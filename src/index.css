@@ -39,12 +39,15 @@
   --color-neutral-50: #f8fafc;
   --color-neutral-100: #f1f5f9;
   --color-neutral-200: #e2e8f0;
+  --color-neutral-250: #d8dee6;
   --color-neutral-300: #cbd5e1;
   --color-neutral-400: #94a3b8;
   --color-neutral-500: #64748b;
   --color-neutral-600: #475569;
+  --color-neutral-650: #3d4f61;
   --color-neutral-700: #334155;
   --color-neutral-800: #1e293b;
+  --color-neutral-850: #172033;
   --color-neutral-900: #0f172a;
 
   --color-success-50: #ecfdf5;
@@ -89,7 +92,7 @@
   --transition-duration-xslow: 800ms;
 
   --transition-timing-standard: cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-timing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
-  --transition-timing-accelerate: cubic-bezier(0.4, 0.0, 1, 1);
+  --transition-timing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --transition-timing-accelerate: cubic-bezier(0.4, 0, 1, 1);
   --transition-timing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }

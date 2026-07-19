@@ -1,14 +1,16 @@
-import React from 'react'
-import type { SceneScale } from '@/hooks/useSceneScale'
-import { mathToDesign } from '@/utils/coordinate'
-import { MATH_COLORS } from '@/theme'
+import React from "react";
+import type { SceneScale } from "@/hooks/useSceneScale";
+import { mathToDesign } from "@/utils/coordinate";
+import { MATH_COLORS } from "@/theme";
 
 interface CoordinateGridProps {
-  scale: SceneScale
-  showGrid?: boolean
-  showLabels?: boolean
-  xStep?: number
-  yStep?: number
+  scale: SceneScale;
+  showGrid?: boolean;
+  showLabels?: boolean;
+  xStep?: number;
+  yStep?: number;
+  /** 字号缩放函数，默认原样返回 */
+  fontScale?: (v: number) => number;
 }
 
 export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
@@ -17,21 +19,22 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   showLabels = true,
   xStep = 1,
   yStep = 1,
+  fontScale = (v) => v,
 }) => {
-  const { xMin, xMax, yMin, yMax } = scale
+  const { xMin, xMax, yMin, yMax } = scale;
 
   // 生成网格线
   const gridLines = React.useMemo(() => {
-    const lines: React.ReactNode[] = []
-    if (!showGrid) return lines
+    const lines: React.ReactNode[] = [];
+    if (!showGrid) return lines;
 
     // 垂直网格线（X 轴刻度处）
-    const xStart = Math.ceil(xMin / xStep) * xStep
-    const xEnd = Math.floor(xMax / xStep) * xStep
+    const xStart = Math.ceil(xMin / xStep) * xStep;
+    const xEnd = Math.floor(xMax / xStep) * xStep;
     for (let x = xStart; x <= xEnd; x += xStep) {
-      if (Math.abs(x) < 1e-9) continue // 避开 Y 轴主轴
-      const startPt = mathToDesign(x, yMin, scale)
-      const endPt = mathToDesign(x, yMax, scale)
+      if (Math.abs(x) < 1e-9) continue; // 避开 Y 轴主轴
+      const startPt = mathToDesign(x, yMin, scale);
+      const endPt = mathToDesign(x, yMax, scale);
       lines.push(
         <line
           key={`grid-v-${x}`}
@@ -42,17 +45,17 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
           stroke={MATH_COLORS.grid}
           strokeWidth={1}
           strokeDasharray="4 4"
-        />
-      )
+        />,
+      );
     }
 
     // 水平网格线（Y 轴刻度处）
-    const yStart = Math.ceil(yMin / yStep) * yStep
-    const yEnd = Math.floor(yMax / yStep) * yStep
+    const yStart = Math.ceil(yMin / yStep) * yStep;
+    const yEnd = Math.floor(yMax / yStep) * yStep;
     for (let y = yStart; y <= yEnd; y += yStep) {
-      if (Math.abs(y) < 1e-9) continue // 避开 X 轴主轴
-      const startPt = mathToDesign(xMin, y, scale)
-      const endPt = mathToDesign(xMax, y, scale)
+      if (Math.abs(y) < 1e-9) continue; // 避开 X 轴主轴
+      const startPt = mathToDesign(xMin, y, scale);
+      const endPt = mathToDesign(xMax, y, scale);
       lines.push(
         <line
           key={`grid-h-${y}`}
@@ -63,25 +66,25 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
           stroke={MATH_COLORS.grid}
           strokeWidth={1}
           strokeDasharray="4 4"
-        />
-      )
+        />,
+      );
     }
 
-    return lines
-  }, [scale, showGrid, xStep, yStep, xMin, xMax, yMin, yMax])
+    return lines;
+  }, [scale, showGrid, xStep, yStep, xMin, xMax, yMin, yMax]);
 
   // 生成刻度线与文本标签
   const ticksAndLabels = React.useMemo(() => {
-    const elements: React.ReactNode[] = []
-    const tickSize = 4 // 刻度线长度 (px)
+    const elements: React.ReactNode[] = [];
+    const tickSize = 4; // 刻度线长度 (px)
 
     // X 轴刻度
-    const xStart = Math.ceil(xMin / xStep) * xStep
-    const xEnd = Math.floor(xMax / xStep) * xStep
+    const xStart = Math.ceil(xMin / xStep) * xStep;
+    const xEnd = Math.floor(xMax / xStep) * xStep;
     for (let x = xStart; x <= xEnd; x += xStep) {
-      if (Math.abs(x) < 1e-9) continue // 避开原点
+      if (Math.abs(x) < 1e-9) continue; // 避开原点
 
-      const pt = mathToDesign(x, 0, scale)
+      const pt = mathToDesign(x, 0, scale);
       // 绘制刻度线
       elements.push(
         <line
@@ -92,8 +95,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
           y2={pt.y + tickSize}
           stroke={MATH_COLORS.axis}
           strokeWidth={1.5}
-        />
-      )
+        />,
+      );
 
       // 绘制数值标签
       if (showLabels) {
@@ -104,21 +107,23 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
             y={pt.y + 16}
             textAnchor="middle"
             fill={MATH_COLORS.labelTextLight}
-            className="text-[10px] font-mono select-none"
+            fontSize={fontScale(10)}
+            fontFamily="monospace"
+            className="select-none"
           >
             {x}
-          </text>
-        )
+          </text>,
+        );
       }
     }
 
     // Y 轴刻度
-    const yStart = Math.ceil(yMin / yStep) * yStep
-    const yEnd = Math.floor(yMax / yStep) * yStep
+    const yStart = Math.ceil(yMin / yStep) * yStep;
+    const yEnd = Math.floor(yMax / yStep) * yStep;
     for (let y = yStart; y <= yEnd; y += yStep) {
-      if (Math.abs(y) < 1e-9) continue // 避开原点
+      if (Math.abs(y) < 1e-9) continue; // 避开原点
 
-      const pt = mathToDesign(0, y, scale)
+      const pt = mathToDesign(0, y, scale);
       // 绘制刻度线
       elements.push(
         <line
@@ -129,8 +134,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
           y2={pt.y}
           stroke={MATH_COLORS.axis}
           strokeWidth={1.5}
-        />
-      )
+        />,
+      );
 
       // 绘制数值标签
       if (showLabels) {
@@ -141,17 +146,19 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
             y={pt.y + 3}
             textAnchor="end"
             fill={MATH_COLORS.labelTextLight}
-            className="text-[10px] font-mono select-none"
+            fontSize={fontScale(10)}
+            fontFamily="monospace"
+            className="select-none"
           >
             {y}
-          </text>
-        )
+          </text>,
+        );
       }
     }
 
     // 绘制原点 'O' 或 '0'
     if (showLabels) {
-      const ptZero = mathToDesign(0, 0, scale)
+      const ptZero = mathToDesign(0, 0, scale);
       elements.push(
         <text
           key="label-zero"
@@ -159,21 +166,23 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
           y={ptZero.y + 14}
           textAnchor="end"
           fill={MATH_COLORS.labelTextLight}
-          className="text-[10px] font-mono select-none"
+          fontSize={fontScale(10)}
+          fontFamily="monospace"
+          className="select-none"
         >
           0
-        </text>
-      )
+        </text>,
+      );
     }
 
-    return elements
-  }, [scale, showLabels, xStep, yStep, xMin, xMax, yMin, yMax])
+    return elements;
+  }, [scale, showLabels, xStep, yStep, xMin, xMax, yMin, yMax]);
 
   // 坐标轴两端主线及其箭头
-  const xAxisStart = mathToDesign(xMin, 0, scale)
-  const xAxisEnd = mathToDesign(xMax, 0, scale)
-  const yAxisStart = mathToDesign(0, yMin, scale)
-  const yAxisEnd = mathToDesign(0, yMax, scale)
+  const xAxisStart = mathToDesign(xMin, 0, scale);
+  const xAxisEnd = mathToDesign(xMax, 0, scale);
+  const yAxisStart = mathToDesign(0, yMin, scale);
+  const yAxisEnd = mathToDesign(0, yMax, scale);
 
   return (
     <g>
@@ -209,7 +218,10 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
         y={xAxisEnd.y - 10}
         textAnchor="middle"
         fill={MATH_COLORS.labelText}
-        className="text-xs font-semibold select-none"
+        fontSize={fontScale(12)}
+        fontFamily="monospace"
+        fontWeight="600"
+        className="select-none"
       >
         x
       </text>
@@ -224,7 +236,10 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
         y={yAxisEnd.y + 8}
         textAnchor="middle"
         fill={MATH_COLORS.labelText}
-        className="text-xs font-semibold select-none"
+        fontSize={fontScale(12)}
+        fontFamily="monospace"
+        fontWeight="600"
+        className="select-none"
       >
         y
       </text>
@@ -232,5 +247,5 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
       {/* 刻度和标签 */}
       {ticksAndLabels}
     </g>
-  )
-}
+  );
+};

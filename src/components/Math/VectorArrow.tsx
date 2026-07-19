@@ -1,31 +1,33 @@
-import React from 'react'
-import type { SceneScale } from '@/hooks/useSceneScale'
-import { mathToDesign } from '@/utils/coordinate'
-import { MATH_COLORS } from '@/theme'
+import React from "react";
+import type { SceneScale } from "@/hooks/useSceneScale";
+import { mathToDesign } from "@/utils/coordinate";
+import { MATH_COLORS } from "@/theme";
 
 interface VectorArrowProps {
   /** 起点数学坐标 [x, y] */
-  from: [number, number]
+  from: [number, number];
   /** 终点数学坐标 [x, y] */
-  to: [number, number]
+  to: [number, number];
   /** 场景比例尺 */
-  scale: SceneScale
+  scale: SceneScale;
   /** 箭头颜色，默认 vectorPrimary */
-  color?: string
+  color?: string;
   /** 线宽 */
-  strokeWidth?: number
+  strokeWidth?: number;
   /** 箭头头部长度 (px) */
-  headLength?: number
+  headLength?: number;
   /** 箭头头部宽度 (px) */
-  headWidth?: number
+  headWidth?: number;
   /** 标签文本，显示在箭头中点附近 */
-  label?: string
+  label?: string;
   /** 标签偏移量 [dx, dy] (px)，相对于箭头中点 */
-  labelOffset?: [number, number]
-  /** 标签字号 */
-  labelSize?: number
+  labelOffset?: [number, number];
+  /** 标签字号（设计基准值，会通过 fontScale 缩放） */
+  labelSize?: number;
+  /** 字号缩放函数，默认原样返回。推荐传入 canvasSize.font 以适配不同屏幕尺寸 */
+  fontScale?: (v: number) => number;
   /** 虚线样式，如 "6 3" */
-  strokeDasharray?: string
+  strokeDasharray?: string;
 }
 
 export const VectorArrow: React.FC<VectorArrowProps> = ({
@@ -39,35 +41,36 @@ export const VectorArrow: React.FC<VectorArrowProps> = ({
   label,
   labelOffset = [0, -8],
   labelSize = 11,
+  fontScale = (v) => v,
   strokeDasharray,
 }) => {
-  const startPt = mathToDesign(from[0], from[1], scale)
-  const endPt = mathToDesign(to[0], to[1], scale)
+  const startPt = mathToDesign(from[0], from[1], scale);
+  const endPt = mathToDesign(to[0], to[1], scale);
 
   // 计算箭头方向向量
-  const dx = endPt.x - startPt.x
-  const dy = endPt.y - startPt.y
-  const len = Math.sqrt(dx * dx + dy * dy)
+  const dx = endPt.x - startPt.x;
+  const dy = endPt.y - startPt.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
 
   // 向量长度过短时不渲染箭头头部
-  if (len < 1) return null
+  if (len < 1) return null;
 
-  const ux = dx / len
-  const uy = dy / len
+  const ux = dx / len;
+  const uy = dy / len;
 
   // 箭头头部两个侧翼点（三角形）
-  const tipX = endPt.x
-  const tipY = endPt.y
-  const baseX = tipX - ux * headLength
-  const baseY = tipY - uy * headLength
-  const wing1X = baseX - uy * (headWidth / 2)
-  const wing1Y = baseY + ux * (headWidth / 2)
-  const wing2X = baseX + uy * (headWidth / 2)
-  const wing2Y = baseY - ux * (headWidth / 2)
+  const tipX = endPt.x;
+  const tipY = endPt.y;
+  const baseX = tipX - ux * headLength;
+  const baseY = tipY - uy * headLength;
+  const wing1X = baseX - uy * (headWidth / 2);
+  const wing1Y = baseY + ux * (headWidth / 2);
+  const wing2X = baseX + uy * (headWidth / 2);
+  const wing2Y = baseY - ux * (headWidth / 2);
 
   // 标签位置：箭头中点 + 偏移
-  const midX = (startPt.x + endPt.x) / 2 + labelOffset[0]
-  const midY = (startPt.y + endPt.y) / 2 + labelOffset[1]
+  const midX = (startPt.x + endPt.x) / 2 + labelOffset[0];
+  const midY = (startPt.y + endPt.y) / 2 + labelOffset[1];
 
   return (
     <g>
@@ -88,12 +91,7 @@ export const VectorArrow: React.FC<VectorArrowProps> = ({
         fill={color}
       />
       {/* 起点圆点 */}
-      <circle
-        cx={startPt.x}
-        cy={startPt.y}
-        r={3}
-        fill={color}
-      />
+      <circle cx={startPt.x} cy={startPt.y} r={3} fill={color} />
       {/* 标签 */}
       {label && (
         <text
@@ -102,7 +100,7 @@ export const VectorArrow: React.FC<VectorArrowProps> = ({
           textAnchor="middle"
           dominantBaseline="central"
           fill={color}
-          fontSize={labelSize}
+          fontSize={fontScale(labelSize)}
           fontWeight={600}
           fontFamily="monospace"
           className="select-none"
@@ -111,5 +109,5 @@ export const VectorArrow: React.FC<VectorArrowProps> = ({
         </text>
       )}
     </g>
-  )
-}
+  );
+};

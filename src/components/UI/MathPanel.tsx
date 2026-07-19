@@ -1,64 +1,148 @@
-import React, { useState } from 'react'
-import { ChevronDown, Award, AlertTriangle, AlertCircle, Info, BookOpen } from 'lucide-react'
-import { KatexFormula } from './KatexFormula'
-import { colors } from '@/theme/colors'
+import React, { useState } from "react";
+import {
+  ChevronDown,
+  Award,
+  AlertTriangle,
+  AlertCircle,
+  Info,
+  BookOpen,
+} from "lucide-react";
+import { KatexFormula } from "./KatexFormula";
+import { colors } from "@/theme/colors";
 
 export interface MathQuantity {
-  label: string
-  symbol?: string
-  value: number | string
-  unit?: string
-  color?: string
-  highlight?: 'positive' | 'negative' | 'zero' | 'extreme'
+  label: string;
+  symbol?: string;
+  value: number | string;
+  unit?: string;
+  color?: string;
+  highlight?: "positive" | "negative" | "zero" | "extreme";
 }
 
 export interface Theorem {
-  name: string
-  latex: string
-  condition?: string
-  note?: string
-  level?: 'core' | 'important' | 'derived' | 'supplementary'
+  name: string;
+  latex: string;
+  condition?: string;
+  /** 适用前提条件（如 a ≠ 0, Δ ≥ 0） */
+  prerequisites?: string[];
+  note?: string;
+  level?: "core" | "important" | "derived" | "supplementary";
 }
 
 export interface GaokaoPoint {
-  text: string
-  importance: 'gaokao' | 'hard' | 'core' | 'basic' | 'extend'
+  text: string;
+  importance: "gaokao" | "hard" | "core" | "basic" | "extend";
 }
 
 export interface WarningItem {
-  text: string
-  level: 'info' | 'warning' | 'danger'
+  text: string;
+  level: "info" | "warning" | "danger";
 }
 
 interface MathPanelProps {
-  quantities: MathQuantity[]
-  theorems?: Theorem[]
-  gaokaoPoints?: GaokaoPoint[]
-  warnings?: WarningItem[]
-  mnemonic?: string
-  title?: string
+  quantities: MathQuantity[];
+  theorems?: Theorem[];
+  gaokaoPoints?: GaokaoPoint[];
+  warnings?: WarningItem[];
+  mnemonic?: string;
+  title?: string;
 }
 
-const THEOREM_LEVEL_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  core: { bg: colors.primary[100], text: colors.primary[700], label: '核心' },
-  important: { bg: colors.accent[100], text: colors.accent[700], label: '重要' },
-  derived: { bg: colors.neutral[100], text: colors.neutral[500], label: '推导' },
-  supplementary: { bg: colors.neutral[50], text: colors.neutral[400], label: '补充' },
-}
+const THEOREM_LEVEL_STYLES: Record<
+  string,
+  { bg: string; text: string; label: string }
+> = {
+  core: { bg: colors.primary[100], text: colors.primary[700], label: "核心" },
+  important: {
+    bg: colors.accent[100],
+    text: colors.accent[700],
+    label: "重要",
+  },
+  derived: {
+    bg: colors.neutral[100],
+    text: colors.neutral[500],
+    label: "推导",
+  },
+  supplementary: {
+    bg: colors.neutral[50],
+    text: colors.neutral[400],
+    label: "补充",
+  },
+};
 
-const GAOKAO_LEVEL_STYLES: Record<string, { bg: string; border: string; text: string; label: string; labelBg: string; labelText: string }> = {
-  gaokao: { bg: colors.accent[50], border: colors.accent[500], text: colors.accent[700], label: '高考要点', labelBg: colors.accent[600], labelText: '#fff' },
-  hard: { bg: colors.danger[50], border: colors.danger[400], text: colors.danger[700], label: '重难点', labelBg: colors.danger[500], labelText: '#fff' },
-  core: { bg: colors.primary[50], border: colors.primary[400], text: colors.primary[700], label: '核心考点', labelBg: colors.primary[600], labelText: '#fff' },
-  basic: { bg: colors.neutral[50], border: colors.neutral[300], text: colors.neutral[600], label: '基础概念', labelBg: colors.neutral[500], labelText: '#fff' },
-  extend: { bg: colors.secondary[50], border: colors.secondary[400], text: colors.secondary[700], label: '拓展延伸', labelBg: colors.secondary[600], labelText: '#fff' },
-}
+const GAOKAO_LEVEL_STYLES: Record<
+  string,
+  {
+    bg: string;
+    border: string;
+    text: string;
+    label: string;
+    labelBg: string;
+    labelText: string;
+  }
+> = {
+  gaokao: {
+    bg: colors.accent[50],
+    border: colors.accent[500],
+    text: colors.accent[700],
+    label: "高考要点",
+    labelBg: colors.accent[600],
+    labelText: "#fff",
+  },
+  hard: {
+    bg: colors.danger[50],
+    border: colors.danger[400],
+    text: colors.danger[700],
+    label: "重难点",
+    labelBg: colors.danger[500],
+    labelText: "#fff",
+  },
+  core: {
+    bg: colors.primary[50],
+    border: colors.primary[400],
+    text: colors.primary[700],
+    label: "核心考点",
+    labelBg: colors.primary[600],
+    labelText: "#fff",
+  },
+  basic: {
+    bg: colors.neutral[50],
+    border: colors.neutral[300],
+    text: colors.neutral[600],
+    label: "基础概念",
+    labelBg: colors.neutral[500],
+    labelText: "#fff",
+  },
+  extend: {
+    bg: colors.secondary[50],
+    border: colors.secondary[400],
+    text: colors.secondary[700],
+    label: "拓展延伸",
+    labelBg: colors.secondary[600],
+    labelText: "#fff",
+  },
+};
 
-const WARNING_LEVEL_STYLES: Record<string, { bg: string; border: string; text: string }> = {
-  danger: { bg: colors.danger[50], border: colors.danger[500], text: colors.danger[700] },
-  warning: { bg: colors.accent[50], border: colors.accent[500], text: colors.accent[700] },
-  info: { bg: colors.primary[50], border: colors.primary[500], text: colors.primary[700] },
-}
+const WARNING_LEVEL_STYLES: Record<
+  string,
+  { bg: string; border: string; text: string }
+> = {
+  danger: {
+    bg: colors.danger[50],
+    border: colors.danger[500],
+    text: colors.danger[700],
+  },
+  warning: {
+    bg: colors.accent[50],
+    border: colors.accent[500],
+    text: colors.accent[700],
+  },
+  info: {
+    bg: colors.primary[50],
+    border: colors.primary[500],
+    text: colors.primary[700],
+  },
+};
 
 export const MathPanel: React.FC<MathPanelProps> = ({
   quantities,
@@ -66,25 +150,27 @@ export const MathPanel: React.FC<MathPanelProps> = ({
   gaokaoPoints = [],
   warnings = [],
   mnemonic,
-  title = '数学量',
+  title = "数学量",
 }) => {
-  const [theoremsOpen, setTheoremsOpen] = useState(true)
-  const [warningsOpen, setWarningsOpen] = useState(true)
-  const [gaokaoOpen, setGaokaoOpen] = useState(true)
-  const [mnemonicOpen, setMnemonicOpen] = useState(true)
+  const [theoremsOpen, setTheoremsOpen] = useState(true);
+  const [warningsOpen, setWarningsOpen] = useState(true);
+  const [gaokaoOpen, setGaokaoOpen] = useState(true);
+  const [mnemonicOpen, setMnemonicOpen] = useState(true);
 
   const getValueColor = (quantity: MathQuantity) => {
-    if (quantity.highlight === 'negative') return colors.danger[600]
-    if (quantity.highlight === 'zero') return colors.neutral[400]
-    if (quantity.highlight === 'extreme') return colors.accent[600]
-    return colors.neutral[700]
-  }
+    if (quantity.highlight === "negative") return colors.danger[600];
+    if (quantity.highlight === "zero") return colors.neutral[400];
+    if (quantity.highlight === "extreme") return colors.accent[600];
+    return colors.neutral[700];
+  };
 
   return (
     <div className="w-full h-full bg-white rounded-lg shadow-sm border border-neutral-200 p-4 overflow-y-auto space-y-5">
       {/* ── 数学量区 ── */}
       <div>
-        <h3 className="text-xs font-semibold text-neutral-600 mb-3 border-b border-neutral-100 pb-1.5">{title}</h3>
+        <h3 className="text-xs font-semibold text-neutral-600 mb-3 border-b border-neutral-100 pb-1.5">
+          {title}
+        </h3>
 
         <div className="space-y-2">
           {quantities.map((q, index) => (
@@ -108,9 +194,13 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                   className="text-sm font-mono font-semibold"
                   style={{ color: getValueColor(q) }}
                 >
-                  {typeof q.value === 'number' ? q.value.toFixed(2) : q.value}
+                  {typeof q.value === "number" ? q.value.toFixed(2) : q.value}
                 </span>
-                {q.unit && <span className="text-xs text-neutral-500 font-medium ml-1">{q.unit}</span>}
+                {q.unit && (
+                  <span className="text-xs text-neutral-500 font-medium ml-1">
+                    {q.unit}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -128,20 +218,32 @@ export const MathPanel: React.FC<MathPanelProps> = ({
               <BookOpen className="w-3.5 h-3.5 text-primary-500" />
               <span>定理公式</span>
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${theoremsOpen ? 'rotate-0' : '-rotate-90'}`} />
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${theoremsOpen ? "rotate-0" : "-rotate-90"}`}
+            />
           </button>
           {theoremsOpen && (
             <div className="space-y-2.5 transition-all duration-fast ease-standard">
               {theorems.map((t, index) => {
-                const levelStyle = t.level ? THEOREM_LEVEL_STYLES[t.level] : undefined
+                const levelStyle = t.level
+                  ? THEOREM_LEVEL_STYLES[t.level]
+                  : undefined;
                 return (
-                  <div key={index} className="p-2.5 rounded-lg border border-primary-100 bg-primary-50/20 text-xs shadow-sm flex flex-col gap-1">
+                  <div
+                    key={index}
+                    className="p-2.5 rounded-lg border border-primary-100 bg-primary-50/20 text-xs shadow-sm flex flex-col gap-1"
+                  >
                     <div className="flex items-center justify-between flex-wrap gap-1.5">
-                      <span className="font-semibold text-neutral-800">{t.name}</span>
+                      <span className="font-semibold text-neutral-800">
+                        {t.name}
+                      </span>
                       {levelStyle && (
                         <span
                           className="text-[10px] px-1 py-0.5 rounded font-semibold"
-                          style={{ backgroundColor: levelStyle.bg, color: levelStyle.text }}
+                          style={{
+                            backgroundColor: levelStyle.bg,
+                            color: levelStyle.text,
+                          }}
                         >
                           {levelStyle.label}
                         </span>
@@ -152,8 +254,22 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                     </div>
                     {t.condition && (
                       <div className="text-xs text-amber-700 mt-0.5 flex items-start gap-1 font-medium">
-                        <span className="shrink-0 text-[10px] bg-amber-100 text-amber-700 px-1 py-0.2 rounded font-semibold leading-none mt-0.5">条件</span>
+                        <span className="shrink-0 text-[10px] bg-amber-100 text-amber-700 px-1 py-0.2 rounded font-semibold leading-none mt-0.5">
+                          条件
+                        </span>
                         <span>{t.condition}</span>
+                      </div>
+                    )}
+                    {t.prerequisites && t.prerequisites.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {t.prerequisites.map((pre, i) => (
+                          <span
+                            key={i}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium"
+                          >
+                            前提：{pre}
+                          </span>
+                        ))}
                       </div>
                     )}
                     {t.note && (
@@ -162,7 +278,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                       </div>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -180,13 +296,21 @@ export const MathPanel: React.FC<MathPanelProps> = ({
               <AlertTriangle className="w-3.5 h-3.5 text-danger-500" />
               <span>易错警示</span>
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${warningsOpen ? 'rotate-0' : '-rotate-90'}`} />
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${warningsOpen ? "rotate-0" : "-rotate-90"}`}
+            />
           </button>
           {warningsOpen && (
             <div className="space-y-2 transition-all duration-fast ease-standard">
               {warnings.map((w, index) => {
-                const style = WARNING_LEVEL_STYLES[w.level] ?? WARNING_LEVEL_STYLES.info
-                const IconComponent = w.level === 'danger' ? AlertCircle : (w.level === 'warning' ? AlertTriangle : Info)
+                const style =
+                  WARNING_LEVEL_STYLES[w.level] ?? WARNING_LEVEL_STYLES.info;
+                const IconComponent =
+                  w.level === "danger"
+                    ? AlertCircle
+                    : w.level === "warning"
+                      ? AlertTriangle
+                      : Info;
                 return (
                   <div
                     key={index}
@@ -200,7 +324,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                     <IconComponent className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>{w.text}</span>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -218,12 +342,16 @@ export const MathPanel: React.FC<MathPanelProps> = ({
               <Award className="w-3.5 h-3.5 text-accent-600" />
               <span>高考要点</span>
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${gaokaoOpen ? 'rotate-0' : '-rotate-90'}`} />
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${gaokaoOpen ? "rotate-0" : "-rotate-90"}`}
+            />
           </button>
           {gaokaoOpen && (
             <div className="space-y-2 transition-all duration-fast ease-standard">
               {gaokaoPoints.map((point, index) => {
-                const style = GAOKAO_LEVEL_STYLES[point.importance] ?? GAOKAO_LEVEL_STYLES.basic
+                const style =
+                  GAOKAO_LEVEL_STYLES[point.importance] ??
+                  GAOKAO_LEVEL_STYLES.basic;
                 return (
                   <div
                     key={index}
@@ -239,15 +367,20 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                       <div className="flex items-center">
                         <span
                           className="text-[10px] px-1 py-0.5 rounded font-semibold leading-none"
-                          style={{ backgroundColor: style.labelBg, color: style.labelText }}
+                          style={{
+                            backgroundColor: style.labelBg,
+                            color: style.labelText,
+                          }}
                         >
                           {style.label}
                         </span>
                       </div>
-                      <span className="text-neutral-700 font-medium">{point.text}</span>
+                      <span className="text-neutral-700 font-medium">
+                        {point.text}
+                      </span>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -265,7 +398,9 @@ export const MathPanel: React.FC<MathPanelProps> = ({
               <span className="text-sm">🗣️</span>
               <span>记忆口诀</span>
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${mnemonicOpen ? 'rotate-0' : '-rotate-90'}`} />
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${mnemonicOpen ? "rotate-0" : "-rotate-90"}`}
+            />
           </button>
           {mnemonicOpen && (
             <div
@@ -282,11 +417,13 @@ export const MathPanel: React.FC<MathPanelProps> = ({
         </div>
       )}
 
-      {quantities.length === 0 && theorems.length === 0 && gaokaoPoints.length === 0 && (
-        <div className="text-center text-neutral-400 py-8">
-          <p className="text-sm">暂无数据</p>
-        </div>
-      )}
+      {quantities.length === 0 &&
+        theorems.length === 0 &&
+        gaokaoPoints.length === 0 && (
+          <div className="text-center text-neutral-400 py-8">
+            <p className="text-sm">暂无数据</p>
+          </div>
+        )}
     </div>
-  )
-}
+  );
+};

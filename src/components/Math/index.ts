@@ -1,4 +1,10 @@
-export { CoordinateGrid } from './CoordinateGrid'
-export { FunctionGraph } from './FunctionGraph'
-export { VectorArrow } from './VectorArrow'
-export { PolarGrid } from './PolarGrid'
+export { CoordinateGrid } from "./CoordinateGrid";
+export { FunctionGraph } from "./FunctionGraph";
+export { VectorArrow } from "./VectorArrow";
+export { PolarGrid } from "./PolarGrid";
+export { InteractivePoint } from "./InteractivePoint";
+export { IntervalShadow } from "./IntervalShadow";
+export { TangentLine } from "./TangentLine";
+export { SecantLine } from "./SecantLine";
+export { Asymptote } from "./Asymptote";
+export { TrackPath } from "./TrackPath";
