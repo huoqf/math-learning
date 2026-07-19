@@ -1,3 +1,5 @@
+name: CI
+
 on:
   push:
     branches: [main]
@@ -15,7 +17,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run lint
+      - run: npx eslint src/ --report-unused-disable-directives
       - run: npx tsc --noEmit -p tsconfig.json
 
   test:
