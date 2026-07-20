@@ -1,0 +1,87 @@
+import type { ParamMeta } from "../types";
+
+export const defaultParams: Record<string, number> = {
+  x0: 1.5,
+  baseA: 2.0,
+  powerAlpha: 2.0,
+  intervalM: -1.0,
+  intervalN: 2.5,
+  bisectionSteps: 3,
+};
+
+export const paramMeta: Record<string, ParamMeta> = {
+  x0: {
+    key: "x0",
+    label: "采样点 x0",
+    labelFormula: "x_0",
+    min: -4.0,
+    max: 4.0,
+    step: 0.1,
+    defaultValue: 1.5,
+    importance: "core",
+    description: "控制研究函数奇偶对称性、反函数对应点的自变量位置 x0",
+  },
+  baseA: {
+    key: "baseA",
+    label: "指对数底数 a",
+    labelFormula: "a",
+    min: 0.1,
+    max: 4.0,
+    step: 0.1,
+    defaultValue: 2.0,
+    importance: "core",
+    description:
+      "控制指数函数 y = a^x 与对数函数 y = log_a(x) 的底数，a = 1 时退化",
+    marks: [
+      {
+        value: 1.0,
+        variant: "critical",
+        label: "退化 (a=1)",
+        labelFormula: "a = 1",
+      },
+    ],
+  },
+  powerAlpha: {
+    key: "powerAlpha",
+    label: "幂函数指数 α",
+    labelFormula: "\\alpha",
+    min: -2.0,
+    max: 3.0,
+    step: 0.5,
+    defaultValue: 2.0,
+    importance: "core",
+    description: "控制幂函数 y = x^α 的指数形状 (如 -1, 0.5, 1, 2, 3)",
+  },
+  intervalM: {
+    key: "intervalM",
+    label: "零点区间左端点 m",
+    labelFormula: "m",
+    min: -3.0,
+    max: 3.0,
+    step: 0.1,
+    defaultValue: -1.0,
+    importance: "advanced",
+    description: "零点存在性定理与二分逼近法研究区间的左边界",
+  },
+  intervalN: {
+    key: "intervalN",
+    label: "零点区间右端点 n",
+    labelFormula: "n",
+    min: -2.0,
+    max: 4.0,
+    step: 0.1,
+    defaultValue: 2.5,
+    importance: "advanced",
+    description: "零点存在性定理与二分逼近法研究区间的右边界",
+  },
+  bisectionSteps: {
+    key: "bisectionSteps",
+    label: "二分逼近步数 Step",
+    min: 1,
+    max: 8,
+    step: 1,
+    defaultValue: 3,
+    importance: "core",
+    description: "二分逼近法迭代切分次数，次数越多误差越小",
+  },
+};

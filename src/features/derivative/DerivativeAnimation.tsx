@@ -102,11 +102,13 @@ export function DerivativeAnimation() {
       return {
         key,
         label: meta.label,
+        labelFormula: meta.labelFormula,
         value: params[key] ?? meta.defaultValue ?? 0,
         min,
         max,
         step: meta.step ?? 0.1,
         description: meta.description,
+        descriptionFormula: meta.descriptionFormula,
         importance: meta.importance as any,
         marks,
       };
@@ -206,7 +208,7 @@ export function DerivativeAnimation() {
                 </p>
                 <div className="my-1.5 p-1 bg-white rounded border border-neutral-100 text-center shadow-sm">
                   <KatexFormula
-                    formula="\lim_{\color{#D97706}{\Delta x} \to 0} k_{\text{割}} = k_{\text{切}}"
+                    formula="\\lim_{\\color{#D97706}{\\Delta x} \\to 0} k_{\\text{割}} = k_{\\text{切}}"
                     mode="inline"
                   />
                 </div>

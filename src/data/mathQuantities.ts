@@ -18,6 +18,12 @@ import {
   solveConstantSingleSepTrans,
   solveConstantSingleDirectTrans,
 } from "@/math/constant";
+import { calculateSetMathState } from "@/math/set";
+import {
+  evalFunctionParity,
+  calculateExpLog,
+  solveBisection,
+} from "@/math/function";
 import { ALGEBRA_COLORS, CALCULUS_COLORS, MATH_COLORS } from "@/theme";
 
 /** 参数颜色映射（与中屏公式保持一致） */
@@ -930,6 +936,401 @@ export function buildMathQuantities(
         selectedLogic === "same_var"
           ? "同变量差函数，作差求最值。"
           : "双动点别慌张，任意任意比极值，最小值压最大值。",
+    };
+  }
+
+  if (animId === "anim-set-venn" || animId === "anim-logic-conditions") {
+    const xA = params.xA ?? -1.2;
+    const yA = params.yA ?? 0.0;
+    const rA = params.rA ?? 2.2;
+    const xB = params.xB ?? 1.2;
+    const yB = params.yB ?? 0.0;
+    const rB = params.rB ?? 2.2;
+    const xP = params.xP ?? 0.0;
+    const yP = params.yP ?? 0.0;
+
+    const setRes = calculateSetMathState(
+      { x: xA, y: yA, r: rA },
+      { x: xB, y: yB, r: rB },
+      { x: xP, y: yP },
+    );
+
+    const quantities: MathQuantity[] = [
+      {
+        label: "圆心距 d(O₠, O₢)",
+        symbol: "d",
+        value: setRes.distance.toFixed(2),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "集合 A 半径",
+        symbol: "rA",
+        value: rA.toFixed(2),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "集合 B 半径",
+        symbol: "rB",
+        value: rB.toFixed(2),
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "测试点 P 归属 A",
+        value: setRes.isPointInA ? "P ∈ A" : "P ∉ A",
+        color: setRes.isPointInA
+          ? MATH_COLORS.paramPrimary
+          : MATH_COLORS.labelText,
+      },
+      {
+        label: "测试点 P 归属 B",
+        value: setRes.isPointInB ? "P ∈ B" : "P ∉ B",
+        color: setRes.isPointInB
+          ? MATH_COLORS.paramSecondary
+          : MATH_COLORS.labelText,
+      },
+      {
+        label: "充要逻辑判定",
+        value:
+          setRes.logicType === "sufficient_not_necessary"
+            ? "充分不必要条件"
+            : setRes.logicType === "necessary_not_sufficient"
+              ? "必要不充分条件"
+              : setRes.logicType === "sufficient_and_necessary"
+                ? "充要条件"
+                : "既不充分也不必要",
+        highlight:
+          setRes.logicType === "sufficient_and_necessary"
+            ? "extreme"
+            : "positive",
+      },
+    ];
+
+    const theorems: Theorem[] = [
+      {
+        name: "集合的基本运算与 Venn 图",
+        latex:
+          "A \\cap B = \\{x \\mid x \\in A \\land x \\in B\\}, \\quad A \\cup B = \\{x \\mid x \\in A \\lor x \\in B\\}",
+        level: "core",
+        prerequisites: ["全集 U 存在"],
+      },
+      {
+        name: "充分必要条件与包含关系",
+        latex:
+          "p: x \\in A, \\quad q: x \\in B, \\quad p \\implies q \\iff A \\subseteq B",
+        level: "important",
+        prerequisites: ["A 与 B 为非空集合"],
+      },
+      {
+        name: "摩根定律 (De Morgan's Laws)",
+        latex:
+          "\\complement_U (A \\cup B) = \\complement_U A \\cap \\complement_U B, \\quad \\complement_U (A \\cap B) = \\complement_U A \\cup \\complement_U B",
+        level: "important",
+        prerequisites: ["全集 U 正确限定"],
+      },
+    ];
+
+    const gaokaoPoints: GaokaoPoint[] = [
+      {
+        text: "高考一轮基础：集合元素的确定性、互异性、无序性。做题时谨防互异性检验与空集 ∅ 扣分陷阱。",
+        importance: "gaokao",
+      },
+      {
+        text: "充分条件与必要条件四步判定法：① 明确条件 p 与结论 q；② 建立集合 A={x|p} 与 B={x|q}；③ 观察 Venn 图包含关系 (A ⊆ B 还是 B ⊆ A)；④ 写出充要判定结论。",
+        importance: "gaokao",
+      },
+      {
+        text: "全称量词与存在量词否定：否定全称命题“∀x∈A, p(x)”变为存在命题“∃x∈A, ¬p(x)”，改量词变结论，限定集合 A 不改变！",
+        importance: "core",
+      },
+    ];
+
+    const warnings: WarningItem[] = [];
+    if (setRes.warningMessage) {
+      warnings.push({
+        text: setRes.warningMessage,
+        level: "danger",
+      });
+    }
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings,
+      mnemonic:
+        "小范围推大范围（A ⊂ B 推出 p 充分）；全称改存在，否定在末尾；空集是子集，互异莫忘记。",
+    };
+  }
+
+  if (animId === "anim-func-properties") {
+    const x0 = params.x0 ?? 1.5;
+    const fnType = ((config?.fnType as string) || "cubic") as
+      "cubic" | "quadratic" | "abs" | "reciprocal";
+    const parityRes = evalFunctionParity(fnType, x0);
+
+    const quantities: MathQuantity[] = [
+      {
+        label: "采样自变量 x₀",
+        symbol: "x₀",
+        value: x0.toFixed(2),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "函数值 f(x₀)",
+        symbol: "f(x₀)",
+        value: Number.isFinite(parityRes.fx)
+          ? parityRes.fx.toFixed(2)
+          : "无定义",
+        color: MATH_COLORS.function,
+      },
+      {
+        label: "对称点值 f(-x₀)",
+        symbol: "f(-x₀)",
+        value: Number.isFinite(parityRes.fNegX)
+          ? parityRes.fNegX.toFixed(2)
+          : "无定义",
+        color: MATH_COLORS.functionTransformed,
+      },
+      {
+        label: "奇偶性判定",
+        value:
+          parityRes.parity === "even"
+            ? "偶函数 (Even)"
+            : parityRes.parity === "odd"
+              ? "奇函数 (Odd)"
+              : "非奇非偶",
+        highlight: parityRes.parity !== "neither" ? "extreme" : "positive",
+      },
+    ];
+
+    const theorems: Theorem[] = [
+      {
+        name: "奇函数与偶函数严格定义",
+        latex:
+          "\\text{偶函数: } f(-x) = f(x), \\quad \\text{奇函数: } f(-x) = -f(x)",
+        level: "core",
+        prerequisites: ["定义域必须关于坐标原点对称！"],
+      },
+      {
+        name: "函数图像对称性定理",
+        latex:
+          "f(a + x) = f(a - x) \\iff \\text{图象关于直线 } x = a \\text{ 轴对称}",
+        level: "important",
+        prerequisites: ["定义域关于 x = a 对称"],
+      },
+      {
+        name: "周期性与对称性组合推导",
+        latex:
+          "\\text{若 } f(x) \\text{ 关于 } x=a \\text{ 与 } x=b \\text{ 均对称 } \\Rightarrow T = 2|a - b|",
+        level: "important",
+        prerequisites: ["a ≠ b"],
+      },
+    ];
+
+    const gaokaoPoints: GaokaoPoint[] = [
+      {
+        text: "高考第一陷阱：研究奇偶性或单调性前，必须首先确定函数的定义域！定义域如果不关于原点对称，直接判定为非奇非偶函数。",
+        importance: "gaokao",
+      },
+      {
+        text: "奇函数在原点处的性质：若奇函数 f(x) 在 x = 0 处有定义，则必有 f(0) = 0！这是高考特值秒杀的关键。",
+        importance: "gaokao",
+      },
+      {
+        text: "单调性与奇偶性复合：奇函数在对称区间上的单调性相同；偶函数在对称区间上的单调性相反。",
+        importance: "core",
+      },
+    ];
+
+    const warnings: WarningItem[] = [];
+    if (fnType === "reciprocal" && Math.abs(x0) < 1e-4) {
+      warnings.push({
+        text: "x = 0 处反比例函数无定义！",
+        level: "danger",
+      });
+    }
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings,
+      mnemonic: "定义域先看对称否，奇在原点f(0)=0，双轴对称周期现。",
+    };
+  }
+
+  if (animId === "anim-func-explog") {
+    const a = params.baseA ?? 2.0;
+    const x0 = params.x0 ?? 1.5;
+    const expLogRes = calculateExpLog(a, x0);
+
+    const quantities: MathQuantity[] = [
+      {
+        label: "底数 a",
+        symbol: "a",
+        value: a.toFixed(1),
+        color: MATH_COLORS.paramPrimary,
+      },
+      { label: "自变量 x₀", symbol: "x₀", value: x0.toFixed(2) },
+      {
+        label: "指数函数值",
+        symbol: "a^(x₀)",
+        value: expLogRes.isValidBase ? expLogRes.expVal.toFixed(2) : "无意义",
+        color: MATH_COLORS.function,
+      },
+      {
+        label: "对数函数值",
+        symbol: "log_a(x₀)",
+        value:
+          expLogRes.isValidBase && Number.isFinite(expLogRes.logVal)
+            ? expLogRes.logVal.toFixed(2)
+            : "无意义",
+        color: MATH_COLORS.functionTransformed,
+      },
+      {
+        label: "单调状态",
+        value:
+          a > 1
+            ? "单调递增 (a > 1)"
+            : a > 0 && a < 1
+              ? "单调递减 (0 < a < 1)"
+              : "退化/无定义",
+        highlight: a > 1 ? "extreme" : "positive",
+      },
+    ];
+
+    const theorems: Theorem[] = [
+      {
+        name: "指数与对数互为反函数关系",
+        latex: "y = a^x \\iff x = \\log_a y \\quad (a > 0, a \\neq 1)",
+        level: "core",
+        prerequisites: ["a > 0", "a ≠ 1", "x ∈ ℝ, y > 0"],
+      },
+      {
+        name: "反函数图像对称定理",
+        latex:
+          "\\text{互为反函数的两个函数图象关于直线 } y = x \\text{ 轴对称}",
+        level: "important",
+        prerequisites: ["定义域与值域互换"],
+      },
+      {
+        name: "对数换底公式与对数运算法则",
+        latex:
+          "\\log_a b = \\frac{\\ln b}{\\ln a}, \\quad \\log_a(MN) = \\log_a M + \\log_a N",
+        level: "important",
+        prerequisites: ["M > 0", "N > 0"],
+      },
+    ];
+
+    const gaokaoPoints: GaokaoPoint[] = [
+      {
+        text: "高考高频定点：指数函数 y = a^x 必过定点 (0, 1)；对数函数 y = log_a x 必过定点 (1, 0)。",
+        importance: "gaokao",
+      },
+      {
+        text: "反函数三要要素：① 定义域与值域互换；② 图象关于 y = x 对称；③ 只有严格单调函数才存在单调性相同的反函数。",
+        importance: "gaokao",
+      },
+    ];
+
+    const warnings: WarningItem[] = [];
+    if (expLogRes.baseWarning) {
+      warnings.push({
+        text: expLogRes.baseWarning,
+        level: "danger",
+      });
+    }
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings,
+      mnemonic: "指过(0,1)对过(1,0)，底过1增小1减；y=x对称反函数。",
+    };
+  }
+
+  if (animId === "anim-func-zero") {
+    const m = params.intervalM ?? -1.0;
+    const n = params.intervalN ?? 2.5;
+    const steps = Math.max(1, Math.round(params.bisectionSteps ?? 3));
+
+    // 默认测试函数 f(x) = x^3 - x - 2
+    const targetFn = (x: number) => x * x * x - x - 2;
+    const bisectionRes = solveBisection(targetFn, m, n, steps);
+
+    const quantities: MathQuantity[] = [
+      { label: "研究区间", value: `[${m.toFixed(1)}, ${n.toFixed(1)}]` },
+      {
+        label: "迭代次数 Step",
+        symbol: "k",
+        value: steps,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "近似零点根",
+        symbol: "x*",
+        value: Number.isFinite(bisectionRes.approxRoot)
+          ? bisectionRes.approxRoot.toFixed(4)
+          : "未收敛",
+        color: MATH_COLORS.function,
+      },
+      {
+        label: "最大误差界",
+        symbol: "ε",
+        value: Number.isFinite(bisectionRes.errorBound)
+          ? `±${bisectionRes.errorBound.toFixed(4)}`
+          : "未知",
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "零点定理满足",
+        value: bisectionRes.hasZero ? "满足 (f(a)·f(b) < 0)" : "不满足同号",
+        highlight: bisectionRes.hasZero ? "extreme" : "negative",
+      },
+    ];
+
+    const theorems: Theorem[] = [
+      {
+        name: "零点存在性定理 (Bolzano 定理)",
+        latex:
+          "f(a) \\cdot f(b) < 0 \\implies \\exists c \\in (a, b), \\, f(c) = 0",
+        level: "core",
+        prerequisites: ["f(x) 在 [a, b] 上连续"],
+      },
+      {
+        name: "二分法误差缩小公式",
+        latex: "|x^* - x_k| \\le \\frac{b - a}{2^k}",
+        level: "important",
+        prerequisites: ["迭代 k 次", "每步区间长度减半"],
+      },
+    ];
+
+    const gaokaoPoints: GaokaoPoint[] = [
+      {
+        text: "零点定理注意事项：定理只是“充分条件”而非“必要条件”！若 f(a)·f(b) > 0，在 (a, b) 内仍可能有偶数个零点；若 f(x) 不连续，异号也不一定有零点。",
+        importance: "gaokao",
+      },
+      {
+        text: "单调函数零点唯一性：若连续函数 f(x) 在 [a, b] 上单调且 f(a)·f(b) < 0，则在 (a, b) 上有且仅有一个零点。",
+        importance: "gaokao",
+      },
+    ];
+
+    const warnings: WarningItem[] = [];
+    if (bisectionRes.warningMessage) {
+      warnings.push({
+        text: bisectionRes.warningMessage,
+        level: "warning",
+      });
+    }
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings,
+      mnemonic: "连续异号有零点，二分切半误差减；单调保证唯一根。",
     };
   }
 

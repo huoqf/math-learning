@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { getStepDigits, formatByStep } from "./Slider";
+import { KatexFormula } from "./KatexFormula";
 
 type ParamImportance = "core" | "advanced" | "display";
 type ParamMarkVariant = "zero" | "critical" | "recommended";
@@ -8,12 +9,15 @@ type ParamMarkVariant = "zero" | "critical" | "recommended";
 interface ParamMark {
   value: number;
   label?: string;
+  labelFormula?: string;
   variant?: ParamMarkVariant;
 }
 
 export interface ParamConfig {
   key: string;
   label: string;
+  /** 参数标签的 KaTeX 公式（优先于 label 纯文本） */
+  labelFormula?: string;
   value: number;
   min: number;
   max: number;
@@ -21,6 +25,8 @@ export interface ParamConfig {
   unit?: string;
   group?: string;
   description?: string;
+  /** 参数描述的 KaTeX 公式（优先于 description 纯文本） */
+  descriptionFormula?: string;
   marks?: ParamMark[];
   importance?: ParamImportance;
   resetOnChange?: boolean;
@@ -248,14 +254,35 @@ export const ParamControl: React.FC<ParamControlProps> = ({
             htmlFor={`param-${param.key}`}
           >
             <span className="inline-flex items-center gap-1.5">
-              <span>
-                {param.label}
-                {param.unit ? ` (${param.unit})` : ""}
-              </span>
+              {param.labelFormula ? (
+                <span className="inline-flex items-center gap-1">
+                  <KatexFormula
+                    formula={param.labelFormula}
+                    mode="inline"
+                    className="!text-xs"
+                  />
+                  {param.unit && (
+                    <span className="text-xs">({param.unit})</span>
+                  )}
+                </span>
+              ) : (
+                <span>
+                  {param.label}
+                  {param.unit ? ` (${param.unit})` : ""}
+                </span>
+              )}
             </span>
             {param.description && (
               <span className="mt-0.5 block text-xs font-normal leading-relaxed text-neutral-400">
-                {param.description}
+                {param.descriptionFormula ? (
+                  <KatexFormula
+                    formula={param.descriptionFormula}
+                    mode="inline"
+                    className="!text-xs !my-0"
+                  />
+                ) : (
+                  param.description
+                )}
               </span>
             )}
           </label>
@@ -353,7 +380,15 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                     ].join(" ")}
                     style={{ left: `${getMarkPercentage(mark.value, param)}%` }}
                   >
-                    {mark.label}
+                    {mark.labelFormula ? (
+                      <KatexFormula
+                        formula={mark.labelFormula}
+                        mode="inline"
+                        className="!text-[10px] !my-0"
+                      />
+                    ) : (
+                      mark.label
+                    )}
                   </span>
                 );
               })}

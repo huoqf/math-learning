@@ -20,6 +20,15 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-logic-conditions"],
     prerequisites: [],
   },
+  {
+    id: "know-logic-quantifiers",
+    title: "全称量词与存在量词及其否定",
+    chapter: "集合与常用逻辑",
+    module: "常用逻辑用语",
+    importance: "basic",
+    animationIds: ["anim-logic-conditions"],
+    prerequisites: ["know-logic-conditions"],
+  },
   // 2. 不等式
   {
     id: "know-ineq-basic",
@@ -50,6 +59,15 @@ export const knowledgeTree: KnowledgeNode[] = [
     prerequisites: [],
   },
   {
+    id: "know-func-symmetry",
+    title: "函数的对称性、周期性与轴/中心对称",
+    chapter: "函数概念与性质",
+    module: "函数的基本性质",
+    importance: "gaokao",
+    animationIds: ["anim-func-properties"],
+    prerequisites: ["know-func-properties"],
+  },
+  {
     id: "know-quadratic",
     title: "二次函数与一元二次方程、不等式",
     chapter: "函数概念与性质",
@@ -64,6 +82,15 @@ export const knowledgeTree: KnowledgeNode[] = [
     chapter: "函数概念与性质",
     module: "基本初等函数",
     importance: "gaokao",
+    animationIds: ["anim-func-explog"],
+    prerequisites: ["know-func-properties"],
+  },
+  {
+    id: "know-power-function",
+    title: "幂函数的性质与图像变化",
+    chapter: "函数概念与性质",
+    module: "基本初等函数",
+    importance: "basic",
     animationIds: ["anim-func-explog"],
     prerequisites: ["know-func-properties"],
   },

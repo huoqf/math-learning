@@ -61,6 +61,11 @@ const SECTIONS = [
 
 // 动画路由映射
 const ANIMATION_ROUTE_MAP: Record<string, string> = {
+  "anim-set-venn": "/set",
+  "anim-logic-conditions": "/set",
+  "anim-func-properties": "/function",
+  "anim-func-explog": "/function",
+  "anim-func-zero": "/function",
   "anim-quadratic": "/quadratic",
   "anim-derivative-tangent": "/derivative",
   "anim-constant-single": "/constant",

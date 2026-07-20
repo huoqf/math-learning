@@ -4,6 +4,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   x0: {
     key: "x0",
     label: "切点 x₀",
+    labelFormula: "x_0",
     min: -4,
     max: 4,
     step: 0.1,
@@ -16,6 +17,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   dx: {
     key: "dx",
     label: "步长 Δx",
+    labelFormula: "\\Delta x",
     min: 0.01,
     max: 2.0,
     step: 0.01,

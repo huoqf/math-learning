@@ -185,8 +185,14 @@ const scale = useSceneScale({ vp, xRange: [-6, 6], yRange: [-4.5, 4.5] })
 paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临界参数如 a=0 须配置 marks 并标明 variant: 'critical'）
 // ❌ 禁止
 手写 <input type="range" />   // 散乱控件
+<select> / 原生下拉框         // 不支持 KaTeX，用按钮组替代
 新建 SidebarExtra 放简单开关  // 仅复杂自定义才用
 ```
+
+**左屏选择类控件**：模式切换、子选项选择（如不等式关系、函数类型）统一用按钮组，支持 KaTeX 公式渲染，禁止用 `<select>`。
+
+**左屏结构约定**（模式切换页必须遵守）：
+- 若页面有多个模式/子模式（如"基本性质 / 指对幂反函数 / 零点二分法"），`paramConfigs` 必须按当前模式**过滤**，仅展示该模式相关的参数，禁止无条件遍历全部 `paramMeta`
 
 ### 铁律 4：组件复用，禁止重复手写
 
@@ -269,7 +275,7 @@ const mathData = useMemo(() => buildMathQuantities('anim-<topic>', params), [par
 
 ```tsx
 // ✅ 左屏标准写法（paramMeta → ParamControl 数据流）
-import { ParamControl, LeftPanel } from '@/components/UI'
+import { ParamControl, LeftPanel, LeftPanelSection } from '@/components/UI'
 import type { ParamConfig } from '@/components/UI'
 import { defaultParams, paramMeta } from '@/data/registries/<topic>'
 
@@ -278,28 +284,48 @@ const [params, setParams] = useState<Record<string, number>>(() => ({
   ...defaultParams,
 }))
 
-// 2. 将 paramMeta 转为 ParamConfig 数组
+// 2. 按模式过滤的声明式参数配置（多模式页必须；单模式页可省略 keysByMode 直接遍历）
 const paramConfigs = useMemo<ParamConfig[]>(() => {
-  return Object.entries(paramMeta).map(([key, meta]) => ({
-    key,
-    label: meta.label,
-    value: params[key] ?? meta.defaultValue ?? 0,
-    min: meta.min,
-    max: meta.max,
-    step: meta.step ?? 0.1,
-    description: meta.description,
-    importance: meta.importance as any,
-    marks: meta.marks,  // 退化临界值标记
-  }))
-}, [params])
+  const keysByMode: Record<string, string[]> = {
+    modeA: ['x0', 'a'],       // 仅展示该模式需要的参数
+    modeB: ['m', 'n', 'step'],
+  }
+  const keys = keysByMode[activeMode] ?? Object.keys(paramMeta)
+  return keys
+    .filter((key) => key in paramMeta)
+    .map((key) => {
+      const meta = paramMeta[key]
+      return {
+        key,
+        label: meta.label,
+        labelFormula: meta.labelFormula,       // 参数标签 KaTeX（优先于 label 纯文本）
+        value: params[key] ?? meta.defaultValue ?? 0,
+        min: meta.min,
+        max: meta.max,
+        step: meta.step ?? 0.1,
+        description: meta.description,
+        descriptionFormula: meta.descriptionFormula, // 参数描述 KaTeX（优先于 description）
+        importance: meta.importance as any,
+        marks: meta.marks,  // 退化临界值标记
+      }
+    })
+}, [params, activeMode])  // ⚠️ 依赖必须包含 activeMode
 
-// 3. 渲染
+// 3. 渲染（左屏：模式选择 + 参数调节）
 <LeftPanel>
-  <ParamControl
-    params={paramConfigs}
-    onParamChange={handleParamChange}
-    onReset={handleReset}
-  />
+  {/* 模式选择区（如有） */}
+  <LeftPanelSection title="模式选择" subtitle="...">
+    {/* 按钮组 */}
+  </LeftPanelSection>
+
+  {/* 参数调节区 */}
+  <LeftPanelSection title="参数调节" subtitle="拖动滑块...">
+    <ParamControl
+      params={paramConfigs}
+      onParamChange={handleParamChange}
+      onReset={handleReset}
+    />
+  </LeftPanelSection>
 </LeftPanel>
 ```
 
@@ -329,6 +355,8 @@ const paramConfigs = useMemo<ParamConfig[]>(() => {
 5. **退化防范与前提**：必须有 $a = 0$ 等退化状态下的图形兼容和红字 `WarningItem` 提示；右侧定理公式注明"适用前提条件"
 6. **曲线连续性**：绘制曲线时，必须对不连续点（例如 $\tan x$ 的渐近线）在采样时进行断开处理
 7. **字号缩放链路**：Animation 必须传 `fontScale={canvasSize.font}` 给 Scene；Scene 必须传 `fontScale` 给 CoordinateGrid/InteractivePoint/Asymptote/VectorArrow；SVG 内禁止 `className="text-[Npx]"` 硬编码字号
+8. **左屏参数过滤**：多模式页的 `paramConfigs` 必须按 `activeMode` 过滤参数，依赖数组必须包含 `activeMode`
+9. **左屏公式渲染**：`paramMeta` 中含数学符号的 `label`/`description`/`marks[].label` 应提供对应的 `labelFormula`/`descriptionFormula`/`marks[].labelFormula`，`ParamControl` 会自动用 KaTeX 渲染
 
 ---
 

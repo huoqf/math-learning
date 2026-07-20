@@ -133,6 +133,7 @@ export function ConstantAnimation() {
       let max = meta.max;
       let step = meta.step ?? 0.05;
       let description = meta.description;
+      let descriptionFormula = meta.descriptionFormula;
       let marks = meta.marks;
 
       if (activeTab === "single" && funModel === "transcendent") {
@@ -140,6 +141,7 @@ export function ConstantAnimation() {
           min = 0.1;
           max = 3.0;
           description = "超越函数定义域 x > 0，故左边界需大等于 0.1";
+          descriptionFormula = "超越函数定义域 x > 0，故左边界需大等于 0.1";
         } else if (key === "n") {
           min = 0.5;
           max = 5.0;
@@ -150,11 +152,15 @@ export function ConstantAnimation() {
           step = 0.02;
           description =
             "【主参数-红】代表水平直线 y = a，其临界值为 1/e ≈ 0.37";
+          descriptionFormula =
+            "【主参数-红】代表水平直线 y = a，其临界值为 \\frac{1}{e} \\approx 0.37";
         } else if (key === "a_axis") {
           min = 0.1;
           max = 5.0;
           description =
             "【主参数-红】函数 f(x) = e^x - ax 的参数 a，极小值点为 ln a";
+          descriptionFormula =
+            "【主参数-红】函数 f(x) = e^x - ax 的参数 a，极小值点为 \\ln a";
         }
       } else if (activeTab === "single" && funModel === "quadratic") {
         if (key === "a") {
@@ -165,19 +171,23 @@ export function ConstantAnimation() {
       } else if (activeTab === "double") {
         if (key === "yf") {
           description = "【主参数-红】控制抛物线 f(x) 顶点的 y_f 坐标";
+          descriptionFormula = "【主参数-红】控制抛物线 f(x) 顶点的 y_f 坐标";
         } else if (key === "yg") {
           description = "【次参数-橙】控制抛物线 g(x) 顶点的 y_g 坐标";
+          descriptionFormula = "【次参数-橙】控制抛物线 g(x) 顶点的 y_g 坐标";
         }
       }
 
       return {
         key,
         label: meta.label,
+        labelFormula: meta.labelFormula,
         value: params[key] ?? meta.defaultValue ?? 0,
         min,
         max,
         step,
         description,
+        descriptionFormula,
         importance: meta.importance as any,
         marks,
       };
@@ -367,31 +377,53 @@ export function ConstantAnimation() {
               title="高考双变量博弈"
               subtitle="双动点对决与同变量差函数博弈"
             >
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-neutral-400 block">
-                  选择不等式关系
-                </label>
-                <select
-                  value={selectedLogic}
-                  onChange={(e) => setSelectedLogic(e.target.value as any)}
-                  className="w-full text-xs border border-neutral-200 rounded-lg p-2.5 bg-white text-neutral-700 font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
-                >
-                  <option value="all_all">
-                    ∀x1, ∀x2, f(x1) ≥ g(x2) (任意对任意-极值分离)
-                  </option>
-                  <option value="all_exist">
-                    ∀x1, ∃x2, f(x1) ≥ g(x2) (任意对存在)
-                  </option>
-                  <option value="exist_all">
-                    ∃x1, ∀x2, f(x1) ≥ g(x2) (存在对任意)
-                  </option>
-                  <option value="exist_exist">
-                    ∃x1, ∃x2, f(x1) ≥ g(x2) (存在对存在)
-                  </option>
-                  <option value="same_var">
-                    ∀x ∈ I₁∩I₂, f(x) ≥ g(x) (同变量对垒-差函数)
-                  </option>
-                </select>
+              <div className="space-y-1.5">
+                {[
+                  {
+                    key: "all_all",
+                    formula: "\\forall x_1, \\forall x_2",
+                    desc: "任意对任意-极值分离",
+                  },
+                  {
+                    key: "all_exist",
+                    formula: "\\forall x_1, \\exists x_2",
+                    desc: "任意对存在",
+                  },
+                  {
+                    key: "exist_all",
+                    formula: "\\exists x_1, \\forall x_2",
+                    desc: "存在对任意",
+                  },
+                  {
+                    key: "exist_exist",
+                    formula: "\\exists x_1, \\exists x_2",
+                    desc: "存在对存在",
+                  },
+                  {
+                    key: "same_var",
+                    formula: "\\forall x \\in I_1 \\cap I_2",
+                    desc: "同变量对垒-差函数",
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => setSelectedLogic(item.key as any)}
+                    className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md border transition-all ${
+                      selectedLogic === item.key
+                        ? "bg-primary-500 text-white border-primary-500 font-semibold shadow-sm"
+                        : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-300"
+                    }`}
+                  >
+                    <KatexFormula
+                      formula={item.formula}
+                      mode="inline"
+                      className="!text-[11px] !my-0"
+                    />
+                    <span className="ml-1.5 text-[10px] opacity-70">
+                      {item.desc}
+                    </span>
+                  </button>
+                ))}
               </div>
             </LeftPanelSection>
           )}

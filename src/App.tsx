@@ -2,9 +2,13 @@ import { HashRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import { QuadraticAnimation } from "./features/quadratic/QuadraticAnimation";
 import { DerivativeAnimation } from "./features/derivative/DerivativeAnimation";
 import { ConstantAnimation } from "./features/constant/ConstantAnimation";
+import { SetAnimation } from "./features/set";
+import { FunctionAnimation } from "./features/function";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 
 const PATH_TO_LABEL: Record<string, string> = {
+  "/set": "集合与常用逻辑实验室",
+  "/function": "函数概念与性质实验室",
   "/quadratic": "二次函数实验室",
   "/derivative": "导数几何意义",
   "/constant": "恒成立实验室",
@@ -59,6 +63,8 @@ export default function App() {
         <main className="flex-1 overflow-hidden">
           <Routes>
             <Route path="/" element={<KnowledgeTreeHome />} />
+            <Route path="/set" element={<SetAnimation />} />
+            <Route path="/function" element={<FunctionAnimation />} />
             <Route path="/quadratic" element={<QuadraticAnimation />} />
             <Route path="/derivative" element={<DerivativeAnimation />} />
             <Route path="/constant" element={<ConstantAnimation />} />

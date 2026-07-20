@@ -1,0 +1,1 @@
+export { FunctionAnimation } from "./FunctionAnimation";

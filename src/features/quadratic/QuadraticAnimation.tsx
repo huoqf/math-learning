@@ -72,11 +72,13 @@ export function QuadraticAnimation() {
     return Object.entries(paramMeta).map(([key, meta]) => ({
       key,
       label: meta.label,
+      labelFormula: meta.labelFormula,
       value: params[key] ?? meta.defaultValue ?? 0,
       min: meta.min,
       max: meta.max,
       step: meta.step ?? 0.1,
       description: meta.description,
+      descriptionFormula: meta.descriptionFormula,
       importance: meta.importance as any,
       marks: meta.marks,
     }));
@@ -183,7 +185,11 @@ export function QuadraticAnimation() {
                       : "bg-white text-neutral-600 border-neutral-200 hover:border-success-300"
                   }`}
                 >
-                  f(x) &gt; 0
+                  <KatexFormula
+                    formula="f(x) > 0"
+                    mode="inline"
+                    className="!text-xs !my-0"
+                  />
                 </button>
                 <button
                   onClick={() => setIneqType("<")}
@@ -193,7 +199,11 @@ export function QuadraticAnimation() {
                       : "bg-white text-neutral-600 border-neutral-200 hover:border-success-300"
                   }`}
                 >
-                  f(x) &lt; 0
+                  <KatexFormula
+                    formula="f(x) < 0"
+                    mode="inline"
+                    className="!text-xs !my-0"
+                  />
                 </button>
               </div>
             </LeftPanelSection>

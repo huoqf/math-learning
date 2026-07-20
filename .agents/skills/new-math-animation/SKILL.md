@@ -35,7 +35,7 @@ description: >
 
 ### 0B：三屏职责分配（铁律）
 
-左屏 LeftPanel：paramMeta → ParamControl，LeftPanelSection 模式切换
+左屏 LeftPanel：paramMeta → ParamControl，LeftPanelSection 模式切换（按钮组，支持 KaTeX）。禁止 `<select>` 原生下拉框。
 中屏 AnimationSvgCanvas：坐标系、函数曲线、可拖拽点、切线渐近线阴影。禁止大段教学文字/完整公式推导/高考考点总结
 右屏 MathPanel：quantities、theorems、gaokaoPoints、warnings、mnemonic。禁止动画控制控件
 
@@ -109,16 +109,29 @@ export function TopicAnimation() {
   }, [params.a])
 
   // 步骤4：左屏参数配置（声明式，禁止手写 <input>）
-  const paramConfigs = useMemo(() =>
-    Object.entries(paramMeta).map(([key, meta]) => ({
-      key, label: meta.label,
-      value: params[key] ?? meta.defaultValue ?? 0,
-      min: meta.min, max: meta.max, step: meta.step ?? 0.1,
-      // 可以在提示文字中注明颜色呼应，例如 a 为主控参数
-      description: key === 'a' ? `【主参数-红】${meta.description}` : meta.description,
-      importance: meta.importance,
-      marks: meta.marks,
-    })), [params])
+  // 多模式页：按 activeMode 过滤参数，仅展示当前模式需要的滑块
+  const paramConfigs = useMemo(() => {
+    const keysByMode = {
+      modeA: ['x0', 'a'],       // 该模式需要的参数 key
+      modeB: ['m', 'n', 'step'],
+    }
+    const keys = keysByMode[activeMode] ?? Object.keys(paramMeta)
+    return keys
+      .filter((key) => key in paramMeta)
+      .map((key) => {
+        const meta = paramMeta[key]
+        return {
+          key, label: meta.label,
+          labelFormula: meta.labelFormula,       // 参数标签 KaTeX（优先于 label）
+          value: params[key] ?? meta.defaultValue ?? 0,
+          min: meta.min, max: meta.max, step: meta.step ?? 0.1,
+          description: meta.description,
+          descriptionFormula: meta.descriptionFormula, // 参数描述 KaTeX（优先于 description）
+          importance: meta.importance,
+          marks: meta.marks,
+        }
+      })
+  }, [params, activeMode])  // ⚠️ 依赖必须包含 activeMode
 
   const handleParamChange = (key, value) =>
     setParams(prev => ({ ...prev, [key]: value }))
@@ -127,6 +140,12 @@ export function TopicAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
+          {/* 模式选择区（如有多个模式） */}
+          <LeftPanelSection title="模式选择" subtitle="...">
+            {/* 按钮组 */}
+          </LeftPanelSection>
+
+          {/* 参数调节区 */}
           <LeftPanelSection title="参数调节" subtitle="拖动滑块...">
             <ParamControl params={paramConfigs}
               onParamChange={handleParamChange}
@@ -339,10 +358,12 @@ export const defaultParams = { a: 1.0 } as const
 export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: 'a', label: '系数 a',
+    labelFormula: '\\text{系数 } a',  // 含数学符号时提供 KaTeX 版本
     min: -2.0, max: 2.0, step: 0.1,
     defaultValue: 1.0, importance: 'core',
-    description: '控制...',
-    marks: [{ value: 0, variant: 'critical', label: '退化' }]  // 退化临界点必须标注
+    description: '控制 y = ax² 的开口',
+    descriptionFormula: '控制 y = ax^2 的开口',
+    marks: [{ value: 0, variant: 'critical', label: '退化', labelFormula: 'a = 0' }]
   },
 }
 `
@@ -383,6 +404,8 @@ export const paramMeta: Record<string, ParamMeta> = {
 - [ ] 数形双向联动：InteractivePoint + onDrag 反向更新 state
 - [ ] 退化防范：marks.variant: 'critical' + MathPanel WarningItem
 - [ ] 曲线连续性：FunctionGraph 对 NaN/±Infinity 断开处理
+- [ ] 左屏参数过滤：多模式页的 `paramConfigs` 按 `activeMode` 过滤，依赖数组包含 `activeMode`
+- [ ] 左屏公式渲染：paramMeta 中含数学符号的 label/description/marks[].label 提供对应 Formula 字段
 - [ ] 路由注册：NAV_ITEMS + Routes
 - [ ] mathQuantities 分支：buildMathQuantities 添加 animId
 

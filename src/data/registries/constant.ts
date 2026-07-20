@@ -15,17 +15,26 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "水平线高度 a",
+    labelFormula: "a",
     min: -1.0,
     max: 4.0,
     step: 0.05,
     defaultValue: 1.2,
     importance: "core",
     description: "作为参变分离后的目标值，代表水平直线 y = a",
-    marks: [{ value: 0.37, variant: "recommended", label: "1/e" }],
+    marks: [
+      {
+        value: 0.37,
+        variant: "recommended",
+        label: "1/e",
+        labelFormula: "\\frac{1}{e}",
+      },
+    ],
   },
   a_axis: {
     key: "a_axis",
     label: "参数 a (讨论项)",
+    labelFormula: "a",
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -35,12 +44,18 @@ export const paramMeta: Record<string, ParamMeta> = {
     marks: [
       { value: 0.5, variant: "recommended", label: "区间左界" },
       { value: 2.5, variant: "recommended", label: "区间右界" },
-      { value: 2.72, variant: "critical", label: "e (恒成立界限)" },
+      {
+        value: 2.72,
+        variant: "critical",
+        label: "e (恒成立界限)",
+        labelFormula: "e",
+      },
     ],
   },
   m: {
     key: "m",
     label: "区间左边界 m",
+    labelFormula: "m",
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -51,6 +66,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   n: {
     key: "n",
     label: "区间右边界 n",
+    labelFormula: "n",
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -61,6 +77,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   yf: {
     key: "yf",
     label: "f(x) 顶点 y_f",
+    labelFormula: "y_f",
     min: 1.0,
     max: 4.0,
     step: 0.05,
@@ -71,6 +88,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   xf: {
     key: "xf",
     label: "f(x) 对称轴 x_f",
+    labelFormula: "x_f",
     min: 0.5,
     max: 2.0,
     step: 0.05,
@@ -81,6 +99,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   yg: {
     key: "yg",
     label: "g(x) 顶点 y_g",
+    labelFormula: "y_g",
     min: 0.0,
     max: 3.0,
     step: 0.05,
@@ -91,6 +110,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   xg: {
     key: "xg",
     label: "g(x) 对称轴 x_g",
+    labelFormula: "x_g",
     min: 1.5,
     max: 3.0,
     step: 0.05,
