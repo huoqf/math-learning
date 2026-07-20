@@ -31,23 +31,34 @@ description: >
 **决策规则**：
 - 能把两个视图合并到同一坐标系 → 必须用 full，禁止 split
 - 需要圆形/旋转对称 → square
+- splitV/splitH 仅限极少数场景（如 f(x)+f'(x) 双坐标系对照），使用前必须确认能否合并到同一坐标系
 - ❌ 严禁手写 width={840} 固定像素，必须走 useAnimationViewport
 
 ### 0B：三屏职责分配（铁律）
 
-左屏 LeftPanel：paramMeta → ParamControl，LeftPanelSection 模式切换（按钮组，支持 KaTeX）。禁止 `<select>` 原生下拉框。
-中屏 AnimationSvgCanvas：坐标系、函数曲线、可拖拽点、切线渐近线阴影。禁止大段教学文字/完整公式推导/高考考点总结
-右屏 MathPanel：quantities、theorems、gaokaoPoints、warnings、mnemonic。禁止动画控制控件
+```
+左屏 LeftPanel                    中屏 AnimationSvgCanvas              右屏 MathPanel
+────────────────────              ──────────────────────────           ──────────────────────
+• paramMeta → ParamControl        • 坐标系、函数曲线、几何元素         • quantities（数学量）
+• LeftPanelSection 模式切换       • 可拖拽点、切线渐近线阴影           • theorems（定理公式）
+• 按钮组（支持 KaTeX）            • 公式悬浮展示（KatexFormula）      • gaokaoPoints（高考要点）
+                                  ❌ 禁止大段教学文字                  • warnings（退化警示）
+                                  ❌ 禁止完整公式推导                  • mnemonic（记忆口诀）
+                                  ❌ 禁止高考考点总结                  ❌ 禁止动画控制控件
+```
+
+左屏禁止 `<select>` 原生下拉框，模式切换用按钮组。
 
 ### 0C：组件 Import 路径速查
 
 Layout: ThreePanel, AnimationSvgCanvas, PageLayout → @/components/Layout
-Math: CoordinateGrid, PolarGrid, FunctionGraph, InteractivePoint, VectorArrow, TangentLine, SecantLine, Asymptote, IntervalShadow → @/components/Math
+Math: CoordinateGrid, PolarGrid, FunctionGraph, InteractivePoint, VectorArrow, TangentLine, SecantLine, Asymptote, IntervalShadow, TrackPath → @/components/Math
 UI: LeftPanel, LeftPanelSection, ParamControl, MathPanel, KatexFormula → @/components/UI
 Hooks: useAnimationViewport, useSceneScale → @/hooks
 Theme: CANVAS_PRESETS, MATH_COLORS, ALGEBRA_COLORS, CALCULUS_COLORS, withAlpha → @/theme
 Utils: buildPolyLatex, buildQuadraticLatex → @/utils/polyBuilder
 Utils: mathToDesign, designToMath → @/utils/coordinate
+Utils: avoidLabelOverlap → @/utils/labelOverlap
 Data: buildMathQuantities → @/data/mathQuantities
 Registry: defaultParams, paramMeta → @/data/registries/<topic>
 
@@ -102,10 +113,10 @@ export function TopicAnimation() {
   const mathData = useMemo(() =>
     buildMathQuantities('anim-topic', params), [params])
 
-  // 步骤3.5：公式字符串拼接（对参数 a 应用 paramPrimary #EF4444 颜色，与滑块/图形呼应）
+  // 步骤3.5：公式字符串拼接（对参数 a 应用 paramPrimary 颜色，与滑块/图形呼应）
   const equationLatex = useMemo(() => {
     const aVal = params.a.toFixed(1)
-    return `y = \\color{#EF4444}{${aVal}}x^2`
+    return `y = \\color{${MATH_COLORS.paramPrimary}}{${aVal}}x^2`
   }, [params.a])
 
   // 步骤4：左屏参数配置（声明式，禁止手写 <input>）
@@ -215,22 +226,41 @@ export function TopicScene({ params, scale, vp, onParamChange, fontScale = v => 
         strokeWidth={2.5}
       />
 
-      {/* ✅ 可拖拽控制点（双向联动）*/}
+      {/* ✅ 可拖拽控制点（双向联动）—— 内部已封装 clientToSvgPoint + designToMath，onDrag 直接返回数学坐标 */}
       <InteractivePoint
         cx={params.x0} cy={0}
         scale={scale} vp={vp}
         onDrag={handleDrag}
-        label={P(, 0)}
-        fontScale={fontScale}  {/* ✅ 必须传 */}
+        label={`P(${params.x0}, 0)`}
+        fontScale={fontScale}
       />
     </g>
   )
 }
 `
 
----
+### 标注避让（铁律 7）
 
-## 🎯 Step 3：坐标变换体系（严禁手写公式）
+当 Scene 中有多个标注（顶点、交点、零点等）距离过近时，使用 `avoidLabelOverlap` 工具自动偏移。该工具检测碰撞方向，选择空间更大的轴推开（水平重叠→左右推，垂直重叠→上下推），多轮迭代直到无碰撞：
+
+```tsx
+import { avoidLabelOverlap } from '@/utils/labelOverlap'
+import { mathToDesign } from '@/utils/coordinate'
+
+// 在 useMemo 中计算偏移
+const labelOffsets = useMemo(() => {
+  const labels = points.map(p => {
+    const pt = mathToDesign(p.x, p.y, scale)
+    return { x: pt.x, y: pt.y - 12, width: 40, height: 14 }
+  })
+  return avoidLabelOverlap(labels)
+}, [points, scale])
+
+// 渲染时应用偏移
+<text x={pt.x + labelOffsets[i].dx} y={pt.y + labelOffsets[i].dy}>...</text>
+```
+
+---
 
 ### 三层坐标体系
 
@@ -243,32 +273,47 @@ SVG 视口坐标 (svgX, svgY)
 vp.transform 说明：useViewport 计算出的 CSS transform 字符串，将设计尺寸（如 840×650）
 缩放+平移到实际 DOM 容器尺寸，子组件无需关心，AnimationSvgCanvas 已统一处理。
 
-### 正确用法
+### 标准场景：InteractivePoint 已封装全部转换
 
-`
-import { mathToDesign, designToMath } from '@/utils/coordinate'
+**拖拽控制点无需手动坐标转换。** `InteractivePoint` 内部已封装完整链路：
 
-// 数学 → 设计坐标
+```
+clientX/Y → clientToSvgPoint（SVG视口坐标）
+  → (svgPt - vp.tx) / vp.scale（设计坐标）
+  → designToMath（数学坐标）
+  → onDrag(mathPt)
+```
+
+调用方只需接收数学坐标，无需关心转换细节：
+
+```tsx
+<InteractivePoint
+  cx={params.x0} cy={0}
+  scale={scale} vp={vp}
+  onDrag={(mathPt) => setParams(prev => ({ ...prev, x0: mathPt.x }))}
+/>
+```
+
+### 渲染场景：mathToDesign（数学 → 设计坐标）
+
+所有 Math 组件（CoordinateGrid、FunctionGraph、VectorArrow 等）内部统一使用 `mathToDesign` 将数学坐标映射到设计坐标，由 `vp.transform` 统一缩放：
+
+```tsx
+import { mathToDesign } from '@/utils/coordinate'
 const { x, y } = mathToDesign(mathX, mathY, scale)
-
-// 拖拽时反向（SVG点 → 设计坐标 → 数学坐标）
-const designX = (svgPt.x - vp.tx) / vp.scale
-const designY = (svgPt.y - vp.ty) / vp.scale
-const mathPt = designToMath(designX, designY, scale)
-
-// scale 来自 useSceneScale，禁止硬编码
-const scale = useSceneScale({ vp, xRange: [-6, 6], yRange: [-4.5, 4.5] })
-`
+```
 
 ### 禁止用法
 
-`
+```
 // ❌ 以下全部禁止
 const x = mathX * scale.scaleX + scale.originX
 const y = scale.originY - mathY * scale.scaleY
 const scale = 0.8  // 硬编码 scale
 viewBox="0 0 840 650"  // 与 vp.transform 同时使用
-`
+<foreignObject> 内嵌 React 图表  // HTML 层 flex 分区，图表与 SVG 平级
+// ❌ 禁止手动做 clientX/Y → 数学坐标的转换，使用 InteractivePoint
+```
 
 ---
 
@@ -362,7 +407,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: -2.0, max: 2.0, step: 0.1,
     defaultValue: 1.0, importance: 'core',
     description: '控制 y = ax² 的开口',
-    descriptionFormula: '控制 y = ax^2 的开口',
+    descriptionFormula: '\\text{控制 } y = ax^2 \\text{ 的开口}',
     marks: [{ value: 0, variant: 'critical', label: '退化', labelFormula: 'a = 0' }]
   },
 }
@@ -381,10 +426,7 @@ export const paramMeta: Record<string, ParamMeta> = {
 ❌ <line> 手写几何向量 → ✅ VectorArrow
 ❌ viewBox={...} 与 vp.transform 同时用 → ✅ 仅用 AnimationSvgCanvas
 ❌ BrowserRouter → ✅ HashRouter only
-❌ SVG 内大段教学文字 → ✅ 移到右屏 MathPanel
-❌ 主屏放高考考点总结 → ✅ 移到右屏 gaokaoPoints
-❌ 主屏放完整公式推导 → ✅ 移到右屏 theorems
-❌ requestAnimationFrame(cb) 裸调用 → ✅ useAnimationLifecycle（仅时间演化）
+❌ requestAnimationFrame(cb) 裸调用 → ✅ 数学页面禁止使用，仅在有时间演化需求时自行管理 RAF
 ❌ src/math/ import React/DOM/window → ✅ 纯函数，零副作用
 ❌ 公式与滑块参数使用不一致的颜色或硬编码颜色 → ✅ 使用 paramPrimary/Secondary/Tertiary 并在 KaTeX 中用 \color 上色实现三位一体绑定
 
@@ -397,7 +439,7 @@ export const paramMeta: Record<string, ParamMeta> = {
 - [ ] 三屏隔离：中屏无教学文字，参数走 ParamControl，右屏职责分明
 - [ ] viewport 链路：useAnimationViewport → vp.transform → AnimationSvgCanvas → Scene
 - [ ] fontScale 链路：canvasSize.font → Scene → CoordinateGrid/InteractivePoint/Asymptote/VectorArrow
-- [ ] 坐标变换：全部使用 mathToDesign/designToMath，无手写公式
+- [ ] 坐标变换：渲染用 mathToDesign，拖拽用 InteractivePoint（内部已封装 designToMath），无手写坐标换算
 - [ ] 颜色规范：无硬编码颜色，且通过 paramPrimary/Secondary/Tertiary 保证公式-图形-滑块色彩三位一体绑定
 - [ ] 三维规范：3D 场景下严格遵循 XYZ 三轴红-绿-蓝 (axis3D_X/Y/Z) 标准轴色设定
 - [ ] 组件复用：切线/渐近线/阴影等用专用组件，不手写等效 SVG

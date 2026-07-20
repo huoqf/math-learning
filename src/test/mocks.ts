@@ -53,5 +53,4 @@ vi.mock("@/hooks", () => ({
     preset: { width: 840, height: 650 },
   }),
   useSceneScale: () => mockScale,
-  useAnimationLifecycle: vi.fn(),
 }));

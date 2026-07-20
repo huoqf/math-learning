@@ -34,7 +34,7 @@
 | `fill="#..."` / `stroke="red"` 等硬编码颜色 | `MATH_COLORS.*` | 铁律1 |
 | `fontSize={14}` 直接写死字号 | `fontScale(14)` 或 `canvasSize.font(14)` | 铁律1 |
 | SVG 内 `className="text-[10px]"` 等硬编码字号 | `fontSize={fontScale(10)}` | 铁律1 |
-| `requestAnimationFrame(cb)` 裸调用 | `useAnimationLifecycle` | 铁律1 |
+| `requestAnimationFrame(cb)` 裸调用 | 数学页面禁止使用 | 铁律1 |
 | 手写 `<line>` 绘制坐标轴或几何向量 | `CoordinateGrid` / `VectorArrow` | 铁律1 |
 | `viewBox={...}` 与 `vp.transform` 同时使用 | 仅用 `AnimationSvgCanvas` | 铁律2 |
 | 手写 `x * scaleX + offsetX` 坐标计算 | `mathToDesign(x, y, scale)` | 铁律1 |
@@ -87,7 +87,7 @@
 | 硬编码尺寸 `fontSize={14}` | `fontScale(14)` 或 `canvasSize.font(14)`（来自 `useAnimationViewport` 解构的 `canvasSize`） |
 | SVG 内 `className="text-[10px]"` | `fontSize={fontScale(10)}`（fontScale 从 Animation 传入） |
 | 几何/向量箭头手写 `<line>` | `VectorArrow` |
-| 直接 `requestAnimationFrame(...)` | 仅在有时间演化需要时使用 `useAnimationLifecycle`，常规数学页面禁止使用 |
+| 直接 `requestAnimationFrame(...)` | 数学页面禁止使用，仅在有时间演化需求时自行管理 RAF |
 | 手写拖拽控制点或 `clientX/Y` 换算 | 使用 `InteractivePoint` 配合 `designToMath` 进行逆向坐标解算 |
 | 使用 `+`/`-` 拼接含参公式字符串 | 使用 `buildPolyLatex` / `buildQuadraticLatex` 等多项式工具动态拼装 |
 | 写死 `scale = 0.8` | `useSceneScale({ vp, xRange, yRange })` |
@@ -121,7 +121,6 @@ const scale = useSceneScale({ vp, xRange: [-6, 6], yRange: [-4.5, 4.5] })
 ```tsx
 // ❌ 禁止
 viewBox={`0 0 ${width} ${height}`}           // 固定 viewBox
-physicsToCanvas(...)                          // 物理遗留，禁止使用
 ```
 
 #### splitV / splitH 分屏布局模板（极少使用，需前置审查）
@@ -247,7 +246,7 @@ import { MATH_COLORS, withAlpha } from '@/theme'
 ### 铁律 7：数形双向联动与避让
 
 1.  **反向求参**：允许拖动图形点反向改变滑块参数。在 drag 回调中解算出数学坐标，四舍五入保留合适精度并更新父 state。
-2.  **标注避让**：当顶点、交点、零点等标注处于极小间距时，必须编写轻量级碰撞检测算法，使其自动偏移避让，严禁文字标签相互重叠。
+2.  **标注避让**：当顶点、交点、零点等标注处于极小间距时，使用 `avoidLabelOverlap`（`@/utils/labelOverlap`）自动偏移避让，严禁文字标签相互重叠。
 
 ### 铁律 8：数学量数据组装约定
 
