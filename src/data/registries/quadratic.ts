@@ -17,7 +17,14 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 1.0,
     importance: "core",
     description: "控制抛物线开口方向与胖瘦，为 0 时退化为直线",
-    marks: [{ value: 0, variant: "critical", label: "退化为直线" }],
+    marks: [
+      {
+        value: 0,
+        variant: "critical",
+        label: "退化为直线",
+        labelFormula: "a = 0",
+      },
+    ],
   },
   b: {
     key: "b",
@@ -29,6 +36,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.0,
     importance: "core",
     description: "与 a 共同决定对称轴位置 x = -b/(2a)",
+    descriptionFormula:
+      "\\text{与 } a \\text{ 共同决定对称轴位置 } x = -\\frac{b}{2a}",
   },
   c: {
     key: "c",

@@ -22,6 +22,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 1.2,
     importance: "core",
     description: "作为参变分离后的目标值，代表水平直线 y = a",
+    descriptionFormula: "\\text{作为参变分离后的目标值，代表水平直线 } y = a",
     marks: [
       {
         value: 0.37,
@@ -41,6 +42,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 1.0,
     importance: "core",
     description: "含参函数的讨论系数（二次函数对称轴或超越函数极小值控制）",
+    descriptionFormula:
+      "\\text{含参函数的讨论系数（二次函数对称轴或超越函数极小值控制）}",
     marks: [
       { value: 0.5, variant: "recommended", label: "区间左界" },
       { value: 2.5, variant: "recommended", label: "区间右界" },
@@ -62,6 +65,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.5,
     importance: "advanced",
     description: "函数研究区间 [m, n] 的左端点",
+    descriptionFormula: "\\text{函数研究区间 } [m, n] \\text{ 的左端点}",
   },
   n: {
     key: "n",
@@ -73,6 +77,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2.5,
     importance: "advanced",
     description: "函数研究区间 [m, n] 的右端点",
+    descriptionFormula: "\\text{函数研究区间 } [m, n] \\text{ 的右端点}",
   },
   yf: {
     key: "yf",
@@ -84,6 +89,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2.5,
     importance: "core",
     description: "控制函数 f(x) = (x - x_f)² + y_f 的最低高度",
+    descriptionFormula:
+      "\\text{控制函数 } f(x) = (x - x_f)^2 + y_f \\text{ 的最低高度}",
   },
   xf: {
     key: "xf",
@@ -95,6 +102,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 1.25,
     importance: "advanced",
     description: "控制函数 f(x) 的对称轴在 I₁ = [0.5, 2.0] 内左右移动",
+    descriptionFormula:
+      "\\text{控制函数 } f(x) \\text{ 的对称轴在 } I_1 = [0.5, 2.0] \\text{ 内左右移动}",
   },
   yg: {
     key: "yg",
@@ -106,6 +115,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 1.5,
     importance: "core",
     description: "控制函数 g(x) = -(x - x_g)² + y_g 的最高高度",
+    descriptionFormula:
+      "\\text{控制函数 } g(x) = -(x - x_g)^2 + y_g \\text{ 的最高高度}",
   },
   xg: {
     key: "xg",
@@ -117,5 +128,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2.25,
     importance: "advanced",
     description: "控制函数 g(x) 的对称轴在 I₂ = [1.5, 3.0] 内左右移动",
+    descriptionFormula:
+      "\\text{控制函数 } g(x) \\text{ 的对称轴在 } I_2 = [1.5, 3.0] \\text{ 内左右移动}",
   },
 };

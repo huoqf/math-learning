@@ -66,6 +66,8 @@ const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-func-properties": "/function",
   "anim-func-explog": "/function",
   "anim-func-zero": "/function",
+  "anim-func-transform": "/transform",
+  "anim-func-composite": "/composite",
   "anim-quadratic": "/quadratic",
   "anim-derivative-tangent": "/derivative",
   "anim-constant-single": "/constant",

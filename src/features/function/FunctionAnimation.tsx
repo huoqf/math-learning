@@ -200,7 +200,7 @@ export function FunctionAnimation() {
                   }`}
                 >
                   <KatexFormula
-                    formula="y=x^{\\alpha}"
+                    formula={"y=x^{\\alpha}"}
                     mode="inline"
                     className="!text-xs !my-0"
                   />

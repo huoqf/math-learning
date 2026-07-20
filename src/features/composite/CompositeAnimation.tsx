@@ -10,17 +10,20 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
-import { SetScene } from "./components/SetScene";
+import { CompositeScene } from "./components/CompositeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/set";
-import type { VennOpType } from "@/math/set";
+import { defaultParams, paramMeta } from "@/data/registries/composite";
 
-export function SetAnimation() {
+export function CompositeAnimation() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
-  const [activeTab, setActiveTab] = useState<"venn" | "logic">("venn");
-  const [vennOp, setVennOp] = useState<VennOpType>("intersection");
+  const [subMode, setSubMode] = useState<"piecewise" | "composite">(
+    "piecewise",
+  );
+  const [outerType, setOuterType] = useState<"exp" | "log" | "quadratic">(
+    "exp",
+  );
 
-  // Step 1: 视口与画布
+  // Step 1: 自适应视口
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
@@ -33,40 +36,56 @@ export function SetAnimation() {
   });
 
   // Step 3: 右屏数学数据组装
-  const animId =
-    activeTab === "venn" ? "anim-set-venn" : "anim-logic-conditions";
   const mathData = useMemo(
-    () => buildMathQuantities(animId, params, { vennOp }),
-    [animId, params, vennOp],
+    () =>
+      buildMathQuantities("anim-func-composite", params, {
+        subMode,
+        outerType,
+      }),
+    [params, subMode, outerType],
   );
 
-  // 动态公式 Latex（对 A 施加 paramPrimary #EF4444，对 B 施加 paramSecondary #D97706）
+  // 动态拼装 LateX 公式
   const formulaLatex = useMemo(() => {
-    if (activeTab === "venn") {
-      switch (vennOp) {
-        case "intersection":
-          return "\\color{#EF4444}{A} \\cap \\color{#D97706}{B} = \\{ x \\mid x \\in \\color{#EF4444}{A} \\land x \\in \\color{#D97706}{B} \\}";
-        case "union":
-          return "\\color{#EF4444}{A} \\cup \\color{#D97706}{B} = \\{ x \\mid x \\in \\color{#EF4444}{A} \\lor x \\in \\color{#D97706}{B} \\}";
-        case "complement_A":
-          return "\\complement_U \\color{#EF4444}{A} = \\{ x \\mid x \\in U \\land x \\notin \\color{#EF4444}{A} \\}";
-        case "difference_A_B":
-          return "\\color{#EF4444}{A} \\setminus \\color{#D97706}{B} = \\{ x \\mid x \\in \\color{#EF4444}{A} \\land x \\notin \\color{#D97706}{B} \\}";
-        default:
-          return "\\color{#EF4444}{A} \\cap \\color{#D97706}{B}";
-      }
+    if (subMode === "piecewise") {
+      const x0Val = (params.x0 ?? 1.0).toFixed(1);
+      const k1 = (params.leftSlope ?? 1.0).toFixed(1);
+      const b1 = (params.leftConst ?? 0.0).toFixed(1);
+      const k2 = (params.rightSlope ?? -0.5).toFixed(1);
+      const b2 = (params.rightConst ?? 1.5).toFixed(1);
+      return `f(x) = \\begin{cases} ${k1}x + ${b1}, & x \\le \\color{#EF4444}{${x0Val}} \\\\ ${k2}x + ${b2}, & x > \\color{#EF4444}{${x0Val}} \\end{cases}`;
     } else {
-      return "p: x \\in \\color{#EF4444}{A}, \\quad q: x \\in \\color{#D97706}{B} \\quad (p \\implies q \\iff \\color{#EF4444}{A} \\subseteq \\color{#D97706}{B})";
+      const bVal = (params.innerB ?? -2.0).toFixed(1);
+      const cVal = (params.innerC ?? 2.0).toFixed(1);
+      const innerStr = `g(x) = x^2 + (\\color{#EF4444}{${bVal}})x + \\color{#D97706}{${cVal}}`;
+      if (outerType === "exp") {
+        return `y = f(g(x)) = 2^{${innerStr}}`;
+      } else if (outerType === "log") {
+        return `y = f(g(x)) = \\log_2(${innerStr})`;
+      } else {
+        return `y = f(g(x)) = -(${innerStr} - 2)^2 + 4`;
+      }
     }
-  }, [activeTab, vennOp]);
+  }, [
+    subMode,
+    outerType,
+    params.x0,
+    params.leftSlope,
+    params.leftConst,
+    params.rightSlope,
+    params.rightConst,
+    params.innerB,
+    params.innerC,
+  ]);
 
-  // Step 4: 按模式过滤的声明式参数配置
+  // Step 4: 按模式过滤的声明式参数配置 (按 subMode 过滤)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByTab: Record<string, string[]> = {
-      venn: ["xA", "yA", "rA", "xB", "yB", "rB", "xP", "yP"],
-      logic: ["xA", "yA", "rA", "xB", "yB", "rB", "xP", "yP"],
+    const keysByMode: Record<string, string[]> = {
+      piecewise: ["x0", "leftSlope", "leftConst", "rightSlope", "rightConst"],
+      composite: ["xSample", "innerB", "innerC"],
     };
-    const keys = keysByTab[activeTab] ?? [];
+
+    const keys = keysByMode[subMode] ?? [];
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
@@ -85,7 +104,7 @@ export function SetAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, activeTab]);
+  }, [params, subMode]);
 
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => ({ ...prev, [key]: value }));
@@ -96,51 +115,52 @@ export function SetAnimation() {
       left={
         <LeftPanel>
           <LeftPanelSection
-            title="模式选择"
-            subtitle="切换集合运算与常用逻辑用语"
+            title="研究模式"
+            subtitle="选择分段函数或复合函数单调性"
           >
+            {/* 模式选择 */}
             <div className="flex bg-neutral-100 p-1 rounded-lg gap-1 mb-3">
               <button
-                onClick={() => setActiveTab("venn")}
+                onClick={() => setSubMode("piecewise")}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  activeTab === "venn"
+                  subMode === "piecewise"
                     ? "bg-white text-primary-600 shadow-sm"
                     : "text-neutral-500 hover:text-neutral-800"
                 }`}
               >
-                集合的基本运算
+                分段函数连续性
               </button>
               <button
-                onClick={() => setActiveTab("logic")}
+                onClick={() => setSubMode("composite")}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  activeTab === "logic"
+                  subMode === "composite"
                     ? "bg-white text-primary-600 shadow-sm"
                     : "text-neutral-500 hover:text-neutral-800"
                 }`}
               >
-                充分必要条件
+                复合函数同增异减
               </button>
             </div>
 
-            {activeTab === "venn" && (
-              <div className="grid grid-cols-2 gap-1.5 mb-4">
+            {/* 复合函数模式下选择外层函数 f(u) */}
+            {subMode === "composite" && (
+              <div className="flex gap-1.5 mb-4">
                 {[
-                  { key: "intersection", formula: "A \\cap B" },
-                  { key: "union", formula: "A \\cup B" },
-                  { key: "complement_A", formula: "\\complement_U A" },
-                  { key: "difference_A_B", formula: "A \\setminus B" },
+                  { key: "exp", label: "y = 2^u" },
+                  { key: "log", label: "y = log₂ u" },
+                  { key: "quadratic", label: "y = -(u-2)²+4" },
                 ].map((item) => (
                   <button
                     key={item.key}
-                    onClick={() => setVennOp(item.key as VennOpType)}
-                    className={`py-1 px-2 text-[11px] font-semibold border rounded-md transition-all ${
-                      vennOp === item.key
-                        ? "border-primary-500 bg-primary-50 text-primary-700 font-bold"
-                        : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                    onClick={() => setOuterType(item.key as any)}
+                    className={`flex-1 py-1 px-1 text-[11px] font-bold border rounded-md transition-all ${
+                      outerType === item.key
+                        ? "border-primary-500 bg-primary-50 text-primary-700"
+                        : "border-neutral-200 bg-white text-neutral-600"
                     }`}
                   >
                     <KatexFormula
-                      formula={item.formula}
+                      formula={item.label}
                       mode="inline"
                       className="!text-[11px] !my-0"
                     />
@@ -150,10 +170,7 @@ export function SetAnimation() {
             )}
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="参数调节与位置控制"
-            subtitle="可拖动图形点或调节参数"
-          >
+          <LeftPanelSection title="参数调节" subtitle="调节临界点与各段参数">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -164,7 +181,7 @@ export function SetAnimation() {
       }
       center={
         <div className="w-full h-full relative flex flex-col bg-white">
-          {/* 公式悬浮看板 */}
+          {/* LateX 公式浮标 */}
           <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3.5 py-2 shadow-sm">
             <KatexFormula formula={formulaLatex} mode="inline" />
           </div>
@@ -173,14 +190,14 @@ export function SetAnimation() {
             containerRef={containerRef}
             transform={vp.transform}
           >
-            <SetScene
+            <CompositeScene
               params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}
               fontScale={canvasSize.font}
-              vennOp={vennOp}
-              showLogic={activeTab === "logic"}
+              subMode={subMode}
+              outerType={outerType}
             />
           </AnimationSvgCanvas>
         </div>
@@ -192,7 +209,7 @@ export function SetAnimation() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
-          title={activeTab === "venn" ? "集合运算看板" : "逻辑条件看板"}
+          title={subMode === "piecewise" ? "分段函数看板" : "复合函数看板"}
         />
       }
     />

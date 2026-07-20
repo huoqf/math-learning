@@ -24,6 +24,8 @@ import {
   calculateExpLog,
   solveBisection,
 } from "@/math/function";
+import { calculateTransform } from "@/math/transform";
+import { calculatePiecewise, calculateComposite } from "@/math/composite";
 import { ALGEBRA_COLORS, CALCULUS_COLORS, MATH_COLORS } from "@/theme";
 
 /** 参数颜色映射（与中屏公式保持一致） */
@@ -1332,6 +1334,247 @@ export function buildMathQuantities(
       warnings,
       mnemonic: "连续异号有零点，二分切半误差减；单调保证唯一根。",
     };
+  }
+
+  if (animId === "anim-func-transform") {
+    const fnType = (config?.fnType as any) || "quadratic";
+    const foldMode = (config?.foldMode as any) || "none";
+    const h = params.h ?? 1.0;
+    const k = params.k ?? 0.5;
+    const A = params.A ?? 1.5;
+    const omega = params.omega ?? 1.0;
+
+    const res = calculateTransform(fnType, { h, k, A, omega, foldMode });
+
+    const quantities: MathQuantity[] = [
+      {
+        label: "左右平移",
+        symbol: "h",
+        value: h > 0 ? `右移 ${h}` : h < 0 ? `左移 ${Math.abs(h)}` : "0",
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "上下平移",
+        symbol: "k",
+        value: k > 0 ? `上移 ${k}` : k < 0 ? `下移 ${Math.abs(k)}` : "0",
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "纵向伸缩",
+        symbol: "A",
+        value: `${A} 倍`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "横向伸缩",
+        symbol: "ω",
+        value: `${omega} 倍`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "翻折模式",
+        value:
+          foldMode === "global"
+            ? "|f(x)| 轴上翻"
+            : foldMode === "input"
+              ? "f(|x|) y轴对称"
+              : "无",
+      },
+      { label: "几何演化", value: res.description },
+    ];
+
+    const theorems: Theorem[] = [
+      {
+        name: "图像平移口诀 (左加右减，上加下减)",
+        latex: "y = f(x \\mp h) \\pm k",
+        level: "core",
+        prerequisites: ["x - h 对应向右平移 h", "+ k 对应向上平移 k"],
+      },
+      {
+        name: "绝对值翻折法则",
+        latex:
+          "y = |f(x)| \\quad \\text{保留 } x \\text{ 轴上方，下方翻到上方}",
+        level: "important",
+        prerequisites: ["y = f(|x|) 保留 y 轴右侧，左侧按右侧对称"],
+      },
+    ];
+
+    const gaokaoPoints: GaokaoPoint[] = [
+      {
+        text: "高考图像平移陷阱：y = f(2x + 1) 是由 y = f(2x) 向左平移 1/2 个单位得到，而不是 1 个单位！提公因数 2 得 y = f(2(x + 1/2))。",
+        importance: "gaokao",
+      },
+      {
+        text: "翻折图像定义域与值域：y = |f(x)| 的值域必为 [0, +∞)；y = f(|x|) 必定为偶函数。",
+        importance: "gaokao",
+      },
+    ];
+
+    const warnings: WarningItem[] = [];
+    if (res.isDegenerate && res.warningMessage) {
+      warnings.push({ text: res.warningMessage, level: "warning" });
+    }
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings,
+      mnemonic:
+        "左加右减平移定，上加下减纵向移；整体绝对值保留上，自变量绝对对称右。",
+    };
+  }
+
+  if (animId === "anim-func-composite") {
+    const subMode = (config?.subMode as string) || "piecewise";
+
+    if (subMode === "piecewise") {
+      const x0 = params.x0 ?? 1.0;
+      const leftSlope = params.leftSlope ?? 1.0;
+      const leftConst = params.leftConst ?? 0.0;
+      const rightSlope = params.rightSlope ?? -0.5;
+      const rightConst = params.rightConst ?? 1.5;
+
+      const res = calculatePiecewise({
+        x0,
+        leftSlope,
+        leftConst,
+        rightSlope,
+        rightConst,
+      });
+
+      const quantities: MathQuantity[] = [
+        {
+          label: "分界点",
+          symbol: "x₀",
+          value: x0.toFixed(1),
+          color: MATH_COLORS.paramPrimary,
+        },
+        { label: "左段 x ≤ x₀ 极限", value: res.leftValAtX0.toFixed(2) },
+        { label: "右段 x > x₀ 极限", value: res.rightValAtX0.toFixed(2) },
+        {
+          label: "连续状态",
+          value: res.isContinuous ? "连续" : "存在跳跃断点",
+          highlight: res.isContinuous ? "extreme" : "negative",
+        },
+      ];
+
+      const theorems: Theorem[] = [
+        {
+          name: "分段函数连续条件",
+          latex:
+            "\\lim_{x \\to x_0^-} f(x) = \\lim_{x \\to x_0^+} f(x) = f(x_0)",
+          level: "core",
+          prerequisites: ["左右两侧函数在分界点处函数值相等"],
+        },
+      ];
+
+      const gaokaoPoints: GaokaoPoint[] = [
+        {
+          text: "分段函数求值策略：“由外向内”或“自内向外”逐步代入，优先判断自变量所在段的区间范围。",
+          importance: "gaokao",
+        },
+        {
+          text: "分段函数零点：需分别求各段的零点，并严格检验所得解是否落在该段的定义域内！",
+          importance: "gaokao",
+        },
+      ];
+
+      return {
+        quantities,
+        theorems,
+        gaokaoPoints,
+        warnings: [],
+        mnemonic: "分段讨论看分界，代入先核定义域；零点分别求解验证。",
+      };
+    } else {
+      const xSample = params.xSample ?? 1.5;
+      const innerB = params.innerB ?? -2.0;
+      const innerC = params.innerC ?? 2.0;
+      const outerType = (config?.outerType as any) || "exp";
+
+      const res = calculateComposite({ xSample, innerB, innerC, outerType });
+
+      const quantities: MathQuantity[] = [
+        {
+          label: "自变量采样",
+          symbol: "x",
+          value: xSample.toFixed(1),
+          color: MATH_COLORS.paramPrimary,
+        },
+        {
+          label: "中间变量",
+          symbol: "u = g(x)",
+          value: Number.isFinite(res.u) ? res.u.toFixed(2) : "无意义",
+          color: MATH_COLORS.paramSecondary,
+        },
+        {
+          label: "复合终值",
+          symbol: "y = f(u)",
+          value: Number.isFinite(res.y) ? res.y.toFixed(2) : "无意义",
+          color: MATH_COLORS.function,
+        },
+        {
+          label: "内层单调性",
+          value:
+            res.innerMonotonicity === "increasing"
+              ? "单调递增"
+              : res.innerMonotonicity === "decreasing"
+                ? "单调递减"
+                : "驻点/极值点",
+        },
+        {
+          label: "外层单调性",
+          value:
+            res.outerMonotonicity === "increasing"
+              ? "单调递增"
+              : res.outerMonotonicity === "decreasing"
+                ? "单调递减"
+                : "驻点",
+        },
+        {
+          label: "复合单调性",
+          value:
+            res.compositeMonotonicity === "increasing"
+              ? "🟢 单调递增"
+              : res.compositeMonotonicity === "decreasing"
+                ? "🔴 单调递减"
+                : "🟡 驻点",
+          highlight:
+            res.compositeMonotonicity === "increasing" ? "extreme" : "negative",
+        },
+      ];
+
+      const theorems: Theorem[] = [
+        {
+          name: "复合函数单调性法则 (同增异减)",
+          latex:
+            "y = f(g(x)) \\quad (\\text{增}+\\text{增}\\to\\text{增},\\, \\text{减}+\\text{减}\\to\\text{增},\\, \\text{增}+\\text{减}\\to\\text{减})",
+          level: "core",
+          prerequisites: ["g(x) 在区间 I 上单调", "f(u) 在 g(I) 上单调"],
+        },
+      ];
+
+      const gaokaoPoints: GaokaoPoint[] = [
+        {
+          text: "复合函数值域核心：求解 y = f(g(x)) 的值域时，必须先求内层 u = g(x) 的值域 U，再求外层 f(u) 在定义域 U 上的值域！直接忽略内层值域是高考最高频错因。",
+          importance: "gaokao",
+        },
+      ];
+
+      const warnings: WarningItem[] = [];
+      if (!res.isValid && res.warningMessage) {
+        warnings.push({ text: res.warningMessage, level: "warning" });
+      }
+
+      return {
+        quantities,
+        theorems,
+        gaokaoPoints,
+        warnings,
+        mnemonic: res.ruleMnemonic,
+      };
+    }
   }
 
   return {

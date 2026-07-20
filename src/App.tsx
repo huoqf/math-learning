@@ -4,11 +4,15 @@ import { DerivativeAnimation } from "./features/derivative/DerivativeAnimation";
 import { ConstantAnimation } from "./features/constant/ConstantAnimation";
 import { SetAnimation } from "./features/set";
 import { FunctionAnimation } from "./features/function";
+import { TransformAnimation } from "./features/transform";
+import { CompositeAnimation } from "./features/composite";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 
 const PATH_TO_LABEL: Record<string, string> = {
   "/set": "集合与常用逻辑实验室",
   "/function": "函数概念与性质实验室",
+  "/transform": "函数图象变换实验室",
+  "/composite": "分段与复合函数实验室",
   "/quadratic": "二次函数实验室",
   "/derivative": "导数几何意义",
   "/constant": "恒成立实验室",
@@ -65,6 +69,8 @@ export default function App() {
             <Route path="/" element={<KnowledgeTreeHome />} />
             <Route path="/set" element={<SetAnimation />} />
             <Route path="/function" element={<FunctionAnimation />} />
+            <Route path="/transform" element={<TransformAnimation />} />
+            <Route path="/composite" element={<CompositeAnimation />} />
             <Route path="/quadratic" element={<QuadraticAnimation />} />
             <Route path="/derivative" element={<DerivativeAnimation />} />
             <Route path="/constant" element={<ConstantAnimation />} />

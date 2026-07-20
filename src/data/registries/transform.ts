@@ -1,0 +1,71 @@
+import type { ParamMeta } from "../types";
+
+export const defaultParams: Record<string, number> = {
+  h: 1.0,
+  k: 0.5,
+  A: 1.5,
+  omega: 1.0,
+};
+
+export const paramMeta: Record<string, ParamMeta> = {
+  h: {
+    key: "h",
+    label: "左右平移量 h",
+    labelFormula: "h",
+    min: -3.0,
+    max: 3.0,
+    step: 0.5,
+    defaultValue: 1.0,
+    importance: "core",
+    description: "控制图像沿 x 轴左右平移：h > 0 向右，h < 0 向左",
+    descriptionFormula: "y = f(x - \\color{#EF4444}{h})",
+    marks: [{ value: 0, label: "无平移", labelFormula: "h = 0" }],
+  },
+  k: {
+    key: "k",
+    label: "上下平移量 k",
+    labelFormula: "k",
+    min: -3.0,
+    max: 3.0,
+    step: 0.5,
+    defaultValue: 0.5,
+    importance: "core",
+    description: "控制图像沿 y 轴上下平移：k > 0 向上，k < 0 向下",
+    descriptionFormula: "y = f(x) + \\color{#D97706}{k}",
+    marks: [{ value: 0, label: "无平移", labelFormula: "k = 0" }],
+  },
+  A: {
+    key: "A",
+    label: "纵向伸缩 A",
+    labelFormula: "A",
+    min: -2.5,
+    max: 2.5,
+    step: 0.5,
+    defaultValue: 1.5,
+    importance: "core",
+    description: "控制图像纵向拉伸与 y 轴翻转：|A| > 1 拉伸，A < 0 沿 x 轴翻转",
+    descriptionFormula: "y = \\color{#EF4444}{A} f(x)",
+    marks: [
+      {
+        value: 0,
+        variant: "critical",
+        label: "退化 (A=0)",
+        labelFormula: "A = 0",
+      },
+      { value: 1, label: "标准", labelFormula: "A = 1" },
+    ],
+  },
+  omega: {
+    key: "omega",
+    label: "横向伸缩 ω",
+    labelFormula: "\\omega",
+    min: 0.2,
+    max: 3.0,
+    step: 0.2,
+    defaultValue: 1.0,
+    importance: "advanced",
+    description: "控制图像横向压缩与拉伸：ω > 1 压缩，0 < ω < 1 拉伸",
+    descriptionFormula: "y = f(\\color{#D97706}{\\omega} x)",
+    marks: [{ value: 1, label: "标准", labelFormula: "\\omega = 1" }],
+  },
+};

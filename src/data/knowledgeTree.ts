@@ -103,6 +103,24 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-func-zero"],
     prerequisites: ["know-func-properties"],
   },
+  {
+    id: "know-func-transform",
+    title: "函数图象的平移、伸缩与翻折变换",
+    chapter: "函数概念与性质",
+    module: "图象变换",
+    importance: "gaokao",
+    animationIds: ["anim-func-transform"],
+    prerequisites: ["know-func-properties"],
+  },
+  {
+    id: "know-func-composite",
+    title: "分段函数临界与复合函数同增异减",
+    chapter: "函数概念与性质",
+    module: "分段与复合函数",
+    importance: "hard",
+    animationIds: ["anim-func-composite"],
+    prerequisites: ["know-func-properties"],
+  },
   // 4. 导数及其应用
   {
     id: "know-derivative-tangent",
