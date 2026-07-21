@@ -36,8 +36,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.0,
     importance: "core",
     description: "与 a 共同决定对称轴位置 x = -b/(2a)",
-    descriptionFormula:
-      "\\text{与 } a \\text{ 共同决定对称轴位置 } x = -\\frac{b}{2a}",
+    descriptionFormula: "与 $a$ 共同决定对称轴位置 $x = -\\frac{b}{2a}$",
   },
   c: {
     key: "c",

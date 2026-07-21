@@ -33,7 +33,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description:
       "控制指数函数 y = a^x 与对数函数 y = log_a(x) 的底数，a = 1 时退化",
     descriptionFormula:
-      "\\text{控制指数函数 } y = a^x \\text{ 与对数函数 } y = \\log_a(x) \\text{ 的底数，} a = 1 \\text{ 时退化}",
+      "控制指数函数 $y = a^x$ 与对数函数 $y = \\log_a(x)$ 的底数，$a = 1$ 时退化",
     marks: [
       {
         value: 1.0,
@@ -53,8 +53,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2.0,
     importance: "core",
     description: "控制幂函数 y = x^α 的指数形状 (如 -1, 0.5, 1, 2, 3)",
-    descriptionFormula:
-      "\\text{控制幂函数 } y = x^{\\alpha} \\text{ 的指数形状}",
+    descriptionFormula: "控制幂函数 $y = x^{\\alpha}$ 的指数形状",
   },
   intervalM: {
     key: "intervalM",
