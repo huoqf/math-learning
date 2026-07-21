@@ -403,11 +403,13 @@ export const defaultParams = { a: 1.0 } as const
 export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: 'a', label: '系数 a',
-    labelFormula: '\\text{系数 } a',  // 含数学符号时提供 KaTeX 版本
+    labelFormula: 'a',  // 含数学符号时提供 KaTeX 版本
     min: -2.0, max: 2.0, step: 0.1,
     defaultValue: 1.0, importance: 'core',
     description: '控制 y = ax² 的开口',
-    descriptionFormula: '\\text{控制 } y = ax^2 \\text{ 的开口}',
+    // descriptionFormula 格式：$...$ 包裹数学部分，中文自动换行
+    // 支持 3 种格式：$...$ 混合（推荐）、\text{...} 旧格式、纯 LaTeX
+    descriptionFormula: '控制 $y = ax^2$ 的开口',
     marks: [{ value: 0, variant: 'critical', label: '退化', labelFormula: 'a = 0' }]
   },
 }
@@ -447,7 +449,7 @@ export const paramMeta: Record<string, ParamMeta> = {
 - [ ] 退化防范：marks.variant: 'critical' + MathPanel WarningItem
 - [ ] 曲线连续性：FunctionGraph 对 NaN/±Infinity 断开处理
 - [ ] 左屏参数过滤：多模式页的 `paramConfigs` 按 `activeMode` 过滤，依赖数组包含 `activeMode`
-- [ ] 左屏公式渲染：paramMeta 中含数学符号的 label/description/marks[].label 提供对应 Formula 字段
+- [ ] 左屏公式渲染：paramMeta 中含数学符号的 label/description/marks[].label 提供对应 Formula 字段（推荐 `$...$` 格式）
 - [ ] 路由注册：NAV_ITEMS + Routes
 - [ ] mathQuantities 分支：buildMathQuantities 添加 animId
 
