@@ -1,3 +1,4 @@
+import React from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -6,6 +7,8 @@ import {
   InteractivePoint,
   IntervalShadow,
 } from "@/components/Math";
+import { mathToDesign } from "@/utils/coordinate";
+import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
   evalFunctionParity,
@@ -57,6 +60,63 @@ export function FunctionScene({
     onParamChange("intervalN", Math.round(mathPt.x * 10) / 10);
   };
 
+  // 标注避让：根据当前模式计算标签位置
+  const placedLabels = React.useMemo(() => {
+    const entries: LabelEntry[] = [];
+
+    if (mode === "properties") {
+      const parityRes = evalFunctionParity(fnType, x0);
+      if (Number.isFinite(parityRes.fx)) {
+        const pt = mathToDesign(x0, parityRes.fx, scale);
+        entries.push({
+          key: "P",
+          text: `P(${x0.toFixed(1)}, ${parityRes.fx.toFixed(1)})`,
+          x: pt.x,
+          y: pt.y,
+          anchor: "middle",
+          dy: -12,
+        });
+      }
+    } else if (mode === "explog") {
+      const isValidBase = a > 0 && Math.abs(a - 1) > 1e-4;
+      const expLogRes = calculateExpLog(a, x0);
+      if (isValidBase && Number.isFinite(expLogRes.expVal)) {
+        const pt = mathToDesign(x0, expLogRes.expVal, scale);
+        entries.push({
+          key: "P",
+          text: `P(${x0.toFixed(1)}, ${expLogRes.expVal.toFixed(1)})`,
+          x: pt.x,
+          y: pt.y,
+          anchor: "middle",
+          dy: -12,
+        });
+      }
+    } else if (mode === "zero") {
+      const ptM = mathToDesign(m, 0, scale);
+      const ptN = mathToDesign(n, 0, scale);
+      entries.push(
+        {
+          key: "m",
+          text: `m=${m.toFixed(1)}`,
+          x: ptM.x,
+          y: ptM.y,
+          anchor: "middle",
+          dy: -12,
+        },
+        {
+          key: "n",
+          text: `n=${n.toFixed(1)}`,
+          x: ptN.x,
+          y: ptN.y,
+          anchor: "middle",
+          dy: -12,
+        },
+      );
+    }
+
+    return avoidLabels(entries, { fontScale });
+  }, [mode, x0, a, fnType, m, n, scale, fontScale]);
+
   // 1. 基本性质模式 (单调/奇偶/对称)
   const renderPropertiesMode = () => {
     const parityRes = evalFunctionParity(fnType, x0);
@@ -96,6 +156,8 @@ export function FunctionScene({
             onDrag={handleDragX0}
             color={MATH_COLORS.paramPrimary}
             label={`P(${x0.toFixed(1)}, ${parityRes.fx.toFixed(1)})`}
+            labelKey="P"
+            placedLabels={placedLabels}
             fontScale={fontScale}
           />
         )}
@@ -255,6 +317,8 @@ export function FunctionScene({
               onDrag={handleDragX0}
               color={MATH_COLORS.function}
               label={`P(${x0.toFixed(1)}, ${expLogRes.expVal.toFixed(1)})`}
+              labelKey="P"
+              placedLabels={placedLabels}
               fontScale={fontScale}
             />
             <circle
@@ -333,6 +397,8 @@ export function FunctionScene({
           onDrag={handleDragM}
           color={MATH_COLORS.paramPrimary}
           label={`m=${m.toFixed(1)}`}
+          labelKey="m"
+          placedLabels={placedLabels}
           fontScale={fontScale}
         />
 
@@ -354,6 +420,8 @@ export function FunctionScene({
           onDrag={handleDragN}
           color={MATH_COLORS.paramSecondary}
           label={`n=${n.toFixed(1)}`}
+          labelKey="n"
+          placedLabels={placedLabels}
           fontScale={fontScale}
         />
 

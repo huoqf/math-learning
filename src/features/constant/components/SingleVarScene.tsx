@@ -9,6 +9,7 @@ import {
   IntervalShadow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import {
   solveConstantSingleSep,
   solveConstantSingleDirect,
@@ -83,23 +84,89 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   const ptN = mathToDesign(n, 0, scale);
   const isCollapsed = m >= n;
 
-  // 计算极值标注避让偏移
-  const { labelMinY, labelMaxY } = useMemo(() => {
-    if (isCollapsed) return { labelMinY: -8, labelMaxY: -8 };
-    const ptMin = mathToDesign(sepResult.xFMin, sepResult.fMin, scale);
-    const ptMax = mathToDesign(sepResult.xFMax, sepResult.fMax, scale);
-    const dx = Math.abs(ptMin.x - ptMax.x);
-    const dy = Math.abs(ptMin.y - ptMax.y);
-
-    // 如果横向距离小于 50 像素，且纵向距离小于 18 像素，把 Min 标签移到下方
-    if (dx < 50 && dy < 18) {
-      return {
-        labelMinY: 14,
-        labelMaxY: -8,
-      };
+  // 极值标注避让（Min/Max 标签）
+  const placedExtremumLabels = useMemo(() => {
+    if (isCollapsed) return [];
+    const entries: LabelEntry[] = [];
+    if (isSep) {
+      const ptMin = mathToDesign(sepResult.xFMin, sepResult.fMin, scale);
+      const ptMax = mathToDesign(sepResult.xFMax, sepResult.fMax, scale);
+      entries.push(
+        {
+          key: "min",
+          text: `Min(${sepResult.fMin.toFixed(2)})`,
+          x: ptMin.x,
+          y: ptMin.y,
+          anchor: "middle",
+          dy: -8,
+        },
+        {
+          key: "max",
+          text: `Max(${sepResult.fMax.toFixed(2)})`,
+          x: ptMax.x,
+          y: ptMax.y,
+          anchor: "middle",
+          dy: -8,
+        },
+      );
+    } else {
+      const ptMin = mathToDesign(directResult.xFMin, directResult.fMin, scale);
+      entries.push({
+        key: "min",
+        text: `Min(${directResult.fMin.toFixed(2)})`,
+        x: ptMin.x,
+        y: ptMin.y,
+        anchor: "middle",
+        dy: -8,
+      });
     }
-    return { labelMinY: -8, labelMaxY: -8 };
-  }, [isCollapsed, sepResult, scale]);
+    return avoidLabels(entries, { fontScale });
+  }, [isSep, isCollapsed, sepResult, directResult, scale, fontScale]);
+
+  // 控制点标注避让（m, n, a, a_axis）
+  const placedPointLabels = useMemo(() => {
+    const entries: LabelEntry[] = [
+      {
+        key: "m",
+        text: `m=${m.toFixed(2)}`,
+        x: mathToDesign(m, 0, scale).x,
+        y: mathToDesign(m, 0, scale).y,
+        anchor: "middle",
+        dy: -12,
+      },
+      {
+        key: "n",
+        text: `n=${n.toFixed(2)}`,
+        x: mathToDesign(n, 0, scale).x,
+        y: mathToDesign(n, 0, scale).y,
+        anchor: "middle",
+        dy: -12,
+      },
+    ];
+    if (isSep && !isCollapsed) {
+      entries.push({
+        key: "a",
+        text: `a=${a.toFixed(2)}`,
+        x: mathToDesign((m + n) / 2, a, scale).x,
+        y: mathToDesign((m + n) / 2, a, scale).y,
+        anchor: "middle",
+        dy: -12,
+      });
+    }
+    if (!isSep && !isCollapsed) {
+      const aX =
+        funModel === "transcendent" && a_axis > 0 ? Math.log(a_axis) : a_axis;
+      entries.push({
+        key: "a_axis",
+        text: `a=${a_axis.toFixed(2)}`,
+        x: mathToDesign(aX, 0, scale).x,
+        y: mathToDesign(aX, 0, scale).y,
+        anchor: "middle",
+        dy: -12,
+      });
+    }
+    return avoidLabels(entries, { fontScale });
+  }, [m, n, a, a_axis, isSep, isCollapsed, funModel, scale, fontScale]);
 
   // 3. 水平线 y = a 的渲染 (仅在 sep 模式)
   const sepHorizontalLine = useMemo(() => {
@@ -312,6 +379,8 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         color={MATH_COLORS.asymptote}
         r={5}
         label={`m=${m.toFixed(2)}`}
+        labelKey="m"
+        placedLabels={placedPointLabels}
         fontScale={fontScale}
       />
 
@@ -325,6 +394,8 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         color={MATH_COLORS.asymptote}
         r={5}
         label={`n=${n.toFixed(2)}`}
+        labelKey="n"
+        placedLabels={placedPointLabels}
         fontScale={fontScale}
       />
 
@@ -339,6 +410,8 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           color={MATH_COLORS.paramPrimary}
           r={6.5}
           label={`a=${a.toFixed(2)} (拖动)`}
+          labelKey="a"
+          placedLabels={placedPointLabels}
           fontScale={fontScale}
         />
       )}
@@ -362,6 +435,8 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
               ? `极小值 ln a (${(a_axis > 0 ? Math.log(a_axis) : 0).toFixed(2)})`
               : `轴 a=${a_axis.toFixed(2)} (拖动)`
           }
+          labelKey="a_axis"
+          placedLabels={placedPointLabels}
           fontScale={fontScale}
         />
       )}
@@ -378,19 +453,24 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                 r={4}
                 fill={MATH_COLORS.function}
               />
-              <text
-                x={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).x}
-                y={
-                  mathToDesign(sepResult.xFMin, sepResult.fMin, scale).y +
-                  labelMinY
-                }
-                textAnchor="middle"
-                fill={MATH_COLORS.function}
-                fontSize={fontScale(9)}
-                className="font-bold font-mono select-none"
-              >
-                Min({sepResult.fMin.toFixed(2)})
-              </text>
+              {(() => {
+                const placed = placedExtremumLabels.find(
+                  (l) => l.key === "min",
+                );
+                return placed ? (
+                  <text
+                    x={placed.x}
+                    y={placed.y}
+                    dy={placed.finalDy}
+                    textAnchor={placed.anchor}
+                    fill={MATH_COLORS.function}
+                    fontSize={fontScale(9)}
+                    className="font-bold font-mono select-none"
+                  >
+                    Min({sepResult.fMin.toFixed(2)})
+                  </text>
+                ) : null;
+              })()}
 
               {/* 最大值点 */}
               <circle
@@ -399,19 +479,24 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                 r={4}
                 fill={MATH_COLORS.derivative}
               />
-              <text
-                x={mathToDesign(sepResult.xFMax, sepResult.fMax, scale).x}
-                y={
-                  mathToDesign(sepResult.xFMax, sepResult.fMax, scale).y +
-                  labelMaxY
-                }
-                textAnchor="middle"
-                fill={MATH_COLORS.derivative}
-                fontSize={fontScale(9)}
-                className="font-bold font-mono select-none"
-              >
-                Max({sepResult.fMax.toFixed(2)})
-              </text>
+              {(() => {
+                const placed = placedExtremumLabels.find(
+                  (l) => l.key === "max",
+                );
+                return placed ? (
+                  <text
+                    x={placed.x}
+                    y={placed.y}
+                    dy={placed.finalDy}
+                    textAnchor={placed.anchor}
+                    fill={MATH_COLORS.derivative}
+                    fontSize={fontScale(9)}
+                    className="font-bold font-mono select-none"
+                  >
+                    Max({sepResult.fMax.toFixed(2)})
+                  </text>
+                ) : null;
+              })()}
             </g>
           ) : (
             <g>
@@ -426,19 +511,24 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                 r={4.5}
                 fill={MATH_COLORS.function}
               />
-              <text
-                x={mathToDesign(directResult.xFMin, directResult.fMin, scale).x}
-                y={
-                  mathToDesign(directResult.xFMin, directResult.fMin, scale).y -
-                  8
-                }
-                textAnchor="middle"
-                fill={MATH_COLORS.function}
-                fontSize={fontScale(9)}
-                className="font-bold font-mono select-none"
-              >
-                Min({directResult.fMin.toFixed(2)})
-              </text>
+              {(() => {
+                const placed = placedExtremumLabels.find(
+                  (l) => l.key === "min",
+                );
+                return placed ? (
+                  <text
+                    x={placed.x}
+                    y={placed.y}
+                    dy={placed.finalDy}
+                    textAnchor={placed.anchor}
+                    fill={MATH_COLORS.function}
+                    fontSize={fontScale(9)}
+                    className="font-bold font-mono select-none"
+                  >
+                    Min({directResult.fMin.toFixed(2)})
+                  </text>
+                ) : null;
+              })()}
             </g>
           )}
         </g>

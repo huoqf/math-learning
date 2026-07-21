@@ -4,6 +4,7 @@ import type { ViewportInfo } from "@/utils/useViewport";
 import { mathToDesign, designToMath } from "@/utils/coordinate";
 import { clientToSvgPoint } from "@/utils/useViewportPointer";
 import { MATH_COLORS } from "@/theme";
+import type { PlacedLabel } from "@/utils/labelAvoider";
 
 interface InteractivePointProps {
   /** 数学坐标 x */
@@ -22,6 +23,10 @@ interface InteractivePointProps {
   r?: number;
   /** 标签文字 */
   label?: string;
+  /** 标签唯一标识（用于匹配 placedLabels） */
+  labelKey?: string;
+  /** 预计算的避让标签位置（来自 avoidLabels()），传入后覆盖默认 dy */
+  placedLabels?: PlacedLabel[];
   /** 是否禁用拖拽 */
   disabled?: boolean;
   /** 字号缩放函数，默认原样返回 */
@@ -37,6 +42,8 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
   color = MATH_COLORS.focusPoint,
   r = 6,
   label,
+  labelKey,
+  placedLabels,
   disabled = false,
   fontScale = (v) => v,
 }) => {
@@ -81,6 +88,13 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
 
   const pt = mathToDesign(cx, cy, scale);
 
+  // 从 placedLabels 中查找匹配的标签位置
+  const placedLabel =
+    placedLabels && labelKey
+      ? placedLabels.find((p) => p.key === labelKey)
+      : undefined;
+  const labelDy = placedLabel ? placedLabel.finalDy : -(r + 6);
+
   return (
     <g>
       {/* 扩大点击区域的透明圆 */}
@@ -109,8 +123,9 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
       {label && (
         <text
           x={pt.x}
-          y={pt.y - r - 6}
-          textAnchor="middle"
+          y={pt.y}
+          dy={labelDy}
+          textAnchor={placedLabel?.anchor ?? "middle"}
           fill={MATH_COLORS.labelText}
           fontSize={fontScale(10)}
           fontFamily="monospace"

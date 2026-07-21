@@ -1,7 +1,9 @@
+import React from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { CoordinateGrid, InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { VennOpType } from "@/math/set";
 import { isPointInCircle } from "@/math/set";
@@ -65,6 +67,37 @@ export function SetScene({
     onParamChange("xP", Math.round(mathPt.x * 10) / 10);
     onParamChange("yP", Math.round(mathPt.y * 10) / 10);
   };
+
+  // 标注避让：计算三个控制点标签的位置
+  const placedLabels = React.useMemo(() => {
+    const entries: LabelEntry[] = [
+      {
+        key: "O_A",
+        text: "O_A",
+        x: posA.x,
+        y: posA.y,
+        anchor: "middle",
+        dy: -12,
+      },
+      {
+        key: "O_B",
+        text: "O_B",
+        x: posB.x,
+        y: posB.y,
+        anchor: "middle",
+        dy: -12,
+      },
+      {
+        key: "P",
+        text: `P(${xP.toFixed(1)}, ${yP.toFixed(1)})`,
+        x: mathToDesign(xP, yP, scale).x,
+        y: mathToDesign(xP, yP, scale).y,
+        anchor: "middle",
+        dy: -12,
+      },
+    ];
+    return avoidLabels(entries, { fontScale });
+  }, [xA, yA, xB, yB, xP, yP, scale, fontScale]);
 
   // SVG ClipPath ID 唯一标识
   const clipIdA = "clip-venn-circle-a";
@@ -257,6 +290,8 @@ export function SetScene({
         onDrag={handleDragA}
         color={MATH_COLORS.paramPrimary}
         label="O_A"
+        labelKey="O_A"
+        placedLabels={placedLabels}
         fontScale={fontScale}
       />
 
@@ -269,6 +304,8 @@ export function SetScene({
         onDrag={handleDragB}
         color={MATH_COLORS.paramSecondary}
         label="O_B"
+        labelKey="O_B"
+        placedLabels={placedLabels}
         fontScale={fontScale}
       />
 
@@ -289,6 +326,8 @@ export function SetScene({
                 : MATH_COLORS.labelText
         }
         label={`P(${xP.toFixed(1)}, ${yP.toFixed(1)})`}
+        labelKey="P"
+        placedLabels={placedLabels}
         fontScale={fontScale}
       />
 

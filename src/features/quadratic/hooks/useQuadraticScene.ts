@@ -6,47 +6,10 @@
 import React from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { mathToDesign } from "@/utils/coordinate";
+import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { solveQuadratic } from "@/math/quadratic";
 import { getSolutionIntervals } from "../model/inequalityIntervals";
 import type { SolutionInterval } from "../model/inequalityIntervals";
-
-/** 标注矩形（用于碰撞检测） */
-interface LabelRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-/** 检测两个矩形是否重叠 */
-function overlaps(a: LabelRect, b: LabelRect): boolean {
-  return !(
-    a.x + a.w < b.x ||
-    b.x + b.w < a.x ||
-    a.y + a.h < b.y ||
-    b.y + b.h < a.y
-  );
-}
-
-/** 默认标注尺寸估计（10px 字号，中文约 6px/字） */
-const LABEL_H = 14;
-function estimateW(text: string): number {
-  return text.length * 6.5 + 8;
-}
-
-interface LabelEntry {
-  key: string;
-  text: string;
-  x: number;
-  y: number;
-  anchor: "middle" | "start" | "end";
-  dy: number;
-}
-
-interface PlacedLabel extends LabelEntry {
-  rect: LabelRect;
-  finalDy: number;
-}
 
 interface UseQuadraticSceneParams {
   params: { a: number; b: number; c: number };
@@ -196,30 +159,8 @@ export function useQuadraticScene({
       });
     }
 
-    // 碰撞检测与避让
-    const placed: PlacedLabel[] = [];
-    for (const e of entries) {
-      const w = estimateW(e.text);
-      const xOff = e.anchor === "start" ? 0 : e.anchor === "end" ? -w : -w / 2;
-      let dy = e.dy;
-
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const rect: LabelRect = {
-          x: e.x + xOff,
-          y: e.y + dy - LABEL_H,
-          w,
-          h: LABEL_H,
-        };
-        const hit = placed.some((p) => overlaps(p.rect, rect));
-        if (!hit) {
-          placed.push({ ...e, rect, finalDy: dy });
-          break;
-        }
-        dy -= LABEL_H + 2;
-      }
-    }
-
-    return placed;
+    // 使用共享避让工具
+    return avoidLabels(entries);
   }, [
     res.vertexX,
     res.vertexY,

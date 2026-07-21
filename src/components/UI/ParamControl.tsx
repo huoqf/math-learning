@@ -142,7 +142,52 @@ function getMarkPercentage(markValue: number, param: ParamConfig) {
   );
 }
 
-function buildMarks(param: ParamConfig): Array<ParamMark & { auto?: boolean }> {
+/**
+ * 标注优先级：auto(0) < zero(1) < 其他(2)
+ * 数值越小越容易被隐藏（保护零点和用户显式标注）
+ */
+function markPriority(m: ParamMark & { auto?: boolean }): number {
+  if (m.auto) return 0;
+  if (m.variant === "zero") return 1;
+  return 2;
+}
+
+/**
+ * 基于像素间距的全局冲突检测
+ * 轨道宽度推导：面板 320px - 左 label 40px - 右值 48px - gap 12px*2 = 208px → 取 220px 容错
+ * MIN_GAP_PX = 28px ≈ 4 个字符宽度，防止标注文字重叠
+ */
+function detectMarkConflicts(
+  marks: Array<ParamMark & { auto?: boolean }>,
+  param: ParamConfig,
+): Set<number> {
+  const CONTAINER_WIDTH_PX = 220;
+  const MIN_GAP_PX = 28;
+  const minGapPercent = (MIN_GAP_PX / CONTAINER_WIDTH_PX) * 100;
+
+  const conflicts = new Set<number>();
+
+  for (let i = 0; i < marks.length; i++) {
+    for (let j = i + 1; j < marks.length; j++) {
+      const gap = Math.abs(
+        getMarkPercentage(marks[i].value, param) -
+          getMarkPercentage(marks[j].value, param),
+      );
+      if (gap < minGapPercent) {
+        const hideIdx =
+          markPriority(marks[i]) <= markPriority(marks[j]) ? i : j;
+        conflicts.add(hideIdx);
+      }
+    }
+  }
+
+  return conflicts;
+}
+
+function buildMarks(param: ParamConfig): {
+  visible: Array<ParamMark & { auto?: boolean }>;
+  hidden: Array<ParamMark & { auto?: boolean }>;
+} {
   const marks: Array<ParamMark & { auto?: boolean }> = (param.marks ?? [])
     .filter(
       (mark) =>
@@ -152,27 +197,26 @@ function buildMarks(param: ParamConfig): Array<ParamMark & { auto?: boolean }> {
     )
     .map((mark) => ({ ...mark }));
 
+  // 自动添加零点
   const hasZero = param.min < 0 && param.max > 0;
   const hasExplicitZero = marks.some((mark) => Math.abs(mark.value) < 1e-9);
   if (hasZero && !hasExplicitZero) {
-    // 基于百分比检测冲突（8% 约等于 200px 宽度下的 16px）
-    const zeroPercent = ((0 - param.min) / (param.max - param.min)) * 100;
-    const tooClose = marks.some((mark) => {
-      const markPercent =
-        ((mark.value - param.min) / (param.max - param.min)) * 100;
-      return Math.abs(markPercent - zeroPercent) < 8;
+    marks.push({
+      value: 0,
+      label: `0${param.unit ?? ""}`,
+      variant: "zero",
+      auto: true,
     });
-    if (!tooClose) {
-      marks.push({
-        value: 0,
-        label: `0${param.unit ?? ""}`,
-        variant: "zero",
-        auto: true,
-      });
-    }
   }
 
-  return marks.sort((a, b) => a.value - b.value);
+  // 全局冲突检测：优先隐藏 auto 标注，保护零点和用户显式标注
+  const conflicts = detectMarkConflicts(marks, param);
+  const visible = marks
+    .filter((_, idx) => !conflicts.has(idx))
+    .sort((a, b) => a.value - b.value);
+  const hidden = marks.filter((_, idx) => conflicts.has(idx));
+
+  return { visible, hidden };
 }
 
 export const ParamControl: React.FC<ParamControlProps> = ({
@@ -318,7 +362,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
       0,
       100,
     );
-    const marks = buildMarks(param);
+    const { visible: marks, hidden: hiddenMarks } = buildMarks(param);
     const zeroMark = marks.find((mark) => Math.abs(mark.value) < 1e-9);
     const zeroPercentage = zeroMark
       ? getMarkPercentage(zeroMark.value, param)
@@ -466,6 +510,14 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                     );
                   })}
               </div>
+            )}
+            {hiddenMarks.length > 0 && (
+              <span
+                className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-neutral-400 cursor-help"
+                title={`隐藏标注: ${hiddenMarks.map((m) => m.label ?? m.value).join(", ")}`}
+              >
+                ({hiddenMarks.length} hidden)
+              </span>
             )}
           </div>
           <span className="text-xs text-neutral-400 font-mono w-8 text-left shrink-0">
