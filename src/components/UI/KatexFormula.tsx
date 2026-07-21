@@ -1,43 +1,38 @@
-import React, { useEffect, useRef } from 'react'
-import katex from 'katex'
-import 'katex/dist/katex.min.css'
+import React, { useEffect, useRef } from "react";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 
 interface KatexFormulaProps {
-  formula: string
-  mode?: 'inline' | 'block'
-  className?: string
+  formula: string;
+  mode?: "inline" | "block";
+  className?: string;
 }
 
 export const KatexFormula: React.FC<KatexFormulaProps> = ({
   formula,
-  mode = 'inline',
-  className = '',
+  mode = "inline",
+  className = "",
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (containerRef.current) {
       try {
         katex.render(formula, containerRef.current, {
           throwOnError: false,
-          displayMode: mode === 'block',
-        })
+          displayMode: mode === "block",
+        });
       } catch {
-        containerRef.current.textContent = formula
+        containerRef.current.textContent = formula;
       }
     }
-  }, [formula, mode])
+  }, [formula, mode]);
 
-  const isBlock = mode === 'block'
+  const isBlock = mode === "block";
 
   const baseClass = isBlock
-    ? 'my-4 px-4 py-3 bg-primary-50 rounded-sm overflow-x-auto text-neutral-800'
-    : 'inline-block align-middle mx-1 my-0.5 text-neutral-800'
+    ? "my-4 px-4 py-3 bg-primary-50 rounded-sm overflow-x-auto text-neutral-800"
+    : "inline-block align-middle mx-1 my-0.5 text-neutral-800 max-w-full overflow-hidden";
 
-  return (
-    <div
-      ref={containerRef}
-      className={`${baseClass} ${className}`}
-    />
-  )
-}
+  return <div ref={containerRef} className={`${baseClass} ${className}`} />;
+};

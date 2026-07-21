@@ -59,7 +59,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: -0.5,
     importance: "core",
     description: "x > x0 时右段直线 f2(x) 的斜率",
-    descriptionFormula: "x > x_0 \\text{ 时右段直线 } f_2(x) \\text{ 的斜率}",
+    descriptionFormula: "$x > x_0$ 时右段直线 $f_2(x)$ 的斜率",
   },
   rightConst: {
     key: "rightConst",
@@ -71,7 +71,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 1.5,
     importance: "core",
     description: "x > x0 时右段直线 f2(x) 的常数项",
-    descriptionFormula: "x > x_0 \\text{ 时右段直线 } f_2(x) \\text{ 的常数项}",
+    descriptionFormula: "$x > x_0$ 时右段直线 $f_2(x)$ 的常数项",
   },
   xSample: {
     key: "xSample",
@@ -109,6 +109,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2.0,
     importance: "core",
     description: "内层二次函数 g(x) 的常数项",
-    descriptionFormula: "\\text{内层二次函数 } g(x) \\text{ 的常数项}",
+    descriptionFormula: "内层二次函数 $g(x)$ 的常数项",
   },
 };

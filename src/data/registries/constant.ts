@@ -22,13 +22,13 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 1.2,
     importance: "core",
     description: "作为参变分离后的目标值，代表水平直线 y = a",
-    descriptionFormula: "\\text{作为参变分离后的目标值，代表水平直线 } y = a",
+    descriptionFormula: "作为参变分离后的目标值，代表水平直线 $y = a$",
     marks: [
       {
         value: 0.37,
         variant: "recommended",
         label: "1/e",
-        labelFormula: "\\frac{1}{e}",
+        labelFormula: "1/e",
       },
     ],
   },
@@ -65,7 +65,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.5,
     importance: "advanced",
     description: "函数研究区间 [m, n] 的左端点",
-    descriptionFormula: "\\text{函数研究区间 } [m, n] \\text{ 的左端点}",
+    descriptionFormula: "函数研究区间 $[m, n]$ 的左端点",
   },
   n: {
     key: "n",
@@ -77,7 +77,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2.5,
     importance: "advanced",
     description: "函数研究区间 [m, n] 的右端点",
-    descriptionFormula: "\\text{函数研究区间 } [m, n] \\text{ 的右端点}",
+    descriptionFormula: "函数研究区间 $[m, n]$ 的右端点",
   },
   yf: {
     key: "yf",

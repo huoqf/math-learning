@@ -42,6 +42,83 @@ interface ParamControlProps {
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
+// ── 描述文字智能渲染 ──
+// 处理 3 种 descriptionFormula 格式：
+// 1. `$...$` 混合格式（中文 + 数学公式）
+// 2. `\text{...}` 包裹格式（旧格式，限制：不支持嵌套大括号）
+// 3. 纯 LaTeX（无中文）
+
+function renderDescription(
+  description: string | undefined,
+  descriptionFormula: string | undefined,
+): React.ReactNode {
+  const text = descriptionFormula || description;
+  if (!text) return null;
+
+  // 纯 LaTeX：无中文字符，直接渲染
+  if (!/[\u4e00-\u9fa5]/.test(text)) {
+    return (
+      <KatexFormula formula={text} mode="inline" className="!text-xs !my-0" />
+    );
+  }
+
+  // `$...$` 混合格式：拆分渲染
+  if (text.includes("$")) {
+    const parts = text.split(/(\$[^$]+\$)/g);
+    return (
+      <span className="inline">
+        {parts.map((part, i) => {
+          if (part.startsWith("$") && part.endsWith("$")) {
+            return (
+              <KatexFormula
+                key={i}
+                formula={part.slice(1, -1)}
+                mode="inline"
+                className="!text-xs !my-0"
+              />
+            );
+          }
+          return <span key={i}>{part}</span>;
+        })}
+      </span>
+    );
+  }
+
+  // `\text{...}` 格式：提取中文，数学部分渲染
+  // 限制：不支持嵌套大括号（当前 28 条数据无嵌套）
+  if (text.includes("\\text{")) {
+    const parts = text.split(/(\\text\{[^}]+\})/g);
+    return (
+      <span className="inline">
+        {parts.map((part, i) => {
+          if (part.startsWith("\\text{") && part.endsWith("}")) {
+            const content = part.slice(6, -1);
+            return <span key={i}>{content}</span>;
+          }
+          if (part.trim()) {
+            try {
+              return (
+                <KatexFormula
+                  key={i}
+                  formula={part}
+                  mode="inline"
+                  className="!text-xs !my-0"
+                />
+              );
+            } catch {
+              return <span key={i}>{part}</span>;
+            }
+          }
+          return null;
+        })}
+      </span>
+    );
+  }
+
+  // 纯文字
+  return <span>{text}</span>;
+}
+
 const snapToStep = (value: number, param: ParamConfig) => {
   const step = param.step ?? 0.1;
   if (!Number.isFinite(step) || step <= 0) return value;
@@ -78,12 +155,21 @@ function buildMarks(param: ParamConfig): Array<ParamMark & { auto?: boolean }> {
   const hasZero = param.min < 0 && param.max > 0;
   const hasExplicitZero = marks.some((mark) => Math.abs(mark.value) < 1e-9);
   if (hasZero && !hasExplicitZero) {
-    marks.push({
-      value: 0,
-      label: `0${param.unit ?? ""}`,
-      variant: "zero",
-      auto: true,
+    // 基于百分比检测冲突（8% 约等于 200px 宽度下的 16px）
+    const zeroPercent = ((0 - param.min) / (param.max - param.min)) * 100;
+    const tooClose = marks.some((mark) => {
+      const markPercent =
+        ((mark.value - param.min) / (param.max - param.min)) * 100;
+      return Math.abs(markPercent - zeroPercent) < 8;
     });
+    if (!tooClose) {
+      marks.push({
+        value: 0,
+        label: `0${param.unit ?? ""}`,
+        variant: "zero",
+        auto: true,
+      });
+    }
   }
 
   return marks.sort((a, b) => a.value - b.value);
@@ -274,15 +360,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
             </span>
             {param.description && (
               <span className="mt-0.5 block text-xs font-normal leading-relaxed text-neutral-400">
-                {param.descriptionFormula ? (
-                  <KatexFormula
-                    formula={param.descriptionFormula}
-                    mode="inline"
-                    className="!text-xs !my-0"
-                  />
-                ) : (
-                  param.description
-                )}
+                {renderDescription(param.description, param.descriptionFormula)}
               </span>
             )}
           </label>
@@ -310,90 +388,90 @@ export const ParamControl: React.FC<ParamControlProps> = ({
           <span className="text-xs text-neutral-400 font-mono w-8 text-right shrink-0">
             {formatByStep(param.min, step)}
           </span>
-          <div className="relative flex-1 h-2 bg-neutral-200 rounded-full flex items-center">
-            {marks.map((mark) => {
-              const markVariant = mark.variant ?? "recommended";
-              return (
-                <div
-                  key={`${param.key}-${mark.value}-${mark.label ?? ""}`}
-                  className={[
-                    "absolute top-1/2 -translate-y-1/2 w-px h-3.5 pointer-events-none z-[1]",
-                    markClass[markVariant].split(" ")[0],
-                  ].join(" ")}
-                  style={{ left: `${getMarkPercentage(mark.value, param)}%` }}
-                  aria-hidden="true"
-                />
-              );
-            })}
-            <input
-              type="range"
-              min={param.min}
-              max={param.max}
-              step={step}
-              value={safeValue}
-              onChange={(e) =>
-                handleSliderChange(
-                  param.key,
-                  Number.parseFloat(e.target.value),
-                  param,
-                )
-              }
-              disabled={disabled}
-              className="peer absolute -inset-y-2 left-0 w-full h-6 opacity-0 cursor-pointer z-10"
-              aria-label={`${param.label}滑块`}
-            />
-            <div
-              className="absolute top-0 h-full bg-primary-500 rounded-full pointer-events-none transition-all duration-fast ease-standard peer-hover:bg-primary-600"
-              style={{
-                left: `${fillLeft}%`,
-                width: `${fillWidth}%`,
-              }}
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-primary-500 rounded-full shadow-sm pointer-events-none transition-all duration-fast ease-standard peer-hover:scale-110 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-300 peer-focus-visible:ring-offset-1 peer-active:scale-95"
-              style={{
-                left: `calc(${percentage}% - 8px)`,
-              }}
-            />
+          <div className="relative flex-1">
+            <div className="relative h-2 bg-neutral-200 rounded-full flex items-center">
+              {marks.map((mark) => {
+                const markVariant = mark.variant ?? "recommended";
+                return (
+                  <div
+                    key={`${param.key}-${mark.value}-${mark.label ?? ""}`}
+                    className={[
+                      "absolute top-1/2 -translate-y-1/2 w-px h-3.5 pointer-events-none z-[1]",
+                      markClass[markVariant].split(" ")[0],
+                    ].join(" ")}
+                    style={{ left: `${getMarkPercentage(mark.value, param)}%` }}
+                    aria-hidden="true"
+                  />
+                );
+              })}
+              <input
+                type="range"
+                min={param.min}
+                max={param.max}
+                step={step}
+                value={safeValue}
+                onChange={(e) =>
+                  handleSliderChange(
+                    param.key,
+                    Number.parseFloat(e.target.value),
+                    param,
+                  )
+                }
+                disabled={disabled}
+                className="peer absolute -inset-y-2 left-0 w-full h-6 opacity-0 cursor-pointer z-10"
+                aria-label={`${param.label}滑块`}
+              />
+              <div
+                className="absolute top-0 h-full bg-primary-500 rounded-full pointer-events-none transition-all duration-fast ease-standard peer-hover:bg-primary-600"
+                style={{
+                  left: `${fillLeft}%`,
+                  width: `${fillWidth}%`,
+                }}
+              />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-primary-500 rounded-full shadow-sm pointer-events-none transition-all duration-fast ease-standard peer-hover:scale-110 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-300 peer-focus-visible:ring-offset-1 peer-active:scale-95"
+                style={{
+                  left: `calc(${percentage}% - 8px)`,
+                }}
+              />
+            </div>
+            {marks.some((mark) => mark.label) && (
+              <div className="relative h-4 text-[10px] font-semibold w-full mt-1">
+                {marks
+                  .filter((mark) => mark.label)
+                  .map((mark) => {
+                    const markVariant = mark.variant ?? "recommended";
+                    const [, textClass] = markClass[markVariant].split(" ");
+                    return (
+                      <span
+                        key={`${param.key}-label-${mark.value}-${mark.label}`}
+                        className={[
+                          "absolute top-0 -translate-x-1/2 whitespace-nowrap",
+                          textClass,
+                        ].join(" ")}
+                        style={{
+                          left: `${getMarkPercentage(mark.value, param)}%`,
+                        }}
+                      >
+                        {mark.labelFormula ? (
+                          <KatexFormula
+                            formula={mark.labelFormula}
+                            mode="inline"
+                            className="!text-[10px] !my-0"
+                          />
+                        ) : (
+                          mark.label
+                        )}
+                      </span>
+                    );
+                  })}
+              </div>
+            )}
           </div>
           <span className="text-xs text-neutral-400 font-mono w-8 text-left shrink-0">
             {formatByStep(param.max, step)}
           </span>
         </div>
-
-        {marks.some((mark) => mark.label) && (
-          <div
-            className="relative h-4 text-[10px] font-semibold w-full"
-            style={{ paddingLeft: "44px", paddingRight: "44px" }}
-          >
-            {marks
-              .filter((mark) => mark.label)
-              .map((mark) => {
-                const markVariant = mark.variant ?? "recommended";
-                const [, textClass] = markClass[markVariant].split(" ");
-                return (
-                  <span
-                    key={`${param.key}-label-${mark.value}-${mark.label}`}
-                    className={[
-                      "absolute top-0 -translate-x-1/2 whitespace-nowrap",
-                      textClass,
-                    ].join(" ")}
-                    style={{ left: `${getMarkPercentage(mark.value, param)}%` }}
-                  >
-                    {mark.labelFormula ? (
-                      <KatexFormula
-                        formula={mark.labelFormula}
-                        mode="inline"
-                        className="!text-[10px] !my-0"
-                      />
-                    ) : (
-                      mark.label
-                    )}
-                  </span>
-                );
-              })}
-          </div>
-        )}
       </div>
     );
   };

@@ -153,14 +153,14 @@ export function ConstantAnimation() {
           description =
             "【主参数-红】代表水平直线 y = a，其临界值为 1/e ≈ 0.37";
           descriptionFormula =
-            "【主参数-红】代表水平直线 y = a，其临界值为 \\frac{1}{e} \\approx 0.37";
+            "【主参数-红】代表水平直线 $y = a$，其临界值为 $\\frac{1}{e} \\approx 0.37$";
         } else if (key === "a_axis") {
           min = 0.1;
           max = 5.0;
           description =
             "【主参数-红】函数 f(x) = e^x - ax 的参数 a，极小值点为 ln a";
           descriptionFormula =
-            "【主参数-红】函数 f(x) = e^x - ax 的参数 a，极小值点为 \\ln a";
+            "【主参数-红】函数 $f(x) = e^x - ax$ 的参数 $a$，极小值点为 $\\ln a$";
         }
       } else if (activeTab === "single" && funModel === "quadratic") {
         if (key === "a") {
@@ -171,10 +171,12 @@ export function ConstantAnimation() {
       } else if (activeTab === "double") {
         if (key === "yf") {
           description = "【主参数-红】控制抛物线 f(x) 顶点的 y_f 坐标";
-          descriptionFormula = "【主参数-红】控制抛物线 f(x) 顶点的 y_f 坐标";
+          descriptionFormula =
+            "【主参数-红】控制抛物线 $f(x)$ 顶点的 $y_f$ 坐标";
         } else if (key === "yg") {
           description = "【次参数-橙】控制抛物线 g(x) 顶点的 y_g 坐标";
-          descriptionFormula = "【次参数-橙】控制抛物线 g(x) 顶点的 y_g 坐标";
+          descriptionFormula =
+            "【次参数-橙】控制抛物线 $g(x)$ 顶点的 $y_g$ 坐标";
         }
       }
 
