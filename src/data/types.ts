@@ -1,3 +1,27 @@
+import type {
+  MathQuantity,
+  Theorem,
+  GaokaoPoint,
+  WarningItem,
+} from "@/components/UI";
+
+export type { MathQuantity, Theorem, GaokaoPoint, WarningItem };
+
+export interface MathPanelData {
+  quantities: MathQuantity[];
+  theorems: Theorem[];
+  gaokaoPoints: GaokaoPoint[];
+  warnings: WarningItem[];
+  mnemonic?: string;
+}
+
+/** 包裹 KaTeX 颜色 */
+export function colorize(text: string, color: string): string {
+  return `\\color{${color}}{${text}}`;
+}
+
+// ── Original types.ts exports ──
+
 export interface KnowledgeNode {
   id: string;
   title: string;
@@ -17,7 +41,6 @@ export type ParamMarkVariant = "zero" | "critical" | "recommended";
 export interface ParamMark {
   value: number;
   label?: string;
-  /** 刻度标签的 KaTeX 公式（优先于 label 纯文本） */
   labelFormula?: string;
   variant?: ParamMarkVariant;
 }
@@ -25,7 +48,6 @@ export interface ParamMark {
 export interface ParamMeta {
   key: string;
   label: string;
-  /** 参数标签的 KaTeX 公式（优先于 label 纯文本） */
   labelFormula?: string;
   min: number;
   max: number;
@@ -34,7 +56,6 @@ export interface ParamMeta {
   defaultValue?: number;
   group?: string;
   description?: string;
-  /** 参数描述的 KaTeX 公式（优先于 description 纯文本） */
   descriptionFormula?: string;
   marks?: ParamMark[];
   importance?: ParamImportance;
