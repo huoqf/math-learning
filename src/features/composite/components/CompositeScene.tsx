@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -6,6 +7,8 @@ import {
   InteractivePoint,
   Asymptote,
 } from "@/components/Math";
+import { mathToDesign } from "@/utils/coordinate";
+import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculatePiecewise, calculateComposite } from "@/math/composite";
 
@@ -28,8 +31,37 @@ export function CompositeScene({
   subMode,
   outerType,
 }: CompositeSceneProps) {
+  const x0 = params.x0 ?? 1.0;
+  const xSample = params.xSample ?? 1.5;
+
+  // 标注避让：根据当前模式计算标签位置
+  const placedLabels = useMemo(() => {
+    const entries: LabelEntry[] = [];
+    if (subMode === "piecewise") {
+      const pt = mathToDesign(x0, 0, scale);
+      entries.push({
+        key: "x0",
+        text: `x₀ = ${x0.toFixed(1)}`,
+        x: pt.x,
+        y: pt.y,
+        anchor: "middle",
+        dy: -12,
+      });
+    } else {
+      const pt = mathToDesign(xSample, 0, scale);
+      entries.push({
+        key: "xSample",
+        text: `x = ${xSample.toFixed(1)}`,
+        x: pt.x,
+        y: pt.y,
+        anchor: "middle",
+        dy: -12,
+      });
+    }
+    return avoidLabels(entries, { fontScale });
+  }, [subMode, x0, xSample, scale, fontScale]);
+
   if (subMode === "piecewise") {
-    const x0 = params.x0 ?? 1.0;
     const leftSlope = params.leftSlope ?? 1.0;
     const leftConst = params.leftConst ?? 0.0;
     const rightSlope = params.rightSlope ?? -0.5;
@@ -106,6 +138,8 @@ export function CompositeScene({
           vp={vp}
           onDrag={handleDragX0}
           label={`x₀ = ${x0.toFixed(1)}`}
+          labelKey="x0"
+          placedLabels={placedLabels}
           color={MATH_COLORS.paramPrimary}
           fontScale={fontScale}
         />
@@ -113,7 +147,6 @@ export function CompositeScene({
     );
   } else {
     // 复合函数模式
-    const xSample = params.xSample ?? 1.5;
     const innerB = params.innerB ?? -2.0;
     const innerC = params.innerC ?? 2.0;
 
@@ -170,6 +203,8 @@ export function CompositeScene({
           vp={vp}
           onDrag={handleDragXSample}
           label={`x = ${xSample.toFixed(1)}`}
+          labelKey="xSample"
+          placedLabels={placedLabels}
           color={MATH_COLORS.paramPrimary}
           fontScale={fontScale}
         />

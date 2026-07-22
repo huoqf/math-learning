@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -6,6 +7,8 @@ import {
   InteractivePoint,
   VectorArrow,
 } from "@/components/Math";
+import { mathToDesign } from "@/utils/coordinate";
+import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
   evalBaseFunction,
@@ -49,6 +52,22 @@ export function TransformScene({
     onParamChange("h", roundH);
     onParamChange("k", roundK);
   };
+
+  // 标注避让：平移控制点 P(h, k) 标签位置
+  const placedLabels = useMemo(() => {
+    const pt = mathToDesign(h, k, scale);
+    const entries: LabelEntry[] = [
+      {
+        key: "P",
+        text: `P(h=${h.toFixed(1)}, k=${k.toFixed(1)})`,
+        x: pt.x,
+        y: pt.y,
+        anchor: "middle",
+        dy: -12,
+      },
+    ];
+    return avoidLabels(entries, { fontScale });
+  }, [h, k, scale, fontScale]);
 
   return (
     <g>
@@ -103,6 +122,8 @@ export function TransformScene({
         vp={vp}
         onDrag={handleDragPoint}
         label={`P(h=${h.toFixed(1)}, k=${k.toFixed(1)})`}
+        labelKey="P"
+        placedLabels={placedLabels}
         color={MATH_COLORS.paramPrimary}
         fontScale={fontScale}
       />

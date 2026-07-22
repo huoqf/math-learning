@@ -1,7 +1,8 @@
 # TODO: 标注避让迁移（Deferred）
 
 > 记录主屏 InteractivePoint 接入 `placedLabels` 的待迁移场景。
-> 完成状态：SetScene、FunctionScene、SingleVarScene 已迁移。
+> 完成状态：全部场景已迁移完成 ✅
+> 详见：`COMPLETED_label_avoidance.md`
 
 ## 已完成
 
@@ -11,15 +12,10 @@
 | FunctionScene | 4 (P, P, m, n) | ✅ |
 | SingleVarScene | 4 (m, n, a, a_axis) | ✅ |
 | useQuadraticScene | 5 (vertex, yInt, root×2, ineq) | ✅ (共享 avoidLabels) |
-
-## 待迁移
-
-| 场景 | 文件 | InteractivePoint 数量 | 优先级 | 说明 |
-|------|------|----------------------|--------|------|
-| DoubleVarScene | `constant/components/DoubleVarScene.tsx` | 2 | 中 | 顶点 + 拖拽点，冲突概率低 |
-| CompositeScene | `composite/components/CompositeScene.tsx` | 2 | 中 | 分界点 + 采样点，可能重叠 |
-| TransformScene | `transform/components/TransformScene.tsx` | 1 | 低 | 单点，无需避让 |
-| DerivativeScene | `derivative/components/DerivativeScene.tsx` | 1 | 低 | 单点，已有固定布局 |
+| DoubleVarScene | 2 (f_vertex, g_vertex) | ✅ |
+| CompositeScene | 2 (x0 / xSample，按 subMode 切换) | ✅ |
+| TransformScene | 1 (P) | ✅ |
+| DerivativeScene | 1 (tangent，含 slope 联动避让) | ✅ |
 
 ## 迁移步骤
 
@@ -36,3 +32,8 @@
 - `avoidLabels()` 在 `useMemo` 中调用，依赖 params/scale/fontScale
 - `labelKey` 与 `placedLabels` 中的 `key` 匹配
 - 未匹配时回退到默认 `dy = -(r + 6)`
+
+## 后续维护
+
+新增 Scene 时，若包含 `InteractivePoint`，应按上述步骤接入 `placedLabels`。
+多模式 Scene（如 `CompositeScene`、`FunctionScene`）应在 `useMemo` 中按当前模式构建 entries，避免无效避让计算。

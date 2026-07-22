@@ -9,6 +9,7 @@ import {
   IntervalShadow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { solveConstantDouble } from "@/math/constant";
 import { MATH_COLORS, withAlpha } from "@/theme";
 
@@ -150,6 +151,32 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
     }
     return { fText, gText };
   }, [selectedLogic]);
+
+  // 7. 标注避让：f/g 顶点拖拽控制点标签位置
+  const placedLabels = useMemo(() => {
+    const ptFV = mathToDesign(xf, yf, scale);
+    const ptGV = mathToDesign(xg, yg, scale);
+    const entries: LabelEntry[] = [
+      {
+        key: "f_vertex",
+        text: `f(x)顶点(${xf.toFixed(2)}, ${yf.toFixed(2)})`,
+        x: ptFV.x,
+        y: ptFV.y,
+        anchor: "middle",
+        dy: -12,
+        priority: 1,
+      },
+      {
+        key: "g_vertex",
+        text: `g(x)顶点(${xg.toFixed(2)}, ${yg.toFixed(2)})`,
+        x: ptGV.x,
+        y: ptGV.y,
+        anchor: "middle",
+        dy: -12,
+      },
+    ];
+    return avoidLabels(entries, { fontScale });
+  }, [xf, yf, xg, yg, scale, fontScale]);
 
   return (
     <g>
@@ -415,6 +442,8 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         color={MATH_COLORS.paramPrimary}
         r={6}
         label={`f(x)顶点(${xf.toFixed(2)}, ${yf.toFixed(2)})`}
+        labelKey="f_vertex"
+        placedLabels={placedLabels}
         fontScale={fontScale}
       />
 
@@ -428,6 +457,8 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         color={MATH_COLORS.paramSecondary}
         r={6}
         label={`g(x)顶点(${xg.toFixed(2)}, ${yg.toFixed(2)})`}
+        labelKey="g_vertex"
+        placedLabels={placedLabels}
         fontScale={fontScale}
       />
     </g>

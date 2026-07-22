@@ -9,6 +9,7 @@ import {
   InteractivePoint,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import {
   solveDerivative,
   PRESET_FUNCTIONS,
@@ -51,34 +52,42 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
     [onParamChange],
   );
 
-  // 切点标签（一上一下避让布局，水平居中）
-  const tangentLabel = React.useMemo(() => {
-    if (!res.isValid) return null;
+  // 标注避让：切点 P 与斜率 k_切 一上一下，避免互相重叠
+  const placedLabels = React.useMemo(() => {
+    if (!res.isValid) return [];
     const pt = mathToDesign(x0, res.fx, scale);
-    return (
-      <text
-        x={pt.x}
-        y={pt.y - 14}
-        textAnchor="middle"
-        fill={MATH_COLORS.paramPrimary}
-        fontSize={fontScale(10)}
-        fontFamily="monospace"
-        fontWeight="600"
-        className="select-none pointer-events-none"
-      >
-        {`(${x0.toFixed(2)}, ${res.fx.toFixed(2)})`}
-      </text>
-    );
-  }, [x0, res.fx, res.isValid, scale, fontScale]);
+    const entries: LabelEntry[] = [
+      {
+        key: "tangent",
+        text: `(${x0.toFixed(2)}, ${res.fx.toFixed(2)})`,
+        x: pt.x,
+        y: pt.y,
+        anchor: "middle",
+        dy: -14,
+        priority: 1,
+      },
+      {
+        key: "slope",
+        text: `k_切 = ${res.slope.toFixed(2)}`,
+        x: pt.x,
+        y: pt.y,
+        anchor: "middle",
+        dy: 22,
+      },
+    ];
+    return avoidLabels(entries, { fontScale });
+  }, [x0, res.fx, res.slope, res.isValid, scale, fontScale]);
 
-  // 斜率标注（放在切点下方以规避重叠）
+  // 斜率标注（位置由 placedLabels 决定，避开切点标签）
   const slopeLabel = React.useMemo(() => {
     if (!res.isValid) return null;
     const pt = mathToDesign(x0, res.fx, scale);
+    const placed = placedLabels.find((p) => p.key === "slope");
+    const dy = placed ? placed.finalDy : 22;
     return (
       <text
         x={pt.x}
-        y={pt.y + 22}
+        y={pt.y + dy}
         textAnchor="middle"
         fill={MATH_COLORS.derivative}
         fontSize={fontScale(10)}
@@ -89,7 +98,7 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
         {`k_切 = ${res.slope.toFixed(2)}`}
       </text>
     );
-  }, [x0, res.fx, res.slope, res.isValid, scale, fontScale]);
+  }, [x0, res.fx, res.slope, res.isValid, scale, fontScale, placedLabels]);
 
   // 割线三角形的 Δx 和 Δy 动态标注 (当 dx 足够大时展示，防止极限时重叠混乱)
   const deltaLabels = React.useMemo(() => {
@@ -186,10 +195,14 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
         color={MATH_COLORS.paramPrimary}
         r={6}
         disabled={!res.isValid}
+        label={
+          res.isValid ? `(${x0.toFixed(2)}, ${res.fx.toFixed(2)})` : undefined
+        }
+        labelKey="tangent"
+        placedLabels={placedLabels}
         fontScale={fontScale}
       />
 
-      {tangentLabel}
       {slopeLabel}
       {deltaLabels}
     </g>
