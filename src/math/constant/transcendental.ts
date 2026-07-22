@@ -317,3 +317,44 @@ export function solveConstantSingleDirectTrans(
     discussionType,
   };
 }
+
+/** 超越函数模型 C 辅助函数：f(x, a) = a * ln(x) - x + 1 (x > 0) */
+export function evalFTransC(x: number, a: number): number {
+  return x > 0 ? a * Math.log(x) - x + 1 : NaN;
+}
+
+/** 超越函数模型 C 导函数：f'(x, a) = a/x - 1 */
+export function evalFTransCDerivative(x: number, a: number): number {
+  return x > 0 ? a / x - 1 : NaN;
+}
+
+/** 超越函数模型 D 辅助函数：f(x, a) = e^x - a * (x + 1) */
+export function evalFTransD(x: number, a: number): number {
+  return Math.exp(x) - a * (x + 1);
+}
+
+/** 超越函数模型 D 导函数：f'(x, a) = e^x - a */
+export function evalFTransDDerivative(x: number, a: number): number {
+  return Math.exp(x) - a;
+}
+
+/** 通用超越函数导函数估值 */
+export function evalTransDerivative(
+  x: number,
+  a: number,
+  model:
+    "ln_x_over_x" | "exp_minus_ax" | "a_ln_x_minus_x" | "exp_minus_a_x_plus_1",
+): number {
+  switch (model) {
+    case "ln_x_over_x":
+      return x > 0 ? (1 - Math.log(x)) / (x * x) : NaN;
+    case "exp_minus_ax":
+      return Math.exp(x) - a;
+    case "a_ln_x_minus_x":
+      return evalFTransCDerivative(x, a);
+    case "exp_minus_a_x_plus_1":
+      return evalFTransDDerivative(x, a);
+    default:
+      return NaN;
+  }
+}

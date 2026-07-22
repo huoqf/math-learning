@@ -7,6 +7,7 @@ import {
   FunctionGraph,
   InteractivePoint,
   IntervalShadow,
+  TangentLine,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
@@ -19,6 +20,10 @@ import {
   evalGParam,
   evalFTrans,
   evalGParamTrans,
+  evalFTransC,
+  evalFTransD,
+  evalTransDerivative,
+  type TransModelKey,
 } from "@/math/constant";
 import { MATH_COLORS, withAlpha } from "@/theme";
 
@@ -26,6 +31,9 @@ interface SingleVarSceneProps {
   subMode: "sep" | "direct";
   logic: "always" | "exist";
   funModel: "quadratic" | "transcendent";
+  transModel?: TransModelKey;
+  showDerivative?: boolean;
+  showTangent?: boolean;
   params: Record<string, number>;
   scale: SceneScale;
   vp: ViewportInfo;
@@ -36,6 +44,9 @@ interface SingleVarSceneProps {
 export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   subMode,
   funModel,
+  transModel = "ln_x_over_x",
+  showDerivative = false,
+  showTangent = false,
   params,
   scale,
   vp,
@@ -48,21 +59,49 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   const n = params.n ?? 2.5;
 
   const isSep = subMode === "sep";
+  const isTrans = funModel === "transcendent";
+
+  // 计算原函数值
+  const evalPrimaryFn = (x: number): number => {
+    if (isTrans) {
+      if (x <= 0) return NaN;
+      if (transModel === "ln_x_over_x")
+        return isSep ? evalFTrans(x) : evalGParamTrans(x, a_axis);
+      if (transModel === "exp_minus_ax")
+        return isSep ? Math.exp(x) / x : Math.exp(x) - a_axis * x;
+      if (transModel === "a_ln_x_minus_x")
+        return evalFTransC(x, isSep ? a : a_axis);
+      if (transModel === "exp_minus_a_x_plus_1")
+        return evalFTransD(x, isSep ? a : a_axis);
+      return evalFTrans(x);
+    } else {
+      return isSep ? evalF(x) : evalGParam(x, a_axis);
+    }
+  };
+
+  // 计算导函数值
+  const evalDerivativeFn = (x: number): number => {
+    if (isTrans) {
+      return evalTransDerivative(x, isSep ? a : a_axis, transModel);
+    } else {
+      return isSep ? 2 * x - 2 : 2 * x - 2 * a_axis;
+    }
+  };
 
   // 计算结果
   const sepResult = useMemo(() => {
-    return funModel === "transcendent"
+    return isTrans
       ? solveConstantSingleSepTrans(a, m, n)
       : solveConstantSingleSep(a, m, n);
-  }, [a, m, n, funModel]);
+  }, [a, m, n, isTrans]);
 
   const directResult = useMemo(() => {
-    return funModel === "transcendent"
+    return isTrans
       ? solveConstantSingleDirectTrans(a_axis, m, n)
       : solveConstantSingleDirect(a_axis, m, n);
-  }, [a_axis, m, n, funModel]);
+  }, [a_axis, m, n, isTrans]);
 
-  // 1. 拖拽回调 (保留 0.05 步长)
+  // 1. 拖拽回调
   const handleMDrag = (mathPt: { x: number; y: number }) => {
     onParamChange("m", Math.round(mathPt.x * 20) / 20);
   };
@@ -84,7 +123,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   const ptN = mathToDesign(n, 0, scale);
   const isCollapsed = m >= n;
 
-  // 极值标注避让（Min/Max 标签）
+  // 极值标注避让
   const placedExtremumLabels = useMemo(() => {
     if (isCollapsed) return [];
     const entries: LabelEntry[] = [];
@@ -154,8 +193,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       });
     }
     if (!isSep && !isCollapsed) {
-      const aX =
-        funModel === "transcendent" && a_axis > 0 ? Math.log(a_axis) : a_axis;
+      const aX = isTrans && a_axis > 0 ? Math.log(a_axis) : a_axis;
       entries.push({
         key: "a_axis",
         text: `a=${a_axis.toFixed(2)}`,
@@ -166,9 +204,9 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       });
     }
     return avoidLabels(entries, { fontScale });
-  }, [m, n, a, a_axis, isSep, isCollapsed, funModel, scale, fontScale]);
+  }, [m, n, a, a_axis, isSep, isCollapsed, isTrans, scale, fontScale]);
 
-  // 3. 水平线 y = a 的渲染 (仅在 sep 模式)
+  // 3. 水平线 y = a (仅在 sep 模式)
   const sepHorizontalLine = useMemo(() => {
     if (!isSep || isCollapsed) return null;
 
@@ -184,10 +222,10 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     );
   }, [isSep, a, scale, fontScale, isCollapsed]);
 
-  // 4. 对称轴 / 极小值点 的渲染 (仅在 direct 模式)
+  // 4. 对称轴 / 极小值点
   const directAxisLine = useMemo(() => {
     if (isSep || isCollapsed) return null;
-    if (funModel === "transcendent") {
+    if (isTrans) {
       if (a_axis <= 0) return null;
       const lna = Math.log(a_axis);
       return (
@@ -196,7 +234,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           value={lna}
           scale={scale}
           color={MATH_COLORS.paramPrimary}
-          label={`极小值点 x = ln a (${lna.toFixed(2)})`}
+          label={`驻点/极小值点 x = ln a (${lna.toFixed(2)})`}
           fontScale={fontScale}
         />
       );
@@ -212,7 +250,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         />
       );
     }
-  }, [isSep, a_axis, scale, fontScale, isCollapsed, funModel]);
+  }, [isSep, a_axis, scale, fontScale, isCollapsed, isTrans]);
 
   // 5. 违背区间与高亮线
   const violatedVisuals = useMemo(() => {
@@ -223,18 +261,11 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     if (!violated) return null;
 
     const [vStart, vEnd] = violated;
-    let curveFn: (x: number) => number;
-    if (funModel === "transcendent") {
-      curveFn = isSep ? evalFTrans : (x: number) => evalGParamTrans(x, a_axis);
-    } else {
-      curveFn = isSep ? evalF : (x: number) => evalGParam(x, a_axis);
-    }
 
     return (
       <g>
-        {/* 违背区间高亮阴影 */}
         <IntervalShadow
-          fn={curveFn}
+          fn={evalPrimaryFn}
           x1={vStart}
           x2={vEnd}
           scale={scale}
@@ -242,7 +273,6 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           strokeColor={MATH_COLORS.degeneracy}
           strokeWidth={2}
         />
-        {/* 违背区间的提示文字 */}
         <text
           x={mathToDesign((vStart + vEnd) / 2, 0, scale).x}
           y={mathToDesign(0, scale.yMin + 0.3, scale).y}
@@ -260,10 +290,9 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     sepResult,
     directResult,
     scale,
-    a_axis,
     fontScale,
     isCollapsed,
-    funModel,
+    evalPrimaryFn,
   ]);
 
   return (
@@ -271,7 +300,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       {/* 坐标轴背景 */}
       <CoordinateGrid scale={scale} fontScale={fontScale} />
 
-      {/* 研究区间 [m, n] 的遮罩底纹 */}
+      {/* 研究区间 [m, n] 底纹 */}
       {!isCollapsed && (
         <rect
           x={ptM.x}
@@ -287,65 +316,66 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         />
       )}
 
-      {/* 抛物线绘制 */}
-      {/* 1. 区间外绘制细线 */}
+      {/* 区间外虚线 */}
       <FunctionGraph
         fn={(x) => {
           if (isCollapsed) return NaN;
-          if (funModel === "transcendent") {
-            if (x <= 0) return NaN;
-            // 参变分离超越曲线
-            if (isSep) {
-              return x < m || x > n ? evalFTrans(x) : NaN;
-            } else {
-              return x < m || x > n ? evalGParamTrans(x, a_axis) : NaN;
-            }
-          } else {
-            return x < m || x > n
-              ? isSep
-                ? evalF(x)
-                : evalGParam(x, a_axis)
-              : NaN;
-          }
+          return x < m || x > n ? evalPrimaryFn(x) : NaN;
         }}
         scale={scale}
         color={withAlpha(MATH_COLORS.function, 0.35)}
         strokeWidth={1.5}
         strokeDasharray="3 3"
       />
-      {/* 2. 区间内绘制加粗实线 */}
+      {/* 区间内加粗实线 */}
       {!isCollapsed && (
         <FunctionGraph
-          fn={(x) => {
-            if (funModel === "transcendent") {
-              if (x <= 0) return NaN;
-              return x >= m && x <= n
-                ? isSep
-                  ? evalFTrans(x)
-                  : evalGParamTrans(x, a_axis)
-                : NaN;
-            } else {
-              return x >= m && x <= n
-                ? isSep
-                  ? evalF(x)
-                  : evalGParam(x, a_axis)
-                : NaN;
-            }
-          }}
+          fn={(x) => (x >= m && x <= n ? evalPrimaryFn(x) : NaN)}
           scale={scale}
           color={MATH_COLORS.function}
           strokeWidth={2.8}
         />
       )}
 
+      {/* 导函数 f'(x) 轨迹（受控于 showDerivative） */}
+      {showDerivative && !isCollapsed && (
+        <g>
+          <FunctionGraph
+            fn={(x) => (x >= m && x <= n ? evalDerivativeFn(x) : NaN)}
+            scale={scale}
+            color={MATH_COLORS.derivative}
+            strokeWidth={1.8}
+            strokeDasharray="4 2"
+          />
+        </g>
+      )}
+
+      {/* 切线放缩辅助线（受控于 showTangent） */}
+      {showTangent && (
+        <g>
+          {isTrans &&
+            (transModel === "a_ln_x_minus_x" ||
+              transModel === "exp_minus_a_x_plus_1") && (
+              <TangentLine
+                fn={evalPrimaryFn}
+                tangentX={transModel === "a_ln_x_minus_x" ? 1.0 : 0.0}
+                scale={scale}
+                color={MATH_COLORS.tangentLine}
+                strokeWidth={1.5}
+                strokeDasharray="5 3"
+              />
+            )}
+        </g>
+      )}
+
       {/* 水平线与对称轴 */}
       {sepHorizontalLine}
       {directAxisLine}
 
-      {/* 违背区间渲染 */}
+      {/* 违背区间 */}
       {violatedVisuals}
 
-      {/* 区间端点垂直虚线与指示 */}
+      {/* 区间端点垂直虚线 */}
       {!isCollapsed && (
         <g>
           <line
@@ -369,7 +399,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         </g>
       )}
 
-      {/* 可交互端点：左端点 m */}
+      {/* 可交互端点 m */}
       <InteractivePoint
         cx={m}
         cy={0}
@@ -384,7 +414,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         fontScale={fontScale}
       />
 
-      {/* 可交互端点：右端点 n */}
+      {/* 可交互端点 n */}
       <InteractivePoint
         cx={n}
         cy={0}
@@ -399,7 +429,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         fontScale={fontScale}
       />
 
-      {/* 探索控制点：水平线 dragging 点 (模式A) */}
+      {/* 水平线 dragging 点 */}
       {isSep && !isCollapsed && (
         <InteractivePoint
           cx={(m + n) / 2}
@@ -409,21 +439,17 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           onDrag={handleADrag}
           color={MATH_COLORS.paramPrimary}
           r={6.5}
-          label={`a=${a.toFixed(2)} (拖动)`}
+          label={`a=${a.toFixed(2)}`}
           labelKey="a"
           placedLabels={placedPointLabels}
           fontScale={fontScale}
         />
       )}
 
-      {/* 探索控制点：对称轴/极小值点 dragging 点 (模式B) */}
+      {/* 对称轴/驻点 dragging 点 */}
       {!isSep && !isCollapsed && (
         <InteractivePoint
-          cx={
-            funModel === "transcendent" && a_axis > 0
-              ? Math.log(a_axis)
-              : a_axis
-          }
+          cx={isTrans && a_axis > 0 ? Math.log(a_axis) : a_axis}
           cy={0}
           scale={scale}
           vp={vp}
@@ -431,9 +457,9 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           color={MATH_COLORS.paramPrimary}
           r={6.5}
           label={
-            funModel === "transcendent"
-              ? `极小值 ln a (${(a_axis > 0 ? Math.log(a_axis) : 0).toFixed(2)})`
-              : `轴 a=${a_axis.toFixed(2)} (拖动)`
+            isTrans
+              ? `驻点 ln a (${(a_axis > 0 ? Math.log(a_axis) : 0).toFixed(2)})`
+              : `轴 a=${a_axis.toFixed(2)}`
           }
           labelKey="a_axis"
           placedLabels={placedPointLabels}
@@ -441,12 +467,11 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         />
       )}
 
-      {/* 渲染极值点标注 (带避让) */}
+      {/* 极值点标注 */}
       {!isCollapsed && (
         <g>
           {isSep ? (
             <g>
-              {/* 最小值点 */}
               <circle
                 cx={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).x}
                 cy={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).y}
@@ -472,7 +497,6 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                 ) : null;
               })()}
 
-              {/* 最大值点 */}
               <circle
                 cx={mathToDesign(sepResult.xFMax, sepResult.fMax, scale).x}
                 cy={mathToDesign(sepResult.xFMax, sepResult.fMax, scale).y}
@@ -500,7 +524,6 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
             </g>
           ) : (
             <g>
-              {/* 直接讨论模式最小值点 */}
               <circle
                 cx={
                   mathToDesign(directResult.xFMin, directResult.fMin, scale).x

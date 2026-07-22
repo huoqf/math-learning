@@ -37,7 +37,7 @@ describe("QuadraticAnimation smoke test", () => {
 
   it("switches study mode on button click", () => {
     render(<QuadraticAnimation />);
-    const equationBtn = screen.getByText("一元二次方程");
+    const equationBtn = screen.getByRole("radio", { name: "一元二次方程" });
     fireEvent.click(equationBtn);
     expect(equationBtn).toHaveClass("bg-primary-500");
   });

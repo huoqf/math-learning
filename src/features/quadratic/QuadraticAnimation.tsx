@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -134,40 +135,16 @@ export function QuadraticAnimation() {
         <LeftPanel>
           {/* 模式选择 Section */}
           <LeftPanelSection title="研究模式" subtitle="选择三位一体探讨对象">
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setStudyMode("function")}
-                  className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
-                    studyMode === "function"
-                      ? "bg-primary-500 text-white border-primary-500 shadow-sm"
-                      : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-300"
-                  }`}
-                >
-                  二次函数性质
-                </button>
-                <button
-                  onClick={() => setStudyMode("equation")}
-                  className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
-                    studyMode === "equation"
-                      ? "bg-primary-500 text-white border-primary-500 shadow-sm"
-                      : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-300"
-                  }`}
-                >
-                  一元二次方程
-                </button>
-              </div>
-              <button
-                onClick={() => setStudyMode("inequality")}
-                className={`w-full py-2 text-xs font-semibold rounded-lg border transition-all ${
-                  studyMode === "inequality"
-                    ? "bg-primary-500 text-white border-primary-500 shadow-sm"
-                    : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-300"
-                }`}
-              >
-                一元二次不等式
-              </button>
-            </div>
+            <SelectGrid
+              items={[
+                { key: "function", label: "二次函数性质" },
+                { key: "equation", label: "一元二次方程" },
+                { key: "inequality", label: "一元二次不等式", fullWidth: true },
+              ]}
+              value={studyMode}
+              onChange={(k) => setStudyMode(k as any)}
+              variant="filled"
+            />
           </LeftPanelSection>
 
           {/* 不等号方向 Section */}
@@ -176,36 +153,16 @@ export function QuadraticAnimation() {
               title="不等号方向"
               subtitle="选择解集的大于/小于关系"
             >
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setIneqType(">")}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                    ineqType === ">"
-                      ? "bg-success-600 text-white border-success-600 shadow-sm"
-                      : "bg-white text-neutral-600 border-neutral-200 hover:border-success-300"
-                  }`}
-                >
-                  <KatexFormula
-                    formula="f(x) > 0"
-                    mode="inline"
-                    className="!text-xs !my-0"
-                  />
-                </button>
-                <button
-                  onClick={() => setIneqType("<")}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                    ineqType === "<"
-                      ? "bg-success-600 text-white border-success-600 shadow-sm"
-                      : "bg-white text-neutral-600 border-neutral-200 hover:border-success-300"
-                  }`}
-                >
-                  <KatexFormula
-                    formula="f(x) < 0"
-                    mode="inline"
-                    className="!text-xs !my-0"
-                  />
-                </button>
-              </div>
+              <SelectGrid
+                items={[
+                  { key: ">", label: "f(x) > 0", formula: "f(x) > 0" },
+                  { key: "<", label: "f(x) < 0", formula: "f(x) < 0" },
+                ]}
+                value={ineqType}
+                onChange={(k) => setIneqType(k as ">" | "<")}
+                variant="filled"
+                color="success"
+              />
             </LeftPanelSection>
           )}
 

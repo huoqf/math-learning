@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -134,34 +135,21 @@ export function DerivativeAnimation() {
         <LeftPanel>
           {/* 函数选择 */}
           <LeftPanelSection title="函数模型" subtitle="选择教学函数">
-            <div className="flex flex-col gap-1.5">
-              <div className="grid grid-cols-2 gap-1.5">
-                {(
-                  Object.entries(PRESET_FUNCTIONS) as [
-                    PresetFunctionKey,
-                    typeof preset,
-                  ][]
-                ).map(([key, p]) => (
-                  <button
-                    key={key}
-                    onClick={() => handleFnKeyChange(key)}
-                    className={`px-2 py-1.5 text-left text-xs rounded-md border transition-all ${
-                      fnKey === key
-                        ? "bg-primary-500 text-white border-primary-500 font-semibold shadow-sm"
-                        : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-300 hover:bg-neutral-50/50"
-                    }`}
-                  >
-                    <div className="truncate">
-                      <KatexFormula
-                        formula={p.latex}
-                        mode="inline"
-                        className="!text-xs !my-0"
-                      />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <SelectGrid
+              items={(
+                Object.entries(PRESET_FUNCTIONS) as [
+                  PresetFunctionKey,
+                  typeof preset,
+                ][]
+              ).map(([key, p]) => ({
+                key,
+                label: p.label,
+                formula: p.latex,
+              }))}
+              value={fnKey}
+              onChange={(k) => handleFnKeyChange(k as PresetFunctionKey)}
+              variant="filled"
+            />
           </LeftPanelSection>
 
           <LeftPanelSection title="参数调节" subtitle="改变切点与割线步长">

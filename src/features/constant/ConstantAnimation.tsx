@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -21,20 +22,22 @@ export function ConstantAnimation() {
 
   // 单变量函数模型：'quadratic' (二次函数) | 'transcendent' (超越函数)
   const [funModel, setFunModel] = useState<"quadratic" | "transcendent">(
-    "quadratic",
+    "transcendent",
   );
+
+  // 超越函数子模型 (高考 4 大母题)
+  const [transModel, setTransModel] = useState<TransModelKey>("ln_x_over_x");
+
+  // 可视化辅助开关：显示导函数 f'(x) / 显示切线放缩线
+  const [showDerivative, setShowDerivative] = useState<boolean>(false);
+  const [showTangent, setShowTangent] = useState<boolean>(false);
 
   // 单变量探索模式：'sep' (参变分离) | 'direct' (直接求导最值)
   const [subMode, setSubMode] = useState<"sep" | "direct">("sep");
   // 单变量逻辑关系：'always' (恒成立) | 'exist' (存在性)
   const [logic, setLogic] = useState<"always" | "exist">("always");
 
-  // 双变量所选逻辑：
-  // 'all_all' : ∀x1, ∀x2, f(x1) >= g(x2)
-  // 'all_exist' : ∀x1, ∃x2, f(x1) >= g(x2)
-  // 'exist_all' : ∃x1, ∀x2, f(x1) >= g(x2)
-  // 'exist_exist' : ∃x1, ∃x2, f(x1) >= g(x2)
-  // 'same_var' : ∀x in I1∩I2, f(x) >= g(x)
+  // 双变量所选逻辑
   const [selectedLogic, setSelectedLogic] = useState<
     "all_all" | "all_exist" | "exist_all" | "exist_exist" | "same_var"
   >("all_all");
@@ -55,7 +58,6 @@ export function ConstantAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 根据不同 Tab 动态计算数学坐标范围
   const scale = useSceneScale({
     vp,
     xRange: activeTab === "single" ? [-2, 6] : [-1, 5],
@@ -64,7 +66,6 @@ export function ConstantAnimation() {
 
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => {
-      // 在超越函数模型下，确保区间左端点 m 至少为 0.10
       if (funModel === "transcendent" && activeTab === "single") {
         if (key === "m") {
           const clampedVal = Math.max(0.1, value);
@@ -82,7 +83,6 @@ export function ConstantAnimation() {
         }
       }
 
-      // 限制区间左边界不能大于等于右边界（如果是在单变量状态下修改端点）
       if (key === "m" && value >= prev.n) {
         return { ...prev, m: prev.n - 0.1 };
       }
@@ -115,8 +115,9 @@ export function ConstantAnimation() {
       logic,
       selectedLogic,
       funModel,
+      transModel,
     });
-  }, [params, activeTab, subMode, logic, selectedLogic, funModel]);
+  }, [params, activeTab, subMode, logic, selectedLogic, funModel, transModel]);
 
   // 组装 ParamControl 参数配置
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -140,27 +141,23 @@ export function ConstantAnimation() {
         if (key === "m") {
           min = 0.1;
           max = 3.0;
-          description = "超越函数定义域 x > 0，故左边界需大等于 0.1";
-          descriptionFormula = "超越函数定义域 x > 0，故左边界需大等于 0.1";
+          description = "超越函数定义域 x > 0，左边界需大等于 0.1";
+          descriptionFormula = "超越函数定义域 $x > 0$，左边界需大等于 0.1";
         } else if (key === "n") {
           min = 0.5;
           max = 5.0;
           description = "超越函数研究区间的右端点";
         } else if (key === "a") {
           min = -0.5;
-          max = 1.0;
+          max = 2.0;
           step = 0.02;
-          description =
-            "【主参数-红】代表水平直线 y = a，其临界值为 1/e ≈ 0.37";
-          descriptionFormula =
-            "【主参数-红】代表水平直线 $y = a$，其临界值为 $\\frac{1}{e} \\approx 0.37$";
+          description = "【主参数-红】目标水平直线 y = a 的位置";
+          descriptionFormula = "【主参数-红】目标水平直线 $y = a$ 的位置";
         } else if (key === "a_axis") {
           min = 0.1;
           max = 5.0;
-          description =
-            "【主参数-红】函数 f(x) = e^x - ax 的参数 a，极小值点为 ln a";
-          descriptionFormula =
-            "【主参数-红】函数 $f(x) = e^x - ax$ 的参数 $a$，极小值点为 $\\ln a$";
+          description = "【主参数-红】超越函数讨论参数 a";
+          descriptionFormula = "【主参数-红】超越函数讨论参数 $a$";
         }
       } else if (activeTab === "single" && funModel === "quadratic") {
         if (key === "a") {
@@ -201,9 +198,19 @@ export function ConstantAnimation() {
     if (activeTab === "single") {
       if (subMode === "sep") {
         if (funModel === "transcendent") {
-          const polyStr = `f(x) = \\frac{\\ln x}{x} \\quad x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
+          let polyStr = "";
+          if (transModel === "ln_x_over_x") {
+            polyStr = `f(x) = \\frac{\\ln x}{x}`;
+          } else if (transModel === "exp_minus_ax") {
+            polyStr = `f(x) = \\frac{e^x}{x}`;
+          } else if (transModel === "a_ln_x_minus_x") {
+            polyStr = `f(x) = \\ln x - x + 1`;
+          } else if (transModel === "exp_minus_a_x_plus_1") {
+            polyStr = `f(x) = \\frac{e^x}{x+1}`;
+          }
+          const rangeStr = `x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
           const lineStr = `y = \\color{#EF4444}{${params.a.toFixed(2)}}`;
-          return { line1: polyStr, line2: lineStr };
+          return { line1: `${polyStr} \\quad ${rangeStr}`, line2: lineStr };
         } else {
           const polyStr = `f(x) = x^2 - 2x + 2 \\quad x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
           const lineStr = `y = \\color{#EF4444}{${params.a.toFixed(2)}}`;
@@ -211,7 +218,14 @@ export function ConstantAnimation() {
         }
       } else {
         if (funModel === "transcendent") {
-          const line1 = `f(x) = e^x - \\color{#EF4444}{${params.a_axis.toFixed(2)}}x`;
+          let line1 = "";
+          if (transModel === "ln_x_over_x" || transModel === "exp_minus_ax") {
+            line1 = `f(x) = e^x - \\color{#EF4444}{${params.a_axis.toFixed(2)}}x`;
+          } else if (transModel === "a_ln_x_minus_x") {
+            line1 = `f(x) = \\color{#EF4444}{${params.a_axis.toFixed(2)}}\\ln x - x + 1`;
+          } else if (transModel === "exp_minus_a_x_plus_1") {
+            line1 = `f(x) = e^x - \\color{#EF4444}{${params.a_axis.toFixed(2)}}(x+1)`;
+          }
           const line2 = `x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
           return { line1, line2 };
         } else {
@@ -231,7 +245,7 @@ export function ConstantAnimation() {
         return { line1: fStr, line2: gStr };
       }
     }
-  }, [activeTab, subMode, funModel, selectedLogic, params]);
+  }, [activeTab, subMode, funModel, transModel, selectedLogic, params]);
 
   return (
     <ThreePanel
@@ -240,135 +254,137 @@ export function ConstantAnimation() {
           {/* Section 1: 场景切换 */}
           <LeftPanelSection
             title="选择场景"
-            subtitle="探索不同的高考恒成立问题类型"
+            subtitle="探索高考恒成立与存在性问题类型"
           >
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab("single")}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
-                  activeTab === "single"
-                    ? "bg-primary-500 text-white border-primary-500 shadow-sm"
-                    : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-300"
-                }`}
-              >
-                单变量实验室
-              </button>
-              <button
-                onClick={() => setActiveTab("double")}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
-                  activeTab === "double"
-                    ? "bg-primary-500 text-white border-primary-500 shadow-sm"
-                    : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-300"
-                }`}
-              >
-                双变量对决
-              </button>
-            </div>
+            <SelectGrid
+              items={[
+                { key: "single", label: "单变量实验室" },
+                { key: "double", label: "双变量对决" },
+              ]}
+              value={activeTab}
+              onChange={(k) => setActiveTab(k as "single" | "double")}
+              variant="filled"
+              columns={2}
+            />
           </LeftPanelSection>
 
-          {/* Section 1.5: 选择函数模型 */}
+          {/* Section 1.5: 函数模型细分 */}
           {activeTab === "single" && (
             <LeftPanelSection
               title="选择函数模型"
-              subtitle="对比经典二次函数与高考超越函数模型"
+              subtitle="高考超越函数四大母题与二次函数"
             >
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setFunModel("quadratic");
-                    setParams((prev) => ({ ...prev, m: 0.5, n: 2.5 }));
-                  }}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                    funModel === "quadratic"
-                      ? "bg-primary-500 text-white border-primary-500 shadow-sm"
-                      : "bg-white text-neutral-650 border-neutral-200 hover:border-primary-300"
-                  }`}
-                >
-                  二次函数
-                </button>
-                <button
-                  onClick={() => {
-                    setFunModel("transcendent");
-                    setParams((prev) => ({
-                      ...prev,
-                      m: Math.max(0.2, prev.m),
-                      n: Math.max(1.5, prev.n),
-                      a: prev.a > 0.4 ? 0.2 : prev.a,
-                    }));
-                  }}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                    funModel === "transcendent"
-                      ? "bg-primary-500 text-white border-primary-500 shadow-sm"
-                      : "bg-white text-neutral-650 border-neutral-200 hover:border-primary-300"
-                  }`}
-                >
-                  超越函数
-                </button>
+              <div className="space-y-2">
+                <SelectGrid
+                  items={[
+                    { key: "transcendent", label: "超越函数" },
+                    { key: "quadratic", label: "二次函数" },
+                  ]}
+                  value={funModel}
+                  onChange={(k) =>
+                    setFunModel(k as "transcendent" | "quadratic")
+                  }
+                  variant="filled"
+                  columns={2}
+                />
+
+                {/* 超越模型 4 大母题细分 */}
+                {funModel === "transcendent" && (
+                  <SelectGrid
+                    items={[
+                      {
+                        key: "ln_x_over_x",
+                        label: "ln x / x 型",
+                        formula: "\\frac{\\ln x}{x} 型",
+                      },
+                      {
+                        key: "exp_minus_ax",
+                        label: "e^x - ax 型",
+                        formula: "e^x - ax 型",
+                      },
+                      {
+                        key: "a_ln_x_minus_x",
+                        label: "a ln x - x + 1 型",
+                        formula: "a\\ln x - x + 1 型",
+                      },
+                      {
+                        key: "exp_minus_a_x_plus_1",
+                        label: "e^x - a(x+1) 型",
+                        formula: "e^x - a(x+1) 型",
+                      },
+                    ]}
+                    value={transModel}
+                    onChange={(k) => setTransModel(k as any)}
+                    variant="filled"
+                    className="pt-1"
+                  />
+                )}
               </div>
             </LeftPanelSection>
           )}
 
-          {/* Section 2: 探索逻辑与方法 */}
+          {/* Section 2: 探索逻辑与辅助开关 */}
           {activeTab === "single" ? (
             <LeftPanelSection
-              title="研究方法与目标"
-              subtitle="选择恒成立探索模式"
+              title="研究方法与辅助工具"
+              subtitle="探究方法及导数/切线放缩辅助"
             >
-              <div className="space-y-3">
-                {/* 模式选择 */}
+              <div className="space-y-2.5">
                 <div>
                   <label className="text-[10px] font-bold text-neutral-400 block mb-1">
                     探索目标
                   </label>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setLogic("always")}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-                        logic === "always"
-                          ? "bg-neutral-850 text-white border-neutral-800"
-                          : "bg-white text-neutral-650 border-neutral-200 hover:bg-neutral-50"
-                      }`}
-                    >
-                      恒成立 (∀x)
-                    </button>
-                    <button
-                      onClick={() => setLogic("exist")}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-                        logic === "exist"
-                          ? "bg-neutral-850 text-white border-neutral-800"
-                          : "bg-white text-neutral-650 border-neutral-200 hover:bg-neutral-50"
-                      }`}
-                    >
-                      存在性 (∃x)
-                    </button>
-                  </div>
+                  <SelectGrid
+                    items={[
+                      { key: "always", label: "恒成立 (∀x)" },
+                      { key: "exist", label: "存在性 (∃x)" },
+                    ]}
+                    value={logic}
+                    onChange={(k) => setLogic(k as "always" | "exist")}
+                    variant="filled"
+                  />
                 </div>
 
-                {/* 方法选择 */}
                 <div>
                   <label className="text-[10px] font-bold text-neutral-400 block mb-1">
-                    核心方法
+                    核心解题方法
+                  </label>
+                  <SelectGrid
+                    items={[
+                      { key: "sep", label: "参变分离法" },
+                      { key: "direct", label: "直接最值讨论" },
+                    ]}
+                    value={subMode}
+                    onChange={(k) => setSubMode(k as "sep" | "direct")}
+                    variant="filled"
+                  />
+                </div>
+
+                {/* 数形结合辅助线开关 */}
+                <div>
+                  <label className="text-[10px] font-bold text-neutral-400 block mb-1">
+                    数形结合辅助图示
                   </label>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setSubMode("sep")}
+                      onClick={() => setShowDerivative(!showDerivative)}
                       className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-                        subMode === "sep"
-                          ? "bg-neutral-850 text-white border-neutral-800"
+                        showDerivative
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
                           : "bg-white text-neutral-650 border-neutral-200 hover:bg-neutral-50"
                       }`}
                     >
-                      参变分离法
+                      {showDerivative ? "隐藏导数 f'(x)" : "显示导数 f'(x)"}
                     </button>
                     <button
-                      onClick={() => setSubMode("direct")}
+                      onClick={() => setShowTangent(!showTangent)}
                       className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-                        subMode === "direct"
-                          ? "bg-neutral-850 text-white border-neutral-800"
+                        showTangent
+                          ? "bg-amber-600 text-white border-amber-600 shadow-sm"
                           : "bg-white text-neutral-650 border-neutral-200 hover:bg-neutral-50"
                       }`}
                     >
-                      直接最值讨论
+                      {showTangent ? "隐藏切线放缩" : "显示切线放缩"}
                     </button>
                   </div>
                 </div>
@@ -379,54 +395,49 @@ export function ConstantAnimation() {
               title="高考双变量博弈"
               subtitle="双动点对决与同变量差函数博弈"
             >
-              <div className="space-y-1.5">
-                {[
+              <SelectGrid
+                items={[
                   {
                     key: "all_all",
+                    label: "∀x₁, ∀x₂",
                     formula: "\\forall x_1, \\forall x_2",
-                    desc: "任意对任意-极值分离",
+                    description: "任意对任意-极值隔离",
+                    fullWidth: true,
                   },
                   {
                     key: "all_exist",
+                    label: "∀x₁, ∃x₂",
                     formula: "\\forall x_1, \\exists x_2",
-                    desc: "任意对存在",
+                    description: "任意对存在",
+                    fullWidth: true,
                   },
                   {
                     key: "exist_all",
+                    label: "∃x₁, ∀x₂",
                     formula: "\\exists x_1, \\forall x_2",
-                    desc: "存在对任意",
+                    description: "存在对任意",
+                    fullWidth: true,
                   },
                   {
                     key: "exist_exist",
+                    label: "∃x₁, ∃x₂",
                     formula: "\\exists x_1, \\exists x_2",
-                    desc: "存在对存在",
+                    description: "存在对存在",
+                    fullWidth: true,
                   },
                   {
                     key: "same_var",
+                    label: "∀x ∈ I₁ ∩ I₂",
                     formula: "\\forall x \\in I_1 \\cap I_2",
-                    desc: "同变量对垒-差函数",
+                    description: "同变量对垒-差函数",
+                    fullWidth: true,
                   },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setSelectedLogic(item.key as any)}
-                    className={`w-full text-left px-2.5 py-1.5 text-xs rounded-md border transition-all ${
-                      selectedLogic === item.key
-                        ? "bg-primary-500 text-white border-primary-500 font-semibold shadow-sm"
-                        : "bg-white text-neutral-600 border-neutral-200 hover:border-primary-300"
-                    }`}
-                  >
-                    <KatexFormula
-                      formula={item.formula}
-                      mode="inline"
-                      className="!text-[11px] !my-0"
-                    />
-                    <span className="ml-1.5 text-[10px] opacity-70">
-                      {item.desc}
-                    </span>
-                  </button>
-                ))}
-              </div>
+                ]}
+                value={selectedLogic}
+                onChange={(k) => setSelectedLogic(k as any)}
+                variant="filled"
+                columns={2}
+              />
             </LeftPanelSection>
           )}
 
@@ -443,7 +454,7 @@ export function ConstantAnimation() {
           {/* 中屏公式显示卡片 */}
           <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur border border-neutral-250 rounded-xl px-4 py-2.5 shadow-md flex flex-col gap-1 font-mono">
             <div className="text-xs text-neutral-400 font-bold mb-0.5">
-              数学方程
+              高考数学方程
             </div>
             <div className="text-sm">
               <KatexFormula formula={formulasLatex.line1} mode="inline" />
@@ -464,6 +475,9 @@ export function ConstantAnimation() {
                 subMode={subMode}
                 logic={logic}
                 funModel={funModel}
+                transModel={transModel}
+                showDerivative={showDerivative}
+                showTangent={showTangent}
                 params={params}
                 scale={scale}
                 vp={vp}

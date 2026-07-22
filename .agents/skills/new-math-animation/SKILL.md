@@ -53,8 +53,8 @@ description: >
 
 Layout: ThreePanel, AnimationSvgCanvas, PageLayout → @/components/Layout
 Math: CoordinateGrid, PolarGrid, FunctionGraph, InteractivePoint, VectorArrow, TangentLine, SecantLine, Asymptote, IntervalShadow, TrackPath → @/components/Math
-UI: LeftPanel, LeftPanelSection, ParamControl, MathPanel, KatexFormula → @/components/UI
-Hooks: useAnimationViewport, useSceneScale → @/hooks
+UI: LeftPanel, LeftPanelSection, ParamControl, MathPanel, KatexFormula, TabSwitcher, SelectGrid → @/components/UI
+Hooks: useAnimationViewport, useSceneScale, useRadioGroup → @/hooks
 Theme: CANVAS_PRESETS, MATH_COLORS, ALGEBRA_COLORS, CALCULUS_COLORS, withAlpha → @/theme
 Utils: buildPolyLatex, buildQuadraticLatex → @/utils/polyBuilder
 Utils: mathToDesign, designToMath → @/utils/coordinate
@@ -153,7 +153,37 @@ export function TopicAnimation() {
         <LeftPanel>
           {/* 模式选择区（如有多个模式） */}
           <LeftPanelSection title="模式选择" subtitle="...">
-            {/* 按钮组 */}
+            <TabSwitcher
+              tabs={[
+                { key: 'modeA', label: '基本性质' },
+                { key: 'modeB', label: '反函数', formula: 'f^{-1}(x)' },
+              ]}
+              value={activeMode}
+              onChange={(k) => setActiveMode(k)}
+            />
+          </LeftPanelSection>
+
+          {/* 子选项选择（公式按钮网格） */}
+          <LeftPanelSection title="参数选择" subtitle="...">
+            <SelectGrid
+              items={[
+                { key: 'opt1', label: '选项1', formula: 'f(x)' },
+                { key: 'opt2', label: '选项2', formula: 'g(x)' },
+              ]}
+              value={selected}
+              onChange={(k) => setSelected(k)}
+              columns={3}
+            />
+            {/* fullWidth: 某项独占一行（2+1 布局）；description: label/formula 下方小字说明 */}
+            <SelectGrid
+              items={[
+                { key: 'a', label: 'a > 0', formula: 'a > 0' },
+                { key: 'b', label: 'a < 0', formula: 'a < 0' },
+                { key: 'c', label: 'a = 0', formula: 'a = 0', description: '退化情况', fullWidth: true },
+              ]}
+              value={subMode}
+              onChange={(k) => setSubMode(k)}
+            />
           </LeftPanelSection>
 
           {/* 参数调节区 */}
@@ -431,6 +461,8 @@ export const paramMeta: Record<string, ParamMeta> = {
 ❌ requestAnimationFrame(cb) 裸调用 → ✅ 数学页面禁止使用，仅在有时间演化需求时自行管理 RAF
 ❌ src/math/ import React/DOM/window → ✅ 纯函数，零副作用
 ❌ 公式与滑块参数使用不一致的颜色或硬编码颜色 → ✅ 使用 paramPrimary/Secondary/Tertiary 并在 KaTeX 中用 \color 上色实现三位一体绑定
+❌ 左屏手写 <button> 做选择控件 → ✅ TabSwitcher（Tab 切换）或 SelectGrid（公式按钮网格）
+❌ formula 字段用 $...$ 包裹 → ✅ 纯 LaTeX，katex.render() 直接接收
 
 ---
 
@@ -450,6 +482,8 @@ export const paramMeta: Record<string, ParamMeta> = {
 - [ ] 曲线连续性：FunctionGraph 对 NaN/±Infinity 断开处理
 - [ ] 左屏参数过滤：多模式页的 `paramConfigs` 按 `activeMode` 过滤，依赖数组包含 `activeMode`
 - [ ] 左屏公式渲染：paramMeta 中含数学符号的 label/description/marks[].label 提供对应 Formula 字段（推荐 `$...$` 格式）
+- [ ] 左屏选择控件：模式切换用 TabSwitcher，公式选择用 SelectGrid，禁止手写 button
+- [ ] formula 格式：纯 LaTeX，无 $ 包裹
 - [ ] 路由注册：NAV_ITEMS + Routes
 - [ ] mathQuantities 分支：buildMathQuantities 添加 animId
 

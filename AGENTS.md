@@ -42,6 +42,8 @@
 | `<foreignObject>` 内嵌 React 图表 | HTML 层 flex 分区，图表与 SVG 平级 | 铁律2 |
 | `BrowserRouter` | `HashRouter` only | 铁律5 |
 | `src/math/` 中 import React / DOM / window | 数学层纯函数，零副作用 | 铁律6 |
+| 左屏手写 `<button>` 做选择控件 | `TabSwitcher` / `SelectGrid` | 铁律3 |
+| `formula` 字段用 `$...$` 包裹 | 纯 LaTeX，`katex.render()` 直接接收 | 铁律1 |
 
 ---
 
@@ -190,6 +192,14 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 
 **左屏选择类控件**：模式切换、子选项选择（如不等式关系、函数类型）统一用按钮组，支持 KaTeX 公式渲染，禁止用 `<select>`。
 
+选择控件组件：
+- `TabSwitcher`：轻量 Tab 切换（顶部模式选择），props: `tabs`/`value`/`onChange`
+- `SelectGrid`：公式按钮网格（参数/运算符选择），props: `items`/`value`/`onChange`/`variant`/`color`/`columns`
+  - `fullWidth`: 某项独占一行（2+1 布局）
+  - `description`: label/formula 下方小字说明
+- `useRadioGroup`：自定义 radiogroup + roving tabindex（极少使用）
+- ❌ 禁止手写 `<button>` + className 做选择控件
+
 **左屏结构约定**（模式切换页必须遵守）：
 - 若页面有多个模式/子模式（如"基本性质 / 指对幂反函数 / 零点二分法"），`paramConfigs` 必须按当前模式**过滤**，仅展示该模式相关的参数，禁止无条件遍历全部 `paramMeta`
 
@@ -209,6 +219,9 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | 视觉标注箭头 | `VectorArrow` | `@/components/Math` | ✅ 支持 `fontScale` prop |
 | 左屏容器 | `LeftPanel` / `LeftPanelSection` | `@/components/UI` | — |
 | 实时数学量面板 | `MathPanel` | `@/components/UI` | — |
+| 左屏 Tab 切换 | `TabSwitcher` | `@/components/UI` | — |
+| 左屏选择网格 | `SelectGrid` | `@/components/UI` | — |
+| 通用按钮 | `Button` | `@/components/UI` | ⚠️ 当前零引用，选择控件请用 TabSwitcher/SelectGrid |
 
 ### 铁律 4B：颜色语义层级隔离（混用即违规）
 
@@ -345,7 +358,7 @@ const paramConfigs = useMemo<ParamConfig[]>(() => {
 
 ---
 
-## 📋 新建页面前必须确认的 7 件事
+## 📋 新建页面前必须确认的 11 件事
 
 1. **选择 preset**：默认 `full`；圆形/三角函数用 `square`；split 仅限双坐标系对照（需前置审查）
 2. **分层结构**：`XxxAnimation.tsx`（编排）+ `math/xxx.ts`（计算）+ `components/XxxScene.tsx`（渲染）
@@ -356,6 +369,8 @@ const paramConfigs = useMemo<ParamConfig[]>(() => {
 7. **字号缩放链路**：Animation 必须传 `fontScale={canvasSize.font}` 给 Scene；Scene 必须传 `fontScale` 给 CoordinateGrid/InteractivePoint/Asymptote/VectorArrow；SVG 内禁止 `className="text-[Npx]"` 硬编码字号
 8. **左屏参数过滤**：多模式页的 `paramConfigs` 必须按 `activeMode` 过滤参数，依赖数组必须包含 `activeMode`
 9. **左屏公式渲染**：`paramMeta` 中含数学符号的 `label`/`description`/`marks[].label` 应提供对应的 `labelFormula`/`descriptionFormula`/`marks[].labelFormula`，`ParamControl` 会自动用 KaTeX 渲染
+10. **左屏选择控件**：模式切换用 `TabSwitcher`，公式选择用 `SelectGrid`，禁止手写 `<button>` 做选择控件
+11. **formula 格式**：`formula` 字段必须是纯 LaTeX，禁止 `$...$` 包裹（`katex.render()` 直接接收，多余的 `$` 会渲染为字面美元符号）
 
 ---
 

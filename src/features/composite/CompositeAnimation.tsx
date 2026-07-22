@@ -6,6 +6,8 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TabSwitcher,
+  SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -118,55 +120,34 @@ export function CompositeAnimation() {
             title="研究模式"
             subtitle="选择分段函数或复合函数单调性"
           >
-            {/* 模式选择 */}
-            <div className="flex bg-neutral-100 p-1 rounded-lg gap-1 mb-3">
-              <button
-                onClick={() => setSubMode("piecewise")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  subMode === "piecewise"
-                    ? "bg-white text-primary-600 shadow-sm"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                分段函数连续性
-              </button>
-              <button
-                onClick={() => setSubMode("composite")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  subMode === "composite"
-                    ? "bg-white text-primary-600 shadow-sm"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                复合函数同增异减
-              </button>
-            </div>
+            <TabSwitcher
+              tabs={[
+                { key: "piecewise", label: "分段函数连续性" },
+                { key: "composite", label: "复合函数同增异减" },
+              ]}
+              value={subMode}
+              onChange={(k) => setSubMode(k as any)}
+              className="mb-3"
+            />
 
             {/* 复合函数模式下选择外层函数 f(u) */}
             {subMode === "composite" && (
-              <div className="flex gap-1.5 mb-4">
-                {[
-                  { key: "exp", label: "y = 2^u" },
-                  { key: "log", label: "y = log₂ u" },
-                  { key: "quadratic", label: "y = -(u-2)²+4" },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setOuterType(item.key as any)}
-                    className={`flex-1 py-1 px-1 text-[11px] font-bold border rounded-md transition-all ${
-                      outerType === item.key
-                        ? "border-primary-500 bg-primary-50 text-primary-700"
-                        : "border-neutral-200 bg-white text-neutral-600"
-                    }`}
-                  >
-                    <KatexFormula
-                      formula={item.label}
-                      mode="inline"
-                      className="!text-[11px] !my-0"
-                    />
-                  </button>
-                ))}
-              </div>
+              <SelectGrid
+                items={[
+                  { key: "exp", label: "y = 2^u", formula: "y = 2^u" },
+                  { key: "log", label: "y = log₂ u", formula: "y = \\log_2 u" },
+                  {
+                    key: "quadratic",
+                    label: "y = -(u-2)²+4",
+                    formula: "y = -(u-2)^2+4",
+                  },
+                ]}
+                value={outerType}
+                onChange={(k) => setOuterType(k as any)}
+                variant="outline"
+                columns={3}
+                className="mb-4"
+              />
             )}
           </LeftPanelSection>
 

@@ -6,6 +6,8 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TabSwitcher,
+  SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -105,58 +107,41 @@ export function TransformAnimation() {
             subtitle="选择基准函数与绝对值翻折模式"
           >
             {/* 基准函数选择器 */}
-            <div className="grid grid-cols-2 gap-1.5 mb-3">
-              {[
-                { key: "quadratic", label: "y = x²" },
-                { key: "sine", label: "y = sin x" },
-                { key: "cubic", label: "y = x³" },
-                { key: "exp", label: "y = 2^x" },
-              ].map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => setFnType(item.key as any)}
-                  className={`py-1.5 px-2 text-xs font-bold rounded-md border transition-all ${
-                    fnType === item.key
-                      ? "border-primary-500 bg-primary-50 text-primary-700"
-                      : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
-                  }`}
-                >
-                  <KatexFormula
-                    formula={item.label}
-                    mode="inline"
-                    className="!text-xs !my-0"
-                  />
-                </button>
-              ))}
-            </div>
+            <SelectGrid
+              items={[
+                { key: "quadratic", label: "y = x²", formula: "y = x^2" },
+                { key: "sine", label: "y = sin x", formula: "y = \\sin x" },
+                { key: "cubic", label: "y = x³", formula: "y = x^3" },
+                { key: "exp", label: "y = 2^x", formula: "y = 2^x" },
+              ]}
+              value={fnType}
+              onChange={(k) => setFnType(k as any)}
+              variant="outline"
+              className="mb-3"
+            />
 
             {/* 翻折模式选择 */}
             <div className="text-[11px] font-semibold text-neutral-500 mb-1">
               绝对值翻折模式：
             </div>
-            <div className="flex bg-neutral-100 p-1 rounded-lg gap-1 mb-4">
-              {[
-                { key: "none", formula: "\\text{无翻折}" },
-                { key: "global", formula: "|f(x)| \\text{ 整体}" },
-                { key: "input", formula: "f(|x|) \\text{ 自变量}" },
-              ].map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => setFoldMode(item.key as any)}
-                  className={`flex-1 py-1 text-[11px] font-bold rounded-md transition-colors ${
-                    foldMode === item.key
-                      ? "bg-white text-primary-600 shadow-sm"
-                      : "text-neutral-500 hover:text-neutral-800"
-                  }`}
-                >
-                  <KatexFormula
-                    formula={item.formula}
-                    mode="inline"
-                    className="!text-[11px] !my-0"
-                  />
-                </button>
-              ))}
-            </div>
+            <TabSwitcher
+              tabs={[
+                { key: "none", label: "无翻折", formula: "\\text{无翻折}" },
+                {
+                  key: "global",
+                  label: "|f(x)| 整体",
+                  formula: "|f(x)| \\text{ 整体}",
+                },
+                {
+                  key: "input",
+                  label: "f(|x|) 自变量",
+                  formula: "f(|x|) \\text{ 自变量}",
+                },
+              ]}
+              value={foldMode}
+              onChange={(k) => setFoldMode(k as any)}
+              className="mb-4"
+            />
           </LeftPanelSection>
 
           <LeftPanelSection

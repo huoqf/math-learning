@@ -6,6 +6,8 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TabSwitcher,
+  SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -99,54 +101,37 @@ export function SetAnimation() {
             title="模式选择"
             subtitle="切换集合运算与常用逻辑用语"
           >
-            <div className="flex bg-neutral-100 p-1 rounded-lg gap-1 mb-3">
-              <button
-                onClick={() => setActiveTab("venn")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  activeTab === "venn"
-                    ? "bg-white text-primary-600 shadow-sm"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                集合的基本运算
-              </button>
-              <button
-                onClick={() => setActiveTab("logic")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  activeTab === "logic"
-                    ? "bg-white text-primary-600 shadow-sm"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                充分必要条件
-              </button>
-            </div>
+            <TabSwitcher
+              tabs={[
+                { key: "venn", label: "集合的基本运算" },
+                { key: "logic", label: "充分必要条件" },
+              ]}
+              value={activeTab}
+              onChange={(k) => setActiveTab(k as "venn" | "logic")}
+              className="mb-3"
+            />
 
             {activeTab === "venn" && (
-              <div className="grid grid-cols-2 gap-1.5 mb-4">
-                {[
-                  { key: "intersection", formula: "A \\cap B" },
-                  { key: "union", formula: "A \\cup B" },
-                  { key: "complement_A", formula: "\\complement_U A" },
-                  { key: "difference_A_B", formula: "A \\setminus B" },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setVennOp(item.key as VennOpType)}
-                    className={`py-1 px-2 text-[11px] font-semibold border rounded-md transition-all ${
-                      vennOp === item.key
-                        ? "border-primary-500 bg-primary-50 text-primary-700 font-bold"
-                        : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
-                    }`}
-                  >
-                    <KatexFormula
-                      formula={item.formula}
-                      mode="inline"
-                      className="!text-[11px] !my-0"
-                    />
-                  </button>
-                ))}
-              </div>
+              <SelectGrid
+                items={[
+                  { key: "intersection", label: "A ∩ B", formula: "A \\cap B" },
+                  { key: "union", label: "A ∪ B", formula: "A \\cup B" },
+                  {
+                    key: "complement_A",
+                    label: "∁UA",
+                    formula: "\\complement_U A",
+                  },
+                  {
+                    key: "difference_A_B",
+                    label: "A \\ B",
+                    formula: "A \\setminus B",
+                  },
+                ]}
+                value={vennOp}
+                onChange={(k) => setVennOp(k as VennOpType)}
+                variant="outline"
+                className="mb-4"
+              />
             )}
           </LeftPanelSection>
 

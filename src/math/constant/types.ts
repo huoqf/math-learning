@@ -9,6 +9,9 @@ export interface MathState {
   degenerateType?: "interval_collapse" | "none";
 }
 
+export type TransModelKey =
+  "ln_x_over_x" | "exp_minus_ax" | "a_ln_x_minus_x" | "exp_minus_a_x_plus_1";
+
 /** 单变量参变分离法求解结果 */
 export interface ConstantSingleSepResult extends MathState {
   fMin: number;
@@ -21,11 +24,13 @@ export interface ConstantSingleSepResult extends MathState {
   isAlwaysTrue: boolean; // ∀x, f(x) >= a
   isExistTrue: boolean; // ∃x, f(x) >= a
   violatedInterval: [number, number] | null; // f(x) < a 的区间交集
+  tangentSlope?: number; // 切线斜率/临界值
+  implicitZero?: number | null; // 隐零点坐标 x0
 }
 
 /** 单变量直接最值讨论法求解结果 */
 export interface ConstantSingleDirectResult extends MathState {
-  a: number; // 二次函数的对称轴
+  a: number; // 参数 a
   m: number;
   n: number;
   fMin: number;
@@ -34,7 +39,9 @@ export interface ConstantSingleDirectResult extends MathState {
   xFMax: number;
   isAlwaysTrue: boolean; // f(x) >= 0 恒成立
   violatedInterval: [number, number] | null; // f(x) < 0 的区间交集
-  discussionType: "left" | "inside" | "right"; // 对称轴在区间的：左侧、内部、右侧
+  discussionType: "left" | "inside" | "right"; // 驻点/极值点在区间的：左侧、内部、右侧
+  tangentSlope?: number;
+  implicitZero?: number | null;
 }
 
 /** 双变量对决博弈求解结果 */

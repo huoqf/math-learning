@@ -9,6 +9,7 @@ export type {
   ConstantSingleSepResult,
   ConstantSingleDirectResult,
   ConstantDoubleResult,
+  TransModelKey,
 } from "./types";
 
 // 二次函数模型
@@ -24,6 +25,9 @@ export {
 export {
   evalFTrans,
   evalGParamTrans,
+  evalFTransC,
+  evalFTransD,
+  evalTransDerivative,
   solveSepEquation,
   solveDirectEquation,
   solveConstantSingleSepTrans,

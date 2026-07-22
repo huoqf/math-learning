@@ -6,6 +6,8 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TabSwitcher,
+  SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -117,95 +119,49 @@ export function FunctionAnimation() {
             title="模式选择"
             subtitle="切换函数性质与基本初等函数"
           >
-            <div className="flex bg-neutral-100 p-1 rounded-lg gap-1 mb-3">
-              <button
-                onClick={() => setActiveMode("properties")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  activeMode === "properties"
-                    ? "bg-white text-primary-600 shadow-sm"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                基本性质
-              </button>
-              <button
-                onClick={() => setActiveMode("explog")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  activeMode === "explog"
-                    ? "bg-white text-primary-600 shadow-sm"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                指对幂反函数
-              </button>
-              <button
-                onClick={() => setActiveMode("zero")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
-                  activeMode === "zero"
-                    ? "bg-white text-primary-600 shadow-sm"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                零点二分法
-              </button>
-            </div>
+            <TabSwitcher
+              tabs={[
+                { key: "properties", label: "基本性质" },
+                { key: "explog", label: "指对幂反函数" },
+                { key: "zero", label: "零点二分法" },
+              ]}
+              value={activeMode}
+              onChange={(k) => setActiveMode(k as any)}
+              className="mb-3"
+            />
 
             {/* 基本性质模式下：切换基准函数 */}
             {activeMode === "properties" && (
-              <div className="grid grid-cols-2 gap-1.5 mb-4">
-                {[
-                  { key: "cubic", formula: "y=x^3" },
-                  { key: "quadratic", formula: "y=x^2" },
-                  { key: "abs", formula: "y=|x|" },
-                  { key: "reciprocal", formula: "y=\\frac{1}{x}" },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setFnType(item.key as any)}
-                    className={`py-1 px-2 text-[11px] font-semibold border rounded-md transition-all ${
-                      fnType === item.key
-                        ? "border-primary-500 bg-primary-50 text-primary-700 font-bold"
-                        : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
-                    }`}
-                  >
-                    <KatexFormula
-                      formula={item.formula}
-                      mode="inline"
-                      className="!text-[11px] !my-0"
-                    />
-                  </button>
-                ))}
-              </div>
+              <SelectGrid
+                items={[
+                  { key: "cubic", label: "y = x³", formula: "y=x^3" },
+                  { key: "quadratic", label: "y = x²", formula: "y=x^2" },
+                  { key: "abs", label: "y = |x|", formula: "y=|x|" },
+                  {
+                    key: "reciprocal",
+                    label: "y = 1/x",
+                    formula: "y=\\frac{1}{x}",
+                  },
+                ]}
+                value={fnType}
+                onChange={(k) => setFnType(k as any)}
+                variant="outline"
+                className="mb-4"
+              />
             )}
 
             {/* 指对数模式下：切换子类型 */}
             {activeMode === "explog" && (
-              <div className="flex gap-2 mb-4">
-                <button
-                  onClick={() => setSubExpLog("explog")}
-                  className={`flex-1 py-1 text-xs font-semibold border rounded-md transition-all ${
-                    subExpLog === "explog"
-                      ? "border-primary-500 bg-primary-50 text-primary-700 font-bold"
-                      : "border-neutral-200 bg-white text-neutral-600"
-                  }`}
-                >
-                  指对数与反函数
-                </button>
-                <button
-                  onClick={() => setSubExpLog("power")}
-                  className={`flex-1 py-1 text-xs font-semibold border rounded-md transition-all ${
-                    subExpLog === "power"
-                      ? "border-primary-500 bg-primary-50 text-primary-700 font-bold"
-                      : "border-neutral-200 bg-white text-neutral-600"
-                  }`}
-                >
-                  <KatexFormula
-                    formula={"y=x^{\\alpha}"}
-                    mode="inline"
-                    className="!text-xs !my-0"
-                  />
-                </button>
-              </div>
+              <SelectGrid
+                items={[
+                  { key: "explog", label: "指对数与反函数" },
+                  { key: "power", label: "y = x^α", formula: "y=x^{\\alpha}" },
+                ]}
+                value={subExpLog}
+                onChange={(k) => setSubExpLog(k as any)}
+                variant="outline"
+                className="mb-4"
+              />
             )}
           </LeftPanelSection>
 
