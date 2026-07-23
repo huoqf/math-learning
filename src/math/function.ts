@@ -93,6 +93,82 @@ export function evalFunctionParity(
 }
 
 /**
+ * 计算割线斜率与单调性
+ */
+export function evalSecantSlope(
+  fn: (x: number) => number,
+  x1: number,
+  x2: number,
+): {
+  fx1: number;
+  fx2: number;
+  deltaX: number;
+  deltaY: number;
+  slope: number;
+  monotonicity: "increasing" | "decreasing" | "constant" | "invalid";
+  description: string;
+} {
+  const fx1 = fn(x1);
+  const fx2 = fn(x2);
+  if (!Number.isFinite(fx1) || !Number.isFinite(fx2)) {
+    return {
+      fx1,
+      fx2,
+      deltaX: x2 - x1,
+      deltaY: NaN,
+      slope: NaN,
+      monotonicity: "invalid",
+      description: "自变量包含无定义点",
+    };
+  }
+  const deltaX = x2 - x1;
+  const deltaY = fx2 - fx1;
+  if (Math.abs(deltaX) < 1e-6) {
+    return {
+      fx1,
+      fx2,
+      deltaX,
+      deltaY: 0,
+      slope: NaN,
+      monotonicity: "invalid",
+      description: "x₁ 与 x₂ 重合，割线变为切线",
+    };
+  }
+  const slope = deltaY / deltaX;
+  let monotonicity: "increasing" | "decreasing" | "constant" = "constant";
+  let description = "常数函数，割线斜率 k = 0";
+  if (slope > 1e-4) {
+    monotonicity = "increasing";
+    description = `割线斜率 k = ${slope.toFixed(2)} > 0，在 [${Math.min(x1, x2).toFixed(1)}, ${Math.max(x1, x2).toFixed(1)}] 区间单调递增`;
+  } else if (slope < -1e-4) {
+    monotonicity = "decreasing";
+    description = `割线斜率 k = ${slope.toFixed(2)} < 0，在 [${Math.min(x1, x2).toFixed(1)}, ${Math.max(x1, x2).toFixed(1)}] 区间单调递减`;
+  }
+  return { fx1, fx2, deltaX, deltaY, slope, monotonicity, description };
+}
+
+/**
+ * 轴对称与双轴周期性计算
+ */
+export function evalSymmetryPeriod(
+  axisA: number,
+  axisB: number,
+): {
+  dist: number;
+  period: number;
+  formulaDescription: string;
+} {
+  const dist = Math.abs(axisB - axisA);
+  const period = 2 * dist;
+  const formulaDescription =
+    dist > 1e-4
+      ? `关于直线 x = ${axisA.toFixed(1)} 与 x = ${axisB.toFixed(1)} 均对称 ⇒ 最小正周期 T = 2|${axisA.toFixed(1)} - ${axisB.toFixed(1)}| = ${period.toFixed(1)}`
+      : `两对称轴重合于 x = ${axisA.toFixed(1)}`;
+
+  return { dist, period, formulaDescription };
+}
+
+/**
  * 指数与对数反函数计算
  */
 export function calculateExpLog(a: number, x0: number): ExpLogResult {

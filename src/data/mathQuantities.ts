@@ -9,6 +9,7 @@ import { buildFuncExpLogPanel } from "./builders/funcExpLog";
 import { buildFuncZeroPanel } from "./builders/funcZero";
 import { buildFuncTransformPanel } from "./builders/funcTransform";
 import { buildFuncCompositePanel } from "./builders/funcComposite";
+import { buildNikePanel } from "./builders/nike";
 
 export type { MathPanelData } from "./types";
 
@@ -25,6 +26,8 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-nike":
+      return buildNikePanel(params, config);
     case "anim-quadratic":
       return buildQuadraticPanel(params, config);
     case "anim-derivative-tangent":

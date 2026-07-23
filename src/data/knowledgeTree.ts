@@ -29,6 +29,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-logic-conditions"],
     prerequisites: ["know-logic-conditions"],
   },
+
   // 2. 不等式
   {
     id: "know-ineq-basic",
@@ -48,7 +49,17 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-ineq-absolute"],
     prerequisites: [],
   },
+
   // 3. 函数概念与性质
+  {
+    id: "know-func-domain-range",
+    title: "函数的概念、定义域与值域",
+    chapter: "函数概念与性质",
+    module: "函数概念",
+    importance: "basic",
+    animationIds: ["anim-func-properties"],
+    prerequisites: [],
+  },
   {
     id: "know-func-properties",
     title: "函数的单调性与奇偶性",
@@ -56,7 +67,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     module: "函数的基本性质",
     importance: "core",
     animationIds: ["anim-func-properties"],
-    prerequisites: [],
+    prerequisites: ["know-func-domain-range"],
   },
   {
     id: "know-func-symmetry",
@@ -95,6 +106,15 @@ export const knowledgeTree: KnowledgeNode[] = [
     prerequisites: ["know-func-properties"],
   },
   {
+    id: "know-func-hook",
+    title: "对勾函数 y=ax+b/x 与双曲型图像",
+    chapter: "函数概念与性质",
+    module: "特殊模型函数",
+    importance: "gaokao",
+    animationIds: ["anim-nike"],
+    prerequisites: ["know-func-properties"],
+  },
+  {
     id: "know-func-zero",
     title: "函数的零点与二分逼近法",
     chapter: "函数概念与性质",
@@ -121,6 +141,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-func-composite"],
     prerequisites: ["know-func-properties"],
   },
+
   // 4. 导数及其应用
   {
     id: "know-derivative-tangent",
@@ -137,7 +158,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     chapter: "导数及其应用",
     module: "导数的应用",
     importance: "hard",
-    animationIds: ["anim-derivative-compare"],
+    animationIds: ["anim-derivative-tangent"],
     prerequisites: ["know-derivative-tangent"],
   },
   {
@@ -149,6 +170,25 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-constant-single", "anim-constant-double"],
     prerequisites: ["know-derivative-compare"],
   },
+  {
+    id: "know-derivative-transcendental",
+    title: "基准超越函数与切线放缩模型",
+    chapter: "导数及其应用",
+    module: "导数压轴",
+    importance: "hard",
+    animationIds: ["anim-derivative-transcendental"],
+    prerequisites: ["know-derivative-compare"],
+  },
+  {
+    id: "know-derivative-shift",
+    title: "隐零点定理与极值点偏移",
+    chapter: "导数及其应用",
+    module: "导数压轴",
+    importance: "hard",
+    animationIds: ["anim-derivative-shift"],
+    prerequisites: ["know-derivative-compare"],
+  },
+
   // 5. 三角函数
   {
     id: "know-trig-unit-circle",
@@ -160,12 +200,39 @@ export const knowledgeTree: KnowledgeNode[] = [
     prerequisites: [],
   },
   {
+    id: "know-trig-identity",
+    title: "同角三角函数关系与诱导公式",
+    chapter: "三角函数",
+    module: "三角恒等变换",
+    importance: "basic",
+    animationIds: ["anim-trig-unit-circle"],
+    prerequisites: ["know-trig-unit-circle"],
+  },
+  {
+    id: "know-trig-formulas",
+    title: "两角和差公式与倍角/辅助角化简",
+    chapter: "三角函数",
+    module: "三角恒等变换",
+    importance: "gaokao",
+    animationIds: ["anim-trig-transform"],
+    prerequisites: ["know-trig-identity"],
+  },
+  {
     id: "know-trig-transform",
     title: "三角函数 y=Asin(ωx+φ) 图像变换",
     chapter: "三角函数",
     module: "三角函数的图像与性质",
     importance: "core",
     animationIds: ["anim-trig-transform"],
+    prerequisites: ["know-trig-unit-circle"],
+  },
+  {
+    id: "know-trig-tan",
+    title: "正切函数 y=tan x 的图像与渐近线",
+    chapter: "三角函数",
+    module: "三角函数的图像与性质",
+    importance: "gaokao",
+    animationIds: ["anim-trig-tan"],
     prerequisites: ["know-trig-unit-circle"],
   },
   {
@@ -177,6 +244,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-triangle-solve"],
     prerequisites: [],
   },
+
   // 6. 平面向量与复数
   {
     id: "know-vector-linear",
@@ -214,6 +282,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-complex-geometry"],
     prerequisites: ["know-vector-linear"],
   },
+
   // 7. 数列
   {
     id: "know-sequence-geom",
@@ -242,6 +311,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-sequence-recurrence"],
     prerequisites: ["know-sequence-geom"],
   },
+
   // 8. 立体几何与空间向量
   {
     id: "know-solid-position",
@@ -270,7 +340,17 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-solid-ball"],
     prerequisites: ["know-solid-position"],
   },
+
   // 9. 解析几何
+  {
+    id: "know-line-equation",
+    title: "直线方程与点到直线的距离",
+    chapter: "解析几何",
+    module: "直线与圆",
+    importance: "basic",
+    animationIds: ["anim-circle-equation"],
+    prerequisites: [],
+  },
   {
     id: "know-circle-equation",
     title: "直线与圆的位置关系及相交弦长",
@@ -278,7 +358,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     module: "圆的方程",
     importance: "basic",
     animationIds: ["anim-circle-equation"],
-    prerequisites: [],
+    prerequisites: ["know-line-equation"],
   },
   {
     id: "know-conic-definition",
@@ -316,6 +396,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-conic-line"],
     prerequisites: ["know-conic-properties"],
   },
+
   // 10. 概率与统计
   {
     id: "know-probability-counting",

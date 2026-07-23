@@ -13,6 +13,7 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/constant";
+import type { TransModelKey } from "@/math/constant";
 import { SingleVarScene } from "./components/SingleVarScene";
 import { DoubleVarScene } from "./components/DoubleVarScene";
 

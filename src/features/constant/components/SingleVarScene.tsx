@@ -358,11 +358,10 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
               transModel === "exp_minus_a_x_plus_1") && (
               <TangentLine
                 fn={evalPrimaryFn}
-                tangentX={transModel === "a_ln_x_minus_x" ? 1.0 : 0.0}
+                x0={transModel === "a_ln_x_minus_x" ? 1.0 : 0.0}
                 scale={scale}
                 color={MATH_COLORS.tangentLine}
                 strokeWidth={1.5}
-                strokeDasharray="5 3"
               />
             )}
         </g>

@@ -3,19 +3,25 @@ import { QuadraticAnimation } from "./features/quadratic/QuadraticAnimation";
 import { DerivativeAnimation } from "./features/derivative/DerivativeAnimation";
 import { ConstantAnimation } from "./features/constant/ConstantAnimation";
 import { SetAnimation } from "./features/set";
-import { FunctionAnimation } from "./features/function";
+import { FuncPropertiesAnimation } from "./features/funcProperties";
+import { FuncExpLogAnimation } from "./features/funcExpLog";
+import { FuncZeroAnimation } from "./features/funcZero";
 import { TransformAnimation } from "./features/transform";
 import { CompositeAnimation } from "./features/composite";
+import { NikeAnimation } from "./features/nike";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 
 const PATH_TO_LABEL: Record<string, string> = {
   "/set": "集合与常用逻辑实验室",
-  "/function": "函数概念与性质实验室",
+  "/function-properties": "函数性质实验室",
+  "/function-explog": "指对幂函数实验室",
+  "/function-zero": "零点二分法实验室",
   "/transform": "函数图象变换实验室",
   "/composite": "分段与复合函数实验室",
   "/quadratic": "二次函数实验室",
   "/derivative": "导数几何意义",
   "/constant": "恒成立实验室",
+  "/nike": "对勾函数与双曲型实验室",
 };
 
 function Header() {
@@ -68,12 +74,18 @@ export default function App() {
           <Routes>
             <Route path="/" element={<KnowledgeTreeHome />} />
             <Route path="/set" element={<SetAnimation />} />
-            <Route path="/function" element={<FunctionAnimation />} />
+            <Route
+              path="/function-properties"
+              element={<FuncPropertiesAnimation />}
+            />
+            <Route path="/function-explog" element={<FuncExpLogAnimation />} />
+            <Route path="/function-zero" element={<FuncZeroAnimation />} />
             <Route path="/transform" element={<TransformAnimation />} />
             <Route path="/composite" element={<CompositeAnimation />} />
             <Route path="/quadratic" element={<QuadraticAnimation />} />
             <Route path="/derivative" element={<DerivativeAnimation />} />
             <Route path="/constant" element={<ConstantAnimation />} />
+            <Route path="/nike" element={<NikeAnimation />} />
             <Route path="*" element={<KnowledgeTreeHome />} />
           </Routes>
         </main>

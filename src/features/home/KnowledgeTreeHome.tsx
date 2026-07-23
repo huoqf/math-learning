@@ -63,15 +63,17 @@ const SECTIONS = [
 const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-set-venn": "/set",
   "anim-logic-conditions": "/set",
-  "anim-func-properties": "/function",
-  "anim-func-explog": "/function",
-  "anim-func-zero": "/function",
+  "anim-func-properties": "/function-properties",
+  "anim-func-explog": "/function-explog",
+  "anim-func-zero": "/function-zero",
   "anim-func-transform": "/transform",
   "anim-func-composite": "/composite",
   "anim-quadratic": "/quadratic",
   "anim-derivative-tangent": "/derivative",
   "anim-constant-single": "/constant",
   "anim-constant-double": "/constant",
+  "anim-nike": "/nike",
+  "anim-func-hook": "/nike",
 };
 
 // 重要性标签映射

@@ -5,8 +5,6 @@ import {
   solveConstantSingleDirect,
   solveConstantSingleSepTrans,
   solveConstantSingleDirectTrans,
-  evalFTransC,
-  evalFTransD,
   type TransModelKey,
 } from "@/math/constant";
 import { MATH_COLORS } from "@/theme";
@@ -169,7 +167,7 @@ function buildDirectBranch(
   m: number,
   n: number,
   isTranscendent: boolean,
-  transModel: TransModelKey,
+  _transModel: TransModelKey,
   col: typeof colorize,
 ): MathPanelData {
   const aAxis = params.a_axis ?? 1.0;

@@ -1,0 +1,1 @@
+export { FuncPropertiesAnimation } from "./FuncPropertiesAnimation";
