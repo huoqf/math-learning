@@ -176,7 +176,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
           {quantities.map((q, index) => (
             <div
               key={index}
-              className="flex items-center justify-between py-1.5 border-b border-neutral-100 last:border-0 transition-all duration-fast ease-standard"
+              className="flex flex-wrap items-center justify-between py-1.5 border-b border-neutral-100 last:border-0 transition-all duration-fast ease-standard gap-x-2"
             >
               <div className="flex items-center gap-1.5 min-w-0">
                 {q.color && (
@@ -189,12 +189,23 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                   {q.symbol ? `${q.label} ${q.symbol}` : q.label}
                 </span>
               </div>
-              <div className="flex items-baseline gap-1 shrink-0">
+              <div className="flex items-baseline gap-1 min-w-0 flex-1 justify-end">
                 <span
-                  className="text-sm font-mono font-semibold"
+                  className="text-sm font-mono font-semibold min-w-0 break-all"
                   style={{ color: getValueColor(q) }}
                 >
-                  {typeof q.value === "number" ? q.value.toFixed(2) : q.value}
+                  {typeof q.value === "number" ? (
+                    q.value.toFixed(2)
+                  ) : typeof q.value === "string" &&
+                    /\\[a-zA-Z]/.test(q.value) ? (
+                    <KatexFormula
+                      formula={q.value}
+                      mode="inline"
+                      className="!text-[13px]"
+                    />
+                  ) : (
+                    q.value
+                  )}
                 </span>
                 {q.unit && (
                   <span className="text-xs text-neutral-500 font-medium ml-1">

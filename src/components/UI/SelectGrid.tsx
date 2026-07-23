@@ -39,7 +39,7 @@ interface SelectGridProps {
   /** 色板 key，默认 primary */
   color?: SelectColor;
   /** 列数，默认 2 */
-  columns?: 2 | 3;
+  columns?: 1 | 2 | 3;
   className?: string;
 }
 
@@ -95,7 +95,11 @@ export const SelectGrid: React.FC<SelectGridProps> = ({
   const colorStyle = COLOR_STYLES[color];
 
   const gridClass =
-    columns === 3 ? "grid grid-cols-3 gap-1.5" : "grid grid-cols-2 gap-1.5";
+    columns === 3
+      ? "grid grid-cols-3 gap-1.5"
+      : columns === 1
+        ? "grid grid-cols-1 gap-1.5"
+        : "grid grid-cols-2 gap-1.5";
 
   return (
     <div
