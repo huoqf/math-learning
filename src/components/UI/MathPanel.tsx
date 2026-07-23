@@ -260,7 +260,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="flex justify-center py-1.5 bg-white rounded border border-neutral-100/50 my-1 overflow-x-auto min-h-[36px] items-center">
+                    <div className="flex justify-center py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center">
                       <KatexFormula formula={t.latex} mode="inline" />
                     </div>
                     {t.condition && (

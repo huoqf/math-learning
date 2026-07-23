@@ -6,7 +6,6 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
-  TabSwitcher,
   SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
@@ -120,13 +119,14 @@ export function CompositeAnimation() {
             title="研究模式"
             subtitle="选择分段函数或复合函数单调性"
           >
-            <TabSwitcher
-              tabs={[
+            <SelectGrid
+              items={[
                 { key: "piecewise", label: "分段函数连续性" },
                 { key: "composite", label: "复合函数同增异减" },
               ]}
               value={subMode}
               onChange={(k) => setSubMode(k as any)}
+              columns={1}
               className="mb-3"
             />
 
@@ -140,12 +140,13 @@ export function CompositeAnimation() {
                     key: "quadratic",
                     label: "y = -(u-2)²+4",
                     formula: "y = -(u-2)^2+4",
+                    fullWidth: true,
                   },
                 ]}
                 value={outerType}
                 onChange={(k) => setOuterType(k as any)}
                 variant="outline"
-                columns={3}
+                columns={2}
                 className="mb-4"
               />
             )}

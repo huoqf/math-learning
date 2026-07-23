@@ -5,11 +5,12 @@ import {
   CoordinateGrid,
   FunctionGraph,
   InteractivePoint,
+  Asymptote,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { MATH_COLORS } from "@/theme";
-import { calculateExpLog } from "@/math/function";
+import { calculateExpLog, calculatePowerFunction } from "@/math/function";
 
 interface ExpLogSceneProps {
   params: Record<string, number>;
@@ -38,9 +39,15 @@ export function ExpLogScene({
     onParamChange("x0", Math.round(mathPt.x * 10) / 10);
   };
 
+  const powerRes = React.useMemo(
+    () => calculatePowerFunction(powerAlpha, x0),
+    [powerAlpha, x0],
+  );
+
   const placedLabels = React.useMemo(() => {
     const entries: LabelEntry[] = [];
     const isValidBase = a > 0 && Math.abs(a - 1) > 1e-4;
+
     if (funcType === "exponential" && isValidBase) {
       const expLogRes = calculateExpLog(a, x0);
       if (Number.isFinite(expLogRes.expVal)) {
@@ -53,6 +60,18 @@ export function ExpLogScene({
           anchor: "middle",
           dy: -12,
         });
+
+        if (showInverse) {
+          const invPt = mathToDesign(expLogRes.expVal, x0, scale);
+          entries.push({
+            key: "P_inv",
+            text: `P'(${expLogRes.expVal.toFixed(1)}, ${x0.toFixed(1)})`,
+            x: invPt.x,
+            y: invPt.y,
+            anchor: "start",
+            dy: -8,
+          });
+        }
       }
     } else if (funcType === "logarithmic" && isValidBase) {
       if (x0 > 0) {
@@ -67,27 +86,81 @@ export function ExpLogScene({
             anchor: "middle",
             dy: -12,
           });
+
+          if (showInverse) {
+            const invPt = mathToDesign(logVal, x0, scale);
+            entries.push({
+              key: "P_inv",
+              text: `P'(${logVal.toFixed(1)}, ${x0.toFixed(1)})`,
+              x: invPt.x,
+              y: invPt.y,
+              anchor: "start",
+              dy: -8,
+            });
+          }
         }
+      }
+    } else if (funcType === "power") {
+      if (powerRes.isValidPoint) {
+        const pt = mathToDesign(x0, powerRes.yVal, scale);
+        entries.push({
+          key: "P",
+          text: `P(${x0.toFixed(1)}, ${powerRes.yVal.toFixed(1)})`,
+          x: pt.x,
+          y: pt.y,
+          anchor: "middle",
+          dy: -12,
+        });
       }
     }
     return avoidLabels(entries, { fontScale });
-  }, [funcType, x0, a, scale, fontScale]);
+  }, [funcType, x0, a, powerAlpha, powerRes, showInverse, scale, fontScale]);
 
-  // 幂函数模式 y = x^α
+  // 1. 幂函数模式 y = x^α
   if (funcType === "power") {
     return (
       <g>
         <CoordinateGrid scale={scale} fontScale={fontScale} />
+
+        {/* 渐近线展示 (α < 0 时展示两坐标轴渐近线) */}
+        {powerAlpha < 0 && (
+          <>
+            <Asymptote
+              type="vertical"
+              value={0}
+              scale={scale}
+              label="x = 0"
+              fontScale={fontScale}
+            />
+            <Asymptote
+              type="horizontal"
+              value={0}
+              scale={scale}
+              label="y = 0"
+              fontScale={fontScale}
+            />
+          </>
+        )}
+
+        {/* 幂函数曲线 */}
         <FunctionGraph
           fn={(x) => {
-            if (powerAlpha === 0.5 && x < 0) return NaN;
-            if (powerAlpha === -1 && Math.abs(x) < 1e-3) return NaN;
+            if (powerAlpha === 0) return Math.abs(x) < 1e-4 ? NaN : 1;
+            if (powerAlpha < 0) {
+              if (Math.abs(x) < 1e-3) return NaN;
+              if (x < 0 && !Number.isInteger(powerAlpha)) return NaN;
+              return Math.pow(x, powerAlpha);
+            }
+            // powerAlpha > 0
+            if (x < 0 && !Number.isInteger(powerAlpha)) return NaN;
             return Math.pow(x, powerAlpha);
           }}
           scale={scale}
           color={MATH_COLORS.function}
           strokeWidth={2.5}
         />
+
+        {/* 通用必过定点 (1, 1) */}
         <circle
           cx={scale.originX + 1 * scale.scaleX}
           cy={scale.originY - 1 * scale.scaleY}
@@ -95,26 +168,72 @@ export function ExpLogScene({
           fill={MATH_COLORS.paramPrimary}
         />
         <text
-          x={scale.originX + 1.2 * scale.scaleX}
-          y={scale.originY - 1.2 * scale.scaleY}
+          x={scale.originX + 1 * scale.scaleX + 8}
+          y={scale.originY - 1 * scale.scaleY - 6}
           fill={MATH_COLORS.paramPrimary}
-          fontSize={fontScale(12)}
+          fontSize={fontScale(11)}
           fontWeight="bold"
         >
           (1, 1)
         </text>
+
+        {/* α > 0 时的原点 (0,0) */}
+        {powerAlpha > 0 && (
+          <circle
+            cx={scale.originX}
+            cy={scale.originY}
+            r={4}
+            fill={MATH_COLORS.function}
+          />
+        )}
+
+        {/* 交互控制与采样点 P */}
+        {powerRes.isValidPoint && (
+          <InteractivePoint
+            cx={x0}
+            cy={powerRes.yVal}
+            scale={scale}
+            vp={vp}
+            onDrag={handleDragX0}
+            color={MATH_COLORS.function}
+            label={`P(${x0.toFixed(1)}, ${powerRes.yVal.toFixed(1)})`}
+            labelKey="P"
+            placedLabels={placedLabels}
+            fontScale={fontScale}
+          />
+        )}
       </g>
     );
   }
 
-  // 指数函数 / 对数函数模式
+  // 2. 指数与对数模式
   const isValidBase = a > 0 && Math.abs(a - 1) > 1e-4;
 
   return (
     <g>
       <CoordinateGrid scale={scale} fontScale={fontScale} />
 
-      {/* 反函数对称轴 y = x（仅 showInverse 时显示） */}
+      {/* 渐近线 */}
+      {funcType === "exponential" && isValidBase && (
+        <Asymptote
+          type="horizontal"
+          value={0}
+          scale={scale}
+          label="y = 0"
+          fontScale={fontScale}
+        />
+      )}
+      {funcType === "logarithmic" && isValidBase && (
+        <Asymptote
+          type="vertical"
+          value={0}
+          scale={scale}
+          label="x = 0"
+          fontScale={fontScale}
+        />
+      )}
+
+      {/* 反函数对称轴 y = x */}
       {showInverse && (
         <FunctionGraph
           fn={(x) => x}
@@ -145,7 +264,7 @@ export function ExpLogScene({
         />
       )}
 
-      {/* 反函数对称：同时显示指数和对数 */}
+      {/* 反函数对称辅助虚线 */}
       {showInverse && isValidBase && funcType === "exponential" && (
         <FunctionGraph
           fn={(x) => (x > 0 ? Math.log(x) / Math.log(a) : NaN)}
@@ -165,11 +284,11 @@ export function ExpLogScene({
         />
       )}
 
-      {/* 定点标注 */}
+      {/* 指数必过点 (0, 1) */}
       {isValidBase && funcType === "exponential" && (
         <g>
           <circle
-            cx={scale.originX + 0 * scale.scaleX}
+            cx={scale.originX}
             cy={scale.originY - 1 * scale.scaleY}
             r={4.5}
             fill={MATH_COLORS.function}
@@ -185,11 +304,13 @@ export function ExpLogScene({
           </text>
         </g>
       )}
+
+      {/* 对数必过点 (1, 0) */}
       {isValidBase && funcType === "logarithmic" && (
         <g>
           <circle
             cx={scale.originX + 1 * scale.scaleX}
-            cy={scale.originY - 0 * scale.scaleY}
+            cy={scale.originY}
             r={4.5}
             fill={MATH_COLORS.function}
           />
@@ -205,12 +326,15 @@ export function ExpLogScene({
         </g>
       )}
 
-      {/* 拖拽采样点 P */}
+      {/* 指数模式下的动态拖拽点 P(x0, a^x0) 与对称点 P' */}
       {isValidBase &&
         funcType === "exponential" &&
         (() => {
           const expLogRes = calculateExpLog(a, x0);
           if (!Number.isFinite(expLogRes.expVal)) return null;
+          const invPt = mathToDesign(expLogRes.expVal, x0, scale);
+          const pInvLabelObj = placedLabels.find((l) => l.key === "P_inv");
+
           return (
             <g>
               <InteractivePoint
@@ -228,16 +352,16 @@ export function ExpLogScene({
               {showInverse && (
                 <>
                   <circle
-                    cx={scale.originX + expLogRes.expVal * scale.scaleX}
-                    cy={scale.originY - x0 * scale.scaleY}
+                    cx={invPt.x}
+                    cy={invPt.y}
                     r={6}
                     fill={MATH_COLORS.functionTransformed}
                     stroke="#FFFFFF"
                     strokeWidth={2}
                   />
                   <text
-                    x={scale.originX + expLogRes.expVal * scale.scaleX + 8}
-                    y={scale.originY - x0 * scale.scaleY - 8}
+                    x={pInvLabelObj ? pInvLabelObj.x : invPt.x + 8}
+                    y={pInvLabelObj ? pInvLabelObj.y : invPt.y - 8}
                     fill={MATH_COLORS.functionTransformed}
                     fontSize={fontScale(11)}
                     fontWeight="bold"
@@ -247,8 +371,8 @@ export function ExpLogScene({
                   <line
                     x1={scale.originX + x0 * scale.scaleX}
                     y1={scale.originY - expLogRes.expVal * scale.scaleY}
-                    x2={scale.originX + expLogRes.expVal * scale.scaleX}
-                    y2={scale.originY - x0 * scale.scaleY}
+                    x2={invPt.x}
+                    y2={invPt.y}
                     stroke={MATH_COLORS.labelText}
                     strokeDasharray="3 3"
                     strokeWidth={1}
@@ -260,13 +384,16 @@ export function ExpLogScene({
           );
         })()}
 
-      {/* 拖拽采样点 P（对数模式） */}
+      {/* 对数模式下的动态拖拽点 P(x0, log_a x0) 与对称点 P' */}
       {isValidBase &&
         funcType === "logarithmic" &&
         x0 > 0 &&
         (() => {
           const logVal = Math.log(x0) / Math.log(a);
           if (!Number.isFinite(logVal)) return null;
+          const invPt = mathToDesign(logVal, x0, scale);
+          const pInvLabelObj = placedLabels.find((l) => l.key === "P_inv");
+
           return (
             <g>
               <InteractivePoint
@@ -284,16 +411,16 @@ export function ExpLogScene({
               {showInverse && (
                 <>
                   <circle
-                    cx={scale.originX + logVal * scale.scaleX}
-                    cy={scale.originY - x0 * scale.scaleY}
+                    cx={invPt.x}
+                    cy={invPt.y}
                     r={6}
                     fill={MATH_COLORS.functionTransformed}
                     stroke="#FFFFFF"
                     strokeWidth={2}
                   />
                   <text
-                    x={scale.originX + logVal * scale.scaleX + 8}
-                    y={scale.originY - x0 * scale.scaleY - 8}
+                    x={pInvLabelObj ? pInvLabelObj.x : invPt.x + 8}
+                    y={pInvLabelObj ? pInvLabelObj.y : invPt.y - 8}
                     fill={MATH_COLORS.functionTransformed}
                     fontSize={fontScale(11)}
                     fontWeight="bold"
@@ -303,8 +430,8 @@ export function ExpLogScene({
                   <line
                     x1={scale.originX + x0 * scale.scaleX}
                     y1={scale.originY - logVal * scale.scaleY}
-                    x2={scale.originX + logVal * scale.scaleX}
-                    y2={scale.originY - x0 * scale.scaleY}
+                    x2={invPt.x}
+                    y2={invPt.y}
                     stroke={MATH_COLORS.labelText}
                     strokeDasharray="3 3"
                     strokeWidth={1}

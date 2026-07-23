@@ -42,7 +42,7 @@ export function buildMathQuantities(
     case "anim-func-properties":
       return buildFuncPropertiesPanel(params, config);
     case "anim-func-explog":
-      return buildFuncExpLogPanel(params);
+      return buildFuncExpLogPanel(params, config);
     case "anim-func-zero":
       return buildFuncZeroPanel(params);
     case "anim-func-transform":

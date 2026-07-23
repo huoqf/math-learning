@@ -3,6 +3,7 @@ import {
   evalFunctionParity,
   evalSecantSlope,
   evalSymmetryPeriod,
+  calculatePowerFunction,
 } from "./function";
 
 describe("evalFunctionParity", () => {
@@ -47,5 +48,35 @@ describe("evalSymmetryPeriod", () => {
     const res = evalSymmetryPeriod(1, 4);
     expect(res.dist).toBe(3);
     expect(res.period).toBe(6);
+  });
+});
+
+describe("calculatePowerFunction", () => {
+  it("correctly evaluates power function for integer alpha = 2", () => {
+    const res = calculatePowerFunction(2, 3);
+    expect(res.isValidPoint).toBe(true);
+    expect(res.yVal).toBe(9);
+    expect(res.parityDescription).toContain("偶函数");
+  });
+
+  it("handles negative exponent alpha = -1 and invalid x0 = 0", () => {
+    const resZero = calculatePowerFunction(-1, 0);
+    expect(resZero.isValidPoint).toBe(false);
+    expect(resZero.warningMessage).toContain("x = 0 为分母无定义点");
+
+    const resValid = calculatePowerFunction(-1, 2);
+    expect(resValid.isValidPoint).toBe(true);
+    expect(resValid.yVal).toBe(0.5);
+    expect(resValid.hasAsymptote).toBe(true);
+  });
+
+  it("handles fractional exponent alpha = 0.5 with domain x >= 0", () => {
+    const resNeg = calculatePowerFunction(0.5, -4);
+    expect(resNeg.isValidPoint).toBe(false);
+    expect(resNeg.warningMessage).toContain("x 必须非负");
+
+    const resPos = calculatePowerFunction(0.5, 4);
+    expect(resPos.isValidPoint).toBe(true);
+    expect(resPos.yVal).toBe(2);
   });
 });

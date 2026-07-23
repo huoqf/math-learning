@@ -168,6 +168,18 @@ export function evalSymmetryPeriod(
   return { dist, period, formulaDescription };
 }
 
+export interface PowerFunctionResult {
+  alpha: number;
+  x0: number;
+  isValidPoint: boolean;
+  yVal: number;
+  domainDescription: string;
+  parityDescription: string;
+  monotonicityPositive: string;
+  warningMessage?: string;
+  hasAsymptote: boolean;
+}
+
 /**
  * 指数与对数反函数计算
  */
@@ -193,6 +205,104 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
     logVal,
     pointExp: { x: x0, y: expVal },
     pointLog: { x: expVal, y: x0 }, // 对应反函数点 (y, x) 恰好关于 y=x 对称
+  };
+}
+
+/**
+ * 幂函数 y = x^α 纯数学计算
+ */
+export function calculatePowerFunction(
+  alpha: number,
+  x0: number,
+): PowerFunctionResult {
+  let isValidPoint = true;
+  let warningMessage: string | undefined;
+  let yVal = NaN;
+
+  // 1. 计算 yVal 并判定定义域合法性
+  if (alpha === 0) {
+    if (Math.abs(x0) < 1e-6) {
+      isValidPoint = false;
+      warningMessage = "0⁰ 在数学上无意义！";
+    } else {
+      yVal = 1;
+    }
+  } else if (alpha < 0) {
+    if (Math.abs(x0) < 1e-6) {
+      isValidPoint = false;
+      warningMessage = `指数 α = ${alpha} < 0 时，x = 0 为分母无定义点（垂直渐近线）！`;
+    } else if (x0 < 0) {
+      // 检查指数是否允许负数自变量
+      if (Number.isInteger(alpha)) {
+        yVal = Math.pow(x0, alpha);
+      } else {
+        isValidPoint = false;
+        warningMessage = `非整数负指数 α = ${alpha} 时，x < 0 在实数域无定义！`;
+      }
+    } else {
+      yVal = Math.pow(x0, alpha);
+    }
+  } else {
+    // alpha > 0
+    if (x0 < 0) {
+      if (Number.isInteger(alpha)) {
+        yVal = Math.pow(x0, alpha);
+      } else if (alpha === 0.5) {
+        isValidPoint = false;
+        warningMessage = "√x 的自变量 x 必须非负 (x ≥ 0)！";
+      } else {
+        // 非整数正指数
+        isValidPoint = false;
+        warningMessage = `分数/非整数指数 α = ${alpha} 时，负数 x < 0 在实数域无定义！`;
+      }
+    } else {
+      yVal = Math.pow(x0, alpha);
+    }
+  }
+
+  // 2. 判定定义域与奇偶性
+  let domainDescription = "x ∈ ℝ";
+  let parityDescription = "非奇非偶函数";
+
+  if (alpha === 2) {
+    domainDescription = "x ∈ ℝ";
+    parityDescription = "偶函数 (f(-x) = f(x)，图象关于 y 轴对称)";
+  } else if (alpha === 3 || alpha === 1 || alpha === -1) {
+    domainDescription = alpha === -1 ? "{x ∈ ℝ | x ≠ 0}" : "x ∈ ℝ";
+    parityDescription = "奇函数 (f(-x) = -f(x)，图象关于原点对称)";
+  } else if (alpha === 0.5) {
+    domainDescription = "[0, +∞)";
+    parityDescription = "非奇非偶函数 (定义域不对称)";
+  } else if (alpha < 0) {
+    domainDescription = Number.isInteger(alpha) ? "{x ∈ ℝ | x ≠ 0}" : "(0, +∞)";
+    parityDescription = Number.isInteger(alpha)
+      ? alpha % 2 === 0
+        ? "偶函数"
+        : "奇函数"
+      : "非奇非偶函数";
+  } else if (alpha === 0) {
+    domainDescription = "{x ∈ ℝ | x ≠ 0}";
+    parityDescription = "偶函数 (在 x ≠ 0 时为常数 1)";
+  }
+
+  // 3. 判定在 (0, +∞) 上的单调性
+  let monotonicityPositive = "常数函数 y = 1 (α = 0)";
+  if (alpha > 0) {
+    monotonicityPositive = `单调递增 (α = ${alpha} > 0)`;
+  } else if (alpha < 0) {
+    monotonicityPositive = `单调递减 (α = ${alpha} < 0)`;
+  }
+
+  return {
+    alpha,
+    x0,
+    isValidPoint,
+    yVal,
+    domainDescription,
+    parityDescription,
+    monotonicityPositive,
+    warningMessage,
+    hasAsymptote: alpha < 0,
   };
 }
 
