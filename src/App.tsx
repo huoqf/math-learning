@@ -9,6 +9,8 @@ import { FuncZeroAnimation } from "./features/funcZero";
 import { TransformAnimation } from "./features/transform";
 import { CompositeAnimation } from "./features/composite";
 import { NikeAnimation } from "./features/nike";
+import { TranscendentalAnimation } from "./features/derivativeTranscendental";
+import { DerivativeShiftAnimation } from "./features/derivativeShift";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 
 const PATH_TO_LABEL: Record<string, string> = {
@@ -22,6 +24,8 @@ const PATH_TO_LABEL: Record<string, string> = {
   "/derivative": "导数几何意义",
   "/constant": "恒成立实验室",
   "/nike": "对勾函数与双曲型实验室",
+  "/derivative-transcendental": "基准超越函数与切线放缩模型",
+  "/derivative-shift": "隐零点定理与极值点偏移",
 };
 
 function Header() {
@@ -86,6 +90,14 @@ export default function App() {
             <Route path="/derivative" element={<DerivativeAnimation />} />
             <Route path="/constant" element={<ConstantAnimation />} />
             <Route path="/nike" element={<NikeAnimation />} />
+            <Route
+              path="/derivative-transcendental"
+              element={<TranscendentalAnimation />}
+            />
+            <Route
+              path="/derivative-shift"
+              element={<DerivativeShiftAnimation />}
+            />
             <Route path="*" element={<KnowledgeTreeHome />} />
           </Routes>
         </main>

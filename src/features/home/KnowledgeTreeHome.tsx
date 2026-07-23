@@ -74,6 +74,8 @@ const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-constant-double": "/constant",
   "anim-nike": "/nike",
   "anim-func-hook": "/nike",
+  "anim-derivative-transcendental": "/derivative-transcendental",
+  "anim-derivative-shift": "/derivative-shift",
 };
 
 // 重要性标签映射
