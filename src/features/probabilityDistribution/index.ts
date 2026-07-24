@@ -1,0 +1,1 @@
+export { ProbabilityDistributionAnimation } from "./ProbabilityDistributionAnimation";

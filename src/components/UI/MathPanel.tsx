@@ -48,6 +48,38 @@ interface MathPanelProps {
   title?: string;
 }
 
+/**
+ * 混合内容渲染：中文句子中用 $...$ 标记数学片段，其余纯文本正常换行。
+ * 例：'已知 $B$ 发生，逆向推断 $A_k$ 的后验概率'
+ * → "已知 " + KaTeX(B) + " 发生，逆向推断 " + KaTeX(A_k) + " 的后验概率"
+ */
+function renderMixedLatex(text: string): React.ReactNode {
+  const parts = text.split(/(\$[^$]+\$)/g);
+  if (parts.length === 1) return text; // 无数学标记，直接纯文本
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("$") && part.endsWith("$")) {
+          return (
+            <KatexFormula
+              key={i}
+              formula={part.slice(1, -1)}
+              mode="inline"
+              className="!my-0 !mx-0.5"
+            />
+          );
+        }
+        return <React.Fragment key={i}>{part}</React.Fragment>;
+      })}
+    </>
+  );
+}
+
+/** 宽松检测：\cmd 命令或 _^ 上下标即视为 LaTeX（供 quantities.label/value 纯公式字段使用）*/
+function hasLatex(text: string): boolean {
+  return /\\[a-zA-Z]|[_^]\{?[\w]/.test(text);
+}
+
 const THEOREM_LEVEL_STYLES: Record<
   string,
   { bg: string; text: string; label: string }
@@ -165,7 +197,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
   };
 
   return (
-    <div className="w-full h-full bg-white rounded-lg shadow-sm border border-neutral-200 p-4 overflow-y-auto space-y-5">
+    <div className="w-full h-full bg-white rounded-lg shadow-sm border border-neutral-200 p-4 overflow-y-auto overflow-x-hidden space-y-5">
       {/* ── 数学量区 ── */}
       <div>
         <h3 className="text-xs font-semibold text-neutral-600 mb-3 border-b border-neutral-100 pb-1.5">
@@ -178,15 +210,23 @@ export const MathPanel: React.FC<MathPanelProps> = ({
               key={index}
               className="flex flex-wrap items-center justify-between py-1.5 border-b border-neutral-100 last:border-0 transition-all duration-fast ease-standard gap-x-2"
             >
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                 {q.color && (
                   <span
                     className="shrink-0 w-2.5 h-2.5 rounded-full border border-white shadow-sm"
                     style={{ backgroundColor: q.color }}
                   />
                 )}
-                <span className="text-xs font-medium text-neutral-600 truncate">
-                  {q.symbol ? `${q.label} ${q.symbol}` : q.label}
+                <span className="text-xs font-medium text-neutral-600 min-w-0 break-words">
+                  {hasLatex(q.label) ? (
+                    <KatexFormula
+                      formula={q.label}
+                      mode="inline"
+                      className="!text-[11px] !my-0"
+                    />
+                  ) : (
+                    q.label
+                  )}
                 </span>
               </div>
               <div className="flex items-baseline gap-1 min-w-0 flex-1 justify-end">
@@ -196,8 +236,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                 >
                   {typeof q.value === "number" ? (
                     q.value.toFixed(2)
-                  ) : typeof q.value === "string" &&
-                    /\\[a-zA-Z]/.test(q.value) ? (
+                  ) : typeof q.value === "string" && hasLatex(q.value) ? (
                     <KatexFormula
                       formula={q.value}
                       mode="inline"
@@ -260,7 +299,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="flex justify-center py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center">
+                    <div className="flex justify-center py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center overflow-x-hidden">
                       <KatexFormula formula={t.latex} mode="inline" />
                     </div>
                     {t.condition && (
@@ -268,7 +307,9 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         <span className="shrink-0 text-[10px] bg-amber-100 text-amber-700 px-1 py-0.2 rounded font-semibold leading-none mt-0.5">
                           条件
                         </span>
-                        <span>{t.condition}</span>
+                        <span className="min-w-0 break-words leading-relaxed">
+                          {renderMixedLatex(t.condition)}
+                        </span>
                       </div>
                     )}
                     {t.prerequisites && t.prerequisites.length > 0 && (
@@ -276,16 +317,16 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         {t.prerequisites.map((pre, i) => (
                           <span
                             key={i}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium"
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium break-words"
                           >
-                            前提：{pre}
+                            前提：{renderMixedLatex(pre)}
                           </span>
                         ))}
                       </div>
                     )}
                     {t.note && (
-                      <div className="text-xs text-neutral-400 mt-0.5 pl-1">
-                        💡 {t.note}
+                      <div className="text-xs text-neutral-400 mt-0.5 pl-1 break-words leading-relaxed">
+                        💡 {renderMixedLatex(t.note)}
                       </div>
                     )}
                   </div>
@@ -333,7 +374,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                     }}
                   >
                     <IconComponent className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{w.text}</span>
+                    <span className="min-w-0 break-words">{w.text}</span>
                   </div>
                 );
               })}
@@ -386,7 +427,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                           {style.label}
                         </span>
                       </div>
-                      <span className="text-neutral-700 font-medium">
+                      <span className="text-neutral-700 font-medium break-words">
                         {point.text}
                       </span>
                     </div>

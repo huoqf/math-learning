@@ -89,10 +89,28 @@ export const STATUS_COLORS = {
   limitPoint: "#D97706", // 极限逼近目标点
 } as const;
 
-// ─── 概率与统计 (Probability & Statistics) ──────────────────────────────────
+// ─── 概率、统计与组合计数 (Probability, Statistics & Combinatorics) ────────────
 export const PROBABILITY_COLORS = {
   barFill: "#06B6D4", // 柱状图填充 — cyan-500
   densityCurve: "#0891B2", // 密度曲线 (正态分布)
+} as const;
+
+export const COMBINATORICS_COLORS = {
+  pascalNodeBg: "#F8FAFC",
+  pascalNodeBorder: "#CBD5E1",
+  pascalSelectedGlow: "rgba(239, 68, 68, 0.25)",
+  pascalLinkLine: "#94A3B8",
+  permCardBg: "#FFF1F2",
+  permCardBorder: "#FDA4AF",
+  permHeader: "#E11D48",
+  combCardBg: "#F0FDF4",
+  combCardBorder: "#86EFAC",
+  combHeader: "#059669",
+  poolBg: "#F8FAFC",
+  poolBorder: "#E2E8F0",
+  tipBg: "#F0F9FF",
+  tipBorder: "#BAE6FD",
+  tipText: "#0284C7",
 } as const;
 
 // ─── 通用 Canvas 元素 (Canvas Commons) ───────────────────────────────────────
@@ -116,6 +134,7 @@ export const MATH_COLORS = {
   ...PARAM_COLORS,
   ...STATUS_COLORS,
   ...PROBABILITY_COLORS,
+  ...COMBINATORICS_COLORS,
   ...CANVAS_COLORS,
 } as const;
 

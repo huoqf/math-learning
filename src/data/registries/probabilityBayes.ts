@@ -1,0 +1,172 @@
+import type { ParamMeta } from "../types";
+
+export const defaultParams = {
+  // 模式 1: 条件概率
+  pA: 0.5,
+  pB: 0.4,
+  pAB: 0.2,
+
+  // 模式 2: 全概率划分
+  pA1: 0.4,
+  pA2: 0.35,
+  pB_A1: 0.6,
+  pB_A2: 0.3,
+  pB_A3: 0.8,
+
+  // 模式 3: 贝叶斯诊断
+  pPriorD: 0.02,
+  pSensitivity: 0.95,
+  pFalsePositive: 0.05,
+} as const;
+
+export const paramMeta: Record<string, ParamMeta> = {
+  // ---------------- 条件概率 ----------------
+  pA: {
+    key: "pA",
+    label: "事件 A 概率 P(A)",
+    labelFormula: "P(A)",
+    min: 0.0,
+    max: 0.9,
+    step: 0.05,
+    defaultValue: 0.5,
+    importance: "core",
+    description: "已知发生的条件事件概率，决定压缩后的样本空间大小",
+    descriptionFormula:
+      "条件事件 $A$ 的概率，已知 $A$ 发生时样本空间压缩为 $A$",
+    marks: [
+      { value: 0, variant: "critical", label: "退化", labelFormula: "P(A)=0" },
+      { value: 0.5, label: "0.5" },
+    ],
+  },
+  pB: {
+    key: "pB",
+    label: "事件 B 概率 P(B)",
+    labelFormula: "P(B)",
+    min: 0.1,
+    max: 0.9,
+    step: 0.05,
+    defaultValue: 0.4,
+    importance: "core",
+    description: "目标事件 B 在全样本空间 Ω 中的边缘概率",
+    descriptionFormula: "目标事件 $B$ 在全样本空间 $\\Omega$ 中的先验概率",
+  },
+  pAB: {
+    key: "pAB",
+    label: "交集概率 P(AB)",
+    labelFormula: "P(AB)",
+    min: 0.0,
+    max: 0.5,
+    step: 0.05,
+    defaultValue: 0.2,
+    importance: "core",
+    description: "事件 A 与事件 B 同时发生的交集概率 P(A ∩ B)",
+    descriptionFormula:
+      "同时发生的联合概率 $P(A \\cap B)$，在 A 发生后成为新的有效区域",
+  },
+
+  // ---------------- 全概率划分 ----------------
+  pA1: {
+    key: "pA1",
+    label: "划分 A1 概率 P(A1)",
+    labelFormula: "P(A_1)",
+    min: 0.1,
+    max: 0.7,
+    step: 0.05,
+    defaultValue: 0.4,
+    importance: "core",
+    description: "完备事件组的第一块划分先验概率",
+    descriptionFormula: "划分块 $A_1$ 的先验概率，满足 $\\sum P(A_i) = 1$",
+  },
+  pA2: {
+    key: "pA2",
+    label: "划分 A2 概率 P(A2)",
+    labelFormula: "P(A_2)",
+    min: 0.1,
+    max: 0.7,
+    step: 0.05,
+    defaultValue: 0.35,
+    importance: "core",
+    description: "完备事件组的第二块划分先验概率（剩余为 A3）",
+    descriptionFormula:
+      "划分块 $A_2$ 的先验概率，$P(A_3) = 1 - P(A_1) - P(A_2)$",
+  },
+  pB_A1: {
+    key: "pB_A1",
+    label: "条件概率 P(B|A1)",
+    labelFormula: "P(B|A_1)",
+    min: 0.0,
+    max: 1.0,
+    step: 0.05,
+    defaultValue: 0.6,
+    importance: "advanced",
+    description: "在划分 A1 发生的条件下事件 B 的概率",
+    descriptionFormula: "分支条件概率 $P(B|A_1)$",
+  },
+  pB_A2: {
+    key: "pB_A2",
+    label: "条件概率 P(B|A2)",
+    labelFormula: "P(B|A_2)",
+    min: 0.0,
+    max: 1.0,
+    step: 0.05,
+    defaultValue: 0.3,
+    importance: "advanced",
+    description: "在划分 A2 发生的条件下事件 B 的概率",
+    descriptionFormula: "分支条件概率 $P(B|A_2)$",
+  },
+  pB_A3: {
+    key: "pB_A3",
+    label: "条件概率 P(B|A3)",
+    labelFormula: "P(B|A_3)",
+    min: 0.0,
+    max: 1.0,
+    step: 0.05,
+    defaultValue: 0.8,
+    importance: "advanced",
+    description: "在划分 A3 发生的条件下事件 B 的概率",
+    descriptionFormula: "分支条件概率 $P(B|A_3)$",
+  },
+
+  // ---------------- 贝叶斯诊断 ----------------
+  pPriorD: {
+    key: "pPriorD",
+    label: "患病先验概率 P(D)",
+    labelFormula: "P(D)",
+    min: 0.005,
+    max: 0.2,
+    step: 0.005,
+    defaultValue: 0.02,
+    importance: "core",
+    description: "总体人群中患病的自然先验概率",
+    descriptionFormula: "人群患病先验概率 $P(D)$（如 2%）",
+    marks: [
+      { value: 0.01, label: "1%" },
+      { value: 0.05, label: "5%" },
+      { value: 0.1, label: "10%" },
+    ],
+  },
+  pSensitivity: {
+    key: "pSensitivity",
+    label: "真阳性率 P(+|D)",
+    labelFormula: "P(+|D)",
+    min: 0.7,
+    max: 0.999,
+    step: 0.01,
+    defaultValue: 0.95,
+    importance: "advanced",
+    description: "试剂在确定患病者中检测出阳性的灵敏度",
+    descriptionFormula: "试剂灵敏度 / 真阳性率 $P(+|D)$",
+  },
+  pFalsePositive: {
+    key: "pFalsePositive",
+    label: "假阳性率 P(+|~D)",
+    labelFormula: "P(+|\\bar{D})",
+    min: 0.005,
+    max: 0.2,
+    step: 0.005,
+    defaultValue: 0.05,
+    importance: "advanced",
+    description: "试剂在健康人群中的误报率（假阳性）",
+    descriptionFormula: "试剂误报率 / 假阳性率 $P(+|\\bar{D})$",
+  },
+};

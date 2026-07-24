@@ -11,6 +11,9 @@ import { CompositeAnimation } from "./features/composite";
 import { NikeAnimation } from "./features/nike";
 import { TranscendentalAnimation } from "./features/derivativeTranscendental";
 import { DerivativeShiftAnimation } from "./features/derivativeShift";
+import { ProbabilityCountingAnimation } from "./features/probabilityCounting";
+import { ProbabilityBayesAnimation } from "./features/probabilityBayes";
+import { ProbabilityDistributionAnimation } from "./features/probabilityDistribution";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 
 const PATH_TO_LABEL: Record<string, string> = {
@@ -26,6 +29,9 @@ const PATH_TO_LABEL: Record<string, string> = {
   "/nike": "对勾函数与双曲型实验室",
   "/derivative-transcendental": "基准超越函数与切线放缩模型",
   "/derivative-shift": "隐零点定理与极值点偏移",
+  "/probability-counting": "计数原理与二项式定理实验室",
+  "/probability-bayes": "条件概率与贝叶斯实验室",
+  "/probability-distribution": "离散型随机变量分布列与数字特征",
 };
 
 function Header() {
@@ -97,6 +103,18 @@ export default function App() {
             <Route
               path="/derivative-shift"
               element={<DerivativeShiftAnimation />}
+            />
+            <Route
+              path="/probability-counting"
+              element={<ProbabilityCountingAnimation />}
+            />
+            <Route
+              path="/probability-bayes"
+              element={<ProbabilityBayesAnimation />}
+            />
+            <Route
+              path="/probability-distribution"
+              element={<ProbabilityDistributionAnimation />}
             />
             <Route path="*" element={<KnowledgeTreeHome />} />
           </Routes>

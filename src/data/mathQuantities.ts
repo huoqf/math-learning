@@ -13,6 +13,9 @@ import { buildNikePanel } from "./builders/nike";
 import { buildTranscendentalPanel } from "./builders/transcendental";
 
 import { buildDerivativeShiftPanel } from "./builders/derivativeShift";
+import { buildProbabilityCountingPanel } from "./builders/probabilityCounting";
+import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
+import { buildProbabilityDistributionPanel } from "./builders/probabilityDistribution";
 
 export type { MathPanelData } from "./types";
 
@@ -29,6 +32,12 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-probability-distribution":
+      return buildProbabilityDistributionPanel(params, config);
+    case "anim-probability-bayes":
+      return buildProbabilityBayesPanel(params, config);
+    case "anim-probability-counting":
+      return buildProbabilityCountingPanel(params, config);
     case "anim-derivative-shift":
       return buildDerivativeShiftPanel(params, config);
     case "anim-derivative-transcendental":

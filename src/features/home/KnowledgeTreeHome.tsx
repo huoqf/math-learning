@@ -76,6 +76,9 @@ const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-func-hook": "/nike",
   "anim-derivative-transcendental": "/derivative-transcendental",
   "anim-derivative-shift": "/derivative-shift",
+  "anim-probability-counting": "/probability-counting",
+  "anim-probability-bayes": "/probability-bayes",
+  "anim-probability-distribution": "/probability-distribution",
 };
 
 // 重要性标签映射

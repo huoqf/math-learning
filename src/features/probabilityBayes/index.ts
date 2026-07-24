@@ -1,0 +1,1 @@
+export { ProbabilityBayesAnimation } from "./ProbabilityBayesAnimation";

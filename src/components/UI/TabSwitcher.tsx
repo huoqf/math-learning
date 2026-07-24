@@ -53,7 +53,10 @@ export const TabSwitcher: React.FC<TabSwitcherProps> = ({
   return (
     <div
       role="radiogroup"
-      className={["flex bg-neutral-100 p-1 rounded-lg gap-1", className]
+      className={[
+        "flex flex-col bg-neutral-100 p-1.5 rounded-xl gap-1",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
     >
@@ -67,21 +70,26 @@ export const TabSwitcher: React.FC<TabSwitcherProps> = ({
             {...itemProps}
             onClick={() => onChange(tab.key)}
             className={[
-              "flex-1 py-1.5 text-xs font-bold rounded-md transition-colors",
+              "py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 whitespace-nowrap overflow-hidden text-left",
               isSelected
-                ? "bg-white text-primary-600 shadow-sm"
-                : "text-neutral-500 hover:text-neutral-800",
+                ? "bg-white text-primary-600 shadow-md ring-1 ring-primary-200"
+                : "text-neutral-500 hover:text-neutral-700 hover:bg-white/50",
             ].join(" ")}
           >
-            {tab.formula ? (
-              <KatexFormula
-                formula={tab.formula}
-                mode="inline"
-                className="!text-[11px] !my-0"
-              />
-            ) : (
-              tab.label
-            )}
+            <div className="flex flex-row items-center gap-2 w-full">
+              <span className="text-[12px] font-bold leading-tight whitespace-nowrap">
+                {tab.label}
+              </span>
+              {tab.formula && (
+                <span className="whitespace-nowrap opacity-80">
+                  <KatexFormula
+                    formula={tab.formula}
+                    mode="inline"
+                    className="!text-[11px] !my-0 !mx-0"
+                  />
+                </span>
+              )}
+            </div>
           </button>
         );
       })}

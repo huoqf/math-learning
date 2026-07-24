@@ -51,19 +51,21 @@ const COLOR_STYLES: Record<
 > = {
   primary: {
     selected: {
-      outline: "border-primary-500 bg-primary-50 text-primary-700 font-bold",
+      outline:
+        "border-primary-500 bg-primary-50 text-primary-700 font-bold shadow-sm",
       filled: "bg-primary-500 text-white border-primary-500 shadow-sm",
     },
     unselected: "border-neutral-200 bg-white text-neutral-600",
-    hover: "hover:border-neutral-300",
+    hover: "hover:border-primary-300 hover:bg-primary-50/30",
   },
   success: {
     selected: {
-      outline: "border-success-500 bg-success-50 text-success-700 font-bold",
+      outline:
+        "border-success-500 bg-success-50 text-success-700 font-bold shadow-sm",
       filled: "bg-success-600 text-white border-success-600 shadow-sm",
     },
     unselected: "border-neutral-200 bg-white text-neutral-600",
-    hover: "hover:border-success-300",
+    hover: "hover:border-success-300 hover:bg-success-50/30",
   },
 };
 
@@ -127,7 +129,7 @@ export const SelectGrid: React.FC<SelectGridProps> = ({
             aria-label={ariaLabel}
             onClick={() => onChange(item.key)}
             className={[
-              "py-1 px-2 text-[11px] font-semibold border rounded-md transition-all",
+              "py-2 px-2.5 text-[11px] font-semibold border-2 rounded-lg transition-all duration-200 whitespace-nowrap min-w-0 overflow-hidden",
               selectedClass,
               hoverClass,
               spanClass,
@@ -135,18 +137,21 @@ export const SelectGrid: React.FC<SelectGridProps> = ({
               .filter(Boolean)
               .join(" ")}
           >
-            <div className={item.description ? "flex flex-col gap-0.5" : ""}>
-              {item.formula ? (
-                <KatexFormula
-                  formula={item.formula}
-                  mode="inline"
-                  className="!text-[11px] !my-0"
-                />
-              ) : (
-                item.label
+            <div className="flex flex-col items-center justify-center gap-0.5 text-center w-full">
+              <span className="text-[12px] font-bold leading-tight whitespace-nowrap truncate w-full">
+                {item.label}
+              </span>
+              {item.formula && (
+                <div className="w-full truncate whitespace-nowrap opacity-90">
+                  <KatexFormula
+                    formula={item.formula}
+                    mode="inline"
+                    className="!text-[10px] !my-0 !mx-0"
+                  />
+                </div>
               )}
               {item.description && (
-                <span className="text-[10px] opacity-70">
+                <span className="text-[10px] opacity-70 whitespace-nowrap truncate w-full">
                   {item.description}
                 </span>
               )}
