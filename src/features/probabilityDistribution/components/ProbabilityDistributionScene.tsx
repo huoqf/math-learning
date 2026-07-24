@@ -21,107 +21,95 @@ export function ProbabilityDistributionScene({
   studyMode,
   scale,
   fontScale,
+  linearA = 2,
+  linearB = 1,
 }: ProbabilityDistributionSceneProps) {
   const { outcomes, mean, stdDev, maxP } = distResult;
 
-  // 确定 X 轴的范围与步长
-  const xValues = outcomes.map((o) => o.x);
-  const minX = Math.min(...xValues, 0) - 0.5;
-  const maxX = Math.max(...xValues, 5) + 0.5;
+  // 1. 固定稳定的纵轴 Y 标尺 0 ~ 1.0 (绝对无跳变抖动)
+  const yTicks = [0.2, 0.4, 0.6, 0.8, 1.0];
 
-  // 画布底线与 Y 轴参考线
+  // 确定基准线坐标
   const yAxisZero = mathToDesign(0, 0, scale);
-  const yAxisMax = mathToDesign(0, Math.max(0.35, maxP * 1.15), scale);
-  const xAxisMin = mathToDesign(minX, 0, scale);
-  const xAxisMax = mathToDesign(maxX, 0, scale);
+  const yAxisMax = mathToDesign(0, 1.0, scale);
 
-  // 期望 E(X) 坐标
+  // X 轴画线起止点绝对固定 (在 xRange [-1.2, 16.8] 内部 100% 静态不动)
+  const xAxisMin = mathToDesign(-0.6, 0, scale);
+  const xAxisMax = mathToDesign(15.6, 0, scale);
+
+  // 期望 E(X) 物理杠杆坐标
   const meanDesign = mathToDesign(mean, 0, scale);
 
-  // 方差波动带 [E(X) - σ, E(X) + σ]
-  const sigmaMin = Math.max(minX, mean - stdDev);
-  const sigmaMax = Math.min(maxX, mean + stdDev);
+  // 方差波动带 [E(X) - σ, E(X) + σ] (限制在 X 轴有效展示区间)
+  const sigmaMin = Math.max(-0.6, mean - stdDev);
+  const sigmaMax = Math.min(15.6, mean + stdDev);
   const sigmaMinDesign = mathToDesign(sigmaMin, 0, scale);
   const sigmaMaxDesign = mathToDesign(sigmaMax, 0, scale);
 
-  // 柱子宽度计算 (根据元素数量自适应宽度)
-  const barWidthMath =
-    outcomes.length > 12 ? 0.35 : outcomes.length > 8 ? 0.45 : 0.55;
-  const halfBarWidthPx = Math.max(8, (barWidthMath * scale.scaleX) / 2);
-
-  // 动态 Y 轴标尺刻度
-  const yTicks = [0.2, 0.4, 0.6, 0.8, 1.0].filter(
-    (val) => val <= (maxP * 1.25 || 0.4),
-  );
-  if (yTicks.length < 3) {
-    const step = maxP / 3;
-    yTicks.length = 0;
-    yTicks.push(
-      Number(step.toFixed(2)),
-      Number((step * 2).toFixed(2)),
-      Number(maxP.toFixed(2)),
-    );
-  }
+  // 柱体像素宽度固定 (由固定比例 scale.scaleX 确定，绝对不随 n 的增减发生压缩变形)
+  const halfBarWidthPx = (0.4 * scale.scaleX) / 2;
 
   return (
     <g className="select-none">
-      {/* 1. 背景网格与纵轴标尺 */}
+      {/* ================= 1. 背景静止网格与 Y 轴刻度 (固定 0~1.0) ================= */}
       {yTicks.map((pVal) => {
         const linePos = mathToDesign(0, pVal, scale);
         return (
           <g key={`grid-y-${pVal}`}>
             <line
-              x1={xAxisMin.x - 10}
+              x1={xAxisMin.x - 12}
               y1={linePos.y}
-              x2={xAxisMax.x + 20}
+              x2={xAxisMax.x + 24}
               y2={linePos.y}
               stroke={CANVAS_COLORS.grid}
               strokeDasharray="4 4"
               strokeWidth={1}
             />
-            {/* 纵轴概率刻度文字 */}
+            {/* 纵轴概率刻度 */}
             <text
-              x={xAxisMin.x - 16}
+              x={xAxisMin.x - 18}
               y={linePos.y + fontScale(4)}
               fill={CANVAS_COLORS.labelText}
               fontSize={fontScale(11)}
               textAnchor="end"
               fontWeight="600"
+              className="font-mono"
             >
-              {pVal.toFixed(2)}
+              {pVal.toFixed(1)}
             </text>
           </g>
         );
       })}
 
-      {/* 2. 方差波动范围阴影带 [E(X) - σ, E(X) + σ] */}
+      {/* ================= 2. 方差波动范围包络带 [E(X)-σ, E(X)+σ] ================= */}
       {stdDev > 0.001 && (
         <g className="transition-all duration-300">
           <rect
             x={sigmaMinDesign.x}
-            y={yAxisMax.y}
+            y={yAxisMax.y - 12}
             width={Math.max(4, sigmaMaxDesign.x - sigmaMinDesign.x)}
-            height={Math.abs(yAxisZero.y - yAxisMax.y)}
-            fill={withAlpha(MATH_COLORS.asymptote, 0.08)}
+            height={Math.abs(yAxisZero.y - (yAxisMax.y - 12))}
+            fill={withAlpha(MATH_COLORS.asymptote, 0.07)}
             stroke={withAlpha(MATH_COLORS.asymptote, 0.35)}
             strokeDasharray="4 3"
-            rx={4}
+            rx={6}
           />
-          {/* 标准差区间标注 */}
+          {/* 标准差区间顶端标注 */}
           <text
             x={(sigmaMinDesign.x + sigmaMaxDesign.x) / 2}
-            y={yAxisMax.y - 8}
+            y={yAxisMax.y - 18}
             fill={MATH_COLORS.asymptote}
             fontSize={fontScale(10)}
             textAnchor="middle"
             fontWeight="bold"
           >
-            σ 波动区间 [E(X)-σ, E(X)+σ]
+            σ 波动区间 [{(mean - stdDev).toFixed(2)},{" "}
+            {(mean + stdDev).toFixed(2)}]
           </text>
         </g>
       )}
 
-      {/* 3. 横轴 X 坐标底线与箭头 */}
+      {/* ================= 3. 主 X 坐标轴与箭头 ================= */}
       <line
         x1={xAxisMin.x - 20}
         y1={yAxisZero.y}
@@ -146,7 +134,7 @@ export function ProbabilityDistributionScene({
         x
       </text>
 
-      {/* 4. 主概率分布柱状图 (Bar Plot) */}
+      {/* ================= 4. 主概率分布柱状图 ================= */}
       {outcomes.map((item, idx) => {
         const topPos = mathToDesign(item.x, item.p, scale);
         const bottomPos = mathToDesign(item.x, 0, scale);
@@ -165,44 +153,43 @@ export function ProbabilityDistributionScene({
               x={topPos.x - halfBarWidthPx}
               y={topPos.y}
               width={halfBarWidthPx * 2}
-              height={Math.max(barHeight, 3)}
-              fill={withAlpha(barColor, isMax ? 0.88 : 0.7)}
+              height={Math.max(barHeight, 2)}
+              fill={withAlpha(barColor, isMax ? 0.9 : 0.72)}
               stroke={barColor}
-              strokeWidth={isMax ? 2 : 1.5}
+              strokeWidth={isMax ? 2.2 : 1.5}
               rx={4}
               className="transition-all duration-300 group-hover:opacity-100"
             />
 
-            {/* 柱顶概率数值标注 (带白框垫底防止与虚线遮挡) */}
+            {/* 柱顶概率数值 (带半透明背景与高亮防重叠) */}
             {item.p > 0.0005 && (
-              <g
-                transform={`translate(${topPos.x}, ${topPos.y - (isMax ? 12 : 8)})`}
-              >
+              <g transform={`translate(${topPos.x}, ${topPos.y - 8})`}>
                 <rect
-                  x={-18}
+                  x={-19}
                   y={-10}
-                  width={36}
-                  height={14}
+                  width={38}
+                  height={13}
                   fill="#FFFFFF"
                   fillOpacity={0.92}
                   rx={3}
                 />
                 <text
                   x={0}
-                  y={1}
+                  y={0}
                   fill={
                     isMax ? MATH_COLORS.paramPrimary : CANVAS_COLORS.labelText
                   }
                   fontSize={fontScale(10)}
                   textAnchor="middle"
                   fontWeight={isMax ? "bold" : "600"}
+                  className="font-mono"
                 >
                   {item.p.toFixed(3)}
                 </text>
               </g>
             )}
 
-            {/* 横轴刻度取值 x_k 标注 */}
+            {/* 横轴刻度取值 x_i 标注 */}
             <text
               x={bottomPos.x}
               y={bottomPos.y + fontScale(16)}
@@ -217,49 +204,12 @@ export function ProbabilityDistributionScene({
         );
       })}
 
-      {/* 5. 线性变换对比模式：渲染 Y = aX + b 的镜像或重叠分布柱 */}
-      {studyMode === "linear" && transformedDist && (
-        <g className="opacity-85">
-          {transformedDist.outcomes.map((tItem, idx) => {
-            const topPos = mathToDesign(tItem.x, tItem.p, scale);
-            const bottomPos = mathToDesign(tItem.x, 0, scale);
-            const barHeight = Math.abs(bottomPos.y - topPos.y);
-
-            return (
-              <g key={`trans-bar-${tItem.x}-${idx}`}>
-                <rect
-                  x={topPos.x - halfBarWidthPx * 0.7}
-                  y={topPos.y}
-                  width={halfBarWidthPx * 1.4}
-                  height={Math.max(barHeight, 3)}
-                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.4)}
-                  stroke={MATH_COLORS.paramSecondary}
-                  strokeDasharray="2 2"
-                  strokeWidth={1.5}
-                  rx={3}
-                />
-                <text
-                  x={topPos.x}
-                  y={topPos.y - 20}
-                  fill={MATH_COLORS.paramSecondary}
-                  fontSize={fontScale(9)}
-                  textAnchor="middle"
-                  fontWeight="bold"
-                >
-                  Y={tItem.x}
-                </text>
-              </g>
-            );
-          })}
-        </g>
-      )}
-
-      {/* 6. 均值 E(X) 物理杠杆平衡支点 (Center of Mass Pivot / Fulcrum) */}
+      {/* ================= 5. 期望 E(X) 物理平衡杠杆支点 ================= */}
       <g className="transition-all duration-300">
-        {/* 垂直指示中轴虚线 */}
+        {/* 垂直重心虚线 */}
         <line
           x1={meanDesign.x}
-          y1={yAxisMax.y - 2}
+          y1={yAxisMax.y - 4}
           x2={meanDesign.x}
           y2={yAxisZero.y}
           stroke={MATH_COLORS.tangentLine}
@@ -267,7 +217,7 @@ export function ProbabilityDistributionScene({
           strokeDasharray="5 4"
         />
 
-        {/* 下方杠杆支点（三角形 Pivot） */}
+        {/* 杠杆支点 (Pivot) */}
         <polygon
           points={`${meanDesign.x},${yAxisZero.y + 2} ${meanDesign.x - 8},${
             yAxisZero.y + 14
@@ -277,12 +227,12 @@ export function ProbabilityDistributionScene({
           strokeWidth={1.5}
         />
 
-        {/* 均值 E(X) 标签 */}
+        {/* E(X) 期望重心卡片 */}
         <g transform={`translate(${meanDesign.x}, ${yAxisZero.y + 30})`}>
           <rect
-            x={-38}
+            x={-42}
             y={-12}
-            width={76}
+            width={84}
             height={22}
             fill={MATH_COLORS.tangentLine}
             rx={4}
@@ -298,59 +248,124 @@ export function ProbabilityDistributionScene({
             E(X) = {mean.toFixed(2)}
           </text>
         </g>
-
-        {/* 线性变换模式下，渲染 E(Y) 支点 */}
-        {studyMode === "linear" && transformedDist && (
-          <g>
-            {(() => {
-              const meanYPos = mathToDesign(transformedDist.mean, 0, scale);
-              return (
-                <g className="transition-all duration-300">
-                  <line
-                    x1={meanYPos.x}
-                    y1={yAxisMax.y + 15}
-                    x2={meanYPos.x}
-                    y2={yAxisZero.y}
-                    stroke={MATH_COLORS.paramSecondary}
-                    strokeWidth={2}
-                    strokeDasharray="4 3"
-                  />
-                  <polygon
-                    points={`${meanYPos.x},${yAxisZero.y + 2} ${
-                      meanYPos.x - 7
-                    },${yAxisZero.y + 12} ${meanYPos.x + 7},${
-                      yAxisZero.y + 12
-                    }`}
-                    fill={MATH_COLORS.paramSecondary}
-                  />
-                  <g
-                    transform={`translate(${meanYPos.x}, ${yAxisZero.y + 56})`}
-                  >
-                    <rect
-                      x={-42}
-                      y={-10}
-                      width={84}
-                      height={20}
-                      fill={MATH_COLORS.paramSecondary}
-                      rx={3}
-                    />
-                    <text
-                      x={0}
-                      y={3}
-                      fill="#FFFFFF"
-                      fontSize={fontScale(10)}
-                      textAnchor="middle"
-                      fontWeight="bold"
-                    >
-                      E(Y) = {transformedDist.mean.toFixed(2)}
-                    </text>
-                  </g>
-                </g>
-              );
-            })()}
-          </g>
-        )}
       </g>
+
+      {/* ================= 6. 线性变换 Y = aX + b 的真实双轨道数形联动视角 ================= */}
+      {studyMode === "linear" && transformedDist && (
+        <g className="transition-all duration-300">
+          {distResult.outcomes.map((o, idx) => {
+            // 原变量 X 的设计像素坐标
+            const xPos = mathToDesign(o.x, 0, scale);
+            // 新变量 Y = aX + b 的实际数学位置与像素坐标
+            const yMathVal = linearA * o.x + linearB;
+            const yPos = mathToDesign(yMathVal, 0, scale);
+            const topYPos = mathToDesign(yMathVal, o.p, scale);
+
+            return (
+              <g key={`linear-map-${idx}`}>
+                {/* 1. 从上轨 X_k 到下轨 Y_k 的动态变换映射指引线 (绝对平行/发散，零交叉) */}
+                <line
+                  x1={xPos.x}
+                  y1={yAxisZero.y + 12}
+                  x2={yPos.x}
+                  y2={yAxisZero.y + 38}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 3"
+                  className="opacity-70 transition-all duration-300"
+                />
+
+                {/* 2. 下轨道 Y_k 处的离散度对比虚线柱 */}
+                <rect
+                  x={yPos.x - halfBarWidthPx * 0.75}
+                  y={topYPos.y + 40}
+                  width={halfBarWidthPx * 1.5}
+                  height={Math.max(Math.abs(yAxisZero.y - topYPos.y), 2)}
+                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.2)}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeDasharray="3 3"
+                  strokeWidth={1.2}
+                  rx={3}
+                  className="transition-all duration-300"
+                />
+
+                {/* 3. 下轨道 Y_k 节点数值卡片 */}
+                <g transform={`translate(${yPos.x}, ${yAxisZero.y + 42})`}>
+                  <rect
+                    x={-22}
+                    y={-8}
+                    width={44}
+                    height={15}
+                    fill={MATH_COLORS.paramSecondary}
+                    rx={3}
+                  />
+                  <text
+                    x={0}
+                    y={3}
+                    fill="#FFFFFF"
+                    fontSize={fontScale(9)}
+                    textAnchor="middle"
+                    fontWeight="bold"
+                    className="font-mono"
+                  >
+                    y={yMathVal.toFixed(1)}
+                  </text>
+                </g>
+              </g>
+            );
+          })}
+
+          {/* 4. 新期望 E(Y) = aE(X)+b 重心杠杆支点 (精准落于 y≈475px，不与 515px 处的底部表格发生任何打架) */}
+          {(() => {
+            const meanYVal = transformedDist.mean;
+            const meanYPos = mathToDesign(meanYVal, 0, scale);
+
+            return (
+              <g className="transition-all duration-300">
+                {/* 垂直期望指示虚线 */}
+                <line
+                  x1={meanYPos.x}
+                  y1={yAxisZero.y + 40}
+                  x2={meanYPos.x}
+                  y2={yAxisZero.y + 62}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={1.8}
+                  strokeDasharray="4 3"
+                />
+
+                {/* 下轨 E(Y) 重心支点 (三角形) */}
+                <polygon
+                  points={`${meanYPos.x},${yAxisZero.y + 62} ${
+                    meanYPos.x - 6
+                  },${yAxisZero.y + 70} ${meanYPos.x + 6},${yAxisZero.y + 70}`}
+                  fill={MATH_COLORS.paramPrimary}
+                />
+
+                <g transform={`translate(${meanYPos.x}, ${yAxisZero.y + 80})`}>
+                  <rect
+                    x={-52}
+                    y={-9}
+                    width={104}
+                    height={18}
+                    fill={MATH_COLORS.paramPrimary}
+                    rx={3}
+                  />
+                  <text
+                    x={0}
+                    y={3}
+                    fill="#FFFFFF"
+                    fontSize={fontScale(9.5)}
+                    textAnchor="middle"
+                    fontWeight="bold"
+                  >
+                    E(Y) = {meanYVal.toFixed(2)}
+                  </text>
+                </g>
+              </g>
+            );
+          })()}
+        </g>
+      )}
     </g>
   );
 }
