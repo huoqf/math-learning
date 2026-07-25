@@ -440,7 +440,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     chapter: "概率与统计",
     module: "统计分析",
     importance: "gaokao",
-    animationIds: ["anim-probability-regression"],
+    animationIds: ["anim-paired-data"],
     prerequisites: [],
   },
 ];

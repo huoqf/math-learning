@@ -17,6 +17,7 @@ import { buildProbabilityCountingPanel } from "./builders/probabilityCounting";
 import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
 import { buildProbabilityDistributionPanel } from "./builders/probabilityDistribution";
 import { buildProbabilityNormalPanel } from "./builders/probabilityNormal";
+import { buildPairedDataPanel } from "./builders/pairedData";
 
 export type { MathPanelData } from "./types";
 
@@ -33,6 +34,8 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-paired-data":
+      return buildPairedDataPanel(params, config);
     case "anim-probability-normal":
       return buildProbabilityNormalPanel(params, config);
     case "anim-probability-distribution":

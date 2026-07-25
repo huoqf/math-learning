@@ -80,6 +80,8 @@ const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-probability-bayes": "/probability-bayes",
   "anim-probability-distribution": "/probability-distribution",
   "anim-probability-normal": "/statistics-normal",
+  "anim-paired-data": "/paired-data",
+  "anim-probability-regression": "/paired-data",
 };
 
 // 重要性标签映射

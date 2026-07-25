@@ -15,6 +15,7 @@ import { ProbabilityCountingAnimation } from "./features/probabilityCounting";
 import { ProbabilityBayesAnimation } from "./features/probabilityBayes";
 import { ProbabilityDistributionAnimation } from "./features/probabilityDistribution";
 import { ProbabilityNormalAnimation } from "./features/probabilityNormal";
+import { PairedDataAnimation } from "./features/pairedData/PairedDataAnimation";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 
 const PATH_TO_LABEL: Record<string, string> = {
@@ -34,6 +35,7 @@ const PATH_TO_LABEL: Record<string, string> = {
   "/probability-bayes": "条件概率与贝叶斯实验室",
   "/probability-distribution": "离散型随机变量分布列与数字特征",
   "/statistics-normal": "频率分布直方图与正态分布实验室",
+  "/paired-data": "成对数据的回归分析与独立性检验",
 };
 
 function Header() {
@@ -122,6 +124,7 @@ export default function App() {
               path="/statistics-normal"
               element={<ProbabilityNormalAnimation />}
             />
+            <Route path="/paired-data" element={<PairedDataAnimation />} />
             <Route path="*" element={<KnowledgeTreeHome />} />
           </Routes>
         </main>
