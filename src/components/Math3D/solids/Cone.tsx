@@ -1,5 +1,5 @@
-import { Edges } from "@react-three/drei";
-import { mathToThree } from "@/math3d/coordinateConvention";
+import { RotationSolid } from "./RotationSolid";
+import { coneProfile } from "@/math3d/rotationProfiles";
 import { MATH_COLORS } from "@/theme/math/colors";
 
 interface ConeProps {
@@ -7,24 +7,18 @@ interface ConeProps {
   height: number;
   colorKey?: keyof typeof MATH_COLORS;
   opacity?: number;
-  segments?: number;
 }
 
+/** 直角三角形绕直角边旋转 → 圆锥（语义化薄封装） */
 export const Cone = ({
   radius,
   height,
   colorKey = "primary",
-  opacity = 0.3,
-  segments = 32,
+  opacity = 0.28,
 }: ConeProps) => (
-  <mesh position={mathToThree({ x: 0, y: 0, z: height / 2 })}>
-    <coneGeometry args={[radius, height, segments]} />
-    <meshStandardMaterial
-      color={MATH_COLORS[colorKey]}
-      transparent
-      opacity={opacity}
-      side={2}
-    />
-    <Edges color={MATH_COLORS.line} />
-  </mesh>
+  <RotationSolid
+    profile={coneProfile(radius, height)}
+    colorKey={colorKey}
+    opacity={opacity}
+  />
 );

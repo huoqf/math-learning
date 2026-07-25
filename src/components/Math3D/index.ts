@@ -43,3 +43,13 @@ export { Point3D } from "./Point3D";
 export { Vector3DArrow } from "./Vector3DArrow";
 export { Plane3D } from "./Plane3D";
 export { AngleArc3D } from "./AngleArc3D";
+
+// ============================================================================
+// 截面可视化 (Cross-Section Visualization)
+// ============================================================================
+export { SectionPlane3D } from "./SectionPlane3D";
+
+// ============================================================================
+// 三视图 (Three-View Orthographic Drawing)
+// ============================================================================
+export { ThreeViewsPanel } from "./ThreeViewsPanel";

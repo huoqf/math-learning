@@ -22,6 +22,7 @@ import {
   buildSpatialAnglePanel,
   buildLinePlaneRelationPanel,
   buildCircumSpherePanel,
+  buildRotationBodyPanel,
 } from "./builders/solidGeometry";
 
 export type { MathPanelData } from "./types";
@@ -82,6 +83,8 @@ export function buildMathQuantities(
       return buildLinePlaneRelationPanel(params);
     case "anim-solid-ball":
       return buildCircumSpherePanel(params);
+    case "anim-solid-rotation-body":
+      return buildRotationBodyPanel(params);
     default:
       return EMPTY;
   }

@@ -109,6 +109,7 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | 双曲线/正切/指对数渐近线 | `Asymptote` | `@/components/Math` | ✅ 支持 `fontScale` prop |
 | 解集/定积分区间阴影 | `IntervalShadow` | `@/components/Math` | — |
 | 视觉标注箭头 | `VectorArrow` | `@/components/Math` | ✅ 支持 `fontScale` prop |
+| 三视图正投影 | `ThreeViewsPanel` | `@/components/Math3D` | — |
 | 左屏容器 | `LeftPanel` / `LeftPanelSection` | `@/components/UI` | — |
 | 实时数学量面板 | `MathPanel` | `@/components/UI` | — |
 
@@ -155,7 +156,7 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 
 - [ ] **三屏隔离**：主屏无大段教学文字；左屏参数走 `paramMeta`；右屏由 MathPanel 渲染。长 LaTeX 公式已做 aligned 对齐。
 - [ ] **布局预设与网格**：选择正确的 preset 和坐标系类型。2D 网格使用 CoordinateGrid，圆形对称使用 PolarGrid。
-- [ ] **3D 几何变换与规范**：3D 立体几何必须使用 `math3DToDesign` 统投影。严格遵循 XYZ 三轴红-绿-蓝 (axis3D_X/Y/Z) 标准轴色设定。
+- [ ] **3D 几何变换与规范**：3D 立体几何必须使用 `math3DToDesign` 统投影。严格遵循 XYZ 三轴红-绿-蓝 (axis3D_X/Y/Z) 标准轴色设定。3D 页面若支持三视图模式，中屏使用 `ThreeViewsPanel`（纯 SVG 正投影），不加载 three.js。
 - [ ] **颜色与三位一体绑定**：无任何 Hex 硬编码颜色。通过 paramPrimary/Secondary/Tertiary 保证“公式-图形-滑块”色彩三位一体绑定。
 - [ ] **退化机制与奇异标记**：当参数产生退化时的崩溃防护及红字 `WarningItem` 提示已完成。临界退化参数已在 `paramMeta` 的 `marks` 中用 `'critical'` 标示。
 - [ ] **曲线连续性**：检验绘制曲线时，不连续点是否在采样中被剔除。

@@ -16,6 +16,12 @@ export const defaultParams = {
     b: 2,
     c: 2,
   },
+  rotationBody: {
+    r1: 1.5,
+    r2: 0.8,
+    height: 3,
+    sweepAngleDeg: 360,
+  },
 } as const;
 
 export const linePlaneRelationMeta: ParamMeta[] = [
@@ -110,6 +116,45 @@ export const circumInSphereMeta: ParamMeta[] = [
     max: 6,
     step: 0.1,
     defaultValue: 2,
+    importance: "core",
+  },
+];
+
+export const rotationBodyMeta: ParamMeta[] = [
+  {
+    key: "r1",
+    label: "底半径 / 半径",
+    min: 0.5,
+    max: 3,
+    step: 0.1,
+    defaultValue: 1.5,
+    importance: "core",
+  },
+  {
+    key: "r2",
+    label: "上口半径（仅圆台）",
+    min: 0.3,
+    max: 3,
+    step: 0.1,
+    defaultValue: 0.8,
+    importance: "advanced",
+  },
+  {
+    key: "height",
+    label: "高",
+    min: 1,
+    max: 5,
+    step: 0.1,
+    defaultValue: 3,
+    importance: "core",
+  },
+  {
+    key: "sweepAngleDeg",
+    label: "旋转角度",
+    min: 0,
+    max: 360,
+    step: 1,
+    defaultValue: 360,
     importance: "core",
   },
 ];

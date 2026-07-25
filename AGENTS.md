@@ -50,16 +50,18 @@
 ## ⚡ 三屏内容分配铁律（设计前必读）
 
 ```
-左屏（LeftPanel）         中屏（AnimationSvgCanvas）        右屏（MathPanel）
-──────────────────        ──────────────────────────        ──────────────────────
-• paramMeta 数值参数      • 动画场景（SVG 主体）            • MathQuantity（数学量）
-• 模式切换（按钮组）      • CenterExtra 图表（可选）         • Theorem（定理公式+前提+条件）
-                          ❌ 禁止大段教学文字              • GaokaoPoint（高考数学考点）
-                          ❌ 禁止完整公式推导               • WarningItem（退化警示）
-                          ❌ 禁止高考考点总结               ❌ 禁止动画控制控件
+左屏（LeftPanel）         中屏（AnimationSvgCanvas / ThreeDCanvas）  右屏（MathPanel）
+──────────────────        ────────────────────────────────────────   ──────────────────────
+• paramMeta 数值参数      • 动画场景（SVG / R3F 3D 主体）            • MathQuantity（数学量）
+• 模式切换（按钮组）      • CenterExtra 图表（可选）                  • Theorem（定理公式+前提+条件）
+                          ❌ 禁止大段教学文字                        • GaokaoPoint（高考数学考点）
+                          ❌ 禁止完整公式推导                         • WarningItem（退化警示）
+                          ❌ 禁止高考考点总结                         ❌ 禁止动画控制控件
 ```
 
 **主屏文字约束**：SVG 内只允许出现数学量数值标注（如 `y = 2.0x`）和坐标轴标签，禁止教学解释段落。
+
+**3D 页面双模式**：3D 页面可提供"3D 直观图 / 三视图"切换。三视图模式下中屏使用 `ThreeViewsPanel`（纯 SVG 正投影）替代 `ThreeDCanvas`，此时不加载 three.js。左屏提供切换按钮，与视角预设按钮并列。
 
 ## ⚡ 布局 preset 选择铁律
 
@@ -217,6 +219,7 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | 双曲线/正切/指对数渐近线 | `Asymptote` | `@/components/Math` | ✅ 支持 `fontScale` prop |
 | 解集/定积分区间阴影 | `IntervalShadow` | `@/components/Math` | — |
 | 视觉标注箭头 | `VectorArrow` | `@/components/Math` | ✅ 支持 `fontScale` prop |
+| 三视图正投影 | `ThreeViewsPanel` | `@/components/Math3D` | — |
 | 左屏容器 | `LeftPanel` / `LeftPanelSection` | `@/components/UI` | — |
 | 实时数学量面板 | `MathPanel` | `@/components/UI` | — |
 | 左屏 Tab 切换 | `TabSwitcher` | `@/components/UI` | — |

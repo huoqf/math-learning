@@ -268,3 +268,131 @@ export function buildCircumSpherePanel(
 
   return { quantities, theorems, gaokaoPoints, warnings: [] };
 }
+
+// ── know-solid-rotation-body: 旋转体的结构特征 ──
+
+export function buildRotationBodyPanel(
+  params: Record<string, number>,
+): MathPanelData {
+  const shape =
+    ((params as Record<string, unknown>).shape as string) ?? "rectangle";
+  const r1 = params.r1 ?? 1.5;
+  const r2 = params.r2 ?? 0.8;
+  const height = params.height ?? 3;
+
+  const quantities: MathQuantity[] = [];
+  const theorems: Theorem[] = [];
+
+  if (shape === "rectangle") {
+    quantities.push(
+      { label: "底半径", symbol: "r", value: r1, color: "#2563EB" },
+      { label: "高", symbol: "h", value: height, color: "#059669" },
+      {
+        label: "侧面积",
+        symbol: "S_{侧}",
+        value: (2 * Math.PI * r1 * height).toFixed(2),
+        color: "#D97706",
+      },
+      {
+        label: "体积",
+        symbol: "V",
+        value: (Math.PI * r1 ** 2 * height).toFixed(2),
+        color: "#DC2626",
+      },
+    );
+    theorems.push(
+      { name: "圆柱侧面积", latex: "S_{侧}=2\\pi r h", level: "core" },
+      { name: "圆柱体积", latex: "V=\\pi r^2 h", level: "core" },
+    );
+  } else if (shape === "rightTriangle") {
+    const l = Math.sqrt(r1 ** 2 + height ** 2);
+    quantities.push(
+      { label: "底半径", symbol: "r", value: r1, color: "#2563EB" },
+      { label: "高", symbol: "h", value: height, color: "#059669" },
+      { label: "母线长", symbol: "l", value: l.toFixed(2), color: "#8B5CF6" },
+      {
+        label: "侧面积",
+        symbol: "S_{侧}",
+        value: (Math.PI * r1 * l).toFixed(2),
+        color: "#D97706",
+      },
+      {
+        label: "体积",
+        symbol: "V",
+        value: ((Math.PI * r1 ** 2 * height) / 3).toFixed(2),
+        color: "#DC2626",
+      },
+    );
+    theorems.push(
+      { name: "圆锥母线长", latex: "l=\\sqrt{r^2+h^2}", level: "core" },
+      { name: "圆锥侧面积", latex: "S_{侧}=\\pi r l", level: "core" },
+      { name: "圆锥体积", latex: "V=\\dfrac{1}{3}\\pi r^2 h", level: "core" },
+    );
+  } else if (shape === "rightTrapezoid") {
+    const l = Math.sqrt((r1 - r2) ** 2 + height ** 2);
+    quantities.push(
+      { label: "下底半径", symbol: "r_1", value: r1, color: "#2563EB" },
+      { label: "上底半径", symbol: "r_2", value: r2, color: "#059669" },
+      { label: "高", symbol: "h", value: height, color: "#D97706" },
+      { label: "母线长", symbol: "l", value: l.toFixed(2), color: "#8B5CF6" },
+      {
+        label: "体积",
+        symbol: "V",
+        value: ((Math.PI * height * (r1 ** 2 + r1 * r2 + r2 ** 2)) / 3).toFixed(
+          2,
+        ),
+        color: "#DC2626",
+      },
+    );
+    theorems.push(
+      { name: "圆台母线长", latex: "l=\\sqrt{(r_1-r_2)^2+h^2}", level: "core" },
+      {
+        name: "圆台体积",
+        latex: "V=\\dfrac{1}{3}\\pi h(r_1^2+r_1r_2+r_2^2)",
+        level: "core",
+      },
+    );
+  } else {
+    // semicircle → sphere
+    quantities.push(
+      { label: "半径", symbol: "r", value: r1, color: "#2563EB" },
+      {
+        label: "表面积",
+        symbol: "S",
+        value: (4 * Math.PI * r1 ** 2).toFixed(2),
+        color: "#D97706",
+      },
+      {
+        label: "体积",
+        symbol: "V",
+        value: ((4 / 3) * Math.PI * r1 ** 3).toFixed(2),
+        color: "#DC2626",
+      },
+    );
+    theorems.push(
+      { name: "球表面积", latex: "S=4\\pi r^2", level: "core" },
+      { name: "球体积", latex: "V=\\dfrac{4}{3}\\pi r^3", level: "core" },
+    );
+  }
+
+  const gaokaoPoints: GaokaoPoint[] = [
+    {
+      text: "旋转体是立体几何的基础概念：圆柱由矩形旋转、圆锥由直角三角形旋转、圆台由直角梯形旋转、球由半圆旋转形成。",
+      importance: "core",
+    },
+    {
+      text: "旋转体的表面积和体积是高考常考内容，需要熟练掌握各旋转体的公式。",
+      importance: "gaokao",
+    },
+  ];
+
+  const warnings: WarningItem[] = [];
+  if (shape === "rightTrapezoid" && Math.abs(r1 - r2) < 0.05) {
+    warnings.push({
+      text: "上下底半径接近相等，圆台退化为圆柱！",
+      level: "warning",
+    });
+  }
+
+  return { quantities, theorems, gaokaoPoints, warnings };
+}

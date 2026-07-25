@@ -24,6 +24,20 @@ export {
 
 export { mathToThree, threeToMath } from "./coordinateConvention";
 
+export type { SilhouettePoint, SilhouetteResult } from "./silhouette";
+export { computeSilhouette } from "./silhouette";
+
+export type { ProfilePoint } from "./rotationProfiles";
+export {
+  cylinderProfile,
+  coneProfile,
+  frustumProfile,
+  sphereProfile,
+  sampleCurveProfile,
+  rimRadiusAtZ,
+  radiusAtZ,
+} from "./rotationProfiles";
+
 export {
   cuboidCircumRadius,
   regularTetrahedronCircumRadius,
@@ -43,3 +57,25 @@ export {
   judgeLineParallel,
   judgePlaneParallel,
 } from "./lineRelation";
+
+export type {
+  PolyhedronEdge,
+  Polyhedron,
+  RotationSection,
+} from "./sectionIntersection";
+export {
+  intersectConvexPolyhedronPlane,
+  buildCuboidPolyhedron,
+  buildRegularPyramidPolyhedron,
+  intersectRotationSolidPlane,
+} from "./sectionIntersection";
+
+export type { ViewName, Point2D, ViewDrawing } from "./orthographicProjection";
+export { projectPolyhedron, VIEW_AXES } from "./orthographicProjection";
+
+export {
+  cylinderViews,
+  coneViews,
+  frustumViews,
+  sphereViews,
+} from "./curvedSolidViews";

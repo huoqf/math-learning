@@ -14,8 +14,17 @@ export { RegularPyramid } from "./RegularPyramid";
 // ============================================================================
 // 旋转体 (Solids of Revolution)
 // ============================================================================
+export { RotationSolid } from "./RotationSolid";
+export { RotationSweep } from "./RotationSweep";
 export { Cone } from "./Cone";
 export { Cylinder } from "./Cylinder";
+export { Frustum } from "./Frustum";
+
+// ============================================================================
+// 旋转体内部组件 (Rotation Sub-components)
+// ============================================================================
+export { RotationOutline } from "./RotationOutline";
+export { DepthPrepassMesh } from "./DepthPrepassMesh";
 
 // ============================================================================
 // 球体 (Spheres)

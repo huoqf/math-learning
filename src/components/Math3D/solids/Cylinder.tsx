@@ -1,5 +1,5 @@
-import { Edges } from "@react-three/drei";
-import { mathToThree } from "@/math3d/coordinateConvention";
+import { RotationSolid } from "./RotationSolid";
+import { cylinderProfile } from "@/math3d/rotationProfiles";
 import { MATH_COLORS } from "@/theme/math/colors";
 
 interface CylinderProps {
@@ -7,24 +7,18 @@ interface CylinderProps {
   height: number;
   colorKey?: keyof typeof MATH_COLORS;
   opacity?: number;
-  segments?: number;
 }
 
+/** 矩形绕一边旋转 → 圆柱（语义化薄封装） */
 export const Cylinder = ({
   radius,
   height,
   colorKey = "primary",
-  opacity = 0.3,
-  segments = 32,
+  opacity = 0.28,
 }: CylinderProps) => (
-  <mesh position={mathToThree({ x: 0, y: 0, z: height / 2 })}>
-    <cylinderGeometry args={[radius, radius, height, segments]} />
-    <meshStandardMaterial
-      color={MATH_COLORS[colorKey]}
-      transparent
-      opacity={opacity}
-      side={2}
-    />
-    <Edges color={MATH_COLORS.line} />
-  </mesh>
+  <RotationSolid
+    profile={cylinderProfile(radius, height)}
+    colorKey={colorKey}
+    opacity={opacity}
+  />
 );

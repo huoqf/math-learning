@@ -29,6 +29,7 @@ description: >
 | `XxxAnimation.tsx` | state、`use3DViewport`、`paramConfigs`、`ThreePanel` 三屏组装、`buildMathQuantities` | 2D `AnimationSvgCanvas`、`mathToDesign`、硬编码 HTML/CSS 样式图例 |
 | 3D 渲染 Scene / Canvas | `<ThreeDCanvas>`、`<CameraRig>`、`Math3D` 系列组件 | `useState` 动态修改全局状态、DOM 节点计算、原生 Canvas/WebGL 裸代码 |
 | `math3d/<topic>.ts` | 纯数学 3D 向量/线/面/几何体计算函数、带 JSDoc 单元测试 | React、DOM、Three.js 对象、Store |
+| `threeViews/buildSolidViews.ts` | 按 SolidKind 分发到 `projectPolyhedron` 或解析视图函数 | React、DOM、Three.js |
 | `registries/<topic>.ts` | `paramMeta`、`defaultParams` | 副作用、动态视图绑定 |
 
 ---
@@ -51,6 +52,7 @@ description: >
 | **上下标标签** | `CompoundLabel3D` | `@/components/Math3D/CompoundLabel3D` | 带有下标的点标签（如 $A_1$, $B_1$）。Props: `position`, `base`, `subscript` |
 | **3D 图例** | `Legend3D` | `@/components/Math3D/Legend3D` | 传入 `ThreeDCanvas` 的 `legend` prop，用于底端浮动图例展示 |
 | **立体几何体** | `Cuboid` / `Cylinder` / `Cone` / `RegularPyramid` / `CircumSphere` / `InSphere` | `@/components/Math3D/solids` | 长方体、圆柱、圆锥、正棱锥、外接球、内切球等 3D 实体 |
+| **三视图渲染** | `ThreeViewsPanel` | `@/components/Math3D` | 2x2 SVG 正投影版面（正/侧/俯）。Props: `views`, `extent` |
 
 ---
 
@@ -60,7 +62,8 @@ description: >
    - **左屏** (`LeftPanel`)：模式/几何体选择（`SelectGrid`）、`ParamControl` 参数滑块、视角切换按钮 (`iso`, `front`, `top`, `side`)。
    - **中屏** (`ThreeDCanvas`)：R3F 3D 场景主体 + `Legend3D` 图例，禁止放长段教学文字。
    - **右屏** (`MathPanel`)：`buildMathQuantities('anim-solid-xxx', params)` 组装的空间指标、判定定理、高考考点。
-2. **3D 坐标系约定** (`src/math3d/coordinateConvention.ts`)：
+2. **显示模式切换**：3D 页面可提供"3D 直观图 / 三视图"切换。三视图模式下中屏使用 `ThreeViewsPanel` 替代 `ThreeDCanvas`，左屏提供切换按钮。数学层对应 `orthographicProjection.ts`（凸多面体消隐投影）和 `curvedSolidViews.ts`（旋转体解析视图），统一出口为 `buildSolidViews(kind, params)`。
+3. **3D 坐标系约定** (`src/math3d/coordinateConvention.ts`)：
    - 使用右上手坐标系，X 为横向、Y 为纵深、Z 为垂直向上。
    - 点与向量表示为 `{ x: number, y: number, z: number }` (`Vec3` 类型)。
 
@@ -237,6 +240,7 @@ export default function Xxx3DAnimation() {
 - ❌ **禁止手写 Canvas / Raw Three.js 代码**：必须使用 `ThreeDCanvas` 和 `@/components/Math3D/` 封装好的组件。
 - ❌ **禁止使用 `<foreignObject>`**：3D 空间标注统一使用 `PointLabel3D` / `FormulaLabel3D` / `CompoundLabel3D`。
 - ❌ **拖拽坐标未加限制**：拖动 `Point3D` 时，必须提供 `constrain` 回调防止点越界或解算非法参数。
+- ⚠️ **三视图模式是 SVG，不是 2D 动画**：`ThreeViewsPanel` 虽然是 SVG 渲染，但它是 3D 立体的正投影输出，不属于 2D SVG 动画管线（`AnimationSvgCanvas`）。三视图模式下不要引入 `mathToDesign`、`useAnimationViewport` 等 2D 基础设施。
 
 ---
 
@@ -248,6 +252,7 @@ export default function Xxx3DAnimation() {
 - [ ] 右屏 `MathPanel` 数据是否通过 `buildMathQuantities('anim-solid-xxx', params)` 组装
 - [ ] `src/math3d/` 中的纯数学运算函数是否有单元测试且通过 `npx vitest run src/math3d/`
 - [ ] `App.tsx` 路由已注册并可通过 Hash 路径直接访问
+- [ ] 若页面支持三视图模式，左屏是否提供了"3D 直观图 / 三视图"切换按钮，且三视图模式下中屏正确渲染 `ThreeViewsPanel`
 
 ---
 

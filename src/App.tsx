@@ -1,5 +1,4 @@
 import { HashRouter, Routes, Route, Link, useLocation } from "react-router-dom";
-import { Suspense, lazy } from "react";
 import { QuadraticAnimation } from "./features/quadratic/QuadraticAnimation";
 import { DerivativeAnimation } from "./features/derivative/DerivativeAnimation";
 import { ConstantAnimation } from "./features/constant/ConstantAnimation";
@@ -18,16 +17,7 @@ import { ProbabilityDistributionAnimation } from "./features/probabilityDistribu
 import { ProbabilityNormalAnimation } from "./features/probabilityNormal";
 import { PairedDataAnimation } from "./features/pairedData/PairedDataAnimation";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
-
-const SpatialAngleAnimation = lazy(
-  () => import("./features/solidGeometry/SpatialAngleAnimation"),
-);
-const LinePlaneRelationAnimation = lazy(
-  () => import("./features/solidGeometry/LinePlaneRelationAnimation"),
-);
-const CircumInSphereAnimation = lazy(
-  () => import("./features/solidGeometry/CircumInSphereAnimation"),
-);
+import { Guarded3DPage } from "./components/Layout/Guarded3DPage";
 
 const PATH_TO_LABEL: Record<string, string> = {
   "/set": "集合与常用逻辑实验室",
@@ -50,6 +40,8 @@ const PATH_TO_LABEL: Record<string, string> = {
   "/solid-angle": "空间角：长方体截面二面角",
   "/solid-position": "线面位置关系判定",
   "/solid-ball": "外接球与内切球",
+  "/solid-rotation-body": "旋转体的结构特征",
+  "/solid-section": "截面可视化",
 };
 
 function Header() {
@@ -139,46 +131,55 @@ export default function App() {
               element={<ProbabilityNormalAnimation />}
             />
             <Route path="/paired-data" element={<PairedDataAnimation />} />
+            {/* 3D 页面：WebGL 门禁 + 按需加载 */}
             <Route
               path="/solid-angle"
               element={
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full text-neutral-400">
-                      加载中...
-                    </div>
+                <Guarded3DPage
+                  loader={() =>
+                    import("./features/solidGeometry/SpatialAngleAnimation")
                   }
-                >
-                  <SpatialAngleAnimation />
-                </Suspense>
+                />
               }
             />
             <Route
               path="/solid-position"
               element={
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full text-neutral-400">
-                      加载中...
-                    </div>
+                <Guarded3DPage
+                  loader={() =>
+                    import("./features/solidGeometry/LinePlaneRelationAnimation")
                   }
-                >
-                  <LinePlaneRelationAnimation />
-                </Suspense>
+                />
               }
             />
             <Route
               path="/solid-ball"
               element={
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-full text-neutral-400">
-                      加载中...
-                    </div>
+                <Guarded3DPage
+                  loader={() =>
+                    import("./features/solidGeometry/CircumInSphereAnimation")
                   }
-                >
-                  <CircumInSphereAnimation />
-                </Suspense>
+                />
+              }
+            />
+            <Route
+              path="/solid-rotation-body"
+              element={
+                <Guarded3DPage
+                  loader={() =>
+                    import("./features/solidGeometry/RotationBodyAnimation")
+                  }
+                />
+              }
+            />
+            <Route
+              path="/solid-section"
+              element={
+                <Guarded3DPage
+                  loader={() =>
+                    import("./features/solidGeometry/section/SectionCuboidDemo")
+                  }
+                />
               }
             />
             <Route path="*" element={<KnowledgeTreeHome />} />

@@ -314,6 +314,15 @@ export const knowledgeTree: KnowledgeNode[] = [
 
   // 8. 立体几何与空间向量
   {
+    id: "know-solid-rotation-body",
+    title: "旋转体的结构特征（圆柱、圆锥、圆台、球）",
+    chapter: "立体几何与空间向量",
+    module: "立体几何",
+    importance: "core",
+    animationIds: ["anim-solid-rotation-body"],
+    prerequisites: [],
+  },
+  {
     id: "know-solid-position",
     title: "空间线面平行与垂直判定定理",
     chapter: "立体几何与空间向量",
