@@ -82,6 +82,9 @@ const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-probability-normal": "/statistics-normal",
   "anim-paired-data": "/paired-data",
   "anim-probability-regression": "/paired-data",
+  "anim-solid-position": "/solid-position",
+  "anim-solid-angle": "/solid-angle",
+  "anim-solid-ball": "/solid-ball",
 };
 
 // 重要性标签映射

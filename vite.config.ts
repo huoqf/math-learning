@@ -20,6 +20,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-katex': ['katex'],
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
         },
       },
     },

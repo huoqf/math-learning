@@ -113,6 +113,19 @@ export const COMBINATORICS_COLORS = {
   tipText: "#0284C7",
 } as const;
 
+// ─── 3D 渲染组件专用色 (3D Rendering Components) ───────────────────────────
+export const MATH3D_COLORS = {
+  accent: "#D97706", // 3D 交互点/高亮
+  primary: "#2563EB", // 3D 主色
+  secondary: "#059669", // 3D 辅助色
+  highlight: "#DC2626", // 3D 角度弧/警示
+  line: "#475569", // 3D 几何体边线
+  background: "#FFFFFF", // Canvas 背景
+  sphereShell: "#93c5fd", // 淡蓝，外接球专用
+  inSphereShell: "#fca5a5", // 淡橙红，内切球专用
+  label: "#1e293b", // 标签文字统一深灰色
+} as const;
+
 // ─── 通用 Canvas 元素 (Canvas Commons) ───────────────────────────────────────
 export const CANVAS_COLORS = {
   axis: "#CBD5E1", // 坐标轴、参考线
@@ -136,6 +149,7 @@ export const MATH_COLORS = {
   ...PROBABILITY_COLORS,
   ...COMBINATORICS_COLORS,
   ...CANVAS_COLORS,
+  ...MATH3D_COLORS,
 } as const;
 
 export type MathColorKey = keyof typeof MATH_COLORS;

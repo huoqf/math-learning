@@ -1,4 +1,5 @@
 import { HashRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { QuadraticAnimation } from "./features/quadratic/QuadraticAnimation";
 import { DerivativeAnimation } from "./features/derivative/DerivativeAnimation";
 import { ConstantAnimation } from "./features/constant/ConstantAnimation";
@@ -18,6 +19,16 @@ import { ProbabilityNormalAnimation } from "./features/probabilityNormal";
 import { PairedDataAnimation } from "./features/pairedData/PairedDataAnimation";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 
+const SpatialAngleAnimation = lazy(
+  () => import("./features/solidGeometry/SpatialAngleAnimation"),
+);
+const LinePlaneRelationAnimation = lazy(
+  () => import("./features/solidGeometry/LinePlaneRelationAnimation"),
+);
+const CircumInSphereAnimation = lazy(
+  () => import("./features/solidGeometry/CircumInSphereAnimation"),
+);
+
 const PATH_TO_LABEL: Record<string, string> = {
   "/set": "集合与常用逻辑实验室",
   "/function-properties": "函数性质实验室",
@@ -36,6 +47,9 @@ const PATH_TO_LABEL: Record<string, string> = {
   "/probability-distribution": "离散型随机变量分布列与数字特征",
   "/statistics-normal": "频率分布直方图与正态分布实验室",
   "/paired-data": "成对数据的回归分析与独立性检验",
+  "/solid-angle": "空间角：长方体截面二面角",
+  "/solid-position": "线面位置关系判定",
+  "/solid-ball": "外接球与内切球",
 };
 
 function Header() {
@@ -125,6 +139,48 @@ export default function App() {
               element={<ProbabilityNormalAnimation />}
             />
             <Route path="/paired-data" element={<PairedDataAnimation />} />
+            <Route
+              path="/solid-angle"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-neutral-400">
+                      加载中...
+                    </div>
+                  }
+                >
+                  <SpatialAngleAnimation />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/solid-position"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-neutral-400">
+                      加载中...
+                    </div>
+                  }
+                >
+                  <LinePlaneRelationAnimation />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/solid-ball"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-full text-neutral-400">
+                      加载中...
+                    </div>
+                  }
+                >
+                  <CircumInSphereAnimation />
+                </Suspense>
+              }
+            />
             <Route path="*" element={<KnowledgeTreeHome />} />
           </Routes>
         </main>

@@ -18,6 +18,11 @@ import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
 import { buildProbabilityDistributionPanel } from "./builders/probabilityDistribution";
 import { buildProbabilityNormalPanel } from "./builders/probabilityNormal";
 import { buildPairedDataPanel } from "./builders/pairedData";
+import {
+  buildSpatialAnglePanel,
+  buildLinePlaneRelationPanel,
+  buildCircumSpherePanel,
+} from "./builders/solidGeometry";
 
 export type { MathPanelData } from "./types";
 
@@ -71,6 +76,12 @@ export function buildMathQuantities(
       return buildFuncTransformPanel(params, config);
     case "anim-func-composite":
       return buildFuncCompositePanel(params, config);
+    case "anim-solid-angle":
+      return buildSpatialAnglePanel(params);
+    case "anim-solid-position":
+      return buildLinePlaneRelationPanel(params);
+    case "anim-solid-ball":
+      return buildCircumSpherePanel(params);
     default:
       return EMPTY;
   }
