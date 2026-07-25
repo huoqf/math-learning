@@ -79,6 +79,7 @@ const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-probability-counting": "/probability-counting",
   "anim-probability-bayes": "/probability-bayes",
   "anim-probability-distribution": "/probability-distribution",
+  "anim-probability-normal": "/statistics-normal",
 };
 
 // 重要性标签映射

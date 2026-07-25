@@ -14,6 +14,7 @@ import { DerivativeShiftAnimation } from "./features/derivativeShift";
 import { ProbabilityCountingAnimation } from "./features/probabilityCounting";
 import { ProbabilityBayesAnimation } from "./features/probabilityBayes";
 import { ProbabilityDistributionAnimation } from "./features/probabilityDistribution";
+import { ProbabilityNormalAnimation } from "./features/probabilityNormal";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 
 const PATH_TO_LABEL: Record<string, string> = {
@@ -32,6 +33,7 @@ const PATH_TO_LABEL: Record<string, string> = {
   "/probability-counting": "计数原理与二项式定理实验室",
   "/probability-bayes": "条件概率与贝叶斯实验室",
   "/probability-distribution": "离散型随机变量分布列与数字特征",
+  "/statistics-normal": "频率分布直方图与正态分布实验室",
 };
 
 function Header() {
@@ -115,6 +117,10 @@ export default function App() {
             <Route
               path="/probability-distribution"
               element={<ProbabilityDistributionAnimation />}
+            />
+            <Route
+              path="/statistics-normal"
+              element={<ProbabilityNormalAnimation />}
             />
             <Route path="*" element={<KnowledgeTreeHome />} />
           </Routes>

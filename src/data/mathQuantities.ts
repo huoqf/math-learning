@@ -16,6 +16,7 @@ import { buildDerivativeShiftPanel } from "./builders/derivativeShift";
 import { buildProbabilityCountingPanel } from "./builders/probabilityCounting";
 import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
 import { buildProbabilityDistributionPanel } from "./builders/probabilityDistribution";
+import { buildProbabilityNormalPanel } from "./builders/probabilityNormal";
 
 export type { MathPanelData } from "./types";
 
@@ -32,6 +33,8 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-probability-normal":
+      return buildProbabilityNormalPanel(params, config);
     case "anim-probability-distribution":
       return buildProbabilityDistributionPanel(params, config);
     case "anim-probability-bayes":
