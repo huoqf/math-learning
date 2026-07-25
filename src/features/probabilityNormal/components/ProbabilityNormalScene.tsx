@@ -10,6 +10,16 @@ import {
   normalPdf,
 } from "@/math/probabilityNormal";
 
+interface TooltipBinData {
+  xStart: number;
+  xEnd: number;
+  mid: number;
+  width: number;
+  density: number;
+  frequency: number;
+  count: number;
+}
+
 interface ProbabilityNormalSceneProps {
   params: {
     mu: number;
@@ -24,7 +34,13 @@ interface ProbabilityNormalSceneProps {
   fontScale: (size: number) => number;
   studyMode: "histogram" | "normalFit" | "sigmaRule";
   showStatsLines?: boolean;
+  showFrequencyLine?: boolean;
+  showSigmaIntervals?: boolean;
   onParamChange: (key: string, value: number) => void;
+  /** Tooltip 事件回调 */
+  onBinMouseEnter?: (bin: TooltipBinData, e: React.MouseEvent) => void;
+  onBinMouseMove?: (e: React.MouseEvent) => void;
+  onBinMouseLeave?: () => void;
 }
 
 export function ProbabilityNormalScene({
@@ -34,7 +50,12 @@ export function ProbabilityNormalScene({
   fontScale,
   studyMode,
   showStatsLines = true,
+  showFrequencyLine = false,
+  showSigmaIntervals = false,
   onParamChange,
+  onBinMouseEnter,
+  onBinMouseMove,
+  onBinMouseLeave,
 }: ProbabilityNormalSceneProps) {
   const { mu, sigma, binCount, sampleSize, x1, x2 } = params;
   const safeSigma = Math.max(0.1, sigma);
@@ -196,23 +217,207 @@ export function ProbabilityNormalScene({
                 stroke={MATH_COLORS.paramSecondary}
                 strokeWidth={1.5}
                 className="transition-all duration-200 hover:fill-amber-300/60"
+                style={{ cursor: "pointer" }}
+                onMouseEnter={(e) => onBinMouseEnter?.(bin, e)}
+                onMouseMove={onBinMouseMove}
+                onMouseLeave={onBinMouseLeave}
               />
-              {/* 矩形顶部概率密度/组距数值极简标注 (宽度充足时显示) */}
-              {rectWidth > 32 && bin.density > 0.03 && (
-                <text
-                  x={leftTop.x + rectWidth / 2}
-                  y={leftTop.y - 5}
-                  fontSize={fontScale(9)}
-                  fill={MATH_COLORS.paramSecondary}
-                  textAnchor="middle"
-                  className="select-none font-semibold opacity-90"
-                >
-                  {bin.density.toFixed(2)}
-                </text>
-              )}
             </g>
           );
         })}
+
+      {/* B2. 频率分布折线图 (连接各矩形顶边中点) */}
+      {showFrequencyLine && studyMode !== "sigmaRule" && (
+        <g>
+          {(() => {
+            // 构建折线路径：从x轴起点开始，连接各矩形顶边中点，最后回到x轴终点
+            const points: string[] = [];
+
+            // 起点：第一个矩形左边界的x轴上
+            const startX = bins[0].xStart;
+            const startPt = mathToDesign(startX, 0, scale);
+            points.push(`M ${startPt.x.toFixed(1)} ${startPt.y.toFixed(1)}`);
+
+            // 连接各矩形顶边中点
+            for (const bin of bins) {
+              const pt = mathToDesign(bin.mid, bin.density, scale);
+              points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+            }
+
+            // 终点：最后一个矩形右边界的x轴上
+            const endX = bins[bins.length - 1].xEnd;
+            const endPt = mathToDesign(endX, 0, scale);
+            points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
+
+            return (
+              <path
+                d={points.join(" ")}
+                fill="none"
+                stroke={MATH_COLORS.function}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="transition-all duration-300"
+              />
+            );
+          })()}
+        </g>
+      )}
+
+      {/* B3. 3-σ 原则区间高亮 */}
+      {showSigmaIntervals && studyMode === "sigmaRule" && (
+        <g>
+          {/* 1σ 区间 (68.27%) */}
+          {(() => {
+            const x1 = mu - sigma;
+            const x2 = mu + sigma;
+            const y1 = 0;
+            const y2 = normalPdf(mu, mu, safeSigma) * 0.8; // 稍低于峰值
+
+            const leftBottom = mathToDesign(x1, y1, scale);
+
+            // 构建区间路径
+            const points: string[] = [];
+            points.push(
+              `M ${leftBottom.x.toFixed(1)} ${leftBottom.y.toFixed(1)}`,
+            );
+
+            // 沿着正态曲线从 x1 到 x2
+            for (let x = x1; x <= x2; x += 0.05) {
+              const y = normalPdf(x, mu, safeSigma) * 0.8;
+              const pt = mathToDesign(x, y, scale);
+              points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+            }
+
+            // 回到 x 轴
+            const endPt = mathToDesign(x2, 0, scale);
+            points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
+            points.push("Z");
+
+            return (
+              <g>
+                <path
+                  d={points.join(" ")}
+                  fill={withAlpha(MATH_COLORS.paramPrimary, 0.2)}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={1}
+                  strokeDasharray="4 2"
+                />
+                <text
+                  x={mathToDesign(mu, y2 + 0.02, scale).x}
+                  y={mathToDesign(mu, y2 + 0.02, scale).y}
+                  fontSize={fontScale(10)}
+                  fill={MATH_COLORS.paramPrimary}
+                  textAnchor="middle"
+                  className="font-bold select-none"
+                >
+                  68.27%
+                </text>
+              </g>
+            );
+          })()}
+
+          {/* 2σ 区间 (95.45%) */}
+          {(() => {
+            const x1 = mu - 2 * sigma;
+            const x2 = mu + 2 * sigma;
+            const y1 = 0;
+            const y2 = normalPdf(mu, mu, safeSigma) * 0.5; // 更低
+
+            const leftBottom = mathToDesign(x1, y1, scale);
+
+            // 构建区间路径
+            const points: string[] = [];
+            points.push(
+              `M ${leftBottom.x.toFixed(1)} ${leftBottom.y.toFixed(1)}`,
+            );
+
+            // 沿着正态曲线从 x1 到 x2
+            for (let x = x1; x <= x2; x += 0.05) {
+              const y = normalPdf(x, mu, safeSigma) * 0.5;
+              const pt = mathToDesign(x, y, scale);
+              points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+            }
+
+            // 回到 x 轴
+            const endPt = mathToDesign(x2, 0, scale);
+            points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
+            points.push("Z");
+
+            return (
+              <g>
+                <path
+                  d={points.join(" ")}
+                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.15)}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={1}
+                  strokeDasharray="4 2"
+                />
+                <text
+                  x={mathToDesign(x1 - 0.1, y2, scale).x}
+                  y={mathToDesign(x1 - 0.1, y2, scale).y}
+                  fontSize={fontScale(9)}
+                  fill={MATH_COLORS.paramSecondary}
+                  textAnchor="end"
+                  className="font-semibold select-none"
+                >
+                  95.45%
+                </text>
+              </g>
+            );
+          })()}
+
+          {/* 3σ 区间 (99.73%) */}
+          {(() => {
+            const x1 = mu - 3 * sigma;
+            const x2 = mu + 3 * sigma;
+            const y1 = 0;
+            const y2 = normalPdf(mu, mu, safeSigma) * 0.3; // 最低
+
+            const leftBottom = mathToDesign(x1, y1, scale);
+
+            // 构建区间路径
+            const points: string[] = [];
+            points.push(
+              `M ${leftBottom.x.toFixed(1)} ${leftBottom.y.toFixed(1)}`,
+            );
+
+            // 沿着正态曲线从 x1 到 x2
+            for (let x = x1; x <= x2; x += 0.05) {
+              const y = normalPdf(x, mu, safeSigma) * 0.3;
+              const pt = mathToDesign(x, y, scale);
+              points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+            }
+
+            // 回到 x 轴
+            const endPt = mathToDesign(x2, 0, scale);
+            points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
+            points.push("Z");
+
+            return (
+              <g>
+                <path
+                  d={points.join(" ")}
+                  fill={withAlpha(MATH_COLORS.paramTertiary, 0.1)}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1}
+                  strokeDasharray="4 2"
+                />
+                <text
+                  x={mathToDesign(x1 - 0.1, y2, scale).x}
+                  y={mathToDesign(x1 - 0.1, y2, scale).y}
+                  fontSize={fontScale(9)}
+                  fill={MATH_COLORS.paramTertiary}
+                  textAnchor="end"
+                  className="font-semibold select-none"
+                >
+                  99.73%
+                </text>
+              </g>
+            );
+          })()}
+        </g>
+      )}
 
       {/* C. 放置数字特征参考虚线 (众数、中位数、平均数) */}
       {showStatsLines && studyMode !== "sigmaRule" && (

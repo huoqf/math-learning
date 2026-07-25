@@ -151,6 +151,8 @@ export interface HistogramStats {
   median: number; // 中位数估算值
   mean: number; // 平均数估算值
   totalArea: number; // 直方图总面积（理论应为1）
+  q1: number; // 第25%百分位数（下四分位数）
+  q3: number; // 第75%百分位数（上四分位数）
 }
 
 /**
@@ -158,7 +160,7 @@ export interface HistogramStats {
  */
 export function estimateHistogramStats(bins: HistogramBin[]): HistogramStats {
   if (bins.length === 0) {
-    return { mode: 0, median: 0, mean: 0, totalArea: 0 };
+    return { mode: 0, median: 0, mean: 0, totalArea: 0, q1: 0, q3: 0 };
   }
 
   // 1. 众数：最高矩形底边中点
@@ -193,11 +195,39 @@ export function estimateHistogramStats(bins: HistogramBin[]): HistogramStats {
     cumFreq += bin.frequency;
   }
 
+  // 4. 第25%百分位数（下四分位数 Q1）
+  let q1 = bins[0].mid;
+  cumFreq = 0;
+  for (const bin of bins) {
+    if (cumFreq + bin.frequency >= 0.25) {
+      const neededFreq = 0.25 - cumFreq;
+      const fraction = bin.frequency > 0 ? neededFreq / bin.frequency : 0.5;
+      q1 = bin.xStart + fraction * bin.width;
+      break;
+    }
+    cumFreq += bin.frequency;
+  }
+
+  // 5. 第75%百分位数（上四分位数 Q3）
+  let q3 = bins[0].mid;
+  cumFreq = 0;
+  for (const bin of bins) {
+    if (cumFreq + bin.frequency >= 0.75) {
+      const neededFreq = 0.75 - cumFreq;
+      const fraction = bin.frequency > 0 ? neededFreq / bin.frequency : 0.5;
+      q3 = bin.xStart + fraction * bin.width;
+      break;
+    }
+    cumFreq += bin.frequency;
+  }
+
   return {
     mode,
     median,
     mean,
     totalArea,
+    q1,
+    q3,
   };
 }
 

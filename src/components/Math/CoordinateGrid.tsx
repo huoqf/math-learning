@@ -150,7 +150,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
             fontFamily="monospace"
             className="select-none"
           >
-            {y}
+            {y.toFixed(1)}
           </text>,
         );
       }

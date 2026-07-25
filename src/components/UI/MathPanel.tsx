@@ -374,7 +374,9 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                     }}
                   >
                     <IconComponent className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span className="min-w-0 break-words">{w.text}</span>
+                    <span className="min-w-0 break-words">
+                      {renderMixedLatex(w.text)}
+                    </span>
                   </div>
                 );
               })}
