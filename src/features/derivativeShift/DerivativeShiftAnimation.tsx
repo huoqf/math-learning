@@ -116,7 +116,7 @@ export function DerivativeShiftAnimation() {
               ]}
               value={activeMode}
               onChange={(k) => {
-                setActiveMode(k as any);
+                setActiveMode(k);
                 if (k === "implicit_zero") setSubModel("x_ln_x");
                 else if (k === "shift_symmetric") setSubModel("xe_neg_x");
               }}

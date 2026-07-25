@@ -161,8 +161,8 @@ export function ProbabilityNormalAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
-          marks: meta.marks as any,
+          importance: meta.importance,
+          marks: meta.marks,
         };
       });
   }, [params, studyMode]);
@@ -209,7 +209,7 @@ export function ProbabilityNormalAnimation() {
                   { key: "sigmaRule", label: "3-σ 原则与区间概率" },
                 ]}
                 value={studyMode}
-                onChange={(k) => setStudyMode(k as any)}
+                onChange={(k) => setStudyMode(k)}
                 variant="filled"
                 columns={1}
               />

@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { useRadioGroup } from "@/hooks/useRadioGroup";
 import { KatexFormula } from "./KatexFormula";
 
@@ -30,10 +30,10 @@ interface SelectGridItem {
 
 type SelectColor = "primary" | "success";
 
-interface SelectGridProps {
+interface SelectGridProps<T extends string = string> {
   items: SelectGridItem[];
-  value: string;
-  onChange: (key: string) => void;
+  value: T;
+  onChange: (key: T) => void;
   /** outline = Pattern B（浅底边框），filled = Pattern C（实心填充） */
   variant?: "outline" | "filled";
   /** 色板 key，默认 primary */
@@ -69,7 +69,7 @@ const COLOR_STYLES: Record<
   },
 };
 
-export const SelectGrid: React.FC<SelectGridProps> = ({
+export const SelectGrid = <T extends string = string>({
   items,
   value,
   onChange,
@@ -77,12 +77,12 @@ export const SelectGrid: React.FC<SelectGridProps> = ({
   color = "primary",
   columns = 2,
   className = "",
-}) => {
+}: SelectGridProps<T>) => {
   const keys = items.map((i) => i.key);
   const { getItemProps, registerRef } = useRadioGroup({
     value,
     keys,
-    onChange,
+    onChange: onChange as (key: string) => void,
     direction: columns >= 2 ? "grid" : "linear",
     columns,
   });
@@ -127,7 +127,7 @@ export const SelectGrid: React.FC<SelectGridProps> = ({
             ref={setRef(item.key)}
             {...itemProps}
             aria-label={ariaLabel}
-            onClick={() => onChange(item.key)}
+            onClick={() => onChange(item.key as T)}
             className={[
               "py-2 px-2.5 text-[11px] font-semibold border-2 rounded-lg transition-all duration-200 whitespace-nowrap min-w-0 overflow-hidden",
               selectedClass,

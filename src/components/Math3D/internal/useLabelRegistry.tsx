@@ -43,7 +43,7 @@ export function useLabelRegistry(
     if (dup) {
       console.warn(
         `[Math3D] 检测到位置重叠的标签冲突: "${dup.text}" 与 "${text}" 几乎在同一位置，` +
-          `请检查是否同时使用了 Label3D 与 PointLabel3D`,
+          `请检查标签位置是否正确`,
       );
     }
     registry.entries.push({ ...pos, text });

@@ -1,16 +1,14 @@
 import { useMemo, useState } from "react";
-import { Cuboid } from "@/components/Math3D/solids/Cuboid";
-import { SectionPlane3D } from "@/components/Math3D/SectionPlane3D";
+import { SectionPlane3D, CameraRig, Scene3DGrid } from "@/components/Math3D";
+import { Cuboid } from "@/components/Math3D/solids";
 import {
   buildCuboidPolyhedron,
   intersectConvexPolyhedronPlane,
 } from "@/math3d/sectionIntersection";
-import { CameraRig } from "@/components/Math3D/CameraRig";
 import { ThreeDCanvas } from "@/components/Layout/ThreeDCanvas";
 import { ThreePanel } from "@/components/Layout/ThreePanel";
 import { LeftPanel, LeftPanelSection } from "@/components/UI/LeftPanel";
 import { ParamControl, type ParamConfig } from "@/components/UI/ParamControl";
-import { Scene3DGrid } from "@/components/Math3D/Scene3DGrid";
 import type { Plane } from "@/math3d/plane";
 
 export default function SectionCuboidDemo() {

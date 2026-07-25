@@ -29,8 +29,6 @@ export { CompoundLabel3D } from "./CompoundLabel3D";
 export { FormulaLabel3D } from "./FormulaLabel3D";
 export { Legend3D } from "./Legend3D";
 export type { LegendItem } from "./Legend3D";
-/** @deprecated 请使用 PointLabel3D / CompoundLabel3D / FormulaLabel3D */
-export { Label3D } from "./Label3D";
 
 // ============================================================================
 // 交互元素 (Interactive Elements)

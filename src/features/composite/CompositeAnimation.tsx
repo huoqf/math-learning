@@ -101,7 +101,7 @@ export function CompositeAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -125,7 +125,7 @@ export function CompositeAnimation() {
                 { key: "composite", label: "复合函数同增异减" },
               ]}
               value={subMode}
-              onChange={(k) => setSubMode(k as any)}
+              onChange={(k) => setSubMode(k)}
               columns={1}
               className="mb-3"
             />
@@ -144,7 +144,7 @@ export function CompositeAnimation() {
                   },
                 ]}
                 value={outerType}
-                onChange={(k) => setOuterType(k as any)}
+                onChange={(k) => setOuterType(k)}
                 variant="outline"
                 columns={2}
                 className="mb-4"

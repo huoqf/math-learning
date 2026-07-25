@@ -9,16 +9,20 @@ import {
   SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Scene3DGrid } from "@/components/Math3D/Scene3DGrid";
-import { PointLabel3D } from "@/components/Math3D/PointLabel3D";
-import { CompoundLabel3D } from "@/components/Math3D/CompoundLabel3D";
-import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
-import { Legend3D } from "@/components/Math3D/Legend3D";
-import { CameraRig } from "@/components/Math3D/CameraRig";
-import { Cuboid } from "@/components/Math3D/solids/Cuboid";
-import { CircumSphere } from "@/components/Math3D/solids/CircumSphere";
-import { RegularPyramid } from "@/components/Math3D/solids/RegularPyramid";
-import { Cone } from "@/components/Math3D/solids/Cone";
+import {
+  Scene3DGrid,
+  PointLabel3D,
+  CompoundLabel3D,
+  FormulaLabel3D,
+  Legend3D,
+  CameraRig,
+} from "@/components/Math3D";
+import {
+  Cuboid,
+  CircumSphere,
+  RegularPyramid,
+  Cone,
+} from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { circumInSphereMeta } from "@/data/registries/solidGeometry";

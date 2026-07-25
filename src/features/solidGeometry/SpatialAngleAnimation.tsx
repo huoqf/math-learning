@@ -8,13 +8,15 @@ import {
   MathPanel,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Scene3DGrid } from "@/components/Math3D/Scene3DGrid";
-import { Point3D } from "@/components/Math3D/Point3D";
-import { Plane3D } from "@/components/Math3D/Plane3D";
-import { AngleArc3D } from "@/components/Math3D/AngleArc3D";
-import { PointLabel3D } from "@/components/Math3D/PointLabel3D";
-import { CameraRig } from "@/components/Math3D/CameraRig";
-import { Cuboid } from "@/components/Math3D/solids/Cuboid";
+import {
+  Scene3DGrid,
+  Point3D,
+  Plane3D,
+  AngleArc3D,
+  PointLabel3D,
+  CameraRig,
+} from "@/components/Math3D";
+import { Cuboid } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { spatialAngleMeta } from "@/data/registries/solidGeometry";

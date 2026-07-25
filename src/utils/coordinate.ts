@@ -1,14 +1,10 @@
+import type { SceneScale } from "@/hooks/useSceneScale";
+
+export type { SceneScale };
+
 export interface Point {
   x: number;
   y: number;
-}
-
-export interface SceneScale {
-  scaleX: number;
-  scaleY: number;
-  scale: number;
-  originX: number;
-  originY: number;
 }
 
 /**

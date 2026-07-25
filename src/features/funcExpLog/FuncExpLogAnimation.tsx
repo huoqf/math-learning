@@ -70,7 +70,7 @@ export function FuncExpLogAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -96,7 +96,7 @@ export function FuncExpLogAnimation() {
                 { key: "power", label: "y = xᵅ", formula: "y=x^{\\alpha}" },
               ]}
               value={funcType}
-              onChange={(k) => setFuncType(k as any)}
+              onChange={(k) => setFuncType(k)}
               variant="outline"
               className="mb-4"
             />

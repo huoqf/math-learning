@@ -188,7 +188,7 @@ export function ConstantAnimation() {
         step,
         description,
         descriptionFormula,
-        importance: meta.importance as any,
+        importance: meta.importance,
         marks,
       };
     });
@@ -315,7 +315,7 @@ export function ConstantAnimation() {
                       },
                     ]}
                     value={transModel}
-                    onChange={(k) => setTransModel(k as any)}
+                    onChange={(k) => setTransModel(k)}
                     variant="filled"
                     className="pt-1"
                   />
@@ -435,7 +435,7 @@ export function ConstantAnimation() {
                   },
                 ]}
                 value={selectedLogic}
-                onChange={(k) => setSelectedLogic(k as any)}
+                onChange={(k) => setSelectedLogic(k)}
                 variant="filled"
                 columns={2}
               />

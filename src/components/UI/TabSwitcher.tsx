@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { useRadioGroup } from "@/hooks/useRadioGroup";
 import { KatexFormula } from "./KatexFormula";
 
@@ -22,24 +22,24 @@ interface TabSwitcherTab {
   formula?: string;
 }
 
-interface TabSwitcherProps {
+interface TabSwitcherProps<T extends string = string> {
   tabs: TabSwitcherTab[];
-  value: string;
-  onChange: (key: string) => void;
+  value: T;
+  onChange: (key: T) => void;
   className?: string;
 }
 
-export const TabSwitcher: React.FC<TabSwitcherProps> = ({
+export const TabSwitcher = <T extends string = string>({
   tabs,
   value,
   onChange,
   className = "",
-}) => {
+}: TabSwitcherProps<T>) => {
   const keys = tabs.map((t) => t.key);
   const { getItemProps, registerRef } = useRadioGroup({
     value,
     keys,
-    onChange,
+    onChange: onChange as (key: string) => void,
     direction: "linear",
   });
 
@@ -68,7 +68,7 @@ export const TabSwitcher: React.FC<TabSwitcherProps> = ({
             key={tab.key}
             ref={setRef(tab.key)}
             {...itemProps}
-            onClick={() => onChange(tab.key)}
+            onClick={() => onChange(tab.key as T)}
             className={[
               "py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 whitespace-nowrap overflow-hidden text-left",
               isSelected

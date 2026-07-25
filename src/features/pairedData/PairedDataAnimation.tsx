@@ -129,7 +129,7 @@ export function PairedDataAnimation() {
           step: meta.step ?? 1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -192,7 +192,7 @@ export function PairedDataAnimation() {
                 },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k)}
               variant="filled"
               columns={1}
             />

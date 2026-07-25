@@ -9,11 +9,13 @@ import {
   SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Scene3DGrid } from "@/components/Math3D/Scene3DGrid";
-import { CameraRig } from "@/components/Math3D/CameraRig";
-import { RotationSweep } from "@/components/Math3D/solids/RotationSweep";
-import { Legend3D } from "@/components/Math3D/Legend3D";
-import { ThreeViewsPanel } from "@/components/Math3D/ThreeViewsPanel";
+import {
+  Scene3DGrid,
+  CameraRig,
+  Legend3D,
+  ThreeViewsPanel,
+} from "@/components/Math3D";
+import { RotationSweep } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import { rotationBodyMeta } from "@/data/registries/solidGeometry";
 import { buildMathQuantities } from "@/data/mathQuantities";

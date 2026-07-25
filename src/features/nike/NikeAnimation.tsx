@@ -124,7 +124,7 @@ export function NikeAnimation() {
                 },
               ]}
               value={activeMode}
-              onChange={(k) => setActiveMode(k as any)}
+              onChange={(k) => setActiveMode(k)}
               columns={1}
               variant="outline"
             />

@@ -8,12 +8,14 @@ import {
   MathPanel,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Scene3DGrid } from "@/components/Math3D/Scene3DGrid";
-import { Vector3DArrow } from "@/components/Math3D/Vector3DArrow";
-import { Plane3D } from "@/components/Math3D/Plane3D";
-import { PointLabel3D } from "@/components/Math3D/PointLabel3D";
-import { Legend3D } from "@/components/Math3D/Legend3D";
-import { CameraRig } from "@/components/Math3D/CameraRig";
+import {
+  Scene3DGrid,
+  Vector3DArrow,
+  Plane3D,
+  PointLabel3D,
+  Legend3D,
+  CameraRig,
+} from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { linePlaneRelationMeta } from "@/data/registries/solidGeometry";

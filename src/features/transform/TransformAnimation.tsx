@@ -88,7 +88,7 @@ export function TransformAnimation() {
         step: meta.step ?? 0.1,
         description: meta.description,
         descriptionFormula: meta.descriptionFormula,
-        importance: meta.importance as any,
+        importance: meta.importance,
         marks: meta.marks,
       };
     });
@@ -115,7 +115,7 @@ export function TransformAnimation() {
                 { key: "exp", label: "y = 2^x", formula: "y = 2^x" },
               ]}
               value={fnType}
-              onChange={(k) => setFnType(k as any)}
+              onChange={(k) => setFnType(k)}
               variant="outline"
               className="mb-3"
             />
@@ -139,7 +139,7 @@ export function TransformAnimation() {
                 },
               ]}
               value={foldMode}
-              onChange={(k) => setFoldMode(k as any)}
+              onChange={(k) => setFoldMode(k)}
               className="mb-4"
             />
           </LeftPanelSection>

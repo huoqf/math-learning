@@ -80,7 +80,7 @@ export function QuadraticAnimation() {
       step: meta.step ?? 0.1,
       description: meta.description,
       descriptionFormula: meta.descriptionFormula,
-      importance: meta.importance as any,
+      importance: meta.importance,
       marks: meta.marks,
     }));
   }, [params]);
@@ -142,7 +142,7 @@ export function QuadraticAnimation() {
                 { key: "inequality", label: "一元二次不等式", fullWidth: true },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k)}
               variant="filled"
             />
           </LeftPanelSection>

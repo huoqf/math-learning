@@ -220,6 +220,17 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | 解集/定积分区间阴影 | `IntervalShadow` | `@/components/Math` | — |
 | 视觉标注箭头 | `VectorArrow` | `@/components/Math` | ✅ 支持 `fontScale` prop |
 | 三视图正投影 | `ThreeViewsPanel` | `@/components/Math3D` | — |
+| 3D 坐标网格 | `Scene3DGrid` | `@/components/Math3D` | 3D 空间网格与坐标轴。Props: `size` |
+| 3D 相机控制 | `CameraRig` | `@/components/Math3D` | 轨道相机，配合 `use3DViewport` |
+| 3D 可拖拽点 | `Point3D` | `@/components/Math3D` | 空间点。Props: `draggable`, `constrain`, `onDrag` |
+| 3D 平面 | `Plane3D` | `@/components/Math3D` | 空间平面。Props: `origin`, `uAxis`, `vAxis` |
+| 3D 向量 | `Vector3DArrow` | `@/components/Math3D` | 带箭头 3D 向量。Props: `from`, `to` |
+| 3D 角弧 | `AngleArc3D` | `@/components/Math3D` | 空间夹角弧线。Props: `vertex`, `dirA`, `dirB` |
+| 3D 点标签 | `PointLabel3D` | `@/components/Math3D` | 顶点文本标注。Props: `position`, `text` |
+| 3D 公式标签 | `FormulaLabel3D` | `@/components/Math3D` | KaTeX 公式标注。Props: `position`, `tex` |
+| 3D 下标标签 | `CompoundLabel3D` | `@/components/Math3D` | 带下标标注。Props: `position`, `base`, `subscript` |
+| 3D 图例 | `Legend3D` | `@/components/Math3D` | 底端浮动图例 |
+| 3D 截面 | `SectionPlane3D` | `@/components/Math3D` | 截面可视化 |
 | 左屏容器 | `LeftPanel` / `LeftPanelSection` | `@/components/UI` | — |
 | 实时数学量面板 | `MathPanel` | `@/components/UI` | — |
 | 左屏 Tab 切换 | `TabSwitcher` | `@/components/UI` | — |

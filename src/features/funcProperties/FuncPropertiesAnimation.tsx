@@ -102,7 +102,7 @@ export function FuncPropertiesAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -142,7 +142,7 @@ export function FuncPropertiesAnimation() {
                 },
               ]}
               value={mode}
-              onChange={(k) => setMode(k as any)}
+              onChange={(k) => setMode(k)}
               columns={1}
               className="mb-4"
             />
@@ -169,7 +169,7 @@ export function FuncPropertiesAnimation() {
                 },
               ]}
               value={fnType}
-              onChange={(k) => setFnType(k as any)}
+              onChange={(k) => setFnType(k)}
               variant="outline"
               className="mb-4"
             />

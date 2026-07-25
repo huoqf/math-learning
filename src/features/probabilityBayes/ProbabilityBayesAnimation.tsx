@@ -125,7 +125,7 @@ export function ProbabilityBayesAnimation() {
           step: meta.step ?? 0.01,
           description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -160,7 +160,7 @@ export function ProbabilityBayesAnimation() {
                 { key: "bayes", label: "贝叶斯公式", formula: "P(A_k|B)" },
               ]}
               value={activeMode}
-              onChange={(k) => setActiveMode(k as any)}
+              onChange={(k) => setActiveMode(k)}
             />
           </LeftPanelSection>
 

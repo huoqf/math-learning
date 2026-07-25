@@ -2,16 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { getStepDigits, formatByStep } from "./Slider";
 import { KatexFormula } from "./KatexFormula";
-
-type ParamImportance = "core" | "advanced" | "display";
-type ParamMarkVariant = "zero" | "critical" | "recommended";
-
-interface ParamMark {
-  value: number;
-  label?: string;
-  labelFormula?: string;
-  variant?: ParamMarkVariant;
-}
+import type {
+  ParamImportance,
+  ParamMark,
+  ParamMarkVariant,
+} from "@/data/types";
 
 export interface ParamConfig {
   key: string;

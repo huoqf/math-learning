@@ -155,7 +155,7 @@ export function ProbabilityDistributionAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -201,7 +201,7 @@ export function ProbabilityDistributionAnimation() {
                 { key: "linear", label: "线性变换 Y=aX+b" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k)}
               variant="filled"
             />
           </LeftPanelSection>

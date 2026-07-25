@@ -208,7 +208,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             width={260}
             height={56}
             rx={6}
-            fill="#FFFFFF"
+            fill={CANVAS_COLORS.white}
             fillOpacity={0.9}
             stroke={CANVAS_COLORS.axis}
             strokeWidth={1}
@@ -311,8 +311,8 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
         width={800}
         height={580}
         rx={12}
-        fill="#FAFAFA"
-        stroke="#E5E7EB"
+        fill={CANVAS_COLORS.gridSubtle}
+        stroke={CANVAS_COLORS.grid}
         strokeWidth={1}
       />
 
@@ -323,7 +323,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
         textAnchor="middle"
         fontSize={fontScale(18)}
         fontWeight="bold"
-        fill="#111827"
+        fill={CANVAS_COLORS.labelText}
       >
         2 × 2 列联表条件频率分布与卡方检验
       </text>
@@ -348,7 +348,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             textAnchor="middle"
             fontSize={fontScale(13)}
             fontWeight="bold"
-            fill="#374151"
+            fill={CANVAS_COLORS.labelTextLight}
           >
             类 A 样本 (共 {row1Total} 人)
           </text>
@@ -367,7 +367,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
               x={60}
               y={100 * ratioA_B + 5}
               textAnchor="middle"
-              fill="#FFFFFF"
+              fill={CANVAS_COLORS.white}
               fontSize={fontScale(12)}
               fontWeight="bold"
             >
@@ -388,7 +388,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
               x={60}
               y={200 * ratioA_B + 100 * ratioA_NotB + 5}
               textAnchor="middle"
-              fill="#1F2937"
+              fill={CANVAS_COLORS.labelText}
               fontSize={fontScale(12)}
               fontWeight="bold"
             >
@@ -405,7 +405,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             textAnchor="middle"
             fontSize={fontScale(13)}
             fontWeight="bold"
-            fill="#374151"
+            fill={CANVAS_COLORS.labelTextLight}
           >
             类 非A 样本 (共 {row2Total} 人)
           </text>
@@ -424,7 +424,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
               x={60}
               y={100 * ratioNotA_B + 5}
               textAnchor="middle"
-              fill="#FFFFFF"
+              fill={CANVAS_COLORS.white}
               fontSize={fontScale(12)}
               fontWeight="bold"
             >
@@ -445,7 +445,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
               x={60}
               y={200 * ratioNotA_B + 100 * ratioNotA_NotB + 5}
               textAnchor="middle"
-              fill="#1F2937"
+              fill={CANVAS_COLORS.labelText}
               fontSize={fontScale(12)}
               fontWeight="bold"
             >
@@ -462,7 +462,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           y={axisY - 45}
           fontSize={fontScale(14)}
           fontWeight="bold"
-          fill="#111827"
+          fill={CANVAS_COLORS.labelText}
         >
           【χ² 卡方检验统计量数轴与高考临界值标尺】
         </text>
@@ -493,7 +493,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           y1={axisY}
           x2={axisEndX}
           y2={axisY}
-          stroke="#4B5563"
+          stroke={CANVAS_COLORS.labelTextLight}
           strokeWidth={3}
         />
 
@@ -513,7 +513,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
                 y1={axisY - 8}
                 x2={tx}
                 y2={axisY + 8}
-                stroke="#1F2937"
+                stroke={CANVAS_COLORS.labelText}
                 strokeWidth={2}
               />
               <text
@@ -527,7 +527,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
                 fill={
                   tick.val === 3.841 || tick.val === 6.635
                     ? MATH_COLORS.paramPrimary
-                    : "#4B5563"
+                    : CANVAS_COLORS.labelTextLight
                 }
               >
                 {tick.label}
@@ -563,7 +563,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             x={0}
             y={-54}
             textAnchor="middle"
-            fill="#FFFFFF"
+            fill={CANVAS_COLORS.white}
             fontSize={fontScale(12)}
             fontWeight="bold"
           >
