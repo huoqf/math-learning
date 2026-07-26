@@ -59,11 +59,12 @@ description: >
 |------|------|----------|-------------------|
 | **画布容器** | `ThreeDCanvas` | `@/components/Layout/ThreeDCanvas` | 3D 根画布，包含视角相机与光源。Props: `cameraPosition`, `legend` |
 | **相机控制** | `CameraRig` | `@/components/Math3D/CameraRig` | 轨道相机控制器，配合 `use3DViewport` 实现预设视角切换 |
-| **坐标网格** | `Scene3DGrid` | `@/components/Math3D/Scene3DGrid` | 3D 空间网格与 X/Y/Z 坐标轴。Props: `size` (默认 5) |
+| **坐标网格** | `Scene3DGrid` | `@/components/Math3D/Scene3DGrid` | 3D 空间网格与 X/Y/Z 坐标轴及 x/y/z 标签。Props: `size` (默认 5) |
 | **3D 点** | `Point3D` | `@/components/Math3D/Point3D` | 空间点。支持拖拽 `draggable`, `constrain={(raw) => Vec3}`, `onDrag` |
 | **3D 平面** | `Plane3D` | `@/components/Math3D/Plane3D` | 空间平面半透明渲染。Props: `origin`, `uAxis`, `vAxis`, `width`, `height`, `colorKey`, `opacity` |
 | **3D 向量** | `Vector3DArrow` | `@/components/Math3D/Vector3DArrow` | 带箭头的 3D 向量。Props: `from`, `to`, `colorKey`, `radius` |
 | **3D 角弧** | `AngleArc3D` | `@/components/Math3D/AngleArc3D` | 空间两条线/向量夹角弧线。Props: `vertex`, `dirA`, `dirB`, `radius`, `colorKey` |
+| **线面角组件** | `LinePlaneAngle3D` | `@/components/Math3D` | 斜线、垂线段、投影线段、底面法向量与线面角弧一体化组件。Props: `lineStart`, `lineEnd`, `footPoint`, `showFootLabel` |
 | **3D 点标签** | `PointLabel3D` | `@/components/Math3D/PointLabel3D` | 3D 点文本标签（如 "A", "B", "O"）。Props: `position`, `text`, `offset` |
 | **3D 公式标签**| `FormulaLabel3D` | `@/components/Math3D/FormulaLabel3D` | 3D 空间 KaTeX 公式（如 `R=2.5`）。Props: `position`, `tex` |
 | **上下标标签** | `CompoundLabel3D` | `@/components/Math3D/CompoundLabel3D` | 带有下标的点标签（如 $A_1$, $B_1$）。Props: `position`, `base`, `subscript` |

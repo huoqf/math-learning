@@ -36,11 +36,12 @@ export type { LegendItem } from "./Legend3D";
 export { Point3D } from "./Point3D";
 
 // ============================================================================
-// 几何图元 (Geometric Primitives)
+// 几何图元与角标示 (Geometric Primitives & Angle Elements)
 // ============================================================================
 export { Vector3DArrow } from "./Vector3DArrow";
 export { Plane3D } from "./Plane3D";
 export { AngleArc3D } from "./AngleArc3D";
+export { LinePlaneAngle3D } from "./LinePlaneAngle3D";
 
 // ============================================================================
 // 截面可视化 (Cross-Section Visualization)

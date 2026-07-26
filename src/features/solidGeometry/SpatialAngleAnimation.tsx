@@ -239,7 +239,7 @@ export default function SpatialAngleAnimation() {
                 colorKey="secondary"
                 opacity={0.18}
               />
-              {/* 线面角：斜线 BE、投影线 BA、垂线 EA、法向量 n0、角弧 */}
+              {/* 线面角组件：斜线 BE、投影线 BA、垂线 EA、底面法向量 n0、角弧 (禁用垂足标签避免与原点重叠) */}
               <LinePlaneAngle3D
                 lineStart={B}
                 lineEnd={E}

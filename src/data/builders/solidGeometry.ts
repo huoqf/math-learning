@@ -439,14 +439,22 @@ export function buildCircumSpherePanel(
           color: MATH_COLORS.highlight,
         },
       );
-      theorems.push({
-        name: "长方体/补体模型外接球公式",
-        latex: `R = \\frac{\\sqrt{a^2 + b^2 + c^2}}{2}`,
-        level: "core",
-        note: "体对角线长等于外接球直径 (2R = d)",
-      });
+      theorems.push(
+        {
+          name: "长方体/墙角模型外接球公式",
+          latex: `R = \\frac{\\sqrt{a^2 + b^2 + c^2}}{2}`,
+          level: "core",
+          note: "体对角线长等于外接球直径 ($d = 2R = \\sqrt{a^2+b^2+c^2}$)",
+        },
+        {
+          name: "球心位置几何表达",
+          latex: `O = \\frac{1}{2} (A + C_1)`,
+          level: "important",
+          note: "外接球球心即为长方体体对角线的中点",
+        },
+      );
       gaokaoPoints.push({
-        text: "高考经典墙角补体法：凡具有三条两两垂直棱的立体图形（如直三棱柱、墙角三棱锥），均可补形为长方体求外接球半径 R = √(a²+b²+c²)/2。",
+        text: "高考经典补体法（墙角模型）：凡具有三条两两垂直棱的三棱锥（如 $P-ABC$ 满足 $PA \\perp PB \\perp PC$），均可补形为长方体求外接球半径 $R = \\frac{\\sqrt{a^2+b^2+c^2}}{2}$。",
         importance: "gaokao",
       });
     } else if (shape === "regularPyramid") {
@@ -479,14 +487,21 @@ export function buildCircumSpherePanel(
           color: MATH_COLORS.highlight,
         },
       );
-      theorems.push({
-        name: "正棱锥外接球公式 (截面法)",
-        latex: `R = \\frac{r_{底}^2 + h^2}{2h} = \\frac{\\frac{a^2}{2} + h^2}{2h}`,
-        level: "core",
-        condition: "外接球球心位于过底面外心且垂直于底面的中心轴线上",
-      });
+      theorems.push(
+        {
+          name: "正棱锥外接球公式 (截面勾股法)",
+          latex: `R = \\frac{r_{底}^2 + h^2}{2h} = \\frac{\\frac{a^2}{2} + h^2}{2h}`,
+          level: "core",
+          condition: "外接球球心位于过底面外心且垂直于底面的中心轴线上",
+        },
+        {
+          name: "中心高线勾股方程",
+          latex: `R^2 = r_{底}^2 + (h - R)^2`,
+          level: "important",
+        },
+      );
       gaokaoPoints.push({
-        text: "正棱锥外接球球心求法：球心在中心高线上，利用勾股定理 R² = r² + (h - R)² 解出 R = (r² + h²)/(2h)。",
+        text: "正棱锥外接球球心求法：球心在中心高线上，在包含高的轴截面直角三角形中利用勾股定理 $R^2 = r^2 + (h-R)^2$ 即可解出 $R = \\frac{r^2+h^2}{2h}$。",
         importance: "gaokao",
       });
     } else if (shape === "triangularPrism") {
@@ -564,14 +579,21 @@ export function buildCircumSpherePanel(
           color: MATH_COLORS.highlight,
         },
       );
-      theorems.push({
-        name: "圆锥外接球公式 (轴截面法)",
-        latex: `R = \\frac{r^2 + h^2}{2h} = \\frac{l^2}{2h}`,
-        level: "core",
-        note: "在轴截面等腰三角形中，外接圆半径即为圆锥外接球半径",
-      });
+      theorems.push(
+        {
+          name: "圆锥外接球公式 (轴截面法)",
+          latex: `R = \\frac{r^2 + h^2}{2h} = \\frac{l^2}{2h}`,
+          level: "core",
+          note: "轴截面为底长 $2r$、腰长 $l$ 的等腰三角形，其外接圆半径即为圆锥外接球半径",
+        },
+        {
+          name: "圆锥母线与半径高勾股关系",
+          latex: `l = \\sqrt{r^2 + h^2}`,
+          level: "important",
+        },
+      );
       gaokaoPoints.push({
-        text: "旋转体切接问题降维法：过旋转轴作轴截面，圆锥外接球转化为轴截面三角形的外接圆半径 R = l² / (2h)。",
+        text: "旋转体切接问题降维法：过旋转轴作轴截面，圆锥外接球问题降维转化为轴截面三角形的外接圆问题，$R = \\frac{l^2}{2h}$。",
         importance: "gaokao",
       });
     } else {
@@ -601,10 +623,10 @@ export function buildCircumSpherePanel(
         name: "圆柱外接球公式",
         latex: `R = \\sqrt{r^2 + \\left(\\frac{h}{2}\\right)^2}`,
         level: "core",
-        note: "轴截面矩形的对角线长的一半即为外接球半径",
+        note: "圆柱轴截面为宽 $2r$、高 $h$ 的矩形，矩形对角线长的一半即为外接球半径",
       });
       gaokaoPoints.push({
-        text: "圆柱外接球球心在轴线中点，轴截面为矩形，矩形外接圆半径 R = √(r² + (h/2)²)。",
+        text: "圆柱外接球球心位于旋转轴的中点，轴截面矩形对角线半径 $R = \\sqrt{r^2 + (h/2)^2}$。",
         importance: "gaokao",
       });
     }

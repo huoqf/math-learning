@@ -289,7 +289,17 @@ export default function CircumInSphereAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
-          title={sphereType === "circum" ? "外接球高考指标" : "内切球高考指标"}
+          title={`${
+            shape === "cuboid"
+              ? "长方体"
+              : shape === "regularPyramid"
+                ? "正四棱锥"
+                : shape === "triangularPrism"
+                  ? "直三棱柱"
+                  : shape === "cone"
+                    ? "圆锥"
+                    : "圆柱"
+          }${sphereType === "circum" ? "外接球" : "内切球"}高考指标`}
         />
       }
     />

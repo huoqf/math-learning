@@ -12,6 +12,7 @@ interface LinePlaneAngle3DProps {
   arcRadius?: number;
   showNormal?: boolean;
   showFootLabel?: boolean;
+  footLabelText?: string;
 }
 
 export const LinePlaneAngle3D = ({
@@ -21,19 +22,37 @@ export const LinePlaneAngle3D = ({
   planeNormal,
   arcRadius = 0.8,
   showNormal = true,
-  showFootLabel = true,
+  showFootLabel = false,
+  footLabelText = "P'",
 }: LinePlaneAngle3DProps) => {
   return (
     <group>
       {/* 1. 斜线段 */}
-      <Vector3DArrow from={lineStart} to={lineEnd} colorKey="primary" />
+      <Vector3DArrow
+        from={lineStart}
+        to={lineEnd}
+        colorKey="primary"
+        radius={0.05}
+      />
 
       {/* 2. 垂线段与投影线段 */}
-      <Vector3DArrow from={lineEnd} to={footPoint} colorKey="paramTertiary" />
-      <Vector3DArrow from={lineStart} to={footPoint} colorKey="secondary" />
+      <Vector3DArrow
+        from={lineEnd}
+        to={footPoint}
+        colorKey="tertiary"
+        radius={0.03}
+      />
+      <Vector3DArrow
+        from={lineStart}
+        to={footPoint}
+        colorKey="secondary"
+        radius={0.04}
+      />
 
-      {/* 3. 垂足标签 */}
-      {showFootLabel && <PointLabel3D position={footPoint} text="P'" />}
+      {/* 3. 垂足标签 (可关闭，防止与原点 O(0,0,0) 重叠) */}
+      {showFootLabel && (
+        <PointLabel3D position={footPoint} text={footLabelText} />
+      )}
 
       {/* 4. 平面法向量 */}
       {showNormal && planeNormal && (
@@ -46,6 +65,7 @@ export const LinePlaneAngle3D = ({
               z: footPoint.z + planeNormal.z,
             }}
             colorKey="secondary"
+            radius={0.04}
           />
           <FormulaLabel3D
             position={{
