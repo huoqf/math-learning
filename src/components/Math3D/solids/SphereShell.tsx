@@ -11,6 +11,8 @@ interface SphereShellProps {
   colorKey: keyof typeof MATH_COLORS;
   opacity?: number;
   showGreatCircles?: boolean;
+  /** 是否启用深度测试。内切球必须传 false，否则被实体遮挡（Bug 8） */
+  depthTest?: boolean;
 }
 
 function sampleCircle(
@@ -42,6 +44,7 @@ export const SphereShell = ({
   colorKey,
   opacity = 0.16,
   showGreatCircles = true,
+  depthTest = true,
 }: SphereShellProps) => {
   const pos = mathToThree(center);
   const color = MATH_COLORS[colorKey];
@@ -68,6 +71,7 @@ export const SphereShell = ({
           metalness={0}
           side={THREE.DoubleSide}
           depthWrite={false}
+          depthTest={depthTest}
         />
       </mesh>
       {circles.map((pts, i) => (
@@ -78,6 +82,7 @@ export const SphereShell = ({
           lineWidth={1.2}
           transparent
           opacity={0.55}
+          depthTest={depthTest}
         />
       ))}
     </group>

@@ -30,6 +30,7 @@ export const Cuboid = ({
       transparent
       opacity={opacity}
       side={2}
+      depthWrite={false}
     />
     <Edges color={MATH_COLORS.line} />
   </mesh>

@@ -13,5 +13,6 @@ export const InSphere = ({ center, radius }: InSphereProps) => (
     colorKey="inSphereShell"
     opacity={0.22}
     showGreatCircles
+    depthTest={false}
   />
 );
