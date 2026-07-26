@@ -17,6 +17,7 @@ import {
   PointLabel3D,
   FormulaLabel3D,
   Vector3DArrow,
+  LinePlaneAngle3D,
   Legend3D,
   CameraRig,
 } from "@/components/Math3D";
@@ -238,27 +239,13 @@ export default function SpatialAngleAnimation() {
                 colorKey="secondary"
                 opacity={0.18}
               />
-              {/* 斜线 BE */}
-              <Vector3DArrow from={B} to={E} colorKey="primary" />
-              {/* 底面法向量 n_0 */}
-              <Vector3DArrow
-                from={{ x: a / 2, y: b / 2, z: 0 }}
-                to={{ x: a / 2, y: b / 2, z: 2 }}
-                colorKey="secondary"
-              />
-              <FormulaLabel3D
-                position={{ x: a / 2, y: b / 2, z: 2.2 }}
-                tex="\vec{n_0}=(0,0,1)"
-              />
-              {/* 投影线 BA */}
-              <Vector3DArrow from={B} to={A} colorKey="paramTertiary" />
-              {/* 线面角弧 */}
-              <AngleArc3D
-                vertex={B}
-                dirA={{ x: A.x - B.x, y: A.y - B.y, z: A.z - B.z }}
-                dirB={{ x: E.x - B.x, y: E.y - B.y, z: E.z - B.z }}
-                radius={0.8}
-                colorKey="highlight"
+              {/* 线面角：斜线 BE、投影线 BA、垂线 EA、法向量 n0、角弧 */}
+              <LinePlaneAngle3D
+                lineStart={B}
+                lineEnd={E}
+                footPoint={A}
+                planeNormal={{ x: 0, y: 0, z: 1 }}
+                arcRadius={0.8}
               />
             </>
           )}
