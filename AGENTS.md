@@ -363,7 +363,7 @@ const paramConfigs = useMemo<ParamConfig[]>(() => {
 
 | 约束 | 说明 |
 |------|------|
-| **禁止新建等效组件** | 改造现有页面时，必须在原文件上编辑，不得创建新文件替代 |
+| **禁止新建等效组件** | 改造现有页面时，必须在原文件上编辑，不得创建新文件替代。例外：按 meta.ts 架构将多模式页面拆分为独立路由页面（如 `/function-exponential` + `/function-logarithmic`）属于有意重构，不受此限 |
 | **禁止新建等效 Scene** | 如需修改渲染逻辑，直接修改 `<Topic>Scene.tsx`，不要新建 `XxxScene2.tsx` |
 | **复用已有组件** | 如需添加切线/渐近线/阴影等，使用 `TangentLine`/`Asymptote`/`IntervalShadow`，禁止手写 |
 | **左屏只改 paramMeta** | 如需调整参数范围/步长/退化标记，修改 `registries/<topic>.ts` 中的 `paramMeta`，不要手写控件 |
@@ -390,10 +390,14 @@ const paramConfigs = useMemo<ParamConfig[]>(() => {
 
 ## 📋 新建页面后必须完成的注册步骤
 
-1. **注册路由**：在 `src/App.tsx` 的 `NAV_ITEMS` 数组中添加导航项，并在 `<Routes>` 中添加 `<Route>` 注册
-2. **注册 mathQuantities 分支**：在 `src/data/mathQuantities.ts` 的 `buildMathQuantities` 函数中添加新 `animId` 的 if 分支
-3. **注册 registry**：在 `src/data/registries/<topic>.ts` 中定义 `defaultParams` 和 `paramMeta`
-4. **组件导出**：如创建了新的公共组件，需在对应 `src/components/*/index.ts` 中导出
+> **快捷方式**：运行 `node scripts/gen-node.mjs` 脚手架脚本可自动生成 meta.ts + Animation.tsx + index.ts 骨架，并自动插入 knowledgeTree.ts 和 routeEntries.ts。
+
+1. **创建 meta.ts**：在 `src/features/<topic>/meta.ts` 中导出 `node`（KnowledgeNode，含 `route` 字段）和 `loader`（`() => import(...)` 动态加载）。参考 `src/features/set/meta.ts`
+2. **注册路由**：在 `src/data/routeEntries.ts` 的 `legacyEntries` 数组中添加 `{ node, loader }` 条目。App.tsx 会从 routeEntries 自动生成所有 `<Route>`，无需手动编辑 App.tsx
+3. **注册知识树**：在 `src/data/knowledgeTree.ts` 中添加对应节点（id、title、chapter、module、importance、animationIds、prerequisites）。routeEntries 中每个有 route 的节点都必须在 knowledgeTree 中有对应条目（`knowledgeTree.test.ts` 会校验）
+4. **注册 mathQuantities 分支**：在 `src/data/mathQuantities.ts` 的 `buildMathQuantities` 函数中添加新 `animId` 的 if 分支
+5. **注册 registry**：在 `src/data/registries/<topic>.ts` 中定义 `defaultParams` 和 `paramMeta`
+6. **组件导出**：如创建了新的公共组件，需在对应 `src/components/*/index.ts` 中导出
 
 ---
 

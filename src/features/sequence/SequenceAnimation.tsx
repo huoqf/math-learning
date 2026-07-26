@@ -20,9 +20,9 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
 
 export function SequenceAnimation() {
-  // 当前研究大类模式: 'arithmetic' | 'geometric' | 'models'
+  // 当前研究大类模式: 'arithmetic' | 'geometric' | 'recurrence' | 'models'
   const [activeMode, setActiveMode] = useState<
-    "arithmetic" | "geometric" | "models"
+    "arithmetic" | "geometric" | "recurrence" | "models"
   >("arithmetic");
 
   // 等比模式下的视图: 'points' | 'tessellation'
@@ -35,10 +35,19 @@ export function SequenceAnimation() {
     "arith-geo" | "telescoping" | "cross-telescoping" | "grouped" | "odd-even"
   >("arith-geo");
 
+  // 递推构造求通项子模型: 5 大核心递推构造模型
+  const [recurrenceModelType, setRecurrenceModelType] = useState<
+    | "linear-pan"
+    | "accumulation"
+    | "multiplication"
+    | "reciprocal"
+    | "second-order"
+  >("linear-pan");
+
   // 当前高亮/选中的项数 n
   const [highlightN, setHighlightN] = useState<number>(1);
 
-  // 参数状态: a1, d, q, N
+  // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
   }));
@@ -51,30 +60,31 @@ export function SequenceAnimation() {
   // 固定坐标轴：N ∈ [3, 15]，xRange 覆盖所有可能的 N
   const xRange: [number, number] = [-1, 16.5];
 
-  // 各模型固定 canonical yRange（从默认参数数据范围推导，模型间自动切换，同一模型内不缩放）
+  // 各模型固定 canonical yRange
   const MODEL_Y_RANGES: Record<string, [number, number]> = {
-    // 等差: a_n ∈ [-4, 3], S_n ∈ [3, 20] (a1=3, d=-1, N=15)
     arithmetic: [-8, 25],
-    // 等比 q<1: S_n → a1/(1-q)=6; q>1: 指数增长
     geometric: params.q > 1 ? [-2, 50] : [-1, 8],
-    // 错位相减: cn = (a1+(n-1)d)*q^(n-1) ∈ [0.02, 3]
     "arith-geo": [-5, 15],
-    // 裂项: partA=1/n ∈ (0,1], -partB=-1/(n+1) ∈ [-0.5,0)
     telescoping: [-0.5, 1.5],
-    // 跨项裂项: partA=0.5/n ∈ (0,0.5], -partB=-0.5/(n+2)
     "cross-telescoping": [-0.2, 1],
-    // 分组: cn = an+bn ∈ [-3.5, 4]
     grouped: [-8, 25],
-    // 奇偶: cn = (-1)^n*n ∈ [-15, 15] (N_MAX=15)
     "odd-even": [-17, 17],
+    // 递推与构造法 Y 轴范围
+    "linear-pan": [-10, 30],
+    accumulation: [-5, 45],
+    multiplication: [-1, 10],
+    reciprocal: [-5, 15],
+    "second-order": [-10, 50],
   };
 
   const yRange: [number, number] =
     activeMode === "models"
       ? (MODEL_Y_RANGES[modelType] ?? [-6, 22])
-      : activeMode === "geometric"
-        ? MODEL_Y_RANGES.geometric
-        : MODEL_Y_RANGES.arithmetic;
+      : activeMode === "recurrence"
+        ? (MODEL_Y_RANGES[recurrenceModelType] ?? [-10, 30])
+        : activeMode === "geometric"
+          ? MODEL_Y_RANGES.geometric
+          : MODEL_Y_RANGES.arithmetic;
 
   const scale = useSceneScale({
     vp,
@@ -88,9 +98,9 @@ export function SequenceAnimation() {
       activeMode,
       geometricViewType,
       modelType,
-      subModel: modelType,
+      subModel: activeMode === "recurrence" ? recurrenceModelType : modelType,
     });
-  }, [params, activeMode, geometricViewType, modelType]);
+  }, [params, activeMode, geometricViewType, modelType, recurrenceModelType]);
 
   // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
@@ -114,6 +124,16 @@ export function SequenceAnimation() {
         modelType === "arith-geo" || modelType === "grouped"
           ? ["a1", "d", "q", "N"]
           : ["N"],
+      recurrence:
+        recurrenceModelType === "linear-pan"
+          ? ["a1", "p_rec", "q_rec", "N"]
+          : recurrenceModelType === "accumulation"
+            ? ["a1", "d", "N"]
+            : recurrenceModelType === "multiplication"
+              ? ["a1", "N"]
+              : recurrenceModelType === "reciprocal"
+                ? ["a1", "coefA", "coefB", "coefC", "N"]
+                : ["a1", "a2", "p_rec", "q_rec", "N"],
     };
 
     const keys = keysByMode[activeMode] ?? Object.keys(paramMeta);
@@ -135,7 +155,7 @@ export function SequenceAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, activeMode, modelType]);
+  }, [params, activeMode, modelType, recurrenceModelType]);
 
   return (
     <ThreePanel
@@ -144,12 +164,13 @@ export function SequenceAnimation() {
           {/* 1. 主模式切换区 */}
           <LeftPanelSection
             title="数列类型与研究模式"
-            subtitle="选择基础数列或高考模型"
+            subtitle="选择基础数列、递推构造或高考模型"
           >
             <TabSwitcher
               tabs={[
                 { key: "arithmetic", label: "等差数列" },
                 { key: "geometric", label: "等比数列" },
+                { key: "recurrence", label: "递推与构造法" },
                 { key: "models", label: "高考求和模型" },
               ]}
               value={activeMode}
@@ -170,6 +191,46 @@ export function SequenceAnimation() {
                 ]}
                 value={geometricViewType}
                 onChange={(val) => setGeometricViewType(val as any)}
+              />
+            </LeftPanelSection>
+          )}
+
+          {activeMode === "recurrence" && (
+            <LeftPanelSection
+              title="递推构造 5 大核心模型"
+              subtitle="涵盖高考求通项待定系数与构造法"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "linear-pan",
+                    label: "待定系数/一阶线性",
+                    formula: "a_{n+1}=pa_n+q",
+                  },
+                  {
+                    key: "accumulation",
+                    label: "累加法求通项",
+                    formula: "a_{n+1}=a_n+f(n)",
+                  },
+                  {
+                    key: "multiplication",
+                    label: "累乘法求通项",
+                    formula: "a_{n+1}=f(n)a_n",
+                  },
+                  {
+                    key: "reciprocal",
+                    label: "倒数构造法",
+                    formula: "a_{n+1}=\\frac{Aa_n}{Ba_n+C}",
+                  },
+                  {
+                    key: "second-order",
+                    label: "二阶特征根法",
+                    formula: "a_{n+2}=pa_{n+1}+qa_n",
+                    fullWidth: true,
+                  },
+                ]}
+                value={recurrenceModelType}
+                onChange={(val) => setRecurrenceModelType(val as any)}
               />
             </LeftPanelSection>
           )}
@@ -219,6 +280,7 @@ export function SequenceAnimation() {
             activeMode={activeMode}
             geometricViewType={geometricViewType}
             modelType={modelType}
+            recurrenceModelType={recurrenceModelType}
             highlightN={highlightN}
             onSelectN={setHighlightN}
           />

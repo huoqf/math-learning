@@ -1,0 +1,512 @@
+import type { KnowledgeNode } from "./types";
+
+export interface RouteEntry {
+  node: KnowledgeNode;
+  /** 动态 import，返回的模块中第一个命名导出即为组件 */
+  loader: () => Promise<Record<string, React.ComponentType>>;
+  /** 3D 页面需要 Guarded3DPage 包裹（WebGL 门禁 + 懒加载） */
+  guarded3D?: boolean;
+}
+
+// ── 已迁移 meta.ts 的页面（从 meta.ts import） ──
+import {
+  vennNode,
+  logicNode,
+  vennLoader,
+  logicLoader,
+} from "@/features/set/meta";
+
+// ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
+
+const legacyEntries: RouteEntry[] = [
+  {
+    node: {
+      id: "know-sequence-geom",
+      title: "等差数列通项与求和",
+      labTitle: "等差数列实验室",
+      chapter: "数列",
+      module: "等差与等比数列",
+      importance: "core",
+      animationIds: ["anim-sequence"],
+      prerequisites: [],
+      route: "/sequence-arithmetic",
+    },
+    loader: () => import("@/features/sequence/ArithmeticPage"),
+  },
+  {
+    node: {
+      id: "know-sequence-geometric",
+      title: "等比数列通项与求和",
+      labTitle: "等比数列实验室",
+      chapter: "数列",
+      module: "等差与等比数列",
+      importance: "core",
+      animationIds: ["anim-sequence-geom"],
+      prerequisites: [],
+      route: "/sequence-geometric",
+    },
+    loader: () => import("@/features/sequence/GeometricPage"),
+  },
+  {
+    node: {
+      id: "know-sequence-recurrence",
+      title: "递推数列与构造法求通项",
+      labTitle: "递推与构造法实验室",
+      chapter: "数列",
+      module: "数列递推",
+      importance: "hard",
+      animationIds: ["anim-sequence-recurrence"],
+      prerequisites: ["know-sequence-geom"],
+      route: "/sequence-recurrence",
+    },
+    loader: () => import("@/features/sequence/RecurrencePage"),
+  },
+  {
+    node: {
+      id: "know-sequence-sum",
+      title: "高考求和模型",
+      labTitle: "高考求和模型实验室",
+      chapter: "数列",
+      module: "数列求和",
+      importance: "gaokao",
+      animationIds: ["anim-sequence-sum"],
+      prerequisites: ["know-sequence-geom"],
+      route: "/sequence-models",
+    },
+    loader: () => import("@/features/sequence/ModelsPage"),
+  },
+  {
+    node: {
+      id: "know-func-domain-range",
+      title: "函数的概念、定义域与值域",
+      labTitle: "定义域与值域实验室",
+      chapter: "函数概念与性质",
+      module: "函数概念",
+      importance: "basic",
+      animationIds: ["anim-func-properties"],
+      prerequisites: [],
+      route: "/function-domain",
+    },
+    loader: () => import("@/features/funcProperties/DomainPage"),
+  },
+  {
+    node: {
+      id: "know-func-properties",
+      title: "函数的单调性与奇偶性",
+      labTitle: "单调奇偶性实验室",
+      chapter: "函数概念与性质",
+      module: "函数的基本性质",
+      importance: "core",
+      animationIds: ["anim-func-properties"],
+      prerequisites: ["know-func-domain-range"],
+      route: "/function-parity",
+    },
+    loader: () => import("@/features/funcProperties/ParityPage"),
+  },
+  {
+    node: {
+      id: "know-func-symmetry",
+      title: "函数的对称性、周期性与轴/中心对称",
+      labTitle: "对称与周期实验室",
+      chapter: "函数概念与性质",
+      module: "函数的基本性质",
+      importance: "gaokao",
+      animationIds: ["anim-func-properties"],
+      prerequisites: ["know-func-properties"],
+      route: "/function-symmetry",
+    },
+    loader: () => import("@/features/funcProperties/SymmetryPage"),
+  },
+  {
+    node: {
+      id: "know-func-explog",
+      title: "指数与对数函数图像及反函数关系",
+      labTitle: "指数函数实验室",
+      chapter: "函数概念与性质",
+      module: "基本初等函数",
+      importance: "gaokao",
+      animationIds: ["anim-func-explog"],
+      prerequisites: ["know-func-properties"],
+      route: "/function-exponential",
+    },
+    loader: () => import("@/features/funcExpLog/ExponentialPage"),
+  },
+  {
+    node: {
+      id: "know-func-logarithmic",
+      title: "对数函数图像与反函数关系",
+      labTitle: "对数函数实验室",
+      chapter: "函数概念与性质",
+      module: "基本初等函数",
+      importance: "gaokao",
+      animationIds: ["anim-func-explog"],
+      prerequisites: ["know-func-properties"],
+      route: "/function-logarithmic",
+    },
+    loader: () => import("@/features/funcExpLog/LogarithmicPage"),
+  },
+  {
+    node: {
+      id: "know-power-function",
+      title: "幂函数的性质与图像变化",
+      labTitle: "幂函数实验室",
+      chapter: "函数概念与性质",
+      module: "基本初等函数",
+      importance: "basic",
+      animationIds: ["anim-func-explog"],
+      prerequisites: ["know-func-properties"],
+      route: "/function-power",
+    },
+    loader: () => import("@/features/funcExpLog/PowerPage"),
+  },
+  {
+    node: {
+      id: "know-func-zero",
+      title: "函数的零点与二分逼近法",
+      labTitle: "零点二分法实验室",
+      chapter: "函数概念与性质",
+      module: "函数与方程",
+      importance: "core",
+      animationIds: ["anim-func-zero"],
+      prerequisites: ["know-func-properties"],
+      route: "/function-zero",
+    },
+    loader: () => import("@/features/funcZero/FuncZeroAnimation"),
+  },
+  {
+    node: {
+      id: "know-func-transform",
+      title: "函数图象的平移、伸缩与翻折变换",
+      labTitle: "函数图象变换实验室",
+      chapter: "函数概念与性质",
+      module: "图象变换",
+      importance: "gaokao",
+      animationIds: ["anim-func-transform"],
+      prerequisites: ["know-func-properties"],
+      route: "/transform",
+    },
+    loader: () => import("@/features/transform/TransformAnimation"),
+  },
+  {
+    node: {
+      id: "know-func-composite",
+      title: "分段函数临界与复合函数同增异减",
+      labTitle: "分段与复合函数实验室",
+      chapter: "函数概念与性质",
+      module: "分段与复合函数",
+      importance: "hard",
+      animationIds: ["anim-func-composite"],
+      prerequisites: ["know-func-properties"],
+      route: "/composite",
+    },
+    loader: () => import("@/features/composite/CompositeAnimation"),
+  },
+  {
+    node: {
+      id: "know-quadratic",
+      title: "二次函数与一元二次方程、不等式",
+      labTitle: "二次函数实验室",
+      chapter: "函数概念与性质",
+      module: "二次函数",
+      importance: "core",
+      animationIds: ["anim-quadratic"],
+      prerequisites: ["know-func-properties"],
+      route: "/quadratic",
+    },
+    loader: () => import("@/features/quadratic/QuadraticAnimation"),
+  },
+  {
+    node: {
+      id: "know-derivative-tangent",
+      title: "导数的几何意义与切线方程",
+      labTitle: "导数几何意义",
+      chapter: "导数及其应用",
+      module: "导数概念",
+      importance: "gaokao",
+      animationIds: ["anim-derivative-tangent"],
+      prerequisites: ["know-func-properties"],
+      route: "/derivative",
+    },
+    loader: () => import("@/features/derivative/DerivativeAnimation"),
+  },
+  {
+    node: {
+      id: "know-derivative-constant",
+      title: "导数与不等式恒成立、存在性问题",
+      labTitle: "单变量恒成立实验室",
+      chapter: "导数及其应用",
+      module: "导数的应用",
+      importance: "gaokao",
+      animationIds: ["anim-constant-single"],
+      prerequisites: ["know-derivative-compare"],
+      route: "/constant-single",
+    },
+    loader: () => import("@/features/constant/SingleVarPage"),
+  },
+  {
+    node: {
+      id: "know-constant-double",
+      title: "双变量博弈与存在性问题",
+      labTitle: "双变量博弈实验室",
+      chapter: "导数及其应用",
+      module: "导数的应用",
+      importance: "gaokao",
+      animationIds: ["anim-constant-double"],
+      prerequisites: ["know-derivative-compare"],
+      route: "/constant-double",
+    },
+    loader: () => import("@/features/constant/DoubleVarPage"),
+  },
+  {
+    node: {
+      id: "know-func-hook",
+      title: "对勾函数 y=ax+b/x 基本性质",
+      labTitle: "对勾函数实验室",
+      chapter: "函数概念与性质",
+      module: "特殊模型函数",
+      importance: "gaokao",
+      animationIds: ["anim-nike"],
+      prerequisites: ["know-func-properties"],
+      route: "/nike-standard",
+    },
+    loader: () => import("@/features/nike/StandardPage"),
+  },
+  {
+    node: {
+      id: "know-nike-amgm",
+      title: "均值不等式与对勾函数",
+      labTitle: "均值不等式实验室",
+      chapter: "函数概念与性质",
+      module: "特殊模型函数",
+      importance: "gaokao",
+      animationIds: ["anim-nike"],
+      prerequisites: ["know-func-properties"],
+      route: "/nike-amgm",
+    },
+    loader: () => import("@/features/nike/AmgmPage"),
+  },
+  {
+    node: {
+      id: "know-nike-shifted",
+      title: "平移对勾函数与双曲型图像",
+      labTitle: "平移双曲线实验室",
+      chapter: "函数概念与性质",
+      module: "特殊模型函数",
+      importance: "gaokao",
+      animationIds: ["anim-nike"],
+      prerequisites: ["know-func-properties"],
+      route: "/nike-shifted",
+    },
+    loader: () => import("@/features/nike/ShiftedPage"),
+  },
+  {
+    node: {
+      id: "know-derivative-transcendental",
+      title: "基准超越函数与切线放缩模型",
+      labTitle: "基准超越函数与切线放缩模型",
+      chapter: "导数及其应用",
+      module: "导数压轴",
+      importance: "hard",
+      animationIds: ["anim-derivative-transcendental"],
+      prerequisites: ["know-derivative-compare"],
+      route: "/derivative-transcendental",
+    },
+    loader: () =>
+      import("@/features/derivativeTranscendental/TranscendentalAnimation"),
+  },
+  {
+    node: {
+      id: "know-derivative-shift",
+      title: "隐零点定理与极值点偏移",
+      labTitle: "隐零点定理与极值点偏移",
+      chapter: "导数及其应用",
+      module: "导数压轴",
+      importance: "hard",
+      animationIds: ["anim-derivative-shift"],
+      prerequisites: ["know-derivative-compare"],
+      route: "/derivative-shift",
+    },
+    loader: () => import("@/features/derivativeShift/DerivativeShiftAnimation"),
+  },
+  {
+    node: {
+      id: "know-probability-counting",
+      title: "计数原理与二项式定理",
+      labTitle: "计数原理与二项式定理实验室",
+      chapter: "概率与统计",
+      module: "排列组合",
+      importance: "core",
+      animationIds: ["anim-probability-counting"],
+      prerequisites: [],
+      route: "/probability-counting",
+    },
+    loader: () =>
+      import("@/features/probabilityCounting/ProbabilityCountingAnimation"),
+  },
+  {
+    node: {
+      id: "know-probability-bayes",
+      title: "条件概率、全概率公式与贝叶斯",
+      labTitle: "条件概率与贝叶斯实验室",
+      chapter: "概率与统计",
+      module: "古典与条件概率",
+      importance: "gaokao",
+      animationIds: ["anim-probability-bayes"],
+      prerequisites: [],
+      route: "/probability-bayes",
+    },
+    loader: () =>
+      import("@/features/probabilityBayes/ProbabilityBayesAnimation"),
+  },
+  {
+    node: {
+      id: "know-probability-distribution",
+      title: "离散型随机变量分布列与数字特征",
+      labTitle: "离散型随机变量分布列与数字特征",
+      chapter: "概率与统计",
+      module: "随机变量及其分布",
+      importance: "gaokao",
+      animationIds: ["anim-probability-distribution"],
+      prerequisites: ["know-probability-bayes"],
+      route: "/probability-distribution",
+    },
+    loader: () =>
+      import("@/features/probabilityDistribution/ProbabilityDistributionAnimation"),
+  },
+  {
+    node: {
+      id: "know-probability-normal",
+      title: "频率直方图与正态分布曲线",
+      labTitle: "频率分布直方图与正态分布实验室",
+      chapter: "概率与统计",
+      module: "随机变量及其分布",
+      importance: "gaokao",
+      animationIds: ["anim-probability-normal"],
+      prerequisites: [],
+      route: "/statistics-normal",
+    },
+    loader: () =>
+      import("@/features/probabilityNormal/ProbabilityNormalAnimation"),
+  },
+  {
+    node: {
+      id: "know-probability-regression",
+      title: "一元线性回归分析",
+      labTitle: "一元线性回归分析",
+      chapter: "概率与统计",
+      module: "统计分析",
+      importance: "gaokao",
+      animationIds: ["anim-paired-data"],
+      prerequisites: [],
+      route: "/paired-data-regression",
+    },
+    loader: () => import("@/features/pairedData/RegressionPage"),
+  },
+  {
+    node: {
+      id: "know-paired-independence",
+      title: "2×2 独立性检验",
+      labTitle: "2×2 独立性检验",
+      chapter: "概率与统计",
+      module: "统计分析",
+      importance: "gaokao",
+      animationIds: ["anim-paired-data"],
+      prerequisites: [],
+      route: "/paired-data-independence",
+    },
+    loader: () => import("@/features/pairedData/IndependencePage"),
+  },
+  {
+    node: {
+      id: "know-solid-rotation-body",
+      title: "旋转体的结构特征（圆柱、圆锥、圆台、球）",
+      labTitle: "旋转体的结构特征",
+      chapter: "立体几何与空间向量",
+      module: "立体几何",
+      importance: "core",
+      animationIds: ["anim-solid-rotation-body"],
+      prerequisites: [],
+      route: "/solid-rotation-body",
+    },
+    loader: () => import("@/features/solidGeometry/RotationBodyAnimation"),
+    guarded3D: true,
+  },
+  {
+    node: {
+      id: "know-solid-position",
+      title: "空间线面平行与垂直判定定理",
+      labTitle: "线面位置关系判定",
+      chapter: "立体几何与空间向量",
+      module: "立体几何",
+      importance: "core",
+      animationIds: ["anim-solid-position"],
+      prerequisites: [],
+      route: "/solid-position",
+    },
+    loader: () => import("@/features/solidGeometry/LinePlaneRelationAnimation"),
+    guarded3D: true,
+  },
+  {
+    node: {
+      id: "know-solid-angle",
+      title: "空间直角坐标系与求空间角",
+      labTitle: "空间角：长方体截面二面角",
+      chapter: "立体几何与空间向量",
+      module: "空间向量应用",
+      importance: "hard",
+      animationIds: ["anim-solid-angle"],
+      prerequisites: ["know-solid-position"],
+      route: "/solid-angle",
+    },
+    loader: () => import("@/features/solidGeometry/SpatialAngleAnimation"),
+    guarded3D: true,
+  },
+  {
+    node: {
+      id: "know-solid-ball",
+      title: "多面体与旋转体的外接球、内切球",
+      labTitle: "外接球与内切球",
+      chapter: "立体几何与空间向量",
+      module: "立体几何",
+      importance: "hard",
+      animationIds: ["anim-solid-ball"],
+      prerequisites: ["know-solid-position"],
+      route: "/solid-ball",
+    },
+    loader: () => import("@/features/solidGeometry/CircumInSphereAnimation"),
+    guarded3D: true,
+  },
+  // 孤立路由：无 knowledgeTree 节点，仅可通过 URL 直接访问
+  {
+    node: {
+      id: "orphan-solid-section",
+      title: "截面可视化",
+      labTitle: "截面可视化",
+      chapter: "",
+      module: "",
+      importance: "basic",
+      animationIds: [],
+      prerequisites: [],
+      route: "/solid-section",
+    },
+    loader: () => import("@/features/solidGeometry/section/SectionCuboidDemo"),
+    guarded3D: true,
+  },
+];
+
+// ── 聚合导出 ──
+
+export const routeEntries: RouteEntry[] = [
+  // 已迁移 meta.ts 的页面
+  { node: vennNode, loader: vennLoader },
+  { node: logicNode, loader: logicLoader },
+  // 暂未迁移的页面
+  ...legacyEntries,
+];
+
+/** 从 routeEntries 自动生成的路由→标题映射（替代 App.tsx 中手写的 PATH_TO_LABEL） */
+export const PATH_TO_LABEL: Record<string, string> = Object.fromEntries(
+  routeEntries
+    .filter((e) => e.node.route)
+    .map((e) => [e.node.route!, e.node.labTitle ?? e.node.title]),
+);

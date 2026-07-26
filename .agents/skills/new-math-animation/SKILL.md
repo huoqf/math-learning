@@ -100,10 +100,14 @@ KaTeX 输出 HTML，不能直接作为 SVG 子元素，禁止 `<foreignObject>`�
 
 ## Step 2：注册步骤（新建页面必做）
 
-1. **路由**：`src/App.tsx` → NAV_ITEMS + Routes
-2. **mathQuantities**：`src/data/mathQuantities.ts` → buildMathQuantities 添加 animId 分支
-3. **registry**：`src/data/registries/<topic>.ts` → defaultParams + paramMeta
-4. **组件导出**：新公共组件在 `src/components/*/index.ts` 导出
+1. **创建 meta.ts**：在 `src/features/<topic>/meta.ts` 中导出 `node`（KnowledgeNode，含 `route`）和 `loader`（`() => import(...)`）。参考 `src/features/set/meta.ts`
+2. **注册路由**：在 `src/data/routeEntries.ts` 的 `legacyEntries` 中添加 `{ node, loader }` 条目。App.tsx 从 routeEntries 自动生成路由，无需手动编辑 App.tsx
+3. **注册知识树**：在 `src/data/knowledgeTree.ts` 中添加节点（id/title/chapter/module/importance/animationIds/prerequisites）
+4. **mathQuantities**：`src/data/mathQuantities.ts` → buildMathQuantities 添加 animId 分支
+5. **registry**：`src/data/registries/<topic>.ts` → defaultParams + paramMeta
+6. **组件导出**：新公共组件在 `src/components/*/index.ts` 导出
+
+> **快捷方式**：`node scripts/gen-node.mjs` 可自动生成 meta.ts + Animation.tsx + index.ts 骨架并插入 knowledgeTree/routeEntries。
 
 ---
 

@@ -7,6 +7,11 @@ import {
   calcGroupedSequence,
   calcCrossTelescoping,
   calcOddEvenSequence,
+  calcLinearRecurrence,
+  calcAccumulationRecurrence,
+  calcMultiplicationRecurrence,
+  calcReciprocalRecurrence,
+  calcSecondOrderRecurrence,
 } from "./sequence";
 
 describe("Sequence Math Calculations", () => {
@@ -90,5 +95,71 @@ describe("Sequence Math Calculations", () => {
     expect(res.terms[1].pairSum).toBe(1);
     expect(res.terms[3].pairSum).toBe(1);
     expect(res.terms[3].Tn).toBe(2);
+  });
+
+  it("should correctly compute linear recurrence terms (a_{n+1} = p*a_n + q)", () => {
+    // a1 = 3, p = 2, q = 1 => c = 1 / (1-2) = -1
+    // a1 = 3, a2 = 7, a3 = 15, a4 = 31
+    const res = calcLinearRecurrence(3, 2, 1, 4);
+    expect(res.isValid).toBe(true);
+    expect(res.fixedPoint).toBe(-1);
+    expect(res.terms[0].an).toBe(3);
+    expect(res.terms[1].an).toBe(7);
+    expect(res.terms[2].an).toBe(15);
+    expect(res.terms[3].an).toBe(31);
+    // bn = an - c = an + 1 => b1=4, b2=8, b3=16, b4=32
+    expect(res.terms[0].bn).toBe(4);
+    expect(res.terms[3].bn).toBe(32);
+  });
+
+  it("should handle degenerate linear recurrence (p = 1)", () => {
+    const res = calcLinearRecurrence(2, 1, 3, 4);
+    expect(res.isDegenerateArith).toBe(true);
+    expect(res.fixedPoint).toBeNull();
+    expect(res.terms[0].an).toBe(2);
+    expect(res.terms[1].an).toBe(5);
+    expect(res.terms[2].an).toBe(8);
+  });
+
+  it("should correctly compute accumulation recurrence terms", () => {
+    // a1 = 1, f(n) = 2n => a1=1, a2=1+2=3, a3=3+4=7, a4=7+6=13
+    const res = calcAccumulationRecurrence(1, "linear", 2, 4);
+    expect(res.isValid).toBe(true);
+    expect(res.terms[0].an).toBe(1);
+    expect(res.terms[1].an).toBe(3);
+    expect(res.terms[2].an).toBe(7);
+    expect(res.terms[3].an).toBe(13);
+  });
+
+  it("should correctly compute multiplication recurrence terms", () => {
+    // a1 = 1, multType = n/(n+1) => a1=1, a2=1/2, a3=1/3, a4=1/4
+    const res = calcMultiplicationRecurrence(1, "n_over_n1", 4);
+    expect(res.isValid).toBe(true);
+    expect(res.terms[0].an).toBe(1);
+    expect(res.terms[1].an).toBe(0.5);
+    expect(res.terms[2].an).toBeCloseTo(1 / 3, 4);
+    expect(res.terms[3].an).toBe(0.25);
+  });
+
+  it("should correctly compute reciprocal recurrence terms", () => {
+    // a1 = 1, A = 1, B = 1, C = 1 => 1/a_{n+1} = 1/a_n + 1 => b_n is arith (b1=1, b2=2, b3=3) => a1=1, a2=1/2, a3=1/3
+    const res = calcReciprocalRecurrence(1, 1, 1, 1, 3);
+    expect(res.isValid).toBe(true);
+    expect(res.isReciprocalLinear).toBe(true);
+    expect(res.terms[0].an).toBe(1);
+    expect(res.terms[1].an).toBe(0.5);
+    expect(res.terms[2].an).toBeCloseTo(1 / 3, 4);
+  });
+
+  it("should correctly compute second order recurrence terms (Fibonacci sequence)", () => {
+    // Fibonacci: a1 = 1, a2 = 1, p = 1, q = 1 => a1=1, a2=1, a3=2, a4=3, a5=5, a6=8
+    const res = calcSecondOrderRecurrence(1, 1, 1, 1, 6);
+    expect(res.isValid).toBe(true);
+    expect(res.terms[0].an).toBe(1);
+    expect(res.terms[1].an).toBe(1);
+    expect(res.terms[2].an).toBe(2);
+    expect(res.terms[3].an).toBe(3);
+    expect(res.terms[4].an).toBe(5);
+    expect(res.terms[5].an).toBe(8);
   });
 });

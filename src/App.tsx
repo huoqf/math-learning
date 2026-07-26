@@ -1,50 +1,31 @@
-import { HashRouter, Routes, Route, Link, useLocation } from "react-router-dom";
-import { QuadraticAnimation } from "./features/quadratic/QuadraticAnimation";
-import { DerivativeAnimation } from "./features/derivative/DerivativeAnimation";
-import { ConstantAnimation } from "./features/constant/ConstantAnimation";
-import { SetAnimation } from "./features/set";
-import { FuncPropertiesAnimation } from "./features/funcProperties";
-import { FuncExpLogAnimation } from "./features/funcExpLog";
-import { FuncZeroAnimation } from "./features/funcZero";
-import { TransformAnimation } from "./features/transform";
-import { CompositeAnimation } from "./features/composite";
-import { NikeAnimation } from "./features/nike";
-import { TranscendentalAnimation } from "./features/derivativeTranscendental";
-import { DerivativeShiftAnimation } from "./features/derivativeShift";
-import { ProbabilityCountingAnimation } from "./features/probabilityCounting";
-import { ProbabilityBayesAnimation } from "./features/probabilityBayes";
-import { ProbabilityDistributionAnimation } from "./features/probabilityDistribution";
-import { ProbabilityNormalAnimation } from "./features/probabilityNormal";
-import { PairedDataAnimation } from "./features/pairedData/PairedDataAnimation";
-import { SequenceAnimation } from "./features/sequence";
+import { Suspense, lazy } from "react";
+import {
+  HashRouter,
+  Routes,
+  Route,
+  Link,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 import { Guarded3DPage } from "./components/Layout/Guarded3DPage";
+import { routeEntries, PATH_TO_LABEL } from "./data/routeEntries";
+import type { RouteEntry } from "./data/routeEntries";
+import type { ComponentType } from "react";
 
-const PATH_TO_LABEL: Record<string, string> = {
-  "/sequence": "等差与等比数列实验室",
-  "/set": "集合与常用逻辑实验室",
-  "/function-properties": "函数性质实验室",
-  "/function-explog": "指对幂函数实验室",
-  "/function-zero": "零点二分法实验室",
-  "/transform": "函数图象变换实验室",
-  "/composite": "分段与复合函数实验室",
-  "/quadratic": "二次函数实验室",
-  "/derivative": "导数几何意义",
-  "/constant": "恒成立实验室",
-  "/nike": "对勾函数与双曲型实验室",
-  "/derivative-transcendental": "基准超越函数与切线放缩模型",
-  "/derivative-shift": "隐零点定理与极值点偏移",
-  "/probability-counting": "计数原理与二项式定理实验室",
-  "/probability-bayes": "条件概率与贝叶斯实验室",
-  "/probability-distribution": "离散型随机变量分布列与数字特征",
-  "/statistics-normal": "频率分布直方图与正态分布实验室",
-  "/paired-data": "成对数据的回归分析与独立性检验",
-  "/solid-angle": "空间角：长方体截面二面角",
-  "/solid-position": "线面位置关系判定",
-  "/solid-ball": "外接球与内切球",
-  "/solid-rotation-body": "旋转体的结构特征",
-  "/solid-section": "截面可视化",
-};
+/** 将命名导出的 loader 适配为 React.lazy 需要的 { default: Component } 格式 */
+function adaptLoader(
+  entry: RouteEntry,
+): () => Promise<{ default: ComponentType }> {
+  return async () => {
+    const mod = await entry.loader();
+    // 取模块中第一个导出的组件作为 default
+    const Component = Object.values(mod).find(
+      (v): v is ComponentType => typeof v === "function",
+    );
+    return { default: Component! };
+  };
+}
 
 function Header() {
   const location = useLocation();
@@ -87,106 +68,75 @@ function Header() {
   );
 }
 
+/** 加载中占位 */
+function PageLoading() {
+  return (
+    <div className="flex items-center justify-center h-full text-neutral-400">
+      加载中...
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <HashRouter>
       <div className="w-screen h-screen flex flex-col overflow-hidden bg-neutral-50">
         <Header />
         <main className="flex-1 overflow-hidden">
-          <Routes>
-            <Route path="/" element={<KnowledgeTreeHome />} />
-            <Route path="/sequence" element={<SequenceAnimation />} />
-            <Route path="/set" element={<SetAnimation />} />
-            <Route
-              path="/function-properties"
-              element={<FuncPropertiesAnimation />}
-            />
-            <Route path="/function-explog" element={<FuncExpLogAnimation />} />
-            <Route path="/function-zero" element={<FuncZeroAnimation />} />
-            <Route path="/transform" element={<TransformAnimation />} />
-            <Route path="/composite" element={<CompositeAnimation />} />
-            <Route path="/quadratic" element={<QuadraticAnimation />} />
-            <Route path="/derivative" element={<DerivativeAnimation />} />
-            <Route path="/constant" element={<ConstantAnimation />} />
-            <Route path="/nike" element={<NikeAnimation />} />
-            <Route
-              path="/derivative-transcendental"
-              element={<TranscendentalAnimation />}
-            />
-            <Route
-              path="/derivative-shift"
-              element={<DerivativeShiftAnimation />}
-            />
-            <Route
-              path="/probability-counting"
-              element={<ProbabilityCountingAnimation />}
-            />
-            <Route
-              path="/probability-bayes"
-              element={<ProbabilityBayesAnimation />}
-            />
-            <Route
-              path="/probability-distribution"
-              element={<ProbabilityDistributionAnimation />}
-            />
-            <Route
-              path="/statistics-normal"
-              element={<ProbabilityNormalAnimation />}
-            />
-            <Route path="/paired-data" element={<PairedDataAnimation />} />
-            {/* 3D 页面：WebGL 门禁 + 按需加载 */}
-            <Route
-              path="/solid-angle"
-              element={
-                <Guarded3DPage
-                  loader={() =>
-                    import("./features/solidGeometry/SpatialAngleAnimation")
-                  }
-                />
-              }
-            />
-            <Route
-              path="/solid-position"
-              element={
-                <Guarded3DPage
-                  loader={() =>
-                    import("./features/solidGeometry/LinePlaneRelationAnimation")
-                  }
-                />
-              }
-            />
-            <Route
-              path="/solid-ball"
-              element={
-                <Guarded3DPage
-                  loader={() =>
-                    import("./features/solidGeometry/CircumInSphereAnimation")
-                  }
-                />
-              }
-            />
-            <Route
-              path="/solid-rotation-body"
-              element={
-                <Guarded3DPage
-                  loader={() =>
-                    import("./features/solidGeometry/RotationBodyAnimation")
-                  }
-                />
-              }
-            />
-            <Route
-              path="/solid-section"
-              element={
-                <Guarded3DPage
-                  loader={() =>
-                    import("./features/solidGeometry/section/SectionCuboidDemo")
-                  }
-                />
-              }
-            />
-            <Route path="*" element={<KnowledgeTreeHome />} />
-          </Routes>
+          <Suspense fallback={<PageLoading />}>
+            <Routes>
+              <Route path="/" element={<KnowledgeTreeHome />} />
+              {/* 旧路由重定向 */}
+              <Route
+                path="/set"
+                element={<Navigate to="/set-logic" replace />}
+              />
+              <Route
+                path="/constant"
+                element={<Navigate to="/constant-single" replace />}
+              />
+              <Route
+                path="/paired-data"
+                element={<Navigate to="/paired-data-regression" replace />}
+              />
+              <Route
+                path="/function-properties"
+                element={<Navigate to="/function-domain" replace />}
+              />
+              <Route
+                path="/function-explog"
+                element={<Navigate to="/function-exponential" replace />}
+              />
+              <Route
+                path="/nike"
+                element={<Navigate to="/nike-standard" replace />}
+              />
+              <Route
+                path="/sequence"
+                element={<Navigate to="/sequence-arithmetic" replace />}
+              />
+              {routeEntries.map((entry) => {
+                const route = entry.node.route;
+                if (!route) return null;
+
+                if (entry.guarded3D) {
+                  return (
+                    <Route
+                      key={route}
+                      path={route}
+                      element={<Guarded3DPage loader={entry.loader as any} />}
+                    />
+                  );
+                }
+
+                const LazyComponent = lazy(adaptLoader(entry));
+                return (
+                  <Route key={route} path={route} element={<LazyComponent />} />
+                );
+              })}
+              <Route path="*" element={<KnowledgeTreeHome />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </HashRouter>

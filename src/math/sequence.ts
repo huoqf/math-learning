@@ -393,3 +393,318 @@ export function calcOddEvenSequence(N: number): OddEvenResult {
     N,
   };
 }
+
+// ==========================================
+// 递推数列与构造法求通项 纯函数模块
+// ==========================================
+
+export interface LinearRecurrenceTerm {
+  n: number;
+  an: number;
+  bn: number; // 平移构造数列 bn = an - c
+  Sn: number;
+}
+
+export interface LinearRecurrenceResult {
+  isValid: boolean;
+  terms: LinearRecurrenceTerm[];
+  a1: number;
+  p: number;
+  q: number;
+  N: number;
+  fixedPoint: number | null; // 不动点 c = q / (1 - p)
+  isDegenerateArith: boolean; // p = 1 时退化为等差数列
+  cobwebPoints: Array<{ x: number; y: number }>; // 蛛网图阶梯点 (x, y)
+}
+
+/**
+ * 1. 一阶线性递推：a_{n+1} = p * a_n + q (不动点法 / 待定系数平移构造)
+ */
+export function calcLinearRecurrence(
+  a1: number,
+  p: number,
+  q: number,
+  N: number,
+): LinearRecurrenceResult {
+  if (
+    N <= 0 ||
+    !Number.isFinite(a1) ||
+    !Number.isFinite(p) ||
+    !Number.isFinite(q)
+  ) {
+    return {
+      isValid: false,
+      terms: [],
+      a1,
+      p,
+      q,
+      N,
+      fixedPoint: null,
+      isDegenerateArith: false,
+      cobwebPoints: [],
+    };
+  }
+
+  const isDegenerateArith = Math.abs(p - 1) < 1e-9;
+  const fixedPoint = isDegenerateArith ? null : q / (1 - p);
+
+  const terms: LinearRecurrenceTerm[] = [];
+  const cobwebPoints: Array<{ x: number; y: number }> = [];
+
+  let currentAn = a1;
+  let currentSum = 0;
+
+  // 蛛网图初始点在对角线 (a1, a1)
+  cobwebPoints.push({ x: currentAn, y: currentAn });
+
+  for (let n = 1; n <= N; n++) {
+    const bn = fixedPoint !== null ? currentAn - fixedPoint : currentAn;
+    currentSum += currentAn;
+    terms.push({ n, an: currentAn, bn, Sn: currentSum });
+
+    const nextAn = p * currentAn + q;
+    // 垂直走向函数 y = p*x + q: (currentAn, nextAn)
+    cobwebPoints.push({ x: currentAn, y: nextAn });
+    // 水平走向对角线 y = x: (nextAn, nextAn)
+    cobwebPoints.push({ x: nextAn, y: nextAn });
+
+    currentAn = nextAn;
+  }
+
+  return {
+    isValid: true,
+    terms,
+    a1,
+    p,
+    q,
+    N,
+    fixedPoint,
+    isDegenerateArith,
+    cobwebPoints,
+  };
+}
+
+export interface AccumulationRecurrenceTerm {
+  n: number;
+  deltaK: number; // 增量 f(k)
+  an: number;
+  Sn: number;
+}
+
+export interface AccumulationRecurrenceResult {
+  isValid: boolean;
+  terms: AccumulationRecurrenceTerm[];
+  a1: number;
+  stepType: "linear" | "exponential";
+  stepParam: number;
+  N: number;
+}
+
+/**
+ * 2. 累加法：a_{n+1} = a_n + f(n)
+ */
+export function calcAccumulationRecurrence(
+  a1: number,
+  stepType: "linear" | "exponential",
+  stepParam: number,
+  N: number,
+): AccumulationRecurrenceResult {
+  const terms: AccumulationRecurrenceTerm[] = [];
+  let currentAn = a1;
+  let currentSum = 0;
+
+  for (let n = 1; n <= N; n++) {
+    currentSum += currentAn;
+    const deltaK =
+      stepType === "linear" ? stepParam * n : Math.pow(stepParam, n - 1);
+    terms.push({ n, deltaK, an: currentAn, Sn: currentSum });
+    currentAn += deltaK;
+  }
+
+  return {
+    isValid: true,
+    terms,
+    a1,
+    stepType,
+    stepParam,
+    N,
+  };
+}
+
+export interface MultiplicationRecurrenceTerm {
+  n: number;
+  ratioK: number; // 比例 f(k)
+  an: number;
+  Sn: number;
+}
+
+export interface MultiplicationRecurrenceResult {
+  isValid: boolean;
+  terms: MultiplicationRecurrenceTerm[];
+  a1: number;
+  multType: "n_over_n1" | "n1_over_n";
+  N: number;
+}
+
+/**
+ * 3. 累乘法：a_{n+1} = f(n) * a_n
+ */
+export function calcMultiplicationRecurrence(
+  a1: number,
+  multType: "n_over_n1" | "n1_over_n",
+  N: number,
+): MultiplicationRecurrenceResult {
+  const terms: MultiplicationRecurrenceTerm[] = [];
+  let currentAn = a1;
+  let currentSum = 0;
+
+  for (let n = 1; n <= N; n++) {
+    currentSum += currentAn;
+    const ratioK = multType === "n_over_n1" ? n / (n + 1) : (n + 1) / n;
+    terms.push({ n, ratioK, an: currentAn, Sn: currentSum });
+    currentAn *= ratioK;
+  }
+
+  return {
+    isValid: true,
+    terms,
+    a1,
+    multType,
+    N,
+  };
+}
+
+export interface ReciprocalRecurrenceTerm {
+  n: number;
+  an: number;
+  bn: number; // 倒数 bn = 1 / an
+  Sn: number;
+}
+
+export interface ReciprocalRecurrenceResult {
+  isValid: boolean;
+  terms: ReciprocalRecurrenceTerm[];
+  a1: number;
+  A: number;
+  B: number;
+  C: number;
+  N: number;
+  isReciprocalLinear: boolean;
+}
+
+/**
+ * 4. 倒数构造法：a_{n+1} = A * a_n / (B * a_n + C) => 1/a_{n+1} = (C/A)*(1/a_n) + B/A
+ */
+export function calcReciprocalRecurrence(
+  a1: number,
+  A: number,
+  B: number,
+  C: number,
+  N: number,
+): ReciprocalRecurrenceResult {
+  const terms: ReciprocalRecurrenceTerm[] = [];
+  let currentAn = a1;
+  let currentSum = 0;
+
+  for (let n = 1; n <= N; n++) {
+    currentSum += currentAn;
+    const bn = Math.abs(currentAn) > 1e-9 ? 1 / currentAn : NaN;
+    terms.push({ n, an: currentAn, bn, Sn: currentSum });
+
+    const denom = B * currentAn + C;
+    if (Math.abs(denom) < 1e-9) {
+      currentAn = NaN;
+    } else {
+      currentAn = (A * currentAn) / denom;
+    }
+  }
+
+  return {
+    isValid: true,
+    terms,
+    a1,
+    A,
+    B,
+    C,
+    N,
+    isReciprocalLinear: Math.abs(A - C) < 1e-9, // 当 A=C 时，倒数 bn 为等差数列
+  };
+}
+
+export interface SecondOrderRecurrenceTerm {
+  n: number;
+  an: number;
+  bn: number; // 构造差值 bn = a_{n+1} - r1 * an
+  Sn: number;
+}
+
+export interface SecondOrderRecurrenceResult {
+  isValid: boolean;
+  terms: SecondOrderRecurrenceTerm[];
+  a1: number;
+  a2: number;
+  p: number;
+  q: number;
+  N: number;
+  r1: number;
+  r2: number;
+}
+
+/**
+ * 5. 二阶常系数线性递推：a_{n+2} = p * a_{n+1} + q * a_n (特征方程 x^2 - p*x - q = 0)
+ */
+export function calcSecondOrderRecurrence(
+  a1: number,
+  a2: number,
+  p: number,
+  q: number,
+  N: number,
+): SecondOrderRecurrenceResult {
+  const delta = p * p + 4 * q;
+  let r1 = 0;
+  let r2 = 0;
+  if (delta >= 0) {
+    r1 = (p + Math.sqrt(delta)) / 2;
+    r2 = (p - Math.sqrt(delta)) / 2;
+  } else {
+    r1 = p / 2;
+    r2 = p / 2;
+  }
+
+  const terms: SecondOrderRecurrenceTerm[] = [];
+  let anPrev = a1;
+  let anCurr = a2;
+  let currentSum = 0;
+
+  for (let n = 1; n <= N; n++) {
+    if (n === 1) {
+      currentSum += a1;
+      const bn = a2 - r1 * a1;
+      terms.push({ n: 1, an: a1, bn, Sn: currentSum });
+    } else if (n === 2) {
+      currentSum += a2;
+      const anNext = p * a2 + q * a1;
+      const bn = anNext - r1 * a2;
+      terms.push({ n: 2, an: a2, bn, Sn: currentSum });
+    } else {
+      const anNext = p * anCurr + q * anPrev;
+      currentSum += anNext;
+      const bnNext = p * anNext + q * anCurr - r1 * anNext;
+      terms.push({ n, an: anNext, bn: bnNext, Sn: currentSum });
+      anPrev = anCurr;
+      anCurr = anNext;
+    }
+  }
+
+  return {
+    isValid: true,
+    terms,
+    a1,
+    a2,
+    p,
+    q,
+    N,
+    r1,
+    r2,
+  };
+}

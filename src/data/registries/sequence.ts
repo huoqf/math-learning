@@ -10,6 +10,12 @@ export interface SequenceParams {
   d: number;
   q: number;
   N: number;
+  p_rec: number;
+  q_rec: number;
+  a2: number;
+  coefA: number;
+  coefB: number;
+  coefC: number;
 }
 
 export const defaultParams: SequenceParams = {
@@ -17,6 +23,12 @@ export const defaultParams: SequenceParams = {
   d: -1,
   q: 0.5,
   N: 8,
+  p_rec: 2,
+  q_rec: 1,
+  a2: 2,
+  coefA: 2,
+  coefB: 1,
+  coefC: 1,
 };
 
 export const paramMeta: Record<
@@ -88,5 +100,71 @@ export const paramMeta: Record<
     description: "数列展现的前 N 项数量",
     descriptionFormula: "可视化前 N 项",
     importance: "advanced",
+  },
+  p_rec: {
+    label: "递推系数 p",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{p}`,
+    defaultValue: 2,
+    min: -3,
+    max: 3,
+    step: 0.5,
+    description: "递推关系式 a_{n+1} = p * a_n + q 中的系数 p",
+    importance: "core",
+    marks: [
+      { value: 1, label: "等差 (p=1)", labelFormula: "\\color{#DC2626}{p=1}" },
+      { value: -1, label: "-1", labelFormula: "-1" },
+    ],
+  },
+  q_rec: {
+    label: "递推常数 q",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{q}`,
+    defaultValue: 1,
+    min: -5,
+    max: 5,
+    step: 1,
+    description: "递推关系式 a_{n+1} = p * a_n + q 中的常数项 q",
+    importance: "core",
+    marks: [{ value: 0, label: "纯等比 (q=0)", labelFormula: "q=0" }],
+  },
+  a2: {
+    label: "第二项 a₂",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{a_2}`,
+    defaultValue: 2,
+    min: -5,
+    max: 10,
+    step: 1,
+    description: "二阶递推数列第二项 a_2",
+    importance: "core",
+  },
+  coefA: {
+    label: "分子系数 A",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{A}`,
+    defaultValue: 2,
+    min: 0.5,
+    max: 5,
+    step: 0.5,
+    description: "分式递推 a_{n+1} = A*a_n / (B*a_n + C) 的分子系数 A",
+    importance: "core",
+  },
+  coefB: {
+    label: "分母二次项 B",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{B}`,
+    defaultValue: 1,
+    min: -3,
+    max: 3,
+    step: 0.5,
+    description: "分式递推 a_{n+1} = A*a_n / (B*a_n + C) 的分母系数 B",
+    importance: "core",
+    marks: [{ value: 0, label: "纯比例 (B=0)", labelFormula: "B=0" }],
+  },
+  coefC: {
+    label: "分母常数 C",
+    labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{C}`,
+    defaultValue: 1,
+    min: 0.5,
+    max: 5,
+    step: 0.5,
+    description: "分式递推 a_{n+1} = A*a_n / (B*a_n + C) 的分母常数 C",
+    importance: "core",
   },
 };

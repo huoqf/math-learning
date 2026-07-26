@@ -220,16 +220,20 @@ export default function Xxx3DAnimation() {
 
 ## Step 2：注册步骤（新建 3D 页面必做）
 
-1. **路由注册** (`src/App.tsx`)：
-   - 在 `NAV_ITEMS` 中加入 3D 页面导航定义。
-   - 在 `<Routes>` 中添加 `<Route path="/solid-xxx" element={<Xxx3DAnimation />} />`。
-2. **3D 数学算法** (`src/math3d/<topic>.ts`)：
+1. **创建 meta.ts**：在 `src/features/<topic>/meta.ts` 中导出 `node`（KnowledgeNode，含 `route`）和 `loader`（`() => import(...)`）。参考 `src/features/set/meta.ts`
+2. **注册路由** (`src/data/routeEntries.ts`)：
+   - 在 `legacyEntries` 中添加 `{ node, loader, guarded3D: true }` 条目。
+   - App.tsx 从 routeEntries 自动生成路由，无需手动编辑 App.tsx。
+3. **注册知识树**：在 `src/data/knowledgeTree.ts` 中添加节点（id/title/chapter/module/importance/animationIds/prerequisites）
+4. **3D 数学算法** (`src/math3d/<topic>.ts`)：
    - 将 3D 向量积、点到面距离、线面角、二面角、球心求解等纯函数写入 `src/math3d/`。
    - 编写配套的 `__tests__` 单元测试，确保无副作用。
-3. **右屏看板分支** (`src/data/mathQuantities.ts` / `src/data/builders/solidGeometry.ts`)：
+5. **右屏看板分支** (`src/data/mathQuantities.ts` / `src/data/builders/solidGeometry.ts`)：
    - 在 `buildMathQuantities` 中添加 `'anim-solid-xxx'` 分支，组装 `MathPanelData`。
-4. **参数 Registry** (`src/data/registries/solidGeometry.ts`)：
+6. **参数 Registry** (`src/data/registries/solidGeometry.ts`)：
    - 定义该 3D 场景的 `defaultParams` 和 `paramMeta`。
+
+> **快捷方式**：`node scripts/gen-node.mjs` 可自动生成 meta.ts + Animation.tsx + index.ts 骨架并插入 knowledgeTree/routeEntries。
 
 ---
 

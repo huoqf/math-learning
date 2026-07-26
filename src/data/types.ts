@@ -32,6 +32,10 @@ export interface KnowledgeNode {
   prerequisites: string[];
   parentId?: string;
   animationParams?: Record<string, number>;
+  /** 实验室页面标题（与 title 的知识点名称不同，用于 Header 面包屑） */
+  labTitle?: string;
+  /** 对应的路由路径（缺失则该节点显示为锁定） */
+  route?: string;
 }
 
 export type ParamImportance = "core" | "advanced" | "display";
