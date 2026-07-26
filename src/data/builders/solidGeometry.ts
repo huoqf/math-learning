@@ -11,7 +11,6 @@ import {
   sphereVolume,
   sphereSurfaceArea,
 } from "@/math3d/solidGeometry";
-import { planeAngle } from "@/math3d/plane";
 import {
   judgeLinePlane,
   getLineDirection,
@@ -24,95 +23,249 @@ import type { Plane } from "@/math3d/plane";
 
 export function buildSpatialAnglePanel(
   params: Record<string, number>,
+  config?: Record<string, unknown>,
 ): MathPanelData {
+  const mode = (config?.mode as string) ?? "skewLines";
   const a = params.a ?? 3;
   const b = params.b ?? 2;
   const c = params.c ?? 2;
   const ex = params.ex ?? 1.2;
 
-  const A: Vec3 = { x: 0, y: 0, z: 0 };
-  const B: Vec3 = { x: a, y: 0, z: 0 };
-  const D: Vec3 = { x: 0, y: b, z: 0 };
-  const E: Vec3 = { x: 0, y: 0, z: ex };
-
-  const basePlane: Plane = { point: A, normal: { x: 0, y: 0, z: 1 } };
-  // 使用 planeFromPoints 逻辑计算截面法向量
-  const v1: Vec3 = { x: D.x - B.x, y: D.y - B.y, z: D.z - B.z };
-  const v2: Vec3 = { x: E.x - B.x, y: E.y - B.y, z: E.z - B.z };
-  const n2: Vec3 = {
-    x: v1.y * v2.z - v1.z * v2.y,
-    y: v1.z * v2.x - v1.x * v2.z,
-    z: v1.x * v2.y - v1.y * v2.x,
-  };
-  const cutNormal: Plane = { point: B, normal: n2 };
-  const dihedral = planeAngle(basePlane, cutNormal);
-  const dihedralDeg = (dihedral * 180) / Math.PI;
-
   const quantities: MathQuantity[] = [
     {
-      label: "长 a",
+      label: "长方体长 a",
       symbol: "a",
       value: a,
-      color: "#2563EB",
+      color: MATH_COLORS.paramPrimary,
     },
     {
-      label: "宽 b",
+      label: "长方体宽 b",
       symbol: "b",
       value: b,
-      color: "#059669",
+      color: MATH_COLORS.paramSecondary,
     },
     {
-      label: "高 c",
+      label: "长方体高 c",
       symbol: "c",
       value: c,
-      color: "#D97706",
+      color: MATH_COLORS.paramTertiary,
     },
     {
-      label: "截面点 E 高度",
+      label: "动点 E 高度",
       symbol: "z_E",
       value: ex,
-      color: "#DC2626",
-    },
-    {
-      label: "二面角 B-DE",
-      symbol: "θ",
-      value: dihedralDeg.toFixed(2),
-      unit: "°",
-      color: "#DC2626",
+      color: MATH_COLORS.highlight,
     },
   ];
 
-  const theorems: Theorem[] = [
-    {
-      name: "二面角定义",
-      latex: `\\theta = \\arccos \\frac{|\\vec{n_1} \\cdot \\vec{n_2}|}{|\\vec{n_1}||\\vec{n_2}|}`,
-      level: "core",
-      note: "两个半平面的法向量夹角即为二面角（或其补角）",
-    },
-    {
-      name: "长方体顶点坐标",
-      latex: `A(0,0,0),\\; B(a,0,0),\\; D(0,b,0),\\; E(0,0,z_E)`,
-      level: "important",
-    },
-  ];
-
-  const gaokaoPoints: GaokaoPoint[] = [
-    {
-      text: "空间向量求二面角是高考立体几何的核心方法：建立空间直角坐标系，求两个平面的法向量，利用向量夹角公式计算。",
-      importance: "gaokao",
-    },
-    {
-      text: "注意二面角范围为 [0°, 180°]，向量夹角公式给出的可能是补角，需根据几何直观判断锐/钝。",
-      importance: "hard",
-    },
-  ];
-
+  const theorems: Theorem[] = [];
+  const gaokaoPoints: GaokaoPoint[] = [];
   const warnings: WarningItem[] = [];
-  if (dihedralDeg < 1 || dihedralDeg > 179) {
-    warnings.push({
-      text: "二面角接近 0° 或 180°，截面退化为平面或共面！",
-      level: "warning",
+
+  if (mode === "skewLines") {
+    // 异面直线 DE (D(0,b,0), E(0,0,ex)) 与 AB1 (A(0,0,0), B1(a,0,c))
+    // u = DE = (0, -b, ex), v = AB1 = (a, 0, c)
+    const dot = ex * c;
+    const lenU = Math.sqrt(b * b + ex * ex);
+    const lenV = Math.sqrt(a * a + c * c);
+    const cosVal = Math.min(1, Math.max(0, Math.abs(dot) / (lenU * lenV)));
+    const angleRad = Math.acos(cosVal);
+    const angleDeg = (angleRad * 180) / Math.PI;
+
+    quantities.push(
+      {
+        label: "起点坐标 D",
+        symbol: "D",
+        value: `(0, ${b}, 0)`,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "动点坐标 E",
+        symbol: "E",
+        value: `(0, 0, ${ex})`,
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "方向向量 u (DE)",
+        symbol: "\\vec{u}",
+        value: `(0, -${b}, ${ex})`,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "方向向量 v (AB₁)",
+        symbol: "\\vec{v}",
+        value: `(${a}, 0, ${c})`,
+        color: MATH_COLORS.accent,
+      },
+      {
+        label: "向量夹角余弦 cosθ",
+        symbol: "\\cos\\theta",
+        value: Number(cosVal.toFixed(4)),
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "异面直线所成的角",
+        symbol: "\\theta",
+        value: `${angleDeg.toFixed(2)}°`,
+        color: MATH_COLORS.highlight,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "异面直线所成角坐标公式",
+        latex: `\\cos \\theta = \\frac{|\\vec{u} \\cdot \\vec{v}|}{|\\vec{u}||\\vec{v}|} = \\frac{|x_1 x_2 + y_1 y_2 + z_1 z_2|}{\\sqrt{x_1^2+y_1^2+z_1^2}\\sqrt{x_2^2+y_2^2+z_2^2}}`,
+        level: "core",
+        condition: "θ ∈ (0°, 90°]，异面直线角不能为钝角",
+      },
+      {
+        name: "长方体建系顶点坐标",
+        latex: `A(0,0,0),\\; B_1(a,0,c),\\; D(0,b,0),\\; E(0,0,z_E)`,
+        level: "important",
+      },
+    );
+
+    gaokaoPoints.push({
+      text: "求异面直线所成角高考三步法：① 建立空间直角坐标系；② 确定两条直线的方向向量 u, v 的坐标；③ 代入余弦绝对值公式计算，范围必在 (0°, 90°] 内。",
+      importance: "gaokao",
     });
+
+    if (Math.abs(dot) < 0.001) {
+      warnings.push({
+        text: "方向向量内积 u · v = 0，异面直线 DE ⊥ AB₁，所成角达到最大极值 90°！",
+        level: "warning",
+      });
+    }
+  } else if (mode === "linePlane") {
+    // 直线 BE (B(a,0,0), E(0,0,ex)) 与底面 ABCD (n0 = (0,0,1)) 的线面角
+    const lenU = Math.sqrt(a * a + ex * ex);
+
+    // 计算直线 BE 与底面 ABCD (n0 = (0,0,1)) 的线面角
+    const sinThetaBase = ex / lenU;
+    const angleBaseDeg = (Math.asin(sinThetaBase) * 180) / Math.PI;
+
+    quantities.push(
+      {
+        label: "顶点坐标 B",
+        symbol: "B",
+        value: `(${a}, 0, 0)`,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "方向向量 u (BE)",
+        symbol: "\\vec{u}",
+        value: `(-${a}, 0, ${ex})`,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "底面法向量 n_0",
+        symbol: "\\vec{n_0}",
+        value: "(0, 0, 1)",
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "线面角正弦 sinθ",
+        symbol: "\\sin\\theta",
+        value: Number(sinThetaBase.toFixed(4)),
+        color: MATH_COLORS.accent,
+      },
+      {
+        label: "直线与底面所成的角",
+        symbol: "\\theta",
+        value: `${angleBaseDeg.toFixed(2)}°`,
+        color: MATH_COLORS.highlight,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "直线与平面所成角坐标公式",
+        latex: `\\sin \\theta = |\\cos \\langle \\vec{u}, \\vec{n} \\rangle| = \\frac{|\\vec{u} \\cdot \\vec{n}|}{|\\vec{u}||\\vec{n}|}`,
+        level: "core",
+        condition: "θ ∈ [0°, 90°]，正弦值等于方向向量与法向量夹角余弦的绝对值",
+      },
+      {
+        name: "底面与斜线向量坐标",
+        latex: `\\vec{u} = \\vec{BE} = (-a, 0, z_E),\\; \\vec{n_0} = (0,0,1)`,
+        level: "important",
+      },
+    );
+
+    gaokaoPoints.push({
+      text: "高考大题核心考点：线面角使用的是正弦 sinθ！向量公式求出的是与法向量夹角的余弦，切记做 sinθ = |cos<u,n>| 的转换，不要直接写成 cosθ。",
+      importance: "gaokao",
+    });
+
+    if (ex < 0.3) {
+      warnings.push({
+        text: "动点 E 接近底面 (z_E → 0)，直线 BE 接近落在底面内，线面角趋近于 0°！",
+        level: "warning",
+      });
+    }
+  } else {
+    // dihedral: 二面角 (底面 ABCD 与 截面 BDE)
+    // n1 = (0,0,1), n2 = (b*ex, a*ex, a*b)
+    const n2X = b * ex;
+    const n2Y = a * ex;
+    const n2Z = a * b;
+    const lenN1 = 1;
+    const lenN2 = Math.sqrt(n2X * n2X + n2Y * n2Y + n2Z * n2Z);
+    const cosVal = n2Z / (lenN1 * lenN2);
+    const dihedralRad = Math.acos(cosVal);
+    const dihedralDeg = (dihedralRad * 180) / Math.PI;
+
+    quantities.push(
+      {
+        label: "底面法向量 n_1",
+        symbol: "\\vec{n_1}",
+        value: "(0, 0, 1)",
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "截面法向量 n_2",
+        symbol: "\\vec{n_2}",
+        value: `(${n2X.toFixed(1)}, ${n2Y.toFixed(1)}, ${(a * b).toFixed(1)})`,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "二面角余弦 cosθ",
+        symbol: "\\cos\\theta",
+        value: Number(cosVal.toFixed(4)),
+        color: MATH_COLORS.accent,
+      },
+      {
+        label: "二面角 B-DE-A 大小",
+        symbol: "\\theta",
+        value: `${dihedralDeg.toFixed(2)}°`,
+        color: MATH_COLORS.highlight,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "二面角向量坐标公式",
+        latex: `\\cos \\theta = \\pm \\frac{\\vec{n_1} \\cdot \\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}`,
+        level: "core",
+        note: "通过计算两个平面的法向量 n₁, n₂ 夹角确定二面角（锐角用正值，钝角用负值）",
+      },
+      {
+        name: "截面法向量求解方程组",
+        latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\;\\Rightarrow\\; \\vec{n_2} = (b z_E, a z_E, a b)`,
+        level: "important",
+      },
+    );
+
+    gaokaoPoints.push({
+      text: "高考立体几何第(2)问满分步骤：① 设法向量 n=(x,y,z)；② 列出 n·v1=0 和 n·v2=0 方程组取特解；③ 计算 cos<n1,n2>；④ 根据图形几何直观明确说明“由图可知该二面角为锐角/钝角”。",
+      importance: "gaokao",
+    });
+
+    if (dihedralDeg < 1 || dihedralDeg > 179) {
+      warnings.push({
+        text: "二面角接近 0° 或 180°，截面退化为共面！",
+        level: "warning",
+      });
+    }
   }
 
   return { quantities, theorems, gaokaoPoints, warnings };
