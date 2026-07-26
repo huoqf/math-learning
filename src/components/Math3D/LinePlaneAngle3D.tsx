@@ -11,6 +11,7 @@ interface LinePlaneAngle3DProps {
   planeNormal?: Vec3;
   arcRadius?: number;
   showNormal?: boolean;
+  showFootLabel?: boolean;
 }
 
 export const LinePlaneAngle3D = ({
@@ -20,6 +21,7 @@ export const LinePlaneAngle3D = ({
   planeNormal,
   arcRadius = 0.8,
   showNormal = true,
+  showFootLabel = true,
 }: LinePlaneAngle3DProps) => {
   return (
     <group>
@@ -31,7 +33,7 @@ export const LinePlaneAngle3D = ({
       <Vector3DArrow from={lineStart} to={footPoint} colorKey="secondary" />
 
       {/* 3. 垂足标签 */}
-      <PointLabel3D position={footPoint} text="P'" />
+      {showFootLabel && <PointLabel3D position={footPoint} text="P'" />}
 
       {/* 4. 平面法向量 */}
       {showNormal && planeNormal && (

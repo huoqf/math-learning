@@ -246,6 +246,7 @@ export default function SpatialAngleAnimation() {
                 footPoint={A}
                 planeNormal={{ x: 0, y: 0, z: 1 }}
                 arcRadius={0.8}
+                showFootLabel={false}
               />
             </>
           )}
