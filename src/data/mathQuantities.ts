@@ -79,7 +79,7 @@ export function buildMathQuantities(
     case "anim-func-composite":
       return buildFuncCompositePanel(params, config);
     case "anim-solid-angle":
-      return buildSpatialAnglePanel(params);
+      return buildSpatialAnglePanel(params, config);
     case "anim-solid-position":
       return buildLinePlaneRelationPanel(params, config);
     case "anim-solid-ball":
