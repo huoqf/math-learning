@@ -30,5 +30,6 @@ export { DepthPrepassMesh } from "./DepthPrepassMesh";
 // ============================================================================
 // 球体 (Spheres)
 // ============================================================================
+export { SphereShell } from "./SphereShell";
 export { CircumSphere } from "./CircumSphere";
 export { InSphere } from "./InSphere";

@@ -93,8 +93,9 @@ export default function CircumInSphereAnimation() {
         return { radius: r, center: { x: 0, y: 0, z: r } };
       } else if (shape === "triangularPrism") {
         const rBaseIn = (a + b - Math.sqrt(a * a + b * b)) / 2;
+        const r = Math.min(rBaseIn, c / 2);
         return {
-          radius: rBaseIn,
+          radius: r,
           center: { x: rBaseIn, y: rBaseIn, z: c / 2 },
         };
       } else if (shape === "cone") {
@@ -103,7 +104,8 @@ export default function CircumInSphereAnimation() {
         return { radius: r, center: { x: 0, y: 0, z: r } };
       } else {
         // cylinder
-        return { radius: a, center: { x: 0, y: 0, z: c / 2 } };
+        const r = Math.min(a, c / 2);
+        return { radius: r, center: { x: 0, y: 0, z: c / 2 } };
       }
     }
   }, [sphereType, shape, a, b, c]);

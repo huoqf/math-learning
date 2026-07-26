@@ -719,7 +719,7 @@ export function buildCircumSpherePanel(
     } else if (shape === "triangularPrism") {
       // 直三棱柱 (底面直角边 a, b, 高 c)
       const rBaseIn = (a + b - Math.sqrt(a * a + b * b)) / 2;
-      radius = rBaseIn;
+      radius = Math.min(rBaseIn, c / 2);
       quantities.push(
         {
           label: "直角边 a",
@@ -806,7 +806,7 @@ export function buildCircumSpherePanel(
       });
     } else {
       // 圆柱 (底半径 a, 高 c)
-      radius = a;
+      radius = Math.min(a, c / 2);
       quantities.push(
         {
           label: "底面半径 r",
