@@ -21,12 +21,11 @@ import {
 } from "@/components/Math3D";
 import {
   Cuboid,
-  CircumSphere,
-  InSphere,
   RegularPyramid,
   TriangularPrism,
   Cone,
   Cylinder,
+  SphereBySphereType,
 } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -245,11 +244,11 @@ export default function CircumInSphereAnimation() {
           )}
 
           {/* 渲染球体 */}
-          {sphereType === "circum" ? (
-            <CircumSphere center={center} radius={radius} />
-          ) : (
-            <InSphere center={center} radius={radius} />
-          )}
+          <SphereBySphereType
+            sphereType={sphereType}
+            center={center}
+            radius={radius}
+          />
 
           {/* 渲染球心点 O */}
           <Point3D position={center} colorKey="highlight" />
