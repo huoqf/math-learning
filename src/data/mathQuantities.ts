@@ -83,7 +83,7 @@ export function buildMathQuantities(
     case "anim-solid-position":
       return buildLinePlaneRelationPanel(params, config);
     case "anim-solid-ball":
-      return buildCircumSpherePanel(params);
+      return buildCircumSpherePanel(params, config);
     case "anim-solid-rotation-body":
       return buildRotationBodyPanel(params);
     case "anim-sequence":

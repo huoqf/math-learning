@@ -8,6 +8,8 @@ import type {
 import { MATH_COLORS } from "@/theme";
 import {
   cuboidCircumRadius,
+  regularPyramidCircumRadius,
+  coneCircumRadius,
   sphereVolume,
   sphereSurfaceArea,
 } from "@/math3d/solidGeometry";
@@ -384,6 +386,11 @@ export function buildCircumSpherePanel(
   params: Record<string, number>,
   config?: Record<string, unknown>,
 ): MathPanelData {
+  if (!config) {
+    console.warn(
+      "[buildCircumSpherePanel] config 未传入，右屏公式默认为长方体外接球",
+    );
+  }
   const sphereType = (config?.sphereType as string) ?? "circum";
   const shape = (config?.shape as string) ?? "cuboid";
   const a = params.a ?? 3;

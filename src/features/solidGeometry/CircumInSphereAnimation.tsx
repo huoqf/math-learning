@@ -24,6 +24,7 @@ import {
   CircumSphere,
   InSphere,
   RegularPyramid,
+  TriangularPrism,
   Cone,
   Cylinder,
 } from "@/components/Math3D/solids";
@@ -34,7 +35,6 @@ import {
   cuboidCircumRadius,
   regularPyramidCircumRadius,
   coneCircumRadius,
-  sphereVolume,
 } from "@/math3d/solidGeometry";
 import type { Vec3 } from "@/math3d/vector3";
 
@@ -227,13 +227,16 @@ export default function CircumInSphereAnimation() {
           {shape === "regularPyramid" && (
             <RegularPyramid
               sides={4}
-              baseRadius={a}
+              baseRadius={a / Math.sqrt(2)}
               height={c}
               colorKey="primary"
             />
           )}
           {shape === "cone" && (
             <Cone radius={a} height={c} colorKey="primary" />
+          )}
+          {shape === "triangularPrism" && (
+            <TriangularPrism legA={a} legB={b} height={c} colorKey="primary" />
           )}
           {shape === "cylinder" && (
             <Cylinder radius={a} height={c} colorKey="primary" />
@@ -257,17 +260,19 @@ export default function CircumInSphereAnimation() {
               to={
                 shape === "regularPyramid" || shape === "cone"
                   ? { x: 0, y: 0, z: c }
-                  : { x: a, y: b, z: c }
+                  : shape === "cylinder"
+                    ? { x: a, y: 0, z: c }
+                    : shape === "triangularPrism"
+                      ? { x: 0, y: 0, z: c }
+                      : { x: a, y: b, z: c }
               }
               colorKey="highlight"
-              radius={0.04}
             />
           ) : (
             <Vector3DArrow
               from={center}
               to={{ x: center.x, y: center.y, z: 0 }}
               colorKey="highlight"
-              radius={0.04}
             />
           )}
 

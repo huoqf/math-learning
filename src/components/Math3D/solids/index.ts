@@ -10,6 +10,7 @@
 // ============================================================================
 export { Cuboid } from "./Cuboid";
 export { RegularPyramid } from "./RegularPyramid";
+export { TriangularPrism } from "./TriangularPrism";
 
 // ============================================================================
 // 旋转体 (Solids of Revolution)
