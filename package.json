@@ -3,11 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "./out/main/index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "electron-vite dev",
+    "build": "tsc -b && electron-vite build",
+    "preview": "electron-vite preview",
+    "start": "electron-vite preview",
+    "build:win": "electron-vite build && electron-builder --win",
+    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:linux": "electron-vite build && electron-builder --linux",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
     "test": "vitest run src/math/",
     "test:ci": "vitest run",
     "prepare": "husky"
@@ -34,6 +39,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@electron-toolkit/utils": "^4.0.0",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.3.0",
@@ -47,6 +53,9 @@
     "@typescript-eslint/parser": "^8.23.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
     "eslint": "^9.20.1",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
@@ -60,5 +69,31 @@
     "typescript": "^5.7.2",
     "vite": "^6.4.3",
     "vitest": "^4.1.10"
+  },
+  "build": {
+    "appId": "com.mathvision.app",
+    "productName": "MathVision",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "${productName}-${version}-setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": "dmg",
+      "artifactName": "${productName}-${version}.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "artifactName": "${productName}-${version}.${ext}"
+    }
   }
 }

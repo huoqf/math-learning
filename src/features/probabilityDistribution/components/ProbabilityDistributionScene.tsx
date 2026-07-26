@@ -169,7 +169,7 @@ export function ProbabilityDistributionScene({
                   y={-10}
                   width={38}
                   height={13}
-                  fill="#FFFFFF"
+                  fill={CANVAS_COLORS.white}
                   fillOpacity={0.92}
                   rx={3}
                 />
@@ -223,7 +223,7 @@ export function ProbabilityDistributionScene({
             yAxisZero.y + 14
           } ${meanDesign.x + 8},${yAxisZero.y + 14}`}
           fill={MATH_COLORS.tangentLine}
-          stroke="#FFFFFF"
+          stroke={CANVAS_COLORS.white}
           strokeWidth={1.5}
         />
 
@@ -240,7 +240,7 @@ export function ProbabilityDistributionScene({
           <text
             x={0}
             y={3}
-            fill="#FFFFFF"
+            fill={CANVAS_COLORS.white}
             fontSize={fontScale(11)}
             textAnchor="middle"
             fontWeight="bold"
@@ -302,7 +302,7 @@ export function ProbabilityDistributionScene({
                   <text
                     x={0}
                     y={3}
-                    fill="#FFFFFF"
+                    fill={CANVAS_COLORS.white}
                     fontSize={fontScale(9)}
                     textAnchor="middle"
                     fontWeight="bold"
@@ -353,7 +353,7 @@ export function ProbabilityDistributionScene({
                   <text
                     x={0}
                     y={3}
-                    fill="#FFFFFF"
+                    fill={CANVAS_COLORS.white}
                     fontSize={fontScale(9.5)}
                     textAnchor="middle"
                     fontWeight="bold"

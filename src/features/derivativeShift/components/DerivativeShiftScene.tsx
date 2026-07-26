@@ -15,7 +15,7 @@ import {
   IntervalShadow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import {
   solveImplicitZero,
   solveExtremumShift,
@@ -204,7 +204,7 @@ export function DerivativeShiftScene({
             cy={tracePt.y}
             r={5}
             fill={MATH_COLORS.paramSecondary}
-            stroke="#ffffff"
+            stroke={CANVAS_COLORS.white}
             strokeWidth={1.5}
           />
           <text
@@ -227,9 +227,9 @@ export function DerivativeShiftScene({
               width={160}
               height={64}
               rx={6}
-              fill="#ffffff"
+              fill={CANVAS_COLORS.white}
               fillOpacity={0.85}
-              stroke="#e2e8f0"
+              stroke={CANVAS_COLORS.grid}
               strokeWidth={1}
             />
             <line
@@ -240,7 +240,12 @@ export function DerivativeShiftScene({
               stroke={MATH_COLORS.function}
               strokeWidth={2.5}
             />
-            <text x={36} y={19} fontSize={fontScale(10)} fill="#334155">
+            <text
+              x={36}
+              y={19}
+              fontSize={fontScale(10)}
+              fill={CANVAS_COLORS.labelTextLight}
+            >
               原函数 f(x)
             </text>
             <line
@@ -252,7 +257,12 @@ export function DerivativeShiftScene({
               strokeWidth={1.8}
               strokeDasharray="4 3"
             />
-            <text x={36} y={37} fontSize={fontScale(10)} fill="#334155">
+            <text
+              x={36}
+              y={37}
+              fontSize={fontScale(10)}
+              fill={CANVAS_COLORS.labelTextLight}
+            >
               导函数 f'(x)
             </text>
             <line
@@ -264,7 +274,12 @@ export function DerivativeShiftScene({
               strokeWidth={2}
               strokeDasharray="6 4"
             />
-            <text x={36} y={53} fontSize={fontScale(10)} fill="#334155">
+            <text
+              x={36}
+              y={53}
+              fontSize={fontScale(10)}
+              fill={CANVAS_COLORS.labelTextLight}
+            >
               消元轨迹 h(x₀)
             </text>
           </g>
@@ -339,7 +354,7 @@ export function DerivativeShiftScene({
             cy={x1Pt.y}
             r={5}
             fill={MATH_COLORS.function}
-            stroke="#ffffff"
+            stroke={CANVAS_COLORS.white}
             strokeWidth={1.5}
           />
           <text
@@ -357,7 +372,7 @@ export function DerivativeShiftScene({
             cy={x2Pt.y}
             r={5}
             fill={MATH_COLORS.functionSecondary}
-            stroke="#ffffff"
+            stroke={CANVAS_COLORS.white}
             strokeWidth={1.5}
           />
           <text
@@ -376,7 +391,7 @@ export function DerivativeShiftScene({
             cy={midPt.y}
             r={5}
             fill={MATH_COLORS.paramSecondary}
-            stroke="#ffffff"
+            stroke={CANVAS_COLORS.white}
             strokeWidth={1.5}
           />
           <line
@@ -404,7 +419,7 @@ export function DerivativeShiftScene({
             cy={mirrorPtAtX1.y}
             r={4}
             fill={MATH_COLORS.functionTransformed}
-            stroke="#ffffff"
+            stroke={CANVAS_COLORS.white}
             strokeWidth={1}
           />
           <line
@@ -435,7 +450,7 @@ export function DerivativeShiftScene({
               width={170}
               height={50}
               rx={6}
-              fill="#ffffff"
+              fill={CANVAS_COLORS.white}
               fillOpacity={0.9}
               stroke={MATH_COLORS.paramTertiary}
               strokeWidth={1.5}
@@ -452,7 +467,12 @@ export function DerivativeShiftScene({
                 ? "右偏 (x₁ + x₂ > 2x₀)"
                 : "左偏"}
             </text>
-            <text x={12} y={38} fill="#475569" fontSize={fontScale(10)}>
+            <text
+              x={12}
+              y={38}
+              fill={CANVAS_COLORS.labelTextLight}
+              fontSize={fontScale(10)}
+            >
               中点偏离量 Δ = {shiftResult.delta.toFixed(3)}
             </text>
           </g>
@@ -590,7 +610,7 @@ export function DerivativeShiftScene({
               width={340}
               height={44}
               rx={6}
-              fill="#ffffff"
+              fill={CANVAS_COLORS.white}
               fillOpacity={0.9}
               stroke={MATH_COLORS.paramPrimary}
               strokeWidth={1.5}
@@ -598,7 +618,7 @@ export function DerivativeShiftScene({
             <text
               x={14}
               y={27}
-              fill="#1e293b"
+              fill={CANVAS_COLORS.labelText}
               fontSize={fontScale(11)}
               fontWeight="bold"
             >

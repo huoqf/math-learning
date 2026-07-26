@@ -213,10 +213,10 @@ export function ProbabilityNormalScene({
                 y={leftTop.y}
                 width={rectWidth}
                 height={rectHeight}
-                fill={withAlpha(MATH_COLORS.paramSecondary, 0.4)}
-                stroke={MATH_COLORS.paramSecondary}
+                fill={withAlpha(MATH_COLORS.barFill, 0.45)}
+                stroke={MATH_COLORS.barBorder}
                 strokeWidth={1.5}
-                className="transition-all duration-200 hover:fill-amber-300/60"
+                className="transition-colors duration-150 hover:opacity-80"
                 style={{ cursor: "pointer" }}
                 onMouseEnter={(e) => onBinMouseEnter?.(bin, e)}
                 onMouseMove={onBinMouseMove}
@@ -253,7 +253,7 @@ export function ProbabilityNormalScene({
               <path
                 d={points.join(" ")}
                 fill="none"
-                stroke={MATH_COLORS.function}
+                stroke={MATH_COLORS.frequencyLine}
                 strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -298,8 +298,8 @@ export function ProbabilityNormalScene({
               <g>
                 <path
                   d={points.join(" ")}
-                  fill={withAlpha(MATH_COLORS.paramPrimary, 0.2)}
-                  stroke={MATH_COLORS.paramPrimary}
+                  fill={MATH_COLORS.sigma1Fill}
+                  stroke={MATH_COLORS.densityCurve}
                   strokeWidth={1}
                   strokeDasharray="4 2"
                 />
@@ -307,7 +307,7 @@ export function ProbabilityNormalScene({
                   x={mathToDesign(mu, y2 + 0.02, scale).x}
                   y={mathToDesign(mu, y2 + 0.02, scale).y}
                   fontSize={fontScale(10)}
-                  fill={MATH_COLORS.paramPrimary}
+                  fill={MATH_COLORS.densityCurve}
                   textAnchor="middle"
                   className="font-bold select-none"
                 >
@@ -348,8 +348,8 @@ export function ProbabilityNormalScene({
               <g>
                 <path
                   d={points.join(" ")}
-                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.15)}
-                  stroke={MATH_COLORS.paramSecondary}
+                  fill={MATH_COLORS.sigma2Fill}
+                  stroke={MATH_COLORS.barFill}
                   strokeWidth={1}
                   strokeDasharray="4 2"
                 />
@@ -357,7 +357,7 @@ export function ProbabilityNormalScene({
                   x={mathToDesign(x1 - 0.1, y2, scale).x}
                   y={mathToDesign(x1 - 0.1, y2, scale).y}
                   fontSize={fontScale(9)}
-                  fill={MATH_COLORS.paramSecondary}
+                  fill={MATH_COLORS.barBorder}
                   textAnchor="end"
                   className="font-semibold select-none"
                 >
@@ -398,8 +398,8 @@ export function ProbabilityNormalScene({
               <g>
                 <path
                   d={points.join(" ")}
-                  fill={withAlpha(MATH_COLORS.paramTertiary, 0.1)}
-                  stroke={MATH_COLORS.paramTertiary}
+                  fill={MATH_COLORS.sigma3Fill}
+                  stroke={MATH_COLORS.sequenceSecondary}
                   strokeWidth={1}
                   strokeDasharray="4 2"
                 />
@@ -407,7 +407,7 @@ export function ProbabilityNormalScene({
                   x={mathToDesign(x1 - 0.1, y2, scale).x}
                   y={mathToDesign(x1 - 0.1, y2, scale).y}
                   fontSize={fontScale(9)}
-                  fill={MATH_COLORS.paramTertiary}
+                  fill={MATH_COLORS.sequenceSecondary}
                   textAnchor="end"
                   className="font-semibold select-none"
                 >

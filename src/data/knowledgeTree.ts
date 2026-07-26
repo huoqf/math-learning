@@ -290,7 +290,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     chapter: "数列",
     module: "等差与等比数列",
     importance: "core",
-    animationIds: ["anim-sequence-geom"],
+    animationIds: ["anim-sequence"],
     prerequisites: [],
   },
   {
@@ -299,7 +299,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     chapter: "数列",
     module: "数列求和",
     importance: "gaokao",
-    animationIds: ["anim-sequence-sum"],
+    animationIds: ["anim-sequence"],
     prerequisites: ["know-sequence-geom"],
   },
   {

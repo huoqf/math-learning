@@ -9,7 +9,7 @@ import {
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
-import { MATH_COLORS } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS } from "@/theme";
 import { calculateExpLog, calculatePowerFunction } from "@/math/function";
 
 interface ExpLogSceneProps {
@@ -356,7 +356,7 @@ export function ExpLogScene({
                     cy={invPt.y}
                     r={6}
                     fill={MATH_COLORS.functionTransformed}
-                    stroke="#FFFFFF"
+                    stroke={CANVAS_COLORS.white}
                     strokeWidth={2}
                   />
                   <text
@@ -415,7 +415,7 @@ export function ExpLogScene({
                     cy={invPt.y}
                     r={6}
                     fill={MATH_COLORS.functionTransformed}
-                    stroke="#FFFFFF"
+                    stroke={CANVAS_COLORS.white}
                     strokeWidth={2}
                   />
                   <text

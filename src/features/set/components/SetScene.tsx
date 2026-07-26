@@ -4,7 +4,7 @@ import type { ViewportInfo } from "@/utils/useViewport";
 import { CoordinateGrid, InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { VennOpType } from "@/math/set";
 import { isPointInCircle } from "@/math/set";
 
@@ -191,7 +191,12 @@ export function SetScene({
           />
           {/* 用白色把 A 的区域盖住 */}
           {rA > 0 && (
-            <circle cx={posA.x} cy={posA.y} r={radiusAInPx} fill="#FFFFFF" />
+            <circle
+              cx={posA.x}
+              cy={posA.y}
+              r={radiusAInPx}
+              fill={CANVAS_COLORS.white}
+            />
           )}
         </g>
       )}
@@ -208,7 +213,12 @@ export function SetScene({
             />
           )}
           {rB > 0 && (
-            <circle cx={posB.x} cy={posB.y} r={radiusBInPx} fill="#FFFFFF" />
+            <circle
+              cx={posB.x}
+              cy={posB.y}
+              r={radiusBInPx}
+              fill={CANVAS_COLORS.white}
+            />
           )}
         </g>
       )}
@@ -341,7 +351,7 @@ export function SetScene({
             y={-20}
             width={360}
             height={32}
-            fill="#FFFFFF"
+            fill={CANVAS_COLORS.white}
             stroke={MATH_COLORS.function}
             strokeWidth={1.5}
             rx={16}

@@ -5,7 +5,7 @@ import type { Vec3 } from "@/math3d/vector3";
 import { add, scale, cross, normalize } from "@/math3d/vector3";
 import type { Plane } from "@/math3d/plane";
 import { mathToThree } from "@/math3d/coordinateConvention";
-import { MATH_COLORS } from "@/theme/math/colors";
+import { MATH_COLORS, MATH3D_COLORS } from "@/theme/math/colors";
 
 interface SectionPlane3DProps {
   /** 求交算法算出的截面闭合曲线点（数学坐标） */
@@ -133,7 +133,7 @@ export function SectionPlane3D({
       {quadGeometry && (
         <mesh geometry={quadGeometry} renderOrder={4}>
           <meshBasicMaterial
-            color="#7fa8d9"
+            color={MATH3D_COLORS.sectionPlane}
             transparent
             opacity={0.15}
             side={THREE.DoubleSide}

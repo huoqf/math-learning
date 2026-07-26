@@ -20,9 +20,14 @@ export function withAlpha(hex: string, alpha: number): string {
   return hex;
 }
 
-// ─── 代数与分析 (Algebra & Analysis) ──────────────────────────────────────────
+// ─── 代数与数列分析 (Algebra, Sequences & Analysis) ───────────────────────────
 export const ALGEBRA_COLORS = {
-  sequence: "#2563EB", // 数列散点 — 经典蓝
+  sequence: "#2563EB", // 主数列通项 a_n 散点 — 经典蓝
+  sequenceSecondary: "#8B5CF6", // 次要/对比数列 b_n 散点 — 葡萄紫
+  sequenceSum: "#D97706", // 前 n 项和 S_n 散点/累加柱状图 — 暖橙
+  sequenceStem: "#94A3B8", // 散点至 n 轴的离散投影垂线 — 中性 slate-400
+  sequenceHighlight: "#EF4444", // 选定项 / S_n 最值高亮点 — 鲜红
+  sequenceCobweb: "#EC4899", // 递推数列蛛网图 (a_{n+1}=f(a_n)) 逼近折线 — 玫红
   inequality: "#10B981", // 不等式可行域 — 绿
   complexNum: "#8B5CF6", // 复数向量 — 紫
 } as const;
@@ -91,8 +96,32 @@ export const STATUS_COLORS = {
 
 // ─── 概率、统计与组合计数 (Probability, Statistics & Combinatorics) ────────────
 export const PROBABILITY_COLORS = {
-  barFill: "#06B6D4", // 柱状图填充 — cyan-500
-  densityCurve: "#0891B2", // 密度曲线 (正态分布)
+  // 1. 频率分布直方图与经验分布
+  barFill: "#06B6D4", // 直方图柱子主色 — 亮青 (cyan-500)
+  barBorder: "#0891B2", // 直方图柱子描边 — 深青 (cyan-600)
+  barHover: "#22D3EE", // 直方图悬浮色 — 浅青 (cyan-400)
+  frequencyLine: "#D97706", // 频率折线/频率多边形 — 暖橙 (amber-600)
+
+  // 2. 正态分布 N(μ, σ²) 理论密度曲线
+  densityCurve: "#2563EB", // 理论密度曲线 f(x) — 经典蓝 (blue-600)
+  meanLine: "#DC2626", // 均值 μ / 期望 E(X) 垂线 — 警示红
+  sdLine: "#059669", // 标准差 σ / 范围辅助线 — 翡翠绿
+
+  // 3. 3σ 区间概率填充 (梯度透视，由内向外)
+  sigma1Fill: "rgba(37, 99, 235, 0.25)", // 1σ 区间 (68.27%) — 宝蓝半透
+  sigma2Fill: "rgba(14, 165, 233, 0.20)", // 2σ 区间 (95.45%) — 天蓝半透
+  sigma3Fill: "rgba(168, 85, 247, 0.15)", // 3σ 区间 (99.73%) — 紫色半透
+
+  // 4. 成对数据与线性回归分析 (Regression Analysis)
+  statScatter: "#0284C7", // 样本散点 (xi, yi) — 湛蓝 (sky-600)
+  regressionLine: "#EF4444", // 最小二乘法回归直线 y^ = bx + a — 鲜红
+  sampleMeanPoint: "#D97706", // 样本中心点 (x̄, ȳ) — 暖橙
+  residualLine: "#94A3B8", // 残差线/偏差虚线 — slate-400
+
+  // 5. 贝叶斯决策与概率树图 (Tree Diagrams & Bayes)
+  bayesPrior: "#3B82F6", // 先验事件 A_i 节点/分支 — 蓝色
+  bayesPosterior: "#10B981", // 后验概率 B 节点/高亮 — 绿色
+  bayesBranch: "#CBD5E1", // 概率分支连线 — neutral slate-300
 } as const;
 
 export const COMBINATORICS_COLORS = {
@@ -123,6 +152,7 @@ export const MATH3D_COLORS = {
   background: "#FFFFFF", // Canvas 背景
   sphereShell: "#93c5fd", // 淡蓝，外接球专用
   inSphereShell: "#fca5a5", // 淡橙红，内切球专用
+  sectionPlane: "#93c5fd", // 淡蓝，3D 截面辅助延伸平面专用
   label: "#1e293b", // 标签文字统一深灰色
 } as const;
 

@@ -9,7 +9,7 @@ import {
   TangentLine,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { solveNike, evalNikeAt } from "@/math/nike";
 import { avoidLabelOffsets } from "@/utils/labelAvoider";
 
@@ -261,7 +261,7 @@ export function NikeScene({
               cy={pt.y}
               r={5}
               fill={MATH_COLORS.vertexPoint}
-              stroke="#FFFFFF"
+              stroke={CANVAS_COLORS.white}
               strokeWidth={1.5}
             />
             {/* 极值点文本标注 */}

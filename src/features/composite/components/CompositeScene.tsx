@@ -9,7 +9,7 @@ import {
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { calculatePiecewise, calculateComposite } from "@/math/composite";
 
 interface CompositeSceneProps {
@@ -124,7 +124,7 @@ export function CompositeScene({
             cx={scale.originX + x0 * scale.scaleX}
             cy={scale.originY - res.rightValAtX0 * scale.scaleY}
             r={5}
-            fill="#FFFFFF"
+            fill={CANVAS_COLORS.white}
             stroke={MATH_COLORS.paramPrimary}
             strokeWidth={2}
           />

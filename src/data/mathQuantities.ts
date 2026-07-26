@@ -24,6 +24,7 @@ import {
   buildCircumSpherePanel,
   buildRotationBodyPanel,
 } from "./builders/solidGeometry";
+import { buildSequencePanel } from "./builders/sequence";
 
 export type { MathPanelData } from "./types";
 
@@ -85,6 +86,8 @@ export function buildMathQuantities(
       return buildCircumSpherePanel(params);
     case "anim-solid-rotation-body":
       return buildRotationBodyPanel(params);
+    case "anim-sequence":
+      return buildSequencePanel(params, config);
     default:
       return EMPTY;
   }

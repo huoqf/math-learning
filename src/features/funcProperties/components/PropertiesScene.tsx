@@ -11,7 +11,7 @@ import {
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import {
   evalFunctionParity,
   evalSecantSlope,
@@ -208,7 +208,7 @@ export function PropertiesScene({
                 cy={scale.originY - parityRes.fNegX * scale.scaleY}
                 r={6}
                 fill={MATH_COLORS.functionTransformed}
-                stroke="#FFFFFF"
+                stroke={CANVAS_COLORS.white}
                 strokeWidth={2}
               />
               <text

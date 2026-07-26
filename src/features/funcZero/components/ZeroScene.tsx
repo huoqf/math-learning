@@ -9,7 +9,7 @@ import {
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { solveBisection } from "@/math/function";
 
 interface ZeroSceneProps {
@@ -143,7 +143,7 @@ export function ZeroScene({
             }
             r={6}
             fill={MATH_COLORS.tangentLine}
-            stroke="#FFFFFF"
+            stroke={CANVAS_COLORS.white}
             strokeWidth={2}
           />
           <text

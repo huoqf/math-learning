@@ -16,10 +16,12 @@ import { ProbabilityBayesAnimation } from "./features/probabilityBayes";
 import { ProbabilityDistributionAnimation } from "./features/probabilityDistribution";
 import { ProbabilityNormalAnimation } from "./features/probabilityNormal";
 import { PairedDataAnimation } from "./features/pairedData/PairedDataAnimation";
+import { SequenceAnimation } from "./features/sequence";
 import { KnowledgeTreeHome } from "./features/home/KnowledgeTreeHome";
 import { Guarded3DPage } from "./components/Layout/Guarded3DPage";
 
 const PATH_TO_LABEL: Record<string, string> = {
+  "/sequence": "等差与等比数列实验室",
   "/set": "集合与常用逻辑实验室",
   "/function-properties": "函数性质实验室",
   "/function-explog": "指对幂函数实验室",
@@ -93,6 +95,7 @@ export default function App() {
         <main className="flex-1 overflow-hidden">
           <Routes>
             <Route path="/" element={<KnowledgeTreeHome />} />
+            <Route path="/sequence" element={<SequenceAnimation />} />
             <Route path="/set" element={<SetAnimation />} />
             <Route
               path="/function-properties"

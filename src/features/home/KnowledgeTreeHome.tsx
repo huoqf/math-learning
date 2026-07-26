@@ -85,6 +85,9 @@ const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-solid-position": "/solid-position",
   "anim-solid-angle": "/solid-angle",
   "anim-solid-ball": "/solid-ball",
+  "anim-sequence": "/sequence",
+  "anim-sequence-geom": "/sequence",
+  "anim-sequence-sum": "/sequence",
 };
 
 // 重要性标签映射
