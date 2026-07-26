@@ -7,6 +7,19 @@ import type { Plane } from "@/math3d/plane";
 import { mathToThree } from "@/math3d/coordinateConvention";
 import { MATH_COLORS, MATH3D_COLORS } from "@/theme/math/colors";
 
+interface ConstructionLineProp {
+  from: Vec3;
+  to: Vec3;
+  color?: string;
+  dashed?: boolean;
+}
+
+interface ConstructionPointProp {
+  position: Vec3;
+  label?: string;
+  color?: string;
+}
+
 interface SectionPlane3DProps {
   /** 求交算法算出的截面闭合曲线点（数学坐标） */
   sectionPoints: Vec3[];
@@ -15,6 +28,10 @@ interface SectionPlane3DProps {
   planeExtent?: number;
   color?: string;
   showPlaneQuad?: boolean;
+  /** 作图辅助线段 */
+  constructionLines?: ConstructionLineProp[];
+  /** 作图辅助顶点 */
+  constructionPoints?: ConstructionPointProp[];
 }
 
 function buildPlaneBasis(normal: Vec3) {
@@ -42,8 +59,10 @@ export function SectionPlane3D({
   sectionPoints,
   plane,
   planeExtent = 3,
-  color = MATH_COLORS.accent,
+  color = MATH3D_COLORS.sectionFill,
   showPlaneQuad = true,
+  constructionLines = [],
+  constructionPoints = [],
 }: SectionPlane3DProps) {
   const threePoints = useMemo(
     () => sectionPoints.map(vec3ToThree),
@@ -86,8 +105,8 @@ export function SectionPlane3D({
     [threePoints],
   );
 
-  const quadGeometry = useMemo(() => {
-    if (!showPlaneQuad) return null;
+  const quadData = useMemo(() => {
+    if (!showPlaneQuad) return { geo: null, outline: [] };
     const { u, v } = buildPlaneBasis(plane.normal);
     const c = plane.point;
     const corners = [
@@ -125,43 +144,89 @@ export function SectionPlane3D({
         3,
       ),
     );
-    return geo;
+    const outline = [a, b, c2, d, a];
+    return { geo, outline };
   }, [plane, planeExtent, showPlaneQuad]);
 
   return (
     <group>
-      {quadGeometry && (
-        <mesh geometry={quadGeometry} renderOrder={4}>
+      {/* 延伸辅助平面 (冰紫天蓝半透明) */}
+      {quadData.geo && (
+        <mesh geometry={quadData.geo} renderOrder={4}>
           <meshBasicMaterial
             color={MATH3D_COLORS.sectionPlane}
             transparent
-            opacity={0.15}
+            opacity={0.22}
             side={THREE.DoubleSide}
             depthWrite={false}
           />
         </mesh>
       )}
 
+      {/* 延伸辅助平面的四周轮廓边界线 (使切割面边界清晰可见) */}
+      {quadData.outline.length > 0 && (
+        <Line
+          points={quadData.outline}
+          color="#818CF8"
+          lineWidth={1.5}
+          dashed
+          dashSize={0.2}
+          gapSize={0.1}
+          renderOrder={5}
+        />
+      )}
+
+      {/* 截面多边形 (高饱和琥珀金填充) */}
       {fillGeometry && (
         <mesh geometry={fillGeometry} renderOrder={6}>
           <meshBasicMaterial
             color={color}
             transparent
-            opacity={0.45}
+            opacity={0.55}
             side={THREE.DoubleSide}
             depthWrite={false}
           />
         </mesh>
       )}
 
+      {/* 平面与多面体表面相交形成的闭合交线轮廓 */}
       {outlinePoints.length > 0 && (
         <Line
           points={outlinePoints}
-          color={color}
-          lineWidth={2.5}
-          renderOrder={7}
+          color={MATH3D_COLORS.sectionOutline}
+          lineWidth={3.0}
+          depthTest={false}
+          renderOrder={100}
         />
       )}
+
+      {/* 作图辅助延长线/虚线 */}
+      {constructionLines.map((line, idx) => {
+        const pts = [vec3ToThree(line.from), vec3ToThree(line.to)];
+        return (
+          <Line
+            key={`const-line-${idx}`}
+            points={pts}
+            color={line.color ?? MATH_COLORS.highlight}
+            lineWidth={1.5}
+            dashed={line.dashed}
+            dashSize={0.2}
+            gapSize={0.1}
+            renderOrder={8}
+          />
+        );
+      })}
+
+      {/* 作图辅助关键点 */}
+      {constructionPoints.map((pt, idx) => {
+        const threePos = vec3ToThree(pt.position);
+        return (
+          <mesh key={`const-pt-${idx}`} position={threePos} renderOrder={9}>
+            <sphereGeometry args={[0.08, 16, 16]} />
+            <meshBasicMaterial color={pt.color ?? MATH_COLORS.highlight} />
+          </mesh>
+        );
+      })}
     </group>
   );
 }

@@ -182,6 +182,43 @@ export function buildRegularPyramidPolyhedron(
   return { vertices, edges, faces };
 }
 
+/** 正 n 棱柱：底面外接圆半径 baseRadius，高 height */
+export function buildRegularPrismPolyhedron(
+  sides: number,
+  baseRadius: number,
+  height: number,
+): Polyhedron {
+  const bottom: Vec3[] = Array.from({ length: sides }, (_, i) => {
+    const t = (i / sides) * Math.PI * 2;
+    return {
+      x: baseRadius * Math.cos(t),
+      y: baseRadius * Math.sin(t),
+      z: 0,
+    };
+  });
+  const top: Vec3[] = bottom.map((v) => ({ ...v, z: height }));
+  const vertices = [...bottom, ...top];
+  const edges: PolyhedronEdge[] = [];
+
+  for (let i = 0; i < sides; i++) {
+    const next = (i + 1) % sides;
+    edges.push({ a: i, b: next }); // 下底边
+    edges.push({ a: i + sides, b: next + sides }); // 上底边
+    edges.push({ a: i, b: i + sides }); // 侧棱
+  }
+
+  const faces: number[][] = [
+    Array.from({ length: sides }, (_, i) => i), // 下底面
+    Array.from({ length: sides }, (_, i) => sides - 1 - i + sides), // 上底面
+    ...Array.from({ length: sides }, (_, i) => {
+      const next = (i + 1) % sides;
+      return [i, next, next + sides, i + sides];
+    }), // 侧面
+  ];
+
+  return { vertices, edges, faces };
+}
+
 // ============================================================
 // 二、旋转体求交
 // ============================================================

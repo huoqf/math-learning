@@ -1,148 +1,506 @@
 import { useMemo, useState } from "react";
-import { SectionPlane3D, CameraRig, Scene3DGrid } from "@/components/Math3D";
-import { Cuboid } from "@/components/Math3D/solids";
+import {
+  SectionPlane3D,
+  CameraRig,
+  Scene3DGrid,
+  Point3D,
+  PointLabel3D,
+  ThreeViewsPanel,
+} from "@/components/Math3D";
+import {
+  Cuboid,
+  RegularPyramid,
+  RegularPrism,
+} from "@/components/Math3D/solids";
 import {
   buildCuboidPolyhedron,
+  buildRegularPyramidPolyhedron,
+  buildRegularPrismPolyhedron,
   intersectConvexPolyhedronPlane,
 } from "@/math3d/sectionIntersection";
+import { computeSectionProjectionDetails } from "@/math3d/sectionArea";
+import { planeFromPoints } from "@/math3d/plane";
+import type { Vec3 } from "@/math3d/vector3";
+import type { Plane } from "@/math3d/plane";
 import { ThreeDCanvas } from "@/components/Layout/ThreeDCanvas";
 import { ThreePanel } from "@/components/Layout/ThreePanel";
-import { LeftPanel, LeftPanelSection } from "@/components/UI/LeftPanel";
-import { ParamControl, type ParamConfig } from "@/components/UI/ParamControl";
-import type { Plane } from "@/math3d/plane";
+import {
+  LeftPanel,
+  LeftPanelSection,
+  ParamControl,
+  MathPanel,
+  TabSwitcher,
+  SelectGrid,
+  type ParamConfig,
+} from "@/components/UI";
+import { Legend3D } from "@/components/Math3D/Legend3D";
+import { use3DViewport } from "@/hooks/use3DViewport";
+import { buildMathQuantities } from "@/data/mathQuantities";
+import { sectionMeta } from "@/data/registries/solidGeometry";
+import { buildSolidViews } from "@/features/solidGeometry/threeViews/buildSolidViews";
+import { MATH_COLORS } from "@/theme";
+
+type SectionMode = "continuous" | "threePoints";
+type SolidKind = "cuboid" | "pyramid" | "prism";
+type ViewMode = "3d" | "views";
+
+/**
+ * 侧棱动点精确求值纯函数
+ */
+function getEdgePoint(
+  kind: SolidKind,
+  edgeIdx: number,
+  t: number,
+  width: number,
+  depth: number,
+  height: number,
+): Vec3 {
+  const clampT = Math.max(0.05, Math.min(0.95, t));
+
+  if (kind === "pyramid") {
+    const r = 2.2;
+    const angles = [0, Math.PI / 2, Math.PI];
+    const angle = angles[edgeIdx % 3];
+    const bx = r * Math.cos(angle);
+    const by = r * Math.sin(angle);
+    return {
+      x: (1 - clampT) * bx,
+      y: (1 - clampT) * by,
+      z: clampT * height,
+    };
+  } else if (kind === "prism") {
+    const r = 2.0;
+    const angles = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3];
+    const angle = angles[edgeIdx % 3];
+    return {
+      x: r * Math.cos(angle),
+      y: r * Math.sin(angle),
+      z: clampT * height,
+    };
+  } else {
+    // cuboid
+    const hw = width / 2;
+    const hd = depth / 2;
+    const basePts = [
+      { x: hw, y: -hd },
+      { x: hw, y: hd },
+      { x: -hw, y: hd },
+    ];
+    const pt = basePts[edgeIdx % 3];
+    return {
+      x: pt.x,
+      y: pt.y,
+      z: clampT * height,
+    };
+  }
+}
 
 export default function SectionCuboidDemo() {
+  const [mode, setMode] = useState<SectionMode>("continuous");
+  const [solidKind, setSolidKind] = useState<SolidKind>("cuboid");
+  const [viewMode, setViewMode] = useState<ViewMode>("3d");
+
+  // 1. 连续切面参数
   const [cutHeight, setCutHeight] = useState(2);
   const [tiltDeg, setTiltDeg] = useState(0);
+  const [azimuthDeg, setAzimuthDeg] = useState(0);
 
+  // 2. 三点作图模式在三条棱上的拖拽高度比例 [0.05, 0.95]
+  const [posP, setPosP] = useState(0.4);
+  const [posQ, setPosQ] = useState(0.7);
+  const [posR, setPosR] = useState(0.5);
+
+  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+    use3DViewport("iso");
+
+  // 多面体几何尺寸
   const width = 3;
-  const depth = 2;
+  const depth = 3;
   const height = 4;
 
-  const plane = useMemo((): Plane => {
-    const tilt = (tiltDeg * Math.PI) / 180;
-    return {
-      point: { x: 0, y: 0, z: cutHeight },
-      normal: { x: Math.sin(tilt), y: 0, z: Math.cos(tilt) },
-    };
-  }, [cutHeight, tiltDeg]);
+  // 构造当前多面体 Polyhedron 数据结构（与 3D Mesh 完全 100% 对齐）
+  const currentPolyhedron = useMemo(() => {
+    if (solidKind === "pyramid") {
+      return buildRegularPyramidPolyhedron(4, 2.2, height);
+    }
+    if (solidKind === "prism") {
+      return buildRegularPrismPolyhedron(3, 2.0, height);
+    }
+    return buildCuboidPolyhedron(width, depth, height);
+  }, [solidKind, width, depth, height]);
 
-  const sectionPoints = useMemo(() => {
-    const poly = buildCuboidPolyhedron(width, depth, height);
-    return intersectConvexPolyhedronPlane(poly, plane);
-  }, [width, depth, height, plane]);
-
-  const paramConfigs = useMemo<ParamConfig[]>(
-    () => [
-      {
-        key: "cutHeight",
-        label: "截面高度",
-        min: 0,
-        max: height,
-        step: 0.1,
-        value: cutHeight,
-      },
-      {
-        key: "tiltDeg",
-        label: "截面倾斜角",
-        min: -60,
-        max: 60,
-        step: 1,
-        value: tiltDeg,
-        unit: "°",
-      },
-    ],
-    [cutHeight, tiltDeg],
+  // 三点作图模式下侧棱上的 3D 控制点
+  const pointPPos = useMemo<Vec3>(
+    () => getEdgePoint(solidKind, 0, posP, width, depth, height),
+    [solidKind, posP, width, depth, height],
   );
+
+  const pointQPos = useMemo<Vec3>(
+    () => getEdgePoint(solidKind, 1, posQ, width, depth, height),
+    [solidKind, posQ, width, depth, height],
+  );
+
+  const pointRPos = useMemo<Vec3>(
+    () => getEdgePoint(solidKind, 2, posR, width, depth, height),
+    [solidKind, posR, width, depth, height],
+  );
+
+  // 计算切割平面 (Plane)
+  const plane = useMemo((): Plane => {
+    if (mode === "threePoints") {
+      return planeFromPoints(pointPPos, pointQPos, pointRPos);
+    } else {
+      const tilt = (tiltDeg * Math.PI) / 180;
+      const azim = (azimuthDeg * Math.PI) / 180;
+      const nx = Math.sin(tilt) * Math.cos(azim);
+      const ny = Math.sin(tilt) * Math.sin(azim);
+      const nz = Math.cos(tilt);
+
+      return {
+        point: { x: 0, y: 0, z: cutHeight },
+        normal: { x: nx, y: ny, z: nz },
+      };
+    }
+  }, [mode, pointPPos, pointQPos, pointRPos, cutHeight, tiltDeg, azimuthDeg]);
+
+  // 求交点多边形
+  const sectionPoints = useMemo(() => {
+    return intersectConvexPolyhedronPlane(currentPolyhedron, plane);
+  }, [currentPolyhedron, plane]);
+
+  // 射影面积及几何细节计算
+  const projDetails = useMemo(() => {
+    return computeSectionProjectionDetails(sectionPoints, plane.normal);
+  }, [sectionPoints, plane]);
+
+  // 三点作图模式下的辅助线段
+  const constructionLines = useMemo(() => {
+    if (mode !== "threePoints" || sectionPoints.length < 3) return [];
+
+    return [
+      { from: pointPPos, to: pointQPos, color: MATH_COLORS.highlight },
+      { from: pointQPos, to: pointRPos, color: MATH_COLORS.highlight },
+      {
+        from: pointRPos,
+        to: pointPPos,
+        color: MATH_COLORS.highlight,
+        dashed: true,
+      },
+    ];
+  }, [mode, sectionPoints, pointPPos, pointQPos, pointRPos]);
+
+  // 组装 MathPanel 右屏看板数据
+  const mathData = useMemo(() => {
+    const paramsMap = {
+      cutHeight,
+      tiltDeg,
+      azimuthDeg,
+      posP,
+      posQ,
+      posR,
+    };
+
+    const normalStr = `(${plane.normal.x.toFixed(2)}, ${plane.normal.y.toFixed(2)}, ${plane.normal.z.toFixed(2)})`;
+
+    return buildMathQuantities("anim-solid-section", paramsMap, {
+      vertexCount: sectionPoints.length,
+      area3D: projDetails.area3D,
+      areaProj: projDetails.areaProj,
+      cosTheta: projDetails.cosTheta,
+      thetaDeg: projDetails.thetaDeg,
+      normalStr,
+    });
+  }, [
+    cutHeight,
+    tiltDeg,
+    azimuthDeg,
+    posP,
+    posQ,
+    posR,
+    plane,
+    sectionPoints,
+    projDetails,
+  ]);
+
+  // 组装左屏参数配置
+  const paramConfigs = useMemo<ParamConfig[]>(() => {
+    const currentKeys =
+      mode === "continuous"
+        ? ["cutHeight", "tiltDeg", "azimuthDeg"]
+        : ["posP", "posQ", "posR"];
+
+    return sectionMeta
+      .filter((meta) => currentKeys.includes(meta.key))
+      .map((meta) => {
+        let val = 0;
+        if (meta.key === "cutHeight") val = cutHeight;
+        else if (meta.key === "tiltDeg") val = tiltDeg;
+        else if (meta.key === "azimuthDeg") val = azimuthDeg;
+        else if (meta.key === "posP") val = posP;
+        else if (meta.key === "posQ") val = posQ;
+        else if (meta.key === "posR") val = posR;
+
+        return {
+          key: meta.key,
+          label: meta.label,
+          labelFormula: meta.labelFormula,
+          min: meta.min,
+          max: meta.max,
+          step: meta.step ?? 0.1,
+          value: val,
+          description: meta.description,
+          descriptionFormula: meta.descriptionFormula,
+          importance: meta.importance as any,
+          marks: meta.marks,
+        };
+      });
+  }, [mode, cutHeight, tiltDeg, azimuthDeg, posP, posQ, posR]);
 
   const handleParamChange = (key: string, value: number) => {
     if (key === "cutHeight") setCutHeight(value);
     else if (key === "tiltDeg") setTiltDeg(value);
+    else if (key === "azimuthDeg") setAzimuthDeg(value);
+    else if (key === "posP") setPosP(value);
+    else if (key === "posQ") setPosQ(value);
+    else if (key === "posR") setPosR(value);
   };
+
+  const handleReset = () => {
+    setCutHeight(2);
+    setTiltDeg(0);
+    setAzimuthDeg(0);
+    setPosP(0.4);
+    setPosQ(0.7);
+    setPosR(0.5);
+  };
+
+  // 生成三视图
+  const viewsData = useMemo(() => {
+    let solidType: "cuboid" | "pyramid" | "prism" = "cuboid";
+    if (solidKind === "pyramid") solidType = "pyramid";
+
+    return buildSolidViews(solidType as any, {
+      width,
+      depth,
+      height,
+      sides: 4,
+      baseRadius: 2,
+    });
+  }, [solidKind, width, depth, height]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
+          {/* 模式选择 */}
+          <LeftPanelSection title="教学模式" subtitle="选择截面生成与作图机制">
+            <TabSwitcher
+              tabs={[
+                { key: "continuous", label: "连续切面" },
+                { key: "threePoints", label: "三点作图" },
+              ]}
+              value={mode}
+              onChange={(m) => setMode(m as SectionMode)}
+            />
+          </LeftPanelSection>
+
+          {/* 立体模型选择 */}
+          <LeftPanelSection title="几何体选择" subtitle="切换高考经典多面体">
+            <SelectGrid
+              items={[
+                {
+                  key: "cuboid",
+                  label: "正方体/长方体",
+                  formula: "\\text{长方体}",
+                },
+                {
+                  key: "pyramid",
+                  label: "正四棱锥",
+                  formula: "\\text{四棱锥}",
+                },
+                { key: "prism", label: "正三棱柱", formula: "\\text{三棱柱}" },
+              ]}
+              value={solidKind}
+              onChange={(k) => setSolidKind(k as SolidKind)}
+              columns={2}
+            />
+          </LeftPanelSection>
+
+          {/* 视图模式选择 */}
+          <LeftPanelSection title="显示模式">
+            <TabSwitcher
+              tabs={[
+                { key: "3d", label: "3D 直观图" },
+                { key: "views", label: "2D 三视图" },
+              ]}
+              value={viewMode}
+              onChange={(v) => setViewMode(v as ViewMode)}
+            />
+          </LeftPanelSection>
+
+          {/* 动态参数调节 */}
           <LeftPanelSection
-            title="截面参数"
-            subtitle="调节切割平面的位置与角度"
+            title="参数调节"
+            subtitle={
+              mode === "continuous"
+                ? "滑动调节切割平面的位置与倾角"
+                : "拖动棱上控制点或滑动比例"
+            }
           >
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
+              onReset={handleReset}
             />
           </LeftPanelSection>
+
+          {/* 3D 视角 Preset */}
+          {viewMode === "3d" && (
+            <LeftPanelSection title="3D 视角预设">
+              <TabSwitcher
+                tabs={[
+                  { key: "iso", label: "轴测" },
+                  { key: "front", label: "主视" },
+                  { key: "top", label: "俯视" },
+                  { key: "side", label: "左视" },
+                ]}
+                value={preset}
+                onChange={(p) => setCameraPreset(p as any)}
+              />
+            </LeftPanelSection>
+          )}
         </LeftPanel>
       }
       center={
-        <ThreeDCanvas cameraPosition={[6, 5, 8]}>
-          <CameraRig />
-          <Scene3DGrid size={4} />
-          <Cuboid a={width} b={depth} c={height} opacity={0.2} />
-          <SectionPlane3D
-            sectionPoints={sectionPoints}
-            plane={plane}
-            planeExtent={Math.max(width, depth) * 0.8}
-          />
-        </ThreeDCanvas>
+        viewMode === "views" ? (
+          <ThreeViewsPanel views={viewsData.views} extent={viewsData.extent} />
+        ) : (
+          <ThreeDCanvas
+            cameraPosition={cameraPosition}
+            legend={
+              <Legend3D
+                title="图例"
+                items={[
+                  { colorKey: "primary", swatch: "area", label: "多面体" },
+                  { colorKey: "accent", swatch: "area", label: "截面多边形" },
+                  { colorKey: "highlight", swatch: "line", label: "作图连线" },
+                ]}
+              />
+            }
+          >
+            <CameraRig ref={controlsRef} />
+            <Scene3DGrid size={5} />
+
+            {/* 3D 实体渲染 */}
+            {solidKind === "cuboid" && (
+              <Cuboid a={width} b={depth} c={height} opacity={0.15} />
+            )}
+            {solidKind === "pyramid" && (
+              <RegularPyramid
+                sides={4}
+                baseRadius={2.2}
+                height={height}
+                opacity={0.15}
+              />
+            )}
+            {solidKind === "prism" && (
+              <RegularPrism
+                sides={3}
+                baseRadius={2.0}
+                height={height}
+                opacity={0.15}
+              />
+            )}
+
+            {/* 3D 截面与作图线渲染 */}
+            <SectionPlane3D
+              sectionPoints={sectionPoints}
+              plane={plane}
+              planeExtent={Math.max(width, depth) * 0.9}
+              constructionLines={constructionLines}
+            />
+
+            {/* 三点作图模式下的 3D 锁死拖拽控制点 */}
+            {mode === "threePoints" && (
+              <>
+                <Point3D
+                  position={pointPPos}
+                  draggable
+                  constrain={(raw) =>
+                    getEdgePoint(
+                      solidKind,
+                      0,
+                      raw.z / height,
+                      width,
+                      depth,
+                      height,
+                    )
+                  }
+                  onDrag={(next) => setPosP(next.z / height)}
+                  colorKey="highlight"
+                />
+                <PointLabel3D
+                  position={pointPPos}
+                  text="P"
+                  offset={[0, 0, 0.2]}
+                />
+
+                <Point3D
+                  position={pointQPos}
+                  draggable
+                  constrain={(raw) =>
+                    getEdgePoint(
+                      solidKind,
+                      1,
+                      raw.z / height,
+                      width,
+                      depth,
+                      height,
+                    )
+                  }
+                  onDrag={(next) => setPosQ(next.z / height)}
+                  colorKey="highlight"
+                />
+                <PointLabel3D
+                  position={pointQPos}
+                  text="Q"
+                  offset={[0, 0, 0.2]}
+                />
+
+                <Point3D
+                  position={pointRPos}
+                  draggable
+                  constrain={(raw) =>
+                    getEdgePoint(
+                      solidKind,
+                      2,
+                      raw.z / height,
+                      width,
+                      depth,
+                      height,
+                    )
+                  }
+                  onDrag={(next) => setPosR(next.z / height)}
+                  colorKey="highlight"
+                />
+                <PointLabel3D
+                  position={pointRPos}
+                  text="R"
+                  offset={[0, 0, 0.2]}
+                />
+              </>
+            )}
+          </ThreeDCanvas>
+        )
       }
       right={
-        <LeftPanel>
-          <LeftPanelSection title="截面信息" subtitle="当前截面的几何属性">
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-neutral-500">截面顶点数</span>
-                <span className="font-mono font-semibold">
-                  {sectionPoints.length}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">截面形状</span>
-                <span className="font-semibold">
-                  {sectionPoints.length === 3
-                    ? "三角形"
-                    : sectionPoints.length === 4
-                      ? "四边形"
-                      : sectionPoints.length === 5
-                        ? "五边形"
-                        : sectionPoints.length === 6
-                          ? "六边形"
-                          : `${sectionPoints.length} 边形`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">平面法向量</span>
-                <span className="font-mono text-xs">
-                  ({plane.normal.x.toFixed(2)}, {plane.normal.y.toFixed(2)},{" "}
-                  {plane.normal.z.toFixed(2)})
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">截面高度</span>
-                <span className="font-mono">{cutHeight.toFixed(1)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-neutral-500">倾斜角</span>
-                <span className="font-mono">{tiltDeg}°</span>
-              </div>
-            </div>
-          </LeftPanelSection>
-          <LeftPanelSection title="知识点" subtitle="长方体截面的高考考点">
-            <div className="space-y-2 text-sm text-neutral-600">
-              <p>
-                • 长方体被平面所截，截面必为<strong>凸多边形</strong>
-              </p>
-              <p>• 截面顶点数 ∈ {"{3, 4, 5, 6}"}</p>
-              <p>
-                • 水平截面与底面<strong>全等</strong>
-              </p>
-              <p>
-                • 倾斜截面可产生<strong>菱形、梯形</strong>等特殊四边形
-              </p>
-            </div>
-          </LeftPanelSection>
-        </LeftPanel>
+        <MathPanel
+          quantities={mathData.quantities}
+          theorems={mathData.theorems}
+          gaokaoPoints={mathData.gaokaoPoints}
+          warnings={mathData.warnings}
+          title="截面几何看板"
+        />
       }
     />
   );

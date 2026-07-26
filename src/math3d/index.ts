@@ -67,8 +67,16 @@ export {
   intersectConvexPolyhedronPlane,
   buildCuboidPolyhedron,
   buildRegularPyramidPolyhedron,
+  buildRegularPrismPolyhedron,
   intersectRotationSolidPlane,
 } from "./sectionIntersection";
+
+export type { SectionProjectionDetails, ConstructionStep } from "./sectionArea";
+export {
+  computeSectionArea3D,
+  computeProjectionArea2D,
+  computeSectionProjectionDetails,
+} from "./sectionArea";
 
 export type { ViewName, Point2D, ViewDrawing } from "./orthographicProjection";
 export { projectPolyhedron, VIEW_AXES } from "./orthographicProjection";

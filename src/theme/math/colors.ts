@@ -152,7 +152,9 @@ export const MATH3D_COLORS = {
   background: "#FFFFFF", // Canvas 背景
   sphereShell: "#93c5fd", // 淡蓝，外接球专用
   inSphereShell: "#fca5a5", // 淡橙红，内切球专用
-  sectionPlane: "#93c5fd", // 淡蓝，3D 截面辅助延伸平面专用
+  sectionPlane: "#a5b4fc", // 冰紫天蓝，3D 截面辅助延伸平面专用
+  sectionFill: "#f59e0b", // 高饱和琥珀金，截面多边形主填色
+  sectionOutline: "#b45309", // 深琥珀棕，截面多边形高亮边线
   label: "#1e293b", // 标签文字统一深灰色
 } as const;
 

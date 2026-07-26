@@ -17,10 +17,7 @@ export const RegularPyramid = ({
   colorKey = "primary",
   opacity = 0.3,
 }: RegularPyramidProps) => (
-  <mesh
-    position={mathToThree({ x: 0, y: 0, z: height / 2 })}
-    rotation={[0, Math.PI / sides, 0]}
-  >
+  <mesh position={mathToThree({ x: 0, y: 0, z: height / 2 })}>
     <coneGeometry args={[baseRadius, height, sides]} />
     <meshStandardMaterial
       color={MATH_COLORS[colorKey]}

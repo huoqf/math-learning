@@ -1,13 +1,13 @@
 import { useRef, useState } from "react";
 import { useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import { MATH_COLORS } from "@/theme/math/colors";
+import { MATH3D_COLORS, MATH_COLORS } from "@/theme/math/colors";
 import { mathToThree, threeToMath } from "@/math3d/coordinateConvention";
 import type { Vec3 } from "@/math3d/vector3";
 
 interface Point3DProps {
   position: Vec3;
-  colorKey?: keyof typeof MATH_COLORS;
+  colorKey?: keyof typeof MATH3D_COLORS | keyof typeof MATH_COLORS;
   radius?: number;
   draggable?: boolean;
   constrain?: (raw: Vec3) => Vec3;
@@ -16,8 +16,8 @@ interface Point3DProps {
 
 export const Point3D = ({
   position,
-  colorKey = "accent",
-  radius = 0.08,
+  colorKey = "highlight",
+  radius = 0.12,
   draggable = false,
   constrain,
   onDrag,
@@ -25,14 +25,36 @@ export const Point3D = ({
   const [hovered, setHovered] = useState(false);
   const [dragging, setDragging] = useState(false);
   const { camera, gl, invalidate } = useThree();
+  const controls = useThree((state) => (state as any).controls);
   const planeRef = useRef(new THREE.Plane());
   const hit = useRef(new THREE.Vector3());
+
+  const stopDragging = (pointerId?: number) => {
+    setDragging(false);
+    if (controls) controls.enabled = true;
+    if (pointerId !== undefined) {
+      try {
+        gl.domElement.releasePointerCapture(pointerId);
+      } catch {
+        // 捕获已释放时忽略
+      }
+    }
+  };
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (!draggable) return;
     e.stopPropagation();
     setDragging(true);
-    gl.domElement.setPointerCapture(e.pointerId);
+
+    // 拖拽点时强行禁用背景 OrbitControls，防止视角旋转与点拖拽冲突
+    if (controls) controls.enabled = false;
+
+    try {
+      gl.domElement.setPointerCapture(e.pointerId);
+    } catch {
+      // 忽略部分浏览器捕获异常
+    }
+
     const camDir = new THREE.Vector3();
     camera.getWorldDirection(camDir);
     planeRef.current.setFromNormalAndCoplanarPoint(
@@ -53,9 +75,14 @@ export const Point3D = ({
   };
 
   const onPointerUp = (e: ThreeEvent<PointerEvent>) => {
-    setDragging(false);
-    gl.domElement.releasePointerCapture(e.pointerId);
+    e.stopPropagation();
+    stopDragging(e.pointerId);
   };
+
+  const colorVal =
+    (MATH3D_COLORS as any)[colorKey] ??
+    (MATH_COLORS as any)[colorKey] ??
+    "#DC2626";
 
   return (
     <mesh
@@ -64,12 +91,19 @@ export const Point3D = ({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerOver={() => draggable && setHovered(true)}
-      onPointerOut={() => setHovered(false)}
+      onPointerOut={() => {
+        setHovered(false);
+      }}
+      renderOrder={500}
     >
       <sphereGeometry
-        args={[hovered || dragging ? radius * 1.4 : radius, 24, 24]}
+        args={[hovered || dragging ? radius * 1.5 : radius, 24, 24]}
       />
-      <meshStandardMaterial color={MATH_COLORS[colorKey]} />
+      <meshStandardMaterial
+        color={colorVal}
+        depthTest={false}
+        roughness={0.2}
+      />
     </mesh>
   );
 };

@@ -481,55 +481,97 @@ export function buildSectionPanel(
 ): MathPanelData {
   const cutHeight = params.cutHeight ?? 2;
   const tiltDeg = params.tiltDeg ?? 0;
-  const vertexCount = config?.vertexCount ?? (tiltDeg === 0 ? 4 : 5);
+  const vertexCount =
+    (config?.vertexCount as number) ?? (tiltDeg === 0 ? 4 : 5);
+  const area3D = (config?.area3D as number) ?? 6.0;
+  const areaProj = (config?.areaProj as number) ?? 6.0;
+  const cosTheta = (config?.cosTheta as number) ?? 1.0;
+  const thetaDeg = (config?.thetaDeg as number) ?? Math.abs(tiltDeg);
+  const normalStr = (config?.normalStr as string) ?? "(0.00, 0.00, 1.00)";
 
-  let shapeName = "四边形截面";
-  if (vertexCount === 3) shapeName = "三角形截面";
-  else if (vertexCount === 4) shapeName = "四边形 (矩形/梯形)";
-  else if (vertexCount === 5) shapeName = "五边形截面";
-  else if (vertexCount === 6) shapeName = "正/斜六边形截面";
+  let shapeName = "四边形";
+  if (vertexCount === 3) shapeName = "三角形";
+  else if (vertexCount === 4) shapeName = "四边形 (矩形/梯形/菱形)";
+  else if (vertexCount === 5) shapeName = "五边形";
+  else if (vertexCount === 6) shapeName = "六边形 (含正六边形)";
+  else if (vertexCount === 0) shapeName = "未切割 (无相交)";
 
   const quantities: MathQuantity[] = [
-    {
-      label: "截面多边形顶点数",
-      symbol: "N",
-      value: vertexCount,
-      color: MATH_COLORS.highlight,
-    },
     {
       label: "截面形状",
       value: shapeName,
       color: MATH_COLORS.primary,
     },
+    {
+      label: "截面顶点数",
+      symbol: "N",
+      value: vertexCount,
+      color: MATH_COLORS.highlight,
+    },
+    {
+      label: "截面 3D 真实面积",
+      symbol: "S_{\\text{截}}",
+      value: `${area3D.toFixed(3)}`,
+      color: MATH_COLORS.paramPrimary,
+    },
+    {
+      label: "底面 2D 投影面积",
+      symbol: "S_{\\text{投影}}",
+      value: `${areaProj.toFixed(3)}`,
+      color: MATH_COLORS.paramSecondary,
+    },
+    {
+      label: "截面与底面夹角",
+      symbol: "\\theta",
+      value: `${thetaDeg.toFixed(1)}° (cosθ=${cosTheta.toFixed(3)})`,
+      color: MATH_COLORS.paramTertiary,
+    },
+    {
+      label: "平面法向量",
+      symbol: "\\boldsymbol{n}",
+      value: normalStr,
+      color: MATH_COLORS.secondary,
+    },
   ];
 
   const theorems: Theorem[] = [
     {
-      name: "截面作图交线法法则",
-      latex: `\\begin{cases} \\alpha \\cap \\text{面}_1 = l_1 \\\\ \\alpha \\cap \\text{面}_2 = l_2 \\end{cases} \\;\\Rightarrow\\; \\text{截面为各交线围成的封闭多边形}`,
+      name: "射影面积定理 (高考核心推导)",
+      latex: `S_{\\text{投影}} = S_{\\text{截}} \\cdot \\cos \\theta \\;\\Rightarrow\\; S_{\\text{截}} = \\frac{S_{\text{投影}}}{\\cos \\theta}`,
       level: "core",
-      note: "平面截 N 面体所得多边形边数不超过几何体面数 (长方体截面边数为 3 ~ 6)",
+      note: `当前数值验证: ${areaProj.toFixed(2)} / ${cosTheta.toFixed(3)} ≈ ${area3D.toFixed(2)}`,
     },
     {
-      name: "面面平行截面性质定理",
-      latex: `\\alpha \\parallel \\beta, \\; \\gamma \\cap \\alpha = a, \\; \\gamma \\cap \\beta = b \\;\\Rightarrow\\; a \\parallel b`,
+      name: "截面作图交线法则与面面平行",
+      latex: `\\alpha \\parallel \\beta \\; \\text{且} \\; \\gamma \\cap \\alpha = a, \\gamma \\cap \\beta = b \\;\\Rightarrow\\; a \\parallel b`,
       level: "important",
-      note: "截面与长方体相对的两个平行平面相交时，两条交线必然平行",
+      note: "平面截多面体，多边形顶点数 ≤ 多面体面数。在正方体/长方体中，相对面交线必平行",
     },
   ];
 
   const gaokaoPoints: GaokaoPoint[] = [
     {
-      text: "高考选填题热点：长方体截面多边形形状可能为三角形、四边形、五边形、六边形，绝不可能为七边形及以上！两平行面交线必平行。",
+      text: "高考选填题热点：正方体/长方体截面边数 N ∈ {3, 4, 5, 6}，绝不可能出现七边形！正六边形截面过正方体中心且垂直于体对角线。",
+      importance: "gaokao",
+    },
+    {
+      text: "高考大题技巧：利用空间向量求出法向量 n 后，无需求截面各边长，直接求出底面投影面积与二面角 cosθ，用 S_截 = S_投 / cosθ 快速解算截面积！",
       importance: "gaokao",
     },
   ];
 
   const warnings: WarningItem[] = [];
 
-  if (cutHeight <= 0 || cutHeight >= 4) {
+  if (cosTheta < 1e-3) {
     warnings.push({
-      text: "切割平面已到达长方体顶底边界，截面退化为正方形底面或单个棱/顶点！",
+      text: "截面垂直于底面 (cosθ = 0)，底面投影退化为一条线段 (S_投影 = 0)，射影面积公式 S_截 = S_投 / cosθ 不适用！",
+      level: "warning",
+    });
+  }
+
+  if (cutHeight <= 0.1 || cutHeight >= 3.9) {
+    warnings.push({
+      text: "切割平面贴近多面体边界顶底，截面临界退化为顶点、棱或底面！",
       level: "warning",
     });
   }
