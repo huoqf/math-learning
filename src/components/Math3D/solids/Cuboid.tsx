@@ -23,7 +23,7 @@ export const Cuboid = ({
   colorKey = "primary",
   opacity = 0.25,
 }: CuboidProps) => (
-  <mesh position={mathToThree({ x: 0, y: 0, z: c / 2 })}>
+  <mesh position={mathToThree({ x: a / 2, y: b / 2, z: c / 2 })}>
     <boxGeometry args={[a, c, b]} />
     <meshStandardMaterial
       color={MATH_COLORS[colorKey]}

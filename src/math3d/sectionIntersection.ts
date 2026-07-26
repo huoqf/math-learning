@@ -110,23 +110,21 @@ export function intersectConvexPolyhedronPlane(
 
 // ── 常用立体构造器 ──
 
-/** 长方体：a(x) × b(y) × c(z)，底面中心在原点 */
+/** 长方体：a(x) × b(y) × c(z)，覆盖范围 [0, a] × [0, b] × [0, c] */
 export function buildCuboidPolyhedron(
   a: number,
   b: number,
   c: number,
 ): Polyhedron {
-  const hx = a / 2;
-  const hy = b / 2;
   const vertices: Vec3[] = [
-    { x: -hx, y: -hy, z: 0 },
-    { x: hx, y: -hy, z: 0 },
-    { x: hx, y: hy, z: 0 },
-    { x: -hx, y: hy, z: 0 },
-    { x: -hx, y: -hy, z: c },
-    { x: hx, y: -hy, z: c },
-    { x: hx, y: hy, z: c },
-    { x: -hx, y: hy, z: c },
+    { x: 0, y: 0, z: 0 },
+    { x: a, y: 0, z: 0 },
+    { x: a, y: b, z: 0 },
+    { x: 0, y: b, z: 0 },
+    { x: 0, y: 0, z: c },
+    { x: a, y: 0, z: c },
+    { x: a, y: b, z: c },
+    { x: 0, y: b, z: c },
   ];
   const edges: PolyhedronEdge[] = [
     { a: 0, b: 1 },

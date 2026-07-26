@@ -78,13 +78,11 @@ function getEdgePoint(
       z: clampT * height,
     };
   } else {
-    // cuboid
-    const hw = width / 2;
-    const hd = depth / 2;
+    // cuboid: 底面顶点 (width, 0), (width, depth), (0, depth), (0, 0)
     const basePts = [
-      { x: hw, y: -hd },
-      { x: hw, y: hd },
-      { x: -hw, y: hd },
+      { x: width, y: 0 },
+      { x: width, y: depth },
+      { x: 0, y: depth },
     ];
     const pt = basePts[edgeIdx % 3];
     return {
@@ -156,12 +154,26 @@ export default function SectionCuboidDemo() {
       const ny = Math.sin(tilt) * Math.sin(azim);
       const nz = Math.cos(tilt);
 
+      const px = solidKind === "cuboid" ? width / 2 : 0;
+      const py = solidKind === "cuboid" ? depth / 2 : 0;
+
       return {
-        point: { x: 0, y: 0, z: cutHeight },
+        point: { x: px, y: py, z: cutHeight },
         normal: { x: nx, y: ny, z: nz },
       };
     }
-  }, [mode, pointPPos, pointQPos, pointRPos, cutHeight, tiltDeg, azimuthDeg]);
+  }, [
+    mode,
+    solidKind,
+    width,
+    depth,
+    pointPPos,
+    pointQPos,
+    pointRPos,
+    cutHeight,
+    tiltDeg,
+    azimuthDeg,
+  ]);
 
   // 求交点多边形
   const sectionPoints = useMemo(() => {
