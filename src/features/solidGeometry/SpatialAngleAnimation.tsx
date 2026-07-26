@@ -16,6 +16,7 @@ import {
   AngleArc3D,
   PointLabel3D,
   FormulaLabel3D,
+  CompoundLabel3D,
   Vector3DArrow,
   LinePlaneAngle3D,
   Legend3D,
@@ -27,7 +28,7 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { spatialAngleMeta } from "@/data/registries/solidGeometry";
 import type { Vec3 } from "@/math3d/vector3";
 
-type AngleMode = "skewLines" | "linePlane" | "dihedral";
+type AngleMode = "skewLines" | "linePlane" | "dihedral" | "distance";
 
 export default function SpatialAngleAnimation() {
   const [activeMode, setActiveMode] = useState<AngleMode>("skewLines");
@@ -88,7 +89,7 @@ export default function SpatialAngleAnimation() {
     [params],
   );
 
-  // 截面 BDE 法向量解算 (用于二面角与线面角)
+  // 截面 BDE 法向量解算 (用于二面角与线面角与距离)
   const n2X = b * ex;
   const n2Y = a * ex;
   const n2Z = a * b;
@@ -103,12 +104,13 @@ export default function SpatialAngleAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="空间角模式选择">
+          <LeftPanelSection title="空间角与距离模式选择">
             <TabSwitcher
               tabs={[
                 { key: "skewLines", label: "异面直线角" },
                 { key: "linePlane", label: "线面角" },
                 { key: "dihedral", label: "二面角" },
+                { key: "distance", label: "点到平面距离" },
               ]}
               value={activeMode}
               onChange={(mode) => setActiveMode(mode as AngleMode)}
@@ -145,28 +147,11 @@ export default function SpatialAngleAnimation() {
           cameraPosition={cameraPosition}
           legend={
             <Legend3D
-              title="3D 空间角图例"
+              title="图例"
               items={[
-                {
-                  colorKey: "primary",
-                  swatch: "line",
-                  label: "直线方向向量 u",
-                },
-                {
-                  colorKey: activeMode === "skewLines" ? "accent" : "secondary",
-                  swatch: "line",
-                  label: activeMode === "skewLines" ? "方向向量 v" : "法向量 n",
-                },
-                {
-                  colorKey: "secondary",
-                  swatch: "area",
-                  label: "基准平面/截面",
-                },
-                {
-                  colorKey: "highlight",
-                  swatch: "line",
-                  label: "所求空间角弧/动点",
-                },
+                { colorKey: "primary", swatch: "area", label: "长方体/截面" },
+                { colorKey: "secondary", swatch: "line", label: "底面/辅助线" },
+                { colorKey: "highlight", swatch: "line", label: "特征角/距离" },
               ]}
             />
           }
@@ -174,28 +159,32 @@ export default function SpatialAngleAnimation() {
           <CameraRig ref={controlsRef} />
           <Scene3DGrid size={5} />
 
-          {/* 长方体实体主体框架 */}
-          <Cuboid a={a} b={b} c={c} colorKey="primary" opacity={0.08} />
+          {/* 基础长方体 */}
+          <Cuboid a={a} b={b} c={c} opacity={0.12} colorKey="primary" />
 
-          {/* 空间直角坐标系顶点坐标标注 */}
-          <PointLabel3D position={A} text="O(0,0,0)" />
-          <PointLabel3D position={B} text={`B(${a},0,0)`} />
-          <PointLabel3D position={D} text={`D(0,${b},0)`} />
-          <PointLabel3D position={C} text={`C(${a},${b},0)`} />
-          <PointLabel3D position={A1} text={`A1(0,0,${c})`} />
-          <PointLabel3D position={B1} text={`B1(${a},0,${c})`} />
-          <PointLabel3D position={E} text={`E(0,0,${ex.toFixed(1)})`} />
+          {/* 顶点文本标号 (原点 A(0,0,0) 已有 3D 轴标示，不重复放 "A" 避免遮挡) */}
+          <PointLabel3D position={B} text="B" />
+          <PointLabel3D position={C} text="C" />
+          <PointLabel3D position={D} text="D" />
+          <CompoundLabel3D position={A1} base="A" subscript="1" />
+          <CompoundLabel3D position={B1} base="B" subscript="1" />
+          <PointLabel3D position={E} text="E" offset={[0.1, 0.1, 0.1]} />
 
-          {/* 可拖拽 3D 动点 E */}
+          {/* 可拖拽点 E */}
           <Point3D
             position={E}
             draggable
             constrain={(raw) => ({
               x: 0,
               y: 0,
-              z: Math.min(Math.max(raw.z, 0.2), c),
+              z: Math.min(c, Math.max(0.2, raw.z)),
             })}
-            onDrag={(next) => setParams((p) => ({ ...p, ex: next.z }))}
+            onDrag={(next) =>
+              setParams((prev) => ({
+                ...prev,
+                ex: Number(next.z.toFixed(2)),
+              }))
+            }
             colorKey="highlight"
           />
 
@@ -248,6 +237,73 @@ export default function SpatialAngleAnimation() {
                 arcRadius={0.8}
                 showFootLabel={false}
               />
+            </>
+          )}
+
+          {/* 模式四：点到平面的距离 */}
+          {activeMode === "distance" && (
+            <>
+              {/* 底面 ABCD */}
+              <Plane3D
+                origin={A}
+                uAxis={{ x: 1, y: 0, z: 0 }}
+                vAxis={{ x: 0, y: 1, z: 0 }}
+                width={a + 0.5}
+                height={b + 0.5}
+                colorKey="secondary"
+                opacity={0.15}
+              />
+              {/* 截面 BDE */}
+              <Plane3D
+                origin={B}
+                uAxis={{ x: D.x - B.x, y: D.y - B.y, z: 0 }}
+                vAxis={{ x: E.x - B.x, y: E.y - B.y, z: E.z - B.z }}
+                width={Math.max(a, b) + 1}
+                height={c + 1}
+                colorKey="paramTertiary"
+                opacity={0.25}
+              />
+              {/* 截面法向量 n */}
+              <Vector3DArrow
+                from={A}
+                to={{
+                  x: n2Normalized.x,
+                  y: n2Normalized.y,
+                  z: n2Normalized.z,
+                }}
+                colorKey="primary"
+              />
+              <FormulaLabel3D
+                position={{
+                  x: n2Normalized.x + 0.2,
+                  y: n2Normalized.y + 0.2,
+                  z: n2Normalized.z + 0.2,
+                }}
+                tex="\vec{n}"
+              />
+              {/* 动点 A 到截面 BDE 的垂线段 AH */}
+              {(() => {
+                const t = (a * b * ex) / (n2Len * n2Len);
+                const H: Vec3 = { x: t * n2X, y: t * n2Y, z: t * n2Z };
+                return (
+                  <>
+                    <Vector3DArrow from={A} to={H} colorKey="highlight" />
+                    <PointLabel3D
+                      position={H}
+                      text="H"
+                      offset={[0.1, 0.1, 0.1]}
+                    />
+                    <FormulaLabel3D
+                      position={{
+                        x: H.x / 2 - 0.2,
+                        y: H.y / 2 - 0.2,
+                        z: H.z / 2,
+                      }}
+                      tex="d"
+                    />
+                  </>
+                );
+              })()}
             </>
           )}
 

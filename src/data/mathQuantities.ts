@@ -23,7 +23,9 @@ import {
   buildLinePlaneRelationPanel,
   buildCircumSpherePanel,
   buildRotationBodyPanel,
+  buildSectionPanel,
 } from "./builders/solidGeometry";
+import { buildVector3DBasisPanel } from "./builders/vector3d";
 import { buildSequencePanel } from "./builders/sequence";
 
 export type { MathPanelData } from "./types";
@@ -79,13 +81,19 @@ export function buildMathQuantities(
     case "anim-func-composite":
       return buildFuncCompositePanel(params, config);
     case "anim-solid-angle":
+    case "anim-solid-distance":
       return buildSpatialAnglePanel(params, config);
     case "anim-solid-position":
+    case "anim-solid-surface-relation":
       return buildLinePlaneRelationPanel(params, config);
+    case "anim-solid-section":
+      return buildSectionPanel(params, config);
     case "anim-solid-ball":
       return buildCircumSpherePanel(params, config);
     case "anim-solid-rotation-body":
       return buildRotationBodyPanel(params);
+    case "anim-vector3d-basis":
+      return buildVector3DBasisPanel(params);
     case "anim-sequence":
       return buildSequencePanel(params, config);
     default:

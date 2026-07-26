@@ -26,7 +26,8 @@ import { linePlaneRelationMeta } from "@/data/registries/solidGeometry";
 import { getLineDirection } from "@/math3d/lineRelation";
 import type { Vec3 } from "@/math3d/vector3";
 
-type TeachingMode = "parallel" | "perpendicular" | "vector";
+type TeachingMode =
+  "parallel" | "perpendicular" | "surfaceParallel" | "surfacePerp" | "vector";
 
 export default function LinePlaneRelationAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallel");
@@ -128,11 +129,13 @@ export default function LinePlaneRelationAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="判定定理模式选择">
+          <LeftPanelSection title="空间位置关系模式选择">
             <TabSwitcher
               tabs={[
                 { key: "parallel", label: "线面平行" },
                 { key: "perpendicular", label: "线面垂直" },
+                { key: "surfaceParallel", label: "面面平行" },
+                { key: "surfacePerp", label: "面面垂直" },
                 { key: "vector", label: "向量与线面角" },
               ]}
               value={activeMode}
@@ -148,32 +151,35 @@ export default function LinePlaneRelationAnimation() {
           </LeftPanelSection>
 
           {activeMode === "perpendicular" && (
-            <LeftPanelSection title="平面内两线关系 (高考对比)">
+            <LeftPanelSection
+              title="面内两条直线关系"
+              subtitle="演示线面垂直判定前提：两条相交直线"
+            >
               <SelectGrid
                 items={[
                   {
                     key: "1",
-                    label: "两线相交 (a ∩ b = P)",
-                    description: "满足判定定理必要条件，锁定 l ⊥ α",
+                    label: "相交",
+                    description: "a ∩ b = P (成立)",
                   },
                   {
                     key: "0",
-                    label: "两线平行 (a ∥ b)",
-                    description: "高考易错反例：l 可左右倾斜斜交",
+                    label: "平行 (反例)",
+                    description: "a ∥ b (反例失效)",
                   },
                 ]}
                 value={String(intersectType)}
                 onChange={(val) =>
-                  setParams((p) => ({ ...p, intersectType: Number(val) }))
+                  setParams((prev) => ({ ...prev, intersectType: Number(val) }))
                 }
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           <LeftPanelSection
-            title="姿态与姿势参数"
-            subtitle="调节高度与空间角度"
+            title="直线几何参数"
+            subtitle="调节直线高度 h、线面角 θ 与方位角 φ"
           >
             <ParamControl
               params={paramConfigs}
@@ -201,34 +207,15 @@ export default function LinePlaneRelationAnimation() {
           cameraPosition={cameraPosition}
           legend={
             <Legend3D
-              title="3D 几何图例"
+              title="图例"
               items={[
+                { colorKey: "primary", swatch: "line", label: "空间直线 l" },
                 { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
-                { colorKey: "highlight", swatch: "line", label: "目标直线 l" },
                 {
-                  colorKey: "primary",
+                  colorKey: "paramTertiary",
                   swatch: "line",
-                  label:
-                    activeMode === "parallel" ? "面内平行线 m" : "面内线 a, b",
+                  label: "辅助平面/投影",
                 },
-                ...(activeMode === "parallel"
-                  ? [
-                      {
-                        colorKey: "paramTertiary" as const,
-                        swatch: "area" as const,
-                        label: "辅助面 β (过 l, m)",
-                      },
-                    ]
-                  : []),
-                ...(activeMode === "vector"
-                  ? [
-                      {
-                        colorKey: "paramPrimary" as const,
-                        swatch: "line" as const,
-                        label: "法向量 n",
-                      },
-                    ]
-                  : []),
               ]}
             />
           }
@@ -236,7 +223,7 @@ export default function LinePlaneRelationAnimation() {
           <CameraRig ref={controlsRef} />
           <Scene3DGrid size={5} />
 
-          {/* 1. 主基准平面 α */}
+          {/* 1. 基准平面 α (xy 平面, z=0) */}
           <Plane3D
             origin={{ x: 0, y: 0, z: 0 }}
             uAxis={{ x: 1, y: 0, z: 0 }}
@@ -246,10 +233,10 @@ export default function LinePlaneRelationAnimation() {
             colorKey="secondary"
             opacity={0.2}
           />
-          <FormulaLabel3D position={{ x: 2.7, y: 2.7, z: 0.1 }} tex="\alpha" />
+          <FormulaLabel3D position={{ x: 2.8, y: 2.8, z: 0.1 }} tex="\alpha" />
 
-          {/* 2. 目标直线 l */}
-          <Vector3DArrow from={startPoint} to={endPoint} colorKey="highlight" />
+          {/* 2. 空间直线 l */}
+          <Vector3DArrow from={startPoint} to={endPoint} colorKey="primary" />
           <FormulaLabel3D
             position={{
               x: endPoint.x + 0.2,
@@ -259,16 +246,17 @@ export default function LinePlaneRelationAnimation() {
             tex="l"
           />
 
-          {/* 3. 平行模式下的面内线 m 及辅助交面 β */}
+          {/* 3. 平行模式下的面内平行线 m 及辅助面 β */}
           {activeMode === "parallel" && (
             <>
+              {/* 面内平行线 m */}
               <Vector3DArrow
                 from={lineMStart}
                 to={lineMEnd}
                 colorKey="primary"
               />
               <FormulaLabel3D position={{ x: 2.6, y: 0.2, z: 0 }} tex="m" />
-              {/* 过 l 和 m 的辅助交面 β */}
+              {/* 辅助平面 β (过 l 和 m 的平面) */}
               <Plane3D
                 origin={{ x: 0, y: 0, z: zHeight / 2 }}
                 uAxis={{ x: 1, y: 0, z: 0 }}
@@ -281,6 +269,84 @@ export default function LinePlaneRelationAnimation() {
               <FormulaLabel3D
                 position={{ x: 2.5, y: 0.1, z: zHeight / 2 + 0.5 }}
                 tex="\beta"
+              />
+            </>
+          )}
+
+          {/* 3B. 面面平行模式 */}
+          {activeMode === "surfaceParallel" && (
+            <>
+              {/* 平面 β (平行于 α, z=2) */}
+              <Plane3D
+                origin={{ x: 0, y: 0, z: 2 }}
+                uAxis={{ x: 1, y: 0, z: 0 }}
+                vAxis={{ x: 0, y: 1, z: 0 }}
+                width={6}
+                height={6}
+                colorKey="paramTertiary"
+                opacity={0.25}
+              />
+              <FormulaLabel3D
+                position={{ x: 2.8, y: 2.8, z: 2.1 }}
+                tex="\beta"
+              />
+              {/* α 与 β 的法向量 */}
+              <Vector3DArrow
+                from={{ x: -1, y: -1, z: 0 }}
+                to={{ x: -1, y: -1, z: 1.5 }}
+                colorKey="primary"
+              />
+              <FormulaLabel3D
+                position={{ x: -0.8, y: -1, z: 1.6 }}
+                tex="\vec{n_1}"
+              />
+              <Vector3DArrow
+                from={{ x: 1, y: 1, z: 2 }}
+                to={{ x: 1, y: 1, z: 3.5 }}
+                colorKey="secondary"
+              />
+              <FormulaLabel3D
+                position={{ x: 1.2, y: 1, z: 3.6 }}
+                tex="\vec{n_2}"
+              />
+            </>
+          )}
+
+          {/* 3C. 面面垂直模式 */}
+          {activeMode === "surfacePerp" && (
+            <>
+              {/* 平面 β (垂直于 α, x=0 即 yz 面) */}
+              <Plane3D
+                origin={{ x: 0, y: 0, z: 0 }}
+                uAxis={{ x: 0, y: 1, z: 0 }}
+                vAxis={{ x: 0, y: 0, z: 1 }}
+                width={6}
+                height={4}
+                colorKey="paramTertiary"
+                opacity={0.25}
+              />
+              <FormulaLabel3D
+                position={{ x: 0.1, y: 2.8, z: 3.2 }}
+                tex="\beta"
+              />
+              {/* α 法向量 (0,0,1) 与 β 法向量 (1,0,0) */}
+              <Vector3DArrow
+                from={{ x: 0, y: -1, z: 0 }}
+                to={{ x: 0, y: -1, z: 1.8 }}
+                colorKey="primary"
+              />
+              <FormulaLabel3D
+                position={{ x: 0.2, y: -1, z: 1.9 }}
+                tex="\vec{n_1}"
+              />
+              <Vector3DArrow
+                from={{ x: 0, y: 1, z: 1 }}
+                to={{ x: 1.8, y: 1, z: 1 }}
+                colorKey="secondary"
+              />
+              <FormulaLabel3D
+                position={{ x: 1.9, y: 1, z: 1.1 }}
+                tex="\vec{n_2}"
               />
             </>
           )}
@@ -355,7 +421,7 @@ export default function LinePlaneRelationAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
-          title="空间线面位置关系看板"
+          title="空间位置关系判定看板"
         />
       }
     />

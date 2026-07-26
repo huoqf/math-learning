@@ -33,32 +33,7 @@ export function buildSpatialAnglePanel(
   const c = params.c ?? 2;
   const ex = params.ex ?? 1.2;
 
-  const quantities: MathQuantity[] = [
-    {
-      label: "长方体长 a",
-      symbol: "a",
-      value: a,
-      color: MATH_COLORS.paramPrimary,
-    },
-    {
-      label: "长方体宽 b",
-      symbol: "b",
-      value: b,
-      color: MATH_COLORS.paramSecondary,
-    },
-    {
-      label: "长方体高 c",
-      symbol: "c",
-      value: c,
-      color: MATH_COLORS.paramTertiary,
-    },
-    {
-      label: "动点 E 高度",
-      symbol: "z_E",
-      value: ex,
-      color: MATH_COLORS.highlight,
-    },
-  ];
+  const quantities: MathQuantity[] = [];
 
   const theorems: Theorem[] = [];
   const gaokaoPoints: GaokaoPoint[] = [];
@@ -204,6 +179,70 @@ export function buildSpatialAnglePanel(
         level: "warning",
       });
     }
+  } else if (mode === "distance") {
+    // distance: 点 A(0,0,0) 到截面 BDE 的垂直距离
+    const n2X = b * ex;
+    const n2Y = a * ex;
+    const n2Z = a * b;
+    const lenN2 = Math.sqrt(n2X * n2X + n2Y * n2Y + n2Z * n2Z);
+    // vector AB = (a, 0, 0), dot(AB, n2) = a * b * ex
+    const dist = (a * b * ex) / lenN2;
+
+    // 棱锥 E-ABD 体积 V = 1/6 * a * b * ex
+    const vol = (1 / 6) * a * b * ex;
+
+    quantities.push(
+      {
+        label: "截面法向量 n",
+        symbol: "\\vec{n}",
+        value: `(${n2X.toFixed(1)}, ${n2Y.toFixed(1)}, ${(a * b).toFixed(1)})`,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "点 A 坐标",
+        symbol: "A",
+        value: "(0, 0, 0)",
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "点到平面距离 d",
+        symbol: "d_{A-\\text{面}}",
+        value: Number(dist.toFixed(4)),
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "三棱锥 E-ABD 体积",
+        symbol: "V_{E-ABD}",
+        value: Number(vol.toFixed(4)),
+        color: MATH_COLORS.accent,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "向量法求点到平面的距离公式",
+        latex: `d = \\frac{|\\vec{AP} \\cdot \\vec{n}|}{|\\vec{n}|}`,
+        level: "core",
+        note: "P 为平面内任意一点，A 为平面外一点，n 为平面的法向量",
+      },
+      {
+        name: "体积与距离等积法关系",
+        latex: `V_{E-ABD} = \\frac{1}{3} S_{\\Delta BDE} \\cdot d`,
+        level: "important",
+      },
+    );
+
+    gaokaoPoints.push({
+      text: "高考压轴问法必杀技：求点到平面的距离优先建系取法向量代用公式 d = |AP · n| / |n|。也可通过等体积法 V = 1/3 S d 避开法向量求解。",
+      importance: "gaokao",
+    });
+
+    if (ex < 0.2) {
+      warnings.push({
+        text: "动点 E 高度过低 (z_E → 0)，三棱锥趋于扁平退化，点 A 到截面的距离 d 趋近于 0！",
+        level: "warning",
+      });
+    }
   } else {
     // dihedral: 二面角 (底面 ABCD 与 截面 BDE)
     // n1 = (0,0,1), n2 = (b*ex, a*ex, a*b)
@@ -273,7 +312,7 @@ export function buildSpatialAnglePanel(
   return { quantities, theorems, gaokaoPoints, warnings };
 }
 
-// ── know-solid-position: 线面位置关系 ──
+// ── know-solid-position: 线面与面面位置关系 ──
 
 export function buildLinePlaneRelationPanel(
   params: Record<string, number>,
@@ -284,6 +323,72 @@ export function buildLinePlaneRelationPanel(
   const thetaDeg = params.thetaDeg ?? 0;
   const phiDeg = params.phiDeg ?? 30;
   const intersectType = params.intersectType ?? 1;
+
+  if (mode === "surfaceParallel" || mode === "surfacePerp") {
+    const isParallelMode = mode === "surfaceParallel";
+    const quantities: MathQuantity[] = [
+      {
+        label: "平面 α 法向量 n₁",
+        symbol: "\\vec{n_1}",
+        value: "(0, 0, 1)",
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "平面 β 法向量 n₂",
+        symbol: "\\vec{n_2}",
+        value: isParallelMode ? "(0, 0, 1)" : "(1, 0, 0)",
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "两平面位置关系",
+        value: isParallelMode ? "面面平行 (α ∥ β)" : "面面垂直 (α ⊥ β)",
+        color: MATH_COLORS.highlight,
+      },
+    ];
+
+    const theorems: Theorem[] = isParallelMode
+      ? [
+          {
+            name: "面面平行判定定理 (几何法)",
+            latex: `\\begin{cases} a \\subset \\alpha, \\; b \\subset \\alpha \\\\ a \\cap b = P \\\\ a \\parallel \\beta, \\; b \\parallel \\beta \\end{cases} \\;\\Rightarrow\\; \\alpha \\parallel \\beta`,
+            level: "core",
+            condition: "一个平面内有两条相交直线分别平行于另一个平面",
+          },
+          {
+            name: "面面平行向量法判定",
+            latex: `\\vec{n_1} \\parallel \\vec{n_2} \\;\\Rightarrow\\; \\alpha \\parallel \\beta`,
+            level: "core",
+            condition: "两平面的法向量平行 (成比例)",
+          },
+        ]
+      : [
+          {
+            name: "面面垂直判定定理 (几何法)",
+            latex: `l \\perp \\alpha, \\; l \\subset \\beta \\;\\Rightarrow\\; \\alpha \\perp \\beta`,
+            level: "core",
+            condition: "一个平面经过另一个平面的一条垂线",
+          },
+          {
+            name: "面面垂直向量法判定",
+            latex: `\\vec{n_1} \\cdot \\vec{n_2} = 0 \\;\\Rightarrow\\; \\alpha \\perp \\beta`,
+            level: "core",
+            condition: "两平面的法向量数量积为 0 (相互垂直)",
+          },
+        ];
+
+    const gaokaoPoints: GaokaoPoint[] = [
+      {
+        text: isParallelMode
+          ? "高考证明面面平行常用“线面平行→面面平行”：找到平面α内的两条相交直线分别平行于β。"
+          : "高考证明面面垂直黄金法则：先在平面β内找到一条直线l，证明l垂直于平面α（线面垂直→面面垂直）。",
+        importance: "gaokao",
+      },
+    ];
+
+    const warnings: WarningItem[] = [];
+
+    return { quantities, theorems, gaokaoPoints, warnings };
+  }
 
   const plane: Plane = {
     point: { x: 0, y: 0, z: 0 },
@@ -305,18 +410,6 @@ export function buildLinePlaneRelationPanel(
           : "线面相交 (l ∩ α = P)";
 
   const quantities: MathQuantity[] = [
-    {
-      label: "直线高度 h",
-      symbol: "h",
-      value: Number(zHeight.toFixed(2)),
-      color: MATH_COLORS.paramPrimary,
-    },
-    {
-      label: "线面倾角 θ",
-      symbol: "\\theta",
-      value: `${thetaDeg.toFixed(1)}°`,
-      color: MATH_COLORS.paramSecondary,
-    },
     {
       label: "线面角正弦 sinθ",
       symbol: "\\sin\\theta",
@@ -380,6 +473,70 @@ export function buildLinePlaneRelationPanel(
   return { quantities, theorems, gaokaoPoints, warnings };
 }
 
+// ── know-solid-section: 多面体截面 ──
+
+export function buildSectionPanel(
+  params: Record<string, number>,
+  config?: Record<string, any>,
+): MathPanelData {
+  const cutHeight = params.cutHeight ?? 2;
+  const tiltDeg = params.tiltDeg ?? 0;
+  const vertexCount = config?.vertexCount ?? (tiltDeg === 0 ? 4 : 5);
+
+  let shapeName = "四边形截面";
+  if (vertexCount === 3) shapeName = "三角形截面";
+  else if (vertexCount === 4) shapeName = "四边形 (矩形/梯形)";
+  else if (vertexCount === 5) shapeName = "五边形截面";
+  else if (vertexCount === 6) shapeName = "正/斜六边形截面";
+
+  const quantities: MathQuantity[] = [
+    {
+      label: "截面多边形顶点数",
+      symbol: "N",
+      value: vertexCount,
+      color: MATH_COLORS.highlight,
+    },
+    {
+      label: "截面形状",
+      value: shapeName,
+      color: MATH_COLORS.primary,
+    },
+  ];
+
+  const theorems: Theorem[] = [
+    {
+      name: "截面作图交线法法则",
+      latex: `\\begin{cases} \\alpha \\cap \\text{面}_1 = l_1 \\\\ \\alpha \\cap \\text{面}_2 = l_2 \\end{cases} \\;\\Rightarrow\\; \\text{截面为各交线围成的封闭多边形}`,
+      level: "core",
+      note: "平面截 N 面体所得多边形边数不超过几何体面数 (长方体截面边数为 3 ~ 6)",
+    },
+    {
+      name: "面面平行截面性质定理",
+      latex: `\\alpha \\parallel \\beta, \\; \\gamma \\cap \\alpha = a, \\; \\gamma \\cap \\beta = b \\;\\Rightarrow\\; a \\parallel b`,
+      level: "important",
+      note: "截面与长方体相对的两个平行平面相交时，两条交线必然平行",
+    },
+  ];
+
+  const gaokaoPoints: GaokaoPoint[] = [
+    {
+      text: "高考选填题热点：长方体截面多边形形状可能为三角形、四边形、五边形、六边形，绝不可能为七边形及以上！两平行面交线必平行。",
+      importance: "gaokao",
+    },
+  ];
+
+  const warnings: WarningItem[] = [];
+
+  if (cutHeight <= 0 || cutHeight >= 4) {
+    warnings.push({
+      text: "切割平面已到达长方体顶底边界，截面退化为正方形底面或单个棱/顶点！",
+      level: "warning",
+    });
+  }
+
+  return { quantities, theorems, gaokaoPoints, warnings };
+}
+
 // ── know-solid-ball: 外接球与内切球 ──
 
 export function buildCircumSpherePanel(
@@ -408,24 +565,6 @@ export function buildCircumSpherePanel(
     if (shape === "cuboid") {
       radius = cuboidCircumRadius(a, b, c);
       quantities.push(
-        {
-          label: "长 a",
-          symbol: "a",
-          value: a,
-          color: MATH_COLORS.paramPrimary,
-        },
-        {
-          label: "宽 b",
-          symbol: "b",
-          value: b,
-          color: MATH_COLORS.paramSecondary,
-        },
-        {
-          label: "高 c",
-          symbol: "c",
-          value: c,
-          color: MATH_COLORS.paramTertiary,
-        },
         {
           label: "体对角线长 d",
           symbol: "d",
@@ -462,12 +601,6 @@ export function buildCircumSpherePanel(
       const rBase = a / Math.sqrt(2);
       radius = regularPyramidCircumRadius(rBase, c);
       quantities.push(
-        {
-          label: "底面边长 a",
-          symbol: "a",
-          value: a,
-          color: MATH_COLORS.paramPrimary,
-        },
         {
           label: "底面外接圆半径 r",
           symbol: "r_{底}",

@@ -28,26 +28,11 @@ export const LinePlaneAngle3D = ({
   return (
     <group>
       {/* 1. 斜线段 */}
-      <Vector3DArrow
-        from={lineStart}
-        to={lineEnd}
-        colorKey="primary"
-        radius={0.05}
-      />
+      <Vector3DArrow from={lineStart} to={lineEnd} colorKey="primary" />
 
       {/* 2. 垂线段与投影线段 */}
-      <Vector3DArrow
-        from={lineEnd}
-        to={footPoint}
-        colorKey="tertiary"
-        radius={0.03}
-      />
-      <Vector3DArrow
-        from={lineStart}
-        to={footPoint}
-        colorKey="secondary"
-        radius={0.04}
-      />
+      <Vector3DArrow from={lineEnd} to={footPoint} colorKey="paramTertiary" />
+      <Vector3DArrow from={lineStart} to={footPoint} colorKey="secondary" />
 
       {/* 3. 垂足标签 (可关闭，防止与原点 O(0,0,0) 重叠) */}
       {showFootLabel && (
@@ -65,7 +50,6 @@ export const LinePlaneAngle3D = ({
               z: footPoint.z + planeNormal.z,
             }}
             colorKey="secondary"
-            radius={0.04}
           />
           <FormulaLabel3D
             position={{
