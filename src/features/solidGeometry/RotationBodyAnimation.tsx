@@ -7,6 +7,8 @@ import {
   ParamControl,
   MathPanel,
   SelectGrid,
+  TabSwitcher,
+  Button,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -41,7 +43,7 @@ export default function RotationBodyAnimation() {
   });
   const [autoPlay, setAutoPlay] = useState(false);
   const [displayMode, setDisplayMode] = useState<"3d" | "orthographic">("3d");
-  const { cameraPosition, setCameraPreset, controlsRef } = use3DViewport("iso");
+  const { cameraPosition, controlsRef } = use3DViewport("iso");
   const timerRef = useRef<number | null>(null);
 
   // 自动播放：定时递增扫描角度，模拟"旋转生成"动画
@@ -125,11 +127,15 @@ export default function RotationBodyAnimation() {
         .map((meta) => ({
           key: meta.key,
           label: meta.label,
+          labelFormula: meta.labelFormula,
           value: params[meta.key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
           description: meta.description,
+          descriptionFormula: meta.descriptionFormula,
+          importance: meta.importance as any,
+          marks: meta.marks,
         })),
     [params, shape],
   );
@@ -175,60 +181,26 @@ export default function RotationBodyAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={() => setAutoPlay((v) => !v)}
-                className={[
-                  "w-full py-2 text-xs font-semibold rounded-lg border-2 transition-all",
-                  autoPlay
-                    ? "bg-primary-500 text-white border-primary-500"
-                    : "bg-white text-primary-600 border-primary-300 hover:bg-primary-50",
-                ].join(" ")}
-              >
-                {autoPlay ? "停止自动演示" : "自动演示旋转生成"}
-              </button>
-            </div>
+            <Button
+              variant={autoPlay ? "primary" : "secondary"}
+              size="sm"
+              className="w-full mt-3"
+              onClick={() => setAutoPlay((v) => !v)}
+            >
+              {autoPlay ? "停止自动演示" : "自动演示旋转生成"}
+            </Button>
           </LeftPanelSection>
 
           <LeftPanelSection title="显示模式">
-            <div className="flex gap-1 rounded-lg bg-slate-100 p-0.5">
-              {[
-                { key: "3d" as const, label: "3D 直观图" },
-                { key: "orthographic" as const, label: "三视图" },
-              ].map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setDisplayMode(key)}
-                  className={[
-                    "flex-1 py-1.5 text-xs font-semibold rounded-md transition-all",
-                    displayMode === key
-                      ? "bg-white text-primary-600 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700",
-                  ].join(" ")}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <TabSwitcher
+              tabs={[
+                { key: "3d", label: "3D 直观图" },
+                { key: "orthographic", label: "三视图" },
+              ]}
+              value={displayMode}
+              onChange={(k) => setDisplayMode(k as "3d" | "orthographic")}
+            />
           </LeftPanelSection>
-
-          {displayMode === "3d" && (
-            <LeftPanelSection title="视角切换">
-              <div className="flex gap-2">
-                {(["iso", "front", "top", "side"] as const).map((p) => (
-                  <button
-                    key={p}
-                    className="px-2 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 font-medium"
-                    onClick={() => setCameraPreset(p)}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </LeftPanelSection>
-          )}
         </LeftPanel>
       }
       center={

@@ -18,8 +18,6 @@ description: >
 2. Read `src/features/solidGeometry/SpatialAngleAnimation.tsx` — 空间角/点线面 3D 动画编排参考
 3. Read `src/features/solidGeometry/CircumInSphereAnimation.tsx` — 3D 实体与外接球/多模式切换参考
 
-未完成以上读取，禁止开始编码。
-
 ---
 
 ## 职责边界
@@ -31,6 +29,25 @@ description: >
 | `math3d/<topic>.ts` | 纯数学 3D 向量/线/面/几何体计算函数、带 JSDoc 单元测试 | React、DOM、Three.js 对象、Store |
 | `threeViews/buildSolidViews.ts` | 按 SolidKind 分发到 `projectPolyhedron` 或解析视图函数 | React、DOM、Three.js |
 | `registries/<topic>.ts` | `paramMeta`、`defaultParams` | 副作用、动态视图绑定 |
+
+---
+
+## 🎨 3D 空间颜色与材质规范 (`SPACE_3D_COLORS` & `colorKey`)
+
+在 3D 场景中，严禁在 Mesh 或 3D 组件中硬编码 Hex 颜色字符串。必须遵循规范：
+
+1. **3D 基础坐标与平面色 (`SPACE_3D_COLORS`)**：
+   - 空间 X 轴：`SPACE_3D_COLORS.axis3D_X` (`#EF4444` - 红)
+   - 空间 Y 轴：`SPACE_3D_COLORS.axis3D_Y` (`#10B981` - 绿)
+   - 空间 Z 轴：`SPACE_3D_COLORS.axis3D_Z` (`#3B82F6` - 蓝)
+   - 空间平面填充：`SPACE_3D_COLORS.planeFill` (`rgba(148, 163, 184, 0.15)`)
+2. **3D 组件 `colorKey` 语义映射**：
+   - 几何主体/面内直线：`colorKey="primary"` (`#2563EB`)
+   - 基准平面/参考几何：`colorKey="secondary"` (`#059669`)
+   - 辅助平面/交面：`colorKey="tertiary"` (`#8B5CF6`)
+   - 重点观察线/动点：`colorKey="highlight"` (`#EF4444`)
+3. **“公式-图形-滑块”三位一体绑定**：
+   - 主控参数由 `colorKey="paramPrimary"` / `"paramSecondary"` / `"paramTertiary"` 控制，在 3D 几何图形、左屏 `ParamControl` 和右屏 `MathPanel` KaTeX 公式（`\color{#EF4444}{a}`）中保持统一色彩。
 
 ---
 
@@ -59,10 +76,10 @@ description: >
 ## Step 0：3D 设计决策与坐标约定
 
 1. **三屏布局**：
-   - **左屏** (`LeftPanel`)：模式/几何体选择（`SelectGrid`）、`ParamControl` 参数滑块、视角切换按钮 (`iso`, `front`, `top`, `side`)。
+   - **左屏** (`LeftPanel`)：模式选择（`TabSwitcher` / `SelectGrid`）、`ParamControl` 参数滑块、视角切换按钮 (`TabSwitcher`)。
    - **中屏** (`ThreeDCanvas`)：R3F 3D 场景主体 + `Legend3D` 图例，禁止放长段教学文字。
-   - **右屏** (`MathPanel`)：`buildMathQuantities('anim-solid-xxx', params)` 组装的空间指标、判定定理、高考考点。
-2. **显示模式切换**：3D 页面可提供"3D 直观图 / 三视图"切换。三视图模式下中屏使用 `ThreeViewsPanel` 替代 `ThreeDCanvas`，左屏提供切换按钮。数学层对应 `orthographicProjection.ts`（凸多面体消隐投影）和 `curvedSolidViews.ts`（旋转体解析视图），统一出口为 `buildSolidViews(kind, params)`。
+   - **右屏** (`MathPanel`)：`buildMathQuantities('anim-solid-xxx', params, config)` 组装的空间指标、判定定理、高考考点。
+2. **显示模式切换**：3D 页面可提供 "3D 直观图 / 三视图" 切换。三视图模式下中屏使用 `ThreeViewsPanel` 替代 `ThreeDCanvas`，左屏提供切换按钮。数学层对应 `orthographicProjection.ts`（凸多面体消隐投影）和 `curvedSolidViews.ts`（旋转体解析视图），统一出口为 `buildSolidViews(kind, params)`。
 3. **3D 坐标系约定** (`src/math3d/coordinateConvention.ts`)：
    - 使用右上手坐标系，X 为横向、Y 为纵深、Z 为垂直向上。
    - 点与向量表示为 `{ x: number, y: number, z: number }` (`Vec3` 类型)。
@@ -71,9 +88,7 @@ description: >
 
 ## Step 1：3D 页面代码骨架
 
-### 编排层 (`XxxAnimation.tsx`)
-
-参考：`src/features/solidGeometry/SpatialAngleAnimation.tsx`
+参考：`src/features/solidGeometry/SpatialAngleAnimation.tsx` 与 `LinePlaneRelationAnimation.tsx`
 
 ```tsx
 import { useState, useMemo } from 'react'
@@ -84,13 +99,14 @@ import {
   LeftPanelSection,
   ParamControl,
   MathPanel,
+  TabSwitcher,
   SelectGrid,
 } from '@/components/UI'
 import type { ParamConfig } from '@/components/UI'
 import { Scene3DGrid } from '@/components/Math3D/Scene3DGrid'
 import { Point3D } from '@/components/Math3D/Point3D'
 import { Plane3D } from '@/components/Math3D/Plane3D'
-import { AngleArc3D } from '@/components/Math3D/AngleArc3D'
+import { Vector3DArrow } from '@/components/Math3D/Vector3DArrow'
 import { PointLabel3D, FormulaLabel3D } from '@/components/Math3D'
 import { Legend3D } from '@/components/Math3D/Legend3D'
 import { CameraRig } from '@/components/Math3D/CameraRig'
@@ -98,7 +114,6 @@ import { Cuboid } from '@/components/Math3D/solids/Cuboid'
 import { use3DViewport } from '@/hooks/use3DViewport'
 import { buildMathQuantities } from '@/data/mathQuantities'
 import { spatialAngleMeta } from '@/data/registries/solidGeometry'
-import type { Vec3 } from '@/math3d/vector3'
 
 export default function Xxx3DAnimation() {
   const [params, setParams] = useState<Record<string, number>>({
@@ -108,7 +123,7 @@ export default function Xxx3DAnimation() {
   })
 
   // 1. 初始化 3D 相机与视角 Preset
-  const { cameraPosition, setCameraPreset, controlsRef } = use3DViewport('iso')
+  const { preset, cameraPosition, setCameraPreset, controlsRef } = use3DViewport('iso')
 
   // 2. 组装右屏看板数据
   const mathData = useMemo(
@@ -151,18 +166,17 @@ export default function Xxx3DAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="视角切换">
-            <div className="flex gap-2">
-              {(['iso', 'front', 'top', 'side'] as const).map((p) => (
-                <button
-                  key={p}
-                  className="px-2 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 font-medium"
-                  onClick={() => setCameraPreset(p)}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+          <LeftPanelSection title="3D 视角切换">
+            <TabSwitcher
+              tabs={[
+                { key: 'iso', label: '轴测' },
+                { key: 'front', label: '主视' },
+                { key: 'top', label: '俯视' },
+                { key: 'side', label: '左视' },
+              ]}
+              value={preset}
+              onChange={(p) => setCameraPreset(p as any)}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }
@@ -220,44 +234,44 @@ export default function Xxx3DAnimation() {
 
 ## Step 2：注册步骤（新建 3D 页面必做）
 
-1. **创建 meta.ts**：在 `src/features/<topic>/meta.ts` 中导出 `node`（KnowledgeNode，含 `route`）和 `loader`（`() => import(...)`）。参考 `src/features/set/meta.ts`
-2. **注册路由** (`src/data/routeEntries.ts`)：
+> **推荐快捷脚手架**：运行 `node scripts/gen-node.mjs` 自动生成 `meta.ts` + `Animation.tsx` + `index.ts` 骨架并插桩路由。
+
+若手动注册，需完成以下链路：
+1. **创建 meta.ts**：在 `src/features/<topic>/meta.ts` 中导出 `node`（`KnowledgeNode`，包含 `route`）和 `loader`（`() => import(...)`）。
+2. **注册路由与 3D Guard** (`src/data/routeEntries.ts`)：
    - 在 `legacyEntries` 中添加 `{ node, loader, guarded3D: true }` 条目。
-   - App.tsx 从 routeEntries 自动生成路由，无需手动编辑 App.tsx。
-3. **注册知识树**：在 `src/data/knowledgeTree.ts` 中添加节点（id/title/chapter/module/importance/animationIds/prerequisites）
+   - **注意**：3D 页面必须设置 `guarded3D: true` 属性！
+3. **注册知识树**：在 `src/data/knowledgeTree.ts` 中添加节点（id/title/chapter/module/importance/animationIds/prerequisites）。
 4. **3D 数学算法** (`src/math3d/<topic>.ts`)：
-   - 将 3D 向量积、点到面距离、线面角、二面角、球心求解等纯函数写入 `src/math3d/`。
-   - 编写配套的 `__tests__` 单元测试，确保无副作用。
+   - 将 3D 向量、线面角、二面角、截面推导等纯函数写入 `src/math3d/`，并编写配套单测 `src/math3d/__tests__/`。
 5. **右屏看板分支** (`src/data/mathQuantities.ts` / `src/data/builders/solidGeometry.ts`)：
    - 在 `buildMathQuantities` 中添加 `'anim-solid-xxx'` 分支，组装 `MathPanelData`。
 6. **参数 Registry** (`src/data/registries/solidGeometry.ts`)：
    - 定义该 3D 场景的 `defaultParams` 和 `paramMeta`。
 
-> **快捷方式**：`node scripts/gen-node.mjs` 可自动生成 meta.ts + Animation.tsx + index.ts 骨架并插入 knowledgeTree/routeEntries。
-
 ---
 
 ## 常见陷阱与 3D 禁令
 
+- ❌ **左屏按钮违规**：左屏选择控件与视角切换必须统一使用 `<TabSwitcher>` 或 `<SelectGrid>`，**严禁手写 `<button>` 按钮组**。
 - ❌ **禁止在 3D 画布中使用 2D SVG 组件**：禁止混用 `AnimationSvgCanvas`、`FunctionGraph` 或 `mathToDesign`。
 - ❌ **禁止手写 Canvas / Raw Three.js 代码**：必须使用 `ThreeDCanvas` 和 `@/components/Math3D/` 封装好的组件。
 - ❌ **禁止使用 `<foreignObject>`**：3D 空间标注统一使用 `PointLabel3D` / `FormulaLabel3D` / `CompoundLabel3D`。
-- ❌ **拖拽坐标未加限制**：拖动 `Point3D` 时，必须提供 `constrain` 回调防止点越界或解算非法参数。
-- ⚠️ **三视图模式是 SVG，不是 2D 动画**：`ThreeViewsPanel` 虽然是 SVG 渲染，但它是 3D 立体的正投影输出，不属于 2D SVG 动画管线（`AnimationSvgCanvas`）。三视图模式下不要引入 `mathToDesign`、`useAnimationViewport` 等 2D 基础设施。
+- ❌ **拖拽坐标未加限制**：拖动 `Point3D` 时，必须提供 `constrain` 回调防止点越界。
+- ⚠️ **三视图模式是 SVG 投影，非 2D 动画**：`ThreeViewsPanel` 属于 3D 正投影输出，不要引入 2D `AnimationSvgCanvas` 管线。
 
 ---
 
 ## 交付前自检
 
 - [ ] 中屏是否使用了 `ThreeDCanvas` + `CameraRig` + `Scene3DGrid`
-- [ ] 左屏是否提供了视角切换按钮 (`iso`, `front`, `top`, `side`)
-- [ ] 3D 元素与几何体是否统一使用 `MATH_COLORS`（通过 `colorKey` prop 关联）
-- [ ] 右屏 `MathPanel` 数据是否通过 `buildMathQuantities('anim-solid-xxx', params)` 组装
+- [ ] 左屏是否使用 `<TabSwitcher>` 提供了视角切换 (`iso`, `front`, `top`, `side`)
+- [ ] 3D 颜色是否符合 `SPACE_3D_COLORS` 与 `colorKey` 语义映射
+- [ ] 右屏 `MathPanel` 数据是否通过 `buildMathQuantities('anim-solid-xxx', params, config)` 组装
+- [ ] `routeEntries.ts` 中注册 3D 路由时是否设置了 `guarded3D: true`
 - [ ] `src/math3d/` 中的纯数学运算函数是否有单元测试且通过 `npx vitest run src/math3d/`
-- [ ] `App.tsx` 路由已注册并可通过 Hash 路径直接访问
-- [ ] 若页面支持三视图模式，左屏是否提供了"3D 直观图 / 三视图"切换按钮，且三视图模式下中屏正确渲染 `ThreeViewsPanel`
 
 ---
 
-*参考范例：`src/features/solidGeometry/SpatialAngleAnimation.tsx` + `CircumInSphereAnimation.tsx`*
+*参考范例：`src/features/solidGeometry/SpatialAngleAnimation.tsx` + `LinePlaneRelationAnimation.tsx`*
 *规则权威源：`AGENTS.md`*

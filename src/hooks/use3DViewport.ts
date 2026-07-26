@@ -4,12 +4,15 @@ export type CameraPreset = "iso" | "front" | "top" | "side";
 
 const PRESET_POSITIONS: Record<CameraPreset, [number, number, number]> = {
   iso: [6, 5, 8],
-  front: [0, 0, 10],
-  top: [0, 10, 0.01],
-  side: [10, 0, 0],
+  front: [0, 1.5, 10],
+  top: [0, 10, 0.001],
+  side: [10, 1.5, 0],
 };
 
-export function use3DViewport(initial: CameraPreset = "iso") {
+export function use3DViewport(
+  initial: CameraPreset = "iso",
+  defaultTarget: [number, number, number] = [0, 1.5, 0],
+) {
   const [preset, setPreset] = useState<CameraPreset>(initial);
   const controlsRef = useRef<{
     object: { position: { set: (x: number, y: number, z: number) => void } };
@@ -17,15 +20,18 @@ export function use3DViewport(initial: CameraPreset = "iso") {
     update: () => void;
   } | null>(null);
 
-  const setCameraPreset = useCallback((p: CameraPreset) => {
-    setPreset(p);
-    const controls = controlsRef.current;
-    if (controls) {
-      controls.object.position.set(...PRESET_POSITIONS[p]);
-      controls.target.set(0, 0, 0);
-      controls.update();
-    }
-  }, []);
+  const setCameraPreset = useCallback(
+    (p: CameraPreset, target = defaultTarget) => {
+      setPreset(p);
+      const controls = controlsRef.current;
+      if (controls) {
+        controls.object.position.set(...PRESET_POSITIONS[p]);
+        controls.target.set(...target);
+        controls.update();
+      }
+    },
+    [defaultTarget],
+  );
 
   return {
     preset,

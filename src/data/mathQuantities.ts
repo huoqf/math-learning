@@ -81,7 +81,7 @@ export function buildMathQuantities(
     case "anim-solid-angle":
       return buildSpatialAnglePanel(params);
     case "anim-solid-position":
-      return buildLinePlaneRelationPanel(params);
+      return buildLinePlaneRelationPanel(params, config);
     case "anim-solid-ball":
       return buildCircumSpherePanel(params);
     case "anim-solid-rotation-body":

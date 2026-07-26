@@ -7,6 +7,7 @@ import {
   ParamControl,
   MathPanel,
   SelectGrid,
+  TabSwitcher,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -43,7 +44,8 @@ export default function CircumInSphereAnimation() {
     c: 2,
   });
 
-  const { cameraPosition, setCameraPreset, controlsRef } = use3DViewport("iso");
+  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+    use3DViewport("iso");
 
   const { a, b, c } = params;
 
@@ -122,17 +124,16 @@ export default function CircumInSphereAnimation() {
           </LeftPanelSection>
 
           <LeftPanelSection title="视角切换">
-            <div className="flex gap-2">
-              {(["iso", "front", "top", "side"] as const).map((p) => (
-                <button
-                  key={p}
-                  className="px-2 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 font-medium"
-                  onClick={() => setCameraPreset(p)}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+            <TabSwitcher
+              tabs={[
+                { key: "iso", label: "轴测" },
+                { key: "front", label: "主视" },
+                { key: "top", label: "俯视" },
+                { key: "side", label: "左视" },
+              ]}
+              value={preset}
+              onChange={(p) => setCameraPreset(p as any)}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }
