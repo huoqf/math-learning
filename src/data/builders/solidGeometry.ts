@@ -49,19 +49,17 @@ export function buildSpatialAnglePanel(
     const angleRad = Math.acos(cosVal);
     const angleDeg = (angleRad * 180) / Math.PI;
 
+    // 公垂线向量 n_公 = u × v = (-b*c, a*ex, a*b)
+    const nSkewX = -b * c;
+    const nSkewY = a * ex;
+    const nSkewZ = a * b;
+    const lenNSkew = Math.sqrt(
+      nSkewX * nSkewX + nSkewY * nSkewY + nSkewZ * nSkewZ,
+    );
+    // 异面直线距离 d_公 = |DA · n_公| / |n_公| = (a * b * ex) / lenNSkew
+    const distSkew = (a * b * ex) / lenNSkew;
+
     quantities.push(
-      {
-        label: "起点坐标 D",
-        symbol: "D",
-        value: `(0, ${b}, 0)`,
-        color: MATH_COLORS.primary,
-      },
-      {
-        label: "动点坐标 E",
-        symbol: "E",
-        value: `(0, 0, ${ex})`,
-        color: MATH_COLORS.highlight,
-      },
       {
         label: "方向向量 u (DE)",
         symbol: "\\vec{u}",
@@ -73,6 +71,18 @@ export function buildSpatialAnglePanel(
         symbol: "\\vec{v}",
         value: `(${a}, 0, ${c})`,
         color: MATH_COLORS.accent,
+      },
+      {
+        label: "公垂线向量 n_公",
+        symbol: "\\vec{n}_{\\text{公}}",
+        value: `(${nSkewX.toFixed(1)}, ${nSkewY.toFixed(1)}, ${nSkewZ.toFixed(1)})`,
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "异面直线间距离",
+        symbol: "d_{\\text{异面}}",
+        value: Number(distSkew.toFixed(4)),
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "向量夹角余弦 cosθ",
@@ -96,16 +106,28 @@ export function buildSpatialAnglePanel(
         condition: "θ ∈ (0°, 90°]，异面直线角不能为钝角",
       },
       {
+        name: "异面直线间的距离（公垂线法）",
+        latex: `d_{\\text{异面}} = \\frac{|\\vec{P_1 P_2} \\cdot \\vec{n}_{\\text{公}}|}{|\\vec{n}_{\\text{公}}|}`,
+        level: "important",
+        note: "n_公 = u × v 为两条异面直线的公垂线方向向量，P1, P2 分别为两直线上任意一点",
+      },
+      {
         name: "长方体建系顶点坐标",
         latex: `A(0,0,0),\\; B_1(a,0,c),\\; D(0,b,0),\\; E(0,0,z_E)`,
         level: "important",
       },
     );
 
-    gaokaoPoints.push({
-      text: "求异面直线所成角高考三步法：① 建立空间直角坐标系；② 确定两条直线的方向向量 u, v 的坐标；③ 代入余弦绝对值公式计算，范围必在 (0°, 90°] 内。",
-      importance: "gaokao",
-    });
+    gaokaoPoints.push(
+      {
+        text: "求异面直线所成角高考三步法：① 建立空间直角坐标系；② 确定两条直线的方向向量 u, v 的坐标；③ 代入余弦绝对值公式计算，范围必在 (0°, 90°] 内。",
+        importance: "gaokao",
+      },
+      {
+        text: "异面直线间距离（公垂线法）：两条异面直线的距离即公垂线段长度，等于连接两线上任意两点 P₁P₂ 在公垂向量 n_公 方向上的投影长度。",
+        importance: "gaokao",
+      },
+    );
 
     if (Math.abs(dot) < 0.001) {
       warnings.push({
@@ -180,7 +202,7 @@ export function buildSpatialAnglePanel(
       });
     }
   } else if (mode === "distance") {
-    // distance: 点 A(0,0,0) 到截面 BDE 的垂直距离
+    // distance: 点 A(0,0,0) 到截面 BDE 的垂直距离与三棱锥 E-ABD 体积极值
     const n2X = b * ex;
     const n2Y = a * ex;
     const n2Z = a * b;
@@ -188,8 +210,15 @@ export function buildSpatialAnglePanel(
     // vector AB = (a, 0, 0), dot(AB, n2) = a * b * ex
     const dist = (a * b * ex) / lenN2;
 
-    // 棱锥 E-ABD 体积 V = 1/6 * a * b * ex
+    // 截面积 S_BDE = 1/2 * |n|
+    const sBde = 0.5 * lenN2;
+    // 底面积 S_ABD = 1/2 * a * b
+    const sAbd = 0.5 * a * b;
+
+    // 棱锥 E-ABD 体积 V = 1/3 * S_ABD * ex = 1/6 * a * b * ex
     const vol = (1 / 6) * a * b * ex;
+    // 棱锥 E-ABD 体积最大极值 (E 到达 A1, z_E = c)
+    const volMax = (1 / 6) * a * b * c;
 
     quantities.push(
       {
@@ -199,10 +228,16 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.primary,
       },
       {
-        label: "点 A 坐标",
-        symbol: "A",
-        value: "(0, 0, 0)",
+        label: "截面三角形面积 S_BDE",
+        symbol: "S_{\\Delta BDE}",
+        value: Number(sBde.toFixed(3)),
         color: MATH_COLORS.secondary,
+      },
+      {
+        label: "底面三角形面积 S_ABD",
+        symbol: "S_{\\Delta ABD}",
+        value: Number(sAbd.toFixed(3)),
+        color: MATH_COLORS.primary,
       },
       {
         label: "点到平面距离 d",
@@ -211,10 +246,16 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.highlight,
       },
       {
-        label: "三棱锥 E-ABD 体积",
+        label: "三棱锥 E-ABD 当前体积",
         symbol: "V_{E-ABD}",
         value: Number(vol.toFixed(4)),
         color: MATH_COLORS.accent,
+      },
+      {
+        label: "三棱锥体积最大极值",
+        symbol: "V_{\\max}",
+        value: Number(volMax.toFixed(4)),
+        color: MATH_COLORS.paramPrimary,
       },
     );
 
@@ -226,20 +267,38 @@ export function buildSpatialAnglePanel(
         note: "P 为平面内任意一点，A 为平面外一点，n 为平面的法向量",
       },
       {
-        name: "体积与距离等积法关系",
-        latex: `V_{E-ABD} = \\frac{1}{3} S_{\\Delta BDE} \\cdot d`,
+        name: "等体积法（等积法）互验公式",
+        latex: `V_{E-ABD} = \\frac{1}{3} S_{\\Delta BDE} \\cdot d = \\frac{1}{3} S_{\\Delta ABD} \\cdot z_E`,
         level: "important",
+        note: "当求法向量复杂时，可利用等体积法 d = (3V) / S_底 反解距离",
+      },
+      {
+        name: "动点体积极值定理",
+        latex: `V(z_E) = \\frac{1}{6} a b z_E \\le \\frac{1}{6} a b c = V_{\\max}`,
+        level: "important",
+        condition: "当 z_E = c (即动点 E 重合顶点 A₁) 时取最大值",
       },
     );
 
-    gaokaoPoints.push({
-      text: "高考压轴问法必杀技：求点到平面的距离优先建系取法向量代用公式 d = |AP · n| / |n|。也可通过等体积法 V = 1/3 S d 避开法向量求解。",
-      importance: "gaokao",
-    });
+    gaokaoPoints.push(
+      {
+        text: "高考压轴问法必杀技：求点到平面的距离优先建系取法向量代用公式 d = |AP · n| / |n|。也可通过等体积法 V = 1/3 S d 避开法向量求解。",
+        importance: "gaokao",
+      },
+      {
+        text: "体积极值考点：由于底面 S_ABD 保持不变，三棱锥 E-ABD 体积随高 z_E 线性递增，当动点 E 移动到侧棱顶端 A₁ (z_E = c) 时达到最大体积。",
+        importance: "gaokao",
+      },
+    );
 
-    if (ex < 0.2) {
+    if (Math.abs(ex - c) < 0.05) {
       warnings.push({
-        text: "动点 E 高度过低 (z_E → 0)，三棱锥趋于扁平退化，点 A 到截面的距离 d 趋近于 0！",
+        text: `动点 E 已到达侧棱顶端 A₁ (z_E = c = ${c})，三棱锥 E-ABD 体积达到最大极值 V_max = ${volMax.toFixed(2)}！`,
+        level: "warning",
+      });
+    } else if (ex < 0.3) {
+      warnings.push({
+        text: "动点 E 接近底面 (z_E → 0)，三棱锥趋于扁平退化，点 A 到截面的距离 d 趋近于 0！",
         level: "warning",
       });
     }
@@ -1281,15 +1340,19 @@ export function buildRotationBodyPanel(
         level: "core",
       },
       {
-        name: "球的截面圆性质定理",
-        latex: "r_{截} = \\sqrt{R^2 - d^2}",
+        name: "斜二测画法面积转换定理",
+        latex: "S_{\\text{直观图}} = \\frac{\\sqrt{2}}{4} S_{\\text{原图形}}",
         level: "important",
-        note: "d 为球心到截面距离，截面积 S_截 = π(R²-d²)",
+        note: "斜二测画法规则：x' 轴与 y' 轴夹角为 45° 或 135°，平行于 x 轴长度不变，平行于 y 轴长度减半",
       },
     );
   }
 
   const gaokaoPoints: GaokaoPoint[] = [
+    {
+      text: "斜二测画法（直观图）：① 横轴 x 长度不变，纵轴 y 长度折半；② 夹角为 45° 或 135°；③ 原平面图形面积与直观图面积满足 S_直观 = (√2 / 4) S_原。",
+      importance: "gaokao",
+    },
     {
       text: "旋转体由平面图形绕轴旋转 360° 形成。轴截面（矩形、等腰三角形、等腰梯形、大圆）是把 3D 旋转体问题降维至 2D 平面图形求解的核心钥匙。",
       importance: "core",
@@ -1299,7 +1362,7 @@ export function buildRotationBodyPanel(
       importance: "gaokao",
     },
     {
-      text: "柱锥台公式统一思想：熟练掌握台体体积公式 V = ⅓h(S₁ + √(S₁S₂) + S₂)。理解 r₂=r₁（圆柱）与 r₂=0（圆锥）时的极限演变。",
+      text: "柱锥台公式统一思想：熟练掌握台体体积公式 V = ⅓h(S₁ + √(S₁S₂) + S₂)。理解 r₂=r₁（圆柱）与 r₂=0（圆锥）时的极限演解。",
       importance: "gaokao",
     },
     {

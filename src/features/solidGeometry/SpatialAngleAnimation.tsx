@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { ThreePanel } from "@/components/Layout/ThreePanel";
 import { ThreeDCanvas } from "@/components/Layout/ThreeDCanvas";
 import {
@@ -31,7 +32,12 @@ import type { Vec3 } from "@/math3d/vector3";
 type AngleMode = "skewLines" | "linePlane" | "dihedral" | "distance";
 
 export default function SpatialAngleAnimation() {
-  const [activeMode, setActiveMode] = useState<AngleMode>("skewLines");
+  const location = useLocation();
+  const defaultMode: AngleMode = location.pathname.includes("distance")
+    ? "distance"
+    : "skewLines";
+
+  const [activeMode, setActiveMode] = useState<AngleMode>(defaultMode);
   const [params, setParams] = useState<Record<string, number>>({
     a: 3,
     b: 2,
@@ -188,7 +194,7 @@ export default function SpatialAngleAnimation() {
             colorKey="highlight"
           />
 
-          {/* 模式一：异面直线所成的角 */}
+          {/* 模式一：异面直线所成的角与公垂线距离 */}
           {activeMode === "skewLines" && (
             <>
               {/* 异面直线 1: DE */}
@@ -212,6 +218,27 @@ export default function SpatialAngleAnimation() {
                 radius={0.8}
                 colorKey="highlight"
               />
+              {/* 异面直线公垂线段 P1P2 */}
+              {(() => {
+                const den = a * a * b * b + b * b * c * c + a * a * ex * ex;
+                const s0 = (b * b * (a * a + c * c)) / Math.max(1e-6, den);
+                const t0 = (b * b * c * ex) / Math.max(1e-6, den);
+                const P1: Vec3 = { x: 0, y: b * (1 - s0), z: s0 * ex };
+                const P2: Vec3 = { x: t0 * a, y: 0, z: t0 * c };
+                return (
+                  <>
+                    <Vector3DArrow from={P1} to={P2} colorKey="paramPrimary" />
+                    <FormulaLabel3D
+                      position={{
+                        x: (P1.x + P2.x) / 2 + 0.15,
+                        y: (P1.y + P2.y) / 2 - 0.2,
+                        z: (P1.z + P2.z) / 2,
+                      }}
+                      tex="d_{\text{异面}}"
+                    />
+                  </>
+                );
+              })()}
             </>
           )}
 
@@ -240,7 +267,7 @@ export default function SpatialAngleAnimation() {
             </>
           )}
 
-          {/* 模式四：点到平面的距离 */}
+          {/* 模式四：点到平面的距离与体积极值 */}
           {activeMode === "distance" && (
             <>
               {/* 底面 ABCD */}
@@ -263,6 +290,12 @@ export default function SpatialAngleAnimation() {
                 colorKey="paramTertiary"
                 opacity={0.25}
               />
+              {/* 三棱锥 E-ABD 的侧棱高亮 */}
+              <Vector3DArrow from={E} to={B} colorKey="accent" />
+              <Vector3DArrow from={E} to={D} colorKey="accent" />
+              <Vector3DArrow from={B} to={D} colorKey="accent" />
+              <Vector3DArrow from={A} to={E} colorKey="primary" />
+
               {/* 截面法向量 n */}
               <Vector3DArrow
                 from={A}
@@ -285,6 +318,7 @@ export default function SpatialAngleAnimation() {
               {(() => {
                 const t = (a * b * ex) / (n2Len * n2Len);
                 const H: Vec3 = { x: t * n2X, y: t * n2Y, z: t * n2Z };
+                const isMax = Math.abs(ex - c) < 0.05;
                 return (
                   <>
                     <Vector3DArrow from={A} to={H} colorKey="highlight" />
@@ -301,6 +335,13 @@ export default function SpatialAngleAnimation() {
                       }}
                       tex="d"
                     />
+                    {/* 极值点 A1 标注 */}
+                    {isMax && (
+                      <FormulaLabel3D
+                        position={{ x: 0, y: -0.3, z: c + 0.3 }}
+                        tex="V_{\max}"
+                      />
+                    )}
                   </>
                 );
               })()}
