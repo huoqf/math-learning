@@ -108,7 +108,13 @@ export function SectionPlane3D({
   const quadData = useMemo(() => {
     if (!showPlaneQuad) return { geo: null, outline: [] };
     const { u, v } = buildPlaneBasis(plane.normal);
-    const c = plane.point;
+    const c =
+      sectionPoints.length >= 3
+        ? scale(
+            sectionPoints.reduce((acc, p) => add(acc, p), { x: 0, y: 0, z: 0 }),
+            1 / sectionPoints.length,
+          )
+        : plane.point;
     const corners = [
       add(add(c, scale(u, -planeExtent)), scale(v, -planeExtent)),
       add(add(c, scale(u, planeExtent)), scale(v, -planeExtent)),
@@ -146,7 +152,7 @@ export function SectionPlane3D({
     );
     const outline = [a, b, c2, d, a];
     return { geo, outline };
-  }, [plane, planeExtent, showPlaneQuad]);
+  }, [plane, planeExtent, showPlaneQuad, sectionPoints]);
 
   return (
     <group>

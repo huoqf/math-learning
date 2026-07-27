@@ -108,8 +108,7 @@ export default function SectionCuboidDemo() {
   const [posQ, setPosQ] = useState(0.7);
   const [posR, setPosR] = useState(0.5);
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
-    use3DViewport("iso");
+  const { cameraPosition, controlsRef } = use3DViewport("iso");
 
   // 多面体几何尺寸
   const width = 3;
@@ -307,6 +306,7 @@ export default function SectionCuboidDemo() {
           {/* 模式选择 */}
           <LeftPanelSection title="教学模式" subtitle="选择截面生成与作图机制">
             <TabSwitcher
+              layout="horizontal"
               tabs={[
                 { key: "continuous", label: "连续切面" },
                 { key: "threePoints", label: "三点作图" },
@@ -320,17 +320,9 @@ export default function SectionCuboidDemo() {
           <LeftPanelSection title="几何体选择" subtitle="切换高考经典多面体">
             <SelectGrid
               items={[
-                {
-                  key: "cuboid",
-                  label: "正方体/长方体",
-                  formula: "\\text{长方体}",
-                },
-                {
-                  key: "pyramid",
-                  label: "正四棱锥",
-                  formula: "\\text{四棱锥}",
-                },
-                { key: "prism", label: "正三棱柱", formula: "\\text{三棱柱}" },
+                { key: "cuboid", label: "正方体/长方体" },
+                { key: "pyramid", label: "正四棱锥" },
+                { key: "prism", label: "正三棱柱" },
               ]}
               value={solidKind}
               onChange={(k) => setSolidKind(k as SolidKind)}
@@ -341,6 +333,7 @@ export default function SectionCuboidDemo() {
           {/* 视图模式选择 */}
           <LeftPanelSection title="显示模式">
             <TabSwitcher
+              layout="horizontal"
               tabs={[
                 { key: "3d", label: "3D 直观图" },
                 { key: "views", label: "2D 三视图" },
@@ -365,22 +358,6 @@ export default function SectionCuboidDemo() {
               onReset={handleReset}
             />
           </LeftPanelSection>
-
-          {/* 3D 视角 Preset */}
-          {viewMode === "3d" && (
-            <LeftPanelSection title="3D 视角预设">
-              <TabSwitcher
-                tabs={[
-                  { key: "iso", label: "轴测" },
-                  { key: "front", label: "主视" },
-                  { key: "top", label: "俯视" },
-                  { key: "side", label: "左视" },
-                ]}
-                value={preset}
-                onChange={(p) => setCameraPreset(p as any)}
-              />
-            </LeftPanelSection>
-          )}
         </LeftPanel>
       }
       center={
@@ -428,7 +405,7 @@ export default function SectionCuboidDemo() {
             <SectionPlane3D
               sectionPoints={sectionPoints}
               plane={plane}
-              planeExtent={Math.max(width, depth) * 0.9}
+              planeExtent={Math.max(width, depth, height) * 0.75}
               constructionLines={constructionLines}
             />
 

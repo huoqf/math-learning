@@ -14,14 +14,29 @@ export default defineConfig({
         port: 5173,
     },
     build: {
+        manifest: true,
         rollupOptions: {
             output: {
-                manualChunks: {
-                    'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-                    'vendor-katex': ['katex'],
+                manualChunks: function (id) {
+                    if (!id.includes('node_modules'))
+                        return undefined;
+                    if (/[\\/]three[\\/]/.test(id) && !id.includes('@react-three'))
+                        return 'vendor-three-core';
+                    if (id.includes('@react-three/fiber'))
+                        return 'vendor-r3f';
+                    if (id.includes('@react-three/drei'))
+                        return 'vendor-drei';
+                    if (id.includes('troika-three'))
+                        return 'vendor-troika';
+                    if (id.includes('katex'))
+                        return 'vendor-katex';
+                    if (id.includes('react-dom') || /[\\/]react[\\/]/.test(id) || id.includes('react-router'))
+                        return 'vendor-react';
+                    return 'vendor-misc';
                 },
             },
         },
+        chunkSizeWarningLimit: 700,
     },
     test: {
         globals: true,

@@ -3,7 +3,7 @@
  */
 
 import type { Vec3 } from "./vector3";
-import { sub, cross, normalize, dot, scale, norm } from "./vector3";
+import { add, sub, cross, normalize, dot, scale, norm } from "./vector3";
 
 export interface Plane {
   point: Vec3;
@@ -11,7 +11,7 @@ export interface Plane {
 }
 
 export const planeFromPoints = (p1: Vec3, p2: Vec3, p3: Vec3): Plane => ({
-  point: p1,
+  point: scale(add(add(p1, p2), p3), 1 / 3),
   normal: normalize(cross(sub(p2, p1), sub(p3, p1))),
 });
 

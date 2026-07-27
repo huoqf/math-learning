@@ -93,7 +93,7 @@ export function buildMathQuantities(
     case "anim-solid-rotation-body":
       return buildRotationBodyPanel(params);
     case "anim-vector3d-basis":
-      return buildVector3DBasisPanel(params);
+      return buildVector3DBasisPanel(params, config as any);
     case "anim-sequence":
       return buildSequencePanel(params, config);
     default:

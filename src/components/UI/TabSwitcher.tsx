@@ -26,6 +26,8 @@ interface TabSwitcherProps<T extends string = string> {
   tabs: TabSwitcherTab[];
   value: T;
   onChange: (key: T) => void;
+  /** 布局方向：vertical(默认单列纵向) | horizontal(单行横向并列) */
+  layout?: "vertical" | "horizontal";
   className?: string;
 }
 
@@ -33,6 +35,7 @@ export const TabSwitcher = <T extends string = string>({
   tabs,
   value,
   onChange,
+  layout = "vertical",
   className = "",
 }: TabSwitcherProps<T>) => {
   const keys = tabs.map((t) => t.key);
@@ -50,15 +53,16 @@ export const TabSwitcher = <T extends string = string>({
     [registerRef],
   );
 
+  const isHorizontal = layout === "horizontal";
+
+  const containerClass = isHorizontal
+    ? "grid grid-flow-col auto-cols-fr bg-neutral-100 p-1 rounded-xl gap-1"
+    : "flex flex-col bg-neutral-100 p-1.5 rounded-xl gap-1";
+
   return (
     <div
       role="radiogroup"
-      className={[
-        "flex flex-col bg-neutral-100 p-1.5 rounded-xl gap-1",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={[containerClass, className].filter(Boolean).join(" ")}
     >
       {tabs.map((tab) => {
         const isSelected = value === tab.key;
@@ -70,14 +74,20 @@ export const TabSwitcher = <T extends string = string>({
             {...itemProps}
             onClick={() => onChange(tab.key as T)}
             className={[
-              "py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 whitespace-nowrap overflow-hidden text-left",
+              "py-2 px-2 text-xs font-bold rounded-lg transition-all duration-200 whitespace-nowrap overflow-hidden text-center",
+              isHorizontal ? "flex justify-center items-center" : "text-left",
               isSelected
                 ? "bg-white text-primary-600 shadow-md ring-1 ring-primary-200"
                 : "text-neutral-500 hover:text-neutral-700 hover:bg-white/50",
             ].join(" ")}
           >
-            <div className="flex flex-row items-center gap-2 w-full">
-              <span className="text-[12px] font-bold leading-tight whitespace-nowrap">
+            <div
+              className={[
+                "flex flex-row items-center gap-1.5 w-full",
+                isHorizontal ? "justify-center text-center" : "",
+              ].join(" ")}
+            >
+              <span className="text-[12px] font-bold leading-tight whitespace-nowrap truncate">
                 {tab.label}
               </span>
               {tab.formula && (
