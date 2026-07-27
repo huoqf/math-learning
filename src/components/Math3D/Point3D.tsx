@@ -25,13 +25,11 @@ export const Point3D = ({
   const [hovered, setHovered] = useState(false);
   const [dragging, setDragging] = useState(false);
   const { camera, gl, invalidate } = useThree();
-  const controls = useThree((state) => (state as any).controls);
   const planeRef = useRef(new THREE.Plane());
   const hit = useRef(new THREE.Vector3());
 
   const stopDragging = (pointerId?: number) => {
     setDragging(false);
-    if (controls) controls.enabled = true;
     if (pointerId !== undefined) {
       try {
         gl.domElement.releasePointerCapture(pointerId);
@@ -45,9 +43,6 @@ export const Point3D = ({
     if (!draggable) return;
     e.stopPropagation();
     setDragging(true);
-
-    // 拖拽点时强行禁用背景 OrbitControls，防止视角旋转与点拖拽冲突
-    if (controls) controls.enabled = false;
 
     try {
       gl.domElement.setPointerCapture(e.pointerId);

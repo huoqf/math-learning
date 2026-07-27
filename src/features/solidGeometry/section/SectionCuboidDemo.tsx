@@ -3,10 +3,10 @@ import {
   SectionPlane3D,
   CameraRig,
   Scene3DGrid,
-  Point3D,
   PointLabel3D,
   ThreeViewsPanel,
 } from "@/components/Math3D";
+import { mathToThree } from "@/math3d/coordinateConvention";
 import {
   Cuboid,
   RegularPyramid,
@@ -432,69 +432,33 @@ export default function SectionCuboidDemo() {
               constructionLines={constructionLines}
             />
 
-            {/* 三点作图模式下的 3D 锁死拖拽控制点 */}
+            {/* 三点作图模式下的静态标注点与标签 (通过左屏 ParamControl 精确调控) */}
             {mode === "threePoints" && (
               <>
-                <Point3D
-                  position={pointPPos}
-                  draggable
-                  constrain={(raw) =>
-                    getEdgePoint(
-                      solidKind,
-                      0,
-                      raw.z / height,
-                      width,
-                      depth,
-                      height,
-                    )
-                  }
-                  onDrag={(next) => setPosP(next.z / height)}
-                  colorKey="highlight"
-                />
+                <mesh position={mathToThree(pointPPos)}>
+                  <sphereGeometry args={[0.08, 16, 16]} />
+                  <meshBasicMaterial color="#DC2626" />
+                </mesh>
                 <PointLabel3D
                   position={pointPPos}
                   text="P"
                   offset={[0, 0, 0.2]}
                 />
 
-                <Point3D
-                  position={pointQPos}
-                  draggable
-                  constrain={(raw) =>
-                    getEdgePoint(
-                      solidKind,
-                      1,
-                      raw.z / height,
-                      width,
-                      depth,
-                      height,
-                    )
-                  }
-                  onDrag={(next) => setPosQ(next.z / height)}
-                  colorKey="highlight"
-                />
+                <mesh position={mathToThree(pointQPos)}>
+                  <sphereGeometry args={[0.08, 16, 16]} />
+                  <meshBasicMaterial color="#DC2626" />
+                </mesh>
                 <PointLabel3D
                   position={pointQPos}
                   text="Q"
                   offset={[0, 0, 0.2]}
                 />
 
-                <Point3D
-                  position={pointRPos}
-                  draggable
-                  constrain={(raw) =>
-                    getEdgePoint(
-                      solidKind,
-                      2,
-                      raw.z / height,
-                      width,
-                      depth,
-                      height,
-                    )
-                  }
-                  onDrag={(next) => setPosR(next.z / height)}
-                  colorKey="highlight"
-                />
+                <mesh position={mathToThree(pointRPos)}>
+                  <sphereGeometry args={[0.08, 16, 16]} />
+                  <meshBasicMaterial color="#DC2626" />
+                </mesh>
                 <PointLabel3D
                   position={pointRPos}
                   text="R"
