@@ -31,11 +31,17 @@ export function StatPercentileAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 坐标系比例尺：直方图 X [42, 108], Y [-0.008, 0.055]
+  // 坐标系比例尺：三模式统一使用 xRange [42, 108]，横轴位置 100% 重合
   const scale = useSceneScale({
     vp,
-    xRange: studyMode === "stratified" ? [0, 600] : [42, 108],
-    yRange: studyMode === "stratified" ? [0, 400] : [-0.008, 0.055],
+    xRange: [42, 108],
+    yRange:
+      studyMode === "stratified"
+        ? [-0.15, 1.15]
+        : studyMode === "cumulative"
+          ? [-0.12, 1.15]
+          : [-0.007, 0.054],
+    keepAspectRatio: false,
   });
 
   // 数学量看板数据计算与组装
@@ -61,7 +67,18 @@ export function StatPercentileAnimation() {
     const keysByMode: Record<string, string[]> = {
       histogram: ["percentileP", "shift"],
       cumulative: ["percentileP", "shift"],
-      stratified: ["sampleN", "N1", "N2", "N3", "mean1", "mean2", "mean3"],
+      stratified: [
+        "sampleN",
+        "N1",
+        "N2",
+        "N3",
+        "mean1",
+        "mean2",
+        "mean3",
+        "var1",
+        "var2",
+        "var3",
+      ],
     };
 
     const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
@@ -140,7 +157,7 @@ export function StatPercentileAnimation() {
       center={
         <div className="w-full h-full relative flex flex-col bg-white">
           {/* 顶部悬浮 Katex 公式 */}
-          <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
+          <div className="absolute top-3 left-16 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
             <KatexFormula formula={topFormulaLatex} mode="inline" />
           </div>
 

@@ -67,38 +67,38 @@ export function buildStatPercentilePanel(
         {
           label: "下四分位数 Q₁ (25%)",
           value: `${stats.q1.toFixed(2)}`,
-          color: MATH_COLORS.paramTertiary,
+          color: MATH_COLORS.function,
         },
         {
           label: "上四分位数 Q₃ (75%)",
           value: `${stats.q3.toFixed(2)}`,
-          color: MATH_COLORS.paramTertiary,
+          color: MATH_COLORS.function,
         },
         {
-          label: "四分位距 IQR",
+          label: "四分位距 IQR (Q₃ - Q₁)",
           value: `${stats.iqr.toFixed(2)}`,
-          color: MATH_COLORS.function,
+          color: MATH_COLORS.paramSecondary,
         },
       ],
       theorems: [
         {
           name: "频率分布直方图三大特征",
           latex:
-            "\\sum (\\text{高}_i \\times \\text{组距}_i) = \\sum \\text{频率}_i = 1",
-          note: "纵轴为 频率/组距，矩形面积为频率，矩形总面积恒等于 1。",
+            "\\sum (h_i \\times d) = \\sum f_i = 1, \\quad h_i = \\frac{f_i}{d}",
+          note: "纵轴为 频率/组距 h，矩形面积表示频率 f，直方图矩形总面积恒等于 1。",
           level: "core",
         },
         {
-          name: "数字特征估算方法 (高考常考)",
+          name: "百分位数/中位数的几何意义",
           latex:
-            "\\bar{x} = \\sum x_{\\text{mid}, i} \\cdot f_i, \\quad M_e \\text{ 平分矩形总面积为 } 0.5",
-          note: "平均数 = ∑(组中值×频率)；众数为最高矩形底边中点；中位数为平分总面积垂直线。",
+            "\\text{面积}(x \\le P_p) = \\sum_{\\text{左侧}} f_i + h_k \\cdot (P_p - x_{k,\\min}) = \\frac{p}{100}",
+          note: "第 p 百分位数 P_p 恰好将直方图左侧矩形面积切割为 p%。",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "【高考考点】频率分布直方图纵轴是 频率/组距，求解各组频率需乘以组距 d！",
+          text: "【高考考点】频率分布直方图纵轴是 频率/组距，求解各组频率需乘以组距 d (如 d=10)！",
           importance: "gaokao",
         },
         {
@@ -194,7 +194,7 @@ export function buildStatPercentilePanel(
       ],
       warnings: [
         {
-          text: "线性插值公式中分子为(p% - F_prev)，分母是矩形高度 h（或频率除以组距），注意量纲单位！",
+          text: "线性插值公式中分子为 (p% - F_prev)，分母是矩形高度 h（或频率除以组距），注意量纲单位！",
           level: "warning",
         },
       ],
@@ -203,6 +203,12 @@ export function buildStatPercentilePanel(
     };
   } else {
     // stratified 模式
+    const intraVar =
+      stratResult.strataWeights[0] * stratResult.strataVars[0] +
+      stratResult.strataWeights[1] * stratResult.strataVars[1] +
+      stratResult.strataWeights[2] * stratResult.strataVars[2];
+    const interMeanVar = Math.max(0, stratResult.totalVar - intraVar);
+
     return {
       quantities: [
         {
@@ -238,9 +244,14 @@ export function buildStatPercentilePanel(
           highlight: "positive",
         },
         {
-          label: "总体标准差 s",
-          value: `${stratResult.totalStd.toFixed(2)}`,
-          color: MATH_COLORS.paramTertiary,
+          label: "• 组内方差贡献 ∑w_i s_i²",
+          value: `${intraVar.toFixed(2)}`,
+          color: MATH_COLORS.function,
+        },
+        {
+          label: "• 组间均值离差贡献",
+          value: `${interMeanVar.toFixed(2)}`,
+          color: MATH_COLORS.paramSecondary,
         },
       ],
       theorems: [

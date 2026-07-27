@@ -180,6 +180,55 @@ export function calculateHistogramStats(
   };
 }
 
+export interface PercentileShadeBin {
+  xMin: number;
+  xMax: number;
+  height: number;
+  isFull: boolean;
+  isPartial: boolean;
+  fraction: number; // 0~1
+}
+
+/**
+ * 计算百分位数 P_p 在各矩形 bin 中的覆盖阴影区间
+ */
+export function calculatePercentileShadeBins(
+  bins: HistogramBin[],
+  percentileVal: number,
+): PercentileShadeBin[] {
+  return bins.map((bin) => {
+    if (percentileVal <= bin.xMin) {
+      return {
+        xMin: bin.xMin,
+        xMax: bin.xMin,
+        height: bin.height,
+        isFull: false,
+        isPartial: false,
+        fraction: 0,
+      };
+    } else if (percentileVal >= bin.xMax) {
+      return {
+        xMin: bin.xMin,
+        xMax: bin.xMax,
+        height: bin.height,
+        isFull: true,
+        isPartial: false,
+        fraction: 1,
+      };
+    } else {
+      const frac = (percentileVal - bin.xMin) / bin.width;
+      return {
+        xMin: bin.xMin,
+        xMax: percentileVal,
+        height: bin.height,
+        isFull: false,
+        isPartial: true,
+        fraction: Math.max(0, Math.min(1, frac)),
+      };
+    }
+  });
+}
+
 /**
  * 分层抽样按比例分配与总均值、总方差推导
  */
