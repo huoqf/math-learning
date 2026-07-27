@@ -79,6 +79,7 @@ const ANIMATION_ROUTE_MAP: Record<string, string> = {
   "anim-probability-bayes": "/probability-bayes",
   "anim-probability-distribution": "/probability-distribution",
   "anim-probability-normal": "/statistics-normal",
+  "anim-stat-percentile": "/stat-percentile",
   "anim-paired-data": "/paired-data-regression",
   "anim-solid-rotation-body": "/solid-rotation-body",
   "anim-solid-position": "/solid-position",
@@ -126,6 +127,8 @@ export function KnowledgeTreeHome() {
 
   // 1. 检查节点是否激活并返回对应路由
   const getNodeRoute = (node: KnowledgeNode): string | null => {
+    if (node.route) return node.route;
+
     for (const animId of node.animationIds) {
       if (ANIMATION_ROUTE_MAP[animId]) {
         return ANIMATION_ROUTE_MAP[animId];

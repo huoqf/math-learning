@@ -15,6 +15,10 @@ import {
   vennLoader,
   logicLoader,
 } from "@/features/set/meta";
+import {
+  statPercentileNode,
+  statPercentileLoader,
+} from "@/features/statPercentile/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
@@ -544,6 +548,7 @@ export const routeEntries: RouteEntry[] = [
   // 已迁移 meta.ts 的页面
   { node: vennNode, loader: vennLoader },
   { node: logicNode, loader: logicLoader },
+  { node: statPercentileNode, loader: statPercentileLoader },
   // 暂未迁移的页面
   ...legacyEntries,
 ];

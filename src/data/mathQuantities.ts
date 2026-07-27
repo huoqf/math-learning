@@ -18,6 +18,7 @@ import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
 import { buildProbabilityDistributionPanel } from "./builders/probabilityDistribution";
 import { buildProbabilityNormalPanel } from "./builders/probabilityNormal";
 import { buildPairedDataPanel } from "./builders/pairedData";
+import { buildStatPercentilePanel } from "./builders/statPercentile";
 import {
   buildSpatialAnglePanel,
   buildLinePlaneRelationPanel,
@@ -43,6 +44,8 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-stat-percentile":
+      return buildStatPercentilePanel(params, config);
     case "anim-paired-data":
       return buildPairedDataPanel(params, config);
     case "anim-probability-normal":

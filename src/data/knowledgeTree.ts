@@ -280,6 +280,15 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-triangle-solve"],
     prerequisites: [],
   },
+  {
+    id: "know-triangle-extrema",
+    title: "解三角形的边角变换与最值范围",
+    chapter: "三角函数",
+    module: "解三角形",
+    importance: "gaokao",
+    animationIds: ["anim-triangle-extrema"],
+    prerequisites: ["know-triangle-solve", "know-ineq-basic"],
+  },
 
   // 6. 平面向量与复数
   {
@@ -486,6 +495,15 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-conic-line"],
     prerequisites: ["know-conic-properties"],
   },
+  {
+    id: "know-conic-parametric",
+    title: "圆锥曲线与直线的参数方程及设点化简",
+    chapter: "解析几何",
+    module: "圆锥曲线",
+    importance: "gaokao",
+    animationIds: ["anim-conic-parametric"],
+    prerequisites: ["know-conic-line", "know-line-equation"],
+  },
 
   // 10. 概率与统计
   {
@@ -523,6 +541,17 @@ export const knowledgeTree: KnowledgeNode[] = [
     importance: "gaokao",
     animationIds: ["anim-probability-normal"],
     prerequisites: [],
+  },
+  {
+    id: "know-stat-percentile",
+    title: "分层抽样、频率直方图与百分位数/中位数",
+    labTitle: "分层抽样与直方图百分位数",
+    chapter: "概率与统计",
+    module: "统计分析",
+    importance: "gaokao",
+    animationIds: ["anim-stat-percentile"],
+    prerequisites: ["know-probability-normal"],
+    route: "/stat-percentile",
   },
   {
     id: "know-probability-regression",

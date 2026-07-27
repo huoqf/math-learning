@@ -1340,6 +1340,12 @@ export function buildRotationBodyPanel(
         level: "core",
       },
       {
+        name: "球截面圆性质定理",
+        latex: "R^2 = r_{截}^2 + d^2",
+        level: "important",
+        note: "球心到截面圆圆心的距离为 d，截面圆半径为 r_截，球半径为 R",
+      },
+      {
         name: "斜二测画法面积转换定理",
         latex: "S_{\\text{直观图}} = \\frac{\\sqrt{2}}{4} S_{\\text{原图形}}",
         level: "important",
