@@ -10,7 +10,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { StatPercentileScene } from "./components/StatPercentileScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/statPercentile";
@@ -115,7 +115,7 @@ export function StatPercentileAnimation() {
       return "\\text{矩形面积 } f_i = h_i \\cdot d, \\quad \\bar{x} = \\sum x_{\\text{mid}, i} \\cdot f_i";
     }
     if (studyMode === "cumulative") {
-      return `y_p = a + \\frac{\\color{#EF4444}{${params.percentileP}\\% - F_{\\text{prev}}}}{h}`;
+      return `y_p = a + \\frac{\\color{${MATH_COLORS.paramPrimary}}{${params.percentileP}\\% - F_{\\text{prev}}}}{h}`;
     }
     return "s^2 = \\sum w_i \\left[ s_i^2 + (\\bar{x}_i - \\bar{x})^2 \\right]";
   }, [studyMode, params.percentileP]);

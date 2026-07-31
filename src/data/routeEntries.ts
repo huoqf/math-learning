@@ -19,6 +19,10 @@ import {
   statPercentileNode,
   statPercentileLoader,
 } from "@/features/statPercentile/meta";
+import {
+  conicDefinitionNode,
+  conicDefinitionLoader,
+} from "@/features/conicDefinition/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
@@ -549,6 +553,7 @@ export const routeEntries: RouteEntry[] = [
   { node: vennNode, loader: vennLoader },
   { node: logicNode, loader: logicLoader },
   { node: statPercentileNode, loader: statPercentileLoader },
+  { node: conicDefinitionNode, loader: conicDefinitionLoader },
   // 暂未迁移的页面
   ...legacyEntries,
 ];
@@ -558,4 +563,13 @@ export const PATH_TO_LABEL: Record<string, string> = Object.fromEntries(
   routeEntries
     .filter((e) => e.node.route)
     .map((e) => [e.node.route!, e.node.labTitle ?? e.node.title]),
+);
+
+/** 从 routeEntries 自动生成的 animationId → route 映射（替代 KnowledgeTreeHome 中手写的 ANIMATION_ROUTE_MAP） */
+export const ANIMATION_ROUTE_MAP: Record<string, string> = Object.fromEntries(
+  routeEntries
+    .filter((e) => e.node.route && e.node.animationIds?.length)
+    .flatMap((e) =>
+      e.node.animationIds.map((animId) => [animId, e.node.route!]),
+    ),
 );

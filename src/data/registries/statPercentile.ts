@@ -80,7 +80,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 1000,
     step: 50,
     defaultValue: 300,
-    importance: "normal",
+    importance: "advanced",
     description: "分层抽样第 1 层的总体规模",
   },
   N2: {
@@ -91,7 +91,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 1000,
     step: 50,
     defaultValue: 500,
-    importance: "normal",
+    importance: "advanced",
     description: "分层抽样第 2 层的总体规模",
   },
   N3: {
@@ -102,7 +102,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 1000,
     step: 50,
     defaultValue: 200,
-    importance: "normal",
+    importance: "advanced",
     description: "分层抽样第 3 层的总体规模",
   },
   mean1: {
@@ -113,7 +113,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 100,
     step: 1,
     defaultValue: 72,
-    importance: "normal",
+    importance: "advanced",
     description: "第 1 层的样本均值",
   },
   mean2: {
@@ -124,7 +124,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 100,
     step: 1,
     defaultValue: 78,
-    importance: "normal",
+    importance: "advanced",
     description: "第 2 层的样本均值",
   },
   mean3: {
@@ -135,7 +135,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 100,
     step: 1,
     defaultValue: 85,
-    importance: "normal",
+    importance: "advanced",
     description: "第 3 层的样本均值",
   },
 };

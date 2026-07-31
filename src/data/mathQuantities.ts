@@ -28,6 +28,7 @@ import {
 } from "./builders/solidGeometry";
 import { buildVector3DBasisPanel } from "./builders/vector3d";
 import { buildSequencePanel } from "./builders/sequence";
+import { buildConicDefinitionPanel } from "./builders/conicDefinition";
 
 export type { MathPanelData } from "./types";
 
@@ -98,7 +99,12 @@ export function buildMathQuantities(
     case "anim-vector3d-basis":
       return buildVector3DBasisPanel(params, config as any);
     case "anim-sequence":
+    case "anim-sequence-geom":
+    case "anim-sequence-recurrence":
+    case "anim-sequence-sum":
       return buildSequencePanel(params, config);
+    case "anim-conic-definition":
+      return buildConicDefinitionPanel(params, config);
     default:
       return EMPTY;
   }

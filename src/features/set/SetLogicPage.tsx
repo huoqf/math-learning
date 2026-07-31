@@ -9,7 +9,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SetScene } from "./components/SetScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/set";
@@ -32,8 +32,7 @@ export function SetLogicPage() {
     [params],
   );
 
-  const formulaLatex =
-    "p: x \\in \\color{#EF4444}{A}, \\quad q: x \\in \\color{#D97706}{B} \\quad (p \\implies q \\iff \\color{#EF4444}{A} \\subseteq \\color{#D97706}{B})";
+  const formulaLatex = `p: x \\in \\color{${MATH_COLORS.paramPrimary}}{A}, \\quad q: x \\in \\color{${MATH_COLORS.paramSecondary}}{B} \\quad (p \\implies q \\iff \\color{${MATH_COLORS.paramPrimary}}{A} \\subseteq \\color{${MATH_COLORS.paramSecondary}}{B})`;
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keys = ["xA", "yA", "rA", "xB", "yB", "rB", "xP", "yP"];

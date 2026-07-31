@@ -11,7 +11,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TransformScene } from "./components/TransformScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/transform";
@@ -51,20 +51,20 @@ export function TransformAnimation() {
     let baseStr = "";
     switch (fnType) {
       case "quadratic":
-        baseStr = `(${wVal}(x - \\color{#EF4444}{${hVal}}))^2`;
+        baseStr = `(${wVal}(x - \\color{${MATH_COLORS.paramPrimary}}{${hVal}}))^2`;
         break;
       case "sine":
-        baseStr = `\\sin(${wVal}(x - \\color{#EF4444}{${hVal}}))`;
+        baseStr = `\\sin(${wVal}(x - \\color{${MATH_COLORS.paramPrimary}}{${hVal}}))`;
         break;
       case "cubic":
-        baseStr = `(${wVal}(x - \\color{#EF4444}{${hVal}}))^3`;
+        baseStr = `(${wVal}(x - \\color{${MATH_COLORS.paramPrimary}}{${hVal}}))^3`;
         break;
       case "exp":
-        baseStr = `2^{${wVal}(x - \\color{#EF4444}{${hVal}})}`;
+        baseStr = `2^{${wVal}(x - \\color{${MATH_COLORS.paramPrimary}}{${hVal}})}`;
         break;
     }
 
-    let coreLatex = `\\color{#EF4444}{${aVal}} \\cdot ${baseStr} + \\color{#D97706}{${kVal}}`;
+    let coreLatex = `\\color{${MATH_COLORS.paramPrimary}}{${aVal}} \\cdot ${baseStr} + \\color{${MATH_COLORS.paramSecondary}}{${kVal}}`;
 
     if (foldMode === "global") {
       return `y = \\left| ${coreLatex} \\right|`;

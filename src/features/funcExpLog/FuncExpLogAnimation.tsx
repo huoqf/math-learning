@@ -10,7 +10,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ExpLogScene } from "./components/ExpLogScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/funcExpLog";
@@ -32,25 +32,25 @@ export function FuncExpLogAnimation() {
     yRange: [-4.5, 4.5],
   });
 
-  const mathData = useMemo(
-    () =>
-      buildMathQuantities("anim-func-explog", params, { subExpLog: funcType }),
-    [params, funcType],
-  );
+  const mathData = useMemo(() => {
+    return buildMathQuantities("anim-func-explog", params, {
+      subExpLog: funcType,
+    });
+  }, [params, funcType]);
 
   const formulaLatex = useMemo(() => {
     const aVal = (params.baseA ?? 2.0).toFixed(1);
     const alphaVal = (params.powerAlpha ?? 2.0).toFixed(1);
     if (funcType === "exponential") {
       return showInverse
-        ? `y = \\color{#EF4444}{${aVal}}^x \\iff x = \\log_{\\color{#EF4444}{${aVal}}} y`
-        : `y = \\color{#EF4444}{${aVal}}^x`;
+        ? `y = \\color{${MATH_COLORS.paramPrimary}}{${aVal}}^x \\iff x = \\log_{\\color{${MATH_COLORS.paramPrimary}}{${aVal}}} y`
+        : `y = \\color{${MATH_COLORS.paramPrimary}}{${aVal}}^x`;
     } else if (funcType === "logarithmic") {
       return showInverse
-        ? `y = \\log_{\\color{#EF4444}{${aVal}}} x \\iff x = \\color{#EF4444}{${aVal}}^y`
-        : `y = \\log_{\\color{#EF4444}{${aVal}}} x`;
+        ? `y = \\log_{\\color{${MATH_COLORS.paramPrimary}}{${aVal}}} x \\iff x = \\color{${MATH_COLORS.paramPrimary}}{${aVal}}^y`
+        : `y = \\log_{\\color{${MATH_COLORS.paramPrimary}}{${aVal}}} x`;
     } else {
-      return `y = x^{\\color{#EF4444}{${alphaVal}}}`;
+      return `y = x^{\\color{${MATH_COLORS.paramPrimary}}{${alphaVal}}}`;
     }
   }, [funcType, showInverse, params.powerAlpha, params.baseA]);
 

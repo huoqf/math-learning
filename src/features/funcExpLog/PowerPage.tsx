@@ -9,7 +9,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ExpLogScene } from "./components/ExpLogScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/funcExpLog";
@@ -30,7 +30,7 @@ export function PowerPage() {
 
   const formulaLatex = useMemo(() => {
     const alphaVal = (params.powerAlpha ?? 2.0).toFixed(1);
-    return `y = x^{\\color{#EF4444}{${alphaVal}}}`;
+    return `y = x^{\\color{${MATH_COLORS.paramPrimary}}{${alphaVal}}}`;
   }, [params.powerAlpha]);
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {

@@ -2,43 +2,10 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { knowledgeTree } from "./knowledgeTree";
-import { routeEntries } from "./routeEntries";
+import { routeEntries, ANIMATION_ROUTE_MAP } from "./routeEntries";
 
-// ── 读取 ANIMATION_ROUTE_MAP（从 KnowledgeTreeHome.tsx 源码中提取） ──
 function extractRouteMap(): Record<string, string> {
-  const filePath = resolve(__dirname, "../features/home/KnowledgeTreeHome.tsx");
-  const src = readFileSync(filePath, "utf-8");
-
-  // 提取 ANIMATION_ROUTE_MAP 对象体
-  const mapStart = src.indexOf("const ANIMATION_ROUTE_MAP");
-  expect(mapStart).toBeGreaterThanOrEqual(0);
-
-  const objectStart = src.indexOf("{", mapStart);
-  const objectBody = src.slice(objectStart);
-
-  const entries: [string, string][] = [];
-  const entryRegex = /"([^"]+)":\s*"([^"]+)"/g;
-  let match;
-  while ((match = entryRegex.exec(objectBody)) !== null) {
-    entries.push([match[1], match[2]]);
-    // 停在第一个非 map 的代码处（如 "// 重要性"）
-    if (
-      objectBody[match.index + match[0].length + 1] === "}" ||
-      objectBody[match.index + match[0].length + 1] === "\n"
-    ) {
-      const nextNonWhitespace = objectBody
-        .slice(match.index + match[0].length + 1)
-        .trimStart();
-      if (
-        nextNonWhitespace.startsWith("}") ||
-        nextNonWhitespace.startsWith("//")
-      ) {
-        // 可能已到末尾，继续检查
-      }
-    }
-  }
-
-  return Object.fromEntries(entries);
+  return ANIMATION_ROUTE_MAP;
 }
 
 // ── 从 routeEntries 获取所有已注册路由 ──

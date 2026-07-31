@@ -15,7 +15,6 @@ import {
   calculateHistogramStats,
   calculateStratifiedSampling,
   calculatePercentileShadeBins,
-  DEFAULT_BIN_INTERVALS,
 } from "@/math/statPercentile";
 
 interface StatPercentileSceneProps {

@@ -182,7 +182,7 @@ export function ProbabilityNormalAnimation() {
       calcIntervalProbability(muVal, sigVal, params.x1, params.x2) * 100
     ).toFixed(2);
 
-    return `f(x) = \\frac{1}{\\sqrt{2\\pi} \\cdot \\color{#D97706}{${sigVal.toFixed(1)}}} e^{-\\frac{(x - \\color{#EF4444}{${muVal.toFixed(1)}})^2}{2 \\cdot \\color{#D97706}{${sigVal.toFixed(1)}}^2}} \\quad P(${minX} \\le X \\le ${maxX}) = \\color{#059669}{${pVal}\\%}`;
+    return `f(x) = \\frac{1}{\\sqrt{2\\pi} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${sigVal.toFixed(1)}}} e^{-\\frac{(x - \\color{${MATH_COLORS.paramPrimary}}{${muVal.toFixed(1)}})^2}{2 \\cdot \\color{${MATH_COLORS.paramSecondary}}{${sigVal.toFixed(1)}}^2}} \\quad P(${minX} \\le X \\le ${maxX}) = \\color{${MATH_COLORS.paramTertiary}}{${pVal}\\%}`;
   }, [params, studyMode]);
 
   // 看板标题

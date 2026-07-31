@@ -200,9 +200,7 @@ export function DerivativeAnimation() {
                 </p>
                 <div className="my-1.5 p-1 bg-white rounded border border-neutral-100 text-center shadow-sm">
                   <KatexFormula
-                    formula={
-                      "\\lim_{\\color{#D97706}{\\Delta x} \\to 0} k_{\\text{割}} = k_{\\text{切}}"
-                    }
+                    formula={`\\lim_{\\color{${MATH_COLORS.paramSecondary}}{\\Delta x} \\to 0} k_{\\text{割}} = k_{\\text{切}}`}
                     mode="inline"
                   />
                 </div>

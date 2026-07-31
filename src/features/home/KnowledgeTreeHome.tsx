@@ -9,6 +9,7 @@ import {
   Activity,
 } from "lucide-react";
 import { knowledgeTree } from "@/data/knowledgeTree";
+import { ANIMATION_ROUTE_MAP } from "@/data/routeEntries";
 import type { KnowledgeNode } from "@/data/types";
 
 // 板块归类映射
@@ -58,42 +59,6 @@ const SECTIONS = [
     textColor: "text-amber-700",
   },
 ];
-
-// 动画路由映射
-const ANIMATION_ROUTE_MAP: Record<string, string> = {
-  "anim-set-venn": "/set",
-  "anim-logic-conditions": "/set-logic",
-  "anim-func-properties": "/function-domain",
-  "anim-func-explog": "/function-exponential",
-  "anim-func-zero": "/function-zero",
-  "anim-func-transform": "/transform",
-  "anim-func-composite": "/composite",
-  "anim-quadratic": "/quadratic",
-  "anim-derivative-tangent": "/derivative",
-  "anim-constant-single": "/constant-single",
-  "anim-constant-double": "/constant-double",
-  "anim-nike": "/nike-standard",
-  "anim-derivative-transcendental": "/derivative-transcendental",
-  "anim-derivative-shift": "/derivative-shift",
-  "anim-probability-counting": "/probability-counting",
-  "anim-probability-bayes": "/probability-bayes",
-  "anim-probability-distribution": "/probability-distribution",
-  "anim-probability-normal": "/statistics-normal",
-  "anim-stat-percentile": "/stat-percentile",
-  "anim-paired-data": "/paired-data-regression",
-  "anim-solid-rotation-body": "/solid-rotation-body",
-  "anim-solid-position": "/solid-position",
-  "anim-solid-surface-relation": "/solid-surface-relation",
-  "anim-solid-section": "/solid-section",
-  "anim-vector3d-basis": "/vector3d-basis",
-  "anim-solid-angle": "/solid-angle",
-  "anim-solid-distance": "/solid-distance",
-  "anim-solid-ball": "/solid-ball",
-  "anim-sequence": "/sequence-arithmetic",
-  "anim-sequence-geom": "/sequence-geometric",
-  "anim-sequence-sum": "/sequence-models",
-  "anim-sequence-recurrence": "/sequence-recurrence",
-};
 
 // 重要性标签映射
 const IMPORTANCE_MAP: Record<

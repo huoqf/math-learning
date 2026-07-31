@@ -47,7 +47,7 @@ interface Segment3DProps {
 function Segment3D({
   from,
   to,
-  color = "#94A3B8",
+  color = MATH_COLORS.axis,
   dashed = true,
   lineWidth = 1.5,
   opacity = 0.6,
@@ -61,7 +61,7 @@ function Segment3D({
       color={color}
       dashed={dashed}
       dashScale={8}
-      dashSize={0.2}
+      dashSize={0.15}
       gapSize={0.1}
       lineWidth={lineWidth}
       transparent
@@ -194,7 +194,7 @@ export default function Vector3DBasisAnimation() {
         step: meta.step ?? 0.1,
         description: meta.description,
         descriptionFormula: meta.descriptionFormula,
-        importance: meta.importance as any,
+        importance: meta.importance,
         marks: meta.marks,
       }));
   }, [params, activeMode]);
@@ -379,18 +379,54 @@ export default function Vector3DBasisAnimation() {
               />
 
               {/* 平行六面体 12 条虚线包络边 */}
-              <Segment3D from={box.xa} to={box.xy} color="#EF4444" />
-              <Segment3D from={box.yb} to={box.xy} color="#D97706" />
+              <Segment3D
+                from={box.xa}
+                to={box.xy}
+                color={MATH_COLORS.paramPrimary}
+              />
+              <Segment3D
+                from={box.yb}
+                to={box.xy}
+                color={MATH_COLORS.paramSecondary}
+              />
 
-              <Segment3D from={box.xa} to={box.xz} color="#EF4444" />
-              <Segment3D from={box.zc} to={box.xz} color="#059669" />
+              <Segment3D
+                from={box.xa}
+                to={box.xz}
+                color={MATH_COLORS.paramPrimary}
+              />
+              <Segment3D
+                from={box.zc}
+                to={box.xz}
+                color={MATH_COLORS.paramTertiary}
+              />
 
-              <Segment3D from={box.yb} to={box.yz} color="#D97706" />
-              <Segment3D from={box.zc} to={box.yz} color="#059669" />
+              <Segment3D
+                from={box.yb}
+                to={box.yz}
+                color={MATH_COLORS.paramSecondary}
+              />
+              <Segment3D
+                from={box.zc}
+                to={box.yz}
+                color={MATH_COLORS.paramTertiary}
+              />
 
-              <Segment3D from={box.xy} to={box.P} color="#64748B" />
-              <Segment3D from={box.xz} to={box.P} color="#64748B" />
-              <Segment3D from={box.yz} to={box.P} color="#64748B" />
+              <Segment3D
+                from={box.xy}
+                to={box.P}
+                color={MATH_COLORS.symmetryAxis}
+              />
+              <Segment3D
+                from={box.xz}
+                to={box.P}
+                color={MATH_COLORS.symmetryAxis}
+              />
+              <Segment3D
+                from={box.yz}
+                to={box.P}
+                color={MATH_COLORS.symmetryAxis}
+              />
             </>
           )}
 
@@ -411,21 +447,21 @@ export default function Vector3DBasisAnimation() {
                 from={pointA}
                 to={pointB}
                 dashed={false}
-                color="#8B5CF6"
+                color={MATH_COLORS.vectorProjection}
                 lineWidth={2}
               />
               <Segment3D
                 from={pointB}
                 to={pointC}
                 dashed={false}
-                color="#8B5CF6"
+                color={MATH_COLORS.vectorProjection}
                 lineWidth={2}
               />
               <Segment3D
                 from={pointC}
                 to={pointA}
                 dashed={false}
-                color="#8B5CF6"
+                color={MATH_COLORS.vectorProjection}
                 lineWidth={2}
               />
 

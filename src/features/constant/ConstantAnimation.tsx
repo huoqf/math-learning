@@ -10,7 +10,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/constant";
 import type { TransModelKey } from "@/math/constant";
@@ -210,39 +210,39 @@ export function ConstantAnimation() {
             polyStr = `f(x) = \\frac{e^x}{x+1}`;
           }
           const rangeStr = `x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
-          const lineStr = `y = \\color{#EF4444}{${params.a.toFixed(2)}}`;
+          const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}}`;
           return { line1: `${polyStr} \\quad ${rangeStr}`, line2: lineStr };
         } else {
           const polyStr = `f(x) = x^2 - 2x + 2 \\quad x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
-          const lineStr = `y = \\color{#EF4444}{${params.a.toFixed(2)}}`;
+          const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}}`;
           return { line1: polyStr, line2: lineStr };
         }
       } else {
         if (funModel === "transcendent") {
           let line1 = "";
           if (transModel === "ln_x_over_x" || transModel === "exp_minus_ax") {
-            line1 = `f(x) = e^x - \\color{#EF4444}{${params.a_axis.toFixed(2)}}x`;
+            line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2)}}x`;
           } else if (transModel === "a_ln_x_minus_x") {
-            line1 = `f(x) = \\color{#EF4444}{${params.a_axis.toFixed(2)}}\\ln x - x + 1`;
+            line1 = `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2)}}\\ln x - x + 1`;
           } else if (transModel === "exp_minus_a_x_plus_1") {
-            line1 = `f(x) = e^x - \\color{#EF4444}{${params.a_axis.toFixed(2)}}(x+1)`;
+            line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2)}}(x+1)`;
           }
           const line2 = `x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
           return { line1, line2 };
         } else {
-          const line1 = `f(x) = x^2 - 2\\color{#EF4444}{(${params.a_axis.toFixed(2)})}x + 2`;
+          const line1 = `f(x) = x^2 - 2\\color{${MATH_COLORS.paramPrimary}}{(${params.a_axis.toFixed(2)})}x + 2`;
           const line2 = `x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
           return { line1, line2 };
         }
       }
     } else {
       if (selectedLogic === "same_var") {
-        const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{#EF4444}{${params.yf.toFixed(2)}}, \\; g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{#D97706}{${params.yg.toFixed(2)}}`;
+        const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}}, \\; g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{${MATH_COLORS.paramSecondary}}{${params.yg.toFixed(2)}}`;
         const goalStr = `\\text{目标：对 } \\forall x \\in I_1 \\cap I_2 = [1.50, 2.00], \\; f(x) \\ge g(x)`;
         return { line1: fStr, line2: goalStr };
       } else {
-        const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{#EF4444}{${params.yf.toFixed(2)}} \\quad x \\in [0.5, 2.0]`;
-        const gStr = `g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{#D97706}{${params.yg.toFixed(2)}} \\quad x \\in [1.5, 3.0]`;
+        const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}} \\quad x \\in [0.5, 2.0]`;
+        const gStr = `g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{${MATH_COLORS.paramSecondary}}{${params.yg.toFixed(2)}} \\quad x \\in [1.5, 3.0]`;
         return { line1: fStr, line2: gStr };
       }
     }

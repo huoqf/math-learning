@@ -10,7 +10,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/constant";
 import { DoubleVarScene } from "./components/DoubleVarScene";
@@ -21,30 +21,18 @@ export function DoubleVarPage() {
   >("all_all");
 
   const [params, setParams] = useState<Record<string, number>>(() => ({
-    yf: defaultParams.yf,
-    xf: defaultParams.xf,
-    yg: defaultParams.yg,
-    xg: defaultParams.xg,
+    ...defaultParams,
   }));
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
 
-  const scale = useSceneScale({ vp, xRange: [-1, 5], yRange: [-2, 5.5] });
-
-  const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleReset = () => {
-    setParams({
-      yf: defaultParams.yf,
-      xf: defaultParams.xf,
-      yg: defaultParams.yg,
-      xg: defaultParams.xg,
-    });
-  };
+  const scale = useSceneScale({
+    vp,
+    xRange: [-0.5, 4],
+    yRange: [-3, 7],
+  });
 
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-constant-double", params, {
@@ -52,21 +40,18 @@ export function DoubleVarPage() {
     });
   }, [params, selectedLogic]);
 
+  const handleParamChange = (key: string, value: number) => {
+    setParams((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleReset = () => {
+    setParams({ ...defaultParams });
+  };
+
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keys = ["yf", "xf", "yg", "xg"];
+    const keys = ["xf", "yf", "xg", "yg"];
     return keys.map((key) => {
       const meta = paramMeta[key];
-      let description = meta.description;
-      let descriptionFormula = meta.descriptionFormula;
-
-      if (key === "yf") {
-        description = "【主参数-红】控制抛物线 f(x) 顶点的 y_f 坐标";
-        descriptionFormula = "【主参数-红】控制抛物线 $f(x)$ 顶点的 $y_f$ 坐标";
-      } else if (key === "yg") {
-        description = "【次参数-橙】控制抛物线 g(x) 顶点的 y_g 坐标";
-        descriptionFormula = "【次参数-橙】控制抛物线 $g(x)$ 顶点的 $y_g$ 坐标";
-      }
-
       return {
         key,
         label: meta.label,
@@ -74,9 +59,9 @@ export function DoubleVarPage() {
         value: params[key] ?? meta.defaultValue ?? 0,
         min: meta.min,
         max: meta.max,
-        step: meta.step ?? 0.05,
-        description,
-        descriptionFormula,
+        step: meta.step ?? 0.1,
+        description: meta.description,
+        descriptionFormula: meta.descriptionFormula,
         importance: meta.importance,
         marks: meta.marks,
       };
@@ -85,12 +70,12 @@ export function DoubleVarPage() {
 
   const formulasLatex = useMemo(() => {
     if (selectedLogic === "same_var") {
-      const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{#EF4444}{${params.yf.toFixed(2)}}, \\; g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{#D97706}{${params.yg.toFixed(2)}}`;
+      const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}}, \\; g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{${MATH_COLORS.paramSecondary}}{${params.yg.toFixed(2)}}`;
       const goalStr = `\\text{目标：对 } \\forall x \\in I_1 \\cap I_2 = [1.50, 2.00], \\; f(x) \\ge g(x)`;
       return { line1: fStr, line2: goalStr };
     } else {
-      const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{#EF4444}{${params.yf.toFixed(2)}} \\quad x \\in [0.5, 2.0]`;
-      const gStr = `g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{#D97706}{${params.yg.toFixed(2)}} \\quad x \\in [1.5, 3.0]`;
+      const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}} \\quad x \\in [0.5, 2.0]`;
+      const gStr = `g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{${MATH_COLORS.paramSecondary}}{${params.yg.toFixed(2)}} \\quad x \\in [1.5, 3.0]`;
       return { line1: fStr, line2: gStr };
     }
   }, [selectedLogic, params]);

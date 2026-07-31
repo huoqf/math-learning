@@ -3,7 +3,7 @@
  * 数列实验室声明式参数注册表
  */
 import { MATH_COLORS } from "@/theme";
-import type { ParamImportance } from "@/data/types";
+import type { ParamMeta } from "@/data/types";
 
 export interface SequenceParams {
   a1: number;
@@ -31,22 +31,9 @@ export const defaultParams: SequenceParams = {
   coefC: 1,
 };
 
-export const paramMeta: Record<
-  string,
-  {
-    label: string;
-    labelFormula?: string;
-    defaultValue: number;
-    min: number;
-    max: number;
-    step: number;
-    description: string;
-    descriptionFormula?: string;
-    importance?: ParamImportance;
-    marks?: Array<{ value: number; label: string; labelFormula?: string }>;
-  }
-> = {
+export const paramMeta: Record<string, ParamMeta> = {
   a1: {
+    key: "a1",
     label: "首项 a₁",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a_1}`,
     defaultValue: 3,
@@ -58,6 +45,7 @@ export const paramMeta: Record<
     marks: [{ value: 0, label: "0", labelFormula: "0" }],
   },
   d: {
+    key: "d",
     label: "公差 d",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{d}`,
     defaultValue: -1,
@@ -75,6 +63,7 @@ export const paramMeta: Record<
     ],
   },
   q: {
+    key: "q",
     label: "公比 q",
     labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{q}`,
     defaultValue: 0.5,
@@ -91,6 +80,7 @@ export const paramMeta: Record<
     ],
   },
   N: {
+    key: "N",
     label: "展示项数 N",
     labelFormula: "N",
     defaultValue: 8,
@@ -102,6 +92,7 @@ export const paramMeta: Record<
     importance: "advanced",
   },
   p_rec: {
+    key: "p_rec",
     label: "递推系数 p",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{p}`,
     defaultValue: 2,
@@ -116,6 +107,7 @@ export const paramMeta: Record<
     ],
   },
   q_rec: {
+    key: "q_rec",
     label: "递推常数 q",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{q}`,
     defaultValue: 1,
@@ -127,6 +119,7 @@ export const paramMeta: Record<
     marks: [{ value: 0, label: "纯等比 (q=0)", labelFormula: "q=0" }],
   },
   a2: {
+    key: "a2",
     label: "第二项 a₂",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{a_2}`,
     defaultValue: 2,
@@ -137,6 +130,7 @@ export const paramMeta: Record<
     importance: "core",
   },
   coefA: {
+    key: "coefA",
     label: "分子系数 A",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{A}`,
     defaultValue: 2,
@@ -147,6 +141,7 @@ export const paramMeta: Record<
     importance: "core",
   },
   coefB: {
+    key: "coefB",
     label: "分母二次项 B",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{B}`,
     defaultValue: 1,
@@ -158,6 +153,7 @@ export const paramMeta: Record<
     marks: [{ value: 0, label: "纯比例 (B=0)", labelFormula: "B=0" }],
   },
   coefC: {
+    key: "coefC",
     label: "分母常数 C",
     labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{C}`,
     defaultValue: 1,

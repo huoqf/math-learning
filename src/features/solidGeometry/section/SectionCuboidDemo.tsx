@@ -261,7 +261,7 @@ export default function SectionCuboidDemo() {
           value: val,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });

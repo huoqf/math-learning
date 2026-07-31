@@ -11,7 +11,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SetScene } from "./components/SetScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/set";
@@ -42,23 +42,23 @@ export function SetAnimation() {
     [animId, params, vennOp],
   );
 
-  // 动态公式 Latex（对 A 施加 paramPrimary #EF4444，对 B 施加 paramSecondary #D97706）
+  // 动态公式 Latex（对 A 施加 paramPrimary，对 B 施加 paramSecondary）
   const formulaLatex = useMemo(() => {
     if (activeTab === "venn") {
       switch (vennOp) {
         case "intersection":
-          return "\\color{#EF4444}{A} \\cap \\color{#D97706}{B} = \\{ x \\mid x \\in \\color{#EF4444}{A} \\land x \\in \\color{#D97706}{B} \\}";
+          return `\\color{${MATH_COLORS.paramPrimary}}{A} \\cap \\color{${MATH_COLORS.paramSecondary}}{B} = \\{ x \\mid x \\in \\color{${MATH_COLORS.paramPrimary}}{A} \\land x \\in \\color{${MATH_COLORS.paramSecondary}}{B} \\}`;
         case "union":
-          return "\\color{#EF4444}{A} \\cup \\color{#D97706}{B} = \\{ x \\mid x \\in \\color{#EF4444}{A} \\lor x \\in \\color{#D97706}{B} \\}";
+          return `\\color{${MATH_COLORS.paramPrimary}}{A} \\cup \\color{${MATH_COLORS.paramSecondary}}{B} = \\{ x \\mid x \\in \\color{${MATH_COLORS.paramPrimary}}{A} \\lor x \\in \\color{${MATH_COLORS.paramSecondary}}{B} \\}`;
         case "complement_A":
-          return "\\complement_U \\color{#EF4444}{A} = \\{ x \\mid x \\in U \\land x \\notin \\color{#EF4444}{A} \\}";
+          return `\\complement_U \\color{${MATH_COLORS.paramPrimary}}{A} = \\{ x \\mid x \\in U \\land x \\notin \\color{${MATH_COLORS.paramPrimary}}{A} \\}`;
         case "difference_A_B":
-          return "\\color{#EF4444}{A} \\setminus \\color{#D97706}{B} = \\{ x \\mid x \\in \\color{#EF4444}{A} \\land x \\notin \\color{#D97706}{B} \\}";
+          return `\\color{${MATH_COLORS.paramPrimary}}{A} \\setminus \\color{${MATH_COLORS.paramSecondary}}{B} = \\{ x \\mid x \\in \\color{${MATH_COLORS.paramPrimary}}{A} \\land x \\notin \\color{${MATH_COLORS.paramSecondary}}{B} \\}`;
         default:
-          return "\\color{#EF4444}{A} \\cap \\color{#D97706}{B}";
+          return `\\color{${MATH_COLORS.paramPrimary}}{A} \\cap \\color{${MATH_COLORS.paramSecondary}}{B}`;
       }
     } else {
-      return "p: x \\in \\color{#EF4444}{A}, \\quad q: x \\in \\color{#D97706}{B} \\quad (p \\implies q \\iff \\color{#EF4444}{A} \\subseteq \\color{#D97706}{B})";
+      return `p: x \\in \\color{${MATH_COLORS.paramPrimary}}{A}, \\quad q: x \\in \\color{${MATH_COLORS.paramSecondary}}{B} \\quad (p \\implies q \\iff \\color{${MATH_COLORS.paramPrimary}}{A} \\subseteq \\color{${MATH_COLORS.paramSecondary}}{B})`;
     }
   }, [activeTab, vennOp]);
 
