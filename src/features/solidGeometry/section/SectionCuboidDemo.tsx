@@ -414,7 +414,7 @@ export default function SectionCuboidDemo() {
               <>
                 <mesh position={mathToThree(pointPPos)}>
                   <sphereGeometry args={[0.08, 16, 16]} />
-                  <meshBasicMaterial color="#DC2626" />
+                  <meshBasicMaterial color={MATH_COLORS.highlight} />
                 </mesh>
                 <PointLabel3D
                   position={pointPPos}
@@ -424,7 +424,7 @@ export default function SectionCuboidDemo() {
 
                 <mesh position={mathToThree(pointQPos)}>
                   <sphereGeometry args={[0.08, 16, 16]} />
-                  <meshBasicMaterial color="#DC2626" />
+                  <meshBasicMaterial color={MATH_COLORS.highlight} />
                 </mesh>
                 <PointLabel3D
                   position={pointQPos}
@@ -434,7 +434,7 @@ export default function SectionCuboidDemo() {
 
                 <mesh position={mathToThree(pointRPos)}>
                   <sphereGeometry args={[0.08, 16, 16]} />
-                  <meshBasicMaterial color="#DC2626" />
+                  <meshBasicMaterial color={MATH_COLORS.highlight} />
                 </mesh>
                 <PointLabel3D
                   position={pointRPos}

@@ -1,0 +1,130 @@
+const defaultParams = {
+  a: 1.2,
+  a_axis: 1,
+  m: 0.5,
+  n: 2.5,
+  yf: 2.5,
+  xf: 1.25,
+  yg: 1.5,
+  xg: 2.25
+};
+const paramMeta = {
+  a: {
+    key: "a",
+    label: "水平线高度 a",
+    labelFormula: "a",
+    min: -1,
+    max: 4,
+    step: 0.05,
+    defaultValue: 1.2,
+    importance: "core",
+    description: "作为参变分离后的目标值，代表水平直线 y = a",
+    descriptionFormula: "作为参变分离后的目标值，代表水平直线 $y = a$",
+    marks: [
+      {
+        value: 0.37,
+        variant: "recommended",
+        label: "1/e",
+        labelFormula: "1/e"
+      }
+    ]
+  },
+  a_axis: {
+    key: "a_axis",
+    label: "参数 a (讨论项)",
+    labelFormula: "a",
+    min: -1,
+    max: 4,
+    step: 0.05,
+    defaultValue: 1,
+    importance: "core",
+    description: "含参函数的讨论系数（二次函数对称轴或超越函数极小值控制）",
+    descriptionFormula: "\\text{含参函数的讨论系数（二次函数对称轴或超越函数极小值控制）}",
+    marks: [
+      { value: 0.5, variant: "recommended", label: "区间左界" },
+      { value: 2.5, variant: "recommended", label: "区间右界" },
+      {
+        value: 2.72,
+        variant: "critical",
+        label: "e (恒成立界限)",
+        labelFormula: "e"
+      }
+    ]
+  },
+  m: {
+    key: "m",
+    label: "区间左边界 m",
+    labelFormula: "m",
+    min: -1,
+    max: 4,
+    step: 0.05,
+    defaultValue: 0.5,
+    importance: "advanced",
+    description: "函数研究区间 [m, n] 的左端点",
+    descriptionFormula: "函数研究区间 $[m, n]$ 的左端点"
+  },
+  n: {
+    key: "n",
+    label: "区间右边界 n",
+    labelFormula: "n",
+    min: -1,
+    max: 4,
+    step: 0.05,
+    defaultValue: 2.5,
+    importance: "advanced",
+    description: "函数研究区间 [m, n] 的右端点",
+    descriptionFormula: "函数研究区间 $[m, n]$ 的右端点"
+  },
+  yf: {
+    key: "yf",
+    label: "f(x) 顶点 y_f",
+    labelFormula: "y_f",
+    min: 1,
+    max: 4,
+    step: 0.05,
+    defaultValue: 2.5,
+    importance: "core",
+    description: "控制函数 f(x) = (x - x_f)² + y_f 的最低高度",
+    descriptionFormula: "\\text{控制函数 } f(x) = (x - x_f)^2 + y_f \\text{ 的最低高度}"
+  },
+  xf: {
+    key: "xf",
+    label: "f(x) 对称轴 x_f",
+    labelFormula: "x_f",
+    min: 0.5,
+    max: 2,
+    step: 0.05,
+    defaultValue: 1.25,
+    importance: "advanced",
+    description: "控制函数 f(x) 的对称轴在 I₁ = [0.5, 2.0] 内左右移动",
+    descriptionFormula: "\\text{控制函数 } f(x) \\text{ 的对称轴在 } I_1 = [0.5, 2.0] \\text{ 内左右移动}"
+  },
+  yg: {
+    key: "yg",
+    label: "g(x) 顶点 y_g",
+    labelFormula: "y_g",
+    min: 0,
+    max: 3,
+    step: 0.05,
+    defaultValue: 1.5,
+    importance: "core",
+    description: "控制函数 g(x) = -(x - x_g)² + y_g 的最高高度",
+    descriptionFormula: "\\text{控制函数 } g(x) = -(x - x_g)^2 + y_g \\text{ 的最高高度}"
+  },
+  xg: {
+    key: "xg",
+    label: "g(x) 对称轴 x_g",
+    labelFormula: "x_g",
+    min: 1.5,
+    max: 3,
+    step: 0.05,
+    defaultValue: 2.25,
+    importance: "advanced",
+    description: "控制函数 g(x) 的对称轴在 I₂ = [1.5, 3.0] 内左右移动",
+    descriptionFormula: "\\text{控制函数 } g(x) \\text{ 的对称轴在 } I_2 = [1.5, 3.0] \\text{ 内左右移动}"
+  }
+};
+export {
+  defaultParams as d,
+  paramMeta as p
+};

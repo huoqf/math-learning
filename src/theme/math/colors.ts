@@ -20,6 +20,15 @@ export function withAlpha(hex: string, alpha: number): string {
   return hex;
 }
 
+// ─── 集合与逻辑 (Set & Logic) ──────────────────────────────────────────────────
+export const SET_COLORS = {
+  setA: "#2563EB", // 集合 A 区域/轮廓 — 经典蓝
+  setB: "#8B5CF6", // 集合 B 区域/轮廓 — 葡萄紫
+  setIntersection: "#10B981", // 集合交集 A ∩ B 高亮 — 翡翠绿
+  setUnion: "#3B82F6", // 集合并集 A ∪ B 高亮 — 宝蓝
+  setComplement: "#F59E0B", // 补集 ∁_U A 高亮 — 琥珀黄
+} as const;
+
 // ─── 代数与数列分析 (Algebra, Sequences & Analysis) ───────────────────────────
 export const ALGEBRA_COLORS = {
   sequence: "#2563EB", // 主数列通项 a_n 散点 — 经典蓝
@@ -171,6 +180,7 @@ export const CANVAS_COLORS = {
 
 // ─── 聚合导出 ───────────────────────────────────────────────────────────────
 export const MATH_COLORS = {
+  ...SET_COLORS,
   ...ALGEBRA_COLORS,
   ...CALCULUS_COLORS,
   ...TRIGONOMETRY_COLORS,

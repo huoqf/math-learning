@@ -149,7 +149,7 @@ export function SetScene({
             cx={posB.x}
             cy={posB.y}
             r={radiusBInPx}
-            fill={withAlpha(MATH_COLORS.function, 0.4)}
+            fill={withAlpha(MATH_COLORS.setIntersection, 0.4)}
             stroke="none"
           />
         </g>
@@ -163,7 +163,7 @@ export function SetScene({
               cx={posA.x}
               cy={posA.y}
               r={radiusAInPx}
-              fill={withAlpha(MATH_COLORS.function, 0.3)}
+              fill={withAlpha(MATH_COLORS.setUnion, 0.3)}
             />
           )}
           {rB > 0 && (
@@ -171,7 +171,7 @@ export function SetScene({
               cx={posB.x}
               cy={posB.y}
               r={radiusBInPx}
-              fill={withAlpha(MATH_COLORS.function, 0.3)}
+              fill={withAlpha(MATH_COLORS.setUnion, 0.3)}
             />
           )}
         </g>
@@ -186,7 +186,7 @@ export function SetScene({
             y={scale.originY - 3.8 * scale.scaleY}
             width={11 * scale.scaleX}
             height={7.6 * scale.scaleY}
-            fill={withAlpha(MATH_COLORS.function, 0.25)}
+            fill={withAlpha(MATH_COLORS.setComplement, 0.25)}
             rx={12}
           />
           {/* 用白色把 A 的区域盖住 */}
@@ -209,7 +209,7 @@ export function SetScene({
               cx={posA.x}
               cy={posA.y}
               r={radiusAInPx}
-              fill={withAlpha(MATH_COLORS.paramPrimary, 0.35)}
+              fill={withAlpha(MATH_COLORS.setA, 0.35)}
             />
           )}
           {rB > 0 && (
@@ -233,15 +233,15 @@ export function SetScene({
             fill={
               vennOp === "intersection" || vennOp === "union"
                 ? "none"
-                : withAlpha(MATH_COLORS.paramPrimary, 0.05)
+                : withAlpha(MATH_COLORS.setA, 0.05)
             }
-            stroke={MATH_COLORS.paramPrimary}
+            stroke={MATH_COLORS.setA}
             strokeWidth={2.5}
           />
           <text
             x={posA.x - radiusAInPx * 0.6}
             y={posA.y - radiusAInPx * 0.6}
-            fill={MATH_COLORS.paramPrimary}
+            fill={MATH_COLORS.setA}
             fontSize={fontScale(16)}
             fontWeight="extrabold"
           >
@@ -260,15 +260,15 @@ export function SetScene({
             fill={
               vennOp === "intersection" || vennOp === "union"
                 ? "none"
-                : withAlpha(MATH_COLORS.paramSecondary, 0.05)
+                : withAlpha(MATH_COLORS.setB, 0.05)
             }
-            stroke={MATH_COLORS.paramSecondary}
+            stroke={MATH_COLORS.setB}
             strokeWidth={2.5}
           />
           <text
             x={posB.x + radiusBInPx * 0.6}
             y={posB.y - radiusBInPx * 0.6}
-            fill={MATH_COLORS.paramSecondary}
+            fill={MATH_COLORS.setB}
             fontSize={fontScale(16)}
             fontWeight="extrabold"
           >

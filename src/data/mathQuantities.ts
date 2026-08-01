@@ -31,6 +31,7 @@ import { buildSequencePanel } from "./builders/sequence";
 import { buildConicDefinitionPanel } from "./builders/conicDefinition";
 import { buildLineEquationPanel } from "./builders/lineEquation";
 import { buildTrigLinesPanel } from "./builders/trigLines";
+import { buildTrigIdentityPanel } from "./builders/trigIdentity";
 
 export type { MathPanelData } from "./types";
 
@@ -47,8 +48,12 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-trig-identity":
+    case "anim-trig-unit-circle":
+      return buildTrigIdentityPanel(params, config);
     case "anim-stat-percentile":
       return buildStatPercentilePanel(params, config);
+
     case "anim-paired-data":
       return buildPairedDataPanel(params, config);
     case "anim-probability-normal":

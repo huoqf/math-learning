@@ -27,10 +27,11 @@ import {
   lineEquationNode,
   lineEquationLoader,
 } from "@/features/lineEquation/meta";
+import { trigLinesNode, trigLinesLoader } from "@/features/trigLines/meta";
 import {
-  trigLinesNode,
-  trigLinesLoader,
-} from "@/features/trigLines/meta";
+  trigIdentityNode,
+  trigIdentityLoader,
+} from "@/features/trigIdentity/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
@@ -42,6 +43,10 @@ const legacyEntries: RouteEntry[] = [
   {
     node: trigLinesNode,
     loader: trigLinesLoader as any,
+  },
+  {
+    node: trigIdentityNode,
+    loader: trigIdentityLoader as any,
   },
   {
     node: {
