@@ -6,7 +6,11 @@
 import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { CoordinateGrid, InteractivePoint, VectorArrow } from "@/components/Math";
+import {
+  CoordinateGrid,
+  InteractivePoint,
+  VectorArrow,
+} from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateTrigLines, pointToAngleDeg } from "../math/trigLines";
@@ -44,7 +48,18 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
 
   // 数学计算
   const trig = useMemo(() => calculateTrigLines(alphaDeg), [alphaDeg]);
-  const { pointP, pointM, pointA, pointT, isTanDefined, alphaRad, normalizeDeg, sinVal, cosVal, tanVal } = trig;
+  const {
+    pointP,
+    pointM,
+    pointA,
+    pointT,
+    isTanDefined,
+    alphaRad,
+    normalizeDeg,
+    sinVal,
+    cosVal,
+    tanVal,
+  } = trig;
 
   // 坐标转换
   const centerPt = mathToDesign(0, 0, scale);
@@ -61,20 +76,89 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
     onParamChange("alphaDeg", newDeg);
   };
 
-  // 生成动角弧 path
-  const arcPath = useMemo(() => {
-    const r = Math.min(scale.scaleX * 0.35, 45); // 角度弧半径
-    const endRad = alphaRad;
-    const isLarge = Math.abs(alphaDeg) > 180 ? 1 : 0;
-    // SVG y 轴向下，正角在数学上逆时针，对应 SVG 中 sweep=0（y 增大向下时需反转）
-    const sweep = alphaDeg >= 0 ? 0 : 1;
+  // 生成动角弧阿基米德螺线 path、方向箭头与智能标注位置
+  const arcData = useMemo(() => {
+    const baseRadius = Math.min(scale.scaleX * 0.28, 36);
+    const radiusStepPerCircle = 9; // 每 360 度螺线半径递增像素
 
-    const startX = centerPt.x + r;
-    const startY = centerPt.y;
-    const endX = centerPt.x + r * Math.cos(endRad);
-    const endY = centerPt.y - r * Math.sin(endRad);
+    if (Math.abs(alphaDeg) < 0.1) {
+      return {
+        path: "",
+        arrowPoints: null,
+        labelPos: {
+          x: centerPt.x + baseRadius + 14,
+          y: centerPt.y - 12,
+        },
+      };
+    }
 
-    return `M ${startX} ${startY} A ${r} ${r} 0 ${isLarge} ${sweep} ${endX} ${endY}`;
+    const isPositive = alphaDeg > 0;
+    const totalAngleAbs = Math.abs(alphaDeg);
+    const steps = Math.max(16, Math.ceil(totalAngleAbs / 4));
+
+    const pathPoints: { x: number; y: number }[] = [];
+
+    for (let i = 0; i <= steps; i++) {
+      const progress = i / steps;
+      const currentRad = alphaRad * progress;
+      const currentDegAbs = totalAngleAbs * progress;
+
+      // 半径随旋转圈数递增 (阿基米德螺线)
+      const r = baseRadius + (currentDegAbs / 360) * radiusStepPerCircle;
+
+      const x = centerPt.x + r * Math.cos(currentRad);
+      const y = centerPt.y - r * Math.sin(currentRad);
+
+      pathPoints.push({ x, y });
+    }
+
+    const path = pathPoints.reduce((acc, pt, idx) => {
+      return idx === 0
+        ? `M ${pt.x.toFixed(2)} ${pt.y.toFixed(2)}`
+        : `${acc} L ${pt.x.toFixed(2)} ${pt.y.toFixed(2)}`;
+    }, "");
+
+    // 计算末端切线方向与箭头 (3顶点)
+    const lastPt = pathPoints[pathPoints.length - 1];
+    const prevPt = pathPoints[pathPoints.length - 2];
+    const dx = lastPt.x - prevPt.x;
+    const dy = lastPt.y - prevPt.y;
+    const tangentRad = Math.atan2(dy, dx);
+
+    const arrowLength = 7;
+    const arrowWidth = 5;
+    const backX = lastPt.x - arrowLength * Math.cos(tangentRad);
+    const backY = lastPt.y - arrowLength * Math.sin(tangentRad);
+    const perpX = -Math.sin(tangentRad) * (arrowWidth / 2);
+    const perpY = Math.cos(tangentRad) * (arrowWidth / 2);
+
+    const arrowPoints = [
+      `${lastPt.x.toFixed(2)},${lastPt.y.toFixed(2)}`,
+      `${(backX + perpX).toFixed(2)},${(backY + perpY).toFixed(2)}`,
+      `${(backX - perpX).toFixed(2)},${(backY - perpY).toFixed(2)}`,
+    ].join(" ");
+
+    // 智能文本位置定位
+    let labelRad: number;
+    if (totalAngleAbs <= 360) {
+      labelRad = alphaRad / 2;
+    } else {
+      labelRad = alphaRad - (isPositive ? Math.PI : -Math.PI);
+    }
+
+    const labelDegAbs = (Math.abs(labelRad) * 180) / Math.PI;
+    const labelR = baseRadius + (labelDegAbs / 360) * radiusStepPerCircle + 14;
+
+    const labelPos = {
+      x: centerPt.x + labelR * Math.cos(labelRad),
+      y: centerPt.y - labelR * Math.sin(labelRad),
+    };
+
+    return {
+      path,
+      arrowPoints,
+      labelPos,
+    };
   }, [centerPt, scale.scaleX, alphaRad, alphaDeg]);
 
   // 第一象限扇形/比较三角形面积路径
@@ -127,41 +211,93 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
       {/* 象限模式下的四象限符号说明浮层 */}
       {studyMode === "quadrant" && (
         <g opacity={0.65}>
-          <text x={mathToDesign(0.7, 0.6, scale).x} y={mathToDesign(0.7, 0.6, scale).y} fill={MATH_COLORS.function} fontSize={fontScale(11)} fontWeight="bold" textAnchor="middle" className="select-none pointer-events-none">
-            Ⅰ 全正(+)
-          </text>
-          <text x={mathToDesign(-0.7, 0.6, scale).x} y={mathToDesign(-0.7, 0.6, scale).y} fill={MATH_COLORS.paramPrimary} fontSize={fontScale(11)} fontWeight="bold" textAnchor="middle" className="select-none pointer-events-none">
-            Ⅱ sin+
-          </text>
-          <text x={mathToDesign(-0.7, -0.6, scale).x} y={mathToDesign(-0.7, -0.6, scale).y} fill={MATH_COLORS.paramTertiary} fontSize={fontScale(11)} fontWeight="bold" textAnchor="middle" className="select-none pointer-events-none">
-            Ⅲ tan+
-          </text>
-          <text x={mathToDesign(0.7, -0.6, scale).x} y={mathToDesign(0.7, -0.6, scale).y} fill={MATH_COLORS.paramSecondary} fontSize={fontScale(11)} fontWeight="bold" textAnchor="middle" className="select-none pointer-events-none">
-            Ⅳ cos+
-          </text>
-        </g>
-      )}
-
-      {/* 动角弧度弧线 */}
-      {showArc === 1 && (
-        <g>
-          <path
-            d={arcPath}
-            fill="none"
-            stroke={MATH_COLORS.function}
-            strokeWidth={2}
-          />
           <text
-            x={centerPt.x + Math.cos(alphaRad / 2) * (Math.min(scale.scaleX * 0.35, 45) + 14)}
-            y={centerPt.y - Math.sin(alphaRad / 2) * (Math.min(scale.scaleX * 0.35, 45) + 14)}
+            x={mathToDesign(0.7, 0.6, scale).x}
+            y={mathToDesign(0.7, 0.6, scale).y}
             fill={MATH_COLORS.function}
             fontSize={fontScale(11)}
             fontWeight="bold"
             textAnchor="middle"
             className="select-none pointer-events-none"
           >
-            α={alphaDeg}°
+            Ⅰ 全正(+)
           </text>
+          <text
+            x={mathToDesign(-0.7, 0.6, scale).x}
+            y={mathToDesign(-0.7, 0.6, scale).y}
+            fill={MATH_COLORS.paramPrimary}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            textAnchor="middle"
+            className="select-none pointer-events-none"
+          >
+            Ⅱ sin+
+          </text>
+          <text
+            x={mathToDesign(-0.7, -0.6, scale).x}
+            y={mathToDesign(-0.7, -0.6, scale).y}
+            fill={MATH_COLORS.paramTertiary}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            textAnchor="middle"
+            className="select-none pointer-events-none"
+          >
+            Ⅲ tan+
+          </text>
+          <text
+            x={mathToDesign(0.7, -0.6, scale).x}
+            y={mathToDesign(0.7, -0.6, scale).y}
+            fill={MATH_COLORS.paramSecondary}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            textAnchor="middle"
+            className="select-none pointer-events-none"
+          >
+            Ⅳ cos+
+          </text>
+        </g>
+      )}
+
+      {/* 动角弧度弧线、方向箭头与带防遮挡背景框的标注 */}
+      {showArc === 1 && (
+        <g>
+          {arcData.path && (
+            <path
+              d={arcData.path}
+              fill="none"
+              stroke={MATH_COLORS.function}
+              strokeWidth={2}
+            />
+          )}
+          {arcData.arrowPoints && (
+            <polygon points={arcData.arrowPoints} fill={MATH_COLORS.function} />
+          )}
+          {/* 动角标注文本 (带防遮挡半透明背景框) */}
+          <g
+            transform={`translate(${arcData.labelPos.x.toFixed(2)}, ${arcData.labelPos.y.toFixed(2)})`}
+          >
+            <rect
+              x={-28}
+              y={-10}
+              width={56}
+              height={20}
+              rx={4}
+              fill={withAlpha(MATH_COLORS.white, 0.88)}
+              stroke={withAlpha(MATH_COLORS.function, 0.4)}
+              strokeWidth={1}
+            />
+            <text
+              x={0}
+              y={4}
+              fill={MATH_COLORS.function}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              textAnchor="middle"
+              className="select-none pointer-events-none"
+            >
+              α={alphaDeg}°
+            </text>
+          </g>
         </g>
       )}
 
@@ -248,21 +384,25 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
       )}
 
       {/* 3. 正切线 AT (有向线段，始点 A(1,0)，终点 T(1, tan α)) - 翠绿 #059669 */}
-      {showTangent === 1 && isTanDefined && pointT && Math.abs(tanVal ?? 0) > 1e-4 && Math.abs(tanVal ?? 0) < 3.5 && (
-        <VectorArrow
-          from={[1, 0]}
-          to={[1, pointT.y]}
-          scale={scale}
-          color={MATH_COLORS.paramTertiary}
-          strokeWidth={3.5}
-          headLength={9}
-          headWidth={6}
-          fontScale={fontScale}
-          label="AT"
-          labelOffset={[18, 0]}
-          labelSize={10}
-        />
-      )}
+      {showTangent === 1 &&
+        isTanDefined &&
+        pointT &&
+        Math.abs(tanVal ?? 0) > 1e-4 &&
+        Math.abs(tanVal ?? 0) < 3.5 && (
+          <VectorArrow
+            from={[1, 0]}
+            to={[1, pointT.y]}
+            scale={scale}
+            color={MATH_COLORS.paramTertiary}
+            strokeWidth={3.5}
+            headLength={9}
+            headWidth={6}
+            fontScale={fontScale}
+            label="AT"
+            labelOffset={[18, 0]}
+            labelSize={10}
+          />
+        )}
 
       {/* 当正切线不存在 (90°, 270°) 时的平行渐近提示 */}
       {showTangent === 1 && !isTanDefined && (
@@ -325,7 +465,12 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
       )}
 
       {/* 切点 A(1,0) */}
-      <circle cx={aDesign.x} cy={aDesign.y} r={3.5} fill={MATH_COLORS.paramTertiary} />
+      <circle
+        cx={aDesign.x}
+        cy={aDesign.y}
+        r={3.5}
+        fill={MATH_COLORS.paramTertiary}
+      />
       <text
         x={aDesign.x + 8}
         y={aDesign.y + 14}
@@ -338,21 +483,29 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
       </text>
 
       {/* 正切交点 T */}
-      {tDesign && isTanDefined && Math.abs(tanVal ?? 0) < 3.5 && (
-        <g>
-          <circle cx={tDesign.x} cy={tDesign.y} r={4} fill={MATH_COLORS.paramTertiary} />
-          <text
-            x={tDesign.x + 10}
-            y={tDesign.y + ((tanVal ?? 0) >= 0 ? -6 : 14)}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            T(1, tanα)
-          </text>
-        </g>
-      )}
+      {tDesign &&
+        isTanDefined &&
+        Math.abs(tanVal ?? 0) > 1e-4 &&
+        Math.abs(tanVal ?? 0) < 3.5 && (
+          <g>
+            <circle
+              cx={tDesign.x}
+              cy={tDesign.y}
+              r={4}
+              fill={MATH_COLORS.paramTertiary}
+            />
+            <text
+              x={tDesign.x + 10}
+              y={tDesign.y + ((tanVal ?? 0) >= 0 ? -6 : 14)}
+              fill={MATH_COLORS.paramTertiary}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              className="select-none pointer-events-none"
+            >
+              T(1, tanα)
+            </text>
+          </g>
+        )}
 
       {/* 单位圆上的主控动点 P(cos α, sin α) - 支持拖拽反向解算角度 */}
       <InteractivePoint
