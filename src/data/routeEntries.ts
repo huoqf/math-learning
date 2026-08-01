@@ -23,10 +23,18 @@ import {
   conicDefinitionNode,
   conicDefinitionLoader,
 } from "@/features/conicDefinition/meta";
+import {
+  lineEquationNode,
+  lineEquationLoader,
+} from "@/features/lineEquation/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
 const legacyEntries: RouteEntry[] = [
+  {
+    node: lineEquationNode,
+    loader: lineEquationLoader as any,
+  },
   {
     node: {
       id: "know-sequence-geom",

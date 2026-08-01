@@ -29,6 +29,7 @@ import {
 import { buildVector3DBasisPanel } from "./builders/vector3d";
 import { buildSequencePanel } from "./builders/sequence";
 import { buildConicDefinitionPanel } from "./builders/conicDefinition";
+import { buildLineEquationPanel } from "./builders/lineEquation";
 
 export type { MathPanelData } from "./types";
 
@@ -105,6 +106,8 @@ export function buildMathQuantities(
       return buildSequencePanel(params, config);
     case "anim-conic-definition":
       return buildConicDefinitionPanel(params, config);
+    case "anim-line-equation":
+      return buildLineEquationPanel(params, config);
     default:
       return EMPTY;
   }

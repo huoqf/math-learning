@@ -444,11 +444,13 @@ export const knowledgeTree: KnowledgeNode[] = [
   {
     id: "know-line-equation",
     title: "直线方程与点到直线的距离",
+    labTitle: "直线方程与距离实验室",
     chapter: "解析几何",
     module: "直线与圆",
     importance: "basic",
-    animationIds: ["anim-circle-equation"],
+    animationIds: ["anim-line-equation"],
     prerequisites: [],
+    route: "/line-equation",
   },
   {
     id: "know-circle-equation",
