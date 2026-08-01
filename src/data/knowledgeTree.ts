@@ -227,13 +227,15 @@ export const knowledgeTree: KnowledgeNode[] = [
 
   // 5. 三角函数
   {
-    id: "know-trig-unit-circle",
+    id: "know-trig-lines",
     title: "任意角与单位圆中的三角函数线",
+    labTitle: "三角函数线实验室",
     chapter: "三角函数",
     module: "三角函数概念",
-    importance: "core",
-    animationIds: ["anim-trig-unit-circle"],
-    prerequisites: [],
+    importance: "gaokao",
+    animationIds: ["anim-trig-lines"],
+    prerequisites: ["know-func-properties"],
+    route: "/trig-lines",
   },
   {
     id: "know-trig-identity",
@@ -242,7 +244,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     module: "三角恒等变换",
     importance: "basic",
     animationIds: ["anim-trig-unit-circle"],
-    prerequisites: ["know-trig-unit-circle"],
+    prerequisites: ["know-trig-lines"],
   },
   {
     id: "know-trig-formulas",
@@ -260,7 +262,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     module: "三角函数的图像与性质",
     importance: "core",
     animationIds: ["anim-trig-transform"],
-    prerequisites: ["know-trig-unit-circle"],
+    prerequisites: ["know-trig-lines"],
   },
   {
     id: "know-trig-tan",
@@ -269,7 +271,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     module: "三角函数的图像与性质",
     importance: "gaokao",
     animationIds: ["anim-trig-tan"],
-    prerequisites: ["know-trig-unit-circle"],
+    prerequisites: ["know-trig-lines"],
   },
   {
     id: "know-triangle-solve",
