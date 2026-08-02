@@ -83,16 +83,16 @@ export function buildTrigIdentityPanel(
       {
         name: "同角平方关系 (单位圆勾股定理)",
         latex: "\\sin^2\\alpha + \\cos^2\\alpha = 1",
-        condition: "任意实数 \\alpha \\in \\mathbb{R}",
-        note: "直观几何解释：单位圆上动点 P(cosα, sinα) 到原点距离 OP^2 = x^2 + y^2 = 1。",
+        condition: "$任意实数 \\alpha \\in \\mathbb{R}$",
+        note: "直观几何解释：单位圆上动点 $P(\\cos\\alpha, \\sin\\alpha)$ 到原点距离 $OP^2 = x^2 + y^2 = 1$。",
         level: "core",
       },
       {
         name: "同角商数关系",
         latex: "\\tan\\alpha = \\frac{\\sin\\alpha}{\\cos\\alpha}",
         condition:
-          "\\alpha \\neq k\\pi + \\frac{\\pi}{2} \\quad (k \\in \\mathbb{Z})",
-        note: "直观几何解释：过点 A(1,0) 作 x 轴切线与终边交于 T(1, tanα)，由相似三角形得正切比值。",
+          "$\\alpha \\neq k\\pi + \\frac{\\pi}{2} \\quad (k \\in \\mathbb{Z})$",
+        note: "直观几何解释：过点 $A(1,0)$ 作 $x$ 轴切线与终边交于 $T(1, \\tan\\alpha)$，由相似三角形得正切比值。",
         level: "core",
       },
       {

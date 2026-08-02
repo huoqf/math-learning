@@ -14,7 +14,11 @@ import { CANVAS_PRESETS } from "@/theme";
 import { TrigIdentityScene } from "./components/TrigIdentityScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/trigIdentity";
-import { calculateInduction, type FormulaType } from "./math/trigIdentity";
+import {
+  calculateTrigIdentity,
+  calculateInduction,
+  type FormulaType,
+} from "./math/trigIdentity";
 
 export function TrigIdentityAnimation() {
   // 研究模式：'identity' | 'induction'
@@ -36,14 +40,14 @@ export function TrigIdentityAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 单位圆与直角坐标系比例尺：数学范围 X [-1.8, 1.8]，Y [-1.4, 1.4]
+  // 单位圆与直角坐标系比例尺：数学范围 X [-2.0, 2.0]，Y [-1.5, 1.5]
   const scale = useSceneScale({
     vp,
-    xRange: [-1.8, 1.8],
-    yRange: [-1.4, 1.4],
+    xRange: [-2.0, 2.0],
+    yRange: [-1.5, 1.5],
   });
 
-  // 数学量看板数据组装
+  // 数学量看板数据组算
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-trig-identity", params, {
       studyMode,
@@ -99,12 +103,19 @@ export function TrigIdentityAnimation() {
   // 顶端悬浮 KaTeX 公式
   const headerFormulaLatex = useMemo(() => {
     if (studyMode === "identity") {
-      return "\\sin^2\\alpha + \\cos^2\\alpha = 1 \\quad \\vert \\quad \\tan\\alpha = \\frac{\\sin\\alpha}{\\cos\\alpha}";
+      const aVal = params.homoA ?? 1;
+      const bVal = params.homoB ?? 1;
+      const trigRes = calculateTrigIdentity(params.alphaDeg ?? 30, aVal, bVal);
+      const valText =
+        trigRes.isHomoDefined && trigRes.homoVal !== undefined
+          ? trigRes.homoVal.toFixed(2)
+          : "\\text{无意义}";
+      return `\\sin^2\\alpha + \\cos^2\\alpha = 1 \\quad \\vert \\quad \\frac{\\color{#EF4444}{${aVal}}\\sin\\alpha + \\color{#D97706}{${bVal}}\\cos\\alpha}{\\sin\\alpha + \\cos\\alpha} = \\frac{\\color{#EF4444}{${aVal}}\\tan\\alpha + \\color{#D97706}{${bVal}}}{\\tan\\alpha + 1} = ${valText}`;
     } else {
       const ind = calculateInduction(params.alphaDeg ?? 30, formulaType);
       return `${ind.formulaTitle}: \\quad ${ind.sinFormulaTex} \\quad \\vert \\quad ${ind.cosFormulaTex}`;
     }
-  }, [studyMode, formulaType, params.alphaDeg]);
+  }, [studyMode, formulaType, params.alphaDeg, params.homoA, params.homoB]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
@@ -138,27 +149,23 @@ export function TrigIdentityAnimation() {
             >
               <SelectGrid
                 items={[
-                  { key: "pi_plus", label: "π + α", formula: "\\pi + \\alpha" },
-                  { key: "neg", label: "-α", formula: "-\\alpha" },
+                  { key: "pi_plus", label: "π + α" },
+                  { key: "neg", label: "-α" },
                   {
                     key: "pi_minus",
                     label: "π - α",
-                    formula: "\\pi - \\alpha",
                   },
                   {
                     key: "half_pi_minus",
                     label: "π/2 - α",
-                    formula: "\\frac{\\pi}{2} - \\alpha",
                   },
                   {
                     key: "half_pi_plus",
                     label: "π/2 + α",
-                    formula: "\\frac{\\pi}{2} + \\alpha",
                   },
                   {
                     key: "period",
                     label: "α + 2kπ",
-                    formula: "\\alpha + 2\\pi",
                   },
                 ]}
                 value={formulaType}

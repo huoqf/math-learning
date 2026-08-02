@@ -60,19 +60,98 @@ function renderMixedLatex(text: string): React.ReactNode {
     <>
       {parts.map((part, i) => {
         if (part.startsWith("$") && part.endsWith("$")) {
-          return (
-            <KatexFormula
-              key={i}
-              formula={part.slice(1, -1)}
-              mode="inline"
-              className="!my-0 !mx-0.5"
-            />
-          );
+          const formula = part.slice(1, -1);
+          const segments = splitLatexByWraps(formula);
+          return segments.map((seg, j) => (
+            <React.Fragment key={`${i}-${j}`}>
+              {j > 0 && <span className="inline-block w-2" />}
+              <KatexFormula
+                formula={seg}
+                mode="inline"
+                className="!my-0 !mx-0.5"
+              />
+            </React.Fragment>
+          ));
         }
         return <React.Fragment key={i}>{part}</React.Fragment>;
       })}
     </>
   );
+}
+
+/**
+ * 将 LaTeX 公式按顶层自然断点拆分为多段，用于自动换行。
+ * 仅在顶层（不在花括号内）拆分，避免破坏 \frac{}{} 等命令结构。
+ * 断点优先级：逗号+空格, \qquad, \quad, 等号+空格
+ */
+function splitLatexByWraps(latex: string): string[] {
+  const segments: string[] = [];
+  let current = "";
+  let braceDepth = 0;
+  let i = 0;
+
+  const flush = () => {
+    const s = current.trim();
+    if (s) segments.push(s);
+    current = "";
+  };
+
+  while (i < latex.length) {
+    const ch = latex[i];
+    if (ch === "{") {
+      braceDepth++;
+      current += ch;
+      i++;
+      continue;
+    }
+    if (ch === "}") {
+      braceDepth--;
+      current += ch;
+      i++;
+      continue;
+    }
+
+    if (braceDepth === 0) {
+      // \qquad 断点
+      if (latex.startsWith("\\qquad", i)) {
+        flush();
+        i += 6;
+        continue;
+      }
+      // \quad 断点
+      if (latex.startsWith("\\quad", i)) {
+        flush();
+        i += 5;
+        continue;
+      }
+      // 逗号+空格 断点
+      if (ch === "," && i + 1 < latex.length && latex[i + 1] === " ") {
+        current += ",";
+        flush();
+        i += 2;
+        continue;
+      }
+      // 等号两侧有空格 断点
+      if (
+        ch === "=" &&
+        i > 0 &&
+        latex[i - 1] === " " &&
+        i + 1 < latex.length &&
+        latex[i + 1] === " "
+      ) {
+        current += "=";
+        flush();
+        i += 1;
+        continue;
+      }
+    }
+
+    current += ch;
+    i++;
+  }
+
+  flush();
+  return segments.length > 1 ? segments : [latex];
 }
 
 /** 宽松检测：\cmd 命令或 _^ 上下标即视为 LaTeX（供 quantities.label/value 纯公式字段使用）*/
@@ -299,8 +378,15 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="flex justify-center py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center overflow-x-hidden">
-                      <KatexFormula formula={t.latex} mode="inline" />
+                    <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center overflow-x-hidden">
+                      {splitLatexByWraps(t.latex).map((seg, i) => (
+                        <KatexFormula
+                          key={i}
+                          formula={seg}
+                          mode="inline"
+                          className="!my-0"
+                        />
+                      ))}
                     </div>
                     {t.condition && (
                       <div className="text-xs text-amber-700 mt-0.5 flex items-start gap-1 font-medium">

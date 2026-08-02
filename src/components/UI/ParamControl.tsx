@@ -357,7 +357,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
       0,
       100,
     );
-    const { visible: marks, hidden: hiddenMarks } = buildMarks(param);
+    const { visible: marks } = buildMarks(param);
     const zeroMark = marks.find((mark) => Math.abs(mark.value) < 1e-9);
     const zeroPercentage = zeroMark
       ? getMarkPercentage(zeroMark.value, param)
@@ -506,14 +506,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                   })}
               </div>
             )}
-            {hiddenMarks.length > 0 && (
-              <span
-                className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] text-neutral-400 cursor-help"
-                title={`隐藏标注: ${hiddenMarks.map((m) => m.label ?? m.value).join(", ")}`}
-              >
-                ({hiddenMarks.length} hidden)
-              </span>
-            )}
+            
           </div>
           <span className="text-xs text-neutral-400 font-mono w-8 text-left shrink-0">
             {formatByStep(param.max, step)}
