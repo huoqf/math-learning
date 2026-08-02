@@ -381,16 +381,22 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                       )}
                     </div>
                     <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center overflow-x-hidden">
-                      {t.mode === "block"
-                        ? <KatexFormula formula={t.latex} mode="block" className="!my-0" />
-                        : splitLatexByWraps(t.latex).map((seg, i) => (
-                            <KatexFormula
-                              key={i}
-                              formula={seg}
-                              mode="inline"
-                              className="!my-0"
-                            />
-                          ))}
+                      {t.mode === "block" ? (
+                        <KatexFormula
+                          formula={t.latex}
+                          mode="block"
+                          className="!my-0"
+                        />
+                      ) : (
+                        splitLatexByWraps(t.latex).map((seg, i) => (
+                          <KatexFormula
+                            key={i}
+                            formula={seg}
+                            mode="inline"
+                            className="!my-0"
+                          />
+                        ))
+                      )}
                     </div>
                     {t.condition && (
                       <div className="text-xs text-amber-700 mt-0.5 flex items-start gap-1 font-medium">
@@ -520,7 +526,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       </div>
                       <span className="text-neutral-700 font-medium break-words">
-                        {point.text}
+                        {renderMixedLatex(point.text)}
                       </span>
                     </div>
                   </div>
