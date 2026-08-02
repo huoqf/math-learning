@@ -21,16 +21,10 @@ export const paramMeta: Record<string, ParamMeta> = {
       "单位圆上的动角 $\\alpha$，决定点 $P(\\cos\\alpha, \\sin\\alpha)$ 的位置",
     marks: [
       {
-        value: -270,
-        variant: "critical",
-        label: "正切无意义",
-        labelFormula: "\\tan(-270^\\circ) \\text{ 无意义}",
-      },
-      {
-        value: -90,
-        variant: "critical",
-        label: "正切无意义",
-        labelFormula: "\\tan(-90^\\circ) \\text{ 无意义}",
+        value: -180,
+        variant: "zero",
+        label: "-180°",
+        labelFormula: "-180^\\circ",
       },
       {
         value: 0,
@@ -39,22 +33,10 @@ export const paramMeta: Record<string, ParamMeta> = {
         labelFormula: "0^\\circ",
       },
       {
-        value: 90,
-        variant: "critical",
-        label: "正切无意义",
-        labelFormula: "\\tan(90^\\circ) \\text{ 无意义}",
-      },
-      {
         value: 180,
         variant: "zero",
         label: "180°",
         labelFormula: "180^\\circ",
-      },
-      {
-        value: 270,
-        variant: "critical",
-        label: "正切无意义",
-        labelFormula: "\\tan(270^\\circ) \\text{ 无意义}",
       },
     ],
   },

@@ -32,6 +32,7 @@ import { buildConicDefinitionPanel } from "./builders/conicDefinition";
 import { buildLineEquationPanel } from "./builders/lineEquation";
 import { buildTrigLinesPanel } from "./builders/trigLines";
 import { buildTrigIdentityPanel } from "./builders/trigIdentity";
+import { buildTrigFormulasPanel } from "./builders/trigFormulas";
 
 export type { MathPanelData } from "./types";
 
@@ -51,6 +52,8 @@ export function buildMathQuantities(
     case "anim-trig-identity":
     case "anim-trig-unit-circle":
       return buildTrigIdentityPanel(params, config);
+    case "anim-trig-formulas":
+      return buildTrigFormulasPanel(params, config);
     case "anim-stat-percentile":
       return buildStatPercentilePanel(params, config);
 

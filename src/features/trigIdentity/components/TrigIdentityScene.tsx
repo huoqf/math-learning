@@ -82,6 +82,16 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
     onParamChange("alphaDeg", newDeg);
   };
 
+  // Q(B, A) 点拖拽解算 A 和 B
+  const handleQDrag = (rawMath: { x: number; y: number }) => {
+    const newB = Math.round(rawMath.x * 2) / 2;
+    const newA = Math.round(rawMath.y * 2) / 2;
+    const clampedB = Math.max(-3, Math.min(3, newB));
+    const clampedA = Math.max(-3, Math.min(3, newA));
+    onParamChange("homoB", clampedB);
+    onParamChange("homoA", clampedA);
+  };
+
   // 单位圆半径
   const unitRadiusPx = scale.scaleX;
 
@@ -269,6 +279,31 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             label={`P(${trig.cosVal.toFixed(2)}, ${trig.sinVal.toFixed(2)})`}
           />
+
+          {/* ================= 齐次式组合向量 OQ(B, A) 与化切推导 ================= */}
+          {(Math.abs(homoA) > 0.01 || Math.abs(homoB) > 0.01) && (
+            <VectorArrow
+              from={[0, 0]}
+              to={[homoB, homoA]}
+              scale={scale}
+              color="#8B5CF6"
+              strokeWidth={2}
+              strokeDasharray="4 4"
+            />
+          )}
+
+          {/* 可拖拽系数点 Q(B, A) */}
+          <InteractivePoint
+            cx={homoB}
+            cy={homoA}
+            scale={scale}
+            vp={vp}
+            onDrag={handleQDrag}
+            fontScale={fontScale}
+            color="#8B5CF6"
+            label={`Q(B=${homoB.toFixed(1)}, A=${homoA.toFixed(1)})`}
+          />
+
         </>
       ) : (
         /* ================= 诱导公式 Mode ================= */

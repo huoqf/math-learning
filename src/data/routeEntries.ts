@@ -32,6 +32,10 @@ import {
   trigIdentityNode,
   trigIdentityLoader,
 } from "@/features/trigIdentity/meta";
+import {
+  trigFormulasNode,
+  trigFormulasLoader,
+} from "@/features/trigFormulas/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
@@ -47,6 +51,10 @@ const legacyEntries: RouteEntry[] = [
   {
     node: trigIdentityNode,
     loader: trigIdentityLoader as any,
+  },
+  {
+    node: trigFormulasNode,
+    loader: trigFormulasLoader as any,
   },
   {
     node: {

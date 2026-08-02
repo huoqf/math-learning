@@ -1,2 +1,2 @@
 export { TrigIdentityAnimation } from "./TrigIdentityAnimation";
-export { trigIdentityNode, trigIdentityLoader } from "./meta";
+export { TrigIdentityAnimation as default } from "./TrigIdentityAnimation";
