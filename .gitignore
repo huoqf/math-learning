@@ -5,6 +5,9 @@ node_modules/
 dist/
 out/
 
+# Temp files
+commit_msg.txt
+
 # Editor
 .vscode/
 .idea/
