@@ -24,6 +24,11 @@ import {
   conicDefinitionLoader,
 } from "@/features/conicDefinition/meta";
 import {
+  conicPropertiesNode,
+  conicPropertiesLoader,
+} from "@/features/conicProperties/meta";
+import { parabolaNode, parabolaLoader } from "@/features/parabola/meta";
+import {
   lineEquationNode,
   lineEquationLoader,
 } from "@/features/lineEquation/meta";
@@ -52,6 +57,14 @@ import {
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
 const legacyEntries: RouteEntry[] = [
+  {
+    node: parabolaNode,
+    loader: parabolaLoader as any,
+  },
+  {
+    node: conicPropertiesNode,
+    loader: conicPropertiesLoader as any,
+  },
   {
     node: triangleExtremaNode,
     loader: triangleExtremaLoader as any,

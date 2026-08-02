@@ -1,0 +1,1 @@
+export { ParabolaAnimation } from "./ParabolaAnimation";

@@ -29,6 +29,7 @@ import {
 import { buildVector3DBasisPanel } from "./builders/vector3d";
 import { buildSequencePanel } from "./builders/sequence";
 import { buildConicDefinitionPanel } from "./builders/conicDefinition";
+import { buildConicPropertiesPanel } from "./builders/conicProperties";
 import { buildLineEquationPanel } from "./builders/lineEquation";
 import { buildTrigLinesPanel } from "./builders/trigLines";
 import { buildTrigIdentityPanel } from "./builders/trigIdentity";
@@ -36,6 +37,7 @@ import { buildTrigFormulasPanel } from "./builders/trigFormulas";
 import { buildTrigTangentPanel } from "./builders/trigTangent";
 import { buildTriangleSolvePanel } from "./builders/triangleSolve";
 import { buildTriangleExtremaPanel } from "./builders/triangleExtrema";
+import { buildParabolaPanel } from "./builders/parabola";
 
 export type { MathPanelData } from "./types";
 
@@ -122,6 +124,10 @@ export function buildMathQuantities(
       return buildSequencePanel(params, config);
     case "anim-conic-definition":
       return buildConicDefinitionPanel(params, config);
+    case "anim-conic-properties":
+      return buildConicPropertiesPanel(params, config);
+    case "anim-conic-parabola":
+      return buildParabolaPanel(params, config);
     case "anim-line-equation":
       return buildLineEquationPanel(params, config);
     case "anim-trig-lines":
