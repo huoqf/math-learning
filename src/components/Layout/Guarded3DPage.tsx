@@ -24,7 +24,7 @@ export const Guarded3DPage = ({ loader }: Guarded3DPageProps) => {
 
   const LazyPage = useMemo(
     () => (supported ? lazy(loader) : null),
-    [supported],
+    [supported, loader],
   );
 
   if (!supported) {

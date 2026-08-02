@@ -84,7 +84,16 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
       );
     }
     return result;
-  }, [showGrid, maxRadius, radiusStep, originX, originY, scaleX]);
+  }, [
+    showGrid,
+    maxRadius,
+    radiusStep,
+    originX,
+    originY,
+    scaleX,
+    gridColor,
+    toDesign,
+  ]);
 
   // 角度辐射线
   const angleLines = React.useMemo(() => {
@@ -107,7 +116,16 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
       );
     }
     return result;
-  }, [showGrid, maxRadius, angleStep, originX, originY, scaleX]);
+  }, [
+    showGrid,
+    maxRadius,
+    angleStep,
+    originX,
+    originY,
+    scaleX,
+    gridColor,
+    toDesign,
+  ]);
 
   // 角度标签
   const angleLabels = React.useMemo(() => {
@@ -133,7 +151,16 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
       );
     }
     return result;
-  }, [showAngleLabels, maxRadius, angleStep, originX, originY, scaleX]);
+  }, [
+    showAngleLabels,
+    maxRadius,
+    angleStep,
+    originX,
+    originY,
+    scaleX,
+    fontScale,
+    toDesign,
+  ]);
 
   // 半径标签
   const radiusLabels = React.useMemo(() => {
@@ -157,7 +184,16 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
       );
     }
     return result;
-  }, [showRadiusLabels, maxRadius, radiusStep, originX, originY, scaleX]);
+  }, [
+    showRadiusLabels,
+    maxRadius,
+    radiusStep,
+    originX,
+    originY,
+    scaleX,
+    fontScale,
+    toDesign,
+  ]);
 
   // 主轴线（实线，稍粗）
   const { xMin, xMax, yMin, yMax } = scale;

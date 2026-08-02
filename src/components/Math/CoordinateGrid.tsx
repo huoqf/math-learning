@@ -176,7 +176,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     }
 
     return elements;
-  }, [scale, showLabels, xStep, yStep, xMin, xMax, yMin, yMax]);
+  }, [scale, showLabels, xStep, yStep, xMin, xMax, yMin, yMax, fontScale]);
 
   // 坐标轴两端主线及其箭头
   const xAxisStart = mathToDesign(xMin, 0, scale);

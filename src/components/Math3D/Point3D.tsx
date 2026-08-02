@@ -74,9 +74,9 @@ export const Point3D = ({
     stopDragging(e.pointerId);
   };
 
-  const colorVal =
-    (MATH3D_COLORS as any)[colorKey] ??
-    (MATH_COLORS as any)[colorKey] ??
+  const colorVal: string =
+    (MATH3D_COLORS as Record<string, string>)[colorKey] ??
+    (MATH_COLORS as Record<string, string>)[colorKey] ??
     "#DC2626";
 
   return (

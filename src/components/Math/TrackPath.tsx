@@ -56,7 +56,7 @@ export const TrackPath: React.FC<TrackPathProps> = ({
       );
     }
     return points.join(" ");
-  }, [parametric, tMin, tMax, step, samples, scale]);
+  }, [parametric, tMin, step, samples, scale]);
 
   // 当前动点位置
   const currentDot = useMemo(() => {
