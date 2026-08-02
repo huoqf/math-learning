@@ -31,7 +31,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   const isBlock = mode === "block";
 
   const baseClass = isBlock
-    ? "my-4 px-4 py-3 bg-primary-50 rounded-sm overflow-x-auto text-neutral-800"
+    ? "my-4 px-4 py-3 bg-primary-50 rounded-sm overflow-x-hidden text-neutral-800"
     : "inline-block align-middle mx-1 my-0.5 max-w-full whitespace-nowrap";
 
   return <div ref={containerRef} className={`${baseClass} ${className}`} />;

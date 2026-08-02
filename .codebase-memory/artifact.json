@@ -1,11 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "d21a9c23f6066ef40831a8f47e7d0e48479d547d",
-    "indexed_at": "2026-07-31T01:09:33Z",
+    "commit": "adf0c1773a297a379545b31c59a7eaa54382026b",
+    "indexed_at": "2026-08-02T02:32:47Z",
     "project": "D-code-math-math-learning",
-    "nodes": 1946,
-    "edges": 5752,
-    "original_size": 7405568,
-    "compressed_size": 1379119,
+    "nodes": 8333,
+    "edges": 27297,
+    "original_size": 29622272,
+    "compressed_size": 6607060,
     "compression_level": 3
 }

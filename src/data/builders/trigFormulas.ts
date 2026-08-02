@@ -163,7 +163,7 @@ export function buildTrigFormulasPanel(
       },
       {
         name: "升降幂公式",
-        latex: "\\sin^2\\alpha = \\frac{1-\\cos 2\\alpha}{2}, \\quad \\cos^2\\alpha = \\frac{1+\cos 2\\alpha}{2}",
+        latex: "\\sin^2\\alpha = \\frac{1-\\cos 2\\alpha}{2}, \\quad \\cos^2\\alpha = \\frac{1+\\cos 2\\alpha}{2}",
         condition: "用于高考化简中将二次项降为一次项，周期减半",
         note: "降幂升角：二次变一次，角度翻倍！",
         level: "important",

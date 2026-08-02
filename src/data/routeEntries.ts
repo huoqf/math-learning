@@ -36,10 +36,26 @@ import {
   trigFormulasNode,
   trigFormulasLoader,
 } from "@/features/trigFormulas/meta";
+import {
+  trigTangentNode,
+  trigTangentLoader,
+} from "@/features/trigTangent/meta";
+import {
+  node as triangleSolveNode,
+  loader as triangleSolveLoader,
+} from "@/features/triangleSolve/meta";
+import {
+  node as triangleExtremaNode,
+  loader as triangleExtremaLoader,
+} from "@/features/triangleExtrema/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
 const legacyEntries: RouteEntry[] = [
+  {
+    node: triangleExtremaNode,
+    loader: triangleExtremaLoader as any,
+  },
   {
     node: lineEquationNode,
     loader: lineEquationLoader as any,
@@ -55,6 +71,10 @@ const legacyEntries: RouteEntry[] = [
   {
     node: trigFormulasNode,
     loader: trigFormulasLoader as any,
+  },
+  {
+    node: trigTangentNode,
+    loader: trigTangentLoader as any,
   },
   {
     node: {
@@ -583,6 +603,7 @@ export const routeEntries: RouteEntry[] = [
   { node: logicNode, loader: logicLoader },
   { node: statPercentileNode, loader: statPercentileLoader },
   { node: conicDefinitionNode, loader: conicDefinitionLoader },
+  { node: triangleSolveNode, loader: triangleSolveLoader },
   // 暂未迁移的页面
   ...legacyEntries,
 ];

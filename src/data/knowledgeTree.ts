@@ -270,12 +270,14 @@ export const knowledgeTree: KnowledgeNode[] = [
   },
   {
     id: "know-trig-tan",
-    title: "正切函数 y=tan x 的图像与渐近线",
+    title: "正切函数的图像与渐近线",
+    labTitle: "正切函数与渐近线实验室",
     chapter: "三角函数",
     module: "三角函数的图像与性质",
     importance: "gaokao",
-    animationIds: ["anim-trig-tan"],
+    animationIds: ["anim-trig-tangent"],
     prerequisites: ["know-trig-lines"],
+    route: "/trig-tangent",
   },
   {
     id: "know-triangle-solve",
@@ -285,15 +287,18 @@ export const knowledgeTree: KnowledgeNode[] = [
     importance: "gaokao",
     animationIds: ["anim-triangle-solve"],
     prerequisites: [],
+    route: "/triangle-solve",
   },
   {
     id: "know-triangle-extrema",
     title: "解三角形的边角变换与最值范围",
+    labTitle: "解三角形边角变换与最值范围实验室",
     chapter: "三角函数",
     module: "解三角形",
     importance: "gaokao",
     animationIds: ["anim-triangle-extrema"],
     prerequisites: ["know-triangle-solve", "know-ineq-basic"],
+    route: "/triangle-extrema",
   },
 
   // 6. 平面向量与复数

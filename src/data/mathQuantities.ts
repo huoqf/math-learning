@@ -33,6 +33,9 @@ import { buildLineEquationPanel } from "./builders/lineEquation";
 import { buildTrigLinesPanel } from "./builders/trigLines";
 import { buildTrigIdentityPanel } from "./builders/trigIdentity";
 import { buildTrigFormulasPanel } from "./builders/trigFormulas";
+import { buildTrigTangentPanel } from "./builders/trigTangent";
+import { buildTriangleSolvePanel } from "./builders/triangleSolve";
+import { buildTriangleExtremaPanel } from "./builders/triangleExtrema";
 
 export type { MathPanelData } from "./types";
 
@@ -49,9 +52,13 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-triangle-extrema":
+      return buildTriangleExtremaPanel(params, config);
     case "anim-trig-identity":
     case "anim-trig-unit-circle":
       return buildTrigIdentityPanel(params, config);
+    case "anim-trig-tangent":
+      return buildTrigTangentPanel(params, config);
     case "anim-trig-formulas":
       return buildTrigFormulasPanel(params, config);
     case "anim-stat-percentile":
@@ -119,6 +126,8 @@ export function buildMathQuantities(
       return buildLineEquationPanel(params, config);
     case "anim-trig-lines":
       return buildTrigLinesPanel(params, config);
+    case "anim-triangle-solve":
+      return buildTriangleSolvePanel(params, config);
     default:
       return EMPTY;
   }

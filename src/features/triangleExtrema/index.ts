@@ -1,0 +1,1 @@
+export { TriangleExtremaAnimation } from "./TriangleExtremaAnimation";

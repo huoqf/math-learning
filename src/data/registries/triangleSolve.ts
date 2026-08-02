@@ -1,0 +1,70 @@
+import type { ParamMeta } from "@/data/types";
+
+export const defaultParams: Record<string, number> = {
+  angleA: 60,
+  b: 5,
+  c: 6,
+  a: 4.5,
+};
+
+export const paramMeta: Record<string, ParamMeta> = {
+  angleA: {
+    key: "angleA",
+    label: "内角 A (角A)",
+    labelFormula: "A",
+    defaultValue: 60,
+    min: 15,
+    max: 150,
+    step: 1,
+    unit: "°",
+    description: "顶点 A 的夹角大小",
+    descriptionFormula: "A \\in (0^\\circ, 180^\\circ)",
+    importance: "core",
+    marks: [
+      { value: 30, label: "30°", labelFormula: "30^\\circ" },
+      { value: 60, label: "60°", labelFormula: "60^\\circ" },
+      { value: 90, label: "90°", labelFormula: "90^\\circ", variant: "critical" },
+      { value: 120, label: "120°", labelFormula: "120^\\circ" },
+    ],
+  },
+  b: {
+    key: "b",
+    label: "边长 b (AC)",
+    labelFormula: "b",
+    defaultValue: 5,
+    min: 1,
+    max: 10,
+    step: 0.1,
+    description: "顶点 B 的对边 AC 长度",
+    descriptionFormula: "b = |AC|",
+    importance: "core",
+  },
+  c: {
+    key: "c",
+    label: "边长 c (AB)",
+    labelFormula: "c",
+    defaultValue: 6,
+    min: 1,
+    max: 10,
+    step: 0.1,
+    description: "顶点 C 的对边 AB 长度",
+    descriptionFormula: "c = |AB|",
+    importance: "advanced",
+  },
+  a: {
+    key: "a",
+    label: "对边 a (BC)",
+    labelFormula: "a",
+    defaultValue: 4.5,
+    min: 0.5,
+    max: 12,
+    step: 0.1,
+    description: "SSA 探究中顶点 A 的对边 BC 长度",
+    descriptionFormula: "a = |BC|",
+    importance: "core",
+    marks: [
+      { value: 4.33, label: "h=b·sinA", labelFormula: "h=b\\sin A", variant: "critical" },
+      { value: 5, label: "a=b", labelFormula: "a=b", variant: "critical" },
+    ],
+  },
+};
