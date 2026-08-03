@@ -38,6 +38,7 @@ import { buildTrigTangentPanel } from "./builders/trigTangent";
 import { buildTriangleSolvePanel } from "./builders/triangleSolve";
 import { buildTriangleExtremaPanel } from "./builders/triangleExtrema";
 import { buildParabolaPanel } from "./builders/parabola";
+import { buildConicLineMathQuantities } from "./builders/conicLine";
 
 export type { MathPanelData } from "./types";
 
@@ -128,6 +129,8 @@ export function buildMathQuantities(
       return buildConicPropertiesPanel(params, config);
     case "anim-conic-parabola":
       return buildParabolaPanel(params, config);
+    case "anim-conic-line":
+      return buildConicLineMathQuantities(params, config as any);
     case "anim-line-equation":
       return buildLineEquationPanel(params, config);
     case "anim-trig-lines":

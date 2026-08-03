@@ -53,10 +53,15 @@ import {
   node as triangleExtremaNode,
   loader as triangleExtremaLoader,
 } from "@/features/triangleExtrema/meta";
+import { meta as conicLineMeta } from "@/features/conicLine/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
 const legacyEntries: RouteEntry[] = [
+  {
+    node: conicLineMeta.node,
+    loader: conicLineMeta.loader,
+  },
   {
     node: parabolaNode,
     loader: parabolaLoader as any,
