@@ -161,6 +161,13 @@ function hasLatex(text: string): boolean {
   return /\\[a-zA-Z]|[_^]\{?[\w]/.test(text);
 }
 
+/** 检测 LaTeX 是否包含需要 displayMode 的环境（如 cases、matrix、aligned 等） */
+function needsBlockMode(latex: string): boolean {
+  return /\\begin\{(cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|align|align\*|aligned|equation|equation\*|gather|gather\*|split|multline|multline\*)\}/.test(
+    latex,
+  );
+}
+
 const THEOREM_LEVEL_STYLES: Record<
   string,
   { bg: string; text: string; label: string }
@@ -381,7 +388,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                       )}
                     </div>
                     <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center overflow-x-hidden">
-                      {t.mode === "block" ? (
+                      {t.mode === "block" || needsBlockMode(t.latex) ? (
                         <KatexFormula
                           formula={t.latex}
                           mode="block"

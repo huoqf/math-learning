@@ -519,11 +519,13 @@ export const knowledgeTree: KnowledgeNode[] = [
   {
     id: "know-conic-parametric",
     title: "圆锥曲线与直线的参数方程及设点化简",
+    labTitle: "圆锥曲线与直线的参数方程及设点化简实验室",
     chapter: "解析几何",
     module: "圆锥曲线",
-    importance: "gaokao",
-    animationIds: ["anim-conic-parametric"],
+    importance: "hard",
+    animationIds: ["anim-conic-param"],
     prerequisites: ["know-conic-line", "know-line-equation"],
+    route: "/conic-param",
   },
 
   // 10. 概率与统计
