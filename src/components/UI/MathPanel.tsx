@@ -168,6 +168,22 @@ function needsBlockMode(latex: string): boolean {
   );
 }
 
+/**
+ * 将 \begin{aligned}...\end{aligned} 环境按行拆分为多段独立公式。
+ * 去掉行间对齐符 `&` 与换行符 `\\`，每行作为一个独立 block 渲染。
+ * 命中 aligned 环境时返回拆分后的行数组；未命中返回 null。
+ */
+function splitAlignedEnvironment(latex: string): string[] | null {
+  const match = latex.match(/\\begin\{aligned\}([\s\S]*?)\\end\{aligned\}/);
+  if (!match) return null;
+  const body = match[1];
+  const lines = body
+    .split(/\\\\/)
+    .map((line) => line.replace(/&/g, "").trim())
+    .filter((line) => line.length > 0);
+  return lines.length > 0 ? lines : null;
+}
+
 const THEOREM_LEVEL_STYLES: Record<
   string,
   { bg: string; text: string; label: string }
@@ -388,22 +404,43 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                       )}
                     </div>
                     <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center overflow-x-hidden">
-                      {t.mode === "block" || needsBlockMode(t.latex) ? (
-                        <KatexFormula
-                          formula={t.latex}
-                          mode="block"
-                          className="!my-0"
-                        />
-                      ) : (
-                        splitLatexByWraps(t.latex).map((seg, i) => (
+                      {(() => {
+                        const alignedLines = splitAlignedEnvironment(t.latex);
+                        if (alignedLines) {
+                          return alignedLines.map((line, i) => (
+                            <div
+                              key={i}
+                              className="w-full flex flex-wrap justify-center gap-x-2 gap-y-0.5 items-center"
+                            >
+                              {splitLatexByWraps(line).map((seg, j) => (
+                                <KatexFormula
+                                  key={j}
+                                  formula={seg}
+                                  mode="inline"
+                                  className="!my-0"
+                                />
+                              ))}
+                            </div>
+                          ));
+                        }
+                        if (t.mode === "block" || needsBlockMode(t.latex)) {
+                          return (
+                            <KatexFormula
+                              formula={t.latex}
+                              mode="block"
+                              className="!my-0"
+                            />
+                          );
+                        }
+                        return splitLatexByWraps(t.latex).map((seg, i) => (
                           <KatexFormula
                             key={i}
                             formula={seg}
                             mode="inline"
                             className="!my-0"
                           />
-                        ))
-                      )}
+                        ));
+                      })()}
                     </div>
                     {t.condition && (
                       <div className="text-xs text-amber-700 mt-0.5 flex items-start gap-1 font-medium">

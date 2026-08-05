@@ -40,6 +40,7 @@ import { buildTriangleExtremaPanel } from "./builders/triangleExtrema";
 import { buildParabolaPanel } from "./builders/parabola";
 import { buildConicLineMathQuantities } from "./builders/conicLine";
 import { buildConicParamPanel } from "./builders/conicParam";
+import { buildInequalityBasicPanel } from "./builders/inequalityBasic";
 
 export type { MathPanelData } from "./types";
 
@@ -140,6 +141,9 @@ export function buildMathQuantities(
       return buildTrigLinesPanel(params, config);
     case "anim-triangle-solve":
       return buildTriangleSolvePanel(params, config);
+    case "anim-ineq-basic":
+    case "anim-inequality-basic":
+      return buildInequalityBasicPanel(params, config);
     default:
       return EMPTY;
   }
