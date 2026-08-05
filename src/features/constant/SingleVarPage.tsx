@@ -208,22 +208,18 @@ export function SingleVarPage() {
                   items={[
                     {
                       key: "ln_x_over_x",
-                      label: "ln x / x 型",
                       formula: "\\frac{\\ln x}{x} 型",
                     },
                     {
                       key: "exp_minus_ax",
-                      label: "e^x - ax 型",
                       formula: "e^x - ax 型",
                     },
                     {
                       key: "a_ln_x_minus_x",
-                      label: "a ln x - x + 1 型",
                       formula: "a\\ln x - x + 1 型",
                     },
                     {
                       key: "exp_minus_a_x_plus_1",
-                      label: "e^x - a(x+1) 型",
                       formula: "e^x - a(x+1) 型",
                     },
                   ]}

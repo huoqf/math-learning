@@ -18,8 +18,8 @@ import { KatexFormula } from "./KatexFormula";
 
 interface SelectGridItem {
   key: string;
-  /** 必填，用于无障碍朗读（aria-label） */
-  label: string;
+  /** 用于无障碍朗读（aria-label）。为空时使用 formula 作为 aria-label */
+  label?: string;
   /** 可选，KaTeX 公式渲染 */
   formula?: string;
   /** 可选，label/formula 下方的小字说明 */
@@ -118,8 +118,8 @@ export const SelectGrid = <T extends string = string>({
         const spanClass = item.fullWidth ? "col-span-2" : "";
 
         const ariaLabel = item.description
-          ? `${item.label}, ${item.description}`
-          : item.label;
+          ? `${item.label || item.formula || item.key}, ${item.description}`
+          : (item.label || item.formula || item.key);
 
         return (
           <button
@@ -138,9 +138,11 @@ export const SelectGrid = <T extends string = string>({
               .join(" ")}
           >
             <div className="flex flex-col items-center justify-center gap-0.5 text-center w-full">
-              <span className="text-[12px] font-bold leading-tight whitespace-nowrap truncate w-full">
-                {item.label}
-              </span>
+              {item.label && (
+                <span className="text-[12px] font-bold leading-tight whitespace-nowrap truncate w-full">
+                  {item.label}
+                </span>
+              )}
               {item.formula && (
                 <div className="w-full truncate whitespace-nowrap opacity-90">
                   <KatexFormula
