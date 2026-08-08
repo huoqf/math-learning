@@ -11,7 +11,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { CANVAS_PRESETS } from "@/theme";
 import { TrigTransformScene } from "./components/TrigTransformScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/trigTransform";

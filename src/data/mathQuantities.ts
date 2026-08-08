@@ -41,6 +41,7 @@ import { buildParabolaPanel } from "./builders/parabola";
 import { buildConicLineMathQuantities } from "./builders/conicLine";
 import { buildConicParamPanel } from "./builders/conicParam";
 import { buildInequalityBasicPanel } from "./builders/inequalityBasic";
+import { buildInequalityAbsolutePanel } from "./builders/inequalityAbsolute";
 import { buildTrigTransformPanel } from "./builders/trigTransform";
 
 export type { MathPanelData } from "./types";
@@ -58,6 +59,8 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-ineq-absolute":
+      return buildInequalityAbsolutePanel(params, config);
     case "anim-triangle-extrema":
       return buildTriangleExtremaPanel(params, config);
     case "anim-trig-identity":

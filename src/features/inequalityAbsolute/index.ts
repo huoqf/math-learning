@@ -1,0 +1,1 @@
+export { InequalityAbsoluteAnimation } from "./InequalityAbsoluteAnimation";

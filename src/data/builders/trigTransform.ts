@@ -14,62 +14,35 @@ export function buildTrigTransformPanel(
   const phi = params.phi ?? Math.PI / 3;
   const k = params.k ?? 0;
 
-  const studyMode = (config?.studyMode as string) ?? "properties";
   const pathType =
     (config?.pathType as "shift-first" | "stretch-first") ?? "shift-first";
   const stepIndex = (config?.stepIndex as number) ?? 0;
 
   const props = calcTrigProperties(A, omega, phi, k);
   const pathSteps = getTransformPathSteps(A, omega, phi, k, pathType);
-  const currentStep = pathSteps[stepIndex] ?? pathSteps[0];
 
-  const phiStr = formatPiValue(phi);
   const periodStr = formatPiValue(props.period);
 
   return {
     quantities: [
       {
-        id: "amplitude",
-        label: "振幅 A",
-        formula: `A = ${A.toFixed(1)}`,
-        value: A.toFixed(1),
-        highlight: true,
-      },
-      {
-        id: "omega",
-        label: "角频率 ω",
-        formula: `\\omega = ${omega.toFixed(1)}`,
-        value: omega.toFixed(1),
-        highlight: true,
-      },
-      {
-        id: "period",
         label: "函数周期 T",
-        formula: `T = \\frac{2\\pi}{\\omega} = ${periodStr}`,
+        symbol: `T = \\frac{2\\pi}{\\omega}`,
         value: periodStr,
       },
       {
-        id: "phi",
-        label: "初相 φ",
-        formula: `\\varphi = ${phiStr}`,
-        value: phiStr,
-      },
-      {
-        id: "range",
         label: "函数值域",
-        formula: `y \\in [${props.yMin.toFixed(1)}, ${props.yMax.toFixed(1)}]`,
+        symbol: `y \\in [y_{min}, y_{max}]`,
         value: `[${props.yMin.toFixed(1)}, ${props.yMax.toFixed(1)}]`,
       },
       {
-        id: "symmetry-axis",
         label: "主对称轴",
-        formula: `x = ${formatPiValue(props.mainSymmetryAxes[0])}`,
+        symbol: `x_{sym}`,
         value: `x = ${formatPiValue(props.mainSymmetryAxes[0])}`,
       },
       {
-        id: "symmetry-center",
         label: "主对称中心",
-        formula: `(${formatPiValue(props.mainSymmetryCenters[0][0])}, ${props.mainSymmetryCenters[0][1].toFixed(1)})`,
+        symbol: `Center`,
         value: `(${formatPiValue(props.mainSymmetryCenters[0][0])}, ${props.mainSymmetryCenters[0][1].toFixed(1)})`,
       },
     ],
@@ -78,11 +51,11 @@ export function buildTrigTransformPanel(
         name: "正弦型函数标准式",
         latex: "y = A \\sin(\\omega x + \\varphi) + k",
         condition:
-          "A 控制振幅，\\omega 控制周期，\\varphi 控制初相，k 控制垂直偏置",
+          "$A$ 控制振幅，$\\omega$ 控制周期，$\\varphi$ 控制初相，$k$ 控制垂直偏置",
         prerequisites: [
-          "A > 0",
-          "\\omega > 0",
-          "|\\varphi| \\leq \\dfrac{\\pi}{2}",
+          "$A > 0$",
+          "$\\omega > 0$",
+          "$|\\varphi| \\leq \\dfrac{\\pi}{2}$",
         ],
         level: "core",
       },
@@ -91,7 +64,7 @@ export function buildTrigTransformPanel(
         latex:
           "y = \\sin(\\omega x + \\varphi) = \\sin\\!\\left[\\omega\\!\\left(x + \\frac{\\varphi}{\\omega}\\right)\\right]",
         condition:
-          "先伸缩后平移：平移量为 \\dfrac{|\\varphi|}{\\omega}，而非 |\\varphi|！",
+          "先伸缩后平移：平移量为 $\\dfrac{|\\varphi|}{\\omega}$，而非 $|\\varphi|$！",
         level: "important",
       },
     ],

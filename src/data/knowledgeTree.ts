@@ -45,11 +45,13 @@ export const knowledgeTree: KnowledgeNode[] = [
   {
     id: "know-ineq-absolute",
     title: "绝对值不等式的几何意义",
+    labTitle: "绝对值不等式实验室",
     chapter: "不等式",
     module: "绝对值不等式",
-    importance: "extend",
+    importance: "gaokao",
     animationIds: ["anim-ineq-absolute"],
-    prerequisites: [],
+    prerequisites: ["know-ineq-basic"],
+    route: "/inequality-absolute",
   },
 
   // 3. 函数概念与性质

@@ -1,4 +1,4 @@
-import type { ParamMeta } from "@/components/UI/ParamControl";
+import type { ParamMeta } from "@/data/types";
 
 export const defaultParams: Record<string, number> = {
   A: 1.5,
@@ -32,7 +32,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "控制函数周期 T = 2π/ω，横向伸缩",
     descriptionFormula:
-      "决定周期 T = \\frac{2\\pi}{\\omega}，横向伸缩 \\frac{1}{\\omega}",
+      "决定周期 $T = \\frac{2\\pi}{\\omega}$，横向伸缩 $\\frac{1}{\\omega}$",
     importance: "primary",
     marks: [
       { value: 0.5, label: "ω=0.5", labelFormula: "\\omega=0.5" },
@@ -54,7 +54,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: Math.PI / 12,
     description: "相位左右平移量",
     descriptionFormula:
-      "决定相位平移，先平移移动 |\\varphi|，先伸缩移动 \\frac{|\\varphi|}{\\omega}",
+      "决定相位平移，先平移移动 $|\\varphi|$，先伸缩移动 $\\frac{|\\varphi|}{\\omega}$",
     importance: "secondary",
     marks: [
       { value: -Math.PI / 2, label: "-π/2", labelFormula: "-\\frac{\\pi}{2}" },
@@ -71,7 +71,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 2,
     step: 0.5,
     description: "平衡位置 y = k 垂直平移",
-    descriptionFormula: "平衡位置 y = k，沿 y 轴平移",
+    descriptionFormula: "平衡位置 $y = k$，沿 y 轴平移",
     importance: "secondary",
     marks: [
       { value: -1, label: "k=-1", labelFormula: "k=-1" },
