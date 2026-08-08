@@ -59,10 +59,18 @@ import {
   inequalityBasicNode,
   inequalityBasicLoader,
 } from "@/features/inequalityBasic/meta";
+import {
+  node as trigTransformNode,
+  loader as trigTransformLoader,
+} from "@/features/trigTransform/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
 const legacyEntries: RouteEntry[] = [
+  {
+    node: trigTransformNode,
+    loader: trigTransformLoader as any,
+  },
   {
     node: inequalityBasicNode,
     loader: inequalityBasicLoader,

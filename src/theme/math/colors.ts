@@ -3,7 +3,8 @@
  * 数学对象颜色语义映射 — Canvas / SVG 内唯一颜色来源
  */
 
-export function withAlpha(hex: string, alpha: number): string {
+export function withAlpha(hex: string | undefined, alpha: number): string {
+  if (!hex) return `rgba(100, 116, 139, ${alpha})`;
   const clean = hex.replace("#", "");
   if (clean.length === 3) {
     const r = parseInt(clean[0] + clean[0], 16);

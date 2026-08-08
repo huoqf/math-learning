@@ -41,6 +41,7 @@ import { buildParabolaPanel } from "./builders/parabola";
 import { buildConicLineMathQuantities } from "./builders/conicLine";
 import { buildConicParamPanel } from "./builders/conicParam";
 import { buildInequalityBasicPanel } from "./builders/inequalityBasic";
+import { buildTrigTransformPanel } from "./builders/trigTransform";
 
 export type { MathPanelData } from "./types";
 
@@ -139,6 +140,8 @@ export function buildMathQuantities(
       return buildLineEquationPanel(params, config);
     case "anim-trig-lines":
       return buildTrigLinesPanel(params, config);
+    case "anim-trig-transform":
+      return buildTrigTransformPanel(params, config);
     case "anim-triangle-solve":
       return buildTriangleSolvePanel(params, config);
     case "anim-ineq-basic":
