@@ -65,6 +65,10 @@ import {
   vectorLinearLoader,
 } from "@/features/vectorLinear/meta";
 import {
+  vectorDotProductNode,
+  vectorDotProductLoader,
+} from "@/features/vectorDotProduct/meta";
+import {
   node as trigTransformNode,
   loader as trigTransformLoader,
 } from "@/features/trigTransform/meta";
@@ -76,6 +80,14 @@ import {
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
 const legacyEntries: RouteEntry[] = [
+  {
+    node: vectorDotProductNode,
+    loader: vectorDotProductLoader,
+  },
+  {
+    node: vectorLinearNode,
+    loader: vectorLinearLoader,
+  },
   {
     node: inequalityAbsoluteNode,
     loader: inequalityAbsoluteLoader as any,
