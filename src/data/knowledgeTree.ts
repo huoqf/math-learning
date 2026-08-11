@@ -311,11 +311,13 @@ export const knowledgeTree: KnowledgeNode[] = [
   {
     id: "know-vector-linear",
     title: "平面向量的线性运算与共线",
+    labTitle: "平面向量线性运算实验室",
     chapter: "平面向量与复数",
     module: "平面向量",
-    importance: "basic",
+    importance: "gaokao",
     animationIds: ["anim-vector-linear"],
     prerequisites: [],
+    route: "/vector-linear",
   },
   {
     id: "know-vector-dot-product",

@@ -61,6 +61,10 @@ import {
   inequalityBasicLoader,
 } from "@/features/inequalityBasic/meta";
 import {
+  vectorLinearNode,
+  vectorLinearLoader,
+} from "@/features/vectorLinear/meta";
+import {
   node as trigTransformNode,
   loader as trigTransformLoader,
 } from "@/features/trigTransform/meta";
@@ -653,6 +657,7 @@ export const routeEntries: RouteEntry[] = [
   { node: conicDefinitionNode, loader: conicDefinitionLoader },
   { node: triangleSolveNode, loader: triangleSolveLoader },
   { node: lineCircleNode, loader: lineCircleLoader },
+  { node: vectorLinearNode, loader: vectorLinearLoader },
   // 暂未迁移的页面
   ...legacyEntries,
 ];

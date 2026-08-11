@@ -1,14 +1,9 @@
-/**
- * 三角函数 y = A sin(ωx + φ) + k 纯数学计算层
- * 严格保持无 DOM、无 React、无 Store 副作用
- */
-
-export interface FivePoint {
+export interface FivePointInfo {
   index: number;
-  phase: number; // 相位 0, π/2, π, 3π/2, 2π
+  phaseName: string;
   x: number;
   y: number;
-  label: string;
+  type: "zero" | "max" | "min";
 }
 
 export interface TrigProperties {
@@ -20,7 +15,7 @@ export interface TrigProperties {
   frequency: number;
   yMax: number;
   yMin: number;
-  fivePoints: FivePoint[];
+  fivePoints: FivePointInfo[];
   mainIncInterval: [number, number];
   mainDecInterval: [number, number];
   mainSymmetryAxes: number[];
@@ -29,89 +24,35 @@ export interface TrigProperties {
 
 export interface TransformStepInfo {
   step: number;
-  title: string;
-  formulaLatex: string;
-  explanation: string;
-  shiftValue?: number;
-  stretchValue?: number;
+  name: string;
+  title?: string;
+  expression: string;
   fn: (x: number) => number;
+  description: string;
+  explanation?: string;
 }
 
-/**
- * 格式化数值为分数/带 π 符号字符串（如 0.5π -> \frac{\pi}{2}）
- */
 export function formatPiValue(val: number): string {
-  if (Math.abs(val) < 1e-6) return "0";
-  const fracOfPi = val / Math.PI;
-
-  // 常见分数比例判别
-  const fractions: Array<[number, string]> = [
-    [1, "\\pi"],
-    [-1, "-\\pi"],
-    [0.5, "\\frac{\\pi}{2}"],
-    [-0.5, "-\\frac{\\pi}{2}"],
-    [1 / 3, "\\frac{\\pi}{3}"],
-    [-1 / 3, "-\\frac{\\pi}{3}"],
-    [2 / 3, "\\frac{2\\pi}{3}"],
-    [-2 / 3, "-\\frac{2\\pi}{3}"],
-    [0.25, "\\frac{\\pi}{4}"],
-    [-0.25, "-\\frac{\\pi}{4}"],
-    [0.75, "\\frac{3\\pi}{4}"],
-    [-0.75, "-\\frac{3\\pi}{4}"],
-    [1 / 6, "\\frac{\\pi}{6}"],
-    [-1 / 6, "-\\frac{\\pi}{6}"],
-    [5 / 6, "\\frac{5\\pi}{6}"],
-    [-5 / 6, "-\\frac{5\\pi}{6}"],
-    [2, "2\\pi"],
-    [-2, "-2\\pi"],
-  ];
-
-  for (const [ratio, tex] of fractions) {
-    if (Math.abs(fracOfPi - ratio) < 1e-4) {
-      return tex;
-    }
-  }
+  if (Math.abs(val) < 1e-4) return "0";
+  const ratio = val / Math.PI;
+  if (Math.abs(ratio - 1) < 1e-4) return "π";
+  if (Math.abs(ratio + 1) < 1e-4) return "-π";
+  if (Math.abs(ratio - 0.5) < 1e-4) return "π/2";
+  if (Math.abs(ratio + 0.5) < 1e-4) return "-π/2";
+  if (Math.abs(ratio - 1 / 3) < 1e-4) return "π/3";
+  if (Math.abs(ratio + 1 / 3) < 1e-4) return "-π/3";
+  if (Math.abs(ratio - 2 / 3) < 1e-4) return "2π/3";
+  if (Math.abs(ratio + 2 / 3) < 1e-4) return "-2π/3";
+  if (Math.abs(ratio - 0.25) < 1e-4) return "π/4";
+  if (Math.abs(ratio + 0.25) < 1e-4) return "-π/4";
+  if (Math.abs(ratio - 0.75) < 1e-4) return "3π/4";
+  if (Math.abs(ratio + 0.75) < 1e-4) return "-3π/4";
+  if (Math.abs(ratio - 1 / 6) < 1e-4) return "π/6";
+  if (Math.abs(ratio + 1 / 6) < 1e-4) return "-π/6";
 
   return val.toFixed(2);
 }
 
-/**
- * 计算五点作图法关键点
- */
-export function calcFivePoints(
-  A: number,
-  omega: number,
-  phi: number,
-  k: number,
-): FivePoint[] {
-  if (Math.abs(omega) < 1e-9) {
-    return [];
-  }
-
-  const phases = [
-    { phase: 0, label: "0" },
-    { phase: Math.PI / 2, label: "\\frac{\\pi}{2}" },
-    { phase: Math.PI, label: "\\pi" },
-    { phase: (3 * Math.PI) / 2, label: "\\frac{3\\pi}{2}" },
-    { phase: 2 * Math.PI, label: "2\\pi" },
-  ];
-
-  return phases.map((p, idx) => {
-    const x = (p.phase - phi) / omega;
-    const y = A * Math.sin(p.phase) + k;
-    return {
-      index: idx + 1,
-      phase: p.phase,
-      x,
-      y,
-      label: p.label,
-    };
-  });
-}
-
-/**
- * 计算三角函数的综合性质
- */
 export function calcTrigProperties(
   A: number,
   omega: number,
@@ -122,23 +63,34 @@ export function calcTrigProperties(
   const period = (2 * Math.PI) / absOmega;
   const frequency = 1 / period;
 
-  const fivePoints = calcFivePoints(A, absOmega, phi, k);
+  const phases = [
+    { phaseName: "0", t: 0, type: "zero" as const },
+    { phaseName: "π/2", t: Math.PI / 2, type: "max" as const },
+    { phaseName: "π", t: Math.PI, type: "zero" as const },
+    { phaseName: "3π/2", t: (3 * Math.PI) / 2, type: "min" as const },
+    { phaseName: "2π", t: 2 * Math.PI, type: "zero" as const },
+  ];
 
-  // 原点附近的主递增区间 [-π/2, π/2]
+  const fivePoints: FivePointInfo[] = phases.map((p, idx) => {
+    const x = (p.t - phi) / absOmega;
+    const y = A * Math.sin(p.t) + k;
+    return {
+      index: idx,
+      phaseName: p.phaseName,
+      x,
+      y,
+      type: p.type,
+    };
+  });
+
   const incStart = (-Math.PI / 2 - phi) / absOmega;
   const incEnd = (Math.PI / 2 - phi) / absOmega;
 
-  // 主递减区间 [π/2, 3π/2]
-  const decStart = (Math.PI / 2 - phi) / absOmega;
-  const decEnd = ((3 * Math.PI) / 2 - phi) / absOmega;
-
-  // 主对称轴 x = (π/2 - φ)/ω 和 x = (3π/2 - φ)/ω
   const symmetryAxes = [
     (Math.PI / 2 - phi) / absOmega,
     ((3 * Math.PI) / 2 - phi) / absOmega,
   ];
 
-  // 主对称中心 (-φ/ω, k) 和 (π-φ/ω, k)
   const symmetryCenters: Array<[number, number]> = [
     [-phi / absOmega, k],
     [(Math.PI - phi) / absOmega, k],
@@ -164,9 +116,15 @@ export function calcTrigProperties(
   };
 }
 
-/**
- * 获取变换路径过程（路径一 vs 路径二）
- */
+export function calcFivePoints(
+  A: number,
+  omega: number,
+  phi: number,
+  k: number,
+) {
+  return calcTrigProperties(A, omega, phi, k).fivePoints;
+}
+
 export function getTransformPathSteps(
   A: number,
   omega: number,
@@ -180,95 +138,103 @@ export function getTransformPathSteps(
   const shiftAmountPath2Str = formatPiValue(shiftAmountPath2);
 
   if (pathType === "shift-first") {
-    // 路径一：先平移后伸缩
     const direction = phi >= 0 ? "左" : "右";
     const absPhiStr = formatPiValue(Math.abs(phi));
-
     return [
       {
         step: 0,
-        title: "基准函数",
-        formulaLatex: "y_0 = \\sin x",
-        explanation: "标准正弦函数，周期 T = 2\\pi，振幅 A = 1。",
+        name: "基准图象",
+        title: "基准图象",
+        expression: "y = \\sin x",
         fn: (x: number) => Math.sin(x),
+        description: "起点：基础正弦曲线 y = sin x",
+        explanation: "起点：基础正弦曲线 y = sin x",
       },
       {
         step: 1,
-        title: "相位平移（平移 φ）",
-        formulaLatex: `y_1 = \\sin(x ${phi >= 0 ? "+" : ""}${phiStr})`,
-        explanation: `沿 x 轴向${direction}平移 |\\varphi| = ${absPhiStr} 个单位。`,
-        shiftValue: phi,
+        name: "第一步：相位平移",
+        title: "第一步：相位平移",
+        expression: `y = \\sin(x + ${phiStr})`,
         fn: (x: number) => Math.sin(x + phi),
+        description: `沿 x 轴向${direction}平移 ${absPhiStr} 个单位`,
+        explanation: `沿 x 轴向${direction}平移 ${absPhiStr} 个单位`,
       },
       {
         step: 2,
-        title: "周期伸缩（伸缩 ω）",
-        formulaLatex: `y_2 = \\sin(\\color{#D97706}{${absOmega.toFixed(1)}} x ${phi >= 0 ? "+" : ""}${phiStr})`,
-        explanation: `将横坐标 x 变为原来的 1/\\omega = 1/${absOmega.toFixed(1)} 倍。`,
-        stretchValue: absOmega,
-        fn: (x: number) => Math.sin(absOmega * x + phi),
+        name: "第二步：周期伸缩",
+        title: "第二步：周期伸缩",
+        expression: `y = \\sin(${omega}x + ${phiStr})`,
+        fn: (x: number) => Math.sin(omega * x + phi),
+        description: `横向伸缩为原来的 1/${absOmega}，周期变为 T = 2π/${absOmega}`,
+        explanation: `横向伸缩为原来的 1/${absOmega}，周期变为 T = 2π/${absOmega}`,
       },
       {
         step: 3,
-        title: "振幅伸缩（伸缩 A）",
-        formulaLatex: `y_3 = \\color{#EF4444}{${A.toFixed(1)}} \\sin(${absOmega.toFixed(1)} x ${phi >= 0 ? "+" : ""}${phiStr})`,
-        explanation: `将纵坐标 y 伸缩到原来的 A = ${A.toFixed(1)} 倍。`,
-        stretchValue: A,
-        fn: (x: number) => A * Math.sin(absOmega * x + phi),
+        name: "第三步：振幅伸缩",
+        title: "第三步：振幅伸缩",
+        expression: `y = ${A}\\sin(${omega}x + ${phiStr})`,
+        fn: (x: number) => A * Math.sin(omega * x + phi),
+        description: `纵向伸缩 A = ${A} 倍`,
+        explanation: `纵向伸缩 A = ${A} 倍`,
       },
       {
         step: 4,
-        title: "垂直平移（平移 k）",
-        formulaLatex: `y_4 = \\color{#EF4444}{${A.toFixed(1)}} \\sin(${absOmega.toFixed(1)} x ${phi >= 0 ? "+" : ""}${phiStr}) ${k >= 0 ? "+" : ""}${k.toFixed(1)}`,
-        explanation: `沿 y 轴向上/下平移 k = ${k.toFixed(1)} 个单位。`,
-        shiftValue: k,
-        fn: (x: number) => A * Math.sin(absOmega * x + phi) + k,
+        name: "第四步：偏置平移",
+        title: "第四步：偏置平移",
+        expression: `y = ${A}\\sin(${omega}x + ${phiStr}) + ${k}`,
+        fn: (x: number) => A * Math.sin(omega * x + phi) + k,
+        description: `沿 y 轴平移 k = ${k}，平衡位置变为 y = ${k}`,
+        explanation: `沿 y 轴平移 k = ${k}，平衡位置变为 y = ${k}`,
       },
     ];
   } else {
-    // 路径二：先伸缩后平移 (高考经典考点陷阱)
-    const direction = phi >= 0 ? "左" : "右";
+    const direction = shiftAmountPath2 >= 0 ? "左" : "右";
     const absShiftStr = formatPiValue(Math.abs(shiftAmountPath2));
-
     return [
       {
         step: 0,
-        title: "基准函数",
-        formulaLatex: "y_0 = \\sin x",
-        explanation: "标准正弦函数，周期 T = 2\\pi，振幅 A = 1。",
+        name: "基准图象",
+        title: "基准图象",
+        expression: "y = \\sin x",
         fn: (x: number) => Math.sin(x),
+        description: "起点：基础正弦曲线 y = sin x",
+        explanation: "起点：基础正弦曲线 y = sin x",
       },
       {
         step: 1,
-        title: "周期伸缩（伸缩 ω）",
-        formulaLatex: `y_1 = \\sin(\\color{#D97706}{${absOmega.toFixed(1)}} x)`,
-        explanation: `将横坐标 x 变为原来的 1/\\omega = 1/${absOmega.toFixed(1)} 倍。`,
-        stretchValue: absOmega,
-        fn: (x: number) => Math.sin(absOmega * x),
+        name: "第一步：周期伸缩",
+        title: "第一步：周期伸缩",
+        expression: `y = \\sin(${omega}x)`,
+        fn: (x: number) => Math.sin(omega * x),
+        description: `横向伸缩为原来的 1/${absOmega}`,
+        explanation: `横向伸缩为原来的 1/${absOmega}`,
       },
       {
         step: 2,
-        title: "相位平移（平移 φ/ω）",
-        formulaLatex: `y_2 = \\sin[\\color{#D97706}{${absOmega.toFixed(1)}}(x ${shiftAmountPath2 >= 0 ? "+" : ""}${absShiftStr})] = \\sin(${absOmega.toFixed(1)}x ${phi >= 0 ? "+" : ""}${phiStr})`,
-        explanation: `⚠️ 高考考点：向${direction}平移 |\\varphi|/\\omega = ${absShiftStr} 个单位，而非 |\\varphi|！`,
-        shiftValue: shiftAmountPath2,
-        fn: (x: number) => Math.sin(absOmega * (x + shiftAmountPath2)),
+        name: "第二步：相位平移",
+        title: "第二步：相位平移",
+        expression: `y = \\sin(${omega}(x + ${shiftAmountPath2Str})) = \\sin(${omega}x + ${phiStr})`,
+        fn: (x: number) => Math.sin(omega * x + phi),
+        description: `沿 x 轴向${direction}平移 φ/ω = ${absShiftStr} 个单位`,
+        explanation: `沿 x 轴向${direction}平移 φ/ω = ${absShiftStr} 个单位`,
       },
       {
         step: 3,
-        title: "振幅伸缩（伸缩 A）",
-        formulaLatex: `y_3 = \\color{#EF4444}{${A.toFixed(1)}} \\sin(${absOmega.toFixed(1)} x ${phi >= 0 ? "+" : ""}${phiStr})`,
-        explanation: `将纵坐标 y 伸缩到原来的 A = ${A.toFixed(1)} 倍。`,
-        stretchValue: A,
-        fn: (x: number) => A * Math.sin(absOmega * x + phi),
+        name: "第三步：振幅伸缩",
+        title: "第三步：振幅伸缩",
+        expression: `y = ${A}\\sin(${omega}x + ${phiStr})`,
+        fn: (x: number) => A * Math.sin(omega * x + phi),
+        description: `纵向伸缩 A = ${A} 倍`,
+        explanation: `纵向伸缩 A = ${A} 倍`,
       },
       {
         step: 4,
-        title: "垂直平移（平移 k）",
-        formulaLatex: `y_4 = \\color{#EF4444}{${A.toFixed(1)}} \\sin(${absOmega.toFixed(1)} x ${phi >= 0 ? "+" : ""}${phiStr}) ${k >= 0 ? "+" : ""}${k.toFixed(1)}`,
-        explanation: `沿 y 轴向上/下平移 k = ${k.toFixed(1)} 个单位。`,
-        shiftValue: k,
-        fn: (x: number) => A * Math.sin(absOmega * x + phi) + k,
+        name: "第四步：偏置平移",
+        title: "第四步：偏置平移",
+        expression: `y = ${A}\\sin(${omega}x + ${phiStr}) + ${k}`,
+        fn: (x: number) => A * Math.sin(omega * x + phi) + k,
+        description: `沿 y 轴平移 k = ${k}`,
+        explanation: `沿 y 轴平移 k = ${k}`,
       },
     ];
   }
