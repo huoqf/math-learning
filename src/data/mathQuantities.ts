@@ -46,6 +46,7 @@ import { buildTrigTransformPanel } from "./builders/trigTransform";
 import { buildLineCirclePanel } from "./builders/lineCircle";
 import { buildVectorLinearPanel } from "./builders/vectorLinear";
 import { buildVectorDotProductPanel } from "./builders/vectorDotProduct";
+import { buildVectorBasisPanel } from "./builders/vectorBasis";
 
 export type { MathPanelData } from "./types";
 
@@ -156,6 +157,8 @@ export function buildMathQuantities(
       return buildVectorLinearPanel(params, config);
     case "anim-vector-dot-product":
       return buildVectorDotProductPanel(params, config);
+    case "anim-vector-basis":
+      return buildVectorBasisPanel(params, config);
     case "anim-ineq-basic":
     case "anim-inequality-basic":
       return buildInequalityBasicPanel(params, config);

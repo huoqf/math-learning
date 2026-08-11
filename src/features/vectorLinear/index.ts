@@ -1,2 +1,1 @@
-export { VectorLinearAnimation } from "./VectorLinearAnimation";
-export { vectorLinearNode, vectorLinearLoader } from "./meta";
+export { VectorLinearAnimation as default } from "./VectorLinearAnimation";

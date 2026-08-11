@@ -69,6 +69,10 @@ import {
   vectorDotProductLoader,
 } from "@/features/vectorDotProduct/meta";
 import {
+  vectorBasisNode,
+  vectorBasisLoader,
+} from "@/features/vectorBasis/meta";
+import {
   node as trigTransformNode,
   loader as trigTransformLoader,
 } from "@/features/trigTransform/meta";
@@ -83,10 +87,6 @@ const legacyEntries: RouteEntry[] = [
   {
     node: vectorDotProductNode,
     loader: vectorDotProductLoader,
-  },
-  {
-    node: vectorLinearNode,
-    loader: vectorLinearLoader,
   },
   {
     node: inequalityAbsoluteNode,
@@ -670,6 +670,7 @@ export const routeEntries: RouteEntry[] = [
   { node: triangleSolveNode, loader: triangleSolveLoader },
   { node: lineCircleNode, loader: lineCircleLoader },
   { node: vectorLinearNode, loader: vectorLinearLoader },
+  { node: vectorBasisNode, loader: vectorBasisLoader },
   // 暂未迁移的页面
   ...legacyEntries,
 ];

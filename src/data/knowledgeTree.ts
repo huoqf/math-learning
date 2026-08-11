@@ -333,11 +333,13 @@ export const knowledgeTree: KnowledgeNode[] = [
   {
     id: "know-vector-basis",
     title: "平面向量基本定理与基底分解",
+    labTitle: "平面向量基本定理与基底分解实验室",
     chapter: "平面向量与复数",
     module: "平面向量",
-    importance: "core",
+    importance: "gaokao",
     animationIds: ["anim-vector-basis"],
     prerequisites: ["know-vector-linear"],
+    route: "/vector-basis",
   },
   {
     id: "know-complex-geometry",

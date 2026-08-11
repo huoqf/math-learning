@@ -50,7 +50,7 @@ exports[`knowledgeTree 数据完整性 > 快照：节点顺序不可被意外调
   "know-solid-distance",
   "know-solid-ball",
   "know-line-equation",
-  "know-circle-equation",
+  "know-line-circle",
   "know-conic-definition",
   "know-conic-properties",
   "know-conic-parabola",
