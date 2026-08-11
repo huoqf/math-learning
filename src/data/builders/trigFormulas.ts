@@ -16,7 +16,7 @@ import {
 
 export function buildTrigFormulasPanel(
   params: Record<string, number>,
-  config?: Record<string, unknown>
+  config?: Record<string, unknown>,
 ): MathPanelData {
   const alphaDeg = params.alphaDeg ?? 45;
   const betaDeg = params.betaDeg ?? 30;
@@ -25,7 +25,8 @@ export function buildTrigFormulasPanel(
 
   const studyMode = (config?.studyMode as StudyMode) ?? "sum_diff";
   const sumDiffKey = (config?.sumDiffKey as SumDiffFormulaKey) ?? "cos_minus";
-  const doubleAngleKey = (config?.doubleAngleKey as DoubleAngleFormulaKey) ?? "sin_2a";
+  const doubleAngleKey =
+    (config?.doubleAngleKey as DoubleAngleFormulaKey) ?? "sin_2a";
 
   if (studyMode === "sum_diff") {
     const res = calculateSumDiff(alphaDeg, betaDeg, sumDiffKey);
@@ -73,14 +74,16 @@ export function buildTrigFormulasPanel(
       {
         name: "两角和与差的三角公式",
         latex: res.formulaLatex,
-        condition: "$任意实数角 \\alpha, \\beta \\in \\mathbb{R}$",
+        condition: "$\\text{任意实数角 } \\alpha, \\beta \\in \\mathbb{R}$",
         note: "几何推导：单位圆上向量 $u=(\\cos\\alpha,\\sin\\alpha)$ 与 $v=(\\cos\\beta,\\sin\\beta)$ 的数量积即为 $\\cos(\\alpha-\\beta)$。",
         level: "core",
       },
       {
         name: "两角和差正切公式",
-        latex: "\\tan(\\alpha \\pm \\beta) = \\frac{\\tan\\alpha \\pm \\tan\\beta}{1 \\mp \\tan\\alpha\\tan\\beta}",
-        condition: "$\\alpha, \\beta, \\alpha\\pm\\beta \\neq k\\pi + \\frac{\\pi}{2}$",
+        latex:
+          "\\tan(\\alpha \\pm \\beta) = \\frac{\\tan\\alpha \\pm \\tan\\beta}{1 \\mp \\tan\\alpha\\tan\\beta}",
+        condition:
+          "$\\alpha, \\beta, \\alpha\\pm\\beta \\neq k\\pi + \\frac{\\pi}{2}$",
         note: "变形应用：$\\tan\\alpha + \\tan\\beta = \\tan(\\alpha+\\beta)(1 - \\tan\\alpha \\tan\\beta)$。",
         level: "important",
       },
@@ -124,7 +127,7 @@ export function buildTrigFormulasPanel(
       {
         label: "倍角 2α 角度",
         symbol: "2\\alpha",
-        value: `${((alphaDeg * 2) % 360 + 360) % 360}°`,
+        value: `${(((alphaDeg * 2) % 360) + 360) % 360}°`,
         color: "#2563EB",
       },
       {
@@ -156,14 +159,16 @@ export function buildTrigFormulasPanel(
     const theorems: Theorem[] = [
       {
         name: "二倍角公式",
-        latex: "\\sin 2\\alpha = 2\\sin\\alpha\\cos\\alpha, \\quad \\cos 2\\alpha = \\cos^2\\alpha - \\sin^2\\alpha = 2\\cos^2\\alpha - 1 = 1 - 2\\sin^2\\alpha",
+        latex:
+          "\\sin 2\\alpha = 2\\sin\\alpha\\cos\\alpha, \\quad \\cos 2\\alpha = \\cos^2\\alpha - \\sin^2\\alpha = 2\\cos^2\\alpha - 1 = 1 - 2\\sin^2\\alpha",
         condition: "$\\alpha \\in \\mathbb{R}$",
         note: "在两角和公式中令 $\\beta = \\alpha$ 即可导出。$\\cos 2\\alpha$ 有三种表现形式，在升降幂中极具威力。",
         level: "core",
       },
       {
         name: "升降幂公式",
-        latex: "\\sin^2\\alpha = \\frac{1-\\cos 2\\alpha}{2}, \\quad \\cos^2\\alpha = \\frac{1+\\cos 2\\alpha}{2}",
+        latex:
+          "\\sin^2\\alpha = \\frac{1-\\cos 2\\alpha}{2}, \\quad \\cos^2\\alpha = \\frac{1+\\cos 2\\alpha}{2}",
         condition: "用于高考化简中将二次项降为一次项，周期减半",
         note: "降幂升角：二次变一次，角度翻倍！",
         level: "important",
@@ -243,13 +248,15 @@ export function buildTrigFormulasPanel(
       {
         name: "辅助角公式 (Asin(ωx+φ) 化简法)",
         latex: "a\\sin x + b\\cos x = \\sqrt{a^2+b^2}\\sin(x+\\varphi)",
-        condition: "$a^2 + b^2 \\neq 0, \\quad \\cos\\varphi = \\frac{a}{\\sqrt{a^2+b^2}}, \\quad \\sin\\varphi = \\frac{b}{\\sqrt{a^2+b^2}}$",
+        condition:
+          "$a^2 + b^2 \\neq 0, \\quad \\cos\\varphi = \\frac{a}{\\sqrt{a^2+b^2}}, \\quad \\sin\\varphi = \\frac{b}{\\sqrt{a^2+b^2}}$",
         note: "几何本质：平面向量 $(a, b)$ 极坐标化 $(A, \\varphi)$。两同频正弦波与余弦波叠加仍为同频正弦波！",
         level: "core",
       },
       {
         name: "辅助角函数的最值与周期",
-        latex: "y_{max} = \\sqrt{a^2+b^2}, \\quad y_{min} = -\\sqrt{a^2+b^2}, \\quad T = 2\\pi",
+        latex:
+          "y_{max} = \\sqrt{a^2+b^2}, \\quad y_{min} = -\\sqrt{a^2+b^2}, \\quad T = 2\\pi",
         condition: "$x \\in \\mathbb{R}$",
         note: "高考中结合单调性与对称轴分析。",
         level: "important",
@@ -280,7 +287,8 @@ export function buildTrigFormulasPanel(
       theorems,
       gaokaoPoints,
       warnings,
-      mnemonic: "辅助角化简口诀：提模长 sqrt(a²+b²)，余弦正弦填角 φ，点(a,b)象限定符号！",
+      mnemonic:
+        "辅助角化简口诀：提模长 sqrt(a²+b²)，余弦正弦填角 φ，点(a,b)象限定符号！",
     };
   }
 }

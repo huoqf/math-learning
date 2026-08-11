@@ -32,6 +32,7 @@ import {
   lineEquationNode,
   lineEquationLoader,
 } from "@/features/lineEquation/meta";
+import { lineCircleNode, lineCircleLoader } from "@/features/line-circle/meta";
 import { trigLinesNode, trigLinesLoader } from "@/features/trigLines/meta";
 import {
   trigIdentityNode,
@@ -651,6 +652,7 @@ export const routeEntries: RouteEntry[] = [
   { node: statPercentileNode, loader: statPercentileLoader },
   { node: conicDefinitionNode, loader: conicDefinitionLoader },
   { node: triangleSolveNode, loader: triangleSolveLoader },
+  { node: lineCircleNode, loader: lineCircleLoader },
   // 暂未迁移的页面
   ...legacyEntries,
 ];
