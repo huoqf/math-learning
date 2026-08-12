@@ -3,6 +3,7 @@ import {
   calculateConditionalProb,
   calculateTotalProb,
   calculateBayesDiagnostic,
+  calculateMarkovChain,
 } from "../../math/probabilityBayes";
 import { MATH_COLORS } from "../../theme";
 
@@ -182,7 +183,7 @@ export function buildProbabilityBayesPanel(
           latex: `P(B) = \\sum_{i=1}^n P(A_i)P(B|A_i)`,
           condition:
             "$A_1, A_2, \\ldots, A_n$ 构成 $\\Omega$ 的完备划分（两两互斥且并集为 $\\Omega$）",
-          prerequisites: ["$P(A_i) > 0$， $i = 1, \\ldots, n$"],
+          prerequisites: ["$P(A_i) > 0$ ($i = 1, \\ldots, n$)"],
           note: '"化整为零，分道汇合"：把复杂事件 $B$ 分解到各完备划分分支路径上进行加权求和。',
           level: "core",
         },
@@ -209,108 +210,220 @@ export function buildProbabilityBayesPanel(
   }
 
   // 3. 模式三：贝叶斯公式与试剂/次品诊断 (后验执因)
-  const pPriorD = params.pPriorD ?? 0.02;
-  const pSensitivity = params.pSensitivity ?? 0.95;
-  const pFalsePositive = params.pFalsePositive ?? 0.05;
-  const bayesPreset = (config?.bayesPreset as string) || "screening";
-  const isFactory = bayesPreset === "factory";
+  if (activeMode === "bayes") {
+    const pPriorD = params.pPriorD ?? 0.02;
+    const pSensitivity = params.pSensitivity ?? 0.95;
+    const pFalsePositive = params.pFalsePositive ?? 0.05;
+    const bayesPreset = (config?.bayesPreset as string) || "screening";
+    const isFactory = bayesPreset === "factory";
 
-  const res = calculateBayesDiagnostic(pPriorD, pSensitivity, pFalsePositive);
-  const targetSymbol = isFactory ? "Def" : "D";
+    const res = calculateBayesDiagnostic(pPriorD, pSensitivity, pFalsePositive);
+    const targetSymbol = isFactory ? "Def" : "D";
 
-  const priorLabel = isFactory ? "次品先验概率 P(Def)" : "先验患病率 P(D)";
-  const sensLabel = isFactory ? "次品检出率 P(+|Def)" : "真阳性率 P(+|D)";
-  const falsePosLabel = isFactory
-    ? "合格误判率 P(+|~Def)"
-    : "假阳性误报率 P(+|~D)";
-  const posteriorLabel = isFactory
-    ? "★ 检测阳性实际为次品率 P(Def|+)"
-    : "★ 阳性后验患病率 P(D|+)";
+    const priorLabel = isFactory ? "次品先验概率 P(Def)" : "先验患病率 P(D)";
+    const sensLabel = isFactory ? "次品检出率 P(+|Def)" : "真阳性率 P(+|D)";
+    const falsePosLabel = isFactory
+      ? "合格误判率 P(+|~Def)"
+      : "假阳性误报率 P(+|~D)";
+    const posteriorLabel = isFactory
+      ? "★ 检测阳性实际为次品率 P(Def|+)"
+      : "★ 阳性后验患病率 P(D|+)";
+
+    return {
+      quantities: [
+        {
+          label: priorLabel,
+          symbol: `P(${targetSymbol})`,
+          value: `${(res.pPriorD * 100).toFixed(2)}%`,
+          color: MATH_COLORS.paramPrimary,
+        },
+        {
+          label: sensLabel,
+          symbol: `P(+|${targetSymbol})`,
+          value: `${(res.pSensitivity * 100).toFixed(1)}%`,
+          color: MATH_COLORS.paramSecondary,
+        },
+        {
+          label: falsePosLabel,
+          symbol: `P(+|\\bar{${targetSymbol}})`,
+          value: `${(res.pFalsePositive * 100).toFixed(1)}%`,
+          color: MATH_COLORS.paramTertiary,
+        },
+        {
+          label: "总体阳性检出率 P(+)",
+          symbol: "P(+)",
+          value: `${(res.pTotalPositive * 100).toFixed(2)}%`,
+          color: MATH_COLORS.functionTransformed,
+        },
+        {
+          label: posteriorLabel,
+          symbol: `P(${targetSymbol}|+)`,
+          value: `${(res.pPosteriorD * 100).toFixed(2)}%`,
+          color: MATH_COLORS.derivative,
+        },
+        {
+          label: "阳性结果中“误报/误判”占比",
+          symbol: "\\text{False Alarm Ratio}",
+          value: `${(res.falseAlarmRatio * 100).toFixed(2)}%`,
+          color: MATH_COLORS.degeneracy,
+        },
+      ],
+      theorems: [
+        {
+          name: "贝叶斯公式 (Bayes' Theorem)",
+          latex: `P(A_k|B) = \\frac{P(A_k B)}{P(B)} = \\frac{P(A_k)P(B|A_k)}{\\sum_{i=1}^n P(A_i)P(B|A_i)}`,
+          condition: "已知结果 $B$ 发生，逆向推断特定原因 $A_k$ 的后验概率",
+          prerequisites: [
+            "$A_1, A_2, \\ldots, A_n$ 构成 $\\Omega$ 的完备划分",
+            "$P(B) > 0$",
+          ],
+          note: "分子是特定原因分支路径 $P(A_k B)$，分母是全概率求得的总结果 $P(B)$。",
+          level: "core",
+        },
+        {
+          name: isFactory
+            ? "工业质检逆向模型"
+            : "试剂检测模型 (Medical Screening)",
+          latex: isFactory
+            ? `P(\\text{Def}|+) = \\frac{P(\\text{Def})P(+|\\text{Def})}{P(\\text{Def})P(+|\\text{Def}) + P(\\bar{\\text{Def}})P(+|\\bar{\\text{Def}})}`
+            : `P(D|+) = \\frac{P(D)P(+|D)}{P(D)P(+|D) + P(\\bar{D})P(+|\\bar{D})}`,
+          note: "基数效应：小概率先验事件中，庞大合格/健康人群基数即使乘以极低误报率，也会产生不可忽视的虚假阳性！",
+          level: "important",
+        },
+      ],
+      gaokaoPoints: [
+        {
+          text: "【新高考通法·全概与贝叶斯求解 3 步法】①确定原因划分 A_i 与结果事件 B；②画出树状路径图，计算全概率分母 P(B) = ∑ P(A_i)P(B|A_i)；③将目标原因路径作分子，求出后验概率 P(A_k|B) = P(A_k B) / P(B)。",
+          importance: "gaokao",
+        },
+        {
+          text: isFactory
+            ? "高考工业应用题：质检仪器精准度 98% ≠ 测出阳性就 98% 为次品！必须结合先验次品率 P(Def) 计算后验概率 P(Def|+)。"
+            : "高考反直觉高频题：试剂准确率 95% ≠ 测出阳性就 95% 患病！必须结合先验患病率 P(D) 计算后验概率 P(D|+)。",
+          importance: "gaokao",
+        },
+        {
+          text: "解题两步法：第一步用全概率公式算出分母 P(+)，第二步用目标分支联合概率作分子相除。",
+          importance: "core",
+        },
+      ],
+      warnings: [
+        {
+          text: `💡 破除直觉陷阱：仪器/试剂准确率高达 ${(res.pSensitivity * 100).toFixed(0)}%，但由于先验${isFactory ? "次品率" : "患病率"}仅 ${(res.pPriorD * 100).toFixed(1)}%，在 1000 个样本中，${(1000 * (1 - res.pPriorD)).toFixed(0)} 名${isFactory ? "合格品" : "健康人"}产生的 ${(1000 * (1 - res.pPriorD) * res.pFalsePositive).toFixed(0)} 个“误报”稀释了真实阳性，导致实际${isFactory ? "次品" : "患病"}概率仅为 ${(res.pPosteriorD * 100).toFixed(1)}%！`,
+          level: "warning",
+        },
+      ],
+      mnemonic: "由果溯因贝叶斯，全概为底分母放，分支路径作分子。",
+    };
+  }
+
+  // 4. 模式四：马尔可夫链与全概率状态转移递推
+  const p1Val = params.p1 ?? 1.0;
+  const p11Val = params.p11 ?? 0.0;
+  const p21Val = params.p21 ?? 0.5;
+  const maxNVal = params.maxN ?? 10;
+  const markovPreset = (config?.markovPreset as string) || "pass_ball";
+
+  const markovRes = calculateMarkovChain(p1Val, p11Val, p21Val, maxNVal);
+  const lastStepP1 = markovRes.steps[markovRes.steps.length - 1]?.p1 ?? 0;
+
+  const modelName =
+    markovPreset === "pass_ball"
+      ? "甲乙传球模型"
+      : markovPreset === "urn_ball"
+        ? "摸球替换模型"
+        : markovPreset === "weather"
+          ? "晴雨天气转移模型"
+          : "自定义马尔可夫链";
 
   return {
     quantities: [
       {
-        label: priorLabel,
-        symbol: `P(${targetSymbol})`,
-        value: `${(res.pPriorD * 100).toFixed(2)}%`,
+        label: "初始状态 1 概率 P1",
+        symbol: "p_1",
+        value: p1Val.toFixed(3),
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: sensLabel,
-        symbol: `P(+|${targetSymbol})`,
-        value: `${(res.pSensitivity * 100).toFixed(1)}%`,
+        label: "转移概率 P(S_{n+1}=1|S_n=1)",
+        symbol: "p_{11}",
+        value: p11Val.toFixed(2),
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: falsePosLabel,
-        symbol: `P(+|\\bar{${targetSymbol}})`,
-        value: `${(res.pFalsePositive * 100).toFixed(1)}%`,
+        label: "转移概率 P(S_{n+1}=1|S_n=2)",
+        symbol: "p_{21}",
+        value: p21Val.toFixed(2),
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "总体阳性检出率 P(+)",
-        symbol: "P(+)",
-        value: `${(res.pTotalPositive * 100).toFixed(2)}%`,
+        label: "等比数列公比 λ = p_{11} - p_{21}",
+        symbol: "\\lambda",
+        value: markovRes.lambda.toFixed(3),
         color: MATH_COLORS.functionTransformed,
       },
       {
-        label: posteriorLabel,
-        symbol: `P(${targetSymbol}|+)`,
-        value: `${(res.pPosteriorD * 100).toFixed(2)}%`,
-        color: MATH_COLORS.derivative,
+        label: "平稳分布 (极限概率) p_∞",
+        symbol: "p_\\infty",
+        value: markovRes.isDegenerate
+          ? "无极值/恒定"
+          : markovRes.pStationary.toFixed(4),
+        color: MATH_COLORS.focusPoint,
       },
       {
-        label: "阳性结果中“误报/误判”占比",
-        symbol: "\\text{False Alarm Ratio}",
-        value: `${(res.falseAlarmRatio * 100).toFixed(2)}%`,
-        color: MATH_COLORS.degeneracy,
+        label: `第 ${markovRes.steps.length} 步状态 1 概率 p_${markovRes.steps.length}`,
+        symbol: `p_{${markovRes.steps.length}}`,
+        value: lastStepP1.toFixed(4),
+        color: MATH_COLORS.function,
       },
     ],
     theorems: [
       {
-        name: "贝叶斯公式 (Bayes' Theorem)",
-        latex: `P(A_k|B) = \\frac{P(A_k)P(B|A_k)}{\\sum_{i=1}^n P(A_i)P(B|A_i)} = \\frac{P(A_k B)}{P(B)}`,
-        condition: "已知结果 B 发生，逆向推断特定原因 A_k 的后验概率",
-        prerequisites: [
-          "$A_1, A_2, \\ldots, A_n$ 构成 $\\Omega$ 的完备划分",
-          "$P(B) > 0$",
-        ],
-        note: "分子是特定原因分支路径 P(A_k B)，分母是全概率求得的总结果 P(B)。",
+        name: "马尔可夫链全概率递推公式",
+        latex: `p_{n+1} = p_{11} p_n + p_{21}(1 - p_n) = (p_{11} - p_{21}) p_n + p_{21}`,
+        condition:
+          "已知当前步状态为 $S_n$，通过全概率公式展开求解下一步状态 $S_{n+1}$",
+        note: `本题递推变形为：$${markovRes.recurrenceLatex}$`,
         level: "core",
       },
       {
-        name: isFactory
-          ? "工业质检逆向模型"
-          : "试剂检测模型 (Medical Screening)",
-        latex: isFactory
-          ? `P(\\text{Def}|+) = \\frac{P(\\text{Def})P(+|\\text{Def})}{P(\\text{Def})P(+|\\text{Def}) + P(\\bar{\\text{Def}})P(+|\\bar{\\text{Def}})}`
-          : `P(D|+) = \\frac{P(D)P(+|D)}{P(D)P(+|D) + P(\\bar{D})P(+|\\bar{D})}`,
-        note: "基数效应：小概率先验事件中，庞大合格/健康人群基数即使乘以极低误报率，也会产生不可忽视的虚假阳性！",
+        name: "构造等比数列法求通项",
+        latex: `p_{n+1} - p_\\infty = \\lambda (p_n - p_\\infty) \\implies p_n = (p_1 - p_\\infty)\\lambda^{n-1} + p_\\infty`,
+        condition:
+          "不动点方程 $p_\\infty = \\lambda p_\\infty + p_{21} \\implies p_\\infty = \\frac{p_{21}}{1-\\lambda}$",
+        note: markovRes.generalTermLatex
+          ? `通项公式：$${markovRes.generalTermLatex}$`
+          : "构造 {p_n - p_\\infty} 为公比为 $\\lambda$ 的等比数列",
         level: "important",
+      },
+      {
+        name: "平稳分布与极限收敛定理",
+        latex: `\\lim_{n \\to \\infty} p_n = p_\\infty = \\frac{p_{21}}{1 - p_{11} + p_{21}} \\quad (|\\lambda| < 1)`,
+        note: markovRes.isOscillating
+          ? "公比 $\\lambda < 0$，序列呈现交替震荡收敛于平稳极限 $p_\\infty$。"
+          : "公比 $\\lambda > 0$，序列呈现单调渐近收敛于平稳极限 $p_\\infty$。",
+        level: "derived",
       },
     ],
     gaokaoPoints: [
       {
-        text: "【新高考通法·全概与贝叶斯求解 3 步法】①确定原因划分 A_i 与结果事件 B；②画出树状路径图，计算全概率分母 P(B) = ∑ P(A_i)P(B|A_i)；③将目标原因路径作分子，求出后验概率 P(A_k|B) = P(A_k B) / P(B)。",
+        text: `【新高考必考：全概率递推 4 步法】①设第 n 步事件为 A_n (概率 p_n)；②用全概率公式写出 p_{n+1} = p_{11}p_n + p_{21}(1-p_n)；③构造等比数列 (p_{n+1}-p_∞) = λ(p_n-p_∞)；④写出通项 p_n 并求极限。`,
         importance: "gaokao",
       },
       {
-        text: isFactory
-          ? "高考工业应用题：质检仪器精准度 98% ≠ 测出阳性就 98% 为次品！必须结合先验次品率 P(Def) 计算后验概率 P(Def|+)。"
-          : "高考反直觉高频题：试剂准确率 95% ≠ 测出阳性就 95% 患病！必须结合先验患病率 P(D) 计算后验概率 P(D|+)。",
+        text: `【${modelName}考点】高考压轴概率题常结合数列求和与极限分析，理解状态转移矩阵在每一步演化中的全概率基石作用。`,
         importance: "gaokao",
       },
-      {
-        text: "解题两步法：第一步用全概率公式算出分母 P(+)，第二步用目标分支联合概率作分子相除。",
-        importance: "core",
-      },
     ],
-    warnings: [
-      {
-        text: `💡 破除直觉陷阱：仪器/试剂准确率高达 ${(res.pSensitivity * 100).toFixed(0)}%，但由于先验${isFactory ? "次品率" : "患病率"}仅 ${(res.pPriorD * 100).toFixed(1)}%，在 1000 个样本中，${(1000 * (1 - res.pPriorD)).toFixed(0)} 名${isFactory ? "合格品" : "健康人"}产生的 ${(1000 * (1 - res.pPriorD) * res.pFalsePositive).toFixed(0)} 个“误报”稀释了真实阳性，导致实际${isFactory ? "次品" : "患病"}概率仅为 ${(res.pPosteriorD * 100).toFixed(1)}%！`,
-        level: "warning",
-      },
-    ],
-    mnemonic: "由果溯因贝叶斯，全概为底分母放，分支路径作分子。",
+    warnings: markovRes.isDegenerate
+      ? [
+          {
+            text: "当 λ = p11 - p21 = 1 时（即 p11=1 且 p21=0），系统为退化闭环，概率保持不变，无法构造非零等比数列。",
+            level: "warning",
+          },
+        ]
+      : [],
+    mnemonic:
+      "全概递推找分支，构造等比设不动，相减求得通项式，极限逼近稳态值。",
   };
 }

@@ -3,6 +3,7 @@ import {
   calculateConditionalProb,
   calculateTotalProb,
   calculateBayesDiagnostic,
+  calculateMarkovChain,
 } from "../probabilityBayes";
 
 describe("probabilityBayes math module", () => {
@@ -41,5 +42,24 @@ describe("probabilityBayes math module", () => {
     // P(D|+) = 0.019 / 0.068 ≈ 0.2794 (27.94%)
     expect(res.pTotalPositive).toBeCloseTo(0.068);
     expect(res.pPosteriorD).toBeCloseTo(0.2794, 3);
+  });
+
+  it("should calculate Markov Chain recurrence correctly (Pass Ball Game model)", () => {
+    // 甲乙丙传球模型：球在甲手中为状态 1。p1 = 1.0, p11 = 0, p21 = 0.5
+    // p_{n+1} = -0.5 * p_n + 0.5
+    // 稳态 p_infty = 0.5 / (1 - (-0.5)) = 1/3 ≈ 0.3333
+    const res = calculateMarkovChain(1.0, 0, 0.5, 10);
+    expect(res.lambda).toBeCloseTo(-0.5);
+    expect(res.pStationary).toBeCloseTo(1 / 3);
+    expect(res.isOscillating).toBe(true);
+
+    // p_1 = 1.0
+    expect(res.steps[0].p1).toBeCloseTo(1.0);
+    // p_2 = 0 * 1.0 + 0.5 * 0.0 = 0.0
+    expect(res.steps[1].p1).toBeCloseTo(0.0);
+    // p_3 = 0 * 0.0 + 0.5 * 1.0 = 0.5
+    expect(res.steps[2].p1).toBeCloseTo(0.5);
+    // p_4 = 0 * 0.5 + 0.5 * 0.5 = 0.25
+    expect(res.steps[3].p1).toBeCloseTo(0.25);
   });
 });

@@ -183,7 +183,12 @@ function splitAlignedEnvironment(latex: string): string[] | null {
   const body = match[1];
   const lines = body
     .split(/\\\\/)
-    .map((line) => line.replace(/&/g, "").trim())
+    .map((line) =>
+      line
+        .replace(/^\[[^\]]+\]/, "")
+        .replace(/&/g, "")
+        .trim(),
+    )
     .filter((line) => line.length > 0);
   return lines.length > 0 ? lines : null;
 }
@@ -401,14 +406,23 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 py-1.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[36px] items-center overflow-x-hidden">
+                    <div className="flex flex-wrap justify-center gap-x-2 gap-y-3 py-2 px-2 bg-white rounded border border-neutral-100/50 my-1 min-h-[38px] items-center overflow-x-auto max-w-full">
                       {(() => {
+                        if (t.mode === "block" || needsBlockMode(t.latex)) {
+                          return (
+                            <KatexFormula
+                              formula={t.latex}
+                              mode="block"
+                              className="!my-0 max-w-full"
+                            />
+                          );
+                        }
                         const alignedLines = splitAlignedEnvironment(t.latex);
                         if (alignedLines) {
                           return alignedLines.map((line, i) => (
                             <div
                               key={i}
-                              className="w-full flex flex-wrap justify-center gap-x-2 gap-y-0.5 items-center"
+                              className="w-full flex flex-wrap justify-center gap-x-2 gap-y-2 items-center"
                             >
                               {splitLatexByWraps(line).map((seg, j) => (
                                 <KatexFormula
@@ -420,15 +434,6 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                               ))}
                             </div>
                           ));
-                        }
-                        if (t.mode === "block" || needsBlockMode(t.latex)) {
-                          return (
-                            <KatexFormula
-                              formula={t.latex}
-                              mode="block"
-                              className="!my-0"
-                            />
-                          );
                         }
                         return splitLatexByWraps(t.latex).map((seg, i) => (
                           <KatexFormula

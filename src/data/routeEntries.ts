@@ -506,6 +506,21 @@ const legacyEntries: RouteEntry[] = [
   },
   {
     node: {
+      id: "know-probability-markov",
+      title: "全概率公式与马尔可夫链状态转移递推",
+      labTitle: "全概与马尔可夫链递推实验室",
+      chapter: "概率与统计",
+      module: "概率压轴",
+      importance: "hard",
+      animationIds: ["anim-probability-markov"],
+      prerequisites: ["know-probability-bayes"],
+      route: "/probability-markov",
+    },
+    loader: () =>
+      import("@/features/probabilityBayes/ProbabilityBayesAnimation"),
+  },
+  {
+    node: {
       id: "know-probability-distribution",
       title: "离散型随机变量分布列与数字特征",
       labTitle: "离散型随机变量分布列与数字特征",

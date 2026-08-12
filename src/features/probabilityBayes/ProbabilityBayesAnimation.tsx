@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -17,17 +18,27 @@ import { buildProbabilityBayesPanel } from "@/data/builders/probabilityBayes";
 import { ProbabilityBayesScene } from "./components/ProbabilityBayesScene";
 
 export function ProbabilityBayesAnimation() {
+  const location = useLocation();
+  const initialMode = location.pathname.includes("markov")
+    ? "markov"
+    : location.pathname.includes("bayes")
+      ? "bayes"
+      : "conditional";
+
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
   }));
 
   const [activeMode, setActiveMode] = useState<
-    "conditional" | "total_prob" | "bayes"
-  >("conditional");
+    "conditional" | "total_prob" | "bayes" | "markov"
+  >(initialMode);
   const [isZoomedToA, setIsZoomedToA] = useState(false);
   const [bayesPreset, setBayesPreset] = useState<
     "screening" | "factory" | "custom"
   >("screening");
+  const [markovPreset, setMarkovPreset] = useState<
+    "pass_ball" | "urn_ball" | "weather" | "custom"
+  >("pass_ball");
 
   // 1. 视口与缩放设置
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -42,8 +53,12 @@ export function ProbabilityBayesAnimation() {
 
   // 2. 右屏 MathPanel 数据组装
   const mathData = useMemo(() => {
-    return buildProbabilityBayesPanel(params, { activeMode, bayesPreset });
-  }, [params, activeMode, bayesPreset]);
+    return buildProbabilityBayesPanel(params, {
+      activeMode,
+      bayesPreset,
+      markovPreset,
+    });
+  }, [params, activeMode, bayesPreset, markovPreset]);
 
   // 3. 悬浮 KaTeX 公式渲染 (支持完整的闭环代入)
   const currentFormulaLatex = useMemo(() => {
@@ -63,21 +78,30 @@ export function ProbabilityBayesAnimation() {
       const pA3 = Math.max(0, 1 - params.pA1 - params.pA2).toFixed(2);
       return `\\color{${MATH_COLORS.function}}{P(B)} = \\sum_{i=1}^3 P(A_i)P(B|A_i) = ${pA1}\\cdot P(B|A_1) + ${pA2}\\cdot P(B|A_2) + ${pA3}\\cdot P(B|A_3)`;
     }
-    // bayes 模式
-    const pD = params.pPriorD ?? 0.02;
-    const pNotD = 1 - pD;
-    const pSens = params.pSensitivity ?? 0.95;
-    const pFalse = params.pFalsePositive ?? 0.05;
+    if (activeMode === "bayes") {
+      const pD = params.pPriorD ?? 0.02;
+      const pNotD = 1 - pD;
+      const pSens = params.pSensitivity ?? 0.95;
+      const pFalse = params.pFalsePositive ?? 0.05;
 
-    const pTrueJoint = pD * pSens;
-    const pFalseJoint = pNotD * pFalse;
-    const pTotalPos = pTrueJoint + pFalseJoint;
-    const pPosterior = pTotalPos > 0 ? (pTrueJoint / pTotalPos) * 100 : 0;
+      const pTrueJoint = pD * pSens;
+      const pFalseJoint = pNotD * pFalse;
+      const pTotalPos = pTrueJoint + pFalseJoint;
+      const pPosterior = pTotalPos > 0 ? (pTrueJoint / pTotalPos) * 100 : 0;
 
-    const isFactory = bayesPreset === "factory";
-    const targetSymbol = isFactory ? "\\text{Def}" : "D";
+      const isFactory = bayesPreset === "factory";
+      const targetSymbol = isFactory ? "\\text{Def}" : "D";
 
-    return `\\color{${MATH_COLORS.derivative}}{P(${targetSymbol}|+)} = \\frac{${pD.toFixed(3)} \\times ${pSens.toFixed(2)}}{${pD.toFixed(3)} \\times ${pSens.toFixed(2)} + ${pNotD.toFixed(3)} \\times ${pFalse.toFixed(2)}} = ${pPosterior.toFixed(2)}\\%`;
+      return `\\color{${MATH_COLORS.derivative}}{P(${targetSymbol}|+)} = \\frac{${pD.toFixed(3)} \\times ${pSens.toFixed(2)}}{${pD.toFixed(3)} \\times ${pSens.toFixed(2)} + ${pNotD.toFixed(3)} \\times ${pFalse.toFixed(2)}} = ${pPosterior.toFixed(2)}\\%`;
+    }
+    // markov 模式
+    const p11 = params.p11 ?? 0.0;
+    const p21 = params.p21 ?? 0.5;
+    const lambda = p11 - p21;
+    const lambdaStr =
+      lambda >= 0 ? lambda.toFixed(2) : `(${lambda.toFixed(2)})`;
+    const betaStr = p21.toFixed(2);
+    return `\\color{${MATH_COLORS.function}}{p_{n+1}} = p_{11} p_n + p_{21}(1-p_n) = ${lambdaStr} p_n + ${betaStr}`;
   }, [activeMode, params, bayesPreset]);
 
   // 4. 左屏声明式参数配置按 activeMode 精准过滤与名称动态适配
@@ -86,6 +110,7 @@ export function ProbabilityBayesAnimation() {
       conditional: ["pA", "pB", "pAB"],
       total_prob: ["pA1", "pA2", "pB_A1", "pB_A2", "pB_A3"],
       bayes: ["pPriorD", "pSensitivity", "pFalsePositive"],
+      markov: ["p1", "p11", "p21", "maxN"],
     };
 
     const isFactory = bayesPreset === "factory";
@@ -135,20 +160,33 @@ export function ProbabilityBayesAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
     if (activeMode === "bayes") {
       setBayesPreset("custom");
+    } else if (activeMode === "markov") {
+      setMarkovPreset("custom");
     }
   };
 
   const handleReset = () => {
     setParams({ ...defaultParams });
     setBayesPreset("screening");
+    setMarkovPreset("pass_ball");
   };
+
+  const panelTitle = useMemo(() => {
+    if (activeMode === "conditional") return "条件概率指标看板";
+    if (activeMode === "total_prob") return "全概率公式指标看板";
+    if (activeMode === "bayes") return "贝叶斯诊断指标看板";
+    return "马尔可夫链状态转移递推看板";
+  }, [activeMode]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
           {/* 模式选择区 */}
-          <LeftPanelSection title="模式选择" subtitle="从样本空间到逆向诊断">
+          <LeftPanelSection
+            title="模式选择"
+            subtitle="从样本空间到状态转移递推"
+          >
             <TabSwitcher
               tabs={[
                 { key: "conditional", label: "条件概率", formula: "P(B|A)" },
@@ -158,9 +196,14 @@ export function ProbabilityBayesAnimation() {
                   formula: "P(B)=\\sum P_i P(B|A_i)",
                 },
                 { key: "bayes", label: "贝叶斯公式", formula: "P(A_k|B)" },
+                {
+                  key: "markov",
+                  label: "马尔可夫链",
+                  formula: "p_{n+1}=a p_n + b",
+                },
               ]}
               value={activeMode}
-              onChange={(k) => setActiveMode(k)}
+              onChange={(k) => setActiveMode(k as any)}
             />
           </LeftPanelSection>
 
@@ -234,6 +277,66 @@ export function ProbabilityBayesAnimation() {
             </LeftPanelSection>
           )}
 
+          {/* 马尔可夫链专属：高考经典模型预设 */}
+          {activeMode === "markov" && (
+            <LeftPanelSection
+              title="高考经典模型预设"
+              subtitle="一键加载递推数列模型"
+            >
+              <SelectGrid
+                columns={1}
+                items={[
+                  {
+                    key: "pass_ball",
+                    label: "甲乙传球问题",
+                    description: "p11=0.0, p21=0.5 (震荡收敛于 1/3)",
+                  },
+                  {
+                    key: "urn_ball",
+                    label: "摸球替换模型",
+                    description: "p11=0.6, p21=0.2 (单调收敛于 1/3)",
+                  },
+                  {
+                    key: "weather",
+                    label: "晴雨天气转移",
+                    description: "p11=0.7, p21=0.4 (稳态概率 4/7)",
+                  },
+                ]}
+                value={markovPreset === "custom" ? "" : markovPreset}
+                onChange={(k) => {
+                  if (k === "pass_ball") {
+                    setParams((prev) => ({
+                      ...prev,
+                      p1: 1.0,
+                      p11: 0.0,
+                      p21: 0.5,
+                      maxN: 10,
+                    }));
+                    setMarkovPreset("pass_ball");
+                  } else if (k === "urn_ball") {
+                    setParams((prev) => ({
+                      ...prev,
+                      p1: 1.0,
+                      p11: 0.6,
+                      p21: 0.2,
+                      maxN: 10,
+                    }));
+                    setMarkovPreset("urn_ball");
+                  } else if (k === "weather") {
+                    setParams((prev) => ({
+                      ...prev,
+                      p1: 1.0,
+                      p11: 0.7,
+                      p21: 0.4,
+                      maxN: 10,
+                    }));
+                    setMarkovPreset("weather");
+                  }
+                }}
+              />
+            </LeftPanelSection>
+          )}
+
           {/* 参数调节区 */}
           <LeftPanelSection
             title="动态参数调节"
@@ -269,6 +372,7 @@ export function ProbabilityBayesAnimation() {
               activeMode={activeMode}
               isZoomedToA={isZoomedToA}
               bayesPreset={bayesPreset || ""}
+              markovPreset={markovPreset || ""}
               fontScale={canvasSize.font}
             />
           </AnimationSvgCanvas>
@@ -281,7 +385,7 @@ export function ProbabilityBayesAnimation() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
-          title="条件概率与贝叶斯看板"
+          title={panelTitle}
         />
       }
     />

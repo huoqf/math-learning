@@ -17,6 +17,12 @@ export const defaultParams = {
   pPriorD: 0.02,
   pSensitivity: 0.95,
   pFalsePositive: 0.05,
+
+  // 模式 4: 马尔可夫链递推
+  p1: 1.0,
+  p11: 0.0,
+  p21: 0.5,
+  maxN: 10,
 } as const;
 
 export const paramMeta: Record<string, ParamMeta> = {
@@ -168,5 +174,60 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     description: "试剂在健康人群中的误报率（假阳性）",
     descriptionFormula: "试剂误报率 / 假阳性率 $P(+|\\bar{D})$",
+  },
+
+  // ---------------- 马尔可夫链状态转移 ----------------
+  p1: {
+    key: "p1",
+    label: "初始状态概率 p1",
+    labelFormula: "p_1",
+    min: 0.0,
+    max: 1.0,
+    step: 0.05,
+    defaultValue: 1.0,
+    importance: "core",
+    description: "时刻 1 系统处于状态 1 的初始概率",
+    descriptionFormula: "初始概率 $p_1 = P(S_1 = 1)$",
+  },
+  p11: {
+    key: "p11",
+    label: "自保持概率 p11",
+    labelFormula: "p_{11}",
+    min: 0.0,
+    max: 1.0,
+    step: 0.05,
+    defaultValue: 0.0,
+    importance: "core",
+    description: "前一刻为状态 1 时，下一刻保持状态 1 的概率",
+    descriptionFormula: "保持概率 $p_{11} = P(S_{n+1}=1|S_n=1)$",
+    marks: [
+      { value: 0, label: "0.0" },
+      { value: 0.5, label: "0.5" },
+    ],
+  },
+  p21: {
+    key: "p21",
+    label: "跨转移概率 p21",
+    labelFormula: "p_{21}",
+    min: 0.0,
+    max: 1.0,
+    step: 0.05,
+    defaultValue: 0.5,
+    importance: "core",
+    description: "前一刻为状态 2 时，下一刻转移到状态 1 的概率",
+    descriptionFormula: "跨转概率 $p_{21} = P(S_{n+1}=1|S_n=2)$",
+    marks: [{ value: 0.5, label: "0.5" }],
+  },
+  maxN: {
+    key: "maxN",
+    label: "演示推导步数 N",
+    labelFormula: "N",
+    min: 3,
+    max: 15,
+    step: 1,
+    defaultValue: 10,
+    importance: "advanced",
+    description: "在折线图与演化树中展示的状态推导步数 N",
+    descriptionFormula: "演化步数 $N$",
   },
 };
