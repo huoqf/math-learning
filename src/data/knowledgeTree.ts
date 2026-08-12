@@ -591,13 +591,16 @@ export const knowledgeTree: KnowledgeNode[] = [
   {
     id: "know-conic-polarization",
     title: "向量极化恒等式与阿波罗尼斯圆",
-    labTitle: "极化恒等式与阿波圆实验室",
+    labTitle: "极化恒等式与阿波罗尼斯圆实验室",
     chapter: "解析几何",
     module: "圆锥曲线压轴",
     importance: "hard",
-    animationIds: ["anim-conic-polarization"],
+    animationIds: [
+      "anim-vector-polarization-apollonius",
+      "anim-conic-polarization",
+    ],
     prerequisites: ["know-conic-line", "know-vector-dot-product"],
-    route: "/conic-polarization",
+    route: "/vector-polarization-apollonius",
   },
   {
     id: "know-conic-homogenization",

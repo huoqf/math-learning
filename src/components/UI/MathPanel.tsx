@@ -100,14 +100,14 @@ function splitLatexByWraps(latex: string): string[] {
 
   while (i < latex.length) {
     const ch = latex[i];
-    if (ch === "{") {
+    if (ch === "{" || ch === "(") {
       braceDepth++;
       current += ch;
       i++;
       continue;
     }
-    if (ch === "}") {
-      braceDepth--;
+    if (ch === "}" || ch === ")") {
+      braceDepth = Math.max(0, braceDepth - 1);
       current += ch;
       i++;
       continue;

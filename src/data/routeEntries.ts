@@ -72,6 +72,10 @@ import {
   vectorBasisNode,
   vectorBasisLoader,
 } from "@/features/vectorBasis/meta";
+import {
+  node as vectorPolarizationApolloniusNode,
+  loader as vectorPolarizationApolloniusLoader,
+} from "@/features/vectorPolarizationApollonius/meta";
 import { complexNode, complexLoader } from "@/features/complex/meta";
 import {
   node as trigTransformNode,
@@ -709,6 +713,10 @@ export const routeEntries: RouteEntry[] = [
   { node: lineCircleNode, loader: lineCircleLoader },
   { node: vectorLinearNode, loader: vectorLinearLoader },
   { node: vectorBasisNode, loader: vectorBasisLoader },
+  {
+    node: vectorPolarizationApolloniusNode,
+    loader: vectorPolarizationApolloniusLoader as any,
+  },
   { node: complexNode, loader: complexLoader as any },
   {
     node: derivativeEndpointTaylorNode,

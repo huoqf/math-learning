@@ -52,6 +52,7 @@ import { buildVectorBasisPanel } from "./builders/vectorBasis";
 import { buildComplexPanel } from "./builders/complex";
 import { buildDerivativeEndpointTaylorPanel } from "./builders/derivativeEndpointTaylor";
 import { buildLineParamTPanel } from "./builders/lineParamT";
+import { buildVectorPolarizationApolloniusPanel } from "./builders/vectorPolarizationApollonius";
 
 export type { MathPanelData } from "./types";
 
@@ -176,6 +177,8 @@ export function buildMathQuantities(
       return buildVectorDotProductPanel(params, config);
     case "anim-vector-basis":
       return buildVectorBasisPanel(params, config);
+    case "anim-vector-polarization-apollonius":
+      return buildVectorPolarizationApolloniusPanel(params, config);
     case "anim-ineq-basic":
     case "anim-inequality-basic":
       return buildInequalityBasicPanel(params, config);
