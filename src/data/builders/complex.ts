@@ -89,25 +89,30 @@ export function buildComplexPanel(
         {
           name: "复数的几何意义与向量对应",
           latex:
-            "z = a + bi \\leftrightarrow Z(a, b) \\leftrightarrow \\vec{OZ} = (a, b)",
+            "\\color{#EF4444}{z} = \\color{#EF4444}{a} + \\color{#D97706}{b}i \\leftrightarrow Z(\\color{#EF4444}{a}, \\color{#D97706}{b}) \\leftrightarrow \\vec{OZ} = (\\color{#EF4444}{a}, \\color{#D97706}{b})",
           prerequisites: ["$a, b \\in \\mathbb{R}$"],
           note: "复平面 $x$ 轴为实轴，$y$ 轴为虚轴。模长 $|z_1 - z_2|$ 代表两点 $Z_1, Z_2$ 欧氏距离。",
           level: "core",
         },
         {
           name: "共轭复数基本性质",
-          latex: "z \\cdot \\bar{z} = |z|^2 = a^2 + b^2",
+          latex:
+            "z \\cdot \\bar{z} = |z|^2 = \\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2",
           note: "$z + \\bar{z} = 2a \\in \\mathbb{R}$，且 $z - \\bar{z} = 2bi$",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "复数相等与分类：$z_1 = z_2 \\Leftrightarrow a_1 = a_2$ 且 $b_1 = b_2$。复数不能比较大小，只能比较模 $|z|$ 的大小。",
+          text: "【新高考通法·复数几何求解 3 步法】①设复数代数形式 z = a + bi (a, b ∈ ℝ)；②将 |z - z₀| = R 转化为复平面上以 Z₀ 为圆心、R 为半径的动点圆轨迹；③利用圆心距加减半径求解最值 |z - w|min = ||z₀ - w| - R|。",
           importance: "gaokao",
         },
         {
-          text: "距离模长模型：$|z - z_1|$ 代表动点 $z$ 到定点 $z_1$ 的欧氏距离。",
+          text: "复数相等与分类：z₁ = z₂ ⇔ a₁ = a₂ 且 b₁ = b₂。复数不能比较大小，只能比较模 |z| 的大小。",
+          importance: "gaokao",
+        },
+        {
+          text: "距离模长模型：|z - z₁| 代表动点 z 到定点 z₁ 的欧氏距离。",
           importance: "core",
         },
       ],

@@ -682,7 +682,7 @@ export function buildCircumSpherePanel(
       theorems.push(
         {
           name: "长方体/墙角模型外接球公式",
-          latex: `R = \\frac{\\sqrt{a^2 + b^2 + c^2}}{2}`,
+          latex: `R = \\frac{\\sqrt{\\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2 + \\color{#059669}{c}^2}}{2}`,
           level: "core",
           note: "体对角线长等于外接球直径 ($d = 2R = \\sqrt{a^2+b^2+c^2}$)",
         },
@@ -693,10 +693,16 @@ export function buildCircumSpherePanel(
           note: "外接球球心即为长方体体对角线的中点",
         },
       );
-      gaokaoPoints.push({
-        text: "高考经典补体法（墙角模型）：凡具有三条两两垂直棱的三棱锥（如 $P-ABC$ 满足 $PA \\perp PB \\perp PC$），均可补形为长方体求外接球半径 $R = \\frac{\\sqrt{a^2+b^2+c^2}}{2}$。",
-        importance: "gaokao",
-      });
+      gaokaoPoints.push(
+        {
+          text: "【新高考通法·多面体外接球 4 步法】①判断三维几何体类型（墙角模型 / 柱体模型 / 正棱锥模型）；②确定底面外接圆半径 r_底；③应用黄金定理 R² = r_底² + d² 求解球半径；④计算球表面积 S = 4πR² 或体积 V = 4/3 πR³。",
+          importance: "gaokao",
+        },
+        {
+          text: "高考经典补体法（墙角模型）：凡具有三条两两垂直棱的三棱锥（如 P-ABC 满足 PA ⊥ PB ⊥ PC），均可补形为长方体求外接球半径 R = √(a²+b²+c²) / 2。",
+          importance: "gaokao",
+        },
+      );
     } else if (shape === "regularPyramid") {
       // 正四棱锥 (底边长 a, 高 c)
       const rBase = a / Math.sqrt(2);

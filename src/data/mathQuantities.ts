@@ -13,6 +13,7 @@ import { buildNikePanel } from "./builders/nike";
 import { buildTranscendentalPanel } from "./builders/transcendental";
 
 import { buildDerivativeShiftPanel } from "./builders/derivativeShift";
+import { buildSecondDerivativePanel } from "./builders/secondDerivative";
 import { buildProbabilityCountingPanel } from "./builders/probabilityCounting";
 import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
 import { buildProbabilityDistributionPanel } from "./builders/probabilityDistribution";
@@ -101,6 +102,8 @@ export function buildMathQuantities(
       return buildQuadraticPanel(params, config);
     case "anim-derivative-tangent":
       return buildDerivativePanel(params, config);
+    case "anim-derivative-inflection":
+      return buildSecondDerivativePanel(params, config);
     case "anim-constant-single":
       return buildConstantSinglePanel(params, config);
     case "anim-constant-double":

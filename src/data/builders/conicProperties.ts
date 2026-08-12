@@ -114,6 +114,10 @@ export function buildConicPropertiesPanel(
   // 3. 高考考点 GaokaoPoints (文本中的数学公式必须用 $...$ 包裹)
   const gaokaoPoints: GaokaoPoint[] = [
     {
+      text: "【新高考通法·焦点三角形求解 4 步法】①利用第一定义写出 r₁ ± r₂ = 2a；②在 ΔPF₁F₂ 中应用余弦定理 (2c)² = r₁² + r₂² - 2r₁r₂cosθ；③联立求得 r₁r₂ 乘积表达式；④代入面积公式 S = ½ r₁r₂ sinθ = b² tan(θ/2) (或 b²/tan(θ/2))。",
+      importance: "gaokao",
+    },
+    {
       text: isEllipse
         ? "椭圆 $0 < e < 1$。$e$ 越接近 1，椭圆越扁；$e$ 越接近 0，椭圆越接近圆。"
         : "双曲线 $e > 1$。$e$ 越接近 1 开口越窄；$e$ 越大开口越张开。等轴双曲线 $e = \\sqrt{2}$，渐近线互相垂直。",

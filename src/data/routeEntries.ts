@@ -81,10 +81,18 @@ import {
   node as inequalityAbsoluteNode,
   loader as inequalityAbsoluteLoader,
 } from "@/features/inequalityAbsolute/meta";
+import {
+  secondDerivativeNode,
+  secondDerivativeLoader,
+} from "@/features/second-derivative/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
 const legacyEntries: RouteEntry[] = [
+  {
+    node: secondDerivativeNode,
+    loader: secondDerivativeLoader,
+  },
   {
     node: vectorDotProductNode,
     loader: vectorDotProductLoader,

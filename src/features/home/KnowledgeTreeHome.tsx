@@ -9,7 +9,7 @@ import {
   Activity,
 } from "lucide-react";
 import { knowledgeTree } from "@/data/knowledgeTree";
-import { ANIMATION_ROUTE_MAP } from "@/data/routeEntries";
+import { ANIMATION_ROUTE_MAP, PATH_TO_LABEL } from "@/data/routeEntries";
 import type { KnowledgeNode } from "@/data/types";
 
 // 板块归类映射
@@ -90,9 +90,11 @@ const IMPORTANCE_MAP: Record<
 export function KnowledgeTreeHome() {
   const navigate = useNavigate();
 
-  // 1. 检查节点是否激活并返回对应路由
+  // 1. 检查节点是否激活并返回对应路由（必须在 routeEntries 中真正注册了路由与组件）
   const getNodeRoute = (node: KnowledgeNode): string | null => {
-    if (node.route) return node.route;
+    if (node.route && PATH_TO_LABEL[node.route]) {
+      return node.route;
+    }
 
     for (const animId of node.animationIds) {
       if (ANIMATION_ROUTE_MAP[animId]) {

@@ -228,6 +228,28 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-derivative-shift"],
     prerequisites: ["know-derivative-compare"],
   },
+  {
+    id: "know-derivative-inflection",
+    title: "二阶导数、拐点与函数凹凸性",
+    labTitle: "二阶导数与拐点实验室",
+    chapter: "导数及其应用",
+    module: "导数压轴",
+    importance: "hard",
+    animationIds: ["anim-derivative-inflection"],
+    prerequisites: ["know-derivative-compare"],
+    route: "/derivative-inflection",
+  },
+  {
+    id: "know-derivative-endpoint",
+    title: "端点效应与洛必达/泰勒拟合放缩",
+    labTitle: "端点效应与放缩实验室",
+    chapter: "导数及其应用",
+    module: "导数压轴",
+    importance: "hard",
+    animationIds: ["anim-derivative-endpoint"],
+    prerequisites: ["know-derivative-transcendental"],
+    route: "/derivative-endpoint",
+  },
 
   // 5. 三角函数
   {
@@ -464,6 +486,17 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-solid-ball"],
     prerequisites: ["know-solid-position"],
   },
+  {
+    id: "know-solid-ball-models",
+    title: "多面体外接球三大模型（墙角/柱体/补形）",
+    labTitle: "外接球三大模型实验室",
+    chapter: "立体几何与空间向量",
+    module: "立体几何压轴",
+    importance: "hard",
+    animationIds: ["anim-solid-ball-models"],
+    prerequisites: ["know-solid-ball"],
+    route: "/solid-ball-models",
+  },
 
   // 9. 解析几何
   {
@@ -543,6 +576,39 @@ export const knowledgeTree: KnowledgeNode[] = [
     prerequisites: ["know-conic-line", "know-line-equation"],
     route: "/conic-param",
   },
+  {
+    id: "know-conic-param-t",
+    title: "直线参数方程 t 的几何意义与割线定理",
+    labTitle: "直线参数 t 几何意义实验室",
+    chapter: "解析几何",
+    module: "圆锥曲线压轴",
+    importance: "hard",
+    animationIds: ["anim-conic-param-t"],
+    prerequisites: ["know-conic-parametric"],
+    route: "/conic-param-t",
+  },
+  {
+    id: "know-conic-polarization",
+    title: "向量极化恒等式与阿波罗尼斯圆",
+    labTitle: "极化恒等式与阿波圆实验室",
+    chapter: "解析几何",
+    module: "圆锥曲线压轴",
+    importance: "hard",
+    animationIds: ["anim-conic-polarization"],
+    prerequisites: ["know-conic-line", "know-vector-dot-product"],
+    route: "/conic-polarization",
+  },
+  {
+    id: "know-conic-homogenization",
+    title: "非对称齐次化求斜率和/斜率积",
+    labTitle: "非对称齐次化实验室",
+    chapter: "解析几何",
+    module: "圆锥曲线压轴",
+    importance: "hard",
+    animationIds: ["anim-conic-homogenization"],
+    prerequisites: ["know-conic-line"],
+    route: "/conic-homogenization",
+  },
 
   // 10. 概率与统计
   {
@@ -609,6 +675,17 @@ export const knowledgeTree: KnowledgeNode[] = [
     importance: "gaokao",
     animationIds: ["anim-paired-data"],
     prerequisites: [],
+  },
+  {
+    id: "know-probability-markov",
+    title: "全概率公式与马尔可夫链状态转移递推",
+    labTitle: "全概与马尔可夫链递推实验室",
+    chapter: "概率与统计",
+    module: "概率压轴",
+    importance: "hard",
+    animationIds: ["anim-probability-markov"],
+    prerequisites: ["know-probability-bayes"],
+    route: "/probability-markov",
   },
 ];
 

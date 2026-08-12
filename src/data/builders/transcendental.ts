@@ -179,6 +179,10 @@ export function buildTranscendentalPanel(
 
   const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
     {
+      text: "【新高考通法·切线放缩与端点效应 4 步法】①确定边界临界点（通常为 x=0 或 x=1）；②求出超越函数在临界点处的切线方程（如 y = x + 1 或 y = x - 1）；③构建差值辅助函数 h(x) = f(x) - g(x) 并证明单调性与凹凸性；④利用切线作桥梁实现双向不等式夹逼。",
+      importance: "gaokao",
+    },
+    {
       text: "高考核心原理：基准切线放缩来自于超越函数在基准点（如 x=0 或 x=1）处的泰勒展开一阶切线近似。",
       importance: "gaokao",
     },

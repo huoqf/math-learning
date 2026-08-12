@@ -62,22 +62,22 @@ export function buildDerivativePanel(
   const theorems: MathPanelData["theorems"] = [
     {
       name: "割线斜率 (平均变化率)",
-      latex: `k_{\\text{割}} = \\frac{f(x_0 + \\Delta x) - f(x_0)}{\\Delta x}`,
+      latex: `k_{\\text{割}} = \\frac{f(\\color{#EF4444}{x_0} + \\color{#D97706}{\\Delta x}) - f(\\color{#EF4444}{x_0})}{\\color{#D97706}{\\Delta x}}`,
       level: "important",
       prerequisites: ["x₀ 与 x₀ + Δx 在函数定义域内"],
     },
     {
       name: "导数的几何意义",
       latex:
-        "f'(x_0) = \\lim_{\\Delta x \\to 0} \\frac{f(x_0 + \\Delta x) - f(x_0)}{\\Delta x}",
+        "f'(\\color{#EF4444}{x_0}) = \\lim_{\\color{#D97706}{\\Delta x} \\to 0} \\frac{f(\\color{#EF4444}{x_0} + \\color{#D97706}{\\Delta x}) - f(\\color{#EF4444}{x_0})}{\\color{#D97706}{\\Delta x}}",
       level: "core",
       prerequisites: ["f(x) 在 x₀ 的某邻域内有定义", "极限存在"],
     },
     {
-      name: "切线方程",
+      name: "切线方程标准式",
       latex: res.isValid
-        ? `y - ${res.fx.toFixed(2)} = ${res.slope.toFixed(2)}(x - ${x0.toFixed(2)})`
-        : "y - f(x_0) = f'(x_0)(x - x_0)",
+        ? `y - ${res.fx.toFixed(2)} = \\color{#2563EB}{${res.slope.toFixed(2)}}(x - \\color{#EF4444}{${x0.toFixed(2)}})`
+        : "y - f(\\color{#EF4444}{x_0}) = f'(\\color{#EF4444}{x_0})(x - \\color{#EF4444}{x_0})",
       level: "important",
       prerequisites: ["f'(x₀) 存在"],
     },
@@ -85,20 +85,20 @@ export function buildDerivativePanel(
 
   const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
     {
+      text: "【新高考通法·求切线方程 4 步法】①确定切点坐标 (x₀, f(x₀))；②求导函数 f'(x)；③计算切线斜率 k = f'(x₀)；④写出点斜式方程 y - f(x₀) = k(x - x₀)。",
+      importance: "gaokao",
+    },
+    {
       text: "几何意义：函数 y=f(x) 在 x₀ 处的导数 f'(x₀) 就是曲线在该点切线的斜率 k。",
       importance: "gaokao",
     },
     {
-      text: "割线斜率的极限：割线斜率随着 Δx 趋于 0 的极限即为切线斜率，体现了\u201C以直代曲\u201D的微积分核心思想。",
+      text: "割线斜率的极限：割线斜率随着 Δx 趋于 0 的极限即为切线斜率，体现了“以直代曲”的微积分核心思想。",
       importance: "core",
     },
     {
-      text: "高考易错点：注意\u201C在点 P 处的切线\u201D与\u201C过点 P 的切线\u201D的区别，前者 P 必为切点，后者 P 不一定是切点。",
+      text: "高考避坑陷阱：注意“在点 P 处的切线”（P 必为切点）与“过点 P 的切线”（P 不一定是切点，需设切点 Q(t, f(t)) 求解）的区别。",
       importance: "gaokao",
-    },
-    {
-      text: "压轴模型：高考常利用 xlnx, (lnx)/x, xex 等高频模型的导数来研究函数的单调性与极值。",
-      importance: "core",
     },
   ];
 

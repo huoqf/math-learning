@@ -291,6 +291,10 @@ export function buildProbabilityBayesPanel(
     ],
     gaokaoPoints: [
       {
+        text: "【新高考通法·全概与贝叶斯求解 3 步法】①确定原因划分 A_i 与结果事件 B；②画出树状路径图，计算全概率分母 P(B) = ∑ P(A_i)P(B|A_i)；③将目标原因路径作分子，求出后验概率 P(A_k|B) = P(A_k B) / P(B)。",
+        importance: "gaokao",
+      },
+      {
         text: isFactory
           ? "高考工业应用题：质检仪器精准度 98% ≠ 测出阳性就 98% 为次品！必须结合先验次品率 P(Def) 计算后验概率 P(Def|+)。"
           : "高考反直觉高频题：试剂准确率 95% ≠ 测出阳性就 95% 患病！必须结合先验患病率 P(D) 计算后验概率 P(D|+)。",
