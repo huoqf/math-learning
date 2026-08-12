@@ -72,6 +72,7 @@ import {
   vectorBasisNode,
   vectorBasisLoader,
 } from "@/features/vectorBasis/meta";
+import { complexNode, complexLoader } from "@/features/complex/meta";
 import {
   node as trigTransformNode,
   loader as trigTransformLoader,
@@ -671,6 +672,7 @@ export const routeEntries: RouteEntry[] = [
   { node: lineCircleNode, loader: lineCircleLoader },
   { node: vectorLinearNode, loader: vectorLinearLoader },
   { node: vectorBasisNode, loader: vectorBasisLoader },
+  { node: complexNode, loader: complexLoader as any },
   // 暂未迁移的页面
   ...legacyEntries,
 ];

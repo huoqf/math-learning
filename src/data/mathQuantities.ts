@@ -47,6 +47,7 @@ import { buildLineCirclePanel } from "./builders/lineCircle";
 import { buildVectorLinearPanel } from "./builders/vectorLinear";
 import { buildVectorDotProductPanel } from "./builders/vectorDotProduct";
 import { buildVectorBasisPanel } from "./builders/vectorBasis";
+import { buildComplexPanel } from "./builders/complex";
 
 export type { MathPanelData } from "./types";
 
@@ -63,6 +64,9 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-complex-geometry":
+    case "anim-complex-geometric":
+      return buildComplexPanel(params, config);
     case "anim-ineq-absolute":
       return buildInequalityAbsolutePanel(params, config);
     case "anim-triangle-extrema":

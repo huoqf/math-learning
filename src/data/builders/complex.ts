@@ -1,0 +1,270 @@
+import type { MathPanelData } from "../types";
+import {
+  createComplex,
+  modulus,
+  argument,
+  conjugate,
+  addComplex,
+  subComplex,
+  mulComplex,
+  fromPolar,
+  formatComplexLatex,
+  calcCircleLocusExtrema,
+} from "@/math/complex";
+
+export function buildComplexPanel(
+  params: Record<string, number>,
+  config?: Record<string, unknown>,
+): MathPanelData {
+  const mode = (config?.mode as string) || "plane-operations";
+
+  if (mode === "plane-operations") {
+    const a1 = params.a1 ?? 3;
+    const b1 = params.b1 ?? 2;
+    const a2 = params.a2 ?? 1;
+    const b2 = params.b2 ?? 3;
+
+    const z1 = createComplex(a1, b1);
+    const z2 = createComplex(a2, b2);
+    const zSum = addComplex(z1, z2);
+    const zDiff = subComplex(z1, z2);
+    const z1Conj = conjugate(z1);
+
+    const mod1 = modulus(z1);
+    const dist = modulus(zDiff);
+
+    const warnings: MathPanelData["warnings"] = [];
+    if (Math.abs(b1) < 1e-9) {
+      warnings.push({
+        text: "当虚部 $b_1 = 0$ 时，$z_1$ 退化为实数，在复平面上落在实轴（$x$ 轴）上。",
+        level: "info",
+      });
+    }
+    if (Math.abs(a1) < 1e-9 && Math.abs(b1) > 1e-9) {
+      warnings.push({
+        text: "当实部 $a_1 = 0$ 且虚部 $b_1 \\neq 0$ 时，$z_1$ 为纯虚数，落在虚轴（$y$ 轴）上。",
+        level: "warning",
+      });
+    }
+
+    return {
+      quantities: [
+        {
+          label: "复数 $z_1$",
+          symbol: "z_1",
+          value: formatComplexLatex(z1),
+          unit: "代数形式",
+        },
+        {
+          label: "复数 $z_2$",
+          symbol: "z_2",
+          value: formatComplexLatex(z2),
+          unit: "代数形式",
+        },
+        {
+          label: "和 $z_1 + z_2$",
+          symbol: "z_1 + z_2",
+          value: formatComplexLatex(zSum),
+          unit: "向量加法",
+        },
+        {
+          label: "距离 $|z_1 - z_2|$",
+          symbol: "|z_1 - z_2|",
+          value: dist.toFixed(2),
+          unit: "减法模长",
+        },
+        {
+          label: "模长 $|z_1|$",
+          symbol: "|z_1|",
+          value: mod1.toFixed(2),
+        },
+        {
+          label: "共轭 $\\bar{z}_1$",
+          symbol: "\\bar{z}_1",
+          value: formatComplexLatex(z1Conj),
+          unit: "实轴对称",
+        },
+      ],
+      theorems: [
+        {
+          name: "复数的几何意义与向量对应",
+          latex:
+            "z = a + bi \\leftrightarrow Z(a, b) \\leftrightarrow \\vec{OZ} = (a, b)",
+          prerequisites: ["$a, b \\in \\mathbb{R}$"],
+          note: "复平面 $x$ 轴为实轴，$y$ 轴为虚轴。模长 $|z_1 - z_2|$ 代表两点 $Z_1, Z_2$ 欧氏距离。",
+          level: "core",
+        },
+        {
+          name: "共轭复数基本性质",
+          latex: "z \\cdot \\bar{z} = |z|^2 = a^2 + b^2",
+          note: "$z + \\bar{z} = 2a \\in \\mathbb{R}$，且 $z - \\bar{z} = 2bi$",
+          level: "important",
+        },
+      ],
+      gaokaoPoints: [
+        {
+          text: "复数相等与分类：$z_1 = z_2 \\Leftrightarrow a_1 = a_2$ 且 $b_1 = b_2$。复数不能比较大小，只能比较模 $|z|$ 的大小。",
+          importance: "gaokao",
+        },
+        {
+          text: "距离模长模型：$|z - z_1|$ 代表动点 $z$ 到定点 $z_1$ 的欧氏距离。",
+          importance: "core",
+        },
+      ],
+      warnings,
+      mnemonic: "实部对实部，虚部对虚部；减法求距离，平行四边形。",
+    };
+  }
+
+  if (mode === "multiplication-rotation") {
+    const r1 = params.r1 ?? 2.0;
+    const deg1 = params.deg1 ?? 30;
+    const r2 = params.r2 ?? 1.5;
+    const deg2 = params.deg2 ?? 60;
+
+    const rad1 = (deg1 * Math.PI) / 180;
+    const rad2 = (deg2 * Math.PI) / 180;
+
+    const z1 = fromPolar(r1, rad1);
+    const z2 = fromPolar(r2, rad2);
+    const zProd = mulComplex(z1, z2);
+
+    const prodMod = modulus(zProd);
+    const prodArgDeg = (argument(zProd) * 180) / Math.PI;
+
+    const warnings: MathPanelData["warnings"] = [];
+    if (Math.abs(r2 - 1.0) < 1e-6) {
+      warnings.push({
+        text: "当 $r_2 = 1$ 时，$|z_2| = 1$，乘以 $z_2$ 保持模长不变，实现纯粹的平面旋转变换！",
+        level: "info",
+      });
+    }
+
+    return {
+      quantities: [
+        {
+          label: "被乘数 $z_1$",
+          symbol: "z_1",
+          value: `r_1=${r1.toFixed(1)}, \\theta_1=${deg1}^\\circ`,
+          unit: "模长 $r_1$, 辐角 $\\theta_1$",
+        },
+        {
+          label: "旋转算子 $z_2$",
+          symbol: "z_2",
+          value: `r_2=${r2.toFixed(1)}, \\theta_2=${deg2}^\\circ`,
+          unit: "伸缩 $r_2$, 旋转 $\\theta_2$",
+        },
+        {
+          label: "乘积模长 $|z_1 z_2|$",
+          symbol: "|z_1 z_2|",
+          value: prodMod.toFixed(2),
+          unit: "模长相乘 $r_1 r_2$",
+        },
+        {
+          label: "乘积辐角 $\\arg(z_1 z_2)$",
+          symbol: "\\arg(z_1 z_2)",
+          value: `${prodArgDeg.toFixed(1)}^\\circ`,
+          unit: "辐角相加 $\\theta_1+\\theta_2$",
+        },
+        {
+          label: "乘积代数形式 $z_1 z_2$",
+          symbol: "z_1 z_2",
+          value: formatComplexLatex(zProd),
+        },
+      ],
+      theorems: [
+        {
+          name: "复数乘法的几何意义（旋转与伸缩）",
+          latex:
+            "z_1 z_2 = (r_1 r_2) [\\cos(\\theta_1 + \\theta_2) + i \\sin(\\theta_1 + \\theta_2)]",
+          prerequisites: [
+            "$z_1 = r_1 e^{i\\theta_1}, z_2 = r_2 e^{i\\theta_2}$",
+          ],
+          note: "模长相乘：$|z_1 z_2| = |z_1| \\cdot |z_2|$；辐角相加：$\\arg(z_1 z_2) = \\theta_1 + \\theta_2$。",
+          level: "core",
+        },
+        {
+          name: "常见旋转算子特例",
+          latex:
+            "z \\cdot i \\text{ (逆时针 } 90^\\circ \\text{)}, \\quad z \\cdot (-1) \\text{ (逆时针 } 180^\\circ \\text{)}",
+          note: "乘以 $i$ 逆时针旋转 $90^\\circ$；乘以 $-i$ 顺时针旋转 $90^\\circ$；乘以 $-1$ 中心对称旋转 $180^\\circ$。",
+          level: "important",
+        },
+      ],
+      gaokaoPoints: [
+        {
+          text: "乘除法几何变换：乘以 $i$ 表示逆时针旋转 $90^\\circ$，除以 $i$ 表示顺时针旋转 $90^\\circ$。",
+          importance: "gaokao",
+        },
+        {
+          text: "棣莫弗定理启蒙：$z^n = r^n (\\cos n\\theta + i \\sin n\\theta)$，表示多次旋转与模长 $n$ 次幂。",
+          importance: "extend",
+        },
+      ],
+      warnings,
+      mnemonic:
+        "乘法几何真神奇，模长相乘角相加；乘以虚数单位 i，逆转直角九十度。",
+    };
+  }
+
+  // 模式 3: locus-extrema
+  const z0x = params.z0x ?? 3.0;
+  const z0y = params.z0y ?? 4.0;
+  const radius = params.radius ?? 2.0;
+  const wx = params.wx ?? 0.0;
+  const wy = params.wy ?? 0.0;
+
+  const center = createComplex(z0x, z0y);
+  const target = createComplex(wx, wy);
+  const locusRes = calcCircleLocusExtrema(center, radius, target);
+
+  return {
+    quantities: [
+      {
+        label: "轨迹圆心 $z_0$",
+        symbol: "z_0",
+        value: formatComplexLatex(center),
+      },
+      {
+        label: "轨迹圆半径 $R$",
+        symbol: "R",
+        value: radius.toFixed(1),
+      },
+      {
+        label: "目标定点 $w$",
+        symbol: "w",
+        value: formatComplexLatex(target),
+      },
+      {
+        label: "最小值 $|z - w|_{\\min}$",
+        symbol: "|z - w|_{\\min}",
+        value: locusRes.minDist.toFixed(2),
+        unit: "$||z_0 - w| - R|$",
+      },
+      {
+        label: "最大值 $|z - w|_{\\max}$",
+        symbol: "|z - w|_{\\max}",
+        value: locusRes.maxDist.toFixed(2),
+        unit: "$|z_0 - w| + R$",
+      },
+    ],
+    theorems: [
+      {
+        name: "复数圆轨迹与极值模型",
+        latex:
+          "|z - z_0| = R \\quad \\Longrightarrow \\quad \\text{圆心 } z_0, \\text{半径 } R",
+        note: "最小值 $|z - w|_{\\min} = ||z_0 - w| - R|$，最大值 $|z - w|_{\\max} = |z_0 - w| + R$。",
+        level: "core",
+      },
+    ],
+    gaokaoPoints: [
+      {
+        text: "高考最值压轴题：把抽象的复数模长条件 $|z - z_0| = R$ 转化为平面几何问题（圆心距与半径加减）。",
+        importance: "hard",
+      },
+    ],
+    warnings: [],
+    mnemonic:
+      "模长方程即画圆，连结圆心看定点；加半径得最大值，减半径得最小值。",
+  };
+}

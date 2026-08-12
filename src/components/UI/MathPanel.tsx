@@ -322,15 +322,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                   />
                 )}
                 <span className="text-xs font-medium text-neutral-600 min-w-0 break-words">
-                  {hasLatex(q.label) ? (
-                    <KatexFormula
-                      formula={q.label}
-                      mode="inline"
-                      className="!text-[11px] !my-0"
-                    />
-                  ) : (
-                    q.label
-                  )}
+                  {renderMixedLatex(q.label)}
                 </span>
               </div>
               <div className="flex items-baseline gap-1 min-w-0 flex-1 justify-end">
@@ -346,13 +338,15 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                       mode="inline"
                       className="!text-[13px]"
                     />
+                  ) : typeof q.value === "string" ? (
+                    renderMixedLatex(q.value)
                   ) : (
                     q.value
                   )}
                 </span>
                 {q.unit && (
                   <span className="text-xs text-neutral-500 font-medium ml-1">
-                    {q.unit}
+                    {renderMixedLatex(q.unit)}
                   </span>
                 )}
               </div>
