@@ -93,6 +93,10 @@ import {
   conicParamTNode,
   conicParamTLoader,
 } from "@/features/conicParamT/meta";
+import {
+  node as conicHomogenizationNode,
+  loader as conicHomogenizationLoader,
+} from "@/features/conicHomogenization/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
@@ -721,6 +725,10 @@ export const routeEntries: RouteEntry[] = [
   {
     node: derivativeEndpointTaylorNode,
     loader: derivativeEndpointTaylorLoader as any,
+  },
+  {
+    node: conicHomogenizationNode,
+    loader: conicHomogenizationLoader as any,
   },
   // 暂未迁移的页面
   ...legacyEntries,
