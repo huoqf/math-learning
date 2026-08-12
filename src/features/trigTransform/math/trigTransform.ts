@@ -35,20 +35,17 @@ export interface TransformStepInfo {
 export function formatPiValue(val: number): string {
   if (Math.abs(val) < 1e-4) return "0";
   const ratio = val / Math.PI;
-  if (Math.abs(ratio - 1) < 1e-4) return "π";
-  if (Math.abs(ratio + 1) < 1e-4) return "-π";
-  if (Math.abs(ratio - 0.5) < 1e-4) return "π/2";
-  if (Math.abs(ratio + 0.5) < 1e-4) return "-π/2";
-  if (Math.abs(ratio - 1 / 3) < 1e-4) return "π/3";
-  if (Math.abs(ratio + 1 / 3) < 1e-4) return "-π/3";
-  if (Math.abs(ratio - 2 / 3) < 1e-4) return "2π/3";
-  if (Math.abs(ratio + 2 / 3) < 1e-4) return "-2π/3";
-  if (Math.abs(ratio - 0.25) < 1e-4) return "π/4";
-  if (Math.abs(ratio + 0.25) < 1e-4) return "-π/4";
-  if (Math.abs(ratio - 0.75) < 1e-4) return "3π/4";
-  if (Math.abs(ratio + 0.75) < 1e-4) return "-3π/4";
-  if (Math.abs(ratio - 1 / 6) < 1e-4) return "π/6";
-  if (Math.abs(ratio + 1 / 6) < 1e-4) return "-π/6";
+  const isNeg = ratio < 0;
+  const absR = Math.abs(ratio);
+
+  const prefix = isNeg ? "-" : "";
+  if (Math.abs(absR - 1) < 1e-4) return isNeg ? "-\\pi" : "\\pi";
+  if (Math.abs(absR - 0.5) < 1e-4) return `${prefix}\\frac{\\pi}{2}`;
+  if (Math.abs(absR - 1 / 3) < 1e-4) return `${prefix}\\frac{\\pi}{3}`;
+  if (Math.abs(absR - 2 / 3) < 1e-4) return `${prefix}\\frac{2\\pi}{3}`;
+  if (Math.abs(absR - 0.25) < 1e-4) return `${prefix}\\frac{\\pi}{4}`;
+  if (Math.abs(absR - 0.75) < 1e-4) return `${prefix}\\frac{3\\pi}{4}`;
+  if (Math.abs(absR - 1 / 6) < 1e-4) return `${prefix}\\frac{\\pi}{6}`;
 
   return val.toFixed(2);
 }

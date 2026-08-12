@@ -14,6 +14,11 @@ import {
   sphereSurfaceArea,
 } from "@/math3d/solidGeometry";
 import {
+  calculateCornerModel,
+  calculateCylinderModel,
+  calculateComplementModel,
+} from "@/math3d/polyhedronSphere";
+import {
   judgeLinePlane,
   getLineDirection,
   calcLinePlaneAngle,
@@ -1403,6 +1408,238 @@ export function buildRotationBodyPanel(
       text: "几何尺寸接近 0，旋转体退化为线段或点！",
       level: "warning",
     });
+  }
+
+  return { quantities, theorems, gaokaoPoints, warnings };
+}
+
+// ── know-solid-ball-models: 多面体外接球三大模型（墙角/柱体/补形） ──
+
+export function buildPolyhedronSpherePanel(
+  params: Record<string, number>,
+  config?: Record<string, unknown>,
+): MathPanelData {
+  const modelType = (config?.modelType as string) ?? "corner";
+  const a = params.a ?? 3;
+  const b = params.b ?? 4;
+  const c = params.c ?? 5;
+  const h = params.h ?? 4;
+
+  const quantities: MathQuantity[] = [];
+  const theorems: Theorem[] = [];
+  const gaokaoPoints: GaokaoPoint[] = [];
+  const warnings: WarningItem[] = [];
+
+  if (modelType === "corner") {
+    // 墙角模型
+    const res = calculateCornerModel(a, b, c);
+    quantities.push(
+      {
+        label: "墙角侧棱长 PA, PB, PC",
+        symbol: "a, b, c",
+        value: `${a}, ${b}, ${c}`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "长方体体对角线 d",
+        symbol: "d",
+        value: Number((2 * res.radius).toFixed(4)),
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "外接球球心坐标 O",
+        symbol: "O",
+        value: `(${res.center.x.toFixed(2)}, ${res.center.y.toFixed(2)}, ${res.center.z.toFixed(2)})`,
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "外接球半径 R",
+        symbol: "R",
+        value: Number(res.radius.toFixed(4)),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "外接球表面积 S",
+        symbol: "S_{球}",
+        value: `${(res.surfaceArea / Math.PI).toFixed(2)}π`,
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "外接球体积 V",
+        symbol: "V_{球}",
+        value: `${(res.volume / Math.PI).toFixed(2)}π`,
+        color: MATH_COLORS.accent,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "墙角模型结论（三棱锥侧棱两两垂直）",
+        latex:
+          "2R = \\sqrt{a^2 + b^2 + c^2} \\implies R = \\frac{1}{2}\\sqrt{a^2 + b^2 + c^2}",
+        level: "important",
+        note: "从同顶点出发的三条侧棱两两垂直时，可补全为以 a, b, c 为长宽高的高考标准长方体，长方体外接球与三棱锥外接球重合",
+      },
+      {
+        name: "墙角模型表面积与体积速记",
+        latex:
+          "S_{\\text{球}} = \\pi(a^2 + b^2 + c^2), \\quad V_{\\text{球}} = \\frac{\\pi}{6}(a^2 + b^2 + c^2)^{\\frac{3}{2}}",
+        level: "important",
+        note: "在高考选择填空题中可直接套用公式极速秒杀",
+      },
+    );
+
+    gaokaoPoints.push(
+      {
+        text: "【墙角模型特征】：顶点 P 处三条侧棱 PA ⊥ PB, PB ⊥ PC, PC ⊥ PA。核心解法：补形长方体。长方体体对角线长等于球直径 2R。",
+        importance: "gaokao",
+      },
+      {
+        text: "【秒杀杀招】：见垂直补长方体，长宽高即为垂直棱长 a, b, c。外接球半径 R = ½ √(a² + b² + c²)。",
+        importance: "hard",
+      },
+    );
+  } else if (modelType === "cylinder") {
+    // 柱体模型
+    const res = calculateCylinderModel(a, b, h);
+    quantities.push(
+      {
+        label: "底面直角边 a, b 与斜边 c_base",
+        symbol: "a, b, c_{\\text{base}}",
+        value: `${a}, ${b}, ${Math.sqrt(a * a + b * b).toFixed(2)}`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "底面外接圆半径 r_base",
+        symbol: "r_{\\text{底}}",
+        value: Number(res.rBase.toFixed(4)),
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "柱体高度 h (球心距 h/2)",
+        symbol: "h, \\frac{h}{2}",
+        value: `${h}, ${(h / 2).toFixed(2)}`,
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "外接球半径 R",
+        symbol: "R",
+        value: Number(res.radius.toFixed(4)),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "外接球表面积 S",
+        symbol: "S_{球}",
+        value: `${(res.surfaceArea / Math.PI).toFixed(2)}π`,
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "外接球体积 V",
+        symbol: "V_{球}",
+        value: `${(res.volume / Math.PI).toFixed(2)}π`,
+        color: MATH_COLORS.accent,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "柱体模型（套柱勾股定理）",
+        latex:
+          "R^2 = r_{\\text{底}}^2 + \\left(\\frac{h}{2}\\right)^2 \\implies R = \\sqrt{r_{\\text{底}}^2 + \\frac{h^2}{4}}",
+        level: "important",
+        note: "直棱柱/侧棱垂直底面多面体，球心投影在底面外接圆圆心，球心到底面距离为 h/2，勾股直角三角形 O-O₁-A 成立",
+      },
+      {
+        name: "底面外接圆半径 r_底 定理",
+        latex:
+          "r_{\\text{底}} = \\frac{a}{2\\sin A} \\quad (\\text{直角三角形斜边中点 } r_{\\text{底}} = \\frac{c}{2})",
+        level: "important",
+        note: "底面为直角三角形时，斜边中点即为外接圆心，r_底 = 斜边 / 2",
+      },
+    );
+
+    gaokaoPoints.push(
+      {
+        text: "【柱体模型特征】：直棱柱或一条侧棱垂直于底面。核心解法：套柱勾股法。求出底面外接圆半径 r_底 与柱高 h，用勾股关系求 R。",
+        importance: "gaokao",
+      },
+      {
+        text: "【新高考通法】：寻找轴中心线线段 O₁O₂（连接上下底外接圆心），中点即为球心 O，高 half 为 h/2。",
+        importance: "hard",
+      },
+    );
+  } else {
+    // 补形模型 (对棱相等四面体)
+    const res = calculateComplementModel(a, b, c);
+    quantities.push(
+      {
+        label: "四面体对棱长对 (a, b, c)",
+        symbol: "a, b, c",
+        value: `${a}, ${b}, ${c}`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "补形长方体三边 (x, y, z)",
+        symbol: "x, y, z",
+        value: res.isValid
+          ? `(${res.boxDimensions.x.toFixed(2)}, ${res.boxDimensions.y.toFixed(2)}, ${res.boxDimensions.z.toFixed(2)})`
+          : "无法构成实长方体",
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "外接球半径 R",
+        symbol: "R",
+        value: Number(res.radius.toFixed(4)),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "外接球表面积 S",
+        symbol: "S_{球}",
+        value: `${(res.surfaceArea / Math.PI).toFixed(2)}π`,
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "外接球体积 V",
+        symbol: "V_{球}",
+        value: `${(res.volume / Math.PI).toFixed(2)}π`,
+        color: MATH_COLORS.accent,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "对棱相等四面体补形定理（汉堡模型）",
+        latex:
+          "R = \\frac{1}{2}\\sqrt{x^2 + y^2 + z^2} = \\frac{1}{2}\\sqrt{\\frac{a^2 + b^2 + c^2}{2}}",
+        level: "important",
+        note: "若四面体对棱两两相等为 a, b, c，可将其 4 个顶点嵌入长宽高为 x, y, z 的长方体对角线上，长方体外接球与四面体外接球完全重合",
+      },
+      {
+        name: "长方体边长与对棱关系组",
+        latex:
+          "\\begin{cases} x^2 + y^2 = a^2 \\\\ y^2 + z^2 = b^2 \\\\ z^2 + x^2 = c^2 \\end{cases} \\implies x^2 + y^2 + z^2 = \\frac{a^2 + b^2 + c^2}{2}",
+        level: "important",
+        note: "通过联立方程组可直接解出长方体长宽高 x, y, z",
+      },
+    );
+
+    gaokaoPoints.push(
+      {
+        text: "【补形模型特征】：四面体 6 条棱中，对棱两两相等。核心解法：割补法还原长方体，四面体 4 个顶点即为长方体交错顶点。",
+        importance: "gaokao",
+      },
+      {
+        text: "【解题公式】：外接球半径 R = ½ √((a² + b² + c²)/2) = ¼ √(2(a² + b² + c²))。",
+        importance: "hard",
+      },
+    );
+
+    if (!res.isValid) {
+      warnings.push({
+        text: "当前对棱长 (a, b, c) 不满足三角形三边平方和条件 (如 a²+b² ≤ c²)，无法构成实数补形长方体！请调整参数使任意两边平方和大于第三边平方和。",
+        level: "danger",
+      });
+    }
   }
 
   return { quantities, theorems, gaokaoPoints, warnings };

@@ -666,6 +666,22 @@ const legacyEntries: RouteEntry[] = [
     loader: () => import("@/features/solidGeometry/CircumInSphereAnimation"),
     guarded3D: true,
   },
+  {
+    node: {
+      id: "know-solid-ball-models",
+      title: "多面体外接球三大模型（墙角/柱体/补形）",
+      labTitle: "外接球三大模型实验室",
+      chapter: "立体几何与空间向量",
+      module: "立体几何压轴",
+      importance: "hard",
+      animationIds: ["anim-solid-ball-models"],
+      prerequisites: ["know-solid-ball"],
+      route: "/solid-ball-models",
+    },
+    loader: () =>
+      import("@/features/solidGeometry/PolyhedronCircumSphereAnimation"),
+    guarded3D: true,
+  },
 ];
 
 import {

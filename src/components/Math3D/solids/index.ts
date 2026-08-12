@@ -41,3 +41,4 @@ export { SphereShell } from "./SphereShell";
 export { CircumSphere } from "./CircumSphere";
 export { InSphere } from "./InSphere";
 export { SphereBySphereType } from "./SphereBySphereType";
+export { PolyhedronSphereScene } from "./PolyhedronSphereScene";

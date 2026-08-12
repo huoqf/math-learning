@@ -32,6 +32,12 @@ export const defaultParams = {
     posQ: 0.5,
     posR: 0.5,
   },
+  polyhedronSphere: {
+    a: 3,
+    b: 4,
+    c: 5,
+    h: 4,
+  },
 } as const;
 
 export const sectionMeta: ParamMeta[] = [
@@ -303,5 +309,56 @@ export const rotationBodyMeta: ParamMeta[] = [
     defaultValue: 360,
     importance: "core",
     description: "平面母线图绕轴旋转的扫过角",
+  },
+];
+
+export const polyhedronSphereMeta: ParamMeta[] = [
+  {
+    key: "a",
+    label: "侧棱/边长/对棱 a",
+    labelFormula: "a",
+    min: 1,
+    max: 6,
+    step: 0.1,
+    defaultValue: 3,
+    importance: "core",
+    description: "墙角模型侧棱 PA / 柱体底边 a / 补形对棱 a",
+    descriptionFormula: "\\text{主特征尺寸 } a",
+  },
+  {
+    key: "b",
+    label: "侧棱/边长/对棱 b",
+    labelFormula: "b",
+    min: 1,
+    max: 6,
+    step: 0.1,
+    defaultValue: 4,
+    importance: "core",
+    description: "墙角模型侧棱 PB / 柱体底边 b / 补形对棱 b",
+    descriptionFormula: "\\text{次特征尺寸 } b",
+  },
+  {
+    key: "c",
+    label: "侧棱/高度/对棱 c",
+    labelFormula: "c",
+    min: 1,
+    max: 6,
+    step: 0.1,
+    defaultValue: 5,
+    importance: "core",
+    description: "墙角模型侧棱 PC / 补形对棱 c",
+    descriptionFormula: "\\text{辅助特征尺寸 } c",
+  },
+  {
+    key: "h",
+    label: "柱体高度 h",
+    labelFormula: "h",
+    min: 1,
+    max: 8,
+    step: 0.1,
+    defaultValue: 4,
+    importance: "core",
+    description: "柱体模型（套柱法）高 h",
+    descriptionFormula: "\\text{柱体轴高度 } h",
   },
 ];
