@@ -45,12 +45,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     descriptionFormula:
       "\\text{含参函数的讨论系数（二次函数对称轴或超越函数极小值控制）}",
     marks: [
-      { value: 0.5, variant: "recommended", label: "区间左界" },
-      { value: 2.5, variant: "recommended", label: "区间右界" },
+      { value: 0.5, variant: "recommended", label: "0.5" },
+      { value: 2.5, variant: "recommended", label: "2.5" },
       {
         value: 2.72,
         variant: "critical",
-        label: "e (恒成立界限)",
+        label: "e",
         labelFormula: "e",
       },
     ],

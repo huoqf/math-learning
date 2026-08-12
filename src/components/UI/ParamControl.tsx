@@ -156,8 +156,8 @@ function detectMarkConflicts(
   marks: Array<ParamMark & { auto?: boolean }>,
   param: ParamConfig,
 ): Set<number> {
-  const CONTAINER_WIDTH_PX = 220;
-  const MIN_GAP_PX = 28;
+  const CONTAINER_WIDTH_PX = 140;
+  const MIN_GAP_PX = 38;
   const minGapPercent = (MIN_GAP_PX / CONTAINER_WIDTH_PX) * 100;
 
   const conflicts = new Set<number>();
@@ -371,7 +371,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
     return (
       <div
         key={param.key}
-        className="space-y-2.5 pb-4 border-b border-neutral-100 last:border-0 last:pb-0"
+        className="space-y-3 pb-5 border-b border-neutral-100 last:border-0 last:pb-0"
       >
         <div className="flex items-start justify-between gap-2">
           <label
@@ -475,21 +475,31 @@ export const ParamControl: React.FC<ParamControlProps> = ({
               />
             </div>
             {marks.some((mark) => mark.label) && (
-              <div className="relative h-4 text-[10px] font-semibold w-full mt-1">
+              <div className="relative h-4 text-[10px] font-mono font-medium w-full mt-1">
                 {marks
                   .filter((mark) => mark.label)
                   .map((mark) => {
                     const markVariant = mark.variant ?? "recommended";
                     const [, textClass] = markClass[markVariant].split(" ");
+                    const pct = getMarkPercentage(mark.value, param);
+
+                    let alignClass = "-translate-x-1/2";
+                    if (pct <= 15) {
+                      alignClass = "translate-x-0";
+                    } else if (pct >= 85) {
+                      alignClass = "-translate-x-full";
+                    }
+
                     return (
                       <span
                         key={`${param.key}-label-${mark.value}-${mark.label}`}
                         className={[
-                          "absolute top-0 -translate-x-1/2 whitespace-nowrap",
+                          "absolute top-0 whitespace-nowrap leading-none transition-all duration-150",
+                          alignClass,
                           textClass,
                         ].join(" ")}
                         style={{
-                          left: `${getMarkPercentage(mark.value, param)}%`,
+                          left: `${pct}%`,
                         }}
                       >
                         {mark.labelFormula ? (
@@ -506,7 +516,6 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                   })}
               </div>
             )}
-            
           </div>
           <span className="text-xs text-neutral-400 font-mono w-8 text-left shrink-0">
             {formatByStep(param.max, step)}

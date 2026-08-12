@@ -219,6 +219,7 @@ export const knowledgeTree: KnowledgeNode[] = [
     animationIds: ["anim-derivative-transcendental"],
     prerequisites: ["know-derivative-compare"],
   },
+
   {
     id: "know-derivative-shift",
     title: "隐零点定理与极值点偏移",

@@ -158,7 +158,11 @@ function splitLatexByWraps(latex: string): string[] {
 
 /** 宽松检测：\cmd 命令或 _^ 上下标即视为 LaTeX（供 quantities.label/value 纯公式字段使用）*/
 function hasLatex(text: string): boolean {
-  return /\\[a-zA-Z]|[_^]\{?[\w]/.test(text);
+  // 若包含中文字符，优先使用 renderMixedLatex 混合渲染，除非全是 \text{} 语法
+  if (/[\u4e00-\u9fa5]/.test(text)) {
+    return text.includes("$") || text.includes("\\text{");
+  }
+  return /\\[a-zA-Z]|[_^]\{?[\w]|=|<|>|\+|-|\*/.test(text);
 }
 
 /** 检测 LaTeX 是否包含需要 displayMode 的环境（如 cases、matrix、aligned 等） */

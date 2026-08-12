@@ -668,6 +668,11 @@ const legacyEntries: RouteEntry[] = [
   },
 ];
 
+import {
+  node as derivativeEndpointTaylorNode,
+  loader as derivativeEndpointTaylorLoader,
+} from "@/features/derivative-endpoint-taylor/meta";
+
 // ── 聚合导出 ──
 
 export const routeEntries: RouteEntry[] = [
@@ -681,6 +686,10 @@ export const routeEntries: RouteEntry[] = [
   { node: vectorLinearNode, loader: vectorLinearLoader },
   { node: vectorBasisNode, loader: vectorBasisLoader },
   { node: complexNode, loader: complexLoader as any },
+  {
+    node: derivativeEndpointTaylorNode,
+    loader: derivativeEndpointTaylorLoader as any,
+  },
   // 暂未迁移的页面
   ...legacyEntries,
 ];

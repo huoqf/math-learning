@@ -30,8 +30,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     marks: [
       {
         value: 0,
-        label: "a=0 (退化)",
-        labelFormula: "\\color{#EF4444}{a=0}",
+        label: "0",
+        labelFormula: "0",
         variant: "critical",
       },
     ],

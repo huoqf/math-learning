@@ -49,6 +49,7 @@ import { buildVectorLinearPanel } from "./builders/vectorLinear";
 import { buildVectorDotProductPanel } from "./builders/vectorDotProduct";
 import { buildVectorBasisPanel } from "./builders/vectorBasis";
 import { buildComplexPanel } from "./builders/complex";
+import { buildDerivativeEndpointTaylorPanel } from "./builders/derivativeEndpointTaylor";
 
 export type { MathPanelData } from "./types";
 
@@ -65,6 +66,9 @@ export function buildMathQuantities(
   config?: Record<string, unknown>,
 ): MathPanelData {
   switch (animId) {
+    case "anim-derivative-endpoint":
+    case "anim-derivative-endpoint-taylor":
+      return buildDerivativeEndpointTaylorPanel(params, config);
     case "anim-complex-geometry":
     case "anim-complex-geometric":
       return buildComplexPanel(params, config);

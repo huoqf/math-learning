@@ -114,9 +114,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: -5,
     max: 5,
     step: 1,
-    description: "递推关系式 a_{n+1} = p * a_n + q 中的常数项 q",
+    description:
+      "递推关系式 a_{n+1} = p * a_n + q 中的常数项 q (q=0 时退化为纯等比)",
     importance: "core",
-    marks: [{ value: 0, label: "纯等比 (q=0)", labelFormula: "q=0" }],
+    marks: [{ value: 0, label: "0", labelFormula: "0" }],
   },
   a2: {
     key: "a2",
@@ -148,9 +149,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: -3,
     max: 3,
     step: 0.5,
-    description: "分式递推 a_{n+1} = A*a_n / (B*a_n + C) 的分母系数 B",
+    description:
+      "分式递推 a_{n+1} = A*a_n / (B*a_n + C) 的分母系数 B (B=0 时退化为纯比例)",
     importance: "core",
-    marks: [{ value: 0, label: "纯比例 (B=0)", labelFormula: "B=0" }],
+    marks: [{ value: 0, label: "0", labelFormula: "0" }],
   },
   coefC: {
     key: "coefC",

@@ -1,0 +1,1 @@
+export { DerivativeEndpointTaylorAnimation } from "./DerivativeEndpointTaylorAnimation";

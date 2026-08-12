@@ -19,7 +19,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "控制图像沿 x 轴左右平移：h > 0 向右，h < 0 向左",
     descriptionFormula: "y = f(x - \\color{#EF4444}{h})",
-    marks: [{ value: 0, label: "无平移", labelFormula: "h = 0" }],
+    marks: [{ value: 0, label: "0", labelFormula: "0" }],
   },
   k: {
     key: "k",
@@ -32,7 +32,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "控制图像沿 y 轴上下平移：k > 0 向上，k < 0 向下",
     descriptionFormula: "y = f(x) + \\color{#D97706}{k}",
-    marks: [{ value: 0, label: "无平移", labelFormula: "k = 0" }],
+    marks: [{ value: 0, label: "0", labelFormula: "0" }],
   },
   A: {
     key: "A",
@@ -49,10 +49,10 @@ export const paramMeta: Record<string, ParamMeta> = {
       {
         value: 0,
         variant: "critical",
-        label: "退化 (A=0)",
-        labelFormula: "A = 0",
+        label: "0",
+        labelFormula: "0",
       },
-      { value: 1, label: "标准", labelFormula: "A = 1" },
+      { value: 1, label: "1", labelFormula: "1" },
     ],
   },
   omega: {
@@ -66,6 +66,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     description: "控制图像横向压缩与拉伸：ω > 1 压缩，0 < ω < 1 拉伸",
     descriptionFormula: "y = f(\\color{#D97706}{\\omega} x)",
-    marks: [{ value: 1, label: "标准", labelFormula: "\\omega = 1" }],
+    marks: [{ value: 1, label: "1", labelFormula: "1" }],
   },
 };

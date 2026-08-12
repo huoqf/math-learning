@@ -121,7 +121,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     importance: "core",
     description: "直线到平面 α 的垂直距离",
     descriptionFormula: "\\text{直线到平面 } \\alpha \\text{ 的垂直距离}",
-    marks: [{ value: 0, label: "在面内", labelFormula: "h=0 \\text{ (面内)}" }],
+    marks: [{ value: 0, label: "0", labelFormula: "0" }],
   },
   {
     key: "thetaDeg",
@@ -137,13 +137,13 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     marks: [
       {
         value: 0,
-        label: "平行",
-        labelFormula: "\\theta=0^\\circ \\text{ (平行)}",
+        label: "0°",
+        labelFormula: "0^\\circ",
       },
       {
         value: 90,
-        label: "垂直",
-        labelFormula: "\\theta=90^\\circ \\text{ (垂直)}",
+        label: "90°",
+        labelFormula: "90^\\circ",
       },
     ],
   },

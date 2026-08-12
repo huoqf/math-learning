@@ -26,6 +26,8 @@ exports[`knowledgeTree 数据完整性 > 快照：节点顺序不可被意外调
   "know-constant-double",
   "know-derivative-transcendental",
   "know-derivative-shift",
+  "know-derivative-inflection",
+  "know-derivative-endpoint",
   "know-trig-lines",
   "know-trig-identity",
   "know-trig-formulas",
@@ -49,6 +51,7 @@ exports[`knowledgeTree 数据完整性 > 快照：节点顺序不可被意外调
   "know-solid-angle",
   "know-solid-distance",
   "know-solid-ball",
+  "know-solid-ball-models",
   "know-line-equation",
   "know-line-circle",
   "know-conic-definition",
@@ -56,6 +59,9 @@ exports[`knowledgeTree 数据完整性 > 快照：节点顺序不可被意外调
   "know-conic-parabola",
   "know-conic-line",
   "know-conic-parametric",
+  "know-conic-param-t",
+  "know-conic-polarization",
+  "know-conic-homogenization",
   "know-probability-counting",
   "know-probability-bayes",
   "know-probability-distribution",
@@ -63,5 +69,6 @@ exports[`knowledgeTree 数据完整性 > 快照：节点顺序不可被意外调
   "know-stat-percentile",
   "know-probability-regression",
   "know-paired-independence",
+  "know-probability-markov",
 ]
 `;
