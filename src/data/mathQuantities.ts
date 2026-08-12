@@ -51,6 +51,7 @@ import { buildVectorDotProductPanel } from "./builders/vectorDotProduct";
 import { buildVectorBasisPanel } from "./builders/vectorBasis";
 import { buildComplexPanel } from "./builders/complex";
 import { buildDerivativeEndpointTaylorPanel } from "./builders/derivativeEndpointTaylor";
+import { buildLineParamTPanel } from "./builders/lineParamT";
 
 export type { MathPanelData } from "./types";
 
@@ -157,6 +158,8 @@ export function buildMathQuantities(
       return buildConicLineMathQuantities(params, config as any);
     case "anim-conic-param":
       return buildConicParamPanel(params, config);
+    case "anim-conic-param-t":
+      return buildLineParamTPanel(params, config);
     case "anim-line-equation":
       return buildLineEquationPanel(params, config);
     case "anim-line-circle":
