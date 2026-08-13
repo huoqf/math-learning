@@ -28,6 +28,7 @@ import {
   buildSectionPanel,
   buildPolyhedronSpherePanel,
   buildSolidFoldingPanel,
+  buildParametricPointPanel,
 } from "./builders/solidGeometry";
 import { buildVector3DBasisPanel } from "./builders/vector3d";
 import { buildSequencePanel } from "./builders/sequence";
@@ -146,6 +147,10 @@ export function buildMathQuantities(
       return buildRotationBodyPanel(params);
     case "anim-solid-folding":
       return buildSolidFoldingPanel(params, config);
+    case "anim-solid-parametric":
+    case "anim-solid-parametric-point":
+    case "anim-parametric-point":
+      return buildParametricPointPanel(params, config);
     case "anim-vector3d-basis":
       return buildVector3DBasisPanel(params, config as any);
     case "anim-sequence":
