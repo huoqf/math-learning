@@ -1,18 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { coneViews } from "@/math3d/curvedSolidViews";
+import type { Point2D } from "@/math3d/orthographicProjection";
 
 function bboxCenter(drawing: {
-  solid: [any, any][];
-  dashed: [any, any][];
-  centerline: [any, any][];
+  solid: [Point2D, Point2D][];
+  dashed: [Point2D, Point2D][];
+  centerline: [Point2D, Point2D][];
 }) {
   const pts = [
     ...drawing.solid,
     ...drawing.dashed,
     ...drawing.centerline,
   ].flat();
-  const us = pts.map((p: any) => p.u);
-  const vs = pts.map((p: any) => p.v);
+  const us = pts.map((p: Point2D) => p.u);
+  const vs = pts.map((p: Point2D) => p.v);
   return {
     cx: (Math.max(...us) + Math.min(...us)) / 2,
     cy: (Math.max(...vs) + Math.min(...vs)) / 2,

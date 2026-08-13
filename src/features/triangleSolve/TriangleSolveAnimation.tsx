@@ -18,9 +18,9 @@ import { solveTriangleFromSAS, solveSSA } from "@/math/triangleSolve";
 
 export function TriangleSolveAnimation() {
   // 研究模式: 'sine' | 'ssa' | 'cosine' | 'area'
-  const [studyMode, setStudyMode] = useState<"sine" | "ssa" | "cosine" | "area">(
-    "sine"
-  );
+  const [studyMode, setStudyMode] = useState<
+    "sine" | "ssa" | "cosine" | "area"
+  >("sine");
 
   // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -135,7 +135,10 @@ export function TriangleSolveAnimation() {
       left={
         <LeftPanel>
           {/* 模式选择 Section */}
-          <LeftPanelSection title="解三角形专题模式" subtitle="选择高考核心探讨机制">
+          <LeftPanelSection
+            title="解三角形专题模式"
+            subtitle="选择高考核心探讨机制"
+          >
             <SelectGrid
               items={[
                 { key: "sine", label: "正弦定理与外接圆" },
@@ -144,7 +147,7 @@ export function TriangleSolveAnimation() {
                 { key: "area", label: "面积与内切圆外接圆" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k as typeof studyMode)}
               variant="filled"
               columns={1}
             />

@@ -9,6 +9,7 @@ import {
   solveConicLineIntersection,
   type ConicType,
   type StudyMode,
+  type ConicLineParams,
 } from "@/math/conicLine";
 
 interface ConicLineSceneProps {
@@ -36,8 +37,13 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
 
   // 1. 求解相交计算结果
   const result = useMemo(
-    () => solveConicLineIntersection({ conicType, ...params } as any),
-    [conicType, params],
+    () =>
+      solveConicLineIntersection({
+        conicType,
+        studyMode,
+        ...params,
+      } as ConicLineParams),
+    [conicType, studyMode, params],
   );
 
   // 2. 直线参数 y = kx + m

@@ -51,8 +51,13 @@ export const paramMeta: Record<
     step?: number;
     description: string;
     descriptionFormula?: string;
-    importance?: "primary" | "secondary" | "advanced";
-    marks?: Array<{ value: number; label?: string; labelFormula?: string; variant?: ParamMarkVariant }>;
+    importance?: "core" | "advanced" | "display";
+    marks?: Array<{
+      value: number;
+      label?: string;
+      labelFormula?: string;
+      variant?: ParamMarkVariant;
+    }>;
   }
 > = {
   A: {
@@ -63,10 +68,16 @@ export const paramMeta: Record<
     max: 5,
     step: 0.5,
     description: "直线一般式方程中 x 的系数",
-    descriptionFormula: "\\text{一般式 } Ax + By + C = 0 \\text{ 中 } x \\text{ 的系数}",
-    importance: "primary",
+    descriptionFormula:
+      "\\text{一般式 } Ax + By + C = 0 \\text{ 中 } x \\text{ 的系数}",
+    importance: "core",
     marks: [
-      { value: 0, label: "A=0 (水平线)", labelFormula: "A=0", variant: "critical" },
+      {
+        value: 0,
+        label: "A=0 (水平线)",
+        labelFormula: "A=0",
+        variant: "critical",
+      },
     ],
   },
   B: {
@@ -77,10 +88,16 @@ export const paramMeta: Record<
     max: 5,
     step: 0.5,
     description: "直线一般式方程中 y 的系数",
-    descriptionFormula: "\\text{一般式 } Ax + By + C = 0 \\text{ 中 } y \\text{ 的系数}",
-    importance: "primary",
+    descriptionFormula:
+      "\\text{一般式 } Ax + By + C = 0 \\text{ 中 } y \\text{ 的系数}",
+    importance: "core",
     marks: [
-      { value: 0, label: "B=0 (铅垂线)", labelFormula: "B=0", variant: "critical" },
+      {
+        value: 0,
+        label: "B=0 (铅垂线)",
+        labelFormula: "B=0",
+        variant: "critical",
+      },
     ],
   },
   C: {
@@ -92,7 +109,7 @@ export const paramMeta: Record<
     step: 0.5,
     description: "直线一般式方程的常数项",
     descriptionFormula: "\\text{常数项，控制直线的平移}",
-    importance: "secondary",
+    importance: "advanced",
     marks: [
       { value: 0, label: "C=0 (过原点)", labelFormula: "C=0", variant: "zero" },
     ],
@@ -106,7 +123,7 @@ export const paramMeta: Record<
     step: 0.1,
     description: "直线的斜率 (k = tan α)",
     descriptionFormula: "k = \\tan \\alpha",
-    importance: "primary",
+    importance: "core",
     marks: [
       { value: 0, label: "k=0 (水平)", labelFormula: "k=0", variant: "zero" },
     ],
@@ -120,7 +137,7 @@ export const paramMeta: Record<
     step: 0.2,
     description: "动点 P 或已知定点的 x 坐标",
     descriptionFormula: "\\text{点 } P(x_0, y_0) \\text{ 的 } x \\text{ 坐标}",
-    importance: "primary",
+    importance: "core",
   },
   y0: {
     label: "y₀ (点P/定点y)",
@@ -131,7 +148,7 @@ export const paramMeta: Record<
     step: 0.2,
     description: "动点 P 或已知定点的 y 坐标",
     descriptionFormula: "\\text{点 } P(x_0, y_0) \\text{ 的 } y \\text{ 坐标}",
-    importance: "secondary",
+    importance: "advanced",
   },
   b: {
     label: "b (y截距)",
@@ -142,7 +159,7 @@ export const paramMeta: Record<
     step: 0.5,
     description: "直线在 y 轴上的截距",
     descriptionFormula: "y \\text{ 轴截距 } (0, b)",
-    importance: "secondary",
+    importance: "advanced",
   },
   a: {
     label: "a (x截距)",
@@ -153,9 +170,14 @@ export const paramMeta: Record<
     step: 0.5,
     description: "直线在 x 轴上的截距（不可为0）",
     descriptionFormula: "x \\text{ 轴截距 } (a, 0) \\quad a \\neq 0",
-    importance: "primary",
+    importance: "core",
     marks: [
-      { value: 0, label: "a=0 (无效)", labelFormula: "a=0", variant: "critical" },
+      {
+        value: 0,
+        label: "a=0 (无效)",
+        labelFormula: "a=0",
+        variant: "critical",
+      },
     ],
   },
   A2: {
@@ -167,7 +189,7 @@ export const paramMeta: Record<
     step: 0.5,
     description: "第二条直线 L₂ 的 x 系数",
     descriptionFormula: "L_2 \\text{ 的 } x \\text{ 系数 } A_2",
-    importance: "secondary",
+    importance: "advanced",
   },
   B2: {
     label: "B₂ (L₂系数)",
@@ -178,7 +200,7 @@ export const paramMeta: Record<
     step: 0.5,
     description: "第二条直线 L₂ 的 y 系数",
     descriptionFormula: "L_2 \\text{ 的 } y \\text{ 系数 } B_2",
-    importance: "secondary",
+    importance: "advanced",
   },
   C2: {
     label: "C₂ (L₂常数)",
@@ -189,7 +211,7 @@ export const paramMeta: Record<
     step: 0.5,
     description: "第二条直线 L₂ 的常数项",
     descriptionFormula: "L_2 \\text{ 的常数项 } C_2",
-    importance: "secondary",
+    importance: "advanced",
   },
   lambda: {
     label: "λ (直线系参数)",

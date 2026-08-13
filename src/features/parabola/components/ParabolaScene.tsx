@@ -17,6 +17,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { ParabolaDirection } from "@/math/parabola";
 import { useParabolaScene } from "../hooks/useParabolaScene";
+import type { PlacedLabel } from "@/utils/labelAvoider";
 
 interface ParabolaSceneProps {
   params: {
@@ -324,7 +325,7 @@ export const ParabolaScene: React.FC<ParabolaSceneProps> = ({
       )}
 
       {/* 9. 避让后的文本标签 */}
-      {labels.map((l: any) => (
+      {labels.map((l: PlacedLabel) => (
         <text
           key={l.key}
           x={l.x}

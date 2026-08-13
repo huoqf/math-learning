@@ -142,7 +142,7 @@ export function ConicParamAnimation() {
                 { key: "tSimplify", label: "高考设点化简" },
               ]}
               value={studyMode}
-              onChange={(v) => setStudyMode(v as any)}
+              onChange={(v) => setStudyMode(v as typeof studyMode)}
             />
           </LeftPanelSection>
 
@@ -189,7 +189,7 @@ export function ConicParamAnimation() {
             transform={vp.transform}
           >
             <ConicParamScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

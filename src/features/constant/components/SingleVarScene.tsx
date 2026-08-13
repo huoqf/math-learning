@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -62,22 +62,25 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   const isTrans = funModel === "transcendent";
 
   // 计算原函数值
-  const evalPrimaryFn = (x: number): number => {
-    if (isTrans) {
-      if (x <= 0) return NaN;
-      if (transModel === "ln_x_over_x")
-        return isSep ? evalFTrans(x) : evalGParamTrans(x, a_axis);
-      if (transModel === "exp_minus_ax")
-        return isSep ? Math.exp(x) / x : Math.exp(x) - a_axis * x;
-      if (transModel === "a_ln_x_minus_x")
-        return evalFTransC(x, isSep ? a : a_axis);
-      if (transModel === "exp_minus_a_x_plus_1")
-        return evalFTransD(x, isSep ? a : a_axis);
-      return evalFTrans(x);
-    } else {
-      return isSep ? evalF(x) : evalGParam(x, a_axis);
-    }
-  };
+  const evalPrimaryFn = useCallback(
+    (x: number): number => {
+      if (isTrans) {
+        if (x <= 0) return NaN;
+        if (transModel === "ln_x_over_x")
+          return isSep ? evalFTrans(x) : evalGParamTrans(x, a_axis);
+        if (transModel === "exp_minus_ax")
+          return isSep ? Math.exp(x) / x : Math.exp(x) - a_axis * x;
+        if (transModel === "a_ln_x_minus_x")
+          return evalFTransC(x, isSep ? a : a_axis);
+        if (transModel === "exp_minus_a_x_plus_1")
+          return evalFTransD(x, isSep ? a : a_axis);
+        return evalFTrans(x);
+      } else {
+        return isSep ? evalF(x) : evalGParam(x, a_axis);
+      }
+    },
+    [isTrans, transModel, isSep, a_axis, a],
+  );
 
   // 计算导函数值
   const evalDerivativeFn = (x: number): number => {

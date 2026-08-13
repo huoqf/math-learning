@@ -100,7 +100,7 @@ export function ConicDefinitionAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -140,7 +140,7 @@ export function ConicDefinitionAnimation() {
                 { key: "locusGen", label: "动圆生成法" },
               ]}
               value={studyMode}
-              onChange={(key) => setStudyMode(key as any)}
+              onChange={(key) => setStudyMode(key as typeof studyMode)}
             />
 
             {studyMode !== "unifiedDef" && (
@@ -164,7 +164,7 @@ export function ConicDefinitionAnimation() {
                       : []),
                   ]}
                   value={conicType}
-                  onChange={(key) => setConicType(key as any)}
+                  onChange={(key) => setConicType(key as typeof conicType)}
                   columns={2}
                 />
               </div>

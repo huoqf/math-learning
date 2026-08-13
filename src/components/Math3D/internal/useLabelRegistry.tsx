@@ -28,6 +28,7 @@ export const LabelRegistryProvider = ({
 
 const EPS = 0.05;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLabelRegistry(
   pos: { x: number; y: number; z: number },
   text: string,
@@ -53,5 +54,6 @@ export function useLabelRegistry(
           !(e.x === pos.x && e.y === pos.y && e.z === pos.z && e.text === text),
       );
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pos.x, pos.y, pos.z, text, registry]);
 }

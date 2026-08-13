@@ -184,12 +184,10 @@ export function computeGeneralDiscreteDistribution(
     label: o.label || `${o.x}`,
   }));
 
-  let sumP = 0;
   let mean = 0;
   let maxP = -1;
 
   normalizedOutcomes.forEach((o) => {
-    sumP += o.p;
     mean += o.x * o.p;
     if (o.p > maxP) maxP = o.p;
   });

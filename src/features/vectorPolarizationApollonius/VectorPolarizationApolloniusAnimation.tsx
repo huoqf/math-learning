@@ -51,7 +51,7 @@ export function VectorPolarizationApolloniusAnimation() {
   const mathData = useMemo(() => {
     return buildMathQuantities(
       "anim-vector-polarization-apollonius",
-      params as any,
+      params as unknown as Record<string, number>,
       { studyMode },
     );
   }, [params, studyMode]);
@@ -144,7 +144,7 @@ export function VectorPolarizationApolloniusAnimation() {
                 },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k as typeof studyMode)}
               variant="filled"
             />
           </LeftPanelSection>

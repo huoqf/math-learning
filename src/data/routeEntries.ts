@@ -103,7 +103,7 @@ import {
 const legacyEntries: RouteEntry[] = [
   {
     node: conicParamTNode,
-    loader: conicParamTLoader as any,
+    loader: conicParamTLoader as RouteEntry["loader"],
   },
   {
     node: secondDerivativeNode,
@@ -115,11 +115,11 @@ const legacyEntries: RouteEntry[] = [
   },
   {
     node: inequalityAbsoluteNode,
-    loader: inequalityAbsoluteLoader as any,
+    loader: inequalityAbsoluteLoader as RouteEntry["loader"],
   },
   {
     node: trigTransformNode,
-    loader: trigTransformLoader as any,
+    loader: trigTransformLoader as RouteEntry["loader"],
   },
   {
     node: inequalityBasicNode,
@@ -135,35 +135,35 @@ const legacyEntries: RouteEntry[] = [
   },
   {
     node: parabolaNode,
-    loader: parabolaLoader as any,
+    loader: parabolaLoader as RouteEntry["loader"],
   },
   {
     node: conicPropertiesNode,
-    loader: conicPropertiesLoader as any,
+    loader: conicPropertiesLoader as RouteEntry["loader"],
   },
   {
     node: triangleExtremaNode,
-    loader: triangleExtremaLoader as any,
+    loader: triangleExtremaLoader as RouteEntry["loader"],
   },
   {
     node: lineEquationNode,
-    loader: lineEquationLoader as any,
+    loader: lineEquationLoader as RouteEntry["loader"],
   },
   {
     node: trigLinesNode,
-    loader: trigLinesLoader as any,
+    loader: trigLinesLoader as RouteEntry["loader"],
   },
   {
     node: trigIdentityNode,
-    loader: trigIdentityLoader as any,
+    loader: trigIdentityLoader as RouteEntry["loader"],
   },
   {
     node: trigFormulasNode,
-    loader: trigFormulasLoader as any,
+    loader: trigFormulasLoader as RouteEntry["loader"],
   },
   {
     node: trigTangentNode,
-    loader: trigTangentLoader as any,
+    loader: trigTangentLoader as RouteEntry["loader"],
   },
   {
     node: {
@@ -764,16 +764,16 @@ export const routeEntries: RouteEntry[] = [
   { node: vectorBasisNode, loader: vectorBasisLoader },
   {
     node: vectorPolarizationApolloniusNode,
-    loader: vectorPolarizationApolloniusLoader as any,
+    loader: vectorPolarizationApolloniusLoader as RouteEntry["loader"],
   },
-  { node: complexNode, loader: complexLoader as any },
+  { node: complexNode, loader: complexLoader as RouteEntry["loader"] },
   {
     node: derivativeEndpointTaylorNode,
-    loader: derivativeEndpointTaylorLoader as any,
+    loader: derivativeEndpointTaylorLoader as RouteEntry["loader"],
   },
   {
     node: conicHomogenizationNode,
-    loader: conicHomogenizationLoader as any,
+    loader: conicHomogenizationLoader as RouteEntry["loader"],
   },
   // 暂未迁移的页面
   ...legacyEntries,

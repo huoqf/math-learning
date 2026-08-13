@@ -42,7 +42,7 @@ export function DerivativeEndpointTaylorAnimation() {
   const [taylorOrder, setTaylorOrder] = useState<number>(2);
 
   // 4. 参数状态 (a, xCurr, x0)
-  const [params, setParams] = useState<Record<string, number>>(() => ({
+  const [params, setParams] = useState(() => ({
     a: defaultParams.a,
     xCurr: defaultParams.xCurr,
     x0: defaultParams.x0,
@@ -105,13 +105,13 @@ export function DerivativeEndpointTaylorAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
+          value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.05,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -179,7 +179,7 @@ export function DerivativeEndpointTaylorAnimation() {
                 { key: "taylor", label: "泰勒拟合" },
               ]}
               value={activeMode}
-              onChange={(k) => setActiveMode(k as any)}
+              onChange={(k) => setActiveMode(k as typeof activeMode)}
             />
           </LeftPanelSection>
 
@@ -293,7 +293,7 @@ export function DerivativeEndpointTaylorAnimation() {
             transform={vp.transform}
           >
             <DerivativeEndpointTaylorScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

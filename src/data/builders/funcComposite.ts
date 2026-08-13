@@ -70,7 +70,8 @@ export function buildFuncCompositePanel(
     const xSample = params.xSample ?? 1.5;
     const innerB = params.innerB ?? -2.0;
     const innerC = params.innerC ?? 2.0;
-    const outerType = (config?.outerType as any) || "exp";
+    const outerType =
+      (config?.outerType as "log" | "exp" | "quadratic") || "exp";
 
     const res = calculateComposite({ xSample, innerB, innerC, outerType });
 

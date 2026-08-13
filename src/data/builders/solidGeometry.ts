@@ -393,9 +393,9 @@ export function buildSpatialAnglePanel(
 
 export function buildLinePlaneRelationPanel(
   params: Record<string, number>,
-  config?: Record<string, any>,
+  config?: Record<string, unknown>,
 ): MathPanelData {
-  const mode = config?.mode ?? "parallel";
+  const mode = (config?.mode as string) ?? "parallel";
   const zHeight = params.zHeight ?? 2;
   const thetaDeg = params.thetaDeg ?? 0;
   const phiDeg = params.phiDeg ?? 30;
@@ -554,7 +554,7 @@ export function buildLinePlaneRelationPanel(
 
 export function buildSectionPanel(
   params: Record<string, number>,
-  config?: Record<string, any>,
+  config?: Record<string, unknown>,
 ): MathPanelData {
   const cutHeight = params.cutHeight ?? 2;
   const tiltDeg = params.tiltDeg ?? 0;

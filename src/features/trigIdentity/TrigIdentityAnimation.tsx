@@ -203,7 +203,9 @@ export function TrigIdentityAnimation() {
             transform={vp.transform}
           >
             <TrigIdentityScene
-              params={params as any}
+              params={
+                params as { alphaDeg: number; homoA?: number; homoB?: number }
+              }
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

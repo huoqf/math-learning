@@ -21,6 +21,7 @@ import {
 } from "@/components/Math3D";
 import { Cuboid } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
+import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidParametricMeta } from "@/data/registries/solidGeometry";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { buildSolidViews } from "./threeViews/buildSolidViews";
@@ -148,6 +149,7 @@ export default function ParametricPointAnimation() {
     geom.setAttribute("position", new BufferAttribute(vertices, 3));
     geom.computeVertexNormals();
     return geom;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [P.x, P.y, P.z, A.x, A.y, A.z, C.x, C.y, C.z]);
 
   // 截面中心与法向量起点
@@ -212,7 +214,7 @@ export default function ParametricPointAnimation() {
                     { key: "side", label: "左视" },
                   ]}
                   value={preset}
-                  onChange={(p) => setCameraPreset(p as any)}
+                  onChange={(p) => setCameraPreset(p as CameraPreset)}
                 />
               )}
             </div>

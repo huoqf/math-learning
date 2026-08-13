@@ -17,7 +17,9 @@ import { defaultParams, paramMeta } from "@/data/registries/trigLines";
 
 export function TrigLinesAnimation() {
   // 研究模式：'lines' | 'comparison' | 'quadrant'
-  const [studyMode, setStudyMode] = useState<"lines" | "comparison" | "quadrant">("lines");
+  const [studyMode, setStudyMode] = useState<
+    "lines" | "comparison" | "quadrant"
+  >("lines");
 
   // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -107,14 +109,17 @@ export function TrigLinesAnimation() {
                 { key: "quadrant", label: "象限符号法则" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k as typeof studyMode)}
               variant="filled"
               columns={1}
             />
           </LeftPanelSection>
 
           {/* 特殊角快捷切换 Section */}
-          <LeftPanelSection title="快捷特殊角" subtitle="一键设定高考常考特殊角度">
+          <LeftPanelSection
+            title="快捷特殊角"
+            subtitle="一键设定高考常考特殊角度"
+          >
             <SelectGrid
               items={[
                 { key: "0", label: "0°" },
@@ -138,21 +143,37 @@ export function TrigLinesAnimation() {
           </LeftPanelSection>
 
           {/* 动态显示开关 */}
-          <LeftPanelSection title="函数线显隐" subtitle="勾选控制展示的三大有向线段">
+          <LeftPanelSection
+            title="函数线显隐"
+            subtitle="勾选控制展示的三大有向线段"
+          >
             <SelectGrid
               items={[
-                { key: "sin", label: "正弦线 MP", formula: "\\overrightarrow{MP}" },
-                { key: "cos", label: "余弦线 OM", formula: "\\overrightarrow{OM}" },
-                { key: "tan", label: "正切线 AT", formula: "\\overrightarrow{AT}", fullWidth: true },
+                {
+                  key: "sin",
+                  label: "正弦线 MP",
+                  formula: "\\overrightarrow{MP}",
+                },
+                {
+                  key: "cos",
+                  label: "余弦线 OM",
+                  formula: "\\overrightarrow{OM}",
+                },
+                {
+                  key: "tan",
+                  label: "正切线 AT",
+                  formula: "\\overrightarrow{AT}",
+                  fullWidth: true,
+                },
               ]}
               value={
                 params.showSine && params.showCosine && params.showTangent
                   ? "all"
                   : params.showSine
-                  ? "sin"
-                  : params.showCosine
-                  ? "cos"
-                  : "tan"
+                    ? "sin"
+                    : params.showCosine
+                      ? "cos"
+                      : "tan"
               }
               onChange={(k) => {
                 if (k === "sin") {
@@ -179,7 +200,10 @@ export function TrigLinesAnimation() {
           </LeftPanelSection>
 
           {/* 参数调节 Section */}
-          <LeftPanelSection title="连续动角调节" subtitle="拖动滑块连续改变动角 α">
+          <LeftPanelSection
+            title="连续动角调节"
+            subtitle="拖动滑块连续改变动角 α"
+          >
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -201,7 +225,16 @@ export function TrigLinesAnimation() {
             transform={vp.transform}
           >
             <TrigLinesScene
-              params={params as any}
+              params={
+                params as {
+                  alphaDeg: number;
+                  showSine?: number;
+                  showCosine?: number;
+                  showTangent?: number;
+                  showArc?: number;
+                  showAuxTriangle?: number;
+                }
+              }
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

@@ -130,7 +130,7 @@ export function TrigTransformScene({
               cx={pt.x}
               cy={pt.y}
               scale={scale}
-              vp={{} as any}
+              vp={{} as ViewportInfo}
               onDrag={() => {}}
               color={MATH_COLORS.paramTertiary}
               r={6}

@@ -6,8 +6,9 @@ export function buildFuncTransformPanel(
   params: Record<string, number>,
   config?: Record<string, unknown>,
 ): MathPanelData {
-  const fnType = (config?.fnType as any) || "quadratic";
-  const foldMode = (config?.foldMode as any) || "none";
+  const fnType =
+    (config?.fnType as "quadratic" | "sine" | "exp") || "quadratic";
+  const foldMode = (config?.foldMode as "none" | "global" | "input") || "none";
   const h = params.h ?? 1.0;
   const k = params.k ?? 0.5;
   const A = params.A ?? 1.5;

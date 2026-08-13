@@ -18,17 +18,7 @@ import {
 } from "@/math/lineParamT";
 
 export interface LineParamTSceneProps {
-  params: {
-    x0: number;
-    y0: number;
-    alpha: number;
-    t: number;
-    kNorm: number;
-    R: number;
-    a: number;
-    b: number;
-    p: number;
-  };
+  params: Record<string, number>;
   scale: SceneScale;
   vp: ViewportInfo;
   fontScale?: (size: number) => number;
@@ -85,59 +75,74 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
   const desLineEnd = mathToDesign(x0 + 12 * dirX, y0 + 12 * dirY, scale);
 
   // 5. 组装待避让的 Label 列表 (Design 坐标)
-  const rawLabels: LabelItem[] = [
-    {
-      key: "P0",
-      x: desP0.x,
-      y: desP0.y - 12,
-      text: `P₀(${x0.toFixed(1)}, ${y0.toFixed(1)})`,
-    },
-  ];
+  const rawLabels = useMemo<LabelItem[]>(() => {
+    const labels: LabelItem[] = [
+      {
+        key: "P0",
+        x: desP0.x,
+        y: desP0.y - 12,
+        text: `P₀(${x0.toFixed(1)}, ${y0.toFixed(1)})`,
+      },
+    ];
 
-  if (mode === "definition") {
-    rawLabels.push({
-      key: "P",
-      x: desP.x,
-      y: desP.y - 12,
-      text: `P(t=${t.toFixed(1)})`,
-    });
-    if (Math.abs(kNorm - 1.0) > 1e-2) {
-      rawLabels.push({
-        key: "PNon",
-        x: desPNon.x,
-        y: desPNon.y + 16,
-        text: `P'(m=${t.toFixed(1)})`,
+    if (mode === "definition") {
+      labels.push({
+        key: "P",
+        x: desP.x,
+        y: desP.y - 12,
+        text: `P(t=${t.toFixed(1)})`,
       });
+      if (Math.abs(kNorm - 1.0) > 1e-2) {
+        labels.push({
+          key: "PNon",
+          x: desPNon.x,
+          y: desPNon.y + 16,
+          text: `P'(m=${t.toFixed(1)})`,
+        });
+      }
+    } else if (intersect.hasIntersection) {
+      if (intersect.pointA) {
+        const desA = mathToDesign(
+          intersect.pointA.x,
+          intersect.pointA.y,
+          scale,
+        );
+        labels.push({
+          key: "A",
+          x: desA.x,
+          y: desA.y - 12,
+          text: `A(t₁=${intersect.t1.toFixed(2)})`,
+        });
+      }
+      if (intersect.pointB) {
+        const desB = mathToDesign(
+          intersect.pointB.x,
+          intersect.pointB.y,
+          scale,
+        );
+        labels.push({
+          key: "B",
+          x: desB.x,
+          y: desB.y - 12,
+          text: `B(t₂=${intersect.t2.toFixed(2)})`,
+        });
+      }
+      if (intersect.pointM) {
+        const desM = mathToDesign(
+          intersect.pointM.x,
+          intersect.pointM.y,
+          scale,
+        );
+        labels.push({
+          key: "M",
+          x: desM.x,
+          y: desM.y + 14,
+          text: `M(中点)`,
+        });
+      }
     }
-  } else if (intersect.hasIntersection) {
-    if (intersect.pointA) {
-      const desA = mathToDesign(intersect.pointA.x, intersect.pointA.y, scale);
-      rawLabels.push({
-        key: "A",
-        x: desA.x,
-        y: desA.y - 12,
-        text: `A(t₁=${intersect.t1.toFixed(2)})`,
-      });
-    }
-    if (intersect.pointB) {
-      const desB = mathToDesign(intersect.pointB.x, intersect.pointB.y, scale);
-      rawLabels.push({
-        key: "B",
-        x: desB.x,
-        y: desB.y - 12,
-        text: `B(t₂=${intersect.t2.toFixed(2)})`,
-      });
-    }
-    if (intersect.pointM) {
-      const desM = mathToDesign(intersect.pointM.x, intersect.pointM.y, scale);
-      rawLabels.push({
-        key: "M",
-        x: desM.x,
-        y: desM.y + 14,
-        text: `M(中点)`,
-      });
-    }
-  }
+    return labels;
+  }, [desP0, desP, desPNon, mode, kNorm, t, intersect, scale, x0, y0]);
 
   const adjustedLabels = useMemo(
     () => avoidLabelOverlap(rawLabels, 16),

@@ -21,6 +21,7 @@ import {
   CameraRig,
 } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
+import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { linePlaneRelationMeta } from "@/data/registries/solidGeometry";
 import { getLineDirection } from "@/math3d/lineRelation";
@@ -197,7 +198,7 @@ export default function LinePlaneRelationAnimation() {
                 { key: "side", label: "左视" },
               ]}
               value={preset}
-              onChange={(p) => setCameraPreset(p as any)}
+              onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
           </LeftPanelSection>
         </LeftPanel>

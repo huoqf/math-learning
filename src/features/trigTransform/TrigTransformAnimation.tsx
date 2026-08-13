@@ -141,7 +141,7 @@ export function TrigTransformAnimation() {
                 { key: "transformPath", label: "变换路径" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k as typeof studyMode)}
             />
           </LeftPanelSection>
 
@@ -163,7 +163,7 @@ export function TrigTransformAnimation() {
                   ]}
                   value={pathType}
                   onChange={(k) => {
-                    setPathType(k as any);
+                    setPathType(k as typeof pathType);
                     setStepIndex(0);
                   }}
                   variant="filled"
@@ -226,7 +226,9 @@ export function TrigTransformAnimation() {
             transform={vp.transform}
           >
             <TrigTransformScene
-              params={params as any}
+              params={
+                params as { A: number; omega: number; phi: number; k: number }
+              }
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

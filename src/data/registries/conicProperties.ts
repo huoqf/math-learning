@@ -1,4 +1,5 @@
 import { MATH_COLORS } from "@/theme";
+import type { ParamMeta } from "@/data/types";
 
 export interface ConicPropertiesParams {
   a: number;
@@ -14,8 +15,9 @@ export const defaultParams: ConicPropertiesParams = {
   t: Math.PI / 4,
 };
 
-export const paramMeta: Record<string, any> = {
+export const paramMeta: Record<string, ParamMeta> = {
   a: {
+    key: "a",
     label: "半长轴 / 半实轴 a",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a}`,
     defaultValue: 3,
@@ -26,6 +28,7 @@ export const paramMeta: Record<string, any> = {
     importance: "core",
   },
   b: {
+    key: "b",
     label: "半短轴 / 半虚轴 b",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{b}`,
     defaultValue: 2,
@@ -36,6 +39,7 @@ export const paramMeta: Record<string, any> = {
     importance: "core",
   },
   e: {
+    key: "e",
     label: "离心率 e",
     labelFormula: `\\color{${MATH_COLORS.primary}}{e}`,
     defaultValue: 0.745,
@@ -60,6 +64,7 @@ export const paramMeta: Record<string, any> = {
     ],
   },
   t: {
+    key: "t",
     label: "动点 P 位置角 t",
     labelFormula: "\\theta_P",
     defaultValue: Math.PI / 4,
@@ -67,6 +72,6 @@ export const paramMeta: Record<string, any> = {
     max: Math.PI - 0.05,
     step: 0.02,
     description: "沿曲线滑动动点 P 的位置",
-    importance: "basic",
+    importance: "display",
   },
 };

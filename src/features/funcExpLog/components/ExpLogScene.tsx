@@ -114,7 +114,7 @@ export function ExpLogScene({
       }
     }
     return avoidLabels(entries, { fontScale });
-  }, [funcType, x0, a, powerAlpha, powerRes, showInverse, scale, fontScale]);
+  }, [funcType, x0, a, powerRes, showInverse, scale, fontScale]);
 
   // 1. 幂函数模式 y = x^α
   if (funcType === "power") {

@@ -147,8 +147,8 @@ export function LineEquationAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
-          marks: meta.marks as any,
+          importance: meta.importance,
+          marks: meta.marks,
         };
       });
   }, [params, studyMode, form]);
@@ -211,23 +211,34 @@ export function LineEquationAnimation() {
                 { key: "family", label: "直线系" },
               ]}
               value={studyMode}
-              onChange={(key) => setStudyMode(key as any)}
+              onChange={(key) => setStudyMode(key as typeof studyMode)}
             />
           </LeftPanelSection>
 
           {/* 直线方程形式子选择 (仅在 forms 模式下) */}
           {studyMode === "forms" && (
-            <LeftPanelSection title="方程表达形式" subtitle="选择五种经典表达形式">
+            <LeftPanelSection
+              title="方程表达形式"
+              subtitle="选择五种经典表达形式"
+            >
               <SelectGrid
                 items={[
                   { key: "general", label: "一般式", formula: "Ax+By+C=0" },
                   { key: "slopeIntercept", label: "斜截式", formula: "y=kx+b" },
-                  { key: "pointSlope", label: "点斜式", formula: "y-y_0=k(x-x_0)" },
-                  { key: "intercept", label: "截距式", formula: "\\frac{x}{a}+\\frac{y}{b}=1" },
+                  {
+                    key: "pointSlope",
+                    label: "点斜式",
+                    formula: "y-y_0=k(x-x_0)",
+                  },
+                  {
+                    key: "intercept",
+                    label: "截距式",
+                    formula: "\\frac{x}{a}+\\frac{y}{b}=1",
+                  },
                   { key: "twoPoint", label: "两点式", fullWidth: true },
                 ]}
                 value={form}
-                onChange={(k) => setForm(k as any)}
+                onChange={(k) => setForm(k as typeof form)}
                 variant="filled"
               />
             </LeftPanelSection>

@@ -29,7 +29,8 @@ export function TrigFormulasAnimation() {
 
   // 子公式选项
   const [sumDiffKey, setSumDiffKey] = useState<SumDiffFormulaKey>("cos_minus");
-  const [doubleAngleKey, setDoubleAngleKey] = useState<DoubleAngleFormulaKey>("sin_2a");
+  const [doubleAngleKey, setDoubleAngleKey] =
+    useState<DoubleAngleFormulaKey>("sin_2a");
 
   // 本地参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -45,7 +46,10 @@ export function TrigFormulasAnimation() {
   });
 
   // 根据研究模式确定 Scene 场景数学范围
-  const scaleRanges = useMemo<{ xRange: [number, number]; yRange: [number, number] }>(() => {
+  const scaleRanges = useMemo<{
+    xRange: [number, number];
+    yRange: [number, number];
+  }>(() => {
     if (studyMode === "auxiliary") {
       return { xRange: [-6.0, 6.0], yRange: [-5.5, 5.5] };
     }
@@ -117,23 +121,44 @@ export function TrigFormulasAnimation() {
   // 顶端悬浮 KaTeX 公式渲染
   const headerFormulaLatex = useMemo(() => {
     if (studyMode === "sum_diff") {
-      const res = calculateSumDiff(params.alphaDeg ?? 45, params.betaDeg ?? 30, sumDiffKey);
-      const valStr = res.isTanDefined ? res.resultVal.toFixed(3) : "\\text{无意义}";
+      const res = calculateSumDiff(
+        params.alphaDeg ?? 45,
+        params.betaDeg ?? 30,
+        sumDiffKey,
+      );
+      const valStr = res.isTanDefined
+        ? res.resultVal.toFixed(3)
+        : "\\text{无意义}";
       return `${res.formulaLatex} = ${valStr}`;
     } else if (studyMode === "double_angle") {
       const res = calculateDoubleAngle(params.alphaDeg ?? 45, doubleAngleKey);
       let valStr = "";
       if (doubleAngleKey === "sin_2a") valStr = res.sin2Alpha.toFixed(3);
       else if (doubleAngleKey === "cos_2a") valStr = res.cos2Alpha.toFixed(3);
-      else if (doubleAngleKey === "tan_2a") valStr = res.isTanDefined && res.tan2Alpha !== undefined ? res.tan2Alpha.toFixed(3) : "\\text{无意义}";
+      else if (doubleAngleKey === "tan_2a")
+        valStr =
+          res.isTanDefined && res.tan2Alpha !== undefined
+            ? res.tan2Alpha.toFixed(3)
+            : "\\text{无意义}";
       else if (doubleAngleKey === "sin2_a") valStr = res.sinSqAlpha.toFixed(3);
       else if (doubleAngleKey === "cos2_a") valStr = res.cosSqAlpha.toFixed(3);
       return `${res.formulaLatex} = ${valStr}`;
     } else {
-      const res = calculateAuxiliary(params.coeffA ?? 1.0, params.coeffB ?? 1.73);
+      const res = calculateAuxiliary(
+        params.coeffA ?? 1.0,
+        params.coeffB ?? 1.73,
+      );
       return res.formulaLatex;
     }
-  }, [studyMode, sumDiffKey, doubleAngleKey, params.alphaDeg, params.betaDeg, params.coeffA, params.coeffB]);
+  }, [
+    studyMode,
+    sumDiffKey,
+    doubleAngleKey,
+    params.alphaDeg,
+    params.betaDeg,
+    params.coeffA,
+    params.coeffB,
+  ]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
@@ -187,7 +212,10 @@ export function TrigFormulasAnimation() {
           )}
 
           {studyMode === "double_angle" && (
-            <LeftPanelSection title="倍角与降幂公式" subtitle="选择二倍角或降幂变形">
+            <LeftPanelSection
+              title="倍角与降幂公式"
+              subtitle="选择二倍角或降幂变形"
+            >
               <SelectGrid
                 items={[
                   { key: "sin_2a", label: "sin 2α" },
@@ -235,7 +263,14 @@ export function TrigFormulasAnimation() {
             transform={vp.transform}
           >
             <TrigFormulasScene
-              params={params as any}
+              params={
+                params as {
+                  alphaDeg: number;
+                  betaDeg: number;
+                  coeffA: number;
+                  coeffB: number;
+                }
+              }
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

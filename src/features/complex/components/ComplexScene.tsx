@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -39,7 +39,10 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
   fontScale = (v) => v,
   studyMode,
 }) => {
-  const toDesign = (x: number, y: number) => mathToDesign(x, y, scale);
+  const toDesign = useCallback(
+    (x: number, y: number) => mathToDesign(x, y, scale),
+    [scale],
+  );
 
   // ─────────────────────────────────────────────────────────────
   // 模式一：复平面与向量加减法
@@ -93,7 +96,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
       );
     }
     return arcPoints.join(" ");
-  }, [rad1, rad2, r1, scale]);
+  }, [rad1, rad2, r1, toDesign]);
 
   // ─────────────────────────────────────────────────────────────
   // 模式三：轨迹与极值

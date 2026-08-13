@@ -152,7 +152,10 @@ export function buildMathQuantities(
     case "anim-parametric-point":
       return buildParametricPointPanel(params, config);
     case "anim-vector3d-basis":
-      return buildVector3DBasisPanel(params, config as any);
+      return buildVector3DBasisPanel(
+        params,
+        config as Parameters<typeof buildVector3DBasisPanel>[1],
+      );
     case "anim-sequence":
     case "anim-sequence-geom":
     case "anim-sequence-recurrence":
@@ -165,7 +168,10 @@ export function buildMathQuantities(
     case "anim-conic-parabola":
       return buildParabolaPanel(params, config);
     case "anim-conic-line":
-      return buildConicLineMathQuantities(params, config as any);
+      return buildConicLineMathQuantities(
+        params,
+        config as Parameters<typeof buildConicLineMathQuantities>[1],
+      );
     case "anim-conic-param":
       return buildConicParamPanel(params, config);
     case "anim-conic-param-t":

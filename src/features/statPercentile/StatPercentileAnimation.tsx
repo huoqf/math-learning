@@ -167,7 +167,22 @@ export function StatPercentileAnimation() {
             transform={vp.transform}
           >
             <StatPercentileScene
-              params={params as any}
+              params={
+                params as {
+                  percentileP: number;
+                  shift: number;
+                  sampleN: number;
+                  N1: number;
+                  N2: number;
+                  N3: number;
+                  mean1: number;
+                  mean2: number;
+                  mean3: number;
+                  var1: number;
+                  var2: number;
+                  var3: number;
+                }
+              }
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

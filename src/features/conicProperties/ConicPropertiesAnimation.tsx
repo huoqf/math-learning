@@ -130,7 +130,7 @@ export function ConicPropertiesAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -148,7 +148,7 @@ export function ConicPropertiesAnimation() {
                 { key: "focusTriangle", label: "焦点三角形" },
               ]}
               value={studyMode}
-              onChange={(key) => setStudyMode(key as any)}
+              onChange={(key) => setStudyMode(key as typeof studyMode)}
             />
 
             <div className="mt-3">
@@ -166,7 +166,9 @@ export function ConicPropertiesAnimation() {
                   },
                 ]}
                 value={conicType}
-                onChange={(key) => handleConicTypeChange(key as any)}
+                onChange={(key) =>
+                  handleConicTypeChange(key as typeof conicType)
+                }
                 columns={2}
               />
             </div>

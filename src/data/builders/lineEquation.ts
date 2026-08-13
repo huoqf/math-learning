@@ -20,10 +20,13 @@ import {
 
 export function buildLineEquationPanel(
   params: Record<string, number>,
-  config?: Record<string, unknown>
+  config?: Record<string, unknown>,
 ): MathPanelData {
   const studyMode = (config?.studyMode as string) || "forms";
-  const form = (config?.form as any) || "general";
+  const form =
+    (config?.form as
+      "general" | "intercept" | "pointSlope" | "slopeIntercept" | "twoPoint") ||
+    "general";
 
   const cPrimary = MATH_COLORS.paramPrimary; // #EF4444
   const cSecondary = MATH_COLORS.paramSecondary; // #D97706
@@ -83,12 +86,18 @@ export function buildLineEquationPanel(
 
     quantities.push({
       label: "x 轴截距 a",
-      value: lineProps.xIntercept !== null ? lineProps.xIntercept.toFixed(2) : "无 (平行x轴)",
+      value:
+        lineProps.xIntercept !== null
+          ? lineProps.xIntercept.toFixed(2)
+          : "无 (平行x轴)",
     });
 
     quantities.push({
       label: "y 轴截距 b",
-      value: lineProps.yIntercept !== null ? lineProps.yIntercept.toFixed(2) : "无 (平行y轴)",
+      value:
+        lineProps.yIntercept !== null
+          ? lineProps.yIntercept.toFixed(2)
+          : "无 (平行y轴)",
       color: cTertiary,
     });
 
@@ -108,15 +117,17 @@ export function buildLineEquationPanel(
       {
         name: "截距式方程",
         latex: "\\frac{x}{a} + \\frac{y}{b} = 1",
-        condition: "a \\neq 0 \\text{ 且 } b \\neq 0 \\text{ (不过原点且不平行于坐标轴)}",
+        condition:
+          "a \\neq 0 \\text{ 且 } b \\neq 0 \\text{ (不过原点且不平行于坐标轴)}",
         level: "important",
       },
       {
         name: "一般式方程",
         latex: "Ax + By + C = 0",
-        condition: "A, B \\text{ 不同时为 } 0 \\text{ (即 } A^2 + B^2 > 0 \\text{)}",
+        condition:
+          "A, B \\text{ 不同时为 } 0 \\text{ (即 } A^2 + B^2 > 0 \\text{)}",
         level: "core",
-      }
+      },
     );
 
     gaokaoPoints.push({
@@ -131,7 +142,10 @@ export function buildLineEquationPanel(
       });
     }
 
-    if (form === "intercept" && (Math.abs(params.a ?? 0) < 1e-9 || Math.abs(params.b ?? 0) < 1e-9)) {
+    if (
+      form === "intercept" &&
+      (Math.abs(params.a ?? 0) < 1e-9 || Math.abs(params.b ?? 0) < 1e-9)
+    ) {
       warnings.push({
         text: "截距式要求 a ≠ 0 且 b ≠ 0。过原点的直线不能用截距式表示！",
         level: "warning",
@@ -163,7 +177,7 @@ export function buildLineEquationPanel(
         label: "垂足 Q(x_H, y_H)",
         value: `(${p2l.foot.x.toFixed(2)}, ${p2l.foot.y.toFixed(2)})`,
         color: cSecondary,
-      }
+      },
     );
 
     theorems.push(
@@ -175,10 +189,11 @@ export function buildLineEquationPanel(
       },
       {
         name: "垂足坐标公式",
-        latex: "x_H = \\frac{B^2 x_0 - AB y_0 - AC}{A^2 + B^2}, \\quad y_H = \\frac{A^2 y_0 - AB x_0 - BC}{A^2 + B^2}",
+        latex:
+          "x_H = \\frac{B^2 x_0 - AB y_0 - AC}{A^2 + B^2}, \\quad y_H = \\frac{A^2 y_0 - AB x_0 - BC}{A^2 + B^2}",
         condition: "PQ \\perp L",
         level: "derived",
-      }
+      },
     );
 
     gaokaoPoints.push(
@@ -189,7 +204,7 @@ export function buildLineEquationPanel(
       {
         text: "求点 $P$ 关于直线 $L$ 的对称点 $P'$，本质利用垂足 $Q$ 是 $PP'$ 的中点，且直线 $PP'$ 与 $L$ 垂直（斜率乘积为 -1）。",
         importance: "core",
-      }
+      },
     );
 
     if (!p2l.isValid) {
@@ -228,8 +243,11 @@ export function buildLineEquationPanel(
       {
         label: "两条直线位置关系",
         value: relTextMap[rel.type],
-        color: rel.isPerpendicular || rel.type === "parallel" ? MATH_COLORS.primary : MATH_COLORS.labelText,
-      }
+        color:
+          rel.isPerpendicular || rel.type === "parallel"
+            ? MATH_COLORS.primary
+            : MATH_COLORS.labelText,
+      },
     );
 
     if (rel.type === "intersect" && rel.intersection) {
@@ -253,22 +271,25 @@ export function buildLineEquationPanel(
     theorems.push(
       {
         name: "两条直线垂直判定",
-        latex: "L_1 \\perp L_2 \\iff A_1 A_2 + B_1 B_2 = 0 \\quad (k_1 k_2 = -1)",
+        latex:
+          "L_1 \\perp L_2 \\iff A_1 A_2 + B_1 B_2 = 0 \\quad (k_1 k_2 = -1)",
         condition: "两直线的法向量点积为 0，或斜率乘积为 -1",
         level: "core",
       },
       {
         name: "两条直线平行判定",
-        latex: "L_1 \\parallel L_2 \\iff A_1 B_2 - A_2 B_1 = 0 \\quad \\text{且} \\quad A_1 C_2 - A_2 C_1 \\neq 0",
+        latex:
+          "L_1 \\parallel L_2 \\iff A_1 B_2 - A_2 B_1 = 0 \\quad \\text{且} \\quad A_1 C_2 - A_2 C_1 \\neq 0",
         condition: "斜率相等但截距不相等",
         level: "core",
       },
       {
         name: "两条平行直线间的距离公式",
         latex: "d = \\frac{|C_1 - C_2|}{\\sqrt{A^2 + B^2}}",
-        condition: "L_1 \\parallel L_2 \\text{ 且 } x, y \\text{ 系数必须完全化为一致}",
+        condition:
+          "L_1 \\parallel L_2 \\text{ 且 } x, y \\text{ 系数必须完全化为一致}",
         level: "important",
-      }
+      },
     );
 
     gaokaoPoints.push({
@@ -310,22 +331,24 @@ export function buildLineEquationPanel(
         label: "动直线系 L(λ)",
         value: `${A_fam.toFixed(1)}x ${B_fam >= 0 ? "+" : ""} ${B_fam.toFixed(1)}y ${C_fam >= 0 ? "+" : ""} ${C_fam.toFixed(1)} = 0`,
         color: cTertiary,
-      }
+      },
     );
 
     theorems.push(
       {
         name: "过两直线交点的直线系",
         latex: "A_1 x + B_1 y + C_1 + \\lambda (A_2 x + B_2 y + C_2) = 0",
-        condition: "表示经过 L₁ 与 L₂ 交点（若相交）的所有直线（不包含 L₂ 本身）",
+        condition:
+          "表示经过 L₁ 与 L₂ 交点（若相交）的所有直线（不包含 L₂ 本身）",
         level: "derived",
       },
       {
         name: "平行/垂直直线系",
-        latex: "\\text{平行系: } Ax + By + \\lambda = 0, \\quad \\text{垂直系: } Bx - Ay + \\lambda = 0",
+        latex:
+          "\\text{平行系: } Ax + By + \\lambda = 0, \\quad \\text{垂直系: } Bx - Ay + \\lambda = 0",
         condition: "\\lambda \\in \\mathbb{R}",
         level: "important",
-      }
+      },
     );
 
     gaokaoPoints.push({

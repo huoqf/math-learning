@@ -36,6 +36,15 @@ interface TooltipState {
   items: Array<{ label: string; value: string; color?: string }>;
 }
 
+type NormalSceneParams = {
+  mu: number;
+  sigma: number;
+  binCount: number;
+  sampleSize: number;
+  x1: number;
+  x2: number;
+};
+
 export function ProbabilityNormalAnimation() {
   // 研究模式：'histogram' | 'normalFit' | 'sigmaRule'
   const [studyMode, setStudyMode] = useState<
@@ -273,7 +282,7 @@ export function ProbabilityNormalAnimation() {
               transform={vp.transform}
             >
               <ProbabilityNormalScene
-                params={params as any}
+                params={params as NormalSceneParams}
                 scale={scale}
                 vp={vp}
                 fontScale={canvasSize.font}

@@ -28,6 +28,7 @@ import {
   SphereBySphereType,
 } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
+import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { circumInSphereMeta } from "@/data/registries/solidGeometry";
 import {
@@ -194,7 +195,7 @@ export default function CircumInSphereAnimation() {
                 { key: "side", label: "左视" },
               ]}
               value={preset}
-              onChange={(p) => setCameraPreset(p as any)}
+              onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
           </LeftPanelSection>
         </LeftPanel>

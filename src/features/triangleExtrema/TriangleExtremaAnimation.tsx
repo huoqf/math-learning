@@ -113,18 +113,24 @@ export function TriangleExtremaAnimation() {
   }, [params, studyMode]);
 
   // 顶点 B 拖拽回调（反向更新角 B 参数）
-  const handleDragB = useCallback((mathPos: { x: number; y: number }) => {
-    const sideA = params.sideA;
-    // B 点应该在 (-a/2, 0)
-    // 根据拖拽量改变 angleB
-    const dx = mathPos.x - (-sideA / 2);
-    const dy = mathPos.y;
-    if (Math.abs(dy) > 0.1) {
-      let angleB = radToDeg(Math.atan2(Math.abs(dy), Math.max(0.1, dx)));
-      angleB = Math.min(180 - params.angleA - 5, Math.max(5, Math.round(angleB)));
-      setParams((prev) => ({ ...prev, angleB }));
-    }
-  }, [params.sideA, params.angleA]);
+  const handleDragB = useCallback(
+    (mathPos: { x: number; y: number }) => {
+      const sideA = params.sideA;
+      // B 点应该在 (-a/2, 0)
+      // 根据拖拽量改变 angleB
+      const dx = mathPos.x - -sideA / 2;
+      const dy = mathPos.y;
+      if (Math.abs(dy) > 0.1) {
+        let angleB = radToDeg(Math.atan2(Math.abs(dy), Math.max(0.1, dx)));
+        angleB = Math.min(
+          180 - params.angleA - 5,
+          Math.max(5, Math.round(angleB)),
+        );
+        setParams((prev) => ({ ...prev, angleB }));
+      }
+    },
+    [params.sideA, params.angleA],
+  );
 
   // 顶点 A 拖拽回调（反向更新 thetaDeg 或相关参数）
   const handleDragA = useCallback(
@@ -140,7 +146,7 @@ export function TriangleExtremaAnimation() {
         setParams((prev) => ({ ...prev, thetaDeg: Math.round(theta) }));
       }
     },
-    [studyMode, params.ratioK, params.sideA]
+    [studyMode, params.ratioK, params.sideA],
   );
 
   // 中屏 KaTeX 浮动最值公式展示
@@ -179,7 +185,7 @@ export function TriangleExtremaAnimation() {
                 { key: "polarization", label: "极化恒等式" },
               ]}
               value={studyMode}
-              onChange={(val) => setStudyMode(val as any)}
+              onChange={(val) => setStudyMode(val as typeof studyMode)}
             />
           </LeftPanelSection>
 
@@ -198,7 +204,10 @@ export function TriangleExtremaAnimation() {
       center={
         <div className="w-full h-full relative bg-white overflow-hidden">
           {/* SVG 动画画布 */}
-          <AnimationSvgCanvas containerRef={containerRef} transform={vp.transform}>
+          <AnimationSvgCanvas
+            containerRef={containerRef}
+            transform={vp.transform}
+          >
             <TriangleExtremaScene
               state={calcState}
               studyMode={studyMode}

@@ -27,7 +27,7 @@ export function ParabolaAnimation() {
   >("definition");
 
   // 参数状态
-  const [params, setParams] = useState<Record<string, number>>(() => ({
+  const [params, setParams] = useState(() => ({
     p: defaultParams.p,
     tP: defaultParams.tP,
     thetaDeg: defaultParams.thetaDeg,
@@ -90,7 +90,7 @@ export function ParabolaAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
+          value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
@@ -150,7 +150,7 @@ export function ParabolaAnimation() {
                 { key: "tangentOptical", label: "切线光学与准线几何" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k as typeof studyMode)}
               variant="filled"
               columns={1}
             />
@@ -182,7 +182,7 @@ export function ParabolaAnimation() {
             transform={vp.transform}
           >
             <ParabolaScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

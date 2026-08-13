@@ -21,6 +21,7 @@ import {
   CameraRig,
 } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
+import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidFoldingMeta } from "@/data/registries/solidGeometry";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
@@ -177,7 +178,7 @@ export default function FoldingAnimation() {
                 { key: "unfolded", label: "2D 展平原图" },
               ]}
               value={foldState}
-              onChange={(s) => setFoldState(s as any)}
+              onChange={(s) => setFoldState(s as typeof foldState)}
             />
           </LeftPanelSection>
 
@@ -188,7 +189,7 @@ export default function FoldingAnimation() {
                 { key: "threeViews", label: "正投影/三视图" },
               ]}
               value={viewMode}
-              onChange={(m) => setViewMode(m as any)}
+              onChange={(m) => setViewMode(m as typeof viewMode)}
             />
           </LeftPanelSection>
 
@@ -212,7 +213,7 @@ export default function FoldingAnimation() {
                 { key: "side", label: "左视" },
               ]}
               value={preset}
-              onChange={(p) => setCameraPreset(p as any)}
+              onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
           </LeftPanelSection>
         </LeftPanel>

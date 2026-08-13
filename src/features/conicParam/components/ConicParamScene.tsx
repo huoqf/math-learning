@@ -14,15 +14,7 @@ import {
 import type { ViewportInfo, SceneScale } from "@/hooks";
 
 interface ConicParamSceneProps {
-  params: {
-    a: number;
-    b: number;
-    x0: number;
-    y0: number;
-    alpha: number;
-    theta: number;
-    t: number;
-  };
+  params: Record<string, number>;
   scale: SceneScale;
   vp: ViewportInfo;
   onParamChange: (key: string, value: number) => void;

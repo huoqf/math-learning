@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS } from "@/theme";
@@ -54,8 +54,11 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
   axisColor = MATH_COLORS.axis,
   fontScale = (v) => v,
 }) => {
-  const { originX, originY, scaleX } = scale;
-  const toDesign = (mx: number, my: number) => mathToDesign(mx, my, scale);
+  const { originX, originY } = scale;
+  const toDesign = useCallback(
+    (mx: number, my: number) => mathToDesign(mx, my, scale),
+    [scale],
+  );
 
   // 同心圆
   const circles = React.useMemo(() => {
@@ -84,16 +87,7 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
       );
     }
     return result;
-  }, [
-    showGrid,
-    maxRadius,
-    radiusStep,
-    originX,
-    originY,
-    scaleX,
-    gridColor,
-    toDesign,
-  ]);
+  }, [showGrid, maxRadius, radiusStep, gridColor, toDesign]);
 
   // 角度辐射线
   const angleLines = React.useMemo(() => {
@@ -116,16 +110,7 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
       );
     }
     return result;
-  }, [
-    showGrid,
-    maxRadius,
-    angleStep,
-    originX,
-    originY,
-    scaleX,
-    gridColor,
-    toDesign,
-  ]);
+  }, [showGrid, maxRadius, angleStep, originX, originY, gridColor, toDesign]);
 
   // 角度标签
   const angleLabels = React.useMemo(() => {
@@ -151,16 +136,7 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
       );
     }
     return result;
-  }, [
-    showAngleLabels,
-    maxRadius,
-    angleStep,
-    originX,
-    originY,
-    scaleX,
-    fontScale,
-    toDesign,
-  ]);
+  }, [showAngleLabels, maxRadius, angleStep, fontScale, toDesign]);
 
   // 半径标签
   const radiusLabels = React.useMemo(() => {
@@ -184,16 +160,7 @@ export const PolarGrid: React.FC<PolarGridProps> = ({
       );
     }
     return result;
-  }, [
-    showRadiusLabels,
-    maxRadius,
-    radiusStep,
-    originX,
-    originY,
-    scaleX,
-    fontScale,
-    toDesign,
-  ]);
+  }, [showRadiusLabels, maxRadius, radiusStep, fontScale, toDesign]);
 
   // 主轴线（实线，稍粗）
   const { xMin, xMax, yMin, yMax } = scale;

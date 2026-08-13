@@ -109,7 +109,8 @@ export function TrigTangentAnimation() {
       return "f(x) = \\tan x \\quad \\left(x \\neq k\\pi + \\frac{\\pi}{2}\\right)";
     }
     const { A, omega, phi, C } = params;
-    const phiStr = phi >= 0 ? `+ ${phi.toFixed(2)}` : `- ${Math.abs(phi).toFixed(2)}`;
+    const phiStr =
+      phi >= 0 ? `+ ${phi.toFixed(2)}` : `- ${Math.abs(phi).toFixed(2)}`;
     const cStr = C >= 0 ? `+ ${C}` : `- ${Math.abs(C)}`;
     return `f(x) = \\color{#EF4444}{${A}}\\tan\\left(\\color{#D97706}{${omega}}x \\color{#059669}{${phiStr}}\\right) ${cStr}`;
   }, [studyMode, params]);
@@ -129,11 +130,17 @@ export function TrigTangentAnimation() {
               items={[
                 { key: "unitCircle", label: "正切线生成" },
                 { key: "baseFunction", label: "y=tan x 性质" },
-                { key: "generalTransform", label: "一般型变换", fullWidth: true },
+                {
+                  key: "generalTransform",
+                  label: "一般型变换",
+                  fullWidth: true,
+                },
               ]}
               value={studyMode}
               onChange={(k) =>
-                setStudyMode(k as "unitCircle" | "baseFunction" | "generalTransform")
+                setStudyMode(
+                  k as "unitCircle" | "baseFunction" | "generalTransform",
+                )
               }
               variant="filled"
             />
@@ -142,7 +149,9 @@ export function TrigTangentAnimation() {
           {studyMode !== "unitCircle" && (
             <LeftPanelSection title="图层显示" subtitle="显示与隐藏辅助图像">
               <div className="flex items-center justify-between py-1">
-                <span className="text-xs text-neutral-600">高亮单调递增开区间</span>
+                <span className="text-xs text-neutral-600">
+                  高亮单调递增开区间
+                </span>
                 <input
                   type="checkbox"
                   checked={showMonotoneInterval}
@@ -171,9 +180,20 @@ export function TrigTangentAnimation() {
             <KatexFormula formula={formulaLatex} mode="inline" />
           </div>
 
-          <AnimationSvgCanvas containerRef={containerRef} transform={vp.transform}>
+          <AnimationSvgCanvas
+            containerRef={containerRef}
+            transform={vp.transform}
+          >
             <TrigTangentScene
-              params={params as any}
+              params={
+                params as {
+                  theta: number;
+                  A: number;
+                  omega: number;
+                  phi: number;
+                  C: number;
+                }
+              }
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

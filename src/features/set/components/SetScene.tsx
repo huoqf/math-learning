@@ -97,6 +97,7 @@ export function SetScene({
       },
     ];
     return avoidLabels(entries, { fontScale });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xA, yA, xB, yB, xP, yP, scale, fontScale]);
 
   // SVG ClipPath ID 唯一标识

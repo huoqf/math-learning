@@ -101,7 +101,7 @@ export function LineParamTAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -159,7 +159,7 @@ export function LineParamTAnimation() {
                 { key: "gaokao", label: "高考压轴模型" },
               ]}
               value={mode}
-              onChange={(key) => setMode(key as any)}
+              onChange={(key) => setMode(key as typeof mode)}
             />
           </LeftPanelSection>
 
@@ -194,7 +194,7 @@ export function LineParamTAnimation() {
                   { key: "reciprocal", label: "倒数和 |1/t1+1/t2|" },
                 ]}
                 value={gaokaoModel}
-                onChange={(k) => setGaokaoModel(k as any)}
+                onChange={(k) => setGaokaoModel(k as typeof gaokaoModel)}
                 variant="filled"
                 columns={1}
               />
@@ -227,7 +227,7 @@ export function LineParamTAnimation() {
             transform={vp.transform}
           >
             <LineParamTScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               fontScale={canvasSize.font}

@@ -22,7 +22,7 @@ export function InequalityBasicAnimation() {
   );
 
   // 1. 本地状态 a, b, k
-  const [params, setParams] = useState<Record<string, number>>(() => ({
+  const [params, setParams] = useState(() => ({
     a: defaultParams.a,
     b: defaultParams.b,
     k: defaultParams.k,
@@ -85,13 +85,13 @@ export function InequalityBasicAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
+          value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -122,7 +122,7 @@ export function InequalityBasicAnimation() {
                 { key: "nike", label: "对勾函数与最值", fullWidth: true },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k as typeof studyMode)}
               columns={1}
               variant="filled"
             />
@@ -151,7 +151,7 @@ export function InequalityBasicAnimation() {
             transform={vp.transform}
           >
             <InequalityBasicScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

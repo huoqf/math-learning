@@ -1,12 +1,13 @@
 import type { MathPanelData } from "../types";
 import { computeConicHomogenization } from "@/math/conicHomogenization";
+import type { CurveType, StudyMode } from "@/math/conicHomogenization";
 
 export function buildConicHomogenizationPanel(
   params: Record<string, number>,
-  config?: Record<string, any>,
+  config?: Record<string, unknown>,
 ): MathPanelData {
-  const curveType = config?.curveType ?? "ellipse";
-  const studyMode = config?.studyMode ?? "shift";
+  const curveType = ((config?.curveType as string) ?? "ellipse") as CurveType;
+  const studyMode = ((config?.studyMode as string) ?? "shift") as StudyMode;
 
   const a = params.a ?? 2.5;
   const b = params.b ?? 1.5;

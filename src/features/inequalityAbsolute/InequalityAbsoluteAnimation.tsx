@@ -27,8 +27,12 @@ export function InequalityAbsoluteAnimation() {
   const [ineqType, setIneqType] = useState<InequalityType>("<=");
 
   // 本地参数状态
-  const [params, setParams] = useState<Record<string, number>>(() => ({
-    ...defaultParams,
+  const [params, setParams] = useState(() => ({
+    a: defaultParams.a,
+    b: defaultParams.b,
+    c: defaultParams.c,
+    m: defaultParams.m,
+    x: defaultParams.x,
   }));
 
   // 画布视口测量
@@ -59,7 +63,13 @@ export function InequalityAbsoluteAnimation() {
   };
 
   const handleReset = () => {
-    setParams({ ...defaultParams });
+    setParams({
+      a: defaultParams.a,
+      b: defaultParams.b,
+      c: defaultParams.c,
+      m: defaultParams.m,
+      x: defaultParams.x,
+    });
   };
 
   // 按 current activeMode 动态过滤参数 (铁律 8)
@@ -81,7 +91,7 @@ export function InequalityAbsoluteAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
+          value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
@@ -182,7 +192,7 @@ export function InequalityAbsoluteAnimation() {
             transform={vp.transform}
           >
             <InequalityAbsoluteScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

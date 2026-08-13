@@ -7,7 +7,7 @@ import globals from 'globals';
 
 export default [
   // 全局忽略
-  { ignores: ['dist', 'coverage', '**/*.tsbuildinfo', 'vite.config.d.ts'] },
+  { ignores: ['dist', 'out', 'release', 'coverage', '**/*.tsbuildinfo', 'vite.config.d.ts', 'electron/**/*.js'] },
 
   js.configs.recommended,
 
@@ -53,7 +53,7 @@ export default [
 
   // 2) 构建/工具配置文件（Node 环境）
   {
-    files: ['*.config.{ts,js,mjs}', 'vite.config.ts', 'vitest.config.ts'],
+    files: ['*.config.{ts,js,mjs}', 'vite.config.ts', 'vitest.config.ts', 'scripts/**/*.mjs'],
     languageOptions: {
       parser: tsParser,
       ecmaVersion: 2020,
@@ -64,6 +64,7 @@ export default [
     rules: {
       ...tseslint.configs.recommended.rules,
       'no-undef': 'off',
+      'no-console': 'off',
     },
   },
 ];

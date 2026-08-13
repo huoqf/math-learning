@@ -11,7 +11,7 @@ import {
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { solveNike, evalNikeAt } from "@/math/nike";
-import { avoidLabelOffsets } from "@/utils/labelAvoider";
+import { avoidLabelOffsets, type LabelEntry } from "@/utils/labelAvoider";
 
 interface NikeSceneProps {
   params: Record<string, number>;
@@ -76,7 +76,7 @@ export function NikeScene({
   const amgmBaseDesign = mathToDesign(x0, 0, scale);
 
   const labelEntries = useMemo(() => {
-    const rawList: any[] = [];
+    const rawList: LabelEntry[] = [];
 
     res.criticalPoints.forEach((cp, idx) => {
       const pt = mathToDesign(cp.x, cp.y, scale);

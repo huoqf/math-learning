@@ -99,7 +99,7 @@ export function VectorLinearAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -151,7 +151,7 @@ export function VectorLinearAnimation() {
                 { key: "basis", label: "平面向量基本定理", fullWidth: true },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k as typeof studyMode)}
               variant="filled"
             />
           </LeftPanelSection>

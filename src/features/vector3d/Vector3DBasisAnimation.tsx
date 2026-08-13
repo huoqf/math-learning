@@ -21,7 +21,7 @@ import {
   Legend3D,
   CameraRig,
 } from "@/components/Math3D";
-import { use3DViewport } from "@/hooks/use3DViewport";
+import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { vector3dBasisMeta } from "@/data/registries/vector3d";
 import type { Vec3 } from "@/math3d/vector3";
@@ -130,9 +130,9 @@ export default function Vector3DBasisAnimation() {
 
   // 定制基底向量 a, b, c
   const O: Vec3 = { x: 0, y: 0, z: 0 };
-  const vecA: Vec3 = { x: 2, y: 0, z: 0 }; // 基底 a (沿 x 轴)
-  const vecB: Vec3 = { x: 0.5, y: 2, z: 0 }; // 基底 b (xy 平面斜向)
-  const vecC: Vec3 = { x: 0, y: 0.5, z: cz }; // 基底 c (垂直高度分量由 cz 决定)
+  const vecA = useMemo<Vec3>(() => ({ x: 2, y: 0, z: 0 }), []); // 基底 a (沿 x 轴)
+  const vecB = useMemo<Vec3>(() => ({ x: 0.5, y: 2, z: 0 }), []); // 基底 b (xy 平面斜向)
+  const vecC = useMemo<Vec3>(() => ({ x: 0, y: 0.5, z: cz }), [cz]); // 基底 c (垂直高度分量由 cz 决定)
 
   // 基底端点 A, B, C (当 x=1, y=1, z=1 时)
   const pointA = vecA;
@@ -298,7 +298,7 @@ export default function Vector3DBasisAnimation() {
                 { key: "side", label: "左视" },
               ]}
               value={preset}
-              onChange={(p) => setCameraPreset(p as any)}
+              onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
           </LeftPanelSection>
         </LeftPanel>

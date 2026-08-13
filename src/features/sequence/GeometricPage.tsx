@@ -76,7 +76,9 @@ export function GeometricPage() {
                 { key: "tessellation", label: "正方形无限剖分" },
               ]}
               value={geometricViewType}
-              onChange={(val) => setGeometricViewType(val as any)}
+              onChange={(val) =>
+                setGeometricViewType(val as typeof geometricViewType)
+              }
             />
           </LeftPanelSection>
           <LeftPanelSection

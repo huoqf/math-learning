@@ -203,7 +203,7 @@ export function ProbabilityBayesAnimation() {
                 },
               ]}
               value={activeMode}
-              onChange={(k) => setActiveMode(k as any)}
+              onChange={(k) => setActiveMode(k as typeof activeMode)}
             />
           </LeftPanelSection>
 

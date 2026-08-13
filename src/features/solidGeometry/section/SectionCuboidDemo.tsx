@@ -290,7 +290,7 @@ export default function SectionCuboidDemo() {
     let solidType: "cuboid" | "pyramid" | "prism" = "cuboid";
     if (solidKind === "pyramid") solidType = "pyramid";
 
-    return buildSolidViews(solidType as any, {
+    return buildSolidViews(solidType, {
       width,
       depth,
       height,

@@ -23,7 +23,7 @@ export function LineCircleAnimation() {
   >("relation");
 
   // 1. 本地状态管理
-  const [params, setParams] = useState<Record<string, number>>(() => ({
+  const [params, setParams] = useState(() => ({
     a: defaultParams.a,
     b: defaultParams.b,
     r: defaultParams.r,
@@ -51,7 +51,7 @@ export function LineCircleAnimation() {
   }, [params, studyMode]);
 
   // 5. 纯数学模型中间量（用于悬浮卡片）
-  const calcRes = useMemo(() => calculateLineCircle(params as any), [params]);
+  const calcRes = useMemo(() => calculateLineCircle(params), [params]);
 
   // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
@@ -92,7 +92,7 @@ export function LineCircleAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
+          value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
@@ -183,7 +183,7 @@ export function LineCircleAnimation() {
             transform={vp.transform}
           >
             <LineCircleScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

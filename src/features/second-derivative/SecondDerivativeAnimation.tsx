@@ -32,8 +32,14 @@ export function SecondDerivativeAnimation() {
   const [fnKey, setFnKey] = useState<FnKey>("cubic");
 
   // 3. 参数状态
-  const [params, setParams] = useState<Record<string, number>>(() => ({
-    ...defaultParams,
+  const [params, setParams] = useState(() => ({
+    a: defaultParams.a,
+    b: defaultParams.b,
+    c: defaultParams.c,
+    d: defaultParams.d,
+    x0: defaultParams.x0,
+    x1: defaultParams.x1,
+    x2: defaultParams.x2,
   }));
 
   // 4. 视口测量 hook
@@ -98,7 +104,7 @@ export function SecondDerivativeAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
+          value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
@@ -135,7 +141,7 @@ export function SecondDerivativeAnimation() {
       const poly = termA + termB + termC + termD || "0";
       const fStr = `f(x) = ${poly}`;
 
-      const eval0 = evalFunction(fnKey, params as any, x0);
+      const eval0 = evalFunction(fnKey, params, x0);
       const dfStr = `f'(${x0.toFixed(1)}) = ${eval0.dy.toFixed(2)}`;
       const ddfStr = `f''(${x0.toFixed(1)}) = ${eval0.ddy.toFixed(2)}`;
 
@@ -171,7 +177,7 @@ export function SecondDerivativeAnimation() {
                 { key: "jensen", label: "琴生不等式" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) => setStudyMode(k as typeof studyMode)}
             />
           </LeftPanelSection>
 
@@ -228,7 +234,7 @@ export function SecondDerivativeAnimation() {
             transform={vp.transform}
           >
             <SecondDerivativeScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

@@ -25,6 +25,7 @@ import {
 } from "@/components/Math3D";
 import { Cuboid } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
+import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { spatialAngleMeta } from "@/data/registries/solidGeometry";
 import type { Vec3 } from "@/math3d/vector3";
@@ -143,7 +144,7 @@ export default function SpatialAngleAnimation() {
                 { key: "side", label: "左视" },
               ]}
               value={preset}
-              onChange={(p) => setCameraPreset(p as any)}
+              onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
           </LeftPanelSection>
         </LeftPanel>

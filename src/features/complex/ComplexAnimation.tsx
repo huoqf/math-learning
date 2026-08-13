@@ -75,7 +75,7 @@ export function ComplexAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance as any,
+          importance: meta.importance,
           marks: meta.marks,
         };
       });
@@ -181,7 +181,9 @@ export function ComplexAnimation() {
                   },
                 ]}
                 value=""
-                onChange={(k) => applyPresetRotation(k as any)}
+                onChange={(k) =>
+                  applyPresetRotation(k as "i" | "-i" | "-1" | "45deg")
+                }
                 variant="filled"
                 color="primary"
               />

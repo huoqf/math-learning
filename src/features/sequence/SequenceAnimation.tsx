@@ -174,7 +174,7 @@ export function SequenceAnimation() {
                 { key: "models", label: "高考求和模型" },
               ]}
               value={activeMode}
-              onChange={(val) => setActiveMode(val as any)}
+              onChange={(val) => setActiveMode(val as typeof activeMode)}
             />
           </LeftPanelSection>
 
@@ -190,7 +190,9 @@ export function SequenceAnimation() {
                   { key: "tessellation", label: "正方形无限剖分" },
                 ]}
                 value={geometricViewType}
-                onChange={(val) => setGeometricViewType(val as any)}
+                onChange={(val) =>
+                  setGeometricViewType(val as typeof geometricViewType)
+                }
               />
             </LeftPanelSection>
           )}
@@ -230,7 +232,9 @@ export function SequenceAnimation() {
                   },
                 ]}
                 value={recurrenceModelType}
-                onChange={(val) => setRecurrenceModelType(val as any)}
+                onChange={(val) =>
+                  setRecurrenceModelType(val as typeof recurrenceModelType)
+                }
               />
             </LeftPanelSection>
           )}
@@ -249,7 +253,7 @@ export function SequenceAnimation() {
                   { key: "odd-even", label: "奇偶并项求和" },
                 ]}
                 value={modelType}
-                onChange={(val) => setModelType(val as any)}
+                onChange={(val) => setModelType(val as typeof modelType)}
               />
             </LeftPanelSection>
           )}
