@@ -38,6 +38,12 @@ export const defaultParams = {
     c: 5,
     h: 4,
   },
+  folding: {
+    a: 4,
+    b: 3,
+    h: 3,
+    alphaDeg: 90,
+  },
 } as const;
 
 export const sectionMeta: ParamMeta[] = [

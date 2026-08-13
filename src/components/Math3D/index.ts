@@ -40,6 +40,7 @@ export { Point3D } from "./Point3D";
 // ============================================================================
 export { Vector3DArrow } from "./Vector3DArrow";
 export { Plane3D } from "./Plane3D";
+export { Polygon3DFace } from "./Polygon3DFace";
 export { AngleArc3D } from "./AngleArc3D";
 export { LinePlaneAngle3D } from "./LinePlaneAngle3D";
 

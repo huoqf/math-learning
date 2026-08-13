@@ -63,17 +63,14 @@ function renderMixedLatex(text: string): React.ReactNode {
       {parts.map((part, i) => {
         if (part.startsWith("$") && part.endsWith("$")) {
           const formula = part.slice(1, -1);
-          const segments = splitLatexByWraps(formula);
-          return segments.map((seg, j) => (
-            <React.Fragment key={`${i}-${j}`}>
-              {j > 0 && <span className="inline-block w-2" />}
-              <KatexFormula
-                formula={seg}
-                mode="inline"
-                className="!my-0 !mx-0.5"
-              />
-            </React.Fragment>
-          ));
+          return (
+            <KatexFormula
+              key={i}
+              formula={formula}
+              mode="inline"
+              className="!my-0 !mx-0.5"
+            />
+          );
         }
         return <React.Fragment key={i}>{part}</React.Fragment>;
       })}
@@ -81,84 +78,8 @@ function renderMixedLatex(text: string): React.ReactNode {
   );
 }
 
-/**
- * 将 LaTeX 公式按顶层自然断点拆分为多段，用于自动换行。
- * 仅在顶层（不在花括号内）拆分，避免破坏 \frac{}{} 等命令结构。
- * 断点优先级：逗号+空格, \qquad, \quad, 等号+空格
- */
-function splitLatexByWraps(latex: string): string[] {
-  const segments: string[] = [];
-  let current = "";
-  let braceDepth = 0;
-  let i = 0;
-
-  const flush = () => {
-    const s = current.trim();
-    if (s) segments.push(s);
-    current = "";
-  };
-
-  while (i < latex.length) {
-    const ch = latex[i];
-    if (ch === "{" || ch === "(") {
-      braceDepth++;
-      current += ch;
-      i++;
-      continue;
-    }
-    if (ch === "}" || ch === ")") {
-      braceDepth = Math.max(0, braceDepth - 1);
-      current += ch;
-      i++;
-      continue;
-    }
-
-    if (braceDepth === 0) {
-      // \qquad 断点
-      if (latex.startsWith("\\qquad", i)) {
-        flush();
-        i += 6;
-        continue;
-      }
-      // \quad 断点
-      if (latex.startsWith("\\quad", i)) {
-        flush();
-        i += 5;
-        continue;
-      }
-      // 逗号+空格 断点
-      if (ch === "," && i + 1 < latex.length && latex[i + 1] === " ") {
-        current += ",";
-        flush();
-        i += 2;
-        continue;
-      }
-      // 等号两侧有空格 断点
-      if (
-        ch === "=" &&
-        i > 0 &&
-        latex[i - 1] === " " &&
-        i + 1 < latex.length &&
-        latex[i + 1] === " "
-      ) {
-        current += "=";
-        flush();
-        i += 1;
-        continue;
-      }
-    }
-
-    current += ch;
-    i++;
-  }
-
-  flush();
-  return segments.length > 1 ? segments : [latex];
-}
-
 /** 宽松检测：\cmd 命令或 _^ 上下标即视为 LaTeX（供 quantities.label/value 纯公式字段使用）*/
 function hasLatex(text: string): boolean {
-  // 若包含中文字符，优先使用 renderMixedLatex 混合渲染，除非全是 \text{} 语法
   if (/[\u4e00-\u9fa5]/.test(text)) {
     return text.includes("$") || text.includes("\\text{");
   }
@@ -174,8 +95,6 @@ function needsBlockMode(latex: string): boolean {
 
 /**
  * 将 \begin{aligned}...\end{aligned} 环境按行拆分为多段独立公式。
- * 去掉行间对齐符 `&` 与换行符 `\\`，每行作为一个独立 block 渲染。
- * 命中 aligned 环境时返回拆分后的行数组；未命中返回 null。
  */
 function splitAlignedEnvironment(latex: string): string[] | null {
   const match = latex.match(/\\begin\{aligned\}([\s\S]*?)\\end\{aligned\}/);
@@ -310,7 +229,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
   };
 
   return (
-    <div className="w-full h-full bg-white rounded-lg shadow-sm border border-neutral-200 p-4 overflow-y-auto overflow-x-hidden space-y-5">
+    <div className="w-full h-full bg-white rounded-lg shadow-sm border border-neutral-200 p-4 overflow-y-auto overflow-x-hidden space-y-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* ── 数学量区 ── */}
       <div>
         <h3 className="text-xs font-semibold text-neutral-600 mb-3 border-b border-neutral-100 pb-1.5">
@@ -406,8 +325,20 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap justify-center gap-x-2 gap-y-3 py-2 px-2 bg-white rounded border border-neutral-100/50 my-1 min-h-[38px] items-center overflow-x-auto max-w-full">
+                    <div className="w-full py-2 px-2.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[42px] flex items-center justify-center overflow-x-auto max-w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                       {(() => {
+                        // 1. 若为纯中文叙述段落 (\text{...})，提取内部文本按中文段落优雅自动换行
+                        const textMatch = t.latex.match(
+                          /^\s*\\text\{([\s\S]*)\}\s*$/,
+                        );
+                        if (textMatch) {
+                          return (
+                            <div className="w-full text-center py-1 text-xs text-neutral-700 font-medium break-words leading-relaxed">
+                              {renderMixedLatex(textMatch[1])}
+                            </div>
+                          );
+                        }
+                        // 2. 若指定 block 模式或需要 block 环境
                         if (t.mode === "block" || needsBlockMode(t.latex)) {
                           return (
                             <KatexFormula
@@ -417,32 +348,30 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                             />
                           );
                         }
+                        // 3. 多行 aligned 环境
                         const alignedLines = splitAlignedEnvironment(t.latex);
                         if (alignedLines) {
-                          return alignedLines.map((line, i) => (
-                            <div
-                              key={i}
-                              className="w-full flex flex-wrap justify-center gap-x-2 gap-y-2 items-center"
-                            >
-                              {splitLatexByWraps(line).map((seg, j) => (
+                          return (
+                            <div className="flex flex-col items-center gap-1.5 w-full">
+                              {alignedLines.map((line, i) => (
                                 <KatexFormula
-                                  key={j}
-                                  formula={seg}
+                                  key={i}
+                                  formula={line}
                                   mode="inline"
                                   className="!my-0"
                                 />
                               ))}
                             </div>
-                          ));
+                          );
                         }
-                        return splitLatexByWraps(t.latex).map((seg, i) => (
+                        // 4. 标准水平 LaTeX 公式
+                        return (
                           <KatexFormula
-                            key={i}
-                            formula={seg}
+                            formula={t.latex}
                             mode="inline"
-                            className="!my-0"
+                            className="!my-0 font-medium"
                           />
-                        ));
+                        );
                       })()}
                     </div>
                     {t.condition && (

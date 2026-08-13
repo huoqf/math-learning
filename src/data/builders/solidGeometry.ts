@@ -25,6 +25,12 @@ import {
   getLineDirection,
   calcLinePlaneAngle,
 } from "@/math3d/lineRelation";
+import {
+  calculateRightTrapezoidFolding,
+  calculateRectangleDiagonalFolding,
+  calculateTriangleAltitudeFolding,
+  calculateRhombusFolding,
+} from "@/math3d/folding";
 import type { Vec3 } from "@/math3d/vector3";
 import type { Plane } from "@/math3d/plane";
 
@@ -1760,6 +1766,269 @@ export function buildPolyhedronSpherePanel(
     gaokaoPoints.push({
       text: "【内切球高考通法——等体积法】：任何有内切球的多面体，其内切球半径 r_in 均满足 r_in = 3V / S_总。求出几何体总体积 V 与总表面积 S_总 即可求出 r_in。",
       importance: "gaokao",
+    });
+  }
+
+  return { quantities, theorems, gaokaoPoints, warnings };
+}
+
+// ── know-solid-folding: 平面图形折叠与翻折二面角 ──
+
+export function buildSolidFoldingPanel(
+  params: Record<string, number>,
+  config?: Record<string, unknown>,
+): MathPanelData {
+  const model = (config?.model as string) ?? "trapezoid";
+  const a = params.a ?? 4;
+  const b = params.b ?? 3;
+  const h = params.h ?? 3;
+  const alphaDeg = params.alphaDeg ?? 90;
+
+  const quantities: MathQuantity[] = [];
+  const theorems: Theorem[] = [];
+  const gaokaoPoints: GaokaoPoint[] = [];
+  const warnings: WarningItem[] = [];
+
+  if (model === "trapezoid") {
+    const res = calculateRightTrapezoidFolding(a, b, h, alphaDeg);
+    const D_prime = res.points["D'"];
+
+    quantities.push(
+      {
+        label: "翻折二面角 α",
+        symbol: "\\alpha",
+        value: `${alphaDeg}°`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "动点 D' 空间坐标",
+        symbol: "D'",
+        value: `(${D_prime.x.toFixed(2)}, ${D_prime.y.toFixed(2)}, ${D_prime.z.toFixed(2)})`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "变动线段 D'A 长度",
+        symbol: "|D'A|",
+        value: Number(res.movingSegmentLength.toFixed(3)),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "翻折四棱锥 D'-ABCE 体积",
+        symbol: "V_{D'-ABCE}",
+        value: Number(res.pyramidVolume.toFixed(3)),
+        color: MATH_COLORS.accent,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "平面翻折基本性质定理（变与不变）",
+        latex: "\\text{折痕及同一半平面内的线段长度、夹角翻折前后保持不变}",
+        level: "core",
+        condition: "折痕 EC 上的点、底面 ABCE 内的几何元素保持不动",
+      },
+      {
+        name: "动点 D' 坐标参数化公式",
+        latex: `D' = (\\color{#D97706}{b} - \\color{#D97706}{b}\\cos\\color{#EF4444}{\\alpha},\\; \\color{#059669}{h},\\; \\color{#D97706}{b}\\sin\\color{#EF4444}{\\alpha})`,
+        level: "important",
+        note: "以折痕 EC 为参考轴建立空间直角坐标系求解 3D 坐标",
+      },
+      {
+        name: "变动线段余弦定理公式",
+        latex: `|D'A|^2 = \\color{#EF4444}{a}^2 + \\color{#059669}{h}^2 + \\color{#D97706}{b}^2 - 2\\color{#EF4444}{a}\\color{#D97706}{b}\\cos\\color{#EF4444}{\\alpha}`,
+        level: "important",
+      },
+    );
+
+    gaokaoPoints.push(
+      {
+        text: "【高考解法一：建系法】：以折痕或垂直于折痕的射线为坐标轴，将二面角 α 参数化带入动点坐标，用向量公式求异面直线角或线面角。",
+        importance: "gaokao",
+      },
+      {
+        text: "【高考解法二：几何法】：翻折二面角 α = 90° 时，翻折面 ⊥ 底面，垂线段 D'E ⊥ 底面 ABCE，可直接作为三棱锥/四棱锥的高求体积。",
+        importance: "gaokao",
+      },
+    );
+  } else if (model === "rectangleDiagonal") {
+    const res = calculateRectangleDiagonalFolding(a, b, alphaDeg);
+    const A_prime = res.points["A'"];
+
+    quantities.push(
+      {
+        label: "翻折二面角 α",
+        symbol: "\\alpha",
+        value: `${alphaDeg}°`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "动点 A' 空间坐标",
+        symbol: "A'",
+        value: `(${A_prime.x.toFixed(2)}, ${A_prime.y.toFixed(2)}, ${A_prime.z.toFixed(2)})`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "变动线段 A'C 长度",
+        symbol: "|A'C|",
+        value: Number(res.movingSegmentLength.toFixed(3)),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "三棱锥 A'-BCD 外接球半径 R",
+        symbol: "R",
+        value: Number(res.circumSphereRadius?.toFixed(3)),
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "三棱锥 A'-BCD 体积 V",
+        symbol: "V_{A'-BCD}",
+        value: Number(res.pyramidVolume.toFixed(3)),
+        color: MATH_COLORS.accent,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "翻折外接球半径不变量定理（高考陷阱必考）",
+        latex: `R = \\frac{L}{2} = \\frac{\\sqrt{\\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2}}{2}`,
+        level: "core",
+        note: "斜边 BD 中点即为外接球球心，外接球半径 R 与二面角 α 无关，恒定不变！",
+      },
+      {
+        name: "矩形对角线翻折体积公式",
+        latex: `V_{A'-BCD}(\\alpha) = \\frac{1}{6} \\color{#EF4444}{a}\\color{#D97706}{b} \\cdot r \\sin\\color{#EF4444}{\\alpha} \\le \\frac{\\color{#EF4444}{a}^2 \\color{#D97706}{b}^2}{6 \\sqrt{\\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2}}`,
+        level: "important",
+        note: "当 α = 90° 时三棱锥体积达到最大极值",
+      },
+    );
+
+    gaokaoPoints.push(
+      {
+        text: "【矩形对角线翻折大题核心】：翻折过程中 △A'BD 和 △CBD 均为 Rt△，外接球球心始终是斜边 BD 中点，因此外接球半径 R = BD/2 恒定不变！",
+        importance: "gaokao",
+      },
+      {
+        text: "【体极值考点】：高 h = r·sinα，在 α = 90° 时，A' 投影落在底面 BD 上，三棱锥 A'-BCD 体积达到最大值。",
+        importance: "gaokao",
+      },
+    );
+  } else if (model === "triangleAltitude") {
+    const res = calculateTriangleAltitudeFolding(a, h, alphaDeg);
+    const C_prime = res.points["C'"];
+
+    quantities.push(
+      {
+        label: "翻折二面角 α",
+        symbol: "\\alpha",
+        value: `${alphaDeg}°`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "动点 C' 空间坐标",
+        symbol: "C'",
+        value: `(${C_prime.x.toFixed(2)}, ${C_prime.y.toFixed(2)}, ${C_prime.z.toFixed(2)})`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "变动底边 BC' 长度",
+        symbol: "|BC'|",
+        value: Number(res.movingSegmentLength.toFixed(3)),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "三棱锥 A-BC'D 体积 V",
+        symbol: "V_{A-BC'D}",
+        value: Number(res.pyramidVolume.toFixed(3)),
+        color: MATH_COLORS.accent,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "等腰三角形高折叠变动底边公式",
+        latex: `|BC'| = \\color{#EF4444}{a} \\sin \\left(\\frac{\\color{#EF4444}{\\alpha}}{2}\\right)`,
+        level: "core",
+        note: "翻折角 α 即为平面角 ∠BDC'",
+      },
+      {
+        name: "α = 90° 墙角模型外接球定理",
+        latex: `R = \\frac{\\sqrt{\\color{#059669}{h}^2 + \\frac{\\color{#EF4444}{a}^2}{2}}}{2}`,
+        level: "important",
+        condition: "当 α = 90° 时，DA, DB, DC' 两两垂直组成墙角模型",
+      },
+    );
+
+    gaokaoPoints.push({
+      text: "【等腰三角形折叠与墙角模型】：沿高 AD 折叠至 α = 90° 时，三条侧棱 DA ⊥ DB, DA ⊥ DC', DB ⊥ DC' 两两垂直，可直接补形为长方体求外接球。",
+      importance: "gaokao",
+    });
+  } else {
+    // rhombus
+    const res = calculateRhombusFolding(a, alphaDeg);
+    const A_prime = res.points["A'"];
+
+    quantities.push(
+      {
+        label: "菱形边长 a",
+        symbol: "a",
+        value: a,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "翻折二面角 α",
+        symbol: "\\alpha",
+        value: `${alphaDeg}°`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "动点 A' 空间坐标",
+        symbol: "A'",
+        value: `(${A_prime.x.toFixed(2)}, ${A_prime.y.toFixed(2)}, ${A_prime.z.toFixed(2)})`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "对角顶点距离 |A'C|",
+        symbol: "|A'C|",
+        value: Number(res.movingSegmentLength.toFixed(3)),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "异面直线 A'C 与 BD 夹角",
+        symbol: "\\theta",
+        value: "90.00° (恒垂直)",
+        color: MATH_COLORS.highlight,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "菱形折叠异面直线恒垂直定理",
+        latex: `BD \\perp A'O, BD \\perp CO \\Rightarrow BD \\perp \\text{面 } A'OC \\Rightarrow BD \\perp A'C`,
+        level: "core",
+        note: "无论翻折二面角 α 如何改变，异面直线 A'C 与折痕 BD 永远垂直",
+      },
+      {
+        name: "对角顶点距离余弦定理",
+        latex: `|A'C|^2 = \\frac{3}{2} \\color{#EF4444}{a}^2 (1 - \\cos\\color{#EF4444}{\\alpha})`,
+        level: "important",
+      },
+    );
+
+    gaokaoPoints.push({
+      text: "【菱形折叠重要结论】：由于对角线 BD 垂直于中线 A'O 和 CO，故 BD 垂直于平面 A'OC，因此异面直线 BD ⊥ A'C 在任意翻折角度下恒成立！",
+      importance: "gaokao",
+    });
+  }
+
+  if (alphaDeg === 0 || alphaDeg === 180) {
+    warnings.push({
+      text: `翻折二面角 α = ${alphaDeg}°，图形退化为 2D 平面图形！`,
+      level: "warning",
+    });
+  } else if (alphaDeg === 90) {
+    warnings.push({
+      text: "翻折二面角 α = 90°，两半平面处于垂直临界状态！二面角 α 即为线面角或直角关系。",
+      level: "info",
     });
   }
 
