@@ -218,3 +218,129 @@ export function calculateComplementModel(
     isValid,
   };
 }
+
+export interface VerticalEdgeModelResult {
+  /** 底面顶点 A(a,0,0), B(0,b,0), C(0,0,0) */
+  bottomVertices: { A: Vec3; B: Vec3; C: Vec3 };
+  /** 垂直于底面的侧棱顶点 P(a,0,h) */
+  topP: Vec3;
+  /** 底面外接圆心 O1 */
+  bottomCenter: Vec3;
+  /** 球心 O */
+  center: Vec3;
+  /** 底面外接圆半径 r_base */
+  rBase: number;
+  /** 侧棱长 h */
+  height: number;
+  /** 外接球半径 R = sqrt(r_base^2 + (h/2)^2) */
+  radius: number;
+  /** 表面积 */
+  surfaceArea: number;
+  /** 体积 */
+  volume: number;
+}
+
+export interface InSphereModelResult {
+  /** 正四面体/锥体顶点 */
+  pyramidVertices: { P: Vec3; A: Vec3; B: Vec3; C: Vec3 };
+  /** 内切球球心 O_in */
+  center: Vec3;
+  /** 内切球半径 r_in */
+  inRadius: number;
+  /** 总体积 V */
+  totalVolume: number;
+  /** 总表面积 S_total */
+  totalArea: number;
+}
+
+/**
+ * 4. 侧棱垂直底面模型（汉堡模型 / 垂直底面侧棱三棱锥 P-ABC）
+ * @param a 底面直角边 a (CA)
+ * @param b 底面直角边 b (CB)
+ * @param h 垂直于底面的侧棱 PA 高度
+ */
+export function calculateVerticalEdgeModel(
+  a: number,
+  b: number,
+  h: number,
+): VerticalEdgeModelResult {
+  const safeA = Math.max(0.1, a);
+  const safeB = Math.max(0.1, b);
+  const safeH = Math.max(0.1, h);
+
+  const C: Vec3 = { x: 0, y: 0, z: 0 };
+  const A: Vec3 = { x: safeA, y: 0, z: 0 };
+  const B: Vec3 = { x: 0, y: safeB, z: 0 };
+  const P: Vec3 = { x: safeA, y: 0, z: safeH }; // PA ⊥ 底面 ABC
+
+  const rBase = Math.sqrt(safeA * safeA + safeB * safeB) / 2;
+  const bottomCenter: Vec3 = { x: safeA / 2, y: safeB / 2, z: 0 };
+  const center: Vec3 = { x: safeA / 2, y: safeB / 2, z: safeH / 2 };
+
+  const radius = Math.sqrt(rBase * rBase + Math.pow(safeH / 2, 2));
+  const surfaceArea = 4 * Math.PI * radius * radius;
+  const volume = (4 / 3) * Math.PI * Math.pow(radius, 3);
+
+  return {
+    bottomVertices: { A, B, C },
+    topP: P,
+    bottomCenter,
+    center,
+    rBase,
+    height: safeH,
+    radius,
+    surfaceArea,
+    volume,
+  };
+}
+
+/**
+ * 5. 内切球模型（等体积法 V = 1/3 * S_total * r_in）
+ */
+export function calculateInSphereModel(
+  a: number,
+  b: number,
+  c: number,
+): InSphereModelResult {
+  const safeA = Math.max(0.1, a);
+  const safeB = Math.max(0.1, b);
+  const safeC = Math.max(0.1, c);
+
+  const P: Vec3 = { x: 0, y: 0, z: safeC };
+  const A: Vec3 = { x: safeA, y: 0, z: 0 };
+  const B: Vec3 = { x: 0, y: safeB, z: 0 };
+  const C: Vec3 = { x: 0, y: 0, z: 0 };
+
+  // 总体积 V = (1/6) * a * b * c
+  const totalVolume = (1 / 6) * safeA * safeB * safeC;
+
+  // 4 个面的面积:
+  // S_bottom (ABC) = 0.5 * a * b
+  // S_back1 (PAC) = 0.5 * a * c
+  // S_back2 (PBC) = 0.5 * b * c
+  // S_slant (PAB) 斜面面积
+  const sBottom = 0.5 * safeA * safeB;
+  const sBack1 = 0.5 * safeA * safeC;
+  const sBack2 = 0.5 * safeB * safeC;
+  // 斜面 PAB 法向量与面积:
+  const sSlant =
+    0.5 *
+    Math.sqrt(
+      safeA * safeA * safeB * safeB +
+        safeA * safeA * safeC * safeC +
+        safeB * safeB * safeC * safeC,
+    );
+
+  const totalArea = sBottom + sBack1 + sBack2 + sSlant;
+  const inRadius = (3 * totalVolume) / totalArea;
+
+  const center: Vec3 = { x: inRadius, y: inRadius, z: inRadius };
+
+  return {
+    pyramidVertices: { P, A, B, C },
+    center,
+    inRadius,
+    totalVolume,
+    totalArea,
+  };
+}

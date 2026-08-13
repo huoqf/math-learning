@@ -16,12 +16,14 @@ import { use3DViewport } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { polyhedronSphereMeta } from "@/data/registries/solidGeometry";
 
-type ModelType = "corner" | "cylinder" | "complement";
+type ModelType =
+  "corner" | "cylinder" | "complement" | "verticalEdge" | "inSphere";
 
 export default function PolyhedronCircumSphereAnimation() {
   const [modelType, setModelType] = useState<ModelType>("corner");
   const [showComplementFrame, setShowComplementFrame] = useState<boolean>(true);
   const [showSphere, setShowSphere] = useState<boolean>(true);
+  const [showRadiusLines, setShowRadiusLines] = useState<boolean>(true);
 
   const [params, setParams] = useState<Record<string, number>>({
     a: 3,
@@ -63,13 +65,7 @@ export default function PolyhedronCircumSphereAnimation() {
   };
 
   const handleReset = () => {
-    if (modelType === "corner") {
-      setParams({ a: 3, b: 4, c: 5, h: 4 });
-    } else if (modelType === "cylinder") {
-      setParams({ a: 3, b: 4, c: 5, h: 4 });
-    } else {
-      setParams({ a: 4, b: 5, c: 6, h: 4 });
-    }
+    setParams({ a: 3, b: 4, c: 5, h: 4 });
   };
 
   // 根据当前模型过滤展现参数
@@ -78,6 +74,8 @@ export default function PolyhedronCircumSphereAnimation() {
       corner: ["a", "b", "c"],
       cylinder: ["a", "b", "h"],
       complement: ["a", "b", "c"],
+      verticalEdge: ["a", "b", "h"],
+      inSphere: ["a", "b", "c"],
     };
 
     const activeKeys = keysByModel[modelType] ?? ["a", "b", "c"];
@@ -87,23 +85,35 @@ export default function PolyhedronCircumSphereAnimation() {
       .map((meta) => ({
         key: meta.key,
         label:
-          modelType === "corner"
+          modelType === "verticalEdge"
             ? meta.key === "a"
-              ? "侧棱长 PA"
+              ? "底面直角边 a"
               : meta.key === "b"
-                ? "侧棱长 PB"
-                : "侧棱长 PC"
-            : modelType === "cylinder"
+                ? "底面直角边 b"
+                : "垂直侧棱长 h"
+            : modelType === "inSphere"
               ? meta.key === "a"
-                ? "底面直角边 a"
+                ? "直角棱 a"
                 : meta.key === "b"
-                  ? "底面直角边 b"
-                  : "柱体高 h"
-              : meta.key === "a"
-                ? "对棱长 a"
-                : meta.key === "b"
-                  ? "对棱长 b"
-                  : "对棱长 c",
+                  ? "直角棱 b"
+                  : "直角棱 c"
+              : modelType === "corner"
+                ? meta.key === "a"
+                  ? "侧棱长 PA"
+                  : meta.key === "b"
+                    ? "侧棱长 PB"
+                    : "侧棱长 PC"
+                : modelType === "cylinder"
+                  ? meta.key === "a"
+                    ? "底面直角边 a"
+                    : meta.key === "b"
+                      ? "底面直角边 b"
+                      : "柱体高 h"
+                  : meta.key === "a"
+                    ? "对棱长 a"
+                    : meta.key === "b"
+                      ? "对棱长 b"
+                      : "对棱长 c",
         labelFormula: meta.labelFormula,
         value: params[meta.key] ?? meta.defaultValue ?? 0,
         min: meta.min,
@@ -119,7 +129,7 @@ export default function PolyhedronCircumSphereAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="外接球三大模型选择">
+          <LeftPanelSection title="球切接模型选择">
             <SelectGrid
               items={[
                 {
@@ -137,6 +147,16 @@ export default function PolyhedronCircumSphereAnimation() {
                   label: "补形模型",
                   description: "对棱相等四面体",
                 },
+                {
+                  key: "verticalEdge",
+                  label: "汉堡模型 (高频)",
+                  description: "侧棱垂直底面",
+                },
+                {
+                  key: "inSphere",
+                  label: "内切球模型",
+                  description: "等体积法剖分",
+                },
               ]}
               value={modelType}
               onChange={(k) => handleModelTypeChange(k as ModelType)}
@@ -149,11 +169,13 @@ export default function PolyhedronCircumSphereAnimation() {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-neutral-500 mb-1 block font-medium">
-                  补形长方体/柱体框架
+                  {modelType === "verticalEdge"
+                    ? "套柱三棱柱框架"
+                    : "补形长方体/柱体框架"}
                 </label>
                 <TabSwitcher
                   tabs={[
-                    { key: "show", label: "显示补形框架" },
+                    { key: "show", label: "显示框架" },
                     { key: "hide", label: "隐藏框架" },
                   ]}
                   value={showComplementFrame ? "show" : "hide"}
@@ -163,17 +185,35 @@ export default function PolyhedronCircumSphereAnimation() {
 
               <div>
                 <label className="text-xs text-neutral-500 mb-1 block font-medium">
-                  外接球透明球壳
+                  {modelType === "inSphere"
+                    ? "内切球透明球壳"
+                    : "外接球透明球壳"}
                 </label>
                 <TabSwitcher
                   tabs={[
-                    { key: "show", label: "显示外接球" },
+                    { key: "show", label: "显示球壳" },
                     { key: "hide", label: "隐藏球壳" },
                   ]}
                   value={showSphere ? "show" : "hide"}
                   onChange={(v) => setShowSphere(v === "show")}
                 />
               </div>
+
+              {modelType === "inSphere" && (
+                <div>
+                  <label className="text-xs text-neutral-500 mb-1 block font-medium">
+                    切点 T₁~T₄ 与半径垂线 (r_in)
+                  </label>
+                  <TabSwitcher
+                    tabs={[
+                      { key: "show", label: "显示半径垂线" },
+                      { key: "hide", label: "隐藏垂线" },
+                    ]}
+                    value={showRadiusLines ? "show" : "hide"}
+                    onChange={(v) => setShowRadiusLines(v === "show")}
+                  />
+                </div>
+              )}
             </div>
           </LeftPanelSection>
 
@@ -207,23 +247,38 @@ export default function PolyhedronCircumSphereAnimation() {
           cameraPosition={cameraPosition}
           legend={
             <Legend3D
-              title="外接球三大模型图例"
+              title={
+                modelType === "inSphere"
+                  ? "内切球模型图例"
+                  : "多面体外接球模型图例"
+              }
               items={[
                 {
                   colorKey: "primary",
                   swatch: "area",
-                  label: "几何主体/四面体",
+                  label: "三棱锥/多面体容器",
+                },
+                {
+                  colorKey:
+                    modelType === "inSphere" ? "inSphereShell" : "sphereShell",
+                  swatch: "sphere",
+                  label: modelType === "inSphere" ? "内切球" : "外接球",
                 },
                 {
                   colorKey: "secondary",
-                  swatch: "line",
-                  label: "补形长方体框架",
+                  swatch: "point",
+                  label:
+                    modelType === "inSphere"
+                      ? "切点 T₁~T₄"
+                      : "补形长方体/柱体框架",
                 },
-                { colorKey: "sphereShell", swatch: "sphere", label: "外接球" },
                 {
                   colorKey: "highlight",
                   swatch: "point",
-                  label: "球心 O & 半径 R",
+                  label:
+                    modelType === "inSphere"
+                      ? "球心 O_in & 半径 r_in"
+                      : "球心 O & 半径 R",
                 },
               ]}
             />
@@ -237,6 +292,7 @@ export default function PolyhedronCircumSphereAnimation() {
             params={params}
             showComplementFrame={showComplementFrame}
             showSphere={showSphere}
+            showRadiusLines={showRadiusLines}
           />
         </ThreeDCanvas>
       }
@@ -251,8 +307,12 @@ export default function PolyhedronCircumSphereAnimation() {
               ? "墙角模型"
               : modelType === "cylinder"
                 ? "柱体模型"
-                : "补形模型"
-          }外接球分析看板`}
+                : modelType === "complement"
+                  ? "补形模型"
+                  : modelType === "verticalEdge"
+                    ? "汉堡模型(侧棱垂直底面)"
+                    : "内切球模型(等体积法)"
+          }${modelType === "inSphere" ? "" : "外接球"}分析看板`}
         />
       }
     />

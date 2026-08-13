@@ -3,6 +3,8 @@ import {
   calculateCornerModel,
   calculateCylinderModel,
   calculateComplementModel,
+  calculateVerticalEdgeModel,
+  calculateInSphereModel,
 } from "../polyhedronSphere";
 
 describe("polyhedronSphere 3D math algorithms", () => {
@@ -39,5 +41,22 @@ describe("polyhedronSphere 3D math algorithms", () => {
 
     // R = 1/2 * sqrt((5+5+6)/2) = 1/2 * sqrt(8) = sqrt(2)
     expect(res.radius).toBeCloseTo(Math.sqrt(2), 4);
+  });
+
+  it("should correctly compute verticalEdge (burger model) radius", () => {
+    // a=3, b=4, h=4 => rBase=2.5, h/2=2 => R^2 = 2.5^2 + 2^2 = 6.25 + 4 = 10.25 => R = sqrt(10.25)
+    const res = calculateVerticalEdgeModel(3, 4, 4);
+    expect(res.rBase).toBe(2.5);
+    expect(res.radius).toBeCloseTo(Math.sqrt(10.25), 4);
+    expect(res.center).toEqual({ x: 1.5, y: 2, z: 2 });
+  });
+
+  it("should correctly compute inSphere radius using equal-volume method", () => {
+    // a=3, b=4, c=12 => V = 1/6 * 3 * 4 * 12 = 24
+    // S_bottom = 6, S_back1 = 18, S_back2 = 24, S_slant = 0.5 * sqrt(48^2 + 36^2 + 12^2) = 0.5 * sqrt(3744) ~ 30.5941
+    // S_total = 6 + 18 + 24 + 30.5941 = 78.5941 => r_in = 72 / 78.5941 ~ 0.916099
+    const res = calculateInSphereModel(3, 4, 12);
+    expect(res.totalVolume).toBe(24);
+    expect(res.inRadius).toBeCloseTo(0.9161, 3);
   });
 });

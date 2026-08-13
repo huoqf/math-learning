@@ -17,7 +17,7 @@ interface Point3DProps {
 export const Point3D = ({
   position,
   colorKey = "highlight",
-  radius = 0.12,
+  radius,
   draggable = false,
   constrain,
   onDrag,
@@ -27,6 +27,9 @@ export const Point3D = ({
   const { camera, gl, invalidate } = useThree();
   const planeRef = useRef(new THREE.Plane());
   const hit = useRef(new THREE.Vector3());
+
+  const defaultRadius = draggable ? 0.09 : 0.06;
+  const finalRadius = radius ?? defaultRadius;
 
   const stopDragging = (pointerId?: number) => {
     setDragging(false);
@@ -92,7 +95,7 @@ export const Point3D = ({
       renderOrder={500}
     >
       <sphereGeometry
-        args={[hovered || dragging ? radius * 1.5 : radius, 24, 24]}
+        args={[hovered || dragging ? finalRadius * 1.5 : finalRadius, 24, 24]}
       />
       <meshStandardMaterial
         color={colorVal}

@@ -639,6 +639,21 @@ const legacyEntries: RouteEntry[] = [
   },
   {
     node: {
+      id: "know-solid-folding",
+      title: "平面图形折叠与翻折二面角",
+      labTitle: "平面图形翻折实验室",
+      chapter: "立体几何与空间向量",
+      module: "立体几何压轴",
+      importance: "hard",
+      animationIds: ["anim-solid-folding"],
+      prerequisites: ["know-solid-surface-relation"],
+      route: "/solid-folding",
+    },
+    loader: () => import("@/features/solidGeometry/FoldingAnimation"),
+    guarded3D: true,
+  },
+  {
+    node: {
       id: "know-vector3d-basis",
       title: "空间向量基本定理与基底分解及共面向量",
       labTitle: "空间向量基底分解实验室",
@@ -684,6 +699,21 @@ const legacyEntries: RouteEntry[] = [
   },
   {
     node: {
+      id: "know-solid-parametric",
+      title: "空间向量与动点存在性、最值问题",
+      labTitle: "动点存在性与最值实验室",
+      chapter: "立体几何与空间向量",
+      module: "空间向量压轴",
+      importance: "hard",
+      animationIds: ["anim-solid-parametric"],
+      prerequisites: ["know-solid-angle", "know-solid-distance"],
+      route: "/solid-parametric",
+    },
+    loader: () => import("@/features/solidGeometry/ParametricPointAnimation"),
+    guarded3D: true,
+  },
+  {
+    node: {
       id: "know-solid-ball",
       title: "多面体与旋转体的外接球、内切球",
       labTitle: "外接球与内切球",
@@ -700,8 +730,8 @@ const legacyEntries: RouteEntry[] = [
   {
     node: {
       id: "know-solid-ball-models",
-      title: "多面体外接球三大模型（墙角/柱体/补形）",
-      labTitle: "外接球三大模型实验室",
+      title: "多面体外接球与内切球四大模型（墙角/柱体/补形/侧棱垂直底面）",
+      labTitle: "外接球与内切球四大模型实验室",
       chapter: "立体几何与空间向量",
       module: "立体几何压轴",
       importance: "hard",
