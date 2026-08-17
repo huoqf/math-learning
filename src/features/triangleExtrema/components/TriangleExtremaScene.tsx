@@ -12,6 +12,7 @@ interface TriangleExtremaSceneProps {
   scale: SceneScale;
   vp: ViewportInfo;
   fontScale: (size: number) => number;
+  isAcuteOnly?: boolean;
   onDragVertexA?: (pt: Point2D) => void;
   onDragVertexB?: (pt: Point2D) => void;
 }
@@ -22,6 +23,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
   scale,
   vp,
   fontScale,
+  isAcuteOnly = false,
   onDragVertexA,
   onDragVertexB,
 }) => {
@@ -29,8 +31,10 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
     vertices,
     sides,
     circumcircle,
+    inscribed,
     apolloniusCircle,
     polarization,
+    acuteRange,
     isValid,
     warning,
   } = state;
@@ -79,6 +83,13 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
   // 顶点 A 在底边上的垂足 H
   const posH = mathToDesign(vertices.A.x, 0, scale);
 
+  // 外接圆最高点（等腰三角形顶点）
+  const maxVertexA = {
+    x: 0,
+    y: circumcircle.center.y + circumcircle.radius,
+  };
+  const posMaxA = mathToDesign(maxVertexA.x, maxVertexA.y, scale);
+
   return (
     <g>
       {/* 1. 坐标系网格与轴 */}
@@ -88,12 +99,13 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
       {/* A. 外接圆 (angle-transform 与 side-ineq 模式) */}
       {(studyMode === "angle-transform" || studyMode === "side-ineq") && (
         <g id="circumcircle-layer">
+          {/* 外接圆底圆 */}
           <circle
             cx={posCircumCenter.x}
             cy={posCircumCenter.y}
             r={radiusPx}
-            fill={withAlpha(MATH_COLORS.primary, 0.05)}
-            stroke={withAlpha(MATH_COLORS.primary, 0.4)}
+            fill={withAlpha(MATH_COLORS.primary, 0.04)}
+            stroke={withAlpha(MATH_COLORS.primary, 0.35)}
             strokeDasharray="4 4"
             strokeWidth={1.5}
           />
@@ -105,13 +117,47 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fill={MATH_COLORS.primary}
           />
           <text
-            x={posCircumCenter.x + 8}
-            y={posCircumCenter.y - 8}
+            x={posCircumCenter.x + 6}
+            y={posCircumCenter.y - 6}
             fill={MATH_COLORS.primary}
             fontSize={fontScale(11)}
             fontWeight="bold"
           >
-            O (R = {circumcircle.radius.toFixed(2)})
+            O
+          </text>
+
+          {/* 最高点极值包络线 (水平切线) */}
+          <line
+            x1={posCircumCenter.x - radiusPx - 20}
+            y1={posMaxA.y}
+            x2={posCircumCenter.x + radiusPx + 20}
+            y2={posMaxA.y}
+            stroke={MATH_COLORS.paramPrimary}
+            strokeDasharray="4 4"
+            strokeWidth={1.2}
+            opacity={0.7}
+          />
+          {/* 等腰对称轴虚线 */}
+          <line
+            x1={posMaxA.x}
+            y1={posMaxA.y}
+            x2={posM.x}
+            y2={posM.y}
+            stroke={CANVAS_COLORS.axis}
+            strokeDasharray="3 3"
+            strokeWidth={1.2}
+          />
+          <text
+            x={posMaxA.x + 6}
+            y={posMaxA.y - 6}
+            fill={MATH_COLORS.paramPrimary}
+            fontSize={fontScale(10)}
+            fontWeight="bold"
+          >
+            h
+            <tspan dy={fontScale(2)} fontSize={fontScale(8)}>
+              max
+            </tspan>
           </text>
         </g>
       )}
@@ -123,12 +169,11 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             cx={apCenter.x}
             cy={apCenter.y}
             r={apRadiusPx}
-            fill={withAlpha(MATH_COLORS.paramPrimary, 0.06)}
+            fill={withAlpha(MATH_COLORS.paramPrimary, 0.05)}
             stroke={MATH_COLORS.paramPrimary}
             strokeDasharray="5 4"
-            strokeWidth={2}
+            strokeWidth={1.8}
           />
-          {/* 圆心与轨迹标注 */}
           <circle
             cx={apCenter.x}
             cy={apCenter.y}
@@ -136,15 +181,16 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fill={MATH_COLORS.paramPrimary}
           />
           <text
-            x={apCenter.x}
-            y={apCenter.y + fontScale(14)}
+            x={apCenter.x + 6}
+            y={apCenter.y - 6}
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(11)}
-            textAnchor="middle"
             fontWeight="bold"
           >
-            阿氏圆心 O_A({apolloniusCircle.center.x.toFixed(1)}, 0)，半径 R ={" "}
-            {apolloniusCircle.radius.toFixed(2)}
+            O
+            <tspan dy={fontScale(2)} fontSize={fontScale(8)}>
+              A
+            </tspan>
           </text>
           {/* 最高点指示虚线 */}
           <line
@@ -159,10 +205,13 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             x={apCenter.x + 6}
             y={apCenter.y - apRadiusPx - 6}
             fill={MATH_COLORS.paramPrimary}
-            fontSize={fontScale(11)}
+            fontSize={fontScale(10)}
             fontWeight="bold"
           >
-            最大高 h = {apolloniusCircle.radius.toFixed(2)}
+            h
+            <tspan dy={fontScale(2)} fontSize={fontScale(8)}>
+              max
+            </tspan>
           </text>
         </g>
       )}
@@ -177,18 +226,8 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fill={withAlpha(MATH_COLORS.paramTertiary, 0.05)}
             stroke={MATH_COLORS.paramTertiary}
             strokeDasharray="4 4"
-            strokeWidth={2}
+            strokeWidth={1.8}
           />
-          <text
-            x={posM.x}
-            y={posM.y - polarization.medianLength * scale.scaleX - 6}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(11)}
-            textAnchor="middle"
-            fontWeight="bold"
-          >
-            中线轨迹圆 |AM| = {polarization.medianLength.toFixed(1)}
-          </text>
         </g>
       )}
 
@@ -201,19 +240,18 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         y2={posH.y}
         stroke={CANVAS_COLORS.axis}
         strokeDasharray="3 3"
-        strokeWidth={1.5}
+        strokeWidth={1.2}
       />
-      {/* 高度 h_a 标签 */}
       <text
-        x={posH.x + 5}
+        x={posH.x + 4}
         y={(posA.y + posH.y) / 2}
         fill={CANVAS_COLORS.labelTextLight}
         fontSize={fontScale(10)}
       >
-        h = {vertices.A.y.toFixed(2)}
+        h
       </text>
 
-      {/* 中线 AM (polarization/apollonius 模式) */}
+      {/* 中线 AM */}
       {(studyMode === "polarization" || studyMode === "apollonius") && (
         <g>
           <line
@@ -232,16 +270,73 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
           />
           <text
             x={posM.x}
-            y={posM.y + fontScale(15)}
+            y={posM.y + fontScale(14)}
             fill={MATH_COLORS.paramTertiary}
             fontSize={fontScale(11)}
             textAnchor="middle"
             fontWeight="bold"
           >
-            M (0,0)
+            M
           </text>
         </g>
       )}
+
+      {/* 内切圆 (当角化边/均值模式有效时) */}
+      {inscribed &&
+        (studyMode === "angle-transform" || studyMode === "side-ineq") && (
+          <g id="inscribed-circle-layer">
+            {/* 锐角三角形约束提示 */}
+            {isAcuteOnly && acuteRange && !state.isAcute && (
+              <text
+                x={posMaxA.x}
+                y={posMaxA.y - fontScale(18)}
+                fill={MATH_COLORS.paramPrimary}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                textAnchor="middle"
+              >
+                ⚠️ 非锐角状态 (角 B ∈ ({acuteRange.minAngleB.toFixed(0)}°,{" "}
+                {acuteRange.maxAngleB.toFixed(0)}°))
+              </text>
+            )}
+
+            {(() => {
+              const posIncenter = mathToDesign(
+                inscribed.incenter.x,
+                inscribed.incenter.y,
+                scale,
+              );
+              const inradiusPx = inscribed.inradius * scale.scaleX;
+              return (
+                <>
+                  <circle
+                    cx={posIncenter.x}
+                    cy={posIncenter.y}
+                    r={inradiusPx}
+                    fill={withAlpha(MATH_COLORS.paramTertiary, 0.08)}
+                    stroke={MATH_COLORS.paramTertiary}
+                    strokeWidth={1.5}
+                  />
+                  <circle
+                    cx={posIncenter.x}
+                    cy={posIncenter.y}
+                    r={2.5}
+                    fill={MATH_COLORS.paramTertiary}
+                  />
+                  <text
+                    x={posIncenter.x + 5}
+                    y={posIncenter.y - 4}
+                    fill={MATH_COLORS.paramTertiary}
+                    fontSize={fontScale(10)}
+                    fontWeight="bold"
+                  >
+                    I
+                  </text>
+                </>
+              );
+            })()}
+          </g>
+        )}
 
       {/* 4. 三角形主体边与阴影填充 */}
       <polygon
@@ -250,7 +345,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         stroke="none"
       />
 
-      {/* 边 a (BC) - 底边: paramPrimary 色彩 */}
+      {/* 边 a (BC) - 底边: paramPrimary (红) */}
       <line
         x1={posB.x}
         y1={posB.y}
@@ -260,7 +355,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         strokeWidth={3.5}
       />
 
-      {/* 边 b (AC) */}
+      {/* 边 b (AC) - paramSecondary (橙) */}
       <line
         x1={posA.x}
         y1={posA.y}
@@ -270,7 +365,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         strokeWidth={2.5}
       />
 
-      {/* 边 c (AB) */}
+      {/* 边 c (AB) - paramTertiary (绿) */}
       <line
         x1={posA.x}
         y1={posA.y}
@@ -280,9 +375,12 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         strokeWidth={2.5}
       />
 
-      {/* 5. 边长标签 */}
+      {/* 5. 边长标签 (位置外扩，避免与中线/内切圆重叠) */}
       <text
-        x={(posB.x + posC.x) / 2}
+        x={
+          (posB.x + posC.x) / 2 +
+          (studyMode === "polarization" || studyMode === "apollonius" ? 22 : 0)
+        }
         y={posB.y + fontScale(16)}
         fill={MATH_COLORS.paramPrimary}
         fontSize={fontScale(12)}
@@ -293,7 +391,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
       </text>
       <text
         x={(posA.x + posC.x) / 2 + 10}
-        y={(posA.y + posC.y) / 2}
+        y={(posA.y + posC.y) / 2 - 4}
         fill={MATH_COLORS.paramSecondary}
         fontSize={fontScale(12)}
         fontWeight="bold"
@@ -301,8 +399,8 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         b = {sides.b.toFixed(2)}
       </text>
       <text
-        x={(posA.x + posB.x) / 2 - 25}
-        y={(posA.y + posB.y) / 2}
+        x={(posA.x + posB.x) / 2 - 24}
+        y={(posA.y + posB.y) / 2 - 4}
         fill={MATH_COLORS.paramTertiary}
         fontSize={fontScale(12)}
         fontWeight="bold"
@@ -310,9 +408,9 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         c = {sides.c.toFixed(2)}
       </text>
 
-      {/* 6. 顶点交互与标注 */}
+      {/* 6. 顶点交互与标注 (纯字母无冗余，外向排布) */}
       {/* 顶点 C: 固定点 */}
-      <circle cx={posC.x} cy={posC.y} r={5} fill={MATH_COLORS.paramPrimary} />
+      <circle cx={posC.x} cy={posC.y} r={4.5} fill={MATH_COLORS.paramPrimary} />
       <text
         x={posC.x + 8}
         y={posC.y + 4}
@@ -320,7 +418,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontSize={fontScale(13)}
         fontWeight="bold"
       >
-        C ({state.angles.C.toFixed(0)}°)
+        C
       </text>
 
       {/* 顶点 B: 静态或支持拖拽 */}
@@ -332,7 +430,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
           vp={vp}
           fontScale={fontScale}
           color={MATH_COLORS.paramSecondary}
-          label={`B (${state.angles.B.toFixed(0)}°)`}
+          label="B"
           onDrag={(mathPos) => {
             if (onDragVertexB) {
               onDragVertexB(mathPos);
@@ -344,17 +442,17 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
           <circle
             cx={posB.x}
             cy={posB.y}
-            r={5}
+            r={4.5}
             fill={MATH_COLORS.paramPrimary}
           />
           <text
-            x={posB.x - 22}
+            x={posB.x - 16}
             y={posB.y + 4}
             fill={CANVAS_COLORS.labelText}
             fontSize={fontScale(13)}
             fontWeight="bold"
           >
-            B ({state.angles.B.toFixed(0)}°)
+            B
           </text>
         </g>
       )}
@@ -367,7 +465,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         vp={vp}
         fontScale={fontScale}
         color={MATH_COLORS.paramPrimary}
-        label={`A (${state.angles.A.toFixed(0)}°)`}
+        label="A"
         onDrag={(mathPos) => {
           if (onDragVertexA) {
             onDragVertexA(mathPos);

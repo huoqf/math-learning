@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   TabSwitcher,
+  SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -27,6 +28,12 @@ export function TriangleExtremaAnimation() {
   const [studyMode, setStudyMode] = useState<
     "angle-transform" | "side-ineq" | "apollonius" | "polarization"
   >("angle-transform");
+
+  // 三角形形态约束（任意三角形 vs 锐角三角形）
+  const [triangleConstraint, setTriangleConstraint] = useState<"any" | "acute">(
+    "any",
+  );
+  const isAcuteOnly = triangleConstraint === "acute";
 
   // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -49,23 +56,34 @@ export function TriangleExtremaAnimation() {
   const calcState = useMemo(() => {
     switch (studyMode) {
       case "angle-transform":
-        return solveAngleTransform(params.angleA, params.sideA, params.angleB);
+        return solveAngleTransform(
+          params.angleA,
+          params.sideA,
+          params.angleB,
+          isAcuteOnly,
+        );
       case "side-ineq":
-        return solveSideIneq(params.angleA, params.sideA, params.sideB);
+        return solveSideIneq(
+          params.angleA,
+          params.sideA,
+          params.sideB,
+          isAcuteOnly,
+        );
       case "apollonius":
         return solveApollonius(params.sideA, params.ratioK, params.thetaDeg);
       case "polarization":
         return solvePolarization(params.sideA, params.medianM, params.thetaDeg);
     }
-  }, [studyMode, params]);
+  }, [studyMode, params, isAcuteOnly]);
 
   // 数学量看板数据（由 buildMathQuantities 统一输出）
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-triangle-extrema", params, {
       studyMode,
       calcState,
+      isAcuteOnly,
     });
-  }, [params, studyMode, calcState]);
+  }, [params, studyMode, calcState, isAcuteOnly]);
 
   // 参数修改回调
   const handleParamChange = (key: string, value: number) => {
@@ -116,8 +134,6 @@ export function TriangleExtremaAnimation() {
   const handleDragB = useCallback(
     (mathPos: { x: number; y: number }) => {
       const sideA = params.sideA;
-      // B 点应该在 (-a/2, 0)
-      // 根据拖拽量改变 angleB
       const dx = mathPos.x - -sideA / 2;
       const dy = mathPos.y;
       if (Math.abs(dy) > 0.1) {
@@ -149,25 +165,26 @@ export function TriangleExtremaAnimation() {
     [studyMode, params.ratioK, params.sideA],
   );
 
-  // 中屏 KaTeX 浮动最值公式展示
+  // 中屏 KaTeX 浮动最值公式展示（带色彩绑定）
   const floatingFormula = useMemo(() => {
     const { extrema, sides, angles } = calcState;
     if (!calcState.isValid) return "";
 
     if (studyMode === "angle-transform") {
-      return `P = a+b+c = ${extrema.perimeter.toFixed(2)} \\le P_{\\max} = ${extrema.maxPerimeter.toFixed(2)} \\quad \\text{(当 } B = ${((180 - angles.A) / 2).toFixed(1)}^\\circ \\text{ 时, } b=c)`;
+      const prefix = isAcuteOnly ? "\\text{[锐角限制]} \\quad " : "";
+      return `${prefix}P = \\color{#EF4444}{a} + \\color{#D97706}{b} + \\color{#059669}{c} = ${extrema.perimeter.toFixed(2)} \\le P_{\\max} = ${extrema.maxPerimeter.toFixed(2)} \\quad (\\text{当 } B = C = ${((180 - angles.A) / 2).toFixed(1)}^\\circ \\text{ 时, } b=c)`;
     }
     if (studyMode === "side-ineq") {
-      return `b+c = ${(sides.b + sides.c).toFixed(2)} \\le \\frac{a}{\\sin(A/2)} = ${extrema.maxSideSum.toFixed(2)} \\quad S = ${extrema.area.toFixed(2)} \\le S_{\\max} = ${extrema.maxArea.toFixed(2)}`;
+      return `\\color{#D97706}{b} + \\color{#059669}{c} = ${(sides.b + sides.c).toFixed(2)} \\le \\frac{\\color{#EF4444}{a}}{\\sin(A/2)} = ${extrema.maxSideSum.toFixed(2)} \\quad S = ${extrema.area.toFixed(2)} \\le S_{\\max} = ${extrema.maxArea.toFixed(2)}`;
     }
     if (studyMode === "apollonius") {
-      return `\\text{阿氏圆轨迹 } h_{\\max} = R_A = ${calcState.apolloniusCircle?.radius.toFixed(2)} \\implies S_{\\max} = \\frac{1}{2}a h_{\\max} = ${extrema.maxArea.toFixed(2)}`;
+      return `\\text{阿氏圆轨迹 } h_{\\max} = R_A = ${calcState.apolloniusCircle?.radius.toFixed(2)} \\implies S_{\\max} = \\frac{1}{2}\\color{#EF4444}{a} h_{\\max} = ${extrema.maxArea.toFixed(2)}`;
     }
     if (studyMode === "polarization") {
-      return `\\vec{AB} \\cdot \\vec{AC} = m_a^2 - \\left(\\frac{a}{2}\\right)^2 = ${params.medianM}^2 - ${params.sideA / 2}^2 = ${extrema.dotProduct.toFixed(2)} \\quad (\\text{常数})`;
+      return `\\overrightarrow{AB} \\cdot \\overrightarrow{AC} = m_a^2 - \\left(\\frac{\\color{#EF4444}{a}}{2}\\right)^2 = ${params.medianM}^2 - ${params.sideA / 2}^2 = ${extrema.dotProduct.toFixed(2)} \\quad (\\text{定值})`;
     }
     return "";
-  }, [calcState, studyMode, params]);
+  }, [calcState, studyMode, params, isAcuteOnly]);
 
   return (
     <ThreePanel
@@ -179,8 +196,8 @@ export function TriangleExtremaAnimation() {
           >
             <TabSwitcher
               tabs={[
-                { key: "angle-transform", label: "角化边最值" },
-                { key: "side-ineq", label: "均值不等式" },
+                { key: "angle-transform", label: "正弦角化边" },
+                { key: "side-ineq", label: "余弦均值式" },
                 { key: "apollonius", label: "阿波罗尼斯圆" },
                 { key: "polarization", label: "极化恒等式" },
               ]}
@@ -188,6 +205,34 @@ export function TriangleExtremaAnimation() {
               onChange={(val) => setStudyMode(val as typeof studyMode)}
             />
           </LeftPanelSection>
+
+          {/* 模式 1 和 2 专属：锐角三角形约束条件切换 */}
+          {(studyMode === "angle-transform" || studyMode === "side-ineq") && (
+            <LeftPanelSection
+              title="三角形形态限定"
+              subtitle="探究锐角条件下的定义域截断"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "any",
+                    label: "任意三角形",
+                    description: "内角 ∈ (0, 180°)",
+                  },
+                  {
+                    key: "acute",
+                    label: "锐角三角形",
+                    description: "三内角均 < 90° (高考常考)",
+                  },
+                ]}
+                value={triangleConstraint}
+                onChange={(val) =>
+                  setTriangleConstraint(val as "any" | "acute")
+                }
+                columns={2}
+              />
+            </LeftPanelSection>
+          )}
 
           <LeftPanelSection
             title="参数调节"
@@ -214,6 +259,7 @@ export function TriangleExtremaAnimation() {
               scale={scale}
               vp={vp}
               fontScale={canvasSize.font}
+              isAcuteOnly={isAcuteOnly}
               onDragVertexA={handleDragA}
               onDragVertexB={handleDragB}
             />
