@@ -54,12 +54,31 @@ export interface IndependenceTestResult {
   c: number; // not A and B
   d: number; // not A and not B
   n: number;
+  row1: number;
+  row2: number;
+  col1: number;
+  col2: number;
+  expected: {
+    eA: number;
+    eB: number;
+    eC: number;
+    eD: number;
+  };
+  contributions: {
+    dA: number;
+    dB: number;
+    dC: number;
+    dD: number;
+  };
   adMinusBc: number;
   chiSquare: number; // 卡方/K^2 观测值
+  chiSquareYates: number; // Yates 连续性修正卡方
   p90: boolean; // >= 2.706 (90% 把握)
   p95: boolean; // >= 3.841 (95% 把握)
   p99: boolean; // >= 6.635 (99% 把握)
   p999: boolean; // >= 10.828 (99.9% 把握)
+  isSampleLargeEnough: boolean; // n >= 40
+  isExpectedEnough: boolean; // 各期望频数 >= 5
   confidenceText: string;
   isValid: boolean;
 }
@@ -442,6 +461,9 @@ export function calculateIndependenceTest(
   const col1 = a + c;
   const col2 = b + d;
 
+  const defaultEmptyExpected = { eA: 0, eB: 0, eC: 0, eD: 0 };
+  const defaultEmptyContrib = { dA: 0, dB: 0, dC: 0, dD: 0 };
+
   if (n === 0 || row1 === 0 || row2 === 0 || col1 === 0 || col2 === 0) {
     return {
       a,
@@ -449,37 +471,67 @@ export function calculateIndependenceTest(
       c,
       d,
       n,
+      row1,
+      row2,
+      col1,
+      col2,
+      expected: defaultEmptyExpected,
+      contributions: defaultEmptyContrib,
       adMinusBc: 0,
       chiSquare: 0,
+      chiSquareYates: 0,
       p90: false,
       p95: false,
       p99: false,
       p999: false,
+      isSampleLargeEnough: false,
+      isExpectedEnough: false,
       confidenceText: "无有效数据或边际分布为0",
       isValid: false,
     };
   }
 
+  // 1. 计算零假设 H0（独立）下的理论期望频数 E_ij
+  const eA = (row1 * col1) / n;
+  const eB = (row1 * col2) / n;
+  const eC = (row2 * col1) / n;
+  const eD = (row2 * col2) / n;
+
+  // 2. 计算各格的偏离度贡献 (O - E)^2 / E
+  const dA = eA > 0 ? Math.pow(a - eA, 2) / eA : 0;
+  const dB = eB > 0 ? Math.pow(b - eB, 2) / eB : 0;
+  const dC = eC > 0 ? Math.pow(c - eC, 2) / eC : 0;
+  const dD = eD > 0 ? Math.pow(d - eD, 2) / eD : 0;
+
+  // 3. 计算常规 Pearson 卡方观测值
   const adMinusBc = a * d - b * c;
   const numerator = n * Math.pow(adMinusBc, 2);
   const denominator = row1 * row2 * col1 * col2;
-
   const chiSquare = denominator > 0 ? numerator / denominator : 0;
+
+  // 4. 计算 Yates 连续性修正卡方: n(|ad - bc| - n/2)^2 / [(a+b)(c+d)(a+c)(b+d)]
+  const absDiff = Math.abs(adMinusBc);
+  const yatesNumerator = n * Math.pow(Math.max(0, absDiff - n / 2), 2);
+  const chiSquareYates = denominator > 0 ? yatesNumerator / denominator : 0;
 
   const p90 = chiSquare >= 2.706;
   const p95 = chiSquare >= 3.841;
   const p99 = chiSquare >= 6.635;
   const p999 = chiSquare >= 10.828;
 
-  let confidenceText = "没有充分理由认为变量间有关联 (接受无关联原假设)";
+  const isSampleLargeEnough = n >= 40;
+  const isExpectedEnough = eA >= 5 && eB >= 5 && eC >= 5 && eD >= 5;
+
+  let confidenceText =
+    "没有充分理由推翻零假设（接受无关联原假设，不能认为两变量有关联）";
   if (p999) {
-    confidenceText = "有 99.9% 以上的把握认为两个变量有关联";
+    confidenceText = "有 99.9% 以上的把握认为两个分类变量有关联 (α = 0.001)";
   } else if (p99) {
-    confidenceText = "有 99% 以上的把握认为两个变量有关联";
+    confidenceText = "有 99% 以上的把握认为两个分类变量有关联 (α = 0.01)";
   } else if (p95) {
-    confidenceText = "有 95% 以上的把握认为两个变量有关联";
+    confidenceText = "有 95% 以上的把握认为两个分类变量有关联 (α = 0.05)";
   } else if (p90) {
-    confidenceText = "有 90% 以上的把握认为两个变量有关联";
+    confidenceText = "有 90% 以上的把握认为两个分类变量有关联 (α = 0.10)";
   }
 
   return {
@@ -488,15 +540,35 @@ export function calculateIndependenceTest(
     c,
     d,
     n,
+    row1,
+    row2,
+    col1,
+    col2,
+    expected: { eA, eB, eC, eD },
+    contributions: { dA, dB, dC, dD },
     adMinusBc,
     chiSquare,
+    chiSquareYates,
     p90,
     p95,
     p99,
     p999,
+    isSampleLargeEnough,
+    isExpectedEnough,
     confidenceText,
     isValid: true,
   };
+}
+
+/**
+ * 单自由度卡方分布 Chi-Square(df=1) 的概率密度函数 PDF:
+ * f(x) = (1 / sqrt(2*pi)) * x^(-1/2) * e^(-x/2)  (x > 0)
+ */
+export function getChiSquare1Pdf(x: number): number {
+  if (x <= 0.01) return 2.5; // 避免 x->0 时的无穷大溢出，做平滑截断便于绘图
+  const val =
+    (1 / Math.sqrt(2 * Math.PI)) * Math.pow(x, -0.5) * Math.exp(-x / 2);
+  return Math.min(2.5, val);
 }
 
 /**
@@ -588,38 +660,72 @@ export const REGRESSION_PRESETS = [
 export const INDEPENDENCE_PRESETS = [
   {
     id: "medicine",
-    name: "新药疗效对比 (强显著关联)",
+    name: "1. 医药研发：新药与常规疗法临床对照 (强显著关联)",
     a: 85,
     b: 15,
     c: 40,
     d: 60,
-    labelA: "新药组",
-    labelNotA: "对照组",
-    labelB: "有效",
-    labelNotB: "无效",
+    labelA: "试验新药组",
+    labelNotA: "常规疗法组",
+    labelB: "显著显效",
+    labelNotB: "无明显改善",
+    contextDesc:
+      "某科研所进行新抗癌药临床双盲试验，检验用药方案与疗效是否有关联。",
   },
   {
-    id: "gender_subject",
-    name: "性别与学科偏好 (中等关联)",
-    a: 40,
-    b: 20,
-    c: 25,
-    d: 35,
-    labelA: "男生",
-    labelNotA: "女生",
-    labelB: "喜欢理科",
-    labelNotB: "喜欢文科",
+    id: "teaching",
+    name: "2. 教学实验：分层走班新教学法达标率 (中等显著关联)",
+    a: 48,
+    b: 12,
+    c: 32,
+    d: 28,
+    labelA: "新课改走班班",
+    labelNotA: "传统教学班",
+    labelB: "测试优秀",
+    labelNotB: "测试一般",
+    contextDesc:
+      "某校开展数学探究式分层走班实验，检验教学模式与成绩优秀率是否有关联。",
   },
   {
-    id: "no_relation",
-    name: "完全无关联独立样本",
+    id: "ev_car",
+    name: "3. 产业调查：新能源汽车选购意愿与年龄 (新质生产力情境)",
+    a: 70,
+    b: 30,
+    c: 35,
+    d: 65,
+    labelA: "青年群体 (≤35岁)",
+    labelNotA: "中老年群体 (>35岁)",
+    labelB: "倾向新能源",
+    labelNotB: "倾向燃油车",
+    contextDesc:
+      "调研机构对汽车消费者进行意向问卷调查，检验年龄段与购车倾向是否有关联。",
+  },
+  {
+    id: "quality",
+    name: "4. 工业生产：智能机械与传统流水线良品率 (极高显著性)",
+    a: 190,
+    b: 10,
+    c: 150,
+    d: 50,
+    labelA: "智能机器人线",
+    labelNotA: "人工组装线",
+    labelB: "一级良品",
+    labelNotB: "瑕疵返工品",
+    contextDesc:
+      "高端制造车间检验生产流水线类型与产品一次交验合格率是否有关联。",
+  },
+  {
+    id: "independent",
+    name: "5. 对照实验：完全独立均匀样本 (ad - bc = 0)",
     a: 50,
     b: 50,
     c: 50,
     d: 50,
-    labelA: "A类",
-    labelNotA: "非A类",
-    labelB: "B类",
-    labelNotB: "非B类",
+    labelA: "分类组 A",
+    labelNotA: "分类组 非A",
+    labelB: "属性 B",
+    labelNotB: "属性 非B",
+    contextDesc:
+      "理论对照模型：各组比例完全相同，卡方统计量精确为 0，接受独立假设。",
   },
 ];

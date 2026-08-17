@@ -52,12 +52,33 @@ interface MathPanelProps {
 
 /**
  * 混合内容渲染：中文句子中用 $...$ 标记数学片段，其余纯文本正常换行。
- * 若为纯 LaTeX（无中文且含数学命令/运算符），自动作为 KaTeX 公式渲染。
+ * 若为包含 LaTeX 命令（如 \text{}, \%, \alpha 等）的表达式，自动作为 KaTeX 公式渲染。
  */
 function renderMixedLatex(text: string): React.ReactNode {
   if (!text) return null;
 
-  // 1. 若无中文字符且包含 LaTeX 命令或数学上下标/运算符，直接按纯公式渲染
+  // 1. 若文本显式包含 \text{...}、\% 或标准 LaTeX 控制序列且无 $ 分隔，直接按 KaTeX 渲染
+  if (
+    text.includes("\\text{") ||
+    text.includes("\\%") ||
+    text.includes("\\color{") ||
+    (!text.includes("$") &&
+      (/\\[a-zA-Z]+/.test(text) ||
+        /^[\w\s()=<>+\-*/^_{}[\].,;:]+$/.test(text)) &&
+      !/[\u4e00-\u9fa5]{3,}/.test(text.replace(/\\text\{[^}]*\}/g, "")))
+  ) {
+    const cleanFormula =
+      text.startsWith("$") && text.endsWith("$") ? text.slice(1, -1) : text;
+    return (
+      <KatexFormula
+        formula={cleanFormula}
+        mode="inline"
+        className="!my-0 !mx-0.5"
+      />
+    );
+  }
+
+  // 2. 若无中文字符且包含 LaTeX 命令或数学上下标/运算符，直接按纯公式渲染
   if (
     !/[\u4e00-\u9fa5]/.test(text) &&
     (/\\[a-zA-Z]|[_^]\{?[\w]|=|<|>|\+|-|\*|\//.test(text) ||
@@ -74,7 +95,7 @@ function renderMixedLatex(text: string): React.ReactNode {
     );
   }
 
-  // 2. 混合文本按 $...$ 切分渲染
+  // 3. 混合文本按 $...$ 切分渲染
   const parts = text.split(/(\$[^$]+\$)/g);
   if (parts.length === 1) return text; // 无数学标记，直接纯文本
   return (
@@ -105,54 +126,94 @@ function hasLatex(text: string): boolean {
   return /\\[a-zA-Z]|[_^]\{?[\w]|=|<|>|\+|-|\*/.test(text);
 }
 
-/** 检测 LaTeX 是否包含需要 displayMode 的特殊矩阵/分段环境（如 cases、matrix 等） */
-function needsBlockMode(latex: string): boolean {
+/** 检测 LaTeX 是否包含需要 displayMode 的特殊矩阵/分段环境（如 cases、matrix 等，不包含可语义展开的 aligned） */
+function needsStrictBlockMode(latex: string): boolean {
   return /\\begin\{(cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|equation|equation\*|gather|gather\*|split|multline|multline\*)\}/.test(
     latex,
   );
 }
 
+export interface ParsedFormulaLine {
+  formula: string;
+  type: "main" | "sub" | "note";
+  indent?: boolean;
+}
+
 /**
- * 将多行或过长 LaTeX 定理公式拆分为多段独立行进行上下堆叠排版，防止右屏宽度溢出截断。
+ * 智能语义断行算法：
+ * 1. 优先在注释说明（\\quad, (..), \\text{..}）处断行，避免在数学等号处断裂；
+ * 2. 识别 \\implies, \\iff 等推导符，并在后续行带悬挂缩进；
+ * 3. 智能拆解 aligned 环境，保留等号完整性与步骤清晰度；
+ * 4. 彻底消除水平滚动条，保障移动端与窄屏自适应。
  */
-function splitTheoremLines(latex: string): string[] | null {
-  // 1. 优先提取 \begin{aligned}...\end{aligned}
-  const match = latex.match(/\\begin\{aligned\}([\s\S]*?)\\end\{aligned\}/);
-  if (match) {
-    const lines = match[1]
-      .split(/\\\\/)
-      .map((line) =>
-        line
-          .replace(/^\[[^\]]+\]/, "")
-          .replace(/&/g, "")
-          .trim(),
-      )
-      .filter((line) => line.length > 0);
-    return lines.length > 0 ? lines : null;
+function parseSmartFormulaLines(latex: string): ParsedFormulaLine[] | null {
+  if (!latex || needsStrictBlockMode(latex)) {
+    return null;
   }
 
-  // 2. 若公式显式包含 \\\\ 换行符
-  if (latex.includes("\\\\")) {
-    const lines = latex
-      .split(/\\\\/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-    if (lines.length > 1) return lines;
+  // 1. 提取 \begin{aligned}...\end{aligned}
+  const alignedMatch = latex.match(
+    /\\begin\{aligned\}([\s\S]*?)\\end\{aligned\}/,
+  );
+  const rawBody = alignedMatch ? alignedMatch[1] : latex;
+
+  // 按显式换行符 \\ 拆分子步骤
+  const rawLines = rawBody
+    .split(/\\\\/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+
+  const result: ParsedFormulaLine[] = [];
+
+  for (const rawLine of rawLines) {
+    // 清理 aligned 的对齐符 &
+    const line = rawLine.replace(/&/g, " ").replace(/\s+/g, " ").trim();
+    if (!line) continue;
+
+    // 规则 A: 若单行中包含明显的注释说明 (\\quad 或 ,\\quad 后跟括号/说明)
+    const quadSplit = line.split(/(?:,\s*\\quad|\\quad)/);
+    if (quadSplit.length > 1 && quadSplit[0].trim().length > 0) {
+      const mainPart = quadSplit[0].trim();
+      result.push({ formula: mainPart, type: "main" });
+
+      for (let i = 1; i < quadSplit.length; i++) {
+        const notePart = quadSplit[i].trim();
+        if (notePart) {
+          result.push({ formula: notePart, type: "note", indent: true });
+        }
+      }
+      continue;
+    }
+
+    // 规则 B: 若公式包含推导关系符 (\implies, \iff, \therefore) 且较长
+    if (line.length > 30 && /\\(implies|iff|therefore|because)/.test(line)) {
+      const match = line.match(
+        /^(.*?)\s*(\\(?:implies|iff|therefore|because)\s*.*)$/,
+      );
+      if (match && match[1] && match[2]) {
+        result.push({ formula: match[1].trim(), type: "main" });
+        result.push({ formula: match[2].trim(), type: "sub", indent: true });
+        continue;
+      }
+    }
+
+    // 规则 C: 若公式非常长 (>45字符) 且包含多个等号 (连等式 A = B = C)
+    if (line.length > 45 && (line.match(/=/g) || []).length >= 2) {
+      const parts = line.split(/\s*=\s*/);
+      if (parts.length >= 2) {
+        result.push({ formula: `${parts[0]} = ${parts[1]}`, type: "main" });
+        for (let i = 2; i < parts.length; i++) {
+          result.push({ formula: `= ${parts[i]}`, type: "sub", indent: true });
+        }
+        continue;
+      }
+    }
+
+    // 默认作为标准数学行
+    result.push({ formula: line, type: rawLines.length > 1 ? "main" : "main" });
   }
 
-  // 3. 若公式较长且含有 \quad / ,\quad，自动拆分为多行显示
-  if (
-    latex.length > 35 &&
-    (latex.includes(",\\quad") || latex.includes("\\quad"))
-  ) {
-    const lines = latex
-      .split(/,\s*\\quad|\\quad/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-    if (lines.length > 1) return lines;
-  }
-
-  return null;
+  return result.length > 0 ? result : null;
 }
 
 const THEOREM_LEVEL_STYLES: Record<
@@ -382,31 +443,74 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                           );
                         }
 
-                        // 2. 多行拆分排版 (优先处理 aligned / \\\\ / 智能长公式 \\quad 拆行)
-                        const theoremLines = splitTheoremLines(t.latex);
-                        if (theoremLines) {
-                          return (
-                            <div className="flex flex-col items-center gap-1.5 w-full py-0.5 max-w-full">
-                              {theoremLines.map((line, i) => (
-                                <KatexFormula
-                                  key={i}
-                                  formula={line}
-                                  mode="inline"
-                                  className="!my-0 font-medium max-w-full"
-                                />
-                              ))}
-                            </div>
-                          );
-                        }
-
-                        // 3. 仅当需要 cases、matrix 等特殊环境或显式指定 block 时才走 displayMode
-                        if (t.mode === "block" || needsBlockMode(t.latex)) {
+                        // 2. 原生环境 (aligned / cases / matrix 等) 或显式 block 模式：由 KaTeX 原生对齐并结合 Auto-Fit 等比缩放
+                        if (
+                          t.mode === "block" ||
+                          /\\begin\{(aligned|cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|equation|equation\*|gather|gather\*|split|multline|multline\*)\}/.test(
+                            t.latex,
+                          )
+                        ) {
                           return (
                             <KatexFormula
                               formula={t.latex}
                               mode="block"
+                              responsive={true}
                               className="!my-0 max-w-full"
                             />
+                          );
+                        }
+
+                        // 3. 智能语义断行排版 (处理包含 \\\\ / \\quad 注释 / 连等式的单行公式)
+                        const smartLines = parseSmartFormulaLines(t.latex);
+                        if (smartLines && smartLines.length > 1) {
+                          return (
+                            <div className="flex flex-col items-center gap-1.5 w-full py-0.5 max-w-full">
+                              {smartLines.map((line, i) => {
+                                if (line.type === "note") {
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="text-[12px] text-neutral-600 font-normal px-2.5 py-0.5 bg-neutral-50/90 rounded max-w-full break-words text-center"
+                                    >
+                                      {renderMixedLatex(line.formula)}
+                                    </div>
+                                  );
+                                }
+                                let indentClass = "";
+                                if (line.indent) {
+                                  if (
+                                    line.formula.startsWith("=") ||
+                                    line.formula.startsWith("\\quad =")
+                                  ) {
+                                    indentClass =
+                                      "self-start pl-6 sm:pl-8 text-neutral-800 font-medium";
+                                  } else if (
+                                    line.formula.startsWith("\\implies") ||
+                                    line.formula.startsWith("\\iff")
+                                  ) {
+                                    indentClass =
+                                      "self-start pl-4 text-primary-700 font-medium";
+                                  } else {
+                                    indentClass =
+                                      "self-start pl-4 text-neutral-700";
+                                  }
+                                }
+
+                                return (
+                                  <div
+                                    key={i}
+                                    className={`max-w-full flex items-center justify-center ${indentClass}`}
+                                  >
+                                    <KatexFormula
+                                      formula={line.formula}
+                                      mode="inline"
+                                      responsive={true}
+                                      className="!my-0 font-medium max-w-full"
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
                           );
                         }
 
@@ -415,6 +519,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                           <KatexFormula
                             formula={t.latex}
                             mode="inline"
+                            responsive={true}
                             className="!my-0 font-medium max-w-full"
                           />
                         );

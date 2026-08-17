@@ -76,7 +76,27 @@ describe("成对数据纯数学计算库单元测试", () => {
 
     expect(res.isValid).toBe(true);
     expect(res.n).toBe(200);
+    expect(res.row1).toBe(100);
+    expect(res.row2).toBe(100);
+    expect(res.col1).toBe(125);
+    expect(res.col2).toBe(75);
+
+    // 验证期望频数 E_ij
+    expect(res.expected.eA).toBeCloseTo(62.5, 2);
+    expect(res.expected.eB).toBeCloseTo(37.5, 2);
+    expect(res.expected.eC).toBeCloseTo(62.5, 2);
+    expect(res.expected.eD).toBeCloseTo(37.5, 2);
+
+    // 验证 sum (O-E)^2 / E 等于卡方统计量
+    const sumContrib =
+      res.contributions.dA +
+      res.contributions.dB +
+      res.contributions.dC +
+      res.contributions.dD;
+    expect(sumContrib).toBeCloseTo(res.chiSquare, 4);
+
     expect(res.chiSquare).toBeCloseTo(43.2, 1);
+    expect(res.chiSquareYates).toBeLessThan(res.chiSquare);
     expect(res.p999).toBe(true);
     expect(res.confidenceText).toContain("99.9% 以上的把握");
   });
