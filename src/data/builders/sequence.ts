@@ -16,6 +16,7 @@ import {
   calcLinearRecurrence,
   calcAccumulationRecurrence,
   calcMultiplicationRecurrence,
+  calcNonHomogeneousExpRecurrence,
   calcReciprocalRecurrence,
   calcSecondOrderRecurrence,
 } from "@/math/sequence";
@@ -41,6 +42,7 @@ export function buildSequencePanel(
   const theorems: MathPanelData["theorems"] = [];
   const gaokaoPoints: MathPanelData["gaokaoPoints"] = [];
   const warnings: MathPanelData["warnings"] = [];
+  let mnemonic: string | undefined = undefined;
 
   if (activeMode === "arithmetic") {
     const subMode = (config?.arithmeticSubMode as string) ?? "linear";
@@ -650,6 +652,14 @@ export function buildSequencePanel(
     }
   } else if (activeMode === "recurrence") {
     const subModel = (config?.subModel as string) ?? "linear-pan";
+    const r_rec = params.r_rec ?? 3;
+    const stepParam = params.stepParam ?? 2;
+    const accumFnType =
+      (config?.accumFnType as "arithmetic" | "geometric" | "telescoping") ??
+      "arithmetic";
+    const multType =
+      (config?.multType as "n_over_n1" | "n1_over_n" | "pow_two") ??
+      "n_over_n1";
 
     if (subModel === "linear-pan") {
       const res = calcLinearRecurrence(a1, p_rec, q_rec, N);
@@ -657,158 +667,280 @@ export function buildSequencePanel(
       const bN = res.terms[N - 1]?.bn ?? 0;
 
       quantities.push({
-        label: `原数列第 ${N} 项 a_${N}`,
-        value: `a_${N} = ${aN.toFixed(2)}`,
+        label: `原数列第 ${N} 项 $a_{${N}}$`,
+        value: `a_{${N}} = ${aN.toFixed(2)}`,
         color: MATH_COLORS.sequence,
       });
 
       if (res.fixedPoint !== null) {
         quantities.push({
-          label: "不动点 c = q / (1 - p)",
+          label: `不动点 $c = \\frac{q}{1-p}$`,
           value: `c = ${res.fixedPoint.toFixed(2)}`,
-          color: MATH_COLORS.sequenceHighlight,
+          color: MATH_COLORS.paramTertiary,
         });
 
         quantities.push({
-          label: `平移等比数列 b_${N} (b_n = a_n - c)`,
-          value: `b_${N} = ${bN.toFixed(2)}`,
+          label: `平移等比数列 $b_{${N}}$ ($b_n = a_n - c$)`,
+          value: `b_{${N}} = ${bN.toFixed(2)}`,
           color: MATH_COLORS.paramSecondary,
         });
 
         theorems.push({
           name: "待定系数法 (一阶线性递推构造)",
-          latex: `a_{n+1} - c = p(a_n - c) \\implies c = \\frac{q}{1-p} \\quad (p \\neq 1)`,
-          condition: "两边减去不动点 c，转化为公比为 p 的等比数列",
+          latex: `a_{n+1} - c = \\color{${MATH_COLORS.paramPrimary}}{p}(a_n - c) \\implies c = \\frac{\\color{${MATH_COLORS.paramSecondary}}{q}}{1-\\color{${MATH_COLORS.paramPrimary}}{p}} \\quad (p \\neq 1)`,
+          condition: `两端同时减去不动点 $c$，构造公比为 $p$ 的等比数列 $\\{a_n - c\\}$`,
         });
 
         theorems.push({
           name: "通项公式推导",
-          latex: `a_n = (a_1 - c) p^{n-1} + c`,
-          condition: `a_1=${a1}, p=${p_rec}, c=${res.fixedPoint.toFixed(2)}`,
+          latex: `a_n = (a_1 - c) \\cdot \\color{${MATH_COLORS.paramPrimary}}{p}^{n-1} + c`,
+          condition: `$a_1=${a1}, p=${p_rec}, c=${res.fixedPoint.toFixed(2)}$`,
         });
+
+        // 极限性质
+        if (Math.abs(p_rec) < 1) {
+          quantities.push({
+            label: `极限稳态 $a_\\infty$`,
+            value: `$a_\\infty = ${res.fixedPoint.toFixed(2)}$ (收敛)`,
+            color: MATH_COLORS.paramTertiary,
+          });
+        }
       } else {
         theorems.push({
           name: "退化等差数列 (p = 1)",
-          latex: `a_{n+1} = a_n + q \\implies a_n = a_1 + (n-1)q`,
-          condition: "p = 1 时递推关系化为标准等差数列",
+          latex: `a_{n+1} = a_n + \\color{${MATH_COLORS.paramSecondary}}{q} \\implies a_n = a_1 + (n-1)q`,
+          condition: `$p = 1$ 时递推关系化为标准等差数列，公差 $d = q$`,
         });
 
         warnings.push({
-          text: "p = 1 (公式退化)：此时不动点 c 不存在，递推关系退化为公差为 q 的等差数列。",
+          text: "$p = 1$ (公式退化)：此时不动点 $c$ 分母为 0，递推式退化为公差为 $q$ 的标准等差数列。",
           level: "warning",
         });
       }
 
       gaokaoPoints.push({
-        text: "高考第一大题常考：待定系数法求通项。令 a_{n+1}+x = p(a_n+x)，展开对比系数得 x = q/(1-p)，构造等比数列 {a_n + x}。图形上表现为蛛网图向不动点 (c,c) 迭代收敛或发散。",
+        text: "【新高考 4 步解答采分点】① 设待定方程 $a_{n+1}-c = p(a_n-c)$，展开得 $c = \\frac{q}{1-p}$；② 证明 $\\{a_n-c\\}$ 是以 $a_1-c$ 为首项、$p$ 为公比的等比数列；③ 写出 $a_n-c = (a_1-c)p^{n-1}$；④ 移项得 $a_n$ 通项公式并检验 $n=1$。",
         importance: "gaokao",
       });
+
+      mnemonic =
+        "常数一阶找不动，平移同减成等比；公比绝对值小于一，蛛网收敛稳态期。";
     } else if (subModel === "accumulation") {
-      const res = calcAccumulationRecurrence(a1, "linear", d, N);
+      const res = calcAccumulationRecurrence(a1, accumFnType, stepParam, N);
       const aN = res.terms[N - 1]?.an ?? 0;
+      const deltaLast = res.terms[N - 1]?.deltaK ?? 0;
 
       quantities.push({
-        label: `通项 a_${N} (a_n = a_1 + \\sum f(k))`,
-        value: `a_${N} = ${aN.toFixed(2)}`,
+        label: `通项 $a_{${N}}$`,
+        value: `a_{${N}} = ${aN.toFixed(2)}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
-        label: `末阶增量 \\Delta a_{${N - 1}}`,
-        value: `\\Delta a = ${(res.terms[N - 1]?.deltaK ?? 0).toFixed(2)}`,
-        color: MATH_COLORS.sequenceHighlight,
+        label: `末阶增量 $\\Delta a_{${N - 1}}$`,
+        value: `\\Delta a = ${deltaLast.toFixed(2)}`,
+        color: MATH_COLORS.paramSecondary,
       });
 
       theorems.push({
-        name: "累加法原理",
+        name: "累加法原理 (差分求和)",
         latex: `a_n = a_1 + \\sum_{k=1}^{n-1} (a_{k+1} - a_k) = a_1 + \\sum_{k=1}^{n-1} f(k)`,
-        condition: "已知递推关系 a_{n+1} - a_n = f(n) 且 f(n) 可求和",
+        condition: `已知 $a_{n+1} - a_n = f(n)$ 且 $f(n)$ 可求和 (适用 $n \\ge 2$)`,
+      });
+
+      theorems.push({
+        name: "本模型通项公式",
+        latex: res.formulaLatex,
+        condition: `首项 $a_1 = ${a1}$，增量参数 $\\Delta = ${stepParam}$`,
       });
 
       gaokaoPoints.push({
-        text: "高考解答题高频：累加法。写出 n-1 个递推式纵向相加，左侧中间项全消，右侧套用 f(n) 的求和公式（如等差、等比或二次式）。",
+        text: "【高考累加法必背】写出 $n-1$ 个递推式纵向排列相加，左侧相邻项两两相消仅余 $a_n - a_1$，右侧套用等差/等比或裂项求和公式，最后务必验证 $n=1$ 是否成立！",
         importance: "gaokao",
       });
+
+      mnemonic =
+        "差值为式用累加，纵向相加中间消；等差等比或裂项，求和之后验首项。";
     } else if (subModel === "multiplication") {
-      const res = calcMultiplicationRecurrence(a1, "n_over_n1", N);
+      const res = calcMultiplicationRecurrence(a1, multType, N);
       const aN = res.terms[N - 1]?.an ?? 0;
 
       quantities.push({
-        label: `通项 a_${N} (a_n = a_1 \\prod f(k))`,
-        value: `a_${N} = ${aN.toFixed(4)}`,
+        label: `通项 $a_{${N}}$`,
+        value: `a_{${N}} = ${aN.toFixed(4)}`,
         color: MATH_COLORS.sequence,
       });
 
       theorems.push({
         name: "累乘法原理",
         latex: `a_n = a_1 \\cdot \\frac{a_2}{a_1} \\cdot \\frac{a_3}{a_2} \\cdots \\frac{a_n}{a_{n-1}} = a_1 \\prod_{k=1}^{n-1} f(k)`,
-        condition: "已知递推关系 a_{n+1} / a_n = f(n) 且 f(n) 可相消或连乘",
+        condition: `已知 $\\frac{a_{n+1}}{a_n} = f(n)$ 且各项非零、$f(n)$ 可连乘相消 (适用 $n \\ge 2$)`,
+      });
+
+      theorems.push({
+        name: "通项结果",
+        latex: res.formulaLatex,
+        condition: `首项 $a_1 = ${a1}$`,
       });
 
       gaokaoPoints.push({
-        text: "高考技巧：累乘法。写出 n-1 个比值式纵向相乘，两两对销只余 a_n / a_1，右侧化简为多项式或阶乘形式。",
+        text: "【高考累乘法关键】写出 $n-1$ 个比值式纵向相乘，分子分母交叉对消只余 $\\frac{a_n}{a_1}$。注意先说明 $a_n \\neq 0$，最后检验 $n=1$。",
         importance: "gaokao",
       });
+
+      mnemonic =
+        "商值为式用累乘，纵向相乘分子消；首尾相连余一项，化简通项验第一。";
+    } else if (subModel === "non-homogeneous") {
+      const res = calcNonHomogeneousExpRecurrence(a1, p_rec, q_rec, r_rec, N);
+      const aN = res.terms[N - 1]?.an ?? 0;
+      const bN = res.terms[N - 1]?.bn ?? 0;
+
+      quantities.push({
+        label: `通项 $a_{${N}}$`,
+        value: `a_{${N}} = ${aN.toFixed(2)}`,
+        color: MATH_COLORS.sequence,
+      });
+
+      quantities.push({
+        label: `构造项 $b_{${N}}$ ($b_n = \\frac{a_n}{${r_rec}^n}$)`,
+        value: `b_{${N}} = ${bN.toFixed(3)}`,
+        color: MATH_COLORS.paramSecondary,
+      });
+
+      if (res.isResonant) {
+        theorems.push({
+          name: "同除构造法 (共振临界 p = r)",
+          latex: `\\frac{a_{n+1}}{\\color{${MATH_COLORS.paramTertiary}}{r}^{n+1}} = \\frac{a_n}{\\color{${MATH_COLORS.paramTertiary}}{r}^n} + \\frac{\\color{${MATH_COLORS.paramSecondary}}{q}}{\\color{${MATH_COLORS.paramTertiary}}{r}} \\implies b_{n+1} = b_n + d`,
+          condition: `当 $p = r = ${p_rec}$ 时，同除 $r^{n+1}$ 直接化为公差 $d = \\frac{q}{r}$ 的等差数列`,
+        });
+
+        warnings.push({
+          text: "共振临界 ($p = r$)：两边同除 $r^{n+1}$ 后，辅助数列 $\\{b_n\\}$ 退化为公差为 $\\frac{q}{r}$ 的等差数列！",
+          level: "info",
+        });
+      } else {
+        theorems.push({
+          name: "同除构造法 (一阶非齐次指数型)",
+          latex: `\\frac{a_{n+1}}{\\color{${MATH_COLORS.paramTertiary}}{r}^{n+1}} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{p}}{\\color{${MATH_COLORS.paramTertiary}}{r}} \\cdot \\frac{a_n}{\\color{${MATH_COLORS.paramTertiary}}{r}^n} + \\frac{\\color{${MATH_COLORS.paramSecondary}}{q}}{\\color{${MATH_COLORS.paramTertiary}}{r}}`,
+          condition: `两边同除 $r^{n+1}$，令 $b_n = \\frac{a_n}{r^n}$，化为一阶线性递推 $b_{n+1} = \\frac{p}{r}b_n + \\frac{q}{r}$`,
+        });
+      }
+
+      theorems.push({
+        name: "通项公式推导结果",
+        latex: res.formulaLatex,
+        condition: `$a_1=${a1}, p=${p_rec}, q=${q_rec}, r=${r_rec}$`,
+      });
+
+      gaokaoPoints.push({
+        text: "【新高考超高频压轴技巧】$a_{n+1} = pa_n + q \\cdot r^n$ 型两边同除 $r^{n+1}$ 构造 $b_n = \\frac{a_n}{r^n}$。若 $p=r$ 则 $\\{b_n\\}$ 为等差数列；若 $p \\neq r$ 则 $\\{b_n\\}$ 为一阶线性递推，可用待定系数法再构造等比。",
+        importance: "gaokao",
+      });
+
+      mnemonic =
+        "指数非齐同除幂，两边除以 r 次方；化归一阶或等差，求出辅助还原本。";
     } else if (subModel === "reciprocal") {
       const res = calcReciprocalRecurrence(a1, coefA, coefB, coefC, N);
       const aN = res.terms[N - 1]?.an ?? 0;
       const bN = res.terms[N - 1]?.bn ?? 0;
 
       quantities.push({
-        label: `原通项 a_${N}`,
-        value: Number.isNaN(aN) ? "发散/无定义" : `a_${N} = ${aN.toFixed(4)}`,
+        label: `原通项 $a_{${N}}$`,
+        value: Number.isNaN(aN) ? "发散/无定义" : `a_{${N}} = ${aN.toFixed(4)}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
-        label: `倒数构造项 b_${N} (b_n = 1/a_n)`,
-        value: Number.isNaN(bN) ? "无定义" : `b_${N} = ${bN.toFixed(4)}`,
+        label: `倒数构造项 $b_{${N}}$ ($b_n = \\frac{1}{a_n}$)`,
+        value: Number.isNaN(bN) ? "无定义" : `b_{${N}} = ${bN.toFixed(4)}`,
         color: MATH_COLORS.paramSecondary,
       });
 
-      theorems.push({
-        name: "倒数构造法 (分式递推)",
-        latex: `a_{n+1} = \\frac{A a_n}{B a_n + C} \\implies \\frac{1}{a_{n+1}} = \\frac{C}{A} \\cdot \\frac{1}{a_n} + \\frac{B}{A}`,
-        condition: "分式递推取倒数，转化为一阶线性递推 b_{n+1} = p b_n + q",
-      });
+      if (res.isReciprocalLinear) {
+        theorems.push({
+          name: "倒数构造等差数列 (A = C 特例)",
+          latex: `\\frac{1}{a_{n+1}} = \\frac{1}{a_n} + \\frac{\\color{${MATH_COLORS.paramSecondary}}{B}}{\\color{${MATH_COLORS.paramPrimary}}{A}} \\implies b_{n+1} = b_n + d`,
+          condition: `$A = C = ${coefA}$ 时，倒数数列 $\\{\\frac{1}{a_n}\\}$ 为公差 $d = \\frac{B}{A} = ${(coefB / coefA).toFixed(2)}$ 的等差数列`,
+        });
+      } else {
+        theorems.push({
+          name: "倒数构造一阶线性 (分式递推)",
+          latex: `\\frac{1}{a_{n+1}} = \\frac{\\color{${MATH_COLORS.paramTertiary}}{C}}{\\color{${MATH_COLORS.paramPrimary}}{A}} \\cdot \\frac{1}{a_n} + \\frac{\\color{${MATH_COLORS.paramSecondary}}{B}}{\\color{${MATH_COLORS.paramPrimary}}{A}}`,
+          condition: `两边取倒数，令 $b_n = \\frac{1}{a_n}$，转化为一阶线性递推 $b_{n+1} = \\frac{C}{A}b_n + \\frac{B}{A}$`,
+        });
+      }
 
       gaokaoPoints.push({
-        text: "高考难题突破：取倒数构造。当递推式分子为单项 a_n、分母为一次式时，取倒数令 b_n = 1/a_n，转化为构造等差/等比数列求出 b_n，再倒数回 a_n。",
+        text: "【高考分式求通项】当分子仅有 $a_n$ 一次项、分母为一次式时，两边取倒数构造 $b_n = \\frac{1}{a_n}$。特别注意先说明 $a_n \\neq 0$ 并检验分母非零。",
         importance: "hard",
       });
 
       if (Math.abs(coefB) < 1e-9) {
         warnings.push({
-          text: "B = 0 (退化为纯比例)：分母二次项为 0 时，无需取倒数，原式即为标准等比数列。",
+          text: "$B = 0$ (退化为纯比例)：分母二次项为 0 时，无需取倒数，原递推式直接等价于公比为 $\\frac{A}{C}$ 的等比数列。",
           level: "info",
         });
       }
+
+      mnemonic =
+        "分式递推分子单，两边取倒现乾坤；化归等差或一阶，算得倒数再翻转。";
     } else if (subModel === "second-order") {
       const res = calcSecondOrderRecurrence(a1, a2, p_rec, q_rec, N);
       const aN = res.terms[N - 1]?.an ?? 0;
+      const bN = res.terms[N - 1]?.bn ?? 0;
 
       quantities.push({
-        label: `二阶递推通项 a_${N}`,
-        value: `a_${N} = ${aN.toFixed(2)}`,
+        label: `二阶递推通项 $a_{${N}}$`,
+        value: `a_{${N}} = ${aN.toFixed(2)}`,
         color: MATH_COLORS.sequence,
       });
 
-      quantities.push({
-        label: "特征根 r₁, r₂",
-        value: `r₁ = ${res.r1.toFixed(2)}, r₂ = ${res.r2.toFixed(2)}`,
-        color: MATH_COLORS.sequenceHighlight,
-      });
+      if (res.delta >= 0) {
+        quantities.push({
+          label: `特征根 $r_1, r_2$`,
+          value: `r_1 = ${res.r1.toFixed(2)}, r_2 = ${res.r2.toFixed(2)}`,
+          color: MATH_COLORS.paramSecondary,
+        });
 
-      theorems.push({
-        name: "特征方程法 (二阶常系数线性递推)",
-        latex: `x^2 - p x - q = 0 \\implies a_n = C_1 r_1^n + C_2 r_2^n \\quad (r_1 \\neq r_2)`,
-        condition: "特征方程求得两不相等实根时通项的线性组合",
-      });
+        quantities.push({
+          label: `降阶等比项 $b_{${N}}$ ($b_n = a_{n+1} - r_1 a_n$)`,
+          value: `b_{${N}} = ${bN.toFixed(2)}`,
+          color: MATH_COLORS.paramSecondary,
+        });
+
+        if (Math.abs(res.r1 - res.r2) < 1e-9) {
+          theorems.push({
+            name: "重特征根型 (Δ = 0)",
+            latex: `(x - r)^2 = 0 \\implies a_n = (C_1 + C_2 n) r^{n-1} \\quad (r = ${res.r1.toFixed(2)})`,
+            condition: `特征方程有二重实根 $r_1 = r_2 = ${res.r1.toFixed(2)}$`,
+          });
+        } else {
+          theorems.push({
+            name: "特征方程法 (二阶常系数线性递推)",
+            latex: `x^2 - \\color{${MATH_COLORS.paramPrimary}}{p} x - \\color{${MATH_COLORS.paramSecondary}}{q} = 0 \\implies a_n = C_1 r_1^n + C_2 r_2^n \\quad (r_1 \\neq r_2)`,
+            condition: `判别式 $\\Delta = p^2 + 4q = ${res.delta.toFixed(2)} > 0$，两不同特征根为 $r_1=${res.r1.toFixed(2)}, r_2=${res.r2.toFixed(2)}$`,
+          });
+        }
+
+        theorems.push({
+          name: "构造降阶等比数列",
+          latex: `a_{n+2} - r_1 a_{n+1} = r_2 (a_{n+1} - r_1 a_n)`,
+          condition: `令 $b_n = a_{n+1} - r_1 a_n$，则 $\\{b_n\\}$ 为公比为 $r_2 = ${res.r2.toFixed(2)}$ 的等比数列`,
+        });
+      } else {
+        warnings.push({
+          text: `特征方程判别式 $\\Delta = p^2 + 4q = ${res.delta.toFixed(2)} < 0$，无实特征根（新高考仅考查 $\\Delta \\ge 0$ 实数特征根模型）。`,
+          level: "danger",
+        });
+      }
 
       gaokaoPoints.push({
-        text: "高考压轴题应用：二阶递推与特征方程。通过构造 a_{n+2} - r_1 a_{n+1} = r_2 (a_{n+1} - r_1 a_n)，将二阶递推转化为一阶等比递推。",
+        text: "【新高考二阶递推标准解法】解特征方程求根 $r_1, r_2$，构造等比数列 $b_n = a_{n+1} - r_1 a_n = (a_2 - r_1 a_1) r_2^{n-1}$，再用累加法或待定系数求解 $a_n$。",
         importance: "hard",
       });
+
+      mnemonic =
+        "二阶递推特征根，方程求出 r₁ r₂；构造等比公比定，降阶求通势如破。";
     }
   }
 
@@ -817,5 +949,6 @@ export function buildSequencePanel(
     theorems,
     gaokaoPoints,
     warnings,
+    mnemonic,
   };
 }

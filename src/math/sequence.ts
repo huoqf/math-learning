@@ -896,43 +896,79 @@ export interface AccumulationRecurrenceTerm {
   Sn: number;
 }
 
+export type AccumulationFnType = "arithmetic" | "geometric" | "telescoping";
+
 export interface AccumulationRecurrenceResult {
   isValid: boolean;
   terms: AccumulationRecurrenceTerm[];
   a1: number;
-  stepType: "linear" | "exponential";
-  stepParam: number;
+  fnType: AccumulationFnType;
+  fnParam: number;
   N: number;
+  formulaLatex: string;
 }
 
 /**
  * 2. 累加法：a_{n+1} = a_n + f(n)
+ * 支持：等差型 f(n)=d*n, 指数型 f(n)=q^n, 裂项型 f(n)=1/(n(n+1))
  */
 export function calcAccumulationRecurrence(
   a1: number,
-  stepType: "linear" | "exponential",
-  stepParam: number,
+  fnType: AccumulationFnType | "linear" | "exponential",
+  fnParam: number,
   N: number,
 ): AccumulationRecurrenceResult {
   const terms: AccumulationRecurrenceTerm[] = [];
   let currentAn = a1;
   let currentSum = 0;
 
+  const normalizedType: AccumulationFnType =
+    fnType === "linear"
+      ? "arithmetic"
+      : fnType === "exponential"
+        ? "geometric"
+        : fnType;
+
+  const getDelta = (k: number): number => {
+    switch (normalizedType) {
+      case "arithmetic":
+        return fnParam * k;
+      case "geometric":
+        return Math.pow(fnParam, k);
+      case "telescoping":
+        return 1 / (k * (k + 1));
+      default:
+        return fnParam * k;
+    }
+  };
+
   for (let n = 1; n <= N; n++) {
     currentSum += currentAn;
-    const deltaK =
-      stepType === "linear" ? stepParam * n : Math.pow(stepParam, n - 1);
+    const deltaK = getDelta(n);
     terms.push({ n, deltaK, an: currentAn, Sn: currentSum });
     currentAn += deltaK;
+  }
+
+  let formulaLatex = "";
+  if (normalizedType === "arithmetic") {
+    formulaLatex = `a_n = a_1 + \\frac{${fnParam}n(n-1)}{2}`;
+  } else if (normalizedType === "geometric") {
+    formulaLatex =
+      fnParam === 1
+        ? `a_n = a_1 + (n-1)`
+        : `a_n = a_1 + \\frac{${fnParam}(${fnParam}^{n-1}-1)}{${fnParam}-1}`;
+  } else {
+    formulaLatex = `a_n = a_1 + 1 - \\frac{1}{n}`;
   }
 
   return {
     isValid: true,
     terms,
     a1,
-    stepType,
-    stepParam,
+    fnType: normalizedType,
+    fnParam,
     N,
+    formulaLatex,
   };
 }
 
@@ -947,8 +983,9 @@ export interface MultiplicationRecurrenceResult {
   isValid: boolean;
   terms: MultiplicationRecurrenceTerm[];
   a1: number;
-  multType: "n_over_n1" | "n1_over_n";
+  multType: "n_over_n1" | "n1_over_n" | "pow_two";
   N: number;
+  formulaLatex: string;
 }
 
 /**
@@ -956,18 +993,40 @@ export interface MultiplicationRecurrenceResult {
  */
 export function calcMultiplicationRecurrence(
   a1: number,
-  multType: "n_over_n1" | "n1_over_n",
+  multType: "n_over_n1" | "n1_over_n" | "pow_two",
   N: number,
 ): MultiplicationRecurrenceResult {
   const terms: MultiplicationRecurrenceTerm[] = [];
   let currentAn = a1;
   let currentSum = 0;
 
+  const getRatio = (k: number): number => {
+    switch (multType) {
+      case "n_over_n1":
+        return k / (k + 1);
+      case "n1_over_n":
+        return (k + 1) / k;
+      case "pow_two":
+        return Math.pow(2, k);
+      default:
+        return k / (k + 1);
+    }
+  };
+
   for (let n = 1; n <= N; n++) {
     currentSum += currentAn;
-    const ratioK = multType === "n_over_n1" ? n / (n + 1) : (n + 1) / n;
+    const ratioK = getRatio(n);
     terms.push({ n, ratioK, an: currentAn, Sn: currentSum });
     currentAn *= ratioK;
+  }
+
+  let formulaLatex = "";
+  if (multType === "n_over_n1") {
+    formulaLatex = `a_n = \\frac{a_1}{n}`;
+  } else if (multType === "n1_over_n") {
+    formulaLatex = `a_n = n \\cdot a_1`;
+  } else {
+    formulaLatex = `a_n = a_1 \\cdot 2^{\\frac{n(n-1)}{2}}`;
   }
 
   return {
@@ -976,6 +1035,96 @@ export function calcMultiplicationRecurrence(
     a1,
     multType,
     N,
+    formulaLatex,
+  };
+}
+
+export interface NonHomogeneousExpTerm {
+  n: number;
+  an: number;
+  bn: number; // 构造数列 bn = an / (r^n) 或待定平移项
+  Sn: number;
+}
+
+export interface NonHomogeneousExpResult {
+  isValid: boolean;
+  terms: NonHomogeneousExpTerm[];
+  a1: number;
+  p: number;
+  q: number;
+  r: number;
+  N: number;
+  isResonant: boolean; // p = r 共振临界（同除后化为等差数列）
+  formulaLatex: string;
+}
+
+/**
+ * 4. 指数非齐次递推：a_{n+1} = p * a_n + q * r^n (新高考必考同除构造模型)
+ */
+export function calcNonHomogeneousExpRecurrence(
+  a1: number,
+  p: number,
+  q: number,
+  r: number,
+  N: number,
+): NonHomogeneousExpResult {
+  if (
+    N <= 0 ||
+    !Number.isFinite(a1) ||
+    !Number.isFinite(p) ||
+    !Number.isFinite(q) ||
+    !Number.isFinite(r)
+  ) {
+    return {
+      isValid: false,
+      terms: [],
+      a1,
+      p,
+      q,
+      r,
+      N,
+      isResonant: false,
+      formulaLatex: "",
+    };
+  }
+
+  const isResonant = Math.abs(p - r) < 1e-9;
+  const terms: NonHomogeneousExpTerm[] = [];
+  let currentAn = a1;
+  let currentSum = 0;
+
+  for (let n = 1; n <= N; n++) {
+    currentSum += currentAn;
+    // 构造数列 bn = an / (r^n)
+    const rPowN = Math.pow(r, n);
+    const bn = Math.abs(rPowN) > 1e-9 ? currentAn / rPowN : 0;
+    terms.push({ n, an: currentAn, bn, Sn: currentSum });
+
+    const nextAn = p * currentAn + q * Math.pow(r, n);
+    currentAn = nextAn;
+  }
+
+  let formulaLatex = "";
+  if (isResonant) {
+    // p = r: bn+1 = bn + q/r (等差数列，公差 d = q/r)
+    formulaLatex = `a_n = [a_1 + (n-1)q] \\cdot ${p}^{n-1}`;
+  } else {
+    // p != r: an = C * p^(n-1) + [q*r/(r-p)] * r^(n-1)
+    const lambda = (q * r) / (r - p);
+    const C = a1 - lambda;
+    formulaLatex = `a_n = (${C.toFixed(2)}) \\cdot ${p}^{n-1} + (${lambda.toFixed(2)}) \\cdot ${r}^{n-1}`;
+  }
+
+  return {
+    isValid: true,
+    terms,
+    a1,
+    p,
+    q,
+    r,
+    N,
+    isResonant,
+    formulaLatex,
   };
 }
 
@@ -994,11 +1143,12 @@ export interface ReciprocalRecurrenceResult {
   B: number;
   C: number;
   N: number;
-  isReciprocalLinear: boolean;
+  isReciprocalLinear: boolean; // A = C 时倒数为等差数列
+  fixedPoints: number[]; // 特征不动点 x = (Ax)/(Bx+C)
 }
 
 /**
- * 4. 倒数构造法：a_{n+1} = A * a_n / (B * a_n + C) => 1/a_{n+1} = (C/A)*(1/a_n) + B/A
+ * 5. 倒数与分式递推构造法：a_{n+1} = A * a_n / (B * a_n + C)
  */
 export function calcReciprocalRecurrence(
   a1: number,
@@ -1024,6 +1174,15 @@ export function calcReciprocalRecurrence(
     }
   }
 
+  // 不动点求解: B x^2 + (C - A) x = 0 => x = 0 或 x = (A - C) / B
+  const fixedPoints: number[] = [0];
+  if (Math.abs(B) > 1e-9) {
+    const nonZeroFp = (A - C) / B;
+    if (Math.abs(nonZeroFp) > 1e-9) {
+      fixedPoints.push(nonZeroFp);
+    }
+  }
+
   return {
     isValid: true,
     terms,
@@ -1032,7 +1191,8 @@ export function calcReciprocalRecurrence(
     B,
     C,
     N,
-    isReciprocalLinear: Math.abs(A - C) < 1e-9, // 当 A=C 时，倒数 bn 为等差数列
+    isReciprocalLinear: Math.abs(A - C) < 1e-9, // 当 A=C 时，倒数 bn 为等差数列 (公差 B/A)
+    fixedPoints,
   };
 }
 
@@ -1053,10 +1213,11 @@ export interface SecondOrderRecurrenceResult {
   N: number;
   r1: number;
   r2: number;
+  delta: number;
 }
 
 /**
- * 5. 二阶常系数线性递推：a_{n+2} = p * a_{n+1} + q * a_n (特征方程 x^2 - p*x - q = 0)
+ * 6. 二阶常系数线性递推：a_{n+2} = p * a_{n+1} + q * a_n (特征方程 x^2 - p*x - q = 0)
  */
 export function calcSecondOrderRecurrence(
   a1: number,
@@ -1111,5 +1272,6 @@ export function calcSecondOrderRecurrence(
     N,
     r1,
     r2,
+    delta,
   };
 }
