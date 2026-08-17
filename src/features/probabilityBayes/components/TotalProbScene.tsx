@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateTotalProb } from "@/math/probabilityBayes";
 
@@ -8,6 +8,10 @@ interface TotalProbSceneProps {
 }
 
 export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
+  const [highlightedPartition, setHighlightedPartition] = useState<
+    number | null
+  >(null);
+
   const totalProbData = useMemo(() => {
     const pA1 = params.pA1 ?? 0.4;
     const pA2 = params.pA2 ?? 0.35;
@@ -37,11 +41,11 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
   }, [params.pA1, params.pA2, params.pB_A1, params.pB_A2, params.pB_A3]);
 
   // 840 x 650 预设标准坐标系
-  // 1. 左半区：完备矩形划分 (x: 45 ~ 410, y: 75 ~ 505)
-  const leftWidth = 365;
+  // 1. 左半区：完备矩形划分 (x: 45 ~ 405, y: 70 ~ 490)
+  const leftWidth = 360;
   const startX = 45;
-  const startY = 75;
-  const treemapHeight = 430;
+  const startY = 70;
+  const treemapHeight = 420;
 
   const w1 = leftWidth * totalProbData.partitions[0].pAi;
   const w2 = leftWidth * totalProbData.partitions[1].pAi;
@@ -51,32 +55,35 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
   const h2B = treemapHeight * totalProbData.partitions[1].pB_given_Ai;
   const h3B = treemapHeight * totalProbData.partitions[2].pB_given_Ai;
 
-  // 2. 右半区：树状图分支与汇聚 (x: 435 ~ 800, y: 75 ~ 505)
-  const treeStartX = 450;
-  const rootPt = { x: treeStartX + 20, y: 290 };
+  // 2. 右半区：树状图分支与汇聚 (x: 435 ~ 795, y: 70 ~ 490)
+  const treeStartX = 445;
+  const rootPt = { x: treeStartX + 20, y: 280 };
 
   const nodesA = [
     {
       x: treeStartX + 140,
-      y: 130,
+      y: 120,
       item: totalProbData.partitions[0],
       color: MATH_COLORS.paramPrimary,
+      idx: 0,
     },
     {
       x: treeStartX + 140,
-      y: 290,
+      y: 280,
       item: totalProbData.partitions[1],
       color: MATH_COLORS.paramSecondary,
+      idx: 1,
     },
     {
       x: treeStartX + 140,
-      y: 450,
+      y: 440,
       item: totalProbData.partitions[2],
       color: MATH_COLORS.paramTertiary,
+      idx: 2,
     },
   ];
 
-  const nodeB = { x: treeStartX + 280, y: 290 };
+  const nodeB = { x: treeStartX + 290, y: 280 };
 
   return (
     <g>
@@ -88,7 +95,7 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
         fontWeight="bold"
         fill={MATH_COLORS.labelText}
       >
-        1. 完备划分与加权面积图 (各色块面积 = 联合概率 P(A_i B))
+        1. 完备划分加权面积图（底宽×高 = 联合概率 P(A_i B)）
       </text>
 
       {/* 外边框（全集 Ω） */}
@@ -104,64 +111,91 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
       />
 
       {/* 分区 1 (A1) */}
-      <rect
-        x={startX}
-        y={startY}
-        width={w1}
-        height={treemapHeight}
-        fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
-        stroke={MATH_COLORS.paramPrimary}
-        strokeWidth={1.5}
-      />
-      <rect
-        x={startX}
-        y={startY + (treemapHeight - h1B)}
-        width={w1}
-        height={h1B}
-        fill={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
-        stroke={MATH_COLORS.paramPrimary}
-        strokeWidth={1.5}
-      />
+      <g
+        onMouseEnter={() => setHighlightedPartition(0)}
+        onMouseLeave={() => setHighlightedPartition(null)}
+        className="cursor-pointer transition-opacity"
+        opacity={
+          highlightedPartition === null || highlightedPartition === 0 ? 1 : 0.35
+        }
+      >
+        <rect
+          x={startX}
+          y={startY}
+          width={w1}
+          height={treemapHeight}
+          fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
+          stroke={MATH_COLORS.paramPrimary}
+          strokeWidth={1.5}
+        />
+        <rect
+          x={startX}
+          y={startY + (treemapHeight - h1B)}
+          width={w1}
+          height={h1B}
+          fill={withAlpha(MATH_COLORS.paramPrimary, 0.65)}
+          stroke={MATH_COLORS.paramPrimary}
+          strokeWidth={2}
+        />
+      </g>
 
       {/* 分区 2 (A2) */}
-      <rect
-        x={startX + w1}
-        y={startY}
-        width={w2}
-        height={treemapHeight}
-        fill={withAlpha(MATH_COLORS.paramSecondary, 0.08)}
-        stroke={MATH_COLORS.paramSecondary}
-        strokeWidth={1.5}
-      />
-      <rect
-        x={startX + w1}
-        y={startY + (treemapHeight - h2B)}
-        width={w2}
-        height={h2B}
-        fill={withAlpha(MATH_COLORS.paramSecondary, 0.6)}
-        stroke={MATH_COLORS.paramSecondary}
-        strokeWidth={1.5}
-      />
+      <g
+        onMouseEnter={() => setHighlightedPartition(1)}
+        onMouseLeave={() => setHighlightedPartition(null)}
+        className="cursor-pointer transition-opacity"
+        opacity={
+          highlightedPartition === null || highlightedPartition === 1 ? 1 : 0.35
+        }
+      >
+        <rect
+          x={startX + w1}
+          y={startY}
+          width={w2}
+          height={treemapHeight}
+          fill={withAlpha(MATH_COLORS.paramSecondary, 0.08)}
+          stroke={MATH_COLORS.paramSecondary}
+          strokeWidth={1.5}
+        />
+        <rect
+          x={startX + w1}
+          y={startY + (treemapHeight - h2B)}
+          width={w2}
+          height={h2B}
+          fill={withAlpha(MATH_COLORS.paramSecondary, 0.65)}
+          stroke={MATH_COLORS.paramSecondary}
+          strokeWidth={2}
+        />
+      </g>
 
       {/* 分区 3 (A3) */}
-      <rect
-        x={startX + w1 + w2}
-        y={startY}
-        width={w3}
-        height={treemapHeight}
-        fill={withAlpha(MATH_COLORS.paramTertiary, 0.08)}
-        stroke={MATH_COLORS.paramTertiary}
-        strokeWidth={1.5}
-      />
-      <rect
-        x={startX + w1 + w2}
-        y={startY + (treemapHeight - h3B)}
-        width={w3}
-        height={h3B}
-        fill={withAlpha(MATH_COLORS.paramTertiary, 0.6)}
-        stroke={MATH_COLORS.paramTertiary}
-        strokeWidth={1.5}
-      />
+      <g
+        onMouseEnter={() => setHighlightedPartition(2)}
+        onMouseLeave={() => setHighlightedPartition(null)}
+        className="cursor-pointer transition-opacity"
+        opacity={
+          highlightedPartition === null || highlightedPartition === 2 ? 1 : 0.35
+        }
+      >
+        <rect
+          x={startX + w1 + w2}
+          y={startY}
+          width={w3}
+          height={treemapHeight}
+          fill={withAlpha(MATH_COLORS.paramTertiary, 0.08)}
+          stroke={MATH_COLORS.paramTertiary}
+          strokeWidth={1.5}
+        />
+        <rect
+          x={startX + w1 + w2}
+          y={startY + (treemapHeight - h3B)}
+          width={w3}
+          height={h3B}
+          fill={withAlpha(MATH_COLORS.paramTertiary, 0.65)}
+          stroke={MATH_COLORS.paramTertiary}
+          strokeWidth={2}
+        />
+      </g>
 
       {/* 分区顶端先验标签 */}
       <text
@@ -195,42 +229,48 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
         A₃: {(totalProbData.partitions[2].pAi * 100).toFixed(0)}%
       </text>
 
-      {/* 色块内联合概率标注 */}
-      {h1B > 24 && w1 > 30 && (
-        <text
-          x={startX + w1 / 2}
-          y={startY + (treemapHeight - h1B / 2) + 4}
-          fontSize={fontScale(11)}
-          fontWeight="bold"
-          fill={MATH_COLORS.white}
-          textAnchor="middle"
-        >
-          {totalProbData.partitions[0].pJoint.toFixed(3)}
-        </text>
+      {/* 色块内联合概率标注与几何公式 */}
+      {h1B > 24 && w1 > 36 && (
+        <g>
+          <text
+            x={startX + w1 / 2}
+            y={startY + (treemapHeight - h1B / 2) + 4}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            fill={MATH_COLORS.white}
+            textAnchor="middle"
+          >
+            {totalProbData.partitions[0].pJoint.toFixed(3)}
+          </text>
+        </g>
       )}
-      {h2B > 24 && w2 > 30 && (
-        <text
-          x={startX + w1 + w2 / 2}
-          y={startY + (treemapHeight - h2B / 2) + 4}
-          fontSize={fontScale(11)}
-          fontWeight="bold"
-          fill={MATH_COLORS.white}
-          textAnchor="middle"
-        >
-          {totalProbData.partitions[1].pJoint.toFixed(3)}
-        </text>
+      {h2B > 24 && w2 > 36 && (
+        <g>
+          <text
+            x={startX + w1 + w2 / 2}
+            y={startY + (treemapHeight - h2B / 2) + 4}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            fill={MATH_COLORS.white}
+            textAnchor="middle"
+          >
+            {totalProbData.partitions[1].pJoint.toFixed(3)}
+          </text>
+        </g>
       )}
-      {h3B > 24 && w3 > 30 && (
-        <text
-          x={startX + w1 + w2 + w3 / 2}
-          y={startY + (treemapHeight - h3B / 2) + 4}
-          fontSize={fontScale(11)}
-          fontWeight="bold"
-          fill={MATH_COLORS.white}
-          textAnchor="middle"
-        >
-          {totalProbData.partitions[2].pJoint.toFixed(3)}
-        </text>
+      {h3B > 24 && w3 > 36 && (
+        <g>
+          <text
+            x={startX + w1 + w2 + w3 / 2}
+            y={startY + (treemapHeight - h3B / 2) + 4}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            fill={MATH_COLORS.white}
+            textAnchor="middle"
+          >
+            {totalProbData.partitions[2].pJoint.toFixed(3)}
+          </text>
+        </g>
       )}
 
       {/* ─── 右半区：树状图路径与全概率汇聚 ─── */}
@@ -241,7 +281,7 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
         fontWeight="bold"
         fill={MATH_COLORS.labelText}
       >
-        2. 全概率树状路径与动态汇流
+        2. 全概率树状路径与动态汇流（分支相乘，汇流相加）
       </text>
 
       {/* 树根：全集 Ω */}
@@ -266,7 +306,15 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
 
       {/* 阶段 1 分支连线 (Ω -> Ai) */}
       {nodesA.map((nA, idx) => (
-        <g key={`branch1-${idx}`}>
+        <g
+          key={`branch1-${idx}`}
+          opacity={
+            highlightedPartition === null || highlightedPartition === idx
+              ? 1
+              : 0.35
+          }
+          className="transition-opacity"
+        >
           <line
             x1={rootPt.x + 22}
             y1={rootPt.y}
@@ -274,11 +322,11 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
             y2={nA.y}
             stroke={nA.color}
             strokeWidth={Math.max(2, nA.item.pAi * 10)}
-            opacity={0.85}
+            strokeLinecap="round"
           />
           {/* 分支概率标注 */}
           <text
-            x={(rootPt.x + nA.x) / 2 - 10}
+            x={(rootPt.x + nA.x) / 2 - 8}
             y={(rootPt.y + nA.y) / 2 - 8}
             fontSize={fontScale(11)}
             fontWeight="bold"
@@ -292,14 +340,24 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
 
       {/* 阶段 1 节点 (Ai) */}
       {nodesA.map((nA, idx) => (
-        <g key={`nodeA-${idx}`}>
+        <g
+          key={`nodeA-${idx}`}
+          opacity={
+            highlightedPartition === null || highlightedPartition === idx
+              ? 1
+              : 0.35
+          }
+          className="cursor-pointer transition-opacity"
+          onMouseEnter={() => setHighlightedPartition(idx)}
+          onMouseLeave={() => setHighlightedPartition(null)}
+        >
           <circle
             cx={nA.x}
             cy={nA.y}
             r={24}
             fill={MATH_COLORS.white}
             stroke={nA.color}
-            strokeWidth={2.5}
+            strokeWidth={highlightedPartition === idx ? 4 : 2.5}
           />
           <text
             x={nA.x}
@@ -316,7 +374,15 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
 
       {/* 阶段 2 分支连线 (Ai -> B) */}
       {nodesA.map((nA, idx) => (
-        <g key={`branch2-${idx}`}>
+        <g
+          key={`branch2-${idx}`}
+          opacity={
+            highlightedPartition === null || highlightedPartition === idx
+              ? 1
+              : 0.35
+          }
+          className="transition-opacity"
+        >
           <line
             x1={nA.x + 24}
             y1={nA.y}
@@ -325,7 +391,7 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
             stroke={nA.color}
             strokeWidth={Math.max(1.5, nA.item.pJoint * 12)}
             strokeDasharray={nA.item.pB_given_Ai === 0 ? "4 4" : undefined}
-            opacity={0.9}
+            strokeLinecap="round"
           />
           {/* 路径联合概率标注 */}
           <text
@@ -370,13 +436,13 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
         {totalProbData.pB.toFixed(3)}
       </text>
 
-      {/* ─── 底部长条卡片：全概率公式闭环数值展开 (x: 45 ~ 800, y: 525 ~ 615) ─── */}
-      <g transform="translate(45, 525)">
+      {/* ─── 底部长条卡片：全概率公式闭环数值展开 (x: 45 ~ 800, y: 515 ~ 620) ─── */}
+      <g transform="translate(45, 515)">
         <rect
           x={0}
           y={0}
-          width={755}
-          height={85}
+          width={750}
+          height={95}
           rx={12}
           fill={MATH_COLORS.white}
           stroke={MATH_COLORS.function}
@@ -384,7 +450,7 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
         />
         <text
           x={16}
-          y={24}
+          y={26}
           fontSize={fontScale(13)}
           fontWeight="bold"
           fill={MATH_COLORS.function}
@@ -393,7 +459,7 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
           P(A₃)P(B|A₃)
         </text>
 
-        <g transform="translate(16, 44)">
+        <g transform="translate(16, 52)">
           <text
             x={0}
             y={16}

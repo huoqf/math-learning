@@ -13,13 +13,27 @@ export function MarkovScene({
   markovPreset = "pass_ball",
   fontScale,
 }: MarkovSceneProps) {
+  const p1 = params.p1 ?? 1.0;
+  const p11 = params.p11 ?? 0.0;
+  const p21 = params.p21 ?? 0.5;
+  const maxN = params.maxN ?? 10;
+  const currStep = Math.min(
+    maxN,
+    Math.max(1, Math.round(params.currStep ?? 1)),
+  );
+
   const markovData = useMemo(() => {
-    const p1 = params.p1 ?? 1.0;
-    const p11 = params.p11 ?? 0.0;
-    const p21 = params.p21 ?? 0.5;
-    const maxN = params.maxN ?? 10;
     return calculateMarkovChain(p1, p11, p21, maxN);
-  }, [params.p1, params.p11, params.p21, params.maxN]);
+  }, [p1, p11, p21, maxN]);
+
+  // 当前选中的步数数据
+  const currentStepItem =
+    markovData.steps.find((s) => s.n === currStep) ?? markovData.steps[0];
+  const nextStepItem =
+    markovData.steps.find((s) => s.n === currStep + 1) ??
+    (currStep < markovData.steps.length
+      ? markovData.steps[currStep]
+      : currentStepItem);
 
   // 场景名称定制
   const labels = useMemo(() => {
@@ -27,41 +41,41 @@ export function MarkovScene({
       return {
         s1: "状态 1 (球在甲)",
         s2: "状态 2 (球在乙/丙)",
-        s1Short: "甲",
-        s2Short: "乙/丙",
+        s1Short: "甲 (S₁)",
+        s2Short: "乙/丙 (S₂)",
       };
     }
     if (markovPreset === "urn_ball") {
       return {
         s1: "状态 1 (摸出白球)",
         s2: "状态 2 (摸出黑球)",
-        s1Short: "白球",
-        s2Short: "黑球",
+        s1Short: "白球 (S₁)",
+        s2Short: "黑球 (S₂)",
       };
     }
     if (markovPreset === "weather") {
       return {
         s1: "状态 1 (晴天)",
         s2: "状态 2 (雨天)",
-        s1Short: "晴天",
-        s2Short: "雨天",
+        s1Short: "晴天 (S₁)",
+        s2Short: "雨天 (S₂)",
       };
     }
     return {
       s1: "状态 1 (S₁)",
       s2: "状态 2 (S₂)",
-      s1Short: "S₁",
-      s2Short: "S₂",
+      s1Short: "状态 S₁",
+      s2Short: "状态 S₂",
     };
   }, [markovPreset]);
 
   // 840 x 650 标准坐标系
-  // 1. 左侧拓扑网络节点坐标 (x: 45 ~ 415, y: 75 ~ 340)
-  const s1Center = { x: 135, y: 195 };
-  const s2Center = { x: 325, y: 195 };
+  // 1. 左侧拓扑网络节点坐标 (x: 45 ~ 405, y: 70 ~ 325)
+  const s1Center = { x: 135, y: 185 };
+  const s2Center = { x: 315, y: 185 };
   const nodeRadius = 32;
 
-  // 2. 右侧折线图坐标界限 (x: 445 ~ 795, y: 80 ~ 450)
+  // 2. 右侧折线图坐标界限 (x: 435 ~ 795, y: 70 ~ 450)
   const plotLeft = 460;
   const plotRight = 785;
   const plotTop = 115;
@@ -73,7 +87,7 @@ export function MarkovScene({
 
   return (
     <g>
-      {/* ─── 左上区：2-State 状态转移拓扑网络 (x: 45 ~ 415, y: 60 ~ 335) ─── */}
+      {/* ─── 左上区：2-State 状态转移拓扑网络 (x: 45 ~ 405, y: 55 ~ 325) ─── */}
       <text
         x={45}
         y={54}
@@ -87,9 +101,9 @@ export function MarkovScene({
       {/* 外框底板 */}
       <rect
         x={45}
-        y={70}
-        width={370}
-        height={265}
+        y={68}
+        width={360}
+        height={255}
         rx={12}
         fill={MATH_COLORS.white}
         stroke={MATH_COLORS.axis}
@@ -107,7 +121,7 @@ export function MarkovScene({
       <text
         x={s1Center.x}
         y={s1Center.y + 5}
-        fontSize={fontScale(14)}
+        fontSize={fontScale(13)}
         fontWeight="bold"
         fill={MATH_COLORS.white}
         textAnchor="middle"
@@ -126,7 +140,7 @@ export function MarkovScene({
       <text
         x={s2Center.x}
         y={s2Center.y + 5}
-        fontSize={fontScale(14)}
+        fontSize={fontScale(13)}
         fontWeight="bold"
         fill={MATH_COLORS.white}
         textAnchor="middle"
@@ -136,7 +150,7 @@ export function MarkovScene({
 
       {/* S1 节点自环弧 (p11) */}
       <path
-        d={`M ${s1Center.x - 22} ${s1Center.y - 20} A 26 26 0 1 1 ${s1Center.x - 5} ${s1Center.y - 30}`}
+        d={`M ${s1Center.x - 22} ${s1Center.y - 20} A 24 24 0 1 1 ${s1Center.x - 5} ${s1Center.y - 30}`}
         fill="none"
         stroke={MATH_COLORS.paramPrimary}
         strokeWidth={Math.max(1.5, markovData.p11 * 5)}
@@ -155,7 +169,7 @@ export function MarkovScene({
 
       {/* S2 节点自环弧 (p22) */}
       <path
-        d={`M ${s2Center.x + 5} ${s2Center.y - 30} A 26 26 0 1 1 ${s2Center.x + 22} ${s2Center.y - 20}`}
+        d={`M ${s2Center.x + 5} ${s2Center.y - 30} A 24 24 0 1 1 ${s2Center.x + 22} ${s2Center.y - 20}`}
         fill="none"
         stroke={MATH_COLORS.paramSecondary}
         strokeWidth={Math.max(1.5, markovData.p22 * 5)}
@@ -174,14 +188,14 @@ export function MarkovScene({
 
       {/* S1 -> S2 转移弧线 */}
       <path
-        d={`M ${s1Center.x + 24} ${s1Center.y - 12} Q ${(s1Center.x + s2Center.x) / 2} ${s1Center.y - 38} ${s2Center.x - 24} ${s1Center.y - 12}`}
+        d={`M ${s1Center.x + 24} ${s1Center.y - 12} Q ${(s1Center.x + s2Center.x) / 2} ${s1Center.y - 36} ${s2Center.x - 24} ${s1Center.y - 12}`}
         fill="none"
         stroke={MATH_COLORS.paramPrimary}
         strokeWidth={Math.max(1.5, markovData.p12 * 5)}
       />
       <text
         x={(s1Center.x + s2Center.x) / 2}
-        y={s1Center.y - 28}
+        y={s1Center.y - 26}
         fontSize={fontScale(11)}
         fontWeight="bold"
         fill={MATH_COLORS.paramPrimary}
@@ -192,14 +206,14 @@ export function MarkovScene({
 
       {/* S2 -> S1 转移弧线 */}
       <path
-        d={`M ${s2Center.x - 24} ${s1Center.y + 12} Q ${(s1Center.x + s2Center.x) / 2} ${s1Center.y + 38} ${s1Center.x + 24} ${s1Center.y + 12}`}
+        d={`M ${s2Center.x - 24} ${s1Center.y + 12} Q ${(s1Center.x + s2Center.x) / 2} ${s1Center.y + 36} ${s1Center.x + 24} ${s1Center.y + 12}`}
         fill="none"
         stroke={MATH_COLORS.paramSecondary}
         strokeWidth={Math.max(1.5, markovData.p21 * 5)}
       />
       <text
         x={(s1Center.x + s2Center.x) / 2}
-        y={s1Center.y + 36}
+        y={s1Center.y + 34}
         fontSize={fontScale(11)}
         fontWeight="bold"
         fill={MATH_COLORS.paramSecondary}
@@ -210,22 +224,22 @@ export function MarkovScene({
 
       {/* 底部转移矩阵说明 */}
       <text
-        x={60}
-        y={315}
+        x={58}
+        y={305}
         fontSize={fontScale(11)}
         fill={MATH_COLORS.labelTextLight}
       >
-        转移矩阵：P = [[{markovData.p11.toFixed(2)}, {markovData.p12.toFixed(2)}
+        转移矩阵 P = [[{markovData.p11.toFixed(2)}, {markovData.p12.toFixed(2)}
         ], [{markovData.p21.toFixed(2)}, {markovData.p22.toFixed(2)}]]
       </text>
 
-      {/* ─── 左下区：全概率单步推导树 (x: 45 ~ 415, y: 350 ~ 615) ─── */}
-      <g transform="translate(45, 350)">
+      {/* ─── 左下区：全概率单步推导树 (x: 45 ~ 405, y: 340 ~ 615) ─── */}
+      <g transform="translate(45, 340)">
         <rect
           x={0}
           y={0}
-          width={370}
-          height={265}
+          width={360}
+          height={275}
           rx={12}
           fill={MATH_COLORS.white}
           stroke={MATH_COLORS.function}
@@ -238,17 +252,17 @@ export function MarkovScene({
           fontWeight="bold"
           fill={MATH_COLORS.function}
         >
-          2. 全概率单步递推路径 (Step n → Step n+1)
+          2. 全概率单步递推（第 {currStep} 步 → 第 {currStep + 1} 步）
         </text>
 
         {/* 树状单步节点与分支 */}
-        <g transform="translate(20, 45)">
+        <g transform="translate(18, 40)">
           {/* Step n 状态 */}
-          <circle cx={20} cy={35} r={16} fill={MATH_COLORS.paramPrimary} />
+          <circle cx={24} cy={35} r={18} fill={MATH_COLORS.paramPrimary} />
           <text
-            x={20}
+            x={24}
             y={39}
-            fontSize={fontScale(10)}
+            fontSize={fontScale(11)}
             fontWeight="bold"
             fill={MATH_COLORS.white}
             textAnchor="middle"
@@ -256,20 +270,21 @@ export function MarkovScene({
             S₁
           </text>
           <text
-            x={20}
-            y={64}
-            fontSize={fontScale(10)}
+            x={24}
+            y={66}
+            fontSize={fontScale(10.5)}
+            fontWeight="bold"
             fill={MATH_COLORS.paramPrimary}
             textAnchor="middle"
           >
-            (pₙ)
+            p_{currStep}={currentStepItem.p1.toFixed(3)}
           </text>
 
-          <circle cx={20} cy={125} r={16} fill={MATH_COLORS.paramSecondary} />
+          <circle cx={24} cy={130} r={18} fill={MATH_COLORS.paramSecondary} />
           <text
-            x={20}
-            y={129}
-            fontSize={fontScale(10)}
+            x={24}
+            y={134}
+            fontSize={fontScale(11)}
             fontWeight="bold"
             fill={MATH_COLORS.white}
             textAnchor="middle"
@@ -277,26 +292,27 @@ export function MarkovScene({
             S₂
           </text>
           <text
-            x={20}
-            y={154}
-            fontSize={fontScale(10)}
+            x={24}
+            y={161}
+            fontSize={fontScale(10.5)}
+            fontWeight="bold"
             fill={MATH_COLORS.paramSecondary}
             textAnchor="middle"
           >
-            (1-pₙ)
+            {(1 - currentStepItem.p1).toFixed(3)}
           </text>
 
           {/* 分支连线 */}
           <line
-            x1={36}
+            x1={44}
             y1={35}
-            x2={165}
-            y2={80}
+            x2={175}
+            y2={82}
             stroke={MATH_COLORS.paramPrimary}
             strokeWidth={2}
           />
           <text
-            x={95}
+            x={100}
             y={48}
             fontSize={fontScale(10.5)}
             fontWeight="bold"
@@ -306,16 +322,16 @@ export function MarkovScene({
           </text>
 
           <line
-            x1={36}
-            y1={125}
-            x2={165}
-            y2={80}
+            x1={44}
+            y1={130}
+            x2={175}
+            y2={82}
             stroke={MATH_COLORS.paramSecondary}
             strokeWidth={2}
           />
           <text
-            x={95}
-            y={120}
+            x={100}
+            y={122}
             fontSize={fontScale(10.5)}
             fontWeight="bold"
             fill={MATH_COLORS.paramSecondary}
@@ -324,52 +340,72 @@ export function MarkovScene({
           </text>
 
           {/* Step n+1 汇总 */}
-          <circle cx={195} cy={80} r={24} fill={MATH_COLORS.function} />
+          <circle cx={205} cy={82} r={26} fill={MATH_COLORS.function} />
           <text
-            x={195}
-            y={76}
+            x={205}
+            y={78}
             fontSize={fontScale(11)}
             fontWeight="bold"
             fill={MATH_COLORS.white}
             textAnchor="middle"
           >
-            Step n+1
+            第 {currStep + 1} 步
           </text>
           <text
-            x={195}
-            y={92}
+            x={205}
+            y={95}
             fontSize={fontScale(12)}
             fontWeight="bold"
             fill={MATH_COLORS.white}
             textAnchor="middle"
           >
-            pₙ₊₁
+            p_{currStep + 1}
+          </text>
+          <text
+            x={265}
+            y={86}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fill={MATH_COLORS.function}
+          >
+            = {nextStepItem.p1.toFixed(3)}
           </text>
         </g>
 
-        {/* 底部汇总全概率公式 */}
-        <g transform="translate(14, 215)">
+        {/* 底部汇总全概率展开式 */}
+        <g transform="translate(12, 222)">
           <rect
             x={0}
             y={0}
-            width={342}
-            height={38}
+            width={336}
+            height={42}
             rx={6}
             fill={withAlpha(MATH_COLORS.function, 0.08)}
           />
           <text
-            x={10}
-            y={23}
-            fontSize={fontScale(11.5)}
+            x={8}
+            y={18}
+            fontSize={fontScale(11)}
             fontWeight="bold"
             fill={MATH_COLORS.function}
           >
-            全概式：pₙ₊₁ = pₙ·p₁₁ + (1-pₙ)·p₂₁ = {markovData.recurrenceText}
+            p_{currStep + 1} = {currentStepItem.p1.toFixed(3)}×
+            {markovData.p11.toFixed(2)} + {(1 - currentStepItem.p1).toFixed(3)}×
+            {markovData.p21.toFixed(2)}
+          </text>
+          <text
+            x={8}
+            y={34}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            fill={MATH_COLORS.labelText}
+          >
+            化简：pₙ₊₁ = {markovData.recurrenceText}
           </text>
         </g>
       </g>
 
-      {/* ─── 右区：状态概率演化折线图 (x: 435 ~ 795, y: 60 ~ 455) ─── */}
+      {/* ─── 右区：状态概率演化折线图 (x: 435 ~ 795, y: 55 ~ 455) ─── */}
       <text
         x={435}
         y={54}
@@ -383,7 +419,7 @@ export function MarkovScene({
       {/* 外框底板 */}
       <rect
         x={435}
-        y={70}
+        y={68}
         width={360}
         height={380}
         rx={12}
@@ -462,6 +498,7 @@ export function MarkovScene({
         const x =
           plotLeft + ((step.n - 1) / Math.max(1, totalSteps - 1)) * plotWidth;
         const y = plotBottom - step.p1 * plotHeight;
+        const isCurrent = step.n === currStep;
 
         let nextLine = null;
         if (idx < totalSteps - 1) {
@@ -485,11 +522,30 @@ export function MarkovScene({
         return (
           <g key={`point-${step.n}`}>
             {nextLine}
+            {isCurrent && (
+              <g>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={10}
+                  fill={withAlpha(MATH_COLORS.paramPrimary, 0.25)}
+                />
+                <line
+                  x1={x}
+                  y1={y}
+                  x2={x}
+                  y2={plotBottom}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeDasharray="2 2"
+                  strokeWidth={1}
+                />
+              </g>
+            )}
             <circle
               cx={x}
               cy={y}
-              r={4.5}
-              fill={MATH_COLORS.function}
+              r={isCurrent ? 6 : 4.5}
+              fill={isCurrent ? MATH_COLORS.paramPrimary : MATH_COLORS.function}
               stroke={MATH_COLORS.white}
               strokeWidth={1.5}
             />
@@ -497,7 +553,12 @@ export function MarkovScene({
               x={x}
               y={plotBottom + 16}
               fontSize={fontScale(9.5)}
-              fill={MATH_COLORS.labelTextLight}
+              fontWeight={isCurrent ? "bold" : "normal"}
+              fill={
+                isCurrent
+                  ? MATH_COLORS.paramPrimary
+                  : MATH_COLORS.labelTextLight
+              }
               textAnchor="middle"
             >
               {step.n}
@@ -506,13 +567,13 @@ export function MarkovScene({
         );
       })}
 
-      {/* ─── 右下区：通项公式与高考数列构造卡片 (x: 435 ~ 795, y: 465 ~ 615) ─── */}
-      <g transform="translate(435, 465)">
+      {/* ─── 右下区：通项公式与高考数列构造卡片 (x: 435 ~ 795, y: 460 ~ 615) ─── */}
+      <g transform="translate(435, 460)">
         <rect
           x={0}
           y={0}
           width={360}
-          height={150}
+          height={155}
           rx={12}
           fill={withAlpha(MATH_COLORS.derivative, 0.04)}
           stroke={withAlpha(MATH_COLORS.derivative, 0.3)}
@@ -525,7 +586,7 @@ export function MarkovScene({
           fontWeight="bold"
           fill={MATH_COLORS.derivative}
         >
-          4. 新高考核心：等比数列构造法
+          4. 新高考核心：等比数列构造通法
         </text>
 
         <text
@@ -556,15 +617,15 @@ export function MarkovScene({
 
         <rect
           x={12}
-          y={102}
+          y={104}
           width={336}
-          height={36}
+          height={40}
           rx={6}
           fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
         />
         <text
           x={20}
-          y={124}
+          y={122}
           fontSize={fontScale(10.5)}
           fontWeight="bold"
           fill={MATH_COLORS.paramPrimary}
@@ -572,6 +633,15 @@ export function MarkovScene({
           {markovData.isOscillating
             ? "【震荡收敛型】公比 λ < 0，在稳态两侧交替摆动逼近"
             : "【单调收敛型】公比 0 < λ < 1，单调逼近稳态极限"}
+        </text>
+        <text
+          x={20}
+          y={136}
+          fontSize={fontScale(9.5)}
+          fill={MATH_COLORS.labelTextLight}
+        >
+          当前观察：第 {currStep} 步 p_{currStep} ={" "}
+          {currentStepItem.p1.toFixed(4)}
         </text>
       </g>
     </g>

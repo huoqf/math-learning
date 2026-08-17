@@ -61,5 +61,15 @@ describe("probabilityBayes math module", () => {
     expect(res.steps[2].p1).toBeCloseTo(0.5);
     // p_4 = 0 * 0.5 + 0.5 * 0.5 = 0.25
     expect(res.steps[3].p1).toBeCloseTo(0.25);
+
+    // 蛛网图轨迹测试
+    expect(res.cobwebPoints.length).toBeGreaterThan(0);
+    expect(res.cobwebPoints[0].x).toBeCloseTo(1.0);
+
+    // 高考 4 步法生成测试
+    expect(res.gaokaoSteps.step1_define).toContain("设第 n 步系统处于状态");
+    expect(res.gaokaoSteps.step2_recurrence).toContain("由全概率公式");
+    expect(res.gaokaoSteps.step3_geometric).toContain("等比数列");
+    expect(res.gaokaoSteps.step4_generalTerm).toContain("通项公式");
   });
 });

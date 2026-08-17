@@ -127,17 +127,30 @@ export function ProbabilityBayesAnimation() {
     return `\\color{${MATH_COLORS.function}}{p_{n+1}} = p_{11} p_n + p_{21}(1-p_n) = ${lambdaStr} p_n + ${betaStr}`;
   }, [activeMode, params, bayesScenario]);
 
-  // 4. 左屏声明式参数配置按 activeMode 精准过滤
+  // 4. 左屏声明式参数配置按 activeMode 精准过滤与动态关联反馈
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
       conditional: ["pA", "pB", "pAB"],
       total_prob: ["pA1", "pA2", "pB_A1", "pB_A2", "pB_A3"],
       bayes: ["pPriorD", "pSensitivity", "pFalsePositive"],
-      markov: ["p1", "p11", "p21", "maxN"],
+      markov: ["p1", "p11", "p21", "currStep", "maxN"],
     };
 
     const isFactory = bayesScenario === "factory";
     const keys = keysByMode[activeMode] ?? Object.keys(paramMeta);
+
+    // 动态关联指标
+    const pA1 = params.pA1 ?? 0.4;
+    const pA2 = params.pA2 ?? 0.35;
+    const pA3 = Math.max(0, 1 - pA1 - pA2);
+
+    const p11 = params.p11 ?? 0.0;
+    const p21 = params.p21 ?? 0.5;
+    const lambda = p11 - p21;
+
+    const pA = params.pA ?? 0.5;
+    const pB = params.pB ?? 0.4;
+    const pIndep = (pA * pB).toFixed(2);
 
     return keys
       .filter((key) => key in paramMeta)
@@ -147,17 +160,45 @@ export function ProbabilityBayesAnimation() {
         let labelFormula = meta.labelFormula;
         let description = meta.description;
 
+        // 全概动态剩余提示
+        if (activeMode === "total_prob") {
+          if (key === "pA2") {
+            description = `第二块划分（自动剩余 P(A₃) = ${pA3.toFixed(2)}）`;
+          }
+        }
+
+        // 条件概率独立点对比
+        if (activeMode === "conditional") {
+          if (key === "pAB") {
+            description = `同时发生概率（独立基准点 P(A)P(B) = ${pIndep}）`;
+          }
+        }
+
+        // 马尔可夫链公比与收敛形态动态提示
+        if (activeMode === "markov") {
+          if (key === "p11" || key === "p21") {
+            const oscText =
+              lambda < -1e-6
+                ? "震荡收敛型"
+                : lambda > 1e-6
+                  ? "单调收敛型"
+                  : "稳态退化型";
+            description = `${meta.description} (当前 λ=${lambda.toFixed(2)}，${oscText})`;
+          }
+        }
+
+        // 贝叶斯场景动态定制
         if (activeMode === "bayes" && isFactory) {
           if (key === "pPriorD") {
-            label = "次品先验概率 P(Def)";
+            label = "次品先验率";
             labelFormula = "P(\\text{Def})";
-            description = "流水线生产零配件的自然次品率";
+            description = "流水线生产零件的自然次品率";
           } else if (key === "pSensitivity") {
-            label = "次品检出率 P(+|Def)";
+            label = "次品检出率";
             labelFormula = "P(+|\\text{Def})";
-            description = "质检仪器在次品中准确检测出阳性的概率";
+            description = "质检仪器对次品的准确检出率";
           } else if (key === "pFalsePositive") {
-            label = "合格误判率 P(+|~Def)";
+            label = "合格误判率";
             labelFormula = "P(+|\\bar{\\text{Def}})";
             description = "质检仪器将合格品误判为次品的概率";
           }
@@ -172,7 +213,6 @@ export function ProbabilityBayesAnimation() {
           max: meta.max,
           step: meta.step ?? 0.01,
           description,
-          descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
         };
@@ -211,21 +251,21 @@ export function ProbabilityBayesAnimation() {
           {/* 模式选择区 */}
           <LeftPanelSection
             title="模式选择"
-            subtitle="从样本空间到状态转移递推"
+            subtitle="从样本空间压缩到状态转移递推"
           >
             <TabSwitcher
               tabs={[
                 { key: "conditional", label: "条件概率", formula: "P(B|A)" },
                 {
                   key: "total_prob",
-                  label: "全概率公式",
-                  formula: "P(B)=\\sum P_i P(B|A_i)",
+                  label: "全概率",
+                  formula: "P(B)",
                 },
-                { key: "bayes", label: "贝叶斯公式", formula: "P(A_k|B)" },
+                { key: "bayes", label: "贝叶斯", formula: "P(A_k|B)" },
                 {
                   key: "markov",
-                  label: "马尔可夫链",
-                  formula: "p_{n+1}=a p_n + b",
+                  label: "马尔可夫",
+                  formula: "p_{n+1}",
                 },
               ]}
               value={activeMode}
@@ -237,7 +277,7 @@ export function ProbabilityBayesAnimation() {
           {activeMode === "conditional" && (
             <>
               <LeftPanelSection
-                title="高考经典情境预设"
+                title="高考经典情境"
                 subtitle="一键加载常考相关性模型"
               >
                 <SelectGrid
@@ -246,7 +286,7 @@ export function ProbabilityBayesAnimation() {
                     {
                       key: "independent",
                       label: "相互独立模型",
-                      description: "P(A)=0.5, P(B)=0.4, P(AB)=0.2",
+                      description: "P(A)=0.5, P(B)=0.4, P(AB)=0.20",
                     },
                     {
                       key: "correlated",
@@ -256,7 +296,7 @@ export function ProbabilityBayesAnimation() {
                     {
                       key: "exclusive",
                       label: "互斥事件模型",
-                      description: "P(AB)=0, P(B|A)=0 (分母有效)",
+                      description: "P(AB)=0, 条件概率 P(B|A)=0",
                     },
                   ]}
                   value={condPreset === "custom" ? "" : condPreset}
@@ -290,22 +330,19 @@ export function ProbabilityBayesAnimation() {
                 />
               </LeftPanelSection>
 
-              <LeftPanelSection
-                title="视角与样本空间"
-                subtitle="观察已知 A 发生下的样本空间压缩"
-              >
+              <LeftPanelSection title="观察视角" subtitle="样本空间压缩对比">
                 <SelectGrid
-                  columns={1}
+                  columns={2}
                   items={[
                     {
                       key: "full",
-                      label: "全样本空间 Ω",
-                      description: "总体 Area = 1.0",
+                      label: "全集 Ω",
+                      description: "全样本空间",
                     },
                     {
                       key: "compressed",
-                      label: "压缩样本空间 A",
-                      description: "已知 A 发生（新全集）",
+                      label: "压缩空间 A",
+                      description: "以 A 为全集",
                     },
                   ]}
                   value={isZoomedToA ? "compressed" : "full"}
@@ -315,24 +352,24 @@ export function ProbabilityBayesAnimation() {
             </>
           )}
 
-          {/* 全概率公式专属：高考模型预设 */}
+          {/* 全概率公式专属：高考模型预设 (双列紧凑) */}
           {activeMode === "total_prob" && (
             <LeftPanelSection
-              title="高考经典情境预设"
+              title="高考经典情境"
               subtitle="一键加载典型完备划分"
             >
               <SelectGrid
-                columns={1}
+                columns={2}
                 items={[
                   {
                     key: "factory3",
-                    label: "三车间加工次品模型",
-                    description: "P(A1)=0.4, P(A2)=0.35, P(A3)=0.25",
+                    label: "三车间次品",
+                    description: "40% / 35% / 25%",
                   },
                   {
                     key: "balanced",
-                    label: "三等分均衡模型",
-                    description: "P(A1)=0.33, P(A2)=0.33, P(A3)=0.34",
+                    label: "三等分均衡",
+                    description: "各 1/3 均等",
                   },
                 ]}
                 value={totalPreset === "custom" ? "" : totalPreset}
@@ -363,24 +400,24 @@ export function ProbabilityBayesAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 贝叶斯专属：经典高考场景预设 */}
+          {/* 贝叶斯专属：经典高考场景预设 (双列紧凑) */}
           {activeMode === "bayes" && (
             <LeftPanelSection
-              title="高考经典场景预设"
-              subtitle="一键加载常考应用模型"
+              title="高考经典情境"
+              subtitle="一键加载由果溯因模型"
             >
               <SelectGrid
-                columns={1}
+                columns={2}
                 items={[
                   {
                     key: "screening",
-                    label: "罕见病筛查 (基率谬误)",
-                    description: "患病率 P(D) = 2%, 灵敏度 95%",
+                    label: "罕见病筛查",
+                    description: "患病基率 2%",
                   },
                   {
                     key: "factory",
-                    label: "工厂质检次品溯源",
-                    description: "次品率 P(Def) = 8%, 检出率 98%",
+                    label: "工厂质检次品",
+                    description: "自然次品 8%",
                   },
                 ]}
                 value={bayesPreset === "custom" ? "" : bayesPreset}
@@ -412,7 +449,7 @@ export function ProbabilityBayesAnimation() {
           {/* 马尔可夫链专属：高考经典模型预设 */}
           {activeMode === "markov" && (
             <LeftPanelSection
-              title="高考经典模型预设"
+              title="高考经典模型"
               subtitle="一键加载递推数列模型"
             >
               <SelectGrid
@@ -420,18 +457,18 @@ export function ProbabilityBayesAnimation() {
                 items={[
                   {
                     key: "pass_ball",
-                    label: "甲乙传球问题",
-                    description: "p11=0.0, p21=0.5 (震荡收敛于 1/3)",
+                    label: "甲乙传球问题 (震荡收敛)",
+                    description: "p11=0.0, p21=0.5 (公比 λ=-0.5, 稳态 1/3)",
                   },
                   {
                     key: "urn_ball",
-                    label: "摸球替换模型",
-                    description: "p11=0.6, p21=0.2 (单调收敛于 1/3)",
+                    label: "摸球置换模型 (单调收敛)",
+                    description: "p11=0.6, p21=0.2 (公比 λ=0.4, 稳态 1/3)",
                   },
                   {
                     key: "weather",
                     label: "晴雨天气转移模型",
-                    description: "p11=0.7, p21=0.4 (收敛于 4/7)",
+                    description: "p11=0.7, p21=0.4 (公比 λ=0.3, 稳态 4/7)",
                   },
                 ]}
                 value={markovPreset === "custom" ? "" : markovPreset}
@@ -442,6 +479,7 @@ export function ProbabilityBayesAnimation() {
                       p1: 1.0,
                       p11: 0.0,
                       p21: 0.5,
+                      currStep: 1,
                       maxN: 10,
                     }));
                     setMarkovPreset("pass_ball");
@@ -452,6 +490,7 @@ export function ProbabilityBayesAnimation() {
                       p1: 1.0,
                       p11: 0.6,
                       p21: 0.2,
+                      currStep: 1,
                       maxN: 10,
                     }));
                     setMarkovPreset("urn_ball");
@@ -462,6 +501,7 @@ export function ProbabilityBayesAnimation() {
                       p1: 1.0,
                       p11: 0.7,
                       p21: 0.4,
+                      currStep: 1,
                       maxN: 10,
                     }));
                     setMarkovPreset("weather");

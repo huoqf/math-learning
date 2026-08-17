@@ -322,9 +322,15 @@ export function buildProbabilityBayesPanel(
   const p11Val = params.p11 ?? 0.0;
   const p21Val = params.p21 ?? 0.5;
   const maxNVal = params.maxN ?? 10;
+  const currStepVal = Math.min(
+    maxNVal,
+    Math.max(1, Math.round(params.currStep ?? 1)),
+  );
   const markovPreset = (config?.markovPreset as string) || "pass_ball";
 
   const markovRes = calculateMarkovChain(p1Val, p11Val, p21Val, maxNVal);
+  const currentStepItem =
+    markovRes.steps.find((s) => s.n === currStepVal) ?? markovRes.steps[0];
   const lastStepP1 = markovRes.steps[markovRes.steps.length - 1]?.p1 ?? 0;
 
   const modelName =
@@ -339,25 +345,25 @@ export function buildProbabilityBayesPanel(
   return {
     quantities: [
       {
-        label: "初始状态 1 概率 P1",
+        label: "初始状态 1 概率 p1",
         symbol: "p_1",
         value: p1Val.toFixed(3),
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "转移概率 P(S_{n+1}=1|S_n=1)",
+        label: "自保持概率 P(S_{n+1}=1|S_n=1)",
         symbol: "p_{11}",
         value: p11Val.toFixed(2),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "跨转移概率 P(S_{n+1}=1|S_n=2)",
+        symbol: "p_{21}",
+        value: p21Val.toFixed(2),
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "转移概率 P(S_{n+1}=1|S_n=2)",
-        symbol: "p_{21}",
-        value: p21Val.toFixed(2),
-        color: MATH_COLORS.paramTertiary,
-      },
-      {
-        label: "等比数列公比 λ = p_{11} - p_{21}",
+        label: "特征公比 λ = p_{11} - p_{21}",
         symbol: "\\lambda",
         value: markovRes.lambda.toFixed(3),
         color: MATH_COLORS.functionTransformed,
@@ -366,59 +372,70 @@ export function buildProbabilityBayesPanel(
         label: "平稳分布 (极限概率) p_∞",
         symbol: "p_\\infty",
         value: markovRes.isDegenerate
-          ? "无极值/恒定"
+          ? "退化恒定"
           : markovRes.pStationary.toFixed(4),
         color: MATH_COLORS.focusPoint,
       },
       {
-        label: `第 ${markovRes.steps.length} 步状态 1 概率 p_${markovRes.steps.length}`,
+        label: `当前第 ${currStepVal} 步状态 1 概率 p_${currStepVal}`,
+        symbol: `p_{${currStepVal}}`,
+        value: currentStepItem.p1.toFixed(4),
+        color: MATH_COLORS.function,
+      },
+      {
+        label: `终态第 ${markovRes.steps.length} 步状态 1 概率 p_${markovRes.steps.length}`,
         symbol: `p_{${markovRes.steps.length}}`,
         value: lastStepP1.toFixed(4),
-        color: MATH_COLORS.function,
+        color: MATH_COLORS.labelText,
       },
     ],
     theorems: [
       {
-        name: "马尔可夫链全概率递推公式",
+        name: "【高考第 2 步】全概率一阶线性递推方程",
         latex: `p_{n+1} = p_{11} p_n + p_{21}(1 - p_n) = (p_{11} - p_{21}) p_n + p_{21}`,
         condition:
-          "已知当前步状态为 $S_n$，通过全概率公式展开求解下一步状态 $S_{n+1}$",
-        note: `本题递推变形为：$${markovRes.recurrenceLatex}$`,
+          "由 $S_n=1$ 与 $S_n=2$ 构成第 $n$ 步完备划分，写出全概递推式",
+        note: `本模型递推化简为：$${markovRes.recurrenceLatex}$`,
         level: "core",
       },
       {
-        name: "构造等比数列法求通项",
-        latex: `p_{n+1} - p_\\infty = \\lambda (p_n - p_\\infty) \\implies p_n = (p_1 - p_\\infty)\\lambda^{n-1} + p_\\infty`,
-        condition:
-          "不动点方程 $p_\\infty = \\lambda p_\\infty + p_{21} \\implies p_\\infty = \\frac{p_{21}}{1-\\lambda}$",
-        note: markovRes.generalTermLatex
-          ? `通项公式：$${markovRes.generalTermLatex}$`
-          : "构造 {p_n - p_\\infty} 为公比为 $\\lambda$ 的等比数列",
+        name: "【高考第 3 步】不动点法构造等比数列",
+        latex: `p_{n+1} - p_\\infty = \\lambda (p_n - p_\\infty) \\quad (\\lambda = p_{11}-p_{21}, p_\\infty = \\frac{p_{21}}{1-\\lambda})`,
+        condition: "特征方程 $x = \\lambda x + p_{21}$ 的不动点解 $p_\\infty$",
+        note: markovRes.isDegenerate
+          ? "公比 $\\lambda = 1$ 时为恒等数列（退化状态）"
+          : `两边同减不动点得：$${markovRes.geometricLatex}$`,
         level: "important",
       },
       {
-        name: "平稳分布与极限收敛定理",
-        latex: `\\lim_{n \\to \\infty} p_n = p_\\infty = \\frac{p_{21}}{1 - p_{11} + p_{21}} \\quad (|\\lambda| < 1)`,
+        name: "【高考第 4 步】通项公式与稳态极限",
+        latex: markovRes.generalTermLatex
+          ? markovRes.generalTermLatex
+          : `p_n = p_\\infty + (p_1 - p_\\infty)\\lambda^{n-1}`,
         note: markovRes.isOscillating
-          ? "公比 $\\lambda < 0$，序列呈现交替震荡收敛于平稳极限 $p_\\infty$。"
-          : "公比 $\\lambda > 0$，序列呈现单调渐近收敛于平稳极限 $p_\\infty$。",
+          ? "公比 $\\lambda < 0$：序列在 $p_\\infty$ 上下交替振荡衰减收敛（如传球模型）。"
+          : "公比 $\\lambda > 0$：序列单调渐近收敛于平稳极限 $p_\\infty$。",
         level: "derived",
       },
     ],
     gaokaoPoints: [
       {
-        text: `【新高考必考：全概率递推 4 步法】①设第 n 步事件为 A_n (概率 p_n)；②用全概率公式写出 p_{n+1} = p_{11}p_n + p_{21}(1-p_n)；③构造等比数列 (p_{n+1}-p_∞) = λ(p_n-p_∞)；④写出通项 p_n 并求极限。`,
+        text: "【新高考大题 4 步规范采分点】①设第 n 步状态事件 An (概率 pn)；②全概列递推 pn+1 = p11 pn + p21(1-pn)；③解不动点同减 p∞ 证明等比数列；④求通项公式并求 n→∞ 稳态极限。",
         importance: "gaokao",
       },
       {
-        text: `【${modelName}考点】高考压轴概率题常结合数列求和与极限分析，理解状态转移矩阵在每一步演化中的全概率基石作用。`,
+        text: `【${modelName}考法点睛】${markovRes.isOscillating ? "公比 λ < 0 时为振荡收敛，偶数步与奇数步分别逼近极限，在求和或极值时需分类讨论。" : "公比 λ > 0 时为单调收敛，可直接通过导数或差分研究单调性。"}`,
         importance: "gaokao",
+      },
+      {
+        text: "【避坑指南】切勿混淆初始条件下标！若第 1 次传球后为 p1，则第 0 次初始在甲手中的确定状态对应 p0=1；答题需明确首项是 p1 还是 p0。",
+        importance: "core",
       },
     ],
     warnings: markovRes.isDegenerate
       ? [
           {
-            text: "当 λ = p11 - p21 = 1 时（即 p11=1 且 p21=0），系统为退化闭环，概率保持不变，无法构造非零等比数列。",
+            text: "当 λ = p11 - p21 = 1 时（即 p11=1 且 p21=0），系统为单向自封闭环，概率恒定不变，无法构造非零等比数列。",
             level: "warning",
           },
         ]

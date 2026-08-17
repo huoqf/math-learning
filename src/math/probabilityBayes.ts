@@ -52,6 +52,13 @@ export interface MarkovStepItem {
   deltaToStationary: number; // p1 - pStationary
 }
 
+export interface CobwebPoint {
+  x: number;
+  y: number;
+  type: "vertical" | "horizontal" | "step";
+  stepIndex: number;
+}
+
 export interface MarkovChainResult {
   p1: number;
   p11: number;
@@ -69,6 +76,13 @@ export interface MarkovChainResult {
   geometricText: string; // 纯文本 Unicode 格式，供 SVG 文本渲染
   generalTermText: string; // 纯文本 Unicode 格式，供 SVG 文本渲染
   steps: MarkovStepItem[];
+  cobwebPoints: CobwebPoint[];
+  gaokaoSteps: {
+    step1_define: string;
+    step2_recurrence: string;
+    step3_geometric: string;
+    step4_generalTerm: string;
+  };
   isValid: boolean;
 }
 
@@ -230,8 +244,17 @@ export function calculateMarkovChain(
   const pStationary = isDegenerate ? initP1 : cP21 / denominator;
 
   const steps: MarkovStepItem[] = [];
+  const cobwebPoints: CobwebPoint[] = [];
   let currP1 = initP1;
   const totalN = Math.max(3, Math.min(15, Math.round(maxSteps)));
+
+  // 起始点 (p1, p1)
+  cobwebPoints.push({
+    x: currP1,
+    y: currP1,
+    type: "step",
+    stepIndex: 1,
+  });
 
   for (let n = 1; n <= totalN; n++) {
     steps.push({
@@ -240,8 +263,25 @@ export function calculateMarkovChain(
       p2: 1 - currP1,
       deltaToStationary: currP1 - pStationary,
     });
-    // 全概率递推一步
-    currP1 = currP1 * cP11 + (1 - currP1) * cP21;
+
+    const nextP1 = currP1 * cP11 + (1 - currP1) * cP21;
+
+    // 蛛网图：从 (p_n, p_n) 垂直连到 (p_n, p_{n+1})
+    cobwebPoints.push({
+      x: currP1,
+      y: nextP1,
+      type: "vertical",
+      stepIndex: n,
+    });
+    // 再水平连到 y=x 线上 (p_{n+1}, p_{n+1})
+    cobwebPoints.push({
+      x: nextP1,
+      y: nextP1,
+      type: "horizontal",
+      stepIndex: n + 1,
+    });
+
+    currP1 = nextP1;
   }
 
   // 格式化系数 LaTeX
@@ -270,6 +310,22 @@ export function calculateMarkovChain(
     generalTermText = `pₙ = ${pInfStr} ${diffStr} × (${lambdaStr})ⁿ⁻¹`;
   }
 
+  // 生成高考 4 步标准作答
+  const gaokaoSteps = {
+    step1_define: `设第 n 步系统处于状态 S_1 的事件为 A_n，其发生概率为 P(A_n) = p_n，则处于状态 S_2 的概率为 P(\\bar{A}_n) = 1 - p_n。初始条件 p_1 = ${initP1.toFixed(2)}。`,
+    step2_recurrence: `由全概率公式，第 n+1 步处于 S_1 的概率满足：
+p_{n+1} = P(S_{n+1}=1|S_n=1)p_n + P(S_{n+1}=1|S_n=2)(1-p_n)
+= ${cP11.toFixed(2)} p_n + ${cP21.toFixed(2)}(1 - p_n)
+= ${lambdaStr} p_n + ${betaStr}`,
+    step3_geometric: `求解不动点方程 x = ${lambdaStr} x + ${betaStr}，得不动点 x = ${pInfStr}。
+方程两边同减 ${pInfStr}，得：
+p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})
+故数列 \\{p_n - ${pInfStr}\\} 是以 p_1 - ${pInfStr} = ${diffInit.toFixed(3)} 为首项，以 \\lambda = ${lambdaStr} 为公比的等比数列。`,
+    step4_generalTerm: `由此得通项公式为：
+p_n - ${pInfStr} = (${diffInit.toFixed(3)}) \\cdot (${lambdaStr})^{n-1} \\implies ${generalTermLatex}
+因为 |\\lambda| = ${Math.abs(lambda).toFixed(2)} < 1，当 n \\to \\infty 时 (\\lambda)^{n-1} \\to 0，故稳态极限 \\lim_{n \\to \\infty} p_n = ${pInfStr}。`,
+  };
+
   return {
     p1: initP1,
     p11: cP11,
@@ -287,6 +343,8 @@ export function calculateMarkovChain(
     geometricText,
     generalTermText,
     steps,
+    cobwebPoints,
+    gaokaoSteps,
     isValid: true,
   };
 }
