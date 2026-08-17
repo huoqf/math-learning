@@ -18,12 +18,18 @@ import { CANVAS_PRESETS } from "@/theme";
 import { SequenceScene } from "./components/SequenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
+import { calcArithmeticSequence } from "@/math/sequence";
 
 export function SequenceAnimation() {
   // 当前研究大类模式: 'arithmetic' | 'geometric' | 'recurrence' | 'models'
   const [activeMode, setActiveMode] = useState<
     "arithmetic" | "geometric" | "recurrence" | "models"
   >("arithmetic");
+
+  // 等差模式下的专题子模式: 'linear' | 'gauss' | 'quadratic' | 'segment' | 'absSum'
+  const [arithmeticSubMode, setArithmeticSubMode] = useState<
+    "linear" | "gauss" | "quadratic" | "segment" | "absSum"
+  >("linear");
 
   // 等比模式下的视图: 'points' | 'tessellation'
   const [geometricViewType, setGeometricViewType] = useState<
@@ -57,34 +63,94 @@ export function SequenceAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 固定坐标轴：N ∈ [3, 15]，xRange 覆盖所有可能的 N
-  const xRange: [number, number] = [-1, 16.5];
+  const a1_param = params.a1 ?? 5;
+  const d_param = params.d ?? -1.5;
+  const N_param = Math.max(4, Math.min(12, Math.round(params.N ?? 8)));
+  const kSeg_param = params.kSegment ?? 3;
 
-  // 各模型固定 canonical yRange
-  const MODEL_Y_RANGES: Record<string, [number, number]> = {
-    arithmetic: [-8, 25],
-    geometric: params.q > 1 ? [-2, 50] : [-1, 8],
-    "arith-geo": [-5, 15],
-    telescoping: [-0.5, 1.5],
-    "cross-telescoping": [-0.2, 1],
-    grouped: [-8, 25],
-    "odd-even": [-17, 17],
-    // 递推与构造法 Y 轴范围
-    "linear-pan": [-10, 30],
-    accumulation: [-5, 45],
-    multiplication: [-1, 10],
-    reciprocal: [-5, 15],
-    "second-order": [-10, 50],
-  };
+  const { xRange, yRange } = useMemo(() => {
+    if (activeMode === "arithmetic") {
+      const res = calcArithmeticSequence(
+        a1_param,
+        d_param,
+        N_param,
+        kSeg_param,
+      );
+      const allAn = res.terms.map((t) => t.an);
+      const allSn = res.terms.map((t) => t.Sn);
+      const allTn = res.terms.map((t) => t.Tn);
 
-  const yRange: [number, number] =
-    activeMode === "models"
-      ? (MODEL_Y_RANGES[modelType] ?? [-6, 22])
-      : activeMode === "recurrence"
-        ? (MODEL_Y_RANGES[recurrenceModelType] ?? [-10, 30])
-        : activeMode === "geometric"
-          ? MODEL_Y_RANGES.geometric
-          : MODEL_Y_RANGES.arithmetic;
+      const minAn = Math.min(0, ...allAn);
+      const maxAn = Math.max(0, ...allAn);
+      const minSn = Math.min(0, ...allSn);
+      const maxSn = Math.max(0, ...allSn);
+      const maxTn = Math.max(0, ...allTn);
+
+      const xR: [number, number] = [-0.8, N_param + 0.8];
+      let yR: [number, number] = [-6, 10];
+
+      if (arithmeticSubMode === "linear") {
+        yR = [Math.floor(minAn - 1.5), Math.ceil(maxAn + 1.5)];
+      } else if (arithmeticSubMode === "gauss") {
+        const sumH = a1_param + (res.terms[N_param - 1]?.an ?? 0);
+        const minH = Math.min(0, ...allAn, sumH);
+        const maxH = Math.max(0, ...allAn, sumH);
+        yR = [Math.floor(minH - 1.2), Math.ceil(maxH + 2.5)];
+      } else if (arithmeticSubMode === "quadratic") {
+        const vertexY =
+          res.continuousAxis !== null ? res.parabolaFn(res.continuousAxis) : 0;
+        const minY = Math.min(0, minSn, vertexY);
+        const maxY = Math.max(0, maxSn, vertexY);
+        yR = [Math.floor(minY - 2.0), Math.ceil(maxY + 2.5)];
+      } else if (arithmeticSubMode === "segment") {
+        yR = [Math.floor(minAn - 1.5), Math.ceil(maxAn + 3.0)];
+      } else if (arithmeticSubMode === "absSum") {
+        const minY = Math.min(0, minAn, minSn);
+        const maxY = Math.max(0, maxTn);
+        yR = [Math.floor(minY - 1.5), Math.ceil(maxY + 2.0)];
+      }
+
+      if (yR[1] - yR[0] < 6) {
+        const mid = (yR[0] + yR[1]) / 2;
+        yR = [Math.floor(mid - 3), Math.ceil(mid + 3)];
+      }
+      return { xRange: xR, yRange: yR };
+    }
+
+    const xR: [number, number] = [-1, 16.5];
+    const MODEL_Y_RANGES: Record<string, [number, number]> = {
+      geometric: params.q > 1 ? [-2, 50] : [-1, 8],
+      "arith-geo": [-5, 15],
+      telescoping: [-0.5, 1.5],
+      "cross-telescoping": [-0.2, 1],
+      grouped: [-8, 25],
+      "odd-even": [-17, 17],
+      "linear-pan": [-10, 30],
+      accumulation: [-5, 45],
+      multiplication: [-1, 10],
+      reciprocal: [-5, 15],
+      "second-order": [-10, 50],
+    };
+
+    const yR =
+      activeMode === "models"
+        ? (MODEL_Y_RANGES[modelType] ?? [-6, 22])
+        : activeMode === "recurrence"
+          ? (MODEL_Y_RANGES[recurrenceModelType] ?? [-10, 30])
+          : MODEL_Y_RANGES.geometric;
+
+    return { xRange: xR, yRange: yR };
+  }, [
+    activeMode,
+    arithmeticSubMode,
+    modelType,
+    recurrenceModelType,
+    a1_param,
+    d_param,
+    N_param,
+    kSeg_param,
+    params.q,
+  ]);
 
   const scale = useSceneScale({
     vp,
@@ -96,11 +162,19 @@ export function SequenceAnimation() {
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-sequence", params, {
       activeMode,
+      arithmeticSubMode,
       geometricViewType,
       modelType,
       subModel: activeMode === "recurrence" ? recurrenceModelType : modelType,
     });
-  }, [params, activeMode, geometricViewType, modelType, recurrenceModelType]);
+  }, [
+    params,
+    activeMode,
+    arithmeticSubMode,
+    geometricViewType,
+    modelType,
+    recurrenceModelType,
+  ]);
 
   // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
@@ -118,7 +192,12 @@ export function SequenceAnimation() {
   // 按 activeMode 过滤并生成声明式 LeftPanel 参数配置
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
-      arithmetic: ["a1", "d", "N"],
+      arithmetic:
+        arithmeticSubMode === "gauss"
+          ? ["a1", "d", "N", "gaussRatio"]
+          : arithmeticSubMode === "segment"
+            ? ["a1", "d", "N", "kSegment"]
+            : ["a1", "d", "N"],
       geometric: ["a1", "q", "N"],
       models:
         modelType === "arith-geo" || modelType === "grouped"
@@ -155,7 +234,7 @@ export function SequenceAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, activeMode, modelType, recurrenceModelType]);
+  }, [params, activeMode, arithmeticSubMode, modelType, recurrenceModelType]);
 
   return (
     <ThreePanel
@@ -179,6 +258,27 @@ export function SequenceAnimation() {
           </LeftPanelSection>
 
           {/* 2. 子模式视图选择 */}
+          {activeMode === "arithmetic" && (
+            <LeftPanelSection
+              title="等差数列 5 大教学与高考专题"
+              subtitle="数形结合深化理解通项、求和与最值"
+            >
+              <SelectGrid
+                items={[
+                  { key: "linear", label: "一次函数与通项" },
+                  { key: "gauss", label: "高斯倒序拼图" },
+                  { key: "quadratic", label: "二次函数与极值" },
+                  { key: "segment", label: "等长片段和性质" },
+                  { key: "absSum", label: "绝对值数列求和" },
+                ]}
+                value={arithmeticSubMode}
+                onChange={(val) =>
+                  setArithmeticSubMode(val as typeof arithmeticSubMode)
+                }
+              />
+            </LeftPanelSection>
+          )}
+
           {activeMode === "geometric" && (
             <LeftPanelSection
               title="视口表达形式"
@@ -282,6 +382,7 @@ export function SequenceAnimation() {
             vp={vp}
             fontScale={canvasSize.font}
             activeMode={activeMode}
+            arithmeticSubMode={arithmeticSubMode}
             geometricViewType={geometricViewType}
             modelType={modelType}
             recurrenceModelType={recurrenceModelType}

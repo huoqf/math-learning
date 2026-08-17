@@ -41,9 +41,12 @@ export function buildSequencePanel(
   const warnings: MathPanelData["warnings"] = [];
 
   if (activeMode === "arithmetic") {
-    const res = calcArithmeticSequence(a1, d, N);
+    const subMode = (config?.arithmeticSubMode as string) ?? "linear";
+    const kSegment = params.kSegment ?? 3;
+    const res = calcArithmeticSequence(a1, d, N, kSegment);
     const aN = res.terms[N - 1]?.an ?? 0;
     const SN = res.terms[N - 1]?.Sn ?? 0;
+    const TN = res.terms[N - 1]?.Tn ?? 0;
 
     const constTerm = a1 - d;
     const constSign =
@@ -53,99 +56,358 @@ export function buildSequencePanel(
         ? `${a1}`
         : `\\color{${MATH_COLORS.paramSecondary}}{${d}}n ${constSign}`;
 
+    // 通用数学量
     quantities.push({
-      label: `通项 a_${N} (a_n = ${anLatex})`,
-      value: `a_${N} = ${aN.toFixed(2)}`,
+      label: `末项 a_{${N}} (a_n = ${anLatex})`,
+      value: `a_{${N}} = ${aN.toFixed(2)}`,
       color: MATH_COLORS.sequence,
     });
 
     quantities.push({
-      label: `前 ${N} 项和 S_${N}`,
-      value: `S_${N} = ${SN.toFixed(2)}`,
+      label: `前 ${N} 项和 S_{${N}}`,
+      value: `S_{${N}} = ${SN.toFixed(2)}`,
       color: MATH_COLORS.sequenceSum,
     });
 
-    if (res.maxSnInfo) {
+    if (subMode === "linear") {
+      if (res.zeroPointExact !== null) {
+        quantities.push({
+          label: "变号零点 x_0 (a_n = 0 处)",
+          value: `x_0 = ${res.zeroPointExact.toFixed(2)}`,
+          color: MATH_COLORS.paramTertiary,
+        });
+      }
+
+      theorems.push({
+        name: "等差数列通项与一次函数形式",
+        latex: `a_n = \\color{${MATH_COLORS.paramPrimary}}{a_1} + (n-1)\\color{${MATH_COLORS.paramSecondary}}{d} = \\color{${MATH_COLORS.paramSecondary}}{d}n + (\\color{${MATH_COLORS.paramPrimary}}{a_1} - \\color{${MATH_COLORS.paramSecondary}}{d})`,
+        condition: "定义在正整数集 N* 上的离散一次函数，斜率为公差 d",
+      });
+
+      theorems.push({
+        name: "等差中项与下标性质",
+        latex: `m+n = p+q \\implies a_m + a_n = a_p + a_q = 2a_{\\frac{m+n}{2}}`,
+        condition: "等距项对称和相等",
+      });
+
+      gaokaoPoints.push({
+        text: "数形结合：等差数列 a_n 散点均落在直线 y = dx + (a_1-d) 上。公差 d > 0 时单调递增，d < 0 时单调递减。公差 d 即直线的斜率。",
+        importance: "basic",
+      });
+    } else if (subMode === "gauss") {
       quantities.push({
-        label: d < 0 ? "S_n 最大值项" : "S_n 极值项",
-        value: `n = ${res.maxSnInfo.nMax}, S_max = ${res.maxSnInfo.maxSn.toFixed(2)}`,
+        label: `首尾和 (a_1 + a_{${N}})`,
+        value: `${(a1 + aN).toFixed(2)}`,
         color: MATH_COLORS.sequenceHighlight,
+      });
+
+      theorems.push({
+        name: "高斯倒序相加原理 (几何拼图面积)",
+        latex: `2S_n = (a_1 + a_n) + (a_2 + a_{n-1}) + \\dots + (a_n + a_1) = n(a_1 + a_n)`,
+        condition:
+          "正序阶梯与倒序阶梯上下扣合，拼成宽为 n、高为 a1+an 的大矩形",
+      });
+
+      theorems.push({
+        name: "前 n 项和标准形式",
+        latex: `S_n = \\frac{n(\\color{${MATH_COLORS.paramPrimary}}{a_1} + a_n)}{2} = n\\color{${MATH_COLORS.paramPrimary}}{a_1} + \\frac{n(n-1)\\color{${MATH_COLORS.paramSecondary}}{d}}{2}`,
+        condition: "知三求二核心公式",
+      });
+
+      gaokaoPoints.push({
+        text: "无字证明思想：高斯倒序相加通过几何旋转 180° 将两个全等阶梯柱拼成规整矩形，是新高考考查算法与数学证明直观的重要载体。",
+        importance: "gaokao",
+      });
+    } else if (subMode === "quadratic") {
+      if (res.continuousAxis !== null) {
+        quantities.push({
+          label: "抛物线对称轴 x_sym",
+          value: `x = ${res.continuousAxis.toFixed(2)}`,
+          color: MATH_COLORS.sequenceHighlight,
+        });
+      }
+
+      if (res.maxSnInfo) {
+        const isMax = d < 0;
+        quantities.push({
+          label: isMax
+            ? `S_n 最大值项 ${res.maxSnInfo.isDual ? "(双最值)" : ""}`
+            : "S_n 最小值项",
+          value: res.maxSnInfo.isDual
+            ? `n = ${res.maxSnInfo.nMax}, ${res.maxSnInfo.dualN}, S = ${res.maxSnInfo.maxSn.toFixed(2)}`
+            : `n = ${res.maxSnInfo.nMax}, S = ${res.maxSnInfo.maxSn.toFixed(2)}`,
+          color: MATH_COLORS.sequenceHighlight,
+        });
+      }
+
+      theorems.push({
+        name: "前 n 项和与二次函数模型",
+        latex: `S_n = \\frac{\\color{${MATH_COLORS.paramSecondary}}{d}}{2}n^2 + \\left(\\color{${MATH_COLORS.paramPrimary}}{a_1} - \\frac{\\color{${MATH_COLORS.paramSecondary}}{d}}{2}\\right)n = An^2 + Bn \\quad (A = \\frac{d}{2}, B = a_1 - \\frac{d}{2})`,
+        condition: "常数项为 0 的二次函数（图象必过坐标原点）",
+      });
+
+      theorems.push({
+        name: "数列法求最值判定准则",
+        latex: `\\begin{cases} a_n \\ge 0 \\\\ a_{n+1} \\le 0 \\end{cases} \\iff S_n \\text{ 取得最大值} \\quad (d < 0)`,
+        condition: "离散极值与连续顶点对称轴邻近取整",
+      });
+
+      gaokaoPoints.push({
+        text: "高考易错点：抛物线对称轴 x_sym = 0.5 - a1/d 通常非整数，实际最值项取与对称轴距离最近的整数点；若对称轴恰为半整数（如 3.5），则有两个相等的最大值 S_3 = S_4。",
+        importance: "hard",
+      });
+    } else if (subMode === "segment") {
+      if (res.segmentedSums) {
+        quantities.push({
+          label: `片段公差 Δ = k²·d (k=${kSegment})`,
+          value: `Δ = ${res.segmentedSums.diff.toFixed(2)}`,
+          color: MATH_COLORS.sequenceHighlight,
+        });
+
+        res.segmentedSums.segments.forEach((seg) => {
+          quantities.push({
+            label: `第 ${seg.segmentIndex} 段和 (n=${seg.startN}..${seg.endN})`,
+            value: `${seg.sumValue.toFixed(2)}`,
+            color: MATH_COLORS.paramTertiary,
+          });
+        });
+      }
+
+      theorems.push({
+        name: "等长片段和等差性质定理",
+        latex: `A_1 = S_k, \\ A_2 = S_{2k}-S_k, \\ A_3 = S_{3k}-S_{2k} \\implies \\{A_m\\} \\text{ 成等差数列，公差 } D = k^2 d`,
+        condition: "分段等长求和性质，适用于解答题快速求 S_{3n}",
+      });
+
+      gaokaoPoints.push({
+        text: "高考小题秒杀技：已知 S_n 和 S_{2n}，直接利用 S_n, S_{2n}-S_n, S_{3n}-S_{2n} 成等差数列可一步口算出 S_{3n}，无需反解 a1 和 d。",
+        importance: "gaokao",
+      });
+    } else if (subMode === "absSum") {
+      quantities.push({
+        label: `绝对值总和 T_{${N}} = \\sum |a_k|`,
+        value: `T_{${N}} = ${TN.toFixed(2)}`,
+        color: MATH_COLORS.sequenceHighlight,
+      });
+
+      if (res.lastPositiveN !== null && d < 0 && a1 > 0) {
+        quantities.push({
+          label: `正项分界项数 m (a_m ≥ 0)`,
+          value: `m = ${res.lastPositiveN}`,
+          color: MATH_COLORS.sequence,
+        });
+      }
+
+      theorems.push({
+        name: "绝对值数列求和分段原理",
+        latex: `T_n = \\sum_{k=1}^n |a_k| = \\begin{cases} S_n, & n \\le m \\\\ 2S_m - S_n, & n > m \\end{cases} \\quad (a_1 > 0, d < 0, a_m \\ge 0 > a_{m+1})`,
+        condition: "利用变号零点分段转化为原数列前 n 项和之差",
+      });
+
+      gaokaoPoints.push({
+        text: "新高考大题压轴热点：绝对值求和必须先令 a_n ≥ 0 求出变号分界点 m。当 n > m 时，T_n = S_m - (S_n - S_m) = 2S_m - S_n，转化后直接代入二次求和公式。",
+        importance: "hard",
       });
     }
 
-    theorems.push({
-      name: "等差数列通项与求和定理",
-      latex: `a_n = a_1 + (n-1)d, \\quad S_n = \\frac{d}{2}n^2 + \\left(a_1 - \\frac{d}{2}\\right)n`,
-      condition: "d 为常数，n ∈ N*",
-    });
-
-    theorems.push({
-      name: "等差中项与下标性质",
-      latex: `若 \\ m+n = p+q \\implies a_m + a_n = a_p + a_q = 2a_{\\frac{m+n}{2}}`,
-      condition: "在对称中点处函数值具有算术平均性质",
-    });
-
-    gaokaoPoints.push({
-      text: "数形结合：等差数列 a_n 对应直线 y=dx+(a1-d)，S_n 对应二次函数抛物线。当 d<0 且 a1>0 时，S_n 存在最大值，极值在 a_n 由正转负临界点处取得。",
-      importance: "gaokao",
-    });
-
     if (Math.abs(d) < 1e-9) {
       warnings.push({
-        text: "d = 0 (退化常数列)：公差 d 为 0 时，通项 a_n = a_1 为常数，前 n 项和 S_n = n · a_1 呈线性增长。",
+        text: "d = 0 (退化常数列)：公差 d 为 0 时，通项 a_n = a_1 为常数，前 n 项和 S_n = n · a_1 呈线性增长，非二次函数。",
         level: "warning",
       });
     }
   } else if (activeMode === "geometric") {
-    const res = calcGeometricSequence(a1, q, N);
+    const subMode =
+      (config?.geometricSubMode as string) ??
+      (config?.geometricViewType === "tessellation"
+        ? "tessellation"
+        : "exponential");
+    const kSegment = params.kSegment ?? 3;
+    const res = calcGeometricSequence(a1, q, N, kSegment);
     const aN = res.terms[N - 1]?.an ?? 0;
     const SN = res.terms[N - 1]?.Sn ?? 0;
+    const PN = res.terms[N - 1]?.Pn ?? 0;
 
+    const a1Colored = `\\color{${MATH_COLORS.paramPrimary}}{${a1}}`;
+    const qColored = `\\color{${MATH_COLORS.paramSecondary}}{${q}}`;
+
+    // 基础通量
     quantities.push({
-      label: `通项 a_${N} (a_n = a_1 · q^{n-1})`,
-      value: `a_${N} = ${aN.toFixed(4)}`,
+      label: `末项 a_{${N}} (a_n = ${a1Colored} \\cdot (${qColored})^{n-1})`,
+      value: `a_{${N}} = ${aN.toFixed(4)}`,
       color: MATH_COLORS.sequence,
     });
 
     quantities.push({
-      label: `前 ${N} 项和 S_${N}`,
-      value: `S_${N} = ${SN.toFixed(4)}`,
+      label: `前 ${N} 项和 S_{${N}}`,
+      value: `S_{${N}} = ${SN.toFixed(4)}`,
       color: MATH_COLORS.sequenceSum,
     });
 
-    if (res.limitSum !== null) {
+    if (subMode === "exponential") {
+      const typeDesc: Record<string, string> = {
+        growth: "指数爆炸递增 (q > 1)",
+        decay: "指数衰减收敛 (0 < q < 1)",
+        constant: "退化常数列 (q = 1)",
+        "oscillate-decay": "衰减交替震荡 (-1 < q < 0)",
+        "oscillate-period": "周期交替摆动 (q = -1)",
+        "oscillate-diverge": "发散交替震荡 (q < -1)",
+      };
+
       quantities.push({
-        label: "无穷递缩和 S_∞",
-        value: `S_∞ = ${res.limitSum.toFixed(4)}`,
+        label: "公比形态特征",
+        value: typeDesc[res.qType] ?? "一般形态",
+        color: MATH_COLORS.paramSecondary,
+      });
+
+      theorems.push({
+        name: "等比数列通项与指数模型",
+        latex: `a_n = \\color{${MATH_COLORS.paramPrimary}}{a_1} \\cdot \\color{${MATH_COLORS.paramSecondary}}{q}^{n-1} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a_1}}{\\color{${MATH_COLORS.paramSecondary}}{q}} \\cdot \\color{${MATH_COLORS.paramSecondary}}{q}^n`,
+        condition: "定义在正整数集 N* 上的离散指数函数 (a1 ≠ 0, q ≠ 0)",
+      });
+
+      theorems.push({
+        name: "等比中项与对数化等差性质",
+        latex: `a_m \\cdot a_n = a_p \\cdot a_q \\quad (m+n = p+q), \\quad \\ln |a_n| = \\ln |a_1| + (n-1)\\ln |q|`,
+        condition: "取绝对值对数后对应公差为 ln|q| 的等差数列",
+      });
+
+      gaokaoPoints.push({
+        text: "公比分类讨论：新高考大题常考 q 的 6 态分类（特别注意 q=1 常数、0<q<1 衰减与 q<0 震荡）。两边取对数化等差数列是第一问通项求解的核心化归思想。",
+        importance: "basic",
+      });
+    } else if (subMode === "staggerSum") {
+      quantities.push({
+        label: `错位项 q · S_{${N}}`,
+        value: `q S_{${N}} = ${(q * SN).toFixed(4)}`,
+        color: MATH_COLORS.sequenceSecondary,
+      });
+
+      quantities.push({
+        label: `两式差 (1 - q) S_{${N}}`,
+        value: `(1-q)S_{${N}} = ${(SN - q * SN).toFixed(4)}`,
         color: MATH_COLORS.sequenceHighlight,
+      });
+
+      theorems.push({
+        name: "错位相减法推导原理",
+        latex: `S_n - \\color{${MATH_COLORS.paramSecondary}}{q}S_n = \\color{${MATH_COLORS.paramPrimary}}{a_1} - \\color{${MATH_COLORS.paramPrimary}}{a_1}\\color{${MATH_COLORS.paramSecondary}}{q}^n \\implies (1-\\color{${MATH_COLORS.paramSecondary}}{q})S_n = \\color{${MATH_COLORS.paramPrimary}}{a_1}(1-\\color{${MATH_COLORS.paramSecondary}}{q}^n)`,
+        condition: "上下两式向右错开 1 格对齐，相减后中间 n-1 项全部对消",
+      });
+
+      theorems.push({
+        name: "等比数列求和标准分段形式",
+        latex: `S_n = \\begin{cases} \\frac{\\color{${MATH_COLORS.paramPrimary}}{a_1}(1 - \\color{${MATH_COLORS.paramSecondary}}{q}^n)}{1 - \\color{${MATH_COLORS.paramSecondary}}{q}}, & \\color{${MATH_COLORS.paramSecondary}}{q} \\neq 1 \\\\ n \\color{${MATH_COLORS.paramPrimary}}{a_1}, & \\color{${MATH_COLORS.paramSecondary}}{q} = 1 \\end{cases}`,
+        condition: "高考解答题求和必写分类讨论",
+      });
+
+      gaokaoPoints.push({
+        text: "大题标准答题规范：错位相减法推导是解答题‘差比数列’求和的母体。必须完整呈现：① 写出 Sn；② 错位写出 qSn；③ 两式相减中间项对消；④ 检验 q=1 并化简。",
+        importance: "gaokao",
+      });
+    } else if (subMode === "segment") {
+      if (res.segmentedSums) {
+        quantities.push({
+          label: `片段公比 q^k (k=${res.segmentedSums.k})`,
+          value: `q^${res.segmentedSums.k} = ${res.segmentedSums.ratio.toFixed(4)}`,
+          color: MATH_COLORS.sequenceHighlight,
+        });
+
+        res.segmentedSums.segments.forEach((seg) => {
+          quantities.push({
+            label: `片段 ${seg.segmentIndex} 和 (a_{${seg.startN}}..a_{${seg.endN}})`,
+            value: `${seg.sumValue.toFixed(4)}`,
+            color: MATH_COLORS.sequence,
+          });
+        });
+      }
+
+      theorems.push({
+        name: "等长片段和成等比性质",
+        latex: `\\frac{S_{2k} - S_k}{S_k} = \\frac{S_{3k} - S_{2k}}{S_{2k} - S_k} = \\color{${MATH_COLORS.paramSecondary}}{q}^k \\quad (q^k \\neq -1, S_k \\neq 0)`,
+        condition: "连续等长片段累加和构成公比为 q^k 的新等比数列",
+      });
+
+      theorems.push({
+        name: "片段知二求一速算公式",
+        latex: `(S_{2k} - S_k)^2 = S_k \\cdot (S_{3k} - S_{2k})`,
+        condition: "等比中项在片段和中的直接应用",
+      });
+
+      gaokaoPoints.push({
+        text: "小题秒杀神器：新高考选择填空中已知 S_3 与 S_6 求 S_9 时，直接利用 S_3, S_6-S_3, S_9-S_6 成等比，无需联立繁琐高次方程解 a1 与 q。",
+        importance: "gaokao",
+      });
+    } else if (subMode === "productMax") {
+      quantities.push({
+        label: `前 ${N} 项积 P_{${N}}`,
+        value: `P_{${N}} = ${PN.toFixed(4)}`,
+        color: MATH_COLORS.sequenceHighlight,
+      });
+
+      if (res.maxPnInfo) {
+        quantities.push({
+          label: res.maxPnInfo.isMax
+            ? `P_n 最大值项 ${res.maxPnInfo.isDual ? "(双最值)" : ""}`
+            : "P_n 最小值项",
+          value: res.maxPnInfo.isDual
+            ? `n = ${res.maxPnInfo.nMax}, ${res.maxPnInfo.dualN}, P = ${res.maxPnInfo.maxPn.toFixed(4)}`
+            : `n = ${res.maxPnInfo.nMax}, P = ${res.maxPnInfo.maxPn.toFixed(4)}`,
+          color: MATH_COLORS.sequenceHighlight,
+        });
+      }
+
+      theorems.push({
+        name: "前 n 项积与对数二次函数模型",
+        latex: `P_n = \\color{${MATH_COLORS.paramPrimary}}{a_1}^n \\color{${MATH_COLORS.paramSecondary}}{q}^{\\frac{n(n-1)}{2}} \\iff \\ln P_n = \\frac{\\ln \\color{${MATH_COLORS.paramSecondary}}{q}}{2} n^2 + \\left(\\ln \\color{${MATH_COLORS.paramPrimary}}{a_1} - \\frac{\\ln \\color{${MATH_COLORS.paramSecondary}}{q}}{2}\\right) n`,
+        condition: "正项等比数列前 n 项积取对数后转化为等差数列二次求和模型",
+      });
+
+      theorems.push({
+        name: "前 n 项积最值判定准则 (以 1 为分界)",
+        latex: `\\begin{cases} a_n \\ge 1 \\\\ a_{n+1} \\le 1 \\end{cases} \\iff P_n \\text{ 取得最大值} \\quad (a_1 > 1, 0 < q < 1)`,
+        condition: "乘数由大于 1 变为小于 1 时乘积达到峰值",
+      });
+
+      gaokaoPoints.push({
+        text: "新高考创新压轴点：类比等差求和以 0 为变号分界，等比求积极值以 1 为乘除分界点；取对数 ln(Pn) 后完全等价于等差数列 Sn 的二次函数求最值。",
+        importance: "hard",
+      });
+    } else if (subMode === "tessellation") {
+      if (res.limitSum !== null) {
+        quantities.push({
+          label: "无穷递缩和 S_∞",
+          value: `S_∞ = ${res.limitSum.toFixed(4)}`,
+          color: MATH_COLORS.sequenceHighlight,
+        });
+      }
+
+      theorems.push({
+        name: "无穷递缩等比数列求和定理",
+        latex: `S_\\infty = \\lim_{n \\to \\infty} S_n = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a_1}}{1 - \\color{${MATH_COLORS.paramSecondary}}{q}} \\quad (|\\color{${MATH_COLORS.paramSecondary}}{q}| < 1)`,
+        condition: "公比绝对值严格小于 1 时，q^n 趋近于 0，和收敛于有限面积",
+      });
+
+      gaokaoPoints.push({
+        text: "极限与无字证明：正方形自相似细分面积展示了代数无穷累加向几何有限面积的收敛，是新高考考查直观想象与极限思想的重要模型。",
+        importance: "gaokao",
       });
     }
 
-    theorems.push({
-      name: "等比数列通项与求和定理",
-      latex: `a_n = a_1 q^{n-1}, \\quad S_n = \\begin{cases} \\frac{a_1(1-q^n)}{1-q}, & q \\neq 1 \\\\ n a_1, & q = 1 \\end{cases}`,
-      condition: "a_1 ≠ 0, q ≠ 0",
-    });
-
-    theorems.push({
-      name: "等比中项性质",
-      latex: `a_n^2 = a_{n-1} \\cdot a_{n+1} \\quad (n \\ge 2)`,
-      condition: "同号连续三项的几何平均值",
-    });
-
-    gaokaoPoints.push({
-      text: "公比 q 的分类讨论：当 q>1 时呈指数爆发增长；0<q<1 时指数衰减收敛；q<0 时正负交替震荡。高考常考 q=1 与 q≠1 的分类讨论。",
-      importance: "gaokao",
-    });
-
+    // 警示与前提
     if (Math.abs(q - 1) < 1e-9) {
       warnings.push({
-        text: "q = 1 (公式退化)：公比 q=1 时不能使用 S_n = a1(1-q^n)/(1-q)，此时 S_n = n · a_1。",
+        text: "⚠️ 临界退化 (q = 1)：分母 1 - q = 0，此时公式退化为 Sn = n·a1。高考大题若漏掉对 q = 1 的分类讨论将被重扣 2~4 分！",
         level: "warning",
       });
     } else if (Math.abs(q) < 1e-9) {
       warnings.push({
-        text: "q = 0 (非等比数列)：等比数列定义要求公比 q ≠ 0 且首项 a1 ≠ 0。",
+        text: "q = 0 (退化常数列)：等比数列定义要求公比 q ≠ 0 且首项 a1 ≠ 0。",
+        level: "danger",
+      });
+    } else if (Math.abs(a1) < 1e-9) {
+      warnings.push({
+        text: "a1 = 0 (所有项均为 0)：首项为 0 时失去等比意义。",
         level: "danger",
       });
     }

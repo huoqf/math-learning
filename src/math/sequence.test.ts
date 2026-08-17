@@ -30,24 +30,82 @@ describe("Sequence Math Calculations", () => {
     const res = calcArithmeticSequence(7, -2, 6);
     expect(res.maxSnInfo?.nMax).toBe(4);
     expect(res.maxSnInfo?.maxSn).toBe(16);
+    expect(res.continuousAxis).toBeCloseTo(4, 4);
+    expect(res.lastPositiveN).toBe(4);
   });
 
-  it("should correctly compute geometric sequence an, Sn and limit", () => {
-    const res = calcGeometricSequence(4, 0.5, 4);
+  it("should correctly compute arithmetic dual max when axis is half integer", () => {
+    // a1 = 7, d = -2 => terms: 7, 5, 3, 1, -1 => Sn: 7, 12, 15, 16, 15
+    // a1 = 5, d = -2 => terms: 5, 3, 1, -1, -3 => Sn: 5, 8, 9, 8, 5
+    // continuousAxis = 0.5 - 5 / (-2) = 0.5 + 2.5 = 3
+    // For a1 = 6, d = -2 => continuousAxis = 0.5 + 3 = 3.5 => a1=6, a2=4, a3=2, a4=0, a5=-2 => S3=12, S4=12
+    const res = calcArithmeticSequence(6, -2, 5);
+    expect(res.continuousAxis).toBe(3.5);
+    expect(res.maxSnInfo?.isDual).toBe(true);
+    expect(res.maxSnInfo?.nMax).toBe(3);
+    expect(res.maxSnInfo?.dualN).toBe(4);
+    expect(res.maxSnInfo?.maxSn).toBe(12);
+  });
+
+  it("should correctly compute absolute value sums Tn and segmented sums", () => {
+    // a1 = 5, d = -2, N = 6 => an: 5, 3, 1, -1, -3, -5
+    // Sn: 5, 8, 9, 8, 5, 0
+    // Tn: 5, 8, 9, 10, 13, 18
+    const res = calcArithmeticSequence(5, -2, 6, 3);
+    expect(res.terms[0].Tn).toBe(5);
+    expect(res.terms[2].Tn).toBe(9);
+    expect(res.terms[3].Tn).toBe(10);
+    expect(res.terms[5].Tn).toBe(18);
+
+    // Segmented sum with k = 3: Seg 1 (n=1..3, sum=9), Seg 2 (n=4..6, sum=-9)
+    // Diff = k^2 * d = 9 * (-2) = -18
+    expect(res.segmentedSums).not.toBeNull();
+    expect(res.segmentedSums?.segments.length).toBe(2);
+    expect(res.segmentedSums?.segments[0].sumValue).toBe(9);
+    expect(res.segmentedSums?.segments[1].sumValue).toBe(-9);
+    expect(res.segmentedSums?.diff).toBe(-18);
+  });
+
+  it("should correctly compute geometric sequence an, Sn, Pn and limit", () => {
+    const res = calcGeometricSequence(4, 0.5, 4, 2);
     expect(res.isValid).toBe(true);
     expect(res.terms[0].an).toBe(4);
     expect(res.terms[3].an).toBe(0.5);
     expect(res.terms[3].Sn).toBe(7.5);
+    expect(res.terms[0].Pn).toBe(4);
+    expect(res.terms[1].Pn).toBe(8);
+    expect(res.terms[2].Pn).toBe(8); // a3 = 1 => dual max P2 = P3 = 8
+    expect(res.terms[3].Pn).toBe(4);
     expect(res.limitSum).toBe(8);
+    expect(res.qType).toBe("decay");
+    expect(res.maxPnInfo?.nMax).toBe(2);
+    expect(res.maxPnInfo?.maxPn).toBe(8);
+
+    // Segmented sums: Seg 1 (n=1..2, sum=6), Seg 2 (n=3..4, sum=1.5) => ratio = 0.25 (q^2)
+    expect(res.segmentedSums).not.toBeNull();
+    expect(res.segmentedSums?.segments[0].sumValue).toBe(6);
+    expect(res.segmentedSums?.segments[1].sumValue).toBe(1.5);
+    expect(res.segmentedSums?.ratio).toBeCloseTo(0.25, 4);
+
+    // Stagger data
+    expect(res.staggerData.diffLeft.val).toBe(4);
+    expect(res.staggerData.diffRight.val).toBe(4 * Math.pow(0.5, 4));
   });
 
-  it("should handle negative q geometric sequence", () => {
+  it("should handle negative q geometric sequence and qType", () => {
     const res = calcGeometricSequence(2, -0.5, 4);
     expect(res.terms[0].an).toBe(2);
     expect(res.terms[1].an).toBe(-1);
     expect(res.terms[2].an).toBe(0.5);
     expect(res.terms[3].an).toBe(-0.25);
     expect(res.limitSum).toBeCloseTo(2 / 1.5, 4);
+    expect(res.qType).toBe("oscillate-decay");
+  });
+
+  it("should correctly identify constant geometric sequence (q=1)", () => {
+    const res = calcGeometricSequence(3, 1, 5);
+    expect(res.qType).toBe("constant");
+    expect(res.terms[4].Sn).toBe(15);
   });
 
   it("should correctly compute arith-geo split terms", () => {

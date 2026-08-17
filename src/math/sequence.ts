@@ -7,12 +7,27 @@ export interface ArithmeticTermInfo {
   n: number;
   an: number;
   Sn: number;
+  absAn: number;
+  Tn: number; // 绝对值前 n 项和
 }
 
 export interface GeometricTermInfo {
   n: number;
   an: number;
   Sn: number;
+  Pn: number; // 前 n 项积
+  lnAn: number | null; // ln|an|（当 an != 0 时）
+}
+
+export interface SegmentedSumInfo {
+  k: number;
+  segments: Array<{
+    segmentIndex: number; // 1, 2, 3...
+    startN: number;
+    endN: number;
+    sumValue: number;
+  }>;
+  diff: number; // 理论公差 k^2 * d
 }
 
 export interface ArithmeticSequenceResult {
@@ -23,13 +38,38 @@ export interface ArithmeticSequenceResult {
   d: number;
   N: number;
   zeroPointN: number | null;
+  zeroPointExact: number | null;
+  continuousAxis: number | null;
+  lastPositiveN: number | null;
   maxSnInfo: {
     nMax: number;
     maxSn: number;
+    isDual?: boolean;
+    dualN?: number;
   } | null;
+  segmentedSums: SegmentedSumInfo | null;
   lineFn: (x: number) => number;
   parabolaFn: (x: number) => number;
 }
+
+export interface GeometricSegmentedSumInfo {
+  k: number;
+  segments: Array<{
+    segmentIndex: number;
+    startN: number;
+    endN: number;
+    sumValue: number;
+  }>;
+  ratio: number; // 理论公比 q^k
+}
+
+export type GeometricQType =
+  | "growth" // q > 1 (指数增长)
+  | "decay" // 0 < q < 1 (指数衰减收敛)
+  | "constant" // q = 1 (退化常数列)
+  | "oscillate-decay" // -1 < q < 0 (衰减震荡)
+  | "oscillate-period" // q = -1 (周期震荡)
+  | "oscillate-diverge"; // q < -1 (发散震荡)
 
 export interface GeometricSequenceResult {
   isValid: boolean;
@@ -38,8 +78,24 @@ export interface GeometricSequenceResult {
   a1: number;
   q: number;
   N: number;
+  qType: GeometricQType;
   limitSum: number | null;
   expFn: ((x: number) => number) | null;
+  logLineFn: ((x: number) => number) | null;
+  maxPnInfo: {
+    nMax: number;
+    maxPn: number;
+    isMax: boolean;
+    isDual?: boolean;
+    dualN?: number;
+  } | null;
+  segmentedSums: GeometricSegmentedSumInfo | null;
+  staggerData: {
+    snTerms: Array<{ n: number; val: number; text: string }>;
+    qSnTerms: Array<{ n: number; val: number; text: string }>;
+    diffLeft: { val: number; text: string };
+    diffRight: { val: number; text: string };
+  };
 }
 
 export interface ArithGeoSplitTerm {
@@ -122,12 +178,13 @@ export interface OddEvenResult {
 }
 
 /**
- * 计算等差数列性质与各项
+ * 计算等差数列性质与各项 (支持函数透视、极值辨析、片段和与绝对值求和)
  */
 export function calcArithmeticSequence(
   a1: number,
   d: number,
   N: number,
+  kSegment: number = 3,
 ): ArithmeticSequenceResult {
   if (N <= 0 || !Number.isFinite(a1) || !Number.isFinite(d)) {
     return {
@@ -138,7 +195,11 @@ export function calcArithmeticSequence(
       d,
       N,
       zeroPointN: null,
+      zeroPointExact: null,
+      continuousAxis: null,
+      lastPositiveN: null,
       maxSnInfo: null,
+      segmentedSums: null,
       lineFn: () => 0,
       parabolaFn: () => 0,
     };
@@ -146,31 +207,66 @@ export function calcArithmeticSequence(
 
   const terms: ArithmeticTermInfo[] = [];
   let currentSum = 0;
+  let currentAbsSum = 0;
+  let lastPosN: number | null = null;
 
   for (let n = 1; n <= N; n++) {
     const an = a1 + (n - 1) * d;
     currentSum += an;
-    terms.push({ n, an, Sn: currentSum });
+    const absAn = Math.abs(an);
+    currentAbsSum += absAn;
+
+    if (an >= 0) {
+      lastPosN = n;
+    }
+
+    terms.push({
+      n,
+      an,
+      Sn: currentSum,
+      absAn,
+      Tn: currentAbsSum,
+    });
   }
 
   const lineFn = (x: number) => d * x + (a1 - d);
   const parabolaFn = (x: number) => 0.5 * d * x * x + (a1 - 0.5 * d) * x;
 
   let zeroPointN: number | null = null;
+  let zeroPointExact: number | null = null;
+  let continuousAxis: number | null = null;
+
   if (Math.abs(d) > 1e-9) {
     const zN = 1 - a1 / d;
+    zeroPointExact = zN;
     if (zN >= 1 && zN <= N) {
       zeroPointN = zN;
     }
+    // 对称轴 x_sym = -B / (2A) = -(a1 - d/2) / d = 0.5 - a1/d
+    continuousAxis = 0.5 - a1 / d;
   }
 
+  // 极值项精确计算
   let bestN = 1;
   let bestSn = terms[0].Sn;
+  let isDual = false;
+  let dualN: number | undefined;
+
   if (d < 0) {
     for (let i = 0; i < terms.length; i++) {
       if (terms[i].Sn > bestSn) {
         bestSn = terms[i].Sn;
         bestN = terms[i].n;
+      }
+    }
+    // 检查是否存在两个相邻且相等的极大值 (即 a_{k+1} = 0)
+    if (continuousAxis !== null) {
+      const k = Math.round(continuousAxis - 0.5);
+      if (Math.abs(continuousAxis - (k + 0.5)) < 1e-9 && k >= 1 && k < N) {
+        if (Math.abs(terms[k - 1].Sn - terms[k].Sn) < 1e-9) {
+          isDual = true;
+          dualN = k + 1;
+        }
       }
     }
   } else if (d > 0) {
@@ -182,6 +278,32 @@ export function calcArithmeticSequence(
     }
   }
 
+  // 片段和计算 (按 kSegment 分组)
+  const validK = Math.max(2, Math.min(5, Math.round(kSegment)));
+  const totalSegments = Math.floor(N / validK);
+  let segmentedSums: SegmentedSumInfo | null = null;
+
+  if (totalSegments >= 2) {
+    const segments: SegmentedSumInfo["segments"] = [];
+    for (let seg = 1; seg <= totalSegments; seg++) {
+      const startN = (seg - 1) * validK + 1;
+      const endN = seg * validK;
+      const sumVal =
+        terms[endN - 1].Sn - (startN > 1 ? terms[startN - 2].Sn : 0);
+      segments.push({
+        segmentIndex: seg,
+        startN,
+        endN,
+        sumValue: sumVal,
+      });
+    }
+    segmentedSums = {
+      k: validK,
+      segments,
+      diff: validK * validK * d,
+    };
+  }
+
   return {
     isValid: true,
     terms,
@@ -189,7 +311,16 @@ export function calcArithmeticSequence(
     d,
     N,
     zeroPointN,
-    maxSnInfo: { nMax: bestN, maxSn: bestSn },
+    zeroPointExact,
+    continuousAxis,
+    lastPositiveN: lastPosN,
+    maxSnInfo: {
+      nMax: bestN,
+      maxSn: bestSn,
+      isDual,
+      dualN,
+    },
+    segmentedSums,
     lineFn,
     parabolaFn,
   };
@@ -202,6 +333,7 @@ export function calcGeometricSequence(
   a1: number,
   q: number,
   N: number,
+  kSegment: number = 3,
 ): GeometricSequenceResult {
   if (N <= 0 || !Number.isFinite(a1) || !Number.isFinite(q)) {
     return {
@@ -211,13 +343,40 @@ export function calcGeometricSequence(
       a1,
       q,
       N,
+      qType: "growth",
       limitSum: null,
       expFn: null,
+      logLineFn: null,
+      maxPnInfo: null,
+      segmentedSums: null,
+      staggerData: {
+        snTerms: [],
+        qSnTerms: [],
+        diffLeft: { val: 0, text: "0" },
+        diffRight: { val: 0, text: "0" },
+      },
     };
+  }
+
+  // 1. 判断公比形态
+  let qType: GeometricQType = "growth";
+  if (Math.abs(q - 1) < 1e-9) {
+    qType = "constant";
+  } else if (Math.abs(q - -1) < 1e-9) {
+    qType = "oscillate-period";
+  } else if (q > 1) {
+    qType = "growth";
+  } else if (q > 0 && q < 1) {
+    qType = "decay";
+  } else if (q > -1 && q < 0) {
+    qType = "oscillate-decay";
+  } else {
+    qType = "oscillate-diverge";
   }
 
   const terms: GeometricTermInfo[] = [];
   let currentSum = 0;
+  let currentProd = 1;
   let currentAn = a1;
 
   for (let n = 1; n <= N; n++) {
@@ -227,18 +386,111 @@ export function calcGeometricSequence(
       currentAn = currentAn * q;
     }
     currentSum += currentAn;
-    terms.push({ n, an: currentAn, Sn: currentSum });
+    currentProd *= currentAn;
+
+    const lnVal =
+      Math.abs(currentAn) > 1e-9 ? Math.log(Math.abs(currentAn)) : null;
+    terms.push({
+      n,
+      an: currentAn,
+      Sn: currentSum,
+      Pn: currentProd,
+      lnAn: lnVal,
+    });
   }
 
+  // 2. 极限和 S_∞
   let limitSum: number | null = null;
   if (Math.abs(q) < 1) {
     limitSum = a1 / (1 - q);
   }
 
+  // 3. 连续母函数
   let expFn: ((x: number) => number) | null = null;
   if (q > 0) {
     expFn = (x: number) => a1 * Math.pow(q, x - 1);
   }
+
+  let logLineFn: ((x: number) => number) | null = null;
+  if (a1 > 0 && q > 0) {
+    const lnA1 = Math.log(a1);
+    const lnQ = Math.log(q);
+    logLineFn = (x: number) => lnA1 + (x - 1) * lnQ;
+  }
+
+  // 4. 前 n 项积最值分析 (当 a1 > 0 且 q > 0 且 q != 1 时最具教学代表性)
+  let maxPnInfo: GeometricSequenceResult["maxPnInfo"] = null;
+  if (a1 > 0 && q > 0 && Math.abs(q - 1) > 1e-9) {
+    const isSeekingMax = q < 1 && a1 > 1; // 递减数列找极大值
+    const isSeekingMin = q > 1 && a1 < 1; // 递增数列找极小值
+
+    let targetN = 1;
+    let targetPn = terms[0].Pn;
+
+    for (let i = 0; i < terms.length; i++) {
+      if (isSeekingMax && terms[i].Pn > targetPn) {
+        targetPn = terms[i].Pn;
+        targetN = terms[i].n;
+      } else if (isSeekingMin && terms[i].Pn < targetPn) {
+        targetPn = terms[i].Pn;
+        targetN = terms[i].n;
+      }
+    }
+
+    // 判断双最值
+    let isDual = false;
+    let dualN: number | undefined;
+    if (targetN < N && Math.abs(terms[targetN].an - 1) < 1e-6) {
+      isDual = true;
+      dualN = targetN + 1;
+    }
+
+    maxPnInfo = {
+      nMax: targetN,
+      maxPn: targetPn,
+      isMax: isSeekingMax,
+      isDual,
+      dualN,
+    };
+  }
+
+  // 5. 等长片段和
+  const validK = Math.max(2, Math.min(5, Math.round(kSegment)));
+  const totalSegments = Math.floor(N / validK);
+  let segmentedSums: GeometricSegmentedSumInfo | null = null;
+
+  if (totalSegments >= 2) {
+    const segments: GeometricSegmentedSumInfo["segments"] = [];
+    for (let seg = 1; seg <= totalSegments; seg++) {
+      const startN = (seg - 1) * validK + 1;
+      const endN = seg * validK;
+      const sumVal =
+        terms[endN - 1].Sn - (startN > 1 ? terms[startN - 2].Sn : 0);
+      segments.push({
+        segmentIndex: seg,
+        startN,
+        endN,
+        sumValue: sumVal,
+      });
+    }
+    segmentedSums = {
+      k: validK,
+      segments,
+      ratio: Math.pow(q, validK),
+    };
+  }
+
+  // 6. 错位相减数据
+  const snTerms = terms.map((t) => ({
+    n: t.n,
+    val: t.an,
+    text: `a_${t.n}`,
+  }));
+  const qSnTerms = terms.map((t) => ({
+    n: t.n,
+    val: t.an * q,
+    text: `a_${t.n}·q`,
+  }));
 
   return {
     isValid: true,
@@ -246,8 +498,18 @@ export function calcGeometricSequence(
     a1,
     q,
     N,
+    qType,
     limitSum,
     expFn,
+    logLineFn,
+    maxPnInfo,
+    segmentedSums,
+    staggerData: {
+      snTerms,
+      qSnTerms,
+      diffLeft: { val: a1, text: `a_1` },
+      diffRight: { val: a1 * Math.pow(q, N), text: `a_1 q^{${N}}` },
+    },
   };
 }
 
