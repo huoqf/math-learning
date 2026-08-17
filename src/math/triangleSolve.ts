@@ -58,7 +58,7 @@ export interface SSASolveResult {
 export function solveTriangleFromSAS(
   b: number,
   c: number,
-  angleADeg: number
+  angleADeg: number,
 ): TriangleSolveResult {
   const radA = (angleADeg * Math.PI) / 180;
 
@@ -108,7 +108,8 @@ export function solveTriangleFromSAS(
 
   // 外心 O 坐标计算
   const oxRaw = b / 2;
-  const oyRaw = sinA > 1e-6 ? (c * c - 2 * c * oxRaw * Math.cos(radA)) / (2 * c * sinA) : 0;
+  const oyRaw =
+    sinA > 1e-6 ? (c * c - 2 * c * oxRaw * Math.cos(radA)) / (2 * c * sinA) : 0;
   const circumcenter: Point2D = {
     x: oxRaw - centroidX,
     y: oyRaw - centroidY,
@@ -123,7 +124,8 @@ export function solveTriangleFromSAS(
   const bcDx = C.x - B.x;
   const bcDy = C.y - B.y;
   const bcLenSq = bcDx * bcDx + bcDy * bcDy;
-  const tA = bcLenSq > 1e-6 ? ((A.x - B.x) * bcDx + (A.y - B.y) * bcDy) / bcLenSq : 0;
+  const tA =
+    bcLenSq > 1e-6 ? ((A.x - B.x) * bcDx + (A.y - B.y) * bcDy) / bcLenSq : 0;
   const footD: Point2D = {
     x: B.x + tA * bcDx,
     y: B.y + tA * bcDy,
@@ -154,7 +156,7 @@ export function solveTriangleFromSAS(
 export function solveSSA(
   a: number,
   b: number,
-  angleADeg: number
+  angleADeg: number,
 ): SSASolveResult {
   const radA = (angleADeg * Math.PI) / 180;
   const sinA = Math.sin(radA);
@@ -206,7 +208,10 @@ export function solveSSA(
 
         const cVal = t;
         const radB_calc = Math.acos(
-          Math.max(-1, Math.min(1, (cVal * cVal + a * a - b * b) / (2 * cVal * a)))
+          Math.max(
+            -1,
+            Math.min(1, (cVal * cVal + a * a - b * b) / (2 * cVal * a)),
+          ),
         );
         const radC_calc = Math.PI - radA - radB_calc;
         details.push({
@@ -226,7 +231,10 @@ export function solveSSA(
 
       const cVal = t;
       const radB_calc = Math.acos(
-        Math.max(-1, Math.min(1, (cVal * cVal + a * a - b * b) / (2 * cVal * a)))
+        Math.max(
+          -1,
+          Math.min(1, (cVal * cVal + a * a - b * b) / (2 * cVal * a)),
+        ),
       );
       const radC_calc = Math.PI - radA - radB_calc;
       details.push({
@@ -247,5 +255,81 @@ export function solveSSA(
     C,
     solutions,
     details,
+  };
+}
+
+export interface BisectorMedianResult {
+  base: TriangleSolveResult;
+  /** 内角平分线交点 D 坐标 */
+  pointD: Point2D;
+  /** 底边中点 M 坐标 */
+  pointM: Point2D;
+  /** 角平分线长 ta */
+  bisectorLength: number;
+  /** 中线长 ma */
+  medianLength: number;
+  /** 边 BD 长度 */
+  sideBD: number;
+  /** 边 DC 长度 */
+  sideDC: number;
+  /** 分三角形 ABD 面积 */
+  areaABD: number;
+  /** 分三角形 ACD 面积 */
+  areaACD: number;
+  /** 向量基底分解系数: AD = lambda * AB + mu * AC */
+  vectorWeights: { lambda: number; mu: number };
+}
+
+export function solveBisectorAndMedian(
+  b: number,
+  c: number,
+  angleADeg: number,
+): BisectorMedianResult {
+  const base = solveTriangleFromSAS(b, c, angleADeg);
+  const { points, sides, area, anglesRad } = base;
+  const { B, C } = points;
+  const { a } = sides;
+
+  // 角平分线交点 D: 由 BD / DC = c / b 分点公式 => D = (b * B + c * C) / (b + c)
+  const sumBC = b + c;
+  const lambda = b / sumBC;
+  const mu = c / sumBC;
+
+  const pointD: Point2D = {
+    x: (b * B.x + c * C.x) / sumBC,
+    y: (b * B.y + c * C.y) / sumBC,
+  };
+
+  // 底边中点 M
+  const pointM: Point2D = {
+    x: (B.x + C.x) / 2,
+    y: (B.y + C.y) / 2,
+  };
+
+  // 角平分线长 ta = 2bc cos(A/2) / (b + c)
+  const radA = anglesRad.A;
+  const bisectorLength = (2 * b * c * Math.cos(radA / 2)) / sumBC;
+
+  // 中线长 ma = 0.5 * sqrt(2b^2 + 2c^2 - a^2)
+  const medianLength =
+    0.5 * Math.sqrt(Math.max(0, 2 * b * b + 2 * c * c - a * a));
+
+  const sideBD = (c / sumBC) * a;
+  const sideDC = (b / sumBC) * a;
+
+  const areaABD = (c / sumBC) * area;
+  const areaACD = (b / sumBC) * area;
+
+  return {
+    base,
+    pointD,
+    pointM,
+    bisectorLength,
+    medianLength,
+    sideBD,
+    sideDC,
+    areaABD,
+    areaACD,
+    vectorWeights: { lambda, mu },
   };
 }

@@ -14,12 +14,16 @@ import { CANVAS_PRESETS } from "@/theme";
 import { TriangleSolveScene } from "./components/TriangleSolveScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/triangleSolve";
-import { solveTriangleFromSAS, solveSSA } from "@/math/triangleSolve";
+import {
+  solveTriangleFromSAS,
+  solveSSA,
+  solveBisectorAndMedian,
+} from "@/math/triangleSolve";
 
 export function TriangleSolveAnimation() {
-  // 研究模式: 'sine' | 'ssa' | 'cosine' | 'area'
+  // 研究模式: 'sine' | 'ssa' | 'cosine' | 'area' | 'bisector'
   const [studyMode, setStudyMode] = useState<
-    "sine" | "ssa" | "cosine" | "area"
+    "sine" | "ssa" | "cosine" | "area" | "bisector"
   >("sine");
 
   // 参数状态
@@ -64,6 +68,7 @@ export function TriangleSolveAnimation() {
       ssa: ["angleA", "b", "a"],
       cosine: ["angleA", "b", "c"],
       area: ["angleA", "b", "c"],
+      bisector: ["angleA", "b", "c"],
     };
 
     const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
@@ -109,6 +114,14 @@ export function TriangleSolveAnimation() {
       const aSq = (sas.sides.a ** 2).toFixed(2);
       return `a^2 = b^2 + c^2 - 2bc \\cos A \\implies a^2 = ${aSq} \\quad (a = ${aVal})`;
     }
+    if (studyMode === "bisector") {
+      const bm = solveBisectorAndMedian(params.b, params.c, params.angleA);
+      const taStr = bm.bisectorLength.toFixed(2);
+      const maStr = bm.medianLength.toFixed(2);
+      const lam = bm.vectorWeights.lambda.toFixed(2);
+      const mu = bm.vectorWeights.mu.toFixed(2);
+      return `t_a = \\frac{2bc\\cos\\frac{A}{2}}{b+c} = ${taStr}, \\quad \\vec{AD} = ${lam}\\vec{AB} + ${mu}\\vec{AC}, \\quad m_a = ${maStr}`;
+    }
     // area
     const sas = solveTriangleFromSAS(params.b, params.c, params.angleA);
     const areaVal = sas.area.toFixed(2);
@@ -125,6 +138,8 @@ export function TriangleSolveAnimation() {
         return "余弦定理与投影定理看板";
       case "area":
         return "三角形面积与切接圆看板";
+      case "bisector":
+        return "角平分线与中线模型看板";
       default:
         return "解三角形指标看板";
     }
@@ -145,6 +160,7 @@ export function TriangleSolveAnimation() {
                 { key: "ssa", label: "SSA边角双解探究" },
                 { key: "cosine", label: "余弦定理与勾股推广" },
                 { key: "area", label: "面积与内切圆外接圆" },
+                { key: "bisector", label: "角平分线与中线定理" },
               ]}
               value={studyMode}
               onChange={(k) => setStudyMode(k as typeof studyMode)}

@@ -1,7 +1,11 @@
 import { CoordinateGrid, InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
-import { solveTriangleFromSAS, solveSSA } from "@/math/triangleSolve";
+import {
+  solveTriangleFromSAS,
+  solveSSA,
+  solveBisectorAndMedian,
+} from "@/math/triangleSolve";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 
@@ -11,7 +15,7 @@ interface TriangleSolveSceneProps {
   vp: ViewportInfo;
   onParamChange?: (key: string, value: number) => void;
   fontScale: (v: number) => number;
-  studyMode: "sine" | "ssa" | "cosine" | "area";
+  studyMode: "sine" | "ssa" | "cosine" | "area" | "bisector";
 }
 
 export function TriangleSolveScene({
@@ -29,6 +33,7 @@ export function TriangleSolveScene({
 
   const sasResult = solveTriangleFromSAS(b, c, angleA);
   const ssaResult = solveSSA(a, b, angleA);
+  const bisectorResult = solveBisectorAndMedian(b, c, angleA);
 
   if (studyMode === "ssa") {
     const { A: pointA, C: pointC, solutions } = ssaResult;
@@ -336,6 +341,111 @@ export function TriangleSolveScene({
           >
             hₐ = {altitudeA.length.toFixed(2)}
           </text>
+        </g>
+      )}
+
+      {/* 角平分线与中线模式渲染 (bisector) */}
+      {studyMode === "bisector" && (
+        <g>
+          {/* 角平分线 AD */}
+          {(() => {
+            const pD = mathToDesign(
+              bisectorResult.pointD.x,
+              bisectorResult.pointD.y,
+              scale,
+            );
+            const pM = mathToDesign(
+              bisectorResult.pointM.x,
+              bisectorResult.pointM.y,
+              scale,
+            );
+            return (
+              <>
+                {/* 分三角形 ABD 与 ACD 区分阴影 */}
+                <polygon
+                  points={`${pA.x},${pA.y} ${pB.x},${pB.y} ${pD.x},${pD.y}`}
+                  fill={withAlpha(MATH_COLORS.paramTertiary, 0.08)}
+                />
+                <polygon
+                  points={`${pA.x},${pA.y} ${pC.x},${pC.y} ${pD.x},${pD.y}`}
+                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.08)}
+                />
+
+                {/* 中线 AM (虚线) */}
+                <line
+                  x1={pA.x}
+                  y1={pA.y}
+                  x2={pM.x}
+                  y2={pM.y}
+                  stroke={MATH_COLORS.complexNum}
+                  strokeWidth={2}
+                  strokeDasharray="4,3"
+                />
+                <circle
+                  cx={pM.x}
+                  cy={pM.y}
+                  r={fontScale(3.5)}
+                  fill={MATH_COLORS.complexNum}
+                />
+                <text
+                  x={pM.x}
+                  y={pM.y + fontScale(16)}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.complexNum}
+                  fontSize={fontScale(10)}
+                  fontWeight="bold"
+                >
+                  M(中点, mₐ={bisectorResult.medianLength.toFixed(2)})
+                </text>
+
+                {/* 角平分线 AD (实线) */}
+                <line
+                  x1={pA.x}
+                  y1={pA.y}
+                  x2={pD.x}
+                  y2={pD.y}
+                  stroke={MATH_COLORS.tangentLine}
+                  strokeWidth={2.5}
+                />
+                <circle
+                  cx={pD.x}
+                  cy={pD.y}
+                  r={fontScale(4)}
+                  fill={MATH_COLORS.tangentLine}
+                />
+                <text
+                  x={pD.x}
+                  y={pD.y + fontScale(26)}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.tangentLine}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                >
+                  D (分角线, tₐ={bisectorResult.bisectorLength.toFixed(2)})
+                </text>
+
+                {/* 比例标注 BD : DC */}
+                <text
+                  x={(pB.x + pD.x) / 2}
+                  y={(pB.y + pD.y) / 2 - fontScale(6)}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.paramTertiary}
+                  fontSize={fontScale(10)}
+                >
+                  BD={bisectorResult.sideBD.toFixed(2)}
+                </text>
+                <text
+                  x={(pC.x + pD.x) / 2}
+                  y={(pC.y + pD.y) / 2 - fontScale(6)}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.paramSecondary}
+                  fontSize={fontScale(10)}
+                >
+                  DC={bisectorResult.sideDC.toFixed(2)}
+                </text>
+              </>
+            );
+          })()}
         </g>
       )}
 

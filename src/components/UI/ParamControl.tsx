@@ -373,36 +373,33 @@ export const ParamControl: React.FC<ParamControlProps> = ({
         key={param.key}
         className="space-y-3 pb-5 border-b border-neutral-100 last:border-0 last:pb-0"
       >
-        <div className="flex items-start justify-between gap-2">
+        {/* 行1：参数标签与数值输入框（两端对齐） */}
+        <div className="flex items-center justify-between gap-2">
           <label
-            className="min-w-0 text-xs font-semibold text-neutral-700 leading-6"
+            className="min-w-0 text-xs font-semibold text-neutral-700 inline-flex items-center gap-1.5"
             htmlFor={`param-${param.key}`}
           >
-            <span className="inline-flex items-center gap-1.5">
-              {param.labelFormula ? (
-                <span className="inline-flex items-center gap-1">
-                  <KatexFormula
-                    formula={param.labelFormula}
-                    mode="inline"
-                    className="!text-xs"
-                  />
-                  {param.unit && (
-                    <span className="text-xs">({param.unit})</span>
-                  )}
-                </span>
-              ) : (
-                <span>
-                  {param.label}
-                  {param.unit ? ` (${param.unit})` : ""}
-                </span>
-              )}
-            </span>
-            {param.description && (
-              <span className="mt-0.5 block text-xs font-normal leading-relaxed text-neutral-400">
-                {renderDescription(param.description, param.descriptionFormula)}
+            {param.labelFormula ? (
+              <span className="inline-flex items-center gap-1">
+                <KatexFormula
+                  formula={param.labelFormula}
+                  mode="inline"
+                  className="!text-xs font-bold"
+                />
+                {param.unit && (
+                  <span className="text-xs text-neutral-500">
+                    ({param.unit})
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span>
+                {param.label}
+                {param.unit ? ` (${param.unit})` : ""}
               </span>
             )}
           </label>
+
           <div className="flex items-center gap-1.5 shrink-0">
             <input
               id={`param-${param.key}`}
@@ -417,13 +414,21 @@ export const ParamControl: React.FC<ParamControlProps> = ({
               step={step}
               disabled={disabled}
               style={{ width: inputWidth }}
-              className="px-2 py-1 text-sm text-right font-mono bg-white border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="px-2 py-0.5 text-xs text-right font-mono bg-white border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               aria-label={`${param.label}数值`}
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* 行2：参数物理/几何意义描述（独占整行 100% 宽度，消除局促断行） */}
+        {(param.description || param.descriptionFormula) && (
+          <div className="text-[11px] font-normal leading-relaxed text-neutral-500 -mt-1.5">
+            {renderDescription(param.description, param.descriptionFormula)}
+          </div>
+        )}
+
+        {/* 行3：滑块轨道与刻度 */}
+        <div className="flex items-center gap-3 pt-0.5">
           <span className="text-xs text-neutral-400 font-mono w-8 text-right shrink-0">
             {formatByStep(param.min, step)}
           </span>

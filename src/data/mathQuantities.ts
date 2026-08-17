@@ -186,7 +186,7 @@ export function buildMathQuantities(
     case "anim-trig-lines":
       return buildTrigLinesPanel(params, config);
     case "anim-trig-transform":
-      return buildTrigTransformPanel(params);
+      return buildTrigTransformPanel(params, config);
     case "anim-triangle-solve":
       return buildTriangleSolvePanel(params, config);
     case "anim-vector-linear":
