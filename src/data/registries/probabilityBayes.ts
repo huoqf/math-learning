@@ -40,7 +40,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     descriptionFormula:
       "条件事件 $A$ 的概率，已知 $A$ 发生时样本空间压缩为 $A$",
     marks: [
-      { value: 0, variant: "critical", label: "退化", labelFormula: "P(A)=0" },
+      {
+        value: 0,
+        variant: "critical",
+        label: "退化 (0)",
+        labelFormula: "P(A)=0",
+      },
       { value: 0.5, label: "0.5" },
     ],
   },
@@ -55,6 +60,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "目标事件 B 在全样本空间 Ω 中的边缘概率",
     descriptionFormula: "目标事件 $B$ 在全样本空间 $\\Omega$ 中的先验概率",
+    marks: [{ value: 0.4, label: "0.4" }],
   },
   pAB: {
     key: "pAB",
@@ -62,12 +68,16 @@ export const paramMeta: Record<string, ParamMeta> = {
     labelFormula: "P(AB)",
     min: 0.0,
     max: 0.5,
-    step: 0.05,
+    step: 0.02,
     defaultValue: 0.2,
     importance: "core",
     description: "事件 A 与事件 B 同时发生的交集概率 P(A ∩ B)",
     descriptionFormula:
       "同时发生的联合概率 $P(A \\cap B)$，在 A 发生后成为新的有效区域",
+    marks: [
+      { value: 0, label: "互斥 (0)" },
+      { value: 0.2, label: "独立点" },
+    ],
   },
 
   // ---------------- 全概率划分 ----------------
@@ -82,6 +92,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "完备事件组的第一块划分先验概率",
     descriptionFormula: "划分块 $A_1$ 的先验概率，满足 $\\sum P(A_i) = 1$",
+    marks: [{ value: 0.4, label: "0.4" }],
   },
   pA2: {
     key: "pA2",
@@ -95,6 +106,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "完备事件组的第二块划分先验概率（剩余为 A3）",
     descriptionFormula:
       "划分块 $A_2$ 的先验概率，$P(A_3) = 1 - P(A_1) - P(A_2)$",
+    marks: [{ value: 0.35, label: "0.35" }],
   },
   pB_A1: {
     key: "pB_A1",
@@ -143,10 +155,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.005,
     defaultValue: 0.02,
     importance: "core",
-    description: "总体人群中患病的自然先验概率",
-    descriptionFormula: "人群患病先验概率 $P(D)$（如 2%）",
+    description: "总体人群中患病的自然先验概率（基率）",
+    descriptionFormula: "人群患病基率 $P(D)$（罕见病往往极低）",
     marks: [
-      { value: 0.01, label: "1%" },
+      { value: 0.01, label: "1% 罕见" },
       { value: 0.05, label: "5%" },
       { value: 0.1, label: "10%" },
     ],
@@ -162,6 +174,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     description: "试剂在确定患病者中检测出阳性的灵敏度",
     descriptionFormula: "试剂灵敏度 / 真阳性率 $P(+|D)$",
+    marks: [
+      { value: 0.95, label: "95%" },
+      { value: 0.99, label: "99%" },
+    ],
   },
   pFalsePositive: {
     key: "pFalsePositive",
@@ -174,6 +190,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     description: "试剂在健康人群中的误报率（假阳性）",
     descriptionFormula: "试剂误报率 / 假阳性率 $P(+|\\bar{D})$",
+    marks: [
+      { value: 0.01, label: "1%" },
+      { value: 0.05, label: "5%" },
+    ],
   },
 
   // ---------------- 马尔可夫链状态转移 ----------------
@@ -188,6 +208,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "时刻 1 系统处于状态 1 的初始概率",
     descriptionFormula: "初始概率 $p_1 = P(S_1 = 1)$",
+    marks: [
+      { value: 1.0, label: "1.0 确定" },
+      { value: 0.5, label: "0.5" },
+    ],
   },
   p11: {
     key: "p11",
@@ -201,7 +225,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "前一刻为状态 1 时，下一刻保持状态 1 的概率",
     descriptionFormula: "保持概率 $p_{11} = P(S_{n+1}=1|S_n=1)$",
     marks: [
-      { value: 0, label: "0.0" },
+      { value: 0, label: "0.0 必传" },
       { value: 0.5, label: "0.5" },
     ],
   },

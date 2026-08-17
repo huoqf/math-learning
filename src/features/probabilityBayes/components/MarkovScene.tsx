@@ -21,7 +21,7 @@ export function MarkovScene({
     return calculateMarkovChain(p1, p11, p21, maxN);
   }, [params.p1, params.p11, params.p21, params.maxN]);
 
-  // 名称定制
+  // 场景名称定制
   const labels = useMemo(() => {
     if (markovPreset === "pass_ball") {
       return {
@@ -33,8 +33,8 @@ export function MarkovScene({
     }
     if (markovPreset === "urn_ball") {
       return {
-        s1: "状态 1 (白球)",
-        s2: "状态 2 (黑球)",
+        s1: "状态 1 (摸出白球)",
+        s2: "状态 2 (摸出黑球)",
         s1Short: "白球",
         s2Short: "黑球",
       };
@@ -55,16 +55,17 @@ export function MarkovScene({
     };
   }, [markovPreset]);
 
-  // 1. 左侧拓扑网络节点坐标
-  const s1Center = { x: 130, y: 160 };
-  const s2Center = { x: 130, y: 390 };
-  const nodeRadius = 36;
+  // 840 x 650 标准坐标系
+  // 1. 左侧拓扑网络节点坐标 (x: 45 ~ 415, y: 75 ~ 340)
+  const s1Center = { x: 135, y: 195 };
+  const s2Center = { x: 325, y: 195 };
+  const nodeRadius = 32;
 
-  // 2. 右侧折线图坐标界限
-  const plotLeft = 440;
-  const plotRight = 790;
-  const plotTop = 380;
-  const plotBottom = 545;
+  // 2. 右侧折线图坐标界限 (x: 445 ~ 795, y: 80 ~ 450)
+  const plotLeft = 460;
+  const plotRight = 785;
+  const plotTop = 115;
+  const plotBottom = 425;
   const plotWidth = plotRight - plotLeft;
   const plotHeight = plotBottom - plotTop;
 
@@ -72,16 +73,28 @@ export function MarkovScene({
 
   return (
     <g>
-      {/* ─── 左区：2-State 状态转移拓扑图 ─── */}
+      {/* ─── 左上区：2-State 状态转移拓扑网络 (x: 45 ~ 415, y: 60 ~ 335) ─── */}
       <text
-        x={35}
-        y={50}
+        x={45}
+        y={54}
         fontSize={fontScale(15)}
         fontWeight="bold"
         fill={MATH_COLORS.labelText}
       >
         1. 状态转移矩阵与拓扑网络
       </text>
+
+      {/* 外框底板 */}
+      <rect
+        x={45}
+        y={70}
+        width={370}
+        height={265}
+        rx={12}
+        fill={MATH_COLORS.white}
+        stroke={MATH_COLORS.axis}
+        strokeWidth={1.5}
+      />
 
       {/* 状态 1 节点 (S1) */}
       <circle
@@ -94,7 +107,7 @@ export function MarkovScene({
       <text
         x={s1Center.x}
         y={s1Center.y + 5}
-        fontSize={fontScale(15)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
         fill={MATH_COLORS.white}
         textAnchor="middle"
@@ -113,7 +126,7 @@ export function MarkovScene({
       <text
         x={s2Center.x}
         y={s2Center.y + 5}
-        fontSize={fontScale(15)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
         fill={MATH_COLORS.white}
         textAnchor="middle"
@@ -123,294 +136,270 @@ export function MarkovScene({
 
       {/* S1 节点自环弧 (p11) */}
       <path
-        d={`M ${s1Center.x - 20} ${s1Center.y - 28} A 30 30 0 1 1 ${s1Center.x + 20} ${s1Center.y - 28}`}
+        d={`M ${s1Center.x - 22} ${s1Center.y - 20} A 26 26 0 1 1 ${s1Center.x - 5} ${s1Center.y - 30}`}
         fill="none"
         stroke={MATH_COLORS.paramPrimary}
         strokeWidth={Math.max(1.5, markovData.p11 * 5)}
         strokeDasharray={markovData.p11 === 0 ? "4 3" : "none"}
       />
       <text
-        x={s1Center.x}
-        y={s1Center.y - 68}
-        fontSize={fontScale(12)}
+        x={s1Center.x - 28}
+        y={s1Center.y - 42}
+        fontSize={fontScale(11)}
         fontWeight="bold"
         fill={MATH_COLORS.paramPrimary}
         textAnchor="middle"
       >
-        自保持 p₁₁ = {markovData.p11.toFixed(2)}
+        自保 p₁₁={markovData.p11.toFixed(2)}
       </text>
 
       {/* S2 节点自环弧 (p22) */}
       <path
-        d={`M ${s2Center.x - 20} ${s2Center.y + 28} A 30 30 0 1 0 ${s2Center.x + 20} ${s2Center.y + 28}`}
+        d={`M ${s2Center.x + 5} ${s2Center.y - 30} A 26 26 0 1 1 ${s2Center.x + 22} ${s2Center.y - 20}`}
         fill="none"
         stroke={MATH_COLORS.paramSecondary}
         strokeWidth={Math.max(1.5, markovData.p22 * 5)}
         strokeDasharray={markovData.p22 === 0 ? "4 3" : "none"}
       />
       <text
-        x={s2Center.x}
-        y={s2Center.y + 80}
-        fontSize={fontScale(12)}
+        x={s2Center.x + 28}
+        y={s2Center.y - 42}
+        fontSize={fontScale(11)}
         fontWeight="bold"
         fill={MATH_COLORS.paramSecondary}
         textAnchor="middle"
       >
-        自保持 p₂₂ = {markovData.p22.toFixed(2)}
+        自保 p₂₂={markovData.p22.toFixed(2)}
       </text>
 
-      {/* S1 -> S2 跨节点弧线 (p12) */}
+      {/* S1 -> S2 转移弧线 */}
       <path
-        d={`M ${s1Center.x + 24} ${s1Center.y + 24} Q ${s1Center.x + 80} ${(s1Center.y + s2Center.y) / 2} ${s2Center.x + 24} ${s2Center.y - 24}`}
+        d={`M ${s1Center.x + 24} ${s1Center.y - 12} Q ${(s1Center.x + s2Center.x) / 2} ${s1Center.y - 38} ${s2Center.x - 24} ${s1Center.y - 12}`}
         fill="none"
         stroke={MATH_COLORS.paramPrimary}
         strokeWidth={Math.max(1.5, markovData.p12 * 5)}
       />
       <text
-        x={s1Center.x + 88}
-        y={(s1Center.y + s2Center.y) / 2 - 10}
-        fontSize={fontScale(12)}
+        x={(s1Center.x + s2Center.x) / 2}
+        y={s1Center.y - 28}
+        fontSize={fontScale(11)}
         fontWeight="bold"
         fill={MATH_COLORS.paramPrimary}
+        textAnchor="middle"
       >
-        p₁₂ = {markovData.p12.toFixed(2)}
+        p₁₂ = {markovData.p12.toFixed(2)} →
       </text>
 
-      {/* S2 -> S1 跨节点弧线 (p21) */}
+      {/* S2 -> S1 转移弧线 */}
       <path
-        d={`M ${s2Center.x - 24} ${s2Center.y - 24} Q ${s2Center.x - 80} ${(s1Center.y + s2Center.y) / 2} ${s1Center.x - 24} ${s1Center.y + 24}`}
+        d={`M ${s2Center.x - 24} ${s1Center.y + 12} Q ${(s1Center.x + s2Center.x) / 2} ${s1Center.y + 38} ${s1Center.x + 24} ${s1Center.y + 12}`}
         fill="none"
         stroke={MATH_COLORS.paramSecondary}
         strokeWidth={Math.max(1.5, markovData.p21 * 5)}
       />
       <text
-        x={s2Center.x - 145}
-        y={(s1Center.y + s2Center.y) / 2 + 15}
-        fontSize={fontScale(12)}
+        x={(s1Center.x + s2Center.x) / 2}
+        y={s1Center.y + 36}
+        fontSize={fontScale(11)}
         fontWeight="bold"
         fill={MATH_COLORS.paramSecondary}
+        textAnchor="middle"
       >
-        p₂₁ = {markovData.p21.toFixed(2)}
+        ← p₂₁ = {markovData.p21.toFixed(2)}
       </text>
 
-      {/* 转移矩阵显示卡片 */}
-      <g transform="translate(40, 485)">
-        <rect
-          x={0}
-          y={0}
-          width={310}
-          height={85}
-          rx={8}
-          fill={MATH_COLORS.white}
-          stroke={MATH_COLORS.grid}
-          strokeWidth={1.5}
-          className="shadow-sm"
-        />
-        <text
-          x={15}
-          y={25}
-          fontSize={fontScale(13)}
-          fontWeight="bold"
-          fill={MATH_COLORS.labelText}
-        >
-          状态转移概率矩阵 P：
-        </text>
-        <text
-          x={15}
-          y={52}
-          fontSize={fontScale(13)}
-          fontFamily="monospace"
-          fill={MATH_COLORS.labelTextLight}
-        >
-          P = [ [ p₁₁={markovData.p11.toFixed(2)}, p₁₂=
-          {markovData.p12.toFixed(2)} ]
-        </text>
-        <text
-          x={39}
-          y={72}
-          fontSize={fontScale(13)}
-          fontFamily="monospace"
-          fill={MATH_COLORS.labelTextLight}
-        >
-          [ p₂₁={markovData.p21.toFixed(2)}, p₂₂={markovData.p22.toFixed(2)} ] ]
-        </text>
-      </g>
-
-      {/* ─── 右上区：全概率单步推导树 (向下偏移避让 top-3 right-3 KaTeX 卡片) ─── */}
+      {/* 底部转移矩阵说明 */}
       <text
-        x={plotLeft - 50}
-        y={82}
-        fontSize={fontScale(15)}
-        fontWeight="bold"
-        fill={MATH_COLORS.labelText}
+        x={60}
+        y={315}
+        fontSize={fontScale(11)}
+        fill={MATH_COLORS.labelTextLight}
       >
-        2. 全概率单步递推路径 (Step n → Step n+1)
+        转移矩阵：P = [[{markovData.p11.toFixed(2)}, {markovData.p12.toFixed(2)}
+        ], [{markovData.p21.toFixed(2)}, {markovData.p22.toFixed(2)}]]
       </text>
 
-      <g transform="translate(390, 100)">
-        {/* 背景卡片 */}
+      {/* ─── 左下区：全概率单步推导树 (x: 45 ~ 415, y: 350 ~ 615) ─── */}
+      <g transform="translate(45, 350)">
         <rect
           x={0}
           y={0}
-          width={410}
-          height={225}
-          rx={8}
-          fill={withAlpha(MATH_COLORS.function, 0.03)}
-          stroke={MATH_COLORS.grid}
-          strokeWidth={1}
-        />
-
-        {/* 节点 Sn = 1 */}
-        <rect
-          x={20}
-          y={35}
-          width={90}
-          height={36}
-          rx={6}
-          fill={MATH_COLORS.paramPrimary}
+          width={370}
+          height={265}
+          rx={12}
+          fill={MATH_COLORS.white}
+          stroke={MATH_COLORS.function}
+          strokeWidth={1.5}
         />
         <text
-          x={65}
-          y={58}
-          fontSize={fontScale(12)}
-          fill={MATH_COLORS.white}
-          textAnchor="middle"
+          x={14}
+          y={24}
+          fontSize={fontScale(13)}
           fontWeight="bold"
-        >
-          Sₙ = 1 (pₙ)
-        </text>
-
-        {/* 节点 Sn = 2 */}
-        <rect
-          x={20}
-          y={155}
-          width={90}
-          height={36}
-          rx={6}
-          fill={MATH_COLORS.paramSecondary}
-        />
-        <text
-          x={65}
-          y={178}
-          fontSize={fontScale(12)}
-          fill={MATH_COLORS.white}
-          textAnchor="middle"
-          fontWeight="bold"
-        >
-          Sₙ = 2 (1-pₙ)
-        </text>
-
-        {/* 目标节点 Sn+1 = 1 */}
-        <rect
-          x={280}
-          y={95}
-          width={110}
-          height={42}
-          rx={8}
           fill={MATH_COLORS.function}
-        />
-        <text
-          x={335}
-          y={121}
-          fontSize={fontScale(14)}
-          fill={MATH_COLORS.white}
-          textAnchor="middle"
-          fontWeight="bold"
         >
-          Sₙ₊₁ = 1 (pₙ₊₁)
+          2. 全概率单步递推路径 (Step n → Step n+1)
         </text>
 
-        {/* 连线 1: Sn=1 -> Sn+1=1 */}
-        <line
-          x1={110}
-          y1={53}
-          x2={280}
-          y2={106}
-          stroke={MATH_COLORS.paramPrimary}
-          strokeWidth={2}
-        />
-        <rect
-          x={155}
-          y={63}
-          width={80}
-          height={20}
-          rx={4}
-          fill={MATH_COLORS.white}
-          stroke={MATH_COLORS.paramPrimary}
-        />
-        <text
-          x={195}
-          y={77}
-          fontSize={fontScale(11)}
-          fontWeight="bold"
-          fill={MATH_COLORS.paramPrimary}
-          textAnchor="middle"
-        >
-          × p₁₁ ({markovData.p11.toFixed(2)})
-        </text>
+        {/* 树状单步节点与分支 */}
+        <g transform="translate(20, 45)">
+          {/* Step n 状态 */}
+          <circle cx={20} cy={35} r={16} fill={MATH_COLORS.paramPrimary} />
+          <text
+            x={20}
+            y={39}
+            fontSize={fontScale(10)}
+            fontWeight="bold"
+            fill={MATH_COLORS.white}
+            textAnchor="middle"
+          >
+            S₁
+          </text>
+          <text
+            x={20}
+            y={64}
+            fontSize={fontScale(10)}
+            fill={MATH_COLORS.paramPrimary}
+            textAnchor="middle"
+          >
+            (pₙ)
+          </text>
 
-        {/* 连线 2: Sn=2 -> Sn+1=1 */}
-        <line
-          x1={110}
-          y1={173}
-          x2={280}
-          y2={126}
-          stroke={MATH_COLORS.paramSecondary}
-          strokeWidth={2}
-        />
-        <rect
-          x={155}
-          y={145}
-          width={80}
-          height={20}
-          rx={4}
-          fill={MATH_COLORS.white}
-          stroke={MATH_COLORS.paramSecondary}
-        />
-        <text
-          x={195}
-          y={159}
-          fontSize={fontScale(11)}
-          fontWeight="bold"
-          fill={MATH_COLORS.paramSecondary}
-          textAnchor="middle"
-        >
-          × p₂₁ ({markovData.p21.toFixed(2)})
-        </text>
+          <circle cx={20} cy={125} r={16} fill={MATH_COLORS.paramSecondary} />
+          <text
+            x={20}
+            y={129}
+            fontSize={fontScale(10)}
+            fontWeight="bold"
+            fill={MATH_COLORS.white}
+            textAnchor="middle"
+          >
+            S₂
+          </text>
+          <text
+            x={20}
+            y={154}
+            fontSize={fontScale(10)}
+            fill={MATH_COLORS.paramSecondary}
+            textAnchor="middle"
+          >
+            (1-pₙ)
+          </text>
+
+          {/* 分支连线 */}
+          <line
+            x1={36}
+            y1={35}
+            x2={165}
+            y2={80}
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={2}
+          />
+          <text
+            x={95}
+            y={48}
+            fontSize={fontScale(10.5)}
+            fontWeight="bold"
+            fill={MATH_COLORS.paramPrimary}
+          >
+            × p₁₁ ({markovData.p11.toFixed(2)})
+          </text>
+
+          <line
+            x1={36}
+            y1={125}
+            x2={165}
+            y2={80}
+            stroke={MATH_COLORS.paramSecondary}
+            strokeWidth={2}
+          />
+          <text
+            x={95}
+            y={120}
+            fontSize={fontScale(10.5)}
+            fontWeight="bold"
+            fill={MATH_COLORS.paramSecondary}
+          >
+            × p₂₁ ({markovData.p21.toFixed(2)})
+          </text>
+
+          {/* Step n+1 汇总 */}
+          <circle cx={195} cy={80} r={24} fill={MATH_COLORS.function} />
+          <text
+            x={195}
+            y={76}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            fill={MATH_COLORS.white}
+            textAnchor="middle"
+          >
+            Step n+1
+          </text>
+          <text
+            x={195}
+            y={92}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fill={MATH_COLORS.white}
+            textAnchor="middle"
+          >
+            pₙ₊₁
+          </text>
+        </g>
 
         {/* 底部汇总全概率公式 */}
-        <text
-          x={205}
-          y={215}
-          fontSize={fontScale(13)}
-          fontWeight="bold"
-          fill={MATH_COLORS.function}
-          textAnchor="middle"
-        >
-          全概率式：pₙ₊₁ = pₙ·p₁₁ + (1-pₙ)·p₂₁ = ({markovData.lambda.toFixed(2)}
-          )pₙ + {markovData.p21.toFixed(2)}
-        </text>
+        <g transform="translate(14, 215)">
+          <rect
+            x={0}
+            y={0}
+            width={342}
+            height={38}
+            rx={6}
+            fill={withAlpha(MATH_COLORS.function, 0.08)}
+          />
+          <text
+            x={10}
+            y={23}
+            fontSize={fontScale(11.5)}
+            fontWeight="bold"
+            fill={MATH_COLORS.function}
+          >
+            全概式：pₙ₊₁ = pₙ·p₁₁ + (1-pₙ)·p₂₁ = {markovData.recurrenceText}
+          </text>
+        </g>
       </g>
 
-      {/* ─── 右下区：概率演化折线与平稳逼近图 ─── */}
+      {/* ─── 右区：状态概率演化折线图 (x: 435 ~ 795, y: 60 ~ 455) ─── */}
       <text
-        x={plotLeft - 50}
-        y={358}
+        x={435}
+        y={54}
         fontSize={fontScale(15)}
         fontWeight="bold"
         fill={MATH_COLORS.labelText}
       >
-        3. 概率演化折线与平稳逼近 (N = 1 .. {totalSteps})
+        3. 状态概率演化折线与稳态逼近
       </text>
 
-      {/* 坐标轴框 */}
+      {/* 外框底板 */}
+      <rect
+        x={435}
+        y={70}
+        width={360}
+        height={380}
+        rx={12}
+        fill={MATH_COLORS.white}
+        stroke={MATH_COLORS.axis}
+        strokeWidth={1.5}
+      />
+
+      {/* 坐标轴 */}
       <line
         x1={plotLeft}
         y1={plotBottom}
         x2={plotRight}
         y2={plotBottom}
         stroke={MATH_COLORS.axis}
-        strokeWidth={2}
+        strokeWidth={1.5}
       />
       <line
         x1={plotLeft}
@@ -418,141 +407,173 @@ export function MarkovScene({
         x2={plotLeft}
         y2={plotBottom}
         stroke={MATH_COLORS.axis}
-        strokeWidth={2}
+        strokeWidth={1.5}
       />
 
-      {/* y = 1.0, 0.5, 0 刻度 */}
-      {[0, 0.5, 1.0].map((val) => {
-        const yPos = plotBottom - val * plotHeight;
+      {/* 刻度线与网格 */}
+      {[0, 0.25, 0.5, 0.75, 1.0].map((v) => {
+        const y = plotBottom - v * plotHeight;
         return (
-          <g key={val}>
-            <line
-              x1={plotLeft - 5}
-              y1={yPos}
-              x2={plotLeft}
-              y2={yPos}
-              stroke={MATH_COLORS.axis}
-              strokeWidth={1.5}
-            />
-            <text
-              x={plotLeft - 10}
-              y={yPos + 4}
-              fontSize={fontScale(11)}
-              fill={MATH_COLORS.axis}
-              textAnchor="end"
-            >
-              {val.toFixed(1)}
-            </text>
+          <g key={`y-grid-${v}`}>
             <line
               x1={plotLeft}
-              y1={yPos}
+              y1={y}
               x2={plotRight}
-              y2={yPos}
-              stroke={MATH_COLORS.grid}
-              strokeWidth={1}
-              strokeDasharray="2 2"
+              y2={y}
+              stroke={withAlpha(MATH_COLORS.axis, 0.2)}
+              strokeDasharray="3 3"
             />
+            <text
+              x={plotLeft - 8}
+              y={y + 4}
+              fontSize={fontScale(10)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="end"
+            >
+              {v.toFixed(2)}
+            </text>
           </g>
         );
       })}
 
-      {/* 平稳概率 p_infty 虚线参考线 */}
-      {!markovData.isDegenerate &&
-        markovData.pStationary >= 0 &&
-        markovData.pStationary <= 1 && (
-          <g>
+      {/* 平稳分布渐近线 */}
+      <line
+        x1={plotLeft}
+        y1={plotBottom - markovData.pStationary * plotHeight}
+        x2={plotRight}
+        y2={plotBottom - markovData.pStationary * plotHeight}
+        stroke={MATH_COLORS.derivative}
+        strokeWidth={2}
+        strokeDasharray="5 3"
+      />
+      <text
+        x={plotRight}
+        y={plotBottom - markovData.pStationary * plotHeight - 6}
+        fontSize={fontScale(11)}
+        fontWeight="bold"
+        fill={MATH_COLORS.derivative}
+        textAnchor="end"
+      >
+        稳态极限 p_∞ = {markovData.pStationary.toFixed(3)}
+      </text>
+
+      {/* 演化折线与点 */}
+      {markovData.steps.map((step, idx) => {
+        const x =
+          plotLeft + ((step.n - 1) / Math.max(1, totalSteps - 1)) * plotWidth;
+        const y = plotBottom - step.p1 * plotHeight;
+
+        let nextLine = null;
+        if (idx < totalSteps - 1) {
+          const nextStep = markovData.steps[idx + 1];
+          const nextX =
+            plotLeft + ((nextStep.n - 1) / (totalSteps - 1)) * plotWidth;
+          const nextY = plotBottom - nextStep.p1 * plotHeight;
+          nextLine = (
             <line
-              x1={plotLeft}
-              y1={plotBottom - markovData.pStationary * plotHeight}
-              x2={plotRight}
-              y2={plotBottom - markovData.pStationary * plotHeight}
-              stroke={MATH_COLORS.focusPoint}
+              key={`line-${idx}`}
+              x1={x}
+              y1={y}
+              x2={nextX}
+              y2={nextY}
+              stroke={MATH_COLORS.function}
               strokeWidth={2}
-              strokeDasharray="6 4"
             />
-            <text
-              x={plotRight - 10}
-              y={plotBottom - markovData.pStationary * plotHeight - 6}
-              fontSize={fontScale(12)}
-              fontWeight="bold"
-              fill={MATH_COLORS.focusPoint}
-              textAnchor="end"
-            >
-              平稳极限 p_∞ = {markovData.pStationary.toFixed(3)}
-            </text>
-          </g>
-        )}
-
-      {/* 折线点坐标计算 */}
-      {(() => {
-        const points = markovData.steps.map((step, idx) => {
-          const x = plotLeft + (idx / Math.max(1, totalSteps - 1)) * plotWidth;
-          const y = plotBottom - Math.max(0, Math.min(1, step.p1)) * plotHeight;
-          return { x, y, step };
-        });
-
-        const pathD = points.reduce(
-          (acc, pt, i) => `${acc} ${i === 0 ? "M" : "L"} ${pt.x} ${pt.y}`,
-          "",
-        );
+          );
+        }
 
         return (
-          <g>
-            {/* 折线 */}
-            <path
-              d={pathD}
-              fill="none"
-              stroke={MATH_COLORS.function}
-              strokeWidth={3}
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <g key={`point-${step.n}`}>
+            {nextLine}
+            <circle
+              cx={x}
+              cy={y}
+              r={4.5}
+              fill={MATH_COLORS.function}
+              stroke={MATH_COLORS.white}
+              strokeWidth={1.5}
             />
-
-            {/* 节点连线圆点与数据标记 */}
-            {points.map((pt, i) => (
-              <g key={i}>
-                <line
-                  x1={pt.x}
-                  y1={plotBottom}
-                  x2={pt.x}
-                  y2={plotBottom + 5}
-                  stroke={MATH_COLORS.axis}
-                  strokeWidth={1.5}
-                />
-                <text
-                  x={pt.x}
-                  y={plotBottom + 18}
-                  fontSize={fontScale(11)}
-                  fill={MATH_COLORS.labelTextLight}
-                  textAnchor="middle"
-                >
-                  n={pt.step.n}
-                </text>
-
-                <circle
-                  cx={pt.x}
-                  cy={pt.y}
-                  r={5}
-                  fill={MATH_COLORS.function}
-                  stroke={MATH_COLORS.white}
-                  strokeWidth={2}
-                />
-
-                <text
-                  x={pt.x}
-                  y={pt.y + (i % 2 === 0 ? -10 : 18)}
-                  fontSize={fontScale(10)}
-                  fontWeight="bold"
-                  fill={MATH_COLORS.function}
-                  textAnchor="middle"
-                >
-                  {pt.step.p1.toFixed(3)}
-                </text>
-              </g>
-            ))}
+            <text
+              x={x}
+              y={plotBottom + 16}
+              fontSize={fontScale(9.5)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="middle"
+            >
+              {step.n}
+            </text>
           </g>
         );
-      })()}
+      })}
+
+      {/* ─── 右下区：通项公式与高考数列构造卡片 (x: 435 ~ 795, y: 465 ~ 615) ─── */}
+      <g transform="translate(435, 465)">
+        <rect
+          x={0}
+          y={0}
+          width={360}
+          height={150}
+          rx={12}
+          fill={withAlpha(MATH_COLORS.derivative, 0.04)}
+          stroke={withAlpha(MATH_COLORS.derivative, 0.3)}
+          strokeWidth={1.5}
+        />
+        <text
+          x={14}
+          y={22}
+          fontSize={fontScale(12.5)}
+          fontWeight="bold"
+          fill={MATH_COLORS.derivative}
+        >
+          4. 新高考核心：等比数列构造法
+        </text>
+
+        <text
+          x={14}
+          y={44}
+          fontSize={fontScale(11)}
+          fill={MATH_COLORS.labelText}
+        >
+          ① 递推公比：λ = p₁₁ - p₂₁ = {markovData.lambda.toFixed(2)}
+        </text>
+        <text
+          x={14}
+          y={66}
+          fontSize={fontScale(11)}
+          fill={MATH_COLORS.labelText}
+        >
+          ② 等比形式：{markovData.geometricText}
+        </text>
+        <text
+          x={14}
+          y={88}
+          fontSize={fontScale(11)}
+          fontWeight="bold"
+          fill={MATH_COLORS.derivative}
+        >
+          ③ 通项公式：{markovData.generalTermText}
+        </text>
+
+        <rect
+          x={12}
+          y={102}
+          width={336}
+          height={36}
+          rx={6}
+          fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
+        />
+        <text
+          x={20}
+          y={124}
+          fontSize={fontScale(10.5)}
+          fontWeight="bold"
+          fill={MATH_COLORS.paramPrimary}
+        >
+          {markovData.isOscillating
+            ? "【震荡收敛型】公比 λ < 0，在稳态两侧交替摆动逼近"
+            : "【单调收敛型】公比 0 < λ < 1，单调逼近稳态极限"}
+        </text>
+      </g>
     </g>
   );
 }

@@ -36,10 +36,12 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
     return calculateTotalProb(inputs);
   }, [params.pA1, params.pA2, params.pB_A1, params.pB_A2, params.pB_A3]);
 
-  const leftWidth = 380;
-  const startX = 60;
-  const startY = 70;
-  const treemapHeight = 440;
+  // 840 x 650 预设标准坐标系
+  // 1. 左半区：完备矩形划分 (x: 45 ~ 410, y: 75 ~ 505)
+  const leftWidth = 365;
+  const startX = 45;
+  const startY = 75;
+  const treemapHeight = 430;
 
   const w1 = leftWidth * totalProbData.partitions[0].pAi;
   const w2 = leftWidth * totalProbData.partitions[1].pAi;
@@ -49,55 +51,59 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
   const h2B = treemapHeight * totalProbData.partitions[1].pB_given_Ai;
   const h3B = treemapHeight * totalProbData.partitions[2].pB_given_Ai;
 
-  const treeStartX = 510;
-  const rootPt = { x: treeStartX, y: 290 };
+  // 2. 右半区：树状图分支与汇聚 (x: 435 ~ 800, y: 75 ~ 505)
+  const treeStartX = 450;
+  const rootPt = { x: treeStartX + 20, y: 290 };
 
   const nodesA = [
     {
-      x: treeStartX + 120,
+      x: treeStartX + 140,
       y: 130,
       item: totalProbData.partitions[0],
       color: MATH_COLORS.paramPrimary,
     },
     {
-      x: treeStartX + 120,
+      x: treeStartX + 140,
       y: 290,
       item: totalProbData.partitions[1],
       color: MATH_COLORS.paramSecondary,
     },
     {
-      x: treeStartX + 120,
+      x: treeStartX + 140,
       y: 450,
       item: totalProbData.partitions[2],
       color: MATH_COLORS.paramTertiary,
     },
   ];
 
-  const nodeB = { x: treeStartX + 260, y: 290 };
+  const nodeB = { x: treeStartX + 280, y: 290 };
 
   return (
     <g>
+      {/* ─── 左半区：完备事件组加权面积图 (Treemap) ─── */}
       <text
         x={startX}
-        y={startY - 16}
-        fontSize={fontScale(17)}
+        y={startY - 14}
+        fontSize={fontScale(15)}
         fontWeight="bold"
         fill={MATH_COLORS.labelText}
       >
-        1. 完备划分与加权面积图 (Treemap)
+        1. 完备划分与加权面积图 (各色块面积 = 联合概率 P(A_i B))
       </text>
 
+      {/* 外边框（全集 Ω） */}
       <rect
         x={startX}
         y={startY}
         width={leftWidth}
         height={treemapHeight}
-        rx={8}
+        rx={10}
         fill={MATH_COLORS.white}
         stroke={MATH_COLORS.axis}
         strokeWidth={2}
       />
 
+      {/* 分区 1 (A1) */}
       <rect
         x={startX}
         y={startY}
@@ -112,11 +118,12 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
         y={startY + (treemapHeight - h1B)}
         width={w1}
         height={h1B}
-        fill={withAlpha(MATH_COLORS.paramPrimary, 0.45)}
+        fill={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
         stroke={MATH_COLORS.paramPrimary}
-        strokeWidth={2}
+        strokeWidth={1.5}
       />
 
+      {/* 分区 2 (A2) */}
       <rect
         x={startX + w1}
         y={startY}
@@ -131,11 +138,12 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
         y={startY + (treemapHeight - h2B)}
         width={w2}
         height={h2B}
-        fill={withAlpha(MATH_COLORS.paramSecondary, 0.45)}
+        fill={withAlpha(MATH_COLORS.paramSecondary, 0.6)}
         stroke={MATH_COLORS.paramSecondary}
-        strokeWidth={2}
+        strokeWidth={1.5}
       />
 
+      {/* 分区 3 (A3) */}
       <rect
         x={startX + w1 + w2}
         y={startY}
@@ -150,196 +158,322 @@ export function TotalProbScene({ params, fontScale }: TotalProbSceneProps) {
         y={startY + (treemapHeight - h3B)}
         width={w3}
         height={h3B}
-        fill={withAlpha(MATH_COLORS.paramTertiary, 0.45)}
+        fill={withAlpha(MATH_COLORS.paramTertiary, 0.6)}
         stroke={MATH_COLORS.paramTertiary}
-        strokeWidth={2}
+        strokeWidth={1.5}
       />
 
+      {/* 分区顶端先验标签 */}
       <text
         x={startX + w1 / 2}
         y={startY + 24}
-        fontSize={fontScale(14)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
         fill={MATH_COLORS.paramPrimary}
         textAnchor="middle"
       >
-        A₁ ({totalProbData.partitions[0].pAi.toFixed(2)})
+        A₁: {(totalProbData.partitions[0].pAi * 100).toFixed(0)}%
       </text>
       <text
         x={startX + w1 + w2 / 2}
         y={startY + 24}
-        fontSize={fontScale(14)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
         fill={MATH_COLORS.paramSecondary}
         textAnchor="middle"
       >
-        A₂ ({totalProbData.partitions[1].pAi.toFixed(2)})
+        A₂: {(totalProbData.partitions[1].pAi * 100).toFixed(0)}%
+      </text>
+      <text
+        x={startX + w1 + w2 + w3 / 2}
+        y={startY + 24}
+        fontSize={fontScale(12)}
+        fontWeight="bold"
+        fill={MATH_COLORS.paramTertiary}
+        textAnchor="middle"
+      >
+        A₃: {(totalProbData.partitions[2].pAi * 100).toFixed(0)}%
       </text>
 
-      {w3 > 15 && (
+      {/* 色块内联合概率标注 */}
+      {h1B > 24 && w1 > 30 && (
         <text
-          x={startX + w1 + w2 + w3 / 2}
-          y={startY + 24}
-          fontSize={fontScale(14)}
+          x={startX + w1 / 2}
+          y={startY + (treemapHeight - h1B / 2) + 4}
+          fontSize={fontScale(11)}
           fontWeight="bold"
-          fill={MATH_COLORS.paramTertiary}
+          fill={MATH_COLORS.white}
           textAnchor="middle"
         >
-          A₃ ({totalProbData.partitions[2].pAi.toFixed(2)})
+          {totalProbData.partitions[0].pJoint.toFixed(3)}
+        </text>
+      )}
+      {h2B > 24 && w2 > 30 && (
+        <text
+          x={startX + w1 + w2 / 2}
+          y={startY + (treemapHeight - h2B / 2) + 4}
+          fontSize={fontScale(11)}
+          fontWeight="bold"
+          fill={MATH_COLORS.white}
+          textAnchor="middle"
+        >
+          {totalProbData.partitions[1].pJoint.toFixed(3)}
+        </text>
+      )}
+      {h3B > 24 && w3 > 30 && (
+        <text
+          x={startX + w1 + w2 + w3 / 2}
+          y={startY + (treemapHeight - h3B / 2) + 4}
+          fontSize={fontScale(11)}
+          fontWeight="bold"
+          fill={MATH_COLORS.white}
+          textAnchor="middle"
+        >
+          {totalProbData.partitions[2].pJoint.toFixed(3)}
         </text>
       )}
 
+      {/* ─── 右半区：树状图路径与全概率汇聚 ─── */}
       <text
-        x={startX + leftWidth / 2}
-        y={startY + treemapHeight - 20}
-        fontSize={fontScale(16)}
-        fontWeight="bold"
-        fill={MATH_COLORS.labelText}
-        textAnchor="middle"
-      >
-        ★ 结果 B 区域 (总阴影面积 P(B) = {totalProbData.pB.toFixed(3)})
-      </text>
-
-      <text
-        x={treeStartX - 10}
-        y={startY - 16}
-        fontSize={fontScale(17)}
+        x={treeStartX + 10}
+        y={startY - 14}
+        fontSize={fontScale(15)}
         fontWeight="bold"
         fill={MATH_COLORS.labelText}
       >
-        2. 分枝树状图与管道汇流
+        2. 全概率树状路径与动态汇流
       </text>
 
+      {/* 树根：全集 Ω */}
       <circle
         cx={rootPt.x}
         cy={rootPt.y}
-        r={16}
-        fill={MATH_COLORS.labelTextLight}
+        r={22}
+        fill={MATH_COLORS.white}
+        stroke={MATH_COLORS.axis}
+        strokeWidth={2}
       />
       <text
         x={rootPt.x}
         y={rootPt.y + 5}
         fontSize={fontScale(13)}
-        fill={MATH_COLORS.white}
-        textAnchor="middle"
         fontWeight="bold"
+        fill={MATH_COLORS.labelText}
+        textAnchor="middle"
       >
         Ω
       </text>
 
-      {nodesA.map((nA, i) => (
-        <g key={i}>
+      {/* 阶段 1 分支连线 (Ω -> Ai) */}
+      {nodesA.map((nA, idx) => (
+        <g key={`branch1-${idx}`}>
           <line
-            x1={rootPt.x}
+            x1={rootPt.x + 22}
             y1={rootPt.y}
-            x2={nA.x}
+            x2={nA.x - 26}
             y2={nA.y}
             stroke={nA.color}
-            strokeWidth={Math.max(1.5, nA.item.pAi * 8)}
+            strokeWidth={Math.max(2, nA.item.pAi * 10)}
+            opacity={0.85}
           />
-          <rect
-            x={(rootPt.x + nA.x) / 2 - 24}
-            y={(rootPt.y + nA.y) / 2 - 12}
-            width={48}
-            height={20}
-            rx={4}
-            fill={MATH_COLORS.white}
-            stroke={nA.color}
-          />
+          {/* 分支概率标注 */}
           <text
-            x={(rootPt.x + nA.x) / 2}
-            y={(rootPt.y + nA.y) / 2 + 3}
+            x={(rootPt.x + nA.x) / 2 - 10}
+            y={(rootPt.y + nA.y) / 2 - 8}
             fontSize={fontScale(11)}
             fontWeight="bold"
             fill={nA.color}
             textAnchor="middle"
           >
-            {nA.item.pAi.toFixed(2)}
-          </text>
-
-          <circle cx={nA.x} cy={nA.y} r={22} fill={nA.color} />
-          <text
-            x={nA.x}
-            y={nA.y + 5}
-            fontSize={fontScale(13)}
-            fill={MATH_COLORS.white}
-            textAnchor="middle"
-            fontWeight="bold"
-          >
-            {nA.item.name.replace("划分 ", "")}
-          </text>
-
-          <line
-            x1={nA.x}
-            y1={nA.y}
-            x2={nodeB.x}
-            y2={nodeB.y}
-            stroke={nA.color}
-            strokeWidth={Math.max(1, nA.item.pJoint * 12)}
-            strokeDasharray="6 3"
-          />
-          <text
-            x={(nA.x + nodeB.x) / 2 + 6}
-            y={(nA.y + nodeB.y) / 2 + (i === 0 ? -6 : i === 2 ? 14 : 0)}
-            fontSize={fontScale(12)}
-            fontWeight="bold"
-            fill={nA.color}
-          >
-            P(B|{nA.item.name.replace("划分 ", "")})=
-            {nA.item.pB_given_Ai.toFixed(2)}
+            P(A{idx + 1})={nA.item.pAi.toFixed(2)}
           </text>
         </g>
       ))}
 
-      <circle cx={nodeB.x} cy={nodeB.y} r={26} fill={MATH_COLORS.function} />
+      {/* 阶段 1 节点 (Ai) */}
+      {nodesA.map((nA, idx) => (
+        <g key={`nodeA-${idx}`}>
+          <circle
+            cx={nA.x}
+            cy={nA.y}
+            r={24}
+            fill={MATH_COLORS.white}
+            stroke={nA.color}
+            strokeWidth={2.5}
+          />
+          <text
+            x={nA.x}
+            y={nA.y + 5}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fill={nA.color}
+            textAnchor="middle"
+          >
+            A{idx + 1}
+          </text>
+        </g>
+      ))}
+
+      {/* 阶段 2 分支连线 (Ai -> B) */}
+      {nodesA.map((nA, idx) => (
+        <g key={`branch2-${idx}`}>
+          <line
+            x1={nA.x + 24}
+            y1={nA.y}
+            x2={nodeB.x - 30}
+            y2={nodeB.y}
+            stroke={nA.color}
+            strokeWidth={Math.max(1.5, nA.item.pJoint * 12)}
+            strokeDasharray={nA.item.pB_given_Ai === 0 ? "4 4" : undefined}
+            opacity={0.9}
+          />
+          {/* 路径联合概率标注 */}
+          <text
+            x={(nA.x + nodeB.x) / 2 + 10}
+            y={(nA.y + nodeB.y) / 2 + (idx === 0 ? -10 : idx === 1 ? -6 : 14)}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            fill={nA.color}
+            textAnchor="middle"
+          >
+            P(A{idx + 1}B)={nA.item.pJoint.toFixed(3)}
+          </text>
+        </g>
+      ))}
+
+      {/* 汇集总节点：事件 B */}
+      <circle
+        cx={nodeB.x}
+        cy={nodeB.y}
+        r={32}
+        fill={MATH_COLORS.function}
+        className="shadow-md"
+      />
       <text
         x={nodeB.x}
-        y={nodeB.y + 6}
-        fontSize={fontScale(16)}
+        y={nodeB.y - 4}
+        fontSize={fontScale(14)}
+        fontWeight="bold"
         fill={MATH_COLORS.white}
         textAnchor="middle"
-        fontWeight="bold"
       >
-        B
+        事件 B
+      </text>
+      <text
+        x={nodeB.x}
+        y={nodeB.y + 16}
+        fontSize={fontScale(12)}
+        fontWeight="bold"
+        fill={MATH_COLORS.white}
+        textAnchor="middle"
+      >
+        {totalProbData.pB.toFixed(3)}
       </text>
 
-      <g transform="translate(60, 535)">
+      {/* ─── 底部长条卡片：全概率公式闭环数值展开 (x: 45 ~ 800, y: 525 ~ 615) ─── */}
+      <g transform="translate(45, 525)">
         <rect
           x={0}
           y={0}
-          width={720}
-          height={55}
-          rx={10}
+          width={755}
+          height={85}
+          rx={12}
           fill={MATH_COLORS.white}
-          stroke={MATH_COLORS.grid}
+          stroke={MATH_COLORS.function}
           strokeWidth={1.5}
-          className="shadow-sm"
         />
         <text
-          x={20}
-          y={33}
-          fontSize={fontScale(14)}
-          fill={MATH_COLORS.labelTextLight}
+          x={16}
+          y={24}
+          fontSize={fontScale(13)}
+          fontWeight="bold"
+          fill={MATH_COLORS.function}
         >
-          <tspan fontWeight="bold">全概率路径汇加：</tspan>
-          <tspan fill={MATH_COLORS.function} fontWeight="bold">
-            {" "}
-            P(B){" "}
-          </tspan>
-          = {totalProbData.partitions[0].pAi.toFixed(2)}×
-          {totalProbData.partitions[0].pB_given_Ai.toFixed(2)} +{" "}
-          {totalProbData.partitions[1].pAi.toFixed(2)}×
-          {totalProbData.partitions[1].pB_given_Ai.toFixed(2)} +{" "}
-          {totalProbData.partitions[2].pAi.toFixed(2)}×
-          {totalProbData.partitions[2].pB_given_Ai.toFixed(2)} ={" "}
-          <tspan
-            fill={MATH_COLORS.function}
-            fontWeight="bold"
-            fontSize={fontScale(16)}
-          >
-            {totalProbData.pB.toFixed(4)}
-          </tspan>
+          全概率公式路径汇总展开：P(B) = P(A₁)P(B|A₁) + P(A₂)P(B|A₂) +
+          P(A₃)P(B|A₃)
         </text>
+
+        <g transform="translate(16, 44)">
+          <text
+            x={0}
+            y={16}
+            fontSize={fontScale(13)}
+            fontWeight="bold"
+            fill={MATH_COLORS.labelText}
+          >
+            P(B) =
+          </text>
+          <text
+            x={45}
+            y={16}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fill={MATH_COLORS.paramPrimary}
+          >
+            {totalProbData.partitions[0].pAi.toFixed(2)}×
+            {totalProbData.partitions[0].pB_given_Ai.toFixed(2)} (
+            {totalProbData.partitions[0].pJoint.toFixed(3)})
+          </text>
+          <text
+            x={200}
+            y={16}
+            fontSize={fontScale(13)}
+            fontWeight="bold"
+            fill={MATH_COLORS.labelText}
+          >
+            +
+          </text>
+          <text
+            x={216}
+            y={16}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fill={MATH_COLORS.paramSecondary}
+          >
+            {totalProbData.partitions[1].pAi.toFixed(2)}×
+            {totalProbData.partitions[1].pB_given_Ai.toFixed(2)} (
+            {totalProbData.partitions[1].pJoint.toFixed(3)})
+          </text>
+          <text
+            x={370}
+            y={16}
+            fontSize={fontScale(13)}
+            fontWeight="bold"
+            fill={MATH_COLORS.labelText}
+          >
+            +
+          </text>
+          <text
+            x={386}
+            y={16}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fill={MATH_COLORS.paramTertiary}
+          >
+            {totalProbData.partitions[2].pAi.toFixed(2)}×
+            {totalProbData.partitions[2].pB_given_Ai.toFixed(2)} (
+            {totalProbData.partitions[2].pJoint.toFixed(3)})
+          </text>
+          <text
+            x={540}
+            y={16}
+            fontSize={fontScale(13)}
+            fontWeight="bold"
+            fill={MATH_COLORS.labelText}
+          >
+            =
+          </text>
+          <text
+            x={560}
+            y={16}
+            fontSize={fontScale(14)}
+            fontWeight="bold"
+            fill={MATH_COLORS.function}
+          >
+            {(totalProbData.pB * 100).toFixed(2)}% (
+            {totalProbData.pB.toFixed(4)})
+          </text>
+        </g>
       </g>
     </g>
   );

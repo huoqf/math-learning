@@ -65,6 +65,9 @@ export interface MarkovChainResult {
   recurrenceLatex: string; // p_{n+1} = a * p_n + b
   geometricLatex: string; // p_{n+1} - p_infty = lambda (p_n - p_infty)
   generalTermLatex: string; // p_n = (p1 - p_infty) * lambda^(n-1) + p_infty
+  recurrenceText: string; // 纯文本 Unicode 格式，供 SVG 文本渲染
+  geometricText: string; // 纯文本 Unicode 格式，供 SVG 文本渲染
+  generalTermText: string; // 纯文本 Unicode 格式，供 SVG 文本渲染
   steps: MarkovStepItem[];
   isValid: boolean;
 }
@@ -77,18 +80,19 @@ export function calculateConditionalProb(
   pB: number,
   pAB: number,
 ): ConditionalProbResult {
-  // 边界钳制
+  // 边界钳制 (满足柯尔莫哥洛夫公理与 Bonferroni 不等式)
   const clampedPA = Math.max(0, Math.min(1, pA));
   const clampedPB = Math.max(0, Math.min(1, pB));
+  const minAB = Math.max(0, clampedPA + clampedPB - 1);
   const maxAB = Math.min(clampedPA, clampedPB);
-  const clampedPAB = Math.max(0, Math.min(maxAB, pAB));
+  const clampedPAB = Math.max(minAB, Math.min(maxAB, pAB));
 
   const isDegenerate = clampedPA <= 1e-6;
   const isBDegenerate = clampedPB <= 1e-6;
 
   const pB_given_A = isDegenerate ? 0 : clampedPAB / clampedPA;
   const pA_given_B = isBDegenerate ? 0 : clampedPAB / clampedPB;
-  const pUnion = Math.min(1, clampedPA + clampedPB - clampedPAB);
+  const pUnion = Math.min(1, Math.max(0, clampedPA + clampedPB - clampedPAB));
 
   const pNotA = 1 - clampedPA;
   const pBNotAJoint = clampedPB - clampedPAB;
@@ -248,16 +252,22 @@ export function calculateMarkovChain(
   const recurrenceLatex = `p_{n+1} = ${lambdaStr} p_n + ${betaStr}`;
   const geometricLatex = `p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})`;
 
+  const recurrenceText = `pₙ₊₁ = ${lambdaStr} pₙ + ${betaStr}`;
+  const geometricText = `pₙ₊₁ - ${pInfStr} = ${lambdaStr}(pₙ - ${pInfStr})`;
+
   const diffInit = initP1 - pStationary;
   let generalTermLatex = "";
+  let generalTermText = "";
   if (Math.abs(diffInit) < 1e-6) {
     generalTermLatex = `p_n = ${pInfStr}`;
+    generalTermText = `pₙ = ${pInfStr}`;
   } else {
     const diffStr =
       diffInit > 0
         ? `+ ${diffInit.toFixed(3)}`
         : `- ${Math.abs(diffInit).toFixed(3)}`;
     generalTermLatex = `p_n = ${pInfStr} ${diffStr} \\cdot (${lambdaStr})^{n-1}`;
+    generalTermText = `pₙ = ${pInfStr} ${diffStr} × (${lambdaStr})ⁿ⁻¹`;
   }
 
   return {
@@ -273,6 +283,9 @@ export function calculateMarkovChain(
     recurrenceLatex,
     geometricLatex,
     generalTermLatex,
+    recurrenceText,
+    geometricText,
+    generalTermText,
     steps,
     isValid: true,
   };

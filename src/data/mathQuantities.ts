@@ -99,6 +99,7 @@ export function buildMathQuantities(
     case "anim-probability-distribution":
       return buildProbabilityDistributionPanel(params, config);
     case "anim-probability-bayes":
+    case "anim-probability-markov":
       return buildProbabilityBayesPanel(params, config);
     case "anim-probability-counting":
       return buildProbabilityCountingPanel(params, config);
