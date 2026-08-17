@@ -105,30 +105,54 @@ function hasLatex(text: string): boolean {
   return /\\[a-zA-Z]|[_^]\{?[\w]|=|<|>|\+|-|\*/.test(text);
 }
 
-/** 检测 LaTeX 是否包含需要 displayMode 的环境（如 cases、matrix、aligned 等） */
+/** 检测 LaTeX 是否包含需要 displayMode 的特殊矩阵/分段环境（如 cases、matrix 等） */
 function needsBlockMode(latex: string): boolean {
-  return /\\begin\{(cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|align|align\*|aligned|equation|equation\*|gather|gather\*|split|multline|multline\*)\}/.test(
+  return /\\begin\{(cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|equation|equation\*|gather|gather\*|split|multline|multline\*)\}/.test(
     latex,
   );
 }
 
 /**
- * 将 \begin{aligned}...\end{aligned} 环境按行拆分为多段独立公式。
+ * 将多行或过长 LaTeX 定理公式拆分为多段独立行进行上下堆叠排版，防止右屏宽度溢出截断。
  */
-function splitAlignedEnvironment(latex: string): string[] | null {
+function splitTheoremLines(latex: string): string[] | null {
+  // 1. 优先提取 \begin{aligned}...\end{aligned}
   const match = latex.match(/\\begin\{aligned\}([\s\S]*?)\\end\{aligned\}/);
-  if (!match) return null;
-  const body = match[1];
-  const lines = body
-    .split(/\\\\/)
-    .map((line) =>
-      line
-        .replace(/^\[[^\]]+\]/, "")
-        .replace(/&/g, "")
-        .trim(),
-    )
-    .filter((line) => line.length > 0);
-  return lines.length > 0 ? lines : null;
+  if (match) {
+    const lines = match[1]
+      .split(/\\\\/)
+      .map((line) =>
+        line
+          .replace(/^\[[^\]]+\]/, "")
+          .replace(/&/g, "")
+          .trim(),
+      )
+      .filter((line) => line.length > 0);
+    return lines.length > 0 ? lines : null;
+  }
+
+  // 2. 若公式显式包含 \\\\ 换行符
+  if (latex.includes("\\\\")) {
+    const lines = latex
+      .split(/\\\\/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    if (lines.length > 1) return lines;
+  }
+
+  // 3. 若公式较长且含有 \quad / ,\quad，自动拆分为多行显示
+  if (
+    latex.length > 35 &&
+    (latex.includes(",\\quad") || latex.includes("\\quad"))
+  ) {
+    const lines = latex
+      .split(/,\s*\\quad|\\quad/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    if (lines.length > 1) return lines;
+  }
+
+  return null;
 }
 
 const THEOREM_LEVEL_STYLES: Record<
@@ -357,7 +381,25 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                             </div>
                           );
                         }
-                        // 2. 若指定 block 模式或需要 block 环境
+
+                        // 2. 多行拆分排版 (优先处理 aligned / \\\\ / 智能长公式 \\quad 拆行)
+                        const theoremLines = splitTheoremLines(t.latex);
+                        if (theoremLines) {
+                          return (
+                            <div className="flex flex-col items-center gap-1.5 w-full py-0.5 max-w-full">
+                              {theoremLines.map((line, i) => (
+                                <KatexFormula
+                                  key={i}
+                                  formula={line}
+                                  mode="inline"
+                                  className="!my-0 font-medium max-w-full"
+                                />
+                              ))}
+                            </div>
+                          );
+                        }
+
+                        // 3. 仅当需要 cases、matrix 等特殊环境或显式指定 block 时才走 displayMode
                         if (t.mode === "block" || needsBlockMode(t.latex)) {
                           return (
                             <KatexFormula
@@ -367,28 +409,13 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                             />
                           );
                         }
-                        // 3. 多行 aligned 环境
-                        const alignedLines = splitAlignedEnvironment(t.latex);
-                        if (alignedLines) {
-                          return (
-                            <div className="flex flex-col items-center gap-1.5 w-full">
-                              {alignedLines.map((line, i) => (
-                                <KatexFormula
-                                  key={i}
-                                  formula={line}
-                                  mode="inline"
-                                  className="!my-0"
-                                />
-                              ))}
-                            </div>
-                          );
-                        }
-                        // 4. 标准水平 LaTeX 公式
+
+                        // 4. 标准单行公式
                         return (
                           <KatexFormula
                             formula={t.latex}
                             mode="inline"
-                            className="!my-0 font-medium"
+                            className="!my-0 font-medium max-w-full"
                           />
                         );
                       })()}

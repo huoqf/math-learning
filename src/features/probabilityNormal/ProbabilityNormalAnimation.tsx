@@ -290,7 +290,20 @@ export function ProbabilityNormalAnimation() {
               transform={vp.transform}
             >
               <ProbabilityNormalScene
-                params={params as any}
+                params={
+                  params as {
+                    mu: number;
+                    sigma: number;
+                    binCount: number;
+                    sampleSize: number;
+                    skewness?: number;
+                    percentileP?: number;
+                    blend?: number;
+                    x0?: number;
+                    x1?: number;
+                    x2?: number;
+                  }
+                }
                 scale={scale}
                 vp={vp}
                 fontScale={canvasSize.font}

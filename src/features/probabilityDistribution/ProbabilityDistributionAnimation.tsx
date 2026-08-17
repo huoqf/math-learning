@@ -327,7 +327,17 @@ export function ProbabilityDistributionAnimation() {
                 { key: "general", label: "一般分布列" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as any)}
+              onChange={(k) =>
+                setStudyMode(
+                  k as
+                    | "binomial"
+                    | "hypergeometric"
+                    | "compare"
+                    | "linear"
+                    | "decision"
+                    | "general",
+                )
+              }
               variant="filled"
             />
           </LeftPanelSection>
@@ -344,7 +354,9 @@ export function ProbabilityDistributionAnimation() {
                   { key: "investment", label: "资产配置(理财vs股票)" },
                 ]}
                 value={decisionScenario}
-                onChange={(k) => setDecisionScenario(k as any)}
+                onChange={(k) =>
+                  setDecisionScenario(k as "quality" | "investment")
+                }
                 variant="filled"
               />
             </LeftPanelSection>

@@ -29,10 +29,9 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   }, [formula, mode]);
 
   const isBlock = mode === "block";
-
   const baseClass = isBlock
-    ? "my-2 px-3 py-2 bg-primary-50/50 rounded-md text-center overflow-x-auto max-w-full text-neutral-800 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-    : "inline-block align-middle mx-1 my-0.5 whitespace-nowrap max-w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]";
+    ? "my-2 px-3 py-2 bg-primary-50/50 rounded-md text-center max-w-full text-neutral-800 overflow-x-auto"
+    : "inline-block align-middle mx-0.5 my-0.5 max-w-full text-neutral-800";
 
   return <div ref={containerRef} className={`${baseClass} ${className}`} />;
 };

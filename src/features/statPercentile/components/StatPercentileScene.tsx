@@ -111,7 +111,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
     [bins, onParamChange],
   );
 
-  // 100% 精确的坐标轴节点：X 轴落在 y=0 上，Y 轴落在 x=50 上
+  // 坐标轴端点位置
   const xAxisStart = mathToDesign(46, 0, scale);
   const xAxisEnd = mathToDesign(105, 0, scale);
 
@@ -124,10 +124,10 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
 
   return (
     <g>
-      {/* 坐标系基示：仅在 histogram 与 cumulative 模式下渲染 */}
+      {/* ────────────────── 坐标系基底：仅在 histogram 与 cumulative 模式下 ────────────────── */}
       {studyMode !== "stratified" && (
         <g key="coordinate-system-base">
-          {/* Y 轴水平参考网格线与刻度 (从 x=50 贴合) */}
+          {/* Y 轴水平参考网格线与刻度 */}
           {studyMode === "histogram" &&
             [0.01, 0.02, 0.03, 0.04, 0.05].map((hVal) => {
               const pLeft = mathToDesign(50, hVal, scale);
@@ -200,7 +200,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
               );
             })}
 
-          {/* X/Y 主轴线 (100% 严丝合缝贴合 y=0 和 x=50) */}
+          {/* X/Y 主轴线 */}
           <line
             x1={xAxisStart.x}
             y1={xAxisStart.y}
@@ -250,7 +250,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
               : "频率 / 组距 (h = f / d)"}
           </text>
 
-          {/* 横轴刻度与数值 50, 60, 70, 80, 90, 100 (从 y=0 完美插出) */}
+          {/* 横轴刻度与数值 50, 60, 70, 80, 90, 100 */}
           {[50, 60, 70, 80, 90, 100].map((xTick) => {
             const pt = mathToDesign(xTick, 0, scale);
             return (
@@ -301,7 +301,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                   fill={
                     isTargetBin
                       ? withAlpha(MATH_COLORS.function, 0.16)
-                      : withAlpha(MATH_COLORS.function, 0.1)
+                      : withAlpha(MATH_COLORS.function, 0.09)
                   }
                   stroke={MATH_COLORS.function}
                   strokeWidth={1.5}
@@ -343,7 +343,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                 y={pTL.y}
                 width={widthPx}
                 height={heightPx}
-                fill={withAlpha(MATH_COLORS.paramPrimary, 0.35)}
+                fill={withAlpha(MATH_COLORS.paramPrimary, 0.32)}
                 stroke={MATH_COLORS.paramPrimary}
                 strokeWidth={1}
                 rx={1}
@@ -361,7 +361,6 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
 
             return (
               <g key="percentile-indicator">
-                {/* 垂直分割线 */}
                 <line
                   x1={ptBase.x}
                   y1={ptTop.y - 20}
@@ -371,8 +370,6 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                   strokeWidth={2.5}
                   strokeDasharray="4 2"
                 />
-
-                {/* Badge 标签卡片 */}
                 <rect
                   x={ptBase.x - 44}
                   y={ptTop.y - 42}
@@ -395,10 +392,87 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
             );
           })()}
 
-          {/* 4. 数字特征线：平均数 x̄ (蓝色虚线) */}
+          {/* 4. 数字特征线：众数 Mo (绿色实线) */}
+          {(() => {
+            const ptMode = mathToDesign(stats.mode, 0, scale);
+            const yTopPx = mathToDesign(stats.mode, 0.046, scale).y;
+
+            return (
+              <g key="mode-indicator">
+                <line
+                  x1={ptMode.x}
+                  y1={yTopPx}
+                  x2={ptMode.x}
+                  y2={ptMode.y}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 2"
+                />
+                <rect
+                  x={ptMode.x - 30}
+                  y={yTopPx - 20}
+                  width={60}
+                  height={18}
+                  rx={3}
+                  fill={withAlpha(MATH_COLORS.paramTertiary, 0.9)}
+                />
+                <text
+                  x={ptMode.x}
+                  y={yTopPx - 7}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.white}
+                  fontSize={fontScale(9.5)}
+                  fontWeight="bold"
+                >
+                  众数={stats.mode.toFixed(1)}
+                </text>
+              </g>
+            );
+          })()}
+
+          {/* 5. 数字特征线：估算中位数 Me (橙色虚线，仅当 p !== 50 时展现避免重叠) */}
+          {percentileP !== 50 &&
+            (() => {
+              const ptMed = mathToDesign(stats.median, 0, scale);
+              const yTopPx = mathToDesign(stats.median, 0.042, scale).y;
+
+              return (
+                <g key="median-indicator">
+                  <line
+                    x1={ptMed.x}
+                    y1={yTopPx}
+                    x2={ptMed.x}
+                    y2={ptMed.y}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={1.5}
+                    strokeDasharray="3 3"
+                  />
+                  <rect
+                    x={ptMed.x - 32}
+                    y={yTopPx - 18}
+                    width={64}
+                    height={16}
+                    rx={3}
+                    fill={withAlpha(MATH_COLORS.paramSecondary, 0.9)}
+                  />
+                  <text
+                    x={ptMed.x}
+                    y={yTopPx - 6}
+                    textAnchor="middle"
+                    fill={MATH_COLORS.white}
+                    fontSize={fontScale(9)}
+                    fontWeight="bold"
+                  >
+                    中位={stats.median.toFixed(1)}
+                  </text>
+                </g>
+              );
+            })()}
+
+          {/* 6. 数字特征线：平均数 x̄ 与 物理力矩平衡支点 (蓝色) */}
           {(() => {
             const ptMean = mathToDesign(stats.mean, 0, scale);
-            const yTopPx = mathToDesign(stats.mean, 0.048, scale).y;
+            const yTopPx = mathToDesign(stats.mean, 0.05, scale).y;
 
             return (
               <g key="mean-indicator">
@@ -429,50 +503,137 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                 >
                   均值 x̄={stats.mean.toFixed(1)}
                 </text>
+
+                {/* 物理力矩平衡三角形支点 (Fulcrum Pivot) */}
+                <polygon
+                  points={`${ptMean.x},${ptMean.y} ${ptMean.x - 6},${ptMean.y + 10} ${ptMean.x + 6},${ptMean.y + 10}`}
+                  fill={MATH_COLORS.function}
+                />
+                <text
+                  x={ptMean.x}
+                  y={ptMean.y + 24}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.function}
+                  fontSize={fontScale(8.5)}
+                  fontWeight="bold"
+                >
+                  ▲ 重心支点
+                </text>
               </g>
             );
           })()}
 
-          {/* 5. 数字特征线：估算中位数 Me (橙色虚线，仅当 p !== 50 时展现避免重叠) */}
-          {percentileP !== 50 &&
-            (() => {
-              const ptMed = mathToDesign(stats.median, 0, scale);
-              const yTopPx = mathToDesign(stats.median, 0.044, scale).y;
+          {/* 7. 直方图下方：水平四分位数箱线图 (Boxplot) 对照 */}
+          {(() => {
+            const pQ1 = mathToDesign(stats.q1, -0.004, scale);
+            const pMed = mathToDesign(stats.median, -0.004, scale);
+            const pQ3 = mathToDesign(stats.q3, -0.004, scale);
+            const pMin = mathToDesign(50, -0.004, scale);
+            const pMax = mathToDesign(100, -0.004, scale);
+            const boxHeight = 12;
 
-              return (
-                <g key="median-indicator">
-                  <line
-                    x1={ptMed.x}
-                    y1={yTopPx}
-                    x2={ptMed.x}
-                    y2={ptMed.y}
-                    stroke={MATH_COLORS.paramSecondary}
-                    strokeWidth={1.5}
-                    strokeDasharray="3 3"
-                  />
-                  <rect
-                    x={ptMed.x - 32}
-                    y={yTopPx - 18}
-                    width={64}
-                    height={16}
-                    rx={3}
-                    fill={withAlpha(MATH_COLORS.paramSecondary, 0.9)}
-                  />
-                  <text
-                    x={ptMed.x}
-                    y={yTopPx - 6}
-                    textAnchor="middle"
-                    fill={MATH_COLORS.white}
-                    fontSize={fontScale(9)}
-                    fontWeight="bold"
-                  >
-                    Me={stats.median.toFixed(1)}
-                  </text>
-                </g>
-              );
-            })()}
+            return (
+              <g key="boxplot-comparison">
+                {/* 须线 (Whiskers) */}
+                <line
+                  x1={pMin.x}
+                  y1={pMin.y}
+                  x2={pQ1.x}
+                  y2={pQ1.y}
+                  stroke={MATH_COLORS.axis}
+                  strokeWidth={1.5}
+                />
+                <line
+                  x1={pQ3.x}
+                  y1={pQ3.y}
+                  x2={pMax.x}
+                  y2={pMax.y}
+                  stroke={MATH_COLORS.axis}
+                  strokeWidth={1.5}
+                />
+                <line
+                  x1={pMin.x}
+                  y1={pMin.y - 4}
+                  x2={pMin.x}
+                  y2={pMin.y + 4}
+                  stroke={MATH_COLORS.axis}
+                  strokeWidth={1.5}
+                />
+                <line
+                  x1={pMax.x}
+                  y1={pMax.y - 4}
+                  x2={pMax.x}
+                  y2={pMax.y + 4}
+                  stroke={MATH_COLORS.axis}
+                  strokeWidth={1.5}
+                />
 
-          {/* 6. 可拖拽控制点：在横轴上拖动改变百分位数 */}
+                {/* IQR 箱体 (Q1 到 Q3) */}
+                <rect
+                  x={pQ1.x}
+                  y={pQ1.y - boxHeight / 2}
+                  width={Math.abs(pQ3.x - pQ1.x)}
+                  height={boxHeight}
+                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.2)}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={1.5}
+                  rx={2}
+                />
+
+                {/* 中位数内线 */}
+                <line
+                  x1={pMed.x}
+                  y1={pMed.y - boxHeight / 2}
+                  x2={pMed.x}
+                  y2={pMed.y + boxHeight / 2}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={2}
+                />
+
+                {/* 箱线图文字标识 */}
+                <text
+                  x={pMin.x - 8}
+                  y={pMin.y + 3}
+                  textAnchor="end"
+                  fill={MATH_COLORS.labelText}
+                  fontSize={fontScale(9)}
+                  fontWeight="bold"
+                >
+                  四分位箱线图:
+                </text>
+                <text
+                  x={pQ1.x}
+                  y={pQ1.y + 16}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.labelText}
+                  fontSize={fontScale(8.5)}
+                >
+                  Q₁={stats.q1.toFixed(1)}
+                </text>
+                <text
+                  x={pQ3.x}
+                  y={pQ3.y + 16}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.labelText}
+                  fontSize={fontScale(8.5)}
+                >
+                  Q₃={stats.q3.toFixed(1)}
+                </text>
+                <text
+                  x={(pQ1.x + pQ3.x) / 2}
+                  y={pQ1.y - 8}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.paramSecondary}
+                  fontSize={fontScale(8.5)}
+                  fontWeight="bold"
+                >
+                  IQR={stats.iqr.toFixed(1)} (中间50%)
+                </text>
+              </g>
+            );
+          })()}
+
+          {/* 8. 可拖拽控制点：在横轴上拖动改变百分位数 */}
           <InteractivePoint
             cx={stats.percentileVal}
             cy={0}
@@ -649,7 +810,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
       {/* ────────────────── 模式 3: 分层抽样与总方差数形结合图形 ────────────────── */}
       {studyMode === "stratified" && (
         <g key="mode-stratified-vis">
-          {/* 1. 统一样本数值 X 轴 (50 ~ 100，与其他模式完全共享同一个横轴) */}
+          {/* 1. 统一样本数值 X 轴 (50 ~ 100) */}
           {(() => {
             const pStart = mathToDesign(46, 0.08, scale);
             const pEnd = mathToDesign(105, 0.08, scale);
@@ -746,11 +907,11 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
             );
           })()}
 
-          {/* 3. 三层高斯密度分布带 (按 yBase=0.24, 0.44, 0.64 美观等距分布) */}
+          {/* 3. 三层高斯密度分布带 */}
           {(() => {
             const strataInfo = [
               {
-                name: "层 A (高一)",
+                name: "层 1 (组 A)",
                 N: strat.strataN[0],
                 n: strat.strataSampleN[0],
                 weight: strat.strataWeights[0],
@@ -760,7 +921,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                 color: MATH_COLORS.paramPrimary,
               },
               {
-                name: "层 B (高二)",
+                name: "层 2 (组 B)",
                 N: strat.strataN[1],
                 n: strat.strataSampleN[1],
                 weight: strat.strataWeights[1],
@@ -770,7 +931,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                 color: MATH_COLORS.paramSecondary,
               },
               {
-                name: "层 C (高三)",
+                name: "层 3 (组 C)",
                 N: strat.strataN[2],
                 n: strat.strataSampleN[2],
                 weight: strat.strataWeights[2],
@@ -812,8 +973,6 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                   }
 
                   const pathD = points.join(" ");
-
-                  // 层均值重心垂直线
                   const ptMeanCenter = mathToDesign(st.mean, st.yBase, scale);
                   const ptMeanTop = mathToDesign(
                     st.mean,

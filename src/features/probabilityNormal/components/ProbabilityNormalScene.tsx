@@ -88,14 +88,16 @@ export function ProbabilityNormalScene({
   }, [bins, percentileP]);
 
   // 直方图在特定横坐标处的高度采样辅助函数
-  const getHistDensityAt = (x: number): number => {
-    for (const bin of bins) {
-      if (x >= bin.xStart && x <= bin.xEnd) {
-        return bin.density;
+  const getHistDensityAt = useMemo(() => {
+    return (x: number): number => {
+      for (const bin of bins) {
+        if (x >= bin.xStart && x <= bin.xEnd) {
+          return bin.density;
+        }
       }
-    }
-    return 0.1;
-  };
+      return 0.1;
+    };
+  }, [bins]);
 
   // 2. 正态分布密度曲线 Path 采样 (x 从 -6 到 6)
   const curvePathD = useMemo(() => {
@@ -262,7 +264,7 @@ export function ProbabilityNormalScene({
         priority: 1,
       },
     ];
-  }, [bins, stats, scale, showStatsLines, studyMode, percentileP]);
+  }, [stats, scale, showStatsLines, studyMode, percentileP, getHistDensityAt]);
 
   const placedLabels = useMemo(() => {
     return avoidLabels(labelEntries, { fontScale, stepY: 14 });

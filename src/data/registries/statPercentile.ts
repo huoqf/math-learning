@@ -15,6 +15,98 @@ export const defaultParams = {
   var3: 25,
 } as const;
 
+export interface StatPresetItem {
+  key: string;
+  label: string;
+  description: string;
+  mode?: "histogram" | "cumulative" | "stratified";
+  params: Record<string, number>;
+}
+
+/** 高考典型教学场景预设 */
+export const STAT_PRESETS: StatPresetItem[] = [
+  {
+    key: "symmetric",
+    label: "对称分布 (钟形)",
+    description: "均值 ≈ 中位数 ≈ 众数，典型标准正态近似",
+    mode: "histogram",
+    params: {
+      percentileP: 50,
+      shift: 0.0,
+      sampleN: 100,
+      N1: 300,
+      N2: 500,
+      N3: 200,
+      mean1: 75,
+      mean2: 75,
+      mean3: 75,
+      var1: 25,
+      var2: 25,
+      var3: 25,
+    },
+  },
+  {
+    key: "rightSkewed",
+    label: "正偏态 (右偏长尾)",
+    description: "众数 < 中位数 < 均值，高收入拉动均值右偏",
+    mode: "histogram",
+    params: {
+      percentileP: 50,
+      shift: 0.6,
+      sampleN: 100,
+      N1: 300,
+      N2: 500,
+      N3: 200,
+      mean1: 65,
+      mean2: 75,
+      mean3: 90,
+      var1: 20,
+      var2: 30,
+      var3: 40,
+    },
+  },
+  {
+    key: "cumulativeMedian",
+    label: "四分位数线性插值",
+    description: "下四分位数 Q₁(25%) 与中位数插值对照",
+    mode: "cumulative",
+    params: {
+      percentileP: 25,
+      shift: 0.0,
+      sampleN: 100,
+      N1: 300,
+      N2: 500,
+      N3: 200,
+      mean1: 72,
+      mean2: 78,
+      mean3: 85,
+      var1: 36,
+      var2: 49,
+      var3: 25,
+    },
+  },
+  {
+    key: "gaokaoStratified",
+    label: "高考真题: 大均值差异",
+    description: "各层方差较小但均值相差大，总方差显著剧增",
+    mode: "stratified",
+    params: {
+      percentileP: 75,
+      shift: 0.0,
+      sampleN: 120,
+      N1: 400,
+      N2: 600,
+      N3: 200,
+      mean1: 62,
+      mean2: 82,
+      mean3: 92,
+      var1: 16,
+      var2: 20,
+      var3: 18,
+    },
+  },
+];
+
 export const paramMeta: Record<string, ParamMeta> = {
   percentileP: {
     key: "percentileP",
@@ -60,6 +152,28 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.0,
     importance: "core",
     description: "调节直方图频率分布在各组间的右偏或左偏趋势",
+    descriptionFormula:
+      "\\text{调节频率分布偏态：} >0 \\text{ 右偏，} <0 \\text{ 左偏}",
+    marks: [
+      {
+        value: -0.6,
+        variant: "recommended",
+        label: "左偏",
+        labelFormula: "\\text{左偏}",
+      },
+      {
+        value: 0.0,
+        variant: "critical",
+        label: "对称",
+        labelFormula: "\\text{对称}",
+      },
+      {
+        value: 0.6,
+        variant: "recommended",
+        label: "右偏",
+        labelFormula: "\\text{右偏}",
+      },
+    ],
   },
   sampleN: {
     key: "sampleN",
@@ -71,10 +185,11 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 100,
     importance: "core",
     description: "分层抽样拟抽取的数据样本总量",
+    descriptionFormula: "n = n_1 + n_2 + n_3",
   },
   N1: {
     key: "N1",
-    label: "层 A 总体人数 N₁",
+    label: "层 1 总体人数 N₁",
     labelFormula: "N_1",
     min: 100,
     max: 1000,
@@ -82,10 +197,11 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 300,
     importance: "advanced",
     description: "分层抽样第 1 层的总体规模",
+    descriptionFormula: "w_1 = \\frac{N_1}{N}",
   },
   N2: {
     key: "N2",
-    label: "层 B 总体人数 N₂",
+    label: "层 2 总体人数 N₂",
     labelFormula: "N_2",
     min: 100,
     max: 1000,
@@ -93,10 +209,11 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 500,
     importance: "advanced",
     description: "分层抽样第 2 层的总体规模",
+    descriptionFormula: "w_2 = \\frac{N_2}{N}",
   },
   N3: {
     key: "N3",
-    label: "层 C 总体人数 N₃",
+    label: "层 3 总体人数 N₃",
     labelFormula: "N_3",
     min: 100,
     max: 1000,
@@ -104,10 +221,11 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 200,
     importance: "advanced",
     description: "分层抽样第 3 层的总体规模",
+    descriptionFormula: "w_3 = \\frac{N_3}{N}",
   },
   mean1: {
     key: "mean1",
-    label: "层 A 平均数 x̄₁",
+    label: "层 1 均值 x̄₁",
     labelFormula: "\\bar{x}_1",
     min: 50,
     max: 100,
@@ -115,10 +233,11 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 72,
     importance: "advanced",
     description: "第 1 层的样本均值",
+    descriptionFormula: "\\bar{x}_1",
   },
   mean2: {
     key: "mean2",
-    label: "层 B 平均数 x̄₂",
+    label: "层 2 均值 x̄₂",
     labelFormula: "\\bar{x}_2",
     min: 50,
     max: 100,
@@ -126,10 +245,11 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 78,
     importance: "advanced",
     description: "第 2 层的样本均值",
+    descriptionFormula: "\\bar{x}_2",
   },
   mean3: {
     key: "mean3",
-    label: "层 C 平均数 x̄₃",
+    label: "层 3 均值 x̄₃",
     labelFormula: "\\bar{x}_3",
     min: 50,
     max: 100,
@@ -137,5 +257,42 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 85,
     importance: "advanced",
     description: "第 3 层的样本均值",
+    descriptionFormula: "\\bar{x}_3",
+  },
+  var1: {
+    key: "var1",
+    label: "层 1 方差 s₁²",
+    labelFormula: "s_1^2",
+    min: 5,
+    max: 100,
+    step: 5,
+    defaultValue: 36,
+    importance: "advanced",
+    description: "第 1 层的样本方差",
+    descriptionFormula: "s_1^2",
+  },
+  var2: {
+    key: "var2",
+    label: "层 2 方差 s₂²",
+    labelFormula: "s_2^2",
+    min: 5,
+    max: 100,
+    step: 5,
+    defaultValue: 49,
+    importance: "advanced",
+    description: "第 2 层的样本方差",
+    descriptionFormula: "s_2^2",
+  },
+  var3: {
+    key: "var3",
+    label: "层 3 方差 s₃²",
+    labelFormula: "s_3^2",
+    min: 5,
+    max: 100,
+    step: 5,
+    defaultValue: 25,
+    importance: "advanced",
+    description: "第 3 层的样本方差",
+    descriptionFormula: "s_3^2",
   },
 };

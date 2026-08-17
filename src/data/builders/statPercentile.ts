@@ -41,6 +41,13 @@ export function buildStatPercentilePanel(
   );
 
   if (studyMode === "histogram") {
+    const skewText =
+      shift > 0.1
+        ? "正偏态 (右偏): 众数 < 中位数 < 均值"
+        : shift < -0.1
+          ? "负偏态 (左偏): 均值 < 中位数 < 众数"
+          : "对称钟形: 众数 ≈ 中位数 ≈ 均值";
+
     return {
       quantities: [
         {
@@ -79,40 +86,49 @@ export function buildStatPercentilePanel(
           value: `${stats.iqr.toFixed(2)}`,
           color: MATH_COLORS.paramSecondary,
         },
+        {
+          label: "分布偏态判断",
+          value: skewText,
+          color: MATH_COLORS.labelText,
+        },
       ],
       theorems: [
         {
           name: "频率分布直方图三大特征",
-          latex:
-            "\\sum (h_i \\times d) = \\sum f_i = 1, \\quad h_i = \\frac{f_i}{d}",
-          note: "纵轴为 频率/组距 h，矩形面积表示频率 f，直方图矩形总面积恒等于 1。",
+          latex: `\\begin{aligned}
+\\sum (h_i \\times d) &= \\sum f_i = 1 \\\\
+h_i &= \\frac{f_i}{d}
+\\end{aligned}`,
+          note: "纵轴为频率/组距 $h$，矩形面积表示频率 $f$，直方图矩形总面积恒等于 $1$。",
           level: "core",
         },
         {
-          name: "百分位数/中位数的几何意义",
-          latex:
-            "\\text{面积}(x \\le P_p) = \\sum_{\\text{左侧}} f_i + h_k \\cdot (P_p - x_{k,\\min}) = \\frac{p}{100}",
-          note: "第 p 百分位数 P_p 恰好将直方图左侧矩形面积切割为 p%。",
+          name: "三大特征数与物理力矩平衡",
+          latex: `\\begin{aligned}
+\\text{力矩平衡: } & \\sum f_i (x_{\\text{mid}, i} - \\bar{x}) = 0 \\\\
+\\text{面积平分: } & \\int_{-\\infty}^{M_e} f(x)dx = 0.5
+\\end{aligned}`,
+          note: "平均数 $\\bar{x}$ 对应直方图的物理重心支点；中位数 $M_e$ 对应平分面积的垂线；众数对应最高矩形组中值。",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "【高考考点】频率分布直方图纵轴是 频率/组距，求解各组频率需乘以组距 d (如 d=10)！",
+          text: "【高考考点】频率分布直方图纵轴是频率/组距，求解各组频率需乘以组距 $d$（即 $f_i = h_i \\cdot d$）！",
           importance: "gaokao",
         },
         {
-          text: "【高考考点】直方图估计平均数必须用各组【组中值】乘以对应组【频率】后累加。",
+          text: "【高考考点】直方图估计平均数必须用各组【组中值】乘以对应组【频率】后累加，即 $\\bar{x} = \\sum x_{\\text{mid}, i} f_i$。",
           importance: "gaokao",
         },
         {
-          text: "【高考考点】中位数是把直方图左右面积平分为 0.5 的垂直切线。",
+          text: "【高考考点】中位数是把直方图左右面积平分为 $0.5$ 的垂直切线；正偏态（右偏）中 $\\text{众数} < M_e < \\bar{x}$。",
           importance: "gaokao",
         },
       ],
       warnings: [
         {
-          text: "易错警示：切勿把纵轴高度 h_i 直接当成频率！频率 = h_i × 组距 d。",
+          text: "易错警示：切勿把纵轴高度 $h_i$ 直接当成频率！各组频率为 $f_i = h_i \\times d$（$d$ 为组距）。",
           level: "warning",
         },
       ],
@@ -164,37 +180,42 @@ export function buildStatPercentilePanel(
       theorems: [
         {
           name: "百分位数线性插值公式 (高考标准)",
-          latex:
-            "y_p = a + \\frac{\\color{#EF4444}{\\frac{p}{100} - F_{\\text{prev}}}}{\\color{#D97706}{h}} = a + \\frac{\\frac{p}{100} - F_{\\text{prev}}}{f_i} \\cdot d",
+          latex: `\\begin{aligned}
+y_p &= a + \\frac{\\color{${MATH_COLORS.paramPrimary}}{\\frac{p}{100} - F_{\\text{prev}}}}{\\color{${MATH_COLORS.paramSecondary}}{h}} \\\\
+&= a + \\frac{\\frac{p}{100} - F_{\\text{prev}}}{f_i} \\cdot d
+\\end{aligned}`,
           prerequisites: [
             "$a$ 为目标所在组左端点",
             "$F_{\\text{prev}}$ 为此前各组累积频率",
-            "$h$ 为该组矩形高度",
+            "$h = \\frac{f_i}{d}$ 为该组矩形高度（$d$ 为组距，$f_i$ 为该组频率）",
           ],
-          note: "累积频率达到 p% 时，在该组内按矩形面积线性插值补足所需频率。",
+          note: "累积频率达到 $p\\%$ 时，在该组内按矩形面积线性插值补足所需频率。",
           level: "core",
         },
         {
-          name: "三大常考百分位数",
-          latex:
-            "Q_1: p=25\\% (\\text{下四分位数}), \\quad M_e: p=50\\% (\\text{中位数}), \\quad Q_3: p=75\\% (\\text{上四分位数})",
-          note: "四分位距 IQR = Q₃ - Q₁ 反映数据中间 50% 的离散程度。",
+          name: "三大常考百分位数与箱线图",
+          latex: `\\begin{aligned}
+Q_1&: p=25\\% \\ (\\text{下四分位数}) \\\\
+M_e&: p=50\\% \\ (\\text{中位数}) \\\\
+Q_3&: p=75\\% \\ (\\text{上四分位数})
+\\end{aligned}`,
+          note: "四分位距 $\\text{IQR} = Q_3 - Q_1$ 反映数据中间 $50\\%$ 的离散程度，具有抗极端值稳健性。",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "【高考考点】百分位数计算题解答时需先算各组累积频率，定位所在区间后再插值。",
+          text: "【高考考点】百分位数计算题解答时需先算各组累积频率 $F_i$，定位所在区间后再进行线性插值。",
           importance: "gaokao",
         },
         {
-          text: "【高考考点】第 p 百分位数代表样本中至少有 p% 的数据小于或等于该值。",
+          text: "【高考考点】第 $p$ 百分位数代表样本中至少有 $p\\%$ 的数据小于或等于该值。",
           importance: "gaokao",
         },
       ],
       warnings: [
         {
-          text: "线性插值公式中分子为 (p% - F_prev)，分母是矩形高度 h（或频率除以组距），注意量纲单位！",
+          text: "线性插值公式中分子为 $(\\frac{p}{100} - F_{\\text{prev}})$，分母是矩形高度 $h$（即 $\\frac{f_i}{d}$），计算横坐标偏移时切勿遗漏组距！",
           level: "warning",
         },
       ],
@@ -245,27 +266,31 @@ export function buildStatPercentilePanel(
         },
         {
           label: "• 组内方差贡献 ∑w_i s_i²",
-          value: `${intraVar.toFixed(2)}`,
+          value: `${intraVar.toFixed(2)} (${((intraVar / Math.max(0.1, stratResult.totalVar)) * 100).toFixed(0)}%)`,
           color: MATH_COLORS.function,
         },
         {
           label: "• 组间均值离差贡献",
-          value: `${interMeanVar.toFixed(2)}`,
+          value: `${interMeanVar.toFixed(2)} (${((interMeanVar / Math.max(0.1, stratResult.totalVar)) * 100).toFixed(0)}%)`,
           color: MATH_COLORS.paramSecondary,
         },
       ],
       theorems: [
         {
           name: "分层抽样比例分配公式",
-          latex:
-            "n_i = N_i \\cdot \\frac{n}{N} = N_i \\cdot f, \\quad \\sum n_i = n",
+          latex: `\\begin{aligned}
+n_i &= N_i \\cdot \\frac{n}{N} = N_i \\cdot f \\\\
+\\sum n_i &= n
+\\end{aligned}`,
           note: "各层抽取的样本量与该层在总体中所占的人数比例成正比。",
           level: "core",
         },
         {
-          name: "分层抽样总体均值与方差公式 (高考高频新大纲)",
-          latex:
-            "\\bar{x} = \\sum_{i=1}^{k} w_i \\bar{x}_i, \\quad s^2 = \\sum_{i=1}^{k} w_i \\left[ s_i^2 + (\\bar{x}_i - \\bar{x})^2 \\right]",
+          name: "分层抽样总体均值与方差分解公式 (新高考核心)",
+          latex: `\\begin{aligned}
+\\bar{x} &= \\sum_{i=1}^{k} w_i \\bar{x}_i \\\\
+s^2 &= \\sum_{i=1}^{k} \\color{${MATH_COLORS.paramPrimary}}{w_i s_i^2} + \\sum_{i=1}^{k} \\color{${MATH_COLORS.paramSecondary}}{w_i (\\bar{x}_i - \\bar{x})^2}
+\\end{aligned}`,
           prerequisites: ["$w_i = \\frac{N_i}{N}$ 满足 $\\sum w_i = 1$"],
           note: "总体方差由【组内方差加权和】与【组间均值离差平方和】两部分共同决定！",
           level: "important",
@@ -273,7 +298,7 @@ export function buildStatPercentilePanel(
       ],
       gaokaoPoints: [
         {
-          text: "【高考新考点】分层抽样的总体方差计算公式：必须考虑各层本身的方差以及各层均值与总体均值偏差的平方！",
+          text: "【高考新考点】分层抽样总方差公式 $s^2 = \\sum w_i s_i^2 + \\sum w_i (\\bar{x}_i - \\bar{x})^2$：必须同时考虑各层内方差 $s_i^2$ 与均值偏离平方 $(\\bar{x}_i - \\bar{x})^2$！",
           importance: "gaokao",
         },
         {
@@ -283,7 +308,7 @@ export function buildStatPercentilePanel(
       ],
       warnings: [
         {
-          text: "特别提醒：总体方差 s² 绝非简单的 ∑ w_i s_i²！必须加上组间均值偏差项 w_i (x̄_i - x̄)²。",
+          text: "特别提醒：总体方差 $s^2$ 绝非简单的 $\\sum w_i s_i^2$！必须加上组间均值偏差项 $\\sum w_i (\\bar{x}_i - \\bar{x})^2$。",
           level: "warning",
         },
       ],

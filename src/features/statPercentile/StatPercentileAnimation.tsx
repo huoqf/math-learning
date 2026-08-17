@@ -13,7 +13,11 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { StatPercentileScene } from "./components/StatPercentileScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/statPercentile";
+import {
+  defaultParams,
+  paramMeta,
+  STAT_PRESETS,
+} from "@/data/registries/statPercentile";
 
 export function StatPercentileAnimation() {
   // 探究模式：'histogram' | 'cumulative' | 'stratified'
@@ -60,6 +64,20 @@ export function StatPercentileAnimation() {
   // 重置参数
   const handleReset = () => {
     setParams({ ...defaultParams });
+  };
+
+  // 载入预设场景（联动更新参数与探究模式）
+  const handlePresetSelect = (presetKey: string) => {
+    const preset = STAT_PRESETS.find((p) => p.key === presetKey);
+    if (preset) {
+      setParams((prev) => ({
+        ...prev,
+        ...preset.params,
+      }));
+      if (preset.mode) {
+        setStudyMode(preset.mode);
+      }
+    }
   };
 
   // 根据当前 activeMode 过滤声明式参数配置
@@ -109,31 +127,40 @@ export function StatPercentileAnimation() {
     return "分层抽样与总体方差看板";
   }, [studyMode]);
 
-  // 顶部悬浮公式
+  // 顶部悬浮公式（铁律 4C 色彩绑定）
   const topFormulaLatex = useMemo(() => {
     if (studyMode === "histogram") {
-      return "\\text{矩形面积 } f_i = h_i \\cdot d, \\quad \\bar{x} = \\sum x_{\\text{mid}, i} \\cdot f_i";
+      return `\\text{矩形面积 } f_i = h_i \\cdot d, \\quad \\color{${MATH_COLORS.function}}{\\bar{x} = \\sum x_{\\text{mid}, i} \\cdot f_i}`;
     }
     if (studyMode === "cumulative") {
-      return `y_p = a + \\frac{\\color{${MATH_COLORS.paramPrimary}}{${params.percentileP}\\% - F_{\\text{prev}}}}{h}`;
+      return `y_p = a + \\frac{\\color{${MATH_COLORS.paramPrimary}}{${(params.percentileP / 100).toFixed(2)} - F_{\\text{prev}}}}{\\color{${MATH_COLORS.paramSecondary}}{h}}`;
     }
-    return "s^2 = \\sum w_i \\left[ s_i^2 + (\\bar{x}_i - \\bar{x})^2 \\right]";
+    return `s^2 = \\sum \\color{${MATH_COLORS.paramPrimary}}{w_i s_i^2} + \\sum \\color{${MATH_COLORS.paramSecondary}}{w_i (\\bar{x}_i - \\bar{x})^2}`;
   }, [studyMode, params.percentileP]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 模式选择 Section */}
+          {/* 模式选择 Section：单列 3 行布局，完整展示文字与描述 */}
           <LeftPanelSection title="研究模式" subtitle="选择统计分析探究专题">
             <SelectGrid
+              columns={1}
               items={[
-                { key: "histogram", label: "直方图与数字特征" },
-                { key: "cumulative", label: "百分位数线性插值" },
+                {
+                  key: "histogram",
+                  label: "直方图与数字特征",
+                  description: "众数、中位数、均值与物理力矩支点",
+                },
+                {
+                  key: "cumulative",
+                  label: "百分位数线性插值",
+                  description: "S 型累积折线与面积补齐插值",
+                },
                 {
                   key: "stratified",
                   label: "分层抽样与总方差",
-                  fullWidth: true,
+                  description: "各层高斯分布、离差拉扯与总方差分解",
                 },
               ]}
               value={studyMode}
@@ -141,6 +168,24 @@ export function StatPercentileAnimation() {
                 setStudyMode(k as "histogram" | "cumulative" | "stratified")
               }
               variant="filled"
+            />
+          </LeftPanelSection>
+
+          {/* 高考经典题型预设 */}
+          <LeftPanelSection
+            title="典型高考情境"
+            subtitle="一键载入高考经典分布数据"
+          >
+            <SelectGrid
+              columns={1}
+              items={STAT_PRESETS.map((p) => ({
+                key: p.key,
+                label: p.label,
+                description: p.description,
+              }))}
+              value=""
+              onChange={handlePresetSelect}
+              variant="outline"
             />
           </LeftPanelSection>
 

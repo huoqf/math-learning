@@ -96,3 +96,19 @@
   --transition-timing-accelerate: cubic-bezier(0.4, 0, 1, 1);
   --transition-timing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* 保证 KaTeX 公式在紧凑右屏看板等容器中自适应换行，彻底杜绝单行溢出或被裁切 */
+.katex-html {
+  white-space: normal;
+}
+.katex {
+  max-width: 100%;
+}
+.katex .base {
+  white-space: normal;
+  max-width: 100%;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+}
