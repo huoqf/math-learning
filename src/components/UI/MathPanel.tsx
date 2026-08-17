@@ -52,10 +52,29 @@ interface MathPanelProps {
 
 /**
  * 混合内容渲染：中文句子中用 $...$ 标记数学片段，其余纯文本正常换行。
- * 例：'已知 $B$ 发生，逆向推断 $A_k$ 的后验概率'
- * → "已知 " + KaTeX(B) + " 发生，逆向推断 " + KaTeX(A_k) + " 的后验概率"
+ * 若为纯 LaTeX（无中文且含数学命令/运算符），自动作为 KaTeX 公式渲染。
  */
 function renderMixedLatex(text: string): React.ReactNode {
+  if (!text) return null;
+
+  // 1. 若无中文字符且包含 LaTeX 命令或数学上下标/运算符，直接按纯公式渲染
+  if (
+    !/[\u4e00-\u9fa5]/.test(text) &&
+    (/\\[a-zA-Z]|[_^]\{?[\w]|=|<|>|\+|-|\*|\//.test(text) ||
+      text.startsWith("$"))
+  ) {
+    const cleanFormula =
+      text.startsWith("$") && text.endsWith("$") ? text.slice(1, -1) : text;
+    return (
+      <KatexFormula
+        formula={cleanFormula}
+        mode="inline"
+        className="!my-0 !mx-0.5"
+      />
+    );
+  }
+
+  // 2. 混合文本按 $...$ 切分渲染
   const parts = text.split(/(\$[^$]+\$)/g);
   if (parts.length === 1) return text; // 无数学标记，直接纯文本
   return (

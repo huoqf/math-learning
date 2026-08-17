@@ -23,3 +23,70 @@ export const BALL_COLORS = [
   "#F97316",
   "#84CC16",
 ];
+
+export function toSup(val: number | string): string {
+  const map: Record<string, string> = {
+    "0": "⁰",
+    "1": "¹",
+    "2": "²",
+    "3": "³",
+    "4": "⁴",
+    "5": "⁵",
+    "6": "⁶",
+    "7": "⁷",
+    "8": "⁸",
+    "9": "⁹",
+    "+": "⁺",
+    "-": "⁻",
+    n: "ⁿ",
+    k: "ᵏ",
+    m: "ᵐ",
+    r: "ʳ",
+    i: "ⁱ",
+  };
+  return String(val)
+    .split("")
+    .map((c) => map[c] || c)
+    .join("");
+}
+
+export function toSub(val: number | string): string {
+  const map: Record<string, string> = {
+    "0": "₀",
+    "1": "₁",
+    "2": "₂",
+    "3": "₃",
+    "4": "₄",
+    "5": "₅",
+    "6": "₆",
+    "7": "₇",
+    "8": "₈",
+    "9": "₉",
+    "+": "₊",
+    "-": "₋",
+    n: "ₙ",
+    k: "ₖ",
+    m: "ₘ",
+    r: "ᵣ",
+    i: "ᵢ",
+  };
+  return String(val)
+    .split("")
+    .map((c) => map[c] || c)
+    .join("");
+}
+
+export function formatComb(n: number | string, k: number | string): string {
+  return `C${toSub(n)}${toSup(k)}`;
+}
+
+export function formatPerm(n: number | string, k: number | string): string {
+  return `A${toSub(n)}${toSup(k)}`;
+}
+
+export function formatTermText(coeff: number, power: number): string {
+  if (power === 0) return `${coeff}`;
+  const coeffStr = coeff === 1 ? "" : coeff === -1 ? "-" : `${coeff}`;
+  const powStr = power === 1 ? "x" : `x${toSup(power)}`;
+  return `${coeffStr}${powStr}`;
+}

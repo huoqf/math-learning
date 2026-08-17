@@ -39,6 +39,46 @@ export function getPascalTriangle(maxRows: number): number[][] {
   return triangle;
 }
 
+/** 杨辉三角高级性质与恒等式分析 */
+export interface PascalProperties {
+  maxIndices: number[]; // 最大二项式系数的 k 索引
+  maxValue: number;
+  hockeyStick: {
+    points: { r: number; c: number }[]; // 沿斜线求和的点
+    target: { r: number; c: number }; // 拐角处等于的和
+  };
+}
+
+export function getPascalProperties(
+  n: number,
+  selectedK: number,
+): PascalProperties {
+  const safeN = Math.max(0, Math.floor(n));
+  const safeK = Math.min(Math.max(0, Math.floor(selectedK)), safeN);
+
+  // 最大二项式系数位置
+  const maxIndices =
+    safeN % 2 === 0 ? [safeN / 2] : [(safeN - 1) / 2, (safeN + 1) / 2];
+  const maxValue = comb(safeN, maxIndices[0]);
+
+  // 曲棍球棒恒等式：从 (safeK, safeK) 沿同一列 c=safeK 向下加到 (safeN, safeK)，和等于 (safeN + 1, safeK + 1)
+  const hockeyPoints: { r: number; c: number }[] = [];
+  const maxRowForHockey = Math.min(safeN, 7);
+  const hockeyCol = Math.min(safeK, maxRowForHockey);
+  for (let r = hockeyCol; r <= maxRowForHockey; r++) {
+    hockeyPoints.push({ r, c: hockeyCol });
+  }
+
+  return {
+    maxIndices,
+    maxValue,
+    hockeyStick: {
+      points: hockeyPoints,
+      target: { r: maxRowForHockey + 1, c: hockeyCol + 1 },
+    },
+  };
+}
+
 export interface BinomialTermInfo {
   k: number;
   binomialCoeff: number; // C_n^k
@@ -100,6 +140,121 @@ export function getAllBinomialTerms(
     terms.push(getBinomialTerm(n, k, a, b));
   }
   return terms;
+}
+
+/** 赋值法评估结果 */
+export interface AssignmentResult {
+  xValue: number;
+  name: string;
+  latexExpr: string;
+  evaluatedValue: number;
+  description: string;
+  itemValues: { k: number; val: number; power: number }[];
+}
+
+/** 评估常用赋值法结果 */
+export function evaluateAssignments(
+  n: number,
+  a: number,
+  b: number,
+): Record<string, AssignmentResult> {
+  const terms = getAllBinomialTerms(n, a, b);
+
+  // 1. x = 1 所有系数之和
+  const valX1 = Math.pow(a + b, n);
+  const itemsX1 = terms.map((t) => ({
+    k: t.k,
+    val: t.termCoeff,
+    power: t.powerA,
+  }));
+
+  // 2. x = -1 交错系数和
+  const valXNeg1 = Math.pow(-a + b, n);
+  const itemsXNeg1 = terms.map((t) => ({
+    k: t.k,
+    val: t.termCoeff * Math.pow(-1, t.powerA),
+    power: t.powerA,
+  }));
+
+  // 3. x = 0 常数项
+  const valX0 = Math.pow(b, n);
+  const itemsX0 = terms.map((t) => ({
+    k: t.k,
+    val: t.powerA === 0 ? t.termCoeff : 0,
+    power: t.powerA,
+  }));
+
+  // 4. 偶次项系数和
+  const valEven = (valX1 + valXNeg1) / 2;
+  // 5. 奇次项系数和
+  const valOdd = (valX1 - valXNeg1) / 2;
+
+  // 6. 导数赋值法 f'(1) = sum k * a_k
+  // f(x) = (ax+b)^n => f'(x) = n * a * (ax+b)^(n-1)
+  const valDerivative = n > 0 ? n * a * Math.pow(a + b, n - 1) : 0;
+
+  return {
+    sum_all: {
+      xValue: 1,
+      name: "全部系数和 (令 x = 1)",
+      latexExpr: `f(1) = (${a} + ${b})^{${n}} = ${valX1}`,
+      evaluatedValue: valX1,
+      description: `各项展开项系数相加：a_0 + a_1 + \\dots + a_n = (${a}+${b})^n`,
+      itemValues: itemsX1,
+    },
+    sum_alt: {
+      xValue: -1,
+      name: "奇偶交错和 (令 x = -1)",
+      latexExpr: `f(-1) = (${-a} + ${b})^{${n}} = ${valXNeg1}`,
+      evaluatedValue: valXNeg1,
+      description: `各项正负交替相加：a_0 - a_1 + a_2 - \\dots = (-${a}+${b})^n`,
+      itemValues: itemsXNeg1,
+    },
+    sum_even: {
+      xValue: 1,
+      name: "偶次项系数和",
+      latexExpr: `\\frac{f(1) + f(-1)}{2} = ${Number.isInteger(valEven) ? valEven : valEven.toFixed(2)}`,
+      evaluatedValue: valEven,
+      description: "偶次项系数之和：a_0 + a_2 + a_4 + \\dots",
+      itemValues: terms.map((t) => ({
+        k: t.k,
+        val: t.powerA % 2 === 0 ? t.termCoeff : 0,
+        power: t.powerA,
+      })),
+    },
+    sum_odd: {
+      xValue: 1,
+      name: "奇次项系数和",
+      latexExpr: `\\frac{f(1) - f(-1)}{2} = ${Number.isInteger(valOdd) ? valOdd : valOdd.toFixed(2)}`,
+      evaluatedValue: valOdd,
+      description: "奇次项系数之和：a_1 + a_3 + a_5 + \\dots",
+      itemValues: terms.map((t) => ({
+        k: t.k,
+        val: t.powerA % 2 !== 0 ? t.termCoeff : 0,
+        power: t.powerA,
+      })),
+    },
+    derivative: {
+      xValue: 1,
+      name: "导数加权和 (f'(1))",
+      latexExpr: `f'(1) = ${n} \\cdot ${a} \\cdot (${a}+${b})^{${Math.max(0, n - 1)}} = ${valDerivative}`,
+      evaluatedValue: valDerivative,
+      description: "两边求导赋值令 x=1：\\sum k a_k = f'(1)",
+      itemValues: terms.map((t) => ({
+        k: t.k,
+        val: t.powerA * t.termCoeff,
+        power: t.powerA,
+      })),
+    },
+    constant: {
+      xValue: 0,
+      name: "常数项 (令 x = 0)",
+      latexExpr: `f(0) = (${b})^{${n}} = ${valX0}`,
+      evaluatedValue: valX0,
+      description: `展开式中的常数项（x^0 的系数）：b^n = ${valX0}`,
+      itemValues: itemsX0,
+    },
+  };
 }
 
 /** 树状决策图节点结构 */
@@ -229,4 +384,74 @@ export function buildAdditionTree(
   }
 
   return { nodes, edges };
+}
+
+/** 网格最短路径与标数法模型 */
+export interface GridPathPoint {
+  x: number;
+  y: number;
+  ways: number; // 从 (0,0) 到 (x,y) 的最短路径方法数
+  labelFormula: string;
+}
+
+export function getGridPathMatrix(m: number, n: number): GridPathPoint[][] {
+  const safeM = Math.min(Math.max(1, Math.floor(m)), 6);
+  const safeN = Math.min(Math.max(1, Math.floor(n)), 5);
+
+  const grid: GridPathPoint[][] = [];
+  for (let y = 0; y <= safeN; y++) {
+    const row: GridPathPoint[] = [];
+    for (let x = 0; x <= safeM; x++) {
+      const ways = comb(x + y, x);
+      row.push({
+        x,
+        y,
+        ways,
+        labelFormula: `C_{${x + y}}^{${x}} = ${ways}`,
+      });
+    }
+    grid.push(row);
+  }
+  return grid;
+}
+
+/** 均匀分组与定向分配模型计算 */
+export interface GroupingInfo {
+  totalItems: number;
+  groupCount: number;
+  itemsPerGroup: number;
+  directCombinationWays: number; // 逐步选出的组合数积 (未消序)
+  divisionOrderFactor: number; // 均分需要消去的全排列数 k!
+  groupedWays: number; // 均匀分组总数（无标签堆）
+  allocatedWays: number; // 分配给指定接收者的总数（有标签）
+}
+
+export function calculateGroupingAllocation(
+  totalItems: number,
+  groupCount: number,
+): GroupingInfo {
+  const k = Math.min(Math.max(2, Math.floor(groupCount)), 4);
+  const itemsPerGroup = Math.max(1, Math.floor(totalItems / k));
+  const validTotal = itemsPerGroup * k;
+
+  let directCombinationWays = 1;
+  let remaining = validTotal;
+  for (let i = 0; i < k; i++) {
+    directCombinationWays *= comb(remaining, itemsPerGroup);
+    remaining -= itemsPerGroup;
+  }
+
+  const divisionOrderFactor = factorial(k);
+  const groupedWays = directCombinationWays / divisionOrderFactor;
+  const allocatedWays = groupedWays * factorial(k); // 等于 directCombinationWays
+
+  return {
+    totalItems: validTotal,
+    groupCount: k,
+    itemsPerGroup,
+    directCombinationWays,
+    divisionOrderFactor,
+    groupedWays,
+    allocatedWays,
+  };
 }

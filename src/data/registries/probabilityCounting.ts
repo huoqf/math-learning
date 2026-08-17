@@ -8,7 +8,12 @@ export const defaultParams = {
   m1: 3,
   m2: 2,
   m3: 2,
-  subMode: 0,
+  // 扩展参数
+  assignmentType: 0, // 0: sum_all (x=1), 1: sum_alt (x=-1), 2: sum_even, 3: sum_odd, 4: derivative, 5: constant
+  gridM: 4, // 网格横向步数
+  gridN: 3, // 网格纵向步数
+  groupTotal: 6, // 均分总元素数
+  groupCount: 3, // 均分组数
 } as const;
 
 export const paramMeta: Record<string, ParamMeta> = {
@@ -22,21 +27,11 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 5,
     importance: "core",
     description: "控制二项式 (ax+b)^n 的指数 n 或总元素个数 n",
-    descriptionFormula: "控制 $(ax+b)^n$ 的指数 $n$",
+    descriptionFormula: "控制 $(ax+b)^n$ 的指数 $n$ 或总元素数 $n$",
     marks: [
-      { value: 0, variant: "critical", label: "退化项", labelFormula: "n = 0" },
-      {
-        value: 5,
-        variant: "recommended",
-        label: "高频考点",
-        labelFormula: "n = 5",
-      },
-      {
-        value: 10,
-        variant: "recommended",
-        label: "上限",
-        labelFormula: "n = 10",
-      },
+      { value: 0, variant: "critical", labelFormula: "n=0" },
+      { value: 5, variant: "recommended", labelFormula: "n=5" },
+      { value: 10, variant: "recommended", labelFormula: "n=10" },
     ],
   },
   k: {
@@ -50,9 +45,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "二项展开式第 k+1 项 (T_{k+1}) 或组合数 C_n^k 中的 k",
     descriptionFormula: "通项 $T_{k+1}$ 或组合数 $C_n^k$ 中的 $k$",
-    marks: [
-      { value: 0, variant: "zero", label: "首项", labelFormula: "k = 0" },
-    ],
+    marks: [{ value: 0, variant: "zero", labelFormula: "k=0" }],
   },
   a: {
     key: "a",
@@ -63,20 +56,13 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 1,
     defaultValue: 1,
     importance: "advanced",
-    description: "二项式 (ax+b)^n 中 x 的系数 a",
-    descriptionFormula: "二项式 $(ax+b)^n$ 中 $x$ 的系数 $a$",
+    description: "二项式 (ax+b)^n 中 x 的系数 a（a=0 时退化为常数单项式）",
+    descriptionFormula: "二项式 $(ax+b)^n$ 中 $x$ 的系数 $a$（$a=0$ 时退化）",
     marks: [
       {
         value: 0,
         variant: "critical",
-        label: "无 x 项",
-        labelFormula: "a = 0",
-      },
-      {
-        value: 1,
-        variant: "recommended",
-        label: "标准",
-        labelFormula: "a = 1",
+        labelFormula: "a=0",
       },
     ],
   },
@@ -89,17 +75,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 1,
     defaultValue: 1,
     importance: "advanced",
-    description: "二项式 (ax+b)^n 中的常数项 b",
-    descriptionFormula: "二项式 $(ax+b)^n$ 中的常数项 $b$",
-    marks: [
-      {
-        value: -1,
-        variant: "recommended",
-        label: "正负交替",
-        labelFormula: "b = -1",
-      },
-      { value: 0, variant: "critical", label: "单项式", labelFormula: "b = 0" },
-    ],
+    description:
+      "二项式 (ax+b)^n 中的常数项 b（b<0 时各项正负交替，b=0 时为单项式）",
+    descriptionFormula: "二项式 $(ax+b)^n$ 中的常数项 $b$（$b<0$ 正负交替）",
+    marks: [{ value: 0, variant: "critical", labelFormula: "b=0" }],
   },
   m1: {
     key: "m1",
@@ -135,6 +114,55 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2,
     importance: "advanced",
     description: "分步乘法第三步的分支数（为0时代表只有两步）",
-    descriptionFormula: "步骤 $3$ 分支数 $m_3$",
+    descriptionFormula: "步骤 $3$ 分支数 $m_3$（$0$ 表示仅前两步）",
+    marks: [{ value: 0, variant: "zero", labelFormula: "m_3=0" }],
+  },
+  gridM: {
+    key: "gridM",
+    label: "横向步数 m",
+    labelFormula: "m",
+    min: 1,
+    max: 6,
+    step: 1,
+    defaultValue: 4,
+    importance: "advanced",
+    description: "网格路径向右走的步数 m",
+    descriptionFormula: "向右步数 $m$",
+  },
+  gridN: {
+    key: "gridN",
+    label: "纵向步数 n",
+    labelFormula: "n",
+    min: 1,
+    max: 5,
+    step: 1,
+    defaultValue: 3,
+    importance: "advanced",
+    description: "网格路径向上走的步数 n",
+    descriptionFormula: "向上步数 $n$",
+  },
+  groupTotal: {
+    key: "groupTotal",
+    label: "均分总元素数",
+    labelFormula: "N",
+    min: 4,
+    max: 8,
+    step: 2,
+    defaultValue: 6,
+    importance: "advanced",
+    description: "参与均匀分组的不同元素总数",
+    descriptionFormula: "总元素数 $N$",
+  },
+  groupCount: {
+    key: "groupCount",
+    label: "均分组数 k",
+    labelFormula: "k",
+    min: 2,
+    max: 4,
+    step: 1,
+    defaultValue: 3,
+    importance: "advanced",
+    description: "均分成的堆数 / 组数 k",
+    descriptionFormula: "均分组数 $k$",
   },
 };
