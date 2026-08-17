@@ -40,6 +40,28 @@ export function normalPdf(x: number, mu: number, sigma: number): number {
 }
 
 /**
+ * 偏态正态分布 (Skew Normal Distribution) 概率密度函数
+ * 用于模拟现实教学中左偏/右偏的频率直方图
+ * @param x 自变量
+ * @param mu 位置参数 (均值中心)
+ * @param sigma 尺度参数
+ * @param alpha 偏度系数 (alpha > 0 右偏，alpha < 0 左偏，alpha = 0 标准正态)
+ */
+export function skewNormalPdf(
+  x: number,
+  mu: number,
+  sigma: number,
+  alpha: number = 0,
+): number {
+  if (sigma <= 0) return 0;
+  const phi = normalPdf(x, mu, sigma);
+  if (Math.abs(alpha) < 1e-4) return phi;
+  const z = (x - mu) / sigma;
+  const capitalPhi = standardNormalCdf(alpha * z);
+  return 2 * phi * capitalPhi;
+}
+
+/**
  * 标准正态分布累积分布函数 \Phi(z)
  */
 export function standardNormalCdf(z: number): number {
@@ -83,14 +105,16 @@ export interface HistogramBin {
 }
 
 /**
- * 确定性生成符合正态分布的频率分布直方图分组数据
+ * 确定性生成符合正态分布或偏态分布的频率分布直方图分组数据
  * 在 [mu - 3.5*sigma, mu + 3.5*sigma] 范围内均匀切分 binCount 个组
+ * @param skewness 偏度参数，-1 (左偏) ~ 0 (对称正态) ~ 1 (右偏)
  */
 export function generateHistogramBins(
   mu: number,
   sigma: number,
   binCount: number,
   sampleSize: number,
+  skewness: number = 0,
 ): HistogramBin[] {
   const safeBinCount = Math.max(4, Math.min(30, Math.round(binCount)));
   const safeSigma = Math.max(0.1, sigma);
@@ -102,16 +126,29 @@ export function generateHistogramBins(
   const binWidth = rangeWidth / safeBinCount;
 
   const bins: HistogramBin[] = [];
+  const alpha = skewness * 4; // 偏度系数放大
 
-  // 利用 CDF 区间概率估算各 bin 的理论概率，并进行离散样本量取整与归一化
+  // 采样各区间概率
   let rawCounts: number[] = [];
   let totalRawCount = 0;
 
   for (let i = 0; i < safeBinCount; i++) {
     const xStart = startX + i * binWidth;
     const xEnd = xStart + binWidth;
-    const p = calcIntervalProbability(mu, safeSigma, xStart, xEnd);
-    const count = Math.round(p * safeSampleSize);
+    const mid = (xStart + xEnd) / 2;
+
+    let p: number;
+    if (Math.abs(alpha) < 1e-3) {
+      p = calcIntervalProbability(mu, safeSigma, xStart, xEnd);
+    } else {
+      // 采用 Simpson 数值积分近似偏态概率
+      const pMid = skewNormalPdf(mid, mu, safeSigma, alpha);
+      const pStart = skewNormalPdf(xStart, mu, safeSigma, alpha);
+      const pEnd = skewNormalPdf(xEnd, mu, safeSigma, alpha);
+      p = ((pStart + 4 * pMid + pEnd) / 6) * binWidth;
+    }
+
+    const count = Math.max(0, Math.round(p * safeSampleSize));
     rawCounts.push(count);
     totalRawCount += count;
   }
@@ -122,7 +159,7 @@ export function generateHistogramBins(
     totalRawCount = safeSampleSize;
   }
 
-  // 构建真正的 bin 对象
+  // 构建直方图各个组
   for (let i = 0; i < safeBinCount; i++) {
     const xStart = startX + i * binWidth;
     const xEnd = xStart + binWidth;
@@ -147,20 +184,34 @@ export function generateHistogramBins(
 }
 
 export interface HistogramStats {
-  mode: number; // 众数估算值
-  median: number; // 中位数估算值
-  mean: number; // 平均数估算值
-  totalArea: number; // 直方图总面积（理论应为1）
+  mode: number; // 众数估算值 (最高矩形底边中点)
+  median: number; // 中位数估算值 (平分面积)
+  mean: number; // 平均数估算值 (离散加权均值)
+  totalArea: number; // 直方图总面积（恒等于1）
   q1: number; // 第25%百分位数（下四分位数）
   q3: number; // 第75%百分位数（上四分位数）
+  percentilePValue: number; // 指定百分位 p 的插值估计值
 }
 
 /**
  * 根据直方图各组数据估计样本的统计数字特征
+ * @param bins 直方图各组数据
+ * @param targetPercentile 指定百分位数探究值 (0~100，如 50 代表中位数)
  */
-export function estimateHistogramStats(bins: HistogramBin[]): HistogramStats {
+export function estimateHistogramStats(
+  bins: HistogramBin[],
+  targetPercentile: number = 50,
+): HistogramStats {
   if (bins.length === 0) {
-    return { mode: 0, median: 0, mean: 0, totalArea: 0, q1: 0, q3: 0 };
+    return {
+      mode: 0,
+      median: 0,
+      mean: 0,
+      totalArea: 0,
+      q1: 0,
+      q3: 0,
+      percentilePValue: 0,
+    };
   }
 
   // 1. 众数：最高矩形底边中点
@@ -178,48 +229,29 @@ export function estimateHistogramStats(bins: HistogramBin[]): HistogramStats {
   let totalArea = 0;
   for (const bin of bins) {
     mean += bin.mid * bin.frequency;
-    totalArea += bin.density * bin.width; // 应该是1.0左右
+    totalArea += bin.density * bin.width;
   }
 
-  // 3. 中位数：使左右累计频率各自达到 0.5 的 x 坐标（矩形内线性插值）
-  let median = bins[0].mid;
-  let cumFreq = 0;
-  for (const bin of bins) {
-    if (cumFreq + bin.frequency >= 0.5) {
-      // 在此 bin 内部进行插值
-      const neededFreq = 0.5 - cumFreq;
-      const fraction = bin.frequency > 0 ? neededFreq / bin.frequency : 0.5;
-      median = bin.xStart + fraction * bin.width;
-      break;
+  // 通用百分位数求值辅助函数
+  const getPercentile = (pRate: number): number => {
+    let cumFreq = 0;
+    for (const bin of bins) {
+      if (cumFreq + bin.frequency >= pRate) {
+        const neededFreq = pRate - cumFreq;
+        const fraction = bin.frequency > 0 ? neededFreq / bin.frequency : 0.5;
+        return bin.xStart + fraction * bin.width;
+      }
+      cumFreq += bin.frequency;
     }
-    cumFreq += bin.frequency;
-  }
+    return bins[bins.length - 1].xEnd;
+  };
 
-  // 4. 第25%百分位数（下四分位数 Q1）
-  let q1 = bins[0].mid;
-  cumFreq = 0;
-  for (const bin of bins) {
-    if (cumFreq + bin.frequency >= 0.25) {
-      const neededFreq = 0.25 - cumFreq;
-      const fraction = bin.frequency > 0 ? neededFreq / bin.frequency : 0.5;
-      q1 = bin.xStart + fraction * bin.width;
-      break;
-    }
-    cumFreq += bin.frequency;
-  }
-
-  // 5. 第75%百分位数（上四分位数 Q3）
-  let q3 = bins[0].mid;
-  cumFreq = 0;
-  for (const bin of bins) {
-    if (cumFreq + bin.frequency >= 0.75) {
-      const neededFreq = 0.75 - cumFreq;
-      const fraction = bin.frequency > 0 ? neededFreq / bin.frequency : 0.5;
-      q3 = bin.xStart + fraction * bin.width;
-      break;
-    }
-    cumFreq += bin.frequency;
-  }
+  // 3. 中位数 (50%)、下四分位数 (25%)、上四分位数 (75%) 与任意百分位 (p%)
+  const median = getPercentile(0.5);
+  const q1 = getPercentile(0.25);
+  const q3 = getPercentile(0.75);
+  const pClamped = Math.max(0.01, Math.min(0.99, targetPercentile / 100));
+  const percentilePValue = getPercentile(pClamped);
 
   return {
     mode,
@@ -228,6 +260,7 @@ export function estimateHistogramStats(bins: HistogramBin[]): HistogramStats {
     totalArea,
     q1,
     q3,
+    percentilePValue,
   };
 }
 
@@ -235,27 +268,83 @@ export function estimateHistogramStats(bins: HistogramBin[]): HistogramStats {
  * 计算 3-Sigma 标准区间概率
  */
 export function getThreeSigmaIntervals(mu: number, sigma: number) {
+  const safeSigma = Math.max(0.1, sigma);
   return [
     {
+      k: 1,
       label: "[μ-σ, μ+σ]",
-      prob: calcIntervalProbability(mu, sigma, mu - sigma, mu + sigma),
+      formula: `[\\color{#EF4444}{${(mu - safeSigma).toFixed(1)}}, \\color{#EF4444}{${(mu + safeSigma).toFixed(1)}}]`,
+      prob: calcIntervalProbability(
+        mu,
+        safeSigma,
+        mu - safeSigma,
+        mu + safeSigma,
+      ),
       expected: 0.6827,
-      x1: mu - sigma,
-      x2: mu + sigma,
+      x1: mu - safeSigma,
+      x2: mu + safeSigma,
     },
     {
+      k: 2,
       label: "[μ-2σ, μ+2σ]",
-      prob: calcIntervalProbability(mu, sigma, mu - 2 * sigma, mu + 2 * sigma),
+      formula: `[\\color{#EF4444}{${(mu - 2 * safeSigma).toFixed(1)}}, \\color{#EF4444}{${(mu + 2 * safeSigma).toFixed(1)}}]`,
+      prob: calcIntervalProbability(
+        mu,
+        safeSigma,
+        mu - 2 * safeSigma,
+        mu + 2 * safeSigma,
+      ),
       expected: 0.9545,
-      x1: mu - 2 * sigma,
-      x2: mu + 2 * sigma,
+      x1: mu - 2 * safeSigma,
+      x2: mu + 2 * safeSigma,
     },
     {
+      k: 3,
       label: "[μ-3σ, μ+3σ]",
-      prob: calcIntervalProbability(mu, sigma, mu - 3 * sigma, mu + 3 * sigma),
+      formula: `[\\color{#EF4444}{${(mu - 3 * safeSigma).toFixed(1)}}, \\color{#EF4444}{${(mu + 3 * safeSigma).toFixed(1)}}]`,
+      prob: calcIntervalProbability(
+        mu,
+        safeSigma,
+        mu - 3 * safeSigma,
+        mu + 3 * safeSigma,
+      ),
       expected: 0.9973,
-      x1: mu - 3 * sigma,
-      x2: mu + 3 * sigma,
+      x1: mu - 3 * safeSigma,
+      x2: mu + 3 * safeSigma,
     },
   ];
+}
+
+/**
+ * 高考对称性区间求解计算器
+ * 给定 x0，求其关于 μ 的对称点 x_sym = 2μ - x0，以及对应单侧与双侧对称概率
+ */
+export function calcSymmetricNormalIntervals(
+  mu: number,
+  sigma: number,
+  x0: number,
+) {
+  const safeSigma = Math.max(0.1, sigma);
+  const xSym = 2 * mu - x0;
+  const leftX = Math.min(x0, xSym);
+  const rightX = Math.max(x0, xSym);
+
+  // 单侧尾部概率 P(X <= leftX) = P(X >= rightX)
+  const tailProb = normalCdf(leftX, mu, safeSigma);
+  // 中间对称概率 P(leftX <= X <= rightX) = 1 - 2*tailProb
+  const centerProb = Math.max(0, 1 - 2 * tailProb);
+  // 标准化值
+  const zLeft = (leftX - mu) / safeSigma;
+  const zRight = (rightX - mu) / safeSigma;
+
+  return {
+    x0,
+    xSym,
+    leftX,
+    rightX,
+    tailProb,
+    centerProb,
+    zLeft,
+    zRight,
+  };
 }

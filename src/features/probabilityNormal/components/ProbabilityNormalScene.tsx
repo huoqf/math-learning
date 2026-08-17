@@ -2,12 +2,13 @@ import { useMemo } from "react";
 import { CoordinateGrid, InteractivePoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { SceneScale, ViewportInfo } from "@/hooks";
-import { mathToDesign, designToMath } from "@/utils/coordinate";
+import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels } from "@/utils/labelAvoider";
 import {
   generateHistogramBins,
   estimateHistogramStats,
   normalPdf,
+  calcSymmetricNormalIntervals,
 } from "@/math/probabilityNormal";
 
 interface TooltipBinData {
@@ -26,16 +27,21 @@ interface ProbabilityNormalSceneProps {
     sigma: number;
     binCount: number;
     sampleSize: number;
-    x1: number;
-    x2: number;
+    skewness?: number;
+    percentileP?: number;
+    blend?: number;
+    x0?: number;
+    x1?: number;
+    x2?: number;
   };
   scale: SceneScale;
   vp: ViewportInfo;
   fontScale: (size: number) => number;
-  studyMode: "histogram" | "normalFit" | "sigmaRule";
+  studyMode: "histogram" | "normalFit" | "paramsShape" | "sigmaRule";
   showStatsLines?: boolean;
   showFrequencyLine?: boolean;
   showSigmaIntervals?: boolean;
+  showBenchmarkNormal?: boolean;
   onParamChange: (key: string, value: number) => void;
   /** Tooltip 事件回调 */
   onBinMouseEnter?: (bin: TooltipBinData, e: React.MouseEvent) => void;
@@ -52,27 +58,49 @@ export function ProbabilityNormalScene({
   showStatsLines = true,
   showFrequencyLine = false,
   showSigmaIntervals = false,
+  showBenchmarkNormal = true,
   onParamChange,
   onBinMouseEnter,
   onBinMouseMove,
   onBinMouseLeave,
 }: ProbabilityNormalSceneProps) {
-  const { mu, sigma, binCount, sampleSize, x1, x2 } = params;
+  const {
+    mu,
+    sigma,
+    binCount,
+    sampleSize,
+    skewness = 0,
+    percentileP = 50,
+    blend = 0.5,
+    x0 = -1,
+    x1 = -1,
+    x2 = 1,
+  } = params;
   const safeSigma = Math.max(0.1, sigma);
 
   // 1. 直方图分组与估计数据
   const bins = useMemo(() => {
-    return generateHistogramBins(mu, safeSigma, binCount, sampleSize);
-  }, [mu, safeSigma, binCount, sampleSize]);
+    return generateHistogramBins(mu, safeSigma, binCount, sampleSize, skewness);
+  }, [mu, safeSigma, binCount, sampleSize, skewness]);
 
   const stats = useMemo(() => {
-    return estimateHistogramStats(bins);
-  }, [bins]);
+    return estimateHistogramStats(bins, percentileP);
+  }, [bins, percentileP]);
+
+  // 直方图在特定横坐标处的高度采样辅助函数
+  const getHistDensityAt = (x: number): number => {
+    for (const bin of bins) {
+      if (x >= bin.xStart && x <= bin.xEnd) {
+        return bin.density;
+      }
+    }
+    return 0.1;
+  };
 
   // 2. 正态分布密度曲线 Path 采样 (x 从 -6 到 6)
   const curvePathD = useMemo(() => {
     const points: string[] = [];
-    const step = 0.05;
+    const step = 0.04;
     for (let x = -6; x <= 6; x += step) {
       const y = normalPdf(x, mu, safeSigma);
       const pt = mathToDesign(x, y, scale);
@@ -83,7 +111,21 @@ export function ProbabilityNormalScene({
     return points.join(" ");
   }, [mu, safeSigma, scale]);
 
-  // 3. 区间阴影 Path 采样 ([x1, x2])
+  // 基准 N(0, 1) 密度曲线 Path
+  const benchmarkCurvePathD = useMemo(() => {
+    const points: string[] = [];
+    const step = 0.05;
+    for (let x = -6; x <= 6; x += step) {
+      const y = normalPdf(x, 0, 1);
+      const pt = mathToDesign(x, y, scale);
+      points.push(
+        `${x === -6 ? "M" : "L"} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`,
+      );
+    }
+    return points.join(" ");
+  }, [scale]);
+
+  // 3. 任意区间阴影 Path 采样 ([x1, x2])
   const minX = Math.min(x1, x2);
   const maxX = Math.max(x1, x2);
 
@@ -91,18 +133,15 @@ export function ProbabilityNormalScene({
     const points: string[] = [];
     const step = 0.02;
 
-    // 起始点 (minX, 0)
     const startPt = mathToDesign(minX, 0, scale);
     points.push(`M ${startPt.x.toFixed(1)} ${startPt.y.toFixed(1)}`);
 
-    // 沿着密度曲线从 minX 走到 maxX
     for (let x = minX; x <= maxX; x += step) {
       const y = normalPdf(x, mu, safeSigma);
       const pt = mathToDesign(x, y, scale);
       points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
     }
 
-    // 处理终点 (maxX, f(maxX)) 落地到 (maxX, 0)
     const endY = normalPdf(maxX, mu, safeSigma);
     const endPt1 = mathToDesign(maxX, endY, scale);
     const endPt2 = mathToDesign(maxX, 0, scale);
@@ -113,17 +152,77 @@ export function ProbabilityNormalScene({
     return points.join(" ");
   }, [minX, maxX, mu, safeSigma, scale]);
 
-  // 4. 特征数标示线 (众数、中位数、平均数) 与避让标签
-  const labelEntries = useMemo(() => {
-    if (!showStatsLines || studyMode === "sigmaRule") return [];
+  // 4. 对称性阴影采样 (x0 与 2μ - x0)
+  const symData = useMemo(() => {
+    return calcSymmetricNormalIntervals(mu, safeSigma, x0);
+  }, [mu, safeSigma, x0]);
 
-    const modeY = Math.max(0.05, normalPdf(stats.mode, mu, safeSigma));
-    const medianY = Math.max(0.05, normalPdf(stats.median, mu, safeSigma));
-    const meanY = Math.max(0.05, normalPdf(stats.mean, mu, safeSigma));
+  // 左侧尾部阴影 [-6, symData.leftX]
+  const leftTailShadowPathD = useMemo(() => {
+    const leftBound = -6;
+    const rightBound = symData.leftX;
+    if (rightBound <= leftBound) return "";
+
+    const points: string[] = [];
+    const step = 0.04;
+    const startPt = mathToDesign(leftBound, 0, scale);
+    points.push(`M ${startPt.x.toFixed(1)} ${startPt.y.toFixed(1)}`);
+
+    for (let x = leftBound; x <= rightBound; x += step) {
+      const y = normalPdf(x, mu, safeSigma);
+      const pt = mathToDesign(x, y, scale);
+      points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+    }
+
+    const endY = normalPdf(rightBound, mu, safeSigma);
+    const endPt1 = mathToDesign(rightBound, endY, scale);
+    const endPt2 = mathToDesign(rightBound, 0, scale);
+    points.push(`L ${endPt1.x.toFixed(1)} ${endPt1.y.toFixed(1)}`);
+    points.push(`L ${endPt2.x.toFixed(1)} ${endPt2.y.toFixed(1)}`);
+    points.push("Z");
+    return points.join(" ");
+  }, [symData.leftX, mu, safeSigma, scale]);
+
+  // 右侧尾部阴影 [symData.rightX, 6]
+  const rightTailShadowPathD = useMemo(() => {
+    const leftBound = symData.rightX;
+    const rightBound = 6;
+    if (leftBound >= rightBound) return "";
+
+    const points: string[] = [];
+    const step = 0.04;
+    const startPt = mathToDesign(leftBound, 0, scale);
+    points.push(`M ${startPt.x.toFixed(1)} ${startPt.y.toFixed(1)}`);
+
+    for (let x = leftBound; x <= rightBound; x += step) {
+      const y = normalPdf(x, mu, safeSigma);
+      const pt = mathToDesign(x, y, scale);
+      points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+    }
+
+    const endY = normalPdf(rightBound, mu, safeSigma);
+    const endPt1 = mathToDesign(rightBound, endY, scale);
+    const endPt2 = mathToDesign(rightBound, 0, scale);
+    points.push(`L ${endPt1.x.toFixed(1)} ${endPt1.y.toFixed(1)}`);
+    points.push(`L ${endPt2.x.toFixed(1)} ${endPt2.y.toFixed(1)}`);
+    points.push("Z");
+    return points.join(" ");
+  }, [symData.rightX, mu, safeSigma, scale]);
+
+  // 5. 特征数标示线与优化避让标签
+  const labelEntries = useMemo(() => {
+    if (!showStatsLines || studyMode !== "histogram") return [];
+
+    // 精确使用柱顶高度，确保标签自然悬浮在柱顶上方
+    const modeY = getHistDensityAt(stats.mode);
+    const medianY = getHistDensityAt(stats.median);
+    const meanY = getHistDensityAt(stats.mean);
+    const pY = getHistDensityAt(stats.percentilePValue);
 
     const modePt = mathToDesign(stats.mode, modeY, scale);
     const medianPt = mathToDesign(stats.median, medianY, scale);
     const meanPt = mathToDesign(stats.mean, meanY, scale);
+    const pPt = mathToDesign(stats.percentilePValue, pY, scale);
 
     return [
       {
@@ -132,8 +231,8 @@ export function ProbabilityNormalScene({
         x: modePt.x,
         y: modePt.y,
         anchor: "middle" as const,
-        dy: -8,
-        priority: 3,
+        dy: -10,
+        priority: 4,
       },
       {
         key: "median",
@@ -141,45 +240,53 @@ export function ProbabilityNormalScene({
         x: medianPt.x,
         y: medianPt.y,
         anchor: "middle" as const,
-        dy: -8,
-        priority: 2,
+        dy: -10,
+        priority: 3,
       },
       {
         key: "mean",
-        text: `平均数 ${stats.mean.toFixed(2)}`,
+        text: `均值 ${stats.mean.toFixed(2)}`,
         x: meanPt.x,
         y: meanPt.y,
         anchor: "middle" as const,
-        dy: -8,
+        dy: -10,
+        priority: 2,
+      },
+      {
+        key: "percentile",
+        text: `P${percentileP} = ${stats.percentilePValue.toFixed(2)}`,
+        x: pPt.x,
+        y: pPt.y,
+        anchor: "middle" as const,
+        dy: -10,
         priority: 1,
       },
     ];
-  }, [stats, scale, showStatsLines, studyMode, mu, safeSigma]);
+  }, [bins, stats, scale, showStatsLines, studyMode, percentileP]);
 
   const placedLabels = useMemo(() => {
     return avoidLabels(labelEntries, { fontScale, stepY: 14 });
   }, [labelEntries, fontScale]);
 
-  // 5. 端点 x1, x2 拖拽处理
-  const handleDragX1 = (newPx: number) => {
-    const mathPt = designToMath(newPx, 0, scale);
-    const clampedX = Math.max(-5, Math.min(5, Math.round(mathPt.x * 10) / 10));
-    onParamChange("x1", clampedX);
+  // 6. 拖拽处理（InteractivePoint 返回数学坐标 mathPt）
+  const handleDragX0 = (mathPt: { x: number; y: number }) => {
+    const clamped = Math.max(-5, Math.min(5, Math.round(mathPt.x * 10) / 10));
+    onParamChange("x0", clamped);
   };
 
-  const handleDragX2 = (newPx: number) => {
-    const mathPt = designToMath(newPx, 0, scale);
-    const clampedX = Math.max(-5, Math.min(5, Math.round(mathPt.x * 10) / 10));
-    onParamChange("x2", clampedX);
+  const handleDragX1 = (mathPt: { x: number; y: number }) => {
+    const clamped = Math.max(-5, Math.min(5, Math.round(mathPt.x * 10) / 10));
+    onParamChange("x1", clamped);
   };
 
-  // 渲染端点在坐标系上的设计点坐标
-  const x1Design = mathToDesign(x1, 0, scale);
-  const x2Design = mathToDesign(x2, 0, scale);
+  const handleDragX2 = (mathPt: { x: number; y: number }) => {
+    const clamped = Math.max(-5, Math.min(5, Math.round(mathPt.x * 10) / 10));
+    onParamChange("x2", clamped);
+  };
 
   return (
     <g>
-      {/* 网格与坐标轴 (标准统一组件) */}
+      {/* 坐标轴与网格 (标准组件) */}
       <CoordinateGrid
         scale={scale}
         fontScale={fontScale}
@@ -187,341 +294,335 @@ export function ProbabilityNormalScene({
         yStep={0.1}
       />
 
-      {/* A. 区间阴影高亮 (sigmaRule 模式或带有区间分析) */}
-      {(studyMode === "sigmaRule" || studyMode === "normalFit") && (
-        <path
-          d={shadowPathD}
-          fill={withAlpha(MATH_COLORS.paramTertiary, 0.35)}
-          stroke={MATH_COLORS.paramTertiary}
-          strokeWidth={1.5}
-          strokeDasharray="4 2"
-        />
+      {/* ─── 模式 1：直方图与数字特征 ────────────────────────────────────────── */}
+      {studyMode === "histogram" && (
+        <g>
+          {/* 直方图各条柱 */}
+          {bins.map((bin) => {
+            const leftTop = mathToDesign(bin.xStart, bin.density, scale);
+            const rightBottom = mathToDesign(bin.xEnd, 0, scale);
+            const rectWidth = Math.max(1, rightBottom.x - leftTop.x);
+            const rectHeight = Math.max(1, rightBottom.y - leftTop.y);
+
+            // 如果该矩形位于中位数或指定百分位数左侧，使用更具视觉提示的浅色带
+            const isLeftOfPercentile = bin.xEnd <= stats.percentilePValue;
+
+            return (
+              <g key={bin.index}>
+                <rect
+                  x={leftTop.x}
+                  y={leftTop.y}
+                  width={rectWidth}
+                  height={rectHeight}
+                  fill={
+                    isLeftOfPercentile
+                      ? withAlpha(MATH_COLORS.paramTertiary, 0.4)
+                      : withAlpha(MATH_COLORS.barFill, 0.45)
+                  }
+                  stroke={
+                    isLeftOfPercentile
+                      ? MATH_COLORS.paramTertiary
+                      : MATH_COLORS.barBorder
+                  }
+                  strokeWidth={1.5}
+                  className="transition-colors duration-150 hover:opacity-80"
+                  style={{ cursor: "pointer" }}
+                  onMouseEnter={(e) => onBinMouseEnter?.(bin, e)}
+                  onMouseMove={onBinMouseMove}
+                  onMouseLeave={onBinMouseLeave}
+                />
+              </g>
+            );
+          })}
+
+          {/* 频率折线图 */}
+          {showFrequencyLine && (
+            <g>
+              {(() => {
+                const points: string[] = [];
+                const startPt = mathToDesign(bins[0].xStart, 0, scale);
+                points.push(
+                  `M ${startPt.x.toFixed(1)} ${startPt.y.toFixed(1)}`,
+                );
+                for (const bin of bins) {
+                  const pt = mathToDesign(bin.mid, bin.density, scale);
+                  points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+                }
+                const endPt = mathToDesign(
+                  bins[bins.length - 1].xEnd,
+                  0,
+                  scale,
+                );
+                points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
+
+                return (
+                  <path
+                    d={points.join(" ")}
+                    fill="none"
+                    stroke={MATH_COLORS.frequencyLine}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                );
+              })()}
+            </g>
+          )}
+
+          {/* 特征数参考虚线与防重叠标签 */}
+          {showStatsLines && (
+            <g>
+              {/* 众数线 (红色) */}
+              {(() => {
+                const modeY = getHistDensityAt(stats.mode);
+                const p1 = mathToDesign(stats.mode, 0, scale);
+                const p2 = mathToDesign(stats.mode, modeY, scale);
+                return (
+                  <line
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                    stroke={MATH_COLORS.paramPrimary}
+                    strokeWidth={1.5}
+                    strokeDasharray="4 3"
+                  />
+                );
+              })()}
+
+              {/* 中位数线 (橙色 - 平分面积) */}
+              {(() => {
+                const medY = getHistDensityAt(stats.median);
+                const p1 = mathToDesign(stats.median, 0, scale);
+                const p2 = mathToDesign(stats.median, medY, scale);
+                return (
+                  <line
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={2}
+                    strokeDasharray="5 3"
+                  />
+                );
+              })()}
+
+              {/* 平均数线 (蓝色 - 重心) */}
+              {(() => {
+                const meanY = getHistDensityAt(stats.mean);
+                const p1 = mathToDesign(stats.mean, 0, scale);
+                const p2 = mathToDesign(stats.mean, meanY, scale);
+                return (
+                  <line
+                    x1={p1.x}
+                    y1={p1.y}
+                    x2={p2.x}
+                    y2={p2.y}
+                    stroke={MATH_COLORS.function}
+                    strokeWidth={1.5}
+                    strokeDasharray="4 3"
+                  />
+                );
+              })()}
+
+              {/* 目标百分位数线 (翠绿色) */}
+              {percentileP !== 50 &&
+                (() => {
+                  const pY = getHistDensityAt(stats.percentilePValue);
+                  const p1 = mathToDesign(stats.percentilePValue, 0, scale);
+                  const p2 = mathToDesign(stats.percentilePValue, pY, scale);
+                  return (
+                    <line
+                      x1={p1.x}
+                      y1={p1.y}
+                      x2={p2.x}
+                      y2={p2.y}
+                      stroke={MATH_COLORS.paramTertiary}
+                      strokeWidth={1.5}
+                      strokeDasharray="3 3"
+                    />
+                  );
+                })()}
+
+              {/* 避让标签渲染 */}
+              {placedLabels.map((lbl) => {
+                let color: string = MATH_COLORS.function;
+                if (lbl.key === "mode") color = MATH_COLORS.paramPrimary;
+                if (lbl.key === "median") color = MATH_COLORS.paramSecondary;
+                if (lbl.key === "percentile") color = MATH_COLORS.paramTertiary;
+
+                return (
+                  <text
+                    key={lbl.key}
+                    x={lbl.x}
+                    y={lbl.y}
+                    dy={lbl.finalDy}
+                    fontSize={fontScale(11)}
+                    fill={color}
+                    textAnchor={lbl.anchor}
+                    className="font-bold select-none drop-shadow-sm"
+                  >
+                    {lbl.text}
+                  </text>
+                );
+              })}
+            </g>
+          )}
+        </g>
       )}
 
-      {/* B. 频率分布直方图 矩形绘制 */}
-      {studyMode !== "sigmaRule" &&
-        bins.map((bin) => {
-          const leftTop = mathToDesign(bin.xStart, bin.density, scale);
-          const rightBottom = mathToDesign(bin.xEnd, 0, scale);
-          const rectWidth = Math.max(1, rightBottom.x - leftTop.x);
-          const rectHeight = Math.max(1, rightBottom.y - leftTop.y);
+      {/* ─── 模式 2：极限逼近与正态拟合 ──────────────────────────────────────── */}
+      {studyMode === "normalFit" && (
+        <g>
+          {/* 区间面积阴影 [x1, x2] */}
+          <path
+            d={shadowPathD}
+            fill={withAlpha(MATH_COLORS.paramTertiary, 0.35)}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.5}
+            strokeDasharray="4 2"
+          />
 
-          return (
-            <g key={bin.index}>
+          {/* 直方图柱带透明过渡 */}
+          {bins.map((bin) => {
+            const leftTop = mathToDesign(bin.xStart, bin.density, scale);
+            const rightBottom = mathToDesign(bin.xEnd, 0, scale);
+            const rectWidth = Math.max(1, rightBottom.x - leftTop.x);
+            const rectHeight = Math.max(1, rightBottom.y - leftTop.y);
+
+            return (
               <rect
+                key={bin.index}
                 x={leftTop.x}
                 y={leftTop.y}
                 width={rectWidth}
                 height={rectHeight}
-                fill={withAlpha(MATH_COLORS.barFill, 0.45)}
-                stroke={MATH_COLORS.barBorder}
-                strokeWidth={1.5}
-                className="transition-colors duration-150 hover:opacity-80"
-                style={{ cursor: "pointer" }}
-                onMouseEnter={(e) => onBinMouseEnter?.(bin, e)}
-                onMouseMove={onBinMouseMove}
-                onMouseLeave={onBinMouseLeave}
+                fill={withAlpha(MATH_COLORS.barFill, 0.45 * (1 - blend * 0.5))}
+                stroke={withAlpha(
+                  MATH_COLORS.barBorder,
+                  0.8 * (1 - blend * 0.3),
+                )}
+                strokeWidth={1.2}
               />
-            </g>
-          );
-        })}
-
-      {/* B2. 频率分布折线图 (连接各矩形顶边中点) */}
-      {showFrequencyLine && studyMode !== "sigmaRule" && (
-        <g>
-          {(() => {
-            // 构建折线路径：从x轴起点开始，连接各矩形顶边中点，最后回到x轴终点
-            const points: string[] = [];
-
-            // 起点：第一个矩形左边界的x轴上
-            const startX = bins[0].xStart;
-            const startPt = mathToDesign(startX, 0, scale);
-            points.push(`M ${startPt.x.toFixed(1)} ${startPt.y.toFixed(1)}`);
-
-            // 连接各矩形顶边中点
-            for (const bin of bins) {
-              const pt = mathToDesign(bin.mid, bin.density, scale);
-              points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
-            }
-
-            // 终点：最后一个矩形右边界的x轴上
-            const endX = bins[bins.length - 1].xEnd;
-            const endPt = mathToDesign(endX, 0, scale);
-            points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
-
-            return (
-              <path
-                d={points.join(" ")}
-                fill="none"
-                stroke={MATH_COLORS.frequencyLine}
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="transition-all duration-300"
-              />
-            );
-          })()}
-        </g>
-      )}
-
-      {/* B3. 3-σ 原则区间高亮 */}
-      {showSigmaIntervals && studyMode === "sigmaRule" && (
-        <g>
-          {/* 1σ 区间 (68.27%) */}
-          {(() => {
-            const x1 = mu - sigma;
-            const x2 = mu + sigma;
-            const y1 = 0;
-            const y2 = normalPdf(mu, mu, safeSigma) * 0.8; // 稍低于峰值
-
-            const leftBottom = mathToDesign(x1, y1, scale);
-
-            // 构建区间路径
-            const points: string[] = [];
-            points.push(
-              `M ${leftBottom.x.toFixed(1)} ${leftBottom.y.toFixed(1)}`,
-            );
-
-            // 沿着正态曲线从 x1 到 x2
-            for (let x = x1; x <= x2; x += 0.05) {
-              const y = normalPdf(x, mu, safeSigma) * 0.8;
-              const pt = mathToDesign(x, y, scale);
-              points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
-            }
-
-            // 回到 x 轴
-            const endPt = mathToDesign(x2, 0, scale);
-            points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
-            points.push("Z");
-
-            return (
-              <g>
-                <path
-                  d={points.join(" ")}
-                  fill={MATH_COLORS.sigma1Fill}
-                  stroke={MATH_COLORS.densityCurve}
-                  strokeWidth={1}
-                  strokeDasharray="4 2"
-                />
-                <text
-                  x={mathToDesign(mu, y2 + 0.02, scale).x}
-                  y={mathToDesign(mu, y2 + 0.02, scale).y}
-                  fontSize={fontScale(10)}
-                  fill={MATH_COLORS.densityCurve}
-                  textAnchor="middle"
-                  className="font-bold select-none"
-                >
-                  68.27%
-                </text>
-              </g>
-            );
-          })()}
-
-          {/* 2σ 区间 (95.45%) */}
-          {(() => {
-            const x1 = mu - 2 * sigma;
-            const x2 = mu + 2 * sigma;
-            const y1 = 0;
-            const y2 = normalPdf(mu, mu, safeSigma) * 0.5; // 更低
-
-            const leftBottom = mathToDesign(x1, y1, scale);
-
-            // 构建区间路径
-            const points: string[] = [];
-            points.push(
-              `M ${leftBottom.x.toFixed(1)} ${leftBottom.y.toFixed(1)}`,
-            );
-
-            // 沿着正态曲线从 x1 到 x2
-            for (let x = x1; x <= x2; x += 0.05) {
-              const y = normalPdf(x, mu, safeSigma) * 0.5;
-              const pt = mathToDesign(x, y, scale);
-              points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
-            }
-
-            // 回到 x 轴
-            const endPt = mathToDesign(x2, 0, scale);
-            points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
-            points.push("Z");
-
-            return (
-              <g>
-                <path
-                  d={points.join(" ")}
-                  fill={MATH_COLORS.sigma2Fill}
-                  stroke={MATH_COLORS.barFill}
-                  strokeWidth={1}
-                  strokeDasharray="4 2"
-                />
-                <text
-                  x={mathToDesign(x1 - 0.1, y2, scale).x}
-                  y={mathToDesign(x1 - 0.1, y2, scale).y}
-                  fontSize={fontScale(9)}
-                  fill={MATH_COLORS.barBorder}
-                  textAnchor="end"
-                  className="font-semibold select-none"
-                >
-                  95.45%
-                </text>
-              </g>
-            );
-          })()}
-
-          {/* 3σ 区间 (99.73%) */}
-          {(() => {
-            const x1 = mu - 3 * sigma;
-            const x2 = mu + 3 * sigma;
-            const y1 = 0;
-            const y2 = normalPdf(mu, mu, safeSigma) * 0.3; // 最低
-
-            const leftBottom = mathToDesign(x1, y1, scale);
-
-            // 构建区间路径
-            const points: string[] = [];
-            points.push(
-              `M ${leftBottom.x.toFixed(1)} ${leftBottom.y.toFixed(1)}`,
-            );
-
-            // 沿着正态曲线从 x1 到 x2
-            for (let x = x1; x <= x2; x += 0.05) {
-              const y = normalPdf(x, mu, safeSigma) * 0.3;
-              const pt = mathToDesign(x, y, scale);
-              points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
-            }
-
-            // 回到 x 轴
-            const endPt = mathToDesign(x2, 0, scale);
-            points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
-            points.push("Z");
-
-            return (
-              <g>
-                <path
-                  d={points.join(" ")}
-                  fill={MATH_COLORS.sigma3Fill}
-                  stroke={MATH_COLORS.sequenceSecondary}
-                  strokeWidth={1}
-                  strokeDasharray="4 2"
-                />
-                <text
-                  x={mathToDesign(x1 - 0.1, y2, scale).x}
-                  y={mathToDesign(x1 - 0.1, y2, scale).y}
-                  fontSize={fontScale(9)}
-                  fill={MATH_COLORS.sequenceSecondary}
-                  textAnchor="end"
-                  className="font-semibold select-none"
-                >
-                  99.73%
-                </text>
-              </g>
-            );
-          })()}
-        </g>
-      )}
-
-      {/* C. 放置数字特征参考虚线 (众数、中位数、平均数) */}
-      {showStatsLines && studyMode !== "sigmaRule" && (
-        <g>
-          {/* 众数线 - 红色 */}
-          {(() => {
-            const modeY = Math.max(0.05, normalPdf(stats.mode, mu, safeSigma));
-            const modePt = mathToDesign(stats.mode, modeY, scale);
-            const basePt = mathToDesign(stats.mode, 0, scale);
-            return (
-              <line
-                x1={modePt.x}
-                y1={basePt.y}
-                x2={modePt.x}
-                y2={modePt.y}
-                stroke={MATH_COLORS.paramPrimary}
-                strokeWidth={1.5}
-                strokeDasharray="4 3"
-              />
-            );
-          })()}
-
-          {/* 中位数线 - 琥珀黄色 */}
-          {(() => {
-            const medY = Math.max(0.05, normalPdf(stats.median, mu, safeSigma));
-            const medPt = mathToDesign(stats.median, medY, scale);
-            const basePt = mathToDesign(stats.median, 0, scale);
-            return (
-              <line
-                x1={medPt.x}
-                y1={basePt.y}
-                x2={medPt.x}
-                y2={medPt.y}
-                stroke={MATH_COLORS.paramSecondary}
-                strokeWidth={1.5}
-                strokeDasharray="4 3"
-              />
-            );
-          })()}
-
-          {/* 平均数线 - 经典蓝 */}
-          {(() => {
-            const meanY = Math.max(0.05, normalPdf(stats.mean, mu, safeSigma));
-            const meanPt = mathToDesign(stats.mean, meanY, scale);
-            const basePt = mathToDesign(stats.mean, 0, scale);
-            return (
-              <line
-                x1={meanPt.x}
-                y1={basePt.y}
-                x2={meanPt.x}
-                y2={meanPt.y}
-                stroke={MATH_COLORS.function}
-                strokeWidth={1.5}
-                strokeDasharray="4 3"
-              />
-            );
-          })()}
-
-          {/* 避让标签渲染 */}
-          {placedLabels.map((lbl) => {
-            let labelColor: string = MATH_COLORS.function;
-            if (lbl.key === "mode") labelColor = MATH_COLORS.paramPrimary;
-            if (lbl.key === "median") labelColor = MATH_COLORS.paramSecondary;
-
-            return (
-              <text
-                key={lbl.key}
-                x={lbl.x}
-                y={lbl.y}
-                dy={lbl.finalDy}
-                fontSize={fontScale(11)}
-                fill={labelColor}
-                textAnchor={lbl.anchor}
-                className="font-bold select-none drop-shadow-sm"
-              >
-                {lbl.text}
-              </text>
             );
           })}
+
+          {/* 正态拟合曲线 */}
+          <path
+            d={curvePathD}
+            fill="none"
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="transition-all duration-300"
+          />
+
+          {/* 顶点高度与参数标注 */}
+          {(() => {
+            const peakY = normalPdf(mu, mu, safeSigma);
+            const muPt = mathToDesign(mu, peakY, scale);
+            // 防止贴画布顶
+            const isNearTop = muPt.y < 40;
+            const textY = isNearTop ? muPt.y + fontScale(16) : muPt.y - 8;
+
+            return (
+              <g>
+                <circle
+                  cx={muPt.x}
+                  cy={muPt.y}
+                  r={4}
+                  fill={MATH_COLORS.paramPrimary}
+                />
+                <text
+                  x={muPt.x}
+                  y={textY}
+                  fontSize={fontScale(11)}
+                  fill={MATH_COLORS.paramPrimary}
+                  textAnchor="middle"
+                  className="font-bold select-none drop-shadow-sm"
+                >
+                  f(μ) = {peakY.toFixed(3)}
+                </text>
+              </g>
+            );
+          })()}
+
+          {/* x1, x2 拖拽控制点 */}
+          <InteractivePoint
+            cx={x1}
+            cy={0}
+            scale={scale}
+            vp={vp}
+            onDrag={handleDragX1}
+            color={MATH_COLORS.paramTertiary}
+            label={`x₁ = ${x1.toFixed(1)}`}
+            fontScale={fontScale}
+          />
+          <InteractivePoint
+            cx={x2}
+            cy={0}
+            scale={scale}
+            vp={vp}
+            onDrag={handleDragX2}
+            color={MATH_COLORS.paramTertiary}
+            label={`x₂ = ${x2.toFixed(1)}`}
+            fontScale={fontScale}
+          />
         </g>
       )}
 
-      {/* D. 正态分布密度曲线 (在 normalFit 或 sigmaRule 模式下高亮展示) */}
-      {studyMode !== "histogram" && (
-        <path
-          d={curvePathD}
-          fill="none"
-          stroke={MATH_COLORS.paramPrimary}
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="transition-all duration-300"
-        />
-      )}
-
-      {/* 峰值对称轴 μ 虚线标示 */}
-      {studyMode !== "histogram" && (
+      {/* ─── 模式 3：正态参数与形态探究 ──────────────────────────────────────── */}
+      {studyMode === "paramsShape" && (
         <g>
+          {/* 基准 N(0,1) 曲线对比 */}
+          {showBenchmarkNormal && (
+            <g>
+              <path
+                d={benchmarkCurvePathD}
+                fill="none"
+                stroke={MATH_COLORS.textMuted}
+                strokeWidth={1.5}
+                strokeDasharray="5 3"
+              />
+              {(() => {
+                const benchPt = mathToDesign(0, 0.4, scale);
+                return (
+                  <text
+                    x={benchPt.x + 12}
+                    y={benchPt.y - 4}
+                    fontSize={fontScale(10)}
+                    fill={MATH_COLORS.textMuted}
+                    className="select-none font-medium"
+                  >
+                    N(0, 1) 基准
+                  </text>
+                );
+              })()}
+            </g>
+          )}
+
+          {/* 当前 N(μ, σ²) 曲线 */}
+          <path
+            d={curvePathD}
+            fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* 对称轴 x = μ 垂线与优化标注 */}
           {(() => {
             const peakY = normalPdf(mu, mu, safeSigma);
             const muPt = mathToDesign(mu, peakY, scale);
             const axisPt = mathToDesign(mu, 0, scale);
+            const isNearTop = muPt.y < 45;
+            const labelY = isNearTop ? muPt.y + fontScale(16) : muPt.y - 10;
+
             return (
-              <>
+              <g>
                 <line
                   x1={muPt.x}
                   y1={axisPt.y}
@@ -539,50 +640,311 @@ export function ProbabilityNormalScene({
                 />
                 <text
                   x={muPt.x}
-                  y={muPt.y - 8}
+                  y={labelY}
                   fontSize={fontScale(11)}
                   fill={MATH_COLORS.paramPrimary}
                   textAnchor="middle"
-                  className="font-bold select-none"
+                  className="font-bold select-none drop-shadow-sm"
                 >
-                  μ = {mu.toFixed(1)}
+                  对称轴 x = {mu.toFixed(1)} (f_max={peakY.toFixed(3)})
                 </text>
-              </>
+              </g>
+            );
+          })()}
+
+          {/* 左右拐点标注 (μ - σ, μ + σ) - 优化避让与清晰度 */}
+          {(() => {
+            const inflectY = normalPdf(mu - safeSigma, mu, safeSigma);
+            const pL = mathToDesign(mu - safeSigma, inflectY, scale);
+            const pR = mathToDesign(mu + safeSigma, inflectY, scale);
+            // 根据 σ 调整文字偏移距离
+            const offsetDist = Math.max(8, 12 * Math.min(1, safeSigma));
+
+            return (
+              <g>
+                <circle
+                  cx={pL.x}
+                  cy={pL.y}
+                  r={4}
+                  fill={MATH_COLORS.paramSecondary}
+                  stroke="#FFFFFF"
+                  strokeWidth={1.5}
+                />
+                <circle
+                  cx={pR.x}
+                  cy={pR.y}
+                  r={4}
+                  fill={MATH_COLORS.paramSecondary}
+                  stroke="#FFFFFF"
+                  strokeWidth={1.5}
+                />
+                <text
+                  x={pL.x - offsetDist}
+                  y={pL.y - 6}
+                  fontSize={fontScale(10)}
+                  fill={MATH_COLORS.paramSecondary}
+                  textAnchor="end"
+                  className="font-bold select-none drop-shadow-sm"
+                >
+                  拐点 μ-σ = {(mu - safeSigma).toFixed(2)}
+                </text>
+                <text
+                  x={pR.x + offsetDist}
+                  y={pR.y - 6}
+                  fontSize={fontScale(10)}
+                  fill={MATH_COLORS.paramSecondary}
+                  textAnchor="start"
+                  className="font-bold select-none drop-shadow-sm"
+                >
+                  拐点 μ+σ = {(mu + safeSigma).toFixed(2)}
+                </text>
+              </g>
             );
           })()}
         </g>
       )}
 
-      {/* E. 可拖拽区间端点 InteractivePoint (x1, x2) */}
-      {(studyMode === "sigmaRule" || studyMode === "normalFit") && (
+      {/* ─── 模式 4：对称性与高考 3-σ 解题 ────────────────────────────────────── */}
+      {studyMode === "sigmaRule" && (
         <g>
-          {/* x1 拖拽控制点 */}
+          {/* 1. 3-σ 区间高亮 (3σ -> 2σ -> 1σ 梯级嵌套) */}
+          {showSigmaIntervals && (
+            <g>
+              {/* 3σ 区间 (99.73%) */}
+              {(() => {
+                const s3L = mu - 3 * safeSigma;
+                const s3R = mu + 3 * safeSigma;
+                const points: string[] = [];
+                const start = mathToDesign(s3L, 0, scale);
+                points.push(`M ${start.x.toFixed(1)} ${start.y.toFixed(1)}`);
+                for (let x = s3L; x <= s3R; x += 0.04) {
+                  const pt = mathToDesign(
+                    x,
+                    normalPdf(x, mu, safeSigma),
+                    scale,
+                  );
+                  points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+                }
+                const end = mathToDesign(s3R, 0, scale);
+                points.push(`L ${end.x.toFixed(1)} ${end.y.toFixed(1)} Z`);
+                return (
+                  <path
+                    d={points.join(" ")}
+                    fill={MATH_COLORS.sigma3Fill}
+                    stroke={MATH_COLORS.paramTertiary}
+                    strokeWidth={1}
+                    strokeDasharray="3 3"
+                  />
+                );
+              })()}
+
+              {/* 2σ 区间 (95.45%) */}
+              {(() => {
+                const s2L = mu - 2 * safeSigma;
+                const s2R = mu + 2 * safeSigma;
+                const points: string[] = [];
+                const start = mathToDesign(s2L, 0, scale);
+                points.push(`M ${start.x.toFixed(1)} ${start.y.toFixed(1)}`);
+                for (let x = s2L; x <= s2R; x += 0.04) {
+                  const pt = mathToDesign(
+                    x,
+                    normalPdf(x, mu, safeSigma),
+                    scale,
+                  );
+                  points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+                }
+                const end = mathToDesign(s2R, 0, scale);
+                points.push(`L ${end.x.toFixed(1)} ${end.y.toFixed(1)} Z`);
+                return (
+                  <path
+                    d={points.join(" ")}
+                    fill={MATH_COLORS.sigma2Fill}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={1}
+                    strokeDasharray="4 2"
+                  />
+                );
+              })()}
+
+              {/* 1σ 区间 (68.27%) */}
+              {(() => {
+                const s1L = mu - safeSigma;
+                const s1R = mu + safeSigma;
+                const points: string[] = [];
+                const start = mathToDesign(s1L, 0, scale);
+                points.push(`M ${start.x.toFixed(1)} ${start.y.toFixed(1)}`);
+                for (let x = s1L; x <= s1R; x += 0.04) {
+                  const pt = mathToDesign(
+                    x,
+                    normalPdf(x, mu, safeSigma),
+                    scale,
+                  );
+                  points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+                }
+                const end = mathToDesign(s1R, 0, scale);
+                points.push(`L ${end.x.toFixed(1)} ${end.y.toFixed(1)} Z`);
+                return (
+                  <path
+                    d={points.join(" ")}
+                    fill={MATH_COLORS.sigma1Fill}
+                    stroke={MATH_COLORS.paramPrimary}
+                    strokeWidth={1.5}
+                    strokeDasharray="4 2"
+                  />
+                );
+              })()}
+            </g>
+          )}
+
+          {/* 2. 对称镜像双色阴影可视化 (P(X ≤ min) = P(X ≥ max)) */}
+          {!showSigmaIntervals && (
+            <g>
+              {/* 左侧尾部阴影 */}
+              {leftTailShadowPathD && (
+                <path
+                  d={leftTailShadowPathD}
+                  fill={withAlpha(MATH_COLORS.paramTertiary, 0.35)}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1.5}
+                />
+              )}
+              {/* 右侧对称镜像尾部阴影 */}
+              {rightTailShadowPathD && (
+                <path
+                  d={rightTailShadowPathD}
+                  fill={withAlpha(MATH_COLORS.setB, 0.35)}
+                  stroke={MATH_COLORS.setB}
+                  strokeWidth={1.5}
+                />
+              )}
+
+              {/* 对称中间区间高度连线与标注 (置于曲线水平高位，避免遮挡横轴) */}
+              {(() => {
+                const heightY = normalPdf(symData.leftX, mu, safeSigma);
+                const leftPt = mathToDesign(symData.leftX, heightY, scale);
+                const rightPt = mathToDesign(symData.rightX, heightY, scale);
+                const midX = (leftPt.x + rightPt.x) / 2;
+
+                return (
+                  <g>
+                    <line
+                      x1={leftPt.x}
+                      y1={leftPt.y}
+                      x2={rightPt.x}
+                      y2={rightPt.y}
+                      stroke={MATH_COLORS.paramSecondary}
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                    />
+                    <circle
+                      cx={leftPt.x}
+                      cy={leftPt.y}
+                      r={3}
+                      fill={MATH_COLORS.paramSecondary}
+                    />
+                    <circle
+                      cx={rightPt.x}
+                      cy={rightPt.y}
+                      r={3}
+                      fill={MATH_COLORS.paramSecondary}
+                    />
+                    <text
+                      x={midX}
+                      y={leftPt.y - 8}
+                      fontSize={fontScale(11)}
+                      fill={MATH_COLORS.paramSecondary}
+                      textAnchor="middle"
+                      className="font-bold select-none drop-shadow-sm"
+                    >
+                      对称区间 P = {(symData.centerProb * 100).toFixed(1)}%
+                    </text>
+                  </g>
+                );
+              })()}
+            </g>
+          )}
+
+          {/* 正态曲线主体 */}
+          <path
+            d={curvePathD}
+            fill="none"
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          {/* 对称轴 */}
+          {(() => {
+            const peakY = normalPdf(mu, mu, safeSigma);
+            const muPt = mathToDesign(mu, peakY, scale);
+            const axisPt = mathToDesign(mu, 0, scale);
+            const isNearTop = muPt.y < 40;
+            const textY = isNearTop ? muPt.y + fontScale(16) : muPt.y - 8;
+
+            return (
+              <g>
+                <line
+                  x1={muPt.x}
+                  y1={axisPt.y}
+                  x2={muPt.x}
+                  y2={muPt.y}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={1.5}
+                  strokeDasharray="6 3"
+                />
+                <text
+                  x={muPt.x}
+                  y={textY}
+                  fontSize={fontScale(11)}
+                  fill={MATH_COLORS.paramPrimary}
+                  textAnchor="middle"
+                  className="font-bold select-none drop-shadow-sm"
+                >
+                  μ = {mu.toFixed(1)}
+                </text>
+              </g>
+            );
+          })()}
+
+          {/* 基准点拖拽控制点 x0 */}
           <InteractivePoint
-            cx={x1Design.x}
-            cy={x1Design.y}
+            cx={x0}
+            cy={0}
             scale={scale}
             vp={vp}
-            onDrag={(mathPt) => {
-              handleDragX1(scale.originX + mathPt.x * scale.scaleX);
-            }}
+            onDrag={handleDragX0}
             color={MATH_COLORS.paramTertiary}
-            label={`x₁ = ${x1.toFixed(1)}`}
+            label={`x₀ = ${x0.toFixed(1)}`}
             fontScale={fontScale}
           />
 
-          {/* x2 拖拽控制点 */}
-          <InteractivePoint
-            cx={x2Design.x}
-            cy={x2Design.y}
-            scale={scale}
-            vp={vp}
-            onDrag={(mathPt) => {
-              handleDragX2(scale.originX + mathPt.x * scale.scaleX);
-            }}
-            color={MATH_COLORS.paramTertiary}
-            label={`x₂ = ${x2.toFixed(1)}`}
-            fontScale={fontScale}
-          />
+          {/* 对称镜像点 (只读显示，标注置于点上方，避免遮挡 X 轴刻度) */}
+          {(() => {
+            const symPt = mathToDesign(symData.xSym, 0, scale);
+            return (
+              <g>
+                <circle
+                  cx={symPt.x}
+                  cy={symPt.y}
+                  r={5}
+                  fill={MATH_COLORS.setB}
+                  stroke="#FFFFFF"
+                  strokeWidth={1.5}
+                />
+                <text
+                  x={symPt.x}
+                  y={symPt.y - fontScale(10)}
+                  fontSize={fontScale(10)}
+                  fill={MATH_COLORS.setB}
+                  textAnchor="middle"
+                  className="font-bold select-none drop-shadow-sm"
+                >
+                  2μ-x₀ = {symData.xSym.toFixed(1)}
+                </text>
+              </g>
+            );
+          })()}
         </g>
       )}
     </g>
