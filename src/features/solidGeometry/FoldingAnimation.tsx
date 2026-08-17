@@ -16,6 +16,7 @@ import {
   Vector3DArrow,
   Point3D,
   PointLabel3D,
+  CompoundLabel3D,
   Polygon3DFace,
   Legend3D,
   CameraRig,
@@ -460,9 +461,10 @@ export default function FoldingAnimation() {
                     )}
 
                     {/* 静态顶点标签 */}
-                    <PointLabel3D
+                    <CompoundLabel3D
                       position={HA}
-                      text="H_A (垂足)"
+                      base="H"
+                      subscript="A"
                       offset={[0, -0.3, -0.2]}
                     />
                     <PointLabel3D

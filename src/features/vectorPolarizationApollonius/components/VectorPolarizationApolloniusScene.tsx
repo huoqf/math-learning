@@ -277,7 +277,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 fontWeight="bold"
                 className="select-none pointer-events-none"
               >
-                P_min(min)
+                Pₘᵢₙ
               </text>
 
               {/* 最长距离点 P_max (外分点 E) 标注 */}
@@ -300,7 +300,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                     fontWeight="bold"
                     className="select-none pointer-events-none"
                   >
-                    P_max(max)
+                    Pₘₐₓ
                   </text>
                 </g>
               )}

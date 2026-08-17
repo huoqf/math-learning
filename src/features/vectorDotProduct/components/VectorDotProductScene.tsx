@@ -359,7 +359,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
                 fontSize={fontScale(14)}
                 fontWeight="bold"
               >
-                a ⊥ b (a · b = 0)
+                a⃗ ⊥ b⃗ (a⃗ · b⃗ = 0)
               </text>
             </g>
           )}

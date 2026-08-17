@@ -1343,7 +1343,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           fill={CANVAS_COLORS.labelTextLight}
           fontWeight="bold"
         >
-          概率密度曲线 f(x) = (2πx)^(-1/2) · e^(-x/2)
+          概率密度曲线 f(x) = (2πx)⁻¹/² · e⁻ˣ/²
         </text>
         <text
           x={chiEndX - 10}

@@ -167,7 +167,11 @@ export function TriangleSolveScene({
                 cx={pB.x}
                 cy={pB.y}
                 r={fontScale(5)}
-                fill={isPrimary ? MATH_COLORS.paramPrimary : MATH_COLORS.sequenceHighlight}
+                fill={
+                  isPrimary
+                    ? MATH_COLORS.paramPrimary
+                    : MATH_COLORS.sequenceHighlight
+                }
               />
               <text
                 x={pB.x}
@@ -224,7 +228,7 @@ export function TriangleSolveScene({
   const pCircumCenter = mathToDesign(
     circumcircle.center.x,
     circumcircle.center.y,
-    scale
+    scale,
   );
   const circumRadiusPx = circumcircle.radius * scale.scaleX;
 
@@ -241,45 +245,46 @@ export function TriangleSolveScene({
       <CoordinateGrid scale={scale} fontScale={fontScale} />
 
       {/* 外接圆 (正弦定理与面积模式) */}
-      {(studyMode === "sine" || studyMode === "area") && circumRadiusPx < 800 && (
-        <g>
-          <circle
-            cx={pCircumCenter.x}
-            cy={pCircumCenter.y}
-            r={circumRadiusPx}
-            fill={withAlpha(MATH_COLORS.circle, 0.04)}
-            stroke={MATH_COLORS.circle}
-            strokeWidth={1.5}
-            strokeDasharray="4,4"
-          />
-          {/* 外心 O 标注 */}
-          <circle
-            cx={pCircumCenter.x}
-            cy={pCircumCenter.y}
-            r={fontScale(3.5)}
-            fill={MATH_COLORS.circle}
-          />
-          <text
-            x={pCircumCenter.x + fontScale(6)}
-            y={pCircumCenter.y - fontScale(6)}
-            fill={MATH_COLORS.circle}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-          >
-            O (R={circumcircle.radius.toFixed(2)})
-          </text>
-          {/* 外接圆半径连线 OA */}
-          <line
-            x1={pCircumCenter.x}
-            y1={pCircumCenter.y}
-            x2={pA.x}
-            y2={pA.y}
-            stroke={MATH_COLORS.circle}
-            strokeWidth={1}
-            strokeDasharray="2,2"
-          />
-        </g>
-      )}
+      {(studyMode === "sine" || studyMode === "area") &&
+        circumRadiusPx < 800 && (
+          <g>
+            <circle
+              cx={pCircumCenter.x}
+              cy={pCircumCenter.y}
+              r={circumRadiusPx}
+              fill={withAlpha(MATH_COLORS.circle, 0.04)}
+              stroke={MATH_COLORS.circle}
+              strokeWidth={1.5}
+              strokeDasharray="4,4"
+            />
+            {/* 外心 O 标注 */}
+            <circle
+              cx={pCircumCenter.x}
+              cy={pCircumCenter.y}
+              r={fontScale(3.5)}
+              fill={MATH_COLORS.circle}
+            />
+            <text
+              x={pCircumCenter.x + fontScale(6)}
+              y={pCircumCenter.y - fontScale(6)}
+              fill={MATH_COLORS.circle}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+            >
+              O (R={circumcircle.radius.toFixed(2)})
+            </text>
+            {/* 外接圆半径连线 OA */}
+            <line
+              x1={pCircumCenter.x}
+              y1={pCircumCenter.y}
+              x2={pA.x}
+              y2={pA.y}
+              stroke={MATH_COLORS.circle}
+              strokeWidth={1}
+              strokeDasharray="2,2"
+            />
+          </g>
+        )}
 
       {/* 内切圆 (面积模式) */}
       {studyMode === "area" && inradiusPx > 2 && (
@@ -329,7 +334,7 @@ export function TriangleSolveScene({
             fill={MATH_COLORS.sequenceHighlight}
             fontSize={fontScale(11)}
           >
-            h_a = {altitudeA.length.toFixed(2)}
+            hₐ = {altitudeA.length.toFixed(2)}
           </text>
         </g>
       )}
@@ -412,7 +417,7 @@ export function TriangleSolveScene({
         onDrag={(mathPos) => {
           if (onParamChange) {
             const newAngle = Math.round(
-              Math.max(15, Math.min(150, Math.abs(mathPos.y) * 15 + 30))
+              Math.max(15, Math.min(150, Math.abs(mathPos.y) * 15 + 30)),
             );
             onParamChange("angleA", newAngle);
           }

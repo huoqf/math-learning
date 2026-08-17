@@ -51,6 +51,22 @@ interface SequenceSceneProps {
   onSelectN?: (n: number) => void;
 }
 
+const toSub = (n: number | string | undefined) =>
+  n === undefined
+    ? ""
+    : String(n)
+        .split("")
+        .map((c) => "₀₁₂₃₄₅₆₇₈₉"[Number(c)] ?? c)
+        .join("");
+
+const toSup = (n: number | string | undefined) =>
+  n === undefined
+    ? ""
+    : String(n)
+        .split("")
+        .map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[Number(c)] ?? c)
+        .join("");
+
 export function SequenceScene({
   params,
   scale,
@@ -275,7 +291,7 @@ export function SequenceScene({
                   }
                   fontWeight={isHighlighted ? "bold" : "normal"}
                 >
-                  a_{t.n}={t.an.toFixed(1)}
+                  a{toSub(t.n)} = {t.an.toFixed(1)}
                 </text>
               </g>
             );
@@ -339,7 +355,7 @@ export function SequenceScene({
                     fill={MATH_COLORS.sequence}
                     fontWeight="bold"
                   >
-                    a_{t.n}
+                    a{toSub(t.n)}
                   </text>
                 )}
 
@@ -364,7 +380,7 @@ export function SequenceScene({
                     fill={MATH_COLORS.paramSecondary}
                     fontWeight="bold"
                   >
-                    a_{revTerm.n}
+                    a{toSub(revTerm.n)}
                   </text>
                 )}
               </g>
@@ -416,7 +432,7 @@ export function SequenceScene({
                         fill={MATH_COLORS.sequenceHighlight}
                         fontWeight="bold"
                       >
-                        大长方形面积 = 2S_{N} = {N} × (a₁ + a_{N}) ={" "}
+                        大长方形面积 = 2S{toSub(N)} = {N} × (a₁ + a{toSub(N)}) ={" "}
                         {(N * sumHeightVal).toFixed(1)}
                       </text>
                     </g>
@@ -511,7 +527,7 @@ export function SequenceScene({
                 fill={MATH_COLORS.sequenceHighlight}
                 fontWeight="bold"
               >
-                双最值：S_{maxSnInfo.nMax} = S_{maxSnInfo.dualN} ={" "}
+                双最值：S{toSub(maxSnInfo.nMax)} = S{toSub(maxSnInfo.dualN)} ={" "}
                 {terms[maxSnInfo.nMax - 1]?.Sn.toFixed(1)}
               </text>
             </g>
@@ -565,7 +581,7 @@ export function SequenceScene({
                     fontSize={fontScale(9)}
                     fill={MATH_COLORS.sequenceSum}
                   >
-                    S_{t.n}={t.Sn.toFixed(1)}
+                    S{toSub(t.n)} = {t.Sn.toFixed(1)}
                   </text>
                 )}
 
@@ -592,7 +608,7 @@ export function SequenceScene({
                         fill={MATH_COLORS.sequenceHighlight}
                         fontWeight="bold"
                       >
-                        最值项 S_{t.n}={t.Sn.toFixed(1)}
+                        最值项 S{toSub(t.n)} = {t.Sn.toFixed(1)}
                       </text>
                     )}
 
@@ -606,7 +622,7 @@ export function SequenceScene({
                         fill={MATH_COLORS.sequenceHighlight}
                         fontWeight="bold"
                       >
-                        S_{t.n}
+                        S{toSub(t.n)}
                       </text>
                     )}
                   </g>
@@ -668,7 +684,7 @@ export function SequenceScene({
                   fill={color}
                   fontWeight="bold"
                 >
-                  A_{seg.segmentIndex} = {seg.sumValue.toFixed(1)}
+                  A{toSub(seg.segmentIndex)} = {seg.sumValue.toFixed(1)}
                 </text>
               </g>
             );
@@ -923,7 +939,7 @@ export function SequenceScene({
                     fill={MATH_COLORS.sequenceHighlight}
                     fontWeight="bold"
                   >
-                    T_{t.n}={t.Tn.toFixed(1)}
+                    T{toSub(t.n)} = {t.Tn.toFixed(1)}
                   </text>
                 )}
 
@@ -958,13 +974,7 @@ export function SequenceScene({
           ? (x: number) => -Math.abs(a1) * Math.pow(Math.abs(q), x - 1)
           : null;
 
-      const toSub = (n: number) => {
-        const map = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
-        return String(n)
-          .split("")
-          .map((c) => map[Number(c)] ?? c)
-          .join("");
-      };
+      // toSub using top-level helper
 
       return (
         <g className="sequence-scene-geometric-exponential">
@@ -1124,20 +1134,8 @@ export function SequenceScene({
       const row1Y = 160;
       const row2Y = 260;
 
-      const toSub = (n: number) => {
-        const map = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
-        return String(n)
-          .split("")
-          .map((c) => map[Number(c)] ?? c)
-          .join("");
-      };
-      const toSup = (n: number) => {
-        const map = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"];
-        return String(n)
-          .split("")
-          .map((c) => map[Number(c)] ?? c)
-          .join("");
-      };
+      // toSub using top-level helper
+      // toSup using top-level helper
 
       return (
         <g className="sequence-scene-stagger-sum">
@@ -1376,13 +1374,7 @@ export function SequenceScene({
         MATH_COLORS.inequality,
       ];
       const validK = segmentedSums?.k ?? 3;
-      const toSup = (n: number) => {
-        const map = ["⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹"];
-        return String(n)
-          .split("")
-          .map((c) => map[Number(c)] ?? c)
-          .join("");
-      };
+      // toSup using top-level helper
 
       return (
         <g className="sequence-scene-geometric-segment">
@@ -1510,13 +1502,7 @@ export function SequenceScene({
     // 专题 D: 前 n 项积与极值 (以 1 为分界点，对数二次模型)
     if (geometricSubMode === "productMax") {
       const ptOneLineY = mathToDesign(0, 1, scale).y;
-      const toSub = (n: number) => {
-        const map = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
-        return String(n)
-          .split("")
-          .map((c) => map[Number(c)] ?? c)
-          .join("");
-      };
+      // toSub using top-level helper
 
       const isDual = Boolean(maxPnInfo?.isDual);
       const dualMidX =
@@ -1740,13 +1726,7 @@ export function SequenceScene({
       geometricViewType === "tessellation"
     ) {
       const isValidTess = a1 > 0 && q > 0 && q < 1;
-      const toSub = (n: number) => {
-        const map = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
-        return String(n)
-          .split("")
-          .map((c) => map[Number(c)] ?? c)
-          .join("");
-      };
+      // toSub using top-level helper
 
       if (!isValidTess) {
         return (
@@ -2002,43 +1982,9 @@ export function SequenceScene({
   }
 
   // 辅助下标与上标格式化工具函数
-  const toSub = (num: number) => {
-    const map: Record<string, string> = {
-      "0": "₀",
-      "1": "₁",
-      "2": "₂",
-      "3": "₃",
-      "4": "₄",
-      "5": "₅",
-      "6": "₆",
-      "7": "₇",
-      "8": "₈",
-      "9": "₉",
-    };
-    return String(num)
-      .split("")
-      .map((c) => map[c] ?? c)
-      .join("");
-  };
+  // toSub using top-level helper
 
-  const toSup = (num: number) => {
-    const map: Record<string, string> = {
-      "0": "⁰",
-      "1": "¹",
-      "2": "²",
-      "3": "³",
-      "4": "⁴",
-      "5": "⁵",
-      "6": "⁶",
-      "7": "⁷",
-      "8": "⁸",
-      "9": "⁹",
-    };
-    return String(num)
-      .split("")
-      .map((c) => map[c] ?? c)
-      .join("");
-  };
+  // toSup using top-level helper
 
   // 3. 高考模型模式（全面支持 5 大求和模型与 step 演化推导）
   if (activeMode === "models") {
@@ -2053,15 +1999,15 @@ export function SequenceScene({
       const stepTitles: Record<number, { text: string; sub: string }> = {
         1: {
           text: "Step 1: 原求和式列出",
-          sub: "T_n = a₁·b₁ + a₂·b₂ + ... + a_n·b_n",
+          sub: "Tₙ = a₁·b₁ + a₂·b₂ + ... + aₙ·bₙ",
         },
         2: {
           text: "Step 2: 乘以公比整体错位",
-          sub: "q·T_n = a₁·b₂ + a₂·b₃ + ... + a_n·b_{n+1} (向右平移 1 格)",
+          sub: "q·Tₙ = a₁·b₂ + a₂·b₃ + ... + aₙ·bₙ₊₁ (向右平移 1 格)",
         },
         3: {
           text: "Step 3: 两式对应项相减",
-          sub: "(1-q)T_n = a₁·b₁ + d·(b₂ + ... + b_n) - a_n·b_{n+1}",
+          sub: "(1-q)Tₙ = a₁·b₁ + d·(b₂ + ... + bₙ) - aₙ·bₙ₊₁",
         },
         4: {
           text: "Step 4: 等比部分求和化简",
@@ -2361,7 +2307,7 @@ export function SequenceScene({
                           fill={MATH_COLORS.paramPrimary}
                           fontWeight="bold"
                         >
-                          ⚠️ - a_n·q^{N}
+                          ⚠️ - aₙ·q{toSup(N)}
                         </text>
                         <text
                           x={tailX}
@@ -2710,7 +2656,7 @@ export function SequenceScene({
                 fill={MATH_COLORS.sequenceHighlight}
                 fontWeight="bold"
               >
-                根式伸缩和：T_{N} = √(N+1) - √1 = √{N + 1} - 1 ≈{" "}
+                根式伸缩和：T{toSub(N)} = √(N+1) - √1 = √{N + 1} - 1 ≈{" "}
                 {radicalTeleData.finalTn.toFixed(3)}
               </text>
             </g>
@@ -3331,7 +3277,7 @@ export function SequenceScene({
                     fill={MATH_COLORS.sequence}
                     fontWeight="bold"
                   >
-                    a_{t.n}={t.an.toFixed(1)}
+                    a{toSub(t.n)} = {t.an.toFixed(1)}
                   </text>
                 )}
 
@@ -3354,7 +3300,7 @@ export function SequenceScene({
                         fontSize={fontScale(10)}
                         fill={MATH_COLORS.paramSecondary}
                       >
-                        b_{t.n}={t.bn.toFixed(1)}
+                        b{toSub(t.n)} = {t.bn.toFixed(1)}
                       </text>
                     )}
                   </g>
@@ -3403,7 +3349,7 @@ export function SequenceScene({
                   fill={MATH_COLORS.sequence}
                   fontWeight="bold"
                 >
-                  a_{t.n}={t.an.toFixed(1)}
+                  a{toSub(t.n)} = {t.an.toFixed(1)}
                 </text>
               </g>
             );
@@ -3449,7 +3395,7 @@ export function SequenceScene({
                   fill={MATH_COLORS.sequence}
                   fontWeight="bold"
                 >
-                  a_{t.n}={t.an.toFixed(3)}
+                  a{toSub(t.n)} = {t.an.toFixed(3)}
                 </text>
               </g>
             );
@@ -3493,7 +3439,7 @@ export function SequenceScene({
                       fill={MATH_COLORS.sequence}
                       fontWeight="bold"
                     >
-                      a_{t.n}={t.an.toFixed(2)}
+                      a{toSub(t.n)} = {t.an.toFixed(2)}
                     </text>
                   </g>
                 )}
@@ -3516,7 +3462,7 @@ export function SequenceScene({
                       fontSize={fontScale(10)}
                       fill={MATH_COLORS.paramSecondary}
                     >
-                      b_{t.n}={t.bn.toFixed(2)}
+                      b{toSub(t.n)} = {t.bn.toFixed(2)}
                     </text>
                   </g>
                 )}
@@ -3564,7 +3510,7 @@ export function SequenceScene({
                   fill={MATH_COLORS.sequence}
                   fontWeight="bold"
                 >
-                  a_{t.n}={t.an.toFixed(1)}
+                  a{toSub(t.n)} = {t.an.toFixed(1)}
                 </text>
               </g>
             );

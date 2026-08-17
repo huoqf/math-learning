@@ -39,6 +39,12 @@ interface StatPercentileSceneProps {
   studyMode?: "histogram" | "cumulative" | "stratified";
 }
 
+const toSub = (n: number | string) =>
+  String(n)
+    .split("")
+    .map((c) => "₀₁₂₃₄₅₆₇₈₉"[Number(c)] ?? c)
+    .join("");
+
 export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
   params,
   scale,
@@ -386,7 +392,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                   fontSize={fontScale(10.5)}
                   fontWeight="bold"
                 >
-                  P_{percentileP} = {pVal.toFixed(1)}
+                  P{toSub(percentileP)} = {pVal.toFixed(1)}
                 </text>
               </g>
             );
@@ -1049,8 +1055,9 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                               fontSize={fontScale(10)}
                               fontWeight="bold"
                             >
-                              {st.name}: N_{i + 1}={st.N}人(抽{st.n}人) 均值x̄_
-                              {i + 1}={st.mean} 方差s_{i + 1}²={st.var}
+                              {st.name}: N{toSub(i + 1)} = {st.N}人(抽{st.n}人)
+                              均值x̄{toSub(i + 1)} = {st.mean} 方差s
+                              {toSub(i + 1)}² = {st.var}
                             </text>
                           </g>
                         );
@@ -1078,7 +1085,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
                               fontSize={fontScale(9)}
                               fontWeight="bold"
                             >
-                              |x̄_{i + 1}-x̄|=
+                              |x̄{toSub(i + 1)} - x̄| ={" "}
                               {(st.mean - strat.totalMean).toFixed(1)}
                             </text>
                           </g>

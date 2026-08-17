@@ -15,6 +15,7 @@ import {
   Vector3DArrow,
   Point3D,
   PointLabel3D,
+  CompoundLabel3D,
   Legend3D,
   CameraRig,
   ThreeViewsPanel,
@@ -398,9 +399,10 @@ export default function ParametricPointAnimation() {
 
                 {/* 理论最佳折点 P1 指示 */}
                 <Point3D position={resPath.optimalP1} colorKey="secondary" />
-                <PointLabel3D
+                <CompoundLabel3D
                   position={resPath.optimalP1}
-                  text="P_1(最优)"
+                  base="P"
+                  subscript="1"
                   offset={[-0.4, 0, 0]}
                 />
               </>

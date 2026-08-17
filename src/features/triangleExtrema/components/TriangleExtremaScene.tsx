@@ -25,7 +25,15 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
   onDragVertexA,
   onDragVertexB,
 }) => {
-  const { vertices, sides, circumcircle, apolloniusCircle, polarization, isValid, warning } = state;
+  const {
+    vertices,
+    sides,
+    circumcircle,
+    apolloniusCircle,
+    polarization,
+    isValid,
+    warning,
+  } = state;
 
   if (!isValid) {
     const defaultCenter = mathToDesign(0, 0, scale);
@@ -53,12 +61,20 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
   const posM = mathToDesign(0, 0, scale); // 底边中点
 
   // 外接圆投射
-  const posCircumCenter = mathToDesign(circumcircle.center.x, circumcircle.center.y, scale);
+  const posCircumCenter = mathToDesign(
+    circumcircle.center.x,
+    circumcircle.center.y,
+    scale,
+  );
   const radiusPx = circumcircle.radius * scale.scaleX;
 
   // 阿波罗尼斯圆投射（如有）
-  const apCenter = apolloniusCircle ? mathToDesign(apolloniusCircle.center.x, apolloniusCircle.center.y, scale) : null;
-  const apRadiusPx = apolloniusCircle ? apolloniusCircle.radius * scale.scaleX : 0;
+  const apCenter = apolloniusCircle
+    ? mathToDesign(apolloniusCircle.center.x, apolloniusCircle.center.y, scale)
+    : null;
+  const apRadiusPx = apolloniusCircle
+    ? apolloniusCircle.radius * scale.scaleX
+    : 0;
 
   // 顶点 A 在底边上的垂足 H
   const posH = mathToDesign(vertices.A.x, 0, scale);
@@ -82,7 +98,12 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             strokeWidth={1.5}
           />
           {/* 圆心标记 */}
-          <circle cx={posCircumCenter.x} cy={posCircumCenter.y} r={3} fill={MATH_COLORS.primary} />
+          <circle
+            cx={posCircumCenter.x}
+            cy={posCircumCenter.y}
+            r={3}
+            fill={MATH_COLORS.primary}
+          />
           <text
             x={posCircumCenter.x + 8}
             y={posCircumCenter.y - 8}
@@ -108,7 +129,12 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             strokeWidth={2}
           />
           {/* 圆心与轨迹标注 */}
-          <circle cx={apCenter.x} cy={apCenter.y} r={3} fill={MATH_COLORS.paramPrimary} />
+          <circle
+            cx={apCenter.x}
+            cy={apCenter.y}
+            r={3}
+            fill={MATH_COLORS.paramPrimary}
+          />
           <text
             x={apCenter.x}
             y={apCenter.y + fontScale(14)}
@@ -117,7 +143,8 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             textAnchor="middle"
             fontWeight="bold"
           >
-            阿氏圆轨迹 O_A ({apolloniusCircle.center.x.toFixed(1)}, 0) R_A={apolloniusCircle.radius.toFixed(2)}
+            阿氏圆心 O_A({apolloniusCircle.center.x.toFixed(1)}, 0)，半径 R ={" "}
+            {apolloniusCircle.radius.toFixed(2)}
           </text>
           {/* 最高点指示虚线 */}
           <line
@@ -135,7 +162,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fontSize={fontScale(11)}
             fontWeight="bold"
           >
-            高 h_max = {apolloniusCircle.radius.toFixed(2)}
+            最大高 h = {apolloniusCircle.radius.toFixed(2)}
           </text>
         </g>
       )}
@@ -197,7 +224,12 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             stroke={MATH_COLORS.paramTertiary}
             strokeWidth={2}
           />
-          <circle cx={posM.x} cy={posM.y} r={3} fill={MATH_COLORS.paramTertiary} />
+          <circle
+            cx={posM.x}
+            cy={posM.y}
+            r={3}
+            fill={MATH_COLORS.paramTertiary}
+          />
           <text
             x={posM.x}
             y={posM.y + fontScale(15)}
@@ -309,7 +341,12 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         />
       ) : (
         <g>
-          <circle cx={posB.x} cy={posB.y} r={5} fill={MATH_COLORS.paramPrimary} />
+          <circle
+            cx={posB.x}
+            cy={posB.y}
+            r={5}
+            fill={MATH_COLORS.paramPrimary}
+          />
           <text
             x={posB.x - 22}
             y={posB.y + 4}
