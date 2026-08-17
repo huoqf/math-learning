@@ -255,3 +255,143 @@ export function computeLinearTransformedDistribution(
     b,
   };
 }
+
+/**
+ * 5. 双分布对比 (超几何 vs 二项分布同屏逼近 N -> ∞)
+ */
+export interface DistributionComparisonResult {
+  hyperDist: DistributionResult;
+  binomDist: DistributionResult;
+  varianceCorrectionFactor: number; // (N - n) / (N - 1)
+  maxDifference: number; // 两分布各点最大概率绝对偏差
+  N: number;
+  p: number;
+  sampleN: number;
+}
+
+export function computeHypergeometricBinomialComparison(
+  N: number,
+  p: number,
+  sampleN: number,
+): DistributionComparisonResult {
+  const M = Math.round(N * p);
+  const hyperDist = computeHypergeometricDistribution(N, M, sampleN);
+  const binomDist = computeBinomialDistribution(sampleN, p);
+
+  let maxDiff = 0;
+  for (let k = 0; k <= sampleN; k++) {
+    const pHyper = hyperDist.outcomes.find((o) => o.x === k)?.p || 0;
+    const pBinom = binomDist.outcomes.find((o) => o.x === k)?.p || 0;
+    const diff = Math.abs(pHyper - pBinom);
+    if (diff > maxDiff) maxDiff = diff;
+  }
+
+  const factor = N > 1 ? (N - sampleN) / (N - 1) : 1;
+
+  return {
+    hyperDist,
+    binomDist,
+    varianceCorrectionFactor: factor,
+    maxDifference: maxDiff,
+    N,
+    p,
+    sampleN,
+  };
+}
+
+/**
+ * 6. 新高考决策模型：方案 A vs 方案 B 期望-方差双准则对比
+ * 典型情境：
+ *  - 'quality': 质检决策（方案 A 抽检 vs 方案 B 全检）
+ *  - 'investment': 理财投资（方案 A 稳健理财 vs 方案 B 风险股票）
+ */
+export interface DecisionScenarioResult {
+  title: string;
+  schemeAName: string;
+  schemeBName: string;
+  schemeADist: DistributionResult;
+  schemeBDist: DistributionResult;
+  bestByMean: "A" | "B" | "EQUAL";
+  bestByRisk: "A" | "B" | "EQUAL";
+  decisionConclusion: string;
+}
+
+export function computeDecisionModel(
+  scenario: "quality" | "investment",
+  paramRatio: number, // 质检次品率 (0.01~0.2) 或 投资牛市概率 (0.1~0.9)
+): DecisionScenarioResult {
+  if (scenario === "quality") {
+    // 质检场景：次品率 p
+    // 方案 A（抽检）：抽检成本低，但漏检有惩罚。设单件抽检费 2 元，漏检违约损失 50 元/件。抽检率 20%，漏检率 80%*p
+    // 方案 B（全检）：全检费固定 8 元/件，完全无漏检违约损失（方差为 0）
+    const p = Math.max(0.01, Math.min(0.2, paramRatio));
+    // 方案 A 单件成本分布：未被抽中且是次品(成本50)概率 0.8*p；抽中(成本2)概率 0.2；未抽中且良品(成本0)概率 0.8*(1-p)
+    const pDefectMiss = 0.8 * p;
+    const pSampled = 0.2;
+    const pGoodPass = Math.max(0, 1 - pDefectMiss - pSampled);
+
+    const distA = computeGeneralDiscreteDistribution([
+      { x: 0, p: pGoodPass, label: "0元(免检合格)" },
+      { x: 2, p: pSampled, label: "2元(抽检)" },
+      { x: 50, p: pDefectMiss, label: "50元(漏检违约)" },
+    ]);
+
+    // 方案 B 单件全检固定成本 8 元
+    const distB = computeGeneralDiscreteDistribution([
+      { x: 8, p: 1.0, label: "8元(全检固定)" },
+    ]);
+
+    const bestByMean =
+      distA.mean < distB.mean ? "A" : distA.mean > distB.mean ? "B" : "EQUAL";
+    const bestByRisk = distA.variance < distB.variance ? "A" : "B"; // 方案 B 方差为 0 风险最低
+
+    const conclusion =
+      p < 0.19
+        ? `当前次品率 p=${(p * 100).toFixed(1)}% < 19%，方案 A 抽检期望成本 (¥${distA.mean.toFixed(2)}) 显著低于全检 (¥8.00)，推荐【方案 A 抽检】。`
+        : `当前次品率 p=${(p * 100).toFixed(1)}% ≥ 19%，漏检违约风险剧增，方案 B 全检期望成本更优且零风险，推荐【方案 B 全检】。`;
+
+    return {
+      title: "产品质量检测决策模型（期望成本与风险分析）",
+      schemeAName: "方案 A：部分抽检（期望成本浮动）",
+      schemeBName: "方案 B：全数检验（固定成本零风险）",
+      schemeADist: distA,
+      schemeBDist: distB,
+      bestByMean,
+      bestByRisk,
+      decisionConclusion: conclusion,
+    };
+  }
+
+  // 投资理财场景：市场景气度概率 p (0.1~0.9)
+  const p = Math.max(0.1, Math.min(0.9, paramRatio));
+  // 方案 A（稳健理财）：收益率稳定 4% (¥4000/10万)
+  const distA = computeGeneralDiscreteDistribution([
+    { x: 4, p: 1.0, label: "+4%稳健" },
+  ]);
+
+  // 方案 B（进取股票）：牛市景气概率 p 收益 +20%，熊市概率 1-p 收益 -10%
+  const distB = computeGeneralDiscreteDistribution([
+    { x: -10, p: 1 - p, label: "-10%下行" },
+    { x: 20, p: p, label: "+20%上涨" },
+  ]);
+
+  const bestByMean =
+    distB.mean > distA.mean ? "B" : distB.mean < distA.mean ? "A" : "EQUAL";
+  const bestByRisk = "A"; // 稳健理财方差为 0
+
+  const conclusion =
+    distB.mean > 4
+      ? `景气概率 p=${p.toFixed(2)}，股票期望收益率 ${distB.mean.toFixed(1)}% 高于理财 (4.0%)，但方差较大 (${distB.variance.toFixed(1)})，适合风险承受力强的投资者。`
+      : `景气概率 p=${p.toFixed(2)}，股票期望收益率 ${distB.mean.toFixed(1)}% 低于稳健理财 (4.0%) 且伴随下行风险，推荐【方案 A 稳健理财】。`;
+
+  return {
+    title: "资产配置与风险收益决策模型",
+    schemeAName: "方案 A：稳健固定理财",
+    schemeBName: "方案 B：进取权益股票",
+    schemeADist: distA,
+    schemeBDist: distB,
+    bestByMean,
+    bestByRisk,
+    decisionConclusion: conclusion,
+  };
+}

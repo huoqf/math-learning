@@ -190,7 +190,166 @@ export function buildProbabilityDistributionPanel(
     };
   }
 
-  // 3. 线性变换 Y = aX + b 专属看板
+  // 3. 双分布逼近对比模式 H(N,M,n) vs B(n,p) 专属看板
+  if (studyMode === "compare") {
+    const comparisonResult = config?.comparisonResult as
+      | import("../../math/probabilityDistribution").DistributionComparisonResult
+      | undefined;
+
+    const N = comparisonResult?.N ?? params.compareN ?? 30;
+    const p = comparisonResult?.p ?? params.compareP ?? 0.35;
+    const n = comparisonResult?.sampleN ?? params.compareSampleN ?? 4;
+    const factor =
+      comparisonResult?.varianceCorrectionFactor ??
+      (N > 1 ? (N - n) / (N - 1) : 1);
+    const maxDiff = comparisonResult?.maxDifference ?? 0;
+
+    return {
+      quantities: [
+        {
+          label: "总体容量 N",
+          symbol: "N",
+          value: `${N}`,
+          color: MATH_COLORS.paramPrimary,
+        },
+        {
+          label: "抽取样本数 n",
+          symbol: "n",
+          value: `${n}`,
+          color: MATH_COLORS.paramSecondary,
+        },
+        {
+          label: "特征比例 p = M/N",
+          symbol: "p_0",
+          value: `${p}`,
+          color: MATH_COLORS.paramTertiary,
+        },
+        {
+          label: "共同数学期望 E",
+          symbol: "E",
+          value: (n * p).toFixed(3),
+          color: MATH_COLORS.tangentLine,
+        },
+        {
+          label: "★ 方差修正系数 (N-n)/(N-1)",
+          symbol: "\\frac{N-n}{N-1}",
+          value: factor.toFixed(3),
+          color: MATH_COLORS.function,
+        },
+        {
+          label: "两分布最大概率差 Δ_max",
+          symbol: "\\Delta_{max}",
+          value: maxDiff.toFixed(4),
+          color: MATH_COLORS.asymptote,
+        },
+      ],
+      theorems: [
+        {
+          name: "超几何分布与二项分布方差关系定理",
+          latex: `D(X_{\\text{超}}) = n p (1-p) \\cdot \\frac{N-n}{N-1} = D(X_{\\text{二项}}) \\cdot \\frac{N-n}{N-1}`,
+          note: "不放回抽样的方差恒小于或等于有放回抽样的方差；当 N 很大时，修正系数 (N-n)/(N-1) 趋近于 1。",
+          level: "core",
+        },
+        {
+          name: "大样本二项逼近极限定理 (N → ∞)",
+          latex: `\\lim_{N \\to \\infty} P(X_{\\text{超}} = k) = P(X_{\\text{二项}} = k) = C_n^k p^k (1-p)^{n-k}`,
+          note: "当总体容量 N 远大于抽取样本数 n（通常 N ≥ 10n）时，不放回抽样可作为二项分布近似处理。",
+          level: "core",
+        },
+      ],
+      gaokaoPoints: [
+        {
+          text: "高考建模选择依据：若总体数量明确且较小（如 10 件产品中抽 3 件），必须严格使用超几何分布模型；若总体极其庞大（如全国考生、全市灯泡寿命检测），直接建模为二项分布 B(n,p)。",
+          importance: "gaokao",
+        },
+        {
+          text: "数学思想：极限逼近思想与连续化过渡，是新高考考查高阶数学抽象素养的重要载体。",
+          importance: "core",
+        },
+      ],
+      warnings: [],
+      mnemonic:
+        "总体庞大无放回，二项逼近省力气；方差修正趋近一，抽样比小可近似。",
+    };
+  }
+
+  // 4. 新高考决策模型 (方案 A vs 方案 B 期望-方差准则) 专属看板
+  if (studyMode === "decision") {
+    const decisionResult = config?.decisionResult as
+      | import("../../math/probabilityDistribution").DecisionScenarioResult
+      | undefined;
+
+    const meanA = decisionResult
+      ? decisionResult.schemeADist.mean.toFixed(2)
+      : "0";
+    const varA = decisionResult
+      ? decisionResult.schemeADist.variance.toFixed(2)
+      : "0";
+    const meanB = decisionResult
+      ? decisionResult.schemeBDist.mean.toFixed(2)
+      : "0";
+    const varB = decisionResult
+      ? decisionResult.schemeBDist.variance.toFixed(2)
+      : "0";
+
+    return {
+      quantities: [
+        {
+          label: "方案 A 期望收益/成本",
+          symbol: "E(A)",
+          value: `${meanA}`,
+          color: MATH_COLORS.paramTertiary,
+        },
+        {
+          label: "方案 A 方差 (风险度)",
+          symbol: "D(A)",
+          value: `${varA}`,
+          color: MATH_COLORS.paramTertiary,
+        },
+        {
+          label: "方案 B 期望收益/成本",
+          symbol: "E(B)",
+          value: `${meanB}`,
+          color: MATH_COLORS.paramPrimary,
+        },
+        {
+          label: "方案 B 方差 (风险度)",
+          symbol: "D(B)",
+          value: `${varB}`,
+          color: MATH_COLORS.paramPrimary,
+        },
+      ],
+      theorems: [
+        {
+          name: "期望-方差双准则决策原理 (Mean-Variance Rule)",
+          latex: `\\text{优选目标}: \\max E(X) \\text{ 且 } \\min D(X) \\quad (\\text{或 } \\min E(\\text{成本}))`,
+          note: "在不确定性决策中，数学期望反映平均回报水平，方差反映结果的不确定性风险。",
+          level: "core",
+        },
+        {
+          name: "全概率加权期望公式",
+          latex: `E(X) = \\sum_{k} P(B_k) E(X | B_k)`,
+          note: "将复杂情境按状态分解计算条件期望后再汇总，是新高考压轴概率大题的标准工具。",
+          level: "important",
+        },
+      ],
+      gaokaoPoints: [
+        {
+          text: "新高考规范解答采分点：第一步分别求解两方案的离散型分布列；第二步求出 E(A)、E(B) 和 D(A)、D(B)；第三步结合题目目标（如成本最低或收益最稳）给出明确文字决策结论。",
+          importance: "gaokao",
+        },
+        {
+          text: "决策分界点探究：新高考常要求通过不等式 E(A) < E(B) 解出临界概率阈值（如本例中的 p_0），并对 p 分段讨论最优策略。",
+          importance: "core",
+        },
+      ],
+      warnings: [],
+      mnemonic:
+        "方案对比列两行，期望定标看高低，方差护航辨稳健，结论严谨扣题意。",
+    };
+  }
+
+  // 5. 线性变换 Y = aX + b 专属看板
   if (studyMode === "linear") {
     const a = params.linearA ?? 2;
     const b = params.linearB ?? 1;

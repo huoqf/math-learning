@@ -2,23 +2,30 @@ import type { ParamMeta } from "../types";
 
 export const defaultParams = {
   // 二项分布参数 X ~ B(n, p)
-  n: 5,
+  n: 6,
   p: 0.4,
 
   // 超几何分布参数 X ~ H(N, M, sampleN)
-  N: 10,
-  M: 4,
-  sampleN: 3,
+  N: 12,
+  M: 5,
+  sampleN: 4,
 
   // 线性变换 Y = aX + b
   linearA: 2,
   linearB: 1,
 
-  // 一般分布概率分配权重
+  // 双分布逼近对比模式 (超几何 vs 二项分布同屏收敛)
+  compareN: 30,
+  compareP: 0.35,
+  compareSampleN: 4,
+
+  // 决策模型参数 (0.01~0.2 质检次品率 或 0.1~0.9 投资景气概率)
+  decisionParam: 0.08,
+
+  // 一般分布概率分配权重（p1+p2+p3 可自由调节，P(X=3) 自动归一补全）
   p1: 0.2,
   p2: 0.4,
   p3: 0.3,
-  p4: 0.1,
 };
 
 export const paramMeta: Record<string, ParamMeta> = {
@@ -26,12 +33,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "n",
     label: "试验次数 n",
     labelFormula: "n",
-    defaultValue: 5,
+    defaultValue: 6,
     min: 1,
-    max: 15,
+    max: 16,
     step: 1,
     description: "独立重复试验的总次数 n",
-    descriptionFormula: "X \\sim B(\\color{#EF4444}{n}, p)",
+    descriptionFormula: "X \\sim B(\\color{#EF4444}{n}, \\color{#D97706}{p})",
     importance: "core",
   },
   p: {
@@ -51,7 +58,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "N",
     label: "总体容量 N",
     labelFormula: "N",
-    defaultValue: 10,
+    defaultValue: 12,
     min: 5,
     max: 30,
     step: 1,
@@ -63,24 +70,25 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "M",
     label: "特征数 M",
     labelFormula: "M",
-    defaultValue: 4,
+    defaultValue: 5,
     min: 1,
     max: 30,
     step: 1,
     description: "总体中目标特征元素的数量 M",
-    descriptionFormula: "M \\le N",
+    descriptionFormula: "\\color{#D97706}{M} \\le N",
     importance: "core",
   },
   sampleN: {
     key: "sampleN",
     label: "抽取样本数 n",
     labelFormula: "n_{抽}",
-    defaultValue: 3,
+    defaultValue: 4,
     min: 1,
     max: 30,
     step: 1,
     description: "不放回抽取的样本个数 n",
-    descriptionFormula: "n \\le N \\text{ 且 } k \\le \\min(n, M)",
+    descriptionFormula:
+      "\\color{#EF4444}{n} \\le N \\text{ 且 } k \\le \\min(n, M)",
     importance: "core",
   },
 
@@ -109,7 +117,57 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 5,
     step: 0.5,
     description: "随机变量的加性平移常数 b",
-    descriptionFormula: "D(aX+b) = a^2 D(X)",
+    descriptionFormula: "D(aX+b) = \\color{#EF4444}{a}^2 D(X)",
+    importance: "core",
+  },
+
+  compareN: {
+    key: "compareN",
+    label: "逼近总体容量 N",
+    labelFormula: "N",
+    defaultValue: 30,
+    min: 8,
+    max: 200,
+    step: 2,
+    description: "观察 N 增大时不放回抽样向二项分布逼近",
+    descriptionFormula: "\\lim_{N \\to \\infty} H(N, M, n) = B(n, p)",
+    importance: "core",
+  },
+  compareP: {
+    key: "compareP",
+    label: "特征比例 p",
+    labelFormula: "p_0",
+    defaultValue: 0.35,
+    min: 0.1,
+    max: 0.9,
+    step: 0.05,
+    description: "特征元素占总体比例 M/N",
+    descriptionFormula: "p_0 = \\frac{M}{N}",
+    importance: "core",
+  },
+  compareSampleN: {
+    key: "compareSampleN",
+    label: "抽取样本容量 n",
+    labelFormula: "n",
+    defaultValue: 4,
+    min: 2,
+    max: 10,
+    step: 1,
+    description: "抽取的样本总数",
+    descriptionFormula: "n \\text{ (固定)}",
+    importance: "core",
+  },
+
+  decisionParam: {
+    key: "decisionParam",
+    label: "情境关键概率参数",
+    labelFormula: "p_{关键}",
+    defaultValue: 0.08,
+    min: 0.01,
+    max: 0.2,
+    step: 0.01,
+    description: "质检场景次品率 p 或 投资市场景气概率",
+    descriptionFormula: "p \\text{ 决定两方案期望与方差平衡点}",
     importance: "core",
   },
 
@@ -149,16 +207,5 @@ export const paramMeta: Record<string, ParamMeta> = {
     descriptionFormula: "p_2",
     importance: "display",
   },
-  p4: {
-    key: "p4",
-    label: "P(X=3)",
-    labelFormula: "P(X=3)",
-    defaultValue: 0.1,
-    min: 0,
-    max: 0.8,
-    step: 0.05,
-    description: "随机变量取 3 的概率",
-    descriptionFormula: "p_3",
-    importance: "display",
-  },
+  // p4 已移除：P(X=3) 由系统自动计算为 1 - (p1+p2+p3)，无需用户调节
 };

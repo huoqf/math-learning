@@ -5,6 +5,8 @@ import {
   computeHypergeometricDistribution,
   computeGeneralDiscreteDistribution,
   computeLinearTransformedDistribution,
+  computeHypergeometricBinomialComparison,
+  computeDecisionModel,
 } from "./probabilityDistribution";
 
 describe("probabilityDistribution math module", () => {
@@ -56,5 +58,28 @@ describe("probabilityDistribution math module", () => {
     // D(Y) = 3^2 * D(X) = 9 * D(X)
     expect(linear.transformed.variance).toBeCloseTo(9 * base.variance);
     expect(linear.transformed.stdDev).toBeCloseTo(3 * base.stdDev);
+  });
+
+  it("hypergeometric vs binomial convergence N -> infinity", () => {
+    // 当 N 很大时，超几何分布接近二项分布
+    const smallN = computeHypergeometricBinomialComparison(10, 0.4, 3);
+    const largeN = computeHypergeometricBinomialComparison(500, 0.4, 3);
+
+    expect(smallN.maxDifference).toBeGreaterThan(0);
+    expect(largeN.maxDifference).toBeLessThan(smallN.maxDifference);
+    expect(largeN.varianceCorrectionFactor).toBeCloseTo(1.0, 1);
+  });
+
+  it("decision model calculations for quality and investment", () => {
+    const qual = computeDecisionModel("quality", 0.05);
+    expect(qual.schemeADist.isValid).toBe(true);
+    expect(qual.schemeBDist.isValid).toBe(true);
+    expect(qual.bestByMean).toBe("A");
+
+    const invest = computeDecisionModel("investment", 0.7);
+    expect(invest.schemeADist.mean).toBe(4);
+    expect(invest.schemeBDist.mean).toBeCloseTo(11.0);
+    expect(invest.bestByMean).toBe("B");
+    expect(invest.bestByRisk).toBe("A");
   });
 });

@@ -21,14 +21,26 @@ import {
   computeHypergeometricDistribution,
   computeGeneralDiscreteDistribution,
   computeLinearTransformedDistribution,
+  computeHypergeometricBinomialComparison,
+  computeDecisionModel,
 } from "@/math/probabilityDistribution";
 import { ProbabilityDistributionScene } from "./components/ProbabilityDistributionScene";
 
 export function ProbabilityDistributionAnimation() {
-  // 研究模式：'binomial' | 'hypergeometric' | 'general' | 'linear'
+  // 6大教学研究模式
   const [studyMode, setStudyMode] = useState<
-    "binomial" | "hypergeometric" | "general" | "linear"
+    | "binomial"
+    | "hypergeometric"
+    | "compare"
+    | "linear"
+    | "decision"
+    | "general"
   >("binomial");
+
+  // 决策场景切换 (质检 vs 投资)
+  const [decisionScenario, setDecisionScenario] = useState<
+    "quality" | "investment"
+  >("quality");
 
   // 参数状态保存
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -68,10 +80,20 @@ export function ProbabilityDistributionAnimation() {
         params.sampleN,
       );
     }
+    if (studyMode === "compare") {
+      return computeBinomialDistribution(
+        params.compareSampleN,
+        params.compareP,
+      );
+    }
     if (studyMode === "linear") {
       return computeBinomialDistribution(params.n, params.p);
     }
-    // 一般离散分布: p0, p1, p2 可自由调节，p3 = 1 - (p0+p1+p2) 自动概率归一化
+    if (studyMode === "decision") {
+      const dec = computeDecisionModel(decisionScenario, params.decisionParam);
+      return dec.schemeADist;
+    }
+    // 一般离散分布: p0, p1, p2 可自由调节，p3 自动概率归一化
     const sum3 = params.p1 + params.p2 + params.p3;
     const p0 = params.p1;
     const p1 = params.p2;
@@ -84,9 +106,29 @@ export function ProbabilityDistributionAnimation() {
       { x: 2, p: p2 },
       { x: 3, p: p3 },
     ]);
-  }, [studyMode, params]);
+  }, [studyMode, params, decisionScenario]);
 
-  // 线性变换分布
+  // 双分布对比计算结果 (模式 3)
+  const comparisonResult = useMemo(() => {
+    if (studyMode === "compare") {
+      return computeHypergeometricBinomialComparison(
+        params.compareN,
+        params.compareP,
+        params.compareSampleN,
+      );
+    }
+    return undefined;
+  }, [studyMode, params.compareN, params.compareP, params.compareSampleN]);
+
+  // 决策模型计算结果 (模式 5)
+  const decisionResult = useMemo(() => {
+    if (studyMode === "decision") {
+      return computeDecisionModel(decisionScenario, params.decisionParam);
+    }
+    return undefined;
+  }, [studyMode, decisionScenario, params.decisionParam]);
+
+  // 线性变换分布 (模式 4)
   const transformedDist = useMemo(() => {
     if (studyMode === "linear") {
       return computeLinearTransformedDistribution(
@@ -98,11 +140,49 @@ export function ProbabilityDistributionAnimation() {
     return undefined;
   }, [studyMode, distResult, params.linearA, params.linearB]);
 
-  // 4. 按预设分辨率 (840x650) 分配视口 (线性模式单独抬升画布基线 116px 并收紧 Y 轴 20%，防止与底部表格打架)
+  // 4. 数据驱动的自适应 X 轴范围 (根据当前模式的数据项自动居中展开，杜绝右侧大片空白)
+  const xRange = useMemo<[number, number]>(() => {
+    if (studyMode === "compare") {
+      const n = params.compareSampleN || 4;
+      return [-0.8, n + 0.8];
+    }
+    if (studyMode === "binomial") {
+      const n = params.n || 6;
+      return [-0.8, n + 0.8];
+    }
+    if (studyMode === "hypergeometric") {
+      const n = params.sampleN || 4;
+      return [-0.8, n + 0.8];
+    }
+    if (studyMode === "decision") {
+      return [-0.3, 5.0];
+    }
+    if (studyMode === "general") {
+      return [-0.8, 3.8];
+    }
+    if (studyMode === "linear") {
+      const a = params.linearA ?? 2;
+      const b = params.linearB ?? 1;
+      const n = params.n ?? 6;
+      const yVals = [b, a * n + b];
+      const minVal = Math.min(0, ...yVals) - 1.0;
+      const maxVal = Math.max(n, ...yVals) + 1.2;
+      return [minVal, maxVal];
+    }
+    return [-0.8, 8.8];
+  }, [
+    studyMode,
+    params.compareSampleN,
+    params.n,
+    params.sampleN,
+    params.linearA,
+    params.linearB,
+  ]);
+
   const scale = useSceneScale({
     vp,
-    xRange: [-1.2, 16.8],
-    yRange: studyMode === "linear" ? [-0.92, 1.48] : [-0.35, 1.35],
+    xRange,
+    yRange: studyMode === "linear" ? [-1.15, 1.35] : [-0.55, 1.25],
     keepAspectRatio: false,
   });
 
@@ -112,16 +192,29 @@ export function ProbabilityDistributionAnimation() {
       studyMode,
       distResult,
       transformedDist,
+      comparisonResult,
+      decisionResult,
+      decisionScenario,
     });
-  }, [params, studyMode, distResult, transformedDist]);
+  }, [
+    params,
+    studyMode,
+    distResult,
+    transformedDist,
+    comparisonResult,
+    decisionResult,
+    decisionScenario,
+  ]);
 
-  // 6. 按模式精准过滤左屏参数配置 (线性模式 n 限制在 2~8 保证节点适中清爽)
+  // 6. 按模式精准过滤左屏参数配置
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
       binomial: ["n", "p"],
       hypergeometric: ["N", "M", "sampleN"],
-      general: ["p1", "p2", "p3"], // 精简为前3项独立调节，第四项由公理自动闭合
-      linear: ["n", "p", "linearA", "linearB"], // 线性变换模式: n∈[2,8] 支持 3~9 个节点演示
+      compare: ["compareN", "compareP", "compareSampleN"],
+      linear: ["n", "p", "linearA", "linearB"],
+      decision: ["decisionParam"],
+      general: ["p1", "p2", "p3"],
     };
 
     const keys = keysByMode[studyMode] || ["n", "p"];
@@ -145,6 +238,16 @@ export function ProbabilityDistributionAnimation() {
           maxVal = Math.min(meta.max, params.N);
         }
 
+        if (studyMode === "decision") {
+          if (decisionScenario === "quality") {
+            minVal = 0.01;
+            maxVal = 0.2;
+          } else {
+            minVal = 0.1;
+            maxVal = 0.9;
+          }
+        }
+
         return {
           key,
           label: meta.label,
@@ -159,17 +262,31 @@ export function ProbabilityDistributionAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, studyMode]);
+  }, [params, studyMode, decisionScenario]);
 
-  // 当前主要模型的 KaTeX 悬浮公式 (优雅处理 b<0 的符号拼接，防止出现 + - 连写)
+  // 当前主要模型的 KaTeX 悬浮公式
   const topFormulaLatex = useMemo(() => {
     if (studyMode === "binomial") {
+      const modeStr = distResult.modeX.join(", ");
+      const modeTip = `\\quad k_{\\text{最值}} = ${modeStr}`;
       return `X \\sim B(${params.n}, ${params.p}) \\quad P(X=k) = C_{${
         params.n
-      }}^k (${params.p})^k (${(1 - params.p).toFixed(2)})^{${params.n}-k}`;
+      }}^k (${params.p})^k (${(1 - params.p).toFixed(2)})^{${
+        params.n
+      }-k} ${modeTip}`;
     }
     if (studyMode === "hypergeometric") {
-      return `X \\sim H(${params.N}, ${params.M}, ${params.sampleN}) \\quad P(X=k) = \\frac{C_{${params.M}}^k C_{${params.N - params.M}}^{${params.sampleN}-k}}{C_{${params.N}}^{${params.sampleN}}}`;
+      const kMin = Math.max(0, params.sampleN - (params.N - params.M));
+      const kMax = Math.min(params.sampleN, params.M);
+      return `X \\sim H(${params.N}, ${params.M}, ${params.sampleN}) \\quad k \\in [${kMin}, ${kMax}] \\quad P(X=k) = \\frac{C_{${params.M}}^k C_{${params.N - params.M}}^{${params.sampleN}-k}}{C_{${params.N}}^{${params.sampleN}}}`;
+    }
+    if (studyMode === "compare") {
+      return `\\lim_{N \\to \\infty} H(N, M, n) = B(n, p) \\quad \\text{方差修正} \\frac{N-n}{N-1} = ${comparisonResult?.varianceCorrectionFactor.toFixed(3)}`;
+    }
+    if (studyMode === "decision") {
+      return decisionScenario === "quality"
+        ? `\\text{质检决策} \\quad E(A) = \\text{¥}${decisionResult?.schemeADist.mean.toFixed(2)} \\text{ vs } E(B) = \\text{¥}8.00`
+        : `\\text{投资决策} \\quad E(\\text{股票}) = ${decisionResult?.schemeBDist.mean.toFixed(1)}\\% \\text{ vs } E(\\text{理财}) = 4.0\\%`;
     }
     if (studyMode === "linear") {
       const aStr = params.linearA === 1 ? "" : `${params.linearA}`;
@@ -182,7 +299,14 @@ export function ProbabilityDistributionAnimation() {
     return `\\sum_{i=0}^3 p_i = 1 \\quad E(X) = \\sum x_i p_i = ${distResult.mean.toFixed(
       2,
     )}`;
-  }, [studyMode, params, distResult]);
+  }, [
+    studyMode,
+    params,
+    distResult,
+    comparisonResult,
+    decisionResult,
+    decisionScenario,
+  ]);
 
   return (
     <ThreePanel
@@ -195,16 +319,36 @@ export function ProbabilityDistributionAnimation() {
           >
             <SelectGrid
               items={[
-                { key: "binomial", label: "二项分布 B(n,p)" },
-                { key: "hypergeometric", label: "超几何分布 H(N,M,n)" },
-                { key: "general", label: "一般分布列" },
+                { key: "binomial", label: "二项分布与最值项" },
+                { key: "hypergeometric", label: "超几何分布与边界" },
+                { key: "compare", label: "双分布逼近收敛" },
                 { key: "linear", label: "线性变换 Y=aX+b" },
+                { key: "decision", label: "高考决策方案对比" },
+                { key: "general", label: "一般分布列" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k)}
+              onChange={(k) => setStudyMode(k as any)}
               variant="filled"
             />
           </LeftPanelSection>
+
+          {/* 决策情境子切换 */}
+          {studyMode === "decision" && (
+            <LeftPanelSection
+              title="决策场景选择"
+              subtitle="高考典型应用题情境"
+            >
+              <SelectGrid
+                items={[
+                  { key: "quality", label: "产品质检(抽检vs全检)" },
+                  { key: "investment", label: "资产配置(理财vs股票)" },
+                ]}
+                value={decisionScenario}
+                onChange={(k) => setDecisionScenario(k as any)}
+                variant="filled"
+              />
+            </LeftPanelSection>
+          )}
 
           {/* 参数调节 */}
           <LeftPanelSection title="模型参数" subtitle="拖动滑块调节分布参数">
@@ -217,32 +361,26 @@ export function ProbabilityDistributionAnimation() {
 
           {/* 左屏参数使用指南卡片 */}
           <LeftPanelSection
-            title="参数使用指南"
-            subtitle="模型参数含义与调节说明"
+            title="新高考教学指南"
+            subtitle="模型考查要点与教学提示"
           >
             {studyMode === "binomial" && (
               <div className="bg-blue-50/80 border border-blue-200/90 rounded-xl p-3 text-xs text-blue-900 flex flex-col gap-1.5 shadow-sm">
                 <div className="font-bold flex items-center gap-1.5 text-blue-800">
                   <span>⚙️</span>
-                  <span>二项分布参数调节说明</span>
+                  <span>二项分布与最值项教学提示</span>
                 </div>
                 <ul className="leading-relaxed text-blue-800/90 list-disc list-inside space-y-1">
                   <li>
-                    <strong>
-                      试验次数 <KatexFormula formula="n" mode="inline" />
-                    </strong>
-                    ：独立重复试验总次数，控制取值点个数{" "}
-                    <KatexFormula formula="k \in [0, n]" mode="inline" />。
+                    <strong>最值项性质</strong>：当{" "}
+                    <KatexFormula formula="(n+1)p" mode="inline" />{" "}
+                    不是整数时，最大概率取整数部分；是整数时两项并列最大。
                   </li>
                   <li>
-                    <strong>
-                      成功概率 <KatexFormula formula="p" mode="inline" />
-                    </strong>
-                    ：调节 <KatexFormula formula="p=0.5" mode="inline" />{" "}
-                    呈对称分布，
-                    <KatexFormula formula="p<0.5" mode="inline" />{" "}
-                    概率集中在左侧，
-                    <KatexFormula formula="p>0.5" mode="inline" /> 集中在右侧。
+                    <strong>方差最大点</strong>：当{" "}
+                    <KatexFormula formula="p=0.5" mode="inline" /> 时方差{" "}
+                    <KatexFormula formula="D(X)=np(1-p)" mode="inline" />{" "}
+                    达到极大值。
                   </li>
                 </ul>
               </div>
@@ -252,24 +390,132 @@ export function ProbabilityDistributionAnimation() {
               <div className="bg-indigo-50/80 border border-indigo-200/90 rounded-xl p-3 text-xs text-indigo-900 flex flex-col gap-1.5 shadow-sm">
                 <div className="font-bold flex items-center gap-1.5 text-indigo-800">
                   <span>⚙️</span>
-                  <span>超几何分布参数调节说明</span>
+                  <span>超几何分布边界防错提示</span>
                 </div>
                 <ul className="leading-relaxed text-indigo-800/90 list-disc list-inside space-y-1">
                   <li>
+                    <strong>定义域下限</strong>：
+                    <KatexFormula
+                      formula="k \ge \max(0, n-(N-M))"
+                      mode="inline"
+                    />
+                    ，防止当白球不够抽时漏算 0。
+                  </li>
+                  <li>
+                    <strong>期望公式统一</strong>：
+                    <KatexFormula
+                      formula="E(X) = n \cdot \frac{M}{N}"
+                      mode="inline"
+                    />
+                    ，形式上与二项分布{" "}
+                    <KatexFormula formula="np" mode="inline" /> 完美一致。
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            {studyMode === "compare" && (
+              <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3 text-xs text-amber-900 flex flex-col gap-1.5 shadow-sm">
+                <div className="font-bold flex items-center gap-1.5 text-amber-800">
+                  <span>⚙️</span>
+                  <span>不放回抽样向二项分布逼近</span>
+                </div>
+                <ul className="leading-relaxed text-amber-800/90 list-disc list-inside space-y-1">
+                  <li>
+                    <strong>极限收敛</strong>：增大总体{" "}
+                    <KatexFormula formula="N" mode="inline" />
+                    ，超几何分布柱状图趋近二项分布。
+                  </li>
+                  <li>
+                    <strong>方差修正系数</strong>：
+                    <KatexFormula
+                      formula="\frac{N-n}{N-1} \to 1"
+                      mode="inline"
+                    />
+                    ，大样本下超几何与二项方差几乎无差。
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            {studyMode === "decision" && (
+              <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-xl p-3 text-xs text-emerald-900 flex flex-col gap-1.5 shadow-sm">
+                <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+                  <span>⚙️</span>
+                  <span>
+                    {decisionScenario === "quality"
+                      ? "产品质检(抽检vs全检)决策导引"
+                      : "资产配置(理财vs股票)决策导引"}
+                  </span>
+                </div>
+                <ul className="leading-relaxed text-emerald-800/90 list-disc list-inside space-y-1">
+                  {decisionScenario === "quality" ? (
+                    <>
+                      <li>
+                        <strong>期望成本方程</strong>：
+                        <KatexFormula
+                          formula="E(A) = 0.4 + 40p"
+                          mode="inline"
+                        />
+                        ，令{" "}
+                        <KatexFormula formula="E(A)=E(B)=8" mode="inline" />{" "}
+                        解得临界次品率{" "}
+                        <KatexFormula formula="p_0 = 19\%" mode="inline" />。
+                      </li>
+                      <li>
+                        <strong>决策规则</strong>：当{" "}
+                        <KatexFormula formula="p < 19\%" mode="inline" />{" "}
+                        选抽检；当{" "}
+                        <KatexFormula formula="p > 19\%" mode="inline" />{" "}
+                        选全检。
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li>
+                        <strong>期望收益方程</strong>：
+                        <KatexFormula
+                          formula="E(\text{股票}) = 30p - 10"
+                          mode="inline"
+                        />
+                        ，令{" "}
+                        <KatexFormula
+                          formula="E(\text{股票})=E(\text{理财})=4\%"
+                          mode="inline"
+                        />{" "}
+                        得临界景气概率{" "}
+                        <KatexFormula formula="p_0 = 46.7\%" mode="inline" />。
+                      </li>
+                      <li>
+                        <strong>风险考量</strong>：股票方差{" "}
+                        <KatexFormula formula="D = 900p(1-p)" mode="inline" />{" "}
+                        反映高收益伴随的高波动风险。
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {studyMode === "linear" && (
+              <div className="bg-purple-50/80 border border-purple-200/90 rounded-xl p-3 text-xs text-purple-900 flex flex-col gap-1.5 shadow-sm">
+                <div className="font-bold flex items-center gap-1.5 text-purple-800">
+                  <span>⚙️</span>
+                  <span>线性变换刚体运动几何意义</span>
+                </div>
+                <ul className="leading-relaxed text-purple-800/90 list-disc list-inside space-y-1">
+                  <li>
                     <strong>
-                      总体数 <KatexFormula formula="N" mode="inline" /> & 特征数{" "}
-                      <KatexFormula formula="M" mode="inline" />
+                      平移 <KatexFormula formula="b" mode="inline" />
                     </strong>
-                    ：总体中目标元素的比例决定了概率集中区。
+                    ：只改中心不改方差宽度。
                   </li>
                   <li>
                     <strong>
-                      样本数{" "}
-                      <KatexFormula formula="n_{\text{抽}}" mode="inline" />
+                      缩放 <KatexFormula formula="a" mode="inline" />
                     </strong>
-                    ：控制抽取数量。滑块已开启联动防越界（自动限制{" "}
-                    <KatexFormula formula="M, n \le N" mode="inline" />
-                    ）。
+                    ：方差按 <KatexFormula formula="a^2" mode="inline" />{" "}
+                    平方倍缩放。
                   </li>
                 </ul>
               </div>
@@ -279,49 +525,13 @@ export function ProbabilityDistributionAnimation() {
               <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-xl p-3 text-xs text-emerald-900 flex flex-col gap-1.5 shadow-sm">
                 <div className="font-bold flex items-center gap-1.5 text-emerald-800">
                   <span>⚙️</span>
-                  <span>一般分布列参数调节说明</span>
+                  <span>一般分布列公理校验</span>
                 </div>
-                <ul className="leading-relaxed text-emerald-800/90 list-disc list-inside space-y-1">
-                  <li>
-                    <strong>前 3 项概率自由分配</strong>：拖动{" "}
-                    <KatexFormula formula="P_0, P_1, P_2" mode="inline" />{" "}
-                    滑块自定义分布形态。
-                  </li>
-                  <li>
-                    <strong>自动闭合归一化</strong>：第四项{" "}
-                    <KatexFormula
-                      formula="P(X=3) = 1 - (P_0+P_1+P_2)"
-                      mode="inline"
-                    />{" "}
-                    自动算齐补余，恒满足概率和为 1。
-                  </li>
-                </ul>
-              </div>
-            )}
-
-            {studyMode === "linear" && (
-              <div className="bg-purple-50/80 border border-purple-200/90 rounded-xl p-3 text-xs text-purple-900 flex flex-col gap-1.5 shadow-sm">
-                <div className="font-bold flex items-center gap-1.5 text-purple-800">
-                  <span>⚙️</span>
-                  <span>线性变换参数调节说明</span>
-                </div>
-                <ul className="leading-relaxed text-purple-800/90 list-disc list-inside space-y-1">
-                  <li>
-                    <strong>
-                      基准参数 <KatexFormula formula="n, p" mode="inline" />
-                    </strong>
-                    ：控制原变量 <KatexFormula formula="X" mode="inline" />{" "}
-                    的节点数与形态。
-                  </li>
-                  <li>
-                    <strong>
-                      缩放 <KatexFormula formula="a" mode="inline" /> & 平移{" "}
-                      <KatexFormula formula="b" mode="inline" />
-                    </strong>
-                    ：观察下轨道 <KatexFormula formula="Y=aX+b" mode="inline" />{" "}
-                    节点的伸缩拉伸与整体平移。
-                  </li>
-                </ul>
+                <p className="leading-relaxed text-emerald-800/90">
+                  系统恒自动保障{" "}
+                  <KatexFormula formula="\sum P_i = 1" mode="inline" />
+                  ，体验物理重心移动。
+                </p>
               </div>
             )}
           </LeftPanelSection>
@@ -329,31 +539,47 @@ export function ProbabilityDistributionAnimation() {
       }
       center={
         <div className="w-full h-full relative bg-white overflow-hidden">
-          {/* 1. 顶部通透悬浮 HUD (KaTeX 公式 + 高考矩阵概览) */}
+          {/* 1. 顶部悬浮 HUD (KaTeX 公式 + 公理校验概览) */}
           <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between gap-3 pointer-events-none">
-            {/* 左侧：KaTeX 模型主公式卡片 */}
-            <div className="bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-xl px-3.5 py-2 shadow-sm pointer-events-auto max-w-[62%]">
+            <div className="bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-xl px-3.5 py-2 shadow-sm pointer-events-auto max-w-[65%]">
               <KatexFormula formula={topFormulaLatex} mode="inline" />
             </div>
 
-            {/* 右侧：高考分布列校验概览 badge */}
             <div className="bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-xl px-3 py-1.5 shadow-sm pointer-events-auto flex items-center gap-2 text-xs font-mono">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-neutral-500 font-bold">高考公理校验:</span>
-              <span className="text-primary-700 font-bold">
-                ∑P = {distResult.sumP.toFixed(3)}
-              </span>
+              {studyMode === "compare" && comparisonResult ? (
+                <>
+                  <span className="text-neutral-500 font-bold">方差修正:</span>
+                  <span className="text-primary-700 font-bold">
+                    {comparisonResult.varianceCorrectionFactor.toFixed(3)}
+                  </span>
+                  <span className="text-neutral-400">|</span>
+                  <span className="text-neutral-500 font-bold">Δ_max:</span>
+                  <span className="text-amber-700 font-bold">
+                    {comparisonResult.maxDifference.toFixed(4)}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-neutral-500 font-bold">公理校验:</span>
+                  <span className="text-primary-700 font-bold">
+                    ∑P = {distResult.sumP.toFixed(3)}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* 2. 底部高考规范分布矩阵表 (在线性模式下呈现 X -> Y 规范对照矩阵) */}
+          {/* 2. 底部高考规范分布矩阵表 */}
           <div className="absolute bottom-3 left-4 right-4 z-10 bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-xl p-2.5 shadow-md flex flex-col gap-1 max-h-[140px] transition-all">
             <div className="text-[11px] font-bold text-neutral-700 flex items-center justify-between px-1">
               <span className="text-primary-800 font-semibold flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary-600" />
                 {studyMode === "linear"
                   ? "高考规范矩阵表 (X → Y 线性变换对照表)"
-                  : "高考分布列规范矩阵表"}
+                  : studyMode === "decision"
+                    ? "方案收益/成本分布对照表"
+                    : "高考分布列规范矩阵表"}
               </span>
               <span className="text-[10px] text-neutral-400 font-normal">
                 {studyMode === "linear"
@@ -364,56 +590,171 @@ export function ProbabilityDistributionAnimation() {
 
             <div className="overflow-x-auto max-w-full">
               <table className="min-w-full text-center border-collapse bg-neutral-50/90 rounded border border-neutral-200 text-xs font-mono">
-                <thead>
-                  <tr className="bg-neutral-100/80 text-neutral-700 font-bold border-b border-neutral-200">
-                    <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-700 font-bold">
-                      x_i
-                    </th>
-                    {distResult.outcomes.map((o) => (
-                      <th
-                        key={`th-x-${o.x}`}
-                        className="px-2 py-0.5 border-r border-neutral-200 min-w-[32px]"
-                      >
-                        {o.x}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {studyMode === "linear" && (
-                    <tr className="bg-amber-50/70 text-amber-900 font-bold border-b border-neutral-200">
-                      <td className="px-2.5 py-0.5 font-bold text-amber-800 border-r border-neutral-200 bg-amber-100/60">
-                        y_i
-                      </td>
-                      {distResult.outcomes.map((o) => (
-                        <td
-                          key={`td-y-${o.x}`}
-                          className="px-2 py-0.5 border-r border-neutral-200 text-amber-900 font-bold"
-                        >
-                          {(params.linearA * o.x + params.linearB).toFixed(1)}
+                {studyMode === "compare" && comparisonResult ? (
+                  <>
+                    <thead>
+                      <tr className="bg-neutral-100/80 text-neutral-700 font-bold border-b border-neutral-200">
+                        <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-700 font-bold">
+                          k
+                        </th>
+                        {comparisonResult.binomDist.outcomes.map((o) => (
+                          <th
+                            key={`th-k-${o.x}`}
+                            className="px-2 py-0.5 border-r border-neutral-200 min-w-[36px]"
+                          >
+                            {o.x}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="bg-blue-50/70 text-blue-900 border-b border-neutral-200">
+                        <td className="px-2.5 py-0.5 font-bold text-blue-800 border-r border-neutral-200 bg-blue-100/60">
+                          P_超
                         </td>
-                      ))}
-                    </tr>
-                  )}
-                  <tr>
-                    <td className="px-2.5 py-0.5 font-bold text-primary-700 border-r border-neutral-200 bg-neutral-100/50">
-                      P_i
-                    </td>
-                    {distResult.outcomes.map((o) => (
-                      <td
-                        key={`td-p-${o.x}`}
-                        className="px-2 py-0.5 border-r border-neutral-200 text-neutral-600 font-medium"
-                      >
-                        {o.p.toFixed(3)}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
+                        {comparisonResult.binomDist.outcomes.map((o) => {
+                          const pHyper =
+                            comparisonResult.hyperDist.outcomes.find(
+                              (h) => h.x === o.x,
+                            )?.p || 0;
+                          return (
+                            <td
+                              key={`td-hyper-${o.x}`}
+                              className="px-2 py-0.5 border-r border-neutral-200 font-medium"
+                            >
+                              {pHyper.toFixed(3)}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      <tr className="bg-amber-50/70 text-amber-900">
+                        <td className="px-2.5 py-0.5 font-bold text-amber-800 border-r border-neutral-200 bg-amber-100/60">
+                          P_二项
+                        </td>
+                        {comparisonResult.binomDist.outcomes.map((o) => (
+                          <td
+                            key={`td-binom-${o.x}`}
+                            className="px-2 py-0.5 border-r border-neutral-200 font-medium"
+                          >
+                            {o.p.toFixed(3)}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </>
+                ) : studyMode === "decision" && decisionResult ? (
+                  <>
+                    <thead>
+                      <tr className="bg-neutral-100/80 text-neutral-700 font-bold border-b border-neutral-200">
+                        <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-700 font-bold">
+                          方案
+                        </th>
+                        <th className="px-2.5 py-0.5 border-r border-neutral-200 text-neutral-700">
+                          分布状态与概率
+                        </th>
+                        <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-800 font-bold">
+                          期望 E
+                        </th>
+                        <th className="px-2.5 py-0.5 text-primary-800 font-bold">
+                          方差 D
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="bg-emerald-50/70 border-b border-neutral-200">
+                        <td className="px-2.5 py-0.5 font-bold text-emerald-800 border-r border-neutral-200 bg-emerald-100/60">
+                          方案 A
+                        </td>
+                        <td className="px-2.5 py-0.5 border-r border-neutral-200 text-left text-neutral-700">
+                          {decisionResult.schemeADist.outcomes
+                            .map(
+                              (o) => `${o.label}: ${(o.p * 100).toFixed(0)}%`,
+                            )
+                            .join(" | ")}
+                        </td>
+                        <td className="px-2.5 py-0.5 font-bold text-emerald-800 border-r border-neutral-200">
+                          {decisionResult.schemeADist.mean.toFixed(2)}
+                        </td>
+                        <td className="px-2.5 py-0.5 font-bold text-emerald-800">
+                          {decisionResult.schemeADist.variance.toFixed(2)}
+                        </td>
+                      </tr>
+                      <tr className="bg-rose-50/70">
+                        <td className="px-2.5 py-0.5 font-bold text-rose-800 border-r border-neutral-200 bg-rose-100/60">
+                          方案 B
+                        </td>
+                        <td className="px-2.5 py-0.5 border-r border-neutral-200 text-left text-neutral-700">
+                          {decisionResult.schemeBDist.outcomes
+                            .map(
+                              (o) => `${o.label}: ${(o.p * 100).toFixed(0)}%`,
+                            )
+                            .join(" | ")}
+                        </td>
+                        <td className="px-2.5 py-0.5 font-bold text-rose-800 border-r border-neutral-200">
+                          {decisionResult.schemeBDist.mean.toFixed(2)}
+                        </td>
+                        <td className="px-2.5 py-0.5 font-bold text-rose-800">
+                          {decisionResult.schemeBDist.variance.toFixed(2)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </>
+                ) : (
+                  <>
+                    <thead>
+                      <tr className="bg-neutral-100/80 text-neutral-700 font-bold border-b border-neutral-200">
+                        <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-700 font-bold">
+                          x_i
+                        </th>
+                        {distResult.outcomes.map((o) => (
+                          <th
+                            key={`th-x-${o.x}`}
+                            className="px-2 py-0.5 border-r border-neutral-200 min-w-[32px]"
+                          >
+                            {o.label || o.x}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {studyMode === "linear" && (
+                        <tr className="bg-amber-50/70 text-amber-900 font-bold border-b border-neutral-200">
+                          <td className="px-2.5 py-0.5 font-bold text-amber-800 border-r border-neutral-200 bg-amber-100/60">
+                            y_i
+                          </td>
+                          {distResult.outcomes.map((o) => (
+                            <td
+                              key={`td-y-${o.x}`}
+                              className="px-2 py-0.5 border-r border-neutral-200 text-amber-900 font-bold"
+                            >
+                              {(params.linearA * o.x + params.linearB).toFixed(
+                                1,
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      )}
+                      <tr>
+                        <td className="px-2.5 py-0.5 font-bold text-primary-700 border-r border-neutral-200 bg-neutral-100/50">
+                          P_i
+                        </td>
+                        {distResult.outcomes.map((o) => (
+                          <td
+                            key={`td-p-${o.x}`}
+                            className="px-2 py-0.5 border-r border-neutral-200 text-neutral-600 font-medium"
+                          >
+                            {o.p.toFixed(3)}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </>
+                )}
               </table>
             </div>
           </div>
 
-          {/* 3. SVG 自适应画布 占据 100% 中屏高度 */}
+          {/* 3. SVG 自适应画布 */}
           <AnimationSvgCanvas
             containerRef={containerRef}
             transform={vp.transform}
@@ -421,6 +762,8 @@ export function ProbabilityDistributionAnimation() {
             <ProbabilityDistributionScene
               distResult={distResult}
               transformedDist={transformedDist}
+              comparisonResult={comparisonResult}
+              decisionResult={decisionResult}
               studyMode={studyMode}
               scale={scale}
               vp={vp}
@@ -440,12 +783,16 @@ export function ProbabilityDistributionAnimation() {
           mnemonic={mathData.mnemonic}
           title={
             studyMode === "binomial"
-              ? "二项分布 B(n,p) 指标看板"
+              ? "二项分布与最值项看板"
               : studyMode === "hypergeometric"
-                ? "超几何分布 H(N,M,n) 指标看板"
-                : studyMode === "linear"
-                  ? "线性变换 Y=aX+b 指标看板"
-                  : "一般离散分布列指标看板"
+                ? "超几何分布指标看板"
+                : studyMode === "compare"
+                  ? "双分布逼近收敛看板"
+                  : studyMode === "decision"
+                    ? "高考方案决策指标看板"
+                    : studyMode === "linear"
+                      ? "线性变换 Y=aX+b 看板"
+                      : "一般离散分布列看板"
           }
         />
       }
