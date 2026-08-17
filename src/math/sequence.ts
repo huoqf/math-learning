@@ -177,6 +177,41 @@ export interface OddEvenResult {
   N: number;
 }
 
+export interface AbsSumTerm {
+  n: number;
+  an: number; // 原项
+  absAn: number; // |an|
+  Tn: number; // 绝对值累计和
+  isNegative: boolean; // 是否为负项(被翻折)
+}
+
+export interface AbsSumResult {
+  isValid: boolean;
+  terms: AbsSumTerm[];
+  a1: number;
+  d: number;
+  N: number;
+  zeroPoint: number | null; // 变号零点精确值 1 - a1/d
+  n0: number | null; // 最后一个非变号项下标
+  signChangeType: "allPositive" | "allNegative" | "posToNeg" | "negToPos";
+  sumFormula: string;
+}
+
+export interface RadicalTelescopingTerm {
+  n: number;
+  cn: number; // 1 / (sqrt(n) + sqrt(n+1)) = sqrt(n+1) - sqrt(n)
+  partA: number; // sqrt(n+1)
+  partB: number; // sqrt(n)
+  Tn: number; // 累计和 sqrt(N+1) - 1
+}
+
+export interface RadicalTelescopingResult {
+  isValid: boolean;
+  terms: RadicalTelescopingTerm[];
+  N: number;
+  finalTn: number;
+}
+
 /**
  * 计算等差数列性质与各项 (支持函数透视、极值辨析、片段和与绝对值求和)
  */
@@ -653,6 +688,114 @@ export function calcOddEvenSequence(N: number): OddEvenResult {
     isValid: true,
     terms,
     N,
+  };
+}
+
+/**
+ * 扩展 4：绝对值变号求和法计算 Tn = sum_{k=1}^n |ak|
+ */
+export function calcAbsSumSequence(
+  a1: number,
+  d: number,
+  N: number,
+): AbsSumResult {
+  const terms: AbsSumTerm[] = [];
+  let currentTn = 0;
+
+  let zeroPoint: number | null = null;
+  let n0: number | null = null;
+  let signChangeType: AbsSumResult["signChangeType"] = "allPositive";
+
+  if (Math.abs(d) < 1e-9) {
+    signChangeType = a1 >= 0 ? "allPositive" : "allNegative";
+  } else {
+    zeroPoint = 1 - a1 / d;
+    if (d < 0) {
+      if (a1 <= 0) {
+        signChangeType = "allNegative";
+      } else {
+        signChangeType = "posToNeg";
+        n0 = Math.floor(zeroPoint);
+      }
+    } else {
+      if (a1 >= 0) {
+        signChangeType = "allPositive";
+      } else {
+        signChangeType = "negToPos";
+        n0 = Math.floor(zeroPoint);
+      }
+    }
+  }
+
+  for (let n = 1; n <= N; n++) {
+    const an = a1 + (n - 1) * d;
+    const absAn = Math.abs(an);
+    currentTn += absAn;
+    terms.push({
+      n,
+      an,
+      absAn,
+      Tn: currentTn,
+      isNegative: an < 0,
+    });
+  }
+
+  let sumFormula = "T_n = |S_n|";
+  if (signChangeType === "posToNeg" && n0 !== null) {
+    sumFormula =
+      n0 >= N
+        ? `T_n = S_n`
+        : `T_n = \\begin{cases} S_n, & n \\le ${n0} \\\\ 2S_{${n0}} - S_n, & n > ${n0} \\end{cases}`;
+  } else if (signChangeType === "negToPos" && n0 !== null) {
+    sumFormula =
+      n0 >= N
+        ? `T_n = -S_n`
+        : `T_n = \\begin{cases} -S_n, & n \\le ${n0} \\\\ S_n - 2S_{${n0}}, & n > ${n0} \\end{cases}`;
+  } else if (signChangeType === "allNegative") {
+    sumFormula = "T_n = -S_n";
+  } else {
+    sumFormula = "T_n = S_n";
+  }
+
+  return {
+    isValid: true,
+    terms,
+    a1,
+    d,
+    N,
+    zeroPoint,
+    n0,
+    signChangeType,
+    sumFormula,
+  };
+}
+
+/**
+ * 扩展 5：根式裂项相消法计算 cn = 1/(sqrt(n) + sqrt(n+1)) = sqrt(n+1) - sqrt(n)
+ */
+export function calcRadicalTelescoping(N: number): RadicalTelescopingResult {
+  const terms: RadicalTelescopingTerm[] = [];
+  let currentTn = 0;
+
+  for (let n = 1; n <= N; n++) {
+    const partA = Math.sqrt(n + 1);
+    const partB = Math.sqrt(n);
+    const cn = partA - partB; // = 1 / (sqrt(n) + sqrt(n+1))
+    currentTn += cn;
+    terms.push({
+      n,
+      cn,
+      partA,
+      partB,
+      Tn: currentTn,
+    });
+  }
+
+  return {
+    isValid: true,
+    terms,
+    N,
+    finalTn: Math.sqrt(N + 1) - 1,
   };
 }
 

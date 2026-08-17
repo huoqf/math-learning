@@ -11,6 +11,8 @@ import {
   calcGroupedSequence,
   calcCrossTelescoping,
   calcOddEvenSequence,
+  calcAbsSumSequence,
+  calcRadicalTelescoping,
   calcLinearRecurrence,
   calcAccumulationRecurrence,
   calcMultiplicationRecurrence,
@@ -413,95 +415,183 @@ export function buildSequencePanel(
     }
   } else if (activeMode === "models") {
     const subModel = (config?.subModel as string) ?? "arith-geo";
+    const teleGap = params.teleGap ?? 1;
 
     if (subModel === "arith-geo") {
       const res = calcArithGeoSplit(a1, d, q, N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
+      const isCriticalQ1 = Math.abs(q - 1) < 1e-6;
 
       quantities.push({
-        label: "混合通项 c_n = a_n · b_n",
-        value: `c_${N} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
+        label: "混合通项 $c_n = a_n \\cdot b_n$",
+        value: `c_{${N}} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
-        label: `前 ${N} 项和 T_${N}`,
-        value: `T_${N} = ${TN.toFixed(4)}`,
+        label: `前 $N$ 项和 $T_{${N}}$`,
+        value: `T_{${N}} = ${TN.toFixed(4)}`,
         color: MATH_COLORS.sequenceSum,
       });
 
+      quantities.push({
+        label: "公比 $q$ 状态",
+        value: isCriticalQ1 ? "$q = 1$ (临界退化)" : `$q = ${q}$`,
+        color: isCriticalQ1
+          ? MATH_COLORS.paramPrimary
+          : MATH_COLORS.paramSecondary,
+      });
+
       theorems.push({
-        name: "错位相减法原理",
-        latex: `(1-q)T_n = a_1 + d \\sum_{k=2}^n q^{k-1} - a_n q^n`,
-        condition: "适用于等差与等比相乘构成的数列",
+        name: "错位相减法通式原理",
+        latex: `(1-q)T_n = a_1 b_1 + d \\sum_{k=2}^n q^{k-1} - a_n q^n`,
+        condition:
+          "适用于等差数列 $\\{a_n\\}$ 与等比数列 $\\{b_n\\}$ 对应项相乘构成的差比混合数列 ($q \\neq 1$)",
       });
 
       gaokaoPoints.push({
-        text: "高考压轴题必考：错位相减对齐与消去。将 T_n 乘以公比 q 后整体右移一位，中间 n-1 项转化为纯等比求和，注意末项 - a_n · q^n 的符号与系数。",
+        text: "新高考易错防坑点 1：公比 $q=1$ 遗漏讨论。当公比含字母参数时，必须先讨论 $q=1$（退化为等差求和或二次多项式求和），再讨论 $q \\neq 1$ 错位相减，否则解答题扣 2-4 分。",
         importance: "hard",
       });
-    } else if (subModel === "telescoping") {
-      const res = calcTelescoping(N);
-      const TN = res.terms[N - 1]?.Tn ?? 0;
-
-      quantities.push({
-        label: "裂项通项 c_n = 1/(n(n+1))",
-        value: `c_${N} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
-        color: MATH_COLORS.sequence,
-      });
-
-      quantities.push({
-        label: `前 ${N} 项和 T_${N}`,
-        value: `T_${N} = ${TN.toFixed(4)}`,
-        color: MATH_COLORS.sequenceSum,
-      });
-
-      quantities.push({
-        label: "极限值 lim T_N",
-        value: "1.0000",
-        color: MATH_COLORS.sequenceHighlight,
-      });
-
-      theorems.push({
-        name: "裂项相消法原理",
-        latex: `\\sum_{k=1}^n \\left( \\frac{1}{k} - \\frac{1}{k+1} \\right) = 1 - \\frac{1}{n+1}`,
-        condition: "通项拆分为前后相消的两项之差",
-      });
 
       gaokaoPoints.push({
-        text: "高考常考：裂项相消首尾对销。中间项 (+1/2 - 1/2 + 1/3 - 1/3 ...) 两两对消，最终仅保留首项 1 与尾项 -1/(N+1)。",
+        text: "新高考易错防坑点 2：中间等比段项数统计。乘以公比右移相减后，中间等比数列共有 $(n-1)$ 项，首项为 $d \\cdot q$，公比为 $q$，切忌将项数误算为 $n$ 项。",
         importance: "gaokao",
       });
-    } else if (subModel === "cross-telescoping") {
-      const res = calcCrossTelescoping(N);
+
+      gaokaoPoints.push({
+        text: "新高考易错防坑点 3：尾项符号与指数。两式相减后，原第 $n$ 项乘公比得到 $-a_n \\cdot q^n$，必带负号且指数为 $n$，常因粗心漏掉负号或写错指数。",
+        importance: "hard",
+      });
+
+      if (isCriticalQ1) {
+        warnings.push({
+          text: "公比 q = 1 错位相减法失效：(1-q)=0 不能作分母除过去。此时 c_n = a_n 为纯等差数列，前 n 项和应直接使用等差求和公式 T_n = n a_1 + n(n-1)d/2。",
+          level: "danger",
+        });
+      }
+    } else if (subModel === "telescoping") {
+      if (teleGap === 3) {
+        // 根式有理化型
+        const res = calcRadicalTelescoping(N);
+        quantities.push({
+          label: "根式通项 $c_n$",
+          value: "\\frac{1}{\\sqrt{n}+\\sqrt{n+1}} = \\sqrt{n+1} - \\sqrt{n}",
+          color: MATH_COLORS.sequence,
+        });
+        quantities.push({
+          label: `前 $N$ 项和 $T_{${N}}$`,
+          value: `T_{${N}} = ${res.finalTn.toFixed(4)}`,
+          color: MATH_COLORS.sequenceSum,
+        });
+        theorems.push({
+          name: "根式有理化裂项原理",
+          latex: `\\sum_{k=1}^n \\frac{1}{\\sqrt{k}+\\sqrt{k+1}} = \\sum_{k=1}^n (\\sqrt{k+1} - \\sqrt{k}) = \\sqrt{n+1} - 1`,
+          condition: "分母为相邻根式和时，分子分母同乘共轭根式有理化",
+        });
+        gaokaoPoints.push({
+          text: "高考根式裂项：分子分母同乘以 $(\\sqrt{k+1} - \\sqrt{k})$，分母化简为 $(k+1)-k=1$，直接转化为前后伸缩抵消，仅剩首项 $-1$ 与尾项 $+\\sqrt{n+1}$。",
+          importance: "gaokao",
+        });
+      } else if (teleGap === 2) {
+        // 跨项差 2 型
+        const res = calcCrossTelescoping(N);
+        const TN = res.terms[N - 1]?.Tn ?? 0;
+
+        quantities.push({
+          label: "跨项裂项通项 $c_n = \\frac{1}{n(n+2)}$",
+          value: `c_{${N}} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
+          color: MATH_COLORS.sequence,
+        });
+        quantities.push({
+          label: `前 $N$ 项和 $T_{${N}}$`,
+          value: `T_{${N}} = ${TN.toFixed(4)}`,
+          color: MATH_COLORS.sequenceSum,
+        });
+        quantities.push({
+          label: "极限值 $\\lim T_N$",
+          value: "0.7500",
+          color: MATH_COLORS.sequenceHighlight,
+        });
+        theorems.push({
+          name: "跨项裂项相消原理 (分母差为 2)",
+          latex: `\\sum_{k=1}^n \\frac{1}{k(k+2)} = \\frac{1}{2}\\left( 1 + \\frac{1}{2} - \\frac{1}{n+1} - \\frac{1}{n+2} \\right)`,
+          condition:
+            "分母两因式差为 $2$ 时，相消后首部保留 $2$ 项，尾部保留 $2$ 项",
+        });
+        gaokaoPoints.push({
+          text: "高考防错陷阱：分母差为 2 时必须先提取系数 $\\frac{1}{2}$！且抵消时对称保留首部前 2 正项 $(1 + \\frac{1}{2})$ 与尾部后 2 负项 $(-\\frac{1}{n+1} - \\frac{1}{n+2})$。",
+          importance: "hard",
+        });
+      } else {
+        // 标准差 1 型
+        const res = calcTelescoping(N);
+        const TN = res.terms[N - 1]?.Tn ?? 0;
+
+        quantities.push({
+          label: "裂项通项 $c_n = \\frac{1}{n(n+1)}$",
+          value: `c_{${N}} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
+          color: MATH_COLORS.sequence,
+        });
+        quantities.push({
+          label: `前 $N$ 项和 $T_{${N}}$`,
+          value: `T_{${N}} = ${TN.toFixed(4)}`,
+          color: MATH_COLORS.sequenceSum,
+        });
+        quantities.push({
+          label: "极限收敛值 $\\lim T_N$",
+          value: "1.0000",
+          color: MATH_COLORS.sequenceHighlight,
+        });
+        theorems.push({
+          name: "标准裂项相消原理 (分母差为 1)",
+          latex: `\\sum_{k=1}^n \\left( \\frac{1}{k} - \\frac{1}{k+1} \\right) = 1 - \\frac{1}{n+1}`,
+          condition: "通项拆分为前后紧邻的两项之差，两两对消",
+        });
+        gaokaoPoints.push({
+          text: "高考基础必拿分：标准裂项相消首尾对销。中间项 $(+\\frac{1}{2} - \\frac{1}{2} + \\frac{1}{3} - \\frac{1}{3} \\dots)$ 全部对消，仅保留首项 $1$ 与尾项 $-\\frac{1}{n+1}$，常用于证明不等式 $T_n < 1$。",
+          importance: "gaokao",
+        });
+      }
+    } else if (subModel === "abs-sum") {
+      const res = calcAbsSumSequence(a1, d, N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
 
       quantities.push({
-        label: "跨项裂项通项 c_n",
-        value: `c_${N} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
-        color: MATH_COLORS.sequence,
-      });
-
-      quantities.push({
-        label: `前 ${N} 项和 T_${N}`,
-        value: `T_${N} = ${TN.toFixed(4)}`,
+        label: `前 $N$ 项绝对值和 $T_{${N}}$`,
+        value: `T_{${N}} = ${TN.toFixed(2)}`,
         color: MATH_COLORS.sequenceSum,
       });
 
+      if (res.zeroPoint !== null) {
+        quantities.push({
+          label: "变号零点 $n_0$",
+          value: `n_0 = ${res.zeroPoint.toFixed(2)}`,
+          color: MATH_COLORS.paramPrimary,
+        });
+      }
+
       quantities.push({
-        label: "极限值 lim T_N",
-        value: "0.7500",
+        label: "变号类型",
+        value:
+          res.signChangeType === "posToNeg"
+            ? "前正后负 (递减变号)"
+            : res.signChangeType === "negToPos"
+              ? "前负后正 (递增变号)"
+              : "同号无变号",
         color: MATH_COLORS.sequenceHighlight,
       });
 
       theorems.push({
-        name: "跨项裂项相消原理",
-        latex: `\\sum_{k=1}^n \\frac{1}{k(k+2)} = \\frac{1}{2}\\left( 1 + \\frac{1}{2} - \\frac{1}{n+1} - \\frac{1}{n+2} \\right)`,
-        condition: "分母差为 2 时，相消后保留首部 2 项与尾部 2 项",
+        name: "绝对值数列分段求和原理",
+        latex: res.sumFormula,
+        mode: "block",
+        condition:
+          "等差数列发生正负变号时，以变号零点 $n_0$ 为分界线分段去绝对值求和",
       });
 
       gaokaoPoints.push({
-        text: "高考防错陷阱：分母差为 k 时，系数须乘以 1/k，且首尾各保留 k 项不被消去。",
+        text: "新高考解答题压轴高频：绝对值数列求和 $T_n = \\sum_{k=1}^n |a_k|$。核心步骤：① 令 $a_n = 0$ 解出变号点 $n_0$；② 分 $n \\le n_0$ 与 $n > n_0$ 两种情况；③ 利用 $T_n = 2S_{n_0} - S_n$ 快速化简计算，避免繁琐分段累加。",
         importance: "hard",
       });
     } else if (subModel === "grouped") {
@@ -509,25 +599,25 @@ export function buildSequencePanel(
       const TN = res.terms[N - 1]?.Tn ?? 0;
 
       quantities.push({
-        label: "复合通项 c_n = a_n + b_n",
-        value: `c_${N} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(2)}`,
+        label: "复合通项 $c_n = a_n + b_n$",
+        value: `c_{${N}} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(2)}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
-        label: `前 ${N} 项和 T_${N}`,
-        value: `T_${N} = ${TN.toFixed(2)}`,
+        label: `前 $N$ 项和 $T_{${N}}$`,
+        value: `T_{${N}} = ${TN.toFixed(2)}`,
         color: MATH_COLORS.sequenceSum,
       });
 
       theorems.push({
-        name: "分组求和法原理",
+        name: "分组转化求和法原理",
         latex: `T_n = \\sum (a_k + b_k) = \\sum a_k + \\sum b_k = S_n^{(a)} + S_n^{(b)}`,
         condition: "通项可拆解为两个已知常见求和数列之和",
       });
 
       gaokaoPoints.push({
-        text: "高考基础必备：拆项分组。将复合通项拆分为等差数列与等比数列，分别套用各自的求和公式相加。",
+        text: "高考基础必备：拆项分组。将复合通项拆分为等差数列与等比数列，分别套用各自的求和公式相加，注意等比部分公比 $q=1$ 的讨论。",
         importance: "basic",
       });
     } else if (subModel === "odd-even") {
@@ -535,25 +625,26 @@ export function buildSequencePanel(
       const TN = res.terms[N - 1]?.Tn ?? 0;
 
       quantities.push({
-        label: "交替通项 c_n = (-1)^n · n",
-        value: `c_${N} = ${res.terms[N - 1]?.cn ?? 0}`,
+        label: "交替通项 $c_n = (-1)^n \\cdot n$",
+        value: `c_{${N}} = ${res.terms[N - 1]?.cn ?? 0}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
-        label: `前 ${N} 项和 T_${N}`,
-        value: `T_${N} = ${TN}`,
+        label: `前 $N$ 项和 $T_{${N}}$`,
+        value: `T_{${N}} = ${TN}`,
         color: MATH_COLORS.sequenceSum,
       });
 
       theorems.push({
         name: "奇偶并项求和原理",
-        latex: `c_{2k-1} + c_{2k} = -(2k-1) + 2k = 1`,
+        latex: `T_n = \\begin{cases} k, & n = 2k \\\\ -k, & n = 2k-1 \\end{cases}`,
+        mode: "block",
         condition: "正负交替或分段数列，相邻奇偶两项合并为常数",
       });
 
       gaokaoPoints.push({
-        text: "高考高频思想：奇偶并项。相邻奇数项与偶数项两两组合，每对合并为常数 1，将 n 项求和转化为 n/2 组常数累加。",
+        text: "高考高频思想：奇偶并项与分类讨论。当数列呈现摆动周期性时，必须分别对项数 $n$ 为偶数 ($n=2k$) 与 $n$ 为奇数 ($n=2k-1$) 分类求解，再综合写出分段或统一表达式。",
         importance: "gaokao",
       });
     }

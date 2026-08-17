@@ -197,13 +197,50 @@ function parseSmartFormulaLines(latex: string): ParsedFormulaLine[] | null {
       }
     }
 
-    // 规则 C: 若公式非常长 (>45字符) 且包含多个等号 (连等式 A = B = C)
-    if (line.length > 45 && (line.match(/=/g) || []).length >= 2) {
-      const parts = line.split(/\s*=\s*/);
-      if (parts.length >= 2) {
-        result.push({ formula: `${parts[0]} = ${parts[1]}`, type: "main" });
-        for (let i = 2; i < parts.length; i++) {
-          result.push({ formula: `= ${parts[i]}`, type: "sub", indent: true });
+    // 规则 C: 若公式较长 (>45字符) 且包含多个顶层主等号 (连等式 A = B = C)
+    // 严格检查花括号/括号嵌套深度，禁止切断 \sum_{k=2} 等内部下标
+    if (line.length > 45) {
+      const topEqualsParts: string[] = [];
+      let currentSeg = "";
+      let braceDepth = 0;
+      let parenDepth = 0;
+      let bracketDepth = 0;
+
+      for (let ci = 0; ci < line.length; ci++) {
+        const char = line[ci];
+        if (char === "{") braceDepth++;
+        else if (char === "}") braceDepth = Math.max(0, braceDepth - 1);
+        else if (char === "(") parenDepth++;
+        else if (char === ")") parenDepth = Math.max(0, parenDepth - 1);
+        else if (char === "[") bracketDepth++;
+        else if (char === "]") bracketDepth = Math.max(0, bracketDepth - 1);
+
+        if (
+          char === "=" &&
+          braceDepth === 0 &&
+          parenDepth === 0 &&
+          bracketDepth === 0
+        ) {
+          topEqualsParts.push(currentSeg.trim());
+          currentSeg = "";
+        } else {
+          currentSeg += char;
+        }
+      }
+      topEqualsParts.push(currentSeg.trim());
+
+      // 只有当存在 2 个以上顶层等号时 (连等式 A = B = C) 才进行分步换行
+      if (topEqualsParts.length >= 3) {
+        result.push({
+          formula: `${topEqualsParts[0]} = ${topEqualsParts[1]}`,
+          type: "main",
+        });
+        for (let i = 2; i < topEqualsParts.length; i++) {
+          result.push({
+            formula: `= ${topEqualsParts[i]}`,
+            type: "sub",
+            indent: true,
+          });
         }
         continue;
       }

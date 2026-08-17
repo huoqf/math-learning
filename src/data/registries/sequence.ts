@@ -12,6 +12,8 @@ export interface SequenceParams {
   N: number;
   kSegment: number;
   gaussRatio: number;
+  sumStep: number;
+  teleGap: number;
   p_rec: number;
   q_rec: number;
   a2: number;
@@ -27,6 +29,8 @@ export const defaultParams: SequenceParams = {
   N: 8,
   kSegment: 3,
   gaussRatio: 1,
+  sumStep: 1,
+  teleGap: 1,
   p_rec: 2,
   q_rec: 1,
   a2: 2,

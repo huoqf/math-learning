@@ -7,6 +7,8 @@ import {
   calcGroupedSequence,
   calcCrossTelescoping,
   calcOddEvenSequence,
+  calcAbsSumSequence,
+  calcRadicalTelescoping,
   calcLinearRecurrence,
   calcAccumulationRecurrence,
   calcMultiplicationRecurrence,
@@ -152,7 +154,32 @@ describe("Sequence Math Calculations", () => {
     expect(res.terms[1].cn).toBe(2);
     expect(res.terms[1].pairSum).toBe(1);
     expect(res.terms[3].pairSum).toBe(1);
-    expect(res.terms[3].Tn).toBe(2);
+    expect(res.terms[3].Tn).toBe(2); // S4 = 1 + 1 = 2
+  });
+
+  it("should correctly compute absolute value sum terms (posToNeg)", () => {
+    // a1 = 5, d = -2 => terms: 5, 3, 1, -1, -3
+    // zeroPoint = 1 - 5/(-2) = 3.5, n0 = 3
+    const res = calcAbsSumSequence(5, -2, 5);
+    expect(res.isValid).toBe(true);
+    expect(res.zeroPoint).toBe(3.5);
+    expect(res.n0).toBe(3);
+    expect(res.signChangeType).toBe("posToNeg");
+    expect(res.terms[2].absAn).toBe(1);
+    expect(res.terms[3].absAn).toBe(1);
+    expect(res.terms[3].isNegative).toBe(true);
+    expect(res.terms[4].absAn).toBe(3);
+    // T5 = 5 + 3 + 1 + 1 + 3 = 13
+    expect(res.terms[4].Tn).toBe(13);
+  });
+
+  it("should correctly compute radical telescoping terms", () => {
+    const res = calcRadicalTelescoping(3);
+    expect(res.isValid).toBe(true);
+    expect(res.terms.length).toBe(3);
+    // T3 = sqrt(4) - 1 = 1
+    expect(res.finalTn).toBe(1);
+    expect(res.terms[2].Tn).toBeCloseTo(1, 4);
   });
 
   it("should correctly compute linear recurrence terms (a_{n+1} = p*a_n + q)", () => {

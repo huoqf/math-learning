@@ -18,7 +18,11 @@ import { CANVAS_PRESETS } from "@/theme";
 import { SequenceScene } from "./components/SequenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
-import { calcArithmeticSequence } from "@/math/sequence";
+import {
+  calcArithmeticSequence,
+  calcArithGeoSplit,
+  calcGroupedSequence,
+} from "@/math/sequence";
 
 export function SequenceAnimation() {
   // 当前研究大类模式: 'arithmetic' | 'geometric' | 'recurrence' | 'models'
@@ -68,7 +72,10 @@ export function SequenceAnimation() {
   const N_param = Math.max(4, Math.min(12, Math.round(params.N ?? 8)));
   const kSeg_param = params.kSegment ?? 3;
 
-  const { xRange, yRange } = useMemo(() => {
+  const { xRange, yRange } = useMemo<{
+    xRange: [number, number];
+    yRange: [number, number];
+  }>(() => {
     if (activeMode === "arithmetic") {
       const res = calcArithmeticSequence(
         a1_param,
@@ -117,14 +124,55 @@ export function SequenceAnimation() {
       return { xRange: xR, yRange: yR };
     }
 
-    const xR: [number, number] = [-1, 16.5];
+    let xR: [number, number] = [-1, N_param + 1.5];
+    let yR: [number, number] = [-4, 16];
+
+    if (activeMode === "models") {
+      const a1_m = a1_param;
+      const d_m = d_param;
+      const q_m = params.q ?? 0.5;
+      const N_m = N_param;
+      const teleGap = params.teleGap ?? 1;
+
+      if (modelType === "arith-geo") {
+        xR = [-1, N_m + 2];
+        const res = calcArithGeoSplit(a1_m, d_m, q_m, N_m);
+        const allVals = res.terms.flatMap((t) => [
+          t.cn,
+          t.cn * q_m,
+          t.an,
+          t.bn,
+        ]);
+        const minV = Math.min(0, ...allVals);
+        const maxV = Math.max(3, ...allVals);
+        yR = [Math.floor(minV - 1.5), Math.ceil(maxV + 2.5)];
+      } else if (modelType === "telescoping") {
+        xR = [-1, N_m + 1.5];
+        if (teleGap === 3) {
+          const maxRad = Math.sqrt(N_m + 1);
+          yR = [-Math.ceil(maxRad + 0.5), Math.ceil(maxRad + 1.5)];
+        } else if (teleGap === 2) {
+          yR = [-0.8, 1.2];
+        } else {
+          yR = [-1.2, 1.5];
+        }
+      } else if (modelType === "grouped") {
+        xR = [-1, N_m + 1.5];
+        const res = calcGroupedSequence(a1_m, d_m, q_m, N_m);
+        const allVals = res.terms.flatMap((t) => [t.an, t.bn, t.cn]);
+        const minV = Math.min(0, ...allVals);
+        const maxV = Math.max(3, ...allVals);
+        yR = [Math.floor(minV - 2), Math.ceil(maxV + 3)];
+      } else if (modelType === "odd-even") {
+        xR = [-1, N_m + 1.5];
+        yR = [-(N_m + 2), N_m + 2];
+      }
+      if (yR[1] - yR[0] < 6) yR = [yR[0], yR[0] + 6];
+      return { xRange: xR, yRange: yR };
+    }
+
     const MODEL_Y_RANGES: Record<string, [number, number]> = {
       geometric: params.q > 1 ? [-2, 50] : [-1, 8],
-      "arith-geo": [-5, 15],
-      telescoping: [-0.5, 1.5],
-      "cross-telescoping": [-0.2, 1],
-      grouped: [-8, 25],
-      "odd-even": [-17, 17],
       "linear-pan": [-10, 30],
       accumulation: [-5, 45],
       multiplication: [-1, 10],
@@ -132,14 +180,12 @@ export function SequenceAnimation() {
       "second-order": [-10, 50],
     };
 
-    const yR =
-      activeMode === "models"
-        ? (MODEL_Y_RANGES[modelType] ?? [-6, 22])
-        : activeMode === "recurrence"
-          ? (MODEL_Y_RANGES[recurrenceModelType] ?? [-10, 30])
-          : MODEL_Y_RANGES.geometric;
+    const defaultYR =
+      activeMode === "recurrence"
+        ? (MODEL_Y_RANGES[recurrenceModelType] ?? [-10, 30])
+        : MODEL_Y_RANGES.geometric;
 
-    return { xRange: xR, yRange: yR };
+    return { xRange: [-1, 16.5], yRange: defaultYR };
   }, [
     activeMode,
     arithmeticSubMode,
@@ -150,12 +196,14 @@ export function SequenceAnimation() {
     N_param,
     kSeg_param,
     params.q,
+    params.teleGap,
   ]);
 
   const scale = useSceneScale({
     vp,
     xRange,
     yRange,
+    keepAspectRatio: false,
   });
 
   // 右屏 MathPanel 看板组装
@@ -347,9 +395,9 @@ export function SequenceAnimation() {
               <SelectGrid
                 items={[
                   { key: "arith-geo", label: "错位相减法" },
-                  { key: "telescoping", label: "标准裂项相消" },
-                  { key: "cross-telescoping", label: "跨项裂项相消" },
-                  { key: "grouped", label: "分组求和法" },
+                  { key: "telescoping", label: "裂项相消法" },
+                  { key: "cross-telescoping", label: "绝对值变号求和" },
+                  { key: "grouped", label: "分组转化求和" },
                   { key: "odd-even", label: "奇偶并项求和" },
                 ]}
                 value={modelType}
@@ -358,10 +406,80 @@ export function SequenceAnimation() {
             </LeftPanelSection>
           )}
 
+          {/* 错位相减专属：推导步骤选择卡片 */}
+          {activeMode === "models" && modelType === "arith-geo" && (
+            <LeftPanelSection
+              title="推导演化步骤"
+              subtitle="分步展示错位相减标准答题过程"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "1",
+                    label: "Step 1: 原式列出",
+                    description: "列出原始求和表达式 T_n",
+                  },
+                  {
+                    key: "2",
+                    label: "Step 2: 乘公比错位",
+                    description: "同乘 q 整体向右平移 1 格",
+                  },
+                  {
+                    key: "3",
+                    label: "Step 3: 两式相减",
+                    description: "首项直落，中间等比，尾项带负号",
+                  },
+                  {
+                    key: "4",
+                    label: "Step 4: 求和化简",
+                    description: "代入等比求和公式完成化简",
+                  },
+                ]}
+                value={String(params.sumStep ?? 1)}
+                onChange={(k) => handleParamChange("sumStep", Number(k))}
+                columns={1}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 裂项相消专属：裂项题型选择卡片 */}
+          {activeMode === "models" && modelType === "telescoping" && (
+            <LeftPanelSection
+              title="裂项相消题型"
+              subtitle="覆盖新高考 3 大典型裂项构造"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "1",
+                    label: "标准差 1 型",
+                    formula: "\\frac{1}{n(n+1)}",
+                    description: "相邻抵消，留首尾各 1 项",
+                  },
+                  {
+                    key: "2",
+                    label: "跨项差 2 型",
+                    formula: "\\frac{1}{n(n+2)}",
+                    description: "提系数 1/2，留首尾各 2 项",
+                  },
+                  {
+                    key: "3",
+                    label: "根式有理化型",
+                    formula: "\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}",
+                    description: "分子有理化，前后伸缩抵消",
+                  },
+                ]}
+                value={String(params.teleGap ?? 1)}
+                onChange={(k) => handleParamChange("teleGap", Number(k))}
+                columns={1}
+              />
+            </LeftPanelSection>
+          )}
+
           {/* 3. 动态声明式参数控制台 */}
           <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块实时观察几何变化"
+            title="数值参数调节"
+            subtitle="拖动滑块探索参数对数列图像与求和的影响"
           >
             <ParamControl
               params={paramConfigs}
