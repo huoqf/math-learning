@@ -16,7 +16,8 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/pairedData";
 import {
   REGRESSION_PRESETS,
-  calculateLinearRegression,
+  fitAllRegressionModels,
+  RegressionModelType,
   Point2D,
 } from "@/math/pairedData";
 
@@ -24,10 +25,45 @@ export function RegressionPage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
   }));
+  const [selectedModel, setSelectedModel] =
+    useState<RegressionModelType>("linear");
   const [regPresetIndex, setRegPresetIndex] = useState<number>(0);
-  const [points, setPoints] = useState<Point2D[]>(
+  const [basePoints, setBasePoints] = useState<Point2D[]>(
     () => REGRESSION_PRESETS[0].points,
   );
+
+  // 根据当前 noise 强度动态计算活跃散点集 (完全同步左屏滑块)
+  const activePoints = useMemo(() => {
+    const noise = params.noise ?? 0;
+    if (noise <= 0.001) return basePoints;
+    return basePoints.map((p, idx) => {
+      const perturbation = noise * Math.sin(idx * 2.3 + 1.2) * 0.9;
+      return {
+        id: p.id,
+        x: p.x,
+        y: Number((p.y + perturbation).toFixed(2)),
+      };
+    });
+  }, [basePoints, params.noise]);
+
+  // 处理散点拖拽更新
+  const handlePointsChange = (newActivePoints: Point2D[]) => {
+    const noise = params.noise ?? 0;
+    if (noise <= 0.001) {
+      setBasePoints(newActivePoints);
+    } else {
+      setBasePoints(
+        newActivePoints.map((p, idx) => {
+          const perturbation = noise * Math.sin(idx * 2.3 + 1.2) * 0.9;
+          return {
+            id: p.id,
+            x: p.x,
+            y: Number((p.y - perturbation).toFixed(2)),
+          };
+        }),
+      );
+    }
+  };
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -54,18 +90,23 @@ export function RegressionPage() {
 
   const handleRegPresetSelect = (index: number) => {
     setRegPresetIndex(index);
-    setPoints(REGRESSION_PRESETS[index].points);
+    const p = REGRESSION_PRESETS[index];
+    setBasePoints(p.points);
+    if (p.recommendedModel) {
+      setSelectedModel(p.recommendedModel);
+    }
     handleParamChange("presetIndex", index);
   };
 
   const handleReset = () => {
     setParams({ ...defaultParams });
     setRegPresetIndex(0);
-    setPoints(REGRESSION_PRESETS[0].points);
+    setSelectedModel("linear");
+    setBasePoints(REGRESSION_PRESETS[0].points);
   };
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keys = ["noise"];
+    const keys = ["noise", "showResidualSquares", "showResidualPlot"];
     return keys
       .filter((k) => k in paramMeta)
       .map((key) => {
@@ -89,25 +130,68 @@ export function RegressionPage() {
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-paired-data", params, {
       studyMode: "regression",
-      points,
+      selectedModel,
+      points: activePoints,
     });
-  }, [params, points]);
+  }, [params, selectedModel, activePoints]);
 
   const headerFormulaLatex = useMemo(() => {
-    const res = calculateLinearRegression(points);
-    if (!res.isValid) return "\\text{数据无法求解线性回归方程}";
-    const bStr = res.b.toFixed(3);
-    const aSign = res.a >= 0 ? "+" : "-";
-    const aStr = Math.abs(res.a).toFixed(3);
-    return `\\hat{y} = ${bStr}x ${aSign} ${aStr} \\quad (r = ${res.r.toFixed(3)}, R^2 = ${res.rSquare.toFixed(3)})`;
-  }, [points]);
+    const fits = fitAllRegressionModels(activePoints);
+    const fit = fits.find((m) => m.type === selectedModel) ?? fits[0];
+    if (!fit || !fit.isValid) return "\\text{当前数据无法求解该回归模型}";
+    return `${fit.name}: \\; ${fit.originalFormula} \\quad (R^2 = ${fit.rSquare.toFixed(3)}, \\text{SSE} = ${fit.sse.toFixed(2)})`;
+  }, [selectedModel, activePoints]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
           <LeftPanelSection
-            title="高考典型例题预设"
+            title="回归模型选择"
+            subtitle="新高考线性化转换与优度比较"
+          >
+            <SelectGrid
+              items={[
+                {
+                  key: "linear",
+                  label: "一元线性模型",
+                  formula: "\\hat{y} = bx + a",
+                  fullWidth: true,
+                },
+                {
+                  key: "exponential",
+                  label: "指数模型 (z=lny)",
+                  formula: "y = c e^{kx}",
+                  fullWidth: true,
+                },
+                {
+                  key: "logarithmic",
+                  label: "对数模型 (u=lnx)",
+                  formula: "y = a + b\\ln x",
+                  fullWidth: true,
+                },
+                {
+                  key: "power",
+                  label: "幂函数模型",
+                  formula: "y = c x^k",
+                  fullWidth: true,
+                },
+                {
+                  key: "inverse",
+                  label: "双曲线逆模型",
+                  formula: "y = a + \\frac{b}{x}",
+                  fullWidth: true,
+                },
+              ]}
+              value={selectedModel}
+              onChange={(k) => setSelectedModel(k as RegressionModelType)}
+              variant="filled"
+              columns={1}
+            />
+          </LeftPanelSection>
+
+          <LeftPanelSection
+            title="高考经典例题情境"
             subtitle="选择真实考题背景数据"
           >
             <SelectGrid
@@ -123,7 +207,10 @@ export function RegressionPage() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="散点控制" subtitle="拖动散点或微调">
+          <LeftPanelSection
+            title="残差与扰动控制"
+            subtitle="支持拖拽散点 / 控制残差正方形与残差图"
+          >
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -144,8 +231,11 @@ export function RegressionPage() {
           >
             <PairedDataScene
               studyMode="regression"
-              points={points}
-              onPointsChange={setPoints}
+              selectedModel={selectedModel}
+              showResidualSquares={Boolean(params.showResidualSquares ?? 1)}
+              showResidualPlot={Boolean(params.showResidualPlot ?? 0)}
+              points={activePoints}
+              onPointsChange={handlePointsChange}
               freqA={85}
               freqB={15}
               freqC={40}
@@ -168,7 +258,7 @@ export function RegressionPage() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
-          title="一元线性回归分析看板"
+          title="成对数据与回归分析看板"
         />
       }
     />

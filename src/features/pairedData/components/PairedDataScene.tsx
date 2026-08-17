@@ -6,12 +6,17 @@ import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
   Point2D,
+  RegressionModelType,
   calculateLinearRegression,
   calculateIndependenceTest,
+  fitAllRegressionModels,
 } from "@/math/pairedData";
 
 interface PairedDataSceneProps {
   studyMode: "regression" | "independence";
+  selectedModel?: RegressionModelType;
+  showResidualSquares?: boolean;
+  showResidualPlot?: boolean;
   points: Point2D[];
   onPointsChange: (newPoints: Point2D[]) => void;
   freqA: number;
@@ -29,6 +34,9 @@ interface PairedDataSceneProps {
 
 export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
   studyMode,
+  selectedModel = "linear",
+  showResidualSquares = true,
+  showResidualPlot = false,
   points,
   onPointsChange,
   freqA,
@@ -48,10 +56,71 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
     return calculateLinearRegression(points);
   }, [points]);
 
-  // 2. 独立性检验计算
+  // 2. 全模型拟合优度计算
+  const modelFits = useMemo(() => {
+    return fitAllRegressionModels(points);
+  }, [points]);
+
+  const currentFit = useMemo(() => {
+    return modelFits.find((m) => m.type === selectedModel) ?? modelFits[0];
+  }, [modelFits, selectedModel]);
+
+  // 3. 独立性检验计算
   const indResult = useMemo(() => {
     return calculateIndependenceTest(freqA, freqB, freqC, freqD);
   }, [freqA, freqB, freqC, freqD]);
+
+  // 4. 生成平滑拟合曲线路径 (动态响应视口数学范围 scale.xMin ~ scale.xMax，顶层 Hook)
+  const curvePointsCount = 140;
+  const curvePath = useMemo(() => {
+    if (studyMode !== "regression" || !currentFit || !currentFit.isValid)
+      return "";
+    const pathSegs: string[] = [];
+    let isDrawing = false;
+
+    // 自适应安全采样区间
+    const startX =
+      selectedModel === "logarithmic" || selectedModel === "power"
+        ? Math.max(0.02, scale.xMin)
+        : scale.xMin;
+    const endX = scale.xMax;
+    const stepX = (endX - startX) / curvePointsCount;
+
+    for (let i = 0; i <= curvePointsCount; i++) {
+      const mx = startX + i * stepX;
+      if (selectedModel === "logarithmic" || selectedModel === "power") {
+        if (mx <= 0.01) {
+          isDrawing = false;
+          continue;
+        }
+      }
+      if (selectedModel === "inverse" && Math.abs(mx) < 0.05) {
+        isDrawing = false;
+        continue;
+      }
+
+      const my = currentFit.predict(mx);
+      // 过滤非数值及大幅超出视口上下界的无效点
+      if (
+        isNaN(my) ||
+        !isFinite(my) ||
+        my < scale.yMin - 15 ||
+        my > scale.yMax + 15
+      ) {
+        isDrawing = false;
+        continue;
+      }
+
+      const dPos = mathToDesign(mx, my, scale);
+      if (!isDrawing) {
+        pathSegs.push(`M ${dPos.x.toFixed(1)} ${dPos.y.toFixed(1)}`);
+        isDrawing = true;
+      } else {
+        pathSegs.push(`L ${dPos.x.toFixed(1)} ${dPos.y.toFixed(1)}`);
+      }
+    }
+    return pathSegs.join(" ");
+  }, [studyMode, currentFit, scale, selectedModel]);
 
   // 处理拖拽散点
   const handlePointDrag = (
@@ -73,16 +142,6 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
 
   // 如果是回归分析模式
   if (studyMode === "regression") {
-    // 回归直线上的两端点坐标
-    const xMin = -10;
-    const xMax = 40;
-    const lineStart = mathToDesign(
-      xMin,
-      regResult.b * xMin + regResult.a,
-      scale,
-    );
-    const lineEnd = mathToDesign(xMax, regResult.b * xMax + regResult.a, scale);
-
     // 样本中心点 (meanX, meanY) 的设计坐标
     const centerPos = mathToDesign(regResult.meanX, regResult.meanY, scale);
     const centerAxisX = mathToDesign(regResult.meanX, 0, scale);
@@ -98,10 +157,40 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           yStep={yStep}
         />
 
-        {/* 1. 绘制残差垂线 (散点 -> 回归直线上对应点) */}
-        {regResult.isValid &&
+        {/* 1. 绘制最小二乘几何“残差正方形面积” (Least Squares Residual Squares) */}
+        {showResidualSquares &&
+          currentFit?.isValid &&
           points.map((p) => {
-            const yHat = regResult.b * p.x + regResult.a;
+            const yHat = currentFit.predict(p.x);
+            const ptDesign = mathToDesign(p.x, p.y, scale);
+            const hatDesign = mathToDesign(p.x, yHat, scale);
+            const size = Math.abs(hatDesign.y - ptDesign.y);
+
+            // 正方形在设计像素层向右延伸，面积在像素上严格正比于残差平方
+            const sqX = ptDesign.x;
+            const sqY = Math.min(ptDesign.y, hatDesign.y);
+
+            return (
+              <g key={`sq-${p.id}`} opacity={0.65}>
+                <rect
+                  x={sqX}
+                  y={sqY}
+                  width={size}
+                  height={size}
+                  fill={withAlpha(MATH_COLORS.paramTertiary, 0.2)}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1.2}
+                  strokeDasharray="2 2"
+                  rx={2}
+                />
+              </g>
+            );
+          })}
+
+        {/* 2. 绘制残差垂线 (散点 -> 拟合曲线对应点) */}
+        {currentFit?.isValid &&
+          points.map((p) => {
+            const yHat = currentFit.predict(p.x);
             const ptDesign = mathToDesign(p.x, p.y, scale);
             const hatDesign = mathToDesign(p.x, yHat, scale);
             return (
@@ -113,26 +202,30 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
                   y2={hatDesign.y}
                   stroke={MATH_COLORS.tangentLine}
                   strokeDasharray="3 3"
-                  strokeWidth={1.5}
-                  opacity={0.7}
+                  strokeWidth={1.8}
+                  opacity={0.85}
+                />
+                <circle
+                  cx={hatDesign.x}
+                  cy={hatDesign.y}
+                  r={3}
+                  fill={MATH_COLORS.tangentLine}
                 />
               </g>
             );
           })}
 
-        {/* 2. 绘制回归直线 */}
-        {regResult.isValid && (
-          <line
-            x1={lineStart.x}
-            y1={lineStart.y}
-            x2={lineEnd.x}
-            y2={lineEnd.y}
+        {/* 3. 绘制拟合回归曲线/直线 */}
+        {currentFit?.isValid && curvePath && (
+          <path
+            d={curvePath}
             stroke={MATH_COLORS.function}
-            strokeWidth={2.5}
+            strokeWidth={3}
+            fill="none"
           />
         )}
 
-        {/* 3. 标记样本中心点 (meanX, meanY) */}
+        {/* 4. 标记样本中心点 (meanX, meanY) - 线性模型下必过重心 */}
         {regResult.isValid && (
           <g className="center-point-group">
             {/* 投影到 X 轴虚线 */}
@@ -141,7 +234,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
               y1={centerPos.y}
               x2={centerAxisX.x}
               y2={centerAxisX.y}
-              stroke={MATH_COLORS.paramPrimary}
+              stroke={MATH_COLORS.paramSecondary}
               strokeDasharray="4 4"
               strokeWidth={1.2}
             />
@@ -151,119 +244,304 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
               y1={centerPos.y}
               x2={centerAxisY.x}
               y2={centerAxisY.y}
-              stroke={MATH_COLORS.paramPrimary}
+              stroke={MATH_COLORS.paramSecondary}
               strokeDasharray="4 4"
               strokeWidth={1.2}
             />
-            {/* 样本中心点外圈脉冲亮环 */}
+            {/* 样本中心点脉冲光晕 */}
             <circle
               cx={centerPos.x}
               cy={centerPos.y}
-              r={9}
-              fill={withAlpha(MATH_COLORS.paramPrimary, 0.2)}
-              stroke={MATH_COLORS.paramPrimary}
+              r={10}
+              fill={withAlpha(MATH_COLORS.paramSecondary, 0.25)}
+              stroke={MATH_COLORS.paramSecondary}
               strokeWidth={1.5}
             />
             <circle
               cx={centerPos.x}
               cy={centerPos.y}
               r={4}
-              fill={MATH_COLORS.paramPrimary}
+              fill={MATH_COLORS.paramSecondary}
             />
-            {/* 中心点文本标签 */}
+            {/* 中心点文本标签 (向上偏移避让点) */}
+            <rect
+              x={centerPos.x + 8}
+              y={centerPos.y - 28}
+              width={140}
+              height={22}
+              rx={4}
+              fill={CANVAS_COLORS.white}
+              fillOpacity={0.9}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1}
+            />
             <text
-              x={centerPos.x + 12}
-              y={centerPos.y - 12}
-              fill={MATH_COLORS.paramPrimary}
-              fontSize={fontScale(13)}
+              x={centerPos.x + 14}
+              y={centerPos.y - 13}
+              fill={MATH_COLORS.paramSecondary}
+              fontSize={fontScale(11)}
               fontWeight="bold"
             >
-              样本中心点 ({regResult.meanX.toFixed(1)},{" "}
+              重心 (x̄={regResult.meanX.toFixed(1)}, ȳ=
               {regResult.meanY.toFixed(1)})
             </text>
           </g>
         )}
 
-        {/* 4. 可拖拽散点 */}
-        {points.map((p, idx) => (
-          <InteractivePoint
-            key={p.id}
-            cx={p.x}
-            cy={p.y}
-            scale={scale}
-            vp={vp}
-            color={MATH_COLORS.paramSecondary}
-            r={7}
-            label={`P${idx + 1}(${p.x}, ${p.y})`}
-            fontScale={fontScale}
-            onDrag={(newPos) => handlePointDrag(p.id, newPos)}
-          />
-        ))}
+        {/* 5. 可拖拽散点 (带有独立半透明背景标签，防止与网格重叠) */}
+        {points.map((p, idx) => {
+          const ptD = mathToDesign(p.x, p.y, scale);
+          return (
+            <g key={p.id}>
+              <InteractivePoint
+                cx={p.x}
+                cy={p.y}
+                scale={scale}
+                vp={vp}
+                color={MATH_COLORS.paramPrimary}
+                r={7}
+                fontScale={fontScale}
+                onDrag={(newPos) => handlePointDrag(p.id, newPos)}
+              />
+              <rect
+                x={ptD.x + 8}
+                y={ptD.y + 4}
+                width={70}
+                height={18}
+                rx={3}
+                fill={CANVAS_COLORS.white}
+                fillOpacity={0.85}
+                stroke={CANVAS_COLORS.axis}
+                strokeWidth={0.8}
+              />
+              <text
+                x={ptD.x + 12}
+                y={ptD.y + 17}
+                fill={CANVAS_COLORS.labelText}
+                fontSize={fontScale(10)}
+                fontWeight="500"
+              >
+                P{idx + 1}({p.x.toFixed(1)}, {p.y.toFixed(1)})
+              </text>
+            </g>
+          );
+        })}
 
-        {/* 回归方程图例与提示 */}
-        <g transform="translate(40, 40)">
+        {/* 6. 浮动图例看板 (置于左下角安全区域，避开顶部公式与密集数据) */}
+        <g transform="translate(30, 520)">
           <rect
             x={0}
             y={0}
-            width={260}
-            height={56}
-            rx={6}
+            width={280}
+            height={showResidualSquares ? 84 : 62}
+            rx={8}
             fill={CANVAS_COLORS.white}
-            fillOpacity={0.9}
+            fillOpacity={0.94}
             stroke={CANVAS_COLORS.axis}
             strokeWidth={1}
+            filter="drop-shadow(0 2px 4px rgba(0,0,0,0.05))"
           />
           <line
-            x1={15}
-            y1={20}
-            x2={45}
-            y2={20}
+            x1={14}
+            y1={18}
+            x2={40}
+            y2={18}
             stroke={MATH_COLORS.function}
             strokeWidth={2.5}
           />
           <text
-            x={55}
-            y={24}
+            x={48}
+            y={22}
             fill={MATH_COLORS.function}
-            fontSize={fontScale(12)}
+            fontSize={fontScale(11)}
             fontWeight="bold"
           >
-            回归: ŷ={regResult.b.toFixed(2)}x{regResult.a >= 0 ? "+" : ""}
-            {regResult.a.toFixed(2)}
+            {currentFit?.name ?? "拟合曲线"}: R²=
+            {(currentFit?.rSquare ?? 0).toFixed(4)}
           </text>
           <line
-            x1={15}
+            x1={14}
             y1={38}
-            x2={45}
+            x2={40}
             y2={38}
             stroke={MATH_COLORS.tangentLine}
             strokeDasharray="3 3"
             strokeWidth={1.5}
           />
           <text
-            x={55}
+            x={48}
             y={42}
             fill={MATH_COLORS.tangentLine}
-            fontSize={fontScale(11)}
+            fontSize={fontScale(10)}
           >
-            残差垂线 (可拖拽散点观察变化)
+            残差 e_i = y_i - ŷ_i (SSE={(currentFit?.sse ?? 0).toFixed(2)})
           </text>
+          {showResidualSquares && (
+            <>
+              <rect
+                x={16}
+                y={54}
+                width={14}
+                height={14}
+                fill={withAlpha(MATH_COLORS.paramTertiary, 0.25)}
+                stroke={MATH_COLORS.paramTertiary}
+                strokeWidth={1}
+                strokeDasharray="2 2"
+                rx={2}
+              />
+              <text
+                x={48}
+                y={66}
+                fill={MATH_COLORS.paramTertiary}
+                fontSize={fontScale(10)}
+                fontWeight="bold"
+              >
+                残差正方形面积和 = SSE (最小二乘)
+              </text>
+            </>
+          )}
         </g>
 
-        {/* 轴名称标注 */}
+        {/* 7. 下方残差分析分布图 (Residual Plot Overlay - 置于右下角独立区域) */}
+        {showResidualPlot &&
+          currentFit?.isValid &&
+          (() => {
+            const xVals = points.map((p) => p.x);
+            const minX = Math.min(...xVals);
+            const maxX = Math.max(...xVals);
+            const xSpan = maxX - minX > 1e-4 ? maxX - minX : 1;
+
+            const residualsWithX = points.map((p) => ({
+              x: p.x,
+              e: p.y - currentFit.predict(p.x),
+              id: p.id,
+            }));
+            const maxAbsE = Math.max(
+              0.6,
+              ...residualsWithX.map((r) => Math.abs(r.e)),
+            );
+            const eScaleY = 36 / maxAbsE;
+
+            return (
+              <g transform="translate(480, 455)">
+                <rect
+                  x={0}
+                  y={0}
+                  width={330}
+                  height={155}
+                  rx={8}
+                  fill={CANVAS_COLORS.white}
+                  fillOpacity={0.96}
+                  stroke={CANVAS_COLORS.axis}
+                  strokeWidth={1}
+                  filter="drop-shadow(0 2px 6px rgba(0,0,0,0.06))"
+                />
+                <text
+                  x={12}
+                  y={18}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  fill={CANVAS_COLORS.labelText}
+                >
+                  【残差分布图 (x_i, e_i)】∑e_i ≈ 0
+                </text>
+                {/* e = 0 零残差基准线 */}
+                <line
+                  x1={20}
+                  y1={75}
+                  x2={305}
+                  y2={75}
+                  stroke={CANVAS_COLORS.axis}
+                  strokeWidth={1.2}
+                />
+                <text
+                  x={308}
+                  y={78}
+                  fontSize={fontScale(9)}
+                  fill={CANVAS_COLORS.labelTextLight}
+                >
+                  e=0
+                </text>
+                {/* 上下对称残差带状参考线 */}
+                <line
+                  x1={20}
+                  y1={75 - maxAbsE * 0.7 * eScaleY}
+                  x2={305}
+                  y2={75 - maxAbsE * 0.7 * eScaleY}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeDasharray="3 3"
+                  strokeWidth={1}
+                  opacity={0.6}
+                />
+                <text
+                  x={308}
+                  y={75 - maxAbsE * 0.7 * eScaleY + 3}
+                  fontSize={fontScale(8)}
+                  fill={MATH_COLORS.paramTertiary}
+                >
+                  +{(maxAbsE * 0.7).toFixed(1)}
+                </text>
+                <line
+                  x1={20}
+                  y1={75 + maxAbsE * 0.7 * eScaleY}
+                  x2={305}
+                  y2={75 + maxAbsE * 0.7 * eScaleY}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeDasharray="3 3"
+                  strokeWidth={1}
+                  opacity={0.6}
+                />
+                <text
+                  x={308}
+                  y={75 + maxAbsE * 0.7 * eScaleY + 3}
+                  fontSize={fontScale(8)}
+                  fill={MATH_COLORS.paramTertiary}
+                >
+                  -{(maxAbsE * 0.7).toFixed(1)}
+                </text>
+                {/* 残差点分布 */}
+                {residualsWithX.map((r) => {
+                  const px = 30 + ((r.x - minX) / xSpan) * 260;
+                  const py = 75 - r.e * eScaleY;
+                  const clampedPy = Math.max(25, Math.min(135, py));
+                  return (
+                    <g key={`res-plot-${r.id}`}>
+                      <line
+                        x1={px}
+                        y1={75}
+                        x2={px}
+                        y2={clampedPy}
+                        stroke={MATH_COLORS.tangentLine}
+                        strokeDasharray="2 2"
+                        strokeWidth={1}
+                      />
+                      <circle
+                        cx={px}
+                        cy={clampedPy}
+                        r={3.5}
+                        fill={MATH_COLORS.paramPrimary}
+                      />
+                    </g>
+                  );
+                })}
+              </g>
+            );
+          })()}
+
+        {/* 轴名称标注 (避让坐标系边缘) */}
         <text
-          x={780}
-          y={630}
-          fontSize={fontScale(12)}
+          x={760}
+          y={635}
+          fontSize={fontScale(11)}
           fill={CANVAS_COLORS.labelText}
           fontWeight="bold"
         >
           {presetXName}
         </text>
         <text
-          x={30}
-          y={30}
-          fontSize={fontScale(12)}
+          x={25}
+          y={40}
+          fontSize={fontScale(11)}
           fill={CANVAS_COLORS.labelText}
           fontWeight="bold"
         >

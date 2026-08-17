@@ -2,6 +2,7 @@ import type { MathPanelData } from "../types";
 import {
   calculateLinearRegression,
   calculateIndependenceTest,
+  fitAllRegressionModels,
   REGRESSION_PRESETS,
   INDEPENDENCE_PRESETS,
   Point2D,
@@ -24,6 +25,10 @@ export function buildPairedDataPanel(
     const points = customPoints ?? preset.points;
 
     const res = calculateLinearRegression(points);
+    const modelFits = fitAllRegressionModels(points);
+    const selectedModel = (config?.selectedModel as string) ?? "linear";
+    const currentModelFit =
+      modelFits.find((m) => m.type === selectedModel) ?? modelFits[0];
 
     return {
       quantities: [
@@ -33,14 +38,25 @@ export function buildPairedDataPanel(
           color: MATH_COLORS.paramPrimary,
         },
         {
-          label: "样本均值 (x̄, ȳ)",
+          label: "样本中心 (x̄, ȳ)",
           value: `(${res.meanX.toFixed(2)}, ${res.meanY.toFixed(2)})`,
-          color: MATH_COLORS.paramPrimary,
+          color: MATH_COLORS.paramSecondary,
+        },
+        {
+          label: "离均差乘积和 L_xy",
+          value: `${res.lxy.toFixed(2)}`,
+          color:
+            res.lxy >= 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramTertiary,
+        },
+        {
+          label: "x离差平方和 L_xx",
+          value: `${res.lxx.toFixed(2)}`,
+          color: MATH_COLORS.paramSecondary,
         },
         {
           label: "回归斜率 b̂",
           value: `${res.b.toFixed(4)}`,
-          color: MATH_COLORS.function,
+          color: MATH_COLORS.paramPrimary,
         },
         {
           label: "回归截距 â",
@@ -55,46 +71,54 @@ export function buildPairedDataPanel(
         },
         {
           label: "决定系数 R²",
-          value: `${res.rSquare.toFixed(4)}`,
+          value: `${(currentModelFit?.rSquare ?? res.rSquare).toFixed(4)}`,
           color: MATH_COLORS.paramSecondary,
         },
         {
           label: "残差平方和 SSE",
-          value: `${res.sse.toFixed(2)}`,
+          value: `${(currentModelFit?.sse ?? res.sse).toFixed(2)}`,
           color: MATH_COLORS.tangentLine,
         },
       ],
       theorems: [
         {
-          name: "一元线性回归模型方程",
-          latex: `\\hat{y} = \\hat{b}x + \\hat{a} \\quad \\text{其中 } \\hat{b} = \\frac{\\sum_{i=1}^{n}(x_i-\\bar{x})(y_i-\\bar{y})}{\\sum_{i=1}^{n}(x_i-\\bar{x})^2}, \\; \\hat{a} = \\bar{y} - \\hat{b}\\bar{x}`,
-          note: "回归直线必过样本中心点 (x̄, ȳ)。",
+          name: "一元线性回归方程与最小二乘法",
+          latex: `\\hat{y} = \\color{#EF4444}{\\hat{b}}x + \\color{#D97706}{\\hat{a}} \\quad \\left( \\hat{b} = \\frac{\\sum_{i=1}^{n}(x_i-\\bar{x})(y_i-\\bar{y})}{\\sum_{i=1}^{n}(x_i-\\bar{x})^2} = \\frac{L_{xy}}{L_{xx}}, \\; \\hat{a} = \\bar{y} - \\hat{b}\\bar{x} \\right)`,
+          note: "回归直线必过样本中心点 (x̄, ȳ)；最小二乘法使残差平方和 SSE = ∑(y_i - ŷ_i)² 达到全局最小。",
           level: "core",
         },
         {
-          name: "样本相关系数 r 公式",
-          latex: `r = \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum (x_i-\\bar{x})^2 \\sum (y_i-\\bar{y})^2}}`,
-          note: "|r| 越接近 1，相关性越强；r > 0 正相关，r < 0 负相关。",
+          name: "相关系数 r 与决定系数 R² 的统计意义",
+          latex: `r = \\frac{L_{xy}}{\\sqrt{L_{xx} L_{yy}}}, \\quad R^2 = 1 - \\frac{\\text{SSE}}{\\text{SST}} = 1 - \\frac{\\sum (y_i - \\hat{y}_i)^2}{\\sum (y_i - \\bar{y})^2}`,
+          note: "r 与 b̂ 同号；|r| 越近 1 线性相关性越强；R² 越近 1 说明模型对 y 变异的解释比例越高、拟合优度越好。",
           level: "important",
         },
         {
-          name: "决定系数 R² 的统计意义",
-          latex: `R^2 = 1 - \\frac{\\sum (y_i - \\hat{y}_i)^2}{\\sum (y_i - \\bar{y})^2} = 1 - \\frac{\\text{SSE}}{\\text{SST}}`,
-          note: "R² 越接近 1，说明回归方程对样本数据的拟合效果越好。",
+          name: "新高考非线性回归线性化转换",
+          latex: currentModelFit
+            ? `${currentModelFit.variableSubstitution} \\implies ${currentModelFit.transformedFormula}`
+            : `y = c e^{kx} \\xrightarrow{z=\\ln y} z = kx + \\ln c`,
+          note: currentModelFit?.isBest
+            ? "【当前模型为最优拟合】在候选模型中决定系数 R² 最大、残差平方和最小。"
+            : "通过变量代换将非线性关系转化为线性方程求解，最后代回原变量。",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "【高考考点】回归直线必过样本中心点 (x̄, ȳ)。已知 x̄, ȳ 与 b̂，必有 â = ȳ - b̂ x̄。",
+          text: "【高考考点1】必过样本中心点：已知 x̄, ȳ 与 b̂，必有 â = ȳ - b̂ x̄（小题高频秒杀考点）。",
           importance: "gaokao",
         },
         {
-          text: "【高考考点】样本相关系数 r 取值范围 [-1, 1]。|r| > 0.75 通常认为线性相关性很强。",
+          text: "【高考考点2】相关系数同号性：r 与斜率 b̂ 的符号由 L_xy 唯一决定，正相关时 r>0, b̂>0；负相关时 r<0, b̂<0。",
           importance: "gaokao",
         },
         {
-          text: "【高考考点】残差 e_i = y_i - ŷ_i。残差图中带状区域越窄，说明线性拟合精度越高。",
+          text: "【高考考点3】残差分析法：残差 e_i = y_i - ŷ_i，且 ∑e_i = 0。残差点在 e=0 上下带状区域越窄，说明线性拟合越精确。",
+          importance: "gaokao",
+        },
+        {
+          text: "【高考考点4】模型选择策略：在高考大题中比较多种经验模型时，选择决定系数 R² 较大（或残差平方和 SSE 较小）的模型。",
           importance: "gaokao",
         },
       ],
@@ -102,7 +126,7 @@ export function buildPairedDataPanel(
         ? Math.abs(res.r) < 0.3
           ? [
               {
-                text: "【相关性较弱】|r| < 0.3 说明线性相关程度低，直接用线性回归模型可能预测偏差较大。",
+                text: "【相关性较弱】|r| < 0.3 说明线性相关程度低，直接使用线性模型预测误差较大，建议尝试非线性模型转换。",
                 level: "warning",
               },
             ]

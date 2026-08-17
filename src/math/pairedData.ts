@@ -10,11 +10,16 @@ export interface Point2D {
 
 export interface LinearRegressionResult {
   n: number;
+  sumX: number;
+  sumY: number;
+  sumXX: number;
+  sumYY: number;
+  sumXY: number;
   meanX: number;
   meanY: number;
-  lxx: number;
-  lyy: number;
-  lxy: number;
+  lxx: number; // \sum (x_i - \bar{x})^2
+  lyy: number; // \sum (y_i - \bar{y})^2
+  lxy: number; // \sum (x_i - \bar{x})(y_i - \bar{y})
   b: number; // 斜率 b_hat
   a: number; // 截距 a_hat
   r: number; // 样本相关系数 r
@@ -24,6 +29,23 @@ export interface LinearRegressionResult {
   sst: number; // 总偏差平方和 SST
   isValid: boolean;
   message?: string;
+}
+
+export type RegressionModelType =
+  "linear" | "exponential" | "power" | "logarithmic" | "inverse";
+
+export interface ModelFitComparison {
+  type: RegressionModelType;
+  name: string;
+  variableSubstitution: string;
+  transformedFormula: string;
+  originalFormula: string;
+  rSquare: number;
+  sse: number;
+  isBest: boolean;
+  isValid: boolean;
+  predict: (x: number) => number;
+  params: Record<string, number>;
 }
 
 export interface IndependenceTestResult {
@@ -43,7 +65,7 @@ export interface IndependenceTestResult {
 }
 
 /**
- * 求解一元线性回归模型
+ * 求解一元线性回归模型及高考常用统计中间量
  */
 export function calculateLinearRegression(
   points: Point2D[],
@@ -52,6 +74,11 @@ export function calculateLinearRegression(
   if (n < 2) {
     return {
       n,
+      sumX: 0,
+      sumY: 0,
+      sumXX: 0,
+      sumYY: 0,
+      sumXY: 0,
       meanX: 0,
       meanY: 0,
       lxx: 0,
@@ -71,9 +98,18 @@ export function calculateLinearRegression(
 
   let sumX = 0;
   let sumY = 0;
+  let sumXX = 0;
+  let sumYY = 0;
+  let sumXY = 0;
+
   for (let i = 0; i < n; i++) {
-    sumX += points[i].x;
-    sumY += points[i].y;
+    const x = points[i].x;
+    const y = points[i].y;
+    sumX += x;
+    sumY += y;
+    sumXX += x * x;
+    sumYY += y * y;
+    sumXY += x * y;
   }
   const meanX = sumX / n;
   const meanY = sumY / n;
@@ -93,6 +129,11 @@ export function calculateLinearRegression(
   if (Math.abs(lxx) < 1e-9) {
     return {
       n,
+      sumX,
+      sumY,
+      sumXX,
+      sumYY,
+      sumXY,
       meanX,
       meanY,
       lxx: 0,
@@ -106,7 +147,7 @@ export function calculateLinearRegression(
       sse: lyy,
       sst: lyy,
       isValid: false,
-      message: "样本点x取值全部相同，无法拟合斜率",
+      message: "样本点 x 取值全部相同，无法拟合斜率",
     };
   }
 
@@ -132,11 +173,16 @@ export function calculateLinearRegression(
 
   let rSquare = 0;
   if (lyy > 1e-9) {
-    rSquare = Math.max(0, 1 - sse / lyy);
+    rSquare = Math.max(0, Math.min(1, 1 - sse / lyy));
   }
 
   return {
     n,
+    sumX,
+    sumY,
+    sumXX,
+    sumYY,
+    sumXY,
     meanX,
     meanY,
     lxx,
@@ -151,6 +197,234 @@ export function calculateLinearRegression(
     sst: lyy,
     isValid: true,
   };
+}
+
+/**
+ * 求解非线性回归模型的线性化拟合与全模型优度比较
+ */
+export function fitAllRegressionModels(
+  points: Point2D[],
+): ModelFitComparison[] {
+  const n = points.length;
+  if (n < 2) return [];
+
+  // 计算原空间 SST
+  let sumY = 0;
+  for (let i = 0; i < n; i++) sumY += points[i].y;
+  const meanY = sumY / n;
+  let sstOriginal = 0;
+  for (let i = 0; i < n; i++) {
+    const dy = points[i].y - meanY;
+    sstOriginal += dy * dy;
+  }
+
+  const results: ModelFitComparison[] = [];
+
+  // 1. 线性模型 y = bx + a
+  const linearRes = calculateLinearRegression(points);
+  if (linearRes.isValid) {
+    const bStr = linearRes.b.toFixed(3);
+    const aSign = linearRes.a >= 0 ? "+" : "-";
+    const aAbs = Math.abs(linearRes.a).toFixed(3);
+    results.push({
+      type: "linear",
+      name: "一元线性模型",
+      variableSubstitution: "直接拟合 y = bx + a",
+      transformedFormula: `\\hat{y} = ${bStr}x ${aSign} ${aAbs}`,
+      originalFormula: `\\hat{y} = ${bStr}x ${aSign} ${aAbs}`,
+      rSquare: linearRes.rSquare,
+      sse: linearRes.sse,
+      isBest: false,
+      isValid: true,
+      predict: (x: number) => linearRes.b * x + linearRes.a,
+      params: { b: linearRes.b, a: linearRes.a },
+    });
+  }
+
+  // 2. 指数模型 y = c * e^(kx) => ln y = kx + ln c, 令 z = ln y, z = kx + a0
+  const allYPositive = points.every((p) => p.y > 0.001);
+  if (allYPositive) {
+    const expPoints = points.map((p) => ({
+      id: p.id,
+      x: p.x,
+      y: Math.log(p.y),
+    }));
+    const expLin = calculateLinearRegression(expPoints);
+    if (expLin.isValid) {
+      const k = expLin.b;
+      const c = Math.exp(expLin.a);
+      const predictFn = (x: number) => c * Math.exp(k * x);
+
+      let sse = 0;
+      for (let i = 0; i < n; i++) {
+        const err = points[i].y - predictFn(points[i].x);
+        sse += err * err;
+      }
+      const rSquare =
+        sstOriginal > 1e-9
+          ? Math.max(0, Math.min(1, 1 - sse / sstOriginal))
+          : 0;
+      const kStr = k.toFixed(3);
+      const cStr = c.toFixed(3);
+
+      results.push({
+        type: "exponential",
+        name: "指数模型",
+        variableSubstitution: "令 z = \\ln y \\implies z = kx + \\ln c",
+        transformedFormula: `\\hat{z} = ${kStr}x + ${Math.log(c).toFixed(3)}`,
+        originalFormula: `\\hat{y} = ${cStr} \\cdot e^{${kStr}x}`,
+        rSquare,
+        sse,
+        isBest: false,
+        isValid: true,
+        predict: predictFn,
+        params: { k, c },
+      });
+    }
+  }
+
+  // 3. 对数模型 y = a + b * ln x => 令 u = ln x, y = bu + a
+  const allXPositive = points.every((p) => p.x > 0.001);
+  if (allXPositive) {
+    const logPoints = points.map((p) => ({
+      id: p.id,
+      x: Math.log(p.x),
+      y: p.y,
+    }));
+    const logLin = calculateLinearRegression(logPoints);
+    if (logLin.isValid) {
+      const b = logLin.b;
+      const a = logLin.a;
+      const predictFn = (x: number) => (x > 0 ? a + b * Math.log(x) : 0);
+
+      let sse = 0;
+      for (let i = 0; i < n; i++) {
+        const err = points[i].y - predictFn(points[i].x);
+        sse += err * err;
+      }
+      const rSquare =
+        sstOriginal > 1e-9
+          ? Math.max(0, Math.min(1, 1 - sse / sstOriginal))
+          : 0;
+      const bStr = b.toFixed(3);
+      const aSign = a >= 0 ? "+" : "-";
+      const aAbs = Math.abs(a).toFixed(3);
+
+      results.push({
+        type: "logarithmic",
+        name: "对数模型",
+        variableSubstitution: "令 u = \\ln x \\implies y = bu + a",
+        transformedFormula: `\\hat{y} = ${bStr}u ${aSign} ${aAbs}`,
+        originalFormula: `\\hat{y} = ${bStr}\\ln x ${aSign} ${aAbs}`,
+        rSquare,
+        sse,
+        isBest: false,
+        isValid: true,
+        predict: predictFn,
+        params: { b, a },
+      });
+    }
+  }
+
+  // 4. 幂函数模型 y = c * x^k => ln y = k * ln x + ln c => 令 z = ln y, u = ln x => z = ku + a0
+  if (allXPositive && allYPositive) {
+    const powerPoints = points.map((p) => ({
+      id: p.id,
+      x: Math.log(p.x),
+      y: Math.log(p.y),
+    }));
+    const powLin = calculateLinearRegression(powerPoints);
+    if (powLin.isValid) {
+      const k = powLin.b;
+      const c = Math.exp(powLin.a);
+      const predictFn = (x: number) => (x > 0 ? c * Math.pow(x, k) : 0);
+
+      let sse = 0;
+      for (let i = 0; i < n; i++) {
+        const err = points[i].y - predictFn(points[i].x);
+        sse += err * err;
+      }
+      const rSquare =
+        sstOriginal > 1e-9
+          ? Math.max(0, Math.min(1, 1 - sse / sstOriginal))
+          : 0;
+      const kStr = k.toFixed(3);
+      const cStr = c.toFixed(3);
+
+      results.push({
+        type: "power",
+        name: "幂函数模型",
+        variableSubstitution:
+          "令 z = \\ln y, u = \\ln x \\implies z = ku + \\ln c",
+        transformedFormula: `\\hat{z} = ${kStr}u + ${Math.log(c).toFixed(3)}`,
+        originalFormula: `\\hat{y} = ${cStr} \\cdot x^{${kStr}}`,
+        rSquare,
+        sse,
+        isBest: false,
+        isValid: true,
+        predict: predictFn,
+        params: { k, c },
+      });
+    }
+  }
+
+  // 5. 双曲线/逆函数模型 y = a + b / x => 令 u = 1/x => y = bu + a
+  const allXNonZero = points.every((p) => Math.abs(p.x) > 0.001);
+  if (allXNonZero) {
+    const invPoints = points.map((p) => ({
+      id: p.id,
+      x: 1 / p.x,
+      y: p.y,
+    }));
+    const invLin = calculateLinearRegression(invPoints);
+    if (invLin.isValid) {
+      const b = invLin.b;
+      const a = invLin.a;
+      const predictFn = (x: number) => (Math.abs(x) > 1e-5 ? a + b / x : 0);
+
+      let sse = 0;
+      for (let i = 0; i < n; i++) {
+        const err = points[i].y - predictFn(points[i].x);
+        sse += err * err;
+      }
+      const rSquare =
+        sstOriginal > 1e-9
+          ? Math.max(0, Math.min(1, 1 - sse / sstOriginal))
+          : 0;
+      const bStr = b.toFixed(3);
+      const aSign = a >= 0 ? "+" : "-";
+      const aAbs = Math.abs(a).toFixed(3);
+
+      results.push({
+        type: "inverse",
+        name: "双曲线逆函数模型",
+        variableSubstitution: "令 u = \\frac{1}{x} \\implies y = bu + a",
+        transformedFormula: `\\hat{y} = ${bStr}u ${aSign} ${aAbs}`,
+        originalFormula: `\\hat{y} = \\frac{${bStr}}{x} ${aSign} ${aAbs}`,
+        rSquare,
+        sse,
+        isBest: false,
+        isValid: true,
+        predict: predictFn,
+        params: { b, a },
+      });
+    }
+  }
+
+  // 标出最优模型 (R^2 最高)
+  if (results.length > 0) {
+    let bestIdx = 0;
+    let maxR2 = -1;
+    for (let i = 0; i < results.length; i++) {
+      if (results[i].rSquare > maxR2) {
+        maxR2 = results[i].rSquare;
+        bestIdx = i;
+      }
+    }
+    results[bestIdx].isBest = true;
+  }
+
+  return results;
 }
 
 /**
@@ -226,12 +500,12 @@ export function calculateIndependenceTest(
 }
 
 /**
- * 高考典型预设数据集
+ * 高考典型预设数据集（覆盖高考题型情境）
  */
 export const REGRESSION_PRESETS = [
   {
     id: "ad_sales",
-    name: "广告支出与销售额 (高考经典正相关)",
+    name: "广告支出与销售额 (高考经典线性正相关)",
     points: [
       { id: "p1", x: 2, y: 3 },
       { id: "p2", x: 4, y: 5 },
@@ -239,14 +513,15 @@ export const REGRESSION_PRESETS = [
       { id: "p4", x: 6, y: 7.5 },
       { id: "p5", x: 8, y: 9.5 },
     ],
-    xName: "广告支出 (万元)",
-    yName: "销售额 (万元)",
+    xName: "广告支出 x (万元)",
+    yName: "销售额 y (万元)",
     xRange: [0, 10] as [number, number],
     yRange: [0, 12] as [number, number],
+    recommendedModel: "linear" as RegressionModelType,
   },
   {
     id: "temp_power",
-    name: "气温与用电量 (高考负相关)",
+    name: "气温与用电量 (高考线性负相关)",
     points: [
       { id: "p1", x: 10, y: 22 },
       { id: "p2", x: 15, y: 18 },
@@ -254,40 +529,59 @@ export const REGRESSION_PRESETS = [
       { id: "p4", x: 25, y: 12 },
       { id: "p5", x: 30, y: 9 },
     ],
-    xName: "气温 (°C)",
-    yName: "用电量 (度)",
+    xName: "气温 x (°C)",
+    yName: "用电量 y (度)",
     xRange: [5, 35] as [number, number],
     yRange: [5, 25] as [number, number],
+    recommendedModel: "linear" as RegressionModelType,
   },
   {
-    id: "height_weight",
-    name: "身高与体重 (强线性)",
+    id: "ev_growth",
+    name: "新能源汽车销量增长 (高考指数模型)",
     points: [
-      { id: "p1", x: -4, y: -3.2 },
-      { id: "p2", x: -2, y: -1.5 },
-      { id: "p3", x: 0, y: 0.2 },
-      { id: "p4", x: 2, y: 1.8 },
-      { id: "p5", x: 4, y: 3.5 },
+      { id: "p1", x: 1, y: 2.1 },
+      { id: "p2", x: 2, y: 3.4 },
+      { id: "p3", x: 3, y: 5.8 },
+      { id: "p4", x: 4, y: 9.6 },
+      { id: "p5", x: 5, y: 16.2 },
     ],
-    xName: "x (离均值)",
-    yName: "y (离均值)",
-    xRange: [-6, 6] as [number, number],
-    yRange: [-5, 5] as [number, number],
+    xName: "年份序号 t",
+    yName: "保有量 y (万辆)",
+    xRange: [0, 6] as [number, number],
+    yRange: [0, 20] as [number, number],
+    recommendedModel: "exponential" as RegressionModelType,
+  },
+  {
+    id: "chip_rnd",
+    name: "研发投入与技术产出 (高考对数饱和模型)",
+    points: [
+      { id: "p1", x: 1, y: 1.2 },
+      { id: "p2", x: 2, y: 3.1 },
+      { id: "p3", x: 4, y: 4.8 },
+      { id: "p4", x: 6, y: 5.7 },
+      { id: "p5", x: 8, y: 6.3 },
+    ],
+    xName: "研发投入 x (亿元)",
+    yName: "产出指数 y",
+    xRange: [0, 10] as [number, number],
+    yRange: [0, 8] as [number, number],
+    recommendedModel: "logarithmic" as RegressionModelType,
   },
   {
     id: "outlier",
-    name: "含异常值的散点分布",
+    name: "含异常干扰点的数据集 (离群点杠杆效应)",
     points: [
-      { id: "p1", x: -4, y: -3 },
-      { id: "p2", x: -2, y: -1.5 },
-      { id: "p3", x: 0, y: 0.5 },
-      { id: "p4", x: 2, y: 2 },
-      { id: "p5", x: 4, y: -3.5 }, // 异常点
+      { id: "p1", x: 1, y: 2 },
+      { id: "p2", x: 2, y: 3.5 },
+      { id: "p3", x: 3, y: 5 },
+      { id: "p4", x: 4, y: 6.5 },
+      { id: "p5", x: 6, y: 1.5 }, // 异常干扰点
     ],
-    xName: "x",
-    yName: "y",
-    xRange: [-6, 6] as [number, number],
-    yRange: [-5, 5] as [number, number],
+    xName: "自变量 x",
+    yName: "因变量 y",
+    xRange: [0, 8] as [number, number],
+    yRange: [0, 10] as [number, number],
+    recommendedModel: "linear" as RegressionModelType,
   },
 ];
 

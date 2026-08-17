@@ -93,6 +93,8 @@ export function buildMathQuantities(
       return buildStatPercentilePanel(params, config);
 
     case "anim-paired-data":
+    case "anim-paired-data-regression":
+    case "anim-paired-data-independence":
       return buildPairedDataPanel(params, config);
     case "anim-probability-normal":
       return buildProbabilityNormalPanel(params, config);

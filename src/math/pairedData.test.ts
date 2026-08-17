@@ -2,10 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   calculateLinearRegression,
   calculateIndependenceTest,
+  fitAllRegressionModels,
 } from "./pairedData";
 
 describe("成对数据纯数学计算库单元测试", () => {
-  it("应当正确求解线性回归方程与相关系数", () => {
+  it("应当正确求解线性回归方程、中间统计量与相关系数", () => {
     const points = [
       { id: "p1", x: 2, y: 3 },
       { id: "p2", x: 4, y: 5 },
@@ -21,6 +22,12 @@ describe("成对数据纯数学计算库单元测试", () => {
     expect(result.meanX).toBe(5);
     expect(result.meanY).toBe(6.3);
 
+    // 验证高考大题关键中间量
+    expect(result.sumX).toBe(25);
+    expect(result.sumY).toBe(31.5);
+    expect(result.sumXX).toBe(145);
+    expect(result.lxx).toBe(20);
+
     // 验证斜率与截距
     expect(result.b).toBeCloseTo(1.1, 4);
     expect(result.a).toBeCloseTo(0.8, 4);
@@ -31,6 +38,26 @@ describe("成对数据纯数学计算库单元测试", () => {
     // 验证回归直线必定经过样本中心点 (meanX, meanY)
     const yHatAtMeanX = result.b * result.meanX + result.a;
     expect(yHatAtMeanX).toBeCloseTo(result.meanY, 5);
+  });
+
+  it("应当正确拟合非线性回归模型并选出最优模型", () => {
+    // 构造指数增长数据: y ≈ 2 * e^(0.5x)
+    const expPoints = [
+      { id: "p1", x: 1, y: 3.3 },
+      { id: "p2", x: 2, y: 5.4 },
+      { id: "p3", x: 3, y: 9.0 },
+      { id: "p4", x: 4, y: 14.8 },
+      { id: "p5", x: 5, y: 24.4 },
+    ];
+
+    const fits = fitAllRegressionModels(expPoints);
+    expect(fits.length).toBeGreaterThan(0);
+
+    const expFit = fits.find((f) => f.type === "exponential");
+    expect(expFit).toBeDefined();
+    expect(expFit?.isValid).toBe(true);
+    expect(expFit?.rSquare).toBeGreaterThan(0.99);
+    expect(expFit?.isBest).toBe(true);
   });
 
   it("应当正确处理退化线性回归数据（点在同一垂直线上）", () => {
@@ -45,20 +72,11 @@ describe("成对数据纯数学计算库单元测试", () => {
   });
 
   it("应当正确计算 2x2 列联表的卡方统计量与显著性判断", () => {
-    // 高考例题：a=85, b=15, c=40, d=60
-    // n = 200, ad - bc = 85*60 - 15*40 = 5100 - 600 = 4500
     const res = calculateIndependenceTest(85, 15, 40, 60);
 
     expect(res.isValid).toBe(true);
     expect(res.n).toBe(200);
-
-    // 卡方值求解
-    // num = 200 * (4500)^2 = 200 * 20250000 = 4,050,000,000
-    // den = (100) * (100) * (125) * (75) = 93,750,000
-    // chi2 = 4050000000 / 93750000 = 43.2
     expect(res.chiSquare).toBeCloseTo(43.2, 1);
-
-    // 43.2 > 10.828，应达到 99.9% 把握
     expect(res.p999).toBe(true);
     expect(res.confidenceText).toContain("99.9% 以上的把握");
   });

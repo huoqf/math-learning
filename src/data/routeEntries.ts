@@ -97,6 +97,12 @@ import {
   node as conicHomogenizationNode,
   loader as conicHomogenizationLoader,
 } from "@/features/conicHomogenization/meta";
+import {
+  regressionNode,
+  independenceNode,
+  regressionLoader,
+  independenceLoader,
+} from "@/features/pairedData/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
@@ -551,34 +557,6 @@ const legacyEntries: RouteEntry[] = [
   },
   {
     node: {
-      id: "know-probability-regression",
-      title: "一元线性回归分析",
-      labTitle: "一元线性回归分析",
-      chapter: "概率与统计",
-      module: "统计分析",
-      importance: "gaokao",
-      animationIds: ["anim-paired-data"],
-      prerequisites: [],
-      route: "/paired-data-regression",
-    },
-    loader: () => import("@/features/pairedData/RegressionPage"),
-  },
-  {
-    node: {
-      id: "know-paired-independence",
-      title: "2×2 独立性检验",
-      labTitle: "2×2 独立性检验",
-      chapter: "概率与统计",
-      module: "统计分析",
-      importance: "gaokao",
-      animationIds: ["anim-paired-data"],
-      prerequisites: [],
-      route: "/paired-data-independence",
-    },
-    loader: () => import("@/features/pairedData/IndependencePage"),
-  },
-  {
-    node: {
       id: "know-solid-rotation-body",
       title: "旋转体的结构特征（圆柱、圆锥、圆台、球）",
       labTitle: "旋转体的结构特征",
@@ -774,6 +752,14 @@ export const routeEntries: RouteEntry[] = [
   {
     node: conicHomogenizationNode,
     loader: conicHomogenizationLoader as RouteEntry["loader"],
+  },
+  {
+    node: regressionNode,
+    loader: regressionLoader as RouteEntry["loader"],
+  },
+  {
+    node: independenceNode,
+    loader: independenceLoader as RouteEntry["loader"],
   },
   // 暂未迁移的页面
   ...legacyEntries,
