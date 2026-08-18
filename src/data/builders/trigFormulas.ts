@@ -32,33 +32,33 @@ export function buildTrigFormulasPanel(
     const res = calculateSumDiff(alphaDeg, betaDeg, sumDiffKey);
     const quantities: MathQuantity[] = [
       {
-        label: "角 α 角度",
+        label: "主控动角 α 角度",
         symbol: "\\alpha",
         value: `${alphaDeg}°`,
         color: "#EF4444",
       },
       {
-        label: "角 β 角度",
+        label: "次要动角 β 角度",
         symbol: "\\beta",
         value: `${betaDeg}°`,
         color: "#D97706",
       },
       {
-        label: "目标角",
+        label: "运算目标角",
         symbol: "\\theta",
         value: `${res.targetAngleDeg.toFixed(1)}°`,
         color: "#2563EB",
       },
       {
-        label: "sin与cos值",
-        symbol: "\\sin\\alpha, \\cos\\alpha",
-        value: `sin=${res.sinAlpha.toFixed(3)}, cos=${res.cosAlpha.toFixed(3)}`,
-        color: "#EF4444",
+        label: "向量 OA 与 OB 点积",
+        symbol: "\\vec{u} \\cdot \\vec{v} = \\cos(\\alpha-\\beta)",
+        value: res.dotProduct.toFixed(3),
+        color: "#059669",
       },
       {
-        label: "向量点积 (cos(α-β))",
-        symbol: "\\vec{u} \\cdot \\vec{v}",
-        value: res.dotProduct.toFixed(3),
+        label: "弦长 AB 距离",
+        symbol: "|AB| = \\sqrt{2-2\\cos(\\alpha-\\beta)}",
+        value: res.chordLength.toFixed(3),
         color: "#059669",
       },
       {
@@ -75,27 +75,31 @@ export function buildTrigFormulasPanel(
         name: "两角和与差的三角公式",
         latex: res.formulaLatex,
         condition: "$\\text{任意实数角 } \\alpha, \\beta \\in \\mathbb{R}$",
-        note: "几何推导：单位圆上向量 $u=(\\cos\\alpha,\\sin\\alpha)$ 与 $v=(\\cos\\beta,\\sin\\beta)$ 的数量积即为 $\\cos(\\alpha-\\beta)$。",
+        note: "几何本质：单位圆上向量数量积 $\\vec{u}\\cdot\\vec{v} = x_1 x_2 + y_1 y_2 = \\cos(\\alpha-\\beta)$，奠定整个高中三角恒等变换的基石。",
         level: "core",
       },
       {
-        name: "两角和差正切公式",
+        name: "两角和差正切公式及变形",
         latex:
-          "\\tan(\\alpha \\pm \\beta) = \\frac{\\tan\\alpha \\pm \\tan\\beta}{1 \\mp \\tan\\alpha\\tan\\beta}",
+          "\\tan(\\alpha \\pm \\beta) = \\frac{\\tan\\alpha \\pm \\tan\\beta}{1 \\mp \\tan\\alpha\\tan\\beta} \\iff \\tan\\alpha \\pm \\tan\\beta = \\tan(\\alpha\\pm\\beta)(1 \\mp \\tan\\alpha\\tan\\beta)",
         condition:
           "$\\alpha, \\beta, \\alpha\\pm\\beta \\neq k\\pi + \\frac{\\pi}{2}$",
-        note: "变形应用：$\\tan\\alpha + \\tan\\beta = \\tan(\\alpha+\\beta)(1 - \\tan\\alpha \\tan\\beta)$。",
+        note: "高考变形技巧：当 $\\alpha+\\beta=\\frac{\\pi}{4}$ 时，必有 $(1+\\tan\\alpha)(1+\\tan\\beta) = 2$。",
         level: "important",
       },
     ];
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "高考考点1：给值求值 —— 巧用拼角拆角 α = (α+β) - β 或 2α = (α+β) + (α-β)",
+        text: "高考变角核心决策树：已知和角与单角，求未知角时优先采用'拼角拆角'技巧：\\alpha = (\\alpha+\\beta) - \\beta，2\\alpha = (\\alpha+\\beta) + (\\alpha-\\beta)",
         importance: "gaokao",
       },
       {
-        text: "高考考点2：给值求角 —— 注意三角函数值的单调区间与角的范围限制，防止多解或错解",
+        text: "给值求角防坑指南：先求出目标角的某三角函数值（通常优先求 cos，因 [0, π] 单调唯一），再结合已知角的范围精确收缩区间，严禁增解或漏解",
+        importance: "gaokao",
+      },
+      {
+        text: "解三角形边角互化：一次齐次式优先角化边或边化角，运用两角和差公式展开消除复杂角",
         importance: "gaokao",
       },
     ];
@@ -103,7 +107,7 @@ export function buildTrigFormulasPanel(
     const warnings: WarningItem[] = [];
     if (!res.isTanDefined) {
       warnings.push({
-        text: "正切无意义警告：分母为 0 或某个角的正切无意义！",
+        text: "正切无意义警告：分母 1 ∓ tan α tan β = 0 或某个角的终边落在 y 轴上（tan 无意义）！",
         level: "danger",
       });
     }
@@ -113,7 +117,8 @@ export function buildTrigFormulasPanel(
       theorems,
       gaokaoPoints,
       warnings,
-      mnemonic: "两角和差口诀：正余余正符号同（sin），余余正正符号反（cos）！",
+      mnemonic:
+        "两角和差口诀：正余余正符号同（sin），余余正正符号反（cos），切式分子符号同、分母符号反！",
     };
   } else if (studyMode === "double_angle") {
     const res = calculateDoubleAngle(alphaDeg, doubleAngleKey);
@@ -131,57 +136,57 @@ export function buildTrigFormulasPanel(
         color: "#2563EB",
       },
       {
-        label: "sin 2α 二倍角",
+        label: "sin 2α 二倍角值",
         symbol: "\\sin 2\\alpha",
         value: res.sin2Alpha.toFixed(3),
         color: "#2563EB",
       },
       {
-        label: "cos 2α 二倍角",
+        label: "cos 2α 二倍角值",
         symbol: "\\cos 2\\alpha",
         value: res.cos2Alpha.toFixed(3),
         color: "#D97706",
       },
       {
-        label: "sin²α 正弦降幂",
-        symbol: "\\sin^2\\alpha",
-        value: `${res.sinSqAlpha.toFixed(3)} = \\frac{1 - (${res.cos2Alpha.toFixed(3)})}{2}`,
+        label: "降幂后周期 T",
+        symbol: "T = \\frac{2\\pi}{2}",
+        value: "\\pi \\approx 3.142",
         color: "#059669",
       },
       {
-        label: "cos²α 余弦降幂",
-        symbol: "\\cos^2\\alpha",
-        value: `${res.cosSqAlpha.toFixed(3)} = \\frac{1 + (${res.cos2Alpha.toFixed(3)})}{2}`,
+        label: "降幂后平衡中轴",
+        symbol: "y_0",
+        value: "y = 0.5",
         color: "#059669",
       },
     ];
 
     const theorems: Theorem[] = [
       {
-        name: "二倍角公式",
+        name: "二倍角公式（三大变式）",
         latex:
           "\\sin 2\\alpha = 2\\sin\\alpha\\cos\\alpha, \\quad \\cos 2\\alpha = \\cos^2\\alpha - \\sin^2\\alpha = 2\\cos^2\\alpha - 1 = 1 - 2\\sin^2\\alpha",
         condition: "$\\alpha \\in \\mathbb{R}$",
-        note: "在两角和公式中令 $\\beta = \\alpha$ 即可导出。$\\cos 2\\alpha$ 有三种表现形式，在升降幂中极具威力。",
+        note: "在两角和公式中令 $\\beta = \\alpha$ 即可导出。$\\cos 2\\alpha$ 的三种变形是升降幂与代数消元的神器。",
         level: "core",
       },
       {
-        name: "升降幂公式",
+        name: "升降幂公式（降次升角）",
         latex:
-          "\\sin^2\\alpha = \\frac{1-\\cos 2\\alpha}{2}, \\quad \\cos^2\\alpha = \\frac{1+\\cos 2\\alpha}{2}",
-        condition: "用于高考化简中将二次项降为一次项，周期减半",
-        note: "降幂升角：二次变一次，角度翻倍！",
+          "\\sin^2\\alpha = \\frac{1-\\cos 2\\alpha}{2}, \\quad \\cos^2\\alpha = \\frac{1+\\cos 2\\alpha}{2}, \\quad 1+\\cos 2\\alpha = 2\\cos^2\\alpha",
+        condition: "用于将二次项降为一次项，周期减半；或开方去根号时升幂",
+        note: "降幂口诀：二次降一次，次数降一半，角度翻一番！",
         level: "important",
       },
     ];
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "高考考点1：三角函数化简求最值 —— 运用降幂公式与倍角公式将 f(x)=a sin²x + b sin x cos x 转化为 Asin(ωx+φ)+C",
+        text: "高考解答题起手式：对于形如 f(x) = a sin²x + b sin x cos x + c cos²x 的二次齐次式，先用降幂公式与倍角正弦化为 A sin 2x + B cos 2x + C，再用辅助角公式化为 Asin(2x+φ)+C",
         importance: "gaokao",
       },
       {
-        text: "高考考点2：二倍角余弦三变式灵活运用（已知 cos α 求 cos 2α 等）",
+        text: "弦切互化技巧（齐次分式）：sin 2α = 2tan α / (1+tan²α)，cos 2α = (1-tan²α) / (1+tan²α)，已知 tan α 时可秒杀一切关于 α 的二次齐次式",
         importance: "gaokao",
       },
     ];
@@ -189,7 +194,7 @@ export function buildTrigFormulasPanel(
     const warnings: WarningItem[] = [];
     if (!res.isTanDefined) {
       warnings.push({
-        text: "二倍角正切无意义：cos 2α = 0，tan 2α 无意义！",
+        text: "二倍角正切无意义：cos 2α = 0（即 2α = 90° + k·180°），tan 2α 不存在！",
         level: "warning",
       });
     }
@@ -199,7 +204,8 @@ export function buildTrigFormulasPanel(
       theorems,
       gaokaoPoints,
       warnings,
-      mnemonic: "倍角降幂口诀：二次降一次，次数降一半，角度翻一番！",
+      mnemonic:
+        "倍角降幂口诀：二次降一次，次数降一半，角度翻一番；开方去根号，加余升余平方消！",
     };
   } else {
     // auxiliary 模式
@@ -218,58 +224,58 @@ export function buildTrigFormulasPanel(
         color: "#D97706",
       },
       {
-        label: "合成振幅 A",
+        label: "合成振幅 A (模长)",
         symbol: "A = \\sqrt{a^2+b^2}",
         value: res.amplitude.toFixed(3),
         color: "#2563EB",
         highlight: res.isDegenerate ? "extreme" : undefined,
       },
       {
-        label: "辅助角 φ (°)",
+        label: "点 (a, b) 所在象限",
+        symbol: "\\text{Quadrant}",
+        value: res.quadrantStr,
+        color: "#059669",
+      },
+      {
+        label: "辅助角 φ 角度",
         symbol: "\\varphi",
         value: `${res.phiDeg.toFixed(1)}°`,
         color: "#059669",
       },
       {
-        label: "cos φ 与 sin φ",
-        symbol: "\\cos\\varphi, \\sin\\varphi",
-        value: `cos=${res.cosPhi.toFixed(3)}, sin=${res.sinPhi.toFixed(3)}`,
-        color: "#059669",
-      },
-      {
-        label: "tan φ 值",
-        symbol: "\\tan\\varphi = \\frac{b}{a}",
-        value: res.tanPhi !== undefined ? res.tanPhi.toFixed(3) : "∞",
-        color: "#D97706",
+        label: "波峰最大值点 x 坐标",
+        symbol: "x_{max}",
+        value: `${(res.maxPointX * (180 / Math.PI)).toFixed(1)}°`,
+        color: "#2563EB",
       },
     ];
 
     const theorems: Theorem[] = [
       {
-        name: "辅助角公式 (Asin(ωx+φ) 化简法)",
+        name: "辅助角公式 (Asin(ωx+φ) 终极化简)",
         latex: "a\\sin x + b\\cos x = \\sqrt{a^2+b^2}\\sin(x+\\varphi)",
         condition:
           "$a^2 + b^2 \\neq 0, \\quad \\cos\\varphi = \\frac{a}{\\sqrt{a^2+b^2}}, \\quad \\sin\\varphi = \\frac{b}{\\sqrt{a^2+b^2}}$",
-        note: "几何本质：平面向量 $(a, b)$ 极坐标化 $(A, \\varphi)$。两同频正弦波与余弦波叠加仍为同频正弦波！",
+        note: "数形结合本质：直角坐标系中向量 $(a, b)$ 的模长即为振幅 $A$，极角即为初相 $\\varphi$。两个同频波叠加仍为同频正弦波！",
         level: "core",
       },
       {
-        name: "辅助角函数的最值与周期",
+        name: "辅助角函数的最值、周期与对称轴",
         latex:
-          "y_{max} = \\sqrt{a^2+b^2}, \\quad y_{min} = -\\sqrt{a^2+b^2}, \\quad T = 2\\pi",
+          "y_{max} = \\sqrt{a^2+b^2}, \\quad y_{min} = -\\sqrt{a^2+b^2}, \\quad T = 2\\pi, \\quad x_{sym} = k\\pi + \\frac{\\pi}{2} - \\varphi",
         condition: "$x \\in \\mathbb{R}$",
-        note: "高考中结合单调性与对称轴分析。",
+        note: "高考结合区间限定求最值时，注意将 $x \\in [m, n]$ 转化为整体角 $x+\\varphi \\in [m+\\varphi, n+\\varphi]$。",
         level: "important",
       },
     ];
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "高考大题必考：将复杂三角函数式化为 Asin(ωx+φ)+C 形式，进而求定义域、最值、单调区间与对称轴",
+        text: "高考第 1 大题必考：将复杂三角函数解析式化简为 y = A sin(ωx+φ)+C，随后求周期 T、单调递增/递减区间、对称轴方程及最值",
         importance: "gaokao",
       },
       {
-        text: "辅助角象限确定：tan φ = b/a，φ 的象限由点 (a, b) 所在象限唯一确定！",
+        text: "辅助角象限定理（极高频失分点）：tan φ = b/a，但 φ 的象限由点 (a, b) 所在象限唯一确定！如 a=-1, b=√3 时点在第二象限，φ = 120°，切勿误当成 -60°",
         importance: "gaokao",
       },
     ];
@@ -277,7 +283,7 @@ export function buildTrigFormulasPanel(
     const warnings: WarningItem[] = [];
     if (res.isDegenerate) {
       warnings.push({
-        text: "退化警告：a = 0 且 b = 0，合成波形退化为恒等于 0 的直线！",
+        text: "退化警告：a = 0 且 b = 0，合成波形退化为恒等于 0 的直线，无振幅与周期！",
         level: "danger",
       });
     }
@@ -288,7 +294,7 @@ export function buildTrigFormulasPanel(
       gaokaoPoints,
       warnings,
       mnemonic:
-        "辅助角化简口诀：提模长 sqrt(a²+b²)，余弦正弦填角 φ，点(a,b)象限定符号！",
+        "辅助角化简口诀：提模长 sqrt(a²+b²)，余弦填a正弦填b，点(a,b)象限定初相！",
     };
   }
 }

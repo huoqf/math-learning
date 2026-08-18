@@ -28,10 +28,30 @@ export const paramMeta: Record<string, ParamMeta> = {
         labelFormula: "0^\\circ",
       },
       {
+        value: 30,
+        label: "30°",
+        labelFormula: "30^\\circ",
+      },
+      {
+        value: 45,
+        label: "45°",
+        labelFormula: "45^\\circ",
+      },
+      {
+        value: 60,
+        label: "60°",
+        labelFormula: "60^\\circ",
+      },
+      {
         value: 90,
         variant: "critical",
         label: "90°",
         labelFormula: "90^\\circ",
+      },
+      {
+        value: 120,
+        label: "120°",
+        labelFormula: "120^\\circ",
       },
       {
         value: 180,
@@ -61,6 +81,21 @@ export const paramMeta: Record<string, ParamMeta> = {
         labelFormula: "0^\\circ",
       },
       {
+        value: 30,
+        label: "30°",
+        labelFormula: "30^\\circ",
+      },
+      {
+        value: 45,
+        label: "45°",
+        labelFormula: "45^\\circ",
+      },
+      {
+        value: 60,
+        label: "60°",
+        labelFormula: "60^\\circ",
+      },
+      {
         value: 90,
         variant: "critical",
         label: "90°",
@@ -70,7 +105,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   coeffA: {
     key: "coeffA",
-    label: "系数 a",
+    label: "正弦系数 a",
     labelFormula: "\\color{#EF4444}{a}",
     min: -5.0,
     max: 5.0,
@@ -82,6 +117,16 @@ export const paramMeta: Record<string, ParamMeta> = {
       "辅助角化简 $\\color{#EF4444}{a}\\sin x + \\color{#D97706}{b}\\cos x$ 中正弦系数 $a$",
     marks: [
       {
+        value: -1.73,
+        label: "-√3",
+        labelFormula: "-\\sqrt{3}",
+      },
+      {
+        value: -1,
+        label: "-1",
+        labelFormula: "-1",
+      },
+      {
         value: 0,
         variant: "critical",
         label: "0",
@@ -92,11 +137,16 @@ export const paramMeta: Record<string, ParamMeta> = {
         label: "1",
         labelFormula: "1",
       },
+      {
+        value: 1.73,
+        label: "√3",
+        labelFormula: "\\sqrt{3}",
+      },
     ],
   },
   coeffB: {
     key: "coeffB",
-    label: "系数 b",
+    label: "余弦系数 b",
     labelFormula: "\\color{#D97706}{b}",
     min: -5.0,
     max: 5.0,
@@ -108,10 +158,25 @@ export const paramMeta: Record<string, ParamMeta> = {
       "辅助角化简 $\\color{#EF4444}{a}\\sin x + \\color{#D97706}{b}\\cos x$ 中余弦系数 $b$",
     marks: [
       {
+        value: -1.73,
+        label: "-√3",
+        labelFormula: "-\\sqrt{3}",
+      },
+      {
+        value: -1,
+        label: "-1",
+        labelFormula: "-1",
+      },
+      {
         value: 0,
         variant: "critical",
         label: "0",
         labelFormula: "0",
+      },
+      {
+        value: 1,
+        label: "1",
+        labelFormula: "1",
       },
       {
         value: 1.73,

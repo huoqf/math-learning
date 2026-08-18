@@ -11,11 +11,7 @@ export type SumDiffFormulaKey =
   | "tan_minus";
 
 export type DoubleAngleFormulaKey =
-  | "sin_2a"
-  | "cos_2a"
-  | "tan_2a"
-  | "sin2_a"
-  | "cos2_a";
+  "sin_2a" | "cos_2a" | "tan_2a" | "sin2_a" | "cos2_a";
 
 export type StudyMode = "sum_diff" | "double_angle" | "auxiliary";
 
@@ -32,6 +28,7 @@ export interface SumDiffResult {
   targetAngleDeg: number;
   resultVal: number;
   dotProduct: number;
+  chordLength: number;
   isTanDefined: boolean;
   formulaTitle: string;
   formulaLatex: string;
@@ -48,6 +45,8 @@ export interface DoubleAngleResult {
   tan2Alpha?: number;
   sinSqAlpha: number;
   cosSqAlpha: number;
+  period: number;
+  baseline: number;
   isTanDefined: boolean;
   formulaTitle: string;
   formulaLatex: string;
@@ -62,8 +61,11 @@ export interface AuxiliaryResult {
   cosPhi: number;
   sinPhi: number;
   tanPhi?: number;
+  quadrantStr: string;
   isDegenerate: boolean;
   formulaLatex: string;
+  maxPointX: number;
+  minPointX: number;
 }
 
 const DEG_TO_RAD = Math.PI / 180;
@@ -75,7 +77,7 @@ const RAD_TO_DEG = 180 / Math.PI;
 export function calculateSumDiff(
   alphaDeg: number,
   betaDeg: number,
-  key: SumDiffFormulaKey = "cos_minus"
+  key: SumDiffFormulaKey = "cos_minus",
 ): SumDiffResult {
   const alphaRad = alphaDeg * DEG_TO_RAD;
   const betaRad = betaDeg * DEG_TO_RAD;
@@ -86,6 +88,9 @@ export function calculateSumDiff(
   const sinBeta = Math.sin(betaRad);
 
   const dotProduct = cosAlpha * cosBeta + sinAlpha * sinBeta; // cos(alpha - beta)
+  const dx = cosAlpha - cosBeta;
+  const dy = sinAlpha - sinBeta;
+  const chordLength = Math.sqrt(dx * dx + dy * dy);
 
   const isTanAlphaDefined = Math.abs(cosAlpha) > 1e-6;
   const isTanBetaDefined = Math.abs(cosBeta) > 1e-6;
@@ -103,29 +108,38 @@ export function calculateSumDiff(
       targetAngleRad = alphaRad - betaRad;
       resultVal = Math.cos(targetAngleRad);
       formulaTitle = "两角差的余弦";
-      formulaLatex = "\\cos(\\alpha - \\beta) = \\cos\\alpha\\cos\\beta + \\sin\\alpha\\sin\\beta";
+      formulaLatex =
+        "\\cos(\\alpha - \\beta) = \\cos\\alpha\\cos\\beta + \\sin\\alpha\\sin\\beta";
       break;
     case "cos_plus":
       targetAngleRad = alphaRad + betaRad;
       resultVal = Math.cos(targetAngleRad);
       formulaTitle = "两角和的余弦";
-      formulaLatex = "\\cos(\\alpha + \\beta) = \\cos\\alpha\\cos\\beta - \\sin\\alpha\\sin\\beta";
+      formulaLatex =
+        "\\cos(\\alpha + \\beta) = \\cos\\alpha\\cos\\beta - \\sin\\alpha\\sin\\beta";
       break;
     case "sin_plus":
       targetAngleRad = alphaRad + betaRad;
       resultVal = Math.sin(targetAngleRad);
       formulaTitle = "两角和的正弦";
-      formulaLatex = "\\sin(\\alpha + \\beta) = \\sin\\alpha\\cos\\beta + \\cos\\alpha\\sin\\beta";
+      formulaLatex =
+        "\\sin(\\alpha + \\beta) = \\sin\\alpha\\cos\\beta + \\cos\\alpha\\sin\\beta";
       break;
     case "sin_minus":
       targetAngleRad = alphaRad - betaRad;
       resultVal = Math.sin(targetAngleRad);
       formulaTitle = "两角差的正弦";
-      formulaLatex = "\\sin(\\alpha - \\beta) = \\sin\\alpha\\cos\\beta - \\cos\\alpha\\sin\\beta";
+      formulaLatex =
+        "\\sin(\\alpha - \\beta) = \\sin\\alpha\\cos\\beta - \\cos\\alpha\\sin\\beta";
       break;
     case "tan_plus":
       targetAngleRad = alphaRad + betaRad;
-      if (!isTanAlphaDefined || !isTanBetaDefined || tanAlpha === undefined || tanBeta === undefined) {
+      if (
+        !isTanAlphaDefined ||
+        !isTanBetaDefined ||
+        tanAlpha === undefined ||
+        tanBeta === undefined
+      ) {
         isTanDefined = false;
         resultVal = NaN;
       } else {
@@ -138,11 +152,17 @@ export function calculateSumDiff(
         }
       }
       formulaTitle = "两角和的正切";
-      formulaLatex = "\\tan(\\alpha + \\beta) = \\frac{\\tan\\alpha + \\tan\\beta}{1 - \\tan\\alpha\\tan\\beta}";
+      formulaLatex =
+        "\\tan(\\alpha + \\beta) = \\frac{\\tan\\alpha + \\tan\\beta}{1 - \\tan\\alpha\\tan\\beta}";
       break;
     case "tan_minus":
       targetAngleRad = alphaRad - betaRad;
-      if (!isTanAlphaDefined || !isTanBetaDefined || tanAlpha === undefined || tanBeta === undefined) {
+      if (
+        !isTanAlphaDefined ||
+        !isTanBetaDefined ||
+        tanAlpha === undefined ||
+        tanBeta === undefined
+      ) {
         isTanDefined = false;
         resultVal = NaN;
       } else {
@@ -155,11 +175,12 @@ export function calculateSumDiff(
         }
       }
       formulaTitle = "两角差的正切";
-      formulaLatex = "\\tan(\\alpha - \\beta) = \\frac{\\tan\\alpha - \\tan\\beta}{1 + \\tan\\alpha\\tan\\beta}";
+      formulaLatex =
+        "\\tan(\\alpha - \\beta) = \\frac{\\tan\\alpha - \\tan\\beta}{1 + \\tan\\alpha\\tan\\beta}";
       break;
   }
 
-  const targetAngleDeg = ((targetAngleRad * RAD_TO_DEG) % 360 + 360) % 360;
+  const targetAngleDeg = (((targetAngleRad * RAD_TO_DEG) % 360) + 360) % 360;
 
   return {
     alphaRad,
@@ -174,6 +195,7 @@ export function calculateSumDiff(
     targetAngleDeg,
     resultVal,
     dotProduct,
+    chordLength,
     isTanDefined,
     formulaTitle,
     formulaLatex,
@@ -185,7 +207,7 @@ export function calculateSumDiff(
  */
 export function calculateDoubleAngle(
   alphaDeg: number,
-  key: DoubleAngleFormulaKey = "sin_2a"
+  key: DoubleAngleFormulaKey = "sin_2a",
 ): DoubleAngleResult {
   const alphaRad = alphaDeg * DEG_TO_RAD;
   const doubleRad = 2 * alphaRad;
@@ -219,11 +241,13 @@ export function calculateDoubleAngle(
       break;
     case "cos_2a":
       formulaTitle = "二倍角余弦";
-      formulaLatex = "\\cos 2\\alpha = \\cos^2\\alpha - \\sin^2\\alpha = 2\\cos^2\\alpha - 1 = 1 - 2\\sin^2\\alpha";
+      formulaLatex =
+        "\\cos 2\\alpha = \\cos^2\\alpha - \\sin^2\\alpha = 2\\cos^2\\alpha - 1 = 1 - 2\\sin^2\\alpha";
       break;
     case "tan_2a":
       formulaTitle = "二倍角正切";
-      formulaLatex = "\\tan 2\\alpha = \\frac{2\\tan\\alpha}{1 - \\tan^2\\alpha}";
+      formulaLatex =
+        "\\tan 2\\alpha = \\frac{2\\tan\\alpha}{1 - \\tan^2\\alpha}";
       break;
     case "sin2_a":
       formulaTitle = "正弦降幂公式";
@@ -246,10 +270,25 @@ export function calculateDoubleAngle(
     tan2Alpha,
     sinSqAlpha,
     cosSqAlpha,
+    period: Math.PI,
+    baseline: 0.5,
     isTanDefined,
     formulaTitle,
     formulaLatex,
   };
+}
+
+/**
+ * 判定点 (a, b) 所在象限字符串
+ */
+function getQuadrantString(a: number, b: number): string {
+  if (Math.abs(a) < 1e-6 && Math.abs(b) < 1e-6) return "原点";
+  if (Math.abs(a) < 1e-6) return b > 0 ? "y 轴正半轴" : "y 轴负半轴";
+  if (Math.abs(b) < 1e-6) return a > 0 ? "x 轴正半轴" : "x 轴负半轴";
+  if (a > 0 && b > 0) return "第一象限";
+  if (a < 0 && b > 0) return "第二象限";
+  if (a < 0 && b < 0) return "第三象限";
+  return "第四象限";
 }
 
 /**
@@ -269,8 +308,11 @@ export function calculateAuxiliary(a: number, b: number): AuxiliaryResult {
       cosPhi: 1,
       sinPhi: 0,
       tanPhi: 0,
+      quadrantStr: "原点",
       isDegenerate: true,
       formulaLatex: "0\\cdot\\sin x + 0\\cdot\\cos x = 0",
+      maxPointX: Math.PI / 2,
+      minPointX: -Math.PI / 2,
     };
   }
 
@@ -281,13 +323,20 @@ export function calculateAuxiliary(a: number, b: number): AuxiliaryResult {
   const cosPhi = a / amplitude;
   const sinPhi = b / amplitude;
   const tanPhi = Math.abs(a) > 1e-6 ? b / a : undefined;
+  const quadrantStr = getQuadrantString(a, b);
 
   const aStr = a.toFixed(2).replace(/\.00$/, "");
-  const bStr = b >= 0 ? `+ ${b.toFixed(2).replace(/\.00$/, "")}` : `- ${Math.abs(b).toFixed(2).replace(/\.00$/, "")}`;
+  const bStr =
+    b >= 0
+      ? `+ ${b.toFixed(2).replace(/\.00$/, "")}`
+      : `- ${Math.abs(b).toFixed(2).replace(/\.00$/, "")}`;
   const ampStr = amplitude.toFixed(2).replace(/\.00$/, "");
   const phiDegStr = phiDeg.toFixed(1).replace(/\.0$/, "");
 
   const formulaLatex = `${aStr}\\sin x ${bStr}\\cos x = ${ampStr}\\sin(x + ${phiDegStr}^\\circ)`;
+
+  const maxPointX = Math.PI / 2 - phiRad;
+  const minPointX = -Math.PI / 2 - phiRad;
 
   return {
     a,
@@ -298,7 +347,10 @@ export function calculateAuxiliary(a: number, b: number): AuxiliaryResult {
     cosPhi,
     sinPhi,
     tanPhi,
+    quadrantStr,
     isDegenerate: false,
     formulaLatex,
+    maxPointX,
+    minPointX,
   };
 }

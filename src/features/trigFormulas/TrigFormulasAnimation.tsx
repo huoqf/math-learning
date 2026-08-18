@@ -24,6 +24,9 @@ import {
 } from "./math/trigFormulas";
 
 export function TrigFormulasAnimation() {
+  // 高考预设选择状态
+  const [activePreset, setActivePreset] = useState<string>("");
+
   // 研究模式：'sum_diff' | 'double_angle' | 'auxiliary'
   const [studyMode, setStudyMode] = useState<StudyMode>("sum_diff");
 
@@ -233,7 +236,83 @@ export function TrigFormulasAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 3. 参数调节 */}
+          {/* 3. 高考经典预设 */}
+          <LeftPanelSection
+            title="高考经典预设"
+            subtitle="一键载入新高考高频参数组合"
+          >
+            {studyMode === "sum_diff" && (
+              <SelectGrid
+                items={[
+                  { key: "preset_45_30", formula: "45^\\circ, 30^\\circ" },
+                  { key: "preset_75_45", formula: "75^\\circ, 45^\\circ" },
+                  { key: "preset_90_30", formula: "90^\\circ, 30^\\circ" },
+                ]}
+                value={activePreset}
+                onChange={(k: string) => {
+                  setActivePreset(k);
+                  if (k === "preset_45_30")
+                    setParams((p) => ({ ...p, alphaDeg: 45, betaDeg: 30 }));
+                  if (k === "preset_75_45")
+                    setParams((p) => ({ ...p, alphaDeg: 75, betaDeg: 45 }));
+                  if (k === "preset_90_30")
+                    setParams((p) => ({ ...p, alphaDeg: 90, betaDeg: 30 }));
+                }}
+                variant="outline"
+                color="primary"
+                columns={3}
+              />
+            )}
+            {studyMode === "double_angle" && (
+              <SelectGrid
+                items={[
+                  { key: "preset_15", formula: "15^\\circ" },
+                  { key: "preset_30", formula: "30^\\circ" },
+                  { key: "preset_45", formula: "45^\\circ" },
+                ]}
+                value={activePreset}
+                onChange={(k: string) => {
+                  setActivePreset(k);
+                  if (k === "preset_15")
+                    setParams((p) => ({ ...p, alphaDeg: 15 }));
+                  if (k === "preset_30")
+                    setParams((p) => ({ ...p, alphaDeg: 30 }));
+                  if (k === "preset_45")
+                    setParams((p) => ({ ...p, alphaDeg: 45 }));
+                }}
+                variant="outline"
+                color="primary"
+                columns={3}
+              />
+            )}
+            {studyMode === "auxiliary" && (
+              <SelectGrid
+                items={[
+                  { key: "p1", formula: "(1, \\sqrt{3})" },
+                  { key: "p2", formula: "(\\sqrt{3}, 1)" },
+                  { key: "p3", formula: "(-1, \\sqrt{3})" },
+                  { key: "p4", formula: "(1, 1)" },
+                ]}
+                value={activePreset}
+                onChange={(k: string) => {
+                  setActivePreset(k);
+                  if (k === "p1")
+                    setParams((p) => ({ ...p, coeffA: 1.0, coeffB: 1.73 }));
+                  if (k === "p2")
+                    setParams((p) => ({ ...p, coeffA: 1.73, coeffB: 1.0 }));
+                  if (k === "p3")
+                    setParams((p) => ({ ...p, coeffA: -1.0, coeffB: 1.73 }));
+                  if (k === "p4")
+                    setParams((p) => ({ ...p, coeffA: 1.0, coeffB: 1.0 }));
+                }}
+                variant="outline"
+                color="primary"
+                columns={2}
+              />
+            )}
+          </LeftPanelSection>
+
+          {/* 4. 参数调节 */}
           <LeftPanelSection
             title="参数调节"
             subtitle={
