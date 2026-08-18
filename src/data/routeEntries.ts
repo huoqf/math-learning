@@ -597,7 +597,7 @@ const legacyEntries: RouteEntry[] = [
       prerequisites: ["know-solid-position"],
       route: "/solid-surface-relation",
     },
-    loader: () => import("@/features/solidGeometry/LinePlaneRelationAnimation"),
+    loader: () => import("@/features/solidGeometry/SurfaceRelationAnimation"),
     guarded3D: true,
   },
   {

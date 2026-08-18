@@ -29,13 +29,7 @@ import { getLineDirection } from "@/math3d/lineRelation";
 import type { Vec3 } from "@/math3d/vector3";
 import { PyramidModelScene } from "./components/PyramidModelScene";
 
-type TeachingMode =
-  | "parallel"
-  | "perpendicular"
-  | "surfaceParallel"
-  | "surfacePerp"
-  | "gaokaoPyramid"
-  | "vector";
+type TeachingMode = "parallel" | "perpendicular" | "gaokaoPyramid" | "vector";
 
 export default function LinePlaneRelationAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallel");
@@ -131,12 +125,6 @@ export default function LinePlaneRelationAnimation() {
           intersectType: 1,
         }));
         break;
-      case "surfaceParallel":
-        setParams((p) => ({ ...p, zHeight: 2.5, step: 1 }));
-        break;
-      case "surfacePerp":
-        setParams((p) => ({ ...p, zHeight: 2.5, thetaDeg: 90, phiDeg: 0 }));
-        break;
       case "gaokaoPyramid":
         setParams((p) => ({
           ...p,
@@ -160,8 +148,6 @@ export default function LinePlaneRelationAnimation() {
         subTheorem === "judge" ? ["zHeight", "phiDeg"] : ["zHeight", "step"],
       perpendicular:
         subTheorem === "judge" ? ["thetaDeg", "phiDeg"] : ["phiDeg"],
-      surfaceParallel: ["zHeight", "step"],
-      surfacePerp: ["zHeight", "thetaDeg"],
       gaokaoPyramid: ["lambdaE", "lambdaF", "pyramidH", "pyramidA", "pyramidB"],
       vector: ["thetaDeg", "phiDeg", "zHeight"],
     };
@@ -297,25 +283,6 @@ export default function LinePlaneRelationAnimation() {
                 },
               ];
         break;
-      case "surfaceParallel":
-        items = [
-          { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
-          { colorKey: "paramTertiary", swatch: "area", label: "平行平面 β" },
-          { colorKey: "primary", swatch: "area", label: "第三截面 γ 与交线" },
-        ];
-        break;
-      case "surfacePerp":
-        items = [
-          { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
-          {
-            colorKey: "paramTertiary",
-            swatch: "area",
-            label: "垂直平面 β ⊥ α",
-          },
-          { colorKey: "secondary", swatch: "line", label: "两面交线 l" },
-          { colorKey: "paramPrimary", swatch: "line", label: "面内垂线 a ⊥ l" },
-        ];
-        break;
       case "gaokaoPyramid":
         items = [
           {
@@ -368,16 +335,6 @@ export default function LinePlaneRelationAnimation() {
                   key: "perpendicular",
                   formula: "l \\perp \\alpha",
                   label: "线面垂直",
-                },
-                {
-                  key: "surfaceParallel",
-                  formula: "\\alpha \\parallel \\beta",
-                  label: "面面平行",
-                },
-                {
-                  key: "surfacePerp",
-                  formula: "\\alpha \\perp \\beta",
-                  label: "面面垂直",
                 },
                 {
                   key: "gaokaoPyramid",
@@ -554,24 +511,19 @@ export default function LinePlaneRelationAnimation() {
               />
 
               {/* 空间直线 l */}
-              {activeMode !== "surfaceParallel" &&
-                activeMode !== "surfacePerp" && (
-                  <>
-                    <Vector3DArrow
-                      from={startPoint}
-                      to={endPoint}
-                      colorKey="paramPrimary"
-                    />
-                    <FormulaLabel3D
-                      position={{
-                        x: endPoint.x + 0.2,
-                        y: endPoint.y + 0.2,
-                        z: endPoint.z + 0.2,
-                      }}
-                      tex="l"
-                    />
-                  </>
-                )}
+              <Vector3DArrow
+                from={startPoint}
+                to={endPoint}
+                colorKey="paramPrimary"
+              />
+              <FormulaLabel3D
+                position={{
+                  x: endPoint.x + 0.2,
+                  y: endPoint.y + 0.2,
+                  z: endPoint.z + 0.2,
+                }}
+                tex="l"
+              />
 
               {/* 线面平行 */}
               {activeMode === "parallel" && (
@@ -664,142 +616,6 @@ export default function LinePlaneRelationAnimation() {
                       />
                     </>
                   )}
-                </>
-              )}
-
-              {/* 面面平行 */}
-              {activeMode === "surfaceParallel" && (
-                <>
-                  <Plane3D
-                    origin={{ x: 0, y: 0, z: zHeight }}
-                    uAxis={{ x: 1, y: 0, z: 0 }}
-                    vAxis={{ x: 0, y: 1, z: 0 }}
-                    width={6}
-                    height={6}
-                    colorKey="paramTertiary"
-                    opacity={0.25}
-                  />
-                  <FormulaLabel3D
-                    position={{ x: 2.8, y: 2.8, z: zHeight + 0.1 }}
-                    tex="\beta"
-                  />
-
-                  {step > 0.05 && (
-                    <>
-                      <Plane3D
-                        origin={{ x: 0, y: 0, z: (zHeight * step) / 2 }}
-                        uAxis={{ x: 0, y: 1, z: 0 }}
-                        vAxis={{ x: 0, y: 0, z: 1 }}
-                        width={6}
-                        height={Math.max(0.5, zHeight * step)}
-                        colorKey="secondary"
-                        opacity={0.18}
-                      />
-                      <FormulaLabel3D
-                        position={{
-                          x: 0.1,
-                          y: 2.8,
-                          z: (zHeight * step) / 2 + 0.2,
-                        }}
-                        tex="\gamma"
-                      />
-                      <Vector3DArrow
-                        from={{ x: 0, y: -2.6, z: 0 }}
-                        to={{ x: 0, y: 2.6, z: 0 }}
-                        colorKey="primary"
-                      />
-                      <FormulaLabel3D
-                        position={{ x: 0.2, y: 2.7, z: 0 }}
-                        tex="a"
-                      />
-                      <Vector3DArrow
-                        from={{ x: 0, y: -2.6, z: zHeight }}
-                        to={{ x: 0, y: 2.6, z: zHeight }}
-                        colorKey="primary"
-                      />
-                      <FormulaLabel3D
-                        position={{ x: 0.2, y: 2.7, z: zHeight }}
-                        tex="b"
-                      />
-                    </>
-                  )}
-
-                  <Vector3DArrow
-                    from={{ x: -1.5, y: -1.5, z: 0 }}
-                    to={{ x: -1.5, y: -1.5, z: 1.5 }}
-                    colorKey="primary"
-                  />
-                  <FormulaLabel3D
-                    position={{ x: -1.3, y: -1.5, z: 1.6 }}
-                    tex="\vec{n_1}"
-                  />
-                  <Vector3DArrow
-                    from={{ x: 1.5, y: 1.5, z: zHeight }}
-                    to={{ x: 1.5, y: 1.5, z: zHeight + 1.5 }}
-                    colorKey="secondary"
-                  />
-                  <FormulaLabel3D
-                    position={{ x: 1.7, y: 1.5, z: zHeight + 1.6 }}
-                    tex="\vec{n_2}"
-                  />
-                </>
-              )}
-
-              {/* 面面垂直 */}
-              {activeMode === "surfacePerp" && (
-                <>
-                  <Plane3D
-                    origin={{ x: 0, y: 0, z: zHeight / 2 }}
-                    uAxis={{ x: 0, y: 1, z: 0 }}
-                    vAxis={{ x: 0, y: 0, z: 1 }}
-                    width={6}
-                    height={zHeight}
-                    colorKey="paramTertiary"
-                    opacity={0.25}
-                  />
-                  <FormulaLabel3D
-                    position={{ x: 0.1, y: 2.8, z: zHeight + 0.2 }}
-                    tex="\beta"
-                  />
-                  <Vector3DArrow
-                    from={{ x: 0, y: -2.8, z: 0 }}
-                    to={{ x: 0, y: 2.8, z: 0 }}
-                    colorKey="secondary"
-                  />
-                  <FormulaLabel3D position={{ x: 0.2, y: 2.9, z: 0 }} tex="l" />
-
-                  {(() => {
-                    const perpThetaRad = (thetaDeg * Math.PI) / 180;
-                    const aLen = 2.4;
-                    const aFrom: Vec3 = { x: 0, y: 0, z: 0 };
-                    const aTo: Vec3 = {
-                      x: 0,
-                      y: aLen * Math.cos(perpThetaRad),
-                      z: aLen * Math.sin(perpThetaRad),
-                    };
-                    return (
-                      <>
-                        <Vector3DArrow
-                          from={aFrom}
-                          to={aTo}
-                          colorKey="paramPrimary"
-                        />
-                        <FormulaLabel3D
-                          position={{ x: 0.1, y: aTo.y + 0.2, z: aTo.z + 0.2 }}
-                          tex="a"
-                        />
-                        {thetaDeg === 90 && (
-                          <AngleArc3D
-                            vertex={aFrom}
-                            dirA={{ x: 0, y: 2, z: 0 }}
-                            dirB={aTo}
-                            radius={0.6}
-                            colorKey="highlight"
-                          />
-                        )}
-                      </>
-                    );
-                  })()}
                 </>
               )}
 

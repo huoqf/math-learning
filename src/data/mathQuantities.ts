@@ -23,6 +23,7 @@ import { buildStatPercentilePanel } from "./builders/statPercentile";
 import {
   buildSpatialAnglePanel,
   buildLinePlaneRelationPanel,
+  buildSurfaceRelationPanel,
   buildCircumSpherePanel,
   buildRotationBodyPanel,
   buildSectionPanel,
@@ -138,8 +139,9 @@ export function buildMathQuantities(
     case "anim-solid-distance":
       return buildSpatialAnglePanel(params, config);
     case "anim-solid-position":
-    case "anim-solid-surface-relation":
       return buildLinePlaneRelationPanel(params, config);
+    case "anim-solid-surface-relation":
+      return buildSurfaceRelationPanel(params, config);
     case "anim-solid-section":
       return buildSectionPanel(params, config);
     case "anim-solid-ball":
