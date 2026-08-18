@@ -42,3 +42,4 @@ export { CircumSphere } from "./CircumSphere";
 export { InSphere } from "./InSphere";
 export { SphereBySphereType } from "./SphereBySphereType";
 export { PolyhedronSphereScene } from "./PolyhedronSphereScene";
+export { SphereCutSection } from "./SphereCutSection";

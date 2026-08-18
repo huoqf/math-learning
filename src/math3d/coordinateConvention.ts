@@ -12,16 +12,16 @@
 
 import type { Vec3 } from "./vector3";
 
-/** 数学坐标(z向上) -> three.js 场景坐标(y向上) */
+/** 数学坐标(x向前, y向右, z向上 - 标准教材右手系) -> three.js 场景坐标(x向右, y向上, z向前) */
 export const mathToThree = (v: Vec3): [number, number, number] => [
-  v.x,
-  v.z,
-  v.y,
+  v.y, // 数学 y (向右) -> Three.js +X
+  v.z, // 数学 z (向上) -> Three.js +Y
+  v.x, // 数学 x (向前) -> Three.js +Z
 ];
 
 /** three.js 场景坐标 -> 数学坐标 */
 export const threeToMath = (x: number, y: number, z: number): Vec3 => ({
-  x,
-  y: z,
+  x: z,
+  y: x,
   z: y,
 });

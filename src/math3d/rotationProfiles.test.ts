@@ -7,6 +7,8 @@ import {
   sampleCurveProfile,
   rimRadiusAtZ,
   radiusAtZ,
+  calculateSphereCut,
+  calculateUnfoldParams,
 } from "./rotationProfiles";
 
 describe("rotationProfiles", () => {
@@ -77,9 +79,9 @@ describe("rimRadiusAtZ", () => {
 
   it("球体极点处半径为 0，赤道处半径为球半径", () => {
     const p = sphereProfile(3, 32);
-    expect(rimRadiusAtZ(p, 0)).toBeCloseTo(0, 5);
-    expect(rimRadiusAtZ(p, 3)).toBeCloseTo(3, 5);
-    expect(rimRadiusAtZ(p, 6)).toBeCloseTo(0, 5);
+    expect(rimRadiusAtZ(p, -3)).toBeCloseTo(0, 5);
+    expect(rimRadiusAtZ(p, 0)).toBeCloseTo(3, 5);
+    expect(rimRadiusAtZ(p, 3)).toBeCloseTo(0, 5);
   });
 });
 
@@ -107,10 +109,43 @@ describe("radiusAtZ（母线任意高度插值）", () => {
 
   it("球体：赤道处半径最大，极点处为 0", () => {
     const p = sphereProfile(3, 32);
-    expect(radiusAtZ(p, 0)).toBeCloseTo(0, 3);
+    expect(radiusAtZ(p, -3)).toBeCloseTo(0, 3);
+    expect(radiusAtZ(p, -1.5)).toBeCloseTo(2.6, 1);
+    expect(radiusAtZ(p, 0)).toBeCloseTo(3, 3);
     expect(radiusAtZ(p, 1.5)).toBeCloseTo(2.6, 1);
-    expect(radiusAtZ(p, 3)).toBeCloseTo(3, 3);
-    expect(radiusAtZ(p, 4.5)).toBeCloseTo(2.6, 1);
-    expect(radiusAtZ(p, 6)).toBeCloseTo(0, 3);
+    expect(radiusAtZ(p, 3)).toBeCloseTo(0, 3);
+  });
+});
+
+describe("calculateSphereCut", () => {
+  it("截面过球心时为大圆 (d=0)", () => {
+    const res = calculateSphereCut(5, 0);
+    expect(res.isGreatCircle).toBe(true);
+    expect(res.cutRadius).toBe(5);
+    expect(res.cutArea).toBeCloseTo(Math.PI * 25);
+  });
+
+  it("球心距 d=3, R=5 时，小圆半径 r=4 (勾股 3-4-5)", () => {
+    const res = calculateSphereCut(5, 3);
+    expect(res.isGreatCircle).toBe(false);
+    expect(res.cutRadius).toBeCloseTo(4);
+    expect(res.cutArea).toBeCloseTo(Math.PI * 16);
+  });
+});
+
+describe("calculateUnfoldParams", () => {
+  it("圆锥展开角计算：r=1, h=sqrt(3) -> l=2, alpha=180°", () => {
+    const res = calculateUnfoldParams("cone", 1, 0, Math.sqrt(3));
+    expect(res.generatorLength).toBeCloseTo(2);
+    expect(res.unfoldAngleDeg).toBeCloseTo(180);
+    expect(res.shortestPathAround).toBeCloseTo(4); // 2 * l * sin(90°) = 4
+  });
+
+  it("圆柱展开为矩形：最短路径对角线", () => {
+    const res = calculateUnfoldParams("cylinder", 1, 0, 4);
+    expect(res.unfoldAngleDeg).toBe(360);
+    expect(res.shortestPathAround).toBeCloseTo(
+      Math.sqrt((2 * Math.PI) ** 2 + 16),
+    );
   });
 });

@@ -147,7 +147,7 @@ export function buildMathQuantities(
     case "anim-solid-ball-models":
       return buildPolyhedronSpherePanel(params, config);
     case "anim-solid-rotation-body":
-      return buildRotationBodyPanel(params);
+      return buildRotationBodyPanel(params, config);
     case "anim-solid-folding":
       return buildSolidFoldingPanel(params, config);
     case "anim-solid-parametric":

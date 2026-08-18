@@ -81,9 +81,10 @@ function makeLineObject(color: string, dashed: boolean): THREE.Line {
 /**
  * 旋转体视角跟随轮廓线（内部组件，由 RotationSolid 调用）
  *
- * 六条线：左/右轮廓母线（恒实线）+ 顶圆/底圆实弧与虚弧。
- * 轮廓母线基于"曲面法线 ⊥ 视线"物理条件计算，直线母线退化为固定角度，
- * 曲线母线（球）连续变化。端面圆前实后虚拆分由 hasTopCap/hasBottomCap 显式控制。
+ * 1. 柱/锥/台：左/右轮廓母线（实线）+ 顶圆/底圆前实后虚拆分。
+ * 2. 球体：
+ *    - 面向相机的外轮廓正圆（恒实线，消除局部坐标系旋转导致的斜割线伪影）；
+ *    - XOY 水平赤道大圆（朝向相机的半圈为实线，背向相机的半圈为虚线）。
  */
 export function RotationOutline({
   profile,
@@ -94,6 +95,12 @@ export function RotationOutline({
   ringRadiusEps = 1e-3,
 }: RotationOutlineProps) {
   const { camera } = useThree();
+
+  const isSphere = !hasTopCap && !hasBottomCap;
+  const sphereRadius = useMemo(() => {
+    if (!isSphere) return 0;
+    return profile.reduce((max, p) => Math.max(max, p.r), 0);
+  }, [isSphere, profile]);
 
   const zMin = profile[0].z;
   const zMax = profile[profile.length - 1].z;
@@ -110,8 +117,106 @@ export function RotationOutline({
   const bottomSolid = useMemo(() => makeLineObject(color, false), [color]);
   const bottomDashed = useMemo(() => makeLineObject(color, true), [color]);
 
+  // 球体专属：赤道大圆实线弧与虚线弧
+  const equatorSolid = useMemo(
+    () => makeLineObject(MATH_COLORS.primary, false),
+    [],
+  );
+  const equatorDashed = useMemo(
+    () => makeLineObject(MATH_COLORS.primary, true),
+    [],
+  );
+
   useFrame(() => {
     const { thetaCam, beta } = getCameraFrame(camera);
+
+    if (isSphere) {
+      // ── 球体标准绘制模式 ──
+      // 1. 面向相机的外轮廓圆 (Billboard 正圆，恒为实线)
+      const R = sphereRadius + RADIAL_EPS;
+      // 相机方向单位向量 (cx, cy, cz)
+      const cx = camera.position.x;
+      const cy = camera.position.y;
+      const cz = camera.position.z;
+      const camLen = Math.hypot(cx, cy, cz) || 1;
+      const nx = cx / camLen;
+      const ny = cy / camLen;
+      const nz = cz / camLen;
+
+      // 构造垂直于视线的正交基 u, v
+      // 先取一个与 n 不共线的辅助向量 (通常取 Y 轴，若视线正对 Y 轴则取 X 轴)
+      const upX = Math.abs(ny) > 0.99 ? 1 : 0;
+      const upY = Math.abs(ny) > 0.99 ? 0 : 1;
+      const upZ = 0;
+
+      // u = up × n
+      let ux = upY * nz - upZ * ny;
+      let uy = upZ * nx - upX * nz;
+      let uz = upX * ny - upY * nx;
+      const uLen = Math.hypot(ux, uy, uz) || 1;
+      ux /= uLen;
+      uy /= uLen;
+      uz /= uLen;
+
+      // v = n × u
+      const vx = ny * uz - nz * uy;
+      const vy = nz * ux - nx * uz;
+      const vz = nx * uy - ny * ux;
+
+      const silhouettePts: [number, number, number][] = [];
+      const numPts = segments * 2;
+      for (let i = 0; i <= numPts; i++) {
+        const phi = (i / numPts) * Math.PI * 2;
+        const cosP = Math.cos(phi);
+        const sinP = Math.sin(phi);
+        silhouettePts.push([
+          R * (ux * cosP + vx * sinP),
+          R * (uy * cosP + vy * sinP),
+          R * (uz * cosP + vz * sinP),
+        ]);
+      }
+      setLinePoints(leftLine, silhouettePts);
+      leftLine.visible = true;
+      rightLine.visible = false;
+      topSolid.visible = false;
+      topDashed.visible = false;
+      bottomSolid.visible = false;
+      bottomDashed.visible = false;
+
+      // 2. 水平赤道大圆：前实后虚拆分
+      const rEq = sphereRadius + RADIAL_EPS;
+      // 朝向相机的半圆弧：thetaCam - PI/2 -> thetaCam + PI/2
+      setLinePoints(
+        equatorSolid,
+        sampleArc(
+          rEq,
+          0,
+          thetaCam - Math.PI / 2,
+          thetaCam + Math.PI / 2,
+          segments,
+        ),
+      );
+      // 背向相机的半圆弧：thetaCam + PI/2 -> thetaCam + 3PI/2
+      setLinePoints(
+        equatorDashed,
+        sampleArc(
+          rEq,
+          0,
+          thetaCam + Math.PI / 2,
+          thetaCam + (Math.PI * 3) / 2,
+          segments,
+        ),
+      );
+      equatorDashed.computeLineDistances();
+      equatorSolid.visible = true;
+      equatorDashed.visible = true;
+      return;
+    }
+
+    // ── 柱/锥/台绘制模式 ──
+    equatorSolid.visible = false;
+    equatorDashed.visible = false;
+
     const { left, right, zRange } = computeSilhouette(profile, thetaCam, beta);
 
     if (!zRange || left.length === 0) {
@@ -226,6 +331,8 @@ export function RotationOutline({
       <primitive object={topDashed} renderOrder={12} />
       <primitive object={bottomSolid} renderOrder={10} />
       <primitive object={bottomDashed} renderOrder={12} />
+      <primitive object={equatorSolid} renderOrder={11} />
+      <primitive object={equatorDashed} renderOrder={13} />
     </group>
   );
 }

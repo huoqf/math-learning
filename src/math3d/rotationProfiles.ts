@@ -46,14 +46,14 @@ export function frustumProfile(
   ];
 }
 
-/** 半圆绕直径旋转 → 球（直径落在旋转轴上，球心在 z = radius 处） */
+/** 半圆绕直径旋转 → 球（直径落在旋转轴 [-radius, radius] 上，球心在原点 z = 0 处） */
 export function sphereProfile(radius: number, segments = 32): ProfilePoint[] {
   const pts: ProfilePoint[] = [];
   for (let i = 0; i <= segments; i++) {
     const t = (i / segments) * Math.PI;
     pts.push({
       r: radius * Math.sin(t),
-      z: radius - radius * Math.cos(t),
+      z: -radius * Math.cos(t),
     });
   }
   return pts;
@@ -120,4 +120,97 @@ export function sampleCurveProfile(
     pts.push({ r: Math.max(0, rOfZ(z)), z });
   }
   return pts;
+}
+
+/**
+ * 球截面小圆几何计算
+ * @param radius 球半径 R
+ * @param cutZFromCenter 截面距球心的有向距离 d (-R < d < R)
+ */
+export interface SphereCutResult {
+  radius: number; // 球半径 R
+  d: number; // 球心距 |d|
+  cutRadius: number; // 截面圆半径 r_cut = sqrt(R^2 - d^2)
+  cutArea: number; // 截面圆面积 S_cut = pi * r_cut^2
+  greatCircleArea: number; // 大圆面积 S_great = pi * R^2
+  isGreatCircle: boolean; // 是否为大圆 (d == 0)
+}
+
+export function calculateSphereCut(
+  radius: number,
+  cutZFromCenter: number,
+): SphereCutResult {
+  const R = Math.max(0.01, radius);
+  const d = Math.min(R, Math.max(-R, cutZFromCenter));
+  const absD = Math.abs(d);
+  const cutRadius = Math.sqrt(Math.max(0, R * R - absD * absD));
+  const cutArea = Math.PI * cutRadius * cutRadius;
+  const greatCircleArea = Math.PI * R * R;
+
+  return {
+    radius: R,
+    d: absD,
+    cutRadius,
+    cutArea,
+    greatCircleArea,
+    isGreatCircle: absD < 1e-4,
+  };
+}
+
+/**
+ * 侧面展开图几何参数（化曲为直）
+ */
+export interface UnfoldParamsResult {
+  generatorLength: number; // 母线长 l
+  unfoldAngleDeg: number; // 展开圆心角 α (度)
+  unfoldAngleRad: number; // 展开圆心角 α (弧度)
+  shortestPathAround: number; // 绕侧面一周最短测地线长度
+  type: "cylinder" | "cone" | "frustum";
+}
+
+export function calculateUnfoldParams(
+  type: "cylinder" | "cone" | "frustum",
+  r1: number,
+  r2: number,
+  height: number,
+): UnfoldParamsResult {
+  if (type === "cylinder") {
+    const l = height;
+    const shortestPath = Math.sqrt((2 * Math.PI * r1) ** 2 + height ** 2);
+    return {
+      generatorLength: l,
+      unfoldAngleDeg: 360,
+      unfoldAngleRad: 2 * Math.PI,
+      shortestPathAround: shortestPath,
+      type: "cylinder",
+    };
+  }
+
+  if (type === "cone") {
+    const l = Math.sqrt(r1 * r1 + height * height);
+    const unfoldAngleRad = (r1 / l) * 2 * Math.PI;
+    const unfoldAngleDeg = (r1 / l) * 360;
+    // 展开扇形中两母线夹角为 unfoldAngleRad，连接两端点的直线距离
+    const shortestPath =
+      unfoldAngleRad <= Math.PI ? 2 * l * Math.sin(unfoldAngleRad / 2) : 2 * l; // 超过 180° 时展平成直线
+    return {
+      generatorLength: l,
+      unfoldAngleDeg,
+      unfoldAngleRad,
+      shortestPathAround: shortestPath,
+      type: "cone",
+    };
+  }
+
+  // frustum
+  const l = Math.sqrt((r1 - r2) ** 2 + height * height);
+  const unfoldAngleDeg = r1 > r2 && l > 0 ? ((r1 - r2) / l) * 360 : 0;
+  const unfoldAngleRad = (unfoldAngleDeg * Math.PI) / 180;
+  return {
+    generatorLength: l,
+    unfoldAngleDeg,
+    unfoldAngleRad,
+    shortestPathAround: 0,
+    type: "frustum",
+  };
 }
