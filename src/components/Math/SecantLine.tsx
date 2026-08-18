@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { mathToDesign } from "@/utils/coordinate";
 import { CALCULUS_COLORS } from "@/theme";
+import { MathPoint } from "./MathPoint";
 
 interface SecantLineProps {
   /** 原函数 f(x) */
@@ -75,9 +76,9 @@ export const SecantLine: React.FC<SecantLineProps> = ({
         strokeWidth={strokeWidth}
         strokeDasharray="4 4"
       />
-      {/* 两个交点 */}
-      <circle cx={result.pA.x} cy={result.pA.y} r={3} fill={color} />
-      <circle cx={result.pB.x} cy={result.pB.y} r={3} fill={color} />
+      {/* 两个割线交点（纯数学点，规范实心尺寸） */}
+      <MathPoint x={result.pA.x} y={result.pA.y} r={3.2} color={color} />
+      <MathPoint x={result.pB.x} y={result.pB.y} r={3.2} color={color} />
       {/* Δx/Δy 直角三角形 */}
       {showTriangle && (
         <g opacity={0.5}>

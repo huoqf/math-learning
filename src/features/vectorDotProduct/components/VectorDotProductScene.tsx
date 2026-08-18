@@ -1,8 +1,9 @@
 import React from "react";
 import {
   CoordinateGrid,
-  VectorArrow,
   InteractivePoint,
+  MathPoint,
+  VectorArrow,
 } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
@@ -226,23 +227,15 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
 
           {/* 垂足 H 点标注 */}
           {normA > 1e-4 && (
-            <circle
-              cx={posHDesign.x}
-              cy={posHDesign.y}
-              r={fontScale(3.5)}
-              fill={MATH_COLORS.paramTertiary}
+            <MathPoint
+              x={posHDesign.x}
+              y={posHDesign.y}
+              variant="foot"
+              color={MATH_COLORS.paramTertiary}
+              label="H (垂足)"
+              labelPosition="bottom-right"
+              fontScale={fontScale}
             />
-          )}
-          {normA > 1e-4 && (
-            <text
-              x={posHDesign.x + fontScale(8)}
-              y={posHDesign.y + fontScale(14)}
-              fill={MATH_COLORS.paramTertiary}
-              fontSize={fontScale(12)}
-              fontWeight="bold"
-            >
-              {`H(${footH.x.toFixed(1)}, ${footH.y.toFixed(1)})`}
-            </text>
           )}
 
           {/* 基础向量 a */}
@@ -446,21 +439,14 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
           />
 
           {/* 中点 M 标记 */}
-          <circle
-            cx={posMDesign.x}
-            cy={posMDesign.y}
-            r={fontScale(4)}
-            fill={MATH_COLORS.paramTertiary}
+          <MathPoint
+            x={posMDesign.x}
+            y={posMDesign.y}
+            color={MATH_COLORS.paramTertiary}
+            label="M (AB中点)"
+            labelPosition="top-right"
+            fontScale={fontScale}
           />
-          <text
-            x={posMDesign.x + fontScale(8)}
-            y={posMDesign.y - fontScale(8)}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(13)}
-            fontWeight="bold"
-          >
-            M (AB中点)
-          </text>
 
           {/* 基础向量 a (OA) */}
           <VectorArrow

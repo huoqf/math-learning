@@ -35,7 +35,8 @@
 | `fontSize={14}` 直接写死字号 | `fontScale(14)` 或 `canvasSize.font(14)` | 铁律1 |
 | SVG 内 `className="text-[10px]"` 等硬编码字号 | `fontSize={fontScale(10)}` | 铁律1 |
 | `requestAnimationFrame(cb)` 裸调用 | 数学页面禁止使用 | 铁律1 |
-| 手写 `<line>` 绘制坐标轴或几何向量 | `CoordinateGrid` / `VectorArrow` | 铁律1 |
+| 几何/向量箭头手写 `<line>` | `VectorArrow` | 铁律1 |
+| 手写 `<circle>` 绘制纯数学点/交点/特征点 | `MathPoint`（纯数学点实心r=3.2/空心r=3.8）或 `InteractivePoint`（可拖拽控制点） | 铁律1/4 |
 | `viewBox={...}` 与 `vp.transform` 同时使用 | 仅用 `AnimationSvgCanvas` | 铁律2 |
 | 手写 `x * scaleX + offsetX` 坐标计算 | `mathToDesign(x, y, scale)` | 铁律1 |
 | 新页面手写 `<input type="range">` | `paramMeta` → `ParamControl` | 铁律3 |
@@ -213,7 +214,8 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | SVG 画布容器 | `AnimationSvgCanvas` | `@/components/Layout` | — |
 | 坐标轴/网格 | `CoordinateGrid` / `PolarGrid` | `@/components/Math` | ✅ 支持 `fontScale` prop |
 | 连续数学函数曲线 | `FunctionGraph` | `@/components/Math` | — |
-| 可拖拽控制点 | `InteractivePoint` | `@/components/Math` | ✅ 支持 `fontScale` prop |
+| 可拖拽控制点 | `InteractivePoint` | `@/components/Math` | ✅ 支持 `fontScale` prop，带外光晕手柄 |
+| 纯数学点/交点/垂足/去心点 | `MathPoint` | `@/components/Math` | ✅ 支持 `fontScale` prop，实心r=3.2/空心r=3.8 |
 | 函数曲线在切点处的切线 | `TangentLine` | `@/components/Math` | — |
 | 演示极限逼近的割线 | `SecantLine` | `@/components/Math` | — |
 | 双曲线/正切/指对数渐近线 | `Asymptote` | `@/components/Math` | ✅ 支持 `fontScale` prop |

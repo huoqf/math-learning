@@ -9,6 +9,7 @@ import type { ViewportInfo } from "@/utils/useViewport";
 import {
   CoordinateGrid,
   InteractivePoint,
+  MathPoint,
   VectorArrow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
@@ -439,45 +440,30 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
               M
             </text>
           )}
-          <circle
-            cx={aDesign.x}
-            cy={aDesign.y}
-            r={3.5}
-            fill={MATH_COLORS.paramTertiary}
+          {/* 垂足点 M 与基准点 A(1,0) */}
+          <MathPoint
+            x={aDesign.x}
+            y={aDesign.y}
+            color={MATH_COLORS.paramTertiary}
+            label="A(1,0)"
+            labelPosition="bottom-right"
+            fontScale={fontScale}
           />
-          <text
-            x={aDesign.x + 8}
-            y={aDesign.y + 14}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            A(1,0)
-          </text>
 
           {tDesign &&
             isTanDefined &&
             Math.abs(tanVal ?? 0) > 1e-4 &&
             Math.abs(tanVal ?? 0) < 3.5 && (
-              <g>
-                <circle
-                  cx={tDesign.x}
-                  cy={tDesign.y}
-                  r={4}
-                  fill={MATH_COLORS.paramTertiary}
-                />
-                <text
-                  x={tDesign.x + 10}
-                  y={tDesign.y + ((tanVal ?? 0) >= 0 ? -6 : 14)}
-                  fill={MATH_COLORS.paramTertiary}
-                  fontSize={fontScale(11)}
-                  fontWeight="bold"
-                  className="select-none pointer-events-none"
-                >
-                  T(1, tanα)
-                </text>
-              </g>
+              <MathPoint
+                x={tDesign.x}
+                y={tDesign.y}
+                color={MATH_COLORS.paramTertiary}
+                label="T(1, tanα)"
+                labelPosition={
+                  (tanVal ?? 0) >= 0 ? "top-right" : "bottom-right"
+                }
+                fontScale={fontScale}
+              />
             )}
 
           {/* 主控动点 P */}
@@ -632,29 +618,20 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
           >
             M
           </text>
-          <circle
-            cx={aDesign.x}
-            cy={aDesign.y}
-            r={3.5}
-            fill={MATH_COLORS.paramTertiary}
+          <MathPoint
+            x={aDesign.x}
+            y={aDesign.y}
+            color={MATH_COLORS.paramTertiary}
+            label="A(1,0)"
+            labelPosition="bottom-right"
+            fontScale={fontScale}
           />
-          <text
-            x={aDesign.x + 6}
-            y={aDesign.y + 16}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            A(1,0)
-          </text>
 
           {/* 交点 T(1, tan x) */}
-          <circle
-            cx={compData.tDes.x}
-            cy={compData.tDes.y}
-            r={4}
-            fill={MATH_COLORS.paramTertiary}
+          <MathPoint
+            x={compData.tDes.x}
+            y={compData.tDes.y}
+            color={MATH_COLORS.paramTertiary}
           />
           <g
             transform={`translate(${compData.tDes.x + 10}, ${compData.tDes.y - 12})`}
@@ -889,20 +866,17 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
             </g>
           )}
 
-          {/* 边界临界交点 (空心圈) */}
+          {/* 边界临界交点 (空心圈，严格数学去心/开区间表示) */}
           {ineqData.boundaryPoints.map((pt, idx) => {
             const des = mathToDesign(pt.x, pt.y, scale);
             return (
-              <g key={idx}>
-                <circle
-                  cx={des.x}
-                  cy={des.y}
-                  r={5}
-                  fill={MATH_COLORS.white}
-                  stroke={MATH_COLORS.paramTertiary}
-                  strokeWidth={2.5}
-                />
-              </g>
+              <MathPoint
+                key={idx}
+                x={des.x}
+                y={des.y}
+                variant="hollow"
+                color={MATH_COLORS.paramTertiary}
+              />
             );
           })}
 

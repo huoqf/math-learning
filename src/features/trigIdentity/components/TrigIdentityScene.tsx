@@ -9,6 +9,7 @@ import type { ViewportInfo } from "@/utils/useViewport";
 import {
   CoordinateGrid,
   InteractivePoint,
+  MathPoint,
   VectorArrow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
@@ -318,34 +319,26 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 strokeWidth={3}
               />
               {/* 切点 T(1, tan α) */}
-              <circle
-                cx={tDesign.x}
-                cy={tDesign.y}
-                r={4}
-                fill={MATH_COLORS.paramTertiary}
+              <MathPoint
+                x={tDesign.x}
+                y={tDesign.y}
+                color={MATH_COLORS.paramTertiary}
+                label={`T(1, tan α=${trig.tanVal!.toFixed(2)})`}
+                labelPosition={trig.tanVal! >= 0 ? "top-right" : "bottom-right"}
+                fontScale={fontScale}
               />
-              <text
-                x={tDesign.x + 8}
-                y={tDesign.y + (trig.tanVal! >= 0 ? -6 : 14)}
-                fontSize={fontScale(11)}
-                fill={MATH_COLORS.paramTertiary}
-                fontWeight="bold"
-              >
-                {`T(1, tan α=${trig.tanVal!.toFixed(2)})`}
-              </text>
             </>
           )}
 
           {/* 切点 A(1,0) 标注 */}
-          <circle cx={aDesign.x} cy={aDesign.y} r={3.5} fill="#4B5563" />
-          <text
-            x={aDesign.x + 6}
-            y={aDesign.y + 14}
-            fontSize={fontScale(10)}
-            fill="#4B5563"
-          >
-            A(1,0)
-          </text>
+          <MathPoint
+            x={aDesign.x}
+            y={aDesign.y}
+            color={MATH_COLORS.labelText}
+            label="A(1,0)"
+            labelPosition="bottom-right"
+            fontScale={fontScale}
+          />
 
           {/* 动角 α 弧线 */}
           {Math.abs(alphaDeg) > 0.5 && (
@@ -502,37 +495,23 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 strokeWidth={2.5}
               />
               {/* 点 P1 标注 */}
-              <circle
-                cx={compP1Design.x}
-                cy={compP1Design.y}
-                r={5}
-                fill={MATH_COLORS.paramPrimary}
+              <MathPoint
+                x={compP1Design.x}
+                y={compP1Design.y}
+                color={MATH_COLORS.paramPrimary}
+                label={`P₁(α+θ=${comp.angle1Deg}°)`}
+                labelPosition="top-right"
+                fontScale={fontScale}
               />
-              <text
-                x={compP1Design.x + 8}
-                y={compP1Design.y - 6}
-                fontSize={fontScale(11)}
-                fill={MATH_COLORS.paramPrimary}
-                fontWeight="bold"
-              >
-                {`P₁(α+θ=${comp.angle1Deg}°)`}
-              </text>
               {/* 点 P2 标注 */}
-              <circle
-                cx={compP2Design.x}
-                cy={compP2Design.y}
-                r={5}
-                fill={MATH_COLORS.paramSecondary}
+              <MathPoint
+                x={compP2Design.x}
+                y={compP2Design.y}
+                color={MATH_COLORS.paramSecondary}
+                label={`P₂(π/2-(α+θ)=${comp.angle2Deg}°)`}
+                labelPosition="top-right"
+                fontScale={fontScale}
               />
-              <text
-                x={compP2Design.x + 8}
-                y={compP2Design.y - 6}
-                fontSize={fontScale(11)}
-                fill={MATH_COLORS.paramSecondary}
-                fontWeight="bold"
-              >
-                {`P₂(π/2-(α+θ)=${comp.angle2Deg}°)`}
-              </text>
             </>
           ) : (
             /* 标准 6 组或万能法则 */
@@ -690,27 +669,22 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
 
               {/* 变换点 P'(cosβ, sinβ) - 仅在未重合时单独渲染 */}
               {!isPCoincide && (
-                <>
-                  <circle
-                    cx={pPrimeDesign.x}
-                    cy={pPrimeDesign.y}
-                    r={5}
-                    fill={MATH_COLORS.paramSecondary}
-                  />
-                  <text
-                    x={
-                      pPrimeDesign.x + (activeInd.pointPPrime.x >= 0 ? 10 : -28)
-                    }
-                    y={
-                      pPrimeDesign.y + (activeInd.pointPPrime.y >= 0 ? -10 : 18)
-                    }
-                    fontSize={fontScale(11)}
-                    fill={MATH_COLORS.paramSecondary}
-                    fontWeight="bold"
-                  >
-                    {`P'(β=${activeInd.betaDeg}°)`}
-                  </text>
-                </>
+                <MathPoint
+                  x={pPrimeDesign.x}
+                  y={pPrimeDesign.y}
+                  color={MATH_COLORS.paramSecondary}
+                  label={`P'(β=${activeInd.betaDeg}°)`}
+                  labelPosition={
+                    activeInd.pointPPrime.x >= 0
+                      ? activeInd.pointPPrime.y >= 0
+                        ? "top-right"
+                        : "bottom-right"
+                      : activeInd.pointPPrime.y >= 0
+                        ? "top-left"
+                        : "bottom-left"
+                  }
+                  fontScale={fontScale}
+                />
               )}
 
               {/* 当重合时，给重合点增加外围橙色指示光晕 */}

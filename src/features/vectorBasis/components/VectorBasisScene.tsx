@@ -3,6 +3,7 @@ import {
   CoordinateGrid,
   VectorArrow,
   InteractivePoint,
+  MathPoint,
 } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
@@ -595,13 +596,11 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
           {(() => {
             const gDesign = mathToDesign(centroid.x, centroid.y, scale);
             return (
-              <circle
-                cx={gDesign.x}
-                cy={gDesign.y}
-                r={fontScale(6)}
-                fill={MATH_COLORS.limitPoint}
-                stroke="#FFFFFF"
-                strokeWidth={2}
+              <MathPoint
+                x={gDesign.x}
+                y={gDesign.y}
+                variant="focus"
+                color={MATH_COLORS.limitPoint}
               />
             );
           })()}

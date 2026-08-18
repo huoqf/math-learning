@@ -1,4 +1,4 @@
-import { CoordinateGrid, InteractivePoint } from "@/components/Math";
+import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import {
@@ -231,11 +231,10 @@ export function TriangleSolveScene({
                 strokeWidth={isPrimary ? 3 : 2}
               />
 
-              <circle
-                cx={pB.x}
-                cy={pB.y}
-                r={fontScale(5)}
-                fill={
+              <MathPoint
+                x={pB.x}
+                y={pB.y}
+                color={
                   isPrimary
                     ? MATH_COLORS.paramPrimary
                     : MATH_COLORS.sequenceHighlight
@@ -356,11 +355,10 @@ export function TriangleSolveScene({
             strokeDasharray="4,4"
           />
           {/* 外心 O */}
-          <circle
-            cx={pCircumCenter.x}
-            cy={pCircumCenter.y}
-            r={fontScale(3.5)}
-            fill={MATH_COLORS.circle}
+          <MathPoint
+            x={pCircumCenter.x}
+            y={pCircumCenter.y}
+            color={MATH_COLORS.circle}
           />
           <text
             x={pCircumCenter.x + fontScale(6)}
@@ -939,18 +937,8 @@ export function TriangleSolveScene({
           }
         }}
       />
-      <circle
-        cx={pB.x}
-        cy={pB.y}
-        r={fontScale(5)}
-        fill={MATH_COLORS.paramSecondary}
-      />
-      <circle
-        cx={pC.x}
-        cy={pC.y}
-        r={fontScale(5)}
-        fill={MATH_COLORS.paramTertiary}
-      />
+      <MathPoint x={pB.x} y={pB.y} color={MATH_COLORS.paramSecondary} />
+      <MathPoint x={pC.x} y={pC.y} color={MATH_COLORS.paramTertiary} />
 
       {/* ── 顶点与角度标签 (沿着形心向外放射，绝对不被遮挡) ── */}
       <text
