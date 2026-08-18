@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TabSwitcher,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -14,12 +15,16 @@ import { CANVAS_PRESETS } from "@/theme";
 import { TrigLinesScene } from "./components/TrigLinesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/trigLines";
+import type { TrigInequalityKind } from "./math/trigLines";
 
 export function TrigLinesAnimation() {
-  // 研究模式：'lines' | 'comparison' | 'quadrant'
+  // 3 大核心研究模式：'lines' | 'comparison' | 'inequality'
   const [studyMode, setStudyMode] = useState<
-    "lines" | "comparison" | "quadrant"
+    "lines" | "comparison" | "inequality"
   >("lines");
+
+  // 不等式类型
+  const [ineqKind, setIneqKind] = useState<TrigInequalityKind>("sin_gt");
 
   // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -40,8 +45,11 @@ export function TrigLinesAnimation() {
 
   // 数学量看板组装
   const mathData = useMemo(() => {
-    return buildMathQuantities("anim-trig-lines", params, { studyMode });
-  }, [params, studyMode]);
+    return buildMathQuantities("anim-trig-lines", params, {
+      studyMode,
+      ineqKind,
+    });
+  }, [params, studyMode, ineqKind]);
 
   // 参数变更
   const handleParamChange = (key: string, value: number) => {
@@ -56,44 +64,79 @@ export function TrigLinesAnimation() {
     setParams({ ...defaultParams });
   };
 
-  // 左屏声明式参数配置
+  // 左屏声明式参数配置 (按当前研究模式严格过滤)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    return Object.entries(paramMeta).map(([key, meta]) => ({
-      key,
-      label: meta.label,
-      labelFormula: meta.labelFormula,
-      value: params[key] ?? meta.defaultValue ?? 0,
-      min: meta.min,
-      max: meta.max,
-      step: meta.step ?? 1,
-      description: meta.description,
-      descriptionFormula: meta.descriptionFormula,
-      importance: meta.importance,
-      marks: meta.marks,
-    }));
-  }, [params]);
+    const keysByMode: Record<string, string[]> = {
+      lines: ["alphaDeg"],
+      comparison: ["compAlphaDeg"],
+      inequality: ["ineqThreshold", "alphaDeg"],
+    };
+
+    const keys = keysByMode[studyMode] ?? ["alphaDeg"];
+    return keys
+      .filter((key) => key in paramMeta)
+      .map((key) => {
+        const meta = paramMeta[key];
+        return {
+          key,
+          label: meta.label,
+          labelFormula: meta.labelFormula,
+          value: params[key] ?? meta.defaultValue ?? 0,
+          min: meta.min,
+          max: meta.max,
+          step: meta.step ?? 1,
+          description: meta.description,
+          descriptionFormula: meta.descriptionFormula,
+          importance: meta.importance,
+          marks: meta.marks,
+        };
+      });
+  }, [params, studyMode]);
 
   // 动态拼装三位一体公式 (带有 Hex 色彩)
   const equationLatex = useMemo(() => {
-    const alpha = params.alphaDeg ?? 45;
-    const rad = (alpha * Math.PI) / 180;
-    const sinV = Math.sin(rad).toFixed(3);
-    const cosV = Math.cos(rad).toFixed(3);
-    const isTanDef = Math.abs(Math.cos(rad)) > 1e-7;
-    const tanV = isTanDef ? Math.tan(rad).toFixed(3) : "\\text{无意义}";
+    if (studyMode === "lines") {
+      const alpha = params.alphaDeg ?? 45;
+      const rad = (alpha * Math.PI) / 180;
+      const sinV = Math.sin(rad).toFixed(3);
+      const cosV = Math.cos(rad).toFixed(3);
+      const isTanDef = Math.abs(Math.cos(rad)) > 1e-7;
+      const tanV = isTanDef ? Math.tan(rad).toFixed(3) : "\\text{无意义}";
+      return `\\sin\\alpha = \\color{#EF4444}{${sinV}}, \\quad \\cos\\alpha = \\color{#D97706}{${cosV}}, \\quad \\tan\\alpha = \\color{#059669}{${tanV}}`;
+    }
 
-    // 色彩映射：
-    // MP (正弦): #EF4444
-    // OM (余弦): #D97706
-    // AT (正切): #059669
-    return `\\sin\\alpha = \\color{#EF4444}{${sinV}}, \\quad \\cos\\alpha = \\color{#D97706}{${cosV}}, \\quad \\tan\\alpha = \\color{#059669}{${tanV}}`;
-  }, [params.alphaDeg]);
+    if (studyMode === "comparison") {
+      const xDeg = params.compAlphaDeg ?? 40;
+      const xRad = (xDeg * Math.PI) / 180;
+      const sinV = Math.sin(xRad).toFixed(3);
+      const xV = xRad.toFixed(3);
+      const tanV = Math.tan(xRad).toFixed(3);
+      return `\\color{#6366F1}{S_{\\triangle OMP}} < \\color{#3B82F6}{S_{\\text{扇形}OAP}} < \\color{#059669}{S_{\\triangle OAT}} \\implies \\color{#EF4444}{\\sin x} < \\color{#3B82F6}{x} < \\color{#059669}{\\tan x} \\quad (${sinV} < ${xV} < ${tanV})`;
+    }
+
+    // inequality
+    const ineqLabels: Record<TrigInequalityKind, string> = {
+      sin_gt: `\\sin x > ${params.ineqThreshold?.toFixed(2)}`,
+      sin_lt: `\\sin x < ${params.ineqThreshold?.toFixed(2)}`,
+      cos_gt: `\\cos x > ${params.ineqThreshold?.toFixed(2)}`,
+      cos_lt: `\\cos x < ${params.ineqThreshold?.toFixed(2)}`,
+      tan_gt: `\\tan x > ${params.ineqThreshold?.toFixed(2)}`,
+      tan_lt: `\\tan x < ${params.ineqThreshold?.toFixed(2)}`,
+    };
+    return `\\text{目标不等式：} \\color{#3B82F6}{${ineqLabels[ineqKind]}} \\quad (\\text{测试角 } \\alpha = ${params.alphaDeg}^\\circ)`;
+  }, [
+    studyMode,
+    params.alphaDeg,
+    params.compAlphaDeg,
+    params.ineqThreshold,
+    ineqKind,
+  ]);
 
   // 标题
   const panelTitle = useMemo(() => {
     if (studyMode === "lines") return "三角函数线定义看板";
-    if (studyMode === "comparison") return "大小比较与不等式看板";
-    return "象限符号与全正法则看板";
+    if (studyMode === "comparison") return "面积逼近与不等式放缩看板";
+    return "单位圆解三角不等式看板";
   }, [studyMode]);
 
   return (
@@ -101,108 +144,108 @@ export function TrigLinesAnimation() {
       left={
         <LeftPanel>
           {/* 模式选择 Section */}
-          <LeftPanelSection title="研究模式" subtitle="选择三角函数线研讨视角">
-            <SelectGrid
-              items={[
-                { key: "lines", label: "三角函数线定义" },
-                { key: "comparison", label: "几何大小比较" },
-                { key: "quadrant", label: "象限符号法则" },
+          <LeftPanelSection title="研究模式" subtitle="选择教学研讨视角">
+            <TabSwitcher
+              tabs={[
+                { key: "lines", label: "定义演化" },
+                { key: "comparison", label: "面积放缩" },
+                { key: "inequality", label: "三角不等式" },
               ]}
               value={studyMode}
               onChange={(k) => setStudyMode(k as typeof studyMode)}
-              variant="filled"
-              columns={1}
             />
           </LeftPanelSection>
 
-          {/* 特殊角快捷切换 Section */}
-          <LeftPanelSection
-            title="快捷特殊角"
-            subtitle="一键设定高考常考特殊角度"
-          >
-            <SelectGrid
-              items={[
-                { key: "0", label: "0°" },
-                { key: "30", label: "30°" },
-                { key: "45", label: "45°" },
-                { key: "60", label: "60°" },
-                { key: "90", label: "90°" },
-                { key: "120", label: "120°" },
-                { key: "135", label: "135°" },
-                { key: "150", label: "150°" },
-                { key: "180", label: "180°" },
-                { key: "270", label: "270°" },
-                { key: "315", label: "315°" },
-                { key: "360", label: "360°" },
-              ]}
-              value={String(params.alphaDeg)}
-              onChange={(k) => handleParamChange("alphaDeg", Number(k))}
-              variant="filled"
-              columns={3}
-            />
-          </LeftPanelSection>
-
-          {/* 动态显示开关 */}
-          <LeftPanelSection
-            title="函数线显隐"
-            subtitle="勾选控制展示的三大有向线段"
-          >
-            <SelectGrid
-              items={[
-                {
-                  key: "sin",
-                  label: "正弦线 MP",
-                  formula: "\\overrightarrow{MP}",
-                },
-                {
-                  key: "cos",
-                  label: "余弦线 OM",
-                  formula: "\\overrightarrow{OM}",
-                },
-                {
-                  key: "tan",
-                  label: "正切线 AT",
-                  formula: "\\overrightarrow{AT}",
-                  fullWidth: true,
-                },
-              ]}
-              value={
-                params.showSine && params.showCosine && params.showTangent
-                  ? "all"
-                  : params.showSine
-                    ? "sin"
-                    : params.showCosine
-                      ? "cos"
-                      : "tan"
-              }
-              onChange={(k) => {
-                if (k === "sin") {
-                  handleParamChange("showSine", 1);
-                  handleParamChange("showCosine", 0);
-                  handleParamChange("showTangent", 0);
-                } else if (k === "cos") {
-                  handleParamChange("showSine", 0);
-                  handleParamChange("showCosine", 1);
-                  handleParamChange("showTangent", 0);
-                } else if (k === "tan") {
-                  handleParamChange("showSine", 0);
-                  handleParamChange("showCosine", 0);
-                  handleParamChange("showTangent", 1);
-                } else {
-                  handleParamChange("showSine", 1);
-                  handleParamChange("showCosine", 1);
-                  handleParamChange("showTangent", 1);
+          {/* 模式 1：函数线显隐开关（紧凑 2 列） */}
+          {studyMode === "lines" && (
+            <LeftPanelSection
+              title="函数线显隐"
+              subtitle="选择展示的三大有向线段"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "all",
+                    label: "全部显示",
+                  },
+                  {
+                    key: "sin",
+                    label: "正弦线",
+                    formula: "\\overrightarrow{MP}",
+                  },
+                  {
+                    key: "cos",
+                    label: "余弦线",
+                    formula: "\\overrightarrow{OM}",
+                  },
+                  {
+                    key: "tan",
+                    label: "正切线",
+                    formula: "\\overrightarrow{AT}",
+                  },
+                ]}
+                value={
+                  params.showSine && params.showCosine && params.showTangent
+                    ? "all"
+                    : params.showSine
+                      ? "sin"
+                      : params.showCosine
+                        ? "cos"
+                        : "tan"
                 }
-              }}
-              variant="filled"
-              color="primary"
-            />
-          </LeftPanelSection>
+                onChange={(k) => {
+                  if (k === "sin") {
+                    handleParamChange("showSine", 1);
+                    handleParamChange("showCosine", 0);
+                    handleParamChange("showTangent", 0);
+                  } else if (k === "cos") {
+                    handleParamChange("showSine", 0);
+                    handleParamChange("showCosine", 1);
+                    handleParamChange("showTangent", 0);
+                  } else if (k === "tan") {
+                    handleParamChange("showSine", 0);
+                    handleParamChange("showCosine", 0);
+                    handleParamChange("showTangent", 1);
+                  } else {
+                    handleParamChange("showSine", 1);
+                    handleParamChange("showCosine", 1);
+                    handleParamChange("showTangent", 1);
+                  }
+                }}
+                variant="filled"
+                color="primary"
+                columns={2}
+              />
+            </LeftPanelSection>
+          )}
 
-          {/* 参数调节 Section */}
+          {/* 模式 3：不等式类型选择 */}
+          {studyMode === "inequality" && (
+            <LeftPanelSection
+              title="不等式结构"
+              subtitle="选择待求解的三角不等式"
+            >
+              <SelectGrid
+                items={[
+                  { key: "sin_gt", formula: "\\sin x > c" },
+                  { key: "sin_lt", formula: "\\sin x < c" },
+                  { key: "cos_gt", formula: "\\cos x > c" },
+                  { key: "cos_lt", formula: "\\cos x < c" },
+                  { key: "tan_gt", formula: "\\tan x > k" },
+                  { key: "tan_lt", formula: "\\tan x < k" },
+                ]}
+                value={ineqKind}
+                onChange={(k) => setIneqKind(k as TrigInequalityKind)}
+                variant="filled"
+                columns={2}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 统一声明式参数调节 Section（内置 marks 快捷点击跳转） */}
           <LeftPanelSection
-            title="连续动角调节"
-            subtitle="拖动滑块连续改变动角 α"
+            title="参数控制"
+            subtitle="拖动滑块或点击刻度快速定位"
           >
             <ParamControl
               params={paramConfigs}
@@ -215,7 +258,7 @@ export function TrigLinesAnimation() {
       center={
         <div className="w-full h-full relative flex flex-col bg-white">
           {/* 三位一体 LaTeX 公式悬浮窗口 */}
-          <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
+          <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm max-w-[90%] overflow-x-auto">
             <KatexFormula formula={equationLatex} mode="inline" />
           </div>
 
@@ -228,6 +271,8 @@ export function TrigLinesAnimation() {
               params={
                 params as {
                   alphaDeg: number;
+                  compAlphaDeg?: number;
+                  ineqThreshold?: number;
                   showSine?: number;
                   showCosine?: number;
                   showTangent?: number;
@@ -240,6 +285,7 @@ export function TrigLinesAnimation() {
               onParamChange={handleParamChange}
               fontScale={canvasSize.font}
               studyMode={studyMode}
+              ineqKind={ineqKind}
             />
           </AnimationSvgCanvas>
         </div>
