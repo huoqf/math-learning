@@ -95,7 +95,7 @@ export const Point3D = ({
       renderOrder={500}
     >
       <sphereGeometry
-        args={[hovered || dragging ? finalRadius * 1.5 : finalRadius, 24, 24]}
+        args={[hovered || dragging ? finalRadius * 1.15 : finalRadius, 24, 24]}
       />
       <meshStandardMaterial
         color={colorVal}

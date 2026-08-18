@@ -20,23 +20,39 @@ import {
   Legend3D,
   CameraRig,
 } from "@/components/Math3D";
+import type { LegendItem } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { linePlaneRelationMeta } from "@/data/registries/solidGeometry";
 import { getLineDirection } from "@/math3d/lineRelation";
 import type { Vec3 } from "@/math3d/vector3";
+import { PyramidModelScene } from "./components/PyramidModelScene";
 
 type TeachingMode =
-  "parallel" | "perpendicular" | "surfaceParallel" | "surfacePerp" | "vector";
+  | "parallel"
+  | "perpendicular"
+  | "surfaceParallel"
+  | "surfacePerp"
+  | "gaokaoPyramid"
+  | "vector";
 
 export default function LinePlaneRelationAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallel");
+  const [subTheorem, setSubTheorem] = useState<"judge" | "prop">("judge");
+  const [showAxes, setShowAxes] = useState<boolean>(false);
   const [params, setParams] = useState<Record<string, number>>({
     zHeight: 2,
     thetaDeg: 0,
-    phiDeg: 30,
+    phiDeg: 0,
     intersectType: 1, // 1: 相交, 0: 平行(反例)
+    inPlaneType: 1, // 1: 面外, 0: 面内(反例)
+    lambdaE: 0.5,
+    lambdaF: 0.5,
+    pyramidA: 3.6,
+    pyramidB: 2.8,
+    pyramidH: 3.5,
+    step: 1,
   });
 
   const { preset, cameraPosition, setCameraPreset, controlsRef } =
@@ -44,41 +60,120 @@ export default function LinePlaneRelationAnimation() {
 
   const zHeight = params.zHeight ?? 2;
   const thetaDeg = params.thetaDeg ?? 0;
-  const phiDeg = params.phiDeg ?? 30;
+  const phiDeg = params.phiDeg ?? 0;
   const intersectType = params.intersectType ?? 1;
+  const inPlaneType = params.inPlaneType ?? 1;
+  const lambdaE = params.lambdaE ?? 0.5;
+  const lambdaF = params.lambdaF ?? 0.5;
+  const pyramidA = params.pyramidA ?? 3.6;
+  const pyramidB = params.pyramidB ?? 2.8;
+  const pyramidH = params.pyramidH ?? 3.5;
+  const step = params.step ?? 1;
 
   // 组装右屏看板数据
   const mathData = useMemo(
     () =>
       buildMathQuantities("anim-solid-position", params, {
         mode: activeMode,
+        subTheorem,
       }),
-    [params, activeMode],
+    [params, activeMode, subTheorem],
   );
 
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleReset = () => {
-    setParams({
-      zHeight: 2,
-      thetaDeg: activeMode === "perpendicular" ? 90 : 0,
-      phiDeg: 30,
-      intersectType: 1,
-    });
+  // 模式切换统一调度
+  const handleModeChange = (mode: TeachingMode) => {
+    setActiveMode(mode);
+    setSubTheorem("judge");
+    setShowAxes(mode === "vector");
+    if (mode === "perpendicular") {
+      setParams((p) => ({
+        ...p,
+        thetaDeg: 90,
+        zHeight: 0,
+        phiDeg: 45,
+        intersectType: 1,
+      }));
+    } else if (mode === "parallel") {
+      setParams((p) => ({
+        ...p,
+        thetaDeg: 0,
+        zHeight: 2,
+        phiDeg: 0,
+        inPlaneType: 1,
+        step: 1,
+      }));
+    }
   };
 
-  // 左屏参数列表配置
+  // 智能重置
+  const handleReset = () => {
+    switch (activeMode) {
+      case "parallel":
+        setParams((p) => ({
+          ...p,
+          zHeight: 2,
+          thetaDeg: 0,
+          phiDeg: 0,
+          inPlaneType: 1,
+          step: 1,
+        }));
+        break;
+      case "perpendicular":
+        setParams((p) => ({
+          ...p,
+          zHeight: 0,
+          thetaDeg: 90,
+          phiDeg: 45,
+          intersectType: 1,
+        }));
+        break;
+      case "surfaceParallel":
+        setParams((p) => ({ ...p, zHeight: 2.5, step: 1 }));
+        break;
+      case "surfacePerp":
+        setParams((p) => ({ ...p, zHeight: 2.5, thetaDeg: 90, phiDeg: 0 }));
+        break;
+      case "gaokaoPyramid":
+        setParams((p) => ({
+          ...p,
+          lambdaE: 0.5,
+          lambdaF: 0.5,
+          pyramidA: 3.6,
+          pyramidB: 2.8,
+          pyramidH: 3.5,
+        }));
+        break;
+      case "vector":
+        setParams((p) => ({ ...p, thetaDeg: 30, phiDeg: 30, zHeight: 1.5 }));
+        break;
+    }
+  };
+
+  // 按模式精准过滤参数
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    return linePlaneRelationMeta.map((meta) => {
-      // 垂直模式下强化 θ = 90° 标记
-      let currentVal = params[meta.key] ?? meta.defaultValue ?? 0;
-      return {
+    const keysMap: Record<TeachingMode, string[]> = {
+      parallel:
+        subTheorem === "judge" ? ["zHeight", "phiDeg"] : ["zHeight", "step"],
+      perpendicular:
+        subTheorem === "judge" ? ["thetaDeg", "phiDeg"] : ["phiDeg"],
+      surfaceParallel: ["zHeight", "step"],
+      surfacePerp: ["zHeight", "thetaDeg"],
+      gaokaoPyramid: ["lambdaE", "lambdaF", "pyramidH", "pyramidA", "pyramidB"],
+      vector: ["thetaDeg", "phiDeg", "zHeight"],
+    };
+
+    return keysMap[activeMode]
+      .map((k) => linePlaneRelationMeta.find((m) => m.key === k))
+      .filter((m): m is NonNullable<typeof m> => Boolean(m))
+      .map((meta) => ({
         key: meta.key,
         label: meta.label,
         labelFormula: meta.labelFormula,
-        value: currentVal,
+        value: params[meta.key] ?? meta.defaultValue ?? 0,
         min: meta.min,
         max: meta.max,
         step: meta.step ?? 0.1,
@@ -86,102 +181,308 @@ export default function LinePlaneRelationAnimation() {
         descriptionFormula: meta.descriptionFormula,
         importance: meta.importance,
         marks: meta.marks,
-      };
-    });
-  }, [params]);
+      }));
+  }, [params, activeMode, subTheorem]);
 
   // 3D 几何向量解算
+  const effectiveZ = inPlaneType === 0 ? 0 : zHeight;
   const lineDir = getLineDirection(thetaDeg, phiDeg);
+  const lineLen = 2.6;
   const startPoint: Vec3 = {
-    x: -lineDir.x * 2.5,
-    y: -lineDir.y * 2.5,
-    z: zHeight - lineDir.z * 2.5,
+    x: -lineDir.x * lineLen,
+    y: -lineDir.y * lineLen,
+    z: effectiveZ - lineDir.z * lineLen,
   };
   const endPoint: Vec3 = {
-    x: lineDir.x * 2.5,
-    y: lineDir.y * 2.5,
-    z: zHeight + lineDir.z * 2.5,
+    x: lineDir.x * lineLen,
+    y: lineDir.y * lineLen,
+    z: effectiveZ + lineDir.z * lineLen,
   };
-  const midPoint: Vec3 = { x: 0, y: 0, z: zHeight };
+  const midPoint: Vec3 = { x: 0, y: 0, z: effectiveZ };
 
-  // 面内平行线 m (平行模式)
-  const lineMStart: Vec3 = { x: -2.5, y: 0, z: 0 };
-  const lineMEnd: Vec3 = { x: 2.5, y: 0, z: 0 };
+  const lineMStart: Vec3 = { x: -2.6, y: 0, z: 0 };
+  const lineMEnd: Vec3 = { x: 2.6, y: 0, z: 0 };
 
-  // 面内直线 a 与 b (垂直模式)
-  // 直线 a 沿 x 轴 (-2.5,0,0) -> (2.5,0,0)
-  const lineAStart: Vec3 = { x: -2.5, y: 0, z: 0 };
-  const lineAEnd: Vec3 = { x: 2.5, y: 0, z: 0 };
-
-  // 直线 b: 若相交，沿 y 轴 (0,-2.5,0) -> (0,2.5,0); 若平行，沿 (x, 1.5, 0)
+  const phiRadB = (phiDeg * Math.PI) / 180;
   const lineBStart: Vec3 =
-    intersectType === 1 ? { x: 0, y: -2.5, z: 0 } : { x: -2.5, y: 1.5, z: 0 };
+    intersectType === 1
+      ? { x: -2.6 * Math.cos(phiRadB), y: -2.6 * Math.sin(phiRadB), z: 0 }
+      : { x: -2.6, y: 1.5, z: 0 };
   const lineBEnd: Vec3 =
-    intersectType === 1 ? { x: 0, y: 2.5, z: 0 } : { x: 2.5, y: 1.5, z: 0 };
+    intersectType === 1
+      ? { x: 2.6 * Math.cos(phiRadB), y: 2.6 * Math.sin(phiRadB), z: 0 }
+      : { x: 2.6, y: 1.5, z: 0 };
 
-  // 法向量 n
-  const normalOrigin: Vec3 = { x: 0, y: 0, z: 0 };
+  const testMRad = (phiDeg * Math.PI) / 180;
+  const testMEnd: Vec3 = {
+    x: 2.5 * Math.cos(testMRad),
+    y: 2.5 * Math.sin(testMRad),
+    z: 0,
+  };
+
   const normalEnd: Vec3 = { x: 0, y: 0, z: 2.5 };
+  const projPoint: Vec3 = { x: endPoint.x, y: endPoint.y, z: effectiveZ };
 
-  // 线面角弧与投影点
-  const projPoint: Vec3 = { x: endPoint.x, y: endPoint.y, z: zHeight };
+  // 精准图例
+  const legendItems = useMemo<LegendItem[]>(() => {
+    let items: LegendItem[] = [];
+    switch (activeMode) {
+      case "parallel":
+        items =
+          subTheorem === "judge"
+            ? [
+                {
+                  colorKey: "paramPrimary",
+                  swatch: "line",
+                  label: "空间直线 l",
+                },
+                { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
+                {
+                  colorKey: "paramSecondary",
+                  swatch: "line",
+                  label: "面内平行线 m",
+                },
+              ]
+            : [
+                {
+                  colorKey: "paramPrimary",
+                  swatch: "line",
+                  label: "平行直线 l",
+                },
+                { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
+                {
+                  colorKey: "paramTertiary",
+                  swatch: "area",
+                  label: "辅助截面 β",
+                },
+                {
+                  colorKey: "paramSecondary",
+                  swatch: "line",
+                  label: "两面交线 m",
+                },
+              ];
+        break;
+      case "perpendicular":
+        items =
+          subTheorem === "judge"
+            ? [
+                {
+                  colorKey: "paramPrimary",
+                  swatch: "line",
+                  label: "空间垂线 l",
+                },
+                { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
+                {
+                  colorKey: "paramSecondary",
+                  swatch: "line",
+                  label: "面内直线 a, b",
+                },
+              ]
+            : [
+                {
+                  colorKey: "paramPrimary",
+                  swatch: "line",
+                  label: "垂线 l ⊥ α",
+                },
+                { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
+                {
+                  colorKey: "paramSecondary",
+                  swatch: "line",
+                  label: "面内任意直线 m",
+                },
+                {
+                  colorKey: "highlight",
+                  swatch: "line",
+                  label: "直角 ∠(l, m) = 90°",
+                },
+              ];
+        break;
+      case "surfaceParallel":
+        items = [
+          { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
+          { colorKey: "paramTertiary", swatch: "area", label: "平行平面 β" },
+          { colorKey: "primary", swatch: "area", label: "第三截面 γ 与交线" },
+        ];
+        break;
+      case "surfacePerp":
+        items = [
+          { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
+          {
+            colorKey: "paramTertiary",
+            swatch: "area",
+            label: "垂直平面 β ⊥ α",
+          },
+          { colorKey: "secondary", swatch: "line", label: "两面交线 l" },
+          { colorKey: "paramPrimary", swatch: "line", label: "面内垂线 a ⊥ l" },
+        ];
+        break;
+      case "gaokaoPyramid":
+        items = [
+          {
+            colorKey: "paramPrimary",
+            swatch: "line",
+            label: "垂直侧棱 PA ⊥ 底面",
+          },
+          { colorKey: "highlight", swatch: "line", label: "动点连线 EF" },
+          { colorKey: "secondary", swatch: "area", label: "矩形底面 ABCD" },
+          { colorKey: "paramTertiary", swatch: "area", label: "平行侧面 PAD" },
+        ];
+        break;
+      case "vector":
+        items = [
+          { colorKey: "paramPrimary", swatch: "line", label: "方向向量 l" },
+          {
+            colorKey: "highlight",
+            swatch: "line",
+            label: "法向量 n = (0,0,1)",
+          },
+          { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
+          { colorKey: "paramSecondary", swatch: "line", label: "线面角 θ" },
+        ];
+        break;
+    }
+    if (showAxes) {
+      items.push({
+        colorKey: "grid",
+        swatch: "line",
+        label: "坐标轴 (x红/y绿/z蓝)",
+      });
+    }
+    return items;
+  }, [activeMode, subTheorem, showAxes]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="空间位置关系模式选择">
-            <TabSwitcher
-              tabs={[
-                { key: "parallel", label: "线面平行" },
-                { key: "perpendicular", label: "线面垂直" },
-                { key: "surfaceParallel", label: "面面平行" },
-                { key: "surfacePerp", label: "面面垂直" },
-                { key: "vector", label: "向量与线面角" },
+          {/* 1. 核心知识体系选择 */}
+          <LeftPanelSection title="空间位置关系体系">
+            <SelectGrid
+              items={[
+                {
+                  key: "parallel",
+                  formula: "l \\parallel \\alpha",
+                  label: "线面平行",
+                },
+                {
+                  key: "perpendicular",
+                  formula: "l \\perp \\alpha",
+                  label: "线面垂直",
+                },
+                {
+                  key: "surfaceParallel",
+                  formula: "\\alpha \\parallel \\beta",
+                  label: "面面平行",
+                },
+                {
+                  key: "surfacePerp",
+                  formula: "\\alpha \\perp \\beta",
+                  label: "面面垂直",
+                },
+                {
+                  key: "gaokaoPyramid",
+                  formula: "P\\text{-}ABCD",
+                  label: "高考母题",
+                },
+                {
+                  key: "vector",
+                  formula: "\\vec{l} \\cdot \\vec{n}",
+                  label: "空间向量",
+                },
               ]}
               value={activeMode}
-              onChange={(mode) => {
-                setActiveMode(mode as TeachingMode);
-                if (mode === "perpendicular") {
-                  setParams((p) => ({ ...p, thetaDeg: 90, zHeight: 0 }));
-                } else if (mode === "parallel") {
-                  setParams((p) => ({ ...p, thetaDeg: 0, zHeight: 2 }));
-                }
-              }}
+              onChange={(m) => handleModeChange(m as TeachingMode)}
+              columns={2}
             />
           </LeftPanelSection>
 
+          {/* 2. 当前模式专属子控制与反例验证 */}
+          {activeMode === "parallel" && (
+            <LeftPanelSection title="定理与前提探究">
+              <div className="space-y-2.5">
+                <TabSwitcher
+                  tabs={[
+                    { key: "judge", label: "判定定理" },
+                    { key: "prop", label: "性质定理" },
+                  ]}
+                  value={subTheorem}
+                  onChange={(val) => setSubTheorem(val as "judge" | "prop")}
+                />
+                <SelectGrid
+                  items={[
+                    { key: "1", label: "面外直线 (l ⊄ α)" },
+                    { key: "0", label: "面内直线 (l ⊂ α 反例)" },
+                  ]}
+                  value={String(inPlaneType)}
+                  onChange={(v) => handleParamChange("inPlaneType", Number(v))}
+                  columns={2}
+                />
+              </div>
+            </LeftPanelSection>
+          )}
+
           {activeMode === "perpendicular" && (
-            <LeftPanelSection
-              title="面内两条直线关系"
-              subtitle="演示线面垂直判定前提：两条相交直线"
-            >
+            <LeftPanelSection title="定理与前提探究">
+              <div className="space-y-2.5">
+                <TabSwitcher
+                  tabs={[
+                    { key: "judge", label: "判定定理" },
+                    { key: "prop", label: "性质定理" },
+                  ]}
+                  value={subTheorem}
+                  onChange={(val) => setSubTheorem(val as "judge" | "prop")}
+                />
+                {subTheorem === "judge" && (
+                  <SelectGrid
+                    items={[
+                      { key: "1", label: "两线相交 (成立)" },
+                      { key: "0", label: "两线平行 (反例)" },
+                    ]}
+                    value={String(intersectType)}
+                    onChange={(v) =>
+                      handleParamChange("intersectType", Number(v))
+                    }
+                    columns={2}
+                  />
+                )}
+              </div>
+            </LeftPanelSection>
+          )}
+
+          {activeMode === "gaokaoPyramid" && (
+            <LeftPanelSection title="动点位置预设">
               <SelectGrid
                 items={[
-                  {
-                    key: "1",
-                    label: "相交",
-                    description: "a ∩ b = P (成立)",
-                  },
-                  {
-                    key: "0",
-                    label: "平行 (反例)",
-                    description: "a ∥ b (反例失效)",
-                  },
+                  { key: "mid", label: "中点平行 (λ = 0.5)" },
+                  { key: "third", label: "三分之一点 (λ = 1/3)" },
+                  { key: "diff", label: "相交反例 (λ_E ≠ λ_F)" },
                 ]}
-                value={String(intersectType)}
-                onChange={(val) =>
-                  setParams((prev) => ({ ...prev, intersectType: Number(val) }))
+                value={
+                  lambdaE === 0.5 && lambdaF === 0.5
+                    ? "mid"
+                    : Math.abs(lambdaE - 0.33) < 0.05 &&
+                        Math.abs(lambdaF - 0.33) < 0.05
+                      ? "third"
+                      : Math.abs(lambdaE - 0.3) < 0.02 &&
+                          Math.abs(lambdaF - 0.7) < 0.02
+                        ? "diff"
+                        : ""
                 }
-                columns={2}
+                onChange={(val) => {
+                  if (val === "mid")
+                    setParams((p) => ({ ...p, lambdaE: 0.5, lambdaF: 0.5 }));
+                  else if (val === "third")
+                    setParams((p) => ({ ...p, lambdaE: 0.33, lambdaF: 0.33 }));
+                  else if (val === "diff")
+                    setParams((p) => ({ ...p, lambdaE: 0.3, lambdaF: 0.7 }));
+                }}
+                columns={1}
               />
             </LeftPanelSection>
           )}
 
-          <LeftPanelSection
-            title="直线几何参数"
-            subtitle="调节直线高度 h、线面角 θ 与方位角 φ"
-          >
+          {/* 3. 参数调节 */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -189,228 +490,349 @@ export default function LinePlaneRelationAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="3D 视角选择">
-            <TabSwitcher
-              tabs={[
-                { key: "iso", label: "轴测" },
-                { key: "front", label: "主视" },
-                { key: "top", label: "俯视" },
-                { key: "side", label: "左视" },
-              ]}
-              value={preset}
-              onChange={(p) => setCameraPreset(p as CameraPreset)}
-            />
+          {/* 4. 3D 观察设置 */}
+          <LeftPanelSection title="3D 观察">
+            <div className="space-y-2.5">
+              <TabSwitcher
+                tabs={[
+                  { key: "iso", label: "轴测" },
+                  { key: "front", label: "主视" },
+                  { key: "top", label: "俯视" },
+                  { key: "side", label: "左视" },
+                ]}
+                value={preset}
+                onChange={(p) => setCameraPreset(p as CameraPreset)}
+              />
+              <SelectGrid
+                items={[
+                  { key: "0", label: "隐藏坐标轴" },
+                  { key: "1", label: "显示坐标轴" },
+                ]}
+                value={showAxes ? "1" : "0"}
+                onChange={(v) => setShowAxes(v === "1")}
+                columns={2}
+              />
+            </div>
           </LeftPanelSection>
         </LeftPanel>
       }
       center={
         <ThreeDCanvas
           cameraPosition={cameraPosition}
-          legend={
-            <Legend3D
-              title="图例"
-              items={[
-                { colorKey: "primary", swatch: "line", label: "空间直线 l" },
-                { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
-                {
-                  colorKey: "paramTertiary",
-                  swatch: "line",
-                  label: "辅助平面/投影",
-                },
-              ]}
-            />
-          }
+          legend={<Legend3D title="图例" items={legendItems} />}
         >
           <CameraRig ref={controlsRef} />
-          <Scene3DGrid size={5} />
+          <Scene3DGrid size={5} showLabels={showAxes} />
 
-          {/* 1. 基准平面 α (xy 平面, z=0) */}
-          <Plane3D
-            origin={{ x: 0, y: 0, z: 0 }}
-            uAxis={{ x: 1, y: 0, z: 0 }}
-            vAxis={{ x: 0, y: 1, z: 0 }}
-            width={6}
-            height={6}
-            colorKey="secondary"
-            opacity={0.2}
-          />
-          <FormulaLabel3D position={{ x: 2.8, y: 2.8, z: 0.1 }} tex="\alpha" />
-
-          {/* 2. 空间直线 l */}
-          <Vector3DArrow from={startPoint} to={endPoint} colorKey="primary" />
-          <FormulaLabel3D
-            position={{
-              x: endPoint.x + 0.2,
-              y: endPoint.y + 0.2,
-              z: endPoint.z + 0.2,
-            }}
-            tex="l"
-          />
-
-          {/* 3. 平行模式下的面内平行线 m 及辅助面 β */}
-          {activeMode === "parallel" && (
-            <>
-              {/* 面内平行线 m */}
-              <Vector3DArrow
-                from={lineMStart}
-                to={lineMEnd}
-                colorKey="primary"
-              />
-              <FormulaLabel3D position={{ x: 2.6, y: 0.2, z: 0 }} tex="m" />
-              {/* 辅助平面 β (过 l 和 m 的平面) */}
-              <Plane3D
-                origin={{ x: 0, y: 0, z: zHeight / 2 }}
-                uAxis={{ x: 1, y: 0, z: 0 }}
-                vAxis={{ x: 0, y: 0, z: 1 }}
-                width={6}
-                height={Math.max(1, zHeight * 1.5)}
-                colorKey="paramTertiary"
-                opacity={0.15}
-              />
-              <FormulaLabel3D
-                position={{ x: 2.5, y: 0.1, z: zHeight / 2 + 0.5 }}
-                tex="\beta"
-              />
-            </>
+          {/* 模式 1：高考四棱锥母题 */}
+          {activeMode === "gaokaoPyramid" && (
+            <PyramidModelScene
+              lambdaE={lambdaE}
+              lambdaF={lambdaF}
+              a={pyramidA}
+              b={pyramidB}
+              h={pyramidH}
+            />
           )}
 
-          {/* 3B. 面面平行模式 */}
-          {activeMode === "surfaceParallel" && (
+          {/* 模式 2：非四棱锥通用场景 */}
+          {activeMode !== "gaokaoPyramid" && (
             <>
-              {/* 平面 β (平行于 α, z=2) */}
+              {/* 基准平面 α */}
               <Plane3D
-                origin={{ x: 0, y: 0, z: 2 }}
+                origin={{ x: 0, y: 0, z: 0 }}
                 uAxis={{ x: 1, y: 0, z: 0 }}
                 vAxis={{ x: 0, y: 1, z: 0 }}
                 width={6}
                 height={6}
-                colorKey="paramTertiary"
-                opacity={0.25}
-              />
-              <FormulaLabel3D
-                position={{ x: 2.8, y: 2.8, z: 2.1 }}
-                tex="\beta"
-              />
-              {/* α 与 β 的法向量 */}
-              <Vector3DArrow
-                from={{ x: -1, y: -1, z: 0 }}
-                to={{ x: -1, y: -1, z: 1.5 }}
-                colorKey="primary"
-              />
-              <FormulaLabel3D
-                position={{ x: -0.8, y: -1, z: 1.6 }}
-                tex="\vec{n_1}"
-              />
-              <Vector3DArrow
-                from={{ x: 1, y: 1, z: 2 }}
-                to={{ x: 1, y: 1, z: 3.5 }}
                 colorKey="secondary"
+                opacity={0.2}
               />
               <FormulaLabel3D
-                position={{ x: 1.2, y: 1, z: 3.6 }}
-                tex="\vec{n_2}"
-              />
-            </>
-          )}
-
-          {/* 3C. 面面垂直模式 */}
-          {activeMode === "surfacePerp" && (
-            <>
-              {/* 平面 β (垂直于 α, x=0 即 yz 面) */}
-              <Plane3D
-                origin={{ x: 0, y: 0, z: 0 }}
-                uAxis={{ x: 0, y: 1, z: 0 }}
-                vAxis={{ x: 0, y: 0, z: 1 }}
-                width={6}
-                height={4}
-                colorKey="paramTertiary"
-                opacity={0.25}
-              />
-              <FormulaLabel3D
-                position={{ x: 0.1, y: 2.8, z: 3.2 }}
-                tex="\beta"
-              />
-              {/* α 法向量 (0,0,1) 与 β 法向量 (1,0,0) */}
-              <Vector3DArrow
-                from={{ x: 0, y: -1, z: 0 }}
-                to={{ x: 0, y: -1, z: 1.8 }}
-                colorKey="primary"
-              />
-              <FormulaLabel3D
-                position={{ x: 0.2, y: -1, z: 1.9 }}
-                tex="\vec{n_1}"
-              />
-              <Vector3DArrow
-                from={{ x: 0, y: 1, z: 1 }}
-                to={{ x: 1.8, y: 1, z: 1 }}
-                colorKey="secondary"
-              />
-              <FormulaLabel3D
-                position={{ x: 1.9, y: 1, z: 1.1 }}
-                tex="\vec{n_2}"
-              />
-            </>
-          )}
-
-          {/* 4. 垂直模式下的面内线 a, b */}
-          {activeMode === "perpendicular" && (
-            <>
-              <Vector3DArrow
-                from={lineAStart}
-                to={lineAEnd}
-                colorKey="primary"
-              />
-              <FormulaLabel3D position={{ x: 2.6, y: 0.2, z: 0 }} tex="a" />
-
-              <Vector3DArrow
-                from={lineBStart}
-                to={lineBEnd}
-                colorKey="primary"
-              />
-              <FormulaLabel3D
-                position={{
-                  x: lineBEnd.x + 0.2,
-                  y: lineBEnd.y + 0.2,
-                  z: 0,
-                }}
-                tex="b"
+                position={{ x: 2.8, y: 2.8, z: 0.1 }}
+                tex="\alpha"
               />
 
-              {intersectType === 1 && (
-                <PointLabel3D position={{ x: 0, y: 0, z: 0 }} text="P" />
+              {/* 空间直线 l */}
+              {activeMode !== "surfaceParallel" &&
+                activeMode !== "surfacePerp" && (
+                  <>
+                    <Vector3DArrow
+                      from={startPoint}
+                      to={endPoint}
+                      colorKey="paramPrimary"
+                    />
+                    <FormulaLabel3D
+                      position={{
+                        x: endPoint.x + 0.2,
+                        y: endPoint.y + 0.2,
+                        z: endPoint.z + 0.2,
+                      }}
+                      tex="l"
+                    />
+                  </>
+                )}
+
+              {/* 线面平行 */}
+              {activeMode === "parallel" && (
+                <>
+                  <Vector3DArrow
+                    from={lineMStart}
+                    to={lineMEnd}
+                    colorKey="paramSecondary"
+                  />
+                  <FormulaLabel3D position={{ x: 2.6, y: 0.2, z: 0 }} tex="m" />
+                  {subTheorem === "prop" && step > 0.05 && (
+                    <>
+                      <Plane3D
+                        origin={{ x: 0, y: 0, z: (effectiveZ * step) / 2 }}
+                        uAxis={{ x: 1, y: 0, z: 0 }}
+                        vAxis={{ x: 0, y: 0, z: 1 }}
+                        width={5.6}
+                        height={Math.max(0.5, effectiveZ * step)}
+                        colorKey="paramTertiary"
+                        opacity={0.22}
+                      />
+                      <FormulaLabel3D
+                        position={{
+                          x: 2.5,
+                          y: 0.1,
+                          z: (effectiveZ * step) / 2,
+                        }}
+                        tex="\beta"
+                      />
+                    </>
+                  )}
+                </>
               )}
-            </>
-          )}
 
-          {/* 5. 向量模式下的法向量 n 与角弧 */}
-          {activeMode === "vector" && (
-            <>
-              <Vector3DArrow
-                from={normalOrigin}
-                to={normalEnd}
-                colorKey="paramPrimary"
-              />
-              <FormulaLabel3D
-                position={{ x: 0.2, y: 0.2, z: 2.6 }}
-                tex="\vec{n}"
-              />
+              {/* 线面垂直 */}
+              {activeMode === "perpendicular" && (
+                <>
+                  {subTheorem === "judge" ? (
+                    <>
+                      <Vector3DArrow
+                        from={lineMStart}
+                        to={lineMEnd}
+                        colorKey="paramSecondary"
+                      />
+                      <FormulaLabel3D
+                        position={{ x: 2.6, y: 0.2, z: 0 }}
+                        tex="a"
+                      />
+                      <Vector3DArrow
+                        from={lineBStart}
+                        to={lineBEnd}
+                        colorKey="paramSecondary"
+                      />
+                      <FormulaLabel3D
+                        position={{
+                          x: lineBEnd.x + 0.2,
+                          y: lineBEnd.y + 0.2,
+                          z: 0,
+                        }}
+                        tex="b"
+                      />
+                      {intersectType === 1 && (
+                        <PointLabel3D
+                          position={{ x: 0, y: 0, z: 0 }}
+                          text="P"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Vector3DArrow
+                        from={{ x: -testMEnd.x, y: -testMEnd.y, z: 0 }}
+                        to={testMEnd}
+                        colorKey="paramSecondary"
+                      />
+                      <FormulaLabel3D
+                        position={{
+                          x: testMEnd.x + 0.2,
+                          y: testMEnd.y + 0.2,
+                          z: 0,
+                        }}
+                        tex="m"
+                      />
+                      <AngleArc3D
+                        vertex={{ x: 0, y: 0, z: 0 }}
+                        dirA={{ x: 0, y: 0, z: 2.5 }}
+                        dirB={{ x: testMEnd.x, y: testMEnd.y, z: 0 }}
+                        radius={0.7}
+                        colorKey="highlight"
+                      />
+                    </>
+                  )}
+                </>
+              )}
 
-              {thetaDeg > 0 && thetaDeg < 90 && (
-                <AngleArc3D
-                  vertex={midPoint}
-                  dirA={{
-                    x: endPoint.x - midPoint.x,
-                    y: endPoint.y - midPoint.y,
-                    z: endPoint.z - midPoint.z,
-                  }}
-                  dirB={{
-                    x: projPoint.x - midPoint.x,
-                    y: projPoint.y - midPoint.y,
-                    z: 0,
-                  }}
-                  radius={0.8}
-                  colorKey="paramSecondary"
-                />
+              {/* 面面平行 */}
+              {activeMode === "surfaceParallel" && (
+                <>
+                  <Plane3D
+                    origin={{ x: 0, y: 0, z: zHeight }}
+                    uAxis={{ x: 1, y: 0, z: 0 }}
+                    vAxis={{ x: 0, y: 1, z: 0 }}
+                    width={6}
+                    height={6}
+                    colorKey="paramTertiary"
+                    opacity={0.25}
+                  />
+                  <FormulaLabel3D
+                    position={{ x: 2.8, y: 2.8, z: zHeight + 0.1 }}
+                    tex="\beta"
+                  />
+
+                  {step > 0.05 && (
+                    <>
+                      <Plane3D
+                        origin={{ x: 0, y: 0, z: (zHeight * step) / 2 }}
+                        uAxis={{ x: 0, y: 1, z: 0 }}
+                        vAxis={{ x: 0, y: 0, z: 1 }}
+                        width={6}
+                        height={Math.max(0.5, zHeight * step)}
+                        colorKey="secondary"
+                        opacity={0.18}
+                      />
+                      <FormulaLabel3D
+                        position={{
+                          x: 0.1,
+                          y: 2.8,
+                          z: (zHeight * step) / 2 + 0.2,
+                        }}
+                        tex="\gamma"
+                      />
+                      <Vector3DArrow
+                        from={{ x: 0, y: -2.6, z: 0 }}
+                        to={{ x: 0, y: 2.6, z: 0 }}
+                        colorKey="primary"
+                      />
+                      <FormulaLabel3D
+                        position={{ x: 0.2, y: 2.7, z: 0 }}
+                        tex="a"
+                      />
+                      <Vector3DArrow
+                        from={{ x: 0, y: -2.6, z: zHeight }}
+                        to={{ x: 0, y: 2.6, z: zHeight }}
+                        colorKey="primary"
+                      />
+                      <FormulaLabel3D
+                        position={{ x: 0.2, y: 2.7, z: zHeight }}
+                        tex="b"
+                      />
+                    </>
+                  )}
+
+                  <Vector3DArrow
+                    from={{ x: -1.5, y: -1.5, z: 0 }}
+                    to={{ x: -1.5, y: -1.5, z: 1.5 }}
+                    colorKey="primary"
+                  />
+                  <FormulaLabel3D
+                    position={{ x: -1.3, y: -1.5, z: 1.6 }}
+                    tex="\vec{n_1}"
+                  />
+                  <Vector3DArrow
+                    from={{ x: 1.5, y: 1.5, z: zHeight }}
+                    to={{ x: 1.5, y: 1.5, z: zHeight + 1.5 }}
+                    colorKey="secondary"
+                  />
+                  <FormulaLabel3D
+                    position={{ x: 1.7, y: 1.5, z: zHeight + 1.6 }}
+                    tex="\vec{n_2}"
+                  />
+                </>
+              )}
+
+              {/* 面面垂直 */}
+              {activeMode === "surfacePerp" && (
+                <>
+                  <Plane3D
+                    origin={{ x: 0, y: 0, z: zHeight / 2 }}
+                    uAxis={{ x: 0, y: 1, z: 0 }}
+                    vAxis={{ x: 0, y: 0, z: 1 }}
+                    width={6}
+                    height={zHeight}
+                    colorKey="paramTertiary"
+                    opacity={0.25}
+                  />
+                  <FormulaLabel3D
+                    position={{ x: 0.1, y: 2.8, z: zHeight + 0.2 }}
+                    tex="\beta"
+                  />
+                  <Vector3DArrow
+                    from={{ x: 0, y: -2.8, z: 0 }}
+                    to={{ x: 0, y: 2.8, z: 0 }}
+                    colorKey="secondary"
+                  />
+                  <FormulaLabel3D position={{ x: 0.2, y: 2.9, z: 0 }} tex="l" />
+
+                  {(() => {
+                    const perpThetaRad = (thetaDeg * Math.PI) / 180;
+                    const aLen = 2.4;
+                    const aFrom: Vec3 = { x: 0, y: 0, z: 0 };
+                    const aTo: Vec3 = {
+                      x: 0,
+                      y: aLen * Math.cos(perpThetaRad),
+                      z: aLen * Math.sin(perpThetaRad),
+                    };
+                    return (
+                      <>
+                        <Vector3DArrow
+                          from={aFrom}
+                          to={aTo}
+                          colorKey="paramPrimary"
+                        />
+                        <FormulaLabel3D
+                          position={{ x: 0.1, y: aTo.y + 0.2, z: aTo.z + 0.2 }}
+                          tex="a"
+                        />
+                        {thetaDeg === 90 && (
+                          <AngleArc3D
+                            vertex={aFrom}
+                            dirA={{ x: 0, y: 2, z: 0 }}
+                            dirB={aTo}
+                            radius={0.6}
+                            colorKey="highlight"
+                          />
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
+              )}
+
+              {/* 空间向量法 */}
+              {activeMode === "vector" && (
+                <>
+                  <Vector3DArrow
+                    from={{ x: 0, y: 0, z: 0 }}
+                    to={normalEnd}
+                    colorKey="highlight"
+                  />
+                  <FormulaLabel3D
+                    position={{ x: 0.2, y: 0.2, z: 2.6 }}
+                    tex="\vec{n}"
+                  />
+                  {thetaDeg > 0 && thetaDeg < 90 && (
+                    <AngleArc3D
+                      vertex={midPoint}
+                      dirA={{
+                        x: endPoint.x - midPoint.x,
+                        y: endPoint.y - midPoint.y,
+                        z: endPoint.z - midPoint.z,
+                      }}
+                      dirB={{
+                        x: projPoint.x - midPoint.x,
+                        y: projPoint.y - midPoint.y,
+                        z: 0,
+                      }}
+                      radius={0.8}
+                      colorKey="paramSecondary"
+                    />
+                  )}
+                </>
               )}
             </>
           )}
@@ -422,7 +844,8 @@ export default function LinePlaneRelationAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
-          title="空间位置关系判定看板"
+          mnemonic={mathData.mnemonic}
+          title="空间位置关系与判定定理看板"
         />
       }
     />
