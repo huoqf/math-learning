@@ -52,70 +52,72 @@ interface MathPanelProps {
 
 /**
  * 混合内容渲染：中文句子中用 $...$ 标记数学片段，其余纯文本正常换行。
- * 若为包含 LaTeX 命令（如 \text{}, \%, \alpha 等）的表达式，自动作为 KaTeX 公式渲染。
+ * 若为包含 LaTeX 命令的表达式，自动作为 KaTeX 公式渲染。
  */
 function renderMixedLatex(text: string): React.ReactNode {
   if (!text) return null;
 
-  // 1. 若文本显式包含 \text{...}、\% 或标准 LaTeX 控制序列且无 $ 分隔，直接按 KaTeX 渲染
-  if (
-    text.includes("\\text{") ||
-    text.includes("\\%") ||
-    text.includes("\\color{") ||
-    (!text.includes("$") &&
-      (/\\[a-zA-Z]+/.test(text) ||
-        /^[\w\s()=<>+\-*/^_{}[\].,;:]+$/.test(text)) &&
-      !/[\u4e00-\u9fa5]{3,}/.test(text.replace(/\\text\{[^}]*\}/g, "")))
-  ) {
-    const cleanFormula =
-      text.startsWith("$") && text.endsWith("$") ? text.slice(1, -1) : text;
+  // 1. 若文本中显式包含 $...$ 数学定界符，严格按 $...$ 切分混合渲染
+  if (text.includes("$")) {
+    const parts = text.split(/(\$[^$]+\$)/g);
     return (
-      <KatexFormula
-        formula={cleanFormula}
-        mode="inline"
-        className="!my-0 !mx-0.5"
-      />
+      <>
+        {parts.map((part, i) => {
+          if (part.startsWith("$") && part.endsWith("$")) {
+            const formula = part.slice(1, -1).trim();
+            if (!formula) return null;
+            return (
+              <KatexFormula
+                key={i}
+                formula={formula}
+                mode="inline"
+                className="!my-0 !mx-0.5"
+              />
+            );
+          }
+          return <React.Fragment key={i}>{part}</React.Fragment>;
+        })}
+      </>
     );
   }
 
-  // 2. 若无中文字符且包含 LaTeX 命令或数学上下标/运算符，直接按纯公式渲染
+  // 2. 若无中文字符且包含 LaTeX 命令或数学运算符，作为整段公式渲染
   if (
     !/[\u4e00-\u9fa5]/.test(text) &&
     (/\\[a-zA-Z]|[_^]\{?[\w]|=|<|>|\+|-|\*|\//.test(text) ||
-      text.startsWith("$"))
+      text.includes("\\text{"))
   ) {
-    const cleanFormula =
-      text.startsWith("$") && text.endsWith("$") ? text.slice(1, -1) : text;
     return (
-      <KatexFormula
-        formula={cleanFormula}
-        mode="inline"
-        className="!my-0 !mx-0.5"
-      />
+      <KatexFormula formula={text} mode="inline" className="!my-0 !mx-0.5" />
     );
   }
 
-  // 3. 混合文本按 $...$ 切分渲染
-  const parts = text.split(/(\$[^$]+\$)/g);
-  if (parts.length === 1) return text; // 无数学标记，直接纯文本
-  return (
-    <>
-      {parts.map((part, i) => {
-        if (part.startsWith("$") && part.endsWith("$")) {
-          const formula = part.slice(1, -1);
-          return (
-            <KatexFormula
-              key={i}
-              formula={formula}
-              mode="inline"
-              className="!my-0 !mx-0.5"
-            />
-          );
-        }
-        return <React.Fragment key={i}>{part}</React.Fragment>;
-      })}
-    </>
-  );
+  // 3. 若无 $ 但包含反斜杠 LaTeX 控制序列（如 \triangle, \vec 等），智能拆分渲染
+  if (/\\[a-zA-Z]+/.test(text)) {
+    const parts = text.split(
+      /(\\[a-zA-Z]+(?:\*|\{[^{}]*\})*(?:[\^_]\{?[^{}]*\}?)*(?:\s*[\w=<>+\-*/^_]+)?)/g,
+    );
+    return (
+      <>
+        {parts.map((part, i) => {
+          if (/\\[a-zA-Z]+/.test(part)) {
+            return (
+              <KatexFormula
+                key={i}
+                formula={part.trim()}
+                mode="inline"
+                className="!my-0 !mx-0.5"
+              />
+            );
+          }
+          return <React.Fragment key={i}>{part}</React.Fragment>;
+        })}
+      </>
+    );
+  }
+
+  // 4. 纯文本原样输出
+  return text;
 }
 
 /** 宽松检测：\cmd 命令或 _^ 上下标即视为 LaTeX（供 quantities.label/value 纯公式字段使用）*/
@@ -126,131 +128,92 @@ function hasLatex(text: string): boolean {
   return /\\[a-zA-Z]|[_^]\{?[\w]|=|<|>|\+|-|\*/.test(text);
 }
 
-/** 检测 LaTeX 是否包含需要 displayMode 的特殊矩阵/分段环境（如 cases、matrix 等，不包含可语义展开的 aligned） */
+/** 检测 LaTeX 是否包含需要 displayMode 的特殊矩阵/分段环境 */
 function needsStrictBlockMode(latex: string): boolean {
   return /\\begin\{(cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|equation|equation\*|gather|gather\*|split|multline|multline\*)\}/.test(
     latex,
   );
 }
 
-export interface ParsedFormulaLine {
+export interface FormulaClause {
   formula: string;
-  type: "main" | "sub" | "note";
-  indent?: boolean;
+  prefix?: string; // 如 \iff, \implies 等
 }
 
 /**
- * 智能语义断行算法：
- * 1. 优先在注释说明（\\quad, (..), \\text{..}）处断行，避免在数学等号处断裂；
- * 2. 识别 \\implies, \\iff 等推导符，并在后续行带悬挂缩进；
- * 3. 智能拆解 aligned 环境，保留等号完整性与步骤清晰度；
- * 4. 彻底消除水平滚动条，保障移动端与窄屏自适应。
+ * 智能数学表达式原子（Clause）分解算法：
+ * 将并列公式或带有双向箭头推导的复合式，拆解为自包含、不可打碎的数学原子项，交由 Flex-Wrap 自然流式换行。
  */
-function parseSmartFormulaLines(latex: string): ParsedFormulaLine[] | null {
-  if (!latex || needsStrictBlockMode(latex)) {
-    return null;
+function splitFormulaClauses(latex: string): FormulaClause[] | null {
+  if (!latex || needsStrictBlockMode(latex)) return null;
+
+  // 1. 如果包含显式换行符 \\，按行拆分
+  if (latex.includes("\\\\")) {
+    const lines = latex
+      .split(/\\\\/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (lines.length > 1) {
+      return lines.map((l) => ({ formula: l }));
+    }
   }
 
-  // 1. 提取 \begin{aligned}...\end{aligned}
-  const alignedMatch = latex.match(
-    /\\begin\{aligned\}([\s\S]*?)\\end\{aligned\}/,
-  );
-  const rawBody = alignedMatch ? alignedMatch[1] : latex;
-
-  // 按显式换行符 \\ 拆分子步骤
-  const rawLines = rawBody
-    .split(/\\\\/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-
-  const result: ParsedFormulaLine[] = [];
-
-  for (const rawLine of rawLines) {
-    // 清理 aligned 的对齐符 &
-    const line = rawLine.replace(/&/g, " ").replace(/\s+/g, " ").trim();
-    if (!line) continue;
-
-    // 规则 A: 若单行中包含明显的注释说明 (\\quad 或 ,\\quad 后跟括号/说明)
-    const quadSplit = line.split(/(?:,\s*\\quad|\\quad)/);
-    if (quadSplit.length > 1 && quadSplit[0].trim().length > 0) {
-      const mainPart = quadSplit[0].trim();
-      result.push({ formula: mainPart, type: "main" });
-
-      for (let i = 1; i < quadSplit.length; i++) {
-        const notePart = quadSplit[i].trim();
-        if (notePart) {
-          result.push({ formula: notePart, type: "note", indent: true });
-        }
-      }
-      continue;
-    }
-
-    // 规则 B: 若公式包含推导关系符 (\implies, \iff, \therefore) 且较长
-    if (line.length > 30 && /\\(implies|iff|therefore|because)/.test(line)) {
-      const match = line.match(
-        /^(.*?)\s*(\\(?:implies|iff|therefore|because)\s*.*)$/,
-      );
-      if (match && match[1] && match[2]) {
-        result.push({ formula: match[1].trim(), type: "main" });
-        result.push({ formula: match[2].trim(), type: "sub", indent: true });
-        continue;
-      }
-    }
-
-    // 规则 C: 若公式较长 (>45字符) 且包含多个顶层主等号 (连等式 A = B = C)
-    // 严格检查花括号/括号嵌套深度，禁止切断 \sum_{k=2} 等内部下标
-    if (line.length > 45) {
-      const topEqualsParts: string[] = [];
-      let currentSeg = "";
-      let braceDepth = 0;
-      let parenDepth = 0;
-      let bracketDepth = 0;
-
-      for (let ci = 0; ci < line.length; ci++) {
-        const char = line[ci];
-        if (char === "{") braceDepth++;
-        else if (char === "}") braceDepth = Math.max(0, braceDepth - 1);
-        else if (char === "(") parenDepth++;
-        else if (char === ")") parenDepth = Math.max(0, parenDepth - 1);
-        else if (char === "[") bracketDepth++;
-        else if (char === "]") bracketDepth = Math.max(0, bracketDepth - 1);
-
-        if (
-          char === "=" &&
-          braceDepth === 0 &&
-          parenDepth === 0 &&
-          bracketDepth === 0
-        ) {
-          topEqualsParts.push(currentSeg.trim());
-          currentSeg = "";
+  // 2. 检查顶层推导符 \iff / \implies
+  if (/\\(iff|implies)/.test(latex) && latex.length > 35) {
+    const parts = latex.split(/(\\(?:iff|implies))/g);
+    if (parts.length >= 3) {
+      const clauses: FormulaClause[] = [];
+      let currentPrefix: string | undefined = undefined;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i].trim();
+        if (!part) continue;
+        if (part === "\\iff" || part === "\\implies") {
+          currentPrefix = part;
         } else {
-          currentSeg += char;
+          clauses.push({ formula: part, prefix: currentPrefix });
+          currentPrefix = undefined;
         }
       }
-      topEqualsParts.push(currentSeg.trim());
+      if (clauses.length > 1) return clauses;
+    }
+  }
 
-      // 只有当存在 2 个以上顶层等号时 (连等式 A = B = C) 才进行分步换行
-      if (topEqualsParts.length >= 3) {
-        result.push({
-          formula: `${topEqualsParts[0]} = ${topEqualsParts[1]}`,
-          type: "main",
-        });
-        for (let i = 2; i < topEqualsParts.length; i++) {
-          result.push({
-            formula: `= ${topEqualsParts[i]}`,
-            type: "sub",
-            indent: true,
-          });
+  // 3. 检查顶层逗号/分号/quad并列公式
+  let braceDepth = 0;
+  let parenDepth = 0;
+  const commaClauses: string[] = [];
+  let cur = "";
+
+  for (let i = 0; i < latex.length; i++) {
+    const ch = latex[i];
+    if (ch === "{" || ch === "[") braceDepth++;
+    else if (ch === "}" || ch === "]") braceDepth = Math.max(0, braceDepth - 1);
+    else if (ch === "(") parenDepth++;
+    else if (ch === ")") parenDepth = Math.max(0, parenDepth - 1);
+
+    if (braceDepth === 0 && parenDepth === 0) {
+      if (ch === "," || latex.slice(i, i + 6) === "\\quad ") {
+        if (cur.trim()) {
+          commaClauses.push(cur.trim());
+          cur = "";
+        }
+        if (latex.slice(i, i + 6) === "\\quad ") {
+          i += 5; // 跳过 \quad
         }
         continue;
       }
     }
-
-    // 默认作为标准数学行
-    result.push({ formula: line, type: rawLines.length > 1 ? "main" : "main" });
+    cur += ch;
+  }
+  if (cur.trim()) {
+    commaClauses.push(cur.trim());
   }
 
-  return result.length > 0 ? result : null;
+  if (commaClauses.length > 1) {
+    return commaClauses.map((c) => ({ formula: c }));
+  }
+
+  return null;
 }
 
 const THEOREM_LEVEL_STYLES: Record<
@@ -269,8 +232,8 @@ const THEOREM_LEVEL_STYLES: Record<
     label: "推导",
   },
   supplementary: {
-    bg: colors.neutral[50],
-    text: colors.neutral[400],
+    bg: colors.secondary[100],
+    text: colors.secondary[700],
     label: "补充",
   },
 };
@@ -370,33 +333,59 @@ export const MathPanel: React.FC<MathPanelProps> = ({
   };
 
   return (
-    <div className="w-full h-full bg-white rounded-lg shadow-sm border border-neutral-200 p-4 overflow-y-auto overflow-x-hidden space-y-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      {/* ── 数学量区 ── */}
-      <div>
-        <h3 className="text-xs font-semibold text-neutral-600 mb-3 border-b border-neutral-100 pb-1.5">
-          {title}
-        </h3>
+    <div className="w-full h-full flex flex-col gap-4 p-4 text-neutral-800 text-sm overflow-y-auto bg-neutral-50/50">
+      {/* ── 标题 ── */}
+      <div className="flex items-center justify-between border-b border-neutral-200 pb-2.5">
+        <div className="flex items-center gap-2">
+          <Award className="w-4 h-4 text-primary-600" />
+          <h3 className="font-bold text-neutral-800 text-sm">{title}</h3>
+        </div>
+        <span className="text-xs text-neutral-500 font-medium">
+          实时指标看板
+        </span>
+      </div>
 
-        <div className="space-y-2">
+      {/* ── 数学量列表 ── */}
+      <div>
+        <div className="text-xs font-semibold text-neutral-600 mb-2 flex items-center justify-between">
+          <span>核心数值指标</span>
+          <span className="text-[10px] text-neutral-400 font-normal">
+            共 {quantities.length} 项
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-1.5">
           {quantities.map((q, index) => (
             <div
               key={index}
-              className="flex flex-wrap items-center justify-between py-1.5 border-b border-neutral-100 last:border-0 transition-all duration-fast ease-standard gap-x-2"
+              className="flex items-center justify-between p-2 rounded-lg bg-white border border-neutral-100 shadow-xs hover:border-neutral-200 transition-colors"
             >
-              <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                {q.color && (
+              <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                {q.symbol && (
                   <span
-                    className="shrink-0 w-2.5 h-2.5 rounded-full border border-white shadow-sm"
-                    style={{ backgroundColor: q.color }}
-                  />
+                    className="font-semibold shrink-0 text-xs px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor: q.color ? `${q.color}15` : "#f3f4f6",
+                      color: q.color ?? "#4b5563",
+                    }}
+                  >
+                    {hasLatex(q.symbol) ? (
+                      <KatexFormula
+                        formula={q.symbol}
+                        mode="inline"
+                        className="!text-xs"
+                      />
+                    ) : (
+                      q.symbol
+                    )}
+                  </span>
                 )}
-                <span className="text-xs font-medium text-neutral-600 min-w-0 break-words">
-                  {renderMixedLatex(q.label)}
+                <span className="text-xs text-neutral-600 truncate font-medium">
+                  {q.label}
                 </span>
               </div>
-              <div className="flex items-baseline gap-1 min-w-0 flex-1 justify-end">
+              <div className="flex items-center gap-0.5 shrink-0 text-right">
                 <span
-                  className="text-sm font-mono font-semibold min-w-0 break-all"
+                  className="font-bold text-xs"
                   style={{ color: getValueColor(q) }}
                 >
                   {typeof q.value === "number" ? (
@@ -466,9 +455,9 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="w-full py-2 px-2.5 bg-white rounded border border-neutral-100/50 my-1 min-h-[42px] flex items-center justify-center overflow-x-auto max-w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                    <div className="w-full py-2 px-2 bg-white rounded border border-neutral-100/50 my-1 min-h-[42px] flex items-center justify-center overflow-x-hidden max-w-full">
                       {(() => {
-                        // 1. 若为纯中文叙述段落 (\text{...})，提取内部文本按中文段落优雅自动换行
+                        // 1. 若为纯中文叙述段落 (\text{...})
                         const textMatch = t.latex.match(
                           /^\s*\\text\{([\s\S]*)\}\s*$/,
                         );
@@ -480,10 +469,10 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                           );
                         }
 
-                        // 2. 原生环境 (aligned / cases / matrix 等) 或显式 block 模式：由 KaTeX 原生对齐并结合 Auto-Fit 等比缩放
+                        // 2. 原生环境 (cases / matrix / aligned 等) 或显式 block 模式
                         if (
                           t.mode === "block" ||
-                          /\\begin\{(aligned|cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|equation|equation\*|gather|gather\*|split|multline|multline\*)\}/.test(
+                          /\\begin\{(aligned|cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|equation|gather|split)\}/.test(
                             t.latex,
                           )
                         ) {
@@ -497,56 +486,31 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                           );
                         }
 
-                        // 3. 智能语义断行排版 (处理包含 \\\\ / \\quad 注释 / 连等式的单行公式)
-                        const smartLines = parseSmartFormulaLines(t.latex);
-                        if (smartLines && smartLines.length > 1) {
+                        // 3. 智能语义原子 Flex-Wrap 流式排版（并列公式或推导式自然折行）
+                        const clauses = splitFormulaClauses(t.latex);
+                        if (clauses && clauses.length > 1) {
                           return (
-                            <div className="flex flex-col items-center gap-1.5 w-full py-0.5 max-w-full">
-                              {smartLines.map((line, i) => {
-                                if (line.type === "note") {
-                                  return (
-                                    <div
-                                      key={i}
-                                      className="text-[12px] text-neutral-600 font-normal px-2.5 py-0.5 bg-neutral-50/90 rounded max-w-full break-words text-center"
-                                    >
-                                      {renderMixedLatex(line.formula)}
-                                    </div>
-                                  );
-                                }
-                                let indentClass = "";
-                                if (line.indent) {
-                                  if (
-                                    line.formula.startsWith("=") ||
-                                    line.formula.startsWith("\\quad =")
-                                  ) {
-                                    indentClass =
-                                      "self-start pl-6 sm:pl-8 text-neutral-800 font-medium";
-                                  } else if (
-                                    line.formula.startsWith("\\implies") ||
-                                    line.formula.startsWith("\\iff")
-                                  ) {
-                                    indentClass =
-                                      "self-start pl-4 text-primary-700 font-medium";
-                                  } else {
-                                    indentClass =
-                                      "self-start pl-4 text-neutral-700";
-                                  }
-                                }
-
-                                return (
-                                  <div
-                                    key={i}
-                                    className={`max-w-full flex items-center justify-center ${indentClass}`}
-                                  >
+                            <div className="w-full flex flex-wrap items-center justify-center gap-x-3 gap-y-2 py-0.5 max-w-full">
+                              {clauses.map((clause, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-1 max-w-full"
+                                >
+                                  {clause.prefix && (
                                     <KatexFormula
-                                      formula={line.formula}
+                                      formula={clause.prefix}
                                       mode="inline"
-                                      responsive={true}
-                                      className="!my-0 font-medium max-w-full"
+                                      className="!my-0 text-primary-600"
                                     />
-                                  </div>
-                                );
-                              })}
+                                  )}
+                                  <KatexFormula
+                                    formula={clause.formula}
+                                    mode="inline"
+                                    responsive={true}
+                                    className="!my-0 font-medium"
+                                  />
+                                </div>
+                              ))}
                             </div>
                           );
                         }

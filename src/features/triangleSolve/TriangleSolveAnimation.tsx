@@ -94,25 +94,25 @@ export function TriangleSolveAnimation() {
       });
   }, [params, studyMode]);
 
-  // 悬浮公式动态生成
+  // 悬浮公式动态生成（遵循铁律4C三位一体色彩绑定）
   const floatFormulaLatex = useMemo(() => {
     if (studyMode === "sine") {
       const sas = solveTriangleFromSAS(params.b, params.c, params.angleA);
       const ratio = sas.sineRatios.ratioA.toFixed(2);
       const r = sas.circumcircle.radius.toFixed(2);
-      return `\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R \\approx ${ratio} = 2 \\times ${r}`;
+      return `\\frac{\\color{#EF4444}{a}}{\\sin \\color{#EF4444}{A}} = \\frac{\\color{#D97706}{b}}{\\sin B} = \\frac{\\color{#059669}{c}}{\\sin C} = 2R \\approx ${ratio} = 2 \\times ${r}`;
     }
     if (studyMode === "ssa") {
       const ssa = solveSSA(params.a, params.b, params.angleA);
       const countStr = ssa.solutionCount;
       const hStr = ssa.h.toFixed(2);
-      return `a = ${params.a.toFixed(1)}, \\; h = b \\sin A = ${hStr} \\implies \\text{解的个数: } ${countStr}`;
+      return `\\color{#EF4444}{a} = ${params.a.toFixed(1)}, \\; h = \\color{#D97706}{b} \\sin \\color{#EF4444}{A} = ${hStr} \\implies \\text{解的个数: } ${countStr}`;
     }
     if (studyMode === "cosine") {
       const sas = solveTriangleFromSAS(params.b, params.c, params.angleA);
       const aVal = sas.sides.a.toFixed(2);
       const aSq = (sas.sides.a ** 2).toFixed(2);
-      return `a^2 = b^2 + c^2 - 2bc \\cos A \\implies a^2 = ${aSq} \\quad (a = ${aVal})`;
+      return `\\color{#EF4444}{a}^2 = \\color{#D97706}{b}^2 + \\color{#059669}{c}^2 - 2\\color{#D97706}{b}\\color{#059669}{c} \\cos \\color{#EF4444}{A} \\implies \\color{#EF4444}{a}^2 = ${aSq} \\quad (\\color{#EF4444}{a} = ${aVal})`;
     }
     if (studyMode === "bisector") {
       const bm = solveBisectorAndMedian(params.b, params.c, params.angleA);
@@ -120,12 +120,12 @@ export function TriangleSolveAnimation() {
       const maStr = bm.medianLength.toFixed(2);
       const lam = bm.vectorWeights.lambda.toFixed(2);
       const mu = bm.vectorWeights.mu.toFixed(2);
-      return `t_a = \\frac{2bc\\cos\\frac{A}{2}}{b+c} = ${taStr}, \\quad \\vec{AD} = ${lam}\\vec{AB} + ${mu}\\vec{AC}, \\quad m_a = ${maStr}`;
+      return `t_a = \\frac{2\\color{#D97706}{b}\\color{#059669}{c}\\cos\\frac{\\color{#EF4444}{A}}{2}}{\\color{#D97706}{b}+\\color{#059669}{c}} = ${taStr}, \\quad \\vec{AD} = ${lam}\\vec{AB} + ${mu}\\vec{AC}, \\quad m_a = ${maStr}`;
     }
     // area
     const sas = solveTriangleFromSAS(params.b, params.c, params.angleA);
     const areaVal = sas.area.toFixed(2);
-    return `S = \\frac{1}{2}bc \\sin A = r \\cdot p = ${areaVal}`;
+    return `S = \\frac{1}{2}\\color{#D97706}{b}\\color{#059669}{c} \\sin \\color{#EF4444}{A} = r \\cdot p = ${areaVal}`;
   }, [params, studyMode]);
 
   const panelTitle = useMemo(() => {

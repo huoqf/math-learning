@@ -23,12 +23,14 @@ export interface TriangleSolveResult {
   area: number;
   /** 外接圆半径 R 与外心 O */
   circumcircle: { radius: number; center: Point2D };
+  /** 外接圆直径推导点 A' (过 B 且经过外心 O 的直径另一端点) */
+  diameterPointA: Point2D;
   /** 内切圆半径 r 与内心 I */
   incircle: { radius: number; center: Point2D };
   /** 顶点 A 向 BC 所作高 FootD 坐标与高长度 ha */
   altitudeA: { foot: Point2D; length: number };
-  /** 投影定理数值: c*cosB 与 b*cosC */
-  projections: { cCosB: number; bCosC: number };
+  /** 投影定理数值: c*cosB 与 b*cosC 以及垂足划分在 BC 上的分段 */
+  projections: { cCosB: number; bCosC: number; footOnBC: Point2D };
 }
 
 export interface SSASolveResult {
@@ -93,46 +95,55 @@ export function solveTriangleFromSAS(
   const p = (a + b + c) / 2;
   const r = area / p;
 
-  // 设置基本坐标
-  const rawA: Point2D = { x: 0, y: 0 };
-  const rawC: Point2D = { x: b, y: 0 };
-  const rawB: Point2D = { x: c * Math.cos(radA), y: c * Math.sin(radA) };
+  // ── 标准高中数学几何系：以底边 BC 为水平基准，顶点 A 在上方 ──
+  // 1. 底边 BC 水平居中: B 在左 (-a/2, 0), C 在右 (a/2, 0)
+  const rawBx = -a / 2;
+  const rawBy = 0;
+  const rawCx = a / 2;
+  const rawCy = 0;
 
-  // 计算形心并平移，使形心居于 (0,0)
-  const centroidX = (rawA.x + rawB.x + rawC.x) / 3;
-  const centroidY = (rawA.y + rawB.y + rawC.y) / 3;
+  // 2. 顶点 A (通过角 B 与边 c 确定):
+  // A.x = B.x + c * cos(B) = -a/2 + c * cosB
+  // A.y = c * sin(B) = ha (高线长)
+  const ha = (2 * area) / a;
+  const rawAx = rawBx + c * Math.cos(radB);
+  const rawAy = ha;
 
-  const A: Point2D = { x: rawA.x - centroidX, y: rawA.y - centroidY };
-  const B: Point2D = { x: rawB.x - centroidX, y: rawB.y - centroidY };
-  const C: Point2D = { x: rawC.x - centroidX, y: rawC.y - centroidY };
+  // 3. 计算形心 G 并平移至坐标系中心 (0, 0)
+  const centroidX = (rawAx + rawBx + rawCx) / 3;
+  const centroidY = (rawAy + rawBy + rawCy) / 3;
 
-  // 外心 O 坐标计算
-  const oxRaw = b / 2;
-  const oyRaw =
-    sinA > 1e-6 ? (c * c - 2 * c * oxRaw * Math.cos(radA)) / (2 * c * sinA) : 0;
+  const A: Point2D = { x: rawAx - centroidX, y: rawAy - centroidY };
+  const B: Point2D = { x: rawBx - centroidX, y: rawBy - centroidY };
+  const C: Point2D = { x: rawCx - centroidX, y: rawCy - centroidY };
+
+  // 4. 外心 O 坐标计算 (到 B, C 距离相等，且到 B 距离为 R)
+  // O.x = (B.x + C.x) / 2 = -centroidX
+  // O.y = B.y + R * cos(A)
   const circumcenter: Point2D = {
-    x: oxRaw - centroidX,
-    y: oyRaw - centroidY,
+    x: (B.x + C.x) / 2,
+    y: B.y + R * Math.cos(radA),
   };
 
-  // 内心 I 坐标计算
+  // 外接圆直径辅助点 A': 过 C 点且经过外心 O 的直径对径点 (C' = 2*O - C)，满足 C-C' 为直径
+  // 在 Rt△BC C' 中，∠C'BC = 90°，由同弧所对圆周角相等有 ∠C C' B = ∠A，故 sin A = sin C' = a / (2R)
+  const diameterPointA: Point2D = {
+    x: 2 * circumcenter.x - C.x,
+    y: 2 * circumcenter.y - C.y,
+  };
+
+  // 5. 内心 I 坐标计算 (三顶点受边长加权平均)
   const incenterX = (a * A.x + b * B.x + c * C.x) / (a + b + c);
   const incenterY = (a * A.y + b * B.y + c * C.y) / (a + b + c);
   const incenter: Point2D = { x: incenterX, y: incenterY };
 
-  // 顶点 A 向 BC 边的高 FootD
-  const bcDx = C.x - B.x;
-  const bcDy = C.y - B.y;
-  const bcLenSq = bcDx * bcDx + bcDy * bcDy;
-  const tA =
-    bcLenSq > 1e-6 ? ((A.x - B.x) * bcDx + (A.y - B.y) * bcDy) / bcLenSq : 0;
+  // 6. 顶点 A 向水平底边 BC 所引垂线 FootD (垂直竖直向下)
   const footD: Point2D = {
-    x: B.x + tA * bcDx,
-    y: B.y + tA * bcDy,
+    x: A.x,
+    y: B.y,
   };
-  const ha = (2 * area) / a;
 
-  // 投影定理分量
+  // 投影定理分量: 底边分段 BD = c*cosB, DC = b*cosC
   const cCosB = c * Math.cos(radB);
   const bCosC = b * Math.cos(radC);
 
@@ -144,9 +155,10 @@ export function solveTriangleFromSAS(
     sineRatios: { ratioA, ratioB, ratioC },
     area,
     circumcircle: { radius: R, center: circumcenter },
+    diameterPointA,
     incircle: { radius: r, center: incenter },
     altitudeA: { foot: footD, length: ha },
-    projections: { cCosB, bCosC },
+    projections: { cCosB, bCosC, footOnBC: footD },
   };
 }
 
