@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TabSwitcher,
   SelectGrid,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
@@ -17,15 +18,28 @@ import { defaultParams, paramMeta } from "@/data/registries/trigIdentity";
 import {
   calculateTrigIdentity,
   calculateInduction,
+  calculateUniversalInduction,
+  calculateComplementaryModel,
   type FormulaType,
+  type IdentitySubMode,
+  type InductionSubMode,
 } from "./math/trigIdentity";
 
 export function TrigIdentityAnimation() {
-  // 研究模式：'identity' | 'induction'
+  // 主研究模式：'identity' | 'induction'
   const [studyMode, setStudyMode] = useState<"identity" | "induction">(
     "identity",
   );
-  // 诱导公式类型选择
+
+  // 同角子模式：'geometry' | 'known_one' | 'homogeneous'
+  const [identitySubMode, setIdentitySubMode] =
+    useState<IdentitySubMode>("geometry");
+
+  // 诱导子模式：'standard6' | 'universal_k' | 'complementary'
+  const [inductionSubMode, setInductionSubMode] =
+    useState<InductionSubMode>("standard6");
+
+  // 诱导公式 6 组分类
   const [formulaType, setFormulaType] = useState<FormulaType>("pi_plus");
 
   // 本地参数状态
@@ -33,6 +47,14 @@ export function TrigIdentityAnimation() {
     alphaDeg: defaultParams.alphaDeg,
     homoA: defaultParams.homoA,
     homoB: defaultParams.homoB,
+    homoC: defaultParams.homoC,
+    homoD: defaultParams.homoD,
+    quadA: defaultParams.quadA,
+    quadB: defaultParams.quadB,
+    quadC: defaultParams.quadC,
+    universalK: defaultParams.universalK,
+    universalSign: defaultParams.universalSign,
+    thetaDeg: defaultParams.thetaDeg,
   }));
 
   // 视口尺寸测量与防抖
@@ -51,9 +73,11 @@ export function TrigIdentityAnimation() {
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-trig-identity", params, {
       studyMode,
+      identitySubMode,
+      inductionSubMode,
       formulaType,
     });
-  }, [params, studyMode, formulaType]);
+  }, [params, studyMode, identitySubMode, inductionSubMode, formulaType]);
 
   // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
@@ -69,16 +93,39 @@ export function TrigIdentityAnimation() {
       alphaDeg: defaultParams.alphaDeg,
       homoA: defaultParams.homoA,
       homoB: defaultParams.homoB,
+      homoC: defaultParams.homoC,
+      homoD: defaultParams.homoD,
+      quadA: defaultParams.quadA,
+      quadB: defaultParams.quadB,
+      quadC: defaultParams.quadC,
+      universalK: defaultParams.universalK,
+      universalSign: defaultParams.universalSign,
+      thetaDeg: defaultParams.thetaDeg,
     });
   };
 
-  // 按研究模式过滤参数配置
+  // 按模式精确过滤参数配置
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      identity: ["alphaDeg", "homoA", "homoB"],
-      induction: ["alphaDeg"],
-    };
-    const activeKeys = keysByMode[studyMode] ?? ["alphaDeg"];
+    let activeKeys: string[] = ["alphaDeg"];
+
+    if (studyMode === "identity") {
+      if (identitySubMode === "geometry") {
+        activeKeys = ["alphaDeg"];
+      } else if (identitySubMode === "known_one") {
+        activeKeys = ["alphaDeg"];
+      } else if (identitySubMode === "homogeneous") {
+        activeKeys = ["alphaDeg", "homoA", "homoB", "quadA", "quadB", "quadC"];
+      }
+    } else {
+      // induction 模式
+      if (inductionSubMode === "standard6") {
+        activeKeys = ["alphaDeg"];
+      } else if (inductionSubMode === "universal_k") {
+        activeKeys = ["alphaDeg", "universalK", "universalSign"];
+      } else if (inductionSubMode === "complementary") {
+        activeKeys = ["alphaDeg", "thetaDeg"];
+      }
+    }
 
     return activeKeys
       .filter((key) => key in paramMeta)
@@ -98,89 +145,250 @@ export function TrigIdentityAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, studyMode]);
+  }, [params, studyMode, identitySubMode, inductionSubMode]);
 
   // 顶端悬浮 KaTeX 公式
   const headerFormulaLatex = useMemo(() => {
+    const alphaVal = params.alphaDeg ?? 30;
     if (studyMode === "identity") {
-      const aVal = params.homoA ?? 1;
-      const bVal = params.homoB ?? 1;
-      const trigRes = calculateTrigIdentity(params.alphaDeg ?? 30, aVal, bVal);
-      const valText =
-        trigRes.isHomoDefined && trigRes.homoVal !== undefined
-          ? trigRes.homoVal.toFixed(2)
-          : "\\text{无意义}";
-      return `\\sin^2\\alpha + \\cos^2\\alpha = 1 \\quad \\vert \\quad \\frac{\\color{#EF4444}{${aVal}}\\sin\\alpha + \\color{#D97706}{${bVal}}\\cos\\alpha}{\\sin\\alpha + \\cos\\alpha} = \\frac{\\color{#EF4444}{${aVal}}\\tan\\alpha + \\color{#D97706}{${bVal}}}{\\tan\\alpha + 1} = ${valText}`;
+      if (identitySubMode === "geometry") {
+        return `\\sin^2\\alpha + \\cos^2\\alpha = 1 \\quad \\vert \\quad \\tan\\alpha = \\frac{\\sin\\alpha}{\\cos\\alpha}`;
+      } else if (identitySubMode === "known_one") {
+        const trig = calculateTrigIdentity(alphaVal);
+        return `S = \\sin\\alpha+\\cos\\alpha = ${trig.sumSC.toFixed(2)} \\quad \\implies \\quad P = \\sin\\alpha\\cos\\alpha = \\frac{S^2-1}{2} = ${trig.prodSC.toFixed(2)}`;
+      } else {
+        const trig = calculateTrigIdentity(
+          alphaVal,
+          params.homoA,
+          params.homoB,
+          params.homoC,
+          params.homoD,
+          params.quadA,
+          params.quadB,
+          params.quadC,
+        );
+        const homoValText =
+          trig.isHomoDefined && trig.homoVal !== undefined
+            ? trig.homoVal.toFixed(2)
+            : "\\text{无意义}";
+        return `${trig.homoFormulaTex} = ${trig.homoStepTex} = ${homoValText}`;
+      }
     } else {
-      const ind = calculateInduction(params.alphaDeg ?? 30, formulaType);
-      return `${ind.formulaTitle}: \\quad ${ind.sinFormulaTex} \\quad \\vert \\quad ${ind.cosFormulaTex}`;
+      // induction 模式
+      if (inductionSubMode === "standard6") {
+        const ind = calculateInduction(alphaVal, formulaType);
+        return `${ind.formulaTitle}: \\quad ${ind.sinFormulaTex} \\quad \\vert \\quad ${ind.cosFormulaTex}`;
+      } else if (inductionSubMode === "universal_k") {
+        const u = calculateUniversalInduction(
+          alphaVal,
+          params.universalK ?? 1,
+          (params.universalSign ?? 1) as 1 | -1,
+        );
+        return `${u.formulaTitle}: \\quad ${u.sinFormulaTex} \\quad \\vert \\quad ${u.cosFormulaTex}`;
+      } else {
+        const c = calculateComplementaryModel(alphaVal, params.thetaDeg ?? 30);
+        return `\\cos\\left[\\frac{\\pi}{2} - (\\alpha + ${c.thetaDeg}^\\circ)\\right] = \\sin(\\alpha + ${c.thetaDeg}^\\circ)`;
+      }
     }
-  }, [studyMode, formulaType, params.alphaDeg, params.homoA, params.homoB]);
+  }, [
+    studyMode,
+    identitySubMode,
+    inductionSubMode,
+    formulaType,
+    params.alphaDeg,
+    params.homoA,
+    params.homoB,
+    params.homoC,
+    params.homoD,
+    params.quadA,
+    params.quadB,
+    params.quadC,
+    params.universalK,
+    params.universalSign,
+    params.thetaDeg,
+  ]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
-    return studyMode === "identity"
-      ? "同角三角函数关系看板"
-      : "诱导公式动态对称看板";
-  }, [studyMode]);
+    if (studyMode === "identity") {
+      if (identitySubMode === "geometry") return "同角三角函数线与基本关系";
+      if (identitySubMode === "known_one") return "知一求二与符号决策看板";
+      return "新高考齐次式化切与代换看板";
+    } else {
+      if (inductionSubMode === "standard6") return "诱导公式6大组动态对称看板";
+      if (inductionSubMode === "universal_k")
+        return "万能法则奇变偶不变推演看板";
+      return "新高考配角与互余互补看板";
+    }
+  }, [studyMode, identitySubMode, inductionSubMode]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 研究模式选择 */}
-          <LeftPanelSection title="研究模式" subtitle="选择探索的专题内容">
-            <SelectGrid
-              items={[
+          {/* 主研究模式 TabSwitcher 顶层轻量切换 */}
+          <LeftPanelSection title="主研究模式" subtitle="选择探索的专题体系">
+            <TabSwitcher
+              tabs={[
                 { key: "identity", label: "同角基本关系" },
                 { key: "induction", label: "诱导公式对称" },
               ]}
               value={studyMode}
               onChange={(k) => setStudyMode(k as "identity" | "induction")}
-              variant="filled"
+              layout="horizontal"
             />
           </LeftPanelSection>
 
-          {/* 诱导公式类型选择 (仅在 induction 模式) */}
-          {studyMode === "induction" && (
+          {/* 同角子模式切换 */}
+          {studyMode === "identity" && (
             <LeftPanelSection
-              title="诱导公式类型"
-              subtitle="选择6大组高考诱导公式"
+              title="同角探究专题"
+              subtitle="选择同角三角函数核心模型"
             >
               <SelectGrid
                 items={[
-                  { key: "pi_plus", label: "π + α" },
-                  { key: "neg", label: "-α" },
+                  {
+                    key: "geometry",
+                    label: "几何三角线",
+                    description: "正弦/余弦/正切线",
+                  },
+                  {
+                    key: "known_one",
+                    label: "知一求二",
+                    description: "和/差/积与象限",
+                  },
+                  {
+                    key: "homogeneous",
+                    label: "齐次化切",
+                    description: "弦化切与“1”的代换",
+                  },
+                ]}
+                value={identitySubMode}
+                onChange={(k) => setIdentitySubMode(k as IdentitySubMode)}
+                variant="outline"
+                color="primary"
+                columns={1}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 诱导公式子模式切换 */}
+          {studyMode === "induction" && (
+            <LeftPanelSection
+              title="诱导探究专题"
+              subtitle="选择诱导公式探索视角"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "standard6",
+                    label: "高考常用6大组",
+                    description: "对称几何图形联动",
+                  },
+                  {
+                    key: "universal_k",
+                    label: "万能法则 (k·π/2)",
+                    description: "奇变偶不变三步法",
+                  },
+                  {
+                    key: "complementary",
+                    label: "互余互补配角模型",
+                    description: "新高考角变换技巧",
+                  },
+                ]}
+                value={inductionSubMode}
+                onChange={(k) => setInductionSubMode(k as InductionSubMode)}
+                variant="outline"
+                color="primary"
+                columns={1}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 常用 6 组诱导公式类型选择 */}
+          {studyMode === "induction" && inductionSubMode === "standard6" && (
+            <LeftPanelSection
+              title="6 组诱导公式"
+              subtitle="点击查看不同对称性几何推演"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "pi_plus",
+                    formula: "\\pi + \\alpha",
+                    description: "关于原点对称",
+                  },
+                  {
+                    key: "neg",
+                    formula: "-\\alpha",
+                    description: "关于 x 轴对称",
+                  },
                   {
                     key: "pi_minus",
-                    label: "π - α",
+                    formula: "\\pi - \\alpha",
+                    description: "关于 y 轴对称",
                   },
                   {
                     key: "half_pi_minus",
-                    label: "π/2 - α",
+                    formula: "\\frac{\\pi}{2} - \\alpha",
+                    description: "关于 y=x 对称",
                   },
                   {
                     key: "half_pi_plus",
-                    label: "π/2 + α",
+                    formula: "\\frac{\\pi}{2} + \\alpha",
+                    description: "逆时针旋转 90°",
                   },
                   {
                     key: "period",
-                    label: "α + 2kπ",
+                    formula: "\\alpha + 2k\\pi",
+                    description: "终边重合(周期)",
                   },
                 ]}
                 value={formulaType}
                 onChange={(k) => setFormulaType(k as FormulaType)}
-                variant="filled"
+                variant="outline"
                 color="primary"
                 columns={2}
               />
             </LeftPanelSection>
           )}
 
-          {/* 参数调节 */}
+          {/* 万能法则模式下的快速 k 选择器 */}
+          {studyMode === "induction" && inductionSubMode === "universal_k" && (
+            <LeftPanelSection
+              title="快速设定 k 值"
+              subtitle="快速测试奇变与偶不变"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "1",
+                    formula: "k=1 (\\frac{\\pi}{2})",
+                    description: "奇变",
+                  },
+                  { key: "2", formula: "k=2 (\\pi)", description: "偶不变" },
+                  {
+                    key: "3",
+                    formula: "k=3 (\\frac{3\\pi}{2})",
+                    description: "奇变",
+                  },
+                  { key: "4", formula: "k=4 (2\\pi)", description: "偶不变" },
+                ]}
+                value={String(params.universalK ?? 1)}
+                onChange={(kStr) =>
+                  handleParamChange("universalK", Number(kStr))
+                }
+                variant="outline"
+                color="primary"
+                columns={2}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 参数调节区 */}
           <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块改变角 α 或齐次式系数"
+            title="参数精细调节"
+            subtitle="拖动滑块探索动态数形变化"
           >
             <ParamControl
               params={paramConfigs}
@@ -193,7 +401,7 @@ export function TrigIdentityAnimation() {
       center={
         <div className="w-full h-full relative flex flex-col bg-white">
           {/* 顶端 KaTeX 公式悬浮框 */}
-          <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
+          <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm max-w-[90%] overflow-x-auto">
             <KatexFormula formula={headerFormulaLatex} mode="inline" />
           </div>
 
@@ -203,14 +411,14 @@ export function TrigIdentityAnimation() {
             transform={vp.transform}
           >
             <TrigIdentityScene
-              params={
-                params as { alphaDeg: number; homoA?: number; homoB?: number }
-              }
+              params={params as any}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}
               fontScale={canvasSize.font}
               studyMode={studyMode}
+              identitySubMode={identitySubMode}
+              inductionSubMode={inductionSubMode}
               formulaType={formulaType}
             />
           </AnimationSvgCanvas>
