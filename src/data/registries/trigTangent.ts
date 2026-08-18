@@ -6,20 +6,22 @@ export const defaultParams = {
   omega: 1.0,
   phi: 0.0,
   C: 0.0,
+  targetIntervalEnd: Math.PI / 3, // 高考模式：区间 [0, xEnd] 的右端点
 } as const;
 
 export const paramMeta: Record<string, ParamMeta> = {
   theta: {
     key: "theta",
-    label: "角 θ (弧度)",
+    label: "动角 θ (弧度)",
     labelFormula: "\\theta",
-    min: -Math.PI / 2 + 0.08,
-    max: Math.PI / 2 - 0.08,
+    min: -Math.PI + 0.08,
+    max: Math.PI - 0.08,
     step: 0.02,
     defaultValue: Math.PI / 4,
     importance: "core",
     description: "单位圆终边旋转角，对应正切线 AT = tan θ",
-    descriptionFormula: "单位圆终边旋转角 $\\theta$，对应正切线 $AT = \\tan \\theta$",
+    descriptionFormula:
+      "\\text{终边旋转角 } \\theta, \\; \\text{对应正切线 } AT = \\tan \\theta",
   },
   A: {
     key: "A",
@@ -50,13 +52,18 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 1.0,
     importance: "core",
     description: "决定正切函数的最小正周期 T = π / |ω|",
-    descriptionFormula: "决定正切函数的最小正周期 $T = \\frac{\\pi}{|\\omega|}$",
+    descriptionFormula: "T = \\frac{\\pi}{|\\omega|}",
     marks: [
       {
         value: 0,
         variant: "critical",
         label: "无意义/退化",
         labelFormula: "\\omega = 0",
+      },
+      {
+        value: 1.5,
+        label: "高考临界值 (1.5)",
+        labelFormula: "\\omega = 1.5",
       },
     ],
   },
@@ -70,7 +77,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.0,
     importance: "core",
     description: "控制正切曲线沿着 x 轴方向的平移量 -φ/ω",
-    descriptionFormula: "控制正切曲线沿着 $x$ 轴方向的平移量 $-\\frac{\\varphi}{\\omega}$",
+    descriptionFormula: "\\Delta x = -\\frac{\\varphi}{\\omega}",
   },
   C: {
     key: "C",
@@ -82,5 +89,18 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.0,
     importance: "core",
     description: "控制正切曲线上下平移，对称中心向上平移 C",
+    descriptionFormula: "y = C",
+  },
+  targetIntervalEnd: {
+    key: "targetIntervalEnd",
+    label: "目标区间右端点",
+    labelFormula: "x_{\\text{end}}",
+    min: 0.2,
+    max: 2.5,
+    step: 0.1,
+    defaultValue: Math.PI / 3,
+    importance: "advanced",
+    description: "给定区间 [0, xEnd]，探究函数在该区间上单调无渐近线的条件",
+    descriptionFormula: "[0, x_{\\text{end}}]",
   },
 };

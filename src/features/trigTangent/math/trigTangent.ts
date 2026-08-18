@@ -15,6 +15,17 @@ export interface SymmetryCenter {
   type: "zero" | "asymptoteIntersection";
 }
 
+export interface TangentLineData {
+  theta: number;
+  pX: number;
+  pY: number;
+  tX: number;
+  tY: number;
+  tanValue: number;
+  isValid: boolean;
+  isBackward: boolean; // 是否是终边反向延长线交于 x=1
+}
+
 /**
  * 安全计算正切函数值
  * @param x 数学坐标 x
@@ -28,7 +39,7 @@ export function calculateTangentValue(
   A: number,
   omega: number,
   phi: number,
-  C: number
+  C: number,
 ): { y: number; isValid: boolean } {
   if (Math.abs(omega) < 1e-9) {
     return { y: C, isValid: false };
@@ -52,6 +63,52 @@ export function calculateTangentValue(
 }
 
 /**
+ * 计算单位圆与正切线几何关系（支持四象限与反向延长线）
+ */
+export function calculateUnitCircleTangent(
+  theta: number,
+  center: { x: number; y: number },
+  r: number,
+): TangentLineData {
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const isCosNearZero = Math.abs(cosT) < 1e-4;
+
+  const pX = center.x + r * cosT;
+  const pY = center.y + r * sinT;
+
+  if (isCosNearZero) {
+    return {
+      theta,
+      pX,
+      pY,
+      tX: center.x + r,
+      tY: sinT > 0 ? Infinity : -Infinity,
+      tanValue: sinT > 0 ? Infinity : -Infinity,
+      isValid: false,
+      isBackward: false,
+    };
+  }
+
+  const tanValue = sinT / cosT;
+  const tX = center.x + r;
+  const tY = center.y + r * tanValue;
+  // 当 cosT < 0 (第二、三象限) 时，为终边反向延长线相交
+  const isBackward = cosT < 0;
+
+  return {
+    theta,
+    pX,
+    pY,
+    tX,
+    tY,
+    tanValue,
+    isValid: true,
+    isBackward,
+  };
+}
+
+/**
  * 获取在 [xMin, xMax] 范围内的所有垂直渐近线 x 坐标
  * 方程：omega * x + phi = k * pi + pi/2  =>  x = (k * pi + pi/2 - phi) / omega
  */
@@ -59,13 +116,11 @@ export function getTangentAsymptotes(
   xMin: number,
   xMax: number,
   omega: number,
-  phi: number
+  phi: number,
 ): { x: number; k: number }[] {
   if (Math.abs(omega) < 1e-9) return [];
 
   const asymptotes: { x: number; k: number }[] = [];
-  // 反解 k 的大约范围
-  // xMin <= (k*pi + pi/2 - phi) / omega <= xMax
   const targetMin = Math.min(xMin * omega, xMax * omega);
   const targetMax = Math.max(xMin * omega, xMax * omega);
 
@@ -79,7 +134,7 @@ export function getTangentAsymptotes(
     }
   }
 
-  return asymptotes;
+  return asymptotes.sort((a, b) => a.x - b.x);
 }
 
 /**
@@ -91,7 +146,7 @@ export function getTangentSymmetryCenters(
   xMax: number,
   omega: number,
   phi: number,
-  C: number
+  C: number,
 ): SymmetryCenter[] {
   if (Math.abs(omega) < 1e-9) return [];
 
@@ -129,7 +184,7 @@ export function generateTangentSegments(
   C: number,
   yMin: number = -10,
   yMax: number = 10,
-  samplesPerPeriod: number = 100
+  samplesPerPeriod: number = 100,
 ): TangentPoint[][] {
   if (Math.abs(omega) < 1e-9) return [];
 
@@ -165,4 +220,36 @@ export function generateTangentSegments(
   }
 
   return segments;
+}
+
+/**
+ * 检测目标区间 [xStart, xEnd] 内是否存在正切渐近线（用于高考真题探究）
+ */
+export function checkIntervalAsymptoteFree(
+  xStart: number,
+  xEnd: number,
+  omega: number,
+  phi: number,
+): {
+  hasAsymptote: boolean;
+  firstAsymptote?: number;
+  maxAllowedOmega?: number;
+} {
+  if (Math.abs(omega) < 1e-9) {
+    return { hasAsymptote: false };
+  }
+
+  // 求解落在 [xStart, xEnd] 内的所有渐近线
+  const asymptotes = getTangentAsymptotes(xStart, xEnd, omega, phi);
+  const hasAsymptote = asymptotes.length > 0;
+  const firstAsymptote = asymptotes.length > 0 ? asymptotes[0].x : undefined;
+
+  // 对于常见高考题型：f(x) = tan(omega * x) 在 [0, xEnd] 单调，则第一条正渐近线 x = pi / (2 * omega) > xEnd => omega < pi / (2 * xEnd)
+  const maxAllowedOmega = xEnd > 0 ? Math.PI / (2 * xEnd) : undefined;
+
+  return {
+    hasAsymptote,
+    firstAsymptote,
+    maxAllowedOmega,
+  };
 }

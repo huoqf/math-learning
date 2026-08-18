@@ -16,9 +16,9 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/trigTangent";
 
 export function TrigTangentAnimation() {
-  // 研究模式：'unitCircle' | 'baseFunction' | 'generalTransform'
+  // 研究模式：'unitCircle' | 'baseFunction' | 'generalTransform' | 'gaokaoProblem'
   const [studyMode, setStudyMode] = useState<
-    "unitCircle" | "baseFunction" | "generalTransform"
+    "unitCircle" | "baseFunction" | "generalTransform" | "gaokaoProblem"
   >("generalTransform");
 
   // 单调区间高亮开关
@@ -31,6 +31,7 @@ export function TrigTangentAnimation() {
     omega: defaultParams.omega,
     phi: defaultParams.phi,
     C: defaultParams.C,
+    targetIntervalEnd: defaultParams.targetIntervalEnd,
   }));
 
   // Viewport 适配
@@ -66,6 +67,7 @@ export function TrigTangentAnimation() {
       omega: defaultParams.omega,
       phi: defaultParams.phi,
       C: defaultParams.C,
+      targetIntervalEnd: defaultParams.targetIntervalEnd,
     });
   };
 
@@ -73,8 +75,9 @@ export function TrigTangentAnimation() {
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
       unitCircle: ["theta"],
-      baseFunction: [],
+      baseFunction: ["theta"],
       generalTransform: ["A", "omega", "phi", "C"],
+      gaokaoProblem: ["omega", "targetIntervalEnd"],
     };
 
     const activeKeys = keysByMode[studyMode] ?? ["A", "omega", "phi", "C"];
@@ -99,14 +102,21 @@ export function TrigTangentAnimation() {
       });
   }, [params, studyMode]);
 
-  // 构建当前公式 LaTeX
+  // 构建当前公式 LaTeX（三位一体色彩绑定）
   const formulaLatex = useMemo(() => {
     if (studyMode === "unitCircle") {
-      const tanVal = Math.tan(params.theta ?? Math.PI / 4);
-      return `\\tan(${params.theta.toFixed(2)}) = ${tanVal.toFixed(3)}`;
+      const cosT = Math.cos(params.theta ?? Math.PI / 4);
+      const tanVal = Math.abs(cosT) > 1e-4 ? Math.tan(params.theta) : Infinity;
+      return `\\tan(\\color{#EF4444}{${params.theta.toFixed(2)}}) = \\color{#D97706}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
     }
     if (studyMode === "baseFunction") {
-      return "f(x) = \\tan x \\quad \\left(x \\neq k\\pi + \\frac{\\pi}{2}\\right)";
+      const cosT = Math.cos(params.theta ?? Math.PI / 4);
+      const tanVal = Math.abs(cosT) > 1e-4 ? Math.tan(params.theta) : Infinity;
+      return `f(x) = \\tan x, \\quad \\tan(\\color{#EF4444}{${params.theta.toFixed(2)}}) = \\color{#2563EB}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
+    }
+    if (studyMode === "gaokaoProblem") {
+      const { omega, targetIntervalEnd } = params;
+      return `f(x) = \\tan(\\color{#D97706}{${omega}}x), \\quad x \\in [0, \\color{#EF4444}{${targetIntervalEnd?.toFixed(2)}}]`;
     }
     const { A, omega, phi, C } = params;
     const phiStr =
@@ -116,8 +126,9 @@ export function TrigTangentAnimation() {
   }, [studyMode, params]);
 
   const panelTitle = useMemo(() => {
-    if (studyMode === "unitCircle") return "正切线与单位圆逼近";
-    if (studyMode === "baseFunction") return "y = tan x 基础性质";
+    if (studyMode === "unitCircle") return "正切线与单位圆极限看板";
+    if (studyMode === "baseFunction") return "y = tan x 基础性质看板";
+    if (studyMode === "gaokaoProblem") return "新高考 ω 范围探究看板";
     return "y = A tan(ωx + φ) + C 看板";
   }, [studyMode]);
 
@@ -128,21 +139,39 @@ export function TrigTangentAnimation() {
           <LeftPanelSection title="研究模式" subtitle="选择正切函数探讨视角">
             <SelectGrid
               items={[
-                { key: "unitCircle", label: "正切线生成" },
-                { key: "baseFunction", label: "y=tan x 性质" },
+                {
+                  key: "unitCircle",
+                  label: "正切线生成",
+                  description: "单位圆与外切线",
+                },
+                {
+                  key: "baseFunction",
+                  label: "y=tan x 性质",
+                  description: "基础图象与周期",
+                },
                 {
                   key: "generalTransform",
                   label: "一般型变换",
-                  fullWidth: true,
+                  description: "A/ω/φ/C 综合参数",
+                },
+                {
+                  key: "gaokaoProblem",
+                  label: "高考 ω 范围",
+                  description: "区间单调无渐近线",
                 },
               ]}
               value={studyMode}
               onChange={(k) =>
                 setStudyMode(
-                  k as "unitCircle" | "baseFunction" | "generalTransform",
+                  k as
+                    | "unitCircle"
+                    | "baseFunction"
+                    | "generalTransform"
+                    | "gaokaoProblem",
                 )
               }
               variant="filled"
+              columns={2}
             />
           </LeftPanelSection>
 
@@ -192,6 +221,7 @@ export function TrigTangentAnimation() {
                   omega: number;
                   phi: number;
                   C: number;
+                  targetIntervalEnd: number;
                 }
               }
               scale={scale}

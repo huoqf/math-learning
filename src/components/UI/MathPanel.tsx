@@ -354,62 +354,148 @@ export const MathPanel: React.FC<MathPanelProps> = ({
           </span>
         </div>
         <div className="grid grid-cols-1 gap-1.5">
-          {quantities.map((q, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between p-2 rounded-lg bg-white border border-neutral-100 shadow-xs hover:border-neutral-200 transition-colors"
-            >
-              <div className="flex items-center gap-1.5 min-w-0 pr-2">
-                {q.symbol && (
+          {quantities.map((q, index) => {
+            const valStr =
+              typeof q.value === "string" ? q.value : String(q.value);
+            const isLongSymbol = Boolean(
+              q.symbol &&
+              (q.symbol.length > 8 ||
+                /\\(frac|tan|sin|cos|sqrt|over|sum|int)|=/.test(q.symbol)),
+            );
+            const isLongValue =
+              valStr.length > 14 ||
+              /\\(frac|tan|sin|cos|sqrt|text|begin|aligned)|=|,/.test(valStr);
+            const isStacked =
+              isLongSymbol ||
+              isLongValue ||
+              (Boolean(q.symbol) && q.label.length > 6);
+
+            if (isStacked) {
+              return (
+                <div
+                  key={index}
+                  className="flex flex-col gap-1.5 p-2 rounded-lg bg-white border border-neutral-100 shadow-xs hover:border-neutral-200 transition-colors"
+                >
+                  {/* 顶部行：符号徽章 + 完整标签 */}
+                  <div className="flex items-center justify-between gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {q.symbol && (
+                        <span
+                          className="font-semibold shrink-0 text-xs px-1.5 py-0.5 rounded"
+                          style={{
+                            backgroundColor: q.color
+                              ? `${q.color}15`
+                              : "#f3f4f6",
+                            color: q.color ?? "#4b5563",
+                          }}
+                        >
+                          {hasLatex(q.symbol) ? (
+                            <KatexFormula
+                              formula={q.symbol}
+                              mode="inline"
+                              className="!text-xs"
+                            />
+                          ) : (
+                            q.symbol
+                          )}
+                        </span>
+                      )}
+                      <span className="text-xs text-neutral-700 font-medium break-words">
+                        {q.label}
+                      </span>
+                    </div>
+                    {q.unit && (
+                      <span className="text-[11px] text-neutral-400 font-medium shrink-0">
+                        {renderMixedLatex(q.unit)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 底部数值/公式展示行：全宽自适应展示，防止重叠挤压与溢出 */}
+                  <div className="w-full flex items-center justify-end overflow-hidden pt-0.5">
+                    <span
+                      className="font-bold text-xs max-w-full text-right"
+                      style={{ color: getValueColor(q) }}
+                    >
+                      {typeof q.value === "number" ? (
+                        q.value.toFixed(2)
+                      ) : typeof q.value === "string" && hasLatex(q.value) ? (
+                        <KatexFormula
+                          formula={q.value}
+                          mode="inline"
+                          responsive={true}
+                          className="!text-xs max-w-full"
+                        />
+                      ) : typeof q.value === "string" ? (
+                        <span className="break-words leading-relaxed text-xs">
+                          {renderMixedLatex(q.value)}
+                        </span>
+                      ) : (
+                        q.value
+                      )}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={index}
+                className="flex items-center justify-between p-2 rounded-lg bg-white border border-neutral-100 shadow-xs hover:border-neutral-200 transition-colors gap-2"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  {q.symbol && (
+                    <span
+                      className="font-semibold shrink-0 text-xs px-1.5 py-0.5 rounded"
+                      style={{
+                        backgroundColor: q.color ? `${q.color}15` : "#f3f4f6",
+                        color: q.color ?? "#4b5563",
+                      }}
+                    >
+                      {hasLatex(q.symbol) ? (
+                        <KatexFormula
+                          formula={q.symbol}
+                          mode="inline"
+                          className="!text-xs"
+                        />
+                      ) : (
+                        q.symbol
+                      )}
+                    </span>
+                  )}
+                  <span className="text-xs text-neutral-600 font-medium whitespace-nowrap">
+                    {q.label}
+                  </span>
+                </div>
+                <div className="flex items-center gap-0.5 shrink-0 text-right">
                   <span
-                    className="font-semibold shrink-0 text-xs px-1.5 py-0.5 rounded"
-                    style={{
-                      backgroundColor: q.color ? `${q.color}15` : "#f3f4f6",
-                      color: q.color ?? "#4b5563",
-                    }}
+                    className="font-bold text-xs"
+                    style={{ color: getValueColor(q) }}
                   >
-                    {hasLatex(q.symbol) ? (
+                    {typeof q.value === "number" ? (
+                      q.value.toFixed(2)
+                    ) : typeof q.value === "string" && hasLatex(q.value) ? (
                       <KatexFormula
-                        formula={q.symbol}
+                        formula={q.value}
                         mode="inline"
                         className="!text-xs"
                       />
+                    ) : typeof q.value === "string" ? (
+                      renderMixedLatex(q.value)
                     ) : (
-                      q.symbol
+                      q.value
                     )}
                   </span>
-                )}
-                <span className="text-xs text-neutral-600 truncate font-medium">
-                  {q.label}
-                </span>
-              </div>
-              <div className="flex items-center gap-0.5 shrink-0 text-right">
-                <span
-                  className="font-bold text-xs"
-                  style={{ color: getValueColor(q) }}
-                >
-                  {typeof q.value === "number" ? (
-                    q.value.toFixed(2)
-                  ) : typeof q.value === "string" && hasLatex(q.value) ? (
-                    <KatexFormula
-                      formula={q.value}
-                      mode="inline"
-                      className="!text-[13px]"
-                    />
-                  ) : typeof q.value === "string" ? (
-                    renderMixedLatex(q.value)
-                  ) : (
-                    q.value
+                  {q.unit && (
+                    <span className="text-xs text-neutral-500 font-medium ml-1">
+                      {renderMixedLatex(q.unit)}
+                    </span>
                   )}
-                </span>
-                {q.unit && (
-                  <span className="text-xs text-neutral-500 font-medium ml-1">
-                    {renderMixedLatex(q.unit)}
-                  </span>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
