@@ -28,6 +28,8 @@ interface SectionPlane3DProps {
   planeExtent?: number;
   color?: string;
   showPlaneQuad?: boolean;
+  /** 是否在底面渲染射影阴影多边形 */
+  showProjection?: boolean;
   /** 作图辅助线段 */
   constructionLines?: ConstructionLineProp[];
   /** 作图辅助顶点 */
@@ -61,6 +63,7 @@ export function SectionPlane3D({
   planeExtent = 3,
   color = MATH3D_COLORS.sectionFill,
   showPlaneQuad = true,
+  showProjection = true,
   constructionLines = [],
   constructionPoints = [],
 }: SectionPlane3DProps) {
@@ -99,6 +102,49 @@ export function SectionPlane3D({
     geo.computeVertexNormals();
     return geo;
   }, [threePoints]);
+
+  // 投影到底面 z = 0 后的几何多边形
+  const projectionGeometry = useMemo(() => {
+    if (!showProjection || sectionPoints.length < 3) return null;
+    const projPoints = sectionPoints.map((p) =>
+      vec3ToThree({ x: p.x, y: p.y, z: 0.01 }),
+    );
+    const centroid = projPoints
+      .reduce((acc, p) => acc.add(p.clone()), new THREE.Vector3())
+      .multiplyScalar(1 / projPoints.length);
+
+    const positions: number[] = [];
+    for (let i = 0; i < projPoints.length; i++) {
+      const a = projPoints[i];
+      const b = projPoints[(i + 1) % projPoints.length];
+      positions.push(
+        centroid.x,
+        centroid.y,
+        centroid.z,
+        a.x,
+        a.y,
+        a.z,
+        b.x,
+        b.y,
+        b.z,
+      );
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(positions, 3),
+    );
+    geo.computeVertexNormals();
+    return geo;
+  }, [showProjection, sectionPoints]);
+
+  const projOutlinePoints = useMemo(() => {
+    if (!showProjection || sectionPoints.length < 3) return [];
+    const pts = sectionPoints.map((p) =>
+      vec3ToThree({ x: p.x, y: p.y, z: 0.01 }),
+    );
+    return [...pts, pts[0]];
+  }, [showProjection, sectionPoints]);
 
   const outlinePoints = useMemo(
     () => (threePoints.length > 0 ? [...threePoints, threePoints[0]] : []),
@@ -193,6 +239,32 @@ export function SectionPlane3D({
             depthWrite={false}
           />
         </mesh>
+      )}
+
+      {/* 截面在底面的射影阴影面 (半透明翠绿) */}
+      {projectionGeometry && (
+        <mesh geometry={projectionGeometry} renderOrder={4}>
+          <meshBasicMaterial
+            color={MATH_COLORS.secondary}
+            transparent
+            opacity={0.35}
+            side={THREE.DoubleSide}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+
+      {/* 投影多边形轮廓线 */}
+      {projOutlinePoints.length > 0 && (
+        <Line
+          points={projOutlinePoints}
+          color={MATH_COLORS.secondary}
+          lineWidth={2.0}
+          dashed
+          dashSize={0.15}
+          gapSize={0.08}
+          renderOrder={5}
+        />
       )}
 
       {/* 平面与多面体表面相交形成的闭合交线轮廓 */}

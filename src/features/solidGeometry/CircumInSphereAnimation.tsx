@@ -188,6 +188,7 @@ export default function CircumInSphereAnimation() {
 
           <LeftPanelSection title="3D 视角选择">
             <TabSwitcher
+              layout="horizontal"
               tabs={[
                 { key: "iso", label: "轴测" },
                 { key: "front", label: "主视" },

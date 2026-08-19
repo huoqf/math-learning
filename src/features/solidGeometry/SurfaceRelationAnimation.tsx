@@ -309,6 +309,7 @@ export default function SurfaceRelationAnimation() {
           <LeftPanelSection title="3D 视角切换">
             <div className="space-y-2.5">
               <TabSwitcher
+                layout="horizontal"
                 tabs={[
                   { key: "iso", label: "轴测" },
                   { key: "front", label: "主视" },

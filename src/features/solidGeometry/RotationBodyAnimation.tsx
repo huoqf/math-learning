@@ -324,28 +324,32 @@ export default function RotationBodyAnimation() {
             )}
           </LeftPanelSection>
 
-          <LeftPanelSection title="3D 视角切换">
-            <TabSwitcher
-              tabs={[
-                { key: "iso", label: "轴测" },
-                { key: "front", label: "主视" },
-                { key: "top", label: "俯视" },
-                { key: "side", label: "左视" },
-              ]}
-              value={preset}
-              onChange={(p) => setCameraPreset(p as any)}
-            />
-          </LeftPanelSection>
-
-          <LeftPanelSection title="显示模式">
-            <TabSwitcher
-              tabs={[
-                { key: "3d", label: "3D 直观图" },
-                { key: "orthographic", label: "正投影三视图" },
-              ]}
-              value={displayMode}
-              onChange={(k) => setDisplayMode(k as "3d" | "orthographic")}
-            />
+          {/* 视图与视角 */}
+          <LeftPanelSection title="视图与视角">
+            <div className="space-y-2">
+              <TabSwitcher
+                layout="horizontal"
+                tabs={[
+                  { key: "3d", label: "3D 直观图" },
+                  { key: "orthographic", label: "2D 三视图" },
+                ]}
+                value={displayMode}
+                onChange={(k) => setDisplayMode(k as "3d" | "orthographic")}
+              />
+              {displayMode === "3d" && (
+                <TabSwitcher
+                  layout="horizontal"
+                  tabs={[
+                    { key: "iso", label: "轴测" },
+                    { key: "front", label: "主视" },
+                    { key: "top", label: "俯视" },
+                    { key: "side", label: "左视" },
+                  ]}
+                  value={preset}
+                  onChange={(p) => setCameraPreset(p as any)}
+                />
+              )}
+            </div>
           </LeftPanelSection>
         </LeftPanel>
       }

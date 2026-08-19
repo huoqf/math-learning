@@ -291,6 +291,7 @@ export default function Vector3DBasisAnimation() {
 
           <LeftPanelSection title="3D 视角控制">
             <TabSwitcher
+              layout="horizontal"
               tabs={[
                 { key: "iso", label: "轴测" },
                 { key: "front", label: "主视" },

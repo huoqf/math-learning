@@ -51,4 +51,19 @@ describe("sectionArea Math Tests", () => {
     // 射影面积公式验证: S_截 * cos θ = S_投
     expect(details.area3D * details.cosTheta).toBeCloseTo(details.areaProj, 4);
   });
+
+  it("正确判定截面形状与周长", () => {
+    const triangle: Vec3[] = [
+      { x: 0, y: 0, z: 0 },
+      { x: 2, y: 0, z: 0 },
+      { x: 1, y: Math.sqrt(3), z: 0 },
+    ];
+    const triDetails = computeSectionProjectionDetails(triangle, {
+      x: 0,
+      y: 0,
+      z: 1,
+    });
+    expect(triDetails.shapeName).toContain("正三角形");
+    expect(triDetails.perimeter).toBeCloseTo(6, 2);
+  });
 });

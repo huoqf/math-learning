@@ -183,17 +183,6 @@ export default function FoldingAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="视图模式选择">
-            <TabSwitcher
-              tabs={[
-                { key: "3d", label: "3D 动态直观图" },
-                { key: "threeViews", label: "正投影/三视图" },
-              ]}
-              value={viewMode}
-              onChange={(m) => setViewMode(m as typeof viewMode)}
-            />
-          </LeftPanelSection>
-
           <LeftPanelSection
             title="几何尺寸与折叠二面角"
             subtitle="调节边长尺寸与翻折二面角 α"
@@ -205,17 +194,32 @@ export default function FoldingAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="3D 视角预设">
-            <TabSwitcher
-              tabs={[
-                { key: "iso", label: "轴测" },
-                { key: "front", label: "主视" },
-                { key: "top", label: "俯视" },
-                { key: "side", label: "左视" },
-              ]}
-              value={preset}
-              onChange={(p) => setCameraPreset(p as CameraPreset)}
-            />
+          {/* 视图与视角 */}
+          <LeftPanelSection title="视图与视角">
+            <div className="space-y-2">
+              <TabSwitcher
+                layout="horizontal"
+                tabs={[
+                  { key: "3d", label: "3D 直观图" },
+                  { key: "threeViews", label: "2D 三视图" },
+                ]}
+                value={viewMode}
+                onChange={(m) => setViewMode(m as typeof viewMode)}
+              />
+              {viewMode === "3d" && (
+                <TabSwitcher
+                  layout="horizontal"
+                  tabs={[
+                    { key: "iso", label: "轴测" },
+                    { key: "front", label: "主视" },
+                    { key: "top", label: "俯视" },
+                    { key: "side", label: "左视" },
+                  ]}
+                  value={preset}
+                  onChange={(p) => setCameraPreset(p as CameraPreset)}
+                />
+              )}
+            </div>
           </LeftPanelSection>
         </LeftPanel>
       }

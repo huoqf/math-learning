@@ -217,6 +217,59 @@ export function buildRegularPrismPolyhedron(
   return { vertices, edges, faces };
 }
 
+/** 正三棱锥 / 正四面体：底面为正三角形 (半径 baseRadius)，高 height */
+export function buildTetrahedronPolyhedron(
+  baseRadius: number,
+  height: number,
+): Polyhedron {
+  return buildRegularPyramidPolyhedron(3, baseRadius, height);
+}
+
+/** 正棱台：下底半径 rBottom，上底半径 rTop，高 height */
+export function buildFrustumPolyhedron(
+  sides: number,
+  rBottom: number,
+  rTop: number,
+  height: number,
+): Polyhedron {
+  const bottom: Vec3[] = Array.from({ length: sides }, (_, i) => {
+    const t = (i / sides) * Math.PI * 2;
+    return {
+      x: rBottom * Math.cos(t),
+      y: rBottom * Math.sin(t),
+      z: 0,
+    };
+  });
+  const top: Vec3[] = Array.from({ length: sides }, (_, i) => {
+    const t = (i / sides) * Math.PI * 2;
+    return {
+      x: rTop * Math.cos(t),
+      y: rTop * Math.sin(t),
+      z: height,
+    };
+  });
+  const vertices = [...bottom, ...top];
+  const edges: PolyhedronEdge[] = [];
+
+  for (let i = 0; i < sides; i++) {
+    const next = (i + 1) % sides;
+    edges.push({ a: i, b: next }); // 下底边
+    edges.push({ a: i + sides, b: next + sides }); // 上底边
+    edges.push({ a: i, b: i + sides }); // 侧棱
+  }
+
+  const faces: number[][] = [
+    Array.from({ length: sides }, (_, i) => i), // 下底面
+    Array.from({ length: sides }, (_, i) => sides - 1 - i + sides), // 上底面
+    ...Array.from({ length: sides }, (_, i) => {
+      const next = (i + 1) % sides;
+      return [i, next, next + sides, i + sides];
+    }), // 侧面四边形
+  ];
+
+  return { vertices, edges, faces };
+}
+
 // ============================================================
 // 二、旋转体求交
 // ============================================================

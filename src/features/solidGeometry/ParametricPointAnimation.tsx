@@ -196,18 +196,21 @@ export default function ParametricPointAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="视图模式与视角预设">
-            <div className="flex flex-col gap-2">
+          {/* 视图与视角 */}
+          <LeftPanelSection title="视图与视角">
+            <div className="space-y-2">
               <TabSwitcher
+                layout="horizontal"
                 tabs={[
                   { key: "3d", label: "3D 直观图" },
-                  { key: "threeViews", label: "正投影三视图" },
+                  { key: "threeViews", label: "2D 三视图" },
                 ]}
                 value={viewMode}
                 onChange={(v) => setViewMode(v as "3d" | "threeViews")}
               />
               {viewMode === "3d" && (
                 <TabSwitcher
+                  layout="horizontal"
                   tabs={[
                     { key: "iso", label: "轴测" },
                     { key: "front", label: "主视" },
