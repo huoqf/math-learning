@@ -1,6 +1,6 @@
 import React from "react";
 import { Plane3D } from "@/components/Math3D/Plane3D";
-import { Vector3DArrow } from "@/components/Math3D/Vector3DArrow";
+import { Segment3D } from "@/components/Math3D/Segment3D";
 import { CompoundLabel3D } from "@/components/Math3D/CompoundLabel3D";
 import { Point3D } from "@/components/Math3D/Point3D";
 import { Polygon3DFace } from "@/components/Math3D/Polygon3DFace";
@@ -43,22 +43,22 @@ export const SurfaceGaokaoModelScene: React.FC<
 
     return (
       <group>
-        {/* 正方体 12 条框架棱线 */}
+        {/* 正方体 12 条框架棱线 (纯几何无箭头棱线) */}
         {/* 下底面 */}
-        <Vector3DArrow from={A} to={B} colorKey="grid" />
-        <Vector3DArrow from={B} to={C} colorKey="grid" />
-        <Vector3DArrow from={C} to={D} colorKey="grid" />
-        <Vector3DArrow from={D} to={A} colorKey="grid" />
+        <Segment3D from={A} to={B} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={B} to={C} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={C} to={D} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={D} to={A} colorKey="grid" lineWidth={1.5} />
         {/* 上底面 */}
-        <Vector3DArrow from={A1} to={B1} colorKey="grid" />
-        <Vector3DArrow from={B1} to={C1} colorKey="grid" />
-        <Vector3DArrow from={C1} to={D1} colorKey="grid" />
-        <Vector3DArrow from={D1} to={A1} colorKey="grid" />
+        <Segment3D from={A1} to={B1} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={B1} to={C1} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={C1} to={D1} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={D1} to={A1} colorKey="grid" lineWidth={1.5} />
         {/* 侧棱 */}
-        <Vector3DArrow from={A} to={A1} colorKey="grid" />
-        <Vector3DArrow from={B} to={B1} colorKey="grid" />
-        <Vector3DArrow from={C} to={C1} colorKey="grid" />
-        <Vector3DArrow from={D} to={D1} colorKey="grid" />
+        <Segment3D from={A} to={A1} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={B} to={B1} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={C} to={C1} colorKey="grid" lineWidth={1.5} />
+        <Segment3D from={D} to={D1} colorKey="grid" lineWidth={1.5} />
 
         {/* 截面 1: 面 AB1C (高中经典对角截面，填充半透明面与高亮边框) */}
         <Polygon3DFace
@@ -66,9 +66,9 @@ export const SurfaceGaokaoModelScene: React.FC<
           colorKey="paramPrimary"
           opacity={0.22}
         />
-        <Vector3DArrow from={A} to={B1} colorKey="paramPrimary" />
-        <Vector3DArrow from={B1} to={C} colorKey="paramPrimary" />
-        <Vector3DArrow from={C} to={A} colorKey="paramPrimary" />
+        <Segment3D from={A} to={B1} colorKey="paramPrimary" lineWidth={2.5} />
+        <Segment3D from={B1} to={C} colorKey="paramPrimary" lineWidth={2.5} />
+        <Segment3D from={C} to={A} colorKey="paramPrimary" lineWidth={2.5} />
 
         {/* 截面 2: 面 A1C1D (高中经典平行截面，填充半透明面与高亮边框) */}
         <Polygon3DFace
@@ -76,9 +76,14 @@ export const SurfaceGaokaoModelScene: React.FC<
           colorKey="paramSecondary"
           opacity={0.22}
         />
-        <Vector3DArrow from={A1} to={C1} colorKey="paramSecondary" />
-        <Vector3DArrow from={C1} to={D} colorKey="paramSecondary" />
-        <Vector3DArrow from={D} to={A1} colorKey="paramSecondary" />
+        <Segment3D
+          from={A1}
+          to={C1}
+          colorKey="paramSecondary"
+          lineWidth={2.5}
+        />
+        <Segment3D from={C1} to={D} colorKey="paramSecondary" lineWidth={2.5} />
+        <Segment3D from={D} to={A1} colorKey="paramSecondary" lineWidth={2.5} />
 
         {/* 几何基准特征点 */}
         <Point3D position={A} colorKey="secondary" radius={0.045} />
@@ -161,19 +166,19 @@ export const SurfaceGaokaoModelScene: React.FC<
       />
 
       {/* 底面矩形棱线 */}
-      <Vector3DArrow from={A} to={B} colorKey="secondary" />
-      <Vector3DArrow from={B} to={C} colorKey="secondary" />
-      <Vector3DArrow from={C} to={D} colorKey="secondary" />
-      <Vector3DArrow from={D} to={A} colorKey="secondary" />
+      <Segment3D from={A} to={B} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={B} to={C} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={C} to={D} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={D} to={A} colorKey="secondary" lineWidth={2} />
 
       {/* 侧棱 PA, PB, PC, PD */}
-      <Vector3DArrow from={P} to={A} colorKey="paramTertiary" />
-      <Vector3DArrow from={P} to={B} colorKey="secondary" />
-      <Vector3DArrow from={P} to={C} colorKey="secondary" />
-      <Vector3DArrow from={P} to={D} colorKey="paramTertiary" />
+      <Segment3D from={P} to={A} colorKey="paramTertiary" lineWidth={2} />
+      <Segment3D from={P} to={B} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={P} to={C} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={P} to={D} colorKey="paramTertiary" lineWidth={2} />
 
       {/* 四棱锥高线 PO 垂直于交线 AD（核心辅助线） */}
-      <Vector3DArrow from={P} to={O} colorKey="paramPrimary" />
+      <Segment3D from={P} to={O} colorKey="paramPrimary" lineWidth={2.5} />
 
       {/* 垂足 O 处的双直角角弧: 1. PO ⊥ AD  2. PO ⊥ AB (底面) */}
       <AngleArc3D

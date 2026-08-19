@@ -7,6 +7,17 @@ export interface FoldingResult {
   model: FoldingModelKind;
   /** 3D 关键顶点映射 */
   points: Record<string, Vec3>;
+  /** 二面角平面角垂线构造点：垂足 H，静态面内垂线端点 H_base，翻折面内垂线端点 H_fold */
+  dihedralRays?: {
+    vertex: Vec3;
+    baseRayEnd: Vec3;
+    foldRayEnd: Vec3;
+  };
+  /** 静态底面法向量 n1 与 翻折面法向量 n2 */
+  normals?: {
+    n1: Vec3;
+    n2: Vec3;
+  };
   /** 变动线段长度 (例如 D'A, A'C, BC') */
   movingSegmentLength: number;
   /** 变动线段名称 */
@@ -17,6 +28,8 @@ export interface FoldingResult {
   circumSphereRadius?: number;
   /** 异面直线夹角 (角度值，如 90.0) */
   skewLinesAngleDeg?: number;
+  /** 矩形对角线翻折时异面直线 A'D ⊥ BC 对应的临界二面角 (度数) */
+  criticalPerpAlphaDeg?: number;
 }
 
 /**
@@ -54,12 +67,27 @@ export function calculateRightTrapezoidFolding(
 
   // 四棱锥 D'-ABCE 体积 = (1/3) * S_ABCE * height_z
   const baseArea = b * h;
-  const heightZ = D_prime.z;
+  const heightZ = Math.max(0, D_prime.z);
   const pyramidVolume = (1 / 3) * baseArea * heightZ;
+
+  // 二面角定义垂线：垂足 E(b, 0, 0)，底面垂线指向 A(0,0,0)，翻折面垂线指向 D'
+  const dihedralRays = {
+    vertex: E,
+    baseRayEnd: A,
+    foldRayEnd: D_prime,
+  };
+
+  // 法向量：底面法向量 (0, 0, 1)，翻折面法向量 (-sin α, 0, cos α)
+  const normals = {
+    n1: { x: 0, y: 0, z: 1 },
+    n2: { x: -Math.sin(alphaRad), y: 0, z: Math.cos(alphaRad) },
+  };
 
   return {
     model: "trapezoid",
     points: { A, B, C, E, "D'": D_prime },
+    dihedralRays,
+    normals,
     movingSegmentLength,
     movingSegmentName: "|D'A|",
     pyramidVolume,
@@ -91,8 +119,6 @@ export function calculateRectangleDiagonalFolding(
   const uz = 0; // 单位向量 u
 
   // A 到对角线 BD 的垂足 H_A
-  // vec(BA) = (-a, 0, 0)
-  // proj_u(BA) = vec(BA) · u = (-a) * (-a/L) = a^2 / L
   const projA = (a * a) / L;
   const HA: Vec3 = {
     x: B.x + projA * ux,
@@ -101,8 +127,6 @@ export function calculateRectangleDiagonalFolding(
   };
 
   // C 到对角线 BD 的垂足 H_C
-  // vec(BC) = (0, b, 0)
-  // proj_u(BC) = vec(BC) · u = b * (b/L) = b^2 / L
   const projC = (b * b) / L;
   const HC: Vec3 = {
     x: B.x + projC * ux,
@@ -144,13 +168,51 @@ export function calculateRectangleDiagonalFolding(
   const heightZ = Math.abs(A_prime.z);
   const pyramidVolume = (1 / 3) * baseArea * heightZ;
 
+  // 异面直线 A'D 与 BC 的向量夹角
+  const vAprimeD = {
+    x: D.x - A_prime.x,
+    y: D.y - A_prime.y,
+    z: D.z - A_prime.z,
+  };
+  const vBC = { x: C.x - B.x, y: C.y - B.y, z: C.z - B.z }; // (0, b, 0)
+  const dot = vAprimeD.x * vBC.x + vAprimeD.y * vBC.y + vAprimeD.z * vBC.z;
+  const lenAprimeD = Math.sqrt(
+    vAprimeD.x ** 2 + vAprimeD.y ** 2 + vAprimeD.z ** 2,
+  );
+  const lenBC = Math.sqrt(vBC.x ** 2 + vBC.y ** 2 + vBC.z ** 2);
+  const cosSkew = Math.abs(dot) / (lenAprimeD * lenBC || 1);
+  const skewLinesAngleDeg =
+    (Math.acos(Math.min(1, Math.max(0, cosSkew))) * 180) / Math.PI;
+
+  // 高考临界角：A'D ⊥ BC 时的二面角 cos(alpha_perp) = a^2 / (a^2 + b^2) 或根据点乘为 0 解算
+  // vAprimeD · vBC = 0 <=> D.y - A_prime.y = 0 <=> A_prime.y = D.y = b/2
+  // rA_prime_y = b/2 - HA.y
+  // rAy * cos(alpha) + vAy * sin(alpha) = b/2 - HA.y (由于 vAy = 0，因此 cos(alpha) = (b/2 - HA.y) / rAy)
+  let criticalPerpAlphaDeg: number | undefined;
+  if (Math.abs(rAy) > 1e-6) {
+    const targetCos = (b / 2 - HA.y) / rAy;
+    if (targetCos >= -1 && targetCos <= 1) {
+      criticalPerpAlphaDeg = Math.round((Math.acos(targetCos) * 180) / Math.PI);
+    }
+  }
+
+  // 二面角定义垂线对：垂足 HA，底面指向 A_base(沿平面与 BD 垂直的射线)，翻折面指向 A'
+  const dihedralRays = {
+    vertex: HA,
+    baseRayEnd: A,
+    foldRayEnd: A_prime,
+  };
+
   return {
     model: "rectangleDiagonal",
     points: { A, B, C, D, HA, HC, "A'": A_prime },
+    dihedralRays,
     movingSegmentLength,
     movingSegmentName: "|A'C|",
     pyramidVolume,
     circumSphereRadius,
+    skewLinesAngleDeg,
+    criticalPerpAlphaDeg,
   };
 }
 
@@ -178,16 +240,24 @@ export function calculateTriangleAltitudeFolding(
     z: halfA * Math.sin(alphaRad),
   };
 
-  // 变动底边 BC' 长度 = a * sin(alpha / 2)
+  // 变动底边 BC' 长度 = 2 * (a/2) * sin(alpha / 2) = a * sin(alpha / 2)
   const movingSegmentLength = a * Math.sin(alphaRad / 2);
 
   // 三棱锥 A-BC'D 体积 = (1/3) * S_BC'D * h = (1/6) * (1/2 * a/2 * a/2 * sin(alpha)) * h
   const baseArea = 0.5 * halfA * halfA * Math.sin(alphaRad);
   const pyramidVolume = (1 / 3) * baseArea * h;
 
+  // 二面角定义垂线对：垂足 D，底面指向 B，翻折面指向 C'
+  const dihedralRays = {
+    vertex: D,
+    baseRayEnd: { x: halfA, y: 0, z: 0 }, // 原始展平点 C
+    foldRayEnd: C_prime,
+  };
+
   return {
     model: "triangleAltitude",
     points: { A, B, D, "C'": C_prime },
+    dihedralRays,
     movingSegmentLength,
     movingSegmentName: "|BC'|",
     pyramidVolume,
@@ -225,12 +295,20 @@ export function calculateRhombusFolding(
 
   // 三棱锥 A'-BCD 体积 = (1/3) * S_BCD * height_z
   const baseArea = 0.5 * a * hAO;
-  const heightZ = A_prime.z;
+  const heightZ = Math.max(0, A_prime.z);
   const pyramidVolume = (1 / 3) * baseArea * heightZ;
+
+  // 二面角定义垂线对：垂足 O(0,0,0)，底面指向 A_0(-hAO, 0, 0)，翻折面指向 A'
+  const dihedralRays = {
+    vertex: O,
+    baseRayEnd: { x: -hAO, y: 0, z: 0 },
+    foldRayEnd: A_prime,
+  };
 
   return {
     model: "rhombus",
     points: { O, B, C, D, "A'": A_prime },
+    dihedralRays,
     movingSegmentLength,
     movingSegmentName: "|A'C|",
     pyramidVolume,

@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { Point3D } from "../Point3D";
 import { PointLabel3D } from "../PointLabel3D";
 import { CompoundLabel3D } from "../CompoundLabel3D";
-import { Vector3DArrow } from "../Vector3DArrow";
+import { Segment3D } from "../Segment3D";
 import { CircumSphere } from "./CircumSphere";
 import { Cuboid } from "./Cuboid";
 import { TriangularPrism } from "./TriangularPrism";
@@ -188,7 +188,12 @@ export function PolyhedronSphereScene({
         {/* 球心 O 与外接球 */}
         <Point3D position={center} colorKey="highlight" />
         <PointLabel3D position={center} text="O" />
-        <Vector3DArrow from={center} to={oppositeP} colorKey="highlight" />
+        <Segment3D
+          from={center}
+          to={oppositeP}
+          colorKey="highlight"
+          lineWidth={3}
+        />
 
         {showSphere && (
           <CircumSphere center={center} radius={radius} opacity={0.18} />
@@ -264,7 +269,12 @@ export function PolyhedronSphereScene({
               color="#10B981"
               lineWidth={2.5}
             />
-            <Vector3DArrow from={center} to={A} colorKey="highlight" />
+            <Segment3D
+              from={center}
+              to={A}
+              colorKey="highlight"
+              lineWidth={3}
+            />
           </group>
         )}
 
@@ -340,7 +350,7 @@ export function PolyhedronSphereScene({
         {/* 球心 O 与外接球 */}
         <Point3D position={center} colorKey="highlight" />
         <PointLabel3D position={center} text="O" />
-        <Vector3DArrow from={center} to={B} colorKey="highlight" />
+        <Segment3D from={center} to={B} colorKey="highlight" lineWidth={3} />
 
         {showSphere && (
           <CircumSphere center={center} radius={radius} opacity={0.18} />
@@ -425,8 +435,13 @@ export function PolyhedronSphereScene({
               color="#F59E0B"
               lineWidth={2.5}
             />
-            {/* 勾股外接球半径向量 O-B */}
-            <Vector3DArrow from={center} to={B} colorKey="highlight" />
+            {/* 勾股外接球半径线段 O-B */}
+            <Segment3D
+              from={center}
+              to={B}
+              colorKey="highlight"
+              lineWidth={3}
+            />
           </group>
         )}
 

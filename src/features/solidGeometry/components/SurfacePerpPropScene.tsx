@@ -1,6 +1,6 @@
 import React from "react";
 import { Plane3D } from "@/components/Math3D/Plane3D";
-import { Vector3DArrow } from "@/components/Math3D/Vector3DArrow";
+import { Segment3D } from "@/components/Math3D/Segment3D";
 import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
 import { CompoundLabel3D } from "@/components/Math3D/CompoundLabel3D";
 import { Point3D } from "@/components/Math3D/Point3D";
@@ -60,10 +60,11 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
         <FormulaLabel3D position={{ x: 0.1, y: 2.3, z: 2.6 }} tex="\beta" />
 
         {/* 两面交线 l (z 轴) 必垂直于 gamma */}
-        <Vector3DArrow
+        <Segment3D
           from={{ x: 0, y: 0, z: 0 }}
           to={{ x: 0, y: 0, z: 3.2 }}
           colorKey="paramPrimary"
+          lineWidth={3}
         />
         <FormulaLabel3D position={{ x: 0.15, y: 0.15, z: 3.3 }} tex="l" />
         <CompoundLabel3D
@@ -118,18 +119,20 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
       <FormulaLabel3D position={{ x: 0.1, y: 2.3, z: 2.6 }} tex="\beta" />
 
       {/* 两面交线 l (y 轴) */}
-      <Vector3DArrow
+      <Segment3D
         from={state.lineLStart}
         to={state.lineLEnd}
         colorKey="secondary"
+        lineWidth={2.5}
       />
       <FormulaLabel3D position={{ x: 0.15, y: 2.6, z: 0.05 }} tex="l" />
 
       {/* 面内直线 a */}
-      <Vector3DArrow
+      <Segment3D
         from={state.lineAStart}
         to={state.lineAEnd}
         colorKey="paramPrimary"
+        lineWidth={3}
       />
       <FormulaLabel3D
         position={{

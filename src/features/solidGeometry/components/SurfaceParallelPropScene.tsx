@@ -1,6 +1,6 @@
 import React from "react";
 import { Plane3D } from "@/components/Math3D/Plane3D";
-import { Vector3DArrow } from "@/components/Math3D/Vector3DArrow";
+import { Segment3D } from "@/components/Math3D/Segment3D";
 import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
 import { calculateParallelIntersectionLines } from "@/math3d/surfaceRelation";
 
@@ -87,10 +87,11 @@ export const SurfaceParallelPropScene: React.FC<
       {/* 下交线 a (在面 beta 上) */}
       {step > 0.1 && (
         <>
-          <Vector3DArrow
+          <Segment3D
             from={lines.lineAStart}
             to={lines.lineAEnd}
             colorKey="paramPrimary"
+            lineWidth={2.5}
           />
           <FormulaLabel3D
             position={{
@@ -106,10 +107,11 @@ export const SurfaceParallelPropScene: React.FC<
       {/* 上交线 b (在面 alpha 上) */}
       {step > 0.6 && (
         <>
-          <Vector3DArrow
+          <Segment3D
             from={lines.lineBStart}
             to={lines.lineBEnd}
             colorKey="paramSecondary"
+            lineWidth={2.5}
           />
           <FormulaLabel3D
             position={{
@@ -123,10 +125,11 @@ export const SurfaceParallelPropScene: React.FC<
       )}
 
       {/* 平行平面间距公垂线段 d */}
-      <Vector3DArrow
+      <Segment3D
         from={{ x: -2, y: -2, z: 0 }}
         to={{ x: -2, y: -2, z: zHeight }}
         colorKey="highlight"
+        lineWidth={2}
       />
       <FormulaLabel3D position={{ x: -2.2, y: -2, z: zHeight / 2 }} tex="d" />
     </>

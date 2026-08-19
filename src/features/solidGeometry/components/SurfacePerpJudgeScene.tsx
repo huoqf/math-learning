@@ -1,5 +1,6 @@
 import React from "react";
 import { Plane3D } from "@/components/Math3D/Plane3D";
+import { Segment3D } from "@/components/Math3D/Segment3D";
 import { Vector3DArrow } from "@/components/Math3D/Vector3DArrow";
 import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
 import { CompoundLabel3D } from "@/components/Math3D/CompoundLabel3D";
@@ -50,10 +51,11 @@ export const SurfacePerpJudgeScene: React.FC<SurfacePerpJudgeSceneProps> = ({
       />
 
       {/* 空间垂线 l (l 垂直于 alpha) */}
-      <Vector3DArrow
+      <Segment3D
         from={fam.lineLStart}
         to={fam.lineLEnd}
         colorKey="paramPrimary"
+        lineWidth={3}
       />
       <FormulaLabel3D position={{ x: 0.15, y: 0.15, z: 3.1 }} tex="l" />
       <CompoundLabel3D

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import {
-  Vector3DArrow,
+  Segment3D,
   Plane3D,
   CompoundLabel3D,
   Point3D,
@@ -50,17 +50,17 @@ export function PyramidModelScene({
         opacity={0.18}
       />
 
-      {/* 2. 底面四边形边线 */}
-      <Vector3DArrow from={A} to={B} colorKey="secondary" />
-      <Vector3DArrow from={B} to={C} colorKey="secondary" />
-      <Vector3DArrow from={C} to={D} colorKey="secondary" />
-      <Vector3DArrow from={D} to={A} colorKey="secondary" />
+      {/* 2. 底面四边形边线 (纯几何无箭头棱线) */}
+      <Segment3D from={A} to={B} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={B} to={C} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={C} to={D} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={D} to={A} colorKey="secondary" lineWidth={2} />
 
-      {/* 3. 侧棱 PA, PB, PC, PD (PA ⊥ 底面作为主参线高亮) */}
-      <Vector3DArrow from={A} to={P} colorKey="paramPrimary" />
-      <Vector3DArrow from={P} to={B} colorKey="secondary" />
-      <Vector3DArrow from={P} to={C} colorKey="secondary" />
-      <Vector3DArrow from={P} to={D} colorKey="secondary" />
+      {/* 3. 侧棱 PA, PB, PC, PD (PA ⊥ 底面高亮) */}
+      <Segment3D from={A} to={P} colorKey="paramPrimary" lineWidth={2.5} />
+      <Segment3D from={P} to={B} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={P} to={C} colorKey="secondary" lineWidth={2} />
+      <Segment3D from={P} to={D} colorKey="secondary" lineWidth={2} />
 
       {/* 4. 侧面 PAD (垂直基准参考平面) */}
       <Plane3D
@@ -74,10 +74,11 @@ export function PyramidModelScene({
       />
 
       {/* 5. 动点 E 与 F 连线 EF (平行时鲜艳高亮，相交时警示色) */}
-      <Vector3DArrow
+      <Segment3D
         from={E}
         to={F}
         colorKey={isEFParallelBase ? "highlight" : "paramSecondary"}
+        lineWidth={2.5}
       />
 
       {/* PA ⊥ AB 与 PA ⊥ AD 直角标记 (高考立体几何建系核心依据) */}

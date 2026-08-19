@@ -1,5 +1,6 @@
 import React from "react";
 import { Plane3D } from "@/components/Math3D/Plane3D";
+import { Segment3D } from "@/components/Math3D/Segment3D";
 import { Vector3DArrow } from "@/components/Math3D/Vector3DArrow";
 import { CompoundLabel3D } from "@/components/Math3D/CompoundLabel3D";
 import { Point3D } from "@/components/Math3D/Point3D";
@@ -61,11 +62,12 @@ export const SurfaceParallelJudgeScene: React.FC<
         tex="\alpha"
       />
 
-      {/* 直线 a */}
-      <Vector3DArrow
+      {/* 直线 a (平面内几何直线) */}
+      <Segment3D
         from={state.lineAStart}
         to={state.lineAEnd}
         colorKey="paramPrimary"
+        lineWidth={2.5}
       />
       <FormulaLabel3D
         position={{
@@ -76,11 +78,12 @@ export const SurfaceParallelJudgeScene: React.FC<
         tex="a"
       />
 
-      {/* 直线 b */}
-      <Vector3DArrow
+      {/* 直线 b (平面内几何直线) */}
+      <Segment3D
         from={state.lineBStart}
         to={state.lineBEnd}
         colorKey="paramSecondary"
+        lineWidth={2.5}
       />
       <FormulaLabel3D
         position={{

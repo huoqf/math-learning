@@ -15,7 +15,7 @@ import {
   Point3D,
   PointLabel3D,
   FormulaLabel3D,
-  Vector3DArrow,
+  Segment3D,
   Legend3D,
   CameraRig,
 } from "@/components/Math3D";
@@ -256,9 +256,9 @@ export default function CircumInSphereAnimation() {
           <Point3D position={center} colorKey="highlight" />
           <PointLabel3D position={center} text="O" />
 
-          {/* 绘制球半径/辅连线 */}
+          {/* 绘制球半径/辅连线 (纯几何无箭头线段) */}
           {sphereType === "circum" ? (
-            <Vector3DArrow
+            <Segment3D
               from={center}
               to={
                 shape === "regularPyramid" || shape === "cone"
@@ -270,12 +270,14 @@ export default function CircumInSphereAnimation() {
                       : { x: a, y: b, z: c }
               }
               colorKey="highlight"
+              lineWidth={2.5}
             />
           ) : (
-            <Vector3DArrow
+            <Segment3D
               from={center}
               to={{ x: center.x, y: center.y, z: 0 }}
               colorKey="highlight"
+              lineWidth={2.5}
             />
           )}
 

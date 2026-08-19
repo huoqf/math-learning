@@ -14,6 +14,7 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import {
   Scene3DGrid,
+  Segment3D,
   Vector3DArrow,
   Plane3D,
   Point3D,
@@ -618,11 +619,12 @@ export default function LinePlaneRelationAnimation() {
                 tex="\alpha"
               />
 
-              {/* 空间直线 l */}
-              <Vector3DArrow
+              {/* 空间直线 l (空间几何直线无箭头) */}
+              <Segment3D
                 from={startPoint}
                 to={endPoint}
                 colorKey="paramPrimary"
+                lineWidth={3}
               />
               <FormulaLabel3D
                 position={{
@@ -636,10 +638,11 @@ export default function LinePlaneRelationAnimation() {
               {/* 线面平行 */}
               {activeMode === "parallel" && (
                 <>
-                  <Vector3DArrow
+                  <Segment3D
                     from={lineMStart}
                     to={lineMEnd}
                     colorKey="paramSecondary"
+                    lineWidth={2.5}
                   />
                   <FormulaLabel3D
                     position={{
@@ -679,10 +682,11 @@ export default function LinePlaneRelationAnimation() {
                   {subTheorem === "judge" ? (
                     <>
                       {/* 直线 a */}
-                      <Vector3DArrow
+                      <Segment3D
                         from={lineMStart}
                         to={lineMEnd}
                         colorKey="paramSecondary"
+                        lineWidth={2.5}
                       />
                       <FormulaLabel3D
                         position={{
@@ -694,10 +698,11 @@ export default function LinePlaneRelationAnimation() {
                       />
 
                       {/* 直线 b */}
-                      <Vector3DArrow
+                      <Segment3D
                         from={lineBStart}
                         to={lineBEnd}
                         colorKey="paramSecondary"
+                        lineWidth={2.5}
                       />
                       <FormulaLabel3D
                         position={{
@@ -763,10 +768,11 @@ export default function LinePlaneRelationAnimation() {
                       />
 
                       {/* 面内任意直线 m */}
-                      <Vector3DArrow
+                      <Segment3D
                         from={{ x: -testMEnd.x, y: -testMEnd.y, z: 0 }}
                         to={testMEnd}
                         colorKey="paramSecondary"
+                        lineWidth={2.5}
                       />
                       <FormulaLabel3D
                         position={{

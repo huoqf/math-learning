@@ -41,6 +41,8 @@ export type { InteractionMode3D } from "./ModeSwitchOverlay3D";
 // 几何图元与角标示 (Geometric Primitives & Angle Elements)
 // ============================================================================
 export { Vector3DArrow } from "./Vector3DArrow";
+export { Segment3D } from "./Segment3D";
+export type { Segment3DProps } from "./Segment3D";
 export { Plane3D } from "./Plane3D";
 export { Polygon3DFace } from "./Polygon3DFace";
 export { AngleArc3D } from "./AngleArc3D";
