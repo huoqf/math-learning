@@ -127,8 +127,15 @@ export default function FoldingAnimation() {
         alphaDeg: { label: "二面角 α", descFormula: "\\text{二面角 } B-AD-C'" },
       },
       rhombus: {
-        a: { label: "菱形边长 a", descFormula: "\\text{边长 } AB = BC" },
-        alphaDeg: { label: "二面角 α", descFormula: "\\text{二面角 } A'-BD-C" },
+        a: {
+          label: "菱形边长 a (∠BAD=60°)",
+          descFormula: "\\text{边长 } AB = BC,\\; \\angle BAD = 60^\\circ",
+        },
+        alphaDeg: {
+          label: "二面角 α",
+          descFormula:
+            "\\text{翻折旋转角 } \\alpha\\;(\\angle A'OA_0 = \\alpha)",
+        },
       },
     };
 
@@ -280,7 +287,8 @@ export default function FoldingAnimation() {
                 {model === "triangleAltitude" && (
                   <span>
                     💡 <b>等腰三角形折叠核心</b>：折痕 AD 垂直于底边两半段 DB 与
-                    DC'，∠BDC' 即为二面角平面角 α。α = 90° 构成标准墙角模型。
+                    DC'，两侧垂线夹角 ∠BDC' = 180°−α（α 为翻折旋转角）。α = 90°
+                    时 ∠BDC' = 90°，构成标准墙角模型，DA⊥DB，DA⊥DC'，DB⊥DC'。
                   </span>
                 )}
                 {model === "rhombus" && (

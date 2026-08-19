@@ -2806,9 +2806,9 @@ export function buildSolidFoldingPanel(
     theorems.push(
       {
         name: "等腰三角形高折叠变动底边公式",
-        latex: `|BC'| = \\color{#EF4444}{a} \\sin \\left(\\frac{\\color{#EF4444}{\\alpha}}{2}\\right)`,
+        latex: `|BC'| = \\color{#EF4444}{a} \\cos \\left(\\frac{\\color{#EF4444}{\\alpha}}{2}\\right)`,
         level: "core",
-        note: "折痕 AD ⊥ DB, AD ⊥ DC'，故 ∠BDC' 直接即为二面角平面角 α",
+        note: "折痕 AD ⊥ DB 且 AD ⊥ DC'，∠BDC' = π − α（B 与 C' 分在折痕两侧），由余弦定理 |BC'|² = 2(a/2)²(1+cosα) = a²cos²(α/2)",
       },
       {
         name: "α = 90° 墙角模型外接球定理",

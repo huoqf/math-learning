@@ -240,8 +240,9 @@ export function calculateTriangleAltitudeFolding(
     z: halfA * Math.sin(alphaRad),
   };
 
-  // 变动底边 BC' 长度 = 2 * (a/2) * sin(alpha / 2) = a * sin(alpha / 2)
-  const movingSegmentLength = a * Math.sin(alphaRad / 2);
+  // 变动底边 BC' 长度：B=(-a/2,0,0), C'=(a/2·cosα, 0, a/2·sinα)
+  // |BC'|² = (a/2)²·2(1+cosα) = a²·cos²(α/2)，故 |BC'| = a·cos(α/2)
+  const movingSegmentLength = a * Math.cos(alphaRad / 2);
 
   // 三棱锥 A-BC'D 体积 = (1/3) * S_BC'D * h = (1/6) * (1/2 * a/2 * a/2 * sin(alpha)) * h
   const baseArea = 0.5 * halfA * halfA * Math.sin(alphaRad);
