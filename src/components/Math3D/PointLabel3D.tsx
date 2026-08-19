@@ -19,8 +19,8 @@ export const PointLabel3D = ({
   text,
   variant = "italic",
   colorKey = "label",
-  offset = [0.16, 0.16, 0],
-  fontSize = 0.26,
+  offset = [0.18, 0.18, 0],
+  fontSize = 0.28,
 }: PointLabel3DProps) => {
   const [x, y, z] = mathToThree(position);
 

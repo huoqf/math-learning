@@ -4,6 +4,10 @@ import {
   computeTripleProduct,
   calculateParallelepipedVertices,
   checkCoplanarCondition,
+  getPresetBasisVectors,
+  calculateBasisVectorNorm,
+  projectPointOnPlaneABC,
+  getSolidFrameworkEdges,
 } from "../basis";
 import type { Vec3 } from "../vector3";
 
@@ -58,6 +62,7 @@ describe("3D 空间向量基底分解与共面检验数学纯函数测试", () =
     const info1 = checkCoplanarCondition(0.5, 0.3, 0.2); // sum = 1
     expect(info1.isCoplanar).toBe(true);
     expect(info1.isInsideTriangle).toBe(true);
+    expect(info1.spatialRegion).toBe("plane_inside");
 
     const infoCentroid = checkCoplanarCondition(0.333, 0.333, 0.334);
     expect(infoCentroid.isCentroid).toBe(true);
@@ -65,5 +70,57 @@ describe("3D 空间向量基底分解与共面检验数学纯函数测试", () =
     const infoOutside = checkCoplanarCondition(1.5, -0.2, -0.3); // sum = 1 但有负数
     expect(infoOutside.isCoplanar).toBe(true);
     expect(infoOutside.isInsideTriangle).toBe(false);
+    expect(infoOutside.spatialRegion).toBe("plane_outside");
+
+    const infoTetra = checkCoplanarCondition(0.2, 0.2, 0.2); // sum = 0.6 < 1
+    expect(infoTetra.isInsideTetrahedron).toBe(true);
+    expect(infoTetra.spatialRegion).toBe("tetra_inside");
+  });
+
+  it("应准确获取典型几何体基底并进行基底法模长计算", () => {
+    const cubeBasis = getPresetBasisVectors("cube");
+    const normRes = calculateBasisVectorNorm(
+      cubeBasis.a,
+      cubeBasis.b,
+      cubeBasis.c,
+      1,
+      1,
+      1,
+    );
+    // |P|^2 = 1^2*4 + 1^2*4 + 1^2*4 = 12
+    expect(normRes.modulusSq).toBeCloseTo(12);
+    expect(normRes.modulus).toBeCloseTo(Math.sqrt(12));
+
+    const cubeEdges = getSolidFrameworkEdges(
+      "cube",
+      cubeBasis.a,
+      cubeBasis.b,
+      cubeBasis.c,
+    );
+    expect(cubeEdges.length).toBe(12);
+
+    const tetraBasis = getPresetBasisVectors("tetrahedron");
+    const tetraEdges = getSolidFrameworkEdges(
+      "tetrahedron",
+      tetraBasis.a,
+      tetraBasis.b,
+      tetraBasis.c,
+    );
+    expect(tetraEdges.length).toBe(6);
+  });
+
+  it("应准确计算点到平面 ABC 的投影与距离", () => {
+    const A: Vec3 = { x: 1, y: 0, z: 0 };
+    const B: Vec3 = { x: 0, y: 1, z: 0 };
+    const C: Vec3 = { x: 0, y: 0, z: 1 };
+    // 平面方程为 x + y + z = 1
+    const P1: Vec3 = { x: 1 / 3, y: 1 / 3, z: 1 / 3 }; // 恰在平面上
+    const proj1 = projectPointOnPlaneABC(P1, A, B, C);
+    expect(proj1.distance).toBeCloseTo(0);
+    expect(proj1.projectedPoint.x).toBeCloseTo(1 / 3);
+
+    const P2: Vec3 = { x: 0, y: 0, z: 0 }; // 原点到平面的距离为 1/sqrt(3) ≈ 0.57735
+    const proj2 = projectPointOnPlaneABC(P2, A, B, C);
+    expect(proj2.distance).toBeCloseTo(1 / Math.sqrt(3));
   });
 });

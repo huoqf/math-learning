@@ -24,23 +24,23 @@ description: >
 
 ---
 
-## ⚡ 核心职责边界
+## ⚡ 核心职责边界与三大数学范式隔离
 
-| 文件层级 | 允许包含 | 严禁包含 |
-|---------|---------|---------|
-| `XxxAnimation.tsx` | state、`use3DViewport`、`paramConfigs`、`ThreePanel` 三屏组装、`buildMathQuantities` | 2D `AnimationSvgCanvas`、`mathToDesign`、硬编码 HTML 样式 |
-| 3D Scene / Canvas | `<ThreeDCanvas>`、`<CameraRig>`、`Math3D` 系列标准组件 | `useState` 动态修改全局状态、DOM 计算、原生 Canvas 裸代码 |
-| `math3d/<topic>.ts` | 纯数学 3D 向量/线面/几何体计算纯函数，配套单测 | React、DOM、Three.js 对象、Store |
-| `registries/<topic>.ts` | `paramMeta`、`defaultParams` | 副作用、动态视图计算 |
+| 数学范式 | 适用章节 | 合法 3D 元素与标注 | 严禁项（禁止跨范式污染） |
+|---------|---------|-------------------|------------------------|
+| **范式 A：综合几何（纯几何）** | 旋转体、线面面面平行垂直、多面体截面、翻折 | 实体几何体、截面、`PointLabel3D` / `CompoundLabel3D` | ❌ 严禁笛卡尔直角坐标轴、严禁向量箭头 |
+| **范式 B：仿射基底（空间向量定理）** | 空间向量基本定理、基底分解、四点共面 | 向量箭头 `Vector3DArrow`、三步加法折线、淡雅水平参考网格 | ❌ 严禁笛卡尔直角坐标轴穿刺画面、严禁生造折线点标签 |
+| **范式 C：解析建系（向量应用）** | 空间直角坐标系、法向量、求空间角与距离 | 空间直角坐标轴 `Scene3DGrid`、法向量、空间角弧 `AngleArc3D` | ❌ 严禁在无坐标系概念的纯几何中提前建系 |
 
 ---
 
 ## 🛠️ 开发与重构标准流程 (4 步走)
 
 ### Step 0：设计决策
-1. **左屏标准**：严格遵守 `references/left-panel-spec.md` 中的**五步渲染层级**（探究模式 $\to$ 几何模型 $\to$ 参数调节 $\to$ 教学提示 $\to$ 视图与视角）。
-2. **几何与标注**：严格遵守 `references/geometry-standards.md` 中的高考几何定义与双垂直/射影标注。
-3. **坐标约定**：右上手坐标系（X 横向、Y 纵深、Z 垂直向上）。
+1. **范式定位**：首先明确当前页面属于范式 A（纯几何）、范式 B（仿射基底）还是范式 C（解析建系），选择对应的画布基础设施。
+2. **左屏标准**：严格遵守 `references/left-panel-spec.md` 中的**五步渲染层级**（探究模式 $\to$ 高考场景/模型 $\to$ 参数调节 $\to$ 教学提示 $\to$ 视图与视角）。
+3. **几何与标注**：严格遵守 `references/geometry-standards.md` 与 `references/components-guide.md`（几何顶点用 `PointLabel3D`/`CompoundLabel3D`，公式用 `FormulaLabel3D(plain)`）。
+4. **坐标约定**：右上手坐标系（X 横向、Y 纵深、Z 垂直向上）。
 
 ### Step 1：编写代码
 - 参考 [Template3DAnimation.tsx](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/examples/Template3DAnimation.tsx) 搭建三屏结构。

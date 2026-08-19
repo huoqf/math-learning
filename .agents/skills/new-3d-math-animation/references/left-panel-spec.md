@@ -7,7 +7,7 @@
 | 顺序 | Section 标题 | 核心控件 | 规范要求 |
 |------|-------------|---------|---------|
 | **Step 1** | `title="探究模式"` | `SelectGrid` / `TabSwitcher` | 2~3 个教学模式；3 项模式必须用 2+1 `SelectGrid`（带 KaTeX 简式），防文字截断 |
-| **Step 2** | `title="几何体模型"` 或 `"定理与分支"` | `SelectGrid` / `TabSwitcher` | 实体多面体/旋转体选择（柱/锥/台/球）或定理正反例辨析 |
+| **Step 2** | `title="高考场景"` 或 `"几何体模型"` | `SelectGrid` / `TabSwitcher` | 实体模型选择（柱/锥/台/球）或当前模式专属高考算例。**铁律：预设仅调参数，严禁跨模式篡改 activeMode** |
 | **Step 3** | `title="参数调节"` | `ParamControl` | 按当前模式精准过滤参数；自动演示按钮紧随滑块区下方 |
 | **Step 4** | `title="教学提示" compact` | `<TipCard variant="...">` | 统一使用 `TipCard`，公式用 `<KatexFormula mode="inline" />`，严禁手写色彩类名 |
 | **Step 5** | `title="视图与视角"` | `TabSwitcher` + `SelectGrid` | 3D/三视图切换 + 4 大视角预设 (`iso`, `front`, `top`, `side`) + 坐标轴开关 |

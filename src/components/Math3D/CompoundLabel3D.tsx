@@ -20,8 +20,8 @@ export const CompoundLabel3D = ({
   subscript,
   variant = "italic",
   colorKey = "label",
-  fontSize = 0.26,
-  offset = [0.16, 0.16, 0],
+  fontSize = 0.28,
+  offset = [0.18, 0.18, 0],
 }: CompoundLabel3DProps) => {
   const [x, y, z] = mathToThree(position);
   const color = MATH_COLORS[colorKey];

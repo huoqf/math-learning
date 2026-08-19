@@ -9,17 +9,20 @@ interface FormulaLabel3DProps {
   offset?: [number, number, number];
   /** 距离缩放因子，默认 7.5，使公式大小与 3D 几何顶点标签完全匹配 */
   distanceFactor?: number;
+  /** 是否使用纯净无框模式（默认 true，符合教科书作图风格） */
+  plain?: boolean;
 }
 
 /**
- * 3D 空间 KaTeX 公式标注卡片
+ * 3D 空间 KaTeX 公式标注
  * 使用 Drei 原生 distanceFactor 保证与 3D 空间几何模型 100% 正向透视同步（远小近大）
  */
 export const FormulaLabel3D = ({
   position,
   tex,
   offset = [0.18, 0.18, 0],
-  distanceFactor = 7.5,
+  distanceFactor = 7.8,
+  plain = true,
 }: FormulaLabel3DProps) => {
   const [x, y, z] = mathToThree(position);
 
@@ -32,18 +35,31 @@ export const FormulaLabel3D = ({
         style={{ pointerEvents: "none" }}
       >
         <div
-          style={{
-            background: "rgba(255, 255, 255, 0.92)",
-            backdropFilter: "blur(4px)",
-            padding: "2px 6px",
-            borderRadius: "4px",
-            boxShadow: "0 1px 4px rgba(15, 23, 42, 0.15)",
-            border: "1px solid rgba(226, 232, 240, 0.8)",
-            whiteSpace: "nowrap",
-            fontSize: "13px",
-            lineHeight: 1.2,
-            userSelect: "none",
-          }}
+          style={
+            plain
+              ? {
+                  background: "transparent",
+                  padding: "0",
+                  whiteSpace: "nowrap",
+                  fontSize: "13.5px",
+                  lineHeight: 1,
+                  userSelect: "none",
+                  textShadow:
+                    "0 0 3px #FFFFFF, 0 0 3px #FFFFFF, 0 0 5px #FFFFFF, 0 0 8px #FFFFFF",
+                }
+              : {
+                  background: "rgba(255, 255, 255, 0.92)",
+                  backdropFilter: "blur(4px)",
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                  boxShadow: "0 1px 4px rgba(15, 23, 42, 0.15)",
+                  border: "1px solid rgba(226, 232, 240, 0.8)",
+                  whiteSpace: "nowrap",
+                  fontSize: "13px",
+                  lineHeight: 1.2,
+                  userSelect: "none",
+                }
+          }
         >
           <KatexFormula formula={tex} mode="inline" />
         </div>
