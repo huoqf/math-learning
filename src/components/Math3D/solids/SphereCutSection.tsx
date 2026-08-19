@@ -103,29 +103,29 @@ export const SphereCutSection = ({
       {/* 3. 球半径 R (O -> P) */}
       <Line points={[O, P]} color={MATH_COLORS.paramPrimary} lineWidth={3.5} />
 
-      {/* 特征直角标记 */}
-      {Math.abs(cutDistance) > 0.2 && rCut > 0.2 && (
+      {/* 特征直角标记 Rt∠OO_1A */}
+      {Math.abs(cutDistance) > 0.25 && rCut > 0.25 && (
         <Line
           points={[
-            [0, cutZ, 0.15],
-            [0, cutZ - Math.sign(cutDistance) * 0.15, 0.15],
-            [0, cutZ - Math.sign(cutDistance) * 0.15, 0],
+            [0, cutZ - Math.sign(cutDistance) * 0.16, 0],
+            [0, cutZ - Math.sign(cutDistance) * 0.16, 0.16],
+            [0, cutZ, 0.16],
           ]}
-          color={MATH_COLORS.label}
-          lineWidth={1.5}
+          color={MATH_COLORS.paramSecondary}
+          lineWidth={2}
         />
       )}
 
-      {/* 空间特征点标注 (高中数学标准斜体顶点 O, O', P 与实体几何点) */}
+      {/* 空间特征点标注 (高中数学标准斜体顶点 O, O_1, A 与实体几何点) */}
       <Point3D
         position={{ x: 0, y: 0, z: 0 }}
         colorKey="paramPrimary"
-        radius={0.06}
+        radius={0.05}
       />
       <Point3D
         position={{ x: 0, y: 0, z: cutZ }}
         colorKey="paramSecondary"
-        radius={0.06}
+        radius={0.055}
         draggable={draggable}
         constrain={(raw) => ({
           x: 0,
@@ -137,40 +137,40 @@ export const SphereCutSection = ({
       <Point3D
         position={{ x: rCut, y: 0, z: cutZ }}
         colorKey="paramTertiary"
-        radius={0.06}
+        radius={0.05}
       />
 
-      {/* 顶点名称标签 (高中数学斜体 O, O', P) */}
+      {/* 顶点名称标签 (高中数学斜体 O, O_1, A) */}
       <CompoundLabel3D
         position={{ x: 0, y: 0, z: 0 }}
         base="O"
         colorKey="paramPrimary"
-        offset={[-0.18, -0.18, 0]}
+        offset={[-0.2, -0.2, 0]}
       />
       <CompoundLabel3D
         position={{ x: 0, y: 0, z: cutZ }}
         base="O"
-        subscript="'"
+        subscript="1"
         colorKey="paramSecondary"
-        offset={[-0.22, 0.12, 0]}
+        offset={[-0.24, 0.14, 0]}
       />
       <CompoundLabel3D
         position={{ x: rCut, y: 0, z: cutZ }}
-        base="P"
+        base="A"
         colorKey="paramTertiary"
-        offset={[0.16, 0.16, 0]}
+        offset={[0.18, 0, 0]}
       />
 
       {/* 空间公式尺寸标签 (红-橙-绿三位一体) */}
       <FormulaLabel3D
         position={{ x: 0, y: 0, z: cutZ / 2 }}
-        tex={`\\color{#D97706}{d=${Math.abs(cutDistance).toFixed(1)}}`}
-        offset={[-0.35, 0, 0]}
+        tex={`\\color{${MATH_COLORS.paramSecondary}}{d=${Math.abs(cutDistance).toFixed(1)}}`}
+        offset={[-0.36, 0, 0]}
       />
       <FormulaLabel3D
         position={{ x: rCut / 2, y: 0, z: cutZ }}
-        tex={`\\color{#059669}{r_{\\text{截}}=${rCut.toFixed(1)}}`}
-        offset={[0, 0, 0.18]}
+        tex={`\\color{${MATH_COLORS.paramTertiary}}{r=${rCut.toFixed(1)}}`}
+        offset={[0, 0, 0.2]}
       />
       <FormulaLabel3D
         position={{
@@ -178,8 +178,8 @@ export const SphereCutSection = ({
           y: 0,
           z: cutZ / 2,
         }}
-        tex={`\\color{#EF4444}{R=${R.toFixed(1)}}`}
-        offset={[0.2, 0, -0.1]}
+        tex={`\\color{${MATH_COLORS.paramPrimary}}{R=${R.toFixed(1)}}`}
+        offset={[0.22, 0, -0.1]}
       />
     </group>
   );

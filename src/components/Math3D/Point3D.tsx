@@ -111,12 +111,11 @@ export const Point3D = ({
   if (!draggable) {
     return (
       <group position={pos3}>
-        <mesh renderOrder={500}>
+        <mesh renderOrder={100}>
           <sphereGeometry args={[finalRadius, 24, 24]} />
           <meshStandardMaterial
             color={colorVal}
-            depthTest={false}
-            roughness={0.4}
+            roughness={0.3}
             metalness={0.1}
           />
         </mesh>

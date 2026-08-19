@@ -81,43 +81,43 @@ export const SurfaceGaokaoModelScene: React.FC<
         <Vector3DArrow from={D} to={A1} colorKey="paramSecondary" />
 
         {/* 几何基准特征点 */}
-        <Point3D position={A} colorKey="secondary" radius={0.05} />
-        <Point3D position={B} colorKey="secondary" radius={0.05} />
-        <Point3D position={C} colorKey="secondary" radius={0.05} />
-        <Point3D position={D} colorKey="secondary" radius={0.05} />
-        <Point3D position={A1} colorKey="secondary" radius={0.05} />
-        <Point3D position={B1} colorKey="secondary" radius={0.05} />
-        <Point3D position={C1} colorKey="secondary" radius={0.05} />
-        <Point3D position={D1} colorKey="secondary" radius={0.05} />
+        <Point3D position={A} colorKey="secondary" radius={0.045} />
+        <Point3D position={B} colorKey="secondary" radius={0.045} />
+        <Point3D position={C} colorKey="secondary" radius={0.045} />
+        <Point3D position={D} colorKey="secondary" radius={0.045} />
+        <Point3D position={A1} colorKey="secondary" radius={0.045} />
+        <Point3D position={B1} colorKey="secondary" radius={0.045} />
+        <Point3D position={C1} colorKey="secondary" radius={0.045} />
+        <Point3D position={D1} colorKey="secondary" radius={0.045} />
 
         {/* 顶点标签（严格符合高中正方体命名与数学斜体下标格式） */}
-        <CompoundLabel3D position={A} base="A" offset={[-0.2, -0.2, 0]} />
-        <CompoundLabel3D position={B} base="B" offset={[0.2, -0.2, 0]} />
-        <CompoundLabel3D position={C} base="C" offset={[0.2, 0.2, 0]} />
-        <CompoundLabel3D position={D} base="D" offset={[-0.2, 0.2, 0]} />
+        <CompoundLabel3D position={A} base="A" offset={[-0.22, -0.22, 0]} />
+        <CompoundLabel3D position={B} base="B" offset={[0.22, -0.22, 0]} />
+        <CompoundLabel3D position={C} base="C" offset={[0.22, 0.22, 0]} />
+        <CompoundLabel3D position={D} base="D" offset={[-0.22, 0.22, 0]} />
         <CompoundLabel3D
           position={A1}
           base="A"
           subscript="1"
-          offset={[-0.2, -0.2, 0.2]}
+          offset={[-0.22, -0.22, 0.2]}
         />
         <CompoundLabel3D
           position={B1}
           base="B"
           subscript="1"
-          offset={[0.2, -0.2, 0.2]}
+          offset={[0.22, -0.22, 0.2]}
         />
         <CompoundLabel3D
           position={C1}
           base="C"
           subscript="1"
-          offset={[0.2, 0.2, 0.2]}
+          offset={[0.22, 0.22, 0.2]}
         />
         <CompoundLabel3D
           position={D1}
           base="D"
           subscript="1"
-          offset={[-0.2, 0.2, 0.2]}
+          offset={[-0.22, 0.22, 0.2]}
         />
       </group>
     );
@@ -175,21 +175,28 @@ export const SurfaceGaokaoModelScene: React.FC<
       {/* 四棱锥高线 PO 垂直于交线 AD（核心辅助线） */}
       <Vector3DArrow from={P} to={O} colorKey="paramPrimary" />
 
-      {/* 垂足 O 处的直角角弧 PO ⊥ AD */}
+      {/* 垂足 O 处的双直角角弧: 1. PO ⊥ AD  2. PO ⊥ AB (底面) */}
       <AngleArc3D
         vertex={O}
         dirA={{ x: 0, y: 1, z: 0 }}
         dirB={{ x: 0, y: 0, z: 1 }}
         radius={0.45}
-        colorKey="highlight"
+        colorKey="paramPrimary"
+      />
+      <AngleArc3D
+        vertex={O}
+        dirA={{ x: 1, y: 0, z: 0 }}
+        dirB={{ x: 0, y: 0, z: 1 }}
+        radius={0.45}
+        colorKey="paramSecondary"
       />
 
       {/* 顶点实体点 */}
-      <Point3D position={P} colorKey="paramPrimary" radius={0.06} />
-      <Point3D position={A} colorKey="secondary" radius={0.05} />
-      <Point3D position={B} colorKey="secondary" radius={0.05} />
-      <Point3D position={C} colorKey="secondary" radius={0.05} />
-      <Point3D position={D} colorKey="secondary" radius={0.05} />
+      <Point3D position={P} colorKey="paramPrimary" radius={0.05} />
+      <Point3D position={A} colorKey="secondary" radius={0.045} />
+      <Point3D position={B} colorKey="secondary" radius={0.045} />
+      <Point3D position={C} colorKey="secondary" radius={0.045} />
+      <Point3D position={D} colorKey="secondary" radius={0.045} />
 
       {/* 垂足 O 点 (严格使用 projectPointOnSegment 约束在底棱 A->D 上滑动) */}
       <Point3D
@@ -237,7 +244,7 @@ export const SurfaceGaokaoModelScene: React.FC<
       <CompoundLabel3D
         position={O}
         base="O"
-        offset={[-0.28, 0, 0]}
+        offset={[-0.26, 0, 0]}
         colorKey="highlight"
       />
     </group>

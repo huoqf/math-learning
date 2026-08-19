@@ -1,7 +1,7 @@
 import React from "react";
 import { Plane3D } from "@/components/Math3D/Plane3D";
 import { Vector3DArrow } from "@/components/Math3D/Vector3DArrow";
-import { PointLabel3D } from "@/components/Math3D/PointLabel3D";
+import { CompoundLabel3D } from "@/components/Math3D/CompoundLabel3D";
 import { Point3D } from "@/components/Math3D/Point3D";
 import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
 import { calculateParallelJudgeState } from "@/math3d/surfaceRelation";
@@ -38,9 +38,9 @@ export const SurfaceParallelJudgeScene: React.FC<
         width={5.6}
         height={5.6}
         colorKey="secondary"
-        opacity={0.25}
+        opacity={0.22}
       />
-      <FormulaLabel3D position={{ x: 2.5, y: 2.5, z: 0.1 }} tex="\beta" />
+      <FormulaLabel3D position={{ x: 2.3, y: 2.3, z: 0.05 }} tex="\beta" />
 
       {/* 上平面 alpha */}
       <Plane3D
@@ -50,13 +50,13 @@ export const SurfaceParallelJudgeScene: React.FC<
         width={5.6}
         height={5.6}
         colorKey="paramTertiary"
-        opacity={0.28}
+        opacity={0.25}
       />
       <FormulaLabel3D
         position={{
-          x: alphaOrigin.x + 2.5,
-          y: alphaOrigin.y + 2.5 * vAxis.y,
-          z: alphaOrigin.z + 2.5 * vAxis.z + 0.15,
+          x: alphaOrigin.x + 2.3,
+          y: alphaOrigin.y + 2.3 * vAxis.y,
+          z: alphaOrigin.z + 2.3 * vAxis.z + 0.1,
         }}
         tex="\alpha"
       />
@@ -69,9 +69,9 @@ export const SurfaceParallelJudgeScene: React.FC<
       />
       <FormulaLabel3D
         position={{
-          x: state.lineAEnd.x + 0.2,
+          x: state.lineAEnd.x + 0.15,
           y: state.lineAEnd.y,
-          z: state.lineAEnd.z + 0.1,
+          z: state.lineAEnd.z + 0.05,
         }}
         tex="a"
       />
@@ -84,9 +84,9 @@ export const SurfaceParallelJudgeScene: React.FC<
       />
       <FormulaLabel3D
         position={{
-          x: state.lineBEnd.x + 0.2,
+          x: state.lineBEnd.x + 0.15,
           y: state.lineBEnd.y,
-          z: state.lineBEnd.z + 0.1,
+          z: state.lineBEnd.z + 0.05,
         }}
         tex="b"
       />
@@ -97,12 +97,13 @@ export const SurfaceParallelJudgeScene: React.FC<
           <Point3D
             position={{ x: 0, y: 0, z: zHeight }}
             colorKey="highlight"
-            radius={0.06}
+            radius={0.05}
           />
-          <PointLabel3D
+          <CompoundLabel3D
             position={{ x: 0, y: 0, z: zHeight }}
-            text="P"
-            offset={[-0.2, -0.2, 0.15]}
+            base="P"
+            colorKey="highlight"
+            offset={[-0.2, -0.2, 0.12]}
           />
         </>
       )}

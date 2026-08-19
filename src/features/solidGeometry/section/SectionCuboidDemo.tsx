@@ -4,6 +4,7 @@ import {
   CameraRig,
   Scene3DGrid,
   CompoundLabel3D,
+  FormulaLabel3D,
   ThreeViewsPanel,
   Legend3D,
   Point3D,
@@ -854,6 +855,37 @@ export default function SectionCuboidDemo() {
                 );
               })()}
 
+            {/* continuous / extrema 模式下的截面面积与底面射影面积空间卡片标注 */}
+            {sectionPoints.length >= 3 &&
+              (mode === "continuous" || mode === "extrema") &&
+              (() => {
+                const cx =
+                  sectionPoints.reduce((sum, p) => sum + p.x, 0) /
+                  sectionPoints.length;
+                const cy =
+                  sectionPoints.reduce((sum, p) => sum + p.y, 0) /
+                  sectionPoints.length;
+                const cz =
+                  sectionPoints.reduce((sum, p) => sum + p.z, 0) /
+                  sectionPoints.length;
+                return (
+                  <group>
+                    {/* 截面中心面积卡片 S_截 */}
+                    <FormulaLabel3D
+                      position={{ x: cx, y: cy, z: cz + 0.15 }}
+                      tex={`\\color{${MATH_COLORS.paramPrimary}}{S_{\\text{截}}=${projDetails.area3D.toFixed(2)}}`}
+                    />
+                    {/* 底面射影中心卡片 S_投 */}
+                    {mode === "continuous" && projDetails.areaProj > 0.05 && (
+                      <FormulaLabel3D
+                        position={{ x: cx, y: cy, z: 0.08 }}
+                        tex={`\\color{${MATH_COLORS.paramTertiary}}{S_{\\text{射}}=${projDetails.areaProj.toFixed(2)}}`}
+                      />
+                    )}
+                  </group>
+                );
+              })()}
+
             {/* construction 模式下的外点与截棱交点标记 (K1, K2, M, N，严格排重与避让) */}
             {mode === "construction" &&
               constructionData.activePoints
@@ -871,7 +903,7 @@ export default function SectionCuboidDemo() {
                       <Point3D
                         position={pt.position}
                         colorKey={pt.isExternal ? "secondary" : "paramTertiary"}
-                        radius={0.05}
+                        radius={0.045}
                       />
                       <CompoundLabel3D
                         position={pt.position}

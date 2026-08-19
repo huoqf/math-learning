@@ -4,6 +4,7 @@ import {
   Plane3D,
   CompoundLabel3D,
   Point3D,
+  AngleArc3D,
 } from "@/components/Math3D";
 import { calcPyramidModel } from "@/math3d/lineRelation";
 import { projectPointOnSegment } from "@/math3d/vector3";
@@ -79,12 +80,28 @@ export function PyramidModelScene({
         colorKey={isEFParallelBase ? "highlight" : "paramSecondary"}
       />
 
+      {/* PA ⊥ AB 与 PA ⊥ AD 直角标记 (高考立体几何建系核心依据) */}
+      <AngleArc3D
+        vertex={A}
+        dirA={{ x: 1, y: 0, z: 0 }}
+        dirB={{ x: 0, y: 0, z: 1 }}
+        radius={0.45}
+        colorKey="paramPrimary"
+      />
+      <AngleArc3D
+        vertex={A}
+        dirA={{ x: 0, y: 1, z: 0 }}
+        dirB={{ x: 0, y: 0, z: 1 }}
+        radius={0.45}
+        colorKey="paramPrimary"
+      />
+
       {/* 6. 几何基准特征点 A, B, C, D, P */}
-      <Point3D position={P} colorKey="paramPrimary" radius={0.06} />
-      <Point3D position={A} colorKey="secondary" radius={0.05} />
-      <Point3D position={B} colorKey="secondary" radius={0.05} />
-      <Point3D position={C} colorKey="secondary" radius={0.05} />
-      <Point3D position={D} colorKey="secondary" radius={0.05} />
+      <Point3D position={P} colorKey="paramPrimary" radius={0.05} />
+      <Point3D position={A} colorKey="secondary" radius={0.045} />
+      <Point3D position={B} colorKey="secondary" radius={0.045} />
+      <Point3D position={C} colorKey="secondary" radius={0.045} />
+      <Point3D position={D} colorKey="secondary" radius={0.045} />
 
       {/* 7. 动点 E、F (严格使用 projectPointOnSegment 进行倾斜侧棱正交投影与比值解算) */}
       <Point3D

@@ -131,20 +131,18 @@ export function RotationOutline({
     const { thetaCam, beta } = getCameraFrame(camera);
 
     if (isSphere) {
-      // ── 球体标准绘制模式 ──
-      // 1. 面向相机的外轮廓圆 (Billboard 正圆，恒为实线)
+      // ── 球体精准透视投影轮廓圆 ──
       const R = sphereRadius + RADIAL_EPS;
-      // 相机方向单位向量 (cx, cy, cz)
+      // 相机方向单位向量 (cx, cy, cz) 与距离 d
       const cx = camera.position.x;
       const cy = camera.position.y;
       const cz = camera.position.z;
-      const camLen = Math.hypot(cx, cy, cz) || 1;
-      const nx = cx / camLen;
-      const ny = cy / camLen;
-      const nz = cz / camLen;
+      const d = Math.hypot(cx, cy, cz) || 1;
+      const nx = cx / d;
+      const ny = cy / d;
+      const nz = cz / d;
 
       // 构造垂直于视线的正交基 u, v
-      // 先取一个与 n 不共线的辅助向量 (通常取 Y 轴，若视线正对 Y 轴则取 X 轴)
       const upX = Math.abs(ny) > 0.99 ? 1 : 0;
       const upY = Math.abs(ny) > 0.99 ? 0 : 1;
       const upZ = 0;
@@ -165,16 +163,41 @@ export function RotationOutline({
 
       const silhouettePts: [number, number, number][] = [];
       const numPts = segments * 2;
-      for (let i = 0; i <= numPts; i++) {
-        const phi = (i / numPts) * Math.PI * 2;
-        const cosP = Math.cos(phi);
-        const sinP = Math.sin(phi);
-        silhouettePts.push([
-          R * (ux * cosP + vx * sinP),
-          R * (uy * cosP + vy * sinP),
-          R * (uz * cosP + vz * sinP),
-        ]);
+
+      // 透视投影下，视线切锥与球面的交线为一个垂直于相机视线的正圆：
+      // 切圆圆心位于相机方向偏移 hRim = R^2 / d 处
+      // 切圆半径为 rRim = R * sqrt(1 - R^2 / d^2)
+      if (d > R) {
+        const hRim = (R * R) / d;
+        const rRim = (R * Math.sqrt(d * d - R * R)) / d;
+        const centerRimX = nx * hRim;
+        const centerRimY = ny * hRim;
+        const centerRimZ = nz * hRim;
+
+        for (let i = 0; i <= numPts; i++) {
+          const phi = (i / numPts) * Math.PI * 2;
+          const cosP = Math.cos(phi);
+          const sinP = Math.sin(phi);
+          silhouettePts.push([
+            centerRimX + rRim * (ux * cosP + vx * sinP),
+            centerRimY + rRim * (uy * cosP + vy * sinP),
+            centerRimZ + rRim * (uz * cosP + vz * sinP),
+          ]);
+        }
+      } else {
+        // 相机进入球体内（退化保护）
+        for (let i = 0; i <= numPts; i++) {
+          const phi = (i / numPts) * Math.PI * 2;
+          const cosP = Math.cos(phi);
+          const sinP = Math.sin(phi);
+          silhouettePts.push([
+            R * (ux * cosP + vx * sinP),
+            R * (uy * cosP + vy * sinP),
+            R * (uz * cosP + vz * sinP),
+          ]);
+        }
       }
+
       setLinePoints(leftLine, silhouettePts);
       leftLine.visible = true;
       rightLine.visible = false;

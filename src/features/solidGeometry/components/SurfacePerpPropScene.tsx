@@ -2,7 +2,7 @@ import React from "react";
 import { Plane3D } from "@/components/Math3D/Plane3D";
 import { Vector3DArrow } from "@/components/Math3D/Vector3DArrow";
 import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
-import { PointLabel3D } from "@/components/Math3D/PointLabel3D";
+import { CompoundLabel3D } from "@/components/Math3D/CompoundLabel3D";
 import { Point3D } from "@/components/Math3D/Point3D";
 import { AngleArc3D } from "@/components/Math3D/AngleArc3D";
 import { calculatePerpPropState } from "@/math3d/surfaceRelation";
@@ -31,9 +31,9 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
           width={5.6}
           height={5.6}
           colorKey="secondary"
-          opacity={0.25}
+          opacity={0.22}
         />
-        <FormulaLabel3D position={{ x: 2.5, y: 2.5, z: 0.1 }} tex="\gamma" />
+        <FormulaLabel3D position={{ x: 2.3, y: 2.3, z: 0.05 }} tex="\gamma" />
 
         {/* 立面 alpha (xz 平面, y=0) 垂直于 gamma */}
         <Plane3D
@@ -43,9 +43,9 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
           width={5.2}
           height={3}
           colorKey="paramTertiary"
-          opacity={0.28}
+          opacity={0.25}
         />
-        <FormulaLabel3D position={{ x: 2.4, y: 0.1, z: 2.8 }} tex="\alpha" />
+        <FormulaLabel3D position={{ x: 2.3, y: 0.1, z: 2.6 }} tex="\alpha" />
 
         {/* 立面 beta (yz 平面, x=0) 垂直于 gamma */}
         <Plane3D
@@ -55,9 +55,9 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
           width={5.2}
           height={3}
           colorKey="paramSecondary"
-          opacity={0.25}
+          opacity={0.22}
         />
-        <FormulaLabel3D position={{ x: 0.1, y: 2.4, z: 2.8 }} tex="\beta" />
+        <FormulaLabel3D position={{ x: 0.1, y: 2.3, z: 2.6 }} tex="\beta" />
 
         {/* 两面交线 l (z 轴) 必垂直于 gamma */}
         <Vector3DArrow
@@ -65,16 +65,26 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
           to={{ x: 0, y: 0, z: 3.2 }}
           colorKey="paramPrimary"
         />
-        <FormulaLabel3D position={{ x: 0.2, y: 0.2, z: 3.3 }} tex="l" />
-        <PointLabel3D
+        <FormulaLabel3D position={{ x: 0.15, y: 0.15, z: 3.3 }} tex="l" />
+        <CompoundLabel3D
           position={{ x: 0, y: 0, z: 0 }}
-          text="O"
+          base="O"
+          colorKey="paramPrimary"
           offset={[-0.2, -0.2, 0]}
         />
         <Point3D
           position={{ x: 0, y: 0, z: 0 }}
-          colorKey="secondary"
+          colorKey="paramPrimary"
           radius={0.05}
+        />
+
+        {/* 交线 l 垂直于底面直角标记 */}
+        <AngleArc3D
+          vertex={{ x: 0, y: 0, z: 0 }}
+          dirA={{ x: 1, y: 0, z: 0 }}
+          dirB={{ x: 0, y: 0, z: 1 }}
+          radius={0.5}
+          colorKey="paramPrimary"
         />
       </>
     );
@@ -91,9 +101,9 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
         width={5.6}
         height={5.6}
         colorKey="secondary"
-        opacity={0.25}
+        opacity={0.22}
       />
-      <FormulaLabel3D position={{ x: 2.5, y: 2.5, z: 0.1 }} tex="\alpha" />
+      <FormulaLabel3D position={{ x: 2.3, y: 2.3, z: 0.05 }} tex="\alpha" />
 
       {/* 垂直立面 beta (x=0, yz平面) */}
       <Plane3D
@@ -103,9 +113,9 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
         width={5.6}
         height={3}
         colorKey="paramTertiary"
-        opacity={0.28}
+        opacity={0.25}
       />
-      <FormulaLabel3D position={{ x: 0.1, y: 2.5, z: 2.8 }} tex="\beta" />
+      <FormulaLabel3D position={{ x: 0.1, y: 2.3, z: 2.6 }} tex="\beta" />
 
       {/* 两面交线 l (y 轴) */}
       <Vector3DArrow
@@ -113,7 +123,7 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
         to={state.lineLEnd}
         colorKey="secondary"
       />
-      <FormulaLabel3D position={{ x: 0.2, y: 2.8, z: 0.1 }} tex="l" />
+      <FormulaLabel3D position={{ x: 0.15, y: 2.6, z: 0.05 }} tex="l" />
 
       {/* 面内直线 a */}
       <Vector3DArrow
@@ -123,29 +133,30 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
       />
       <FormulaLabel3D
         position={{
-          x: 0.1,
-          y: state.lineAEnd.y + 0.2,
-          z: state.lineAEnd.z + 0.2,
+          x: 0.05,
+          y: state.lineAEnd.y + 0.15,
+          z: state.lineAEnd.z + 0.15,
         }}
         tex="a"
       />
-      <PointLabel3D
+      <CompoundLabel3D
         position={{ x: 0, y: 0, z: 0 }}
-        text="P"
+        base="O"
+        colorKey="paramPrimary"
         offset={[-0.2, -0.2, 0]}
       />
       <Point3D
         position={{ x: 0, y: 0, z: 0 }}
-        colorKey="secondary"
+        colorKey="paramPrimary"
         radius={0.05}
       />
 
-      {/* 直线 a 与交线 l 的夹角弧 */}
+      {/* 直线 a 与交线 l 的夹角弧 (a ⊥ l) */}
       <AngleArc3D
         vertex={{ x: 0, y: 0, z: 0 }}
         dirA={{ x: 0, y: 1, z: 0 }}
         dirB={{ x: 0, y: state.aDir.y, z: state.aDir.z }}
-        radius={0.7}
+        radius={0.55}
         colorKey={state.isPerpToAlpha ? "highlight" : "paramSecondary"}
       />
     </>

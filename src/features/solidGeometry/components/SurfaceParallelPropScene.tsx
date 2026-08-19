@@ -46,9 +46,9 @@ export const SurfaceParallelPropScene: React.FC<
         width={5.6}
         height={5.6}
         colorKey="secondary"
-        opacity={0.25}
+        opacity={0.22}
       />
-      <FormulaLabel3D position={{ x: 2.5, y: 2.5, z: 0.1 }} tex="\beta" />
+      <FormulaLabel3D position={{ x: 2.3, y: 2.3, z: 0.05 }} tex="\beta" />
 
       {/* 上平面 alpha (z=zHeight) */}
       <Plane3D
@@ -58,10 +58,10 @@ export const SurfaceParallelPropScene: React.FC<
         width={5.6}
         height={5.6}
         colorKey="paramTertiary"
-        opacity={0.28}
+        opacity={0.25}
       />
       <FormulaLabel3D
-        position={{ x: 2.5, y: 2.5, z: zHeight + 0.15 }}
+        position={{ x: 2.3, y: 2.3, z: zHeight + 0.1 }}
         tex="\alpha"
       />
 
@@ -79,7 +79,7 @@ export const SurfaceParallelPropScene: React.FC<
       )}
       {step > 0.05 && (
         <FormulaLabel3D
-          position={{ x: 0.2, y: 2.6, z: (zHeight * step) / 2 + 0.2 }}
+          position={{ x: 0.1, y: 2.3, z: (zHeight * step) / 2 + 0.15 }}
           tex="\gamma"
         />
       )}
@@ -94,9 +94,9 @@ export const SurfaceParallelPropScene: React.FC<
           />
           <FormulaLabel3D
             position={{
-              x: lines.lineAEnd.x + 0.2,
-              y: lines.lineAEnd.y + 0.2,
-              z: 0.1,
+              x: lines.lineAEnd.x + 0.15,
+              y: lines.lineAEnd.y + 0.15,
+              z: 0.05,
             }}
             tex="a"
           />
@@ -113,9 +113,9 @@ export const SurfaceParallelPropScene: React.FC<
           />
           <FormulaLabel3D
             position={{
-              x: lines.lineBEnd.x + 0.2,
-              y: lines.lineBEnd.y + 0.2,
-              z: zHeight + 0.1,
+              x: lines.lineBEnd.x + 0.15,
+              y: lines.lineBEnd.y + 0.15,
+              z: zHeight + 0.05,
             }}
             tex="b"
           />
@@ -128,7 +128,7 @@ export const SurfaceParallelPropScene: React.FC<
         to={{ x: -2, y: -2, z: zHeight }}
         colorKey="highlight"
       />
-      <FormulaLabel3D position={{ x: -2.3, y: -2, z: zHeight / 2 }} tex="d" />
+      <FormulaLabel3D position={{ x: -2.2, y: -2, z: zHeight / 2 }} tex="d" />
     </>
   );
 };

@@ -4,7 +4,8 @@ import * as THREE from "three";
 import { RotationSolid } from "./RotationSolid";
 import { MATH_COLORS } from "@/theme/math/colors";
 import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
-import { PointLabel3D } from "@/components/Math3D/PointLabel3D";
+import { CompoundLabel3D } from "@/components/Math3D/CompoundLabel3D";
+import { Point3D } from "@/components/Math3D/Point3D";
 import type { ProfilePoint } from "@/math3d/rotationProfiles";
 
 interface RotationSweepProps {
@@ -29,7 +30,7 @@ interface RotationSweepProps {
  * 旋转生成动画核心教学组件
  *
  * 展示母线（矩形/三角形/梯形/半圆）绕轴逐步扫过形成立体图形的过程。
- * 支持轴截面剖开高亮与三位一体尺寸标注。
+ * 支持轴截面剖开高亮与符合高考规范的三位一体几何特征标注。
  */
 export const RotationSweep = ({
   profile,
@@ -41,12 +42,13 @@ export const RotationSweep = ({
   showAxialSection = false,
   showLabels = false,
   r1 = 1.5,
+  r2 = 0.8,
   height = 3,
 }: RotationSweepProps) => {
   const angleRad = (sweepAngleDeg / 180) * Math.PI;
   const isComplete = sweepAngleDeg >= 359.5;
 
-  // 母线闭合路径（定义在数学 x 轴即 Three.js +Z 轴构成的纵切面上）
+  // 母线闭合路径（定义在数学 x 轴即 Three.js +Z 轴纵切面上）
   const closedLoop = useMemo<[number, number, number][]>(
     () => [
       ...profile.map((p) => [0, p.z, p.r] as [number, number, number]),
@@ -65,7 +67,7 @@ export const RotationSweep = ({
     return shape;
   }, [profile]);
 
-  // 完整的轴截面双侧 Shape (数学 x 轴方向对称切面)
+  // 完整的轴截面双侧 Shape (数学 x 轴纵截面)
   const axialShape = useMemo(() => {
     if (!showAxialSection) return null;
     const shape = new THREE.Shape();
@@ -93,6 +95,9 @@ export const RotationSweep = ({
   }, [profile, showAxialSection]);
 
   const isSphere = !hasTopCap && !hasBottomCap;
+  const isCone = hasBottomCap && !hasTopCap;
+  const isFrustum =
+    hasBottomCap && hasTopCap && Math.abs(r1 - r2) > 0.05 && r2 > 0.05;
 
   const zMin = useMemo(
     () => profile.reduce((min, p) => Math.min(min, p.z), 0),
@@ -106,6 +111,14 @@ export const RotationSweep = ({
   const axisBottom = Math.min(-0.3, zMin - 0.3);
   const axisTop = Math.max(axisHeight + 0.3, zMax + 0.3);
 
+  // 母线长度
+  const busbarLength = useMemo(() => {
+    if (isSphere) return 0;
+    if (isCone) return Math.sqrt(r1 * r1 + height * height);
+    if (isFrustum) return Math.sqrt(Math.pow(r1 - r2, 2) + height * height);
+    return height; // cylinder
+  }, [isSphere, isCone, isFrustum, r1, r2, height]);
+
   return (
     <group>
       {/* 旋转轴：自适应几何体高度 */}
@@ -115,10 +128,17 @@ export const RotationSweep = ({
           [0, axisTop, 0],
         ]}
         color={MATH_COLORS.axis3D_Z}
-        lineWidth={1.5}
+        lineWidth={1.6}
         dashed
-        dashSize={0.1}
+        dashSize={0.12}
         gapSize={0.08}
+      />
+
+      {/* 旋转轴名称标注直线 l */}
+      <FormulaLabel3D
+        position={{ x: 0, y: 0, z: axisTop + 0.15 }}
+        tex="l"
+        offset={[0.1, 0, 0.1]}
       />
 
       {/* 已扫过部分 (LatheGeometry 默认由 +Z 轴数学 x 向 +X 轴数学 y 顺滑旋转) */}
@@ -142,14 +162,14 @@ export const RotationSweep = ({
             <meshBasicMaterial
               color={MATH_COLORS.accent}
               transparent
-              opacity={0.4}
+              opacity={0.35}
               side={THREE.DoubleSide}
             />
           </mesh>
           <Line
             points={axialBorder.map(([_, y, z]) => [z, y, 0])}
             color={MATH_COLORS.accent}
-            lineWidth={3}
+            lineWidth={2.8}
           />
         </group>
       )}
@@ -163,7 +183,7 @@ export const RotationSweep = ({
               <meshBasicMaterial
                 color={MATH_COLORS.highlight}
                 transparent
-                opacity={0.5}
+                opacity={0.45}
                 side={THREE.DoubleSide}
               />
             </mesh>
@@ -171,7 +191,7 @@ export const RotationSweep = ({
           <Line
             points={closedLoop}
             color={MATH_COLORS.highlight}
-            lineWidth={2}
+            lineWidth={2.5}
           />
         </group>
       )}
@@ -192,77 +212,481 @@ export const RotationSweep = ({
         />
       )}
 
-      {/* 空间尺寸标注与轴截面几何特征点 */}
-      {showLabels && (
-        <group>
-          {isSphere ? (
-            <>
-              {/* 球心与半径标注 (沿数学 x 轴方向) */}
-              <Line
-                points={[
-                  [0, 0, 0],
-                  [0, 0, r1],
-                ]}
-                color={MATH_COLORS.paramPrimary}
-                lineWidth={3}
+      {/* 几何顶点与高中课本特征标注 */}
+      <group>
+        {isSphere ? (
+          <>
+            {/* 球心 O */}
+            <Point3D
+              position={{ x: 0, y: 0, z: 0 }}
+              colorKey="paramPrimary"
+              radius={0.05}
+            />
+            <CompoundLabel3D
+              position={{ x: 0, y: 0, z: 0 }}
+              base="O"
+              offset={[-0.2, -0.2, 0]}
+            />
+
+            {/* 动态随母线扫掠的赤道半径点 A */}
+            <group
+              rotation={[0, isComplete || showAxialSection ? 0 : angleRad, 0]}
+            >
+              <Point3D
+                position={{ x: profile[1]?.r ?? r1, y: 0, z: 0 }}
+                colorKey="paramPrimary"
+                radius={0.045}
               />
-              <PointLabel3D
-                position={{ x: 0, y: 0, z: 0 }}
-                text="O"
-                colorKey="label"
+              <CompoundLabel3D
+                position={{ x: profile[1]?.r ?? r1, y: 0, z: 0 }}
+                base="A"
+                offset={[0.18, 0, 0]}
               />
-              <FormulaLabel3D
-                position={{ x: r1 / 2, y: 0, z: 0 }}
-                tex={`\\color{#EF4444}{R=${r1.toFixed(1)}}`}
-                offset={[0, 0, 0.15]}
+            </group>
+
+            {/* 轴截面模式下半径标注 */}
+            {showLabels && (
+              <>
+                <Line
+                  points={[
+                    [0, 0, 0],
+                    [0, 0, profile[1]?.r ?? r1],
+                  ]}
+                  color={MATH_COLORS.paramPrimary}
+                  lineWidth={3}
+                />
+                <FormulaLabel3D
+                  position={{ x: (profile[1]?.r ?? r1) / 2, y: 0, z: 0 }}
+                  tex={`\\color{${MATH_COLORS.paramPrimary}}{R=${(profile[1]?.r ?? r1).toFixed(1)}}`}
+                  offset={[0, 0, 0.18]}
+                />
+              </>
+            )}
+          </>
+        ) : isCone ? (
+          <>
+            {/* 锥体顶点 S 与 底面圆心 O */}
+            <Point3D
+              position={{ x: 0, y: 0, z: profile[2]?.z ?? height }}
+              colorKey="paramSecondary"
+              radius={0.05}
+            />
+            <CompoundLabel3D
+              position={{ x: 0, y: 0, z: profile[2]?.z ?? height }}
+              base="S"
+              offset={[0, 0, 0.22]}
+            />
+
+            <Point3D
+              position={{ x: 0, y: 0, z: profile[0]?.z ?? 0 }}
+              colorKey="secondary"
+              radius={0.05}
+            />
+            <CompoundLabel3D
+              position={{ x: 0, y: 0, z: profile[0]?.z ?? 0 }}
+              base="O"
+              offset={[-0.22, -0.22, 0]}
+            />
+
+            {/* 动态随母线扫掠的底面母线端点 A */}
+            <group
+              rotation={[0, isComplete || showAxialSection ? 0 : angleRad, 0]}
+            >
+              <Point3D
+                position={{
+                  x: profile[1]?.r ?? r1,
+                  y: 0,
+                  z: profile[1]?.z ?? 0,
+                }}
+                colorKey="paramPrimary"
+                radius={0.045}
               />
-            </>
-          ) : (
-            <>
-              {/* 底面半径标注 (沿数学 x 轴) */}
-              <Line
-                points={[
-                  [0, 0, 0],
-                  [0, 0, r1],
-                ]}
-                color={MATH_COLORS.paramPrimary}
-                lineWidth={2.5}
+              <CompoundLabel3D
+                position={{
+                  x: profile[1]?.r ?? r1,
+                  y: 0,
+                  z: profile[1]?.z ?? 0,
+                }}
+                base="A"
+                offset={[0.22, 0, 0]}
               />
-              <FormulaLabel3D
-                position={{ x: r1 / 2, y: 0, z: 0 }}
-                tex={`\\color{#EF4444}{r_1=${r1.toFixed(1)}}`}
-                offset={[0, 0, -0.18]}
+            </group>
+
+            {showAxialSection && (
+              <>
+                <Point3D
+                  position={{
+                    x: -(profile[1]?.r ?? r1),
+                    y: 0,
+                    z: profile[1]?.z ?? 0,
+                  }}
+                  colorKey="paramPrimary"
+                  radius={0.045}
+                />
+                <CompoundLabel3D
+                  position={{
+                    x: -(profile[1]?.r ?? r1),
+                    y: 0,
+                    z: profile[1]?.z ?? 0,
+                  }}
+                  base="B"
+                  offset={[-0.25, 0, 0]}
+                />
+              </>
+            )}
+
+            {/* 尺寸标注 */}
+            {showLabels && (
+              <>
+                {/* 底面半径 r */}
+                <Line
+                  points={[
+                    [0, 0, 0],
+                    [0, 0, profile[1]?.r ?? r1],
+                  ]}
+                  color={MATH_COLORS.paramPrimary}
+                  lineWidth={2.5}
+                />
+                <FormulaLabel3D
+                  position={{
+                    x: (profile[1]?.r ?? r1) / 2,
+                    y: 0,
+                    z: profile[0]?.z ?? 0,
+                  }}
+                  tex={`\\color{${MATH_COLORS.paramPrimary}}{r=${(profile[1]?.r ?? r1).toFixed(1)}}`}
+                  offset={[0, 0, -0.2]}
+                />
+                {/* 高 h */}
+                <FormulaLabel3D
+                  position={{ x: 0, y: 0, z: (profile[2]?.z ?? height) / 2 }}
+                  tex={`\\color{${MATH_COLORS.paramTertiary}}{h=${(profile[2]?.z ?? height).toFixed(1)}}`}
+                  offset={[-0.32, 0, 0]}
+                />
+                {/* 母线 l */}
+                <FormulaLabel3D
+                  position={{
+                    x: (profile[1]?.r ?? r1) / 2,
+                    y: 0,
+                    z: (profile[2]?.z ?? height) / 2,
+                  }}
+                  tex={`\\color{${MATH_COLORS.paramSecondary}}{l=${busbarLength.toFixed(1)}}`}
+                  offset={[0.22, 0, 0.1]}
+                />
+              </>
+            )}
+          </>
+        ) : isFrustum ? (
+          <>
+            {/* 圆台上底面圆心 O1, 下底面圆心 O */}
+            <Point3D
+              position={{ x: 0, y: 0, z: profile[3]?.z ?? height }}
+              colorKey="paramSecondary"
+              radius={0.05}
+            />
+            <CompoundLabel3D
+              position={{ x: 0, y: 0, z: profile[3]?.z ?? height }}
+              base="O"
+              subscript="1"
+              offset={[-0.22, 0, 0.22]}
+            />
+
+            <Point3D
+              position={{ x: 0, y: 0, z: profile[0]?.z ?? 0 }}
+              colorKey="secondary"
+              radius={0.05}
+            />
+            <CompoundLabel3D
+              position={{ x: 0, y: 0, z: profile[0]?.z ?? 0 }}
+              base="O"
+              offset={[-0.22, -0.22, 0]}
+            />
+
+            {/* 动态随母线扫掠的母线端点 A1, A */}
+            <group
+              rotation={[0, isComplete || showAxialSection ? 0 : angleRad, 0]}
+            >
+              <Point3D
+                position={{
+                  x: profile[2]?.r ?? r2,
+                  y: 0,
+                  z: profile[2]?.z ?? height,
+                }}
+                colorKey="paramSecondary"
+                radius={0.045}
+              />
+              <CompoundLabel3D
+                position={{
+                  x: profile[2]?.r ?? r2,
+                  y: 0,
+                  z: profile[2]?.z ?? height,
+                }}
+                base="A"
+                subscript="1"
+                offset={[0.22, 0, 0.18]}
               />
 
-              {/* 高标注 (沿数学 z 轴) */}
-              <FormulaLabel3D
-                position={{ x: 0, y: 0, z: height / 2 }}
-                tex={`\\color{#059669}{h=${height.toFixed(1)}}`}
-                offset={[-0.3, 0, 0]}
+              <Point3D
+                position={{
+                  x: profile[1]?.r ?? r1,
+                  y: 0,
+                  z: profile[1]?.z ?? 0,
+                }}
+                colorKey="paramPrimary"
+                radius={0.045}
+              />
+              <CompoundLabel3D
+                position={{
+                  x: profile[1]?.r ?? r1,
+                  y: 0,
+                  z: profile[1]?.z ?? 0,
+                }}
+                base="A"
+                offset={[0.22, 0, -0.12]}
+              />
+            </group>
+
+            {showAxialSection && (
+              <>
+                <Point3D
+                  position={{
+                    x: -(profile[2]?.r ?? r2),
+                    y: 0,
+                    z: profile[2]?.z ?? height,
+                  }}
+                  colorKey="paramSecondary"
+                  radius={0.045}
+                />
+                <CompoundLabel3D
+                  position={{
+                    x: -(profile[2]?.r ?? r2),
+                    y: 0,
+                    z: profile[2]?.z ?? height,
+                  }}
+                  base="B"
+                  subscript="1"
+                  offset={[-0.28, 0, 0.18]}
+                />
+
+                <Point3D
+                  position={{
+                    x: -(profile[1]?.r ?? r1),
+                    y: 0,
+                    z: profile[1]?.z ?? 0,
+                  }}
+                  colorKey="paramPrimary"
+                  radius={0.045}
+                />
+                <CompoundLabel3D
+                  position={{
+                    x: -(profile[1]?.r ?? r1),
+                    y: 0,
+                    z: profile[1]?.z ?? 0,
+                  }}
+                  base="B"
+                  offset={[-0.25, 0, -0.12]}
+                />
+              </>
+            )}
+
+            {/* 尺寸标注 */}
+            {showLabels && (
+              <>
+                <Line
+                  points={[
+                    [0, 0, 0],
+                    [0, 0, profile[1]?.r ?? r1],
+                  ]}
+                  color={MATH_COLORS.paramPrimary}
+                  lineWidth={2.5}
+                />
+                <FormulaLabel3D
+                  position={{
+                    x: (profile[1]?.r ?? r1) / 2,
+                    y: 0,
+                    z: profile[0]?.z ?? 0,
+                  }}
+                  tex={`\\color{${MATH_COLORS.paramPrimary}}{r_1=${(profile[1]?.r ?? r1).toFixed(1)}}`}
+                  offset={[0, 0, -0.2]}
+                />
+                <Line
+                  points={[
+                    [0, profile[3]?.z ?? height, 0],
+                    [0, profile[3]?.z ?? height, profile[2]?.r ?? r2],
+                  ]}
+                  color={MATH_COLORS.paramSecondary}
+                  lineWidth={2.5}
+                />
+                <FormulaLabel3D
+                  position={{
+                    x: (profile[2]?.r ?? r2) / 2,
+                    y: 0,
+                    z: profile[3]?.z ?? height,
+                  }}
+                  tex={`\\color{${MATH_COLORS.paramSecondary}}{r_2=${(profile[2]?.r ?? r2).toFixed(1)}}`}
+                  offset={[0, 0, 0.2]}
+                />
+                <FormulaLabel3D
+                  position={{ x: 0, y: 0, z: (profile[3]?.z ?? height) / 2 }}
+                  tex={`\\color{${MATH_COLORS.paramTertiary}}{h=${(profile[3]?.z ?? height).toFixed(1)}}`}
+                  offset={[-0.32, 0, 0]}
+                />
+              </>
+            )}
+          </>
+        ) : (
+          /* 圆柱 Cylinder：矩形 OO1A1A 绕 OO1 旋转 */
+          <>
+            {/* 上底圆心 O1, 下底圆心 O (定点) */}
+            <Point3D
+              position={{ x: 0, y: 0, z: profile[3]?.z ?? height }}
+              colorKey="paramSecondary"
+              radius={0.05}
+            />
+            <CompoundLabel3D
+              position={{ x: 0, y: 0, z: profile[3]?.z ?? height }}
+              base="O"
+              subscript="1"
+              offset={[-0.22, 0, 0.22]}
+            />
+
+            <Point3D
+              position={{ x: 0, y: 0, z: profile[0]?.z ?? 0 }}
+              colorKey="secondary"
+              radius={0.05}
+            />
+            <CompoundLabel3D
+              position={{ x: 0, y: 0, z: profile[0]?.z ?? 0 }}
+              base="O"
+              offset={[-0.22, -0.22, 0]}
+            />
+
+            {/* 动态随母线矩形旋转的旋转母线端点 A1 (上底圆周), A (下底圆周) */}
+            <group
+              rotation={[0, isComplete || showAxialSection ? 0 : angleRad, 0]}
+            >
+              <Point3D
+                position={{
+                  x: profile[2]?.r ?? r1,
+                  y: 0,
+                  z: profile[2]?.z ?? height,
+                }}
+                colorKey="paramPrimary"
+                radius={0.045}
+              />
+              <CompoundLabel3D
+                position={{
+                  x: profile[2]?.r ?? r1,
+                  y: 0,
+                  z: profile[2]?.z ?? height,
+                }}
+                base="A"
+                subscript="1"
+                offset={[0.22, 0, 0.18]}
               />
 
-              {/* 上底半径标注 (仅在圆台等顶部有实际非零平面的几何体上展示) */}
-              {profile[2]?.r > 0.05 && Math.abs(profile[2]?.r - r1) > 0.05 && (
-                <>
-                  <Line
-                    points={[
-                      [0, height, 0],
-                      [0, height, profile[2].r],
-                    ]}
-                    color={MATH_COLORS.paramSecondary}
-                    lineWidth={2.5}
-                  />
-                  <FormulaLabel3D
-                    position={{ x: profile[2].r / 2, y: 0, z: height }}
-                    tex={`\\color{#D97706}{r_2=${profile[2].r.toFixed(1)}}`}
-                    offset={[0, 0, 0.18]}
-                  />
-                </>
-              )}
-            </>
-          )}
-        </group>
-      )}
+              <Point3D
+                position={{
+                  x: profile[1]?.r ?? r1,
+                  y: 0,
+                  z: profile[1]?.z ?? 0,
+                }}
+                colorKey="paramPrimary"
+                radius={0.045}
+              />
+              <CompoundLabel3D
+                position={{
+                  x: profile[1]?.r ?? r1,
+                  y: 0,
+                  z: profile[1]?.z ?? 0,
+                }}
+                base="A"
+                offset={[0.22, 0, -0.12]}
+              />
+            </group>
+
+            {showAxialSection && (
+              <>
+                {/* 轴截面左侧母线端点 B1 (上底), B (下底) */}
+                <Point3D
+                  position={{
+                    x: -(profile[2]?.r ?? r1),
+                    y: 0,
+                    z: profile[2]?.z ?? height,
+                  }}
+                  colorKey="paramPrimary"
+                  radius={0.045}
+                />
+                <CompoundLabel3D
+                  position={{
+                    x: -(profile[2]?.r ?? r1),
+                    y: 0,
+                    z: profile[2]?.z ?? height,
+                  }}
+                  base="B"
+                  subscript="1"
+                  offset={[-0.28, 0, 0.18]}
+                />
+
+                <Point3D
+                  position={{
+                    x: -(profile[1]?.r ?? r1),
+                    y: 0,
+                    z: profile[1]?.z ?? 0,
+                  }}
+                  colorKey="paramPrimary"
+                  radius={0.045}
+                />
+                <CompoundLabel3D
+                  position={{
+                    x: -(profile[1]?.r ?? r1),
+                    y: 0,
+                    z: profile[1]?.z ?? 0,
+                  }}
+                  base="B"
+                  offset={[-0.25, 0, -0.12]}
+                />
+              </>
+            )}
+
+            {/* 尺寸标注 */}
+            {showLabels && (
+              <>
+                <Line
+                  points={[
+                    [0, 0, 0],
+                    [0, 0, profile[1]?.r ?? r1],
+                  ]}
+                  color={MATH_COLORS.paramPrimary}
+                  lineWidth={2.5}
+                />
+                <FormulaLabel3D
+                  position={{
+                    x: (profile[1]?.r ?? r1) / 2,
+                    y: 0,
+                    z: profile[0]?.z ?? 0,
+                  }}
+                  tex={`\\color{${MATH_COLORS.paramPrimary}}{r=${(profile[1]?.r ?? r1).toFixed(1)}}`}
+                  offset={[0, 0, -0.2]}
+                />
+                <FormulaLabel3D
+                  position={{ x: 0, y: 0, z: (profile[3]?.z ?? height) / 2 }}
+                  tex={`\\color{${MATH_COLORS.paramTertiary}}{h=${(profile[3]?.z ?? height).toFixed(1)}}`}
+                  offset={[-0.32, 0, 0]}
+                />
+                <FormulaLabel3D
+                  position={{
+                    x: profile[1]?.r ?? r1,
+                    y: 0,
+                    z: (profile[3]?.z ?? height) / 2,
+                  }}
+                  tex={`\\color{${MATH_COLORS.paramSecondary}}{l=${(profile[3]?.z ?? height).toFixed(1)}}`}
+                  offset={[0.25, 0, 0]}
+                />
+              </>
+            )}
+          </>
+        )}
+      </group>
     </group>
   );
 };

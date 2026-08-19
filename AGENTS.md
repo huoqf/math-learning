@@ -260,10 +260,11 @@ import { MATH_COLORS, withAlpha } from '@/theme'
    - 核心主控参数一（如 $a$, $k$）：`MATH_COLORS.paramPrimary` (`#EF4444` - 鲜红)
    - 次要关联参数二（如 $b$）：`MATH_COLORS.paramSecondary` (`#D97706` - 暖橙)
    - 辅助或常数参数三（如 $c$, $\theta$）：`MATH_COLORS.paramTertiary` (`#059669` - 翠绿)
-2. **公式内上色**：在 KaTeX 公式渲染时，使用 `\color{Hex}` 指令将特定参数变量渲染为对应的参数色彩。
-   - 例如二次函数：`\color{#EF4444}{a}x^2 + \color{#D97706}{b}x + \color{#059669}{c}`
+2. **公式内上色**：在 KaTeX 公式渲染时，使用 `\color{${MATH_COLORS.paramPrimary}}` 动态 Token 指令将特定参数变量渲染为对应的参数色彩（**严禁硬编码字面量 Hex**）。
+   - 例如二次函数：`\\color{${MATH_COLORS.paramPrimary}}{a}x^2 + \\color{${MATH_COLORS.paramSecondary}}{b}x + \\color{${MATH_COLORS.paramTertiary}}{c}`
 3. **滑块与控制台**：在左屏 `ParamControl` 标签或提示文本中对该参数应用统一的色彩指示。
-4. **场景几何图象**：中屏 SVG 中由特定参数直接决定的特征图形（例如二次函数的对称轴、焦点）应尽量使用或呼应其所绑定的色彩。
+4. **场景几何图象**：中屏 SVG/3D 中由特定参数直接决定的特征图形（例如二次函数的对称轴、旋转体的母线与底面半径）应尽量使用或呼应其所绑定的色彩。
+5. **3D 几何特征点与单一数据源**：3D 旋转体特征点 $O, O_1, A, A_1, S$ 与虚线母线框必须 100% 直连 `profile` 顶点数据源；球体外轮廓线必须使用透视切圆解析解（$h_{\text{rim}}=R^2/d, r_{\text{rim}}=R\sqrt{1-R^2/d^2}$），杜绝近景放大脱节。
 
 ### 铁律 5：HashRouter Only
 

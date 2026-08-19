@@ -16,7 +16,8 @@ import {
   Scene3DGrid,
   Vector3DArrow,
   Plane3D,
-  PointLabel3D,
+  Point3D,
+  CompoundLabel3D,
   FormulaLabel3D,
   AngleArc3D,
   Legend3D,
@@ -607,13 +608,13 @@ export default function LinePlaneRelationAnimation() {
                 origin={{ x: 0, y: 0, z: 0 }}
                 uAxis={{ x: 1, y: 0, z: 0 }}
                 vAxis={{ x: 0, y: 1, z: 0 }}
-                width={6}
-                height={6}
+                width={5.6}
+                height={5.6}
                 colorKey="secondary"
-                opacity={0.2}
+                opacity={0.22}
               />
               <FormulaLabel3D
-                position={{ x: 2.8, y: 2.8, z: 0.1 }}
+                position={{ x: 2.3, y: 2.3, z: 0.05 }}
                 tex="\alpha"
               />
 
@@ -625,9 +626,9 @@ export default function LinePlaneRelationAnimation() {
               />
               <FormulaLabel3D
                 position={{
-                  x: endPoint.x + 0.2,
-                  y: endPoint.y + 0.2,
-                  z: endPoint.z + 0.2,
+                  x: endPoint.x + 0.15,
+                  y: endPoint.y + 0.15,
+                  z: endPoint.z + 0.1,
                 }}
                 tex="l"
               />
@@ -640,7 +641,14 @@ export default function LinePlaneRelationAnimation() {
                     to={lineMEnd}
                     colorKey="paramSecondary"
                   />
-                  <FormulaLabel3D position={{ x: 2.6, y: 0.2, z: 0 }} tex="m" />
+                  <FormulaLabel3D
+                    position={{
+                      x: lineMEnd.x + 0.15,
+                      y: lineMEnd.y + 0.15,
+                      z: 0.05,
+                    }}
+                    tex="m"
+                  />
                   {subTheorem === "prop" && step > 0.05 && (
                     <>
                       <Plane3D
@@ -654,7 +662,7 @@ export default function LinePlaneRelationAnimation() {
                       />
                       <FormulaLabel3D
                         position={{
-                          x: 2.5,
+                          x: 2.3,
                           y: 0.1,
                           z: (effectiveZ * step) / 2,
                         }}
@@ -670,15 +678,22 @@ export default function LinePlaneRelationAnimation() {
                 <>
                   {subTheorem === "judge" ? (
                     <>
+                      {/* 直线 a */}
                       <Vector3DArrow
                         from={lineMStart}
                         to={lineMEnd}
                         colorKey="paramSecondary"
                       />
                       <FormulaLabel3D
-                        position={{ x: 2.6, y: 0.2, z: 0 }}
+                        position={{
+                          x: lineMEnd.x + 0.15,
+                          y: lineMEnd.y + 0.15,
+                          z: 0.05,
+                        }}
                         tex="a"
                       />
+
+                      {/* 直线 b */}
                       <Vector3DArrow
                         from={lineBStart}
                         to={lineBEnd}
@@ -686,21 +701,68 @@ export default function LinePlaneRelationAnimation() {
                       />
                       <FormulaLabel3D
                         position={{
-                          x: lineBEnd.x + 0.2,
-                          y: lineBEnd.y + 0.2,
-                          z: 0,
+                          x: lineBEnd.x + 0.15,
+                          y: lineBEnd.y + 0.15,
+                          z: 0.05,
                         }}
                         tex="b"
                       />
+
+                      {/* 交点 P 与两条直角标记 */}
                       {intersectType === 1 && (
-                        <PointLabel3D
-                          position={{ x: 0, y: 0, z: 0 }}
-                          text="P"
-                        />
+                        <>
+                          <Point3D
+                            position={{ x: 0, y: 0, z: 0 }}
+                            colorKey="paramPrimary"
+                            radius={0.05}
+                          />
+                          <CompoundLabel3D
+                            position={{ x: 0, y: 0, z: 0 }}
+                            base="P"
+                            colorKey="paramPrimary"
+                            offset={[-0.2, -0.2, 0]}
+                          />
+
+                          {/* 直角标记 1: l ⊥ a */}
+                          <AngleArc3D
+                            vertex={{ x: 0, y: 0, z: 0 }}
+                            dirA={{ x: 0, y: 0, z: 1 }}
+                            dirB={{ x: 1, y: 0, z: 0 }}
+                            radius={0.45}
+                            colorKey="paramPrimary"
+                          />
+
+                          {/* 直角标记 2: l ⊥ b */}
+                          <AngleArc3D
+                            vertex={{ x: 0, y: 0, z: 0 }}
+                            dirA={{ x: 0, y: 0, z: 1 }}
+                            dirB={{
+                              x: Math.cos(Math.PI / 4),
+                              y: Math.sin(Math.PI / 4),
+                              z: 0,
+                            }}
+                            radius={0.6}
+                            colorKey="paramSecondary"
+                          />
+                        </>
                       )}
                     </>
                   ) : (
                     <>
+                      {/* 垂足 O */}
+                      <Point3D
+                        position={{ x: 0, y: 0, z: 0 }}
+                        colorKey="paramPrimary"
+                        radius={0.05}
+                      />
+                      <CompoundLabel3D
+                        position={{ x: 0, y: 0, z: 0 }}
+                        base="O"
+                        colorKey="paramPrimary"
+                        offset={[-0.2, -0.2, 0]}
+                      />
+
+                      {/* 面内任意直线 m */}
                       <Vector3DArrow
                         from={{ x: -testMEnd.x, y: -testMEnd.y, z: 0 }}
                         to={testMEnd}
@@ -708,17 +770,19 @@ export default function LinePlaneRelationAnimation() {
                       />
                       <FormulaLabel3D
                         position={{
-                          x: testMEnd.x + 0.2,
-                          y: testMEnd.y + 0.2,
-                          z: 0,
+                          x: testMEnd.x + 0.15,
+                          y: testMEnd.y + 0.15,
+                          z: 0.05,
                         }}
                         tex="m"
                       />
+
+                      {/* 直角标记 l ⊥ m */}
                       <AngleArc3D
                         vertex={{ x: 0, y: 0, z: 0 }}
                         dirA={{ x: 0, y: 0, z: 2.5 }}
                         dirB={{ x: testMEnd.x, y: testMEnd.y, z: 0 }}
-                        radius={0.7}
+                        radius={0.55}
                         colorKey="highlight"
                       />
                     </>
@@ -735,7 +799,7 @@ export default function LinePlaneRelationAnimation() {
                     colorKey="highlight"
                   />
                   <FormulaLabel3D
-                    position={{ x: 0.2, y: 0.2, z: 2.6 }}
+                    position={{ x: 0.15, y: 0.15, z: 2.6 }}
                     tex="\vec{n}"
                   />
                   {thetaDeg > 0 && thetaDeg < 90 && (

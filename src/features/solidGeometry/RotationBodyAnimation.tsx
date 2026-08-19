@@ -440,7 +440,7 @@ export default function RotationBodyAnimation() {
                   featureMode === "generation" ? params.sweepAngleDeg : 360
                 }
                 axisHeight={params.height}
-                hasTopCap={shape !== "semicircle"}
+                hasTopCap={shape === "rectangle" || shape === "rightTrapezoid"}
                 hasBottomCap={shape !== "semicircle"}
                 showAxialSection={featureMode === "section"}
                 showLabels={featureMode === "section"}
