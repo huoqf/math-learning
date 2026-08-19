@@ -1270,13 +1270,14 @@ export function buildSectionPanel(
   // 2. 定理体系
   theorems.push(
     {
-      name: "截面射影面积定理 (新高考秒杀公式)",
-      latex: `S_{\\text{截}} = \\frac{S_{\\text{投}}}{\\cos \\theta} \\quad (\\theta \\text{ 为截面与射影底面的二面角})`,
+      name: "截面射影面积定理",
+      latex: `S_{\\text{截}} = \\frac{S_{\\text{投}}}{\\cos \\theta} \\quad (\\theta \\text{ 为截面与射影参考平面的二面角})`,
       level: "core",
-      condition: "截面不能垂直于底面 (cos θ > 0)。若垂直底面则投影退化为线段",
+      condition:
+        "截面不能垂直于射影参考面 (cos θ > 0)。若垂直底面则投影退化为线段",
     },
     {
-      name: "截面作图三大公理依据",
+      name: "截面作图三大公理与性质依据",
       latex: `\\begin{cases} \\text{公理 1 (同面连线): } A, B \\in \\alpha \\implies AB \\subset \\alpha \\\\ \\text{公理 3 (交轨法): } \\alpha \\cap \\beta = l \\\\ \\text{面面平行性质: } \\alpha \\parallel \\beta \\implies l_1 \\parallel l_2 \\end{cases}`,
       level: "core",
       note: "同面直接连线；异面延线相交于底面/侧面交轨；平行面截线必平行",
@@ -1286,7 +1287,8 @@ export function buildSectionPanel(
   if (mode === "construction" && rationale) {
     theorems.push({
       name: stepTitle || "当前作图步骤依据",
-      latex: `\\text{${rationale}}`,
+      latex: `\\text{依据公理与几何性质推演}`,
+      note: rationale,
       level: "important",
     });
   }

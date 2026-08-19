@@ -63,7 +63,49 @@ describe("sectionArea Math Tests", () => {
       y: 0,
       z: 1,
     });
-    expect(triDetails.shapeName).toContain("正三角形");
+    expect(triDetails.shapeName).toBe("正三角形 (等边)");
     expect(triDetails.perimeter).toBeCloseTo(6, 2);
+
+    // 正方形测试
+    const square: Vec3[] = [
+      { x: 0, y: 0, z: 1 },
+      { x: 2, y: 0, z: 1 },
+      { x: 2, y: 2, z: 1 },
+      { x: 0, y: 2, z: 1 },
+    ];
+    const squareDetails = computeSectionProjectionDetails(square, {
+      x: 0,
+      y: 0,
+      z: 1,
+    });
+    expect(squareDetails.shapeName).toBe("正方形");
+
+    // 矩形测试 (长宽不等)
+    const rect: Vec3[] = [
+      { x: 0, y: 0, z: 1 },
+      { x: 3, y: 0, z: 1 },
+      { x: 3, y: 2, z: 1 },
+      { x: 0, y: 2, z: 1 },
+    ];
+    const rectDetails = computeSectionProjectionDetails(rect, {
+      x: 0,
+      y: 0,
+      z: 1,
+    });
+    expect(rectDetails.shapeName).toBe("矩形");
+
+    // 菱形测试 (四边等长对角线不等)
+    const rhombus: Vec3[] = [
+      { x: 2, y: 0, z: 0 },
+      { x: 0, y: 1, z: 0 },
+      { x: -2, y: 0, z: 0 },
+      { x: 0, y: -1, z: 0 },
+    ];
+    const rhombusDetails = computeSectionProjectionDetails(rhombus, {
+      x: 0,
+      y: 0,
+      z: 1,
+    });
+    expect(rhombusDetails.shapeName).toBe("菱形");
   });
 });

@@ -86,5 +86,18 @@ describe("sectionConstruction 作图推演纯函数测试", () => {
     );
     expect(prismSteps.step).toBe(4);
     expect(prismSteps.partialPolygon.length).toBeGreaterThanOrEqual(3);
+
+    const tetraSteps = buildPolyhedronConstructionSteps(
+      "tetrahedron",
+      3,
+      3,
+      0, // 默认触发 h = √2 * r
+      0.4,
+      0.6,
+      0.5,
+      4,
+    );
+    expect(tetraSteps.step).toBe(4);
+    expect(tetraSteps.partialPolygon.length).toBeGreaterThanOrEqual(3);
   });
 });

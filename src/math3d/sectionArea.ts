@@ -54,11 +54,11 @@ export function judgeSectionShape(points: Vec3[]): string {
     const d2 = distance(points[2], points[0]);
     const maxD = Math.max(d0, d1, d2);
     const minD = Math.min(d0, d1, d2);
-    if (Math.abs(maxD - minD) < 0.05) return "正三角形 (等边)";
+    if (maxD > 1e-4 && (maxD - minD) / maxD < 0.02) return "正三角形 (等边)";
     if (
-      Math.abs(d0 - d1) < 0.05 ||
-      Math.abs(d1 - d2) < 0.05 ||
-      Math.abs(d2 - d0) < 0.05
+      Math.abs(d0 - d1) / Math.max(d0, d1) < 0.02 ||
+      Math.abs(d1 - d2) / Math.max(d1, d2) < 0.02 ||
+      Math.abs(d2 - d0) / Math.max(d2, d0) < 0.02
     ) {
       return "等腰三角形";
     }
@@ -69,6 +69,7 @@ export function judgeSectionShape(points: Vec3[]): string {
     const d1 = distance(points[1], points[2]);
     const d2 = distance(points[2], points[3]);
     const d3 = distance(points[3], points[0]);
+
     // 对边是否平行
     const v01 = sub(points[1], points[0]);
     const v32 = sub(points[2], points[3]);
@@ -81,29 +82,45 @@ export function judgeSectionShape(points: Vec3[]): string {
     const isP2 = Math.sqrt(c2.x * c2.x + c2.y * c2.y + c2.z * c2.z) < 0.05;
 
     if (isP1 && isP2) {
-      if (
-        Math.abs(d0 - d1) < 0.05 &&
-        Math.abs(d1 - d2) < 0.05 &&
-        Math.abs(d2 - d3) < 0.05
-      ) {
-        return "菱形 / 正方形";
+      const maxSide = Math.max(d0, d1, d2, d3);
+      const minSide = Math.min(d0, d1, d2, d3);
+      const isEquilateral =
+        maxSide > 1e-4 && (maxSide - minSide) / maxSide < 0.02;
+
+      // 对角线长度比较
+      const diag1 = distance(points[0], points[2]);
+      const diag2 = distance(points[1], points[3]);
+      const maxDiag = Math.max(diag1, diag2);
+      const isDiagEqual =
+        maxDiag > 1e-4 && Math.abs(diag1 - diag2) / maxDiag < 0.02;
+
+      if (isEquilateral && isDiagEqual) {
+        return "正方形";
       }
-      return "平行四边形 / 矩形";
+      if (isEquilateral) {
+        return "菱形";
+      }
+      if (isDiagEqual) {
+        return "矩形";
+      }
+      return "平行四边形";
     }
     if (isP1 || isP2) return "梯形";
     return "凸四边形";
   }
   if (n === 5) return "五边形";
   if (n === 6) {
-    const d0 = distance(points[0], points[1]);
-    const d1 = distance(points[1], points[2]);
-    const d2 = distance(points[2], points[3]);
-    const d3 = distance(points[3], points[4]);
-    const d4 = distance(points[4], points[5]);
-    const d5 = distance(points[5], points[0]);
-    const maxD = Math.max(d0, d1, d2, d3, d4, d5);
-    const minD = Math.min(d0, d1, d2, d3, d4, d5);
-    if (Math.abs(maxD - minD) < 0.08) return "正六边形";
+    const sides = [
+      distance(points[0], points[1]),
+      distance(points[1], points[2]),
+      distance(points[2], points[3]),
+      distance(points[3], points[4]),
+      distance(points[4], points[5]),
+      distance(points[5], points[0]),
+    ];
+    const maxD = Math.max(...sides);
+    const minD = Math.min(...sides);
+    if (maxD > 1e-4 && (maxD - minD) / maxD < 0.03) return "正六边形";
     return "六边形";
   }
   return `${n} 边形`;

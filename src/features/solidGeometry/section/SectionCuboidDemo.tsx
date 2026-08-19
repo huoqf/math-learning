@@ -174,23 +174,24 @@ export default function SectionCuboidDemo() {
   const width = 3;
   const depth = 3;
   const height = 3.5;
+  const currentHeight = solidKind === "tetrahedron" ? 2.2 * Math.SQRT2 : height;
 
   // 构造当前多面体 Polyhedron 数据结构
   const currentPolyhedron = useMemo(() => {
     if (solidKind === "pyramid") {
-      return buildRegularPyramidPolyhedron(4, 2.2, height);
+      return buildRegularPyramidPolyhedron(4, 2.2, currentHeight);
     }
     if (solidKind === "tetrahedron") {
-      return buildTetrahedronPolyhedron(2.2, height);
+      return buildTetrahedronPolyhedron(2.2, currentHeight);
     }
     if (solidKind === "prism") {
-      return buildRegularPrismPolyhedron(3, 2.0, height);
+      return buildRegularPrismPolyhedron(3, 2.0, currentHeight);
     }
     if (solidKind === "frustum") {
-      return buildFrustumPolyhedron(4, 2.2, 1.2, height);
+      return buildFrustumPolyhedron(4, 2.2, 1.2, currentHeight);
     }
-    return buildCuboidPolyhedron(width, depth, height);
-  }, [solidKind, width, depth, height]);
+    return buildCuboidPolyhedron(width, depth, currentHeight);
+  }, [solidKind, width, depth, currentHeight]);
 
   // 三点控制点坐标
   const pointPPos = useMemo<Vec3>(
@@ -201,19 +202,19 @@ export default function SectionCuboidDemo() {
         mode === "extrema" ? tParam : posP,
         width,
         depth,
-        height,
+        currentHeight,
       ),
-    [solidKind, mode, tParam, posP, width, depth, height],
+    [solidKind, mode, tParam, posP, width, depth, currentHeight],
   );
 
   const pointQPos = useMemo<Vec3>(
-    () => getEdgePoint(solidKind, 1, posQ, width, depth, height),
-    [solidKind, posQ, width, depth, height],
+    () => getEdgePoint(solidKind, 1, posQ, width, depth, currentHeight),
+    [solidKind, posQ, width, depth, currentHeight],
   );
 
   const pointRPos = useMemo<Vec3>(
-    () => getEdgePoint(solidKind, 2, posR, width, depth, height),
-    [solidKind, posR, width, depth, height],
+    () => getEdgePoint(solidKind, 2, posR, width, depth, currentHeight),
+    [solidKind, posR, width, depth, currentHeight],
   );
 
   // 作图推演步骤数据 (仅在 construction 模式下，针对所有几何体模型动态求解)
@@ -222,13 +223,13 @@ export default function SectionCuboidDemo() {
       solidKind,
       width,
       depth,
-      height,
+      currentHeight,
       posP,
       posQ,
       posR,
       step,
     );
-  }, [solidKind, width, depth, height, posP, posQ, posR, step]);
+  }, [solidKind, width, depth, currentHeight, posP, posQ, posR, step]);
 
   // 计算切割平面 (Plane)
   const plane = useMemo((): Plane => {
@@ -278,7 +279,7 @@ export default function SectionCuboidDemo() {
       solidKind,
       width,
       depth,
-      height,
+      currentHeight,
     );
     const labels: {
       position: Vec3;
@@ -340,7 +341,7 @@ export default function SectionCuboidDemo() {
       });
     }
     return labels;
-  }, [solidKind, width, depth, height]);
+  }, [solidKind, width, depth, currentHeight]);
 
   // 动点极值探究：采样 S(t) 在 t in [0.05, 0.95] 范围内的最值
   const extremaAnalysis = useMemo(() => {
@@ -348,7 +349,7 @@ export default function SectionCuboidDemo() {
     let minA = Infinity;
     let maxA = -Infinity;
     for (let t = 0.05; t <= 0.95; t += 0.05) {
-      const pP = getEdgePoint(solidKind, 0, t, width, depth, height);
+      const pP = getEdgePoint(solidKind, 0, t, width, depth, currentHeight);
       const pl = planeFromPoints(pP, pointQPos, pointRPos);
       const pts = intersectConvexPolyhedronPlane(currentPolyhedron, pl);
       const d = computeSectionProjectionDetails(pts, pl.normal);
@@ -366,7 +367,7 @@ export default function SectionCuboidDemo() {
     solidKind,
     width,
     depth,
-    height,
+    currentHeight,
     pointQPos,
     pointRPos,
     currentPolyhedron,
@@ -502,11 +503,11 @@ export default function SectionCuboidDemo() {
     return buildSolidViews(solidType, {
       width,
       depth,
-      height,
+      height: currentHeight,
       sides: solidKind === "tetrahedron" ? 3 : 4,
       baseRadius: 2.2,
     });
-  }, [solidKind, width, depth, height]);
+  }, [solidKind, width, depth, currentHeight]);
 
   return (
     <ThreePanel
@@ -780,7 +781,12 @@ export default function SectionCuboidDemo() {
             {(mode === "construction" || mode === "extrema") &&
               (() => {
                 const { baseVertices, topVertices } =
-                  getPolyhedronEdgeEndpoints(solidKind, width, depth, height);
+                  getPolyhedronEdgeEndpoints(
+                    solidKind,
+                    width,
+                    depth,
+                    currentHeight,
+                  );
                 const A0 = baseVertices[0];
                 const A1 = topVertices[0];
                 const B0 = baseVertices[1];

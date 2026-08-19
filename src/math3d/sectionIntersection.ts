@@ -217,12 +217,13 @@ export function buildRegularPrismPolyhedron(
   return { vertices, edges, faces };
 }
 
-/** 正三棱锥 / 正四面体：底面为正三角形 (半径 baseRadius)，高 height */
+/** 正四面体：底面为正三角形 (外接圆半径 baseRadius)，高默认严格取 baseRadius * √2 确保 6 条棱等长 */
 export function buildTetrahedronPolyhedron(
   baseRadius: number,
-  height: number,
+  height?: number,
 ): Polyhedron {
-  return buildRegularPyramidPolyhedron(3, baseRadius, height);
+  const h = height ?? baseRadius * Math.SQRT2;
+  return buildRegularPyramidPolyhedron(3, baseRadius, h);
 }
 
 /** 正棱台：下底半径 rBottom，上底半径 rTop，高 height */

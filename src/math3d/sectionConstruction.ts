@@ -92,7 +92,9 @@ export function getPolyhedronEdgeEndpoints(
       const t = (i / sides) * Math.PI * 2;
       return { x: r * Math.cos(t), y: r * Math.sin(t), z: 0 };
     });
-    const apex: Vec3 = { x: 0, y: 0, z: c };
+    // 正四面体高严格满足 h = √2 * r 保证 6 条棱等长
+    const h = c > 0 ? c : r * Math.SQRT2;
+    const apex: Vec3 = { x: 0, y: 0, z: h };
     return { baseVertices: base, topVertices: [apex, apex, apex] };
   }
 
@@ -192,7 +194,7 @@ export function buildPolyhedronConstructionSteps(
         const segLenSq = dot(segVec, segVec);
         const pVec = sub(ip, eStart);
         const t = dot(pVec, segVec) / segLenSq;
-        if (t >= -0.05 && t <= 1.05) {
+        if (t >= -0.02 && t <= 1.02) {
           const lbl = bottomPoints.length === 0 ? "N" : "M";
           bottomPoints.push({ point: ip, label: lbl });
         }
@@ -255,7 +257,7 @@ export function buildPolyhedronConstructionSteps(
       description:
         "点 P, Q 同在前侧面内，连结线段 PQ；点 Q, R 同在相邻侧面内，连结线段 QR。",
       rationale:
-        "公理 1 / 公理 2：同在一个平面内的两个已知点，其连线段必在该多面体表面内，即为截面的交线段。",
+        "公理 1 / 公理 2：同在一个平面内的两个已知点，其连线段必在该多面体表面内，即为截面的交线段（已知三点不共线）。",
       activeLines: [
         { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
         { from: Q, to: R, type: "solid", colorKey: "highlight", label: "QR" },
@@ -392,7 +394,7 @@ export function buildPolyhedronConstructionSteps(
     title: "Step 4: 闭合生成完整截面多边形",
     description: `截面在多面体各表面的交线顺次闭合，生成 ${finalPolygon.length} 边形截面！各面交线满足平行与共面约束。`,
     rationale:
-      "面面平行性质定理：平行平面与第三个平面相交，交线互相平行；各表面截线封闭形成完整多面体截面。",
+      "多面体表面截线首尾相接，封闭生成截面多边形（在柱体中应用面面平行性质保证对边平行；在锥体中利用公理 1 与公理 3 封闭各面交线）。",
     activeLines: lines,
     activePoints: [
       ...finalPolygon.map((p, idx) => ({
