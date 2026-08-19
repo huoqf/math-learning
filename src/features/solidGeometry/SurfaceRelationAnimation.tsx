@@ -8,6 +8,8 @@ import {
   MathPanel,
   TabSwitcher,
   SelectGrid,
+  TipCard,
+  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { Scene3DGrid, Legend3D, CameraRig } from "@/components/Math3D";
@@ -211,8 +213,8 @@ export default function SurfaceRelationAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 1. 核心模式选择 */}
-          <LeftPanelSection title="面面位置关系体系">
+          {/* 1. 探究模式选择 */}
+          <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
                 {
@@ -251,9 +253,9 @@ export default function SurfaceRelationAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 当前模式探究与反例辨析 */}
+          {/* 2. 定理与模型分支 */}
           {activeMode === "parallelJudge" && (
-            <LeftPanelSection title="定理探究与反例辨析">
+            <LeftPanelSection title="定理与分支">
               <SelectGrid
                 items={[
                   { key: "standard", label: "两条相交直线 (判定成立)" },
@@ -267,7 +269,7 @@ export default function SurfaceRelationAnimation() {
           )}
 
           {activeMode === "perpProp" && (
-            <LeftPanelSection title="性质探究与高考易错点">
+            <LeftPanelSection title="定理与分支">
               <SelectGrid
                 items={[
                   { key: "standard", label: "交线垂线 (推出 a ⊥ α)" },
@@ -281,7 +283,7 @@ export default function SurfaceRelationAnimation() {
           )}
 
           {activeMode === "gaokaoModel" && (
-            <LeftPanelSection title="高考经典几何体模型">
+            <LeftPanelSection title="几何体模型">
               <SelectGrid
                 items={[
                   { key: "pyramid", label: "四棱锥侧面垂直与作高" },
@@ -305,9 +307,92 @@ export default function SurfaceRelationAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 4. 3D 观察设置 */}
-          <LeftPanelSection title="3D 视角切换">
-            <div className="space-y-2.5">
+          {/* 4. 教学提示 */}
+          <LeftPanelSection title="教学提示" compact>
+            {activeMode === "parallelJudge" && subType === "counterExample" && (
+              <TipCard variant="danger">
+                <span className="font-bold">易错反例</span>
+                ：仅平行于两条平行线时，待判平面可绕平行线转动而与基准面相交。定理必须满足
+                <span className="font-bold">两条相交直线</span>。
+              </TipCard>
+            )}
+            {activeMode === "parallelJudge" && subType !== "counterExample" && (
+              <TipCard variant="info">
+                <span className="font-bold">面面平行证明链</span>：线线平行{" "}
+                <KatexFormula formula="\Rightarrow" mode="inline" /> 线面平行{" "}
+                <KatexFormula formula="\Rightarrow" mode="inline" />{" "}
+                两条相交线平行于另一平面{" "}
+                <KatexFormula formula="\Rightarrow" mode="inline" /> 面面平行。
+              </TipCard>
+            )}
+            {activeMode === "parallelProp" && (
+              <TipCard variant="success">
+                <span className="font-bold">面面平行性质</span>
+                ：两平行平面同时被第三平面所截，交线必平行（
+                <KatexFormula
+                  formula="\alpha \parallel \beta \Rightarrow a \parallel b"
+                  mode="inline"
+                />
+                ）。
+              </TipCard>
+            )}
+            {activeMode === "perpJudge" && (
+              <TipCard variant="warning">
+                <span className="font-bold">面面垂直判定</span>
+                ：面过垂线则面面垂直（
+                <KatexFormula
+                  formula="l \perp \alpha, l \subset \beta \Rightarrow \beta \perp \alpha"
+                  mode="inline"
+                />
+                ）。二面角为 <KatexFormula formula="90^\circ" mode="inline" />。
+              </TipCard>
+            )}
+            {activeMode === "perpProp" && subType === "dualPerp" && (
+              <TipCard variant="primary">
+                <span className="font-bold">双垂直面交线定理</span>
+                ：若两相交平面均垂直于第三平面，则其交线垂直于第三平面（
+                <KatexFormula
+                  formula="\alpha \perp \gamma, \beta \perp \gamma \Rightarrow (\alpha \cap \beta) \perp \gamma"
+                  mode="inline"
+                />
+                ）。
+              </TipCard>
+            )}
+            {activeMode === "perpProp" && subType !== "dualPerp" && (
+              <TipCard variant="success">
+                <span className="font-bold">面面垂直性质</span>
+                ：面面垂直时，在其中一个面内垂直于交线的直线必垂直于另一个平面（
+                <KatexFormula
+                  formula="a \subset \beta, a \perp l \Rightarrow a \perp \alpha"
+                  mode="inline"
+                />
+                ）。
+              </TipCard>
+            )}
+            {activeMode === "gaokaoModel" && subType === "cube" && (
+              <TipCard variant="info">
+                <span className="font-bold">正方体平行截面</span>：截面{" "}
+                <KatexFormula formula="AB_1D_1 \parallel" mode="inline" /> 截面{" "}
+                <KatexFormula formula="C_1BD" mode="inline" />
+                ，把体对角线 <KatexFormula formula="AC_1" mode="inline" />{" "}
+                三等分。
+              </TipCard>
+            )}
+            {activeMode === "gaokaoModel" && subType !== "cube" && (
+              <TipCard variant="warning">
+                <span className="font-bold">四棱锥作高模型</span>：侧面{" "}
+                <KatexFormula formula="PAD \perp" mode="inline" /> 底面{" "}
+                <KatexFormula formula="ABCD" mode="inline" /> 时，在侧面内作{" "}
+                <KatexFormula formula="PO \perp AD" mode="inline" />
+                ，由性质定理可得{" "}
+                <KatexFormula formula="PO \perp" mode="inline" /> 底面。
+              </TipCard>
+            )}
+          </LeftPanelSection>
+
+          {/* 5. 视图与视角 */}
+          <LeftPanelSection title="视图与视角">
+            <div className="space-y-2">
               <TabSwitcher
                 layout="horizontal"
                 tabs={[

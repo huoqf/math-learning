@@ -30,6 +30,8 @@ import {
   MathPanel,
   TabSwitcher,
   SelectGrid,
+  TipCard,
+  KatexFormula,
   type ParamConfig,
 } from "@/components/UI";
 import { use3DViewport } from "@/hooks/use3DViewport";
@@ -503,21 +505,34 @@ export default function SectionCuboidDemo() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 教学模式选择 */}
-          <LeftPanelSection title="教学模式">
-            <TabSwitcher
-              layout="vertical"
-              tabs={[
-                { key: "continuous", label: "自由连续切面" },
-                { key: "construction", label: "三点作图推演" },
-                { key: "extrema", label: "动点极值探究" },
+          {/* 1. 探究模式选择 */}
+          <LeftPanelSection title="探究模式">
+            <SelectGrid
+              items={[
+                {
+                  key: "continuous",
+                  label: "连续切面",
+                  formula: "S = \\frac{S'}{\\cos\\theta}",
+                },
+                {
+                  key: "construction",
+                  label: "作图推演",
+                  formula: "P, Q, R \\text{ 交轨}",
+                },
+                {
+                  key: "extrema",
+                  label: "动点极值探究",
+                  formula: "S(t) \\to \\max / \\min",
+                  fullWidth: true,
+                },
               ]}
               value={mode}
               onChange={(m) => setMode(m as SectionMode)}
+              columns={2}
             />
           </LeftPanelSection>
 
-          {/* 几何体模型选择 (所有模式均可自由切换) */}
+          {/* 2. 几何体模型选择 */}
           <LeftPanelSection title="几何体模型">
             <SelectGrid
               items={[
@@ -537,7 +552,7 @@ export default function SectionCuboidDemo() {
             />
           </LeftPanelSection>
 
-          {/* 作图推演步骤控制器 (两行式卡片：大字 Step 序号 + 小字 4 字动作，空间充裕绝无截断) */}
+          {/* 3. 作图推演步骤控制器 (仅在 construction 模式下呈现) */}
           {mode === "construction" && (
             <LeftPanelSection
               title="作图推演步骤"
@@ -557,17 +572,8 @@ export default function SectionCuboidDemo() {
             </LeftPanelSection>
           )}
 
-          {/* 动态参数调节 */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle={
-              mode === "continuous"
-                ? "高度 z₀ 与倾斜角 θ"
-                : mode === "construction"
-                  ? "调节棱上已知点 P, Q, R 位置比例"
-                  : "动点参数 t 与截面积 S(t)"
-            }
-          >
+          {/* 4. 动态参数调节 */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -575,7 +581,35 @@ export default function SectionCuboidDemo() {
             />
           </LeftPanelSection>
 
-          {/* 视图与视角 */}
+          {/* 5. 教学提示 */}
+          <LeftPanelSection title="教学提示" compact>
+            {mode === "continuous" && (
+              <TipCard variant="info">
+                <span className="font-bold">面积射影定理</span>：
+                <KatexFormula
+                  formula="S_{\text{截}} = \frac{S_{\text{射}}}{\cos\theta}"
+                  mode="inline"
+                />
+                。截面面积等于底面投影面积除以法向量与天顶夹角余弦。
+              </TipCard>
+            )}
+            {mode === "construction" && (
+              <TipCard variant="warning">
+                <span className="font-bold">截面作图通法</span>
+                ：同面两点直接连线；异面点延长棱线与切线求交点，利用共面交线封闭多边形。
+              </TipCard>
+            )}
+            {mode === "extrema" && (
+              <TipCard variant="success">
+                <span className="font-bold">动点极值追踪</span>：动点{" "}
+                <KatexFormula formula="P" mode="inline" /> 沿棱滑动（参数{" "}
+                <KatexFormula formula="t" mode="inline" />
+                ），动态观察截面形状突变与面积极值点。
+              </TipCard>
+            )}
+          </LeftPanelSection>
+
+          {/* 6. 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
               <TabSwitcher

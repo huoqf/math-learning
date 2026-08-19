@@ -9,6 +9,8 @@ import {
   SelectGrid,
   TabSwitcher,
   Button,
+  TipCard,
+  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -261,52 +263,54 @@ export default function RotationBodyAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="旋转体类型选择"
-            subtitle="选择母线平面图形绕轴旋转"
-          >
+          {/* 1. 探究模式选择 */}
+          <LeftPanelSection title="探究模式">
+            <TabSwitcher
+              tabs={modeTabs}
+              value={featureMode}
+              onChange={(k) => {
+                const nextMode = k as FeatureMode;
+                setFeatureMode(nextMode);
+                if (nextMode === "sphereCut" && shape !== "semicircle") {
+                  setShape("semicircle");
+                }
+              }}
+            />
+          </LeftPanelSection>
+
+          {/* 2. 旋转体模型选择 */}
+          <LeftPanelSection title="几何体模型">
             <SelectGrid
               items={[
-                { key: "rectangle", label: "矩形", description: "→ 生成圆柱" },
+                { key: "rectangle", label: "矩形", description: "→ 圆柱" },
                 {
                   key: "rightTriangle",
                   label: "直角三角形",
-                  description: "→ 生成圆锥",
+                  description: "→ 圆锥",
                 },
                 {
                   key: "rightTrapezoid",
                   label: "直角梯形",
-                  description: "→ 生成圆台",
+                  description: "→ 圆台",
                 },
-                { key: "semicircle", label: "半圆", description: "→ 生成球体" },
+                { key: "semicircle", label: "半圆", description: "→ 球体" },
               ]}
               value={shape}
               onChange={(k) => {
-                setShape(k as ShapeType);
-                if (k !== "semicircle" && featureMode === "sphereCut") {
+                const nextShape = k as ShapeType;
+                setShape(nextShape);
+                if (nextShape !== "semicircle" && featureMode === "sphereCut") {
                   setFeatureMode("generation");
                 }
                 setParams((p) => ({ ...p, sweepAngleDeg: 360 }));
               }}
               variant="filled"
+              columns={2}
             />
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="探究模式"
-            subtitle="数形结合：生成、降维与截面"
-          >
-            <TabSwitcher
-              tabs={modeTabs}
-              value={featureMode}
-              onChange={(k) => setFeatureMode(k as FeatureMode)}
-            />
-          </LeftPanelSection>
-
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="调节几何体特征尺寸与动态控制"
-          >
+          {/* 3. 参数调节 */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -316,7 +320,7 @@ export default function RotationBodyAnimation() {
               <Button
                 variant={autoPlay ? "primary" : "secondary"}
                 size="sm"
-                className="w-full mt-3"
+                className="w-full mt-2.5"
                 onClick={toggleAutoPlay}
               >
                 {autoPlay ? "停止自动演示" : "自动演示旋转生成"}
@@ -324,7 +328,32 @@ export default function RotationBodyAnimation() {
             )}
           </LeftPanelSection>
 
-          {/* 视图与视角 */}
+          {/* 4. 教学提示 */}
+          {featureMode === "section" && (
+            <LeftPanelSection title="教学提示" compact>
+              <TipCard variant="warning">
+                <span className="font-bold">轴截面法</span>：过旋转轴截面将 3D
+                问题降维为 2D 对称平面几何图形快速求解。
+              </TipCard>
+            </LeftPanelSection>
+          )}
+
+          {featureMode === "sphereCut" && (
+            <LeftPanelSection title="教学提示" compact>
+              <TipCard variant="info">
+                <span className="font-bold">球截面小圆</span>：球心距{" "}
+                <KatexFormula formula="d" mode="inline" />
+                、截面半径 <KatexFormula
+                  formula="r"
+                  mode="inline"
+                /> 与球半径 <KatexFormula formula="R" mode="inline" />{" "}
+                满足勾股定理：
+                <KatexFormula formula="R^2 = d^2 + r^2" mode="inline" />。
+              </TipCard>
+            </LeftPanelSection>
+          )}
+
+          {/* 5. 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
               <TabSwitcher

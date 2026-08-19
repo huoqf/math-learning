@@ -8,6 +8,8 @@ import {
   MathPanel,
   TabSwitcher,
   SelectGrid,
+  TipCard,
+  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -322,8 +324,8 @@ export default function LinePlaneRelationAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 1. 核心知识体系选择 */}
-          <LeftPanelSection title="空间位置关系体系">
+          {/* 1. 探究模式选择 */}
+          <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
                 {
@@ -353,10 +355,10 @@ export default function LinePlaneRelationAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 当前模式专属子控制与反例验证 */}
+          {/* 2. 定理与模型分支 */}
           {activeMode === "parallel" && (
-            <LeftPanelSection title="定理与前提探究">
-              <div className="space-y-2.5">
+            <LeftPanelSection title="定理与分支">
+              <div className="space-y-2">
                 <TabSwitcher
                   tabs={[
                     { key: "judge", label: "判定定理" },
@@ -379,8 +381,8 @@ export default function LinePlaneRelationAnimation() {
           )}
 
           {activeMode === "perpendicular" && (
-            <LeftPanelSection title="定理与前提探究">
-              <div className="space-y-2.5">
+            <LeftPanelSection title="定理与分支">
+              <div className="space-y-2">
                 <TabSwitcher
                   tabs={[
                     { key: "judge", label: "判定定理" },
@@ -447,9 +449,82 @@ export default function LinePlaneRelationAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 3D 观察设置 */}
-          <LeftPanelSection title="3D 观察">
-            <div className="space-y-2.5">
+          {/* 4. 教学提示 */}
+          <LeftPanelSection title="教学提示" compact>
+            {activeMode === "parallel" && inPlaneType === 0 && (
+              <TipCard variant="danger">
+                <span className="font-bold">易错反例</span>：当直线在面内时（
+                <KatexFormula formula="l \subset \alpha" mode="inline" />
+                ），即使与面内直线平行，也不构成线面平行。必须满足
+                <span className="font-bold">面外直线</span>前提（
+                <KatexFormula formula="l \not\subset \alpha" mode="inline" />
+                ）。
+              </TipCard>
+            )}
+            {activeMode === "parallel" && inPlaneType === 1 && (
+              <TipCard variant="info">
+                <span className="font-bold">线面平行转化</span>：线线平行（
+                <KatexFormula formula="l \parallel m" mode="inline" />
+                ）且面外（
+                <KatexFormula formula="l \not\subset \alpha" mode="inline" />）
+                <KatexFormula formula="\Rightarrow" mode="inline" /> 线面平行（
+                <KatexFormula formula="l \parallel \alpha" mode="inline" />
+                ）。
+              </TipCard>
+            )}
+            {activeMode === "perpendicular" &&
+              subTheorem === "judge" &&
+              intersectType === 0 && (
+                <TipCard variant="danger">
+                  <span className="font-bold">易错反例</span>
+                  ：若仅垂直于面内两条平行线，直线可绕其倾斜旋转，无法确定垂面。必须垂直于两条
+                  <span className="font-bold">相交直线</span>。
+                </TipCard>
+              )}
+            {activeMode === "perpendicular" &&
+              (subTheorem === "prop" ||
+                (subTheorem === "judge" && intersectType === 1)) && (
+                <TipCard variant="success">
+                  <span className="font-bold">线面垂直核心</span>
+                  ：垂直于面内两条相交直线{" "}
+                  <KatexFormula formula="\Rightarrow" mode="inline" />{" "}
+                  垂直于平面内任意一条直线。
+                </TipCard>
+              )}
+            {activeMode === "gaokaoPyramid" && (
+              <TipCard variant="warning">
+                <span className="font-bold">高考母题转化链</span>：中位线 /
+                平行线分线段成比例定理（
+                <KatexFormula formula="\lambda_E = \lambda_F" mode="inline" />）
+                <KatexFormula
+                  formula="\Rightarrow EF \parallel BC \Rightarrow EF \parallel"
+                  mode="inline"
+                />{" "}
+                平面 ABCD。
+              </TipCard>
+            )}
+            {activeMode === "vector" && (
+              <TipCard variant="primary">
+                <span className="font-bold">空间向量法</span>：方向向量{" "}
+                <KatexFormula formula="\vec{l}" mode="inline" /> 垂直于法向量{" "}
+                <KatexFormula formula="\vec{n}" mode="inline" />（
+                <KatexFormula
+                  formula="\vec{l} \cdot \vec{n} = 0"
+                  mode="inline"
+                />
+                ）判定平行；线面角{" "}
+                <KatexFormula
+                  formula="\sin\theta = |\cos\langle\vec{l}, \vec{n}\rangle|"
+                  mode="inline"
+                />
+                。
+              </TipCard>
+            )}
+          </LeftPanelSection>
+
+          {/* 5. 视图与视角 */}
+          <LeftPanelSection title="视图与视角">
+            <div className="space-y-2">
               <TabSwitcher
                 layout="horizontal"
                 tabs={[
