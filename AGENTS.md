@@ -223,8 +223,9 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | 视觉标注箭头 | `VectorArrow` | `@/components/Math` | ✅ 支持 `fontScale` prop |
 | 三视图正投影 | `ThreeViewsPanel` | `@/components/Math3D` | — |
 | 3D 坐标网格 | `Scene3DGrid` | `@/components/Math3D` | 3D 空间网格与坐标轴。Props: `size` |
-| 3D 相机控制 | `CameraRig` | `@/components/Math3D` | 轨道相机，配合 `use3DViewport` |
-| 3D 可拖拽点 | `Point3D` | `@/components/Math3D` | 空间点。Props: `draggable`, `constrain`, `onDrag` |
+| 3D 相机控制 | `CameraRig` | `@/components/Math3D` | 轨道相机，配合 `use3DViewport`。支持 `enabled` 动点交互互斥 |
+| 3D 交互模式浮层 | `ModeSwitchOverlay3D` | `@/components/Math3D` | 3D 画布右上角【🔄 视角漫游】与【👆 动点交互】切换浮层 |
+| 3D 空间点 | `Point3D` | `@/components/Math3D` | 空间点。固定点 $r=0.042$ 纯实心；动点 $r=0.075$ 脉冲光晕与全局射线追踪。Props: `draggable`, `constrain`, `onDrag` |
 | 3D 平面 | `Plane3D` | `@/components/Math3D` | 空间平面。Props: `origin`, `uAxis`, `vAxis` |
 | 3D 向量 | `Vector3DArrow` | `@/components/Math3D` | 带箭头 3D 向量。Props: `from`, `to` |
 | 3D 角弧 | `AngleArc3D` | `@/components/Math3D` | 空间夹角弧线。Props: `vertex`, `dirA`, `dirB` |

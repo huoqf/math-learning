@@ -22,17 +22,46 @@
 
 | 类别 | 组件 | 导入路径 | 核心 Props 与说明 |
 |------|------|----------|-------------------|
-| **画布容器** | `ThreeDCanvas` | `@/components/Layout/ThreeDCanvas` | 根画布，Props: `cameraPosition`, `legend` |
-| **相机控制** | `CameraRig` | `@/components/Math3D/CameraRig` | 轨道相机，配合 `use3DViewport` 控制视角 |
+| **画布容器** | `ThreeDCanvas` | `@/components/Layout/ThreeDCanvas` | 根画布，Props: `cameraPosition`, `legend`, `overlay` (浮层槽位) |
+| **相机控制** | `CameraRig` | `@/components/Math3D/CameraRig` | 轨道相机。Props: `enabled` (动点交互时设为 false 防冲突), `autoRotate` |
+| **交互模式浮层** | `ModeSwitchOverlay3D` | `@/components/Math3D` | 3D 右上角【🔄 视角漫游】与【👆 动点交互】切换器。Props: `mode`, `onModeChange`, `pointCount` |
 | **坐标网格** | `Scene3DGrid` | `@/components/Math3D/Scene3DGrid` | 空间网格与 X/Y/Z 轴。Props: `size`, `showLabels` |
-| **3D 点** | `Point3D` | `@/components/Math3D/Point3D` | 空间点。Props: `draggable`, `constrain`, `onDrag`, `colorKey` |
+| **3D 点** | `Point3D` | `@/components/Math3D/Point3D` | 空间点。固定点 $r=0.042$ 纯实心；动点 $r=0.075$ 带外光晕与全局射线追踪。Props: `draggable`, `constrain`, `onDrag`, `colorKey` |
 | **3D 平面** | `Plane3D` | `@/components/Math3D/Plane3D` | 空间平面。Props: `origin`, `uAxis`, `vAxis`, `width`, `height`, `colorKey`, `opacity` |
+| **3D 多边形面** | `Polygon3DFace` | `@/components/Math3D/Polygon3DFace` | 空间 3 或 4 顶点多边形面。Props: `points`, `colorKey`, `opacity` |
 | **3D 向量** | `Vector3DArrow` | `@/components/Math3D/Vector3DArrow` | 带箭头向量。Props: `from`, `to`, `colorKey`, `radius` |
 | **3D 角弧** | `AngleArc3D` | `@/components/Math3D/AngleArc3D` | 空间夹角弧线。Props: `vertex`, `dirA`, `dirB`, `radius`, `colorKey` |
 | **线面角组件** | `LinePlaneAngle3D` | `@/components/Math3D` | 斜线/垂线段/投影线/法向量/角弧一体化组件 |
-| **3D 点标签** | `PointLabel3D` | `@/components/Math3D/PointLabel3D` | 文本标签。Props: `position`, `text`, `offset` |
+| **3D 点标签** | `PointLabel3D` | `@/components/Math3D/PointLabel3D` | 文本标签（默认数学斜体）。Props: `position`, `text`, `offset` |
 | **3D 公式标签**| `FormulaLabel3D` | `@/components/Math3D/FormulaLabel3D` | KaTeX 空间公式。Props: `position`, `tex` |
-| **上下标标签** | `CompoundLabel3D` | `@/components/Math3D/CompoundLabel3D` | 带下标标签（如 $A_1$）。Props: `position`, `base`, `subscript` |
+| **上下标标签** | `CompoundLabel3D` | `@/components/Math3D/CompoundLabel3D` | 带下标标签（如 $A_1$，默认数学斜体）。Props: `position`, `base`, `subscript` |
 | **3D 图例** | `Legend3D` | `@/components/Math3D/Legend3D` | 底端浮动图例。Props: `title`, `items` |
+| **截面可视化** | `SectionPlane3D` | `@/components/Math3D` | 3D 截面多边形、底面投影与交轨辅助线 |
 | **立体几何体** | `Cuboid` / `Cylinder` / `Cone` / `RegularPyramid` / `CircumSphere` / `InSphere` | `@/components/Math3D/solids` | 标准几何体 3D 实体模型 |
 | **三视图面板** | `ThreeViewsPanel` | `@/components/Math3D` | 纯 SVG 正投影（主/左/俯）。Props: `views`, `extent` |
+
+---
+
+## 3. 3D 动点交互与线段约束最佳实践
+
+### ① 动点 vs 固定点样式严格隔离
+- **固定几何顶点 / 交点 / 垂足**：`draggable={false}`（默认），小巧细腻实心点（$r=0.042$），无外光晕、无抓取光标，绝不误导用户；
+- **控制动点**：`draggable={interactionMode === "drag"}`，大尺寸（$r=0.075$），带外光晕手柄环与全局指针追踪，悬浮变成 `grab`。
+
+### ② 严格空间线段正交投影 (`projectPointOnSegment`)
+严禁在倾斜侧棱上只修改单一 $Z$ 坐标导致脱轨！必须使用 `@/math3d/vector3` 的 `projectPointOnSegment`：
+```tsx
+import { projectPointOnSegment } from "@/math3d/vector3";
+
+// 动点严格在线段 A -> B 上滑动，解算参数 t in [0.05, 0.95]
+<Point3D
+  position={pointPos}
+  draggable={interactionMode === "drag"}
+  constrain={(raw) => projectPointOnSegment(raw, A, B).point}
+  onDrag={(next) => {
+    const { t } = projectPointOnSegment(next, A, B);
+    handleParamChange("lambda", Number(t.toFixed(2)));
+  }}
+  colorKey="paramPrimary"
+/>
+```

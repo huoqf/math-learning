@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { RotationSolid } from "./RotationSolid";
 import { MATH_COLORS } from "@/theme/math/colors";
 import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
+import { PointLabel3D } from "@/components/Math3D/PointLabel3D";
 import type { ProfilePoint } from "@/math3d/rotationProfiles";
 
 interface RotationSweepProps {
@@ -191,7 +192,7 @@ export const RotationSweep = ({
         />
       )}
 
-      {/* 空间尺寸标注 */}
+      {/* 空间尺寸标注与轴截面几何特征点 */}
       {showLabels && (
         <group>
           {isSphere ? (
@@ -205,10 +206,15 @@ export const RotationSweep = ({
                 color={MATH_COLORS.paramPrimary}
                 lineWidth={3}
               />
-              <FormulaLabel3D position={{ x: 0, y: 0, z: 0 }} tex="O" />
+              <PointLabel3D
+                position={{ x: 0, y: 0, z: 0 }}
+                text="O"
+                colorKey="label"
+              />
               <FormulaLabel3D
                 position={{ x: r1 / 2, y: 0, z: 0 }}
                 tex={`\\color{#EF4444}{R=${r1.toFixed(1)}}`}
+                offset={[0, 0, 0.15]}
               />
             </>
           ) : (
@@ -225,12 +231,14 @@ export const RotationSweep = ({
               <FormulaLabel3D
                 position={{ x: r1 / 2, y: 0, z: 0 }}
                 tex={`\\color{#EF4444}{r_1=${r1.toFixed(1)}}`}
+                offset={[0, 0, -0.18]}
               />
 
               {/* 高标注 (沿数学 z 轴) */}
               <FormulaLabel3D
                 position={{ x: 0, y: 0, z: height / 2 }}
                 tex={`\\color{#059669}{h=${height.toFixed(1)}}`}
+                offset={[-0.3, 0, 0]}
               />
 
               {/* 上底半径标注 (仅在圆台等顶部有实际非零平面的几何体上展示) */}
@@ -247,6 +255,7 @@ export const RotationSweep = ({
                   <FormulaLabel3D
                     position={{ x: profile[2].r / 2, y: 0, z: height }}
                     tex={`\\color{#D97706}{r_2=${profile[2].r.toFixed(1)}}`}
+                    offset={[0, 0, 0.18]}
                   />
                 </>
               )}

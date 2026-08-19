@@ -34,6 +34,8 @@ export type { LegendItem } from "./Legend3D";
 // 交互元素 (Interactive Elements)
 // ============================================================================
 export { Point3D } from "./Point3D";
+export { ModeSwitchOverlay3D } from "./ModeSwitchOverlay3D";
+export type { InteractionMode3D } from "./ModeSwitchOverlay3D";
 
 // ============================================================================
 // 几何图元与角标示 (Geometric Primitives & Angle Elements)

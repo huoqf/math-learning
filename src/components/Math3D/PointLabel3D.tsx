@@ -17,7 +17,7 @@ interface PointLabel3DProps {
 export const PointLabel3D = ({
   position,
   text,
-  variant = "regular",
+  variant = "italic",
   colorKey = "label",
   offset = [0.16, 0.16, 0],
   fontSize = 0.26,

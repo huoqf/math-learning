@@ -18,10 +18,11 @@ import {
   CameraRig,
   Legend3D,
   ThreeViewsPanel,
+  ModeSwitchOverlay3D,
 } from "@/components/Math3D";
-import type { LegendItem } from "@/components/Math3D/Legend3D";
+import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { RotationSweep, SphereCutSection } from "@/components/Math3D/solids";
-import { use3DViewport } from "@/hooks/use3DViewport";
+import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
 import { rotationBodyMeta } from "@/data/registries/solidGeometry";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
@@ -41,6 +42,8 @@ type FeatureMode = "generation" | "section" | "sphereCut";
 export default function RotationBodyAnimation() {
   const [shape, setShape] = useState<ShapeType>("rectangle");
   const [featureMode, setFeatureMode] = useState<FeatureMode>("generation");
+  const [interactionMode, setInteractionMode] =
+    useState<InteractionMode3D>("orbit");
   const [params, setParams] = useState<Record<string, number>>({
     r1: 1.5,
     r2: 0.8,
@@ -366,17 +369,32 @@ export default function RotationBodyAnimation() {
                 onChange={(k) => setDisplayMode(k as "3d" | "orthographic")}
               />
               {displayMode === "3d" && (
-                <TabSwitcher
-                  layout="horizontal"
-                  tabs={[
-                    { key: "iso", label: "轴测" },
-                    { key: "front", label: "主视" },
-                    { key: "top", label: "俯视" },
-                    { key: "side", label: "左视" },
-                  ]}
-                  value={preset}
-                  onChange={(p) => setCameraPreset(p as any)}
-                />
+                <>
+                  {shape === "semicircle" && featureMode === "sphereCut" && (
+                    <TabSwitcher
+                      layout="horizontal"
+                      tabs={[
+                        { key: "orbit", label: "🔄 视角漫游" },
+                        { key: "drag", label: "👆 动点交互" },
+                      ]}
+                      value={interactionMode}
+                      onChange={(m) =>
+                        setInteractionMode(m as InteractionMode3D)
+                      }
+                    />
+                  )}
+                  <TabSwitcher
+                    layout="horizontal"
+                    tabs={[
+                      { key: "iso", label: "轴测" },
+                      { key: "front", label: "主视" },
+                      { key: "top", label: "俯视" },
+                      { key: "side", label: "左视" },
+                    ]}
+                    value={preset}
+                    onChange={(p) => setCameraPreset(p as CameraPreset)}
+                  />
+                </>
               )}
             </div>
           </LeftPanelSection>
@@ -388,14 +406,32 @@ export default function RotationBodyAnimation() {
             cameraPosition={cameraPosition}
             frameloop={autoPlay ? "always" : "demand"}
             legend={<Legend3D title="图例" items={legendItems} />}
+            overlay={
+              shape === "semicircle" && featureMode === "sphereCut" ? (
+                <ModeSwitchOverlay3D
+                  mode={interactionMode}
+                  onModeChange={setInteractionMode}
+                  pointCount={1}
+                />
+              ) : undefined
+            }
           >
-            <CameraRig ref={controlsRef} />
+            <CameraRig
+              ref={controlsRef}
+              enabled={
+                interactionMode === "orbit" ||
+                shape !== "semicircle" ||
+                featureMode !== "sphereCut"
+              }
+            />
             <Scene3DGrid size={4} />
 
             {shape === "semicircle" && featureMode === "sphereCut" ? (
               <SphereCutSection
                 radius={params.r1}
                 cutDistance={params.cutDistance}
+                draggable={interactionMode === "drag"}
+                onDragCutDistance={(d) => handleParamChange("cutDistance", d)}
               />
             ) : (
               <RotationSweep

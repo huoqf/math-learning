@@ -8,6 +8,7 @@ interface CompoundLabel3DProps {
   position: Vec3;
   base: string;
   subscript?: string;
+  variant?: "regular" | "italic";
   colorKey?: keyof typeof MATH_COLORS;
   fontSize?: number;
   offset?: [number, number, number];
@@ -17,6 +18,7 @@ export const CompoundLabel3D = ({
   position,
   base,
   subscript,
+  variant = "italic",
   colorKey = "label",
   fontSize = 0.26,
   offset = [0.16, 0.16, 0],
@@ -27,7 +29,7 @@ export const CompoundLabel3D = ({
   return (
     <Billboard position={[x + offset[0], y + offset[1], z + offset[2]]} follow>
       <Text
-        font={FONT_3D.regular}
+        font={variant === "italic" ? FONT_3D.italic : FONT_3D.regular}
         fontSize={fontSize}
         color={color}
         anchorX="left"

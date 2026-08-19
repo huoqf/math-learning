@@ -7,6 +7,7 @@ import { LabelRegistryProvider } from "@/components/Math3D/internal/useLabelRegi
 interface ThreeDCanvasProps {
   children: ReactNode;
   legend?: ReactNode;
+  overlay?: ReactNode;
   cameraPosition?: [number, number, number];
   fov?: number;
   frameloop?: "always" | "demand";
@@ -15,6 +16,7 @@ interface ThreeDCanvasProps {
 export const ThreeDCanvas = ({
   children,
   legend,
+  overlay,
   cameraPosition = [6, 5, 8],
   fov = 45,
   frameloop = "demand",
@@ -23,6 +25,7 @@ export const ThreeDCanvas = ({
     className="relative w-full h-full rounded-xl overflow-hidden"
     style={{ background: CANVAS_COLORS.white }}
   >
+    {overlay}
     <Canvas
       frameloop={frameloop}
       dpr={[1, 2]}

@@ -60,3 +60,25 @@ export const lerp = (a: Vec3, b: Vec3, t: number): Vec3 => ({
   y: a.y + (b.y - a.y) * t,
   z: a.z + (b.z - a.z) * t,
 });
+
+/**
+ * 计算空间点 p 在线段 a -> b 上的严格正交投影比值 t 与约束点坐标
+ */
+export const projectPointOnSegment = (
+  p: Vec3,
+  a: Vec3,
+  b: Vec3,
+  clampMin = 0.05,
+  clampMax = 0.95,
+): { t: number; point: Vec3 } => {
+  const ab = sub(b, a);
+  const abLenSq = dot(ab, ab);
+  if (abLenSq < 1e-9) return { t: 0.5, point: a };
+  const ap = sub(p, a);
+  const rawT = dot(ap, ab) / abLenSq;
+  const t = Math.max(clampMin, Math.min(clampMax, rawT));
+  return {
+    t,
+    point: lerp(a, b, t),
+  };
+};

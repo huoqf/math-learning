@@ -6,7 +6,10 @@ import {
   CompoundLabel3D,
   ThreeViewsPanel,
   Legend3D,
+  Point3D,
+  ModeSwitchOverlay3D,
 } from "@/components/Math3D";
+import type { InteractionMode3D } from "@/components/Math3D";
 import {
   buildCuboidPolyhedron,
   buildRegularPyramidPolyhedron,
@@ -20,6 +23,7 @@ import { computeSectionProjectionDetails } from "@/math3d/sectionArea";
 import { buildPolyhedronConstructionSteps } from "@/math3d/sectionConstruction";
 import { planeFromPoints } from "@/math3d/plane";
 import type { Vec3 } from "@/math3d/vector3";
+import { projectPointOnSegment } from "@/math3d/vector3";
 import type { Plane } from "@/math3d/plane";
 import { ThreeDCanvas } from "@/components/Layout/ThreeDCanvas";
 import { ThreePanel } from "@/components/Layout/ThreePanel";
@@ -34,21 +38,19 @@ import {
   KatexFormula,
   type ParamConfig,
 } from "@/components/UI";
-import { use3DViewport } from "@/hooks/use3DViewport";
+import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { sectionMeta } from "@/data/registries/solidGeometry";
 import { buildSolidViews } from "@/features/solidGeometry/threeViews/buildSolidViews";
 import { MATH_COLORS } from "@/theme";
-import { Point3D } from "@/components/Math3D/Point3D";
-
-type SectionMode = "continuous" | "construction" | "extrema";
-type SolidKind = "cuboid" | "pyramid" | "prism" | "tetrahedron" | "frustum";
-type ViewMode = "3d" | "views";
-
 import * as THREE from "three";
 import { Line } from "@react-three/drei";
 import { mathToThree } from "@/math3d/coordinateConvention";
 import { getPolyhedronEdgeEndpoints } from "@/math3d/sectionConstruction";
+
+type SectionMode = "continuous" | "construction" | "extrema";
+type SolidKind = "cuboid" | "pyramid" | "prism" | "tetrahedron" | "frustum";
+type ViewMode = "3d" | "views";
 
 /**
  * 通用多面体 3D 实体与边线渲染组件
@@ -159,6 +161,10 @@ export default function SectionCuboidDemo() {
 
   // 3. 动点极值探究参数
   const [tParam, setTParam] = useState(0.5);
+
+  // 3D 交互防冲突模式（视角漫游 vs 动点交互）
+  const [interactionMode, setInteractionMode] =
+    useState<InteractionMode3D>("orbit");
 
   const { preset, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
@@ -622,17 +628,32 @@ export default function SectionCuboidDemo() {
                 onChange={(v) => setViewMode(v as ViewMode)}
               />
               {viewMode === "3d" && (
-                <TabSwitcher
-                  layout="horizontal"
-                  tabs={[
-                    { key: "iso", label: "轴测" },
-                    { key: "front", label: "主视" },
-                    { key: "top", label: "俯视" },
-                    { key: "side", label: "左视" },
-                  ]}
-                  value={preset}
-                  onChange={(p) => setCameraPreset(p as any)}
-                />
+                <>
+                  {mode !== "continuous" && (
+                    <TabSwitcher
+                      layout="horizontal"
+                      tabs={[
+                        { key: "orbit", label: "🔄 视角漫游" },
+                        { key: "drag", label: "👆 动点交互" },
+                      ]}
+                      value={interactionMode}
+                      onChange={(m) =>
+                        setInteractionMode(m as InteractionMode3D)
+                      }
+                    />
+                  )}
+                  <TabSwitcher
+                    layout="horizontal"
+                    tabs={[
+                      { key: "iso", label: "轴测" },
+                      { key: "front", label: "主视" },
+                      { key: "top", label: "俯视" },
+                      { key: "side", label: "左视" },
+                    ]}
+                    value={preset}
+                    onChange={(p) => setCameraPreset(p as CameraPreset)}
+                  />
+                </>
               )}
             </div>
           </LeftPanelSection>
@@ -644,6 +665,16 @@ export default function SectionCuboidDemo() {
         ) : (
           <ThreeDCanvas
             cameraPosition={cameraPosition}
+            overlay={
+              (mode === "construction" || mode === "extrema") &&
+              viewMode === "3d" ? (
+                <ModeSwitchOverlay3D
+                  mode={interactionMode}
+                  onModeChange={setInteractionMode}
+                  pointCount={mode === "extrema" ? 1 : 3}
+                />
+              ) : undefined
+            }
             legend={
               <Legend3D
                 title="截面图例"
@@ -668,10 +699,12 @@ export default function SectionCuboidDemo() {
               />
             }
           >
-            <CameraRig ref={controlsRef} />
+            <CameraRig
+              ref={controlsRef}
+              enabled={interactionMode === "orbit" || mode === "continuous"}
+            />
             <Scene3DGrid size={5} />
 
-            {/* 3D 实体渲染 */}
             {/* 3D 几何实体与边线渲染 (严格基于 Polyhedron 拓扑结构，100% 精确吻合) */}
             <PolyhedronSolid polyhedron={currentPolyhedron} opacity={0.15} />
 
@@ -724,83 +757,102 @@ export default function SectionCuboidDemo() {
               }
             />
 
-            {/* 多面体几何基准顶点标准标注 (A, B, C, D, S, A1, B1...) */}
+            {/* 多面体几何基准顶点标准标注 (A, B, C, D, S, A1, B1...) 与精美实体顶点 */}
             {polyhedronVertexLabels.map((vl, idx) => (
-              <CompoundLabel3D
-                key={`solid-vtx-${idx}`}
-                position={vl.position}
-                base={vl.base}
-                subscript={vl.subscript}
-                offset={vl.offset}
-                fontSize={0.24}
-              />
+              <group key={`solid-vtx-${idx}`}>
+                <Point3D
+                  position={vl.position}
+                  colorKey="secondary"
+                  radius={0.045}
+                />
+                <CompoundLabel3D
+                  position={vl.position}
+                  base={vl.base}
+                  subscript={vl.subscript}
+                  offset={vl.offset}
+                  fontSize={0.24}
+                />
+              </group>
             ))}
 
-            {/* 控制点交互渲染与标签 (P, Q, R) */}
-            {(mode === "construction" || mode === "extrema") && (
-              <>
-                {/* 点 P (绑定 paramPrimary 鲜红) */}
-                <Point3D
-                  position={pointPPos}
-                  draggable
-                  constrain={(raw) => ({
-                    x: pointPPos.x,
-                    y: pointPPos.y,
-                    z: Math.max(0.2, Math.min(height * 0.95, raw.z)),
-                  })}
-                  onDrag={(next) => {
-                    const ratio = next.z / height;
-                    if (mode === "extrema") setTParam(ratio);
-                    else setPosP(ratio);
-                  }}
-                  colorKey="paramPrimary"
-                />
-                <CompoundLabel3D
-                  position={pointPPos}
-                  base="P"
-                  colorKey="paramPrimary"
-                  offset={[0, 0, 0.25]}
-                />
+            {/* 控制点交互渲染与标签 (P, Q, R，严格使用空间侧棱正交投影 projectPointOnSegment) */}
+            {(mode === "construction" || mode === "extrema") &&
+              (() => {
+                const { baseVertices, topVertices } =
+                  getPolyhedronEdgeEndpoints(solidKind, width, depth, height);
+                const A0 = baseVertices[0];
+                const A1 = topVertices[0];
+                const B0 = baseVertices[1];
+                const B1 = topVertices[1];
+                const C0 = baseVertices[2];
+                const C1 = topVertices[2];
 
-                {/* 点 Q (绑定 paramSecondary 暖橙) */}
-                <Point3D
-                  position={pointQPos}
-                  draggable
-                  constrain={(raw) => ({
-                    x: pointQPos.x,
-                    y: pointQPos.y,
-                    z: Math.max(0.2, Math.min(height * 0.95, raw.z)),
-                  })}
-                  onDrag={(next) => setPosQ(next.z / height)}
-                  colorKey="paramSecondary"
-                />
-                <CompoundLabel3D
-                  position={pointQPos}
-                  base="Q"
-                  colorKey="paramSecondary"
-                  offset={[0, 0, 0.25]}
-                />
+                return (
+                  <>
+                    {/* 点 P (绑定 paramPrimary 鲜红，严格在第 1 条侧棱上滑动) */}
+                    <Point3D
+                      position={pointPPos}
+                      draggable={interactionMode === "drag"}
+                      constrain={(raw) =>
+                        projectPointOnSegment(raw, A0, A1).point
+                      }
+                      onDrag={(next) => {
+                        const proj = projectPointOnSegment(next, A0, A1);
+                        const tVal = Number(proj.t.toFixed(2));
+                        if (mode === "extrema") setTParam(tVal);
+                        else setPosP(tVal);
+                      }}
+                      colorKey="paramPrimary"
+                    />
+                    <CompoundLabel3D
+                      position={pointPPos}
+                      base="P"
+                      colorKey="paramPrimary"
+                      offset={[0, 0, 0.25]}
+                    />
 
-                {/* 点 R (绑定 paramTertiary 翠绿) */}
-                <Point3D
-                  position={pointRPos}
-                  draggable
-                  constrain={(raw) => ({
-                    x: pointRPos.x,
-                    y: pointRPos.y,
-                    z: Math.max(0.2, Math.min(height * 0.95, raw.z)),
-                  })}
-                  onDrag={(next) => setPosR(next.z / height)}
-                  colorKey="paramTertiary"
-                />
-                <CompoundLabel3D
-                  position={pointRPos}
-                  base="R"
-                  colorKey="paramTertiary"
-                  offset={[0, 0, 0.25]}
-                />
-              </>
-            )}
+                    {/* 点 Q (绑定 paramSecondary 暖橙，严格在第 2 条侧棱上滑动) */}
+                    <Point3D
+                      position={pointQPos}
+                      draggable={interactionMode === "drag"}
+                      constrain={(raw) =>
+                        projectPointOnSegment(raw, B0, B1).point
+                      }
+                      onDrag={(next) => {
+                        const proj = projectPointOnSegment(next, B0, B1);
+                        setPosQ(Number(proj.t.toFixed(2)));
+                      }}
+                      colorKey="paramSecondary"
+                    />
+                    <CompoundLabel3D
+                      position={pointQPos}
+                      base="Q"
+                      colorKey="paramSecondary"
+                      offset={[0, 0, 0.25]}
+                    />
+
+                    {/* 点 R (绑定 paramTertiary 翠绿，严格在第 3 条侧棱上滑动) */}
+                    <Point3D
+                      position={pointRPos}
+                      draggable={interactionMode === "drag"}
+                      constrain={(raw) =>
+                        projectPointOnSegment(raw, C0, C1).point
+                      }
+                      onDrag={(next) => {
+                        const proj = projectPointOnSegment(next, C0, C1);
+                        setPosR(Number(proj.t.toFixed(2)));
+                      }}
+                      colorKey="paramTertiary"
+                    />
+                    <CompoundLabel3D
+                      position={pointRPos}
+                      base="R"
+                      colorKey="paramTertiary"
+                      offset={[0, 0, 0.25]}
+                    />
+                  </>
+                );
+              })()}
 
             {/* construction 模式下的外点与截棱交点标记 (K1, K2, M, N，严格排重与避让) */}
             {mode === "construction" &&
@@ -819,6 +871,7 @@ export default function SectionCuboidDemo() {
                       <Point3D
                         position={pt.position}
                         colorKey={pt.isExternal ? "secondary" : "paramTertiary"}
+                        radius={0.05}
                       />
                       <CompoundLabel3D
                         position={pt.position}

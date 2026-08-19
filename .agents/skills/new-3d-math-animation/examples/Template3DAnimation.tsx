@@ -17,14 +17,17 @@ import {
   CameraRig,
   Legend3D,
   Point3D,
-  PointLabel3D,
+  CompoundLabel3D,
   FormulaLabel3D,
+  ModeSwitchOverlay3D,
 } from "@/components/Math3D";
+import type { InteractionMode3D } from "@/components/Math3D";
 import { Cuboid } from "@/components/Math3D/solids/Cuboid";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { spatialAngleMeta } from "@/data/registries/solidGeometry";
+import { sectionMeta } from "@/data/registries/solidGeometry";
+import { projectPointOnSegment } from "@/math3d/vector3";
 
 type ModeType = "modeA" | "modeB" | "modeC";
 
@@ -32,10 +35,13 @@ export default function Template3DAnimation() {
   const [mode, setMode] = useState<ModeType>("modeA");
   const [subType, setSubType] = useState<string>("standard");
   const [showAxes, setShowAxes] = useState<boolean>(false);
+  const [interactionMode, setInteractionMode] =
+    useState<InteractionMode3D>("orbit");
   const [params, setParams] = useState<Record<string, number>>({
     a: 3,
     b: 2,
     c: 2,
+    tParam: 0.5,
   });
 
   // 1. 初始化 3D 相机与视角 Preset
@@ -51,8 +57,8 @@ export default function Template3DAnimation() {
   // 3. 参数配置列表 (按当前模式过滤)
   const paramConfigs = useMemo<ParamConfig[]>(
     () =>
-      spatialAngleMeta
-        .filter((meta) => ["a", "b", "c"].includes(meta.key))
+      sectionMeta
+        .filter((meta) => ["posP", "posQ", "posR", "tParam"].includes(meta.key))
         .map((meta) => ({
           key: meta.key,
           label: meta.label,
@@ -72,14 +78,23 @@ export default function Template3DAnimation() {
   };
 
   const handleReset = () => {
-    setParams({ a: 3, b: 2, c: 2 });
+    setParams({ a: 3, b: 2, c: 2, tParam: 0.5 });
+  };
+
+  // 侧棱端点 A0(0,0,0) -> A1(0,0,c)
+  const A0 = { x: params.a, y: 0, z: 0 };
+  const A1 = { x: params.a, y: 0, z: params.c };
+  const P = {
+    x: params.a,
+    y: 0,
+    z: params.c * (params.tParam ?? 0.5),
   };
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* Step 1: 探究模式选择 (3项模式推荐 2+1 SelectGrid 布局带公式) */}
+          {/* Step 1: 探究模式选择 */}
           <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
@@ -120,7 +135,7 @@ export default function Template3DAnimation() {
             />
           </LeftPanelSection>
 
-          {/* Step 4: 教学提示 (统一使用 TipCard 配合 KatexFormula，加 compact) */}
+          {/* Step 4: 教学提示 */}
           <LeftPanelSection title="教学提示" compact>
             <TipCard variant="info">
               <span className="font-bold">转化思维链</span>：线线垂直{" "}
@@ -132,6 +147,15 @@ export default function Template3DAnimation() {
           {/* Step 5: 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
+              <TabSwitcher
+                layout="horizontal"
+                tabs={[
+                  { key: "orbit", label: "🔄 视角漫游" },
+                  { key: "drag", label: "👆 动点交互" },
+                ]}
+                value={interactionMode}
+                onChange={(m) => setInteractionMode(m as InteractionMode3D)}
+              />
               <TabSwitcher
                 layout="horizontal"
                 tabs={[
@@ -159,17 +183,27 @@ export default function Template3DAnimation() {
       center={
         <ThreeDCanvas
           cameraPosition={cameraPosition}
+          overlay={
+            <ModeSwitchOverlay3D
+              mode={interactionMode}
+              onModeChange={setInteractionMode}
+              pointCount={1}
+            />
+          }
           legend={
             <Legend3D
               title="图例"
               items={[
                 { colorKey: "primary", swatch: "area", label: "几何体" },
-                { colorKey: "secondary", swatch: "line", label: "基准面" },
+                { colorKey: "paramPrimary", swatch: "line", label: "动点 P" },
               ]}
             />
           }
         >
-          <CameraRig ref={controlsRef} />
+          <CameraRig
+            ref={controlsRef}
+            enabled={interactionMode === "orbit"}
+          />
           <Scene3DGrid size={5} showLabels={showAxes} />
 
           {/* 3D 实体与几何元素 */}
@@ -181,22 +215,23 @@ export default function Template3DAnimation() {
             opacity={0.2}
           />
 
-          {/* 可拖拽 3D 交互点 */}
-          <Point3D
-            position={{ x: params.a, y: 0, z: params.c }}
-            draggable
-            constrain={(raw) => ({
-              x: Math.max(0, raw.x),
-              y: 0,
-              z: Math.max(0, raw.z),
-            })}
-            onDrag={(next) =>
-              setParams((p) => ({ ...p, a: next.x, c: next.z }))
-            }
-            colorKey="highlight"
-          />
+          {/* 不可交互几何基准顶点：纯净实心点 */}
+          <Point3D position={{ x: 0, y: 0, z: 0 }} colorKey="secondary" />
+          <CompoundLabel3D position={{ x: 0, y: 0, z: 0 }} base="A" offset={[-0.2, -0.2, 0]} />
 
-          <PointLabel3D position={{ x: 0, y: 0, z: 0 }} text="A" />
+          {/* 可拖拽 3D 动点：严格使用 projectPointOnSegment 进行侧棱正交投影 */}
+          <Point3D
+            position={P}
+            draggable={interactionMode === "drag"}
+            constrain={(raw) => projectPointOnSegment(raw, A0, A1).point}
+            onDrag={(next) => {
+              const { t } = projectPointOnSegment(next, A0, A1);
+              handleParamChange("tParam", Number(t.toFixed(2)));
+            }}
+            colorKey="paramPrimary"
+          />
+          <CompoundLabel3D position={P} base="P" colorKey="paramPrimary" offset={[0.2, 0, 0.2]} />
+
           <FormulaLabel3D
             position={{ x: 1, y: 1, z: 1 }}
             tex="V=a \cdot b \cdot c"

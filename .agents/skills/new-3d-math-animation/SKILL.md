@@ -56,8 +56,14 @@ description: >
 
 ### Step 3：交付前自检
 - [ ] **左屏五步层级**：是否严格按 探究模式 $\to$ 几何模型 $\to$ 参数调节 $\to$ 教学提示 $\to$ 视图视角 顺序渲染
-- [ ] **防截断机制**：模式选择选项 $\ge 3$ 时，是否使用了 2+1 `SelectGrid`
-- [ ] **教学提示 Token**：是否使用 `<TipCard variant="...">` 承载，公式是否用 `<KatexFormula mode="inline" />` 渲染
-- [ ] **3D 语义色**：是否使用 `SPACE_3D_COLORS` 与 `colorKey`，杜绝硬编码 Hex 色值
-- [ ] **路由 3D 守卫**：`routeEntries.ts` 是否配置了 `guarded3D: true`
-- [ ] **测试验证**：`npx vitest run src/math3d/` 全部通过，`npm run build` 打包 0 错误
+- [ ] **3D 交互防冲突**：存在动点拖拽时，是否引入 `<ModeSwitchOverlay3D>`，且 `CameraRig` 的 `enabled` 是否与 `interactionMode === 'orbit'` 联动
+- [ ] **点样式严格隔离**：
+  - 固定几何顶点/交点/垂足：`draggable={false}`，小巧实心点（$r=0.042$），无光晕、无抓取光标；
+  - 参数控制动点：`draggable={interactionMode === 'drag'}`，大尺寸（$r=0.075$），带外光晕脉冲手柄与全局射线追踪；
+- [ ] **空间几何约束**：动点在线段/侧棱上滑动时，是否严格使用 `projectPointOnSegment` 纯函数进行正交投影与比值参数反向解算，杜绝脱轨；
+- [ ] **高考标注规范**：空间顶点统一使用数学斜体（`PointLabel3D` / `CompoundLabel3D` 默认斜体），上下标对齐规范；
+- [ ] **防截断机制**：模式选择选项 $\ge 3$ 时，是否使用了 2+1 `SelectGrid`；
+- [ ] **教学提示 Token**：是否使用 `<TipCard variant="...">` 承载，公式是否用 `<KatexFormula mode="inline" />` 渲染；
+- [ ] **3D 语义色**：是否使用 `SPACE_3D_COLORS` 与 `colorKey`，杜绝硬编码 Hex 色值；
+- [ ] **路由 3D 守卫**：`routeEntries.ts` 是否配置了 `guarded3D: true`；
+- [ ] **测试验证**：`npx vitest run src/math3d/` 全部通过，`npm run build` 打包 0 错误。

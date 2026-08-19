@@ -21,8 +21,9 @@ import {
   AngleArc3D,
   Legend3D,
   CameraRig,
+  ModeSwitchOverlay3D,
 } from "@/components/Math3D";
-import type { LegendItem } from "@/components/Math3D";
+import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -37,6 +38,8 @@ export default function LinePlaneRelationAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallel");
   const [subTheorem, setSubTheorem] = useState<"judge" | "prop">("judge");
   const [showAxes, setShowAxes] = useState<boolean>(false);
+  const [interactionMode, setInteractionMode] =
+    useState<InteractionMode3D>("orbit");
   const [params, setParams] = useState<Record<string, number>>({
     zHeight: 2,
     thetaDeg: 0,
@@ -525,6 +528,17 @@ export default function LinePlaneRelationAnimation() {
           {/* 5. 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
+              {activeMode === "gaokaoPyramid" && (
+                <TabSwitcher
+                  layout="horizontal"
+                  tabs={[
+                    { key: "orbit", label: "🔄 视角漫游" },
+                    { key: "drag", label: "👆 动点交互" },
+                  ]}
+                  value={interactionMode}
+                  onChange={(m) => setInteractionMode(m as InteractionMode3D)}
+                />
+              )}
               <TabSwitcher
                 layout="horizontal"
                 tabs={[
@@ -553,8 +567,22 @@ export default function LinePlaneRelationAnimation() {
         <ThreeDCanvas
           cameraPosition={cameraPosition}
           legend={<Legend3D title="图例" items={legendItems} />}
+          overlay={
+            activeMode === "gaokaoPyramid" ? (
+              <ModeSwitchOverlay3D
+                mode={interactionMode}
+                onModeChange={setInteractionMode}
+                pointCount={2}
+              />
+            ) : undefined
+          }
         >
-          <CameraRig ref={controlsRef} />
+          <CameraRig
+            ref={controlsRef}
+            enabled={
+              interactionMode === "orbit" || activeMode !== "gaokaoPyramid"
+            }
+          />
           <Scene3DGrid size={5} showLabels={showAxes} />
 
           {/* 模式 1：高考四棱锥母题 */}
@@ -565,6 +593,9 @@ export default function LinePlaneRelationAnimation() {
               a={pyramidA}
               b={pyramidB}
               h={pyramidH}
+              draggable={interactionMode === "drag"}
+              onDragE={(val) => handleParamChange("lambdaE", val)}
+              onDragF={(val) => handleParamChange("lambdaF", val)}
             />
           )}
 

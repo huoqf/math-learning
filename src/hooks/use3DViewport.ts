@@ -1,6 +1,8 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, type ElementRef } from "react";
+import type { OrbitControls } from "@react-three/drei";
 
 export type CameraPreset = "iso" | "front" | "top" | "side";
+export type OrbitControlsHandle = ElementRef<typeof OrbitControls>;
 
 const PRESET_POSITIONS: Record<CameraPreset, [number, number, number]> = {
   iso: [6, 5, 8],
@@ -14,11 +16,7 @@ export function use3DViewport(
   defaultTarget: [number, number, number] = [0, 1.5, 0],
 ) {
   const [preset, setPreset] = useState<CameraPreset>(initial);
-  const controlsRef = useRef<{
-    object: { position: { set: (x: number, y: number, z: number) => void } };
-    target: { set: (x: number, y: number, z: number) => void };
-    update: () => void;
-  } | null>(null);
+  const controlsRef = useRef<OrbitControlsHandle | null>(null);
 
   const setCameraPreset = useCallback(
     (p: CameraPreset, target = defaultTarget) => {

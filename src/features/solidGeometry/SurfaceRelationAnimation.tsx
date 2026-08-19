@@ -12,8 +12,13 @@ import {
   KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Scene3DGrid, Legend3D, CameraRig } from "@/components/Math3D";
-import type { LegendItem } from "@/components/Math3D";
+import {
+  Scene3DGrid,
+  Legend3D,
+  CameraRig,
+  ModeSwitchOverlay3D,
+} from "@/components/Math3D";
+import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -31,6 +36,8 @@ export default function SurfaceRelationAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallelJudge");
   const [subType, setSubType] = useState<string>("standard");
   const [showAxes, setShowAxes] = useState<boolean>(false);
+  const [interactionMode, setInteractionMode] =
+    useState<InteractionMode3D>("orbit");
   const [params, setParams] = useState<Record<string, number>>({
     zHeight: 2.2,
     tiltDeg: 0,
@@ -393,6 +400,17 @@ export default function SurfaceRelationAnimation() {
           {/* 5. 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
+              {activeMode === "gaokaoModel" && subType !== "cube" && (
+                <TabSwitcher
+                  layout="horizontal"
+                  tabs={[
+                    { key: "orbit", label: "🔄 视角漫游" },
+                    { key: "drag", label: "👆 动点交互" },
+                  ]}
+                  value={interactionMode}
+                  onChange={(m) => setInteractionMode(m as InteractionMode3D)}
+                />
+              )}
               <TabSwitcher
                 layout="horizontal"
                 tabs={[
@@ -421,8 +439,24 @@ export default function SurfaceRelationAnimation() {
         <ThreeDCanvas
           cameraPosition={cameraPosition}
           legend={<Legend3D title="图例" items={legendItems} />}
+          overlay={
+            activeMode === "gaokaoModel" && subType !== "cube" ? (
+              <ModeSwitchOverlay3D
+                mode={interactionMode}
+                onModeChange={setInteractionMode}
+                pointCount={1}
+              />
+            ) : undefined
+          }
         >
-          <CameraRig ref={controlsRef} />
+          <CameraRig
+            ref={controlsRef}
+            enabled={
+              interactionMode === "orbit" ||
+              activeMode !== "gaokaoModel" ||
+              subType === "cube"
+            }
+          />
           <Scene3DGrid size={5} showLabels={showAxes} />
 
           {/* 模式 1：面面平行判定 */}
@@ -465,6 +499,8 @@ export default function SurfaceRelationAnimation() {
               pyramidB={pyramidB}
               pyramidH={pyramidH}
               posO={posO}
+              draggable={interactionMode === "drag" && subType !== "cube"}
+              onDragO={(v) => handleParamChange("posO", v)}
             />
           )}
         </ThreeDCanvas>

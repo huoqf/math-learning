@@ -6,6 +6,7 @@ import { add, scale, cross, normalize } from "@/math3d/vector3";
 import type { Plane } from "@/math3d/plane";
 import { mathToThree } from "@/math3d/coordinateConvention";
 import { MATH_COLORS, MATH3D_COLORS } from "@/theme/math/colors";
+import { Point3D } from "./Point3D";
 
 interface ConstructionLineProp {
   from: Vec3;
@@ -295,16 +296,15 @@ export function SectionPlane3D({
         );
       })}
 
-      {/* 作图辅助关键点 */}
-      {constructionPoints.map((pt, idx) => {
-        const threePos = vec3ToThree(pt.position);
-        return (
-          <mesh key={`const-pt-${idx}`} position={threePos} renderOrder={9}>
-            <sphereGeometry args={[0.08, 16, 16]} />
-            <meshBasicMaterial color={pt.color ?? MATH_COLORS.highlight} />
-          </mesh>
-        );
-      })}
+      {/* 作图辅助关键点（统一使用标准 Point3D） */}
+      {constructionPoints.map((pt, idx) => (
+        <Point3D
+          key={`const-pt-${idx}`}
+          position={pt.position}
+          colorKey="highlight"
+          draggable={false}
+        />
+      ))}
     </group>
   );
 }
