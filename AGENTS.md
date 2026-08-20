@@ -45,6 +45,8 @@
 | `src/math/` 中 import React / DOM / window | 数学层纯函数，零副作用 | 铁律6 |
 | 左屏手写 `<button>` 做选择控件 | `TabSwitcher` / `SelectGrid` | 铁律3 |
 | `formula` 字段用 `$...$` 包裹 | 纯 LaTeX，`katex.render()` 直接接收 | 铁律1 |
+| 用 `Vector3DArrow` 绘制棱/斜线/垂线等纯几何线段 | `Segment3D`（纯几何线段无箭头，仅法向量/基向量用 `Vector3DArrow`） | 铁律1/4 |
+| 向 `PointLabel3D` 传入 Unicode 下标（如 `P₁`） | `CompoundLabel3D(base, subscript)`（彻底杜绝 ⌧ 豆腐块） | 铁律1/4 |
 
 ---
 
@@ -226,8 +228,9 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | 3D 相机控制 | `CameraRig` | `@/components/Math3D` | 轨道相机，配合 `use3DViewport`。支持 `enabled` 动点交互互斥 |
 | 3D 交互模式浮层 | `ModeSwitchOverlay3D` | `@/components/Math3D` | 3D 画布右上角【🔄 视角漫游】与【👆 动点交互】切换浮层 |
 | 3D 空间点 | `Point3D` | `@/components/Math3D` | 空间点。固定点 $r=0.042$ 纯实心；动点 $r=0.075$ 脉冲光晕与全局射线追踪。Props: `draggable`, `constrain`, `onDrag` |
+| 3D 空间线段 | `Segment3D` | `@/components/Math3D` | 3D 空间几何线段/棱/垂线/辅助线（纯几何线段无箭头）。Props: `from`, `to`, `colorKey`, `lineWidth`, `dashed` |
 | 3D 平面 | `Plane3D` | `@/components/Math3D` | 空间平面。Props: `origin`, `uAxis`, `vAxis` |
-| 3D 向量 | `Vector3DArrow` | `@/components/Math3D` | 带箭头 3D 向量。Props: `from`, `to` |
+| 3D 向量 | `Vector3DArrow` | `@/components/Math3D` | 带箭头 3D 向量（仅法向量/基向量使用）。Props: `from`, `to` |
 | 3D 角弧 | `AngleArc3D` | `@/components/Math3D` | 空间夹角弧线。Props: `vertex`, `dirA`, `dirB` |
 | 3D 点标签 | `PointLabel3D` | `@/components/Math3D` | 顶点文本标注。Props: `position`, `text` |
 | 3D 公式标签 | `FormulaLabel3D` | `@/components/Math3D` | KaTeX 公式标注。Props: `position`, `tex` |
@@ -269,12 +272,13 @@ import { MATH_COLORS, withAlpha } from '@/theme'
 ### 铁律 4D：3D 数学三大范式隔离与标注分工铁律
 
 1. **范式隔离（严禁跨范式污染）**：
-   - **纯几何范式（必修二）**：线面面面平行垂直、旋转体、截面。**严禁出现笛卡尔坐标轴与向量箭头**，使用淡雅纯网格 `gridHelper`。
-   - **仿射基底范式（空间向量定理）**：一般斜基底 $\vec{a},\vec{b},\vec{c}$。**严禁出现笛卡尔直角坐标轴穿刺**，加法折线严禁自造生硬点标。
-   - **解析建系范式（向量应用与空间角/距）**：仅在建立直角坐标系时使用 `Scene3DGrid`，呈现法向量与空间角弧。
+   - **纯几何范式（必修二）**：线面面面平行垂直、旋转体、截面、球体切接。**纯空间几何骨架，严禁出现笛卡尔坐标轴、向量箭头与干扰性地面地砖网格**。
+   - **仿射基底范式（空间向量定理）**：一般斜基底 $\vec{a},\vec{b},\vec{c}$ 与平行六面体分解。**纯仿射空间向量箭头，严禁出现笛卡尔直角坐标轴穿刺与地面地砖网格**，加法折线严禁自造生硬点标。
+   - **解析建系范式（向量应用与空间角/距）**：仅在建立直角坐标系时使用 `Scene3DGrid`（纯 $x,y,z$ 三轴系统，`showGrid: false` 杜绝地砖），呈现法向量与空间角弧。
 2. **3D 标注组件严格分工**：
-   - 几何顶点（$A, B, C \dots$）：100% 使用 `PointLabel3D`（单字母）或 `CompoundLabel3D`（如 $A_1$），纯 3D 矢量文字，**严禁使用带背景卡片的 FormulaLabel3D**。
-   - 空间公式符号（$\vec{a}, \vec{OP}$）：使用 `FormulaLabel3D`（默认纯净无底框 plain 模式）。
+   - 几何顶点（$A, B, C \dots$）：100% 使用 `PointLabel3D`（单字母）或 `CompoundLabel3D`（如 $A_1, P_1$），纯 3D 矢量文字，**严禁向 PointLabel3D 传入 Unicode 下标，严禁使用带背景卡片的 FormulaLabel3D**。
+   - 空间几何线段（棱、面对角线、斜线、垂线段、公垂线）：100% 使用 `Segment3D`，**严禁误用带箭头的 Vector3DArrow**。
+   - 空间代数向量（$\vec{a}, \vec{OP}$、法向量 $\vec{n}$）：使用 `Vector3DArrow` 与 `FormulaLabel3D`（默认纯净无底框 plain 模式）。
 3. **高考场景预设单模式闭环**：
    - 左屏预设仅调整参数，**严禁在预设回调中篡改 activeMode**。
 

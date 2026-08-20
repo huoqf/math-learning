@@ -554,12 +554,6 @@ export default function Vector3DBasisAnimation() {
         >
           <CameraRig ref={controlsRef} enabled={interactionMode === "orbit"} />
 
-          {/* 淡雅水平底面网格（纯净高中几何背景，无穿刺坐标轴） */}
-          <gridHelper
-            args={[10, 10, MATH_COLORS.grid, MATH_COLORS.gridSubtle]}
-            position={[0, 0, 0]}
-          />
-
           {/* 原点 O */}
           <Point3D position={O} colorKey="primary" />
           <PointLabel3D position={O} text="O" offset={[-0.22, -0.22, 0]} />

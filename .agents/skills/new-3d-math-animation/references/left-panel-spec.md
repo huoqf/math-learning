@@ -14,22 +14,14 @@
 
 ---
 
-## 2. 模式选择防截断规范 (2+1 SelectGrid)
+## 2. 模式选择网格选用规范矩阵 (防截断与对称排版)
 
-当探究模式有 3 个选项时，横排 `TabSwitcher` 会因宽度不足产生文本截断。必须统一采用 2+1 `SelectGrid` 架构：
-
-```tsx
-<SelectGrid
-  items={[
-    { key: "continuous", label: "连续切面", formula: "S = \\frac{S'}{\\cos\\theta}" },
-    { key: "construction", label: "作图推演", formula: "P, Q, R \\text{ 交轨}" },
-    { key: "extrema", label: "动点极值探究", formula: "S(t) \\to \\max / \\min", fullWidth: true },
-  ]}
-  value={mode}
-  onChange={(m) => setMode(m as ModeType)}
-  columns={2}
-/>
-```
+| 选项数量与特征 | 推荐控件 / 布局 | 规则说明 |
+|---------------|----------------|---------|
+| **4 项模式** | `SelectGrid (columns={2})` | 2×2 完美对称网格，微描述 $\le 6$ 字，禁止 `fullWidth` 破相 |
+| **3 项短标签**（$\le 3$ 字，如模型预设） | `SelectGrid (columns={3})` 或 `TabSwitcher` | 3 列紧凑展示，如“长方体”、“正方体”、“四棱柱” |
+| **3 项长公式 / 长描述** | `SelectGrid (columns={2})` + `fullWidth` | 2+1 布局，第 3 项独占一行 |
+| **2 项模式** | `TabSwitcher (horizontal)` 或 `SelectGrid (columns={2})` | 2 列等宽 |
 
 ---
 
@@ -54,4 +46,5 @@
 3. **参数模式过滤**：`paramConfigs` 必须根据当前 `activeMode` 进行精准过滤，严禁全量罗列无关滑块。
 4. **提示精炼精粹**：教学提示只提炼 1~2 句核心转化链或易错警示点，严禁大段长篇推导（完整推导属于右屏 `MathPanel`）。
 5. **紧凑外边距**：教学提示外层 `LeftPanelSection` 必须添加 `compact` prop，使卡片轻盈融入左屏。
+6. **图层解耦分类**：3D 辅助结构开关必须按数学维度独立解耦（几何辅助线、垂直直角符号、空间角弧、空间法向量），严禁将辅助线与直角混绑。
 

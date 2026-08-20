@@ -43,6 +43,12 @@ import {
   calculatePerpPropState,
   calculatePyramidPerpModel,
 } from "@/math3d/surfaceRelation";
+import {
+  solveSkewLines,
+  solveLinePlaneAngle,
+  solveDihedralAngle,
+  solvePointToPlaneDistance,
+} from "@/math3d/spatialAngle";
 import type { Vec3 } from "@/math3d/vector3";
 import type { Plane } from "@/math3d/plane";
 
@@ -56,69 +62,58 @@ export function buildSpatialAnglePanel(
   const a = params.a ?? 3;
   const b = params.b ?? 2;
   const c = params.c ?? 2;
-  const ex = params.ex ?? 1.2;
+  const lambda = params.lambda ?? (params.ex ? params.ex / c : 0.6);
+  const zE = Math.max(0.01, Math.min(c, lambda * c));
 
   const quantities: MathQuantity[] = [];
-
   const theorems: Theorem[] = [];
   const gaokaoPoints: GaokaoPoint[] = [];
   const warnings: WarningItem[] = [];
 
   if (mode === "skewLines") {
-    // 异面直线 DE (D(0,b,0), E(0,0,ex)) 与 AB1 (A(0,0,0), B1(a,0,c))
-    // u = DE = (0, -b, ex), v = AB1 = (a, 0, c)
-    const dot = ex * c;
-    const lenU = Math.sqrt(b * b + ex * ex);
-    const lenV = Math.sqrt(a * a + c * c);
-    const cosVal = Math.min(1, Math.max(0, Math.abs(dot) / (lenU * lenV)));
-    const angleRad = Math.acos(cosVal);
-    const angleDeg = (angleRad * 180) / Math.PI;
-
-    // 公垂线向量 n_公 = u × v = (-b*c, a*ex, a*b)
-    const nSkewX = -b * c;
-    const nSkewY = a * ex;
-    const nSkewZ = a * b;
-    const lenNSkew = Math.sqrt(
-      nSkewX * nSkewX + nSkewY * nSkewY + nSkewZ * nSkewZ,
-    );
-    // 异面直线距离 d_公 = |DA · n_公| / |n_公| = (a * b * ex) / lenNSkew
-    const distSkew = (a * b * ex) / lenNSkew;
+    const skew = solveSkewLines(a, b, c, lambda);
 
     quantities.push(
       {
-        label: "方向向量 u (DE)",
+        label: "异面直线 1 (A₁B)",
         symbol: "\\vec{u}",
-        value: `(0, -${b}, ${ex})`,
+        value: `(${a}, 0, -${c})`,
         color: MATH_COLORS.primary,
       },
       {
-        label: "方向向量 v (AB₁)",
+        label: "异面直线 2 (AC)",
         symbol: "\\vec{v}",
-        value: `(${a}, 0, ${c})`,
+        value: `(${a}, ${b}, 0)`,
         color: MATH_COLORS.accent,
+      },
+      {
+        label: "平移平行向量 (D₁C)",
+        symbol: "\\vec{u}'",
+        value: `(${a}, 0, -${c})`,
+        color: MATH_COLORS.secondary,
       },
       {
         label: "公垂线向量 n_公",
         symbol: "\\vec{n}_{\\text{公}}",
-        value: `(${nSkewX.toFixed(1)}, ${nSkewY.toFixed(1)}, ${nSkewZ.toFixed(1)})`,
-        color: MATH_COLORS.secondary,
+        value: `(${(b * c).toFixed(1)}, ${(-a * c).toFixed(1)}, ${(a * b).toFixed(1)})`,
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "异面直线间距离",
         symbol: "d_{\\text{异面}}",
-        value: Number(distSkew.toFixed(4)),
+        value: Number(skew.distance.toFixed(4)),
         color: MATH_COLORS.paramPrimary,
       },
       {
         label: "向量夹角余弦 cosθ",
         symbol: "\\cos\\theta",
-        value: Number(cosVal.toFixed(4)),
+        value: Number(skew.cosTheta.toFixed(4)),
         color: MATH_COLORS.secondary,
       },
       {
         label: "异面直线所成的角",
         symbol: "\\theta",
-        value: `${angleDeg.toFixed(2)}°`,
+        value: `${skew.angleDeg.toFixed(2)}°`,
         color: MATH_COLORS.highlight,
       },
     );
@@ -126,60 +121,61 @@ export function buildSpatialAnglePanel(
     theorems.push(
       {
         name: "异面直线所成角坐标公式",
-        latex: `\\cos \\theta = \\frac{|\\vec{u} \\cdot \\vec{v}|}{|\\vec{u}||\\vec{v}|} = \\frac{|x_1 x_2 + y_1 y_2 + z_1 z_2|}{\\sqrt{x_1^2+y_1^2+z_1^2}\\sqrt{x_2^2+y_2^2+z_2^2}}`,
+        latex: `\\cos \\theta = \\frac{|\\vec{u} \\cdot \\vec{v}|}{|\\vec{u}||\\vec{v}|} = \\frac{|x_1 x_2 + y_1 y_2 + z_1 z_2|}{\\sqrt{x_1^2+y_1^2+z_1^2}\\sqrt{x_2^2+y_2^2+z_2^2}} = \\frac{a^2}{\\sqrt{a^2+c^2}\\sqrt{a^2+b^2}}`,
         level: "core",
-        condition: "θ ∈ (0°, 90°]，异面直线角不能为钝角",
+        condition:
+          "\\theta \\in (0^\\circ, 90^\\circ]，异面直线所成角必须取锐角或直角，公式中必须加绝对值",
       },
       {
-        name: "异面直线间的距离（公垂线法）",
-        latex: `d_{\\text{异面}} = \\frac{|\\vec{P_1 P_2} \\cdot \\vec{n}_{\\text{公}}|}{|\\vec{n}_{\\text{公}}|}`,
+        name: "平移法与向量法等价原理",
+        latex: `D_1C \\parallel A_1B \\implies \\text{异面直线 } A_1B, AC \\text{ 所成的角等于相交角 } \\angle ACD_1`,
         level: "important",
-        note: "n_公 = u × v 为两条异面直线的公垂线方向向量，P1, P2 分别为两直线上任意一点",
+        note: "在 △ACD1 中，利用余弦定理求 ∠ACD1 与向量法结果完全一致",
       },
       {
-        name: "长方体建系顶点坐标",
-        latex: `A(0,0,0),\\; B_1(a,0,c),\\; D(0,b,0),\\; E(0,0,z_E)`,
+        name: "异面直线间的距离（向量射影法）",
+        latex: `d_{\\text{异面}} = \\frac{|\\vec{A_1A} \\cdot \\vec{n}_{\\text{公}}|}{|\\vec{n}_{\\text{公}}|}, \\quad \\vec{n}_{\\text{公}} = \\vec{u} \\times \\vec{v} = (bc, -ac, ab)`,
         level: "important",
       },
     );
 
     gaokaoPoints.push(
       {
-        text: "求异面直线所成角高考三步法：① 建立空间直角坐标系；② 确定两条直线的方向向量 u, v 的坐标；③ 代入余弦绝对值公式计算，范围必在 (0°, 90°] 内。",
+        text: "高考满分规范三步法：① 建立空间直角坐标系 A-xyz；② 确定两条直线的方向向量 u, v 坐标；③ 代入余弦绝对值公式，切记结果必须在 (0°, 90°] 内。",
         importance: "gaokao",
       },
       {
-        text: "异面直线间距离（公垂线法）：两条异面直线的距离即公垂线段长度，等于连接两线上任意两点 P₁P₂ 在公垂向量 n_公 方向上的投影长度。",
+        text: "平移法与向量法对照：在侧面 CDD₁C₁ 中作 D₁C // A₁B，异面角即化为平面相交角 ∠ACD₁，实现几何直观与向量代数的双向验算。",
         importance: "gaokao",
       },
     );
-
-    if (Math.abs(dot) < 0.001) {
-      warnings.push({
-        text: "方向向量内积 u · v = 0，异面直线 DE ⊥ AB₁，所成角达到最大极值 90°！",
-        level: "warning",
-      });
-    }
   } else if (mode === "linePlane") {
-    // 直线 BE (B(a,0,0), E(0,0,ex)) 与底面 ABCD (n0 = (0,0,1)) 的线面角
-    const lenU = Math.sqrt(a * a + ex * ex);
-
-    // 计算直线 BE 与底面 ABCD (n0 = (0,0,1)) 的线面角
-    const sinThetaBase = ex / lenU;
-    const angleBaseDeg = (Math.asin(sinThetaBase) * 180) / Math.PI;
+    const lp = solveLinePlaneAngle(a, b, c, lambda);
 
     quantities.push(
       {
-        label: "顶点坐标 B",
-        symbol: "B",
-        value: `(${a}, 0, 0)`,
+        label: "斜线起点 C",
+        symbol: "C",
+        value: `(${a}, ${b}, 0)`,
         color: MATH_COLORS.primary,
       },
       {
-        label: "方向向量 u (BE)",
+        label: "动点 E (AA₁上)",
+        symbol: "E",
+        value: `(0, 0, ${zE.toFixed(2)})`,
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "空间斜线向量 u (CE)",
         symbol: "\\vec{u}",
-        value: `(-${a}, 0, ${ex})`,
+        value: `(-${a}, -${b}, ${zE.toFixed(2)})`,
         color: MATH_COLORS.primary,
+      },
+      {
+        label: "底面射影向量 (CA)",
+        symbol: "\\vec{CA}",
+        value: `(-${a}, -${b}, 0)`,
+        color: MATH_COLORS.secondary,
       },
       {
         label: "底面法向量 n_0",
@@ -190,13 +186,19 @@ export function buildSpatialAnglePanel(
       {
         label: "线面角正弦 sinθ",
         symbol: "\\sin\\theta",
-        value: Number(sinThetaBase.toFixed(4)),
+        value: Number(lp.sinTheta.toFixed(4)),
         color: MATH_COLORS.accent,
+      },
+      {
+        label: "线面角余弦 cosθ",
+        symbol: "\\cos\\theta",
+        value: Number(lp.cosTheta.toFixed(4)),
+        color: MATH_COLORS.secondary,
       },
       {
         label: "直线与底面所成的角",
         symbol: "\\theta",
-        value: `${angleBaseDeg.toFixed(2)}°`,
+        value: `${lp.angleDeg.toFixed(2)}°`,
         color: MATH_COLORS.highlight,
       },
     );
@@ -204,140 +206,124 @@ export function buildSpatialAnglePanel(
     theorems.push(
       {
         name: "直线与平面所成角坐标公式",
-        latex: `\\sin \\theta = |\\cos \\langle \\vec{u}, \\vec{n} \\rangle| = \\frac{|\\vec{u} \\cdot \\vec{n}|}{|\\vec{u}||\\vec{n}|}`,
+        latex: `\\sin \\theta = |\\cos \\langle \\vec{u}, \\vec{n} \\rangle| = \\frac{|\\vec{u} \\cdot \\vec{n}|}{|\\vec{u}||\\vec{n}|} = \\frac{z_E}{\\sqrt{a^2+b^2+z_E^2}}`,
         level: "core",
-        condition: "θ ∈ [0°, 90°]，正弦值等于方向向量与法向量夹角余弦的绝对值",
+        condition:
+          "\\theta \\in [0^\\circ, 90^\\circ]，正弦值等于方向向量与法向量夹角余弦的绝对值",
       },
       {
-        name: "底面与斜线向量坐标",
-        latex: `\\vec{u} = \\vec{BE} = (-a, 0, z_E),\\; \\vec{n_0} = (0,0,1)`,
+        name: "空间射影直角三角形定理",
+        latex: `EA \\perp \\text{面 } ABCD \\implies CA \\text{ 为 } CE \\text{ 在底面上的射影}, \\; \\triangle EAC \\text{ 为直角三角形}`,
         level: "important",
+        note: "在直角三角形 △EAC 中，sinθ = EA / EC = z_E / √(a² + b² + z_E²)",
       },
     );
 
-    gaokaoPoints.push({
-      text: "高考大题核心考点：线面角使用的是正弦 sinθ！向量公式求出的是与法向量夹角的余弦，切记做 sinθ = |cos<u,n>| 的转换，不要直接写成 cosθ。",
-      importance: "gaokao",
-    });
+    gaokaoPoints.push(
+      {
+        text: "高考黄金考点：线面角公式求出的是正弦值 sinθ，而非余弦值 cosθ！若题干要求求余弦值，须用 cosθ = √(1 - sin²θ) 换算。",
+        importance: "gaokao",
+      },
+      {
+        text: "空间几何直观：斜线 EC、垂线 EA、射影 CA 构成倾斜直角三角形 △EAC，线面角即为 ∠ECA。",
+        importance: "gaokao",
+      },
+    );
 
-    if (ex < 0.3) {
+    if (lambda < 0.15) {
       warnings.push({
-        text: "动点 E 接近底面 (z_E → 0)，直线 BE 接近落在底面内，线面角趋近于 0°！",
+        text: "动点 E 接近原点 A (λ → 0)，斜线 EC 接近落入底面，线面角趋近于 0°！",
         level: "warning",
       });
     }
   } else if (mode === "distance") {
-    // distance: 点 A(0,0,0) 到截面 BDE 的垂直距离与三棱锥 E-ABD 体积极值
-    const n2X = b * ex;
-    const n2Y = a * ex;
-    const n2Z = a * b;
-    const lenN2 = Math.sqrt(n2X * n2X + n2Y * n2Y + n2Z * n2Z);
-    // vector AB = (a, 0, 0), dot(AB, n2) = a * b * ex
-    const dist = (a * b * ex) / lenN2;
-
-    // 截面积 S_BDE = 1/2 * |n|
-    const sBde = 0.5 * lenN2;
-    // 底面积 S_ABD = 1/2 * a * b
-    const sAbd = 0.5 * a * b;
-
-    // 棱锥 E-ABD 体积 V = 1/3 * S_ABD * ex = 1/6 * a * b * ex
-    const vol = (1 / 6) * a * b * ex;
-    // 棱锥 E-ABD 体积最大极值 (E 到达 A1, z_E = c)
-    const volMax = (1 / 6) * a * b * c;
+    const distRes = solvePointToPlaneDistance(a, b, c, lambda);
 
     quantities.push(
       {
         label: "截面法向量 n",
         symbol: "\\vec{n}",
-        value: `(${n2X.toFixed(1)}, ${n2Y.toFixed(1)}, ${(a * b).toFixed(1)})`,
+        value: `(${(b * zE).toFixed(1)}, ${(a * zE).toFixed(1)}, ${(a * b).toFixed(1)})`,
         color: MATH_COLORS.primary,
       },
       {
         label: "截面三角形面积 S_BDE",
         symbol: "S_{\\Delta BDE}",
-        value: Number(sBde.toFixed(3)),
+        value: Number(distRes.areaBDE.toFixed(3)),
         color: MATH_COLORS.secondary,
       },
       {
         label: "底面三角形面积 S_ABD",
         symbol: "S_{\\Delta ABD}",
-        value: Number(sAbd.toFixed(3)),
+        value: Number(distRes.areaABD.toFixed(3)),
         color: MATH_COLORS.primary,
       },
       {
-        label: "点到平面距离 d",
+        label: "点 A 到截面 BDE 的距离 d",
         symbol: "d_{A-\\text{面}}",
-        value: Number(dist.toFixed(4)),
+        value: Number(distRes.distance.toFixed(4)),
         color: MATH_COLORS.highlight,
       },
       {
         label: "三棱锥 E-ABD 当前体积",
         symbol: "V_{E-ABD}",
-        value: Number(vol.toFixed(4)),
+        value: Number(distRes.volume.toFixed(4)),
         color: MATH_COLORS.accent,
       },
       {
         label: "三棱锥体积最大极值",
         symbol: "V_{\\max}",
-        value: Number(volMax.toFixed(4)),
+        value: Number(distRes.maxVolume.toFixed(4)),
         color: MATH_COLORS.paramPrimary,
       },
     );
 
     theorems.push(
       {
-        name: "向量法求点到平面的距离公式",
+        name: "向量射影法求点到平面的距离公式",
         latex: `d = \\frac{|\\vec{AP} \\cdot \\vec{n}|}{|\\vec{n}|}`,
         level: "core",
-        note: "P 为平面内任意一点，A 为平面外一点，n 为平面的法向量",
+        note: "P 为平面内任意已知点（如 B 点），A 为待求点，n 为平面的法向量",
       },
       {
         name: "等体积法（等积法）互验公式",
-        latex: `V_{E-ABD} = \\frac{1}{3} S_{\\Delta BDE} \\cdot d = \\frac{1}{3} S_{\\Delta ABD} \\cdot z_E`,
+        latex: `V_{E-ABD} = \\frac{1}{3} S_{\\Delta BDE} \\cdot d = \\frac{1}{3} S_{\\Delta ABD} \\cdot z_E \\implies d = \\frac{S_{\\Delta ABD} \\cdot z_E}{S_{\\Delta BDE}}`,
         level: "important",
-        note: "当求法向量复杂时，可利用等体积法 d = (3V) / S_底 反解距离",
+        note: "当法向量求解复杂时，利用等体积法反解高线距离，是高考极高频的满分简捷法",
       },
       {
         name: "动点体积极值定理",
-        latex: `V(z_E) = \\frac{1}{6} a b z_E \\le \\frac{1}{6} a b c = V_{\\max}`,
+        latex: `V(\\lambda) = \\frac{1}{6} a b (\\lambda c) \\le \\frac{1}{6} a b c = V_{\\max}`,
         level: "important",
-        condition: "当 z_E = c (即动点 E 重合顶点 A₁) 时取最大值",
+        condition: "当 λ = 1.0 (即动点 E 到达侧棱顶端 A₁) 时取最大体积",
       },
     );
 
     gaokaoPoints.push(
       {
-        text: "高考压轴问法必杀技：求点到平面的距离优先建系取法向量代用公式 d = |AP · n| / |n|。也可通过等体积法 V = 1/3 S d 避开法向量求解。",
+        text: "高考大题二选一解法：① 向量法：设法向量代公式 d = |AB · n| / |n|；② 几何法：转换顶点利用等体积法 V_{A-BDE} = V_{E-ABD} 反求垂线高 d。",
         importance: "gaokao",
       },
       {
-        text: "体积极值考点：由于底面 S_ABD 保持不变，三棱锥 E-ABD 体积随高 z_E 线性递增，当动点 E 移动到侧棱顶端 A₁ (z_E = c) 时达到最大体积。",
+        text: "体积极值考点：由于底面 △ABD 面积恒定 (1/2 ab)，棱锥体积随分点比例 λ 线性递增，极值点在棱端点 A₁ 处取得。",
         importance: "gaokao",
       },
     );
 
-    if (Math.abs(ex - c) < 0.05) {
+    if (Math.abs(lambda - 1.0) < 0.05) {
       warnings.push({
-        text: `动点 E 已到达侧棱顶端 A₁ (z_E = c = ${c})，三棱锥 E-ABD 体积达到最大极值 V_max = ${volMax.toFixed(2)}！`,
+        text: `动点 E 已到达侧棱顶端 A₁ (λ = 1.0)，三棱锥 E-ABD 体积达到最大极值 V_max = ${distRes.maxVolume.toFixed(2)}！`,
         level: "warning",
       });
-    } else if (ex < 0.3) {
+    } else if (lambda < 0.15) {
       warnings.push({
-        text: "动点 E 接近底面 (z_E → 0)，三棱锥趋于扁平退化，点 A 到截面的距离 d 趋近于 0！",
+        text: "动点 E 接近底面 (λ → 0)，三棱锥趋于扁平退化，点 A 到截面的距离 d 趋近于 0！",
         level: "warning",
       });
     }
   } else {
-    // dihedral: 二面角 (底面 ABCD 与 截面 BDE)
-    // n1 = (0,0,1), n2 = (b*ex, a*ex, a*b)
-    const n2X = b * ex;
-    const n2Y = a * ex;
-    const n2Z = a * b;
-    const lenN1 = 1;
-    const lenN2 = Math.sqrt(n2X * n2X + n2Y * n2Y + n2Z * n2Z);
-    const cosVal = n2Z / (lenN1 * lenN2);
-    const dihedralRad = Math.acos(cosVal);
-    const dihedralDeg = (dihedralRad * 180) / Math.PI;
+    // dihedral
+    const dih = solveDihedralAngle(a, b, c, lambda);
 
     quantities.push(
       {
@@ -349,43 +335,62 @@ export function buildSpatialAnglePanel(
       {
         label: "截面法向量 n_2",
         symbol: "\\vec{n_2}",
-        value: `(${n2X.toFixed(1)}, ${n2Y.toFixed(1)}, ${(a * b).toFixed(1)})`,
+        value: `(${dih.n2Raw.x.toFixed(1)}, ${dih.n2Raw.y.toFixed(1)}, ${dih.n2Raw.z.toFixed(1)})`,
         color: MATH_COLORS.primary,
       },
       {
-        label: "二面角余弦 cosθ",
+        label: "二面角平面角余弦 cosθ",
         symbol: "\\cos\\theta",
-        value: Number(cosVal.toFixed(4)),
+        value: Number(dih.cosTheta.toFixed(4)),
         color: MATH_COLORS.accent,
       },
       {
         label: "二面角 B-DE-A 大小",
         symbol: "\\theta",
-        value: `${dihedralDeg.toFixed(2)}°`,
+        value: `${dih.dihedralDeg.toFixed(2)}°`,
         color: MATH_COLORS.highlight,
+      },
+      {
+        label: "三垂线定理垂足 M",
+        symbol: "M",
+        value: `(${dih.edgeFootM.x.toFixed(2)}, ${dih.edgeFootM.y.toFixed(2)}, 0)`,
+        color: MATH_COLORS.paramTertiary,
       },
     );
 
     theorems.push(
       {
-        name: "二面角向量坐标公式",
-        latex: `\\cos \\theta = \\pm \\frac{\\vec{n_1} \\cdot \\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}`,
+        name: "二面角向量法与钝锐判断定理",
+        latex: `|\\cos \\theta| = \\frac{|\\vec{n_1} \\cdot \\vec{n_2}|}{|\\vec{n_1}||\\vec{n_2}|}, \\quad \\text{由图可知二面角为锐角} \\implies \\cos\\theta = +\\frac{\\vec{n_1}\\cdot\\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}`,
         level: "core",
-        note: "通过计算两个平面的法向量 n₁, n₂ 夹角确定二面角（锐角用正值，钝角用负值）",
+        condition:
+          "\\theta \\in [0^\\circ, 180^\\circ]，法向量夹角可能与二面角相等或互补，高考大题必须写明“由图可知”！",
       },
       {
-        name: "截面法向量求解方程组",
-        latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\;\\Rightarrow\\; \\vec{n_2} = (b z_E, a z_E, a b)`,
+        name: "三垂线定理作二面角平面角（几何法）",
+        latex: `AM \\perp BD \\;\\text{于}\\; M, \\; EA \\perp \\text{底面} \\implies EM \\perp BD, \\; \\angle AME \\text{ 即为二面角平面角}`,
+        level: "important",
+        note: "在直角三角形 △EAM 中，tan∠AME = EA / AM = z_E / AM",
+      },
+      {
+        name: "截面法向量求解方程组（标准高考格式）",
+        latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\;\\Rightarrow\\; \\begin{cases} -a x + b y = 0 \\\\ -a x + z_E z = 0 \\end{cases} \\;\\xrightarrow{\\text{令 } x=b z_E}\\; \\vec{n_2} = (b z_E, a z_E, a b)`,
         level: "important",
       },
     );
 
-    gaokaoPoints.push({
-      text: "高考立体几何第(2)问满分步骤：① 设法向量 n=(x,y,z)；② 列出 n·v1=0 和 n·v2=0 方程组取特解；③ 计算 cos<n1,n2>；④ 根据图形几何直观明确说明“由图可知该二面角为锐角/钝角”。",
-      importance: "gaokao",
-    });
+    gaokaoPoints.push(
+      {
+        text: "高考立体几何第(2)问满分步骤闭环：① 建立空间直角坐标系 O-xyz；② 设法向量 n=(x,y,z) 联立两方程赋非零特解；③ 代入向量点乘模长公式；④ 依据空间几何直观明确说明“由图可知该二面角为锐角/钝角”。",
+        importance: "gaokao",
+      },
+      {
+        text: "法向量进进出出判定律：若两个法向量同时指向二面角内侧（或同时指向外侧），则法向量夹角与二面角互补 (θ + <n1,n2> = 180°)；若一进一出，则相等 (θ = <n1,n2>)。",
+        importance: "gaokao",
+      },
+    );
 
-    if (dihedralDeg < 1 || dihedralDeg > 179) {
+    if (dih.dihedralDeg < 1 || dih.dihedralDeg > 179) {
       warnings.push({
         text: "二面角接近 0° 或 180°，截面退化为共面！",
         level: "warning",

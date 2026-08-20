@@ -25,15 +25,16 @@
 | **画布容器** | `ThreeDCanvas` | `@/components/Layout/ThreeDCanvas` | 根画布，Props: `cameraPosition`, `legend`, `overlay` (浮层槽位) |
 | **相机控制** | `CameraRig` | `@/components/Math3D/CameraRig` | 轨道相机。Props: `enabled` (动点交互时设为 false 防冲突), `autoRotate` |
 | **交互模式浮层** | `ModeSwitchOverlay3D` | `@/components/Math3D` | 3D 右上角【🔄 视角漫游】与【👆 动点交互】切换器。Props: `mode`, `onModeChange`, `pointCount` |
-| **坐标网格** | `Scene3DGrid` | `@/components/Math3D/Scene3DGrid` | 空间直角坐标系（含 X/Y/Z 彩色轴）。**仅限范式 C 解析建系场景**；纯几何/斜基底统一使用 `<gridHelper args={[10, 10, MATH_COLORS.grid, MATH_COLORS.gridSubtle]} />` |
+| **坐标网格** | `Scene3DGrid` | `@/components/Math3D/Scene3DGrid` | 空间直角坐标系（含 X/Y/Z 彩色三轴与箭头）。**纯三轴建系（showGrid 默认为 false 杜绝地砖干扰）** |
 | **3D 点** | `Point3D` | `@/components/Math3D/Point3D` | 空间点。固定点 $r=0.042$ 纯实心；动点 $r=0.075$ 带外光晕与全局射线追踪。Props: `draggable`, `constrain`, `onDrag`, `colorKey` |
+| **3D 空间线段** | `Segment3D` | `@/components/Math3D/Segment3D` | 空间几何线段/棱/垂线段/射影线（纯几何线段无箭头）。Props: `from`, `to`, `colorKey`, `lineWidth`, `dashed` |
 | **3D 平面** | `Plane3D` | `@/components/Math3D/Plane3D` | 空间平面。Props: `origin`, `uAxis`, `vAxis`, `width`, `height`, `colorKey`, `opacity` |
 | **3D 多边形面** | `Polygon3DFace` | `@/components/Math3D/Polygon3DFace` | 空间 3 或 4 顶点多边形面。Props: `points`, `colorKey`, `opacity` |
-| **3D 向量** | `Vector3DArrow` | `@/components/Math3D/Vector3DArrow` | 带箭头向量。Props: `from`, `to`, `colorKey`, `radius` |
-| **3D 角弧** | `AngleArc3D` | `@/components/Math3D/AngleArc3D` | 空间夹角弧线。Props: `vertex`, `dirA`, `dirB`, `radius`, `colorKey` |
+| **3D 向量** | `Vector3DArrow` | `@/components/Math3D/Vector3DArrow` | 带箭头 3D 向量（仅法向量/基向量使用，严禁画几何线段）。Props: `from`, `to`, `colorKey`, `radius` |
+| **3D 角弧** | `AngleArc3D` | `@/components/Math3D/AngleArc3D` | 空间夹角弧线与直角方框。Props: `vertex`, `dirA`, `dirB`, `radius`, `colorKey`, `isRight` |
 | **线面角组件** | `LinePlaneAngle3D` | `@/components/Math3D` | 斜线/垂线段/投影线/法向量/角弧一体化组件 |
-| **3D 点标签** | `PointLabel3D` | `@/components/Math3D/PointLabel3D` | 纯 3D 矢量文字（零白底/零边框）。**所有单字母几何顶点唯一合法组件**。Props: `position`, `text`, `offset` |
-| **上下标标签** | `CompoundLabel3D` | `@/components/Math3D/CompoundLabel3D` | 纯 3D 矢量上下标（如 $A_1$）。**所有带下标几何顶点唯一合法组件**。Props: `position`, `base`, `subscript` |
+| **3D 点标签** | `PointLabel3D` | `@/components/Math3D/PointLabel3D` | 纯 3D 矢量文字。**所有单字母几何顶点唯一合法组件（严禁传 Unicode 下标）**。Props: `position`, `text`, `offset` |
+| **上下标标签** | `CompoundLabel3D` | `@/components/Math3D/CompoundLabel3D` | 纯 3D 矢量上下标（如 $A_1, P_1$）。**所有带下标顶点唯一合法组件**。Props: `position`, `base`, `subscript` |
 | **3D 公式标签**| `FormulaLabel3D` | `@/components/Math3D/FormulaLabel3D` | KaTeX 空间公式（如 $\vec{a}, \vec{OP}$）。**默认 plain 纯净透明模式，严禁用于几何顶点**。Props: `position`, `tex`, `plain` |
 | **3D 图例** | `Legend3D` | `@/components/Math3D/Legend3D` | 底端浮动图例。Props: `title`, `items` |
 | **截面可视化** | `SectionPlane3D` | `@/components/Math3D` | 3D 截面多边形、底面投影与交轨辅助线 |

@@ -5,11 +5,13 @@ import { PointLabel3D } from "./PointLabel3D";
 interface Scene3DGridProps {
   size?: number;
   showLabels?: boolean;
+  showGrid?: boolean;
 }
 
 export const Scene3DGrid = ({
   size = 5,
   showLabels = true,
+  showGrid = false,
 }: Scene3DGridProps) => {
   const coneHeight = 0.28;
   const coneRadius = 0.08;
@@ -68,10 +70,12 @@ export const Scene3DGrid = ({
         <meshBasicMaterial color={MATH_COLORS.axis3D_Z} />
       </mesh>
 
-      {/* 水平 XOY 网格参考面 */}
-      <gridHelper
-        args={[size * 2, size * 2, MATH_COLORS.grid, MATH_COLORS.grid]}
-      />
+      {/* 水平 XOY 网格参考面 (高中数学解析建系默认关闭，保持纯净) */}
+      {showGrid && (
+        <gridHelper
+          args={[size * 2, size * 2, MATH_COLORS.grid, MATH_COLORS.grid]}
+        />
+      )}
 
       {/* 坐标轴标签 (纯数学坐标 Vec3) */}
       {showLabels && (
