@@ -11,6 +11,7 @@ import {
   SelectGrid,
   TipCard,
   KatexFormula,
+  Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -106,12 +107,14 @@ export default function SpatialAngleAnimation() {
   );
 
   // 组装右屏看板数据
+  const animId =
+    activeMode === "distance" ? "anim-solid-distance" : "anim-solid-angle";
   const mathData = useMemo(
     () =>
-      buildMathQuantities("anim-solid-angle", params, {
+      buildMathQuantities(animId, params, {
         mode: activeMode,
       }),
-    [params, activeMode],
+    [params, activeMode, animId],
   );
 
   const handleParamChange = (key: string, value: number) => {
@@ -270,57 +273,30 @@ export default function SpatialAngleAnimation() {
             />
           </LeftPanelSection>
 
-          {/* Step 4: 几何图层与标注控制 (按数学分类解耦) */}
+          {/* Step 4: 几何图层与标注控制 (按数学分类解耦，使用规范 Toggle) */}
           <LeftPanelSection title="几何图层与标注控制" compact>
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => setShowAuxiliary((prev) => !prev)}
-                className={`py-1.5 px-2 rounded text-xs font-medium border transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-                  showAuxiliary
-                    ? "bg-primary-50 text-primary-700 border-primary-300 font-semibold"
-                    : "bg-neutral-50 text-neutral-500 border-neutral-200"
-                }`}
-              >
-                <span>{showAuxiliary ? "✓" : "○"} 几何辅助线</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowRightAngles((prev) => !prev)}
-                className={`py-1.5 px-2 rounded text-xs font-medium border transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-                  showRightAngles
-                    ? "bg-primary-50 text-primary-700 border-primary-300 font-semibold"
-                    : "bg-neutral-50 text-neutral-500 border-neutral-200"
-                }`}
-              >
-                <span>{showRightAngles ? "✓" : "○"} 垂直直角符号</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowAngles((prev) => !prev)}
-                className={`py-1.5 px-2 rounded text-xs font-medium border transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-                  showAngles
-                    ? "bg-primary-50 text-primary-700 border-primary-300 font-semibold"
-                    : "bg-neutral-50 text-neutral-500 border-neutral-200"
-                }`}
-              >
-                <span>{showAngles ? "✓" : "○"} 空间角弧 θ</span>
-              </button>
-
+            <div className="grid grid-cols-2 gap-2 bg-neutral-50/80 p-2 rounded-md border border-neutral-200/70">
+              <Toggle
+                label="几何辅助线"
+                checked={showAuxiliary}
+                onChange={setShowAuxiliary}
+              />
+              <Toggle
+                label="垂直直角符号"
+                checked={showRightAngles}
+                onChange={setShowRightAngles}
+              />
+              <Toggle
+                label="空间角弧 θ"
+                checked={showAngles}
+                onChange={setShowAngles}
+              />
               {(activeMode === "linePlane" || activeMode === "dihedral") && (
-                <button
-                  type="button"
-                  onClick={() => setShowNormals((prev) => !prev)}
-                  className={`py-1.5 px-2 rounded text-xs font-medium border transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
-                    showNormals
-                      ? "bg-primary-50 text-primary-700 border-primary-300 font-semibold"
-                      : "bg-neutral-50 text-neutral-500 border-neutral-200"
-                  }`}
-                >
-                  <span>{showNormals ? "✓" : "○"} 空间法向量</span>
-                </button>
+                <Toggle
+                  label="空间法向量"
+                  checked={showNormals}
+                  onChange={setShowNormals}
+                />
               )}
             </div>
           </LeftPanelSection>
@@ -351,14 +327,19 @@ export default function SpatialAngleAnimation() {
               onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
             {activeMode === "dihedral" && (
-              <div className="mt-2.5">
-                <button
-                  type="button"
-                  onClick={handleAlignAlongEdge}
-                  className="w-full py-1.5 px-3 rounded text-xs font-medium bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span>📐 沿棱直视 (视线沿 BD 判定钝锐角)</span>
-                </button>
+              <div className="mt-2">
+                <SelectGrid
+                  items={[
+                    {
+                      key: "alongEdge",
+                      label: "📐 沿棱直视 (视线沿 BD 判定钝锐角)",
+                      fullWidth: true,
+                    },
+                  ]}
+                  value=""
+                  onChange={() => handleAlignAlongEdge()}
+                  columns={1}
+                />
               </div>
             )}
           </LeftPanelSection>
@@ -946,7 +927,11 @@ export default function SpatialAngleAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
-          title="空间角与坐标系高考看板"
+          title={
+            activeMode === "distance"
+              ? "点到平面距离与体积极值高考看板"
+              : "空间角与坐标系高考看板"
+          }
         />
       }
     />

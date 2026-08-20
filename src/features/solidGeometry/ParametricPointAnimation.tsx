@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { BufferGeometry, BufferAttribute, DoubleSide } from "three";
 import { ThreePanel } from "@/components/Layout/ThreePanel";
 import { ThreeDCanvas } from "@/components/Layout/ThreeDCanvas";
 import {
@@ -8,17 +7,24 @@ import {
   ParamControl,
   MathPanel,
   TabSwitcher,
+  SelectGrid,
+  TipCard,
+  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
   Scene3DGrid,
   Vector3DArrow,
+  Segment3D,
   Point3D,
   PointLabel3D,
   CompoundLabel3D,
+  FormulaLabel3D,
+  Polygon3DFace,
   Legend3D,
   CameraRig,
   ThreeViewsPanel,
+  ModeSwitchOverlay3D,
 } from "@/components/Math3D";
 import { Cuboid } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
@@ -26,7 +32,6 @@ import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidParametricMeta } from "@/data/registries/solidGeometry";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { buildSolidViews } from "./threeViews/buildSolidViews";
-import { mathToThree } from "@/math3d/coordinateConvention";
 import {
   calculateSinglePointAngle,
   calculateSurfacePath,
@@ -40,6 +45,9 @@ export default function ParametricPointAnimation() {
   const [activeMode, setActiveMode] =
     useState<ParametricMode>("singlePointAngle");
   const [viewMode, setViewMode] = useState<"3d" | "threeViews">("3d");
+  const [interactionMode, setInteractionMode] = useState<"orbit" | "drag">(
+    "orbit",
+  );
 
   const [params, setParams] = useState<Record<string, number>>({
     a: 4,
@@ -120,6 +128,33 @@ export default function ParametricPointAnimation() {
       }));
   }, [params, activeMode]);
 
+  // 5. 教学提示配置
+  const tipConfig = useMemo(() => {
+    switch (activeMode) {
+      case "singlePointAngle":
+        return {
+          variant: "primary" as const,
+          formula:
+            "\\cos\\theta(\\lambda) = \\frac{|\\vec{n}_{PAC}\\cdot\\vec{n}_0|}{|\\vec{n}_{PAC}||\\vec{n}_0|}",
+          text: "设动点坐标 P(a, 0, λc)，利用法向量夹角列方程反求 λ，并检验 λ ∈ [0, 1] 判断动点存在性。",
+        };
+      case "doublePointDistance":
+        return {
+          variant: "warning" as const,
+          formula:
+            "|PQ|^2 = a^2(1-\\mu)^2 + b^2\\mu^2 + \\lambda^2 c^2 \\ge d_{\\min}^2",
+          text: "双参数二次型最值：通过配方法独立求各变量极小，当 λ=0 且 μ=a²/(a²+b²) 时取公垂线最小距离。",
+        };
+      case "surfaceShortestPath":
+        return {
+          variant: "success" as const,
+          formula:
+            "L_{\\min} = \\min\\{\\sqrt{(a+b)^2+c^2}, \\sqrt{a^2+(b+c)^2}\\}",
+          text: "立体几何表面最短路径：“化曲为平，展成平面”。展开相邻侧面与底面，直线连结起点与终点。",
+        };
+    }
+  }, [activeMode]);
+
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
@@ -135,23 +170,10 @@ export default function ParametricPointAnimation() {
     });
   };
 
-  // 5. 三视图数据
+  // 6. 三视图数据
   const viewsData = useMemo(() => {
     return buildSolidViews("cuboid", { width: a, depth: b, height: c });
   }, [a, b, c]);
-
-  // 6. 截面 PAC 的 R3F Mesh buffer geometry (精确映射 three.js 场景坐标)
-  const pacGeometry = useMemo(() => {
-    const geom = new BufferGeometry();
-    const p3 = mathToThree(P);
-    const a3 = mathToThree(A);
-    const c3 = mathToThree(C);
-    const vertices = new Float32Array([...p3, ...a3, ...c3]);
-    geom.setAttribute("position", new BufferAttribute(vertices, 3));
-    geom.computeVertexNormals();
-    return geom;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [P.x, P.y, P.z, A.x, A.y, A.z, C.x, C.y, C.z]);
 
   // 截面中心与法向量起点
   const centerPAC: Vec3 = {
@@ -170,21 +192,34 @@ export default function ParametricPointAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="探究模式选择"
-            subtitle="选择高考空间向量动点典型问题"
-          >
-            <TabSwitcher
-              tabs={[
-                { key: "singlePointAngle", label: "棱上动点与空间角" },
-                { key: "doublePointDistance", label: "双动点与向量最值" },
-                { key: "surfaceShortestPath", label: "表面最短路径" },
+          {/* Step 1: 探究模式 (2+1 布局防截断) */}
+          <LeftPanelSection title="探究模式">
+            <SelectGrid
+              items={[
+                {
+                  key: "singlePointAngle",
+                  label: "棱上动点与空间角",
+                  description: "存在性与方程求解",
+                },
+                {
+                  key: "doublePointDistance",
+                  label: "双动点与向量最值",
+                  description: "二次型配方与公垂线",
+                },
+                {
+                  key: "surfaceShortestPath",
+                  label: "表面最短路径",
+                  description: "展开图与直线路经",
+                  fullWidth: true,
+                },
               ]}
               value={activeMode}
               onChange={(m) => setActiveMode(m as ParametricMode)}
+              columns={2}
             />
           </LeftPanelSection>
 
+          {/* Step 2: 参数调节 */}
           <LeftPanelSection
             title="几何与动点参数调节"
             subtitle="拖动滑块或在 3D 场景中直接拖拽动点 P / Q"
@@ -196,7 +231,19 @@ export default function ParametricPointAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 视图与视角 */}
+          {/* Step 3: 教学提示 */}
+          <LeftPanelSection title="教学提示与解题通法" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="font-semibold text-xs mb-1">
+                <KatexFormula mode="inline" formula={tipConfig.formula} />
+              </div>
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                {tipConfig.text}
+              </p>
+            </TipCard>
+          </LeftPanelSection>
+
+          {/* Step 4: 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
               <TabSwitcher
@@ -229,188 +276,259 @@ export default function ParametricPointAnimation() {
         viewMode === "threeViews" ? (
           <ThreeViewsPanel views={viewsData.views} extent={viewsData.extent} />
         ) : (
-          <ThreeDCanvas
-            cameraPosition={cameraPosition}
-            legend={
-              <Legend3D
-                title="图例"
-                items={[
-                  { colorKey: "primary", swatch: "area", label: "长方体主体" },
-                  {
-                    colorKey: "highlight",
-                    swatch: "line",
-                    label: "动点 P 轨线",
-                  },
-                  ...(activeMode === "singlePointAngle"
-                    ? [
-                        {
-                          colorKey: "secondary" as const,
-                          swatch: "area" as const,
-                          label: "截面 PAC & 法向量",
-                        },
-                        {
-                          colorKey: "accent" as const,
-                          swatch: "line" as const,
-                          label: "连线 DP",
-                        },
-                      ]
-                    : []),
-                  ...(activeMode === "doublePointDistance"
-                    ? [
-                        {
-                          colorKey: "secondary" as const,
-                          swatch: "line" as const,
-                          label: "对角线 AC",
-                        },
-                        {
-                          colorKey: "accent" as const,
-                          swatch: "line" as const,
-                          label: "动线段 PQ",
-                        },
-                      ]
-                    : []),
-                  ...(activeMode === "surfaceShortestPath"
-                    ? [
-                        {
-                          colorKey: "secondary" as const,
-                          swatch: "line" as const,
-                          label: "最佳折点 P₁",
-                        },
-                      ]
-                    : []),
-                ]}
-              />
-            }
-          >
-            <CameraRig ref={controlsRef} />
-            <Scene3DGrid size={5} />
-
-            {/* 长方体透视骨架 */}
-            <Cuboid a={a} b={b} c={c} opacity={0.12} colorKey="primary" />
-
-            {/* 顶点的固定标注 */}
-            <PointLabel3D position={A} text="A" />
-            <PointLabel3D position={B} text="B" />
-            <PointLabel3D position={C} text="C" />
-            <PointLabel3D position={D} text="D" />
-            <PointLabel3D position={A1} text="A1" />
-            <PointLabel3D position={B1} text="B1" />
-            <PointLabel3D position={C1} text="C1" />
-            <PointLabel3D position={D1} text="D1" />
-
-            {/* 侧棱 BB1 高亮轨迹导轨 */}
-            <Vector3DArrow from={B} to={B1} colorKey="highlight" />
-
-            {/* 动点 P：在侧棱 BB1 上垂直拖拽 */}
-            <Point3D
-              position={P}
-              draggable
-              constrain={(raw) => ({
-                x: a,
-                y: 0,
-                z: Math.min(c, Math.max(0, raw.z)),
-              })}
-              onDrag={(next) =>
-                setParams((prev) => ({
-                  ...prev,
-                  lambda: Number((next.z / c).toFixed(2)),
-                }))
+          <div className="w-full h-full relative">
+            <ThreeDCanvas
+              cameraPosition={cameraPosition}
+              legend={
+                <Legend3D
+                  title="图例标注"
+                  items={[
+                    {
+                      colorKey: "primary",
+                      swatch: "area",
+                      label: "长方体主体",
+                    },
+                    {
+                      colorKey: "highlight",
+                      swatch: "line",
+                      label: "动点 P / 轨迹线",
+                    },
+                    ...(activeMode === "singlePointAngle"
+                      ? [
+                          {
+                            colorKey: "secondary" as const,
+                            swatch: "area" as const,
+                            label: "截面 PAC & 法向量",
+                          },
+                          {
+                            colorKey: "accent" as const,
+                            swatch: "line" as const,
+                            label: "动连线 DP",
+                          },
+                        ]
+                      : []),
+                    ...(activeMode === "doublePointDistance"
+                      ? [
+                          {
+                            colorKey: "secondary" as const,
+                            swatch: "line" as const,
+                            label: "对角线 AC 轨迹",
+                          },
+                          {
+                            colorKey: "accent" as const,
+                            swatch: "line" as const,
+                            label: "动线段 PQ",
+                          },
+                        ]
+                      : []),
+                    ...(activeMode === "surfaceShortestPath"
+                      ? [
+                          {
+                            colorKey: "secondary" as const,
+                            swatch: "line" as const,
+                            label: "最佳折点 P₁",
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
               }
-              colorKey="highlight"
-            />
-            <PointLabel3D position={P} text="P(λ)" offset={[0.15, 0, 0.1]} />
+            >
+              <CameraRig
+                ref={controlsRef}
+                enabled={interactionMode === "orbit"}
+              />
+              {/* 空间直角坐标系（纯三轴系统，彻底移除地面网格） */}
+              <Scene3DGrid size={5.5} showGrid={false} />
 
-            {/* 模式一：单动点与空间角及存在性 */}
-            {activeMode === "singlePointAngle" && (
-              <>
-                {/* 截面 PAC 面片 (与 3D 场景坐标精确重合) */}
-                <mesh geometry={pacGeometry}>
-                  <meshBasicMaterial
-                    color="#3B82F6"
-                    opacity={0.3}
-                    transparent
-                    side={DoubleSide}
-                  />
-                </mesh>
-                {/* 截面三条边 */}
-                <Vector3DArrow from={A} to={P} colorKey="highlight" />
-                <Vector3DArrow from={P} to={C} colorKey="highlight" />
-                <Vector3DArrow from={C} to={A} colorKey="highlight" />
+              {/* 长方体透视骨架 */}
+              <Cuboid a={a} b={b} c={c} opacity={0.12} colorKey="primary" />
 
-                {/* 截面法向量 */}
-                {resSingle.lenN > 1e-4 && (
-                  <Vector3DArrow
-                    from={centerPAC}
-                    to={vecNormalScaled}
+              {/* 顶点文本标注（纯 3D 矢量文字，严格使用 CompoundLabel3D 消除豆腐块） */}
+              <PointLabel3D position={A} text="A" />
+              <PointLabel3D position={B} text="B" />
+              <PointLabel3D position={C} text="C" />
+              <PointLabel3D position={D} text="D" />
+              <CompoundLabel3D position={A1} base="A" subscript="1" />
+              <CompoundLabel3D position={B1} base="B" subscript="1" />
+              <CompoundLabel3D position={C1} base="C" subscript="1" />
+              <CompoundLabel3D position={D1} base="D" subscript="1" />
+
+              {/* 侧棱 BB1 高亮轨迹导轨 (纯几何线段，无箭头) */}
+              <Segment3D
+                from={B}
+                to={B1}
+                colorKey="highlight"
+                lineWidth={2.5}
+              />
+
+              {/* 动点 P：在侧棱 BB1 上垂直拖拽 */}
+              <Point3D
+                position={P}
+                draggable={interactionMode === "drag"}
+                constrain={(raw) => ({
+                  x: a,
+                  y: 0,
+                  z: Math.min(c, Math.max(0, raw.z)),
+                })}
+                onDrag={(next) =>
+                  setParams((prev) => ({
+                    ...prev,
+                    lambda: Number((next.z / c).toFixed(2)),
+                  }))
+                }
+                colorKey="highlight"
+              />
+              <PointLabel3D position={P} text="P(λ)" offset={[0.15, 0, 0.1]} />
+
+              {/* 模式一：单动点与空间角及存在性 */}
+              {activeMode === "singlePointAngle" && (
+                <>
+                  {/* 截面 PAC 半透明面片 */}
+                  <Polygon3DFace
+                    points={[P, A, C]}
                     colorKey="secondary"
+                    opacity={0.25}
                   />
-                )}
 
-                {/* 动连线 DP */}
-                <Vector3DArrow from={D} to={P} colorKey="accent" />
-                {/* 探究线 AC1 */}
-                <Vector3DArrow from={A} to={C1} colorKey="secondary" />
-              </>
-            )}
+                  {/* 截面三条边 (纯几何线段，绝无箭头) */}
+                  <Segment3D
+                    from={A}
+                    to={P}
+                    colorKey="highlight"
+                    lineWidth={2.5}
+                  />
+                  <Segment3D
+                    from={P}
+                    to={C}
+                    colorKey="highlight"
+                    lineWidth={2.5}
+                  />
+                  <Segment3D
+                    from={C}
+                    to={A}
+                    colorKey="highlight"
+                    lineWidth={2.5}
+                  />
 
-            {/* 模式二：双动点与向量最值 */}
-            {activeMode === "doublePointDistance" && (
-              <>
-                {/* 底面对角线 AC 高亮轨迹导轨 */}
-                <Vector3DArrow from={A} to={C} colorKey="secondary" />
+                  {/* 截面法向量 (唯一代数向量箭头) */}
+                  {resSingle.lenN > 1e-4 && (
+                    <>
+                      <Vector3DArrow
+                        from={centerPAC}
+                        to={vecNormalScaled}
+                        colorKey="secondary"
+                      />
+                      <FormulaLabel3D
+                        position={vecNormalScaled}
+                        tex="\\vec{n}_{PAC}"
+                      />
+                    </>
+                  )}
 
-                {/* 动点 Q：在 AC 上可向量正交平滑拖拽 */}
-                <Point3D
-                  position={Q}
-                  draggable
-                  constrain={(raw) => {
-                    const acLenSq = a * a + b * b;
-                    const dotVal = raw.x * a + raw.y * b;
-                    const t = Math.min(1, Math.max(0, dotVal / acLenSq));
-                    return { x: t * a, y: t * b, z: 0 };
-                  }}
-                  onDrag={(next) => {
-                    const acLenSq = a * a + b * b;
-                    const t = Math.min(
-                      1,
-                      Math.max(0, (next.x * a + next.y * b) / acLenSq),
-                    );
-                    setParams((prev) => ({
-                      ...prev,
-                      mu: Number(t.toFixed(2)),
-                    }));
-                  }}
-                  colorKey="accent"
-                />
-                <PointLabel3D
-                  position={Q}
-                  text="Q(μ)"
-                  offset={[0.1, 0.1, -0.1]}
-                />
+                  {/* 动连线 DP (纯几何线段) */}
+                  <Segment3D
+                    from={D}
+                    to={P}
+                    colorKey="accent"
+                    lineWidth={2.5}
+                  />
+                  {/* 探究线 AC1 (纯几何线段) */}
+                  <Segment3D
+                    from={A}
+                    to={C1}
+                    colorKey="secondary"
+                    dashed
+                    lineWidth={2}
+                  />
+                </>
+              )}
 
-                {/* 动线段 PQ */}
-                <Vector3DArrow from={P} to={Q} colorKey="highlight" />
-              </>
-            )}
+              {/* 模式二：双动点与向量最值 */}
+              {activeMode === "doublePointDistance" && (
+                <>
+                  {/* 底面对角线 AC 高亮轨迹导轨 (纯几何线段) */}
+                  <Segment3D
+                    from={A}
+                    to={C}
+                    colorKey="secondary"
+                    lineWidth={2.5}
+                  />
 
-            {/* 模式三：表面展开最短路径 */}
-            {activeMode === "surfaceShortestPath" && (
-              <>
-                {/* 折线段 AP 与 PC1 */}
-                <Vector3DArrow from={A} to={P} colorKey="highlight" />
-                <Vector3DArrow from={P} to={C1} colorKey="highlight" />
+                  {/* 动点 Q：在 AC 上可向量正交平滑拖拽 */}
+                  <Point3D
+                    position={Q}
+                    draggable={interactionMode === "drag"}
+                    constrain={(raw) => {
+                      const acLenSq = a * a + b * b;
+                      const dotVal = raw.x * a + raw.y * b;
+                      const t = Math.min(1, Math.max(0, dotVal / acLenSq));
+                      return { x: t * a, y: t * b, z: 0 };
+                    }}
+                    onDrag={(next) => {
+                      const acLenSq = a * a + b * b;
+                      const t = Math.min(
+                        1,
+                        Math.max(0, (next.x * a + next.y * b) / acLenSq),
+                      );
+                      setParams((prev) => ({
+                        ...prev,
+                        mu: Number(t.toFixed(2)),
+                      }));
+                    }}
+                    colorKey="accent"
+                  />
+                  <PointLabel3D
+                    position={Q}
+                    text="Q(μ)"
+                    offset={[0.1, 0.1, -0.1]}
+                  />
 
-                {/* 理论最佳折点 P1 指示 */}
-                <Point3D position={resPath.optimalP1} colorKey="secondary" />
-                <CompoundLabel3D
-                  position={resPath.optimalP1}
-                  base="P"
-                  subscript="1"
-                  offset={[-0.4, 0, 0]}
-                />
-              </>
-            )}
-          </ThreeDCanvas>
+                  {/* 动线段 PQ (纯几何线段，无箭头) */}
+                  <Segment3D
+                    from={P}
+                    to={Q}
+                    colorKey="highlight"
+                    lineWidth={3}
+                  />
+                </>
+              )}
+
+              {/* 模式三：表面展开最短路径 */}
+              {activeMode === "surfaceShortestPath" && (
+                <>
+                  {/* 折线段 AP 与 PC1 (纯几何线段，无箭头) */}
+                  <Segment3D
+                    from={A}
+                    to={P}
+                    colorKey="highlight"
+                    lineWidth={3}
+                  />
+                  <Segment3D
+                    from={P}
+                    to={C1}
+                    colorKey="highlight"
+                    lineWidth={3}
+                  />
+
+                  {/* 理论最佳折点 P1 指示 */}
+                  <Point3D position={resPath.optimalP1} colorKey="secondary" />
+                  <CompoundLabel3D
+                    position={resPath.optimalP1}
+                    base="P"
+                    subscript="1"
+                    offset={[-0.4, 0, 0]}
+                  />
+                </>
+              )}
+            </ThreeDCanvas>
+
+            {/* 右上角漫游/交互切换浮层 */}
+            <ModeSwitchOverlay3D
+              mode={interactionMode}
+              onModeChange={setInteractionMode}
+            />
+          </div>
         )
       }
       right={

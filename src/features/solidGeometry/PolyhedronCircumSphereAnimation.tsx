@@ -8,9 +8,12 @@ import {
   MathPanel,
   SelectGrid,
   TabSwitcher,
+  TipCard,
+  KatexFormula,
+  Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Scene3DGrid, Legend3D, CameraRig } from "@/components/Math3D";
+import { Legend3D, CameraRig } from "@/components/Math3D";
 import { PolyhedronSphereScene } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -126,10 +129,47 @@ export default function PolyhedronCircumSphereAnimation() {
       }));
   }, [params, modelType]);
 
+  // 教学提示配置
+  const tipConfig = useMemo(() => {
+    switch (modelType) {
+      case "corner":
+        return {
+          variant: "primary" as const,
+          formula: "2R = \\sqrt{a^2 + b^2 + c^2}",
+          text: "墙角模型（三侧棱两两垂直）：将三棱锥补形成长方体，外接球直径等于体对角线长。",
+        };
+      case "cylinder":
+        return {
+          variant: "warning" as const,
+          formula: "R^2 = r_{\\text{底}}^2 + \\left(\\frac{h}{2}\\right)^2",
+          text: "柱体模型（直棱柱套柱）：底面外接圆半径 r_底 与半高 h/2 勾股合成外接球半径 R。",
+        };
+      case "complement":
+        return {
+          variant: "success" as const,
+          formula: "8R^2 = a^2 + b^2 + c^2",
+          text: "对棱相等四面体补形模型：嵌入长方体使得四面体 6 条棱为长方体 6 面对角线，2(x²+y²+z²)=a²+b²+c²。",
+        };
+      case "verticalEdge":
+        return {
+          variant: "warning" as const,
+          formula: "R^2 = r_{\\text{底}}^2 + \\left(\\frac{h}{2}\\right)^2",
+          text: "汉堡模型（侧棱垂直底面）：套柱转化法，高为垂直侧棱 h，底面外心正上方 h/2 处即球心。",
+        };
+      case "inSphere":
+        return {
+          variant: "danger" as const,
+          formula: "r_{\\text{in}} = \\frac{3V}{S_1 + S_2 + S_3 + S_4}",
+          text: "内切球等体积法：球心与各顶点连线剖分为 4 个同高三棱锥，体积和等于原三棱锥体积。",
+        };
+    }
+  }, [modelType]);
+
   return (
     <ThreePanel
       left={
         <LeftPanel>
+          {/* Step 1: 球切接模型选择 (2+1 布局防截断) */}
           <LeftPanelSection title="球切接模型选择">
             <SelectGrid
               items={[
@@ -157,67 +197,45 @@ export default function PolyhedronCircumSphereAnimation() {
                   key: "inSphere",
                   label: "内切球模型",
                   description: "等体积法剖分",
+                  fullWidth: true,
                 },
               ]}
               value={modelType}
               onChange={(k) => handleModelTypeChange(k as ModelType)}
-              variant="filled"
-              columns={1}
+              columns={2}
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="视图与透视辅助">
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-neutral-500 mb-1 block font-medium">
-                  {modelType === "verticalEdge"
+          {/* Step 2: 视图与透视辅助 (紧凑 Toggle) */}
+          <LeftPanelSection title="几何图层与框架辅助" compact>
+            <div className="space-y-2 bg-neutral-50/80 p-2 rounded-md border border-neutral-200/70">
+              <Toggle
+                label={
+                  modelType === "verticalEdge"
                     ? "套柱三棱柱框架"
-                    : "补形长方体/柱体框架"}
-                </label>
-                <TabSwitcher
-                  tabs={[
-                    { key: "show", label: "显示框架" },
-                    { key: "hide", label: "隐藏框架" },
-                  ]}
-                  value={showComplementFrame ? "show" : "hide"}
-                  onChange={(v) => setShowComplementFrame(v === "show")}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-neutral-500 mb-1 block font-medium">
-                  {modelType === "inSphere"
-                    ? "内切球透明球壳"
-                    : "外接球透明球壳"}
-                </label>
-                <TabSwitcher
-                  tabs={[
-                    { key: "show", label: "显示球壳" },
-                    { key: "hide", label: "隐藏球壳" },
-                  ]}
-                  value={showSphere ? "show" : "hide"}
-                  onChange={(v) => setShowSphere(v === "show")}
-                />
-              </div>
-
+                    : "补形长方体/柱体框架"
+                }
+                checked={showComplementFrame}
+                onChange={setShowComplementFrame}
+              />
+              <Toggle
+                label={
+                  modelType === "inSphere" ? "内切球透明球壳" : "外接球透明球壳"
+                }
+                checked={showSphere}
+                onChange={setShowSphere}
+              />
               {modelType === "inSphere" && (
-                <div>
-                  <label className="text-xs text-neutral-500 mb-1 block font-medium">
-                    切点 T₁~T₄ 与半径垂线 (r_in)
-                  </label>
-                  <TabSwitcher
-                    tabs={[
-                      { key: "show", label: "显示半径垂线" },
-                      { key: "hide", label: "隐藏垂线" },
-                    ]}
-                    value={showRadiusLines ? "show" : "hide"}
-                    onChange={(v) => setShowRadiusLines(v === "show")}
-                  />
-                </div>
+                <Toggle
+                  label="切点 T₁~T₄ 与半径垂线"
+                  checked={showRadiusLines}
+                  onChange={setShowRadiusLines}
+                />
               )}
             </div>
           </LeftPanelSection>
 
+          {/* Step 3: 参数调节 */}
           <LeftPanelSection
             title="几何参数调节"
             subtitle="拖动滑块改变棱长与高"
@@ -229,6 +247,19 @@ export default function PolyhedronCircumSphereAnimation() {
             />
           </LeftPanelSection>
 
+          {/* Step 4: 教学提示 */}
+          <LeftPanelSection title="教学提示与核心公式" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="font-semibold text-xs mb-1">
+                <KatexFormula mode="inline" formula={tipConfig.formula} />
+              </div>
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                {tipConfig.text}
+              </p>
+            </TipCard>
+          </LeftPanelSection>
+
+          {/* Step 5: 3D 视角选择 */}
           <LeftPanelSection title="3D 视角选择">
             <TabSwitcher
               layout="horizontal"
@@ -287,7 +318,7 @@ export default function PolyhedronCircumSphereAnimation() {
           }
         >
           <CameraRig ref={controlsRef} />
-          <Scene3DGrid size={5} />
+          {/* 纯几何范式：严禁笛卡尔直角坐标系与地面网格 */}
 
           <PolyhedronSphereScene
             modelType={modelType}

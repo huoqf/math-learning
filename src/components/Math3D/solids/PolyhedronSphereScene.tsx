@@ -16,7 +16,7 @@ import {
 } from "@/math3d/polyhedronSphere";
 import { InSphere } from "./InSphere";
 import { mathToThree } from "@/math3d/coordinateConvention";
-import { Line } from "@react-three/drei";
+import { MATH_COLORS } from "@/theme/math/colors";
 import type { Vec3 } from "@/math3d/vector3";
 
 interface PolyhedronSphereSceneProps {
@@ -28,21 +28,21 @@ interface PolyhedronSphereSceneProps {
 }
 
 /**
- * 渲染三棱锥 P-ABC 的 4 个半透明 Mesh 实体面
+ * 渲染三棱锥 P-ABC 的 4 个半透明 Mesh 实体面 (完全基于主题 Token)
  */
 function TetrahedronSolidMesh({
   P,
   A,
   B,
   C,
-  color = "#3B82F6",
+  colorKey = "primary",
   opacity = 0.18,
 }: {
   P: Vec3;
   A: Vec3;
   B: Vec3;
   C: Vec3;
-  color?: string;
+  colorKey?: keyof typeof MATH_COLORS;
   opacity?: number;
 }) {
   const positions = useMemo(() => {
@@ -71,13 +71,15 @@ function TetrahedronSolidMesh({
     ]);
   }, [P, A, B, C]);
 
+  const colorHex = MATH_COLORS[colorKey] ?? MATH_COLORS.primary;
+
   return (
     <mesh>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <meshStandardMaterial
-        color={color}
+        color={colorHex}
         transparent
         opacity={opacity}
         side={THREE.DoubleSide}
@@ -140,23 +142,20 @@ export function PolyhedronSphereScene({
           A={A}
           B={B}
           C={C}
-          color="#EF4444"
+          colorKey="paramPrimary"
           opacity={0.15}
         />
 
-        {/* 三棱锥 P-ABC 的实线棱 */}
-        {linesPyramid.map(([from, to], idx) => {
-          const p1 = mathToThree(from);
-          const p2 = mathToThree(to);
-          return (
-            <Line
-              key={`pyr-edge-${idx}`}
-              points={[p1, p2]}
-              color="#EF4444"
-              lineWidth={3}
-            />
-          );
-        })}
+        {/* 三棱锥 P-ABC 的实线棱 (规范 Segment3D) */}
+        {linesPyramid.map(([from, to], idx) => (
+          <Segment3D
+            key={`pyr-edge-${idx}`}
+            from={from}
+            to={to}
+            colorKey="paramPrimary"
+            lineWidth={3}
+          />
+        ))}
 
         {/* 顶点 P, A, B, C */}
         <Point3D position={P} colorKey="primary" />
@@ -172,13 +171,13 @@ export function PolyhedronSphereScene({
         {showComplementFrame && (
           <group>
             <Cuboid a={a} b={b} c={c} colorKey="secondary" opacity={0.12} />
-            {/* 长方体对角线 P-P' */}
-            <Line
-              points={[mathToThree(P), mathToThree(oppositeP)]}
-              color="#F59E0B"
+            {/* 长方体体对角线 P-P' */}
+            <Segment3D
+              from={P}
+              to={oppositeP}
+              colorKey="paramSecondary"
               lineWidth={2.5}
               dashed
-              dashScale={10}
             />
             <Point3D position={oppositeP} colorKey="secondary" />
             <PointLabel3D position={oppositeP} text="P'" />
@@ -246,12 +245,12 @@ export function PolyhedronSphereScene({
         {showComplementFrame && (
           <group>
             {/* 轴线 O1-O2 */}
-            <Line
-              points={[mathToThree(bottomCenter), mathToThree(topCenter)]}
-              color="#10B981"
+            <Segment3D
+              from={bottomCenter}
+              to={topCenter}
+              colorKey="paramTertiary"
               lineWidth={2}
               dashed
-              dashScale={12}
             />
             <Point3D position={bottomCenter} colorKey="secondary" />
             <CompoundLabel3D position={bottomCenter} base="O" subscript="1" />
@@ -259,14 +258,16 @@ export function PolyhedronSphereScene({
             <CompoundLabel3D position={topCenter} base="O" subscript="2" />
 
             {/* 勾股直角三角形 O-O1-A */}
-            <Line
-              points={[mathToThree(bottomCenter), mathToThree(A)]}
-              color="#F59E0B"
+            <Segment3D
+              from={bottomCenter}
+              to={A}
+              colorKey="paramSecondary"
               lineWidth={2.5}
             />
-            <Line
-              points={[mathToThree(center), mathToThree(bottomCenter)]}
-              color="#10B981"
+            <Segment3D
+              from={center}
+              to={bottomCenter}
+              colorKey="paramTertiary"
               lineWidth={2.5}
             />
             <Segment3D
@@ -295,13 +296,13 @@ export function PolyhedronSphereScene({
       complementData;
     const [A, B, C, D] = tetrahedronVertices;
 
-    const tetrahedronEdges: [Vec3, Vec3, string][] = [
-      [A, B, "#EF4444"], // 对棱 a (AB)
-      [C, D, "#EF4444"], // 对棱 a (CD)
-      [A, C, "#3B82F6"], // 对棱 b (AC)
-      [B, D, "#3B82F6"], // 对棱 b (BD)
-      [A, D, "#10B981"], // 对棱 c (AD)
-      [B, C, "#10B981"], // 对棱 c (BC)
+    const tetrahedronEdges: [Vec3, Vec3, keyof typeof MATH_COLORS][] = [
+      [A, B, "paramPrimary"], // 对棱 a (AB)
+      [C, D, "paramPrimary"], // 对棱 a (CD)
+      [A, C, "primary"], // 对棱 b (AC)
+      [B, D, "primary"], // 对棱 b (BD)
+      [A, D, "paramTertiary"], // 对棱 c (AD)
+      [B, C, "paramTertiary"], // 对棱 c (BC)
     ];
 
     return (
@@ -317,11 +318,12 @@ export function PolyhedronSphereScene({
         <PointLabel3D position={D} text="D" />
 
         {/* 6 条四面体对棱 (相同颜色标出相等对棱) */}
-        {tetrahedronEdges.map(([from, to, color], idx) => (
-          <Line
+        {tetrahedronEdges.map(([from, to, colorKey], idx) => (
+          <Segment3D
             key={`tet-edge-${idx}`}
-            points={[mathToThree(from), mathToThree(to)]}
-            color={color}
+            from={from}
+            to={to}
+            colorKey={colorKey}
             lineWidth={3.5}
           />
         ))}
@@ -336,13 +338,13 @@ export function PolyhedronSphereScene({
               colorKey="secondary"
               opacity={0.12}
             />
-            {/* 长方体对角线 A-B */}
-            <Line
-              points={[mathToThree(A), mathToThree(B)]}
-              color="#F59E0B"
+            {/* 长方体面对角线 A-B */}
+            <Segment3D
+              from={A}
+              to={B}
+              colorKey="paramSecondary"
               lineWidth={2}
               dashed
-              dashScale={10}
             />
           </group>
         )}
@@ -382,16 +384,17 @@ export function PolyhedronSphereScene({
           A={A}
           B={B}
           C={C}
-          color="#EF4444"
+          colorKey="paramPrimary"
           opacity={0.15}
         />
 
         {/* 三棱锥 P-ABC 的实线棱 */}
         {linesPyramid.map(([from, to], idx) => (
-          <Line
+          <Segment3D
             key={`vert-edge-${idx}`}
-            points={[mathToThree(from), mathToThree(to)]}
-            color="#EF4444"
+            from={from}
+            to={to}
+            colorKey="paramPrimary"
             lineWidth={3}
           />
         ))}
@@ -419,20 +422,21 @@ export function PolyhedronSphereScene({
             />
 
             {/* 轴线 O1-O */}
-            <Line
-              points={[mathToThree(bottomCenter), mathToThree(center)]}
-              color="#10B981"
+            <Segment3D
+              from={bottomCenter}
+              to={center}
+              colorKey="paramTertiary"
               lineWidth={2.5}
               dashed
-              dashScale={12}
             />
             <Point3D position={bottomCenter} colorKey="secondary" />
             <CompoundLabel3D position={bottomCenter} base="O" subscript="1" />
 
             {/* 底面外接圆半径 r_base 线段 O1-B */}
-            <Line
-              points={[mathToThree(bottomCenter), mathToThree(B)]}
-              color="#F59E0B"
+            <Segment3D
+              from={bottomCenter}
+              to={B}
+              colorKey="paramSecondary"
               lineWidth={2.5}
             />
             {/* 勾股外接球半径线段 O-B */}
@@ -496,16 +500,17 @@ export function PolyhedronSphereScene({
         A={A}
         B={B}
         C={C}
-        color="#3B82F6"
+        colorKey="primary"
         opacity={0.22}
       />
 
       {/* 三棱锥棱 */}
       {linesPyramid.map(([from, to], idx) => (
-        <Line
+        <Segment3D
           key={`in-edge-${idx}`}
-          points={[mathToThree(from), mathToThree(to)]}
-          color="#2563EB"
+          from={from}
+          to={to}
+          colorKey="primary"
           lineWidth={3.5}
         />
       ))}
@@ -530,37 +535,41 @@ export function PolyhedronSphereScene({
           {/* 切点 T1 (底面 ABC) */}
           <Point3D position={T1} colorKey="secondary" radius={0.045} />
           <CompoundLabel3D position={T1} base="T" subscript="1" />
-          <Line
-            points={[mathToThree(center), mathToThree(T1)]}
-            color="#EF4444"
-            lineWidth={3}
+          <Segment3D
+            from={center}
+            to={T1}
+            colorKey="paramPrimary"
+            lineWidth={2.5}
           />
 
           {/* 切点 T2 (侧面 PAC) */}
           <Point3D position={T2} colorKey="secondary" radius={0.045} />
           <CompoundLabel3D position={T2} base="T" subscript="2" />
-          <Line
-            points={[mathToThree(center), mathToThree(T2)]}
-            color="#EF4444"
-            lineWidth={3}
+          <Segment3D
+            from={center}
+            to={T2}
+            colorKey="paramPrimary"
+            lineWidth={2.5}
           />
 
           {/* 切点 T3 (侧面 PBC) */}
           <Point3D position={T3} colorKey="secondary" radius={0.045} />
           <CompoundLabel3D position={T3} base="T" subscript="3" />
-          <Line
-            points={[mathToThree(center), mathToThree(T3)]}
-            color="#EF4444"
-            lineWidth={3}
+          <Segment3D
+            from={center}
+            to={T3}
+            colorKey="paramPrimary"
+            lineWidth={2.5}
           />
 
           {/* 切点 T4 (斜面 PAB) */}
           <Point3D position={T4} colorKey="secondary" radius={0.045} />
           <CompoundLabel3D position={T4} base="T" subscript="4" />
-          <Line
-            points={[mathToThree(center), mathToThree(T4)]}
-            color="#EF4444"
-            lineWidth={3}
+          <Segment3D
+            from={center}
+            to={T4}
+            colorKey="paramPrimary"
+            lineWidth={2.5}
           />
         </group>
       )}
