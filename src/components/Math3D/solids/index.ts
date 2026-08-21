@@ -49,4 +49,6 @@ export type {
   AdvancedSphereModelType,
   AdvancedSphereSceneProps,
 } from "./AdvancedSphereScene";
+export { CircumInSphereScene } from "./CircumInSphereScene";
+export type { CircumInSphereSceneProps } from "./CircumInSphereScene";
 export { SphereCutSection } from "./SphereCutSection";

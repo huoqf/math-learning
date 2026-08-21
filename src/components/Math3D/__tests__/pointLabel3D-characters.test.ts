@@ -19,6 +19,7 @@ const SOURCE_FILES = [
   "src/features/solidGeometry/SpatialAngleAnimation.tsx",
   "src/features/solidGeometry/LinePlaneRelationAnimation.tsx",
   "src/features/solidGeometry/CircumInSphereAnimation.tsx",
+  "src/components/Math3D/solids/CircumInSphereScene.tsx",
   "src/components/Math3D/Scene3DGrid.tsx",
 ];
 

@@ -8,43 +8,30 @@ import {
   MathPanel,
   SelectGrid,
   TabSwitcher,
-  TipCard,
-  KatexFormula,
+  Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import {
-  Point3D,
-  PointLabel3D,
-  FormulaLabel3D,
-  Segment3D,
-  Legend3D,
-  CameraRig,
-} from "@/components/Math3D";
-import {
-  Cuboid,
-  RegularPyramid,
-  TriangularPrism,
-  Cone,
-  Cylinder,
-  SphereBySphereType,
-} from "@/components/Math3D/solids";
+import { Legend3D, CameraRig } from "@/components/Math3D";
+import { CircumInSphereScene } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import {
-  cuboidCircumRadius,
-  regularPyramidCircumRadius,
-  coneCircumRadius,
-} from "@/math3d/solidGeometry";
-import type { Vec3 } from "@/math3d/vector3";
-
-type SphereType = "circum" | "inscribed";
-type ShapeType =
-  "cuboid" | "regularPyramid" | "triangularPrism" | "cone" | "cylinder";
+import { circumInSphereMeta } from "@/data/registries/solidGeometry";
+import type { SphereType, ShapeType } from "@/math3d/circumInSphere";
+import { MATH_COLORS } from "@/theme/math/colors";
 
 export default function CircumInSphereAnimation() {
   const [sphereType, setSphereType] = useState<SphereType>("circum");
   const [shape, setShape] = useState<ShapeType>("cuboid");
+  const [presetKey, setPresetKey] = useState<string>("free");
+
+  // 图层显示控制
+  const [showSolid, setShowSolid] = useState<boolean>(true);
+  const [showSphere, setShowSphere] = useState<boolean>(true);
+  const [showAuxLines, setShowAuxLines] = useState<boolean>(true);
+  const [showSection, setShowSection] = useState<boolean>(true);
+  const [showTangentPoints, setShowTangentPoints] = useState<boolean>(true);
+
   const [params, setParams] = useState<Record<string, number>>({
     a: 3,
     b: 2,
@@ -54,62 +41,170 @@ export default function CircumInSphereAnimation() {
   const { preset, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
-  const { a, b, c } = params;
+  // 1. 黄金 2×2 典型预设体系
+  const presetsByShape: Record<
+    ShapeType,
+    {
+      key: string;
+      label: string;
+      formula?: string;
+      description: string;
+      values: Record<string, number>;
+    }[]
+  > = {
+    cuboid: [
+      {
+        key: "free",
+        label: "自由探究",
+        formula: "a, b, c",
+        description: "全参开放",
+        values: { a: 3, b: 2, c: 2 },
+      },
+      {
+        key: "cube",
+        label: "正方体",
+        formula: "a = b = c",
+        description: "对称直角",
+        values: { a: 3, b: 3, c: 3 },
+      },
+      {
+        key: "cuboid_std",
+        label: "3-4-12",
+        formula: "2R = 13",
+        description: "整数秒杀",
+        values: { a: 3, b: 4, c: 12 },
+      },
+      {
+        key: "cuboid_flat",
+        label: "扁平长方体",
+        formula: "c \\ll a, b",
+        description: "极限观察",
+        values: { a: 4.5, b: 3.5, c: 1.2 },
+      },
+    ],
+    regularPyramid: [
+      {
+        key: "free",
+        label: "自由探究",
+        formula: "a, h",
+        description: "全参开放",
+        values: { a: 3, b: 3, c: 2.5 },
+      },
+      {
+        key: "octa_half",
+        label: "正八面半体",
+        formula: "h = \\frac{\\sqrt{2}}{2}a",
+        description: "正四面面对",
+        values: { a: 4, b: 4, c: 2.83 },
+      },
+      {
+        key: "pyr_high",
+        label: "高尖棱锥",
+        formula: "h \\gg a",
+        description: "球心下移",
+        values: { a: 2.5, b: 2.5, c: 5 },
+      },
+      {
+        key: "pyr_flat",
+        label: "扁平棱锥",
+        formula: "h \\to 1.0",
+        description: "球心外落",
+        values: { a: 5, b: 5, c: 1.0 },
+      },
+    ],
+    triangularPrism: [
+      {
+        key: "free",
+        label: "自由探究",
+        formula: "a, b, h",
+        description: "全参开放",
+        values: { a: 3, b: 4, c: 4 },
+      },
+      {
+        key: "prism_equal",
+        label: "等腰直角柱",
+        formula: "a = b",
+        description: "对称套柱",
+        values: { a: 3, b: 3, c: 4 },
+      },
+      {
+        key: "prism_std",
+        label: "3-4-5 高考",
+        formula: "2R = 13",
+        description: "勾股母题",
+        values: { a: 3, b: 4, c: 12 },
+      },
+      {
+        key: "prism_flat",
+        label: "扁三棱柱",
+        formula: "h \\to 1.5",
+        description: "底大高小",
+        values: { a: 4, b: 4, c: 1.5 },
+      },
+    ],
+    cone: [
+      {
+        key: "free",
+        label: "自由探究",
+        formula: "r, h",
+        description: "全参开放",
+        values: { a: 3, b: 3, c: 4 },
+      },
+      {
+        key: "cone_equilateral",
+        label: "等边圆锥",
+        formula: "l = 2r",
+        description: "正三角截面",
+        values: { a: 3, b: 3, c: 5.2 },
+      },
+      {
+        key: "cone_right",
+        label: "直角圆锥",
+        formula: "h = r",
+        description: "90°顶角",
+        values: { a: 3.5, b: 3.5, c: 3.5 },
+      },
+      {
+        key: "cone_flat",
+        label: "扁圆锥",
+        formula: "h \\ll r",
+        description: "底大高小",
+        values: { a: 5, b: 5, c: 1.5 },
+      },
+    ],
+    cylinder: [
+      {
+        key: "free",
+        label: "自由探究",
+        formula: "r, h",
+        description: "全参开放",
+        values: { a: 2.5, b: 2.5, c: 5 },
+      },
+      {
+        key: "cyl_square",
+        label: "等高圆柱",
+        formula: "h = 2r",
+        description: "正方形截面",
+        values: { a: 2.5, b: 2.5, c: 5 },
+      },
+      {
+        key: "cyl_high",
+        label: "细长圆柱",
+        formula: "h \\gg r",
+        description: "高大径小",
+        values: { a: 1.5, b: 1.5, c: 5.5 },
+      },
+      {
+        key: "cyl_flat",
+        label: "扁圆柱",
+        formula: "h \\to 1.5",
+        description: "饼状圆柱",
+        values: { a: 4.5, b: 4.5, c: 1.5 },
+      },
+    ],
+  };
 
-  // 球半径与球心坐标精准解算
-  const { radius, center } = useMemo<{ radius: number; center: Vec3 }>(() => {
-    if (sphereType === "circum") {
-      // ── 外接球模式 ──
-      if (shape === "cuboid") {
-        const r = cuboidCircumRadius(a, b, c);
-        return { radius: r, center: { x: a / 2, y: b / 2, z: c / 2 } };
-      } else if (shape === "regularPyramid") {
-        const rBase = a / Math.sqrt(2);
-        const r = regularPyramidCircumRadius(rBase, c);
-        return { radius: r, center: { x: 0, y: 0, z: c - r } };
-      } else if (shape === "triangularPrism") {
-        const rBase = Math.sqrt(a * a + b * b) / 2;
-        const r = Math.sqrt(rBase * rBase + (c / 2) ** 2);
-        return { radius: r, center: { x: a / 2, y: b / 2, z: c / 2 } };
-      } else if (shape === "cone") {
-        const r = coneCircumRadius(a, c);
-        return { radius: r, center: { x: 0, y: 0, z: c - r } };
-      } else {
-        // cylinder
-        const r = Math.sqrt(a * a + (c / 2) ** 2);
-        return { radius: r, center: { x: 0, y: 0, z: c / 2 } };
-      }
-    } else {
-      // ── 内切球模式 ──
-      if (shape === "cuboid") {
-        const r = Math.min(a, b, c) / 2;
-        return { radius: r, center: { x: a / 2, y: b / 2, z: c / 2 } };
-      } else if (shape === "regularPyramid") {
-        const hs = Math.sqrt(c * c + (a / 2) ** 2);
-        const vSolid = (1 / 3) * a * a * c;
-        const sTotal = a * a + 2 * a * hs;
-        const r = (3 * vSolid) / sTotal;
-        return { radius: r, center: { x: 0, y: 0, z: r } };
-      } else if (shape === "triangularPrism") {
-        const rBaseIn = (a + b - Math.sqrt(a * a + b * b)) / 2;
-        const r = Math.min(rBaseIn, c / 2);
-        return {
-          radius: r,
-          center: { x: rBaseIn, y: rBaseIn, z: c / 2 },
-        };
-      } else if (shape === "cone") {
-        const l = Math.sqrt(a * a + c * c);
-        const r = (a * c) / (a + l);
-        return { radius: r, center: { x: 0, y: 0, z: r } };
-      } else {
-        // cylinder
-        const r = Math.min(a, c / 2);
-        return { radius: r, center: { x: 0, y: 0, z: c / 2 } };
-      }
-    }
-  }, [sphereType, shape, a, b, c]);
-
-  // 组装右屏看板数据
+  // 2. 右屏看板数据
   const mathData = useMemo(
     () =>
       buildMathQuantities("anim-solid-ball", params, {
@@ -119,22 +214,55 @@ export default function CircumInSphereAnimation() {
     [params, sphereType, shape],
   );
 
+  const handleShapeChange = (nextShape: ShapeType) => {
+    setShape(nextShape);
+    setPresetKey("free");
+    const freeP = presetsByShape[nextShape]?.find((p) => p.key === "free");
+    if (freeP) {
+      setParams((prev) => ({ ...prev, ...freeP.values }));
+    }
+  };
+
+  const handlePresetChange = (key: string) => {
+    setPresetKey(key);
+    const target = presetsByShape[shape]?.find((p) => p.key === key);
+    if (target) {
+      setParams((prev) => ({ ...prev, ...target.values }));
+    }
+  };
+
   const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
+    setParams((prev) => {
+      const next = { ...prev, [key]: value };
+      if (presetKey === "cube" && (key === "a" || key === "b" || key === "c")) {
+        next.a = value;
+        next.b = value;
+        next.c = value;
+      }
+      if (presetKey === "prism_equal" && key === "a") {
+        next.b = value;
+      }
+      return next;
+    });
+    setPresetKey("free");
   };
 
   const handleReset = () => {
-    setParams({ a: 3, b: 2, c: 2 });
+    setPresetKey("free");
+    const freeP = presetsByShape[shape]?.find((p) => p.key === "free");
+    if (freeP) {
+      setParams((prev) => ({ ...prev, ...freeP.values }));
+    }
   };
 
-  // 左屏参数配置（按几何体形状精准过滤）
+  // 3. 声明式参数动态裁剪
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     if (shape === "cone" || shape === "cylinder") {
       return [
         {
           key: "a",
           label: "底面半径 r",
-          labelFormula: "r",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{r}`,
           value: params.a ?? 3,
           min: 1,
           max: 6,
@@ -145,7 +273,7 @@ export default function CircumInSphereAnimation() {
         {
           key: "c",
           label: "高 h",
-          labelFormula: "h",
+          labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{h}`,
           value: params.c ?? 2,
           min: 1,
           max: 6,
@@ -161,7 +289,7 @@ export default function CircumInSphereAnimation() {
         {
           key: "a",
           label: "底面边长 a",
-          labelFormula: "a",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a}`,
           value: params.a ?? 3,
           min: 1,
           max: 6,
@@ -172,117 +300,102 @@ export default function CircumInSphereAnimation() {
         {
           key: "c",
           label: "高 h",
-          labelFormula: "h",
+          labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{h}`,
           value: params.c ?? 2,
           min: 1,
           max: 6,
           step: 0.1,
-          description: "正棱锥的高",
+          description: "正棱锥中心高",
           importance: "core",
         },
       ];
     }
 
-    return [
-      {
-        key: "a",
-        label: shape === "triangularPrism" ? "直角边 a" : "长 a",
-        labelFormula: "a",
-        value: params.a ?? 3,
-        min: 1,
-        max: 6,
-        step: 0.1,
-        description: "底面尺寸 a",
-        importance: "core",
-      },
-      {
-        key: "b",
-        label: shape === "triangularPrism" ? "直角边 b" : "宽 b",
-        labelFormula: "b",
-        value: params.b ?? 2,
-        min: 1,
-        max: 6,
-        step: 0.1,
-        description: "底面尺寸 b",
-        importance: "core",
-      },
-      {
-        key: "c",
-        label: "高 h",
-        labelFormula: "h",
-        value: params.c ?? 2,
-        min: 1,
-        max: 6,
-        step: 0.1,
-        description: "几何体高度",
-        importance: "core",
-      },
-    ];
-  }, [shape, params]);
-
-  // 教学提示配置
-  const tipConfig = useMemo(() => {
-    if (sphereType === "circum") {
-      if (shape === "cuboid") {
-        return {
-          variant: "success" as const,
-          formula: "2R = \\sqrt{a^2+b^2+c^2}",
-          text: "长方体外接球：体对角线即为外接球直径，球心为长方体中心。",
-        };
-      }
-      if (shape === "regularPyramid" || shape === "cone") {
-        return {
-          variant: "primary" as const,
-          formula: "R = \\frac{r_{\\text{底}}^2 + h^2}{2h}",
-          text: "正棱锥与圆锥外接球：球心位于高线上，由勾股定理 (h-R)² + r² = R² 求解。",
-        };
-      }
-      return {
-        variant: "warning" as const,
-        formula: "R^2 = r_{\\text{底}}^2 + \\left(\\frac{h}{2}\\right)^2",
-        text: "直棱柱与圆柱外接球：套柱勾股定理，球心位于上下底面中心连线的中点。",
-      };
-    } else {
-      return {
-        variant: "danger" as const,
-        formula: "r_{\\text{in}} = \\frac{3V}{S_{\\text{表}}}",
-        text: "多面体与多棱锥内切球通法：等体积法剖分，体积等于各面面积与内切球半径乘积之和的 1/3。",
-      };
+    if (presetKey === "cube") {
+      return [
+        {
+          key: "a",
+          label: "棱长 a",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a}`,
+          value: params.a ?? 3,
+          min: 1,
+          max: 6,
+          step: 0.1,
+          description: "正方体各棱长 (a=b=c)",
+          importance: "core",
+        },
+      ];
     }
-  }, [sphereType, shape]);
+
+    return circumInSphereMeta.map((meta) => ({
+      key: meta.key,
+      label:
+        shape === "triangularPrism"
+          ? meta.key === "a"
+            ? "直角边 a"
+            : meta.key === "b"
+              ? "直角边 b"
+              : "柱体高 h"
+          : meta.label,
+      labelFormula:
+        meta.key === "a"
+          ? `\\color{${MATH_COLORS.paramPrimary}}{a}`
+          : meta.key === "b"
+            ? `\\color{${MATH_COLORS.paramSecondary}}{b}`
+            : `\\color{${MATH_COLORS.paramTertiary}}{h}`,
+      value: params[meta.key] ?? meta.defaultValue ?? 0,
+      min: meta.min,
+      max: meta.max,
+      step: meta.step ?? 0.1,
+      description: meta.description,
+      importance: meta.importance as any,
+    }));
+  }, [shape, params, presetKey]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* Step 1: 球切接类型 */}
-          <LeftPanelSection title="球切接类型">
-            <TabSwitcher
-              tabs={[
-                { key: "circum", label: "外接球 (Circum)" },
-                { key: "inscribed", label: "内切球 (Inscribed)" },
+          {/* Step 1: 探究模式 (2×2 黄金网格) */}
+          <LeftPanelSection title="探究模式">
+            <SelectGrid
+              columns={2}
+              items={[
+                {
+                  key: "circum",
+                  label: "外接球探究",
+                  formula: "R_{\\text{外}}",
+                  description: "包络顶点",
+                },
+                {
+                  key: "inscribed",
+                  label: "内切球探究",
+                  formula: "r_{\\text{内}}",
+                  description: "面面相切",
+                },
               ]}
               value={sphereType}
               onChange={(t) => setSphereType(t as SphereType)}
             />
           </LeftPanelSection>
 
-          {/* Step 2: 几何体模型选择 (2+1 布局防截断) */}
+          {/* Step 2: 几何体选择 */}
           <LeftPanelSection title="几何体模型选择">
             <SelectGrid
+              columns={2}
               items={[
-                { key: "cuboid", label: "长方体", description: "对角线补形" },
+                { key: "cuboid", label: "长方体", description: "体对角线" },
                 {
                   key: "regularPyramid",
                   label: "正四棱锥",
-                  description: "高线切接",
+                  description: "高线勾股",
                 },
                 {
                   key: "triangularPrism",
                   label: "直三棱柱",
-                  description: "套柱勾股",
+                  description: "套柱转化",
                 },
-                { key: "cone", label: "圆锥", description: "轴截面切接" },
+                { key: "cone", label: "圆锥", description: "轴截面法" },
                 {
                   key: "cylinder",
                   label: "圆柱",
@@ -291,13 +404,22 @@ export default function CircumInSphereAnimation() {
                 },
               ]}
               value={shape}
-              onChange={(k) => setShape(k as ShapeType)}
-              columns={2}
+              onChange={(k) => handleShapeChange(k as ShapeType)}
             />
           </LeftPanelSection>
 
-          {/* Step 3: 参数调节 */}
-          <LeftPanelSection title="几何参数调节" subtitle="调节底面尺寸与高度">
+          {/* Step 3: 典型模型预设 (2×2 黄金网格) */}
+          <LeftPanelSection title="典型算例预设">
+            <SelectGrid
+              columns={2}
+              items={presetsByShape[shape]}
+              value={presetKey}
+              onChange={handlePresetChange}
+            />
+          </LeftPanelSection>
+
+          {/* Step 4: 参数调节 */}
+          <LeftPanelSection title="几何参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -305,20 +427,43 @@ export default function CircumInSphereAnimation() {
             />
           </LeftPanelSection>
 
-          {/* Step 4: 教学提示 */}
-          <LeftPanelSection title="教学提示与核心公式" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="font-semibold text-xs mb-1">
-                <KatexFormula mode="inline" formula={tipConfig.formula} />
-              </div>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                {tipConfig.text}
-              </p>
-            </TipCard>
+          {/* Step 5: 图层与标注显示控制 */}
+          <LeftPanelSection title="图层与标注显示控制" compact>
+            <div className="flex flex-col gap-2.5">
+              <Toggle
+                label="几何体实体"
+                checked={showSolid}
+                onChange={setShowSolid}
+              />
+              <Toggle
+                label="标准切接球壳 (带赤道与极轴)"
+                checked={showSphere}
+                onChange={setShowSphere}
+              />
+              <Toggle
+                label="特征高线与对角线"
+                checked={showAuxLines}
+                onChange={setShowAuxLines}
+              />
+              {(shape === "cone" || shape === "cylinder") && (
+                <Toggle
+                  label="轴截面剖面"
+                  checked={showSection}
+                  onChange={setShowSection}
+                />
+              )}
+              {sphereType === "inscribed" && (
+                <Toggle
+                  label="相切切点与垂线段"
+                  checked={showTangentPoints}
+                  onChange={setShowTangentPoints}
+                />
+              )}
+            </div>
           </LeftPanelSection>
 
-          {/* Step 5: 3D 视角选择 */}
-          <LeftPanelSection title="3D 视角选择">
+          {/* Step 6: 3D 空间视角预设 */}
+          <LeftPanelSection title="3D 空间视角预设">
             <TabSwitcher
               layout="horizontal"
               tabs={[
@@ -347,75 +492,30 @@ export default function CircumInSphereAnimation() {
                   swatch: "sphere",
                   label: sphereType === "circum" ? "外接球" : "内切球",
                 },
-                { colorKey: "highlight", swatch: "point", label: "O：球心" },
+                {
+                  colorKey: "highlight",
+                  swatch: "point",
+                  label: sphereType === "circum" ? "O：球心" : "I：球心",
+                },
+                {
+                  colorKey: "paramTertiary",
+                  swatch: "line",
+                  label: "特征高线/对角线",
+                },
               ]}
             />
           }
         >
           <CameraRig ref={controlsRef} />
-          {/* 纯几何范式：严禁笛卡尔直角坐标系与地面网格 */}
-
-          {/* 渲染几何体实体 */}
-          {shape === "cuboid" && (
-            <Cuboid a={a} b={b} c={c} colorKey="primary" opacity={0.2} />
-          )}
-          {shape === "regularPyramid" && (
-            <RegularPyramid
-              sides={4}
-              baseRadius={a / Math.sqrt(2)}
-              height={c}
-              colorKey="primary"
-            />
-          )}
-          {shape === "cone" && (
-            <Cone radius={a} height={c} colorKey="primary" />
-          )}
-          {shape === "triangularPrism" && (
-            <TriangularPrism legA={a} legB={b} height={c} colorKey="primary" />
-          )}
-          {shape === "cylinder" && (
-            <Cylinder radius={a} height={c} colorKey="primary" />
-          )}
-
-          {/* 渲染球体 */}
-          <SphereBySphereType
+          <CircumInSphereScene
             sphereType={sphereType}
-            center={center}
-            radius={radius}
-          />
-
-          {/* 渲染球心点 O */}
-          <Point3D position={center} colorKey="highlight" />
-          <PointLabel3D position={center} text="O" />
-
-          {/* 绘制球半径/辅连线 (纯几何无箭头线段) */}
-          {sphereType === "circum" ? (
-            <Segment3D
-              from={center}
-              to={
-                shape === "regularPyramid" || shape === "cone"
-                  ? { x: 0, y: 0, z: c }
-                  : shape === "cylinder"
-                    ? { x: a, y: 0, z: c }
-                    : shape === "triangularPrism"
-                      ? { x: 0, y: 0, z: c }
-                      : { x: a, y: b, z: c }
-              }
-              colorKey="highlight"
-              lineWidth={2.5}
-            />
-          ) : (
-            <Segment3D
-              from={center}
-              to={{ x: center.x, y: center.y, z: 0 }}
-              colorKey="highlight"
-              lineWidth={2.5}
-            />
-          )}
-
-          <FormulaLabel3D
-            position={{ x: center.x + 0.3, y: center.y, z: center.z + 0.3 }}
-            tex={`${sphereType === "circum" ? "R" : "r_{\\text{in}}"}=${radius.toFixed(2)}`}
+            shape={shape}
+            params={params}
+            showSolid={showSolid}
+            showSphere={showSphere}
+            showAuxLines={showAuxLines}
+            showSection={showSection}
+            showTangentPoints={showTangentPoints}
           />
         </ThreeDCanvas>
       }
@@ -435,7 +535,7 @@ export default function CircumInSphereAnimation() {
                   : shape === "cone"
                     ? "圆锥"
                     : "圆柱"
-          }${sphereType === "circum" ? "外接球" : "内切球"}高考指标`}
+          }${sphereType === "circum" ? "外接球" : "内切球"}高考看板`}
         />
       }
     />

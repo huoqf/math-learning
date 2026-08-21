@@ -1429,7 +1429,7 @@ export function buildCircumSpherePanel(
       theorems.push(
         {
           name: "长方体/墙角模型外接球公式",
-          latex: `R = \\frac{\\sqrt{\\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2 + \\color{#059669}{c}^2}}{2}`,
+          latex: `R = \\frac{\\sqrt{\\color{${MATH_COLORS.paramPrimary}}{a}^2 + \\color{${MATH_COLORS.paramSecondary}}{b}^2 + \\color{${MATH_COLORS.paramTertiary}}{c}^2}}{2}`,
           level: "core",
           note: "体对角线长等于外接球直径 ($d = 2R = \\sqrt{a^2+b^2+c^2}$)",
         },

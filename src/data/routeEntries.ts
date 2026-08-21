@@ -694,7 +694,7 @@ const legacyEntries: RouteEntry[] = [
     node: {
       id: "know-solid-ball",
       title: "多面体与旋转体的外接球、内切球",
-      labTitle: "外接球与内切球",
+      labTitle: "外接球与内切球实验室",
       chapter: "立体几何与空间向量",
       module: "立体几何",
       importance: "hard",
@@ -708,7 +708,7 @@ const legacyEntries: RouteEntry[] = [
   {
     node: {
       id: "know-solid-ball-models",
-      title: "多面体外接球与内切球四大模型（墙角/柱体/补形/侧棱垂直底面）",
+      title: "多面体外接球与内切球四大模型（墙角/侧棱垂直/补形/内切等体积）",
       labTitle: "外接球与内切球四大模型实验室",
       chapter: "立体几何与空间向量",
       module: "立体几何压轴",
@@ -724,7 +724,7 @@ const legacyEntries: RouteEntry[] = [
   {
     node: {
       id: "know-solid-advanced-sphere",
-      title: "多面体与旋转体进阶切接球（双外心/翻折最值/三球同心/圆台/极值）",
+      title: "多面体与旋转体进阶切接球（双外心/三球同心/旋转体切接/体积极值）",
       labTitle: "进阶切接球与体积极值实验室",
       chapter: "立体几何与空间向量",
       module: "立体几何压轴",
