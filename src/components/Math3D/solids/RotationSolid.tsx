@@ -65,7 +65,7 @@ export const RotationSolid = ({
       {showOutline && fullSweep && (
         <RotationOutline
           profile={profile}
-          color={MATH_COLORS.line}
+          color={!hasTopCap && !hasBottomCap ? color : MATH_COLORS.line}
           segments={segments}
           hasTopCap={hasTopCap}
           hasBottomCap={hasBottomCap}

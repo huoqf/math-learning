@@ -30,6 +30,7 @@ import {
   buildPolyhedronSpherePanel,
   buildSolidFoldingPanel,
   buildParametricPointPanel,
+  buildAdvancedSpherePanel,
 } from "./builders/solidGeometry";
 import { buildVector3DBasisPanel } from "./builders/vector3d";
 import { buildSequencePanel } from "./builders/sequence";
@@ -148,6 +149,8 @@ export function buildMathQuantities(
       return buildCircumSpherePanel(params, config);
     case "anim-solid-ball-models":
       return buildPolyhedronSpherePanel(params, config);
+    case "anim-solid-advanced-sphere":
+      return buildAdvancedSpherePanel(params, config);
     case "anim-solid-rotation-body":
       return buildRotationBodyPanel(params, config);
     case "anim-solid-folding":

@@ -37,9 +37,16 @@ export { DepthPrepassMesh } from "./DepthPrepassMesh";
 // ============================================================================
 // 球体 (Spheres)
 // ============================================================================
+export { Sphere } from "./Sphere";
+export type { SphereProps } from "./Sphere";
 export { SphereShell } from "./SphereShell";
 export { CircumSphere } from "./CircumSphere";
 export { InSphere } from "./InSphere";
 export { SphereBySphereType } from "./SphereBySphereType";
 export { PolyhedronSphereScene } from "./PolyhedronSphereScene";
+export { AdvancedSphereScene } from "./AdvancedSphereScene";
+export type {
+  AdvancedSphereModelType,
+  AdvancedSphereSceneProps,
+} from "./AdvancedSphereScene";
 export { SphereCutSection } from "./SphereCutSection";

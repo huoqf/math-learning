@@ -7,7 +7,8 @@ interface InSphereProps {
   opacity?: number;
 }
 
-export const InSphere = ({ center, radius, opacity = 0.25 }: InSphereProps) => (
+/** 内切球组件（薄封装标准 SphereShell，暖珊瑚红高透语义） */
+export const InSphere = ({ center, radius, opacity = 0.18 }: InSphereProps) => (
   <SphereShell
     center={center}
     radius={radius}

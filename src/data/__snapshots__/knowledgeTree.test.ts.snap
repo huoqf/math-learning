@@ -54,6 +54,7 @@ exports[`knowledgeTree 数据完整性 > 快照：节点顺序不可被意外调
   "know-solid-parametric",
   "know-solid-ball",
   "know-solid-ball-models",
+  "know-solid-advanced-sphere",
   "know-line-equation",
   "know-line-circle",
   "know-conic-definition",

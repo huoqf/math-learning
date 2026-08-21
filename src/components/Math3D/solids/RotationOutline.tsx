@@ -1,9 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { ProfilePoint } from "@/math3d/rotationProfiles";
 import { rimRadiusAtZ } from "@/math3d/rotationProfiles";
-import { computeSilhouette } from "@/math3d/silhouette";
 import { MATH_COLORS } from "@/theme/math/colors";
 
 interface RotationOutlineProps {
@@ -19,17 +18,6 @@ interface RotationOutlineProps {
 
 /** 轮廓线沿半径方向的微小外扩量，避免与半透明主体表面深度重合（z-fighting） */
 const RADIAL_EPS = 0.004;
-
-function getCameraFrame(camera: THREE.Camera) {
-  const cx = camera.position.x;
-  const cy = camera.position.y;
-  const cz = camera.position.z;
-  const horiz = Math.hypot(cx, cz);
-  return {
-    thetaCam: Math.atan2(cz, cx),
-    beta: Math.atan2(cy, horiz),
-  };
-}
 
 function sampleArc(
   r: number,
@@ -95,6 +83,7 @@ export function RotationOutline({
   ringRadiusEps = 1e-3,
 }: RotationOutlineProps) {
   const { camera } = useThree();
+  const groupRef = useRef<THREE.Group>(null);
 
   const isSphere = !hasTopCap && !hasBottomCap;
   const sphereRadius = useMemo(() => {
@@ -117,27 +106,27 @@ export function RotationOutline({
   const bottomSolid = useMemo(() => makeLineObject(color, false), [color]);
   const bottomDashed = useMemo(() => makeLineObject(color, true), [color]);
 
-  // 球体专属：赤道大圆实线弧与虚线弧
-  const equatorSolid = useMemo(
-    () => makeLineObject(MATH_COLORS.primary, false),
-    [],
-  );
-  const equatorDashed = useMemo(
-    () => makeLineObject(MATH_COLORS.primary, true),
-    [],
-  );
+  // 球体专属：赤道大圆实线弧与虚线弧（与球体语义颜色统一）
+  const equatorSolid = useMemo(() => makeLineObject(color, false), [color]);
+  const equatorDashed = useMemo(() => makeLineObject(color, true), [color]);
 
   useFrame(() => {
-    const { thetaCam, beta } = getCameraFrame(camera);
+    // 关键修复：将相机世界坐标转换为当前局部坐标系的相对坐标
+    let localCamPos = camera.position.clone();
+    if (groupRef.current) {
+      groupRef.current.updateWorldMatrix(true, false);
+      localCamPos = groupRef.current.worldToLocal(localCamPos);
+    }
+    const cx = localCamPos.x;
+    const cy = localCamPos.y;
+    const cz = localCamPos.z;
+    const thetaCam = Math.atan2(cz, cx);
+    const d = Math.hypot(cx, cy, cz) || 1;
 
     if (isSphere) {
       // ── 球体精准透视投影轮廓圆 ──
       const R = sphereRadius + RADIAL_EPS;
-      // 相机方向单位向量 (cx, cy, cz) 与距离 d
-      const cx = camera.position.x;
-      const cy = camera.position.y;
-      const cz = camera.position.z;
-      const d = Math.hypot(cx, cy, cz) || 1;
+      // 局部相机方向单位向量 (cx, cy, cz) 与局部距离 d
       const nx = cx / d;
       const ny = cy / d;
       const nz = cz / d;
@@ -236,54 +225,67 @@ export function RotationOutline({
       return;
     }
 
-    // ── 柱/锥/台绘制模式 ──
+    // ── 柱/锥/台精准透视轮廓线解析解 ──
     equatorSolid.visible = false;
     equatorDashed.visible = false;
 
-    const { left, right, zRange } = computeSilhouette(profile, thetaCam, beta);
+    const dr = rBottom - rTop;
+    const h = zMax - zMin;
+    const horizDist = Math.hypot(cx, cz) || 1e-4;
 
-    if (!zRange || left.length === 0) {
-      [
-        leftLine,
-        rightLine,
-        topSolid,
-        topDashed,
-        bottomSolid,
-        bottomDashed,
-      ].forEach((obj) => {
-        obj.visible = false;
-      });
-      return;
+    let deltaTheta = Math.PI / 2; // 默认垂直于视线两侧 (圆柱)
+    let hasTangentGeneratrix = true; // 是否存在真实的相切侧母线
+
+    if (Math.abs(dr) > 1e-4 && h > 1e-4) {
+      // 锥顶高度 Hv (在局部 Z 轴/Three Y 轴上的坐标)
+      const Hv = zMin + (rBottom * h) / dr;
+      const slope = Math.abs(dr) / h;
+      const val = slope * (Math.abs(Hv - cy) / horizDist);
+      if (val >= 1) {
+        // 相机处于轴向俯视/仰视不可切锥区，侧面无切母线轮廓
+        hasTangentGeneratrix = false;
+      } else {
+        deltaTheta = Math.acos(val);
+      }
     }
 
-    setLinePoints(
-      leftLine,
-      left.map((p) => {
-        const r = p.r + RADIAL_EPS;
-        return [r * Math.cos(p.theta), p.z, r * Math.sin(p.theta)] as [
-          number,
-          number,
-          number,
-        ];
-      }),
-    );
-    setLinePoints(
-      rightLine,
-      right.map((p) => {
-        const r = p.r + RADIAL_EPS;
-        return [r * Math.cos(p.theta), p.z, r * Math.sin(p.theta)] as [
-          number,
-          number,
-          number,
-        ];
-      }),
-    );
-    leftLine.visible = true;
-    rightLine.visible = true;
+    let thetaL = thetaCam - deltaTheta;
+    let thetaR = thetaCam + deltaTheta;
 
-    // 数组严格连续，端点直接取首尾
-    const bottomBoundary = left[0];
-    const topBoundary = left[left.length - 1];
+    if (hasTangentGeneratrix) {
+      thetaL = thetaCam - deltaTheta;
+      thetaR = thetaCam + deltaTheta;
+
+      // 左侧与右侧透视轮廓母线 (精确直连顶底圆切点)
+      const pBotL: [number, number, number] = [
+        (rBottom + RADIAL_EPS) * Math.cos(thetaL),
+        zMin,
+        (rBottom + RADIAL_EPS) * Math.sin(thetaL),
+      ];
+      const pTopL: [number, number, number] = [
+        (rTop + RADIAL_EPS) * Math.cos(thetaL),
+        zMax,
+        (rTop + RADIAL_EPS) * Math.sin(thetaL),
+      ];
+      const pBotR: [number, number, number] = [
+        (rBottom + RADIAL_EPS) * Math.cos(thetaR),
+        zMin,
+        (rBottom + RADIAL_EPS) * Math.sin(thetaR),
+      ];
+      const pTopR: [number, number, number] = [
+        (rTop + RADIAL_EPS) * Math.cos(thetaR),
+        zMax,
+        (rTop + RADIAL_EPS) * Math.sin(thetaR),
+      ];
+
+      setLinePoints(leftLine, [pBotL, pTopL]);
+      setLinePoints(rightLine, [pBotR, pTopR]);
+      leftLine.visible = true;
+      rightLine.visible = true;
+    } else {
+      leftLine.visible = false;
+      rightLine.visible = false;
+    }
 
     const applyRing = (
       solid: THREE.Line,
@@ -291,8 +293,8 @@ export function RotationOutline({
       fullyVisible: boolean,
       r: number,
       z: number,
-      thetaL: number,
-      thetaR: number,
+      t1: number,
+      t2: number,
     ) => {
       if (fullyVisible) {
         setLinePoints(solid, sampleArc(r, z, 0, Math.PI * 2, segments * 2));
@@ -300,29 +302,25 @@ export function RotationOutline({
         dashed.visible = false;
         return;
       }
-      setLinePoints(solid, sampleArc(r, z, thetaL, thetaR, segments));
-      setLinePoints(
-        dashed,
-        sampleArc(r, z, thetaR, thetaL + Math.PI * 2, segments),
-      );
+      setLinePoints(solid, sampleArc(r, z, t1, t2, segments));
+      setLinePoints(dashed, sampleArc(r, z, t2, t1 + Math.PI * 2, segments));
       dashed.computeLineDistances();
       solid.visible = true;
       dashed.visible = true;
     };
 
-    const topFullyVisible = beta > 0;
-    const bottomFullyVisible = beta < 0;
+    const topFullyVisible = cy > zMax || !hasTangentGeneratrix;
+    const bottomFullyVisible = cy < zMin || !hasTangentGeneratrix;
 
     if (hasTopRing) {
-      const phi = Math.abs(topBoundary.theta - thetaCam);
       applyRing(
         topSolid,
         topDashed,
         topFullyVisible,
         rTop,
         zMax,
-        thetaCam - phi,
-        thetaCam + phi,
+        thetaL,
+        thetaR,
       );
     } else {
       topSolid.visible = false;
@@ -330,15 +328,14 @@ export function RotationOutline({
     }
 
     if (hasBottomRing) {
-      const phi = Math.abs(bottomBoundary.theta - thetaCam);
       applyRing(
         bottomSolid,
         bottomDashed,
         bottomFullyVisible,
         rBottom,
         zMin,
-        thetaCam - phi,
-        thetaCam + phi,
+        thetaL,
+        thetaR,
       );
     } else {
       bottomSolid.visible = false;
@@ -347,7 +344,7 @@ export function RotationOutline({
   });
 
   return (
-    <group>
+    <group ref={groupRef}>
       <primitive object={leftLine} renderOrder={10} />
       <primitive object={rightLine} renderOrder={10} />
       <primitive object={topSolid} renderOrder={10} />

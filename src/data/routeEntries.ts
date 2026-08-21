@@ -721,6 +721,21 @@ const legacyEntries: RouteEntry[] = [
       import("@/features/solidGeometry/PolyhedronCircumSphereAnimation"),
     guarded3D: true,
   },
+  {
+    node: {
+      id: "know-solid-advanced-sphere",
+      title: "多面体与旋转体进阶切接球（双外心/翻折最值/三球同心/圆台/极值）",
+      labTitle: "进阶切接球与体积极值实验室",
+      chapter: "立体几何与空间向量",
+      module: "立体几何压轴",
+      importance: "hard",
+      animationIds: ["anim-solid-advanced-sphere"],
+      prerequisites: ["know-solid-ball-models"],
+      route: "/solid-advanced-sphere",
+    },
+    loader: () => import("@/features/solidGeometry/AdvancedSphereAnimation"),
+    guarded3D: true,
+  },
 ];
 
 import {
