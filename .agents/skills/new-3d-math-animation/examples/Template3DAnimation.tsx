@@ -8,8 +8,6 @@ import {
   MathPanel,
   TabSwitcher,
   SelectGrid,
-  TipCard,
-  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -135,24 +133,25 @@ export default function Template3DAnimation() {
             />
           </LeftPanelSection>
 
-          {/* Step 4: 教学提示 */}
-          <LeftPanelSection title="教学提示" compact>
-            <TipCard variant="info">
-              <span className="font-bold">转化思维链</span>：线线垂直{" "}
-              <KatexFormula formula="\Rightarrow" mode="inline" /> 线面垂直{" "}
-              <KatexFormula formula="\Rightarrow" mode="inline" /> 面面垂直。
-            </TipCard>
-          </LeftPanelSection>
-
-          {/* Step 5: 视图与视角 */}
-          <LeftPanelSection title="视图与视角">
+          {/* Step 4: 视图与操作引导 */}
+          <LeftPanelSection title="3D 视角与操作引导">
             <div className="space-y-2">
               <TabSwitcher
                 layout="horizontal"
                 tabs={[
-                  { key: "orbit", label: "🔄 视角漫游" },
-                  { key: "drag", label: "👆 动点交互" },
+                  { key: "iso", label: "轴测" },
+                  { key: "front", label: "主视" },
+                  { key: "top", label: "俯视" },
+                  { key: "side", label: "左视" },
                 ]}
+                value={preset}
+                onChange={(p) => setCameraPreset(p as CameraPreset)}
+              />
+              <div className="p-2 bg-neutral-50 rounded-md border border-neutral-200/60 text-[11px] text-neutral-500 leading-relaxed">
+                💡 鼠标左键按住拖拽可 360° 旋转视角，滚轮缩放；右上角可切换【👆 动点交互】模式。
+              </div>
+            </div>
+          </LeftPanelSection>
                 value={interactionMode}
                 onChange={(m) => setInteractionMode(m as InteractionMode3D)}
               />

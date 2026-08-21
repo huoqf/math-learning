@@ -13,7 +13,6 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
-  Scene3DGrid,
   Segment3D,
   Vector3DArrow,
   Point3D,
@@ -382,7 +381,6 @@ export default function FoldingAnimation() {
               ref={controlsRef}
               enabled={interactionMode === "orbit"}
             />
-            <Scene3DGrid size={5} />
 
             {/* ── 1. 直角梯形翻折 ── */}
             {model === "trapezoid" &&

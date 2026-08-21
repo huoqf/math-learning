@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import {
   SectionPlane3D,
   CameraRig,
-  Scene3DGrid,
   CompoundLabel3D,
   FormulaLabel3D,
   ThreeViewsPanel,
@@ -705,7 +704,6 @@ export default function SectionCuboidDemo() {
               ref={controlsRef}
               enabled={interactionMode === "orbit" || mode === "continuous"}
             />
-            <Scene3DGrid size={5} />
 
             {/* 3D 几何实体与边线渲染 (严格基于 Polyhedron 拓扑结构，100% 精确吻合) */}
             <PolyhedronSolid polyhedron={currentPolyhedron} opacity={0.15} />

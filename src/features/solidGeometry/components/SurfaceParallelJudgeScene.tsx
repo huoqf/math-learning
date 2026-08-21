@@ -117,7 +117,10 @@ export const SurfaceParallelJudgeScene: React.FC<
         to={{ x: -1.8, y: -1.8, z: 1.5 }}
         colorKey="secondary"
       />
-      <FormulaLabel3D position={{ x: -1.6, y: -1.8, z: 1.6 }} tex="\vec{n_2}" />
+      <FormulaLabel3D
+        position={{ x: -1.6, y: -1.8, z: 1.6 }}
+        tex="\\vec{n}_2"
+      />
 
       <Vector3DArrow
         from={{
@@ -138,7 +141,7 @@ export const SurfaceParallelJudgeScene: React.FC<
           y: alphaOrigin.y + 1.2 * vAxis.y + state.alphaNormal.y * 1.5,
           z: alphaOrigin.z + 1.2 * vAxis.z + state.alphaNormal.z * 1.5 + 0.1,
         }}
-        tex="\vec{n_1}"
+        tex="\\vec{n}_1"
       />
     </>
   );

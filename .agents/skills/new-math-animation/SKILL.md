@@ -111,11 +111,13 @@ KaTeX 输出 HTML，不能直接作为 SVG 子元素，禁止 `<foreignObject>`�
 
 ---
 
-## 常见陷阱
+## 常见陷阱与全局设计规范
 
+- **典型预设首项必须为【自由探究】（`key: "free"`）** → 默认全参数开放；选择特定典型预设时动态隐藏被锁定的无关/对称参数（如正方体隐藏从属边长、中点预设隐藏 $\lambda$）
+- **画布拖拽控制点必须自动切回【自由探究】** → 拖拽触发 `onDrag` 时调用 `setModelPreset("free")`，全量展开参数滑块
 - **公式标注不要绑定在随参数动态移动的曲线点上** → 用固定图例，颜色+线型区分曲线
-- **多模式页参数必须按 activeMode 过滤** → paramConfigs 依赖数组包含 activeMode
-- **右屏数据不要绕过统一入口** → 必须走 buildMathQuantities(animId, params)
+- **多模式/预设页参数必须按 activeMode 与 modelPreset 过滤** → `paramConfigs` 依赖数组包含 `[params, activeMode, modelPreset]`
+- **右屏数据不要绕过统一入口** → 必须走 `buildMathQuantities(animId, params)`
 
 ---
 

@@ -90,9 +90,9 @@ export function solveSkewLines(
   // 求解公垂线段在 A1B 上的点 P1 和 AC 上的点 P2
   // 设 P1 = A1 + s * u = (s*a, 0, c*(1-s))
   // 设 P2 = A + t * v = (t*a, t*b, 0)
-  // 由 P1P2 // n 且 P1P2 ⊥ u, v
+  // 由 P1P2 ⊥ u 且 P1P2 ⊥ v 解析解得:
   const den = b * b * c * c + a * a * c * c + a * a * b * b;
-  const s0 = den > 1e-6 ? (a * a * b * b) / den : 0.5;
+  const s0 = den > 1e-6 ? (c * c * (a * a + b * b)) / den : 0.5;
   const t0 = den > 1e-6 ? (a * a * c * c) / den : 0.5;
 
   const P1: Vec3 = { x: s0 * a, y: 0, z: c * (1 - s0) };
@@ -237,6 +237,10 @@ export interface DistanceVolumeResult {
   volume: number; // 三棱锥 E-ABD 体积
   maxVolume: number; // 动点到达 A1 时的体积极值
   zE: number; // 实际动点高度
+  nRaw: Vec3; // 截面法向量 (未归一化)
+  nUnit: Vec3; // 截面法向量 (单位化)
+  centroidSection: Vec3; // 截面 △BDE 重心 G2
+  centroidBase: Vec3; // 底面 △ABD 重心 G1
 }
 
 /**
@@ -264,10 +268,18 @@ export function solvePointToPlaneDistance(
     z: t * nZ,
   };
 
+  const nRaw: Vec3 = { x: nX, y: nY, z: nZ };
+  const nUnit: Vec3 =
+    lenN > 1e-6
+      ? { x: nX / lenN, y: nY / lenN, z: nZ / lenN }
+      : { x: 0, y: 0, z: 1 };
+
   const areaBDE = 0.5 * lenN;
   const areaABD = 0.5 * a * b;
   const volume = (1 / 6) * a * b * zE;
   const maxVolume = (1 / 6) * a * b * c;
+  const centroidSection: Vec3 = { x: a / 3, y: b / 3, z: zE / 3 };
+  const centroidBase: Vec3 = { x: a / 3, y: b / 3, z: 0 };
 
   return {
     distance,
@@ -277,5 +289,9 @@ export function solvePointToPlaneDistance(
     volume,
     maxVolume,
     zE,
+    nRaw,
+    nUnit,
+    centroidSection,
+    centroidBase,
   };
 }

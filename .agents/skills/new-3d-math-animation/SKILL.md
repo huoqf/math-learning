@@ -18,7 +18,7 @@ description: >
 | 资源路径 | 作用与内容 | 适用场景 |
 |---------|-----------|---------|
 | [references/geometry-standards.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/geometry-standards.md) | **全章节模型图谱与高考标注规范**（空间角/距离/切接球/截面/动点） | **重构与新建前必查**（确定必标辅助线与图元） |
-| [references/left-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/left-panel-spec.md) | **左屏五步渲染层级**、2+1 SelectGrid 防截断、TipCard Token 映射表 | 编写/重构左屏 UI 时必读 |
+| [references/left-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/left-panel-spec.md) | **左屏五步渲染层级**、模式防截断、操作引导与图层分类规范 | 编写/重构左屏 UI 时必读 |
 | [references/components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/components-guide.md) | **3D 核心组件清单**、`SPACE_3D_COLORS`、动点约束与透视切圆架构 | 编写中屏 3D 场景时查阅 |
 | [examples/Template3DAnimation.tsx](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/examples/Template3DAnimation.tsx) | **3D 页面标准完整骨架模板** | 新建 3D 页面时直接参考复制 |
 

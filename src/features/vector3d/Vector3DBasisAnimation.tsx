@@ -569,7 +569,7 @@ export default function Vector3DBasisAnimation() {
               <Vector3DArrow from={O} to={vecA} colorKey="paramPrimary" />
               <FormulaLabel3D
                 position={{ x: vecA.x * 0.5, y: -0.28, z: 0 }}
-                tex="\vec{a}"
+                tex="\\vec{a}"
               />
 
               <Vector3DArrow from={O} to={vecB} colorKey="paramSecondary" />
@@ -579,7 +579,7 @@ export default function Vector3DBasisAnimation() {
                   y: vecB.y * 0.5 + 0.15,
                   z: 0,
                 }}
-                tex="\vec{b}"
+                tex="\\vec{b}"
               />
 
               <Vector3DArrow from={O} to={vecC} colorKey="paramTertiary" />
@@ -589,7 +589,7 @@ export default function Vector3DBasisAnimation() {
                   y: pointC.y * 0.5,
                   z: pointC.z * 0.5 + 0.18,
                 }}
-                tex="\vec{c}"
+                tex="\\vec{c}"
               />
 
               {/* 1. 分步加法路径链（当分量绝对值 >= 0.05 时渲染） */}
@@ -736,7 +736,7 @@ export default function Vector3DBasisAnimation() {
               <Vector3DArrow from={O} to={vecA} colorKey="paramPrimary" />
               <FormulaLabel3D
                 position={{ x: vecA.x * 0.5, y: -0.28, z: 0 }}
-                tex="\vec{a}"
+                tex="\\vec{a}"
               />
               <Point3D position={pointA} colorKey="paramPrimary" />
               <PointLabel3D
@@ -752,7 +752,7 @@ export default function Vector3DBasisAnimation() {
                   y: vecB.y * 0.5 + 0.15,
                   z: 0,
                 }}
-                tex="\vec{b}"
+                tex="\\vec{b}"
               />
               <Point3D position={pointB} colorKey="paramSecondary" />
               <PointLabel3D
@@ -768,7 +768,7 @@ export default function Vector3DBasisAnimation() {
                   y: vecC.y * 0.5,
                   z: vecC.z * 0.5 + 0.18,
                 }}
-                tex="\vec{c}"
+                tex="\\vec{c}"
               />
               <Point3D position={pointC} colorKey="paramTertiary" />
               <PointLabel3D
@@ -1026,7 +1026,7 @@ export default function Vector3DBasisAnimation() {
                       y: (pointA.y + P.y) * 0.5,
                       z: (pointA.z + P.z) * 0.5 + 0.15,
                     }}
-                    tex="\vec{AP}"
+                    tex="\\overrightarrow{AP}"
                   />
                 </>
               )}
@@ -1045,7 +1045,7 @@ export default function Vector3DBasisAnimation() {
           <PointLabel3D position={P} text="P" offset={[0, 0, 0.25]} />
           <FormulaLabel3D
             position={{ x: P.x * 0.5, y: P.y * 0.5, z: P.z * 0.5 + 0.22 }}
-            tex="\vec{OP}"
+            tex="\\overrightarrow{OP}"
           />
         </ThreeDCanvas>
       }

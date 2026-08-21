@@ -13,6 +13,32 @@ interface FormulaLabel3DProps {
   plain?: boolean;
 }
 
+function sanitizeLatex(input: string): string {
+  if (!input) return "";
+  let clean = input.trim();
+
+  // 1. 过滤任何控制字符 (如 ASCII 11 / \x0b / \v)
+  // eslint-disable-next-line no-control-regex
+  clean = clean.replace(/[\x00-\x1f]/g, "");
+
+  // 2. 将连续的反斜杠（\\）归一化为单个反斜杠（\）
+  clean = clean.replace(/\\+/g, "\\");
+
+  // 3. 修复带下标的向量 (如 vecn_1, vecn_2, ecn_1, \vec{n_1}, \vec{n}_1, \\vec{n}_2 等)
+  clean = clean.replace(
+    /^(?:\\?vec|ec)\{?([a-zA-Z])\}?_\{?([0-9a-zA-Z]+)\}?$/,
+    (_m, p1, p2) => `\\vec{${p1}}_{${p2}}`,
+  );
+
+  // 4. 修复单字母向量 (如 vecn, veca, \vec{a}, ec{a} 等)
+  clean = clean.replace(
+    /^(?:\\?vec|ec)\{?([a-zA-Z])\}?$/,
+    (_m, p1) => `\\vec{${p1}}`,
+  );
+
+  return clean;
+}
+
 /**
  * 3D 空间 KaTeX 公式标注
  * 使用 Drei 原生 distanceFactor 保证与 3D 空间几何模型 100% 正向透视同步（远小近大）
@@ -25,6 +51,7 @@ export const FormulaLabel3D = ({
   plain = true,
 }: FormulaLabel3DProps) => {
   const [x, y, z] = mathToThree(position);
+  const cleanTex = sanitizeLatex(tex);
 
   return (
     <group position={[x + offset[0], y + offset[1], z + offset[2]]}>
@@ -61,7 +88,7 @@ export const FormulaLabel3D = ({
                 }
           }
         >
-          <KatexFormula formula={tex} mode="inline" />
+          <KatexFormula formula={cleanTex} mode="inline" />
         </div>
       </Html>
     </group>

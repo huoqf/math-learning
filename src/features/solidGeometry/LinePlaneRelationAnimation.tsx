@@ -585,7 +585,7 @@ export default function LinePlaneRelationAnimation() {
               interactionMode === "orbit" || activeMode !== "gaokaoPyramid"
             }
           />
-          <Scene3DGrid size={5} showLabels={showAxes} />
+          {activeMode === "vector" && <Scene3DGrid size={5} showGrid={false} />}
 
           {/* 模式 1：高考四棱锥母题 */}
           {activeMode === "gaokaoPyramid" && (
@@ -806,7 +806,7 @@ export default function LinePlaneRelationAnimation() {
                   />
                   <FormulaLabel3D
                     position={{ x: 0.15, y: 0.15, z: 2.6 }}
-                    tex="\vec{n}"
+                    tex="\\vec{n}"
                   />
                   {thetaDeg > 0 && thetaDeg < 90 && (
                     <AngleArc3D

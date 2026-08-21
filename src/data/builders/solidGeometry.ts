@@ -59,6 +59,7 @@ export function buildSpatialAnglePanel(
   config?: Record<string, unknown>,
 ): MathPanelData {
   const mode = (config?.mode as string) ?? "skewLines";
+  const preset = (config?.preset as string) ?? "free";
   const a = params.a ?? 3;
   const b = params.b ?? 2;
   const c = params.c ?? 2;
@@ -117,6 +118,15 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.highlight,
       },
     );
+
+    if (preset === "cube") {
+      theorems.push({
+        name: "正方体 60° 秒杀模型",
+        latex: `\\text{正方体中 } AC = CD_1 = AD_1 = \\sqrt{2}a \\implies \\triangle ACD_1 \\text{ 为正三角形} \\implies \\theta = 60^\\circ`,
+        level: "core",
+        note: "在高考选择填空题中，正方体面对角线异面角可直接秒杀 60°，无需建系计算",
+      });
+    }
 
     theorems.push(
       {
@@ -203,6 +213,15 @@ export function buildSpatialAnglePanel(
       },
     );
 
+    if (preset === "bodyDiag") {
+      theorems.push({
+        name: "正方体体对角线线面角模型",
+        latex: `\\text{正方体体对角线与底面角 } \\tan\\theta = \\frac{a}{\\sqrt{2}a} = \\frac{1}{\\sqrt{2}} \\implies \\sin\\theta = \\frac{\\sqrt{3}}{3} \\approx 0.5774 \\; (\\theta \\approx 35.26^\\circ)`,
+        level: "core",
+        note: "高考极高频母题：正方体体对角线与三个坐标面所成角均相等，且满足 sin²α + sin²β + sin²γ = 1",
+      });
+    }
+
     theorems.push(
       {
         name: "直线与平面所成角坐标公式",
@@ -277,6 +296,15 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.paramPrimary,
       },
     );
+
+    if (preset === "cubeThird") {
+      theorems.push({
+        name: "正方体点面距三分体对角线模型",
+        latex: `\\text{正方体顶点 } A \\text{ 到截面 } A_1BD \\text{ 的距离 } d = \\frac{\\sqrt{3}}{3}a = \\frac{1}{3}|AC_1|`,
+        level: "core",
+        note: "在正方体中，体对角线 AC₁ 垂直于截面 A₁BD 且被其三等分，点面距恒为 (√3/3)a",
+      });
+    }
 
     theorems.push(
       {
@@ -357,6 +385,15 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.paramTertiary,
       },
     );
+
+    if (preset === "cubeSection") {
+      theorems.push({
+        name: "正方体截面二面角基角模型",
+        latex: `\\text{正方体截面 } A_1BD \\text{ 与底面二面角 } \\cos\\theta = \\frac{\\sqrt{3}}{3} \\approx 0.5774 \\; (\\theta \\approx 54.74^\\circ)`,
+        level: "core",
+        note: "在正方体中，tanθ = AA₁ / AM = a / (√2/2 a) = √2，由此推得 cosθ = 1/√(1 + tan²θ) = √3/3",
+      });
+    }
 
     theorems.push(
       {

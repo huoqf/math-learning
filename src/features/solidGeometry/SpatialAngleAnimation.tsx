@@ -9,8 +9,6 @@ import {
   MathPanel,
   TabSwitcher,
   SelectGrid,
-  TipCard,
-  KatexFormula,
   Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
@@ -28,6 +26,7 @@ import {
   CameraRig,
   ModeSwitchOverlay3D,
 } from "@/components/Math3D";
+import type { LegendItem } from "@/components/Math3D";
 import { Cuboid } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -43,7 +42,6 @@ import {
 import type { Vec3 } from "@/math3d/vector3";
 
 type AngleMode = "skewLines" | "linePlane" | "dihedral" | "distance";
-type ModelPreset = "standard" | "cube" | "tallPrism";
 
 export default function SpatialAngleAnimation() {
   const location = useLocation();
@@ -52,16 +50,17 @@ export default function SpatialAngleAnimation() {
     : "skewLines";
 
   const [activeMode, setActiveMode] = useState<AngleMode>(defaultMode);
-  const [modelPreset, setModelPreset] = useState<ModelPreset>("standard");
+  const [modelPreset, setModelPreset] = useState<string>("free");
   const [interactionMode, setInteractionMode] = useState<"orbit" | "drag">(
     "orbit",
   );
 
-  // 数学分类图层控制开关 (彼此解耦，符合高中教学)
+  // 数学分类图层控制开关 (解耦必修二综合法与选修一向量法，默认纯几何优先)
+  const [showAxes, setShowAxes] = useState<boolean>(false); // 空间直角坐标系 A-xyz (默认关闭，符合高中综合几何习惯)
   const [showAuxiliary, setShowAuxiliary] = useState<boolean>(true); // 几何辅助线 (平移线/射影/垂线高)
   const [showRightAngles, setShowRightAngles] = useState<boolean>(true); // 空间垂直与直角符号
   const [showAngles, setShowAngles] = useState<boolean>(true); // 特征空间角弧 θ
-  const [showNormals, setShowNormals] = useState<boolean>(true); // 空间法向量 (唯一代数向量箭头)
+  const [showNormals, setShowNormals] = useState<boolean>(false); // 空间法向量 (选修一向量法，按需开启)
 
   const [params, setParams] = useState<Record<string, number>>({
     a: 3,
@@ -106,37 +105,176 @@ export default function SpatialAngleAnimation() {
     [a, b, c, lambda],
   );
 
-  // 组装右屏看板数据
+  // 组装右屏看板数据 (精准同步左屏探究模式与典型预设)
   const animId =
     activeMode === "distance" ? "anim-solid-distance" : "anim-solid-angle";
   const mathData = useMemo(
     () =>
       buildMathQuantities(animId, params, {
         mode: activeMode,
+        preset: modelPreset,
       }),
-    [params, activeMode, animId],
+    [params, activeMode, modelPreset, animId],
   );
 
+  // 探究模式对应的典型模型预设 (2x2 对称布局：自由探究 + 3大典型母题)
+  const currentPresets = useMemo(() => {
+    const presetsByMode: Record<
+      AngleMode,
+      {
+        key: string;
+        label: string;
+        description: string;
+        params: Record<string, number>;
+      }[]
+    > = {
+      skewLines: [
+        {
+          key: "free",
+          label: "自由探究",
+          description: "三边长可调",
+          params: { a: 3, b: 2, c: 2, lambda: 0.5 },
+        },
+        {
+          key: "cube",
+          label: "正方体",
+          description: "60°秒杀",
+          params: { a: 2.5, b: 2.5, c: 2.5, lambda: 0.5 },
+        },
+        {
+          key: "tallPrism",
+          label: "直四棱柱",
+          description: "正方形底",
+          params: { a: 2.5, b: 2.5, c: 3.5, lambda: 0.5 },
+        },
+        {
+          key: "standard",
+          label: "经典长方体",
+          description: "3:2:2算例",
+          params: { a: 3, b: 2, c: 2, lambda: 0.5 },
+        },
+      ],
+      linePlane: [
+        {
+          key: "free",
+          label: "自由探究",
+          description: "连续变倾角",
+          params: { a: 3, b: 2, c: 2.5, lambda: 0.6 },
+        },
+        {
+          key: "midpoint",
+          label: "中点斜线",
+          description: "λ=0.5固定",
+          params: { a: 3, b: 2, c: 2.5, lambda: 0.5 },
+        },
+        {
+          key: "bodyDiag",
+          label: "体对角线",
+          description: "正方体模型",
+          params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
+        },
+        {
+          key: "tallPrismMid",
+          label: "正棱柱中点",
+          description: "λ=0.5正棱柱",
+          params: { a: 2.5, b: 2.5, c: 3.5, lambda: 0.5 },
+        },
+      ],
+      dihedral: [
+        {
+          key: "free",
+          label: "自由探究",
+          description: "连续变二面角",
+          params: { a: 3, b: 2, c: 2, lambda: 0.7 },
+        },
+        {
+          key: "cubeSection",
+          label: "正方体截面",
+          description: "cosθ=√3/3",
+          params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
+        },
+        {
+          key: "midSection",
+          label: "中点截面",
+          description: "λ=0.5固定",
+          params: { a: 3, b: 2, c: 2, lambda: 0.5 },
+        },
+        {
+          key: "tallPrismSection",
+          label: "正棱柱截面",
+          description: "λ=1.0正棱柱",
+          params: { a: 2.5, b: 2.5, c: 3.5, lambda: 1.0 },
+        },
+      ],
+      distance: [
+        {
+          key: "free",
+          label: "自由探究",
+          description: "连续变体积",
+          params: { a: 3, b: 2, c: 2, lambda: 0.6 },
+        },
+        {
+          key: "maxVolume",
+          label: "顶点极值",
+          description: "V_max=1/6 abc",
+          params: { a: 3, b: 2, c: 2, lambda: 1.0 },
+        },
+        {
+          key: "cubeThird",
+          label: "正方体距",
+          description: "d=√3/3 a",
+          params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
+        },
+        {
+          key: "midVolume",
+          label: "中点半体积",
+          description: "V=1/12 abc",
+          params: { a: 3, b: 2, c: 2, lambda: 0.5 },
+        },
+      ],
+    };
+    return presetsByMode[activeMode] ?? presetsByMode.skewLines;
+  }, [activeMode]);
+
+  // 高考模型预设切换 (铁律：仅调参数，严禁篡改 activeMode)
+  const handleModelPresetChange = (pKey: string) => {
+    setModelPreset(pKey);
+    const target = currentPresets.find((p) => p.key === pKey);
+    if (target) {
+      setParams(target.params);
+    }
+  };
+
   const handleParamChange = (key: string, value: number) => {
+    // 智能联动逻辑：根据当前模型预设的几何特征约束自动同步关联尺寸
+    if (
+      modelPreset === "cube" ||
+      modelPreset === "cubeSection" ||
+      modelPreset === "bodyDiag" ||
+      modelPreset === "cubeThird"
+    ) {
+      // 正方体约束：a=b=c 同步联动
+      if (key === "a" || key === "b" || key === "c") {
+        setParams((prev) => ({ ...prev, a: value, b: value, c: value }));
+        return;
+      }
+    } else if (
+      modelPreset === "tallPrism" ||
+      modelPreset === "tallPrismMid" ||
+      modelPreset === "tallPrismSection"
+    ) {
+      // 直四棱柱约束：底面正方形 a=b 同步联动
+      if (key === "a" || key === "b") {
+        setParams((prev) => ({ ...prev, a: value, b: value }));
+        return;
+      }
+    }
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleReset = () => {
+    setModelPreset("free");
     setParams({ a: 3, b: 2, c: 2, lambda: 0.6 });
-    setModelPreset("standard");
-  };
-
-  // 高考模型预设切换 (铁律：仅调参数，严禁篡改 activeMode)
-  const handleModelPresetChange = (pKey: string) => {
-    const key = pKey as ModelPreset;
-    setModelPreset(key);
-    if (key === "standard") {
-      setParams({ a: 3, b: 2, c: 2, lambda: 0.6 });
-    } else if (key === "cube") {
-      setParams({ a: 2.5, b: 2.5, c: 2.5, lambda: 0.5 });
-    } else if (key === "tallPrism") {
-      setParams({ a: 2, b: 2, c: 3.5, lambda: 0.6 });
-    }
   };
 
   // 沿棱直视视角触发
@@ -152,120 +290,232 @@ export default function SpatialAngleAnimation() {
     }
   };
 
-  // 按模式精准过滤左屏参数配置 (铁律 8)
+  // 核心参数过滤与可见性决策系统 (自由探究全开放，典型预设精准隐藏无关参数)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<AngleMode, string[]> = {
-      skewLines: ["a", "b", "c"],
-      linePlane: ["a", "b", "c", "lambda"],
-      dihedral: ["a", "b", "c", "lambda"],
-      distance: ["a", "b", "c", "lambda"],
-    };
-    const activeKeys = keysByMode[activeMode] ?? ["a", "b", "c", "lambda"];
+    const isCubePreset =
+      modelPreset === "cube" ||
+      modelPreset === "cubeSection" ||
+      modelPreset === "bodyDiag" ||
+      modelPreset === "cubeThird";
+
+    const isPrismPreset =
+      modelPreset === "tallPrism" ||
+      modelPreset === "tallPrismMid" ||
+      modelPreset === "tallPrismSection";
+
+    const isFixedLambdaPreset =
+      modelPreset === "midpoint" ||
+      modelPreset === "bodyDiag" ||
+      modelPreset === "tallPrismMid" ||
+      modelPreset === "cubeSection" ||
+      modelPreset === "midSection" ||
+      modelPreset === "tallPrismSection" ||
+      modelPreset === "maxVolume" ||
+      modelPreset === "cubeThird" ||
+      modelPreset === "midVolume";
+
+    // 1. 决定当前探究模式下需要呈现的参数集合
+    let activeKeys: string[];
+
+    if (activeMode === "skewLines") {
+      // 异面直线角只由长方体尺寸决定，彻底排除动点 lambda
+      if (modelPreset === "free" || modelPreset === "standard") {
+        activeKeys = ["a", "b", "c"]; // 自由探究：三边自由
+      } else if (isCubePreset) {
+        activeKeys = ["a"]; // 正方体：单棱长 (联动 b=a, c=a)
+      } else if (isPrismPreset) {
+        activeKeys = ["a", "c"]; // 直四棱柱：底边 a (联动 b=a) + 侧棱高 c
+      } else {
+        activeKeys = ["a", "b", "c"];
+      }
+    } else {
+      // linePlane / dihedral / distance 模式
+      if (modelPreset === "free") {
+        // 自由探究：全部参数开放可调
+        activeKeys = ["a", "b", "c", "lambda"];
+      } else if (isCubePreset) {
+        // 正方体预设：隐藏 b, c；若动点固定则同时隐藏 lambda
+        activeKeys = isFixedLambdaPreset ? ["a"] : ["a", "lambda"];
+      } else if (isPrismPreset) {
+        // 直四棱柱预设：隐藏 b；若动点固定则同时隐藏 lambda
+        activeKeys = isFixedLambdaPreset ? ["a", "c"] : ["a", "c", "lambda"];
+      } else if (isFixedLambdaPreset) {
+        // 特征动点固定预设：隐藏 lambda，仅展示尺寸参数
+        activeKeys = ["a", "b", "c"];
+      } else {
+        activeKeys = ["a", "b", "c", "lambda"];
+      }
+    }
 
     return spatialAngleMeta
       .filter((meta) => activeKeys.includes(meta.key))
-      .map((meta) => ({
-        key: meta.key,
-        label: meta.label,
-        labelFormula: meta.labelFormula,
-        value: params[meta.key] ?? meta.defaultValue ?? 0,
-        min: meta.min,
-        max: meta.max,
-        step: meta.step ?? 0.05,
-        description: meta.description,
-        descriptionFormula: meta.descriptionFormula,
-        importance: meta.importance,
-        marks: meta.marks,
-      }));
-  }, [params, activeMode]);
+      .map((meta) => {
+        // 在正方体预设下，将 label 描述提升为“正方体棱长 a”
+        const label =
+          isCubePreset && meta.key === "a" ? "正方体棱长 a" : meta.label;
+        const description =
+          isCubePreset && meta.key === "a"
+            ? "长宽高同步 a=b=c"
+            : isPrismPreset && meta.key === "a"
+              ? "底面正方形 a=b"
+              : meta.description;
 
-  // 教学提示内容配置
-  const tipConfig = useMemo(() => {
+        return {
+          key: meta.key,
+          label,
+          labelFormula:
+            isCubePreset && meta.key === "a" ? undefined : meta.labelFormula,
+          value: params[meta.key] ?? meta.defaultValue ?? 0,
+          min: meta.min,
+          max: meta.max,
+          step: meta.step ?? 0.05,
+          description,
+          descriptionFormula: undefined, // 彻底消除重复公式
+          importance: meta.importance,
+          marks: meta.marks,
+        };
+      });
+  }, [params, activeMode, modelPreset]);
+
+  // 中屏图例按探究模式与图层开关精准动态同步
+  const legendItems = useMemo<LegendItem[]>(() => {
     switch (activeMode) {
       case "skewLines":
-        return {
-          variant: "warning" as const,
-          formula:
-            "\\cos\\theta = \\frac{|\\vec{u}\\cdot\\vec{v}|}{|\\vec{u}||\\vec{v}|} \\in (0, 1]",
-          text: "平移法 D₁C // A₁B 将异面直线角转化为平面相交角 ∠ACD₁，余弦绝对值保证取锐角/直角。",
-        };
+        return [
+          { colorKey: "primary", swatch: "line", label: "异面直线 A₁B 与 AC" },
+          {
+            colorKey: "accent",
+            swatch: "line",
+            label: "辅助平移线 D₁C // A₁B",
+          },
+          { colorKey: "highlight", swatch: "line", label: "夹角 θ (∠ACD₁)" },
+        ];
       case "linePlane":
-        return {
-          variant: "danger" as const,
-          formula:
-            "\\sin\\theta = |\\cos\\langle\\vec{u}, \\vec{n}\\rangle| = \\frac{|\\vec{u}\\cdot\\vec{n}|}{|\\vec{u}||\\vec{n}|}",
-          text: "高考黄金考点：线面角公式求出的是正弦值 sinθ！直角三角形 △EAC 中 sinθ = EA / EC。",
-        };
+        return [
+          { colorKey: "primary", swatch: "line", label: "空间斜线 EC" },
+          { colorKey: "accent", swatch: "line", label: "垂线 EA 与射影 AC" },
+          { colorKey: "secondary", swatch: "area", label: "底面 ABCD" },
+          { colorKey: "highlight", swatch: "line", label: "线面角 θ (∠ECA)" },
+          ...(showNormals
+            ? [
+                {
+                  colorKey: "secondary" as const,
+                  swatch: "line" as const,
+                  label: "底面法向量 n⃗",
+                },
+              ]
+            : []),
+        ];
       case "dihedral":
-        return {
-          variant: "primary" as const,
-          formula: "\\text{同进同出互补，一进一出相等}",
-          text: "三垂线定理在交线 BD 垂足 M 处构造平面角 ∠AME；法向量指向相同侧时与二面角互补。",
-        };
+        return [
+          { colorKey: "primary", swatch: "line", label: "截面交线 BD" },
+          {
+            colorKey: "accent",
+            swatch: "line",
+            label: "三垂线 AM⊥BD 与 EM⊥BD",
+          },
+          { colorKey: "secondary", swatch: "area", label: "截面 BDE 与底面" },
+          {
+            colorKey: "highlight",
+            swatch: "line",
+            label: "二面角平面角 θ (∠AME)",
+          },
+          ...(showNormals
+            ? [
+                {
+                  colorKey: "secondary" as const,
+                  swatch: "line" as const,
+                  label: "底面法向量 n⃗₁",
+                },
+                {
+                  colorKey: "primary" as const,
+                  swatch: "line" as const,
+                  label: "截面法向量 n⃗₂",
+                },
+              ]
+            : []),
+        ];
       case "distance":
-        return {
-          variant: "success" as const,
-          formula:
-            "d = \\frac{|\\vec{AP}\\cdot\\vec{n}|}{|\\vec{n}|} = \\frac{3V}{S_{\\text{底}}}",
-          text: "等体积法换底对照：以 △ABD 为底高为 EA，以截面 △BDE 为底高为 d，反解距离最简捷。",
-        };
+        return [
+          { colorKey: "primary", swatch: "line", label: "三棱锥棱线与截面边" },
+          {
+            colorKey: "highlight",
+            swatch: "line",
+            label: "点 A 到截面高线 AH (距离 d)",
+          },
+          {
+            colorKey: "secondary",
+            swatch: "area",
+            label: "底面 ABD 与截面 BDE",
+          },
+          {
+            colorKey: "accent",
+            swatch: "line",
+            label: "竖直侧高 EA (等体积换底)",
+          },
+          ...(showNormals
+            ? [
+                {
+                  colorKey: "primary" as const,
+                  swatch: "line" as const,
+                  label: "截面法向量 n⃗",
+                },
+              ]
+            : []),
+        ];
     }
-  }, [activeMode]);
+  }, [activeMode, showNormals]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* Step 1: 探究模式 (纯净紧凑 2x2 控制卡片，三屏职责分明) */}
+          {/* Step 1: 探究模式 (纯净紧凑 2x2 控制卡片) */}
           <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
                 {
                   key: "skewLines",
                   label: "异面直线角",
-                  description: "平移法与向量法",
+                  description: "平移转化",
                 },
                 {
                   key: "linePlane",
-                  label: "直线与平面角",
-                  description: "斜线与射影直角",
+                  label: "线面夹角",
+                  description: "垂线射影",
                 },
                 {
                   key: "dihedral",
-                  label: "二面角",
-                  description: "三垂线与双法向量",
+                  label: "空间二面角",
+                  description: "三垂线法",
                 },
                 {
                   key: "distance",
-                  label: "点面距与体积",
-                  description: "等体积法与极值",
+                  label: "点面距离",
+                  description: "等体积法",
                 },
               ]}
               value={activeMode}
-              onChange={(m) => setActiveMode(m as AngleMode)}
+              onChange={(m) => {
+                setActiveMode(m as AngleMode);
+                setModelPreset("free");
+              }}
               columns={2}
             />
           </LeftPanelSection>
 
-          {/* Step 2: 高考场景预设 (精炼 3 字标签，彻底消除省略号) */}
-          <LeftPanelSection title="高考模型预设">
+          {/* Step 2: 典型模型预设 (2x2 黄金对称布局：自由探究 + 3大典型母题) */}
+          <LeftPanelSection title="典型模型预设">
             <SelectGrid
-              items={[
-                { key: "standard", label: "长方体", description: "3×2×2" },
-                { key: "cube", label: "正方体", description: "2.5³" },
-                { key: "tallPrism", label: "四棱柱", description: "2×2×3.5" },
-              ]}
+              items={currentPresets}
               value={modelPreset}
               onChange={handleModelPresetChange}
-              columns={3}
+              columns={2}
             />
           </LeftPanelSection>
 
-          {/* Step 3: 参数调节 (按当前模式过滤，纯净滑块) */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="调节空间各轴棱长与动点 E 分点比例 λ"
-          >
+          {/* Step 3: 参数调节 (按当前模式与预设过滤) */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -273,73 +523,81 @@ export default function SpatialAngleAnimation() {
             />
           </LeftPanelSection>
 
-          {/* Step 4: 几何图层与标注控制 (按数学分类解耦，使用规范 Toggle) */}
-          <LeftPanelSection title="几何图层与标注控制" compact>
-            <div className="grid grid-cols-2 gap-2 bg-neutral-50/80 p-2 rounded-md border border-neutral-200/70">
-              <Toggle
-                label="几何辅助线"
-                checked={showAuxiliary}
-                onChange={setShowAuxiliary}
-              />
-              <Toggle
-                label="垂直直角符号"
-                checked={showRightAngles}
-                onChange={setShowRightAngles}
-              />
-              <Toggle
-                label="空间角弧 θ"
-                checked={showAngles}
-                onChange={setShowAngles}
-              />
-              {(activeMode === "linePlane" || activeMode === "dihedral") && (
-                <Toggle
-                  label="空间法向量"
-                  checked={showNormals}
-                  onChange={setShowNormals}
-                />
-              )}
+          {/* Step 4: 几何与向量图层控制 (按高中两大体系分类) */}
+          <LeftPanelSection title="图层与标注显示控制" compact>
+            <div className="space-y-2.5">
+              {/* 必修二：综合几何法图层 */}
+              <div className="bg-neutral-50/80 p-2.5 rounded-lg border border-neutral-200/70">
+                <div className="text-[11px] font-semibold text-neutral-600 mb-2 flex items-center gap-1.5">
+                  <span className="text-xs">📐</span>
+                  <span>综合几何法（必修二）</span>
+                </div>
+                <div className="space-y-2">
+                  <Toggle
+                    label="几何辅助线（平移/射影/垂线）"
+                    checked={showAuxiliary}
+                    onChange={setShowAuxiliary}
+                  />
+                  <Toggle
+                    label="垂直直角符号（⊥）"
+                    checked={showRightAngles}
+                    onChange={setShowRightAngles}
+                  />
+                  <Toggle
+                    label="空间特征角弧（θ）"
+                    checked={showAngles}
+                    onChange={setShowAngles}
+                  />
+                </div>
+              </div>
+
+              {/* 选修一：空间向量法图层 */}
+              <div className="bg-blue-50/40 p-2.5 rounded-lg border border-blue-100/80">
+                <div className="text-[11px] font-semibold text-blue-700 mb-2 flex items-center gap-1.5">
+                  <span className="text-xs">🧭</span>
+                  <span>空间向量法（选修一）</span>
+                </div>
+                <div className="space-y-2">
+                  <Toggle
+                    label="空间直角坐标系（A-xyz）"
+                    checked={showAxes}
+                    onChange={setShowAxes}
+                  />
+                  {activeMode !== "skewLines" && (
+                    <Toggle
+                      label="空间法向量（代数向量 n⃗）"
+                      checked={showNormals}
+                      onChange={setShowNormals}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
           </LeftPanelSection>
 
-          {/* Step 5: 教学提示 (TipCard) */}
-          <LeftPanelSection title="教学提示与避坑指南" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="font-semibold text-xs mb-1">
-                <KatexFormula mode="inline" formula={tipConfig.formula} />
-              </div>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                {tipConfig.text}
-              </p>
-            </TipCard>
-          </LeftPanelSection>
-
-          {/* Step 6: 视图与视角 */}
-          <LeftPanelSection title="3D 视角与观察方向">
+          {/* Step 5: 3D 空间视角预设 */}
+          <LeftPanelSection title="3D 空间视角预设">
             <TabSwitcher
               layout="horizontal"
               tabs={[
-                { key: "iso", label: "轴测" },
-                { key: "front", label: "主视" },
-                { key: "top", label: "俯视" },
-                { key: "side", label: "左视" },
+                { key: "iso", label: "轴测直观" },
+                { key: "front", label: "主视正投" },
+                { key: "top", label: "俯视底面" },
+                { key: "side", label: "左视侧面" },
               ]}
               value={preset}
               onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
             {activeMode === "dihedral" && (
-              <div className="mt-2">
-                <SelectGrid
-                  items={[
-                    {
-                      key: "alongEdge",
-                      label: "📐 沿棱直视 (视线沿 BD 判定钝锐角)",
-                      fullWidth: true,
-                    },
-                  ]}
-                  value=""
-                  onChange={() => handleAlignAlongEdge()}
-                  columns={1}
-                />
+              <div className="mt-2.5">
+                <button
+                  type="button"
+                  onClick={handleAlignAlongEdge}
+                  className="w-full py-2 px-3 bg-blue-50 hover:bg-blue-100/80 border border-blue-200/80 rounded-md text-xs text-blue-700 font-medium flex items-center justify-center gap-1.5 transition-colors active:scale-[0.99]"
+                >
+                  <span>📐</span>
+                  <span>沿棱对齐直视（视线沿交线 BD 判定平面角 ∠AME）</span>
+                </button>
               </div>
             )}
           </LeftPanelSection>
@@ -349,40 +607,19 @@ export default function SpatialAngleAnimation() {
         <div className="w-full h-full relative">
           <ThreeDCanvas
             cameraPosition={cameraPosition}
-            legend={
-              <Legend3D
-                title="图例标注"
-                items={[
-                  {
-                    colorKey: "primary",
-                    swatch: "line",
-                    label: "主直线 / 斜线 (线段)",
-                  },
-                  {
-                    colorKey: "accent",
-                    swatch: "line",
-                    label: "目标直线 / 垂线 (线段)",
-                  },
-                  {
-                    colorKey: "paramTertiary",
-                    swatch: "area",
-                    label: "截面 / 射影 / 垂足",
-                  },
-                  {
-                    colorKey: "highlight",
-                    swatch: "line",
-                    label: "特征角弧 / 距离 d",
-                  },
-                ]}
-              />
-            }
+            legend={<Legend3D title="图例标注" items={legendItems} />}
           >
             <CameraRig
               ref={controlsRef}
               enabled={interactionMode === "orbit"}
             />
-            {/* 纯净直角坐标系 A-xyz（固定基准尺寸 5.5，彻底移除地面方格网格） */}
-            <Scene3DGrid size={5.5} showGrid={false} />
+            {/* 纯净直角坐标系 A-xyz（受左屏开关控制，动态适配长方体尺寸，正半轴实线箭头，负半轴细虚线） */}
+            {showAxes && (
+              <Scene3DGrid
+                size={[a + 1.2, b + 1.2, c + 1.2]}
+                showGrid={false}
+              />
+            )}
 
             {/* 基础长方体 */}
             <Cuboid a={a} b={b} c={c} opacity={0.1} colorKey="primary" />
@@ -547,14 +784,15 @@ export default function SpatialAngleAnimation() {
                     y: 0,
                     z: Math.min(c, Math.max(0.1 * c, raw.z)),
                   })}
-                  onDrag={(next) =>
+                  onDrag={(next) => {
+                    setModelPreset("free");
                     setParams((prev) => ({
                       ...prev,
                       lambda: Number(
                         Math.min(1.0, Math.max(0.1, next.z / c)).toFixed(2),
                       ),
-                    }))
-                  }
+                    }));
+                  }}
                   colorKey="highlight"
                 />
 
@@ -624,8 +862,9 @@ export default function SpatialAngleAnimation() {
                       colorKey="secondary"
                     />
                     <FormulaLabel3D
-                      position={{ x: a / 2 + 0.15, y: b / 2, z: 1.9 }}
-                      tex="\vec{n_0}"
+                      position={{ x: a / 2, y: b / 2, z: 1.8 }}
+                      tex="\\vec{n}_0"
+                      offset={[0.1, 0.1, 0.1]}
                     />
                   </>
                 )}
@@ -649,14 +888,15 @@ export default function SpatialAngleAnimation() {
                     y: 0,
                     z: Math.min(c, Math.max(0.1 * c, raw.z)),
                   })}
-                  onDrag={(next) =>
+                  onDrag={(next) => {
+                    setModelPreset("free");
                     setParams((prev) => ({
                       ...prev,
                       lambda: Number(
                         Math.min(1.0, Math.max(0.1, next.z / c)).toFixed(2),
                       ),
-                    }))
-                  }
+                    }));
+                  }}
                   colorKey="highlight"
                 />
 
@@ -707,7 +947,7 @@ export default function SpatialAngleAnimation() {
                 {/* 垂直直角符号 */}
                 {showRightAngles && showAuxiliary && (
                   <>
-                    {/* 垂足 M 处 AM ⊥ BD 直角标记 */}
+                    {/* 垂足 M 处 AM ⊥ BD 直角标记 (落在底面 △ABD 内，朝向点 B) */}
                     <AngleArc3D
                       vertex={dihedralData.edgeFootM}
                       dirA={{
@@ -716,16 +956,16 @@ export default function SpatialAngleAnimation() {
                         z: 0,
                       }}
                       dirB={{
-                        x: D.x - dihedralData.edgeFootM.x,
-                        y: D.y - dihedralData.edgeFootM.y,
+                        x: B.x - dihedralData.edgeFootM.x,
+                        y: B.y - dihedralData.edgeFootM.y,
                         z: 0,
                       }}
-                      radius={0.22}
+                      radius={0.25}
                       colorKey="secondary"
                       isRight
                     />
 
-                    {/* 垂足 M 处 EM ⊥ BD 直角标记 */}
+                    {/* 垂足 M 处 EM ⊥ BD 直角标记 (落在截面 △BDE 内，朝向点 D) */}
                     <AngleArc3D
                       vertex={dihedralData.edgeFootM}
                       dirA={{
@@ -738,7 +978,7 @@ export default function SpatialAngleAnimation() {
                         y: D.y - dihedralData.edgeFootM.y,
                         z: 0,
                       }}
-                      radius={0.25}
+                      radius={0.28}
                       colorKey="paramTertiary"
                       isRight
                     />
@@ -791,7 +1031,11 @@ export default function SpatialAngleAnimation() {
                             to={n2Target}
                             colorKey="primary"
                           />
-                          <FormulaLabel3D position={n2Target} tex="\vec{n_2}" />
+                          <FormulaLabel3D
+                            position={n2Target}
+                            tex="\\vec{n}_2"
+                            offset={[0.1, 0.1, 0.1]}
+                          />
                         </>
                       );
                     })()}
@@ -806,7 +1050,11 @@ export default function SpatialAngleAnimation() {
                             to={n1Target}
                             colorKey="secondary"
                           />
-                          <FormulaLabel3D position={n1Target} tex="\vec{n_1}" />
+                          <FormulaLabel3D
+                            position={n1Target}
+                            tex="\\vec{n}_1"
+                            offset={[0.1, 0.1, 0.1]}
+                          />
                         </>
                       );
                     })()}
@@ -815,7 +1063,7 @@ export default function SpatialAngleAnimation() {
               </>
             )}
 
-            {/* ═════════ 模式四：点到平面的距离 (纯几何棱线与高线) ═════════ */}
+            {/* ═════════ 模式四：点到平面的距离 (纯几何棱线与高线 + 空间法向量) ═════════ */}
             {activeMode === "distance" && (
               <>
                 {/* 动点 E 在 AA1 上 */}
@@ -832,14 +1080,15 @@ export default function SpatialAngleAnimation() {
                     y: 0,
                     z: Math.min(c, Math.max(0.1 * c, raw.z)),
                   })}
-                  onDrag={(next) =>
+                  onDrag={(next) => {
+                    setModelPreset("free");
                     setParams((prev) => ({
                       ...prev,
                       lambda: Number(
                         Math.min(1.0, Math.max(0.1, next.z / c)).toFixed(2),
                       ),
-                    }))
-                  }
+                    }));
+                  }}
                   colorKey="highlight"
                 />
 
@@ -863,16 +1112,16 @@ export default function SpatialAngleAnimation() {
                 {/* 几何辅助线：双高线 EA 与 AH */}
                 {showAuxiliary && (
                   <>
-                    {/* 竖直高线 h1 = EA */}
+                    {/* 竖直高线 h1 = EA (底面 ABD 对应的高) */}
                     <Segment3D
                       from={A}
                       to={E}
                       dashed
-                      colorKey="accent"
+                      colorKey="paramPrimary"
                       lineWidth={2.5}
                     />
 
-                    {/* 原点 A 到截面 BDE 的垂线段 AH (几何线段，无箭头) */}
+                    {/* 原点 A 到截面 BDE 的垂线段 AH (截面 BDE 对应的高 d) */}
                     <Segment3D
                       from={A}
                       to={distanceData.footH}
@@ -888,27 +1137,81 @@ export default function SpatialAngleAnimation() {
                       text="H"
                       offset={[0.1, 0.1, 0.1]}
                     />
+                    <FormulaLabel3D
+                      position={{
+                        x: (A.x + distanceData.footH.x) / 2 + 0.1,
+                        y: (A.y + distanceData.footH.y) / 2 + 0.1,
+                        z: (A.z + distanceData.footH.z) / 2 + 0.1,
+                      }}
+                      tex="d"
+                    />
                   </>
                 )}
 
-                {/* 垂直直角符号 */}
+                {/* 垂直双直角符号 (AH ⊥ HE 与 AH ⊥ HB，凸显线面垂直严格定义) */}
                 {showRightAngles && showAuxiliary && (
-                  <AngleArc3D
-                    vertex={distanceData.footH}
-                    dirA={{
-                      x: A.x - distanceData.footH.x,
-                      y: A.y - distanceData.footH.y,
-                      z: A.z - distanceData.footH.z,
-                    }}
-                    dirB={{
-                      x: E.x - distanceData.footH.x,
-                      y: E.y - distanceData.footH.y,
-                      z: distanceData.zE - distanceData.footH.z,
-                    }}
-                    radius={0.2}
-                    colorKey="highlight"
-                    isRight
-                  />
+                  <>
+                    <AngleArc3D
+                      vertex={distanceData.footH}
+                      dirA={{
+                        x: A.x - distanceData.footH.x,
+                        y: A.y - distanceData.footH.y,
+                        z: A.z - distanceData.footH.z,
+                      }}
+                      dirB={{
+                        x: E.x - distanceData.footH.x,
+                        y: E.y - distanceData.footH.y,
+                        z: distanceData.zE - distanceData.footH.z,
+                      }}
+                      radius={0.22}
+                      colorKey="highlight"
+                      isRight
+                    />
+                    <AngleArc3D
+                      vertex={distanceData.footH}
+                      dirA={{
+                        x: A.x - distanceData.footH.x,
+                        y: A.y - distanceData.footH.y,
+                        z: A.z - distanceData.footH.z,
+                      }}
+                      dirB={{
+                        x: B.x - distanceData.footH.x,
+                        y: B.y - distanceData.footH.y,
+                        z: B.z - distanceData.footH.z,
+                      }}
+                      radius={0.28}
+                      colorKey="secondary"
+                      isRight
+                    />
+                  </>
+                )}
+
+                {/* 截面法向量 n (空间代数向量，展示向量投影法求距离 d = |BA·n| / |n|) */}
+                {showNormals && (
+                  <>
+                    {(() => {
+                      const G2 = distanceData.centroidSection;
+                      const nTarget: Vec3 = {
+                        x: G2.x + distanceData.nUnit.x * 1.6,
+                        y: G2.y + distanceData.nUnit.y * 1.6,
+                        z: G2.z + distanceData.nUnit.z * 1.6,
+                      };
+                      return (
+                        <>
+                          <Vector3DArrow
+                            from={G2}
+                            to={nTarget}
+                            colorKey="primary"
+                          />
+                          <FormulaLabel3D
+                            position={nTarget}
+                            tex="\\vec{n}"
+                            offset={[0.1, 0.1, 0.1]}
+                          />
+                        </>
+                      );
+                    })()}
+                  </>
                 )}
               </>
             )}
@@ -928,9 +1231,13 @@ export default function SpatialAngleAnimation() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           title={
-            activeMode === "distance"
-              ? "点到平面距离与体积极值高考看板"
-              : "空间角与坐标系高考看板"
+            activeMode === "skewLines"
+              ? "异面直线角与公垂线高考看板"
+              : activeMode === "linePlane"
+                ? "直线与平面所成角高考看板"
+                : activeMode === "dihedral"
+                  ? "空间二面角与截面平面角高考看板"
+                  : "点到平面距离与体积极值高考看板"
           }
         />
       }

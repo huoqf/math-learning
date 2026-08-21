@@ -57,7 +57,7 @@ export const LinePlaneAngle3D = ({
               y: footPoint.y + planeNormal.y + 0.2,
               z: footPoint.z + planeNormal.z + 0.2,
             }}
-            tex="\vec{n}"
+            tex="\\vec{n}"
           />
         </>
       )}

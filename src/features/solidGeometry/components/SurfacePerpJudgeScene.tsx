@@ -76,7 +76,10 @@ export const SurfacePerpJudgeScene: React.FC<SurfacePerpJudgeSceneProps> = ({
         to={{ x: -1.8, y: -1.8, z: 1.5 }}
         colorKey="secondary"
       />
-      <FormulaLabel3D position={{ x: -1.6, y: -1.8, z: 1.6 }} tex="\vec{n_1}" />
+      <FormulaLabel3D
+        position={{ x: -1.6, y: -1.8, z: 1.6 }}
+        tex="\\vec{n}_1"
+      />
 
       {/* 旋转平面 beta 法向量 n2 */}
       <Vector3DArrow
@@ -94,7 +97,7 @@ export const SurfacePerpJudgeScene: React.FC<SurfacePerpJudgeSceneProps> = ({
           y: fam.betaNormal.y * 1.6,
           z: 1.3,
         }}
-        tex="\vec{n_2}"
+        tex="\\vec{n}_2"
       />
 
       {/* 二面角直角角弧 (l ⊥ alpha / beta ⊥ alpha) */}

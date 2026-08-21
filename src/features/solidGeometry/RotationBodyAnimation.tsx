@@ -14,7 +14,6 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
-  Scene3DGrid,
   CameraRig,
   Legend3D,
   ThreeViewsPanel,
@@ -424,7 +423,6 @@ export default function RotationBodyAnimation() {
                 featureMode !== "sphereCut"
               }
             />
-            <Scene3DGrid size={4} />
 
             {shape === "semicircle" && featureMode === "sphereCut" ? (
               <SphereCutSection

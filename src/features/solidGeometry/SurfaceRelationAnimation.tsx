@@ -12,12 +12,7 @@ import {
   KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import {
-  Scene3DGrid,
-  Legend3D,
-  CameraRig,
-  ModeSwitchOverlay3D,
-} from "@/components/Math3D";
+import { Legend3D, CameraRig, ModeSwitchOverlay3D } from "@/components/Math3D";
 import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -457,7 +452,6 @@ export default function SurfaceRelationAnimation() {
               subType === "cube"
             }
           />
-          <Scene3DGrid size={5} showLabels={showAxes} />
 
           {/* 模式 1：面面平行判定 */}
           {activeMode === "parallelJudge" && (

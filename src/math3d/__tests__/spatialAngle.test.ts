@@ -28,6 +28,21 @@ describe("spatialAngle 空间角与距离数学求解器测试（新高考母题
     expect(res.angleDeg).toBeGreaterThan(0);
     expect(res.angleDeg).toBeLessThanOrEqual(90);
     expect(res.distance).toBeGreaterThan(0);
+
+    // 验证公垂线段 P1P2 与两条异面直线严格正交
+    const P1P2 = {
+      x: res.P2.x - res.P1.x,
+      y: res.P2.y - res.P1.y,
+      z: res.P2.z - res.P1.z,
+    };
+    const dotU = P1P2.x * res.u.x + P1P2.y * res.u.y + P1P2.z * res.u.z;
+    const dotV = P1P2.x * res.v.x + P1P2.y * res.v.y + P1P2.z * res.v.z;
+    expect(dotU).toBeCloseTo(0, 6);
+    expect(dotV).toBeCloseTo(0, 6);
+    const lenP1P2 = Math.sqrt(
+      P1P2.x * P1P2.x + P1P2.y * P1P2.y + P1P2.z * P1P2.z,
+    );
+    expect(lenP1P2).toBeCloseTo(res.distance, 6);
   });
 
   it("正确计算体对角斜线 EC 与底面 ABCD 的线面角", () => {
