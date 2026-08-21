@@ -27,6 +27,11 @@ export { CameraRig } from "./CameraRig";
 export { PointLabel3D } from "./PointLabel3D";
 export { CompoundLabel3D } from "./CompoundLabel3D";
 export { FormulaLabel3D } from "./FormulaLabel3D";
+export { VertexLabelGroup3D } from "./VertexLabelGroup3D";
+export type {
+  VertexItem3D,
+  VertexLabelGroup3DProps,
+} from "./VertexLabelGroup3D";
 export { Legend3D } from "./Legend3D";
 export type { LegendItem } from "./Legend3D";
 
@@ -47,6 +52,10 @@ export { Plane3D } from "./Plane3D";
 export { Polygon3DFace } from "./Polygon3DFace";
 export { AngleArc3D } from "./AngleArc3D";
 export { LinePlaneAngle3D } from "./LinePlaneAngle3D";
+export { RightTriangle3D } from "./RightTriangle3D";
+export type { RightTriangle3DProps } from "./RightTriangle3D";
+export { AffineBasis3D } from "./AffineBasis3D";
+export type { AffineBasis3DProps } from "./AffineBasis3D";
 
 // ============================================================================
 // 截面可视化 (Cross-Section Visualization)

@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { Point3D } from "../Point3D";
 import { PointLabel3D } from "../PointLabel3D";
 import { CompoundLabel3D } from "../CompoundLabel3D";
+import { FormulaLabel3D } from "../FormulaLabel3D";
 import { Segment3D } from "../Segment3D";
 import { CircumSphere } from "./CircumSphere";
 import { Cuboid } from "./Cuboid";
@@ -180,7 +181,7 @@ export function PolyhedronSphereScene({
               dashed
             />
             <Point3D position={oppositeP} colorKey="secondary" />
-            <PointLabel3D position={oppositeP} text="P'" />
+            <FormulaLabel3D position={oppositeP} tex="P'" />
           </group>
         )}
 

@@ -18,6 +18,7 @@ import {
   Point3D,
   PointLabel3D,
   CompoundLabel3D,
+  FormulaLabel3D,
   Polygon3DFace,
   AngleArc3D,
   Legend3D,
@@ -512,9 +513,9 @@ export default function FoldingAnimation() {
                           onDrag={(next) => handlePointDrag(next.z, a - b)}
                           colorKey="highlight"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={D_prime}
-                          text="D'"
+                          tex="D'"
                           offset={[0.1, 0.1, 0.2]}
                         />
                       </>
@@ -538,17 +539,17 @@ export default function FoldingAnimation() {
                           to={{ x: 0, y: 0, z: 2.2 }}
                           colorKey="paramTertiary"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 2.3, y: 0, z: 0 }}
-                          text="x"
+                          tex="x"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 0, y: 2.3, z: 0 }}
-                          text="y"
+                          tex="y"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 0, y: 0, z: 2.3 }}
-                          text="z"
+                          tex="z"
                         />
 
                         <Vector3DArrow
@@ -556,10 +557,9 @@ export default function FoldingAnimation() {
                           to={{ x: E.x, y: E.y, z: 1.6 }}
                           colorKey="secondary"
                         />
-                        <CompoundLabel3D
+                        <FormulaLabel3D
                           position={{ x: E.x, y: E.y, z: 1.7 }}
-                          base="n"
-                          subscript="1"
+                          tex="\vec{n}_1"
                         />
                         {alphaDeg > 0 && alphaDeg < 180 && (
                           <>
@@ -574,7 +574,7 @@ export default function FoldingAnimation() {
                               }}
                               colorKey="highlight"
                             />
-                            <CompoundLabel3D
+                            <FormulaLabel3D
                               position={{
                                 x:
                                   E.x -
@@ -582,8 +582,7 @@ export default function FoldingAnimation() {
                                 y: E.y,
                                 z: 1.7 * Math.cos((alphaDeg * Math.PI) / 180),
                               }}
-                              base="n"
-                              subscript="2"
+                              tex="\vec{n}_2"
                             />
                           </>
                         )}
@@ -751,9 +750,9 @@ export default function FoldingAnimation() {
                           onDrag={(next) => handlePointDrag(next.z, rA)}
                           colorKey="highlight"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={A_prime}
-                          text="A'"
+                          tex="A'"
                           offset={[-0.2, 0, 0.2]}
                         />
                       </>
@@ -777,17 +776,17 @@ export default function FoldingAnimation() {
                           to={{ x: HA.x, y: HA.y, z: 2 }}
                           colorKey="paramTertiary"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: HA.x + 2.1, y: HA.y, z: 0 }}
-                          text="x"
+                          tex="x"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: HA.x, y: HA.y + 2.1, z: 0 }}
-                          text="y"
+                          tex="y"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: HA.x, y: HA.y, z: 2.1 }}
-                          text="z"
+                          tex="z"
                         />
 
                         <Vector3DArrow
@@ -795,10 +794,9 @@ export default function FoldingAnimation() {
                           to={{ x: HA.x, y: HA.y, z: 1.6 }}
                           colorKey="secondary"
                         />
-                        <CompoundLabel3D
+                        <FormulaLabel3D
                           position={{ x: HA.x, y: HA.y, z: 1.7 }}
-                          base="n"
-                          subscript="1"
+                          tex="\vec{n}_1"
                         />
                       </>
                     )}
@@ -960,9 +958,9 @@ export default function FoldingAnimation() {
                           onDrag={(next) => handlePointDrag(next.z, halfA)}
                           colorKey="highlight"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={C_prime}
-                          text="C'"
+                          tex="C'"
                           offset={[0.2, 0, 0.2]}
                         />
                       </>
@@ -986,17 +984,17 @@ export default function FoldingAnimation() {
                           to={{ x: 0, y: 0, z: 2 }}
                           colorKey="paramTertiary"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 2.1, y: 0, z: 0 }}
-                          text="x"
+                          tex="x"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 0, y: 2.3, z: 0 }}
-                          text="y"
+                          tex="y"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 0, y: 0, z: 2.1 }}
-                          text="z"
+                          tex="z"
                         />
 
                         <Vector3DArrow
@@ -1004,10 +1002,9 @@ export default function FoldingAnimation() {
                           to={{ x: 0, y: 0, z: 1.6 }}
                           colorKey="secondary"
                         />
-                        <CompoundLabel3D
+                        <FormulaLabel3D
                           position={{ x: 0, y: 0, z: 1.7 }}
-                          base="n"
-                          subscript="1"
+                          tex="\vec{n}_1"
                         />
                         {alphaDeg > 0 && alphaDeg < 180 && (
                           <>
@@ -1020,14 +1017,13 @@ export default function FoldingAnimation() {
                               }}
                               colorKey="highlight"
                             />
-                            <CompoundLabel3D
+                            <FormulaLabel3D
                               position={{
                                 x: -1.7 * Math.sin((alphaDeg * Math.PI) / 180),
                                 y: 0,
                                 z: 1.7 * Math.cos((alphaDeg * Math.PI) / 180),
                               }}
-                              base="n"
-                              subscript="2"
+                              tex="\vec{n}_2"
                             />
                           </>
                         )}
@@ -1195,9 +1191,9 @@ export default function FoldingAnimation() {
                           onDrag={(next) => handlePointDrag(next.z, hAO)}
                           colorKey="highlight"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={A_prime}
-                          text="A'"
+                          tex="A'"
                           offset={[-0.2, 0, 0.2]}
                         />
                       </>
@@ -1221,17 +1217,17 @@ export default function FoldingAnimation() {
                           to={{ x: 0, y: 0, z: 2 }}
                           colorKey="paramTertiary"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 2.1, y: 0, z: 0 }}
-                          text="x"
+                          tex="x"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 0, y: 2.1, z: 0 }}
-                          text="y"
+                          tex="y"
                         />
-                        <PointLabel3D
+                        <FormulaLabel3D
                           position={{ x: 0, y: 0, z: 2.1 }}
-                          text="z"
+                          tex="z"
                         />
 
                         <Vector3DArrow
@@ -1239,10 +1235,9 @@ export default function FoldingAnimation() {
                           to={{ x: 0, y: 0, z: 1.6 }}
                           colorKey="secondary"
                         />
-                        <CompoundLabel3D
+                        <FormulaLabel3D
                           position={{ x: 0, y: 0, z: 1.7 }}
-                          base="n"
-                          subscript="1"
+                          tex="\vec{n}_1"
                         />
                         {alphaDeg > 0 && alphaDeg < 180 && (
                           <>
@@ -1255,14 +1250,13 @@ export default function FoldingAnimation() {
                               }}
                               colorKey="highlight"
                             />
-                            <CompoundLabel3D
+                            <FormulaLabel3D
                               position={{
                                 x: 1.7 * Math.sin((alphaDeg * Math.PI) / 180),
                                 y: 0,
                                 z: 1.7 * Math.cos((alphaDeg * Math.PI) / 180),
                               }}
-                              base="n"
-                              subscript="2"
+                              tex="\vec{n}_2"
                             />
                           </>
                         )}

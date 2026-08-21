@@ -130,44 +130,44 @@ export function PyramidModelScene({
       <CompoundLabel3D
         position={P}
         base="P"
-        offset={[0, 0, 0.22]}
+        offset={[0, 0, 0.16]}
         colorKey="paramPrimary"
       />
       <CompoundLabel3D
         position={A}
         base="A"
-        offset={[-0.22, -0.22, 0]}
+        offset={[-0.15, -0.15, 0]}
         colorKey="label"
       />
       <CompoundLabel3D
         position={B}
         base="B"
-        offset={[0.22, -0.22, 0]}
+        offset={[0.15, -0.15, 0]}
         colorKey="label"
       />
       <CompoundLabel3D
         position={C}
         base="C"
-        offset={[0.22, 0.22, 0]}
+        offset={[0.15, 0.15, 0]}
         colorKey="label"
       />
       <CompoundLabel3D
         position={D}
         base="D"
-        offset={[-0.22, 0.22, 0]}
+        offset={[-0.15, 0.15, 0]}
         colorKey="label"
       />
       <CompoundLabel3D
         position={E}
         base="E"
         colorKey="highlight"
-        offset={[0.18, -0.18, 0.12]}
+        offset={[0.14, -0.14, 0.08]}
       />
       <CompoundLabel3D
         position={F}
         base="F"
         colorKey="highlight"
-        offset={[0.18, 0.18, 0.12]}
+        offset={[0.14, 0.14, 0.08]}
       />
     </group>
   );

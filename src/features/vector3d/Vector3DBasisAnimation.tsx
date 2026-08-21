@@ -505,7 +505,7 @@ export default function Vector3DBasisAnimation() {
 
           {/* 原点 O */}
           <Point3D position={O} colorKey="primary" />
-          <PointLabel3D position={O} text="O" offset={[-0.22, -0.22, 0]} />
+          <PointLabel3D position={O} text="O" offset={[-0.15, -0.15, 0]} />
 
           {/* ========================================================
               模式一：空间向量基本定理（平行六面体分解）
@@ -713,7 +713,7 @@ export default function Vector3DBasisAnimation() {
                   <PointLabel3D
                     position={pointA}
                     text="A"
-                    offset={[0.22, -0.22, 0]}
+                    offset={[0.15, -0.15, 0]}
                   />
 
                   <Vector3DArrow from={O} to={vecB} colorKey="paramSecondary" />
@@ -729,15 +729,15 @@ export default function Vector3DBasisAnimation() {
                   <PointLabel3D
                     position={pointB}
                     text="B"
-                    offset={[-0.22, 0.22, 0]}
+                    offset={[-0.15, 0.15, 0]}
                   />
 
                   <Vector3DArrow from={O} to={vecC} colorKey="paramTertiary" />
                   <FormulaLabel3D
                     position={{
-                      x: vecC.x * 0.5 - 0.28,
-                      y: vecC.y * 0.5,
-                      z: vecC.z * 0.5 + 0.18,
+                      x: -0.28,
+                      y: pointC.y * 0.5,
+                      z: pointC.z * 0.5 + 0.18,
                     }}
                     tex="\\vec{c}"
                   />
@@ -745,7 +745,7 @@ export default function Vector3DBasisAnimation() {
                   <PointLabel3D
                     position={pointC}
                     text="C"
-                    offset={[0, 0.1, 0.28]}
+                    offset={[0, 0.08, 0.18]}
                   />
                 </>
               )}
@@ -941,7 +941,7 @@ export default function Vector3DBasisAnimation() {
                     <PointLabel3D
                       position={projABC.projectedPoint}
                       text="H"
-                      offset={[0.18, 0.18, 0.08]}
+                      offset={[0.12, 0.12, 0.06]}
                     />
                   </>
                 )}
@@ -964,7 +964,7 @@ export default function Vector3DBasisAnimation() {
                       z: (pointA.z + pointB.z + pointC.z) / 3,
                     }}
                     text="G"
-                    offset={[0.18, 0.18, 0.18]}
+                    offset={[0.12, 0.12, 0.12]}
                   />
                 </>
               )}
@@ -1024,7 +1024,7 @@ export default function Vector3DBasisAnimation() {
                 constrain={constrainP}
                 onDrag={handlePointPDrag}
               />
-              <PointLabel3D position={P} text="P" offset={[0, 0, 0.25]} />
+              <PointLabel3D position={P} text="P" offset={[0, 0, 0.18]} />
               <FormulaLabel3D
                 position={{ x: P.x * 0.5, y: P.y * 0.5, z: P.z * 0.5 + 0.22 }}
                 tex="\\overrightarrow{OP}"

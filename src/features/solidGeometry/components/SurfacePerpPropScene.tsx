@@ -146,7 +146,7 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
         position={{ x: 0, y: 0, z: 0 }}
         base="O"
         colorKey="paramPrimary"
-        offset={[-0.2, -0.2, 0]}
+        offset={[-0.14, -0.14, 0]}
       />
       <Point3D
         position={{ x: 0, y: 0, z: 0 }}
@@ -154,12 +154,13 @@ export const SurfacePerpPropScene: React.FC<SurfacePerpPropSceneProps> = ({
         radius={0.05}
       />
 
-      {/* 直线 a 与交线 l 的夹角弧 (a ⊥ l) */}
+      {/* 直线 a 与交线 l 的夹角弧 (a ⊥ l 时直角方框) */}
       <AngleArc3D
         vertex={{ x: 0, y: 0, z: 0 }}
         dirA={{ x: 0, y: 1, z: 0 }}
         dirB={{ x: 0, y: state.aDir.y, z: state.aDir.z }}
-        radius={0.55}
+        radius={0.45}
+        isRight={state.isPerpToAlpha}
         colorKey={state.isPerpToAlpha ? "highlight" : "paramSecondary"}
       />
     </>

@@ -36,6 +36,9 @@
 | **3D 点标签** | `PointLabel3D` | `@/components/Math3D/PointLabel3D` | 纯 3D 矢量文字。**所有单字母几何顶点唯一合法组件（严禁传 Unicode 下标）**。Props: `position`, `text`, `offset` |
 | **上下标标签** | `CompoundLabel3D` | `@/components/Math3D/CompoundLabel3D` | 纯 3D 矢量上下标（如 $A_1, P_1$）。**所有带下标顶点唯一合法组件**。Props: `position`, `base`, `subscript` |
 | **3D 公式标签**| `FormulaLabel3D` | `@/components/Math3D/FormulaLabel3D` | KaTeX 空间公式（如 $\vec{a}, \vec{OP}$）。**默认 plain 纯净透明模式，严禁用于几何顶点**。Props: `position`, `tex`, `plain` |
+| **顶点标签组** | `VertexLabelGroup3D` | `@/components/Math3D` | 多面体顶点标签批量生成器。Props: `vertices`, `items`, `fontSize` |
+| **直角三角形** | `RightTriangle3D` | `@/components/Math3D` | 空间直角三角形复合组件（含直角标志与边长公式）。Props: `rightVertex`, `vertexA`, `vertexB` |
+| **仿射基底组** | `AffineBasis3D` | `@/components/Math3D` | 空间仿射基底/向量组复合组件。Props: `origin`, `vecA`, `vecB`, `vecC` |
 | **3D 图例** | `Legend3D` | `@/components/Math3D/Legend3D` | 底端浮动图例。Props: `title`, `items` |
 | **截面可视化** | `SectionPlane3D` | `@/components/Math3D` | 3D 截面多边形、底面投影与交轨辅助线 |
 | **立体几何体** | `Cuboid` / `Cylinder` / `Cone` / `RegularPyramid` / `CircumSphere` / `InSphere` | `@/components/Math3D/solids` | 标准几何体 3D 实体模型 |

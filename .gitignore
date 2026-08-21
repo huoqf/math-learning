@@ -38,3 +38,7 @@ playwright-report/
 
 # Local screenshots
 *.png
+
+# Tool artifacts
+.codebase-memory/
+.git-rewrite/

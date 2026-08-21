@@ -250,6 +250,9 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | 3D 点标签 | `PointLabel3D` | `@/components/Math3D` | 顶点文本标注。Props: `position`, `text` |
 | 3D 公式标签 | `FormulaLabel3D` | `@/components/Math3D` | KaTeX 公式标注。Props: `position`, `tex` |
 | 3D 下标标签 | `CompoundLabel3D` | `@/components/Math3D` | 带下标标注。Props: `position`, `base`, `subscript` |
+| 3D 顶点标签组 | `VertexLabelGroup3D` | `@/components/Math3D` | 多面体顶点标签批量生成器。Props: `vertices`, `items` |
+| 3D 直角三角形 | `RightTriangle3D` | `@/components/Math3D` | 空间直角三角形（含直角标志与边长公式）。Props: `rightVertex`, `vertexA`, `vertexB` |
+| 3D 仿射基底组 | `AffineBasis3D` | `@/components/Math3D` | 空间仿射基底/向量组复合组件。Props: `origin`, `vecA`, `vecB`, `vecC` |
 | 3D 图例 | `Legend3D` | `@/components/Math3D` | 底端浮动图例 |
 | 3D 截面 | `SectionPlane3D` | `@/components/Math3D` | 截面可视化 |
 | 左屏容器 | `LeftPanel` / `LeftPanelSection` | `@/components/UI` | — |
