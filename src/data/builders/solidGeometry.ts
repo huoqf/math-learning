@@ -34,6 +34,7 @@ import {
 import {
   calculateSinglePointAngle,
   calculateDoublePointDistance,
+  calculatePyramidVolumeExtrema,
   calculateSurfacePath,
 } from "@/math3d/parametricPoint";
 import {
@@ -3031,7 +3032,7 @@ export function buildParametricPointPanel(
         level: "core",
       },
       {
-        name: "目标二面角反解方程",
+        name: "目标二面角反解方程与区间检验",
         latex: `\\cos \\theta(\\lambda) = \\cos \\theta_0 \\;\\Rightarrow\\; \\lambda = \\frac{a b \\tan \\theta_0}{c \\sqrt{a^2+b^2}}`,
         level: "important",
         note: `当前目标角度 θ₀ = ${targetThetaDeg}°，求得 λ = ${res.rawLambdaTarget.toFixed(2)} (${res.isTargetDihedralExist ? "在棱 BB₁ 上存在" : "超出 [0,1] 不存在"})`,
@@ -3100,9 +3101,9 @@ export function buildParametricPointPanel(
     theorems.push(
       {
         name: "双动点距离二次型最值定理",
-        latex: `|PQ|^2(\\lambda, \\mu) = a^2(1-\\mu)^2 + b^2 \\mu^2 + \\lambda^2 c^2`,
+        latex: `|PQ|^2(\\lambda, \\mu) = a^2(1-\\mu)^2 + b^2 \\mu^2 + \\lambda^2 c^2 = (a^2+b^2)\\left(\\mu - \\frac{a^2}{a^2+b^2}\\right)^2 + \\frac{a^2b^2}{a^2+b^2} + \\lambda^2 c^2`,
         level: "core",
-        note: "通过配方法或偏导数确定最值：当 λ=0, μ=a²/(a²+b²) 时取得最小值",
+        note: "通过配方法分离变量：当 λ=0 且 μ=a²/(a²+b²) 时取得严格最小值",
       },
       {
         name: "异面直线公垂线段最小距离",
@@ -3120,6 +3121,73 @@ export function buildParametricPointPanel(
     if (Math.abs(mu - res.optimalMu) < 0.02 && lambda === 0) {
       warnings.push({
         text: `当前双动点 P, Q 处于异面直线公垂线段两端点位置，|PQ| 达到全局极小值 d_min = ${res.minDistSkew.toFixed(2)}！`,
+        level: "info",
+      });
+    }
+  } else if (mode === "pyramidVolumeExtrema") {
+    const res = calculatePyramidVolumeExtrema(a, b, c, lambda);
+
+    quantities.push(
+      {
+        label: "动点 P 比例 λ",
+        symbol: "\\lambda",
+        value: Number(lambda.toFixed(2)),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "动点 P 空间高度 h",
+        symbol: "h(\\lambda) = \\lambda c",
+        value: Number(res.heightH.toFixed(2)),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "固定底面 △ACD 面积",
+        symbol: "S_{\\Delta ACD}",
+        value: Number(res.baseAreaACD.toFixed(2)),
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "三棱锥 P-ACD 动态体积",
+        symbol: "V_{P-ACD}(\\lambda)",
+        value: Number(res.volumePACD.toFixed(3)),
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "三棱锥体积最大极值",
+        symbol: "V_{\\max}",
+        value: Number(res.maxVolumePACD.toFixed(3)),
+        color: MATH_COLORS.paramPrimary,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "动点三棱锥体积极值定理（动高模型）",
+        latex: `V(\\lambda) = \\frac{1}{3} S_{\\Delta ACD} \\cdot h(\\lambda) = \\frac{1}{6} a b (\\lambda c) \\le \\frac{1}{6} a b c = V_{\\max}`,
+        level: "core",
+        condition: "当 λ = 1.0 (动点 P 到达顶点 B₁) 时取最大体积",
+      },
+      {
+        name: "等底同高体积转换原理",
+        latex: `V_{P-ACD} = V_{D-PAC} = \\frac{1}{3} S_{\\Delta PAC} \\cdot d_{D-\\text{面}}`,
+        level: "important",
+        note: "等体积法是高考解答题中求空间点到截面距离的核心转化桥梁",
+      },
+    );
+
+    gaokaoPoints.push({
+      text: "【高考体积极值考法】立体几何体积极值题型中，通常有一面面积为定值（如此处的底面 △ACD），动点在棱上移动使得高线线性变化，极值点必在边界端点处取得。",
+      importance: "gaokao",
+    });
+
+    if (lambda === 0) {
+      warnings.push({
+        text: "λ = 0 时动点 P 位于底面内，三棱锥高度退化为 0，体积退化为 0！",
+        level: "warning",
+      });
+    } else if (lambda === 1) {
+      warnings.push({
+        text: `λ = 1.0 时动点 P 到达顶端 B₁，三棱锥高度达到最大值 c = ${c}，体积达到全局最大极值 V_max = ${res.maxVolumePACD.toFixed(2)}！`,
         level: "info",
       });
     }

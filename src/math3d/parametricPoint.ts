@@ -27,12 +27,15 @@ export interface SinglePointAngleResult {
   linePlaneSin: number;
   /** 探究是否满足 DP ⊥ AC1 的 lambda 解 (若存在且在 [0, 1] 内则返回) */
   lambdaPerpDP_AC1: number | null;
+  rawLambdaPerp: number;
   isPerpExist: boolean;
+  perpTargetP: Vec3;
   /** 目标二面角 θ0 对应的反解 lambda 及存在性 */
   targetThetaDeg: number;
   rawLambdaTarget: number;
   lambdaTargetDihedral: number | null;
   isTargetDihedralExist: boolean;
+  dihedralTargetP: Vec3;
 }
 
 /**
@@ -46,10 +49,29 @@ export interface DoublePointDistanceResult {
   /** 公垂线最小距离 (lambda=0, mu=a^2/(a^2+b^2)) */
   minDistSkew: number;
   optimalMu: number;
+  optimalFootOnBB1: Vec3;
+  optimalFootOnAC: Vec3;
   /** 向量 AP 与 DQ 的数量积 */
   dotAP_DQ: number;
   /** 是否达到向量垂直条件 (dotAP_DQ = 0) */
   isAP_DQ_Perp: boolean;
+}
+
+/**
+ * 动点三棱锥体积极值运算结果
+ */
+export interface PyramidVolumeExtremaResult {
+  P: Vec3;
+  lambda: number;
+  /** 三棱锥 P-ACD 体积 V = 1/6 * a * b * (lambda * c) */
+  volumePACD: number;
+  maxVolumePACD: number;
+  /** 动高线高 h = lambda * c */
+  heightH: number;
+  /** 底面 △ACD 面积 S = 1/2 * a * b */
+  baseAreaACD: number;
+  /** 动点 P 在底面 ABCD 上的垂直射影点 */
+  projectionPOnBase: Vec3;
 }
 
 /**
@@ -136,6 +158,7 @@ export function calculateSinglePointAngle(
   const lambdaPerpDP_AC1 = isPerpExist
     ? Number(rawLambdaPerp.toFixed(4))
     : null;
+  const perpTargetP: Vec3 = { x: a, y: 0, z: rawLambdaPerp * c };
 
   // 存在性探究 2：使二面角等于目标角度 targetThetaDeg ?
   // cosθ(λ) = (a * b) / sqrt(λ^2 c^2 (a^2+b^2) + a^2 b^2) = cos(θ_0)
@@ -147,6 +170,7 @@ export function calculateSinglePointAngle(
   const lambdaTargetDihedral = isTargetDihedralExist
     ? Number(rawLambdaTarget.toFixed(4))
     : null;
+  const dihedralTargetP: Vec3 = { x: a, y: 0, z: rawLambdaTarget * c };
 
   return {
     A,
@@ -166,11 +190,14 @@ export function calculateSinglePointAngle(
     linePlaneDeg,
     linePlaneSin,
     lambdaPerpDP_AC1,
+    rawLambdaPerp,
     isPerpExist,
+    perpTargetP,
     targetThetaDeg,
     rawLambdaTarget,
     lambdaTargetDihedral,
     isTargetDihedralExist,
+    dihedralTargetP,
   };
 }
 
@@ -204,6 +231,8 @@ export function calculateDoublePointDistance(
   // 公垂线对应 lambda = 0, mu = a^2 / (a^2 + b^2)
   const optimalMu = (a * a) / (a * a + b * b);
   const minDistSkew = (a * b) / Math.sqrt(a * a + b * b);
+  const optimalFootOnBB1: Vec3 = { x: a, y: 0, z: 0 };
+  const optimalFootOnAC: Vec3 = { x: a * optimalMu, y: b * optimalMu, z: 0 };
 
   // 向量 AP = (a, 0, lambda*c), DQ = (a*mu, b(mu-1), 0)
   // AP · DQ = a^2 * mu
@@ -217,13 +246,47 @@ export function calculateDoublePointDistance(
     distPQ,
     minDistSkew,
     optimalMu,
+    optimalFootOnBB1,
+    optimalFootOnAC,
     dotAP_DQ,
     isAP_DQ_Perp,
   };
 }
 
 /**
- * 3. 表面沿面最短路径与折线最值
+ * 3. 动点三棱锥体积极值与高线
+ * @param a 长方体长
+ * @param b 长方体宽
+ * @param c 长方体高
+ * @param lambda 动点 P 在棱 BB1 上的比例参数 [0, 1]
+ */
+export function calculatePyramidVolumeExtrema(
+  a: number,
+  b: number,
+  c: number,
+  lambda: number,
+): PyramidVolumeExtremaResult {
+  const safeLambda = Math.max(0, Math.min(1, lambda));
+  const P: Vec3 = { x: a, y: 0, z: safeLambda * c };
+  const heightH = safeLambda * c;
+  const baseAreaACD = 0.5 * a * b;
+  const volumePACD = (1 / 3) * baseAreaACD * heightH;
+  const maxVolumePACD = (1 / 6) * a * b * c;
+  const projectionPOnBase: Vec3 = { x: a, y: 0, z: 0 };
+
+  return {
+    P,
+    lambda: safeLambda,
+    volumePACD,
+    maxVolumePACD,
+    heightH,
+    baseAreaACD,
+    projectionPOnBase,
+  };
+}
+
+/**
+ * 4. 表面沿面最短路径与折线最值
  * @param a 长方体长
  * @param b 长方体宽
  * @param c 长方体高
