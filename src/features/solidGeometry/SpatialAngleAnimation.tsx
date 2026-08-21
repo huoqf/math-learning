@@ -57,10 +57,11 @@ export default function SpatialAngleAnimation() {
 
   // 数学分类图层控制开关 (解耦必修二综合法与选修一向量法，默认纯几何优先)
   const [showAxes, setShowAxes] = useState<boolean>(false); // 空间直角坐标系 A-xyz (默认关闭，符合高中综合几何习惯)
+  const [showCoordinates, setShowCoordinates] = useState<boolean>(true); // 空间点坐标数值标注 (建系后生效)
   const [showAuxiliary, setShowAuxiliary] = useState<boolean>(true); // 几何辅助线 (平移线/射影/垂线高)
   const [showRightAngles, setShowRightAngles] = useState<boolean>(true); // 空间垂直与直角符号
   const [showAngles, setShowAngles] = useState<boolean>(true); // 特征空间角弧 θ
-  const [showNormals, setShowNormals] = useState<boolean>(false); // 空间法向量 (选修一向量法，按需开启)
+  const [showNormals, setShowNormals] = useState<boolean>(false); // 空间法向量/方向向量 (选修一向量法，按需开启)
 
   const [params, setParams] = useState<Record<string, number>>({
     a: 3,
@@ -132,7 +133,7 @@ export default function SpatialAngleAnimation() {
         {
           key: "free",
           label: "自由探究",
-          description: "三边长可调",
+          description: "全参数开放",
           params: { a: 3, b: 2, c: 2, lambda: 0.5 },
         },
         {
@@ -158,25 +159,25 @@ export default function SpatialAngleAnimation() {
         {
           key: "free",
           label: "自由探究",
-          description: "连续变倾角",
+          description: "全参数开放",
           params: { a: 3, b: 2, c: 2.5, lambda: 0.6 },
         },
         {
           key: "midpoint",
           label: "中点斜线",
-          description: "λ=0.5固定",
+          description: "λ=0.5中点",
           params: { a: 3, b: 2, c: 2.5, lambda: 0.5 },
         },
         {
           key: "bodyDiag",
           label: "体对角线",
-          description: "正方体模型",
+          description: "正方体对角",
           params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
         },
         {
           key: "tallPrismMid",
           label: "正棱柱中点",
-          description: "λ=0.5正棱柱",
+          description: "正棱柱中点",
           params: { a: 2.5, b: 2.5, c: 3.5, lambda: 0.5 },
         },
       ],
@@ -184,25 +185,25 @@ export default function SpatialAngleAnimation() {
         {
           key: "free",
           label: "自由探究",
-          description: "连续变二面角",
+          description: "全参数开放",
           params: { a: 3, b: 2, c: 2, lambda: 0.7 },
         },
         {
           key: "cubeSection",
           label: "正方体截面",
-          description: "cosθ=√3/3",
+          description: "正方体截面",
           params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
         },
         {
           key: "midSection",
           label: "中点截面",
-          description: "λ=0.5固定",
+          description: "λ=0.5中点",
           params: { a: 3, b: 2, c: 2, lambda: 0.5 },
         },
         {
           key: "tallPrismSection",
           label: "正棱柱截面",
-          description: "λ=1.0正棱柱",
+          description: "正棱柱截面",
           params: { a: 2.5, b: 2.5, c: 3.5, lambda: 1.0 },
         },
       ],
@@ -210,25 +211,25 @@ export default function SpatialAngleAnimation() {
         {
           key: "free",
           label: "自由探究",
-          description: "连续变体积",
+          description: "全参数开放",
           params: { a: 3, b: 2, c: 2, lambda: 0.6 },
         },
         {
           key: "maxVolume",
           label: "顶点极值",
-          description: "V_max=1/6 abc",
+          description: "顶点极值",
           params: { a: 3, b: 2, c: 2, lambda: 1.0 },
         },
         {
           key: "cubeThird",
           label: "正方体距",
-          description: "d=√3/3 a",
+          description: "正方体距",
           params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
         },
         {
           key: "midVolume",
           label: "中点半体积",
-          description: "V=1/12 abc",
+          description: "中点半体积",
           params: { a: 3, b: 2, c: 2, lambda: 0.5 },
         },
       ],
@@ -389,6 +390,20 @@ export default function SpatialAngleAnimation() {
             label: "辅助平移线 D₁C // A₁B",
           },
           { colorKey: "highlight", swatch: "line", label: "夹角 θ (∠ACD₁)" },
+          ...(showNormals
+            ? [
+                {
+                  colorKey: "primary" as const,
+                  swatch: "line" as const,
+                  label: "方向向量 u⃗ (A₁B)",
+                },
+                {
+                  colorKey: "accent" as const,
+                  swatch: "line" as const,
+                  label: "方向向量 v⃗ (AC)",
+                },
+              ]
+            : []),
         ];
       case "linePlane":
         return [
@@ -563,7 +578,20 @@ export default function SpatialAngleAnimation() {
                     checked={showAxes}
                     onChange={setShowAxes}
                   />
-                  {activeMode !== "skewLines" && (
+                  {showAxes && (
+                    <Toggle
+                      label="空间点坐标标注（x, y, z）"
+                      checked={showCoordinates}
+                      onChange={setShowCoordinates}
+                    />
+                  )}
+                  {activeMode === "skewLines" ? (
+                    <Toggle
+                      label="方向向量（代数向量 u⃗, v⃗）"
+                      checked={showNormals}
+                      onChange={setShowNormals}
+                    />
+                  ) : (
                     <Toggle
                       label="空间法向量（代数向量 n⃗）"
                       checked={showNormals}
@@ -624,39 +652,98 @@ export default function SpatialAngleAnimation() {
             {/* 基础长方体 */}
             <Cuboid a={a} b={b} c={c} opacity={0.1} colorKey="primary" />
 
-            {/* 顶点文本标号 (纯矢量 3D 文字，严格使用 CompoundLabel3D 消除豆腐块) */}
-            <PointLabel3D
-              position={A}
-              text="A"
-              offset={[-0.15, -0.15, -0.15]}
-            />
-            <PointLabel3D position={B} text="B" offset={[0.15, -0.15, -0.15]} />
-            <PointLabel3D position={C} text="C" offset={[0.15, 0.15, -0.15]} />
-            <PointLabel3D position={D} text="D" offset={[-0.15, 0.15, -0.15]} />
-            <CompoundLabel3D
-              position={A1}
-              base="A"
-              subscript="1"
-              offset={[-0.15, -0.15, 0.15]}
-            />
-            <CompoundLabel3D
-              position={B1}
-              base="B"
-              subscript="1"
-              offset={[0.15, -0.15, 0.15]}
-            />
-            <CompoundLabel3D
-              position={C1}
-              base="C"
-              subscript="1"
-              offset={[0.15, 0.15, 0.15]}
-            />
-            <CompoundLabel3D
-              position={D1}
-              base="D"
-              subscript="1"
-              offset={[-0.15, 0.15, 0.15]}
-            />
+            {/* 顶点文本标号与空间坐标（建系后智能切换为带坐标数值标注） */}
+            {showAxes && showCoordinates ? (
+              <>
+                <FormulaLabel3D
+                  position={A}
+                  tex="A(0,0,0)"
+                  offset={[-0.2, -0.2, -0.15]}
+                />
+                <FormulaLabel3D
+                  position={B}
+                  tex={`B(${a},0,0)`}
+                  offset={[0.2, -0.2, -0.15]}
+                />
+                <FormulaLabel3D
+                  position={C}
+                  tex={`C(${a},${b},0)`}
+                  offset={[0.2, 0.2, -0.15]}
+                />
+                <FormulaLabel3D
+                  position={D}
+                  tex={`D(0,${b},0)`}
+                  offset={[-0.2, 0.2, -0.15]}
+                />
+                <FormulaLabel3D
+                  position={A1}
+                  tex={`A_1(0,0,${c})`}
+                  offset={[-0.25, -0.2, 0.15]}
+                />
+                <FormulaLabel3D
+                  position={B1}
+                  tex={`B_1(${a},0,${c})`}
+                  offset={[0.25, -0.2, 0.15]}
+                />
+                <FormulaLabel3D
+                  position={C1}
+                  tex={`C_1(${a},${b},${c})`}
+                  offset={[0.25, 0.2, 0.15]}
+                />
+                <FormulaLabel3D
+                  position={D1}
+                  tex={`D_1(0,${b},${c})`}
+                  offset={[-0.25, 0.2, 0.15]}
+                />
+              </>
+            ) : (
+              <>
+                <PointLabel3D
+                  position={A}
+                  text="A"
+                  offset={[-0.15, -0.15, -0.15]}
+                />
+                <PointLabel3D
+                  position={B}
+                  text="B"
+                  offset={[0.15, -0.15, -0.15]}
+                />
+                <PointLabel3D
+                  position={C}
+                  text="C"
+                  offset={[0.15, 0.15, -0.15]}
+                />
+                <PointLabel3D
+                  position={D}
+                  text="D"
+                  offset={[-0.15, 0.15, -0.15]}
+                />
+                <CompoundLabel3D
+                  position={A1}
+                  base="A"
+                  subscript="1"
+                  offset={[-0.15, -0.15, 0.15]}
+                />
+                <CompoundLabel3D
+                  position={B1}
+                  base="B"
+                  subscript="1"
+                  offset={[0.15, -0.15, 0.15]}
+                />
+                <CompoundLabel3D
+                  position={C1}
+                  base="C"
+                  subscript="1"
+                  offset={[0.15, 0.15, 0.15]}
+                />
+                <CompoundLabel3D
+                  position={D1}
+                  base="D"
+                  subscript="1"
+                  offset={[-0.15, 0.15, 0.15]}
+                />
+              </>
+            )}
 
             {/* ═════════ 模式一：异面直线所成的角 (纯几何线段，无箭头误导) ═════════ */}
             {activeMode === "skewLines" && (
@@ -757,6 +844,30 @@ export default function SpatialAngleAnimation() {
                     />
                   </>
                 )}
+
+                {/* 空间向量法：方向向量 u⃗ (A₁B) 与 v⃗ (AC) */}
+                {showNormals && (
+                  <>
+                    <Vector3DArrow from={A1} to={B} colorKey="primary" />
+                    <FormulaLabel3D
+                      position={{
+                        x: (A1.x + B.x) / 2 + 0.1,
+                        y: 0,
+                        z: (A1.z + B.z) / 2 + 0.15,
+                      }}
+                      tex="\\vec{u}"
+                    />
+                    <Vector3DArrow from={A} to={C} colorKey="accent" />
+                    <FormulaLabel3D
+                      position={{
+                        x: (A.x + C.x) / 2 - 0.1,
+                        y: (A.y + C.y) / 2 + 0.15,
+                        z: 0.15,
+                      }}
+                      tex="\\vec{v}"
+                    />
+                  </>
+                )}
               </>
             )}
 
@@ -771,11 +882,19 @@ export default function SpatialAngleAnimation() {
                 />
 
                 {/* 动点 E 在侧棱 AA1 上 */}
-                <PointLabel3D
-                  position={E}
-                  text="E"
-                  offset={[-0.2, -0.2, 0.1]}
-                />
+                {showAxes && showCoordinates ? (
+                  <FormulaLabel3D
+                    position={E}
+                    tex={`E(0,0,${(lambda * c).toFixed(1)})`}
+                    offset={[-0.25, -0.2, 0.1]}
+                  />
+                ) : (
+                  <PointLabel3D
+                    position={E}
+                    text="E"
+                    offset={[-0.2, -0.2, 0.1]}
+                  />
+                )}
                 <Point3D
                   position={E}
                   draggable={interactionMode === "drag"}
@@ -875,11 +994,19 @@ export default function SpatialAngleAnimation() {
             {activeMode === "dihedral" && (
               <>
                 {/* 动点 E 在 AA1 上 */}
-                <PointLabel3D
-                  position={E}
-                  text="E"
-                  offset={[-0.2, -0.2, 0.1]}
-                />
+                {showAxes && showCoordinates ? (
+                  <FormulaLabel3D
+                    position={E}
+                    tex={`E(0,0,${(lambda * c).toFixed(1)})`}
+                    offset={[-0.25, -0.2, 0.1]}
+                  />
+                ) : (
+                  <PointLabel3D
+                    position={E}
+                    text="E"
+                    offset={[-0.2, -0.2, 0.1]}
+                  />
+                )}
                 <Point3D
                   position={E}
                   draggable={interactionMode === "drag"}
@@ -1067,11 +1194,19 @@ export default function SpatialAngleAnimation() {
             {activeMode === "distance" && (
               <>
                 {/* 动点 E 在 AA1 上 */}
-                <PointLabel3D
-                  position={E}
-                  text="E"
-                  offset={[-0.2, -0.2, 0.1]}
-                />
+                {showAxes && showCoordinates ? (
+                  <FormulaLabel3D
+                    position={E}
+                    tex={`E(0,0,${(lambda * c).toFixed(1)})`}
+                    offset={[-0.25, -0.2, 0.1]}
+                  />
+                ) : (
+                  <PointLabel3D
+                    position={E}
+                    text="E"
+                    offset={[-0.2, -0.2, 0.1]}
+                  />
+                )}
                 <Point3D
                   position={E}
                   draggable={interactionMode === "drag"}
