@@ -233,12 +233,12 @@ export const RotationSweep = ({
               rotation={[0, isComplete || showAxialSection ? 0 : angleRad, 0]}
             >
               <Point3D
-                position={{ x: profile[1]?.r ?? r1, y: 0, z: 0 }}
+                position={{ x: r1, y: 0, z: 0 }}
                 colorKey="paramPrimary"
                 radius={0.045}
               />
               <CompoundLabel3D
-                position={{ x: profile[1]?.r ?? r1, y: 0, z: 0 }}
+                position={{ x: r1, y: 0, z: 0 }}
                 base="A"
                 offset={[0.18, 0, 0]}
               />
@@ -250,14 +250,14 @@ export const RotationSweep = ({
                 <Line
                   points={[
                     [0, 0, 0],
-                    [0, 0, profile[1]?.r ?? r1],
+                    [0, 0, r1],
                   ]}
                   color={MATH_COLORS.paramPrimary}
                   lineWidth={3}
                 />
                 <FormulaLabel3D
-                  position={{ x: (profile[1]?.r ?? r1) / 2, y: 0, z: 0 }}
-                  tex={`\\color{${MATH_COLORS.paramPrimary}}{R=${(profile[1]?.r ?? r1).toFixed(1)}}`}
+                  position={{ x: r1 / 2, y: 0, z: 0 }}
+                  tex={`\\color{${MATH_COLORS.paramPrimary}}{R=${r1.toFixed(1)}}`}
                   offset={[0, 0, 0.18]}
                 />
               </>
