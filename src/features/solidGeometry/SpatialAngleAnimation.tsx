@@ -12,22 +12,8 @@ import {
   Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import {
-  Scene3DGrid,
-  Point3D,
-  AngleArc3D,
-  PointLabel3D,
-  FormulaLabel3D,
-  CompoundLabel3D,
-  Vector3DArrow,
-  Segment3D,
-  Polygon3DFace,
-  Legend3D,
-  CameraRig,
-  ModeSwitchOverlay3D,
-} from "@/components/Math3D";
+import { Legend3D, CameraRig, ModeSwitchOverlay3D } from "@/components/Math3D";
 import type { LegendItem } from "@/components/Math3D";
-import { Cuboid } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -40,6 +26,11 @@ import {
   solvePointToPlaneDistance,
 } from "@/math3d/spatialAngle";
 import type { Vec3 } from "@/math3d/vector3";
+import CuboidBaseScene from "./CuboidBaseScene";
+import SkewLinesModeScene from "./modes/SkewLinesModeScene";
+import LinePlaneModeScene from "./modes/LinePlaneModeScene";
+import DihedralModeScene from "./modes/DihedralModeScene";
+import DistanceModeScene from "./modes/DistanceModeScene";
 
 type AngleMode = "skewLines" | "linePlane" | "dihedral" | "distance";
 
@@ -80,7 +71,15 @@ export default function SpatialAngleAnimation() {
     () => solveCuboidVertices(a, b, c, lambda),
     [a, b, c, lambda],
   );
-  const { A, B, C, D, A1, B1, C1, D1, E } = vertices;
+
+  // 动点 E 沿侧棱 AA1 拖拽反向求参回调 (同步切回自由探究预设)
+  const handleEPointDrag = (next: Vec3) => {
+    setModelPreset("free");
+    setParams((prev) => ({
+      ...prev,
+      lambda: Number(Math.min(1.0, Math.max(0.1, next.z / c)).toFixed(2)),
+    }));
+  };
 
   // 异面直线模型计算
   const skewData = useMemo(
@@ -641,714 +640,84 @@ export default function SpatialAngleAnimation() {
               ref={controlsRef}
               enabled={interactionMode === "orbit"}
             />
-            {/* 纯净直角坐标系 A-xyz（受左屏开关控制，动态适配长方体尺寸，正半轴实线箭头，负半轴细虚线） */}
-            {showAxes && (
-              <Scene3DGrid
-                size={[a + 1.2, b + 1.2, c + 1.2]}
-                showGrid={false}
-              />
-            )}
-
-            {/* 基础长方体 */}
-            <Cuboid a={a} b={b} c={c} opacity={0.1} colorKey="primary" />
-
-            {/* 顶点文本标号与空间坐标（建系后智能切换为带坐标数值标注） */}
-            {showAxes && showCoordinates ? (
-              <>
-                <FormulaLabel3D
-                  position={A}
-                  tex="A(0,0,0)"
-                  offset={[-0.2, -0.2, -0.15]}
-                />
-                <FormulaLabel3D
-                  position={B}
-                  tex={`B(${a},0,0)`}
-                  offset={[0.2, -0.2, -0.15]}
-                />
-                <FormulaLabel3D
-                  position={C}
-                  tex={`C(${a},${b},0)`}
-                  offset={[0.2, 0.2, -0.15]}
-                />
-                <FormulaLabel3D
-                  position={D}
-                  tex={`D(0,${b},0)`}
-                  offset={[-0.2, 0.2, -0.15]}
-                />
-                <FormulaLabel3D
-                  position={A1}
-                  tex={`A_1(0,0,${c})`}
-                  offset={[-0.25, -0.2, 0.15]}
-                />
-                <FormulaLabel3D
-                  position={B1}
-                  tex={`B_1(${a},0,${c})`}
-                  offset={[0.25, -0.2, 0.15]}
-                />
-                <FormulaLabel3D
-                  position={C1}
-                  tex={`C_1(${a},${b},${c})`}
-                  offset={[0.25, 0.2, 0.15]}
-                />
-                <FormulaLabel3D
-                  position={D1}
-                  tex={`D_1(0,${b},${c})`}
-                  offset={[-0.25, 0.2, 0.15]}
-                />
-              </>
-            ) : (
-              <>
-                <PointLabel3D
-                  position={A}
-                  text="A"
-                  offset={[-0.15, -0.15, -0.15]}
-                />
-                <PointLabel3D
-                  position={B}
-                  text="B"
-                  offset={[0.15, -0.15, -0.15]}
-                />
-                <PointLabel3D
-                  position={C}
-                  text="C"
-                  offset={[0.15, 0.15, -0.15]}
-                />
-                <PointLabel3D
-                  position={D}
-                  text="D"
-                  offset={[-0.15, 0.15, -0.15]}
-                />
-                <CompoundLabel3D
-                  position={A1}
-                  base="A"
-                  subscript="1"
-                  offset={[-0.15, -0.15, 0.15]}
-                />
-                <CompoundLabel3D
-                  position={B1}
-                  base="B"
-                  subscript="1"
-                  offset={[0.15, -0.15, 0.15]}
-                />
-                <CompoundLabel3D
-                  position={C1}
-                  base="C"
-                  subscript="1"
-                  offset={[0.15, 0.15, 0.15]}
-                />
-                <CompoundLabel3D
-                  position={D1}
-                  base="D"
-                  subscript="1"
-                  offset={[-0.15, 0.15, 0.15]}
-                />
-              </>
-            )}
+            {/* 基础长方体 + 顶点标号（建系后切换为坐标标注）共享骨架 */}
+            <CuboidBaseScene
+              a={a}
+              b={b}
+              c={c}
+              vertices={vertices}
+              showAxes={showAxes}
+              showCoordinates={showCoordinates}
+            />
 
             {/* ═════════ 模式一：异面直线所成的角 (纯几何线段，无箭头误导) ═════════ */}
             {activeMode === "skewLines" && (
-              <>
-                {/* 异面直线 1: A1B (几何线段，无箭头) */}
-                <Segment3D from={A1} to={B} colorKey="primary" lineWidth={3} />
-
-                {/* 异面直线 2: AC (几何线段，无箭头) */}
-                <Segment3D from={A} to={C} colorKey="accent" lineWidth={3} />
-
-                {/* 平移法辅助线与公垂线段 */}
-                {showAuxiliary && (
-                  <>
-                    {/* 长方体侧面上 D1C // A1B (辅助线段) */}
-                    <Segment3D
-                      from={D1}
-                      to={C}
-                      dashed
-                      colorKey="secondary"
-                      lineWidth={2.5}
-                    />
-
-                    {/* 公垂线段 P1P2 (几何线段，无箭头) */}
-                    <Segment3D
-                      from={skewData.P1}
-                      to={skewData.P2}
-                      colorKey="paramPrimary"
-                      lineWidth={2.5}
-                    />
-                    <CompoundLabel3D
-                      position={skewData.P1}
-                      base="P"
-                      subscript="1"
-                      offset={[-0.15, 0.1, 0.1]}
-                    />
-                    <CompoundLabel3D
-                      position={skewData.P2}
-                      base="P"
-                      subscript="2"
-                      offset={[0.15, -0.1, 0.1]}
-                    />
-                  </>
-                )}
-
-                {/* 垂直直角符号 */}
-                {showRightAngles && showAuxiliary && (
-                  <>
-                    {/* P1 处直角标记 */}
-                    <AngleArc3D
-                      vertex={skewData.P1}
-                      dirA={{
-                        x: skewData.u.x,
-                        y: skewData.u.y,
-                        z: skewData.u.z,
-                      }}
-                      dirB={{
-                        x: skewData.P2.x - skewData.P1.x,
-                        y: skewData.P2.y - skewData.P1.y,
-                        z: skewData.P2.z - skewData.P1.z,
-                      }}
-                      radius={0.18}
-                      colorKey="paramPrimary"
-                      isRight
-                    />
-                    {/* P2 处直角标记 */}
-                    <AngleArc3D
-                      vertex={skewData.P2}
-                      dirA={{
-                        x: skewData.v.x,
-                        y: skewData.v.y,
-                        z: skewData.v.z,
-                      }}
-                      dirB={{
-                        x: skewData.P1.x - skewData.P2.x,
-                        y: skewData.P1.y - skewData.P2.y,
-                        z: skewData.P1.z - skewData.P2.z,
-                      }}
-                      radius={0.18}
-                      colorKey="paramPrimary"
-                      isRight
-                    />
-                  </>
-                )}
-
-                {/* 空间特征角弧 θ */}
-                {showAngles && showAuxiliary && (
-                  <>
-                    <AngleArc3D
-                      vertex={C}
-                      dirA={{ x: -a, y: -b, z: 0 }}
-                      dirB={{ x: -a, y: 0, z: c }}
-                      radius={0.7}
-                      colorKey="highlight"
-                    />
-                    <FormulaLabel3D
-                      position={{ x: a - 0.3, y: b - 0.3, z: 0.15 }}
-                      tex="\theta"
-                    />
-                  </>
-                )}
-
-                {/* 空间向量法：方向向量 u⃗ (A₁B) 与 v⃗ (AC) */}
-                {showNormals && (
-                  <>
-                    <Vector3DArrow from={A1} to={B} colorKey="primary" />
-                    <FormulaLabel3D
-                      position={{
-                        x: (A1.x + B.x) / 2 + 0.1,
-                        y: 0,
-                        z: (A1.z + B.z) / 2 + 0.15,
-                      }}
-                      tex="\\vec{u}"
-                    />
-                    <Vector3DArrow from={A} to={C} colorKey="accent" />
-                    <FormulaLabel3D
-                      position={{
-                        x: (A.x + C.x) / 2 - 0.1,
-                        y: (A.y + C.y) / 2 + 0.15,
-                        z: 0.15,
-                      }}
-                      tex="\\vec{v}"
-                    />
-                  </>
-                )}
-              </>
+              <SkewLinesModeScene
+                a={a}
+                b={b}
+                c={c}
+                vertices={vertices}
+                skewData={skewData}
+                showAuxiliary={showAuxiliary}
+                showRightAngles={showRightAngles}
+                showAngles={showAngles}
+                showNormals={showNormals}
+              />
             )}
 
             {/* ═════════ 模式二：直线与平面所成的角 (几何斜线与射影) ═════════ */}
             {activeMode === "linePlane" && (
-              <>
-                {/* 底面 ABCD 半透明填充 */}
-                <Polygon3DFace
-                  points={[A, B, C, D]}
-                  colorKey="secondary"
-                  opacity={0.18}
-                />
-
-                {/* 动点 E 在侧棱 AA1 上 */}
-                {showAxes && showCoordinates ? (
-                  <FormulaLabel3D
-                    position={E}
-                    tex={`E(0,0,${(lambda * c).toFixed(1)})`}
-                    offset={[-0.25, -0.2, 0.1]}
-                  />
-                ) : (
-                  <PointLabel3D
-                    position={E}
-                    text="E"
-                    offset={[-0.2, -0.2, 0.1]}
-                  />
-                )}
-                <Point3D
-                  position={E}
-                  draggable={interactionMode === "drag"}
-                  constrain={(raw) => ({
-                    x: 0,
-                    y: 0,
-                    z: Math.min(c, Math.max(0.1 * c, raw.z)),
-                  })}
-                  onDrag={(next) => {
-                    setModelPreset("free");
-                    setParams((prev) => ({
-                      ...prev,
-                      lambda: Number(
-                        Math.min(1.0, Math.max(0.1, next.z / c)).toFixed(2),
-                      ),
-                    }));
-                  }}
-                  colorKey="highlight"
-                />
-
-                {/* 空间斜线 EC (几何线段，无箭头) */}
-                <Segment3D
-                  from={linePlaneData.E}
-                  to={linePlaneData.C}
-                  colorKey="primary"
-                  lineWidth={3}
-                />
-
-                {/* 几何辅助线：垂线段 EA 与底面射影 AC */}
-                {showAuxiliary && (
-                  <>
-                    <Segment3D
-                      from={linePlaneData.E}
-                      to={linePlaneData.A}
-                      dashed
-                      colorKey="accent"
-                      lineWidth={2.5}
-                    />
-                    <Segment3D
-                      from={linePlaneData.A}
-                      to={linePlaneData.C}
-                      dashed
-                      colorKey="secondary"
-                      lineWidth={2}
-                    />
-                  </>
-                )}
-
-                {/* 垂直直角符号 */}
-                {showRightAngles && showAuxiliary && (
-                  <AngleArc3D
-                    vertex={linePlaneData.A}
-                    dirA={{ x: 0, y: 0, z: linePlaneData.zE }}
-                    dirB={{ x: C.x - A.x, y: C.y - A.y, z: 0 }}
-                    radius={0.3}
-                    colorKey="accent"
-                    isRight
-                  />
-                )}
-
-                {/* 空间角弧 θ */}
-                {showAngles && showAuxiliary && (
-                  <>
-                    <AngleArc3D
-                      vertex={linePlaneData.C}
-                      dirA={{ x: -a, y: -b, z: 0 }}
-                      dirB={{ x: -a, y: -b, z: linePlaneData.zE }}
-                      radius={0.7}
-                      colorKey="highlight"
-                    />
-                    <FormulaLabel3D
-                      position={{ x: a - 0.35, y: b - 0.35, z: 0.15 }}
-                      tex="\theta"
-                    />
-                  </>
-                )}
-
-                {/* 底面法向量 n_0 (唯一代数向量箭头) */}
-                {showNormals && (
-                  <>
-                    <Vector3DArrow
-                      from={{ x: a / 2, y: b / 2, z: 0 }}
-                      to={{ x: a / 2, y: b / 2, z: 1.8 }}
-                      colorKey="secondary"
-                    />
-                    <FormulaLabel3D
-                      position={{ x: a / 2, y: b / 2, z: 1.8 }}
-                      tex="\\vec{n}_0"
-                      offset={[0.1, 0.1, 0.1]}
-                    />
-                  </>
-                )}
-              </>
+              <LinePlaneModeScene
+                a={a}
+                b={b}
+                c={c}
+                lambda={lambda}
+                vertices={vertices}
+                linePlaneData={linePlaneData}
+                showAxes={showAxes}
+                showCoordinates={showCoordinates}
+                showAuxiliary={showAuxiliary}
+                showRightAngles={showRightAngles}
+                showAngles={showAngles}
+                showNormals={showNormals}
+                interactionMode={interactionMode}
+                onEPointDrag={handleEPointDrag}
+              />
             )}
 
             {/* ═════════ 模式三：二面角 (三垂线几何角与重心法向量) ═════════ */}
             {activeMode === "dihedral" && (
-              <>
-                {/* 动点 E 在 AA1 上 */}
-                {showAxes && showCoordinates ? (
-                  <FormulaLabel3D
-                    position={E}
-                    tex={`E(0,0,${(lambda * c).toFixed(1)})`}
-                    offset={[-0.25, -0.2, 0.1]}
-                  />
-                ) : (
-                  <PointLabel3D
-                    position={E}
-                    text="E"
-                    offset={[-0.2, -0.2, 0.1]}
-                  />
-                )}
-                <Point3D
-                  position={E}
-                  draggable={interactionMode === "drag"}
-                  constrain={(raw) => ({
-                    x: 0,
-                    y: 0,
-                    z: Math.min(c, Math.max(0.1 * c, raw.z)),
-                  })}
-                  onDrag={(next) => {
-                    setModelPreset("free");
-                    setParams((prev) => ({
-                      ...prev,
-                      lambda: Number(
-                        Math.min(1.0, Math.max(0.1, next.z / c)).toFixed(2),
-                      ),
-                    }));
-                  }}
-                  colorKey="highlight"
-                />
-
-                {/* 底面 ABD 与 截面 BDE */}
-                <Polygon3DFace
-                  points={[A, B, D]}
-                  colorKey="secondary"
-                  opacity={0.15}
-                />
-                <Polygon3DFace
-                  points={[B, D, E]}
-                  colorKey="paramTertiary"
-                  opacity={0.28}
-                />
-
-                {/* 二面角的棱 BD (几何线段) */}
-                <Segment3D from={B} to={D} colorKey="highlight" lineWidth={3} />
-
-                {/* 几何辅助线：三垂线定理垂足 M 及垂线 AM ⊥ BD, EM ⊥ BD */}
-                {showAuxiliary && (
-                  <>
-                    <Segment3D
-                      from={A}
-                      to={dihedralData.edgeFootM}
-                      dashed
-                      colorKey="secondary"
-                      lineWidth={2}
-                    />
-                    <Segment3D
-                      from={E}
-                      to={dihedralData.edgeFootM}
-                      dashed
-                      colorKey="paramTertiary"
-                      lineWidth={2}
-                    />
-                    <Point3D
-                      position={dihedralData.edgeFootM}
-                      colorKey="paramTertiary"
-                    />
-                    <PointLabel3D
-                      position={dihedralData.edgeFootM}
-                      text="M"
-                      offset={[0.1, 0.1, 0.05]}
-                    />
-                  </>
-                )}
-
-                {/* 垂直直角符号 */}
-                {showRightAngles && showAuxiliary && (
-                  <>
-                    {/* 垂足 M 处 AM ⊥ BD 直角标记 (落在底面 △ABD 内，朝向点 B) */}
-                    <AngleArc3D
-                      vertex={dihedralData.edgeFootM}
-                      dirA={{
-                        x: A.x - dihedralData.edgeFootM.x,
-                        y: A.y - dihedralData.edgeFootM.y,
-                        z: 0,
-                      }}
-                      dirB={{
-                        x: B.x - dihedralData.edgeFootM.x,
-                        y: B.y - dihedralData.edgeFootM.y,
-                        z: 0,
-                      }}
-                      radius={0.25}
-                      colorKey="secondary"
-                      isRight
-                    />
-
-                    {/* 垂足 M 处 EM ⊥ BD 直角标记 (落在截面 △BDE 内，朝向点 D) */}
-                    <AngleArc3D
-                      vertex={dihedralData.edgeFootM}
-                      dirA={{
-                        x: E.x - dihedralData.edgeFootM.x,
-                        y: E.y - dihedralData.edgeFootM.y,
-                        z: dihedralData.zE,
-                      }}
-                      dirB={{
-                        x: D.x - dihedralData.edgeFootM.x,
-                        y: D.y - dihedralData.edgeFootM.y,
-                        z: 0,
-                      }}
-                      radius={0.28}
-                      colorKey="paramTertiary"
-                      isRight
-                    />
-                  </>
-                )}
-
-                {/* 空间特征角弧 θ (二面角平面角) */}
-                {showAngles && showAuxiliary && (
-                  <>
-                    <AngleArc3D
-                      vertex={dihedralData.edgeFootM}
-                      dirA={{
-                        x: A.x - dihedralData.edgeFootM.x,
-                        y: A.y - dihedralData.edgeFootM.y,
-                        z: 0,
-                      }}
-                      dirB={{
-                        x: E.x - dihedralData.edgeFootM.x,
-                        y: E.y - dihedralData.edgeFootM.y,
-                        z: dihedralData.zE,
-                      }}
-                      radius={0.55}
-                      colorKey="highlight"
-                    />
-                    <FormulaLabel3D
-                      position={{
-                        x: dihedralData.edgeFootM.x - 0.15,
-                        y: dihedralData.edgeFootM.y - 0.15,
-                        z: 0.25,
-                      }}
-                      tex="\theta"
-                    />
-                  </>
-                )}
-
-                {/* 截面法向量 n_2 与底面法向量 n_1 (代数向量箭头) */}
-                {showNormals && (
-                  <>
-                    {(() => {
-                      const G2 = dihedralData.centroidSection;
-                      const n2Target: Vec3 = {
-                        x: G2.x + dihedralData.n2.x * 1.6,
-                        y: G2.y + dihedralData.n2.y * 1.6,
-                        z: G2.z + dihedralData.n2.z * 1.6,
-                      };
-                      return (
-                        <>
-                          <Vector3DArrow
-                            from={G2}
-                            to={n2Target}
-                            colorKey="primary"
-                          />
-                          <FormulaLabel3D
-                            position={n2Target}
-                            tex="\\vec{n}_2"
-                            offset={[0.1, 0.1, 0.1]}
-                          />
-                        </>
-                      );
-                    })()}
-
-                    {(() => {
-                      const G1 = dihedralData.centroidBase;
-                      const n1Target: Vec3 = { x: G1.x, y: G1.y, z: 1.6 };
-                      return (
-                        <>
-                          <Vector3DArrow
-                            from={G1}
-                            to={n1Target}
-                            colorKey="secondary"
-                          />
-                          <FormulaLabel3D
-                            position={n1Target}
-                            tex="\\vec{n}_1"
-                            offset={[0.1, 0.1, 0.1]}
-                          />
-                        </>
-                      );
-                    })()}
-                  </>
-                )}
-              </>
+              <DihedralModeScene
+                c={c}
+                lambda={lambda}
+                vertices={vertices}
+                dihedralData={dihedralData}
+                showAxes={showAxes}
+                showCoordinates={showCoordinates}
+                showAuxiliary={showAuxiliary}
+                showRightAngles={showRightAngles}
+                showAngles={showAngles}
+                showNormals={showNormals}
+                interactionMode={interactionMode}
+                onEPointDrag={handleEPointDrag}
+              />
             )}
 
             {/* ═════════ 模式四：点到平面的距离 (纯几何棱线与高线 + 空间法向量) ═════════ */}
             {activeMode === "distance" && (
-              <>
-                {/* 动点 E 在 AA1 上 */}
-                {showAxes && showCoordinates ? (
-                  <FormulaLabel3D
-                    position={E}
-                    tex={`E(0,0,${(lambda * c).toFixed(1)})`}
-                    offset={[-0.25, -0.2, 0.1]}
-                  />
-                ) : (
-                  <PointLabel3D
-                    position={E}
-                    text="E"
-                    offset={[-0.2, -0.2, 0.1]}
-                  />
-                )}
-                <Point3D
-                  position={E}
-                  draggable={interactionMode === "drag"}
-                  constrain={(raw) => ({
-                    x: 0,
-                    y: 0,
-                    z: Math.min(c, Math.max(0.1 * c, raw.z)),
-                  })}
-                  onDrag={(next) => {
-                    setModelPreset("free");
-                    setParams((prev) => ({
-                      ...prev,
-                      lambda: Number(
-                        Math.min(1.0, Math.max(0.1, next.z / c)).toFixed(2),
-                      ),
-                    }));
-                  }}
-                  colorKey="highlight"
-                />
-
-                {/* 底面 ABD 与 截面 BDE */}
-                <Polygon3DFace
-                  points={[A, B, D]}
-                  colorKey="secondary"
-                  opacity={0.15}
-                />
-                <Polygon3DFace
-                  points={[B, D, E]}
-                  colorKey="paramTertiary"
-                  opacity={0.28}
-                />
-
-                {/* 三棱锥 E-ABD 棱线 (几何线段，绝无箭头) */}
-                <Segment3D from={E} to={B} colorKey="accent" lineWidth={2} />
-                <Segment3D from={E} to={D} colorKey="accent" lineWidth={2} />
-                <Segment3D from={B} to={D} colorKey="accent" lineWidth={2} />
-
-                {/* 几何辅助线：双高线 EA 与 AH */}
-                {showAuxiliary && (
-                  <>
-                    {/* 竖直高线 h1 = EA (底面 ABD 对应的高) */}
-                    <Segment3D
-                      from={A}
-                      to={E}
-                      dashed
-                      colorKey="paramPrimary"
-                      lineWidth={2.5}
-                    />
-
-                    {/* 原点 A 到截面 BDE 的垂线段 AH (截面 BDE 对应的高 d) */}
-                    <Segment3D
-                      from={A}
-                      to={distanceData.footH}
-                      colorKey="highlight"
-                      lineWidth={3}
-                    />
-                    <Point3D
-                      position={distanceData.footH}
-                      colorKey="highlight"
-                    />
-                    <PointLabel3D
-                      position={distanceData.footH}
-                      text="H"
-                      offset={[0.1, 0.1, 0.1]}
-                    />
-                    <FormulaLabel3D
-                      position={{
-                        x: (A.x + distanceData.footH.x) / 2 + 0.1,
-                        y: (A.y + distanceData.footH.y) / 2 + 0.1,
-                        z: (A.z + distanceData.footH.z) / 2 + 0.1,
-                      }}
-                      tex="d"
-                    />
-                  </>
-                )}
-
-                {/* 垂直双直角符号 (AH ⊥ HE 与 AH ⊥ HB，凸显线面垂直严格定义) */}
-                {showRightAngles && showAuxiliary && (
-                  <>
-                    <AngleArc3D
-                      vertex={distanceData.footH}
-                      dirA={{
-                        x: A.x - distanceData.footH.x,
-                        y: A.y - distanceData.footH.y,
-                        z: A.z - distanceData.footH.z,
-                      }}
-                      dirB={{
-                        x: E.x - distanceData.footH.x,
-                        y: E.y - distanceData.footH.y,
-                        z: distanceData.zE - distanceData.footH.z,
-                      }}
-                      radius={0.22}
-                      colorKey="highlight"
-                      isRight
-                    />
-                    <AngleArc3D
-                      vertex={distanceData.footH}
-                      dirA={{
-                        x: A.x - distanceData.footH.x,
-                        y: A.y - distanceData.footH.y,
-                        z: A.z - distanceData.footH.z,
-                      }}
-                      dirB={{
-                        x: B.x - distanceData.footH.x,
-                        y: B.y - distanceData.footH.y,
-                        z: B.z - distanceData.footH.z,
-                      }}
-                      radius={0.28}
-                      colorKey="secondary"
-                      isRight
-                    />
-                  </>
-                )}
-
-                {/* 截面法向量 n (空间代数向量，展示向量投影法求距离 d = |BA·n| / |n|) */}
-                {showNormals && (
-                  <>
-                    {(() => {
-                      const G2 = distanceData.centroidSection;
-                      const nTarget: Vec3 = {
-                        x: G2.x + distanceData.nUnit.x * 1.6,
-                        y: G2.y + distanceData.nUnit.y * 1.6,
-                        z: G2.z + distanceData.nUnit.z * 1.6,
-                      };
-                      return (
-                        <>
-                          <Vector3DArrow
-                            from={G2}
-                            to={nTarget}
-                            colorKey="primary"
-                          />
-                          <FormulaLabel3D
-                            position={nTarget}
-                            tex="\\vec{n}"
-                            offset={[0.1, 0.1, 0.1]}
-                          />
-                        </>
-                      );
-                    })()}
-                  </>
-                )}
-              </>
+              <DistanceModeScene
+                c={c}
+                lambda={lambda}
+                vertices={vertices}
+                distanceData={distanceData}
+                showAxes={showAxes}
+                showCoordinates={showCoordinates}
+                showAuxiliary={showAuxiliary}
+                showRightAngles={showRightAngles}
+                showNormals={showNormals}
+                interactionMode={interactionMode}
+                onEPointDrag={handleEPointDrag}
+              />
             )}
           </ThreeDCanvas>
 
