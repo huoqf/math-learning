@@ -572,6 +572,108 @@ export function getChiSquare1Pdf(x: number): number {
 }
 
 /**
+ * 从全模型拟合列表中选取"当前选中的模型"对应的拟合结果。
+ * 找不到匹配模型时回退到列表中的第一个（原组件内 modelFits.find ?? modelFits[0] 逻辑）。
+ */
+export function selectCurrentFit(
+  models: ModelFitComparison[],
+  model: RegressionModelType,
+): ModelFitComparison | undefined {
+  return models.find((m) => m.type === model) ?? models[0];
+}
+
+/**
+ * 平滑拟合曲线的单个数学空间采样点（未做设计坐标系投影）。
+ */
+export interface CurveSamplePoint {
+  x: number;
+  y: number;
+}
+
+/**
+ * 按给定拟合模型在 [xMin, xMax] 上生成用于绘制拟合曲线的数学采样点数组。
+ * 仅执行纯数学处理：针对对数/幂/逆函数模型的不连续点剔除，以及 predict 结果的 NaN/Infinity 过滤。
+ * 视口上下界裁剪、设计坐标投影与 SVG path 组装由组件层负责。
+ * @param fit 当前拟合模型（含 predict 函数）
+ * @param model 模型类型，决定不连续点的剔除策略
+ * @param xMin 采样区间左端点（数学坐标）
+ * @param xMax 采样区间右端点（数学坐标）
+ * @param count 采样段数（采样点个数为 count + 1）
+ */
+export function sampleRegressionCurvePoints(
+  fit: ModelFitComparison,
+  model: RegressionModelType,
+  xMin: number,
+  xMax: number,
+  count: number,
+): CurveSamplePoint[] {
+  const points: CurveSamplePoint[] = [];
+  const startX =
+    model === "logarithmic" || model === "power" ? Math.max(0.02, xMin) : xMin;
+  const endX = xMax;
+  const stepX = (endX - startX) / count;
+
+  for (let i = 0; i <= count; i++) {
+    const mx = startX + i * stepX;
+    if (model === "logarithmic" || model === "power") {
+      if (mx <= 0.01) continue;
+    }
+    if (model === "inverse" && Math.abs(mx) < 0.05) continue;
+
+    const my = fit.predict(mx);
+    if (isNaN(my) || !isFinite(my)) continue;
+
+    points.push({ x: mx, y: my });
+  }
+  return points;
+}
+
+/**
+ * 卡方分布密度曲线的单个数学采样点（未做设计坐标投影）。
+ */
+export interface ChiCurvePoint {
+  chi: number;
+  pdf: number;
+}
+
+/**
+ * 在 [startChi, maxChi] 区间上均匀采样单自由度卡方概率密度曲线 (df=1) 的数学点数组。
+ * 用于构造卡方密度曲线与拒绝域阴影的采样源；像素映射由组件层负责。
+ * @param startChi 采样起点卡方值（密度曲线用 0.08，拒绝域用 3.841）
+ * @param maxChi 采样终点卡方值（坐标轴最大刻度）
+ * @param samples 采样段数（采样点个数为 samples + 1）
+ */
+export function sampleChiSquareCurvePoints(
+  startChi: number,
+  maxChi: number,
+  samples: number,
+): ChiCurvePoint[] {
+  const points: ChiCurvePoint[] = [];
+  for (let i = 0; i <= samples; i++) {
+    const chiVal = startChi + (i / samples) * (maxChi - startChi);
+    points.push({ chi: chiVal, pdf: getChiSquare1Pdf(chiVal) });
+  }
+  return points;
+}
+
+/**
+ * 将卡方数值映射到数轴像素横坐标（纯线性映射，含 [0, maxChi] 钳制）。
+ * @param val 卡方观测值
+ * @param maxChi 坐标轴最大刻度卡方值
+ * @param startPixel 数轴左端像素横坐标
+ * @param plotWidth 数轴像素宽度
+ */
+export function mapChiValueToPixel(
+  val: number,
+  maxChi: number,
+  startPixel: number,
+  plotWidth: number,
+): number {
+  const clamped = Math.min(maxChi, Math.max(0, val));
+  return startPixel + (clamped / maxChi) * plotWidth;
+}
+
+/**
  * 高考典型预设数据集（覆盖高考题型情境）
  */
 export const REGRESSION_PRESETS = [

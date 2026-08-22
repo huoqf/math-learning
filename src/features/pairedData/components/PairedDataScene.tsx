@@ -11,6 +11,10 @@ import {
   calculateIndependenceTest,
   fitAllRegressionModels,
   getChiSquare1Pdf,
+  selectCurrentFit,
+  sampleRegressionCurvePoints,
+  sampleChiSquareCurvePoints,
+  mapChiValueToPixel,
 } from "@/math/pairedData";
 
 interface PairedDataSceneProps {
@@ -73,7 +77,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
   }, [points]);
 
   const currentFit = useMemo(() => {
-    return modelFits.find((m) => m.type === selectedModel) ?? modelFits[0];
+    return selectCurrentFit(modelFits, selectedModel);
   }, [modelFits, selectedModel]);
 
   // 3. 独立性检验计算（考虑倍增因子）
@@ -97,43 +101,26 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
   const curvePath = useMemo(() => {
     if (studyMode !== "regression" || !currentFit || !currentFit.isValid)
       return "";
+    // 数学空间采样（含不连续点与 NaN/Infinity 剔除，纯数学层负责）
+    const samples = sampleRegressionCurvePoints(
+      currentFit,
+      selectedModel,
+      scale.xMin,
+      scale.xMax,
+      curvePointsCount,
+    );
+
     const pathSegs: string[] = [];
     let isDrawing = false;
 
-    // 自适应安全采样区间
-    const startX =
-      selectedModel === "logarithmic" || selectedModel === "power"
-        ? Math.max(0.02, scale.xMin)
-        : scale.xMin;
-    const endX = scale.xMax;
-    const stepX = (endX - startX) / curvePointsCount;
-
-    for (let i = 0; i <= curvePointsCount; i++) {
-      const mx = startX + i * stepX;
-      if (selectedModel === "logarithmic" || selectedModel === "power") {
-        if (mx <= 0.01) {
-          isDrawing = false;
-          continue;
-        }
-      }
-      if (selectedModel === "inverse" && Math.abs(mx) < 0.05) {
+    for (const p of samples) {
+      // 过滤大幅超出视口上下界的无效点，并在视口中裁剪投影
+      if (p.y < scale.yMin - 15 || p.y > scale.yMax + 15) {
         isDrawing = false;
         continue;
       }
 
-      const my = currentFit.predict(mx);
-      // 过滤非数值及大幅超出视口上下界的无效点
-      if (
-        isNaN(my) ||
-        !isFinite(my) ||
-        my < scale.yMin - 15 ||
-        my > scale.yMax + 15
-      ) {
-        isDrawing = false;
-        continue;
-      }
-
-      const dPos = mathToDesign(mx, my, scale);
+      const dPos = mathToDesign(p.x, p.y, scale);
       if (!isDrawing) {
         pathSegs.push(`M ${dPos.x.toFixed(1)} ${dPos.y.toFixed(1)}`);
         isDrawing = true;
@@ -152,29 +139,23 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
   const chiPlotWidth = chiEndX - chiStartX;
   const maxChi = 15; // 坐标轴最大刻度卡方值
 
-  const getChiX = (val: number) => {
-    const clamped = Math.min(maxChi, Math.max(0, val));
-    return chiStartX + (clamped / maxChi) * chiPlotWidth;
-  };
+  const getChiX = (val: number) =>
+    mapChiValueToPixel(val, maxChi, chiStartX, chiPlotWidth);
 
   // 生成 ChiSquare(df=1) 平滑概率密度曲线路径 (pdf 放大至 85 像素高度)
   const chiCurvePath = useMemo(() => {
     if (studyMode !== "independence") return "";
     const segments: string[] = [];
-    const samples = 80;
-    for (let i = 0; i <= samples; i++) {
-      const chiVal = 0.08 + (i / samples) * (maxChi - 0.08);
-      const pdf = getChiSquare1Pdf(chiVal);
-      const px =
-        chiStartX +
-        (Math.min(maxChi, Math.max(0, chiVal)) / maxChi) * chiPlotWidth;
-      const py = chiPlotBaseY - Math.min(chiPlotHeight, pdf * 85);
+    const points = sampleChiSquareCurvePoints(0.08, maxChi, 80);
+    points.forEach((p, i) => {
+      const px = mapChiValueToPixel(p.chi, maxChi, chiStartX, chiPlotWidth);
+      const py = chiPlotBaseY - Math.min(chiPlotHeight, p.pdf * 85);
       if (i === 0) {
         segments.push(`M ${px.toFixed(1)} ${py.toFixed(1)}`);
       } else {
         segments.push(`L ${px.toFixed(1)} ${py.toFixed(1)}`);
       }
-    }
+    });
     return segments.join(" ");
   }, [studyMode, chiPlotWidth]);
 
@@ -184,14 +165,10 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
     const startChi = 3.841;
     const startPx = chiStartX + (startChi / maxChi) * chiPlotWidth;
     const segments: string[] = [`M ${startPx.toFixed(1)} ${chiPlotBaseY}`];
-    const samples = 40;
-    for (let i = 0; i <= samples; i++) {
-      const chiVal = startChi + (i / samples) * (maxChi - startChi);
-      const pdf = getChiSquare1Pdf(chiVal);
-      const px =
-        chiStartX +
-        (Math.min(maxChi, Math.max(0, chiVal)) / maxChi) * chiPlotWidth;
-      const py = chiPlotBaseY - Math.min(chiPlotHeight, pdf * 85);
+    const points = sampleChiSquareCurvePoints(startChi, maxChi, 40);
+    for (const p of points) {
+      const px = mapChiValueToPixel(p.chi, maxChi, chiStartX, chiPlotWidth);
+      const py = chiPlotBaseY - Math.min(chiPlotHeight, p.pdf * 85);
       segments.push(`L ${px.toFixed(1)} ${py.toFixed(1)}`);
     }
     segments.push(
