@@ -13,21 +13,11 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
-  Scene3DGrid,
-  Vector3DArrow,
-  Segment3D,
-  Point3D,
-  PointLabel3D,
-  CompoundLabel3D,
-  FormulaLabel3D,
-  Polygon3DFace,
   Legend3D,
   CameraRig,
   ThreeViewsPanel,
   ModeSwitchOverlay3D,
-  AngleArc3D,
 } from "@/components/Math3D";
-import { Cuboid } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidParametricMeta } from "@/data/registries/solidGeometry";
@@ -40,7 +30,11 @@ import {
   calculateSurfacePath,
 } from "@/math3d/parametricPoint";
 import type { Vec3 } from "@/math3d/vector3";
-import { distance } from "@/math3d/vector3";
+import ParametricPointBaseScene from "./ParametricPointBaseScene";
+import SinglePointAngleModeScene from "./modes/SinglePointAngleModeScene";
+import DoublePointDistanceModeScene from "./modes/DoublePointDistanceModeScene";
+import PyramidVolumeModeScene from "./modes/PyramidVolumeModeScene";
+import SurfacePathModeScene from "./modes/SurfacePathModeScene";
 
 type ParametricMode =
   | "singlePointAngle"
@@ -202,7 +196,24 @@ export default function ParametricPointAnimation() {
     });
   };
 
-  // 7. 左屏参数配置与动态裁剪（铁律 3：特定预设下隐藏已锁定的特征点参数，自由探究下全量展开）
+  // 7. 3D 画布内动点拖拽反向求参回调 (铁律 7：拖拽图形改参数，同步切回自由探究)
+  const handlePDrag = (z: number) => {
+    setPresetKey("free");
+    setParams((prev) => ({
+      ...prev,
+      lambda: Number((z / c).toFixed(2)),
+    }));
+  };
+
+  const handleQDrag = (muNext: number) => {
+    setPresetKey("free");
+    setParams((prev) => ({
+      ...prev,
+      mu: Number(muNext.toFixed(2)),
+    }));
+  };
+
+  // 8. 左屏参数配置与动态裁剪（铁律 3：特定预设下隐藏已锁定的特征点参数，自由探究下全量展开）
   const mapKeysToConfigs = useCallback(
     (keys: string[]): ParamConfig[] => {
       return keys
@@ -281,7 +292,7 @@ export default function ParametricPointAnimation() {
     return mapKeysToConfigs(["a", "b", "c", "lambda"]);
   }, [activeMode, presetKey, mapKeysToConfigs]);
 
-  // 8. 教学提示配置
+  // 9. 教学提示配置
   const tipConfig = useMemo(() => {
     switch (activeMode) {
       case "singlePointAngle":
@@ -315,27 +326,10 @@ export default function ParametricPointAnimation() {
     }
   }, [activeMode]);
 
-  // 9. 三视图数据
+  // 10. 三视图数据
   const viewsData = useMemo(() => {
     return buildSolidViews("cuboid", { width: a, depth: b, height: c });
   }, [a, b, c]);
-
-  // 截面中心与法向量缩放
-  const centerPAC: Vec3 = {
-    x: (P.x + A.x + C.x) / 3,
-    y: (P.y + A.y + C.y) / 3,
-    z: (P.z + A.z + C.z) / 3,
-  };
-  const normLen = resSingle.lenN < 1e-9 ? 1 : resSingle.lenN;
-  const vecNormalScaled: Vec3 = {
-    x: centerPAC.x + (resSingle.nPAC.x / normLen) * 1.8,
-    y: centerPAC.y + (resSingle.nPAC.y / normLen) * 1.8,
-    z: centerPAC.z + (resSingle.nPAC.z / normLen) * 1.8,
-  };
-
-  // 公垂线判断
-  const isAtCommonPerp =
-    Math.abs(mu - resDouble.optimalMu) < 0.03 && lambda < 0.05;
 
   return (
     <ThreePanel
@@ -611,344 +605,73 @@ export default function ParametricPointAnimation() {
                 ref={controlsRef}
                 enabled={interactionMode === "orbit"}
               />
-              {/* 空间直角坐标系（纯三轴系统，彻底移除地面网格） */}
-              <Scene3DGrid size={5.5} showGrid={false} />
 
-              {/* 长方体透视骨架 (尺寸与顶点 100% 精确贴合) */}
-              <Cuboid a={a} b={b} c={c} opacity={0.12} colorKey="primary" />
-
-              {/* 顶点文本标注（纯 3D 矢量文字，严格使用 CompoundLabel3D 消除豆腐块） */}
-              <PointLabel3D position={A} text="A" offset={[-0.2, -0.2, -0.1]} />
-              <PointLabel3D position={B} text="B" offset={[0.2, -0.2, -0.1]} />
-              <PointLabel3D position={C} text="C" offset={[0.2, 0.2, -0.1]} />
-              <PointLabel3D position={D} text="D" offset={[-0.2, 0.2, -0.1]} />
-              <CompoundLabel3D
-                position={A1}
-                base="A"
-                subscript="1"
-                offset={[-0.2, -0.2, 0.2]}
-              />
-              <CompoundLabel3D
-                position={B1}
-                base="B"
-                subscript="1"
-                offset={[0.2, -0.2, 0.2]}
-              />
-              <CompoundLabel3D
-                position={C1}
-                base="C"
-                subscript="1"
-                offset={[0.2, 0.2, 0.2]}
-              />
-              <CompoundLabel3D
-                position={D1}
-                base="D"
-                subscript="1"
-                offset={[-0.2, 0.2, 0.2]}
+              {/* 共享 3D 基底：长方体骨架 + 顶点标注 + 导轨 + 可拖拽动点 P */}
+              <ParametricPointBaseScene
+                a={a}
+                b={b}
+                c={c}
+                P={P}
+                A={A}
+                B={B}
+                C={C}
+                D={D}
+                A1={A1}
+                B1={B1}
+                C1={C1}
+                D1={D1}
+                interactionMode={interactionMode}
+                onPDrag={handlePDrag}
               />
 
-              {/* 侧棱 BB1 高亮轨迹导轨 (纯几何线段，无箭头) */}
-              <Segment3D
-                from={B}
-                to={B1}
-                colorKey="highlight"
-                lineWidth={2.5}
-              />
-
-              {/* 动点 P：在侧棱 BB1 上垂直拖拽 */}
-              <Point3D
-                position={P}
-                draggable={interactionMode === "drag"}
-                constrain={(raw) => ({
-                  x: a,
-                  y: 0,
-                  z: Math.min(c, Math.max(0, raw.z)),
-                })}
-                onDrag={(next) => {
-                  setPresetKey("free");
-                  setParams((prev) => ({
-                    ...prev,
-                    lambda: Number((next.z / c).toFixed(2)),
-                  }));
-                }}
-                colorKey="highlight"
-              />
-              <PointLabel3D position={P} text="P" offset={[0.18, 0, 0.1]} />
-
-              {/* 模式一：单动点与空间角及存在性 */}
+              {/* ═════════ 模式一：单动点与空间角及存在性 ═════════ */}
               {activeMode === "singlePointAngle" && (
-                <>
-                  {/* 截面 PAC 半透明面片 */}
-                  <Polygon3DFace
-                    points={[P, A, C]}
-                    colorKey="secondary"
-                    opacity={0.25}
-                  />
-
-                  {/* 截面三条边 (纯几何线段，绝无箭头) */}
-                  <Segment3D
-                    from={A}
-                    to={P}
-                    colorKey="highlight"
-                    lineWidth={2.5}
-                  />
-                  <Segment3D
-                    from={P}
-                    to={C}
-                    colorKey="highlight"
-                    lineWidth={2.5}
-                  />
-                  <Segment3D
-                    from={C}
-                    to={A}
-                    colorKey="highlight"
-                    lineWidth={2.5}
-                  />
-
-                  {/* 截面法向量 (唯一代数向量箭头) */}
-                  {resSingle.lenN > 1e-4 && (
-                    <>
-                      <Vector3DArrow
-                        from={centerPAC}
-                        to={vecNormalScaled}
-                        colorKey="secondary"
-                      />
-                      <FormulaLabel3D
-                        position={vecNormalScaled}
-                        tex="\\vec{n}"
-                      />
-                    </>
-                  )}
-
-                  {/* 动连线 DP (纯几何线段) */}
-                  <Segment3D
-                    from={D}
-                    to={P}
-                    colorKey="accent"
-                    lineWidth={2.5}
-                  />
-                  {/* 探究线 AC1 (纯几何线段) */}
-                  <Segment3D
-                    from={A}
-                    to={C1}
-                    colorKey="secondary"
-                    dashed
-                    lineWidth={2}
-                  />
-
-                  {/* 存在性目标点指示：当未与当前动点 P 重叠时才显示 P_0 辅助点 */}
-                  {resSingle.isTargetDihedralExist &&
-                    distance(P, resSingle.dihedralTargetP) > 0.25 && (
-                      <>
-                        <Point3D
-                          position={resSingle.dihedralTargetP}
-                          colorKey="paramTertiary"
-                        />
-                        <CompoundLabel3D
-                          position={resSingle.dihedralTargetP}
-                          base="P"
-                          subscript="0"
-                          offset={[0.2, 0, 0]}
-                        />
-                      </>
-                    )}
-
-                  {/* 超界虚线导轨延伸指示 */}
-                  {!resSingle.isTargetDihedralExist && (
-                    <Segment3D
-                      from={B1}
-                      to={{
-                        x: a,
-                        y: 0,
-                        z: Math.min(
-                          c * 1.5,
-                          Math.max(c + 0.8, resSingle.dihedralTargetP.z),
-                        ),
-                      }}
-                      colorKey="highlight"
-                      dashed
-                      lineWidth={1.5}
-                    />
-                  )}
-                </>
+                <SinglePointAngleModeScene
+                  a={a}
+                  c={c}
+                  P={P}
+                  A={A}
+                  C={C}
+                  D={D}
+                  C1={C1}
+                  B1={B1}
+                  resSingle={resSingle}
+                />
               )}
 
-              {/* 模式二：双动点与向量最值 */}
+              {/* ═════════ 模式二：双动点与向量最值 ═════════ */}
               {activeMode === "doublePointDistance" && (
-                <>
-                  {/* 底面对角线 AC 高亮轨迹导轨 (纯几何线段) */}
-                  <Segment3D
-                    from={A}
-                    to={C}
-                    colorKey="secondary"
-                    lineWidth={2.5}
-                  />
-
-                  {/* 动点 Q：在 AC 上可向量正交平滑拖拽 */}
-                  <Point3D
-                    position={Q}
-                    draggable={interactionMode === "drag"}
-                    constrain={(raw) => {
-                      const acLenSq = a * a + b * b;
-                      const dotVal = raw.x * a + raw.y * b;
-                      const t = Math.min(1, Math.max(0, dotVal / acLenSq));
-                      return { x: t * a, y: t * b, z: 0 };
-                    }}
-                    onDrag={(next) => {
-                      setPresetKey("free");
-                      const acLenSq = a * a + b * b;
-                      const t = Math.min(
-                        1,
-                        Math.max(0, (next.x * a + next.y * b) / acLenSq),
-                      );
-                      setParams((prev) => ({
-                        ...prev,
-                        mu: Number(t.toFixed(2)),
-                      }));
-                    }}
-                    colorKey="accent"
-                  />
-                  <PointLabel3D
-                    position={Q}
-                    text="Q"
-                    offset={[0.15, 0.15, -0.1]}
-                  />
-
-                  {/* 动线段 PQ (纯几何线段，无箭头) */}
-                  <Segment3D
-                    from={P}
-                    to={Q}
-                    colorKey={isAtCommonPerp ? "paramTertiary" : "highlight"}
-                    lineWidth={isAtCommonPerp ? 3.5 : 3}
-                  />
-
-                  {/* 当到达公垂线极值时，渲染双直角方框 */}
-                  {isAtCommonPerp && (
-                    <>
-                      <AngleArc3D
-                        vertex={resDouble.optimalFootOnBB1}
-                        dirA={{ x: 0, y: 0, z: 1 }}
-                        dirB={{
-                          x: resDouble.optimalFootOnAC.x - a,
-                          y: resDouble.optimalFootOnAC.y,
-                          z: 0,
-                        }}
-                        radius={0.35}
-                        isRight
-                        colorKey="paramTertiary"
-                      />
-                    </>
-                  )}
-                </>
+                <DoublePointDistanceModeScene
+                  a={a}
+                  b={b}
+                  lambda={lambda}
+                  mu={mu}
+                  P={P}
+                  Q={Q}
+                  A={A}
+                  C={C}
+                  resDouble={resDouble}
+                  interactionMode={interactionMode}
+                  onQDrag={handleQDrag}
+                />
               )}
 
-              {/* 模式三：动点三棱锥体积极值 */}
+              {/* ═════════ 模式三：动点三棱锥体积极值 ═════════ */}
               {activeMode === "pyramidVolumeExtrema" && (
-                <>
-                  {/* 底面 △ACD 半透明面片 */}
-                  <Polygon3DFace
-                    points={[A, C, D]}
-                    colorKey="secondary"
-                    opacity={0.3}
-                  />
-
-                  {/* 底面三边 */}
-                  <Segment3D
-                    from={A}
-                    to={C}
-                    colorKey="secondary"
-                    lineWidth={2}
-                  />
-                  <Segment3D
-                    from={C}
-                    to={D}
-                    colorKey="secondary"
-                    lineWidth={2}
-                  />
-                  <Segment3D
-                    from={D}
-                    to={A}
-                    colorKey="secondary"
-                    lineWidth={2}
-                  />
-
-                  {/* 棱锥三条侧棱 PA, PC, PD */}
-                  <Segment3D
-                    from={P}
-                    to={A}
-                    colorKey="highlight"
-                    lineWidth={2.5}
-                  />
-                  <Segment3D
-                    from={P}
-                    to={C}
-                    colorKey="highlight"
-                    lineWidth={2.5}
-                  />
-                  <Segment3D
-                    from={P}
-                    to={D}
-                    colorKey="highlight"
-                    lineWidth={2.5}
-                  />
-
-                  {/* 动高线 PB 垂线段 (纯几何线段，虚线高) */}
-                  <Segment3D
-                    from={P}
-                    to={B}
-                    colorKey="paramTertiary"
-                    dashed
-                    lineWidth={2.5}
-                  />
-                  {resVolume.heightH > 0.4 && (
-                    <FormulaLabel3D
-                      position={{
-                        x: a + 0.25,
-                        y: 0,
-                        z: resVolume.heightH / 2,
-                      }}
-                      tex={`h=${resVolume.heightH.toFixed(1)}`}
-                    />
-                  )}
-
-                  {/* 垂足 B 处直角方框 */}
-                  <AngleArc3D
-                    vertex={B}
-                    dirA={{ x: 0, y: 0, z: 1 }}
-                    dirB={{ x: -1, y: 0, z: 0 }}
-                    radius={0.35}
-                    isRight
-                    colorKey="paramTertiary"
-                  />
-                </>
+                <PyramidVolumeModeScene
+                  a={a}
+                  P={P}
+                  A={A}
+                  B={B}
+                  C={C}
+                  D={D}
+                  resVolume={resVolume}
+                />
               )}
 
-              {/* 模式四：表面展开最短路径 */}
+              {/* ═════════ 模式四：表面展开最短路径 ═════════ */}
               {activeMode === "surfaceShortestPath" && (
-                <>
-                  {/* 折线段 AP 与 PC1 (纯几何线段，无箭头) */}
-                  <Segment3D
-                    from={A}
-                    to={P}
-                    colorKey="highlight"
-                    lineWidth={3}
-                  />
-                  <Segment3D
-                    from={P}
-                    to={C1}
-                    colorKey="highlight"
-                    lineWidth={3}
-                  />
-
-                  {/* 理论最佳折点 P1 指示 */}
-                  <Point3D position={resPath.optimalP1} colorKey="secondary" />
-                  <CompoundLabel3D
-                    position={resPath.optimalP1}
-                    base="P"
-                    subscript="1"
-                    offset={[-0.3, 0, 0.1]}
-                  />
-                </>
+                <SurfacePathModeScene A={A} P={P} C1={C1} resPath={resPath} />
               )}
             </ThreeDCanvas>
 
