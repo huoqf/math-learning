@@ -597,7 +597,7 @@ export default function SectionCuboidDemo() {
                   formula="S_{\text{截}} = \frac{S_{\text{射}}}{\cos\theta}"
                   mode="inline"
                 />
-                。截面面积等于底面投影面积除以法向量与天顶夹角余弦。
+                。截面面积等于底面投影面积除以截面与底面所成角的余弦值。
               </TipCard>
             )}
             {mode === "construction" && (

@@ -30,7 +30,7 @@ describe("sectionConstruction 作图推演纯函数测试", () => {
     const step1 = buildCuboidConstructionSteps(a, b, c, posP, posQ, posR, 1);
     expect(step1.step).toBe(1);
     expect(step1.activeLines.length).toBeGreaterThanOrEqual(2);
-    expect(step1.rationale).toContain("公理");
+    expect(step1.rationale).toMatch(/基本事实|公理/);
 
     const step2 = buildCuboidConstructionSteps(a, b, c, posP, posQ, posR, 2);
     expect(step2.step).toBe(2);

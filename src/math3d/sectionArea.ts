@@ -70,16 +70,24 @@ export function judgeSectionShape(points: Vec3[]): string {
     const d2 = distance(points[2], points[3]);
     const d3 = distance(points[3], points[0]);
 
-    // 对边是否平行
+    // 对边是否平行（使用相对误差判断两向量平行，sin θ = ||v1 x v2|| / (||v1|| * ||v2||) < 0.02）
     const v01 = sub(points[1], points[0]);
     const v32 = sub(points[2], points[3]);
     const c1 = cross(v01, v32);
-    const isP1 = Math.sqrt(c1.x * c1.x + c1.y * c1.y + c1.z * c1.z) < 0.05;
+    const len01 = distance(points[0], points[1]);
+    const len32 = distance(points[3], points[2]);
+    const crossLen1 = Math.sqrt(c1.x * c1.x + c1.y * c1.y + c1.z * c1.z);
+    const isP1 =
+      len01 > 1e-4 && len32 > 1e-4 && crossLen1 / (len01 * len32) < 0.02;
 
     const v12 = sub(points[2], points[1]);
     const v03 = sub(points[3], points[0]);
     const c2 = cross(v12, v03);
-    const isP2 = Math.sqrt(c2.x * c2.x + c2.y * c2.y + c2.z * c2.z) < 0.05;
+    const len12 = distance(points[1], points[2]);
+    const len03 = distance(points[0], points[3]);
+    const crossLen2 = Math.sqrt(c2.x * c2.x + c2.y * c2.y + c2.z * c2.z);
+    const isP2 =
+      len12 > 1e-4 && len03 > 1e-4 && crossLen2 / (len12 * len03) < 0.02;
 
     if (isP1 && isP2) {
       const maxSide = Math.max(d0, d1, d2, d3);
@@ -105,7 +113,19 @@ export function judgeSectionShape(points: Vec3[]): string {
       }
       return "平行四边形";
     }
-    if (isP1 || isP2) return "梯形";
+    if (isP1 || isP2) {
+      // 进一步判断是否为等腰梯形 (非平行对边等长)
+      const nonParallelSide1 = isP1 ? d1 : d0;
+      const nonParallelSide2 = isP1 ? d3 : d2;
+      if (
+        Math.abs(nonParallelSide1 - nonParallelSide2) /
+          Math.max(nonParallelSide1, nonParallelSide2) <
+        0.02
+      ) {
+        return "等腰梯形";
+      }
+      return "梯形";
+    }
     return "凸四边形";
   }
   if (n === 5) return "五边形";
@@ -151,9 +171,9 @@ export interface SectionProjectionDetails {
   shapeName: string;
   /** 底面 (XY面) 投影面积 S_投 */
   areaProj: number;
-  /** 截面法向量与底面法向量夹角的余弦值 cos θ */
+  /** 截面法向量与底面法向量夹角的余弦绝对值 cos θ (即截面与底面所成角余弦值) */
   cosTheta: number;
-  /** 截面与底面的二面角 (角度 °) */
+  /** 截面与底面的所成角 (角度 °，范围 0° ~ 90°) */
   thetaDeg: number;
   /** 射影面积公式是否适用 (当 cos θ > 1e-4 且截面非垂直于底面时有效) */
   isProjectionValid: boolean;

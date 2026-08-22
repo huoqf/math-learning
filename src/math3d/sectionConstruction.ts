@@ -255,9 +255,9 @@ export function buildPolyhedronConstructionSteps(
       totalSteps: 4,
       title: "Step 1: 同面直接连线",
       description:
-        "点 P, Q 同在前侧面内，连结线段 PQ；点 Q, R 同在相邻侧面内，连结线段 QR。",
+        "点 P, Q 同在多面体前侧面内，连结线段 PQ；点 Q, R 同在相邻侧面内，连结线段 QR。",
       rationale:
-        "公理 1 / 公理 2：同在一个平面内的两个已知点，其连线段必在该多面体表面内，即为截面的交线段（已知三点不共线）。",
+        "基本事实 1（同面连线原理）：如果一条直线上的两点在一个平面内，那么这条直线在此平面内。已知点 P、Q 共面，故线段 PQ 必在该侧表面上，为截面的第一段截线。",
       activeLines: [
         { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
         { from: Q, to: R, type: "solid", colorKey: "highlight", label: "QR" },
@@ -278,9 +278,9 @@ export function buildPolyhedronConstructionSteps(
       totalSteps: 4,
       title: "Step 2: 交轨法延长相交求外点",
       description:
-        "延长侧面截线 PQ 与底面对应棱相交于外点 K₁；延长 QR 与底面对应棱相交于外点 K₂。",
+        "延长侧面截线 PQ 与底面对应棱所在的直线，相交于外点 K₁；同理延长 QR 与底面对应棱直线相交于外点 K₂（K₁、K₂ 通常落在棱的延长线上，为辅助虚点）。",
       rationale:
-        "公理 3：两个相交侧面与底面共线。截线 PQ/QR 与底面棱均为共面直线，延长后必相交于底面内的公共点 K₁ 和 K₂。",
+        "基本事实 3（交线/交轨原理）：截线 PQ 与底棱共面于侧面，其延长线必相交于公共点 K₁；同理求得 K₂。K₁、K₂ 既在截面内又在底面内，是两平面的公共点。",
       activeLines: [
         { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
         { from: Q, to: R, type: "solid", colorKey: "highlight", label: "QR" },
@@ -360,9 +360,9 @@ export function buildPolyhedronConstructionSteps(
       totalSteps: 4,
       title: "Step 3: 确定底面交线与棱交点",
       description:
-        "连结外点直线 K₁K₂ 作为截面在底面内的交线，截得底面棱交点并连出其余表面截线。",
+        "连结外点直线 K₁K₂ 作为截面在底面内的交线，交底面棱于内点 M、N，得到底面截线段。",
       rationale:
-        "公理 1 与公理 3：K₁ 和 K₂ 均为截面与底面的公共点，故直线 K₁K₂ 必为截面与底面的交线，与底棱的交点即为截面顶点。",
+        "基本事实 3：两点确定一条直线，直线 K₁K₂ 即为截面与底面的交线；交线与底面多边形各边内部的实际交点即为截面在底面上的顶点。",
       activeLines: lines,
       activePoints: points,
       partialPolygon: [P, Q, R, ...bottomPoints.map((b) => b.point)],
@@ -394,7 +394,7 @@ export function buildPolyhedronConstructionSteps(
     title: "Step 4: 闭合生成完整截面多边形",
     description: `截面在多面体各表面的交线顺次闭合，生成 ${finalPolygon.length} 边形截面！各面交线满足平行与共面约束。`,
     rationale:
-      "多面体表面截线首尾相接，封闭生成截面多边形（在柱体中应用面面平行性质保证对边平行；在锥体中利用公理 1 与公理 3 封闭各面交线）。",
+      "多面体表面截线首尾相接，封闭生成截面多边形（在柱体中应用面面平行性质定理保证平行面截线互相平行；在锥体中利用基本事实 1 与基本事实 3 依次封闭各面交线）。",
     activeLines: lines,
     activePoints: [
       ...finalPolygon.map((p, idx) => ({

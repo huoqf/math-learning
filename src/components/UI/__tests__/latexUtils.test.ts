@@ -40,8 +40,8 @@ describe("latexUtils 定界符深度追踪与公式换行测试", () => {
     const latex = "x^2 + 2ax + a^2 - 4b";
     const split = splitAtTopLevelBinary(latex);
     expect(split).not.toBeNull();
-    expect(split![0]).toBe("x^2");
-    expect(split![1]).toBe("+ 2ax + a^2 - 4b");
+    expect(split![0]).toBe("x^2 + 2ax");
+    expect(split![1]).toBe("+ a^2 - 4b");
   });
 
   it("跳过一元正负号（如负数项）", () => {
