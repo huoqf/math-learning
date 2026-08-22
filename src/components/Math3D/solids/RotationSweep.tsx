@@ -141,10 +141,11 @@ export const RotationSweep = ({
         offset={[0.1, 0, 0.1]}
       />
 
-      {/* 已扫过部分 (LatheGeometry 默认由 +Z 轴数学 x 向 +X 轴数学 y 顺滑旋转) */}
+      {/* 已扫过部分 (LatheGeometry 从 +Z 轴数学 x 向 +X 轴数学 y 顺滑旋转) */}
       {sweepAngleDeg > 0 && (
         <RotationSolid
           profile={profile}
+          thetaStart={Math.PI / 2}
           thetaLength={Math.min(angleRad, Math.PI * 2)}
           colorKey={colorKey}
           opacity={isComplete ? (showAxialSection ? 0.18 : 0.28) : 0.15}

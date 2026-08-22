@@ -116,7 +116,7 @@ export default function RotationBodyAnimation() {
       case "rightTrapezoid":
         return frustumProfile(params.r1, params.r2, params.height);
       case "semicircle":
-        return sphereProfile(params.r1);
+        return sphereProfile(params.r1, 64);
     }
   }, [shape, params.r1, params.r2, params.height]);
 

@@ -23,10 +23,14 @@ export { RegularPrism } from "./RegularPrism";
 // 旋转体 (Solids of Revolution)
 // ============================================================================
 export { RotationSolid } from "./RotationSolid";
+export type { RotationSolidProps } from "./RotationSolid";
 export { RotationSweep } from "./RotationSweep";
 export { Cone } from "./Cone";
+export type { ConeProps } from "./Cone";
 export { Cylinder } from "./Cylinder";
+export type { CylinderProps } from "./Cylinder";
 export { Frustum } from "./Frustum";
+export type { FrustumProps } from "./Frustum";
 
 // ============================================================================
 // 旋转体内部组件 (Rotation Sub-components)

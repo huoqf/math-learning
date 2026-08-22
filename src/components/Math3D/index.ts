@@ -66,3 +66,26 @@ export { SectionPlane3D } from "./SectionPlane3D";
 // 三视图 (Three-View Orthographic Drawing)
 // ============================================================================
 export { ThreeViewsPanel } from "./ThreeViewsPanel";
+
+// ============================================================================
+// 立体几何体 (3D Solid Geometries)
+// ============================================================================
+export {
+  Sphere,
+  Cylinder,
+  Cone,
+  Frustum,
+  Cuboid,
+  RegularPrism,
+  RegularPyramid,
+  TriangularPrism,
+  RotationSolid,
+  RotationSweep,
+} from "./solids";
+export type {
+  SphereProps,
+  CylinderProps,
+  ConeProps,
+  FrustumProps,
+  RotationSolidProps,
+} from "./solids";
