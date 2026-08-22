@@ -251,7 +251,7 @@ export function calculateTriangleAltitudeFolding(
   // 二面角定义垂线对：垂足 D，底面指向 B，翻折面指向 C'
   const dihedralRays = {
     vertex: D,
-    baseRayEnd: { x: halfA, y: 0, z: 0 }, // 原始展平点 C
+    baseRayEnd: B,
     foldRayEnd: C_prime,
   };
 
@@ -315,4 +315,95 @@ export function calculateRhombusFolding(
     pyramidVolume,
     skewLinesAngleDeg: 90, // A'C 与 BD 恒垂直
   };
+}
+
+import type { Polyhedron } from "./sectionIntersection";
+
+/**
+ * 根据折叠结果构建标准 Polyhedron 几何体（供三视图投影与正投影分析）
+ */
+export function buildFoldingPolyhedron(result: FoldingResult): Polyhedron {
+  switch (result.model) {
+    case "trapezoid": {
+      const { A, B, C, E, "D'": D_prime } = result.points;
+      // 顶点: 0:A, 1:B, 2:C, 3:E, 4:D'
+      const vertices = [A, B, C, E, D_prime];
+      const edges = [
+        { a: 0, b: 1 }, // AB
+        { a: 1, b: 2 }, // BC
+        { a: 2, b: 3 }, // CE
+        { a: 3, b: 0 }, // EA
+        { a: 3, b: 4 }, // ED'
+        { a: 2, b: 4 }, // CD'
+        { a: 0, b: 4 }, // AD'
+      ];
+      const faces = [
+        [0, 1, 2, 3], // 底面 ABCE
+        [3, 2, 4], // 翻折面 ECD'
+        [0, 3, 4], // 侧面 AED'
+        [0, 4, 2, 1], // 侧面 ABD'C
+      ];
+      return { vertices, edges, faces };
+    }
+    case "rectangleDiagonal": {
+      const { B, C, D, "A'": A_prime } = result.points;
+      // 顶点: 0:B, 1:C, 2:D, 3:A'
+      const vertices = [B, C, D, A_prime];
+      const edges = [
+        { a: 0, b: 1 }, // BC
+        { a: 1, b: 2 }, // CD
+        { a: 2, b: 0 }, // DB
+        { a: 0, b: 3 }, // BA'
+        { a: 2, b: 3 }, // DA'
+        { a: 1, b: 3 }, // CA'
+      ];
+      const faces = [
+        [0, 1, 2], // 底面 BCD
+        [0, 3, 2], // 侧面 BA'D
+        [0, 1, 3], // 侧面 BCA'
+        [1, 2, 3], // 侧面 CDA'
+      ];
+      return { vertices, edges, faces };
+    }
+    case "triangleAltitude": {
+      const { A, B, D, "C'": C_prime } = result.points;
+      // 顶点: 0:D, 1:A, 2:B, 3:C'
+      const vertices = [D, A, B, C_prime];
+      const edges = [
+        { a: 0, b: 1 }, // DA
+        { a: 0, b: 2 }, // DB
+        { a: 1, b: 2 }, // AB
+        { a: 0, b: 3 }, // DC'
+        { a: 1, b: 3 }, // AC'
+        { a: 2, b: 3 }, // BC'
+      ];
+      const faces = [
+        [0, 1, 2], // 面 DAB
+        [0, 3, 1], // 面 DC'A
+        [0, 2, 3], // 面 DBC'
+        [1, 2, 3], // 面 ABC'
+      ];
+      return { vertices, edges, faces };
+    }
+    case "rhombus": {
+      const { B, C, D, "A'": A_prime } = result.points;
+      // 顶点: 0:B, 1:C, 2:D, 3:A'
+      const vertices = [B, C, D, A_prime];
+      const edges = [
+        { a: 0, b: 1 }, // BC
+        { a: 1, b: 2 }, // CD
+        { a: 2, b: 0 }, // DB
+        { a: 0, b: 3 }, // BA'
+        { a: 2, b: 3 }, // DA'
+        { a: 1, b: 3 }, // CA'
+      ];
+      const faces = [
+        [0, 1, 2], // 面 BCD
+        [0, 3, 2], // 面 BA'D
+        [0, 1, 3], // 面 BCA'
+        [1, 2, 3], // 面 CDA'
+      ];
+      return { vertices, edges, faces };
+    }
+  }
 }

@@ -9,7 +9,7 @@ import {
   MathPanel,
   TabSwitcher,
   SelectGrid,
-  TipCard,
+  Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -35,9 +35,10 @@ import {
   calculateRectangleDiagonalFolding,
   calculateTriangleAltitudeFolding,
   calculateRhombusFolding,
+  buildFoldingPolyhedron,
   type FoldingModelKind,
 } from "@/math3d/folding";
-import { buildSolidViews } from "./threeViews/buildSolidViews";
+import { projectPolyhedron } from "@/math3d/orthographicProjection";
 import type { Vec3 } from "@/math3d/vector3";
 
 export default function FoldingAnimation() {
@@ -86,16 +87,18 @@ export default function FoldingAnimation() {
     [params, model],
   );
 
-  // 3. 正投影/三视图组装
-  const solidViews = useMemo(
-    () =>
-      buildSolidViews("cuboid", {
-        width: a,
-        depth: b,
-        height: h,
-      }),
-    [a, b, h],
-  );
+  // 3. 真实折叠体正投影/三视图组装
+  const solidViews = useMemo(() => {
+    const poly = buildFoldingPolyhedron(foldingData);
+    return {
+      views: {
+        front: projectPolyhedron(poly, "front"),
+        side: projectPolyhedron(poly, "side"),
+        top: projectPolyhedron(poly, "top"),
+      },
+      extent: Math.max(a, b, h) * 1.3,
+    };
+  }, [foldingData, a, b, h]);
 
   // 4. 左屏按 model 过滤参数配置并注入高中数学几何边长描述
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -241,63 +244,23 @@ export default function FoldingAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 第 4 步：教学提示 */}
-          <LeftPanelSection title="教学提示" compact>
+          {/* 第 4 步：辅助图层开关 */}
+          <LeftPanelSection
+            title="图层开关"
+            subtitle="辅助几何与向量建系"
+            compact
+          >
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowDihedralArc((prev) => !prev)}
-                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                    showDihedralArc
-                      ? "bg-primary-50 border-primary-300 text-primary-700"
-                      : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                  }`}
-                >
-                  {showDihedralArc ? "✓ 二面角平面角" : "显示二面角"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowVectorBasis((prev) => !prev)}
-                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                    showVectorBasis
-                      ? "bg-primary-50 border-primary-300 text-primary-700"
-                      : "bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50"
-                  }`}
-                >
-                  {showVectorBasis ? "✓ 空间向量建系" : "空间向量建系"}
-                </button>
-              </div>
-
-              {/* 动态教学提示卡 */}
-              <TipCard variant="primary">
-                {model === "trapezoid" && (
-                  <span>
-                    💡 <b>直角梯形折叠破题核心</b>：折痕 EC ⊥ AD 且 EC ⊥
-                    BC。折后 EC ⊥ EA 且 EC ⊥ ED'，因此{" "}
-                    <b>EC ⊥ 面 D'EA 恒成立</b>！
-                  </span>
-                )}
-                {model === "rectangleDiagonal" && (
-                  <span>
-                    💡 <b>矩形对角线折叠核心</b>：△A'BD 与 △CBD 均为直角三角形，
-                    <b>外接球球心始终为 BD 中点</b>，半径 R 恒定不变！
-                  </span>
-                )}
-                {model === "triangleAltitude" && (
-                  <span>
-                    💡 <b>等腰三角形折叠核心</b>：折痕 AD 垂直于底边两半段 DB 与
-                    DC'，两侧垂线夹角 ∠BDC' = 180°−α（α 为翻折旋转角）。α = 90°
-                    时 ∠BDC' = 90°，构成标准墙角模型，DA⊥DB，DA⊥DC'，DB⊥DC'。
-                  </span>
-                )}
-                {model === "rhombus" && (
-                  <span>
-                    💡 <b>菱形短对角线折叠核心</b>：折痕 BD ⊥ A'O 且 BD ⊥ CO，故{" "}
-                    <b>BD ⊥ 面 A'OC</b>，异面直线 <b>BD ⊥ A'C 恒成立</b>！
-                  </span>
-                )}
-              </TipCard>
+              <Toggle
+                label="二面角平面角弧线"
+                checked={showDihedralArc}
+                onChange={setShowDihedralArc}
+              />
+              <Toggle
+                label="空间向量直角坐标系"
+                checked={showVectorBasis}
+                onChange={setShowVectorBasis}
+              />
             </div>
           </LeftPanelSection>
 

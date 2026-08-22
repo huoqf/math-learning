@@ -4,6 +4,7 @@ import {
   calculateRectangleDiagonalFolding,
   calculateTriangleAltitudeFolding,
   calculateRhombusFolding,
+  buildFoldingPolyhedron,
 } from "../folding";
 
 describe("平面图形折叠与翻折二面角 3D 数学解算法库测试", () => {
@@ -64,5 +65,27 @@ describe("平面图形折叠与翻折二面角 3D 数学解算法库测试", () 
     const res = calculateRhombusFolding(2, 60);
     expect(res.skewLinesAngleDeg).toBe(90);
     expect(res.dihedralRays?.vertex).toEqual({ x: 0, y: 0, z: 0 });
+  });
+
+  it("多面体三视图几何体构建 (buildFoldingPolyhedron): 4 种母题面数与顶点数验证", () => {
+    const r1 = calculateRightTrapezoidFolding(4, 3, 3, 90);
+    const poly1 = buildFoldingPolyhedron(r1);
+    expect(poly1.vertices.length).toBe(5);
+    expect(poly1.faces.length).toBe(4);
+
+    const r2 = calculateRectangleDiagonalFolding(4, 3, 60);
+    const poly2 = buildFoldingPolyhedron(r2);
+    expect(poly2.vertices.length).toBe(4);
+    expect(poly2.faces.length).toBe(4);
+
+    const r3 = calculateTriangleAltitudeFolding(4, 3, 90);
+    const poly3 = buildFoldingPolyhedron(r3);
+    expect(poly3.vertices.length).toBe(4);
+    expect(poly3.faces.length).toBe(4);
+
+    const r4 = calculateRhombusFolding(3, 75);
+    const poly4 = buildFoldingPolyhedron(r4);
+    expect(poly4.vertices.length).toBe(4);
+    expect(poly4.faces.length).toBe(4);
   });
 });

@@ -149,11 +149,11 @@ export function buildSolidFoldingPanel(
       },
       {
         name: "异面直线 A'D ⊥ BC 临界角公式",
-        latex: `\\cos\\color{#EF4444}{\\alpha_\\perp} = \\frac{\\color{#D97706}{b}^2}{\\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2}`,
+        latex: `\\cos\\color{#EF4444}{\\alpha_\\perp} = -\\frac{\\color{#D97706}{b}^2}{\\color{#EF4444}{a}^2} \\quad (\\color{#EF4444}{a} \\ge \\color{#D97706}{b})`,
         level: "important",
         note: res.criticalPerpAlphaDeg
-          ? `当 α = ${res.criticalPerpAlphaDeg}° 时，异面直线 A'D 与 BC 严格垂直`
-          : "根据空间向量数量积点乘为零求出",
+          ? `当 a ≥ b 时存在钝角二面角 α = ${res.criticalPerpAlphaDeg}°，使异面直线 A'D 与 BC 严格垂直`
+          : "若 a < b 则不存在二面角使 A'D ⊥ BC",
       },
       {
         name: "三棱锥体积最大值定理",
