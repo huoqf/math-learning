@@ -4,14 +4,16 @@ import "katex/dist/katex.min.css";
 import {
   splitAtTopLevelEquals,
   splitAtTopLevelImplies,
+  splitAtTopLevelSpacing,
   splitAtTopLevelBinary,
   splitAtTopLevelPunctuation,
   normalizeFractionRowSpacing,
 } from "./latexUtils";
 
-/** 缩放兜底下限：低于此值公式过小，触发教材式换行 */
-const MIN_SCALE = 0.75;
-/** 教材式换行后仍溢出（仅见于选项按钮等极窄容器）时的硬底线，必须允许适度缩小以彻底杜绝文字两端被裁切 */
+/**
+ * 优先换行阈值：公式超宽 8% 即尝试换行，不达此阈值才允许少量缩放（符合教材公式从不缩放的排版习惯） */
+const MIN_SCALE = 0.92;
+/** 换行后仍溢出（仅见于选项按鈕等极窄容器）时的硬底线，必须允许适度缩小以彻底杜绝文字两端被裁切 */
 const HARD_MIN_SCALE = 0.45;
 
 interface KatexFormulaProps {
@@ -97,10 +99,11 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
         const needed = (containerWidth - 6) / contentWidth;
         if (needed < MIN_SCALE) {
           if (!lines) {
-            // 首选顶层等号/推导符换行；次选多项式 +/- 与标点
+            // 换行优先级：等号 → 推导符 → 语义间距\quad/\; → 二元运算符+/- → 标点
             const split =
               splitAtTopLevelEquals(formula) ??
               splitAtTopLevelImplies(formula) ??
+              splitAtTopLevelSpacing(formula) ??
               splitAtTopLevelBinary(formula) ??
               splitAtTopLevelPunctuation(formula);
             if (split) {
@@ -108,12 +111,13 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
               return;
             }
           } else {
-            // 多行模式下找出仍然超宽的行，继续按等号/推导符/加减号/标点拆分
+            // 多行模式下找出仍然超宽的行，继续按同一优先级次拆分
             for (let i = 0; i < lineDivs.length; i++) {
               if (lineDivs[i].scrollWidth > containerWidth) {
                 const further =
                   splitAtTopLevelEquals(lines[i]) ??
                   splitAtTopLevelImplies(lines[i]) ??
+                  splitAtTopLevelSpacing(lines[i]) ??
                   splitAtTopLevelBinary(lines[i]) ??
                   splitAtTopLevelPunctuation(lines[i]);
                 if (further) {
@@ -152,24 +156,17 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
     setLines(null);
   }, [formula]);
 
+  // innerContent: 每行一个 div 容器，供 KaTeX 注入内容。
+  // whitespace-nowrap 确保 KaTeX 自身不被 CSS 文字折行打断。
   const innerContent = (lines ?? [null]).map((_, i) => (
-    <div
-      key={i}
-      className={
-        lines && lines.length > 1
-          ? i > 0
-            ? "whitespace-nowrap"
-            : "whitespace-nowrap"
-          : "whitespace-nowrap"
-      }
-    />
+    <div key={i} className="whitespace-nowrap" />
   ));
 
   if (isBlock) {
     return (
       <div
         ref={outerRef}
-        className={`w-full my-1 flex items-center justify-center overflow-hidden transition-all duration-150 ${className}`}
+        className={`w-full my-1 flex items-center justify-center overflow-x-hidden transition-all duration-150 ${className}`}
         style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
       >
         <div

@@ -85,7 +85,8 @@ export function advanceLatexDepth(
 }
 
 /**
- * 寻找公式中所有顶层等号的位置
+ * 寻找公式中所有顶层等号的位置。
+ * 排除 <= >= != \neq 等复合符号中的 = 以避免误断。
  */
 export function findTopLevelEqualsIndices(latex: string): number[] {
   const indices: number[] = [];
@@ -93,7 +94,11 @@ export function findTopLevelEqualsIndices(latex: string): number[] {
   let i = 0;
   while (i < latex.length) {
     if (latex[i] === "=" && isTopLevel(state)) {
-      indices.push(i);
+      // 排除 <=, >=, !=, \leq=, \geq= 等复合符号中的 =
+      const prev = i > 0 ? latex[i - 1] : "";
+      if (!"<>!".includes(prev)) {
+        indices.push(i);
+      }
       i++;
       continue;
     }
@@ -106,26 +111,21 @@ export function findTopLevelEqualsIndices(latex: string): number[] {
 /**
  * 教材推导换行：在最合适的顶层等号处把长等式拆为两段
  * （左端一段，右端以「=」起头，与高中教材/高考答题卡书写习惯一致）。
- * 针对连等式（A = B = C），优先在能使两行长度更均衡的等号处断开。
+ * 针对连等式（A = B = C），选择使两行字符数最均衡的等号处断开。
  */
 export function splitAtTopLevelEquals(latex: string): [string, string] | null {
   const equalsIndices = findTopLevelEqualsIndices(latex);
   if (equalsIndices.length === 0) return null;
 
-  // 默认取第 1 个等号
+  // 选使左右字符数最均衡的等号断点
+  const mid = latex.length / 2;
   let chosenIdx = equalsIndices[0];
-
-  // 若有多个等号（连等式，如 A = B = C），若在第 1 个等号切分后右侧依然过长，
-  // 且第 2 个等号能使前后长度更均衡，则选择在第 2 个等号处折行
-  if (equalsIndices.length >= 2) {
-    const secondIdx = equalsIndices[1];
-    const leftFirstLen = chosenIdx;
-    const rightFirstLen = latex.length - chosenIdx;
-    const leftSecondLen = secondIdx;
-
-    // 若第 1 个等号左边过短（如只是 \sin\theta）而右边很长，优先选第 2 个等号断开
-    if (leftFirstLen < 20 && rightFirstLen > 40 && leftSecondLen < 55) {
-      chosenIdx = secondIdx;
+  let minDist = Math.abs(equalsIndices[0] - mid);
+  for (const idx of equalsIndices) {
+    const dist = Math.abs(idx - mid);
+    if (dist < minDist) {
+      minDist = dist;
+      chosenIdx = idx;
     }
   }
 
@@ -136,28 +136,123 @@ export function splitAtTopLevelEquals(latex: string): [string, string] | null {
 }
 
 /**
- * 教材续行换行：在首个顶层二元 +/- 处把长式拆为两段，
+ * 教材续行换行：在最均衡的顶层二元运算符处把长式拆为两段，
  * 续行以运算符起头（教材多项式展开的标准排法）。
+ * 支持 +, -, \cdot, \times, \pm, \mp。
  */
 export function splitAtTopLevelBinary(latex: string): [string, string] | null {
+  const cmdOps = ["\\cdot", "\\times", "\\pm", "\\mp", "\\oplus", "\\otimes"];
+  interface BinaryCandidate {
+    charIdx: number;
+    opLen: number;
+  }
+  const candidates: BinaryCandidate[] = [];
   const state = createDepthState();
   let i = 0;
+
   while (i < latex.length) {
     const ch = latex[i];
-    if ((ch === "+" || ch === "-") && isTopLevel(state)) {
-      // 跳过一元正负号：前一个非空字符是 = + - ( , 或位于串首
-      let p = i - 1;
-      while (p >= 0 && latex[p] === " ") p--;
-      if (p >= 0 && !"=+-,(<>:≤≥".includes(latex[p])) {
-        const left = latex.slice(0, i).trim();
-        const right = latex.slice(i).trim(); // 含开头的 +/-
-        if (left && right.length > 1) return [left, right];
-        return null;
+    if (isTopLevel(state)) {
+      if (ch === "+" || ch === "-") {
+        // 跳过一元正负号：前一个非空字符是 = + - ( , < > : ≤ ≥ 或位于串首
+        let p = i - 1;
+        while (p >= 0 && latex[p] === " ") p--;
+        if (p < 0 || "=+-,(<>:≤≥".includes(latex[p])) {
+          // 一元号，跳过
+        } else {
+          candidates.push({ charIdx: i, opLen: 1 });
+        }
+      } else if (ch === "\\") {
+        const sub = latex.slice(i);
+        for (const op of cmdOps) {
+          if (sub.startsWith(op)) {
+            const nextCh = sub[op.length];
+            if (!nextCh || !/[a-zA-Z]/.test(nextCh)) {
+              candidates.push({ charIdx: i, opLen: op.length });
+              i += op.length;
+              break;
+            }
+          }
+        }
       }
     }
     const step = advanceLatexDepth(latex, i, state);
     i += step;
   }
+
+  if (candidates.length === 0) return null;
+
+  // 选使左右字符数最均衡的断点
+  const mid = latex.length / 2;
+  let chosen = candidates[0];
+  let minDist = Math.abs(candidates[0].charIdx - mid);
+  for (const c of candidates) {
+    const dist = Math.abs(c.charIdx - mid);
+    if (dist < minDist) {
+      minDist = dist;
+      chosen = c;
+    }
+  }
+
+  const left = latex.slice(0, chosen.charIdx).trim();
+  const right = latex.slice(chosen.charIdx).trim(); // 含开头的运算符
+  if (left && right.length > 1) return [left, right];
+  return null;
+}
+
+/**
+ * 语义间距换行：在顶层 \quad/\qquad/\; 间距命令处断开。
+ * 高中教材中这类命令往往标志着「条件与结论」或「前提与推论」的分界，
+ * 是最自然的换行位置，优先级高于 +/-，低于等号/推导符。
+ * 选使两段长度最均衡的断点。
+ */
+export function splitAtTopLevelSpacing(latex: string): [string, string] | null {
+  const spacingOps = ["\\qquad", "\\quad", "\\;", "\\,"];
+  interface SpacingCandidate {
+    idx: number;
+    opLen: number;
+  }
+  const candidates: SpacingCandidate[] = [];
+  const state = createDepthState();
+  let i = 0;
+
+  while (i < latex.length) {
+    if (isTopLevel(state) && latex[i] === "\\") {
+      const sub = latex.slice(i);
+      for (const op of spacingOps) {
+        if (sub.startsWith(op)) {
+          const nextCh = sub[op.length];
+          if (!nextCh || !/[a-zA-Z]/.test(nextCh)) {
+            candidates.push({ idx: i, opLen: op.length });
+            i += op.length;
+            break;
+          }
+        }
+      }
+    }
+    const step = advanceLatexDepth(latex, i, state);
+    i += step;
+  }
+
+  if (candidates.length === 0) return null;
+
+  // 选最均衡断点
+  const mid = latex.length / 2;
+  let chosen = candidates[0];
+  let minDist = Math.abs(candidates[0].idx - mid);
+  for (const c of candidates) {
+    const dist = Math.abs(c.idx - mid);
+    if (dist < minDist) {
+      minDist = dist;
+      chosen = c;
+    }
+  }
+
+  // 左段去掉末尾间距命令，右段从间距命令后的内容开始
+  let left = latex.slice(0, chosen.idx).trim();
+  left = left.replace(/(\s|\\;|\\,|\\!|\\quad|\\qquad)+$/, "").trim();
+  const right = latex.slice(chosen.idx + chosen.opLen).trim();
+  if (left && right) return [left, right];
   return null;
 }
 
@@ -227,28 +322,39 @@ export function splitAtTopLevelImplies(latex: string): [string, string] | null {
 }
 
 /**
- * 顶层标点/分号折行：在顶层逗号或分号处断开复合条件（仅在等号/推导符无法断开或需进一步分行时作为辅助）
+ * 顶层标点折行：在最靠近中点的顶层逗号或分号处断开复合条件。
+ * 作为等号/推导符/间距命令/二元运算符均无法断开时的最终兜底。
  */
 export function splitAtTopLevelPunctuation(
   latex: string,
 ): [string, string] | null {
+  const candidates: number[] = [];
   const state = createDepthState();
   let i = 0;
-  let chosenIdx = -1;
   while (i < latex.length) {
-    if (isTopLevel(state)) {
-      if (latex[i] === "," || latex[i] === ";") {
-        chosenIdx = i;
-      }
+    if (isTopLevel(state) && (latex[i] === "," || latex[i] === ";")) {
+      candidates.push(i);
     }
     const step = advanceLatexDepth(latex, i, state);
     i += step;
   }
-  if (chosenIdx > 0) {
-    const left = latex.slice(0, chosenIdx).trim();
-    const right = latex.slice(chosenIdx + 1).trim();
-    if (left && right) return [left, right];
+  if (candidates.length === 0) return null;
+
+  // 选最靠近中点的逗号/分号，使两段长度均衡
+  const mid = latex.length / 2;
+  let chosenIdx = candidates[0];
+  let minDist = Math.abs(candidates[0] - mid);
+  for (const idx of candidates) {
+    const dist = Math.abs(idx - mid);
+    if (dist < minDist) {
+      minDist = dist;
+      chosenIdx = idx;
+    }
   }
+
+  const left = latex.slice(0, chosenIdx).trim();
+  const right = latex.slice(chosenIdx + 1).trim();
+  if (left && right) return [left, right];
   return null;
 }
 

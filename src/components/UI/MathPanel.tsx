@@ -8,6 +8,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { KatexFormula } from "./KatexFormula";
+import { createDepthState, advanceLatexDepth, isTopLevel } from "./latexUtils";
 import { colors } from "@/theme/colors";
 
 export interface MathQuantity {
@@ -93,7 +94,8 @@ function renderMixedLatex(text: string): React.ReactNode {
   }
 
   // 3. 若无 $ 但包含反斜杠 LaTeX 控制序列（如 \triangle, \vec 等），按「公式原子」拆分渲染。
-  //    一个公式原子从首个反斜杠开始，一直延伸到 CJK 字符（大括号内的 \text{中文} 除外）为止，
+  //    公式原子从首个反斜杠开始，使用 advanceLatexDepth 统一追踪 {} [] \left\right
+  //    \langle\rangle \begin{}\end{} 全部嵌套层级，直到顶层 CJK 字符才截断。
   //    保证折行只发生在公式与文字之间，公式自身永远作为不可折断的整体参与排版。
   if (/\\[a-zA-Z]+/.test(text)) {
     const isCJK = (ch: string) =>
@@ -103,15 +105,14 @@ function renderMixedLatex(text: string): React.ReactNode {
     while (i < text.length) {
       if (text[i] === "\\") {
         let j = i;
-        let depth = 0;
         let buf = "";
+        const depthState = createDepthState();
         while (j < text.length) {
-          const ch = text[j];
-          if (depth === 0 && isCJK(ch)) break;
-          if (ch === "{") depth++;
-          else if (ch === "}") depth = Math.max(0, depth - 1);
-          buf += ch;
-          j++;
+          // 利用完整深度状态判断顶层：\left\right / \langle\rangle / \begin{}\end{} 均纳入追踪
+          if (isTopLevel(depthState) && isCJK(text[j])) break;
+          const step = advanceLatexDepth(text, j, depthState);
+          buf += text.slice(j, j + step);
+          j += step;
         }
         runs.push({ math: true, content: buf.trimEnd() });
         i = j;
@@ -478,13 +479,15 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                     </div>
                     <div className="w-full py-3.5 px-4 bg-white rounded-lg border border-neutral-100/70 my-1 min-h-[54px] flex items-center justify-center overflow-x-hidden max-w-full">
                       {(() => {
-                        // 1. 若为纯中文叙述段落 (\text{...}) 且不含数学符号
+                        // 1. 若为纯中文叙述段落（整体恰好是 \text{...}，且内部无数学符号）
+                        //    使用非贪婪 *? 防止 \text{甲} \text{乙} 等多段被贪婪捕获误判；
+                        //    同时把 $ 纳入禁止字符集，避免 \text{含 $x$} 绕过 KaTeX。
                         const textMatch = t.latex.match(
-                          /^\s*\\text\{([\s\S]*)\}\s*$/,
+                          /^\s*\\text\{([\s\S]*?)\}\s*$/,
                         );
                         if (
                           textMatch &&
-                          !/\\[a-zA-Z]|[_^=<>+\-*/]/.test(textMatch[1])
+                          !/\\[a-zA-Z]|[_^=<>+\-*/]|\$/.test(textMatch[1])
                         ) {
                           return (
                             <div className="w-full text-center py-1 text-xs text-neutral-700 font-medium break-words leading-relaxed">
