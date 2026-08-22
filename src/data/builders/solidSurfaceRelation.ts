@@ -155,7 +155,7 @@ export function buildSurfaceRelationPanel(
         name: "平行平面间的距离公式",
         latex: `d(\\alpha, \\beta) = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{|D_1 - D_2|}{\\sqrt{A^2 + B^2 + C^2}}`,
         level: "important",
-        note: "A, B 分别为两平面上任意一点，n 为平面的法向量",
+        note: "点 A ∈ α, B ∈ β，\\vec{n} 为平面法向量；A, B, C 为平面方程一般式系数",
       },
     );
 
@@ -271,10 +271,11 @@ export function buildSurfaceRelationPanel(
           "两平面垂直，在其中一个面内【垂直于交线】的直线必垂直于另一个平面",
       },
       {
-        name: "面面垂直性质定理 2 (双垂直交线定理)",
+        name: "面面垂直性质拓展 (双垂直交线定理)",
         latex: `\\begin{cases} \\alpha \\perp \\gamma \\\\ \\beta \\perp \\gamma \\\\ \\alpha \\cap \\beta = l \\end{cases} \\;\\Rightarrow\\; l \\perp \\gamma`,
         level: "important",
-        condition: "两个相交平面都垂直于第三个平面，它们的交线垂直于第三个平面",
+        condition:
+          "两个相交平面都垂直于第三个平面，它们的交线垂直于第三个平面 (高考常用二级结论)",
       },
     );
 

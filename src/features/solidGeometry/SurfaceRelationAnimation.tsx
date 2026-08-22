@@ -332,7 +332,7 @@ export default function SurfaceRelationAnimation() {
                 <span className="font-bold">面面平行性质</span>
                 ：两平行平面同时被第三平面所截，交线必平行（
                 <KatexFormula
-                  formula="\alpha \parallel \beta \Rightarrow a \parallel b"
+                  formula="\alpha \parallel \beta, \gamma \cap \alpha = a, \gamma \cap \beta = b \Rightarrow a \parallel b"
                   mode="inline"
                 />
                 ）。
@@ -354,7 +354,7 @@ export default function SurfaceRelationAnimation() {
                 <span className="font-bold">双垂直面交线定理</span>
                 ：若两相交平面均垂直于第三平面，则其交线垂直于第三平面（
                 <KatexFormula
-                  formula="\alpha \perp \gamma, \beta \perp \gamma \Rightarrow (\alpha \cap \beta) \perp \gamma"
+                  formula="\alpha \perp \gamma, \beta \perp \gamma, \alpha \cap \beta = l \Rightarrow l \perp \gamma"
                   mode="inline"
                 />
                 ）。
@@ -365,7 +365,7 @@ export default function SurfaceRelationAnimation() {
                 <span className="font-bold">面面垂直性质</span>
                 ：面面垂直时，在其中一个面内垂直于交线的直线必垂直于另一个平面（
                 <KatexFormula
-                  formula="a \subset \beta, a \perp l \Rightarrow a \perp \alpha"
+                  formula="\alpha \perp \beta, \alpha \cap \beta = l, a \subset \beta, a \perp l \Rightarrow a \perp \alpha"
                   mode="inline"
                 />
                 ）。
