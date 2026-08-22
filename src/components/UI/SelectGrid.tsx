@@ -16,7 +16,7 @@ import { KatexFormula } from "./KatexFormula";
  * 避免部分有 description 部分没有导致行高参差不齐。
  */
 
-interface SelectGridItem {
+export interface SelectGridItem {
   key: string;
   /** 用于无障碍朗读（aria-label）。为空时使用 formula 作为 aria-label */
   label?: string;
@@ -119,7 +119,7 @@ export const SelectGrid = <T extends string = string>({
 
         const ariaLabel = item.description
           ? `${item.label || item.formula || item.key}, ${item.description}`
-          : (item.label || item.formula || item.key);
+          : item.label || item.formula || item.key;
 
         return (
           <button

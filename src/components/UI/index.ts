@@ -27,6 +27,7 @@ export { ParamControl } from "./ParamControl";
 export type { ParamConfig } from "./ParamControl";
 export { TabSwitcher } from "./TabSwitcher";
 export { SelectGrid } from "./SelectGrid";
+export type { SelectGridItem } from "./SelectGrid";
 
 // ============================================================================
 // 面板与布局 (Panels & Layout)

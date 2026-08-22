@@ -8,10 +8,9 @@ import {
   MathPanel,
   TabSwitcher,
   SelectGrid,
-  TipCard,
-  KatexFormula,
+  Toggle,
 } from "@/components/UI";
-import type { ParamConfig } from "@/components/UI";
+import type { ParamConfig, SelectGridItem } from "@/components/UI";
 import {
   Scene3DGrid,
   Segment3D,
@@ -38,8 +37,11 @@ type TeachingMode = "parallel" | "perpendicular" | "gaokaoPyramid" | "vector";
 
 export default function LinePlaneRelationAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallel");
+  const [activePreset, setActivePreset] = useState<string>("free");
   const [subTheorem, setSubTheorem] = useState<"judge" | "prop">("judge");
   const [showAxes, setShowAxes] = useState<boolean>(false);
+  const [showAuxPlane, setShowAuxPlane] = useState<boolean>(true);
+  const [showAngleArc, setShowAngleArc] = useState<boolean>(true);
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode3D>("orbit");
   const [params, setParams] = useState<Record<string, number>>({
@@ -82,12 +84,14 @@ export default function LinePlaneRelationAnimation() {
   );
 
   const handleParamChange = (key: string, value: number) => {
+    setActivePreset("free");
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
   // 模式切换统一调度
   const handleModeChange = (mode: TeachingMode) => {
     setActiveMode(mode);
+    setActivePreset("free");
     setSubTheorem("judge");
     setShowAxes(mode === "vector");
     if (mode === "perpendicular") {
@@ -107,11 +111,171 @@ export default function LinePlaneRelationAnimation() {
         inPlaneType: 1,
         step: 1,
       }));
+    } else if (mode === "vector") {
+      setParams((p) => ({
+        ...p,
+        thetaDeg: 30,
+        phiDeg: 30,
+        zHeight: 1.5,
+      }));
+    } else if (mode === "gaokaoPyramid") {
+      setParams((p) => ({
+        ...p,
+        lambdaE: 0.5,
+        lambdaF: 0.5,
+        pyramidA: 3.6,
+        pyramidB: 2.8,
+        pyramidH: 3.5,
+      }));
     }
   };
 
+  // 典型预设切换（黄金 2×2 规范）
+  const handlePresetSelect = (key: string) => {
+    setActivePreset(key);
+    if (key === "free") return;
+
+    if (activeMode === "parallel") {
+      if (key === "judgeStandard") {
+        setSubTheorem("judge");
+        setParams((p) => ({
+          ...p,
+          zHeight: 2,
+          inPlaneType: 1,
+          thetaDeg: 0,
+          phiDeg: 0,
+          step: 1,
+        }));
+      } else if (key === "counterInPlane") {
+        setSubTheorem("judge");
+        setParams((p) => ({
+          ...p,
+          zHeight: 0,
+          inPlaneType: 0,
+          thetaDeg: 0,
+          phiDeg: 0,
+          step: 1,
+        }));
+      } else if (key === "propInter") {
+        setSubTheorem("prop");
+        setParams((p) => ({
+          ...p,
+          zHeight: 2,
+          inPlaneType: 1,
+          thetaDeg: 0,
+          phiDeg: 0,
+          step: 2,
+        }));
+      }
+    } else if (activeMode === "perpendicular") {
+      if (key === "judgeIntersect") {
+        setSubTheorem("judge");
+        setParams((p) => ({
+          ...p,
+          thetaDeg: 90,
+          phiDeg: 45,
+          zHeight: 0,
+          intersectType: 1,
+        }));
+      } else if (key === "counterParallel") {
+        setSubTheorem("judge");
+        setParams((p) => ({
+          ...p,
+          thetaDeg: 90,
+          phiDeg: 0,
+          zHeight: 0,
+          intersectType: 0,
+        }));
+      } else if (key === "propAll") {
+        setSubTheorem("prop");
+        setParams((p) => ({
+          ...p,
+          thetaDeg: 90,
+          phiDeg: 45,
+          zHeight: 0,
+          intersectType: 1,
+        }));
+      }
+    } else if (activeMode === "gaokaoPyramid") {
+      if (key === "midParallel") {
+        setParams((p) => ({ ...p, lambdaE: 0.5, lambdaF: 0.5 }));
+      } else if (key === "thirdParallel") {
+        setParams((p) => ({ ...p, lambdaE: 0.33, lambdaF: 0.33 }));
+      } else if (key === "intersectCross") {
+        setParams((p) => ({ ...p, lambdaE: 0.3, lambdaF: 0.7 }));
+      }
+    } else if (activeMode === "vector") {
+      if (key === "vecParallel") {
+        setParams((p) => ({ ...p, thetaDeg: 0, phiDeg: 0, zHeight: 1.5 }));
+      } else if (key === "vecPerp") {
+        setParams((p) => ({ ...p, thetaDeg: 90, phiDeg: 0, zHeight: 0 }));
+      } else if (key === "vecAngle45") {
+        setParams((p) => ({ ...p, thetaDeg: 45, phiDeg: 0, zHeight: 1.5 }));
+      }
+    }
+  };
+
+  // 各模式下的 2×2 典型预设配置项
+  const presetItems = useMemo<SelectGridItem[]>(() => {
+    switch (activeMode) {
+      case "parallel":
+        return [
+          { key: "free", label: "自由探究", description: "全参开放" },
+          {
+            key: "judgeStandard",
+            label: "判定成立",
+            description: "面外h=2平行",
+          },
+          {
+            key: "counterInPlane",
+            label: "面内反例",
+            description: "h=0落入面内",
+          },
+          { key: "propInter", label: "性质交线", description: "辅助面截交线" },
+        ];
+      case "perpendicular":
+        return [
+          { key: "free", label: "自由探究", description: "全参开放" },
+          {
+            key: "judgeIntersect",
+            label: "相交判定",
+            description: "垂直相交两线",
+          },
+          {
+            key: "counterParallel",
+            label: "平行反例",
+            description: "垂直平行两线",
+          },
+          { key: "propAll", label: "性质垂线", description: "垂直面内任意" },
+        ];
+      case "gaokaoPyramid":
+        return [
+          { key: "free", label: "自由探究", description: "动点自由拖拽" },
+          { key: "midParallel", label: "中点平行", description: "λE=λF=0.5" },
+          {
+            key: "thirdParallel",
+            label: "三分点平行",
+            description: "λE=λF=0.33",
+          },
+          {
+            key: "intersectCross",
+            label: "相交反例",
+            description: "λE≠λF相交",
+          },
+        ];
+      case "vector":
+        return [
+          { key: "free", label: "自由探究", description: "全参可调" },
+          { key: "vecParallel", label: "向量平行", description: "l·n=0" },
+          { key: "vecPerp", label: "向量垂直", description: "l∥n成比例" },
+          { key: "vecAngle45", label: "45°线面角", description: "sinθ=√2/2" },
+        ];
+    }
+  }, [activeMode]);
+
   // 智能重置
   const handleReset = () => {
+    setActivePreset("free");
     switch (activeMode) {
       case "parallel":
         setParams((p) => ({
@@ -251,7 +415,7 @@ export default function LinePlaneRelationAnimation() {
                 {
                   colorKey: "paramSecondary",
                   swatch: "line",
-                  label: "两面交线 m",
+                  label: "截线交线 m",
                 },
               ];
         break;
@@ -262,41 +426,37 @@ export default function LinePlaneRelationAnimation() {
                 {
                   colorKey: "paramPrimary",
                   swatch: "line",
-                  label: "空间垂线 l",
+                  label: "垂线 l",
                 },
                 { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
                 {
                   colorKey: "paramSecondary",
                   swatch: "line",
-                  label: "面内直线 a, b",
+                  label: "面内直线 a",
+                },
+                {
+                  colorKey: "paramTertiary",
+                  swatch: "line",
+                  label: intersectType === 1 ? "相交线 b" : "平行线 b (反例)",
                 },
               ]
             : [
                 {
                   colorKey: "paramPrimary",
                   swatch: "line",
-                  label: "垂线 l ⊥ α",
+                  label: "垂线 l",
                 },
                 { colorKey: "secondary", swatch: "area", label: "基准平面 α" },
                 {
-                  colorKey: "paramSecondary",
-                  swatch: "line",
-                  label: "面内任意直线 m",
-                },
-                {
                   colorKey: "highlight",
                   swatch: "line",
-                  label: "直角 ∠(l, m) = 90°",
+                  label: "面内任意直线 m",
                 },
               ];
         break;
       case "gaokaoPyramid":
         items = [
-          {
-            colorKey: "paramPrimary",
-            swatch: "line",
-            label: "垂直侧棱 PA ⊥ 底面",
-          },
+          { colorKey: "primary", swatch: "point", label: "四棱锥顶点 P" },
           { colorKey: "highlight", swatch: "line", label: "动点连线 EF" },
           { colorKey: "secondary", swatch: "area", label: "矩形底面 ABCD" },
           { colorKey: "paramTertiary", swatch: "area", label: "平行侧面 PAD" },
@@ -319,17 +479,17 @@ export default function LinePlaneRelationAnimation() {
       items.push({
         colorKey: "grid",
         swatch: "line",
-        label: "坐标轴 (x红/y绿/z蓝)",
+        label: "空间坐标系 (x/y/z)",
       });
     }
     return items;
-  }, [activeMode, subTheorem, showAxes]);
+  }, [activeMode, subTheorem, showAxes, intersectType]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 1. 探究模式选择 */}
+          {/* Step 1: 探究模式选择 */}
           <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
@@ -337,21 +497,25 @@ export default function LinePlaneRelationAnimation() {
                   key: "parallel",
                   formula: "l \\parallel \\alpha",
                   label: "线面平行",
+                  description: "平行判定/性质",
                 },
                 {
                   key: "perpendicular",
                   formula: "l \\perp \\alpha",
                   label: "线面垂直",
+                  description: "垂直判定/性质",
                 },
                 {
                   key: "gaokaoPyramid",
                   formula: "P\\text{-}ABCD",
                   label: "高考母题",
+                  description: "四棱锥动点模型",
                 },
                 {
                   key: "vector",
                   formula: "\\vec{l} \\cdot \\vec{n}",
                   label: "空间向量",
+                  description: "法向量求线面角",
                 },
               ]}
               value={activeMode}
@@ -360,92 +524,17 @@ export default function LinePlaneRelationAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 定理与模型分支 */}
-          {activeMode === "parallel" && (
-            <LeftPanelSection title="定理与分支">
-              <div className="space-y-2">
-                <TabSwitcher
-                  tabs={[
-                    { key: "judge", label: "判定定理" },
-                    { key: "prop", label: "性质定理" },
-                  ]}
-                  value={subTheorem}
-                  onChange={(val) => setSubTheorem(val as "judge" | "prop")}
-                />
-                <SelectGrid
-                  items={[
-                    { key: "1", label: "面外直线 (l ⊄ α)" },
-                    { key: "0", label: "面内直线 (l ⊂ α 反例)" },
-                  ]}
-                  value={String(inPlaneType)}
-                  onChange={(v) => handleParamChange("inPlaneType", Number(v))}
-                  columns={2}
-                />
-              </div>
-            </LeftPanelSection>
-          )}
+          {/* Step 2: 典型模型预设 (黄金 2×2 对称网格) */}
+          <LeftPanelSection title="典型模型预设">
+            <SelectGrid
+              items={presetItems}
+              value={activePreset}
+              onChange={handlePresetSelect}
+              columns={2}
+            />
+          </LeftPanelSection>
 
-          {activeMode === "perpendicular" && (
-            <LeftPanelSection title="定理与分支">
-              <div className="space-y-2">
-                <TabSwitcher
-                  tabs={[
-                    { key: "judge", label: "判定定理" },
-                    { key: "prop", label: "性质定理" },
-                  ]}
-                  value={subTheorem}
-                  onChange={(val) => setSubTheorem(val as "judge" | "prop")}
-                />
-                {subTheorem === "judge" && (
-                  <SelectGrid
-                    items={[
-                      { key: "1", label: "两线相交 (成立)" },
-                      { key: "0", label: "两线平行 (反例)" },
-                    ]}
-                    value={String(intersectType)}
-                    onChange={(v) =>
-                      handleParamChange("intersectType", Number(v))
-                    }
-                    columns={2}
-                  />
-                )}
-              </div>
-            </LeftPanelSection>
-          )}
-
-          {activeMode === "gaokaoPyramid" && (
-            <LeftPanelSection title="动点位置预设">
-              <SelectGrid
-                items={[
-                  { key: "mid", label: "中点平行 (λ = 0.5)" },
-                  { key: "third", label: "三分之一点 (λ = 1/3)" },
-                  { key: "diff", label: "相交反例 (λ_E ≠ λ_F)" },
-                ]}
-                value={
-                  lambdaE === 0.5 && lambdaF === 0.5
-                    ? "mid"
-                    : Math.abs(lambdaE - 0.33) < 0.05 &&
-                        Math.abs(lambdaF - 0.33) < 0.05
-                      ? "third"
-                      : Math.abs(lambdaE - 0.3) < 0.02 &&
-                          Math.abs(lambdaF - 0.7) < 0.02
-                        ? "diff"
-                        : ""
-                }
-                onChange={(val) => {
-                  if (val === "mid")
-                    setParams((p) => ({ ...p, lambdaE: 0.5, lambdaF: 0.5 }));
-                  else if (val === "third")
-                    setParams((p) => ({ ...p, lambdaE: 0.33, lambdaF: 0.33 }));
-                  else if (val === "diff")
-                    setParams((p) => ({ ...p, lambdaE: 0.3, lambdaF: 0.7 }));
-                }}
-                columns={1}
-              />
-            </LeftPanelSection>
-          )}
-
-          {/* 3. 参数调节 */}
+          {/* Step 3: 参数调节 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -454,81 +543,33 @@ export default function LinePlaneRelationAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 教学提示 */}
-          <LeftPanelSection title="教学提示" compact>
-            {activeMode === "parallel" && inPlaneType === 0 && (
-              <TipCard variant="danger">
-                <span className="font-bold">易错反例</span>：当直线在面内时（
-                <KatexFormula formula="l \subset \alpha" mode="inline" />
-                ），即使与面内直线平行，也不构成线面平行。必须满足
-                <span className="font-bold">面外直线</span>前提（
-                <KatexFormula formula="l \not\subset \alpha" mode="inline" />
-                ）。
-              </TipCard>
-            )}
-            {activeMode === "parallel" && inPlaneType === 1 && (
-              <TipCard variant="info">
-                <span className="font-bold">线面平行转化</span>：线线平行（
-                <KatexFormula formula="l \parallel m" mode="inline" />
-                ）且面外（
-                <KatexFormula formula="l \not\subset \alpha" mode="inline" />）
-                <KatexFormula formula="\Rightarrow" mode="inline" /> 线面平行（
-                <KatexFormula formula="l \parallel \alpha" mode="inline" />
-                ）。
-              </TipCard>
-            )}
-            {activeMode === "perpendicular" &&
-              subTheorem === "judge" &&
-              intersectType === 0 && (
-                <TipCard variant="danger">
-                  <span className="font-bold">易错反例</span>
-                  ：若仅垂直于面内两条平行线，直线可绕其倾斜旋转，无法确定垂面。必须垂直于两条
-                  <span className="font-bold">相交直线</span>。
-                </TipCard>
-              )}
-            {activeMode === "perpendicular" &&
-              (subTheorem === "prop" ||
-                (subTheorem === "judge" && intersectType === 1)) && (
-                <TipCard variant="success">
-                  <span className="font-bold">线面垂直核心</span>
-                  ：垂直于面内两条相交直线{" "}
-                  <KatexFormula formula="\Rightarrow" mode="inline" />{" "}
-                  垂直于平面内任意一条直线。
-                </TipCard>
-              )}
-            {activeMode === "gaokaoPyramid" && (
-              <TipCard variant="warning">
-                <span className="font-bold">高考母题转化链</span>：中位线 /
-                平行线分线段成比例定理（
-                <KatexFormula formula="\lambda_E = \lambda_F" mode="inline" />）
-                <KatexFormula
-                  formula="\Rightarrow EF \parallel BC \Rightarrow EF \parallel"
-                  mode="inline"
-                />{" "}
-                平面 ABCD。
-              </TipCard>
-            )}
-            {activeMode === "vector" && (
-              <TipCard variant="primary">
-                <span className="font-bold">空间向量法</span>：方向向量{" "}
-                <KatexFormula formula="\vec{l}" mode="inline" /> 垂直于法向量{" "}
-                <KatexFormula formula="\vec{n}" mode="inline" />（
-                <KatexFormula
-                  formula="\vec{l} \cdot \vec{n} = 0"
-                  mode="inline"
+          {/* Step 4: 图层与标注显示控制 (Toggle 单列流式) */}
+          <LeftPanelSection title="图层与标注显示控制" compact>
+            <div className="space-y-2.5">
+              <Toggle
+                label="显示空间直角坐标系 (Scene3DGrid)"
+                checked={showAxes}
+                onChange={setShowAxes}
+              />
+              {activeMode === "parallel" && subTheorem === "prop" && (
+                <Toggle
+                  label="显示辅助相交平面 β"
+                  checked={showAuxPlane}
+                  onChange={setShowAuxPlane}
                 />
-                ）判定平行；线面角{" "}
-                <KatexFormula
-                  formula="\sin\theta = |\cos\langle\vec{l}, \vec{n}\rangle|"
-                  mode="inline"
+              )}
+              {(activeMode === "vector" || activeMode === "perpendicular") && (
+                <Toggle
+                  label="显示线面角 / 垂直标记"
+                  checked={showAngleArc}
+                  onChange={setShowAngleArc}
                 />
-                。
-              </TipCard>
-            )}
+              )}
+            </div>
           </LeftPanelSection>
 
-          {/* 5. 视图与视角 */}
-          <LeftPanelSection title="视图与视角">
+          {/* Step 5: 3D 空间视角预设 */}
+          <LeftPanelSection title="3D 空间视角预设">
             <div className="space-y-2">
               {activeMode === "gaokaoPyramid" && (
                 <TabSwitcher
@@ -544,22 +585,13 @@ export default function LinePlaneRelationAnimation() {
               <TabSwitcher
                 layout="horizontal"
                 tabs={[
-                  { key: "iso", label: "轴测" },
-                  { key: "front", label: "主视" },
-                  { key: "top", label: "俯视" },
-                  { key: "side", label: "左视" },
+                  { key: "iso", label: "轴测直观" },
+                  { key: "front", label: "主视正投" },
+                  { key: "top", label: "俯视底面" },
+                  { key: "side", label: "左视侧面" },
                 ]}
                 value={preset}
                 onChange={(p) => setCameraPreset(p as CameraPreset)}
-              />
-              <SelectGrid
-                items={[
-                  { key: "0", label: "隐藏坐标轴" },
-                  { key: "1", label: "显示坐标轴" },
-                ]}
-                value={showAxes ? "1" : "0"}
-                onChange={(v) => setShowAxes(v === "1")}
-                columns={2}
               />
             </div>
           </LeftPanelSection>
@@ -585,7 +617,8 @@ export default function LinePlaneRelationAnimation() {
               interactionMode === "orbit" || activeMode !== "gaokaoPyramid"
             }
           />
-          {activeMode === "vector" && <Scene3DGrid size={5} showGrid={false} />}
+          {/* 真实响应 showAxes 状态！ */}
+          {showAxes && <Scene3DGrid size={5} showGrid={false} />}
 
           {/* 模式 1：高考四棱锥母题 */}
           {activeMode === "gaokaoPyramid" && (
@@ -652,7 +685,7 @@ export default function LinePlaneRelationAnimation() {
                     }}
                     tex="m"
                   />
-                  {subTheorem === "prop" && step > 0.05 && (
+                  {subTheorem === "prop" && step > 0.05 && showAuxPlane && (
                     <>
                       <Plane3D
                         origin={{ x: 0, y: 0, z: (effectiveZ * step) / 2 }}
@@ -667,9 +700,16 @@ export default function LinePlaneRelationAnimation() {
                         position={{
                           x: 2.3,
                           y: 0.1,
-                          z: (effectiveZ * step) / 2,
+                          z: Math.max(0.5, effectiveZ * step) + 0.1,
                         }}
                         tex="\beta"
+                      />
+                      {/* 截线 m */}
+                      <Segment3D
+                        from={{ x: -2.6, y: 0, z: effectiveZ * step }}
+                        to={{ x: 2.6, y: 0, z: effectiveZ * step }}
+                        colorKey="paramSecondary"
+                        lineWidth={2.5}
                       />
                     </>
                   )}
@@ -728,27 +768,31 @@ export default function LinePlaneRelationAnimation() {
                             offset={[-0.2, -0.2, 0]}
                           />
 
-                          {/* 直角标记 1: l ⊥ a */}
-                          <AngleArc3D
-                            vertex={{ x: 0, y: 0, z: 0 }}
-                            dirA={{ x: 0, y: 0, z: 1 }}
-                            dirB={{ x: 1, y: 0, z: 0 }}
-                            radius={0.45}
-                            colorKey="paramPrimary"
-                          />
+                          {showAngleArc && (
+                            <>
+                              {/* 直角标记 1: l ⊥ a */}
+                              <AngleArc3D
+                                vertex={{ x: 0, y: 0, z: 0 }}
+                                dirA={{ x: 0, y: 0, z: 1 }}
+                                dirB={{ x: 1, y: 0, z: 0 }}
+                                radius={0.45}
+                                colorKey="paramPrimary"
+                              />
 
-                          {/* 直角标记 2: l ⊥ b */}
-                          <AngleArc3D
-                            vertex={{ x: 0, y: 0, z: 0 }}
-                            dirA={{ x: 0, y: 0, z: 1 }}
-                            dirB={{
-                              x: Math.cos(Math.PI / 4),
-                              y: Math.sin(Math.PI / 4),
-                              z: 0,
-                            }}
-                            radius={0.6}
-                            colorKey="paramSecondary"
-                          />
+                              {/* 直角标记 2: l ⊥ b */}
+                              <AngleArc3D
+                                vertex={{ x: 0, y: 0, z: 0 }}
+                                dirA={{ x: 0, y: 0, z: 1 }}
+                                dirB={{
+                                  x: Math.cos(Math.PI / 4),
+                                  y: Math.sin(Math.PI / 4),
+                                  z: 0,
+                                }}
+                                radius={0.6}
+                                colorKey="paramSecondary"
+                              />
+                            </>
+                          )}
                         </>
                       )}
                     </>
@@ -784,13 +828,15 @@ export default function LinePlaneRelationAnimation() {
                       />
 
                       {/* 直角标记 l ⊥ m */}
-                      <AngleArc3D
-                        vertex={{ x: 0, y: 0, z: 0 }}
-                        dirA={{ x: 0, y: 0, z: 2.5 }}
-                        dirB={{ x: testMEnd.x, y: testMEnd.y, z: 0 }}
-                        radius={0.55}
-                        colorKey="highlight"
-                      />
+                      {showAngleArc && (
+                        <AngleArc3D
+                          vertex={{ x: 0, y: 0, z: 0 }}
+                          dirA={{ x: 0, y: 0, z: 2.5 }}
+                          dirB={{ x: testMEnd.x, y: testMEnd.y, z: 0 }}
+                          radius={0.55}
+                          colorKey="highlight"
+                        />
+                      )}
                     </>
                   )}
                 </>

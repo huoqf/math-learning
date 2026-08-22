@@ -405,10 +405,10 @@ export function buildSpatialAnglePanel(
     theorems.push(
       {
         name: "二面角向量法与钝锐判断定理",
-        latex: `|\\cos \\theta| = \\frac{|\\vec{n_1} \\cdot \\vec{n_2}|}{|\\vec{n_1}||\\vec{n_2}|}, \\quad \\text{由图可知二面角为锐角} \\implies \\cos\\theta = +\\frac{\\vec{n_1}\\cdot\\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}`,
+        latex: `\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle = \\frac{\\vec{n_1} \\cdot \\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}, \\quad \\cos\\theta_{\\text{二面角}} = \\pm\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle \\;(\\text{由图判定正负})`,
         level: "core",
         condition:
-          "\\theta \\in [0^\\circ, 180^\\circ]，法向量夹角可能与二面角相等或互补，高考大题必须写明“由图可知”！",
+          "\\theta \\in [0^\\circ, 180^\\circ]，法向量夹角与二面角相等或互补，高考大题须依据空间图形判断正负号！",
       },
       {
         name: "三垂线定理作二面角平面角（几何法）",
@@ -492,13 +492,13 @@ export function buildLinePlaneRelationPanel(
     const theorems: Theorem[] = [
       {
         name: "四棱锥动点线面平行判定法",
-        latex: `\\begin{cases} \\frac{PE}{PB} = \\frac{PF}{PC} \\;\\Rightarrow\\; EF \\parallel BC \\\\ BC \\parallel AD \\;\\Rightarrow\\; EF \\parallel AD \\\\ EF \\not\\subset \\text{面}PAD, \\; AD \\subset \\text{面}PAD \\end{cases} \\;\\Rightarrow\\; EF \\parallel \\text{面}PAD`,
+        latex: `\\begin{cases} \\frac{PE}{PB} = \\frac{PF}{PC} \\;\\Rightarrow\\; EF \\parallel AD \\\\ EF \\not\\subset \\text{平面 }PAD \\\\ AD \\subset \\text{平面 }PAD \\end{cases} \\;\\Rightarrow\\; EF \\parallel \\text{平面 }PAD`,
         level: "core",
         condition: "三角形相似中位线与平行公理(传递性)转化",
       },
       {
         name: "四棱锥侧面与底面垂直性质",
-        latex: `PA \\perp \\text{面}ABCD, \\; PA \\subset \\text{面}PAD \\;\\Rightarrow\\; \\text{面}PAD \\perp \\text{面}ABCD`,
+        latex: `PA \\perp \\text{平面 }ABCD, \\; PA \\subset \\text{平面 }PAD \\;\\Rightarrow\\; \\text{平面 }PAD \\perp \\text{平面 }ABCD`,
         level: "core",
         condition: "一条直线垂直于底面，则包含该直线的侧面必垂直于底面",
       },

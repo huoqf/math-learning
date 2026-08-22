@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import katex from "katex";
 import { buildLinePlaneRelationPanel } from "../solidGeometry";
 
 describe("buildLinePlaneRelationPanel 测试", () => {
@@ -93,5 +94,44 @@ describe("buildLinePlaneRelationPanel 测试", () => {
       true,
     );
     expect(data.gaokaoPoints[0].text).toContain("面面垂直满分答题注意");
+  });
+
+  it("所有模式下的定理公式均能被 KaTeX 正常解析无报错", () => {
+    const modes = [
+      "parallel",
+      "perpendicular",
+      "gaokaoPyramid",
+      "vector",
+      "surfaceParallel",
+      "surfacePerp",
+    ];
+    const subTheorems = ["judge", "prop"];
+
+    for (const mode of modes) {
+      for (const subTheorem of subTheorems) {
+        const data = buildLinePlaneRelationPanel(
+          { thetaDeg: 30, lambdaE: 0.5, lambdaF: 0.5 },
+          { mode, subTheorem },
+        );
+        for (const t of data.theorems) {
+          expect(() => {
+            katex.renderToString(t.latex, {
+              throwOnError: true,
+              strict: false,
+            });
+          }).not.toThrow();
+        }
+        for (const q of data.quantities) {
+          if (q.symbol) {
+            expect(() => {
+              katex.renderToString(q.symbol!, {
+                throwOnError: true,
+                strict: false,
+              });
+            }).not.toThrow();
+          }
+        }
+      }
+    }
   });
 });

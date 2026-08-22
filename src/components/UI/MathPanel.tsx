@@ -8,7 +8,6 @@ import {
   BookOpen,
 } from "lucide-react";
 import { KatexFormula } from "./KatexFormula";
-import { splitAtTopLevelEquals } from "./latexUtils";
 import { colors } from "@/theme/colors";
 
 export interface MathQuantity {
@@ -152,199 +151,6 @@ function hasLatex(text: string): boolean {
     return text.includes("$") || text.includes("\\text{");
   }
   return /\\[a-zA-Z]|\\[,;!]|[_^]\{?[\w]|=|<|>|\+|-|\*/.test(text);
-}
-
-/** 检测 LaTeX 是否包含需要 displayMode 的特殊矩阵/分段环境 */
-function needsStrictBlockMode(latex: string): boolean {
-  return /\\begin\{(cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|equation|equation\*|gather|gather\*|split|multline|multline\*)\}/.test(
-    latex,
-  );
-}
-
-export interface FormulaClause {
-  formula: string;
-  prefix?: string; // 如 \iff, \implies 等
-}
-
-/** 面板公式区可用宽度有限：LaTeX 源串超过该长度即视为「长公式」，优先教材式等号换行而非缩放 */
-const LONG_FORMULA_LATEX_LEN = 45;
-
-/**
- * 按「顶层」\text{...} 句段切分公式（brace 深度 0 才提取）。
- * 嵌在 _{...} 等结构内部的 \text（如 \vec{n}_{\text{公}}）属于公式本体，绝不拆出。
- */
-function splitTopLevelTextSegments(
-  latex: string,
-): Array<{ text?: string; formula?: string }> {
-  const segs: Array<{ text?: string; formula?: string }> = [];
-  let depth = 0;
-  let cur = "";
-  let i = 0;
-  while (i < latex.length) {
-    const ch = latex[i];
-    if (depth === 0 && latex.startsWith("\\text{", i)) {
-      let j = i + 6;
-      let d = 1;
-      while (j < latex.length && d > 0) {
-        if (latex[j] === "{") d++;
-        else if (latex[j] === "}") d--;
-        j++;
-      }
-      if (cur.trim()) segs.push({ formula: cur.trim() });
-      cur = "";
-      segs.push({ text: latex.slice(i + 6, j - 1) });
-      i = j;
-      continue;
-    }
-    if (ch === "{" || ch === "[") depth++;
-    else if (ch === "}" || ch === "]") depth = Math.max(0, depth - 1);
-    cur += ch;
-    i++;
-  }
-  if (cur.trim()) segs.push({ formula: cur.trim() });
-  return segs;
-}
-
-/** 检测公式中是否含顶层 \text{中文} 句段（此类内容应按可换行文字处理，而非整段公式原子） */
-function hasCjkTextSegment(latex: string): boolean {
-  return splitTopLevelTextSegments(latex).some(
-    (s) => s.text && /[\u4e00-\u9fa5]/.test(s.text),
-  );
-}
-
-/**
- * 渲染含顶层 \text{中文} 的混合公式：\text 段还原为可自由换行的文本，
- * 其余数学段保持不可折断的公式原子，兼顾教材断行习惯与公式完整性。
- */
-function renderTextMixedFormula(
-  latex: string,
-  keyPrefix: string,
-): React.ReactNode {
-  const segs = splitTopLevelTextSegments(latex);
-  return (
-    <span className="flex-1 min-w-0 break-words leading-relaxed">
-      {segs.map((seg, i) => {
-        if (seg.text !== undefined) {
-          return (
-            <React.Fragment key={`${keyPrefix}-t${i}`}>
-              {seg.text}
-            </React.Fragment>
-          );
-        }
-        return (
-          <KatexFormula
-            key={`${keyPrefix}-f${i}`}
-            formula={seg.formula!}
-            mode="inline"
-            responsive={true}
-            className="!my-0 font-medium"
-          />
-        );
-      })}
-    </span>
-  );
-}
-
-/** 渲染长等式的教材式两行结构（等号换行 + 右端缩进） */
-function renderBrokenEquation(
-  left: string,
-  right: string,
-  keyPrefix: string,
-): React.ReactNode {
-  return (
-    <div className="w-full flex-1 min-w-0 flex flex-col items-start gap-1 max-w-full">
-      <KatexFormula
-        key={`${keyPrefix}-l`}
-        formula={left}
-        mode="inline"
-        responsive={true}
-        className="!my-0 font-medium max-w-full"
-      />
-      <KatexFormula
-        key={`${keyPrefix}-r`}
-        formula={right}
-        mode="inline"
-        responsive={true}
-        className="!my-0 font-medium max-w-full ml-4"
-      />
-    </div>
-  );
-}
-
-/**
- * 智能数学表达式原子（Clause）分解算法：
- * 将并列公式或带有双向箭头推导的复合式，拆解为自包含、不可打碎的数学原子项，交由 Flex-Wrap 自然流式换行。
- */
-function splitFormulaClauses(latex: string): FormulaClause[] | null {
-  if (!latex || needsStrictBlockMode(latex)) return null;
-
-  // 1. 如果包含显式换行符 \\，按行拆分
-  if (latex.includes("\\\\")) {
-    const lines = latex
-      .split(/\\\\/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-    if (lines.length > 1) {
-      return lines.map((l) => ({ formula: l }));
-    }
-  }
-
-  // 2. 检查顶层推导符 \iff / \implies
-  if (/\\(iff|implies)/.test(latex) && latex.length > 35) {
-    const parts = latex.split(/(\\(?:iff|implies))/g);
-    if (parts.length >= 3) {
-      const clauses: FormulaClause[] = [];
-      let currentPrefix: string | undefined = undefined;
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i].trim();
-        if (!part) continue;
-        if (part === "\\iff" || part === "\\implies") {
-          currentPrefix = part;
-        } else {
-          clauses.push({ formula: part, prefix: currentPrefix });
-          currentPrefix = undefined;
-        }
-      }
-      if (clauses.length > 1) return clauses;
-    }
-  }
-
-  // 3. 检查顶层逗号/分号/quad并列公式
-  let braceDepth = 0;
-  let parenDepth = 0;
-  const commaClauses: string[] = [];
-  let cur = "";
-
-  for (let i = 0; i < latex.length; i++) {
-    const ch = latex[i];
-    if (ch === "{" || ch === "[") braceDepth++;
-    else if (ch === "}" || ch === "]") braceDepth = Math.max(0, braceDepth - 1);
-    else if (ch === "(") parenDepth++;
-    else if (ch === ")") parenDepth = Math.max(0, parenDepth - 1);
-
-    if (braceDepth === 0 && parenDepth === 0) {
-      if (ch === "," || latex.slice(i, i + 6) === "\\quad ") {
-        if (cur.trim()) {
-          commaClauses.push(cur.trim());
-          cur = "";
-        }
-        if (latex.slice(i, i + 6) === "\\quad ") {
-          i += 5; // 跳过 \quad
-        }
-        continue;
-      }
-    }
-    cur += ch;
-  }
-  if (cur.trim()) {
-    commaClauses.push(cur.trim());
-  }
-
-  if (commaClauses.length > 1) {
-    return commaClauses.map((c) => ({ formula: c }));
-  }
-
-  return null;
 }
 
 const THEOREM_LEVEL_STYLES: Record<
@@ -670,13 +476,16 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="w-full py-2 px-2 bg-white rounded border border-neutral-100/50 my-1 min-h-[42px] flex items-center justify-center overflow-x-hidden max-w-full">
+                    <div className="w-full py-3.5 px-4 bg-white rounded-lg border border-neutral-100/70 my-1 min-h-[54px] flex items-center justify-center overflow-x-hidden max-w-full">
                       {(() => {
-                        // 1. 若为纯中文叙述段落 (\text{...})
+                        // 1. 若为纯中文叙述段落 (\text{...}) 且不含数学符号
                         const textMatch = t.latex.match(
                           /^\s*\\text\{([\s\S]*)\}\s*$/,
                         );
-                        if (textMatch) {
+                        if (
+                          textMatch &&
+                          !/\\[a-zA-Z]|[_^=<>+\-*/]/.test(textMatch[1])
+                        ) {
                           return (
                             <div className="w-full text-center py-1 text-xs text-neutral-700 font-medium break-words leading-relaxed">
                               {renderMixedLatex(textMatch[1])}
@@ -684,141 +493,11 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                           );
                         }
 
-                        // 2. 原生环境 (cases / matrix / aligned 等) 或显式 block 模式
-                        if (
-                          t.mode === "block" ||
-                          /\\begin\{(aligned|cases|array|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|equation|gather|split)\}/.test(
-                            t.latex,
-                          )
-                        ) {
-                          return (
-                            <KatexFormula
-                              formula={t.latex}
-                              mode="block"
-                              responsive={true}
-                              className="!my-0 max-w-full"
-                            />
-                          );
-                        }
-
-                        // 3. 智能语义原子流式排版（并列公式或推导式自然折行）
-                        const clauses = splitFormulaClauses(t.latex);
-                        if (clauses && clauses.length > 1) {
-                          // 教材推导式纵向逐行左对齐排列：3 个及以上子句，
-                          // 或任一子句较长（横向并排必然触发过度缩放/裁切）时；
-                          // 仅 2 个短子句时保持横向 Flex-Wrap 居中，更紧凑
-                          const vertical =
-                            clauses.length >= 3 ||
-                            clauses.some((c) => c.formula.length > 30);
-                          if (vertical) {
-                            return (
-                              <div className="w-full flex flex-col items-start gap-1.5 py-0.5 max-w-full">
-                                {clauses.map((clause, idx) => {
-                                  // 含 \text{中文} 的句段子句：文字可换行、数学段保持原子
-                                  if (hasCjkTextSegment(clause.formula)) {
-                                    return (
-                                      <div
-                                        key={idx}
-                                        className="flex items-start gap-1 w-full max-w-full"
-                                      >
-                                        {clause.prefix && (
-                                          <KatexFormula
-                                            formula={clause.prefix}
-                                            mode="inline"
-                                            className="!my-0 text-primary-600 shrink-0"
-                                          />
-                                        )}
-                                        {renderTextMixedFormula(
-                                          clause.formula,
-                                          `c${idx}`,
-                                        )}
-                                      </div>
-                                    );
-                                  }
-                                  // 长等式子句：教材式等号换行（左端一行，= 右端缩进一行）
-                                  const broken =
-                                    clause.formula.length >
-                                    LONG_FORMULA_LATEX_LEN
-                                      ? splitAtTopLevelEquals(clause.formula)
-                                      : null;
-                                  return (
-                                    <div
-                                      key={idx}
-                                      className="flex items-start gap-1 w-full max-w-full"
-                                    >
-                                      {clause.prefix && (
-                                        <KatexFormula
-                                          formula={clause.prefix}
-                                          mode="inline"
-                                          className="!my-0 text-primary-600 shrink-0"
-                                        />
-                                      )}
-                                      {broken ? (
-                                        renderBrokenEquation(
-                                          broken[0],
-                                          broken[1],
-                                          `c${idx}`,
-                                        )
-                                      ) : (
-                                        <KatexFormula
-                                          formula={clause.formula}
-                                          mode="inline"
-                                          responsive={true}
-                                          className="!my-0 font-medium flex-1 min-w-0"
-                                        />
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            );
-                          }
-                          return (
-                            <div className="w-full flex flex-wrap items-center justify-center gap-x-3 gap-y-2 py-0.5 max-w-full">
-                              {clauses.map((clause, idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-center gap-1 max-w-full"
-                                >
-                                  {clause.prefix && (
-                                    <KatexFormula
-                                      formula={clause.prefix}
-                                      mode="inline"
-                                      className="!my-0 text-primary-600"
-                                    />
-                                  )}
-                                  <KatexFormula
-                                    formula={clause.formula}
-                                    mode="inline"
-                                    responsive={true}
-                                    className="!my-0 font-medium"
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        }
-
-                        // 4. 标准单行公式
-                        //    含 \text{中文} 句段：文字可换行、数学段保持原子；
-                        //    长等式优先教材式等号换行，避免过度缩放
-                        if (hasCjkTextSegment(t.latex)) {
-                          return renderTextMixedFormula(t.latex, "single");
-                        }
-                        if (t.latex.length > LONG_FORMULA_LATEX_LEN) {
-                          const broken = splitAtTopLevelEquals(t.latex);
-                          if (broken) {
-                            return renderBrokenEquation(
-                              broken[0],
-                              broken[1],
-                              "single",
-                            );
-                          }
-                        }
+                        // 2. 完整数学公式由 KatexFormula 自适应渲染引擎统一承载（原生支持 \text{中文}、分式与推导链）
                         return (
                           <KatexFormula
                             formula={t.latex}
-                            mode="inline"
+                            mode={t.mode ?? "block"}
                             responsive={true}
                             className="!my-0 font-medium max-w-full"
                           />
