@@ -3,6 +3,7 @@ import {
   splitAtTopLevelEquals,
   splitAtTopLevelBinary,
   splitAtTopLevelImplies,
+  splitAtTopLevelSpacing,
   normalizeFractionRowSpacing,
   findTopLevelEqualsIndices,
 } from "../latexUtils";
@@ -82,5 +83,38 @@ describe("latexUtils 定界符深度追踪与公式换行测试", () => {
     expect(normalized).toContain("\\dfrac{PE}{PB}");
     expect(normalized).toContain("\\\\[0.65em]");
     expect(normalized).toContain("\\\\[0.2em]");
+  });
+
+  it("对单等号短左端公式（如 S = S'/cosθ, y = f(x)）拒绝生硬碎行，保持单行展示", () => {
+    // 截图中截面公式：左端只有 1 个字符 S，单等号断行会导致严重失衡
+    const latex1 = "S = \\frac{S'}{\\cos\\theta}";
+    expect(splitAtTopLevelEquals(latex1)).toBeNull();
+
+    const latex2 = "y = f(x)";
+    expect(splitAtTopLevelEquals(latex2)).toBeNull();
+
+    const latex3 = "e = \\frac{c}{a}";
+    expect(splitAtTopLevelEquals(latex3)).toBeNull();
+  });
+
+  it("极值趋近符 \\to（如 S(t) \\to \\max / \\min）不被误判为逻辑推导换行", () => {
+    const latex = "S(t) \\to \\max / \\min";
+    expect(splitAtTopLevelImplies(latex)).toBeNull();
+  });
+
+  it("微小细间距 \\, 不被误判为语义大间距换行", () => {
+    const latex = "f(x)\\,dx";
+    expect(splitAtTopLevelSpacing(latex)).toBeNull();
+  });
+
+  it("\\begin{cases} ... \\end{cases} 完整跨越，不污染外层大括号深度计数", () => {
+    // 外层包含大括号，且内部有 cases 环境
+    const latex =
+      "\\left\\{ \\begin{cases} x = 1 \\\\ y = 2 \\end{cases} \\right\\} \\;\\Rightarrow\\; (1, 2)";
+    const split = splitAtTopLevelImplies(latex);
+    expect(split).not.toBeNull();
+    expect(split![0]).toContain("\\begin{cases}");
+    expect(split![0]).toContain("\\end{cases}");
+    expect(split![1]).toBe("\\Rightarrow\\; (1, 2)");
   });
 });

@@ -65,10 +65,20 @@ export function advanceLatexDepth(
       return 7;
     }
     if (sub.startsWith("\\begin{")) {
+      const endBrace = sub.indexOf("}");
+      if (endBrace !== -1) {
+        state.env++;
+        return endBrace + 1;
+      }
       state.env++;
       return 7;
     }
     if (sub.startsWith("\\end{")) {
+      const endBrace = sub.indexOf("}");
+      if (endBrace !== -1) {
+        state.env = Math.max(0, state.env - 1);
+        return endBrace + 1;
+      }
       state.env = Math.max(0, state.env - 1);
       return 5;
     }
@@ -82,6 +92,19 @@ export function advanceLatexDepth(
     }
   }
   return 1;
+}
+
+/**
+ * 计算 LaTeX 片段的有效可见字符长度（去除指令名、颜色标记、定界符与空白）。
+ * 用于断行时的平衡度度量与短左端保护判定。
+ */
+export function getEffectiveLatexLength(latex: string): number {
+  if (!latex) return 0;
+  let s = latex.replace(/\\color\{[^}]+\}/g, "");
+  s = s.replace(/\\text\{([^}]+)\}/g, "$1");
+  s = s.replace(/\\[a-zA-Z]+/g, "x");
+  s = s.replace(/[{}[\]()^_\s\\,;!]/g, "");
+  return s.length;
 }
 
 /**
@@ -111,13 +134,40 @@ export function findTopLevelEqualsIndices(latex: string): number[] {
 /**
  * 教材推导换行：在最合适的顶层等号处把长等式拆为两段
  * （左端一段，右端以「=」起头，与高中教材/高考答题卡书写习惯一致）。
- * 针对连等式（A = B = C），选择使两行字符数最均衡的等号处断开。
+ *
+ * 核心规则（符合高中数学人类习惯）：
+ * 1. 若为单等号式且左端仅为简单单变量（如 S = ..., y = ..., e = ...，有效字符 <= 3）：
+ *    严禁在等号处截断！因为右端依然占据全宽，截断无法降低行宽且破坏视觉整体感，返回 null。
+ * 2. 若两端均有实质结构（左端 >= 4 字符，如 \cos\langle\vec{n_1},\vec{n_2}\rangle = ...），允许断开。
+ * 3. 若为连等式（A = B = C），选择使两行字符数最均衡的等号处断开。
  */
 export function splitAtTopLevelEquals(latex: string): [string, string] | null {
   const equalsIndices = findTopLevelEqualsIndices(latex);
   if (equalsIndices.length === 0) return null;
 
-  // 选使左右字符数最均衡的等号断点
+  // 单等号场景：执行短左端保护
+  if (equalsIndices.length === 1) {
+    const idx = equalsIndices[0];
+    const left = latex.slice(0, idx).trim();
+    const right = latex.slice(idx).trim();
+    if (!left || right.length <= 1) return null;
+
+    const leftLen = getEffectiveLatexLength(left);
+    const rightLen = getEffectiveLatexLength(right);
+
+    // 短左端保护：有效字符 <= 3 拒绝断行
+    if (leftLen <= 3) {
+      return null;
+    }
+
+    // 两端均有实质内容时允许断开
+    if (leftLen >= 4 && rightLen >= 4) {
+      return [left, right];
+    }
+    return null;
+  }
+
+  // 连等式（>= 2 个等号）：选使两段最均衡的断点
   const mid = latex.length / 2;
   let chosenIdx = equalsIndices[0];
   let minDist = Math.abs(equalsIndices[0] - mid);
@@ -205,9 +255,10 @@ export function splitAtTopLevelBinary(latex: string): [string, string] | null {
  * 高中教材中这类命令往往标志着「条件与结论」或「前提与推论」的分界，
  * 是最自然的换行位置，优先级高于 +/-，低于等号/推导符。
  * 选使两段长度最均衡的断点。
+ * 注意：剔除微小细间距 \,（避免在积分微元或紧凑乘法处误断）。
  */
 export function splitAtTopLevelSpacing(latex: string): [string, string] | null {
-  const spacingOps = ["\\qquad", "\\quad", "\\;", "\\,"];
+  const spacingOps = ["\\qquad", "\\quad", "\\;"];
   interface SpacingCandidate {
     idx: number;
     opLen: number;
@@ -250,14 +301,15 @@ export function splitAtTopLevelSpacing(latex: string): [string, string] | null {
 
   // 左段去掉末尾间距命令，右段从间距命令后的内容开始
   let left = latex.slice(0, chosen.idx).trim();
-  left = left.replace(/(\s|\\;|\\,|\\!|\\quad|\\qquad)+$/, "").trim();
+  left = left.replace(/(\s|\\;|\\!|\\quad|\\qquad)+$/, "").trim();
   const right = latex.slice(chosen.idx + chosen.opLen).trim();
   if (left && right) return [left, right];
   return null;
 }
 
 /**
- * 寻找公式中顶层逻辑推导符（\Rightarrow, \implies, \iff, \Leftrightarrow 等）的位置与长度
+ * 寻找公式中顶层逻辑推导符（\Rightarrow, \implies, \iff, \Leftrightarrow 等）的位置与长度。
+ * 注意：剔除 \to（\to 在高中数学用于极限或极值趋向，非命题逻辑推导）。
  */
 export function findTopLevelImplies(
   latex: string,
@@ -271,7 +323,6 @@ export function findTopLevelImplies(
     "\\Rightarrow",
     "\\implies",
     "\\iff",
-    "\\to",
   ];
 
   while (i < latex.length) {

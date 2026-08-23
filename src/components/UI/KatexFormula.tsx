@@ -8,11 +8,15 @@ import {
   splitAtTopLevelBinary,
   splitAtTopLevelPunctuation,
   normalizeFractionRowSpacing,
+  getEffectiveLatexLength,
 } from "./latexUtils";
 
 /**
- * 优先换行阈值：公式超宽 8% 即尝试换行，不达此阈值才允许少量缩放（符合教材公式从不缩放的排版习惯） */
-const MIN_SCALE = 0.92;
+ * 优先换行阈值：
+ * 当单行所需缩放比例低于此阈值（空间极窄且公式较长）时，优先尝试按高中数学教材语义换行；
+ * 在此阈值之上，优先保持单行高保真完整呈现。
+ */
+const MIN_SCALE = 0.72;
 /** 换行后仍溢出（仅见于选项按鈕等极窄容器）时的硬底线，必须允许适度缩小以彻底杜绝文字两端被裁切 */
 const HARD_MIN_SCALE = 0.45;
 
@@ -60,8 +64,11 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
         segments.forEach((seg, i) => {
           const target = renderDivs[i];
           if (!target) return;
-          // 在独立公式卡片 (isBlock) 模式下，统一执行分式满尺寸升级与多行环境行间距自动平衡
-          const formattedSeg = isBlock ? normalizeFractionRowSpacing(seg) : seg;
+          // 统一执行分式满尺寸升级与多行环境行间距自动平衡：
+          // 行内模式（SelectGrid/ParamControl/MathPanel/renderMixedLatex 等）不再跳过，
+          // 使 \frac 全部提升为 \dfrac，分子分母保持 100% 原文字号；多行环境自动补 [0.65em] 行距防挤压。
+          // （displayMode 仅决定整体数学样式；\dfrac 在两种模式下都强制分式满尺寸）
+          const formattedSeg = normalizeFractionRowSpacing(seg);
           katex.render(formattedSeg, target, {
             throwOnError: false,
             displayMode: isBlock,
@@ -76,7 +83,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
     }
 
     // B. 测量实际内容尺寸并执行精准 Scale-to-Fit 缩放（此刻内容已渲染完成，测量必然准确）；缩放触底
-    //    （< MIN_SCALE）时逐级触发教材式换行：优先等号、推出符号，次选加减号、标点
+    //    （< MIN_SCALE）时逐级触发教材式换行：优先推出符号、语义间距，次选等号、加减号、标点
     if (!responsive || !outerRef.current || !inner) {
       setScale(1);
       setScaledHeight(undefined);
@@ -96,30 +103,41 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
       const contentHeight = innerBox.scrollHeight;
 
       if (containerWidth > 0 && contentWidth > containerWidth) {
-        const needed = (containerWidth - 6) / contentWidth;
+        const needed = (containerWidth - 4) / contentWidth;
         if (needed < MIN_SCALE) {
           if (!lines) {
-            // 换行优先级：等号 → 推导符 → 语义间距\quad/\; → 二元运算符+/- → 标点
+            // 换行优先级：推导符 → 语义间距\quad/\; → 等号 → 二元运算符+/- → 标点
             const split =
-              splitAtTopLevelEquals(formula) ??
               splitAtTopLevelImplies(formula) ??
               splitAtTopLevelSpacing(formula) ??
+              splitAtTopLevelEquals(formula) ??
               splitAtTopLevelBinary(formula) ??
               splitAtTopLevelPunctuation(formula);
+
+            // 断行有效性验证：拆分出来的较长子段必须实质性短于原式
             if (split) {
-              setLines(split);
-              return;
+              const origLen = getEffectiveLatexLength(formula);
+              const maxSubLen = Math.max(
+                getEffectiveLatexLength(split[0]),
+                getEffectiveLatexLength(split[1]),
+              );
+              // 如果最长子段相较于原式减少了至少 15% 的有效长度，断行才具备实质降宽价值
+              if (maxSubLen <= origLen * 0.85 || split.length > 2) {
+                setLines(split);
+                return;
+              }
             }
           } else {
-            // 多行模式下找出仍然超宽的行，继续按同一优先级次拆分
+            // 多行模式下找出仍然超宽的行，继续按同一优先级拆分
             for (let i = 0; i < lineDivs.length; i++) {
               if (lineDivs[i].scrollWidth > containerWidth) {
+                const targetLine = lines[i];
                 const further =
-                  splitAtTopLevelEquals(lines[i]) ??
-                  splitAtTopLevelImplies(lines[i]) ??
-                  splitAtTopLevelSpacing(lines[i]) ??
-                  splitAtTopLevelBinary(lines[i]) ??
-                  splitAtTopLevelPunctuation(lines[i]);
+                  splitAtTopLevelImplies(targetLine) ??
+                  splitAtTopLevelSpacing(targetLine) ??
+                  splitAtTopLevelEquals(targetLine) ??
+                  splitAtTopLevelBinary(targetLine) ??
+                  splitAtTopLevelPunctuation(targetLine);
                 if (further) {
                   const next = [...lines];
                   next.splice(i, 1, further[0], further[1]);
@@ -133,7 +151,11 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
         // 动态保底缩放：不论是否换行，绝不刚性截断，确保 100% 完整可见不丢字
         const nextScale = Math.max(HARD_MIN_SCALE, needed);
         setScale(nextScale);
-        setScaledHeight(Math.ceil(contentHeight * nextScale));
+        if (lines && lines.length > 1) {
+          setScaledHeight(Math.ceil(contentHeight * nextScale));
+        } else {
+          setScaledHeight(undefined);
+        }
       } else {
         setScale(1);
         setScaledHeight(undefined);
@@ -190,7 +212,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   return (
     <div
       ref={outerRef}
-      className={`inline-flex items-center align-middle mx-0.5 my-0.5 max-w-full overflow-hidden ${className}`}
+      className={`inline-flex items-center justify-center align-middle mx-0.5 my-0.5 max-w-full overflow-hidden ${className}`}
       style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
     >
       <div
@@ -198,11 +220,12 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
         className={`text-neutral-800 font-medium ${
           lines && lines.length > 1
             ? "flex flex-col items-start gap-1.5"
-            : "inline-block whitespace-nowrap"
+            : "inline-block text-center whitespace-nowrap"
         }`}
         style={{
           transform: scale < 1 ? `scale(${scale})` : undefined,
-          transformOrigin: "center left",
+          transformOrigin:
+            lines && lines.length > 1 ? "center left" : "center center",
         }}
       >
         {innerContent}

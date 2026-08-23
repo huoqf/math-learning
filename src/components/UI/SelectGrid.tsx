@@ -144,7 +144,7 @@ export const SelectGrid = <T extends string = string>({
                 </span>
               )}
               {item.formula && (
-                <div className="w-full truncate whitespace-nowrap opacity-90">
+                <div className="w-full flex items-center justify-center overflow-hidden opacity-90">
                   <KatexFormula
                     formula={item.formula}
                     mode="inline"
