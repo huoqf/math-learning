@@ -271,7 +271,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
   };
 
   return (
-    <div className="w-full h-full flex flex-col gap-4 p-4 text-neutral-800 text-sm overflow-y-auto bg-neutral-50/50">
+    <div className="w-full min-h-full flex flex-col gap-4 p-4 text-neutral-800 text-sm bg-neutral-50/50">
       {/* ── 标题 ── */}
       <div className="flex items-center justify-between border-b border-neutral-200 pb-2.5">
         <div className="flex items-center gap-2 min-w-0">
@@ -477,7 +477,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="w-full py-3.5 px-4 bg-white rounded-lg border border-neutral-100/70 my-1 min-h-[54px] flex items-center justify-center overflow-x-hidden max-w-full">
+                    <div className="w-full py-3.5 px-4 bg-white rounded-lg border border-neutral-100/70 my-1 min-h-[54px] flex items-center justify-center overflow-hidden max-w-full">
                       {(() => {
                         // 1. 若为纯中文叙述段落（整体恰好是 \text{...}，且内部无数学符号）
                         //    使用非贪婪 *? 防止 \text{甲} \text{乙} 等多段被贪婪捕获误判；

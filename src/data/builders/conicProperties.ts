@@ -90,6 +90,11 @@ export function buildConicPropertiesPanel(
         value: focusTriangle.areaGeom.toFixed(2),
         color: MATH_COLORS.primary,
       },
+      {
+        label: "内切圆半径 r_{in}",
+        value: focusTriangle.incircle.inradius.toFixed(3),
+        color: MATH_COLORS.paramTertiary,
+      },
     );
   }
 
@@ -103,11 +108,12 @@ export function buildConicPropertiesPanel(
       prerequisites: ["平面直角坐标系", "焦点在 $x$ 轴上"],
     },
     {
-      name: "焦点三角形面积公式",
+      name: "焦点三角形面积与内切圆半径定理",
       latex: isEllipse
-        ? `S_{\\triangle PF_1F_2} = b^2 \\tan\\frac{\\theta}{2}`
+        ? `S_{\\triangle PF_1F_2} = b^2 \\tan\\frac{\\theta}{2}, \\quad r_{\\text{in}} = \\frac{S}{a+c} = \\frac{b^2\\tan\\frac{\\theta}{2}}{a+c}`
         : `S_{\\triangle PF_1F_2} = \\frac{b^2}{\\tan\\frac{\\theta}{2}}`,
       condition: `$\\theta = \\angle F_1PF_2$`,
+      note: "对椭圆，内切圆与底边 F1F2 的切点横坐标为 $x_T = e^2 x_P$，切点到长轴顶点的切线长恒为 $a-c$！",
     },
   ];
 

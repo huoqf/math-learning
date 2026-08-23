@@ -11,6 +11,8 @@ export const defaultParams: Record<string, number> = {
   theta: 0.785, // PI/4 ≈ 0.785 (45 deg)
   midpointX: 1,
   midpointY: 1,
+  poleX: 4.0,
+  poleY: 3.0,
 };
 
 export const paramMeta: Record<string, ParamMeta> = {
@@ -119,6 +121,28 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 3,
     step: 0.1,
     description: "目标弦 AB 的中点 Y 坐标",
+    importance: "core",
+  },
+  poleX: {
+    key: "poleX",
+    label: "极点 P x 坐标",
+    labelFormula: "\\color{#EF4444}{x_0}",
+    defaultValue: 4.0,
+    min: -6,
+    max: 6,
+    step: 0.1,
+    description: "曲线外极点 P 的横坐标",
+    importance: "core",
+  },
+  poleY: {
+    key: "poleY",
+    label: "极点 P y 坐标",
+    labelFormula: "\\color{#EF4444}{y_0}",
+    defaultValue: 3.0,
+    min: -5,
+    max: 5,
+    step: 0.1,
+    description: "曲线外极点 P 的纵坐标",
     importance: "core",
   },
 };

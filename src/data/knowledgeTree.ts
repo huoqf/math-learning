@@ -558,6 +558,17 @@ export const knowledgeTree: KnowledgeNode[] = [
     route: "/line-circle",
   },
   {
+    id: "know-circle-circle",
+    title: "圆与圆的位置关系及公共弦方程",
+    labTitle: "圆与圆实验室",
+    chapter: "解析几何",
+    module: "直线与圆",
+    importance: "gaokao",
+    animationIds: ["anim-circle-circle"],
+    prerequisites: ["know-line-circle"],
+    route: "/circle-circle",
+  },
+  {
     id: "know-conic-definition",
     title: "圆锥曲线的定义与轨迹生成",
     labTitle: "圆锥曲线定义与轨迹实验室",

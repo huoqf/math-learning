@@ -28,6 +28,11 @@ export interface ConicMathResult {
     areaGeom: number; // S = c * |y_P|
     areaTheoretical: number; // S = b^2 * tan(\theta/2) 或 b^2 / tan(\theta/2)
     maxAngleRad: number; // 椭圆最大顶角
+    incircle: {
+      incenter: Point2D;
+      inradius: number;
+      tangentBase: Point2D;
+    };
   };
 }
 
@@ -131,6 +136,24 @@ export function calculateConicProperties(
   const maxAngleRad =
     conicType === "ellipse" ? 2 * Math.atan(c / safeB) : Math.PI;
 
+  // 8. 焦点三角形内切圆解算 (Incircle)
+  const sideA = r2; // F2P 对面为 F1
+  const sideB = r1; // F1P 对面为 F2
+  const sideC = 2 * c; // F1F2 对面为 P
+  const perimeter = sideA + sideB + sideC;
+
+  const incenter: Point2D = {
+    x: (sideA * F1.x + sideB * F2.x + sideC * px) / (perimeter || 1),
+    y: (sideA * F1.y + sideB * F2.y + sideC * py) / (perimeter || 1),
+  };
+
+  const inradius = areaGeom / (perimeter / 2 || 1);
+
+  // 底边切点坐标 (落在 x 轴上)
+  // 对椭圆：切点坐标 x = e^2 * x_P
+  const tangentBaseX = conicType === "ellipse" ? e * e * px : incenter.x;
+  const tangentBase: Point2D = { x: tangentBaseX, y: 0 };
+
   return {
     conicType,
     a: safeA,
@@ -151,6 +174,11 @@ export function calculateConicProperties(
       areaGeom,
       areaTheoretical,
       maxAngleRad,
+      incircle: {
+        incenter,
+        inradius,
+        tangentBase,
+      },
     },
   };
 }

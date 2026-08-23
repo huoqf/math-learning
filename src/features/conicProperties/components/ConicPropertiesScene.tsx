@@ -374,6 +374,72 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
           >
             θ = {focusTriangle.angleDeg.toFixed(1)}°
           </text>
+          {/* 焦点三角形内切圆与内心 */}
+          {focusTriangle.incircle && focusTriangle.incircle.inradius > 0.05 && (
+            <g className="incircle-layer">
+              {(() => {
+                const inc = focusTriangle.incircle;
+                const incenterD = mathToDesign(
+                  inc.incenter.x,
+                  inc.incenter.y,
+                  scale,
+                );
+                const inradiusPx = inc.inradius * scale.scaleX;
+                const tBaseD = mathToDesign(
+                  inc.tangentBase.x,
+                  inc.tangentBase.y,
+                  scale,
+                );
+
+                return (
+                  <>
+                    {/* 内切圆 */}
+                    <circle
+                      cx={incenterD.x}
+                      cy={incenterD.y}
+                      r={inradiusPx}
+                      fill={withAlpha(MATH_COLORS.paramTertiary, 0.18)}
+                      stroke={MATH_COLORS.paramTertiary}
+                      strokeWidth={1.8}
+                      strokeDasharray="4 3"
+                    />
+                    {/* 内心 I */}
+                    <circle
+                      cx={incenterD.x}
+                      cy={incenterD.y}
+                      r={3}
+                      fill={MATH_COLORS.paramTertiary}
+                    />
+                    <text
+                      x={incenterD.x + 6}
+                      y={incenterD.y - 4}
+                      fill={MATH_COLORS.paramTertiary}
+                      fontSize={fontScale(11)}
+                      fontWeight="bold"
+                    >
+                      I (r={inc.inradius.toFixed(2)})
+                    </text>
+
+                    {/* 底边切点 T */}
+                    <circle
+                      cx={tBaseD.x}
+                      cy={tBaseD.y}
+                      r={3.2}
+                      fill={MATH_COLORS.paramPrimary}
+                    />
+                    <text
+                      x={tBaseD.x - 12}
+                      y={tBaseD.y + 14}
+                      fill={MATH_COLORS.paramPrimary}
+                      fontSize={fontScale(10)}
+                    >
+                      T(e²x_P, 0)
+                    </text>
+                  </>
+                );
+              })()}
+            </g>
+          )}
         </g>
       )}
 

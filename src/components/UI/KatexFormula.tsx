@@ -188,7 +188,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
     return (
       <div
         ref={outerRef}
-        className={`w-full my-1 flex items-center justify-center overflow-x-hidden transition-all duration-150 ${className}`}
+        className={`w-full my-1 flex items-center justify-center overflow-visible transition-all duration-150 ${className}`}
         style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
       >
         <div

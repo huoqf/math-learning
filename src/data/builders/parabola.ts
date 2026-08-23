@@ -187,9 +187,10 @@ export function buildParabolaPanel(
       level: "important",
     },
     {
-      name: "准线切线性质与蒙日定理",
-      latex: "k_{QA} \\cdot k_{QB} = -1,\\quad F \\in AB",
-      note: "① 以焦点弦 $AB$ 为直径的圆必与准线相切；② 从准线上任意点 $Q$ 引抛物线两切线 $QA$, $QB$ 必互相垂直，且切点弦 $AB$ 必过焦点 $F$。",
+      name: "抛物线阿基米德三角形性质定理 (准线蒙日定理)",
+      latex:
+        "QA \\perp QB, \\quad F \\in AB, \\quad S_{\\triangle QAB} = \\frac{p^2}{\\sin^3\\theta} \\ge p^2",
+      note: "① 准线上任一点 Q 引出的两条切线 QA ⊥ QB；② 切点弦 AB 必过焦点 F；③ 三角形 QAB 称为阿基米德三角形，其面积为外接矩形面积的一半，通径处达到最小值 p²。",
       prerequisites: ["点 $Q$ 在准线 $x = -p/2$ 上"],
       level: "derived",
     },
@@ -206,7 +207,7 @@ export function buildParabolaPanel(
       importance: "gaokao",
     },
     {
-      text: "准线垂切线与切点弦焦点归宿证明题。",
+      text: "阿基米德三角形全链条结论：过抛物线上任意两点引切线交于 Q，若切点弦过焦点 F ⇔ Q 点在准线上 ⇔ 两切线互相垂直（三位一体等价！）。",
       importance: "hard",
     },
   ];

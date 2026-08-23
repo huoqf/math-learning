@@ -4,7 +4,7 @@
  */
 
 export type ConicType = "ellipse" | "hyperbola" | "parabola";
-export type StudyMode = "general" | "focus" | "midpoint";
+export type StudyMode = "general" | "focus" | "midpoint" | "polePolar";
 
 export interface Point2D {
   x: number;
@@ -26,6 +26,9 @@ export interface ConicLineParams {
   // 在中点弦模式下：目标中点 (x0, y0)
   midpointX?: number;
   midpointY?: number;
+  // 在极点极线/切点弦模式下：外部极点 P(poleX, poleY)
+  poleX?: number;
+  poleY?: number;
 }
 
 export interface IntersectionResult {
@@ -124,6 +127,22 @@ export function solveConicLineIntersection(
     }
     // 直线过 M(x0, y0): y0 = k * x0 + m => m = y0 - k * x0
     m = y0 - k * x0;
+  } else if (studyMode === "polePolar") {
+    // 极点 P(x0, y0) 引出的极线（切点弦）
+    const x0 = params.poleX ?? 4;
+    const y0 = params.poleY ?? 3;
+    const safeY0 = Math.abs(y0) < 1e-4 ? (y0 >= 0 ? 0.01 : -0.01) : y0;
+
+    if (conicType === "ellipse") {
+      k = -(b * b * x0) / (a * a * safeY0);
+      m = (b * b) / safeY0;
+    } else if (conicType === "hyperbola") {
+      k = (b * b * x0) / (a * a * safeY0);
+      m = -(b * b) / safeY0;
+    } else {
+      k = p / safeY0;
+      m = (p * x0) / safeY0;
+    }
   }
 
   // 判断是否为过焦点弦

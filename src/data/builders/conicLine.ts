@@ -140,10 +140,25 @@ export function buildConicLineMathQuantities(
             : "k_{AB} \\cdot y_0 = p",
       note: "利用曲线方程上两点 A, B 作差，可避开一元二次方程根的繁琐求解，直接求得弦中点 M 与弦斜率 k 的乘积。",
     },
+    {
+      name: "极点与极线（切点弦方程对偶定理）",
+      latex:
+        conicType === "ellipse"
+          ? "\\frac{x_0 x}{a^2} + \\frac{y_0 y}{b^2} = 1"
+          : conicType === "hyperbola"
+            ? "\\frac{x_0 x}{a^2} - \\frac{y_0 y}{b^2} = 1"
+            : "y_0 y = p(x + x_0)",
+      condition: "极点 P(x_0, y_0) 在二次曲线外部",
+      note: "从曲线外一点 P(x0, y0) 引出的两条切线 PA, PB，其切点弦 AB 所在直线方程恰好是将二次方程中的 x² 替换为 x0 x、y² 替换为 y0 y！",
+    },
   ];
 
   // 3. 高考考点
   const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
+    {
+      text: "【切点弦方程速写】由二次曲线外一点 P(x0, y0) 作两条切线，求切点弦 AB 方程无需联立解切点，直接套用极线公式一步写出！",
+      importance: "gaokao",
+    },
     {
       text: "【联立方程与判别式讨论】高考压轴题第(2)问的通法：设直线 -> 联立方程 -> 判别式 $\\Delta > 0$ -> 韦达定理 -> 目标表达式化简。",
       importance: "gaokao",

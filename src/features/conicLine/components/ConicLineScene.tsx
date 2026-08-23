@@ -337,6 +337,52 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
         ),
       )}
 
+      {/* 极点极线模式：渲染极点 P 与切线 PA, PB */}
+      {studyMode === "polePolar" && (
+        <g className="pole-polar-layer">
+          {(() => {
+            const poleX = params.poleX ?? 4;
+            const poleY = params.poleY ?? 3;
+            const poleD = mathToDesign(poleX, poleY, scale);
+
+            return (
+              <>
+                {/* 切线 PA 与 PB */}
+                {intersectionDesignPoints.map((pt, idx) => (
+                  <line
+                    key={`tangent-arm-${idx}`}
+                    x1={poleD.x}
+                    y1={poleD.y}
+                    x2={pt.x}
+                    y2={pt.y}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={2}
+                    strokeDasharray="4 3"
+                  />
+                ))}
+
+                {/* 极点 P 交互点 */}
+                <circle
+                  cx={poleD.x}
+                  cy={poleD.y}
+                  r={7}
+                  fill={MATH_COLORS.paramPrimary}
+                />
+                <text
+                  x={poleD.x + 10}
+                  y={poleD.y - 10}
+                  fill={MATH_COLORS.paramPrimary}
+                  fontSize={fontScale(12)}
+                  fontWeight="bold"
+                >
+                  P({poleX.toFixed(1)}, {poleY.toFixed(1)})
+                </text>
+              </>
+            );
+          })()}
+        </g>
+      )}
+
       {/* 弦中点 M */}
       {midpointD && studyMode === "midpoint" && (
         <circle

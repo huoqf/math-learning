@@ -33,6 +33,10 @@ import {
   lineEquationLoader,
 } from "@/features/lineEquation/meta";
 import { lineCircleNode, lineCircleLoader } from "@/features/line-circle/meta";
+import {
+  circleCircleNode,
+  circleCircleLoader,
+} from "@/features/circle-circle/meta";
 import { trigLinesNode, trigLinesLoader } from "@/features/trigLines/meta";
 import {
   trigIdentityNode,
@@ -753,6 +757,7 @@ export const routeEntries: RouteEntry[] = [
   { node: conicDefinitionNode, loader: conicDefinitionLoader },
   { node: triangleSolveNode, loader: triangleSolveLoader },
   { node: lineCircleNode, loader: lineCircleLoader },
+  { node: circleCircleNode, loader: circleCircleLoader },
   { node: vectorLinearNode, loader: vectorLinearLoader },
   { node: vectorBasisNode, loader: vectorBasisLoader },
   {

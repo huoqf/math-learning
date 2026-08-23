@@ -77,6 +77,8 @@ export function ConicLineAnimation() {
       modeKeys = ["theta"];
     } else if (studyMode === "midpoint") {
       modeKeys = ["midpointX", "midpointY"];
+    } else if (studyMode === "polePolar") {
+      modeKeys = ["poleX", "poleY"];
     }
 
     const activeKeys = [...conicKeys, ...modeKeys];
@@ -126,10 +128,14 @@ export function ConicLineAnimation() {
         ((params.theta ?? Math.PI / 4) * 180) / Math.PI,
       );
       lineTex = `L_{焦点}: \\theta = \\color{#059669}{${thetaDeg}^\\circ}`;
-    } else {
+    } else if (studyMode === "midpoint") {
       const mx = params.midpointX ?? 1;
       const my = params.midpointY ?? 1;
       lineTex = `M_{中点}: (${mx.toFixed(1)}, ${my.toFixed(1)})`;
+    } else {
+      const px = params.poleX ?? 4;
+      const py = params.poleY ?? 3;
+      lineTex = `P_{极点}: (${px.toFixed(1)}, ${py.toFixed(1)})`;
     }
 
     return `${curveTex} \\quad \\text{与} \\quad ${lineTex}`;
@@ -170,6 +176,11 @@ export function ConicLineAnimation() {
                   key: "midpoint",
                   label: "中点弦与点差法",
                   formula: "k_{AB} \\cdot k_{OM} \\text{ 点差法}",
+                },
+                {
+                  key: "polePolar",
+                  label: "极点极线与切点弦",
+                  formula: "\\frac{x_0 x}{a^2}+\\frac{y_0 y}{b^2}=1",
                 },
               ]}
               value={studyMode}
