@@ -157,10 +157,25 @@ export function buildParametricPointPanel(
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "向量 AP · DQ 数量积",
-        symbol: "\\vec{AP} \\cdot \\vec{DQ}",
-        value: Number(res.dotAP_DQ.toFixed(2)),
+        label: "距离相对极小值增量",
+        symbol: "\\Delta d = |PQ| - |PQ|_{\\min}",
+        value: Number(res.distDelta.toFixed(3)),
+        color:
+          res.distDelta < 0.01
+            ? MATH_COLORS.paramTertiary
+            : MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "二次型 μ 偏离项贡献",
+        symbol: "(a^2+b^2)(\\mu - \\mu_0)^2",
+        value: Number(res.muTermContrib.toFixed(2)),
         color: MATH_COLORS.secondary,
+      },
+      {
+        label: "二次型 λ 偏离项贡献",
+        symbol: "\\lambda^2 c^2",
+        value: Number(res.lambdaTermContrib.toFixed(2)),
+        color: MATH_COLORS.primary,
       },
     );
 

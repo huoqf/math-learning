@@ -131,7 +131,7 @@ export default function DistanceModeScene({
             dirB={{
               x: E.x - distanceData.footH.x,
               y: E.y - distanceData.footH.y,
-              z: distanceData.zE - distanceData.footH.z,
+              z: E.z - distanceData.footH.z,
             }}
             radius={0.22}
             colorKey="highlight"

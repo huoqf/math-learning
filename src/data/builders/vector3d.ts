@@ -71,8 +71,8 @@ export function buildVector3DBasisPanel(
       color: MATH_COLORS.highlight,
     },
     {
-      label: "基底坐标 (x, y, z)",
-      symbol: "[\\vec{OP}]_{\\mathcal{B}}",
+      label: "基底分解系数 (x, y, z)",
+      symbol: "(x, y, z)",
       value: `(${x.toFixed(2)}, \\; ${y.toFixed(2)}, \\; ${z.toFixed(2)})`,
       color: MATH_COLORS.paramPrimary,
     },

@@ -141,9 +141,23 @@ export function ParallelepipedModeScene({
             opacity={0.06}
           />
 
-          {/* 复用公共 Segment3D 组件 */}
+          {/* 底面 4 棱 */}
           <Segment3D
             from={O}
+            to={box.xa}
+            colorKey="asymptote"
+            dashed
+            opacity={0.6}
+          />
+          <Segment3D
+            from={box.xa}
+            to={box.xy}
+            colorKey="asymptote"
+            dashed
+            opacity={0.6}
+          />
+          <Segment3D
+            from={box.xy}
             to={box.yb}
             colorKey="asymptote"
             dashed
@@ -151,11 +165,43 @@ export function ParallelepipedModeScene({
           />
           <Segment3D
             from={box.yb}
-            to={box.xy}
+            to={O}
             colorKey="asymptote"
             dashed
             opacity={0.6}
           />
+
+          {/* 顶面 4 棱 */}
+          <Segment3D
+            from={box.zc}
+            to={box.xz}
+            colorKey="asymptote"
+            dashed
+            opacity={0.6}
+          />
+          <Segment3D
+            from={box.xz}
+            to={box.P}
+            colorKey="asymptote"
+            dashed
+            opacity={0.6}
+          />
+          <Segment3D
+            from={box.P}
+            to={box.yz}
+            colorKey="asymptote"
+            dashed
+            opacity={0.6}
+          />
+          <Segment3D
+            from={box.yz}
+            to={box.zc}
+            colorKey="asymptote"
+            dashed
+            opacity={0.6}
+          />
+
+          {/* 4 条立棱 / 侧棱 */}
           <Segment3D
             from={O}
             to={box.zc}
@@ -171,36 +217,15 @@ export function ParallelepipedModeScene({
             opacity={0.6}
           />
           <Segment3D
+            from={box.xy}
+            to={box.P}
+            colorKey="asymptote"
+            dashed
+            opacity={0.6}
+          />
+          <Segment3D
             from={box.yb}
             to={box.yz}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.zc}
-            to={box.xz}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.zc}
-            to={box.yz}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.xz}
-            to={box.P}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.yz}
-            to={box.P}
             colorKey="asymptote"
             dashed
             opacity={0.6}

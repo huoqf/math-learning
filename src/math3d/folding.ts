@@ -184,7 +184,7 @@ export function calculateRectangleDiagonalFolding(
   const skewLinesAngleDeg =
     (Math.acos(Math.min(1, Math.max(0, cosSkew))) * 180) / Math.PI;
 
-  // 高考临界角：A'D ⊥ BC 时的二面角 cos(alpha_perp) = a^2 / (a^2 + b^2) 或根据点乘为 0 解算
+  // 高考临界角：A'D ⊥ BC 时的二面角 cos(alpha_perp) = -b^2 / a^2（代数推导：criticalCos = b³/L² ÷ (-a²b/L²) = -b²/a²）
   // vAprimeD · vBC = 0 <=> D.y - A_prime.y = 0 <=> A_prime.y = D.y = b/2
   // rA_prime_y = b/2 - HA.y
   // rAy * cos(alpha) + vAy * sin(alpha) = b/2 - HA.y (由于 vAy = 0，因此 cos(alpha) = (b/2 - HA.y) / rAy)

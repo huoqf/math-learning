@@ -51,10 +51,12 @@ export interface DoublePointDistanceResult {
   optimalMu: number;
   optimalFootOnBB1: Vec3;
   optimalFootOnAC: Vec3;
-  /** 向量 AP 与 DQ 的数量积 */
-  dotAP_DQ: number;
-  /** 是否达到向量垂直条件 (dotAP_DQ = 0) */
-  isAP_DQ_Perp: boolean;
+  /** 配方中 mu 偏离项贡献 (a^2+b^2)(mu - mu_opt)^2 */
+  muTermContrib: number;
+  /** 配方中 lambda 偏离项贡献 lambda^2 * c^2 */
+  lambdaTermContrib: number;
+  /** 距离偏离理论最小值的增量 delta = |PQ| - |PQ|_min */
+  distDelta: number;
 }
 
 /**
@@ -234,10 +236,10 @@ export function calculateDoublePointDistance(
   const optimalFootOnBB1: Vec3 = { x: a, y: 0, z: 0 };
   const optimalFootOnAC: Vec3 = { x: a * optimalMu, y: b * optimalMu, z: 0 };
 
-  // 向量 AP = (a, 0, lambda*c), DQ = (a*mu, b(mu-1), 0)
-  // AP · DQ = a^2 * mu
-  const dotAP_DQ = a * a * safeMu;
-  const isAP_DQ_Perp = Math.abs(dotAP_DQ) < 1e-6;
+  // 二次型配方分项贡献
+  const muTermContrib = (a * a + b * b) * (safeMu - optimalMu) ** 2;
+  const lambdaTermContrib = safeLambda * safeLambda * c * c;
+  const distDelta = Math.max(0, distPQ - minDistSkew);
 
   return {
     P,
@@ -248,8 +250,9 @@ export function calculateDoublePointDistance(
     optimalMu,
     optimalFootOnBB1,
     optimalFootOnAC,
-    dotAP_DQ,
-    isAP_DQ_Perp,
+    muTermContrib,
+    lambdaTermContrib,
+    distDelta,
   };
 }
 

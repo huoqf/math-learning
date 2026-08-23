@@ -114,11 +114,15 @@ export default function LinePlaneModeScene({
       {showRightAngles && showAuxiliary && (
         <AngleArc3D
           vertex={linePlaneData.A}
-          dirA={{ x: 0, y: 0, z: linePlaneData.zE }}
+          dirA={{
+            x: linePlaneData.E.x - linePlaneData.A.x,
+            y: linePlaneData.E.y - linePlaneData.A.y,
+            z: linePlaneData.E.z - linePlaneData.A.z,
+          }}
           dirB={{
             x: linePlaneData.C.x - linePlaneData.A.x,
             y: linePlaneData.C.y - linePlaneData.A.y,
-            z: 0,
+            z: linePlaneData.C.z - linePlaneData.A.z,
           }}
           radius={0.3}
           colorKey="accent"
@@ -131,8 +135,16 @@ export default function LinePlaneModeScene({
         <>
           <AngleArc3D
             vertex={linePlaneData.C}
-            dirA={{ x: -a, y: -b, z: 0 }}
-            dirB={{ x: -a, y: -b, z: linePlaneData.zE }}
+            dirA={{
+              x: linePlaneData.A.x - linePlaneData.C.x,
+              y: linePlaneData.A.y - linePlaneData.C.y,
+              z: linePlaneData.A.z - linePlaneData.C.z,
+            }}
+            dirB={{
+              x: linePlaneData.E.x - linePlaneData.C.x,
+              y: linePlaneData.E.y - linePlaneData.C.y,
+              z: linePlaneData.E.z - linePlaneData.C.z,
+            }}
             radius={0.7}
             colorKey="highlight"
           />

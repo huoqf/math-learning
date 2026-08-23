@@ -55,6 +55,9 @@ describe("3D 空间向量基底分解与共面检验数学纯函数测试", () =
     expect(vertices.xa).toEqual({ x: 2, y: 0, z: 0 });
     expect(vertices.yb).toEqual({ x: 0, y: 2, z: 0 });
     expect(vertices.zc).toEqual({ x: 0, y: 0, z: 2 });
+    expect(vertices.xy).toEqual({ x: 2, y: 2, z: 0 });
+    expect(vertices.xz).toEqual({ x: 2, y: 0, z: 2 });
+    expect(vertices.yz).toEqual({ x: 0, y: 2, z: 2 });
     expect(vertices.P).toEqual({ x: 2, y: 2, z: 2 });
   });
 
@@ -122,5 +125,47 @@ describe("3D 空间向量基底分解与共面检验数学纯函数测试", () =
     const P2: Vec3 = { x: 0, y: 0, z: 0 }; // 原点到平面的距离为 1/sqrt(3) ≈ 0.57735
     const proj2 = projectPointOnPlaneABC(P2, A, B, C);
     expect(proj2.distance).toBeCloseTo(1 / Math.sqrt(3));
+  });
+
+  it("当基底为一般斜基底时，基底法内积交叉项展开应与解析几何直角坐标模方严格一致", () => {
+    // 手算标准真值：a=(2,0,0), b=(1,2,0), c=(0,1,2)
+    // a·b=2, b·c=2, c·a=0
+    // x=1, y=2, z=3 => P = (4, 7, 6) => |P|^2 = 16+49+36 = 101
+    const a: Vec3 = { x: 2, y: 0, z: 0 };
+    const b: Vec3 = { x: 1, y: 2, z: 0 };
+    const c: Vec3 = { x: 0, y: 1, z: 2 };
+    const normRes = calculateBasisVectorNorm(a, b, c, 1, 2, 3);
+    expect(normRes.dotAB).toBeCloseTo(2);
+    expect(normRes.dotBC).toBeCloseTo(2);
+    expect(normRes.dotCA).toBeCloseTo(0);
+    expect(normRes.modulusSq).toBeCloseTo(101);
+    expect(normRes.modulus).toBeCloseTo(Math.sqrt(101));
+  });
+
+  it("任意斜基底下的正向线性组合与逆向克拉默解算应严格满足双向闭环不变性", () => {
+    const a: Vec3 = { x: 2, y: 0.5, z: 0 };
+    const b: Vec3 = { x: -0.8, y: 1.8, z: 0.3 };
+    const c: Vec3 = { x: 0.2, y: -0.4, z: 2.5 };
+
+    const testCases = [
+      { x: 1.5, y: -2.0, z: 0.8 },
+      { x: 0.33, y: 0.33, z: 0.34 },
+      { x: -1.2, y: 2.4, z: -0.5 },
+    ];
+
+    for (const { x, y, z } of testCases) {
+      // 1. 正向合成空间点 P
+      const P: Vec3 = {
+        x: x * a.x + y * b.x + z * c.x,
+        y: x * a.y + y * b.y + z * c.y,
+        z: x * a.z + y * b.z + z * c.z,
+      };
+      // 2. 逆向通过克拉默法则求解系数
+      const res = solveBasisCoefficients(a, b, c, P);
+      expect(res.isValid).toBe(true);
+      expect(res.x).toBeCloseTo(x, 4);
+      expect(res.y).toBeCloseTo(y, 4);
+      expect(res.z).toBeCloseTo(z, 4);
+    }
   });
 });

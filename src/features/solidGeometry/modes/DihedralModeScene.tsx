@@ -117,12 +117,12 @@ export default function DihedralModeScene({
             dirA={{
               x: A.x - dihedralData.edgeFootM.x,
               y: A.y - dihedralData.edgeFootM.y,
-              z: 0,
+              z: A.z - dihedralData.edgeFootM.z,
             }}
             dirB={{
               x: B.x - dihedralData.edgeFootM.x,
               y: B.y - dihedralData.edgeFootM.y,
-              z: 0,
+              z: B.z - dihedralData.edgeFootM.z,
             }}
             radius={0.25}
             colorKey="secondary"
@@ -135,12 +135,12 @@ export default function DihedralModeScene({
             dirA={{
               x: E.x - dihedralData.edgeFootM.x,
               y: E.y - dihedralData.edgeFootM.y,
-              z: dihedralData.zE,
+              z: E.z - dihedralData.edgeFootM.z,
             }}
             dirB={{
               x: D.x - dihedralData.edgeFootM.x,
               y: D.y - dihedralData.edgeFootM.y,
-              z: 0,
+              z: D.z - dihedralData.edgeFootM.z,
             }}
             radius={0.28}
             colorKey="paramTertiary"
@@ -157,12 +157,12 @@ export default function DihedralModeScene({
             dirA={{
               x: A.x - dihedralData.edgeFootM.x,
               y: A.y - dihedralData.edgeFootM.y,
-              z: 0,
+              z: A.z - dihedralData.edgeFootM.z,
             }}
             dirB={{
               x: E.x - dihedralData.edgeFootM.x,
               y: E.y - dihedralData.edgeFootM.y,
-              z: dihedralData.zE,
+              z: E.z - dihedralData.edgeFootM.z,
             }}
             radius={0.55}
             colorKey="highlight"

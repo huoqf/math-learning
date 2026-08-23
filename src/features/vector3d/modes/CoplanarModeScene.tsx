@@ -129,7 +129,7 @@ export function CoplanarModeScene({
           const q10 = {
             x: pointA.x + uMax * AB.x + vMin * AC.x,
             y: pointA.y + uMax * AB.y + vMin * AC.y,
-            z: pointA.z + uMin * AB.z + vMin * AC.z,
+            z: pointA.z + uMax * AB.z + vMin * AC.z,
           };
           const q11 = {
             x: pointA.x + uMax * AB.x + vMax * AC.x,
