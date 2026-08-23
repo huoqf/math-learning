@@ -55,78 +55,186 @@ export function buildLineEquationPanel(
 
   // 1. 模式一：方程形式转换 (forms)
   if (studyMode === "forms") {
-    quantities.push({
-      label: "一般式方程",
-      value: `${A.toFixed(1)}x ${B >= 0 ? "+" : ""} ${B.toFixed(1)}y ${C >= 0 ? "+" : ""} ${C.toFixed(1)} = 0`,
-    });
+    if (form === "pointSlope") {
+      const k = params.k ?? 1;
+      const x0 = params.x0 ?? 2;
+      const y0 = params.y0 ?? 3;
+      quantities.push(
+        {
+          label: "点斜式方程",
+          value: `y - (${y0.toFixed(1)}) = ${k.toFixed(1)}(x - (${x0.toFixed(1)}))`,
+          color: cPrimary,
+        },
+        {
+          label: "已知定点 P₀(x₀, y₀)",
+          value: `(${x0.toFixed(1)}, ${y0.toFixed(1)})`,
+          color: cSecondary,
+        },
+        {
+          label: "斜率 k",
+          value: k.toFixed(2),
+          color: cPrimary,
+        },
+        {
+          label: "对应一般式方程",
+          value: `${A.toFixed(1)}x ${B >= 0 ? "+" : ""} ${B.toFixed(1)}y ${C >= 0 ? "+" : ""} ${C.toFixed(1)} = 0`,
+        },
+      );
+    } else if (form === "slopeIntercept") {
+      const k = params.k ?? 1;
+      const b = params.b ?? 1;
+      quantities.push(
+        {
+          label: "斜截式方程",
+          value: `y = ${k.toFixed(1)}x ${b >= 0 ? "+" : ""} ${b.toFixed(1)}`,
+          color: cPrimary,
+        },
+        {
+          label: "斜率 k",
+          value: k.toFixed(2),
+          color: cPrimary,
+        },
+        {
+          label: "y 轴截距 b",
+          value: b.toFixed(2),
+          color: cSecondary,
+        },
+        {
+          label: "对应一般式方程",
+          value: `${A.toFixed(1)}x ${B >= 0 ? "+" : ""} ${B.toFixed(1)}y ${C >= 0 ? "+" : ""} ${C.toFixed(1)} = 0`,
+        },
+      );
+    } else if (form === "twoPoint") {
+      const x1 = params.x1 ?? -2;
+      const y1 = params.y1 ?? -1;
+      const x2 = params.x2 ?? 2;
+      const y2 = params.y2 ?? 3;
+      const isVert = Math.abs(x1 - x2) < 1e-9;
+      const isHoriz = Math.abs(y1 - y2) < 1e-9;
 
-    if (lineProps.slope !== null) {
-      quantities.push({
-        label: "斜率 k = -A/B",
-        value: lineProps.slope.toFixed(2),
-        color: cPrimary,
-      });
-      quantities.push({
-        label: "倾斜角 α",
-        value: `${lineProps.inclinationDeg.toFixed(1)}°`,
-        color: cSecondary,
-      });
+      quantities.push(
+        {
+          label: "两点式方程",
+          value:
+            !isVert && !isHoriz
+              ? `(y - (${y1.toFixed(1)})) / ${(y2 - y1).toFixed(1)} = (x - (${x1.toFixed(1)})) / ${(x2 - x1).toFixed(1)}`
+              : "分母为0 (退化)",
+          color: cPrimary,
+        },
+        {
+          label: "已知点 P₁(x₁, y₁)",
+          value: `(${x1.toFixed(1)}, ${y1.toFixed(1)})`,
+          color: cSecondary,
+        },
+        {
+          label: "已知点 P₂(x₂, y₂)",
+          value: `(${x2.toFixed(1)}, ${y2.toFixed(1)})`,
+          color: cTertiary,
+        },
+        {
+          label: "对应一般式方程",
+          value: `${A.toFixed(1)}x ${B >= 0 ? "+" : ""} ${B.toFixed(1)}y ${C >= 0 ? "+" : ""} ${C.toFixed(1)} = 0`,
+        },
+      );
+    } else if (form === "intercept") {
+      const a = params.a ?? 3;
+      const b = params.b ?? 2;
+      const isValidInt = Math.abs(a) > 1e-9 && Math.abs(b) > 1e-9;
+      quantities.push(
+        {
+          label: "截距式方程",
+          value: isValidInt
+            ? `x / (${a.toFixed(1)}) + y / (${b.toFixed(1)}) = 1`
+            : "截距为0 (无效)",
+          color: cPrimary,
+        },
+        {
+          label: "x 轴截距 a",
+          value: a.toFixed(2),
+          color: cSecondary,
+        },
+        {
+          label: "y 轴截距 b",
+          value: b.toFixed(2),
+          color: cTertiary,
+        },
+        {
+          label: "对应一般式方程",
+          value: `${A.toFixed(1)}x ${B >= 0 ? "+" : ""} ${B.toFixed(1)}y ${C >= 0 ? "+" : ""} ${C.toFixed(1)} = 0`,
+        },
+      );
     } else {
-      quantities.push({
-        label: "斜率 k",
-        value: "不存在 (α = 90°)",
-        color: cPrimary,
-      });
-      quantities.push({
-        label: "倾斜角 α",
-        value: "90.0°",
-        color: cSecondary,
-      });
+      // 一般式
+      quantities.push(
+        {
+          label: "一般式方程",
+          value: `${A.toFixed(1)}x ${B >= 0 ? "+" : ""} ${B.toFixed(1)}y ${C >= 0 ? "+" : ""} ${C.toFixed(1)} = 0`,
+          color: cPrimary,
+        },
+        {
+          label: "斜率 k = -A/B",
+          value:
+            lineProps.slope !== null
+              ? lineProps.slope.toFixed(2)
+              : "不存在 (垂直x轴)",
+          color: cSecondary,
+        },
+        {
+          label: "倾斜角 α",
+          value: `${lineProps.inclinationDeg.toFixed(1)}°`,
+          color: cTertiary,
+        },
+        {
+          label: "x 轴截距 a",
+          value:
+            lineProps.xIntercept !== null
+              ? lineProps.xIntercept.toFixed(2)
+              : "无 (平行x轴)",
+        },
+        {
+          label: "y 轴截距 b",
+          value:
+            lineProps.yIntercept !== null
+              ? lineProps.yIntercept.toFixed(2)
+              : "无 (平行y轴)",
+        },
+      );
     }
 
-    quantities.push({
-      label: "x 轴截距 a",
-      value:
-        lineProps.xIntercept !== null
-          ? lineProps.xIntercept.toFixed(2)
-          : "无 (平行x轴)",
-    });
-
-    quantities.push({
-      label: "y 轴截距 b",
-      value:
-        lineProps.yIntercept !== null
-          ? lineProps.yIntercept.toFixed(2)
-          : "无 (平行y轴)",
-      color: cTertiary,
-    });
-
+    // 动态调整定理显示优先级
     theorems.push(
+      {
+        name: "两点式方程",
+        latex: "\\frac{y - y_1}{y_2 - y_1} = \\frac{x - x_1}{x_2 - x_1}",
+        condition:
+          "x_1 \\neq x_2 \\text{ 且 } y_1 \\neq y_2 \\text{ (不平行于坐标轴)}",
+        level: form === "twoPoint" ? "core" : "important",
+      },
       {
         name: "点斜式方程",
         latex: "y - y_0 = k(x - x_0)",
         condition: "适用于斜率 k 存在 (直线不垂直于 x 轴) 的情况",
-        level: "core",
+        level: form === "pointSlope" ? "core" : "important",
       },
       {
         name: "斜截式方程",
         latex: "y = kx + b",
         condition: "已知斜率 k 与 y 轴截距 (0, b)",
-        level: "core",
+        level: form === "slopeIntercept" ? "core" : "important",
       },
       {
         name: "截距式方程",
         latex: "\\frac{x}{a} + \\frac{y}{b} = 1",
         condition:
           "a \\neq 0 \\text{ 且 } b \\neq 0 \\text{ (不过原点且不平行于坐标轴)}",
-        level: "important",
+        level: form === "intercept" ? "core" : "important",
       },
       {
         name: "一般式方程",
         latex: "Ax + By + C = 0",
         condition:
           "A, B \\text{ 不同时为 } 0 \\text{ (即 } A^2 + B^2 > 0 \\text{)}",
-        level: "core",
+        level: form === "general" ? "core" : "important",
       },
     );
 
@@ -142,12 +250,35 @@ export function buildLineEquationPanel(
       });
     }
 
+    if (form === "twoPoint") {
+      const x1 = params.x1 ?? -2;
+      const y1 = params.y1 ?? -1;
+      const x2 = params.x2 ?? 2;
+      const y2 = params.y2 ?? 3;
+      if (Math.abs(x1 - x2) < 1e-9 && Math.abs(y1 - y2) < 1e-9) {
+        warnings.push({
+          text: "两点重合 (P₁ = P₂)，无法确定唯一直线！",
+          level: "danger",
+        });
+      } else if (Math.abs(x1 - x2) < 1e-9) {
+        warnings.push({
+          text: "两点横坐标相同 (x₁ = x₂)，直线垂直于 x 轴，两点式分母为 0 失效，应表示为 x = x₁！",
+          level: "warning",
+        });
+      } else if (Math.abs(y1 - y2) < 1e-9) {
+        warnings.push({
+          text: "两点纵坐标相同 (y₁ = y₂)，直线平行于 x 轴，两点式分母为 0 失效，应表示为 y = y₁！",
+          level: "warning",
+        });
+      }
+    }
+
     if (
       form === "intercept" &&
       (Math.abs(params.a ?? 0) < 1e-9 || Math.abs(params.b ?? 0) < 1e-9)
     ) {
       warnings.push({
-        text: "截距式要求 a ≠ 0 且 b ≠ 0。过原点的直线不能用截距式表示！",
+        text: "截距式要求 a ≠ 0 且 b ≠ 0。过原点或平行于坐标轴的直线不能用截距式表示！",
         level: "warning",
       });
     }
@@ -316,6 +447,8 @@ export function buildLineEquationPanel(
     const B_fam = B + lam * B2;
     const C_fam = C + lam * C2;
 
+    const rel = calcTwoLinesRelation(A, B, C, A2, B2, C2);
+
     quantities.push(
       {
         label: "基准直线 L₁",
@@ -334,13 +467,21 @@ export function buildLineEquationPanel(
       },
     );
 
+    if (rel.type === "intersect" && rel.intersection) {
+      quantities.push({
+        label: "直线系恒过定点 P₀",
+        value: `(${rel.intersection.x.toFixed(2)}, ${rel.intersection.y.toFixed(2)})`,
+        color: MATH_COLORS.primary,
+      });
+    }
+
     theorems.push(
       {
         name: "过两直线交点的直线系",
         latex: "A_1 x + B_1 y + C_1 + \\lambda (A_2 x + B_2 y + C_2) = 0",
         condition:
           "表示经过 L₁ 与 L₂ 交点（若相交）的所有直线（不包含 L₂ 本身）",
-        level: "derived",
+        level: "core",
       },
       {
         name: "平行/垂直直线系",
@@ -351,10 +492,16 @@ export function buildLineEquationPanel(
       },
     );
 
-    gaokaoPoints.push({
-      text: "对于形如 $(2\\lambda+1)x + (\\lambda-1)y + \\lambda - 4 = 0$ 的含参直线，按 $\\lambda$ 整理为 $(2x + y + 1)\\lambda + (x - y - 4) = 0$，解方程组 $2x + y + 1 = 0$ 与 $x - y - 4 = 0$ 即可求得恒过的定点坐标。",
-      importance: "gaokao",
-    });
+    gaokaoPoints.push(
+      {
+        text: "【分离参数法求定点】对于形如 $(2\\lambda+1)x + (\\lambda-1)y + \\lambda - 4 = 0$ 的含参直线，按 $\\lambda$ 整理为 $(2x + y + 1)\\lambda + (x - y - 4) = 0$，解方程组 $2x + y + 1 = 0$ 与 $x - y - 4 = 0$ 即可求得恒过的定点坐标。",
+        importance: "gaokao",
+      },
+      {
+        text: "【直线系设线技巧】求经过两已知直线交点的直线方程时，优先设为 $L_1 + \\lambda L_2 = 0$，再代入已知条件（如过某点或垂直）解出 $\\lambda$，避免求交点联立方程组的繁琐计算。",
+        importance: "gaokao",
+      },
+    );
   }
 
   return {

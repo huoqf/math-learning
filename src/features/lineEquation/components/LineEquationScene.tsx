@@ -40,6 +40,8 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
     intersectionDesign,
     familyLineDesign,
     handlePointPDrag,
+    handlePoint1Drag,
+    handlePoint2Drag,
     labels,
   } = useLineEquationScene({
     params,
@@ -133,19 +135,26 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
         </g>
       )}
 
-      {/* 5. 两线关系模式：交点高亮 */}
-      {studyMode === "relation" && twoLinesRelation.type === "intersect" && intersectionDesign && (
-        <circle
-          cx={intersectionDesign.x}
-          cy={intersectionDesign.y}
-          r={6}
-          fill={MATH_COLORS.vectorResult}
-          stroke={MATH_COLORS.white}
-          strokeWidth={2}
-        />
-      )}
+      {/* 5. 两线关系 / 直线系模式：交点 / 恒过定点高亮 */}
+      {(studyMode === "relation" || studyMode === "family") &&
+        twoLinesRelation.type === "intersect" &&
+        intersectionDesign && (
+          <circle
+            cx={intersectionDesign.x}
+            cy={intersectionDesign.y}
+            r={6}
+            fill={
+              studyMode === "family"
+                ? MATH_COLORS.paramPrimary
+                : MATH_COLORS.vectorResult
+            }
+            stroke={MATH_COLORS.white}
+            strokeWidth={2}
+          />
+        )}
 
-      {/* 6. 动点 P 拖拽控制点 (仅在点到直线距离模式下显示并可拖拽) */}
+      {/* 6. 交互控制点 (标签统一由下方 avoidLabels 智能避让渲染，杜绝重叠重影) */}
+      {/* 6.1 点到直线距离模式：动点 P */}
       {studyMode === "distance" && (
         <InteractivePoint
           cx={params.x0 ?? 2}
@@ -154,6 +163,46 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
           vp={vp}
           onDrag={handlePointPDrag}
           color={MATH_COLORS.paramPrimary}
+          r={6}
+          fontScale={fontScale}
+        />
+      )}
+
+      {/* 6.2 两点式模式：已知点 P1 与 P2 */}
+      {studyMode === "forms" && form === "twoPoint" && (
+        <>
+          <InteractivePoint
+            cx={params.x1 ?? -2}
+            cy={params.y1 ?? -1}
+            scale={scale}
+            vp={vp}
+            onDrag={handlePoint1Drag}
+            color={MATH_COLORS.paramSecondary}
+            r={6}
+            fontScale={fontScale}
+          />
+          <InteractivePoint
+            cx={params.x2 ?? 2}
+            cy={params.y2 ?? 3}
+            scale={scale}
+            vp={vp}
+            onDrag={handlePoint2Drag}
+            color={MATH_COLORS.paramTertiary}
+            r={6}
+            fontScale={fontScale}
+          />
+        </>
+      )}
+
+      {/* 6.3 点斜式模式：已知定点 P0 */}
+      {studyMode === "forms" && form === "pointSlope" && (
+        <InteractivePoint
+          cx={params.x0 ?? 0}
+          cy={params.y0 ?? 1}
+          scale={scale}
+          vp={vp}
+          onDrag={handlePointPDrag}
+          color={MATH_COLORS.paramSecondary}
           r={6}
           fontScale={fontScale}
         />

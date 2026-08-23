@@ -6,7 +6,7 @@
 import { useMemo, useCallback } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { mathToDesign, designToMath } from "@/utils/coordinate";
+import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import {
   convertFormToGeneral,
@@ -55,13 +55,13 @@ export function useLineEquationScene({
       yMin: scale.yMin,
       yMax: scale.yMax,
     }),
-    [scale]
+    [scale],
   );
 
   // 3. 计算主直线剪裁端点
   const mainLineMath = useMemo(
     () => getLineSegmentInBounds(A, B, C, bounds),
-    [A, B, C, bounds]
+    [A, B, C, bounds],
   );
 
   const mainLineDesign = useMemo(() => {
@@ -80,50 +80,49 @@ export function useLineEquationScene({
 
   const pointPDesign = useMemo(
     () => mathToDesign(x0, y0, scale),
-    [x0, y0, scale]
+    [x0, y0, scale],
   );
 
   const distanceResult = useMemo(
     () => calcPointToLineDistance(x0, y0, A, B, C),
-    [x0, y0, A, B, C]
+    [x0, y0, A, B, C],
   );
 
   const footDesign = useMemo(
     () => mathToDesign(distanceResult.foot.x, distanceResult.foot.y, scale),
-    [distanceResult.foot, scale]
+    [distanceResult.foot, scale],
   );
 
   // 直角符号 (Right Angle Mark) 的 3 个坐标点（设计坐标系）
   const rightAnglePath = useMemo(() => {
-    if (!distanceResult.isValid || distanceResult.distance < 1e-4) return null;
+    if (!distanceResult.isValid || distanceResult.distance < 0.15) return null;
 
     const Q = footDesign;
     const P = pointPDesign;
 
     // 向量 Q -> P
     const vLen = Math.hypot(P.x - Q.x, P.y - Q.y);
-    if (vLen < 1e-4) return null;
+    if (vLen < 8) return null;
     const vx = (P.x - Q.x) / vLen;
     const vy = (P.y - Q.y) / vLen;
 
-    // 直线单位方向向量 (以主直线上的一段为例)
-    if (!mainLineDesign) return null;
-    const dx = mainLineDesign.p2.x - mainLineDesign.p1.x;
-    const dy = mainLineDesign.p2.y - mainLineDesign.p1.y;
-    const uLen = Math.hypot(dx, dy);
-    if (uLen < 1e-4) return null;
-    let ux = dx / uLen;
-    let uy = dy / uLen;
+    // 垂直于 Q->P 的直线上单位切向量
+    const ux = -vy;
+    const uy = vx;
 
-    const size = 12 * fontScale(1);
+    // 限制直角符号大小，确保精致小巧且不超出垂线段
+    const size = Math.min(10 * fontScale(1), vLen * 0.25);
+    if (size < 3) return null;
 
-    // 确定 u 向量的方向，保证直角符号在 Q 与 P 同侧的四分之一区域内
     const pt1 = { x: Q.x + size * ux, y: Q.y + size * uy };
-    const pt2 = { x: Q.x + size * ux + size * vx, y: Q.y + size * uy + size * vy };
+    const pt2 = {
+      x: Q.x + size * ux + size * vx,
+      y: Q.y + size * uy + size * vy,
+    };
     const pt3 = { x: Q.x + size * vx, y: Q.y + size * vy };
 
     return `${pt1.x},${pt1.y} ${pt2.x},${pt2.y} ${pt3.x},${pt3.y}`;
-  }, [footDesign, pointPDesign, mainLineDesign, distanceResult, fontScale]);
+  }, [footDesign, pointPDesign, distanceResult, fontScale]);
 
   // 5. 两直线位置关系模式 (relation)
   const A2 = params.A2 ?? 1;
@@ -132,7 +131,7 @@ export function useLineEquationScene({
 
   const line2Math = useMemo(
     () => getLineSegmentInBounds(A2, B2, C2, bounds),
-    [A2, B2, C2, bounds]
+    [A2, B2, C2, bounds],
   );
 
   const line2Design = useMemo(() => {
@@ -144,7 +143,7 @@ export function useLineEquationScene({
 
   const twoLinesRelation = useMemo(
     () => calcTwoLinesRelation(A, B, C, A2, B2, C2),
-    [A, B, C, A2, B2, C2]
+    [A, B, C, A2, B2, C2],
   );
 
   const intersectionDesign = useMemo(() => {
@@ -152,7 +151,7 @@ export function useLineEquationScene({
     return mathToDesign(
       twoLinesRelation.intersection.x,
       twoLinesRelation.intersection.y,
-      scale
+      scale,
     );
   }, [twoLinesRelation.intersection, scale]);
 
@@ -172,9 +171,9 @@ export function useLineEquationScene({
         familyLineCoeffs.A,
         familyLineCoeffs.B,
         familyLineCoeffs.C,
-        bounds
+        bounds,
       ),
-    [familyLineCoeffs, bounds]
+    [familyLineCoeffs, bounds],
   );
 
   const familyLineDesign = useMemo(() => {
@@ -184,14 +183,29 @@ export function useLineEquationScene({
     return { p1, p2 };
   }, [familyLineMath, scale]);
 
-  // 7. 拖拽回调函数 (双向参数联动)
+  // 7. 拖拽回调函数 (双向参数联动，接收由 InteractivePoint 传出的数学坐标)
   const handlePointPDrag = useCallback(
-    (designPt: Point2D) => {
-      const mathPt = designToMath(designPt.x, designPt.y, scale);
+    (mathPt: Point2D) => {
       onParamChange("x0", Number(mathPt.x.toFixed(1)));
       onParamChange("y0", Number(mathPt.y.toFixed(1)));
     },
-    [scale, onParamChange]
+    [onParamChange],
+  );
+
+  const handlePoint1Drag = useCallback(
+    (mathPt: Point2D) => {
+      onParamChange("x1", Number(mathPt.x.toFixed(1)));
+      onParamChange("y1", Number(mathPt.y.toFixed(1)));
+    },
+    [onParamChange],
+  );
+
+  const handlePoint2Drag = useCallback(
+    (mathPt: Point2D) => {
+      onParamChange("x2", Number(mathPt.x.toFixed(1)));
+      onParamChange("y2", Number(mathPt.y.toFixed(1)));
+    },
+    [onParamChange],
   );
 
   // 8. 智能避让文本标签
@@ -234,35 +248,81 @@ export function useLineEquationScene({
         });
       }
     } else if (studyMode === "forms") {
-      if (lineProps.xIntercept !== null) {
-        const pt = mathToDesign(lineProps.xIntercept, 0, scale);
+      if (form === "twoPoint") {
+        const p1D = mathToDesign(params.x1 ?? -2, params.y1 ?? -1, scale);
+        const p2D = mathToDesign(params.x2 ?? 2, params.y2 ?? 3, scale);
         rawEntries.push({
-          key: "xInt",
-          text: `(${lineProps.xIntercept.toFixed(1)}, 0)`,
-          x: pt.x,
-          y: pt.y,
-          anchor: "middle",
-          dy: 16,
-          priority: 2,
-        });
-      }
-      if (lineProps.yIntercept !== null) {
-        const pt = mathToDesign(0, lineProps.yIntercept, scale);
-        rawEntries.push({
-          key: "yInt",
-          text: `(0, ${lineProps.yIntercept.toFixed(1)})`,
-          x: pt.x,
-          y: pt.y,
+          key: "P1",
+          text: `P₁(${(params.x1 ?? -2).toFixed(1)}, ${(params.y1 ?? -1).toFixed(1)})`,
+          x: p1D.x,
+          y: p1D.y,
           anchor: "start",
-          dy: -10,
-          priority: 2,
+          dy: -14,
+          priority: 3,
         });
+        rawEntries.push({
+          key: "P2",
+          text: `P₂(${(params.x2 ?? 2).toFixed(1)}, ${(params.y2 ?? 3).toFixed(1)})`,
+          x: p2D.x,
+          y: p2D.y,
+          anchor: "start",
+          dy: -14,
+          priority: 3,
+        });
+      } else if (form === "pointSlope") {
+        const p0D = mathToDesign(params.x0 ?? 0, params.y0 ?? 1, scale);
+        rawEntries.push({
+          key: "P0",
+          text: `P₀(${(params.x0 ?? 0).toFixed(1)}, ${(params.y0 ?? 1).toFixed(1)})`,
+          x: p0D.x,
+          y: p0D.y,
+          anchor: "start",
+          dy: -14,
+          priority: 3,
+        });
+      } else {
+        if (lineProps.xIntercept !== null) {
+          const pt = mathToDesign(lineProps.xIntercept, 0, scale);
+          rawEntries.push({
+            key: "xInt",
+            text: `(${lineProps.xIntercept.toFixed(1)}, 0)`,
+            x: pt.x,
+            y: pt.y,
+            anchor: "middle",
+            dy: 16,
+            priority: 2,
+          });
+        }
+        if (lineProps.yIntercept !== null) {
+          const pt = mathToDesign(0, lineProps.yIntercept, scale);
+          rawEntries.push({
+            key: "yInt",
+            text: `(0, ${lineProps.yIntercept.toFixed(1)})`,
+            x: pt.x,
+            y: pt.y,
+            anchor: "start",
+            dy: -10,
+            priority: 2,
+          });
+        }
       }
     } else if (studyMode === "relation") {
       if (intersectionDesign) {
         rawEntries.push({
           key: "intersection",
           text: `交点 (${twoLinesRelation.intersection!.x.toFixed(1)}, ${twoLinesRelation.intersection!.y.toFixed(1)})`,
+          x: intersectionDesign.x,
+          y: intersectionDesign.y,
+          anchor: "start",
+          dy: -16,
+          priority: 3,
+        });
+      }
+    } else if (studyMode === "family") {
+      if (intersectionDesign) {
+        rawEntries.push({
+          key: "familyFixedPoint",
+          text: `恒过定点 P₀(${twoLinesRelation.intersection!.x.toFixed(1)}, ${twoLinesRelation.intersection!.y.toFixed(1)})`,
           x: intersectionDesign.x,
           y: intersectionDesign.y,
           anchor: "start",
@@ -278,6 +338,8 @@ export function useLineEquationScene({
     });
   }, [
     studyMode,
+    form,
+    params,
     x0,
     y0,
     pointPDesign,
@@ -304,6 +366,8 @@ export function useLineEquationScene({
     intersectionDesign,
     familyLineDesign,
     handlePointPDrag,
+    handlePoint1Drag,
+    handlePoint2Drag,
     labels,
     lineProps,
   };

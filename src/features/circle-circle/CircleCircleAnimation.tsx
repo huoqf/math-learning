@@ -11,7 +11,6 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
-  TabSwitcher,
   KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";

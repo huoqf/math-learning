@@ -48,7 +48,11 @@ export interface TwoLinesRelationResult {
 /**
  * 规范化一般式系数，消除比例缩放带来的不确定性，使 A^2 + B^2 归一化或保留标准形式
  */
-export function normalizeLineCoeffs(A: number, B: number, C: number): GeneralLineCoeffs {
+export function normalizeLineCoeffs(
+  A: number,
+  B: number,
+  C: number,
+): GeneralLineCoeffs {
   if (Math.abs(A) < 1e-9 && Math.abs(B) < 1e-9) {
     return { A: 0, B: 0, C, isValid: false };
   }
@@ -73,7 +77,7 @@ export function convertFormToGeneral(
     A?: number;
     B?: number;
     C?: number;
-  }
+  },
 ): GeneralLineCoeffs {
   switch (form) {
     case "pointSlope": {
@@ -126,7 +130,7 @@ export function getLineSegmentInBounds(
   A: number,
   B: number,
   C: number,
-  bounds: Bounds2D
+  bounds: Bounds2D,
 ): LineSegment | null {
   if (Math.abs(A) < 1e-9 && Math.abs(B) < 1e-9) return null;
 
@@ -169,7 +173,7 @@ export function getLineSegmentInBounds(
   const uniquePoints: Point2D[] = [];
   for (const pt of points) {
     const isDuplicate = uniquePoints.some(
-      (u) => Math.hypot(u.x - pt.x, u.y - pt.y) < 1e-5
+      (u) => Math.hypot(u.x - pt.x, u.y - pt.y) < 1e-5,
     );
     if (!isDuplicate) {
       uniquePoints.push(pt);
@@ -191,7 +195,7 @@ export function calcPointToLineDistance(
   y0: number,
   A: number,
   B: number,
-  C: number
+  C: number,
 ): PointToLineResult {
   const denomSq = A * A + B * B;
   if (denomSq < 1e-12) {
@@ -220,7 +224,7 @@ export function calcTwoLinesRelation(
   C1: number,
   A2: number,
   B2: number,
-  C2: number
+  C2: number,
 ): TwoLinesRelationResult {
   const norm1 = Math.hypot(A1, B1);
   const norm2 = Math.hypot(A2, B2);
@@ -348,4 +352,44 @@ export function getLineProperties(A: number, B: number, C: number) {
     yIntercept,
     isValid: true,
   };
+}
+
+/**
+ * 格式化一般式方程 Ax + By + C = 0 的标准 LaTeX
+ */
+export function formatGeneralEquationLatex(
+  A: number,
+  B: number,
+  C: number,
+  colors?: { cA?: string; cB?: string; cC?: string },
+): string {
+  const parts: string[] = [];
+
+  // A*x 项
+  if (Math.abs(A) > 1e-9) {
+    const aAbs = Math.abs(A);
+    const aStr = aAbs === 1 ? "" : aAbs.toFixed(1);
+    const sign = A < 0 ? "-" : "";
+    const term = `${sign}${aStr}x`;
+    parts.push(colors?.cA ? `\\color{${colors.cA}}{${term}}` : term);
+  }
+
+  // B*y 项
+  if (Math.abs(B) > 1e-9) {
+    const bAbs = Math.abs(B);
+    const bStr = bAbs === 1 ? "" : bAbs.toFixed(1);
+    const sign = parts.length > 0 ? (B > 0 ? "+ " : "- ") : B < 0 ? "-" : "";
+    const term = `${sign}${bStr}y`;
+    parts.push(colors?.cB ? `\\color{${colors.cB}}{${term}}` : term);
+  }
+
+  // C 项
+  if (Math.abs(C) > 1e-9 || parts.length === 0) {
+    const cAbs = Math.abs(C);
+    const sign = parts.length > 0 ? (C > 0 ? "+ " : "- ") : C < 0 ? "-" : "";
+    const term = `${sign}${cAbs.toFixed(1)}`;
+    parts.push(colors?.cC ? `\\color{${colors.cC}}{${term}}` : term);
+  }
+
+  return `${parts.join(" ")} = 0`;
 }
