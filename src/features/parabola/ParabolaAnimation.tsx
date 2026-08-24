@@ -274,7 +274,19 @@ export function ParabolaAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引 */}
+          {/* 4. 参数调节 Section */}
+          <LeftPanelSection
+            title="参数调节"
+            subtitle="拖动滑块探索动态几何规律"
+          >
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={handleReset}
+            />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引（置于参数调节下方） */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
@@ -303,18 +315,6 @@ export function ParabolaAnimation() {
                 </div>
               </div>
             </TipCard>
-          </LeftPanelSection>
-
-          {/* 4. 参数调节 Section */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块探索动态几何规律"
-          >
-            <ParamControl
-              params={paramConfigs}
-              onParamChange={handleParamChange}
-              onReset={handleReset}
-            />
           </LeftPanelSection>
         </LeftPanel>
       }

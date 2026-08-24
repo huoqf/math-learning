@@ -283,7 +283,19 @@ export function LineParamTAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 教学提示与题设导引 */}
+          {/* 参数调节 */}
+          <LeftPanelSection
+            title="参数调节"
+            subtitle="拖动滑块改变直线与曲线参数"
+          >
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={handleReset}
+            />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引（置于参数调节下方） */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
@@ -312,18 +324,6 @@ export function LineParamTAnimation() {
                 </div>
               </div>
             </TipCard>
-          </LeftPanelSection>
-
-          {/* 参数调节 */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块改变直线与曲线参数"
-          >
-            <ParamControl
-              params={paramConfigs}
-              onParamChange={handleParamChange}
-              onReset={handleReset}
-            />
           </LeftPanelSection>
         </LeftPanel>
       }

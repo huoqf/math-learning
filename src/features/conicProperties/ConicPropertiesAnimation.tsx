@@ -370,7 +370,18 @@ export function ConicPropertiesAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引 */}
+          <LeftPanelSection
+            title="参数调节"
+            subtitle="拖动滑块观察图形与量值响应"
+          >
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={handleReset}
+            />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引（置于参数调节下方） */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
@@ -399,17 +410,6 @@ export function ConicPropertiesAnimation() {
                 </div>
               </div>
             </TipCard>
-          </LeftPanelSection>
-
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块观察图形与量值响应"
-          >
-            <ParamControl
-              params={paramConfigs}
-              onParamChange={handleParamChange}
-              onReset={handleReset}
-            />
           </LeftPanelSection>
         </LeftPanel>
       }

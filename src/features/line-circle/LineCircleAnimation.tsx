@@ -401,7 +401,31 @@ export function LineCircleAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引 */}
+          {/* 3. 参数调节 Section */}
+          <LeftPanelSection
+            title="核心参数调节"
+            subtitle="聚焦动直线与半径主参数"
+          >
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={handleReset}
+            />
+
+            {/* 展开/收起圆心平移辅助参数 (a, b) */}
+            <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
+              <span>圆心平移参数 (a, b)</span>
+              <button
+                type="button"
+                onClick={() => setShowCenterParams((v) => !v)}
+                className="text-blue-600 hover:text-blue-700 font-medium px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"
+              >
+                {showCenterParams ? "收起圆心参数" : "展开圆心参数"}
+              </button>
+            </div>
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引（置于参数调节下方） */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
@@ -430,30 +454,6 @@ export function LineCircleAnimation() {
                 </div>
               </div>
             </TipCard>
-          </LeftPanelSection>
-
-          {/* 3. 参数调节 Section */}
-          <LeftPanelSection
-            title="核心参数调节"
-            subtitle="聚焦动直线与半径主参数"
-          >
-            <ParamControl
-              params={paramConfigs}
-              onParamChange={handleParamChange}
-              onReset={handleReset}
-            />
-
-            {/* 展开/收起圆心平移辅助参数 (a, b) */}
-            <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
-              <span>圆心平移参数 (a, b)</span>
-              <button
-                type="button"
-                onClick={() => setShowCenterParams((v) => !v)}
-                className="text-blue-600 hover:text-blue-700 font-medium px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"
-              >
-                {showCenterParams ? "收起圆心参数" : "展开圆心参数"}
-              </button>
-            </div>
           </LeftPanelSection>
         </LeftPanel>
       }

@@ -304,37 +304,6 @@ export function CircleCircleAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【秒杀通法】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.method}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
-
           {/* 3. 圆 O1 参数调节（红） */}
           <LeftPanelSection
             title={
@@ -371,6 +340,37 @@ export function CircleCircleAnimation() {
               params={circle2Configs}
               onParamChange={handleParamChange}
             />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引（置于参数调节下方） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【秒杀通法】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.method}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
 
           {/* 5. 辅助图层开关 */}
