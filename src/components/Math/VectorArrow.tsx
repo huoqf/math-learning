@@ -20,7 +20,9 @@ interface VectorArrowProps {
   headWidth?: number;
   /** 标签文本，显示在箭头中点附近 */
   label?: string;
-  /** 标签偏移量 [dx, dy] (px)，相对于箭头中点 */
+  /** 标签在箭身上的位置比例 (0~1)，默认 0.5 (中点) */
+  labelPositionRatio?: number;
+  /** 标签偏移量 [dx, dy] (px)，相对于箭头指定比例点 */
   labelOffset?: [number, number];
   /** 标签字号（设计基准值，会通过 fontScale 缩放） */
   labelSize?: number;
@@ -39,6 +41,7 @@ export const VectorArrow: React.FC<VectorArrowProps> = ({
   headLength = 10,
   headWidth = 6,
   label,
+  labelPositionRatio = 0.5,
   labelOffset = [0, -8],
   labelSize = 11,
   fontScale = (v) => v,
@@ -68,9 +71,10 @@ export const VectorArrow: React.FC<VectorArrowProps> = ({
   const wing2X = baseX + uy * (headWidth / 2);
   const wing2Y = baseY - ux * (headWidth / 2);
 
-  // 标签位置：箭头中点 + 偏移
-  const midX = (startPt.x + endPt.x) / 2 + labelOffset[0];
-  const midY = (startPt.y + endPt.y) / 2 + labelOffset[1];
+  // 标签位置：按 labelPositionRatio 比例插值 + 偏移
+  const ratio = Math.max(0.05, Math.min(0.95, labelPositionRatio));
+  const posX = startPt.x + (endPt.x - startPt.x) * ratio + labelOffset[0];
+  const posY = startPt.y + (endPt.y - startPt.y) * ratio + labelOffset[1];
 
   return (
     <g>
@@ -95,11 +99,14 @@ export const VectorArrow: React.FC<VectorArrowProps> = ({
       {/* 标签 */}
       {label && (
         <text
-          x={midX}
-          y={midY}
+          x={posX}
+          y={posY}
           textAnchor="middle"
           dominantBaseline="central"
           fill={color}
+          stroke="white"
+          strokeWidth={3}
+          paintOrder="stroke"
           fontSize={fontScale(labelSize)}
           fontWeight={600}
           fontFamily="monospace"

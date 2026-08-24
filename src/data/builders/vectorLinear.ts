@@ -143,43 +143,100 @@ export function buildVectorLinearPanel(
     );
   }
 
-  // 2. 定理列表
-  const theorems: Theorem[] = [
-    {
-      name: "向量共线充要条件",
+  // 2. 定理列表（根据当前探究模式动态置顶）
+  const allTheorems: Record<
+    string,
+    { name: string; latex: string; prerequisites: string[] }
+  > = {
+    linearCombo: {
+      name: "向量加减与数乘线性运算法则",
       latex:
-        "\\vec{b} = \\lambda\\vec{a} \\iff x_1 y_2 - x_2 y_1 = 0 \\quad (\\vec{a} \\neq \\vec{0})",
-      prerequisites: ["a 为非零向量", "坐标交叉相乘为 0"],
-    },
-    {
-      name: "三点共线定理 (高考核心考点)",
-      latex: "\\vec{OC} = x\\vec{OA} + y\\vec{OB} \\quad (x + y = 1)",
+        "\\vec{s} = \\lambda\\vec{a} + \\mu\\vec{b} = (\\lambda x_a + \\mu x_b, \\lambda y_a + \\mu y_b)",
       prerequisites: [
-        "始点 O 为平面内任意点",
-        "系数和 x + y = 1 时 C 落在直线 AB 上",
+        "三角形法则 (首尾顺次相接)",
+        "平行四边形法则 (共起点作对角线)",
+        "数乘几何意义 (λ>0同向, λ<0反向, λ=0零向量)",
       ],
     },
-    {
+    collinear: {
+      name: "三点共线定理 (高考核心大招)",
+      latex: "\\vec{OC} = x\\vec{OA} + y\\vec{OB} \\iff x + y = 1",
+      prerequisites: [
+        "始点 O 为平面内任意基准定点",
+        "A, B, C 三点共线充要条件为系数和 x + y = 1",
+        "0 ≤ x, y ≤ 1 对应线段 AB 内分点；x=y=0.5 对应中点",
+      ],
+    },
+    collinearCondition: {
+      name: "向量平行/共线充要条件",
+      latex:
+        "\\vec{a} \\parallel \\vec{b} \\iff x_a y_b - x_b y_a = 0 \\quad (\\vec{a} \\neq \\vec{0})",
+      prerequisites: [
+        "向量共线等价于存在唯一实数 λ 使得 b = λa",
+        "坐标交叉相乘之差为 0",
+      ],
+    },
+    basis: {
       name: "平面向量基本定理",
       latex: "\\vec{v} = \\lambda_1\\vec{e}_1 + \\lambda_2\\vec{e}_2",
       prerequisites: [
-        "e1, e2 为同一平面内不共线的基底向量",
-        "分解系数 λ1, λ2 存在且唯一",
+        "e₁, e₂ 为同一平面内不共线的基底向量 (det ≠ 0)",
+        "平面内任一向量 v 存在且唯一确定一对实数 λ₁, λ₂",
       ],
     },
-  ];
+  };
 
-  // 3. 高考考点
-  const gaokaoPoints: GaokaoPoint[] = [
-    {
-      text: "高考热点：三点共线系数和定理 (OC = x*OA + y*OB 且 x + y = 1)。若 0 <= x, y <= 1，则 C 落在线段 AB 上；中点时 x = y = 0.5。",
-      importance: "gaokao",
-    },
-    {
-      text: "坐标法与基底法：利用向量线性分解，将复杂的几何线段比例、交点及平行垂直问题转化为联立方程组求解。",
-      importance: "gaokao",
-    },
-  ];
+  const theorems: Theorem[] = [];
+  if (studyMode === "linearCombo") {
+    theorems.push({ ...allTheorems.linearCombo, level: "core" });
+    theorems.push({ ...allTheorems.collinearCondition, level: "important" });
+    theorems.push({ ...allTheorems.basis, level: "supplementary" });
+  } else if (studyMode === "collinear") {
+    theorems.push({ ...allTheorems.collinear, level: "core" });
+    theorems.push({ ...allTheorems.collinearCondition, level: "core" });
+    theorems.push({ ...allTheorems.basis, level: "supplementary" });
+  } else {
+    theorems.push({ ...allTheorems.basis, level: "core" });
+    theorems.push({ ...allTheorems.collinearCondition, level: "important" });
+    theorems.push({ ...allTheorems.linearCombo, level: "supplementary" });
+  }
+
+  // 3. 高考考点（按模式动态适配）
+  const gaokaoPoints: GaokaoPoint[] = [];
+  if (studyMode === "linearCombo") {
+    gaokaoPoints.push(
+      {
+        text: "向量三角形不等式：||a| - |b|| ≤ |a ± b| ≤ |a| + |b|，当且仅当 a, b 同向共线或反向共线时取等号。",
+        importance: "gaokao",
+      },
+      {
+        text: "差向量几何意义：向量 a - b 是从 b 的终点指向 a 的终点的向量，常用于转化距离与解析模长。",
+        importance: "gaokao",
+      },
+    );
+  } else if (studyMode === "collinear") {
+    gaokaoPoints.push(
+      {
+        text: "三点共线分点与面积比（奔驰定理）：若 OC = x·OA + y·OB 且 x+y=1，则 △OAC 与 △OBC 的面积比满足 S_△OBC / S_△OAC = x / y。",
+        importance: "gaokao",
+      },
+      {
+        text: "斜率与坐标秒杀：若两向量平行，则坐标交叉相乘 xa*yb - xb*ya = 0（横纵交乘相等），避免讨论斜率不存在的繁琐分类。",
+        importance: "gaokao",
+      },
+    );
+  } else {
+    gaokaoPoints.push(
+      {
+        text: "基底法与建系法双向转化：选择互相垂直的单位向量即为平面直角坐标系；在非正交图形（菱形、平行四边形、斜三角形）中，以相邻两边为斜基底可秒杀动点线性表征。",
+        importance: "gaokao",
+      },
+      {
+        text: "待定系数法求分解系数：通过向量数量积或列二元一次方程组，求出目标向量在两不共线基底上的唯一投影与分解系数。",
+        importance: "gaokao",
+      },
+    );
+  }
 
   // 4. 退化与异常警示
   const warnings: WarningItem[] = [];
@@ -199,7 +256,7 @@ export function buildVectorLinearPanel(
 
   if (studyMode === "basis" && !isBasisValid) {
     warnings.push({
-      text: "基底失效警告：基底向量 e1 与 e2 共线（交叉相乘值为 0），无法张成二维向量空间，不能唯一分解目标向量！",
+      text: "基底失效警告：基底向量 e₁ 与 e₂ 共线（交叉相乘值为 0），无法张成二维向量空间，不能唯一分解目标向量！",
       level: "danger",
     });
   }
