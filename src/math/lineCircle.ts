@@ -17,6 +17,8 @@ export interface LineCircleParams {
   m: number; // 直线 y 截距 y = kx + m
   px?: number; // 圆外点 Px (切线模式)
   py?: number; // 圆外点 Py (切线模式)
+  mx?: number; // 圆内定点 Mx (定点弦长极值分析)
+  my?: number; // 圆内定点 My (定点弦长极值分析)
 }
 
 export interface BaseLineCircleResult {
@@ -50,6 +52,11 @@ export interface LineCircleResult extends BaseLineCircleResult {
   tangentLength?: number;
   tangentPoints?: Point2D[];
   secantLineEq?: { A: number; B: number; C: number; latex: string };
+  pointM?: Point2D;
+  distMC?: number;
+  maxChordLength?: number;
+  minChordLength?: number;
+  isInsideCircle?: boolean;
 }
 
 /**
@@ -123,7 +130,7 @@ export function calculateBaseLineCircle(
   // 3. 位置关系
   let relation: "intersect" | "tangent" | "disjoint";
   let relationLabel = "";
-  const eps = 1e-6;
+  const eps = 1e-3;
   if (distance < r - eps) {
     relation = "intersect";
     relationLabel = "相交 (2个公共点)";
@@ -144,7 +151,20 @@ export function calculateBaseLineCircle(
   let sumX = 0;
   let prodX = 0;
 
-  if (Math.abs(B) > 1e-7) {
+  if (relation === "tangent") {
+    // 相切时交点严格唯一（即垂足切点 H），判别式 Delta = 0
+    delta = 0;
+    intersections.push(foot);
+    if (Math.abs(B) > 1e-7) {
+      const kLine = -A / B;
+      const mLine = -C / B;
+      coeffA = 1 + kLine * kLine;
+      coeffB = 2 * (kLine * (mLine - b) - a);
+      coeffC = a * a + (mLine - b) * (mLine - b) - r * r;
+      sumX = 2 * foot.x;
+      prodX = foot.x * foot.x;
+    }
+  } else if (Math.abs(B) > 1e-7) {
     // y = k_line * x + m_line  => k_line = -A/B, m_line = -C/B
     const kLine = -A / B;
     const mLine = -C / B;
@@ -156,16 +176,15 @@ export function calculateBaseLineCircle(
     sumX = -coeffB / coeffA;
     prodX = coeffC / coeffA;
 
-    if (delta >= -eps) {
-      const safeDelta = Math.max(0, delta);
-      const sqrtDelta = Math.sqrt(safeDelta);
+    if (delta > 0) {
+      const sqrtDelta = Math.sqrt(delta);
       const x1 = (-coeffB - sqrtDelta) / (2 * coeffA);
       const y1 = kLine * x1 + mLine;
       const x2 = (-coeffB + sqrtDelta) / (2 * coeffA);
       const y2 = kLine * x2 + mLine;
 
       intersections.push({ x: x1, y: y1 });
-      if (Math.abs(x2 - x1) > 1e-5 || Math.abs(y2 - y1) > 1e-5) {
+      if (Math.abs(x2 - x1) > 1e-4 || Math.abs(y2 - y1) > 1e-4) {
         intersections.push({ x: x2, y: y2 });
       }
     }
@@ -174,12 +193,12 @@ export function calculateBaseLineCircle(
     const xConst = -C / A;
     const dySquare = r * r - (xConst - a) * (xConst - a);
     delta = dySquare * 4; // 标识
-    if (dySquare >= -eps) {
-      const safeDy = Math.sqrt(Math.max(0, dySquare));
+    if (dySquare > 0) {
+      const safeDy = Math.sqrt(dySquare);
       const y1 = b + safeDy;
       const y2 = b - safeDy;
       intersections.push({ x: xConst, y: y1 });
-      if (safeDy > 1e-5) {
+      if (safeDy > 1e-4) {
         intersections.push({ x: xConst, y: y2 });
       }
     }
@@ -188,7 +207,7 @@ export function calculateBaseLineCircle(
   // 5. 弦长计算
   let chordLengthGeom = 0;
   let chordLengthAlg = 0;
-  if (relation !== "disjoint") {
+  if (relation === "intersect") {
     chordLengthGeom = 2 * Math.sqrt(Math.max(0, r * r - distance * distance));
     chordLengthAlg = chordLengthGeom; // 几何与代数弦长值相等
   }
@@ -219,7 +238,7 @@ export function calculateBaseLineCircle(
 export function calculateLineCircle(
   params: LineCircleParams,
 ): LineCircleResult {
-  const { a, b, r, k, m, px, py } = params;
+  const { a, b, r, k, m, px, py, mx, my } = params;
 
   // 1. 直线方程 kx - y + m = 0  => A=k, B=-1, C=m
   const A = k;
@@ -269,6 +288,25 @@ export function calculateLineCircle(
     }
   }
 
+  // 5. 定点弦长最值分析 (模式2/相交弦长)
+  let pointM: Point2D | undefined;
+  let distMC: number | undefined;
+  let maxChordLength: number | undefined;
+  let minChordLength: number | undefined;
+  let isInsideCircle: boolean | undefined;
+
+  if (mx !== undefined && my !== undefined) {
+    pointM = { x: mx, y: my };
+    distMC = Math.hypot(mx - a, my - b);
+    isInsideCircle = distMC < r - 1e-6;
+    maxChordLength = 2 * r; // 直径
+    if (distMC < r) {
+      minChordLength = 2 * Math.sqrt(Math.max(0, r * r - distMC * distMC)); // 垂直弦
+    } else {
+      minChordLength = 0;
+    }
+  }
+
   return {
     ...baseRes,
     center: { x: a, y: b },
@@ -281,6 +319,11 @@ export function calculateLineCircle(
     tangentLength,
     tangentPoints,
     secantLineEq,
+    pointM,
+    distMC,
+    maxChordLength,
+    minChordLength,
+    isInsideCircle,
   };
 }
 

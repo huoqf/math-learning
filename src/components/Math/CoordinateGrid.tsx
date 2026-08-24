@@ -13,9 +13,17 @@ interface CoordinateGridProps {
   fontScale?: (v: number) => number;
 }
 
+/** 格式化刻度数值：整数显示整数，非整数去除末尾无意义的 0 */
+function formatTick(val: number): string {
+  if (Math.abs(val - Math.round(val)) < 1e-4) {
+    return Math.round(val).toString();
+  }
+  return Number(val.toFixed(2)).toString();
+}
+
 export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   scale,
-  showGrid = true,
+  showGrid = false, // 默认纯净高中数学坐标系 (无背景虚线方格干扰)
   showLabels = true,
   xStep = 1,
   yStep = 1,
@@ -23,7 +31,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
 }) => {
   const { xMin, xMax, yMin, yMax } = scale;
 
-  // 生成网格线
+  // 生成网格线（若显式开启 showGrid）
   const gridLines = React.useMemo(() => {
     const lines: React.ReactNode[] = [];
     if (!showGrid) return lines;
@@ -76,13 +84,13 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   // 生成刻度线与文本标签
   const ticksAndLabels = React.useMemo(() => {
     const elements: React.ReactNode[] = [];
-    const tickSize = 4; // 刻度线长度 (px)
+    const tickSize = 3.5; // 刻度线半长 (px)
 
     // X 轴刻度
     const xStart = Math.ceil(xMin / xStep) * xStep;
     const xEnd = Math.floor(xMax / xStep) * xStep;
     for (let x = xStart; x <= xEnd; x += xStep) {
-      if (Math.abs(x) < 1e-9) continue; // 避开原点
+      if (Math.abs(x) < 1e-4) continue; // 避开原点
 
       const pt = mathToDesign(x, 0, scale);
       // 绘制刻度线
@@ -93,25 +101,24 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
           y1={pt.y - tickSize}
           x2={pt.x}
           y2={pt.y + tickSize}
-          stroke={MATH_COLORS.axis}
-          strokeWidth={1.5}
+          stroke={MATH_COLORS.labelTextLight}
+          strokeWidth={1.2}
         />,
       );
 
-      // 绘制数值标签
+      // 绘制数值标签（统一格式化整数与小数）
       if (showLabels) {
         elements.push(
           <text
             key={`label-x-${x}`}
             x={pt.x}
-            y={pt.y + 16}
+            y={pt.y + fontScale(14)}
             textAnchor="middle"
             fill={MATH_COLORS.labelTextLight}
-            fontSize={fontScale(10)}
-            fontFamily="monospace"
-            className="select-none"
+            fontSize={fontScale(10.5)}
+            className="select-none font-sans"
           >
-            {x}
+            {formatTick(x)}
           </text>,
         );
       }
@@ -121,7 +128,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     const yStart = Math.ceil(yMin / yStep) * yStep;
     const yEnd = Math.floor(yMax / yStep) * yStep;
     for (let y = yStart; y <= yEnd; y += yStep) {
-      if (Math.abs(y) < 1e-9) continue; // 避开原点
+      if (Math.abs(y) < 1e-4) continue; // 避开原点
 
       const pt = mathToDesign(0, y, scale);
       // 绘制刻度线
@@ -132,8 +139,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
           y1={pt.y}
           x2={pt.x + tickSize}
           y2={pt.y}
-          stroke={MATH_COLORS.axis}
-          strokeWidth={1.5}
+          stroke={MATH_COLORS.labelTextLight}
+          strokeWidth={1.2}
         />,
       );
 
@@ -142,35 +149,35 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
         elements.push(
           <text
             key={`label-y-${y}`}
-            x={pt.x - 8}
-            y={pt.y + 3}
+            x={pt.x - fontScale(6)}
+            y={pt.y + fontScale(3.5)}
             textAnchor="end"
             fill={MATH_COLORS.labelTextLight}
-            fontSize={fontScale(10)}
-            fontFamily="monospace"
-            className="select-none"
+            fontSize={fontScale(10.5)}
+            className="select-none font-sans"
           >
-            {y.toFixed(1)}
+            {formatTick(y)}
           </text>,
         );
       }
     }
 
-    // 绘制原点 'O' 或 '0'
+    // 绘制原点 'O' (标准高中数学坐标原点标识，位于第三象限左下角)
     if (showLabels) {
       const ptZero = mathToDesign(0, 0, scale);
       elements.push(
         <text
-          key="label-zero"
-          x={ptZero.x - 8}
-          y={ptZero.y + 14}
+          key="label-origin"
+          x={ptZero.x - fontScale(6)}
+          y={ptZero.y + fontScale(13)}
           textAnchor="end"
-          fill={MATH_COLORS.labelTextLight}
-          fontSize={fontScale(10)}
-          fontFamily="monospace"
+          fill={MATH_COLORS.labelText}
+          fontSize={fontScale(12)}
+          fontStyle="italic"
+          fontWeight="bold"
           className="select-none"
         >
-          0
+          O
         </text>,
       );
     }
@@ -178,7 +185,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     return elements;
   }, [scale, showLabels, xStep, yStep, xMin, xMax, yMin, yMax, fontScale]);
 
-  // 坐标轴两端主线及其箭头
+  // 坐标轴两端主线及其端点
   const xAxisStart = mathToDesign(xMin, 0, scale);
   const xAxisEnd = mathToDesign(xMax, 0, scale);
   const yAxisStart = mathToDesign(0, yMin, scale);
@@ -189,13 +196,13 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
       {/* 网格线背景 */}
       {gridLines}
 
-      {/* 坐标轴主线 */}
+      {/* 坐标轴主线（清晰标准深色） */}
       <line
         x1={xAxisStart.x}
         y1={xAxisStart.y}
         x2={xAxisEnd.x}
         y2={xAxisEnd.y}
-        stroke={MATH_COLORS.axis}
+        stroke={MATH_COLORS.labelTextLight}
         strokeWidth={1.5}
       />
       <line
@@ -203,42 +210,42 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
         y1={yAxisStart.y}
         x2={yAxisEnd.x}
         y2={yAxisEnd.y}
-        stroke={MATH_COLORS.axis}
+        stroke={MATH_COLORS.labelTextLight}
         strokeWidth={1.5}
       />
 
-      {/* 坐标轴方向箭头 */}
-      {/* X 轴箭头 */}
+      {/* 坐标轴方向箭头与标准数学斜体标签 */}
+      {/* X 轴箭头与 x 标签 */}
       <polygon
-        points={`${xAxisEnd.x},${xAxisEnd.y} ${xAxisEnd.x - 8},${xAxisEnd.y - 4} ${xAxisEnd.x - 8},${xAxisEnd.y + 4}`}
-        fill={MATH_COLORS.axis}
+        points={`${xAxisEnd.x},${xAxisEnd.y} ${xAxisEnd.x - 7},${xAxisEnd.y - 3.5} ${xAxisEnd.x - 7},${xAxisEnd.y + 3.5}`}
+        fill={MATH_COLORS.labelTextLight}
       />
       <text
-        x={xAxisEnd.x - 4}
-        y={xAxisEnd.y - 10}
+        x={xAxisEnd.x - fontScale(2)}
+        y={xAxisEnd.y + fontScale(15)}
         textAnchor="middle"
         fill={MATH_COLORS.labelText}
-        fontSize={fontScale(12)}
-        fontFamily="monospace"
-        fontWeight="600"
+        fontSize={fontScale(13)}
+        fontStyle="italic"
+        fontWeight="bold"
         className="select-none"
       >
         x
       </text>
 
-      {/* Y 轴箭头 */}
+      {/* Y 轴箭头与 y 标签 */}
       <polygon
-        points={`${yAxisEnd.x},${yAxisEnd.y} ${yAxisEnd.x - 4},${yAxisEnd.y + 8} ${yAxisEnd.x + 4},${yAxisEnd.y + 8}`}
-        fill={MATH_COLORS.axis}
+        points={`${yAxisEnd.x},${yAxisEnd.y} ${yAxisEnd.x - 3.5},${yAxisEnd.y + 7} ${yAxisEnd.x + 3.5},${yAxisEnd.y + 7}`}
+        fill={MATH_COLORS.labelTextLight}
       />
       <text
-        x={yAxisEnd.x + 10}
-        y={yAxisEnd.y + 8}
+        x={yAxisEnd.x - fontScale(12)}
+        y={yAxisEnd.y + fontScale(10)}
         textAnchor="middle"
         fill={MATH_COLORS.labelText}
-        fontSize={fontScale(12)}
-        fontFamily="monospace"
-        fontWeight="600"
+        fontSize={fontScale(13)}
+        fontStyle="italic"
+        fontWeight="bold"
         className="select-none"
       >
         y

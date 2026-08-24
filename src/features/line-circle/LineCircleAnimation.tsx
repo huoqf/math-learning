@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -16,14 +16,19 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/lineCircle";
 import { calculateLineCircle } from "@/math/lineCircle";
 
-export function LineCircleAnimation() {
-  // 4种研究模式：位置关系与判定 | 相交弦长 | 切线与切线长 | 垂径定理与弦中点
-  const [studyMode, setStudyMode] = useState<
-    "relation" | "chord" | "tangent" | "midpoint"
-  >("relation");
+export type LineCircleStudyMode = "relation" | "chord" | "tangent" | "midpoint";
+export type LineCirclePresetKey =
+  "free" | "diameter" | "tangentCritical" | "minChord";
 
-  // 1. 本地状态管理
-  const [params, setParams] = useState(() => ({
+export function LineCircleAnimation() {
+  // 1. 研究模式状态
+  const [studyMode, setStudyMode] = useState<LineCircleStudyMode>("relation");
+
+  // 2. 典型预设状态 (黄金2x2)
+  const [preset, setPreset] = useState<LineCirclePresetKey>("free");
+
+  // 3. 本地几何参数管理
+  const [params, setParams] = useState<Record<string, number>>(() => ({
     a: defaultParams.a,
     b: defaultParams.b,
     r: defaultParams.r,
@@ -31,38 +36,102 @@ export function LineCircleAnimation() {
     m: defaultParams.m,
     px: defaultParams.px,
     py: defaultParams.py,
+    mx: defaultParams.mx,
+    my: defaultParams.my,
   }));
 
-  // 2. 视口尺寸测量
+  // 4. 视口尺寸测量
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
 
-  // 3. 直角坐标系比例尺 X [-7, 7], Y [-5, 5]
+  // 5. 直角坐标系比例尺 X [-7, 7], Y [-5, 5]
   const scale = useSceneScale({
     vp,
     xRange: [-7, 7],
     yRange: [-5, 5],
   });
 
-  // 4. 数学量看板数据组装
+  // 6. 数学量看板数据组装
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-line-circle", params, { studyMode });
   }, [params, studyMode]);
 
-  // 5. 纯数学模型中间量（用于悬浮卡片）
-  const calcRes = useMemo(() => calculateLineCircle(params), [params]);
+  // 7. 纯数学模型中间量（用于悬浮卡片与预设计算）
+  const calcRes = useMemo(
+    () =>
+      calculateLineCircle({
+        a: params.a ?? defaultParams.a,
+        b: params.b ?? defaultParams.b,
+        r: params.r ?? defaultParams.r,
+        k: params.k ?? defaultParams.k,
+        m: params.m ?? defaultParams.m,
+        px: params.px ?? defaultParams.px,
+        py: params.py ?? defaultParams.py,
+        mx: params.mx ?? defaultParams.mx,
+        my: params.my ?? defaultParams.my,
+      }),
+    [params],
+  );
 
-  // 参数更新处理器
-  const handleParamChange = (key: string, value: number) => {
+  // 参数更新处理器（学生手动调整时自动回退为自由探究）
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setPreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
-  };
+  }, []);
+
+  // 典型预设切换处理器
+  const handlePresetSelect = useCallback(
+    (key: LineCirclePresetKey) => {
+      setPreset(key);
+      if (key === "free") return;
+
+      if (key === "diameter") {
+        // 直径最大弦：令直线过圆心 C(a, b) => m = b - k*a
+        const currentK = 0.5;
+        const currentM = params.b - currentK * params.a;
+        setParams((prev) => ({
+          ...prev,
+          k: currentK,
+          m: Number(currentM.toFixed(2)),
+        }));
+      } else if (key === "tangentCritical") {
+        // 临界相切：d = r => 直线 kx - y + m = 0, d = |k*a - b + m| / sqrt(1+k^2) = r
+        // => m = b - k*a - r * sqrt(1+k^2)
+        const currentK = 0.75;
+        const offset = (params.r ?? 3.0) * Math.hypot(1, currentK);
+        const currentM = (params.b ?? 0) - currentK * (params.a ?? 0) - offset;
+        setParams((prev) => ({
+          ...prev,
+          k: currentK,
+          m: Number(currentM.toFixed(2)),
+        }));
+      } else if (key === "minChord") {
+        // 定点垂直最短弦：过定点 M(1, 1)，k = -(mx-a)/(my-b)
+        const mx = 1.0;
+        const my = 1.0;
+        const dx = mx - params.a;
+        const dy = my - params.b;
+        const perpK = Math.abs(dy) > 1e-4 ? -dx / dy : 0;
+        const perpM = my - perpK * mx;
+        setParams((prev) => ({
+          ...prev,
+          mx,
+          my,
+          k: Number(perpK.toFixed(2)),
+          m: Number(perpM.toFixed(2)),
+        }));
+      }
+    },
+    [params.a, params.b, params.r],
+  );
 
   // 重置参数
   const handleReset = () => {
+    setPreset("free");
     setParams({
       a: defaultParams.a,
       b: defaultParams.b,
@@ -71,19 +140,28 @@ export function LineCircleAnimation() {
       m: defaultParams.m,
       px: defaultParams.px,
       py: defaultParams.py,
+      mx: defaultParams.mx,
+      my: defaultParams.my,
     });
   };
 
-  // 动态过滤参数列表
+  // 控制是否展开次要的圆心平移参数 (a, b)
+  const [showCenterParams, setShowCenterParams] = useState(false);
+
+  // 动态过滤与精简参数列表（严格遵循高中教学认知：主控直线的k, m与圆半径r居首，收拢圆心次要平移参数）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      relation: ["a", "b", "r", "k", "m"],
-      chord: ["a", "b", "r", "k", "m"],
-      tangent: ["a", "b", "r", "px", "py"],
-      midpoint: ["a", "b", "r", "k", "m"],
+    const coreKeysByMode: Record<LineCircleStudyMode, string[]> = {
+      relation: ["m", "k", "r"], // 截距平移与斜率旋转为教学第一核心
+      chord: ["k", "m", "r"], // 斜率转动与弦长极值为核心
+      tangent: ["px", "py", "r"], // 圆外点位置与半径为核心
+      midpoint: ["m", "k", "r"], // 弦位置与垂足中点轨迹为核心
     };
 
-    const keys = keysByMode[studyMode] ?? ["a", "b", "r", "k", "m"];
+    let keys = [...(coreKeysByMode[studyMode] ?? ["m", "k", "r"])];
+    if (showCenterParams) {
+      keys = [...keys, "a", "b"];
+    }
+
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
@@ -102,27 +180,71 @@ export function LineCircleAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, studyMode]);
+  }, [params, studyMode, showCenterParams]);
 
-  // 悬浮公式 KaTeX
+  // 悬浮公式 KaTeX（严谨数学格式化，消除 0 项与 + - 瑕疵）
   const formulaLatex = useMemo(() => {
-    const lineStr = `y = ${params.k}x ${params.m >= 0 ? `+ ${params.m}` : `- ${Math.abs(params.m)}`}`;
-    const circleStr = `(x ${params.a >= 0 ? `- ${params.a}` : `+ ${Math.abs(params.a)}`})^2 + (y ${params.b >= 0 ? `- ${params.b}` : `+ ${Math.abs(params.b)}`})^2 = ${params.r}^2`;
+    const kVal = params.k ?? 0.75;
+    const mVal = params.m ?? -1.0;
+    const aVal = params.a ?? 0;
+    const bVal = params.b ?? 0;
+    const rVal = params.r ?? 3.0;
+
+    // 格式化直线方程
+    let lineStr = "";
+    if (Math.abs(kVal) < 1e-4) {
+      lineStr = `y = ${mVal.toFixed(1)}`;
+    } else {
+      const kStr =
+        Math.abs(kVal - 1) < 1e-4
+          ? "x"
+          : Math.abs(kVal + 1) < 1e-4
+            ? "-x"
+            : `${kVal.toFixed(2)}x`;
+      if (Math.abs(mVal) < 1e-4) {
+        lineStr = `y = ${kStr}`;
+      } else if (mVal > 0) {
+        lineStr = `y = ${kStr} + ${mVal.toFixed(1)}`;
+      } else {
+        lineStr = `y = ${kStr} - ${Math.abs(mVal).toFixed(1)}`;
+      }
+    }
+
+    // 格式化圆方程
+    const xTerm =
+      Math.abs(aVal) < 1e-4
+        ? "x^2"
+        : aVal > 0
+          ? `(x - ${aVal.toFixed(1)})^2`
+          : `(x + ${Math.abs(aVal).toFixed(1)})^2`;
+    const yTerm =
+      Math.abs(bVal) < 1e-4
+        ? "y^2"
+        : bVal > 0
+          ? `(y - ${bVal.toFixed(1)})^2`
+          : `(y + ${Math.abs(bVal).toFixed(1)})^2`;
+    const circleStr = `${xTerm} + ${yTerm} = ${(rVal * rVal).toFixed(1)}`;
 
     if (studyMode === "relation") {
-      return `\\begin{cases} C: ${circleStr} \\\\ L: ${lineStr} \\end{cases} \\quad d = ${calcRes.distance.toFixed(2)}, \\; r = ${params.r}`;
+      if (calcRes.relation === "tangent") {
+        return `\\begin{cases} C: ${circleStr} \\\\ l: ${lineStr} \\end{cases} \\quad d = r = ${rVal.toFixed(1)}, \\; \\Delta = 0 \\; (\\text{相切唯一公共点 } T)`;
+      }
+      return `\\begin{cases} C: ${circleStr} \\\\ l: ${lineStr} \\end{cases} \\quad d = ${calcRes.distance.toFixed(2)}, \\; r = ${rVal.toFixed(1)} \\implies ${calcRes.relationLabel}`;
     } else if (studyMode === "chord") {
       if (calcRes.relation === "disjoint") {
-        return `\\text{相离状态，无实数弦长} \\quad d = ${calcRes.distance.toFixed(2)} > r = ${params.r}`;
+        return `\\text{直线与圆相离，无实数弦长} \\quad (d = ${calcRes.distance.toFixed(2)} > r = ${rVal.toFixed(1)})`;
       }
-      return `L_{\\text{弦长}} = 2\\sqrt{r^2 - d^2} = 2\\sqrt{${params.r}^2 - ${calcRes.distance.toFixed(2)}^2} = ${calcRes.chordLengthGeom.toFixed(2)}`;
+      if (calcRes.relation === "tangent") {
+        return `\\text{相切临界状态，弦长退化为 } 0 \\quad (d = r = ${rVal.toFixed(1)})`;
+      }
+      return `L = 2\\sqrt{r^2 - d^2} = 2\\sqrt{${rVal.toFixed(1)}^2 - ${calcRes.distance.toFixed(2)}^2} = ${calcRes.chordLengthGeom.toFixed(2)}`;
     } else if (studyMode === "tangent") {
       if (calcRes.tangentLength !== undefined) {
-        return `P(${params.px}, ${params.py}), \\; PT = \\sqrt{d_{PC}^2 - r^2} = ${calcRes.tangentLength.toFixed(2)}`;
+        return `P(${params.px?.toFixed(1)}, ${params.py?.toFixed(1)}), \\; PT = \\sqrt{|PC|^2 - r^2} = ${calcRes.tangentLength.toFixed(2)}, \\; \\text{切点弦: } (x_P - a)(x - a) + (y_P - b)(y - b) = r^2`;
       }
-      return `P(${params.px}, ${params.py}) \\text{ 在圆内或圆上，无切线长}`;
+      return `P(${params.px?.toFixed(1)}, ${params.py?.toFixed(1)}) \\text{ 在圆内或圆上，无法引两条切线}`;
     } else {
-      return `\\text{垂径定理: } CH \\perp AB \\implies H \\text{ 为弦 } AB \\text{ 中点 } (${calcRes.midpoint.x.toFixed(1)}, ${calcRes.midpoint.y.toFixed(1)})`;
+      return `\\text{垂径定理: } CH \\perp AB \\iff H \\text{ 为弦 } AB \\text{ 中点} \\quad (k_{CH} \\cdot k_{AB} = -1)`;
     }
   }, [params, studyMode, calcRes]);
 
@@ -143,30 +265,75 @@ export function LineCircleAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 模式选择 Section */}
-          <LeftPanelSection title="研究模式" subtitle="选择直线与圆探讨主题">
+          {/* 1. 探究主题 Section */}
+          <LeftPanelSection title="探究主题" subtitle="选择直线与圆探讨方向">
             <SelectGrid
               items={[
-                { key: "relation", label: "位置关系判定" },
-                { key: "chord", label: "相交弦长计算" },
-                { key: "tangent", label: "切线与切线长" },
-                { key: "midpoint", label: "垂径定理与弦中点" },
+                { key: "relation", label: "位置关系与判定" },
+                { key: "chord", label: "相交弦长与极值" },
+                { key: "tangent", label: "切线长与切点弦" },
+                { key: "midpoint", label: "垂径定理与中点" },
               ]}
               value={studyMode}
-              onChange={(k) =>
-                setStudyMode(k as "relation" | "chord" | "tangent" | "midpoint")
-              }
+              onChange={(k) => {
+                setStudyMode(k as LineCircleStudyMode);
+                setPreset("free");
+              }}
               variant="filled"
+              columns={2}
             />
           </LeftPanelSection>
 
-          {/* 参数调节 Section */}
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块改变几何参数">
+          {/* 2. 典型预设 Section (黄金2x2规范) */}
+          <LeftPanelSection title="典型预设" subtitle="新高考经典几何构型">
+            <SelectGrid
+              items={[
+                { key: "free", label: "自由探究", description: "全参数开放" },
+                {
+                  key: "diameter",
+                  label: "过圆心最大弦",
+                  description: "直线过圆心d=0",
+                },
+                {
+                  key: "tangentCritical",
+                  label: "临界切线状态",
+                  description: "d=r切线Δ=0",
+                },
+                {
+                  key: "minChord",
+                  label: "垂直最短弦",
+                  description: "垂直CM垂弦",
+                },
+              ]}
+              value={preset}
+              onChange={(k) => handlePresetSelect(k as LineCirclePresetKey)}
+              variant="outline"
+              columns={2}
+            />
+          </LeftPanelSection>
+
+          {/* 3. 参数调节 Section */}
+          <LeftPanelSection
+            title="核心参数调节"
+            subtitle="聚焦动直线与半径主参数"
+          >
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+
+            {/* 展开/收起圆心平移辅助参数 (a, b) */}
+            <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
+              <span>圆心平移参数 (a, b)</span>
+              <button
+                type="button"
+                onClick={() => setShowCenterParams((v) => !v)}
+                className="text-blue-600 hover:text-blue-700 font-medium px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"
+              >
+                {showCenterParams ? "收起圆心参数" : "展开圆心参数"}
+              </button>
+            </div>
           </LeftPanelSection>
         </LeftPanel>
       }
