@@ -23,6 +23,7 @@ interface UseParabolaSceneProps {
   direction: ParabolaDirection;
   studyMode: string;
   onParamChange: (key: string, value: number) => void;
+  onInteractionStart?: () => void;
 }
 
 export function useParabolaScene({
@@ -31,6 +32,7 @@ export function useParabolaScene({
   direction,
   studyMode,
   onParamChange,
+  onInteractionStart,
 }: UseParabolaSceneProps) {
   const { p, tP, thetaDeg, yQ } = params;
 
@@ -48,9 +50,9 @@ export function useParabolaScene({
       const yMax = scale.yMax + 1;
       for (let i = 0; i <= steps; i++) {
         const yVal = yMin + (i / steps) * (yMax - yMin);
-        const P = getPointOnParabola(yVal, base.p, direction);
-        if (P.x >= scale.xMin - 2 && P.x <= scale.xMax + 2) {
-          const dPt = mathToDesign(P.x, P.y, scale);
+        const pt = getPointOnParabola(yVal, base.p, direction);
+        if (pt.x >= scale.xMin - 2 && pt.x <= scale.xMax + 2) {
+          const dPt = mathToDesign(pt.x, pt.y, scale);
           pts.push(dPt);
         }
       }
@@ -59,9 +61,9 @@ export function useParabolaScene({
       const xMax = scale.xMax + 1;
       for (let i = 0; i <= steps; i++) {
         const xVal = xMin + (i / steps) * (xMax - xMin);
-        const P = getPointOnParabola(xVal, base.p, direction);
-        if (P.y >= scale.yMin - 2 && P.y <= scale.yMax + 2) {
-          const dPt = mathToDesign(P.x, P.y, scale);
+        const pt = getPointOnParabola(xVal, base.p, direction);
+        if (pt.y >= scale.yMin - 2 && pt.y <= scale.yMax + 2) {
+          const dPt = mathToDesign(pt.x, pt.y, scale);
           pts.push(dPt);
         }
       }
@@ -102,6 +104,7 @@ export function useParabolaScene({
 
   // 5. 拖拽处理器
   const handlePDrag = (mathPt: { x: number; y: number }) => {
+    onInteractionStart?.();
     let newTP = tP;
 
     if (direction === "right" || direction === "left") {
@@ -113,6 +116,7 @@ export function useParabolaScene({
   };
 
   const handleQDrag = (mathPt: { x: number; y: number }) => {
+    onInteractionStart?.();
     let newYQ = yQ;
     if (base.directrixIsVertical) {
       newYQ = Math.max(scale.yMin, Math.min(scale.yMax, mathPt.y));
@@ -122,7 +126,7 @@ export function useParabolaScene({
     onParamChange("yQ", Math.round(newYQ * 10) / 10);
   };
 
-  // 6. 自动防重叠计算标注位置
+  // 6. 纯字母单源标注避让（零坐标堆砌）
   const labels = useMemo(() => {
     const rawLabels: LabelEntry[] = [];
 
@@ -133,7 +137,7 @@ export function useParabolaScene({
       y: F_d.y,
       anchor: "start",
       dy: 14,
-      text: `F(${base.focus.x.toFixed(1)}, ${base.focus.y.toFixed(1)})`,
+      text: "F",
     });
 
     const O_d = mathToDesign(0, 0, scale);
@@ -143,7 +147,7 @@ export function useParabolaScene({
       y: O_d.y,
       anchor: "end",
       dy: 14,
-      text: "O(0,0)",
+      text: "O",
     });
 
     if (studyMode === "definition") {
@@ -154,7 +158,7 @@ export function useParabolaScene({
         y: P_d.y,
         anchor: "start",
         dy: -8,
-        text: `P(${P.x.toFixed(1)}, ${P.y.toFixed(1)})`,
+        text: "P",
       });
 
       const H_d = mathToDesign(radiusInfo.H.x, radiusInfo.H.y, scale);
@@ -164,11 +168,22 @@ export function useParabolaScene({
         y: H_d.y,
         anchor: "end",
         dy: -8,
-        text: `H(${radiusInfo.H.x.toFixed(1)}, ${radiusInfo.H.y.toFixed(1)})`,
+        text: "H",
       });
     } else if (studyMode === "focalChord") {
       const A_d = mathToDesign(chordInfo.A.x, chordInfo.A.y, scale);
       const B_d = mathToDesign(chordInfo.B.x, chordInfo.B.y, scale);
+      const M_d = mathToDesign(
+        chordInfo.midCircle.center.x,
+        chordInfo.midCircle.center.y,
+        scale,
+      );
+      const K_d = mathToDesign(
+        chordInfo.midCircle.directrixTangentPoint.x,
+        chordInfo.midCircle.directrixTangentPoint.y,
+        scale,
+      );
+
       rawLabels.push(
         {
           key: "label-A",
@@ -176,7 +191,7 @@ export function useParabolaScene({
           y: A_d.y,
           anchor: "start",
           dy: -8,
-          text: `A(${chordInfo.A.x.toFixed(1)}, ${chordInfo.A.y.toFixed(1)})`,
+          text: "A",
         },
         {
           key: "label-B",
@@ -184,7 +199,23 @@ export function useParabolaScene({
           y: B_d.y,
           anchor: "start",
           dy: 14,
-          text: `B(${chordInfo.B.x.toFixed(1)}, ${chordInfo.B.y.toFixed(1)})`,
+          text: "B",
+        },
+        {
+          key: "label-M",
+          x: M_d.x,
+          y: M_d.y,
+          anchor: "start",
+          dy: -8,
+          text: "M",
+        },
+        {
+          key: "label-K",
+          x: K_d.x,
+          y: K_d.y,
+          anchor: "end",
+          dy: -8,
+          text: "K",
         },
       );
     } else if (studyMode === "tangentOptical") {
@@ -195,7 +226,7 @@ export function useParabolaScene({
         y: Q_d.y,
         anchor: "end",
         dy: -8,
-        text: `Q(${mongeInfo.Q.x.toFixed(1)}, ${mongeInfo.Q.y.toFixed(1)})`,
+        text: "Q",
       });
 
       const P_d = mathToDesign(P.x, P.y, scale);
@@ -205,8 +236,29 @@ export function useParabolaScene({
         y: P_d.y,
         anchor: "start",
         dy: -8,
-        text: `P(${P.x.toFixed(1)}, ${P.y.toFixed(1)})`,
+        text: "P",
       });
+
+      const A_d = mathToDesign(mongeInfo.A.x, mongeInfo.A.y, scale);
+      const B_d = mathToDesign(mongeInfo.B.x, mongeInfo.B.y, scale);
+      rawLabels.push(
+        {
+          key: "label-QA-A",
+          x: A_d.x,
+          y: A_d.y,
+          anchor: "start",
+          dy: -8,
+          text: "A",
+        },
+        {
+          key: "label-QB-B",
+          x: B_d.x,
+          y: B_d.y,
+          anchor: "start",
+          dy: 14,
+          text: "B",
+        },
+      );
     }
 
     return avoidLabels(rawLabels);

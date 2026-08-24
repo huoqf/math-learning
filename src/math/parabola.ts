@@ -45,10 +45,11 @@ export interface FocalChordInfo {
   prodY: number; // y1 * y2 (若适用)
   prodX: number; // x1 * x2 (若适用)
   midCircle: {
-    center: Point2D;
+    center: Point2D; // 中点 M
     radius: number;
     distToDirectrix: number;
     isTangentToDirectrix: boolean;
+    directrixTangentPoint: Point2D; // 准线切点 K
   };
 }
 
@@ -65,6 +66,7 @@ export interface TangentOpticalInfo {
 
 export interface DirectrixMongeInfo {
   Q: Point2D; // 准线上点
+  F: Point2D; // 焦点 F
   A: Point2D; // 切点 A
   B: Point2D; // 切点 B
   slopeQA: number;
@@ -72,6 +74,8 @@ export interface DirectrixMongeInfo {
   isPerpendicular: boolean; // QA ⊥ QB
   chordLine: { A: number; B: number; C: number }; // 切点弦 AB 直线
   chordPassesFocus: boolean; // 是否过焦点 F
+  isQFPerpAB: boolean; // QF ⊥ AB 是否成立
+  areaQAB: number; // 三角形 QAB 面积
 }
 
 /**
@@ -282,6 +286,10 @@ export function getFocalChordInfo(
     ? Math.abs(midCenter.x - base.directrixConstant)
     : Math.abs(midCenter.y - base.directrixConstant);
 
+  const directrixTangentPoint: Point2D = base.directrixIsVertical
+    ? { x: base.directrixConstant, y: midCenter.y }
+    : { x: midCenter.x, y: base.directrixConstant };
+
   const isTangentToDirectrix = Math.abs(distToDirectrix - radius) < 1e-4;
 
   return {
@@ -302,6 +310,7 @@ export function getFocalChordInfo(
       radius,
       distToDirectrix,
       isTangentToDirectrix,
+      directrixTangentPoint,
     },
   };
 }
@@ -464,8 +473,21 @@ export function getDirectrixMongeInfo(
   const distF = Math.abs(lineA * F.x + lineB * F.y + lineC);
   const chordPassesFocus = distF < 1e-4;
 
+  // 验证 QF ⊥ AB: 向量 QF·AB = (Fx - Qx)(Bx - Ax) + (Fy - Qy)(By - Ay)
+  const vecQFx = F.x - Q.x;
+  const vecQFy = F.y - Q.y;
+  const vecABx = B.x - A.x;
+  const vecABy = B.y - A.y;
+  const dotQFAB = vecQFx * vecABx + vecQFy * vecABy;
+  const isQFPerpAB = Math.abs(dotQFAB) < 1e-4;
+
+  // 三角形 QAB 面积 S = 0.5 * |(Ax - Qx)(By - Qy) - (Ay - Qy)(Bx - Qx)|
+  const areaQAB =
+    0.5 * Math.abs((A.x - Q.x) * (B.y - Q.y) - (A.y - Q.y) * (B.x - Q.x));
+
   return {
     Q,
+    F,
     A,
     B,
     slopeQA,
@@ -473,5 +495,7 @@ export function getDirectrixMongeInfo(
     isPerpendicular,
     chordLine: { A: lineA, B: lineB, C: lineC },
     chordPassesFocus,
+    isQFPerpAB,
+    areaQAB,
   };
 }

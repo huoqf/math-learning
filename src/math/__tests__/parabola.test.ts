@@ -27,18 +27,24 @@ describe("parabola math library", () => {
     expect(radiusInfo.isEqual).toBe(true);
   });
 
-  it("should verify focal chord harmonic sum 1/AF + 1/BF == 2/p", () => {
+  it("should verify focal chord harmonic sum 1/AF + 1/BF == 2/p and tangent to directrix", () => {
     const p = 2; // 2/p = 1
     const chordInfo = getFocalChordInfo(60, p, "right"); // 60 deg
     expect(chordInfo.harmonicSum).toBeCloseTo(2 / p, 4);
     expect(chordInfo.midCircle.isTangentToDirectrix).toBe(true);
+    expect(chordInfo.midCircle.directrixTangentPoint.x).toBeCloseTo(-1);
+    expect(chordInfo.midCircle.directrixTangentPoint.y).toBeCloseTo(
+      chordInfo.midCircle.center.y,
+    );
   });
 
-  it("should verify directrix monge property: QA perp QB & chord AB passes focus F", () => {
+  it("should verify directrix monge property: QA perp QB & chord AB passes focus F & QF perp AB", () => {
     const p = 2;
     const qParam = 3.0; // Q(-1, 3.0)
     const mongeInfo = getDirectrixMongeInfo(qParam, p, "right");
     expect(mongeInfo.isPerpendicular).toBe(true);
     expect(mongeInfo.chordPassesFocus).toBe(true);
+    expect(mongeInfo.isQFPerpAB).toBe(true);
+    expect(mongeInfo.areaQAB).toBeGreaterThanOrEqual(p * p - 1e-4);
   });
 });

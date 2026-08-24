@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -11,10 +11,14 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ParabolaScene } from "./components/ParabolaScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/parabola";
+import {
+  defaultParams,
+  paramMeta,
+  PARABOLA_PRESETS,
+} from "@/data/registries/parabola";
 import type { ParabolaDirection } from "@/math/parabola";
 
 export function ParabolaAnimation() {
@@ -25,6 +29,9 @@ export function ParabolaAnimation() {
   const [studyMode, setStudyMode] = useState<
     "definition" | "focalChord" | "tangentOptical"
   >("definition");
+
+  // 当前激活的典型预设 key（默认 "free" 自由探究）
+  const [activePreset, setActivePreset] = useState<string>("free");
 
   // 参数状态
   const [params, setParams] = useState(() => ({
@@ -54,16 +61,43 @@ export function ParabolaAnimation() {
     });
   }, [params, direction, studyMode]);
 
+  // 画布拖拽交互时自动回归自由探究
+  const handleInteractionStart = useCallback(() => {
+    setActivePreset("free");
+  }, []);
+
   // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
+    setActivePreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
+  // 切换模式处理器
+  const handleModeChange = (modeKey: string) => {
+    const nextMode = modeKey as typeof studyMode;
+    setStudyMode(nextMode);
+    setActivePreset("free");
+  };
+
+  // 典型预设切换
+  const handlePresetSelect = (presetKey: string) => {
+    setActivePreset(presetKey);
+    const modePresets = PARABOLA_PRESETS[studyMode] ?? [];
+    const targetPreset = modePresets.find((p) => p.key === presetKey);
+    if (targetPreset && targetPreset.params) {
+      setParams((prev) => ({
+        ...prev,
+        ...targetPreset.params,
+      }));
+    }
+  };
+
   // 重置参数
   const handleReset = () => {
+    setActivePreset("free");
     setParams({
       p: defaultParams.p,
       tP: defaultParams.tP,
@@ -102,18 +136,27 @@ export function ParabolaAnimation() {
       });
   }, [params, studyMode]);
 
-  // 抛物线标准方程 LaTeX 字符串
+  // 当前模式下的预设列表项
+  const currentPresets = useMemo(() => {
+    return (PARABOLA_PRESETS[studyMode] ?? []).map((preset) => ({
+      key: preset.key,
+      label: preset.label,
+      description: preset.description,
+    }));
+  }, [studyMode]);
+
+  // 抛物线标准方程 LaTeX 字符串（使用动态 Token 色彩）
   const equationLatex = useMemo(() => {
     const pStr = params.p > 0 ? (2 * params.p).toFixed(1) : "2p";
     switch (direction) {
       case "right":
-        return `y^2 = \\color{#EF4444}{${pStr}} x`;
+        return `y^2 = \\color{${MATH_COLORS.paramPrimary}}{${pStr}} x`;
       case "left":
-        return `y^2 = -\\color{#EF4444}{${pStr}} x`;
+        return `y^2 = -\\color{${MATH_COLORS.paramPrimary}}{${pStr}} x`;
       case "up":
-        return `x^2 = \\color{#EF4444}{${pStr}} y`;
+        return `x^2 = \\color{${MATH_COLORS.paramPrimary}}{${pStr}} y`;
       case "down":
-        return `x^2 = -\\color{#EF4444}{${pStr}} y`;
+        return `x^2 = -\\color{${MATH_COLORS.paramPrimary}}{${pStr}} y`;
     }
   }, [params.p, direction]);
 
@@ -121,7 +164,7 @@ export function ParabolaAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 开口方向选择 Section */}
+          {/* 1. 开口方向选择 Section */}
           <LeftPanelSection
             title="抛物线开向"
             subtitle="选择四种标准抛物线姿态"
@@ -138,7 +181,7 @@ export function ParabolaAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 研究模式 Section */}
+          {/* 2. 研究主题 Section */}
           <LeftPanelSection
             title="高考焦点与准线几何"
             subtitle="选择深入研究范畴"
@@ -150,13 +193,27 @@ export function ParabolaAnimation() {
                 { key: "tangentOptical", label: "切线光学与准线几何" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as typeof studyMode)}
+              onChange={handleModeChange}
               variant="filled"
               columns={1}
             />
           </LeftPanelSection>
 
-          {/* 参数调节 Section */}
+          {/* 3. 典型预设 Section (2x2 对称网格) */}
+          <LeftPanelSection
+            title="典型预设"
+            subtitle="一键切换高考经典几何构型"
+          >
+            <SelectGrid
+              items={currentPresets}
+              value={activePreset}
+              onChange={handlePresetSelect}
+              variant="filled"
+              columns={2}
+            />
+          </LeftPanelSection>
+
+          {/* 4. 参数调节 Section */}
           <LeftPanelSection
             title="参数调节"
             subtitle="拖动滑块探索动态几何规律"
@@ -186,6 +243,7 @@ export function ParabolaAnimation() {
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}
+              onInteractionStart={handleInteractionStart}
               fontScale={canvasSize.font}
               direction={direction}
               studyMode={studyMode}
