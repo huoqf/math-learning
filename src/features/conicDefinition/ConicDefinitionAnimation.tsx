@@ -7,14 +7,17 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
-  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { CANVAS_PRESETS } from "@/theme";
 import { ConicDefinitionScene } from "./components/ConicDefinitionScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/conicDefinition";
+import {
+  defaultParams,
+  paramMeta,
+  conicPresetsByMode,
+} from "@/data/registries/conicDefinition";
 
 export function ConicDefinitionAnimation() {
   // 研究模式: 'firstDef' (第一定义) | 'unifiedDef' (统一定义 e) | 'locusGen' (动圆/几何生成)
@@ -26,6 +29,9 @@ export function ConicDefinitionAnimation() {
   const [conicType, setConicType] = useState<
     "ellipse" | "hyperbola" | "parabola"
   >("ellipse");
+
+  // 典型预设 key (默认 'free')
+  const [activePreset, setActivePreset] = useState<string>("free");
 
   // 参数状态
   const [params, setParams] = useState({
@@ -56,16 +62,44 @@ export function ConicDefinitionAnimation() {
     });
   }, [params, studyMode, conicType]);
 
-  // 参数更新
+  // 参数更新 (当手动修改参数或拖拽时，自动切回 free)
   const handleParamChange = (key: string, value: number) => {
+    setActivePreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
+  // 典型预设切换
+  const handlePresetSelect = (presetKey: string) => {
+    setActivePreset(presetKey);
+    const modePresets = conicPresetsByMode[studyMode] || [];
+    const target = modePresets.find((p) => p.key === presetKey);
+    if (target) {
+      if (target.conicType) {
+        setConicType(target.conicType);
+      }
+      setParams((prev) => ({
+        ...prev,
+        ...target.params,
+      }));
+    }
+  };
+
+  // 模式切换
+  const handleModeChange = (modeKey: string) => {
+    const newMode = modeKey as typeof studyMode;
+    setStudyMode(newMode);
+    setActivePreset("free");
+    if (newMode === "locusGen" && conicType === "parabola") {
+      setConicType("ellipse");
+    }
+  };
+
   // 参数重置
   const handleReset = () => {
+    setActivePreset("free");
     setParams({
       a: defaultParams.a,
       c: defaultParams.c,
@@ -74,6 +108,11 @@ export function ConicDefinitionAnimation() {
       theta: defaultParams.theta,
     });
   };
+
+  // 当前模式的预设列表
+  const currentPresets = useMemo(() => {
+    return conicPresetsByMode[studyMode] || [];
+  }, [studyMode]);
 
   // 左屏声明式参数过滤 (根据 activeMode 过滤)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -106,25 +145,6 @@ export function ConicDefinitionAnimation() {
       });
   }, [params, studyMode, conicType]);
 
-  // 三位一体参数 LaTeX 渲染
-  const latexFormula = useMemo(() => {
-    const c1 = MATH_COLORS.paramPrimary;
-    const c2 = MATH_COLORS.paramSecondary;
-    if (studyMode === "firstDef") {
-      if (conicType === "ellipse") {
-        return `|PF_1| + |PF_2| = 2\\color{${c1}}{a} = ${(2 * params.a).toFixed(1)}`;
-      } else if (conicType === "hyperbola") {
-        return `||PF_1| - |PF_2|| = 2\\color{${c1}}{a} = ${(2 * params.a).toFixed(1)}`;
-      } else {
-        return `|PF| = d_l \\quad (\\color{${c2}}{p} = ${params.p.toFixed(1)})`;
-      }
-    } else if (studyMode === "unifiedDef") {
-      return `\\frac{d_F}{d_l} = \\color{${c1}}{e} = ${params.e.toFixed(2)}`;
-    } else {
-      return `|MF_1| \\pm |MF_2| = 2\\color{${c1}}{a}`;
-    }
-  }, [studyMode, conicType, params]);
-
   return (
     <ThreePanel
       left={
@@ -140,39 +160,66 @@ export function ConicDefinitionAnimation() {
                 { key: "locusGen", label: "动圆生成法" },
               ]}
               value={studyMode}
-              onChange={(key) => setStudyMode(key as typeof studyMode)}
+              onChange={handleModeChange}
             />
 
             {studyMode !== "unifiedDef" && (
               <div className="mt-3">
                 <SelectGrid
                   items={[
-                    { key: "ellipse", label: "椭圆", formula: "PF_1+PF_2=2a" },
-                    {
-                      key: "hyperbola",
-                      label: "双曲线",
-                      formula: "|PF_1-PF_2|=2a",
-                    },
+                    { key: "ellipse", label: "椭圆" },
+                    { key: "hyperbola", label: "双曲线" },
                     ...(studyMode === "firstDef"
-                      ? [
-                          {
-                            key: "parabola",
-                            label: "抛物线",
-                            formula: "PF=d_l",
-                          },
-                        ]
+                      ? [{ key: "parabola", label: "抛物线" }]
                       : []),
                   ]}
                   value={conicType}
-                  onChange={(key) => setConicType(key as typeof conicType)}
-                  columns={2}
+                  onChange={(key) => {
+                    const newType = key as typeof conicType;
+                    setConicType(newType);
+                    setActivePreset("free");
+                    if (studyMode === "firstDef") {
+                      if (newType === "ellipse" && params.a <= params.c) {
+                        setParams((prev) => ({ ...prev, a: 3.0, c: 2.0 }));
+                      } else if (
+                        newType === "hyperbola" &&
+                        params.c <= params.a
+                      ) {
+                        setParams((prev) => ({ ...prev, a: 2.0, c: 3.0 }));
+                      }
+                    } else if (studyMode === "locusGen") {
+                      if (newType === "ellipse" && params.a <= params.c) {
+                        setParams((prev) => ({ ...prev, a: 3.0, c: 1.8 }));
+                      } else if (
+                        newType === "hyperbola" &&
+                        params.c <= params.a
+                      ) {
+                        setParams((prev) => ({ ...prev, a: 2.0, c: 3.2 }));
+                      }
+                    }
+                  }}
+                  columns={studyMode === "firstDef" ? 3 : 2}
                 />
               </div>
             )}
+          </LeftPanelSection>
 
-            <div className="mt-3 p-2 bg-neutral-50 rounded border border-neutral-200 text-center">
-              <KatexFormula formula={latexFormula} className="text-sm" />
-            </div>
+          {/* 黄金 2×2 典型预设 */}
+          <LeftPanelSection
+            title="典型教学预设"
+            subtitle="一键定位特征构型与临界状态"
+          >
+            <SelectGrid
+              items={currentPresets.map((p) => ({
+                key: p.key,
+                label: p.label,
+                formula: p.formula,
+                description: p.description,
+              }))}
+              value={activePreset}
+              onChange={handlePresetSelect}
+              columns={2}
+            />
           </LeftPanelSection>
 
           <LeftPanelSection title="参数调节" subtitle="拖动滑块联动图形变化">

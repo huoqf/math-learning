@@ -1,12 +1,20 @@
 import type { ParamMeta } from "../types";
 
-export const defaultParams = {
+export interface ConicParams {
+  a: number;
+  c: number;
+  e: number;
+  p: number;
+  theta: number;
+}
+
+export const defaultParams: ConicParams = {
   a: 3.0,
   c: 2.0,
   e: 0.66,
   p: 2.0,
   theta: 0.8,
-} as const;
+};
 
 export const paramMeta: Record<string, ParamMeta> = {
   a: {
@@ -18,12 +26,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     defaultValue: 3.0,
     importance: "core",
-    description: "决定椭圆长半轴或双曲线实半轴长度",
+    description: "决定椭圆长半轴或双曲线实半轴长度 (2a 为常数和/差)",
     marks: [
       {
         value: 2.0,
         variant: "critical",
-        label: "与 c 相等 (a=c)",
+        label: "临界相等 (a=c)",
         labelFormula: "a = c",
       },
     ],
@@ -42,7 +50,7 @@ export const paramMeta: Record<string, ParamMeta> = {
       {
         value: 3.0,
         variant: "critical",
-        label: "与 a 相等 (c=a)",
+        label: "临界相等 (c=a)",
         labelFormula: "c = a",
       },
     ],
@@ -56,7 +64,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.05,
     defaultValue: 0.66,
     importance: "core",
-    description: "离心率 e < 1 为椭圆，e = 1 为抛物线，e > 1 为双曲线",
+    description: "e < 1 为椭圆，e = 1 为抛物线，e > 1 为双曲线",
     marks: [
       {
         value: 1.0,
@@ -88,4 +96,107 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "控制动点 P 沿着圆锥曲线轨迹连续滑动",
   },
+};
+
+export interface ConicPresetItem {
+  key: string;
+  label: string;
+  formula?: string;
+  description: string;
+  params: Partial<typeof defaultParams>;
+  conicType?: "ellipse" | "hyperbola" | "parabola";
+}
+
+export const conicPresetsByMode: Record<string, ConicPresetItem[]> = {
+  firstDef: [
+    {
+      key: "free",
+      label: "自由探究",
+      description: "全参数开放",
+      params: { a: 3.0, c: 2.0, p: 2.0 },
+    },
+    {
+      key: "standard_ellipse",
+      label: "经典椭圆",
+      formula: "a=3, c=2",
+      description: "e ≈ 0.67",
+      params: { a: 3.0, c: 2.0, theta: 0.8 },
+      conicType: "ellipse",
+    },
+    {
+      key: "critical_degenerate",
+      label: "临界退化",
+      formula: "a = c = 2.5",
+      description: "退化为线段",
+      params: { a: 2.5, c: 2.5, theta: 0.8 },
+    },
+    {
+      key: "equilateral_hyperbola",
+      label: "等轴双曲",
+      formula: "e = \\sqrt{2}",
+      description: "渐近线垂直",
+      params: { a: 2.0, c: 2.83, theta: 0.8 },
+      conicType: "hyperbola",
+    },
+  ],
+  unifiedDef: [
+    {
+      key: "free",
+      label: "自由探究",
+      description: "全参数开放",
+      params: { e: 0.66, p: 2.0 },
+    },
+    {
+      key: "ellipse_e",
+      label: "椭圆形态",
+      formula: "e = 0.60",
+      description: "0 < e < 1",
+      params: { e: 0.6, p: 2.0, theta: 0.8 },
+    },
+    {
+      key: "parabola_e",
+      label: "抛物线",
+      formula: "e = 1.00",
+      description: "e = 1",
+      params: { e: 1.0, p: 2.0, theta: 0.8 },
+    },
+    {
+      key: "hyperbola_e",
+      label: "双曲线",
+      formula: "e = 1.60",
+      description: "e > 1",
+      params: { e: 1.6, p: 2.0, theta: 0.8 },
+    },
+  ],
+  locusGen: [
+    {
+      key: "free",
+      label: "自由探究",
+      description: "全参数开放",
+      params: { a: 3.0, c: 2.0 },
+    },
+    {
+      key: "inside_ellipse",
+      label: "点在圆内",
+      formula: "c < a",
+      description: "生成椭圆",
+      params: { a: 3.0, c: 1.8, theta: 1.2 },
+      conicType: "ellipse",
+    },
+    {
+      key: "outside_hyperbola",
+      label: "点在圆外",
+      formula: "c > a",
+      description: "生成双曲线",
+      params: { a: 2.0, c: 3.2, theta: 1.2 },
+      conicType: "hyperbola",
+    },
+    {
+      key: "tangent_critical",
+      label: "点在圆周",
+      formula: "c = a",
+      description: "临界退化",
+      params: { a: 2.5, c: 2.5, theta: 1.2 },
+    },
+  ],
 };
