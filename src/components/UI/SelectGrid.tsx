@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useRadioGroup } from "@/hooks/useRadioGroup";
 import { KatexFormula } from "./KatexFormula";
 
@@ -8,12 +8,10 @@ import { KatexFormula } from "./KatexFormula";
  * Pattern B（outline）：`border-primary-500 bg-primary-50 text-primary-700` 选中
  * Pattern C（filled）：`bg-primary-500 text-white` 选中
  *
- * a11y：radiogroup + roving tabindex，
- *   direction="linear"（columns=1）：← → 线性移动
- *   direction="grid"（columns≥2）：← → ↑ ↓ 网格移动
- *
- * 使用约定：同一实例内的 item 应保持 description 有无一致，
- * 避免部分有 description 部分没有导致行高参差不齐。
+ * 弹性排版特性：
+ * - 显式优先：支持显式指定 columns (1 | 2 | 3)；支持 columns="auto" 智能选列
+ * - 零截断保证：移除强制 whitespace-nowrap/truncate，长文本紧凑优雅折行
+ * - 等高自适应：min-h 弹性高度，同一行卡片自动等高垂直居中对齐
  */
 
 export interface SelectGridItem {
@@ -38,8 +36,8 @@ interface SelectGridProps<T extends string = string> {
   variant?: "outline" | "filled";
   /** 色板 key，默认 primary */
   color?: SelectColor;
-  /** 列数，默认 2 */
-  columns?: 1 | 2 | 3;
+  /** 列数，默认 2，支持 1/2/3 或 "auto" 智能自适应 */
+  columns?: 1 | 2 | 3 | "auto";
   className?: string;
 }
 
@@ -78,13 +76,29 @@ export const SelectGrid = <T extends string = string>({
   columns = 2,
   className = "",
 }: SelectGridProps<T>) => {
+  // 智能解析最终列数（显式数字优先；auto 模式智能嗅探）
+  const resolvedColumns = useMemo(() => {
+    if (typeof columns === "number") return columns;
+
+    // auto 模式智能检测：若含有长标题/长描述/复杂分式公式则自适应为 1 列
+    const hasLongContent = items.some(
+      (item) =>
+        (item.label && item.label.length > 6) ||
+        (item.description && item.description.length > 7) ||
+        (item.formula &&
+          (item.formula.includes("\\frac") || item.formula.length > 14)),
+    );
+
+    return hasLongContent ? 1 : 2;
+  }, [columns, items]);
+
   const keys = items.map((i) => i.key);
   const { getItemProps, registerRef } = useRadioGroup({
     value,
     keys,
     onChange: onChange as (key: string) => void,
-    direction: columns >= 2 ? "grid" : "linear",
-    columns,
+    direction: resolvedColumns >= 2 ? "grid" : "linear",
+    columns: resolvedColumns,
   });
 
   const setRef = useCallback(
@@ -97,16 +111,18 @@ export const SelectGrid = <T extends string = string>({
   const colorStyle = COLOR_STYLES[color];
 
   const gridClass =
-    columns === 3
+    resolvedColumns === 3
       ? "grid grid-cols-3 gap-1.5"
-      : columns === 1
+      : resolvedColumns === 1
         ? "grid grid-cols-1 gap-1.5"
         : "grid grid-cols-2 gap-1.5";
 
   return (
     <div
       role="radiogroup"
-      className={[gridClass, className].filter(Boolean).join(" ")}
+      className={[gridClass, "items-stretch", className]
+        .filter(Boolean)
+        .join(" ")}
     >
       {items.map((item) => {
         const isSelected = value === item.key;
@@ -115,7 +131,8 @@ export const SelectGrid = <T extends string = string>({
           ? colorStyle.selected[variant]
           : colorStyle.unselected;
         const hoverClass = isSelected ? "" : colorStyle.hover;
-        const spanClass = item.fullWidth ? "col-span-2" : "";
+        const spanClass =
+          item.fullWidth && resolvedColumns >= 2 ? "col-span-2" : "";
 
         const ariaLabel = item.description
           ? `${item.label || item.formula || item.key}, ${item.description}`
@@ -129,7 +146,7 @@ export const SelectGrid = <T extends string = string>({
             aria-label={ariaLabel}
             onClick={() => onChange(item.key as T)}
             className={[
-              "py-2 px-2.5 text-[11px] font-semibold border-2 rounded-lg transition-all duration-200 whitespace-nowrap min-w-0 overflow-hidden",
+              "py-2 px-2 text-[11px] font-semibold border-2 rounded-lg transition-all duration-200 min-h-[44px] h-full flex flex-col items-center justify-center cursor-pointer select-none",
               selectedClass,
               hoverClass,
               spanClass,
@@ -139,21 +156,21 @@ export const SelectGrid = <T extends string = string>({
           >
             <div className="flex flex-col items-center justify-center gap-0.5 text-center w-full">
               {item.label && (
-                <span className="text-[12px] font-bold leading-tight whitespace-nowrap truncate w-full">
+                <span className="text-[12px] font-bold leading-snug break-words whitespace-normal w-full text-center">
                   {item.label}
                 </span>
               )}
               {item.formula && (
-                <div className="w-full flex items-center justify-center overflow-hidden opacity-90">
+                <div className="w-full flex items-center justify-center overflow-x-auto overflow-y-hidden opacity-90 py-0.5">
                   <KatexFormula
                     formula={item.formula}
                     mode="inline"
-                    className="!text-[10px] !my-0 !mx-0"
+                    className="!text-[10px] !my-0 !mx-0 max-w-full"
                   />
                 </div>
               )}
               {item.description && (
-                <span className="text-[10px] opacity-70 whitespace-nowrap truncate w-full">
+                <span className="text-[10px] opacity-75 leading-tight break-words whitespace-normal w-full text-center mt-0.5">
                   {item.description}
                 </span>
               )}
