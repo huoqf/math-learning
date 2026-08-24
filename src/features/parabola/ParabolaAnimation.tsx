@@ -161,7 +161,7 @@ export function ParabolaAnimation() {
     }
   }, [params.p, direction]);
 
-  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
     if (activePreset !== "free") {
       const modePresets = PARABOLA_PRESETS[studyMode] ?? [];
@@ -173,8 +173,6 @@ export function ParabolaAnimation() {
             badge: "高考经典 · 通径性质",
             condition: "过焦点 F 作垂直于对称轴的弦，交抛物线于 A, B 两点。",
             question: "求解通径长 |AB| 及其端点坐标。",
-            method:
-              "通径长 |AB| = 2p，端点坐标为 (p/2, ±p)，为所有焦点弦长极小值。",
           };
         }
         if (activePreset === "orthogonalTangents") {
@@ -183,8 +181,6 @@ export function ParabolaAnimation() {
             badge: "高考经典 · 垂直切线与阿基米德三角形",
             condition: "割线 AB 为焦点弦，分别过 A, B 作切线交于点 P。",
             question: "探究交点 P 的位置与切线夹角 ∠APB。",
-            method:
-              "交点 P 必在准线 x = -p/2 上，且 PA ⊥ PB（夹角 90°），PF ⊥ AB。",
           };
         }
       }
@@ -197,8 +193,6 @@ export function ParabolaAnimation() {
         condition: `抛物线标准方程及动点 P，焦点 F 与准线 l（焦准距 p = ${params.p.toFixed(1)}）。`,
         question:
           "探究动点 P 到焦点的距离 |PF| 与到准线垂线段距离的等价转化关系。",
-        method:
-          "几何转化法：|PF| = d(P, l) = x_P + p/2，将折线距离和最值问题转化为到准线的单条垂直线段。",
       };
     }
     if (studyMode === "focalChord") {
@@ -207,8 +201,6 @@ export function ParabolaAnimation() {
         badge: "高考焦点弦与相切圆",
         condition: "过焦点 F 的直线交抛物线于 A(x₁,y₁), B(x₂,y₂)，倾斜角为 θ。",
         question: "求焦点弦长 |AB|，探究以 AB 为直径的圆与准线的位置关系。",
-        method:
-          "弦长公式 |AB| = x₁ + x₂ + p = 2p / sin²θ；以 AB 为直径的圆必与准线相切；以焦半径为直径的圆与切于顶点的直线相切。",
       };
     }
     return {
@@ -216,8 +208,6 @@ export function ParabolaAnimation() {
       badge: "阿基米德三角形与光学性质",
       condition: "过抛物线上两点 A, B 作切线交于点 P（阿基米德三角形）。",
       question: "探究焦点弦切线交点 P 的轨迹、正交性及切线光学反射规律。",
-      method:
-        "高考秒杀三大定律：① 当 AB 过焦点时，P 在准线上且 PA ⊥ PB；② PF ⊥ AB；③ 焦点发出的光线经抛物面反射后平行于对称轴。",
     };
   }, [studyMode, activePreset, params.p]);
 
@@ -306,12 +296,6 @@ export function ParabolaAnimation() {
                     【探究设问】
                   </span>
                   <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【秒杀通法】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.method}</span>
                 </div>
               </div>
             </TipCard>

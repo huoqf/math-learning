@@ -171,7 +171,7 @@ export function ConicDefinitionAnimation() {
       });
   }, [params, studyMode, conicType]);
 
-  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
     if (studyMode === "firstDef") {
       if (conicType === "ellipse") {
@@ -182,8 +182,6 @@ export function ConicDefinitionAnimation() {
             "平面内动点 P 到两定点 F₁, F₂ 距离之和为常数 2a (2a > 2c)。",
           question:
             "探究动点轨迹方程与退化临界（2a = 2c 退化为线段，2a < 2c 无轨迹）。",
-          method:
-            "|PF₁| + |PF₂| = 2a 结合余弦定理/勾股定理，用于求解焦点三角形周长与面积。",
         };
       }
       if (conicType === "hyperbola") {
@@ -194,8 +192,6 @@ export function ConicDefinitionAnimation() {
             "动点 P 到两定点 F₁, F₂ 距离之差的绝对值为常数 2a (0 < 2a < 2c)。",
           question:
             "探究双支曲线与退化临界（2a = 2c 为两条射线，2a = 0 为垂直平分线）。",
-          method:
-            "||PF₁| - |PF₂|| = 2a，用于双曲线焦半径求差与焦点三角形面积化简。",
         };
       }
       return {
@@ -203,8 +199,6 @@ export function ConicDefinitionAnimation() {
         badge: "抛物线定义 · 到定点等于到定直线",
         condition: "动点 P 到焦点 F 的距离等于到准线 l 的距离 (e = 1)。",
         question: "探究抛物线焦半径转化法在折线距离最值问题中的应用。",
-        method:
-          "转化法：|PF| = d(P, l)，折线距离之和 |PA| + |PF| 转化为点到准线垂线段最短。",
       };
     }
     return {
@@ -213,8 +207,6 @@ export function ConicDefinitionAnimation() {
       condition:
         "动点 P 到焦点 F 的距离与到准线 l 的距离之比为常数 e（离心率）。",
       question: "探究离心率 e 的数值演变对曲线形态的决定性作用。",
-      method:
-        "0 < e < 1 为椭圆；e = 1 为抛物线；e > 1 为双曲线。高考常用于焦半径与准线距离等价转化。",
     };
   }, [studyMode, conicType]);
 
@@ -310,12 +302,6 @@ export function ConicDefinitionAnimation() {
                     【探究设问】
                   </span>
                   <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【秒杀通法】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.method}</span>
                 </div>
               </div>
             </TipCard>

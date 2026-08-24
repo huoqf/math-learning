@@ -163,7 +163,7 @@ export function LineParamTAnimation() {
     )}, \\: t_1 t_2 = ${intersect.tProd.toFixed(2)})`;
   }, [params, mode, intersect]);
 
-  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
     if (mode === "definition") {
       return {
@@ -172,8 +172,6 @@ export function LineParamTAnimation() {
         condition:
           "直线标准参数方程 x = x₀ + t cos α, y = y₀ + t sin α，P₀(x₀,y₀) 为定基点。",
         question: "参数 t 的代数正负与动点 P 到基点 P₀ 的几何距离对应关系。",
-        method:
-          "当方向向量为单位向量 (cos α, sin α) 时，|t| = |P₀P| 为点 P 到 P₀ 的真实距离；t > 0 与 t < 0 表示 P₀ 两侧的反向点。",
       };
     }
     if (mode === "secant") {
@@ -182,8 +180,6 @@ export function LineParamTAnimation() {
         badge: "割线定理与几何方幂",
         condition: `过定点 P₀ 的直线与${conicType === "circle" ? "圆" : conicType === "ellipse" ? "椭圆" : conicType === "hyperbola" ? "双曲线" : "抛物线"}交于 A(t₁), B(t₂)。`,
         question: "求相交弦长 |AB| 以及两线段距离乘积 |P₀A| · |P₀B|。",
-        method:
-          "代入曲线得 At² + Bt + C = 0；弦长 |AB| = |t₁-t₂| = √Δ/|A|；乘积 |P₀A|·|P₀B| = |t₁t₂| = |C/A|（推广到所有二次曲线）。",
       };
     }
     if (gaokaoModel === "midpoint") {
@@ -192,8 +188,6 @@ export function LineParamTAnimation() {
         badge: "高考模型 · 中点弦条件 (t₁ + t₂ = 0)",
         condition: "割线过定点 P₀(x₀, y₀)，且 P₀ 恰好为相交动弦 AB 的中点。",
         question: "探究定点 P₀ 为弦中点时代数方程系数满足的充要条件。",
-        method:
-          "中点等价于 t₁ + t₂ = 0，即关于 t 的一元二次方程一次项系数 B = 0，瞬间求出直线倾斜角 α 与斜率。",
       };
     }
     return {
@@ -202,8 +196,6 @@ export function LineParamTAnimation() {
       condition:
         "割线过定点 P₀（如焦点或轴上定点），与二次曲线交于 A, B 两点。",
       question: "求解线段倒数和 |1/|P₀A| ± 1/|P₀B|| 是否为定值及极值。",
-      method:
-        "线段倒数和通分转化为 |(t₁±t₂)/(t₁t₂)| = |B/C|，直接由韦达定理一步出解，免去繁琐的根式化简。",
     };
   }, [mode, conicType, gaokaoModel]);
 
@@ -315,12 +307,6 @@ export function LineParamTAnimation() {
                     【探究设问】
                   </span>
                   <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【秒杀通法】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.method}</span>
                 </div>
               </div>
             </TipCard>

@@ -179,17 +179,16 @@ export function CircleCircleAnimation() {
       });
   }, [params]);
 
-  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
     if (preset === "outerTangent") {
       return {
         variant: "primary" as const,
         badge: "高考经典 · 典型外切",
-        condition: "两圆圆心距恰好等于两半径之和 (d = r₁ + r₂)。",
+        condition:
+          "两圆圆心距恰好等于两半径之和 (d = r₁ + r₂)，外离与相交的临界态。",
         question:
           "两圆外切时的切点坐标与公切线条数（共3条：2条外公切线 + 1条内公切线）。",
-        method:
-          "两圆连心线 O₁O₂ 垂直于在切点处的公切线，外切点为连心线定比分点。",
       };
     }
     if (preset === "intersectStandard") {
@@ -198,8 +197,6 @@ export function CircleCircleAnimation() {
         badge: "高考经典 · 相交公共弦",
         condition: "|r₁ - r₂| < d < r₁ + r₂，两圆相交于两个不同的实数交点。",
         question: "求解两圆公共弦所在直线方程及公共弦长。",
-        method:
-          "作差法 C₁ - C₂ = 0 秒出公共弦直线方程，再由垂径定理 L = 2√(r₁² - d₁²) 秒求弦长。",
       };
     }
     if (preset === "innerTangent") {
@@ -208,7 +205,6 @@ export function CircleCircleAnimation() {
         badge: "高考经典 · 典型内切",
         condition: "两圆圆心距恰好等于两半径之差绝对值 (d = |r₁ - r₂|)。",
         question: "两圆内切时的切点坐标与公切线条数（唯一 1 条外公切线）。",
-        method: "切点位于连心线延长线上，两圆在切点处具有完全重合的公切线。",
       };
     }
 
@@ -218,8 +214,6 @@ export function CircleCircleAnimation() {
         badge: "两圆 5 种位置关系判定",
         condition: `圆 O₁(${parsedCircleParams.x1.toFixed(1)}, ${parsedCircleParams.y1.toFixed(1)}) 半径 ${parsedCircleParams.r1.toFixed(1)}，圆 O₂(${parsedCircleParams.x2.toFixed(1)}, ${parsedCircleParams.y2.toFixed(1)}) 半径 ${parsedCircleParams.r2.toFixed(1)}，圆心距 d = ${calcRes.d.toFixed(2)}。`,
         question: "如何准确判断两圆外离、外切、相交、内切或内含？",
-        method:
-          "比较圆心距 d 与 r₁+r₂、|r₁-r₂|：d > r₁+r₂ 外离 (4条切线)；d = r₁+r₂ 外切 (3条)；相交 (2条)；内切 (1条)；内含 (0条)。",
       };
     }
     if (studyMode === "commonChord") {
@@ -362,12 +356,6 @@ export function CircleCircleAnimation() {
                     【探究设问】
                   </span>
                   <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【秒杀通法】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.method}</span>
                 </div>
               </div>
             </TipCard>

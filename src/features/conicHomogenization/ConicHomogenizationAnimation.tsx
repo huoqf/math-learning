@@ -186,7 +186,7 @@ export function ConicHomogenizationAnimation() {
     return `\\text{齐次方程: } ${result.homoEqLatex} \\quad \\implies \\quad \\color{${MATH_COLORS.paramPrimary}}{k_{PA}} + \\color{${MATH_COLORS.paramSecondary}}{k_{PB}} = ${sumVal}, \\quad \\color{${MATH_COLORS.paramPrimary}}{k_{PA}} \\cdot \\color{${MATH_COLORS.paramSecondary}}{k_{PB}} = ${prodVal}`;
   }, [result]);
 
-  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
     if (presetKey === "left_vertex_perpendicular") {
       return {
@@ -196,8 +196,6 @@ export function ConicHomogenizationAnimation() {
           "已知椭圆及左顶点 P(-a, 0)，割线 AB 过 x 轴上定点且 PA ⊥ PB。",
         question:
           "探究直线 AB 恒过定点的坐标与斜率乘积 k_{PA} · k_{PB} 的定值规律。",
-        method:
-          "以 P 为新原点平移换元，齐次化后由 k_{PA} · k_{PB} = -1 建立方程，秒求割线定点横坐标。",
       };
     }
     if (presetKey === "origin_symmetric_sum") {
@@ -207,8 +205,6 @@ export function ConicHomogenizationAnimation() {
         condition:
           "割线 AB 与椭圆相交，原点 O(0,0) 为弦角顶点，k_{OA} + k_{OB} = 0。",
         question: "探究动弦 AB 斜率与割线在坐标轴截距的几何对称特征。",
-        method:
-          "割线 Ax+By=1 齐次化代入二次曲线，一次项系数为 0 对应斜率和为 0，割线必平行于对称轴。",
       };
     }
     if (presetKey === "asymmetric_slope_explore") {
@@ -218,8 +214,6 @@ export function ConicHomogenizationAnimation() {
         condition:
           "过定点 P(x₀,y₀) 的割线交曲线于 A, B，满足 λk_{PA} + μk_{PB} = 0 (λ ≠ μ)。",
         question: "探究在非对称加权斜率条件下，割线 AB 是否仍恒过定点？",
-        method:
-          "设而不求设割线方程，代入齐次化二次型韦达定理，分离参数法求出割线所恒过的固定点坐标。",
       };
     }
 
@@ -231,8 +225,6 @@ export function ConicHomogenizationAnimation() {
           "中心曲线 C 与割线 l: Ax+By=1 交于 A, B 两点，定点为原点 O(0,0)。",
         question:
           "求证动弦 OA, OB 的斜率和 k_{OA}+k_{OB} 与斜率乘积 k_{OA}·k_{OB} 为定值。",
-        method:
-          "将割线常数项 1 齐次升次代入曲线，两边同除 x² 转化为关于 k 的一元二次方程，韦达定理秒出解。",
       };
     }
     if (studyMode === "shift") {
@@ -243,8 +235,6 @@ export function ConicHomogenizationAnimation() {
           "已知定点 P(x₀,y₀) 在曲线上或轴上，割线 AB 绕定点旋转或与 PA, PB 联动。",
         question:
           "探究动角 ∠APB 与动弦 AB 恒过定点、斜率定值之间的等价代数关系。",
-        method:
-          "平移坐标系 X=x-x₀, Y=y-y₀ 将定点移至新原点，用割线方程消去常数项与一次项进行齐次化求解。",
       };
     }
     return {
@@ -253,8 +243,6 @@ export function ConicHomogenizationAnimation() {
       condition:
         "割线交曲线于 A, B，且动弦斜率满足 λk_{PA} + μk_{PB} = 0 (如 k₁ + 2k₂ = 0)。",
       question: "探究非对称关系下直线 AB 恒过定点的存在性与坐标解。",
-      method:
-        "联立齐次化二次型方程，利用非对称韦达关系消除参数，推导直线 AB 的定点与定值结论。",
     };
   }, [studyMode, presetKey]);
 
@@ -387,12 +375,6 @@ export function ConicHomogenizationAnimation() {
                     【探究设问】
                   </span>
                   <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【秒杀通法】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.method}</span>
                 </div>
               </div>
             </TipCard>
