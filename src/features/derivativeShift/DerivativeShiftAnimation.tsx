@@ -13,6 +13,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -99,6 +100,44 @@ export function DerivativeShiftAnimation() {
     return `\\sqrt{x_1 x_2} < L(x_1, x_2) < \\frac{x_1 + x_2}{2}`;
   }, [activeMode, subModel, params.a, params.k]);
 
+  // 教学导引与题设背景配置
+  const tipConfig = useMemo(() => {
+    switch (activeMode) {
+      case "implicit_zero":
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 隐零点定理与消元",
+          condition: `已知函数 ${subModel === "x_ln_x" ? "f(x) = x ln x - ax + 1" : "f(x) = eˣ - ax"}，导数零点 x₀ 无法显式解析求解。`,
+          question:
+            "设导数零点为 x₀，求函数 f(x) 极值的取值范围或证明相关代数不等式。",
+        };
+      case "shift_symmetric":
+        return {
+          variant: "warning" as const,
+          badge: "高考压轴 · 极值点偏移",
+          condition: `割线 y = k 与曲线 ${subModel === "xe_neg_x" ? "f(x) = x e⁻ˣ" : "f(x) = (ln x)/x"} 交于两不等正实根 x₁ < x₂，极值点为 x₀。`,
+          question:
+            "已知两根函数值相等 f(x₁)=f(x₂)=k，求证极值点偏移不等式 x₁ + x₂ > 2x₀（或 < 2x₀）。",
+        };
+      case "log_mean":
+        return {
+          variant: "info" as const,
+          badge: "高考压轴 · 对数均值不等式 (L-Mean)",
+          condition:
+            "对任意相异正实数 x₁ < x₂，定义对数平均数 L(x₁, x₂) = (x₁-x₂)/(ln x₁ - ln x₂)。",
+          question:
+            "探究对数均值 L(x₁, x₂) 与几何平均数 √(x₁x₂)、算术平均数 (x₁+x₂)/2 的双边大小关系。",
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 隐零点与极值点偏移",
+          condition: "考察导数零点非显式表达或非对称函数多零点问题。",
+          question: "证明极值点与零点相关的范围与不等式。",
+        };
+    }
+  }, [activeMode, subModel]);
+
   return (
     <ThreePanel
       left={
@@ -172,6 +211,31 @@ export function DerivativeShiftAnimation() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

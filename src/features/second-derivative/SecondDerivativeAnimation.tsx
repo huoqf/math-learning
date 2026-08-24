@@ -13,6 +13,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   TabSwitcher,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -164,6 +165,43 @@ export function SecondDerivativeAnimation() {
     }
   }, [params, fnKey, studyMode]);
 
+  // 教学导引与题设背景配置
+  const tipConfig = useMemo(() => {
+    switch (studyMode) {
+      case "concavity":
+        return {
+          variant: "primary" as const,
+          badge: "高考难点 · 曲线凹凸性与切线位置",
+          condition: "函数 f(x) 具有连续二阶导数，切点探针位于 x₀ 处。",
+          question:
+            "判断函数在不同区间上的凹凸性，并探究曲线与对应切线的上下相对位置关系。",
+        };
+      case "inflection":
+        return {
+          variant: "warning" as const,
+          badge: "高考核心 · 拐点与极值点对比",
+          condition: "给定函数 f(x)，考察一阶导数驻点与二阶导数变号点。",
+          question:
+            "求函数拐点坐标，并辨析拐点（凹凸性分界点）与极值点（单调性分界点）的本质区别。",
+        };
+      case "jensen":
+        return {
+          variant: "info" as const,
+          badge: "高考压轴 · 琴生不等式弦弧关系",
+          condition: "在函数凹凸区间内选取两相异自变量点 x₁ 与 x₂。",
+          question:
+            "判断中点函数值 f((x₁+x₂)/2) 与割线中点 (f(x₁)+f(x₂))/2 的大小关系。",
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "高考难点 · 二阶导数与拐点",
+          condition: "考察函数的二阶导数符号与图象弯曲特征。",
+          question: "确定函数的拐点坐标与凹凸区间。",
+        };
+    }
+  }, [studyMode]);
+
   return (
     <ThreePanel
       left={
@@ -218,6 +256,31 @@ export function SecondDerivativeAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

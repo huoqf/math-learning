@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -129,6 +130,60 @@ export function DerivativeAnimation() {
   const secantLatex = `k_{\\text{割}} = \\frac{f(\\color{${x0ColorHex}}{x_0} + \\color{${dxColorHex}}{\\Delta x}) - f(\\color{${x0ColorHex}}{x_0})}{\\color{${dxColorHex}}{\\Delta x}}`;
   const limitLatex = `f'(\\color{${x0ColorHex}}{x_0}) = \\lim_{\\color{${dxColorHex}}{\\Delta x} \\to 0} k_{\\text{割}}`;
 
+  // 教学导引与题设背景配置
+  const tipConfig = useMemo(() => {
+    switch (fnKey) {
+      case "cubic":
+        return {
+          variant: "primary" as const,
+          badge: "高考基础 · 多项式切线与平均变化率",
+          condition:
+            "已知函数 f(x) = x³ - 3x，考察切点 x₀ 与割线动点 x₀ + Δx。",
+          question:
+            "求割线斜率在步长 Δx → 0 时的极限，并确定切点 x₀ 处的切线方程与导数值 f'(x₀)。",
+        };
+      case "rational":
+        return {
+          variant: "info" as const,
+          badge: "高考基础 · 反比例分式函数变化率",
+          condition:
+            "已知反比例函数 f(x) = 1/x (x ≠ 0)，考察切点 x₀ 处的割线逼近。",
+          question:
+            "求双曲线上任意切点的瞬时变化率与切线方程，探究斜率随切点位置的演化规律。",
+        };
+      case "sqrt":
+        return {
+          variant: "warning" as const,
+          badge: "高考易错 · 根式函数与端点可导性",
+          condition:
+            "已知半幂函数 f(x) = √x (x ≥ 0)，考察正半轴切点及逼近原点 x=0 处。",
+          question:
+            "判断函数在端点 x=0 处的导数是否存在，探究切线趋近垂直的几何极限。",
+        };
+      case "xlnx":
+        return {
+          variant: "primary" as const,
+          badge: "高考核心 · 经典超越模型 x·ln(x) 极值与切线",
+          condition: "已知经典超越函数 f(x) = x ln x (定义域 x > 0)。",
+          question: "求函数的极值点坐标与切线斜率，探究水平切线处的临界特征。",
+        };
+      case "lnx_x":
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 经典母题 (ln x)/x 极大值与切线",
+          condition: "已知经典超越母题 f(x) = (ln x)/x (定义域 x > 0)。",
+          question: "求函数的单调区间与极大值点，并求切点处的切线方程。",
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "高考基础 · 导数几何意义与割线逼近",
+          condition: "已知函数 f(x) 与切点 x₀，割线步长为 Δx。",
+          question: "求割线斜率在 Δx → 0 时的瞬时极限导数值。",
+        };
+    }
+  }, [fnKey]);
+
   return (
     <ThreePanel
       left={
@@ -160,53 +215,29 @@ export function DerivativeAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示 */}
-          <LeftPanelSection title="教学提示" subtitle="数形结合理解导数">
-            <div className="space-y-3 text-xs text-neutral-600 leading-relaxed">
-              <div className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-100">
-                <p className="font-semibold text-neutral-700 mb-1">
-                  虚线几何含义：
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-neutral-600">
-                  <li>
-                    <span className="font-medium text-[#DC2626]">
-                      红色虚线 (切线)
-                    </span>
-                    ： 曲线在切点{" "}
-                    <span className="font-mono text-[#EF4444]">x₀</span>{" "}
-                    处的切线，斜率等同于该点的导数值{" "}
-                    <span className="font-mono text-[#EF4444]">f'(x₀)</span>。
-                  </li>
-                  <li>
-                    <span className="font-medium text-[#D97706]">
-                      橙色虚线 (割线)
-                    </span>
-                    ： 连接切点与邻近动点{" "}
-                    <span className="font-mono text-[#EF4444]">x₀</span> +{" "}
-                    <span className="font-mono text-[#D97706]">Δx</span>{" "}
-                    的割线，斜率代表区间平均变化率。
-                  </li>
-                </ul>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
               </div>
-
-              <div className="p-2.5 bg-primary-50/40 rounded-lg border border-primary-100/40">
-                <p className="font-semibold text-primary-900 mb-1">
-                  极限逼近互动：
-                </p>
-                <p className="mb-2">
-                  尝试将{" "}
-                  <span className="font-medium text-[#D97706]">步长 Δx</span>{" "}
-                  调小，观察橙色割线如何旋转并最终重合至红色切线：
-                </p>
-                <div className="my-1.5 p-1 bg-white rounded border border-neutral-100 text-center shadow-sm">
-                  <KatexFormula
-                    formula={`\\lim_{\\color{${MATH_COLORS.paramSecondary}}{\\Delta x} \\to 0} k_{\\text{割}} = k_{\\text{切}}`}
-                    mode="inline"
-                  />
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
                 </div>
-                <p>这就是极限定义，即割线斜率的极限就是切线斜率。</p>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
               </div>
-            </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

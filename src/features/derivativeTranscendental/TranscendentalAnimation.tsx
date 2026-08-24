@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -116,6 +117,52 @@ export function TranscendentalAnimation() {
       setParams((prev) => ({ ...prev, a: 1.0 }));
     }
   };
+
+  // 教学导引与题设背景配置
+  const tipConfig = useMemo(() => {
+    switch (mode) {
+      case "exp":
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 指数基准切线放缩 eˣ ≥ x+1",
+          condition: "给定超越指数函数 f(x) = eˣ，切点为 x₀ (默认 (0, 1))。",
+          question:
+            "探究在切点处的切线方程，并求证不等式 eˣ ≥ x+1（及相关变体）在实数域恒成立。",
+        };
+      case "log":
+        return {
+          variant: "info" as const,
+          badge: "高考压轴 · 对数基准切线放缩 ln x ≤ x-1",
+          condition:
+            "给定超越对数函数 g(x) = ln x (x > 0)，切点为 x₀ (默认 (1, 0))。",
+          question:
+            "探究在切点处的切线方程，并求证不等式 ln x ≤ x-1 在正实数域恒成立。",
+        };
+      case "chain":
+        return {
+          variant: "warning" as const,
+          badge: "高考压轴 · 对偶双基准夹逼不等式链",
+          condition:
+            "在正实数域 x > 0 上同时考察指数曲线、对数曲线与一次函数 y = x。",
+          question:
+            "探究公切点 x=1 处的切线特征，求证双基准夹逼链 ln x + 1 ≤ x ≤ e^{x-1} 恒成立。",
+        };
+      case "param":
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 切线临界与恒成立求参",
+          condition: `已知不等式 ${subMode === "exp_ax" ? "eˣ ≥ ax" : "eˣ ≥ ax + 1"} 恒成立，待求参数为 a。`,
+          question: "求实数参数 a 的最大临界值，使得不等式在定义域内恒成立。",
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 超越函数切线放缩",
+          condition: "考察基准超越函数 (eˣ 与 ln x) 与切线方程的关系。",
+          question: "求切线方程并证明相关切线放缩不等式。",
+        };
+    }
+  }, [mode, subMode]);
 
   return (
     <ThreePanel
@@ -250,6 +297,31 @@ export function TranscendentalAnimation() {
               />
             </LeftPanelSection>
           )}
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
+          </LeftPanelSection>
         </LeftPanel>
       }
       center={

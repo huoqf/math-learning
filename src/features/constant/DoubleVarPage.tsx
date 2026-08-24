@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -80,6 +81,63 @@ export function DoubleVarPage() {
     }
   }, [selectedLogic, params]);
 
+  // 教学导引与题设背景配置
+  const tipConfig = useMemo(() => {
+    switch (selectedLogic) {
+      case "all_all":
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 双变量任意对任意 (极值隔离)",
+          condition:
+            "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+          question:
+            "求参数范围，使得对任意 x₁ 与任意 x₂，恒有 f(x₁) ≥ g(x₂) 成立。",
+        };
+      case "all_exist":
+        return {
+          variant: "info" as const,
+          badge: "高考压轴 · 任意对存在 (值域包含)",
+          condition:
+            "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+          question:
+            "求参数范围，使得对任意 x₁，总存在 x₂ 满足 f(x₁) = g(x₂)（或 f(x₁) ≤ g(x₂)）。",
+        };
+      case "exist_all":
+        return {
+          variant: "warning" as const,
+          badge: "高考压轴 · 存在对任意 (最值压制)",
+          condition:
+            "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+          question:
+            "求参数范围，使得存在 x₁，对任意 x₂ 均有 f(x₁) ≥ g(x₂) 成立。",
+        };
+      case "exist_exist":
+        return {
+          variant: "warning" as const,
+          badge: "高考压轴 · 存在对存在 (值域相交)",
+          condition:
+            "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+          question:
+            "求参数范围，使得存在 x₁ 与 x₂ 满足 f(x₁) = g(x₂)（两函数图象有重合值域）。",
+        };
+      case "same_var":
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 同自变量对垒 (差函数)",
+          condition: "在公共区间 x ∈ [1.5, 2.0] 上考察双函数 f(x) 与 g(x)。",
+          question:
+            "求参数范围，使得在公共区间内对任意相同自变量 x 均有 f(x) ≥ g(x)。",
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 双变量博弈问题",
+          condition: "考察两函数 f(x) 与 g(x) 在不同量词约束下的数值关系。",
+          question: "求满足特定全称与存在量词不等式关系的参数取值范围。",
+        };
+    }
+  }, [selectedLogic]);
+
   return (
     <ThreePanel
       left={
@@ -128,11 +186,41 @@ export function DoubleVarPage() {
             />
           </LeftPanelSection>
 
-          <ParamControl
-            params={paramConfigs}
-            onParamChange={handleParamChange}
-            onReset={handleReset}
-          />
+          <LeftPanelSection
+            title="参数调节"
+            subtitle="拖动顶点参数调节两抛物线位置"
+          >
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={handleReset}
+            />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
+          </LeftPanelSection>
         </LeftPanel>
       }
       center={

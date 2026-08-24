@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -183,6 +184,41 @@ export function SingleVarPage() {
     }
   }, [subMode, funModel, transModel, params]);
 
+  // 教学导引与题设背景配置
+  const tipConfig = useMemo(() => {
+    const isAlways = logic === "always";
+    const rangeText = `区间 [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
+
+    if (funModel === "transcendent") {
+      let modelName = "(ln x)/x";
+      if (transModel === "exp_minus_ax") modelName = "eˣ - ax";
+      else if (transModel === "a_ln_x_minus_x") modelName = "a ln x - x + 1";
+      else if (transModel === "exp_minus_a_x_plus_1") modelName = "eˣ - a(x+1)";
+
+      return {
+        variant: (isAlways ? "primary" : "warning") as "primary" | "warning",
+        badge: isAlways
+          ? `高考压轴 · 超越函数 ${modelName} 恒成立`
+          : `高考压轴 · 超越函数 ${modelName} 存在性`,
+        condition: `给定超越函数与参数 a，自变量限定在研究${rangeText}内。`,
+        question: isAlways
+          ? "求实数参数 a 的取值范围，使得不等式在给定区间内对任意 x 均恒成立。"
+          : "求实数参数 a 的取值范围，使得不等式在给定区间内存在实数解（能成立）。",
+      };
+    } else {
+      return {
+        variant: (isAlways ? "primary" : "warning") as "primary" | "warning",
+        badge: isAlways
+          ? "高考经典 · 二次函数含参恒成立 (轴动区间定)"
+          : "高考经典 · 二次函数含参存在性 (能成立)",
+        condition: `二次函数含参对称轴 x = a，自变量限定在研究${rangeText}内。`,
+        question: isAlways
+          ? "求实数参数 a 的取值范围，使得二次不等式在给定区间上恒成立。"
+          : "求实数参数 a 的取值范围，使得二次不等式在给定区间上存在解。",
+      };
+    }
+  }, [funModel, transModel, logic, params.m, params.n]);
+
   return (
     <ThreePanel
       left={
@@ -297,11 +333,38 @@ export function SingleVarPage() {
             </div>
           </LeftPanelSection>
 
-          <ParamControl
-            params={paramConfigs}
-            onParamChange={handleParamChange}
-            onReset={handleReset}
-          />
+          <LeftPanelSection title="参数调节" subtitle="改变研究区间与目标参数">
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={handleReset}
+            />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
+          </LeftPanelSection>
         </LeftPanel>
       }
       center={

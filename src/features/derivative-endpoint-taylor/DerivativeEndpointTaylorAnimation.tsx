@@ -13,6 +13,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   TabSwitcher,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -163,6 +164,49 @@ export function DerivativeEndpointTaylorAnimation() {
     return `${baseMap[taylorBase]} 泰勒 ${taylorOrder} 阶拟合放缩看板`;
   }, [activeMode, endpointType, taylorBase, taylorOrder]);
 
+  // 教学导引与题设背景配置
+  const tipConfig = useMemo(() => {
+    switch (activeMode) {
+      case "endpoint": {
+        const typeName =
+          endpointType === "exp"
+            ? "指数切线"
+            : endpointType === "ln"
+              ? "对数切线"
+              : "超越混合";
+        return {
+          variant: "primary" as const,
+          badge: `高考压轴 · 端点效应与恒成立 (${typeName})`,
+          condition:
+            "不等式在区间端点处取等号，要求在定义域半区间内 f(x) ≥ 0 恒成立。",
+          question: "求实数参数 a 的取值范围，使得不等式在半区间上恒成立。",
+        };
+      }
+      case "lhopital":
+        return {
+          variant: "info" as const,
+          badge: "高考压轴 · 0/0 型未定式极限逼近",
+          condition: "当自变量 x 趋向端点时，分式极限呈现 0/0 未定式形态。",
+          question:
+            "求自变量逼近端点时分式函数的极限值，确定不等式临界放缩边界。",
+        };
+      case "taylor":
+        return {
+          variant: "warning" as const,
+          badge: `高考压轴 · 泰勒 ${taylorOrder} 阶拟合放缩`,
+          condition: `考察超越基底函数 ${taylorBase} 在原点附近的 ${taylorOrder} 阶多项式逼近。`,
+          question: `探究多项式 P_${taylorOrder}(x) 在原点附近的逼近程度，求证对应的多项式放缩不等式。`,
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 端点效应与放缩",
+          condition: "考察函数在端点处的导数性态与极限逼近。",
+          question: "求参数范围并验证放缩不等式。",
+        };
+    }
+  }, [activeMode, endpointType, taylorBase, taylorOrder]);
+
   return (
     <ThreePanel
       left={
@@ -277,6 +321,31 @@ export function DerivativeEndpointTaylorAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

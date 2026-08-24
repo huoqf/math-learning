@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -248,6 +249,106 @@ export function ConstantAnimation() {
     }
   }, [activeTab, subMode, funModel, transModel, selectedLogic, params]);
 
+  // 教学导引与题设背景配置
+  const tipConfig = useMemo(() => {
+    if (activeTab === "single") {
+      const isAlways = logic === "always";
+      const rangeText = `区间 [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
+
+      if (funModel === "transcendent") {
+        let modelName = "(ln x)/x";
+        if (transModel === "exp_minus_ax") modelName = "eˣ - ax";
+        else if (transModel === "a_ln_x_minus_x") modelName = "a ln x - x + 1";
+        else if (transModel === "exp_minus_a_x_plus_1")
+          modelName = "eˣ - a(x+1)";
+
+        return {
+          variant: (isAlways ? "primary" : "warning") as "primary" | "warning",
+          badge: isAlways
+            ? `高考压轴 · 单变量 ${modelName} 恒成立`
+            : `高考压轴 · 单变量 ${modelName} 存在性`,
+          condition: `给定超越函数与参数 a，自变量限定在研究${rangeText}内。`,
+          question: isAlways
+            ? "求实数参数 a 的取值范围，使得不等式在给定区间内对任意 x 均恒成立。"
+            : "求实数参数 a 的取值范围，使得不等式在给定区间内存在实数解（能成立）。",
+        };
+      } else {
+        return {
+          variant: (isAlways ? "primary" : "warning") as "primary" | "warning",
+          badge: isAlways
+            ? "高考经典 · 二次函数含参恒成立 (轴动区间定)"
+            : "高考经典 · 二次函数含参存在性 (能成立)",
+          condition: `二次函数含参对称轴 x = a，自变量限定在研究${rangeText}内。`,
+          question: isAlways
+            ? "求实数参数 a 的取值范围，使得二次不等式在给定区间上恒成立。"
+            : "求实数参数 a 的取值范围，使得二次不等式在给定区间上存在解。",
+        };
+      }
+    } else {
+      switch (selectedLogic) {
+        case "all_all":
+          return {
+            variant: "primary" as const,
+            badge: "高考压轴 · 双变量任意对任意 (极值隔离)",
+            condition:
+              "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+            question:
+              "求参数范围，使得对任意 x₁ 与任意 x₂，恒有 f(x₁) ≥ g(x₂) 成立。",
+          };
+        case "all_exist":
+          return {
+            variant: "info" as const,
+            badge: "高考压轴 · 任意对存在 (值域包含)",
+            condition:
+              "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+            question:
+              "求参数范围，使得对任意 x₁，总存在 x₂ 满足 f(x₁) = g(x₂)（或 f(x₁) ≤ g(x₂)）。",
+          };
+        case "exist_all":
+          return {
+            variant: "warning" as const,
+            badge: "高考压轴 · 存在对任意 (最值压制)",
+            condition:
+              "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+            question:
+              "求参数范围，使得存在 x₁，对任意 x₂ 均有 f(x₁) ≥ g(x₂) 成立。",
+          };
+        case "exist_exist":
+          return {
+            variant: "warning" as const,
+            badge: "高考压轴 · 存在对存在 (值域相交)",
+            condition:
+              "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+            question:
+              "求参数范围，使得存在 x₁ 与 x₂ 满足 f(x₁) = g(x₂)（两函数图象有重合值域）。",
+          };
+        case "same_var":
+          return {
+            variant: "primary" as const,
+            badge: "高考压轴 · 同自变量对垒 (差函数)",
+            condition: "在公共区间 x ∈ [1.5, 2.0] 上考察双函数 f(x) 与 g(x)。",
+            question:
+              "求参数范围，使得在公共区间内对任意相同自变量 x 均有 f(x) ≥ g(x)。",
+          };
+        default:
+          return {
+            variant: "primary" as const,
+            badge: "高考压轴 · 双变量博弈问题",
+            condition: "考察两函数 f(x) 与 g(x) 在不同量词约束下的数值关系。",
+            question: "求满足特定全称与存在量词不等式关系的参数取值范围。",
+          };
+      }
+    }
+  }, [
+    activeTab,
+    funModel,
+    transModel,
+    logic,
+    selectedLogic,
+    params.m,
+    params.n,
+  ]);
+
   return (
     <ThreePanel
       left={
@@ -259,8 +360,16 @@ export function ConstantAnimation() {
           >
             <SelectGrid
               items={[
-                { key: "single", label: "单变量实验室" },
-                { key: "double", label: "双变量对决" },
+                {
+                  key: "single",
+                  label: "单变量实验室",
+                  description: "恒成立与存在性",
+                },
+                {
+                  key: "double",
+                  label: "双变量对决",
+                  description: "双动点博弈",
+                },
               ]}
               value={activeTab}
               onChange={(k) => setActiveTab(k as "single" | "double")}
@@ -443,11 +552,38 @@ export function ConstantAnimation() {
           )}
 
           {/* Section 3: 参数设置 (ParamControl 渲染) */}
-          <ParamControl
-            params={paramConfigs}
-            onParamChange={handleParamChange}
-            onReset={handleReset}
-          />
+          <LeftPanelSection title="参数调节" subtitle="改变研究区间与目标参数">
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={handleReset}
+            />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
+          </LeftPanelSection>
         </LeftPanel>
       }
       center={
