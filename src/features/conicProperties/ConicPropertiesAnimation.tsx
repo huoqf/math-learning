@@ -29,7 +29,10 @@ export function ConicPropertiesAnimation() {
   // 2. 曲线类型
   const [conicType, setConicType] = useState<ConicType>("ellipse");
 
-  // 3. 参数状态
+  // 3. 典型预设
+  const [presetKey, setPresetKey] = useState<string>("free");
+
+  // 4. 参数状态
   const [params, setParams] = useState({
     a: defaultParams.a,
     b: defaultParams.b,
@@ -37,19 +40,19 @@ export function ConicPropertiesAnimation() {
     t: defaultParams.t,
   });
 
-  // 4. 视口尺寸 Hook
+  // 5. 视口尺寸 Hook
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
 
-  // 5. 坐标映射比例尺: X [-6, 6], Y [-4.5, 4.5]
+  // 6. 坐标映射比例尺: X [-6, 6], Y [-4.5, 4.5]
   const scale = useSceneScale({
     vp,
     xRange: [-6, 6],
     yRange: [-4.5, 4.5],
   });
 
-  // 6. 右屏看板数据
+  // 7. 右屏看板数据
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-conic-properties", params, {
       studyMode,
@@ -57,15 +60,14 @@ export function ConicPropertiesAnimation() {
     });
   }, [params, studyMode, conicType]);
 
-  // 7. 参数回调处理 (在 e 改变时自动倒推 b，在 a/b 改变时自动倒推 e)
+  // 8. 参数回调处理
   const handleParamChange = (key: string, value: number) => {
+    setPresetKey("free");
     setParams((prev) => {
       const next = { ...prev, [key]: value };
       if (key === "e") {
-        // 调节离心率 e -> 自动计算对应的 b
         next.b = deriveBFromEccentricity(conicType, next.a, value);
       } else if (key === "a" || key === "b") {
-        // 调节 a 或 b -> 自动更新离心率 e
         const calc = calculateConicProperties(
           conicType,
           next.a,
@@ -78,8 +80,77 @@ export function ConicPropertiesAnimation() {
     });
   };
 
-  // 8. 重置参数
+  // 9. 预设切换
+  const handlePresetChange = (key: string) => {
+    setPresetKey(key);
+    if (conicType === "ellipse") {
+      switch (key) {
+        case "rightTriangle": {
+          // 直角焦点三角形: e = sqrt(2)/2 ≈ 0.707, 顶角在短轴端点 t = PI/2
+          const a = 3;
+          const e = Math.SQRT1_2;
+          const b = a * Math.sqrt(1 - e * e);
+          setParams({ a, b, e, t: Math.PI / 2 });
+          break;
+        }
+        case "latusRectum": {
+          // 通径端点: x_P = c, t = acos(c/a)
+          const a = 3;
+          const b = 2;
+          const c = Math.sqrt(a * a - b * b);
+          const t = Math.acos(c / a);
+          const e = c / a;
+          setParams({ a, b, e, t });
+          break;
+        }
+        case "nearCircle": {
+          // 近圆退化: e -> 0.1, b -> a
+          const a = 3;
+          const b = 2.9;
+          const calc = calculateConicProperties("ellipse", a, b, Math.PI / 4);
+          setParams({ a, b, e: calc.e, t: Math.PI / 4 });
+          break;
+        }
+        default:
+          break;
+      }
+    } else {
+      switch (key) {
+        case "equilateral": {
+          // 等轴双曲线: a = b = 3, e = sqrt(2) ≈ 1.414
+          const a = 2.5;
+          const b = 2.5;
+          const calc = calculateConicProperties("hyperbola", a, b, 0.6);
+          setParams({ a, b, e: calc.e, t: 0.6 });
+          break;
+        }
+        case "latusRectum": {
+          // 通径端点: x_P = c, sec(t) = c/a => cos(t) = a/c
+          const a = 2.5;
+          const b = 2.5;
+          const c = Math.sqrt(a * a + b * b);
+          const t = Math.acos(a / c);
+          const calc = calculateConicProperties("hyperbola", a, b, t);
+          setParams({ a, b, e: calc.e, t });
+          break;
+        }
+        case "wideAngle": {
+          // 渐近线夹角 120 度: b/a = sqrt(3), e = 2
+          const a = 2;
+          const bVal = 2 * Math.sqrt(3); // 2 * sqrt(3) ≈ 3.464
+          const calc = calculateConicProperties("hyperbola", a, bVal, 0.5);
+          setParams({ a, b: bVal, e: calc.e, t: 0.5 });
+          break;
+        }
+        default:
+          break;
+      }
+    }
+  };
+
+  // 10. 重置参数
   const handleReset = () => {
+    setPresetKey("free");
     setParams({
       a: defaultParams.a,
       b: defaultParams.b,
@@ -88,9 +159,10 @@ export function ConicPropertiesAnimation() {
     });
   };
 
-  // 9. 切换圆锥曲线类型 handler
+  // 11. 切换圆锥曲线类型 handler
   const handleConicTypeChange = (newType: ConicType) => {
     setConicType(newType);
+    setPresetKey("free");
     setParams((prev) => {
       let nextB = prev.b;
       if (newType === "ellipse" && prev.b >= prev.a) {
@@ -105,7 +177,55 @@ export function ConicPropertiesAnimation() {
     });
   };
 
-  // 10. 左屏声明式参数配置按 activeMode 过滤
+  // 12. 典型预设选项
+  const presetItems = useMemo(() => {
+    if (conicType === "ellipse") {
+      return [
+        { key: "free", label: "自由探究", description: "全参数开放" },
+        {
+          key: "rightTriangle",
+          label: "直角焦点三角形",
+          formula: "e=\\frac{\\sqrt{2}}{2}",
+          description: "短轴顶角90°",
+        },
+        {
+          key: "latusRectum",
+          label: "通径垂直端点",
+          formula: "L=\\frac{2b^2}{a}",
+          description: "最小焦点弦",
+        },
+        {
+          key: "nearCircle",
+          label: "近圆退化极限",
+          formula: "e \\to 0",
+          description: "短半轴b→a",
+        },
+      ];
+    }
+    return [
+      { key: "free", label: "自由探究", description: "全参数开放" },
+      {
+        key: "equilateral",
+        label: "等轴双曲线",
+        formula: "e=\\sqrt{2}",
+        description: "渐近线垂直",
+      },
+      {
+        key: "latusRectum",
+        label: "通径垂直端点",
+        formula: "L=\\frac{2b^2}{a}",
+        description: "焦点垂直弦",
+      },
+      {
+        key: "wideAngle",
+        label: "广角渐近构型",
+        formula: "e=2",
+        description: "渐近线夹角120°",
+      },
+    ];
+  }, [conicType]);
+
+  // 13. 左屏声明式参数配置按 activeMode 过滤
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
       basicProperties: ["a", "b", "t"],
@@ -114,6 +234,28 @@ export function ConicPropertiesAnimation() {
     };
 
     const activeKeys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+
+    // 动态 marks 过滤
+    const ellipseMarks = [
+      { value: 0.01, label: "圆", labelFormula: "e \\to 0" },
+      {
+        value: 0.707,
+        label: "直角焦点三角形",
+        labelFormula: "e = \\frac{\\sqrt{2}}{2}",
+      },
+    ];
+    const hyperbolaMarks = [
+      {
+        value: 1.414,
+        label: "等轴双曲线",
+        labelFormula: "e = \\sqrt{2}",
+      },
+      {
+        value: 2.0,
+        label: "广角双曲线",
+        labelFormula: "e = 2",
+      },
+    ];
 
     return activeKeys
       .filter((key) => key in paramMeta)
@@ -131,7 +273,12 @@ export function ConicPropertiesAnimation() {
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
-          marks: meta.marks,
+          marks:
+            key === "e"
+              ? conicType === "ellipse"
+                ? ellipseMarks
+                : hyperbolaMarks
+              : meta.marks,
         };
       });
   }, [params, studyMode, conicType]);
@@ -140,7 +287,7 @@ export function ConicPropertiesAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="研究模式" subtitle="选择视角与圆锥曲线类型">
+          <LeftPanelSection title="研究模式" subtitle="选择视角与曲线类型">
             <TabSwitcher
               tabs={[
                 { key: "basicProperties", label: "几何特征" },
@@ -172,6 +319,18 @@ export function ConicPropertiesAnimation() {
                 columns={2}
               />
             </div>
+          </LeftPanelSection>
+
+          <LeftPanelSection
+            title="典型预设"
+            subtitle="高考高频几何构型一键切换"
+          >
+            <SelectGrid
+              items={presetItems}
+              value={presetKey}
+              onChange={handlePresetChange}
+              columns={2}
+            />
           </LeftPanelSection>
 
           <LeftPanelSection

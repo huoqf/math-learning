@@ -1,5 +1,10 @@
 import React, { useMemo } from "react";
-import { CoordinateGrid, Asymptote, InteractivePoint } from "@/components/Math";
+import {
+  CoordinateGrid,
+  Asymptote,
+  InteractivePoint,
+  MathPoint,
+} from "@/components/Math";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { MATH_COLORS, withAlpha } from "@/theme";
@@ -55,12 +60,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
   const originPt = mathToDesign(0, 0, scale);
   const f1Pt = mathToDesign(foci.F1.x, foci.F1.y, scale);
   const f2Pt = mathToDesign(foci.F2.x, foci.F2.y, scale);
-
-  const a1Pt = mathToDesign(vertices.A1.x, vertices.A1.y, scale);
-  const a2Pt = mathToDesign(vertices.A2.x, vertices.A2.y, scale);
-  const b1Pt = mathToDesign(vertices.B1.x, vertices.B1.y, scale);
   const b2Pt = mathToDesign(vertices.B2.x, vertices.B2.y, scale);
-
   const pPt = mathToDesign(pointP.x, pointP.y, scale);
 
   // 1. 生成曲线 SVG 路径
@@ -139,8 +139,8 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
 
   return (
     <g className="conic-properties-scene">
-      {/* 网格与坐标轴 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      {/* 坐标轴与网格 (解析几何默认纯净背景) */}
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* 渐近线 (仅双曲线) */}
       {conicType === "hyperbola" && (
@@ -174,7 +174,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             value={directrices.leftX}
             scale={scale}
             color={MATH_COLORS.primary}
-            label={`x = -a²/c`}
+            label="x = -a²/c"
             fontScale={fontScale}
           />
           <Asymptote
@@ -182,7 +182,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             value={directrices.rightX}
             scale={scale}
             color={MATH_COLORS.primary}
-            label={`x = a²/c`}
+            label="x = a²/c"
             fontScale={fontScale}
           />
         </>
@@ -201,7 +201,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                 strokeWidth={1.5}
                 strokeDasharray="4 3"
               />
-              {/* 斜边 a 标注 (0,b) -> (c,0) */}
+              {/* 斜边 a (0,b) -> (c,0) */}
               <line
                 x1={b2Pt.x}
                 y1={b2Pt.y}
@@ -216,26 +216,35 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                 fill={MATH_COLORS.paramPrimary}
                 fontSize={fontScale(13)}
                 fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
               >
                 a (斜边)
               </text>
-              {/* 直角边 b 标注 */}
+              {/* 直角边 b */}
               <text
-                x={originPt.x - 18}
+                x={originPt.x - 14}
                 y={(originPt.y + b2Pt.y) / 2}
                 fill={MATH_COLORS.paramSecondary}
                 fontSize={fontScale(12)}
                 fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
               >
                 b
               </text>
-              {/* 直角边 c 标注 */}
+              {/* 直角边 c */}
               <text
                 x={(originPt.x + f2Pt.x) / 2}
                 y={originPt.y + 16}
                 fill={MATH_COLORS.paramTertiary}
                 fontSize={fontScale(12)}
                 fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
               >
                 c
               </text>
@@ -265,6 +274,9 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                   y={rectPts.p1.y - 4}
                   fill={MATH_COLORS.paramSecondary}
                   fontSize={fontScale(11)}
+                  paintOrder="stroke"
+                  stroke="white"
+                  strokeWidth={3}
                 >
                   (a, b)
                 </text>
@@ -285,17 +297,19 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             stroke={MATH_COLORS.paramPrimary}
             strokeWidth={3}
           />
-          <circle
-            cx={lrTopPt.x}
-            cy={lrTopPt.y}
-            r={4}
-            fill={MATH_COLORS.paramPrimary}
+          <MathPoint
+            cx={latusRectum.points.top.x}
+            cy={latusRectum.points.top.y}
+            scale={scale}
+            color={MATH_COLORS.paramPrimary}
+            r={3.5}
           />
-          <circle
-            cx={lrBotPt.x}
-            cy={lrBotPt.y}
-            r={4}
-            fill={MATH_COLORS.paramPrimary}
+          <MathPoint
+            cx={latusRectum.points.bottom.x}
+            cy={latusRectum.points.bottom.y}
+            scale={scale}
+            color={MATH_COLORS.paramPrimary}
+            r={3.5}
           />
           <text
             x={lrTopPt.x + 8}
@@ -303,6 +317,9 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(12)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
           >
             通径 L = {((2 * b * b) / a).toFixed(2)}
           </text>
@@ -352,6 +369,9 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(11)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
           >
             r₁={focusTriangle.r1.toFixed(2)}
           </text>
@@ -361,6 +381,9 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             fill={MATH_COLORS.primary}
             fontSize={fontScale(11)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
           >
             r₂={focusTriangle.r2.toFixed(2)}
           </text>
@@ -371,9 +394,13 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             fill={MATH_COLORS.primary}
             fontSize={fontScale(12)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
           >
             θ = {focusTriangle.angleDeg.toFixed(1)}°
           </text>
+
           {/* 焦点三角形内切圆与内心 */}
           {focusTriangle.incircle && focusTriangle.incircle.inradius > 0.05 && (
             <g className="incircle-layer">
@@ -385,11 +412,6 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                   scale,
                 );
                 const inradiusPx = inc.inradius * scale.scaleX;
-                const tBaseD = mathToDesign(
-                  inc.tangentBase.x,
-                  inc.tangentBase.y,
-                  scale,
-                );
 
                 return (
                   <>
@@ -404,37 +426,26 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                       strokeDasharray="4 3"
                     />
                     {/* 内心 I */}
-                    <circle
-                      cx={incenterD.x}
-                      cy={incenterD.y}
-                      r={3}
-                      fill={MATH_COLORS.paramTertiary}
+                    <MathPoint
+                      cx={inc.incenter.x}
+                      cy={inc.incenter.y}
+                      scale={scale}
+                      color={MATH_COLORS.paramTertiary}
+                      label="I"
+                      labelPosition="top-right"
+                      fontScale={fontScale}
                     />
-                    <text
-                      x={incenterD.x + 6}
-                      y={incenterD.y - 4}
-                      fill={MATH_COLORS.paramTertiary}
-                      fontSize={fontScale(11)}
-                      fontWeight="bold"
-                    >
-                      I (r={inc.inradius.toFixed(2)})
-                    </text>
 
                     {/* 底边切点 T */}
-                    <circle
-                      cx={tBaseD.x}
-                      cy={tBaseD.y}
-                      r={3.2}
-                      fill={MATH_COLORS.paramPrimary}
+                    <MathPoint
+                      cx={inc.tangentBase.x}
+                      cy={inc.tangentBase.y}
+                      scale={scale}
+                      color={MATH_COLORS.paramPrimary}
+                      label="T"
+                      labelPosition="bottom"
+                      fontScale={fontScale}
                     />
-                    <text
-                      x={tBaseD.x - 12}
-                      y={tBaseD.y + 14}
-                      fill={MATH_COLORS.paramPrimary}
-                      fontSize={fontScale(10)}
-                    >
-                      T(e²x_P, 0)
-                    </text>
                   </>
                 );
               })()}
@@ -443,76 +454,64 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         </g>
       )}
 
-      {/* 顶点标注 */}
-      <circle cx={a1Pt.x} cy={a1Pt.y} r={3.5} fill={MATH_COLORS.primary} />
-      <circle cx={a2Pt.x} cy={a2Pt.y} r={3.5} fill={MATH_COLORS.primary} />
-      <text
-        x={a1Pt.x - 16}
-        y={a1Pt.y + 14}
-        fill={MATH_COLORS.primary}
-        fontSize={fontScale(11)}
-      >
-        A₁(-a,0)
-      </text>
-      <text
-        x={a2Pt.x + 4}
-        y={a2Pt.y + 14}
-        fill={MATH_COLORS.primary}
-        fontSize={fontScale(11)}
-      >
-        A₂(a,0)
-      </text>
+      {/* 顶点标注 (使用标准 MathPoint 与学术单字母) */}
+      <MathPoint
+        cx={vertices.A1.x}
+        cy={vertices.A1.y}
+        scale={scale}
+        color={MATH_COLORS.primary}
+        label="A₁"
+        labelPosition="left"
+        fontScale={fontScale}
+      />
+      <MathPoint
+        cx={vertices.A2.x}
+        cy={vertices.A2.y}
+        scale={scale}
+        color={MATH_COLORS.primary}
+        label="A₂"
+        labelPosition="right"
+        fontScale={fontScale}
+      />
 
-      <circle
-        cx={b1Pt.x}
-        cy={b1Pt.y}
-        r={3.5}
-        fill={MATH_COLORS.paramSecondary}
+      <MathPoint
+        cx={vertices.B1.x}
+        cy={vertices.B1.y}
+        scale={scale}
+        color={MATH_COLORS.paramSecondary}
+        label="B₁"
+        labelPosition="bottom"
+        fontScale={fontScale}
       />
-      <circle
-        cx={b2Pt.x}
-        cy={b2Pt.y}
-        r={3.5}
-        fill={MATH_COLORS.paramSecondary}
+      <MathPoint
+        cx={vertices.B2.x}
+        cy={vertices.B2.y}
+        scale={scale}
+        color={MATH_COLORS.paramSecondary}
+        label="B₂"
+        labelPosition="top"
+        fontScale={fontScale}
       />
-      <text
-        x={b1Pt.x - 14}
-        y={b1Pt.y + 14}
-        fill={MATH_COLORS.paramSecondary}
-        fontSize={fontScale(11)}
-      >
-        B₁(0,-b)
-      </text>
-      <text
-        x={b2Pt.x - 14}
-        y={b2Pt.y - 8}
-        fill={MATH_COLORS.paramSecondary}
-        fontSize={fontScale(11)}
-      >
-        B₂(0,b)
-      </text>
 
       {/* 焦点标注 */}
-      <circle cx={f1Pt.x} cy={f1Pt.y} r={4} fill={MATH_COLORS.paramTertiary} />
-      <circle cx={f2Pt.x} cy={f2Pt.y} r={4} fill={MATH_COLORS.paramTertiary} />
-      <text
-        x={f1Pt.x - 10}
-        y={f1Pt.y - 8}
-        fill={MATH_COLORS.paramTertiary}
-        fontSize={fontScale(11)}
-        fontWeight="bold"
-      >
-        F₁(-c,0)
-      </text>
-      <text
-        x={f2Pt.x - 10}
-        y={f2Pt.y - 8}
-        fill={MATH_COLORS.paramTertiary}
-        fontSize={fontScale(11)}
-        fontWeight="bold"
-      >
-        F₂(c,0)
-      </text>
+      <MathPoint
+        cx={foci.F1.x}
+        cy={foci.F1.y}
+        scale={scale}
+        color={MATH_COLORS.paramTertiary}
+        label="F₁"
+        labelPosition="top-left"
+        fontScale={fontScale}
+      />
+      <MathPoint
+        cx={foci.F2.x}
+        cy={foci.F2.y}
+        scale={scale}
+        color={MATH_COLORS.paramTertiary}
+        label="F₂"
+        labelPosition="top-right"
+        fontScale={fontScale}
+      />
 
       {/* 可拖拽动点 P (InteractivePoint) */}
       <InteractivePoint
@@ -521,7 +520,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         scale={scale}
         vp={vp}
         color={MATH_COLORS.primary}
-        label={`P(${pointP.x.toFixed(2)}, ${pointP.y.toFixed(2)})`}
+        label="P"
         fontScale={fontScale}
         onDrag={(newMathPt) => {
           let newT: number;

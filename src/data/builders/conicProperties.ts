@@ -44,7 +44,7 @@ export function buildConicPropertiesPanel(
       color: MATH_COLORS.paramTertiary,
     },
     {
-      label: "离心率 e (c/a)",
+      label: "离心率 e = c/a",
       value: e.toFixed(3),
       color: MATH_COLORS.primary,
     },
@@ -54,7 +54,7 @@ export function buildConicPropertiesPanel(
       color: MATH_COLORS.primary,
     },
     {
-      label: "通径长 L",
+      label: "通径长 L = 2b^2/a",
       value: latusRectum.length.toFixed(2),
       color: MATH_COLORS.paramPrimary,
     },
@@ -62,7 +62,7 @@ export function buildConicPropertiesPanel(
 
   if (!isEllipse && calc.asymptotes) {
     quantities.push({
-      label: "渐近线斜率 k",
+      label: "渐近线斜率 k = \\pm b/a",
       value: `\\pm ${calc.asymptotes.slope.toFixed(2)}`,
       color: MATH_COLORS.paramSecondary,
     });
@@ -86,7 +86,7 @@ export function buildConicPropertiesPanel(
         color: MATH_COLORS.primary,
       },
       {
-        label: "三角形面积 S",
+        label: "焦点三角形面积 S",
         value: focusTriangle.areaGeom.toFixed(2),
         color: MATH_COLORS.primary,
       },
@@ -101,42 +101,44 @@ export function buildConicPropertiesPanel(
   // 2. 定理与公式 Theorems
   const theorems: Theorem[] = [
     {
-      name: isEllipse ? "椭圆几何关系定理" : "双曲线几何关系定理",
+      name: isEllipse ? "椭圆几何基本关系" : "双曲线几何基本关系",
       latex: isEllipse
         ? `a^2 = b^2 + c^2 \\quad (a > b > 0)`
         : `c^2 = a^2 + b^2 \\quad (a, b > 0)`,
       prerequisites: ["平面直角坐标系", "焦点在 $x$ 轴上"],
     },
     {
-      name: "焦点三角形面积与内切圆半径定理",
+      name: "焦点三角形面积与内切圆定理",
       latex: isEllipse
         ? `S_{\\triangle PF_1F_2} = b^2 \\tan\\frac{\\theta}{2}, \\quad r_{\\text{in}} = \\frac{S}{a+c} = \\frac{b^2\\tan\\frac{\\theta}{2}}{a+c}`
         : `S_{\\triangle PF_1F_2} = \\frac{b^2}{\\tan\\frac{\\theta}{2}}`,
-      condition: `$\\theta = \\angle F_1PF_2$`,
-      note: "对椭圆，内切圆与底边 F1F2 的切点横坐标为 $x_T = e^2 x_P$，切点到长轴顶点的切线长恒为 $a-c$！",
+      condition: `$\\theta = \\angle F_1PF_2$ 为焦点三角形顶角`,
+      note: isEllipse
+        ? "对椭圆：内切圆与底边 $F_1F_2$ 的切点横坐标为 $x_T = e^2 x_P$；切点到对应长轴顶点的切线长恒为 $a - c$！"
+        : "对双曲线：内切圆与实轴切点恒落在实轴顶点 $(\\pm a, 0)$，切线长恒为 $a$！",
     },
   ];
 
-  // 3. 高考考点 GaokaoPoints (文本中的数学公式必须用 $...$ 包裹)
+  // 3. 高考考点 GaokaoPoints (公式全部采用规范 $...$ 包裹)
   const gaokaoPoints: GaokaoPoint[] = [
     {
-      text: "【新高考通法·焦点三角形求解 4 步法】①利用第一定义写出 r₁ ± r₂ = 2a；②在 ΔPF₁F₂ 中应用余弦定理 (2c)² = r₁² + r₂² - 2r₁r₂cosθ；③联立求得 r₁r₂ 乘积表达式；④代入面积公式 S = ½ r₁r₂ sinθ = b² tan(θ/2) (或 b²/tan(θ/2))。",
+      text: "【新高考通法·焦点三角形秒杀 4 步法】① 由第一定义列出 $r_1 \\pm r_2 = 2a$；② 在 $\\triangle PF_1F_2$ 中应用余弦定理 $(2c)^2 = r_1^2 + r_2^2 - 2r_1r_2\\cos\\theta$；③ 联立化简求得 $r_1r_2$ 乘积；④ 代入面积公式 $S = \\frac{1}{2}r_1r_2\\sin\\theta = b^2\\tan\\frac{\\theta}{2}$（双曲线为 $\\frac{b^2}{\\tan(\\theta/2)}$）。",
       importance: "gaokao",
     },
     {
       text: isEllipse
-        ? "椭圆 $0 < e < 1$。$e$ 越接近 1，椭圆越扁；$e$ 越接近 0，椭圆越接近圆。"
-        : "双曲线 $e > 1$。$e$ 越接近 1 开口越窄；$e$ 越大开口越张开。等轴双曲线 $e = \\sqrt{2}$，渐近线互相垂直。",
+        ? "【离心率与扁平度】椭圆 $0 < e < 1$。$e$ 越接近 1，椭圆越扁（$b \\to 0, c \\to a$）；$e$ 越接近 0，椭圆越圆（$b \\to a, c \\to 0$）。"
+        : "【离心率与渐近线】双曲线 $e > 1$。渐近线斜率 $k = \\pm \\frac{b}{a} = \\pm \\sqrt{e^2 - 1}$。$e$ 越大双曲线开口越开阔。等轴双曲线 $e = \\sqrt{2}$，渐近线互相垂直 ($y = \\pm x$)。",
       importance: "gaokao",
     },
     {
       text: isEllipse
-        ? "椭圆在短轴端点处顶角 $\\theta$ 达到最大值。若存在直角焦点三角形 ($\\theta = 90^\\circ$)，则 $e \\ge \\frac{\\sqrt{2}}{2}$。"
-        : "双曲线焦点三角形顶角 $\\theta$ 无上限，但当 $\\theta = 90^\\circ$ 时 $S = b^2$。",
+        ? "【直角焦点三角形存在性】动点 $P$ 在短轴端点 $(0, \\pm b)$ 时顶角 $\\theta$ 取得最大值，且 $\\tan\\frac{\\theta_{\\max}}{2} = \\frac{c}{b}$。若曲线上存在使 $\\angle F_1PF_2 = 90^\\circ$ 的点，当且仅当 $e \\ge \\frac{\\sqrt{2}}{2}$。"
+        : "【焦点三角形面积极值】双曲线焦点三角形顶角 $\\theta \\in (0, 180^\\circ)$，当 $\\theta = 90^\\circ$ 时，$S_{\\triangle PF_1F_2} = b^2$。",
       importance: "gaokao",
     },
     {
-      text: `过焦点垂直于主轴的弦为通径，长度 $L = \\frac{2b^2}{a}$。通径是过焦点所有弦中长度最小者。`,
+      text: "【通径核心性质】过焦点垂直于主轴的弦长为通径 $L = \\frac{2b^2}{a}$。通径是过焦点所有相交弦中长度最短者（垂直最短弦）。",
       importance: "core",
     },
   ];
@@ -146,7 +148,7 @@ export function buildConicPropertiesPanel(
 
   if (isEllipse && b >= a - 0.1) {
     warnings.push({
-      text: "当 $b \\to a$ 时，$c \\to 0$，离心率 $e \\to 0$，椭圆退化为正圆 ($x^2 + y^2 = a^2$)。",
+      text: "当 $b \\to a$ 时，$c \\to 0$，离心率 $e \\to 0$，椭圆退化为圆 ($x^2 + y^2 = a^2$)。",
       level: "warning",
     });
   }
