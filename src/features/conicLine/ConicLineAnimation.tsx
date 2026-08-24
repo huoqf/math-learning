@@ -11,17 +11,23 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ConicLineScene } from "./components/ConicLineScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/conicLine";
+import {
+  defaultParams,
+  paramMeta,
+  presetsByMode,
+} from "@/data/registries/conicLine";
 import type { ConicType, StudyMode } from "@/math/conicLine";
 
 export function ConicLineAnimation() {
   // 圆锥曲线类型：'ellipse' | 'hyperbola' | 'parabola'
   const [conicType, setConicType] = useState<ConicType>("ellipse");
-  // 研究模式：'general' (位置关系与弦长) | 'focus' (过焦点弦) | 'midpoint' (中点弦点差法)
+  // 研究模式：'general' (位置关系与弦长) | 'focus' (过焦点弦) | 'midpoint' (中点弦点差法) | 'polePolar' (极点极线切点弦)
   const [studyMode, setStudyMode] = useState<StudyMode>("general");
+  // 当前选中的典型预设 key
+  const [activePreset, setActivePreset] = useState<string>("free");
 
   // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -48,20 +54,56 @@ export function ConicLineAnimation() {
     });
   }, [params, conicType, studyMode]);
 
-  // 参数变更处理器
+  // 参数变更处理器（拖拽或手动微调时自动退回 free 自由探究）
   const handleParamChange = (key: string, value: number) => {
+    setActivePreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
+  // 典型预设切换处理器
+  const handlePresetChange = (presetKey: string) => {
+    setActivePreset(presetKey);
+    const presets = presetsByMode[studyMode] ?? [];
+    const target = presets.find((p) => p.key === presetKey);
+    if (target && Object.keys(target.params).length > 0) {
+      setParams((prev) => {
+        const next = { ...prev };
+        Object.entries(target.params).forEach(([k, v]) => {
+          if (typeof v === "number") {
+            next[k] = v;
+          }
+        });
+        return next;
+      });
+    }
+  };
+
+  // 模式切换处理器
+  const handleModeChange = (mode: StudyMode) => {
+    setStudyMode(mode);
+    setActivePreset("free");
+  };
+
   // 重置参数
   const handleReset = () => {
+    setActivePreset("free");
     setParams({
       ...defaultParams,
     });
   };
+
+  // 当前模式下的预设列表
+  const currentPresets = useMemo(() => {
+    const list = presetsByMode[studyMode] ?? [];
+    return list.map((item) => ({
+      key: item.key,
+      label: item.label,
+      description: item.description,
+    }));
+  }, [studyMode]);
 
   // 根据当前圆锥曲线与模式动态过滤 ParamConfig
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -111,31 +153,31 @@ export function ConicLineAnimation() {
 
     let curveTex = "";
     if (conicType === "ellipse") {
-      curveTex = `\\frac{x^2}{\\color{#EF4444}{${a.toFixed(1)}}^2} + \\frac{y^2}{\\color{#D97706}{${b.toFixed(1)}}^2} = 1`;
+      curveTex = `\\frac{x^2}{\\color{${MATH_COLORS.paramPrimary}}{${a.toFixed(1)}}^2} + \\frac{y^2}{\\color{${MATH_COLORS.paramSecondary}}{${b.toFixed(1)}}^2} = 1`;
     } else if (conicType === "hyperbola") {
-      curveTex = `\\frac{x^2}{\\color{#EF4444}{${a.toFixed(1)}}^2} - \\frac{y^2}{\\color{#D97706}{${b.toFixed(1)}}^2} = 1`;
+      curveTex = `\\frac{x^2}{\\color{${MATH_COLORS.paramPrimary}}{${a.toFixed(1)}}^2} - \\frac{y^2}{\\color{${MATH_COLORS.paramSecondary}}{${b.toFixed(1)}}^2} = 1`;
     } else {
-      curveTex = `y^2 = 2(\\color{#EF4444}{${p.toFixed(1)}})x`;
+      curveTex = `y^2 = 2(\\color{${MATH_COLORS.paramPrimary}}{${p.toFixed(1)}})x`;
     }
 
     let lineTex = "";
     if (studyMode === "general") {
       const k = params.k ?? 0.5;
       const m = params.m ?? 0.5;
-      lineTex = `L: y = \\color{#D97706}{${k.toFixed(2)}} x ${m >= 0 ? "+" : ""} \\color{#059669}{${m.toFixed(2)}}`;
+      lineTex = `L: y = \\color{${MATH_COLORS.paramSecondary}}{${k.toFixed(2)}} x ${m >= 0 ? "+" : ""} \\color{${MATH_COLORS.paramTertiary}}{${m.toFixed(2)}}`;
     } else if (studyMode === "focus") {
       const thetaDeg = Math.round(
         ((params.theta ?? Math.PI / 4) * 180) / Math.PI,
       );
-      lineTex = `L_{焦点}: \\theta = \\color{#059669}{${thetaDeg}^\\circ}`;
+      lineTex = `L_{焦点}: \\theta = \\color{${MATH_COLORS.paramTertiary}}{${thetaDeg}^\\circ}`;
     } else if (studyMode === "midpoint") {
       const mx = params.midpointX ?? 1;
       const my = params.midpointY ?? 1;
-      lineTex = `M_{中点}: (${mx.toFixed(1)}, ${my.toFixed(1)})`;
+      lineTex = `M_{中点}: (\\color{${MATH_COLORS.paramPrimary}}{${mx.toFixed(1)}}, \\color{${MATH_COLORS.paramSecondary}}{${my.toFixed(1)}})`;
     } else {
       const px = params.poleX ?? 4;
       const py = params.poleY ?? 3;
-      lineTex = `P_{极点}: (${px.toFixed(1)}, ${py.toFixed(1)})`;
+      lineTex = `P_{极点}: (\\color{${MATH_COLORS.paramPrimary}}{${px.toFixed(1)}}, \\color{${MATH_COLORS.paramSecondary}}{${py.toFixed(1)}})`;
     }
 
     return `${curveTex} \\quad \\text{与} \\quad ${lineTex}`;
@@ -180,13 +222,24 @@ export function ConicLineAnimation() {
                 {
                   key: "polePolar",
                   label: "极点极线与切点弦",
-                  formula: "\\frac{x_0 x}{a^2}+\\frac{y_0 y}{b^2}=1",
+                  formula: "\\frac{x_P x}{a^2}+\\frac{y_P y}{b^2}=1",
                 },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as StudyMode)}
+              onChange={(k) => handleModeChange(k as StudyMode)}
               variant="filled"
               columns={1}
+            />
+          </LeftPanelSection>
+
+          {/* 典型预设 Section */}
+          <LeftPanelSection title="典型预设" subtitle="一键复现高考经典构型">
+            <SelectGrid
+              items={currentPresets}
+              value={activePreset}
+              onChange={handlePresetChange}
+              variant="filled"
+              columns={2}
             />
           </LeftPanelSection>
 

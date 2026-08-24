@@ -1,7 +1,12 @@
 import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { CoordinateGrid, Asymptote } from "@/components/Math";
+import {
+  CoordinateGrid,
+  Asymptote,
+  InteractivePoint,
+  MathPoint,
+} from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabelOverlap, type LabelItem } from "@/utils/labelOverlap";
 import { MATH_COLORS, withAlpha } from "@/theme";
@@ -10,6 +15,7 @@ import {
   type ConicType,
   type StudyMode,
   type ConicLineParams,
+  type Point2D,
 } from "@/math/conicLine";
 
 interface ConicLineSceneProps {
@@ -25,9 +31,11 @@ interface ConicLineSceneProps {
 export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
   params,
   scale,
+  vp,
   fontScale = (v) => v,
   conicType,
   studyMode,
+  onParamChange,
 }) => {
   const a = params.a ?? 3;
   const b = params.b ?? 2;
@@ -75,20 +83,20 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
     ? mathToDesign(result.midpoint.x, result.midpoint.y, scale)
     : null;
 
-  // 5. 组装待避让的 Label 列表
+  // 5. 组装待避让的 Label 列表 (纯字母点标规范)
   const rawLabels = useMemo(() => {
     const raw: LabelItem[] = [
       {
         key: "O",
         x: originD.x,
         y: originD.y + 12,
-        text: "O(0,0)",
+        text: "O",
       },
       {
         key: "F1",
         x: focus1D.x,
         y: focus1D.y - 12,
-        text: conicType === "parabola" ? "F" : "F1",
+        text: conicType === "parabola" ? "F" : "F₁",
       },
     ];
     if (focus2D) {
@@ -96,19 +104,24 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
         key: "F2",
         x: focus2D.x,
         y: focus2D.y - 12,
-        text: "F2",
+        text: "F₂",
       });
     }
 
-    if (intersectionDesignPoints.length >= 1) {
+    if (intersectionDesignPoints.length === 1) {
+      raw.push({
+        key: "T",
+        x: intersectionDesignPoints[0].x,
+        y: intersectionDesignPoints[0].y - 12,
+        text: result.status === "tangent" ? "T" : "P₀",
+      });
+    } else if (intersectionDesignPoints.length === 2) {
       raw.push({
         key: "A",
         x: intersectionDesignPoints[0].x,
         y: intersectionDesignPoints[0].y - 12,
-        text: result.intersectionCount === 1 ? "P0(切点/交点)" : "A",
+        text: "A",
       });
-    }
-    if (intersectionDesignPoints.length === 2) {
       raw.push({
         key: "B",
         x: intersectionDesignPoints[1].x,
@@ -122,7 +135,19 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
         key: "M",
         x: midpointD.x,
         y: midpointD.y + 14,
-        text: "M(弦中点)",
+        text: "M",
+      });
+    }
+
+    if (studyMode === "polePolar") {
+      const poleX = params.poleX ?? 4;
+      const poleY = params.poleY ?? 3;
+      const poleD = mathToDesign(poleX, poleY, scale);
+      raw.push({
+        key: "P",
+        x: poleD.x + 12,
+        y: poleD.y - 12,
+        text: "P",
       });
     }
 
@@ -135,7 +160,10 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
     midpointD,
     studyMode,
     conicType,
-    result.intersectionCount,
+    result.status,
+    params.poleX,
+    params.poleY,
+    scale,
   ]);
 
   const adjustedLabels = useMemo(
@@ -202,10 +230,21 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
     return d;
   }, [conicType, a, b, scale]);
 
+  // 动点拖拽处理器 (防火墙 1：回调入参已经是数学坐标，严禁二次 designToMath)
+  const handleMidpointDrag = (pt: Point2D) => {
+    onParamChange("midpointX", Number(pt.x.toFixed(2)));
+    onParamChange("midpointY", Number(pt.y.toFixed(2)));
+  };
+
+  const handlePoleDrag = (pt: Point2D) => {
+    onParamChange("poleX", Number(pt.x.toFixed(2)));
+    onParamChange("poleY", Number(pt.y.toFixed(2)));
+  };
+
   return (
     <g>
-      {/* 坐标轴与网格 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      {/* 坐标轴与网格 (解析几何采用纯净坐标轴规范 showGrid={false}) */}
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* 双曲线渐近线 y = ±(b/a)x */}
       {conicType === "hyperbola" && (
@@ -227,7 +266,7 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
         </>
       )}
 
-      {/* 圆锥曲线主体渲染 (解决坐标轴顶点断裂缝隙) */}
+      {/* 圆锥曲线主体渲染 */}
       {conicType === "ellipse" && (
         <ellipse
           cx={originD.x}
@@ -314,30 +353,36 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
       )}
 
       {/* 焦点点标 */}
-      <circle cx={focus1D.x} cy={focus1D.y} r={4.5} fill={MATH_COLORS.accent} />
-      {focus2D && (
-        <circle
-          cx={focus2D.x}
-          cy={focus2D.y}
-          r={4.5}
-          fill={MATH_COLORS.accent}
+      <MathPoint
+        x={result.focusF1.x}
+        y={result.focusF1.y}
+        scale={scale}
+        color={MATH_COLORS.accent}
+        fontScale={fontScale}
+      />
+      {result.focusF2 && (
+        <MathPoint
+          x={result.focusF2.x}
+          y={result.focusF2.y}
+          scale={scale}
+          color={MATH_COLORS.accent}
+          fontScale={fontScale}
         />
       )}
 
-      {/* 交点 A 与 B */}
-      {intersectionDesignPoints.map(
-        (pt: { x: number; y: number }, idx: number) => (
-          <circle
-            key={`intersect-${idx}`}
-            cx={pt.x}
-            cy={pt.y}
-            r={6}
-            fill={MATH_COLORS.paramPrimary}
-          />
-        ),
-      )}
+      {/* 交点 A 与 B / 切点 T */}
+      {result.intersections.map((pt, idx) => (
+        <MathPoint
+          key={`intersect-${idx}`}
+          x={pt.x}
+          y={pt.y}
+          scale={scale}
+          color={MATH_COLORS.paramPrimary}
+          fontScale={fontScale}
+        />
+      ))}
 
-      {/* 极点极线模式：渲染极点 P 与切线 PA, PB */}
+      {/* 极点极线模式：渲染切线 PA, PB 与可拖拽极点 P */}
       {studyMode === "polePolar" && (
         <g className="pole-polar-layer">
           {(() => {
@@ -362,38 +407,35 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
                 ))}
 
                 {/* 极点 P 交互点 */}
-                <circle
-                  cx={poleD.x}
-                  cy={poleD.y}
-                  r={7}
-                  fill={MATH_COLORS.paramPrimary}
+                <InteractivePoint
+                  cx={poleX}
+                  cy={poleY}
+                  scale={scale}
+                  vp={vp}
+                  onDrag={handlePoleDrag}
+                  color={MATH_COLORS.paramPrimary}
+                  fontScale={fontScale}
                 />
-                <text
-                  x={poleD.x + 10}
-                  y={poleD.y - 10}
-                  fill={MATH_COLORS.paramPrimary}
-                  fontSize={fontScale(12)}
-                  fontWeight="bold"
-                >
-                  P({poleX.toFixed(1)}, {poleY.toFixed(1)})
-                </text>
               </>
             );
           })()}
         </g>
       )}
 
-      {/* 弦中点 M */}
-      {midpointD && studyMode === "midpoint" && (
-        <circle
-          cx={midpointD.x}
-          cy={midpointD.y}
-          r={5.5}
-          fill={MATH_COLORS.paramSecondary}
+      {/* 弦中点 M 可拖拽交互点 */}
+      {studyMode === "midpoint" && (
+        <InteractivePoint
+          cx={params.midpointX ?? 1}
+          cy={params.midpointY ?? 1}
+          scale={scale}
+          vp={vp}
+          onDrag={handleMidpointDrag}
+          color={MATH_COLORS.paramSecondary}
+          fontScale={fontScale}
         />
       )}
 
-      {/* 避让算法排布标注文本 */}
+      {/* 避让算法排布标注文本 (带白色微描边，杜绝白底遮挡与重影) */}
       {adjustedLabels.map((lbl) => (
         <text
           key={lbl.key}
@@ -412,6 +454,10 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
           fontWeight="bold"
           textAnchor="middle"
           dominantBaseline="central"
+          paintOrder="stroke"
+          stroke="white"
+          strokeWidth={3}
+          strokeLinejoin="round"
         >
           {lbl.text}
         </text>
