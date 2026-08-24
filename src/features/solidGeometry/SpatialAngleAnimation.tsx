@@ -10,6 +10,7 @@ import {
   TabSwitcher,
   SelectGrid,
   Toggle,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { Legend3D, CameraRig, ModeSwitchOverlay3D } from "@/components/Math3D";
@@ -480,6 +481,48 @@ export default function SpatialAngleAnimation() {
     }
   }, [activeMode, showNormals]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    switch (activeMode) {
+      case "skewLines":
+        return {
+          variant: "primary" as const,
+          badge: "高考核心 · 异面直线所成角",
+          condition:
+            "长方体 ABCD-A₁B₁C₁D₁ 中棱长分别为 a, b, c，异面直线 A₁B 与 AC。",
+          question:
+            "通过平移向量 D₁C ∥ A₁B 将空间异面直线角转化为相交直线角 ∠ACD₁，或利用方向向量点积公式 cosθ=|u⃗·v⃗|/(|u⃗||v⃗|) 求解。",
+        };
+      case "linePlane":
+        return {
+          variant: "warning" as const,
+          badge: "高考经典 · 直线与平面所成角",
+          condition:
+            "斜线 EC 与底面 ABCD 相交于点 C，E 为侧棱 AA₁ 上动点 (AE=λc)。",
+          question:
+            "寻找垂线段 EA ⊥ 底面与斜线在底面射影 AC，在直角三角形 △EAC 中求 sinθ=EA/EC，或利用法向量公式 sinθ=|v⃗·n⃗|/(|v⃗||n⃗|) 求解。",
+        };
+      case "dihedral":
+        return {
+          variant: "success" as const,
+          badge: "高考母题 · 空间二面角平面角",
+          condition:
+            "截面 BDE 与底面 ABCD 相交于交线 BD，E 为侧棱 AA₁ 上定点/动点。",
+          question:
+            "作 AM ⊥ BD 连结 EM（三垂线定理），探究二面角平面角 ∠AME，或利用两平面法向量夹角公式 cosθ=|n⃗₁·n⃗₂|/(|n⃗₁||n⃗₂|) 判定与求解。",
+        };
+      case "distance":
+        return {
+          variant: "accent" as const,
+          badge: "高考大题 · 点到平面垂直距离",
+          condition:
+            "求长方体顶点 A 到斜截面 BDE 的空间垂直距离 d (垂线段 AH)。",
+          question:
+            "利用三棱锥等体积法换底 V_{A-BDE} = V_{E-ABD} 求解高线 d=3V/S_{△BDE}，或利用向量射影公式 d=|AB⃗·n⃗|/|n⃗| 精确计算。",
+        };
+    }
+  }, [activeMode]);
+
   return (
     <ThreePanel
       left={
@@ -627,6 +670,31 @@ export default function SpatialAngleAnimation() {
                 </button>
               </div>
             )}
+          </LeftPanelSection>
+
+          {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

@@ -9,6 +9,7 @@ import {
   SelectGrid,
   TabSwitcher,
   Toggle,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { Legend3D, CameraRig } from "@/components/Math3D";
@@ -287,6 +288,55 @@ export default function PolyhedronCircumSphereAnimation() {
       }));
   }, [params, modelType, presetKey]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    switch (modelType) {
+      case "corner":
+        return {
+          variant: "primary" as const,
+          badge: "高考母题 · 三棱直角墙角模型",
+          condition:
+            "三棱锥 P-ABC 中三条侧棱两两垂直 (PA ⊥ PB, PB ⊥ PC, PC ⊥ PA)，侧棱长分别为 a, b, c。",
+          question:
+            "补形为以 a, b, c 为长宽高的长方体，长方体体对角线即外接球直径：(2R)² = a² + b² + c²，球心 O 为体对角线中点。",
+        };
+      case "verticalEdge":
+        return {
+          variant: "warning" as const,
+          badge: "高考经典 · 侧棱垂直底面模型",
+          condition:
+            "三棱锥 P-ABC 中侧棱 PA ⊥ 底面 ABC，高 PA=h，底面 △ABC 的外接圆半径为 r_底。",
+          question:
+            "套柱转化为直三棱柱：外接球球心 O 在底面外心正上方 h/2 处，由勾股定理得 R² = r_底² + (h/2)²。",
+        };
+      case "complement":
+        return {
+          variant: "success" as const,
+          badge: "高考大招 · 对棱相等补形模型",
+          condition:
+            "四面体中三组对棱分别相等 (AB=CD=a, AC=BD=b, BC=AD=c，四面体各面为全等锐角三角形)。",
+          question:
+            "补形为长方体（四面体各棱为长方体各面的面对角线）：设长方体棱长为 x, y, z，推导得 8R² = a² + b² + c²。",
+        };
+      case "inSphere":
+        return {
+          variant: "accent" as const,
+          badge: "高考必备 · 多面体内切球等体积法",
+          condition:
+            "凸多面体（如三棱锥）的总体积为 V，表面积为 S_表，内切球球心为 I，切点为 T₁~T₄。",
+          question:
+            "以球心 I 为顶点将多面体分割为若干个高为 r 的小棱锥，由体积相加原理推导内切球半径公式：r = 3V / S_表。",
+        };
+      default:
+        return {
+          variant: "info" as const,
+          badge: "高考多面体切接球模型",
+          condition: "多面体几何顶点均在球面上（外接）或各面与球相切（内切）。",
+          question: "探究多面体对称特征与切接球球心位置、半径计算通法。",
+        };
+    }
+  }, [modelType]);
+
   return (
     <ThreePanel
       left={
@@ -388,6 +438,31 @@ export default function PolyhedronCircumSphereAnimation() {
               value={preset}
               onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
+          </LeftPanelSection>
+
+          {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

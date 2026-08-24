@@ -9,6 +9,7 @@ import {
   SelectGrid,
   TabSwitcher,
   Toggle,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { Legend3D, CameraRig } from "@/components/Math3D";
@@ -284,6 +285,55 @@ export default function AdvancedSphereAnimation() {
     }
   }, [modelType]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    switch (modelType) {
+      case "perpPlanes":
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 双垂直平面截面圆交心法",
+          condition:
+            "两平面 α ⊥ β 相交于交线 AB (长度为 c)，多面体在面 α, β 内截面外接圆半径分别为 r₁, r₂，外心分别为 O₁, O₂。",
+          question:
+            "分别过 O₁, O₂ 作面 α, β 的垂线，两垂线在空间相交于外接球球心 O，构造空间矩形推导外接球半径通式：R² = r₁² + r₂² - (c/2)²。",
+        };
+      case "concentric":
+        return {
+          variant: "warning" as const,
+          badge: "高考秒杀 · 正四面体三球同心模型",
+          condition:
+            "棱长为 a 的正四面体 ABCD，外接球球心、棱切球球心、内切球球心同心于中心 O。",
+          question:
+            "探究三球半径秒杀比例 r_内 : r_棱 : R_外 = 1 : √3 : 3（其中 r_内=√6/12 a, r_棱=√2/4 a, R_外=√6/4 a）。",
+        };
+      case "truncatedCone":
+        return {
+          variant: "success" as const,
+          badge: "高考大题 · 圆台轴截面切接球模型",
+          condition:
+            "圆台上底面半径为 r₁、下底面半径为 r₂、母线长为 l、高为 h。",
+          question:
+            "轴截面降维为等腰梯形，圆台内切球存在充要条件为梯形对边和相等：l = r₁ + r₂，内切球半径 r = h/2 = √(r₁ r₂)。",
+        };
+      case "extrema":
+        return {
+          variant: "accent" as const,
+          badge: "导数与立几压轴 · 球内接体积极值模型",
+          condition:
+            "半径为 R 的球体内接圆柱或圆锥，内接体的高为 h (h ∈ (0, 2R))。",
+          question:
+            "建立体积函数 V(h) 并利用导数求极值：内接圆柱当 h = 2√3/3 R 时体积最大（占球体 57.7%）；内接圆锥当 h = 4/3 R 时体积最大（占球体 29.6%）。",
+        };
+      default:
+        return {
+          variant: "info" as const,
+          badge: "高阶空间切接模型",
+          condition: "多面体或旋转体在空间中与球体相交或相切。",
+          question: "探究外心垂线交轨、截面降维与函数极值求解通法。",
+        };
+    }
+  }, [modelType]);
+
   return (
     <ThreePanel
       left={
@@ -395,6 +445,31 @@ export default function AdvancedSphereAnimation() {
               value={preset}
               onChange={(val) => setCameraPreset(val as CameraPreset)}
             />
+          </LeftPanelSection>
+
+          {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

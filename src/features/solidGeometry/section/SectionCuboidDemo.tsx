@@ -35,7 +35,6 @@ import {
   TabSwitcher,
   SelectGrid,
   TipCard,
-  KatexFormula,
   type ParamConfig,
 } from "@/components/UI";
 import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
@@ -508,6 +507,45 @@ export default function SectionCuboidDemo() {
     });
   }, [solidKind, width, depth, currentHeight]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    const solidNames: Record<SolidKind, string> = {
+      cuboid: "长方体/正方体",
+      pyramid: "正四棱锥",
+      tetrahedron: "正四面体",
+      prism: "正三棱柱",
+      frustum: "正四棱台",
+    };
+    const sName = solidNames[solidKind] ?? "多面体";
+
+    switch (mode) {
+      case "continuous":
+        return {
+          variant: "primary" as const,
+          badge: `高考模型 · ${sName}连续截面与面积射影`,
+          condition: `空间切面与${sName}相交，截面法向量与竖直方向倾角为 θ，底面投影多边形面积为 S_射。`,
+          question:
+            "验证面积射影定理 S_截 = S_射 / cosθ，调节倾角与方位角观察截面边数（三角形→四边形→多边形）的拓扑突变。",
+        };
+      case "construction":
+        return {
+          variant: "warning" as const,
+          badge: `高考必考 · ${sName}三点交轨作图通法`,
+          condition: `已知${sName}侧棱上三点 P, Q, R（参数 posP, posQ, posR）。`,
+          question:
+            "演示截面作图 4 步通法：①同面直接连线；②相交棱延长求基面交点；③连结基面交线；④求出全部交点封闭截面多边形。",
+        };
+      case "extrema":
+        return {
+          variant: "success" as const,
+          badge: `高考压轴 · ${sName}动点截面面积极值探究`,
+          condition: `定点 Q, R 位置固定，动点 P(t) 沿第一侧棱从底部向顶部连续滑动 (t ∈ [0.05, 0.95])。`,
+          question:
+            "追踪动点滑动时截面多边形形状突变过程，分析并求解截面面积函数 S(t) 的最大值与最小值点。",
+        };
+    }
+  }, [mode, solidKind]);
+
   return (
     <ThreePanel
       left={
@@ -588,35 +626,7 @@ export default function SectionCuboidDemo() {
             />
           </LeftPanelSection>
 
-          {/* 5. 教学提示 */}
-          <LeftPanelSection title="教学提示" compact>
-            {mode === "continuous" && (
-              <TipCard variant="info">
-                <span className="font-bold">面积射影定理</span>：
-                <KatexFormula
-                  formula="S_{\text{截}} = \frac{S_{\text{射}}}{\cos\theta}"
-                  mode="inline"
-                />
-                。截面面积等于底面投影面积除以截面与底面所成角的余弦值。
-              </TipCard>
-            )}
-            {mode === "construction" && (
-              <TipCard variant="warning">
-                <span className="font-bold">截面作图通法</span>
-                ：同面两点直接连线；异面点延长棱线与切线求交点，利用共面交线封闭多边形。
-              </TipCard>
-            )}
-            {mode === "extrema" && (
-              <TipCard variant="success">
-                <span className="font-bold">动点极值追踪</span>：动点{" "}
-                <KatexFormula formula="P" mode="inline" /> 沿棱滑动（参数{" "}
-                <KatexFormula formula="t" mode="inline" />
-                ），动态观察截面形状突变与面积极值点。
-              </TipCard>
-            )}
-          </LeftPanelSection>
-
-          {/* 6. 视图与视角 */}
+          {/* 5. 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
               <TabSwitcher
@@ -657,6 +667,31 @@ export default function SectionCuboidDemo() {
                 </>
               )}
             </div>
+          </LeftPanelSection>
+
+          {/* 6. 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

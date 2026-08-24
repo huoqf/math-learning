@@ -10,7 +10,6 @@ import {
   TabSwitcher,
   Button,
   TipCard,
-  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -261,6 +260,46 @@ export default function RotationBodyAnimation() {
     return items;
   }, [featureMode]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    const shapeNames: Record<ShapeType, string> = {
+      rectangle: "圆柱 (由矩形旋转生成)",
+      rightTriangle: "圆锥 (由直角三角形旋转生成)",
+      rightTrapezoid: "圆台 (由直角梯形旋转生成)",
+      semicircle: "球体 (由半圆绕直径旋转生成)",
+    };
+    const currentName = shapeNames[shape];
+
+    if (featureMode === "sphereCut") {
+      return {
+        variant: "info" as const,
+        badge: "高考母题 · 球截面小圆垂径勾股模型",
+        condition:
+          "球心为 O，球半径为 R，截面平面与球心垂直距离为 d (球心距)，截面圆半径为 r_截。",
+        question:
+          "验证球心、球心在截面射影与截面上任意一点构成空间直角三角形，由勾股定理得 R² = d² + r_截²。",
+      };
+    }
+
+    if (featureMode === "section") {
+      return {
+        variant: "warning" as const,
+        badge: `高考方法 · ${currentName}轴截面降维法`,
+        condition: `过${currentName}旋转对称轴作纵向剖切截面。`,
+        question:
+          "将 3D 旋转体空间问题降维为 2D 轴截面（矩形 / 等腰三角形 / 等腰梯形 / 大圆），利用平面几何公式快速求解母线长、表面积与体积。",
+      };
+    }
+
+    return {
+      variant: "primary" as const,
+      badge: `必修二核心 · ${currentName}旋转生成机制`,
+      condition: `平面几何多边形/半圆绕固定旋转轴（z 轴）连续旋转扫掠 360°。`,
+      question:
+        "观察动母线在空间中扫过的曲面，理解旋转体底面圆、母线长、高与旋转体的空间几何严格定义。",
+    };
+  }, [shape, featureMode]);
+
   return (
     <ThreePanel
       left={
@@ -330,32 +369,7 @@ export default function RotationBodyAnimation() {
             )}
           </LeftPanelSection>
 
-          {/* 4. 教学提示 */}
-          {featureMode === "section" && (
-            <LeftPanelSection title="教学提示" compact>
-              <TipCard variant="warning">
-                <span className="font-bold">轴截面法</span>：过旋转轴截面将 3D
-                问题降维为 2D 对称平面几何图形快速求解。
-              </TipCard>
-            </LeftPanelSection>
-          )}
-
-          {featureMode === "sphereCut" && (
-            <LeftPanelSection title="教学提示" compact>
-              <TipCard variant="info">
-                <span className="font-bold">球截面小圆</span>：球心距{" "}
-                <KatexFormula formula="d" mode="inline" />
-                、截面半径 <KatexFormula
-                  formula="r"
-                  mode="inline"
-                /> 与球半径 <KatexFormula formula="R" mode="inline" />{" "}
-                满足勾股定理：
-                <KatexFormula formula="R^2 = d^2 + r^2" mode="inline" />。
-              </TipCard>
-            </LeftPanelSection>
-          )}
-
-          {/* 5. 视图与视角 */}
+          {/* 4. 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
               <TabSwitcher
@@ -396,6 +410,31 @@ export default function RotationBodyAnimation() {
                 </>
               )}
             </div>
+          </LeftPanelSection>
+
+          {/* 5. 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

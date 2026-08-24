@@ -9,6 +9,7 @@ import {
   TabSwitcher,
   SelectGrid,
   Toggle,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -272,6 +273,28 @@ export default function Vector3DBasisAnimation() {
       }));
   }, [activeMode, activePreset, params]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    if (activeMode === "parallelepiped") {
+      return {
+        variant: "primary" as const,
+        badge: "选择性必修一 · 空间向量基本定理",
+        condition:
+          "空间不共面的三个基底向量 {a⃗, b⃗, c⃗}，P 为空间中任意一点 (OP⃗ = p⃗)。",
+        question:
+          "探究存在唯一定理：存在唯一实数组 (x, y, z) 使得 p⃗ = x a⃗ + y b⃗ + z c⃗。直观呈现平行六面体法则三步折线合成路径。",
+      };
+    }
+    return {
+      variant: "success" as const,
+      badge: "选择性必修一 · 共面向量定理与四点共面判定",
+      condition:
+        "以点 O 为起点的基底向量 OA⃗, OB⃗, OC⃗，动点 P 满足 OP⃗ = x OA⃗ + y OB⃗ + z OC⃗。",
+      question:
+        "证明空间四点 P, A, B, C 共面（即 P ∈ 面 ABC）的充要条件为 x + y + z = 1；当 x=y=z=1/3 时点 P 恰为 △ABC 的重心 G。",
+    };
+  }, [activeMode]);
+
   return (
     <ThreePanel
       left={
@@ -293,10 +316,10 @@ export default function Vector3DBasisAnimation() {
               ]}
               value={activeMode}
               onChange={(m) => {
-                const mode = m as TeachingMode;
-                setActiveMode(mode);
+                const nextMode = m as TeachingMode;
+                setActiveMode(nextMode);
                 setActivePreset("free");
-                if (mode === "parallelepiped") {
+                if (nextMode === "parallelepiped") {
                   setParams((p) => ({ ...p, x: 1.0, y: 1.0, z: 1.0, cz: 2.0 }));
                 } else {
                   setParams((p) => ({
@@ -402,6 +425,31 @@ export default function Vector3DBasisAnimation() {
               value={preset}
               onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
+          </LeftPanelSection>
+
+          {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

@@ -9,7 +9,6 @@ import {
   TabSwitcher,
   SelectGrid,
   TipCard,
-  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import {
@@ -292,36 +291,44 @@ export default function ParametricPointAnimation() {
     return mapKeysToConfigs(["a", "b", "c", "lambda"]);
   }, [activeMode, presetKey, mapKeysToConfigs]);
 
-  // 9. 教学提示配置
+  // 9. 教学提示配置（规范化初始条件与探究设问）
   const tipConfig = useMemo(() => {
     switch (activeMode) {
       case "singlePointAngle":
         return {
           variant: "primary" as const,
-          formula:
-            "\\cos\\theta(\\lambda) = \\frac{|\\vec{n}_{PAC}\\cdot\\vec{n}_0|}{|\\vec{n}_{PAC}||\\vec{n}_0|}",
-          text: "设动点坐标 P(a, 0, λc)，利用法向量夹角列方程反求 λ，并检验 λ ∈ [0, 1] 严格判断动点存在性。",
+          badge: "高考大题 · 空间动点存在性与二面角求解",
+          condition:
+            "长方体 ABCD-A₁B₁C₁D₁ 中侧棱 AA₁ 上动点 P(a, 0, λc) (λ ∈ [0, 1])，截面 PAC 与底面夹角为 θ。",
+          question:
+            "建立截面 PAC 法向量与底面法向量夹角方程 cosθ(λ) = cosθ_目标，反解动点参数 λ 并严格检验 λ ∈ [0, 1] 判断动点存在性。",
         };
       case "doublePointDistance":
         return {
           variant: "warning" as const,
-          formula:
-            "|PQ|^2 = (a^2+b^2)\\left(\\mu - \\frac{a^2}{a^2+b^2}\\right)^2 + \\frac{a^2b^2}{a^2+b^2} + \\lambda^2 c^2",
-          text: "双参数二次型最值：通过配方法独立求各变量极小，当 λ=0 且 μ=a²/(a²+b²) 时取公垂线最短距离。",
+          badge: "高考压轴 · 双动点空间距离最值与公垂线",
+          condition:
+            "动点 P 沿棱 AA₁ 滑动 (分比 λ)，动点 Q 沿面对角线 BC 滑动 (分比 μ)。",
+          question:
+            "展开空间距离二次型函数 |PQ|²(λ, μ)，通过配方法求极值：当 λ=0 且 μ=a²/(a²+b²) 时，线段 PQ 为异面直线公垂线，取得最短空间距离。",
         };
       case "pyramidVolumeExtrema":
         return {
-          variant: "primary" as const,
-          formula:
-            "V_{P-ACD}(\\lambda) = \\frac{1}{3} S_{\\Delta ACD} \\cdot h(\\lambda) = \\frac{1}{6} a b (\\lambda c) \\le V_{\\max}",
-          text: "动点三棱锥体积极值：固定底面 △ACD 面积恒为 ab/2，动高 h(λ)=λc 线性单调递增，极值在端点 B₁(λ=1) 处取得。",
+          variant: "success" as const,
+          badge: "高考经典 · 动点三棱锥体积极值与单调性",
+          condition:
+            "三棱锥 P-ACD 中动点 P 沿侧棱 BB₁ 滑动，底面 △ACD 固定于长方体底面。",
+          question:
+            "固定底面 △ACD 面积为 ab/2，动高 h(λ)=λc 线性单调递增，分析体积函数 V(λ) = 1/6 ab(λc) 的单调性并在顶点 B₁(λ=1) 处取得最大值。",
         };
       case "surfaceShortestPath":
         return {
-          variant: "success" as const,
-          formula:
-            "L_{\\min} = \\min\\{\\sqrt{(a+b)^2+c^2}, \\sqrt{a^2+(b+c)^2}\\}",
-          text: "立体几何表面最短路径：“化曲为平，展成平面”。展开相邻侧面与底面，两点之间直线段最短。",
+          variant: "accent" as const,
+          badge: "立体几何经典 · 表面最短路径化曲为平",
+          condition:
+            "在长方体表面寻找从顶点 A 沿外表面爬行至相对顶点 C₁ 的折线最短路径。",
+          question:
+            "将相邻侧面与底面展成平面，由两点之间线段最短比较不同展开路线长 L = min{√((a+b)²+c²), √(a²+(b+c)²)} 并确定侧面最佳折点。",
         };
     }
   }, [activeMode]);
@@ -484,19 +491,7 @@ export default function ParametricPointAnimation() {
             />
           </LeftPanelSection>
 
-          {/* Step 4: 教学提示 */}
-          <LeftPanelSection title="教学提示与解题通法" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="font-semibold text-xs mb-1">
-                <KatexFormula mode="inline" formula={tipConfig.formula} />
-              </div>
-              <p className="text-xs text-neutral-600 leading-relaxed">
-                {tipConfig.text}
-              </p>
-            </TipCard>
-          </LeftPanelSection>
-
-          {/* Step 5: 视图与视角 */}
+          {/* Step 4: 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
               <TabSwitcher
@@ -522,6 +517,31 @@ export default function ParametricPointAnimation() {
                 />
               )}
             </div>
+          </LeftPanelSection>
+
+          {/* Step 5: 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

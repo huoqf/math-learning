@@ -9,6 +9,7 @@ import {
   TabSwitcher,
   SelectGrid,
   Toggle,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig, SelectGridItem } from "@/components/UI";
 import {
@@ -485,6 +486,66 @@ export default function LinePlaneRelationAnimation() {
     return items;
   }, [activeMode, subTheorem, showAxes, intersectType]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    switch (activeMode) {
+      case "parallel":
+        return subTheorem === "judge"
+          ? {
+              variant: "primary" as const,
+              badge: "必修二 · 线面平行判定定理",
+              condition:
+                "平面 α 外一条直线 l，平面 α 内一条直线 m，且满足 l ∥ m。",
+              question:
+                "求证 l ∥ α。探究证明链“线线平行 ⇒ 线面平行”，观察若 l ⊂ α（面内直线）则定理失效的退化反例。",
+            }
+          : {
+              variant: "success" as const,
+              badge: "必修二 · 线面平行性质定理",
+              condition:
+                "已知直线 l ∥ 平面 α，过直线 l 作辅助截面 β 与平面 α 相交于交线 m。",
+              question:
+                "求证 l ∥ m。探究证明链“线面平行 ⇒ 线线平行”，在立体几何截面与辅助线作图中作为关键依据。",
+            };
+      case "perpendicular":
+        return subTheorem === "judge"
+          ? {
+              variant: "warning" as const,
+              badge: "必修二 · 线面垂直判定定理",
+              condition:
+                "直线 l 与平面 α 内的两条相交直线 a, b 均垂直 (l ⊥ a, l ⊥ b, a ∩ b = P)。",
+              question:
+                "求证 l ⊥ α。探究两条直线必须“相交”的关键防错条件（若 a ∥ b 平行则直线 l 可绕其转动，不能保证垂直于平面）。",
+            }
+          : {
+              variant: "danger" as const,
+              badge: "必修二 · 线面垂直性质定理",
+              condition:
+                "已知直线 l ⊥ 平面 α，直线 m ⊂ 平面 α 为面内任意直线。",
+              question:
+                "求证 l ⊥ m。理解“线面垂直定义为垂直于面内所有直线”，探究空间直角标记与正投影性质。",
+            };
+      case "gaokaoPyramid":
+        return {
+          variant: "primary" as const,
+          badge: "高考大题母题 · 四棱锥动点线面平行",
+          condition:
+            "四棱锥 P-ABCD 底面为矩形 ABCD，侧面 PAD ⊥ 底面 ABCD。动点 E ∈ PB (分比 λ_E)，动点 F ∈ PC (分比 λ_F)。",
+          question:
+            "当 λ_E = λ_F（如同为中点）时，求证 EF ∥ 面 PAD；探究动点在线段上滑动时满足 EF ∥ 面 PAD 的充要几何条件。",
+        };
+      case "vector":
+        return {
+          variant: "accent" as const,
+          badge: "选修一 · 空间向量法求解线面角",
+          condition:
+            "直线 l 的方向向量为 l⃗=(x, y, z)，基准平面 α 的法向量为 n⃗=(0, 0, 1)。",
+          question:
+            "探究直线与法向量夹角 〈l⃗, n⃗〉 与线面角 θ 的互余关系：sinθ = |cos〈l⃗, n⃗〉| = |l⃗·n⃗| / (|l⃗||n⃗|)。",
+        };
+    }
+  }, [activeMode, subTheorem]);
+
   return (
     <ThreePanel
       left={
@@ -594,6 +655,31 @@ export default function LinePlaneRelationAnimation() {
                 onChange={(p) => setCameraPreset(p as CameraPreset)}
               />
             </div>
+          </LeftPanelSection>
+
+          {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

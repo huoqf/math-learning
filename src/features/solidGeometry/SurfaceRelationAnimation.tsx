@@ -9,7 +9,6 @@ import {
   TabSwitcher,
   SelectGrid,
   TipCard,
-  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { Legend3D, CameraRig, ModeSwitchOverlay3D } from "@/components/Math3D";
@@ -211,6 +210,86 @@ export default function SurfaceRelationAnimation() {
     return items;
   }, [activeMode, showAxes]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    if (activeMode === "parallelJudge") {
+      return subType === "counterExample"
+        ? {
+            variant: "danger" as const,
+            badge: "易错反例 · 面面平行判定中的平行线失效",
+            condition:
+              "待判平面 α 内存在两条互相平行的直线 a ∥ b，且 a ∥ β, b ∥ β。",
+            question:
+              "平面 α 可绕平行线转动而与平面 β 相交！判定定理必须满足两条直线“相交”：a ∩ b = P, a ∥ β, b ∥ β ⇒ α ∥ β。",
+          }
+        : {
+            variant: "primary" as const,
+            badge: "必修二 · 面面平行判定定理",
+            condition:
+              "平面 α 内的两条相交直线 a, b 分别平行于平面 β (a ∥ β, b ∥ β, a ∩ b = P)。",
+            question:
+              "求证 α ∥ β。掌握高考标准证明链：线线平行 ⇒ 线面平行 ⇒ 面面平行。",
+          };
+    }
+    if (activeMode === "parallelProp") {
+      return {
+        variant: "success" as const,
+        badge: "必修二 · 面面平行性质定理",
+        condition:
+          "已知两平面平行 α ∥ β，第三个平面 γ 与它们同时相交于交线 a, b (γ ∩ α = a, γ ∩ β = b)。",
+        question:
+          "求证 a ∥ b。利用性质定理将面面平行转化为截线平行，常用于几何体截面构造与线面角转化。",
+      };
+    }
+    if (activeMode === "perpJudge") {
+      return {
+        variant: "warning" as const,
+        badge: "必修二 · 面面垂直判定定理",
+        condition:
+          "直线 l 垂直于平面 α (l ⊥ α)，且直线 l 包含在平面 β 内 (l ⊂ β)。",
+        question:
+          "求证 β ⊥ α。直观观察二面角平面角为 90°，理解“面过垂线则两面垂直”的核心思想。",
+      };
+    }
+    if (activeMode === "perpProp") {
+      return subType === "dualPerp"
+        ? {
+            variant: "primary" as const,
+            badge: "高考定理 · 双垂直平面交线定理",
+            condition:
+              "两相交平面 α, β 均垂直于第三个平面 γ (α ⊥ γ, β ⊥ γ, α ∩ β = l)。",
+            question:
+              "求证交线 l ⊥ γ。在直角三棱柱或四棱锥建系中用于快速寻找 z 轴竖直基准。",
+          }
+        : {
+            variant: "success" as const,
+            badge: "必修二 · 面面垂直性质定理",
+            condition:
+              "两平面垂直 α ⊥ β，交线为 l，在平面 β 内作直线 a 垂直于交线 l (a ⊂ β, a ⊥ l)。",
+            question:
+              "求证 a ⊥ α。高考立体几何第一问“作高建系”的核心依据：面面垂直时在面内作交线的垂线必为底面高。",
+          };
+    }
+    // gaokaoModel
+    return subType === "cube"
+      ? {
+          variant: "info" as const,
+          badge: "高考经典 · 正方体平行对角截面模型",
+          condition:
+            "正方体 ABCD-A₁B₁C₁D₁ 中，截面 AB₁D₁ 与截面 C₁BD 均垂直于体对角线 AC₁。",
+          question:
+            "求证截面 AB₁D₁ ∥ 截面 C₁BD，且两平行截面将体对角线 AC₁ 准确三等分。",
+        }
+      : {
+          variant: "primary" as const,
+          badge: "高考母题 · 四棱锥侧面垂直作高建系",
+          condition:
+            "四棱锥 P-ABCD 中侧面 PAD ⊥ 底面 ABCD，交线为 AD，在侧面 PAD 内作 PO ⊥ AD。",
+          question:
+            "由面面垂直性质定理得 PO ⊥ 底面 ABCD，以点 O 为坐标原点建立空间直角坐标系求解二面角。",
+        };
+  }, [activeMode, subType]);
+
   return (
     <ThreePanel
       left={
@@ -309,90 +388,7 @@ export default function SurfaceRelationAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 4. 教学提示 */}
-          <LeftPanelSection title="教学提示" compact>
-            {activeMode === "parallelJudge" && subType === "counterExample" && (
-              <TipCard variant="danger">
-                <span className="font-bold">易错反例</span>
-                ：仅平行于两条平行线时，待判平面可绕平行线转动而与基准面相交。定理必须满足
-                <span className="font-bold">两条相交直线</span>。
-              </TipCard>
-            )}
-            {activeMode === "parallelJudge" && subType !== "counterExample" && (
-              <TipCard variant="info">
-                <span className="font-bold">面面平行证明链</span>：线线平行{" "}
-                <KatexFormula formula="\Rightarrow" mode="inline" /> 线面平行{" "}
-                <KatexFormula formula="\Rightarrow" mode="inline" />{" "}
-                两条相交线平行于另一平面{" "}
-                <KatexFormula formula="\Rightarrow" mode="inline" /> 面面平行。
-              </TipCard>
-            )}
-            {activeMode === "parallelProp" && (
-              <TipCard variant="success">
-                <span className="font-bold">面面平行性质</span>
-                ：两平行平面同时被第三平面所截，交线必平行（
-                <KatexFormula
-                  formula="\alpha \parallel \beta, \gamma \cap \alpha = a, \gamma \cap \beta = b \Rightarrow a \parallel b"
-                  mode="inline"
-                />
-                ）。
-              </TipCard>
-            )}
-            {activeMode === "perpJudge" && (
-              <TipCard variant="warning">
-                <span className="font-bold">面面垂直判定</span>
-                ：面过垂线则面面垂直（
-                <KatexFormula
-                  formula="l \perp \alpha, l \subset \beta \Rightarrow \beta \perp \alpha"
-                  mode="inline"
-                />
-                ）。二面角为 <KatexFormula formula="90^\circ" mode="inline" />。
-              </TipCard>
-            )}
-            {activeMode === "perpProp" && subType === "dualPerp" && (
-              <TipCard variant="primary">
-                <span className="font-bold">双垂直面交线定理</span>
-                ：若两相交平面均垂直于第三平面，则其交线垂直于第三平面（
-                <KatexFormula
-                  formula="\alpha \perp \gamma, \beta \perp \gamma, \alpha \cap \beta = l \Rightarrow l \perp \gamma"
-                  mode="inline"
-                />
-                ）。
-              </TipCard>
-            )}
-            {activeMode === "perpProp" && subType !== "dualPerp" && (
-              <TipCard variant="success">
-                <span className="font-bold">面面垂直性质</span>
-                ：面面垂直时，在其中一个面内垂直于交线的直线必垂直于另一个平面（
-                <KatexFormula
-                  formula="\alpha \perp \beta, \alpha \cap \beta = l, a \subset \beta, a \perp l \Rightarrow a \perp \alpha"
-                  mode="inline"
-                />
-                ）。
-              </TipCard>
-            )}
-            {activeMode === "gaokaoModel" && subType === "cube" && (
-              <TipCard variant="info">
-                <span className="font-bold">正方体平行截面</span>：截面{" "}
-                <KatexFormula formula="AB_1D_1 \parallel" mode="inline" /> 截面{" "}
-                <KatexFormula formula="C_1BD" mode="inline" />
-                ，把体对角线 <KatexFormula formula="AC_1" mode="inline" />{" "}
-                三等分。
-              </TipCard>
-            )}
-            {activeMode === "gaokaoModel" && subType !== "cube" && (
-              <TipCard variant="warning">
-                <span className="font-bold">四棱锥作高模型</span>：侧面{" "}
-                <KatexFormula formula="PAD \perp" mode="inline" /> 底面{" "}
-                <KatexFormula formula="ABCD" mode="inline" /> 时，在侧面内作{" "}
-                <KatexFormula formula="PO \perp AD" mode="inline" />
-                ，由性质定理可得{" "}
-                <KatexFormula formula="PO \perp" mode="inline" /> 底面。
-              </TipCard>
-            )}
-          </LeftPanelSection>
-
-          {/* 5. 视图与视角 */}
+          {/* 4. 视图与视角 */}
           <LeftPanelSection title="视图与视角">
             <div className="space-y-2">
               {activeMode === "gaokaoModel" && subType !== "cube" && (
@@ -427,6 +423,31 @@ export default function SurfaceRelationAnimation() {
                 columns={2}
               />
             </div>
+          </LeftPanelSection>
+
+          {/* 5. 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

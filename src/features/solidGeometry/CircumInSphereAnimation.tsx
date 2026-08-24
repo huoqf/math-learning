@@ -9,6 +9,7 @@ import {
   SelectGrid,
   TabSwitcher,
   Toggle,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { Legend3D, CameraRig } from "@/components/Math3D";
@@ -352,6 +353,67 @@ export default function CircumInSphereAnimation() {
     }));
   }, [shape, params, presetKey]);
 
+  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    const isCircum = sphereType === "circum";
+    switch (shape) {
+      case "cuboid":
+        return {
+          variant: "primary" as const,
+          badge: isCircum
+            ? "高考母题 · 长方体/正方体外接球"
+            : "高考核心 · 正方体内切球",
+          condition: "长方体长宽高分别为 a, b, h (当 a=b=h 时为正方体)。",
+          question: isCircum
+            ? "长方体体对角线即外接球直径：(2R)² = a² + b² + h²，球心为体对角线交点。"
+            : "正方体内切球球心为中心，内切球直径等于棱长：2r = a，球与 6 个正方形面相切。",
+        };
+      case "regularPyramid":
+        return {
+          variant: "warning" as const,
+          badge: isCircum
+            ? "高考经典 · 正四棱锥外接球"
+            : "高考大题 · 正四棱锥内切球",
+          condition:
+            "正四棱锥底面边长为 a，高为 h，斜高为 h_斜 = √(h² + (a/2)²)。",
+          question: isCircum
+            ? "外接球球心在高线上，设球心到顶点距离为 R，由直角三角形勾股得 R² = (a/√2)² + (h - R)²。"
+            : "轴截面降维为等腰三角形内切圆，或由等体积法得内切球半径 r = (3V) / S_表 = (a·h) / (a + 2h_斜)。",
+        };
+      case "triangularPrism":
+        return {
+          variant: "success" as const,
+          badge: isCircum
+            ? "高考常考 · 直三棱柱外接球"
+            : "高考高频 · 直三棱柱内切球",
+          condition:
+            "直三棱柱高为 h，底面为直角三角形（直角边 a, b，斜边 c=√(a²+b²)）。",
+          question: isCircum
+            ? "底面外接圆半径 r_底 = c/2，外接球球心为上下底外心连线中点，满足 R² = r_底² + (h/2)²。"
+            : "内切球存在充要条件为底面内切圆直径等于高：2r = h = a + b - c。",
+        };
+      case "cone":
+        return {
+          variant: "accent" as const,
+          badge: isCircum ? "高考模型 · 圆锥外接球" : "高考核心 · 圆锥内切球",
+          condition: "圆锥底面半径为 r_底=a，高为 h，母线长为 l = √(a² + h²)。",
+          question: isCircum
+            ? "轴截面为等腰三角形，外接球半径即等腰三角形外接圆半径：R = l² / (2h)。"
+            : "轴截面等腰三角形内切圆半径即圆锥内切球半径：r = (a·h) / (a + l)。",
+        };
+      case "cylinder":
+        return {
+          variant: "info" as const,
+          badge: isCircum ? "高考模型 · 圆柱外接球" : "高考模型 · 圆柱内切球",
+          condition:
+            "圆柱底面半径为 r_底=a，高为 h (当 h=2a 时轴截面为正方形)。",
+          question: isCircum
+            ? "轴截面为矩形，外接球直径即矩形对角线：(2R)² = (2a)² + h²，R = √(a² + (h/2)²)。"
+            : "当且仅当 h=2a（等高圆柱）时存在内切球，内切球半径 r = a = h/2。",
+        };
+    }
+  }, [shape, sphereType]);
+
   return (
     <ThreePanel
       left={
@@ -475,6 +537,31 @@ export default function CircumInSphereAnimation() {
               value={preset}
               onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
+          </LeftPanelSection>
+
+          {/* Step 7: 教学提示与题设导引（置于左屏底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }
