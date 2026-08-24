@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -308,6 +309,69 @@ export function ProbabilityDistributionAnimation() {
     decisionScenario,
   ]);
 
+  // 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  const tipConfig = useMemo(() => {
+    if (studyMode === "binomial") {
+      return {
+        variant: "primary" as const,
+        badge: "高考经典 · 二项分布模型与最值项",
+        condition:
+          "独立重复试验进行 n 次，单次成功概率为 p，随机变量 X ~ B(n, p)。",
+        question:
+          "求分布列、期望 E(X)=np、方差 D(X)=np(1-p) 及概率最大项 P(X=k) 的取值。",
+      };
+    }
+    if (studyMode === "hypergeometric") {
+      return {
+        variant: "info" as const,
+        badge: "高考高频 · 超几何分布不放回抽样",
+        condition:
+          "总数 N 件产品中含 M 件次品，不放回随机抽取 n 件，抽中次品数 X ~ H(N, M, n)。",
+        question: "求超几何分布列、期望 E(X)=n·(M/N) 与方差，注意定义域边界。",
+      };
+    }
+    if (studyMode === "compare") {
+      return {
+        variant: "warning" as const,
+        badge: "高考思想 · 超几何向二项分布逼近",
+        condition: "固定抽取样本量 n 和次品比例 p=M/N，逐步扩大总体总量 N。",
+        question:
+          "探究有限总体不放回抽样与无限总体独立重复试验之间的极限收敛关系。",
+      };
+    }
+    if (studyMode === "decision") {
+      const isQuality = decisionScenario === "quality";
+      return {
+        variant: "danger" as const,
+        badge: isQuality
+          ? "高考压轴 · 产品质检期望成本决策"
+          : "高考压轴 · 资产配置期望收益决策",
+        condition: isQuality
+          ? "方案 A(抽检): 检验费 0.4 元，次品流出损失 40p；方案 B(全检): 检验费固定 8 元，杜绝流出。"
+          : "方案 A(股票): 景气概率 p 收益 20%，不景气亏损 10%；方案 B(理财): 固定年化收益 4%。",
+        question: isQuality
+          ? "求两方案期望成本方程 E(A), E(B)，并确定选择抽检或全检的临界次品率 p₀。"
+          : "求股票期望收益 E(X)，并计算使股票优于固定理财的临界景气概率 p₀。",
+      };
+    }
+    if (studyMode === "linear") {
+      return {
+        variant: "accent" as const,
+        badge: "高考基础 · 随机变量线性变换性质",
+        condition: "已知随机变量 X 的期望 E(X) 与方差 D(X)，令 Y = aX + b。",
+        question:
+          "探究伸缩因子 a 与平移量 b 对新变量 Y 的期望 E(Y) 与方差 D(Y) 的影响。",
+      };
+    }
+    return {
+      variant: "success" as const,
+      badge: "高考基础 · 离散分布列与概率归一性",
+      condition: "随机变量 X 取值为 xᵢ，对应概率为 pᵢ (pᵢ ≥ 0)。",
+      question:
+        "验证分布列概率归一性 ∑ pᵢ = 1，并求解期望 E(X)=∑ xᵢpᵢ 与方差 D(X)。",
+    };
+  }, [studyMode, decisionScenario]);
+
   return (
     <ThreePanel
       left={
@@ -371,181 +435,29 @@ export function ProbabilityDistributionAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 左屏参数使用指南卡片 */}
-          <LeftPanelSection
-            title="新高考教学指南"
-            subtitle="模型考查要点与教学提示"
-          >
-            {studyMode === "binomial" && (
-              <div className="bg-blue-50/80 border border-blue-200/90 rounded-xl p-3 text-xs text-blue-900 flex flex-col gap-1.5 shadow-sm">
-                <div className="font-bold flex items-center gap-1.5 text-blue-800">
-                  <span>⚙️</span>
-                  <span>二项分布与最值项教学提示</span>
-                </div>
-                <ul className="leading-relaxed text-blue-800/90 list-disc list-inside space-y-1">
-                  <li>
-                    <strong>最值项性质</strong>：当{" "}
-                    <KatexFormula formula="(n+1)p" mode="inline" />{" "}
-                    不是整数时，最大概率取整数部分；是整数时两项并列最大。
-                  </li>
-                  <li>
-                    <strong>方差最大点</strong>：当{" "}
-                    <KatexFormula formula="p=0.5" mode="inline" /> 时方差{" "}
-                    <KatexFormula formula="D(X)=np(1-p)" mode="inline" />{" "}
-                    达到极大值。
-                  </li>
-                </ul>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
               </div>
-            )}
-
-            {studyMode === "hypergeometric" && (
-              <div className="bg-indigo-50/80 border border-indigo-200/90 rounded-xl p-3 text-xs text-indigo-900 flex flex-col gap-1.5 shadow-sm">
-                <div className="font-bold flex items-center gap-1.5 text-indigo-800">
-                  <span>⚙️</span>
-                  <span>超几何分布边界防错提示</span>
-                </div>
-                <ul className="leading-relaxed text-indigo-800/90 list-disc list-inside space-y-1">
-                  <li>
-                    <strong>定义域下限</strong>：
-                    <KatexFormula
-                      formula="k \ge \max(0, n-(N-M))"
-                      mode="inline"
-                    />
-                    ，防止当白球不够抽时漏算 0。
-                  </li>
-                  <li>
-                    <strong>期望公式统一</strong>：
-                    <KatexFormula
-                      formula="E(X) = n \cdot \frac{M}{N}"
-                      mode="inline"
-                    />
-                    ，形式上与二项分布{" "}
-                    <KatexFormula formula="np" mode="inline" /> 完美一致。
-                  </li>
-                </ul>
-              </div>
-            )}
-
-            {studyMode === "compare" && (
-              <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3 text-xs text-amber-900 flex flex-col gap-1.5 shadow-sm">
-                <div className="font-bold flex items-center gap-1.5 text-amber-800">
-                  <span>⚙️</span>
-                  <span>不放回抽样向二项分布逼近</span>
-                </div>
-                <ul className="leading-relaxed text-amber-800/90 list-disc list-inside space-y-1">
-                  <li>
-                    <strong>极限收敛</strong>：增大总体{" "}
-                    <KatexFormula formula="N" mode="inline" />
-                    ，超几何分布柱状图趋近二项分布。
-                  </li>
-                  <li>
-                    <strong>方差修正系数</strong>：
-                    <KatexFormula
-                      formula="\frac{N-n}{N-1} \to 1"
-                      mode="inline"
-                    />
-                    ，大样本下超几何与二项方差几乎无差。
-                  </li>
-                </ul>
-              </div>
-            )}
-
-            {studyMode === "decision" && (
-              <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-xl p-3 text-xs text-emerald-900 flex flex-col gap-1.5 shadow-sm">
-                <div className="font-bold flex items-center gap-1.5 text-emerald-800">
-                  <span>⚙️</span>
-                  <span>
-                    {decisionScenario === "quality"
-                      ? "产品质检(抽检vs全检)决策导引"
-                      : "资产配置(理财vs股票)决策导引"}
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
                   </span>
                 </div>
-                <ul className="leading-relaxed text-emerald-800/90 list-disc list-inside space-y-1">
-                  {decisionScenario === "quality" ? (
-                    <>
-                      <li>
-                        <strong>期望成本方程</strong>：
-                        <KatexFormula
-                          formula="E(A) = 0.4 + 40p"
-                          mode="inline"
-                        />
-                        ，令{" "}
-                        <KatexFormula formula="E(A)=E(B)=8" mode="inline" />{" "}
-                        解得临界次品率{" "}
-                        <KatexFormula formula="p_0 = 19\%" mode="inline" />。
-                      </li>
-                      <li>
-                        <strong>决策规则</strong>：当{" "}
-                        <KatexFormula formula="p < 19\%" mode="inline" />{" "}
-                        选抽检；当{" "}
-                        <KatexFormula formula="p > 19\%" mode="inline" />{" "}
-                        选全检。
-                      </li>
-                    </>
-                  ) : (
-                    <>
-                      <li>
-                        <strong>期望收益方程</strong>：
-                        <KatexFormula
-                          formula="E(\text{股票}) = 30p - 10"
-                          mode="inline"
-                        />
-                        ，令{" "}
-                        <KatexFormula
-                          formula="E(\text{股票})=E(\text{理财})=4\%"
-                          mode="inline"
-                        />{" "}
-                        得临界景气概率{" "}
-                        <KatexFormula formula="p_0 = 46.7\%" mode="inline" />。
-                      </li>
-                      <li>
-                        <strong>风险考量</strong>：股票方差{" "}
-                        <KatexFormula formula="D = 900p(1-p)" mode="inline" />{" "}
-                        反映高收益伴随的高波动风险。
-                      </li>
-                    </>
-                  )}
-                </ul>
-              </div>
-            )}
-
-            {studyMode === "linear" && (
-              <div className="bg-purple-50/80 border border-purple-200/90 rounded-xl p-3 text-xs text-purple-900 flex flex-col gap-1.5 shadow-sm">
-                <div className="font-bold flex items-center gap-1.5 text-purple-800">
-                  <span>⚙️</span>
-                  <span>线性变换刚体运动几何意义</span>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
                 </div>
-                <ul className="leading-relaxed text-purple-800/90 list-disc list-inside space-y-1">
-                  <li>
-                    <strong>
-                      平移 <KatexFormula formula="b" mode="inline" />
-                    </strong>
-                    ：只改中心不改方差宽度。
-                  </li>
-                  <li>
-                    <strong>
-                      缩放 <KatexFormula formula="a" mode="inline" />
-                    </strong>
-                    ：方差按 <KatexFormula formula="a^2" mode="inline" />{" "}
-                    平方倍缩放。
-                  </li>
-                </ul>
               </div>
-            )}
-
-            {studyMode === "general" && (
-              <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-xl p-3 text-xs text-emerald-900 flex flex-col gap-1.5 shadow-sm">
-                <div className="font-bold flex items-center gap-1.5 text-emerald-800">
-                  <span>⚙️</span>
-                  <span>一般分布列公理校验</span>
-                </div>
-                <p className="leading-relaxed text-emerald-800/90">
-                  系统恒自动保障{" "}
-                  <KatexFormula formula="\sum P_i = 1" mode="inline" />
-                  ，体验物理重心移动。
-                </p>
-              </div>
-            )}
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

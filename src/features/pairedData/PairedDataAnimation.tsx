@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   TabSwitcher,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -206,6 +207,44 @@ export function PairedDataAnimation() {
     }
   }, [studyMode, selectedModel, activePoints, params]);
 
+  // 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  const tipConfig = useMemo(() => {
+    if (studyMode === "regression") {
+      const modelNameMap: Record<RegressionModelType, string> = {
+        linear: "一元线性模型 ŷ = bx + a",
+        exponential: "指数模型 y = c·e^{kx} (令 z = ln y 线性化)",
+        logarithmic: "对数模型 y = a + b·ln x (令 u = ln x 线性化)",
+        power: "幂函数模型 y = c·x^k (令 z = ln y, u = ln x 线性化)",
+        inverse: "双曲线逆模型 y = a + b/x (令 u = 1/x 线性化)",
+      };
+
+      return {
+        variant: (selectedModel === "linear" ? "primary" : "warning") as
+          "primary" | "warning",
+        badge: `高考例题 · ${currentPreset?.name ?? "成对数据回归分析"}`,
+        condition: `成对观测样本 (${currentPreset?.xName ?? "x"}, ${currentPreset?.yName ?? "y"})，拟合模型设定为 ${modelNameMap[selectedModel]}。`,
+        question:
+          "求解回归方程系数、相关系数 r、决定系数 R² 以及残差平方和 ∑ eᵢ² 最小化。",
+      };
+    }
+
+    // independence
+    const curInd = INDEPENDENCE_PRESETS[indPresetIndex];
+    const a = params.freqA ?? 85;
+    const b = params.freqB ?? 15;
+    const c = params.freqC ?? 40;
+    const d = params.freqD ?? 60;
+    const totalN = a + b + c + d;
+
+    return {
+      variant: "danger" as const,
+      badge: `高考经典 · ${curInd?.name ?? "2×2 列联表独立性检验"}`,
+      condition: `观测 2×2 列联表各格频数 (a=${a}, b=${b}, c=${c}, d=${d})，总样本容量 n=${totalN}。`,
+      question:
+        "计算卡方统计量 χ² = n(ad-bc)² / [(a+b)(c+d)(a+c)(b+d)]，推断两分类变量是否关联。",
+    };
+  }, [studyMode, selectedModel, currentPreset, indPresetIndex, params]);
+
   // 看板标题
   const panelTitle = useMemo(() => {
     return studyMode === "regression"
@@ -336,6 +375,31 @@ export function PairedDataAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

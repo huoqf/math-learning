@@ -9,6 +9,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   Toggle,
+  TipCard,
 } from "@/components/UI";
 import { HtmlTooltip } from "@/components/Math/SvgTooltip";
 import type { ParamConfig } from "@/components/UI";
@@ -193,6 +194,47 @@ export function ProbabilityNormalAnimation() {
     return "正态分布对称性与高考 3-σ 看板";
   }, [studyMode]);
 
+  // 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  const tipConfig = useMemo(() => {
+    if (studyMode === "histogram") {
+      return {
+        variant: "primary" as const,
+        badge: "高考基础 · 频率分布直方图与特征数",
+        condition:
+          "样本数据划分为若干组，纵轴为『频率/组距』，各矩形面积之和恒等于 1。",
+        question:
+          "求解直方图的众数（最高矩形底边中点）、中位数（左右面积各 0.5 的等分垂线）与平均数（各组中值乘以频率加权）。",
+      };
+    }
+    if (studyMode === "normalFit") {
+      return {
+        variant: "info" as const,
+        badge: "高考思想 · 频率直方图向正态分布逼近",
+        condition:
+          "固定样本均值与方差，逐步增大样本容量 N 并无限细分区间组距 Δx。",
+        question: "探究频率折线图向钟形光滑正态密度曲线 f(x) 的极限收敛过程。",
+      };
+    }
+    if (studyMode === "paramsShape") {
+      return {
+        variant: "warning" as const,
+        badge: "高考核心 · 参数 μ 与 σ 对正态曲线形态影响",
+        condition:
+          "正态分布 X ~ N(μ, σ²)，密度函数 f(x) 由期望 μ 与标准差 σ 完全决定。",
+        question:
+          "探究改变位置参数 μ 与形态参数 σ 时正态曲线的平移与胖瘦变化。",
+      };
+    }
+    // sigmaRule
+    return {
+      variant: "danger" as const,
+      badge: "高考秒杀 · 3-σ 准则与对称区间解题",
+      condition: "X ~ N(μ, σ²)，正态曲线关于直线 x=μ 严格轴对称。",
+      question:
+        "利用 P(μ-σ<X<μ+σ)≈0.6827、P(μ-2σ<X<μ+2σ)≈0.9545、P(μ-3σ<X<μ+3σ)≈0.9973 求解单侧或任意对称区间概率。",
+    };
+  }, [studyMode]);
+
   return (
     <>
       <ThreePanel
@@ -274,6 +316,33 @@ export function ProbabilityNormalAnimation() {
                 onParamChange={handleParamChange}
                 onReset={handleReset}
               />
+            </LeftPanelSection>
+
+            {/* 教学导引与题设背景 */}
+            <LeftPanelSection title="教学导引与题设背景" compact>
+              <TipCard variant={tipConfig.variant}>
+                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                  <span>{tipConfig.badge}</span>
+                </div>
+                <div className="space-y-1.5 text-[11px] leading-relaxed">
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【初始条件】
+                    </span>
+                    <span className="text-neutral-600">
+                      {tipConfig.condition}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【核心设问】
+                    </span>
+                    <span className="text-neutral-600">
+                      {tipConfig.question}
+                    </span>
+                  </div>
+                </div>
+              </TipCard>
             </LeftPanelSection>
           </LeftPanel>
         }

@@ -7,6 +7,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   KatexFormula,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -138,6 +139,36 @@ export function StatPercentileAnimation() {
     return `s^2 = \\sum \\color{${MATH_COLORS.paramPrimary}}{w_i s_i^2} + \\sum \\color{${MATH_COLORS.paramSecondary}}{w_i (\\bar{x}_i - \\bar{x})^2}`;
   }, [studyMode, params.percentileP]);
 
+  // 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  const tipConfig = useMemo(() => {
+    if (studyMode === "histogram") {
+      return {
+        variant: "primary" as const,
+        badge: "高考基础 · 直方图与数字特征",
+        condition:
+          "样本数据划分为若干区间，直方图矩形面积表示频率，总面积恒为 1。",
+        question:
+          "求解众数（最高矩形底边中点）、中位数（面积平分点）与平均数（各组中值加权平均）。",
+      };
+    }
+    if (studyMode === "cumulative") {
+      return {
+        variant: "warning" as const,
+        badge: "高考高频 · 百分位数与累积频率折线",
+        condition: `样本容量按升序排列，给定目标分位数 p = ${params.percentileP ?? 75}%。`,
+        question:
+          "根据累积频率 S 型折线，求第 p 百分位数 yₚ 的精确线性插值坐标。",
+      };
+    }
+    // stratified
+    return {
+      variant: "danger" as const,
+      badge: "高考压轴 · 分层抽样与总方差分解",
+      condition: `总体分为 3 层，各层容量为 N₁, N₂, N₃，层内均值与方差已知，按比例抽取样本容量 n = ${params.sampleN ?? 100}。`,
+      question: "求解分层抽样总样本均值 x̄ 与总样本方差 s²。",
+    };
+  }, [studyMode, params.percentileP, params.sampleN]);
+
   return (
     <ThreePanel
       left={
@@ -196,6 +227,31 @@ export function StatPercentileAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

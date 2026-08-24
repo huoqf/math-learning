@@ -9,6 +9,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -126,6 +127,64 @@ export function ProbabilityBayesAnimation() {
     const betaStr = p21.toFixed(2);
     return `\\color{${MATH_COLORS.function}}{p_{n+1}} = p_{11} p_n + p_{21}(1-p_n) = ${lambdaStr} p_n + ${betaStr}`;
   }, [activeMode, params, bayesScenario]);
+
+  // 3.5. 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  const tipConfig = useMemo(() => {
+    if (activeMode === "conditional") {
+      return {
+        variant: "primary" as const,
+        badge: "高考基础 · 条件概率与样本空间压缩",
+        condition:
+          "已知全集事件 A 的发生概率 P(A) 与两事件同时发生的交事件概率 P(AB)。",
+        question:
+          "在已知事件 A 已经发生的前提下，求事件 B 发生的条件概率 P(B|A)。",
+      };
+    }
+    if (activeMode === "total_prob") {
+      return {
+        variant: "info" as const,
+        badge:
+          totalPreset === "factory3"
+            ? "高考经典 · 三车间次品全概率模型"
+            : "完备事件组划分与全概公式",
+        condition:
+          "样本空间由互斥事件组 A₁, A₂, A₃ 完备划分 (∑P(Aᵢ)=1)，各分支条件概率 P(B|Aᵢ) 已知。",
+        question: "求目标事件 B（如总次品率、总命中率）发生的综合全概率 P(B)。",
+      };
+    }
+    if (activeMode === "bayes") {
+      const isScreening = bayesScenario === "screening";
+      return {
+        variant: "warning" as const,
+        badge: isScreening
+          ? "高考压轴 · 罕见病筛查与由果溯因"
+          : "高考经典 · 工厂次品溯源与贝叶斯",
+        condition: isScreening
+          ? "某罕见病自然患病率 P(D)=2%，筛查试剂灵敏度 95%（真阳性），假阳性率 5%。"
+          : "工厂次品率 8%，检测仪检出率 98%，误报率 2%。",
+        question:
+          "当某样本检测结果呈阳性(+)时，求其真正患病（或真为次品）的后验概率 P(D|+)。",
+      };
+    }
+    // markov
+    return {
+      variant: "danger" as const,
+      badge:
+        markovScenario === "pass_ball"
+          ? "高考压轴 · 甲乙传球马尔可夫链"
+          : markovScenario === "urn_ball"
+            ? "高考经典 · 摸球置换转移递推"
+            : "状态转移矩阵与平稳分布",
+      condition:
+        markovScenario === "pass_ball"
+          ? "初始球在甲手中 (p₁=1.0)，每轮传球甲必传给乙 (p₁₁=0.0)，乙等可能传给甲或丙 (p₂₁=0.5)。"
+          : markovScenario === "urn_ball"
+            ? "袋中有黑白球，根据上一轮摸出颜色按概率矩阵转移置换 (p₁₁=0.6, p₂₁=0.2)。"
+            : "天气状态转移，晴天次日晴概率 0.7，雨天次日晴概率 0.4。",
+      question:
+        "求第 n 次状态概率 pₙ 的数列递推关系式，并探究 n→∞ 时的稳态极限分布。",
+    };
+  }, [activeMode, totalPreset, bayesScenario, markovScenario]);
 
   // 4. 左屏声明式参数配置按 activeMode 精准过滤与动态关联反馈
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -522,6 +581,31 @@ export function ProbabilityBayesAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

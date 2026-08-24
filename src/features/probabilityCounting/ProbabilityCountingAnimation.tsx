@@ -8,6 +8,7 @@ import {
   KatexFormula,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "../../components/UI";
 import type { ParamConfig } from "../../components/UI";
 import { useAnimationViewport, useSceneScale } from "../../hooks";
@@ -139,6 +140,90 @@ export function ProbabilityCountingAnimation() {
       MATH_COLORS.paramSecondary
     }}{${m2}} = ${m1 + m2}`;
   }, [params, activeMode, subMode]);
+
+  // 4.5. 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  const tipConfig = useMemo(() => {
+    if (activeMode === "binomial") {
+      if (subMode === 0) {
+        return {
+          variant: "primary" as const,
+          badge: "高考核心 · 二项式展开与通项公式",
+          condition: "已知二项式 (ax+b)ⁿ，各项幂次与组合数遵循杨辉三角规律。",
+          question:
+            "求展开式中第 k+1 项通项公式 T_{k+1}=C_n^k (ax)^{n-k} b^k、常数项或指定次项系数。",
+        };
+      }
+      if (subMode === 1) {
+        return {
+          variant: "warning" as const,
+          badge: "高考秒杀 · 赋值法动态沙盘",
+          condition: "已知展开式 f(x)=a₀ + a₁x + a₂x² + ... + aₙxⁿ。",
+          question:
+            "快速求各项系数总和 f(1)、交错和 f(-1)、奇数项和、偶数项和以及加权求和 f'(1)。",
+        };
+      }
+      return {
+        variant: "accent" as const,
+        badge: "高考考点辨析 · 二项式系数 vs 项系数",
+        condition:
+          "对比展开式第 k+1 项的组合数 C_n^k 与项系数 A_k = C_n^k a^{n-k} b^k。",
+        question:
+          "辨析二项式系数的最大项（仅由 n 决定，居中取得）与项系数的最大项（与 a,b 大小相关）。",
+      };
+    }
+
+    if (activeMode === "perm_comb") {
+      if (subMode === 0) {
+        return {
+          variant: "primary" as const,
+          badge: "高考基础 · 排列数与组合数区别",
+          condition: "从 n 个不同元素中取出 k 个元素 (k ≤ n)。",
+          question: "探究有序排列 A_n^k 与无序组合 C_n^k 的数理关系。",
+        };
+      }
+      if (subMode === 1) {
+        return {
+          variant: "danger" as const,
+          badge: "高考高频 · 均匀分组消序模型",
+          condition:
+            "将总数 n 个不同元素均分为 k 组，每组分配 m 个元素 (n = k·m)。",
+          question:
+            "求均匀分组（无指定对象）与定向分配（有指定对象如甲乙丙车间）的种数差异。",
+        };
+      }
+      return {
+        variant: "success" as const,
+        badge: "高考经典 · 捆绑法与插空法",
+        condition: "多元素排队，部分特殊元素要求相邻或要求互不相邻。",
+        question:
+          "计算相邻限制（捆绑法）与不相邻限制（插空法）的排列方案总数。",
+      };
+    }
+
+    // principles
+    if (subMode === 0) {
+      return {
+        variant: "primary" as const,
+        badge: "高考基础 · 分步乘法计数原理",
+        condition: "完成一件事需要连续经过多道步骤，各步骤之间相互依存。",
+        question: "求完成整件事的全部方案数 N = m₁ × m₂ × ... × mₖ。",
+      };
+    }
+    if (subMode === 1) {
+      return {
+        variant: "info" as const,
+        badge: "高考基础 · 分类加法计数原理",
+        condition: "完成一件事有多种互斥的独立途径，每种途径均可独立完成目标。",
+        question: "求完成整件事的方案总数 N = m₁ + m₂ + ... + mₖ。",
+      };
+    }
+    return {
+      variant: "accent" as const,
+      badge: "高考创新 · 网格最短路径与标数法",
+      condition: "在 m × n 的二维网格中，质点只能沿网格线向右或向上移动。",
+      question: "求从左下角起点到右上角终点的最短路径总数。",
+    };
+  }, [activeMode, subMode]);
 
   // 5. 左屏声明式参数过滤 (按 activeMode 与 subMode 过滤)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -319,6 +404,31 @@ export function ProbabilityCountingAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }
