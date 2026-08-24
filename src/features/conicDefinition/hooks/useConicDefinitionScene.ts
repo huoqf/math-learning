@@ -1,3 +1,9 @@
+/**
+ * src/features/conicDefinition/hooks/useConicDefinitionScene.ts
+ * 场景图元解算与屏幕坐标映射 Hook
+ * 专为第一定义与统一定义两大核心服务
+ */
+
 import { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { mathToDesign } from "@/utils/coordinate";
@@ -6,7 +12,6 @@ import type { LabelEntry, PlacedLabel } from "@/utils/labelAvoider";
 import {
   getFirstDefData,
   getUnifiedDefData,
-  getLocusGenData,
   solveThetaFromDrag,
 } from "@/math/conicDefinition";
 import type { ConicSceneData, Point2D } from "@/math/conicDefinition";
@@ -20,7 +25,7 @@ interface UseConicDefinitionSceneProps {
     theta: number;
   };
   scale: SceneScale;
-  studyMode: "firstDef" | "unifiedDef" | "locusGen";
+  studyMode: "firstDef" | "unifiedDef";
   conicType: "ellipse" | "hyperbola" | "parabola";
   onParamChange: (key: string, value: number) => void;
 }
@@ -38,15 +43,8 @@ export function useConicDefinitionScene({
   const sceneData: ConicSceneData = useMemo(() => {
     if (studyMode === "firstDef") {
       return getFirstDefData(conicType, a, c, p, theta);
-    } else if (studyMode === "unifiedDef") {
-      return getUnifiedDefData(e, p, theta);
     } else {
-      return getLocusGenData(
-        conicType === "hyperbola" ? "hyperbola" : "ellipse",
-        a,
-        c,
-        theta,
-      );
+      return getUnifiedDefData(e, p, theta);
     }
   }, [studyMode, conicType, a, c, e, p, theta]);
 
@@ -133,36 +131,7 @@ export function useConicDefinitionScene({
     };
   }, [sceneData.directrix, sceneData.pPoint, pDesign, scale]);
 
-  // 7. 动圆法中点 Q 与中点 N 的屏幕坐标
-  const qDesign = useMemo(() => {
-    return sceneData.qPoint
-      ? mathToDesign(sceneData.qPoint.x, sceneData.qPoint.y, scale)
-      : null;
-  }, [sceneData.qPoint, scale]);
-
-  const nDesign = useMemo(() => {
-    return sceneData.nPoint
-      ? mathToDesign(sceneData.nPoint.x, sceneData.nPoint.y, scale)
-      : null;
-  }, [sceneData.nPoint, scale]);
-
-  // 8. 垂直平分线屏幕坐标
-  const bisectorLineDesign = useMemo(() => {
-    if (!sceneData.bisectorLine) return null;
-    const pt1 = mathToDesign(
-      sceneData.bisectorLine.x1,
-      sceneData.bisectorLine.y1,
-      scale,
-    );
-    const pt2 = mathToDesign(
-      sceneData.bisectorLine.x2,
-      sceneData.bisectorLine.y2,
-      scale,
-    );
-    return { x1: pt1.x, y1: pt1.y, x2: pt2.x, y2: pt2.y };
-  }, [sceneData.bisectorLine, scale]);
-
-  // 8.5 渐近线屏幕坐标
+  // 7. 渐近线屏幕坐标
   const asymptotesDesign = useMemo(() => {
     if (!sceneData.asymptotes) return [];
     return sceneData.asymptotes.map((line) => {
@@ -172,12 +141,12 @@ export function useConicDefinitionScene({
     });
   }, [sceneData.asymptotes, scale]);
 
-  // 9. 避让标签位置计算
+  // 8. 避让标签位置计算
   const rawLabels = useMemo<LabelEntry[]>(() => {
     const list: LabelEntry[] = [
       {
-        key: studyMode === "locusGen" ? "M" : "P",
-        text: studyMode === "locusGen" ? "M" : "P",
+        key: "P",
+        text: "P",
         x: pDesign.x,
         y: pDesign.y,
         anchor: "middle",
@@ -186,7 +155,8 @@ export function useConicDefinitionScene({
       },
       {
         key: "F1",
-        text: "F₁",
+        text:
+          studyMode === "unifiedDef" || conicType === "parabola" ? "F" : "F₁",
         x: f1Design.x,
         y: f1Design.y,
         anchor: "middle",
@@ -212,48 +182,26 @@ export function useConicDefinitionScene({
         x: perpFootH.design.x,
         y: perpFootH.design.y,
         anchor: "middle",
-        dy: -12,
-        priority: 1,
-      });
-    }
-    if (qDesign) {
-      list.push({
-        key: "Q",
-        text: "Q",
-        x: qDesign.x,
-        y: qDesign.y,
-        anchor: "middle",
-        dy: -12,
-        priority: 1,
-      });
-    }
-    if (nDesign) {
-      list.push({
-        key: "N",
-        text: "N",
-        x: nDesign.x,
-        y: nDesign.y,
-        anchor: "middle",
-        dy: 16,
+        dy: -14,
         priority: 1,
       });
     }
     return list;
-  }, [pDesign, f1Design, f2Design, perpFootH, qDesign, nDesign, studyMode]);
+  }, [pDesign, f1Design, f2Design, perpFootH, studyMode, conicType]);
 
-  const labelPositions: PlacedLabel[] = useMemo(() => {
+  const labelPositions = useMemo<PlacedLabel[]>(() => {
     return avoidLabels(rawLabels);
   }, [rawLabels]);
 
-  // 10. 动点拖拽精准反解
-  const handlePDrag = (newMathPt: Point2D) => {
-    const solvedTheta = solveThetaFromDrag(
-      studyMode,
-      conicType,
-      newMathPt,
-      params,
-    );
-    onParamChange("theta", solvedTheta);
+  // 9. 反向拖拽处理 (InteractivePoint 传入数学坐标 { x, y })
+  const handlePDrag = (newMathPt: { x: number; y: number }) => {
+    const newTheta = solveThetaFromDrag(studyMode, conicType, newMathPt, {
+      a,
+      c,
+      e,
+      p,
+    });
+    onParamChange("theta", newTheta);
   };
 
   return {
@@ -262,11 +210,8 @@ export function useConicDefinitionScene({
     f1Design,
     f2Design,
     pDesign,
-    qDesign,
-    nDesign,
     directrixLine,
     perpFootH,
-    bisectorLineDesign,
     asymptotesDesign,
     labelPositions,
     handlePDrag,

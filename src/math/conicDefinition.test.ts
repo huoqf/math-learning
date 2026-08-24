@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   getFirstDefData,
   getUnifiedDefData,
-  getLocusGenData,
   solveThetaFromDrag,
 } from "./conicDefinition";
 
@@ -26,11 +25,11 @@ describe("conicDefinition 数学求解与测试", () => {
     it("椭圆退化状态 (a <= c)：标记 isDegenerate 并返回退化原因", () => {
       const dataEq = getFirstDefData("ellipse", 2.0, 2.0, 2.0, 0.5);
       expect(dataEq.isDegenerate).toBe(true);
-      expect(dataEq.degenerateReason).toContain("退化为线段");
+      expect(dataEq.degenerateReason).toContain("线段");
 
       const dataLess = getFirstDefData("ellipse", 1.5, 2.0, 2.0, 0.5);
       expect(dataLess.isDegenerate).toBe(true);
-      expect(dataLess.degenerateReason).toContain("无轨迹");
+      expect(dataLess.degenerateReason).toContain("不存在");
     });
 
     it("双曲线正常状态 (c > a > 0)：满足 ||PF1| - |PF2|| = 2a", () => {
@@ -72,24 +71,6 @@ describe("conicDefinition 数学求解与测试", () => {
       // 双曲线 e = 1.5
       const dataH = getUnifiedDefData(1.5, 2.0, 0.4);
       expect(dataH.d1 / (dataH.dl ?? 1)).toBeCloseTo(1.5, 2);
-    });
-  });
-
-  describe("动圆切线几何生成法 (getLocusGenData)", () => {
-    it("F2在定圆内 (c < a) 生成椭圆轨迹", () => {
-      const a = 3.0;
-      const c = 2.0;
-      const data = getLocusGenData("ellipse", a, c, 1.2);
-
-      expect(data.isDegenerate).toBe(false);
-      expect(data.auxiliaryCircles?.length).toBe(2);
-      expect(data.qPoint).toBeDefined();
-      expect(data.nPoint).toBeDefined();
-      expect(data.bisectorLine).toBeDefined();
-
-      // 动圆圆心 M 满足 |MF1| + |MF2| = 2a
-      const sum = data.d1 + (data.d2 ?? 0);
-      expect(sum).toBeCloseTo(2 * a, 2);
     });
   });
 

@@ -1,3 +1,13 @@
+/**
+ * src/features/conicDefinition/ConicDefinitionAnimation.tsx
+ * 高中数学圆锥曲线定义与特征实验室
+ * 严格遵循项目规范：
+ * - 仅聚焦高考核心两大范式：第一定义 (和/差/准线) 与 统一定义 (离心率 e 焦准比法)
+ * - 左屏纯净声明式控制，杜绝冗余嵌套与杂乱线条
+ * - 中屏纯净 SVG 画布，零多余虚线干扰
+ * - 右屏标准 MathPanel 数据看板
+ */
+
 import { useState, useMemo } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
@@ -17,15 +27,16 @@ import {
   defaultParams,
   paramMeta,
   conicPresetsByMode,
+  firstDefPresetsByType,
 } from "@/data/registries/conicDefinition";
 
 export function ConicDefinitionAnimation() {
-  // 研究模式: 'firstDef' (第一定义) | 'unifiedDef' (统一定义 e) | 'locusGen' (动圆/几何生成)
-  const [studyMode, setStudyMode] = useState<
-    "firstDef" | "unifiedDef" | "locusGen"
-  >("firstDef");
+  // 研究模式: 'firstDef' (第一定义) | 'unifiedDef' (统一定义 e)
+  const [studyMode, setStudyMode] = useState<"firstDef" | "unifiedDef">(
+    "firstDef",
+  );
 
-  // 圆锥曲线子类型: 'ellipse' | 'hyperbola' | 'parabola'
+  // 圆锥曲线子类型 (仅在第一定义下展开): 'ellipse' | 'hyperbola' | 'parabola'
   const [conicType, setConicType] = useState<
     "ellipse" | "hyperbola" | "parabola"
   >("ellipse");
@@ -54,6 +65,14 @@ export function ConicDefinitionAnimation() {
     yRange: [-4.5, 4.5],
   });
 
+  // 当前模式的预设列表
+  const currentPresets = useMemo(() => {
+    if (studyMode === "firstDef") {
+      return firstDefPresetsByType[conicType] || [];
+    }
+    return conicPresetsByMode[studyMode] || [];
+  }, [studyMode, conicType]);
+
   // 右屏看板数据组装
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-conic-definition", params, {
@@ -74,8 +93,7 @@ export function ConicDefinitionAnimation() {
   // 典型预设切换
   const handlePresetSelect = (presetKey: string) => {
     setActivePreset(presetKey);
-    const modePresets = conicPresetsByMode[studyMode] || [];
-    const target = modePresets.find((p) => p.key === presetKey);
+    const target = currentPresets.find((p) => p.key === presetKey);
     if (target) {
       if (target.conicType) {
         setConicType(target.conicType);
@@ -92,9 +110,6 @@ export function ConicDefinitionAnimation() {
     const newMode = modeKey as typeof studyMode;
     setStudyMode(newMode);
     setActivePreset("free");
-    if (newMode === "locusGen" && conicType === "parabola") {
-      setConicType("ellipse");
-    }
   };
 
   // 参数重置
@@ -109,17 +124,11 @@ export function ConicDefinitionAnimation() {
     });
   };
 
-  // 当前模式的预设列表
-  const currentPresets = useMemo(() => {
-    return conicPresetsByMode[studyMode] || [];
-  }, [studyMode]);
-
   // 左屏声明式参数过滤 (根据 activeMode 过滤)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
       firstDef: conicType === "parabola" ? ["p", "theta"] : ["a", "c", "theta"],
       unifiedDef: ["e", "p", "theta"],
-      locusGen: ["a", "c", "theta"],
     };
 
     const activeKeys = keysByMode[studyMode] ?? Object.keys(paramMeta);
@@ -151,54 +160,41 @@ export function ConicDefinitionAnimation() {
         <LeftPanel>
           <LeftPanelSection
             title="定义与研究模式"
-            subtitle="选择圆锥曲线与定义视角"
+            subtitle="选择圆锥曲线核心定义视角"
           >
             <TabSwitcher
               tabs={[
-                { key: "firstDef", label: "第一定义" },
-                { key: "unifiedDef", label: "统一定义(e)" },
-                { key: "locusGen", label: "动圆生成法" },
+                { key: "firstDef", label: "第一定义 (距离和差)" },
+                { key: "unifiedDef", label: "统一定义 (离心率e)" },
               ]}
               value={studyMode}
               onChange={handleModeChange}
             />
 
-            {studyMode !== "unifiedDef" && (
+            {/* 仅在第一定义下展示曲线类型切换 */}
+            {studyMode === "firstDef" && (
               <div className="mt-3">
                 <SelectGrid
                   items={[
                     { key: "ellipse", label: "椭圆" },
                     { key: "hyperbola", label: "双曲线" },
-                    ...(studyMode === "firstDef"
-                      ? [{ key: "parabola", label: "抛物线" }]
-                      : []),
+                    { key: "parabola", label: "抛物线" },
                   ]}
                   value={conicType}
                   onChange={(key) => {
                     const newType = key as typeof conicType;
                     setConicType(newType);
                     setActivePreset("free");
-                    if (studyMode === "firstDef") {
-                      if (newType === "ellipse" && params.a <= params.c) {
-                        setParams((prev) => ({ ...prev, a: 3.0, c: 2.0 }));
-                      } else if (
-                        newType === "hyperbola" &&
-                        params.c <= params.a
-                      ) {
-                        setParams((prev) => ({ ...prev, a: 2.0, c: 3.0 }));
-                      }
-                    } else if (studyMode === "locusGen") {
-                      if (newType === "ellipse" && params.a <= params.c) {
-                        setParams((prev) => ({ ...prev, a: 3.0, c: 1.8 }));
-                      } else if (
-                        newType === "hyperbola" &&
-                        params.c <= params.a
-                      ) {
-                        setParams((prev) => ({ ...prev, a: 2.0, c: 3.2 }));
-                      }
+                    if (newType === "ellipse" && params.a <= params.c) {
+                      setParams((prev) => ({ ...prev, a: 3.0, c: 2.0 }));
+                    } else if (
+                      newType === "hyperbola" &&
+                      params.c <= params.a
+                    ) {
+                      setParams((prev) => ({ ...prev, a: 2.0, c: 3.0 }));
                     }
                   }}
-                  columns={studyMode === "firstDef" ? 3 : 2}
+                  columns={3}
                 />
               </div>
             )}
@@ -254,7 +250,7 @@ export function ConicDefinitionAnimation() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
-          title="圆锥曲线定义与轨迹看板"
+          title="圆锥曲线定义看板"
         />
       }
     />

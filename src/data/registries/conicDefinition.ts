@@ -107,13 +107,13 @@ export interface ConicPresetItem {
   conicType?: "ellipse" | "hyperbola" | "parabola";
 }
 
-export const conicPresetsByMode: Record<string, ConicPresetItem[]> = {
-  firstDef: [
+export const firstDefPresetsByType: Record<string, ConicPresetItem[]> = {
+  ellipse: [
     {
       key: "free",
       label: "自由探究",
       description: "全参数开放",
-      params: { a: 3.0, c: 2.0, p: 2.0 },
+      params: { a: 3.0, c: 2.0 },
     },
     {
       key: "standard_ellipse",
@@ -121,24 +121,83 @@ export const conicPresetsByMode: Record<string, ConicPresetItem[]> = {
       formula: "a=3, c=2",
       description: "e ≈ 0.67",
       params: { a: 3.0, c: 2.0, theta: 0.8 },
-      conicType: "ellipse",
+    },
+    {
+      key: "flat_ellipse",
+      label: "扁平椭圆",
+      formula: "e = 0.89",
+      description: "长轴远大于短轴",
+      params: { a: 3.5, c: 3.1, theta: 0.8 },
     },
     {
       key: "critical_degenerate",
       label: "临界退化",
-      formula: "a = c = 2.5",
+      formula: "a = c",
       description: "退化为线段",
       params: { a: 2.5, c: 2.5, theta: 0.8 },
+    },
+  ],
+  hyperbola: [
+    {
+      key: "free",
+      label: "自由探究",
+      description: "全参数开放",
+      params: { a: 2.0, c: 3.0 },
     },
     {
       key: "equilateral_hyperbola",
       label: "等轴双曲",
       formula: "e = \\sqrt{2}",
-      description: "渐近线垂直",
+      description: "渐近线互相垂直",
       params: { a: 2.0, c: 2.83, theta: 0.8 },
-      conicType: "hyperbola",
+    },
+    {
+      key: "wide_hyperbola",
+      label: "大开角双曲",
+      formula: "e = 2.0",
+      description: "渐近线夹角120°",
+      params: { a: 1.6, c: 3.2, theta: 0.8 },
+    },
+    {
+      key: "hyperbola_degenerate",
+      label: "临界退化",
+      formula: "c = a",
+      description: "退化为两条射线",
+      params: { a: 2.5, c: 2.5, theta: 0.8 },
     },
   ],
+  parabola: [
+    {
+      key: "free",
+      label: "自由探究",
+      description: "全参数开放",
+      params: { p: 2.0 },
+    },
+    {
+      key: "standard_parabola",
+      label: "标准抛物",
+      formula: "p = 2.0",
+      description: "焦点 (1, 0)",
+      params: { p: 2.0, theta: 3.14 },
+    },
+    {
+      key: "flat_parabola",
+      label: "宽开度抛物",
+      formula: "p = 3.6",
+      description: "焦点距准线更远",
+      params: { p: 3.6, theta: 3.14 },
+    },
+    {
+      key: "narrow_parabola",
+      label: "窄开度抛物",
+      formula: "p = 1.0",
+      description: "曲线更陡峭",
+      params: { p: 1.0, theta: 3.14 },
+    },
+  ],
+};
+
+export const conicPresetsByMode: Record<string, ConicPresetItem[]> = {
   unifiedDef: [
     {
       key: "free",
@@ -166,37 +225,6 @@ export const conicPresetsByMode: Record<string, ConicPresetItem[]> = {
       formula: "e = 1.60",
       description: "e > 1",
       params: { e: 1.6, p: 2.0, theta: 0.8 },
-    },
-  ],
-  locusGen: [
-    {
-      key: "free",
-      label: "自由探究",
-      description: "全参数开放",
-      params: { a: 3.0, c: 2.0 },
-    },
-    {
-      key: "inside_ellipse",
-      label: "点在圆内",
-      formula: "c < a",
-      description: "生成椭圆",
-      params: { a: 3.0, c: 1.8, theta: 1.2 },
-      conicType: "ellipse",
-    },
-    {
-      key: "outside_hyperbola",
-      label: "点在圆外",
-      formula: "c > a",
-      description: "生成双曲线",
-      params: { a: 2.0, c: 3.2, theta: 1.2 },
-      conicType: "hyperbola",
-    },
-    {
-      key: "tangent_critical",
-      label: "点在圆周",
-      formula: "c = a",
-      description: "临界退化",
-      params: { a: 2.5, c: 2.5, theta: 1.2 },
     },
   ],
 };

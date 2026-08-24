@@ -7,11 +7,7 @@ import type {
 } from "../types";
 import { colorize } from "../types";
 import { MATH_COLORS } from "@/theme";
-import {
-  getFirstDefData,
-  getUnifiedDefData,
-  getLocusGenData,
-} from "@/math/conicDefinition";
+import { getFirstDefData, getUnifiedDefData } from "@/math/conicDefinition";
 
 export function buildConicDefinitionPanel(
   params: Record<string, number>,
@@ -312,66 +308,6 @@ export function buildConicDefinitionPanel(
       },
       {
         text: "高考考点：椭圆/双曲线的准线方程为 x = ±a²/c，焦准距 p = b²/c，满足 e·p = b²/a（通径之半）。",
-        importance: "core",
-      },
-    );
-  } else {
-    // 动圆生成法
-    const sceneDataL = getLocusGenData(
-      conicType === "hyperbola" ? "hyperbola" : "ellipse",
-      a,
-      c,
-      theta,
-    );
-    const d1 = sceneDataL.d1;
-    const d2 = sceneDataL.d2 ?? 0;
-    const sumOrDiff = conicType === "ellipse" ? d1 + d2 : Math.abs(d1 - d2);
-
-    quantities.push(
-      {
-        label: "定圆 C₁ 半径 R = 2a",
-        value: (2 * a).toFixed(2),
-        color: cPrimary,
-      },
-      {
-        label: "焦距 2c (|F₁F₂|)",
-        value: (2 * c).toFixed(2),
-        color: cSecondary,
-      },
-      {
-        label: "动圆心 M 坐标",
-        value: `(${sceneDataL.pPoint.x.toFixed(2)}, ${sceneDataL.pPoint.y.toFixed(2)})`,
-      },
-      {
-        label: "动圆半径 r_M = |MF₂| = |MQ|",
-        value: d2.toFixed(2),
-        color: cSecondary,
-      },
-      {
-        label: conicType === "ellipse" ? "|MF₁| + |MF₂|" : "||MF₁| - |MF₂||",
-        value: `${sumOrDiff.toFixed(2)} ≡ R (2a)`,
-        color: cPrimary,
-      },
-    );
-
-    theorems.push({
-      name: "动圆相切轨迹生成定理 (折纸法几何本质)",
-      latex:
-        conicType === "ellipse"
-          ? "|MF_1| + |MF_2| = R = 2a"
-          : "||MF_1| - |MF_2|| = R = 2a",
-      note: `过定点 ${col("F_2", cSecondary)} 且与已知定圆 ${col("C_1", cPrimary)} 相切的动圆圆心 ${col("M", cTertiary)}：点 F₂ 在圆内生成椭圆，点 F₂ 在圆外生成双曲线`,
-      prerequisites: ["中垂线与半径的交点即为切圆圆心", "|MF₂| = |MQ|"],
-      level: "core",
-    });
-
-    gaokaoPoints.push(
-      {
-        text: "高考核心题型：解答题常以“动圆与已知圆内切/外切且过定点”为背景考查圆锥曲线第一定义的方程推导与轨迹辨析。",
-        importance: "gaokao",
-      },
-      {
-        text: "几何解题思维：利用中垂线性质将未知动线段 |MF₂| 转化为定圆半径的一部分 |MQ|，实现 |MF₁| ± |MF₂| = R 恒值化简。",
         importance: "core",
       },
     );
