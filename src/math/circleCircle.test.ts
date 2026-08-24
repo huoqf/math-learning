@@ -19,6 +19,8 @@ describe("calculateCircleCircle", () => {
     expect(res.d).toBeCloseTo(6);
     expect(res.tangents.length).toBe(4);
     expect(res.intersections.length).toBe(0);
+    expect(res.outerTangentLength).toBeCloseTo(6);
+    expect(res.innerTangentLength).toBeCloseTo(Math.sqrt(36 - 9)); // sqrt(27)
   });
 
   it("应准确识别两圆外切并计算 3 条公切线与切点", () => {
@@ -36,12 +38,14 @@ describe("calculateCircleCircle", () => {
     expect(res.intersections.length).toBe(1);
     expect(res.intersections[0].x).toBeCloseTo(0);
     expect(res.intersections[0].y).toBeCloseTo(0);
+    expect(res.outerTangentLength).toBeCloseTo(4);
+    expect(res.innerTangentLength).toBeCloseTo(0);
   });
 
-  it("应准确识别两圆相交并计算公共弦方程与弦长", () => {
+  it("应准确识别两圆相交并计算公共弦方程、弦心距与弦长", () => {
     // 圆1: x^2 + y^2 = 4 (r=2)
     // 圆2: (x-2)^2 + y^2 = 4 (r=2)
-    // 弦交点: x=1, y = +-sqrt(3) => 弦长 2*sqrt(3) ~= 3.464
+    // 弦交点: x=1, y = +-sqrt(3) => 弦长 2*sqrt(3) ~= 3.464, 弦心距 d1=1
     const res = calculateCircleCircle({
       x1: 0,
       y1: 0,
@@ -53,7 +57,10 @@ describe("calculateCircleCircle", () => {
     expect(res.relation).toBe("intersect");
     expect(res.intersections.length).toBe(2);
     expect(res.commonChord?.length).toBeCloseTo(2 * Math.sqrt(3));
+    expect(res.commonChord?.distToO1).toBeCloseTo(1.0);
     expect(res.tangents.length).toBe(2); // 2 条外公切线
+    expect(res.outerTangentLength).toBeCloseTo(2);
+    expect(res.innerTangentLength).toBeNull();
   });
 
   it("应准确识别两圆内切与内含", () => {

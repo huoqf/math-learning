@@ -52,9 +52,13 @@ export interface CircleCircleResult {
     line: LineEquationCoeffs;
     length: number | null; // 相交时为弦长，其他为 null
     midpoint: Point2D | null;
+    distToO1: number | null; // O1 到公共弦距离（弦心距）
+    distToO2: number | null; // O2 到公共弦距离
   } | null;
   tangents: TangentLineResult[];
   tangentCount: number;
+  outerTangentLength: number | null; // 外公切线长
+  innerTangentLength: number | null; // 内公切线长
 }
 
 const EPS = 1e-4;
@@ -111,11 +115,11 @@ export function calculateCircleCircle(
     const C = x1 * x1 + y1 * y1 - r1 * r1 - (x2 * x2 + y2 * y2 - r2 * r2);
 
     // 标准化 Ax + By + C = 0 的 LaTeX 表示
-    const norm = Math.hypot(A, B);
-    const aStr = (A / norm).toFixed(2);
-    const bStr = (B / norm).toFixed(2);
-    const cStr = (C / norm).toFixed(2);
-    const latex = `${aStr}x + ${bStr}y + (${cStr}) = 0`;
+    const norm = Math.hypot(A, B) || 1;
+    const aNorm = A / norm;
+    const bNorm = B / norm;
+    const cNorm = C / norm;
+    const latex = formatLineLatex(aNorm, bNorm, cNorm);
 
     const line: LineEquationCoeffs = { A, B, C, latex };
 
@@ -138,6 +142,8 @@ export function calculateCircleCircle(
     const midpoint: Point2D = { x: midX, y: midY };
 
     let chordLen: number | null = null;
+    const distToO1 = Math.abs(aDist);
+    const distToO2 = Math.abs(d - aDist);
 
     if (h2 > EPS) {
       // 存在两个交点
@@ -157,6 +163,8 @@ export function calculateCircleCircle(
       line,
       length: relation === "intersect" ? chordLen : null,
       midpoint: relation === "intersect" ? midpoint : null,
+      distToO1: relation === "intersect" ? distToO1 : null,
+      distToO2: relation === "intersect" ? distToO2 : null,
     };
   }
 
@@ -273,6 +281,29 @@ export function calculateCircleCircle(
         });
       }
     }
+
+    // 3.3 计算公切线长
+    const outerTanSq = d * d - diffR * diffR;
+    const outerTangentLength =
+      d >= diffR - EPS && outerTanSq >= 0 ? Math.sqrt(outerTanSq) : null;
+
+    const innerTanSq = d * d - sumR * sumR;
+    const innerTangentLength =
+      d >= sumR - EPS && innerTanSq >= 0 ? Math.sqrt(innerTanSq) : null;
+
+    return {
+      d,
+      sumR,
+      diffR,
+      relation,
+      relationText,
+      intersections,
+      commonChord,
+      tangents,
+      tangentCount: tangents.length,
+      outerTangentLength,
+      innerTangentLength,
+    };
   }
 
   return {
@@ -284,8 +315,45 @@ export function calculateCircleCircle(
     intersections,
     commonChord,
     tangents,
-    tangentCount: tangents.length,
+    tangentCount: 0,
+    outerTangentLength: null,
+    innerTangentLength: null,
   };
+}
+
+/**
+ * 格式化一般式直线方程 Ax + By + C = 0 的标准 LaTeX
+ */
+export function formatLineLatex(A: number, B: number, C: number): string {
+  const parts: string[] = [];
+
+  // A*x 项
+  if (Math.abs(A) > 1e-4) {
+    const aAbs = Math.abs(A);
+    const aStr =
+      Math.abs(aAbs - 1) < 1e-4 ? "" : aAbs.toFixed(2).replace(/\.?0+$/, "");
+    const sign = A < 0 ? "-" : "";
+    parts.push(`${sign}${aStr}x`);
+  }
+
+  // B*y 项
+  if (Math.abs(B) > 1e-4) {
+    const bAbs = Math.abs(B);
+    const bStr =
+      Math.abs(bAbs - 1) < 1e-4 ? "" : bAbs.toFixed(2).replace(/\.?0+$/, "");
+    const sign = parts.length > 0 ? (B > 0 ? "+ " : "- ") : B < 0 ? "-" : "";
+    parts.push(`${sign}${bStr}y`);
+  }
+
+  // C 项
+  if (Math.abs(C) > 1e-4 || parts.length === 0) {
+    const cAbs = Math.abs(C);
+    const cStr = cAbs.toFixed(2).replace(/\.?0+$/, "");
+    const sign = parts.length > 0 ? (C > 0 ? "+ " : "- ") : C < 0 ? "-" : "";
+    parts.push(`${sign}${cStr}`);
+  }
+
+  return `${parts.join(" ")} = 0`;
 }
 
 function twoPointsToLine(p1: Point2D, p2: Point2D): LineEquationCoeffs {
@@ -293,6 +361,6 @@ function twoPointsToLine(p1: Point2D, p2: Point2D): LineEquationCoeffs {
   const B = p1.x - p2.x;
   const C = p2.x * p1.y - p1.x * p2.y;
   const norm = Math.hypot(A, B) || 1;
-  const latex = `${(A / norm).toFixed(2)}x + ${(B / norm).toFixed(2)}y + (${(C / norm).toFixed(2)}) = 0`;
+  const latex = formatLineLatex(A / norm, B / norm, C / norm);
   return { A, B, C, latex };
 }

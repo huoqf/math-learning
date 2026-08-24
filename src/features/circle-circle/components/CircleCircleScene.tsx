@@ -63,8 +63,8 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
 
   return (
     <g className="circle-circle-scene select-none">
-      {/* 1. 基础直角坐标系 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      {/* 1. 基础直角坐标系 (纯净坐标系，showGrid={false}) */}
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* 2. 圆心连线 O1O2 (虚线) */}
       {layers.showCenterLine && (
@@ -130,7 +130,7 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
             );
           })()}
 
-          {/* 实心相交弦 AB */}
+          {/* 实心相交弦 AB 与垂径直角三角形构造 */}
           {res.intersections.length === 2 && (
             <>
               {(() => {
@@ -156,7 +156,80 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
                 );
               })()}
 
-              {/* 两个交点 */}
+              {/* 垂径三角形辅助线：O1A (斜边 r1) 与 O1M (弦心距 d1) */}
+              {res.commonChord.midpoint && (
+                <>
+                  {(() => {
+                    const ptA = res.intersections[0];
+                    const mid = res.commonChord.midpoint!;
+                    const pAD = mathToDesign(ptA.x, ptA.y, scale);
+                    const midD = mathToDesign(mid.x, mid.y, scale);
+
+                    // 直角标尺计算 (固定 9px，防畸变)
+                    const dMidO1X = center1Design.x - midD.x;
+                    const dMidO1Y = center1Design.y - midD.y;
+                    const lenO1 = Math.hypot(dMidO1X, dMidO1Y) || 1;
+                    const uO1X = dMidO1X / lenO1;
+                    const uO1Y = dMidO1Y / lenO1;
+
+                    const dMidAX = pAD.x - midD.x;
+                    const dMidAY = pAD.y - midD.y;
+                    const lenA = Math.hypot(dMidAX, dMidAY) || 1;
+                    const uAX = dMidAX / lenA;
+                    const uAY = dMidAY / lenA;
+
+                    const s = 9;
+                    const corner1 = {
+                      x: midD.x + s * uO1X,
+                      y: midD.y + s * uO1Y,
+                    };
+                    const corner2 = {
+                      x: midD.x + s * uO1X + s * uAX,
+                      y: midD.y + s * uO1Y + s * uAY,
+                    };
+                    const corner3 = {
+                      x: midD.x + s * uAX,
+                      y: midD.y + s * uAY,
+                    };
+
+                    return (
+                      <g className="chord-triangle-helper">
+                        {/* 半径辅助线 O1-A */}
+                        <line
+                          x1={center1Design.x}
+                          y1={center1Design.y}
+                          x2={pAD.x}
+                          y2={pAD.y}
+                          stroke={MATH_COLORS.paramPrimary}
+                          strokeWidth={1.5}
+                          strokeDasharray="4 3"
+                          opacity={0.85}
+                        />
+                        {/* 弦心距辅助线 O1-M */}
+                        <line
+                          x1={center1Design.x}
+                          y1={center1Design.y}
+                          x2={midD.x}
+                          y2={midD.y}
+                          stroke={MATH_COLORS.paramSecondary}
+                          strokeWidth={1.8}
+                          strokeDasharray="3 2"
+                          opacity={0.9}
+                        />
+                        {/* 垂足 M 处的直角标尺 */}
+                        <polyline
+                          points={`${corner1.x},${corner1.y} ${corner2.x},${corner2.y} ${corner3.x},${corner3.y}`}
+                          fill="none"
+                          stroke={MATH_COLORS.paramTertiary}
+                          strokeWidth={1.5}
+                        />
+                      </g>
+                    );
+                  })()}
+                </>
+              )}
+
+              {/* 两个交点 A 与 B */}
               <MathPoint
                 x={res.intersections[0].x}
                 y={res.intersections[0].y}
@@ -189,16 +262,48 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
             </>
           )}
 
-          {/* 相切时的单交点 */}
+          {/* 相切时的单交点 T */}
           {res.intersections.length === 1 && (
-            <MathPoint
-              x={res.intersections[0].x}
-              y={res.intersections[0].y}
-              scale={scale}
-              fontScale={fontScale}
-              label="T (公切点)"
-              color={MATH_COLORS.paramSecondary}
-            />
+            <>
+              {(() => {
+                const tPt = res.intersections[0];
+                const tDesign = mathToDesign(tPt.x, tPt.y, scale);
+
+                // 在切点处画直角标尺
+                const dx = center2Design.x - center1Design.x;
+                const dy = center2Design.y - center1Design.y;
+                const lenD = Math.hypot(dx, dy) || 1;
+                const ux = dx / lenD;
+                const uy = dy / lenD;
+                const vx = -uy;
+                const vy = ux;
+                const s = 9;
+
+                const c1 = { x: tDesign.x - s * ux, y: tDesign.y - s * uy };
+                const c2 = {
+                  x: tDesign.x - s * ux + s * vx,
+                  y: tDesign.y - s * uy + s * vy,
+                };
+                const c3 = { x: tDesign.x + s * vx, y: tDesign.y + s * vy };
+
+                return (
+                  <polyline
+                    points={`${c1.x},${c1.y} ${c2.x},${c2.y} ${c3.x},${c3.y}`}
+                    fill="none"
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={1.5}
+                  />
+                );
+              })()}
+              <MathPoint
+                x={res.intersections[0].x}
+                y={res.intersections[0].y}
+                scale={scale}
+                fontScale={fontScale}
+                label="T"
+                color={MATH_COLORS.paramSecondary}
+              />
+            </>
           )}
         </g>
       )}
@@ -264,14 +369,14 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
         </g>
       )}
 
-      {/* 7. 圆心交互控制点 O1 与 O2 */}
+      {/* 7. 圆心交互控制点 O1 与 O2 (纯字母标签，坐标归位右屏看板) */}
       <InteractivePoint
         cx={x1}
         cy={y1}
         scale={scale}
         vp={vp}
         fontScale={fontScale}
-        label={`O₁(${x1.toFixed(1)}, ${y1.toFixed(1)})`}
+        label="O₁"
         color={MATH_COLORS.paramPrimary}
         onDrag={(mathPt) => onCenter1Drag?.(mathPt.x, mathPt.y)}
       />
@@ -282,7 +387,7 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
         scale={scale}
         vp={vp}
         fontScale={fontScale}
-        label={`O₂(${x2.toFixed(1)}, ${y2.toFixed(1)})`}
+        label="O₂"
         color={MATH_COLORS.paramSecondary}
         onDrag={(mathPt) => onCenter2Drag?.(mathPt.x, mathPt.y)}
       />
