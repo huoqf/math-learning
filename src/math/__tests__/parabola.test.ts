@@ -5,6 +5,7 @@ import {
   getFocalRadiusInfo,
   getFocalChordInfo,
   getDirectrixMongeInfo,
+  getTangentAndOpticalInfo,
 } from "../parabola";
 
 describe("parabola math library", () => {
@@ -46,5 +47,23 @@ describe("parabola math library", () => {
     expect(mongeInfo.chordPassesFocus).toBe(true);
     expect(mongeInfo.isQFPerpAB).toBe(true);
     expect(mongeInfo.areaQAB).toBeGreaterThanOrEqual(p * p - 1e-4);
+  });
+
+  it("should verify optical reflection property: ray from focus reflects parallel to axis", () => {
+    const p = 2;
+    const P = getPointOnParabola(4, p, "right"); // P(4, 4)
+    const optical = getTangentAndOpticalInfo(P, p, "right");
+    // 对右开口抛物线，从焦点发出的光线经切点反射后平行于 x 轴 (方向向量 y 分量为 0)
+    expect(optical.isParallelToAxis).toBe(true);
+    expect(optical.reflectedDir.y).toBeCloseTo(0, 4);
+    // 切线在对称轴上的截距为 -x0 = -4
+    expect(optical.axisIntercept.x).toBeCloseTo(-4, 4);
+  });
+
+  it("should calculate correct properties for upward parabola x^2 = 2py", () => {
+    const baseUp = getParabolaBaseInfo(2, "up");
+    expect(baseUp.focus).toEqual({ x: 0, y: 1 });
+    expect(baseUp.directrixIsVertical).toBe(false);
+    expect(baseUp.directrixConstant).toBe(-1); // 准线 y = -1
   });
 });

@@ -62,9 +62,9 @@ describe("solveConicLineIntersection", () => {
     expect(resParallel.intersectionCount).toBe(1);
   });
 
-  it("应当正确计算抛物线焦点弦长", () => {
-    // 抛物线 y^2 = 4x (p=2), 焦点 (1, 0)
-    // 垂直焦点的弦（通径）：theta = PI/2 => |AB| = 2p = 4
+  it("应当正确计算抛物线焦点弦长与通径", () => {
+    // 抛物线标准方程 y^2 = 2px (取焦准距 p=2 => y^2 = 4x), 焦点坐标 (p/2, 0) = (1, 0)
+    // 垂直于对称轴的焦点弦（即通径）：theta = PI/2 => 通径长度 |AB| = 2p = 4
     const resFocus = solveConicLineIntersection({
       conicType: "parabola",
       studyMode: "focus",

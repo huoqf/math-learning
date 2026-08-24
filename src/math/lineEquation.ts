@@ -98,10 +98,10 @@ export function convertFormToGeneral(
       const y1 = params.y1 ?? -1;
       const x2 = params.x2 ?? 2;
       const y2 = params.y2 ?? 3;
-      // (y2 - y1)x - (x2 - x1)y + (x1 y2 - x2 y1) = 0
+      // (y2 - y1)x - (x2 - x1)y + (x2 y1 - x1 y2) = 0
       const A = y2 - y1;
       const B = -(x2 - x1);
-      const C = x1 * y2 - x2 * y1;
+      const C = x2 * y1 - x1 * y2;
       return normalizeLineCoeffs(A, B, C);
     }
     case "intercept": {

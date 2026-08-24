@@ -55,11 +55,12 @@ describe("probabilityBayes math module", () => {
 
     // p_1 = 1.0
     expect(res.steps[0].p1).toBeCloseTo(1.0);
-    // p_2 = 0 * 1.0 + 0.5 * 0.0 = 0.0
+    // p_{n+1} = p_{11} * p_n + p_{21} * (1 - p_n)
+    // p_2 = 0 * 1.0 + 0.5 * (1 - 1.0) = 0.0
     expect(res.steps[1].p1).toBeCloseTo(0.0);
-    // p_3 = 0 * 0.0 + 0.5 * 1.0 = 0.5
+    // p_3 = 0 * 0.0 + 0.5 * (1 - 0.0) = 0.5
     expect(res.steps[2].p1).toBeCloseTo(0.5);
-    // p_4 = 0 * 0.5 + 0.5 * 0.5 = 0.25
+    // p_4 = 0 * 0.5 + 0.5 * (1 - 0.5) = 0.25
     expect(res.steps[3].p1).toBeCloseTo(0.25);
 
     // 蛛网图轨迹测试

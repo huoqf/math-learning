@@ -7,7 +7,7 @@ describe("平面向量线性运算与共线数学模块 (vectorLinear)", () => {
     expect(vectorNorm({ x: 0, y: 0 })).toBe(0);
   });
 
-  it("应正确计算向量加减与数乘", () => {
+  it("应正确计算向量加减与数乘，并验证差向量几何方向 (b指向a)", () => {
     const res = computeVectorLinear({
       xa: 3,
       ya: 1,
@@ -21,8 +21,13 @@ describe("平面向量线性运算与共线数学模块 (vectorLinear)", () => {
     // sumVec = (5, -1)
     expect(res.sumVec.x).toBeCloseTo(5);
     expect(res.sumVec.y).toBeCloseTo(-1);
+    // diffVec = a - b = (3-1, 1-3) = (2, -2)
+    // 符合高中几何三角形法则：从减向量 b(1,3) 的终点指向被减向量 a(3,1) 的终点
     expect(res.diffVec.x).toBeCloseTo(2);
     expect(res.diffVec.y).toBeCloseTo(-2);
+    // 验证差向量平移到 b 的终点时精确到达 a 的终点：(xb + diffX, yb + diffY) == (xa, ya)
+    expect(1 + res.diffVec.x).toBeCloseTo(3);
+    expect(3 + res.diffVec.y).toBeCloseTo(1);
   });
 
   it("应正确判定向量共线条件", () => {

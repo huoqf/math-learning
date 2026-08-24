@@ -110,6 +110,16 @@ describe("Sequence Math Calculations", () => {
     expect(res.terms[4].Sn).toBe(15);
   });
 
+  it("should handle boundary case q = 0 (an = 0 for n >= 2, lnVal is null)", () => {
+    const res = calcGeometricSequence(5, 0, 4);
+    expect(res.isValid).toBe(true);
+    expect(res.terms[0].an).toBe(5);
+    expect(res.terms[1].an).toBe(0);
+    expect(res.terms[2].an).toBe(0);
+    expect(res.terms[3].Sn).toBe(5);
+    expect(res.terms[1].lnAn).toBeNull();
+  });
+
   it("should correctly compute arith-geo split terms", () => {
     const res = calcArithGeoSplit(1, 2, 0.5, 3);
     expect(res.isValid).toBe(true);
