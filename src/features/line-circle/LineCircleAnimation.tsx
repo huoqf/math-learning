@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -254,14 +255,87 @@ export function LineCircleAnimation() {
       }
       return `L = 2\\sqrt{r^2 - d^2} = 2\\sqrt{${rVal.toFixed(1)}^2 - ${calcRes.distance.toFixed(2)}^2} = ${calcRes.chordLengthGeom.toFixed(2)}`;
     } else if (studyMode === "tangent") {
-      if (calcRes.tangentLength !== undefined) {
-        return `P(${params.px?.toFixed(1)}, ${params.py?.toFixed(1)}), \\; PT = \\sqrt{|PC|^2 - r^2} = ${calcRes.tangentLength.toFixed(2)}, \\; \\text{切点弦: } (x_P - a)(x - a) + (y_P - b)(y - b) = r^2`;
-      }
-      return `P(${params.px?.toFixed(1)}, ${params.py?.toFixed(1)}) \\text{ 在圆内或圆上，无法引两条切线}`;
+      const pxVal = params.px ?? 0;
+      const pyVal = params.py ?? 0;
+      return `\\begin{cases} C: ${circleStr} \\\\ P: (${pxVal.toFixed(1)}, ${pyVal.toFixed(1)}) \\end{cases} \\quad L_{\\text{切线}} = ${calcRes.tangentLength?.toFixed(2) ?? "0"}`;
     } else {
       return `\\text{垂径定理: } CH \\perp AB \\iff H \\text{ 为弦 } AB \\text{ 中点} \\quad (k_{CH} \\cdot k_{AB} = -1)`;
     }
   }, [params, studyMode, calcRes]);
+
+  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  const tipConfig = useMemo(() => {
+    if (preset === "diameter") {
+      return {
+        variant: "primary" as const,
+        badge: "高考经典 · 直径最长弦",
+        condition: "直线过圆心 C，此时弦心距 d = 0。",
+        question: "求解过圆心的弦长最大值。",
+        method:
+          "弦长最大为直径 |AB| = 2r = " +
+          (2 * (params.r ?? 3)).toFixed(1) +
+          "，此时弦与直径完全重合。",
+      };
+    }
+    if (preset === "tangentCritical") {
+      return {
+        variant: "warning" as const,
+        badge: "高考经典 · 临界切线相切",
+        condition: "直线与圆满足圆心距等于半径 d = r，判别式 Δ = 0。",
+        question: "探究切点坐标 T 与切线斜率截距关系。",
+        method: "切线垂直于切点半径 CT ⊥ l，切点唯一，弦长收缩为 0。",
+      };
+    }
+    if (preset === "minChord") {
+      return {
+        variant: "danger" as const,
+        badge: "高考经典 · 垂径垂直最短弦",
+        condition: "割线垂直于圆心与定点连线 CM ⊥ l。",
+        question: "探究过圆内定点的动弦长极小值。",
+        method:
+          "当割线垂直于 CM 时弦心距 d 取得最大值 |CM|，此时弦长最短 L = 2√(r² - |CM|²)。",
+      };
+    }
+
+    if (studyMode === "relation") {
+      return {
+        variant: "info" as const,
+        badge: "几何法判定位置关系 (d 与 r)",
+        condition: `圆心 C(${(params.a ?? 0).toFixed(1)}, ${(params.b ?? 0).toFixed(1)})，半径 r = ${(params.r ?? 3).toFixed(1)}，直线斜率 k = ${(params.k ?? 0).toFixed(2)}。`,
+        question: "如何快速判定直线与圆的交点个数与相交状态？",
+        method:
+          "高考优先用几何法计算弦心距 d，比较 d 与 r 的大小（d < r 相交，d = r 相切，d > r 相离），避免联立二次方程求 Δ。",
+      };
+    }
+    if (studyMode === "chord") {
+      return {
+        variant: "primary" as const,
+        badge: "垂径定理与勾股弦长法",
+        condition: `直线与圆相交于 A, B 两点，弦心距为 d = ${calcRes.distance.toFixed(2)}。`,
+        question: "求解相交弦长 |AB|，探究过定点的最长与最短弦长。",
+        method:
+          "勾股弦长公式 |AB| = 2√(r² - d²)；最长弦为过圆心的直径 (2r)，最短弦为垂直于弦心距的垂弦。",
+      };
+    }
+    if (studyMode === "tangent") {
+      return {
+        variant: "warning" as const,
+        badge: "切线长定理与切点弦方程",
+        condition: `从圆外一点 P(${(params.px ?? 0).toFixed(1)}, ${(params.py ?? 0).toFixed(1)}) 引圆的两条切线 PA, PB。`,
+        question: "求解切线长 |PA|，求两切点所连切点弦 AB 的直线方程。",
+        method:
+          "切线长公式 |PA| = √(d(P,C)² - r²)；以 PC 为直径的圆与原圆相减（作差法）即得切点弦方程。",
+      };
+    }
+    return {
+      variant: "danger" as const,
+      badge: "中点弦与垂径垂直定理",
+      condition: `已知动弦 AB 的中点为 M(${(params.mx ?? 0).toFixed(1)}, ${(params.my ?? 0).toFixed(1)})。`,
+      question: "求解割线 AB 的斜率与直线方程。",
+      method:
+        "由垂径定理知 CM ⊥ AB，故割线斜率 k_{AB} = -1 / k_{CM}，点斜式直接秒出弦所在直线方程。",
+    };
+  }, [studyMode, preset, params, calcRes]);
 
   const panelTitle = useMemo(() => {
     switch (studyMode) {
@@ -325,6 +399,37 @@ export function LineCircleAnimation() {
               variant="outline"
               columns={2}
             />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【秒杀通法】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.method}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
 
           {/* 3. 参数调节 Section */}

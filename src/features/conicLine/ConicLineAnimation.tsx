@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   TabSwitcher,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -204,6 +205,83 @@ export function ConicLineAnimation() {
     return `${curveTex} \\quad \\text{与} \\quad ${lineTex}`;
   }, [conicType, studyMode, params]);
 
+  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  const tipConfig = useMemo(() => {
+    if (activePreset !== "free") {
+      const targetPreset = (presetsByMode[studyMode] ?? []).find(
+        (p) => p.key === activePreset,
+      );
+      if (targetPreset) {
+        if (
+          activePreset.includes("tangent") ||
+          activePreset.includes("critical")
+        ) {
+          return {
+            variant: "warning" as const,
+            badge: `高考经典 · ${targetPreset.label}`,
+            condition: `直线与${conicType === "ellipse" ? "椭圆" : conicType === "hyperbola" ? "双曲线" : "抛物线"}处于相切临界状态 (Δ = 0)。`,
+            question: "探究相切时的切点坐标与切线斜率截距关系。",
+            method:
+              "联立方程化为一元二次方程，令判别式 Δ = 0 即可锁定切线斜率 k 或截距 m。",
+          };
+        }
+        if (activePreset.includes("latus") || activePreset.includes("focus")) {
+          return {
+            variant: "primary" as const,
+            badge: `高考经典 · ${targetPreset.label}`,
+            condition: "割线过焦点且垂直于对称轴 (θ = 90°)，构成通径。",
+            question: "求解最短焦点弦长（通径长），探究通径端点坐标。",
+            method:
+              "直接令 x = c（或 x = p/2），解得通径长 2b²/a（抛物线为 2p），高考高频考点。",
+          };
+        }
+      }
+    }
+
+    if (studyMode === "general") {
+      return {
+        variant: "info" as const,
+        badge: "位置关系判定与弦长公式",
+        condition: `直线 l: y=kx+m 与${conicType === "ellipse" ? "椭圆" : conicType === "hyperbola" ? "双曲线" : "抛物线"}联立，判别式为 Δ。`,
+        question:
+          "判定直线与曲线交点个数（相交/相切/相离），求解相交弦长 |AB|。",
+        method:
+          "设交点 A(x₁,y₁), B(x₂,y₂)，由弦长公式 |AB| = √(1+k²) · √((x₁+x₂)² - 4x₁x₂)，利用韦达定理免解方程求根。",
+      };
+    }
+    if (studyMode === "focus") {
+      return {
+        variant: "primary" as const,
+        badge: "高考焦点弦与通径极值",
+        condition: "割线过焦点 F(c,0)，倾斜角为 θ，交曲线于 A, B 两点。",
+        question:
+          "探究焦点弦长 |AB| 的最值规律，以及两焦半径倒数和的定值性质。",
+        method:
+          "通径（θ=90°）为垂直对称轴的最短焦点弦长 2b²/a；两焦半径倒数和 1/|FA| + 1/|FB| 恒为定值 2a/b²（抛物线为 2/p）。",
+      };
+    }
+    if (studyMode === "midpoint") {
+      return {
+        variant: "warning" as const,
+        badge: "中点弦与点差法秒杀",
+        condition:
+          "已知动弦 AB 的中点为 M(x₀, y₀)，两端点 A(x₁,y₁), B(x₂,y₂) 在曲线上。",
+        question:
+          "求割线 AB 所在的直线方程与斜率，并判定该中点是否在曲线内部（存在性）。",
+        method: `代入两点坐标作差：k_{AB} · k_{OM} = ${conicType === "ellipse" ? "-b²/a²" : conicType === "hyperbola" ? "b²/a²" : "p/(2y₀)"}，设而不求秒出斜率；务必回代检验 Δ > 0。`,
+      };
+    }
+    return {
+      variant: "danger" as const,
+      badge: "极点极线与切点弦对偶",
+      condition: "从曲线外一点 P(x_P, y_P) 引曲线的两条切线，切点分别为 A, B。",
+      question:
+        "求切点弦 AB 所在的直线方程，探究当点 P 在定直线上运动时切点弦恒过定点的规律。",
+      method:
+        "切点弦统一方程为 x_P x/a² + y_P y/b² = 1；极点与极线满足对偶原理：P 在定直线上滑动 ⇔ AB 绕定点旋转。",
+    };
+  }, [studyMode, activePreset, conicType]);
+
   return (
     <ThreePanel
       left={
@@ -262,6 +340,37 @@ export function ConicLineAnimation() {
               variant="filled"
               columns={2}
             />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【秒杀通法】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.method}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
 
           {/* 参数调节 Section */}

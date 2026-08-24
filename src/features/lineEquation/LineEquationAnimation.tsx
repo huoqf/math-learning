@@ -12,6 +12,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -387,6 +388,90 @@ export function LineEquationAnimation() {
     }
   }, [params, studyMode, form]);
 
+  const tipConfig = useMemo(() => {
+    if (studyMode === "forms") {
+      switch (form) {
+        case "general":
+          return {
+            variant: "info" as const,
+            badge: "直线一般式 Ax + By + C = 0",
+            condition:
+              "A, B 不同时为 0，适用于平面内所有直线（包含水平线与铅垂线）。",
+            question: "如何由一般式确定直线的法向量、方向向量与斜率？",
+            method:
+              "法向量 n = (A, B)，方向向量 v = (-B, A)；当 B ≠ 0 时斜率 k = -A/B，截距 b = -C/B。",
+          };
+        case "slopeIntercept":
+          return {
+            variant: "primary" as const,
+            badge: "斜截式 y = kx + b",
+            condition: "直线不垂直于 x 轴（斜率 k 存在），b 为 y 轴截距。",
+            question: "斜率 k 的几何意义与倾斜角 α 的对应关系。",
+            method:
+              "k = tan α (α ≠ 90°)，b 为直线与 y 轴交点 (0, b) 的纵坐标（注意截距不是距离，可正可负可为零）。",
+          };
+        case "pointSlope":
+          return {
+            variant: "warning" as const,
+            badge: "点斜式 y - y₀ = k(x - x₀)",
+            condition: "已知定点 P₀(x₀, y₀) 且斜率 k 存在。",
+            question: "高考求切线、割线方程的标准设法与分类讨论。",
+            method:
+              "解题设直线时首选点斜式；若斜率可能不存在，务必单独讨论垂直于 x 轴的情形 x = x₀。",
+          };
+        case "twoPoint":
+          return {
+            variant: "accent" as const,
+            badge: "两点式 (y-y₁)/(y₂-y₁) = (x-x₁)/(x₂-x₁)",
+            condition:
+              "已知两不同点 P₁(x₁,y₁), P₂(x₂,y₂)，且 x₁ ≠ x₂, y₁ ≠ y₂。",
+            question: "过两定点的直线方程构建与退化情形。",
+            method:
+              "当 x₁ = x₂ 时为铅垂线 x = x₁；当 y₁ = y₂ 时为水平线 y = y₁。",
+          };
+        case "intercept":
+          return {
+            variant: "danger" as const,
+            badge: "截距式 x/a + y/b = 1",
+            condition:
+              "直线不过原点，在 x 轴和 y 轴上的截距分别为 a ≠ 0, b ≠ 0。",
+            question:
+              "涉及与坐标轴围成三角形面积 S = 1/2 |ab| 极值问题的设参。",
+            method:
+              "直角三角形面积公式 S = 1/2 |ab| 结合基本不等式秒求最值；过原点直线不可设截距式。",
+          };
+      }
+    }
+    if (studyMode === "distance") {
+      return {
+        variant: "primary" as const,
+        badge: "点到直线距离公式",
+        condition: "点 P(x₀, y₀) 与直线 Ax + By + C = 0。",
+        question: "求解垂线段长度及两平行线间距离。",
+        method:
+          "距离公式 d = |Ax₀ + By₀ + C| / √(A² + B²)；两平行线间距离 d = |C₁ - C₂| / √(A² + B²)。",
+      };
+    }
+    if (studyMode === "relation") {
+      return {
+        variant: "warning" as const,
+        badge: "两直线平行与垂直充要条件",
+        condition: "两直线 L₁: A₁x+B₁y+C₁=0 与 L₂: A₂x+B₂y+C₂=0。",
+        question: "判定平行、垂直与重合的充要代数关系。",
+        method:
+          "一般式系数交叉法：L₁ // L₂ ⇔ A₁B₂ - A₂B₁ = 0 且 A₁C₂ ≠ A₂C₁；L₁ ⊥ L₂ ⇔ A₁A₂ + B₁B₂ = 0，彻底避免斜率讨论。",
+      };
+    }
+    return {
+      variant: "danger" as const,
+      badge: "相交直线系与恒过定点",
+      condition: "直线系方程 L₁ + λ L₂ = 0（λ 为参数）。",
+      question: "探究含参直线恒过定点的求解通法。",
+      method:
+        "分离参数法：整理为关于 λ 的一次方程，令常数项与 λ 系数同时为 0，联立方程组求交点即可得定点坐标。",
+    };
+  }, [studyMode, form]);
+
   const panelTitleMap = {
     forms: "直线方程形式看板",
     distance: "点到直线距离看板",
@@ -467,6 +552,37 @@ export function LineEquationAnimation() {
               />
             </LeftPanelSection>
           )}
+
+          {/* 教学提示与题设导引 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【秒杀通法】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.method}</span>
+                </div>
+              </div>
+            </TipCard>
+          </LeftPanelSection>
 
           {/* 3. 参数调节 Section */}
           <LeftPanelSection title="参数调节" subtitle="拖动滑块改变参数数值">

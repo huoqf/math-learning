@@ -7,6 +7,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -283,19 +284,55 @@ export function ConicPropertiesAnimation() {
       });
   }, [params, studyMode, conicType]);
 
+  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  const tipConfig = useMemo(() => {
+    if (studyMode === "basicProperties") {
+      return {
+        variant: "info" as const,
+        badge: "圆锥曲线基本几何性质",
+        condition: `${conicType === "ellipse" ? "椭圆半轴 a, b 满足 a > b > 0，c = √(a²-b²)" : "双曲线半轴 a, b > 0，c = √(a²+b²)"}。`,
+        question: "求解焦点坐标、准线方程、通径长度与渐近线。",
+        method:
+          "通径长统一为 2b²/a；双曲线渐近线方程为 y = ±(b/a)x；焦点坐标为 (±c, 0)。",
+      };
+    }
+    if (studyMode === "eccentricity") {
+      return {
+        variant: "primary" as const,
+        badge: "离心率 e 与几何形态",
+        condition: `${conicType === "ellipse" ? "椭圆离心率 e = c/a = √(1 - b²/a²) ∈ (0, 1)" : "双曲线离心率 e = c/a = √(1 + b²/a²) > 1"}。`,
+        question: "离心率 e 的大小如何决定曲线的扁平度与张角？",
+        method: `${conicType === "ellipse" ? "e 越大椭圆越扁，e 趋近 0 趋近于圆；若短轴顶角为直角则 e = √2/2。" : "e 越大双曲线张角越大；等轴双曲线 e = √2，渐近线互相垂直。"}`,
+      };
+    }
+    return {
+      variant: "danger" as const,
+      badge: "焦点三角形与面积秒杀",
+      condition: "P 为曲线上动点，F₁, F₂ 为左右焦点，顶角 ∠F₁PF₂ = θ。",
+      question: "求解焦点三角形 △PF₁F₂ 的面积与顶角最值范围。",
+      method: `高考焦点三角形面积秒杀公式：S = ${conicType === "ellipse" ? "b² tan(θ/2)" : "b² / tan(θ/2)"}；椭圆在短轴端点时顶角最大。`,
+    };
+  }, [studyMode, conicType]);
+
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="研究模式" subtitle="选择视角与曲线类型">
+          <LeftPanelSection
+            title="研究模式"
+            subtitle="选择圆锥曲线特征研究范畴"
+          >
             <TabSwitcher
               tabs={[
-                { key: "basicProperties", label: "几何特征" },
-                { key: "eccentricity", label: "离心率演变" },
+                { key: "basicProperties", label: "几何性质" },
+                { key: "eccentricity", label: "离心率构造" },
                 { key: "focusTriangle", label: "焦点三角形" },
               ]}
               value={studyMode}
-              onChange={(key) => setStudyMode(key as typeof studyMode)}
+              onChange={(key) => {
+                setStudyMode(key as typeof studyMode);
+                setPresetKey("free");
+              }}
             />
 
             <div className="mt-3">
@@ -331,6 +368,37 @@ export function ConicPropertiesAnimation() {
               onChange={handlePresetChange}
               columns={2}
             />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【秒杀通法】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.method}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
 
           <LeftPanelSection

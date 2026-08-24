@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -173,6 +174,40 @@ export function ConicParamAnimation() {
     }
   }, [studyMode, params]);
 
+  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  const tipConfig = useMemo(() => {
+    if (studyMode === "lineParam") {
+      return {
+        variant: "info" as const,
+        badge: "直线标准参数方程与模长",
+        condition:
+          "直线参数方程 x = x₀ + t cos α, y = y₀ + t sin α 与椭圆相交。",
+        question: "参数 t 的几何意义是什么？如何快速求弦长？",
+        method:
+          "当 (cos α, sin α) 为单位向量时，|t| 为定点到动点的几何距离；相交弦长直接为 |t₁ - t₂|，免去直角三角形斜率转换。",
+      };
+    }
+    if (studyMode === "ellipseParam") {
+      return {
+        variant: "primary" as const,
+        badge: "椭圆三角参数设点与最值",
+        condition: "椭圆标准参数方程 x = a cos θ, y = b sin θ，θ 为离心角。",
+        question: "求椭圆上的动点到切线/割线的距离最值，或内接四边形最大面积。",
+        method:
+          "设点 (a cos θ, b sin θ) 代入距离公式，利用辅助角公式 A a cos θ + B b sin θ = √(A²a² + B²b²) sin(θ+φ) 瞬间求出最值与切点坐标。",
+      };
+    }
+    return {
+      variant: "danger" as const,
+      badge: "高考 t₁与t₂ 设点综合化简",
+      condition:
+        "割线过定点 P₀ 联立椭圆化为 At² + Bt + C = 0，两交点参数为 t₁, t₂。",
+      question: "如何避免繁琐的二次方程求根，快速处理对称/非对称代数式化简？",
+      method:
+        "直接利用韦达定理 t₁ + t₂ = -B/A, t₁t₂ = C/A 进行整式代换，运算量仅为常规直角坐标法的三分之一。",
+    };
+  }, [studyMode]);
+
   return (
     <ThreePanel
       left={
@@ -202,6 +237,37 @@ export function ConicParamAnimation() {
               variant="filled"
               columns={2}
             />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【秒杀通法】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.method}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
 
           {/* 参数调节 Section */}

@@ -12,6 +12,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   KatexFormula,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -178,6 +179,69 @@ export function CircleCircleAnimation() {
       });
   }, [params]);
 
+  // 左屏教学提示与题设导引（说明初始条件、设问目标与高考通法）
+  const tipConfig = useMemo(() => {
+    if (preset === "outerTangent") {
+      return {
+        variant: "primary" as const,
+        badge: "高考经典 · 典型外切",
+        condition: "两圆圆心距恰好等于两半径之和 (d = r₁ + r₂)。",
+        question:
+          "两圆外切时的切点坐标与公切线条数（共3条：2条外公切线 + 1条内公切线）。",
+        method:
+          "两圆连心线 O₁O₂ 垂直于在切点处的公切线，外切点为连心线定比分点。",
+      };
+    }
+    if (preset === "intersectStandard") {
+      return {
+        variant: "warning" as const,
+        badge: "高考经典 · 相交公共弦",
+        condition: "|r₁ - r₂| < d < r₁ + r₂，两圆相交于两个不同的实数交点。",
+        question: "求解两圆公共弦所在直线方程及公共弦长。",
+        method:
+          "作差法 C₁ - C₂ = 0 秒出公共弦直线方程，再由垂径定理 L = 2√(r₁² - d₁²) 秒求弦长。",
+      };
+    }
+    if (preset === "innerTangent") {
+      return {
+        variant: "danger" as const,
+        badge: "高考经典 · 典型内切",
+        condition: "两圆圆心距恰好等于两半径之差绝对值 (d = |r₁ - r₂|)。",
+        question: "两圆内切时的切点坐标与公切线条数（唯一 1 条外公切线）。",
+        method: "切点位于连心线延长线上，两圆在切点处具有完全重合的公切线。",
+      };
+    }
+
+    if (studyMode === "position") {
+      return {
+        variant: "info" as const,
+        badge: "两圆 5 种位置关系判定",
+        condition: `圆 O₁(${parsedCircleParams.x1.toFixed(1)}, ${parsedCircleParams.y1.toFixed(1)}) 半径 ${parsedCircleParams.r1.toFixed(1)}，圆 O₂(${parsedCircleParams.x2.toFixed(1)}, ${parsedCircleParams.y2.toFixed(1)}) 半径 ${parsedCircleParams.r2.toFixed(1)}，圆心距 d = ${calcRes.d.toFixed(2)}。`,
+        question: "如何准确判断两圆外离、外切、相交、内切或内含？",
+        method:
+          "比较圆心距 d 与 r₁+r₂、|r₁-r₂|：d > r₁+r₂ 外离 (4条切线)；d = r₁+r₂ 外切 (3条)；相交 (2条)；内切 (1条)；内含 (0条)。",
+      };
+    }
+    if (studyMode === "commonChord") {
+      return {
+        variant: "warning" as const,
+        badge: "公共弦方程与作差法",
+        condition: "两圆标准或一般方程 C₁, C₂ 联立。",
+        question: "如何快速求解相交公共弦所在直线方程？",
+        method:
+          "作差法：将两圆二次方程直接相减 C₁ - C₂ = 0 消除 x², y² 二次项，即得公共弦（或根轴）方程。",
+      };
+    }
+    return {
+      variant: "danger" as const,
+      badge: "公切线长定理与切点系统",
+      condition: "两圆在不同位置关系下的公切线系统。",
+      question: "求解外公切线长与内公切线长。",
+      method:
+        "构造直角梯形：外公切线长 L_{外} = √(d² - (r₁-r₂)²)，内公切线长 L_{内} = √(d² - (r₁+r₂)²)。",
+    };
+  }, [studyMode, preset, parsedCircleParams, calcRes]);
+
   return (
     <ThreePanel
       left={
@@ -238,6 +302,37 @@ export function CircleCircleAnimation() {
               onChange={handlePresetChange}
               columns={2}
             />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【秒杀通法】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.method}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
 
           {/* 3. 圆 O1 参数调节（红） */}
