@@ -200,44 +200,122 @@ export function buildLineParamTPanel(
     }
   }
 
-  const theorems: Theorem[] = [
-    {
-      name: "直线标准参数方程的几何意义",
-      latex:
-        "\\begin{cases} x = x_0 + t \\cos\\alpha \\\\ y = y_0 + t \\sin\\alpha \\end{cases}",
-      note: "当直线的方向向量为单位向量 (cosα, sinα) 时，参数 |t| 表示动点 P(x, y) 到定点 P0(x0, y0) 的绝对距离；t 的符号表示在向量方向上的相对指向。",
-      prerequisites: [
-        "直线倾斜角 α ∈ [0, π)",
-        "向量 (cosα, sinα) 必须为单位向量",
-      ],
-      level: "core",
-    },
-    {
-      name: "割线定理与二次曲线幂的统一",
-      latex: "|P_0A| \\cdot |P_0B| = |t_1 t_2| = \\left| \\frac{C}{A} \\right|",
-      note: "将直线标准参数方程代入二次曲线方程得 A t² + B t + C = 0。若交点为 A(t₁), B(t₂)，则有向线段积 |P₀A|·|P₀B| 等于 |t₁ t₂|，极大地简化了几何距离乘积的求解。",
-      prerequisites: [
-        "判别式 Δ = B² - 4AC ≥ 0",
-        "A ≠ 0（直线不平行于二次曲线的渐近线或轴）",
-      ],
-      level: "important",
-    },
-  ];
+  const theorems: Theorem[] = [];
+  const gaokaoPoints: GaokaoPoint[] = [];
 
-  const gaokaoPoints: GaokaoPoint[] = [
-    {
-      text: "新高考求线段积与弦长免斜率讨论：传统斜率 y=k(x-x0)+y0 方法遇到 '垂直于 x 轴 (斜率不存在)' 时需要分类讨论。而使用直线参数方程只需要设 α 倾斜角，统一用 t1, t2 求解弦长与线段积，消除了分类讨论的冗余。",
-      importance: "gaokao",
-    },
-    {
-      text: "非标准参数方程扣分陷阱（归一化）：当参数方程写为 x=x0+am, y=y0+bm 且 a²+b² ≠ 1 时，m 不等于实际几何距离！此时真正的距离是 √(a²+b²)·|m|。高考中若直接令 |AB|=|m1-m2| 将直接导致整步扣分。",
-      importance: "hard",
-    },
-    {
-      text: "弦中点与中点弦条件：定点 P0 为弦 AB 的中点 ⇔ t1 + t2 = 0 ⇔ 二次方程一次项系数 B = 0。在求过定点平分弦的直线斜率时非常高效。",
-      importance: "core",
-    },
-  ];
+  if (mode === "definition") {
+    theorems.push(
+      {
+        name: "直线标准参数方程的几何意义",
+        latex:
+          "\\begin{cases} x = x_0 + t \\cos\\alpha \\\\ y = y_0 + t \\sin\\alpha \\end{cases}",
+        note: "当直线的方向向量为单位向量 (cosα, sinα) 时，参数 |t| 表示动点 P(x, y) 到定点 P0(x0, y0) 的绝对距离；t 的符号表示在向量方向上的相对指向。",
+        prerequisites: [
+          "直线倾斜角 α ∈ [0, π)",
+          "向量 (cosα, sinα) 必须为单位向量",
+        ],
+        level: "core",
+      },
+      {
+        name: "非标准参数方程的距离修正",
+        latex: "|P_0P'| = \\sqrt{a^2 + b^2} \\cdot |m|",
+        note: "当直线方程设为 x=x0+am, y=y0+bm 且 a²+b² ≠ 1 时，参数 m 不等于实际距离，必须乘归一化系数 √(a²+b²)。",
+        prerequisites: ["a²+b² > 0"],
+        level: "important",
+      },
+    );
+    gaokaoPoints.push(
+      {
+        text: "非标准参数方程扣分陷阱（归一化）：当参数方程未归一化（a²+b² ≠ 1）时，m 不等于实际几何距离！高考中若直接令 |AB|=|m1-m2| 将直接导致整步扣分。",
+        importance: "hard",
+      },
+      {
+        text: "参数正负的方向性意义：t > 0 表示点 P 在 P0 上方/右方（沿方向向量正向），t < 0 表示在反方向。求解射线或定比分点时需注意符号。",
+        importance: "core",
+      },
+    );
+  } else if (mode === "secant") {
+    theorems.push(
+      {
+        name: "割线定理与二次曲线幂的统一",
+        latex:
+          "|P_0A| \\cdot |P_0B| = |t_1 t_2| = \\left| \\frac{C}{A} \\right|",
+        note: "将直线标准参数方程代入二次曲线方程得 A t² + B t + C = 0。若交点为 A(t₁), B(t₂)，则有向线段积 |P₀A|·|P₀B| 等于 |t₁ t₂|，极大地简化了几何距离乘积的求解。",
+        prerequisites: [
+          "判别式 Δ = B² - 4AC ≥ 0",
+          "A ≠ 0（直线不平行于二次曲线的渐近线或轴）",
+        ],
+        level: "core",
+      },
+      {
+        name: "参数方程弦长公式",
+        latex: "|AB| = |t_1 - t_2| = \\frac{\\sqrt{\\Delta}}{|A|}",
+        note: "无需分别求出交点坐标，通过二次方程的判别式与二次项系数直接求解弦长。",
+        prerequisites: ["Δ ≥ 0", "A ≠ 0"],
+        level: "important",
+      },
+    );
+    gaokaoPoints.push(
+      {
+        text: "新高考求线段积与弦长免斜率讨论：传统斜率 y=k(x-x0)+y0 遇到斜率不存在时需要分类讨论。而使用直线参数方程统一用 t1, t2 求解，彻底消除了斜率讨论的冗余。",
+        importance: "gaokao",
+      },
+      {
+        text: "圆幂定理的统一推广：圆中 |PA|·|PB| 恒与倾斜角 α 无关（割线定理/相交弦定理）；在椭圆/双曲线中随 α 规律变化，常用于高考中的定值与最值证明。",
+        importance: "core",
+      },
+    );
+  } else {
+    // 高考专题模型 (中点弦 / 倒数和)
+    if (gaokaoModel === "midpoint") {
+      theorems.push(
+        {
+          name: "中点弦判定定理",
+          latex:
+            "P_0 \\text{ 为弦 } AB \\text{ 中点} \\iff t_1 + t_2 = 0 \\iff B = 0",
+          note: "当定点 P0 恰好是弦 AB 的中点时，对应参数 t1 与 t2 互为相反数，二次方程一次项系数 B 恒为 0。",
+          prerequisites: ["Δ > 0", "A ≠ 0"],
+          level: "core",
+        },
+        {
+          name: "中点参数与坐标公式",
+          latex: "t_M = \\frac{t_1 + t_2}{2} = -\\frac{B}{2A}",
+          note: "弦中点 M 的坐标为 (x0 + tM cosα, y0 + tM sinα)。",
+          prerequisites: ["Δ ≥ 0"],
+          level: "important",
+        },
+      );
+      gaokaoPoints.push(
+        {
+          text: "秒求中点弦直线斜率：令一次项系数 B = 0 即可直接建立定点 (x0, y0) 与倾斜角 α (或斜率 k) 的代数关系，计算量远小于点差法与判别式联立。",
+          importance: "gaokao",
+        },
+        {
+          text: "中点弦的存在性前提：解出 α (或斜率 k) 后，必须代回检验判别式 Δ = B² - 4AC > 0，确保直线与曲线真实相交（圆锥曲线内部点必有解，外部点无中点弦）。",
+          importance: "hard",
+        },
+      );
+    } else {
+      theorems.push({
+        name: "线段倒数和定理",
+        latex:
+          "\\left|\\frac{1}{t_1} + \\frac{1}{t_2}\\right| = \\left|\\frac{t_1 + t_2}{t_1 t_2}\\right| = \\left|\\frac{B}{C}\\right|",
+        note: "当直线过焦点或特定定点时，常出现 1/|PA| + 1/|PB| 为定值的调和性质。",
+        prerequisites: ["t1 ≠ 0 且 t2 ≠ 0 (P0 不在曲线上)", "Δ > 0"],
+        level: "core",
+      });
+      gaokaoPoints.push(
+        {
+          text: "抛物线焦点弦倒数和经典定值：过抛物线焦点 F(p/2, 0) 的弦 AB 满足 1/|AF| + 1/|BF| = 2/p (常数)，是新高考选择填空秒杀题的高频考点。",
+          importance: "gaokao",
+        },
+        {
+          text: "调和点列与极点极线：利用参数倒数和等于常数，可快速证明极线过定点或交比调和性质。",
+          importance: "hard",
+        },
+      );
+    }
+  }
 
   const warnings: WarningItem[] = [];
 

@@ -174,8 +174,8 @@ export function LineParamTAnimation() {
             <TabSwitcher
               tabs={[
                 { key: "definition", label: "t的几何意义" },
-                { key: "secant", label: "割线与二次曲线" },
-                { key: "gaokao", label: "高考压轴模型" },
+                { key: "secant", label: "割线定理与方幂" },
+                { key: "gaokao", label: "中点弦与倒数和" },
               ]}
               value={mode}
               onChange={(key) => setMode(key as typeof mode)}
@@ -190,10 +190,18 @@ export function LineParamTAnimation() {
             >
               <SelectGrid
                 items={[
-                  { key: "circle", label: "圆 x²+y²=R²" },
-                  { key: "ellipse", label: "椭圆 x²/a²+y²/b²=1" },
-                  { key: "parabola", label: "抛物线 y²=2px" },
-                  { key: "hyperbola", label: "双曲线 x²/a²-y²/b²=1" },
+                  { key: "circle", label: "圆", formula: "x^2+y^2=R^2" },
+                  {
+                    key: "ellipse",
+                    label: "椭圆",
+                    formula: "\\frac{x^2}{a^2}+\\frac{y^2}{b^2}=1",
+                  },
+                  { key: "parabola", label: "抛物线", formula: "y^2=2px" },
+                  {
+                    key: "hyperbola",
+                    label: "双曲线",
+                    formula: "\\frac{x^2}{a^2}-\\frac{y^2}{b^2}=1",
+                  },
                 ]}
                 value={conicType}
                 onChange={(k) => setConicType(k as ConicType)}
@@ -203,19 +211,29 @@ export function LineParamTAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 高考子模型选择 */}
+          {/* 高考专项模型选择（精简为 2 列紧凑网格，去除与割线定理重复的选项） */}
           {mode === "gaokao" && (
-            <LeftPanelSection title="高考课题" subtitle="选择热点压轴解题模型">
+            <LeftPanelSection
+              title="高考专题模型"
+              subtitle="选择热点压轴解题模型"
+            >
               <SelectGrid
                 items={[
-                  { key: "midpoint", label: "中点弦 (t1+t2=0)" },
-                  { key: "product", label: "割线方幂 (|t1 t2|)" },
-                  { key: "reciprocal", label: "倒数和 |1/t1+1/t2|" },
+                  {
+                    key: "midpoint",
+                    label: "中点弦模型",
+                    formula: "t_1+t_2=0",
+                  },
+                  {
+                    key: "reciprocal",
+                    label: "线段倒数和",
+                    formula: "\\left|\\frac{1}{t_1}+\\frac{1}{t_2}\\right|",
+                  },
                 ]}
-                value={gaokaoModel}
-                onChange={(k) => setGaokaoModel(k as typeof gaokaoModel)}
+                value={gaokaoModel === "product" ? "midpoint" : gaokaoModel}
+                onChange={(k) => setGaokaoModel(k as "midpoint" | "reciprocal")}
                 variant="filled"
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
