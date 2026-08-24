@@ -52,33 +52,52 @@ export function ComplexAnimation() {
     setParams({ ...defaultParams });
   };
 
-  // 按研究模式过滤参数配置（符合 AGENTS.md 左屏参数过滤铁律）
+  // 声明式参数配置（按复数代数形式/三角极坐标形式进行对象化分组）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<StudyMode, string[]> = {
-      "plane-operations": ["a1", "b1", "a2", "b2"],
-      "multiplication-rotation": ["r1", "deg1", "r2", "deg2"],
-      "locus-extrema": ["z0x", "z0y", "radius", "wx", "wy"],
-    };
+    let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
-    const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
-    return keys
-      .filter((key) => key in paramMeta)
-      .map((key) => {
-        const meta = paramMeta[key];
-        return {
-          key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
-          step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance,
-          marks: meta.marks,
-        };
+    if (studyMode === "plane-operations") {
+      modeKeyGroups = [
+        { group: "复数 z₁ = a₁ + b₁i (实部与虚部)", keys: ["a1", "b1"] },
+        { group: "复数 z₂ = a₂ + b₂i (实部与虚部)", keys: ["a2", "b2"] },
+      ];
+    } else if (studyMode === "multiplication-rotation") {
+      modeKeyGroups = [
+        { group: "基准复数 z₁ (模长与辐角)", keys: ["r1", "deg1"] },
+        { group: "旋转算子 z₂ (缩放与转角)", keys: ["r2", "deg2"] },
+      ];
+    } else {
+      modeKeyGroups = [
+        { group: "圆心定点 z₀ (实部与虚部)", keys: ["z0x", "z0y"] },
+        { group: "轨迹圆半径 r", keys: ["radius"] },
+        { group: "参考定点 w (实部与虚部)", keys: ["wx", "wy"] },
+      ];
+    }
+
+    const configs: ParamConfig[] = [];
+    modeKeyGroups.forEach(({ group, keys }) => {
+      keys.forEach((key) => {
+        if (key in paramMeta) {
+          const meta = paramMeta[key];
+          configs.push({
+            key,
+            label: meta.label,
+            labelFormula: meta.labelFormula,
+            value: params[key] ?? meta.defaultValue ?? 0,
+            min: meta.min,
+            max: meta.max,
+            step: meta.step ?? 0.1,
+            group,
+            description: meta.description,
+            descriptionFormula: meta.descriptionFormula,
+            importance: meta.importance,
+            marks: meta.marks,
+          });
+        }
       });
+    });
+
+    return configs;
   }, [params, studyMode]);
 
   // 数学量看板数据计算与组装

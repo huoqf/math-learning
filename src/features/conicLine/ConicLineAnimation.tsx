@@ -105,44 +105,65 @@ export function ConicLineAnimation() {
     }));
   }, [studyMode]);
 
-  // 根据当前圆锥曲线与模式动态过滤 ParamConfig
+  // 根据当前圆锥曲线与模式动态过滤并结构化分组 ParamConfig
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    // 曲线固有的形状参数
-    let conicKeys: string[] = ["a", "b"];
-    if (conicType === "parabola") {
-      conicKeys = ["p"];
-    }
+    // 曲线固有的形状底模参数
+    const conicKeys = conicType === "parabola" ? ["p"] : ["a", "b"];
+    const conicGroupName =
+      conicType === "ellipse"
+        ? "椭圆半轴 (a, b)"
+        : conicType === "hyperbola"
+          ? "双曲线半轴 (a, b)"
+          : "抛物线焦准距 (p)";
 
-    // 直线/研究模式相关的参数
-    let modeKeys: string[] = ["k", "m"];
-    if (studyMode === "focus") {
-      modeKeys = ["theta"];
+    let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
+
+    if (studyMode === "general") {
+      modeKeyGroups = [
+        { group: "直线斜截式参数 (k, m)", keys: ["k", "m"] },
+        { group: conicGroupName, keys: conicKeys },
+      ];
+    } else if (studyMode === "focus") {
+      modeKeyGroups = [
+        { group: "焦点弦倾斜角 θ", keys: ["theta"] },
+        { group: conicGroupName, keys: conicKeys },
+      ];
     } else if (studyMode === "midpoint") {
-      modeKeys = ["midpointX", "midpointY"];
-    } else if (studyMode === "polePolar") {
-      modeKeys = ["poleX", "poleY"];
+      modeKeyGroups = [
+        { group: "弦中点 M(x₀, y₀) 坐标", keys: ["midpointX", "midpointY"] },
+        { group: conicGroupName, keys: conicKeys },
+      ];
+    } else {
+      modeKeyGroups = [
+        { group: "曲线外极点 P(x_P, y_P) 坐标", keys: ["poleX", "poleY"] },
+        { group: conicGroupName, keys: conicKeys },
+      ];
     }
 
-    const activeKeys = [...conicKeys, ...modeKeys];
-
-    return activeKeys
-      .filter((key) => key in paramMeta)
-      .map((key) => {
-        const meta = paramMeta[key];
-        return {
-          key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
-          step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance,
-          marks: meta.marks,
-        };
+    const configs: ParamConfig[] = [];
+    modeKeyGroups.forEach(({ group, keys }) => {
+      keys.forEach((key) => {
+        if (key in paramMeta) {
+          const meta = paramMeta[key];
+          configs.push({
+            key,
+            label: meta.label,
+            labelFormula: meta.labelFormula,
+            value: params[key] ?? meta.defaultValue ?? 0,
+            min: meta.min,
+            max: meta.max,
+            step: meta.step ?? 0.1,
+            group,
+            description: meta.description,
+            descriptionFormula: meta.descriptionFormula,
+            importance: meta.importance,
+            marks: meta.marks,
+          });
+        }
       });
+    });
+
+    return configs;
   }, [params, conicType, studyMode]);
 
   // 悬浮在画布上的动态方程 LaTeX

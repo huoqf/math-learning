@@ -128,13 +128,14 @@ export function CircleCircleAnimation() {
     }));
   };
 
-  // 分组参数配置：圆 O1 参数
+  // 分组参数配置：圆 O1 参数（圆心坐标与半径对象化分组）
   const circle1Configs = useMemo<ParamConfig[]>(() => {
     const keys = ["x1", "y1", "r1"];
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        const group = key === "r1" ? "圆 O₁ 半径" : "圆心 O₁(x₁, y₁) 坐标";
         return {
           key,
           label: meta.label,
@@ -143,6 +144,7 @@ export function CircleCircleAnimation() {
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
+          group,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
@@ -151,13 +153,14 @@ export function CircleCircleAnimation() {
       });
   }, [params]);
 
-  // 分组参数配置：圆 O2 参数
+  // 分组参数配置：圆 O2 参数（圆心坐标与半径对象化分组）
   const circle2Configs = useMemo<ParamConfig[]>(() => {
     const keys = ["x2", "y2", "r2"];
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        const group = key === "r2" ? "圆 O₂ 半径" : "圆心 O₂(x₂, y₂) 坐标";
         return {
           key,
           label: meta.label,
@@ -166,6 +169,7 @@ export function CircleCircleAnimation() {
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
+          group,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,

@@ -148,38 +148,53 @@ export function LineCircleAnimation() {
   // 控制是否展开次要的圆心平移参数 (a, b)
   const [showCenterParams, setShowCenterParams] = useState(false);
 
-  // 动态过滤与精简参数列表（严格遵循高中教学认知：主控直线的k, m与圆半径r居首，收拢圆心次要平移参数）
+  // 动态过滤与精简参数列表（严格遵循高中教学认知：对象化分组与主次分层）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const coreKeysByMode: Record<LineCircleStudyMode, string[]> = {
-      relation: ["m", "k", "r"], // 截距平移与斜率旋转为教学第一核心
-      chord: ["k", "m", "r"], // 斜率转动与弦长极值为核心
-      tangent: ["px", "py", "r"], // 圆外点位置与半径为核心
-      midpoint: ["m", "k", "r"], // 弦位置与垂足中点轨迹为核心
-    };
+    let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
-    let keys = [...(coreKeysByMode[studyMode] ?? ["m", "k", "r"])];
-    if (showCenterParams) {
-      keys = [...keys, "a", "b"];
+    if (studyMode === "tangent") {
+      modeKeyGroups = [
+        { group: "圆外极点 P(x_P, y_P) 坐标", keys: ["px", "py"] },
+        { group: "目标圆半径 r", keys: ["r"] },
+      ];
+    } else {
+      modeKeyGroups = [
+        { group: "直线斜截式参数 (k, m)", keys: ["k", "m"] },
+        { group: "目标圆半径 r", keys: ["r"] },
+      ];
     }
 
-    return keys
-      .filter((key) => key in paramMeta)
-      .map((key) => {
-        const meta = paramMeta[key];
-        return {
-          key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
-          value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
-          step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance,
-          marks: meta.marks,
-        };
+    if (showCenterParams) {
+      modeKeyGroups.push({
+        group: "圆心 C(a, b) 平移",
+        keys: ["a", "b"],
       });
+    }
+
+    const configs: ParamConfig[] = [];
+    modeKeyGroups.forEach(({ group, keys }) => {
+      keys.forEach((key) => {
+        if (key in paramMeta) {
+          const meta = paramMeta[key];
+          configs.push({
+            key,
+            label: meta.label,
+            labelFormula: meta.labelFormula,
+            value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
+            min: meta.min,
+            max: meta.max,
+            step: meta.step ?? 0.1,
+            group,
+            description: meta.description,
+            descriptionFormula: meta.descriptionFormula,
+            importance: meta.importance,
+            marks: meta.marks,
+          });
+        }
+      });
+    });
+
+    return configs;
   }, [params, studyMode, showCenterParams]);
 
   // 悬浮公式 KaTeX（严谨数学格式化，消除 0 项与 + - 瑕疵）

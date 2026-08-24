@@ -189,55 +189,79 @@ export function LineEquationAnimation() {
     });
   };
 
-  // 7. 声明式参数配置 (按模式与形式进行过滤)
+  // 7. 声明式参数配置 (按模式与形式进行结构化对象分组)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    let keys: string[] = [];
+    let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
     if (studyMode === "forms") {
       switch (form) {
         case "pointSlope":
-          keys = ["k", "x0", "y0"];
+          modeKeyGroups = [
+            { group: "已知定点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
+            { group: "直线斜率 k", keys: ["k"] },
+          ];
           break;
         case "slopeIntercept":
-          keys = ["k", "b"];
+          modeKeyGroups = [{ group: "斜截式参数 (k, b)", keys: ["k", "b"] }];
           break;
         case "twoPoint":
-          keys = ["x1", "y1", "x2", "y2"];
+          modeKeyGroups = [
+            { group: "已知点 P₁(x₁, y₁)", keys: ["x1", "y1"] },
+            { group: "已知点 P₂(x₂, y₂)", keys: ["x2", "y2"] },
+          ];
           break;
         case "intercept":
-          keys = ["a", "b"];
+          modeKeyGroups = [{ group: "轴截距参数 (a, b)", keys: ["a", "b"] }];
           break;
         case "general":
         default:
-          keys = ["A", "B", "C"];
+          modeKeyGroups = [
+            { group: "一般式系数 (A, B, C)", keys: ["A", "B", "C"] },
+          ];
           break;
       }
     } else if (studyMode === "distance") {
-      keys = ["A", "B", "C", "x0", "y0"];
+      modeKeyGroups = [
+        { group: "待测点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
+        { group: "目标直线 L: Ax+By+C=0", keys: ["A", "B", "C"] },
+      ];
     } else if (studyMode === "relation") {
-      keys = ["A", "B", "C", "A2", "B2", "C2"];
+      modeKeyGroups = [
+        { group: "直线 L₁: A₁x+B₁y+C₁=0", keys: ["A", "B", "C"] },
+        { group: "直线 L₂: A₂x+B₂y+C₂=0", keys: ["A2", "B2", "C2"] },
+      ];
     } else if (studyMode === "family") {
-      keys = ["A", "B", "C", "A2", "B2", "C2", "lambda"];
+      modeKeyGroups = [
+        { group: "基准直线 L₁", keys: ["A", "B", "C"] },
+        { group: "基准直线 L₂", keys: ["A2", "B2", "C2"] },
+        { group: "直线系变参数 λ", keys: ["lambda"] },
+      ];
     }
 
-    return keys
-      .filter((key) => key in paramMeta)
-      .map((key) => {
-        const meta = paramMeta[key];
-        return {
-          key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
-          step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance,
-          marks: meta.marks,
-        };
+    const configs: ParamConfig[] = [];
+    modeKeyGroups.forEach(({ group, keys }) => {
+      keys.forEach((key) => {
+        if (key in paramMeta) {
+          const meta = paramMeta[key];
+          configs.push({
+            key,
+            label: meta.label,
+            labelFormula: meta.labelFormula,
+            value: params[key] ?? meta.defaultValue ?? 0,
+            min: meta.min,
+            max: meta.max,
+            step: meta.step ?? 0.1,
+            group,
+            description: meta.description,
+            descriptionFormula: meta.descriptionFormula,
+            importance: meta.importance,
+            marks: meta.marks,
+          });
+        }
       });
+    });
+
+    return configs;
   }, [params, studyMode, form]);
 
   // 典型预设配置项

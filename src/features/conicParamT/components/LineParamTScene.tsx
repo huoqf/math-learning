@@ -7,7 +7,7 @@ import {
   VectorArrow,
   FunctionGraph,
 } from "@/components/Math";
-import { MATH_COLORS, CANVAS_COLORS } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabelOverlap, type LabelItem } from "@/utils/labelOverlap";
 import {
@@ -66,6 +66,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
   );
 
   // 4. 坐标映射到 Design 空间
+  const originDesign = useMemo(() => mathToDesign(0, 0, scale), [scale]);
   const desP0 = mathToDesign(ptP0.x, ptP0.y, scale);
   const desP = mathToDesign(ptP.x, ptP.y, scale);
   const desPNon = mathToDesign(ptPNon.x, ptPNon.y, scale);
@@ -74,14 +75,20 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
   const desLineStart = mathToDesign(x0 - 12 * dirX, y0 - 12 * dirY, scale);
   const desLineEnd = mathToDesign(x0 + 12 * dirX, y0 + 12 * dirY, scale);
 
-  // 5. 组装待避让的 Label 列表 (Design 坐标)
+  // 5. 组装待避让的 Label 列表 (Design 坐标，纯字母点标规范)
   const rawLabels = useMemo<LabelItem[]>(() => {
     const labels: LabelItem[] = [
+      {
+        key: "O",
+        x: originDesign.x,
+        y: originDesign.y + 12,
+        text: "O",
+      },
       {
         key: "P0",
         x: desP0.x,
         y: desP0.y - 12,
-        text: `P₀(${x0.toFixed(1)}, ${y0.toFixed(1)})`,
+        text: "P₀",
       },
     ];
 
@@ -90,14 +97,14 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
         key: "P",
         x: desP.x,
         y: desP.y - 12,
-        text: `P(t=${t.toFixed(1)})`,
+        text: "P",
       });
       if (Math.abs(kNorm - 1.0) > 1e-2) {
         labels.push({
           key: "PNon",
           x: desPNon.x,
           y: desPNon.y + 16,
-          text: `P'(m=${t.toFixed(1)})`,
+          text: "P'",
         });
       }
     } else if (intersect.hasIntersection) {
@@ -111,7 +118,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
           key: "A",
           x: desA.x,
           y: desA.y - 12,
-          text: `A(t₁=${intersect.t1.toFixed(2)})`,
+          text: "A",
         });
       }
       if (intersect.pointB) {
@@ -124,7 +131,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
           key: "B",
           x: desB.x,
           y: desB.y - 12,
-          text: `B(t₂=${intersect.t2.toFixed(2)})`,
+          text: "B",
         });
       }
       if (intersect.pointM) {
@@ -137,12 +144,12 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
           key: "M",
           x: desM.x,
           y: desM.y + 14,
-          text: `M(中点)`,
+          text: "M",
         });
       }
     }
     return labels;
-  }, [desP0, desP, desPNon, mode, kNorm, t, intersect, scale, x0, y0]);
+  }, [desP0, desP, desPNon, originDesign, mode, kNorm, intersect, scale]);
 
   const adjustedLabels = useMemo(
     () => avoidLabelOverlap(rawLabels, 16),
@@ -158,9 +165,6 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
         : conicType === "hyperbola"
           ? MATH_COLORS.hyperbola
           : MATH_COLORS.parabola;
-
-  // 原点 Design 坐标与轴半径
-  const originDesign = mathToDesign(0, 0, scale);
 
   // 抛物线 path: 以 y 轴为参数 [-9, 9] 采样 x = y^2 / (2p)
   const parabolaPathD = useMemo(() => {
@@ -215,7 +219,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
   return (
     <g>
       {/* 坐标网格与坐标轴 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* 割线与高考模式下的二次曲线渲染 */}
       {mode !== "definition" && (
@@ -302,8 +306,8 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
         y1={desLineStart.y}
         x2={desLineEnd.x}
         y2={desLineEnd.y}
-        stroke={MATH_COLORS.paramPrimary}
-        strokeWidth={2}
+        stroke={withAlpha(MATH_COLORS.line, 0.6)}
+        strokeWidth={1.5}
         strokeDasharray="6,4"
       />
 
@@ -327,7 +331,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
             y1={desP0.y}
             x2={desP.x}
             y2={desP.y}
-            stroke={MATH_COLORS.function}
+            stroke={MATH_COLORS.paramSecondary}
             strokeWidth={4}
           />
           {/* 非标准点与连线 */}
@@ -337,8 +341,8 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
               y1={desP0.y}
               x2={desPNon.x}
               y2={desPNon.y}
-              stroke={MATH_COLORS.paramSecondary}
-              strokeWidth={2.5}
+              stroke={MATH_COLORS.paramTertiary}
+              strokeWidth={2}
               strokeDasharray="3,3"
             />
           )}
@@ -349,7 +353,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
             cy={ptP.y}
             scale={scale}
             vp={vp}
-            color={MATH_COLORS.function}
+            color={MATH_COLORS.paramSecondary}
             r={7}
             fontScale={fontScale}
             onDrag={(mathPt) => {
@@ -365,7 +369,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
               cx={desPNon.x}
               cy={desPNon.y}
               r={5}
-              fill={MATH_COLORS.paramSecondary}
+              fill={MATH_COLORS.paramTertiary}
             />
           )}
         </>
@@ -381,7 +385,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
               y1={mathToDesign(intersect.pointA.x, intersect.pointA.y, scale).y}
               x2={mathToDesign(intersect.pointB.x, intersect.pointB.y, scale).x}
               y2={mathToDesign(intersect.pointB.x, intersect.pointB.y, scale).y}
-              stroke={MATH_COLORS.paramSecondary}
+              stroke={MATH_COLORS.paramPrimary}
               strokeWidth={4.5}
             />
           )}
@@ -393,7 +397,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
               cy={intersect.pointA.y}
               scale={scale}
               vp={vp}
-              color={MATH_COLORS.paramSecondary}
+              color={MATH_COLORS.paramPrimary}
               r={6}
               fontScale={fontScale}
               onDrag={() => {}}
@@ -407,7 +411,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
               cy={intersect.pointB.y}
               scale={scale}
               vp={vp}
-              color={MATH_COLORS.paramSecondary}
+              color={MATH_COLORS.paramPrimary}
               r={6}
               fontScale={fontScale}
               onDrag={() => {}}
@@ -423,7 +427,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
               fill={
                 mode === "gaokao" && gaokaoModel === "midpoint"
                   ? MATH_COLORS.paramPrimary
-                  : MATH_COLORS.paramTertiary
+                  : MATH_COLORS.paramSecondary
               }
             />
           )}
@@ -445,27 +449,34 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
         }}
       />
 
-      {/* SVG 内标注 (使用避让算法排布) */}
+      {/* SVG 内标注 (使用避让算法排布，带白色微描边防遮挡) */}
       {adjustedLabels.map((lbl) => (
         <text
           key={lbl.key}
           x={lbl.x}
           y={lbl.y + (lbl.finalDy ?? 0)}
           fill={
-            lbl.key === "P0"
-              ? MATH_COLORS.paramPrimary
-              : lbl.key === "P"
-                ? MATH_COLORS.function
-                : lbl.key === "PNon"
+            lbl.key === "O"
+              ? MATH_COLORS.line
+              : lbl.key === "P0"
+                ? MATH_COLORS.paramPrimary
+                : lbl.key === "P"
                   ? MATH_COLORS.paramSecondary
-                  : lbl.key === "M"
+                  : lbl.key === "PNon"
                     ? MATH_COLORS.paramTertiary
-                    : MATH_COLORS.paramSecondary
+                    : lbl.key === "M"
+                      ? MATH_COLORS.paramSecondary
+                      : MATH_COLORS.paramPrimary
           }
           fontSize={fontScale(12)}
           fontWeight="bold"
           textAnchor="middle"
           dominantBaseline="central"
+          paintOrder="stroke"
+          stroke="white"
+          strokeWidth={3}
+          strokeLinejoin="round"
+          className="select-none pointer-events-none"
         >
           {lbl.text}
         </text>

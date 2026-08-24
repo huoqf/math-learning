@@ -67,44 +67,63 @@ export function LineParamTAnimation() {
     });
   }, [params, mode, conicType, gaokaoModel]);
 
-  // 6. 按当前模式过滤声明式 ParamControl 配置
+  // 6. 按当前模式过滤并结构化分组 ParamControl 配置
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      definition: ["x0", "y0", "alpha", "t", "kNorm"],
-      secant:
-        conicType === "circle"
-          ? ["x0", "y0", "alpha", "R"]
-          : conicType === "ellipse" || conicType === "hyperbola"
-            ? ["x0", "y0", "alpha", "a", "b"]
-            : ["x0", "y0", "alpha", "p"],
-      gaokao:
-        conicType === "circle"
-          ? ["x0", "y0", "alpha", "R"]
-          : conicType === "ellipse" || conicType === "hyperbola"
-            ? ["x0", "y0", "alpha", "a", "b"]
-            : ["x0", "y0", "alpha", "p"],
-    };
+    let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
-    const keys = keysByMode[mode] ?? Object.keys(paramMeta);
+    const curveShapeGroupName =
+      conicType === "circle"
+        ? "圆半径 (R)"
+        : conicType === "ellipse"
+          ? "椭圆半轴 (a, b)"
+          : conicType === "hyperbola"
+            ? "双曲线半轴 (a, b)"
+            : "抛物线焦准距 (p)";
 
-    return keys
-      .filter((key) => key in paramMeta)
-      .map((key) => {
-        const meta = paramMeta[key as keyof typeof paramMeta];
-        return {
-          key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
-          step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
-          importance: meta.importance,
-          marks: meta.marks,
-        };
+    const curveShapeKeys =
+      conicType === "circle"
+        ? ["R"]
+        : conicType === "ellipse" || conicType === "hyperbola"
+          ? ["a", "b"]
+          : ["p"];
+
+    if (mode === "definition") {
+      modeKeyGroups = [
+        { group: "定点 P₀(x₀, y₀) 坐标", keys: ["x0", "y0"] },
+        { group: "方向向量与动点参数", keys: ["alpha", "t", "kNorm"] },
+      ];
+    } else {
+      modeKeyGroups = [
+        { group: "割线定点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
+        { group: "割线倾斜角 α", keys: ["alpha"] },
+        { group: curveShapeGroupName, keys: curveShapeKeys },
+      ];
+    }
+
+    const configs: ParamConfig[] = [];
+    modeKeyGroups.forEach(({ group, keys }) => {
+      keys.forEach((key) => {
+        if (key in paramMeta) {
+          const meta = paramMeta[key as keyof typeof paramMeta];
+          configs.push({
+            key,
+            label: meta.label,
+            labelFormula: meta.labelFormula,
+            value: params[key] ?? meta.defaultValue ?? 0,
+            min: meta.min,
+            max: meta.max,
+            step: meta.step ?? 0.1,
+            group,
+            description: meta.description,
+            descriptionFormula: meta.descriptionFormula,
+            importance: meta.importance,
+            marks: meta.marks,
+          });
+        }
       });
+    });
+
+    return configs;
   }, [params, mode, conicType]);
 
   const handleParamChange = (key: string, value: number) => {
