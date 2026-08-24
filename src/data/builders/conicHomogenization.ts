@@ -1,3 +1,8 @@
+/**
+ * src/data/builders/conicHomogenization.ts
+ * 齐次化与非对称斜率关系看板数据组装
+ */
+
 import type { MathPanelData } from "../types";
 import { computeConicHomogenization } from "@/math/conicHomogenization";
 import type { CurveType, StudyMode } from "@/math/conicHomogenization";
@@ -35,12 +40,12 @@ export function buildConicHomogenizationPanel(
   return {
     quantities: [
       {
-        label: "曲线半轴 a, b",
+        label: "圆锥曲线方程",
         value: `a=${a.toFixed(1)}, b=${b.toFixed(1)}`,
         symbol: `\\frac{x^2}{${(a * a).toFixed(1)}} ${curveType === "ellipse" ? "+" : "-"} \\frac{y^2}{${(b * b).toFixed(1)}} = 1`,
       },
       {
-        label: "齐次化定点 P",
+        label: "平移定点 / 割线基准点 P",
         value: `(${result.P.x.toFixed(2)}, ${result.P.y.toFixed(2)})`,
         symbol: isShift
           ? `P(x_0, y_0) = (${result.P.x.toFixed(2)}, ${result.P.y.toFixed(2)})`
@@ -49,57 +54,49 @@ export function buildConicHomogenizationPanel(
       {
         label: "割线方程 l",
         value: result.lineEqLatex,
-        symbol: isShift ? `m(x-x_0) + n(y-y_0) = 1` : `Ax + By = 1`,
+        symbol: isShift ? `m(x-x_0) + n(y-y_0) = 1` : `mx + ny = 1`,
       },
       {
-        label: "齐次二次方程",
+        label: "齐次化二次方程",
         value: result.homoEqLatex,
-        symbol: `${result.homoC.toFixed(2)} k^2 + ${result.homoB.toFixed(2)} k + ${result.homoA.toFixed(2)} = 0`,
+        symbol: `C' k^2 + B' k + A' = 0 \\quad (k = \\frac{Y}{X})`,
       },
       {
         label: "理论斜率和 (k₁ + k₂)",
         value:
           result.theoreticalSum !== null
             ? result.theoreticalSum.toFixed(4)
-            : "斜率不存在/退化",
-        symbol: `k_1 + k_2 = -\\frac{B'}{C'}`,
+            : "斜率不存在/C'=0",
+        symbol: `k_1 + k_2 = -\\frac{B'}{C'} = -\\frac{${result.homoB.toFixed(2)}}{${result.homoC.toFixed(2)}}`,
       },
       {
         label: "理论斜率积 (k₁ · k₂)",
         value:
           result.theoreticalProduct !== null
             ? result.theoreticalProduct.toFixed(4)
-            : "斜率不存在/退化",
-        symbol: `k_1 k_2 = \\frac{A'}{C'}`,
+            : "斜率不存在/C'=0",
+        symbol: `k_1 k_2 = \\frac{A'}{C'} = \\frac{${result.homoA.toFixed(2)}}{${result.homoC.toFixed(2)}}`,
       },
       {
-        label: "实测交点 A, B 斜率",
+        label: "实测交点 A, B 与斜率校验",
         value:
           result.measuredK1 !== null && result.measuredK2 !== null
             ? `k₁=${result.measuredK1.toFixed(3)}, k₂=${result.measuredK2.toFixed(3)}`
             : "未形成 2 个实割点",
         symbol:
           result.measuredSum !== null
-            ? `k_1 + k_2 = ${result.measuredSum.toFixed(4)}, k_1 k_2 = ${result.measuredProduct?.toFixed(4)}`
+            ? `k_1 + k_2 = ${result.measuredSum.toFixed(4)}, \\; k_1 k_2 = ${result.measuredProduct?.toFixed(4)}`
             : "\\Delta \\le 0",
       },
       ...(studyMode === "asymmetric"
         ? [
             {
-              label: "加权斜率和",
-              value: `λk₁ + μk₂ = ${result.asymmetricWeightedSum?.toFixed(4) ?? "N/A"}`,
-              symbol: `\\lambda k_1 + \\mu k_2`,
-            },
-            {
-              label: "割线必过定点 Q",
+              label: "加权斜率和实测值",
               value:
-                result.fixedPointQ !== null
-                  ? `(${result.fixedPointQ.x.toFixed(2)}, ${result.fixedPointQ.y.toFixed(2)})`
-                  : "无定点",
-              symbol:
-                result.fixedPointQ !== null
-                  ? `Q = (${result.fixedPointQ.x.toFixed(2)}, ${result.fixedPointQ.y.toFixed(2)})`
-                  : "\\text{无}",
+                result.asymmetricWeightedSum !== null
+                  ? `${lambda}k₁ + ${mu}k₂ = ${result.asymmetricWeightedSum.toFixed(4)}`
+                  : "无实割点",
+              symbol: `\\lambda k_1 + \\mu k_2`,
             },
           ]
         : []),
@@ -107,30 +104,44 @@ export function buildConicHomogenizationPanel(
 
     theorems: [
       {
-        name: "非对称齐次化联立核心定理",
+        name: "对称平移齐次化核心原理 (高中通法变体)",
         latex:
           "\\begin{cases} X = x - x_0, \\ Y = y - y_0 \\\\ mX + nY = 1 \\\\ A' X^2 + B' XY + C' Y^2 = 0 \\end{cases} \\implies C' k^2 + B' k + A' = 0",
-        note: "平移坐标原点至定点 P(x₀,y₀)，将割线方程变形为 1 的形式代入二次曲线完成齐次化，除以 X² 转化为斜率二次方程。",
+        note: "以定点 P(x₀,y₀) 为基准建立平移坐标系，用割线方程 1 = mX + nY 对曲线的一次项与常数项齐次升次，两边同除以 X² 转化为关于斜率 k 的一元二次方程。",
         prerequisites: [
-          "割线 l 与圆锥曲线交于两点 A, B",
+          "割线 l 与圆锥曲线有两个不同交点 A, B (判别式 Δ > 0)",
           "定点 P 不在割线 l 上 (即 m·0 + n·0 ≠ 1)",
-          "齐次方程二次项系数 C' ≠ 0 (割线非竖直线)",
+          "割线非铅垂线且 C' ≠ 0 (确保斜率 k 存在且方程为二次)",
         ],
       },
       {
-        name: "韦达定理求解斜率和与积",
+        name: "韦达定理斜率和与斜率积公式",
         latex: "k_1 + k_2 = -\\frac{B'}{C'}, \\quad k_1 k_2 = \\frac{A'}{C'}",
-        note: "避免解二元二次方程组和繁琐代入，一步得到 k_PA + k_PB 与 k_PA · k_PB。",
+        note: "直接将交点坐标的非线性联立转化为关于割线斜率的对称代数式，跳过传统的两点坐标通分。",
+      },
+      {
+        name: "非对称斜率关系的高考代数本质",
+        latex:
+          "\\begin{cases} k_1 + \\lambda k_2 = 0 \\\\ k_1 + k_2 = S \\\\ k_1 k_2 = P \\end{cases} \\implies S^2 + \\frac{(1-\\lambda)^2}{\\lambda} P = 0",
+        note: "非对称条件与韦达对称式联立消元后，参数 m, n 满足非线性二次型方程，几何上对应双定点直线系或包络相切，解答题中严禁跳步直接写公式结论。",
       },
     ],
 
     gaokaoPoints: [
       {
-        text: "新高考圆锥曲线压轴：齐次化方法消去联立解韦达定理的繁琐步骤，秒杀斜率和/斜率积定值定点。",
+        text: "新高考答题规范：解答题中严禁直接写'由齐次化公式可得'。必须完整写出坐标平移 X=x-x₀, Y=y-y₀、联立升次方程、同除 X² 及韦达定理全过程方可得满分。",
         importance: "gaokao",
       },
       {
-        text: "平移齐次化技巧：当定点 P(-a,0) 为椭圆顶点时，坐标平移后可快速求定点或角平分线。",
+        text: "必查扣分雷区 1（分类讨论）：必须单独讨论割线斜率不存在（铅垂线）或 C'=0 的退化情况，否则扣 2~4 分。",
+        importance: "gaokao",
+      },
+      {
+        text: "必查扣分雷区 2（判别式 Δ > 0）：必须写出联立方程判别式 Δ > 0 保证交点存在，此为新高考必设采分点。",
+        importance: "hard",
+      },
+      {
+        text: "非对称斜率消元避坑：非对称关系消元平方时需注意等价性检验，防止引入伪解与增解。",
         importance: "hard",
       },
     ],
@@ -139,22 +150,30 @@ export function buildConicHomogenizationPanel(
       ...(!result.isValidIntersections
         ? [
             {
-              text: "相交判别式 Warning: 当前割线与圆锥曲线判别式 Δ ≤ 0，直线与曲线无交点或相切！",
+              text: "相交判别式警示: 当前割线与圆锥曲线判别式 Δ ≤ 0，割线与曲线无交点或相切，齐次化割线斜率不存在！",
               level: "warning" as const,
             },
           ]
         : []),
-      ...(Math.abs(result.homoC) < 1e-5
+      ...(Math.abs(result.homoC) < 1e-4
         ? [
             {
-              text: "二次项系数退化 Warning: 齐次二次方程二次项系数 C' ≈ 0，割线斜率趋近无穷大！",
+              text: "二次项退化警示: 齐次二次方程二次项系数 C' ≈ 0，方程退化为一元一次方程，必有直线与 y 轴平行！",
               level: "danger" as const,
+            },
+          ]
+        : []),
+      ...(studyMode === "asymmetric" && Math.abs(lambda - mu) > 1e-3
+        ? [
+            {
+              text: "非对称消元注意: λ ≠ μ 时斜率关系不对称，消参后为 (m,n) 的二次型方程，切忌机械套用单一定点公式！",
+              level: "info" as const,
             },
           ]
         : []),
     ],
 
     mnemonic:
-      "平移定点为原点，割线化为一值式；代入二次齐次化，韦达定理斜率出！",
+      "平移定点立新系，割线化一升二次；除以X方出斜率，韦达消参步步晰；判别分类莫遗漏，满分答卷严逻辑！",
   };
 }
