@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -111,6 +112,42 @@ export function CompositeAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    if (subMode === "piecewise") {
+      const x0 = params.x0 ?? 1.0;
+      const yLeft = (params.leftSlope ?? 1.0) * x0 + (params.leftConst ?? 0.0);
+      const yRight =
+        (params.rightSlope ?? -0.5) * x0 + (params.rightConst ?? 1.5);
+      const isContinuous = Math.abs(yLeft - yRight) < 1e-4;
+      return {
+        variant: isContinuous ? ("success" as const) : ("danger" as const),
+        badge: "高考高频 · 分段函数分界点连续性与单调性",
+        condition: `分界点 x₀ = ${x0.toFixed(1)}，左极限值 f(x₀⁻) = ${yLeft.toFixed(2)}，右极限值 f(x₀⁺) = ${yRight.toFixed(2)}。`,
+        question: isContinuous
+          ? "两段图象在分界点处闭合连续，求全局单调性或零点分布。"
+          : `分界点存在间断跳跃 Δy = ${(yRight - yLeft).toFixed(2)}，警惕跨区间最值与连续性失效陷阱。`,
+      };
+    } else {
+      const symAxis = (-(params.innerB ?? -2.0) / 2).toFixed(2);
+      return {
+        variant: "primary" as const,
+        badge: "高考难点 · 复合函数“同增异减”复合单调法则",
+        condition: `外层函数为 ${outerType === "exp" ? "指数递增 y = 2ᵘ" : outerType === "log" ? "对数递增 y = log₂ u" : "二次函数 y = -(u-2)²+4"}，内层二次函数对称轴 x = ${symAxis}。`,
+        question: `分析内层函数 g(x) 的单调区间与值域（真数 u > 0 等限制），依据复合单调法则推导整体 y = f(g(x)) 的单调区间。`,
+      };
+    }
+  }, [
+    subMode,
+    outerType,
+    params.x0,
+    params.leftSlope,
+    params.leftConst,
+    params.rightSlope,
+    params.rightConst,
+    params.innerB,
+  ]);
+
   return (
     <ThreePanel
       left={
@@ -158,6 +195,31 @@ export function CompositeAnimation() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -60,6 +61,20 @@ export function FuncZeroAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    const m = params.intervalM ?? 1.0;
+    const n = params.intervalN ?? 2.0;
+    const steps = params.bisectionSteps ?? 1;
+    const len = Math.abs(n - m) / Math.pow(2, steps);
+    return {
+      variant: "primary" as const,
+      badge: "高考核心 · 零点存在性定理与二分逼近",
+      condition: `在初始区间 [${m.toFixed(1)}, ${n.toFixed(1)}] 上连续，端点异号 f(${m.toFixed(1)})·f(${n.toFixed(1)}) < 0。`,
+      question: `执行 ${steps} 次二分逼近，区间长度缩减为 (b-a)/2ⁿ = ${len.toFixed(4)}，逼近零点 x* ≈ 1.521。`,
+    };
+  }, [params.intervalM, params.intervalN, params.bisectionSteps]);
+
   return (
     <ThreePanel
       left={
@@ -73,6 +88,30 @@ export function FuncZeroAnimation() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

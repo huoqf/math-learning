@@ -69,6 +69,52 @@ export function ParityPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    switch (fnType) {
+      case "cubic":
+        return {
+          variant: "primary" as const,
+          badge: "高考基础 · 三次奇函数中心对称与单调递增",
+          condition: "函数 f(x) = x³，定义域 R 关于原点对称。",
+          question:
+            "验证 f(-x) = -f(x) 的原点对称性，以及割线斜率 k > 0 在 R 上的全局单调递增性。",
+        };
+      case "quadratic":
+        return {
+          variant: "primary" as const,
+          badge: "核心模型 · 二次偶函数轴对称与分段单调",
+          condition: "函数 f(x) = x²，定义域 R 关于 y 轴对称。",
+          question:
+            "验证 f(-x) = f(x) 的 y 轴对称性，观察 (-∞, 0] 递减与 [0, +∞) 递增的割线斜率变号。",
+        };
+      case "abs":
+        return {
+          variant: "warning" as const,
+          badge: "高考高频 · 绝对值 V 型偶函数",
+          condition: "函数 f(x) = |x|，关于 y 轴折叠对称。",
+          question:
+            "对比 x₀ 与 -x₀ 处函数值的相等性，并分析原点两侧固定斜率 ±1 的单调性跃迁。",
+        };
+      case "reciprocal":
+        return {
+          variant: "danger" as const,
+          badge: "易错辨析 · 反比例奇函数与单调区间不能并",
+          condition: "函数 f(x) = 1/x，定义域 (-∞, 0) ∪ (0, +∞) 关于原点对称。",
+          question:
+            "验证 f(-x) = -f(x) 原点对称；警惕‘在定义域内单调递减’的错论，应分区间表述。",
+        };
+      case "sin":
+        return {
+          variant: "info" as const,
+          badge: "三角核心 · 正弦奇函数与无穷周期单调区间",
+          condition: "函数 f(x) = sin x，定义域 R，f(-x) = -sin x。",
+          question:
+            "观察原点对称特征，以及各单调增区间 [2kπ - π/2, 2kπ + π/2] 内部割线斜率正负。",
+        };
+    }
+  }, [fnType]);
+
   return (
     <ThreePanel
       left={
@@ -105,20 +151,28 @@ export function ParityPage() {
               onReset={() => setParams({ ...defaultParams })}
             />
           </LeftPanelSection>
-          <LeftPanelSection
-            title="观察与操作指引"
-            subtitle="奇偶与单调性探索要点"
-          >
-            <TipCard variant="warning">
-              <p className="font-bold mb-1">奇偶与单调性观察要点：</p>
-              <p>
-                1. <b>奇偶测试</b>：拖动 x₀ 观察点 P₀ 与对称点 P'。偶函数
-                f(-x)=f(x) 关于 y 轴对称；奇函数 f(-x)=-f(x) 关于原点对称。
-              </p>
-              <p>
-                2. <b>单调割线斜率</b>：拖动 x₁, x₂ 形成割线，斜率 k = Δy/Δx{" "}
-                {">"} 0 表示增函数，k {"<"} 0 表示减函数。
-              </p>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
             </TipCard>
           </LeftPanelSection>
         </LeftPanel>

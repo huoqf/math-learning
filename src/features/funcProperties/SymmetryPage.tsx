@@ -69,6 +69,18 @@ export function SymmetryPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    const dist = Math.abs((params.axisB ?? 2) - (params.axisA ?? 0));
+    const period = (2 * dist).toFixed(1);
+    return {
+      variant: "primary" as const,
+      badge: "高考经典 · 双对称轴导出函数周期性",
+      condition: `函数图象同时具有两条纵向对称轴 x = ${params.axisA.toFixed(1)} 与 x = ${params.axisB.toFixed(1)}。`,
+      question: `证明两次连续轴对称变换复合产生平移周期，计算基本周期 T = 2|a - b| = ${period}。`,
+    };
+  }, [params.axisA, params.axisB]);
+
   return (
     <ThreePanel
       left={
@@ -105,21 +117,28 @@ export function SymmetryPage() {
               onReset={() => setParams({ ...defaultParams })}
             />
           </LeftPanelSection>
-          <LeftPanelSection
-            title="观察与操作指引"
-            subtitle="对称与周期性探索要点"
-          >
-            <TipCard variant="primary">
-              <p className="font-bold mb-1">对称与周期性观察要点：</p>
-              <p>
-                1. <b>双对称轴</b>：拖动 a, b 控制红/橙两条虚线对称轴 x = a 与 x
-                = b。
-              </p>
-              <p>
-                2. <b>导出周期</b>
-                ：当图象关于两条直线均对称时，两次折叠形成周期循环，周期长度正好等于{" "}
-                <b>两倍轴距 T = 2|a - b|</b>。
-              </p>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
             </TipCard>
           </LeftPanelSection>
         </LeftPanel>

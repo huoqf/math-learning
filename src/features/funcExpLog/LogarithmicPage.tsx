@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -64,6 +65,37 @@ export function LogarithmicPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    const a = params.baseA ?? 2.0;
+    if (showInverse) {
+      return {
+        variant: "info" as const,
+        badge: "高考高频 · 对数与指数反函数对称",
+        condition: `对数函数 y = log_{${a.toFixed(1)}} x 与指数函数 y = ${a.toFixed(1)}ˣ 互为反函数。`,
+        question:
+          "观察两曲线关于 y = x 轴对称，并对比定义域与值域的互换映射（D ↔ R）。",
+      };
+    }
+    if (a > 1) {
+      return {
+        variant: "primary" as const,
+        badge: "核心基准 · 对数缓增与垂直渐近线 (a > 1)",
+        condition: `底数 a = ${a.toFixed(1)} > 1，真数 x > 0，恒过定点 (1, 0)，竖直渐近线为 y 轴 (x = 0)。`,
+        question:
+          "观察 x → 0⁺ 时函数值跌入 -∞ 的垂直渐近行为，以及 x → +∞ 时的极其缓慢的对数增长趋势。",
+      };
+    } else {
+      return {
+        variant: "warning" as const,
+        badge: "核心基准 · 衰减对数模型 (0 < a < 1)",
+        condition: `底数 0 < a = ${a.toFixed(1)} < 1，真数 x > 0，恒过定点 (1, 0)。`,
+        question:
+          "验证在定义域 (0, +∞) 上的单调递减性质，以及在 x → 0⁺ 时的趋向 +∞ 行为。",
+      };
+    }
+  }, [params.baseA, showInverse]);
+
   return (
     <ThreePanel
       left={
@@ -88,6 +120,30 @@ export function LogarithmicPage() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

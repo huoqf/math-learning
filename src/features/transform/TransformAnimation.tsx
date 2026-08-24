@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -98,6 +99,42 @@ export function TransformAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    const { h, k, A, omega } = params;
+    if (foldMode === "global") {
+      return {
+        variant: "warning" as const,
+        badge: "高考必考 · 整体绝对值 y = |f(x)| 翻折变换",
+        condition:
+          "保留 x 轴及上方图象不动，将 x 轴下方的图象以 x 轴为对称轴翻折到上方。",
+        question:
+          "分析下翻上后函数值非负 (y ≥ 0) 的值域截断与零点处尖点导数不存在特征。",
+      };
+    } else if (foldMode === "input") {
+      return {
+        variant: "info" as const,
+        badge: "高考必考 · 自变量绝对值 y = f(|x|) 偶函数化",
+        condition:
+          "保留 y 轴及右侧 (x ≥ 0) 图象不动，擦除左侧并关于 y 轴对称复制到左侧。",
+        question:
+          "验证变换后的函数满足 f(|-x|) = f(|x|)，恒为偶函数且图象关于 y 轴对称。",
+      };
+    } else {
+      const hDesc =
+        h >= 0 ? `右移 ${h.toFixed(1)}` : `左移 ${Math.abs(h).toFixed(1)}`;
+      const kDesc =
+        k >= 0 ? `上移 ${k.toFixed(1)}` : `下移 ${Math.abs(k).toFixed(1)}`;
+      return {
+        variant: "primary" as const,
+        badge: "高考基石 · 四维几何平移与伸缩法则",
+        condition: `基准函数经历水平平移 h = ${h.toFixed(1)} (${hDesc})、竖直平移 k = ${k.toFixed(1)} (${kDesc})，横向伸缩 ω = ${omega.toFixed(1)}，纵向拉伸 A = ${A.toFixed(1)}。`,
+        question:
+          "遵循“左加右减，上加下减，横缩纵扩”四步口诀，快速推导任意变换后的函数解析式与特征点迁移。",
+      };
+    }
+  }, [foldMode, params.h, params.k, params.A, params.omega]);
+
   return (
     <ThreePanel
       left={
@@ -153,6 +190,31 @@ export function TransformAnimation() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

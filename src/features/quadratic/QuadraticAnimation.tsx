@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -129,6 +130,51 @@ export function QuadraticAnimation() {
     return "一元二次不等式指标看板";
   }, [studyMode]);
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    const delta = params.b * params.b - 4 * params.a * params.c;
+    switch (studyMode) {
+      case "function":
+        return {
+          variant: "primary" as const,
+          badge: "高考核心 · 二次函数图象特征与最值",
+          condition: `二次项系数 a = ${params.a.toFixed(1)}，一次项 b = ${params.b.toFixed(1)}，常数项 c = ${params.c.toFixed(1)}。`,
+          question:
+            "观察抛物线开口方向、对称轴 x = -b/(2a) 与顶点坐标，确定在给定区间上的最值分布。",
+        };
+      case "equation":
+        return {
+          variant: delta >= 0 ? ("success" as const) : ("danger" as const),
+          badge: "高考高频 · 判别式 Δ 与实根个数对应",
+          condition: `一元二次方程 ax² + bx + c = 0，判别式 Δ = b² - 4ac = ${delta.toFixed(2)}。`,
+          question:
+            delta > 0
+              ? "Δ > 0，抛物线与 x 轴有两个相异交点，求两实根 x₁, x₂。"
+              : delta === 0
+                ? "Δ = 0，抛物线与 x 轴相切，方程有两相等实根。"
+                : "Δ < 0，抛物线与 x 轴无交点，方程无实数根。",
+        };
+      case "inequality":
+        return {
+          variant: "warning" as const,
+          badge: "高考基石 · 一元二次不等式解集几何化",
+          condition: `探究不等式 ax² + bx + c ${ineqType} 0，抛物线开口与判别式 Δ = ${delta.toFixed(2)}。`,
+          question:
+            ineqType === ">"
+              ? params.a > 0
+                ? delta > 0
+                  ? "a > 0, Δ > 0：取抛物线上方两侧区间 (-∞, x₁) ∪ (x₂, +∞)。"
+                  : "a > 0, Δ ≤ 0：恒成立或全实数除顶点。"
+                : "a < 0：开口向下，图象上方位于两根之间 (x₁, x₂)。"
+              : params.a > 0
+                ? delta > 0
+                  ? "a > 0, Δ > 0：取抛物线下方中间开区间 (x₁, x₂)。"
+                  : "a > 0, Δ ≤ 0：解集为空集 ∅。"
+                : "a < 0：开口向下，图象下方位于两根外侧。",
+        };
+    }
+  }, [params.a, params.b, params.c, studyMode, ineqType]);
+
   return (
     <ThreePanel
       left={
@@ -173,6 +219,31 @@ export function QuadraticAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

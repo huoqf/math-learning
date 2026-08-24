@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -61,6 +62,19 @@ export function AmgmPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    const { a, b } = params;
+    const xMin = Math.sqrt(Math.max(1e-4, b / Math.max(1e-4, a))).toFixed(2);
+    const minVal = (2 * Math.sqrt(Math.max(0, a * b))).toFixed(2);
+    return {
+      variant: "success" as const,
+      badge: "高考核心 · 均值不等式与对勾最值联动",
+      condition: `已知正数 a = ${a.toFixed(1)}, b = ${b.toFixed(1)}，当 x > 0 时满足“一正、二定、三相等”。`,
+      question: `求函数最小值 min = 2√(ab) = ${minVal}，验证等号成立充要条件 ax = b/x 即 x = √(b/a) = ${xMin}。`,
+    };
+  }, [params.a, params.b]);
+
   return (
     <ThreePanel
       left={
@@ -69,13 +83,16 @@ export function AmgmPage() {
             title="均值不等式"
             subtitle="AM-GM 不等式的几何直观"
           >
-            <div className="text-sm text-neutral-600 p-3 bg-neutral-50 rounded-lg">
-              <p className="mb-1">
-                <strong>a, b {">"} 0</strong> 时：
+            <div className="text-xs text-neutral-600 p-2.5 bg-neutral-50 rounded-lg border border-neutral-200/60 leading-relaxed space-y-1">
+              <p className="font-semibold text-neutral-800">AM-GM 定理条件：</p>
+              <p>
+                1. <b>正</b>：x &gt; 0, a &gt; 0, b &gt; 0
               </p>
-              <p className="font-mono text-xs">ax + b/x ≥ 2√(ab)</p>
-              <p className="text-neutral-400 text-xs mt-1">
-                等号成立条件：ax = b/x → x = √(b/a)
+              <p>
+                2. <b>定</b>：乘积项 (ax)·(b/x) = ab 为定值
+              </p>
+              <p>
+                3. <b>等</b>：ax = b/x 时取等号最小值
               </p>
             </div>
           </LeftPanelSection>
@@ -88,6 +105,30 @@ export function AmgmPage() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

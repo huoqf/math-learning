@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -63,15 +64,29 @@ export function ShiftedPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    const { a, b, h, c } = params;
+    return {
+      variant: "primary" as const,
+      badge: "高考难点 · 平移双曲线与分式换元模型",
+      condition: `中心平移至 (${h.toFixed(1)}, ${c.toFixed(1)})，渐近线为 x = ${h.toFixed(1)} 与 y = ${a.toFixed(1)}(x - ${h.toFixed(1)}) + ${c.toFixed(1)}，分子系数 b = ${b.toFixed(1)}。`,
+      question: `通过换元法 u = x - ${h.toFixed(1)} 将复杂分式函数转化为标准${b >= 0 ? "对勾" : "飘带"}模型 y - ${c.toFixed(1)} = ${a.toFixed(1)}u + ${b.toFixed(1)}/u，求解值域与单调区间。`,
+    };
+  }, [params.a, params.b, params.h, params.c]);
+
   return (
     <ThreePanel
       left={
         <LeftPanel>
           <LeftPanelSection title="平移双曲线" subtitle="对勾函数的平移变换">
-            <div className="text-sm text-neutral-600 p-3 bg-neutral-50 rounded-lg">
-              <p className="mb-1">渐近线：x = h, y = a(x-h) + c</p>
-              <p className="text-neutral-400 text-xs">
-                拖动 h, c 控制渐近线交点位置
+            <div className="text-xs text-neutral-600 p-2.5 bg-neutral-50 rounded-lg border border-neutral-200/60 leading-relaxed space-y-1">
+              <p>
+                <b>对称中心</b>：(h, c) = ({params.h.toFixed(1)},{" "}
+                {params.c.toFixed(1)})
+              </p>
+              <p>
+                <b>两条渐近线</b>：x = {params.h.toFixed(1)} 与 y = a(x-h)+c
               </p>
             </div>
           </LeftPanelSection>
@@ -84,6 +99,30 @@ export function ShiftedPage() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

@@ -70,6 +70,50 @@ export function DomainPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 动态教学提示配置
+  const tipConfig = useMemo(() => {
+    switch (fnType) {
+      case "cubic":
+        return {
+          variant: "primary" as const,
+          badge: "基础认知 · 三次多项式定义域与值域",
+          condition: "函数 f(x) = x³，无分母、根号或对数等限制结构。",
+          question:
+            "观察 X/Y 轴投影区间，确认自变量与函数值均可遍历全体实数 R。",
+        };
+      case "quadratic":
+        return {
+          variant: "primary" as const,
+          badge: "核心考点 · 二次函数单侧有界值域",
+          condition: "函数 f(x) = x²，x ∈ R，抛物线开口向上且顶点位于原点。",
+          question: "拖动探针 x₀，观察 Y 轴非负投影区间 [0, +∞) 的下界临界点。",
+        };
+      case "abs":
+        return {
+          variant: "warning" as const,
+          badge: "高考高频 · 绝对值非负值域模型",
+          condition: "函数 f(x) = |x|，分段线性并在 x = 0 处折叠。",
+          question: "验证定义域 R 与非负值域 [0, +∞) 在折点处的投影变化。",
+        };
+      case "reciprocal":
+        return {
+          variant: "danger" as const,
+          badge: "易错陷阱 · 反比例分母去心无定义点",
+          condition: "函数 f(x) = 1/x，分母限制条件 x ≠ 0。",
+          question:
+            "拖动 x₀ 逼近 0，观察双侧趋向无穷大与 X/Y 轴去心零点的间断特征。",
+        };
+      case "sin":
+        return {
+          variant: "info" as const,
+          badge: "周期有界 · 正弦波动紧致值域",
+          condition: "函数 f(x) = sin x，具有 2π 周期性与全局有界性。",
+          question:
+            "观察定义域 R 与闭区间值域 [-1, 1] 之间的周期映射波峰与波谷。",
+        };
+    }
+  }, [fnType]);
+
   return (
     <ThreePanel
       left={
@@ -106,22 +150,28 @@ export function DomainPage() {
               onReset={() => setParams({ ...defaultParams })}
             />
           </LeftPanelSection>
-          <LeftPanelSection
-            title="观察与操作指引"
-            subtitle="定义域与值域探索要点"
-          >
-            <TipCard variant="info">
-              <p className="font-bold mb-1">概念与定义域观察要点：</p>
-              <p>
-                1. <b>定义域 D</b>：允许取值的自变量集合（X 轴淡阴影区）。
-              </p>
-              <p>
-                2. <b>值域 R</b>：所有函数值 f(x) 的集合（Y 轴淡阴影区）。
-              </p>
-              <p>
-                3. <b>拖动验证</b>：拖动滑块 x₀。切换到 y = 1/x 试着拖动到 x₀ =
-                0，观察无定义点警示。
-              </p>
+          {/* 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
             </TipCard>
           </LeftPanelSection>
         </LeftPanel>
