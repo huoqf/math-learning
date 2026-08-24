@@ -10,6 +10,7 @@ import {
   CoordinateGrid,
   InteractivePoint,
   VectorArrow,
+  MathPoint,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
@@ -109,66 +110,72 @@ export const VectorPolarizationApolloniusScene: React.FC<
           />
 
           {/* 定点 B */}
-          <circle
-            cx={designB.x}
-            cy={designB.y}
-            r={5}
-            fill={MATH_COLORS.paramSecondary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            x={designB.x}
+            y={designB.y}
+            variant="solid"
+            color={MATH_COLORS.paramSecondary}
+            r={3.8}
           />
           <text
             x={designB.x}
-            y={designB.y + fontScale(18)}
+            y={designB.y + fontScale(16)}
             textAnchor="middle"
             fill={MATH_COLORS.labelText}
             fontSize={fontScale(12)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
             className="select-none pointer-events-none"
           >
-            B({polarizationData.pointB.x.toFixed(1)}, 0)
+            B
           </text>
 
           {/* 定点 C */}
-          <circle
-            cx={designC.x}
-            cy={designC.y}
-            r={5}
-            fill={MATH_COLORS.paramSecondary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            x={designC.x}
+            y={designC.y}
+            variant="solid"
+            color={MATH_COLORS.paramSecondary}
+            r={3.8}
           />
           <text
             x={designC.x}
-            y={designC.y + fontScale(18)}
+            y={designC.y + fontScale(16)}
             textAnchor="middle"
             fill={MATH_COLORS.labelText}
             fontSize={fontScale(12)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
             className="select-none pointer-events-none"
           >
-            C({polarizationData.pointC.x.toFixed(1)}, 0)
+            C
           </text>
 
           {/* 中点 M */}
-          <circle
-            cx={designM.x}
-            cy={designM.y}
-            r={4.5}
-            fill={MATH_COLORS.paramPrimary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            x={designM.x}
+            y={designM.y}
+            variant="focus"
+            color={MATH_COLORS.paramPrimary}
+            r={3.8}
           />
           <text
             x={designM.x}
             y={designM.y + fontScale(16)}
             textAnchor="middle"
             fill={MATH_COLORS.paramPrimary}
-            fontSize={fontScale(11)}
+            fontSize={fontScale(12)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
             className="select-none pointer-events-none"
           >
-            M(0,0) [中点]
+            M
           </text>
 
           {/* 动点 A (可拖拽) */}
@@ -187,12 +194,14 @@ export const VectorPolarizationApolloniusScene: React.FC<
             y={designA.y - fontScale(12)}
             textAnchor="middle"
             fill={MATH_COLORS.focusPoint}
-            fontSize={fontScale(12)}
+            fontSize={fontScale(13)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
             className="select-none pointer-events-none"
           >
-            A({polarizationData.pointA.x.toFixed(1)},{" "}
-            {polarizationData.pointA.y.toFixed(1)})
+            A
           </text>
 
           {/* 极化恒等式几何注解: AM 长度 */}
@@ -202,6 +211,9 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(11)}
             fontWeight="600"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
             className="select-none pointer-events-none"
           >
             |AM| = {polarizationData.lenAM.toFixed(2)}
@@ -254,53 +266,68 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 fill={MATH_COLORS.paramPrimary}
                 fontSize={fontScale(11)}
                 fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
                 className="select-none pointer-events-none"
               >
                 |PM| = {combinedData.lenPM.toFixed(2)}
               </text>
 
               {/* 最短距离点 P_min (内分点 D) 标注 */}
-              <circle
-                cx={designMinP.x}
-                cy={designMinP.y}
-                r={5.5}
-                fill={MATH_COLORS.paramTertiary}
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.5}
+              <MathPoint
+                x={designMinP.x}
+                y={designMinP.y}
+                variant="focus"
+                color={MATH_COLORS.paramTertiary}
+                r={4}
               />
               <text
                 x={designMinP.x}
                 y={designMinP.y + fontScale(16)}
                 textAnchor="middle"
                 fill={MATH_COLORS.paramTertiary}
-                fontSize={fontScale(10)}
+                fontSize={fontScale(11)}
                 fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
                 className="select-none pointer-events-none"
               >
-                Pₘᵢₙ
+                P
+                <tspan dy={fontScale(3)} fontSize={fontScale(8.5)}>
+                  min
+                </tspan>
+                <tspan dy={-fontScale(3)}> </tspan>
               </text>
 
               {/* 最长距离点 P_max (外分点 E) 标注 */}
               {!apolloniusData.isDegenerate && (
                 <g>
-                  <circle
-                    cx={designMaxP.x}
-                    cy={designMaxP.y}
-                    r={5.5}
-                    fill={MATH_COLORS.degeneracy}
-                    stroke={MATH_COLORS.white}
-                    strokeWidth={1.5}
+                  <MathPoint
+                    x={designMaxP.x}
+                    y={designMaxP.y}
+                    variant="focus"
+                    color={MATH_COLORS.degeneracy}
+                    r={4}
                   />
                   <text
                     x={designMaxP.x}
                     y={designMaxP.y + fontScale(16)}
                     textAnchor="middle"
                     fill={MATH_COLORS.degeneracy}
-                    fontSize={fontScale(10)}
+                    fontSize={fontScale(11)}
                     fontWeight="bold"
+                    paintOrder="stroke"
+                    stroke="white"
+                    strokeWidth={3}
                     className="select-none pointer-events-none"
                   >
-                    Pₘₐₓ
+                    P
+                    <tspan dy={fontScale(3)} fontSize={fontScale(8.5)}>
+                      max
+                    </tspan>
+                    <tspan dy={-fontScale(3)}> </tspan>
                   </text>
                 </g>
               )}
@@ -326,78 +353,101 @@ export const VectorPolarizationApolloniusScene: React.FC<
           />
 
           {/* 定点 A (-c, 0) */}
-          <circle
-            cx={designB.x}
-            cy={designB.y}
-            r={5}
-            fill={MATH_COLORS.paramSecondary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            x={designB.x}
+            y={designB.y}
+            variant="solid"
+            color={MATH_COLORS.paramSecondary}
+            r={3.8}
           />
           <text
             x={designB.x}
-            y={designB.y + fontScale(18)}
+            y={designB.y + fontScale(16)}
             textAnchor="middle"
             fill={MATH_COLORS.labelText}
-            fontSize={fontScale(11)}
+            fontSize={fontScale(12)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
             className="select-none pointer-events-none"
           >
-            A({apolloniusData.pointA.x.toFixed(1)}, 0)
+            A
           </text>
 
           {/* 定点 B (c, 0) */}
-          <circle
-            cx={designC.x}
-            cy={designC.y}
-            r={5}
-            fill={MATH_COLORS.paramSecondary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            x={designC.x}
+            y={designC.y}
+            variant="solid"
+            color={MATH_COLORS.paramSecondary}
+            r={3.8}
           />
           <text
             x={designC.x}
-            y={designC.y + fontScale(18)}
+            y={designC.y + fontScale(16)}
             textAnchor="middle"
             fill={MATH_COLORS.labelText}
-            fontSize={fontScale(11)}
+            fontSize={fontScale(12)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
             className="select-none pointer-events-none"
           >
-            B({apolloniusData.pointB.x.toFixed(1)}, 0)
+            B
           </text>
 
           {/* 中点 M (0,0) */}
-          <circle
-            cx={designM.x}
-            cy={designM.y}
-            r={4}
-            fill={MATH_COLORS.paramPrimary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            x={designM.x}
+            y={designM.y}
+            variant="focus"
+            color={MATH_COLORS.paramPrimary}
+            r={3.8}
           />
+          <text
+            x={designM.x}
+            y={designM.y + fontScale(16)}
+            textAnchor="middle"
+            fill={MATH_COLORS.paramPrimary}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
+            className="select-none pointer-events-none"
+          >
+            M
+          </text>
 
           {/* 圆心 O_A */}
           {!apolloniusData.isDegenerate && (
             <g>
-              <circle
-                cx={designCenterO.x}
-                cy={designCenterO.y}
-                r={4}
-                fill={MATH_COLORS.function}
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.5}
+              <MathPoint
+                x={designCenterO.x}
+                y={designCenterO.y}
+                variant="solid"
+                color={MATH_COLORS.function}
+                r={3.5}
               />
               <text
                 x={designCenterO.x}
                 y={designCenterO.y - fontScale(10)}
                 textAnchor="middle"
                 fill={MATH_COLORS.function}
-                fontSize={fontScale(10)}
+                fontSize={fontScale(11)}
                 fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
                 className="select-none pointer-events-none"
               >
-                O_A({apolloniusData.centerO.x.toFixed(1)}, 0)
+                O
+                <tspan dy={fontScale(2.5)} fontSize={fontScale(8.5)}>
+                  A
+                </tspan>
+                <tspan dy={-fontScale(2.5)}> </tspan>
               </text>
             </g>
           )}
@@ -405,38 +455,48 @@ export const VectorPolarizationApolloniusScene: React.FC<
           {/* 内分点 D & 外分点 E */}
           {!apolloniusData.isDegenerate && studyMode === "apollonius" && (
             <g>
-              <circle
-                cx={designD.x}
-                cy={designD.y}
-                r={4}
-                fill={MATH_COLORS.paramPrimary}
+              <MathPoint
+                x={designD.x}
+                y={designD.y}
+                variant="solid"
+                color={MATH_COLORS.paramPrimary}
+                r={3.5}
               />
               <text
                 x={designD.x}
-                y={designD.y + fontScale(14)}
+                y={designD.y + fontScale(15)}
                 textAnchor="middle"
                 fill={MATH_COLORS.paramPrimary}
-                fontSize={fontScale(10)}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
                 className="select-none pointer-events-none"
               >
-                D({apolloniusData.pointD.x.toFixed(1)},0)
+                D
               </text>
 
-              <circle
-                cx={designE.x}
-                cy={designE.y}
-                r={4}
-                fill={MATH_COLORS.paramPrimary}
+              <MathPoint
+                x={designE.x}
+                y={designE.y}
+                variant="solid"
+                color={MATH_COLORS.paramPrimary}
+                r={3.5}
               />
               <text
                 x={designE.x}
-                y={designE.y + fontScale(14)}
+                y={designE.y + fontScale(15)}
                 textAnchor="middle"
                 fill={MATH_COLORS.paramPrimary}
-                fontSize={fontScale(10)}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
                 className="select-none pointer-events-none"
               >
-                E({apolloniusData.pointE.x.toFixed(1)},0)
+                E
               </text>
             </g>
           )}
@@ -457,12 +517,14 @@ export const VectorPolarizationApolloniusScene: React.FC<
             y={designP.y - fontScale(12)}
             textAnchor="middle"
             fill={MATH_COLORS.focusPoint}
-            fontSize={fontScale(12)}
+            fontSize={fontScale(13)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
             className="select-none pointer-events-none"
           >
-            P({apolloniusData.pointP.x.toFixed(1)},{" "}
-            {apolloniusData.pointP.y.toFixed(1)})
+            P
           </text>
         </g>
       )}

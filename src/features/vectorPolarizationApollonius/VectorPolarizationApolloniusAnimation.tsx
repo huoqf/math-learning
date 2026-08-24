@@ -30,6 +30,9 @@ export function VectorPolarizationApolloniusAnimation() {
     "polarization" | "apollonius" | "combined"
   >("polarization");
 
+  // 典型预设状态
+  const [preset, setPreset] = useState<string>("free");
+
   // 本地参数状态
   const [params, setParams] = useState<VectorPolarizationApolloniusParams>(
     () => ({ ...defaultParams }),
@@ -56,18 +59,149 @@ export function VectorPolarizationApolloniusAnimation() {
     );
   }, [params, studyMode]);
 
-  // 参数更新
+  // 模式切换
+  const handleModeChange = (
+    mode: "polarization" | "apollonius" | "combined",
+  ) => {
+    setStudyMode(mode);
+    setPreset("free");
+  };
+
+  // 参数更新（手动调节或拖拽时自动回归自由探究）
   const handleParamChange = (key: string, value: number) => {
+    setPreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
+  // 典型预设切换处理器（黄金 2×2）
+  const handlePresetSelect = (presetKey: string) => {
+    setPreset(presetKey);
+    if (presetKey === "free") return;
+
+    if (studyMode === "polarization") {
+      if (presetKey === "equilateral") {
+        // 正三角形: bcLength = 6.0 => c = 3.0, h = 3 * sqrt(3) ≈ 5.2
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          pointX: 0.0,
+          pointY: 5.2,
+        }));
+      } else if (presetKey === "rightAngle") {
+        // 直角三角形: A(0, 3.0), c = 3.0 => |AM| = |BM| = 3.0, 点积为 0
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          pointX: 0.0,
+          pointY: 3.0,
+        }));
+      } else if (presetKey === "obtuseExtrema") {
+        // 钝角极小值: A(0, 1.5)
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          pointX: 0.0,
+          pointY: 1.5,
+        }));
+      }
+    } else if (studyMode === "apollonius") {
+      if (presetKey === "doubleRatio") {
+        // 2 倍比标准阿圆
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          lambda: 2.0,
+          pointAngle: 45,
+        }));
+      } else if (presetKey === "degenerate") {
+        // 退化中垂线 λ = 1.0
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          lambda: 1.0,
+          pointAngle: 90,
+        }));
+      } else if (presetKey === "halfRatio") {
+        // 0.5 倍比阿圆
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          lambda: 0.5,
+          pointAngle: 45,
+        }));
+      }
+    } else {
+      // combined 模式
+      if (presetKey === "minPoint") {
+        // 数量积最小值点 (内分点 D, 角度 0° 或 180°)
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          lambda: 2.0,
+          pointAngle: 0,
+        }));
+      } else if (presetKey === "maxPoint") {
+        // 数量积最大值点 (外分点 E, 角度 180° 或 0°)
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          lambda: 2.0,
+          pointAngle: 180,
+        }));
+      } else if (presetKey === "orthogonal") {
+        // 正交状态 (θ 处于垂直上方)
+        setParams((prev) => ({
+          ...prev,
+          bcLength: 6.0,
+          lambda: 2.0,
+          pointAngle: 90,
+        }));
+      }
+    }
+  };
+
   // 重置参数
   const handleReset = () => {
+    setPreset("free");
     setParams({ ...defaultParams });
   };
+
+  // 典型预设选项（黄金 2×2 对称网格）
+  const presetItems = useMemo(() => {
+    if (studyMode === "polarization") {
+      return [
+        { key: "free", label: "自由探究", formula: "\\text{全参数开放}" },
+        { key: "equilateral", label: "正三角形", formula: "\\triangle ABC" },
+        {
+          key: "rightAngle",
+          label: "直角正交",
+          formula: "\\vec{a} \\perp \\vec{b}",
+        },
+        { key: "obtuseExtrema", label: "钝角构型", formula: "|AM| < |BM|" },
+      ];
+    }
+    if (studyMode === "apollonius") {
+      return [
+        { key: "free", label: "自由探究", formula: "\\text{全参数开放}" },
+        { key: "doubleRatio", label: "2倍比阿圆", formula: "\\lambda = 2.0" },
+        { key: "degenerate", label: "中垂线退化", formula: "\\lambda = 1.0" },
+        { key: "halfRatio", label: "0.5倍比圆", formula: "\\lambda = 0.5" },
+      ];
+    }
+    return [
+      { key: "free", label: "自由探究", formula: "\\text{全参数开放}" },
+      { key: "minPoint", label: "数量积最小", formula: "P = D" },
+      { key: "maxPoint", label: "数量积最大", formula: "P = E" },
+      {
+        key: "orthogonal",
+        label: "零数量积",
+        formula: "\\vec{PA} \\perp \\vec{PB}",
+      },
+    ];
+  }, [studyMode]);
 
   // 声明式参数配置 (按模式动态过滤参数，铁律 3 & 铁律 8)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -95,6 +229,7 @@ export function VectorPolarizationApolloniusAnimation() {
         description: meta.description,
         descriptionFormula: meta.descriptionFormula,
         importance: meta.importance,
+        group: meta.group,
         marks: meta.marks,
       };
     });
@@ -144,12 +279,26 @@ export function VectorPolarizationApolloniusAnimation() {
                 },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as typeof studyMode)}
+              onChange={(k) => handleModeChange(k as typeof studyMode)}
               variant="filled"
             />
           </LeftPanelSection>
 
-          {/* 2. 参数调节 Section */}
+          {/* 2. 典型预设 Section (黄金 2×2 网格) */}
+          <LeftPanelSection
+            title="典型构型预设"
+            subtitle="一键切换高考经典特值与极值状态"
+          >
+            <SelectGrid
+              items={presetItems}
+              value={preset}
+              onChange={handlePresetSelect}
+              columns={2}
+              variant="outline"
+            />
+          </LeftPanelSection>
+
+          {/* 3. 参数调节 Section */}
           <LeftPanelSection
             title="参数控制台"
             subtitle="拖动滑块或画布控制点探究规律"
