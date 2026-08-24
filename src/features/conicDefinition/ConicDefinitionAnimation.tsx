@@ -110,6 +110,22 @@ export function ConicDefinitionAnimation() {
     const newMode = modeKey as typeof studyMode;
     setStudyMode(newMode);
     setActivePreset("free");
+    if (newMode === "unifiedDef") {
+      setParams((prev) => ({
+        ...prev,
+        e: 0.66,
+        p: 2.0,
+        theta: 0.8,
+      }));
+    } else {
+      setParams((prev) => ({
+        ...prev,
+        a: conicType === "hyperbola" ? 2.0 : 3.0,
+        c: conicType === "hyperbola" ? 3.0 : 2.0,
+        p: 2.0,
+        theta: conicType === "parabola" ? 3.14 : 0.8,
+      }));
+    }
   };
 
   // 参数重置

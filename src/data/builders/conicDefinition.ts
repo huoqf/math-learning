@@ -110,6 +110,10 @@ export function buildConicDefinitionPanel(
           importance: "gaokao",
         },
         {
+          text: "高考核心模型（动圆相切）：已知定圆 C₁:(x+c)²+y²=4a² 与定点 F₂(c,0)，动圆 M 与圆 C₁ 内切且过 F₂ ⟹ |MC₁| + |MF₂| = 2a ⟹ 动圆心 M 轨迹必为标准椭圆。",
+          importance: "gaokao",
+        },
+        {
           text: "高考大招：若 |PF₁|·|PF₂| 出现，立即联立余弦定理 |F₁F₂|² = d₁² + d₂² - 2d₁d₂cosθ 与定义式 (d₁+d₂)² = 4a²。",
           importance: "core",
         },
@@ -187,6 +191,10 @@ export function buildConicDefinitionPanel(
       gaokaoPoints.push(
         {
           text: "高考考点：双曲线第一定义极易遗漏“绝对值”，不带绝对值仅代表双曲线的一支（左支或右支）。",
+          importance: "gaokao",
+        },
+        {
+          text: "高考核心模型（动圆外切）：若动圆 M 与定圆 C₁:(x+c)²+y²=4a² 外切且过定点 F₂(c,0) ⟹ ||MC₁| - |MF₂|| = 2a ⟹ 动圆心 M 轨迹必为双曲线分支。",
           importance: "gaokao",
         },
         {
