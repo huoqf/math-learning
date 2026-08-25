@@ -1,4 +1,4 @@
-import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
+import { InteractivePoint, MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
@@ -111,8 +111,6 @@ export function TriangleSolveScene({
   // ── 模式 2~5: sine | cosine | area | bisector (共享同一坐标系与主三角形) ──
   const {
     points: { A, B, C },
-    sides,
-    anglesDeg,
   } = sasResult;
 
   const pA = mathToDesign(A.x, A.y, scale);
@@ -137,8 +135,7 @@ export function TriangleSolveScene({
 
   return (
     <g className="triangle-solve-scene">
-      {/* 坐标轴与网格 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      {/* 纯几何范式：彻底移除笛卡尔坐标系与刻度穿刺 */}
 
       {/* ── 各专题专属几何图层 (均为叠加于共享主三角形之上的独立图层) ── */}
       {studyMode === "sine" && (
@@ -174,8 +171,35 @@ export function TriangleSolveScene({
       {/* ── 主三角形主体结构渲染 (三位一体色彩) ── */}
       <polygon
         points={`${pA.x},${pA.y} ${pB.x},${pB.y} ${pC.x},${pC.y}`}
-        fill={withAlpha(MATH_COLORS.function, 0.06)}
+        fill={withAlpha(MATH_COLORS.function, 0.05)}
       />
+
+      {/* 顶点 A 内角角弧（在非角平分线模式下绘制纯正几何角弧） */}
+      {studyMode !== "bisector" &&
+        (() => {
+          const arcR = fontScale(24);
+          const dirAB = { x: pB.x - pA.x, y: pB.y - pA.y };
+          const dirAC = { x: pC.x - pA.x, y: pC.y - pA.y };
+
+          const angAB = Math.atan2(dirAB.y, dirAB.x);
+          const angAC = Math.atan2(dirAC.y, dirAC.x);
+
+          const startX = pA.x + arcR * Math.cos(angAB);
+          const startY = pA.y + arcR * Math.sin(angAB);
+          const endX = pA.x + arcR * Math.cos(angAC);
+          const endY = pA.y + arcR * Math.sin(angAC);
+
+          return (
+            <g className="angle-A-arc">
+              <path
+                d={`M ${startX} ${startY} A ${arcR} ${arcR} 0 0 ${angAC > angAB ? 1 : 0} ${endX} ${endY}`}
+                fill="none"
+                stroke={MATH_COLORS.paramPrimary}
+                strokeWidth={1.8}
+              />
+            </g>
+          );
+        })()}
 
       {/* 边 a (BC): 鲜红 */}
       <line
@@ -205,21 +229,22 @@ export function TriangleSolveScene({
         strokeWidth={3}
       />
 
-      {/* ── 边长标签 (精准外法向量偏移，永不压线，永不倒扣) ── */}
+      {/* ── 边长标签 (纯正高中教材学术符号: a, b, c，数值 100% 归位右屏看板) ── */}
       {studyMode !== "bisector" && studyMode !== "cosine" && (
         <text
           x={edgePosA.x}
           y={edgePosA.y}
           textAnchor={edgePosA.anchor}
           fill={MATH_COLORS.paramPrimary}
-          fontSize={fontScale(11)}
+          fontSize={fontScale(14)}
           fontWeight="bold"
+          fontStyle="italic"
           paintOrder="stroke"
           stroke="white"
-          strokeWidth={fontScale(3.5)}
+          strokeWidth={fontScale(4)}
           strokeLinejoin="round"
         >
-          a = {sides.a.toFixed(2)}
+          a
         </text>
       )}
 
@@ -228,14 +253,15 @@ export function TriangleSolveScene({
         y={edgePosB.y}
         textAnchor={edgePosB.anchor}
         fill={MATH_COLORS.paramSecondary}
-        fontSize={fontScale(11)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
-        strokeWidth={fontScale(3.5)}
+        strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        b = {sides.b.toFixed(2)}
+        b
       </text>
 
       <text
@@ -243,14 +269,15 @@ export function TriangleSolveScene({
         y={edgePosC.y}
         textAnchor={edgePosC.anchor}
         fill={MATH_COLORS.paramTertiary}
-        fontSize={fontScale(11)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
-        strokeWidth={fontScale(3.5)}
+        strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        c = {sides.c.toFixed(2)}
+        c
       </text>
 
       {/* ── 顶点交互点与圆点 ── */}
@@ -273,48 +300,51 @@ export function TriangleSolveScene({
       <MathPoint x={pB.x} y={pB.y} color={MATH_COLORS.paramSecondary} />
       <MathPoint x={pC.x} y={pC.y} color={MATH_COLORS.paramTertiary} />
 
-      {/* ── 顶点与角度标签 (沿着形心向外放射，绝对不被遮挡) ── */}
+      {/* ── 纯字母顶点标签 (严谨高中数学习惯: 单字母，无多余括号数值) ── */}
       <text
         x={labelPosA.x}
         y={labelPosA.y}
         textAnchor={labelPosA.anchor}
         fill={MATH_COLORS.paramPrimary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        A ({anglesDeg.A.toFixed(1)}°)
+        A
       </text>
       <text
         x={labelPosB.x}
         y={labelPosB.y}
         textAnchor={labelPosB.anchor}
         fill={MATH_COLORS.paramSecondary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        B ({anglesDeg.B.toFixed(1)}°)
+        B
       </text>
       <text
         x={labelPosC.x}
         y={labelPosC.y}
         textAnchor={labelPosC.anchor}
         fill={MATH_COLORS.paramTertiary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        C ({anglesDeg.C.toFixed(1)}°)
+        C
       </text>
     </g>
   );

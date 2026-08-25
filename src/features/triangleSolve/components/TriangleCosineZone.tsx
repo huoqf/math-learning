@@ -64,13 +64,26 @@ export function TriangleCosineZone({
         strokeWidth={2}
         strokeDasharray="4,3"
       />
-      {/* 垂足直角标记 (底线上方) */}
-      <path
-        d={`M ${pFootD.x - fontScale(8)} ${pFootD.y} L ${pFootD.x - fontScale(8)} ${pFootD.y - fontScale(8)} L ${pFootD.x} ${pFootD.y - fontScale(8)}`}
-        fill="none"
-        stroke={MATH_COLORS.tangentLine}
-        strokeWidth={1.5}
-      />
+
+      {/* 自适应垂足直角标记 (边长为固定 8px, 永不倒扣到图形外) */}
+      {(() => {
+        const markSize = fontScale(8);
+        // 若 D 在 B 左侧, 向右侧直角三角形内侧绘制; 否则向左侧绘制
+        const isLeftOfB = pFootD.x < pB.x;
+        const dir = isLeftOfB ? 1 : -1;
+        const xOffset = pFootD.x + dir * markSize;
+        const yOffset = pFootD.y - markSize;
+
+        return (
+          <path
+            d={`M ${xOffset} ${pFootD.y} L ${xOffset} ${yOffset} L ${pFootD.x} ${yOffset}`}
+            fill="none"
+            stroke={MATH_COLORS.tangentLine}
+            strokeWidth={1.5}
+          />
+        );
+      })()}
+
       {/* 垂足点 D */}
       <circle
         cx={pFootD.x}
@@ -78,14 +91,15 @@ export function TriangleCosineZone({
         r={fontScale(3.5)}
         fill={MATH_COLORS.tangentLine}
       />
-      {/* 垂足字母 D: 置于底线上方右侧 */}
+      {/* 垂足字母 D: 置于底线上方 */}
       <text
-        x={pFootD.x + fontScale(8)}
+        x={pFootD.x < pB.x ? pFootD.x - fontScale(8) : pFootD.x + fontScale(8)}
         y={pFootD.y - fontScale(6)}
-        textAnchor="start"
+        textAnchor={pFootD.x < pB.x ? "end" : "start"}
         fill={MATH_COLORS.tangentLine}
-        fontSize={fontScale(10)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(3.5)}
@@ -99,17 +113,18 @@ export function TriangleCosineZone({
         y={(pA.y + pFootD.y) / 2}
         textAnchor="end"
         fill={MATH_COLORS.tangentLine}
-        fontSize={fontScale(10)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
-        strokeWidth={fontScale(3.5)}
+        strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        hₐ = {sasResult.altitudeA.length.toFixed(2)}
+        hₐ
       </text>
 
-      {/* 射影定理底边彩色分段高亮 (左右各自独立居中，绝不与垂足冲突) */}
+      {/* 射影定理底边彩色分段 (纯正高中射影代数式: c cosB 与 b cosC) */}
       <g className="projection-theorem-segments">
         {/* BD 段: c * cosB (翠绿) */}
         <line
@@ -125,14 +140,15 @@ export function TriangleCosineZone({
           y={pB.y + fontScale(24)}
           textAnchor="middle"
           fill={MATH_COLORS.paramTertiary}
-          fontSize={fontScale(10)}
+          fontSize={fontScale(11)}
           fontWeight="bold"
+          fontStyle="italic"
           paintOrder="stroke"
           stroke="white"
           strokeWidth={fontScale(3.5)}
           strokeLinejoin="round"
         >
-          c·cosB = {sasResult.projections.cCosB.toFixed(2)}
+          c cosB
         </text>
 
         {/* DC 段: b * cosC (暖橙) */}
@@ -149,14 +165,15 @@ export function TriangleCosineZone({
           y={pC.y + fontScale(24)}
           textAnchor="middle"
           fill={MATH_COLORS.paramSecondary}
-          fontSize={fontScale(10)}
+          fontSize={fontScale(11)}
           fontWeight="bold"
+          fontStyle="italic"
           paintOrder="stroke"
           stroke="white"
           strokeWidth={fontScale(3.5)}
           strokeLinejoin="round"
         >
-          b·cosC = {sasResult.projections.bCosC.toFixed(2)}
+          b cosC
         </text>
       </g>
     </g>

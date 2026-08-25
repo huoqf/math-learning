@@ -51,19 +51,20 @@ export function TriangleSineZone({
             color={MATH_COLORS.circle}
           />
           <text
-            x={pCircumCenter.x + fontScale(6)}
+            x={pCircumCenter.x + fontScale(8)}
             y={pCircumCenter.y - fontScale(6)}
             fill={MATH_COLORS.circle}
-            fontSize={fontScale(11)}
+            fontSize={fontScale(12)}
             fontWeight="bold"
+            fontStyle="italic"
             paintOrder="stroke"
             stroke="white"
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
-            O (R={sasResult.circumcircle.radius.toFixed(2)})
+            O
           </text>
-          {/* 外接圆半径 OA 虚线 */}
+          {/* 外接圆半径 OA 虚线与标注 R */}
           <line
             x1={pCircumCenter.x}
             y1={pCircumCenter.y}
@@ -73,6 +74,20 @@ export function TriangleSineZone({
             strokeWidth={1}
             strokeDasharray="2,2"
           />
+          <text
+            x={(pCircumCenter.x + pA.x) / 2 - fontScale(8)}
+            y={(pCircumCenter.y + pA.y) / 2}
+            fill={MATH_COLORS.circle}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fontStyle="italic"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
+          >
+            R
+          </text>
 
           {/* 直径推导 Rt△C'BC 辅助线 */}
           <g className="sine-diameter-proof">
@@ -90,7 +105,7 @@ export function TriangleSineZone({
 
               return (
                 <>
-                  {/* 直径 C-C' */}
+                  {/* 直径 C-C' (长为 2R) */}
                   <line
                     x1={pC.x}
                     y1={pC.y}
@@ -100,6 +115,22 @@ export function TriangleSineZone({
                     strokeWidth={2}
                     strokeDasharray="4,4"
                   />
+                  {/* 直径标注 2R */}
+                  <text
+                    x={(pC.x + pDiamCPrime.x) / 2 + fontScale(10)}
+                    y={(pC.y + pDiamCPrime.y) / 2}
+                    fill={MATH_COLORS.tangentLine}
+                    fontSize={fontScale(10)}
+                    fontWeight="bold"
+                    fontStyle="italic"
+                    paintOrder="stroke"
+                    stroke="white"
+                    strokeWidth={fontScale(3.5)}
+                    strokeLinejoin="round"
+                  >
+                    2R
+                  </text>
+
                   {/* 直角三角形另一边 C'-B */}
                   <line
                     x1={pDiamCPrime.x}
@@ -122,14 +153,15 @@ export function TriangleSineZone({
                     y={pDiamCPrime.y + offY}
                     textAnchor={offX >= 0 ? "start" : "end"}
                     fill={MATH_COLORS.tangentLine}
-                    fontSize={fontScale(11)}
+                    fontSize={fontScale(13)}
                     fontWeight="bold"
+                    fontStyle="italic"
                     paintOrder="stroke"
                     stroke="white"
                     strokeWidth={fontScale(4)}
                     strokeLinejoin="round"
                   >
-                    C'(直径对径点, 2R)
+                    C'
                   </text>
                   <text
                     x={pDiamCPrime.x + offX}
@@ -137,12 +169,13 @@ export function TriangleSineZone({
                     textAnchor={offX >= 0 ? "start" : "end"}
                     fill={MATH_COLORS.paramPrimary}
                     fontSize={fontScale(10)}
+                    fontWeight="bold"
                     paintOrder="stroke"
                     stroke="white"
                     strokeWidth={fontScale(4)}
                     strokeLinejoin="round"
                   >
-                    ∠C' = ∠A = {sasResult.anglesDeg.A.toFixed(1)}°
+                    ∠C' = ∠A
                   </text>
                 </>
               );

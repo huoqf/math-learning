@@ -1,4 +1,4 @@
-import { CoordinateGrid, MathPoint } from "@/components/Math";
+import { MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { solveSSA } from "@/math/triangleSolve";
@@ -50,9 +50,9 @@ export function TriangleSolveSsaScene({
 
   return (
     <g className="triangle-solve-scene">
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      {/* 纯几何范式：移除笛卡尔坐标系 */}
 
-      {/* 射线 AB 方向基准虚线 */}
+      {/* 射线 Ax 方向基准虚线 */}
       <line
         x1={pA.x}
         y1={pA.y}
@@ -62,6 +62,15 @@ export function TriangleSolveSsaScene({
         strokeWidth={1.5}
         strokeDasharray="4,4"
       />
+      <text
+        x={pRayEnd.x + fontScale(8)}
+        y={pRayEnd.y - fontScale(4)}
+        fill={CANVAS_COLORS.labelTextLight}
+        fontSize={fontScale(11)}
+        fontStyle="italic"
+      >
+        x
+      </text>
 
       {/* 基准边 AC (长为 b) */}
       <line
@@ -77,15 +86,52 @@ export function TriangleSolveSsaScene({
         y={pA.y + fontScale(18)}
         textAnchor="middle"
         fill={MATH_COLORS.paramSecondary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        b = {b.toFixed(1)}
+        b
       </text>
+
+      {/* 角 A 角弧 */}
+      {(() => {
+        const arcR = fontScale(22);
+        const startX = pA.x + arcR;
+        const startY = pA.y;
+        const endX = pA.x + arcR * Math.cos(radA);
+        const endY = pA.y + arcR * Math.sin(radA);
+        const midAng = radA / 2;
+        const textR = arcR + fontScale(12);
+
+        return (
+          <g className="angle-A-arc-ssa">
+            <path
+              d={`M ${startX} ${startY} A ${arcR} ${arcR} 0 0 1 ${endX} ${endY}`}
+              fill="none"
+              stroke={MATH_COLORS.paramPrimary}
+              strokeWidth={1.8}
+            />
+            <text
+              x={pA.x + textR * Math.cos(midAng)}
+              y={pA.y + textR * Math.sin(midAng) + fontScale(3)}
+              textAnchor="middle"
+              fill={MATH_COLORS.paramPrimary}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              paintOrder="stroke"
+              stroke="white"
+              strokeWidth={fontScale(3.5)}
+              strokeLinejoin="round"
+            >
+              {angleA}°
+            </text>
+          </g>
+        );
+      })()}
 
       {/* 垂线 h (b sinA) */}
       <line
@@ -97,18 +143,35 @@ export function TriangleSolveSsaScene({
         strokeWidth={2}
         strokeDasharray="3,3"
       />
+      {/* 垂足直角标记 (在 Rt△ACD 内部) */}
+      {(() => {
+        const markSize = fontScale(8);
+        const xOffset = pFootD.x - markSize * Math.cos(radA);
+        const yOffset = pFootD.y - markSize * Math.sin(radA);
+        const perpX = xOffset + markSize * Math.sin(radA);
+        const perpY = yOffset - markSize * Math.cos(radA);
+        return (
+          <path
+            d={`M ${xOffset} ${yOffset} L ${perpX} ${perpY} L ${pFootD.x + markSize * Math.sin(radA)} ${pFootD.y - markSize * Math.cos(radA)}`}
+            fill="none"
+            stroke={MATH_COLORS.tangentLine}
+            strokeWidth={1.5}
+          />
+        );
+      })()}
       <text
         x={(pC.x + pFootD.x) / 2 + fontScale(10)}
         y={(pC.y + pFootD.y) / 2}
         fill={MATH_COLORS.tangentLine}
-        fontSize={fontScale(11)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(3.5)}
         strokeLinejoin="round"
       >
-        h = {h.toFixed(2)}
+        h
       </text>
 
       {/* 以 C 为圆心，半径为 a 的探究圆弧 */}
@@ -166,46 +229,59 @@ export function TriangleSolveSsaScene({
                   : MATH_COLORS.sequenceHighlight
               }
             />
+            {/* 解顶点 B1 / B2 (带下标) */}
             <text
               x={pB.x}
               y={pB.y - fontScale(12)}
               textAnchor="middle"
               fill={MATH_COLORS.function}
-              fontSize={fontScale(12)}
+              fontSize={fontScale(14)}
               fontWeight="bold"
+              fontStyle="italic"
               paintOrder="stroke"
               stroke="white"
               strokeWidth={fontScale(4)}
               strokeLinejoin="round"
             >
-              {solutions.length === 2 ? `B${idx + 1}` : "B"}
+              {solutions.length === 2 ? (
+                <>
+                  B
+                  <tspan fontSize={fontScale(10)} dy={fontScale(4)}>
+                    {idx + 1}
+                  </tspan>
+                </>
+              ) : (
+                "B"
+              )}
             </text>
           </g>
         );
       })}
 
-      {/* 固定顶点 A, C 标注 */}
+      {/* 固定顶点 A, C 标注 (纯正斜体字母) */}
       <text
         x={pA.x - fontScale(10)}
         y={pA.y + fontScale(18)}
         textAnchor="end"
         fill={MATH_COLORS.paramPrimary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        A ({angleA}°)
+        A
       </text>
       <text
         x={pC.x + fontScale(10)}
         y={pC.y + fontScale(18)}
         textAnchor="start"
         fill={MATH_COLORS.paramSecondary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(4)}

@@ -38,30 +38,123 @@ export function TriangleBisectorZone({
   );
 
   const distMD = Math.abs(pD.x - pM.x);
-  const isClose = distMD < 36;
+  const isClose = distMD < 30;
+
+  // 计算中线与角平分线上不同 t 比例的插值点，形成纵向高度落差避让 (ma 偏上 t=0.35, ta 偏下 t=0.68)
+  const posMa = {
+    x: pA.x + (pM.x - pA.x) * 0.35 - fontScale(12),
+    y: pA.y + (pM.y - pA.y) * 0.35,
+  };
+  const posTa = {
+    x: pA.x + (pD.x - pA.x) * 0.68 + fontScale(12),
+    y: pA.y + (pD.y - pA.y) * 0.68,
+  };
 
   return (
     <g className="bisector-mode-scene">
-      {/* 分三角形 ABD 与 ACD 阴影 */}
+      {/* 分三角形 ABD 与 ACD 柔和阴影 */}
       <polygon
         points={`${pA.x},${pA.y} ${pB.x},${pB.y} ${pD.x},${pD.y}`}
-        fill={withAlpha(MATH_COLORS.paramTertiary, 0.08)}
+        fill={withAlpha(MATH_COLORS.paramTertiary, 0.07)}
       />
       <polygon
         points={`${pA.x},${pA.y} ${pC.x},${pC.y} ${pD.x},${pD.y}`}
-        fill={withAlpha(MATH_COLORS.paramSecondary, 0.08)}
+        fill={withAlpha(MATH_COLORS.paramSecondary, 0.07)}
       />
 
-      {/* 中线 AM (虚线) */}
+      {/* ── 顶点 A 分角等角弧 (∠BAD 与 ∠CAD 各自独立且带等角记号) ── */}
+      {(() => {
+        const arcR = fontScale(26);
+        const dirAB = { x: pB.x - pA.x, y: pB.y - pA.y };
+        const dirAD = { x: pD.x - pA.x, y: pD.y - pA.y };
+        const dirAC = { x: pC.x - pA.x, y: pC.y - pA.y };
+
+        const angAB = Math.atan2(dirAB.y, dirAB.x);
+        const angAD = Math.atan2(dirAD.y, dirAD.x);
+        const angAC = Math.atan2(dirAC.y, dirAC.x);
+
+        // 弧 1: AB 到 AD
+        const s1X = pA.x + arcR * Math.cos(angAB);
+        const s1Y = pA.y + arcR * Math.sin(angAB);
+        const e1X = pA.x + arcR * Math.cos(angAD);
+        const e1Y = pA.y + arcR * Math.sin(angAD);
+
+        // 弧 2: AD 到 AC
+        const s2X = pA.x + (arcR - 3) * Math.cos(angAD);
+        const s2Y = pA.y + (arcR - 3) * Math.sin(angAD);
+        const e2X = pA.x + (arcR - 3) * Math.cos(angAC);
+        const e2Y = pA.y + (arcR - 3) * Math.sin(angAC);
+
+        return (
+          <g className="bisector-angle-arcs">
+            <path
+              d={`M ${s1X} ${s1Y} A ${arcR} ${arcR} 0 0 ${angAD > angAB ? 1 : 0} ${e1X} ${e1Y}`}
+              fill="none"
+              stroke={MATH_COLORS.tangentLine}
+              strokeWidth={1.5}
+            />
+            <path
+              d={`M ${s2X} ${s2Y} A ${arcR - 3} ${arcR - 3} 0 0 ${angAC > angAD ? 1 : 0} ${e2X} ${e2Y}`}
+              fill="none"
+              stroke={MATH_COLORS.tangentLine}
+              strokeWidth={1.5}
+            />
+          </g>
+        );
+      })()}
+
+      {/* ── 中线 AM (紫色虚线，偏上方 t=0.35 标注学术符号 ma) ── */}
       <line
         x1={pA.x}
         y1={pA.y}
         x2={pM.x}
         y2={pM.y}
         stroke={MATH_COLORS.complexNum}
-        strokeWidth={2}
+        strokeWidth={1.8}
         strokeDasharray="4,3"
       />
+      <text
+        x={posMa.x}
+        y={posMa.y}
+        textAnchor="end"
+        fill={MATH_COLORS.complexNum}
+        fontSize={fontScale(12)}
+        fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(4)}
+        strokeLinejoin="round"
+      >
+        mₐ
+      </text>
+
+      {/* ── 角平分线 AD (实线，偏下方 t=0.68 标注学术符号 ta) ── */}
+      <line
+        x1={pA.x}
+        y1={pA.y}
+        x2={pD.x}
+        y2={pD.y}
+        stroke={MATH_COLORS.tangentLine}
+        strokeWidth={2.2}
+      />
+      <text
+        x={posTa.x}
+        y={posTa.y}
+        textAnchor="start"
+        fill={MATH_COLORS.tangentLine}
+        fontSize={fontScale(12)}
+        fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(4)}
+        strokeLinejoin="round"
+      >
+        tₐ
+      </text>
+
+      {/* ── 底边中点 M 与分角交点 D (圆点与纯字母点标) ── */}
       <circle
         cx={pM.x}
         cy={pM.y}
@@ -69,78 +162,41 @@ export function TriangleBisectorZone({
         fill={MATH_COLORS.complexNum}
       />
       <text
-        x={pM.x}
-        y={isClose ? pM.y - fontScale(8) : pM.y + fontScale(16)}
-        textAnchor="middle"
+        x={isClose ? pM.x - fontScale(10) : pM.x}
+        y={pM.y - fontScale(7)}
+        textAnchor={isClose ? "end" : "middle"}
         fill={MATH_COLORS.complexNum}
-        fontSize={fontScale(10)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
-        strokeWidth={fontScale(3.5)}
+        strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        M(中点, mₐ={bisectorResult.medianLength.toFixed(2)})
+        M
       </text>
 
-      {/* 角平分线 AD (实线) */}
-      <line
-        x1={pA.x}
-        y1={pA.y}
-        x2={pD.x}
-        y2={pD.y}
-        stroke={MATH_COLORS.tangentLine}
-        strokeWidth={2.5}
-      />
       <circle
         cx={pD.x}
         cy={pD.y}
-        r={fontScale(4)}
+        r={fontScale(3.5)}
         fill={MATH_COLORS.tangentLine}
       />
       <text
-        x={pD.x}
-        y={isClose ? pD.y + fontScale(26) : pD.y + fontScale(20)}
-        textAnchor="middle"
+        x={isClose ? pD.x + fontScale(10) : pD.x}
+        y={pD.y - fontScale(7)}
+        textAnchor={isClose ? "start" : "middle"}
         fill={MATH_COLORS.tangentLine}
-        fontSize={fontScale(11)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
-        strokeWidth={fontScale(3.5)}
+        strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        D(分角线, tₐ={bisectorResult.bisectorLength.toFixed(2)})
-      </text>
-
-      {/* 比例标注 BD : DC */}
-      <text
-        x={(pB.x + pD.x) / 2}
-        y={(pB.y + pD.y) / 2 - fontScale(6)}
-        textAnchor="middle"
-        fill={MATH_COLORS.paramTertiary}
-        fontSize={fontScale(10)}
-        fontWeight="bold"
-        paintOrder="stroke"
-        stroke="white"
-        strokeWidth={fontScale(3.5)}
-        strokeLinejoin="round"
-      >
-        BD={bisectorResult.sideBD.toFixed(2)}
-      </text>
-      <text
-        x={(pC.x + pD.x) / 2}
-        y={(pC.y + pD.y) / 2 - fontScale(6)}
-        textAnchor="middle"
-        fill={MATH_COLORS.paramSecondary}
-        fontSize={fontScale(10)}
-        fontWeight="bold"
-        paintOrder="stroke"
-        stroke="white"
-        strokeWidth={fontScale(3.5)}
-        strokeLinejoin="round"
-      >
-        DC={bisectorResult.sideDC.toFixed(2)}
+        D
       </text>
     </g>
   );

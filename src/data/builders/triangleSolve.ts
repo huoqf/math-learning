@@ -69,7 +69,7 @@ export function buildTriangleSolvePanel(
         label: "向量基底分解系数",
         symbol: "\\vec{AD} = \\lambda\\vec{AB} + \\mu\\vec{AC}",
         value: `λ = ${vectorWeights.lambda.toFixed(2)}, μ = ${vectorWeights.mu.toFixed(2)} (λ+μ=1)`,
-        color: "#2563EB",
+        color: MATH_COLORS.function,
       },
       {
         label: "夹角 A 与边 b, c",

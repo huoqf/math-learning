@@ -49,7 +49,7 @@ export function TriangleAreaZone({
             stroke={MATH_COLORS.complexNum}
             strokeWidth={1.5}
           />
-          {/* 内心 I 标注：置于内切圆中心偏上 */}
+          {/* 内心 I 标注：纯正斜体字母 */}
           <circle
             cx={pIncenter.x}
             cy={pIncenter.y}
@@ -61,14 +61,39 @@ export function TriangleAreaZone({
             y={pIncenter.y - fontScale(6)}
             textAnchor="middle"
             fill={MATH_COLORS.complexNum}
-            fontSize={fontScale(11)}
+            fontSize={fontScale(12)}
             fontWeight="bold"
+            fontStyle="italic"
             paintOrder="stroke"
             stroke="white"
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
-            I (r={sasResult.incircle.radius.toFixed(2)})
+            I
+          </text>
+          {/* 内切圆半径虚线 (向底边 BC 垂下) 与 r 标注 */}
+          <line
+            x1={pIncenter.x}
+            y1={pIncenter.y}
+            x2={pIncenter.x}
+            y2={pB.y}
+            stroke={MATH_COLORS.complexNum}
+            strokeWidth={1}
+            strokeDasharray="2,2"
+          />
+          <text
+            x={pIncenter.x + fontScale(6)}
+            y={(pIncenter.y + pB.y) / 2}
+            fill={MATH_COLORS.complexNum}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fontStyle="italic"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
+          >
+            r
           </text>
         </g>
       )}
@@ -107,13 +132,25 @@ export function TriangleAreaZone({
         strokeWidth={2}
         strokeDasharray="4,3"
       />
-      {/* 垂足直角标记 (底线上方) */}
-      <path
-        d={`M ${pFootD.x - fontScale(8)} ${pFootD.y} L ${pFootD.x - fontScale(8)} ${pFootD.y - fontScale(8)} L ${pFootD.x} ${pFootD.y - fontScale(8)}`}
-        fill="none"
-        stroke={MATH_COLORS.tangentLine}
-        strokeWidth={1.5}
-      />
+
+      {/* 自适应垂足直角标记 (边长为固定 8px) */}
+      {(() => {
+        const markSize = fontScale(8);
+        const isLeftOfB = pFootD.x < pB.x;
+        const dir = isLeftOfB ? 1 : -1;
+        const xOffset = pFootD.x + dir * markSize;
+        const yOffset = pFootD.y - markSize;
+
+        return (
+          <path
+            d={`M ${xOffset} ${pFootD.y} L ${xOffset} ${yOffset} L ${pFootD.x} ${yOffset}`}
+            fill="none"
+            stroke={MATH_COLORS.tangentLine}
+            strokeWidth={1.5}
+          />
+        );
+      })()}
+
       <circle
         cx={pFootD.x}
         cy={pFootD.y}
@@ -122,12 +159,13 @@ export function TriangleAreaZone({
       />
       {/* 垂足字母 D */}
       <text
-        x={pFootD.x + fontScale(8)}
+        x={pFootD.x < pB.x ? pFootD.x - fontScale(8) : pFootD.x + fontScale(8)}
         y={pFootD.y - fontScale(6)}
-        textAnchor="start"
+        textAnchor={pFootD.x < pB.x ? "end" : "start"}
         fill={MATH_COLORS.tangentLine}
-        fontSize={fontScale(10)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
         strokeWidth={fontScale(3.5)}
@@ -141,14 +179,15 @@ export function TriangleAreaZone({
         y={(pA.y + pFootD.y) / 2}
         textAnchor="end"
         fill={MATH_COLORS.tangentLine}
-        fontSize={fontScale(10)}
+        fontSize={fontScale(12)}
         fontWeight="bold"
+        fontStyle="italic"
         paintOrder="stroke"
         stroke="white"
-        strokeWidth={fontScale(3.5)}
+        strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
-        hₐ = {sasResult.altitudeA.length.toFixed(2)}
+        hₐ
       </text>
     </g>
   );
