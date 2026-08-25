@@ -1,5 +1,6 @@
 import type { MathPanelData } from "../types";
 import { computeVectorBasis } from "@/math/vectorBasis";
+import { MATH_COLORS } from "@/theme";
 import type {
   MathQuantity,
   Theorem,
@@ -87,12 +88,12 @@ export function buildVectorBasisPanel(
       },
       {
         label: "分解系数 λ (e1 权重)",
-        symbol: "\\color{#EF4444}{\\lambda}",
+        symbol: `\\color{${MATH_COLORS.paramPrimary}}{\\lambda}`,
         value: isCollinear ? "无唯一解" : lambda.toFixed(3),
       },
       {
         label: "分解系数 μ (e2 权重)",
-        symbol: "\\color{#D97706}{\\mu}",
+        symbol: `\\color{${MATH_COLORS.paramSecondary}}{\\mu}`,
         value: isCollinear ? "无唯一解" : mu.toFixed(3),
       },
     );
@@ -133,12 +134,12 @@ export function buildVectorBasisPanel(
     quantities.push(
       {
         label: "基底权重 x (针对 e1)",
-        symbol: "\\color{#EF4444}{x}",
+        symbol: `\\color{${MATH_COLORS.paramPrimary}}{x}`,
         value: (params.xCoeff ?? 0.4).toFixed(2),
       },
       {
         label: "基底权重 y (针对 e2)",
-        symbol: "\\color{#D97706}{y}",
+        symbol: `\\color{${MATH_COLORS.paramSecondary}}{y}`,
         value: (params.yCoeff ?? 0.6).toFixed(2),
       },
       {
@@ -188,41 +189,103 @@ export function buildVectorBasisPanel(
     );
   }
 
-  // 2. 定理列表
-  const theorems: Theorem[] = [
-    {
+  // 2. 定理列表（根据当前模式动态置顶核心定理）
+  const allTheorems: Record<string, Theorem> = {
+    basisTheorem: {
       name: "平面向量基本定理",
       latex:
         "\\vec{a} = \\lambda \\vec{e}_1 + \\mu \\vec{e}_2 \\quad (\\vec{e}_1 \\nparallel \\vec{e}_2)",
       condition: "基底 {e1, e2} 为同一平面内不共线的两个非零向量",
       note: "对平面内任意向量 a，有且仅有一对实数 λ, μ 使得 a 可由 e1, e2 线性组合唯一表示。",
-      level: "core",
+      level: studyMode === "basisDecomp" ? "core" : "important",
     },
-    {
+    orthogonalTheorem: {
+      name: "正交分解与投影定理",
+      latex:
+        "\\vec{a} = (\\vec{a}\\cdot\\vec{e}_1')\\vec{e}_1' + (\\vec{a}\\cdot\\vec{e}_2')\\vec{e}_2'",
+      condition: "{e1', e2'} 为互相垂直的单位基底 (|e1'|=|e2'|=1, e1' ⊥ e2')",
+      note: "正交基底下分解系数即向量在坐标轴上的正交投影长度，模长满足勾股定理。",
+      level: studyMode === "orthogonal" ? "core" : "important",
+    },
+    collinearTheorem: {
       name: "三点共线与等系数线定理",
       latex:
         "\\vec{OP} = x\\vec{OA} + y\\vec{OB} \\iff x + y = 1 \\quad (A,B,P \\text{ 共线})",
       condition: "O 为平面内任意基准点，A, B, P 为平面上的点",
       note: "当 x+y=1 时 P 在直线 AB 上；当 x+y=k 时，P 点轨迹构成平行于 AB 的等系数直线族。",
-      level: "important",
+      level: studyMode === "collinear" ? "core" : "important",
     },
-  ];
+    triangleTheorem: {
+      name: "爪子模型与重心向量定理",
+      latex:
+        "\\vec{OP} = (1-t)\\vec{OA} + t\\vec{OB}, \\quad \\vec{OG} = \\frac{1}{3}(\\vec{OA} + \\vec{OB})",
+      condition: "P 为线段 AB 上分点 (AP/AB = t)，G 为 △OAB 的重心",
+      note: "一维线段上的内分点在基底下的系数和恒为 1，体现凸组合几何本质。",
+      level: studyMode === "triangleGeom" ? "core" : "important",
+    },
+  };
 
-  // 3. 高考必考点
-  const gaokaoPoints: GaokaoPoint[] = [
-    {
-      text: "建系法与斜坐标系转换：设基底 → 写出目标向量与已知向量的分解式 → 求解 λ, μ。",
-      importance: "gaokao",
-    },
-    {
-      text: "等系数线法速解向量综合题：已知 OP = x OA + y OB 且 x+y=k 时，平移等系数线确定极值范围。",
-      importance: "gaokao",
-    },
-    {
-      text: "三角形四心向量表达：重心 G: (1/3)a + (1/3)b；中点 M: (1/2)a + (1/2)b。",
-      importance: "core",
-    },
+  const modeTheoremKeys: Record<string, string[]> = {
+    basisDecomp: ["basisTheorem", "orthogonalTheorem", "collinearTheorem"],
+    orthogonal: ["orthogonalTheorem", "basisTheorem", "collinearTheorem"],
+    collinear: ["collinearTheorem", "triangleTheorem", "basisTheorem"],
+    triangleGeom: ["triangleTheorem", "collinearTheorem", "basisTheorem"],
+  };
+
+  const selectedKeys = modeTheoremKeys[studyMode] ?? [
+    "basisTheorem",
+    "collinearTheorem",
   ];
+  const theorems: Theorem[] = selectedKeys.map((k) => allTheorems[k]);
+
+  // 3. 高考必考点（随模式提供实战大招）
+  const gaokaoPoints: GaokaoPoint[] = [];
+
+  if (studyMode === "basisDecomp") {
+    gaokaoPoints.push(
+      {
+        text: "斜基底建系与度量化：选取夹角与模长已知的两共起点向量作为基底，将未知向量与数量积全部转化为基底表示。",
+        importance: "gaokao",
+      },
+      {
+        text: "克拉默消元法则：在基底分解中建立二元一次方程组，唯一解的存在性等价于行列式 D ≠ 0（基底不共线）。",
+        importance: "core",
+      },
+    );
+  } else if (studyMode === "orthogonal") {
+    gaokaoPoints.push(
+      {
+        text: "正交建系秒杀解析几何：遇互相垂直线段（如直角三角形、矩形）首选建立直角坐标系，将几何问题代数化。",
+        importance: "gaokao",
+      },
+      {
+        text: "旋转正交系分解：当图形具有特定倾斜对称轴时，旋转坐标系可大幅简化投影计算。",
+        importance: "core",
+      },
+    );
+  } else if (studyMode === "collinear") {
+    gaokaoPoints.push(
+      {
+        text: "等系数线法速解最值：已知 OP = x OA + y OB 且 x+y=k 时，平移等系数线确定向量模长或点积极值范围。",
+        importance: "gaokao",
+      },
+      {
+        text: "交点分点比模型：利用两条共线直线对应的系数和条件（x+y=1 与 m+n=1）联立求解交点向量坐标。",
+        importance: "gaokao",
+      },
+    );
+  } else {
+    gaokaoPoints.push(
+      {
+        text: "爪子模型与分点定比：P 在 AB 上且 AP:PB = λ:μ 时，OP = (μ/(λ+μ))OA + (λ/(λ+μ))OB，两系数和必为 1。",
+        importance: "gaokao",
+      },
+      {
+        text: "奔驰定理与四心统一：重心向量满足 PA + PB + PC = 0，内心/外心/垂心均可由面积或三角正切比给出对应基底系数。",
+        importance: "core",
+      },
+    );
+  }
 
   // 4. 退化 Warning
   const warnings: WarningItem[] = [];
