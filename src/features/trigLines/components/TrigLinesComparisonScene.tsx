@@ -188,6 +188,20 @@ export const TrigLinesComparisonScene: React.FC<
         labelSize={10}
       />
 
+      {/* 垂足 M 与切点 A 直角标尺 ∟ */}
+      <path
+        d={`M ${compData.mDes.x} ${compData.mDes.y - 9} L ${compData.mDes.x - 9} ${compData.mDes.y - 9} L ${compData.mDes.x - 9} ${compData.mDes.y}`}
+        fill="none"
+        stroke={MATH_COLORS.axis}
+        strokeWidth={1.2}
+      />
+      <path
+        d={`M ${aDesign.x - 9} ${aDesign.y} L ${aDesign.x - 9} ${aDesign.y - 9} L ${aDesign.x} ${aDesign.y - 9}`}
+        fill="none"
+        stroke={MATH_COLORS.axis}
+        strokeWidth={1.2}
+      />
+
       {/* 原点与切点标注 */}
       <text
         x={centerPt.x - 14}
@@ -195,6 +209,9 @@ export const TrigLinesComparisonScene: React.FC<
         fill={MATH_COLORS.labelText}
         fontSize={fontScale(11)}
         fontWeight="600"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={3}
         className="select-none pointer-events-none"
       >
         O
@@ -206,6 +223,9 @@ export const TrigLinesComparisonScene: React.FC<
         fontSize={fontScale(11)}
         fontWeight="bold"
         textAnchor="middle"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={3}
         className="select-none pointer-events-none"
       >
         M

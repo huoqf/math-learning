@@ -11,6 +11,7 @@ import {
   solveTrigInequality,
   type TrigInequalityKind,
 } from "@/features/trigLines/math/trigLines";
+import { MATH_COLORS } from "@/theme";
 
 export function buildTrigLinesPanel(
   params: Record<string, number>,
@@ -48,7 +49,7 @@ export function buildTrigLinesPanel(
         label: "正弦线 MP (有向数量)",
         symbol: "MP = \\sin\\alpha",
         value: sinStr,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
         highlight:
           trig.sinVal > 0 ? "positive" : trig.sinVal < 0 ? "negative" : "zero",
       },
@@ -56,7 +57,7 @@ export function buildTrigLinesPanel(
         label: "余弦线 OM (有向数量)",
         symbol: "OM = \\cos\\alpha",
         value: cosStr,
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
         highlight:
           trig.cosVal > 0 ? "positive" : trig.cosVal < 0 ? "negative" : "zero",
       },
@@ -64,7 +65,7 @@ export function buildTrigLinesPanel(
         label: "正切线 AT (有向数量)",
         symbol: "AT = \\tan\\alpha",
         value: tanStr,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
         highlight: !trig.isTanDefined
           ? "extreme"
           : (trig.tanVal ?? 0) > 0
@@ -77,7 +78,7 @@ export function buildTrigLinesPanel(
         label: "勾股恒等式",
         symbol: "\\sin^2\\alpha + \\cos^2\\alpha",
         value: "1.000",
-        color: "#3B82F6",
+        color: MATH_COLORS.function,
       },
     ];
 
@@ -159,31 +160,31 @@ export function buildTrigLinesPanel(
         label: "探究锐角 x",
         symbol: "x",
         value: `${compAlphaDeg}° (${xVal} rad)`,
-        color: "#3B82F6",
+        color: MATH_COLORS.function,
       },
       {
         label: "小三角形面积 S_△OMP",
         symbol: "S_1 = \\frac{1}{2}\\sin x \\cos x",
         value: s1,
-        color: "#6366F1",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "扇形面积 S_扇形OAP",
         symbol: "S_2 = \\frac{1}{2}x",
         value: s2,
-        color: "#3B82F6",
+        color: MATH_COLORS.function,
       },
       {
         label: "大三角形面积 S_△OAT",
         symbol: "S_3 = \\frac{1}{2}\\tan x",
         value: s3,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "三阶函数值比较",
         symbol: "\\sin x < x < \\tan x",
         value: `${sinVal} < ${xVal} < ${tanVal}`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
         highlight: "positive",
       },
     ];
@@ -249,7 +250,7 @@ export function buildTrigLinesPanel(
       label: "目标不等式",
       symbol: kindLabels[ineqKind],
       value: "动态求解中",
-      color: "#3B82F6",
+      color: MATH_COLORS.function,
     },
     {
       label: "当前测试角 α",
@@ -268,7 +269,9 @@ export function buildTrigLinesPanel(
         : ineqKind.startsWith("cos")
           ? cosStr
           : tanStr,
-      color: ineq.isSatisfied ? "#059669" : "#EF4444",
+      color: ineq.isSatisfied
+        ? MATH_COLORS.paramTertiary
+        : MATH_COLORS.paramPrimary,
       highlight: ineq.isSatisfied ? "positive" : "negative",
     },
     {
@@ -277,7 +280,9 @@ export function buildTrigLinesPanel(
       value: ineq.isSatisfied
         ? "✓ 满足不等式 (在区间内)"
         : "✗ 不满足 (在区间外)",
-      color: ineq.isSatisfied ? "#059669" : "#EF4444",
+      color: ineq.isSatisfied
+        ? MATH_COLORS.paramTertiary
+        : MATH_COLORS.paramPrimary,
       highlight: ineq.isSatisfied ? "positive" : "extreme",
     },
   ];

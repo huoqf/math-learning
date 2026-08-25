@@ -11,7 +11,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TrigLinesScene } from "./components/TrigLinesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/trigLines";
@@ -22,6 +22,9 @@ export function TrigLinesAnimation() {
   const [studyMode, setStudyMode] = useState<
     "lines" | "comparison" | "inequality"
   >("lines");
+
+  // 典型构型预设 key
+  const [presetKey, setPresetKey] = useState<string>("free");
 
   // 不等式类型
   const [ineqKind, setIneqKind] = useState<TrigInequalityKind>("sin_gt");
@@ -51,8 +54,9 @@ export function TrigLinesAnimation() {
     });
   }, [params, studyMode, ineqKind]);
 
-  // 参数变更
+  // 参数变更（用户手动拖拽或调参时，自动切回 free 预设）
   const handleParamChange = (key: string, value: number) => {
+    setPresetKey("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -61,7 +65,48 @@ export function TrigLinesAnimation() {
 
   // 重置参数
   const handleReset = () => {
+    setPresetKey("free");
     setParams({ ...defaultParams });
+  };
+
+  // 预设选择切换
+  const handlePresetSelect = (key: string) => {
+    setPresetKey(key);
+    if (studyMode === "lines") {
+      if (key === "free") {
+        setParams((p) => ({ ...p, alphaDeg: 45 }));
+      } else if (key === "special_30") {
+        setParams((p) => ({ ...p, alphaDeg: 30 }));
+      } else if (key === "obtuse_135") {
+        setParams((p) => ({ ...p, alphaDeg: 135 }));
+      } else if (key === "critical_90") {
+        setParams((p) => ({ ...p, alphaDeg: 90 }));
+      }
+    } else if (studyMode === "comparison") {
+      if (key === "free") {
+        setParams((p) => ({ ...p, compAlphaDeg: 40 }));
+      } else if (key === "pi_6") {
+        setParams((p) => ({ ...p, compAlphaDeg: 30 }));
+      } else if (key === "pi_4") {
+        setParams((p) => ({ ...p, compAlphaDeg: 45 }));
+      } else if (key === "pi_3") {
+        setParams((p) => ({ ...p, compAlphaDeg: 60 }));
+      }
+    } else if (studyMode === "inequality") {
+      if (key === "free") {
+        setIneqKind("sin_gt");
+        setParams((p) => ({ ...p, ineqThreshold: 0.5, alphaDeg: 45 }));
+      } else if (key === "sin_half") {
+        setIneqKind("sin_gt");
+        setParams((p) => ({ ...p, ineqThreshold: 0.5, alphaDeg: 60 }));
+      } else if (key === "cos_neg_half") {
+        setIneqKind("cos_lt");
+        setParams((p) => ({ ...p, ineqThreshold: -0.5, alphaDeg: 150 }));
+      } else if (key === "tan_one") {
+        setIneqKind("tan_gt");
+        setParams((p) => ({ ...p, ineqThreshold: 1, alphaDeg: 60 }));
+      }
+    }
   };
 
   // 左屏声明式参数配置 (按当前研究模式严格过滤)
@@ -93,7 +138,7 @@ export function TrigLinesAnimation() {
       });
   }, [params, studyMode]);
 
-  // 动态拼装三位一体公式 (带有 Hex 色彩)
+  // 动态拼装三位一体公式 (使用 MATH_COLORS Token 色彩)
   const equationLatex = useMemo(() => {
     if (studyMode === "lines") {
       const alpha = params.alphaDeg ?? 45;
@@ -102,7 +147,7 @@ export function TrigLinesAnimation() {
       const cosV = Math.cos(rad).toFixed(3);
       const isTanDef = Math.abs(Math.cos(rad)) > 1e-7;
       const tanV = isTanDef ? Math.tan(rad).toFixed(3) : "\\text{无意义}";
-      return `\\sin\\alpha = \\color{#EF4444}{${sinV}}, \\quad \\cos\\alpha = \\color{#D97706}{${cosV}}, \\quad \\tan\\alpha = \\color{#059669}{${tanV}}`;
+      return `\\sin\\alpha = \\color{${MATH_COLORS.paramPrimary}}{${sinV}}, \\quad \\cos\\alpha = \\color{${MATH_COLORS.paramSecondary}}{${cosV}}, \\quad \\tan\\alpha = \\color{${MATH_COLORS.paramTertiary}}{${tanV}}`;
     }
 
     if (studyMode === "comparison") {
@@ -111,7 +156,7 @@ export function TrigLinesAnimation() {
       const sinV = Math.sin(xRad).toFixed(3);
       const xV = xRad.toFixed(3);
       const tanV = Math.tan(xRad).toFixed(3);
-      return `\\color{#6366F1}{S_{\\triangle OMP}} < \\color{#3B82F6}{S_{\\text{扇形}OAP}} < \\color{#059669}{S_{\\triangle OAT}} \\implies \\color{#EF4444}{\\sin x} < \\color{#3B82F6}{x} < \\color{#059669}{\\tan x} \\quad (${sinV} < ${xV} < ${tanV})`;
+      return `\\color{${MATH_COLORS.paramPrimary}}{S_{\\triangle OMP}} < \\color{${MATH_COLORS.function}}{S_{\\text{扇形}OAP}} < \\color{${MATH_COLORS.paramTertiary}}{S_{\\triangle OAT}} \\implies \\color{${MATH_COLORS.paramPrimary}}{\\sin x} < \\color{${MATH_COLORS.function}}{x} < \\color{${MATH_COLORS.paramTertiary}}{\\tan x} \\quad (${sinV} < ${xV} < ${tanV})`;
     }
 
     // inequality
@@ -123,7 +168,7 @@ export function TrigLinesAnimation() {
       tan_gt: `\\tan x > ${params.ineqThreshold?.toFixed(2)}`,
       tan_lt: `\\tan x < ${params.ineqThreshold?.toFixed(2)}`,
     };
-    return `\\text{目标不等式：} \\color{#3B82F6}{${ineqLabels[ineqKind]}} \\quad (\\text{测试角 } \\alpha = ${params.alphaDeg}^\\circ)`;
+    return `\\text{目标不等式：} \\color{${MATH_COLORS.function}}{${ineqLabels[ineqKind]}} \\quad (\\text{测试角 } \\alpha = ${params.alphaDeg}^\\circ)`;
   }, [
     studyMode,
     params.alphaDeg,
@@ -152,8 +197,108 @@ export function TrigLinesAnimation() {
                 { key: "inequality", label: "三角不等式" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as typeof studyMode)}
+              onChange={(k) => {
+                setStudyMode(k as typeof studyMode);
+                setPresetKey("free");
+              }}
             />
+          </LeftPanelSection>
+
+          {/* 典型预设 2x2 黄金规范 */}
+          <LeftPanelSection
+            title="典型构型预设"
+            subtitle="选择高考经典模型或自由探究"
+          >
+            {studyMode === "lines" && (
+              <SelectGrid
+                items={[
+                  { key: "free", label: "自由探究", description: "全参数开放" },
+                  {
+                    key: "special_30",
+                    label: "30°特殊角",
+                    formula: "30^\\circ",
+                    description: "正弦1/2",
+                  },
+                  {
+                    key: "obtuse_135",
+                    label: "135°钝角",
+                    formula: "135^\\circ",
+                    description: "反向切线",
+                  },
+                  {
+                    key: "critical_90",
+                    label: "90°临界",
+                    formula: "90^\\circ",
+                    description: "切线平行",
+                  },
+                ]}
+                value={presetKey}
+                onChange={handlePresetSelect}
+                variant="filled"
+                color="primary"
+                columns={2}
+              />
+            )}
+            {studyMode === "comparison" && (
+              <SelectGrid
+                items={[
+                  { key: "free", label: "自由探究", description: "全参数开放" },
+                  {
+                    key: "pi_6",
+                    label: "30°(π/6)",
+                    formula: "\\frac{\\pi}{6}",
+                    description: "经典放缩",
+                  },
+                  {
+                    key: "pi_4",
+                    label: "45°(π/4)",
+                    formula: "\\frac{\\pi}{4}",
+                    description: "正余弦对称",
+                  },
+                  {
+                    key: "pi_3",
+                    label: "60°(π/3)",
+                    formula: "\\frac{\\pi}{3}",
+                    description: "正切高陡",
+                  },
+                ]}
+                value={presetKey}
+                onChange={handlePresetSelect}
+                variant="filled"
+                color="primary"
+                columns={2}
+              />
+            )}
+            {studyMode === "inequality" && (
+              <SelectGrid
+                items={[
+                  { key: "free", label: "自由探究", description: "全参数开放" },
+                  {
+                    key: "sin_half",
+                    label: "正弦>1/2",
+                    formula: "\\sin x>\\frac{1}{2}",
+                    description: "一二象限",
+                  },
+                  {
+                    key: "cos_neg_half",
+                    label: "余弦<-1/2",
+                    formula: "\\cos x<-\\frac{1}{2}",
+                    description: "钝角区间",
+                  },
+                  {
+                    key: "tan_one",
+                    label: "正切>1",
+                    formula: "\\tan x>1",
+                    description: "对顶双弧",
+                  },
+                ]}
+                value={presetKey}
+                onChange={handlePresetSelect}
+                variant="filled"
+                color="primary"
+                columns={2}
+              />
+            )}
           </LeftPanelSection>
 
           {/* 模式 1：函数线显隐开关（紧凑 2 列） */}
@@ -235,7 +380,10 @@ export function TrigLinesAnimation() {
                   { key: "tan_lt", formula: "\\tan x < k" },
                 ]}
                 value={ineqKind}
-                onChange={(k) => setIneqKind(k as TrigInequalityKind)}
+                onChange={(k) => {
+                  setIneqKind(k as TrigInequalityKind);
+                  setPresetKey("free");
+                }}
                 variant="filled"
                 columns={2}
               />
@@ -252,6 +400,34 @@ export function TrigLinesAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 教学启发引导卡片 (置于底部辅助区) */}
+          <LeftPanelSection title="教学探究启发" subtitle="数形结合思考引导">
+            <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 text-xs text-neutral-600 space-y-2">
+              <div>
+                <span className="font-semibold text-neutral-800">
+                  【基础条件】
+                </span>
+                {studyMode === "lines" &&
+                  " 单位圆半径 r=1，P(cosα, sinα)，过 A(1,0) 作切线交终边于 T。"}
+                {studyMode === "comparison" &&
+                  " 锐角 x ∈ (0, π/2)，△OMP ⊂ 扇形 OAP ⊂ △OAT。"}
+                {studyMode === "inequality" &&
+                  " 终边扫过单位圆弧，函数线有向长度需越过基准阈值。"}
+              </div>
+              <div>
+                <span className="font-semibold text-neutral-800">
+                  【探究问题】
+                </span>
+                {studyMode === "lines" &&
+                  " 拖拽点 P 观察：当终边进入第二、三象限时，正切线 AT 为何交在反向延长线上？"}
+                {studyMode === "comparison" &&
+                  " 改变锐角 x，观察三者面积比值如何逼近极限值 1？"}
+                {studyMode === "inequality" &&
+                  " 观察交点界值与圆弧旋转方向，如何逆时针规范书写解集区间？"}
+              </div>
+            </div>
           </LeftPanelSection>
         </LeftPanel>
       }

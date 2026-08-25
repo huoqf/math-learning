@@ -319,6 +319,23 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
         </g>
       )}
 
+      {/* 原点与垂足/切线直角标尺 ∟ */}
+      {Math.abs(sinVal) > 0.08 && Math.abs(cosVal) > 0.08 && (
+        <path
+          d={`M ${mDesign.x} ${mDesign.y + (sinVal >= 0 ? -9 : 9)} L ${mDesign.x + (cosVal >= 0 ? -9 : 9)} ${mDesign.y + (sinVal >= 0 ? -9 : 9)} L ${mDesign.x + (cosVal >= 0 ? -9 : 9)} ${mDesign.y}`}
+          fill="none"
+          stroke={MATH_COLORS.axis}
+          strokeWidth={1.2}
+        />
+      )}
+      {/* A(1,0) 切线直角标尺 */}
+      <path
+        d={`M ${aDesign.x - 9} ${aDesign.y} L ${aDesign.x - 9} ${aDesign.y - 9} L ${aDesign.x} ${aDesign.y - 9}`}
+        fill="none"
+        stroke={MATH_COLORS.axis}
+        strokeWidth={1.2}
+      />
+
       {/* 原点与切点标注 */}
       <text
         x={centerPt.x - 14}
@@ -326,6 +343,9 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
         fill={MATH_COLORS.labelText}
         fontSize={fontScale(11)}
         fontWeight="600"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={3}
         className="select-none pointer-events-none"
       >
         O
@@ -338,6 +358,9 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
           fontSize={fontScale(11)}
           fontWeight="bold"
           textAnchor="middle"
+          paintOrder="stroke"
+          stroke="white"
+          strokeWidth={3}
           className="select-none pointer-events-none"
         >
           M
@@ -386,6 +409,9 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
         fontSize={fontScale(11)}
         fontWeight="bold"
         textAnchor={cosVal >= 0 ? "start" : "end"}
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={3}
         className="select-none pointer-events-none"
       >
         P({cosVal.toFixed(2)}, {sinVal.toFixed(2)})
