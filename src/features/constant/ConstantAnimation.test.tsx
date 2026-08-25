@@ -13,6 +13,7 @@ vi.mock("@/components/Math", () => ({
   CoordinateGrid: () => <div data-testid="coordinate-grid" />,
   FunctionGraph: () => null,
   InteractivePoint: () => null,
+  MathPoint: () => null,
   VectorArrow: () => null,
   Asymptote: () => null,
   IntervalShadow: () => null,

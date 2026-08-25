@@ -5,7 +5,7 @@ import {
   CoordinateGrid,
   FunctionGraph,
   InteractivePoint,
-  VectorArrow,
+  MathPoint,
   IntervalShadow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
@@ -73,20 +73,50 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
   const evalFDouble = (x: number) => (x - xf) * (x - xf) + yf;
   const evalGDouble = (x: number) => -(x - xg) * (x - xg) + yg;
 
-  // 4. 定位与比较
-  const ptFMin = mathToDesign(res.xFMin, res.fMin, scale);
-  const ptGMax = mathToDesign(res.xGMax, res.gMax, scale);
-
-  // 5. 对垒博弈箭头的文本
-  const arrowLabel = useMemo(() => {
-    const symbolStr = res.isCurrentLogicTrue ? "≥" : "<";
-    return `${res.battlePointF.y.toFixed(2)} ${symbolStr} ${res.battlePointG.y.toFixed(2)}`;
-  }, [res]);
+  // 4. 对垒两点各自的研究极值语义（使用规范高中数学符号，杜绝 f_min 下划线）
+  const battleMeta = useMemo(() => {
+    switch (selectedLogic) {
+      case "all_all":
+        return {
+          fSymbol: "f_{min}",
+          gSymbol: "g_{max}",
+          fName: "f最小",
+          gName: "g最大",
+        };
+      case "all_exist":
+        return {
+          fSymbol: "f_{min}",
+          gSymbol: "g_{min}",
+          fName: "f最小",
+          gName: "g最小",
+        };
+      case "exist_all":
+        return {
+          fSymbol: "f_{max}",
+          gSymbol: "g_{max}",
+          fName: "f最大",
+          gName: "g最大",
+        };
+      case "exist_exist":
+        return {
+          fSymbol: "f_{max}",
+          gSymbol: "g_{min}",
+          fName: "f最大",
+          gName: "g最小",
+        };
+      case "same_var":
+        return {
+          fSymbol: "f(x_{min})",
+          gSymbol: "g(x_{min})",
+          fName: "f",
+          gName: "g",
+        };
+    }
+  }, [selectedLogic]);
 
   // 计算同变量违背区间：交集 [1.5, 2.0] 内 f(x) < g(x) 的部分
   const sameVarViolatedInterval = useMemo<[number, number] | null>(() => {
     if (selectedLogic !== "same_var") return null;
-    // 解 2x^2 - 2(xf + xg)x + (xf^2 + yf + xg^2 - yg) < 0
     const A = 2;
     const B = -2 * (xf + xg);
     const C = xf * xf + yf + xg * xg - yg;
@@ -102,64 +132,14 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
     return vStart < vEnd ? [vStart, vEnd] : null;
   }, [xf, yf, xg, yg, selectedLogic]);
 
-  // 计算对垒标注文字碰撞避让偏移
-  const { battleLabelOffsetYF, battleLabelOffsetYG } = useMemo(() => {
-    const ptF = mathToDesign(res.battlePointF.x, res.battlePointF.y, scale);
-    const ptG = mathToDesign(res.battlePointG.x, res.battlePointG.y, scale);
-    const dx = Math.abs(ptF.x - ptG.x);
-    const dy = Math.abs(ptF.y - ptG.y);
-
-    if (dx < 60 && dy < 18) {
-      // 较低点 (SVG y 较大，即数学高度较低者) 往下偏，较高点 往上偏
-      const fIsLower = ptF.y > ptG.y;
-      return {
-        battleLabelOffsetYF: fIsLower ? 12 : -10,
-        battleLabelOffsetYG: fIsLower ? -10 : 12,
-      };
-    }
-    return {
-      battleLabelOffsetYF: -4,
-      battleLabelOffsetYG: -4,
-    };
-  }, [res.battlePointF, res.battlePointG, scale]);
-
-  // 6. 对垒两点各自的研究极值语义
-  const battleLabels = useMemo(() => {
-    let fText = "";
-    let gText = "";
-    switch (selectedLogic) {
-      case "all_all":
-        fText = "f_min";
-        gText = "g_max";
-        break;
-      case "all_exist":
-        fText = "f_min";
-        gText = "g_min";
-        break;
-      case "exist_all":
-        fText = "f_max";
-        gText = "g_max";
-        break;
-      case "exist_exist":
-        fText = "f_max";
-        gText = "g_min";
-        break;
-      case "same_var":
-        fText = "f";
-        gText = "g";
-        break;
-    }
-    return { fText, gText };
-  }, [selectedLogic]);
-
-  // 7. 标注避让：f/g 顶点拖拽控制点标签位置
+  // 5. 标注避让：顶点控制点（仅使用学术字母 P₁ / P₂，严禁在点旁堆砌长坐标）
   const placedLabels = useMemo(() => {
     const ptFV = mathToDesign(xf, yf, scale);
     const ptGV = mathToDesign(xg, yg, scale);
     const entries: LabelEntry[] = [
       {
         key: "f_vertex",
-        text: `f(x)顶点(${xf.toFixed(2)}, ${yf.toFixed(2)})`,
+        text: "P₁",
         x: ptFV.x,
         y: ptFV.y,
         anchor: "middle",
@@ -168,107 +148,206 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
       },
       {
         key: "g_vertex",
-        text: `g(x)顶点(${xg.toFixed(2)}, ${yg.toFixed(2)})`,
+        text: "P₂",
         x: ptGV.x,
         y: ptGV.y,
         anchor: "middle",
-        dy: -12,
+        dy: 14,
       },
     ];
     return avoidLabels(entries, { fontScale });
   }, [xf, yf, xg, yg, scale, fontScale]);
 
+  // 设计坐标预计算
+  const ptDecisionF = mathToDesign(
+    res.battlePointF.x,
+    res.battlePointF.y,
+    scale,
+  );
+  const ptDecisionG = mathToDesign(
+    res.battlePointG.x,
+    res.battlePointG.y,
+    scale,
+  );
+  const ptYAxisF = mathToDesign(0, res.battlePointF.y, scale);
+  const ptYAxisG = mathToDesign(0, res.battlePointG.y, scale);
+
+  // 顶点在 X 轴上的垂足设计坐标
+  const ptAxisXF = mathToDesign(xf, 0, scale);
+  const ptAxisXG = mathToDesign(xg, 0, scale);
+  const ptFV = mathToDesign(xf, yf, scale);
+  const ptGV = mathToDesign(xg, yg, scale);
+
+  // 高度差计算（Δy = yF - yG）
+  const deltaY = res.battlePointF.y - res.battlePointG.y;
+  const isSatisfied = res.isCurrentLogicTrue;
+
+  // 区间端点设计坐标
+  const ptFStart = mathToDesign(mf, evalFDouble(mf), scale);
+  const ptFEnd = mathToDesign(nf, evalFDouble(nf), scale);
+  const ptGStart = mathToDesign(mg, evalGDouble(mg), scale);
+  const ptGEnd = mathToDesign(ng, evalGDouble(ng), scale);
+  const ptAxisFStart = mathToDesign(mf, 0, scale);
+  const ptAxisFEnd = mathToDesign(nf, 0, scale);
+  const ptAxisGStart = mathToDesign(mg, 0, scale);
+  const ptAxisGEnd = mathToDesign(ng, 0, scale);
+
+  // Y 轴值域柱设计坐标（x 固定在 y 轴两侧）
+  const ptFValMin = mathToDesign(0, res.fMin, scale);
+  const ptFValMax = mathToDesign(0, res.fMax, scale);
+  const ptGValMin = mathToDesign(0, res.gMin, scale);
+  const ptGValMax = mathToDesign(0, res.gMax, scale);
+
   return (
     <g>
-      {/* 坐标轴背景 */}
+      {/* 坐标轴背景（纯净高中数学坐标系） */}
       <CoordinateGrid scale={scale} fontScale={fontScale} />
 
-      {/* 1. 区间 I1 的底纹遮罩与端点虚线 */}
-      <rect
-        x={mathToDesign(mf, 0, scale).x}
-        y={mathToDesign(0, scale.yMax, scale).y}
-        width={mathToDesign(nf, 0, scale).x - mathToDesign(mf, 0, scale).x}
-        height={
-          mathToDesign(0, scale.yMin, scale).y -
-          mathToDesign(0, scale.yMax, scale).y
-        }
-        fill={withAlpha(MATH_COLORS.function, 0.03)}
-        pointerEvents="none"
-      />
+      {/* 1. 顶点向 X 轴引出的对称轴垂线与垂足标记 */}
       <line
-        x1={mathToDesign(mf, 0, scale).x}
-        y1={mathToDesign(0, scale.yMax, scale).y}
-        x2={mathToDesign(mf, 0, scale).x}
-        y2={mathToDesign(0, scale.yMin, scale).y}
-        stroke={MATH_COLORS.asymptote}
+        x1={ptFV.x}
+        y1={ptFV.y}
+        x2={ptAxisXF.x}
+        y2={ptAxisXF.y}
+        stroke={withAlpha(MATH_COLORS.paramPrimary, 0.45)}
         strokeWidth={1}
         strokeDasharray="2 2"
       />
+      <circle
+        cx={ptAxisXF.x}
+        cy={ptAxisXF.y}
+        r={2}
+        fill={MATH_COLORS.paramPrimary}
+      />
       <line
-        x1={mathToDesign(nf, 0, scale).x}
-        y1={mathToDesign(0, scale.yMax, scale).y}
-        x2={mathToDesign(nf, 0, scale).x}
-        y2={mathToDesign(0, scale.yMin, scale).y}
-        stroke={MATH_COLORS.asymptote}
+        x1={ptGV.x}
+        y1={ptGV.y}
+        x2={ptAxisXG.x}
+        y2={ptAxisXG.y}
+        stroke={withAlpha(MATH_COLORS.paramSecondary, 0.45)}
         strokeWidth={1}
         strokeDasharray="2 2"
+      />
+      <circle
+        cx={ptAxisXG.x}
+        cy={ptAxisXG.y}
+        r={2}
+        fill={MATH_COLORS.paramSecondary}
+      />
+
+      {/* 2. 定义域区间垂足引线（符合高中作图：端点向 X 轴引垂线） */}
+      {/* f(x) 定义域端点向 x 轴引垂线 */}
+      <line
+        x1={ptFStart.x}
+        y1={ptFStart.y}
+        x2={ptAxisFStart.x}
+        y2={ptAxisFStart.y}
+        stroke={withAlpha(MATH_COLORS.function, 0.35)}
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
+      <line
+        x1={ptFEnd.x}
+        y1={ptFEnd.y}
+        x2={ptAxisFEnd.x}
+        y2={ptAxisFEnd.y}
+        stroke={withAlpha(MATH_COLORS.function, 0.35)}
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
+      {/* g(x) 定义域端点向 x 轴引垂线 */}
+      <line
+        x1={ptGStart.x}
+        y1={ptGStart.y}
+        x2={ptAxisGStart.x}
+        y2={ptAxisGStart.y}
+        stroke={withAlpha(MATH_COLORS.functionSecondary, 0.35)}
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
+      <line
+        x1={ptGEnd.x}
+        y1={ptGEnd.y}
+        x2={ptAxisGEnd.x}
+        y2={ptAxisGEnd.y}
+        stroke={withAlpha(MATH_COLORS.functionSecondary, 0.35)}
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
+
+      {/* X 轴下方的定义域区间线段标注 */}
+      {/* I1 区间标尺 */}
+      <line
+        x1={ptAxisFStart.x}
+        y1={ptAxisFStart.y + 12}
+        x2={ptAxisFEnd.x}
+        y2={ptAxisFEnd.y + 12}
+        stroke={MATH_COLORS.function}
+        strokeWidth={2}
+      />
+      <circle
+        cx={ptAxisFStart.x}
+        cy={ptAxisFStart.y + 12}
+        r={2}
+        fill={MATH_COLORS.function}
+      />
+      <circle
+        cx={ptAxisFEnd.x}
+        cy={ptAxisFEnd.y + 12}
+        r={2}
+        fill={MATH_COLORS.function}
       />
       <text
-        x={mathToDesign(mf + 0.1, 0, scale).x}
-        y={mathToDesign(0, scale.yMin - 0.2, scale).y}
+        x={(ptAxisFStart.x + ptAxisFEnd.x) / 2}
+        y={ptAxisFStart.y + 24}
+        textAnchor="middle"
         fill={MATH_COLORS.function}
-        fontSize={fontScale(9)}
-        className="font-bold select-none"
+        fontSize={fontScale(9.5)}
+        fontWeight="bold"
+        className="select-none"
       >
         I₁ = [0.5, 2.0]
       </text>
 
-      {/* 2. 区间 I2 的底纹遮罩与端点虚线 */}
-      <rect
-        x={mathToDesign(mg, 0, scale).x}
-        y={mathToDesign(0, scale.yMax, scale).y}
-        width={mathToDesign(ng, 0, scale).x - mathToDesign(mg, 0, scale).x}
-        height={
-          mathToDesign(0, scale.yMin, scale).y -
-          mathToDesign(0, scale.yMax, scale).y
-        }
-        fill={withAlpha(MATH_COLORS.functionSecondary, 0.03)}
-        pointerEvents="none"
-      />
+      {/* I2 区间标尺 */}
       <line
-        x1={mathToDesign(mg, 0, scale).x}
-        y1={mathToDesign(0, scale.yMax, scale).y}
-        x2={mathToDesign(mg, 0, scale).x}
-        y2={mathToDesign(0, scale.yMin, scale).y}
-        stroke={MATH_COLORS.asymptote}
-        strokeWidth={1}
-        strokeDasharray="2 2"
+        x1={ptAxisGStart.x}
+        y1={ptAxisGStart.y + 12}
+        x2={ptAxisGEnd.x}
+        y2={ptAxisGEnd.y + 12}
+        stroke={MATH_COLORS.functionSecondary}
+        strokeWidth={2}
       />
-      <line
-        x1={mathToDesign(ng, 0, scale).x}
-        y1={mathToDesign(0, scale.yMax, scale).y}
-        x2={mathToDesign(ng, 0, scale).x}
-        y2={mathToDesign(0, scale.yMin, scale).y}
-        stroke={MATH_COLORS.asymptote}
-        strokeWidth={1}
-        strokeDasharray="2 2"
+      <circle
+        cx={ptAxisGStart.x}
+        cy={ptAxisGStart.y + 12}
+        r={2}
+        fill={MATH_COLORS.functionSecondary}
+      />
+      <circle
+        cx={ptAxisGEnd.x}
+        cy={ptAxisGEnd.y + 12}
+        r={2}
+        fill={MATH_COLORS.functionSecondary}
       />
       <text
-        x={mathToDesign(ng - 0.9, 0, scale).x}
-        y={mathToDesign(0, scale.yMin - 0.2, scale).y}
+        x={(ptAxisGStart.x + ptAxisGEnd.x) / 2}
+        y={ptAxisGStart.y + 24}
+        textAnchor="middle"
         fill={MATH_COLORS.functionSecondary}
-        fontSize={fontScale(9)}
-        className="font-bold select-none"
+        fontSize={fontScale(9.5)}
+        fontWeight="bold"
+        className="select-none"
       >
         I₂ = [1.5, 3.0]
       </text>
 
       {/* 3. f(x) 抛物线绘制 */}
-      {/* 区间外虚线 */}
+      {/* 区间外细虚线 */}
       <FunctionGraph
         fn={(x) => (x < mf || x > nf ? evalFDouble(x) : NaN)}
         scale={scale}
-        color={withAlpha(MATH_COLORS.function, 0.35)}
+        color={withAlpha(MATH_COLORS.function, 0.3)}
         strokeWidth={1.2}
         strokeDasharray="3 3"
       />
@@ -279,13 +358,27 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         color={MATH_COLORS.function}
         strokeWidth={2.8}
       />
+      {/* f(x) 曲线标签 */}
+      <text
+        x={mathToDesign(0.6, evalFDouble(0.6), scale).x - 6}
+        y={mathToDesign(0.6, evalFDouble(0.6), scale).y - 6}
+        fill={MATH_COLORS.function}
+        fontSize={fontScale(11)}
+        fontWeight="bold"
+        className="select-none"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={3}
+      >
+        y = f(x)
+      </text>
 
       {/* 4. g(x) 抛物线绘制 */}
-      {/* 区间外虚线 */}
+      {/* 区间外细虚线 */}
       <FunctionGraph
         fn={(x) => (x < mg || x > ng ? evalGDouble(x) : NaN)}
         scale={scale}
-        color={withAlpha(MATH_COLORS.functionSecondary, 0.35)}
+        color={withAlpha(MATH_COLORS.functionSecondary, 0.3)}
         strokeWidth={1.2}
         strokeDasharray="3 3"
       />
@@ -296,143 +389,311 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         color={MATH_COLORS.functionSecondary}
         strokeWidth={2.8}
       />
+      {/* g(x) 曲线标签 */}
+      <text
+        x={mathToDesign(2.85, evalGDouble(2.85), scale).x + 6}
+        y={mathToDesign(2.85, evalGDouble(2.85), scale).y - 6}
+        fill={MATH_COLORS.functionSecondary}
+        fontSize={fontScale(11)}
+        fontWeight="bold"
+        className="select-none"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={3}
+      >
+        y = g(x)
+      </text>
 
-      {/* 同自变量作用域交集 [1.5, 2.0] 特殊边框标记 */}
-      {selectedLogic === "same_var" && (
-        <rect
-          x={mathToDesign(1.5, 0, scale).x}
-          y={mathToDesign(0, scale.yMax, scale).y}
-          width={mathToDesign(2.0, 0, scale).x - mathToDesign(1.5, 0, scale).x}
-          height={
-            mathToDesign(0, scale.yMin, scale).y -
-            mathToDesign(0, scale.yMax, scale).y
-          }
-          fill={withAlpha(MATH_COLORS.inequality, 0.05)}
-          stroke={MATH_COLORS.inequality}
-          strokeWidth={1.5}
-          strokeDasharray="4 4"
-          pointerEvents="none"
-        />
-      )}
-
-      {/* 同自变量违背区间高亮（f(x) < g(x)） */}
-      {selectedLogic === "same_var" && sameVarViolatedInterval && (
-        <g>
-          {/* 使用 IntervalShadow 高亮同自变量违背区间 */}
-          <IntervalShadow
-            fn={evalFDouble}
-            x1={sameVarViolatedInterval[0]}
-            x2={sameVarViolatedInterval[1]}
-            scale={scale}
-            fillColor={withAlpha(MATH_COLORS.degeneracy, 0.12)}
-            strokeColor={MATH_COLORS.degeneracy}
-            strokeWidth={1.5}
-          />
-          <IntervalShadow
-            fn={evalGDouble}
-            x1={sameVarViolatedInterval[0]}
-            x2={sameVarViolatedInterval[1]}
-            scale={scale}
-            fillColor={withAlpha(MATH_COLORS.degeneracy, 0.05)}
-            strokeColor={MATH_COLORS.degeneracy}
-            strokeWidth={1.5}
-          />
-          {/* 提示文字 */}
-          <text
-            x={
-              mathToDesign(
-                (sameVarViolatedInterval[0] + sameVarViolatedInterval[1]) / 2,
-                0,
-                scale,
-              ).x
-            }
-            y={mathToDesign(0, scale.yMin + 0.3, scale).y}
-            textAnchor="middle"
-            fill={MATH_COLORS.degeneracy}
-            fontSize={fontScale(10)}
-            className="font-bold select-none"
-          >
-            违背区间 [{sameVarViolatedInterval[0].toFixed(2)},{" "}
-            {sameVarViolatedInterval[1].toFixed(2)}]
-          </text>
-        </g>
-      )}
-
-      {/* 5. 绘制两曲线在研究区间内的最值水平虚线，以辅助视觉比照 */}
-      {selectedLogic !== "same_var" && (
-        <g>
-          {/* f 最值线 */}
-          <line
-            x1={mathToDesign(scale.xMin, res.fMin, scale).x}
-            y1={ptFMin.y}
-            x2={mathToDesign(scale.xMax, res.fMin, scale).x}
-            y2={ptFMin.y}
-            stroke={withAlpha(MATH_COLORS.function, 0.35)}
-            strokeWidth={1}
-            strokeDasharray="3 3"
-          />
-          {/* g 最值线 */}
-          <line
-            x1={mathToDesign(scale.xMin, res.gMax, scale).x}
-            y1={ptGMax.y}
-            x2={mathToDesign(scale.xMax, res.gMax, scale).x}
-            y2={ptGMax.y}
-            stroke={withAlpha(MATH_COLORS.functionSecondary, 0.35)}
-            strokeWidth={1}
-            strokeDasharray="3 3"
-          />
-        </g>
-      )}
-
-      {/* 6. 双变量博弈对垒连接线 */}
-      <VectorArrow
-        from={[res.battlePointF.x, res.battlePointF.y]}
-        to={[res.battlePointG.x, res.battlePointG.y]}
-        scale={scale}
-        color={
-          res.isCurrentLogicTrue
-            ? MATH_COLORS.inequality
-            : MATH_COLORS.degeneracy
-        }
-        strokeWidth={2.5}
-        label={arrowLabel}
-        labelSize={10}
-        fontScale={fontScale}
-        labelOffset={[0, -10]}
+      {/* 5. Y 轴上的值域区间投影柱（高中最值与值域核心表达范式） */}
+      {/* f(x) 在 Y 轴左侧的值域条 */}
+      <line
+        x1={ptYAxisF.x - 6}
+        y1={ptFValMin.y}
+        x2={ptYAxisF.x - 6}
+        y2={ptFValMax.y}
+        stroke={MATH_COLORS.function}
+        strokeWidth={3.5}
+        strokeLinecap="round"
+      />
+      {/* g(x) 在 Y 轴右侧的值域条 */}
+      <line
+        x1={ptYAxisG.x + 6}
+        y1={ptGValMin.y}
+        x2={ptYAxisG.x + 6}
+        y2={ptGValMax.y}
+        stroke={MATH_COLORS.functionSecondary}
+        strokeWidth={3.5}
+        strokeLinecap="round"
       />
 
-      {/* 7. 对垒点标注文字 (向外避让绘制，防止重叠) */}
-      {/* f 侧对垒点标注 */}
-      <text
-        x={mathToDesign(res.battlePointF.x, res.battlePointF.y, scale).x - 6}
-        y={
-          mathToDesign(res.battlePointF.x, res.battlePointF.y, scale).y +
-          battleLabelOffsetYF
-        }
-        textAnchor="end"
-        fill={MATH_COLORS.function}
-        fontSize={fontScale(9)}
-        className="font-bold font-mono select-none"
-      >
-        {battleLabels.fText}({res.battlePointF.y.toFixed(2)})
-      </text>
+      {/* 6. 双变量模式：决策点向 Y 轴引水平辅助虚线与高度差标尺 */}
+      {selectedLogic !== "same_var" && (
+        <g>
+          {/* f 决策点向 Y 轴的水平投影虚线 */}
+          <line
+            x1={ptDecisionF.x}
+            y1={ptDecisionF.y}
+            x2={ptYAxisF.x - 6}
+            y2={ptYAxisF.y}
+            stroke={withAlpha(MATH_COLORS.function, 0.6)}
+            strokeWidth={1.2}
+            strokeDasharray="3 3"
+          />
+          {/* g 决策点向 Y 轴的水平投影虚线 */}
+          <line
+            x1={ptDecisionG.x}
+            y1={ptDecisionG.y}
+            x2={ptYAxisG.x + 6}
+            y2={ptYAxisG.y}
+            stroke={withAlpha(MATH_COLORS.functionSecondary, 0.6)}
+            strokeWidth={1.2}
+            strokeDasharray="3 3"
+          />
 
-      {/* g 侧对垒点标注 */}
-      <text
-        x={mathToDesign(res.battlePointG.x, res.battlePointG.y, scale).x + 6}
-        y={
-          mathToDesign(res.battlePointG.x, res.battlePointG.y, scale).y +
-          battleLabelOffsetYG
-        }
-        textAnchor="start"
-        fill={MATH_COLORS.functionSecondary}
-        fontSize={fontScale(9)}
-        className="font-bold font-mono select-none"
-      >
-        {battleLabels.gText}({res.battlePointG.y.toFixed(2)})
-      </text>
+          {/* Y 轴上的决策投影点标 */}
+          <circle
+            cx={ptYAxisF.x - 6}
+            cy={ptYAxisF.y}
+            r={3.2}
+            fill={MATH_COLORS.function}
+          />
+          <circle
+            cx={ptYAxisG.x + 6}
+            cy={ptYAxisG.y}
+            r={3.2}
+            fill={MATH_COLORS.functionSecondary}
+          />
 
-      {/* 8. f(x) 的顶点 (可拖拽，修改 xf 与 yf) */}
+          {/* Y 轴决策高度文本标注 */}
+          <text
+            x={ptYAxisF.x - 12}
+            y={ptYAxisF.y + 4}
+            textAnchor="end"
+            fill={MATH_COLORS.function}
+            fontSize={fontScale(9.5)}
+            fontWeight="bold"
+            className="select-none"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={2.5}
+          >
+            {battleMeta.fName} {res.battlePointF.y.toFixed(2)}
+          </text>
+          <text
+            x={ptYAxisG.x + 12}
+            y={ptYAxisG.y + 4}
+            textAnchor="start"
+            fill={MATH_COLORS.functionSecondary}
+            fontSize={fontScale(9.5)}
+            fontWeight="bold"
+            className="select-none"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={2.5}
+          >
+            {battleMeta.gName} {res.battlePointG.y.toFixed(2)}
+          </text>
+
+          {/* Y 轴两侧高度差比较标尺（高中正统高低判定） */}
+          <g>
+            {/* 标尺竖线 */}
+            <line
+              x1={ptYAxisF.x - 22}
+              y1={ptYAxisF.y}
+              x2={ptYAxisF.x - 22}
+              y2={ptYAxisG.y}
+              stroke={
+                isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
+              }
+              strokeWidth={2}
+            />
+            {/* 上下端点刻度短横线 */}
+            <line
+              x1={ptYAxisF.x - 26}
+              y1={ptYAxisF.y}
+              x2={ptYAxisF.x - 18}
+              y2={ptYAxisF.y}
+              stroke={
+                isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
+              }
+              strokeWidth={2}
+            />
+            <line
+              x1={ptYAxisF.x - 26}
+              y1={ptYAxisG.y}
+              x2={ptYAxisF.x - 18}
+              y2={ptYAxisG.y}
+              stroke={
+                isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
+              }
+              strokeWidth={2}
+            />
+            {/* 高度差结论文本 */}
+            <text
+              x={ptYAxisF.x - 28}
+              y={(ptYAxisF.y + ptYAxisG.y) / 2 + 4}
+              textAnchor="end"
+              fill={
+                isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
+              }
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              className="select-none"
+              paintOrder="stroke"
+              stroke="white"
+              strokeWidth={3}
+            >
+              Δy = {deltaY.toFixed(2)}{" "}
+              {isSatisfied ? "≥ 0 (成立)" : "< 0 (违背)"}
+            </text>
+          </g>
+        </g>
+      )}
+
+      {/* 7. 同自变量模式（same_var）：同 X 处的垂直差函数线段 */}
+      {selectedLogic === "same_var" && (
+        <g>
+          {/* 公共交集 [1.5, 2.0] 特殊边框 */}
+          <rect
+            x={mathToDesign(1.5, 0, scale).x}
+            y={mathToDesign(0, scale.yMax, scale).y}
+            width={
+              mathToDesign(2.0, 0, scale).x - mathToDesign(1.5, 0, scale).x
+            }
+            height={
+              mathToDesign(0, scale.yMin, scale).y -
+              mathToDesign(0, scale.yMax, scale).y
+            }
+            fill={withAlpha(
+              res.isSameVarTrue
+                ? MATH_COLORS.inequality
+                : MATH_COLORS.degeneracy,
+              0.04,
+            )}
+            stroke={
+              res.isSameVarTrue
+                ? MATH_COLORS.inequality
+                : MATH_COLORS.degeneracy
+            }
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            pointerEvents="none"
+          />
+
+          {/* 最危险点垂直差值高度线（同一 x=xmin 处的高度差） */}
+          <line
+            x1={ptDecisionF.x}
+            y1={ptDecisionF.y}
+            x2={ptDecisionG.x}
+            y2={ptDecisionG.y}
+            stroke={
+              res.isSameVarTrue
+                ? MATH_COLORS.inequality
+                : MATH_COLORS.degeneracy
+            }
+            strokeWidth={2.5}
+          />
+          {/* 上下端点 */}
+          <circle
+            cx={ptDecisionF.x}
+            cy={ptDecisionF.y}
+            r={3.2}
+            fill={MATH_COLORS.function}
+          />
+          <circle
+            cx={ptDecisionG.x}
+            cy={ptDecisionG.y}
+            r={3.2}
+            fill={MATH_COLORS.functionSecondary}
+          />
+
+          {/* 差函数最值标注 */}
+          <text
+            x={ptDecisionF.x + 8}
+            y={(ptDecisionF.y + ptDecisionG.y) / 2 + 4}
+            textAnchor="start"
+            fill={
+              res.isSameVarTrue
+                ? MATH_COLORS.inequality
+                : MATH_COLORS.degeneracy
+            }
+            fontSize={fontScale(10)}
+            fontWeight="bold"
+            className="select-none"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
+          >
+            h(x)_{"{min}"} = {(res.sameVarMinDiff ?? 0).toFixed(2)}{" "}
+            {res.isSameVarTrue ? "≥ 0" : "< 0"}
+          </text>
+
+          {/* 违背区间阴影（若有） */}
+          {sameVarViolatedInterval && (
+            <g>
+              <IntervalShadow
+                fn={evalFDouble}
+                x1={sameVarViolatedInterval[0]}
+                x2={sameVarViolatedInterval[1]}
+                scale={scale}
+                fillColor={withAlpha(MATH_COLORS.degeneracy, 0.12)}
+                strokeColor={MATH_COLORS.degeneracy}
+                strokeWidth={1.5}
+              />
+              <IntervalShadow
+                fn={evalGDouble}
+                x1={sameVarViolatedInterval[0]}
+                x2={sameVarViolatedInterval[1]}
+                scale={scale}
+                fillColor={withAlpha(MATH_COLORS.degeneracy, 0.05)}
+                strokeColor={MATH_COLORS.degeneracy}
+                strokeWidth={1.5}
+              />
+              <text
+                x={
+                  mathToDesign(
+                    (sameVarViolatedInterval[0] + sameVarViolatedInterval[1]) /
+                      2,
+                    0,
+                    scale,
+                  ).x
+                }
+                y={mathToDesign(0, scale.yMin + 0.3, scale).y}
+                textAnchor="middle"
+                fill={MATH_COLORS.degeneracy}
+                fontSize={fontScale(10)}
+                className="font-bold select-none"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
+              >
+                违背区间 [{sameVarViolatedInterval[0].toFixed(2)},{" "}
+                {sameVarViolatedInterval[1].toFixed(2)}]
+              </text>
+            </g>
+          )}
+        </g>
+      )}
+
+      {/* 8. 博弈决策特征点（MathPoint 高亮指示参与比较的关键点） */}
+      <MathPoint
+        cx={res.battlePointF.x}
+        cy={res.battlePointF.y}
+        scale={scale}
+        variant="focus"
+        color={MATH_COLORS.function}
+        r={3.8}
+      />
+      <MathPoint
+        cx={res.battlePointG.x}
+        cy={res.battlePointG.y}
+        scale={scale}
+        variant="focus"
+        color={MATH_COLORS.functionSecondary}
+        r={3.8}
+      />
+
+      {/* 9. f(x) 可拖拽顶点控制点 */}
       <InteractivePoint
         cx={xf}
         cy={yf}
@@ -441,13 +702,13 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         onDrag={handleFVertexDrag}
         color={MATH_COLORS.paramPrimary}
         r={6}
-        label={`f(x)顶点(${xf.toFixed(2)}, ${yf.toFixed(2)})`}
+        label="P₁"
         labelKey="f_vertex"
         placedLabels={placedLabels}
         fontScale={fontScale}
       />
 
-      {/* 9. g(x) 的顶点 (可拖拽，修改 xg 与 yg) */}
+      {/* 10. g(x) 可拖拽顶点控制点 */}
       <InteractivePoint
         cx={xg}
         cy={yg}
@@ -456,7 +717,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         onDrag={handleGVertexDrag}
         color={MATH_COLORS.paramSecondary}
         r={6}
-        label={`g(x)顶点(${xg.toFixed(2)}, ${yg.toFixed(2)})`}
+        label="P₂"
         labelKey="g_vertex"
         placedLabels={placedLabels}
         fontScale={fontScale}

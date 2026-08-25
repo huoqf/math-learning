@@ -52,7 +52,7 @@ export function DoubleVarPage() {
     if (key === "free") return;
 
     if (key === "critical_touch") {
-      // 临界对决：f_min = g_max
+      // 临界相切：f_min = g_max = 2.00
       setParams((prev) => ({
         ...prev,
         xf: 1.25,
@@ -61,7 +61,7 @@ export function DoubleVarPage() {
         yg: 2.0,
       }));
     } else if (key === "safe_isolate") {
-      // 安全隔离：f_min > g_max
+      // 极值完全隔离：f_min = 3.00 > g_max = 1.00
       setParams((prev) => ({
         ...prev,
         xf: 1.25,
@@ -69,14 +69,14 @@ export function DoubleVarPage() {
         xg: 2.25,
         yg: 1.0,
       }));
-    } else if (key === "cross_violate") {
-      // 交叉穿透：f_min < g_max
+    } else if (key === "partial_overlap") {
+      // 值域交叉重叠：g_min <= f_min < g_max
       setParams((prev) => ({
         ...prev,
         xf: 1.25,
         yf: 1.4,
         xg: 2.25,
-        yg: 2.6,
+        yg: 2.2,
       }));
     }
   };
@@ -92,8 +92,8 @@ export function DoubleVarPage() {
       const meta = paramMeta[key];
       const group =
         key === "xf" || key === "yf"
-          ? "抛物线 f(x) 顶点与对称轴"
-          : "抛物线 g(x) 顶点与对称轴";
+          ? "抛物线 f(x) (开口向上)"
+          : "抛物线 g(x) (开口向下)";
 
       return {
         key,
@@ -113,70 +113,84 @@ export function DoubleVarPage() {
   }, [params]);
 
   const formulasLatex = useMemo(() => {
-    if (selectedLogic === "same_var") {
-      const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}}, \\; g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{${MATH_COLORS.paramSecondary}}{${params.yg.toFixed(2)}}`;
-      const goalStr = `\\text{目标：对 } \\forall x \\in I_1 \\cap I_2 = [1.50, 2.00], \\; f(x) \\ge g(x)`;
-      return { line1: fStr, line2: goalStr };
-    } else {
-      const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}} \\quad x \\in [0.5, 2.0]`;
-      const gStr = `g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{${MATH_COLORS.paramSecondary}}{${params.yg.toFixed(2)}} \\quad x \\in [1.5, 3.0]`;
-      return { line1: fStr, line2: gStr };
+    const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}} \\quad (x \\in I_1 = [0.5, 2.0])`;
+    const gStr = `g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{${MATH_COLORS.paramSecondary}}{${params.yg.toFixed(2)}} \\quad (x \\in I_2 = [1.5, 3.0])`;
+
+    let goalStr = "";
+    switch (selectedLogic) {
+      case "all_all":
+        goalStr = `\\text{博弈目标：} \\forall x_1 \\in I_1, \\; \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
+        break;
+      case "all_exist":
+        goalStr = `\\text{博弈目标：} \\forall x_1 \\in I_1, \\; \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
+        break;
+      case "exist_all":
+        goalStr = `\\text{博弈目标：} \\exists x_1 \\in I_1, \\; \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
+        break;
+      case "exist_exist":
+        goalStr = `\\text{博弈目标：} \\exists x_1 \\in I_1, \\; \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
+        break;
+      case "same_var":
+        goalStr = `\\text{博弈目标：对 } \\forall x \\in I_1 \\cap I_2 = [1.50, 2.00], \\; f(x) \\ge g(x)`;
+        break;
     }
+    return { line1: `${fStr}, \\; ${gStr}`, line2: goalStr };
   }, [selectedLogic, params]);
 
-  // 教学导引与题设背景配置
+  // 教学导引与启发思考（精简重复，突出本质与设问）
   const tipConfig = useMemo(() => {
     switch (selectedLogic) {
       case "all_all":
         return {
           variant: "primary" as const,
-          badge: "高考压轴 · 双变量任意对任意 (极值隔离)",
-          condition:
-            "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+          badge: "∀x₁, ∀x₂ · 任意对任意 (极值隔离)",
+          essence:
+            "两动点独立滑动，f 必须在整个区间全面高于 g，最弱项守住底线：f_min ≥ g_max。",
           question:
-            "求参数范围，使得对任意 x₁ 与任意 x₂，恒有 f(x₁) ≥ g(x₂) 成立。",
+            "拖动 f(x) 顶点上下移动，观察刚好相切 (f_min = g_max) 时的临界状态。",
         };
       case "all_exist":
         return {
           variant: "info" as const,
-          badge: "高考压轴 · 任意对存在 (值域包含)",
-          condition:
-            "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+          badge: "∀x₁, ∃x₂ · 任意对存在 (极小保底)",
+          essence:
+            "对每一个 f(x₁)，只需在 g 域内能找到不大于它的点即可，充要条件化为：f_min ≥ g_min。",
           question:
-            "求参数范围，使得对任意 x₁，总存在 x₂ 满足 f(x₁) = g(x₂)（或 f(x₁) ≤ g(x₂)）。",
+            "尝试制造 f_min < g_max 但 f_min ≥ g_min 的交叉状态，思考为什么此时博弈依然成立？",
         };
       case "exist_all":
         return {
           variant: "warning" as const,
-          badge: "高考压轴 · 存在对任意 (最值压制)",
-          condition:
-            "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+          badge: "∃x₁, ∀x₂ · 存在对任意 (顶峰压制)",
+          essence:
+            "只需 f 的最高点能压住 g 的整个图象，最强项单点击破：f_max ≥ g_max。",
           question:
-            "求参数范围，使得存在 x₁，对任意 x₂ 均有 f(x₁) ≥ g(x₂) 成立。",
+            "观察 f 的峰顶何时突破 g 的极值点，理解“存在”关注最强优势点的数学内涵。",
         };
       case "exist_exist":
         return {
           variant: "warning" as const,
-          badge: "高考压轴 · 存在对存在 (值域相交)",
-          condition:
-            "给定函数 f(x) 与 g(x)，自变量区间分别为 [0.5, 2.0] 与 [1.5, 3.0]。",
+          badge: "∃x₁, ∃x₂ · 存在对存在 (门槛超越)",
+          essence:
+            "只需两函数值域有重叠或局部超越，充要条件化为最低门槛：f_max ≥ g_min。",
           question:
-            "求参数范围，使得存在 x₁ 与 x₂ 满足 f(x₁) = g(x₂)（两函数图象有重合值域）。",
+            "只要 f 的最高点没有跌破 g 的最低点，即存在满足条件的点对 (x₁, x₂)。",
         };
       case "same_var":
         return {
           variant: "primary" as const,
-          badge: "高考压轴 · 同自变量对垒 (差函数)",
-          condition: "在公共区间 x ∈ [1.5, 2.0] 上考察双函数 f(x) 与 g(x)。",
+          badge: "∀x ∈ I₁ ∩ I₂ · 同自变量对垒 (差函数法)",
+          essence:
+            "自变量为同一动点，无需极值完全隔离，构造差函数 h(x) = f(x) - g(x) ≥ 0 即可。",
           question:
-            "求参数范围，使得在公共区间内对任意相同自变量 x 均有 f(x) ≥ g(x)。",
+            "两曲线可以有高低交叉吗？观察交集 [1.5, 2.0] 内违背区间的动态变化。",
         };
       default:
         return {
           variant: "primary" as const,
-          badge: "高考压轴 · 双变量博弈问题",
-          condition: "考察两函数 f(x) 与 g(x) 在不同量词约束下的数值关系。",
-          question: "求满足特定全称与存在量词不等式关系的参数取值范围。",
+          badge: "双变量博弈问题",
+          essence: "考察全称与存在量词组合下两函数最值的博弈关系。",
+          question: "通过拖拽与预设探索满足不等式的充要条件。",
         };
     }
   }, [selectedLogic]);
@@ -188,7 +202,7 @@ export function DoubleVarPage() {
           {/* 1. 双变量博弈量词模式 */}
           <LeftPanelSection
             title="博弈量词关系"
-            subtitle="双动点对决与同变量差函数"
+            subtitle="选择全称/存在量词或同变量差函数"
           >
             <SelectGrid
               items={[
@@ -200,17 +214,17 @@ export function DoubleVarPage() {
                 {
                   key: "all_exist",
                   label: "∀x₁, ∃x₂",
-                  description: "任意对存在(值域包含)",
+                  description: "任意对存在(极小保底)",
                 },
                 {
                   key: "exist_all",
                   label: "∃x₁, ∀x₂",
-                  description: "存在对任意(最值压制)",
+                  description: "存在对任意(顶峰压制)",
                 },
                 {
                   key: "exist_exist",
                   label: "∃x₁, ∃x₂",
-                  description: "存在对存在(值域相交)",
+                  description: "存在对存在(门槛超越)",
                 },
                 {
                   key: "same_var",
@@ -249,9 +263,9 @@ export function DoubleVarPage() {
                   description: "f_min > g_max",
                 },
                 {
-                  key: "cross_violate",
-                  label: "交叉穿透",
-                  description: "f_min < g_max",
+                  key: "partial_overlap",
+                  label: "图象交叉",
+                  description: "值域部分重叠",
                 },
               ]}
               value={presetKey}
@@ -273,8 +287,8 @@ export function DoubleVarPage() {
             />
           </LeftPanelSection>
 
-          {/* 4. 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
+          {/* 4. 教学导引与启发思考 */}
+          <LeftPanelSection title="教学导引与启发思考" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
                 <span>{tipConfig.badge}</span>
@@ -282,15 +296,13 @@ export function DoubleVarPage() {
               <div className="space-y-1.5 text-[11px] leading-relaxed">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【初始条件】
+                    【核心本质】
                   </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
+                  <span className="text-neutral-600">{tipConfig.essence}</span>
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【核心设问】
+                    【启发探究】
                   </span>
                   <span className="text-neutral-600">{tipConfig.question}</span>
                 </div>
