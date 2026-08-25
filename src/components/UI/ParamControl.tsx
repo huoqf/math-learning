@@ -37,6 +37,55 @@ interface ParamControlProps {
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
+// ── 分组标题智能渲染 ──
+function renderGroupTitle(label: string): React.ReactNode {
+  if (!label) return null;
+
+  // 1. `$...$` 混合格式：拆分渲染
+  if (label.includes("$")) {
+    const parts = label.split(/(\$[^$]+\$)/g);
+    return (
+      <span className="inline-flex items-center gap-1 flex-wrap">
+        {parts.map((part, i) => {
+          if (part.startsWith("$") && part.endsWith("$")) {
+            try {
+              return (
+                <KatexFormula
+                  key={i}
+                  formula={part.slice(1, -1)}
+                  mode="inline"
+                  className="!text-xs font-semibold text-neutral-700 !my-0"
+                />
+              );
+            } catch {
+              return <span key={i}>{part}</span>;
+            }
+          }
+          return <span key={i}>{part}</span>;
+        })}
+      </span>
+    );
+  }
+
+  // 2. 含有 LaTeX 指令 (包含 \text, \vec, \alpha, \lambda 等)
+  if (label.includes("\\")) {
+    try {
+      return (
+        <KatexFormula
+          formula={label}
+          mode="inline"
+          className="!text-xs font-semibold text-neutral-700 !my-0"
+        />
+      );
+    } catch {
+      return <span>{label}</span>;
+    }
+  }
+
+  // 3. 纯文本
+  return <span>{label}</span>;
+}
+
 // ── 描述文字智能渲染 ──
 // 处理 3 种 descriptionFormula 格式：
 // 1. `$...$` 混合格式（中文 + 数学公式）
@@ -553,17 +602,26 @@ export const ParamControl: React.FC<ParamControlProps> = ({
         )}
       </div>
 
-      <div className="space-y-4">
-        {groupedParams.map((group) => (
-          <div key={group.label} className="space-y-3">
+      <div className="space-y-3.5">
+        {groupedParams.map((group, groupIdx) => (
+          <div
+            key={`${group.label}-${groupIdx}`}
+            className={
+              showGroupTitle
+                ? "bg-neutral-50/60 border border-neutral-200/80 rounded-xl p-3.5 space-y-3.5"
+                : "space-y-3"
+            }
+          >
             {showGroupTitle && (
-              <div className="flex items-center gap-2 text-xs font-bold text-neutral-500">
-                <span className="h-px flex-1 bg-neutral-200" />
-                <span>{group.label}</span>
-                <span className="h-px flex-1 bg-neutral-200" />
+              <div className="flex items-center gap-2 pb-2 border-b border-neutral-200/60">
+                <span className="w-1 h-3.5 bg-primary-500 rounded-full shrink-0" />
+                <div className="text-xs font-bold text-neutral-800 tracking-tight flex-1">
+                  {renderGroupTitle(group.label)}
+                </div>
               </div>
             )}
-            {group.params.map(renderParam)}
+
+            <div className="space-y-3">{group.params.map(renderParam)}</div>
           </div>
         ))}
       </div>

@@ -19,6 +19,7 @@ interface VectorDotProductSceneProps {
   scale: SceneScale;
   vp: ViewportInfo;
   onParamChange: (key: string, value: number) => void;
+  onBatchParamsChange?: (updates: Record<string, number>) => void;
   fontScale: (size: number) => number;
   studyMode: "defProj" | "properties" | "polarization";
 }
@@ -28,6 +29,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
   scale,
   vp,
   onParamChange,
+  onBatchParamsChange,
   fontScale,
   studyMode,
 }) => {
@@ -39,11 +41,9 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
     normA,
     normB,
     angleDeg,
-    scalarProjBtoA,
     projVecBtoA,
     footH,
     sumVec,
-    diffVec,
     isPerpendicular,
     midpointM,
   } = mathRes;
@@ -59,16 +59,24 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
   const handleDragPointA = (pt: { x: number; y: number }) => {
     const roundX = Math.round(pt.x * 2) / 2;
     const roundY = Math.round(pt.y * 2) / 2;
-    onParamChange("xa", roundX);
-    onParamChange("ya", roundY);
+    if (onBatchParamsChange) {
+      onBatchParamsChange({ xa: roundX, ya: roundY });
+    } else {
+      onParamChange("xa", roundX);
+      onParamChange("ya", roundY);
+    }
   };
 
   // 拖拽 B 点 (数学坐标)
   const handleDragPointB = (pt: { x: number; y: number }) => {
     const roundX = Math.round(pt.x * 2) / 2;
     const roundY = Math.round(pt.y * 2) / 2;
-    onParamChange("xb", roundX);
-    onParamChange("yb", roundY);
+    if (onBatchParamsChange) {
+      onBatchParamsChange({ xb: roundX, yb: roundY });
+    } else {
+      onParamChange("xb", roundX);
+      onParamChange("yb", roundY);
+    }
   };
 
   // 计算夹角圆弧 (从 a 到 b)
@@ -93,7 +101,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
     const sweepFlag = delta > 0 ? 0 : 1;
 
     const midAngle = angleA + delta / 2;
-    const labelRadius = radius + fontScale(16);
+    const labelRadius = radius + fontScale(15);
     const labelX = originDesign.x + labelRadius * Math.cos(midAngle);
     const labelY = originDesign.y - labelRadius * Math.sin(midAngle);
 
@@ -114,24 +122,27 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
           fontWeight="bold"
           textAnchor="middle"
           dominantBaseline="central"
+          paintOrder="stroke"
+          stroke="white"
+          strokeWidth={3}
         >
-          {`${angleDeg.toFixed(0)}°`}
+          {`θ = ${angleDeg.toFixed(0)}°`}
         </text>
       </g>
     );
   };
 
-  // 渲染垂足处的直角标记 (Right Angle Indicator)
+  // 渲染垂足处的直角标记 (Right Angle Indicator) - 固定 9~10px 防畸变
   const renderRightAngleSymbol = (
     corner: { x: number; y: number },
     dir1: { x: number; y: number },
     dir2: { x: number; y: number },
   ) => {
-    const size = fontScale(8);
     const len1 = Math.hypot(dir1.x, dir1.y);
     const len2 = Math.hypot(dir2.x, dir2.y);
     if (len1 < 1e-4 || len2 < 1e-4) return null;
 
+    const size = Math.min(10, Math.min(len1, len2) * 0.35);
     const u1 = { x: (dir1.x / len1) * size, y: (dir1.y / len1) * size };
     const u2 = { x: (dir2.x / len2) * size, y: (dir2.y / len2) * size };
 
@@ -161,6 +172,9 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
         fill={MATH_COLORS.textMuted}
         fontSize={fontScale(13)}
         fontWeight="600"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={3}
       >
         O
       </text>
@@ -212,7 +226,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
               },
             )}
 
-          {/* 投影向量 proj_a(b) */}
+          {/* 投影向量 p = proj_a(b) */}
           {normA > 1e-4 && Math.hypot(projVecBtoA.x, projVecBtoA.y) > 1e-4 && (
             <VectorArrow
               from={[0, 0]}
@@ -221,7 +235,8 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
               color={MATH_COLORS.paramTertiary}
               strokeWidth={4}
               fontScale={fontScale}
-              label={`proj_a(b) (${scalarProjBtoA.toFixed(2)})`}
+              label="p"
+              labelOffset={[0, -10]}
             />
           )}
 
@@ -232,13 +247,13 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
               y={posHDesign.y}
               variant="foot"
               color={MATH_COLORS.paramTertiary}
-              label="H (垂足)"
+              label="H"
               labelPosition="bottom-right"
               fontScale={fontScale}
             />
           )}
 
-          {/* 基础向量 a */}
+          {/* 基础向量 a (OA) */}
           <VectorArrow
             from={[0, 0]}
             to={[a.x, a.y]}
@@ -246,10 +261,11 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             strokeWidth={3}
             fontScale={fontScale}
-            label={`a (${a.x}, ${a.y})`}
+            label="a"
+            labelOffset={[0, -10]}
           />
 
-          {/* 基础向量 b */}
+          {/* 基础向量 b (OB) */}
           <VectorArrow
             from={[0, 0]}
             to={[b.x, b.y]}
@@ -257,7 +273,8 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             strokeWidth={3}
             fontScale={fontScale}
-            label={`b (${b.x}, ${b.y})`}
+            label="b"
+            labelOffset={[0, -10]}
           />
 
           {/* 交互控制点 A 和 B */}
@@ -309,7 +326,17 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             strokeDasharray="4,4"
           />
 
-          {/* 和向量 s = a + b */}
+          {/* 和向量顶点 S */}
+          <MathPoint
+            x={posSDesign.x}
+            y={posSDesign.y}
+            color={MATH_COLORS.paramTertiary}
+            label="S"
+            labelPosition="top-right"
+            fontScale={fontScale}
+          />
+
+          {/* 和向量 s = a + b (O -> S) */}
           <VectorArrow
             from={[0, 0]}
             to={[sumVec.x, sumVec.y]}
@@ -317,10 +344,11 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             color={MATH_COLORS.paramTertiary}
             strokeWidth={3.5}
             fontScale={fontScale}
-            label={`a+b (${sumVec.x.toFixed(1)}, ${sumVec.y.toFixed(1)})`}
+            label="a+b"
+            labelOffset={[0, -10]}
           />
 
-          {/* 差向量 d = a - b (从 B 点指向 A 点) */}
+          {/* 差向量 d = a - b (从 B 点指向 A 点: BA = OA - OB) */}
           <VectorArrow
             from={[b.x, b.y]}
             to={[a.x, a.y]}
@@ -328,7 +356,8 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             color={MATH_COLORS.accent}
             strokeWidth={2.5}
             fontScale={fontScale}
-            label={`a-b (${diffVec.x.toFixed(1)}, ${diffVec.y.toFixed(1)})`}
+            label="a-b"
+            labelOffset={[0, -10]}
           />
 
           {/* 垂直高亮标识 */}
@@ -351,8 +380,11 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
                 fill={MATH_COLORS.paramTertiary}
                 fontSize={fontScale(14)}
                 fontWeight="bold"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={3}
               >
-                a⃗ ⊥ b⃗ (a⃗ · b⃗ = 0)
+                a ⊥ b (a · b = 0)
               </text>
             </g>
           )}
@@ -365,7 +397,8 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             strokeWidth={3}
             fontScale={fontScale}
-            label={`a (${a.x}, ${a.y})`}
+            label="a"
+            labelOffset={[0, -10]}
           />
 
           {/* 基础向量 b */}
@@ -376,7 +409,8 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             strokeWidth={3}
             fontScale={fontScale}
-            label={`b (${b.x}, ${b.y})`}
+            label="b"
+            labelOffset={[0, -10]}
           />
 
           {/* 交互控制点 A 和 B */}
@@ -416,7 +450,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             strokeWidth={2}
           />
 
-          {/* 平行四边形两条对角线: 和向量 s (O -> S) 与 差向量 d (B -> A) */}
+          {/* 平行四边形两条对角线: 和向量 (O -> S) 辅助线 */}
           <line
             x1={originDesign.x}
             y1={originDesign.y}
@@ -435,7 +469,8 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             color={MATH_COLORS.paramTertiary}
             strokeWidth={3.5}
             fontScale={fontScale}
-            label={`OM (${midpointM.x.toFixed(1)}, ${midpointM.y.toFixed(1)})`}
+            label="OM"
+            labelOffset={[0, -10]}
           />
 
           {/* 中点 M 标记 */}
@@ -443,12 +478,12 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             x={posMDesign.x}
             y={posMDesign.y}
             color={MATH_COLORS.paramTertiary}
-            label="M (AB中点)"
+            label="M (中点)"
             labelPosition="top-right"
             fontScale={fontScale}
           />
 
-          {/* 基础向量 a (OA) */}
+          {/* 基础向量 OA */}
           <VectorArrow
             from={[0, 0]}
             to={[a.x, a.y]}
@@ -457,9 +492,10 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             strokeWidth={3}
             fontScale={fontScale}
             label="OA"
+            labelOffset={[0, -10]}
           />
 
-          {/* 基础向量 b (OB) */}
+          {/* 基础向量 OB */}
           <VectorArrow
             from={[0, 0]}
             to={[b.x, b.y]}
@@ -468,6 +504,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             strokeWidth={3}
             fontScale={fontScale}
             label="OB"
+            labelOffset={[0, -10]}
           />
 
           {/* 交互控制点 A 和 B */}

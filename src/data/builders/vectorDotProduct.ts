@@ -6,6 +6,7 @@ import type {
   GaokaoPoint,
   WarningItem,
 } from "@/components/UI";
+import { MATH_COLORS } from "@/theme";
 
 export function buildVectorDotProductPanel(
   params: Record<string, number>,
@@ -28,6 +29,7 @@ export function buildVectorDotProductPanel(
     projVecBtoA,
     footH,
     scalarProjAtoB,
+    projVecAtoB,
     normSum,
     normDiff,
     normSum2,
@@ -79,12 +81,12 @@ export function buildVectorDotProductPanel(
       },
       {
         label: "b 在 a 方向上的投影数量",
-        symbol: "W_{\\vec{a}}(\\vec{b})",
+        symbol: "|\\vec{b}|\\cos\\theta",
         value: scalarProjBtoA.toFixed(2),
       },
       {
         label: "b 在 a 方向上的投影向量",
-        symbol: "\\mathbf{proj}_{\\vec{a}}\\vec{b}",
+        symbol: "\\vec{p}_{\\vec{a}}(\\vec{b})",
         value: `(${projVecBtoA.x.toFixed(2)}, ${projVecBtoA.y.toFixed(2)})`,
       },
       {
@@ -94,8 +96,13 @@ export function buildVectorDotProductPanel(
       },
       {
         label: "a 在 b 方向上的投影数量",
-        symbol: "W_{\\vec{b}}(\\vec{a})",
+        symbol: "|\\vec{a}|\\cos\\theta",
         value: scalarProjAtoB.toFixed(2),
+      },
+      {
+        label: "a 在 b 方向上的投影向量",
+        symbol: "\\vec{p}_{\\vec{b}}(\\vec{a})",
+        value: `(${projVecAtoB.x.toFixed(2)}, ${projVecAtoB.y.toFixed(2)})`,
       },
     );
   } else if (studyMode === "properties") {
@@ -116,12 +123,12 @@ export function buildVectorDotProductPanel(
         value: normB2.toFixed(2),
       },
       {
-        label: "和向量 s = a + b 模长",
+        label: "和向量 a + b 模长",
         symbol: "|\\vec{a} + \\vec{b}|",
         value: normSum.toFixed(2),
       },
       {
-        label: "差向量 d = a - b 模长",
+        label: "差向量 a - b 模长",
         symbol: "|\\vec{a} - \\vec{b}|",
         value: normDiff.toFixed(2),
       },
@@ -149,7 +156,7 @@ export function buildVectorDotProductPanel(
         value: normDiff2.toFixed(2),
       },
       {
-        label: "极化右式 1/4(|a+b|² - |a-b|²)",
+        label: "极化恒等式 (平行四边形展开)",
         symbol: "\\frac{1}{4}(|\\vec{a}+\\vec{b}|^2 - |\\vec{a}-\\vec{b}|^2)",
         value: polarizationVal.toFixed(2),
       },
@@ -176,53 +183,60 @@ export function buildVectorDotProductPanel(
     );
   }
 
+  const primaryCol = MATH_COLORS.paramPrimary;
+  const secondaryCol = MATH_COLORS.paramSecondary;
+  const tertiaryCol = MATH_COLORS.paramTertiary;
+
   const theorems: Theorem[] = [
     {
       name: "数量积几何定义与坐标公式",
-      latex:
-        "\\vec{a} \\cdot \\vec{b} = |\\vec{a}||\\vec{b}|\\cos\\theta = x_1 x_2 + y_1 y_2",
+      latex: `\\color{${primaryCol}}{\\vec{a}} \\cdot \\color{${secondaryCol}}{\\vec{b}} = |\\color{${primaryCol}}{\\vec{a}}||\\color{${secondaryCol}}{\\vec{b}}|\\cos\\theta = x_1 x_2 + y_1 y_2`,
       prerequisites: [
         "θ 为向量 a 与 b 的夹角 (θ ∈ [0, π])",
         "零向量与任意向量的数量积均为 0",
       ],
+      level: studyMode === "defProj" ? "core" : "important",
     },
     {
-      name: "向量投影（数量投影与投影向量）",
-      latex:
-        "W_{\\vec{a}}(\\vec{b}) = |\\vec{b}|\\cos\\theta = \\frac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}|}, \\quad \\mathbf{proj}_{\\vec{a}}\\vec{b} = \\frac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}|^2}\\vec{a}",
+      name: "人教A版向量投影（投影数量与投影向量）",
+      latex: `\\text{投影数量} = |\\color{${secondaryCol}}{\\vec{b}}|\\cos\\theta = \\frac{\\color{${primaryCol}}{\\vec{a}}\\cdot\\color{${secondaryCol}}{\\vec{b}}}{|\\color{${primaryCol}}{\\vec{a}}|}, \\quad \\color{${tertiaryCol}}{\\vec{p}} = \\frac{\\color{${primaryCol}}{\\vec{a}}\\cdot\\color{${secondaryCol}}{\\vec{b}}}{|\\color{${primaryCol}}{\\vec{a}}|^2}\\color{${primaryCol}}{\\vec{a}}`,
       prerequisites: [
-        "投影数量为实数（锐角为正，钝角为负）",
-        "投影向量与 a 共线（同向或反向）",
+        "投影数量为带正负的实数 (锐角为正，钝角为负，垂直为0)",
+        "投影向量为与向量 a 共线的矢量",
       ],
+      level: studyMode === "defProj" ? "core" : "important",
     },
     {
-      name: "模长展开与垂直条件",
-      latex:
-        "|\\vec{a} \\pm \\vec{b}|^2 = |\\vec{a}|^2 \\pm 2\\vec{a}\\cdot\\vec{b} + |\\vec{b}|^2, \\quad \\vec{a} \\perp \\vec{b} \\iff \\vec{a}\\cdot\\vec{b} = 0",
-      prerequisites: ["a, b 为非零向量时，a ⊥ b 充要条件为 x1x2 + y1y2 = 0"],
-    },
-    {
-      name: "极化恒等式 (高考秒杀神器)",
-      latex:
-        "\\vec{a} \\cdot \\vec{b} = \\frac{1}{4}\\left(|\\vec{a}+\\vec{b}|^2 - |\\vec{a}-\\vec{b}|^2\\right) = |\\vec{OM}|^2 - |\\vec{MB}|^2",
+      name: "模长二次展开与垂直条件",
+      latex: `|\\color{${primaryCol}}{\\vec{a}} \\pm \\color{${secondaryCol}}{\\vec{b}}|^2 = |\\color{${primaryCol}}{\\vec{a}}|^2 \\pm 2\\color{${primaryCol}}{\\vec{a}}\\cdot\\color{${secondaryCol}}{\\vec{b}} + |\\color{${secondaryCol}}{\\vec{b}}|^2, \\quad \\color{${primaryCol}}{\\vec{a}} \\perp \\color{${secondaryCol}}{\\vec{b}} \\iff x_1 x_2 + y_1 y_2 = 0`,
       prerequisites: [
-        "M 为线段 AB 的中点",
-        "将双变量数量积转化为了中点距离平方差单变量问题",
+        "a, b 为非零向量时，a ⊥ b 充要条件为 a · b = 0",
+        "注意区分垂直条件 x1x2+y1y2=0 与共线条件 x1y2-x2y1=0",
       ],
+      level: studyMode === "properties" ? "core" : "important",
+    },
+    {
+      name: "极化恒等式 (高考压轴秒杀模型)",
+      latex: `\\color{${primaryCol}}{\\vec{OA}} \\cdot \\color{${secondaryCol}}{\\vec{OB}} = \\frac{1}{4}\\left(|\\vec{OA}+\\vec{OB}|^2 - |\\vec{OA}-\\vec{OB}|^2\\right) = |\\color{${tertiaryCol}}{\\vec{OM}}|^2 - |\\vec{MB}|^2`,
+      prerequisites: [
+        "M 为定线段 AB 的中点",
+        "将双变量数量积 OA·OB 转化为单动点中线长 |OM|² 的最值求解",
+      ],
+      level: studyMode === "polarization" ? "core" : "important",
     },
   ];
 
   const gaokaoPoints: GaokaoPoint[] = [
     {
-      text: "高考必考：数量积的物理与几何意义。W = |b|cosθ 表示向量 b 在 a 方向上的投影数量。当 θ 为锐角时投影数量 > 0；当 θ 为钝角时投影数量 < 0；垂直时为 0。",
+      text: "新课标核心：投影数量与投影向量的严格辨析。投影数量是标量 (|b|cosθ)，锐角时 >0，钝角时 <0，直角时为 0；投影向量是矢量，与向量 a 同向或反向。",
       importance: "gaokao",
     },
     {
-      text: "易错点防范：a·b > 0 是 θ 为锐角或 0° 的充要条件。若题目要求夹角为锐角，必须剔除 a // b (同向) 即 θ = 0° 的情况！",
+      text: "易错点辨析：a·b = 0 是 a ⊥ b 的充分不必要条件 (需排除零向量)。a ⊥ b 充要条件为 x1x2 + y1y2 = 0；而 a // b 充要条件为 x1y2 - x2y1 = 0，严禁记混！",
       importance: "gaokao",
     },
     {
-      text: "高考秒杀技巧——极化恒等式：求矢量数量积 PA·PB 的最值时，找到固定线段 AB 的中点 M，直接写出 PA·PB = |PM|² - |MA|²，取 PM 的最大或最小值即可瞬间破题！",
+      text: "高考压轴秒杀技巧——极化恒等式：求数量积 OA·OB 的最值或范围时，取 AB 中点 M，立刻写出 OA·OB = |OM|² - |MB|²。当 AB 为定长时 |MB| 为常数，数量积最值完全转化为求动点到定点 M 的距离最值！",
       importance: "gaokao",
     },
   ];
@@ -244,7 +258,7 @@ export function buildVectorDotProductPanel(
 
   if (studyMode === "defProj" && angleType === "obtuse") {
     warnings.push({
-      text: "钝角投影提示：夹角 θ 为钝角 (cosθ < 0)，投影数量 W_a(b) 为负值，垂足 H 落在向量 a 的反向延长线上！",
+      text: "钝角投影提示：夹角 θ 为钝角 (cosθ < 0)，投影数量为负值，垂足 H 落在向量 a 的反向延长线上！",
       level: "warning",
     });
   }

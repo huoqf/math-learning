@@ -113,13 +113,15 @@ export function computeVectorDotProduct(
 
   const angleDeg = (angleRad * 180) / Math.PI;
 
+  const cleanZero = (v: number) => (Math.abs(v) < 1e-12 ? 0 : v);
+
   // 1. 投影计算 (b 在 a 方向)
   let scalarProjBtoA = 0;
   let projVecBtoA: Vector2D = { x: 0, y: 0 };
   if (normA > 1e-7) {
-    scalarProjBtoA = dotProduct / normA;
+    scalarProjBtoA = cleanZero(dotProduct / normA);
     const factor = dotProduct / normA2;
-    projVecBtoA = { x: factor * a.x, y: factor * a.y };
+    projVecBtoA = { x: cleanZero(factor * a.x), y: cleanZero(factor * a.y) };
   }
   const footH = { ...projVecBtoA };
 
@@ -127,9 +129,9 @@ export function computeVectorDotProduct(
   let scalarProjAtoB = 0;
   let projVecAtoB: Vector2D = { x: 0, y: 0 };
   if (normB > 1e-7) {
-    scalarProjAtoB = dotProduct / normB;
+    scalarProjAtoB = cleanZero(dotProduct / normB);
     const factor = dotProduct / normB2;
-    projVecAtoB = { x: factor * b.x, y: factor * b.y };
+    projVecAtoB = { x: cleanZero(factor * b.x), y: cleanZero(factor * b.y) };
   }
 
   // 3. 和差向量与模长展开
