@@ -2,6 +2,7 @@ import React from "react";
 import {
   CoordinateGrid,
   InteractivePoint,
+  MathPoint,
   VectorArrow,
   FunctionGraph,
 } from "@/components/Math";
@@ -180,6 +181,9 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
           fill={MATH_COLORS.primary}
           fontSize={fontScale(11)}
           fontWeight="bold"
+          paintOrder="stroke"
+          stroke="white"
+          strokeWidth={3}
         >
           弦 AB
         </text>
@@ -282,6 +286,9 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
             y={baselineLeft.y - 6}
             fill={MATH_COLORS.paramTertiary}
             fontSize={fontScale(11)}
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
           >
             中轴 y = 0.5
           </text>
@@ -323,7 +330,6 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
     const { sinAlpha, cosAlpha, sin2Alpha, cos2Alpha } = doubleData;
 
     const pointA = mathToDesign(cosAlpha, sinAlpha, scale);
-    const pointDouble = mathToDesign(cos2Alpha, sin2Alpha, scale);
 
     const handleDragA = (pt: { x: number; y: number }) => {
       const angleRad = Math.atan2(pt.y, pt.x);
@@ -395,22 +401,15 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
           fontScale={fontScale}
         />
 
-        {/* 倍角点 P(2α) */}
-        <circle
-          cx={pointDouble.x}
-          cy={pointDouble.y}
-          r={6}
-          fill={MATH_COLORS.primary}
+        {/* 倍角特征点 P(2α) */}
+        <MathPoint
+          cx={cos2Alpha}
+          cy={sin2Alpha}
+          scale={scale}
+          color={MATH_COLORS.primary}
+          label="P(2α)"
+          fontScale={fontScale}
         />
-        <text
-          x={pointDouble.x + 10}
-          y={pointDouble.y - 10}
-          fill={MATH_COLORS.primary}
-          fontSize={fontScale(12)}
-          fontWeight="bold"
-        >
-          P(2α)
-        </text>
       </g>
     );
   }
@@ -440,8 +439,6 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
   const ampLineRight = mathToDesign(6, amplitude, scale);
   const ampNegLineLeft = mathToDesign(-6, -amplitude, scale);
   const ampNegLineRight = mathToDesign(6, -amplitude, scale);
-
-  const maxPeakPt = mathToDesign(maxPointX, amplitude, scale);
 
   return (
     <g>
@@ -550,23 +547,15 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
             strokeDasharray="3 3"
           />
 
-          {/* 波峰点标注 */}
-          <circle
-            cx={maxPeakPt.x}
-            cy={maxPeakPt.y}
-            r={4}
-            fill={MATH_COLORS.primary}
+          {/* 波峰特征点标注 */}
+          <MathPoint
+            cx={maxPointX}
+            cy={amplitude}
+            scale={scale}
+            color={MATH_COLORS.primary}
+            label={`波峰 (${((maxPointX * 180) / Math.PI).toFixed(0)}°, A=${amplitude.toFixed(2)})`}
+            fontScale={fontScale}
           />
-          <text
-            x={maxPeakPt.x + 6}
-            y={maxPeakPt.y - 6}
-            fill={MATH_COLORS.primary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-          >
-            波峰 ({((maxPointX * 180) / Math.PI).toFixed(0)}°, A=
-            {amplitude.toFixed(2)})
-          </text>
         </>
       )}
     </g>

@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   alphaDeg: 45,
@@ -11,15 +12,15 @@ export const paramMeta: Record<string, ParamMeta> = {
   alphaDeg: {
     key: "alphaDeg",
     label: "角 α (°)",
-    labelFormula: "\\color{#EF4444}{\\alpha}",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{\\alpha}`,
     min: -360,
     max: 360,
     step: 1,
     defaultValue: 45,
     importance: "core",
+    group: "动角参数 (α, β)",
     description: "主控动角 α，决定向量 A(cos α, sin α) 或单角 x 的终边位置",
-    descriptionFormula:
-      "主控动角 $\\color{#EF4444}{\\alpha}$，决定向量 $A(\\cos\\alpha, \\sin\\alpha)$ 的终边",
+    descriptionFormula: `主控动角 $\\color{${MATH_COLORS.paramPrimary}}{\\alpha}$，决定向量 $A(\\cos\\alpha, \\sin\\alpha)$ 的终边`,
     marks: [
       {
         value: 0,
@@ -64,15 +65,15 @@ export const paramMeta: Record<string, ParamMeta> = {
   betaDeg: {
     key: "betaDeg",
     label: "角 β (°)",
-    labelFormula: "\\color{#D97706}{\\beta}",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{\\beta}`,
     min: -360,
     max: 360,
     step: 1,
     defaultValue: 30,
     importance: "core",
+    group: "动角参数 (α, β)",
     description: "次要动角 β，决定向量 B(cos β, sin β) 的终边位置",
-    descriptionFormula:
-      "次要动角 $\\color{#D97706}{\\beta}$，决定向量 $B(\\cos\\beta, \\sin\\beta)$ 的终边",
+    descriptionFormula: `次要动角 $\\color{${MATH_COLORS.paramSecondary}}{\\beta}$，决定向量 $B(\\cos\\beta, \\sin\\beta)$ 的终边`,
     marks: [
       {
         value: 0,
@@ -106,15 +107,15 @@ export const paramMeta: Record<string, ParamMeta> = {
   coeffA: {
     key: "coeffA",
     label: "正弦系数 a",
-    labelFormula: "\\color{#EF4444}{a}",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a}`,
     min: -5.0,
     max: 5.0,
     step: 0.1,
     defaultValue: 1.0,
     importance: "core",
+    group: "辅助角线性系数 (a, b)",
     description: "辅助角公式 a sin x + b cos x 中的正弦前系数 a",
-    descriptionFormula:
-      "辅助角化简 $\\color{#EF4444}{a}\\sin x + \\color{#D97706}{b}\\cos x$ 中正弦系数 $a$",
+    descriptionFormula: `辅助角化简 $\\color{${MATH_COLORS.paramPrimary}}{a}\\sin x + \\color{${MATH_COLORS.paramSecondary}}{b}\\cos x$ 中正弦系数 $a$`,
     marks: [
       {
         value: -1.73,
@@ -147,15 +148,15 @@ export const paramMeta: Record<string, ParamMeta> = {
   coeffB: {
     key: "coeffB",
     label: "余弦系数 b",
-    labelFormula: "\\color{#D97706}{b}",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{b}`,
     min: -5.0,
     max: 5.0,
     step: 0.1,
     defaultValue: 1.73,
     importance: "core",
+    group: "辅助角线性系数 (a, b)",
     description: "辅助角公式 a sin x + b cos x 中的余弦前系数 b",
-    descriptionFormula:
-      "辅助角化简 $\\color{#EF4444}{a}\\sin x + \\color{#D97706}{b}\\cos x$ 中余弦系数 $b$",
+    descriptionFormula: `辅助角化简 $\\color{${MATH_COLORS.paramPrimary}}{a}\\sin x + \\color{${MATH_COLORS.paramSecondary}}{b}\\cos x$ 中余弦系数 $b$`,
     marks: [
       {
         value: -1.73,

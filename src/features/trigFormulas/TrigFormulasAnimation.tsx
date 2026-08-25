@@ -24,8 +24,8 @@ import {
 } from "./math/trigFormulas";
 
 export function TrigFormulasAnimation() {
-  // 高考预设选择状态
-  const [activePreset, setActivePreset] = useState<string>("");
+  // 典型构型预设 (2x2 黄金规范：首项固定为 free 自由探究)
+  const [activePreset, setActivePreset] = useState<string>("free");
 
   // 研究模式：'sum_diff' | 'double_angle' | 'auxiliary'
   const [studyMode, setStudyMode] = useState<StudyMode>("sum_diff");
@@ -74,8 +74,9 @@ export function TrigFormulasAnimation() {
     });
   }, [params, studyMode, sumDiffKey, doubleAngleKey]);
 
-  // 参数更新
+  // 参数更新（拖拽或滑块改变时自动将预设切回 free）
   const handleParamChange = (key: string, value: number) => {
+    setActivePreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -84,12 +85,52 @@ export function TrigFormulasAnimation() {
 
   // 重置参数
   const handleReset = () => {
+    setActivePreset("free");
     setParams({
       alphaDeg: defaultParams.alphaDeg,
       betaDeg: defaultParams.betaDeg,
       coeffA: defaultParams.coeffA,
       coeffB: defaultParams.coeffB,
     });
+  };
+
+  // 模式切换
+  const handleModeChange = (mode: StudyMode) => {
+    setStudyMode(mode);
+    setActivePreset("free");
+  };
+
+  // 典型预设选择响应 (2x2 黄金规范)
+  const handlePresetSelect = (key: string) => {
+    setActivePreset(key);
+    if (key === "free") return;
+
+    if (studyMode === "sum_diff") {
+      if (key === "preset_45_30") {
+        setParams((p) => ({ ...p, alphaDeg: 45, betaDeg: 30 }));
+      } else if (key === "preset_75_45") {
+        setParams((p) => ({ ...p, alphaDeg: 75, betaDeg: 45 }));
+      } else if (key === "preset_90_30") {
+        setParams((p) => ({ ...p, alphaDeg: 90, betaDeg: 30 }));
+      }
+    } else if (studyMode === "double_angle") {
+      if (key === "preset_15") {
+        setParams((p) => ({ ...p, alphaDeg: 15 }));
+      } else if (key === "preset_22_5") {
+        setParams((p) => ({ ...p, alphaDeg: 22.5 }));
+      } else if (key === "preset_45") {
+        setParams((p) => ({ ...p, alphaDeg: 45 }));
+      }
+    } else {
+      // auxiliary
+      if (key === "p1") {
+        setParams((p) => ({ ...p, coeffA: 1.0, coeffB: 1.73 }));
+      } else if (key === "p3") {
+        setParams((p) => ({ ...p, coeffA: -1.0, coeffB: 1.73 }));
+      } else if (key === "p4") {
+        setParams((p) => ({ ...p, coeffA: 1.0, coeffB: -1.0 }));
+      }
+    }
   };
 
   // 按研究模式过滤参数配置
@@ -116,6 +157,7 @@ export function TrigFormulasAnimation() {
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
+          group: meta.group,
           marks: meta.marks,
         };
       });
@@ -185,10 +227,10 @@ export function TrigFormulasAnimation() {
               items={[
                 { key: "sum_diff", label: "两角和差公式" },
                 { key: "double_angle", label: "倍角与升降幂" },
-                { key: "auxiliary", label: "辅助角化简" },
+                { key: "auxiliary", label: "辅助角化简", fullWidth: true },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as StudyMode)}
+              onChange={(k) => handleModeChange(k as StudyMode)}
               variant="filled"
             />
           </LeftPanelSection>
@@ -198,12 +240,12 @@ export function TrigFormulasAnimation() {
             <LeftPanelSection title="和差公式分类" subtitle="选择高考和差公式">
               <SelectGrid
                 items={[
-                  { key: "cos_minus", label: "cos(α-β)" },
-                  { key: "cos_plus", label: "cos(α+β)" },
-                  { key: "sin_plus", label: "sin(α+β)" },
-                  { key: "sin_minus", label: "sin(α-β)" },
-                  { key: "tan_plus", label: "tan(α+β)" },
-                  { key: "tan_minus", label: "tan(α-β)" },
+                  { key: "cos_minus", formula: "\\cos(\\alpha-\\beta)" },
+                  { key: "cos_plus", formula: "\\cos(\\alpha+\\beta)" },
+                  { key: "sin_plus", formula: "\\sin(\\alpha+\\beta)" },
+                  { key: "sin_minus", formula: "\\sin(\\alpha-\\beta)" },
+                  { key: "tan_plus", formula: "\\tan(\\alpha+\\beta)" },
+                  { key: "tan_minus", formula: "\\tan(\\alpha-\\beta)" },
                 ]}
                 value={sumDiffKey}
                 onChange={(k) => setSumDiffKey(k as SumDiffFormulaKey)}
@@ -221,11 +263,11 @@ export function TrigFormulasAnimation() {
             >
               <SelectGrid
                 items={[
-                  { key: "sin_2a", label: "sin 2α" },
-                  { key: "cos_2a", label: "cos 2α" },
-                  { key: "tan_2a", label: "tan 2α" },
-                  { key: "sin2_a", label: "sin²α" },
-                  { key: "cos2_a", label: "cos²α" },
+                  { key: "sin_2a", formula: "\\sin 2\\alpha" },
+                  { key: "cos_2a", formula: "\\cos 2\\alpha" },
+                  { key: "tan_2a", formula: "\\tan 2\\alpha" },
+                  { key: "sin2_a", formula: "\\sin^2\\alpha" },
+                  { key: "cos2_a", formula: "\\cos^2\\alpha", fullWidth: true },
                 ]}
                 value={doubleAngleKey}
                 onChange={(k) => setDoubleAngleKey(k as DoubleAngleFormulaKey)}
@@ -236,75 +278,87 @@ export function TrigFormulasAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 3. 高考经典预设 */}
+          {/* 3. 高考经典预设 (2x2 黄金规范：首项为 free) */}
           <LeftPanelSection
-            title="高考经典预设"
-            subtitle="一键载入新高考高频参数组合"
+            title="典型构型预设"
+            subtitle="首项自由探究，其余一键载入新高考高频模型"
           >
             {studyMode === "sum_diff" && (
               <SelectGrid
                 items={[
-                  { key: "preset_45_30", formula: "45^\\circ, 30^\\circ" },
-                  { key: "preset_75_45", formula: "75^\\circ, 45^\\circ" },
-                  { key: "preset_90_30", formula: "90^\\circ, 30^\\circ" },
+                  { key: "free", label: "自由探究", description: "全参数开放" },
+                  {
+                    key: "preset_45_30",
+                    formula: "45^\\circ, 30^\\circ",
+                    description: "求 15°/75°",
+                  },
+                  {
+                    key: "preset_75_45",
+                    formula: "75^\\circ, 45^\\circ",
+                    description: "差角 30° 验证",
+                  },
+                  {
+                    key: "preset_90_30",
+                    formula: "90^\\circ, 30^\\circ",
+                    description: "正交诱导检验",
+                  },
                 ]}
                 value={activePreset}
-                onChange={(k: string) => {
-                  setActivePreset(k);
-                  if (k === "preset_45_30")
-                    setParams((p) => ({ ...p, alphaDeg: 45, betaDeg: 30 }));
-                  if (k === "preset_75_45")
-                    setParams((p) => ({ ...p, alphaDeg: 75, betaDeg: 45 }));
-                  if (k === "preset_90_30")
-                    setParams((p) => ({ ...p, alphaDeg: 90, betaDeg: 30 }));
-                }}
+                onChange={handlePresetSelect}
                 variant="outline"
                 color="primary"
-                columns={3}
+                columns={2}
               />
             )}
             {studyMode === "double_angle" && (
               <SelectGrid
                 items={[
-                  { key: "preset_15", formula: "15^\\circ" },
-                  { key: "preset_30", formula: "30^\\circ" },
-                  { key: "preset_45", formula: "45^\\circ" },
+                  { key: "free", label: "自由探究", description: "全参数开放" },
+                  {
+                    key: "preset_15",
+                    formula: "15^\\circ",
+                    description: "倍角得 30°",
+                  },
+                  {
+                    key: "preset_22_5",
+                    formula: "22.5^\\circ",
+                    description: "半角求值",
+                  },
+                  {
+                    key: "preset_45",
+                    formula: "45^\\circ",
+                    description: "倍角得 90°",
+                  },
                 ]}
                 value={activePreset}
-                onChange={(k: string) => {
-                  setActivePreset(k);
-                  if (k === "preset_15")
-                    setParams((p) => ({ ...p, alphaDeg: 15 }));
-                  if (k === "preset_30")
-                    setParams((p) => ({ ...p, alphaDeg: 30 }));
-                  if (k === "preset_45")
-                    setParams((p) => ({ ...p, alphaDeg: 45 }));
-                }}
+                onChange={handlePresetSelect}
                 variant="outline"
                 color="primary"
-                columns={3}
+                columns={2}
               />
             )}
             {studyMode === "auxiliary" && (
               <SelectGrid
                 items={[
-                  { key: "p1", formula: "(1, \\sqrt{3})" },
-                  { key: "p2", formula: "(\\sqrt{3}, 1)" },
-                  { key: "p3", formula: "(-1, \\sqrt{3})" },
-                  { key: "p4", formula: "(1, 1)" },
+                  { key: "free", label: "自由探究", description: "全参数开放" },
+                  {
+                    key: "p1",
+                    formula: "(1, \\sqrt{3})",
+                    description: "φ=60° (第Ⅰ象限)",
+                  },
+                  {
+                    key: "p3",
+                    formula: "(-1, \\sqrt{3})",
+                    description: "φ=120° 易错陷阱",
+                  },
+                  {
+                    key: "p4",
+                    formula: "(1, -1)",
+                    description: "φ=315° (第Ⅳ象限)",
+                  },
                 ]}
                 value={activePreset}
-                onChange={(k: string) => {
-                  setActivePreset(k);
-                  if (k === "p1")
-                    setParams((p) => ({ ...p, coeffA: 1.0, coeffB: 1.73 }));
-                  if (k === "p2")
-                    setParams((p) => ({ ...p, coeffA: 1.73, coeffB: 1.0 }));
-                  if (k === "p3")
-                    setParams((p) => ({ ...p, coeffA: -1.0, coeffB: 1.73 }));
-                  if (k === "p4")
-                    setParams((p) => ({ ...p, coeffA: 1.0, coeffB: 1.0 }));
-                }}
+                onChange={handlePresetSelect}
                 variant="outline"
                 color="primary"
                 columns={2}
@@ -317,8 +371,8 @@ export function TrigFormulasAnimation() {
             title="参数调节"
             subtitle={
               studyMode === "auxiliary"
-                ? "拖动滑块改变系数 a, b 或在中屏直接拖拽 P 点"
-                : "拖动滑块改变角 α, β 或在中屏拖拽 A, B 点"
+                ? "调节系数 a, b 或在中屏直接拖拽点 P"
+                : "调节角 α, β 或在中屏直接拖拽点 A, B"
             }
           >
             <ParamControl
@@ -326,6 +380,34 @@ export function TrigFormulasAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 5. 教学引导卡片 (置于底部辅助区，不阻断调参动线) */}
+          <LeftPanelSection title="教学思考与探究" subtitle="启发式问题引导">
+            <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200 text-xs text-neutral-600 space-y-2">
+              <div>
+                <span className="font-semibold text-neutral-800">
+                  【基础条件】
+                </span>
+                {studyMode === "sum_diff" &&
+                  "两动角终边交于单位圆上的动点 A、B，其几何向量点积对应两角差的余弦。"}
+                {studyMode === "double_angle" &&
+                  "倍角变换将单角 α 投射到 2α，降幂将二次项降为一次项且周期减半。"}
+                {studyMode === "auxiliary" &&
+                  "线性组合 a sin x + b cos x 等价于平面向量 (a, b) 模长与极角合成。"}
+              </div>
+              <div>
+                <span className="font-semibold text-neutral-800">
+                  【探究思考】
+                </span>
+                {studyMode === "sum_diff" &&
+                  "拖动 A、B 观察向量夹角与弦长变化：为什么两角差的余弦公式是整个三角恒等变换的基石？"}
+                {studyMode === "double_angle" &&
+                  "观察曲线 y=sin²x 与 y=(1-cos 2x)/2 的重合轨迹，注意中轴线 y=0.5 和周期的变化。"}
+                {studyMode === "auxiliary" &&
+                  "尝试将 P 拖到第二、三象限，思考为什么初相 φ 的象限必须由点 (a, b) 唯一确定？"}
+              </div>
+            </div>
           </LeftPanelSection>
         </LeftPanel>
       }

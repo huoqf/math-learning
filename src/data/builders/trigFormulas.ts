@@ -5,6 +5,7 @@ import type {
   GaokaoPoint,
   WarningItem,
 } from "../types";
+import { MATH_COLORS } from "@/theme";
 import {
   calculateSumDiff,
   calculateDoubleAngle,
@@ -35,37 +36,37 @@ export function buildTrigFormulasPanel(
         label: "主控动角 α 角度",
         symbol: "\\alpha",
         value: `${alphaDeg}°`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "次要动角 β 角度",
         symbol: "\\beta",
         value: `${betaDeg}°`,
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
       },
       {
         label: "运算目标角",
         symbol: "\\theta",
         value: `${res.targetAngleDeg.toFixed(1)}°`,
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
       },
       {
         label: "向量 OA 与 OB 点积",
         symbol: "\\vec{u} \\cdot \\vec{v} = \\cos(\\alpha-\\beta)",
         value: res.dotProduct.toFixed(3),
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "弦长 AB 距离",
         symbol: "|AB| = \\sqrt{2-2\\cos(\\alpha-\\beta)}",
         value: res.chordLength.toFixed(3),
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "公式展开计算值",
         symbol: res.formulaTitle,
         value: res.isTanDefined ? res.resultVal.toFixed(3) : "无意义",
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
         highlight: !res.isTanDefined ? "extreme" : undefined,
       },
     ];
@@ -74,7 +75,7 @@ export function buildTrigFormulasPanel(
       {
         name: "两角和与差的三角公式",
         latex: res.formulaLatex,
-        condition: "$\\text{任意实数角 } \\alpha, \\beta \\in \\mathbb{R}$",
+        condition: "\\alpha, \\beta \\in \\mathbb{R}",
         note: "几何本质：单位圆上向量数量积 $\\vec{u}\\cdot\\vec{v} = x_1 x_2 + y_1 y_2 = \\cos(\\alpha-\\beta)$，奠定整个高中三角恒等变换的基石。",
         level: "core",
       },
@@ -83,8 +84,8 @@ export function buildTrigFormulasPanel(
         latex:
           "\\tan(\\alpha \\pm \\beta) = \\frac{\\tan\\alpha \\pm \\tan\\beta}{1 \\mp \\tan\\alpha\\tan\\beta} \\iff \\tan\\alpha \\pm \\tan\\beta = \\tan(\\alpha\\pm\\beta)(1 \\mp \\tan\\alpha\\tan\\beta)",
         condition:
-          "$\\alpha, \\beta, \\alpha\\pm\\beta \\neq k\\pi + \\frac{\\pi}{2}$",
-        note: "高考变形技巧：当 $\\alpha+\\beta=\\frac{\\pi}{4}$ 时，必有 $(1+\\tan\\alpha)(1+\\tan\\beta) = 2$。",
+          "\\alpha, \\beta, \\alpha\\pm\\beta \\neq k\\pi + \\frac{\\pi}{2}",
+        note: "高考秒杀技巧：当 $\\alpha+\\beta=\\frac{\\pi}{4}$ 时，必有 $(1+\\tan\\alpha)(1+\\tan\\beta) = 2$；当 $\\alpha+\\beta=\\frac{3\\pi}{4}$ 时，$(1-\\tan\\alpha)(1-\\tan\\beta) = 2$。",
         level: "important",
       },
     ];
@@ -127,37 +128,37 @@ export function buildTrigFormulasPanel(
         label: "单角 α 角度",
         symbol: "\\alpha",
         value: `${alphaDeg}°`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "倍角 2α 角度",
         symbol: "2\\alpha",
         value: `${(((alphaDeg * 2) % 360) + 360) % 360}°`,
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
       },
       {
         label: "sin 2α 二倍角值",
         symbol: "\\sin 2\\alpha",
         value: res.sin2Alpha.toFixed(3),
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
       },
       {
         label: "cos 2α 二倍角值",
         symbol: "\\cos 2\\alpha",
         value: res.cos2Alpha.toFixed(3),
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
       },
       {
         label: "降幂后周期 T",
         symbol: "T = \\frac{2\\pi}{2}",
         value: "\\pi \\approx 3.142",
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "降幂后平衡中轴",
         symbol: "y_0",
         value: "y = 0.5",
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
     ];
 
@@ -166,16 +167,16 @@ export function buildTrigFormulasPanel(
         name: "二倍角公式（三大变式）",
         latex:
           "\\sin 2\\alpha = 2\\sin\\alpha\\cos\\alpha, \\quad \\cos 2\\alpha = \\cos^2\\alpha - \\sin^2\\alpha = 2\\cos^2\\alpha - 1 = 1 - 2\\sin^2\\alpha",
-        condition: "$\\alpha \\in \\mathbb{R}$",
+        condition: "\\alpha \\in \\mathbb{R}",
         note: "在两角和公式中令 $\\beta = \\alpha$ 即可导出。$\\cos 2\\alpha$ 的三种变形是升降幂与代数消元的神器。",
         level: "core",
       },
       {
         name: "升降幂公式（降次升角）",
         latex:
-          "\\sin^2\\alpha = \\frac{1-\\cos 2\\alpha}{2}, \\quad \\cos^2\\alpha = \\frac{1+\\cos 2\\alpha}{2}, \\quad 1+\\cos 2\\alpha = 2\\cos^2\\alpha",
-        condition: "用于将二次项降为一次项，周期减半；或开方去根号时升幂",
-        note: "降幂口诀：二次降一次，次数降一半，角度翻一番！",
+          "\\sin^2\\alpha = \\frac{1-\\cos 2\\alpha}{2}, \\quad \\cos^2\\alpha = \\frac{1+\\cos 2\\alpha}{2}, \\quad 1+\\cos 2\\alpha = 2\\cos^2\\alpha, \\quad 1-\\cos 2\\alpha = 2\\sin^2\\alpha",
+        condition: "用于将二次项降为一次项（周期减半），或开方去根号时升幂化简",
+        note: "降幂口诀：二次降一次，次数降一半，角度翻一番；开方去根号，加余升余平方消！",
         level: "important",
       },
     ];
@@ -215,38 +216,38 @@ export function buildTrigFormulasPanel(
         label: "正弦系数 a",
         symbol: "a",
         value: `${coeffA}`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "余弦系数 b",
         symbol: "b",
         value: `${coeffB}`,
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
       },
       {
         label: "合成振幅 A (模长)",
         symbol: "A = \\sqrt{a^2+b^2}",
         value: res.amplitude.toFixed(3),
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
         highlight: res.isDegenerate ? "extreme" : undefined,
       },
       {
         label: "点 (a, b) 所在象限",
         symbol: "\\text{Quadrant}",
         value: res.quadrantStr,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "辅助角 φ 角度",
         symbol: "\\varphi",
         value: `${res.phiDeg.toFixed(1)}°`,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "波峰最大值点 x 坐标",
         symbol: "x_{max}",
         value: `${(res.maxPointX * (180 / Math.PI)).toFixed(1)}°`,
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
       },
     ];
 
@@ -255,7 +256,7 @@ export function buildTrigFormulasPanel(
         name: "辅助角公式 (Asin(ωx+φ) 终极化简)",
         latex: "a\\sin x + b\\cos x = \\sqrt{a^2+b^2}\\sin(x+\\varphi)",
         condition:
-          "$a^2 + b^2 \\neq 0, \\quad \\cos\\varphi = \\frac{a}{\\sqrt{a^2+b^2}}, \\quad \\sin\\varphi = \\frac{b}{\\sqrt{a^2+b^2}}$",
+          "a^2 + b^2 \\neq 0, \\quad \\cos\\varphi = \\frac{a}{\\sqrt{a^2+b^2}}, \\quad \\sin\\varphi = \\frac{b}{\\sqrt{a^2+b^2}}",
         note: "数形结合本质：直角坐标系中向量 $(a, b)$ 的模长即为振幅 $A$，极角即为初相 $\\varphi$。两个同频波叠加仍为同频正弦波！",
         level: "core",
       },
@@ -263,7 +264,7 @@ export function buildTrigFormulasPanel(
         name: "辅助角函数的最值、周期与对称轴",
         latex:
           "y_{max} = \\sqrt{a^2+b^2}, \\quad y_{min} = -\\sqrt{a^2+b^2}, \\quad T = 2\\pi, \\quad x_{sym} = k\\pi + \\frac{\\pi}{2} - \\varphi",
-        condition: "$x \\in \\mathbb{R}$",
+        condition: "x \\in \\mathbb{R}",
         note: "高考结合区间限定求最值时，注意将 $x \\in [m, n]$ 转化为整体角 $x+\\varphi \\in [m+\\varphi, n+\\varphi]$。",
         level: "important",
       },
