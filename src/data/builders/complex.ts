@@ -1,4 +1,5 @@
 import type { MathPanelData } from "../types";
+import { MATH_COLORS } from "@/theme";
 import {
   createComplex,
   modulus,
@@ -68,7 +69,7 @@ export function buildComplexPanel(
           unit: "向量加法",
         },
         {
-          label: "距离 $|z_1 - z_2|$",
+          label: "两点距离 $|z_1 - z_2|$",
           symbol: "|z_1 - z_2|",
           value: dist.toFixed(2),
           unit: "减法模长",
@@ -77,27 +78,26 @@ export function buildComplexPanel(
           label: "模长 $|z_1|$",
           symbol: "|z_1|",
           value: mod1.toFixed(2),
+          unit: "\\sqrt{a_1^2 + b_1^2}",
         },
         {
           label: "共轭 $\\bar{z}_1$",
           symbol: "\\bar{z}_1",
           value: formatComplexLatex(z1Conj),
-          unit: "实轴对称",
+          unit: "关于实轴对称",
         },
       ],
       theorems: [
         {
           name: "复数的几何意义与向量对应",
-          latex:
-            "\\color{#EF4444}{z} = \\color{#EF4444}{a} + \\color{#D97706}{b}i \\leftrightarrow Z(\\color{#EF4444}{a}, \\color{#D97706}{b}) \\leftrightarrow \\vec{OZ} = (\\color{#EF4444}{a}, \\color{#D97706}{b})",
+          latex: `\\color{${MATH_COLORS.paramPrimary}}{z} = \\color{${MATH_COLORS.paramPrimary}}{a} + \\color{${MATH_COLORS.paramSecondary}}{b}i \\leftrightarrow Z(\\color{${MATH_COLORS.paramPrimary}}{a}, \\color{${MATH_COLORS.paramSecondary}}{b}) \\leftrightarrow \\vec{OZ} = (\\color{${MATH_COLORS.paramPrimary}}{a}, \\color{${MATH_COLORS.paramSecondary}}{b})`,
           prerequisites: ["$a, b \\in \\mathbb{R}$"],
           note: "复平面 $x$ 轴为实轴，$y$ 轴为虚轴。模长 $|z_1 - z_2|$ 代表两点 $Z_1, Z_2$ 欧氏距离。",
           level: "core",
         },
         {
           name: "共轭复数基本性质",
-          latex:
-            "z \\cdot \\bar{z} = |z|^2 = \\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2",
+          latex: `z \\cdot \\bar{z} = |z|^2 = \\color{${MATH_COLORS.paramPrimary}}{a}^2 + \\color{${MATH_COLORS.paramSecondary}}{b}^2`,
           note: "$z + \\bar{z} = 2a \\in \\mathbb{R}$，且 $z - \\bar{z} = 2bi$",
           level: "important",
         },
@@ -140,7 +140,7 @@ export function buildComplexPanel(
     const warnings: MathPanelData["warnings"] = [];
     if (Math.abs(r2 - 1.0) < 1e-6) {
       warnings.push({
-        text: "当 $r_2 = 1$ 时，$|z_2| = 1$，乘以 $z_2$ 保持模长不变，实现纯粹的平面旋转变换！",
+        text: "当 $r_2 = 1$ 时，$|z_2| = 1$，乘以 $z_2$ 保持模长不变，实现纯粹的平面刚体旋转变换！",
         level: "info",
       });
     }
@@ -189,6 +189,14 @@ export function buildComplexPanel(
           level: "core",
         },
         {
+          name: "复数除法的几何意义（逆向旋转）",
+          latex:
+            "\\frac{z_1}{z_2} = \\left(\\frac{r_1}{r_2}\\right) [\\cos(\\theta_1 - \\theta_2) + i \\sin(\\theta_1 - \\theta_2)]",
+          prerequisites: ["$z_2 \\neq 0$"],
+          note: "模长相除：$|z_1 / z_2| = r_1 / r_2$；辐角相减：$\\arg(z_1 / z_2) = \\theta_1 - \\theta_2$。",
+          level: "important",
+        },
+        {
           name: "常见旋转算子特例",
           latex:
             "z \\cdot i \\text{ (逆时针 } 90^\\circ \\text{)}, \\quad z \\cdot (-1) \\text{ (逆时针 } 180^\\circ \\text{)}",
@@ -223,6 +231,19 @@ export function buildComplexPanel(
   const target = createComplex(wx, wy);
   const locusRes = calcCircleLocusExtrema(center, radius, target);
 
+  const warnings: MathPanelData["warnings"] = [];
+  if (locusRes.centerDist < 1e-9) {
+    warnings.push({
+      text: "当定点 $w$ 恰好为轨迹圆心 $z_0$ 时，圆上所有点到 $w$ 的距离恒等于半径 $R$。",
+      level: "info",
+    });
+  } else if (locusRes.centerDist < radius) {
+    warnings.push({
+      text: "定点 $w$ 位于轨迹圆内部，最近距离为 $R - |z_0 - w|$，最远距离为 $R + |z_0 - w|$。",
+      level: "info",
+    });
+  }
+
   return {
     quantities: [
       {
@@ -239,6 +260,12 @@ export function buildComplexPanel(
         label: "目标定点 $w$",
         symbol: "w",
         value: formatComplexLatex(target),
+      },
+      {
+        label: "圆心距 $d = |z_0 - w|$",
+        symbol: "d",
+        value: locusRes.centerDist.toFixed(2),
+        unit: "圆心到定点距离",
       },
       {
         label: "最小值 $|z - w|_{\\min}$",
@@ -267,8 +294,12 @@ export function buildComplexPanel(
         text: "高考最值压轴题：把抽象的复数模长条件 $|z - z_0| = R$ 转化为平面几何问题（圆心距与半径加减）。",
         importance: "hard",
       },
+      {
+        text: "动点三点共线极值定理：当且仅当动点 $z$、圆心 $z_0$ 与定点 $w$ 三点共线时取得最大与最小距离。",
+        importance: "gaokao",
+      },
     ],
-    warnings: [],
+    warnings,
     mnemonic:
       "模长方程即画圆，连结圆心看定点；加半径得最大值，减半径得最小值。",
   };

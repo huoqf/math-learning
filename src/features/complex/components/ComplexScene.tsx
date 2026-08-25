@@ -6,19 +6,17 @@ import {
   PolarGrid,
   VectorArrow,
   InteractivePoint,
+  MathPoint,
 } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import {
   createComplex,
   addComplex,
-  subComplex,
   mulComplex,
   modulus,
   argument,
   fromPolar,
-  conjugate,
-  formatComplexLatex,
   calcCircleLocusExtrema,
 } from "@/math/complex";
 
@@ -55,12 +53,14 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
   const z1 = useMemo(() => createComplex(a1, b1), [a1, b1]);
   const z2 = useMemo(() => createComplex(a2, b2), [a2, b2]);
   const zSum = useMemo(() => addComplex(z1, z2), [z1, z2]);
-  const zDiff = useMemo(() => subComplex(z1, z2), [z1, z2]);
 
   const p1 = toDesign(z1.re, z1.im);
   const p2 = toDesign(z2.re, z2.im);
   const pSum = toDesign(zSum.re, zSum.im);
   const pConj1 = toDesign(z1.re, -z1.im);
+
+  // 是否展示共轭点（虚部不为 0 时才显示镜像点，避免实轴文字四重重叠）
+  const showConjugate = Math.abs(b1) > 0.4;
 
   // ─────────────────────────────────────────────────────────────
   // 模式二：乘法旋转与缩放
@@ -78,12 +78,12 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
   const zProd = useMemo(() => mulComplex(z1Polar, z2Polar), [z1Polar, z2Polar]);
 
   // 旋转弧线路径计算 (从 rad1 到 rad1 + rad2，半径为 r1)
+  const arcRadius = Math.min(r1, 2.5);
   const rotationArcPath = useMemo(() => {
     const startAngle = rad1;
     const endAngle = rad1 + rad2;
-    const steps = 40;
+    const steps = 30;
     const arcPoints: string[] = [];
-    const arcRadius = r1;
 
     for (let i = 0; i <= steps; i++) {
       const angle = startAngle + (endAngle - startAngle) * (i / steps);
@@ -96,7 +96,14 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
       );
     }
     return arcPoints.join(" ");
-  }, [rad1, rad2, r1, toDesign]);
+  }, [rad1, rad2, arcRadius, toDesign]);
+
+  // 旋转角标注位置 (弧线外侧)
+  const midAngle = rad1 + rad2 / 2;
+  const arcLabelPt = toDesign(
+    (arcRadius + 0.35) * Math.cos(midAngle),
+    (arcRadius + 0.35) * Math.sin(midAngle),
+  );
 
   // ─────────────────────────────────────────────────────────────
   // 模式三：轨迹与极值
@@ -122,9 +129,12 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
   // 圆周像素半径
   const circlePxRadius = radius * scale.scaleX;
 
+  // 定点 W 是否靠近原点
+  const isTargetNearOrigin = Math.hypot(wx, wy) < 0.6;
+
   return (
     <g>
-      {/* 网格底图 */}
+      {/* 极简网格底图 */}
       {studyMode === "multiplication-rotation" ? (
         <PolarGrid
           scale={scale}
@@ -132,6 +142,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
           maxRadius={5}
           radiusStep={1}
           angleStep={Math.PI / 6}
+          showAngleLabels={false}
           gridColor={MATH_COLORS.grid}
           axisColor={MATH_COLORS.axis}
         />
@@ -150,7 +161,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             y1={p1.y}
             x2={pSum.x}
             y2={pSum.y}
-            stroke={withAlpha(MATH_COLORS.paramSecondary, 0.6)}
+            stroke={withAlpha(MATH_COLORS.paramSecondary, 0.5)}
             strokeWidth={1.5}
             strokeDasharray="4 4"
           />
@@ -159,12 +170,12 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             y1={p2.y}
             x2={pSum.x}
             y2={pSum.y}
-            stroke={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
+            stroke={withAlpha(MATH_COLORS.paramPrimary, 0.5)}
             strokeWidth={1.5}
             strokeDasharray="4 4"
           />
 
-          {/* 减法差向量 z1 - z2 */}
+          {/* 减法差向量 z1 - z2 (从 Z2 指向 Z1，标注偏向 t=0.25 避开对角线中心交点) */}
           <VectorArrow
             from={[z2.re, z2.im]}
             to={[z1.re, z1.im]}
@@ -173,34 +184,36 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             color={MATH_COLORS.function}
             strokeWidth={2}
             strokeDasharray="5 3"
-            label={`|z1-z2|=${modulus(zDiff).toFixed(2)}`}
-            labelSize={10}
+            label="z₁ - z₂"
+            labelPositionRatio={0.25}
+            labelSize={11}
           />
 
-          {/* 共轭复数虚线与镜像点 */}
-          <line
-            x1={p1.x}
-            y1={p1.y}
-            x2={pConj1.x}
-            y2={pConj1.y}
-            stroke={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
-            strokeWidth={1}
-            strokeDasharray="2 2"
-          />
-          <circle
-            cx={pConj1.x}
-            cy={pConj1.y}
-            r={4}
-            fill={withAlpha(MATH_COLORS.paramPrimary, 0.5)}
-          />
-          <text
-            x={pConj1.x + 8}
-            y={pConj1.y + 12}
-            fill={MATH_COLORS.labelTextLight}
-            fontSize={fontScale(10)}
-          >
-            {`z1* = ${formatComplexLatex(conjugate(z1))}`}
-          </text>
+          {/* 共轭复数虚线与镜像点（仅当非实数时显示，彻底杜绝实轴重合） */}
+          {showConjugate && (
+            <>
+              <line
+                x1={p1.x}
+                y1={p1.y}
+                x2={pConj1.x}
+                y2={pConj1.y}
+                stroke={withAlpha(MATH_COLORS.paramPrimary, 0.35)}
+                strokeWidth={1}
+                strokeDasharray="2 2"
+              />
+              <MathPoint
+                cx={z1.re}
+                cy={-z1.im}
+                scale={scale}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramPrimary}
+                variant="solid"
+                r={3.8}
+                label="z̄₁"
+                labelPosition="bottom"
+              />
+            </>
+          )}
 
           {/* 向量 z1 */}
           <VectorArrow
@@ -210,7 +223,8 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramPrimary}
             strokeWidth={2.5}
-            label={`z1 = ${formatComplexLatex(z1)}`}
+            label="z₁"
+            labelSize={12}
           />
 
           {/* 向量 z2 */}
@@ -221,10 +235,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramSecondary}
             strokeWidth={2.5}
-            label={`z2 = ${formatComplexLatex(z2)}`}
+            label="z₂"
+            labelSize={12}
           />
 
-          {/* 和向量 z1 + z2 */}
+          {/* 和向量 z1 + z2 (标注偏向 t=0.8 靠近箭头端，避开中心交点) */}
           <VectorArrow
             from={[0, 0]}
             to={[zSum.re, zSum.im]}
@@ -232,7 +247,9 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramTertiary}
             strokeWidth={3}
-            label={`z1+z2 = ${formatComplexLatex(zSum)}`}
+            label="z₁ + z₂"
+            labelPositionRatio={0.8}
+            labelSize={12}
           />
 
           {/* 可拖拽交互点 Z1 */}
@@ -244,7 +261,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramPrimary}
             r={7}
-            label="Z1"
+            label="Z₁"
             onDrag={({ x, y }) => {
               onParamChange("a1", Math.round(x * 2) / 2);
               onParamChange("b1", Math.round(y * 2) / 2);
@@ -260,7 +277,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramSecondary}
             r={7}
-            label="Z2"
+            label="Z₂"
             onDrag={({ x, y }) => {
               onParamChange("a2", Math.round(x * 2) / 2);
               onParamChange("b2", Math.round(y * 2) / 2);
@@ -289,10 +306,26 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             cy={scale.originY}
             r={modulus(zProd) * scale.scaleX}
             fill="none"
-            stroke={withAlpha(MATH_COLORS.paramTertiary, 0.3)}
+            stroke={withAlpha(MATH_COLORS.paramTertiary, 0.25)}
             strokeWidth={1}
             strokeDasharray="2 4"
           />
+
+          {/* 旋转角度文字标注 (位于弧线外侧) */}
+          <text
+            x={arcLabelPt.x}
+            y={arcLabelPt.y}
+            fill={MATH_COLORS.paramSecondary}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            textAnchor="middle"
+            dominantBaseline="central"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
+          >
+            {deg2 >= 0 ? `+${deg2}°` : `${deg2}°`}
+          </text>
 
           {/* 被乘向量 z1 */}
           <VectorArrow
@@ -302,7 +335,8 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramPrimary}
             strokeWidth={2.5}
-            label={`z1 (${r1.toFixed(1)}, ${deg1}°)`}
+            label="z₁"
+            labelSize={12}
           />
 
           {/* 旋转算子向量 z2 */}
@@ -313,10 +347,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramSecondary}
             strokeWidth={2.5}
-            label={`z2 (旋转 ${deg2}°)`}
+            label="z₂"
+            labelSize={12}
           />
 
-          {/* 乘积向量 z1 * z2 */}
+          {/* 乘积向量 z1 * z2 (靠外端标注) */}
           <VectorArrow
             from={[0, 0]}
             to={[zProd.re, zProd.im]}
@@ -324,7 +359,9 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramTertiary}
             strokeWidth={3}
-            label={`z1·z2 = ${formatComplexLatex(zProd)}`}
+            label="z₁z₂"
+            labelPositionRatio={0.85}
+            labelSize={12}
           />
 
           {/* 可拖拽交互点 Z1 (改变 r1, deg1) */}
@@ -336,7 +373,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramPrimary}
             r={7}
-            label="Z1"
+            label="Z₁"
             onDrag={({ x, y }) => {
               const pt = createComplex(x, y);
               const mod = Math.min(4.5, Math.max(0.5, modulus(pt)));
@@ -355,7 +392,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramSecondary}
             r={7}
-            label="Z2"
+            label="Z₂"
             onDrag={({ x, y }) => {
               const pt = createComplex(x, y);
               const mod = Math.min(3.0, Math.max(0.5, modulus(pt)));
@@ -404,38 +441,30 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
           />
 
           {/* 最远点标注 */}
-          <circle
-            cx={pMax.x}
-            cy={pMax.y}
-            r={5}
-            fill={MATH_COLORS.paramPrimary}
+          <MathPoint
+            cx={locusRes.maxPoint.re}
+            cy={locusRes.maxPoint.im}
+            scale={scale}
+            fontScale={fontScale}
+            color={MATH_COLORS.paramPrimary}
+            variant="solid"
+            r={4}
+            label="Z_max"
+            labelPosition="top"
           />
-          <text
-            x={pMax.x + 8}
-            y={pMax.y - 6}
-            fill={MATH_COLORS.paramPrimary}
-            fontSize={fontScale(10)}
-            fontWeight="bold"
-          >
-            {`Z_max (|d|=${locusRes.maxDist.toFixed(2)})`}
-          </text>
 
           {/* 最近点标注 */}
-          <circle
-            cx={pMin.x}
-            cy={pMin.y}
-            r={5}
-            fill={MATH_COLORS.paramTertiary}
+          <MathPoint
+            cx={locusRes.minPoint.re}
+            cy={locusRes.minPoint.im}
+            scale={scale}
+            fontScale={fontScale}
+            color={MATH_COLORS.paramTertiary}
+            variant="solid"
+            r={4}
+            label="Z_min"
+            labelPosition="bottom"
           />
-          <text
-            x={pMin.x + 8}
-            y={pMin.y - 6}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(10)}
-            fontWeight="bold"
-          >
-            {`Z_min (|d|=${locusRes.minDist.toFixed(2)})`}
-          </text>
 
           {/* 圆心 z0 可拖拽 */}
           <InteractivePoint
@@ -446,14 +475,14 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramPrimary}
             r={7}
-            label="圆心 z0"
+            label="Z₀"
             onDrag={({ x, y }) => {
               onParamChange("z0x", Math.round(x * 2) / 2);
               onParamChange("z0y", Math.round(y * 2) / 2);
             }}
           />
 
-          {/* 目标点 w 可拖拽 */}
+          {/* 目标定点 w 可拖拽（若在原点附近，将 label 置于左上方避免遮盖 O） */}
           <InteractivePoint
             cx={target.re}
             cy={target.im}
@@ -462,7 +491,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             fontScale={fontScale}
             color={MATH_COLORS.paramSecondary}
             r={7}
-            label="定点 w"
+            label={isTargetNearOrigin ? "W (定点)" : "W"}
             onDrag={({ x, y }) => {
               onParamChange("wx", Math.round(x * 2) / 2);
               onParamChange("wy", Math.round(y * 2) / 2);
