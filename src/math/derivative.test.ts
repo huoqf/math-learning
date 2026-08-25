@@ -3,6 +3,9 @@ import {
   solveDerivative,
   numericalDerivative,
   PRESET_FUNCTIONS,
+  formatNum,
+  buildPointSlopeLatex,
+  buildSlopeInterceptLatex,
 } from "./derivative";
 
 describe("numericalDerivative", () => {
@@ -48,6 +51,46 @@ describe("solveDerivative", () => {
     // f(x) = x³ - 3x → f'(x) = 3x² - 3 → f'(1) = 0
     expect(res.slope).toBeCloseTo(0, 3);
     expect(res.fx).toBeCloseTo(-2);
+  });
+});
+
+describe("formatNum", () => {
+  it("formats numbers properly without -0", () => {
+    expect(formatNum(0)).toBe("0");
+    expect(formatNum(-0.0001)).toBe("0");
+    expect(formatNum(2.5)).toBe("2.5");
+    expect(formatNum(-3.14159, 2)).toBe("-3.14");
+  });
+});
+
+describe("buildPointSlopeLatex & buildSlopeInterceptLatex", () => {
+  it("eliminates double negatives and formats standard point-slope properly", () => {
+    // 切点 (1, -2), 斜率 0 => y + 2 = 0
+    const latex1 = buildPointSlopeLatex(1, -2, 0);
+    expect(latex1).toBe("y + 2 = 0");
+
+    // 切点 (-1, 2), 斜率 3 => y - 2 = 3(x + 1)
+    const latex2 = buildPointSlopeLatex(-1, 2, 3);
+    expect(latex2).toBe("y - 2 = 3(x + 1)");
+
+    // 切点 (0, 0), 斜率 1 => y = x
+    const latex3 = buildPointSlopeLatex(0, 0, 1);
+    expect(latex3).toBe("y = x");
+
+    // 切点 (0, 1), 斜率 1 => y - 1 = x
+    const latex4 = buildPointSlopeLatex(0, 1, 1);
+    expect(latex4).toBe("y - 1 = x");
+  });
+
+  it("formats slope-intercept standard latex properly", () => {
+    // y = 2x - 1
+    expect(buildSlopeInterceptLatex(2, -1)).toBe("y = 2x - 1");
+    // y = -x + 3
+    expect(buildSlopeInterceptLatex(-1, 3)).toBe("y = -x + 3");
+    // y = 4 (水平线)
+    expect(buildSlopeInterceptLatex(0, 4)).toBe("y = 4");
+    // y = x (截距 0)
+    expect(buildSlopeInterceptLatex(1, 0)).toBe("y = x");
   });
 });
 

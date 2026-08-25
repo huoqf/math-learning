@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -17,7 +17,31 @@ import { DerivativeScene } from "./components/DerivativeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/derivative";
 
+type ExploreMode = "secant_limit" | "tangent_eq";
+type PresetType =
+  | "free"
+  | "limit_near"
+  | "macro"
+  | "reverse"
+  | "extrema"
+  | "tangent_scale"
+  | "inflection";
+
+// 精选高中高频核心教学函数（8个经典模型，杜绝冗余）
+const CORE_FUNCTION_KEYS: PresetFunctionKey[] = [
+  "cubic", // f(x) = x³ - 3x
+  "quadratic", // f(x) = x²
+  "exp", // f(x) = eˣ
+  "ln", // f(x) = ln x
+  "xlnx", // f(x) = x ln x
+  "lnx_x", // f(x) = (ln x)/x
+  "rational", // f(x) = 1/x
+  "sqrt", // f(x) = √x
+];
+
 export function DerivativeAnimation() {
+  const [mode, setMode] = useState<ExploreMode>("secant_limit");
+  const [presetKey, setPresetKey] = useState<PresetType>("free");
   const [fnKey, setFnKey] = useState<PresetFunctionKey>("cubic");
   const [params, setParams] = useState<Record<string, number>>(() => ({
     x0: PRESET_FUNCTIONS.cubic.defaultX0,
@@ -35,44 +59,121 @@ export function DerivativeAnimation() {
   });
 
   const mathData = useMemo(() => {
-    return buildMathQuantities("anim-derivative-tangent", params, { fnKey });
-  }, [params, fnKey]);
+    return buildMathQuantities("anim-derivative-tangent", params, {
+      fnKey,
+      mode,
+    });
+  }, [params, fnKey, mode]);
 
-  const handleParamChange = (key: string, value: number) => {
-    let clampedValue = value;
-    const preset = PRESET_FUNCTIONS[fnKey];
-    if (key === "x0") {
-      clampedValue = Math.max(
-        preset.x0Range[0],
-        Math.min(preset.x0Range[1], value),
-      );
-    } else if (key === "dx") {
-      clampedValue = Math.max(0.01, Math.min(2.0, value));
+  const preset = PRESET_FUNCTIONS[fnKey];
+
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      let clampedValue = value;
+      const currentPreset = PRESET_FUNCTIONS[fnKey];
+      if (key === "x0") {
+        clampedValue = Math.max(
+          currentPreset.x0Range[0],
+          Math.min(currentPreset.x0Range[1], value),
+        );
+      } else if (key === "dx") {
+        clampedValue = Math.max(-2.0, Math.min(2.0, value));
+        if (Math.abs(clampedValue) < 0.01) clampedValue = 0.01;
+      }
+      setParams((prev) => ({ ...prev, [key]: clampedValue }));
+    },
+    [fnKey],
+  );
+
+  // 拖拽动点切点时，自动切回自由探究
+  const handleDragStart = useCallback(() => {
+    if (presetKey !== "free") {
+      setPresetKey("free");
     }
-    setParams((prev) => ({ ...prev, [key]: clampedValue }));
+  }, [presetKey]);
+
+  const handleModeChange = (newMode: ExploreMode) => {
+    setMode(newMode);
+    setPresetKey("free");
   };
 
   const handleFnKeyChange = (key: PresetFunctionKey) => {
     setFnKey(key);
-    const preset = PRESET_FUNCTIONS[key];
+    setPresetKey("free");
+    const newPreset = PRESET_FUNCTIONS[key];
     setParams({
-      x0: preset.defaultX0,
+      x0: newPreset.defaultX0,
       dx: defaultParams.dx,
     });
+  };
+
+  const handlePresetChange = (type: PresetType) => {
+    setPresetKey(type);
+    const currentPreset = PRESET_FUNCTIONS[fnKey];
+
+    switch (type) {
+      case "free":
+        break;
+      // 模式一专属预设（聚焦割线逼近）
+      case "limit_near":
+        setParams((prev) => ({ ...prev, dx: 0.02 }));
+        break;
+      case "macro":
+        setParams((prev) => ({ ...prev, dx: 1.2 }));
+        break;
+      case "reverse":
+        setParams((prev) => ({ ...prev, dx: -0.8 }));
+        break;
+      // 模式二专属预设（聚焦切点与斜率）
+      case "extrema":
+        if (fnKey === "cubic") {
+          setParams((prev) => ({ ...prev, x0: 1.0 })); // f'(1) = 0
+        } else if (fnKey === "quadratic") {
+          setParams((prev) => ({ ...prev, x0: 0.0 })); // f'(0) = 0
+        } else if (fnKey === "xlnx") {
+          setParams((prev) => ({ ...prev, x0: 0.37 })); // 1/e
+        } else if (fnKey === "lnx_x") {
+          setParams((prev) => ({ ...prev, x0: 2.72 })); // e
+        } else {
+          setParams((prev) => ({ ...prev, x0: currentPreset.defaultX0 }));
+        }
+        break;
+      case "tangent_scale":
+        if (fnKey === "exp") {
+          setParams((prev) => ({ ...prev, x0: 0.0 })); // (0,1) 处的切线 y = x + 1
+        } else if (fnKey === "ln") {
+          setParams((prev) => ({ ...prev, x0: 1.0 })); // (1,0) 处的切线 y = x - 1
+        } else if (fnKey === "cubic") {
+          setParams((prev) => ({ ...prev, x0: -1.0 })); // (-1, 2)
+        } else {
+          setParams((prev) => ({ ...prev, x0: 1.0 }));
+        }
+        break;
+      case "inflection":
+        if (fnKey === "cubic") {
+          setParams((prev) => ({ ...prev, x0: 0.0 })); // 拐点 (0,0)
+        } else {
+          setParams((prev) => ({ ...prev, x0: currentPreset.defaultX0 }));
+        }
+        break;
+    }
   };
 
   const handleReset = () => {
-    const preset = PRESET_FUNCTIONS[fnKey];
+    setPresetKey("free");
+    const currentPreset = PRESET_FUNCTIONS[fnKey];
     setParams({
-      x0: preset.defaultX0,
+      x0: currentPreset.defaultX0,
       dx: defaultParams.dx,
     });
   };
 
-  const preset = PRESET_FUNCTIONS[fnKey];
-
+  // 模式与参数动态裁剪：在切线方程模式下隐藏 Δx
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    return Object.entries(paramMeta).map(([key, meta]) => {
+    const keys = mode === "secant_limit" ? ["x0", "dx"] : ["x0"];
+
+    return keys.map((key) => {
+      const meta = paramMeta[key];
       let min = meta.min;
       let max = meta.max;
       let marks = meta.marks;
@@ -80,7 +181,6 @@ export function DerivativeAnimation() {
       if (key === "x0") {
         min = preset.x0Range[0];
         max = preset.x0Range[1];
-        // 针对特定函数在 0 处的不可导/退化高亮
         if (fnKey === "rational" || fnKey === "sqrt") {
           marks = [
             { value: preset.x0Range[0], label: preset.x0Range[0].toString() },
@@ -105,109 +205,160 @@ export function DerivativeAnimation() {
         key,
         label: meta.label,
         labelFormula: meta.labelFormula,
+        group: meta.group,
         value: params[key] ?? meta.defaultValue ?? 0,
         min,
         max,
-        step: meta.step ?? 0.1,
+        step: meta.step ?? 0.05,
         description: meta.description,
         descriptionFormula: meta.descriptionFormula,
         importance: meta.importance,
         marks,
       };
     });
-  }, [params, fnKey, preset]);
+  }, [params, fnKey, preset, mode]);
 
-  // 三位一体上色公式拼接：x0 为红色 paramPrimary (#EF4444)，dx (Δx) 为橙色 paramSecondary (#D97706)
+  // 三位一体上色公式拼接：x0 为红色 paramPrimary，dx 为橙色 paramSecondary
+  const x0ColorHex = MATH_COLORS.paramPrimary;
+  const dxColorHex = MATH_COLORS.paramSecondary;
+
   const equationLatex = useMemo(() => {
     const fnName = preset.latex.replace("f(x) = ", "");
     return `f(x) = ${fnName}`;
   }, [preset]);
 
-  const x0ColorHex = MATH_COLORS.paramPrimary;
-  const dxColorHex = MATH_COLORS.paramSecondary;
-
-  // 拼接带有变量颜色的割线斜率公式和切线斜率公式
   const secantLatex = `k_{\\text{割}} = \\frac{f(\\color{${x0ColorHex}}{x_0} + \\color{${dxColorHex}}{\\Delta x}) - f(\\color{${x0ColorHex}}{x_0})}{\\color{${dxColorHex}}{\\Delta x}}`;
   const limitLatex = `f'(\\color{${x0ColorHex}}{x_0}) = \\lim_{\\color{${dxColorHex}}{\\Delta x} \\to 0} k_{\\text{割}}`;
 
   // 教学导引与题设背景配置
   const tipConfig = useMemo(() => {
-    switch (fnKey) {
-      case "cubic":
-        return {
-          variant: "primary" as const,
-          badge: "高考基础 · 多项式切线与平均变化率",
-          condition:
-            "已知函数 f(x) = x³ - 3x，考察切点 x₀ 与割线动点 x₀ + Δx。",
-          question:
-            "求割线斜率在步长 Δx → 0 时的极限，并确定切点 x₀ 处的切线方程与导数值 f'(x₀)。",
-        };
-      case "rational":
-        return {
-          variant: "info" as const,
-          badge: "高考基础 · 反比例分式函数变化率",
-          condition:
-            "已知反比例函数 f(x) = 1/x (x ≠ 0)，考察切点 x₀ 处的割线逼近。",
-          question:
-            "求双曲线上任意切点的瞬时变化率与切线方程，探究斜率随切点位置的演化规律。",
-        };
-      case "sqrt":
-        return {
-          variant: "warning" as const,
-          badge: "高考易错 · 根式函数与端点可导性",
-          condition:
-            "已知半幂函数 f(x) = √x (x ≥ 0)，考察正半轴切点及逼近原点 x=0 处。",
-          question:
-            "判断函数在端点 x=0 处的导数是否存在，探究切线趋近垂直的几何极限。",
-        };
-      case "xlnx":
-        return {
-          variant: "primary" as const,
-          badge: "高考核心 · 经典超越模型 x·ln(x) 极值与切线",
-          condition: "已知经典超越函数 f(x) = x ln x (定义域 x > 0)。",
-          question: "求函数的极值点坐标与切线斜率，探究水平切线处的临界特征。",
-        };
-      case "lnx_x":
-        return {
-          variant: "primary" as const,
-          badge: "高考压轴 · 经典母题 (ln x)/x 极大值与切线",
-          condition: "已知经典超越母题 f(x) = (ln x)/x (定义域 x > 0)。",
-          question: "求函数的单调区间与极大值点，并求切点处的切线方程。",
-        };
-      default:
-        return {
-          variant: "primary" as const,
-          badge: "高考基础 · 导数几何意义与割线逼近",
-          condition: "已知函数 f(x) 与切点 x₀，割线步长为 Δx。",
-          question: "求割线斜率在 Δx → 0 时的瞬时极限导数值。",
-        };
+    if (mode === "secant_limit") {
+      return {
+        badge: "探究一 · 割线逼近切线（以直代曲 · 极限思想）",
+        condition: `考察函数 ${preset.latex} 在切点 P 处的平均变化率。`,
+        question:
+          "调节割线步长 Δx 趋近于 0，观察割线 PQ 如何平滑极限逼近切线 l。",
+      };
     }
-  }, [fnKey]);
+    return {
+      badge: "探究二 · 切线方程与斜率（几何性质 · 点斜式）",
+      condition: `考察函数 ${preset.latex} 随切点 P(x₀, y₀) 移动时切线的变化。`,
+      question:
+        "拖动切点 P 观察切线斜率 k = f'(x₀) 的符号与大小，验证水平切线与单调性/极值的联系。",
+    };
+  }, [mode, preset]);
+
+  // 模式对应的 2x2 典型预设选项
+  const presetItems = useMemo(() => {
+    if (mode === "secant_limit") {
+      return [
+        {
+          key: "free",
+          label: "自由逼近",
+          description: "全参数开放",
+        },
+        {
+          key: "limit_near",
+          label: "微元极限",
+          description: "Δx=0.02 逼近",
+        },
+        {
+          key: "macro",
+          label: "宏观割线",
+          description: "Δx=1.2 差商",
+        },
+        {
+          key: "reverse",
+          label: "反向逼近",
+          description: "Δx=-0.8 左极限",
+        },
+      ];
+    }
+    return [
+      {
+        key: "free",
+        label: "自由滑动",
+        description: "全区间拖拽",
+      },
+      {
+        key: "extrema",
+        label: "极值切线",
+        description: "导数 f'=0",
+      },
+      {
+        key: "tangent_scale",
+        label: "切线放缩",
+        description: "经典切线基准",
+      },
+      {
+        key: "inflection",
+        label: "特征中心",
+        description: "对称中心/拐点",
+      },
+    ];
+  }, [mode]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 函数选择 */}
-          <LeftPanelSection title="函数模型" subtitle="选择教学函数">
+          {/* 1. 核心探究模式 */}
+          <LeftPanelSection title="探究模式" subtitle="选择认知视角">
             <SelectGrid
-              items={(
-                Object.entries(PRESET_FUNCTIONS) as [
-                  PresetFunctionKey,
-                  typeof preset,
-                ][]
-              ).map(([key, p]) => ({
-                key,
-                label: p.label,
-                formula: p.latex,
-              }))}
-              value={fnKey}
-              onChange={(k) => handleFnKeyChange(k as PresetFunctionKey)}
+              items={[
+                {
+                  key: "secant_limit",
+                  label: "割线极限逼近",
+                  description: "Δx→0 以直代曲",
+                },
+                {
+                  key: "tangent_eq",
+                  label: "切线方程性质",
+                  description: "点斜式与极值切线",
+                },
+              ]}
+              value={mode}
+              onChange={(m) => handleModeChange(m as ExploreMode)}
               variant="filled"
+              columns={2}
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="参数调节" subtitle="改变切点与割线步长">
+          {/* 2. 典型构型预设 (2x2 黄金规范，随模式动态切换) */}
+          <LeftPanelSection title="典型预设" subtitle="典型特征状态快速探究">
+            <SelectGrid
+              items={presetItems}
+              value={presetKey}
+              onChange={(k) => handlePresetChange(k as PresetType)}
+              variant="filled"
+              columns={2}
+            />
+          </LeftPanelSection>
+
+          {/* 3. 函数模型选择（精选8个经典母题，纯KaTeX公式无重复文本） */}
+          <LeftPanelSection title="函数模型" subtitle="选择教学与高考典型函数">
+            <SelectGrid
+              items={CORE_FUNCTION_KEYS.map((key) => {
+                const p = PRESET_FUNCTIONS[key];
+                return {
+                  key,
+                  formula: p.latex,
+                };
+              })}
+              value={fnKey}
+              onChange={(k) => handleFnKeyChange(k as PresetFunctionKey)}
+              variant="filled"
+              columns={2}
+            />
+          </LeftPanelSection>
+
+          {/* 4. 参数与坐标调节（按模式动态裁剪） */}
+          <LeftPanelSection
+            title="参数调节"
+            subtitle={
+              mode === "secant_limit" ? "改变切点与割线步长" : "移动切点横坐标"
+            }
+          >
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -215,9 +366,9 @@ export function DerivativeAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学导引与题设背景 */}
+          {/* 5. 教学引导与题设背景 (置于最底部) */}
           <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
+            <TipCard variant="primary">
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
                 <span>{tipConfig.badge}</span>
               </div>
@@ -246,18 +397,22 @@ export function DerivativeAnimation() {
           {/* 公式悬浮窗口 */}
           <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5 bg-white/95 backdrop-blur border border-neutral-200 rounded-lg p-3 shadow-md select-none max-w-[280px]">
             <div className="text-xs font-semibold text-neutral-500 border-b border-neutral-100 pb-1">
-              函数公式与几何定义
+              {mode === "secant_limit" ? "割线逼近与导数定义" : "函数切线方程"}
             </div>
             <div className="space-y-1.5 py-1">
               <div>
                 <KatexFormula formula={equationLatex} mode="inline" />
               </div>
-              <div className="text-[11px]">
-                <KatexFormula formula={secantLatex} mode="inline" />
-              </div>
-              <div className="text-[11px]">
-                <KatexFormula formula={limitLatex} mode="inline" />
-              </div>
+              {mode === "secant_limit" && (
+                <>
+                  <div className="text-[11px]">
+                    <KatexFormula formula={secantLatex} mode="inline" />
+                  </div>
+                  <div className="text-[11px]">
+                    <KatexFormula formula={limitLatex} mode="inline" />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -266,12 +421,14 @@ export function DerivativeAnimation() {
             transform={vp.transform}
           >
             <DerivativeScene
+              mode={mode}
               fnKey={fnKey}
               x0={params.x0}
               dx={params.dx}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}
+              onDragStart={handleDragStart}
               fontScale={canvasSize.font}
             />
           </AnimationSvgCanvas>

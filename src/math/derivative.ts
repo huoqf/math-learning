@@ -74,6 +74,141 @@ export function solveDerivative(
   };
 }
 
+/**
+ * 格式化数值为保留指定位数的纯净字符串（去除末尾多余0与 -0）
+ */
+export function formatNum(num: number, digits = 2): string {
+  if (!Number.isFinite(num)) return "";
+  const fixed = num.toFixed(digits);
+  // 去除 -0.00
+  if (Math.abs(Number(fixed)) < 1e-9) return "0";
+  return Number(fixed).toString();
+}
+
+/**
+ * 构建规范的点斜式切线方程 LaTeX
+ * y - y₀ = k(x - x₀)
+ * 严格按照高中代数消元规则：
+ * - 负负得正：y - (-2) => y + 2
+ * - 0 项消去：y - 0 => y
+ * - 系数 1 / -1 / 0 处理：0(x - x₀) => 0
+ */
+export function buildPointSlopeLatex(
+  x0: number,
+  y0: number,
+  slope: number,
+  options?: {
+    x0Color?: string;
+    y0Color?: string;
+    slopeColor?: string;
+  },
+): string {
+  if (!Number.isFinite(x0) || !Number.isFinite(y0) || !Number.isFinite(slope)) {
+    return "y - y_0 = f'(x_0)(x - x_0)";
+  }
+
+  const { x0Color, y0Color, slopeColor } = options || {};
+
+  // 左侧 y - y₀
+  let leftSide = "y";
+  if (Math.abs(y0) < 1e-6) {
+    leftSide = "y";
+  } else if (y0 > 0) {
+    const y0Str = formatNum(y0);
+    const coloredY0 = y0Color ? `\\color{${y0Color}}{${y0Str}}` : y0Str;
+    leftSide = `y - ${coloredY0}`;
+  } else {
+    const absY0Str = formatNum(Math.abs(y0));
+    const coloredY0 = y0Color ? `\\color{${y0Color}}{${absY0Str}}` : absY0Str;
+    leftSide = `y + ${coloredY0}`;
+  }
+
+  // 斜率为 0（水平切线）
+  if (Math.abs(slope) < 1e-6) {
+    return `${leftSide} = 0`;
+  }
+
+  const slopeStr = formatNum(slope);
+  const coloredSlope = slopeColor
+    ? `\\color{${slopeColor}}{${slopeStr}}`
+    : slopeStr;
+
+  // 右侧 (x - x₀)
+  let rightInner = "x";
+  if (Math.abs(x0) < 1e-6) {
+    rightInner = "x";
+  } else if (x0 > 0) {
+    const x0Str = formatNum(x0);
+    const coloredX0 = x0Color ? `\\color{${x0Color}}{${x0Str}}` : x0Str;
+    rightInner = `x - ${coloredX0}`;
+  } else {
+    const absX0Str = formatNum(Math.abs(x0));
+    const coloredX0 = x0Color ? `\\color{${x0Color}}{${absX0Str}}` : absX0Str;
+    rightInner = `x + ${coloredX0}`;
+  }
+
+  if (Math.abs(x0) < 1e-6) {
+    if (slope === 1) return `${leftSide} = x`;
+    if (slope === -1) return `${leftSide} = -x`;
+    return `${leftSide} = ${coloredSlope}x`;
+  }
+
+  if (slope === 1) {
+    return `${leftSide} = ${rightInner}`;
+  }
+  if (slope === -1) {
+    return `${leftSide} = -(${rightInner})`;
+  }
+
+  return `${leftSide} = ${coloredSlope}(${rightInner})`;
+}
+
+/**
+ * 构建规范的斜截式切线方程 LaTeX: y = kx + b
+ */
+export function buildSlopeInterceptLatex(
+  slope: number,
+  intercept: number,
+  options?: {
+    slopeColor?: string;
+  },
+): string {
+  if (!Number.isFinite(slope) || !Number.isFinite(intercept)) {
+    return "y = kx + b";
+  }
+
+  const { slopeColor } = options || {};
+
+  // 水平切线
+  if (Math.abs(slope) < 1e-6) {
+    return `y = ${formatNum(intercept)}`;
+  }
+
+  const slopeStr = formatNum(slope);
+  const coloredSlope = slopeColor
+    ? `\\color{${slopeColor}}{${slopeStr}}`
+    : slopeStr;
+
+  let xTerm = "";
+  if (slope === 1) {
+    xTerm = "x";
+  } else if (slope === -1) {
+    xTerm = "-x";
+  } else {
+    xTerm = `${coloredSlope}x`;
+  }
+
+  if (Math.abs(intercept) < 1e-6) {
+    return `y = ${xTerm}`;
+  }
+
+  if (intercept > 0) {
+    return `y = ${xTerm} + ${formatNum(intercept)}`;
+  }
+
+  return `y = ${xTerm} - ${formatNum(Math.abs(intercept))}`;
+}
+
 export interface PresetFunction {
   fn: (x: number) => number;
   label: string;
