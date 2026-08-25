@@ -1,3 +1,5 @@
+import { MATH_COLORS } from "@/theme";
+
 export interface FivePointInfo {
   index: number;
   phaseName: string;
@@ -55,9 +57,17 @@ export interface GaokaoPreset {
 
 export const GAOKAO_PRESETS: GaokaoPreset[] = [
   {
+    id: "free",
+    name: "自由探究",
+    description: "全参数开放",
+    mode: "properties",
+    params: { A: 1.5, omega: 2, phi: Math.PI / 3, k: 0, x1: 0, x2: Math.PI },
+    keyTakeaway: "自由调节振幅、角频率、初相与偏置，观察曲线动态演化。",
+  },
+  {
     id: "shift-vs-stretch",
-    name: "高考经典陷阱：平移顺序对比",
-    description: "对比先平移(移|φ|)与先伸缩(移|φ|/ω)的区别",
+    name: "平移顺序陷阱",
+    description: "先移φ后移φ/ω",
     mode: "transformPath",
     params: { A: 2, omega: 2, phi: Math.PI / 3, k: 0 },
     pathType: "shift-first",
@@ -67,32 +77,17 @@ export const GAOKAO_PRESETS: GaokaoPreset[] = [
   },
   {
     id: "omega-zeros-count",
-    name: "新高考压轴：求 ω 范围使恰有2个零点",
-    description: "f(x)=sin(ωx + π/6) 在 [0, π/2] 上恰有2个零点",
+    name: "ω范围与两零点",
+    description: "区间恰有2零点",
     mode: "omegaZeros",
     params: { A: 1, omega: 3, phi: Math.PI / 6, k: 0, x1: 0, x2: Math.PI / 2 },
     keyTakeaway:
       "令 u = ωx + π/6 ∈ [π/6, ωπ/2 + π/6]，恰有2个零点要求 π < ωπ/2 + π/6 ≤ 2π，即 5/3 < ω ≤ 11/3。",
   },
   {
-    id: "omega-monotone",
-    name: "新高考真题：求 ω 范围使区间单调递增",
-    description: "f(x)=sin(ωx + π/4) 在 [0, π/3] 上严格单调递增",
-    mode: "omegaZeros",
-    params: {
-      A: 1,
-      omega: 0.75,
-      phi: Math.PI / 4,
-      k: 0,
-      x1: 0,
-      x2: Math.PI / 3,
-    },
-    keyTakeaway: "单调递增要求右端点 u2 = ωπ/3 + π/4 ≤ π/2，解得 0 < ω ≤ 3/4。",
-  },
-  {
     id: "five-points-fit",
-    name: "由图求式：五点特征定解析式",
-    description: "最高点 (π/6, 2)，相邻零点 (5π/12, 0)",
+    name: "五点逆向求式",
+    description: "波峰代入定初相",
     mode: "fivePoints",
     params: { A: 2, omega: 2, phi: -Math.PI / 6, k: 0 },
     keyTakeaway:
@@ -266,6 +261,9 @@ export function getTransformPathSteps(
   const shiftAmountPath2Str = formatPiValue(shiftAmountPath2);
   const phiSign = phi >= 0 ? "+" : "";
 
+  // 格式化自变量括号内的相位部分，若 phi 为 0 则省略
+  const phiFormatted = Math.abs(phi) < 1e-4 ? "" : ` ${phiSign}${phiStr}`;
+
   if (pathType === "shift-first") {
     const direction = phi >= 0 ? "左" : "右";
     const absPhiStr = formatPiValue(Math.abs(phi));
@@ -283,7 +281,7 @@ export function getTransformPathSteps(
         step: 1,
         name: "第一步：相位平移",
         title: "步1：相位平移（自变量代换 x → x + φ）",
-        expression: `y = \\sin(x ${phiSign}${phiStr})`,
+        expression: `y = \\sin(x${phiFormatted})`,
         fn: (x: number) => Math.sin(x + phi),
         description: `沿 x 轴向${direction}平移 |φ| = ${absPhiStr} 个单位`,
         explanation: `沿 x 轴向${direction}平移 |φ| = ${absPhiStr} 个单位（加左减右）`,
@@ -295,7 +293,7 @@ export function getTransformPathSteps(
         step: 2,
         name: "第二步：周期伸缩",
         title: "步2：横向周期伸缩（x → ωx）",
-        expression: `y = \\sin(\\color{#D97706}{${omega.toFixed(1)}} x ${phiSign}${phiStr})`,
+        expression: `y = \\sin(\\color{${MATH_COLORS.paramSecondary}}{${omega.toFixed(1)}} x${phiFormatted})`,
         fn: (x: number) => Math.sin(omega * x + phi),
         description: `横坐标变为原来的 1/${absOmega}，周期变为 T = 2π/${absOmega}`,
         explanation: `所有点的横坐标伸缩为 1/${absOmega} 倍，纵坐标保持不变`,
@@ -304,7 +302,7 @@ export function getTransformPathSteps(
         step: 3,
         name: "第三步：振幅伸缩",
         title: "步3：纵向振幅伸缩（y → Ay）",
-        expression: `y = \\color{#EF4444}{${A.toFixed(1)}} \\sin(${omega.toFixed(1)} x ${phiSign}${phiStr})`,
+        expression: `y = \\color{${MATH_COLORS.paramPrimary}}{${A.toFixed(1)}} \\sin(${omega.toFixed(1)} x${phiFormatted})`,
         fn: (x: number) => A * Math.sin(omega * x + phi),
         description: `纵坐标伸长为原来的 A = ${A.toFixed(1)} 倍`,
         explanation: `所有点的纵坐标变为 A 倍，波峰达 ${A.toFixed(1)}，波谷达 ${(-A).toFixed(1)}`,
@@ -313,7 +311,7 @@ export function getTransformPathSteps(
         step: 4,
         name: "第四步：偏置平移",
         title: "步4：上下平衡平移（y → y + k）",
-        expression: `y = ${A.toFixed(1)} \\sin(${omega.toFixed(1)} x ${phiSign}${phiStr}) ${k >= 0 ? "+" : ""}${k.toFixed(1)}`,
+        expression: `y = ${A.toFixed(1)} \\sin(${omega.toFixed(1)} x${phiFormatted}) ${k >= 0 ? "+" : ""}${k.toFixed(1)}`,
         fn: (x: number) => A * Math.sin(omega * x + phi) + k,
         description: `沿 y 轴平移 k = ${k.toFixed(1)}，平衡轴变为 y = ${k.toFixed(1)}`,
         explanation: `图象整体沿 y 轴上下移动 k 单位，平衡位置变为 y = ${k.toFixed(1)}`,
@@ -323,6 +321,10 @@ export function getTransformPathSteps(
     const direction = shiftAmountPath2 >= 0 ? "左" : "右";
     const absShiftStr = formatPiValue(Math.abs(shiftAmountPath2));
     const shiftSign = shiftAmountPath2 >= 0 ? "+" : "";
+    const shiftFormatted =
+      Math.abs(shiftAmountPath2) < 1e-4
+        ? ""
+        : ` ${shiftSign}${shiftAmountPath2Str}`;
 
     return [
       {
@@ -338,7 +340,7 @@ export function getTransformPathSteps(
         step: 1,
         name: "第一步：周期伸缩",
         title: "步1：横向周期伸缩（x → ωx）",
-        expression: `y = \\sin(\\color{#D97706}{${omega.toFixed(1)}} x)`,
+        expression: `y = \\sin(\\color{${MATH_COLORS.paramSecondary}}{${omega.toFixed(1)}} x)`,
         fn: (x: number) => Math.sin(omega * x),
         description: `横坐标变为原来的 1/${absOmega}，周期变为 T = 2π/${absOmega}`,
         explanation: `先进行横向伸缩，图象横向缩短或伸长`,
@@ -347,7 +349,7 @@ export function getTransformPathSteps(
         step: 2,
         name: "第二步：相位平移",
         title: "步2：相位平移（注意：平移自变量 x → x + φ/ω）",
-        expression: `y = \\sin\\left[${omega.toFixed(1)}\\left(x ${shiftSign}${shiftAmountPath2Str}\\right)\\right] = \\sin(${omega.toFixed(1)} x ${phiSign}${phiStr})`,
+        expression: `y = \\sin\\left[${omega.toFixed(1)}\\left(x${shiftFormatted}\\right)\\right] = \\sin(${omega.toFixed(1)} x${phiFormatted})`,
         fn: (x: number) => Math.sin(omega * x + phi),
         description: `沿 x 轴向${direction}平移 φ/ω = ${absShiftStr} 个单位`,
         explanation: `【高考高频陷阱】先伸缩后平移时，平移量必须除以 ω，即移动 |φ|/ω = ${absShiftStr}！`,
@@ -359,7 +361,7 @@ export function getTransformPathSteps(
         step: 3,
         name: "第三步：振幅伸缩",
         title: "步3：纵向振幅伸缩（y → Ay）",
-        expression: `y = \\color{#EF4444}{${A.toFixed(1)}} \\sin(${omega.toFixed(1)} x ${phiSign}${phiStr})`,
+        expression: `y = \\color{${MATH_COLORS.paramPrimary}}{${A.toFixed(1)}} \\sin(${omega.toFixed(1)} x${phiFormatted})`,
         fn: (x: number) => A * Math.sin(omega * x + phi),
         description: `纵坐标伸长为原来的 A = ${A.toFixed(1)} 倍`,
         explanation: `所有点的纵坐标变为 A 倍`,
@@ -368,7 +370,7 @@ export function getTransformPathSteps(
         step: 4,
         name: "第四步：偏置平移",
         title: "步4：上下平衡平移（y → y + k）",
-        expression: `y = ${A.toFixed(1)} \\sin(${omega.toFixed(1)} x ${phiSign}${phiStr}) ${k >= 0 ? "+" : ""}${k.toFixed(1)}`,
+        expression: `y = ${A.toFixed(1)} \\sin(${omega.toFixed(1)} x${phiFormatted}) ${k >= 0 ? "+" : ""}${k.toFixed(1)}`,
         fn: (x: number) => A * Math.sin(omega * x + phi) + k,
         description: `沿 y 轴平移 k = ${k.toFixed(1)}`,
         explanation: `图象整体沿 y 轴移动 k 单位`,

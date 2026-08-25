@@ -3,6 +3,7 @@ import {
   CoordinateGrid,
   FunctionGraph,
   InteractivePoint,
+  MathPoint,
   VectorArrow,
 } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
@@ -122,6 +123,9 @@ export function TrigTransformScene({
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(11)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="#FFFFFF"
+            strokeWidth={3}
           >
             y_max = {props.yMax.toFixed(2)}
           </text>
@@ -142,6 +146,9 @@ export function TrigTransformScene({
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(11)}
             fontWeight="bold"
+            paintOrder="stroke"
+            stroke="#FFFFFF"
+            strokeWidth={3}
           >
             y_min = {props.yMin.toFixed(2)}
           </text>
@@ -164,6 +171,9 @@ export function TrigTransformScene({
                 fill={MATH_COLORS.paramTertiary}
                 fontSize={fontScale(10)}
                 textAnchor="end"
+                paintOrder="stroke"
+                stroke="#FFFFFF"
+                strokeWidth={3}
               >
                 平衡轴 y = {k.toFixed(1)}
               </text>
@@ -188,19 +198,18 @@ export function TrigTransformScene({
               );
             })}
 
-          {/* 对称中心标记 */}
+          {/* 对称中心标记 (空心 MathPoint) */}
           {showSymmetry &&
             props.mainSymmetryCenters.map((center, idx) => {
-              const pCenter = mathToDesign(center[0], center[1], scale);
               return (
-                <circle
+                <MathPoint
                   key={`sym-center-${idx}`}
-                  cx={pCenter.x}
-                  cy={pCenter.y}
-                  r={3.5}
-                  fill="#FFFFFF"
-                  stroke={MATH_COLORS.paramSecondary}
-                  strokeWidth={1.5}
+                  x={center[0]}
+                  y={center[1]}
+                  scale={scale}
+                  color={MATH_COLORS.paramSecondary}
+                  variant="hollow"
+                  fontScale={fontScale}
                 />
               );
             })}
@@ -248,7 +257,7 @@ export function TrigTransformScene({
                 }
                 r={6}
                 fontScale={fontScale}
-                label={`P${pt.index + 1}(${pt.x.toFixed(2)}, ${pt.y.toFixed(2)})`}
+                label={`P${pt.index + 1}`}
               />
             );
           })}
@@ -287,41 +296,21 @@ export function TrigTransformScene({
                 fontScale={fontScale}
                 label={currentStep.vectorLabel}
               />
-              <circle
-                cx={
-                  mathToDesign(
-                    currentStep.vectorFrom[0],
-                    currentStep.vectorFrom[1],
-                    scale,
-                  ).x
-                }
-                cy={
-                  mathToDesign(
-                    currentStep.vectorFrom[0],
-                    currentStep.vectorFrom[1],
-                    scale,
-                  ).y
-                }
-                r={4}
-                fill={MATH_COLORS.paramSecondary}
+              <MathPoint
+                x={currentStep.vectorFrom[0]}
+                y={currentStep.vectorFrom[1]}
+                scale={scale}
+                color={MATH_COLORS.paramSecondary}
+                variant="solid"
+                fontScale={fontScale}
               />
-              <circle
-                cx={
-                  mathToDesign(
-                    currentStep.vectorTo[0],
-                    currentStep.vectorTo[1],
-                    scale,
-                  ).x
-                }
-                cy={
-                  mathToDesign(
-                    currentStep.vectorTo[0],
-                    currentStep.vectorTo[1],
-                    scale,
-                  ).y
-                }
-                r={4}
-                fill={MATH_COLORS.paramPrimary}
+              <MathPoint
+                x={currentStep.vectorTo[0]}
+                y={currentStep.vectorTo[1]}
+                scale={scale}
+                color={MATH_COLORS.paramPrimary}
+                variant="solid"
+                fontScale={fontScale}
               />
             </>
           )}
@@ -368,6 +357,9 @@ export function TrigTransformScene({
               fill={MATH_COLORS.paramPrimary}
               fontSize={fontScale(11)}
               fontWeight="bold"
+              paintOrder="stroke"
+              stroke="#FFFFFF"
+              strokeWidth={3}
             >
               x₁ = {x1.toFixed(2)}
             </text>
@@ -378,6 +370,9 @@ export function TrigTransformScene({
               fill={MATH_COLORS.paramPrimary}
               fontSize={fontScale(11)}
               fontWeight="bold"
+              paintOrder="stroke"
+              stroke="#FFFFFF"
+              strokeWidth={3}
             >
               x₂ = {x2.toFixed(2)}
             </text>
@@ -394,23 +389,29 @@ export function TrigTransformScene({
           {/* 区间内所有零点标记 */}
           {intervalInfo.zeros.map((zero, idx) => {
             const pZ = mathToDesign(zero.x, zero.y, scale);
+            const dotColor = zero.isEndpoint
+              ? "#DC2626"
+              : MATH_COLORS.paramPrimary;
             return (
               <g key={`zero-${idx}`}>
-                <circle
-                  cx={pZ.x}
-                  cy={pZ.y}
-                  r={4.5}
-                  fill={zero.isEndpoint ? "#DC2626" : MATH_COLORS.paramPrimary}
-                  stroke="#FFFFFF"
-                  strokeWidth={2}
+                <MathPoint
+                  x={zero.x}
+                  y={zero.y}
+                  scale={scale}
+                  color={dotColor}
+                  variant="solid"
+                  fontScale={fontScale}
                 />
                 <text
                   x={pZ.x}
                   y={pZ.y + fontScale(15)}
                   textAnchor="middle"
-                  fill={zero.isEndpoint ? "#DC2626" : MATH_COLORS.paramPrimary}
+                  fill={dotColor}
                   fontSize={fontScale(9.5)}
                   fontWeight="bold"
+                  paintOrder="stroke"
+                  stroke="#FFFFFF"
+                  strokeWidth={3}
                 >
                   Z{idx + 1}({zero.x.toFixed(2)})
                   {zero.isEndpoint ? "[端点]" : ""}
@@ -424,13 +425,13 @@ export function TrigTransformScene({
             const pM = mathToDesign(maxPt.x, maxPt.y, scale);
             return (
               <g key={`max-${idx}`}>
-                <circle
-                  cx={pM.x}
-                  cy={pM.y}
-                  r={4}
-                  fill={MATH_COLORS.paramSecondary}
-                  stroke="#FFFFFF"
-                  strokeWidth={1.5}
+                <MathPoint
+                  x={maxPt.x}
+                  y={maxPt.y}
+                  scale={scale}
+                  color={MATH_COLORS.paramSecondary}
+                  variant="solid"
+                  fontScale={fontScale}
                 />
                 <text
                   x={pM.x}
@@ -439,6 +440,9 @@ export function TrigTransformScene({
                   fill={MATH_COLORS.paramSecondary}
                   fontSize={fontScale(9)}
                   fontWeight="bold"
+                  paintOrder="stroke"
+                  stroke="#FFFFFF"
+                  strokeWidth={3}
                 >
                   极大({maxPt.x.toFixed(2)})
                 </text>
@@ -450,13 +454,13 @@ export function TrigTransformScene({
             const pM = mathToDesign(minPt.x, minPt.y, scale);
             return (
               <g key={`min-${idx}`}>
-                <circle
-                  cx={pM.x}
-                  cy={pM.y}
-                  r={4}
-                  fill={MATH_COLORS.paramTertiary}
-                  stroke="#FFFFFF"
-                  strokeWidth={1.5}
+                <MathPoint
+                  x={minPt.x}
+                  y={minPt.y}
+                  scale={scale}
+                  color={MATH_COLORS.paramTertiary}
+                  variant="solid"
+                  fontScale={fontScale}
                 />
                 <text
                   x={pM.x}
@@ -465,6 +469,9 @@ export function TrigTransformScene({
                   fill={MATH_COLORS.paramTertiary}
                   fontSize={fontScale(9)}
                   fontWeight="bold"
+                  paintOrder="stroke"
+                  stroke="#FFFFFF"
+                  strokeWidth={3}
                 >
                   极小({minPt.x.toFixed(2)})
                 </text>

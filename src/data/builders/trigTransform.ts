@@ -10,6 +10,7 @@ import {
   formatPiValue,
   calculateIntervalZeros,
 } from "@/features/trigTransform/math/trigTransform";
+import { MATH_COLORS } from "@/theme";
 
 export function buildTrigTransformPanel(
   params: Record<string, number>,
@@ -43,38 +44,38 @@ export function buildTrigTransformPanel(
         label: "角频率 ω 与周期 T",
         symbol: "\\omega, \\; T",
         value: `ω = ${omega.toFixed(2)}, T = ${periodStr}`,
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
       },
       {
         label: "探究区间 [x₁, x₂]",
         symbol: "[x_1, x_2]",
         value: `[${intervalInfo.x1.toFixed(2)}, ${intervalInfo.x2.toFixed(2)}]`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "整体相位区间 [u₁, u₂]",
         symbol: "[\\omega x_1 + \\varphi, \\; \\omega x_2 + \\varphi]",
         value: `[${u1Str}, ${u2Str}]`,
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
       },
       {
         label: "相位跨度 Δu",
         symbol: "\\Delta u = \\omega(x_2 - x_1)",
         value: `${deltaUStr} rad (${(intervalInfo.deltaU / Math.PI).toFixed(2)}π)`,
-        color: "#7C3AED",
+        color: MATH_COLORS.ellipse,
       },
       {
         label: "区间内零点个数",
         symbol: "N_{zeros}",
         value: `${intervalInfo.zeroCount} 个`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
         highlight: intervalInfo.zeroCount > 0 ? "positive" : "zero",
       },
       {
         label: "区间内极值点个数",
         symbol: "N_{extrema}",
         value: `${intervalInfo.extremumCount} 个 (极大 ${intervalInfo.maxima.length}, 极小 ${intervalInfo.minima.length})`,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "区间严格单调性",
@@ -84,7 +85,9 @@ export function buildTrigTransformPanel(
             ? "严格单调递增"
             : "严格单调递减"
           : "非单调 (跨越极值点)",
-        color: intervalInfo.isMonotone ? "#059669" : "#DC2626",
+        color: intervalInfo.isMonotone
+          ? MATH_COLORS.paramTertiary
+          : MATH_COLORS.paramPrimary,
       },
     ];
 
@@ -101,7 +104,7 @@ export function buildTrigTransformPanel(
         name: "零点个数与单调区间充要判据",
         latex:
           "\\begin{cases} \\text{恰有 } n \\text{ 个零点} \\implies (n-1)\\pi < \\Delta u \\le (n+1)\\pi \\text{ (需验证端点)} \\\\ \\text{在 } [x_1, x_2] \\text{ 上单调} \\implies \\Delta u \\le \\pi \\text{ 且区间不含极值点 } \\frac{\\pi}{2}+m\\pi \\end{cases}",
-        condition: "\\Delta u = \\omega(x_2 - x_1)",
+        condition: "\\Delta u = \\omega(x_2 - x_1) > 0",
         note: "高考求解 ω 范围核心：先求开区间必要条件，再将端点 ω 值代入检验闭区间端点是否产生多余零点。",
         level: "important",
       },
@@ -149,13 +152,13 @@ export function buildTrigTransformPanel(
           pathType === "shift-first"
             ? "路线一: 先平移后伸缩"
             : "路线二: 先伸缩后平移",
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
       },
       {
         label: "当前演化步骤",
         symbol: "\\text{Step}",
         value: `第 ${stepIndex} 步 / 共 4 步`,
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
       },
       {
         label: "相位平移量",
@@ -164,19 +167,19 @@ export function buildTrigTransformPanel(
           pathType === "shift-first"
             ? `|φ| = ${formatPiValue(Math.abs(phi))}`
             : `|φ|/ω = ${absShiftPath2}`,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "横向周期伸缩比",
         symbol: "\\frac{1}{\\omega}",
         value: `1/${omega.toFixed(1)} 倍 (T: 2π → ${periodStr})`,
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
       },
       {
         label: "纵向振幅伸缩比",
         symbol: "A",
         value: `${A.toFixed(1)} 倍`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
     ];
 
@@ -218,31 +221,31 @@ export function buildTrigTransformPanel(
         label: "函数周期 T",
         symbol: `T = \\frac{2\\pi}{\\omega}`,
         value: periodStr,
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
       },
       {
         label: "振幅 A 与偏置 k",
         symbol: "A, \\; k",
         value: `A = ${A.toFixed(2)}, k = ${k.toFixed(2)}`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "P1 (第一零点)",
         symbol: "\\omega x + \\varphi = 0",
         value: `(${props.fivePoints[0].x.toFixed(2)}, ${props.fivePoints[0].y.toFixed(2)})`,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "P2 (第一波峰)",
         symbol: "\\omega x + \\varphi = \\frac{\\pi}{2}",
         value: `(${props.fivePoints[1].x.toFixed(2)}, ${props.fivePoints[1].y.toFixed(2)})`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "P3 (第二零点)",
         symbol: "\\omega x + \\varphi = \\pi",
         value: `(${props.fivePoints[2].x.toFixed(2)}, ${props.fivePoints[2].y.toFixed(2)})`,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
     ];
 
@@ -251,7 +254,7 @@ export function buildTrigTransformPanel(
         name: "五点作图法整体相位对应定理",
         latex:
           "u = \\omega x + \\varphi \\in \\left\\{ 0, \\; \\frac{\\pi}{2}, \\; \\pi, \\; \\frac{3\\pi}{2}, \\; 2\\pi \\right\\}",
-        condition: "\\omega > 0",
+        condition: "\\omega > 0, \\; A > 0",
         note: "令整体相位等于标准正弦的五个特征值，反解 x 坐标并描点连线成光滑波形。",
         level: "core",
       },
@@ -259,6 +262,7 @@ export function buildTrigTransformPanel(
         name: "由图求解析式（逆向求解法）",
         latex:
           "A = \\frac{y_{\\max} - y_{\\min}}{2}, \\quad k = \\frac{y_{\\max} + y_{\\min}}{2}, \\quad \\omega = \\frac{2\\pi}{T}, \\quad \\varphi = \\frac{\\pi}{2} - \\omega x_{\\text{max}}",
+        condition: "A > 0, \\; \\omega > 0",
         note: "先定 A 与 k，再由相邻峰谷或零点间距定 T → ω，最后代入最高点第一零点求 φ。",
         level: "important",
       },
@@ -285,43 +289,51 @@ export function buildTrigTransformPanel(
   }
 
   // 4. 基本性质模式 (properties)
+  const warnings: WarningItem[] = [];
+  if (A <= 0.2) {
+    warnings.push({
+      text: "注意：当前振幅 A 极小，曲线趋近水平直线。",
+      level: "warning",
+    });
+  }
+
   return {
     quantities: [
       {
         label: "函数周期 T",
         symbol: `T = \\frac{2\\pi}{\\omega}`,
         value: periodStr,
-        color: "#D97706",
+        color: MATH_COLORS.paramSecondary,
       },
       {
         label: "振幅 A",
         symbol: "A",
         value: props.amplitude.toFixed(2),
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "最大值 y_max",
         symbol: "y_{max} = k + A",
         value: props.yMax.toFixed(2),
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "最小值 y_min",
         symbol: "y_{min} = k - A",
         value: props.yMin.toFixed(2),
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "主单调增区间",
         symbol: "\\text{增区间}",
         value: `[${props.mainIncInterval[0].toFixed(2)}, ${props.mainIncInterval[1].toFixed(2)}]`,
-        color: "#2563EB",
+        color: MATH_COLORS.primary,
       },
       {
         label: "初相 φ",
         symbol: "\\varphi",
         value: `${phiStr} rad`,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
       },
     ],
     theorems: [
@@ -329,7 +341,7 @@ export function buildTrigTransformPanel(
         name: "三角函数图象标准方程与周期公式",
         latex:
           "y = A\\sin(\\omega x + \\varphi) + k, \\quad T = \\frac{2\\pi}{|\\omega|}",
-        prerequisites: ["A > 0, \\omega > 0"],
+        condition: "A > 0, \\; \\omega > 0",
         note: "A 决定振幅与值域 [k-A, k+A]，ω 决定周期，φ 决定初相，k 决定平衡位置。",
         level: "core",
       },
@@ -342,7 +354,6 @@ export function buildTrigTransformPanel(
         level: "important",
       },
     ],
-
     gaokaoPoints: [
       {
         text: "对称性多选题考查：若 x=x1 与 x=x2 都是对称轴，则 |x1 - x2| 必为 T/2 的整数倍。",
@@ -353,7 +364,7 @@ export function buildTrigTransformPanel(
         importance: "gaokao",
       },
     ],
-    warnings: [],
+    warnings,
     mnemonic:
       "先平移移 phi，后平移移 phi 比 omega；对称轴过最值点，对称中心在平衡！",
   };

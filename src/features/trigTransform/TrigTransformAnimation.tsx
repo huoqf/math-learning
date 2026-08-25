@@ -11,7 +11,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TrigTransformScene } from "./components/TrigTransformScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/trigTransform";
@@ -28,8 +28,8 @@ export function TrigTransformAnimation() {
     "properties" | "fivePoints" | "transformPath" | "omegaZeros"
   >("properties");
 
-  // 当前激活的高考预设 ID（"" 表示用户自定义参数）
-  const [activePresetId, setActivePresetId] = useState<string>("");
+  // 当前激活的高考预设 ID（默认 'free'）
+  const [activePresetId, setActivePresetId] = useState<string>("free");
 
   // 高考变换路径类型：'shift-first' (先平移后伸缩) | 'stretch-first' (先伸缩后平移)
   const [pathType, setPathType] = useState<"shift-first" | "stretch-first">(
@@ -79,16 +79,16 @@ export function TrigTransformAnimation() {
     return calculateIntervalZeros(A, omega, phi, k, x1, x2);
   }, [params]);
 
-  // 参数更新处理器
+  // 参数更新处理器（画布拖拽或手动滑块更新时，自动切回 'free' 自由探究）
   const handleParamChange = (key: string, value: number) => {
-    setActivePresetId(""); // 用户手动调参后清空预设高亮
+    setActivePresetId("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
-  // 载入高考真题预设
+  // 载入高考典型预设
   const handleLoadPreset = (presetId: string) => {
     const preset = GAOKAO_PRESETS.find((p) => p.id === presetId);
     if (!preset) return;
@@ -104,7 +104,7 @@ export function TrigTransformAnimation() {
 
   // 重置参数
   const handleReset = () => {
-    setActivePresetId("");
+    setActivePresetId("free");
     setParams({ ...defaultParams });
     setStepIndex(0);
   };
@@ -128,6 +128,7 @@ export function TrigTransformAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
+          group: meta.group,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
@@ -140,7 +141,7 @@ export function TrigTransformAnimation() {
       });
   }, [params, studyMode]);
 
-  // 构建带色彩绑定的实时公式 (铁律 4C)
+  // 构建带色彩绑定的实时公式 (铁律 4C / 规范 1.1)
   const equationLatex = useMemo(() => {
     const A = params.A ?? 1;
     const omega = params.omega ?? 1;
@@ -151,19 +152,24 @@ export function TrigTransformAnimation() {
     const signPhi = phi >= 0 ? "+" : "";
     const signK = k >= 0 ? "+" : "";
 
-    const aPart = `\\color{#EF4444}{${A.toFixed(1)}}`;
-    const wPart = `\\color{#D97706}{${omega.toFixed(1)}}`;
-    const phiPart = `\\color{#059669}{${signPhi}${phiStr}}`;
+    const aPart = `\\color{${MATH_COLORS.paramPrimary}}{${A.toFixed(1)}}`;
+    const wPart = `\\color{${MATH_COLORS.paramSecondary}}{${omega.toFixed(1)}}`;
+    const phiPart =
+      Math.abs(phi) < 1e-4
+        ? ""
+        : ` \\color{${MATH_COLORS.paramTertiary}}{${signPhi}${phiStr}}`;
     const kPart =
-      Math.abs(k) > 1e-5 ? ` \\color{#8B5CF6}{${signK}${k.toFixed(1)}}` : "";
+      Math.abs(k) > 1e-5
+        ? ` \\color{${MATH_COLORS.functionSecondary}}{${signK}${k.toFixed(1)}}`
+        : "";
 
     if (studyMode === "omegaZeros") {
       const x1Val = (params.x1 ?? 0).toFixed(2);
       const x2Val = (params.x2 ?? Math.PI).toFixed(2);
-      return `f(x) = ${aPart} \\sin(${wPart} x ${phiPart})${kPart}, \\quad x \\in [${x1Val}, ${x2Val}]`;
+      return `f(x) = ${aPart} \\sin(${wPart} x${phiPart})${kPart}, \\quad x \\in [${x1Val}, ${x2Val}]`;
     }
 
-    return `f(x) = ${aPart} \\sin(${wPart} x ${phiPart})${kPart}`;
+    return `f(x) = ${aPart} \\sin(${wPart} x${phiPart})${kPart}`;
   }, [params, studyMode]);
 
   // 获取路径步骤标题与说明
@@ -204,25 +210,25 @@ export function TrigTransformAnimation() {
               value={studyMode}
               onChange={(k) => {
                 setStudyMode(k as typeof studyMode);
-                setActivePresetId("");
+                setActivePresetId("free");
               }}
             />
           </LeftPanelSection>
 
-          {/* 2. 高考真题预设案例 (情境快捷载入) */}
+          {/* 2. 高考真题预设案例 (2x2 黄金网格规范) */}
           <LeftPanelSection
-            title="高考题型预设"
-            subtitle="一键载入新高考典型题型情境"
+            title="典型情境预设"
+            subtitle="2×2 高考真题与核心构型"
           >
             <SelectGrid
               items={GAOKAO_PRESETS.map((p) => ({
                 key: p.id,
                 label: p.name,
-                fullWidth: true,
                 description: p.description,
               }))}
               value={activePresetId}
               onChange={handleLoadPreset}
+              columns={2}
               variant="filled"
               color="primary"
             />
@@ -314,6 +320,38 @@ export function TrigTransformAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 6. 教学引导卡片 (规范 2.3: 置于左屏最底部辅助区) */}
+          <LeftPanelSection title="教学探究引导" subtitle="启发式思考问题">
+            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs space-y-2 text-neutral-700">
+              <div>
+                <span className="font-semibold text-primary-700">
+                  【基础条件】
+                </span>
+                {studyMode === "transformPath" &&
+                  " 正弦函数图象平移变换均作用于自变量 x 自身。"}
+                {studyMode === "omegaZeros" &&
+                  " 令整体相位 u = ωx + φ，将 x 区间转化为 u 范围。"}
+                {studyMode === "fivePoints" &&
+                  " 一个周期内 5 个特征相位为 0, π/2, π, 3π/2, 2π。"}
+                {studyMode === "properties" &&
+                  " 函数周期 T = 2π/|ω|，值域为 [k - |A|, k + |A|]。"}
+              </div>
+              <div>
+                <span className="font-semibold text-amber-700">
+                  【探究问题】
+                </span>
+                {studyMode === "transformPath" &&
+                  " 为什么先伸缩后平移时，平移量必须除以 ω？"}
+                {studyMode === "omegaZeros" &&
+                  " 当区间端点恰好为零点时，开闭区间对零点个数有何影响？"}
+                {studyMode === "fivePoints" &&
+                  " 为什么已知图象求解析式时，代入波峰比代入零点更准确？"}
+                {studyMode === "properties" &&
+                  " 对称轴方程与对称中心横坐标之间有什么内在距离规律？"}
+              </div>
+            </div>
           </LeftPanelSection>
         </LeftPanel>
       }

@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   A: 1.5,
@@ -13,11 +14,12 @@ export const paramMeta: Record<string, ParamMeta> = {
   A: {
     key: "A",
     label: "振幅 A",
-    labelFormula: "\\color{#EF4444}{A}",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{A}`,
     defaultValue: 1.5,
     min: 0.1,
     max: 4,
     step: 0.1,
+    group: "形态与相位参数",
     description: "控制波峰与波谷高度，纵向伸缩",
     descriptionFormula: "值域 $[k-A, k+A]$ · 纵向伸缩 $A$ 倍",
     importance: "core",
@@ -31,11 +33,12 @@ export const paramMeta: Record<string, ParamMeta> = {
   omega: {
     key: "omega",
     label: "角频率 ω",
-    labelFormula: "\\color{#D97706}{\\omega}",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{\\omega}`,
     defaultValue: 2,
     min: 0.2,
     max: 6,
     step: 0.1,
+    group: "形态与相位参数",
     description: "控制函数周期 T = 2π/ω，横向伸缩",
     descriptionFormula:
       "周期 $T = \\frac{2\\pi}{\\omega}$ · 横向伸缩 $\\frac{1}{\\omega}$",
@@ -51,11 +54,12 @@ export const paramMeta: Record<string, ParamMeta> = {
   phi: {
     key: "phi",
     label: "初相 φ",
-    labelFormula: "\\color{#059669}{\\varphi}",
+    labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{\\varphi}`,
     defaultValue: Math.PI / 3,
     min: -Math.PI,
     max: Math.PI,
     step: Math.PI / 12,
+    group: "形态与相位参数",
     description: "相位左右平移量",
     descriptionFormula:
       "左右相位平移 · 先移 $|\\varphi|$ · 后移 $\\frac{|\\varphi|}{\\omega}$",
@@ -70,11 +74,12 @@ export const paramMeta: Record<string, ParamMeta> = {
   k: {
     key: "k",
     label: "偏置 k",
-    labelFormula: "\\color{#8B5CF6}{k}",
+    labelFormula: `\\color{${MATH_COLORS.functionSecondary}}{k}`,
     defaultValue: 0,
     min: -3,
     max: 3,
     step: 0.5,
+    group: "形态与相位参数",
     description: "平衡位置 y = k 垂直平移",
     descriptionFormula: "平衡轴 $y = k$ · 沿 $y$ 轴垂直平移",
     importance: "advanced",
@@ -92,6 +97,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: -Math.PI,
     max: Math.PI,
     step: Math.PI / 12,
+    group: "探究区间范围 [x₁, x₂]",
     description: "探究区间 [x₁, x₂] 的左端点",
     descriptionFormula: "探究区间 $[x_1, x_2]$ 左端点",
     importance: "core",
@@ -108,6 +114,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: 0,
     max: 2 * Math.PI,
     step: Math.PI / 12,
+    group: "探究区间范围 [x₁, x₂]",
     description: "探究区间 [x₁, x₂] 的右端点",
     descriptionFormula: "探究区间 $[x_1, x_2]$ 右端点",
     importance: "core",
