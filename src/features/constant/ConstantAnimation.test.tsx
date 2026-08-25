@@ -31,13 +31,13 @@ describe("ConstantAnimation smoke test", () => {
 
   it("displays scene selection section", () => {
     render(<ConstantAnimation />);
-    expect(screen.getByText("选择场景")).toBeInTheDocument();
+    expect(screen.getByText("实验室场景")).toBeInTheDocument();
   });
 
   it("switches to double variable mode", () => {
     render(<ConstantAnimation />);
     fireEvent.click(screen.getByText("双变量对决"));
-    expect(screen.getByText("高考双变量博弈")).toBeInTheDocument();
+    expect(screen.getByText("博弈量词关系")).toBeInTheDocument();
   });
 
   it("shows single variable sub-modes by default", () => {

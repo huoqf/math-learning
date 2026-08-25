@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TabSwitcher,
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
@@ -18,10 +19,11 @@ import type { TransModelKey } from "@/math/constant";
 import { SingleVarScene } from "./components/SingleVarScene";
 
 export function SingleVarPage() {
-  const [funModel, setFunModel] = useState<"quadratic" | "transcendent">(
+  const [funModel, setFunModel] = useState<"transcendent" | "quadratic">(
     "transcendent",
   );
   const [transModel, setTransModel] = useState<TransModelKey>("ln_x_over_x");
+  const [presetKey, setPresetKey] = useState<string>("free");
   const [showDerivative, setShowDerivative] = useState<boolean>(false);
   const [showTangent, setShowTangent] = useState<boolean>(false);
   const [subMode, setSubMode] = useState<"sep" | "direct">("sep");
@@ -40,35 +42,86 @@ export function SingleVarPage() {
 
   const scale = useSceneScale({ vp, xRange: [-2, 6], yRange: [-1, 5.5] });
 
-  const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => {
-      if (funModel === "transcendent") {
-        if (key === "m") {
-          const clampedVal = Math.max(0.1, value);
-          return {
-            ...prev,
-            m: clampedVal >= prev.n ? prev.n - 0.1 : clampedVal,
-          };
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      // 拖拽或手动调参时，自动切回自由探究
+      setPresetKey("free");
+      setParams((prev) => {
+        if (funModel === "transcendent") {
+          if (key === "m") {
+            const clampedVal = Math.max(0.1, value);
+            return {
+              ...prev,
+              m: clampedVal >= prev.n ? prev.n - 0.1 : clampedVal,
+            };
+          }
+          if (key === "n") {
+            const clampedVal = Math.max(0.2, value);
+            return {
+              ...prev,
+              n: clampedVal <= prev.m ? prev.m + 0.1 : clampedVal,
+            };
+          }
         }
-        if (key === "n") {
-          const clampedVal = Math.max(0.2, value);
-          return {
-            ...prev,
-            n: clampedVal <= prev.m ? prev.m + 0.1 : clampedVal,
-          };
+        if (key === "m" && value >= prev.n) {
+          return { ...prev, m: prev.n - 0.1 };
         }
+        if (key === "n" && value <= prev.m) {
+          return { ...prev, n: prev.m + 0.1 };
+        }
+        return { ...prev, [key]: value };
+      });
+    },
+    [funModel],
+  );
+
+  // 典型预设切换响应
+  const handlePresetChange = (key: string) => {
+    setPresetKey(key);
+    if (key === "free") return;
+
+    if (funModel === "transcendent") {
+      if (key === "trans_critical") {
+        // 极值相切临界
+        if (transModel === "ln_x_over_x") {
+          setSubMode("sep");
+          setParams((prev) => ({ ...prev, a: 0.37, m: 0.5, n: 3.5 }));
+        } else if (transModel === "exp_minus_ax") {
+          setSubMode("direct");
+          setParams((prev) => ({ ...prev, a_axis: 1.0, m: 0.1, n: 2.0 }));
+        } else if (transModel === "a_ln_x_minus_x") {
+          setSubMode("direct");
+          setShowTangent(true);
+          setParams((prev) => ({ ...prev, a_axis: 1.0, m: 0.2, n: 3.0 }));
+        } else if (transModel === "exp_minus_a_x_plus_1") {
+          setSubMode("direct");
+          setShowTangent(true);
+          setParams((prev) => ({ ...prev, a_axis: 1.0, m: 0.1, n: 2.5 }));
+        }
+      } else if (key === "trans_left") {
+        setParams((prev) => ({ ...prev, m: 0.2, n: 1.5 }));
+      } else if (key === "trans_right") {
+        setParams((prev) => ({ ...prev, m: 2.5, n: 5.0 }));
       }
-      if (key === "m" && value >= prev.n) {
-        return { ...prev, m: prev.n - 0.1 };
+    } else {
+      if (key === "axis_left") {
+        // 轴在区间左 (a < m)
+        setSubMode("direct");
+        setParams((prev) => ({ ...prev, a_axis: 0.0, m: 1.0, n: 3.0 }));
+      } else if (key === "axis_inside") {
+        // 轴在区间内 (m <= a <= n)
+        setSubMode("direct");
+        setParams((prev) => ({ ...prev, a_axis: 2.0, m: 1.0, n: 3.0 }));
+      } else if (key === "axis_right") {
+        // 轴在区间右 (a > n)
+        setSubMode("direct");
+        setParams((prev) => ({ ...prev, a_axis: 4.0, m: 1.0, n: 3.0 }));
       }
-      if (key === "n" && value <= prev.m) {
-        return { ...prev, n: prev.m + 0.1 };
-      }
-      return { ...prev, [key]: value };
-    });
+    }
   };
 
   const handleReset = () => {
+    setPresetKey("free");
     setParams({
       a: defaultParams.a,
       a_axis: defaultParams.a_axis,
@@ -96,6 +149,8 @@ export function SingleVarPage() {
       let description = meta.description;
       let descriptionFormula = meta.descriptionFormula;
       let marks = meta.marks;
+      const group =
+        key === "a" || key === "a_axis" ? "目标特征参数 a" : "研究区间 [m, n]";
 
       if (funModel === "transcendent") {
         if (key === "m") {
@@ -124,6 +179,19 @@ export function SingleVarPage() {
           description = "【主参数-红】代表水平直线 y = a";
         } else if (key === "a_axis") {
           description = "【主参数-红】抛物线对称轴 x = a";
+          // 动态 marks：指示当前区间的端点值 m 与 n 作为分类讨论分界
+          marks = [
+            {
+              value: params.m,
+              variant: "critical",
+              label: `m=${params.m.toFixed(1)}`,
+            },
+            {
+              value: params.n,
+              variant: "critical",
+              label: `n=${params.n.toFixed(1)}`,
+            },
+          ];
         }
       }
 
@@ -135,6 +203,7 @@ export function SingleVarPage() {
         min,
         max,
         step,
+        group,
         description,
         descriptionFormula,
         importance: meta.importance,
@@ -223,68 +292,153 @@ export function SingleVarPage() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="选择函数模型"
-            subtitle="高考超越函数四大母题与二次函数"
-          >
-            <div className="space-y-2">
-              <SelectGrid
-                items={[
-                  { key: "transcendent", label: "超越函数" },
-                  { key: "quadratic", label: "二次函数" },
-                ]}
-                value={funModel}
-                onChange={(k) => setFunModel(k as "transcendent" | "quadratic")}
-                variant="filled"
-                columns={2}
-              />
+          {/* 1. 顶层函数模型切换 */}
+          <LeftPanelSection title="核心函数专题">
+            <TabSwitcher
+              tabs={[
+                { key: "transcendent", label: "超越函数压轴" },
+                { key: "quadratic", label: "二次函数模型" },
+              ]}
+              value={funModel}
+              onChange={(k) => {
+                setFunModel(k as "transcendent" | "quadratic");
+                setPresetKey("free");
+              }}
+            />
 
-              {funModel === "transcendent" && (
+            {funModel === "transcendent" && (
+              <div className="pt-2">
+                <div className="text-[10px] font-semibold text-neutral-400 mb-1">
+                  高考 4 大超越母题
+                </div>
                 <SelectGrid
                   items={[
                     {
                       key: "ln_x_over_x",
-                      formula: "\\frac{\\ln x}{x} 型",
+                      formula: "\\frac{\\ln x}{x}",
+                      description: "极值点 x=e",
                     },
                     {
                       key: "exp_minus_ax",
-                      formula: "e^x - ax 型",
+                      formula: "e^x - ax",
+                      description: "驻点 x=ln a",
                     },
                     {
                       key: "a_ln_x_minus_x",
-                      formula: "a\\ln x - x + 1 型",
+                      formula: "a\\ln x - x + 1",
+                      description: "x=1 切线放缩",
                     },
                     {
                       key: "exp_minus_a_x_plus_1",
-                      formula: "e^x - a(x+1) 型",
+                      formula: "e^x - a(x+1)",
+                      description: "x=0 切线下界",
                     },
                   ]}
                   value={transModel}
-                  onChange={(k) => setTransModel(k)}
+                  onChange={(k) => {
+                    setTransModel(k as TransModelKey);
+                    setPresetKey("free");
+                  }}
                   variant="filled"
-                  className="pt-1"
+                  columns={2}
                 />
-              )}
-            </div>
+              </div>
+            )}
           </LeftPanelSection>
 
+          {/* 2. 黄金 2x2 典型高考预设 */}
           <LeftPanelSection
-            title="研究方法与辅助工具"
-            subtitle="探究方法及导数/切线放缩辅助"
+            title="典型构型预设"
+            subtitle="一键直达经典高考题型参数"
+          >
+            {funModel === "transcendent" ? (
+              <SelectGrid
+                items={[
+                  {
+                    key: "free",
+                    label: "自由探究",
+                    description: "全参数开放",
+                  },
+                  {
+                    key: "trans_critical",
+                    label: "极值相切",
+                    description: "临界点等号",
+                  },
+                  {
+                    key: "trans_left",
+                    label: "左偏区间",
+                    description: "单调递增区",
+                  },
+                  {
+                    key: "trans_right",
+                    label: "右偏区间",
+                    description: "单调递减区",
+                  },
+                ]}
+                value={presetKey}
+                onChange={handlePresetChange}
+                variant="filled"
+                columns={2}
+              />
+            ) : (
+              <SelectGrid
+                items={[
+                  {
+                    key: "free",
+                    label: "自由探究",
+                    description: "全参数开放",
+                  },
+                  {
+                    key: "axis_left",
+                    label: "轴在区间左",
+                    description: "a < m 单调递增",
+                  },
+                  {
+                    key: "axis_inside",
+                    label: "轴在区间内",
+                    description: "m ≤ a ≤ n 顶点极值",
+                  },
+                  {
+                    key: "axis_right",
+                    label: "轴在区间右",
+                    description: "a > n 单调递减",
+                  },
+                ]}
+                value={presetKey}
+                onChange={handlePresetChange}
+                variant="filled"
+                columns={2}
+              />
+            )}
+          </LeftPanelSection>
+
+          {/* 3. 探究目标与解法 */}
+          <LeftPanelSection
+            title="研究目标与方法"
+            subtitle="选择量词目标与求解转化方法"
           >
             <div className="space-y-2.5">
               <div>
                 <label className="text-[10px] font-bold text-neutral-400 block mb-1">
-                  探索目标
+                  探索目标 (量词)
                 </label>
                 <SelectGrid
                   items={[
-                    { key: "always", label: "恒成立 (∀x)" },
-                    { key: "exist", label: "存在性 (∃x)" },
+                    {
+                      key: "always",
+                      label: "恒成立 (∀x)",
+                      description: "抓最小值守底线",
+                    },
+                    {
+                      key: "exist",
+                      label: "存在性 (∃x)",
+                      description: "抓最大值求突破",
+                    },
                   ]}
                   value={logic}
                   onChange={(k) => setLogic(k as "always" | "exist")}
                   variant="filled"
+                  columns={2}
                 />
               </div>
 
@@ -294,45 +448,57 @@ export function SingleVarPage() {
                 </label>
                 <SelectGrid
                   items={[
-                    { key: "sep", label: "参变分离法" },
-                    { key: "direct", label: "直接最值讨论" },
+                    {
+                      key: "sep",
+                      label: "参变分离法",
+                      description: "孤立参数看极值",
+                    },
+                    {
+                      key: "direct",
+                      label: "直接最值讨论",
+                      description: "分类讨论单调性",
+                    },
                   ]}
                   value={subMode}
                   onChange={(k) => setSubMode(k as "sep" | "direct")}
                   variant="filled"
+                  columns={2}
                 />
               </div>
 
               <div>
                 <label className="text-[10px] font-bold text-neutral-400 block mb-1">
-                  数形结合辅助图示
+                  辅助分析图层
                 </label>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   <button
-                    onClick={() => setShowDerivative(!showDerivative)}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                    type="button"
+                    onClick={() => setShowDerivative((prev) => !prev)}
+                    className={`py-1.5 px-2 text-[11px] font-semibold rounded-lg border transition-all duration-200 text-center select-none ${
                       showDerivative
-                        ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                        : "bg-white text-neutral-650 border-neutral-200 hover:bg-neutral-50"
+                        ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                        : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50"
                     }`}
                   >
-                    {showDerivative ? "隐藏导数 f'(x)" : "显示导数 f'(x)"}
+                    {showDerivative ? "✓ 导数 f'(x)" : "+ 导数 f'(x)"}
                   </button>
                   <button
-                    onClick={() => setShowTangent(!showTangent)}
-                    className={`flex-1 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                    type="button"
+                    onClick={() => setShowTangent((prev) => !prev)}
+                    className={`py-1.5 px-2 text-[11px] font-semibold rounded-lg border transition-all duration-200 text-center select-none ${
                       showTangent
-                        ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                        : "bg-white text-neutral-650 border-neutral-200 hover:bg-neutral-50"
+                        ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                        : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50"
                     }`}
                   >
-                    {showTangent ? "隐藏切线放缩" : "显示切线放缩"}
+                    {showTangent ? "✓ 切线放缩" : "+ 切线放缩"}
                   </button>
                 </div>
               </div>
             </div>
           </LeftPanelSection>
 
+          {/* 4. 参数与区间调节 (按 group 分组) */}
           <LeftPanelSection title="参数调节" subtitle="改变研究区间与目标参数">
             <ParamControl
               params={paramConfigs}
@@ -341,7 +507,7 @@ export function SingleVarPage() {
             />
           </LeftPanelSection>
 
-          {/* 教学导引与题设背景 */}
+          {/* 5. 教学导引与题设背景 */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">

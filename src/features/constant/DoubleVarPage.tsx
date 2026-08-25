@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -20,6 +20,7 @@ export function DoubleVarPage() {
   const [selectedLogic, setSelectedLogic] = useState<
     "all_all" | "all_exist" | "exist_all" | "exist_exist" | "same_var"
   >("all_all");
+  const [presetKey, setPresetKey] = useState<string>("free");
 
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
@@ -41,18 +42,59 @@ export function DoubleVarPage() {
     });
   }, [params, selectedLogic]);
 
-  const handleParamChange = (key: string, value: number) => {
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setPresetKey("free");
     setParams((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handlePresetChange = (key: string) => {
+    setPresetKey(key);
+    if (key === "free") return;
+
+    if (key === "critical_touch") {
+      // 临界对决：f_min = g_max
+      setParams((prev) => ({
+        ...prev,
+        xf: 1.25,
+        yf: 2.0,
+        xg: 2.25,
+        yg: 2.0,
+      }));
+    } else if (key === "safe_isolate") {
+      // 安全隔离：f_min > g_max
+      setParams((prev) => ({
+        ...prev,
+        xf: 1.25,
+        yf: 3.0,
+        xg: 2.25,
+        yg: 1.0,
+      }));
+    } else if (key === "cross_violate") {
+      // 交叉穿透：f_min < g_max
+      setParams((prev) => ({
+        ...prev,
+        xf: 1.25,
+        yf: 1.4,
+        xg: 2.25,
+        yg: 2.6,
+      }));
+    }
   };
 
   const handleReset = () => {
+    setPresetKey("free");
     setParams({ ...defaultParams });
   };
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keys = ["xf", "yf", "xg", "yg"];
+    const keys = ["yf", "xf", "yg", "xg"];
     return keys.map((key) => {
       const meta = paramMeta[key];
+      const group =
+        key === "xf" || key === "yf"
+          ? "抛物线 f(x) 顶点与对称轴"
+          : "抛物线 g(x) 顶点与对称轴";
+
       return {
         key,
         label: meta.label,
@@ -61,6 +103,7 @@ export function DoubleVarPage() {
         min: meta.min,
         max: meta.max,
         step: meta.step ?? 0.1,
+        group,
         description: meta.description,
         descriptionFormula: meta.descriptionFormula,
         importance: meta.importance,
@@ -142,40 +185,37 @@ export function DoubleVarPage() {
     <ThreePanel
       left={
         <LeftPanel>
+          {/* 1. 双变量博弈量词模式 */}
           <LeftPanelSection
-            title="高考双变量博弈"
-            subtitle="双动点对决与同变量差函数博弈"
+            title="博弈量词关系"
+            subtitle="双动点对决与同变量差函数"
           >
             <SelectGrid
               items={[
                 {
                   key: "all_all",
                   label: "∀x₁, ∀x₂",
-                  description: "任意对任意-极值隔离",
-                  fullWidth: true,
+                  description: "任意对任意(极值隔离)",
                 },
                 {
                   key: "all_exist",
                   label: "∀x₁, ∃x₂",
-                  description: "任意对存在",
-                  fullWidth: true,
+                  description: "任意对存在(值域包含)",
                 },
                 {
                   key: "exist_all",
                   label: "∃x₁, ∀x₂",
-                  description: "存在对任意",
-                  fullWidth: true,
+                  description: "存在对任意(最值压制)",
                 },
                 {
                   key: "exist_exist",
                   label: "∃x₁, ∃x₂",
-                  description: "存在对存在",
-                  fullWidth: true,
+                  description: "存在对存在(值域相交)",
                 },
                 {
                   key: "same_var",
-                  label: "∀x ∈ I₁ ∩ I₂",
-                  description: "同变量对垒-差函数",
+                  label: "∀x ∈ I₁ ∩ I₂ (同变量)",
+                  description: "同变量对垒 (差函数法 h(x) ≥ 0)",
                   fullWidth: true,
                 },
               ]}
@@ -186,9 +226,45 @@ export function DoubleVarPage() {
             />
           </LeftPanelSection>
 
+          {/* 2. 黄金 2x2 典型构型预设 */}
           <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动顶点参数调节两抛物线位置"
+            title="典型构型预设"
+            subtitle="一键直达双动点临界与博弈构型"
+          >
+            <SelectGrid
+              items={[
+                {
+                  key: "free",
+                  label: "自由探究",
+                  description: "全参数开放",
+                },
+                {
+                  key: "critical_touch",
+                  label: "临界相切",
+                  description: "f_min = g_max",
+                },
+                {
+                  key: "safe_isolate",
+                  label: "安全隔离",
+                  description: "f_min > g_max",
+                },
+                {
+                  key: "cross_violate",
+                  label: "交叉穿透",
+                  description: "f_min < g_max",
+                },
+              ]}
+              value={presetKey}
+              onChange={handlePresetChange}
+              variant="filled"
+              columns={2}
+            />
+          </LeftPanelSection>
+
+          {/* 3. 参数调节 (按 group 分组) */}
+          <LeftPanelSection
+            title="顶点参数调节"
+            subtitle="拖动滑块改变两抛物线位置"
           >
             <ParamControl
               params={paramConfigs}
@@ -197,7 +273,7 @@ export function DoubleVarPage() {
             />
           </LeftPanelSection>
 
-          {/* 教学导引与题设背景 */}
+          {/* 4. 教学导引与题设背景 */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
