@@ -1,5 +1,5 @@
 import React from "react";
-import { CoordinateGrid, InteractivePoint } from "@/components/Math";
+import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { TriangleExtremaState, Point2D } from "@/math/triangleExtrema";
@@ -29,7 +29,6 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
 }) => {
   const {
     vertices,
-    sides,
     circumcircle,
     inscribed,
     apolloniusCircle,
@@ -43,7 +42,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
     const defaultCenter = mathToDesign(0, 0, scale);
     return (
       <g>
-        <CoordinateGrid scale={scale} fontScale={fontScale} />
+        <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
         <text
           x={defaultCenter.x}
           y={defaultCenter.y - 20}
@@ -91,9 +90,9 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
   const posMaxA = mathToDesign(maxVertexA.x, maxVertexA.y, scale);
 
   return (
-    <g>
-      {/* 1. 坐标系网格与轴 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+    <g className="triangle-extrema-scene">
+      {/* 1. 纯净坐标系网格与轴 (showGrid: false 杜绝地砖网格) */}
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* 2. 轨迹背景图层 */}
       {/* A. 外接圆 (angle-transform 与 side-ineq 模式) */}
@@ -104,24 +103,28 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             cx={posCircumCenter.x}
             cy={posCircumCenter.y}
             r={radiusPx}
-            fill={withAlpha(MATH_COLORS.primary, 0.04)}
-            stroke={withAlpha(MATH_COLORS.primary, 0.35)}
+            fill={withAlpha(MATH_COLORS.circle, 0.04)}
+            stroke={MATH_COLORS.circle}
             strokeDasharray="4 4"
             strokeWidth={1.5}
           />
           {/* 圆心标记 */}
-          <circle
-            cx={posCircumCenter.x}
-            cy={posCircumCenter.y}
-            r={3}
-            fill={MATH_COLORS.primary}
+          <MathPoint
+            x={posCircumCenter.x}
+            y={posCircumCenter.y}
+            color={MATH_COLORS.circle}
           />
           <text
-            x={posCircumCenter.x + 6}
-            y={posCircumCenter.y - 6}
-            fill={MATH_COLORS.primary}
-            fontSize={fontScale(11)}
+            x={posCircumCenter.x + fontScale(8)}
+            y={posCircumCenter.y - fontScale(6)}
+            fill={MATH_COLORS.circle}
+            fontSize={fontScale(12)}
             fontWeight="bold"
+            fontStyle="italic"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
           >
             O
           </text>
@@ -148,16 +151,18 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             strokeWidth={1.2}
           />
           <text
-            x={posMaxA.x + 6}
-            y={posMaxA.y - 6}
+            x={posMaxA.x + fontScale(8)}
+            y={posMaxA.y - fontScale(6)}
             fill={MATH_COLORS.paramPrimary}
-            fontSize={fontScale(10)}
+            fontSize={fontScale(11)}
             fontWeight="bold"
+            fontStyle="italic"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
           >
-            h
-            <tspan dy={fontScale(2)} fontSize={fontScale(8)}>
-              max
-            </tspan>
+            hₘₐₓ
           </text>
         </g>
       )}
@@ -169,28 +174,25 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             cx={apCenter.x}
             cy={apCenter.y}
             r={apRadiusPx}
-            fill={withAlpha(MATH_COLORS.paramPrimary, 0.05)}
-            stroke={MATH_COLORS.paramPrimary}
+            fill={withAlpha(MATH_COLORS.circle, 0.05)}
+            stroke={MATH_COLORS.circle}
             strokeDasharray="5 4"
             strokeWidth={1.8}
           />
-          <circle
-            cx={apCenter.x}
-            cy={apCenter.y}
-            r={3}
-            fill={MATH_COLORS.paramPrimary}
-          />
+          <MathPoint x={apCenter.x} y={apCenter.y} color={MATH_COLORS.circle} />
           <text
-            x={apCenter.x + 6}
-            y={apCenter.y - 6}
-            fill={MATH_COLORS.paramPrimary}
-            fontSize={fontScale(11)}
+            x={apCenter.x + fontScale(8)}
+            y={apCenter.y - fontScale(6)}
+            fill={MATH_COLORS.circle}
+            fontSize={fontScale(12)}
             fontWeight="bold"
+            fontStyle="italic"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
           >
-            O
-            <tspan dy={fontScale(2)} fontSize={fontScale(8)}>
-              A
-            </tspan>
+            O_A
           </text>
           {/* 最高点指示虚线 */}
           <line
@@ -198,20 +200,22 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             y1={apCenter.y}
             x2={apCenter.x}
             y2={apCenter.y - apRadiusPx}
-            stroke={MATH_COLORS.paramPrimary}
+            stroke={MATH_COLORS.tangentLine}
             strokeDasharray="3 3"
           />
           <text
-            x={apCenter.x + 6}
-            y={apCenter.y - apRadiusPx - 6}
-            fill={MATH_COLORS.paramPrimary}
-            fontSize={fontScale(10)}
+            x={apCenter.x + fontScale(8)}
+            y={apCenter.y - apRadiusPx - fontScale(6)}
+            fill={MATH_COLORS.tangentLine}
+            fontSize={fontScale(11)}
             fontWeight="bold"
+            fontStyle="italic"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
           >
-            h
-            <tspan dy={fontScale(2)} fontSize={fontScale(8)}>
-              max
-            </tspan>
+            hₘₐₓ = R_A
           </text>
         </g>
       )}
@@ -223,8 +227,8 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             cx={posM.x}
             cy={posM.y}
             r={polarization.medianLength * scale.scaleX}
-            fill={withAlpha(MATH_COLORS.paramTertiary, 0.05)}
-            stroke={MATH_COLORS.paramTertiary}
+            fill={withAlpha(MATH_COLORS.complexNum, 0.05)}
+            stroke={MATH_COLORS.complexNum}
             strokeDasharray="4 4"
             strokeWidth={1.8}
           />
@@ -238,17 +242,51 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         y1={posA.y}
         x2={posH.x}
         y2={posH.y}
-        stroke={CANVAS_COLORS.axis}
+        stroke={MATH_COLORS.tangentLine}
         strokeDasharray="3 3"
-        strokeWidth={1.2}
+        strokeWidth={1.5}
       />
+      {/* 垂足直角标尺 ∟ (固定 8px) */}
+      {(() => {
+        const markSize = fontScale(8);
+        return (
+          <path
+            d={`M ${posH.x - markSize} ${posH.y} L ${posH.x - markSize} ${posH.y - markSize} L ${posH.x} ${posH.y - markSize}`}
+            fill="none"
+            stroke={MATH_COLORS.tangentLine}
+            strokeWidth={1.5}
+          />
+        );
+      })()}
+      <MathPoint x={posH.x} y={posH.y} color={MATH_COLORS.tangentLine} />
       <text
-        x={posH.x + 4}
-        y={(posA.y + posH.y) / 2}
-        fill={CANVAS_COLORS.labelTextLight}
-        fontSize={fontScale(10)}
+        x={posH.x + fontScale(6)}
+        y={posH.y - fontScale(6)}
+        fill={MATH_COLORS.tangentLine}
+        fontSize={fontScale(11)}
+        fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(3.5)}
+        strokeLinejoin="round"
       >
-        h
+        H
+      </text>
+      <text
+        x={posH.x - fontScale(8)}
+        y={(posA.y + posH.y) / 2}
+        textAnchor="end"
+        fill={MATH_COLORS.tangentLine}
+        fontSize={fontScale(11)}
+        fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(3.5)}
+        strokeLinejoin="round"
+      >
+        hₐ
       </text>
 
       {/* 中线 AM */}
@@ -259,24 +297,40 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             y1={posA.y}
             x2={posM.x}
             y2={posM.y}
-            stroke={MATH_COLORS.paramTertiary}
+            stroke={MATH_COLORS.complexNum}
             strokeWidth={2}
+            strokeDasharray="4 3"
           />
-          <circle
-            cx={posM.x}
-            cy={posM.y}
-            r={3}
-            fill={MATH_COLORS.paramTertiary}
-          />
+          <MathPoint x={posM.x} y={posM.y} color={MATH_COLORS.complexNum} />
           <text
             x={posM.x}
-            y={posM.y + fontScale(14)}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(11)}
+            y={posM.y + fontScale(16)}
+            fill={MATH_COLORS.complexNum}
+            fontSize={fontScale(12)}
             textAnchor="middle"
             fontWeight="bold"
+            fontStyle="italic"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
           >
             M
+          </text>
+          <text
+            x={(posA.x + posM.x) / 2 - fontScale(10)}
+            y={(posA.y + posM.y) / 2}
+            textAnchor="end"
+            fill={MATH_COLORS.complexNum}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            fontStyle="italic"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
+          >
+            mₐ
           </text>
         </g>
       )}
@@ -291,9 +345,12 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
                 x={posMaxA.x}
                 y={posMaxA.y - fontScale(18)}
                 fill={MATH_COLORS.paramPrimary}
-                fontSize={fontScale(11)}
+                fontSize={fontScale(12)}
                 fontWeight="bold"
                 textAnchor="middle"
+                paintOrder="stroke"
+                stroke="white"
+                strokeWidth={fontScale(4)}
               >
                 ⚠️ 非锐角状态 (角 B ∈ ({acuteRange.minAngleB.toFixed(0)}°,{" "}
                 {acuteRange.maxAngleB.toFixed(0)}°))
@@ -313,22 +370,26 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
                     cx={posIncenter.x}
                     cy={posIncenter.y}
                     r={inradiusPx}
-                    fill={withAlpha(MATH_COLORS.paramTertiary, 0.08)}
-                    stroke={MATH_COLORS.paramTertiary}
+                    fill={withAlpha(MATH_COLORS.complexNum, 0.08)}
+                    stroke={MATH_COLORS.complexNum}
                     strokeWidth={1.5}
                   />
-                  <circle
-                    cx={posIncenter.x}
-                    cy={posIncenter.y}
-                    r={2.5}
-                    fill={MATH_COLORS.paramTertiary}
+                  <MathPoint
+                    x={posIncenter.x}
+                    y={posIncenter.y}
+                    color={MATH_COLORS.complexNum}
                   />
                   <text
-                    x={posIncenter.x + 5}
-                    y={posIncenter.y - 4}
-                    fill={MATH_COLORS.paramTertiary}
-                    fontSize={fontScale(10)}
+                    x={posIncenter.x + fontScale(6)}
+                    y={posIncenter.y - fontScale(4)}
+                    fill={MATH_COLORS.complexNum}
+                    fontSize={fontScale(11)}
                     fontWeight="bold"
+                    fontStyle="italic"
+                    paintOrder="stroke"
+                    stroke="white"
+                    strokeWidth={fontScale(3.5)}
+                    strokeLinejoin="round"
                   >
                     I
                   </text>
@@ -341,9 +402,32 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
       {/* 4. 三角形主体边与阴影填充 */}
       <polygon
         points={`${posA.x},${posA.y} ${posB.x},${posB.y} ${posC.x},${posC.y}`}
-        fill={withAlpha(MATH_COLORS.primary, 0.12)}
+        fill={withAlpha(MATH_COLORS.function, 0.08)}
         stroke="none"
       />
+
+      {/* 顶点 A 角弧 */}
+      {(() => {
+        const arcR = fontScale(22);
+        const dirAB = { x: posB.x - posA.x, y: posB.y - posA.y };
+        const dirAC = { x: posC.x - posA.x, y: posC.y - posA.y };
+        const angAB = Math.atan2(dirAB.y, dirAB.x);
+        const angAC = Math.atan2(dirAC.y, dirAC.x);
+
+        const startX = posA.x + arcR * Math.cos(angAB);
+        const startY = posA.y + arcR * Math.sin(angAB);
+        const endX = posA.x + arcR * Math.cos(angAC);
+        const endY = posA.y + arcR * Math.sin(angAC);
+
+        return (
+          <path
+            d={`M ${startX} ${startY} A ${arcR} ${arcR} 0 0 ${angAC > angAB ? 1 : 0} ${endX} ${endY}`}
+            fill="none"
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={1.8}
+          />
+        );
+      })()}
 
       {/* 边 a (BC) - 底边: paramPrimary (红) */}
       <line
@@ -352,7 +436,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         x2={posC.x}
         y2={posC.y}
         stroke={MATH_COLORS.paramPrimary}
-        strokeWidth={3.5}
+        strokeWidth={3}
       />
 
       {/* 边 b (AC) - paramSecondary (橙) */}
@@ -362,7 +446,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         x2={posC.x}
         y2={posC.y}
         stroke={MATH_COLORS.paramSecondary}
-        strokeWidth={2.5}
+        strokeWidth={3}
       />
 
       {/* 边 c (AB) - paramTertiary (绿) */}
@@ -372,10 +456,10 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         x2={posB.x}
         y2={posB.y}
         stroke={MATH_COLORS.paramTertiary}
-        strokeWidth={2.5}
+        strokeWidth={3}
       />
 
-      {/* 5. 边长标签 (位置外扩，避免与中线/内切圆重叠) */}
+      {/* 5. 边长标签 (纯学术符号 a, b, c，数值归位右屏看板) */}
       <text
         x={
           (posB.x + posC.x) / 2 +
@@ -383,40 +467,61 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         }
         y={posB.y + fontScale(16)}
         fill={MATH_COLORS.paramPrimary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
         textAnchor="middle"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(4)}
+        strokeLinejoin="round"
       >
-        a = {sides.a.toFixed(1)}
+        a
       </text>
       <text
-        x={(posA.x + posC.x) / 2 + 10}
-        y={(posA.y + posC.y) / 2 - 4}
+        x={(posA.x + posC.x) / 2 + fontScale(12)}
+        y={(posA.y + posC.y) / 2}
         fill={MATH_COLORS.paramSecondary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(4)}
+        strokeLinejoin="round"
       >
-        b = {sides.b.toFixed(2)}
+        b
       </text>
       <text
-        x={(posA.x + posB.x) / 2 - 24}
-        y={(posA.y + posB.y) / 2 - 4}
+        x={(posA.x + posB.x) / 2 - fontScale(14)}
+        y={(posA.y + posB.y) / 2}
+        textAnchor="end"
         fill={MATH_COLORS.paramTertiary}
-        fontSize={fontScale(12)}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(4)}
+        strokeLinejoin="round"
       >
-        c = {sides.c.toFixed(2)}
+        c
       </text>
 
-      {/* 6. 顶点交互与标注 (纯字母无冗余，外向排布) */}
+      {/* 6. 顶点交互与标注 (纯字母微描边无重影) */}
       {/* 顶点 C: 固定点 */}
-      <circle cx={posC.x} cy={posC.y} r={4.5} fill={MATH_COLORS.paramPrimary} />
+      <MathPoint x={posC.x} y={posC.y} color={MATH_COLORS.paramPrimary} />
       <text
-        x={posC.x + 8}
-        y={posC.y + 4}
-        fill={CANVAS_COLORS.labelText}
-        fontSize={fontScale(13)}
+        x={posC.x + fontScale(8)}
+        y={posC.y + fontScale(6)}
+        fill={MATH_COLORS.paramPrimary}
+        fontSize={fontScale(14)}
         fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(4)}
+        strokeLinejoin="round"
       >
         C
       </text>
@@ -430,7 +535,6 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
           vp={vp}
           fontScale={fontScale}
           color={MATH_COLORS.paramSecondary}
-          label="B"
           onDrag={(mathPos) => {
             if (onDragVertexB) {
               onDragVertexB(mathPos);
@@ -438,24 +542,23 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
           }}
         />
       ) : (
-        <g>
-          <circle
-            cx={posB.x}
-            cy={posB.y}
-            r={4.5}
-            fill={MATH_COLORS.paramPrimary}
-          />
-          <text
-            x={posB.x - 16}
-            y={posB.y + 4}
-            fill={CANVAS_COLORS.labelText}
-            fontSize={fontScale(13)}
-            fontWeight="bold"
-          >
-            B
-          </text>
-        </g>
+        <MathPoint x={posB.x} y={posB.y} color={MATH_COLORS.paramSecondary} />
       )}
+      <text
+        x={posB.x - fontScale(10)}
+        y={posB.y + fontScale(6)}
+        textAnchor="end"
+        fill={MATH_COLORS.paramSecondary}
+        fontSize={fontScale(14)}
+        fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(4)}
+        strokeLinejoin="round"
+      >
+        B
+      </text>
 
       {/* 顶点 A: 交互控制点 */}
       <InteractivePoint
@@ -465,13 +568,27 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         vp={vp}
         fontScale={fontScale}
         color={MATH_COLORS.paramPrimary}
-        label="A"
         onDrag={(mathPos) => {
           if (onDragVertexA) {
             onDragVertexA(mathPos);
           }
         }}
       />
+      <text
+        x={posA.x}
+        y={posA.y - fontScale(12)}
+        textAnchor="middle"
+        fill={MATH_COLORS.paramPrimary}
+        fontSize={fontScale(14)}
+        fontWeight="bold"
+        fontStyle="italic"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={fontScale(4)}
+        strokeLinejoin="round"
+      >
+        A
+      </text>
     </g>
   );
 };
