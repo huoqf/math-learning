@@ -10,7 +10,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TrigTangentScene } from "./components/TrigTangentScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/trigTangent";
@@ -107,22 +107,22 @@ export function TrigTangentAnimation() {
     if (studyMode === "unitCircle") {
       const cosT = Math.cos(params.theta ?? Math.PI / 4);
       const tanVal = Math.abs(cosT) > 1e-4 ? Math.tan(params.theta) : Infinity;
-      return `\\tan(\\color{#EF4444}{${params.theta.toFixed(2)}}) = \\color{#D97706}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
+      return `\\tan(\\color{${MATH_COLORS.paramPrimary}}{${params.theta.toFixed(2)}}) = \\color{${MATH_COLORS.paramSecondary}}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
     }
     if (studyMode === "baseFunction") {
       const cosT = Math.cos(params.theta ?? Math.PI / 4);
       const tanVal = Math.abs(cosT) > 1e-4 ? Math.tan(params.theta) : Infinity;
-      return `f(x) = \\tan x, \\quad \\tan(\\color{#EF4444}{${params.theta.toFixed(2)}}) = \\color{#2563EB}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
+      return `f(x) = \\tan x, \\quad \\tan(\\color{${MATH_COLORS.paramPrimary}}{${params.theta.toFixed(2)}}) = \\color{${MATH_COLORS.function}}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
     }
     if (studyMode === "gaokaoProblem") {
       const { omega, targetIntervalEnd } = params;
-      return `f(x) = \\tan(\\color{#D97706}{${omega}}x), \\quad x \\in [0, \\color{#EF4444}{${targetIntervalEnd?.toFixed(2)}}]`;
+      return `f(x) = \\tan(\\color{${MATH_COLORS.paramSecondary}}{${omega}}x), \\quad x \\in [0, \\color{${MATH_COLORS.paramPrimary}}{${targetIntervalEnd?.toFixed(2)}}]`;
     }
     const { A, omega, phi, C } = params;
     const phiStr =
       phi >= 0 ? `+ ${phi.toFixed(2)}` : `- ${Math.abs(phi).toFixed(2)}`;
     const cStr = C >= 0 ? `+ ${C}` : `- ${Math.abs(C)}`;
-    return `f(x) = \\color{#EF4444}{${A}}\\tan\\left(\\color{#D97706}{${omega}}x \\color{#059669}{${phiStr}}\\right) ${cStr}`;
+    return `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${A}}\\tan\\left(\\color{${MATH_COLORS.paramSecondary}}{${omega}}x \\color{${MATH_COLORS.paramTertiary}}{${phiStr}}\\right) ${cStr}`;
   }, [studyMode, params]);
 
   const panelTitle = useMemo(() => {

@@ -228,7 +228,7 @@ export function buildTrigTangentPanel(
       {
         label: "图象对称中心",
         symbol: "P_0",
-        value: `\\left(\\frac{k\\pi - (${phi.toFixed(2)})}{${omega}},\\; ${C}\\right)`,
+        value: `\\left(\\frac{\\frac{k\\pi}{2} - (${phi.toFixed(2)})}{${omega}},\\; ${C}\\right) \\quad (k\\in\\mathbb{Z})`,
         color: MATH_COLORS.paramTertiary,
       },
     );
