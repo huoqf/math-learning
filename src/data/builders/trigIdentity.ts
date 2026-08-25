@@ -5,6 +5,7 @@ import type {
   GaokaoPoint,
   WarningItem,
 } from "../types";
+import { MATH_COLORS } from "@/theme";
 import {
   calculateTrigIdentity,
   calculateInduction,
@@ -71,26 +72,26 @@ export function buildTrigIdentityPanel(
         label: "角 α 角度/弧度",
         symbol: "\\alpha",
         value: `${alphaDeg}° (${radStr})`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "动点 P 坐标 (cosα, sinα)",
         symbol: "P(x, y)",
         value: `(${cosStr}, ${sinStr})`,
-        color: "#EF4444",
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "正切值 (斜率/切线)",
         symbol: "\\tan\\alpha",
         value: tanStr,
-        color: "#059669",
+        color: MATH_COLORS.paramTertiary,
         highlight: !trig.isTanDefined ? "extreme" : undefined,
       },
       {
         label: "平方关系验证",
         symbol: "\\sin^2\\alpha + \\cos^2\\alpha",
         value: `${trig.sinSq.toFixed(3)} + ${trig.cosSq.toFixed(3)} = ${trig.sqSum.toFixed(3)}`,
-        color: "#3B82F6",
+        color: MATH_COLORS.primary,
       },
     ];
 
@@ -100,19 +101,19 @@ export function buildTrigIdentityPanel(
           label: "和值 S = sinα + cosα",
           symbol: "S",
           value: `${trig.sumSC.toFixed(3)} (S²=${trig.sumSqVerif.toFixed(3)})`,
-          color: "#EF4444",
+          color: MATH_COLORS.paramPrimary,
         },
         {
           label: "积值 P = sinα · cosα",
           symbol: "P = \\frac{S^2-1}{2}",
           value: `${trig.prodSC.toFixed(3)}`,
-          color: "#D97706",
+          color: MATH_COLORS.paramSecondary,
         },
         {
           label: "差值 D = sinα - cosα",
           symbol: "D = \\pm\\sqrt{2-S^2}",
           value: `${trig.diffSC.toFixed(3)} (D²=${trig.diffSqVerif.toFixed(3)})`,
-          color: "#059669",
+          color: MATH_COLORS.paramTertiary,
         },
       );
     } else if (identitySubMode === "homogeneous") {
@@ -124,7 +125,7 @@ export function buildTrigIdentityPanel(
             trig.isHomoDefined && trig.homoVal !== undefined
               ? `${trig.homoVal.toFixed(3)} (= ${trig.homoStepTex})`
               : "分母为零无意义",
-          color: "#D97706",
+          color: MATH_COLORS.paramSecondary,
           highlight: !trig.isHomoDefined ? "extreme" : undefined,
         },
         {
@@ -134,7 +135,7 @@ export function buildTrigIdentityPanel(
             trig.isQuadDefined && trig.quadVal !== undefined
               ? `${trig.quadVal.toFixed(3)} (= ${trig.quadStepTex})`
               : "正切无意义",
-          color: "#059669",
+          color: MATH_COLORS.paramTertiary,
         },
       );
     }
@@ -162,7 +163,7 @@ export function buildTrigIdentityPanel(
         condition:
           "已知 sinα+cosα、sinα-cosα、sinα·cosα 中任意一个可求另外两个",
         note: `开方决策警示：当前角度决策为：${trig.diffSignReason}。`,
-        level: "important",
+        level: identitySubMode === "known_one" ? "core" : "important",
       },
       {
         name: "新高考齐次式“弦化切”秒杀法则",
@@ -170,7 +171,7 @@ export function buildTrigIdentityPanel(
           "a\\sin^2\\alpha + b\\sin\\alpha\\cos\\alpha + c\\cos^2\\alpha = \\frac{a\\tan^2\\alpha + b\\tan\\alpha + c}{\\tan^2\\alpha + 1}",
         condition: "构造分母 1 = sin²α + cos²α，分子分母同除以 cos²α",
         note: "彻底消去正余弦，将已知 tanα 直接代入，10秒内速解高考选择填空题。",
-        level: "important",
+        level: identitySubMode === "homogeneous" ? "core" : "important",
       },
     ];
 
@@ -224,43 +225,45 @@ export function buildTrigIdentityPanel(
           label: "原角 α",
           symbol: "\\alpha",
           value: `${alphaDeg}°`,
-          color: "#EF4444",
+          color: MATH_COLORS.paramPrimary,
         },
         {
           label: "变换角 β",
           symbol: ind.formulaTex,
           value: `${ind.betaDeg}°`,
-          color: "#D97706",
+          color: MATH_COLORS.paramSecondary,
         },
         {
           label: "几何对称关系",
           symbol: "P \\to P'",
           value: ind.symmetryName,
-          color: "#3B82F6",
+          color: MATH_COLORS.primary,
         },
         {
           label: "奇偶性与名变换",
           symbol: `k = ${ind.kValue}`,
           value: ind.nameChangeDesc,
-          color: ind.isOdd ? "#EF4444" : "#059669",
+          color: ind.isOdd
+            ? MATH_COLORS.paramPrimary
+            : MATH_COLORS.paramTertiary,
         },
         {
           label: "象限符号分析",
           symbol: "\\text{符号判定}",
           value: ind.signDesc,
-          color: "#D97706",
+          color: MATH_COLORS.paramSecondary,
         },
         {
           label: "正弦变换值",
           symbol: ind.sinFormulaTex,
           value: `sin β = ${ind.sinBeta.toFixed(3)}`,
-          color: "#EF4444",
+          color: MATH_COLORS.paramPrimary,
         },
         {
           label: "余弦变换值",
           symbol: ind.cosFormulaTex,
           value: `cos β = ${ind.cosBeta.toFixed(3)}`,
-          color: "#D97706",
+          color: MATH_COLORS.paramSecondary,
         },
       ];
 
@@ -286,31 +289,33 @@ export function buildTrigIdentityPanel(
           label: "参数设置",
           symbol: "k, \\pm",
           value: `k=${univInd.kValue}, 符号=${universalSign > 0 ? "+α" : "-α"}`,
-          color: "#3B82F6",
+          color: MATH_COLORS.primary,
         },
         {
           label: "变换角 β",
           symbol: univInd.formulaTex,
           value: `${univInd.betaDeg}°`,
-          color: "#D97706",
+          color: MATH_COLORS.paramSecondary,
         },
         {
           label: "第一步：看名 (奇偶)",
           symbol: univInd.isOdd ? "\\text{奇数 (变)}" : "\\text{偶数 (不变)}",
           value: univInd.step1Name,
-          color: univInd.isOdd ? "#EF4444" : "#059669",
+          color: univInd.isOdd
+            ? MATH_COLORS.paramPrimary
+            : MATH_COLORS.paramTertiary,
         },
         {
           label: "第二步：看号 (象限)",
           symbol: "\\text{锐角假定}",
           value: univInd.step2Sign,
-          color: "#D97706",
+          color: MATH_COLORS.paramSecondary,
         },
         {
           label: "第三步：化简恒等式",
           symbol: univInd.sinFormulaTex,
           value: `sin β = ${univInd.sinBeta.toFixed(3)}`,
-          color: "#EF4444",
+          color: MATH_COLORS.paramPrimary,
         },
       ];
 
@@ -331,25 +336,25 @@ export function buildTrigIdentityPanel(
           label: "动角 α 与基准偏移 θ",
           symbol: "\\alpha, \\theta",
           value: `α = ${alphaDeg}°, θ = ${thetaDeg}°`,
-          color: "#EF4444",
+          color: MATH_COLORS.paramPrimary,
         },
         {
           label: "配对角 1：α + θ",
           symbol: "\\angle 1",
           value: `${comp.angle1Deg}°`,
-          color: "#D97706",
+          color: MATH_COLORS.paramSecondary,
         },
         {
           label: "配对角 2：π/2 - (α+θ)",
           symbol: "\\angle 2",
           value: `${comp.angle2Deg}°`,
-          color: "#059669",
+          color: MATH_COLORS.paramTertiary,
         },
         {
           label: "两角和关系",
           symbol: "\\angle 1 + \\angle 2",
           value: `${comp.angle1Deg + comp.angle2Deg}° = 90° (互余)`,
-          color: "#3B82F6",
+          color: MATH_COLORS.primary,
         },
       ];
 
