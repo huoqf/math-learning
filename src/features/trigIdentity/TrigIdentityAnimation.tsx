@@ -42,9 +42,6 @@ export function TrigIdentityAnimation() {
   // 诱导公式 6 组分类
   const [formulaType, setFormulaType] = useState<FormulaType>("pi_plus");
 
-  // 典型构型预设 (2x2 黄金规范：首项为 free)
-  const [presetKey, setPresetKey] = useState<string>("free");
-
   // 本地参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
     alphaDeg: defaultParams.alphaDeg,
@@ -82,9 +79,8 @@ export function TrigIdentityAnimation() {
     });
   }, [params, studyMode, identitySubMode, inductionSubMode, formulaType]);
 
-  // 参数更新处理器（若为画布拖拽等直接改动，自动切回 free 自由探究）
+  // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
-    setPresetKey("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -93,7 +89,6 @@ export function TrigIdentityAnimation() {
 
   // 重置参数
   const handleReset = () => {
-    setPresetKey("free");
     setParams({
       alphaDeg: defaultParams.alphaDeg,
       homoA: defaultParams.homoA,
@@ -107,58 +102,6 @@ export function TrigIdentityAnimation() {
       universalSign: defaultParams.universalSign,
       thetaDeg: defaultParams.thetaDeg,
     });
-  };
-
-  // 典型预设切换响应
-  const handlePresetSelect = (key: string) => {
-    setPresetKey(key);
-    if (key === "free") return;
-
-    if (studyMode === "identity") {
-      if (key === "sharp_30") {
-        setParams((prev) => ({ ...prev, alphaDeg: 30 }));
-      } else if (key === "obtuse_135") {
-        setParams((prev) => ({ ...prev, alphaDeg: 135 }));
-      } else if (key === "homo_special") {
-        setParams((prev) => ({
-          ...prev,
-          alphaDeg: 60,
-          homoA: 2,
-          homoB: 1,
-          homoC: 1,
-          homoD: -1,
-          quadA: 1,
-          quadB: 2,
-          quadC: 1,
-        }));
-      }
-    } else {
-      if (key === "preset_pi_plus") {
-        setFormulaType("pi_plus");
-        setParams((prev) => ({
-          ...prev,
-          alphaDeg: 30,
-          universalK: 2,
-          universalSign: 1,
-        }));
-      } else if (key === "preset_half_pi") {
-        setFormulaType("half_pi_minus");
-        setParams((prev) => ({
-          ...prev,
-          alphaDeg: 30,
-          universalK: 1,
-          universalSign: -1,
-        }));
-      } else if (key === "preset_neg") {
-        setFormulaType("neg");
-        setParams((prev) => ({
-          ...prev,
-          alphaDeg: 45,
-          universalK: 0,
-          universalSign: -1,
-        }));
-      }
-    }
   };
 
   // 按模式精确过滤参数配置
@@ -303,7 +246,6 @@ export function TrigIdentityAnimation() {
               value={studyMode}
               onChange={(k) => {
                 setStudyMode(k as "identity" | "induction");
-                setPresetKey("free");
               }}
               layout="horizontal"
             />
@@ -336,7 +278,6 @@ export function TrigIdentityAnimation() {
                 value={identitySubMode}
                 onChange={(k) => {
                   setIdentitySubMode(k as IdentitySubMode);
-                  setPresetKey("free");
                 }}
                 variant="outline"
                 color="primary"
@@ -372,7 +313,6 @@ export function TrigIdentityAnimation() {
                 value={inductionSubMode}
                 onChange={(k) => {
                   setInductionSubMode(k as InductionSubMode);
-                  setPresetKey("free");
                 }}
                 variant="outline"
                 color="primary"
@@ -380,67 +320,6 @@ export function TrigIdentityAnimation() {
               />
             </LeftPanelSection>
           )}
-
-          {/* 典型预设 2x2 黄金规范（首项为 free） */}
-          <LeftPanelSection
-            title="典型构型预设"
-            subtitle="一键切换高考经典构型"
-          >
-            <SelectGrid
-              items={
-                studyMode === "identity"
-                  ? [
-                      {
-                        key: "free",
-                        label: "自由探究",
-                        description: "全参数开放",
-                      },
-                      {
-                        key: "sharp_30",
-                        formula: "\\alpha=30^\\circ",
-                        description: "标准锐角标杆",
-                      },
-                      {
-                        key: "obtuse_135",
-                        formula: "\\alpha=135^\\circ",
-                        description: "第二象限钝角",
-                      },
-                      {
-                        key: "homo_special",
-                        formula: "\\tan\\alpha = \\sqrt{3}",
-                        description: "齐次化切特值",
-                      },
-                    ]
-                  : [
-                      {
-                        key: "free",
-                        label: "自由探究",
-                        description: "全参数开放",
-                      },
-                      {
-                        key: "preset_pi_plus",
-                        formula: "\\pi + \\alpha",
-                        description: "原点中心对称",
-                      },
-                      {
-                        key: "preset_half_pi",
-                        formula: "\\frac{\\pi}{2} - \\alpha",
-                        description: "y=x 互余对称",
-                      },
-                      {
-                        key: "preset_neg",
-                        formula: "-\\alpha",
-                        description: "关于 x 轴对称",
-                      },
-                    ]
-              }
-              value={presetKey}
-              onChange={handlePresetSelect}
-              variant="outline"
-              color="primary"
-              columns={2}
-            />
-          </LeftPanelSection>
 
           {/* 常用 6 组诱导公式类型选择 */}
           {studyMode === "induction" && inductionSubMode === "standard6" && (
@@ -484,7 +363,6 @@ export function TrigIdentityAnimation() {
                 value={formulaType}
                 onChange={(k) => {
                   setFormulaType(k as FormulaType);
-                  setPresetKey("free");
                 }}
                 variant="outline"
                 color="primary"

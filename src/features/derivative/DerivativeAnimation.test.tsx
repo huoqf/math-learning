@@ -19,6 +19,8 @@ vi.mock("@/components/Math", () => ({
   IntervalShadow: () => null,
   TangentLine: () => null,
   SecantLine: () => null,
+  SceneLegend: () => null,
+  SceneLabelGroup: () => null,
 }));
 
 import { DerivativeAnimation } from "./DerivativeAnimation";
@@ -27,18 +29,15 @@ describe("DerivativeAnimation", () => {
   it("renders without crashing with all essential sections", () => {
     render(<DerivativeAnimation />);
     expect(screen.getByText("探究模式")).toBeInTheDocument();
-    expect(screen.getByText("典型预设")).toBeInTheDocument();
     expect(screen.getByText("函数模型")).toBeInTheDocument();
     expect(screen.getByText("参数调节")).toBeInTheDocument();
     expect(screen.getByText("教学导引与题设背景")).toBeInTheDocument();
   });
 
-  it("displays preset buttons including 2x2 grid in secant mode", () => {
+  it("displays mode options properly", () => {
     render(<DerivativeAnimation />);
-    expect(screen.getByText("自由逼近")).toBeInTheDocument();
-    expect(screen.getByText("微元极限")).toBeInTheDocument();
-    expect(screen.getByText("宏观割线")).toBeInTheDocument();
-    expect(screen.getByText("反向逼近")).toBeInTheDocument();
+    expect(screen.getByText("割线极限逼近")).toBeInTheDocument();
+    expect(screen.getByText("切线方程性质")).toBeInTheDocument();
   });
 
   it("has MathPanel with correct title and gaokao points", () => {

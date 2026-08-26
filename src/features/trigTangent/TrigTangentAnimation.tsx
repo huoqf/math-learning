@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TabSwitcher,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -176,18 +177,18 @@ export function TrigTangentAnimation() {
           </LeftPanelSection>
 
           {studyMode !== "unitCircle" && (
-            <LeftPanelSection title="图层显示" subtitle="显示与隐藏辅助图像">
-              <div className="flex items-center justify-between py-1">
-                <span className="text-xs text-neutral-600">
-                  高亮单调递增开区间
-                </span>
-                <input
-                  type="checkbox"
-                  checked={showMonotoneInterval}
-                  onChange={(e) => setShowMonotoneInterval(e.target.checked)}
-                  className="rounded border-neutral-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                />
-              </div>
+            <LeftPanelSection
+              title="单调区间高亮"
+              subtitle="显示与隐藏开区间阴影"
+            >
+              <TabSwitcher
+                tabs={[
+                  { key: "show", label: "高亮单调区间" },
+                  { key: "hide", label: "隐藏区间阴影" },
+                ]}
+                value={showMonotoneInterval ? "show" : "hide"}
+                onChange={(k) => setShowMonotoneInterval(k === "show")}
+              />
             </LeftPanelSection>
           )}
 

@@ -24,9 +24,6 @@ import {
 } from "./math/trigFormulas";
 
 export function TrigFormulasAnimation() {
-  // 典型构型预设 (2x2 黄金规范：首项固定为 free 自由探究)
-  const [activePreset, setActivePreset] = useState<string>("free");
-
   // 研究模式：'sum_diff' | 'double_angle' | 'auxiliary'
   const [studyMode, setStudyMode] = useState<StudyMode>("sum_diff");
 
@@ -74,9 +71,8 @@ export function TrigFormulasAnimation() {
     });
   }, [params, studyMode, sumDiffKey, doubleAngleKey]);
 
-  // 参数更新（拖拽或滑块改变时自动将预设切回 free）
+  // 参数更新
   const handleParamChange = (key: string, value: number) => {
-    setActivePreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -85,7 +81,6 @@ export function TrigFormulasAnimation() {
 
   // 重置参数
   const handleReset = () => {
-    setActivePreset("free");
     setParams({
       alphaDeg: defaultParams.alphaDeg,
       betaDeg: defaultParams.betaDeg,
@@ -97,40 +92,6 @@ export function TrigFormulasAnimation() {
   // 模式切换
   const handleModeChange = (mode: StudyMode) => {
     setStudyMode(mode);
-    setActivePreset("free");
-  };
-
-  // 典型预设选择响应 (2x2 黄金规范)
-  const handlePresetSelect = (key: string) => {
-    setActivePreset(key);
-    if (key === "free") return;
-
-    if (studyMode === "sum_diff") {
-      if (key === "preset_45_30") {
-        setParams((p) => ({ ...p, alphaDeg: 45, betaDeg: 30 }));
-      } else if (key === "preset_75_45") {
-        setParams((p) => ({ ...p, alphaDeg: 75, betaDeg: 45 }));
-      } else if (key === "preset_90_30") {
-        setParams((p) => ({ ...p, alphaDeg: 90, betaDeg: 30 }));
-      }
-    } else if (studyMode === "double_angle") {
-      if (key === "preset_15") {
-        setParams((p) => ({ ...p, alphaDeg: 15 }));
-      } else if (key === "preset_22_5") {
-        setParams((p) => ({ ...p, alphaDeg: 22.5 }));
-      } else if (key === "preset_45") {
-        setParams((p) => ({ ...p, alphaDeg: 45 }));
-      }
-    } else {
-      // auxiliary
-      if (key === "p1") {
-        setParams((p) => ({ ...p, coeffA: 1.0, coeffB: 1.73 }));
-      } else if (key === "p3") {
-        setParams((p) => ({ ...p, coeffA: -1.0, coeffB: 1.73 }));
-      } else if (key === "p4") {
-        setParams((p) => ({ ...p, coeffA: 1.0, coeffB: -1.0 }));
-      }
-    }
   };
 
   // 按研究模式过滤参数配置
@@ -277,94 +238,6 @@ export function TrigFormulasAnimation() {
               />
             </LeftPanelSection>
           )}
-
-          {/* 3. 高考经典预设 (2x2 黄金规范：首项为 free) */}
-          <LeftPanelSection
-            title="典型构型预设"
-            subtitle="首项自由探究，其余一键载入新高考高频模型"
-          >
-            {studyMode === "sum_diff" && (
-              <SelectGrid
-                items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
-                  {
-                    key: "preset_45_30",
-                    formula: "45^\\circ, 30^\\circ",
-                    description: "求 15°/75°",
-                  },
-                  {
-                    key: "preset_75_45",
-                    formula: "75^\\circ, 45^\\circ",
-                    description: "差角 30° 验证",
-                  },
-                  {
-                    key: "preset_90_30",
-                    formula: "90^\\circ, 30^\\circ",
-                    description: "正交诱导检验",
-                  },
-                ]}
-                value={activePreset}
-                onChange={handlePresetSelect}
-                variant="outline"
-                color="primary"
-                columns={2}
-              />
-            )}
-            {studyMode === "double_angle" && (
-              <SelectGrid
-                items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
-                  {
-                    key: "preset_15",
-                    formula: "15^\\circ",
-                    description: "倍角得 30°",
-                  },
-                  {
-                    key: "preset_22_5",
-                    formula: "22.5^\\circ",
-                    description: "半角求值",
-                  },
-                  {
-                    key: "preset_45",
-                    formula: "45^\\circ",
-                    description: "倍角得 90°",
-                  },
-                ]}
-                value={activePreset}
-                onChange={handlePresetSelect}
-                variant="outline"
-                color="primary"
-                columns={2}
-              />
-            )}
-            {studyMode === "auxiliary" && (
-              <SelectGrid
-                items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
-                  {
-                    key: "p1",
-                    formula: "(1, \\sqrt{3})",
-                    description: "φ=60° (第Ⅰ象限)",
-                  },
-                  {
-                    key: "p3",
-                    formula: "(-1, \\sqrt{3})",
-                    description: "φ=120° 易错陷阱",
-                  },
-                  {
-                    key: "p4",
-                    formula: "(1, -1)",
-                    description: "φ=315° (第Ⅳ象限)",
-                  },
-                ]}
-                value={activePreset}
-                onChange={handlePresetSelect}
-                variant="outline"
-                color="primary"
-                columns={2}
-              />
-            )}
-          </LeftPanelSection>
 
           {/* 4. 参数调节 */}
           <LeftPanelSection

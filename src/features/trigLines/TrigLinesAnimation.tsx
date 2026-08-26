@@ -23,9 +23,6 @@ export function TrigLinesAnimation() {
     "lines" | "comparison" | "inequality"
   >("lines");
 
-  // 典型构型预设 key
-  const [presetKey, setPresetKey] = useState<string>("free");
-
   // 不等式类型
   const [ineqKind, setIneqKind] = useState<TrigInequalityKind>("sin_gt");
 
@@ -54,9 +51,8 @@ export function TrigLinesAnimation() {
     });
   }, [params, studyMode, ineqKind]);
 
-  // 参数变更（用户手动拖拽或调参时，自动切回 free 预设）
+  // 参数变更
   const handleParamChange = (key: string, value: number) => {
-    setPresetKey("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -65,48 +61,7 @@ export function TrigLinesAnimation() {
 
   // 重置参数
   const handleReset = () => {
-    setPresetKey("free");
     setParams({ ...defaultParams });
-  };
-
-  // 预设选择切换
-  const handlePresetSelect = (key: string) => {
-    setPresetKey(key);
-    if (studyMode === "lines") {
-      if (key === "free") {
-        setParams((p) => ({ ...p, alphaDeg: 45 }));
-      } else if (key === "special_30") {
-        setParams((p) => ({ ...p, alphaDeg: 30 }));
-      } else if (key === "obtuse_135") {
-        setParams((p) => ({ ...p, alphaDeg: 135 }));
-      } else if (key === "critical_90") {
-        setParams((p) => ({ ...p, alphaDeg: 90 }));
-      }
-    } else if (studyMode === "comparison") {
-      if (key === "free") {
-        setParams((p) => ({ ...p, compAlphaDeg: 40 }));
-      } else if (key === "pi_6") {
-        setParams((p) => ({ ...p, compAlphaDeg: 30 }));
-      } else if (key === "pi_4") {
-        setParams((p) => ({ ...p, compAlphaDeg: 45 }));
-      } else if (key === "pi_3") {
-        setParams((p) => ({ ...p, compAlphaDeg: 60 }));
-      }
-    } else if (studyMode === "inequality") {
-      if (key === "free") {
-        setIneqKind("sin_gt");
-        setParams((p) => ({ ...p, ineqThreshold: 0.5, alphaDeg: 45 }));
-      } else if (key === "sin_half") {
-        setIneqKind("sin_gt");
-        setParams((p) => ({ ...p, ineqThreshold: 0.5, alphaDeg: 60 }));
-      } else if (key === "cos_neg_half") {
-        setIneqKind("cos_lt");
-        setParams((p) => ({ ...p, ineqThreshold: -0.5, alphaDeg: 150 }));
-      } else if (key === "tan_one") {
-        setIneqKind("tan_gt");
-        setParams((p) => ({ ...p, ineqThreshold: 1, alphaDeg: 60 }));
-      }
-    }
   };
 
   // 左屏声明式参数配置 (按当前研究模式严格过滤)
@@ -199,106 +154,8 @@ export function TrigLinesAnimation() {
               value={studyMode}
               onChange={(k) => {
                 setStudyMode(k as typeof studyMode);
-                setPresetKey("free");
               }}
             />
-          </LeftPanelSection>
-
-          {/* 典型预设 2x2 黄金规范 */}
-          <LeftPanelSection
-            title="典型构型预设"
-            subtitle="选择高考经典模型或自由探究"
-          >
-            {studyMode === "lines" && (
-              <SelectGrid
-                items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
-                  {
-                    key: "special_30",
-                    label: "30°特殊角",
-                    formula: "30^\\circ",
-                    description: "正弦1/2",
-                  },
-                  {
-                    key: "obtuse_135",
-                    label: "135°钝角",
-                    formula: "135^\\circ",
-                    description: "反向切线",
-                  },
-                  {
-                    key: "critical_90",
-                    label: "90°临界",
-                    formula: "90^\\circ",
-                    description: "切线平行",
-                  },
-                ]}
-                value={presetKey}
-                onChange={handlePresetSelect}
-                variant="filled"
-                color="primary"
-                columns={2}
-              />
-            )}
-            {studyMode === "comparison" && (
-              <SelectGrid
-                items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
-                  {
-                    key: "pi_6",
-                    label: "30°(π/6)",
-                    formula: "\\frac{\\pi}{6}",
-                    description: "经典放缩",
-                  },
-                  {
-                    key: "pi_4",
-                    label: "45°(π/4)",
-                    formula: "\\frac{\\pi}{4}",
-                    description: "正余弦对称",
-                  },
-                  {
-                    key: "pi_3",
-                    label: "60°(π/3)",
-                    formula: "\\frac{\\pi}{3}",
-                    description: "正切高陡",
-                  },
-                ]}
-                value={presetKey}
-                onChange={handlePresetSelect}
-                variant="filled"
-                color="primary"
-                columns={2}
-              />
-            )}
-            {studyMode === "inequality" && (
-              <SelectGrid
-                items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
-                  {
-                    key: "sin_half",
-                    label: "正弦>1/2",
-                    formula: "\\sin x>\\frac{1}{2}",
-                    description: "一二象限",
-                  },
-                  {
-                    key: "cos_neg_half",
-                    label: "余弦<-1/2",
-                    formula: "\\cos x<-\\frac{1}{2}",
-                    description: "钝角区间",
-                  },
-                  {
-                    key: "tan_one",
-                    label: "正切>1",
-                    formula: "\\tan x>1",
-                    description: "对顶双弧",
-                  },
-                ]}
-                value={presetKey}
-                onChange={handlePresetSelect}
-                variant="filled"
-                color="primary"
-                columns={2}
-              />
-            )}
           </LeftPanelSection>
 
           {/* 模式 1：函数线显隐开关（紧凑 2 列） */}
@@ -382,7 +239,6 @@ export function TrigLinesAnimation() {
                 value={ineqKind}
                 onChange={(k) => {
                   setIneqKind(k as TrigInequalityKind);
-                  setPresetKey("free");
                 }}
                 variant="filled"
                 columns={2}

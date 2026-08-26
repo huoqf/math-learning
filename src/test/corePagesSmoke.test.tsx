@@ -20,6 +20,8 @@ vi.mock("@/components/Math", () => ({
   TangentLine: () => null,
   SecantLine: () => null,
   MathPoint: () => null,
+  SceneLegend: () => null,
+  SceneLabelGroup: () => null,
 }));
 
 import { LineEquationAnimation } from "@/features/lineEquation/LineEquationAnimation";
@@ -47,13 +49,13 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("TriangleSolveAnimation mounts properly and renders study mode", () => {
     render(<TriangleSolveAnimation />);
     expect(screen.getByText("解三角形专题模式")).toBeInTheDocument();
-    expect(screen.getByText("正弦定理与外接圆")).toBeInTheDocument();
+    expect(screen.getByText("正弦与外接圆")).toBeInTheDocument();
     expect(screen.getByText("实时指标看板")).toBeInTheDocument();
   });
 
   it("TriangleExtremaAnimation mounts properly and renders", () => {
     render(<TriangleExtremaAnimation />);
-    expect(screen.getByText("高考变换模式")).toBeInTheDocument();
+    expect(screen.getByText("最值研究模型")).toBeInTheDocument();
     expect(screen.getByText("正弦角化边")).toBeInTheDocument();
     expect(screen.getByText("阿波罗尼斯圆")).toBeInTheDocument();
     expect(screen.getByText("实时指标看板")).toBeInTheDocument();

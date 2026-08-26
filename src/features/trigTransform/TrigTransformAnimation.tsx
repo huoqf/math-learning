@@ -19,7 +19,6 @@ import {
   getTransformPathSteps,
   formatPiValue,
   calculateIntervalZeros,
-  GAOKAO_PRESETS,
 } from "./math/trigTransform";
 
 export function TrigTransformAnimation() {
@@ -27,9 +26,6 @@ export function TrigTransformAnimation() {
   const [studyMode, setStudyMode] = useState<
     "properties" | "fivePoints" | "transformPath" | "omegaZeros"
   >("properties");
-
-  // 当前激活的高考预设 ID（默认 'free'）
-  const [activePresetId, setActivePresetId] = useState<string>("free");
 
   // 高考变换路径类型：'shift-first' (先平移后伸缩) | 'stretch-first' (先伸缩后平移)
   const [pathType, setPathType] = useState<"shift-first" | "stretch-first">(
@@ -79,32 +75,16 @@ export function TrigTransformAnimation() {
     return calculateIntervalZeros(A, omega, phi, k, x1, x2);
   }, [params]);
 
-  // 参数更新处理器（画布拖拽或手动滑块更新时，自动切回 'free' 自由探究）
+  // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
-    setActivePresetId("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
-  // 载入高考典型预设
-  const handleLoadPreset = (presetId: string) => {
-    const preset = GAOKAO_PRESETS.find((p) => p.id === presetId);
-    if (!preset) return;
-    setActivePresetId(preset.id);
-    setStudyMode(preset.mode);
-    setParams((prev) => ({
-      ...prev,
-      ...preset.params,
-    }));
-    if (preset.pathType) setPathType(preset.pathType);
-    if (preset.stepIndex !== undefined) setStepIndex(preset.stepIndex);
-  };
-
   // 重置参数
   const handleReset = () => {
-    setActivePresetId("free");
     setParams({ ...defaultParams });
     setStepIndex(0);
   };
@@ -210,27 +190,7 @@ export function TrigTransformAnimation() {
               value={studyMode}
               onChange={(k) => {
                 setStudyMode(k as typeof studyMode);
-                setActivePresetId("free");
               }}
-            />
-          </LeftPanelSection>
-
-          {/* 2. 高考真题预设案例 (2x2 黄金网格规范) */}
-          <LeftPanelSection
-            title="典型情境预设"
-            subtitle="2×2 高考真题与核心构型"
-          >
-            <SelectGrid
-              items={GAOKAO_PRESETS.map((p) => ({
-                key: p.id,
-                label: p.name,
-                description: p.description,
-              }))}
-              value={activePresetId}
-              onChange={handleLoadPreset}
-              columns={2}
-              variant="filled"
-              color="primary"
             />
           </LeftPanelSection>
 
