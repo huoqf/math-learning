@@ -17,7 +17,9 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math";
 import { DerivativeEndpointTaylorScene } from "./components/DerivativeEndpointTaylorScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
@@ -207,6 +209,90 @@ export function DerivativeEndpointTaylorAnimation() {
     }
   }, [activeMode, endpointType, taylorBase, taylorOrder]);
 
+  // 右下角图例配置 (模式专属)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (activeMode === "endpoint") {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula:
+            endpointType === "exp"
+              ? "f(x) = e^x - ax - 1"
+              : endpointType === "ln"
+                ? "f(x) = \\ln(x+1) - ax"
+                : "f(x) = x - a\\sin x",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramSecondary,
+          formula: "y = f'(0)x \\;(\\text{端点切线})",
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.focusPoint,
+          formula: "P_0(0, 0) \\;(\\text{端点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          formula: "T(1, f'(0)) \\;(\\text{切线控制点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.vectorResult,
+          label: "必要条件失效区 f'(0) < 0",
+          style: "area",
+        },
+      ];
+    } else if (activeMode === "lhopital") {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: "y = \\frac{f(x)}{g(x)} \\;(\\text{函数比值})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.derivative,
+          formula: "y = \\frac{f'(x)}{g'(x)} \\;(\\text{导数比值})",
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.focusPoint,
+          formula: "L(0, 1) \\;(\\text{极限点})",
+          style: "hollow-point",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          formula: "P(x, \\text{比值}) \\;(\\text{逼近动点})",
+          style: "point",
+        },
+      ];
+    } else {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: "f(x) \\;(\\text{原函数})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          formula: `T_{${taylorOrder}}(x) \\;(\\text{${taylorOrder}阶泰勒拟合})`,
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.focusPoint,
+          formula: "P_0(x_0, f(x_0)) \\;(\\text{展开中心})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramSecondary,
+          formula: "P(x, f(x)) \\;(\\text{测试点})",
+          style: "point",
+        },
+      ];
+    }
+  }, [activeMode, endpointType, taylorOrder]);
+
   return (
     <ThreePanel
       left={
@@ -355,6 +441,9 @@ export function DerivativeEndpointTaylorAnimation() {
           <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
             <KatexFormula formula={headerFormulaLatex} mode="inline" />
           </div>
+
+          {/* 右下角图例 */}
+          <SceneLegend items={legendItems} />
 
           {/* SVG 动画画布 */}
           <AnimationSvgCanvas

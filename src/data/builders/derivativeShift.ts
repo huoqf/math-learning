@@ -70,7 +70,7 @@ export function buildDerivativeShiftPanel(
     theorems.push(
       {
         name: "零点存在定理与隐零点设而不求",
-        latex: "f'(x_0) = 0 \\implies x_0 \\in (a, b)",
+        latex: `f'({\\color{${MATH_COLORS.paramPrimary}}x_0}) = 0 \\implies {\\color{${MATH_COLORS.paramPrimary}}x_0} \\in (a, b)`,
         condition: "1. f'(x) 在 (a, b) 连续且单调； 2. f'(a) \\cdot f'(b) < 0",
         note: "设而不求：不直接求出 x0 的显式，而是利用 f'(x0)=0 导出超越项等量代换关系。",
         level: "core",
@@ -79,8 +79,8 @@ export function buildDerivativeShiftPanel(
         name: "代换下沉消元法",
         latex:
           subModel === "x_ln_x"
-            ? "\\ln x_0 = a-1 \\implies f(x_0) = 1 - x_0"
-            : "e^{x_0} = a \\implies f(x_0) = a(1 - \\ln a)",
+            ? `\\ln {\\color{${MATH_COLORS.paramPrimary}}x_0} = a-1 \\implies f({\\color{${MATH_COLORS.paramPrimary}}x_0}) = {\\color{${MATH_COLORS.paramSecondary}}1 - x_0}`
+            : `e^{{\\color{${MATH_COLORS.paramPrimary}}x_0}} = a \\implies f({\\color{${MATH_COLORS.paramPrimary}}x_0}) = {\\color{${MATH_COLORS.paramSecondary}}a(1 - \\ln a)}`,
         condition: "消去极值表达式中的超越项（如 e^{x0} 或 \\ln x0）",
         note: "将双变量/超越极值转化为仅含 x0 的多项式或代数函数 h(x0)，从而方便求最值。",
         level: "important",
@@ -143,7 +143,7 @@ export function buildDerivativeShiftPanel(
     theorems.push(
       {
         name: "极值点偏移判定定理",
-        latex: "x_1 + x_2 > 2x_0 \\iff \\text{中点 } \\frac{x_1+x_2}{2} > x_0",
+        latex: `x_1 + x_2 > 2{\\color{${MATH_COLORS.paramPrimary}}x_0} \\iff \\text{中点 } {\\color{${MATH_COLORS.paramSecondary}}\\frac{x_1+x_2}{2}} > {\\color{${MATH_COLORS.paramPrimary}}x_0}`,
         condition: "f(x1) = f(x2) = k，且 f(x) 在 x0 两侧单调性相反",
         note: "口诀：中点在极值点右侧为“右偏”，中点在左侧为“左偏”。",
         level: "core",
@@ -201,17 +201,17 @@ export function buildDerivativeShiftPanel(
     theorems.push(
       {
         name: "对数均值不等式链",
-        latex: "\\sqrt{ab} < \\frac{a - b}{\\ln a - \\ln b} < \\frac{a + b}{2}",
+        latex: `\\sqrt{ab} < {\\color{${MATH_COLORS.paramPrimary}}\\frac{a - b}{\\ln a - \\ln b}} < {\\color{${MATH_COLORS.paramSecondary}}\\frac{a + b}{2}}`,
         condition: "a, b 为正实数且 a ≠ b",
         note: "对数均值 L(a, b) 严格夹在几何均值与算术均值之间！",
         level: "core",
       },
       {
-        name: "齐次化单变量不等式",
+        name: "齐次化与答题构造函数",
         latex:
-          "\\sqrt{t} < \\frac{t - 1}{\\ln t} < \\frac{t + 1}{2} \\quad (t > 1)",
-        condition: "设 t = b / a > 1",
-        note: "极值点偏移压轴题中秒杀 x1+x2 > 2x0 或 x1 x2 < x0^2 的终极利器。",
+          "g(t) = \\ln t - \\frac{2(t - 1)}{t + 1} > 0 \\quad (t = \\frac{b}{a} > 1)",
+        condition: "高考答题若需直接引用对数均值，需用导数证明该单变量不等式",
+        note: "通过证明 g'(t) = (t-1)^2 / (t(t+1)^2) > 0 即可在考卷上获得满分证明。",
         level: "important",
       },
     );

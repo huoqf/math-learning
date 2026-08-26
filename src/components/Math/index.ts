@@ -14,3 +14,7 @@ export { TangentLine } from "./TangentLine";
 export { SecantLine } from "./SecantLine";
 export { Asymptote } from "./Asymptote";
 export { TrackPath } from "./TrackPath";
+export { SceneLegend } from "./SceneLegend";
+export type { SceneLegendItem } from "./SceneLegend";
+export { SceneLabelGroup } from "./SceneLabelGroup";
+export type { SceneLabelGroupProps } from "./SceneLabelGroup";

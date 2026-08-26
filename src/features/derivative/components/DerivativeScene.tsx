@@ -8,9 +8,10 @@ import {
   SecantLine,
   InteractivePoint,
   MathPoint,
+  SceneLabelGroup,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
-import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
+import type { LabelItem } from "@/utils/labelOverlap";
 import {
   solveDerivative,
   PRESET_FUNCTIONS,
@@ -27,7 +28,6 @@ interface DerivativeSceneProps {
   vp: ViewportInfo;
   onParamChange: (key: string, value: number) => void;
   onDragStart?: () => void;
-  /** 字号缩放函数，默认原样返回 */
   fontScale?: (v: number) => number;
 }
 
@@ -67,49 +67,39 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
     [onParamChange, onDragStart],
   );
 
-  // 标注调度与避让：切点 P、割线动点 Q、切线斜率 k_切
-  const placedLabels = React.useMemo(() => {
+  // 纯极简学术点标：切点 P、割线动点 Q
+  const labelItems = React.useMemo<LabelItem[]>(() => {
     if (!res.isValid) return [];
     const ptP = mathToDesign(x0, res.fx, scale);
-    const entries: LabelEntry[] = [
+    const items: LabelItem[] = [
       {
         key: "ptP",
-        text: `P(${x0.toFixed(2)}, ${res.fx.toFixed(2)})`,
+        text: "P",
         x: ptP.x,
         y: ptP.y,
-        anchor: "middle",
-        dy: -14,
-        priority: 2,
-      },
-      {
-        key: "slope",
-        text: `k_切 = ${res.slope.toFixed(2)}`,
-        x: ptP.x,
-        y: ptP.y,
-        anchor: "middle",
-        dy: 22,
-        priority: 1,
+        color: MATH_COLORS.paramPrimary,
+        fontSize: fontScale(13),
+        preferredPlacement: "top-right",
       },
     ];
 
-    if (showSecant && isQValid && Math.abs(dx) >= 0.25) {
+    if (showSecant && isQValid && Math.abs(dx) >= 0.15) {
       const ptQ = mathToDesign(x2, y2, scale);
-      entries.push({
+      items.push({
         key: "ptQ",
-        text: `Q(${x2.toFixed(2)}, ${y2.toFixed(2)})`,
+        text: "Q",
         x: ptQ.x,
         y: ptQ.y,
-        anchor: "middle",
-        dy: -14,
-        priority: 1,
+        color: MATH_COLORS.paramSecondary,
+        fontSize: fontScale(12),
+        preferredPlacement: dx > 0 ? "top-right" : "top-left",
       });
     }
 
-    return avoidLabels(entries, { fontScale });
+    return items;
   }, [
     x0,
     res.fx,
-    res.slope,
     res.isValid,
     showSecant,
     isQValid,
@@ -127,11 +117,11 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
     const pC = mathToDesign(x2, res.fx, scale);
     const sqSize = 9;
     const xDir = dx > 0 ? -1 : 1;
-    const yDir = y2 > res.fx ? -1 : 1; // 屏幕坐标 y 轴向下
+    const yDir = y2 > res.fx ? -1 : 1;
     return `M ${pC.x + xDir * sqSize} ${pC.y} L ${pC.x + xDir * sqSize} ${pC.y + yDir * sqSize} L ${pC.x} ${pC.y + yDir * sqSize}`;
   }, [showSecant, res.isValid, isQValid, dx, x2, y2, res.fx, scale]);
 
-  // 割线增量 Δx 和 Δy 动态标注
+  // 割线增量 Δx 和 Δy 极简学术标注
   const deltaLabels = React.useMemo(() => {
     if (!showSecant || !res.isValid || !isQValid || Math.abs(dx) < 0.35)
       return null;
@@ -155,35 +145,31 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
           fill={MATH_COLORS.paramSecondary}
           fontSize={fontScale(10)}
           fontWeight="600"
-          className="select-none pointer-events-none font-mono"
+          className="select-none pointer-events-none"
           paintOrder="stroke"
           stroke="white"
           strokeWidth={3}
         >
-          {`Δx = ${dx.toFixed(2)}`}
+          Δx
         </text>
         {/* Δy 标注 */}
         <text
-          x={pY.x + (dx >= 0 ? 9 : -9)}
+          x={pY.x + (dx >= 0 ? 8 : -8)}
           y={pY.y + 4}
           textAnchor={dx >= 0 ? "start" : "end"}
           fill={MATH_COLORS.paramSecondary}
           fontSize={fontScale(10)}
           fontWeight="600"
-          className="select-none pointer-events-none font-mono"
+          className="select-none pointer-events-none"
           paintOrder="stroke"
           stroke="white"
           strokeWidth={3}
         >
-          {`Δy = ${(y2 - res.fx).toFixed(2)}`}
+          Δy
         </text>
       </g>
     );
   }, [showSecant, x0, dx, y2, res.fx, res.isValid, isQValid, scale, fontScale]);
-
-  const pLabel = placedLabels.find((l) => l.key === "ptP");
-  const qLabel = placedLabels.find((l) => l.key === "ptQ");
-  const slopeLabel = placedLabels.find((l) => l.key === "slope");
 
   return (
     <g>
@@ -235,14 +221,16 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
       {/* 割线动点 Q (仅割线模式) */}
       {showSecant && isQValid && (
         <MathPoint
-          x={mathToDesign(x2, y2, scale).x}
-          y={mathToDesign(x2, y2, scale).y}
-          r={3.8}
+          cx={x2}
+          cy={y2}
+          r={4}
+          scale={scale}
           color={MATH_COLORS.paramSecondary}
+          fontScale={fontScale}
         />
       )}
 
-      {/* 切点 P（可拖拽，绑定红色主参数色） */}
+      {/* 切点 P（可拖拽） */}
       <InteractivePoint
         cx={x0}
         cy={res.isValid ? res.fx : 0}
@@ -255,60 +243,8 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
         fontScale={fontScale}
       />
 
-      {/* 避让标签统一渲染 */}
-      {pLabel && (
-        <text
-          x={pLabel.x}
-          y={pLabel.y + pLabel.finalDy}
-          textAnchor={pLabel.anchor}
-          fill={MATH_COLORS.paramPrimary}
-          fontSize={fontScale(10.5)}
-          fontFamily="monospace"
-          fontWeight="700"
-          className="select-none pointer-events-none"
-          paintOrder="stroke"
-          stroke="white"
-          strokeWidth={3}
-        >
-          {pLabel.text}
-        </text>
-      )}
-
-      {showSecant && qLabel && (
-        <text
-          x={qLabel.x}
-          y={qLabel.y + qLabel.finalDy}
-          textAnchor={qLabel.anchor}
-          fill={MATH_COLORS.paramSecondary}
-          fontSize={fontScale(10.5)}
-          fontFamily="monospace"
-          fontWeight="600"
-          className="select-none pointer-events-none"
-          paintOrder="stroke"
-          stroke="white"
-          strokeWidth={3}
-        >
-          {qLabel.text}
-        </text>
-      )}
-
-      {slopeLabel && (
-        <text
-          x={slopeLabel.x}
-          y={slopeLabel.y + slopeLabel.finalDy}
-          textAnchor={slopeLabel.anchor}
-          fill={MATH_COLORS.tangentLine}
-          fontSize={fontScale(10)}
-          fontFamily="monospace"
-          fontWeight="600"
-          className="select-none pointer-events-none"
-          paintOrder="stroke"
-          stroke="white"
-          strokeWidth={3}
-        >
-          {slopeLabel.text}
-        </text>
-      )}
+      {/* 极简学术点标 */}
+      <SceneLabelGroup items={labelItems} fontScale={fontScale} />
 
       {deltaLabels}
     </g>

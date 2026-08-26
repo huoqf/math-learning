@@ -65,9 +65,18 @@ const mathData = useMemo(() => buildMathQuantities('anim-xxx', params), [params]
 ```tsx
 <ThreePanel
   left={<LeftPanel>...ParamControl...TabSwitcher/SelectGrid...</LeftPanel>}
-  center={<AnimationSvgCanvas containerRef={containerRef} transform={vp.transform}>
-    <XxxScene params={params} scale={scale} vp={vp} fontScale={canvasSize.font} />
-  </AnimationSvgCanvas>}
+  center={
+    <div className="w-full h-full relative flex flex-col bg-white">
+      {/* 悬浮公式 / 标题 */}
+      <div className="absolute top-4 left-4 z-10 ..."><KatexFormula ... /></div>
+      {/* 右下角毛玻璃图例 */}
+      <SceneLegend items={legendItems} />
+      {/* SVG 动画画布 */}
+      <AnimationSvgCanvas containerRef={containerRef} transform={vp.transform}>
+        <XxxScene params={params} scale={scale} vp={vp} fontScale={canvasSize.font} />
+      </AnimationSvgCanvas>
+    </div>
+  }
   right={<MathPanel {...mathData} title="xxx看板" />}
 />
 ```
@@ -82,6 +91,8 @@ const mathData = useMemo(() => buildMathQuantities('anim-xxx', params), [params]
   <CoordinateGrid scale={scale} fontScale={fontScale} />
   <FunctionGraph fn={...} scale={scale} color={MATH_COLORS.xxx} />
   <InteractivePoint cx={...} cy={...} scale={scale} vp={vp} onDrag={...} fontScale={fontScale} />
+  {/* 极简学术点标智能避让图层 */}
+  <SceneLabelGroup items={labelItems} fontScale={fontScale} />
 </g>
 ```
 
@@ -123,7 +134,7 @@ KaTeX 输出 HTML，不能直接作为 SVG 子元素，禁止 `<foreignObject>`�
 - **左屏参数精炼与对象化分组** → 默认仅展示 2~3 个核心动参数，同一几何对象（如 $x_0, y_0$、向量分量、复数实虚部）必须配置相同的 `group` 聚合呈现，底模参数置底。
 - **画布拖拽控制点必须自动切回【自由探究】** → 拖拽触发 `onDrag` 时调用 `setPreset("free")`，全量展开参数滑块。
 - **解析几何纯净坐标系** → `CoordinateGrid` 默认 `showGrid={false}`（纯白底色 + 清晰 $xOy$ 轴，杜绝满屏虚线方格干扰）。
-- **中屏点标纯字母化与向量标签防重叠** → 几何点仅标纯字母（$C, H, A, B, T$）；相交线段（如平行四边形和向量与差向量对角线）使用 `labelPositionRatio`（如 0.8 与 0.75）错开中点交点；共线/平行向量使用 `getNormalOffset` 沿法向两侧分流，严禁硬塞长串方程字符串。
+- **中屏点标纯学术化与智能避让** → 画布内点标统一使用 `<SceneLabelGroup />` 渲染极简符号（$P, P_0, Q, M, I, E$），自动应用 8 向碰撞检测与防遮挡描边；全量函数方程、切线/割线解析式、点坐标与面积释义一律放置在中屏右下角 `<SceneLegend />`，严禁在画布内手写散乱长文本。
 - **多子模型 Warning 判定解耦** → 包含不同相切/退化临界时（如定点相切 $a=1$ 与过原点相切 $a=e$），Warning 判定必须按 `subMode` 独立分支计算。
 - **右屏数据不要绕过统一入口** → 必须走 `buildMathQuantities(animId, params)`。
 

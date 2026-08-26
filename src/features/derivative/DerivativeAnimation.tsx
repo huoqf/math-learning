@@ -15,6 +15,8 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { PRESET_FUNCTIONS, type PresetFunctionKey } from "@/math/derivative";
 import { DerivativeScene } from "./components/DerivativeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math";
 import { defaultParams, paramMeta } from "@/data/registries/derivative";
 
 type ExploreMode = "secant_limit" | "tangent_eq";
@@ -66,6 +68,41 @@ export function DerivativeAnimation() {
   }, [params, fnKey, mode]);
 
   const preset = PRESET_FUNCTIONS[fnKey];
+
+  // 右下角图例配置
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const items: SceneLegendItem[] = [
+      {
+        color: MATH_COLORS.function,
+        formula: `f(x) = ${preset.latex}`,
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.tangentLine,
+        formula: "y - f(x_0) = f'(x_0)(x - x_0) \\;(\\text{切线})",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.focusPoint,
+        formula: "P(x_0, f(x_0)) \\;(\\text{切点})",
+        style: "point",
+      },
+    ];
+
+    if (mode === "secant_limit") {
+      items.splice(2, 0, {
+        color: MATH_COLORS.secantLine,
+        formula: "PQ \\;(\\text{割线, 斜率 } \\frac{\\Delta y}{\\Delta x})",
+        style: "dash",
+      });
+      items.push({
+        color: MATH_COLORS.paramSecondary,
+        formula: "Q(x_0 + \\Delta x, f(x_0 + \\Delta x)) \\;(\\text{割线动点})",
+        style: "point",
+      });
+    }
+    return items;
+  }, [preset.latex, mode]);
 
   const handleParamChange = useCallback(
     (key: string, value: number) => {
@@ -415,6 +452,9 @@ export function DerivativeAnimation() {
               )}
             </div>
           </div>
+
+          {/* 右下角图例说明 */}
+          <SceneLegend items={legendItems} />
 
           <AnimationSvgCanvas
             containerRef={containerRef}

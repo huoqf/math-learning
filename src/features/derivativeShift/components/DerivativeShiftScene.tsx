@@ -2,6 +2,7 @@
  * src/features/derivativeShift/components/DerivativeShiftScene.tsx
  * 隐零点定理与极值点偏移 SVG 交互场景
  * 零 React/DOM/window 副作用，接收 fontScale 与 viewport 信息
+ * 全量接入 resolveLabelPlacements 智能多方向标签避让算法
  */
 
 import { useMemo } from "react";
@@ -11,11 +12,14 @@ import {
   CoordinateGrid,
   FunctionGraph,
   InteractivePoint,
+  MathPoint,
   Asymptote,
   IntervalShadow,
+  SceneLabelGroup,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, withAlpha } from "@/theme";
+import type { LabelItem } from "@/utils/labelOverlap";
 import {
   solveImplicitZero,
   solveExtremumShift,
@@ -75,33 +79,194 @@ export function DerivativeShiftScene({
     () => mathToDesign(izResult.x0, 0, scale),
     [izResult, scale],
   );
-  const tracePt = useMemo(
-    () => mathToDesign(izResult.x0, izResult.traceY, scale),
-    [izResult, scale],
-  );
 
-  const x1Pt = useMemo(
-    () => mathToDesign(shiftResult.x1, shiftResult.k, scale),
-    [shiftResult, scale],
+  // 模式三：割线与切线端点解算
+  const p1Design = useMemo(
+    () => mathToDesign(logMeanResult.x1, Math.log(logMeanResult.x1), scale),
+    [logMeanResult.x1, scale],
   );
-  const x2Pt = useMemo(
-    () => mathToDesign(shiftResult.x2, shiftResult.k, scale),
-    [shiftResult, scale],
+  const p2Design = useMemo(
+    () => mathToDesign(logMeanResult.x2, Math.log(logMeanResult.x2), scale),
+    [logMeanResult.x2, scale],
+  );
+  const tangentPtDesign = useMemo(
+    () =>
+      mathToDesign(
+        logMeanResult.logMean,
+        Math.log(logMeanResult.logMean),
+        scale,
+      ),
+    [logMeanResult.logMean, scale],
+  );
+  const tanL = logMeanResult.logMean;
+  const tanSlope = 1 / tanL;
+  const tanY0 = Math.log(tanL);
+  const tanLeftDesign = useMemo(
+    () =>
+      mathToDesign(
+        Math.max(0.05, tanL - 1.2),
+        tanY0 - tanSlope * Math.min(1.2, tanL - 0.05),
+        scale,
+      ),
+    [tanL, tanSlope, tanY0, scale],
+  );
+  const tanRightDesign = useMemo(
+    () => mathToDesign(tanL + 1.2, tanY0 + tanSlope * 1.2, scale),
+    [tanL, tanSlope, tanY0, scale],
   );
   const midPt = useMemo(
     () => mathToDesign(shiftResult.midX, shiftResult.k, scale),
     [shiftResult, scale],
   );
 
-  const mirrorPtAtX1 = useMemo(
-    () =>
-      mathToDesign(
+  // 6. 纯极简学术点标解算 (集中定义学术符号)
+  const modeLabels = useMemo<LabelItem[]>(() => {
+    if (activeMode === "implicit_zero") {
+      const items: LabelItem[] = [
+        {
+          key: "zero_p",
+          x: zeroPt.x,
+          y: zeroPt.y,
+          text: "P",
+          color: MATH_COLORS.paramPrimary,
+          fontSize: fontScale(13),
+          preferredPlacement: "top-right",
+        },
+        {
+          key: "df_x0",
+          x: zeroFootPt.x,
+          y: zeroFootPt.y,
+          text: "x₀",
+          color: MATH_COLORS.derivative,
+          fontSize: fontScale(12),
+          preferredPlacement: "bottom-left",
+        },
+      ];
+      return items;
+    } else if (activeMode === "shift_symmetric") {
+      const p1 = mathToDesign(shiftResult.x1, shiftResult.k, scale);
+      const p2 = mathToDesign(shiftResult.x2, shiftResult.k, scale);
+      const p1m = mathToDesign(
         2 * shiftResult.x0 - shiftResult.x1,
-        shiftResult.fn(2 * shiftResult.x0 - shiftResult.x1),
+        shiftResult.k,
         scale,
-      ),
-    [shiftResult, scale],
-  );
+      );
+      const mid = mathToDesign(shiftResult.midX, shiftResult.k, scale);
+
+      const items: LabelItem[] = [
+        {
+          key: "p1",
+          x: p1.x,
+          y: p1.y,
+          text: "P₁",
+          color: MATH_COLORS.function,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-left",
+        },
+        {
+          key: "p2",
+          x: p2.x,
+          y: p2.y,
+          text: "P₂",
+          color: MATH_COLORS.functionSecondary,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-right",
+        },
+        {
+          key: "p1_mirror",
+          x: p1m.x,
+          y: p1m.y,
+          text: "P'₁",
+          color: MATH_COLORS.functionTransformed,
+          fontSize: fontScale(11),
+          preferredPlacement: "bottom-left",
+        },
+        {
+          key: "mid",
+          x: mid.x,
+          y: mid.y,
+          text: "M",
+          color: MATH_COLORS.paramSecondary,
+          fontSize: fontScale(12),
+          preferredPlacement: "bottom",
+        },
+      ];
+      return items;
+    } else {
+      const geo = mathToDesign(logMeanResult.geoMean, 0, scale);
+      const logM = mathToDesign(logMeanResult.logMean, 0, scale);
+      const ari = mathToDesign(logMeanResult.ariMean, 0, scale);
+
+      const items: LabelItem[] = [
+        {
+          key: "p1",
+          x: p1Design.x,
+          y: p1Design.y,
+          text: "P₁",
+          color: MATH_COLORS.function,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-left",
+        },
+        {
+          key: "p2",
+          x: p2Design.x,
+          y: p2Design.y,
+          text: "P₂",
+          color: MATH_COLORS.functionSecondary,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-right",
+        },
+        {
+          key: "tangent_t",
+          x: tangentPtDesign.x,
+          y: tangentPtDesign.y,
+          text: "T",
+          color: MATH_COLORS.tangentLine,
+          fontSize: fontScale(12),
+          preferredPlacement: "top",
+        },
+        {
+          key: "geo",
+          x: geo.x,
+          y: geo.y,
+          text: "G",
+          color: MATH_COLORS.function,
+          fontSize: fontScale(11),
+          preferredPlacement: "bottom-left",
+        },
+        {
+          key: "logM",
+          x: logM.x,
+          y: logM.y,
+          text: "L",
+          color: MATH_COLORS.paramPrimary,
+          fontSize: fontScale(11),
+          preferredPlacement: "bottom",
+        },
+        {
+          key: "ari",
+          x: ari.x,
+          y: ari.y,
+          text: "A",
+          color: MATH_COLORS.paramSecondary,
+          fontSize: fontScale(11),
+          preferredPlacement: "bottom-right",
+        },
+      ];
+      return items;
+    }
+  }, [
+    activeMode,
+    zeroPt,
+    zeroFootPt,
+    shiftResult,
+    logMeanResult,
+    scale,
+    fontScale,
+    p1Design,
+    p2Design,
+    tangentPtDesign,
+  ]);
 
   // 拖拽回调
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
@@ -170,7 +335,7 @@ export function DerivativeShiftScene({
             value={izResult.x0}
             scale={scale}
             color={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
-            label={`x₀ = ${izResult.x0.toFixed(2)}`}
+            label="x = x₀"
             fontScale={fontScale}
           />
 
@@ -194,95 +359,27 @@ export function DerivativeShiftScene({
             onDrag={handleDragX0}
             color={MATH_COLORS.paramPrimary}
             r={6}
-            label={`极值 P(${izResult.x0.toFixed(2)}, ${izResult.y0.toFixed(2)})`}
             fontScale={fontScale}
           />
 
           {/* 代换消元下的轨迹点 (x0, h(x0)) */}
-          <circle
-            cx={tracePt.x}
-            cy={tracePt.y}
-            r={5}
-            fill={MATH_COLORS.paramSecondary}
-            stroke={CANVAS_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            cx={izResult.x0}
+            cy={izResult.traceY}
+            scale={scale}
+            color={MATH_COLORS.paramSecondary}
+            fontScale={fontScale}
           />
-          <text
-            x={tracePt.x + 10}
-            y={tracePt.y + 4}
-            fill={MATH_COLORS.paramSecondary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-          >
-            轨迹 h(x₀) = {izResult.traceY.toFixed(2)}
-          </text>
 
-          {/* 图例说明卡片 (图上标注) */}
-          <g
-            transform={`translate(${scale.originX - 180}, ${scale.originY - 140})`}
-          >
-            <rect
-              x={0}
-              y={0}
-              width={160}
-              height={64}
-              rx={6}
-              fill={CANVAS_COLORS.white}
-              fillOpacity={0.85}
-              stroke={CANVAS_COLORS.grid}
-              strokeWidth={1}
-            />
-            <line
-              x1={10}
-              y1={16}
-              x2={30}
-              y2={16}
-              stroke={MATH_COLORS.function}
-              strokeWidth={2.5}
-            />
-            <text
-              x={36}
-              y={19}
-              fontSize={fontScale(10)}
-              fill={CANVAS_COLORS.labelTextLight}
-            >
-              原函数 f(x)
-            </text>
-            <line
-              x1={10}
-              y1={34}
-              x2={30}
-              y2={34}
-              stroke={MATH_COLORS.derivative}
-              strokeWidth={1.8}
-              strokeDasharray="4 3"
-            />
-            <text
-              x={36}
-              y={37}
-              fontSize={fontScale(10)}
-              fill={CANVAS_COLORS.labelTextLight}
-            >
-              导函数 f'(x)
-            </text>
-            <line
-              x1={10}
-              y1={50}
-              x2={30}
-              y2={50}
-              stroke={MATH_COLORS.trace}
-              strokeWidth={2}
-              strokeDasharray="6 4"
-            />
-            <text
-              x={36}
-              y={53}
-              fontSize={fontScale(10)}
-              fill={CANVAS_COLORS.labelTextLight}
-            >
-              消元轨迹 h(x₀)
-            </text>
-          </g>
+          {/* 导数零点 (x0, 0) */}
+          <MathPoint
+            cx={izResult.x0}
+            cy={0}
+            scale={scale}
+            color={MATH_COLORS.derivative}
+            variant="hollow"
+            fontScale={fontScale}
+          />
         </g>
       )}
 
@@ -301,7 +398,7 @@ export function DerivativeShiftScene({
           <FunctionGraph
             fn={shiftResult.mirrorFn}
             scale={scale}
-            color={withAlpha(MATH_COLORS.functionTransformed, 0.75)}
+            color={withAlpha(MATH_COLORS.functionTransformed, 0.85)}
             strokeWidth={2}
             strokeDasharray="5 4"
           />
@@ -312,7 +409,7 @@ export function DerivativeShiftScene({
             value={shiftResult.x0}
             scale={scale}
             color={MATH_COLORS.paramPrimary}
-            label={`对称轴 x₀ = ${shiftResult.x0.toFixed(2)}`}
+            label="对称轴 x = x₀"
             fontScale={fontScale}
           />
 
@@ -322,17 +419,17 @@ export function DerivativeShiftScene({
             value={shiftResult.k}
             scale={scale}
             color={MATH_COLORS.secantLine}
-            label={`y = k = ${shiftResult.k.toFixed(2)}`}
+            label="割线 y = k"
             fontScale={fontScale}
           />
 
-          {/* 偏移区间高亮阴影: [x1, x2] 的相对区域 */}
+          {/* 偏移区间高亮阴影: [x0, midX] */}
           <IntervalShadow
             fn={shiftResult.fn}
             x1={shiftResult.x0}
             x2={shiftResult.midX}
             scale={scale}
-            fillColor={withAlpha(MATH_COLORS.paramTertiary, 0.2)}
+            fillColor={withAlpha(MATH_COLORS.paramTertiary, 0.25)}
           />
 
           {/* 水平割线上的控制点：拖动改变 k */}
@@ -344,55 +441,43 @@ export function DerivativeShiftScene({
             onDrag={handleDragSecant}
             color={MATH_COLORS.secantLine}
             r={6}
-            label={`拖动割线 y = ${shiftResult.k.toFixed(2)}`}
             fontScale={fontScale}
           />
 
           {/* 双根交点 P1(x1, k) 与 P2(x2, k) */}
-          <circle
-            cx={x1Pt.x}
-            cy={x1Pt.y}
-            r={5}
-            fill={MATH_COLORS.function}
-            stroke={CANVAS_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            cx={shiftResult.x1}
+            cy={shiftResult.k}
+            scale={scale}
+            color={MATH_COLORS.function}
+            fontScale={fontScale}
           />
-          <text
-            x={x1Pt.x - 12}
-            y={x1Pt.y - 10}
-            fill={MATH_COLORS.function}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-          >
-            x₁({shiftResult.x1.toFixed(2)})
-          </text>
 
-          <circle
-            cx={x2Pt.x}
-            cy={x2Pt.y}
-            r={5}
-            fill={MATH_COLORS.functionSecondary}
-            stroke={CANVAS_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            cx={shiftResult.x2}
+            cy={shiftResult.k}
+            scale={scale}
+            color={MATH_COLORS.functionSecondary}
+            fontScale={fontScale}
           />
-          <text
-            x={x2Pt.x + 10}
-            y={x2Pt.y - 10}
-            fill={MATH_COLORS.functionSecondary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-          >
-            x₂({shiftResult.x2.toFixed(2)})
-          </text>
 
-          {/* 中点 (x1+x2)/2 */}
-          <circle
-            cx={midPt.x}
-            cy={midPt.y}
-            r={5}
-            fill={MATH_COLORS.paramSecondary}
-            stroke={CANVAS_COLORS.white}
-            strokeWidth={1.5}
+          {/* 对称点 P'1(2x0 - x1, k) */}
+          <MathPoint
+            cx={2 * shiftResult.x0 - shiftResult.x1}
+            cy={shiftResult.k}
+            scale={scale}
+            color={MATH_COLORS.functionTransformed}
+            variant="hollow"
+            fontScale={fontScale}
+          />
+
+          {/* 两根中点 M((x1+x2)/2, k) */}
+          <MathPoint
+            cx={shiftResult.midX}
+            cy={shiftResult.k}
+            scale={scale}
+            color={MATH_COLORS.paramSecondary}
+            fontScale={fontScale}
           />
           <line
             x1={midPt.x}
@@ -403,79 +488,45 @@ export function DerivativeShiftScene({
             strokeWidth={1.5}
             strokeDasharray="3 3"
           />
-          <text
-            x={midPt.x - 20}
-            y={scale.originY - 10}
-            fill={MATH_COLORS.paramSecondary}
-            fontSize={fontScale(10)}
-            fontWeight="bold"
-          >
-            中点 {shiftResult.midX.toFixed(2)}
-          </text>
 
-          {/* 镜像点 (2x0 - x1, f(2x0 - x1)) */}
-          <circle
-            cx={mirrorPtAtX1.x}
-            cy={mirrorPtAtX1.y}
-            r={4}
-            fill={MATH_COLORS.functionTransformed}
-            stroke={CANVAS_COLORS.white}
-            strokeWidth={1}
-          />
-          <line
-            x1={x2Pt.x}
-            y1={x2Pt.y}
-            x2={mirrorPtAtX1.x}
-            y2={mirrorPtAtX1.y}
-            stroke={MATH_COLORS.paramTertiary}
-            strokeWidth={1.5}
-            strokeDasharray="4 2"
-          />
-          <text
-            x={mirrorPtAtX1.x + 8}
-            y={mirrorPtAtX1.y + 12}
-            fill={MATH_COLORS.functionTransformed}
-            fontSize={fontScale(10)}
-          >
-            镜像点 f(2x₀ - x₁)
-          </text>
-
-          {/* 偏向文字提示卡片 */}
-          <g
-            transform={`translate(${scale.originX + 120}, ${scale.originY - 140})`}
-          >
-            <rect
-              x={0}
-              y={0}
-              width={170}
-              height={50}
-              rx={6}
-              fill={CANVAS_COLORS.white}
-              fillOpacity={0.9}
-              stroke={MATH_COLORS.paramTertiary}
-              strokeWidth={1.5}
-            />
-            <text
-              x={12}
-              y={22}
-              fill={MATH_COLORS.paramTertiary}
-              fontSize={fontScale(11)}
-              fontWeight="bold"
-            >
-              偏移结论:{" "}
-              {shiftResult.shiftType === "right"
-                ? "右偏 (x₁ + x₂ > 2x₀)"
-                : "左偏"}
-            </text>
-            <text
-              x={12}
-              y={38}
-              fill={CANVAS_COLORS.labelTextLight}
-              fontSize={fontScale(10)}
-            >
-              中点偏离量 Δ = {shiftResult.delta.toFixed(3)}
-            </text>
-          </g>
+          {/* x1 处的差值垂线段展示 F(x1) = f(x1) - f(2x0-x1) */}
+          {(() => {
+            const topPt = mathToDesign(
+              shiftResult.x1,
+              shiftResult.mirrorFn(shiftResult.x1),
+              scale,
+            );
+            const botPt = mathToDesign(
+              shiftResult.x1,
+              shiftResult.fn(shiftResult.x1),
+              scale,
+            );
+            if (!isNaN(topPt.y) && !isNaN(botPt.y)) {
+              return (
+                <g>
+                  <line
+                    x1={topPt.x}
+                    y1={topPt.y}
+                    x2={botPt.x}
+                    y2={botPt.y}
+                    stroke={MATH_COLORS.paramTertiary}
+                    strokeWidth={1.8}
+                    strokeDasharray="3 2"
+                  />
+                  <text
+                    x={topPt.x - 45}
+                    y={(topPt.y + botPt.y) / 2}
+                    fill={MATH_COLORS.paramTertiary}
+                    fontSize={fontScale(10)}
+                    fontWeight="bold"
+                  >
+                    高度差 F(x₁)
+                  </text>
+                </g>
+              );
+            }
+            return null;
+          })()}
         </g>
       )}
 
@@ -490,6 +541,27 @@ export function DerivativeShiftScene({
             strokeWidth={2.5}
           />
 
+          {/* 割线 P1P2 */}
+          <line
+            x1={p1Design.x}
+            y1={p1Design.y}
+            x2={p2Design.x}
+            y2={p2Design.y}
+            stroke={MATH_COLORS.secantLine}
+            strokeWidth={1.8}
+            strokeDasharray="4 3"
+          />
+
+          {/* 切点处的平行切线 */}
+          <line
+            x1={tanLeftDesign.x}
+            y1={tanLeftDesign.y}
+            x2={tanRightDesign.x}
+            y2={tanRightDesign.y}
+            stroke={MATH_COLORS.tangentLine}
+            strokeWidth={2}
+          />
+
           {/* 可拖动端点 x1 与 x2 */}
           <InteractivePoint
             cx={logMeanResult.x1}
@@ -499,7 +571,6 @@ export function DerivativeShiftScene({
             onDrag={handleDragLogMeanX1}
             color={MATH_COLORS.function}
             r={6}
-            label={`x₁ = ${logMeanResult.x1.toFixed(2)}`}
             fontScale={fontScale}
           />
 
@@ -511,122 +582,58 @@ export function DerivativeShiftScene({
             onDrag={handleDragLogMeanX2}
             color={MATH_COLORS.functionSecondary}
             r={6}
-            label={`x₂ = ${logMeanResult.x2.toFixed(2)}`}
             fontScale={fontScale}
           />
 
+          {/* 切点 T(L, ln L) */}
+          <MathPoint
+            cx={logMeanResult.logMean}
+            cy={Math.log(logMeanResult.logMean)}
+            scale={scale}
+            color={MATH_COLORS.tangentLine}
+            fontScale={fontScale}
+          />
+
+          {/* 切点到 x 轴的垂线 */}
+          <line
+            x1={tangentPtDesign.x}
+            y1={tangentPtDesign.y}
+            x2={tangentPtDesign.x}
+            y2={scale.originY}
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={1.5}
+            strokeDasharray="3 3"
+          />
+
           {/* 三大均值位置标注 */}
-          {(() => {
-            const geoPt = mathToDesign(logMeanResult.geoMean, 0, scale);
-            const logPt = mathToDesign(logMeanResult.logMean, 0, scale);
-            const ariPt = mathToDesign(logMeanResult.ariMean, 0, scale);
-            return (
-              <g>
-                {/* 几何均值 sqrt(x1 x2) */}
-                <circle
-                  cx={geoPt.x}
-                  cy={geoPt.y}
-                  r={4}
-                  fill={MATH_COLORS.function}
-                />
-                <line
-                  x1={geoPt.x}
-                  y1={geoPt.y}
-                  x2={geoPt.x}
-                  y2={geoPt.y + 35}
-                  stroke={MATH_COLORS.function}
-                  strokeWidth={1.5}
-                />
-                <text
-                  x={geoPt.x - 20}
-                  y={geoPt.y + 48}
-                  fill={MATH_COLORS.function}
-                  fontSize={fontScale(10)}
-                  fontWeight="bold"
-                >
-                  √(x₁x₂)={logMeanResult.geoMean.toFixed(2)}
-                </text>
+          <MathPoint
+            cx={logMeanResult.geoMean}
+            cy={0}
+            scale={scale}
+            color={MATH_COLORS.function}
+            fontScale={fontScale}
+          />
 
-                {/* 对数均值 L(x1, x2) */}
-                <circle
-                  cx={logPt.x}
-                  cy={logPt.y}
-                  r={5}
-                  fill={MATH_COLORS.paramPrimary}
-                />
-                <line
-                  x1={logPt.x}
-                  y1={logPt.y}
-                  x2={logPt.x}
-                  y2={logPt.y + 15}
-                  stroke={MATH_COLORS.paramPrimary}
-                  strokeWidth={2}
-                />
-                <text
-                  x={logPt.x - 18}
-                  y={logPt.y + 26}
-                  fill={MATH_COLORS.paramPrimary}
-                  fontSize={fontScale(11)}
-                  fontWeight="bold"
-                >
-                  L(x₁,x₂)={logMeanResult.logMean.toFixed(2)}
-                </text>
+          <MathPoint
+            cx={logMeanResult.logMean}
+            cy={0}
+            scale={scale}
+            color={MATH_COLORS.paramPrimary}
+            fontScale={fontScale}
+          />
 
-                {/* 算术均值 (x1+x2)/2 */}
-                <circle
-                  cx={ariPt.x}
-                  cy={ariPt.y}
-                  r={4}
-                  fill={MATH_COLORS.paramSecondary}
-                />
-                <line
-                  x1={ariPt.x}
-                  y1={ariPt.y}
-                  x2={ariPt.x}
-                  y2={ariPt.y + 35}
-                  stroke={MATH_COLORS.paramSecondary}
-                  strokeWidth={1.5}
-                />
-                <text
-                  x={ariPt.x - 20}
-                  y={ariPt.y + 48}
-                  fill={MATH_COLORS.paramSecondary}
-                  fontSize={fontScale(10)}
-                  fontWeight="bold"
-                >
-                  (x₁+x₂)/2={logMeanResult.ariMean.toFixed(2)}
-                </text>
-              </g>
-            );
-          })()}
-
-          {/* 关系链大展示 */}
-          <g
-            transform={`translate(${scale.originX - 180}, ${scale.originY - 140})`}
-          >
-            <rect
-              x={0}
-              y={0}
-              width={340}
-              height={44}
-              rx={6}
-              fill={CANVAS_COLORS.white}
-              fillOpacity={0.9}
-              stroke={MATH_COLORS.paramPrimary}
-              strokeWidth={1.5}
-            />
-            <text
-              x={14}
-              y={27}
-              fill={CANVAS_COLORS.labelText}
-              fontSize={fontScale(11)}
-              fontWeight="bold"
-            >
-              对数均值不等式链： √(x₁x₂) &lt; L(x₁, x₂) &lt; (x₁ + x₂)/2
-            </text>
-          </g>
+          <MathPoint
+            cx={logMeanResult.ariMean}
+            cy={0}
+            scale={scale}
+            color={MATH_COLORS.paramSecondary}
+            fontScale={fontScale}
+          />
         </g>
       )}
+
+      {/* ─── 统一智能避让学术点标 ─── */}
+      <SceneLabelGroup items={modeLabels} fontScale={fontScale} />
     </g>
   );
 }

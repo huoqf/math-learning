@@ -13,6 +13,8 @@ import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TranscendentalScene } from "./components/TranscendentalScene";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams } from "@/data/registries/transcendental";
 import type { TranscendentalMode } from "@/math/transcendental";
@@ -352,6 +354,121 @@ export function TranscendentalAnimation() {
     }
   }, [mode, subMode]);
 
+  // 右下角图例配置 (模式专属)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (mode === "exp") {
+      const isShift = subMode === "shift_1";
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: isShift ? "f(x) = e^{x-1}" : "f(x) = e^x",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.tangentLine,
+          formula: isShift
+            ? "y = x \\;(\\text{基准切线})"
+            : "y = x + 1 \\;(\\text{基准切线})",
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.focusPoint,
+          formula: isShift
+            ? "P_0(1, 1) \\;(\\text{基准切点})"
+            : "P_0(0, 1) \\;(\\text{基准切点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          formula: "P(x_0, f(x_0)) \\;(\\text{动切点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramTertiary,
+          label: "差值阴影区 f(x) - (x+1)",
+          style: "area",
+        },
+      ];
+    } else if (mode === "log") {
+      const isQuad = subMode === "quadratic_bound";
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: "g(x) = \\ln x",
+          style: "solid",
+        },
+        {
+          color: isQuad ? MATH_COLORS.paramSecondary : MATH_COLORS.tangentLine,
+          formula: isQuad
+            ? "y = \\frac{x^2-1}{2} \\;(\\text{二次放缩上界})"
+            : "y = x - 1 \\;(\\text{线性切线上界})",
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.focusPoint,
+          formula: "P_0(1, 0) \\;(\\text{基准切点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          formula: "P(x_0, \\ln x_0) \\;(\\text{动切点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramTertiary,
+          label: "放缩差值区",
+          style: "area",
+        },
+      ];
+    } else if (mode === "chain") {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: "y = e^{x-1} \\;(\\text{上界指数})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.functionTransformed,
+          formula: "y = \\ln x + 1 \\;(\\text{下界对数})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramSecondary,
+          formula: "y = x \\;(\\text{中轴线 / 公共切线})",
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.paramSecondary,
+          formula: "P_0(1, 1) \\;(\\text{公共切点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          formula: "P(x_0, x_0) \\;(\\text{中轴动点})",
+          style: "point",
+        },
+      ];
+    } else {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: "y = e^x",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          formula: subMode === "exp_ax" ? "y = ax" : "y = ax + 1",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.tangentLine,
+          formula: "P_0(0, 1) \\;(\\text{临界切点})",
+          style: "point",
+        },
+      ];
+    }
+  }, [mode, subMode]);
+
   return (
     <ThreePanel
       left={
@@ -451,90 +568,23 @@ export function TranscendentalAnimation() {
             </LeftPanelSection>
           )}
 
-          {mode === "chain" && (
-            <LeftPanelSection
-              title="高考典型切点"
-              subtitle="观察三线合一与夹逼态势"
-            >
-              <SelectGrid
-                items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
-                  {
-                    key: "tangent_1",
-                    label: "公切相切",
-                    formula: "x=1",
-                    description: "三线合一",
-                  },
-                  {
-                    key: "pos_2",
-                    label: "右侧发散",
-                    formula: "x=2",
-                    description: "指数主导",
-                  },
-                  {
-                    key: "pos_half",
-                    label: "左侧逼近",
-                    formula: "x=0.5",
-                    description: "对数主导",
-                  },
-                ]}
-                value={preset}
-                onChange={handlePresetChange}
-                columns={2}
-              />
-            </LeftPanelSection>
-          )}
+          {/* 3. 核心参数调节滑块 */}
+          <LeftPanelSection
+            title="参数调节"
+            subtitle="拖动观察切线放缩与动点夹逼"
+          >
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={() => {
+                setParams({ ...defaultParams });
+                setPreset("free");
+              }}
+            />
+          </LeftPanelSection>
 
-          {mode === "param" && (
-            <LeftPanelSection
-              title="高考临界构型"
-              subtitle="选择常考切线临界求参模型"
-            >
-              <SelectGrid
-                items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
-                  {
-                    key: "exp_ax_1_crit",
-                    label: "定点相切",
-                    formula: "a=1",
-                    description: "切于 (0,1)",
-                  },
-                  {
-                    key: "exp_ax_crit",
-                    label: "原点相切",
-                    formula: "a=e",
-                    description: "切于 (1,e)",
-                  },
-                  {
-                    key: "horizontal",
-                    label: "水平切线",
-                    formula: "a=0",
-                    description: "下界 y=1",
-                  },
-                ]}
-                value={preset}
-                onChange={handlePresetChange}
-                columns={2}
-              />
-            </LeftPanelSection>
-          )}
-
-          {/* 3. 参数调节区 */}
-          {paramConfigs.length > 0 && (
-            <LeftPanelSection
-              title="参数调节"
-              subtitle="拖动滑块或画布拖拽切点"
-            >
-              <ParamControl
-                params={paramConfigs}
-                onParamChange={handleParamChange}
-                onReset={() => setParams({ ...defaultParams })}
-              />
-            </LeftPanelSection>
-          )}
-
-          {/* 4. 切线放缩破题引导 (置于底部辅助区，不阻断调参动线) */}
-          <LeftPanelSection title="切线放缩破题引导" compact>
+          {/* 4. 教学导引与考题设问 */}
+          <LeftPanelSection title="教学导引与高考设问" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
                 <span>{tipConfig.badge}</span>
@@ -542,7 +592,7 @@ export function TranscendentalAnimation() {
               <div className="space-y-1.5 text-[11px] leading-relaxed">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【几何特征】
+                    【前置条件】
                   </span>
                   <span className="text-neutral-600 ml-1">
                     {tipConfig.condition}
@@ -567,6 +617,9 @@ export function TranscendentalAnimation() {
           <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
             <KatexFormula formula={equationLatex} mode="inline" />
           </div>
+
+          {/* 右下角图例说明 */}
+          <SceneLegend items={legendItems} />
 
           {/* Svg 画布容器 */}
           <AnimationSvgCanvas

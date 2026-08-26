@@ -17,7 +17,9 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/secondDerivative";
 import { SecondDerivativeScene } from "./components/SecondDerivativeScene";
@@ -202,6 +204,82 @@ export function SecondDerivativeAnimation() {
     }
   }, [studyMode]);
 
+  // 右下角图例配置 (模式专属)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (studyMode === "concavity") {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: "f(x) \\;(\\text{原函数})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.tangentLine,
+          formula: "y - f(x_0) = f'(x_0)(x - x_0) \\;(\\text{切线})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.focusPoint,
+          formula: "P_0(x_0, f(x_0)) \\;(\\text{探针切点})",
+          style: "point",
+        },
+        {
+          color: "#10B981",
+          label: "下凸凹区间 f''(x) > 0",
+          style: "area",
+        },
+        {
+          color: "#F59E0B",
+          label: "上凸凸区间 f''(x) < 0",
+          style: "area",
+        },
+      ];
+    } else if (studyMode === "inflection") {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: "f(x) \\;(\\text{原函数})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.vectorResult,
+          formula: "I(x, f(x)) \\;(\\text{拐点, } f''(x)=0)",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramSecondary,
+          formula: "E(x, f(x)) \\;(\\text{极值点, } f'(x)=0)",
+          style: "point",
+        },
+      ];
+    } else {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: "f(x) \\;(\\text{原函数})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramSecondary,
+          formula: "S_1S_2 \\;(\\text{割线段})",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramSecondary,
+          formula:
+            "M\\left(\\frac{x_1+x_2}{2}, \\frac{y_1+y_2}{2}\\right) \\;(\\text{弦中点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramTertiary,
+          formula:
+            "P\\left(\\frac{x_1+x_2}{2}, f\\left(\\frac{x_1+x_2}{2}\\right)\\right) \\;(\\text{弧中点})",
+          style: "point",
+        },
+      ];
+    }
+  }, [studyMode]);
+
   return (
     <ThreePanel
       left={
@@ -290,6 +368,9 @@ export function SecondDerivativeAnimation() {
           <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
             <KatexFormula formula={topFormulaLatex} mode="inline" />
           </div>
+
+          {/* 右下角图例 */}
+          <SceneLegend items={legendItems} />
 
           {/* SVG 自适应画布 */}
           <AnimationSvgCanvas

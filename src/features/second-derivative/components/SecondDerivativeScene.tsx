@@ -1,7 +1,7 @@
 /**
  * src/features/second-derivative/components/SecondDerivativeScene.tsx
  * 二阶导数、拐点与凹凸性纯 SVG 渲染组件
- * 零物理公式，严格遵循 AGENTS.md 规范
+ * 全量接入 resolveLabelPlacements 智能多方向标签避让算法
  */
 
 import React, { useCallback, useMemo } from "react";
@@ -11,9 +11,12 @@ import {
   CoordinateGrid,
   FunctionGraph,
   InteractivePoint,
+  MathPoint,
+  SceneLabelGroup,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
+import type { LabelItem } from "@/utils/labelOverlap";
 import {
   evalFunction,
   findInflectionPoints,
@@ -98,7 +101,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
     [scale, x1, onParamChange],
   );
 
-  // 6. 切线两端点计算 (用于绘制延长切线)
+  // 6. 切线两端点计算
   const tangentSegment = useMemo(() => {
     const k = eval0.dy;
     const xLeft = scale.xMin;
@@ -111,7 +114,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
     return { pLeft, pRight };
   }, [eval0.dy, eval0.y, x0, scale]);
 
-  // 7. 凹凸区域背景高亮网格采样 (生成下凸/上凸背景阴影条带)
+  // 7. 凹凸区域背景高亮
   const concavityRegions = useMemo(() => {
     const steps = 60;
     const dx = (scale.xMax - scale.xMin) / steps;
@@ -149,6 +152,112 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
   const ptJ2 = mathToDesign(jensen.x2, jensen.y2, scale);
   const ptJChordMid = mathToDesign(jensen.xMid, jensen.yChordMid, scale);
   const ptJCurveMid = mathToDesign(jensen.xMid, jensen.yCurveMid, scale);
+
+  // 8. 智能多方向学术标签避让解算
+  const modeLabels = useMemo(() => {
+    if (studyMode === "concavity") {
+      const items: LabelItem[] = [
+        {
+          key: "p0",
+          x: pt0.x,
+          y: pt0.y,
+          text: "P₀",
+          color: MATH_COLORS.paramPrimary,
+          fontSize: fontScale(13),
+          preferredPlacement: "top-right",
+        },
+      ];
+      return items;
+    } else if (studyMode === "inflection") {
+      const items: LabelItem[] = [
+        {
+          key: "p0",
+          x: pt0.x,
+          y: pt0.y,
+          text: "P₀",
+          color: MATH_COLORS.paramPrimary,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-right",
+        },
+      ];
+      inflections.forEach((ip, idx) => {
+        const pt = mathToDesign(ip.x, ip.y, scale);
+        items.push({
+          key: `inflection-${idx}`,
+          x: pt.x,
+          y: pt.y,
+          text: inflections.length > 1 ? `I${idx + 1}` : "I",
+          color: MATH_COLORS.vectorResult,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-left",
+        });
+      });
+      extrema.forEach((ext, idx) => {
+        const pt = mathToDesign(ext.x, ext.y, scale);
+        items.push({
+          key: `extrema-${idx}`,
+          x: pt.x,
+          y: pt.y,
+          text: extrema.length > 1 ? `E${idx + 1}` : "E",
+          color: MATH_COLORS.paramSecondary,
+          fontSize: fontScale(12),
+          preferredPlacement: "bottom-right",
+        });
+      });
+      return items;
+    } else {
+      const items: LabelItem[] = [
+        {
+          key: "s1",
+          x: ptJ1.x,
+          y: ptJ1.y,
+          text: "S₁",
+          color: MATH_COLORS.paramSecondary,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-left",
+        },
+        {
+          key: "s2",
+          x: ptJ2.x,
+          y: ptJ2.y,
+          text: "S₂",
+          color: MATH_COLORS.paramTertiary,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-right",
+        },
+        {
+          key: "m",
+          x: ptJChordMid.x,
+          y: ptJChordMid.y,
+          text: "M",
+          color: MATH_COLORS.paramSecondary,
+          fontSize: fontScale(12),
+          preferredPlacement: "top",
+        },
+        {
+          key: "p",
+          x: ptJCurveMid.x,
+          y: ptJCurveMid.y,
+          text: "P",
+          color: MATH_COLORS.paramTertiary,
+          fontSize: fontScale(12),
+          preferredPlacement: "bottom",
+        },
+      ];
+      return items;
+    }
+  }, [
+    studyMode,
+    pt0,
+    ptJ1,
+    ptJ2,
+    ptJChordMid,
+    ptJCurveMid,
+    inflections,
+    extrema,
+    scale,
+    fontScale,
+  ]);
 
   return (
     <g>
@@ -190,7 +299,6 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
 
       {/* 拐点与其切线渲染 */}
       {inflections.map((ip, idx) => {
-        const ptIp = mathToDesign(ip.x, ip.y, scale);
         const resIp = evalFunction(fnKey, params, ip.x);
         const kIp = resIp.dy;
         const pIpLeft = mathToDesign(
@@ -206,116 +314,67 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
 
         return (
           <g key={`inflection-${idx}`}>
-            {/* 拐点切线 (穿过曲线的切线) */}
+            {/* 拐点切线 */}
             <line
               x1={pIpLeft.x}
               y1={pIpLeft.y}
               x2={pIpRight.x}
               y2={pIpRight.y}
-              stroke={MATH_COLORS.focusPoint}
+              stroke={MATH_COLORS.vectorResult}
               strokeWidth={1.5}
               strokeDasharray="4 4"
               strokeOpacity={0.8}
             />
-            {/* 拐点中心高亮圆圈 */}
-            <circle
-              cx={ptIp.x}
-              cy={ptIp.y}
-              r={ip.isTrueInflection ? 6 : 5}
-              fill={
-                ip.isTrueInflection ? MATH_COLORS.focusPoint : MATH_COLORS.white
-              }
-              stroke={MATH_COLORS.focusPoint}
-              strokeWidth={2}
+            {/* 拐点标准学术点标 */}
+            <MathPoint
+              cx={ip.x}
+              cy={ip.y}
+              scale={scale}
+              color={MATH_COLORS.vectorResult}
+              fontScale={fontScale}
             />
-            <text
-              x={ptIp.x + 8}
-              y={ptIp.y - 8}
-              fill={MATH_COLORS.focusPoint}
-              fontSize={fontScale(11)}
-              fontWeight="bold"
-              className="select-none pointer-events-none"
-            >
-              {ip.label}
-            </text>
           </g>
         );
       })}
 
-      {/* 极值点渲染 (在 inflection 模式下对比) */}
+      {/* 极值点渲染 */}
       {studyMode === "inflection" &&
-        extrema.map((ext, idx) => {
-          const ptExt = mathToDesign(ext.x, ext.y, scale);
-          return (
-            <g key={`extrema-${idx}`}>
-              <circle
-                cx={ptExt.x}
-                cy={ptExt.y}
-                r={5}
-                fill={MATH_COLORS.vectorResult}
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.5}
-              />
-              <text
-                x={ptExt.x - 10}
-                y={ptExt.y + 16}
-                fill={MATH_COLORS.vectorResult}
-                fontSize={fontScale(10)}
-                fontWeight="600"
-                className="select-none pointer-events-none"
-              >
-                {ext.label}
-              </text>
-            </g>
-          );
-        })}
-
-      {/* 凹凸性与切线模式下的动态切线与探针 */}
-      {studyMode === "concavity" && (
-        <g>
-          {/* 切线 */}
-          <line
-            x1={tangentSegment.pLeft.x}
-            y1={tangentSegment.pLeft.y}
-            x2={tangentSegment.pRight.x}
-            y2={tangentSegment.pRight.y}
-            stroke={MATH_COLORS.paramSecondary}
-            strokeWidth={2}
-          />
-          {/* 切点下落至 x 轴的虚线 */}
-          <line
-            x1={pt0.x}
-            y1={pt0.y}
-            x2={pt0.x}
-            y2={mathToDesign(x0, 0, scale).y}
-            stroke={MATH_COLORS.paramSecondary}
-            strokeWidth={1}
-            strokeDasharray="3 3"
-          />
-          {/* 切点坐标与凹凸性标签 */}
-          <text
-            x={pt0.x + 8}
-            y={pt0.y + (eval0.dy > 0 ? 16 : -12)}
-            fill={MATH_COLORS.paramPrimary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            切点 P0({x0.toFixed(2)}, {eval0.y.toFixed(2)}) | f''=
-            {eval0.ddy.toFixed(2)}
-          </text>
-          {/* 探针可拖拽控制点 */}
-          <InteractivePoint
-            cx={x0}
-            cy={eval0.y}
+        extrema.map((ext, idx) => (
+          <MathPoint
+            key={`extrema-${idx}`}
+            cx={ext.x}
+            cy={ext.y}
             scale={scale}
-            vp={vp}
-            onDrag={handleX0Drag}
-            color={MATH_COLORS.paramPrimary}
-            r={6}
+            color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
           />
-        </g>
+        ))}
+
+      {/* 凹凸性探针切线 */}
+      {studyMode === "concavity" && (
+        <line
+          x1={tangentSegment.pLeft.x}
+          y1={tangentSegment.pLeft.y}
+          x2={tangentSegment.pRight.x}
+          y2={tangentSegment.pRight.y}
+          stroke={MATH_COLORS.tangentLine}
+          strokeWidth={2}
+          strokeOpacity={0.9}
+        />
+      )}
+
+      {/* 探针可拖拽控制点 */}
+      {studyMode === "concavity" && (
+        <InteractivePoint
+          cx={x0}
+          cy={eval0.y}
+          scale={scale}
+          vp={vp}
+          onDrag={handleX0Drag}
+          color={MATH_COLORS.paramPrimary}
+          r={6}
+          fontScale={fontScale}
+        />
       )}
 
       {/* 琴生不等式模式渲染 */}
@@ -342,59 +401,24 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           />
 
           {/* 割线中点 M */}
-          <circle
-            cx={ptJChordMid.x}
-            cy={ptJChordMid.y}
-            r={5}
-            fill={MATH_COLORS.paramSecondary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            cx={jensen.xMid}
+            cy={jensen.yChordMid}
+            scale={scale}
+            color={MATH_COLORS.paramSecondary}
+            fontScale={fontScale}
           />
-          <text
-            x={ptJChordMid.x + 8}
-            y={ptJChordMid.y - 6}
-            fill={MATH_COLORS.paramSecondary}
-            fontSize={fontScale(10)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            弦中点 M
-          </text>
 
           {/* 曲线上中点 P */}
-          <circle
-            cx={ptJCurveMid.x}
-            cy={ptJCurveMid.y}
-            r={5}
-            fill={MATH_COLORS.paramTertiary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={1.5}
+          <MathPoint
+            cx={jensen.xMid}
+            cy={jensen.yCurveMid}
+            scale={scale}
+            color={MATH_COLORS.paramTertiary}
+            fontScale={fontScale}
           />
-          <text
-            x={ptJCurveMid.x + 8}
-            y={ptJCurveMid.y + 14}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(10)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            弧中点 P
-          </text>
 
-          {/* 琴生差值说明 */}
-          <text
-            x={(ptJChordMid.x + ptJCurveMid.x) / 2 + 10}
-            y={(ptJChordMid.y + ptJCurveMid.y) / 2}
-            fill={MATH_COLORS.vectorResult}
-            fontSize={fontScale(10)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            Δy = {jensen.diff.toFixed(2)} (
-            {jensen.isConvexUp ? "下凸 弦在弧上" : "上凸 弧在弦上"})
-          </text>
-
-          {/* 琴生点 x1 探针 */}
+          {/* 琴生端点 S1 与 S2 探针 */}
           <InteractivePoint
             cx={x1}
             cy={jensen.y1}
@@ -406,7 +430,6 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
             fontScale={fontScale}
           />
 
-          {/* 琴生点 x2 探针 */}
           <InteractivePoint
             cx={x2}
             cy={jensen.y2}
@@ -419,6 +442,9 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           />
         </g>
       )}
+
+      {/* ─── 统一智能避让图层：纯净学术点标渲染 ─── */}
+      <SceneLabelGroup items={modeLabels} fontScale={fontScale} />
     </g>
   );
 };

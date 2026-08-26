@@ -47,6 +47,7 @@
 | `formula` 字段用 `$...$` 包裹 | 纯 LaTeX，`katex.render()` 直接接收 | 铁律1 |
 | 用 `Vector3DArrow` 绘制棱/斜线/垂线等纯几何线段 | `Segment3D`（纯几何线段无箭头，仅法向量/基向量用 `Vector3DArrow`） | 铁律1/4 |
 | 向 `PointLabel3D` 传入 Unicode 下标（如 `P₁`） | `CompoundLabel3D(base, subscript)`（彻底杜绝 ⌧ 豆腐块） | 铁律1/4 |
+| 2D 画布手写 `<text>` 渲染散乱汉字/坐标/方程 | `SceneLabelGroup` 极简学术点标 + 中屏右下角 `SceneLegend` 毛玻璃图例 | 铁律1/4 |
 
 ---
 
@@ -240,6 +241,8 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
 | 双曲线/正切/指对数渐近线 | `Asymptote` | `@/components/Math` | ✅ 支持 `fontScale` prop |
 | 解集/定积分区间阴影 | `IntervalShadow` | `@/components/Math` | — |
 | 视觉标注箭头 | `VectorArrow` | `@/components/Math` | ✅ 支持 `fontScale` prop |
+| 2D 智能避让点标图层 | `SceneLabelGroup` | `@/components/Math` | ✅ 支持 `fontScale`，8 向防重叠碰撞分流与微描边 |
+| 2D 右下角图例卡片 | `SceneLegend` | `@/components/Math` | 毛玻璃卡片，支持实线/虚线/特征点/面积/KaTeX |
 | 三视图正投影 | `ThreeViewsPanel` | `@/components/Math3D` | — |
 | 3D 坐标网格 | `Scene3DGrid` | `@/components/Math3D` | 3D 空间网格与坐标轴。Props: `size` |
 | 3D 相机控制 | `CameraRig` | `@/components/Math3D` | 轨道相机，配合 `use3DViewport`。支持 `enabled` 动点交互互斥 |
