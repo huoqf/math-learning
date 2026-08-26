@@ -20,7 +20,10 @@ export function buildTranscendentalPanel(
   const warnings: MathPanelData["warnings"] = [];
 
   if (mode === "exp") {
+    const isShift = (config?.subMode as string) === "shift_1";
     const resExp = solveExpTangent(x0);
+    const shiftY0 = Math.exp(x0 - 1);
+
     quantities.push(
       {
         label: "切点横坐标",
@@ -29,25 +32,28 @@ export function buildTranscendentalPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "切点纵坐标",
-        symbol: "e^{x₀}",
-        value: resExp.y0.toFixed(3),
+        label: isShift ? "平移曲线值" : "切点纵坐标",
+        symbol: isShift ? "e^{x₀-1}" : "e^{x₀}",
+        value: isShift ? shiftY0.toFixed(3) : resExp.y0.toFixed(3),
         color: MATH_COLORS.function,
       },
       {
         label: "切线斜率",
         symbol: "f'(x₀)",
-        value: resExp.slope.toFixed(3),
+        value: isShift ? shiftY0.toFixed(3) : resExp.slope.toFixed(3),
         color: MATH_COLORS.tangentLine,
       },
       {
-        label: "基准下界差值 (x=0)",
-        symbol: "e⁰ - (0+1)",
-        value: "0.000",
+        label: isShift ? "平移放缩差值" : "基准下界差值",
+        symbol: isShift ? "e^{x₀-1} - x₀" : "e^{x₀} - (x₀ + 1)",
+        value: isShift
+          ? (shiftY0 - x0).toFixed(3)
+          : (resExp.y0 - (x0 + 1)).toFixed(3),
         color: MATH_COLORS.labelText,
       },
     );
   } else if (mode === "log") {
+    const isQuad = (config?.subMode as string) === "quadratic_bound";
     const resLog = solveLogTangent(x0);
     if (!resLog.isValid) {
       warnings.push({
@@ -55,6 +61,8 @@ export function buildTranscendentalPanel(
         level: "danger",
       });
     }
+
+    const quadBound = 0.5 * (x0 * x0 - 1);
     quantities.push(
       {
         label: "切点横坐标",
@@ -63,50 +71,76 @@ export function buildTranscendentalPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "切点纵坐标",
-        symbol: "ln(x₀)",
+        label: "对数函数值",
+        symbol: "\\ln(x₀)",
         value: resLog.isValid ? resLog.y0.toFixed(3) : "无定义",
         color: MATH_COLORS.function,
       },
       {
-        label: "切线斜率",
-        symbol: "g'(x₀)",
-        value: resLog.isValid ? resLog.slope.toFixed(3) : "无定义",
-        color: MATH_COLORS.tangentLine,
+        label: isQuad ? "二次放缩上界" : "线性切线上界",
+        symbol: isQuad ? "\\frac{x₀^2 - 1}{2}" : "x₀ - 1",
+        value: resLog.isValid
+          ? isQuad
+            ? quadBound.toFixed(3)
+            : (x0 - 1).toFixed(3)
+          : "无定义",
+        color: isQuad
+          ? MATH_COLORS.functionTransformed
+          : MATH_COLORS.paramSecondary,
       },
       {
-        label: "基准上界差值 (x=1)",
-        symbol: "(1-1) - ln 1",
-        value: "0.000",
+        label: isQuad ? "二次逼近差值" : "线性放缩差值",
+        symbol: isQuad ? "\\frac{x₀^2-1}{2} - \\ln x₀" : "(x₀ - 1) - \\ln x₀",
+        value: resLog.isValid
+          ? isQuad
+            ? (quadBound - resLog.y0).toFixed(3)
+            : (x0 - 1 - resLog.y0).toFixed(3)
+          : "无定义",
         color: MATH_COLORS.labelText,
       },
     );
   } else if (mode === "chain") {
+    const validChainX = x0 > 0 ? x0 : 1.0;
+    const expVal = Math.exp(validChainX - 1);
+    const logVal = Math.log(validChainX) + 1;
     quantities.push(
       {
-        label: "基准中轴切线",
-        symbol: "y",
-        value: "x",
-        color: MATH_COLORS.paramSecondary,
+        label: "自变量位置",
+        symbol: "x",
+        value: validChainX.toFixed(2),
+        color: MATH_COLORS.paramPrimary,
       },
       {
         label: "指数上界",
         symbol: "e^{x-1}",
-        value: Math.exp(x0 - 1).toFixed(3),
+        value: expVal.toFixed(3),
         color: MATH_COLORS.function,
       },
       {
+        label: "中轴基准切线",
+        symbol: "y = x",
+        value: validChainX.toFixed(3),
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
         label: "对数下界",
-        symbol: "ln x + 1",
-        value: x0 > 0 ? (Math.log(x0) + 1).toFixed(3) : "无定义",
+        symbol: "\\ln x + 1",
+        value: logVal.toFixed(3),
         color: MATH_COLORS.functionTransformed,
+      },
+      {
+        label: "夹逼包络跨度",
+        symbol: "e^{x-1} - (\\ln x + 1)",
+        value: (expVal - logVal).toFixed(3),
+        color: MATH_COLORS.labelText,
       },
     );
   } else if (mode === "param") {
     const subMode = (config?.subMode as string) || "exp_ax_1";
     const resAx1 = solveParamExpAx1(a);
     const resAx = solveParamExpAx(a);
-    const activeRes = subMode === "exp_ax" ? resAx : resAx1;
+    const isOverOrigin = subMode === "exp_ax";
+    const activeRes = isOverOrigin ? resAx : resAx1;
 
     quantities.push(
       {
@@ -116,12 +150,9 @@ export function buildTranscendentalPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label:
-          subMode === "exp_ax"
-            ? "e^x ≥ ax 过原点临界"
-            : "e^x ≥ ax + 1 切线临界",
+        label: isOverOrigin ? "e^x ≥ ax 过原点临界" : "e^x ≥ ax + 1 切线临界",
         symbol: "a_{临界}",
-        value: subMode === "exp_ax" ? Math.E.toFixed(2) : "1.00",
+        value: isOverOrigin ? Math.E.toFixed(2) : "1.00",
         color: MATH_COLORS.tangentLine,
       },
       {
@@ -135,46 +166,96 @@ export function buildTranscendentalPanel(
       },
     );
 
-    if (a > 1.0) {
-      warnings.push({
-        text: `当前参数 a = ${a.toFixed(2)} > 1，直线与 e^x 出现 2 个交点，e^x ≥ ax + 1 不恒成立！`,
-        level: "warning",
-      });
+    if (isOverOrigin) {
+      if (a > Math.E + 0.01) {
+        warnings.push({
+          text: `当前参数 a = ${a.toFixed(2)} > e ≈ 2.72，直线与 e^x 出现 2 个交点，e^x ≥ ax 不恒成立！`,
+          level: "warning",
+        });
+      }
+    } else {
+      if (a > 1.0) {
+        warnings.push({
+          text: `当前参数 a = ${a.toFixed(2)} > 1.00，直线与 e^x 出现 2 个交点，e^x ≥ ax + 1 不恒成立！`,
+          level: "warning",
+        });
+      }
     }
   }
 
-  const theorems: MathPanelData["theorems"] = [
+  const isShift = (config?.subMode as string) === "shift_1";
+  const isQuad = (config?.subMode as string) === "quadratic_bound";
+  const pColor = MATH_COLORS.paramPrimary;
+
+  const rawTheorems: (MathPanelData["theorems"][number] & {
+    id: TranscendentalMode;
+  })[] = [
     {
-      name: "指数基准切线放缩不等式",
-      latex: "e^x \\ge x + 1 \\quad (x \\in \\mathbb{R})",
-      level: "core",
-      prerequisites: ["f(x) = e^x 是下凸函数", "等号仅在 x = 0 时成立"],
+      id: "exp",
+      name: isShift ? "指数平移切线放缩不等式" : "指数基准切线放缩不等式",
+      latex: isShift
+        ? `e^{x-1} \\ge x \\quad (x \\in \\mathbb{R})`
+        : `e^x \\ge x + 1 \\quad (x \\in \\mathbb{R})`,
+      level: mode === "exp" ? "core" : "important",
+      prerequisites: isShift
+        ? [
+            "f(x) = e^{x-1} 为下凸函数",
+            "在切点 (1, 1) 处公切线为 y = x",
+            "等号当且仅当 x = 1 时成立",
+          ]
+        : [
+            "f(x) = e^x 为下凸函数",
+            "在切点 (0, 1) 处切线为 y = x + 1",
+            "等号当且仅当 x = 0 时成立",
+          ],
     },
     {
-      name: "对数基准切线放缩不等式",
-      latex: "\\ln x \\le x - 1 \\quad (x > 0)",
-      level: "core",
-      prerequisites: ["g(x) = \\ln x 是上凸函数", "等号仅在 x = 1 时成立"],
+      id: "log",
+      name: isQuad ? "对数二次上界放缩不等式" : "对数基准切线放缩不等式",
+      latex: isQuad
+        ? `\\ln x \\le \\frac{x^2 - 1}{2} \\le x - 1 \\quad (x > 0)`
+        : `\\ln x \\le x - 1 \\quad (x > 0)`,
+      level: mode === "log" ? "core" : "important",
+      prerequisites: isQuad
+        ? [
+            "利用切线进一步构造二次抛物线上界",
+            "在 x > 1 时比线性切线更贴合对数曲线",
+            "等号当且仅当 x = 1 时成立",
+          ]
+        : [
+            "g(x) = \\ln x 为上凸函数",
+            "在切点 (1, 0) 处切线为 y = x - 1",
+            "等号当且仅当 x = 1 时成立",
+          ],
     },
     {
+      id: "chain",
       name: "双基准对偶链式夹逼不等式",
-      latex: "\\ln x + 1 \\le x \\le e^{x-1} \\quad (x > 0)",
-      level: "important",
+      latex: `\\ln x + 1 \\le x \\le e^{x-1} \\quad (x > 0)`,
+      level: mode === "chain" ? "core" : "important",
       prerequisites: [
         "e^{x-1} 与 \\ln x + 1 互为反函数",
-        "三者关于 y = x 对称",
+        "在公共切点 (1, 1) 处公切线为 y = x",
+        "等号当且仅当 x = 1 时三者取等",
       ],
     },
     {
+      id: "param",
       name: "切线临界求参定理",
-      latex:
-        "e^x \\ge \\color{#EF4444}{a} x + 1 \\iff \\color{#EF4444}{a} \\le 1",
-      level: "important",
+      latex: `e^x \\ge \\color{${pColor}}{a} x + 1 \\iff \\color{${pColor}}{a} \\le 1 \\quad (e^x \\ge \\color{${pColor}}{a} x \\iff \\color{${pColor}}{a} \\le e)`,
+      level: mode === "param" ? "core" : "important",
       prerequisites: [
-        "当 a = 1 时直线与曲线在 (0,1) 相切",
-        "a > 1 时产生第二个交点",
+        "定点模型在 (0, 1) 处相切临界 a = 1",
+        "过原点模型在 (1, e) 处相切临界 a = e",
+        "斜率超过临界值产生双交点破坏恒成立",
       ],
     },
+  ];
+
+  // 动态将当前模式的核心定理置顶
+  const theorems = [
+    ...rawTheorems.filter((t) => t.id === mode),
+    ...rawTheorems.filter((t) => t.id !== mode),
   ];
 
   const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
