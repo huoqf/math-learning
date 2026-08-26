@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -25,9 +25,6 @@ export function VectorLinearAnimation() {
   // 典型预设状态
   const [presetKey, setPresetKey] = useState<string>("free");
 
-  // 模式二是否锁定 x + y = 1 三点共线
-  const [lockCollinear, setLockCollinear] = useState<boolean>(true);
-
   // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
@@ -45,6 +42,10 @@ export function VectorLinearAnimation() {
     yRange: [-4.5, 4.5],
   });
 
+  // 是否处于三点共线严格锁定状态 (由预设决定，无需外挂多余开关)
+  const isCollinearLocked =
+    studyMode === "collinear" && presetKey !== "plane-free";
+
   // 典型预设定义
   const presetsByMode = useMemo(() => {
     return {
@@ -52,36 +53,47 @@ export function VectorLinearAnimation() {
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
           key: "parallelogram",
-          label: "平行四边形和向量",
+          label: "平行四边形法则",
+          formula: "\\vec{a} + \\vec{b}",
           description: "λ=1, μ=1 合成",
         },
         {
           key: "subtraction",
-          label: "差向量与反向",
-          description: "λ=1, μ=-1",
+          label: "三角形减法法则",
+          formula: "\\vec{a} - \\vec{b}",
+          description: "λ=1, μ=-1 差向量",
         },
         {
           key: "scaleUp",
-          label: "倍数与伸缩",
+          label: "数乘伸缩倍数",
+          formula: "2\\vec{a} + 0.5\\vec{b}",
           description: "λ=2, μ=0.5",
         },
       ],
       collinear: [
-        { key: "free", label: "自由探究", description: "全参数开放" },
+        {
+          key: "collinear-line",
+          label: "三点共线约束",
+          formula: "x + y = 1",
+          description: "单滑块内分外分",
+        },
         {
           key: "midpoint",
           label: "线段 AB 中点",
-          description: "x=0.5, y=0.5",
+          formula: "x = 0.5, y = 0.5",
+          description: "中点向量公式",
         },
         {
           key: "trisection",
           label: "三等分内分点",
-          description: "x=2/3, y=1/3",
+          formula: "x = \\frac{2}{3}, y = \\frac{1}{3}",
+          description: "2:1 分点比",
         },
         {
-          key: "extension",
-          label: "AB 延长线外分点",
-          description: "x=1.5, y=-0.5",
+          key: "plane-free",
+          label: "全平面自由验证",
+          formula: "x + y \\ne 1",
+          description: "开放双滑块看偏离",
         },
       ],
       basis: [
@@ -89,17 +101,20 @@ export function VectorLinearAnimation() {
         {
           key: "orthogonal",
           label: "标准正交基底",
-          description: "e1=(1,0), e2=(0,1)",
+          formula: "\\vec{e}_1 \\perp \\vec{e}_2",
+          description: "笛卡尔坐标系",
         },
         {
           key: "oblique",
           label: "一般斜坐标基底",
-          description: "e1=(3,1), e2=(1,3)",
+          formula: "\\text{任意不共线}",
+          description: "唯一分解定理",
         },
         {
           key: "degenerate",
           label: "基底共线退化",
-          description: "e1与e2平行失效",
+          formula: "D = 0",
+          description: "无法张成空间",
         },
       ],
     };
@@ -108,7 +123,7 @@ export function VectorLinearAnimation() {
   // 切换模式时重置预设
   const handleModeChange = (mode: "linearCombo" | "collinear" | "basis") => {
     setStudyMode(mode);
-    setPresetKey("free");
+    setPresetKey(mode === "collinear" ? "collinear-line" : "free");
   };
 
   // 应用典型预设
@@ -118,72 +133,25 @@ export function VectorLinearAnimation() {
 
     if (studyMode === "linearCombo") {
       if (preset === "parallelogram") {
-        setParams((p) => ({
-          ...p,
-          xa: 3,
-          ya: 1,
-          xb: 1,
-          yb: 3,
-          lambda: 1,
-          mu: 1,
-        }));
+        setParams((p) => ({ ...p, lambda: 1, mu: 1 }));
       } else if (preset === "subtraction") {
-        setParams((p) => ({
-          ...p,
-          xa: 3,
-          ya: 1,
-          xb: 1,
-          yb: 3,
-          lambda: 1,
-          mu: -1,
-        }));
+        setParams((p) => ({ ...p, lambda: 1, mu: -1 }));
       } else if (preset === "scaleUp") {
-        setParams((p) => ({
-          ...p,
-          xa: 2,
-          ya: 1,
-          xb: 1,
-          yb: 2,
-          lambda: 2,
-          mu: 0.5,
-        }));
+        setParams((p) => ({ ...p, lambda: 2, mu: 0.5 }));
       }
     } else if (studyMode === "collinear") {
-      setLockCollinear(true);
-      if (preset === "midpoint") {
-        setParams((p) => ({
-          ...p,
-          xa: 3,
-          ya: 1,
-          xb: -1,
-          yb: 3,
-          xCoeff: 0.5,
-          yCoeff: 0.5,
-        }));
+      if (preset === "collinear-line") {
+        setParams((p) => ({ ...p, xCoeff: 0.4, yCoeff: 0.6 }));
+      } else if (preset === "midpoint") {
+        setParams((p) => ({ ...p, xCoeff: 0.5, yCoeff: 0.5 }));
       } else if (preset === "trisection") {
-        setParams((p) => ({
-          ...p,
-          xa: 3,
-          ya: 1,
-          xb: -1,
-          yb: 3,
-          xCoeff: 0.67,
-          yCoeff: 0.33,
-        }));
-      } else if (preset === "extension") {
-        setParams((p) => ({
-          ...p,
-          xa: 3,
-          ya: 1,
-          xb: -1,
-          yb: 3,
-          xCoeff: 1.5,
-          yCoeff: -0.5,
-        }));
+        setParams((p) => ({ ...p, xCoeff: 0.67, yCoeff: 0.33 }));
+      } else if (preset === "plane-free") {
+        setParams((p) => ({ ...p, xCoeff: 0.8, yCoeff: 0.8 }));
       }
     } else if (studyMode === "basis") {
       if (preset === "orthogonal") {
-        setParams((p) => ({ ...p, xa: 1, ya: 0, xb: 0, yb: 1, xv: 3, yv: 2 }));
+        setParams((p) => ({ ...p, xa: 3, ya: 0, xb: 0, yb: 3, xv: 3, yv: 2 }));
       } else if (preset === "oblique") {
         setParams((p) => ({
           ...p,
@@ -202,77 +170,99 @@ export function VectorLinearAnimation() {
 
   // 数学计算结果
   const mathRes = useMemo(
-    () => computeVectorLinear({ ...params, lockCollinear }),
-    [params, lockCollinear],
+    () => computeVectorLinear({ ...params, lockCollinear: isCollinearLocked }),
+    [params, isCollinearLocked],
   );
 
   // 看板数据
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-vector-linear", params, {
       studyMode,
-      lockCollinear,
+      lockCollinear: isCollinearLocked,
     });
-  }, [params, studyMode, lockCollinear]);
+  }, [params, studyMode, isCollinearLocked]);
 
-  // 参数单项更新处理器（拖拽或滑块改变自动回归 free）
-  const handleParamChange = (key: string, value: number) => {
-    setPresetKey("free");
-    setParams((prev) => {
-      const next = { ...prev, [key]: value };
-      // 若锁定 x+y=1，改变 xCoeff 联动改变 yCoeff
-      if (lockCollinear && key === "xCoeff") {
-        next.yCoeff = Math.round((1 - value) * 100) / 100;
-      } else if (lockCollinear && key === "yCoeff") {
-        next.xCoeff = Math.round((1 - value) * 100) / 100;
+  // 参数单项更新处理器
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      setParams((prev) => {
+        const next = { ...prev, [key]: value };
+        if (isCollinearLocked && key === "xCoeff") {
+          next.yCoeff = Math.round((1 - value) * 100) / 100;
+        } else if (isCollinearLocked && key === "yCoeff") {
+          next.xCoeff = Math.round((1 - value) * 100) / 100;
+        }
+        return next;
+      });
+    },
+    [isCollinearLocked],
+  );
+
+  // 参数批量原子更新处理器（画布直接拖拽动点时使用，自动切回自由模式）
+  const handleBatchParamsChange = useCallback(
+    (updates: Record<string, number>) => {
+      if (presetKey !== "free" && presetKey !== "collinear-line") {
+        setPresetKey(studyMode === "collinear" ? "collinear-line" : "free");
       }
-      return next;
-    });
-  };
-
-  // 参数批量原子更新处理器（画布直接拖拽动点时使用，保障数学严格同步）
-  const handleBatchParamsChange = (updates: Record<string, number>) => {
-    setPresetKey("free");
-    setParams((prev) => ({ ...prev, ...updates }));
-  };
+      setParams((prev) => ({ ...prev, ...updates }));
+    },
+    [presetKey, studyMode],
+  );
 
   // 重置参数
   const handleReset = () => {
     setParams({ ...defaultParams });
-    setPresetKey("free");
+    setPresetKey(studyMode === "collinear" ? "collinear-line" : "free");
   };
 
-  // 按研究模式过滤参数（核心参数置顶，底模参数在后；模式二锁定时裁剪从属参数）
+  // 按研究模式过滤参数并实现真正降维
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      linearCombo: ["lambda", "mu", "xa", "ya", "xb", "yb"],
-      collinear: lockCollinear
-        ? ["xCoeff", "xa", "ya", "xb", "yb"]
-        : ["xCoeff", "yCoeff", "xa", "ya", "xb", "yb"],
-      basis: ["xv", "yv", "xa", "ya", "xb", "yb"],
-    };
+    let activeKeys: string[] = [];
 
-    const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    if (studyMode === "linearCombo") {
+      if (presetKey === "parallelogram" || presetKey === "subtraction") {
+        activeKeys = ["xa", "ya", "xb", "yb"];
+      } else {
+        activeKeys = ["lambda", "mu", "xa", "ya", "xb", "yb"];
+      }
+    } else if (studyMode === "collinear") {
+      if (isCollinearLocked) {
+        // 锁定 x+y=1：仅需一个 xCoeff 分点滑块，实现极致降维
+        activeKeys = ["xCoeff", "xa", "ya", "xb", "yb"];
+      } else {
+        // 全平面自由：开放两个滑块
+        activeKeys = ["xCoeff", "yCoeff", "xa", "ya", "xb", "yb"];
+      }
+    } else {
+      activeKeys = ["xv", "yv", "xa", "ya", "xb", "yb"];
+    }
 
-    return keys
+    return activeKeys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
         return {
           key,
-          label: meta.label,
+          label:
+            isCollinearLocked && key === "xCoeff"
+              ? "共线分点系数 x (y=1-x)"
+              : meta.label,
           labelFormula: meta.labelFormula,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
-          description: meta.description,
+          description:
+            isCollinearLocked && key === "xCoeff"
+              ? "0~1为内分点，0.5为中点，<0或>1为外分点"
+              : meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
           group: meta.group,
         };
       });
-  }, [params, studyMode, lockCollinear]);
+  }, [params, studyMode, presetKey, isCollinearLocked]);
 
   // 渲染顶端悬浮 LaTeX 表达式
   const equationLatex = useMemo(() => {
@@ -287,7 +277,7 @@ export function VectorLinearAnimation() {
       return `\\vec{OC} = x\\vec{OA} + y\\vec{OB} \\quad (x+y = ${sumStr})`;
     } else {
       if (!mathRes.isBasisValid) {
-        return `\\text{基底共线退化 } x_1 y_2 - x_2 y_1 = 0 \\quad (\\text{无法分解})`;
+        return `\\text{基底共线退化 } x_1 y_2 - x_2 y_1 = 0 \\quad (\\text{无法张成基底})`;
       }
       return `\\vec{v} = \\color{#EF4444}{${mathRes.lambda1.toFixed(
         2,
@@ -300,33 +290,9 @@ export function VectorLinearAnimation() {
   // 看板标题
   const panelTitle = useMemo(() => {
     if (studyMode === "linearCombo") return "向量加减与数乘看板";
-    if (studyMode === "collinear") return "向量共线与三点共线看板";
+    if (studyMode === "collinear") return "三点共线与分点定理看板";
     return "平面向量基本定理看板";
   }, [studyMode]);
-
-  // 教学引导与探究问题（左屏专属，符合高中数学课标，不与右屏看板重复）
-  const guidanceByMode = useMemo(() => {
-    return {
-      linearCombo: {
-        condition: "基准向量 a, b 从同一起点 O 出发，标量 λ, μ ∈ [-3, 3]。",
-        question:
-          "调节 λ, μ 观察合成向量 s = λa + μb 的平行四边形对角线变化；思考差向量 d = a - b 为何始终从 B 点指向 A 点？",
-      },
-      collinear: {
-        condition: "基准定点 O 与基准线 AB，动点 C 满足 OC = x·OA + y·OB。",
-        question:
-          "锁定 x+y=1 拖动点 C，观察其在线段 AB 内外滑动及分点比例；解除锁定观察偏离直线时 x+y 为何偏离 1？",
-      },
-      basis: {
-        condition:
-          "平面内任意两个不共线向量 {e₁, e₂} 构成一组基底，det(e₁, e₂) ≠ 0。",
-        question:
-          "任意拖拽目标向量 V，观察过 V 作两基底轴平行线所唯一确定的分解系数对 (λ₁, λ₂)；思考基底共线时为何无解？",
-      },
-    };
-  }, []);
-
-  const currentGuidance = guidanceByMode[studyMode];
 
   return (
     <ThreePanel
@@ -334,13 +300,13 @@ export function VectorLinearAnimation() {
         <LeftPanel>
           {/* 模式选择 Section */}
           <LeftPanelSection
-            title="核心专题模式"
+            title="探究专题模式"
             subtitle="选择平面向量研究切入点"
           >
             <SelectGrid
               items={[
-                { key: "linearCombo", label: "加减与数乘" },
-                { key: "collinear", label: "共线与三点共线" },
+                { key: "linearCombo", label: "加减与数乘运算" },
+                { key: "collinear", label: "三点共线与分点定理" },
                 { key: "basis", label: "平面向量基本定理", fullWidth: true },
               ]}
               value={studyMode}
@@ -351,10 +317,10 @@ export function VectorLinearAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 典型预设 2x2 网格 */}
+          {/* 典型预设 (实现参数降维) */}
           <LeftPanelSection
             title="典型构型预设"
-            subtitle="一键切换典型高考探究场景"
+            subtitle="一键切换高考经典探究场景"
           >
             <SelectGrid
               items={presetsByMode[studyMode]}
@@ -365,25 +331,6 @@ export function VectorLinearAnimation() {
               columns={2}
             />
           </LeftPanelSection>
-
-          {/* 模式二锁定量配置 */}
-          {studyMode === "collinear" && (
-            <LeftPanelSection
-              title="三点共线条件锁定"
-              subtitle="验证 x + y = 1 是否落在直线 AB 上"
-            >
-              <SelectGrid
-                items={[
-                  { key: "lock", label: "锁定 x + y = 1 (直线 AB 上)" },
-                  { key: "free", label: "自由滑动 (检验全平面)" },
-                ]}
-                value={lockCollinear ? "lock" : "free"}
-                onChange={(k) => setLockCollinear(k === "lock")}
-                variant="filled"
-                color="success"
-              />
-            </LeftPanelSection>
-          )}
 
           {/* 参数调节 Section */}
           <LeftPanelSection
@@ -397,28 +344,111 @@ export function VectorLinearAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学引导与探究问题 (置于左屏底部辅助阅读区) */}
+          {/* 教学引导与探究问题 (规范排版，接入 KatexFormula) */}
           <LeftPanelSection
-            title="教学引导与探究"
+            title="教学探究引导"
             subtitle="带着核心问题动手实验"
           >
-            <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-lg p-2.5 text-[11px] space-y-1.5 leading-relaxed">
-              <div className="flex items-start gap-1.5">
-                <span className="inline-block px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 font-semibold text-[10px] shrink-0">
-                  基础条件
-                </span>
-                <span className="text-neutral-700">
-                  {currentGuidance.condition}
-                </span>
-              </div>
-              <div className="flex items-start gap-1.5 pt-0.5">
-                <span className="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold text-[10px] shrink-0">
-                  探究问题
-                </span>
-                <span className="text-neutral-700">
-                  {currentGuidance.question}
-                </span>
-              </div>
+            <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-lg p-2.5 text-xs space-y-2 text-neutral-600 leading-relaxed">
+              {studyMode === "linearCombo" && (
+                <>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【基础条件】：
+                    </span>
+                    基准向量{" "}
+                    <KatexFormula formula="\\vec{a}, \\vec{b}" mode="inline" />{" "}
+                    共起点 O，标量{" "}
+                    <KatexFormula
+                      formula="\\lambda, \\mu \\in [-3, 3]"
+                      mode="inline"
+                    />
+                    。
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【探究问题】：
+                    </span>
+                    调节 <KatexFormula formula="\\lambda, \\mu" mode="inline" />{" "}
+                    观察合成向量{" "}
+                    <KatexFormula
+                      formula="\\vec{s} = \\lambda\\vec{a} + \\mu\\vec{b}"
+                      mode="inline"
+                    />{" "}
+                    的对角线变化；思考差向量{" "}
+                    <KatexFormula
+                      formula="\\vec{d} = \\vec{a} - \\vec{b}"
+                      mode="inline"
+                    />{" "}
+                    为何始终从 B 点指向 A 点？
+                  </div>
+                </>
+              )}
+              {studyMode === "collinear" && (
+                <>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【基础条件】：
+                    </span>
+                    点 <KatexFormula formula="C" mode="inline" /> 满足{" "}
+                    <KatexFormula
+                      formula="\\vec{OC} = x\\vec{OA} + y\\vec{OB}"
+                      mode="inline"
+                    />
+                    。
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【探究问题】：
+                    </span>
+                    滑动系数 <KatexFormula formula="x" mode="inline" />
+                    ，观察点 <KatexFormula
+                      formula="C"
+                      mode="inline"
+                    /> 在线段 <KatexFormula formula="AB" mode="inline" />{" "}
+                    内外的分点比例；切换到“全平面自由验证”观察偏离直线时{" "}
+                    <KatexFormula formula="x+y" mode="inline" /> 为何不再等于
+                    1？
+                  </div>
+                </>
+              )}
+              {studyMode === "basis" && (
+                <>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【基础条件】：
+                    </span>
+                    不共线向量{" "}
+                    <KatexFormula
+                      formula="\\{\\vec{e}_1, \\vec{e}_2\\}"
+                      mode="inline"
+                    />{" "}
+                    构成一组基底，
+                    <KatexFormula
+                      formula="\\det(\\vec{e}_1, \\vec{e}_2) \\neq 0"
+                      mode="inline"
+                    />
+                    。
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【探究问题】：
+                    </span>
+                    拖拽目标向量{" "}
+                    <KatexFormula formula="\\vec{v}" mode="inline" />
+                    ，观察过 <KatexFormula
+                      formula="\\vec{v}"
+                      mode="inline"
+                    />{" "}
+                    作两基底平行线所唯一确定的分解系数对{" "}
+                    <KatexFormula
+                      formula="(\\lambda_1, \\lambda_2)"
+                      mode="inline"
+                    />
+                    ；基底共线时为何无解？
+                  </div>
+                </>
+              )}
             </div>
           </LeftPanelSection>
         </LeftPanel>
@@ -443,7 +473,7 @@ export function VectorLinearAnimation() {
               onBatchParamsChange={handleBatchParamsChange}
               fontScale={canvasSize.font}
               studyMode={studyMode}
-              lockCollinear={lockCollinear}
+              lockCollinear={isCollinearLocked}
             />
           </AnimationSvgCanvas>
         </div>

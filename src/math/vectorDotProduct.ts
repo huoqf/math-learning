@@ -57,6 +57,11 @@ export interface VectorDotProductParams {
   ya?: number;
   xb?: number;
   yb?: number;
+  // 几何定义模式参数
+  normA?: number;
+  normB?: number;
+  thetaDeg?: number;
+  usePolarGeom?: boolean;
 }
 
 /**
@@ -72,10 +77,20 @@ export function vectorNorm(v: Vector2D): number {
 export function computeVectorDotProduct(
   params: VectorDotProductParams,
 ): VectorDotProductResult {
-  const xa = params.xa ?? 4;
-  const ya = params.ya ?? 0;
-  const xb = params.xb ?? 2;
-  const yb = params.yb ?? 3;
+  let xa = params.xa ?? 4;
+  let ya = params.ya ?? 0;
+  let xb = params.xb ?? 2;
+  let yb = params.yb ?? 3;
+
+  if (params.usePolarGeom) {
+    const rA = params.normA ?? 4.0;
+    const rB = params.normB ?? 3.5;
+    const theta = ((params.thetaDeg ?? 60) * Math.PI) / 180;
+    xa = rA;
+    ya = 0;
+    xb = rB * Math.cos(theta);
+    yb = rB * Math.sin(theta);
+  }
 
   const a: Vector2D = { x: xa, y: ya };
   const b: Vector2D = { x: xb, y: yb };

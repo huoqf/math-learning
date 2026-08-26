@@ -11,6 +11,8 @@ import {
   fromPolar,
   formatComplexLatex,
   calcCircleLocusExtrema,
+  calcPerpBisectorLocus,
+  calcModulusTriangleInequality,
 } from "@/math/complex";
 
 export function buildComplexPanel(
@@ -221,6 +223,133 @@ export function buildComplexPanel(
   }
 
   // 模式 3: locus-extrema
+  const subModel = (config?.subModel as string) || "circle";
+
+  if (subModel === "perp-bisector") {
+    const a1 = params.a1 ?? 3;
+    const b1 = params.b1 ?? 1;
+    const a2 = params.a2 ?? -1;
+    const b2 = params.b2 ?? 3;
+
+    const z1 = createComplex(a1, b1);
+    const z2 = createComplex(a2, b2);
+    const bisector = calcPerpBisectorLocus(z1, z2);
+
+    return {
+      quantities: [
+        {
+          label: "定点 $z_1$",
+          symbol: "z_1",
+          value: formatComplexLatex(z1),
+          unit: "第一定点",
+        },
+        {
+          label: "定点 $z_2$",
+          symbol: "z_2",
+          value: formatComplexLatex(z2),
+          unit: "第二定点",
+        },
+        {
+          label: "线段中点 $M$",
+          symbol: "\\frac{z_1+z_2}{2}",
+          value: formatComplexLatex(bisector.midPoint),
+          unit: "垂足点",
+        },
+        {
+          label: "两定点距离 $|z_1 - z_2|$",
+          symbol: "|z_1 - z_2|",
+          value: bisector.dist.toFixed(2),
+          unit: "线段长度",
+        },
+      ],
+      theorems: [
+        {
+          name: "垂直平分线轨迹方程",
+          latex:
+            "|z - z_1| = |z - z_2| \\quad \\Longleftrightarrow \\quad z \\text{ 落在 } z_1, z_2 \\text{ 连线的垂直平分线上}",
+          note: "几何意义：到两定点距离相等的动点轨迹是连接两定点线段的中垂线。",
+          level: "core",
+        },
+      ],
+      gaokaoPoints: [
+        {
+          text: "【新高考经典轨迹】方程 |z - z₁| = |z - z₂| 表示两定点连线段的垂直平分线，常用斜率垂直 k₁k₂ = -1 与中点坐标直接写出直线方程。",
+          importance: "gaokao",
+        },
+      ],
+      warnings: !bisector.valid
+        ? [
+            {
+              text: "两定点重合 ($z_1 = z_2$)，轨迹退化为全平面任意复数。",
+              level: "warning",
+            },
+          ]
+        : [],
+      mnemonic: "等距方程中垂线，找准中点定法向。",
+    };
+  }
+
+  if (subModel === "triangle-ineq") {
+    const a1 = params.a1 ?? 3;
+    const b1 = params.b1 ?? 2;
+    const a2 = params.a2 ?? 1;
+    const b2 = params.b2 ?? 3;
+
+    const z1 = createComplex(a1, b1);
+    const z2 = createComplex(a2, b2);
+    const ineq = calcModulusTriangleInequality(z1, z2);
+
+    return {
+      quantities: [
+        {
+          label: "模长 $|z_1|$",
+          symbol: "|z_1|",
+          value: ineq.mod1.toFixed(2),
+        },
+        {
+          label: "模长 $|z_2|$",
+          symbol: "|z_2|",
+          value: ineq.mod2.toFixed(2),
+        },
+        {
+          label: "和的模长 $|z_1 + z_2|$",
+          symbol: "|z_1 + z_2|",
+          value: ineq.modSum.toFixed(2),
+          unit: "实际对角线长",
+        },
+        {
+          label: "理论下界 $||z_1| - |z_2||$",
+          symbol: "||z_1| - |z_2||",
+          value: ineq.lowerBound.toFixed(2),
+          unit: "反向共线时取等",
+        },
+        {
+          label: "理论上界 $|z_1| + |z_2|$",
+          symbol: "|z_1| + |z_2|",
+          value: ineq.upperBound.toFixed(2),
+          unit: "同向共线时取等",
+        },
+      ],
+      theorems: [
+        {
+          name: "复数模的三角不等式",
+          latex: "||z_1| - |z_2|| \\le |z_1 \\pm z_2| \\le |z_1| + |z_2|",
+          note: "同向共线时取右侧等号；反向共线时取左侧等号。",
+          level: "core",
+        },
+      ],
+      gaokaoPoints: [
+        {
+          text: "【高考模长极值秒杀】利用三角不等式可以直接对 |z₁ + z₂| 或 |z₁ - z₂| 放缩求解最大/最小值，无需建系消元。",
+          importance: "gaokao",
+        },
+      ],
+      warnings: [],
+      mnemonic: "两边之差小于第三边，两边之和大于第三边。",
+    };
+  }
+
+  // 默认 circle
   const z0x = params.z0x ?? 3.0;
   const z0y = params.z0y ?? 4.0;
   const radius = params.radius ?? 2.0;

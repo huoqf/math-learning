@@ -177,3 +177,69 @@ export function calcCircleLocusExtrema(
     centerDist,
   };
 }
+
+/** 计算两复数 z1, z2 的垂直平分线几何参数及距离 */
+export function calcPerpBisectorLocus(
+  z1: ComplexNumber,
+  z2: ComplexNumber,
+): {
+  midPoint: ComplexNumber;
+  normalDir: ComplexNumber;
+  dist: number;
+  valid: boolean;
+} {
+  const diff = subComplex(z2, z1);
+  const dist = modulus(diff);
+  if (dist < 1e-9) {
+    return {
+      midPoint: z1,
+      normalDir: { re: 0, im: 1 },
+      dist: 0,
+      valid: false,
+    };
+  }
+  const midPoint: ComplexNumber = {
+    re: (z1.re + z2.re) / 2,
+    im: (z1.im + z2.im) / 2,
+  };
+  // 法方向（与 z2-z1 垂直，即逆时针旋转 90° 的单位向量）
+  const normalDir: ComplexNumber = {
+    re: -diff.im / dist,
+    im: diff.re / dist,
+  };
+  return {
+    midPoint,
+    normalDir,
+    dist,
+    valid: true,
+  };
+}
+
+/** 计算两复数模的三角不等式范围 ||z1|-|z2|| <= |z1±z2| <= |z1|+|z2| */
+export function calcModulusTriangleInequality(
+  z1: ComplexNumber,
+  z2: ComplexNumber,
+): {
+  mod1: number;
+  mod2: number;
+  modSum: number;
+  modDiff: number;
+  lowerBound: number;
+  upperBound: number;
+} {
+  const mod1 = modulus(z1);
+  const mod2 = modulus(z2);
+  const modSum = modulus(addComplex(z1, z2));
+  const modDiff = modulus(subComplex(z1, z2));
+  const lowerBound = Math.abs(mod1 - mod2);
+  const upperBound = mod1 + mod2;
+
+  return {
+    mod1,
+    mod2,
+    modSum,
+    modDiff,
+    lowerBound,
+    upperBound,
+  };
+}

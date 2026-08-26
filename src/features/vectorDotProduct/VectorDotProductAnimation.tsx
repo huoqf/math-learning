@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -25,7 +25,7 @@ export function VectorDotProductAnimation() {
   // 典型预设 key
   const [presetKey, setPresetKey] = useState<string>("free");
 
-  // 本地参数状态 (xa, ya, xb, yb)
+  // 本地参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
   }));
@@ -42,7 +42,7 @@ export function VectorDotProductAnimation() {
     yRange: [-4.5, 4.5],
   });
 
-  // 典型预设黄金 2x2 定义
+  // 典型预设定义
   const presetsByMode = useMemo(() => {
     return {
       defProj: [
@@ -50,16 +50,19 @@ export function VectorDotProductAnimation() {
         {
           key: "perpendicular",
           label: "正交垂直 (90°)",
+          formula: "\\vec{a} \\perp \\vec{b}",
           description: "投影数量为0",
         },
         {
           key: "collinearSame",
           label: "同向共线 (0°)",
+          formula: "\\vec{a} \\uparrow\\!\\uparrow \\vec{b}",
           description: "投影等于模长",
         },
         {
           key: "obtuseAngle",
           label: "钝角投影 (120°)",
+          formula: "\\theta = 120^\\circ",
           description: "投影数量为负",
         },
       ],
@@ -67,18 +70,21 @@ export function VectorDotProductAnimation() {
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
           key: "orthogonalTest",
-          label: "垂直判定",
-          description: "x1x2+y1y2=0",
+          label: "垂直充要判定",
+          formula: "x_1x_2+y_1y_2=0",
+          description: "法向正交",
         },
         {
           key: "equalNorm60",
           label: "等模夹角 (60°)",
+          formula: "|a|=|b|",
           description: "a·b=|a|²/2",
         },
         {
           key: "oppositeCollinear",
           label: "反向共线 (180°)",
-          description: "a·b=-|a||b|",
+          formula: "a·b = -|a||b|",
+          description: "取极小值",
         },
       ],
       polarization: [
@@ -86,16 +92,19 @@ export function VectorDotProductAnimation() {
         {
           key: "equalSides",
           label: "等腰中线垂直",
-          description: "|OA|=|OB|",
+          formula: "|OA|=|OB|",
+          description: "中线与底边垂直",
         },
         {
           key: "rightHypotenuse",
           label: "直角斜边中线",
-          description: "|OM|=|MA|",
+          formula: "|OM|=|MA|",
+          description: "数量积为0",
         },
         {
           key: "collinearExtrema",
           label: "共线极值构型",
+          formula: "A, O, B \\text{ 共线}",
           description: "中线与边重合",
         },
       ],
@@ -110,61 +119,91 @@ export function VectorDotProductAnimation() {
     setPresetKey("free");
   };
 
-  // 应用典型预设
+  // 应用典型预设（支持参数降维锁定）
   const handlePresetChange = (key: string) => {
     setPresetKey(key);
     if (key === "free") return;
 
     if (studyMode === "defProj") {
       if (key === "perpendicular") {
-        setParams({ xa: 4, ya: 0, xb: 0, yb: 3 });
+        setParams((p) => ({ ...p, normA: 4, normB: 3, thetaDeg: 90 }));
       } else if (key === "collinearSame") {
-        setParams({ xa: 4, ya: 0, xb: 2.5, yb: 0 });
+        setParams((p) => ({ ...p, normA: 4, normB: 2.5, thetaDeg: 0 }));
       } else if (key === "obtuseAngle") {
-        setParams({ xa: 4, ya: 0, xb: -2, yb: 3.46 });
+        setParams((p) => ({ ...p, normA: 4, normB: 3.5, thetaDeg: 120 }));
       }
     } else if (studyMode === "properties") {
       if (key === "orthogonalTest") {
-        setParams({ xa: 3, ya: 2, xb: -2, yb: 3 });
+        setParams((p) => ({ ...p, xa: 3, ya: 2, xb: -2, yb: 3 }));
       } else if (key === "equalNorm60") {
-        setParams({ xa: 4, ya: 0, xb: 2, yb: 3.46 });
+        setParams((p) => ({ ...p, xa: 4, ya: 0, xb: 2, yb: 3.46 }));
       } else if (key === "oppositeCollinear") {
-        setParams({ xa: 4, ya: 0, xb: -3, yb: 0 });
+        setParams((p) => ({ ...p, xa: 4, ya: 0, xb: -3, yb: 0 }));
       }
     } else if (studyMode === "polarization") {
       if (key === "equalSides") {
-        setParams({ xa: 3, ya: 2, xb: 2, yb: 3 });
+        setParams((p) => ({ ...p, xa: 3, ya: 2, xb: 2, yb: 3 }));
       } else if (key === "rightHypotenuse") {
-        setParams({ xa: 4, ya: 0, xb: 0, yb: 3 });
+        setParams((p) => ({ ...p, xa: 4, ya: 0, xb: 0, yb: 3 }));
       } else if (key === "collinearExtrema") {
-        setParams({ xa: 4, ya: 0, xb: -2, yb: 0 });
+        setParams((p) => ({ ...p, xa: 4, ya: 0, xb: -2, yb: 0 }));
       }
     }
   };
 
   // 参数更新（切回 free）
-  const handleParamChange = (key: string, value: number) => {
-    setPresetKey("free");
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      setParams((prev) => {
+        const next = { ...prev, [key]: value };
+        // 如果在 defProj 模式下调节极坐标参数，同步更新笛卡尔坐标
+        if (studyMode === "defProj") {
+          const rA = next.normA ?? 4;
+          const rB = next.normB ?? 3.5;
+          const th = ((next.thetaDeg ?? 60) * Math.PI) / 180;
+          next.xa = rA;
+          next.ya = 0;
+          next.xb = Math.round(rB * Math.cos(th) * 10) / 10;
+          next.yb = Math.round(rB * Math.sin(th) * 10) / 10;
+        }
+        return next;
+      });
+    },
+    [studyMode],
+  );
 
-  // 批量更新（拖拽时使用）
-  const handleBatchParamsChange = (updates: Record<string, number>) => {
-    setPresetKey("free");
-    setParams((prev) => ({
-      ...prev,
-      ...updates,
-    }));
-  };
+  // 批量更新（画布拖拽时使用）
+  const handleBatchParamsChange = useCallback(
+    (updates: Record<string, number>) => {
+      if (presetKey !== "free") {
+        setPresetKey("free");
+      }
+      setParams((prev) => {
+        const next = { ...prev, ...updates };
+        if (
+          studyMode === "defProj" &&
+          (updates.xa !== undefined || updates.xb !== undefined)
+        ) {
+          const rA = Math.hypot(next.xa, next.ya);
+          const rB = Math.hypot(next.xb, next.yb);
+          const dot = next.xa * next.xb + next.ya * next.yb;
+          const cosVal =
+            rA > 1e-4 && rB > 1e-4
+              ? Math.max(-1, Math.min(1, dot / (rA * rB)))
+              : 1;
+          next.normA = Math.round(rA * 10) / 10;
+          next.normB = Math.round(rB * 10) / 10;
+          next.thetaDeg = Math.round((Math.acos(cosVal) * 180) / Math.PI);
+        }
+        return next;
+      });
+    },
+    [presetKey, studyMode],
+  );
 
   // 重置参数
   const handleReset = () => {
-    setParams({
-      ...defaultParams,
-    });
+    setParams({ ...defaultParams });
     setPresetKey("free");
   };
 
@@ -175,11 +214,11 @@ export function VectorDotProductAnimation() {
         return {
           condition: "两共起点向量 a 与 b，夹角 θ ∈ [0, π]。",
           question:
-            "拖动向量 b 观察：当 θ 分别为锐角、直角、钝角时，垂足 H 与投影数量正负有什么规律？",
+            "拖动夹角滑块观察：当 θ 分别为锐角、直角、钝角时，垂足 H 与投影数量正负有什么规律？",
         };
       case "properties":
         return {
-          condition: "由坐标定义 a=(x1, y1), b=(x2, y2)。",
+          condition: "由坐标定义 a=(x₁, y₁), b=(x₂, y₂)。",
           question:
             "两向量垂直时坐标满足什么等式？与向量共线的坐标充要条件有何本质区别？",
         };
@@ -199,23 +238,41 @@ export function VectorDotProductAnimation() {
     });
   }, [params, studyMode]);
 
-  // 左屏 ParamControl 参数配置
+  // 左屏 ParamControl 参数配置 (根据模式实现真正降维)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    return Object.entries(paramMeta).map(([key, meta]) => ({
-      key,
-      label: meta.label,
-      labelFormula: meta.labelFormula,
-      value: params[key] ?? meta.defaultValue ?? 0,
-      min: meta.min,
-      max: meta.max,
-      step: meta.step ?? 0.1,
-      description: meta.description,
-      descriptionFormula: meta.descriptionFormula,
-      importance: meta.importance,
-      marks: meta.marks,
-      group: meta.group,
-    }));
-  }, [params]);
+    let activeKeys: string[] = [];
+
+    if (studyMode === "defProj") {
+      if (presetKey !== "free") {
+        // 预设锁定角度，仅开放模长调节
+        activeKeys = ["normA", "normB"];
+      } else {
+        activeKeys = ["normA", "normB", "thetaDeg"];
+      }
+    } else {
+      activeKeys = ["xa", "ya", "xb", "yb"];
+    }
+
+    return activeKeys
+      .filter((key) => key in paramMeta)
+      .map((key) => {
+        const meta = paramMeta[key];
+        return {
+          key,
+          label: meta.label,
+          labelFormula: meta.labelFormula,
+          value: params[key] ?? meta.defaultValue ?? 0,
+          min: meta.min,
+          max: meta.max,
+          step: meta.step ?? 0.1,
+          description: meta.description,
+          descriptionFormula: meta.descriptionFormula,
+          importance: meta.importance,
+          marks: meta.marks,
+          group: meta.group,
+        };
+      });
+  }, [params, studyMode, presetKey]);
 
   // 计算中屏顶端悬浮的 KaTeX 动态公式（带色彩 Token 绑定）
   const topFormulaLatex = useMemo(() => {
@@ -257,14 +314,14 @@ export function VectorDotProductAnimation() {
         <LeftPanel>
           {/* 1. 模式选择 Section */}
           <LeftPanelSection
-            title="研究模式"
+            title="探究专题模式"
             subtitle="选择平面向量数量积研讨主题"
           >
             <SelectGrid
               items={[
-                { key: "defProj", label: "几何定义与投影" },
-                { key: "properties", label: "坐标与模长垂直" },
-                { key: "polarization", label: "极化恒等式 (高考极值)" },
+                { key: "defProj", label: "几何定义与投影 (|a|, |b|, θ)" },
+                { key: "properties", label: "坐标运算与垂直 (x₁, y₁, x₂, y₂)" },
+                { key: "polarization", label: "极化恒等式 (高考极值模型)" },
               ]}
               value={studyMode}
               onChange={(k) =>
@@ -275,7 +332,7 @@ export function VectorDotProductAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 典型构型预设 (2x2 黄金规范) */}
+          {/* 2. 典型构型预设 (实现参数降维) */}
           <LeftPanelSection
             title="典型构型预设"
             subtitle="一键切换高考经典构型"
@@ -285,15 +342,13 @@ export function VectorDotProductAnimation() {
               value={presetKey}
               onChange={handlePresetChange}
               variant="filled"
+              color="primary"
               columns={2}
             />
           </LeftPanelSection>
 
           {/* 3. 参数调节 Section (按 group 对象化聚合) */}
-          <LeftPanelSection
-            title="向量坐标调节"
-            subtitle="拖动滑块或画布点 A、B"
-          >
+          <LeftPanelSection title="参数调节" subtitle="拖动滑块或画布控制点">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -301,12 +356,12 @@ export function VectorDotProductAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 教学引导与探究问题 (置于左屏最底部辅助区) */}
+          {/* 4. 教学引导与探究问题 (规范排版，接入 KatexFormula) */}
           <LeftPanelSection
-            title="教学引导与探究"
+            title="教学探究引导"
             subtitle="带着核心问题动手实验"
           >
-            <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-lg p-2.5 text-[11px] space-y-1.5 leading-relaxed">
+            <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-lg p-2.5 text-xs space-y-2 text-neutral-600 leading-relaxed">
               <div className="flex items-start gap-1.5">
                 <span className="inline-block px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 font-semibold text-[10px] shrink-0">
                   基础条件

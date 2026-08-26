@@ -10,6 +10,8 @@ import {
   conjugate,
   formatComplexLatex,
   calcCircleLocusExtrema,
+  calcPerpBisectorLocus,
+  calcModulusTriangleInequality,
 } from "./complex";
 
 describe("complex math pure functions", () => {
@@ -60,5 +62,27 @@ describe("complex math pure functions", () => {
     expect(res.centerDist).toBeCloseTo(5);
     expect(res.minDist).toBeCloseTo(3); // 5 - 2
     expect(res.maxDist).toBeCloseTo(7); // 5 + 2
+  });
+
+  it("should calculate perpendicular bisector locus correctly", () => {
+    const z1 = createComplex(3, 1);
+    const z2 = createComplex(-1, 3);
+
+    const res = calcPerpBisectorLocus(z1, z2);
+    expect(res.valid).toBe(true);
+    expect(res.midPoint).toEqual({ re: 1, im: 2 });
+    expect(res.dist).toBeCloseTo(Math.hypot(-4, 2));
+  });
+
+  it("should calculate modulus triangle inequality range correctly", () => {
+    const z1 = createComplex(3, 0);
+    const z2 = createComplex(0, 4);
+
+    const res = calcModulusTriangleInequality(z1, z2);
+    expect(res.mod1).toBeCloseTo(3);
+    expect(res.mod2).toBeCloseTo(4);
+    expect(res.modSum).toBeCloseTo(5);
+    expect(res.lowerBound).toBeCloseTo(1); // |3 - 4|
+    expect(res.upperBound).toBeCloseTo(7); // 3 + 4
   });
 });

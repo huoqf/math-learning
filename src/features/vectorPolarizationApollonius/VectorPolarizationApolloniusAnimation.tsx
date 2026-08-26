@@ -1,9 +1,4 @@
-/**
- * src/features/vectorPolarizationApollonius/VectorPolarizationApolloniusAnimation.tsx
- * 向量极化恒等式与阿波罗尼斯圆动画编排主页面
- */
-
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -68,15 +63,23 @@ export function VectorPolarizationApolloniusAnimation() {
   };
 
   // 参数更新（手动调节或拖拽时自动回归自由探究）
-  const handleParamChange = (key: string, value: number) => {
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setParams((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }, []);
+
+  // 拖拽动点时的解耦回调
+  const handleDragParamChange = useCallback((key: string, value: number) => {
     setPreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
-  };
+  }, []);
 
-  // 典型预设切换处理器（黄金 2×2）
+  // 典型预设切换处理器（实现参数降维与锁定）
   const handlePresetSelect = (presetKey: string) => {
     setPreset(presetKey);
     if (presetKey === "free") return;
@@ -109,7 +112,6 @@ export function VectorPolarizationApolloniusAnimation() {
       }
     } else if (studyMode === "apollonius") {
       if (presetKey === "doubleRatio") {
-        // 2 倍比标准阿圆
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
@@ -117,7 +119,6 @@ export function VectorPolarizationApolloniusAnimation() {
           pointAngle: 45,
         }));
       } else if (presetKey === "degenerate") {
-        // 退化中垂线 λ = 1.0
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
@@ -125,7 +126,6 @@ export function VectorPolarizationApolloniusAnimation() {
           pointAngle: 90,
         }));
       } else if (presetKey === "halfRatio") {
-        // 0.5 倍比阿圆
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
@@ -136,7 +136,6 @@ export function VectorPolarizationApolloniusAnimation() {
     } else {
       // combined 模式
       if (presetKey === "minPoint") {
-        // 数量积最小值点 (内分点 D, 角度 0° 或 180°)
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
@@ -144,7 +143,6 @@ export function VectorPolarizationApolloniusAnimation() {
           pointAngle: 0,
         }));
       } else if (presetKey === "maxPoint") {
-        // 数量积最大值点 (外分点 E, 角度 180° 或 0°)
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
@@ -152,7 +150,6 @@ export function VectorPolarizationApolloniusAnimation() {
           pointAngle: 180,
         }));
       } else if (presetKey === "orthogonal") {
-        // 正交状态 (θ 处于垂直上方)
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
@@ -169,52 +166,93 @@ export function VectorPolarizationApolloniusAnimation() {
     setParams({ ...defaultParams });
   };
 
-  // 典型预设选项（黄金 2×2 对称网格）
+  // 典型预设选项
   const presetItems = useMemo(() => {
     if (studyMode === "polarization") {
       return [
-        { key: "free", label: "自由探究", formula: "\\text{全参数开放}" },
-        { key: "equilateral", label: "正三角形", formula: "\\triangle ABC" },
+        { key: "free", label: "自由探究", description: "全参数开放" },
+        {
+          key: "equilateral",
+          label: "正三角形",
+          formula: "\\triangle ABC",
+          description: "边长等于6",
+        },
         {
           key: "rightAngle",
           label: "直角正交",
           formula: "\\vec{a} \\perp \\vec{b}",
+          description: "数量积为0",
         },
-        { key: "obtuseExtrema", label: "钝角构型", formula: "|AM| < |BM|" },
+        {
+          key: "obtuseExtrema",
+          label: "钝角构型",
+          formula: "|AM| < |BM|",
+          description: "数量积为负",
+        },
       ];
     }
     if (studyMode === "apollonius") {
       return [
-        { key: "free", label: "自由探究", formula: "\\text{全参数开放}" },
-        { key: "doubleRatio", label: "2倍比阿圆", formula: "\\lambda = 2.0" },
-        { key: "degenerate", label: "中垂线退化", formula: "\\lambda = 1.0" },
-        { key: "halfRatio", label: "0.5倍比圆", formula: "\\lambda = 0.5" },
+        { key: "free", label: "自由探究", description: "全参数开放" },
+        {
+          key: "doubleRatio",
+          label: "2倍比阿圆",
+          formula: "\\lambda = 2.0",
+          description: "经典定比轨迹",
+        },
+        {
+          key: "degenerate",
+          label: "中垂线退化",
+          formula: "\\lambda = 1.0",
+          description: "直线轨迹",
+        },
+        {
+          key: "halfRatio",
+          label: "0.5倍比圆",
+          formula: "\\lambda = 0.5",
+          description: "对称圆轨迹",
+        },
       ];
     }
     return [
-      { key: "free", label: "自由探究", formula: "\\text{全参数开放}" },
-      { key: "minPoint", label: "数量积最小", formula: "P = D" },
-      { key: "maxPoint", label: "数量积最大", formula: "P = E" },
+      { key: "free", label: "自由探究", description: "全参数开放" },
+      {
+        key: "minPoint",
+        label: "数量积最小",
+        formula: "P = D",
+        description: "内分点极小值",
+      },
+      {
+        key: "maxPoint",
+        label: "数量积最大",
+        formula: "P = E",
+        description: "外分点极大值",
+      },
       {
         key: "orthogonal",
         label: "零数量积",
         formula: "\\vec{PA} \\perp \\vec{PB}",
+        description: "正交状态",
       },
     ];
   }, [studyMode]);
 
-  // 声明式参数配置 (按模式动态过滤参数，铁律 3 & 铁律 8)
+  // 声明式参数配置 (按模式动态降维与过滤参数)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<
-      string,
-      (keyof VectorPolarizationApolloniusParams)[]
-    > = {
-      polarization: ["bcLength", "pointX", "pointY"],
-      apollonius: ["bcLength", "lambda", "pointAngle"],
-      combined: ["bcLength", "lambda", "pointAngle"],
-    };
+    let activeKeys: (keyof VectorPolarizationApolloniusParams)[] = [];
 
-    const activeKeys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    if (studyMode === "polarization") {
+      activeKeys = ["bcLength", "pointX", "pointY"];
+    } else if (studyMode === "apollonius") {
+      activeKeys = ["bcLength", "lambda", "pointAngle"];
+    } else {
+      if (preset === "minPoint" || preset === "maxPoint") {
+        // 极值状态锁定动点位置，仅开放底边长与比值
+        activeKeys = ["bcLength", "lambda"];
+      } else {
+        activeKeys = ["bcLength", "lambda", "pointAngle"];
+      }
+    }
 
     return activeKeys.map((key) => {
       const meta = paramMeta[key];
@@ -233,9 +271,9 @@ export function VectorPolarizationApolloniusAnimation() {
         marks: meta.marks,
       };
     });
-  }, [params, studyMode]);
+  }, [params, studyMode, preset]);
 
-  // 悬浮公式动态生成（三位一体色彩绑定，铁律 4C）
+  // 悬浮公式动态生成（三位一体色彩绑定）
   const formulaLatex = useMemo(() => {
     if (studyMode === "polarization") {
       return `\\vec{AB} \\cdot \\vec{AC} = \\color{${MATH_COLORS.paramPrimary}}{\\|\\vec{AM}\\|^2} - \\color{${MATH_COLORS.paramSecondary}}{\\|\\vec{BM}\\|^2}`;
@@ -258,7 +296,10 @@ export function VectorPolarizationApolloniusAnimation() {
       left={
         <LeftPanel>
           {/* 1. 模式选择 Section */}
-          <LeftPanelSection title="研究模式" subtitle="选择数形结合探讨维度">
+          <LeftPanelSection
+            title="探究专题模式"
+            subtitle="选择数形结合探讨维度"
+          >
             <SelectGrid
               items={[
                 {
@@ -268,7 +309,7 @@ export function VectorPolarizationApolloniusAnimation() {
                 },
                 {
                   key: "apollonius",
-                  label: "阿波罗尼斯圆",
+                  label: "阿波罗尼斯圆轨迹",
                   formula: "\\frac{|PA|}{|PB|}=\\lambda",
                 },
                 {
@@ -284,7 +325,7 @@ export function VectorPolarizationApolloniusAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 典型预设 Section (黄金 2×2 网格) */}
+          {/* 2. 典型预设 Section (实现参数降维) */}
           <LeftPanelSection
             title="典型构型预设"
             subtitle="一键切换高考经典特值与极值状态"
@@ -294,13 +335,14 @@ export function VectorPolarizationApolloniusAnimation() {
               value={preset}
               onChange={handlePresetSelect}
               columns={2}
-              variant="outline"
+              variant="filled"
+              color="primary"
             />
           </LeftPanelSection>
 
           {/* 3. 参数调节 Section */}
           <LeftPanelSection
-            title="参数控制台"
+            title="参数调节"
             subtitle="拖动滑块或画布控制点探究规律"
           >
             <ParamControl
@@ -308,6 +350,95 @@ export function VectorPolarizationApolloniusAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 4. 教学引导卡片 (规范排版，接入 KatexFormula) */}
+          <LeftPanelSection
+            title="教学探究引导"
+            subtitle="带着核心问题动手实验"
+          >
+            <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-lg p-2.5 text-xs space-y-2 text-neutral-600 leading-relaxed">
+              {studyMode === "polarization" && (
+                <>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【基础条件】：
+                    </span>
+                    <KatexFormula formula="M" mode="inline" /> 为底边{" "}
+                    <KatexFormula formula="BC" mode="inline" /> 中点，
+                    <KatexFormula
+                      formula="\\vec{AB} \\cdot \\vec{AC} = |\\vec{AM}|^2 - |\\vec{BM}|^2"
+                      mode="inline"
+                    />
+                    。
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【探究问题】：
+                    </span>
+                    当底边长固定时，数量积仅由中线长{" "}
+                    <KatexFormula formula="|\\vec{AM}|" mode="inline" />{" "}
+                    决定，如何用它秒杀高考模长与数量积最值？
+                  </div>
+                </>
+              )}
+              {studyMode === "apollonius" && (
+                <>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【基础条件】：
+                    </span>
+                    动点 <KatexFormula formula="P" mode="inline" />{" "}
+                    满足到两定点距离比{" "}
+                    <KatexFormula
+                      formula="|PA|/|PB| = \\lambda (\\lambda \\ne 1)"
+                      mode="inline"
+                    />
+                    。
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【探究问题】：
+                    </span>
+                    观察圆直径端点 <KatexFormula formula="D, E" mode="inline" />{" "}
+                    分别为线段 <KatexFormula formula="AB" mode="inline" />{" "}
+                    的内分点与外分点，当{" "}
+                    <KatexFormula formula="\\lambda \\to 1" mode="inline" />{" "}
+                    时轨迹如何退化为中垂线？
+                  </div>
+                </>
+              )}
+              {studyMode === "combined" && (
+                <>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【基础条件】：
+                    </span>
+                    动点 <KatexFormula formula="P" mode="inline" />{" "}
+                    在阿波罗尼斯圆上运动，求{" "}
+                    <KatexFormula
+                      formula="\\vec{PA} \\cdot \\vec{PB}"
+                      mode="inline"
+                    />{" "}
+                    的最值。
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【探究问题】：
+                    </span>
+                    利用极化恒等式化为{" "}
+                    <KatexFormula
+                      formula="|\\vec{PM}|^2 - |\\vec{MB}|^2"
+                      mode="inline"
+                    />
+                    ，当 <KatexFormula formula="P" mode="inline" /> 取在内分点{" "}
+                    <KatexFormula formula="D" mode="inline" /> 或外分点{" "}
+                    <KatexFormula formula="E" mode="inline" />{" "}
+                    时如何分别取得最小与最大值？
+                  </div>
+                </>
+              )}
+            </div>
           </LeftPanelSection>
         </LeftPanel>
       }
@@ -327,7 +458,7 @@ export function VectorPolarizationApolloniusAnimation() {
               params={params}
               scale={scale}
               vp={vp}
-              onParamChange={handleParamChange}
+              onParamChange={handleDragParamChange}
               fontScale={canvasSize.font}
               studyMode={studyMode}
             />

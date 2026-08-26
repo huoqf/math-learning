@@ -18,6 +18,7 @@ import {
   argument,
   fromPolar,
   calcCircleLocusExtrema,
+  calcPerpBisectorLocus,
 } from "@/math/complex";
 
 interface ComplexSceneProps {
@@ -27,6 +28,7 @@ interface ComplexSceneProps {
   onParamChange: (key: string, value: number) => void;
   fontScale?: (v: number) => number;
   studyMode: "plane-operations" | "multiplication-rotation" | "locus-extrema";
+  subModel?: "circle" | "perp-bisector" | "triangle-ineq";
 }
 
 export const ComplexScene: React.FC<ComplexSceneProps> = ({
@@ -36,6 +38,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
   onParamChange,
   fontScale = (v) => v,
   studyMode,
+  subModel = "circle",
 }) => {
   const toDesign = useCallback(
     (x: number, y: number) => mathToDesign(x, y, scale),
@@ -405,10 +408,10 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 模式三：复数圆轨迹与最值几何 */}
+      {/* 模式三：复数圆轨迹 / 垂直平分线 / 三角不等式几何 */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {studyMode === "locus-extrema" && (
-        <g key="mode-locus">
+      {studyMode === "locus-extrema" && subModel === "circle" && (
+        <g key="mode-locus-circle">
           {/* 轨迹圆 |z - z0| = R */}
           <circle
             cx={pCenter.x}
@@ -495,6 +498,152 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             onDrag={({ x, y }) => {
               onParamChange("wx", Math.round(x * 2) / 2);
               onParamChange("wy", Math.round(y * 2) / 2);
+            }}
+          />
+        </g>
+      )}
+
+      {studyMode === "locus-extrema" &&
+        subModel === "perp-bisector" &&
+        (() => {
+          const pBisector = calcPerpBisectorLocus(z1, z2);
+          const lineLen = 12;
+          const ptA = toDesign(
+            pBisector.midPoint.re + pBisector.normalDir.re * lineLen,
+            pBisector.midPoint.im + pBisector.normalDir.im * lineLen,
+          );
+          const ptB = toDesign(
+            pBisector.midPoint.re - pBisector.normalDir.re * lineLen,
+            pBisector.midPoint.im - pBisector.normalDir.im * lineLen,
+          );
+          return (
+            <g key="mode-locus-bisector">
+              {/* 定点连线 */}
+              <line
+                x1={p1.x}
+                y1={p1.y}
+                x2={p2.x}
+                y2={p2.y}
+                stroke={withAlpha(MATH_COLORS.axis, 0.4)}
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+              />
+              {/* 垂直平分线 */}
+              <line
+                x1={ptA.x}
+                y1={ptA.y}
+                x2={ptB.x}
+                y2={ptB.y}
+                stroke={MATH_COLORS.paramPrimary}
+                strokeWidth={2.5}
+              />
+              {/* 中点 M */}
+              <MathPoint
+                cx={pBisector.midPoint.re}
+                cy={pBisector.midPoint.im}
+                scale={scale}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramTertiary}
+                variant="solid"
+                r={3.8}
+                label="M (中点)"
+                labelPosition="right"
+              />
+              {/* 定点 Z1 */}
+              <InteractivePoint
+                cx={z1.re}
+                cy={z1.im}
+                scale={scale}
+                vp={vp}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramPrimary}
+                r={7}
+                label="Z₁"
+                onDrag={({ x, y }) => {
+                  onParamChange("a1", Math.round(x * 2) / 2);
+                  onParamChange("b1", Math.round(y * 2) / 2);
+                }}
+              />
+              {/* 定点 Z2 */}
+              <InteractivePoint
+                cx={z2.re}
+                cy={z2.im}
+                scale={scale}
+                vp={vp}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramSecondary}
+                r={7}
+                label="Z₂"
+                onDrag={({ x, y }) => {
+                  onParamChange("a2", Math.round(x * 2) / 2);
+                  onParamChange("b2", Math.round(y * 2) / 2);
+                }}
+              />
+            </g>
+          );
+        })()}
+
+      {studyMode === "locus-extrema" && subModel === "triangle-ineq" && (
+        <g key="mode-locus-triangle-ineq">
+          {/* z1 向量 */}
+          <VectorArrow
+            from={[0, 0]}
+            to={[z1.re, z1.im]}
+            scale={scale}
+            fontScale={fontScale}
+            color={MATH_COLORS.paramPrimary}
+            strokeWidth={2.5}
+            label="z₁"
+          />
+          {/* z2 平移向量接在 z1 之后 */}
+          <VectorArrow
+            from={[z1.re, z1.im]}
+            to={[zSum.re, zSum.im]}
+            scale={scale}
+            fontScale={fontScale}
+            color={MATH_COLORS.paramSecondary}
+            strokeWidth={2}
+            strokeDasharray="4 3"
+            label="z₂ (平移)"
+          />
+          {/* 和向量 z1 + z2 作为三角形第三边 */}
+          <VectorArrow
+            from={[0, 0]}
+            to={[zSum.re, zSum.im]}
+            scale={scale}
+            fontScale={fontScale}
+            color={MATH_COLORS.paramTertiary}
+            strokeWidth={3}
+            label="z₁ + z₂"
+          />
+          {/* 定点 Z1 */}
+          <InteractivePoint
+            cx={z1.re}
+            cy={z1.im}
+            scale={scale}
+            vp={vp}
+            fontScale={fontScale}
+            color={MATH_COLORS.paramPrimary}
+            r={7}
+            label="Z₁"
+            onDrag={({ x, y }) => {
+              onParamChange("a1", Math.round(x * 2) / 2);
+              onParamChange("b1", Math.round(y * 2) / 2);
+            }}
+          />
+          {/* 定点 Z2 */}
+          <InteractivePoint
+            cx={z2.re}
+            cy={z2.im}
+            scale={scale}
+            vp={vp}
+            fontScale={fontScale}
+            color={MATH_COLORS.paramSecondary}
+            r={7}
+            label="Z₂"
+            onDrag={({ x, y }) => {
+              onParamChange("a2", Math.round(x * 2) / 2);
+              onParamChange("b2", Math.round(y * 2) / 2);
             }}
           />
         </g>
