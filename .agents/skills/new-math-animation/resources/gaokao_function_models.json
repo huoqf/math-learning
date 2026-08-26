@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "高中数学新高考高频函数模型字典（用于 new-math-animation 快速查表调用与定义域保护）",
+  "models": {
+    "cubic_standard": {
+      "name": "三次多项式",
+      "formula": "x^3 - x - 2 = 0",
+      "formula_latex": "f(x) = x^3 - x - 2",
+      "category": "algebra_polynomial",
+      "default_domain": [-2.0, 4.0],
+      "default_range": [-4.5, 4.5],
+      "default_interval": [1.0, 2.0],
+      "domain_protection": {
+        "minA": -2.0,
+        "maxA": 3.0,
+        "minB": -1.0,
+        "maxB": 4.0
+      },
+      "analytical_zero": 1.5214,
+      "monotonicity": "在 [1, 2] 上严格单调递增 (f'(x) = 3x^2 - 1 > 0)",
+      "gaokao_focus": "代数单调增模型与二分逼近基本收敛流程"
+    },
+    "log_mixed_pep": {
+      "name": "对数混合 (人教A版必修一例题)",
+      "formula": "\\ln x + 2x - 6 = 0",
+      "formula_latex": "f(x) = \\ln x + 2x - 6",
+      "category": "transcendental_log",
+      "default_domain": [0.2, 5.0],
+      "default_range": [-4.5, 4.5],
+      "default_interval": [2.0, 3.0],
+      "domain_protection": {
+        "minA": 0.2,
+        "maxA": 3.5,
+        "minN": 0.5,
+        "maxN": 5.0
+      },
+      "analytical_zero": 2.5362,
+      "monotonicity": "在 (0, +\\infty) 上严格单调递增 (增+增=增)",
+      "gaokao_focus": "人教A版必修一课本例题，数形拆分 y=ln x 与 y=6-2x 交点估值"
+    },
+    "exp_mixed_gaokao": {
+      "name": "指数混合 (新高考高频题型)",
+      "formula": "2^x + 3x - 7 = 0",
+      "formula_latex": "f(x) = 2^x + 3x - 7",
+      "category": "transcendental_exp",
+      "default_domain": [-1.0, 4.0],
+      "default_range": [-4.5, 4.5],
+      "default_interval": [1.0, 2.0],
+      "domain_protection": {
+        "minA": -1.0,
+        "maxA": 3.0,
+        "minB": 0.0,
+        "maxB": 4.0
+      },
+      "analytical_zero": 1.4312,
+      "monotonicity": "在 R 上严格单调递增 (指数增+线性增)",
+      "gaokao_focus": "指对幂增+增=增单调性判断与整数端点区间定位"
+    },
+    "counter_example_multizero": {
+      "name": "充分非必要反例 (同号多零点)",
+      "formula": "x^2 - 2x = 0",
+      "formula_latex": "f(x) = x^2 - 2x",
+      "category": "theorem_boundary",
+      "default_domain": [-3.0, 5.0],
+      "default_range": [-4.5, 4.5],
+      "default_interval": [-1.0, 3.0],
+      "domain_protection": {
+        "minA": -3.0,
+        "maxA": 3.0,
+        "minB": -1.0,
+        "maxB": 5.0
+      },
+      "analytical_zeros": [0.0, 2.0],
+      "gaokao_focus": "零点存在定理中端点异号为充分非必要条件的深刻辨析"
+    },
+    "isomorphism_ex_x": {
+      "name": "同构放缩基准模型",
+      "formula": "e^x - x - 1 \\ge 0",
+      "formula_latex": "f(x) = e^x - x - 1",
+      "category": "derivative_isomorphism",
+      "default_domain": [-3.0, 3.0],
+      "default_range": [-1.0, 6.0],
+      "critical_points": [{ "x": 0, "y": 0, "type": "global_minimum" }],
+      "gaokao_focus": "高考导数压轴题第一切线不等式放缩与同构转化"
+    }
+  }
+}

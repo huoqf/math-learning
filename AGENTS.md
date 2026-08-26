@@ -185,25 +185,37 @@ const scale = useSceneScale({ vp, xRange: [-6, 6], yRange: [-4.5, 4.5] })
 />
 ```
 
-### 铁律 3：左屏控制台必须使用声明式体系
+### 铁律 3：左屏控制台必须使用声明式体系与克制设计
 
 ```tsx
 // ✅ 正确
-paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临界参数如 a=0 须配置 marks 并标明 variant: 'critical'）
+paramMeta → 由 registry 驱动 ParamControl
 // ❌ 禁止
 手写 <input type="range" />   // 散乱控件
 <select> / 原生下拉框         // 不支持 KaTeX，用按钮组替代
 新建 SidebarExtra 放简单开关  // 仅复杂自定义才用
 ```
 
-**左屏选择类控件**：模式切换、子选项选择（如不等式关系、函数类型）统一用按钮组，支持 KaTeX 公式渲染，禁止用 `<select>`。
+**1. 参数标签命名三位一体范式（含义 + 代号 + 色彩）**：
+- ❌ **严禁**只留孤立英文字母（如单纯写 $a, b, k, x_0$），导致学生无法直观理解参数控制什么；
+- ❌ **严禁**写了孤立字母又在下方硬塞一行口水话 `description`；
+- ✅ **必须**在 `labelFormula` 中直接融合**中文物理/几何含义 + 标准课标代号 + 动态语义色彩**：
+  ```ts
+  // 示例：
+  labelFormula: `\\text{区间左端点 } \\color{${MATH_COLORS.paramPrimary}}{a}`
+  labelFormula: `\\text{切点横坐标 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`
+  labelFormula: `\\text{离心率 } \\color{${MATH_COLORS.paramPrimary}}{e}`
+  ```
 
-选择控件组件：
-- `TabSwitcher`：轻量 Tab 切换（顶部模式选择），props: `tabs`/`value`/`onChange`
-- `SelectGrid`：公式按钮网格（参数/运算符/模型选择），props: `items`/`value`/`onChange`/`variant`/`color`/`columns`
-  - `fullWidth`: 某项独占一行（2+1 布局）
-  - `description`: label/formula 下方小字说明
-- ❌ 禁止手写 `<button>` + className 做选择控件
+**2. 滑块轨道刻度（`marks`）防撞车铁律**：
+- 轨道两端组件已自带 `min` / `max` 灰色端点数值；
+- ❌ **严禁**在普通连续滑块或离散整数滑块（如 $1 \le k \le 8$）上平铺密集 marks（会导致刻度文字与两端数字严重重叠重影）；
+- ✅ **仅**在存在**数学分水岭/退化临界点**（如二次项 $a=0$、极值/不可导点、$\Delta=0$、双曲线渐近线、离心率 $e=1$）时，才配置单个 `variant: 'critical'` 的关键标注。
+
+**3. 组件字段按需使用与克制留白原则（拒绝填鸭式填空）**：
+- `LeftPanelSection`：仅使用清晰的 `title`（如 `函数模型`、`参数调节`），**省略无意义的副标题 `subtitle`**（如“调节参数观察变化”等废话）；
+- `SelectGrid`：采用极简双行架构（**【加粗中文名称】+【核心 KaTeX 标准方程】**），自解释选项**省略 `description`**；
+- `ParamControl`：自解释参数直接**省略 `description`**，压缩垂直空间，让界面紧凑自然。
 
 ---
 
@@ -216,7 +228,7 @@ paramMeta → 由 registry 驱动 ParamControl（数值参数，对于退化临�
   `探究维度/模式 (TabSwitcher) → 函数/代数模型选择 (SelectGrid) → 参数调节 (ParamControl) → 启发导引 (TipCard 底部)`
 * **设计要点**：
   - 严禁盲目强加“2×2 预设网格”，避免模式、预设与函数模型层层嵌套、打架混乱；
-  - 参数随所选模型动态自适应（如切换到指数混合函数时，自动隐藏无关的高次项参数）。
+  - **模式与参数 1-to-1 动态自适应与定义域保护**：切换到不同模型时，`paramConfigs` 必须动态重新划定 `min / max / defaultValue`（例如对数模型强制约束 $a \ge 0.2$，严禁 $a \le 0$ 穿透定义域）。
 
 #### 2. 解析几何 / 立体几何专题（几何约束与参数降维动线）
 * **标准操作动线**：

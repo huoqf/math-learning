@@ -19,8 +19,10 @@ description: >
 ## ⚠️ 前置条件（写代码前必须完成）
 
 1. Read `AGENTS.md` — 铁律、禁令、组件表、颜色规范、checklist 全部在此
-2. Read `src/features/quadratic/QuadraticAnimation.tsx` — Animation 编排层参考
-3. Read `src/features/quadratic/components/QuadraticScene.tsx` — Scene 渲染层参考
+2. Read 实体黄金样板与资源库：
+   - 代数/函数模型黄金样板：`.agents/skills/new-math-animation/examples/algebra_function_model.md`
+   - 高考高频函数模型字典：`.agents/skills/new-math-animation/resources/gaokao_function_models.json`
+3. 经典参考代码：`src/features/funcZero/FuncZeroAnimation.tsx`（代数模型） / `src/features/quadratic/QuadraticAnimation.tsx`（参数二次型）
 
 未完成以上读取，禁止开始编码。
 
