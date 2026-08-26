@@ -113,6 +113,9 @@ export function buildMathQuantities(
     case "anim-derivative-transcendental":
       return buildTranscendentalPanel(params, config);
     case "anim-nike":
+    case "anim-nike-standard":
+    case "anim-nike-amgm":
+    case "anim-nike-shifted":
       return buildNikePanel(params, config);
     case "anim-quadratic":
       return buildQuadraticPanel(params, config);

@@ -61,6 +61,14 @@ import {
 import { meta as conicLineMeta } from "@/features/conicLine/meta";
 import { meta as conicParamMeta } from "@/features/conicParam/meta";
 import {
+  nikeStandardNode,
+  nikeAmgmNode,
+  nikeShiftedNode,
+  nikeStandardLoader,
+  nikeAmgmLoader,
+  nikeShiftedLoader,
+} from "@/features/nike/meta";
+import {
   inequalityBasicNode,
   inequalityBasicLoader,
 } from "@/features/inequalityBasic/meta";
@@ -413,48 +421,7 @@ const legacyEntries: RouteEntry[] = [
     },
     loader: () => import("@/features/constant/DoubleVarPage"),
   },
-  {
-    node: {
-      id: "know-func-hook",
-      title: "对勾函数 y=ax+b/x 基本性质",
-      labTitle: "对勾函数实验室",
-      chapter: "函数概念与性质",
-      module: "特殊模型函数",
-      importance: "gaokao",
-      animationIds: ["anim-nike"],
-      prerequisites: ["know-func-properties"],
-      route: "/nike-standard",
-    },
-    loader: () => import("@/features/nike/StandardPage"),
-  },
-  {
-    node: {
-      id: "know-nike-amgm",
-      title: "均值不等式与对勾函数",
-      labTitle: "均值不等式实验室",
-      chapter: "函数概念与性质",
-      module: "特殊模型函数",
-      importance: "gaokao",
-      animationIds: ["anim-nike"],
-      prerequisites: ["know-func-properties"],
-      route: "/nike-amgm",
-    },
-    loader: () => import("@/features/nike/AmgmPage"),
-  },
-  {
-    node: {
-      id: "know-nike-shifted",
-      title: "平移对勾函数与双曲型图像",
-      labTitle: "平移双曲线实验室",
-      chapter: "函数概念与性质",
-      module: "特殊模型函数",
-      importance: "gaokao",
-      animationIds: ["anim-nike"],
-      prerequisites: ["know-func-properties"],
-      route: "/nike-shifted",
-    },
-    loader: () => import("@/features/nike/ShiftedPage"),
-  },
+
   {
     node: {
       id: "know-derivative-transcendental",
@@ -781,6 +748,9 @@ export const routeEntries: RouteEntry[] = [
     node: independenceNode,
     loader: independenceLoader as RouteEntry["loader"],
   },
+  { node: nikeStandardNode, loader: nikeStandardLoader },
+  { node: nikeAmgmNode, loader: nikeAmgmLoader },
+  { node: nikeShiftedNode, loader: nikeShiftedLoader },
   // 暂未迁移的页面
   ...legacyEntries,
 ];
