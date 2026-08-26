@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -6,8 +6,10 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  SelectGrid,
   TipCard,
 } from "@/components/UI";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
@@ -18,7 +20,12 @@ import { defaultParams, paramMeta } from "@/data/registries/nike";
 export function AmgmPage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
+    a: 1.0,
+    b: 4.0,
+    x0: 2.0,
   }));
+
+  const [preset, setPreset] = useState<string>("amgm_std");
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -50,82 +57,143 @@ export function AmgmPage() {
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
+          group: meta.group,
           importance: meta.importance,
           marks: meta.marks,
         };
       });
   }, [params]);
 
-  const handleParamChange = (key: string, value: number) => {
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setPreset("free");
     setParams((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handlePresetChange = (key: string) => {
+    setPreset(key);
+    if (key === "amgm_std") {
+      setParams((p) => ({ ...p, a: 1.0, b: 4.0, h: 0, c: 0, x0: 2.0 }));
+    } else if (key === "amgm_double") {
+      setParams((p) => ({ ...p, a: 2.0, b: 8.0, h: 0, c: 0, x0: 2.0 }));
+    } else if (key === "amgm_unit") {
+      setParams((p) => ({ ...p, a: 1.0, b: 1.0, h: 0, c: 0, x0: 1.0 }));
+    }
   };
 
-  // 动态教学提示配置
-  const tipConfig = useMemo(() => {
+  // 图例配置
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
     const { a, b } = params;
-    const xMin = Math.sqrt(Math.max(1e-4, b / Math.max(1e-4, a))).toFixed(2);
-    const minVal = (2 * Math.sqrt(Math.max(0, a * b))).toFixed(2);
-    return {
-      variant: "success" as const,
-      badge: "高考核心 · 均值不等式与对勾最值联动",
-      condition: `已知正数 a = ${a.toFixed(1)}, b = ${b.toFixed(1)}，当 x > 0 时满足“一正、二定、三相等”。`,
-      question: `求函数最小值 min = 2√(ab) = ${minVal}，验证等号成立充要条件 ax = b/x 即 x = √(b/a) = ${xMin}。`,
-    };
-  }, [params.a, params.b]);
+    return [
+      {
+        label: "对勾和函数 f(x)=ax+b/x",
+        color: MATH_COLORS.function,
+        style: "solid",
+      },
+      {
+        label: `项一：y1 = ${a.toFixed(1)}x`,
+        color: MATH_COLORS.paramPrimary,
+        style: "dash",
+      },
+      {
+        label: `项二：y2 = ${b.toFixed(1)}/x`,
+        color: MATH_COLORS.paramSecondary,
+        style: "dash",
+      },
+      {
+        label: "均值等号成立极小点",
+        color: MATH_COLORS.vertexPoint,
+        style: "point",
+      },
+    ];
+  }, [params]);
+
+  const xMinVal = Math.sqrt(
+    Math.max(1e-4, params.b / Math.max(1e-4, params.a)),
+  ).toFixed(2);
+  const minValStr = (2 * Math.sqrt(Math.max(0, params.a * params.b))).toFixed(
+    2,
+  );
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="均值不等式"
-            subtitle="AM-GM 不等式的几何直观"
-          >
-            <div className="text-xs text-neutral-600 p-2.5 bg-neutral-50 rounded-lg border border-neutral-200/60 leading-relaxed space-y-1">
-              <p className="font-semibold text-neutral-800">AM-GM 定理条件：</p>
-              <p>
-                1. <b>正</b>：x &gt; 0, a &gt; 0, b &gt; 0
-              </p>
-              <p>
-                2. <b>定</b>：乘积项 (ax)·(b/x) = ab 为定值
-              </p>
-              <p>
-                3. <b>等</b>：ax = b/x 时取等号最小值
-              </p>
-            </div>
+          {/* 1. 典型均值不等式模型 */}
+          <LeftPanelSection title="均值不等式经典配凑">
+            <SelectGrid
+              items={[
+                {
+                  key: "amgm_std",
+                  label: "标准对勾配凑",
+                  formula: "x + \\frac{4}{x} \\ge 4",
+                },
+                {
+                  key: "amgm_double",
+                  label: "倍数系数模型",
+                  formula: "2x + \\frac{8}{x} \\ge 8",
+                },
+                {
+                  key: "amgm_unit",
+                  label: "单位系数模型",
+                  formula: "x + \\frac{1}{x} \\ge 2",
+                  fullWidth: true,
+                },
+              ]}
+              value={preset}
+              onChange={handlePresetChange}
+              columns={2}
+            />
           </LeftPanelSection>
-          <LeftPanelSection
-            title="动态参数调节"
-            subtitle="拖动滑块或中屏控制点探索"
-          >
+
+          {/* 2. 对象化参数调节 */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() => setParams({ ...defaultParams })}
+              onReset={() => {
+                setPreset("amgm_std");
+                setParams({ ...defaultParams, a: 1.0, b: 4.0, x0: 2.0 });
+              }}
             />
           </LeftPanelSection>
-          {/* 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
+
+          {/* 3. 教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引与等号条件" compact>
+            <TipCard variant="success">
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-success-800">
+                <span>高考核心 · 均值不等式“一正二定三相等”</span>
               </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
+              <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【初始条件】
+                    【三要素核查】
                   </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
+                  <span>① </span>
+                  <b>正</b>：
+                  <KatexFormula formula="a>0, b>0, x>0" mode="inline" />
+                  ；② <b>定</b>：积为定值{" "}
+                  <KatexFormula
+                    formula={`(ax)(\\frac{b}{x}) = ${(params.a * params.b).toFixed(1)}`}
+                    mode="inline"
+                  />
+                  ；③ <b>等</b>：当且仅当{" "}
+                  <KatexFormula formula="ax = b/x" mode="inline" />。
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【核心设问】
+                    【理论最小值】
                   </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
+                  <span>在 </span>
+                  <KatexFormula
+                    formula={`x = \\sqrt{b/a} = ${xMinVal}`}
+                    mode="inline"
+                  />
+                  <span> 处取得理论最小值 </span>
+                  <KatexFormula
+                    formula={`y_{\\min} = 2\\sqrt{ab} = ${minValStr}`}
+                    mode="inline"
+                  />
+                  <span>。拖动动点 P 逼近该处观察两项拆分高线等长。</span>
                 </div>
               </div>
             </TipCard>
@@ -150,6 +218,7 @@ export function AmgmPage() {
               fontScale={canvasSize.font}
             />
           </AnimationSvgCanvas>
+          <SceneLegend items={legendItems} />
         </div>
       }
       right={

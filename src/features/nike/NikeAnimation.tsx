@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -6,8 +6,10 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TabSwitcher,
   SelectGrid,
 } from "@/components/UI";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
@@ -23,6 +25,8 @@ export function NikeAnimation() {
   const [activeMode, setActiveMode] = useState<"standard" | "amgm" | "shifted">(
     "standard",
   );
+
+  const [preset, setPreset] = useState<string>("nike_std");
 
   // 1. Viewport 与自适应画布 (Preset: full)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -83,104 +87,249 @@ export function NikeAnimation() {
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
+          group: meta.group,
           importance: meta.importance,
           marks: meta.marks,
         };
       });
   }, [params, activeMode]);
 
-  const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
+  // 6. 模式与预设联动
+  const handleModeChange = (newMode: string) => {
+    const m = newMode as "standard" | "amgm" | "shifted";
+    setActiveMode(m);
+    if (m === "standard") {
+      setPreset("nike_std");
+      setParams((p) => ({ ...p, a: 1.0, b: 4.0, h: 0, c: 0, x0: 3.0 }));
+    } else if (m === "amgm") {
+      setPreset("amgm_std");
+      setParams((p) => ({ ...p, a: 1.0, b: 4.0, h: 0, c: 0, x0: 2.0 }));
+    } else if (m === "shifted") {
+      setPreset("shifted_quad");
+      setParams((p) => ({ ...p, a: 1.0, b: 4.0, h: 1.0, c: 2.0, x0: 3.0 }));
+    }
   };
 
-  const handleReset = () => {
-    setParams({ ...defaultParams });
+  const handlePresetChange = (key: string) => {
+    setPreset(key);
+    if (key === "nike_std") {
+      setParams((p) => ({ ...p, a: 1.0, b: 4.0, h: 0, c: 0, x0: 3.0 }));
+    } else if (key === "streamer_std") {
+      setParams((p) => ({ ...p, a: 1.0, b: -4.0, h: 0, c: 0, x0: 3.0 }));
+    } else if (key === "inverse_std") {
+      setParams((p) => ({ ...p, a: 0.0, b: 4.0, h: 0, c: 0, x0: 3.0 }));
+    } else if (key === "amgm_std") {
+      setParams((p) => ({ ...p, a: 1.0, b: 4.0, h: 0, c: 0, x0: 2.0 }));
+    } else if (key === "amgm_double") {
+      setParams((p) => ({ ...p, a: 2.0, b: 8.0, h: 0, c: 0, x0: 2.0 }));
+    } else if (key === "amgm_unit") {
+      setParams((p) => ({ ...p, a: 1.0, b: 1.0, h: 0, c: 0, x0: 1.0 }));
+    } else if (key === "shifted_quad") {
+      setParams((p) => ({ ...p, a: 1.0, b: 4.0, h: 1.0, c: 2.0, x0: 3.0 }));
+    } else if (key === "shifted_linear") {
+      setParams((p) => ({ ...p, a: 0.0, b: 3.0, h: 2.0, c: 1.0, x0: 4.0 }));
+    } else if (key === "shifted_streamer") {
+      setParams((p) => ({ ...p, a: 1.0, b: -4.0, h: 2.0, c: 0.0, x0: 4.0 }));
+    }
   };
+
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setPreset("free");
+    setParams((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleReset = () => {
+    handleModeChange(activeMode);
+  };
+
+  // 图例配置
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const { a, b, h, c } = params;
+    const isNike = a * b > 0;
+    if (activeMode === "shifted") {
+      return [
+        {
+          label: isNike
+            ? "平移对勾曲线"
+            : a * b < 0
+              ? "平移飘带曲线"
+              : "平移退化曲线",
+          color: isNike
+            ? MATH_COLORS.function
+            : MATH_COLORS.functionTransformed,
+          style: "solid",
+        },
+        {
+          label: `垂直渐近线 x = ${h.toFixed(1)}`,
+          color: MATH_COLORS.asymptote,
+          style: "dash",
+        },
+        {
+          label: `斜渐近线 y = ${a.toFixed(1)}(x-${h.toFixed(1)})+${c.toFixed(1)}`,
+          color: MATH_COLORS.asymptote,
+          style: "dash",
+        },
+        {
+          label: `中心 C(${h.toFixed(1)}, ${c.toFixed(1)})`,
+          color: MATH_COLORS.focusPoint,
+          style: "point",
+        },
+      ];
+    }
+    if (activeMode === "amgm") {
+      return [
+        {
+          label: "和函数 f(x)=ax+b/x",
+          color: MATH_COLORS.function,
+          style: "solid",
+        },
+        {
+          label: `y1 = ${a.toFixed(1)}x`,
+          color: MATH_COLORS.paramPrimary,
+          style: "dash",
+        },
+        {
+          label: `y2 = ${b.toFixed(1)}/x`,
+          color: MATH_COLORS.paramSecondary,
+          style: "dash",
+        },
+        {
+          label: "均值等号极小点",
+          color: MATH_COLORS.vertexPoint,
+          style: "point",
+        },
+      ];
+    }
+    return [
+      {
+        label: isNike
+          ? "对勾函数曲线"
+          : a * b < 0
+            ? "双曲飘带曲线"
+            : "退化函数图象",
+        color: isNike
+          ? MATH_COLORS.function
+          : a * b < 0
+            ? MATH_COLORS.functionTransformed
+            : MATH_COLORS.degeneracy,
+        style: "solid",
+      },
+      {
+        label: "垂直渐近线 x = 0",
+        color: MATH_COLORS.asymptote,
+        style: "dash",
+      },
+      {
+        label: `斜渐近线 y = ${a.toFixed(1)}x`,
+        color: MATH_COLORS.asymptote,
+        style: "dash",
+      },
+      {
+        label: "特征极值点",
+        color: MATH_COLORS.vertexPoint,
+        style: "point",
+      },
+    ];
+  }, [params, activeMode]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 模式选择区 */}
-          <LeftPanelSection title="模式选择" subtitle="切换高考核心场景模式">
-            <SelectGrid
-              items={[
-                {
-                  key: "standard",
-                  label: "基本性质",
-                  formula: "y = ax + \\frac{b}{x}",
-                },
-                {
-                  key: "amgm",
-                  label: "均值不等式",
-                  formula: "a x + \\frac{b}{x} \\ge 2\\sqrt{ab}",
-                },
-                {
-                  key: "shifted",
-                  label: "平移双曲线",
-                  formula: "y = a(x-h)+c+\\frac{b}{x-h}",
-                },
+          {/* 1. 模式选择区 (TabSwitcher) */}
+          <LeftPanelSection title="探究场景模式">
+            <TabSwitcher
+              tabs={[
+                { key: "standard", label: "基本性质" },
+                { key: "amgm", label: "均值不等式" },
+                { key: "shifted", label: "平移双曲线" },
               ]}
               value={activeMode}
-              onChange={(k) => setActiveMode(k)}
-              columns={1}
-              variant="outline"
+              onChange={handleModeChange}
             />
           </LeftPanelSection>
 
-          {/* 快捷配置网格 */}
-          <LeftPanelSection
-            title="典型形态预设"
-            subtitle="快速加载高考典型函数曲线"
-          >
-            <SelectGrid
-              items={[
-                {
-                  key: "nike_std",
-                  label: "经典对勾型",
-                  formula: "y = x + \\frac{4}{x}",
-                },
-                {
-                  key: "streamer_std",
-                  label: "双曲飘带型",
-                  formula: "y = x - \\frac{4}{x}",
-                },
-                {
-                  key: "inverse_std",
-                  label: "反比例退化",
-                  formula: "y = \\frac{4}{x}, \\; a = 0",
-                  fullWidth: true,
-                },
-              ]}
-              value={
-                params.a === 1 && params.b === 4
-                  ? "nike_std"
-                  : params.a === 1 && params.b === -4
-                    ? "streamer_std"
-                    : params.a === 0
-                      ? "inverse_std"
-                      : ""
-              }
-              onChange={(key) => {
-                if (key === "nike_std") {
-                  setParams((p) => ({ ...p, a: 1.0, b: 4.0, h: 0, c: 0 }));
-                } else if (key === "streamer_std") {
-                  setParams((p) => ({ ...p, a: 1.0, b: -4.0, h: 0, c: 0 }));
-                } else if (key === "inverse_std") {
-                  setParams((p) => ({ ...p, a: 0.0, b: 4.0, h: 0, c: 0 }));
-                }
-              }}
-              columns={2}
-            />
+          {/* 2. 随模式动态切换典型真题形态预设 */}
+          <LeftPanelSection title="典型形态预设">
+            {activeMode === "standard" && (
+              <SelectGrid
+                items={[
+                  {
+                    key: "nike_std",
+                    label: "经典对勾型",
+                    formula: "y = x + \\frac{4}{x}",
+                  },
+                  {
+                    key: "streamer_std",
+                    label: "双曲飘带型",
+                    formula: "y = x - \\frac{4}{x}",
+                  },
+                  {
+                    key: "inverse_std",
+                    label: "反比例退化",
+                    formula: "y = \\frac{4}{x}, \\; a = 0",
+                    fullWidth: true,
+                  },
+                ]}
+                value={preset}
+                onChange={handlePresetChange}
+                columns={2}
+              />
+            )}
+            {activeMode === "amgm" && (
+              <SelectGrid
+                items={[
+                  {
+                    key: "amgm_std",
+                    label: "标准对勾配凑",
+                    formula: "x + \\frac{4}{x} \\ge 4",
+                  },
+                  {
+                    key: "amgm_double",
+                    label: "倍数系数模型",
+                    formula: "2x + \\frac{8}{x} \\ge 8",
+                  },
+                  {
+                    key: "amgm_unit",
+                    label: "单位系数模型",
+                    formula: "x + \\frac{1}{x} \\ge 2",
+                    fullWidth: true,
+                  },
+                ]}
+                value={preset}
+                onChange={handlePresetChange}
+                columns={2}
+              />
+            )}
+            {activeMode === "shifted" && (
+              <SelectGrid
+                items={[
+                  {
+                    key: "shifted_quad",
+                    label: "二次分式对勾",
+                    formula: "y = (x-1) + 2 + \\frac{4}{x-1}",
+                  },
+                  {
+                    key: "shifted_linear",
+                    label: "分式线性平移",
+                    formula: "y = 1 + \\frac{3}{x-2}",
+                  },
+                  {
+                    key: "shifted_streamer",
+                    label: "二次分式飘带",
+                    formula: "y = (x-2) - \\frac{4}{x-2}",
+                    fullWidth: true,
+                  },
+                ]}
+                value={preset}
+                onChange={handlePresetChange}
+                columns={2}
+              />
+            )}
           </LeftPanelSection>
 
-          {/* 参数调节控制台 */}
-          <LeftPanelSection
-            title="动态参数调节"
-            subtitle="拖动滑块或中屏控制点探索"
-          >
+          {/* 3. 对象化参数调节控制台 */}
+          <LeftPanelSection title="动态参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -210,6 +359,7 @@ export function NikeAnimation() {
               fontScale={canvasSize.font}
             />
           </AnimationSvgCanvas>
+          <SceneLegend items={legendItems} />
         </div>
       }
       right={

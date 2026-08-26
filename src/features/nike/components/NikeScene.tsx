@@ -1,17 +1,19 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
   CoordinateGrid,
   FunctionGraph,
   InteractivePoint,
+  MathPoint,
   Asymptote,
   TangentLine,
+  SceneLabelGroup,
 } from "@/components/Math";
+import type { LabelItem } from "@/utils/labelOverlap";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, withAlpha } from "@/theme";
 import { solveNike, evalNikeAt } from "@/math/nike";
-import { avoidLabelOffsets, type LabelEntry } from "@/utils/labelAvoider";
 
 interface NikeSceneProps {
   params: Record<string, number>;
@@ -40,103 +42,128 @@ export function NikeScene({
   const evalPt = evalNikeAt(a, b, h, c, x0);
 
   // 1. 动点 P 拖拽解算
-  const handleDragProbe = (mathPt: { x: number; y: number }) => {
-    let newX = Math.round(mathPt.x * 10) / 10;
-    if (Math.abs(newX - h) < 0.2) {
-      newX = newX >= h ? h + 0.2 : h - 0.2;
-    }
-    onParamChange("x0", newX);
-  };
+  const handleDragProbe = useCallback(
+    (mathPt: { x: number; y: number }) => {
+      let newX = Math.round(mathPt.x * 10) / 10;
+      if (Math.abs(newX - h) < 0.2) {
+        newX = newX >= h ? h + 0.2 : h - 0.2;
+      }
+      onParamChange("x0", newX);
+    },
+    [h, onParamChange],
+  );
 
   // 2. 中心点拖拽解算 (仅平移模式)
-  const handleDragCenter = (mathPt: { x: number; y: number }) => {
-    onParamChange("h", Math.round(mathPt.x * 2) / 2);
-    onParamChange("c", Math.round(mathPt.y * 2) / 2);
-  };
+  const handleDragCenter = useCallback(
+    (mathPt: { x: number; y: number }) => {
+      onParamChange("h", Math.round(mathPt.x * 2) / 2);
+      onParamChange("c", Math.round(mathPt.y * 2) / 2);
+    },
+    [onParamChange],
+  );
 
   // 3. 计算对勾/双曲线函数：y = a(x-h) + c + b/(x-h)
-  const nikeFn = (x: number) => {
-    const dx = x - h;
-    if (Math.abs(dx) < 1e-4) return NaN;
-    return a * dx + c + b / dx;
-  };
+  const nikeFn = useCallback(
+    (x: number) => {
+      const dx = x - h;
+      if (Math.abs(dx) < 1e-4) return NaN;
+      return a * dx + c + b / dx;
+    },
+    [a, b, h, c],
+  );
 
-  // 4. 均值不等式模式下的单项拆分函数
-  const fnLine = (x: number) => a * (x - h) + c;
+  // 4. 渐近线 / 单项拆分函数
+  const fnLine = useCallback((x: number) => a * (x - h) + c, [a, h, c]);
 
-  // 5. 设计坐标转换与标注避让
+  // 5. 设计坐标计算
   const centerDesign = mathToDesign(h, c, scale);
   const probeDesign = evalPt.isValid ? mathToDesign(x0, evalPt.y, scale) : null;
 
   // 均值不等式拆分线坐标
   const amgmY1 = a * (x0 - h);
   const amgmY2 = b / (x0 - h);
+  const amgmBaseDesign = mathToDesign(x0, 0, scale);
   const amgmPt1Design = mathToDesign(x0, amgmY1, scale);
   const amgmPt2Design = mathToDesign(x0, amgmY2, scale);
-  const amgmBaseDesign = mathToDesign(x0, 0, scale);
 
-  const labelEntries = useMemo(() => {
-    const rawList: LabelEntry[] = [];
+  // 6. 学术点标智能解算组装 (SceneLabelGroup 8向防重叠)
+  const labelItems = useMemo<LabelItem[]>(() => {
+    const items: LabelItem[] = [];
 
+    // 极值特征点标签
     res.criticalPoints.forEach((cp, idx) => {
       const pt = mathToDesign(cp.x, cp.y, scale);
-      rawList.push({
+      items.push({
         key: `cp-${idx}`,
-        text: cp.label,
+        text: cp.type === "min" ? "极小值" : "极大值",
         x: pt.x,
         y: pt.y,
-        anchor: "middle" as const,
-        dy: -14,
+        color: MATH_COLORS.vertexPoint,
+        fontSize: fontScale(11),
+        preferredPlacement: cp.type === "min" ? "bottom" : "top",
       });
     });
 
-    if (probeDesign) {
-      rawList.push({
-        key: "probe",
-        text: `P(${x0.toFixed(1)}, ${evalPt.y.toFixed(1)})`,
+    // 探针动点标签
+    if (probeDesign && evalPt.isValid) {
+      items.push({
+        key: "probe-P",
+        text: "P",
         x: probeDesign.x,
         y: probeDesign.y,
-        anchor: "middle" as const,
-        dy: -14,
+        color: MATH_COLORS.interactiveActive,
+        fontSize: fontScale(13),
+        preferredPlacement: "top-right",
       });
     }
 
+    // 平移对称中心标签
     if (activeMode === "shifted") {
-      rawList.push({
-        key: "center",
-        text: `中心 C(${h.toFixed(1)}, ${c.toFixed(1)})`,
+      items.push({
+        key: "center-C",
+        text: "C",
         x: centerDesign.x,
         y: centerDesign.y,
-        anchor: "middle" as const,
-        dy: 14,
+        color: MATH_COLORS.focusPoint,
+        fontSize: fontScale(13),
+        preferredPlacement: "bottom-left",
       });
     }
 
-    return rawList;
+    // 均值拆分点标签
+    if (activeMode === "amgm" && probeDesign) {
+      items.push({
+        key: "amgm-p1",
+        text: "P₁",
+        x: amgmPt1Design.x,
+        y: amgmPt1Design.y,
+        color: MATH_COLORS.paramPrimary,
+        fontSize: fontScale(11),
+        preferredPlacement: "top-left",
+      });
+      items.push({
+        key: "amgm-p2",
+        text: "P₂",
+        x: amgmPt2Design.x,
+        y: amgmPt2Design.y,
+        color: MATH_COLORS.paramSecondary,
+        fontSize: fontScale(11),
+        preferredPlacement: "bottom-left",
+      });
+    }
+
+    return items;
   }, [
     res.criticalPoints,
     probeDesign,
-    centerDesign,
-    scale,
+    evalPt.isValid,
     activeMode,
-    x0,
-    evalPt.y,
-    h,
-    c,
+    centerDesign,
+    amgmPt1Design,
+    amgmPt2Design,
+    scale,
+    fontScale,
   ]);
-
-  const labelOffsets = useMemo(() => {
-    return avoidLabelOffsets(labelEntries);
-  }, [labelEntries]);
-
-  const labelOffsetMap = useMemo(() => {
-    const map = new Map<string, { dx: number; dy: number }>();
-    labelEntries.forEach((entry, idx) => {
-      const offset = labelOffsets[idx] || { dx: 0, dy: 0 };
-      map.set(entry.key, offset);
-    });
-    return map;
-  }, [labelEntries, labelOffsets]);
 
   return (
     <g>
@@ -149,19 +176,28 @@ export function NikeScene({
         type="vertical"
         value={h}
         scale={scale}
-        label={h === 0 ? "x = 0 (y轴渐近线)" : `x = ${h.toFixed(1)}`}
+        label={h === 0 ? "x = 0" : `x = ${h.toFixed(1)}`}
         fontScale={fontScale}
         color={MATH_COLORS.asymptote}
       />
 
-      {/* 斜渐近线 y = a(x-h) + c */}
-      {Math.abs(a) >= 1e-4 && (
+      {/* 斜渐近线 y = a(x-h) + c 或 水平渐近线 y = c (当 a=0 时) */}
+      {Math.abs(a) >= 1e-4 ? (
         <FunctionGraph
           fn={fnLine}
           scale={scale}
-          color={withAlpha(MATH_COLORS.asymptote, 0.6)}
+          color={withAlpha(MATH_COLORS.asymptote, 0.7)}
           strokeWidth={1.5}
           strokeDasharray="5,5"
+        />
+      ) : (
+        <Asymptote
+          type="horizontal"
+          value={c}
+          scale={scale}
+          label={c === 0 ? "y = 0" : `y = ${c.toFixed(1)}`}
+          fontScale={fontScale}
+          color={MATH_COLORS.asymptote}
         />
       )}
 
@@ -172,7 +208,7 @@ export function NikeScene({
           <FunctionGraph
             fn={(x) => a * x}
             scale={scale}
-            color={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
+            color={withAlpha(MATH_COLORS.paramPrimary, 0.45)}
             strokeWidth={1.5}
             strokeDasharray="4,4"
           />
@@ -180,7 +216,7 @@ export function NikeScene({
           <FunctionGraph
             fn={(x) => (Math.abs(x) < 1e-4 ? NaN : b / x)}
             scale={scale}
-            color={withAlpha(MATH_COLORS.paramSecondary, 0.4)}
+            color={withAlpha(MATH_COLORS.paramSecondary, 0.45)}
             strokeWidth={1.5}
             strokeDasharray="4,4"
           />
@@ -197,22 +233,24 @@ export function NikeScene({
                 strokeDasharray="3,3"
               />
               {/* 项一高亮点 P1(x0, ax0) */}
-              <circle
-                cx={amgmPt1Design.x}
-                cy={amgmPt1Design.y}
-                r={4}
-                fill={MATH_COLORS.paramPrimary}
+              <MathPoint
+                x={x0}
+                y={amgmY1}
+                scale={scale}
+                color={MATH_COLORS.paramPrimary}
+                fontScale={fontScale}
               />
               {/* 项二高亮点 P2(x0, b/x0) */}
-              <circle
-                cx={amgmPt2Design.x}
-                cy={amgmPt2Design.y}
-                r={4}
-                fill={MATH_COLORS.paramSecondary}
+              <MathPoint
+                x={x0}
+                y={amgmY2}
+                scale={scale}
+                color={MATH_COLORS.paramSecondary}
+                fontScale={fontScale}
               />
               {/* 矢量加和指示线 */}
               <line
-                x1={amgmPt1Design.x}
+                x1={probeDesign.x}
                 y1={amgmPt1Design.y}
                 x2={probeDesign.x}
                 y2={probeDesign.y}
@@ -238,49 +276,34 @@ export function NikeScene({
         strokeWidth={2.5}
       />
 
-      {/* 5. 极值点高亮与切线 (当存在极值点时) */}
+      {/* 5. 极值点切线标尺 (当存在极值点时) */}
       {res.criticalPoints.map((cp, idx) => {
         const pt = mathToDesign(cp.x, cp.y, scale);
-        const offset = labelOffsetMap.get(`cp-${idx}`) || { dx: 0, dy: -12 };
-
         return (
           <g key={`crit-${idx}`}>
             {/* 水平切线线段 */}
             <line
-              x1={pt.x - 25}
+              x1={pt.x - 24}
               y1={pt.y}
-              x2={pt.x + 25}
+              x2={pt.x + 24}
               y2={pt.y}
               stroke={MATH_COLORS.tangentLine}
               strokeWidth={1.5}
               strokeDasharray="4,2"
             />
-            {/* 极值点圆圈 */}
-            <circle
-              cx={pt.x}
-              cy={pt.y}
-              r={5}
-              fill={MATH_COLORS.vertexPoint}
-              stroke={CANVAS_COLORS.white}
-              strokeWidth={1.5}
+            {/* 极值特征点 */}
+            <MathPoint
+              x={cp.x}
+              y={cp.y}
+              scale={scale}
+              color={MATH_COLORS.vertexPoint}
+              fontScale={fontScale}
             />
-            {/* 极值点文本标注 */}
-            <text
-              x={pt.x + offset.dx}
-              y={pt.y - 12 + offset.dy}
-              fill={MATH_COLORS.vertexPoint}
-              fontSize={fontScale(11)}
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              {cp.type === "min" ? "极小值" : "极大值"} ({cp.x.toFixed(1)},{" "}
-              {cp.y.toFixed(1)})
-            </text>
           </g>
         );
       })}
 
-      {/* 6. 平移模式：渐近线交点 / 对称中心 C(h, c) */}
+      {/* 6. 平移模式：对称中心 C(h, c) 可拖拽手柄 */}
       {activeMode === "shifted" && (
         <g className="symmetry-center">
           <InteractivePoint
@@ -289,7 +312,6 @@ export function NikeScene({
             scale={scale}
             vp={vp}
             onDrag={handleDragCenter}
-            label={`中心 C(${h.toFixed(1)}, ${c.toFixed(1)})`}
             color={MATH_COLORS.focusPoint}
             fontScale={fontScale}
           />
@@ -308,19 +330,21 @@ export function NikeScene({
             strokeWidth={1.5}
           />
 
-          {/* 可拖拽动点 */}
+          {/* 可拖拽切点手柄 */}
           <InteractivePoint
             cx={x0}
             cy={evalPt.y}
             scale={scale}
             vp={vp}
             onDrag={handleDragProbe}
-            label={`P(${x0.toFixed(1)}, ${evalPt.y.toFixed(1)})`}
             color={MATH_COLORS.interactiveActive}
             fontScale={fontScale}
           />
         </g>
       )}
+
+      {/* 8. 智能防重叠学术点标图层 (铁律 1/4) */}
+      <SceneLabelGroup items={labelItems} fontScale={fontScale} />
     </g>
   );
 }
