@@ -21,7 +21,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.5,
     defaultValue: 1.0,
     importance: "core",
-    description: "分段函数的临界接缝位置，决定左右段定义域分割",
+    marks: [
+      { value: -1.0, label: "-1" },
+      { value: 0.0, label: "0" },
+      { value: 1.0, label: "1" },
+    ],
+    description: "分界点位置",
   },
   leftSlope: {
     key: "leftSlope",
@@ -32,9 +37,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.5,
     defaultValue: 1.0,
     importance: "core",
-    description: "x ≤ x0 时左段直线 f1(x) 的斜率",
-    descriptionFormula:
-      "x \\le x_0 \\text{ 时左段直线 } f_1(x) \\text{ 的斜率}",
+    marks: [
+      { value: 0.0, label: "0(常数)", variant: "critical" },
+      { value: 1.0, label: "1(单增)" },
+    ],
   },
   leftConst: {
     key: "leftConst",
@@ -45,9 +51,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.5,
     defaultValue: 0.0,
     importance: "core",
-    description: "x ≤ x0 时左段直线 f1(x) 的常数项",
-    descriptionFormula:
-      "x \\le x_0 \\text{ 时左段直线 } f_1(x) \\text{ 的常数项}",
   },
   rightSlope: {
     key: "rightSlope",
@@ -58,8 +61,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.5,
     defaultValue: -0.5,
     importance: "core",
-    description: "x > x0 时右段直线 f2(x) 的斜率",
-    descriptionFormula: "$x > x_0$ 时右段直线 $f_2(x)$ 的斜率",
+    marks: [
+      { value: 0.0, label: "0(常数)", variant: "critical" },
+      { value: 1.0, label: "1(单增)" },
+    ],
   },
   rightConst: {
     key: "rightConst",
@@ -70,45 +75,47 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.5,
     defaultValue: 1.5,
     importance: "core",
-    description: "x > x0 时右段直线 f2(x) 的常数项",
-    descriptionFormula: "$x > x_0$ 时右段直线 $f_2(x)$ 的常数项",
   },
   xSample: {
     key: "xSample",
-    label: "自变量采样点 x",
+    label: "自变量动点 x",
     labelFormula: "x",
     min: -3.0,
     max: 3.0,
     step: 0.1,
     defaultValue: 1.5,
     importance: "core",
-    description: "复合函数 f(g(x)) 研究传导路径与单调性的自变量采样点",
-    descriptionFormula:
-      "\\text{复合函数 } f(g(x)) \\text{ 研究传导路径与单调性的自变量采样点}",
+    marks: [
+      { value: 0.0, label: "0" },
+      { value: 1.0, label: "1(轴)" },
+    ],
   },
   innerB: {
     key: "innerB",
-    label: "内层 b 参数",
+    label: "内层系数 b",
     labelFormula: "b",
     min: -4.0,
     max: 4.0,
     step: 0.5,
     defaultValue: -2.0,
     importance: "advanced",
-    description: "内层二次函数 g(x) = x² + bx + c 的一次项系数，决定对称轴位置",
-    descriptionFormula:
-      "\\text{内层二次函数 } g(x) = x^2 + bx + c \\text{ 的一次项系数，决定对称轴位置}",
+    marks: [
+      { value: -2.0, label: "-2(轴1)" },
+      { value: 0.0, label: "0(y轴)", variant: "critical" },
+    ],
   },
   innerC: {
     key: "innerC",
-    label: "内层 c 参数",
+    label: "内层常数 c",
     labelFormula: "c",
-    min: -2.0,
+    min: -3.0,
     max: 4.0,
     step: 0.5,
     defaultValue: 2.0,
     importance: "core",
-    description: "内层二次函数 g(x) 的常数项",
-    descriptionFormula: "内层二次函数 $g(x)$ 的常数项",
+    marks: [
+      { value: 0.0, label: "0" },
+      { value: 1.0, label: "1(判别式临界)", variant: "critical" },
+    ],
   },
 };
