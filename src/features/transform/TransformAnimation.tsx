@@ -6,17 +6,21 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
-  TabSwitcher,
   SelectGrid,
   TipCard,
 } from "@/components/UI";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { TransformScene } from "./components/TransformScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/transform";
-import type { BaseFnType, FoldMode } from "@/math/transform";
+import {
+  buildTransformLatex,
+  type BaseFnType,
+  type FoldMode,
+} from "@/math/transform";
 
 export function TransformAnimation() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
@@ -42,40 +46,25 @@ export function TransformAnimation() {
     [params, fnType, foldMode],
   );
 
-  // 动态拼装 KaTeX 颜色标记公式
+  // 严格标准消元与色彩绑定的 KaTeX 公式
   const formulaLatex = useMemo(() => {
-    const hVal = (params.h ?? 1.0).toFixed(1);
-    const kVal = (params.k ?? 0.5).toFixed(1);
-    const aVal = (params.A ?? 1.5).toFixed(1);
-    const wVal = (params.omega ?? 1.0).toFixed(1);
+    return buildTransformLatex(
+      fnType,
+      {
+        h: params.h ?? 1.0,
+        k: params.k ?? 0.5,
+        A: params.A ?? 1.5,
+        omega: params.omega ?? 1.0,
+        foldMode,
+      },
+      {
+        colorPrimary: MATH_COLORS.paramPrimary,
+        colorSecondary: MATH_COLORS.paramSecondary,
+      },
+    );
+  }, [fnType, foldMode, params]);
 
-    let baseStr = "";
-    switch (fnType) {
-      case "quadratic":
-        baseStr = `(${wVal}(x - \\color{${MATH_COLORS.paramPrimary}}{${hVal}}))^2`;
-        break;
-      case "sine":
-        baseStr = `\\sin(${wVal}(x - \\color{${MATH_COLORS.paramPrimary}}{${hVal}}))`;
-        break;
-      case "cubic":
-        baseStr = `(${wVal}(x - \\color{${MATH_COLORS.paramPrimary}}{${hVal}}))^3`;
-        break;
-      case "exp":
-        baseStr = `2^{${wVal}(x - \\color{${MATH_COLORS.paramPrimary}}{${hVal}})}`;
-        break;
-    }
-
-    let coreLatex = `\\color{${MATH_COLORS.paramPrimary}}{${aVal}} \\cdot ${baseStr} + \\color{${MATH_COLORS.paramSecondary}}{${kVal}}`;
-
-    if (foldMode === "global") {
-      return `y = \\left| ${coreLatex} \\right|`;
-    } else if (foldMode === "input") {
-      return `y = f(|x|) = T\\left[ f(|x|) \\right]`;
-    }
-    return `y = ${coreLatex}`;
-  }, [fnType, foldMode, params.h, params.k, params.A, params.omega]);
-
-  // Step 4: 声明式参数配置
+  // Step 4: 声明式参数配置 (按水平与竖直对象化分组)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     return Object.keys(paramMeta).map((key) => {
       const meta = paramMeta[key];
@@ -87,6 +76,7 @@ export function TransformAnimation() {
         min: meta.min,
         max: meta.max,
         step: meta.step ?? 0.1,
+        group: meta.group,
         description: meta.description,
         descriptionFormula: meta.descriptionFormula,
         importance: meta.importance,
@@ -99,92 +89,148 @@ export function TransformAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 动态教学提示配置
-  const tipConfig = useMemo(() => {
+  // 中屏右下角图例卡片
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const baseNames: Record<BaseFnType, string> = {
+      quadratic: "y = x^2",
+      sine: "y = \\sin x",
+      cubic: "y = x^3",
+      exp: "y = 2^x",
+    };
+
+    return [
+      {
+        label: `母函数 ${baseNames[fnType]}`,
+        color: withAlpha(MATH_COLORS.function, 0.6),
+        style: "dash",
+      },
+      {
+        label: "目标图象 y = T[f](x)",
+        color: MATH_COLORS.paramPrimary,
+        style: "solid",
+      },
+      {
+        label: "特征点迁移轨迹",
+        color: withAlpha(MATH_COLORS.paramSecondary, 0.8),
+        style: "dot",
+      },
+    ];
+  }, [fnType]);
+
+  // 动态教学提示 (说明模型条件和研究问题，防止学生看不懂当前场景)
+  const tipContent = useMemo(() => {
     const { h, k, A, omega } = params;
+
     if (foldMode === "global") {
       return {
         variant: "warning" as const,
-        badge: "高考必考 · 整体绝对值 y = |f(x)| 翻折变换",
-        condition:
-          "保留 x 轴及上方图象不动，将 x 轴下方的图象以 x 轴为对称轴翻折到上方。",
-        question:
-          "分析下翻上后函数值非负 (y ≥ 0) 的值域截断与零点处尖点导数不存在特征。",
-      };
-    } else if (foldMode === "input") {
-      return {
-        variant: "info" as const,
-        badge: "高考必考 · 自变量绝对值 y = f(|x|) 偶函数化",
-        condition:
-          "保留 y 轴及右侧 (x ≥ 0) 图象不动，擦除左侧并关于 y 轴对称复制到左侧。",
-        question:
-          "验证变换后的函数满足 f(|-x|) = f(|x|)，恒为偶函数且图象关于 y 轴对称。",
-      };
-    } else {
-      const hDesc =
-        h >= 0 ? `右移 ${h.toFixed(1)}` : `左移 ${Math.abs(h).toFixed(1)}`;
-      const kDesc =
-        k >= 0 ? `上移 ${k.toFixed(1)}` : `下移 ${Math.abs(k).toFixed(1)}`;
-      return {
-        variant: "primary" as const,
-        badge: "高考基石 · 四维几何平移与伸缩法则",
-        condition: `基准函数经历水平平移 h = ${h.toFixed(1)} (${hDesc})、竖直平移 k = ${k.toFixed(1)} (${kDesc})，横向伸缩 ω = ${omega.toFixed(1)}，纵向拉伸 A = ${A.toFixed(1)}。`,
-        question:
-          "遵循“左加右减，上加下减，横缩纵扩”四步口诀，快速推导任意变换后的函数解析式与特征点迁移。",
+        badge: "整体绝对值翻折变换",
+        conditionNode: (
+          <span>
+            基准母函数图象经整体绝对值变换为{" "}
+            <KatexFormula formula="y = |f(x)|" mode="inline" />。
+          </span>
+        ),
+        questionNode: (
+          <span>
+            观察图象如何保留 <KatexFormula formula="x" mode="inline" />{" "}
+            轴上方并将下方翻折向上，理解值域非负 (
+            <KatexFormula formula="y \ge 0" mode="inline" />)
+            与零点处尖点的不可导性。
+          </span>
+        ),
       };
     }
-  }, [foldMode, params.h, params.k, params.A, params.omega]);
+
+    if (foldMode === "input") {
+      return {
+        variant: "info" as const,
+        badge: "自变量绝对值翻折变换",
+        conditionNode: (
+          <span>
+            基准母函数图象经自变量绝对值变换为{" "}
+            <KatexFormula formula="y = f(|x|)" mode="inline" />。
+          </span>
+        ),
+        questionNode: (
+          <span>
+            观察图象如何保留 <KatexFormula formula="y" mode="inline" />{" "}
+            轴右侧并向左对称复制，理解{" "}
+            <KatexFormula formula="f(|-x|) = f(|x|)" mode="inline" />{" "}
+            恒为偶函数且单调性镜像反转。
+          </span>
+        ),
+      };
+    }
+
+    const hDesc =
+      h >= 0 ? `右移 ${h.toFixed(1)}` : `左移 ${Math.abs(h).toFixed(1)}`;
+    const kDesc =
+      k >= 0 ? `上移 ${k.toFixed(1)}` : `下移 ${Math.abs(k).toFixed(1)}`;
+
+    return {
+      variant: "primary" as const,
+      badge: "函数平移与伸缩变换",
+      conditionNode: (
+        <span>
+          基准母函数经历水平平移{" "}
+          <KatexFormula formula={`h = ${h.toFixed(1)}`} mode="inline" /> (
+          {hDesc})、竖直平移{" "}
+          <KatexFormula formula={`k = ${k.toFixed(1)}`} mode="inline" /> (
+          {kDesc})，横向伸缩{" "}
+          <KatexFormula
+            formula={`\\omega = ${omega.toFixed(1)}`}
+            mode="inline"
+          />
+          ，纵向伸缩{" "}
+          <KatexFormula formula={`A = ${A.toFixed(1)}`} mode="inline" />。
+        </span>
+      ),
+      questionNode: (
+        <span>
+          探究各参数如何决定图象的位移与形变，体会“先平移后伸缩”与“先伸缩后平移”提公因式的代数本质。
+        </span>
+      ),
+    };
+  }, [foldMode, params]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="基准函数与变换法则"
-            subtitle="选择基准函数与绝对值翻折模式"
-          >
-            {/* 基准函数选择器 */}
+          {/* 母函数模型选择 */}
+          <LeftPanelSection title="基准母函数">
             <SelectGrid
               items={[
-                { key: "quadratic", label: "y = x²", formula: "y = x^2" },
-                { key: "sine", label: "y = sin x", formula: "y = \\sin x" },
-                { key: "cubic", label: "y = x³", formula: "y = x^3" },
-                { key: "exp", label: "y = 2^x", formula: "y = 2^x" },
+                { key: "quadratic", formula: "y = x^2" },
+                { key: "sine", formula: "y = \\sin x" },
+                { key: "cubic", formula: "y = x^3" },
+                { key: "exp", formula: "y = 2^x" },
               ]}
               value={fnType}
-              onChange={(k) => setFnType(k)}
+              onChange={(k) => setFnType(k as BaseFnType)}
               variant="outline"
-              className="mb-3"
-            />
-
-            {/* 翻折模式选择 */}
-            <div className="text-[11px] font-semibold text-neutral-500 mb-1">
-              绝对值翻折模式：
-            </div>
-            <TabSwitcher
-              tabs={[
-                { key: "none", label: "无翻折", formula: "\\text{无翻折}" },
-                {
-                  key: "global",
-                  label: "|f(x)| 整体",
-                  formula: "|f(x)| \\text{ 整体}",
-                },
-                {
-                  key: "input",
-                  label: "f(|x|) 自变量",
-                  formula: "f(|x|) \\text{ 自变量}",
-                },
-              ]}
-              value={foldMode}
-              onChange={(k) => setFoldMode(k)}
-              className="mb-4"
+              columns={2}
             />
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="平移与伸缩参数"
-            subtitle="拖动滑块或拖拽中屏控制点"
-          >
+          {/* 绝对值翻折模式 */}
+          <LeftPanelSection title="绝对值翻折">
+            <SelectGrid
+              items={[
+                { key: "none", formula: "\\text{无翻折}" },
+                { key: "global", formula: "y = |f(x)|" },
+                { key: "input", formula: "y = f(|x|)" },
+              ]}
+              value={foldMode}
+              onChange={(k) => setFoldMode(k as FoldMode)}
+              variant="outline"
+              columns={3}
+            />
+          </LeftPanelSection>
+
+          {/* 对象化参数调节 */}
+          <LeftPanelSection title="平移与伸缩参数">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -192,26 +238,28 @@ export function TransformAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
+          {/* 教学提示 */}
+          <LeftPanelSection title="教学提示" compact>
+            <TipCard variant={tipContent.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
+                <span>{tipContent.badge}</span>
               </div>
               <div className="space-y-1.5 text-[11px] leading-relaxed">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【初始条件】
+                    【模型条件】
                   </span>
                   <span className="text-neutral-600">
-                    {tipConfig.condition}
+                    {tipContent.conditionNode}
                   </span>
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【核心设问】
+                    【研究问题】
                   </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
+                  <span className="text-neutral-600">
+                    {tipContent.questionNode}
+                  </span>
                 </div>
               </div>
             </TipCard>
@@ -220,10 +268,13 @@ export function TransformAnimation() {
       }
       center={
         <div className="w-full h-full relative flex flex-col bg-white">
-          {/* Katex 公式浮标 */}
+          {/* Katex 公式浮标：精简消元与三位一体色彩绑定 */}
           <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3.5 py-2 shadow-sm">
             <KatexFormula formula={formulaLatex} mode="inline" />
           </div>
+
+          {/* 中屏右下角图例 */}
+          <SceneLegend items={legendItems} />
 
           <AnimationSvgCanvas
             containerRef={containerRef}
