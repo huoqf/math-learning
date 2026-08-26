@@ -4,6 +4,7 @@
  */
 
 import type { ParamMeta } from "@/data/types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   a: 0.5,
@@ -19,7 +20,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "最高次项系数 a",
-    labelFormula: "\\color{#EF4444}{a}",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a}`,
     defaultValue: 0.5,
     min: -2,
     max: 2,
@@ -27,6 +28,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "控制函数的整体开口方向与凹凸程度",
     descriptionFormula: "a > 0 \\text{ 时下凸，} a < 0 \\text{ 时上凸}",
     importance: "core",
+    group: "函数解析式核心参数",
     marks: [
       {
         value: 0,
@@ -39,20 +41,20 @@ export const paramMeta: Record<string, ParamMeta> = {
   b: {
     key: "b",
     label: "二次项/系数 b",
-    labelFormula: "\\color{#D97706}{b}",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{b}`,
     defaultValue: 0,
     min: -3,
     max: 3,
     step: 0.1,
     description: "决定三次函数拐点横坐标 x_0 = -b/(3a) 的平移",
-    descriptionFormula:
-      "x_0 = -\\frac{\\color{#D97706}{b}}{3\\color{#EF4444}{a}}",
+    descriptionFormula: `x_0 = -\\frac{\\color{${MATH_COLORS.paramSecondary}}{b}}{3\\color{${MATH_COLORS.paramPrimary}}{a}}`,
     importance: "core",
+    group: "函数解析式核心参数",
   },
   c: {
     key: "c",
     label: "一次项系数 c",
-    labelFormula: "\\color{#059669}{c}",
+    labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{c}`,
     defaultValue: -1.5,
     min: -4,
     max: 4,
@@ -60,6 +62,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "影响一阶导数与极值点的存在性与距离",
     descriptionFormula: "f'(x) \\text{ 中一次项系数}",
     importance: "advanced",
+    group: "函数解析式核心参数",
   },
   d: {
     key: "d",
@@ -71,11 +74,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "函数整体上下平移量",
     importance: "advanced",
+    group: "函数解析式核心参数",
   },
   x0: {
     key: "x0",
     label: "切点探针 x0",
-    labelFormula: "\\color{#EF4444}{x_0}",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0}`,
     defaultValue: 1.0,
     min: -4,
     max: 4,
@@ -83,27 +87,30 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "切线与二阶导数实时检测探针",
     descriptionFormula: "\\text{观测 } f''(x_0) \\text{ 符号与切线位置}",
     importance: "core",
+    group: "探针与割线位置",
   },
   x1: {
     key: "x1",
     label: "琴生点 x1",
-    labelFormula: "\\color{#D97706}{x_1}",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{x_1}`,
     defaultValue: -1.5,
     min: -4,
     max: 4,
     step: 0.1,
     description: "琴生不等式割线左侧端点",
     importance: "advanced",
+    group: "探针与割线位置",
   },
   x2: {
     key: "x2",
     label: "琴生点 x2",
-    labelFormula: "\\color{#059669}{x_2}",
+    labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{x_2}`,
     defaultValue: 1.5,
     min: -4,
     max: 4,
     step: 0.1,
     description: "琴生不等式割线右侧端点",
     importance: "advanced",
+    group: "探针与割线位置",
   },
 };

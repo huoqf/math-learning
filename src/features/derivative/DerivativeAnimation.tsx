@@ -20,14 +20,6 @@ import type { SceneLegendItem } from "@/components/Math";
 import { defaultParams, paramMeta } from "@/data/registries/derivative";
 
 type ExploreMode = "secant_limit" | "tangent_eq";
-type PresetType =
-  | "free"
-  | "limit_near"
-  | "macro"
-  | "reverse"
-  | "extrema"
-  | "tangent_scale"
-  | "inflection";
 
 // 精选高中高频核心教学函数（8个经典模型，杜绝冗余）
 const CORE_FUNCTION_KEYS: PresetFunctionKey[] = [
@@ -43,7 +35,6 @@ const CORE_FUNCTION_KEYS: PresetFunctionKey[] = [
 
 export function DerivativeAnimation() {
   const [mode, setMode] = useState<ExploreMode>("secant_limit");
-  const [presetKey, setPresetKey] = useState<PresetType>("free");
   const [fnKey, setFnKey] = useState<PresetFunctionKey>("cubic");
   const [params, setParams] = useState<Record<string, number>>(() => ({
     x0: PRESET_FUNCTIONS.cubic.defaultX0,
@@ -122,21 +113,14 @@ export function DerivativeAnimation() {
     [fnKey],
   );
 
-  // 拖拽动点切点时，自动切回自由探究
-  const handleDragStart = useCallback(() => {
-    if (presetKey !== "free") {
-      setPresetKey("free");
-    }
-  }, [presetKey]);
+  const handleDragStart = useCallback(() => {}, []);
 
   const handleModeChange = (newMode: ExploreMode) => {
     setMode(newMode);
-    setPresetKey("free");
   };
 
   const handleFnKeyChange = (key: PresetFunctionKey) => {
     setFnKey(key);
-    setPresetKey("free");
     const newPreset = PRESET_FUNCTIONS[key];
     setParams({
       x0: newPreset.defaultX0,
@@ -144,60 +128,7 @@ export function DerivativeAnimation() {
     });
   };
 
-  const handlePresetChange = (type: PresetType) => {
-    setPresetKey(type);
-    const currentPreset = PRESET_FUNCTIONS[fnKey];
-
-    switch (type) {
-      case "free":
-        break;
-      // 模式一专属预设（聚焦割线逼近）
-      case "limit_near":
-        setParams((prev) => ({ ...prev, dx: 0.02 }));
-        break;
-      case "macro":
-        setParams((prev) => ({ ...prev, dx: 1.2 }));
-        break;
-      case "reverse":
-        setParams((prev) => ({ ...prev, dx: -0.8 }));
-        break;
-      // 模式二专属预设（聚焦切点与斜率）
-      case "extrema":
-        if (fnKey === "cubic") {
-          setParams((prev) => ({ ...prev, x0: 1.0 })); // f'(1) = 0
-        } else if (fnKey === "quadratic") {
-          setParams((prev) => ({ ...prev, x0: 0.0 })); // f'(0) = 0
-        } else if (fnKey === "xlnx") {
-          setParams((prev) => ({ ...prev, x0: 0.37 })); // 1/e
-        } else if (fnKey === "lnx_x") {
-          setParams((prev) => ({ ...prev, x0: 2.72 })); // e
-        } else {
-          setParams((prev) => ({ ...prev, x0: currentPreset.defaultX0 }));
-        }
-        break;
-      case "tangent_scale":
-        if (fnKey === "exp") {
-          setParams((prev) => ({ ...prev, x0: 0.0 })); // (0,1) 处的切线 y = x + 1
-        } else if (fnKey === "ln") {
-          setParams((prev) => ({ ...prev, x0: 1.0 })); // (1,0) 处的切线 y = x - 1
-        } else if (fnKey === "cubic") {
-          setParams((prev) => ({ ...prev, x0: -1.0 })); // (-1, 2)
-        } else {
-          setParams((prev) => ({ ...prev, x0: 1.0 }));
-        }
-        break;
-      case "inflection":
-        if (fnKey === "cubic") {
-          setParams((prev) => ({ ...prev, x0: 0.0 })); // 拐点 (0,0)
-        } else {
-          setParams((prev) => ({ ...prev, x0: currentPreset.defaultX0 }));
-        }
-        break;
-    }
-  };
-
   const handleReset = () => {
-    setPresetKey("free");
     const currentPreset = PRESET_FUNCTIONS[fnKey];
     setParams({
       x0: currentPreset.defaultX0,
@@ -236,6 +167,13 @@ export function DerivativeAnimation() {
             { value: preset.x0Range[1], label: preset.x0Range[1].toString() },
           ];
         }
+      } else if (key === "dx") {
+        marks = [
+          { value: -1.0, label: "-1.0" },
+          { value: -0.05, label: "左逼近", variant: "critical" },
+          { value: 0.05, label: "右逼近", variant: "critical" },
+          { value: 1.0, label: "1.0" },
+        ];
       }
 
       return {
@@ -285,56 +223,6 @@ export function DerivativeAnimation() {
     };
   }, [mode, preset]);
 
-  // 模式对应的 2x2 典型预设选项
-  const presetItems = useMemo(() => {
-    if (mode === "secant_limit") {
-      return [
-        {
-          key: "free",
-          label: "自由逼近",
-          description: "全参数开放",
-        },
-        {
-          key: "limit_near",
-          label: "微元极限",
-          description: "Δx=0.02 逼近",
-        },
-        {
-          key: "macro",
-          label: "宏观割线",
-          description: "Δx=1.2 差商",
-        },
-        {
-          key: "reverse",
-          label: "反向逼近",
-          description: "Δx=-0.8 左极限",
-        },
-      ];
-    }
-    return [
-      {
-        key: "free",
-        label: "自由滑动",
-        description: "全区间拖拽",
-      },
-      {
-        key: "extrema",
-        label: "极值切线",
-        description: "导数 f'=0",
-      },
-      {
-        key: "tangent_scale",
-        label: "切线放缩",
-        description: "经典切线基准",
-      },
-      {
-        key: "inflection",
-        label: "特征中心",
-        description: "对称中心/拐点",
-      },
-    ];
-  }, [mode]);
-
   return (
     <ThreePanel
       left={
@@ -361,18 +249,7 @@ export function DerivativeAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 典型构型预设 (2x2 黄金规范，随模式动态切换) */}
-          <LeftPanelSection title="典型预设" subtitle="典型特征状态快速探究">
-            <SelectGrid
-              items={presetItems}
-              value={presetKey}
-              onChange={(k) => handlePresetChange(k as PresetType)}
-              variant="filled"
-              columns={2}
-            />
-          </LeftPanelSection>
-
-          {/* 3. 函数模型选择（精选8个经典母题，纯KaTeX公式无重复文本） */}
+          {/* 2. 函数模型选择（精选8个经典母题，纯KaTeX公式无重复文本） */}
           <LeftPanelSection title="函数模型" subtitle="选择教学与高考典型函数">
             <SelectGrid
               items={CORE_FUNCTION_KEYS.map((key) => {
@@ -389,7 +266,7 @@ export function DerivativeAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 参数与坐标调节（按模式动态裁剪） */}
+          {/* 3. 参数与坐标调节（按模式动态裁剪） */}
           <LeftPanelSection
             title="参数调节"
             subtitle={
@@ -403,7 +280,7 @@ export function DerivativeAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 5. 教学引导与题设背景 (置于最底部) */}
+          {/* 4. 教学引导与题设背景 (置于最底部) */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant="primary">
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">

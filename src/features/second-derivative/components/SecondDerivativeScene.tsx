@@ -169,17 +169,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
       ];
       return items;
     } else if (studyMode === "inflection") {
-      const items: LabelItem[] = [
-        {
-          key: "p0",
-          x: pt0.x,
-          y: pt0.y,
-          text: "P₀",
-          color: MATH_COLORS.paramPrimary,
-          fontSize: fontScale(12),
-          preferredPlacement: "top-right",
-        },
-      ];
+      const items: LabelItem[] = [];
       inflections.forEach((ip, idx) => {
         const pt = mathToDesign(ip.x, ip.y, scale);
         items.push({
@@ -261,8 +251,8 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
 
   return (
     <g>
-      {/* 坐标轴与背景网格 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      {/* 坐标轴与纯净背景（无多余方格网干扰） */}
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* 凹凸性模式下的背景区域高亮（下凸:蓝色, 上凸:浅红） */}
       {studyMode === "concavity" &&

@@ -23,7 +23,7 @@ import type { SceneLegendItem } from "@/components/Math";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/secondDerivative";
 import { SecondDerivativeScene } from "./components/SecondDerivativeScene";
-import { evalFunction, type FnKey } from "@/math/secondDerivative";
+import { evalFunction, evalJensen, type FnKey } from "@/math/secondDerivative";
 
 export function SecondDerivativeAnimation() {
   // 1. 探究模式：'concavity' | 'inflection' | 'jensen'
@@ -33,6 +33,18 @@ export function SecondDerivativeAnimation() {
 
   // 2. 函数模型选择：'cubic' | 'mixed' | 'quartic'
   const [fnKey, setFnKey] = useState<FnKey>("cubic");
+
+  // 切换 studyMode
+  const handleStudyModeChange = (
+    mode: "concavity" | "inflection" | "jensen",
+  ) => {
+    setStudyMode(mode);
+    if (mode === "concavity") {
+      setParams((prev) => ({ ...prev, x0: 1.0 }));
+    } else if (mode === "jensen") {
+      setParams((prev) => ({ ...prev, x1: -1.5, x2: 1.5 }));
+    }
+  };
 
   // 3. 参数状态
   const [params, setParams] = useState(() => ({
@@ -115,55 +127,110 @@ export function SecondDerivativeAnimation() {
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
+          group: meta.group,
         };
       });
   }, [params, studyMode, fnKey]);
 
-  // 9. 拼装顶端悬浮 LaTeX 动态公式
+  // 9. 拼装顶端悬浮 LaTeX 动态公式（严格色彩 Token 绑定与模式自适应）
   const topFormulaLatex = useMemo(() => {
-    const { a, b, c, d, x0 } = params;
+    const { a, b, c, d, x0, x1, x2 } = params;
 
-    const buildTerm = (val: number, varStr: string, isFirst: boolean) => {
+    const buildTerm = (
+      val: number,
+      varStr: string,
+      isFirst: boolean,
+      colorHex?: string,
+    ) => {
       if (Math.abs(val) < 1e-6) return "";
       const sign = val > 0 ? (isFirst ? "" : " + ") : " - ";
       const absVal = Math.abs(val);
       const numStr =
         Math.abs(absVal - 1) < 1e-6 && varStr !== "" ? "" : absVal.toFixed(1);
-      return `${sign}${numStr}${varStr}`;
+      const valOutput = colorHex ? `\\color{${colorHex}}{${numStr}}` : numStr;
+      return `${sign}${valOutput}${varStr}`;
     };
 
+    let fStr = "";
     if (fnKey === "cubic") {
-      const termA = buildTerm(a, "x^3", true);
-      const termB = buildTerm(b, "x^2", termA === "");
-      const termC = buildTerm(c, "x", termA === "" && termB === "");
+      const termA = buildTerm(a, "x^3", true, MATH_COLORS.paramPrimary);
+      const termB = buildTerm(
+        b,
+        "x^2",
+        termA === "",
+        MATH_COLORS.paramSecondary,
+      );
+      const termC = buildTerm(
+        c,
+        "x",
+        termA === "" && termB === "",
+        MATH_COLORS.paramTertiary,
+      );
       const termD = buildTerm(
         d,
         "",
         termA === "" && termB === "" && termC === "",
       );
       const poly = termA + termB + termC + termD || "0";
-      const fStr = `f(x) = ${poly}`;
-
-      const eval0 = evalFunction(fnKey, params, x0);
-      const dfStr = `f'(${x0.toFixed(1)}) = ${eval0.dy.toFixed(2)}`;
-      const ddfStr = `f''(${x0.toFixed(1)}) = ${eval0.ddy.toFixed(2)}`;
-
-      if (studyMode === "concavity") {
-        return `${fStr} \\quad | \\quad ${dfStr}, \\, ${ddfStr}`;
-      } else if (studyMode === "inflection") {
-        const xInf = Math.abs(a) > 1e-6 ? (-b / (3 * a)).toFixed(2) : "无";
-        return `${fStr} \\quad | \\quad \\text{拐点 } x_{\\text{inf}} = -\\frac{b}{3a} = ${xInf}`;
-      } else {
-        return `${fStr} \\quad | \\quad f\\left(\\frac{x_1+x_2}{2}\\right) \\le \\frac{f(x_1)+f(x_2)}{2}`;
-      }
+      fStr = `f(x) = ${poly}`;
     } else if (fnKey === "mixed") {
-      const fStr = `f(x) = ${a.toFixed(1)}x e^x${c >= 0 ? " + " + c.toFixed(1) : " - " + Math.abs(c).toFixed(1)}`;
-      const ddfStr = `f''(x) = ${a.toFixed(1)}(x+2)e^x`;
-      return `${fStr} \\quad | \\quad ${ddfStr} \\text{ (拐点在 } x = -2 \\text{)}`;
+      const termA = buildTerm(a, "x e^x", true, MATH_COLORS.paramPrimary);
+      const termB = buildTerm(b, "x", termA === "", MATH_COLORS.paramSecondary);
+      const termC = buildTerm(
+        c,
+        "",
+        termA === "" && termB === "",
+        MATH_COLORS.paramTertiary,
+      );
+      const poly = termA + termB + termC || "0";
+      fStr = `f(x) = ${poly}`;
     } else {
-      const fStr = `f(x) = ${a.toFixed(1)}x^4${b >= 0 ? " + " + b.toFixed(1) : " - " + Math.abs(b).toFixed(1)}x^2 + ${c.toFixed(1)}`;
-      const ddfStr = `f''(x) = ${(12 * a).toFixed(1)}x^2${2 * b >= 0 ? " + " + (2 * b).toFixed(1) : " - " + Math.abs(2 * b).toFixed(1)}`;
-      return `${fStr} \\quad | \\quad ${ddfStr}`;
+      const termA = buildTerm(a, "x^4", true, MATH_COLORS.paramPrimary);
+      const termB = buildTerm(
+        b,
+        "x^2",
+        termA === "",
+        MATH_COLORS.paramSecondary,
+      );
+      const termC = buildTerm(
+        c,
+        "x",
+        termA === "" && termB === "",
+        MATH_COLORS.paramTertiary,
+      );
+      const termD = buildTerm(
+        d,
+        "",
+        termA === "" && termB === "" && termC === "",
+      );
+      const poly = termA + termB + termC + termD || "0";
+      fStr = `f(x) = ${poly}`;
+    }
+
+    if (studyMode === "concavity") {
+      const eval0 = evalFunction(fnKey, params, x0);
+      const dfStr = `f'(\\color{${MATH_COLORS.paramPrimary}}{${x0.toFixed(1)}}) = ${eval0.dy.toFixed(2)}`;
+      const ddfStr = `f''(\\color{${MATH_COLORS.paramPrimary}}{${x0.toFixed(1)}}) = ${eval0.ddy.toFixed(2)}`;
+      return `${fStr} \\quad | \\quad ${dfStr}, \\, ${ddfStr}`;
+    } else if (studyMode === "inflection") {
+      if (fnKey === "cubic") {
+        const xInf = Math.abs(a) > 1e-6 ? (-b / (3 * a)).toFixed(2) : "无";
+        return `${fStr} \\quad | \\quad \\text{拐点/对称中心 } x_{\\text{inf}} = -\\frac{b}{3a} = ${xInf}`;
+      } else if (fnKey === "mixed") {
+        return `${fStr} \\quad | \\quad f''(x) = a(x+2)e^x \\implies \\text{拐点 } x_{\\text{inf}} = -2`;
+      } else {
+        const val = Math.abs(a) > 1e-6 ? -b / (6 * a) : 0;
+        if (val > 1e-6) {
+          const xInf = Math.sqrt(val).toFixed(2);
+          return `${fStr} \\quad | \\quad \\text{双拐点 } x_{\\text{inf}} = \\pm ${xInf}`;
+        } else {
+          return `${fStr} \\quad | \\quad f''(0)=0 \\text{ (极小值点，非拐点反例)}`;
+        }
+      }
+    } else {
+      const jensen = evalJensen(fnKey, params, x1, x2);
+      const sign = jensen.diff >= 0 ? "\\ge" : "<";
+      return `${fStr} \\quad | \\quad \\frac{f(x_1)+f(x_2)}{2} ${sign} f\\left(\\frac{x_1+x_2}{2}\\right) \\; (\\Delta y = ${jensen.diff.toFixed(2)})`;
     }
   }, [params, fnKey, studyMode]);
 
@@ -204,7 +271,7 @@ export function SecondDerivativeAnimation() {
     }
   }, [studyMode]);
 
-  // 右下角图例配置 (模式专属)
+  // 右下角图例配置 (模式专属，严格使用 MATH_COLORS)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
     if (studyMode === "concavity") {
       return [
@@ -224,12 +291,12 @@ export function SecondDerivativeAnimation() {
           style: "point",
         },
         {
-          color: "#10B981",
+          color: MATH_COLORS.paramTertiary,
           label: "下凸凹区间 f''(x) > 0",
           style: "area",
         },
         {
-          color: "#F59E0B",
+          color: MATH_COLORS.paramSecondary,
           label: "上凸凸区间 f''(x) < 0",
           style: "area",
         },
@@ -293,7 +360,7 @@ export function SecondDerivativeAnimation() {
                 { key: "jensen", label: "琴生不等式" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as typeof studyMode)}
+              onChange={(k) => handleStudyModeChange(k as typeof studyMode)}
             />
           </LeftPanelSection>
 

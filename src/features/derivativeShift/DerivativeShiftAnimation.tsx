@@ -22,11 +22,7 @@ import { DerivativeShiftScene } from "./components/DerivativeShiftScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
-import {
-  defaultParams,
-  paramMeta,
-  getPresets,
-} from "@/data/registries/derivativeShift";
+import { defaultParams, paramMeta } from "@/data/registries/derivativeShift";
 
 export function DerivativeShiftAnimation() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
@@ -34,7 +30,6 @@ export function DerivativeShiftAnimation() {
     "implicit_zero" | "shift_symmetric" | "log_mean"
   >("implicit_zero");
   const [subModel, setSubModel] = useState<string>("x_ln_x");
-  const [activePreset, setActivePreset] = useState<string>("free");
 
   // 1. Viewport + 自适应画布 (固定 Preset: full)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -58,13 +53,6 @@ export function DerivativeShiftAnimation() {
     [params, activeMode, subModel],
   );
 
-  // 当前模式与函数模型下的预设列表
-  const currentPresets = useMemo(
-    () =>
-      getPresets(activeMode, activeMode === "log_mean" ? "default" : subModel),
-    [activeMode, subModel],
-  );
-
   // 4. 左屏声明式参数过滤
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
@@ -85,7 +73,7 @@ export function DerivativeShiftAnimation() {
           value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
-          step: meta.step ?? 0.1,
+          step: meta.step ?? 0.05,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
@@ -94,18 +82,8 @@ export function DerivativeShiftAnimation() {
       });
   }, [params, activeMode]);
 
-  // 预设切换处理
-  const handlePresetChange = (presetKey: string) => {
-    setActivePreset(presetKey);
-    const targetPreset = currentPresets.find((p) => p.key === presetKey);
-    if (targetPreset && targetPreset.params) {
-      setParams((prev) => ({ ...prev, ...targetPreset.params }));
-    }
-  };
-
-  // 参数更新处理（用户手动调参或画布拖拽时自动切回 free）
+  // 参数更新处理
   const handleParamChange = (key: string, value: number) => {
-    setActivePreset("free");
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -256,7 +234,6 @@ export function DerivativeShiftAnimation() {
               value={activeMode}
               onChange={(k) => {
                 setActiveMode(k);
-                setActivePreset("free");
                 if (k === "implicit_zero") setSubModel("x_ln_x");
                 else if (k === "shift_symmetric") setSubModel("xe_neg_x");
               }}
@@ -281,10 +258,7 @@ export function DerivativeShiftAnimation() {
                     },
                   ]}
                   value={subModel}
-                  onChange={(key) => {
-                    setSubModel(key);
-                    setActivePreset("free");
-                  }}
+                  onChange={(key) => setSubModel(key)}
                   columns={2}
                 />
               ) : (
@@ -302,27 +276,14 @@ export function DerivativeShiftAnimation() {
                     },
                   ]}
                   value={subModel}
-                  onChange={(key) => {
-                    setSubModel(key);
-                    setActivePreset("free");
-                  }}
+                  onChange={(key) => setSubModel(key)}
                   columns={2}
                 />
               )}
             </LeftPanelSection>
           )}
 
-          {/* 3. 高考典型预设区 (2x2 黄金网格) */}
-          <LeftPanelSection title="典型预设" subtitle="高考真题与临界特征构型">
-            <SelectGrid
-              items={currentPresets}
-              value={activePreset}
-              onChange={handlePresetChange}
-              columns={2}
-            />
-          </LeftPanelSection>
-
-          {/* 4. 参数调节区 */}
+          {/* 3. 参数调节区 */}
           <LeftPanelSection
             title="参数调节"
             subtitle="拖动滑块动态观察图形联动"
