@@ -124,11 +124,11 @@ export function DerivativeEndpointTaylorAnimation() {
   const headerFormulaLatex = useMemo(() => {
     if (activeMode === "endpoint") {
       if (endpointType === "exp") {
-        return `f(x) = e^x - \\color{#EF4444}{${params.a.toFixed(2)}} x - 1 \\ge 0 \\quad (x \\ge 0)`;
+        return `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}} x - 1 \\ge 0 \\quad (x \\ge 0)`;
       } else if (endpointType === "ln") {
-        return `f(x) = \\ln(x+1) - \\color{#EF4444}{${params.a.toFixed(2)}} x \\le 0 \\quad (x \\ge 0)`;
+        return `f(x) = \\ln(x+1) - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}} x \\le 0 \\quad (x \\ge 0)`;
       } else {
-        return `f(x) = x\\ln x - \\color{#EF4444}{${params.a.toFixed(2)}}(x-1) \\ge 0 \\quad (x \\ge 1)`;
+        return `f(x) = x\\ln x - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}}(x-1) \\ge 0 \\quad (x \\ge 1)`;
       }
     } else if (activeMode === "lhopital") {
       return `\\lim_{x \\to 0} \\frac{e^x - 1 - x}{x^2} \\xrightarrow{\\text{L'Hôpital}} \\lim_{x \\to 0} \\frac{e^x - 1}{2x} = \\frac{1}{2}`;
@@ -220,27 +220,27 @@ export function DerivativeEndpointTaylorAnimation() {
               ? "f(x) = e^x - ax - 1"
               : endpointType === "ln"
                 ? "f(x) = \\ln(x+1) - ax"
-                : "f(x) = x - a\\sin x",
+                : "f(x) = x\\ln x - a(x-1)",
           style: "solid",
         },
         {
           color: MATH_COLORS.paramSecondary,
-          formula: "y = f'(0)x \\;(\\text{端点切线})",
+          formula: "y = f'(x_0)(x-x_0) \\;(\\text{端点切线})",
           style: "dash",
         },
         {
           color: MATH_COLORS.focusPoint,
-          formula: "P_0(0, 0) \\;(\\text{端点})",
+          formula: "P_0(x_0, 0) \\;(\\text{端点})",
           style: "point",
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: "T(1, f'(0)) \\;(\\text{切线控制点})",
+          formula: "T(x_0+1, y_T) \\;(\\text{切线控制点})",
           style: "point",
         },
         {
           color: MATH_COLORS.vectorResult,
-          label: "必要条件失效区 f'(0) < 0",
+          label: "必要条件失效区 f'(x_0) < 0",
           style: "area",
         },
       ];
@@ -258,7 +258,7 @@ export function DerivativeEndpointTaylorAnimation() {
         },
         {
           color: MATH_COLORS.focusPoint,
-          formula: "L(0, 1) \\;(\\text{极限点})",
+          formula: "L(0, 1/2) \\;(\\text{极限点})",
           style: "hollow-point",
         },
         {
