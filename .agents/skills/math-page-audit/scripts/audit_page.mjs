@@ -83,8 +83,9 @@ for (const filePath of files) {
       }
     }
 
-    // 1.1 检查 SVG Label 或纯文本中裸露反斜杠 LaTeX 源码 (如 text: "\\sqrt{x}" 或 text: "\\frac")
-    if (/text:\s*["'`][^"'`]*\\[a-zA-Z]+/.test(line) || /<text[^>]*>[^<]*\\[a-zA-Z]+/.test(line)) {
+    // 1.1 检查 SVG Label 或纯文本中裸露反斜杠 LaTeX 源码 (仅在 Scene/SVG 组件中检测)
+    if ((filePath.includes('Scene') || line.includes('<text')) && 
+        (/text:\s*["'`][^"'`]*\\[a-zA-Z]+/.test(line) || /<text[^>]*>[^<]*\\[a-zA-Z]+/.test(line))) {
       issues.push({
         lineNum,
         type: 'SVG裸LaTeX源码',
@@ -142,6 +143,19 @@ for (const filePath of files) {
           lineNum,
           type: '左屏职责越界',
           message: '左屏应聚焦于模型条件与探究设问，严禁堆砌高考考点字样（请归位右屏 MathPanel）',
+          snippet: line.trim()
+        });
+      }
+    }
+
+    // 7. 检查数据层混合文本未加 $ 定界符 (如 "当 \\alpha > 0 时" 或 "y=x^2 偶函数")
+    const isCommentLine = /^\s*(\/\/|\/\*|\{\/\*|\*)/.test(line);
+    if (!isCommentLine && (line.includes('text:') || line.includes('prerequisites:') || line.includes('"') || line.includes('\'')) && /[\u4e00-\u9fa5]/.test(line)) {
+      if (/(\\[a-zA-Z]+|[a-zA-Z]\^[0-9a-zA-Z]+|[a-zA-Z]_[0-9a-zA-Z]+)/.test(line) && !line.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
+        issues.push({
+          lineNum,
+          type: '混合文本缺少$定界符',
+          message: '检测到中文句子中包含 LaTeX 指令或上下标，但未用 $...$ 包裹，会导致公式无法被 KaTeX 正确切分渲染',
           snippet: line.trim()
         });
       }
