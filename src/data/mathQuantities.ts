@@ -56,6 +56,7 @@ import { buildVectorDotProductPanel } from "./builders/vectorDotProduct";
 import { buildVectorBasisPanel } from "./builders/vectorBasis";
 import { buildComplexPanel } from "./builders/complex";
 import { buildDerivativeEndpointTaylorPanel } from "./builders/derivativeEndpointTaylor";
+import { buildDerivativeMonotonicityQuantities } from "./builders/derivativeMonotonicity";
 import { buildLineParamTPanel } from "./builders/lineParamT";
 import { buildVectorPolarizationApolloniusPanel } from "./builders/vectorPolarizationApollonius";
 import { buildConicHomogenizationPanel } from "./builders/conicHomogenization";
@@ -121,6 +122,12 @@ export function buildMathQuantities(
       return buildQuadraticPanel(params, config);
     case "anim-derivative-tangent":
       return buildDerivativePanel(params, config);
+    case "anim-derivative-monotonicity":
+    case "anim-derivative-compare":
+      return buildDerivativeMonotonicityQuantities(
+        params,
+        config as Parameters<typeof buildDerivativeMonotonicityQuantities>[1],
+      );
     case "anim-derivative-inflection":
       return buildSecondDerivativePanel(params, config);
     case "anim-constant-single":

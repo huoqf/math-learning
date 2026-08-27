@@ -115,6 +115,10 @@ import {
   regressionLoader,
   independenceLoader,
 } from "@/features/pairedData/meta";
+import {
+  derivativeMonotonicityNode,
+  derivativeMonotonicityLoader,
+} from "@/features/derivative-monotonicity/meta";
 
 // ── 暂未迁移的页面（内联声明，未来逐步迁移到 meta.ts） ──
 
@@ -751,6 +755,7 @@ export const routeEntries: RouteEntry[] = [
   { node: nikeStandardNode, loader: nikeStandardLoader },
   { node: nikeAmgmNode, loader: nikeAmgmLoader },
   { node: nikeShiftedNode, loader: nikeShiftedLoader },
+  { node: derivativeMonotonicityNode, loader: derivativeMonotonicityLoader },
   // 暂未迁移的页面
   ...legacyEntries,
 ];
