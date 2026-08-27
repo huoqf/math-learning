@@ -367,7 +367,7 @@ export function VectorPolarizationApolloniusAnimation() {
                     <KatexFormula formula="M" mode="inline" /> 为底边{" "}
                     <KatexFormula formula="BC" mode="inline" /> 中点，
                     <KatexFormula
-                      formula="\\vec{AB} \\cdot \\vec{AC} = |\\vec{AM}|^2 - |\\vec{BM}|^2"
+                      formula="\vec{AB} \cdot \vec{AC} = |\vec{AM}|^2 - |\vec{BM}|^2"
                       mode="inline"
                     />
                     。
@@ -377,7 +377,7 @@ export function VectorPolarizationApolloniusAnimation() {
                       【探究问题】：
                     </span>
                     当底边长固定时，数量积仅由中线长{" "}
-                    <KatexFormula formula="|\\vec{AM}|" mode="inline" />{" "}
+                    <KatexFormula formula="|\vec{AM}|" mode="inline" />{" "}
                     决定，如何用它秒杀高考模长与数量积最值？
                   </div>
                 </>
@@ -391,7 +391,7 @@ export function VectorPolarizationApolloniusAnimation() {
                     动点 <KatexFormula formula="P" mode="inline" />{" "}
                     满足到两定点距离比{" "}
                     <KatexFormula
-                      formula="|PA|/|PB| = \\lambda (\\lambda \\ne 1)"
+                      formula="|PA|/|PB| = \lambda (\lambda \ne 1)"
                       mode="inline"
                     />
                     。
@@ -403,7 +403,7 @@ export function VectorPolarizationApolloniusAnimation() {
                     观察圆直径端点 <KatexFormula formula="D, E" mode="inline" />{" "}
                     分别为线段 <KatexFormula formula="AB" mode="inline" />{" "}
                     的内分点与外分点，当{" "}
-                    <KatexFormula formula="\\lambda \\to 1" mode="inline" />{" "}
+                    <KatexFormula formula="\lambda \to 1" mode="inline" />{" "}
                     时轨迹如何退化为中垂线？
                   </div>
                 </>
@@ -417,7 +417,7 @@ export function VectorPolarizationApolloniusAnimation() {
                     动点 <KatexFormula formula="P" mode="inline" />{" "}
                     在阿波罗尼斯圆上运动，求{" "}
                     <KatexFormula
-                      formula="\\vec{PA} \\cdot \\vec{PB}"
+                      formula="\vec{PA} \cdot \vec{PB}"
                       mode="inline"
                     />{" "}
                     的最值。
@@ -428,7 +428,7 @@ export function VectorPolarizationApolloniusAnimation() {
                     </span>
                     利用极化恒等式化为{" "}
                     <KatexFormula
-                      formula="|\\vec{PM}|^2 - |\\vec{MB}|^2"
+                      formula="|\vec{PM}|^2 - |\vec{MB}|^2"
                       mode="inline"
                     />
                     ，当 <KatexFormula formula="P" mode="inline" /> 取在内分点{" "}

@@ -49,17 +49,29 @@ export function AmgmPage() {
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        // 均值不等式模式下动态强化正数定义域保护
+        let minVal = meta.min;
+        let maxVal = meta.max;
+        if (key === "a") {
+          minVal = 0.2;
+          maxVal = 3.0;
+        } else if (key === "b") {
+          minVal = 0.5;
+          maxVal = 9.0;
+        } else if (key === "x0") {
+          minVal = 0.2;
+          maxVal = 6.0;
+        }
         return {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
           value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
+          min: minVal,
+          max: maxVal,
           step: meta.step ?? 0.1,
           group: meta.group,
           importance: meta.importance,
-          marks: meta.marks,
         };
       });
   }, [params]);
@@ -157,43 +169,46 @@ export function AmgmPage() {
             />
           </LeftPanelSection>
 
-          {/* 3. 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与等号条件" compact>
+          {/* 3. 教学导引与探究设问 */}
+          <LeftPanelSection title="教学导引与探究设问" compact>
             <TipCard variant="success">
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-success-800">
-                <span>高考核心 · 均值不等式“一正二定三相等”</span>
+                <span>均值不等式数形结合 (AM-GM)</span>
               </div>
               <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【三要素核查】
+                    【模型特征 / 条件】
                   </span>
-                  <span>① </span>
-                  <b>正</b>：
+                  <span>满足前提“一正” </span>
                   <KatexFormula formula="a>0, b>0, x>0" mode="inline" />
-                  ；② <b>定</b>：积为定值{" "}
+                  <span> 与“二定” </span>
                   <KatexFormula
                     formula={`(ax)(\\frac{b}{x}) = ${(params.a * params.b).toFixed(1)}`}
                     mode="inline"
                   />
-                  ；③ <b>等</b>：当且仅当{" "}
-                  <KatexFormula formula="ax = b/x" mode="inline" />。
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【理论最小值】
-                  </span>
-                  <span>在 </span>
+                  <span>。在 </span>
                   <KatexFormula
                     formula={`x = \\sqrt{b/a} = ${xMinVal}`}
                     mode="inline"
                   />
-                  <span> 处取得理论最小值 </span>
+                  <span> 取得理论最小值 </span>
                   <KatexFormula
                     formula={`y_{\\min} = 2\\sqrt{ab} = ${minValStr}`}
                     mode="inline"
                   />
-                  <span>。拖动动点 P 逼近该处观察两项拆分高线等长。</span>
+                  <span>。</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问 / 探究】
+                  </span>
+                  <span>
+                    拖动探针动点 P
+                    逼近极小值点，观察虚线拆分高线何时满足两项等长{" "}
+                    <KatexFormula formula="ax = b/x" mode="inline" />
+                    ？两项不等时为何和值总是严格偏大？
+                  </span>
                 </div>
               </div>
             </TipCard>

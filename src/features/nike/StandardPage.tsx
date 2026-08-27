@@ -156,8 +156,8 @@ export function StandardPage() {
             />
           </LeftPanelSection>
 
-          {/* 3. 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
+          {/* 3. 教学导引与探究设问 */}
+          <LeftPanelSection title="教学导引与探究设问" compact>
             <TipCard
               variant={
                 params.a * params.b > 0
@@ -170,54 +170,61 @@ export function StandardPage() {
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
                 <span>
                   {params.a * params.b > 0
-                    ? "高考核心 · 经典对勾函数模型 (ab > 0)"
+                    ? "经典对勾函数模型 (ab > 0)"
                     : params.a * params.b < 0
-                      ? "高考辨析 · 双曲飘带型函数 (ab < 0)"
-                      : "特殊退化 · 初等函数形态"}
+                      ? "双曲飘带型函数 (ab < 0)"
+                      : "初等退化函数形态"}
                 </span>
               </div>
               <div className="space-y-1.5 text-[11px] leading-relaxed">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【定义域与奇偶性】
+                    【模型特征 / 条件】
                   </span>
                   <span>定义域去心 </span>
                   <KatexFormula formula="x \ne 0" mode="inline" />
-                  <span>，由于 </span>
+                  <span>，为奇函数 </span>
                   <KatexFormula formula="f(-x) = -f(x)" mode="inline" />
-                  <span>，为典型奇函数（关于原点中心对称）。</span>
+                  <span>
+                    。
+                    {params.a * params.b > 0 ? (
+                      <span>
+                        在第一象限驻点{" "}
+                        <KatexFormula
+                          formula={`x = \\sqrt{b/a} = ${Math.sqrt(Math.max(1e-4, params.b / Math.max(1e-4, params.a))).toFixed(2)}`}
+                          mode="inline"
+                        />{" "}
+                        取得极小值，在{" "}
+                        <KatexFormula formula="(0, \sqrt{b/a}]" mode="inline" />{" "}
+                        单调递减，在{" "}
+                        <KatexFormula
+                          formula="[\sqrt{b/a}, +\infty)"
+                          mode="inline"
+                        />{" "}
+                        单调递增。
+                      </span>
+                    ) : (
+                      <span>
+                        导数{" "}
+                        <KatexFormula
+                          formula="f'(x) = a - b/x^2"
+                          mode="inline"
+                        />{" "}
+                        恒{params.a > 0 ? "正" : "负"}，全域单调
+                        {params.a > 0 ? "递增" : "递减"}无极值。
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【单调性与极值】
+                    【核心设问 / 探究】
                   </span>
-                  {params.a * params.b > 0 ? (
-                    <span>
-                      在第一象限驻点{" "}
-                      <KatexFormula
-                        formula={`x = \\sqrt{b/a} = ${Math.sqrt(Math.max(1e-4, params.b / Math.max(1e-4, params.a))).toFixed(2)}`}
-                        mode="inline"
-                      />{" "}
-                      处取得极小值，在{" "}
-                      <KatexFormula
-                        formula={`(0, \\sqrt{b/a}]`}
-                        mode="inline"
-                      />{" "}
-                      递减，在{" "}
-                      <KatexFormula
-                        formula={`[\\sqrt{b/a}, +\\infty)`}
-                        mode="inline"
-                      />{" "}
-                      递增。
-                    </span>
-                  ) : (
-                    <span>
-                      导数{" "}
-                      <KatexFormula formula="f'(x) = a - b/x^2" mode="inline" />{" "}
-                      恒{params.a > 0 ? "大于" : "小于"} 0，在各区间内均严格单调
-                      {params.a > 0 ? "递增" : "递减"}，全域无极值点。
-                    </span>
-                  )}
+                  <span>
+                    {params.a * params.b > 0
+                      ? "调节分子系数 b，观察特征驻点如何沿双曲线向外迁移？拖动切点 P 观察切线何时变为水平？"
+                      : "改变斜率 a 的正负，观察为何飘带形态不具备驻点？渐近线与曲线的位置关系如何变化？"}
+                  </span>
                 </div>
               </div>
             </TipCard>

@@ -170,16 +170,16 @@ export function ShiftedPage() {
             />
           </LeftPanelSection>
 
-          {/* 3. 教学导引卡片 */}
-          <LeftPanelSection title="教学导引与破题思路" compact>
+          {/* 3. 教学导引与探究设问 */}
+          <LeftPanelSection title="教学导引与探究设问" compact>
             <TipCard variant="primary">
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-primary-700">
-                <span>高考题型 · 分离常数与换元转化法</span>
+                <span>平移双曲模型与化归探究</span>
               </div>
               <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【中心与渐近线】
+                    【模型特征 / 条件】
                   </span>
                   <span>对称中心为 </span>
                   <KatexFormula
@@ -196,23 +196,26 @@ export function ShiftedPage() {
                     formula={`y = ${params.a.toFixed(1)}(x - ${params.h.toFixed(1)}) + ${params.c.toFixed(1)}`}
                     mode="inline"
                   />
-                  <span>。</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【破题转化】
-                  </span>
-                  <span>令 </span>
+                  <span>。令 </span>
                   <KatexFormula
                     formula={`u = x - ${params.h.toFixed(1)}`}
                     mode="inline"
                   />
-                  <span>，将复杂分式化为标准 </span>
+                  <span> 可化为标准型 </span>
                   <KatexFormula
                     formula={`y - ${params.c.toFixed(1)} = ${params.a.toFixed(1)}u + \\frac{${params.b.toFixed(1)}}{u}`}
                     mode="inline"
                   />
-                  <span>，利用均值不等式或导数求解值域与单调性。</span>
+                  <span>。</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问 / 探究】
+                  </span>
+                  <span>
+                    拖拽中心点 C
+                    改变渐近线交点，观察函数图象如何整体平移？对比一次分式与二次分式在分离常数后的核心几何差异是什么？
+                  </span>
                 </div>
               </div>
             </TipCard>

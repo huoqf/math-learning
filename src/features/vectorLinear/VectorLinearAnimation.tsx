@@ -357,10 +357,10 @@ export function VectorLinearAnimation() {
                       【基础条件】：
                     </span>
                     基准向量{" "}
-                    <KatexFormula formula="\\vec{a}, \\vec{b}" mode="inline" />{" "}
+                    <KatexFormula formula="\vec{a}, \vec{b}" mode="inline" />{" "}
                     共起点 O，标量{" "}
                     <KatexFormula
-                      formula="\\lambda, \\mu \\in [-3, 3]"
+                      formula="\lambda, \mu \in [-3, 3]"
                       mode="inline"
                     />
                     。
@@ -369,15 +369,15 @@ export function VectorLinearAnimation() {
                     <span className="font-semibold text-neutral-800">
                       【探究问题】：
                     </span>
-                    调节 <KatexFormula formula="\\lambda, \\mu" mode="inline" />{" "}
+                    调节 <KatexFormula formula="\lambda, \mu" mode="inline" />{" "}
                     观察合成向量{" "}
                     <KatexFormula
-                      formula="\\vec{s} = \\lambda\\vec{a} + \\mu\\vec{b}"
+                      formula="\vec{s} = \lambda\vec{a} + \mu\vec{b}"
                       mode="inline"
                     />{" "}
                     的对角线变化；思考差向量{" "}
                     <KatexFormula
-                      formula="\\vec{d} = \\vec{a} - \\vec{b}"
+                      formula="\vec{d} = \vec{a} - \vec{b}"
                       mode="inline"
                     />{" "}
                     为何始终从 B 点指向 A 点？
@@ -392,7 +392,7 @@ export function VectorLinearAnimation() {
                     </span>
                     点 <KatexFormula formula="C" mode="inline" /> 满足{" "}
                     <KatexFormula
-                      formula="\\vec{OC} = x\\vec{OA} + y\\vec{OB}"
+                      formula="\vec{OC} = x\vec{OA} + y\vec{OB}"
                       mode="inline"
                     />
                     。
@@ -420,12 +420,12 @@ export function VectorLinearAnimation() {
                     </span>
                     不共线向量{" "}
                     <KatexFormula
-                      formula="\\{\\vec{e}_1, \\vec{e}_2\\}"
+                      formula="\{\vec{e}_1, \vec{e}_2\}"
                       mode="inline"
                     />{" "}
                     构成一组基底，
                     <KatexFormula
-                      formula="\\det(\\vec{e}_1, \\vec{e}_2) \\neq 0"
+                      formula="\det(\vec{e}_1, \vec{e}_2) \neq 0"
                       mode="inline"
                     />
                     。
@@ -435,14 +435,14 @@ export function VectorLinearAnimation() {
                       【探究问题】：
                     </span>
                     拖拽目标向量{" "}
-                    <KatexFormula formula="\\vec{v}" mode="inline" />
+                    <KatexFormula formula="\vec{v}" mode="inline" />
                     ，观察过 <KatexFormula
-                      formula="\\vec{v}"
+                      formula="\vec{v}"
                       mode="inline"
                     />{" "}
                     作两基底平行线所唯一确定的分解系数对{" "}
                     <KatexFormula
-                      formula="(\\lambda_1, \\lambda_2)"
+                      formula="(\lambda_1, \lambda_2)"
                       mode="inline"
                     />
                     ；基底共线时为何无解？

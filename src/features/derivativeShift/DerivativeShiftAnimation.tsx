@@ -396,7 +396,7 @@ export function DerivativeShiftAnimation() {
                       <KatexFormula formula="x_1 < x_2" mode="inline" />
                       ，定义对数平均数{" "}
                       <KatexFormula
-                        formula="L(x_1, x_2) = \\frac{x_1 - x_2}{\\ln x_1 - \\ln x_2}"
+                        formula="L(x_1, x_2) = \frac{x_1 - x_2}{\ln x_1 - \ln x_2}"
                         mode="inline"
                       />
                       。
@@ -408,10 +408,10 @@ export function DerivativeShiftAnimation() {
                     </span>
                     <span className="text-neutral-600 ml-1">
                       探究对数均值与几何均值{" "}
-                      <KatexFormula formula="\\sqrt{x_1 x_2}" mode="inline" />
+                      <KatexFormula formula="\sqrt{x_1 x_2}" mode="inline" />
                       、算术均值{" "}
                       <KatexFormula
-                        formula="\\frac{x_1+x_2}{2}"
+                        formula="\frac{x_1+x_2}{2}"
                         mode="inline"
                       />{" "}
                       的双边大小关系。

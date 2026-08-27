@@ -205,11 +205,11 @@ export function VectorBasisAnimation() {
                     </span>
                     基底{" "}
                     <KatexFormula
-                      formula="\\{\\vec{e}_1, \\vec{e}_2\\}"
+                      formula="\{\vec{e}_1, \vec{e}_2\}"
                       mode="inline"
                     />{" "}
                     不共线（
-                    <KatexFormula formula="\\det \\neq 0" mode="inline" />
+                    <KatexFormula formula="\det \neq 0" mode="inline" />
                     ）且为非零向量。
                   </div>
                   <div>
@@ -217,8 +217,8 @@ export function VectorBasisAnimation() {
                       【探究问题】：
                     </span>
                     拖动基底端点改变夹角，观察目标向量在斜坐标网格中的分解系数{" "}
-                    <KatexFormula formula="\\lambda" mode="inline" /> 与{" "}
-                    <KatexFormula formula="\\mu" mode="inline" /> 是否唯一确定？
+                    <KatexFormula formula="\lambda" mode="inline" /> 与{" "}
+                    <KatexFormula formula="\mu" mode="inline" /> 是否唯一确定？
                   </div>
                 </>
               )}
@@ -230,12 +230,12 @@ export function VectorBasisAnimation() {
                     </span>
                     基底{" "}
                     <KatexFormula
-                      formula="\\{\\vec{e}_1', \\vec{e}_2'\\}"
+                      formula="\{\vec{e}_1', \vec{e}_2'\}"
                       mode="inline"
                     />{" "}
                     模长均为 1 且互相垂直（
                     <KatexFormula
-                      formula="\\vec{e}_1' \\perp \\vec{e}_2'"
+                      formula="\vec{e}_1' \perp \vec{e}_2'"
                       mode="inline"
                     />
                     ）。
@@ -245,11 +245,11 @@ export function VectorBasisAnimation() {
                       【探究问题】：
                     </span>
                     旋转坐标轴角度{" "}
-                    <KatexFormula formula="\\theta" mode="inline" />
+                    <KatexFormula formula="\theta" mode="inline" />
                     ，观察正交投影系数平方和{" "}
                     <KatexFormula formula="x'^2 + y'^2" mode="inline" />{" "}
                     是否始终等于模长平方{" "}
-                    <KatexFormula formula="|\\vec{a}|^2" mode="inline" />？
+                    <KatexFormula formula="|\vec{a}|^2" mode="inline" />？
                   </div>
                 </>
               )}
@@ -260,7 +260,7 @@ export function VectorBasisAnimation() {
                       【基础条件】：
                     </span>
                     <KatexFormula
-                      formula="\\vec{OP} = x\\vec{OA} + y\\vec{OB}"
+                      formula="\vec{OP} = x\vec{OA} + y\vec{OB}"
                       mode="inline"
                     />
                     ，基准点 <KatexFormula formula="O" mode="inline" />{" "}
@@ -288,7 +288,7 @@ export function VectorBasisAnimation() {
                     <KatexFormula formula="P" mode="inline" /> 为线段{" "}
                     <KatexFormula formula="AB" mode="inline" /> 上的内分点，
                     <KatexFormula formula="G" mode="inline" /> 为{" "}
-                    <KatexFormula formula="\\triangle OAB" mode="inline" />{" "}
+                    <KatexFormula formula="\triangle OAB" mode="inline" />{" "}
                     的重心。
                   </div>
                   <div>
@@ -297,7 +297,7 @@ export function VectorBasisAnimation() {
                     </span>
                     滑动分点比率 <KatexFormula formula="t" mode="inline" />
                     ，观察分点向量{" "}
-                    <KatexFormula formula="\\vec{OP}" mode="inline" />{" "}
+                    <KatexFormula formula="\vec{OP}" mode="inline" />{" "}
                     的系数之和是否恒等于 1？重心{" "}
                     <KatexFormula formula="G" mode="inline" />{" "}
                     对应的两系数各为多少？

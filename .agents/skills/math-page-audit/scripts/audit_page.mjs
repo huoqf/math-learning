@@ -10,6 +10,9 @@
  * 4. 手写 <circle> 替代 MathPoint
  * 5. 拖拽二次转换错误 (onDrag -> designToMath)
  * 6. 硬编码 Hex 颜色
+ * 7. JSX 属性字符串双斜杠转义陷阱 (formula="...\\\\...")
+ * 8. 左屏职责越界文案 (左屏侵入“高考核心/高考题型”)
+ * 9. 动画页面缺少 TipCard 教学引导卡片
  */
 
 import fs from 'node:fs';
@@ -51,6 +54,19 @@ for (const filePath of files) {
   const lines = content.split('\n');
   const relPath = path.relative(workspaceRoot, filePath);
   const issues = [];
+
+  // 全文级检查：主动画页面必须包含 TipCard
+  const isAnimationPage = (filePath.endsWith('Animation.tsx') || filePath.endsWith('Page.tsx')) && 
+                          !filePath.includes('test') && 
+                          content.includes('ThreePanel');
+  if (isAnimationPage && !content.includes('TipCard')) {
+    issues.push({
+      lineNum: 1,
+      type: '缺失教学导引',
+      message: '主探究页面左屏必须包含 TipCard 教学导引卡片（说明模型特征与核心设问）',
+      snippet: 'ThreePanel 页面未引入/挂载 TipCard'
+    });
+  }
 
   lines.forEach((line, index) => {
     const lineNum = index + 1;
@@ -98,6 +114,28 @@ for (const filePath of files) {
         });
       }
     }
+
+    // 5. 检查 JSX 属性中的 LaTeX 双斜杠转义陷阱 (formula="...\\\\...")
+    if (/formula="[^"]*\\\\/.test(line)) {
+      issues.push({
+        lineNum,
+        type: 'JSX双斜杠陷阱',
+        message: 'JSX 属性字符串中的 \\\\ 会被直接传给 KaTeX 导致换行/排版断裂，请改为单斜杠 \\',
+        snippet: line.trim()
+      });
+    }
+
+    // 6. 检查左屏越界考点词
+    if (line.includes('<TipCard') || (line.includes('title=') && line.includes('LeftPanelSection'))) {
+      if (line.includes('高考核心') || line.includes('高考题型') || line.includes('高考考点')) {
+        issues.push({
+          lineNum,
+          type: '左屏职责越界',
+          message: '左屏应聚焦于模型条件与探究设问，严禁堆砌高考考点字样（请归位右屏 MathPanel）',
+          snippet: line.trim()
+        });
+      }
+    }
   });
 
   if (issues.length > 0) {
@@ -116,3 +154,4 @@ if (totalIssues === 0) {
 } else {
   console.log(`⚠️ 审计完成：扫描 ${totalFiles} 个文件，发现 ${totalIssues} 处需关注项。\n`);
 }
+

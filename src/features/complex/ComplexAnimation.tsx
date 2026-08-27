@@ -532,7 +532,7 @@ export function ComplexAnimation() {
                     </span>
                     复数 <KatexFormula formula="z = a + bi" mode="inline" />{" "}
                     与复平面向量{" "}
-                    <KatexFormula formula="\\vec{OZ} = (a, b)" mode="inline" />{" "}
+                    <KatexFormula formula="\vec{OZ} = (a, b)" mode="inline" />{" "}
                     一一对应。
                   </div>
                   <div>
@@ -555,7 +555,7 @@ export function ComplexAnimation() {
                     </span>
                     复数乘法满足“模长相乘，辐角相加”：
                     <KatexFormula
-                      formula="z_1 z_2 = (r_1 r_2)e^{i(\\theta_1+\\theta_2)}"
+                      formula="z_1 z_2 = (r_1 r_2)e^{i(\theta_1+\theta_2)}"
                       mode="inline"
                     />
                     。
@@ -588,8 +588,8 @@ export function ComplexAnimation() {
                     拖动定点 <KatexFormula formula="w" mode="inline" /> 和圆心{" "}
                     <KatexFormula formula="z_0" mode="inline" />
                     ，观察极值点{" "}
-                    <KatexFormula formula="Z_{\\min}" mode="inline" /> 与{" "}
-                    <KatexFormula formula="Z_{\\max}" mode="inline" />{" "}
+                    <KatexFormula formula="Z_{\min}" mode="inline" /> 与{" "}
+                    <KatexFormula formula="Z_{\max}" mode="inline" />{" "}
                     是否始终落在连线所在直线上？
                   </div>
                 </>

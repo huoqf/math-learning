@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
@@ -67,7 +68,7 @@ export function NikeAnimation() {
     return `y = ${colA}x + \\frac{${colB}}{x}`;
   }, [params.a, params.b, params.h, params.c, activeMode]);
 
-  // 5. 左屏参数过滤与配置 (声明式ParamControl)
+  // 5. 左屏参数过滤与配置 (声明式ParamControl，支持动态定义域保护)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
       standard: ["a", "b", "x0"],
@@ -79,17 +80,35 @@ export function NikeAnimation() {
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        let minVal = meta.min;
+        let maxVal = meta.max;
+        let marks = meta.marks;
+
+        if (activeMode === "amgm") {
+          marks = undefined;
+          if (key === "a") {
+            minVal = 0.2;
+            maxVal = 3.0;
+          } else if (key === "b") {
+            minVal = 0.5;
+            maxVal = 9.0;
+          } else if (key === "x0") {
+            minVal = 0.2;
+            maxVal = 6.0;
+          }
+        }
+
         return {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
           value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
+          min: minVal,
+          max: maxVal,
           step: meta.step ?? 0.1,
           group: meta.group,
           importance: meta.importance,
-          marks: meta.marks,
+          marks,
         };
       });
   }, [params, activeMode]);
@@ -335,6 +354,179 @@ export function NikeAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          {/* 4. 教学导引与探究设问 */}
+          <LeftPanelSection title="教学导引与探究设问" compact>
+            {activeMode === "standard" && (
+              <TipCard
+                variant={
+                  params.a * params.b > 0
+                    ? "primary"
+                    : params.a * params.b < 0
+                      ? "warning"
+                      : "danger"
+                }
+              >
+                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                  <span>
+                    {params.a * params.b > 0
+                      ? "经典对勾函数模型 (ab > 0)"
+                      : params.a * params.b < 0
+                        ? "双曲飘带型函数 (ab < 0)"
+                        : "初等退化函数形态"}
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-[11px] leading-relaxed">
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【模型特征 / 条件】
+                    </span>
+                    <span>定义域去心 </span>
+                    <KatexFormula formula="x \ne 0" mode="inline" />
+                    <span>，为奇函数 </span>
+                    <KatexFormula formula="f(-x) = -f(x)" mode="inline" />
+                    <span>
+                      。
+                      {params.a * params.b > 0 ? (
+                        <span>
+                          在第一象限驻点{" "}
+                          <KatexFormula
+                            formula={`x = \\sqrt{b/a} = ${Math.sqrt(Math.max(1e-4, params.b / Math.max(1e-4, params.a))).toFixed(2)}`}
+                            mode="inline"
+                          />{" "}
+                          取得极小值，在{" "}
+                          <KatexFormula
+                            formula="(0, \sqrt{b/a}]"
+                            mode="inline"
+                          />{" "}
+                          单调递减，在{" "}
+                          <KatexFormula
+                            formula="[\sqrt{b/a}, +\infty)"
+                            mode="inline"
+                          />{" "}
+                          单调递增。
+                        </span>
+                      ) : (
+                        <span>
+                          导数{" "}
+                          <KatexFormula
+                            formula="f'(x) = a - b/x^2"
+                            mode="inline"
+                          />{" "}
+                          恒{params.a > 0 ? "正" : "负"}，全域单调
+                          {params.a > 0 ? "递增" : "递减"}无极值。
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【核心设问 / 探究】
+                    </span>
+                    <span>
+                      {params.a * params.b > 0
+                        ? "调节分子系数 b，观察特征驻点如何沿双曲线向外迁移？拖动切点 P 观察切线何时变为水平？"
+                        : "改变斜率 a 的正负，观察为何飘带形态不具备驻点？渐近线与曲线的位置关系如何变化？"}
+                    </span>
+                  </div>
+                </div>
+              </TipCard>
+            )}
+
+            {activeMode === "amgm" && (
+              <TipCard variant="success">
+                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-success-800">
+                  <span>均值不等式数形结合 (AM-GM)</span>
+                </div>
+                <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【模型特征 / 条件】
+                    </span>
+                    <span>满足前提“一正” </span>
+                    <KatexFormula formula="a>0, b>0, x>0" mode="inline" />
+                    <span> 与“二定” </span>
+                    <KatexFormula
+                      formula={`(ax)(\\frac{b}{x}) = ${(params.a * params.b).toFixed(1)}`}
+                      mode="inline"
+                    />
+                    <span>。在 </span>
+                    <KatexFormula
+                      formula={`x = \\sqrt{b/a} = ${Math.sqrt(Math.max(1e-4, params.b / Math.max(1e-4, params.a))).toFixed(2)}`}
+                      mode="inline"
+                    />
+                    <span> 取得理论最小值 </span>
+                    <KatexFormula
+                      formula={`y_{\\min} = 2\\sqrt{ab} = ${(2 * Math.sqrt(Math.max(0, params.a * params.b))).toFixed(2)}`}
+                      mode="inline"
+                    />
+                    <span>。</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【核心设问 / 探究】
+                    </span>
+                    <span>
+                      拖动探针动点 P
+                      逼近极小值点，观察虚线拆分高线何时满足两项等长{" "}
+                      <KatexFormula formula="ax = b/x" mode="inline" />
+                      ？两项不等时为何和值总是严格偏大？
+                    </span>
+                  </div>
+                </div>
+              </TipCard>
+            )}
+
+            {activeMode === "shifted" && (
+              <TipCard variant="primary">
+                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-primary-700">
+                  <span>平移双曲模型与化归探究</span>
+                </div>
+                <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【模型特征 / 条件】
+                    </span>
+                    <span>对称中心为 </span>
+                    <KatexFormula
+                      formula={`(${params.h.toFixed(1)}, ${params.c.toFixed(1)})`}
+                      mode="inline"
+                    />
+                    <span>，渐近线为 </span>
+                    <KatexFormula
+                      formula={`x = ${params.h.toFixed(1)}`}
+                      mode="inline"
+                    />
+                    <span> 与 </span>
+                    <KatexFormula
+                      formula={`y = ${params.a.toFixed(1)}(x - ${params.h.toFixed(1)}) + ${params.c.toFixed(1)}`}
+                      mode="inline"
+                    />
+                    <span>。令 </span>
+                    <KatexFormula
+                      formula={`u = x - ${params.h.toFixed(1)}`}
+                      mode="inline"
+                    />
+                    <span> 可化为标准型 </span>
+                    <KatexFormula
+                      formula={`y - ${params.c.toFixed(1)} = ${params.a.toFixed(1)}u + \\frac{${params.b.toFixed(1)}}{u}`}
+                      mode="inline"
+                    />
+                    <span>。</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">
+                      【核心设问 / 探究】
+                    </span>
+                    <span>
+                      拖拽中心点 C
+                      改变渐近线交点，观察函数图象如何整体平移？对比一次分式与二次分式在分离常数后的核心几何差异是什么？
+                    </span>
+                  </div>
+                </div>
+              </TipCard>
+            )}
           </LeftPanelSection>
         </LeftPanel>
       }
