@@ -11,16 +11,24 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { SceneLegend } from "@/components/Math";
 import { PropertiesScene } from "./components/PropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/funcProperties";
 
-type FnType = "cubic" | "quadratic" | "abs" | "reciprocal" | "sin";
+type SubMode =
+  | "axis"
+  | "center"
+  | "period-dual-axis"
+  | "period-dual-center"
+  | "period-axis-center";
+type FnType = "quadratic" | "abs" | "cubic" | "sin" | "reciprocal";
 
 export function SymmetryPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
-  const [fnType, setFnType] = useState<FnType>("cubic");
+  const [subMode, setSubMode] = useState<SubMode>("axis");
+  const [fnType, setFnType] = useState<FnType>("quadratic");
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -31,21 +39,52 @@ export function SymmetryPage() {
     () =>
       buildMathQuantities("anim-func-properties", params, {
         mode: "symmetry",
+        subMode,
         fnType,
       }),
-    [params, fnType],
+    [params, subMode, fnType],
   );
 
   const formulaLatex = useMemo(() => {
-    const axisA = (params.axisA ?? 0).toFixed(1);
-    const axisB = (params.axisB ?? 2).toFixed(1);
-    const dist = Math.abs((params.axisB ?? 2) - (params.axisA ?? 0));
-    const period = (2 * dist).toFixed(1);
-    return `x = ${axisA}, \\ x = ${axisB} \\text{ 对称 } \\Rightarrow T = 2|a - b| = ${period}`;
-  }, [params]);
+    if (subMode === "axis") {
+      const a = (params.axisA ?? 0).toFixed(1);
+      return `f(x) \\text{ 关于直线 } x = ${a} \\text{ 轴对称 } \\iff f(x) = f(${2 * Number(a)} - x)`;
+    }
+    if (subMode === "center") {
+      const xc = (params.centerX ?? 0).toFixed(1);
+      const yc = (params.centerY ?? 0).toFixed(1);
+      return `f(x) \\text{ 关于点 } (${xc}, ${yc}) \\text{ 中心对称 } \\iff f(x) + f(${2 * Number(xc)} - x) = ${2 * Number(yc)}`;
+    }
+    if (subMode === "period-dual-axis") {
+      const a = (params.axisA ?? 0).toFixed(1);
+      const b = (params.axisB ?? 2).toFixed(1);
+      const T = (2 * Math.abs(Number(b) - Number(a))).toFixed(1);
+      return `x = ${a}, \\ x = ${b} \\text{ 轴对称 } \\Rightarrow T = 2|a - b| = ${T}`;
+    }
+    if (subMode === "period-dual-center") {
+      const a = (params.axisA ?? 0).toFixed(1);
+      const b = (params.axisB ?? 2).toFixed(1);
+      const T = (2 * Math.abs(Number(b) - Number(a))).toFixed(1);
+      return `(${a}, 0), \\ (${b}, 0) \\text{ 中心对称 } \\Rightarrow T = 2|a - b| = ${T}`;
+    }
+    // period-axis-center
+    const a = (params.axisA ?? 0).toFixed(1);
+    const b = (params.axisB ?? 2).toFixed(1);
+    const T = (4 * Math.abs(Number(b) - Number(a))).toFixed(1);
+    return `x = ${a} \\text{ 轴与 } (${b}, 0) \\text{ 中心 } \\Rightarrow T = 4|a - b| = ${T}`;
+  }, [subMode, params]);
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    return ["axisA", "axisB"]
+    let keys: string[] = [];
+    if (subMode === "axis") {
+      keys = ["axisA", "x0"];
+    } else if (subMode === "center") {
+      keys = ["centerX", "centerY", "x0"];
+    } else {
+      keys = ["axisA", "axisB"];
+    }
+
+    return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
@@ -57,13 +96,11 @@ export function SymmetryPage() {
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
         };
       });
-  }, [params]);
+  }, [params, subMode]);
 
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => ({ ...prev, [key]: value }));
@@ -71,52 +108,136 @@ export function SymmetryPage() {
 
   // 动态教学提示配置
   const tipConfig = useMemo(() => {
+    if (subMode === "axis") {
+      return {
+        variant: "primary" as const,
+        badge: "模型探究 · 函数图象轴对称性质",
+        condition: `函数图象关于垂直直线 x = ${(params.axisA ?? 0).toFixed(1)} 轴对称。`,
+        question:
+          "观察任意测试点 P 与其对称点 P'，验证两点中点必然落在对称轴上，且 f(x) = f(2a-x)。",
+      };
+    }
+    if (subMode === "center") {
+      return {
+        variant: "primary" as const,
+        badge: "模型探究 · 函数图象中心对称性质",
+        condition: `函数图象关于点 C(${(params.centerX ?? 0).toFixed(1)}, ${(params.centerY ?? 0).toFixed(1)}) 中心对称。`,
+        question:
+          "观察测试点 P 与对称点 P' 的连线必过对称中心 C 并被其平分，验证 f(x) + f(2a-x) = 2b。",
+      };
+    }
+    if (subMode === "period-dual-axis") {
+      const dist = Math.abs((params.axisB ?? 2) - (params.axisA ?? 0));
+      return {
+        variant: "primary" as const,
+        badge: "核心模型 · 双轴对称导出周期",
+        condition: `图象同时具有两条对称轴 x = ${(params.axisA ?? 0).toFixed(1)} 与 x = ${(params.axisB ?? 2).toFixed(1)}。`,
+        question: `两次连续轴反射复合产生水平平移，导出最小正周期 T = 2|a - b| = ${(2 * dist).toFixed(1)}。`,
+      };
+    }
+    if (subMode === "period-dual-center") {
+      const dist = Math.abs((params.axisB ?? 2) - (params.axisA ?? 0));
+      return {
+        variant: "primary" as const,
+        badge: "核心模型 · 双中心对称导出周期",
+        condition: `图象关于点 (${(params.axisA ?? 0).toFixed(1)}, 0) 与 (${(params.axisB ?? 2).toFixed(1)}, 0) 中心对称。`,
+        question: `两次连续中心反射复合产生水平平移，导出最小正周期 T = 2|a - b| = ${(2 * dist).toFixed(1)}。`,
+      };
+    }
+    // period-axis-center
     const dist = Math.abs((params.axisB ?? 2) - (params.axisA ?? 0));
-    const period = (2 * dist).toFixed(1);
     return {
       variant: "primary" as const,
-      badge: "高考经典 · 双对称轴导出函数周期性",
-      condition: `函数图象同时具有两条纵向对称轴 x = ${params.axisA.toFixed(1)} 与 x = ${params.axisB.toFixed(1)}。`,
-      question: `证明两次连续轴对称变换复合产生平移周期，计算基本周期 T = 2|a - b| = ${period}。`,
+      badge: "核心模型 · 一轴一中心导出周期",
+      condition: `图象关于轴 x = ${(params.axisA ?? 0).toFixed(1)} 与中心 (${(params.axisB ?? 2).toFixed(1)}, 0) 对称。`,
+      question: `一轴一中心连续反射四次完成完整循环，导出周期 T = 4|a - b| = ${(4 * dist).toFixed(1)}。`,
     };
-  }, [params.axisA, params.axisB]);
+  }, [subMode, params.axisA, params.axisB, params.centerX, params.centerY]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="基准函数选择"
-            subtitle="切换观察不同函数的对称性"
-          >
+          <LeftPanelSection title="探究模式切换">
             <SelectGrid
               items={[
-                { key: "cubic", label: "y = x³", formula: "y=x^3" },
-                { key: "quadratic", label: "y = x²", formula: "y=x^2" },
-                { key: "abs", label: "y = |x|", formula: "y=|x|" },
+                { key: "axis", label: "单轴对称", formula: "f(2a-x)=f(x)" },
                 {
-                  key: "reciprocal",
-                  label: "y = 1/x",
-                  formula: "y=\\frac{1}{x}",
+                  key: "center",
+                  label: "中心对称",
+                  formula: "f(2a-x)+f(x)=2b",
                 },
-                { key: "sin", label: "y = sin x", formula: "y=\\sin x" },
+                {
+                  key: "period-dual-axis",
+                  label: "双轴导出周期",
+                  formula: "T=2|a-b|",
+                },
+                {
+                  key: "period-dual-center",
+                  label: "双中心导出周期",
+                  formula: "T=2|a-b|",
+                },
+                {
+                  key: "period-axis-center",
+                  label: "一轴一中心导出周期",
+                  formula: "T=4|a-b|",
+                },
               ]}
-              value={fnType}
-              onChange={(k) => setFnType(k)}
-              variant="outline"
+              value={subMode}
+              onChange={(k) => setSubMode(k as SubMode)}
+              columns={1}
               className="mb-4"
             />
           </LeftPanelSection>
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="调节参数观察曲线与几何演变"
-          >
+
+          {subMode === "axis" && (
+            <LeftPanelSection title="基准函数模型">
+              <SelectGrid
+                items={[
+                  {
+                    key: "quadratic",
+                    label: "二次抛物线",
+                    formula: "y=(x-a)^2",
+                  },
+                  { key: "abs", label: "绝对值折线", formula: "y=|x-a|" },
+                  { key: "sin", label: "余弦波形", formula: "y=\\cos(x-a)" },
+                ]}
+                value={fnType}
+                onChange={(k) => setFnType(k as FnType)}
+                variant="outline"
+                className="mb-4"
+              />
+            </LeftPanelSection>
+          )}
+
+          {subMode === "center" && (
+            <LeftPanelSection title="基准函数模型">
+              <SelectGrid
+                items={[
+                  { key: "cubic", label: "三次曲线", formula: "y=(x-x_c)^3" },
+                  { key: "sin", label: "正弦波形", formula: "y=\\sin(x-x_c)" },
+                  {
+                    key: "reciprocal",
+                    label: "分式中心",
+                    formula: "y=\\frac{1}{x-x_c}",
+                  },
+                ]}
+                value={fnType}
+                onChange={(k) => setFnType(k as FnType)}
+                variant="outline"
+                className="mb-4"
+              />
+            </LeftPanelSection>
+          )}
+
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
           </LeftPanelSection>
+
           {/* 教学导引与题设背景 */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
@@ -126,7 +247,7 @@ export function SymmetryPage() {
               <div className="space-y-1.5 text-[11px] leading-relaxed">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【初始条件】
+                    【模型条件】
                   </span>
                   <span className="text-neutral-600">
                     {tipConfig.condition}
@@ -134,7 +255,7 @@ export function SymmetryPage() {
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【核心设问】
+                    【核心探究】
                   </span>
                   <span className="text-neutral-600">{tipConfig.question}</span>
                 </div>
@@ -160,8 +281,82 @@ export function SymmetryPage() {
               fontScale={canvasSize.font}
               fnType={fnType}
               mode="symmetry"
+              subMode={subMode}
             />
           </AnimationSvgCanvas>
+          <SceneLegend
+            items={
+              subMode === "axis"
+                ? [
+                    {
+                      style: "solid",
+                      color: MATH_COLORS.function,
+                      formula: "y = f(x)",
+                    },
+                    {
+                      style: "dash",
+                      color: MATH_COLORS.paramPrimary,
+                      formula: `x = ${(params.axisA ?? 0).toFixed(1)}`,
+                    },
+                    {
+                      style: "point",
+                      color: MATH_COLORS.paramSecondary,
+                      formula: "P(x, y)",
+                    },
+                    {
+                      style: "point",
+                      color: MATH_COLORS.paramTertiary,
+                      formula: "P'(2a-x, y)",
+                    },
+                  ]
+                : subMode === "center"
+                  ? [
+                      {
+                        style: "solid",
+                        color: MATH_COLORS.function,
+                        formula: "y = f(x)",
+                      },
+                      {
+                        style: "point",
+                        color: MATH_COLORS.paramPrimary,
+                        formula: `C(${params.centerX ?? 0}, ${params.centerY ?? 0})`,
+                      },
+                      {
+                        style: "point",
+                        color: MATH_COLORS.paramSecondary,
+                        formula: "P(x, y)",
+                      },
+                      {
+                        style: "point",
+                        color: MATH_COLORS.paramTertiary,
+                        formula: "P'(2a-x, 2b-y)",
+                      },
+                    ]
+                  : [
+                      {
+                        style: "solid",
+                        color: MATH_COLORS.function,
+                        formula: "y = f(x)",
+                      },
+                      {
+                        style: "dash",
+                        color: MATH_COLORS.paramPrimary,
+                        formula: `x = ${(params.axisA ?? 0).toFixed(1)}`,
+                      },
+                      {
+                        style: "dash",
+                        color: MATH_COLORS.paramSecondary,
+                        formula: `x = ${(params.axisB ?? 2).toFixed(1)}`,
+                      },
+                      {
+                        style: "area",
+                        color: MATH_COLORS.asymptote,
+                        formula: "T",
+                      },
+                    ]
+            }
+            title="对称图例说明"
+          />
         </div>
       }
       right={

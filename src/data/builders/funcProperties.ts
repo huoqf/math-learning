@@ -2,7 +2,10 @@ import type { MathPanelData } from "../types";
 import {
   evalFunctionParity,
   evalSecantSlope,
-  evalSymmetryPeriod,
+  evalAxisSymmetry,
+  evalCenterSymmetry,
+  evalPeriodicityModel,
+  type PeriodModelType,
 } from "@/math/function";
 import { MATH_COLORS } from "@/theme";
 
@@ -12,7 +15,8 @@ export function buildFuncPropertiesPanel(
 ): MathPanelData {
   const mode = ((config?.mode as string) || "parity") as
     "domain" | "parity" | "symmetry";
-  const fnType = ((config?.fnType as string) || "cubic") as
+  const subMode = (config?.subMode as string) || "axis"; // "axis" | "center" | "period-dual-axis" | "period-dual-center" | "period-axis-center"
+  const fnType = ((config?.fnType as string) || "quadratic") as
     "cubic" | "quadratic" | "abs" | "reciprocal" | "sin";
 
   const getFn = (x: number): number => {
@@ -37,7 +41,10 @@ export function buildFuncPropertiesPanel(
   const x2 = params.x2 ?? 2.0;
   const axisA = params.axisA ?? 0.0;
   const axisB = params.axisB ?? 2.0;
+  const centerX = params.centerX ?? 0.0;
+  const centerY = params.centerY ?? 0.0;
 
+  // 1. 定义域与值域模式
   if (mode === "domain") {
     const fx0 = getFn(x0);
     const domainText =
@@ -88,10 +95,10 @@ export function buildFuncPropertiesPanel(
         ],
       },
       {
-        name: "值域与对应关系",
+        name: "值域与对应法则",
         latex: "R = \\{ y \\mid y = f(x), x \\in D \\}",
         level: "important",
-        prerequisites: ["每一个 x 在 D 中有且仅有一个对应的 y"],
+        prerequisites: ["定义域 D 内的每一个自变量 x 有唯一确定的 y 与之对应"],
       },
     ];
 
@@ -101,7 +108,7 @@ export function buildFuncPropertiesPanel(
         importance: "gaokao",
       },
       {
-        text: "值域与最值：闭区间上的连续函数必有最大值与最小值；反比例函数与分式函数需特别警示渐近线与无定义断点。",
+        text: "值域与最值求解：利用单调性、基本不等式或二次函数配方法确定函数的值域范围。",
         importance: "core",
       },
     ];
@@ -109,7 +116,7 @@ export function buildFuncPropertiesPanel(
     const warnings: MathPanelData["warnings"] = [];
     if (fnType === "reciprocal" && Math.abs(x0) < 1e-4) {
       warnings.push({
-        text: "x₀ = 0 处反比例函数无定义！位于定义域之外。",
+        text: "x₀ = 0 处反比例函数分母为零无定义！属于定义域外的奇点。",
         level: "danger",
       });
     }
@@ -123,6 +130,7 @@ export function buildFuncPropertiesPanel(
     };
   }
 
+  // 2. 奇偶性与单调性模式
   if (mode === "parity") {
     const parityRes = evalFunctionParity(
       fnType === "sin" ? "cubic" : fnType,
@@ -174,7 +182,7 @@ export function buildFuncPropertiesPanel(
 
     const theorems: MathPanelData["theorems"] = [
       {
-        name: "奇函数与偶函数严格定义",
+        name: "奇偶性代数充要条件",
         latex:
           "\\text{偶函数: } f(-x) = f(x), \\quad \\text{奇函数: } f(-x) = -f(x)",
         level: "core",
@@ -188,20 +196,20 @@ export function buildFuncPropertiesPanel(
         prerequisites: ["x₁ ≠ x₂ 且均属于定义域区间"],
       },
       {
-        name: "奇同偶反定理",
+        name: "奇同偶反单调性定理",
         latex: "\\text{奇函数在对称区间单调性相同；偶函数在对称区间单调性相反}",
         level: "important",
-        prerequisites: ["区间关于原点对称"],
+        prerequisites: ["定义域区间关于原点对称"],
       },
     ];
 
     const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
       {
-        text: "奇函数在原点处的性质：若奇函数 f(x) 在 x = 0 处有定义，则必有 f(0) = 0！这是高考特值秒杀的关键。",
+        text: "奇函数在原点处的性质：若奇函数 f(x) 在 x = 0 处有定义，则必有 f(0) = 0！这是高考赋值法秒杀待定系数的关键。",
         importance: "gaokao",
       },
       {
-        text: "单调性与不等式：利用单调性脱去函数符号 f(A) > f(B) 转化为 A > B (增) 或 A < B (减)。",
+        text: "单调性与不等式转化：利用单调性可直接脱去外层函数符号，将抽象不等式 f(A) > f(B) 转化为自变量不等式。",
         importance: "gaokao",
       },
     ];
@@ -209,7 +217,7 @@ export function buildFuncPropertiesPanel(
     const warnings: MathPanelData["warnings"] = [];
     if (Math.abs(x1 - x2) < 1e-4) {
       warnings.push({
-        text: "x₁ 与 x₂ 重合！割线退化，斜率未定义。",
+        text: "x₁ 与 x₂ 重合！割线退化为点，割线斜率未定义。",
         level: "warning",
       });
     }
@@ -223,74 +231,215 @@ export function buildFuncPropertiesPanel(
     };
   }
 
-  // mode === "symmetry"
-  const symRes = evalSymmetryPeriod(axisA, axisB);
+  // 3. 对称性与周期性模式 (Symmetry & Periodicity)
+  if (subMode === "axis") {
+    // 单轴对称探究
+    const axisRes = evalAxisSymmetry(getFn, axisA, x0);
+    const quantities: MathPanelData["quantities"] = [
+      {
+        label: "对称轴位置 a",
+        symbol: "x = a",
+        value: axisA.toFixed(1),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "测试点 P(x₀, y₀)",
+        symbol: "P",
+        value: `(${x0.toFixed(1)}, ${axisRes.fx.toFixed(1)})`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "对称点 P'(2a-x₀, y₀)",
+        symbol: "P'",
+        value: `(${axisRes.symX.toFixed(1)}, ${axisRes.symFx.toFixed(1)})`,
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "轴对称匹配判定",
+        value: axisRes.isSymmetric
+          ? "完全对称"
+          : `残差 Δy=${axisRes.residual.toFixed(2)}`,
+        highlight: axisRes.isSymmetric ? "positive" : "negative",
+      },
+    ];
+
+    const theorems: MathPanelData["theorems"] = [
+      {
+        name: "函数图象轴对称充要条件",
+        latex:
+          "f(a + x) = f(a - x) \\iff f(x) = f(2a - x) \\iff \\text{图象关于直线 } x = a \\text{ 对称}",
+        level: "core",
+        prerequisites: ["定义域关于直线 x = a 对称"],
+      },
+      {
+        name: "任意两点轴对称判定定理",
+        latex:
+          "f(x_1) = f(x_2) \\ (x_1 \\neq x_2) \\Rightarrow \\text{对称轴 } x = \\frac{x_1 + x_2}{2}",
+        level: "important",
+        prerequisites: ["适用于二次函数、绝对值函数等具有单轴对称性的图象"],
+      },
+    ];
+
+    const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
+      {
+        text: "高考特征代数式识别：若 f(a+x) = f(b-x) 对任意 x 恒成立，两自变量之和 (a+x)+(b-x) = a+b 为常数，则图象对称轴为 x = (a+b)/2！",
+        importance: "gaokao",
+      },
+    ];
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings: [],
+      mnemonic: "两自变量相加为常数，和定对称看中点 x=(a+b)/2。",
+    };
+  }
+
+  if (subMode === "center") {
+    // 一般中心对称探究
+    const centerRes = evalCenterSymmetry(getFn, centerX, centerY, x0);
+    const quantities: MathPanelData["quantities"] = [
+      {
+        label: "对称中心 C(xc, yc)",
+        symbol: "C",
+        value: `(${centerX.toFixed(1)}, ${centerY.toFixed(1)})`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "测试点 P(x₀, y₀)",
+        symbol: "P",
+        value: `(${x0.toFixed(1)}, ${centerRes.fx.toFixed(1)})`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "中心对称点 P'",
+        symbol: "P'",
+        value: `(${centerRes.symX.toFixed(1)}, ${centerRes.symFx.toFixed(1)})`,
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "中心对称判定",
+        value: centerRes.isSymmetric
+          ? "完全对称"
+          : `残差 Δy=${centerRes.residual.toFixed(2)}`,
+        highlight: centerRes.isSymmetric ? "positive" : "negative",
+      },
+    ];
+
+    const theorems: MathPanelData["theorems"] = [
+      {
+        name: "函数图象中心对称充要条件",
+        latex:
+          "f(a + x) + f(a - x) = 2b \\iff f(x) + f(2a - x) = 2b \\iff \\text{图象关于点 } (a, b) \\text{ 对称}",
+        level: "core",
+        prerequisites: ["定义域关于点 x = a 对称"],
+      },
+      {
+        name: "奇函数特殊中心对称",
+        latex:
+          "f(-x) + f(x) = 0 \\iff \\text{关于坐标原点 } (0, 0) \\text{ 中心对称}",
+        level: "important",
+        prerequisites: ["a = 0, b = 0 特例"],
+      },
+    ];
+
+    const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
+      {
+        text: "高考中心对称识别大招：若 f(a+x) + f(b-x) = 2c 恒成立，则对称中心必为 ((a+b)/2, c)！例如三次函数与正切函数常以此形式命题。",
+        importance: "gaokao",
+      },
+    ];
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings: [],
+      mnemonic: "自变量相加为常数，函数值相加为常数，必关于中点中心对称。",
+    };
+  }
+
+  // 高考三大周期性推导子模式
+  const periodModelType: PeriodModelType =
+    subMode === "period-dual-center"
+      ? "dual-center"
+      : subMode === "period-axis-center"
+        ? "axis-center"
+        : "dual-axis";
+
+  const periodRes = evalPeriodicityModel(periodModelType, axisA, axisB);
 
   const quantities: MathPanelData["quantities"] = [
     {
-      label: "第一对称轴 a",
-      symbol: "x=a",
+      label: periodModelType === "axis-center" ? "对称轴 a" : "第一特征 a",
+      symbol: "a",
       value: axisA.toFixed(1),
       color: MATH_COLORS.paramPrimary,
     },
     {
-      label: "第二对称轴 b",
-      symbol: "x=b",
+      label: periodModelType === "axis-center" ? "对称中心 b" : "第二特征 b",
+      symbol: "b",
       value: axisB.toFixed(1),
       color: MATH_COLORS.paramSecondary,
     },
     {
-      label: "轴间距 |a - b|",
+      label: "特征间距 |a - b|",
       symbol: "Δd",
-      value: symRes.dist.toFixed(1),
+      value: periodRes.dist.toFixed(1),
       color: MATH_COLORS.asymptote,
     },
     {
       label: "导出最小正周期 T",
       symbol: "T",
-      value: symRes.dist > 1e-4 ? symRes.period.toFixed(1) : "未导出(两轴重合)",
-      highlight: symRes.dist > 1e-4 ? "positive" : "negative",
+      value: periodRes.valid
+        ? periodRes.period.toFixed(1)
+        : "未导出(两特征重合)",
+      highlight: periodRes.valid ? "positive" : "negative",
     },
   ];
 
   const theorems: MathPanelData["theorems"] = [
     {
-      name: "函数图象轴对称定理",
+      name:
+        periodModelType === "dual-axis"
+          ? "双轴对称导出周期定理"
+          : periodModelType === "dual-center"
+            ? "双中心对称导出周期定理"
+            : "一轴一中心导出周期定理",
       latex:
-        "f(a + x) = f(a - x) \\iff \\text{图象关于直线 } x = a \\text{ 轴对称}",
+        periodModelType === "dual-axis"
+          ? "f(x) \\text{ 关于 } x=a, x=b \\text{ 均对称 } \\Rightarrow T = 2|a - b|"
+          : periodModelType === "dual-center"
+            ? "f(x) \\text{ 关于 } (a, c), (b, c) \\text{ 均对称 } \\Rightarrow T = 2|a - b|"
+            : "f(x) \\text{ 关于轴 } x=a \\text{ 与中心 } (b, c) \\text{ 对称 } \\Rightarrow T = 4|a - b|",
       level: "core",
-      prerequisites: ["定义域关于 x = a 对称"],
+      prerequisites: ["a ≠ b"],
     },
     {
-      name: "双轴对称导出周期性定理",
+      name: "周期函数平移不变性",
       latex:
-        "f(x) \\text{ 关于 } x=a, x=b \\text{ 对称 } \\Rightarrow T = 2|a - b|",
+        "f(x + T) = f(x) \\iff \\text{图象按周期 } T \\text{ 沿水平方向无限重复}",
       level: "important",
-      prerequisites: ["a ≠ b"],
-    },
-    {
-      name: "一轴一中心推导周期",
-      latex: "\\text{轴 } x=a \\text{ 与中心 } (b,c) \\Rightarrow T = 4|a - b|",
-      level: "important",
-      prerequisites: ["a ≠ b"],
+      prerequisites: ["T 为非零常数"],
     },
   ];
 
   const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
     {
-      text: "高考压轴秒杀：只要看到 f(a+x) = f(b-x)，对称轴必为 x = (a+b)/2；看到 f(a+x) = -f(b-x)，周期必与 2|a-b| 或 4|a-b| 相关！",
+      text: "新高考压轴秒杀口诀：双轴/双中心周期为 2 倍间距 (T = 2|a-b|)，一轴一中心周期为 4 倍间距 (T = 4|a-b|)！",
       importance: "gaokao",
     },
     {
-      text: "周期函数性质：f(x+T) = f(x) 意味着函数图象在水平方向上按长度 T 无限重复循环。",
-      importance: "core",
+      text: "抽象周期公式速记：f(x+a) = -f(x) ⇒ T = 2a；f(x+a) = 1/f(x) ⇒ T = 2a；f(x+a) = -1/f(x) ⇒ T = 2a；f(x+a) = (1-f(x))/(1+f(x)) ⇒ T = 4a。",
+      importance: "gaokao",
     },
   ];
 
   const warnings: MathPanelData["warnings"] = [];
-  if (symRes.dist < 1e-4) {
+  if (!periodRes.valid) {
     warnings.push({
-      text: "对称轴 a 与 b 重合！无法导出周期 T，需两条不同对称轴。",
+      text: "两对称特征横坐标重合 (a = b)！两次对称折叠退化为单次对称，无法导出周期。",
       level: "warning",
     });
   }
@@ -300,6 +449,6 @@ export function buildFuncPropertiesPanel(
     theorems,
     gaokaoPoints,
     warnings,
-    mnemonic: "双轴对称周期现，周期长度等于两倍轴距 T=2|a-b|。",
+    mnemonic: "双轴双中心周期两倍距，一轴一中心周期四倍距，和定对称差定周期。",
   };
 }

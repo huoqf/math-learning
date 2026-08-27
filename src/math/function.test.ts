@@ -3,6 +3,9 @@ import {
   evalFunctionParity,
   evalSecantSlope,
   evalSymmetryPeriod,
+  evalAxisSymmetry,
+  evalCenterSymmetry,
+  evalPeriodicityModel,
   calculatePowerFunction,
 } from "./function";
 
@@ -48,6 +51,52 @@ describe("evalSymmetryPeriod", () => {
     const res = evalSymmetryPeriod(1, 4);
     expect(res.dist).toBe(3);
     expect(res.period).toBe(6);
+  });
+});
+
+describe("evalAxisSymmetry", () => {
+  it("evaluates symmetry for parabola y = (x - 2)^2 about axis x = 2", () => {
+    const fn = (x: number) => Math.pow(x - 2, 2);
+    const res = evalAxisSymmetry(fn, 2, 3);
+    expect(res.symX).toBe(1);
+    expect(res.fx).toBe(1);
+    expect(res.symFx).toBe(1);
+    expect(res.isSymmetric).toBe(true);
+  });
+});
+
+describe("evalCenterSymmetry", () => {
+  it("evaluates center symmetry for cubic y = (x - 1)^3 + 2 about (1, 2)", () => {
+    const fn = (x: number) => Math.pow(x - 1, 3) + 2;
+    const res = evalCenterSymmetry(fn, 1, 2, 2);
+    expect(res.symX).toBe(0);
+    expect(res.fx).toBe(3);
+    expect(res.symFx).toBe(1);
+    expect(res.midY).toBe(2);
+    expect(res.isSymmetric).toBe(true);
+  });
+});
+
+describe("evalPeriodicityModel", () => {
+  it("computes dual-axis period T = 2|a - b|", () => {
+    const res = evalPeriodicityModel("dual-axis", 1, 3);
+    expect(res.period).toBe(4);
+    expect(res.waveFn(1)).toBeCloseTo(1);
+    expect(res.waveFn(3)).toBeCloseTo(-1);
+  });
+
+  it("computes dual-center period T = 2|a - b|", () => {
+    const res = evalPeriodicityModel("dual-center", 1, 3);
+    expect(res.period).toBe(4);
+    expect(res.waveFn(1)).toBeCloseTo(0);
+    expect(res.waveFn(3)).toBeCloseTo(0);
+  });
+
+  it("computes axis-center period T = 4|a - b|", () => {
+    const res = evalPeriodicityModel("axis-center", 0, 2);
+    expect(res.period).toBe(8);
+    expect(res.waveFn(0)).toBeCloseTo(1); // 轴对称处峰值
+    expect(res.waveFn(2)).toBeCloseTo(0); // 中心对称处零点
   });
 });
 

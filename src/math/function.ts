@@ -183,6 +183,138 @@ export function evalSymmetryPeriod(
   return { dist, period, formulaDescription };
 }
 
+/**
+ * 一般轴对称点计算与验证 (关于直线 x = a)
+ */
+export function evalAxisSymmetry(
+  fn: (x: number) => number,
+  axisA: number,
+  x: number,
+): {
+  x: number;
+  fx: number;
+  symX: number;
+  symFx: number;
+  midX: number;
+  isSymmetric: boolean;
+  residual: number;
+} {
+  const fx = fn(x);
+  const symX = 2 * axisA - x;
+  const symFx = fn(symX);
+  const midX = (x + symX) / 2;
+  const residual = Math.abs(fx - symFx);
+  const isSymmetric = Number.isFinite(residual) && residual < 1e-3;
+
+  return { x, fx, symX, symFx, midX, isSymmetric, residual };
+}
+
+/**
+ * 一般中心对称点计算与验证 (关于点 C(a, b))
+ */
+export function evalCenterSymmetry(
+  fn: (x: number) => number,
+  centerX: number,
+  centerY: number,
+  x: number,
+): {
+  x: number;
+  fx: number;
+  symX: number;
+  symFx: number;
+  midX: number;
+  midY: number;
+  isSymmetric: boolean;
+  residual: number;
+} {
+  const fx = fn(x);
+  const symX = 2 * centerX - x;
+  const symFx = fn(symX);
+  const midX = (x + symX) / 2;
+  const midY = (fx + symFx) / 2;
+  const residual = Math.abs(midY - centerY);
+  const isSymmetric = Number.isFinite(residual) && residual < 1e-3;
+
+  return { x, fx, symX, symFx, midX, midY, isSymmetric, residual };
+}
+
+export type PeriodModelType = "dual-axis" | "dual-center" | "axis-center";
+
+/**
+ * 高考三大周期模型求解与解析波形构造
+ */
+export function evalPeriodicityModel(
+  model: PeriodModelType,
+  a: number,
+  b: number,
+): {
+  dist: number;
+  period: number;
+  valid: boolean;
+  formulaLatex: string;
+  theoremText: string;
+  waveFn: (x: number) => number;
+} {
+  const dist = Math.abs(b - a);
+  const valid = dist > 1e-4;
+
+  if (model === "dual-axis") {
+    const period = 2 * dist;
+    const waveFn = (x: number) => {
+      if (!valid) return Math.cos(x);
+      return Math.cos((Math.PI * (x - a)) / (b - a));
+    };
+    return {
+      dist,
+      period,
+      valid,
+      formulaLatex: valid
+        ? `f(x \\text{ 关于 } x = ${a.toFixed(1)}, x = ${b.toFixed(1)} \\text{ 轴对称}) \\Rightarrow T = 2|a - b| = ${period.toFixed(1)}`
+        : `两轴重合 (a = b = ${a.toFixed(1)})，无法导出周期`,
+      theoremText:
+        "若函数图象关于直线 x = a 与 x = b 均对称，则周期 T = 2|a - b|。",
+      waveFn,
+    };
+  }
+
+  if (model === "dual-center") {
+    const period = 2 * dist;
+    const waveFn = (x: number) => {
+      if (!valid) return Math.sin(x);
+      return Math.sin((Math.PI * (x - a)) / (b - a));
+    };
+    return {
+      dist,
+      period,
+      valid,
+      formulaLatex: valid
+        ? `f(x \\text{ 关于 } (${a.toFixed(1)}, 0), (${b.toFixed(1)}, 0) \\text{ 中心对称}) \\Rightarrow T = 2|a - b| = ${period.toFixed(1)}`
+        : `两中心重合 (a = b = ${a.toFixed(1)})，无法导出周期`,
+      theoremText:
+        "若函数图象关于点 (a, c) 与点 (b, c) 均对称，则周期 T = 2|a - b|。",
+      waveFn,
+    };
+  }
+
+  // axis-center: 轴 x = a, 中心 (b, 0)
+  const period = 4 * dist;
+  const waveFn = (x: number) => {
+    if (!valid) return Math.cos(x);
+    return Math.cos((Math.PI * (x - a)) / (2 * (b - a)));
+  };
+  return {
+    dist,
+    period,
+    valid,
+    formulaLatex: valid
+      ? `f(x \\text{ 关于轴 } x = ${a.toFixed(1)} \\text{ 与中心 } (${b.toFixed(1)}, 0) \\text{ 对称}) \\Rightarrow T = 4|a - b| = ${period.toFixed(1)}`
+      : `轴与中心横坐标重合，无法导出周期`,
+    theoremText:
+      "若函数图象关于直线 x = a 轴对称，且关于点 (b, c) 中心对称，则周期 T = 4|a - b|。",
+    waveFn,
+  };
+}
+
 export interface StandardPowerInfo {
   key: string;
   alpha: number;

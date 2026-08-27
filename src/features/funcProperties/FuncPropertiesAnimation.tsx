@@ -59,15 +59,15 @@ export function FuncPropertiesAnimation() {
     if (mode === "parity") {
       switch (fnType) {
         case "cubic":
-          return "f(x) = x^3 \\quad (\\text{奇函数: } f(-x) = -f(x))";
+          return "f(x) = x^3 \\quad (f(-x) = -f(x))";
         case "quadratic":
-          return "f(x) = x^2 \\quad (\\text{偶函数: } f(-x) = f(x))";
+          return "f(x) = x^2 \\quad (f(-x) = f(x))";
         case "abs":
-          return "f(x) = |x| \\quad (\\text{偶函数: } f(-x) = f(x))";
+          return "f(x) = |x| \\quad (f(-x) = f(x))";
         case "reciprocal":
-          return "f(x) = \\frac{1}{x} \\quad (\\text{奇函数: } f(-x) = -f(x))";
+          return "f(x) = \\frac{1}{x} \\quad (f(-x) = -f(x))";
         case "sin":
-          return "f(x) = \\sin x \\quad (\\text{奇函数: } f(-x) = -f(x))";
+          return "f(x) = \\sin x \\quad (f(-x) = -f(x))";
         default:
           return "y = f(x)";
       }
@@ -100,8 +100,6 @@ export function FuncPropertiesAnimation() {
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
         };
@@ -112,73 +110,92 @@ export function FuncPropertiesAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  const tipConfig = useMemo(() => {
+    if (mode === "domain") {
+      return {
+        variant: "info" as const,
+        badge: "课标基础 · 定义域与值域判定",
+        condition: "研究函数性质前，必须首先确定定义域 D 与值域 R。",
+        question: "拖动测试点验证取值范围，反比例函数特别注意 x = 0 断点。",
+      };
+    }
+    if (mode === "parity") {
+      return {
+        variant: "primary" as const,
+        badge: "核心性质 · 单调性与奇偶性联动",
+        condition: "定义域关于原点对称是讨论函数奇偶性的必要前置条件。",
+        question:
+          "对比测试点 P₀ 与奇偶对称点 P'，观察割线斜率 k 判断区间单调性。",
+      };
+    }
+    const dist = Math.abs((params.axisB ?? 2) - (params.axisA ?? 0));
+    return {
+      variant: "primary" as const,
+      badge: "高考秒杀 · 双轴对称导出周期",
+      condition: `图象同时具有两条纵向对称轴 x = ${(params.axisA ?? 0).toFixed(1)} 与 x = ${(params.axisB ?? 2).toFixed(1)}。`,
+      question: `连续两次轴反射产生水平平移周期，导出 T = 2|a - b| = ${(2 * dist).toFixed(1)}。`,
+    };
+  }, [mode, params.axisA, params.axisB]);
+
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="核心考点模式切换"
-            subtitle="选择对应考点探索高考核心性质"
-          >
+          <LeftPanelSection title="探究模式切换">
             <SelectGrid
               items={[
                 {
                   key: "domain",
                   label: "概念定义域",
                   formula: "x \\in D",
-                  description: "定义域与值域",
                 },
                 {
                   key: "parity",
                   label: "单调奇偶性",
                   formula: "f(-x)=\\pm f(x)",
-                  description: "奇偶与单调性",
                 },
                 {
                   key: "symmetry",
                   label: "对称周期性",
                   formula: "T=2|a-b|",
-                  description: "对称与周期",
                 },
               ]}
               value={mode}
-              onChange={(k) => setMode(k)}
+              onChange={(k) => setMode(k as "domain" | "parity" | "symmetry")}
               columns={1}
               className="mb-4"
             />
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="基准函数选择"
-            subtitle="切换观察不同函数的动态图象与性质"
-          >
+          <LeftPanelSection title="基准函数选择">
             <SelectGrid
               items={[
-                { key: "cubic", label: "y = x³", formula: "y=x^3" },
-                { key: "quadratic", label: "y = x²", formula: "y=x^2" },
-                { key: "abs", label: "y = |x|", formula: "y=|x|" },
+                { key: "cubic", label: "三次曲线", formula: "y=x^3" },
+                { key: "quadratic", label: "二次抛物线", formula: "y=x^2" },
+                { key: "abs", label: "绝对值折线", formula: "y=|x|" },
                 {
                   key: "reciprocal",
-                  label: "y = 1/x",
+                  label: "反比例双曲线",
                   formula: "y=\\frac{1}{x}",
                 },
                 {
                   key: "sin",
-                  label: "y = sin x",
+                  label: "正弦波形",
                   formula: "y=\\sin x",
                 },
               ]}
               value={fnType}
-              onChange={(k) => setFnType(k)}
+              onChange={(k) =>
+                setFnType(
+                  k as "cubic" | "quadratic" | "abs" | "reciprocal" | "sin",
+                )
+              }
               variant="outline"
               className="mb-4"
             />
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="调节参数观察曲线与几何演变"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -186,52 +203,28 @@ export function FuncPropertiesAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="💡 观察与操作指引"
-            subtitle="根据当前模式指导数形结合探索"
-          >
-            {mode === "domain" && (
-              <TipCard variant="info">
-                <p className="font-bold mb-1">📌 概念与定义域观察要点：</p>
-                <p>
-                  1. <b>定义域 D</b>：允许取值的自变量集合（X 轴淡阴影区）。
-                </p>
-                <p>
-                  2. <b>值域 R</b>：所有函数值 f(x) 的集合（Y 轴淡阴影区）。
-                </p>
-                <p>
-                  3. <b>拖动验证</b>：拖动滑块 x₀。切换到 y = 1/x 试着拖动到 x₀
-                  = 0，观察无定义点警示。
-                </p>
-              </TipCard>
-            )}
-            {mode === "parity" && (
-              <TipCard variant="warning">
-                <p className="font-bold mb-1">📌 奇偶与单调性观察要点：</p>
-                <p>
-                  1. <b>奇偶测试</b>：拖动 x₀ 观察点 P₀ 与对称点 P'。偶函数
-                  f(-x)=f(x) 关于 y 轴对称；奇函数 f(-x)=-f(x) 关于原点对称。
-                </p>
-                <p>
-                  2. <b>单调割线斜率</b>：拖动 x₁, x₂ 形成割线，斜率 k = Δy/Δx
-                  &gt; 0 表示增函数，k &lt; 0 表示减函数。
-                </p>
-              </TipCard>
-            )}
-            {mode === "symmetry" && (
-              <TipCard variant="primary">
-                <p className="font-bold mb-1">📌 对称与周期性观察要点：</p>
-                <p>
-                  1. <b>双对称轴</b>：拖动 a, b 控制红/橙两条虚线对称轴 x = a 与
-                  x = b。
-                </p>
-                <p>
-                  2. <b>导出周期</b>
-                  ：当图象关于两条直线均对称时，两次折叠形成周期循环，周期长度正好等于{" "}
-                  <b>两倍轴距 T = 2|a - b|</b>。
-                </p>
-              </TipCard>
-            )}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【模型条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

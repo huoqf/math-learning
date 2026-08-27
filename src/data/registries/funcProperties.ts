@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   x0: 1.5,
@@ -6,22 +7,20 @@ export const defaultParams: Record<string, number> = {
   x2: 2.0,
   axisA: 0.0,
   axisB: 2.0,
+  centerX: 0.0,
+  centerY: 0.0,
 };
 
 export const paramMeta: Record<string, ParamMeta> = {
   x0: {
     key: "x0",
     label: "主测试点 x0",
-    labelFormula: "x_0",
+    labelFormula: `\\text{测试点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
     min: -4.0,
     max: 4.0,
     step: 0.1,
     defaultValue: 1.5,
     importance: "core",
-    description:
-      "拖动观察点 $P_0(x_0, f(x_0))$ 及其奇偶对称点 $P'(-x_0, f(-x_0))$ 的坐标对应关系",
-    descriptionFormula:
-      "拖动观察点 $P_0(x_0, f(x_0))$ 及其奇偶对称点 $P'(-x_0, f(-x_0))$ 的坐标对应关系",
     marks: [
       { value: 0, variant: "critical", label: "原点", labelFormula: "x_0 = 0" },
     ],
@@ -29,14 +28,12 @@ export const paramMeta: Record<string, ParamMeta> = {
   x1: {
     key: "x1",
     label: "割线端点 x1",
-    labelFormula: "x_1",
+    labelFormula: `\\text{割线端点 } \\color{${MATH_COLORS.paramSecondary}}{x_1}`,
     min: -4.0,
     max: 4.0,
     step: 0.1,
     defaultValue: -1.0,
     importance: "core",
-    description: "单调性测试：割线 $P_1P_2$ 的左侧自变量端点 $x_1$",
-    descriptionFormula: "单调性测试：割线 $P_1P_2$ 的左侧自变量端点 $x_1$",
     marks: [
       { value: 0, variant: "critical", label: "原点", labelFormula: "x_1 = 0" },
     ],
@@ -44,56 +41,66 @@ export const paramMeta: Record<string, ParamMeta> = {
   x2: {
     key: "x2",
     label: "割线端点 x2",
-    labelFormula: "x_2",
+    labelFormula: `\\text{割线端点 } \\color{${MATH_COLORS.paramTertiary}}{x_2}`,
     min: -4.0,
     max: 4.0,
     step: 0.1,
     defaultValue: 2.0,
     importance: "core",
-    description:
-      "单调性测试：割线 $P_1P_2$ 的右侧自变量端点 $x_2$，用于计算割线斜率 $k = \\frac{\\Delta y}{\\Delta x}$",
-    descriptionFormula:
-      "单调性测试：割线 $P_1P_2$ 的右侧自变量端点 $x_2$，用于计算割线斜率 $k = \\frac{\\Delta y}{\\Delta x}$",
     marks: [
       { value: 0, variant: "critical", label: "原点", labelFormula: "x_2 = 0" },
     ],
   },
   axisA: {
     key: "axisA",
-    label: "对称轴 a",
-    labelFormula: "a",
+    label: "第一对称特征 a",
+    labelFormula: `\\text{对称特征一 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
     min: -3.0,
     max: 3.0,
     step: 0.1,
     defaultValue: 0.0,
     importance: "core",
-    description: "移动第一条对称轴 $x = a$ 的位置（红虚线）",
-    descriptionFormula: "移动第一条对称轴 $x = a$ 的位置（红虚线）",
     marks: [
       { value: 0, variant: "critical", label: "y轴", labelFormula: "a = 0" },
     ],
   },
   axisB: {
     key: "axisB",
-    label: "对称轴 b",
-    labelFormula: "b",
+    label: "第二对称特征 b",
+    labelFormula: `\\text{对称特征二 } \\color{${MATH_COLORS.paramSecondary}}{b}`,
     min: -3.0,
     max: 3.0,
     step: 0.1,
     defaultValue: 2.0,
     importance: "core",
-    description:
-      "移动第二条对称轴 $x = b$ 的位置（橙虚线），观察两轴导出周期 $T = 2|a - b|$",
-    descriptionFormula:
-      "移动第二条对称轴 $x = b$ 的位置（橙虚线），观察两轴导出周期 $T = 2|a - b|$",
     marks: [
-      {
-        value: 2.0,
-        variant: "recommended",
-        label: "默认",
-        labelFormula: "b = 2",
-      },
-      { value: 0.0, variant: "critical", label: "y轴", labelFormula: "b = 0" },
+      { value: 0, variant: "critical", label: "y轴", labelFormula: "b = 0" },
+    ],
+  },
+  centerX: {
+    key: "centerX",
+    label: "中心横坐标 xc",
+    labelFormula: `\\text{对称中心 } \\color{${MATH_COLORS.paramPrimary}}{x_c}`,
+    min: -3.0,
+    max: 3.0,
+    step: 0.1,
+    defaultValue: 0.0,
+    importance: "core",
+    marks: [
+      { value: 0, variant: "critical", label: "原点", labelFormula: "x_c = 0" },
+    ],
+  },
+  centerY: {
+    key: "centerY",
+    label: "中心纵坐标 yc",
+    labelFormula: `\\text{对称中心 } \\color{${MATH_COLORS.paramSecondary}}{y_c}`,
+    min: -3.0,
+    max: 3.0,
+    step: 0.1,
+    defaultValue: 0.0,
+    importance: "core",
+    marks: [
+      { value: 0, variant: "critical", label: "x轴", labelFormula: "y_c = 0" },
     ],
   },
 };
