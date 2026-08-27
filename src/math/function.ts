@@ -49,6 +49,8 @@ export interface ExpLogResult {
   expTangentSlopeStr: string;
   expFixedPointSlope?: number;
   expFixedPointSlopeStr: string;
+  expTangentEquationLatex?: string;
+  logTangentEquationLatex?: string;
 }
 
 /**
@@ -233,11 +235,13 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
   let logTangentSlopeStr = "无定义";
   let logFixedPointSlope: number | undefined;
   let logFixedPointSlopeStr = "无定义";
+  let logTangentEquationLatex: string | undefined;
 
   let expTangentSlope: number | undefined;
   let expTangentSlopeStr = "无定义";
   let expFixedPointSlope: number | undefined;
   let expFixedPointSlopeStr = "无定义";
+  let expTangentEquationLatex: string | undefined;
 
   if (isValidBase) {
     const lnA = Math.log(a);
@@ -245,6 +249,14 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
     if (isLogDefined) {
       logTangentSlope = 1 / (x0 * lnA);
       logTangentSlopeStr = logTangentSlope.toFixed(2);
+      const b = logVal - logTangentSlope * x0;
+      const bStr =
+        Math.abs(b) < 1e-4
+          ? ""
+          : b > 0
+            ? ` + ${b.toFixed(2)}`
+            : ` - ${Math.abs(b).toFixed(2)}`;
+      logTangentEquationLatex = `y = ${logTangentSlope.toFixed(2)}x${bStr}`;
     }
     logFixedPointSlope = 1 / lnA;
     logFixedPointSlopeStr = logFixedPointSlope.toFixed(2);
@@ -253,6 +265,14 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
     if (Number.isFinite(expVal)) {
       expTangentSlope = expVal * lnA;
       expTangentSlopeStr = expTangentSlope.toFixed(2);
+      const b = expVal - expTangentSlope * x0;
+      const bStr =
+        Math.abs(b) < 1e-4
+          ? ""
+          : b > 0
+            ? ` + ${b.toFixed(2)}`
+            : ` - ${Math.abs(b).toFixed(2)}`;
+      expTangentEquationLatex = `y = ${expTangentSlope.toFixed(2)}x${bStr}`;
     }
     expFixedPointSlope = lnA;
     expFixedPointSlopeStr = expFixedPointSlope.toFixed(2);
@@ -294,12 +314,14 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
     logTangentSlopeStr,
     logFixedPointSlope,
     logFixedPointSlopeStr,
+    logTangentEquationLatex,
     logSignState,
     logSignDescription,
     expTangentSlope,
     expTangentSlopeStr,
     expFixedPointSlope,
     expFixedPointSlopeStr,
+    expTangentEquationLatex,
   };
 }
 

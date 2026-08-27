@@ -396,6 +396,28 @@ export function ExpLogScene({
             />
           </>
         )}
+      {showTangent &&
+        isValidBase &&
+        funcType === "exponential" &&
+        Number.isFinite(expLogRes.expVal) && (
+          <>
+            {/* 动点切线 */}
+            <TangentLine
+              fn={(x) => Math.pow(a, x)}
+              x0={x0}
+              scale={scale}
+              strokeWidth={1.8}
+            />
+            {/* 定点 (0, 1) 切线 */}
+            <TangentLine
+              fn={(x) => Math.pow(a, x)}
+              x0={0}
+              scale={scale}
+              color={MATH_COLORS.axis}
+              strokeWidth={1.2}
+            />
+          </>
+        )}
 
       {/* 指数模式下的动点与对称点 */}
       {isValidBase &&

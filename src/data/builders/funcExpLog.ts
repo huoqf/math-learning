@@ -313,6 +313,10 @@ export function buildFuncExpLogPanel(
             highlight: expLogRes.isValidBase ? "positive" : undefined,
           },
           {
+            label: "动点切线方程",
+            value: expLogRes.expTangentEquationLatex ?? "无定义",
+          },
+          {
             label: "定点 (0,1) 切线斜率",
             symbol: "f'(0)",
             value: expLogRes.expFixedPointSlopeStr,
@@ -383,26 +387,39 @@ export function buildFuncExpLogPanel(
             prerequisites: [
               "$a > 0, a \\neq 1$",
               "指数函数定义域 $\\mathbb{R}$，值域 $(0, +\\infty)$，恒过定点 $(0, 1)$",
-              "图象关于直线 $y = x$ 轴对称",
+              "图象关于直线 $y = x$ 轴对称，定点 $(0, 1)$ 与 $(1, 0)$ 互为对称镜像",
             ],
           },
           {
-            name: "指数函数单调与极限性质",
+            name: "反函数公切线与相切临界定理",
+            latex:
+              "a = e^{1/e} \\approx 1.4447 \\iff y = a^x \\text{ 与 } y = \\log_a x \\text{ 相切于 } (e, e)",
+            level: "core",
+            prerequisites: [
+              "当 $1 < a < e^{1/e}$ 时，两曲线在直线 $y = x$ 上有 2 个交点",
+              "当 $a = e^{1/e}$ 时，两曲线相切于唯一公共点 $(e, e)$，公切线为 $y = x$",
+              "当 $a > e^{1/e}$ 时，两曲线无交点，指数曲线恒在对数曲线上方",
+            ],
+          },
+          {
+            name: "高考双基准指数切线放缩不等式",
+            latex:
+              "e^x \\ge x + 1 \\quad \\text{且} \\quad e^x \\ge ex \\quad (x \\in \\mathbb{R})",
+            level: "important",
+            prerequisites: [
+              "$e^x \\ge x + 1$：在点 $(0, 1)$ 处与切线相切，高考常用于局部极值放缩",
+              "$e^x \\ge ex$：在点 $(1, e)$ 处与过原点切线相切，常用于全局下界估计",
+              "反函数对偶形式：$\\ln x \\le x - 1$ 与 $\\ln x \\le \\frac{x}{e}$",
+            ],
+          },
+          {
+            name: "指数函数单调与渐近极限性质",
             latex:
               "\\lim_{x \\to -\\infty} a^x = 0 \\;(a > 1), \\quad \\lim_{x \\to +\\infty} a^x = 0 \\;(0 < a < 1)",
             level: "important",
             prerequisites: [
-              "$x$ 轴 ($y = 0$) 为水平渐近线",
-              "$a > 1$ 时为“爆炸式”指数级增长",
-            ],
-          },
-          {
-            name: "高考基准指数放缩不等式",
-            latex: "e^x \\ge x + 1 \\quad (x \\in \\mathbb{R})",
-            level: "important",
-            prerequisites: [
-              "当且仅当 $x = 0$ 时等号成立",
-              "几何意义：指数曲线 $y = e^x$ 恒在点 $(0, 1)$ 切线 $y = x + 1$ 上方",
+              "$x$ 轴 ($y = 0$) 为水平渐近线，与对数垂直渐近线 $x = 0$ 轴对称",
+              "$a > 1$ 时为“爆炸式”加速增长 ($f''(x) > 0$ 下凹)",
             ],
           },
         ];
@@ -425,11 +442,19 @@ export function buildFuncExpLogPanel(
         ]
       : [
           {
-            text: "高考高频定点：指数函数 $y = a^x$ 必过定点 $(0, 1)$，渐近线 $y = 0$；对数函数 $y = \\log_a x$ 必过定点 $(1, 0)$，渐近线 $x = 0$。",
+            text: "【指对同构大题破题思维】新高考导数压轴题第一大招：利用指数对数互逆性质，将含 $e^x$ 与 $\\ln x$ 的复杂方程同构化。例如 $x e^x = \\ln x + x \\iff x e^x = \\ln(x e^x)$，设 $t = x e^x$ 转化为单一函数单调性破题。",
             importance: "gaokao",
           },
           {
-            text: "反函数三要素：① 定义域与值域互换；② 图象关于 $y = x$ 轴对称；③ 只有严格单调函数才存在同单调性的反函数。",
+            text: "【高考双基准切线放缩】基准一 $e^x \\ge x + 1$（切点 $(0, 1)$）与基准二 $e^x \\ge ex$（切点 $(1, e)$），结合对偶式 $\\ln x \\le x - 1$ 与 $\\ln x \\le \\frac{x}{e}$，是证明高考导数不等式与求参数范围的必背工具。",
+            importance: "gaokao",
+          },
+          {
+            text: "【反函数公切线与交点临界】指数与对数曲线关于 $y = x$ 对称：当 $a = e^{1/e} \\approx 1.445$ 时相切于 $(e, e)$；$1 < a < e^{1/e}$ 时有 2 个交点；$a > e^{1/e}$ 时无交点。新高考常以交点个数作为含参分类讨论压轴设问。",
+            importance: "gaokao",
+          },
+          {
+            text: "【反函数三要素与对称定点】① 定义域与值域互换 ($D \\leftrightarrow R$)；② 图象关于 $y = x$ 轴对称；③ 定点 $(0, 1) \\leftrightarrow (1, 0)$ 对称；④ 渐近线 $y = 0 \\leftrightarrow x = 0$ 对称。",
             importance: "gaokao",
           },
         ];
@@ -456,6 +481,6 @@ export function buildFuncExpLogPanel(
     mnemonic:
       subType === "logarithmic"
         ? "对过(1,0)轴渐近，同大为正异大负；y=x对称反函数，切线ln放缩牢记。"
-        : "指过(0,1)对过(1,0)，底过1增小1减；y=x对称反函数。",
+        : "指过(0,1)对过(1,0)，双切放缩同构破；a为e^(1/e)公切切，y=x对称反函数。",
   };
 }

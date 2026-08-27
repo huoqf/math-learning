@@ -7,8 +7,11 @@ import {
   LeftPanel,
   LeftPanelSection,
   TipCard,
+  TabSwitcher,
+  Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ExpLogScene } from "./components/ExpLogScene";
@@ -17,12 +20,15 @@ import { defaultParams, paramMeta } from "@/data/registries/funcExpLog";
 
 export function ExponentialPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
-  const [showInverse, setShowInverse] = useState(false);
+  const [mode, setMode] = useState<"single" | "inverse">("single");
+  const [showTangent, setShowTangent] = useState(false);
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
   const scale = useSceneScale({ vp, xRange: [-6, 6], yRange: [-4.5, 4.5] });
+
+  const showInverse = mode === "inverse";
 
   const mathData = useMemo(
     () =>
@@ -53,8 +59,6 @@ export function ExponentialPage() {
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
         };
@@ -65,6 +69,46 @@ export function ExponentialPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 1-to-1 右下角图例配置
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const aVal = (params.baseA ?? 2.0).toFixed(1);
+    const items: SceneLegendItem[] = [
+      {
+        formula: `y = ${aVal}^x`,
+        color: MATH_COLORS.function,
+        style: "solid",
+      },
+      {
+        label: "(0, 1) 必过定点",
+        color: MATH_COLORS.function,
+        style: "point",
+      },
+    ];
+
+    if (showInverse) {
+      items.push({
+        formula: `y = \\log_{${aVal}} x \\text{ (反函数)}`,
+        color: MATH_COLORS.functionTransformed,
+        style: "dash",
+      });
+      items.push({
+        label: "y = x 对称轴",
+        color: MATH_COLORS.labelText,
+        style: "dash",
+      });
+    }
+
+    if (showTangent) {
+      items.push({
+        label: "切线 $f'(x_0)$",
+        color: MATH_COLORS.tangentLine,
+        style: "solid",
+      });
+    }
+
+    return items;
+  }, [params.baseA, showInverse, showTangent]);
+
   // 动态教学提示配置
   const tipConfig = useMemo(() => {
     const a = params.baseA ?? 2.0;
@@ -74,7 +118,7 @@ export function ExponentialPage() {
         badge: "高考高频 · 指数与对数反函数对称",
         condition: `指数函数 y = ${a.toFixed(1)}ˣ 与对数函数 y = log_{${a.toFixed(1)}} x 互为反函数。`,
         question:
-          "观察两曲线关于直线 y = x 严格轴对称，且定点 (0,1) 与 (1,0) 互为对称镜像。",
+          "观察两曲线关于直线 y = x 严格轴对称，且定点 (0,1) 与 (1,0) 互为对称镜像，体会定义域与值域的互换映射 (D ↔ R)。",
       };
     }
     if (a > 1) {
@@ -100,27 +144,32 @@ export function ExponentialPage() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="指数函数" subtitle="y = aˣ 的图像与性质">
-            <label className="flex items-center gap-2 text-xs text-neutral-600 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={showInverse}
-                onChange={(e) => setShowInverse(e.target.checked)}
-                className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+          <LeftPanelSection title="探究模式">
+            <TabSwitcher
+              tabs={[
+                { key: "single", label: "单曲线性质" },
+                { key: "inverse", label: "反函数对称" },
+              ]}
+              value={mode}
+              onChange={(val) => setMode(val as "single" | "inverse")}
+            />
+            <div className="pt-2">
+              <Toggle
+                label="展示导数切线"
+                checked={showTangent}
+                onChange={setShowTangent}
               />
-              显示反函数对称 (y = x)
-            </label>
+            </div>
           </LeftPanelSection>
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="调节参数观察曲线与几何演变"
-          >
+
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
           </LeftPanelSection>
+
           {/* 教学导引与题设背景 */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
@@ -152,6 +201,10 @@ export function ExponentialPage() {
           <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3.5 py-2 shadow-sm">
             <KatexFormula formula={formulaLatex} mode="inline" />
           </div>
+
+          {/* 右下角图例 */}
+          <SceneLegend items={legendItems} />
+
           <AnimationSvgCanvas
             containerRef={containerRef}
             transform={vp.transform}
@@ -164,6 +217,7 @@ export function ExponentialPage() {
               fontScale={canvasSize.font}
               funcType="exponential"
               showInverse={showInverse}
+              showTangent={showTangent}
             />
           </AnimationSvgCanvas>
         </div>

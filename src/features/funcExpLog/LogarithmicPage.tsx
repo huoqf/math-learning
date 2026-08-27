@@ -141,7 +141,7 @@ export function LogarithmicPage() {
       return {
         variant: "info" as const,
         badge: "高考高频 · 对数与指数反函数对称",
-        condition: `对数函数 y = \\log_{${a.toFixed(1)}} x 与指数函数 y = ${a.toFixed(1)}^x 互为反函数。`,
+        condition: `对数函数 y = log_{${a.toFixed(1)}} x 与指数函数 y = ${a.toFixed(1)}ˣ 互为反函数。`,
         question:
           "观察动点 P 与对称点 P' 关于 y = x 轴垂直平分对称，体会定义域与值域的互换映射 (D ↔ R)。",
       };
@@ -213,7 +213,7 @@ export function LogarithmicPage() {
                     【初始条件】
                   </span>
                   <span className="text-neutral-600">
-                    <KatexFormula formula={tipConfig.condition} mode="inline" />
+                    {tipConfig.condition}
                   </span>
                 </div>
                 <div>
