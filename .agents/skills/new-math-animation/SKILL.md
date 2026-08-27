@@ -100,14 +100,16 @@ const mathData = useMemo(() => buildMathQuantities('anim-xxx', params), [params]
 
 坐标转换：渲染用 `mathToDesign(x, y, scale)`，拖拽用 `InteractivePoint`（内部已封装 designToMath）。详见 AGENTS.md → 铁律 1 / 铁律 7。
 
-### SVG 内 KaTeX 公式
+### 📐 全屏公式与点标双轨渲染管线
 
 KaTeX 输出 HTML，不能直接作为 SVG 子元素，禁止 `<foreignObject>`：
 
-| 场景 | 方案 |
-|------|------|
-| 简单上下标 `C_n^k` | SVG `<text>` + `<tspan>` 手动偏移 |
-| 复杂公式 `\frac` `\sqrt` | Animation 层 HTML overlay，`transform: translate(vp.tx,vp.ty) scale(vp.scale)` 同步坐标 |
+| 渲染场景 | 规范技术方案 | 严禁行为 |
+|---------|-------------|---------|
+| UI 容器 (左屏/右屏/左上角) | `<KatexFormula formula="..." mode="inline" />` | ❌ 严禁裸写带大括号 `{}` 的 LaTeX 源码 |
+| 2D 中屏几何点标/曲线名称 | `<SceneLabelGroup items={...} />` (纯代数/Unicode 字符) | ❌ 严禁向 SVG `<text>` 传入带反斜杠的 LaTeX 源码 (如 `\sqrt{x}`) |
+| 2D 中屏全量解析式/特征点 | `<SceneLegend items={...} />` (右下角毛玻璃卡片内置 KaTeX) | ❌ 严禁在画布中央堆砌随拖拽跳动的浮点数字符串 |
+| 3D 空间几何顶点/向量公式 | 顶点 `PointLabel3D` / 下标 `CompoundLabel3D` / 向量 `FormulaLabel3D(plain)` | ❌ 严禁向 PointLabel3D 传 Unicode 下标；严禁顶点带白底卡片 |
 
 ---
 

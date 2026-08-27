@@ -78,5 +78,16 @@ describe("calculatePowerFunction", () => {
     const resPos = calculatePowerFunction(0.5, 4);
     expect(resPos.isValidPoint).toBe(true);
     expect(resPos.yVal).toBe(2);
+    expect(resPos.isTangentDifferentiable).toBe(true);
+    expect(resPos.derivativeVal).toBeCloseTo(0.25);
+    expect(resPos.tangentEquationLatex).toContain("0.25x");
+  });
+
+  it("calculates derivative and tangent correctly at fixed point (1, 1)", () => {
+    const res = calculatePowerFunction(3, 1);
+    expect(res.isAtFixedPoint).toBe(true);
+    expect(res.isTangentDifferentiable).toBe(true);
+    expect(res.derivativeVal).toBe(3);
+    expect(res.tangentEquationLatex).toBe("y = 3.00x - 2.00");
   });
 });

@@ -83,6 +83,16 @@ for (const filePath of files) {
       }
     }
 
+    // 1.1 检查 SVG Label 或纯文本中裸露反斜杠 LaTeX 源码 (如 text: "\\sqrt{x}" 或 text: "\\frac")
+    if (/text:\s*["'`][^"'`]*\\[a-zA-Z]+/.test(line) || /<text[^>]*>[^<]*\\[a-zA-Z]+/.test(line)) {
+      issues.push({
+        lineNum,
+        type: 'SVG裸LaTeX源码',
+        message: '检测到 SVG 画布点标或曲线标签传入了裸 LaTeX 源码，SVG 不支持 LaTeX 解析，请使用 Unicode 字符 (如 √x, 1/x, x²) 或归位 SceneLegend',
+        snippet: line.trim()
+      });
+    }
+
     // 2. 检查孤立字母参数标签
     if (/labelFormula:\s*["'][a-zA-Z0-9_]["']/.test(line)) {
       issues.push({

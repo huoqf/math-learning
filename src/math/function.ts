@@ -168,6 +168,17 @@ export function evalSymmetryPeriod(
   return { dist, period, formulaDescription };
 }
 
+export interface StandardPowerInfo {
+  key: string;
+  alpha: number;
+  latex: string;
+  name: string;
+  labelUnicode: string;
+  domain: string;
+  parity: string;
+  colorToken: string;
+}
+
 export interface PowerFunctionResult {
   alpha: number;
   x0: number;
@@ -178,6 +189,13 @@ export interface PowerFunctionResult {
   monotonicityPositive: string;
   warningMessage?: string;
   hasAsymptote: boolean;
+  // 导数与切线相关
+  isTangentDifferentiable: boolean;
+  derivativeVal?: number;
+  tangentSlopeStr: string;
+  tangentEquationLatex: string;
+  tangentIntercept?: number;
+  isAtFixedPoint: boolean;
 }
 
 /**
@@ -207,6 +225,62 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
     pointLog: { x: expVal, y: x0 }, // 对应反函数点 (y, x) 恰好关于 y=x 对称
   };
 }
+
+/**
+ * 课标 5 大基准幂函数元数据
+ */
+export const STANDARD_POWER_FUNCTIONS: StandardPowerInfo[] = [
+  {
+    key: "power-1",
+    alpha: 1,
+    latex: "y = x",
+    name: "正比例 (α = 1)",
+    labelUnicode: "y = x",
+    domain: "x \\in \\mathbb{R}",
+    parity: "奇函数",
+    colorToken: "#3B82F6",
+  },
+  {
+    key: "power-2",
+    alpha: 2,
+    latex: "y = x^2",
+    name: "二次抛物线 (α = 2)",
+    labelUnicode: "y = x²",
+    domain: "x \\in \\mathbb{R}",
+    parity: "偶函数",
+    colorToken: "#10B981",
+  },
+  {
+    key: "power-3",
+    alpha: 3,
+    latex: "y = x^3",
+    name: "三次曲线 (α = 3)",
+    labelUnicode: "y = x³",
+    domain: "x \\in \\mathbb{R}",
+    parity: "奇函数",
+    colorToken: "#8B5CF6",
+  },
+  {
+    key: "power-half",
+    alpha: 0.5,
+    latex: "y = \\sqrt{x}",
+    name: "平方根 (α = 1/2)",
+    labelUnicode: "y = √x",
+    domain: "[0, +\\infty)",
+    parity: "非奇非偶",
+    colorToken: "#F59E0B",
+  },
+  {
+    key: "power-neg1",
+    alpha: -1,
+    latex: "y = \\frac{1}{x}",
+    name: "反比例 (α = -1)",
+    labelUnicode: "y = 1/x",
+    domain: "\\{x \\in \\mathbb{R} \\mid x \\neq 0\\}",
+    parity: "奇函数",
+    colorToken: "#EC4899",
+  },
+];
 
 /**
  * 幂函数 y = x^α 纯数学计算
@@ -293,6 +367,67 @@ export function calculatePowerFunction(
     monotonicityPositive = `单调递减 (α = ${alpha} < 0)`;
   }
 
+  // 4. 导数与切线斜率计算 y' = α * x^(α - 1)
+  let isTangentDifferentiable = false;
+  let derivativeVal: number | undefined;
+  let tangentSlopeStr = "不可导";
+  let tangentEquationLatex = "切线不存在";
+  let tangentIntercept: number | undefined;
+
+  if (isValidPoint && Number.isFinite(yVal)) {
+    if (alpha === 0) {
+      isTangentDifferentiable = true;
+      derivativeVal = 0;
+      tangentSlopeStr = "0";
+      tangentEquationLatex = "y = 1";
+      tangentIntercept = 1;
+    } else if (x0 > 0) {
+      isTangentDifferentiable = true;
+      derivativeVal = alpha * Math.pow(x0, alpha - 1);
+      tangentSlopeStr = derivativeVal.toFixed(2);
+      tangentIntercept = yVal - derivativeVal * x0;
+      const bStr =
+        Math.abs(tangentIntercept) < 1e-4
+          ? ""
+          : tangentIntercept > 0
+            ? ` + ${tangentIntercept.toFixed(2)}`
+            : ` - ${Math.abs(tangentIntercept).toFixed(2)}`;
+      tangentEquationLatex = `y = ${derivativeVal.toFixed(2)}x${bStr}`;
+    } else if (Math.abs(x0) < 1e-6) {
+      if (alpha === 1) {
+        isTangentDifferentiable = true;
+        derivativeVal = 1;
+        tangentSlopeStr = "1";
+        tangentEquationLatex = "y = x";
+        tangentIntercept = 0;
+      } else if (alpha > 1) {
+        isTangentDifferentiable = true;
+        derivativeVal = 0;
+        tangentSlopeStr = "0";
+        tangentEquationLatex = "y = 0";
+        tangentIntercept = 0;
+      } else if (alpha > 0 && alpha < 1) {
+        isTangentDifferentiable = false;
+        tangentSlopeStr = "切线垂直于 x 轴 (斜率趋向 +∞)";
+        tangentEquationLatex = "x = 0";
+      }
+    } else if (x0 < 0 && Number.isInteger(alpha)) {
+      isTangentDifferentiable = true;
+      derivativeVal = alpha * Math.pow(x0, alpha - 1);
+      tangentSlopeStr = derivativeVal.toFixed(2);
+      tangentIntercept = yVal - derivativeVal * x0;
+      const bStr =
+        Math.abs(tangentIntercept) < 1e-4
+          ? ""
+          : tangentIntercept > 0
+            ? ` + ${tangentIntercept.toFixed(2)}`
+            : ` - ${Math.abs(tangentIntercept).toFixed(2)}`;
+      tangentEquationLatex = `y = ${derivativeVal.toFixed(2)}x${bStr}`;
+    }
+  }
+
+  const isAtFixedPoint = Math.abs(x0 - 1.0) < 0.05;
+
   return {
     alpha,
     x0,
@@ -303,6 +438,12 @@ export function calculatePowerFunction(
     monotonicityPositive,
     warningMessage,
     hasAsymptote: alpha < 0,
+    isTangentDifferentiable,
+    derivativeVal,
+    tangentSlopeStr,
+    tangentEquationLatex,
+    tangentIntercept,
+    isAtFixedPoint,
   };
 }
 

@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -124,6 +125,33 @@ export function FuncExpLogAnimation() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          {/* 教学导引卡片 */}
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard variant="primary">
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>
+                  {funcType === "exponential"
+                    ? "指数函数模型"
+                    : funcType === "logarithmic"
+                      ? "对数函数模型"
+                      : "幂函数模型"}
+                </span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed text-neutral-600">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【模型特征】
+                  </span>
+                  {funcType === "exponential"
+                    ? "恒过定点 (0, 1)，以 x 轴为渐近线；底数 a > 1 增，0 < a < 1 减。"
+                    : funcType === "logarithmic"
+                      ? "恒过定点 (1, 0)，以 y 轴为渐近线；与同底指数函数关于 y = x 对称。"
+                      : "恒过定点 (1, 1)；α > 0 过原点单调递增，α < 0 含双渐近线单调递减。"}
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

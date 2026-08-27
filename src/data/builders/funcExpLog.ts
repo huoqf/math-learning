@@ -4,29 +4,45 @@ import { MATH_COLORS } from "@/theme";
 
 export function buildFuncExpLogPanel(
   params: Record<string, number>,
-  config?: { subExpLog?: string },
+  config?: { subExpLog?: string; powerMode?: string },
 ): MathPanelData {
   const subType = config?.subExpLog ?? "exponential";
 
   // 1. 幂函数模式
   if (subType === "power") {
+    const powerMode = (config?.powerMode as string) ?? "single";
     const alpha = params.powerAlpha ?? 2.0;
     const x0 = params.x0 ?? 1.5;
     const powerRes = calculatePowerFunction(alpha, x0);
 
     const quantities: MathPanelData["quantities"] = [
       {
-        label: "指数 α",
+        label: "幂指数 α",
         symbol: "\\alpha",
         value: alpha.toFixed(1),
         color: MATH_COLORS.paramPrimary,
       },
-      { label: "自变量 x₀", symbol: "x_0", value: x0.toFixed(2) },
       {
-        label: "函数值 y₀",
+        label: "探究动点 x₀",
+        symbol: "x_0",
+        value: x0.toFixed(2),
+        color: MATH_COLORS.function,
+      },
+      {
+        label: "对应函数值 y₀",
         symbol: "x_0^{\\alpha}",
         value: powerRes.isValidPoint ? powerRes.yVal.toFixed(2) : "无定义",
         color: MATH_COLORS.function,
+      },
+      {
+        label: "切线斜率 k",
+        symbol: "f'(x_0)",
+        value: powerRes.tangentSlopeStr,
+        highlight: powerRes.isTangentDifferentiable ? "positive" : "extreme",
+      },
+      {
+        label: "切线方程",
+        value: powerRes.tangentEquationLatex,
       },
       {
         label: "定义域",
@@ -43,36 +59,84 @@ export function buildFuncExpLogPanel(
       },
     ];
 
-    const theorems: MathPanelData["theorems"] = [
-      {
-        name: "幂函数概念与第一象限通用性质",
-        latex: "y = x^{\\alpha} \\quad (x > 0)",
-        level: "core",
-        prerequisites: ["图象必过定点 (1, 1)", "在 (0, +∞) 上均有定义"],
-      },
-      {
-        name: "高考常见 5 种基准幂函数",
-        latex:
-          "y=x, \\quad y=x^2, \\quad y=x^3, \\quad y=x^{-1}, \\quad y=x^{1/2}",
-        level: "important",
-        prerequisites: ["奇偶性判定", "定义域分析"],
-      },
-      {
-        name: "第一象限图象变化特征",
-        latex:
-          "\\alpha > 1: \\text{凸向上递增}; \\quad 0 < \\alpha < 1: \\text{凹向下递增}; \\quad \\alpha < 0: \\text{减函数且含双渐近线}",
-        level: "important",
-        prerequisites: ["x > 0", "α ≠ 0"],
-      },
-    ];
+    const theorems: MathPanelData["theorems"] =
+      powerMode === "compare"
+        ? [
+            {
+              name: "课标 5 种基准幂函数解析与奇偶性",
+              latex:
+                "y=x, \\quad y=x^2, \\quad y=x^3, \\quad y=\\frac{1}{x}, \\quad y=\\sqrt{x}",
+              level: "core",
+              prerequisites: [
+                "奇函数：y=x, y=x^3, y=1/x (关于原点对称)",
+                "偶函数：y=x^2 (关于 y 轴对称)",
+                "非奇非偶：y=√x (定义域 [0, +∞))",
+              ],
+            },
+            {
+              name: "第一象限图象分界与大小反转定理",
+              latex:
+                "\\begin{cases} 0 < x < 1: & \\alpha_1 > \\alpha_2 \\implies x^{\\alpha_1} < x^{\\alpha_2} \\\\ x > 1: & \\alpha_1 > \\alpha_2 \\implies x^{\\alpha_1} > x^{\\alpha_2} \\end{cases}",
+              level: "core",
+              prerequisites: [
+                "以定点 (1, 1) 为分界点",
+                "x > 1 处指数大者图象在上 (指大图高)",
+                "0 < x < 1 处指数大者图象在下",
+              ],
+            },
+            {
+              name: "幂函数概念与第一象限通用性质",
+              latex: "y = x^{\\alpha} \\quad (x > 0)",
+              level: "important",
+              prerequisites: [
+                "在 (0, +∞) 上均有定义",
+                "第一象限图象恒过公共定点 (1, 1)",
+                "当 α > 0 时恒过原点 (0, 0)",
+              ],
+            },
+          ]
+        : [
+            {
+              name: "幂函数概念与第一象限通用性质",
+              latex: "y = x^{\\alpha} \\quad (x > 0)",
+              level: "core",
+              prerequisites: [
+                "在 (0, +∞) 上均有定义",
+                "第一象限图象恒过公共定点 (1, 1)",
+                "当 α > 0 时恒过原点 (0, 0)",
+              ],
+            },
+            {
+              name: "第一象限图象凹凸与导数特征",
+              latex:
+                "f'(x) = \\alpha x^{\\alpha - 1} \\implies \\begin{cases} \\alpha > 1: f'(x) \\uparrow (\\text{凹向下/增长加快}) \\\\ 0 < \\alpha < 1: f'(x) \\downarrow (\\text{凸向上/增长变缓}) \\\\ \\alpha < 0: f'(x) < 0 (\\text{严格单调递减}) \\end{cases}",
+              level: "core",
+              prerequisites: ["x > 0", "α 为常实数"],
+            },
+            {
+              name: "课标 5 种基准幂函数解析与奇偶性",
+              latex:
+                "y=x, \\quad y=x^2, \\quad y=x^3, \\quad y=\\frac{1}{x}, \\quad y=\\sqrt{x}",
+              level: "important",
+              prerequisites: [
+                "奇函数：y=x, y=x^3, y=1/x",
+                "偶函数：y=x^2",
+                "非奇非偶：y=√x (定义域 [0, +∞))",
+              ],
+            },
+          ];
 
     const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
       {
-        text: "高考必考定点：所有幂函数图象在第一象限内必过定点 (1, 1)；当 α > 0 时图象必过原点 (0, 0)。",
+        text: "第一象限比较大小秒杀通法：作直线 x = 2，观察图象的高低，图象在上方的函数对应幂指数 α 更大（即【指大图高】）。",
         importance: "gaokao",
       },
       {
-        text: "第一象限图象比较策略：取 x = 2，看图象的高低，y 值越大对应的指数 α 越大。",
+        text: "区间 [0, 1] 与 (1, +∞) 的大小反转：当 0 < x < 1 时，指数 α 越大函数值越小；当 x > 1 时，指数 α 越大函数值越大。",
+        importance: "gaokao",
+      },
+      {
+        text: "原点切线与导数极值：y = √x 在 x → 0+ 时切线竖直不可导；y = x^α (α > 1) 在 x = 0 处切线水平 (y' = 0)。",
         importance: "gaokao",
       },
     ];
