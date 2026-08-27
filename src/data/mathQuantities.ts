@@ -131,8 +131,14 @@ export function buildMathQuantities(
     case "anim-logic-conditions":
       return buildSetPanel(params);
     case "anim-func-properties":
+    case "anim-func-domain":
+    case "anim-func-parity":
+    case "anim-func-symmetry":
       return buildFuncPropertiesPanel(params, config);
     case "anim-func-explog":
+    case "anim-func-exponential":
+    case "anim-func-logarithmic":
+    case "anim-func-power":
       return buildFuncExpLogPanel(params, config);
     case "anim-func-zero":
       return buildFuncZeroPanel(params);

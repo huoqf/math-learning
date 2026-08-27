@@ -1,13 +1,14 @@
 import type { KnowledgeNode } from "@/data/types";
 
 export const node: KnowledgeNode = {
-  id: "trig-transform",
-  title: "y=Asin(ωx+φ) 图像变换与五点作图",
+  id: "know-trig-transform",
+  title: "三角函数 y=Asin(ωx+φ) 图像变换",
+  labTitle: "y=Asin(ωx+φ) 图像变换实验室",
   chapter: "三角函数",
-  module: "高中数学必修一 / 选择性必修",
-  importance: "gaokao",
+  module: "三角函数的图像与性质",
+  importance: "core",
   animationIds: ["anim-trig-transform"],
-  prerequisites: ["trig-lines", "trig-identity"],
+  prerequisites: ["know-trig-lines"],
   route: "/trig-transform",
 };
 

@@ -36,6 +36,19 @@ export interface ExpLogResult {
   logVal: number;
   pointExp: FunctionPoint;
   pointLog: FunctionPoint;
+  // 对数特化数据
+  isLogDefined: boolean;
+  logTangentSlope?: number;
+  logTangentSlopeStr: string;
+  logFixedPointSlope?: number;
+  logFixedPointSlopeStr: string;
+  logSignState: "positive" | "negative" | "zero" | "undefined";
+  logSignDescription: string;
+  // 指数特化数据
+  expTangentSlope?: number;
+  expTangentSlopeStr: string;
+  expFixedPointSlope?: number;
+  expFixedPointSlopeStr: string;
 }
 
 /**
@@ -212,8 +225,61 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
   }
 
   const expVal = isValidBase ? Math.pow(a, x0) : NaN;
-  // 计算对数 y = log_a(x0)，要求 x0 > 0
-  const logVal = isValidBase && x0 > 0 ? Math.log(x0) / Math.log(a) : NaN;
+  const isLogDefined = isValidBase && x0 > 0;
+  const logVal = isLogDefined ? Math.log(x0) / Math.log(a) : NaN;
+
+  // 导数与切线斜率计算
+  let logTangentSlope: number | undefined;
+  let logTangentSlopeStr = "无定义";
+  let logFixedPointSlope: number | undefined;
+  let logFixedPointSlopeStr = "无定义";
+
+  let expTangentSlope: number | undefined;
+  let expTangentSlopeStr = "无定义";
+  let expFixedPointSlope: number | undefined;
+  let expFixedPointSlopeStr = "无定义";
+
+  if (isValidBase) {
+    const lnA = Math.log(a);
+    // 对数导数 (log_a x)' = 1 / (x * ln a)
+    if (isLogDefined) {
+      logTangentSlope = 1 / (x0 * lnA);
+      logTangentSlopeStr = logTangentSlope.toFixed(2);
+    }
+    logFixedPointSlope = 1 / lnA;
+    logFixedPointSlopeStr = logFixedPointSlope.toFixed(2);
+
+    // 指数导数 (a^x)' = a^x * ln a
+    if (Number.isFinite(expVal)) {
+      expTangentSlope = expVal * lnA;
+      expTangentSlopeStr = expTangentSlope.toFixed(2);
+    }
+    expFixedPointSlope = lnA;
+    expFixedPointSlopeStr = expFixedPointSlope.toFixed(2);
+  }
+
+  // 对数符号状态与同大为正异大为负
+  let logSignState: ExpLogResult["logSignState"] = "undefined";
+  let logSignDescription = "真数 x ≤ 0 无定义";
+
+  if (isLogDefined) {
+    if (Math.abs(x0 - 1) < 1e-4) {
+      logSignState = "zero";
+      logSignDescription = "x = 1 为对数零点，log_a(1) = 0";
+    } else if ((a > 1 && x0 > 1) || (a < 1 && x0 < 1)) {
+      logSignState = "positive";
+      logSignDescription =
+        a > 1
+          ? "同大于 1 (a > 1, x > 1) ⇒ log_a(x) > 0"
+          : "同小于 1 (0 < a < 1, 0 < x < 1) ⇒ log_a(x) > 0";
+    } else {
+      logSignState = "negative";
+      logSignDescription =
+        a > 1
+          ? "异侧 (a > 1, 0 < x < 1) ⇒ log_a(x) < 0"
+          : "异侧 (0 < a < 1, x > 1) ⇒ log_a(x) < 0";
+    }
+  }
 
   return {
     a,
@@ -222,7 +288,18 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
     expVal,
     logVal,
     pointExp: { x: x0, y: expVal },
-    pointLog: { x: expVal, y: x0 }, // 对应反函数点 (y, x) 恰好关于 y=x 对称
+    pointLog: { x: isLogDefined ? x0 : NaN, y: logVal },
+    isLogDefined,
+    logTangentSlope,
+    logTangentSlopeStr,
+    logFixedPointSlope,
+    logFixedPointSlopeStr,
+    logSignState,
+    logSignDescription,
+    expTangentSlope,
+    expTangentSlopeStr,
+    expFixedPointSlope,
+    expFixedPointSlopeStr,
   };
 }
 

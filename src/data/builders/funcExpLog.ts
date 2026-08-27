@@ -198,97 +198,252 @@ export function buildFuncExpLogPanel(
   const x0 = params.x0 ?? 1.5;
   const expLogRes = calculateExpLog(a, x0);
 
-  const quantities: MathPanelData["quantities"] = [
-    {
-      label: "底数 a",
-      symbol: "a",
-      value: a.toFixed(1),
-      color: MATH_COLORS.paramPrimary,
-    },
-    { label: "自变量 x₀", symbol: "x₀", value: x0.toFixed(2) },
-    {
-      label: subType === "logarithmic" ? "对数函数值" : "指数函数值",
-      symbol: subType === "logarithmic" ? "\\log_a(x_0)" : "a^{x_0}",
-      value:
-        subType === "logarithmic"
-          ? expLogRes.isValidBase && Number.isFinite(expLogRes.logVal)
-            ? expLogRes.logVal.toFixed(2)
-            : "无意义"
-          : expLogRes.isValidBase
-            ? expLogRes.expVal.toFixed(2)
-            : "无意义",
-      color: MATH_COLORS.function,
-    },
-    {
-      label: subType === "logarithmic" ? "对称指数值" : "对称对数值",
-      symbol: subType === "logarithmic" ? "a^{x_0}" : "\\log_a(x_0)",
-      value:
-        subType === "logarithmic"
-          ? expLogRes.isValidBase
-            ? expLogRes.expVal.toFixed(2)
-            : "无意义"
-          : expLogRes.isValidBase && Number.isFinite(expLogRes.logVal)
-            ? expLogRes.logVal.toFixed(2)
-            : "无意义",
-      color: MATH_COLORS.functionTransformed,
-    },
-    {
-      label: "单调状态",
-      value:
-        a > 1
-          ? "单调递增 (a > 1)"
-          : a > 0 && a < 1
-            ? "单调递减 (0 < a < 1)"
-            : "退化/无定义",
-      highlight: a > 1 ? "extreme" : "positive",
-    },
-  ];
+  const quantities: MathPanelData["quantities"] =
+    subType === "logarithmic"
+      ? [
+          {
+            label: "底数 a",
+            symbol: "a",
+            value: a.toFixed(1),
+            color: MATH_COLORS.paramPrimary,
+          },
+          {
+            label: "探究真数 x₀",
+            symbol: "x_0",
+            value: x0.toFixed(2),
+            color: MATH_COLORS.function,
+          },
+          {
+            label: "对数函数值 y₀",
+            symbol: "\\log_a(x_0)",
+            value: expLogRes.isLogDefined
+              ? expLogRes.logVal.toFixed(2)
+              : "无定义",
+            color: MATH_COLORS.function,
+          },
+          {
+            label: "对应反函数点 P'",
+            symbol: "P'(y_0, x_0)",
+            value: expLogRes.isLogDefined
+              ? `(${expLogRes.logVal.toFixed(2)}, ${x0.toFixed(2)})`
+              : "无定义",
+            color: MATH_COLORS.functionTransformed,
+          },
+          {
+            label: "反函数指数验证",
+            symbol: `a^{y_0}`,
+            value: expLogRes.isLogDefined
+              ? `${a.toFixed(1)}^{${expLogRes.logVal.toFixed(2)}} = ${x0.toFixed(2)}`
+              : "无定义",
+            color: MATH_COLORS.functionTransformed,
+          },
+          {
+            label: "动点切线斜率",
+            symbol: "f'(x_0)",
+            value: expLogRes.logTangentSlopeStr,
+            highlight: expLogRes.isLogDefined ? "positive" : undefined,
+          },
+          {
+            label: "定点 (1,0) 切线斜率",
+            symbol: "f'(1)",
+            value: expLogRes.logFixedPointSlopeStr,
+          },
+          {
+            label: "符号与分界判定",
+            value: expLogRes.logSignDescription,
+            highlight:
+              expLogRes.logSignState === "positive"
+                ? "positive"
+                : expLogRes.logSignState === "negative"
+                  ? "extreme"
+                  : undefined,
+          },
+          {
+            label: "单调与凹凸性",
+            value:
+              a > 1
+                ? "严格单调递增 · 上凸减速增长"
+                : a > 0 && a < 1
+                  ? "严格单调递减 · 上凸加速衰减"
+                  : "退化/无定义",
+            highlight: a > 1 ? "positive" : "extreme",
+          },
+        ]
+      : [
+          {
+            label: "底数 a",
+            symbol: "a",
+            value: a.toFixed(1),
+            color: MATH_COLORS.paramPrimary,
+          },
+          {
+            label: "自变量 x₀",
+            symbol: "x_0",
+            value: x0.toFixed(2),
+            color: MATH_COLORS.function,
+          },
+          {
+            label: "指数函数值 y₀",
+            symbol: "a^{x_0}",
+            value: expLogRes.isValidBase
+              ? expLogRes.expVal.toFixed(2)
+              : "无定义",
+            color: MATH_COLORS.function,
+          },
+          {
+            label: "对应反函数点 P'",
+            symbol: "P'(y_0, x_0)",
+            value: expLogRes.isValidBase
+              ? `(${expLogRes.expVal.toFixed(2)}, ${x0.toFixed(2)})`
+              : "无定义",
+            color: MATH_COLORS.functionTransformed,
+          },
+          {
+            label: "反函数对数验证",
+            symbol: `\\log_a(y_0)`,
+            value: expLogRes.isValidBase
+              ? `\\log_{${a.toFixed(1)}}(${expLogRes.expVal.toFixed(2)}) = ${x0.toFixed(2)}`
+              : "无定义",
+            color: MATH_COLORS.functionTransformed,
+          },
+          {
+            label: "动点切线斜率",
+            symbol: "f'(x_0)",
+            value: expLogRes.expTangentSlopeStr,
+            highlight: expLogRes.isValidBase ? "positive" : undefined,
+          },
+          {
+            label: "定点 (0,1) 切线斜率",
+            symbol: "f'(0)",
+            value: expLogRes.expFixedPointSlopeStr,
+          },
+          {
+            label: "单调与凹凸性",
+            value:
+              a > 1
+                ? "严格单调递增 · 下凹加速增长 (爆炸式)"
+                : a > 0 && a < 1
+                  ? "严格单调递减 · 下凹衰减 (趋于0)"
+                  : "退化/无定义",
+            highlight: a > 1 ? "positive" : "extreme",
+          },
+        ];
 
-  const theorems: MathPanelData["theorems"] = [
-    {
-      name: "指数与对数互为反函数关系",
-      latex: "y = a^x \\iff x = \\log_a y \\quad (a > 0, a \\neq 1)",
-      level: "core",
-      prerequisites: [
-        "$a > 0$",
-        "$a \\neq 1$",
-        "$x \\in \\mathbb{R},\\; y > 0$",
-      ],
-    },
-    {
-      name: "反函数图像对称定理",
-      latex:
-        "f(x) \\text{ 与 } f^{-1}(x) \\text{ 图象关于直线 } y = x \\text{ 对称}",
-      level: "important",
-      prerequisites: [
-        "定义域与值域互换",
-        "点 $(x_0, y_0) \\leftrightarrow (y_0, x_0)$",
-      ],
-    },
-    {
-      name: "对数换底公式与运算法则",
-      latex:
-        "\\log_a b = \\frac{\\ln b}{\\ln a}, \\quad \\log_a(MN) = \\log_a M + \\log_a N",
-      level: "important",
-      prerequisites: ["$M > 0$", "$N > 0$", "$a > 0, a \\neq 1$"],
-    },
-  ];
+  const theorems: MathPanelData["theorems"] =
+    subType === "logarithmic"
+      ? [
+          {
+            name: "对数函数定义与图象性质",
+            latex: "y = \\log_a x \\quad (a > 0, a \\neq 1, x > 0)",
+            level: "core",
+            prerequisites: [
+              "定义域 $(0, +\\infty)$，值域 $\\mathbb{R}$，恒过定点 $(1, 0)$",
+              "当 $a > 1$ 时在 $(0, +\\infty)$ 上严格递增；当 $0 < a < 1$ 时严格递减",
+              "以 $y$ 轴 ($x = 0$) 为竖直渐近线",
+            ],
+          },
+          {
+            name: "指数与对数反函数对称定理",
+            latex:
+              "y = \\log_a x \\iff x = a^y \\quad (\\text{关于 } y = x \\text{ 轴对称})",
+            level: "core",
+            prerequisites: [
+              "对数函数的定义域 $(0, +\\infty)$ 对应指数函数的值域",
+              "对数函数的值域 $\\mathbb{R}$ 对应指数函数的定义域",
+              "动点 $P(x_0, \\log_a x_0)$ 与对称点 $P'(\\log_a x_0, x_0)$ 的连线被 $y = x$ 垂直平分",
+            ],
+          },
+          {
+            name: "对数运算法则与换底公式",
+            latex:
+              "\\log_a(MN) = \\log_a M + \\log_a N, \\quad \\log_a b = \\frac{\\ln b}{\\ln a}",
+            level: "important",
+            prerequisites: [
+              "$M > 0, N > 0$",
+              "$a > 0, a \\neq 1$",
+              "常用对数 $\\lg x = \\log_{10} x$，自然对数 $\\ln x = \\log_e x$",
+            ],
+          },
+          {
+            name: "高考基准切线放缩不等式",
+            latex: "\\ln x \\le x - 1 \\quad (x > 0)",
+            level: "important",
+            prerequisites: [
+              "当且仅当 $x = 1$ 时等号成立",
+              "几何意义：曲线 $y = \\ln x$ 位于其在点 $(1, 0)$ 处切线 $y = x - 1$ 下方",
+              "高考衍生放缩：$\\ln x \\le \\frac{x}{e}$ (在 $x = e$ 处相切)",
+            ],
+          },
+        ]
+      : [
+          {
+            name: "指数与对数互为反函数关系",
+            latex: "y = a^x \\iff x = \\log_a y \\quad (a > 0, a \\neq 1)",
+            level: "core",
+            prerequisites: [
+              "$a > 0, a \\neq 1$",
+              "指数函数定义域 $\\mathbb{R}$，值域 $(0, +\\infty)$，恒过定点 $(0, 1)$",
+              "图象关于直线 $y = x$ 轴对称",
+            ],
+          },
+          {
+            name: "指数函数单调与极限性质",
+            latex:
+              "\\lim_{x \\to -\\infty} a^x = 0 \\;(a > 1), \\quad \\lim_{x \\to +\\infty} a^x = 0 \\;(0 < a < 1)",
+            level: "important",
+            prerequisites: [
+              "$x$ 轴 ($y = 0$) 为水平渐近线",
+              "$a > 1$ 时为“爆炸式”指数级增长",
+            ],
+          },
+          {
+            name: "高考基准指数放缩不等式",
+            latex: "e^x \\ge x + 1 \\quad (x \\in \\mathbb{R})",
+            level: "important",
+            prerequisites: [
+              "当且仅当 $x = 0$ 时等号成立",
+              "几何意义：指数曲线 $y = e^x$ 恒在点 $(0, 1)$ 切线 $y = x + 1$ 上方",
+            ],
+          },
+        ];
 
-  const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
-    {
-      text: "高考高频定点：指数函数 $y = a^x$ 必过定点 $(0, 1)$，渐近线 $y = 0$；对数函数 $y = \\log_a x$ 必过定点 $(1, 0)$，渐近线 $x = 0$。",
-      importance: "gaokao",
-    },
-    {
-      text: "反函数三要素：① 定义域与值域互换；② 图象关于 $y = x$ 轴对称；③ 只有严格单调函数才存在同单调性的反函数。",
-      importance: "gaokao",
-    },
-  ];
+  const gaokaoPoints: MathPanelData["gaokaoPoints"] =
+    subType === "logarithmic"
+      ? [
+          {
+            text: "【同大为正，异大为负】对数值符号秒杀：当底数 $a$ 与真数 $x$ 同时大于 1 或同时在 $(0, 1)$ 时，$\\log_a x > 0$；若一个大于 1、另一个在 $(0, 1)$，则 $\\log_a x < 0$。引入中间媒介 0 和 1 即可快速比较大小。",
+            importance: "gaokao",
+          },
+          {
+            text: "【反函数三要素与公切线】① 定义域与值域互换；② 图象关于 $y = x$ 轴对称；③ 当 $a > 1$ 且 $y = \\log_a x$ 与 $y = a^x$ 有交点时，交点必在直线 $y = x$ 上（相切临界为 $a = e^{1/e} \\approx 1.445$）。",
+            importance: "gaokao",
+          },
+          {
+            text: "【指对同构大题破题思维】新高考导数压轴题常利用指对同构构造单调函数：如将 $x e^x = \\ln x + x$ 或 $a e^a = b + \\ln b$ 转化为 $f(t) = t e^t$ 或 $g(t) = t + \\ln t$ 的单调性求解。",
+            importance: "gaokao",
+          },
+        ]
+      : [
+          {
+            text: "高考高频定点：指数函数 $y = a^x$ 必过定点 $(0, 1)$，渐近线 $y = 0$；对数函数 $y = \\log_a x$ 必过定点 $(1, 0)$，渐近线 $x = 0$。",
+            importance: "gaokao",
+          },
+          {
+            text: "反函数三要素：① 定义域与值域互换；② 图象关于 $y = x$ 轴对称；③ 只有严格单调函数才存在同单调性的反函数。",
+            importance: "gaokao",
+          },
+        ];
 
   const warnings: MathPanelData["warnings"] = [];
   if (expLogRes.baseWarning) {
     warnings.push({
       text: expLogRes.baseWarning,
+      level: "danger",
+    });
+  }
+  if (subType === "logarithmic" && x0 <= 0) {
+    warnings.push({
+      text: "真数必须大于 0！x ≤ 0 时对数函数无意义。",
       level: "danger",
     });
   }
@@ -298,6 +453,9 @@ export function buildFuncExpLogPanel(
     theorems,
     gaokaoPoints,
     warnings,
-    mnemonic: "指过(0,1)对过(1,0)，底过1增小1减；y=x对称反函数。",
+    mnemonic:
+      subType === "logarithmic"
+        ? "对过(1,0)轴渐近，同大为正异大负；y=x对称反函数，切线ln放缩牢记。"
+        : "指过(0,1)对过(1,0)，底过1增小1减；y=x对称反函数。",
   };
 }
