@@ -11,7 +11,9 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math";
 import { PropertiesScene } from "./components/PropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/funcProperties";
@@ -23,7 +25,7 @@ const FORMULA_MAP: Record<FnType, string> = {
   quadratic: "f(x) = x^2 \\quad (D = \\mathbb{R}, \\ R = [0, +\\infty))",
   abs: "f(x) = |x| \\quad (D = \\mathbb{R}, \\ R = [0, +\\infty))",
   reciprocal:
-    "f(x) = \\frac{1}{x} \\quad (D = (-\\infty, 0) \\cup (0, +\\infty))",
+    "f(x) = \\frac{1}{x} \\quad (D = (-\\infty, 0) \\cup (0, +\\infty), \\ R = (-\\infty, 0) \\cup (0, +\\infty))",
   sin: "f(x) = \\sin x \\quad (D = \\mathbb{R}, \\ R = [-1, 1])",
 };
 
@@ -114,14 +116,56 @@ export function DomainPage() {
     }
   }, [fnType]);
 
+  // 中屏右下角图例卡片
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const items: SceneLegendItem[] = [
+      {
+        color: MATH_COLORS.function,
+        formula:
+          fnType === "cubic"
+            ? "y = x^3"
+            : fnType === "quadratic"
+              ? "y = x^2"
+              : fnType === "abs"
+                ? "y = |x|"
+                : fnType === "reciprocal"
+                  ? "y = \\frac{1}{x}"
+                  : "y = \\sin x",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.paramPrimary,
+        label: "动探针 P₀(x₀, f(x₀))",
+        style: "point",
+      },
+      {
+        color: MATH_COLORS.functionTransformed,
+        label: "X 轴投影：定义域 D",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.functionSecondary,
+        label: "Y 轴投影：值域 R",
+        style: "solid",
+      },
+    ];
+
+    if (fnType === "reciprocal") {
+      items.push({
+        color: MATH_COLORS.degeneracy,
+        label: "x = 0 (去心奇点)",
+        style: "hollow-point",
+      });
+    }
+
+    return items;
+  }, [fnType]);
+
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="基准函数选择"
-            subtitle="切换观察不同函数的定义域与值域"
-          >
+          <LeftPanelSection title="基准函数选择">
             <SelectGrid
               items={[
                 { key: "cubic", label: "y = x³", formula: "y=x^3" },
@@ -140,10 +184,7 @@ export function DomainPage() {
               className="mb-4"
             />
           </LeftPanelSection>
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="调节参数观察曲线与几何演变"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -195,6 +236,7 @@ export function DomainPage() {
               mode="domain"
             />
           </AnimationSvgCanvas>
+          <SceneLegend items={legendItems} />
         </div>
       }
       right={

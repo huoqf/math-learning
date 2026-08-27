@@ -87,28 +87,55 @@ export function buildFuncPropertiesPanel(
 
     const theorems: MathPanelData["theorems"] = [
       {
-        name: "定义域优先铁律",
-        latex: "\\text{确定函数性质的前置条件: } x \\in D",
+        name: "函数概念与三要素",
+        latex:
+          "y = f(x), \\quad x \\in D, \\quad R = \\{ y \\mid y = f(x), x \\in D \\}",
         level: "core",
         prerequisites: [
-          "任何关于奇偶性、单调性、周期的讨论均建立在定义域存在的基础上",
+          "定义域 D 与值域 R 均为非空实数集",
+          "单值对应：定义域 D 内的每一个自变量 x，有且仅有唯一确定的 y 与之对应",
         ],
       },
       {
-        name: "值域与对应法则",
-        latex: "R = \\{ y \\mid y = f(x), x \\in D \\}",
+        name: "垂直线检验定理 (Vertical Line Test)",
+        latex:
+          "\\text{任意直线 } x = c \\ (c \\in D) \\text{ 与函数图象有且仅有 } 1 \\text{ 个交点}",
+        level: "core",
+        prerequisites: [
+          "若存在直线与曲线交点数大于 1，则该几何图形必不表示函数关系",
+        ],
+      },
+      {
+        name: "同一函数判定准则",
+        latex: "f(x) \\equiv g(x) \\iff D_f = D_g \\ \\land \\ f(x) = g(x)",
         level: "important",
-        prerequisites: ["定义域 D 内的每一个自变量 x 有唯一确定的 y 与之对应"],
+        prerequisites: [
+          "定义域相同且对应法则完全相同（两要素决定三要素，与自变量字母无关）",
+        ],
+      },
+      {
+        name: "抽象函数复合定义域原则",
+        latex: "x \\in D_{\\text{复合}} \\iff g(x) \\in D_f",
+        level: "important",
+        prerequisites: ["同一个对应法则 f 的括号内范围必须完全相同"],
       },
     ];
 
     const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
       {
-        text: "高考第一陷阱：研究奇偶性或单调性前，必须首先确定函数的定义域！定义域如果不关于原点对称，直接判定为非奇非偶函数。",
+        text: "定义域优先铁律：研究函数的奇偶性、单调性、最值或零点前，必须首先确定定义域！若定义域不关于原点对称，直接秒杀判定为非奇非偶。",
         importance: "gaokao",
       },
       {
-        text: "值域与最值求解：利用单调性、基本不等式或二次函数配方法确定函数的值域范围。",
+        text: "同一函数高考辨析陷阱：两函数若要相等，定义域与解析式必须完全一致！例如 f(x)=x 与 g(x)=√(x²)=|x| 法则不同非同一函数；f(x)=1 与 g(x)=x⁰ 定义域不同(x≠0)非同一函数。",
+        importance: "gaokao",
+      },
+      {
+        text: "抽象函数定义域速解口诀：“同一 f 括号内范围相同”。已知 f(x) 的定义域为 [a, b]，求 f(g(x)) 的定义域只需解不等式 a ≤ g(x) ≤ b 得出 x 的取值范围。",
+        importance: "gaokao",
+      },
+      {
+        text: "求值域与最值的新高考通法：①直接图象投影法；②二次函数配方法；③代数/三角换元法（换元必先定新元范围）；④基本不等式法（一正二定三相等）；⑤分离常数法（分式）；⑥导数单调性极值法。",
         importance: "core",
       },
     ];
@@ -116,7 +143,7 @@ export function buildFuncPropertiesPanel(
     const warnings: MathPanelData["warnings"] = [];
     if (fnType === "reciprocal" && Math.abs(x0) < 1e-4) {
       warnings.push({
-        text: "x₀ = 0 处反比例函数分母为零无定义！属于定义域外的奇点。",
+        text: "x₀ = 0 处反比例函数分母为零无定义！属于定义域外的去心奇点。",
         level: "danger",
       });
     }
@@ -126,7 +153,7 @@ export function buildFuncPropertiesPanel(
       theorems,
       gaokaoPoints,
       warnings,
-      mnemonic: "定义域先看对称否，无定义点需排查，值域区间仔细寻。",
+      mnemonic: "横看定义域纵看值域，垂线相交唯一解，括号内外范围清。",
     };
   }
 
