@@ -273,7 +273,7 @@ export function getThreeSigmaIntervals(mu: number, sigma: number) {
     {
       k: 1,
       label: "[μ-σ, μ+σ]",
-      formula: `[\\color{#EF4444}{${(mu - safeSigma).toFixed(1)}}, \\color{#EF4444}{${(mu + safeSigma).toFixed(1)}}]`,
+      formula: `[${(mu - safeSigma).toFixed(1)}, ${(mu + safeSigma).toFixed(1)}]`,
       prob: calcIntervalProbability(
         mu,
         safeSigma,
@@ -287,7 +287,7 @@ export function getThreeSigmaIntervals(mu: number, sigma: number) {
     {
       k: 2,
       label: "[μ-2σ, μ+2σ]",
-      formula: `[\\color{#EF4444}{${(mu - 2 * safeSigma).toFixed(1)}}, \\color{#EF4444}{${(mu + 2 * safeSigma).toFixed(1)}}]`,
+      formula: `[${(mu - 2 * safeSigma).toFixed(1)}, ${(mu + 2 * safeSigma).toFixed(1)}]`,
       prob: calcIntervalProbability(
         mu,
         safeSigma,
@@ -301,7 +301,7 @@ export function getThreeSigmaIntervals(mu: number, sigma: number) {
     {
       k: 3,
       label: "[μ-3σ, μ+3σ]",
-      formula: `[\\color{#EF4444}{${(mu - 3 * safeSigma).toFixed(1)}}, \\color{#EF4444}{${(mu + 3 * safeSigma).toFixed(1)}}]`,
+      formula: `[${(mu - 3 * safeSigma).toFixed(1)}, ${(mu + 3 * safeSigma).toFixed(1)}]`,
       prob: calcIntervalProbability(
         mu,
         safeSigma,

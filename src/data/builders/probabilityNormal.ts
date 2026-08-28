@@ -166,8 +166,7 @@ export function buildProbabilityNormalPanel(
         },
         {
           name: "正态分布密度函数 N(μ, σ²)",
-          latex:
-            "f(x) = \\frac{1}{\\sqrt{2\\pi}\\color{#D97706}{\\sigma}} e^{-\\frac{(x - \\color{#EF4444}{\\mu})^2}{2\\color{#D97706}{\\sigma}^2}}",
+          latex: `f(x) = \\frac{1}{\\sqrt{2\\pi}\\color{${MATH_COLORS.paramSecondary}}{\\sigma}} e^{-\\frac{(x - \\color{${MATH_COLORS.paramPrimary}}{\\mu})^2}{2\\color{${MATH_COLORS.paramSecondary}}{\\sigma}^2}}`,
           prerequisites: [
             "$\\sigma > 0$",
             "$\\int_{-\\infty}^{+\\infty} f(x)dx = 1$",
@@ -238,8 +237,7 @@ export function buildProbabilityNormalPanel(
       theorems: [
         {
           name: "参数 μ 与 σ 的几何意义",
-          latex:
-            "\\text{对称轴: } x = \\color{#EF4444}{\\mu} \\quad \\text{最大值: } f_{\\max} = \\frac{1}{\\sqrt{2\\pi}\\color{#D97706}{\\sigma}}",
+          latex: `\\text{对称轴: } x = \\color{${MATH_COLORS.paramPrimary}}{\\mu} \\quad \\text{最大值: } f_{\\max} = \\frac{1}{\\sqrt{2\\pi}\\color{${MATH_COLORS.paramSecondary}}{\\sigma}}`,
           note: "μ 决定中心位置（平移）；σ 决定高矮胖瘦（σ 越小越瘦高陡峭，数据越集中；σ 越大越矮胖平缓，数据越分散）。",
           level: "core",
         },
@@ -325,8 +323,7 @@ export function buildProbabilityNormalPanel(
       },
       {
         name: "标准化变量变换公式",
-        latex:
-          "Z = \\frac{X - \\color{#EF4444}{\\mu}}{\\color{#D97706}{\\sigma}} \\sim N(0, 1) \\quad \\Rightarrow \\quad P(X \\le x_0) = \\Phi(Z_0)",
+        latex: `Z = \\frac{X - \\color{${MATH_COLORS.paramPrimary}}{\\mu}}{\\color{${MATH_COLORS.paramSecondary}}{\\sigma}} \\sim N(0, 1) \\quad \\Rightarrow \\quad P(X \\le x_0) = \\Phi(Z_0)`,
         note: isStandardNormal
           ? "当前已为标准正态分布 N(0, 1)。"
           : `当前 x₀ = ${x0.toFixed(2)} 对应标准正态分位数 Z₀ = ${z0.toFixed(2)}。`,

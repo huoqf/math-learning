@@ -1,4 +1,4 @@
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { SceneScale } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
 import { normalPdf } from "@/math/probabilityNormal";
@@ -115,7 +115,7 @@ export function ProbabilityNormalParamsShapeScene({
               cy={pL.y}
               r={4}
               fill={MATH_COLORS.paramSecondary}
-              stroke="#FFFFFF"
+              stroke={CANVAS_COLORS.white}
               strokeWidth={1.5}
             />
             <circle
@@ -123,7 +123,7 @@ export function ProbabilityNormalParamsShapeScene({
               cy={pR.y}
               r={4}
               fill={MATH_COLORS.paramSecondary}
-              stroke="#FFFFFF"
+              stroke={CANVAS_COLORS.white}
               strokeWidth={1.5}
             />
             <text

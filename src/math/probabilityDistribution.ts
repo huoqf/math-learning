@@ -306,6 +306,7 @@ export function computeHypergeometricBinomialComparison(
  *  - 'investment': 理财投资（方案 A 稳健理财 vs 方案 B 风险股票）
  */
 export interface DecisionScenarioResult {
+  scenario: "quality" | "investment";
   title: string;
   schemeAName: string;
   schemeBName: string;
@@ -351,6 +352,7 @@ export function computeDecisionModel(
         : `当前次品率 p=${(p * 100).toFixed(1)}% ≥ 19%，漏检违约风险剧增，方案 B 全检期望成本更优且零风险，推荐【方案 B 全检】。`;
 
     return {
+      scenario: "quality",
       title: "产品质量检测决策模型（期望成本与风险分析）",
       schemeAName: "方案 A：部分抽检（期望成本浮动）",
       schemeBName: "方案 B：全数检验（固定成本零风险）",
@@ -385,6 +387,7 @@ export function computeDecisionModel(
       : `景气概率 p=${p.toFixed(2)}，股票期望收益率 ${distB.mean.toFixed(1)}% 低于稳健理财 (4.0%) 且伴随下行风险，推荐【方案 A 稳健理财】。`;
 
   return {
+    scenario: "investment",
     title: "资产配置与风险收益决策模型",
     schemeAName: "方案 A：稳健固定理财",
     schemeBName: "方案 B：进取权益股票",

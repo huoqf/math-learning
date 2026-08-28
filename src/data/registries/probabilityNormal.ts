@@ -1,6 +1,4 @@
-/**
- * 频率分布直方图与正态分布参数注册与描述元数据
- */
+import { MATH_COLORS } from "@/theme";
 
 export interface ParamMeta {
   label: string;
@@ -36,38 +34,38 @@ export const defaultParams: Record<string, number> = {
 export const paramMeta: Record<string, ParamMeta> = {
   mu: {
     label: "均值 μ",
-    labelFormula: "\\text{均值 } \\color{#EF4444}{\\mu}",
+    labelFormula: `\\text{均值 } \\color{${MATH_COLORS.paramPrimary}}{\\mu}`,
     defaultValue: 0,
     min: -2.5,
     max: 2.5,
     step: 0.1,
     description: "决定正态分布曲线的对称轴与中心位置",
-    descriptionFormula: "x = \\color{#EF4444}{\\mu}",
+    descriptionFormula: `x = \\color{${MATH_COLORS.paramPrimary}}{\\mu}`,
     importance: "core",
     marks: [
       {
         value: 0,
         label: "μ = 0",
-        labelFormula: "\\color{#EF4444}{\\mu} = 0",
+        labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{\\mu} = 0`,
         variant: "critical",
       },
     ],
   },
   sigma: {
     label: "标准差 σ",
-    labelFormula: "\\text{标准差 } \\color{#D97706}{\\sigma}",
+    labelFormula: `\\text{标准差 } \\color{${MATH_COLORS.paramSecondary}}{\\sigma}`,
     defaultValue: 1,
     min: 0.4,
     max: 1.8,
     step: 0.1,
     description: "决定正态分布曲线的分散程度（σ越小越瘦陡，σ越大越矮胖）",
-    descriptionFormula: "\\color{#D97706}{\\sigma} > 0",
+    descriptionFormula: `\\color{${MATH_COLORS.paramSecondary}}{\\sigma} > 0`,
     importance: "core",
     marks: [
       {
         value: 1,
         label: "σ = 1",
-        labelFormula: "\\color{#D97706}{\\sigma} = 1",
+        labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{\\sigma} = 1`,
         variant: "recommended",
       },
     ],
@@ -104,28 +102,16 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     marks: [
       {
-        value: -1,
-        label: "左偏",
-        labelFormula: "\\alpha < 0",
-        variant: "recommended",
-      },
-      {
         value: 0,
         label: "对称",
         labelFormula: "\\alpha = 0",
         variant: "critical",
       },
-      {
-        value: 1,
-        label: "右偏",
-        labelFormula: "\\alpha > 0",
-        variant: "recommended",
-      },
     ],
   },
   percentileP: {
     label: "百分位数 p%",
-    labelFormula: "\\text{百分位 } \\color{#059669}{p\\%}",
+    labelFormula: `\\text{百分位 } \\color{${MATH_COLORS.paramTertiary}}{p\\%}`,
     defaultValue: 50,
     min: 5,
     max: 95,
@@ -134,22 +120,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     marks: [
       {
-        value: 25,
-        label: "Q₁ (25%)",
-        labelFormula: "Q_1",
-        variant: "recommended",
-      },
-      {
         value: 50,
         label: "中位数 (50%)",
         labelFormula: "m_e",
         variant: "critical",
-      },
-      {
-        value: 75,
-        label: "Q₃ (75%)",
-        labelFormula: "Q_3",
-        variant: "recommended",
       },
     ],
   },
@@ -165,7 +139,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   x0: {
     label: "对称探究点 x₀",
-    labelFormula: "\\text{基准点 } \\color{#EF4444}{x_0}",
+    labelFormula: `\\text{基准点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
     defaultValue: -1,
     min: -4,
     max: 4,
@@ -175,7 +149,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   x1: {
     label: "区间左端点 x₁",
-    labelFormula: "\\text{左端点 } \\color{#059669}{x_1}",
+    labelFormula: `\\text{左端点 } \\color{${MATH_COLORS.paramTertiary}}{x_1}`,
     defaultValue: -1,
     min: -4,
     max: 4,
@@ -185,7 +159,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   x2: {
     label: "区间右端点 x₂",
-    labelFormula: "\\text{右端点 } \\color{#059669}{x_2}",
+    labelFormula: `\\text{右端点 } \\color{${MATH_COLORS.paramTertiary}}{x_2}`,
     defaultValue: 1,
     min: -4,
     max: 4,

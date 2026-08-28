@@ -12,6 +12,8 @@ import {
   TipCard,
 } from "@/components/UI";
 import { HtmlTooltip } from "@/components/Math/SvgTooltip";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
@@ -38,10 +40,12 @@ interface TooltipState {
 }
 
 type NormalStudyMode = "histogram" | "normalFit" | "paramsShape" | "sigmaRule";
+type NormalPreset = "free" | "height" | "factory" | "standard";
 
 export function ProbabilityNormalAnimation() {
   // 研究模式：'histogram' | 'normalFit' | 'paramsShape' | 'sigmaRule'
   const [studyMode, setStudyMode] = useState<NormalStudyMode>("histogram");
+  const [preset, setPreset] = useState<NormalPreset>("free");
 
   // 辅助开关
   const [showStatsLines, setShowStatsLines] = useState(true);
@@ -95,13 +99,54 @@ export function ProbabilityNormalAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 直角坐标系比例尺：X 轴量纲 [-6, 6]（与正态曲线采样区间完全一致），Y 轴为概率密度/组距范围 [-0.08, 0.85]
+  // 直角坐标系比例尺：X 轴量纲 [-6, 6]，Y 轴为概率密度/组距范围 [-0.08, 0.85]
   const scale = useSceneScale({
     vp,
     xRange: [-6, 6],
     yRange: [-0.08, 0.85],
     keepAspectRatio: false,
   });
+
+  // 预设情境切换
+  const handlePresetChange = (newPreset: NormalPreset) => {
+    setPreset(newPreset);
+    if (newPreset === "free") return;
+
+    if (newPreset === "height") {
+      setParams((prev) => ({
+        ...prev,
+        mu: 0,
+        sigma: 1.2,
+        x0: -1.2,
+        binCount: 12,
+        sampleSize: 500,
+        skewness: 0,
+      }));
+      setShowSigmaIntervals(false);
+    } else if (newPreset === "factory") {
+      setParams((prev) => ({
+        ...prev,
+        mu: 0,
+        sigma: 0.8,
+        x0: -1.6,
+        binCount: 16,
+        sampleSize: 800,
+        skewness: 0,
+      }));
+      setShowSigmaIntervals(true);
+    } else if (newPreset === "standard") {
+      setParams((prev) => ({
+        ...prev,
+        mu: 0,
+        sigma: 1.0,
+        x0: -1.0,
+        binCount: 10,
+        sampleSize: 300,
+        skewness: 0,
+      }));
+      setShowSigmaIntervals(false);
+    }
+  };
 
   // 数学量看板数据更新
   const mathData = useMemo(() => {
@@ -110,8 +155,9 @@ export function ProbabilityNormalAnimation() {
     });
   }, [params, studyMode]);
 
-  // 参数变更
+  // 参数变更（拖拽或滑块改变自动切回 free）
   const handleParamChange = (key: string, value: number) => {
+    setPreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -120,6 +166,7 @@ export function ProbabilityNormalAnimation() {
 
   // 恢复默认参数
   const handleReset = () => {
+    setPreset("free");
     setParams({ ...defaultParams });
   };
 
@@ -186,6 +233,159 @@ export function ProbabilityNormalAnimation() {
     return `P(X \\le ${sym.leftX.toFixed(1)}) = P(X \\ge ${sym.rightX.toFixed(1)}) = \\color{${MATH_COLORS.paramTertiary}}{${pTail}\\%} \\quad P(${sym.leftX.toFixed(1)} \\le X \\le ${sym.rightX.toFixed(1)}) = \\color{${MATH_COLORS.paramSecondary}}{${pCenter}\\%}`;
   }, [params, studyMode]);
 
+  // 中屏右下角学术图例
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const muVal = params.mu ?? 0;
+    const sigVal = Math.max(0.1, params.sigma ?? 1);
+    const x0Val = params.x0 ?? -1;
+    const x1Val = params.x1 ?? -1;
+    const x2Val = params.x2 ?? 1;
+
+    if (studyMode === "histogram") {
+      const items: SceneLegendItem[] = [
+        {
+          formula: "\\text{矩形面积 } S_i \\text{ (频率)}",
+          color: MATH_COLORS.barBorder,
+          style: "area",
+        },
+      ];
+      if (showStatsLines) {
+        items.push(
+          {
+            formula: "\\text{众数 } m_o",
+            color: MATH_COLORS.paramPrimary,
+            style: "dash",
+          },
+          {
+            formula: "\\text{中位数 } m_e",
+            color: MATH_COLORS.paramSecondary,
+            style: "dash",
+          },
+          {
+            formula: "\\text{均值 } \\bar{x}",
+            color: MATH_COLORS.function,
+            style: "dash",
+          },
+        );
+      }
+      if (showFrequencyLine) {
+        items.push({
+          label: "频率折线图",
+          color: MATH_COLORS.frequencyLine,
+          style: "solid",
+        });
+      }
+      return items;
+    }
+
+    if (studyMode === "normalFit") {
+      const minX = Math.min(x1Val, x2Val);
+      const maxX = Math.max(x1Val, x2Val);
+      return [
+        {
+          formula: `f(x) \\sim N(${muVal.toFixed(1)}, ${sigVal.toFixed(1)}^2)`,
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          formula: "\\text{样本频率直方图}",
+          color: MATH_COLORS.barBorder,
+          style: "area",
+        },
+        {
+          formula: `P(${minX.toFixed(1)} \\le X \\le ${maxX.toFixed(1)})`,
+          color: MATH_COLORS.paramTertiary,
+          style: "area",
+        },
+      ];
+    }
+
+    if (studyMode === "paramsShape") {
+      const items: SceneLegendItem[] = [
+        {
+          formula: `N(${muVal.toFixed(1)}, ${sigVal.toFixed(1)}^2)`,
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          formula: `\\text{对称轴 } x = ${muVal.toFixed(1)}`,
+          color: MATH_COLORS.paramPrimary,
+          style: "dash",
+        },
+        {
+          formula: "\\text{拐点 } \\mu \\pm \\sigma",
+          color: MATH_COLORS.paramSecondary,
+          style: "point",
+        },
+      ];
+      if (showBenchmarkNormal) {
+        items.push({
+          formula: "N(0, 1) \\text{ 基准}",
+          color: MATH_COLORS.textMuted,
+          style: "dash",
+        });
+      }
+      return items;
+    }
+
+    // sigmaRule
+    const sym = calcSymmetricNormalIntervals(muVal, sigVal, x0Val);
+    if (showSigmaIntervals) {
+      return [
+        {
+          formula: `N(${muVal.toFixed(1)}, ${sigVal.toFixed(1)}^2)`,
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          formula: "1\\text{-}\\sigma \\;(68.27\\%)",
+          color: MATH_COLORS.paramPrimary,
+          style: "area",
+        },
+        {
+          formula: "2\\text{-}\\sigma \\;(95.45\\%)",
+          color: MATH_COLORS.paramSecondary,
+          style: "area",
+        },
+        {
+          formula: "3\\text{-}\\sigma \\;(99.73\\%)",
+          color: MATH_COLORS.paramTertiary,
+          style: "area",
+        },
+      ];
+    }
+
+    return [
+      {
+        formula: `N(${muVal.toFixed(1)}, ${sigVal.toFixed(1)}^2)`,
+        color: MATH_COLORS.paramPrimary,
+        style: "solid",
+      },
+      {
+        formula: `P(X \\le ${sym.leftX.toFixed(1)})`,
+        color: MATH_COLORS.paramTertiary,
+        style: "area",
+      },
+      {
+        formula: `P(X \\ge ${sym.rightX.toFixed(1)})`,
+        color: MATH_COLORS.setB,
+        style: "area",
+      },
+      {
+        formula: `P(${sym.leftX.toFixed(1)} \\le X \\le ${sym.rightX.toFixed(1)})`,
+        color: MATH_COLORS.paramSecondary,
+        style: "dash",
+      },
+    ];
+  }, [
+    studyMode,
+    params,
+    showStatsLines,
+    showFrequencyLine,
+    showBenchmarkNormal,
+    showSigmaIntervals,
+  ]);
+
   // 看板标题
   const panelTitle = useMemo(() => {
     if (studyMode === "histogram") return "频率分布直方图与特征数看板";
@@ -240,11 +440,8 @@ export function ProbabilityNormalAnimation() {
       <ThreePanel
         left={
           <LeftPanel>
-            {/* 模式选择 Section */}
-            <LeftPanelSection
-              title="探究模式"
-              subtitle="选择频率分布与正态分布学习视角"
-            >
+            {/* 模式选择 Section (遵循铁律 3：省略无意义 subtitle) */}
+            <LeftPanelSection title="探究模式">
               <SelectGrid
                 items={[
                   { key: "histogram", label: "直方图与特征数" },
@@ -259,12 +456,25 @@ export function ProbabilityNormalAnimation() {
               />
             </LeftPanelSection>
 
+            {/* 高考典型情境预设 */}
+            <LeftPanelSection title="典型情境预设">
+              <SelectGrid
+                items={[
+                  { key: "free", label: "自由探索" },
+                  { key: "standard", label: "标准正态 N(0, 1)" },
+                  { key: "height", label: "体检身高模型" },
+                  { key: "factory", label: "零件 3-σ 质检" },
+                ]}
+                value={preset}
+                onChange={(k) => handlePresetChange(k as NormalPreset)}
+                variant="filled"
+                columns={2}
+              />
+            </LeftPanelSection>
+
             {/* 辅助开关 Section */}
             {studyMode === "histogram" && (
-              <LeftPanelSection
-                title="辅助线与折线"
-                subtitle="控制图表辅助元素显示"
-              >
+              <LeftPanelSection title="辅助图元">
                 <div className="space-y-2">
                   <Toggle
                     label="显示众数/中位数/均值/百分位"
@@ -281,10 +491,7 @@ export function ProbabilityNormalAnimation() {
             )}
 
             {studyMode === "paramsShape" && (
-              <LeftPanelSection
-                title="对比参考"
-                subtitle="与标准正态分布同图对照"
-              >
+              <LeftPanelSection title="对比参考">
                 <Toggle
                   label="同屏显示 N(0, 1) 基准曲线"
                   checked={showBenchmarkNormal}
@@ -294,10 +501,7 @@ export function ProbabilityNormalAnimation() {
             )}
 
             {studyMode === "sigmaRule" && (
-              <LeftPanelSection
-                title="3-σ 原则"
-                subtitle="切换对称镜像与标准区间"
-              >
+              <LeftPanelSection title="3-σ 准则">
                 <Toggle
                   label="显示 3-σ 标准区间高亮"
                   checked={showSigmaIntervals}
@@ -307,10 +511,7 @@ export function ProbabilityNormalAnimation() {
             )}
 
             {/* 声明式 ParamControl 参数调节 Section */}
-            <LeftPanelSection
-              title="参数调节"
-              subtitle="拖动滑块改变分布状态或区间"
-            >
+            <LeftPanelSection title="参数调节">
               <ParamControl
                 params={paramConfigs}
                 onParamChange={handleParamChange}
@@ -352,6 +553,9 @@ export function ProbabilityNormalAnimation() {
             <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
               <KatexFormula formula={formulaLatex} mode="inline" />
             </div>
+
+            {/* 中屏右下角毛玻璃图例卡片 */}
+            <SceneLegend items={legendItems} />
 
             {/* SVG 动画画布 */}
             <AnimationSvgCanvas

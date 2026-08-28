@@ -1,5 +1,5 @@
 import { InteractivePoint } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
 import { normalPdf } from "@/math/probabilityNormal";
@@ -253,7 +253,7 @@ export function ProbabilityNormalSigmaRuleScene({
               cy={symPt.y}
               r={5}
               fill={MATH_COLORS.setB}
-              stroke="#FFFFFF"
+              stroke={CANVAS_COLORS.white}
               strokeWidth={1.5}
             />
             <text
