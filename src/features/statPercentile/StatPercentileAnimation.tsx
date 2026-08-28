@@ -173,22 +173,22 @@ export function StatPercentileAnimation() {
         },
         {
           color: MATH_COLORS.paramPrimary,
-          label: `目标百分位 P${params.percentileP} 面积`,
+          formula: `\\text{分位数 } P_{${params.percentileP}} \\text{ 覆盖面积}`,
           style: "area",
         },
         {
           color: MATH_COLORS.function,
-          label: "估算平均数 x̄ (力矩重心)",
+          formula: "\\text{估算均值 } \\bar{x} \\text{ (力矩重心)}",
           style: "dash",
         },
         {
           color: MATH_COLORS.paramSecondary,
-          label: "估算中位数 Me (面积平分)",
+          formula: "\\text{中位数 } M_e \\text{ (平分面积)}",
           style: "dash",
         },
         {
           color: MATH_COLORS.paramTertiary,
-          label: "众数 Mo (最高组中值)",
+          formula: "\\text{众数 } M_o \\text{ (最高组中点)}",
           style: "dash",
         },
       ];
@@ -202,7 +202,7 @@ export function StatPercentileAnimation() {
         },
         {
           color: MATH_COLORS.paramPrimary,
-          label: `目标百分位 ${params.percentileP}% 插值投影`,
+          formula: `\\text{目标百分位 } ${params.percentileP}\\% \\text{ 投影}`,
           style: "dash",
         },
         {
@@ -216,65 +216,65 @@ export function StatPercentileAnimation() {
     return [
       {
         color: MATH_COLORS.paramPrimary,
-        label: "层 1 高斯分布与均值 x̄₁",
+        formula: "\\text{层 1 高斯分布与均值 } \\bar{x}_1",
         style: "solid",
       },
       {
         color: MATH_COLORS.paramSecondary,
-        label: "层 2 高斯分布与均值 x̄₂",
+        formula: "\\text{层 2 高斯分布与均值 } \\bar{x}_2",
         style: "solid",
       },
       {
         color: MATH_COLORS.paramTertiary,
-        label: "层 3 高斯分布与均值 x̄₃",
+        formula: "\\text{层 3 高斯分布与均值 } \\bar{x}_3",
         style: "solid",
       },
       {
         color: MATH_COLORS.function,
-        label: "总体加权均值 x̄",
+        formula: "\\text{总体加权均值 } \\bar{x}",
         style: "dash",
       },
       {
         color: MATH_COLORS.function,
-        label: "组内方差贡献 ∑wᵢsᵢ²",
+        formula: "\\sum w_i s_i^2 \\text{ (组内方差)}",
         style: "area",
       },
       {
         color: MATH_COLORS.paramSecondary,
-        label: "组间离差贡献 ∑wᵢ(x̄ᵢ-x̄)²",
+        formula: "\\sum w_i (\\bar{x}_i - \\bar{x})^2 \\text{ (组间离差)}",
         style: "area",
       },
     ];
   }, [studyMode, params.percentileP]);
 
-  // 左屏教学提示与题设导引 (说明初始条件与核心设问，KaTeX 规范渲染)
+  // 左屏教学提示与题设导引 (说明初始条件与核心设问)
   const tipConfig = useMemo(() => {
     if (studyMode === "histogram") {
       return {
         variant: "primary" as const,
         badge: "高考基础 · 直方图与数字特征",
-        conditionFormula:
-          "\\text{样本划分为若干组，直方图矩形总面积恒等于 } \\sum f_i = 1",
-        questionFormula:
-          "\\text{求解众数 } M_o\\text{、中位数 } M_e \\text{ 与估算均值 } \\bar{x} = \\sum x_{\\text{mid}, i} f_i",
+        condition:
+          "样本划分为若干组，纵轴为频率/组距，各矩形面积之和恒等于 1。",
+        question:
+          "求解直方图的众数（最高矩形底边中点）、中位数（平分面积线）与均值（组中值加权）。",
       };
     }
     if (studyMode === "cumulative") {
       return {
         variant: "warning" as const,
         badge: "高考高频 · 百分位数与累积频率折线",
-        conditionFormula: `\\text{样本按升序排列，目标百分位数 } p = ${params.percentileP ?? 75}\\%`,
-        questionFormula:
-          "\\text{根据 S 型累积折线，求第 } p \\text{ 百分位数 } y_p \\text{ 的线性插值坐标}",
+        condition: `样本数据按升序排列，当前目标百分位 p = ${params.percentileP ?? 75}%。`,
+        question:
+          "根据 S 型累积折线，求第 p 百分位数的精确线性插值坐标与分界点。",
       };
     }
     // stratified
     return {
       variant: "danger" as const,
       badge: "高考压轴 · 分层抽样与总方差分解",
-      conditionFormula: `\\text{总体分为 3 层 } (N_1, N_2, N_3)\\text{，按比例抽取样本 } n = ${params.sampleN ?? 100}`,
-      questionFormula:
-        "\\text{求解分层抽样总样本均值 } \\bar{x} \\text{ 与总样本方差 } s^2",
+      condition: `总体划分为 3 层，按比例抽取容量为 n = ${params.sampleN ?? 100} 的样本。`,
+      question:
+        "求解分层抽样总样本均值 x̄ 与总样本方差 s² 的组内+组间两项分解合成。",
     };
   }, [studyMode, params.percentileP, params.sampleN]);
 
@@ -344,19 +344,15 @@ export function StatPercentileAnimation() {
                   <span className="font-semibold text-neutral-800 mr-1">
                     【初始条件】
                   </span>
-                  <KatexFormula
-                    formula={tipConfig.conditionFormula}
-                    mode="inline"
-                  />
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800 mr-1">
                     【核心设问】
                   </span>
-                  <KatexFormula
-                    formula={tipConfig.questionFormula}
-                    mode="inline"
-                  />
+                  <span className="text-neutral-600">{tipConfig.question}</span>
                 </div>
               </div>
             </TipCard>

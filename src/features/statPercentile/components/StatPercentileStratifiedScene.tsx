@@ -1,15 +1,9 @@
-/**
- * src/features/statPercentile/components/StatPercentileStratifiedScene.tsx
- * 分层抽样与总方差数形结合场景（studyMode === "stratified"）
- * 纯 SVG 渲染，零 React/DOM/window 副作用
- */
-
 import React from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { StratifiedResult } from "@/math/statPercentile";
 
 interface StatPercentileStratifiedSceneProps {
@@ -19,12 +13,6 @@ interface StatPercentileStratifiedSceneProps {
   onParamChange?: (key: string, value: number) => void;
   fontScale?: (v: number) => number;
 }
-
-const toSub = (n: number | string) =>
-  String(n)
-    .split("")
-    .map((c) => "₀₁₂₃₄₅₆₇₈₉"[Number(c)] ?? c)
-    .join("");
 
 export const StatPercentileStratifiedScene: React.FC<
   StatPercentileStratifiedSceneProps
@@ -107,18 +95,18 @@ export const StatPercentileStratifiedScene: React.FC<
               strokeDasharray="5 3"
             />
             <rect
-              x={ptMeanTop.x - 55}
-              y={ptMeanTop.y - 22}
-              width={110}
-              height={22}
+              x={ptMeanTop.x - 50}
+              y={ptMeanTop.y - 20}
+              width={100}
+              height={20}
               rx={4}
               fill={MATH_COLORS.function}
             />
             <text
               x={ptMeanTop.x}
-              y={ptMeanTop.y - 7}
+              y={ptMeanTop.y - 6}
               textAnchor="middle"
-              fill={MATH_COLORS.white}
+              fill={CANVAS_COLORS.white}
               fontSize={fontScale(10.5)}
               fontWeight="bold"
             >
@@ -134,7 +122,8 @@ export const StatPercentileStratifiedScene: React.FC<
         const rawStrataInfo = [
           {
             key: "mean1",
-            name: "层 1 (组 A)",
+            name: "层 1 (A组)",
+            indexLabel: "1",
             N: strat.strataN[0],
             n: strat.strataSampleN[0],
             weight: strat.strataWeights[0],
@@ -145,7 +134,8 @@ export const StatPercentileStratifiedScene: React.FC<
           },
           {
             key: "mean2",
-            name: "层 2 (组 B)",
+            name: "层 2 (B组)",
+            indexLabel: "2",
             N: strat.strataN[1],
             n: strat.strataSampleN[1],
             weight: strat.strataWeights[1],
@@ -156,7 +146,8 @@ export const StatPercentileStratifiedScene: React.FC<
           },
           {
             key: "mean3",
-            name: "层 3 (组 C)",
+            name: "层 3 (C组)",
+            indexLabel: "3",
             N: strat.strataN[2],
             n: strat.strataSampleN[2],
             weight: strat.strataWeights[2],
@@ -242,7 +233,7 @@ export const StatPercentileStratifiedScene: React.FC<
                       />
                     )}
 
-                  {/* 该层名称与参数 Badge */}
+                  {/* 该层精简学术 Badge */}
                   {(() => {
                     const ptBadge = mathToDesign(48, st.yBase + 0.11, scale);
                     if (
@@ -255,22 +246,20 @@ export const StatPercentileStratifiedScene: React.FC<
                         <rect
                           x={ptBadge.x}
                           y={ptBadge.y - 12}
-                          width={245}
-                          height={22}
+                          width={140}
+                          height={20}
                           rx={4}
                           fill={withAlpha(st.color, 0.15)}
                           stroke={st.color}
                         />
                         <text
                           x={ptBadge.x + 8}
-                          y={ptBadge.y + 3}
+                          y={ptBadge.y + 2}
                           fill={st.color}
                           fontSize={fontScale(10)}
                           fontWeight="bold"
                         >
-                          {st.name}: N{toSub(i + 1)} = {st.N}人(抽{st.n}人)
-                          均值x̄{toSub(i + 1)} = {st.mean} 方差s
-                          {toSub(i + 1)}² = {st.var}
+                          {st.name} (抽样 n={st.n})
                         </text>
                       </g>
                     );
@@ -295,11 +284,11 @@ export const StatPercentileStratifiedScene: React.FC<
                           y={ptMeanCenter.y - 13}
                           textAnchor="middle"
                           fill={st.color}
-                          fontSize={fontScale(9)}
+                          fontSize={fontScale(9.5)}
                           fontWeight="bold"
                         >
-                          |x̄{toSub(i + 1)} - x̄| ={" "}
-                          {(st.mean - strat.totalMean).toFixed(1)}
+                          |x̄{st.indexLabel} - x̄| ={" "}
+                          {Math.abs(st.mean - strat.totalMean).toFixed(1)}
                         </text>
                       </g>
                     )}
@@ -338,7 +327,8 @@ export const StatPercentileStratifiedScene: React.FC<
         const interMeanVar = Math.max(0, strat.totalVar - intraVar);
 
         const ptBarStart = mathToDesign(50, -0.04, scale);
-        const totalWidthPx = 480;
+        const ptBarEnd = mathToDesign(100, -0.04, scale);
+        const totalWidthPx = Math.max(200, ptBarEnd.x - ptBarStart.x);
         const barHeight = 24;
 
         const intraRatio = strat.totalVar > 0 ? intraVar / strat.totalVar : 0.5;
@@ -354,8 +344,8 @@ export const StatPercentileStratifiedScene: React.FC<
             <rect
               x={ptBarStart.x - 10}
               y={ptBarStart.y - 28}
-              width={totalWidthPx + 160}
-              height={54}
+              width={totalWidthPx + 20}
+              height={56}
               rx={8}
               fill={withAlpha(MATH_COLORS.function, 0.06)}
               stroke={withAlpha(MATH_COLORS.function, 0.25)}
@@ -367,7 +357,7 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(11.5)}
               fontWeight="bold"
             >
-              高考必考总体方差分解合成：s² = {strat.totalVar.toFixed(2)}
+              总体方差分解：s² = {strat.totalVar.toFixed(2)}
             </text>
 
             {/* 组内方差贡献柱 (蓝色) */}
@@ -383,11 +373,11 @@ export const StatPercentileStratifiedScene: React.FC<
               x={ptBarStart.x + intraWidthPx / 2}
               y={ptBarStart.y + 16}
               textAnchor="middle"
-              fill={MATH_COLORS.white}
+              fill={CANVAS_COLORS.white}
               fontSize={fontScale(10)}
               fontWeight="bold"
             >
-              组内散度贡献: {intraVar.toFixed(2)} (
+              组内方差: {intraVar.toFixed(2)} (
               {((intraVar / Math.max(1, strat.totalVar)) * 100).toFixed(0)}
               %)
             </text>
@@ -401,16 +391,16 @@ export const StatPercentileStratifiedScene: React.FC<
               rx={4}
               fill={withAlpha(MATH_COLORS.paramSecondary, 0.85)}
             />
-            {interWidthPx > 40 && (
+            {interWidthPx > 50 && (
               <text
                 x={ptBarStart.x + intraWidthPx + interWidthPx / 2}
                 y={ptBarStart.y + 16}
                 textAnchor="middle"
-                fill={MATH_COLORS.white}
+                fill={CANVAS_COLORS.white}
                 fontSize={fontScale(10)}
                 fontWeight="bold"
               >
-                组间重心离差: {interMeanVar.toFixed(2)} (
+                组间离差: {interMeanVar.toFixed(2)} (
                 {((interMeanVar / Math.max(1, strat.totalVar)) * 100).toFixed(
                   0,
                 )}
