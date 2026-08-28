@@ -11,6 +11,7 @@ export function buildStatPercentilePanel(
   config?: Record<string, unknown>,
 ): MathPanelData {
   const studyMode = (config?.studyMode as string) ?? "histogram";
+  const scenarioKey = (config?.activeScenario as string) ?? "free";
 
   const percentileP = params.percentileP ?? 50;
   const shift = params.shift ?? 0;
@@ -103,18 +104,27 @@ h_i &= \\frac{f_i}{d}
           level: "core",
         },
         {
-          name: "三大特征数与物理力矩平衡",
+          name: "直方图数字特征估计公式",
           latex: `\\begin{aligned}
-\\text{力矩平衡: } & \\sum f_i (x_{\\text{mid}, i} - \\bar{x}) = 0 \\\\
-\\text{面积平分: } & \\int_{-\\infty}^{M_e} f(x)dx = 0.5
+\\bar{x} &\\approx \\sum_{i=1}^k x_{\\text{mid}, i} \\cdot f_i \\\\
+s^2 &\\approx \\sum_{i=1}^k (x_{\\text{mid}, i} - \\bar{x})^2 \\cdot f_i
 \\end{aligned}`,
-          note: "平均数 $\\bar{x}$ 对应直方图的物理重心支点；中位数 $M_e$ 对应平分面积的垂线；众数对应最高矩形组中值。",
+          note: "平均数 $\\bar{x}$ 对应直方图的物理重心支点；方差 $s^2$ 估计用各组组中值偏离平方加权求和。",
+          level: "important",
+        },
+        {
+          name: "分布偏态与特征量关系",
+          latex: `\\begin{aligned}
+\\text{正偏态 (右偏长尾): } & \\text{众数} < M_e < \\bar{x} \\\\
+\\text{负偏态 (左偏长尾): } & \\bar{x} < M_e < \\text{众数}
+\\end{aligned}`,
+          note: "极端极大值会大幅拉高平均数 $\\bar{x}$，而中位数 $M_e$ 具有抗极端值的稳健性。",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "【高考考点】频率分布直方图纵轴是频率/组距，求解各组频率需乘以组距 $d$（即 $f_i = h_i \\cdot d$）！",
+          text: "【高考必考】频率分布直方图纵轴是频率/组距，求解各组频率需乘以组距 $d$（即 $f_i = h_i \\cdot d$）！",
           importance: "gaokao",
         },
         {
@@ -122,7 +132,7 @@ h_i &= \\frac{f_i}{d}
           importance: "gaokao",
         },
         {
-          text: "【高考考点】中位数是把直方图左右面积平分为 $0.5$ 的垂直切线；正偏态（右偏）中 $\\text{众数} < M_e < \\bar{x}$。",
+          text: "【高考考点】中位数是把直方图左右面积平分为 $0.5$ 的垂直切线；在对称单峰分布下，$\\text{众数} \\approx M_e \\approx \\bar{x}$。",
           importance: "gaokao",
         },
       ],
@@ -179,7 +189,7 @@ h_i &= \\frac{f_i}{d}
       ],
       theorems: [
         {
-          name: "百分位数线性插值公式 (高考标准)",
+          name: "百分位数线性插值公式 (新课标标准)",
           latex: `\\begin{aligned}
 y_p &= a + \\frac{\\color{${MATH_COLORS.paramPrimary}}{\\frac{p}{100} - F_{\\text{prev}}}}{\\color{${MATH_COLORS.paramSecondary}}{h}} \\\\
 &= a + \\frac{\\frac{p}{100} - F_{\\text{prev}}}{f_i} \\cdot d
@@ -230,6 +240,43 @@ Q_3&: p=75\\% \\ (\\text{上四分位数})
       stratResult.strataWeights[2] * stratResult.strataVars[2];
     const interMeanVar = Math.max(0, stratResult.totalVar - intraVar);
 
+    const allTheorems = [
+      {
+        name: "分层抽样比例分配公式",
+        latex: `\\begin{aligned}
+n_i &= N_i \\cdot \\frac{n}{N} = N_i \\cdot f \\\\
+\\sum n_i &= n
+\\end{aligned}`,
+        note: "各层抽取的样本量与该层在总体中所占的人数比例成正比。",
+        level: "core" as const,
+      },
+      {
+        name: "分层抽样总体均值与方差分解公式 (新高考核心)",
+        latex: `\\begin{aligned}
+\\bar{x} &= \\sum_{i=1}^{k} w_i \\bar{x}_i \\\\
+s^2 &= \\sum_{i=1}^{k} \\color{${MATH_COLORS.paramPrimary}}{w_i s_i^2} + \\sum_{i=1}^{k} \\color{${MATH_COLORS.paramSecondary}}{w_i (\\bar{x}_i - \\bar{x})^2}
+\\end{aligned}`,
+        prerequisites: ["$w_i = \\frac{N_i}{N}$ 满足 $\\sum w_i = 1$"],
+        note: "总体方差由【组内方差加权和】与【组间均值离差平方和】两部分共同决定！",
+        level: "important" as const,
+      },
+      {
+        name: "高考秒杀特例: 两层合并方差极速公式",
+        latex: `\\begin{aligned}
+s^2 &= w_1 s_1^2 + w_2 s_2^2 + w_1 w_2 (\\bar{x}_1 - \\bar{x}_2)^2
+\\end{aligned}`,
+        prerequisites: ["$w_1 + w_2 = 1$（如男女生成绩合并）"],
+        note: "两层合并时，组间方差项可直接化简为 $w_1 w_2 (\\bar{x}_1 - \\bar{x}_2)^2$，避免二次计算总均值 $\\bar{x}$！",
+        level: "important" as const,
+      },
+    ];
+
+    // 二级情景置顶特化：若为两层合并，置顶两层极速公式
+    const sortedTheorems =
+      scenarioKey === "twoStrata"
+        ? [allTheorems[2], allTheorems[0], allTheorems[1]]
+        : allTheorems;
+
     return {
       quantities: [
         {
@@ -275,34 +322,14 @@ Q_3&: p=75\\% \\ (\\text{上四分位数})
           color: MATH_COLORS.paramSecondary,
         },
       ],
-      theorems: [
-        {
-          name: "分层抽样比例分配公式",
-          latex: `\\begin{aligned}
-n_i &= N_i \\cdot \\frac{n}{N} = N_i \\cdot f \\\\
-\\sum n_i &= n
-\\end{aligned}`,
-          note: "各层抽取的样本量与该层在总体中所占的人数比例成正比。",
-          level: "core",
-        },
-        {
-          name: "分层抽样总体均值与方差分解公式 (新高考核心)",
-          latex: `\\begin{aligned}
-\\bar{x} &= \\sum_{i=1}^{k} w_i \\bar{x}_i \\\\
-s^2 &= \\sum_{i=1}^{k} \\color{${MATH_COLORS.paramPrimary}}{w_i s_i^2} + \\sum_{i=1}^{k} \\color{${MATH_COLORS.paramSecondary}}{w_i (\\bar{x}_i - \\bar{x})^2}
-\\end{aligned}`,
-          prerequisites: ["$w_i = \\frac{N_i}{N}$ 满足 $\\sum w_i = 1$"],
-          note: "总体方差由【组内方差加权和】与【组间均值离差平方和】两部分共同决定！",
-          level: "important",
-        },
-      ],
+      theorems: sortedTheorems,
       gaokaoPoints: [
         {
           text: "【高考新考点】分层抽样总方差公式 $s^2 = \\sum w_i s_i^2 + \\sum w_i (\\bar{x}_i - \\bar{x})^2$：必须同时考虑各层内方差 $s_i^2$ 与均值偏离平方 $(\\bar{x}_i - \\bar{x})^2$！",
           importance: "gaokao",
         },
         {
-          text: "【高考考点】当总体由差异明显的几部分组成时，必须采用分层抽样以提高估计精度。",
+          text: "【秒杀技巧】两组数据合并计算总方差时，利用 $s^2 = w_1 s_1^2 + w_2 s_2^2 + w_1 w_2 (\\bar{x}_1 - \\bar{x}_2)^2$ 能够直接口算，节省大题 5 分钟草稿时间！",
           importance: "gaokao",
         },
       ],
@@ -313,7 +340,7 @@ s^2 &= \\sum_{i=1}^{k} \\color{${MATH_COLORS.paramPrimary}}{w_i s_i^2} + \\sum_{
         },
       ],
       mnemonic:
-        "按比例抽样本，总体均值权加和；总体方差两部分，层内方差加层间！",
+        "按比例抽样本，总体均值权加和；总体方差两部分，层内方差加层间！两组速算乘权积，均值差方一秒析！",
     };
   }
 }

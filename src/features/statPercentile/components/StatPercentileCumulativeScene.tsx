@@ -220,6 +220,8 @@ export const StatPercentileCumulativeScene: React.FC<
               {/* 折线各点圆点标注 */}
               {points.map((p, idx) => {
                 const pt = mathToDesign(p.x, p.y, scale);
+                const isOrigin = idx === 0;
+
                 return (
                   <g key={`cum-node-${idx}`}>
                     <circle
@@ -231,9 +233,9 @@ export const StatPercentileCumulativeScene: React.FC<
                       strokeWidth={2}
                     />
                     <text
-                      x={pt.x}
-                      y={pt.y - 8}
-                      textAnchor="middle"
+                      x={isOrigin ? pt.x + 6 : pt.x}
+                      y={isOrigin ? pt.y - 6 : pt.y - 8}
+                      textAnchor={isOrigin ? "start" : "middle"}
                       fill={MATH_COLORS.labelText}
                       fontSize={fontScale(9.5)}
                       fontWeight="600"

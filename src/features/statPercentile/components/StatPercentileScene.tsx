@@ -108,6 +108,8 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
       <StatPercentileStratifiedScene
         strat={strat}
         scale={scale}
+        vp={vp}
+        onParamChange={onParamChange}
         fontScale={fontScale}
       />
     );

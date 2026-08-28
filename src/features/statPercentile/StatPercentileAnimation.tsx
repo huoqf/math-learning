@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -10,6 +10,8 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math/SceneLegend";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { StatPercentileScene } from "./components/StatPercentileScene";
@@ -17,14 +19,16 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   defaultParams,
   paramMeta,
-  STAT_PRESETS,
+  MODE_SCENARIOS,
 } from "@/data/registries/statPercentile";
+import type { StudyMode } from "@/data/registries/statPercentile";
 
 export function StatPercentileAnimation() {
-  // 探究模式：'histogram' | 'cumulative' | 'stratified'
-  const [studyMode, setStudyMode] = useState<
-    "histogram" | "cumulative" | "stratified"
-  >("histogram");
+  // 一级探究模式：'histogram' | 'cumulative' | 'stratified'
+  const [studyMode, setStudyMode] = useState<StudyMode>("histogram");
+
+  // 二级典型高考情景预设（首选为 'free' 自由探索）
+  const [activeScenario, setActiveScenario] = useState<string>("free");
 
   // 参数状态保存
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -49,41 +53,56 @@ export function StatPercentileAnimation() {
     keepAspectRatio: false,
   });
 
-  // 数学量看板数据计算与组装
+  // 数学量看板数据计算与组装（带二级情景特化）
   const mathData = useMemo(() => {
-    return buildMathQuantities("anim-stat-percentile", params, { studyMode });
-  }, [params, studyMode]);
+    return buildMathQuantities("anim-stat-percentile", params, {
+      studyMode,
+      activeScenario,
+    });
+  }, [params, studyMode, activeScenario]);
 
-  // 参数更新处理器
-  const handleParamChange = (key: string, value: number) => {
+  // 参数更新处理器（学生主动调参或中屏拖拽动点时，自动切回 'free' 自由探索）
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setActiveScenario("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
+  }, []);
+
+  // 切换一级研究模式（单模式闭环：重置二级情景为 'free'）
+  const handleStudyModeChange = (newMode: string) => {
+    const m = newMode as StudyMode;
+    setStudyMode(m);
+    setActiveScenario("free");
+  };
+
+  // 载入二级情景预设（参数题设锁定与降维）
+  const handleScenarioSelect = (scenarioKey: string) => {
+    setActiveScenario(scenarioKey);
+    const scenarioList = MODE_SCENARIOS[studyMode];
+    const scenario = scenarioList.find((s) => s.key === scenarioKey);
+    if (scenario?.params) {
+      setParams((prev) => ({
+        ...prev,
+        ...scenario.params,
+      }));
+    }
   };
 
   // 重置参数
   const handleReset = () => {
+    setActiveScenario("free");
     setParams({ ...defaultParams });
   };
 
-  // 载入预设场景（联动更新参数与探究模式）
-  const handlePresetSelect = (presetKey: string) => {
-    const preset = STAT_PRESETS.find((p) => p.key === presetKey);
-    if (preset) {
-      setParams((prev) => ({
-        ...prev,
-        ...preset.params,
-      }));
-      if (preset.mode) {
-        setStudyMode(preset.mode);
-      }
-    }
-  };
-
-  // 根据当前 activeMode 过滤声明式参数配置
+  // 根据当前 activeMode 与 activeScenario 进行声明式参数裁剪（参数降维核心初衷）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
+    const scenarioList = MODE_SCENARIOS[studyMode];
+    const currentScenario =
+      scenarioList.find((s) => s.key === activeScenario) ?? scenarioList[0];
+
+    const defaultKeysByMode: Record<StudyMode, string[]> = {
       histogram: ["percentileP", "shift"],
       cumulative: ["percentileP", "shift"],
       stratified: [
@@ -100,8 +119,11 @@ export function StatPercentileAnimation() {
       ],
     };
 
-    const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
-    return keys
+    // 如果当前情景定义了可见参数白名单 visibleKeys，则仅展示白名单参数（降维隐藏从属/锁定参数）
+    const allowedKeys =
+      currentScenario.visibleKeys ?? defaultKeysByMode[studyMode];
+
+    return allowedKeys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
@@ -117,9 +139,10 @@ export function StatPercentileAnimation() {
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
+          group: meta.group,
         };
       });
-  }, [params, studyMode]);
+  }, [params, studyMode, activeScenario]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
@@ -139,33 +162,119 @@ export function StatPercentileAnimation() {
     return `s^2 = \\sum \\color{${MATH_COLORS.paramPrimary}}{w_i s_i^2} + \\sum \\color{${MATH_COLORS.paramSecondary}}{w_i (\\bar{x}_i - \\bar{x})^2}`;
   }, [studyMode, params.percentileP]);
 
-  // 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  // 中屏右下角图例配置 (SceneLegend)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (studyMode === "histogram") {
+      return [
+        {
+          color: MATH_COLORS.function,
+          label: "直方图各组频率矩形",
+          style: "area",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          label: `目标百分位 P${params.percentileP} 面积`,
+          style: "area",
+        },
+        {
+          color: MATH_COLORS.function,
+          label: "估算平均数 x̄ (力矩重心)",
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.paramSecondary,
+          label: "估算中位数 Me (面积平分)",
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.paramTertiary,
+          label: "众数 Mo (最高组中值)",
+          style: "dash",
+        },
+      ];
+    }
+    if (studyMode === "cumulative") {
+      return [
+        {
+          color: MATH_COLORS.paramSecondary,
+          label: "累积频率 S 型折线",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          label: `目标百分位 ${params.percentileP}% 插值投影`,
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          label: "分位数交互控制点",
+          style: "point",
+        },
+      ];
+    }
+    // stratified
+    return [
+      {
+        color: MATH_COLORS.paramPrimary,
+        label: "层 1 高斯分布与均值 x̄₁",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.paramSecondary,
+        label: "层 2 高斯分布与均值 x̄₂",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.paramTertiary,
+        label: "层 3 高斯分布与均值 x̄₃",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.function,
+        label: "总体加权均值 x̄",
+        style: "dash",
+      },
+      {
+        color: MATH_COLORS.function,
+        label: "组内方差贡献 ∑wᵢsᵢ²",
+        style: "area",
+      },
+      {
+        color: MATH_COLORS.paramSecondary,
+        label: "组间离差贡献 ∑wᵢ(x̄ᵢ-x̄)²",
+        style: "area",
+      },
+    ];
+  }, [studyMode, params.percentileP]);
+
+  // 左屏教学提示与题设导引 (说明初始条件与核心设问，KaTeX 规范渲染)
   const tipConfig = useMemo(() => {
     if (studyMode === "histogram") {
       return {
         variant: "primary" as const,
         badge: "高考基础 · 直方图与数字特征",
-        condition:
-          "样本数据划分为若干区间，直方图矩形面积表示频率，总面积恒为 1。",
-        question:
-          "求解众数（最高矩形底边中点）、中位数（面积平分点）与平均数（各组中值加权平均）。",
+        conditionFormula:
+          "\\text{样本划分为若干组，直方图矩形总面积恒等于 } \\sum f_i = 1",
+        questionFormula:
+          "\\text{求解众数 } M_o\\text{、中位数 } M_e \\text{ 与估算均值 } \\bar{x} = \\sum x_{\\text{mid}, i} f_i",
       };
     }
     if (studyMode === "cumulative") {
       return {
         variant: "warning" as const,
         badge: "高考高频 · 百分位数与累积频率折线",
-        condition: `样本容量按升序排列，给定目标分位数 p = ${params.percentileP ?? 75}%。`,
-        question:
-          "根据累积频率 S 型折线，求第 p 百分位数 yₚ 的精确线性插值坐标。",
+        conditionFormula: `\\text{样本按升序排列，目标百分位数 } p = ${params.percentileP ?? 75}\\%`,
+        questionFormula:
+          "\\text{根据 S 型累积折线，求第 } p \\text{ 百分位数 } y_p \\text{ 的线性插值坐标}",
       };
     }
     // stratified
     return {
       variant: "danger" as const,
       badge: "高考压轴 · 分层抽样与总方差分解",
-      condition: `总体分为 3 层，各层容量为 N₁, N₂, N₃，层内均值与方差已知，按比例抽取样本容量 n = ${params.sampleN ?? 100}。`,
-      question: "求解分层抽样总样本均值 x̄ 与总样本方差 s²。",
+      conditionFormula: `\\text{总体分为 3 层 } (N_1, N_2, N_3)\\text{，按比例抽取样本 } n = ${params.sampleN ?? 100}`,
+      questionFormula:
+        "\\text{求解分层抽样总样本均值 } \\bar{x} \\text{ 与总样本方差 } s^2",
     };
   }, [studyMode, params.percentileP, params.sampleN]);
 
@@ -173,8 +282,8 @@ export function StatPercentileAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 模式选择 Section：单列 3 行布局，完整展示文字与描述 */}
-          <LeftPanelSection title="研究模式" subtitle="选择统计分析探究专题">
+          {/* 模式选择 Section：单列 3 行布局 */}
+          <LeftPanelSection title="研究模式">
             <SelectGrid
               columns={1}
               items={[
@@ -195,33 +304,28 @@ export function StatPercentileAnimation() {
                 },
               ]}
               value={studyMode}
-              onChange={(k) =>
-                setStudyMode(k as "histogram" | "cumulative" | "stratified")
-              }
+              onChange={handleStudyModeChange}
               variant="filled"
             />
           </LeftPanelSection>
 
-          {/* 高考经典题型预设 */}
-          <LeftPanelSection
-            title="典型高考情境"
-            subtitle="一键载入高考经典分布数据"
-          >
+          {/* 高考典型题型预设（严格模式级二级隔离） */}
+          <LeftPanelSection title="典型高考情境">
             <SelectGrid
               columns={1}
-              items={STAT_PRESETS.map((p) => ({
-                key: p.key,
-                label: p.label,
-                description: p.description,
+              items={MODE_SCENARIOS[studyMode].map((s) => ({
+                key: s.key,
+                label: s.label,
+                description: s.description,
               }))}
-              value=""
-              onChange={handlePresetSelect}
+              value={activeScenario}
+              onChange={handleScenarioSelect}
               variant="outline"
             />
           </LeftPanelSection>
 
-          {/* 参数调节 Section */}
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块改变统计参数">
+          {/* 参数调节 Section（按情景降维展开） */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -237,18 +341,22 @@ export function StatPercentileAnimation() {
               </div>
               <div className="space-y-1.5 text-[11px] leading-relaxed">
                 <div>
-                  <span className="font-semibold text-neutral-800">
+                  <span className="font-semibold text-neutral-800 mr-1">
                     【初始条件】
                   </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
+                  <KatexFormula
+                    formula={tipConfig.conditionFormula}
+                    mode="inline"
+                  />
                 </div>
                 <div>
-                  <span className="font-semibold text-neutral-800">
+                  <span className="font-semibold text-neutral-800 mr-1">
                     【核心设问】
                   </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
+                  <KatexFormula
+                    formula={tipConfig.questionFormula}
+                    mode="inline"
+                  />
                 </div>
               </div>
             </TipCard>
@@ -261,6 +369,9 @@ export function StatPercentileAnimation() {
           <div className="absolute top-3 left-16 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
             <KatexFormula formula={topFormulaLatex} mode="inline" />
           </div>
+
+          {/* 右下角毛玻璃图例 (SceneLegend) */}
+          <SceneLegend items={legendItems} title="图元与特征指示" />
 
           {/* SVG 画布 */}
           <AnimationSvgCanvas

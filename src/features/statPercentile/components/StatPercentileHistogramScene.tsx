@@ -299,16 +299,82 @@ export const StatPercentileHistogramScene: React.FC<
           );
         })()}
 
-        {/* 4. 数字特征线：众数 Mo (绿色实线) */}
+        {/* 4. 数字特征线系统 (众数 Mo / 中位数 Me / 均值 x̄，带智能重合检测与垂直错落避让) */}
         {(() => {
+          const isCoincident =
+            Math.abs(stats.mode - stats.mean) < 0.25 &&
+            Math.abs(stats.median - stats.mean) < 0.25;
+
+          if (isCoincident) {
+            // 对称分布完全重合时：合并展示单一综合卡片，彻底避免 3 张标签卡在同一点重叠
+            const ptShared = mathToDesign(stats.mean, 0, scale);
+            const yTopPx = mathToDesign(stats.mean, 0.05, scale).y;
+
+            return (
+              <g key="coincident-indicators">
+                <line
+                  x1={ptShared.x}
+                  y1={yTopPx}
+                  x2={ptShared.x}
+                  y2={ptShared.y}
+                  stroke={MATH_COLORS.function}
+                  strokeWidth={2}
+                  strokeDasharray="4 2"
+                />
+                <rect
+                  x={ptShared.x - 90}
+                  y={yTopPx - 22}
+                  width={180}
+                  height={22}
+                  rx={4}
+                  fill={withAlpha(MATH_COLORS.function, 0.95)}
+                />
+                <text
+                  x={ptShared.x}
+                  y={yTopPx - 7}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.white}
+                  fontSize={fontScale(9.5)}
+                  fontWeight="bold"
+                >
+                  均值 x̄ = 中位 Me = 众数 = {stats.mean.toFixed(1)}
+                </text>
+
+                {/* 物理力矩平衡三角形支点 (Fulcrum Pivot) */}
+                <polygon
+                  points={`${ptShared.x},${ptShared.y} ${ptShared.x - 6},${ptShared.y + 10} ${ptShared.x + 6},${ptShared.y + 10}`}
+                  fill={MATH_COLORS.function}
+                />
+                <text
+                  x={ptShared.x}
+                  y={ptShared.y + 24}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.function}
+                  fontSize={fontScale(8.5)}
+                  fontWeight="bold"
+                >
+                  ▲ 重心支点
+                </text>
+              </g>
+            );
+          }
+
+          // 非完全重合时：按高低分层渲染
           const ptMode = mathToDesign(stats.mode, 0, scale);
-          const yTopPx = mathToDesign(stats.mode, 0.046, scale).y;
+          const yModeTopPx = mathToDesign(stats.mode, 0.038, scale).y;
+
+          const ptMed = mathToDesign(stats.median, 0, scale);
+          const yMedTopPx = mathToDesign(stats.median, 0.044, scale).y;
+
+          const ptMean = mathToDesign(stats.mean, 0, scale);
+          const yMeanTopPx = mathToDesign(stats.mean, 0.051, scale).y;
 
           return (
-            <g key="mode-indicator">
+            <g key="separated-indicators">
+              {/* 众数 Mo (绿色) */}
               <line
                 x1={ptMode.x}
-                y1={yTopPx}
+                y1={yModeTopPx}
                 x2={ptMode.x}
                 y2={ptMode.y}
                 stroke={MATH_COLORS.paramTertiary}
@@ -316,76 +382,61 @@ export const StatPercentileHistogramScene: React.FC<
                 strokeDasharray="3 2"
               />
               <rect
-                x={ptMode.x - 30}
-                y={yTopPx - 20}
-                width={60}
-                height={18}
+                x={ptMode.x - 28}
+                y={yModeTopPx - 18}
+                width={56}
+                height={16}
                 rx={3}
                 fill={withAlpha(MATH_COLORS.paramTertiary, 0.9)}
               />
               <text
                 x={ptMode.x}
-                y={yTopPx - 7}
+                y={yModeTopPx - 6}
                 textAnchor="middle"
                 fill={MATH_COLORS.white}
-                fontSize={fontScale(9.5)}
+                fontSize={fontScale(9)}
                 fontWeight="bold"
               >
                 众数={stats.mode.toFixed(1)}
               </text>
-            </g>
-          );
-        })()}
 
-        {/* 5. 数字特征线：估算中位数 Me (橙色虚线，仅当 p !== 50 时展现避免重叠) */}
-        {percentileP !== 50 &&
-          (() => {
-            const ptMed = mathToDesign(stats.median, 0, scale);
-            const yTopPx = mathToDesign(stats.median, 0.042, scale).y;
+              {/* 中位数 Me (橙色，仅当与百分位不重合时展示) */}
+              {Math.abs(stats.median - stats.percentileVal) > 0.3 && (
+                <>
+                  <line
+                    x1={ptMed.x}
+                    y1={yMedTopPx}
+                    x2={ptMed.x}
+                    y2={ptMed.y}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={1.5}
+                    strokeDasharray="3 3"
+                  />
+                  <rect
+                    x={ptMed.x - 30}
+                    y={yMedTopPx - 18}
+                    width={60}
+                    height={16}
+                    rx={3}
+                    fill={withAlpha(MATH_COLORS.paramSecondary, 0.9)}
+                  />
+                  <text
+                    x={ptMed.x}
+                    y={yMedTopPx - 6}
+                    textAnchor="middle"
+                    fill={MATH_COLORS.white}
+                    fontSize={fontScale(9)}
+                    fontWeight="bold"
+                  >
+                    中位={stats.median.toFixed(1)}
+                  </text>
+                </>
+              )}
 
-            return (
-              <g key="median-indicator">
-                <line
-                  x1={ptMed.x}
-                  y1={yTopPx}
-                  x2={ptMed.x}
-                  y2={ptMed.y}
-                  stroke={MATH_COLORS.paramSecondary}
-                  strokeWidth={1.5}
-                  strokeDasharray="3 3"
-                />
-                <rect
-                  x={ptMed.x - 32}
-                  y={yTopPx - 18}
-                  width={64}
-                  height={16}
-                  rx={3}
-                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.9)}
-                />
-                <text
-                  x={ptMed.x}
-                  y={yTopPx - 6}
-                  textAnchor="middle"
-                  fill={MATH_COLORS.white}
-                  fontSize={fontScale(9)}
-                  fontWeight="bold"
-                >
-                  中位={stats.median.toFixed(1)}
-                </text>
-              </g>
-            );
-          })()}
-
-        {/* 6. 数字特征线：平均数 x̄ 与 物理力矩平衡支点 (蓝色) */}
-        {(() => {
-          const ptMean = mathToDesign(stats.mean, 0, scale);
-          const yTopPx = mathToDesign(stats.mean, 0.05, scale).y;
-
-          return (
-            <g key="mean-indicator">
+              {/* 平均数 x̄ (蓝色) */}
               <line
                 x1={ptMean.x}
-                y1={yTopPx}
+                y1={yMeanTopPx}
                 x2={ptMean.x}
                 y2={ptMean.y}
                 stroke={MATH_COLORS.function}
@@ -393,22 +444,22 @@ export const StatPercentileHistogramScene: React.FC<
                 strokeDasharray="4 3"
               />
               <rect
-                x={ptMean.x - 36}
-                y={yTopPx - 20}
-                width={72}
-                height={18}
+                x={ptMean.x - 34}
+                y={yMeanTopPx - 18}
+                width={68}
+                height={16}
                 rx={3}
                 fill={withAlpha(MATH_COLORS.function, 0.9)}
               />
               <text
                 x={ptMean.x}
-                y={yTopPx - 7}
+                y={yMeanTopPx - 6}
                 textAnchor="middle"
                 fill={MATH_COLORS.white}
-                fontSize={fontScale(9.5)}
+                fontSize={fontScale(9)}
                 fontWeight="bold"
               >
-                均值 x̄={stats.mean.toFixed(1)}
+                均值={stats.mean.toFixed(1)}
               </text>
 
               {/* 物理力矩平衡三角形支点 (Fulcrum Pivot) */}

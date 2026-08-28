@@ -6,6 +6,8 @@
 
 import React from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
+import type { ViewportInfo } from "@/utils/useViewport";
+import { InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { StratifiedResult } from "@/math/statPercentile";
@@ -13,6 +15,8 @@ import type { StratifiedResult } from "@/math/statPercentile";
 interface StatPercentileStratifiedSceneProps {
   strat: StratifiedResult;
   scale: SceneScale;
+  vp?: ViewportInfo;
+  onParamChange?: (key: string, value: number) => void;
   fontScale?: (v: number) => number;
 }
 
@@ -24,7 +28,7 @@ const toSub = (n: number | string) =>
 
 export const StatPercentileStratifiedScene: React.FC<
   StatPercentileStratifiedSceneProps
-> = ({ strat, scale, fontScale = (v) => v }) => {
+> = ({ strat, scale, vp, onParamChange, fontScale = (v) => v }) => {
   return (
     <g key="mode-stratified-vis">
       {/* 1. 统一样本数值 X 轴 (50 ~ 100) */}
@@ -124,30 +128,34 @@ export const StatPercentileStratifiedScene: React.FC<
         );
       })()}
 
-      {/* 3. 三层高斯密度分布带 */}
+      {/* 3. 高斯密度分布带与均值拖拽动点（自适应 2 层 / 3 层布局与空层隐藏） */}
       {(() => {
-        const strataInfo = [
+        const isTwoStrata = strat.strataN[2] <= 0;
+        const rawStrataInfo = [
           {
+            key: "mean1",
             name: "层 1 (组 A)",
             N: strat.strataN[0],
             n: strat.strataSampleN[0],
             weight: strat.strataWeights[0],
             mean: strat.strataMeans[0],
             var: strat.strataVars[0],
-            yBase: 0.24,
+            yBase: isTwoStrata ? 0.3 : 0.24,
             color: MATH_COLORS.paramPrimary,
           },
           {
+            key: "mean2",
             name: "层 2 (组 B)",
             N: strat.strataN[1],
             n: strat.strataSampleN[1],
             weight: strat.strataWeights[1],
             mean: strat.strataMeans[1],
             var: strat.strataVars[1],
-            yBase: 0.44,
+            yBase: isTwoStrata ? 0.58 : 0.44,
             color: MATH_COLORS.paramSecondary,
           },
           {
+            key: "mean3",
             name: "层 3 (组 C)",
             N: strat.strataN[2],
             n: strat.strataSampleN[2],
@@ -158,6 +166,8 @@ export const StatPercentileStratifiedScene: React.FC<
             color: MATH_COLORS.paramTertiary,
           },
         ];
+
+        const strataInfo = rawStrataInfo.filter((st) => st.N > 0);
 
         return (
           <g key="strata-distribution-curves">
@@ -191,7 +201,7 @@ export const StatPercentileStratifiedScene: React.FC<
 
               const pathD = points.join(" ");
               const ptMeanCenter = mathToDesign(st.mean, st.yBase, scale);
-              const ptMeanTop = mathToDesign(st.mean, st.yBase + 0.13, scale);
+              const ptMeanTop = mathToDesign(st.mean, st.yBase + 0.12, scale);
               const ptTotalMeanAtLayer = mathToDesign(
                 strat.totalMean,
                 st.yBase,
@@ -293,6 +303,25 @@ export const StatPercentileStratifiedScene: React.FC<
                         </text>
                       </g>
                     )}
+
+                  {/* 该层均值交互拖拽点 */}
+                  {vp && onParamChange && (
+                    <InteractivePoint
+                      cx={st.mean}
+                      cy={st.yBase + 0.12}
+                      scale={scale}
+                      vp={vp}
+                      onDrag={(newPos) => {
+                        const targetX = Math.round(
+                          Math.max(50, Math.min(100, newPos.x)),
+                        );
+                        onParamChange(st.key, targetX);
+                      }}
+                      color={st.color}
+                      r={6}
+                      fontScale={fontScale}
+                    />
+                  )}
                 </g>
               );
             })}
