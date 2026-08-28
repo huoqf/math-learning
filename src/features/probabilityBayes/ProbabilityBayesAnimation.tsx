@@ -34,23 +34,19 @@ export function ProbabilityBayesAnimation() {
     "conditional" | "total_prob" | "bayes" | "markov"
   >(initialMode);
   const [isZoomedToA, setIsZoomedToA] = useState(false);
-  const [condPreset, setCondPreset] = useState<
-    "independent" | "correlated" | "exclusive" | "custom"
+
+  // 各模式情境选择（单一事实源：free 自由探索 + 典型高考情景）
+  const [condScenario, setCondScenario] = useState<
+    "free" | "independent" | "correlated" | "exclusive"
   >("independent");
-  const [totalPreset, setTotalPreset] = useState<
-    "factory3" | "balanced" | "custom"
+  const [totalScenario, setTotalScenario] = useState<
+    "free" | "factory3" | "balanced"
   >("factory3");
-  const [bayesScenario, setBayesScenario] = useState<"screening" | "factory">(
-    "screening",
-  );
-  const [bayesPreset, setBayesPreset] = useState<
-    "screening" | "factory" | "survey" | "custom"
+  const [bayesScenario, setBayesScenario] = useState<
+    "free" | "screening" | "factory"
   >("screening");
   const [markovScenario, setMarkovScenario] = useState<
-    "pass_ball" | "urn_ball" | "weather"
-  >("pass_ball");
-  const [markovPreset, setMarkovPreset] = useState<
-    "pass_ball" | "urn_ball" | "weather" | "custom"
+    "free" | "pass_ball" | "urn_ball" | "weather"
   >("pass_ball");
 
   // 1. 视口与缩放设置 (840 x 650 full preset)
@@ -64,7 +60,7 @@ export function ProbabilityBayesAnimation() {
     yRange: [-4.5, 4.5],
   });
 
-  // 2. 右屏 MathPanel 数据组装 (严格根据 bayesScenario / markovScenario 语义同步)
+  // 2. 右屏 MathPanel 数据组装 (与情景严格同步)
   const mathData = useMemo(() => {
     const animId =
       activeMode === "markov"
@@ -72,10 +68,19 @@ export function ProbabilityBayesAnimation() {
         : "anim-probability-bayes";
     return buildMathQuantities(animId, params, {
       activeMode,
-      bayesPreset: bayesScenario,
-      markovPreset: markovScenario,
+      condScenario,
+      totalScenario,
+      bayesPreset: bayesScenario === "factory" ? "factory" : "screening",
+      markovPreset: markovScenario === "free" ? "pass_ball" : markovScenario,
     });
-  }, [params, activeMode, bayesScenario, markovScenario]);
+  }, [
+    params,
+    activeMode,
+    condScenario,
+    totalScenario,
+    bayesScenario,
+    markovScenario,
+  ]);
 
   // 3. 悬浮 KaTeX 公式渲染 (三位一体色彩深度绑定与全数值闭环)
   const currentFormulaLatex = useMemo(() => {
@@ -128,139 +133,297 @@ export function ProbabilityBayesAnimation() {
     return `\\color{${MATH_COLORS.function}}{p_{n+1}} = p_{11} p_n + p_{21}(1-p_n) = ${lambdaStr} p_n + ${betaStr}`;
   }, [activeMode, params, bayesScenario]);
 
-  // 3.5. 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  // 3.5. 左屏教学提示与题设导引
   const tipConfig = useMemo(() => {
     if (activeMode === "conditional") {
+      if (condScenario === "independent") {
+        return {
+          variant: "primary" as const,
+          badge: "高考经典 · 相互独立事件与乘法公式",
+          condition: "事件 A 与 B 相互独立，满足 P(AB) = P(A)P(B)。",
+          question: "探究为何无论怎样改变 P(A)，条件概率 P(B|A) 恒等于 P(B)。",
+        };
+      }
+      if (condScenario === "correlated") {
+        return {
+          variant: "primary" as const,
+          badge: "高考模型 · 包含与强正相关模型",
+          condition: "事件 A 发生时 B 必然发生 (A ⊆ B)，交集 P(AB) = P(A)。",
+          question:
+            "探究子集包含关系下，条件概率 P(B|A) 恒为 100% 的几何意义。",
+        };
+      }
+      if (condScenario === "exclusive") {
+        return {
+          variant: "danger" as const,
+          badge: "高考基础 · 互斥事件模型",
+          condition: "事件 A 与 B 互斥 (AB = ∅)，两事件不可能同时发生。",
+          question: "观察互斥状态下两圆无交集，条件概率 P(B|A) 恒为 0。",
+        };
+      }
       return {
         variant: "primary" as const,
-        badge: "高考基础 · 条件概率与样本空间压缩",
-        condition:
-          "已知全集事件 A 的发生概率 P(A) 与两事件同时发生的交事件概率 P(AB)。",
-        question:
-          "在已知事件 A 已经发生的前提下，求事件 B 发生的条件概率 P(B|A)。",
+        badge: "自由探索 · 条件概率与样本空间压缩",
+        condition: "全集 Ω 中已知先验概率 P(A)、P(B) 与联合交集概率 P(AB)。",
+        question: "自由调节各参数，观察样本空间压缩至 A 后的条件概率变化。",
       };
     }
     if (activeMode === "total_prob") {
+      if (totalScenario === "factory3") {
+        return {
+          variant: "info" as const,
+          badge: "高考经典 · 三车间次品全概率模型",
+          condition: "三车间产量占比固定为 40% / 35% / 25% (∑P(Aᵢ)=1)。",
+          question:
+            "调节各车间次品率，探究总次品率 P(B) 如何被主产车间所主导。",
+        };
+      }
+      if (totalScenario === "balanced") {
+        return {
+          variant: "info" as const,
+          badge: "高考模型 · 三等分均衡加权模型",
+          condition: "三分支先验概率均等 (P(A₁)=P(A₂)=P(A₃)=1/3)。",
+          question: "观察全概率加权平均如何退化为分支概率的简单算术平均数。",
+        };
+      }
       return {
         variant: "info" as const,
-        badge:
-          totalPreset === "factory3"
-            ? "高考经典 · 三车间次品全概率模型"
-            : "完备事件组划分与全概公式",
-        condition:
-          "样本空间由互斥事件组 A₁, A₂, A₃ 完备划分 (∑P(Aᵢ)=1)，各分支条件概率 P(B|Aᵢ) 已知。",
-        question: "求目标事件 B（如总次品率、总命中率）发生的综合全概率 P(B)。",
+        badge: "自由探索 · 完备划分与全概率公式",
+        condition: "样本空间由互斥事件组 A₁, A₂, A₃ 完备划分 (∑P(Aᵢ)=1)。",
+        question: "自由划分先验权重与条件概率，观察全概率汇总加权演化。",
       };
     }
     if (activeMode === "bayes") {
-      const isScreening = bayesScenario === "screening";
+      if (bayesScenario === "screening") {
+        return {
+          variant: "warning" as const,
+          badge: "高考压轴 · 罕见病筛查与基率效应",
+          condition: "试剂真阳率 95%、假阳误报率 5% 固定（试剂固有技术指标）。",
+          question:
+            "滑动自然患病率 P(D)，观察后验患病率从 2% 飙升至 80% 的基率谬误。",
+        };
+      }
+      if (bayesScenario === "factory") {
+        return {
+          variant: "warning" as const,
+          badge: "高考应用 · 工厂次品溯源与误判容忍度",
+          condition: "流水线自然次品率 8%、检出率 98% 固定。",
+          question: "滑动仪器误判率，探究质检仪器精度对阳性可信度的剧烈影响。",
+        };
+      }
       return {
         variant: "warning" as const,
-        badge: isScreening
-          ? "高考压轴 · 罕见病筛查与由果溯因"
-          : "高考经典 · 工厂次品溯源与贝叶斯",
-        condition: isScreening
-          ? "某罕见病自然患病率 P(D)=2%，筛查试剂灵敏度 95%（真阳性），假阳性率 5%。"
-          : "工厂次品率 8%，检测仪检出率 98%，误报率 2%。",
-        question:
-          "当某样本检测结果呈阳性(+)时，求其真正患病（或真为次品）的后验概率 P(D|+)。",
+        badge: "自由探索 · 贝叶斯公式与由果溯因",
+        condition: "已知先验概率 P(D)、灵敏度 P(+|D) 与误报率 P(+|~D)。",
+        question: "自由输入任意诊断数据，探究全概分母与后验概率的形成过程。",
       };
     }
     // markov
+    if (markovScenario === "pass_ball") {
+      return {
+        variant: "danger" as const,
+        badge: "高考压轴 · 甲乙传球马尔可夫链 (震荡收敛)",
+        condition:
+          "甲必传乙 (p₁₁=0)，乙等可能传甲或丙 (p₂₁=0.5)，球初在甲手 (p₁=1)。",
+        question:
+          "滑动步数 n，观察特征公比 λ = -0.5 下数列交替摆动逼近 1/3 的全过程。",
+      };
+    }
+    if (markovScenario === "urn_ball") {
+      return {
+        variant: "danger" as const,
+        badge: "高考经典 · 摸球置换转移模型 (单调收敛)",
+        condition: "转移矩阵固定 (p₁₁=0.6, p₂₁=0.2)，特征公比 λ = 0.4 > 0。",
+        question: "滑动步数 n，观察概率序列单调渐近收敛于稳态极限 1/3。",
+      };
+    }
+    if (markovScenario === "weather") {
+      return {
+        variant: "danger" as const,
+        badge: "高考经典 · 晴雨天气转移模型 (单调收敛)",
+        condition: "转移矩阵固定 (p₁₁=0.7, p₂₁=0.4)，特征公比 λ = 0.3 > 0。",
+        question: "滑动步数 n，探究长期天气概率如何收敛于稳态极限 4/7。",
+      };
+    }
     return {
       variant: "danger" as const,
-      badge:
-        markovScenario === "pass_ball"
-          ? "高考压轴 · 甲乙传球马尔可夫链"
-          : markovScenario === "urn_ball"
-            ? "高考经典 · 摸球置换转移递推"
-            : "状态转移矩阵与平稳分布",
-      condition:
-        markovScenario === "pass_ball"
-          ? "初始球在甲手中 (p₁=1.0)，每轮传球甲必传给乙 (p₁₁=0.0)，乙等可能传给甲或丙 (p₂₁=0.5)。"
-          : markovScenario === "urn_ball"
-            ? "袋中有黑白球，根据上一轮摸出颜色按概率矩阵转移置换 (p₁₁=0.6, p₂₁=0.2)。"
-            : "天气状态转移，晴天次日晴概率 0.7，雨天次日晴概率 0.4。",
-      question:
-        "求第 n 次状态概率 pₙ 的数列递推关系式，并探究 n→∞ 时的稳态极限分布。",
+      badge: "自由探索 · 马尔可夫链状态转移",
+      condition: "自由设定 2-State 转移概率矩阵与初始状态概率 p₁。",
+      question: "探究公比 λ 与稳态极限 p_∞ 的形成，以及递推数列的收敛特征。",
     };
-  }, [activeMode, totalPreset, bayesScenario, markovScenario]);
+  }, [activeMode, condScenario, totalScenario, bayesScenario, markovScenario]);
 
-  // 4. 左屏声明式参数配置按 activeMode 精准过滤与动态关联反馈
+  // 4. 参数双向数学联动与情景约束锁定
+  const handleParamChange = (key: string, value: number) => {
+    setParams((prev) => {
+      const next = { ...prev, [key]: value };
+
+      // 1. 条件概率模式
+      if (activeMode === "conditional") {
+        const pA = key === "pA" ? value : (next.pA ?? 0.5);
+        const pB = key === "pB" ? value : (next.pB ?? 0.4);
+        let pAB = key === "pAB" ? value : (next.pAB ?? 0.2);
+
+        if (condScenario === "independent") {
+          // 独立情景：自动计算 P(AB) = P(A)P(B)
+          pAB = Number((pA * pB).toFixed(2));
+        } else if (condScenario === "correlated") {
+          // 包含情景：P(AB) = P(A)，且确保 P(B) >= P(A)
+          pAB = pA;
+          if (pB < pA) next.pB = pA;
+        } else if (condScenario === "exclusive") {
+          // 互斥情景：P(AB) = 0，且确保 P(A) + P(B) <= 1
+          pAB = 0;
+          if (pA + pB > 1) next.pB = Number((1 - pA).toFixed(2));
+        } else {
+          // 自由探索：动态钳制数学上下界
+          const maxAB = Math.min(pA, pB);
+          const minAB = Math.max(0, Number((pA + pB - 1).toFixed(2)));
+          pAB = Math.max(minAB, Math.min(maxAB, pAB));
+        }
+
+        next.pA = pA;
+        next.pB = next.pB ?? pB;
+        next.pAB = Number(pAB.toFixed(2));
+      }
+
+      // 2. 全概模式：联动保护 P(A1) + P(A2) <= 0.95
+      if (activeMode === "total_prob") {
+        const pA1 = key === "pA1" ? value : (next.pA1 ?? 0.4);
+        let pA2 = key === "pA2" ? value : (next.pA2 ?? 0.35);
+
+        if (pA1 + pA2 > 0.95) {
+          pA2 = Math.max(0.05, Number((0.95 - pA1).toFixed(2)));
+        }
+
+        next.pA1 = pA1;
+        next.pA2 = pA2;
+      }
+
+      // 3. 马尔可夫链模式：联动保护 currStep <= maxN
+      if (activeMode === "markov") {
+        if (key === "maxN") {
+          if ((next.currStep ?? 1) > value) {
+            next.currStep = value;
+          }
+        }
+      }
+
+      return next;
+    });
+  };
+
+  // 5. 左屏声明式参数配置（情景参数降维 + 自由探索分组）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      conditional: ["pA", "pB", "pAB"],
-      total_prob: ["pA1", "pA2", "pB_A1", "pB_A2", "pB_A3"],
-      bayes: ["pPriorD", "pSensitivity", "pFalsePositive"],
-      markov: ["p1", "p11", "p21", "currStep", "maxN"],
-    };
+    // 依据当前情景决定暴露哪些参数（参数降维矩阵）
+    let activeKeys: string[] = [];
+    let groupMap: Record<string, string> = {};
+
+    if (activeMode === "conditional") {
+      if (condScenario === "free") {
+        activeKeys = ["pA", "pB", "pAB"];
+      } else {
+        // 典型情景下隐藏 P(AB)（由情景约束自动锁定）
+        activeKeys = ["pA", "pB"];
+      }
+    } else if (activeMode === "total_prob") {
+      if (totalScenario === "free") {
+        activeKeys = ["pA1", "pA2", "pB_A1", "pB_A2", "pB_A3"];
+        groupMap = {
+          pA1: "完备划分先验概率",
+          pA2: "完备划分先验概率",
+          pB_A1: "各分支条件概率",
+          pB_A2: "各分支条件概率",
+          pB_A3: "各分支条件概率",
+        };
+      } else {
+        // 三车间/均衡情景下锁定并隐藏先验划分，仅暴露各分支条件概率
+        activeKeys = ["pB_A1", "pB_A2", "pB_A3"];
+      }
+    } else if (activeMode === "bayes") {
+      if (bayesScenario === "free") {
+        activeKeys = ["pPriorD", "pSensitivity", "pFalsePositive"];
+      } else if (bayesScenario === "screening") {
+        // 罕见病筛查：试剂指标固定，仅开放核心主控滑块：先验患病率
+        activeKeys = ["pPriorD"];
+      } else {
+        // 工厂次品：次品率先验固定，仅开放核心主控滑块：仪器误判率
+        activeKeys = ["pFalsePositive"];
+      }
+    } else {
+      // markov
+      if (markovScenario === "free") {
+        activeKeys = ["p11", "p21", "p1", "currStep", "maxN"];
+        groupMap = {
+          p11: "转移矩阵核心参数",
+          p21: "转移矩阵核心参数",
+          p1: "初始状态与演化步数",
+          currStep: "初始状态与演化步数",
+          maxN: "初始状态与演化步数",
+        };
+      } else if (markovScenario === "pass_ball") {
+        // 甲乙传球：转移矩阵固定，仅开放步数探索
+        activeKeys = ["currStep", "maxN"];
+      } else {
+        // 摸球/天气：仅开放初态与步数
+        activeKeys = ["p1", "currStep", "maxN"];
+      }
+    }
 
     const isFactory = bayesScenario === "factory";
-    const keys = keysByMode[activeMode] ?? Object.keys(paramMeta);
 
-    // 动态关联指标
-    const pA1 = params.pA1 ?? 0.4;
-    const pA2 = params.pA2 ?? 0.35;
-    const pA3 = Math.max(0, 1 - pA1 - pA2);
-
-    const p11 = params.p11 ?? 0.0;
-    const p21 = params.p21 ?? 0.5;
-    const lambda = p11 - p21;
-
+    // 动态关联边界
     const pA = params.pA ?? 0.5;
     const pB = params.pB ?? 0.4;
-    const pIndep = (pA * pB).toFixed(2);
+    const maxAB = Math.min(pA, pB);
+    const minAB = Math.max(0, Number((pA + pB - 1).toFixed(2)));
 
-    return keys
+    const pA1 = params.pA1 ?? 0.4;
+    const maxA2 = Math.max(0.05, Number((0.95 - pA1).toFixed(2)));
+    const pA2 = Math.min(params.pA2 ?? 0.35, maxA2);
+    const pA3 = Math.max(0.05, Number((1 - pA1 - pA2).toFixed(2)));
+
+    const maxN = params.maxN ?? 10;
+
+    return activeKeys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
         let label = meta.label;
         let labelFormula = meta.labelFormula;
-        let description = meta.description;
+        let description: string | undefined = undefined;
+        let min = meta.min;
+        let max = meta.max;
 
-        // 全概动态剩余提示
-        if (activeMode === "total_prob") {
-          if (key === "pA2") {
-            description = `第二块划分（自动剩余 P(A₃) = ${pA3.toFixed(2)}）`;
-          }
+        // 条件概率动态上下限
+        if (activeMode === "conditional" && key === "pAB") {
+          min = minAB;
+          max = maxAB;
         }
 
-        // 条件概率独立点对比
-        if (activeMode === "conditional") {
-          if (key === "pAB") {
-            description = `同时发生概率（独立基准点 P(A)P(B) = ${pIndep}）`;
-          }
+        // 全概动态剩余提示与动态上限
+        if (activeMode === "total_prob" && key === "pA2") {
+          max = maxA2;
+          description = `自动剩余 P(A₃) = ${pA3.toFixed(2)}`;
         }
 
-        // 马尔可夫链公比与收敛形态动态提示
-        if (activeMode === "markov") {
-          if (key === "p11" || key === "p21") {
-            const oscText =
-              lambda < -1e-6
-                ? "震荡收敛型"
-                : lambda > 1e-6
-                  ? "单调收敛型"
-                  : "稳态退化型";
-            description = `${meta.description} (当前 λ=${lambda.toFixed(2)}，${oscText})`;
-          }
-        }
-
-        // 贝叶斯场景动态定制
+        // 贝叶斯场景动态定制（三位一体色彩标签）
         if (activeMode === "bayes" && isFactory) {
           if (key === "pPriorD") {
             label = "次品先验率";
-            labelFormula = "P(\\text{Def})";
-            description = "流水线生产零件的自然次品率";
+            labelFormula = `\\text{次品先验 } \\color{${MATH_COLORS.paramPrimary}}{P(\\text{Def})}`;
           } else if (key === "pSensitivity") {
             label = "次品检出率";
-            labelFormula = "P(+|\\text{Def})";
-            description = "质检仪器对次品的准确检出率";
+            labelFormula = `\\text{次品检出 } \\color{${MATH_COLORS.paramSecondary}}{P(+|\\text{Def})}`;
           } else if (key === "pFalsePositive") {
             label = "合格误判率";
-            labelFormula = "P(+|\\bar{\\text{Def}})";
-            description = "质检仪器将合格品误判为次品的概率";
+            labelFormula = `\\text{合格误判 } \\color{${MATH_COLORS.paramTertiary}}{P(+|\\bar{\\text{Def}})}`;
           }
+        }
+
+        // 马尔可夫链步数动态上限
+        if (activeMode === "markov" && key === "currStep") {
+          max = maxN;
         }
 
         return {
@@ -268,32 +431,30 @@ export function ProbabilityBayesAnimation() {
           label,
           labelFormula,
           value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
+          min,
+          max,
           step: meta.step ?? 0.01,
+          group: groupMap[key],
           description,
           importance: meta.importance,
           marks: meta.marks,
         };
       });
-  }, [params, activeMode, bayesScenario]);
-
-  const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-    if (activeMode === "conditional") setCondPreset("custom");
-    else if (activeMode === "total_prob") setTotalPreset("custom");
-    else if (activeMode === "bayes") setBayesPreset("custom");
-    else if (activeMode === "markov") setMarkovPreset("custom");
-  };
+  }, [
+    params,
+    activeMode,
+    condScenario,
+    totalScenario,
+    bayesScenario,
+    markovScenario,
+  ]);
 
   const handleReset = () => {
     setParams({ ...defaultParams });
-    setCondPreset("independent");
-    setTotalPreset("factory3");
+    setCondScenario("independent");
+    setTotalScenario("factory3");
     setBayesScenario("screening");
-    setBayesPreset("screening");
     setMarkovScenario("pass_ball");
-    setMarkovPreset("pass_ball");
   };
 
   const panelTitle = useMemo(() => {
@@ -307,11 +468,8 @@ export function ProbabilityBayesAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 模式选择区 */}
-          <LeftPanelSection
-            title="模式选择"
-            subtitle="从样本空间压缩到状态转移递推"
-          >
+          {/* 第 1 层：模式选择区 */}
+          <LeftPanelSection title="模式选择">
             <TabSwitcher
               tabs={[
                 { key: "conditional", label: "条件概率", formula: "P(B|A)" },
@@ -332,108 +490,91 @@ export function ProbabilityBayesAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 条件概率专属：视角切换与高考经典预设 */}
+          {/* 第 2 层：典型情境选择（首项统一为自由探索） */}
           {activeMode === "conditional" && (
-            <>
-              <LeftPanelSection
-                title="高考经典情境"
-                subtitle="一键加载常考相关性模型"
-              >
-                <SelectGrid
-                  columns={1}
-                  items={[
-                    {
-                      key: "independent",
-                      label: "相互独立模型",
-                      description: "P(A)=0.5, P(B)=0.4, P(AB)=0.20",
-                    },
-                    {
-                      key: "correlated",
-                      label: "强正相关模型",
-                      description: "P(A)=0.6, P(B)=0.5, P(AB)=0.45",
-                    },
-                    {
-                      key: "exclusive",
-                      label: "互斥事件模型",
-                      description: "P(AB)=0, 条件概率 P(B|A)=0",
-                    },
-                  ]}
-                  value={condPreset === "custom" ? "" : condPreset}
-                  onChange={(k) => {
-                    if (k === "independent") {
-                      setParams((prev) => ({
-                        ...prev,
-                        pA: 0.5,
-                        pB: 0.4,
-                        pAB: 0.2,
-                      }));
-                      setCondPreset("independent");
-                    } else if (k === "correlated") {
-                      setParams((prev) => ({
-                        ...prev,
-                        pA: 0.6,
-                        pB: 0.5,
-                        pAB: 0.45,
-                      }));
-                      setCondPreset("correlated");
-                    } else if (k === "exclusive") {
-                      setParams((prev) => ({
-                        ...prev,
-                        pA: 0.5,
-                        pB: 0.4,
-                        pAB: 0.0,
-                      }));
-                      setCondPreset("exclusive");
-                    }
-                  }}
-                />
-              </LeftPanelSection>
-
-              <LeftPanelSection title="观察视角" subtitle="样本空间压缩对比">
-                <SelectGrid
-                  columns={2}
-                  items={[
-                    {
-                      key: "full",
-                      label: "全集 Ω",
-                      description: "全样本空间",
-                    },
-                    {
-                      key: "compressed",
-                      label: "压缩空间 A",
-                      description: "以 A 为全集",
-                    },
-                  ]}
-                  value={isZoomedToA ? "compressed" : "full"}
-                  onChange={(k) => setIsZoomedToA(k === "compressed")}
-                />
-              </LeftPanelSection>
-            </>
+            <LeftPanelSection title="典型情境">
+              <SelectGrid
+                columns={2}
+                items={[
+                  {
+                    key: "independent",
+                    label: "相互独立模型",
+                    formula: "P(AB)=P(A)P(B)",
+                  },
+                  {
+                    key: "correlated",
+                    label: "包含/强相关",
+                    formula: "A \\subseteq B",
+                  },
+                  {
+                    key: "exclusive",
+                    label: "互斥事件模型",
+                    formula: "P(AB)=0",
+                  },
+                  {
+                    key: "free",
+                    label: "自由探索",
+                    formula: "\\text{自由调参}",
+                  },
+                ]}
+                value={condScenario}
+                onChange={(k) => {
+                  const s = k as typeof condScenario;
+                  setCondScenario(s);
+                  if (s === "independent") {
+                    setParams((prev) => ({
+                      ...prev,
+                      pA: 0.5,
+                      pB: 0.4,
+                      pAB: 0.2,
+                    }));
+                  } else if (s === "correlated") {
+                    setParams((prev) => ({
+                      ...prev,
+                      pA: 0.5,
+                      pB: 0.6,
+                      pAB: 0.5,
+                    }));
+                  } else if (s === "exclusive") {
+                    setParams((prev) => ({
+                      ...prev,
+                      pA: 0.5,
+                      pB: 0.4,
+                      pAB: 0.0,
+                    }));
+                  }
+                }}
+              />
+            </LeftPanelSection>
           )}
 
-          {/* 全概率公式专属：高考模型预设 (双列紧凑) */}
           {activeMode === "total_prob" && (
-            <LeftPanelSection
-              title="高考经典情境"
-              subtitle="一键加载典型完备划分"
-            >
+            <LeftPanelSection title="典型情境">
               <SelectGrid
                 columns={2}
                 items={[
                   {
                     key: "factory3",
                     label: "三车间次品",
-                    description: "40% / 35% / 25%",
+                    formula: "40\\%/35\\%/25\\%",
                   },
                   {
                     key: "balanced",
                     label: "三等分均衡",
-                    description: "各 1/3 均等",
+                    formula: "1/3\\text{ 均等}",
+                  },
+                  {
+                    key: "free",
+                    label: "自由探索",
+                    formula: "\\text{自由设定划分与分支}",
+                    fullWidth: true,
                   },
                 ]}
-                value={totalPreset === "custom" ? "" : totalPreset}
+                value={totalScenario}
                 onChange={(k) => {
-                  if (k === "factory3") {
+                  const s = k as typeof totalScenario;
+                  setTotalScenario(s);
+                  if (s === "factory3") {
                     setParams((prev) => ({
                       ...prev,
                       pA1: 0.4,
@@ -442,8 +583,7 @@ export function ProbabilityBayesAnimation() {
                       pB_A2: 0.3,
                       pB_A3: 0.8,
                     }));
-                    setTotalPreset("factory3");
-                  } else {
+                  } else if (s === "balanced") {
                     setParams((prev) => ({
                       ...prev,
                       pA1: 0.33,
@@ -452,87 +592,89 @@ export function ProbabilityBayesAnimation() {
                       pB_A2: 0.5,
                       pB_A3: 0.5,
                     }));
-                    setTotalPreset("balanced");
                   }
                 }}
               />
             </LeftPanelSection>
           )}
 
-          {/* 贝叶斯专属：经典高考场景预设 (双列紧凑) */}
           {activeMode === "bayes" && (
-            <LeftPanelSection
-              title="高考经典情境"
-              subtitle="一键加载由果溯因模型"
-            >
+            <LeftPanelSection title="典型情境">
               <SelectGrid
                 columns={2}
                 items={[
                   {
                     key: "screening",
                     label: "罕见病筛查",
-                    description: "患病基率 2%",
+                    formula: "P(D)=2\\%",
                   },
                   {
                     key: "factory",
                     label: "工厂质检次品",
-                    description: "自然次品 8%",
+                    formula: "P(\\text{Def})=8\\%",
+                  },
+                  {
+                    key: "free",
+                    label: "自由探索",
+                    formula: "\\text{自由设定先验与试剂}",
+                    fullWidth: true,
                   },
                 ]}
-                value={bayesPreset === "custom" ? "" : bayesPreset}
+                value={bayesScenario}
                 onChange={(k) => {
-                  if (k === "screening") {
+                  const s = k as typeof bayesScenario;
+                  setBayesScenario(s);
+                  if (s === "screening") {
                     setParams((prev) => ({
                       ...prev,
                       pPriorD: 0.02,
                       pSensitivity: 0.95,
                       pFalsePositive: 0.05,
                     }));
-                    setBayesPreset("screening");
-                    setBayesScenario("screening");
-                  } else {
+                  } else if (s === "factory") {
                     setParams((prev) => ({
                       ...prev,
                       pPriorD: 0.08,
                       pSensitivity: 0.98,
                       pFalsePositive: 0.02,
                     }));
-                    setBayesPreset("factory");
-                    setBayesScenario("factory");
                   }
                 }}
               />
             </LeftPanelSection>
           )}
 
-          {/* 马尔可夫链专属：高考经典模型预设 */}
           {activeMode === "markov" && (
-            <LeftPanelSection
-              title="高考经典模型"
-              subtitle="一键加载递推数列模型"
-            >
+            <LeftPanelSection title="典型模型">
               <SelectGrid
-                columns={1}
+                columns={2}
                 items={[
                   {
                     key: "pass_ball",
-                    label: "甲乙传球问题 (震荡收敛)",
-                    description: "p11=0.0, p21=0.5 (公比 λ=-0.5, 稳态 1/3)",
+                    label: "甲乙传球",
+                    formula: "\\lambda=-0.5",
                   },
                   {
                     key: "urn_ball",
-                    label: "摸球置换模型 (单调收敛)",
-                    description: "p11=0.6, p21=0.2 (公比 λ=0.4, 稳态 1/3)",
+                    label: "摸球置换",
+                    formula: "\\lambda=0.4",
                   },
                   {
                     key: "weather",
-                    label: "晴雨天气转移模型",
-                    description: "p11=0.7, p21=0.4 (公比 λ=0.3, 稳态 4/7)",
+                    label: "晴雨天气",
+                    formula: "\\lambda=0.3",
+                  },
+                  {
+                    key: "free",
+                    label: "自由探索",
+                    formula: "\\text{自由矩阵}",
                   },
                 ]}
-                value={markovPreset === "custom" ? "" : markovPreset}
+                value={markovScenario}
                 onChange={(k) => {
-                  if (k === "pass_ball") {
+                  const s = k as typeof markovScenario;
+                  setMarkovScenario(s);
+                  if (s === "pass_ball") {
                     setParams((prev) => ({
                       ...prev,
                       p1: 1.0,
@@ -541,9 +683,7 @@ export function ProbabilityBayesAnimation() {
                       currStep: 1,
                       maxN: 10,
                     }));
-                    setMarkovPreset("pass_ball");
-                    setMarkovScenario("pass_ball");
-                  } else if (k === "urn_ball") {
+                  } else if (s === "urn_ball") {
                     setParams((prev) => ({
                       ...prev,
                       p1: 1.0,
@@ -552,9 +692,7 @@ export function ProbabilityBayesAnimation() {
                       currStep: 1,
                       maxN: 10,
                     }));
-                    setMarkovPreset("urn_ball");
-                    setMarkovScenario("urn_ball");
-                  } else {
+                  } else if (s === "weather") {
                     setParams((prev) => ({
                       ...prev,
                       p1: 1.0,
@@ -563,19 +701,14 @@ export function ProbabilityBayesAnimation() {
                       currStep: 1,
                       maxN: 10,
                     }));
-                    setMarkovPreset("weather");
-                    setMarkovScenario("weather");
                   }
                 }}
               />
             </LeftPanelSection>
           )}
 
-          {/* 参数调节区 */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块探索动态概率演化"
-          >
+          {/* 第 3 层：参数调节区（情景参数降维 + 自由探索分组） */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -583,8 +716,31 @@ export function ProbabilityBayesAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
+          {/* 第 4 层：观察视角（仅条件概率模式作为辅助透视开关） */}
+          {activeMode === "conditional" && (
+            <LeftPanelSection title="观察视角">
+              <SelectGrid
+                columns={2}
+                items={[
+                  {
+                    key: "full",
+                    label: "全集视角",
+                    formula: "\\Omega",
+                  },
+                  {
+                    key: "compressed",
+                    label: "条件视角",
+                    formula: "\\Omega' = A",
+                  },
+                ]}
+                value={isZoomedToA ? "compressed" : "full"}
+                onChange={(k) => setIsZoomedToA(k === "compressed")}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 第 5 层：教学导引与题设背景 */}
+          <LeftPanelSection title="教学导引" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
                 <span>{tipConfig.badge}</span>
@@ -611,7 +767,7 @@ export function ProbabilityBayesAnimation() {
       }
       center={
         <div className="w-full h-full relative bg-white flex flex-col overflow-hidden">
-          {/* 顶部优雅数学公式 Bar (与画布空间完全隔离，杜绝遮挡) */}
+          {/* 顶部优雅数学公式 Bar */}
           <div className="h-[48px] shrink-0 border-b border-neutral-200/80 bg-neutral-50/90 backdrop-blur-sm px-4 flex items-center justify-between z-10 shadow-xs">
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-blue-600"></span>
@@ -642,8 +798,12 @@ export function ProbabilityBayesAnimation() {
                 vp={vp}
                 activeMode={activeMode}
                 isZoomedToA={isZoomedToA}
-                bayesPreset={bayesScenario}
-                markovPreset={markovScenario}
+                bayesPreset={
+                  bayesScenario === "factory" ? "factory" : "screening"
+                }
+                markovPreset={
+                  markovScenario === "free" ? "pass_ball" : markovScenario
+                }
                 fontScale={canvasSize.font}
               />
             </AnimationSvgCanvas>

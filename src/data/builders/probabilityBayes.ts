@@ -12,6 +12,8 @@ export function buildProbabilityBayesPanel(
   config?: Record<string, unknown>,
 ): MathPanelData {
   const activeMode = (config?.activeMode as string) || "conditional";
+  const condScenario = (config?.condScenario as string) || "independent";
+  const totalScenario = (config?.totalScenario as string) || "factory3";
 
   // 1. 模式一：条件概率与样本空间压缩
   if (activeMode === "conditional") {
@@ -20,6 +22,48 @@ export function buildProbabilityBayesPanel(
     const pAB = Math.min(params.pAB ?? 0.2, Math.min(pA, pB));
 
     const res = calculateConditionalProb(pA, pB, pAB);
+
+    // 根据情境动态定制定理与高考考点
+    const scenarioTheorems = [];
+    const scenarioGaokaoPoints = [];
+
+    if (condScenario === "independent") {
+      scenarioTheorems.push({
+        name: "相互独立事件乘法公式 (Independence)",
+        latex: `P(AB) = P(A)P(B) \\iff P(B|A) = P(B) \\quad (P(A) > 0)`,
+        condition: "事件 A 的发生对事件 B 的发生概率无影响",
+        note: "条件概率等于无条件先验概率，几何上两圆相交比例与全集比例一致。",
+        level: "core" as const,
+      });
+      scenarioGaokaoPoints.push({
+        text: "【新高考高频考点·独立性等价判定】四式等价：① P(AB)=P(A)P(B) ② P(B|A)=P(B) ③ P(A|B)=P(A) ④ P(~A~B)=P(~A)P(~B)。满足其一则全成立。",
+        importance: "gaokao" as const,
+      });
+    } else if (condScenario === "exclusive") {
+      scenarioTheorems.push({
+        name: "互斥事件加法公式 (Mutual Exclusivity)",
+        latex: `A \\cap B = \\emptyset \\implies P(AB) = 0 \\implies P(B|A) = 0`,
+        condition: "事件 A 与 B 不可能同时发生",
+        note: "两圆无公共交集区域，已知 A 发生后 B 绝不可能发生。",
+        level: "core" as const,
+      });
+      scenarioGaokaoPoints.push({
+        text: "【易错辨析·互斥 vs 独立】互斥是“不能同时发生”，独立是“互不影响”。若 P(A)>0 且 P(B)>0，则互斥事件必然不独立，独立事件必然不互斥！",
+        importance: "gaokao" as const,
+      });
+    } else if (condScenario === "correlated") {
+      scenarioTheorems.push({
+        name: "子集包含条件概率 (Subset Relation)",
+        latex: `A \\subseteq B \\implies P(AB) = P(A) \\implies P(B|A) = 1.0`,
+        condition: "事件 A 是事件 B 的充分条件",
+        note: "集合 A 完全包含在集合 B 内部，已知 A 发生则 B 必然发生。",
+        level: "core" as const,
+      });
+      scenarioGaokaoPoints.push({
+        text: "【极值几何性质】当 A ⊆ B 时，条件概率 P(B|A) 达到理论最大值 1.0；当 B ⊆ A 时，P(A|B) = 1.0。",
+        importance: "core" as const,
+      });
+    }
 
     return {
       quantities: [
@@ -61,6 +105,7 @@ export function buildProbabilityBayesPanel(
         },
       ],
       theorems: [
+        ...scenarioTheorems,
         {
           name: "条件概率定义 (Conditional Probability)",
           latex: `P(B|A) = \\frac{P(AB)}{P(A)} \\quad (P(A) > 0)`,
@@ -75,26 +120,27 @@ export function buildProbabilityBayesPanel(
           level: "important",
         },
         {
-          name: "条件概率的加法公式与性质",
+          name: "条件概率加法公式",
           latex: `P(B_1 \\cup B_2 | A) = P(B_1|A) + P(B_2|A) - P(B_1 B_2 | A)`,
-          note: "条件概率 P(·|A) 满足概率的三条公理（非负性、规范性、可加性）。",
+          note: "条件概率 P(·|A) 满足概率公理（非负性、规范性、可加性）。",
           level: "derived",
         },
       ],
       gaokaoPoints: [
+        ...scenarioGaokaoPoints,
         {
-          text: "高考一轮必考：识别“已知……”为条件事件 A，将样本空间锁定在 A 集合内部分子为交集 AB 的元素个数。",
+          text: "【新高考大题第 1 步】识别题干中“在已知……前提下”为条件事件 A，将样本空间从 Ω 缩小为 A，分子取交集 AB。",
           importance: "gaokao",
         },
         {
-          text: "独立性判定：若 P(B|A) = P(B) 或 P(AB) = P(A)P(B)，则事件 A 与 B 相互独立。",
+          text: "【乘法公式应用】求“连续两步依次发生”用乘法公式：P(AB) = P(A)P(B|A)。",
           importance: "core",
         },
       ],
       warnings: res.isDegenerate
         ? [
             {
-              text: "当 P(A) = 0 时，条件 P(A) 不能作为分母，条件概率 P(B|A) 无意义（退化状态）！",
+              text: "当 P(A) = 0 时，条件事件概率为 0 不能作为分母，条件概率 P(B|A) 数学上无意义！",
               level: "danger",
             },
           ]
@@ -131,6 +177,35 @@ export function buildProbabilityBayesPanel(
     ];
 
     const res = calculateTotalProb(inputs);
+
+    const scenarioTheorems = [];
+    const scenarioGaokaoPoints = [];
+
+    if (totalScenario === "factory3") {
+      scenarioTheorems.push({
+        name: "三车间次品全概模型 (Three-Partition Factory)",
+        latex: `P(B) = P(A_1)P(B|A_1) + P(A_2)P(B|A_2) + P(A_3)P(B|A_3)`,
+        condition: "A₁, A₂, A₃ 为三个互斥生产车间，B 为产出次品",
+        note: "总次品率等于各车间产量占比乘以该车间自身次品率的加权和。",
+        level: "core" as const,
+      });
+      scenarioGaokaoPoints.push({
+        text: "【高考工业大题标准答题规范】① 设 A_i 为“产品由第 i 车间生产”，B 为“抽到次品”；② 证明 A₁, A₂, A₃ 构成完备事件组；③ 写出全概公式并代入数值求和。",
+        importance: "gaokao" as const,
+      });
+    } else if (totalScenario === "balanced") {
+      scenarioTheorems.push({
+        name: "等权完备划分模型 (Equal-Weight Partition)",
+        latex: `P(A_i) = \\frac{1}{n} \\implies P(B) = \\frac{1}{n} \\sum_{i=1}^n P(B|A_i)`,
+        condition: "各原因分支先验等可能发生",
+        note: "全概率退化为各分支条件概率的简单算术平均数。",
+        level: "important" as const,
+      });
+      scenarioGaokaoPoints.push({
+        text: "【均等简化速算】当各原因等可能发生时，直接将各分支条件概率相加除以分支数即可快速求得总概率。",
+        importance: "core" as const,
+      });
+    }
 
     return {
       quantities: [
@@ -178,6 +253,7 @@ export function buildProbabilityBayesPanel(
         },
       ],
       theorems: [
+        ...scenarioTheorems,
         {
           name: "全概率公式 (Total Probability Theorem)",
           latex: `P(B) = \\sum_{i=1}^n P(A_i)P(B|A_i)`,
@@ -195,12 +271,13 @@ export function buildProbabilityBayesPanel(
         },
       ],
       gaokaoPoints: [
+        ...scenarioGaokaoPoints,
         {
-          text: "高考大题核心策略：第一步找到原因划分 A_i，第二步写出各分支条件概率 P(B|A_i)，第三步代入加权累加。",
+          text: "【高考大题核心策略】第一步找到原因划分 A_i，第二步写出各分支条件概率 P(B|A_i)，第三步代入加权累加。",
           importance: "gaokao",
         },
         {
-          text: "画树状图求概率：树的第一层节点连线表示先验概率 P(A_i)，第二层连线表示条件概率 P(B|A_i)，路径相乘求联合概率 P(A_i B)。",
+          text: "【画树状图求概率】树的第一层节点连线表示先验概率 P(A_i)，第二层连线表示条件概率 P(B|A_i)，路径相乘求联合概率 P(A_i B)。",
           importance: "core",
         },
       ],

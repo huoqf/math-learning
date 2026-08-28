@@ -63,14 +63,38 @@ const scale = useSceneScale({ vp, xRange: [-6, 6], yRange: [-4.5, 4.5] })
 const mathData = useMemo(() => buildMathQuantities('anim-xxx', params), [params])
 ```
 
-三屏组装：
+三屏组装（严格执行左屏标准五层渲染顺序）：
 ```tsx
 <ThreePanel
-  left={<LeftPanel>...ParamControl...TabSwitcher/SelectGrid...</LeftPanel>}
+  left={
+    <LeftPanel>
+      {/* ① 模式探索维度 */}
+      <LeftPanelSection title="模式选择">
+        <TabSwitcher tabs={...} value={...} onChange={...} />
+      </LeftPanelSection>
+      
+      {/* ② 探究情境/模型选择（仅 B 类多模型/多构型页面按需配置，含 free 自由探索；A 类单模型基础页面省略本层） */}
+      <LeftPanelSection title="典型情境">
+        <SelectGrid columns={2} items={...} value={...} onChange={...} />
+      </LeftPanelSection>
+      
+      {/* ③ 核心参数调节（情景参数降维 + 自由探索对象化分组） */}
+      <LeftPanelSection title="参数调节">
+        <ParamControl params={paramConfigs} onParamChange={...} onReset={...} />
+      </LeftPanelSection>
+      
+      {/* ④ 辅助视角/图层开关（按需出现） */}
+      
+      {/* ⑤ 教学导引与题设背景（紧凑双要素） */}
+      <LeftPanelSection title="教学导引" compact>
+        <TipCard variant={tipConfig.variant}>...</TipCard>
+      </LeftPanelSection>
+    </LeftPanel>
+  }
   center={
     <div className="w-full h-full relative flex flex-col bg-white">
-      {/* 悬浮公式 / 标题 */}
-      <div className="absolute top-4 left-4 z-10 ..."><KatexFormula ... /></div>
+      {/* 悬浮公式 / 标题 Bar */}
+      <div className="h-[48px] border-b ..."><KatexFormula ... /></div>
       {/* 右下角毛玻璃图例 */}
       <SceneLegend items={legendItems} />
       {/* SVG 动画画布 */}
