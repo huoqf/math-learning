@@ -30,6 +30,7 @@ interface ProbabilityDistributionSceneProps {
   fontScale: (baseSize: number) => number;
   linearA?: number;
   linearB?: number;
+  onProbabilityChange?: (index: number, newP: number) => void;
 }
 
 export function ProbabilityDistributionScene({
@@ -39,9 +40,11 @@ export function ProbabilityDistributionScene({
   decisionResult,
   studyMode,
   scale,
+  vp,
   fontScale,
   linearA = 2,
   linearB = 1,
+  onProbabilityChange,
 }: ProbabilityDistributionSceneProps) {
   const { outcomes, mean, stdDev } = distResult;
 
@@ -128,7 +131,7 @@ export function ProbabilityDistributionScene({
       ) : (
         /* ================= 其它模式：标准单轨道设计 ================= */
         <>
-          {/* 1. 背景静止网格与 Y 轴刻度 (左侧保留安全边距，绝对无截断) */}
+          {/* 1. 背景静止网格与 Y 轴刻度 */}
           {yTicks.map((pVal) => {
             const linePos = mathToDesign(0, pVal, scale);
             return (
@@ -142,7 +145,6 @@ export function ProbabilityDistributionScene({
                   strokeDasharray="4 4"
                   strokeWidth={1}
                 />
-                {/* 纵轴概率刻度：紧贴 leftSafeMargin 左侧，右对齐 */}
                 <text
                   x={leftSafeMargin - 8}
                   y={linePos.y + fontScale(4)}
@@ -189,6 +191,7 @@ export function ProbabilityDistributionScene({
               studyMode={studyMode as "binomial" | "hypergeometric" | "general"}
               distResult={distResult}
               scale={scale}
+              vp={vp}
               fontScale={fontScale}
               yAxisZero={yAxisZero}
               yAxisMax={yAxisMax}
@@ -196,6 +199,7 @@ export function ProbabilityDistributionScene({
               sigmaMaxDesign={sigmaMaxDesign}
               meanDesign={meanDesign}
               halfBarWidthPx={halfBarWidthPx}
+              onProbabilityChange={onProbabilityChange}
             />
           )}
 

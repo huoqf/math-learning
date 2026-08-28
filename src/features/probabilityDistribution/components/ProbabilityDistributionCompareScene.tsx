@@ -15,7 +15,7 @@ interface ProbabilityDistributionCompareSceneProps {
   halfBarWidthPx: number;
 }
 
-/** 双分布逼近同屏对比（超几何 vs 二项） */
+/** 双分布逼近同屏对比（超几何 vs 二项，含收敛残差与方差修正因子量化） */
 export function ProbabilityDistributionCompareScene({
   comparisonResult,
   scale,
@@ -24,50 +24,46 @@ export function ProbabilityDistributionCompareScene({
   yAxisMax,
   meanDesign,
   mean,
-  rightSafeMargin,
   halfBarWidthPx,
 }: ProbabilityDistributionCompareSceneProps) {
+  const { varianceCorrectionFactor } = comparisonResult;
+  const isNearConvergence = varianceCorrectionFactor > 0.95;
+
   return (
     <g className="transition-all duration-300">
-      {/* 右上角图例 */}
-      <g transform={`translate(${rightSafeMargin - 150}, ${yAxisMax.y + 16})`}>
+      {/* 1. 顶部收敛进度看板指示 */}
+      <g transform={`translate(${meanDesign.x}, ${yAxisMax.y - 18})`}>
         <rect
+          x={-120}
+          y={-14}
+          width={240}
+          height={24}
+          fill={withAlpha(
+            isNearConvergence ? MATH_COLORS.paramTertiary : MATH_COLORS.primary,
+            0.1,
+          )}
+          stroke={
+            isNearConvergence ? MATH_COLORS.paramTertiary : MATH_COLORS.primary
+          }
+          strokeWidth={1.2}
+          rx={5}
+        />
+        <text
           x={0}
-          y={-4}
-          width={10}
-          height={8}
-          fill={MATH_COLORS.primary}
-          rx={2}
-        />
-        <text
-          x={14}
-          y={4}
-          fill={MATH_COLORS.primary}
-          fontSize={fontScale(10)}
+          y={3}
+          fill={
+            isNearConvergence ? MATH_COLORS.paramTertiary : MATH_COLORS.primary
+          }
+          fontSize={fontScale(10.5)}
+          textAnchor="middle"
           fontWeight="bold"
         >
-          超几何 H
-        </text>
-        <rect
-          x={75}
-          y={-4}
-          width={10}
-          height={8}
-          fill={MATH_COLORS.paramSecondary}
-          rx={2}
-        />
-        <text
-          x={89}
-          y={4}
-          fill={MATH_COLORS.paramSecondary}
-          fontSize={fontScale(10)}
-          fontWeight="bold"
-        >
-          二项 B
+          方差修正系数 (N-n)/(N-1) = {varianceCorrectionFactor.toFixed(3)}{" "}
+          {isNearConvergence ? "✔ 极限逼近" : "≈ 趋近中"}
         </text>
       </g>
 
-      {/* 并排双柱体绘制 */}
+      {/* 2. 并排双柱体绘制与残差 */}
       {comparisonResult.binomDist.outcomes.map((binomItem) => {
         const k = binomItem.x;
         const hyperItem = comparisonResult.hyperDist.outcomes.find(
@@ -75,6 +71,7 @@ export function ProbabilityDistributionCompareScene({
         );
         const pHyper = hyperItem?.p || 0;
         const pBinom = binomItem.p;
+        const diff = Math.abs(pHyper - pBinom);
 
         const centerPos = mathToDesign(k, 0, scale);
         const w = Math.max(10, halfBarWidthPx * 0.85);
@@ -87,7 +84,7 @@ export function ProbabilityDistributionCompareScene({
 
         return (
           <g key={`comp-bar-${k}`}>
-            {/* 超几何柱体 */}
+            {/* 超几何柱体 (深蓝色) */}
             <rect
               x={centerPos.x - w - 2}
               y={topHyper.y}
@@ -112,7 +109,7 @@ export function ProbabilityDistributionCompareScene({
               </text>
             )}
 
-            {/* 二项分布柱体 */}
+            {/* 二项分布柱体 (暖橙色) */}
             <rect
               x={centerPos.x + 2}
               y={topBinom.y}
@@ -137,6 +134,21 @@ export function ProbabilityDistributionCompareScene({
               </text>
             )}
 
+            {/* 柱顶差值绝对值微标注 (Δp) */}
+            {diff > 0.01 && (
+              <text
+                x={centerPos.x}
+                y={Math.min(topHyper.y, topBinom.y) - fontScale(16)}
+                fill={CANVAS_COLORS.labelText}
+                fontSize={fontScale(8.5)}
+                textAnchor="middle"
+                className="font-mono"
+              >
+                Δ={diff.toFixed(2)}
+              </text>
+            )}
+
+            {/* 横轴刻度 */}
             <text
               x={centerPos.x}
               y={centerPos.y + fontScale(16)}
@@ -151,20 +163,29 @@ export function ProbabilityDistributionCompareScene({
         );
       })}
 
-      {/* 期望重合支点 */}
+      {/* 3. 共同期望支点 */}
       <g className="transition-all duration-300">
+        <line
+          x1={meanDesign.x}
+          y1={yAxisMax.y - 4}
+          x2={meanDesign.x}
+          y2={yAxisZero.y}
+          stroke={MATH_COLORS.tangentLine}
+          strokeWidth={2}
+          strokeDasharray="5 4"
+        />
         <polygon
           points={`${meanDesign.x},${yAxisZero.y + 2} ${
-            meanDesign.x - 8
-          },${yAxisZero.y + 14} ${meanDesign.x + 8},${yAxisZero.y + 14}`}
+            meanDesign.x - 7
+          },${yAxisZero.y + 12} ${meanDesign.x + 7},${yAxisZero.y + 12}`}
           fill={MATH_COLORS.tangentLine}
         />
         <g transform={`translate(${meanDesign.x}, ${yAxisZero.y + 30})`}>
           <rect
-            x={-60}
-            y={-12}
-            width={120}
-            height={22}
+            x={-46}
+            y={-10}
+            width={92}
+            height={20}
             fill={MATH_COLORS.tangentLine}
             rx={4}
           />
@@ -176,7 +197,7 @@ export function ProbabilityDistributionCompareScene({
             textAnchor="middle"
             fontWeight="bold"
           >
-            共同期望 E={mean.toFixed(2)}
+            E(X) = {mean.toFixed(2)}
           </text>
         </g>
       </g>

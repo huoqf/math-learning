@@ -10,8 +10,9 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   defaultParams,
@@ -62,6 +63,23 @@ export function ProbabilityDistributionAnimation() {
         next.sampleN = Math.min(next.sampleN, value);
       }
       return next;
+    });
+  };
+
+  // 画布上直接拖拽柱高调整一般分布概率
+  const handleCanvasProbabilityChange = (index: number, newP: number) => {
+    setParams((prev) => {
+      const pKey = index === 0 ? "p1" : index === 1 ? "p2" : "p3";
+      const otherSum =
+        index === 0
+          ? prev.p2 + prev.p3
+          : index === 1
+            ? prev.p1 + prev.p3
+            : prev.p1 + prev.p2;
+
+      // 保证前三项总和不超过 1.0
+      const safeP = Math.min(newP, Math.max(0, 1.0 - otherSum));
+      return { ...prev, [pKey]: Number(safeP.toFixed(2)) };
     });
   };
 
@@ -141,7 +159,7 @@ export function ProbabilityDistributionAnimation() {
     return undefined;
   }, [studyMode, distResult, params.linearA, params.linearB]);
 
-  // 4. 数据驱动的自适应 X 轴范围 (根据当前模式的数据项自动居中展开，杜绝右侧大片空白)
+  // 4. 数据驱动的自适应 X 轴范围
   const xRange = useMemo<[number, number]>(() => {
     if (studyMode === "compare") {
       const n = params.compareSampleN || 4;
@@ -187,7 +205,7 @@ export function ProbabilityDistributionAnimation() {
     keepAspectRatio: false,
   });
 
-  // 5. 右屏看板数据 (根据 studyMode 动态刷新)
+  // 5. 右屏看板数据
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-probability-distribution", params, {
       studyMode,
@@ -257,8 +275,6 @@ export function ProbabilityDistributionAnimation() {
           min: minVal,
           max: maxVal,
           step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
         };
@@ -282,7 +298,7 @@ export function ProbabilityDistributionAnimation() {
       return `X \\sim H(${params.N}, ${params.M}, ${params.sampleN}) \\quad k \\in [${kMin}, ${kMax}] \\quad P(X=k) = \\frac{C_{${params.M}}^k C_{${params.N - params.M}}^{${params.sampleN}-k}}{C_{${params.N}}^{${params.sampleN}}}`;
     }
     if (studyMode === "compare") {
-      return `\\lim_{N \\to \\infty} H(N, M, n) = B(n, p) \\quad \\text{方差修正} \\frac{N-n}{N-1} = ${comparisonResult?.varianceCorrectionFactor.toFixed(3)}`;
+      return `\\lim_{N \\to \\infty} H(N, M, n) = B(n, p) \\quad \\text{修正系数 } \\frac{N-n}{N-1} = ${comparisonResult?.varianceCorrectionFactor.toFixed(3)}`;
     }
     if (studyMode === "decision") {
       return decisionScenario === "quality"
@@ -299,7 +315,7 @@ export function ProbabilityDistributionAnimation() {
     }
     return `\\sum_{i=0}^3 p_i = 1 \\quad E(X) = \\sum x_i p_i = ${distResult.mean.toFixed(
       2,
-    )}`;
+    )} \\quad \\sum (x_i - E)p_i = 0`;
   }, [
     studyMode,
     params,
@@ -309,7 +325,7 @@ export function ProbabilityDistributionAnimation() {
     decisionScenario,
   ]);
 
-  // 左屏教学提示与题设导引 (说明初始条件与核心设问)
+  // 左屏教学提示与题设导引
   const tipConfig = useMemo(() => {
     if (studyMode === "binomial") {
       return {
@@ -365,30 +381,92 @@ export function ProbabilityDistributionAnimation() {
     }
     return {
       variant: "success" as const,
-      badge: "高考基础 · 离散分布列与概率归一性",
-      condition: "随机变量 X 取值为 xᵢ，对应概率为 pᵢ (pᵢ ≥ 0)。",
+      badge: "高考基础 · 离散分布列与力矩天平平衡",
+      condition: "随机变量 X 取值为 xᵢ，对应概率为 pᵢ (pᵢ ≥ 0 且 ∑pᵢ=1)。",
       question:
-        "验证分布列概率归一性 ∑ pᵢ = 1，并求解期望 E(X)=∑ xᵢpᵢ 与方差 D(X)。",
+        "可在中屏画布直接上下拖拽柱顶调节概率，观察期望支点力矩平衡 ∑(xᵢ-E)pᵢ=0。",
     };
   }, [studyMode, decisionScenario]);
+
+  // 中屏右下角图例配置
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (studyMode === "compare") {
+      return [
+        {
+          label: "超几何分布 H",
+          formula: "X \\sim H(N, M, n)",
+          color: MATH_COLORS.primary,
+          style: "solid",
+        },
+        {
+          label: "二项分布 B",
+          formula: "X \\sim B(n, p)",
+          color: MATH_COLORS.paramSecondary,
+          style: "solid",
+        },
+        {
+          label: "期望支点",
+          formula: "E(X)",
+          color: MATH_COLORS.tangentLine,
+          style: "point",
+        },
+      ];
+    }
+    if (studyMode === "decision") {
+      return [
+        {
+          label: "方案 A",
+          color: MATH_COLORS.paramTertiary,
+          style: "solid",
+        },
+        {
+          label: "方案 B",
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+      ];
+    }
+    return [];
+  }, [studyMode]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
           {/* 模式选择 */}
-          <LeftPanelSection
-            title="概率模型与性质"
-            subtitle="选择高中高考核心随机变量模型"
-          >
+          <LeftPanelSection title="概率模型与性质">
             <SelectGrid
               items={[
-                { key: "binomial", label: "二项分布与最值项" },
-                { key: "hypergeometric", label: "超几何分布与边界" },
-                { key: "compare", label: "双分布逼近收敛" },
-                { key: "linear", label: "线性变换 Y=aX+b" },
-                { key: "decision", label: "高考决策方案对比" },
-                { key: "general", label: "一般分布列" },
+                {
+                  key: "binomial",
+                  label: "二项分布与最值项",
+                  formula: "X \\sim B(n, p)",
+                },
+                {
+                  key: "hypergeometric",
+                  label: "超几何分布",
+                  formula: "X \\sim H(N, M, n)",
+                },
+                {
+                  key: "compare",
+                  label: "双分布逼近收敛",
+                  formula: "\\lim_{N \\to \\infty} H = B",
+                },
+                {
+                  key: "linear",
+                  label: "线性变换",
+                  formula: "Y = aX + b",
+                },
+                {
+                  key: "decision",
+                  label: "高考决策方案",
+                  formula: "E(A) \\text{ vs } E(B)",
+                },
+                {
+                  key: "general",
+                  label: "一般分布列与天平",
+                  formula: "\\sum p_i = 1",
+                },
               ]}
               value={studyMode}
               onChange={(k) =>
@@ -408,14 +486,19 @@ export function ProbabilityDistributionAnimation() {
 
           {/* 决策情境子切换 */}
           {studyMode === "decision" && (
-            <LeftPanelSection
-              title="决策场景选择"
-              subtitle="高考典型应用题情境"
-            >
+            <LeftPanelSection title="决策场景选择">
               <SelectGrid
                 items={[
-                  { key: "quality", label: "产品质检(抽检vs全检)" },
-                  { key: "investment", label: "资产配置(理财vs股票)" },
+                  {
+                    key: "quality",
+                    label: "产品质检",
+                    formula: "\\text{抽检 vs 全检}",
+                  },
+                  {
+                    key: "investment",
+                    label: "资产配置",
+                    formula: "\\text{理财 vs 股票}",
+                  },
                 ]}
                 value={decisionScenario}
                 onChange={(k) =>
@@ -427,7 +510,7 @@ export function ProbabilityDistributionAnimation() {
           )}
 
           {/* 参数调节 */}
-          <LeftPanelSection title="模型参数" subtitle="拖动滑块调节分布参数">
+          <LeftPanelSection title="模型参数">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -694,8 +777,12 @@ export function ProbabilityDistributionAnimation() {
               fontScale={canvasSize.font}
               linearA={params.linearA}
               linearB={params.linearB}
+              onProbabilityChange={handleCanvasProbabilityChange}
             />
           </AnimationSvgCanvas>
+
+          {/* 4. 中屏右下角毛玻璃图例 */}
+          {legendItems.length > 0 && <SceneLegend items={legendItems} />}
         </div>
       }
       right={
