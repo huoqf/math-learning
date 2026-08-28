@@ -11,6 +11,7 @@ import { buildFuncTransformPanel } from "./builders/funcTransform";
 import { buildFuncCompositePanel } from "./builders/funcComposite";
 import { buildNikePanel } from "./builders/nike";
 import { buildTranscendentalPanel } from "./builders/transcendental";
+import { buildQuantifiersPanel } from "./builders/quantifiersBuilder";
 
 import { buildDerivativeShiftPanel } from "./builders/derivativeShift";
 import { buildSecondDerivativePanel } from "./builders/secondDerivative";
@@ -137,6 +138,11 @@ export function buildMathQuantities(
     case "anim-set-venn":
     case "anim-logic-conditions":
       return buildSetPanel(params);
+    case "anim-logic-quantifiers":
+      return buildQuantifiersPanel(
+        params,
+        config as Parameters<typeof buildQuantifiersPanel>[1],
+      );
     case "anim-func-properties":
     case "anim-func-domain":
     case "anim-func-parity":

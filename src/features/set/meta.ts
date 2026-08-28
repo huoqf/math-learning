@@ -6,6 +6,7 @@ import type { KnowledgeNode } from "@/data/types";
  * 路由映射：
  *   /set → SetVennPage（集合的基本运算）
  *   /set-logic → SetLogicPage（充分必要条件）
+ *   /set-quantifiers → SetQuantifiersPage（全称量词与存在量词及其否定）
  */
 export const vennNode: KnowledgeNode = {
   id: "know-set-venn",
@@ -31,6 +32,19 @@ export const logicNode: KnowledgeNode = {
   route: "/set-logic",
 };
 
+export const quantifiersNode: KnowledgeNode = {
+  id: "know-logic-quantifiers",
+  title: "全称量词与存在量词及其否定",
+  labTitle: "全称与存在量词实验室",
+  chapter: "集合与常用逻辑",
+  module: "常用逻辑用语",
+  importance: "basic",
+  animationIds: ["anim-logic-quantifiers"],
+  prerequisites: ["know-logic-conditions"],
+  route: "/set-quantifiers",
+};
+
 /** 独立 loader，不进入 KnowledgeNode 类型 */
 export const vennLoader = () => import("./SetVennPage");
 export const logicLoader = () => import("./SetLogicPage");
+export const quantifiersLoader = () => import("./SetQuantifiersPage");

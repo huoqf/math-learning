@@ -27,11 +27,13 @@ export const knowledgeTree: KnowledgeNode[] = [
   {
     id: "know-logic-quantifiers",
     title: "全称量词与存在量词及其否定",
+    labTitle: "全称与存在量词实验室",
     chapter: "集合与常用逻辑",
     module: "常用逻辑用语",
     importance: "basic",
-    animationIds: ["anim-logic-quantifiers-pending"],
+    animationIds: ["anim-logic-quantifiers"],
     prerequisites: ["know-logic-conditions"],
+    route: "/set-quantifiers",
   },
 
   // 2. 不等式

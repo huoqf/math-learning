@@ -1,0 +1,162 @@
+import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
+
+export const defaultParams: Record<string, number> = {
+  k: 1.0, // 二次项系数
+  h: 0.0, // 对称轴
+  v: 1.0, // 顶点纵坐标
+  intMin: -2.0, // 区间左端点 a
+  intMax: 2.0, // 区间右端点 b
+  threshold: 0.0, // 基准线 m
+  probeX: 0.0, // 探针/动点 x0
+
+  // 双变量模式专属参数
+  k2: -0.8,
+  h2: 0.0,
+  v2: -0.5,
+  int2Min: -1.5,
+  int2Max: 1.5,
+};
+
+export const paramMeta: Record<string, ParamMeta> = {
+  threshold: {
+    key: "threshold",
+    label: "基准阈值 m",
+    labelFormula: `\\text{基准阈值 } \\color{${MATH_COLORS.paramPrimary}}{m}`,
+    min: -4.0,
+    max: 4.0,
+    step: 0.2,
+    defaultValue: 0.0,
+    importance: "core",
+    group: "阈值与区间",
+  },
+  intMin: {
+    key: "intMin",
+    label: "区间左端点 a",
+    labelFormula: `\\text{区间左端点 } \\color{${MATH_COLORS.paramSecondary}}{a}`,
+    min: -5.0,
+    max: 3.0,
+    step: 0.2,
+    defaultValue: -2.0,
+    importance: "core",
+    group: "阈值与区间",
+  },
+  intMax: {
+    key: "intMax",
+    label: "区间右端点 b",
+    labelFormula: `\\text{区间右端点 } \\color{${MATH_COLORS.paramSecondary}}{b}`,
+    min: -3.0,
+    max: 5.0,
+    step: 0.2,
+    defaultValue: 2.0,
+    importance: "core",
+    group: "阈值与区间",
+  },
+  probeX: {
+    key: "probeX",
+    label: "动点探针 x₀",
+    labelFormula: `\\text{动点探针 } \\color{${MATH_COLORS.paramTertiary}}{x_0}`,
+    min: -5.0,
+    max: 5.0,
+    step: 0.1,
+    defaultValue: 0.0,
+    importance: "core",
+    group: "动点反例",
+  },
+  k: {
+    key: "k",
+    label: "函数开口 k",
+    labelFormula: `\\text{函数开口 } \\color{${MATH_COLORS.primary}}{k}`,
+    min: -3.0,
+    max: 3.0,
+    step: 0.2,
+    defaultValue: 1.0,
+    importance: "advanced",
+    group: "函数形态",
+    marks: [
+      {
+        value: 0,
+        variant: "critical",
+        label: "退化",
+        labelFormula: "k=0",
+      },
+    ],
+  },
+  h: {
+    key: "h",
+    label: "对称轴 h",
+    labelFormula: `\\text{对称轴 } \\color{${MATH_COLORS.primary}}{h}`,
+    min: -3.0,
+    max: 3.0,
+    step: 0.2,
+    defaultValue: 0.0,
+    importance: "advanced",
+    group: "函数形态",
+  },
+  v: {
+    key: "v",
+    label: "顶点高 v",
+    labelFormula: `\\text{顶点高 } \\color{${MATH_COLORS.primary}}{v}`,
+    min: -4.0,
+    max: 4.0,
+    step: 0.2,
+    defaultValue: 1.0,
+    importance: "advanced",
+    group: "函数形态",
+  },
+  k2: {
+    key: "k2",
+    label: "函数 g 开口 k₂",
+    labelFormula: `\\text{函数 g 开口 } \\color{${MATH_COLORS.secondary}}{k_2}`,
+    min: -3.0,
+    max: 3.0,
+    step: 0.2,
+    defaultValue: -0.8,
+    importance: "advanced",
+    group: "函数 g 形态",
+  },
+  h2: {
+    key: "h2",
+    label: "函数 g 对称轴 h₂",
+    labelFormula: `\\text{函数 g 对称轴 } \\color{${MATH_COLORS.secondary}}{h_2}`,
+    min: -3.0,
+    max: 3.0,
+    step: 0.2,
+    defaultValue: 0.0,
+    importance: "advanced",
+    group: "函数 g 形态",
+  },
+  v2: {
+    key: "v2",
+    label: "函数 g 顶点高 v₂",
+    labelFormula: `\\text{函数 g 顶点高 } \\color{${MATH_COLORS.secondary}}{v_2}`,
+    min: -4.0,
+    max: 4.0,
+    step: 0.2,
+    defaultValue: -0.5,
+    importance: "advanced",
+    group: "函数 g 形态",
+  },
+  int2Min: {
+    key: "int2Min",
+    label: "g 区间左端点",
+    labelFormula: `\\text{g 区间左端点 } c`,
+    min: -5.0,
+    max: 3.0,
+    step: 0.2,
+    defaultValue: -1.5,
+    importance: "advanced",
+    group: "函数 g 形态",
+  },
+  int2Max: {
+    key: "int2Max",
+    label: "g 区间右端点",
+    labelFormula: `\\text{g 区间右端点 } d`,
+    min: -3.0,
+    max: 5.0,
+    step: 0.2,
+    defaultValue: 1.5,
+    importance: "advanced",
+    group: "函数 g 形态",
+  },
+};
