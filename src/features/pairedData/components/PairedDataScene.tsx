@@ -150,7 +150,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
   const chiCurvePath = useMemo(() => {
     if (studyMode !== "independence") return "";
     const segments: string[] = [];
-    const points = sampleChiSquareCurvePoints(0.08, maxChi, 80);
+    const points = sampleChiSquareCurvePoints(0.08, maxChi, 90);
     points.forEach((p, i) => {
       const px = mapChiValueToPixel(p.chi, maxChi, chiStartX, chiPlotWidth);
       const py = chiPlotBaseY - Math.min(chiPlotHeight, p.pdf * 85);
@@ -163,22 +163,44 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
     return segments.join(" ");
   }, [studyMode, chiPlotWidth]);
 
-  // 生成 >= 3.841 临界值的拒绝域阴影封闭路径
-  const rejectAreaPath = useMemo(() => {
-    if (studyMode !== "independence") return "";
-    const startChi = 3.841;
-    const startPx = chiStartX + (startChi / maxChi) * chiPlotWidth;
-    const segments: string[] = [`M ${startPx.toFixed(1)} ${chiPlotBaseY}`];
-    const points = sampleChiSquareCurvePoints(startChi, maxChi, 40);
+  // 生成任意区间 [startChi, endChi] 在卡方曲线下方的封闭阴影路径辅助函数
+  const generateChiShadePath = (
+    startChi: number,
+    endChi: number,
+    samplesCount = 30,
+  ) => {
+    const sX = mapChiValueToPixel(startChi, maxChi, chiStartX, chiPlotWidth);
+    const eX = mapChiValueToPixel(endChi, maxChi, chiStartX, chiPlotWidth);
+    const points = sampleChiSquareCurvePoints(startChi, endChi, samplesCount);
+    const segs: string[] = [`M ${sX.toFixed(1)} ${chiPlotBaseY}`];
     for (const p of points) {
       const px = mapChiValueToPixel(p.chi, maxChi, chiStartX, chiPlotWidth);
       const py = chiPlotBaseY - Math.min(chiPlotHeight, p.pdf * 85);
-      segments.push(`L ${px.toFixed(1)} ${py.toFixed(1)}`);
+      segs.push(`L ${px.toFixed(1)} ${py.toFixed(1)}`);
     }
-    segments.push(
-      `L ${(chiStartX + chiPlotWidth).toFixed(1)} ${chiPlotBaseY} Z`,
-    );
-    return segments.join(" ");
+    segs.push(`L ${eX.toFixed(1)} ${chiPlotBaseY} Z`);
+    return segs.join(" ");
+  };
+
+  // 多级置信区间阴影路径 (接受域 / 95%拒绝域 / 99%拒绝域 / 99.9%极显著拒绝域)
+  const acceptAreaPath = useMemo(() => {
+    if (studyMode !== "independence") return "";
+    return generateChiShadePath(0.08, 3.841, 40);
+  }, [studyMode, chiPlotWidth]);
+
+  const p95AreaPath = useMemo(() => {
+    if (studyMode !== "independence") return "";
+    return generateChiShadePath(3.841, 6.635, 25);
+  }, [studyMode, chiPlotWidth]);
+
+  const p99AreaPath = useMemo(() => {
+    if (studyMode !== "independence") return "";
+    return generateChiShadePath(6.635, 10.828, 25);
+  }, [studyMode, chiPlotWidth]);
+
+  const p999AreaPath = useMemo(() => {
+    if (studyMode !== "independence") return "";
+    return generateChiShadePath(10.828, maxChi, 25);
   }, [studyMode, chiPlotWidth]);
 
   // 处理拖拽散点
@@ -545,85 +567,104 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
   const deltaP = Math.abs(ratioA_B - ratioNotA_B);
 
   // 下半部分卡方分布与数轴几何参数
-  const chiAxisY = 540;
+  const chiAxisY = 535;
   const isChiOverflow = indResult.chiSquare > maxChi;
   const currChiX = getChiX(indResult.chiSquare);
-  // 浮动标牌水平中心安全钳位 (卡片宽 170px，半宽 85px)
+  // 浮动标牌水平中心安全钳位 (卡片宽 210px，半宽 105px)
   const cardCenterX = isChiOverflow
-    ? chiEndX - 90
-    : Math.max(chiStartX + 85, Math.min(chiEndX - 85, currChiX));
+    ? chiEndX - 110
+    : Math.max(chiStartX + 105, Math.min(chiEndX - 105, currChiX));
+
+  const minExpected = Math.min(
+    indResult.expected.eA,
+    indResult.expected.eB,
+    indResult.expected.eC,
+    indResult.expected.eD,
+  );
+  const isLargeSampleValid = totalN >= 40 && minExpected >= 5;
 
   return (
     <g className="paired-data-scene-independence" transform="translate(0, 0)">
       {/* 背景主卡片 */}
       <rect
-        x={15}
-        y={10}
-        width={810}
-        height={630}
+        x={12}
+        y={8}
+        width={816}
+        height={634}
         rx={12}
         fill={CANVAS_COLORS.gridSubtle}
         stroke={CANVAS_COLORS.grid}
         strokeWidth={1}
       />
 
-      {/* 顶部主标题与核心计算公式胶囊栏 */}
-      <g transform="translate(0, 30)">
+      {/* 顶部主标题与核心代入计算公式胶囊栏 */}
+      <g transform="translate(0, 24)">
         <text
-          x={30}
-          y={4}
-          fontSize={fontScale(15)}
+          x={25}
+          y={14}
+          fontSize={fontScale(14)}
           fontWeight="bold"
           fill={CANVAS_COLORS.labelText}
         >
           2 × 2 列联表独立性检验实验室
         </text>
-
-        {/* 顶部右侧公式胶囊 */}
-        <rect
-          x={360}
-          y={-14}
-          width={445}
-          height={28}
-          rx={14}
-          fill={CANVAS_COLORS.white}
-          stroke={CANVAS_COLORS.grid}
-          strokeWidth={1}
-        />
         <text
-          x={582}
-          y={4}
-          textAnchor="middle"
-          fontSize={fontScale(10.5)}
-          fill={MATH_COLORS.paramPrimary}
-          fontWeight="bold"
+          x={240}
+          y={14}
+          fontSize={fontScale(9.5)}
+          fill={CANVAS_COLORS.labelTextLight}
         >
-          χ² = n(ad - bc)² / [(a+b)(c+d)(a+c)(b+d)] ={" "}
-          {indResult.chiSquare.toFixed(3)}
-        </text>
-      </g>
-
-      {/* ========================================================================= */}
-      {/* 模块 1：左上区 —— 2×2 列联表双层矩阵 (四格表 + 边际合计 + 期望频数 E) */}
-      {/* ========================================================================= */}
-      <g transform="translate(30, 52)">
-        <text
-          x={5}
-          y={12}
-          fontSize={fontScale(12)}
-          fontWeight="bold"
-          fill={MATH_COLORS.paramPrimary}
-        >
-          【2 × 2 列联表四格矩阵 (观测频数 O 与 期望频数 E)】
+          (人教A版选择性必修三 · 统计推断)
         </text>
 
-        {/* 表格外框卡片 */}
-        <g transform="translate(0, 20)">
+        {/* 顶部右侧代入公式胶囊 */}
+        <g transform="translate(420, -6)">
           <rect
             x={0}
             y={0}
-            width={375}
-            height={180}
+            width={395}
+            height={28}
+            rx={6}
+            fill={CANVAS_COLORS.white}
+            stroke={CANVAS_COLORS.grid}
+            strokeWidth={1}
+            filter="drop-shadow(0 1px 3px rgba(0,0,0,0.04))"
+          />
+          <text
+            x={197}
+            y={18}
+            textAnchor="middle"
+            fontSize={fontScale(10)}
+            fill={MATH_COLORS.paramPrimary}
+            fontWeight="bold"
+          >
+            χ² = n(ad - bc)² / [(a+b)(c+d)(a+c)(b+d)] ={" "}
+            {indResult.chiSquare.toFixed(3)}
+          </text>
+        </g>
+      </g>
+
+      {/* ========================================================================= */}
+      {/* 模块 1：左上区 —— 2×2 列联表四格矩阵 (四格表 + 边际合计 + 期望频数 E) */}
+      {/* ========================================================================= */}
+      <g transform="translate(25, 50)">
+        <text
+          x={4}
+          y={11}
+          fontSize={fontScale(11.5)}
+          fontWeight="bold"
+          fill={MATH_COLORS.paramPrimary}
+        >
+          【2 × 2 列联表 (观测频数 O 与 理论期望频数 E)】
+        </text>
+
+        {/* 表格外框卡片 */}
+        <g transform="translate(0, 18)">
+          <rect
+            x={0}
+            y={0}
+            width={385}
+            height={148}
             rx={8}
             fill={CANVAS_COLORS.white}
             stroke={CANVAS_COLORS.grid}
@@ -633,90 +674,90 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           {/* 表头横纵分割线 */}
           <line
             x1={0}
-            y1={32}
-            x2={375}
-            y2={32}
+            y1={28}
+            x2={385}
+            y2={28}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
           />
           <line
             x1={0}
-            y1={81}
-            x2={375}
-            y2={81}
+            y1={68}
+            x2={385}
+            y2={68}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
           />
           <line
             x1={0}
-            y1={130}
-            x2={375}
-            y2={130}
+            y1={108}
+            x2={385}
+            y2={108}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
           />
 
           <line
-            x1={95}
+            x1={96}
             y1={0}
-            x2={95}
-            y2={180}
+            x2={96}
+            y2={148}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
           />
           <line
-            x1={188}
+            x1={192}
             y1={0}
-            x2={188}
-            y2={180}
+            x2={192}
+            y2={148}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
           />
           <line
-            x1={281}
+            x1={288}
             y1={0}
-            x2={281}
-            y2={180}
+            x2={288}
+            y2={148}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
           />
 
           {/* 列表头 */}
           <text
-            x={47}
-            y={21}
+            x={48}
+            y={18}
             textAnchor="middle"
-            fontSize={fontScale(10)}
+            fontSize={fontScale(9.5)}
             fill={CANVAS_COLORS.labelTextLight}
             fontWeight="bold"
           >
-            分类指标
+            分类变量 X \ Y
           </text>
           <text
-            x={141}
-            y={21}
+            x={144}
+            y={18}
             textAnchor="middle"
-            fontSize={labelB.length > 4 ? fontScale(9.5) : fontScale(11)}
+            fontSize={labelB.length > 4 ? fontScale(9.5) : fontScale(10.5)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
             {labelB}
           </text>
           <text
-            x={234}
-            y={21}
+            x={240}
+            y={18}
             textAnchor="middle"
-            fontSize={labelNotB.length > 4 ? fontScale(9.5) : fontScale(11)}
+            fontSize={labelNotB.length > 4 ? fontScale(9.5) : fontScale(10.5)}
             fill={CANVAS_COLORS.labelTextLight}
             fontWeight="bold"
           >
             {labelNotB}
           </text>
           <text
-            x={328}
-            y={21}
+            x={336}
+            y={18}
             textAnchor="middle"
-            fontSize={fontScale(10.5)}
+            fontSize={fontScale(10)}
             fill={CANVAS_COLORS.labelText}
             fontWeight="bold"
           >
@@ -725,10 +766,10 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
 
           {/* 行 1: labelA */}
           <text
-            x={47}
-            y={60}
+            x={48}
+            y={52}
             textAnchor="middle"
-            fontSize={labelA.length > 4 ? fontScale(9.5) : fontScale(11)}
+            fontSize={labelA.length > 4 ? fontScale(9) : fontScale(10.5)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
@@ -737,68 +778,68 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
 
           {/* 格 1 (a) */}
           <rect
-            x={96}
-            y={33}
-            width={91}
-            height={47}
+            x={97}
+            y={29}
+            width={94}
+            height={38}
             fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
           />
           <text
-            x={141}
-            y={54}
+            x={144}
+            y={46}
             textAnchor="middle"
-            fontSize={fontScale(14)}
+            fontSize={fontScale(13.5)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
             a = {effectiveA}
           </text>
           <text
-            x={141}
-            y={70}
+            x={144}
+            y={61}
             textAnchor="middle"
             fontSize={fontScale(8.5)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            E={indResult.expected.eA.toFixed(1)} | D=
-            {indResult.contributions.dA.toFixed(2)}
+            ({(ratioA_B * 100).toFixed(1)}%) · 期望E=
+            {indResult.expected.eA.toFixed(1)}
           </text>
 
           {/* 格 2 (b) */}
           <rect
-            x={189}
-            y={33}
-            width={91}
-            height={47}
+            x={193}
+            y={29}
+            width={94}
+            height={38}
             fill={withAlpha(MATH_COLORS.paramSecondary, 0.05)}
           />
           <text
-            x={234}
-            y={54}
+            x={240}
+            y={46}
             textAnchor="middle"
-            fontSize={fontScale(14)}
+            fontSize={fontScale(13.5)}
             fill={MATH_COLORS.paramSecondary}
             fontWeight="bold"
           >
             b = {effectiveB}
           </text>
           <text
-            x={234}
-            y={70}
+            x={240}
+            y={61}
             textAnchor="middle"
             fontSize={fontScale(8.5)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            E={indResult.expected.eB.toFixed(1)} | D=
-            {indResult.contributions.dB.toFixed(2)}
+            ({(ratioA_NotB * 100).toFixed(1)}%) · 期望E=
+            {indResult.expected.eB.toFixed(1)}
           </text>
 
           {/* 行 1 合计 */}
           <text
-            x={328}
-            y={60}
+            x={336}
+            y={53}
             textAnchor="middle"
-            fontSize={fontScale(12.5)}
+            fontSize={fontScale(12)}
             fill={CANVAS_COLORS.labelText}
             fontWeight="bold"
           >
@@ -807,10 +848,10 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
 
           {/* 行 2: labelNotA */}
           <text
-            x={47}
-            y={109}
+            x={48}
+            y={92}
             textAnchor="middle"
-            fontSize={labelNotA.length > 4 ? fontScale(9.5) : fontScale(11)}
+            fontSize={labelNotA.length > 4 ? fontScale(9) : fontScale(10.5)}
             fill={MATH_COLORS.paramSecondary}
             fontWeight="bold"
           >
@@ -819,68 +860,68 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
 
           {/* 格 3 (c) */}
           <rect
-            x={96}
-            y={82}
-            width={91}
-            height={47}
+            x={97}
+            y={69}
+            width={94}
+            height={38}
             fill={withAlpha(MATH_COLORS.paramTertiary, 0.06)}
           />
           <text
-            x={141}
-            y={103}
+            x={144}
+            y={86}
             textAnchor="middle"
-            fontSize={fontScale(14)}
+            fontSize={fontScale(13.5)}
             fill={MATH_COLORS.paramTertiary}
             fontWeight="bold"
           >
             c = {effectiveC}
           </text>
           <text
-            x={141}
-            y={119}
+            x={144}
+            y={101}
             textAnchor="middle"
             fontSize={fontScale(8.5)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            E={indResult.expected.eC.toFixed(1)} | D=
-            {indResult.contributions.dC.toFixed(2)}
+            ({(ratioNotA_B * 100).toFixed(1)}%) · 期望E=
+            {indResult.expected.eC.toFixed(1)}
           </text>
 
           {/* 格 4 (d) */}
           <rect
-            x={189}
-            y={82}
-            width={91}
-            height={47}
+            x={193}
+            y={69}
+            width={94}
+            height={38}
             fill={withAlpha(CANVAS_COLORS.labelTextLight, 0.06)}
           />
           <text
-            x={234}
-            y={103}
+            x={240}
+            y={86}
             textAnchor="middle"
-            fontSize={fontScale(14)}
+            fontSize={fontScale(13.5)}
             fill={CANVAS_COLORS.labelText}
             fontWeight="bold"
           >
             d = {effectiveD}
           </text>
           <text
-            x={234}
-            y={119}
+            x={240}
+            y={101}
             textAnchor="middle"
             fontSize={fontScale(8.5)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            E={indResult.expected.eD.toFixed(1)} | D=
-            {indResult.contributions.dD.toFixed(2)}
+            ({(ratioNotA_NotB * 100).toFixed(1)}%) · 期望E=
+            {indResult.expected.eD.toFixed(1)}
           </text>
 
           {/* 行 2 合计 */}
           <text
-            x={328}
-            y={109}
+            x={336}
+            y={93}
             textAnchor="middle"
-            fontSize={fontScale(12.5)}
+            fontSize={fontScale(12)}
             fill={CANVAS_COLORS.labelText}
             fontWeight="bold"
           >
@@ -889,30 +930,30 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
 
           {/* 列合计行 */}
           <text
-            x={47}
-            y={158}
+            x={48}
+            y={131}
             textAnchor="middle"
-            fontSize={fontScale(10.5)}
+            fontSize={fontScale(10)}
             fill={CANVAS_COLORS.labelText}
             fontWeight="bold"
           >
             列合计
           </text>
           <text
-            x={141}
-            y={158}
+            x={144}
+            y={131}
             textAnchor="middle"
-            fontSize={fontScale(12.5)}
+            fontSize={fontScale(12)}
             fill={CANVAS_COLORS.labelText}
             fontWeight="bold"
           >
             {col1Total}
           </text>
           <text
-            x={234}
-            y={158}
+            x={240}
+            y={131}
             textAnchor="middle"
-            fontSize={fontScale(12.5)}
+            fontSize={fontScale(12)}
             fill={CANVAS_COLORS.labelText}
             fontWeight="bold"
           >
@@ -921,56 +962,97 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
 
           {/* 总样本数 n */}
           <rect
-            x={282}
-            y={131}
-            width={92}
-            height={48}
+            x={289}
+            y={109}
+            width={95}
+            height={38}
             fill={withAlpha(MATH_COLORS.paramPrimary, 0.12)}
             rx={4}
           />
           <text
-            x={328}
-            y={151}
+            x={336}
+            y={124}
             textAnchor="middle"
-            fontSize={fontScale(9.5)}
+            fontSize={fontScale(8.5)}
             fill={MATH_COLORS.paramPrimary}
           >
             总样本量
           </text>
           <text
-            x={328}
-            y={168}
+            x={336}
+            y={139}
             textAnchor="middle"
-            fontSize={fontScale(13)}
+            fontSize={fontScale(12.5)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
             n = {totalN}
           </text>
         </g>
+
+        {/* 底部对角乘积对比与大样本判定条 */}
+        <g transform="translate(0, 172)">
+          <rect
+            x={0}
+            y={0}
+            width={385}
+            height={24}
+            rx={5}
+            fill={CANVAS_COLORS.white}
+            stroke={CANVAS_COLORS.grid}
+            strokeWidth={1}
+          />
+          <text
+            x={10}
+            y={16}
+            fontSize={fontScale(9)}
+            fill={CANVAS_COLORS.labelText}
+            fontWeight="bold"
+          >
+            交叉积: ad = {effectiveA * effectiveD}, bc ={" "}
+            {effectiveB * effectiveC} ⇒ |ad-bc| ={" "}
+            {Math.abs(effectiveA * effectiveD - effectiveB * effectiveC)}
+          </text>
+          <text
+            x={375}
+            y={16}
+            textAnchor="end"
+            fontSize={fontScale(8.5)}
+            fill={
+              isLargeSampleValid
+                ? MATH_COLORS.paramTertiary
+                : MATH_COLORS.paramSecondary
+            }
+            fontWeight="bold"
+          >
+            {isLargeSampleValid
+              ? "✓ 大样本条件满足 (n≥40, E≥5)"
+              : "⚠ 样本偏小或E<5 (宜参考Yates)"}
+          </text>
+        </g>
       </g>
 
       {/* ========================================================================= */}
-      {/* 模块 2：右上区 —— 条件频率等高条形图 (含水平基准落差线 Δp) */}
+      {/* 模块 2：右上区 —— 条件频率等高条形图 (含水平基准落差线 Δp 与直观评价) */}
       {/* ========================================================================= */}
-      <g transform="translate(430, 52)">
+      <g transform="translate(430, 50)">
         <text
-          x={5}
-          y={12}
-          fontSize={fontScale(12)}
+          x={4}
+          y={11}
+          fontSize={fontScale(11.5)}
           fontWeight="bold"
           fill={MATH_COLORS.paramPrimary}
         >
-          【等高条形图与条件频率落差 Δp】
+          【等高条形图 · 条件频率差异分析】
         </text>
 
-        {/* 等高图外框 */}
-        <g transform="translate(0, 20)">
+        {/* 等高图外框卡片 */}
+        <g transform="translate(0, 18)">
           <rect
             x={0}
             y={0}
             width={380}
-            height={180}
+            height={178}
             rx={8}
             fill={CANVAS_COLORS.white}
             stroke={CANVAS_COLORS.grid}
@@ -978,12 +1060,12 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           />
 
           {/* 柱 1: 类 A */}
-          <g transform={`translate(${50}, 28)`}>
+          <g transform={`translate(${45}, 24)`}>
             <text
-              x={45}
-              y={-8}
+              x={40}
+              y={-7}
               textAnchor="middle"
-              fontSize={fontScale(10)}
+              fontSize={fontScale(9.5)}
               fontWeight="bold"
               fill={MATH_COLORS.paramPrimary}
             >
@@ -994,40 +1076,40 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             <rect
               x={0}
               y={0}
-              width={90}
-              height={110 * ratioA_B}
+              width={80}
+              height={108 * ratioA_B}
               fill={MATH_COLORS.paramPrimary}
               rx={3}
-              opacity={0.88}
+              opacity={0.9}
             />
-            {ratioA_B > 0.15 && (
+            {ratioA_B > 0.12 && (
               <text
-                x={45}
-                y={55 * ratioA_B + 4}
+                x={40}
+                y={54 * ratioA_B + 4}
                 textAnchor="middle"
                 fill={CANVAS_COLORS.white}
-                fontSize={fontScale(9.5)}
+                fontSize={fontScale(9)}
                 fontWeight="bold"
               >
-                {(ratioA_B * 100).toFixed(1)}%
+                p₁={(ratioA_B * 100).toFixed(1)}%
               </text>
             )}
             {/* 下部 非B */}
             <rect
               x={0}
-              y={110 * ratioA_B}
-              width={90}
-              height={110 * ratioA_NotB}
-              fill={withAlpha(MATH_COLORS.paramPrimary, 0.35)}
+              y={108 * ratioA_B}
+              width={80}
+              height={108 * ratioA_NotB}
+              fill={withAlpha(MATH_COLORS.paramPrimary, 0.22)}
               rx={3}
             />
-            {ratioA_NotB > 0.15 && (
+            {ratioA_NotB > 0.12 && (
               <text
-                x={45}
-                y={110 * ratioA_B + 55 * ratioA_NotB + 4}
+                x={40}
+                y={108 * ratioA_B + 54 * ratioA_NotB + 4}
                 textAnchor="middle"
                 fill={CANVAS_COLORS.labelText}
-                fontSize={fontScale(9.5)}
+                fontSize={fontScale(9)}
                 fontWeight="bold"
               >
                 {(ratioA_NotB * 100).toFixed(1)}%
@@ -1036,56 +1118,56 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           </g>
 
           {/* 柱 2: 类 非A */}
-          <g transform={`translate(${240}, 28)`}>
+          <g transform={`translate(${255}, 24)`}>
             <text
-              x={45}
-              y={-8}
+              x={40}
+              y={-7}
               textAnchor="middle"
-              fontSize={fontScale(10)}
+              fontSize={fontScale(9.5)}
               fontWeight="bold"
-              fill={MATH_COLORS.paramSecondary}
+              fill={CANVAS_COLORS.labelText}
             >
               {labelNotA.length > 5 ? `${labelNotA.slice(0, 4)}..` : labelNotA}{" "}
               (n₂={row2Total})
             </text>
-            {/* 上部 B */}
+            {/* 上部 B (使用与柱1相同的事件主色，确保视觉对比严格对应事件B的发生比例) */}
             <rect
               x={0}
               y={0}
-              width={90}
-              height={110 * ratioNotA_B}
-              fill={MATH_COLORS.paramSecondary}
+              width={80}
+              height={108 * ratioNotA_B}
+              fill={MATH_COLORS.paramPrimary}
               rx={3}
-              opacity={0.88}
+              opacity={0.9}
             />
-            {ratioNotA_B > 0.15 && (
+            {ratioNotA_B > 0.12 && (
               <text
-                x={45}
-                y={55 * ratioNotA_B + 4}
+                x={40}
+                y={54 * ratioNotA_B + 4}
                 textAnchor="middle"
                 fill={CANVAS_COLORS.white}
-                fontSize={fontScale(9.5)}
+                fontSize={fontScale(9)}
                 fontWeight="bold"
               >
-                {(ratioNotA_B * 100).toFixed(1)}%
+                p₂={(ratioNotA_B * 100).toFixed(1)}%
               </text>
             )}
             {/* 下部 非B */}
             <rect
               x={0}
-              y={110 * ratioNotA_B}
-              width={90}
-              height={110 * ratioNotA_NotB}
-              fill={withAlpha(MATH_COLORS.paramSecondary, 0.35)}
+              y={108 * ratioNotA_B}
+              width={80}
+              height={108 * ratioNotA_NotB}
+              fill={withAlpha(MATH_COLORS.paramPrimary, 0.22)}
               rx={3}
             />
-            {ratioNotA_NotB > 0.15 && (
+            {ratioNotA_NotB > 0.12 && (
               <text
-                x={45}
-                y={110 * ratioNotA_B + 55 * ratioNotA_NotB + 4}
+                x={40}
+                y={108 * ratioNotA_B + 54 * ratioNotA_NotB + 4}
                 textAnchor="middle"
                 fill={CANVAS_COLORS.labelText}
-                fontSize={fontScale(9.5)}
+                fontSize={fontScale(9)}
                 fontWeight="bold"
               >
                 {(ratioNotA_NotB * 100).toFixed(1)}%
@@ -1093,65 +1175,67 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             )}
           </g>
 
-          {/* 水平对比基准虚线 (从柱1分割点延伸到柱2分割点) */}
+          {/* 水平对比基准虚线与落差指示 */}
           {row1Total > 0 && row2Total > 0 && (
             <g>
               <line
-                x1={140}
-                y1={28 + 110 * ratioA_B}
-                x2={240}
-                y2={28 + 110 * ratioA_B}
+                x1={125}
+                y1={24 + 108 * ratioA_B}
+                x2={255}
+                y2={24 + 108 * ratioA_B}
                 stroke={MATH_COLORS.paramPrimary}
                 strokeDasharray="3 3"
-                strokeWidth={1.5}
+                strokeWidth={1.2}
               />
               <line
-                x1={140}
-                y1={28 + 110 * ratioNotA_B}
-                x2={240}
-                y2={28 + 110 * ratioNotA_B}
-                stroke={MATH_COLORS.paramSecondary}
+                x1={125}
+                y1={24 + 108 * ratioNotA_B}
+                x2={255}
+                y2={24 + 108 * ratioNotA_B}
+                stroke={CANVAS_COLORS.labelTextLight}
                 strokeDasharray="3 3"
-                strokeWidth={1.5}
+                strokeWidth={1.2}
               />
+
               {/* 落差指示标牌 */}
-              {deltaP > 0.02 && (
+              {deltaP > 0.01 && (
                 <g>
                   <line
                     x1={190}
-                    y1={28 + 110 * ratioA_B}
+                    y1={24 + 108 * ratioA_B}
                     x2={190}
-                    y2={28 + 110 * ratioNotA_B}
+                    y2={24 + 108 * ratioNotA_B}
                     stroke={MATH_COLORS.paramTertiary}
                     strokeWidth={2}
                   />
                   <rect
-                    x={158}
+                    x={145}
                     y={
-                      28 +
-                      110 * Math.min(ratioA_B, ratioNotA_B) +
-                      (110 * deltaP) / 2 -
-                      9
+                      24 +
+                      108 * Math.min(ratioA_B, ratioNotA_B) +
+                      (108 * deltaP) / 2 -
+                      12
                     }
-                    width={64}
-                    height={18}
-                    rx={4}
+                    width={90}
+                    height={24}
+                    rx={5}
                     fill={MATH_COLORS.paramTertiary}
+                    filter="drop-shadow(0 1px 3px rgba(0,0,0,0.12))"
                   />
                   <text
                     x={190}
                     y={
-                      28 +
-                      110 * Math.min(ratioA_B, ratioNotA_B) +
-                      (110 * deltaP) / 2 +
-                      3.5
+                      24 +
+                      108 * Math.min(ratioA_B, ratioNotA_B) +
+                      (108 * deltaP) / 2 +
+                      3
                     }
                     textAnchor="middle"
                     fill={CANVAS_COLORS.white}
                     fontSize={fontScale(8.5)}
                     fontWeight="bold"
                   >
-                    落差:{(deltaP * 100).toFixed(1)}%
+                    落差|p₁-p₂|: {(deltaP * 100).toFixed(1)}%
                   </text>
                 </g>
               )}
@@ -1159,103 +1243,125 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           )}
 
           {/* 底部图例 */}
-          <g transform="translate(115, 160)">
+          <g transform="translate(100, 155)">
             <rect
               x={0}
               y={0}
-              width={12}
-              height={8}
+              width={14}
+              height={9}
               fill={MATH_COLORS.paramPrimary}
-              rx={1}
+              rx={2}
             />
             <text
-              x={16}
+              x={18}
               y={8}
-              fontSize={fontScale(9.5)}
-              fill={CANVAS_COLORS.labelTextLight}
+              fontSize={fontScale(9)}
+              fill={CANVAS_COLORS.labelText}
+              fontWeight="bold"
             >
-              {labelB}
+              具有属性: {labelB}
             </text>
 
             <rect
-              x={85}
+              x={110}
               y={0}
-              width={12}
-              height={8}
-              fill={withAlpha(MATH_COLORS.paramPrimary, 0.35)}
-              rx={1}
+              width={14}
+              height={9}
+              fill={withAlpha(MATH_COLORS.paramPrimary, 0.22)}
+              rx={2}
             />
             <text
-              x={101}
+              x={128}
               y={8}
-              fontSize={fontScale(9.5)}
+              fontSize={fontScale(9)}
               fill={CANVAS_COLORS.labelTextLight}
             >
-              {labelNotB}
+              无属性: {labelNotB}
             </text>
           </g>
         </g>
       </g>
 
       {/* ========================================================================= */}
-      {/* 模块 3：下半区 —— χ²(1) 连续概率分布曲线与高考决策临界标尺 */}
+      {/* 模块 3：下半区 —— χ²(1) 连续概率分布曲线 · 多级拒绝域 · 高考决策临界标尺 */}
       {/* ========================================================================= */}
-      <g transform="translate(0, 10)">
+      <g transform="translate(0, 5)">
         <text
-          x={35}
+          x={29}
           y={268}
-          fontSize={fontScale(12)}
+          fontSize={fontScale(11.5)}
           fontWeight="bold"
           fill={MATH_COLORS.paramPrimary}
         >
-          【χ² (自由度 df=1) 概率分布曲线 · 拒绝域面积 · 高考临界值标尺】
+          【χ² (自由度 df=1) 连续概率分布曲线 · 显著性拒绝域面积 ·
+          高考临界决策标尺】
         </text>
 
         {/* 背景卡片 */}
         <rect
-          x={30}
-          y={278}
-          width={780}
-          height={330}
+          x={25}
+          y={276}
+          width={785}
+          height={340}
           rx={8}
           fill={CANVAS_COLORS.white}
           stroke={CANVAS_COLORS.grid}
           strokeWidth={1}
         />
 
-        {/* 拒绝域背景阴影 (α = 0.05 对应 χ² ≥ 3.841 尾部区域) */}
+        {/* 多级拒绝域分段着色阴影 */}
+        {/* 1. 接受域阴影 (0.08 ~ 3.841) */}
         <path
-          d={rejectAreaPath}
+          d={acceptAreaPath}
+          fill={withAlpha(CANVAS_COLORS.labelTextLight, 0.08)}
+        />
+
+        {/* 2. 95% 拒绝域 (3.841 ~ 6.635, α ≤ 0.05) */}
+        <path
+          d={p95AreaPath}
           fill={withAlpha(MATH_COLORS.paramTertiary, 0.22)}
         />
 
-        {/* χ²(1) 连续密度曲线 */}
+        {/* 3. 99% 拒绝域 (6.635 ~ 10.828, α ≤ 0.01) */}
+        <path
+          d={p99AreaPath}
+          fill={withAlpha(MATH_COLORS.paramTertiary, 0.38)}
+        />
+
+        {/* 4. 99.9% 极显著拒绝域 (10.828 ~ 15, α ≤ 0.001) */}
+        <path
+          d={p999AreaPath}
+          fill={withAlpha(MATH_COLORS.paramTertiary, 0.55)}
+        />
+
+        {/* χ²(1) 连续密度曲线主体 */}
         <path
           d={chiCurvePath}
           fill="none"
           stroke={MATH_COLORS.paramPrimary}
-          strokeWidth={2.5}
+          strokeWidth={2.4}
         />
 
         {/* 曲线左上侧公式与说明 */}
         <text
-          x={chiStartX + 10}
-          y={305}
-          fontSize={fontScale(10)}
+          x={chiStartX + 8}
+          y={302}
+          fontSize={fontScale(9.5)}
           fill={CANVAS_COLORS.labelTextLight}
           fontWeight="bold"
         >
-          概率密度曲线 f(x) = (2πx)⁻¹/² · e⁻ˣ/²
+          概率密度函数 f(x) = (2πx)⁻¹/² · e⁻ˣ/²
         </text>
         <text
-          x={chiEndX - 10}
-          y={305}
+          x={chiEndX - 8}
+          y={302}
           textAnchor="end"
-          fontSize={fontScale(10)}
+          fontSize={fontScale(9.5)}
           fill={MATH_COLORS.paramTertiary}
           fontWeight="bold"
         >
-          绿色阴影为拒绝域: P(χ² ≥ 3.841) = 0.05 (犯错概率 ≤ 5%)
+          阴影区为拒绝域: P(χ² ≥ 3.841) = 0.05 · P(χ² ≥ 6.635) = 0.01 · P(χ² ≥
+          10.828) = 0.001
         </text>
 
         {/* 主数轴基线 */}
@@ -1268,7 +1374,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           strokeWidth={2}
         />
         <text
-          x={chiEndX + 10}
+          x={chiEndX + 12}
           y={chiAxisY + 4}
           fontSize={fontScale(11)}
           fill={CANVAS_COLORS.labelText}
@@ -1277,25 +1383,36 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           χ²
         </text>
 
-        {/* 高考关键临界值刻度标尺与垂直投影虚线 (通过错落垂直高度彻底避免横向碰撞) */}
+        {/* 高考关键临界值刻度标尺与垂直投影虚线 */}
         {[
-          { val: 0, label: "0", alpha: "接受 H₀", alphaOffsetY: 26 },
-          { val: 2.706, label: "2.706", alpha: "α=0.10", alphaOffsetY: 26 },
+          { val: 0, label: "0", alpha: "接受 H₀ (无关联)", alphaOffsetY: 24 },
+          {
+            val: 2.706,
+            label: "2.706",
+            alpha: "α=0.10 (90%)",
+            alphaOffsetY: 24,
+          },
           {
             val: 3.841,
             label: "3.841",
-            alpha: "α=0.05 (95%)",
-            alphaOffsetY: 38,
+            alpha: "α=0.05 (95%基准)",
+            alphaOffsetY: 37,
             isKey: true,
           },
           {
             val: 6.635,
             label: "6.635",
-            alpha: "α=0.01 (99%)",
-            alphaOffsetY: 26,
+            alpha: "α=0.01 (99%高频)",
+            alphaOffsetY: 24,
             isKey: true,
           },
-          { val: 10.828, label: "10.828", alpha: "α=0.001", alphaOffsetY: 26 },
+          {
+            val: 10.828,
+            label: "10.828",
+            alpha: "α=0.001 (99.9%)",
+            alphaOffsetY: 37,
+            isKey: true,
+          },
         ].map((tick) => {
           const tx = getChiX(tick.val);
           const pdfVal = getChiSquare1Pdf(tick.val);
@@ -1312,7 +1429,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
                   stroke={
                     tick.isKey ? MATH_COLORS.paramTertiary : CANVAS_COLORS.grid
                   }
-                  strokeWidth={tick.isKey ? 1.5 : 1}
+                  strokeWidth={tick.isKey ? 1.4 : 1}
                   strokeDasharray="3 3"
                 />
               )}
@@ -1340,7 +1457,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
               >
                 {tick.label}
               </text>
-              {/* 显著性水平 α (高低错落避免重叠) */}
+              {/* 显著性水平 α */}
               <text
                 x={tx}
                 y={chiAxisY + tick.alphaOffsetY}
@@ -1359,9 +1476,9 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
           );
         })}
 
-        {/* 动态计算出的当前 χ² 观测值指针与浮动标牌 (安全停靠与垂直对齐) */}
+        {/* 动态计算出的当前 χ² 观测值指针与浮动标牌 */}
         <g>
-          {/* 指针箭头 (若超限停靠在最右端) */}
+          {/* 指针箭头 (若超限停靠在最右端并带折断指示) */}
           <polygon
             points={`${currChiX},${chiAxisY - 6} ${currChiX - 6},${chiAxisY - 16} ${currChiX + 6},${chiAxisY - 16}`}
             fill={
@@ -1384,44 +1501,78 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             strokeWidth={1.5}
             strokeDasharray="2 2"
           />
+
+          {/* 超限标尺折断标识 */}
+          {isChiOverflow && (
+            <g transform={`translate(${chiEndX - 15}, ${chiAxisY - 8})`}>
+              <line
+                x1={0}
+                y1={-6}
+                x2={6}
+                y2={6}
+                stroke={MATH_COLORS.paramPrimary}
+                strokeWidth={2}
+              />
+              <line
+                x1={4}
+                y1={-6}
+                x2={10}
+                y2={6}
+                stroke={MATH_COLORS.paramPrimary}
+                strokeWidth={2}
+              />
+              <text
+                x={14}
+                y={-6}
+                fontSize={fontScale(8)}
+                fill={MATH_COLORS.paramPrimary}
+                fontWeight="bold"
+              >
+                ≫
+              </text>
+            </g>
+          )}
+
           {/* 浮动结果胶囊卡片 */}
-          <g transform={`translate(${cardCenterX}, ${chiAxisY - 100})`}>
+          <g transform={`translate(${cardCenterX}, ${chiAxisY - 105})`}>
             <rect
-              x={-85}
-              y={-32}
-              width={170}
-              height={32}
+              x={-105}
+              y={-34}
+              width={210}
+              height={34}
               rx={6}
               fill={
                 indResult.p95
                   ? MATH_COLORS.paramPrimary
                   : MATH_COLORS.paramTertiary
               }
-              filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.15))"
+              filter="drop-shadow(0px 2px 5px rgba(0,0,0,0.18))"
             />
             <text
               x={0}
-              y={-16}
+              y={-18}
               textAnchor="middle"
               fill={CANVAS_COLORS.white}
               fontSize={fontScale(10.5)}
               fontWeight="bold"
             >
-              当前 χ² = {indResult.chiSquare.toFixed(3)}{" "}
-              {isChiOverflow ? "(≫ 15)" : ""}
+              当前观测值 χ² = {indResult.chiSquare.toFixed(3)}{" "}
+              {isChiOverflow ? "(≫ 15 极显著)" : ""}
             </text>
             <text
               x={0}
-              y={-3}
+              y={-4}
               textAnchor="middle"
-              fill={withAlpha(CANVAS_COLORS.white, 0.92)}
+              fill={withAlpha(CANVAS_COLORS.white, 0.94)}
               fontSize={fontScale(8.5)}
             >
-              {indResult.p99
-                ? "✓ 超99%把握关联 (拒绝H₀)"
-                : indResult.p95
-                  ? "✓ 超95%把握关联 (拒绝H₀)"
-                  : "✗ 未达95%临界 (接受H₀)"}
+              {indResult.p999
+                ? "✓ 达 99.9% 把握关联 (拒绝 H₀, α=0.001)"
+                : indResult.p99
+                  ? "✓ 达 99% 把握关联 (拒绝 H₀, α=0.01)"
+                  : indResult.p95
+                    ? "✓ 达 95% 把握关联 (拒绝 H₀, α=0.05)"
+                    : "✗ 未达 95% 临界 (接受零假设 H₀, 无关联)"}
             </text>
           </g>
         </g>

@@ -132,15 +132,27 @@ export function IndependencePage() {
       });
   }, [params, activeTab, isFreeMode]);
 
+  const effectiveScaleMultiplier =
+    activeTab === "scale" ? (params.scaleMultiplier ?? 1) : 1;
+
   const mathData = useMemo(() => {
-    return buildMathQuantities("anim-paired-data", params, {
-      studyMode: "independence",
-      points: [],
-    });
-  }, [params]);
+    return buildMathQuantities(
+      "anim-paired-data",
+      {
+        ...params,
+        scaleMultiplier: effectiveScaleMultiplier,
+      },
+      {
+        studyMode: "independence",
+        indPresetKey,
+        activeTab,
+        points: [],
+      },
+    );
+  }, [params, effectiveScaleMultiplier, indPresetKey, activeTab]);
 
   const tipConfig = useMemo(() => {
-    const mult = activeTab === "scale" ? (params.scaleMultiplier ?? 1) : 1;
+    const mult = effectiveScaleMultiplier;
     if (indPresetKey === "free") {
       const a = (params.freqA ?? 85) * mult;
       const b = (params.freqB ?? 15) * mult;
@@ -167,7 +179,7 @@ export function IndependencePage() {
           : p.conditionDesc,
       question: p.questionDesc,
     };
-  }, [params, indPresetKey, activeTab]);
+  }, [params, indPresetKey, effectiveScaleMultiplier]);
 
   const presetGridItems = useMemo(() => {
     return [
@@ -283,7 +295,7 @@ export function IndependencePage() {
               labelNotA={currentPreset.labelNotA}
               labelB={currentPreset.labelB}
               labelNotB={currentPreset.labelNotB}
-              scaleMultiplier={params.scaleMultiplier ?? 1}
+              scaleMultiplier={effectiveScaleMultiplier}
               presetXName="x"
               presetYName="y"
               scale={scale}
