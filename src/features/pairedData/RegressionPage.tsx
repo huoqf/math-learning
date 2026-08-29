@@ -264,8 +264,7 @@ export function RegressionPage() {
   }, [fits, selectedModel]);
 
   const headerFormulaLatex = useMemo(() => {
-    if (!currentFit || !currentFit.isValid)
-      return "\\text{当前数据点不足或异常，无法拟合回归方程}";
+    if (!currentFit || !currentFit.isValid) return "y = f(x)";
     return `\\text{${currentFit.name}: } \\; ${currentFit.originalFormula} \\quad (R^2 = ${currentFit.rSquare.toFixed(3)}, \\; \\text{SSE} = ${currentFit.sse.toFixed(2)})`;
   }, [currentFit]);
 
@@ -306,27 +305,35 @@ export function RegressionPage() {
 
   // 左屏教学提示与题设导引 (说明初始条件与核心设问)
   const tipConfig = useMemo(() => {
+    const isFree = selectedScenarioKey === "free";
     const modelNameMap: Record<RegressionModelType, string> = {
       linear: "一元线性模型 $\\hat{y} = bx + a$",
-      exponential: "指数模型 $y = c e^{kx}$（令 $z = \\ln y$ 线性化）",
-      logarithmic: "对数模型 $y = a + b \\ln x$（令 $u = \\ln x$ 线性化）",
-      power: "幂函数模型 $y = c x^k$（令 $z = \\ln y, u = \\ln x$ 线性化）",
+      exponential: "指数模型 $y = c e^{kx}$（变量置换 $z = \\ln y$）",
+      logarithmic: "对数模型 $y = a + b \\ln x$（变量置换 $u = \\ln x$）",
+      power: "幂函数模型 $y = c x^k$（对数置换 $u = \\ln x, z = \\ln y$）",
       inverse:
-        "双曲线逆模型 $y = a + \\frac{b}{x}$（令 $u = \\frac{1}{x}$ 线性化）",
+        "双曲线模型 $y = a + \\frac{b}{x}$（倒数置换 $u = \\frac{1}{x}$）",
     };
 
-    const isFree = selectedScenarioKey === "free";
+    if (isFree) {
+      return {
+        variant: "primary" as const,
+        badge: "自主探究 · 自由拖拽散点",
+        condition: `在画布中自由拖拽散点 $P_1 \\sim P_5$，当前采用【${modelNameMap[selectedModel]}】。`,
+        question:
+          "通过最小二乘法求解拟合参数，观察相关系数 $r$、决定系数 $R^2$ 与残差平方和 $\\text{SSE}$ 的动态响应。",
+      };
+    }
+
     return {
-      variant: (selectedModel === "linear" ? "primary" : "warning") as
-        "primary" | "warning",
-      badge: isFree
-        ? "自主探究 · 自由拖拽散点"
-        : `高考例题 · ${currentPreset?.name ?? "成对数据分析"}`,
-      condition: isFree
-        ? `在画布中自由拖拽散点 $P_1 \\sim P_5$，当前聚焦 ${modelNameMap[selectedModel]}。`
-        : `成对观测样本 (${currentPreset?.xName ?? "x"}, ${currentPreset?.yName ?? "y"})，拟合模型设定为 ${modelNameMap[selectedModel]}。`,
+      variant:
+        selectedScenarioKey === "outlier"
+          ? ("warning" as const)
+          : ("primary" as const),
+      badge: `高考经典 · ${currentPreset?.name ?? "成对数据分析"}`,
+      condition: `成对观测样本：自变量【${currentPreset?.xName ?? "x"}】与因变量【${currentPreset?.yName ?? "y"}】共 $5$ 组实测数据，拟合模型为【${modelNameMap[selectedModel]}】。`,
       question:
-        "求解回归方程系数、相关系数 $r$、决定系数 $R^2$ 以及残差平方和 $\\sum e_i^2$ 最小化。",
+        "建立回归分析方程，评估相关系数 $r$、决定系数 $R^2$ 及残差平方和 $\\sum e_i^2$，检验拟合优度与预报价值。",
     };
   }, [selectedModel, currentPreset, selectedScenarioKey]);
 
@@ -367,35 +374,27 @@ export function RegressionPage() {
             />
           </LeftPanelSection>
 
-          {/* 第 2 层：高考典型情境 (SelectGrid 单列全宽，题设与模型一体化绑定) */}
+          {/* 第 2 层：高考典型情境 */}
           {analysisMode === "linear" ? (
             <LeftPanelSection title="典型考题与情境">
               <SelectGrid
-                columns={1}
+                columns={2}
                 items={[
                   {
                     key: "free",
                     label: "自由探索",
-                    formula: "\\text{自由拖拽 5 点探究}",
-                    fullWidth: true,
                   },
                   {
                     key: "ad_sales",
                     label: "广告支出与销售额",
-                    formula: "r = +0.98 \\; (\\text{强正相关})",
-                    fullWidth: true,
                   },
                   {
                     key: "temp_power",
                     label: "气温与用电量",
-                    formula: "r = -0.99 \\; (\\text{强负相关})",
-                    fullWidth: true,
                   },
                   {
                     key: "outlier",
                     label: "含异常干扰点",
-                    formula: "\\text{离群点杠杆效应检验}",
-                    fullWidth: true,
                   },
                 ]}
                 value={selectedScenarioKey}
@@ -405,31 +404,23 @@ export function RegressionPage() {
           ) : (
             <LeftPanelSection title="非线性考题与模型">
               <SelectGrid
-                columns={1}
+                columns={2}
                 items={[
                   {
                     key: "free",
-                    label: "自由探索 (自主切换模型)",
-                    formula: "\\text{拖拽散点与选模}",
-                    fullWidth: true,
+                    label: "自由探索",
                   },
                   {
                     key: "ev_growth",
-                    label: "新能源汽车销量增长",
-                    formula: "\\text{指数模型 } y = c e^{kx}",
-                    fullWidth: true,
+                    label: "新能源车销量增长",
                   },
                   {
                     key: "chip_rnd",
-                    label: "研发投入与技术产出",
-                    formula: "\\text{对数模型 } y = a+b\\ln x",
-                    fullWidth: true,
+                    label: "研发投入与产出",
                   },
                   {
                     key: "inverse_current",
-                    label: "物理电阻与电流强度",
-                    formula: "\\text{双曲线逆 } y = a+\\frac{b}{x}",
-                    fullWidth: true,
+                    label: "电阻与电流强度",
                   },
                 ]}
                 value={selectedScenarioKey}

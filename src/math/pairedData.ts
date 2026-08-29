@@ -778,7 +778,8 @@ export const REGRESSION_PRESETS = [
 export const INDEPENDENCE_PRESETS = [
   {
     id: "medicine",
-    name: "1. 医药研发：新药与常规疗法临床对照 (强显著关联)",
+    name: "医药研发：新药与常规疗法临床对照",
+    shortName: "医药临床试验",
     a: 85,
     b: 15,
     c: 40,
@@ -787,12 +788,15 @@ export const INDEPENDENCE_PRESETS = [
     labelNotA: "常规疗法组",
     labelB: "显著显效",
     labelNotB: "无明显改善",
-    contextDesc:
-      "某科研所进行新抗癌药临床双盲试验，检验用药方案与疗效是否有关联。",
+    conditionDesc:
+      "新药临床双盲试验：新药组 $100$ 人中显效 $85$ 人（显效率 $85\\%$），常规组 $100$ 人中显效 $40$ 人（显效率 $40\\%$），总样本量 $n=200$。",
+    questionDesc:
+      "检验用药方案（试验新药 vs 常规疗法）与临床疗效是否显著相关。",
   },
   {
     id: "teaching",
-    name: "2. 教学实验：分层走班新教学法达标率 (中等显著关联)",
+    name: "教学实验：分层走班新教学法达标率",
+    shortName: "教学达标实验",
     a: 48,
     b: 12,
     c: 32,
@@ -801,12 +805,15 @@ export const INDEPENDENCE_PRESETS = [
     labelNotA: "传统教学班",
     labelB: "测试优秀",
     labelNotB: "测试一般",
-    contextDesc:
-      "某校开展数学探究式分层走班实验，检验教学模式与成绩优秀率是否有关联。",
+    conditionDesc:
+      "分层走班教学实验：走班实验班 $60$ 人中优秀 $48$ 人（优秀率 $80\\%$），传统教学班 $60$ 人中优秀 $32$ 人（优秀率 $53.3\\%$），总样本量 $n=120$。",
+    questionDesc:
+      "检验教学模式（分层走班 vs 传统模式）与数学成绩优秀率是否显著相关。",
   },
   {
-    id: "ev_car",
-    name: "3. 产业调查：新能源汽车选购意愿与年龄 (新质生产力情境)",
+    id: "evCar",
+    name: "产业调查：新能源汽车选购意愿与年龄",
+    shortName: "新能源购车意向",
     a: 70,
     b: 30,
     c: 35,
@@ -815,12 +822,15 @@ export const INDEPENDENCE_PRESETS = [
     labelNotA: "中老年群体 (>35岁)",
     labelB: "倾向新能源",
     labelNotB: "倾向燃油车",
-    contextDesc:
-      "调研机构对汽车消费者进行意向问卷调查，检验年龄段与购车倾向是否有关联。",
+    conditionDesc:
+      "汽车消费意向调查：青年群体 $100$ 人中倾向新能源 $70$ 人（偏好率 $70\\%$），中老年群体 $100$ 人中倾向新能源 $35$ 人（偏好率 $35\\%$），总样本量 $n=200$。",
+    questionDesc:
+      "检验消费者年龄段（青年 vs 中老年）与新能源汽车选购倾向是否显著相关。",
   },
   {
     id: "quality",
-    name: "4. 工业生产：智能机械与传统流水线良品率 (极高显著性)",
+    name: "工业生产：智能机械与流水线良品率",
+    shortName: "智能制造良品率",
     a: 190,
     b: 10,
     c: 150,
@@ -829,12 +839,15 @@ export const INDEPENDENCE_PRESETS = [
     labelNotA: "人工组装线",
     labelB: "一级良品",
     labelNotB: "瑕疵返工品",
-    contextDesc:
-      "高端制造车间检验生产流水线类型与产品一次交验合格率是否有关联。",
+    conditionDesc:
+      "高端制造产线质检：机器人线抽检 $200$ 件有一级良品 $190$ 件（良品率 $95\\%$），人工线抽检 $200$ 件有一级良品 $150$ 件（良品率 $75\\%$），总样本量 $n=400$。",
+    questionDesc:
+      "检验流水线生产模式（机器人自动化 vs 传统人工）与产品良品率是否显著相关。",
   },
   {
     id: "independent",
-    name: "5. 对照实验：完全独立均匀样本 (ad - bc = 0)",
+    name: "理论对照：完全独立均匀样本模型",
+    shortName: "完全独立基准",
     a: 50,
     b: 50,
     c: 50,
@@ -843,7 +856,9 @@ export const INDEPENDENCE_PRESETS = [
     labelNotA: "分类组 非A",
     labelB: "属性 B",
     labelNotB: "属性 非B",
-    contextDesc:
-      "理论对照模型：各组比例完全相同，卡方统计量精确为 0，接受独立假设。",
+    conditionDesc:
+      "完全独立理论样本：两分类组各 $100$ 个样本，对应特征发生频数完全对称相等（各 $50$ 个，频率均为 $50\\%$），交叉积差 $ad - bc = 0$，总样本量 $n=200$。",
+    questionDesc:
+      "验证当两分类变量完全独立时，条件频率落差 $\\Delta p = 0$，卡方统计量 $\\chi^2 = 0$，接受零假设 $H_0$。",
   },
 ];

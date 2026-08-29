@@ -491,30 +491,27 @@ export function ProbabilityBayesAnimation() {
           </LeftPanelSection>
 
           {/* 第 2 层：典型情境选择（首项统一为自由探索） */}
+          {/* 第 2 层：典型情境选择（首项统一为自由探索） */}
           {activeMode === "conditional" && (
             <LeftPanelSection title="典型情境">
               <SelectGrid
                 columns={2}
                 items={[
                   {
+                    key: "free",
+                    label: "自由探索",
+                  },
+                  {
                     key: "independent",
                     label: "相互独立模型",
-                    formula: "P(AB)=P(A)P(B)",
                   },
                   {
                     key: "correlated",
                     label: "包含/强相关",
-                    formula: "A \\subseteq B",
                   },
                   {
                     key: "exclusive",
                     label: "互斥事件模型",
-                    formula: "P(AB)=0",
-                  },
-                  {
-                    key: "free",
-                    label: "自由探索",
-                    formula: "\\text{自由调参}",
                   },
                 ]}
                 value={condScenario}
@@ -551,22 +548,21 @@ export function ProbabilityBayesAnimation() {
           {activeMode === "total_prob" && (
             <LeftPanelSection title="典型情境">
               <SelectGrid
-                columns={2}
+                columns={1}
                 items={[
-                  {
-                    key: "factory3",
-                    label: "三车间次品",
-                    formula: "40\\%/35\\%/25\\%",
-                  },
-                  {
-                    key: "balanced",
-                    label: "三等分均衡",
-                    formula: "1/3\\text{ 均等}",
-                  },
                   {
                     key: "free",
                     label: "自由探索",
-                    formula: "\\text{自由设定划分与分支}",
+                    fullWidth: true,
+                  },
+                  {
+                    key: "factory3",
+                    label: "三车间次品模型",
+                    fullWidth: true,
+                  },
+                  {
+                    key: "balanced",
+                    label: "三等分均衡模型",
                     fullWidth: true,
                   },
                 ]}
@@ -601,22 +597,21 @@ export function ProbabilityBayesAnimation() {
           {activeMode === "bayes" && (
             <LeftPanelSection title="典型情境">
               <SelectGrid
-                columns={2}
+                columns={1}
                 items={[
-                  {
-                    key: "screening",
-                    label: "罕见病筛查",
-                    formula: "P(D)=2\\%",
-                  },
-                  {
-                    key: "factory",
-                    label: "工厂质检次品",
-                    formula: "P(\\text{Def})=8\\%",
-                  },
                   {
                     key: "free",
                     label: "自由探索",
-                    formula: "\\text{自由设定先验与试剂}",
+                    fullWidth: true,
+                  },
+                  {
+                    key: "screening",
+                    label: "罕见病筛查模型",
+                    fullWidth: true,
+                  },
+                  {
+                    key: "factory",
+                    label: "工厂质检次品溯源",
                     fullWidth: true,
                   },
                 ]}
@@ -650,24 +645,20 @@ export function ProbabilityBayesAnimation() {
                 columns={2}
                 items={[
                   {
+                    key: "free",
+                    label: "自由探索",
+                  },
+                  {
                     key: "pass_ball",
                     label: "甲乙传球",
-                    formula: "\\lambda=-0.5",
                   },
                   {
                     key: "urn_ball",
                     label: "摸球置换",
-                    formula: "\\lambda=0.4",
                   },
                   {
                     key: "weather",
                     label: "晴雨天气",
-                    formula: "\\lambda=0.3",
-                  },
-                  {
-                    key: "free",
-                    label: "自由探索",
-                    formula: "\\text{自由矩阵}",
                   },
                 ]}
                 value={markovScenario}

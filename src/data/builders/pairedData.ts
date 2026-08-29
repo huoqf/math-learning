@@ -301,32 +301,36 @@ export function buildPairedDataPanel(
         {
           name: "新高考四步标准答题规范",
           latex: `\\begin{aligned}
-\\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立} \\\\
+\\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立 (无关联)} \\\\
 \\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\
 &= ${res.chiSquare.toFixed(3)} \\\\
 \\text{Step 3 (比临界)} &: \\chi^2 ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}
 \\end{aligned}`,
-          note: `【Step 4 规范作答结论】${conclusionDetail}（阅卷采分要点：必须注明小概率值 α 与置信度，严禁表述为因果概率）。`,
+          condition: "大样本容量 n ≥ 40 且所有单元格理论期望频数 E_ij ≥ 5",
+          note: `【Step 4 规范作答结论】${conclusionDetail}（阅卷采分要点：必须写明小概率值 α 与置信度，严禁表述为因果因果必然关系）。`,
           level: "core",
         },
         {
           name: "2×2 列联表卡方公式本质 (理论偏离度)",
           latex: `\\begin{aligned}
-\\chi^2 &= \\sum_{i,j} \\frac{(O_{ij} - E_{ij})^2}{E_{ij}} \\\\
+\\chi^2 &= \\sum_{i=1}^2 \\sum_{j=1}^2 \\frac{(O_{ij} - E_{ij})^2}{E_{ij}} \\\\
 &= \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)}
 \\end{aligned}`,
-          note: "其中 O_ij 为实际观测频数，E_ij = (行和×列和)/n 为独立假设下的理论期望频数。",
+          condition:
+            "自由度 df = (2 - 1) × (2 - 1) = 1，E_ij = \\frac{(行和) \\times (列和)}{n}",
+          note: "其中 O_ij 为实际观测频数，E_ij 为 H₀ 成立下的理论期望频数。各格偏离度平方和综合衡量两变量与独立假设的偏离程度。",
           level: "important",
         },
         {
-          name: "新课标高考常用卡方临界值对照",
+          name: "新课标高考常用卡方临界值对照表",
           latex: `\\begin{aligned}
-P(\\chi^2 \\ge 2.706) &= 0.10 \\quad (90\\% \\text{ 把握}) \\\\
-P(\\chi^2 \\ge 3.841) &= 0.05 \\quad (95\\% \\text{ 把握, 核心}) \\\\
-P(\\chi^2 \\ge 6.635) &= 0.01 \\quad (99\\% \\text{ 把握, 高频}) \\\\
-P(\\chi^2 \\ge 10.828) &= 0.001 \\quad (99.9\\% \\text{ 把握})
+P(\\chi^2 \\ge 2.706) &= 0.10 \\quad (90\\% \\text{ 把握推断有关}) \\\\
+P(\\chi^2 \\ge 3.841) &= 0.05 \\quad (95\\% \\text{ 把握, 高考核心}) \\\\
+P(\\chi^2 \\ge 6.635) &= 0.01 \\quad (99\\% \\text{ 把握, 高考高频}) \\\\
+P(\\chi^2 \\ge 10.828) &= 0.001 \\quad (99.9\\% \\text{ 把握推断有关})
 \\end{aligned}`,
-          note: "当计算的 χ² 观测值大于等于对应临界值时，即拒绝零假设 H₀，认为两个分类变量有关联。",
+          condition: "在零假设 H₀: X 与 Y 相互独立成立的前提下",
+          note: "当计算的 χ² 观测值大于等于对应临界值时，即拒绝零假设 H₀，推断两个分类变量有关联。",
           level: "core",
         },
       ],

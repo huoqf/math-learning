@@ -311,26 +311,23 @@ export function ProbabilityCountingAnimation() {
 
           {/* 子模式 / 模型选择网格 */}
           {activeMode === "binomial" && (
-            <LeftPanelSection
-              title="二项式探索视图"
-              subtitle="多维探究展开与性质"
-            >
+            <LeftPanelSection title="二项式探索视图">
               <SelectGrid
                 items={[
                   {
                     key: "0",
                     label: "杨辉三角与恒等式",
-                    formula: "C_n^k = C_{n-1}^{k-1}+C_{n-1}^k",
+                    fullWidth: true,
                   },
                   {
                     key: "1",
                     label: "赋值法动态沙盘",
-                    formula: "f(1), f(-1), f'(1)",
+                    fullWidth: true,
                   },
                   {
                     key: "2",
                     label: "双轨系数对比",
-                    formula: "C_n^k \\text{ vs } A_k",
+                    fullWidth: true,
                   },
                 ]}
                 value={String(subMode)}
@@ -341,23 +338,23 @@ export function ProbabilityCountingAnimation() {
           )}
 
           {activeMode === "perm_comb" && (
-            <LeftPanelSection title="解题模型" subtitle="高考高频思维模型">
+            <LeftPanelSection title="解题模型">
               <SelectGrid
                 items={[
                   {
                     key: "0",
-                    label: "基础排列与组合对比",
-                    formula: "A_n^k \\text{ vs } C_n^k",
+                    label: "排列与组合对比",
+                    fullWidth: true,
                   },
                   {
                     key: "1",
                     label: "均匀分组消序模型",
-                    formula: "\\frac{\\prod C}{k!}",
+                    fullWidth: true,
                   },
                   {
                     key: "2",
                     label: "捆绑法与插空法",
-                    formula: "\\text{相邻 / 不相邻}",
+                    fullWidth: true,
                   },
                 ]}
                 value={String(subMode)}
@@ -368,26 +365,23 @@ export function ProbabilityCountingAnimation() {
           )}
 
           {activeMode === "principles" && (
-            <LeftPanelSection
-              title="原理类型与模型"
-              subtitle="对比分步、分类与网格"
-            >
+            <LeftPanelSection title="原理类型与模型">
               <SelectGrid
                 items={[
                   {
                     key: "0",
                     label: "分步乘法决策树",
-                    formula: "N = m_1 \\times m_2",
+                    fullWidth: true,
                   },
                   {
                     key: "1",
                     label: "分类加法独立通道",
-                    formula: "N = m_1 + m_2",
+                    fullWidth: true,
                   },
                   {
                     key: "2",
                     label: "网格路径与标数法",
-                    formula: "C_{m+n}^m",
+                    fullWidth: true,
                   },
                 ]}
                 value={String(subMode)}

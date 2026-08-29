@@ -99,8 +99,8 @@ export function PairedDataAnimation() {
     }
   };
 
-  // 独立性检验特有的当前预设索引
-  const [indPresetIndex, setIndPresetIndex] = useState<number>(0);
+  // 独立性检验特有的当前预设 key
+  const [indPresetKey, setIndPresetKey] = useState<string>("0");
 
   // 2. 视口尺寸测量
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -130,12 +130,19 @@ export function PairedDataAnimation() {
     yRange,
   });
 
+  const handleStudyModeChange = (mode: "regression" | "independence") => {
+    setStudyMode(mode);
+  };
+
   // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
+    if (key.startsWith("freq")) {
+      setIndPresetKey("free");
+    }
   };
 
   // 预设数据集切换 (回归模式)
@@ -150,35 +157,54 @@ export function PairedDataAnimation() {
   };
 
   // 预设情境切换 (独立性检验)
-  const handleIndPresetSelect = (index: number) => {
-    setIndPresetIndex(index);
+  const handleIndPresetSelect = (key: string) => {
+    setIndPresetKey(key);
+    if (key === "free") return;
+    const index = Number(key);
     const p = INDEPENDENCE_PRESETS[index];
-    setParams((prev) => ({
-      ...prev,
-      presetIndex: index,
-      freqA: p.a,
-      freqB: p.b,
-      freqC: p.c,
-      freqD: p.d,
-    }));
+    if (p) {
+      setParams((prev) => ({
+        ...prev,
+        presetIndex: index,
+        freqA: p.a,
+        freqB: p.b,
+        freqC: p.c,
+        freqD: p.d,
+      }));
+    }
   };
 
   // 重置参数
   const handleReset = () => {
     setParams({ ...defaultParams });
     setRegPresetIndex(0);
-    setIndPresetIndex(0);
+    setIndPresetKey("0");
     setSelectedModel("linear");
     setBasePoints(REGRESSION_PRESETS[0].points);
   };
 
+  const isFreeIndMode = indPresetKey === "free";
+
   // 构建声明式控制面板配置参数
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      regression: ["noise", "showResidualSquares", "showResidualPlot"],
-      independence: ["freqA", "freqB", "freqC", "freqD"],
-    };
-    const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    let keys: string[] = [];
+
+    if (studyMode === "regression") {
+      keys = [
+        "noise",
+        "meanShiftY",
+        ...(regPresetIndex === 4 ? ["outlierOffset"] : []),
+        "showResidualSquares",
+        "showResidualPlot",
+      ];
+    } else {
+      // 独立性检验：自由探索开放全部参数，预设模式锁定题设
+      if (isFreeIndMode) {
+        keys = ["freqA", "freqB", "freqC", "freqD", "scaleMultiplier"];
+      } else {
+        keys = ["scaleMultiplier"];
+      }
+    }
 
     return keys
       .filter((k) => k in paramMeta)
@@ -192,13 +218,10 @@ export function PairedDataAnimation() {
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
-          marks: meta.marks,
         };
       });
-  }, [params, studyMode]);
+  }, [studyMode, regPresetIndex, isFreeIndMode, params]);
 
   // 计算看板数据
   const mathData = useMemo(() => {
@@ -214,7 +237,7 @@ export function PairedDataAnimation() {
     if (studyMode === "regression") {
       const fits = fitAllRegressionModels(activePoints);
       const fit = fits.find((m) => m.type === selectedModel) ?? fits[0];
-      if (!fit || !fit.isValid) return "\\text{当前数据无法求解该回归模型}";
+      if (!fit || !fit.isValid) return "y = f(x)";
       return `${fit.name}: \\; ${fit.originalFormula} \\quad (R^2 = ${fit.rSquare.toFixed(3)}, \\text{SSE} = ${fit.sse.toFixed(2)})`;
     } else {
       const a = params.freqA ?? 85;
@@ -233,37 +256,52 @@ export function PairedDataAnimation() {
         linear: "一元线性模型 $\\hat{y} = bx + a$",
         exponential: "指数模型 $y = c e^{kx}$（令 $z = \\ln y$ 线性化）",
         logarithmic: "对数模型 $y = a + b \\ln x$（令 $u = \\ln x$ 线性化）",
-        power: "幂函数模型 $y = c x^k$（令 $z = \\ln y, u = \\ln x$ 线性化）",
+        power: "幂函数模型 $y = c x^k$（令 $u = \\ln x, z = \\ln y$ 线性化）",
         inverse:
           "双曲线逆模型 $y = a + \\frac{b}{x}$（令 $u = \\frac{1}{x}$ 线性化）",
       };
-
       return {
-        variant: (selectedModel === "linear" ? "primary" : "warning") as
-          "primary" | "warning",
-        badge: `高考例题 · ${currentPreset?.name ?? "成对数据回归分析"}`,
-        condition: `成对观测样本 (${currentPreset?.xName ?? "x"}, ${currentPreset?.yName ?? "y"})，拟合模型设定为 ${modelNameMap[selectedModel]}。`,
+        variant: "info" as const,
+        badge: `高考经典 · ${currentPreset?.name ?? "成对数据回归分析"}`,
+        condition: `当前选定【${modelNameMap[selectedModel]}】，样本容量 $n=${activePoints.length}$。`,
         question:
-          "求解回归方程系数、相关系数 $r$、决定系数 $R^2$ 以及残差平方和 $\\sum e_i^2$ 最小化。",
+          "通过最小二乘法拟合曲线，对比决定系数 $R^2$ 与残差平方和 $\\text{SSE}$，评估模型拟合优度与预报效果。",
       };
     }
 
     // independence
-    const curInd = INDEPENDENCE_PRESETS[indPresetIndex];
-    const a = params.freqA ?? 85;
-    const b = params.freqB ?? 15;
-    const c = params.freqC ?? 40;
-    const d = params.freqD ?? 60;
-    const totalN = a + b + c + d;
+    if (indPresetKey === "free") {
+      const a = params.freqA ?? 85;
+      const b = params.freqB ?? 15;
+      const c = params.freqC ?? 40;
+      const d = params.freqD ?? 60;
+      const totalN = a + b + c + d;
+      return {
+        variant: "danger" as const,
+        badge: "自由探索 · 2×2 列联表",
+        condition: `自定义四格观测频数 ($a=${a}, b=${b}, c=${c}, d=${d}$)，总样本容量 $n=${totalN}$。`,
+        question:
+          "计算卡方统计量 $\\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)}$，对比临界值推断两分类变量是否关联。",
+      };
+    }
+
+    const curInd =
+      INDEPENDENCE_PRESETS[Number(indPresetKey)] ?? INDEPENDENCE_PRESETS[0];
 
     return {
       variant: "danger" as const,
-      badge: `高考经典 · ${curInd?.name ?? "2×2 列联表独立性检验"}`,
-      condition: `观测 2×2 列联表各格频数 (a=${a}, b=${b}, c=${c}, d=${d})，总样本容量 n=${totalN}。`,
-      question:
-        "计算卡方统计量 χ² = n(ad-bc)² / [(a+b)(c+d)(a+c)(b+d)]，推断两分类变量是否关联。",
+      badge: `高考真题 · ${curInd.shortName}`,
+      condition: curInd.conditionDesc,
+      question: curInd.questionDesc,
     };
-  }, [studyMode, selectedModel, currentPreset, indPresetIndex, params]);
+  }, [
+    studyMode,
+    selectedModel,
+    currentPreset,
+    indPresetKey,
+    activePoints.length,
+    params,
+  ]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
@@ -272,86 +310,64 @@ export function PairedDataAnimation() {
       : "2×2 列联表独立性检验看板";
   }, [studyMode]);
 
+  const indPresetGridItems = useMemo(() => {
+    return [
+      {
+        key: "free",
+        label: "自由探索",
+      },
+      ...INDEPENDENCE_PRESETS.map((p, idx) => ({
+        key: String(idx),
+        label: p.shortName,
+      })),
+    ];
+  }, []);
+
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 研究模式选择 */}
-          <LeftPanelSection
-            title="统计分析模式"
-            subtitle="成对数据回归 vs 列联表独立性检验"
-          >
+          {/* 研究模式切换 */}
+          <LeftPanelSection title="研究模块">
             <TabSwitcher
               tabs={[
                 { key: "regression", label: "回归分析" },
                 { key: "independence", label: "独立性检验" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as "regression" | "independence")}
+              onChange={handleStudyModeChange}
             />
           </LeftPanelSection>
 
-          {/* 回归模式下的模型选择与高考例题预设 */}
+          {/* 回归模式下的特定控制区 */}
           {studyMode === "regression" && (
             <>
-              <LeftPanelSection
-                title="回归模型选择"
-                subtitle="新高考线性化转换与优度比较"
-              >
-                <SelectGrid
-                  items={[
-                    {
-                      key: "linear",
-                      label: "一元线性模型",
-                      formula: "\\hat{y} = bx + a",
-                      fullWidth: true,
-                    },
-                    {
-                      key: "exponential",
-                      label: "指数模型 (z=lny)",
-                      formula: "y = c e^{kx}",
-                      fullWidth: true,
-                    },
-                    {
-                      key: "logarithmic",
-                      label: "对数模型 (u=lnx)",
-                      formula: "y = a + b\\ln x",
-                      fullWidth: true,
-                    },
-                    {
-                      key: "power",
-                      label: "幂函数模型",
-                      formula: "y = c x^k",
-                      fullWidth: true,
-                    },
-                    {
-                      key: "inverse",
-                      label: "双曲线逆模型",
-                      formula: "y = a + \\frac{b}{x}",
-                      fullWidth: true,
-                    },
+              <LeftPanelSection title="回归模型类型选择">
+                <TabSwitcher
+                  tabs={[
+                    { key: "linear", label: "线性" },
+                    { key: "exponential", label: "指数" },
+                    { key: "logarithmic", label: "对数" },
+                    { key: "power", label: "幂函数" },
+                    { key: "inverse", label: "双曲线逆" },
                   ]}
                   value={selectedModel}
-                  onChange={(k) => setSelectedModel(k as RegressionModelType)}
-                  variant="filled"
-                  columns={1}
+                  onChange={(key) =>
+                    setSelectedModel(key as RegressionModelType)
+                  }
                 />
               </LeftPanelSection>
 
-              <LeftPanelSection
-                title="高考经典例题情境"
-                subtitle="选择真实考题背景数据"
-              >
+              <LeftPanelSection title="高考真实数据集预设">
                 <SelectGrid
                   items={REGRESSION_PRESETS.map((p, idx) => ({
                     key: String(idx),
-                    label: p.name,
-                    fullWidth: true,
+                    label: p.name.split("：")[0] || p.name,
                   }))}
                   value={String(regPresetIndex)}
                   onChange={(k) => handleRegPresetSelect(Number(k))}
                   variant="filled"
-                  columns={1}
+                  columns={2}
                 />
               </LeftPanelSection>
             </>
@@ -359,20 +375,13 @@ export function PairedDataAnimation() {
 
           {/* 独立性检验下的情景预设 */}
           {studyMode === "independence" && (
-            <LeftPanelSection
-              title="列联表测试情境预设"
-              subtitle="选择高考分类变量应用"
-            >
+            <LeftPanelSection title="高考典型情境预设">
               <SelectGrid
-                items={INDEPENDENCE_PRESETS.map((p, idx) => ({
-                  key: String(idx),
-                  label: p.name,
-                  fullWidth: true,
-                }))}
-                value={String(indPresetIndex)}
-                onChange={(k) => handleIndPresetSelect(Number(k))}
+                items={indPresetGridItems}
+                value={indPresetKey}
+                onChange={handleIndPresetSelect}
                 variant="filled"
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
@@ -382,12 +391,7 @@ export function PairedDataAnimation() {
             title={
               studyMode === "regression"
                 ? "残差与扰动控制"
-                : "列联表频数调节 (a,b,c,d)"
-            }
-            subtitle={
-              studyMode === "regression"
-                ? "支持拖拽散点 / 控制残差正方形与残差图"
-                : "拖动滑块改变各格频数"
+                : "四格频数与倍增调节"
             }
           >
             <ParamControl
