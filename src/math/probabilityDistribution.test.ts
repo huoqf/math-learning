@@ -27,13 +27,31 @@ describe("probabilityDistribution math module", () => {
     expect(res.stdDev).toBeCloseTo(1);
     expect(res.sumP).toBeCloseTo(1);
     expect(res.outcomes.length).toBe(5);
+
+    // 边界退化：p=0 与 p=1
+    const resP0 = computeBinomialDistribution(3, 0);
+    expect(resP0.mean).toBe(0);
+    expect(resP0.variance).toBe(0);
+    expect(resP0.outcomes[0].p).toBe(1);
+
+    const resP1 = computeBinomialDistribution(3, 1);
+    expect(resP1.mean).toBe(3);
+    expect(resP1.variance).toBe(0);
+    expect(resP1.outcomes[3].p).toBe(1);
+
+    // 参数不合法
+    const resInvalid = computeBinomialDistribution(0, 0.5);
+    expect(resInvalid.isValid).toBe(false);
   });
 
   it("hypergeometric distribution H(N, M, n)", () => {
     // H(10, 4, 3) => E(X) = 3 * (4/10) = 1.2
+    // D(X) = 3 * 0.4 * 0.6 * (7/9) = 0.56
     const res = computeHypergeometricDistribution(10, 4, 3);
     expect(res.isValid).toBe(true);
     expect(res.mean).toBeCloseTo(1.2);
+    expect(res.variance).toBeCloseTo(0.56);
+    expect(res.stdDev).toBeCloseTo(Math.sqrt(0.56));
     expect(res.sumP).toBeCloseTo(1);
 
     // 退化校验
@@ -75,6 +93,7 @@ describe("probabilityDistribution math module", () => {
     expect(qual.schemeADist.isValid).toBe(true);
     expect(qual.schemeBDist.isValid).toBe(true);
     expect(qual.bestByMean).toBe("A");
+    expect(qual.bestByRisk).toBe("B"); // 方案B全检方差为0
 
     const invest = computeDecisionModel("investment", 0.7);
     expect(invest.schemeADist.mean).toBe(4);

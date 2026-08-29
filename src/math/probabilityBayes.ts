@@ -326,7 +326,7 @@ export function calculateMarkovChain(
 方程两边同减 ${pInfStr}，得：
 p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})
 故数列 \\{p_n - ${pInfStr}\\} 为以 0 为首项的常数数列。`;
-    step4_generalTerm = `初始概率 p_1 = ${initP1.toFixed(2)} 恰好等于不动点 ${pInfStr}，故 \\{p_n - ${pInfStr}\\} 为以 0 为首项的数列，即 p_n = ${pInfStr}（常数列）。稳态极限 \\lim_{n \\to \\infty} p_n = ${pInfStr}。`;
+    step4_generalTerm = `初始概率 p_1 = ${initP1.toFixed(3)} 恰好等于不动点 ${pInfStr}，故 \\{p_n - ${pInfStr}\\} 为以 0 为首项的数列，即 p_n = ${pInfStr}（常数列）。稳态极限 \\lim_{n \\to \\infty} p_n = ${pInfStr}。`;
   } else if (isPureOscillating) {
     // |lambda| = 1，永久等幅振荡，通项公式成立但不收敛
     const altValue = (2 * pStationary - initP1).toFixed(3);

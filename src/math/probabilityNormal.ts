@@ -8,6 +8,7 @@
  * 经典数值逼近法，最大误差 < 1.5e-7
  */
 export function erf(x: number): number {
+  if (x === 0) return 0;
   // sign
   const sign = x >= 0 ? 1 : -1;
   const absX = Math.abs(x);

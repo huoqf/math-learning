@@ -121,6 +121,7 @@ describe("probabilityBayes math module", () => {
     const pStat = 1 / 3;
     const res = calculateMarkovChain(pStat, 0, 0.5, 5);
     // isOscillating 描述转移矩阵的振荡收敛特性（lambda < 0 且 |lambda| < 1），和常数列无关
+    expect(res.isOscillating).toBe(true);
     expect(res.isPureOscillating).toBe(false);
     // 所有步骤概率均为 1/3
     for (let i = 0; i < 5; i++) {
@@ -129,6 +130,62 @@ describe("probabilityBayes math module", () => {
     // step4 应描述常数列，不输出通项展开式中的 diffInit
     expect(res.gaokaoSteps.step4_generalTerm).toContain("常数列");
     expect(res.gaokaoSteps.step4_generalTerm).not.toContain("(0.000) \\cdot");
+    expect(res.gaokaoSteps.step4_generalTerm).toContain(
+      "初始概率 p_1 = 0.333 恰好等于不动点 0.333",
+    );
+  });
+
+  it("should handle diffInit < 0 (initial probability below steady state)", () => {
+    // p1 = 0.1, p11 = 0, p21 = 0.5 => pStationary = 1/3 ≈ 0.333, diffInit = 0.1 - 1/3 ≈ -0.233
+    const res = calculateMarkovChain(0.1, 0, 0.5, 5);
+    expect(res.generalTermLatex).toContain("- 0.233");
+    expect(res.generalTermLatex).not.toContain("((");
+    expect(res.steps[0].deltaToStationary).toBeCloseTo(0.1 - 1 / 3);
+  });
+
+  it("should handle lambda = 0 (one-step immediate convergence)", () => {
+    // p11 = 0.5, p21 = 0.5 => lambda = 0, pStationary = 0.5
+    const res = calculateMarkovChain(0.9, 0.5, 0.5, 5);
+    expect(res.lambda).toBe(0);
+    expect(res.pStationary).toBe(0.5);
+    expect(res.steps[0].p1).toBe(0.9);
+    expect(res.steps[1].p1).toBe(0.5);
+    expect(res.steps[2].p1).toBe(0.5);
+  });
+
+  it("should clamp maxSteps within [3, 15] range", () => {
+    const resMin = calculateMarkovChain(0.5, 0.2, 0.8, 1);
+    expect(resMin.steps.length).toBe(3);
+    const resMax = calculateMarkovChain(0.5, 0.2, 0.8, 20);
+    expect(resMax.steps.length).toBe(15);
+  });
+
+  it("should calculate falseAlarmRatio in Bayes diagnostic", () => {
+    const res = calculateBayesDiagnostic(0.02, 0.95, 0.05);
+    // falseAlarmRatio = FP / (TP + FP) = 0.049 / 0.068 ≈ 0.720588
+    expect(res.falseAlarmRatio).toBeCloseTo(0.049 / 0.068, 4);
+    expect(res.pPosteriorD + res.falseAlarmRatio).toBeCloseTo(1.0);
+  });
+
+  it("should handle P(B) = 0 degenerate condition in calculateConditionalProb", () => {
+    const res = calculateConditionalProb(0.5, 0, 0);
+    expect(res.pA_given_B).toBe(0);
+    expect(res.pB_given_A).toBe(0);
+  });
+
+  it("should handle P(AB) bounds and warnings in calculateConditionalProb", () => {
+    // pAB = 0.5 超出 min(0.3, 0.4) = 0.3
+    const res = calculateConditionalProb(0.3, 0.4, 0.5);
+    expect(res.pAB).toBe(0.3);
+  });
+
+  it("should generate valid recurrenceLatex and geometricLatex formulas", () => {
+    const res = calculateMarkovChain(0.8, 0.7, 0.1, 5);
+    expect(res.recurrenceLatex).toContain("p_{n+1}");
+    expect(res.geometricLatex).toContain("p_{n+1}");
+    expect(res.cobwebPoints[0].type).toBe("step");
+    expect(res.cobwebPoints[1].type).toBe("vertical");
+    expect(res.cobwebPoints[2].type).toBe("horizontal");
   });
 
   it("should normalize pAi when sum != 1 in total probability", () => {
