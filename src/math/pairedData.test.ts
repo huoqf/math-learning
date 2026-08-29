@@ -22,22 +22,62 @@ describe("成对数据纯数学计算库单元测试", () => {
     expect(result.meanX).toBe(5);
     expect(result.meanY).toBe(6.3);
 
-    // 验证高考大题关键中间量
+    // 验证高考大题关键中间量（含 lxy：最小二乘法核心分子）
     expect(result.sumX).toBe(25);
     expect(result.sumY).toBe(31.5);
     expect(result.sumXX).toBe(145);
     expect(result.lxx).toBe(20);
+    // lxy = Σ(xi-x̄)(yi-ȳ) = 22，是高考大题计算 b̂ = lxy/lxx 的核心中间量
+    expect(result.lxy).toBeCloseTo(22, 5);
 
-    // 验证斜率与截距
+    // 验证斜率与截距：b̂ = lxy/lxx = 22/20 = 1.1，â = ȳ - b̂·x̄ = 6.3 - 1.1×5 = 0.8
     expect(result.b).toBeCloseTo(1.1, 4);
     expect(result.a).toBeCloseTo(0.8, 4);
 
-    // 验证相关系数 r > 0.99
+    // 验证相关系数 r > 0.99（强正相关，与斜率 b̂>0 同号）
     expect(result.r).toBeGreaterThan(0.99);
+    expect(result.r).toBeGreaterThan(0); // r 与 b̂ 同号
 
     // 验证回归直线必定经过样本中心点 (meanX, meanY)
     const yHatAtMeanX = result.b * result.meanX + result.a;
     expect(yHatAtMeanX).toBeCloseTo(result.meanY, 5);
+
+    // 验证决定系数 R² = 1 - SSE/SST，强相关时应接近1
+    expect(result.rSquare).toBeGreaterThan(0.99);
+    expect(result.rSquare).toBeCloseTo(0.9959, 3);
+  });
+
+  it("应当正确处理负相关数据集，验证 r 与 b̂ 同号（高考铁律）", () => {
+    // 气温与用电量：气温升高用电量下降 → 负相关
+    const points = [
+      { id: "p1", x: 10, y: 22 },
+      { id: "p2", x: 15, y: 18 },
+      { id: "p3", x: 20, y: 15 },
+      { id: "p4", x: 25, y: 12 },
+      { id: "p5", x: 30, y: 9 },
+    ];
+
+    const result = calculateLinearRegression(points);
+
+    expect(result.isValid).toBe(true);
+    expect(result.meanX).toBe(20);
+    expect(result.meanY).toBeCloseTo(15.2, 5);
+
+    // lxx = 250，lxy = -160（负值表明负相关）
+    expect(result.lxx).toBeCloseTo(250, 4);
+    expect(result.lxy).toBeCloseTo(-160, 4);
+
+    // 斜率 b̂ = -160/250 = -0.64（负值）
+    expect(result.b).toBeCloseTo(-0.64, 4);
+
+    // 高考铁律：r 与 b̂ 同号，负相关时 r < 0 且 b̂ < 0
+    expect(result.r).toBeLessThan(0);
+    expect(result.b).toBeLessThan(0);
+    expect(Math.sign(result.r)).toBe(Math.sign(result.b));
+
+    // 强负相关：|r| > 0.99
+    expect(Math.abs(result.r)).toBeGreaterThan(0.99);
+    expect(result.r).toBeCloseTo(-0.9981, 3);
   });
 
   it("应当正确拟合非线性回归模型并选出最优模型", () => {
@@ -57,10 +97,17 @@ describe("成对数据纯数学计算库单元测试", () => {
     expect(expFit).toBeDefined();
     expect(expFit?.isValid).toBe(true);
     expect(expFit?.rSquare).toBeGreaterThan(0.99);
+    // 参数接近真值 c≈2，k≈0.5
+    expect(expFit?.params.c).toBeCloseTo(2, 0);
+    expect(expFit?.params.k).toBeCloseTo(0.5, 1);
+    // 指数模型在此数据集上应为最优模型（R² 最高）
     expect(expFit?.isBest).toBe(true);
+
+    // 预测值合理性检验：predict(3) ≈ 2*e^1.5 ≈ 8.96
+    expect(expFit?.predict(3)).toBeCloseTo(2 * Math.exp(1.5), 0);
   });
 
-  it("应当正确处理退化线性回归数据（点在同一垂直线上）", () => {
+  it("应当正确处理退化线性回归数据（点在同一垂直线上，lxx=0）", () => {
     const points = [
       { id: "p1", x: 3, y: 2 },
       { id: "p2", x: 3, y: 5 },
@@ -71,7 +118,15 @@ describe("成对数据纯数学计算库单元测试", () => {
     expect(result.message).toContain("无法拟合斜率");
   });
 
-  it("应当正确计算 2x2 列联表的卡方统计量与显著性判断", () => {
+  it("应当在样本容量不足（n=1）时返回 isValid=false", () => {
+    const result = calculateLinearRegression([{ id: "p1", x: 1, y: 2 }]);
+    expect(result.isValid).toBe(false);
+    expect(result.n).toBe(1);
+    expect(result.message).toContain("至少需要2个");
+  });
+
+  it("应当正确计算 2×2 列联表的卡方统计量与显著性判断", () => {
+    // 经典高考场景：药物疗效对照 (85,15,40,60)，n=200
     const res = calculateIndependenceTest(85, 15, 40, 60);
 
     expect(res.isValid).toBe(true);
@@ -81,13 +136,13 @@ describe("成对数据纯数学计算库单元测试", () => {
     expect(res.col1).toBe(125);
     expect(res.col2).toBe(75);
 
-    // 验证期望频数 E_ij
+    // 验证期望频数 E_ij = 行合计×列合计/n
     expect(res.expected.eA).toBeCloseTo(62.5, 2);
     expect(res.expected.eB).toBeCloseTo(37.5, 2);
     expect(res.expected.eC).toBeCloseTo(62.5, 2);
     expect(res.expected.eD).toBeCloseTo(37.5, 2);
 
-    // 验证 sum (O-E)^2 / E 等于卡方统计量
+    // 验证 Σ(O-E)²/E 与快捷公式 n(ad-bc)²/... 精确相等（两种写法等价性）
     const sumContrib =
       res.contributions.dA +
       res.contributions.dB +
@@ -95,18 +150,51 @@ describe("成对数据纯数学计算库单元测试", () => {
       res.contributions.dD;
     expect(sumContrib).toBeCloseTo(res.chiSquare, 4);
 
-    expect(res.chiSquare).toBeCloseTo(43.2, 1);
+    // χ² = 200*(85×60-15×40)²/(100×100×125×75) = 200*4500²/93750000 = 43.2
+    expect(res.chiSquare).toBeCloseTo(43.2, 4);
+
+    // Yates 连续性修正：n*(|ad-bc|-n/2)² / ... = 200*(4500-100)²/93750000 ≈ 41.301
+    expect(res.chiSquareYates).toBeCloseTo(41.301, 2);
     expect(res.chiSquareYates).toBeLessThan(res.chiSquare);
+
+    // 期望频数均≥5，样本量≥40，无需修正
+    expect(res.isExpectedEnough).toBe(true);
+    expect(res.isSampleLargeEnough).toBe(true);
+
+    // 显著性层级：超过所有临界值
+    expect(res.p90).toBe(true);
+    expect(res.p95).toBe(true);
+    expect(res.p99).toBe(true);
     expect(res.p999).toBe(true);
     expect(res.confidenceText).toContain("99.9% 以上的把握");
   });
 
-  it("应当在无关联数据时判断接受原假设", () => {
+  it("应当在无关联数据时（ad=bc）χ²=0，接受原假设", () => {
+    // (50,50,50,50)：ad-bc=50×50-50×50=0，完全独立
     const res = calculateIndependenceTest(50, 50, 50, 50);
 
     expect(res.isValid).toBe(true);
     expect(res.chiSquare).toBe(0);
+    expect(res.chiSquareYates).toBe(0);
     expect(res.p90).toBe(false);
+    expect(res.p95).toBe(false);
+    expect(res.p99).toBe(false);
     expect(res.confidenceText).toContain("接受无关联原假设");
+  });
+
+  it("应当在期望频数不足（E_ij < 5）时标记 isExpectedEnough=false", () => {
+    // 小样本 (3,2,3,2)：n=10，eA = row1*col1/n = 5*6/10 = 3 < 5
+    const res = calculateIndependenceTest(3, 2, 3, 2);
+
+    expect(res.isValid).toBe(true);
+    expect(res.isExpectedEnough).toBe(false); // 存在 E < 5，高考规范提示使用 Yates 连续性修正
+    // Yates 修正仍能正常输出（≥0）
+    expect(res.chiSquareYates).toBeGreaterThanOrEqual(0);
+  });
+
+  it("应当正确处理边际为0的退化列联表，返回 isValid=false", () => {
+    // a=10,b=0,c=0,d=0：col2=b+d=0，列边际为0，无法计算卡方
+    const res = calculateIndependenceTest(10, 0, 0, 0);
+    expect(res.isValid).toBe(false);
   });
 });

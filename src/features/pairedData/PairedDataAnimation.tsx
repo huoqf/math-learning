@@ -25,6 +25,25 @@ import {
   Point2D,
 } from "@/math/pairedData";
 
+// 辅助渲染混合文本（支持 $...$ 内嵌公式与普通文本自然换行）
+function renderMixedText(text: string) {
+  if (!text) return null;
+  const parts = text.split(/\$(.*?)\$/g);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      return (
+        <KatexFormula
+          key={i}
+          formula={part}
+          mode="inline"
+          className="!text-[11px] !my-0 !mx-0.5"
+        />
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 export function PairedDataAnimation() {
   // 研究模式：'regression' (成对数据与回归分析) | 'independence' (2x2 独立性检验)
   const [studyMode, setStudyMode] = useState<"regression" | "independence">(
@@ -390,14 +409,16 @@ export function PairedDataAnimation() {
                     【初始条件】
                   </span>
                   <span className="text-neutral-600">
-                    {tipConfig.condition}
+                    {renderMixedText(tipConfig.condition)}
                   </span>
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
                     【核心设问】
                   </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
+                  <span className="text-neutral-600">
+                    {renderMixedText(tipConfig.question)}
+                  </span>
                 </div>
               </div>
             </TipCard>
