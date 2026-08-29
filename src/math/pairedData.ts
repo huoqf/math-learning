@@ -464,7 +464,18 @@ export function calculateIndependenceTest(
   const defaultEmptyExpected = { eA: 0, eB: 0, eC: 0, eD: 0 };
   const defaultEmptyContrib = { dA: 0, dB: 0, dC: 0, dD: 0 };
 
-  if (n === 0 || row1 === 0 || row2 === 0 || col1 === 0 || col2 === 0) {
+  if (
+    !Number.isFinite(n) ||
+    a < 0 ||
+    b < 0 ||
+    c < 0 ||
+    d < 0 ||
+    n === 0 ||
+    row1 === 0 ||
+    row2 === 0 ||
+    col1 === 0 ||
+    col2 === 0
+  ) {
     return {
       a,
       b,

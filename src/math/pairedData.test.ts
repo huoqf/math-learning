@@ -3,6 +3,7 @@ import {
   calculateLinearRegression,
   calculateIndependenceTest,
   fitAllRegressionModels,
+  getChiSquare1Pdf,
 } from "./pairedData";
 
 describe("成对数据纯数学计算库单元测试", () => {
@@ -153,20 +154,34 @@ describe("成对数据纯数学计算库单元测试", () => {
     // χ² = 200*(85×60-15×40)²/(100×100×125×75) = 200*4500²/93750000 = 43.2
     expect(res.chiSquare).toBeCloseTo(43.2, 4);
 
-    // Yates 连续性修正：n*(|ad-bc|-n/2)² / ... = 200*(4500-100)²/93750000 ≈ 41.301
-    expect(res.chiSquareYates).toBeCloseTo(41.301, 2);
+    // Yates 连续性修正：n*(|ad-bc|-n/2)² / ... = 200*(4500-100)²/93750000 ≈ 41.30133...
+    expect(res.chiSquareYates).toBeCloseTo(41.301, 3);
     expect(res.chiSquareYates).toBeLessThan(res.chiSquare);
 
     // 期望频数均≥5，样本量≥40，无需修正
     expect(res.isExpectedEnough).toBe(true);
     expect(res.isSampleLargeEnough).toBe(true);
 
-    // 显著性层级：超过所有临界值
+    // 显著性层级：超过所有临界值 (43.2 >= 10.828)
     expect(res.p90).toBe(true);
     expect(res.p95).toBe(true);
     expect(res.p99).toBe(true);
     expect(res.p999).toBe(true);
     expect(res.confidenceText).toContain("99.9% 以上的把握");
+  });
+
+  it("应当正确判断只达 95% 置信水平（α=0.05）的中间分档场景", () => {
+    // (30,20,20,30)：n=100, ad-bc=500, chi2 = 100*500² / (50*50*50*50) = 4.0
+    // 3.841 <= 4.0 < 6.635 -> 达到 95% 但未达 99%
+    const res = calculateIndependenceTest(30, 20, 20, 30);
+
+    expect(res.isValid).toBe(true);
+    expect(res.chiSquare).toBeCloseTo(4.0, 4);
+    expect(res.p90).toBe(true);
+    expect(res.p95).toBe(true);
+    expect(res.p99).toBe(false);
+    expect(res.p999).toBe(false);
+    expect(res.confidenceText).toContain("95% 以上的把握");
   });
 
   it("应当在无关联数据时（ad=bc）χ²=0，接受原假设", () => {
@@ -179,22 +194,51 @@ describe("成对数据纯数学计算库单元测试", () => {
     expect(res.p90).toBe(false);
     expect(res.p95).toBe(false);
     expect(res.p99).toBe(false);
+    expect(res.p999).toBe(false);
     expect(res.confidenceText).toContain("接受无关联原假设");
   });
 
-  it("应当在期望频数不足（E_ij < 5）时标记 isExpectedEnough=false", () => {
-    // 小样本 (3,2,3,2)：n=10，eA = row1*col1/n = 5*6/10 = 3 < 5
-    const res = calculateIndependenceTest(3, 2, 3, 2);
+  it("应当在期望频数不足（E_ij < 5）且存在关联时正确计算并提示使用 Yates 修正", () => {
+    // 真实关联小样本 (4, 1, 1, 14)：n=20, row1=5, row2=15, col1=5, col2=15
+    // eA = 5*5/20 = 1.25 < 5, eB=3.75 < 5, eC=3.75 < 5, eD=11.25
+    // ad-bc = 56-1 = 55
+    // chi2 = 20*55² / (5*15*5*15) = 60500 / 5625 ≈ 10.7556
+    // Yates: 20*(55-10)² / 5625 = 20*2025 / 5625 = 7.2000
+    const res = calculateIndependenceTest(4, 1, 1, 14);
 
     expect(res.isValid).toBe(true);
-    expect(res.isExpectedEnough).toBe(false); // 存在 E < 5，高考规范提示使用 Yates 连续性修正
-    // Yates 修正仍能正常输出（≥0）
-    expect(res.chiSquareYates).toBeGreaterThanOrEqual(0);
+    expect(res.n).toBe(20);
+    expect(res.isSampleLargeEnough).toBe(false); // n=20 < 40
+    expect(res.isExpectedEnough).toBe(false); // 存在 E < 5
+    expect(res.expected.eA).toBeCloseTo(1.25, 2);
+    expect(res.chiSquare).toBeCloseTo(10.756, 3);
+    expect(res.chiSquareYates).toBeCloseTo(7.2, 3);
   });
 
   it("应当正确处理边际为0的退化列联表，返回 isValid=false", () => {
     // a=10,b=0,c=0,d=0：col2=b+d=0，列边际为0，无法计算卡方
     const res = calculateIndependenceTest(10, 0, 0, 0);
     expect(res.isValid).toBe(false);
+    expect(res.confidenceText).toContain("边际分布为0");
+  });
+
+  it("应当拦截非法负数输入，返回 isValid=false", () => {
+    const res = calculateIndependenceTest(-5, 10, 10, 10);
+    expect(res.isValid).toBe(false);
+  });
+
+  it("应当正确计算单自由度卡方分布的概率密度函数 getChiSquare1Pdf", () => {
+    // x <= 0.01 时截断平滑值为 2.5
+    expect(getChiSquare1Pdf(0)).toBe(2.5);
+    expect(getChiSquare1Pdf(0.005)).toBe(2.5);
+
+    // x = 1 时，f(1) = (1 / sqrt(2*pi)) * 1^(-0.5) * e^(-0.5) = 1 / sqrt(2*pi*e) ≈ 0.24197
+    const expectedAt1 = (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5);
+    expect(getChiSquare1Pdf(1)).toBeCloseTo(expectedAt1, 4);
+
+    // x = 2 时，f(2) = (1 / sqrt(2*pi)) * (1/sqrt(2)) * e^(-1) = 1 / (2 * sqrt(pi) * e) ≈ 0.10378
+    const expectedAt2 =
+      (1 / Math.sqrt(2 * Math.PI)) * Math.pow(2, -0.5) * Math.exp(-1);
+    expect(getChiSquare1Pdf(2)).toBeCloseTo(expectedAt2, 4);
   });
 });
