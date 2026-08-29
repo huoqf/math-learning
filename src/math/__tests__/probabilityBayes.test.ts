@@ -4,6 +4,7 @@ import {
   calculateTotalProb,
   calculateBayesDiagnostic,
   calculateMarkovChain,
+  calculateWarnerModel,
 } from "../probabilityBayes";
 
 describe("probabilityBayes math module", () => {
@@ -226,5 +227,20 @@ describe("probabilityBayes math module", () => {
     // 特殊情形：P(A)=1 → ~A 不可能，pB_given_notA = 0
     const res2 = calculateConditionalProb(1.0, 0.6, 0.6);
     expect(res2.pB_given_notA).toBeCloseTo(0);
+  });
+
+  it("should calculate Warner randomized response model correctly", () => {
+    // 抽卡概率 pCard = 0.8, 调查回答 Yes 占比 0.36
+    // P(Yes) = 0.8 * p_real + 0.2 * (1 - p_real) = 0.6 * p_real + 0.2 = 0.36
+    // p_real = (0.36 - 0.2) / 0.6 = 0.16 / 0.6 = 4/15 ≈ 0.2667 (26.67%)
+    const res = calculateWarnerModel(0.8, 0.36);
+    expect(res.pReal).toBeCloseTo(4 / 15);
+    expect(res.isDegenerate).toBe(false);
+    expect(res.inversionFormulaLatex).toContain("26.67\\%");
+
+    // 退化测试：pCard = 0.5 时无法反解真实比例
+    const resDegen = calculateWarnerModel(0.5, 0.5);
+    expect(resDegen.isDegenerate).toBe(true);
+    expect(resDegen.inversionFormulaLatex).toContain("无法解出");
   });
 });

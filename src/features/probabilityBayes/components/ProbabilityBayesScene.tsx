@@ -12,7 +12,8 @@ interface ProbabilityBayesSceneProps {
   activeMode: "conditional" | "total_prob" | "bayes" | "markov";
   isZoomedToA?: boolean;
   bayesPreset?: "screening" | "factory" | "survey" | "custom";
-  markovPreset?: "pass_ball" | "urn_ball" | "weather" | "custom";
+  markovPreset?:
+    "pass_ball" | "pass_ball_3" | "urn_ball" | "weather" | "custom";
   fontScale?: (v: number) => number;
 }
 

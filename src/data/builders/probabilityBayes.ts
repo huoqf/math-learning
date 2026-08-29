@@ -4,6 +4,7 @@ import {
   calculateTotalProb,
   calculateBayesDiagnostic,
   calculateMarkovChain,
+  calculateWarnerModel,
 } from "../../math/probabilityBayes";
 import { MATH_COLORS } from "../../theme";
 
@@ -151,6 +152,81 @@ export function buildProbabilityBayesPanel(
 
   // 2. 模式二：全概率公式与完备事件组划分
   if (activeMode === "total_prob") {
+    if (totalScenario === "warner") {
+      const pCard = params.pCard ?? 0.8;
+      const pReportYes = params.pReportYes ?? 0.36;
+      const warnerRes = calculateWarnerModel(pCard, pReportYes);
+
+      return {
+        quantities: [
+          {
+            label: "正面卡片概率 P(C₁: 我是)",
+            symbol: "P(C_1)",
+            value: `${(warnerRes.pCard * 100).toFixed(1)}%`,
+            color: MATH_COLORS.paramPrimary,
+          },
+          {
+            label: "反面卡片概率 P(C₂: 我不是)",
+            symbol: "P(C_2)",
+            value: `${((1 - warnerRes.pCard) * 100).toFixed(1)}%`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: "调查统计回答 Yes 比例 P(Yes)",
+            symbol: "P(\\text{Yes})",
+            value: `${(warnerRes.pReportYes * 100).toFixed(1)}%`,
+            color: MATH_COLORS.functionTransformed,
+          },
+          {
+            label: "★ 全概逆解真实具有特征率 p_real",
+            symbol: "p_{\\text{real}}",
+            value: warnerRes.isDegenerate
+              ? "退化无法解出"
+              : `${(warnerRes.pReal * 100).toFixed(2)}%`,
+            color: MATH_COLORS.function,
+          },
+        ],
+        theorems: [
+          {
+            name: "Warner 敏感问题随机化回答模型 (Randomized Response)",
+            latex: `P(\\text{Yes}) = P(C_1)p_{\\text{real}} + P(C_2)(1 - p_{\\text{real}}) = (2P(C_1) - 1)p_{\\text{real}} + (1 - P(C_1))`,
+            condition:
+              "受访者随机抽取卡片 C₁ 或 C₂ 并如实回答（调查员不知道受访者抽到哪张卡）",
+            prerequisites: [
+              "$P(C_1) \\ne 0.5$（$P(C_1) = 0.5$ 时信息完全抵消退化）",
+            ],
+            note: "充分保护个人隐私的同时，利用全概率公式从群体回答率精确推算真实敏感比例。",
+            level: "core",
+          },
+          {
+            name: "全概逆向解算公式",
+            latex: `p_{\\text{real}} = \\frac{P(\\text{Yes}) - (1 - P(C_1))}{2P(C_1) - 1}`,
+            note: "新高考创新大题核心公式：代入统计数据一元线性方程秒解真实比例。",
+            level: "important",
+          },
+        ],
+        gaokaoPoints: [
+          {
+            text: "【新高考创新统计考点】利用全概公式破除被调查者戒备心理。全概列方程 P(Yes) = P(C1)p + P(C2)(1-p)，直接移项解一元一次方程。",
+            importance: "gaokao",
+          },
+          {
+            text: "【退化临界分析】若抽卡概率 P(C1) = 0.5，则无论真实比例 p 为何值，P(Yes) 恒为 0.5，无法反解未知参数 p；实际调查中常取 P(C1) = 0.7~0.85。",
+            importance: "core",
+          },
+        ],
+        warnings: warnerRes.isDegenerate
+          ? [
+              {
+                text: "当正面卡片概率 P(C₁) = 0.5 时，分母 2P(C₁) - 1 = 0，回答 Yes 的概率恒为 50%，信息完全抵消，无法逆向推导真实比例！",
+                level: "danger",
+              },
+            ]
+          : [],
+        mnemonic: "全概正列抽卡式，移项反解真实率。",
+      };
+    }
+
     const pA1 = params.pA1 ?? 0.4;
     const pA2 = params.pA2 ?? 0.35;
     const pA3 = Math.max(0, 1 - pA1 - pA2);
@@ -411,13 +487,15 @@ export function buildProbabilityBayesPanel(
   const lastStepP1 = markovRes.steps[markovRes.steps.length - 1]?.p1 ?? 0;
 
   const modelName =
-    markovPreset === "pass_ball"
-      ? "甲乙传球模型"
-      : markovPreset === "urn_ball"
-        ? "摸球替换模型"
-        : markovPreset === "weather"
-          ? "晴雨天气转移模型"
-          : "自定义马尔可夫链";
+    markovPreset === "pass_ball_3"
+      ? "甲乙丙三人环传模型 (对称降维)"
+      : markovPreset === "pass_ball"
+        ? "甲乙传球模型"
+        : markovPreset === "urn_ball"
+          ? "摸球替换模型"
+          : markovPreset === "weather"
+            ? "晴雨天气转移模型"
+            : "自定义马尔可夫链";
 
   return {
     quantities: [

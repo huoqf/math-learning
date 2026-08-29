@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateMarkovChain } from "@/math/probabilityBayes";
 
@@ -13,6 +13,9 @@ export function MarkovScene({
   markovPreset = "pass_ball",
   fontScale,
 }: MarkovSceneProps) {
+  const [plotMode, setPlotMode] = useState<"timeseries" | "cobweb">(
+    "timeseries",
+  );
   const p1 = params.p1 ?? 1.0;
   const p11 = params.p11 ?? 0.0;
   const p21 = params.p21 ?? 0.5;
@@ -37,7 +40,7 @@ export function MarkovScene({
 
   // 场景名称定制
   const labels = useMemo(() => {
-    if (markovPreset === "pass_ball") {
+    if (markovPreset === "pass_ball" || markovPreset === "pass_ball_3") {
       return {
         s1: "状态 1 (球在甲)",
         s2: "状态 2 (球在乙/丙)",
@@ -405,16 +408,92 @@ export function MarkovScene({
         </g>
       </g>
 
-      {/* ─── 右区：状态概率演化折线图 (x: 435 ~ 795, y: 55 ~ 455) ─── */}
-      <text
-        x={435}
-        y={54}
-        fontSize={fontScale(15)}
-        fontWeight="bold"
-        fill={MATH_COLORS.labelText}
-      >
-        3. 状态概率演化折线与稳态逼近
-      </text>
+      {/* ─── 右区：状态概率演化折线图 / 蛛网迭代图 (x: 435 ~ 795, y: 55 ~ 455) ─── */}
+      <g>
+        <text
+          x={435}
+          y={54}
+          fontSize={fontScale(14)}
+          fontWeight="bold"
+          fill={MATH_COLORS.labelText}
+        >
+          3.{" "}
+          {plotMode === "timeseries"
+            ? "状态概率演化折线"
+            : "一阶蛛网迭代图 (Cobweb)"}
+        </text>
+
+        {/* 胶囊切换按钮组 */}
+        <g transform="translate(640, 36)">
+          <rect
+            x={0}
+            y={0}
+            width={155}
+            height={26}
+            rx={13}
+            fill={withAlpha(MATH_COLORS.axis, 0.12)}
+          />
+          {/* 折线图选项 */}
+          <g
+            className="cursor-pointer"
+            onClick={() => setPlotMode("timeseries")}
+          >
+            {plotMode === "timeseries" && (
+              <rect
+                x={2}
+                y={2}
+                width={74}
+                height={22}
+                rx={11}
+                fill={MATH_COLORS.white}
+                className="shadow-sm"
+              />
+            )}
+            <text
+              x={39}
+              y={17}
+              fontSize={fontScale(11)}
+              fontWeight={plotMode === "timeseries" ? "bold" : "normal"}
+              fill={
+                plotMode === "timeseries"
+                  ? MATH_COLORS.function
+                  : MATH_COLORS.labelTextLight
+              }
+              textAnchor="middle"
+            >
+              📈 折线图
+            </text>
+          </g>
+          {/* 蛛网图选项 */}
+          <g className="cursor-pointer" onClick={() => setPlotMode("cobweb")}>
+            {plotMode === "cobweb" && (
+              <rect
+                x={79}
+                y={2}
+                width={74}
+                height={22}
+                rx={11}
+                fill={MATH_COLORS.white}
+                className="shadow-sm"
+              />
+            )}
+            <text
+              x={116}
+              y={17}
+              fontSize={fontScale(11)}
+              fontWeight={plotMode === "cobweb" ? "bold" : "normal"}
+              fill={
+                plotMode === "cobweb"
+                  ? MATH_COLORS.derivative
+                  : MATH_COLORS.labelTextLight
+              }
+              textAnchor="middle"
+            >
+              🕸️ 蛛网图
+            </text>
+          </g>
+        </g>
+      </g>
 
       {/* 外框底板 */}
       <rect
@@ -472,100 +551,253 @@ export function MarkovScene({
         );
       })}
 
-      {/* 平稳分布渐近线 */}
-      <line
-        x1={plotLeft}
-        y1={plotBottom - markovData.pStationary * plotHeight}
-        x2={plotRight}
-        y2={plotBottom - markovData.pStationary * plotHeight}
-        stroke={MATH_COLORS.derivative}
-        strokeWidth={2}
-        strokeDasharray="5 3"
-      />
-      <text
-        x={plotRight}
-        y={plotBottom - markovData.pStationary * plotHeight - 6}
-        fontSize={fontScale(11)}
-        fontWeight="bold"
-        fill={MATH_COLORS.derivative}
-        textAnchor="end"
-      >
-        稳态极限 p_∞ = {markovData.pStationary.toFixed(3)}
-      </text>
+      {/* ─── 视图 1：时间演化折线图 ─── */}
+      {plotMode === "timeseries" && (
+        <g>
+          {/* 平稳分布渐近线 */}
+          <line
+            x1={plotLeft}
+            y1={plotBottom - markovData.pStationary * plotHeight}
+            x2={plotRight}
+            y2={plotBottom - markovData.pStationary * plotHeight}
+            stroke={MATH_COLORS.derivative}
+            strokeWidth={2}
+            strokeDasharray="5 3"
+          />
+          <text
+            x={plotRight}
+            y={plotBottom - markovData.pStationary * plotHeight - 6}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            fill={MATH_COLORS.derivative}
+            textAnchor="end"
+          >
+            稳态极限 p_∞ = {markovData.pStationary.toFixed(3)}
+          </text>
 
-      {/* 演化折线与点 */}
-      {markovData.steps.map((step, idx) => {
-        const x =
-          plotLeft + ((step.n - 1) / Math.max(1, totalSteps - 1)) * plotWidth;
-        const y = plotBottom - step.p1 * plotHeight;
-        const isCurrent = step.n === currStep;
+          {/* 演化折线与点 */}
+          {markovData.steps.map((step, idx) => {
+            const x =
+              plotLeft +
+              ((step.n - 1) / Math.max(1, totalSteps - 1)) * plotWidth;
+            const y = plotBottom - step.p1 * plotHeight;
+            const isCurrent = step.n === currStep;
 
-        let nextLine = null;
-        if (idx < totalSteps - 1) {
-          const nextStep = markovData.steps[idx + 1];
-          const nextX =
-            plotLeft + ((nextStep.n - 1) / (totalSteps - 1)) * plotWidth;
-          const nextY = plotBottom - nextStep.p1 * plotHeight;
-          nextLine = (
-            <line
-              key={`line-${idx}`}
-              x1={x}
-              y1={y}
-              x2={nextX}
-              y2={nextY}
-              stroke={MATH_COLORS.function}
-              strokeWidth={2}
-            />
-          );
-        }
+            let nextLine = null;
+            if (idx < totalSteps - 1) {
+              const nextStep = markovData.steps[idx + 1];
+              const nextX =
+                plotLeft + ((nextStep.n - 1) / (totalSteps - 1)) * plotWidth;
+              const nextY = plotBottom - nextStep.p1 * plotHeight;
+              nextLine = (
+                <line
+                  key={`line-${idx}`}
+                  x1={x}
+                  y1={y}
+                  x2={nextX}
+                  y2={nextY}
+                  stroke={MATH_COLORS.function}
+                  strokeWidth={2}
+                />
+              );
+            }
 
-        return (
-          <g key={`point-${step.n}`}>
-            {nextLine}
-            {isCurrent && (
-              <g>
+            return (
+              <g key={`point-${step.n}`}>
+                {nextLine}
+                {isCurrent && (
+                  <g>
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r={10}
+                      fill={withAlpha(MATH_COLORS.paramPrimary, 0.25)}
+                    />
+                    <line
+                      x1={x}
+                      y1={y}
+                      x2={x}
+                      y2={plotBottom}
+                      stroke={MATH_COLORS.paramPrimary}
+                      strokeDasharray="2 2"
+                      strokeWidth={1}
+                    />
+                  </g>
+                )}
                 <circle
                   cx={x}
                   cy={y}
-                  r={10}
-                  fill={withAlpha(MATH_COLORS.paramPrimary, 0.25)}
+                  r={isCurrent ? 6 : 4.5}
+                  fill={
+                    isCurrent ? MATH_COLORS.paramPrimary : MATH_COLORS.function
+                  }
+                  stroke={MATH_COLORS.white}
+                  strokeWidth={1.5}
                 />
+                <text
+                  x={x}
+                  y={plotBottom + 16}
+                  fontSize={fontScale(9.5)}
+                  fontWeight={isCurrent ? "bold" : "normal"}
+                  fill={
+                    isCurrent
+                      ? MATH_COLORS.paramPrimary
+                      : MATH_COLORS.labelTextLight
+                  }
+                  textAnchor="middle"
+                >
+                  {step.n}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      )}
+
+      {/* ─── 视图 2：蛛网图 (Cobweb Plot) ─── */}
+      {plotMode === "cobweb" && (
+        <g>
+          {/* X 轴刻度标签 */}
+          {[0, 0.25, 0.5, 0.75, 1.0].map((v) => {
+            const x = plotLeft + v * plotWidth;
+            return (
+              <text
+                key={`x-grid-${v}`}
+                x={x}
+                y={plotBottom + 16}
+                fontSize={fontScale(9.5)}
+                fill={MATH_COLORS.labelTextLight}
+                textAnchor="middle"
+              >
+                {v.toFixed(2)}
+              </text>
+            );
+          })}
+
+          {/* 对角辅助线 y = x */}
+          <line
+            x1={plotLeft}
+            y1={plotBottom}
+            x2={plotRight}
+            y2={plotTop}
+            stroke={withAlpha(MATH_COLORS.axis, 0.6)}
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+          />
+          <text
+            x={plotRight - 4}
+            y={plotTop + 14}
+            fontSize={fontScale(10)}
+            fill={MATH_COLORS.labelTextLight}
+            textAnchor="end"
+          >
+            y = x
+          </text>
+
+          {/* 递推函数直线 y = λx + β */}
+          {(() => {
+            const y0 = markovData.p21; // x=0 处 y = p21
+            const y1 = markovData.lambda + markovData.p21; // x=1 处 y = lambda + p21
+            const pt0 = { x: plotLeft, y: plotBottom - y0 * plotHeight };
+            const pt1 = { x: plotRight, y: plotBottom - y1 * plotHeight };
+            return (
+              <g>
                 <line
-                  x1={x}
-                  y1={y}
-                  x2={x}
-                  y2={plotBottom}
-                  stroke={MATH_COLORS.paramPrimary}
-                  strokeDasharray="2 2"
-                  strokeWidth={1}
+                  x1={pt0.x}
+                  y1={pt0.y}
+                  x2={pt1.x}
+                  y2={pt1.y}
+                  stroke={MATH_COLORS.function}
+                  strokeWidth={2.5}
+                />
+                <text
+                  x={(pt0.x + pt1.x) / 2 + 10}
+                  y={(pt0.y + pt1.y) / 2 - 10}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  fill={MATH_COLORS.function}
+                  textAnchor="middle"
+                >
+                  y = {markovData.recurrenceText}
+                </text>
+              </g>
+            );
+          })()}
+
+          {/* 不动点交点 (p_inf, p_inf) */}
+          {!markovData.isDegenerate && (
+            <g>
+              <circle
+                cx={plotLeft + markovData.pStationary * plotWidth}
+                cy={plotBottom - markovData.pStationary * plotHeight}
+                r={5}
+                fill={MATH_COLORS.derivative}
+                stroke={MATH_COLORS.white}
+                strokeWidth={1.5}
+              />
+              <text
+                x={plotLeft + markovData.pStationary * plotWidth + 8}
+                y={plotBottom - markovData.pStationary * plotHeight - 8}
+                fontSize={fontScale(10.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.derivative}
+              >
+                不动点 ({markovData.pStationary.toFixed(2)},{" "}
+                {markovData.pStationary.toFixed(2)})
+              </text>
+            </g>
+          )}
+
+          {/* 蛛网轨迹连线 */}
+          {markovData.cobwebPoints.map((pt, idx) => {
+            if (idx === 0) return null;
+            const prev = markovData.cobwebPoints[idx - 1];
+            const x1 = plotLeft + prev.x * plotWidth;
+            const y1 = plotBottom - prev.y * plotHeight;
+            const x2 = plotLeft + pt.x * plotWidth;
+            const y2 = plotBottom - pt.y * plotHeight;
+            const isHighlighted = pt.stepIndex <= currStep + 1;
+
+            return (
+              <g key={`cobweb-${idx}`}>
+                <line
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={
+                    pt.type === "vertical"
+                      ? MATH_COLORS.paramPrimary
+                      : MATH_COLORS.paramSecondary
+                  }
+                  strokeWidth={isHighlighted ? 2 : 1}
+                  strokeOpacity={isHighlighted ? 1 : 0.3}
                 />
               </g>
-            )}
-            <circle
-              cx={x}
-              cy={y}
-              r={isCurrent ? 6 : 4.5}
-              fill={isCurrent ? MATH_COLORS.paramPrimary : MATH_COLORS.function}
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.5}
-            />
-            <text
-              x={x}
-              y={plotBottom + 16}
-              fontSize={fontScale(9.5)}
-              fontWeight={isCurrent ? "bold" : "normal"}
-              fill={
-                isCurrent
-                  ? MATH_COLORS.paramPrimary
-                  : MATH_COLORS.labelTextLight
-              }
-              textAnchor="middle"
-            >
-              {step.n}
-            </text>
-          </g>
-        );
-      })}
+            );
+          })}
+
+          {/* 初始点 (p1, p1) */}
+          <circle
+            cx={plotLeft + p1 * plotWidth}
+            cy={plotBottom - p1 * plotHeight}
+            r={5}
+            fill={MATH_COLORS.paramPrimary}
+            stroke={MATH_COLORS.white}
+            strokeWidth={1.5}
+          />
+          <text
+            x={plotLeft + p1 * plotWidth - 8}
+            y={plotBottom - p1 * plotHeight + 14}
+            fontSize={fontScale(10)}
+            fontWeight="bold"
+            fill={MATH_COLORS.paramPrimary}
+            textAnchor="end"
+          >
+            初值 p₁={p1.toFixed(2)}
+          </text>
+        </g>
+      )}
 
       {/* ─── 右下区：通项公式与高考数列构造卡片 (x: 435 ~ 795, y: 460 ~ 615) ─── */}
       <g transform="translate(435, 460)">

@@ -40,13 +40,13 @@ export function ProbabilityBayesAnimation() {
     "free" | "independent" | "correlated" | "exclusive"
   >("independent");
   const [totalScenario, setTotalScenario] = useState<
-    "free" | "factory3" | "balanced"
+    "free" | "factory3" | "balanced" | "warner"
   >("factory3");
   const [bayesScenario, setBayesScenario] = useState<
     "free" | "screening" | "factory"
   >("screening");
   const [markovScenario, setMarkovScenario] = useState<
-    "free" | "pass_ball" | "urn_ball" | "weather"
+    "free" | "pass_ball" | "pass_ball_3" | "urn_ball" | "weather"
   >("pass_ball");
 
   // 1. 视口与缩放设置 (840 x 650 full preset)
@@ -97,6 +97,16 @@ export function ProbabilityBayesAnimation() {
       return `\\color{${MATH_COLORS.function}}{P(B|A)} = \\frac{\\color{${MATH_COLORS.paramTertiary}}{P(AB)}}{\\color{${MATH_COLORS.paramPrimary}}{P(A)}} = \\frac{${pABVal}}{${pAVal}} = ${pBGivenA}`;
     }
     if (activeMode === "total_prob") {
+      if (totalScenario === "warner") {
+        const pCard = params.pCard ?? 0.8;
+        const pReportYes = params.pReportYes ?? 0.36;
+        const denom = 2 * pCard - 1;
+        const pReal =
+          denom !== 0
+            ? Math.max(0, Math.min(1, (pReportYes - (1 - pCard)) / denom))
+            : 0;
+        return `\\color{${MATH_COLORS.function}}{P(\\text{Yes})} = \\color{${MATH_COLORS.paramPrimary}}{${pCard.toFixed(2)}} p_{\\text{real}} + ${(1 - pCard).toFixed(2)}(1 - p_{\\text{real}}) \\implies \\color{${MATH_COLORS.function}}{p_{\\text{real}}} = ${(pReal * 100).toFixed(1)}\\%`;
+      }
       const pA1 = params.pA1 ?? 0.4;
       const pA2 = params.pA2 ?? 0.35;
       const pA3 = Math.max(0, 1 - pA1 - pA2);
@@ -131,7 +141,7 @@ export function ProbabilityBayesAnimation() {
       lambda >= 0 ? lambda.toFixed(2) : `(${lambda.toFixed(2)})`;
     const betaStr = p21.toFixed(2);
     return `\\color{${MATH_COLORS.function}}{p_{n+1}} = p_{11} p_n + p_{21}(1-p_n) = ${lambdaStr} p_n + ${betaStr}`;
-  }, [activeMode, params, bayesScenario]);
+  }, [activeMode, params, bayesScenario, totalScenario]);
 
   // 3.5. 左屏教学提示与题设导引
   const tipConfig = useMemo(() => {
@@ -186,6 +196,15 @@ export function ProbabilityBayesAnimation() {
           question: "观察全概率加权平均如何退化为分支概率的简单算术平均数。",
         };
       }
+      if (totalScenario === "warner") {
+        return {
+          variant: "info" as const,
+          badge: "高考前沿 · Warner 敏感问题调查模型",
+          condition: "正面卡概率 P(C₁) 与调查回答 Yes 统计率 P(Yes)。",
+          question:
+            "利用全概率公式列一元线性方程，从群体回答率反解真实敏感比例。",
+        };
+      }
       return {
         variant: "info" as const,
         badge: "自由探索 · 完备划分与全概率公式",
@@ -227,6 +246,16 @@ export function ProbabilityBayesAnimation() {
           "甲必传乙 (p₁₁=0)，乙等可能传甲或丙 (p₂₁=0.5)，球初在甲手 (p₁=1)。",
         question:
           "滑动步数 n，观察特征公比 λ = -0.5 下数列交替摆动逼近 1/3 的全过程。",
+      };
+    }
+    if (markovScenario === "pass_ball_3") {
+      return {
+        variant: "danger" as const,
+        badge: "高考压轴 · 三人环传模型 (对称降维)",
+        condition:
+          "甲乙丙三人轮流传球，球在甲为 S₁，球在乙/丙为 S₂，公比 λ = -0.5。",
+        question:
+          "探究利用 P(乙)=P(丙) 对称性将 3 状态转移矩阵降维为一阶等比递推。",
       };
     }
     if (markovScenario === "urn_ball") {
@@ -327,7 +356,9 @@ export function ProbabilityBayesAnimation() {
         activeKeys = ["pA", "pB"];
       }
     } else if (activeMode === "total_prob") {
-      if (totalScenario === "free") {
+      if (totalScenario === "warner") {
+        activeKeys = ["pCard", "pReportYes"];
+      } else if (totalScenario === "free") {
         activeKeys = ["pA1", "pA2", "pB_A1", "pB_A2", "pB_A3"];
         groupMap = {
           pA1: "完备划分先验概率",
@@ -361,8 +392,11 @@ export function ProbabilityBayesAnimation() {
           currStep: "初始状态与演化步数",
           maxN: "初始状态与演化步数",
         };
-      } else if (markovScenario === "pass_ball") {
-        // 甲乙传球：转移矩阵固定，仅开放步数探索
+      } else if (
+        markovScenario === "pass_ball" ||
+        markovScenario === "pass_ball_3"
+      ) {
+        // 甲乙传球/三人传球：转移矩阵固定，仅开放步数探索
         activeKeys = ["currStep", "maxN"];
       } else {
         // 摸球/天气：仅开放初态与步数
@@ -565,6 +599,11 @@ export function ProbabilityBayesAnimation() {
                     label: "三等分均衡模型",
                     fullWidth: true,
                   },
+                  {
+                    key: "warner",
+                    label: "Warner 敏感问题调查",
+                    fullWidth: true,
+                  },
                 ]}
                 value={totalScenario}
                 onChange={(k) => {
@@ -587,6 +626,12 @@ export function ProbabilityBayesAnimation() {
                       pB_A1: 0.5,
                       pB_A2: 0.5,
                       pB_A3: 0.5,
+                    }));
+                  } else if (s === "warner") {
+                    setParams((prev) => ({
+                      ...prev,
+                      pCard: 0.8,
+                      pReportYes: 0.36,
                     }));
                   }
                 }}
@@ -653,6 +698,10 @@ export function ProbabilityBayesAnimation() {
                     label: "甲乙传球",
                   },
                   {
+                    key: "pass_ball_3",
+                    label: "三人环传",
+                  },
+                  {
                     key: "urn_ball",
                     label: "摸球置换",
                   },
@@ -665,7 +714,7 @@ export function ProbabilityBayesAnimation() {
                 onChange={(k) => {
                   const s = k as typeof markovScenario;
                   setMarkovScenario(s);
-                  if (s === "pass_ball") {
+                  if (s === "pass_ball" || s === "pass_ball_3") {
                     setParams((prev) => ({
                       ...prev,
                       p1: 1.0,

@@ -45,6 +45,16 @@ export interface BayesDiagnosticResult {
   isValid: boolean;
 }
 
+export interface WarnerModelResult {
+  pCard: number; // 抽到正面卡片(如"我是")的概率 P(Card1)
+  pReportYes: number; // 统计回答"Yes"的样本比例 P(Yes)
+  pReal: number; // 反解出的真实具有该特征的概率 p_real
+  isDegenerate: boolean; // 当 pCard = 0.5 时无法反解真实比例（分母为0）
+  totalFormulaLatex: string;
+  inversionFormulaLatex: string;
+  isValid: boolean;
+}
+
 export interface MarkovStepItem {
   n: number;
   p1: number; // 第 n 步处于状态 1 的概率
@@ -375,6 +385,43 @@ p_{n+1} = P(S_{n+1}=1|S_n=1)p_n + P(S_{n+1}=1|S_n=2)(1-p_n)
     steps,
     cobwebPoints,
     gaokaoSteps,
+    isValid: true,
+  };
+}
+
+/**
+ * 5. Warner 敏感问题随机化回答调查模型
+ * 全概正向：P(Yes) = P(Card1)*p_real + P(Card2)*(1 - p_real) = (2*pCard - 1)*p_real + (1 - pCard)
+ * 全概逆向：p_real = [P(Yes) - (1 - pCard)] / (2*pCard - 1)  (pCard != 0.5)
+ */
+export function calculateWarnerModel(
+  pCard: number,
+  pReportYes: number,
+): WarnerModelResult {
+  const cPCard = Math.max(0.01, Math.min(0.99, pCard));
+  const cPYes = Math.max(0, Math.min(1, pReportYes));
+
+  const denominator = 2 * cPCard - 1;
+  const isDegenerate = Math.abs(denominator) < 1e-4;
+
+  let pReal = 0;
+  if (!isDegenerate) {
+    const rawReal = (cPYes - (1 - cPCard)) / denominator;
+    pReal = Math.max(0, Math.min(1, rawReal));
+  }
+
+  const totalFormulaLatex = `P(\\text{Yes}) = P(C_1)p_{\\text{real}} + P(C_2)(1 - p_{\\text{real}}) = (${(2 * cPCard - 1).toFixed(2)})p_{\\text{real}} + ${(1 - cPCard).toFixed(2)}`;
+  const inversionFormulaLatex = isDegenerate
+    ? `p_{\\text{real}} \\text{ 无法解出 (抽卡概率等于 0.5 时信息完全抵消)}`
+    : `p_{\\text{real}} = \\frac{P(\\text{Yes}) - ${(1 - cPCard).toFixed(2)}}{${(2 * cPCard - 1).toFixed(2)}} = ${(pReal * 100).toFixed(2)}\\%`;
+
+  return {
+    pCard: cPCard,
+    pReportYes: cPYes,
+    pReal,
+    isDegenerate,
+    totalFormulaLatex,
+    inversionFormulaLatex,
     isValid: true,
   };
 }

@@ -13,6 +13,8 @@ export const defaultParams = {
   pB_A1: 0.6,
   pB_A2: 0.3,
   pB_A3: 0.8,
+  pCard: 0.8,
+  pReportYes: 0.36,
 
   // 模式 3: 贝叶斯诊断
   pPriorD: 0.02,
@@ -124,6 +126,33 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.05,
     defaultValue: 0.8,
     importance: "advanced",
+  },
+  pCard: {
+    key: "pCard",
+    label: "正面抽卡概率",
+    labelFormula: `\\text{正面卡概率 } \\color{${MATH_COLORS.paramPrimary}}{P(C_1)}`,
+    min: 0.1,
+    max: 0.9,
+    step: 0.05,
+    defaultValue: 0.8,
+    importance: "core",
+    marks: [
+      {
+        value: 0.5,
+        variant: "critical",
+        label: "退化",
+      },
+    ],
+  },
+  pReportYes: {
+    key: "pReportYes",
+    label: "统计回答Yes比例",
+    labelFormula: `\\text{调查回答率 } \\color{${MATH_COLORS.paramSecondary}}{P(\\text{Yes})}`,
+    min: 0.05,
+    max: 0.95,
+    step: 0.01,
+    defaultValue: 0.36,
+    importance: "core",
   },
 
   // ---------------- 贝叶斯诊断 ----------------
