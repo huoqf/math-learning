@@ -630,9 +630,13 @@ export function MarkovScene({
           fontWeight="bold"
           fill={MATH_COLORS.paramPrimary}
         >
-          {markovData.isOscillating
-            ? "【震荡收敛型】公比 λ < 0，在稳态两侧交替摆动逼近"
-            : "【单调收敛型】公比 0 < λ < 1，单调逼近稳态极限"}
+          {markovData.isPureOscillating
+            ? "【永久振荡型】公比 λ = -1，在两点间等幅振荡，无稳态极限"
+            : markovData.isDegenerate
+              ? "【吸收退化型】公比 λ = 1，系统处于自封闭态，概率恒定"
+              : markovData.isOscillating
+                ? "【震荡收敛型】公比 -1 < λ < 0，在稳态两侧交替摆动逼近"
+                : "【单调收敛型】公比 0 ≤ λ < 1，单调逼近稳态极限"}
         </text>
         <text
           x={20}

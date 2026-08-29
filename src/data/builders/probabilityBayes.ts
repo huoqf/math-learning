@@ -489,9 +489,13 @@ export function buildProbabilityBayesPanel(
         latex: markovRes.generalTermLatex
           ? markovRes.generalTermLatex
           : `p_n = p_\\infty + (p_1 - p_\\infty)\\lambda^{n-1}`,
-        note: markovRes.isOscillating
-          ? "公比 $\\lambda < 0$：序列在 $p_\\infty$ 上下交替振荡衰减收敛（如传球模型）。"
-          : "公比 $\\lambda > 0$：序列单调渐近收敛于平稳极限 $p_\\infty$。",
+        note: markovRes.isPureOscillating
+          ? "公比 $\\lambda = -1$：序列在两点间永久等幅振荡，不存在稳态极限。"
+          : markovRes.isDegenerate
+            ? "公比 $\\lambda = 1$：系统处于自封闭吸收态，各步概率恒定不变。"
+            : markovRes.isOscillating
+              ? "公比 $-1 < \\lambda < 0$：序列在 $p_\\infty$ 上下交替振荡衰减收敛（如传球模型）。"
+              : "公比 $0 \\le \\lambda < 1$：序列单调渐近收敛于平稳极限 $p_\\infty$。",
         level: "derived",
       },
     ],
@@ -501,7 +505,15 @@ export function buildProbabilityBayesPanel(
         importance: "gaokao",
       },
       {
-        text: `【${modelName}考法点睛】${markovRes.isOscillating ? "公比 λ < 0 时为振荡收敛，偶数步与奇数步分别逼近极限，在求和或极值时需分类讨论。" : "公比 λ > 0 时为单调收敛，可直接通过导数或差分研究单调性。"}`,
+        text: `【${modelName}考法点睛】${
+          markovRes.isPureOscillating
+            ? "公比 λ = -1 时序列在奇偶步间等幅振荡，通项公式存在但极限不存在。"
+            : markovRes.isDegenerate
+              ? "公比 λ = 1 时系统概率恒定，无需构造等比数列。"
+              : markovRes.isOscillating
+                ? "公比 -1 < λ < 0 时为振荡衰减收敛，偶数步与奇数步分别逼近极限，在求和或极值时需分类讨论。"
+                : "公比 0 ≤ λ < 1 时为单调收敛，可直接通过导数或差分研究单调性。"
+        }`,
         importance: "gaokao",
       },
       {

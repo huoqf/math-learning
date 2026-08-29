@@ -67,8 +67,9 @@ export interface MarkovChainResult {
   p22: number; // 1 - p21
   lambda: number; // 公比 = p11 - p21
   pStationary: number; // 平稳分布 p_infty = p21 / (1 - lambda)
-  isOscillating: boolean; // lambda < 0 时为交替震荡收敛
-  isDegenerate: boolean; // lambda == 1 时为退化恒定
+  isOscillating: boolean; // lambda < 0 且 |lambda| < 1 时为交替震荡收敛
+  isDegenerate: boolean; // lambda == 1 时为退化恒定（吸收态）
+  isPureOscillating: boolean; // lambda == -1 时为永久等幅振荡，不存在稳态极限
   recurrenceLatex: string; // p_{n+1} = a * p_n + b
   geometricLatex: string; // p_{n+1} - p_infty = lambda (p_n - p_infty)
   generalTermLatex: string; // p_n = (p1 - p_infty) * lambda^(n-1) + p_infty
@@ -237,7 +238,9 @@ export function calculateMarkovChain(
 
   const lambda = cP11 - cP21;
   const isDegenerate = Math.abs(1 - lambda) < 1e-6;
-  const isOscillating = lambda < -1e-6;
+  // lambda = -1 时 |lambda| = 1，序列永久振荡不收敛，须与收敛震荡（|lambda| < 1）区分
+  const isPureOscillating = Math.abs(lambda + 1) < 1e-6;
+  const isOscillating = lambda < -1e-6 && !isPureOscillating;
 
   // 平稳分布：p_infty = p21 / (1 - lambda) = p21 / (1 - p11 + p21)
   const denominator = 1 - lambda;
@@ -284,8 +287,9 @@ export function calculateMarkovChain(
     currP1 = nextP1;
   }
 
-  // 格式化系数 LaTeX
-  const lambdaStr = lambda >= 0 ? lambda.toFixed(2) : `(${lambda.toFixed(2)})`;
+  // 格式化系数 LaTeX 与纯文本（底数统一单层括号，杜绝 ((-0.50)) 双重括号）
+  const lambdaBaseStr = lambda.toFixed(2);
+  const lambdaStr = lambda >= 0 ? lambdaBaseStr : `(${lambdaBaseStr})`;
   const betaStr = cP21.toFixed(2);
   const pInfStr = pStationary.toFixed(3);
 
@@ -298,7 +302,7 @@ export function calculateMarkovChain(
   const diffInit = initP1 - pStationary;
   let generalTermLatex = "";
   let generalTermText = "";
-  if (Math.abs(diffInit) < 1e-6) {
+  if (isDegenerate || Math.abs(diffInit) < 1e-6) {
     generalTermLatex = `p_n = ${pInfStr}`;
     generalTermText = `pₙ = ${pInfStr}`;
   } else {
@@ -306,24 +310,49 @@ export function calculateMarkovChain(
       diffInit > 0
         ? `+ ${diffInit.toFixed(3)}`
         : `- ${Math.abs(diffInit).toFixed(3)}`;
-    generalTermLatex = `p_n = ${pInfStr} ${diffStr} \\cdot (${lambdaStr})^{n-1}`;
-    generalTermText = `pₙ = ${pInfStr} ${diffStr} × (${lambdaStr})ⁿ⁻¹`;
+    generalTermLatex = `p_n = ${pInfStr} ${diffStr} \\cdot (${lambdaBaseStr})^{n-1}`;
+    generalTermText = `pₙ = ${pInfStr} ${diffStr} × (${lambdaBaseStr})ⁿ⁻¹`;
   }
 
-  // 生成高考 4 步标准作答
+  // 生成高考 4 步标准作答（按四种情形严格分支）
+  let step3_geometric: string;
+  let step4_generalTerm: string;
+
+  if (isDegenerate) {
+    step3_geometric = `特征公比 \\lambda = 1.00，系统处于吸收/自封闭退化状态，状态概率恒定不变，无需构造等比数列。`;
+    step4_generalTerm = `系统处于吸收退化态（\\lambda = 1），各步状态概率恒为初始值，即 p_n = ${pInfStr}（常数列）。`;
+  } else if (Math.abs(diffInit) < 1e-6) {
+    step3_geometric = `求解不动点方程 x = ${lambdaStr} x + ${betaStr}，得不动点 x = ${pInfStr}。
+方程两边同减 ${pInfStr}，得：
+p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})
+故数列 \\{p_n - ${pInfStr}\\} 为以 0 为首项的常数数列。`;
+    step4_generalTerm = `初始概率 p_1 = ${initP1.toFixed(2)} 恰好等于不动点 ${pInfStr}，故 \\{p_n - ${pInfStr}\\} 为以 0 为首项的数列，即 p_n = ${pInfStr}（常数列）。稳态极限 \\lim_{n \\to \\infty} p_n = ${pInfStr}。`;
+  } else if (isPureOscillating) {
+    // |lambda| = 1，永久等幅振荡，通项公式成立但不收敛
+    const altValue = (2 * pStationary - initP1).toFixed(3);
+    step3_geometric = `求解不动点方程 x = ${lambdaStr} x + ${betaStr}，得不动点 x = ${pInfStr}。
+方程两边同减 ${pInfStr}，得：
+p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})
+故数列 \\{p_n - ${pInfStr}\\} 是以 p_1 - ${pInfStr} = ${diffInit.toFixed(3)} 为首项，以 \\lambda = ${lambdaStr} 为公比的等比数列。`;
+    step4_generalTerm = `注意公比 \\lambda = ${lambdaStr}，|\\lambda| = 1，数列 \\{p_n - ${pInfStr}\\} 的公比为 ${lambdaStr}，不满足 |\\lambda| < 1。序列在 ${initP1.toFixed(3)} 与 ${altValue} 之间永久等幅振荡，不存在稳态极限。通项公式为 ${generalTermLatex}（n 为奇数取 ${initP1.toFixed(3)}，n 为偶数取 ${altValue}）。`;
+  } else {
+    step3_geometric = `求解不动点方程 x = ${lambdaStr} x + ${betaStr}，得不动点 x = ${pInfStr}。
+方程两边同减 ${pInfStr}，得：
+p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})
+故数列 \\{p_n - ${pInfStr}\\} 是以 p_1 - ${pInfStr} = ${diffInit.toFixed(3)} 为首项，以 \\lambda = ${lambdaStr} 为公比的等比数列。`;
+    step4_generalTerm = `由此得通项公式为：
+p_n - ${pInfStr} = (${diffInit.toFixed(3)}) \\cdot (${lambdaBaseStr})^{n-1} \\implies ${generalTermLatex}
+因为 |\\lambda| = ${Math.abs(lambda).toFixed(2)} < 1，当 n \\to \\infty 时 (\\lambda)^{n-1} \\to 0，故稳态极限 \\lim_{n \\to \\infty} p_n = ${pInfStr}。`;
+  }
+
   const gaokaoSteps = {
     step1_define: `设第 n 步系统处于状态 S_1 的事件为 A_n，其发生概率为 P(A_n) = p_n，则处于状态 S_2 的概率为 P(\\bar{A}_n) = 1 - p_n。初始条件 p_1 = ${initP1.toFixed(2)}。`,
     step2_recurrence: `由全概率公式，第 n+1 步处于 S_1 的概率满足：
 p_{n+1} = P(S_{n+1}=1|S_n=1)p_n + P(S_{n+1}=1|S_n=2)(1-p_n)
 = ${cP11.toFixed(2)} p_n + ${cP21.toFixed(2)}(1 - p_n)
 = ${lambdaStr} p_n + ${betaStr}`,
-    step3_geometric: `求解不动点方程 x = ${lambdaStr} x + ${betaStr}，得不动点 x = ${pInfStr}。
-方程两边同减 ${pInfStr}，得：
-p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})
-故数列 \\{p_n - ${pInfStr}\\} 是以 p_1 - ${pInfStr} = ${diffInit.toFixed(3)} 为首项，以 \\lambda = ${lambdaStr} 为公比的等比数列。`,
-    step4_generalTerm: `由此得通项公式为：
-p_n - ${pInfStr} = (${diffInit.toFixed(3)}) \\cdot (${lambdaStr})^{n-1} \\implies ${generalTermLatex}
-因为 |\\lambda| = ${Math.abs(lambda).toFixed(2)} < 1，当 n \\to \\infty 时 (\\lambda)^{n-1} \\to 0，故稳态极限 \\lim_{n \\to \\infty} p_n = ${pInfStr}。`,
+    step3_geometric,
+    step4_generalTerm,
   };
 
   return {
@@ -336,6 +365,7 @@ p_n - ${pInfStr} = (${diffInit.toFixed(3)}) \\cdot (${lambdaStr})^{n-1} \\implie
     pStationary,
     isOscillating,
     isDegenerate,
+    isPureOscillating,
     recurrenceLatex,
     geometricLatex,
     generalTermLatex,
