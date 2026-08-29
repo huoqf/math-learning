@@ -30,6 +30,94 @@ export function buildPairedDataPanel(
     const currentModelFit =
       modelFits.find((m) => m.type === selectedModel) ?? modelFits[0];
 
+    const isLinearMode = selectedModel === "linear";
+    const isOutlierScenario = (config?.scenarioKey as string) === "outlier";
+
+    // 动态组装定理体系：根据当前情境与模式特化置顶
+    const dynamicTheorems = isLinearMode
+      ? [
+          {
+            name: "一元线性回归方程与最小二乘法",
+            latex: `\\begin{aligned} \\hat{y} &= \\color{${MATH_COLORS.paramPrimary}}{\\hat{b}}x + \\color{${MATH_COLORS.paramSecondary}}{\\hat{a}} \\\\[4pt] \\hat{b} &= \\frac{L_{xy}}{L_{xx}} = \\frac{\\sum_{i=1}^{n}(x_i-\\bar{x})(y_i-\\bar{y})}{\\sum_{i=1}^{n}(x_i-\\bar{x})^2} \\\\[4pt] \\hat{a} &= \\bar{y} - \\hat{b}\\bar{x} \\end{aligned}`,
+            note: "回归直线必过样本中心点 (x̄, ȳ)；最小二乘法使残差平方和 SSE = ∑(y_i - ŷ_i)² 达到全局最小。",
+            level: "core" as const,
+          },
+          {
+            name: "相关系数 r 与决定系数 R² 的统计意义",
+            latex: `\\begin{aligned} r &= \\frac{L_{xy}}{\\sqrt{L_{xx} L_{yy}}} \\\\[4pt] R^2 &= 1 - \\frac{\\text{SSE}}{\\text{SST}} = 1 - \\frac{\\sum (y_i - \\hat{y}_i)^2}{\\sum (y_i - \\bar{y})^2} \\end{aligned}`,
+            note: "r 与 b̂ 同号；|r| 越近 1 线性相关性越强；R² 越近 1 说明模型对 y 变异的解释比例越高、拟合优度越好。",
+            level: "important" as const,
+          },
+        ]
+      : [
+          {
+            name: `非线性回归转换模型 (${currentModelFit?.name ?? "换元线性化"})`,
+            latex: currentModelFit
+              ? `\\begin{aligned} \\text{原方程: } & ${currentModelFit.originalFormula} \\\\[4pt] \\text{换元法: } & ${currentModelFit.variableSubstitution} \\\\[4pt] \\text{线性型: } & ${currentModelFit.transformedFormula} \\end{aligned}`
+              : `y = c e^{kx} \\xrightarrow{z=\\ln y} z = kx + \\ln c`,
+            note: currentModelFit?.isBest
+              ? "【当前模型拟合优度最高】在候选非线性模型中决定系数 R² 最大、残差平方和 SSE 最小。"
+              : "通过变量代换将非线性关系化为线性方程求解，最后必须代回原变量得到预测方程。",
+            level: "core" as const,
+          },
+          {
+            name: "经验模型比较与决定系数 R² 准则",
+            latex: `R^2 = 1 - \\frac{\\text{SSE}}{\\text{SST}} = 1 - \\frac{\\sum_{i=1}^n (y_i - \\hat{y}_i)^2}{\\sum_{i=1}^n (y_i - \\bar{y})^2}`,
+            note: "高考大题核心判定：决定系数 R² 越接近 1（残差平方和 SSE 越小），模型的拟合效果越好。",
+            level: "important" as const,
+          },
+        ];
+
+    // 动态组装高考考点：根据情境置顶特化
+    const dynamicGaokaoPoints = isOutlierScenario
+      ? [
+          {
+            text: "【高考考点·离群点检验】异常干扰点（如第5点）会产生巨大的“杠杆拉扯效应”，导致相关系数 r 暴跌、斜率显著偏离，实际解题时应进行残差检验与数据清洗。",
+            importance: "gaokao" as const,
+          },
+          {
+            text: "【高考考点·残差分析法】残差 e_i = y_i - ŷ_i，且 ∑e_i = 0。残差点在 e=0 上下带状区域越窄，说明拟合越精确。",
+            importance: "core" as const,
+          },
+          {
+            text: "【高考考点·样本中心点】不论是否存在离群点，最小二乘回归直线必定严格过样本中心点 (x̄, ȳ)。",
+            importance: "basic" as const,
+          },
+        ]
+      : !isLinearMode
+        ? [
+            {
+              text: `【高考考点·非线性线性化】熟练掌握四大换元模型：指数 y=ce^{kx} (令 z=ln y)、对数 y=a+bln x (令 u=ln x)、幂函数 y=cx^k (令 z=ln y, u=ln x)、双曲线 y=a+b/x (令 u=1/x)。`,
+              importance: "gaokao" as const,
+            },
+            {
+              text: "【高考考点·模型优选决策】在高考大题中比较多种经验模型时，依据决定系数 R² 较大或残差平方和 SSE 较小确定最佳模型。",
+              importance: "core" as const,
+            },
+            {
+              text: "【高考考点·方程代回还原】求解出线性转换方程的系数后，务必逆代换回原物理/实际变量 (如将 z 还原为 ln y 代解 y)。",
+              importance: "core" as const,
+            },
+          ]
+        : [
+            {
+              text: "【高考考点1】必过样本中心点：已知 x̄, ȳ 与 b̂，必有 â = ȳ - b̂ x̄（小题高频秒杀考点）。",
+              importance: "gaokao" as const,
+            },
+            {
+              text: "【高考考点2】相关系数同号性：r 与斜率 b̂ 的符号由 L_xy 唯一决定，正相关时 r>0, b̂>0；负相关时 r<0, b̂<0。",
+              importance: "gaokao" as const,
+            },
+            {
+              text: "【高考考点3】残差分析法：残差 e_i = y_i - ŷ_i，且 ∑e_i = 0。残差点在 e=0 上下带状区域越窄，拟合越精确。",
+              importance: "core" as const,
+            },
+            {
+              text: "【高考考点4】决定系数与拟合优度：R² 越接近 1 说明回归直线对观测数据的解释能力越强。",
+              importance: "basic" as const,
+            },
+          ];
+
     return {
       quantities: [
         {
@@ -80,48 +168,8 @@ export function buildPairedDataPanel(
           color: MATH_COLORS.tangentLine,
         },
       ],
-      theorems: [
-        {
-          name: "一元线性回归方程与最小二乘法",
-          latex: `\\hat{y} = \\color{#EF4444}{\\hat{b}}x + \\color{#D97706}{\\hat{a}} \\quad \\left( \\hat{b} = \\frac{\\sum_{i=1}^{n}(x_i-\\bar{x})(y_i-\\bar{y})}{\\sum_{i=1}^{n}(x_i-\\bar{x})^2} = \\frac{L_{xy}}{L_{xx}}, \\; \\hat{a} = \\bar{y} - \\hat{b}\\bar{x} \\right)`,
-          note: "回归直线必过样本中心点 (x̄, ȳ)；最小二乘法使残差平方和 SSE = ∑(y_i - ŷ_i)² 达到全局最小。",
-          level: "core",
-        },
-        {
-          name: "相关系数 r 与决定系数 R² 的统计意义",
-          latex: `r = \\frac{L_{xy}}{\\sqrt{L_{xx} L_{yy}}}, \\quad R^2 = 1 - \\frac{\\text{SSE}}{\\text{SST}} = 1 - \\frac{\\sum (y_i - \\hat{y}_i)^2}{\\sum (y_i - \\bar{y})^2}`,
-          note: "r 与 b̂ 同号；|r| 越近 1 线性相关性越强；R² 越近 1 说明模型对 y 变异的解释比例越高、拟合优度越好。",
-          level: "important",
-        },
-        {
-          name: "新高考非线性回归线性化转换",
-          latex: currentModelFit
-            ? `${currentModelFit.variableSubstitution} \\implies ${currentModelFit.transformedFormula}`
-            : `y = c e^{kx} \\xrightarrow{z=\\ln y} z = kx + \\ln c`,
-          note: currentModelFit?.isBest
-            ? "【当前模型为最优拟合】在候选模型中决定系数 R² 最大、残差平方和最小。"
-            : "通过变量代换将非线性关系转化为线性方程求解，最后代回原变量。",
-          level: "important",
-        },
-      ],
-      gaokaoPoints: [
-        {
-          text: "【高考考点1】必过样本中心点：已知 x̄, ȳ 与 b̂，必有 â = ȳ - b̂ x̄（小题高频秒杀考点）。",
-          importance: "gaokao",
-        },
-        {
-          text: "【高考考点2】相关系数同号性：r 与斜率 b̂ 的符号由 L_xy 唯一决定，正相关时 r>0, b̂>0；负相关时 r<0, b̂<0。",
-          importance: "gaokao",
-        },
-        {
-          text: "【高考考点3】残差分析法：残差 e_i = y_i - ŷ_i，且 ∑e_i = 0。残差点在 e=0 上下带状区域越窄，说明线性拟合越精确。",
-          importance: "gaokao",
-        },
-        {
-          text: "【高考考点4】模型选择策略：在高考大题中比较多种经验模型时，选择决定系数 R² 较大（或残差平方和 SSE 较小）的模型。",
-          importance: "gaokao",
-        },
-      ],
+      theorems: dynamicTheorems,
+      gaokaoPoints: dynamicGaokaoPoints,
       warnings: res.isValid
         ? Math.abs(res.r) < 0.3
           ? [

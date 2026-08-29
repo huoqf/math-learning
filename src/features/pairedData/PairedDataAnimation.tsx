@@ -211,11 +211,12 @@ export function PairedDataAnimation() {
   const tipConfig = useMemo(() => {
     if (studyMode === "regression") {
       const modelNameMap: Record<RegressionModelType, string> = {
-        linear: "一元线性模型 ŷ = bx + a",
-        exponential: "指数模型 y = c·e^{kx} (令 z = ln y 线性化)",
-        logarithmic: "对数模型 y = a + b·ln x (令 u = ln x 线性化)",
-        power: "幂函数模型 y = c·x^k (令 z = ln y, u = ln x 线性化)",
-        inverse: "双曲线逆模型 y = a + b/x (令 u = 1/x 线性化)",
+        linear: "一元线性模型 $\\hat{y} = bx + a$",
+        exponential: "指数模型 $y = c e^{kx}$（令 $z = \\ln y$ 线性化）",
+        logarithmic: "对数模型 $y = a + b \\ln x$（令 $u = \\ln x$ 线性化）",
+        power: "幂函数模型 $y = c x^k$（令 $z = \\ln y, u = \\ln x$ 线性化）",
+        inverse:
+          "双曲线逆模型 $y = a + \\frac{b}{x}$（令 $u = \\frac{1}{x}$ 线性化）",
       };
 
       return {
@@ -224,7 +225,7 @@ export function PairedDataAnimation() {
         badge: `高考例题 · ${currentPreset?.name ?? "成对数据回归分析"}`,
         condition: `成对观测样本 (${currentPreset?.xName ?? "x"}, ${currentPreset?.yName ?? "y"})，拟合模型设定为 ${modelNameMap[selectedModel]}。`,
         question:
-          "求解回归方程系数、相关系数 r、决定系数 R² 以及残差平方和 ∑ eᵢ² 最小化。",
+          "求解回归方程系数、相关系数 $r$、决定系数 $R^2$ 以及残差平方和 $\\sum e_i^2$ 最小化。",
       };
     }
 

@@ -742,6 +742,22 @@ export const REGRESSION_PRESETS = [
     recommendedModel: "logarithmic" as RegressionModelType,
   },
   {
+    id: "inverse_current",
+    name: "电阻与电流强度 (高考双曲线逆模型)",
+    points: [
+      { id: "p1", x: 1, y: 10.2 },
+      { id: "p2", x: 2, y: 5.3 },
+      { id: "p3", x: 3, y: 3.5 },
+      { id: "p4", x: 5, y: 2.2 },
+      { id: "p5", x: 8, y: 1.4 },
+    ],
+    xName: "电阻 R (Ω)",
+    yName: "电流 I (A)",
+    xRange: [0, 10] as [number, number],
+    yRange: [0, 12] as [number, number],
+    recommendedModel: "inverse" as RegressionModelType,
+  },
+  {
     id: "outlier",
     name: "含异常干扰点的数据集 (离群点杠杆效应)",
     points: [

@@ -1,10 +1,15 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   // 回归预设索引
   presetIndex: 0,
   // 噪声强度
   noise: 0,
+  // 重心纵向平移偏移量 Δȳ
+  meanShiftY: 0,
+  // 离群点垂直偏离度 Δy (仅在异常点情境激活)
+  outlierOffset: 0,
   // 是否显示最小二乘残差正方形几何面积 (0: 关, 1: 开)
   showResidualSquares: 1,
   // 是否显示下方残差图 (0: 关, 1: 开)
@@ -23,51 +28,52 @@ export const paramMeta: Record<string, ParamMeta> = {
   noise: {
     key: "noise",
     label: "噪声强度",
-    labelFormula: "\\sigma_{\\epsilon}",
+    labelFormula: `\\text{噪声扰动 } \\color{${MATH_COLORS.paramPrimary}}{\\sigma}`,
     defaultValue: 0,
     min: 0,
     max: 3,
     step: 0.2,
-    description: "对回归散点加入正态随机扰动",
-    descriptionFormula: "y_i \\to y_i + \\epsilon_i",
     importance: "core",
-    marks: [
-      { value: 0, label: "无噪声", labelFormula: "0" },
-      { value: 1.5, label: "中度", labelFormula: "1.5" },
-      { value: 3, label: "高扰动", labelFormula: "3.0" },
-    ],
+  },
+  meanShiftY: {
+    key: "meanShiftY",
+    label: "重心平移",
+    labelFormula: `\\text{重心纵向平移 } \\color{${MATH_COLORS.paramTertiary}}{\\Delta \\bar{y}}`,
+    defaultValue: 0,
+    min: -4,
+    max: 4,
+    step: 0.5,
+    importance: "core",
+  },
+  outlierOffset: {
+    key: "outlierOffset",
+    label: "离群点偏移",
+    labelFormula: `\\text{离群点偏移 } \\color{${MATH_COLORS.paramSecondary}}{\\Delta y}`,
+    defaultValue: 0,
+    min: -8,
+    max: 8,
+    step: 0.5,
+    importance: "core",
   },
   showResidualSquares: {
     key: "showResidualSquares",
     label: "残差平方面积",
-    labelFormula: "\\sum e_i^2",
+    labelFormula: `\\text{残差正方形 } \\color{${MATH_COLORS.paramTertiary}}{\\sum e_i^2}`,
     defaultValue: 1,
     min: 0,
     max: 1,
     step: 1,
-    description: "可视化最小二乘法中每个残差对应的几何正方形面积",
-    descriptionFormula: "\\text{Area}_i = (y_i - \\hat{y}_i)^2",
     importance: "advanced",
-    marks: [
-      { value: 0, label: "隐藏", labelFormula: "0" },
-      { value: 1, label: "显示", labelFormula: "1" },
-    ],
   },
   showResidualPlot: {
     key: "showResidualPlot",
     label: "残差分析图",
-    labelFormula: "(x_i, e_i)",
+    labelFormula: `\\text{残差分布图 } (x_i, e_i)`,
     defaultValue: 0,
     min: 0,
     max: 1,
     step: 1,
-    description: "在下方绘制残差分布带状散点图以检验模型合理性",
-    descriptionFormula: "e_i = y_i - \\hat{y}_i",
     importance: "advanced",
-    marks: [
-      { value: 0, label: "主视图", labelFormula: "0" },
-      { value: 1, label: "残差图", labelFormula: "1" },
-    ],
   },
 
   freqA: {

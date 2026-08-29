@@ -7,6 +7,8 @@ import {
   LeftPanelSection,
   SelectGrid,
   TabSwitcher,
+  TipCard,
+  KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -15,6 +17,25 @@ import { PairedDataScene } from "./components/PairedDataScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/pairedData";
 import { INDEPENDENCE_PRESETS } from "@/math/pairedData";
+
+// 辅助渲染混合文本（支持 $...$ 内嵌公式与普通文本自然换行）
+function renderMixedText(text: string) {
+  if (!text) return null;
+  const parts = text.split(/\$(.*?)\$/g);
+  return parts.map((part, i) => {
+    if (i % 2 === 1) {
+      return (
+        <KatexFormula
+          key={i}
+          formula={part}
+          mode="inline"
+          className="!text-[11px] !my-0 !mx-0.5"
+        />
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
 
 export function IndependencePage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -89,14 +110,26 @@ export function IndependencePage() {
     });
   }, [params]);
 
+  const tipConfig = useMemo(() => {
+    const a = params.freqA ?? currentPreset.a;
+    const b = params.freqB ?? currentPreset.b;
+    const c = params.freqC ?? currentPreset.c;
+    const d = params.freqD ?? currentPreset.d;
+    const totalN = a + b + c + d;
+
+    return {
+      badge: `高考经典 · ${currentPreset.name}`,
+      condition: `观测 $2 \\times 2$ 列联表各格频数 ($a=${a}, b=${b}, c=${c}, d=${d}$)，总样本容量 $n=${totalN}$。`,
+      question:
+        "计算卡方统计量 $\\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)}$，检验两分类变量是否独立关联。",
+    };
+  }, [params, currentPreset]);
+
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="探究实验模式"
-            subtitle="选择自由调参或样本量倍增探究"
-          >
+          <LeftPanelSection title="探究实验模式">
             <TabSwitcher
               tabs={[
                 { key: "custom", label: "自由调参" },
@@ -107,10 +140,7 @@ export function IndependencePage() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="新高考真题情境预设"
-            subtitle={currentPreset.contextDesc ?? "选择高考分类变量应用"}
-          >
+          <LeftPanelSection title="新高考真题情境预设">
             <SelectGrid
               items={INDEPENDENCE_PRESETS.map((p, idx) => ({
                 key: String(idx),
@@ -124,19 +154,38 @@ export function IndependencePage() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="列联表频数与参数调节"
-            subtitle={
-              activeTab === "scale"
-                ? "拖动倍增因子 k，观察频数比例不变时 χ² 线性增长规律"
-                : "拖动滑块改变各格频数 (a, b, c, d)"
-            }
-          >
+          <LeftPanelSection title="列联表频数与参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant="danger">
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {renderMixedText(tipConfig.condition)}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600">
+                    {renderMixedText(tipConfig.question)}
+                  </span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

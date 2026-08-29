@@ -1,5 +1,9 @@
 import React, { useMemo } from "react";
-import { CoordinateGrid, InteractivePoint } from "@/components/Math";
+import {
+  CoordinateGrid,
+  InteractivePoint,
+  SceneLabelGroup,
+} from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks/useSceneScale";
@@ -202,6 +206,35 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
     const centerAxisX = mathToDesign(regResult.meanX, 0, scale);
     const centerAxisY = mathToDesign(0, regResult.meanY, scale);
 
+    // 构建学术点标组数据 (散点 P₁~Pₙ 与 样本中心点 (x̄, ȳ))
+    const subscriptDigits = ["₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₁₀"];
+    const regressionLabels = [
+      ...points.map((p, idx) => {
+        const ptD = mathToDesign(p.x, p.y, scale);
+        const sub = subscriptDigits[idx] ?? `${idx + 1}`;
+        return {
+          key: `pt-${p.id}`,
+          x: ptD.x,
+          y: ptD.y,
+          text: `P${sub}`,
+          color: MATH_COLORS.paramPrimary,
+          fontSize: fontScale(11),
+        };
+      }),
+      ...(regResult.isValid
+        ? [
+            {
+              key: "pt-center",
+              x: centerPos.x,
+              y: centerPos.y,
+              text: "(x̄, ȳ)",
+              color: MATH_COLORS.paramSecondary,
+              fontSize: fontScale(12),
+            },
+          ]
+        : []),
+    ];
+
     return (
       <g className="paired-data-scene-regression">
         {/* 坐标轴与网格 */}
@@ -307,7 +340,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             <circle
               cx={centerPos.x}
               cy={centerPos.y}
-              r={10}
+              r={9}
               fill={withAlpha(MATH_COLORS.paramSecondary, 0.25)}
               stroke={MATH_COLORS.paramSecondary}
               strokeWidth={1.5}
@@ -315,149 +348,31 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             <circle
               cx={centerPos.x}
               cy={centerPos.y}
-              r={4}
+              r={3.8}
               fill={MATH_COLORS.paramSecondary}
             />
-            {/* 中心点文本标签 (向上偏移避让点) */}
-            <rect
-              x={centerPos.x + 8}
-              y={centerPos.y - 28}
-              width={140}
-              height={22}
-              rx={4}
-              fill={CANVAS_COLORS.white}
-              fillOpacity={0.9}
-              stroke={MATH_COLORS.paramSecondary}
-              strokeWidth={1}
-            />
-            <text
-              x={centerPos.x + 14}
-              y={centerPos.y - 13}
-              fill={MATH_COLORS.paramSecondary}
-              fontSize={fontScale(11)}
-              fontWeight="bold"
-            >
-              重心 (x̄={regResult.meanX.toFixed(1)}, ȳ=
-              {regResult.meanY.toFixed(1)})
-            </text>
           </g>
         )}
 
-        {/* 5. 可拖拽散点 (带有独立半透明背景标签，防止与网格重叠) */}
-        {points.map((p, idx) => {
-          const ptD = mathToDesign(p.x, p.y, scale);
-          return (
-            <g key={p.id}>
-              <InteractivePoint
-                cx={p.x}
-                cy={p.y}
-                scale={scale}
-                vp={vp}
-                color={MATH_COLORS.paramPrimary}
-                r={7}
-                fontScale={fontScale}
-                onDrag={(newPos) => handlePointDrag(p.id, newPos)}
-              />
-              <rect
-                x={ptD.x + 8}
-                y={ptD.y + 4}
-                width={70}
-                height={18}
-                rx={3}
-                fill={CANVAS_COLORS.white}
-                fillOpacity={0.85}
-                stroke={CANVAS_COLORS.axis}
-                strokeWidth={0.8}
-              />
-              <text
-                x={ptD.x + 12}
-                y={ptD.y + 17}
-                fill={CANVAS_COLORS.labelText}
-                fontSize={fontScale(10)}
-                fontWeight="500"
-              >
-                P{idx + 1}({p.x.toFixed(1)}, {p.y.toFixed(1)})
-              </text>
-            </g>
-          );
-        })}
+        {/* 5. 可拖拽散点 */}
+        {points.map((p) => (
+          <InteractivePoint
+            key={p.id}
+            cx={p.x}
+            cy={p.y}
+            scale={scale}
+            vp={vp}
+            color={MATH_COLORS.paramPrimary}
+            r={6.5}
+            fontScale={fontScale}
+            onDrag={(newPos) => handlePointDrag(p.id, newPos)}
+          />
+        ))}
 
-        {/* 6. 浮动图例看板 (置于左下角安全区域，避开顶部公式与密集数据) */}
-        <g transform="translate(30, 520)">
-          <rect
-            x={0}
-            y={0}
-            width={280}
-            height={showResidualSquares ? 84 : 62}
-            rx={8}
-            fill={CANVAS_COLORS.white}
-            fillOpacity={0.94}
-            stroke={CANVAS_COLORS.axis}
-            strokeWidth={1}
-            filter="drop-shadow(0 2px 4px rgba(0,0,0,0.05))"
-          />
-          <line
-            x1={14}
-            y1={18}
-            x2={40}
-            y2={18}
-            stroke={MATH_COLORS.function}
-            strokeWidth={2.5}
-          />
-          <text
-            x={48}
-            y={22}
-            fill={MATH_COLORS.function}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-          >
-            {currentFit?.name ?? "拟合曲线"}: R²=
-            {(currentFit?.rSquare ?? 0).toFixed(4)}
-          </text>
-          <line
-            x1={14}
-            y1={38}
-            x2={40}
-            y2={38}
-            stroke={MATH_COLORS.tangentLine}
-            strokeDasharray="3 3"
-            strokeWidth={1.5}
-          />
-          <text
-            x={48}
-            y={42}
-            fill={MATH_COLORS.tangentLine}
-            fontSize={fontScale(10)}
-          >
-            残差 e_i = y_i - ŷ_i (SSE={(currentFit?.sse ?? 0).toFixed(2)})
-          </text>
-          {showResidualSquares && (
-            <>
-              <rect
-                x={16}
-                y={54}
-                width={14}
-                height={14}
-                fill={withAlpha(MATH_COLORS.paramTertiary, 0.25)}
-                stroke={MATH_COLORS.paramTertiary}
-                strokeWidth={1}
-                strokeDasharray="2 2"
-                rx={2}
-              />
-              <text
-                x={48}
-                y={66}
-                fill={MATH_COLORS.paramTertiary}
-                fontSize={fontScale(10)}
-                fontWeight="bold"
-              >
-                残差正方形面积和 = SSE (最小二乘)
-              </text>
-            </>
-          )}
-        </g>
+        {/* 6. 统一智能防重叠学术标签层 */}
+        <SceneLabelGroup items={regressionLabels} fontScale={fontScale} />
 
-        {/* 7. 下方残差分析分布图 (Residual Plot Overlay - 置于右下角独立区域) */}
+        {/* 7. 下方残差分析分布图 (Residual Plot Overlay - 置于左上角独立区域，避开右下角图例) */}
         {showResidualPlot &&
           currentFit?.isValid &&
           (() => {
@@ -475,15 +390,15 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
               0.6,
               ...residualsWithX.map((r) => Math.abs(r.e)),
             );
-            const eScaleY = 36 / maxAbsE;
+            const eScaleY = 32 / maxAbsE;
 
             return (
-              <g transform="translate(480, 455)">
+              <g transform="translate(24, 55)">
                 <rect
                   x={0}
                   y={0}
-                  width={330}
-                  height={155}
+                  width={300}
+                  height={140}
                   rx={8}
                   fill={CANVAS_COLORS.white}
                   fillOpacity={0.96}
@@ -494,61 +409,61 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
                 <text
                   x={12}
                   y={18}
-                  fontSize={fontScale(11)}
+                  fontSize={fontScale(10.5)}
                   fontWeight="bold"
                   fill={CANVAS_COLORS.labelText}
                 >
-                  【残差分布图 (x_i, e_i)】∑e_i ≈ 0
+                  【残差分布检验图 (x_i, e_i)】∑e_i ≈ 0
                 </text>
                 {/* e = 0 零残差基准线 */}
                 <line
-                  x1={20}
-                  y1={75}
-                  x2={305}
-                  y2={75}
+                  x1={18}
+                  y1={68}
+                  x2={275}
+                  y2={68}
                   stroke={CANVAS_COLORS.axis}
                   strokeWidth={1.2}
                 />
                 <text
-                  x={308}
-                  y={78}
-                  fontSize={fontScale(9)}
+                  x={278}
+                  y={71}
+                  fontSize={fontScale(8.5)}
                   fill={CANVAS_COLORS.labelTextLight}
                 >
                   e=0
                 </text>
                 {/* 上下对称残差带状参考线 */}
                 <line
-                  x1={20}
-                  y1={75 - maxAbsE * 0.7 * eScaleY}
-                  x2={305}
-                  y2={75 - maxAbsE * 0.7 * eScaleY}
+                  x1={18}
+                  y1={68 - maxAbsE * 0.7 * eScaleY}
+                  x2={275}
+                  y2={68 - maxAbsE * 0.7 * eScaleY}
                   stroke={MATH_COLORS.paramTertiary}
                   strokeDasharray="3 3"
                   strokeWidth={1}
                   opacity={0.6}
                 />
                 <text
-                  x={308}
-                  y={75 - maxAbsE * 0.7 * eScaleY + 3}
+                  x={278}
+                  y={68 - maxAbsE * 0.7 * eScaleY + 3}
                   fontSize={fontScale(8)}
                   fill={MATH_COLORS.paramTertiary}
                 >
                   +{(maxAbsE * 0.7).toFixed(1)}
                 </text>
                 <line
-                  x1={20}
-                  y1={75 + maxAbsE * 0.7 * eScaleY}
-                  x2={305}
-                  y2={75 + maxAbsE * 0.7 * eScaleY}
+                  x1={18}
+                  y1={68 + maxAbsE * 0.7 * eScaleY}
+                  x2={275}
+                  y2={68 + maxAbsE * 0.7 * eScaleY}
                   stroke={MATH_COLORS.paramTertiary}
                   strokeDasharray="3 3"
                   strokeWidth={1}
                   opacity={0.6}
                 />
                 <text
-                  x={308}
-                  y={75 + maxAbsE * 0.7 * eScaleY + 3}
+                  x={278}
+                  y={68 + maxAbsE * 0.7 * eScaleY + 3}
                   fontSize={fontScale(8)}
                   fill={MATH_COLORS.paramTertiary}
                 >
@@ -556,14 +471,14 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
                 </text>
                 {/* 残差点分布 */}
                 {residualsWithX.map((r) => {
-                  const px = 30 + ((r.x - minX) / xSpan) * 260;
-                  const py = 75 - r.e * eScaleY;
-                  const clampedPy = Math.max(25, Math.min(135, py));
+                  const px = 26 + ((r.x - minX) / xSpan) * 235;
+                  const py = 68 - r.e * eScaleY;
+                  const clampedPy = Math.max(22, Math.min(125, py));
                   return (
                     <g key={`res-plot-${r.id}`}>
                       <line
                         x1={px}
-                        y1={75}
+                        y1={68}
                         x2={px}
                         y2={clampedPy}
                         stroke={MATH_COLORS.tangentLine}
@@ -573,7 +488,7 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
                       <circle
                         cx={px}
                         cy={clampedPy}
-                        r={3.5}
+                        r={3.2}
                         fill={MATH_COLORS.paramPrimary}
                       />
                     </g>
@@ -583,25 +498,35 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
             );
           })()}
 
-        {/* 轴名称标注 (避让坐标系边缘) */}
-        <text
-          x={760}
-          y={635}
-          fontSize={fontScale(11)}
-          fill={CANVAS_COLORS.labelText}
-          fontWeight="bold"
-        >
-          {presetXName}
-        </text>
-        <text
-          x={25}
-          y={40}
-          fontSize={fontScale(11)}
-          fill={CANVAS_COLORS.labelText}
-          fontWeight="bold"
-        >
-          {presetYName}
-        </text>
+        {/* 轴名称标注 (自适应贴合坐标轴箭头末端，绝不溢出) */}
+        {(() => {
+          const xAxisEnd = mathToDesign(scale.xMax, 0, scale);
+          const yAxisTop = mathToDesign(0, scale.yMax, scale);
+          return (
+            <>
+              <text
+                x={Math.min(810, xAxisEnd.x - 10)}
+                y={Math.min(620, Math.max(30, xAxisEnd.y - 10))}
+                textAnchor="end"
+                fontSize={fontScale(11)}
+                fill={CANVAS_COLORS.labelText}
+                fontWeight="bold"
+              >
+                {presetXName}
+              </text>
+              <text
+                x={Math.max(15, Math.min(780, yAxisTop.x + 12))}
+                y={Math.max(30, yAxisTop.y + 12)}
+                textAnchor="start"
+                fontSize={fontScale(11)}
+                fill={CANVAS_COLORS.labelText}
+                fontWeight="bold"
+              >
+                {presetYName}
+              </text>
+            </>
+          );
+        })()}
       </g>
     );
   }
