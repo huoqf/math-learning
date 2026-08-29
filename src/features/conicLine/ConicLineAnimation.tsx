@@ -120,15 +120,34 @@ export function ConicLineAnimation() {
     let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
     if (studyMode === "general") {
-      modeKeyGroups = [
-        { group: "直线斜截式参数 (k, m)", keys: ["k", "m"] },
-        { group: conicGroupName, keys: conicKeys },
-      ];
+      if (activePreset === "tangent") {
+        // 临界相切：截距 m 由相切判别式锁定，仅调节斜率 k 与曲线形状
+        modeKeyGroups = [
+          { group: "切线斜率 k", keys: ["k"] },
+          { group: conicGroupName, keys: conicKeys },
+        ];
+      } else if (activePreset === "axis_secant") {
+        // 过原点对称轴正交弦：截距 m=0 锁定
+        modeKeyGroups = [
+          { group: "割线斜率 k", keys: ["k"] },
+          { group: conicGroupName, keys: conicKeys },
+        ];
+      } else {
+        modeKeyGroups = [
+          { group: "直线斜截式参数 (k, m)", keys: ["k", "m"] },
+          { group: conicGroupName, keys: conicKeys },
+        ];
+      }
     } else if (studyMode === "focus") {
-      modeKeyGroups = [
-        { group: "焦点弦倾斜角 θ", keys: ["theta"] },
-        { group: conicGroupName, keys: conicKeys },
-      ];
+      if (activePreset === "latus_rectum") {
+        // 通径极值：θ = 90° 锁定，仅调节圆锥曲线底模
+        modeKeyGroups = [{ group: conicGroupName, keys: conicKeys }];
+      } else {
+        modeKeyGroups = [
+          { group: "焦点弦倾斜角 θ", keys: ["theta"] },
+          { group: conicGroupName, keys: conicKeys },
+        ];
+      }
     } else if (studyMode === "midpoint") {
       modeKeyGroups = [
         { group: "弦中点 M(x₀, y₀) 坐标", keys: ["midpointX", "midpointY"] },
@@ -136,7 +155,7 @@ export function ConicLineAnimation() {
       ];
     } else {
       modeKeyGroups = [
-        { group: "曲线外极点 P(x_P, y_P) 坐标", keys: ["poleX", "poleY"] },
+        { group: "曲线外极点 P₀(x₀, y₀) 坐标", keys: ["poleX", "poleY"] },
         { group: conicGroupName, keys: conicKeys },
       ];
     }
@@ -165,7 +184,7 @@ export function ConicLineAnimation() {
     });
 
     return configs;
-  }, [params, conicType, studyMode]);
+  }, [params, conicType, studyMode, activePreset]);
 
   // 悬浮在画布上的动态方程 LaTeX
   const floatingEquation = useMemo(() => {
@@ -219,16 +238,21 @@ export function ConicLineAnimation() {
           return {
             variant: "warning" as const,
             badge: `高考经典 · ${targetPreset.label}`,
-            condition: `直线与${conicType === "ellipse" ? "椭圆" : conicType === "hyperbola" ? "双曲线" : "抛物线"}处于相切临界状态 (Δ = 0)。`,
-            question: "探究相切时的切点坐标与切线斜率截距关系。",
+            condition: "直线与圆锥曲线处于相切临界状态，恰有一个公共切点。",
+            question:
+              "如何由联立方程的判别式确定相切条件，求解切点坐标与切线方程？",
           };
         }
-        if (activePreset.includes("latus") || activePreset.includes("focus")) {
+        if (
+          activePreset.includes("latus") ||
+          activePreset.includes("focus") ||
+          activePreset === "latus_rectum"
+        ) {
           return {
             variant: "primary" as const,
             badge: `高考经典 · ${targetPreset.label}`,
-            condition: "割线过焦点且垂直于对称轴 (θ = 90°)，构成通径。",
-            question: "求解最短焦点弦长（通径长），探究通径端点坐标。",
+            condition: "割线通过圆锥曲线焦点且垂直于对称轴（通径）。",
+            question: "求解最短焦点弦长（通径长），探究通径端点的几何坐标。",
           };
         }
       }
@@ -237,46 +261,46 @@ export function ConicLineAnimation() {
     if (studyMode === "general") {
       return {
         variant: "info" as const,
-        badge: "位置关系判定与弦长公式",
-        condition: `直线 l: y=kx+m 与${conicType === "ellipse" ? "椭圆" : conicType === "hyperbola" ? "双曲线" : "抛物线"}联立，判别式为 Δ。`,
+        badge: "位置关系判定与相交弦长",
+        condition: "平面内给定圆锥曲线方程与一般动割线方程。",
         question:
-          "判定直线与曲线交点个数（相交/相切/相离），求解相交弦长 |AB|。",
+          "如何通过联立消元判别式判定相交、相切与相离，并利用弦长公式求解割线弦长？",
       };
     }
     if (studyMode === "focus") {
       return {
         variant: "primary" as const,
         badge: "高考焦点弦与通径极值",
-        condition: "割线过焦点 F(c,0)，倾斜角为 θ，交曲线于 A, B 两点。",
+        condition: "割线通过圆锥曲线焦点，交曲线于 A, B 两点。",
         question:
-          "探究焦点弦长 |AB| 的最值规律，以及两焦半径倒数和的定值性质。",
+          "探究焦点弦长的最值变化规律，以及两端点焦半径倒数和的定值性质。",
       };
     }
     if (studyMode === "midpoint") {
       return {
         variant: "warning" as const,
-        badge: "中点弦与点差法秒杀",
-        condition:
-          "已知动弦 AB 的中点为 M(x₀, y₀)，两端点 A(x₁,y₁), B(x₂,y₂) 在曲线上。",
+        badge: "中点弦与点差法",
+        condition: "已知圆锥曲线动弦 AB 的中点为 M(x₀, y₀)。",
         question:
-          "求割线 AB 所在的直线方程与斜率，并判定该中点是否在曲线内部（存在性）。",
+          "如何利用点差法快速求解动弦所在直线方程，并检验弦中点的存在性？",
       };
     }
     return {
       variant: "danger" as const,
       badge: "极点极线与切点弦对偶",
-      condition: "从曲线外一点 P(x_P, y_P) 引曲线的两条切线，切点分别为 A, B。",
+      condition:
+        "从曲线外一点 P₀(x₀, y₀) 引圆锥曲线的两条切线，切点分别为 A, B。",
       question:
-        "求切点弦 AB 所在的直线方程，探究当点 P 在定直线上运动时切点弦恒过定点的规律。",
+        "如何求解切点弦 AB 所在的直线方程，探究极点在定直线上运动时切点弦的定点规律？",
     };
-  }, [studyMode, activePreset, conicType]);
+  }, [studyMode, activePreset]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
           {/* 圆锥曲线选择 Section */}
-          <LeftPanelSection title="曲线类型" subtitle="选择研究的圆锥曲线">
+          <LeftPanelSection title="曲线类型">
             <TabSwitcher
               tabs={[
                 { key: "ellipse", label: "椭圆" },
@@ -289,7 +313,7 @@ export function ConicLineAnimation() {
           </LeftPanelSection>
 
           {/* 研究视角 Section */}
-          <LeftPanelSection title="研究视角" subtitle="选择高考核心专题模式">
+          <LeftPanelSection title="研究视角">
             <SelectGrid
               items={[
                 {
@@ -310,7 +334,7 @@ export function ConicLineAnimation() {
                 {
                   key: "polePolar",
                   label: "极点极线与切点弦",
-                  formula: "\\frac{x_P x}{a^2}+\\frac{y_P y}{b^2}=1",
+                  formula: "\\frac{x_0 x}{a^2}+\\frac{y_0 y}{b^2}=1",
                 },
               ]}
               value={studyMode}
@@ -321,7 +345,7 @@ export function ConicLineAnimation() {
           </LeftPanelSection>
 
           {/* 典型预设 Section */}
-          <LeftPanelSection title="典型预设" subtitle="一键复现高考经典构型">
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={currentPresets}
               value={activePreset}
@@ -332,10 +356,7 @@ export function ConicLineAnimation() {
           </LeftPanelSection>
 
           {/* 参数调节 Section */}
-          <LeftPanelSection
-            title="动态参数调节"
-            subtitle="拖动滑块改变几何形状与直线"
-          >
+          <LeftPanelSection title="动态参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

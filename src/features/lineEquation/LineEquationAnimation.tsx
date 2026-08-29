@@ -190,7 +190,7 @@ export function LineEquationAnimation() {
     });
   };
 
-  // 7. 声明式参数配置 (按模式与形式进行结构化对象分组)
+  // 7. 声明式参数配置 (按模式、形式与预设进行降维过滤与结构化分组)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
@@ -222,21 +222,53 @@ export function LineEquationAnimation() {
           break;
       }
     } else if (studyMode === "distance") {
-      modeKeyGroups = [
-        { group: "待测点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
-        { group: "目标直线 L: Ax+By+C=0", keys: ["A", "B", "C"] },
-      ];
+      if (preset === "onLine") {
+        // 点在线上：锁定 y0，仅展示 x0 与直线参数
+        modeKeyGroups = [
+          { group: "待测点 P₀ 横坐标", keys: ["x0"] },
+          { group: "目标直线 L: Ax+By+C=0", keys: ["A", "B", "C"] },
+        ];
+      } else if (preset === "axisParallel") {
+        // 水平投影：A=0, B=1 锁定，仅调节 y0, C 与 x0
+        modeKeyGroups = [
+          { group: "待测点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
+          { group: "直线截距参数 C", keys: ["C"] },
+        ];
+      } else {
+        modeKeyGroups = [
+          { group: "待测点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
+          { group: "目标直线 L: Ax+By+C=0", keys: ["A", "B", "C"] },
+        ];
+      }
     } else if (studyMode === "relation") {
-      modeKeyGroups = [
-        { group: "直线 L₁: A₁x+B₁y+C₁=0", keys: ["A", "B", "C"] },
-        { group: "直线 L₂: A₂x+B₂y+C₂=0", keys: ["A2", "B2", "C2"] },
-      ];
+      if (preset === "perpendicular" || preset === "parallel") {
+        // 垂直/平行预设下：L2 方向由 L1 锁定，仅调节 L1 及 L2 截距 C2
+        modeKeyGroups = [
+          { group: "基准直线 L₁: A₁x+B₁y+C₁=0", keys: ["A", "B", "C"] },
+          { group: "关联直线 L₂ 截距 C₂", keys: ["C2"] },
+        ];
+      } else if (preset === "coincident") {
+        // 两线重合：全量锁定由 L1 驱动
+        modeKeyGroups = [
+          { group: "重合直线 L₁/L₂ 参数", keys: ["A", "B", "C"] },
+        ];
+      } else {
+        modeKeyGroups = [
+          { group: "直线 L₁: A₁x+B₁y+C₁=0", keys: ["A", "B", "C"] },
+          { group: "直线 L₂: A₂x+B₂y+C₂=0", keys: ["A2", "B2", "C2"] },
+        ];
+      }
     } else if (studyMode === "family") {
-      modeKeyGroups = [
-        { group: "基准直线 L₁", keys: ["A", "B", "C"] },
-        { group: "基准直线 L₂", keys: ["A2", "B2", "C2"] },
-        { group: "直线系变参数 λ", keys: ["lambda"] },
-      ];
+      if (preset !== "free") {
+        // 预设模式下锁定基准直线 L1, L2，仅开放直线系变参数 λ
+        modeKeyGroups = [{ group: "直线系变参数 λ", keys: ["lambda"] }];
+      } else {
+        modeKeyGroups = [
+          { group: "基准直线 L₁", keys: ["A", "B", "C"] },
+          { group: "基准直线 L₂", keys: ["A2", "B2", "C2"] },
+          { group: "直线系变参数 λ", keys: ["lambda"] },
+        ];
+      }
     }
 
     const configs: ParamConfig[] = [];
@@ -263,7 +295,7 @@ export function LineEquationAnimation() {
     });
 
     return configs;
-  }, [params, studyMode, form]);
+  }, [params, studyMode, form, preset]);
 
   // 典型预设配置项
   const presetItems = useMemo(() => {
@@ -389,6 +421,69 @@ export function LineEquationAnimation() {
   }, [params, studyMode, form]);
 
   const tipConfig = useMemo(() => {
+    if (preset !== "free") {
+      if (studyMode === "distance") {
+        if (preset === "onLine") {
+          return {
+            variant: "info" as const,
+            badge: "典型情境 · 点在直线上",
+            condition: "待测点 P₀ 位于目标直线 L 上。",
+            question: "如何由坐标代入判定点在线上，此时点线距离有何几何特征？",
+          };
+        }
+        if (preset === "axisParallel") {
+          return {
+            variant: "primary" as const,
+            badge: "典型情境 · 坐标轴平行线距离",
+            condition:
+              "目标直线平行于坐标轴（水平线或铅垂线），待测点位于直线外。",
+            question: "直线平行于坐标轴时，如何利用坐标差直接求点线距离？",
+          };
+        }
+        if (preset === "pythagorean") {
+          return {
+            variant: "accent" as const,
+            badge: "高考经典 · 勾股数 3-4-5 距离模型",
+            condition: "直线一般式系数 A, B 构成勾股比例，待测点位于坐标原点。",
+            question:
+              "如何利用勾股数简化分母开方，快速计算原点到直线的垂线段长度？",
+          };
+        }
+      } else if (studyMode === "relation") {
+        if (preset === "perpendicular") {
+          return {
+            variant: "danger" as const,
+            badge: "高考经典 · 两直线垂直",
+            condition: "平面内给定两条相交直线，其夹角为直角。",
+            question: "两直线垂直时，其一般式系数与斜率分别满足什么等价条件？",
+          };
+        }
+        if (preset === "parallel") {
+          return {
+            variant: "primary" as const,
+            badge: "高考经典 · 两直线平行",
+            condition: "平面内两条直线方向相同但截距不同（不重合）。",
+            question: "如何判定两直线平行，并求解两条平行直线之间的夹缝距离？",
+          };
+        }
+        if (preset === "coincident") {
+          return {
+            variant: "warning" as const,
+            badge: "高考经典 · 两直线重合",
+            condition: "两条直线表示平面内的同一条直线。",
+            question: "两直线重合时，一般式方程系数之间满足怎样的比例关系？",
+          };
+        }
+      } else if (studyMode === "family") {
+        return {
+          variant: "danger" as const,
+          badge: "高考经典 · 相交直线系与定点",
+          condition: "含变参数 λ 的直线系由两条相交基准直线线性组合构成。",
+          question: "直线系恒过的公共定点如何求解？参数 λ 变动时直线如何旋转？",
+        };
+      }
+    }
+
     if (studyMode === "forms") {
       switch (form) {
         case "general":
@@ -396,39 +491,37 @@ export function LineEquationAnimation() {
             variant: "info" as const,
             badge: "直线一般式 Ax + By + C = 0",
             condition:
-              "A, B 不同时为 0，适用于平面内所有直线（包含水平线与铅垂线）。",
-            question: "如何由一般式确定直线的法向量、方向向量与斜率？",
+              "系数 A, B 不同时为 0，适用于平面直角坐标系内的所有直线。",
+            question: "如何由一般式系数确定直线的法向量、方向向量与斜率？",
           };
         case "slopeIntercept":
           return {
             variant: "primary" as const,
             badge: "斜截式 y = kx + b",
-            condition: "直线不垂直于 x 轴（斜率 k 存在），b 为 y 轴截距。",
-            question: "斜率 k 的几何意义与倾斜角 α 的对应关系。",
+            condition: "直线斜率 k 存在（不垂直于 x 轴），b 为 y 轴截距。",
+            question: "斜率 k 的几何意义与倾斜角 α 的对应关系是什么？",
           };
         case "pointSlope":
           return {
             variant: "warning" as const,
             badge: "点斜式 y - y₀ = k(x - x₀)",
-            condition: "已知定点 P₀(x₀, y₀) 且斜率 k 存在。",
-            question: "高考求切线、割线方程的标准设法与分类讨论。",
+            condition: "已知定点 P₀(x₀, y₀) 且直线斜率 k 存在。",
+            question: "已知过定点求直线方程时，如何防范斜率不存在的遗漏？",
           };
         case "twoPoint":
           return {
             variant: "accent" as const,
-            badge: "两点式 (y-y₁)/(y₂-y₁) = (x-x₁)/(x₂-x₁)",
+            badge: "两点式方程",
             condition:
-              "已知两不同点 P₁(x₁,y₁), P₂(x₂,y₂)，且 x₁ ≠ x₂, y₁ ≠ y₂。",
-            question: "过两定点的直线方程构建与退化情形。",
+              "已知两不同定点 P₁(x₁,y₁), P₂(x₂,y₂)，且不平行于坐标轴。",
+            question: "两点式在直线垂直于坐标轴时的退化情形如何处理？",
           };
         case "intercept":
           return {
             variant: "danger" as const,
             badge: "截距式 x/a + y/b = 1",
-            condition:
-              "直线不过原点，在 x 轴和 y 轴上的截距分别为 a ≠ 0, b ≠ 0。",
-            question:
-              "涉及与坐标轴围成三角形面积 S = 1/2 |ab| 极值问题的设参。",
+            condition: "直线不过原点，在 x 轴和 y 轴上的截距均非零。",
+            question: "如何利用截距式求解直线与两坐标轴围成三角形的面积最值？",
           };
       }
     }
@@ -436,25 +529,25 @@ export function LineEquationAnimation() {
       return {
         variant: "primary" as const,
         badge: "点到直线距离公式",
-        condition: "点 P(x₀, y₀) 与直线 Ax + By + C = 0。",
-        question: "求解垂线段长度及两平行线间距离。",
+        condition: "平面内给定待测定点 P₀ 与目标直线 L。",
+        question: "如何构造垂线段求解点到直线的垂直距离及投影垂足坐标？",
       };
     }
     if (studyMode === "relation") {
       return {
         variant: "warning" as const,
-        badge: "两直线平行与垂直充要条件",
-        condition: "两直线 L₁: A₁x+B₁y+C₁=0 与 L₂: A₂x+B₂y+C₂=0。",
-        question: "判定平行、垂直与重合的充要代数关系。",
+        badge: "两直线位置关系判定",
+        condition: "平面内给定两条直线的一般式方程 L₁ 与 L₂。",
+        question: "如何通过两直线的系数快速判定平行、垂直、相交与重合？",
       };
     }
     return {
       variant: "danger" as const,
       badge: "相交直线系与恒过定点",
-      condition: "直线系方程 L₁ + λ L₂ = 0（λ 为参数）。",
-      question: "探究含参直线恒过定点的求解通法。",
+      condition: "直线系由两条相交直线组合而成，含可变参数 λ。",
+      question: "探究直线系恒过定点的求解通法与动态旋转轨迹。",
     };
-  }, [studyMode, form]);
+  }, [studyMode, form, preset]);
 
   const panelTitleMap = {
     forms: "直线方程形式看板",
@@ -468,7 +561,7 @@ export function LineEquationAnimation() {
       left={
         <LeftPanel>
           {/* 1. 研究主题模式选择 (2x2 对称网格) */}
-          <LeftPanelSection title="研究模式" subtitle="选择解析几何探究主题">
+          <LeftPanelSection title="研究模式">
             <SelectGrid
               items={[
                 { key: "forms", label: "方程形式", description: "5种表达形式" },
@@ -495,10 +588,7 @@ export function LineEquationAnimation() {
 
           {/* 2. 方程形式模式下的二级选择：方程表达形式 */}
           {studyMode === "forms" ? (
-            <LeftPanelSection
-              title="方程表达形式"
-              subtitle="选择五种经典表达形式"
-            >
+            <LeftPanelSection title="方程表达形式">
               <SelectGrid
                 items={[
                   { key: "general", label: "一般式", formula: "Ax+By+C=0" },
@@ -527,7 +617,7 @@ export function LineEquationAnimation() {
             </LeftPanelSection>
           ) : (
             /* 其余模式下的二级选择：典型预设 */
-            <LeftPanelSection title="典型预设" subtitle="快速切换典型构型">
+            <LeftPanelSection title="典型预设">
               <SelectGrid
                 items={presetItems}
                 value={preset}
@@ -538,7 +628,7 @@ export function LineEquationAnimation() {
           )}
 
           {/* 3. 参数调节 Section */}
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块改变参数数值">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

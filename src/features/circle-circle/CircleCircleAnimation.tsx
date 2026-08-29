@@ -88,11 +88,32 @@ export function CircleCircleAnimation() {
 
   // 参数更新处理器
   const handleParamChange = (key: string, value: number) => {
-    setPreset("free");
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setParams((prev) => {
+      const next = {
+        ...prev,
+        [key]: value,
+      };
+
+      if (preset === "outerTangent") {
+        const x1 = key === "x1" ? value : next.x1;
+        const r1 = key === "r1" ? value : next.r1;
+        const r2 = key === "r2" ? value : next.r2;
+        next.x2 = Number((x1 + r1 + r2).toFixed(1));
+        next.y1 = 0;
+        next.y2 = 0;
+      } else if (preset === "innerTangent") {
+        const x1 = key === "x1" ? value : next.x1;
+        const r1 = key === "r1" ? value : next.r1;
+        const r2 = key === "r2" ? value : next.r2;
+        next.x2 = Number((x1 + Math.max(0.1, r1 - r2)).toFixed(1));
+        next.y1 = 0;
+        next.y2 = 0;
+      } else {
+        setPreset("free");
+      }
+
+      return next;
+    });
   };
 
   // 典型预设切换
@@ -129,9 +150,11 @@ export function CircleCircleAnimation() {
     }));
   };
 
-  // 分组参数配置：圆 O1 参数（圆心坐标与半径对象化分组）
+  // 分组参数配置：圆 O1 参数（圆心坐标与半径对象化分组，预设下锁定降维）
   const circle1Configs = useMemo<ParamConfig[]>(() => {
-    const keys = ["x1", "y1", "r1"];
+    const isTangetPreset =
+      preset === "outerTangent" || preset === "innerTangent";
+    const keys = isTangetPreset ? ["r1"] : ["x1", "y1", "r1"];
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
@@ -152,11 +175,13 @@ export function CircleCircleAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params]);
+  }, [params, preset]);
 
-  // 分组参数配置：圆 O2 参数（圆心坐标与半径对象化分组）
+  // 分组参数配置：圆 O2 参数（圆心坐标与半径对象化分组，预设下锁定降维）
   const circle2Configs = useMemo<ParamConfig[]>(() => {
-    const keys = ["x2", "y2", "r2"];
+    const isTangetPreset =
+      preset === "outerTangent" || preset === "innerTangent";
+    const keys = isTangetPreset ? ["r2"] : ["x2", "y2", "r2"];
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
@@ -177,7 +202,7 @@ export function CircleCircleAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params]);
+  }, [params, preset]);
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
@@ -185,63 +210,59 @@ export function CircleCircleAnimation() {
       return {
         variant: "primary" as const,
         badge: "高考经典 · 典型外切",
-        condition:
-          "两圆圆心距恰好等于两半径之和 (d = r₁ + r₂)，外离与相交的临界态。",
+        condition: "两圆处于外离与相交之间的外切临界状态。",
         question:
-          "两圆外切时的切点坐标与公切线条数（共3条：2条外公切线 + 1条内公切线）。",
+          "两圆外切时圆心距与两半径满足什么等量关系？此时共有几条公切线？",
       };
     }
     if (preset === "intersectStandard") {
       return {
         variant: "warning" as const,
         badge: "高考经典 · 相交公共弦",
-        condition: "|r₁ - r₂| < d < r₁ + r₂，两圆相交于两个不同的实数交点。",
-        question: "求解两圆公共弦所在直线方程及公共弦长。",
+        condition: "两圆相交于两个不同的实数交点，存在公共弦。",
+        question: "如何由两圆方程快速求解公共弦所在直线方程及相交弦长？",
       };
     }
     if (preset === "innerTangent") {
       return {
         variant: "danger" as const,
         badge: "高考经典 · 典型内切",
-        condition: "两圆圆心距恰好等于两半径之差绝对值 (d = |r₁ - r₂|)。",
-        question: "两圆内切时的切点坐标与公切线条数（唯一 1 条外公切线）。",
+        condition: "两圆处于相交与内含之间的内切临界状态。",
+        question:
+          "两圆内切时圆心距与两半径满足什么等量关系？此时共有几条公切线？",
       };
     }
 
     if (studyMode === "position") {
       return {
         variant: "info" as const,
-        badge: "两圆 5 种位置关系判定",
-        condition: `圆 O₁(${parsedCircleParams.x1.toFixed(1)}, ${parsedCircleParams.y1.toFixed(1)}) 半径 ${parsedCircleParams.r1.toFixed(1)}，圆 O₂(${parsedCircleParams.x2.toFixed(1)}, ${parsedCircleParams.y2.toFixed(1)}) 半径 ${parsedCircleParams.r2.toFixed(1)}，圆心距 d = ${calcRes.d.toFixed(2)}。`,
-        question: "如何准确判断两圆外离、外切、相交、内切或内含？",
+        badge: "两圆位置关系判定",
+        condition: "平面内给定两已知圆的圆心坐标与半径。",
+        question: "如何通过圆心距与两圆半径的和、差关系，判定五种位置关系？",
       };
     }
     if (studyMode === "commonChord") {
       return {
         variant: "warning" as const,
-        badge: "公共弦方程与作差法",
-        condition: "两圆标准或一般方程 C₁, C₂ 联立。",
-        question: "如何快速求解相交公共弦所在直线方程？",
-        method:
-          "作差法：将两圆二次方程直接相减 C₁ - C₂ = 0 消除 x², y² 二次项，即得公共弦（或根轴）方程。",
+        badge: "公共弦与根轴方程",
+        condition: "两相交圆的方程已知，交点连线构成公共弦。",
+        question: "如何通过两圆二次方程作差消元，快速导出公共弦直线方程？",
       };
     }
     return {
       variant: "danger" as const,
-      badge: "公切线长定理与切点系统",
-      condition: "两圆在不同位置关系下的公切线系统。",
-      question: "求解外公切线长与内公切线长。",
-      method:
-        "构造直角梯形：外公切线长 L_{外} = √(d² - (r₁-r₂)²)，内公切线长 L_{内} = √(d² - (r₁+r₂)²)。",
+      badge: "公切线长与几何系统",
+      condition: "两圆在不同位置关系下的外公切线与内公切线系统。",
+      question: "如何构造直角梯形与勾股定理，求解外公切线与内公切线的切线长？",
     };
-  }, [studyMode, preset, parsedCircleParams, calcRes]);
+  }, [studyMode, preset]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
           {/* 1. 探究主题模式选择 (2+1 标准布局) */}
-          <LeftPanelSection title="探究主题" subtitle="选择两圆研究维度">
+          <LeftPanelSection title="探究主题">
             <SelectGrid<StudyMode>
               items={[
                 {
@@ -268,7 +289,7 @@ export function CircleCircleAnimation() {
           </LeftPanelSection>
 
           {/* 2. 典型预设 (黄金 2x2 对称网格) */}
-          <LeftPanelSection title="典型预设" subtitle="快速设定典型构型">
+          <LeftPanelSection title="典型预设">
             <SelectGrid<PresetKey>
               items={[
                 {
@@ -309,7 +330,6 @@ export function CircleCircleAnimation() {
                 <span>圆 O₁ 参数 (x₁, y₁, r₁)</span>
               </div>
             }
-            subtitle="调节主控圆圆心与半径"
           >
             <ParamControl
               params={circle1Configs}
@@ -328,7 +348,6 @@ export function CircleCircleAnimation() {
                 <span>圆 O₂ 参数 (x₂, y₂, r₂)</span>
               </div>
             }
-            subtitle="调节关联圆圆心与半径"
           >
             <ParamControl
               params={circle2Configs}
@@ -336,33 +355,8 @@ export function CircleCircleAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
-
           {/* 5. 辅助图层开关 */}
-          <LeftPanelSection title="辅助图层" subtitle="切换几何元素显示">
+          <LeftPanelSection title="辅助图层">
             <div className="flex flex-col gap-2 text-xs text-neutral-700">
               <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-neutral-50 cursor-pointer">
                 <span>连心线 O₁O₂</span>
@@ -409,6 +403,31 @@ export function CircleCircleAnimation() {
                 </label>
               )}
             </div>
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引（置于最底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

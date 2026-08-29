@@ -15,7 +15,7 @@ import {
   VectorArrow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { ParabolaDirection } from "@/math/parabola";
 import { useParabolaScene } from "../hooks/useParabolaScene";
 import type { PlacedLabel } from "@/utils/labelAvoider";
@@ -524,7 +524,7 @@ export const ParabolaScene: React.FC<ParabolaSceneProps> = ({
           y={l.y + (l.finalDy ?? 0)}
           textAnchor={l.anchor}
           fill={MATH_COLORS.labelText}
-          stroke="#FFFFFF"
+          stroke={CANVAS_COLORS.white}
           strokeWidth={3}
           paintOrder="stroke fill"
           fontSize={fontScale(12)}

@@ -169,33 +169,35 @@ export function LineParamTAnimation() {
       return {
         variant: "info" as const,
         badge: "参数 t 的几何意义本质",
-        condition:
-          "直线标准参数方程 x = x₀ + t cos α, y = y₀ + t sin α，P₀(x₀,y₀) 为定基点。",
-        question: "参数 t 的代数正负与动点 P 到基点 P₀ 的几何距离对应关系。",
+        condition: "直线标准参数方程以定点 P₀ 为基准点建立。",
+        question:
+          "参数 t 的正负号与动点 P 到基点 P₀ 的几何有向距离有何对应规律？",
       };
     }
     if (mode === "secant") {
       return {
         variant: "primary" as const,
         badge: "割线定理与几何方幂",
-        condition: `过定点 P₀ 的直线与${conicType === "circle" ? "圆" : conicType === "ellipse" ? "椭圆" : conicType === "hyperbola" ? "双曲线" : "抛物线"}交于 A(t₁), B(t₂)。`,
-        question: "求相交弦长 |AB| 以及两线段距离乘积 |P₀A| · |P₀B|。",
+        condition: `过定点 P₀ 的割线与${conicType === "circle" ? "圆" : conicType === "ellipse" ? "椭圆" : conicType === "hyperbola" ? "双曲线" : "抛物线"}相交于 A, B 两点。`,
+        question:
+          "如何利用参数方程的根与系数关系，快速求解相交弦长与两线段距离乘积？",
       };
     }
     if (gaokaoModel === "midpoint") {
       return {
         variant: "warning" as const,
-        badge: "高考模型 · 中点弦条件 (t₁ + t₂ = 0)",
-        condition: "割线过定点 P₀(x₀, y₀)，且 P₀ 恰好为相交动弦 AB 的中点。",
-        question: "探究定点 P₀ 为弦中点时代数方程系数满足的充要条件。",
+        badge: "高考模型 · 中点弦条件",
+        condition: "割线过定点 P₀，且 P₀ 恰好为相交动弦 AB 的中点。",
+        question:
+          "定点为弦中点时，参数二次方程一次项系数满足什么充要代数条件？",
       };
     }
     return {
       variant: "danger" as const,
-      badge: "高考模型 · 焦半径/割线倒数和",
+      badge: "高考模型 · 焦半径与割线倒数和",
       condition:
         "割线过定点 P₀（如焦点或轴上定点），与二次曲线交于 A, B 两点。",
-      question: "求解线段倒数和 |1/|P₀A| ± 1/|P₀B|| 是否为定值及极值。",
+      question: "如何利用参数方程韦达定理求解线段倒数和，并探究其定值与极值？",
     };
   }, [mode, conicType, gaokaoModel]);
 
@@ -204,10 +206,7 @@ export function LineParamTAnimation() {
       left={
         <LeftPanel>
           {/* 模式选择 */}
-          <LeftPanelSection
-            title="研究主题"
-            subtitle="选择直线参数 t 的探究维度"
-          >
+          <LeftPanelSection title="研究主题">
             <TabSwitcher
               tabs={[
                 { key: "definition", label: "t的几何意义" },
@@ -221,10 +220,7 @@ export function LineParamTAnimation() {
 
           {/* 曲线类型选择（割线与高考模式） */}
           {mode !== "definition" && (
-            <LeftPanelSection
-              title="二次曲线类型"
-              subtitle="选择相交探究的目标曲线"
-            >
+            <LeftPanelSection title="二次曲线类型">
               <SelectGrid
                 items={[
                   { key: "circle", label: "圆", formula: "x^2+y^2=R^2" },
@@ -250,10 +246,7 @@ export function LineParamTAnimation() {
 
           {/* 高考专项模型选择（精简为 2 列紧凑网格，去除与割线定理重复的选项） */}
           {mode === "gaokao" && (
-            <LeftPanelSection
-              title="高考专题模型"
-              subtitle="选择热点压轴解题模型"
-            >
+            <LeftPanelSection title="高考专题模型">
               <SelectGrid
                 items={[
                   {
@@ -276,10 +269,7 @@ export function LineParamTAnimation() {
           )}
 
           {/* 参数调节 */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块改变直线与曲线参数"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

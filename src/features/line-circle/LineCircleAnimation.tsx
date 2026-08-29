@@ -75,14 +75,47 @@ export function LineCircleAnimation() {
     [params],
   );
 
-  // 参数更新处理器（学生手动调整时自动回退为自由探究）
-  const handleParamChange = useCallback((key: string, value: number) => {
-    setPreset("free");
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  }, []);
+  // 参数更新处理器（学生手动调整时，若在锁定预设下则保持联动，若在free下则自由调整）
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      setParams((prev) => {
+        const next = {
+          ...prev,
+          [key]: value,
+        };
+
+        // 在特定预设下联动从属参数
+        if (preset === "diameter") {
+          const kVal = key === "k" ? value : next.k;
+          const aVal = key === "a" ? value : next.a;
+          const bVal = key === "b" ? value : next.b;
+          next.m = Number((bVal - kVal * aVal).toFixed(2));
+        } else if (preset === "tangentCritical") {
+          const kVal = key === "k" ? value : next.k;
+          const aVal = key === "a" ? value : next.a;
+          const bVal = key === "b" ? value : next.b;
+          const rVal = key === "r" ? value : next.r;
+          const offset = rVal * Math.hypot(1, kVal);
+          next.m = Number((bVal - kVal * aVal - offset).toFixed(2));
+        } else if (preset === "minChord") {
+          const mxVal = key === "mx" ? value : next.mx;
+          const myVal = key === "my" ? value : next.my;
+          const aVal = key === "a" ? value : next.a;
+          const bVal = key === "b" ? value : next.b;
+          const dx = mxVal - aVal;
+          const dy = myVal - bVal;
+          const perpK = Math.abs(dy) > 1e-4 ? -dx / dy : 0;
+          next.k = Number(perpK.toFixed(2));
+          next.m = Number((myVal - perpK * mxVal).toFixed(2));
+        } else {
+          setPreset("free");
+        }
+
+        return next;
+      });
+    },
+    [preset],
+  );
 
   // 典型预设切换处理器
   const handlePresetSelect = useCallback(
@@ -149,20 +182,39 @@ export function LineCircleAnimation() {
   // 控制是否展开次要的圆心平移参数 (a, b)
   const [showCenterParams, setShowCenterParams] = useState(false);
 
-  // 动态过滤与精简参数列表（严格遵循高中教学认知：对象化分组与主次分层）
+  // 动态过滤与精简参数列表（严格遵循高中教学认知：对象化分组与主次分层，典型预设降维）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
     if (studyMode === "tangent") {
       modeKeyGroups = [
-        { group: "圆外极点 P(x_P, y_P) 坐标", keys: ["px", "py"] },
+        { group: "圆外极点 P₀(x₀, y₀) 坐标", keys: ["px", "py"] },
+        { group: "目标圆半径 r", keys: ["r"] },
+      ];
+    } else if (studyMode === "midpoint") {
+      modeKeyGroups = [
+        { group: "弦中点 M(x₀, y₀) 坐标", keys: ["mx", "my"] },
         { group: "目标圆半径 r", keys: ["r"] },
       ];
     } else {
-      modeKeyGroups = [
-        { group: "直线斜截式参数 (k, m)", keys: ["k", "m"] },
-        { group: "目标圆半径 r", keys: ["r"] },
-      ];
+      if (preset === "diameter" || preset === "tangentCritical") {
+        // 过圆心最大弦 / 临界切线：截距 m 已锁定，仅展示直线斜率 k 与半径 r
+        modeKeyGroups = [
+          { group: "直线斜率 k", keys: ["k"] },
+          { group: "目标圆半径 r", keys: ["r"] },
+        ];
+      } else if (preset === "minChord") {
+        // 垂直最短弦：斜率截距已由定点垂直锁定，展示定点坐标与半径
+        modeKeyGroups = [
+          { group: "定点 M(x₀, y₀) 坐标", keys: ["mx", "my"] },
+          { group: "目标圆半径 r", keys: ["r"] },
+        ];
+      } else {
+        modeKeyGroups = [
+          { group: "直线斜截式参数 (k, m)", keys: ["k", "m"] },
+          { group: "目标圆半径 r", keys: ["r"] },
+        ];
+      }
     }
 
     if (showCenterParams) {
@@ -196,7 +248,7 @@ export function LineCircleAnimation() {
     });
 
     return configs;
-  }, [params, studyMode, showCenterParams]);
+  }, [params, studyMode, preset, showCenterParams]);
 
   // 悬浮公式 KaTeX（严谨数学格式化，消除 0 项与 + - 瑕疵）
   const formulaLatex = useMemo(() => {
@@ -269,58 +321,59 @@ export function LineCircleAnimation() {
       return {
         variant: "primary" as const,
         badge: "高考经典 · 直径最长弦",
-        condition: "直线过圆心 C，此时弦心距 d = 0。",
-        question: "求解过圆心的弦长最大值。",
+        condition: "割线通过已知圆的圆心 C。",
+        question: "过圆心的割线弦长（直径）与圆内其他割线弦长有何极值关系？",
       };
     }
     if (preset === "tangentCritical") {
       return {
         variant: "warning" as const,
         badge: "高考经典 · 临界切线相切",
-        condition: "直线与圆满足圆心距等于半径 d = r，判别式 Δ = 0。",
-        question: "探究切点坐标 T 与切线斜率截距关系。",
+        condition: "直线与已知圆处于相切临界状态，恰有一个公共切点。",
+        question: "直线与圆相切时，圆心到直线的距离与圆半径满足什么等量关系？",
       };
     }
     if (preset === "minChord") {
       return {
         variant: "danger" as const,
         badge: "高考经典 · 垂径垂直最短弦",
-        condition: "割线垂直于圆心与定点连线 CM ⊥ l。",
-        question: "探究过圆内定点的动弦长极小值。",
+        condition: "割线过圆内定点 M 且垂直于连心线 CM。",
+        question: "为什么过圆内定点的所有割线中，垂直于半径的弦长最小？",
       };
     }
 
     if (studyMode === "relation") {
       return {
         variant: "info" as const,
-        badge: "几何法判定位置关系 (d 与 r)",
-        condition: `圆心 C(${(params.a ?? 0).toFixed(1)}, ${(params.b ?? 0).toFixed(1)})，半径 r = ${(params.r ?? 3).toFixed(1)}，直线斜率 k = ${(params.k ?? 0).toFixed(2)}。`,
-        question: "如何快速判定直线与圆的交点个数与相交状态？",
+        badge: "位置关系与几何判定",
+        condition: "平面内给定目标圆与动直线。",
+        question:
+          "如何通过圆心到直线的距离与圆半径的大小比较，快速判定交点个数？",
       };
     }
     if (studyMode === "chord") {
       return {
         variant: "primary" as const,
-        badge: "垂径定理与勾股弦长法",
-        condition: `直线与圆相交于 A, B 两点，弦心距为 d = ${calcRes.distance.toFixed(2)}。`,
-        question: "求解相交弦长 |AB|，探究过定点的最长与最短弦长。",
+        badge: "垂径定理与相交弦长",
+        condition: "直线与圆相交于 A, B 两个不同交点。",
+        question: "如何利用圆半径与弦心距构造直角三角形，求解相交弦长？",
       };
     }
     if (studyMode === "tangent") {
       return {
         variant: "warning" as const,
-        badge: "切线长定理与切点弦方程",
-        condition: `从圆外一点 P(${(params.px ?? 0).toFixed(1)}, ${(params.py ?? 0).toFixed(1)}) 引圆的两条切线 PA, PB。`,
-        question: "求解切线长 |PA|，求两切点所连切点弦 AB 的直线方程。",
+        badge: "切线长定理与切点弦",
+        condition: "从圆外定点 P 向目标圆引两条切线，切点分别为 A, B。",
+        question: "如何证明两条切线长相等，并求解切点弦 AB 所在的直线方程？",
       };
     }
     return {
       variant: "danger" as const,
-      badge: "中点弦与垂径垂直定理",
-      condition: `已知动弦 AB 的中点为 M(${(params.mx ?? 0).toFixed(1)}, ${(params.my ?? 0).toFixed(1)})。`,
-      question: "求解割线 AB 的斜率与直线方程。",
+      badge: "垂径定理与弦中点",
+      condition: "已知圆内动弦 AB 的中点 M。",
+      question: "如何利用圆心与中点连线垂直于弦的几何性质，求解割线斜率？",
     };
-  }, [studyMode, preset, params, calcRes]);
+  }, [studyMode, preset]);
 
   const panelTitle = useMemo(() => {
     switch (studyMode) {
@@ -340,7 +393,7 @@ export function LineCircleAnimation() {
       left={
         <LeftPanel>
           {/* 1. 探究主题 Section */}
-          <LeftPanelSection title="探究主题" subtitle="选择直线与圆探讨方向">
+          <LeftPanelSection title="探究主题">
             <SelectGrid
               items={[
                 { key: "relation", label: "位置关系与判定" },
@@ -359,7 +412,7 @@ export function LineCircleAnimation() {
           </LeftPanelSection>
 
           {/* 2. 典型预设 Section (黄金2x2规范) */}
-          <LeftPanelSection title="典型预设" subtitle="新高考经典几何构型">
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={[
                 { key: "free", label: "自由探究", description: "全参数开放" },
@@ -387,10 +440,7 @@ export function LineCircleAnimation() {
           </LeftPanelSection>
 
           {/* 3. 参数调节 Section */}
-          <LeftPanelSection
-            title="核心参数调节"
-            subtitle="聚焦动直线与半径主参数"
-          >
+          <LeftPanelSection title="核心参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

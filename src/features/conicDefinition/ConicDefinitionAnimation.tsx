@@ -82,13 +82,35 @@ export function ConicDefinitionAnimation() {
     });
   }, [params, studyMode, conicType]);
 
-  // 参数更新 (当手动修改参数或拖拽时，自动切回 free)
+  // 参数更新 (当在特定预设下联动从属参数，当在自由模式下直接更新)
   const handleParamChange = (key: string, value: number) => {
-    setActivePreset("free");
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setParams((prev) => {
+      const next = {
+        ...prev,
+        [key]: value,
+      };
+
+      if (studyMode === "firstDef") {
+        if (
+          activePreset === "critical_degenerate" ||
+          activePreset === "hyperbola_degenerate"
+        ) {
+          if (key === "a") next.c = value;
+        } else if (activePreset === "equilateral_hyperbola") {
+          if (key === "a") next.c = Number((value * Math.SQRT2).toFixed(2));
+        } else if (activePreset === "wide_hyperbola") {
+          if (key === "a") next.c = Number((value * 2).toFixed(2));
+        } else {
+          setActivePreset("free");
+        }
+      } else {
+        if (activePreset !== "parabola_e") {
+          setActivePreset("free");
+        }
+      }
+
+      return next;
+    });
   };
 
   // 典型预设切换
@@ -141,14 +163,34 @@ export function ConicDefinitionAnimation() {
     });
   };
 
-  // 左屏声明式参数过滤 (根据 activeMode 过滤)
+  // 左屏声明式参数过滤 (根据 activeMode 与预设降维过滤)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      firstDef: conicType === "parabola" ? ["p", "theta"] : ["a", "c", "theta"],
-      unifiedDef: ["e", "p", "theta"],
-    };
+    let activeKeys: string[] = [];
 
-    const activeKeys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    if (studyMode === "firstDef") {
+      if (conicType === "parabola") {
+        activeKeys = ["p", "theta"];
+      } else {
+        // 在退化或等轴双曲线等典型预设下，隐藏已绑定的焦距 c，仅保留长半轴 a 与动点参数 theta
+        if (
+          activePreset === "critical_degenerate" ||
+          activePreset === "equilateral_hyperbola" ||
+          activePreset === "wide_hyperbola" ||
+          activePreset === "hyperbola_degenerate"
+        ) {
+          activeKeys = ["a", "theta"];
+        } else {
+          activeKeys = ["a", "c", "theta"];
+        }
+      }
+    } else {
+      // 统一定义：若为抛物线预设 (e=1 锁定)，隐藏离心率 e 滑块
+      if (activePreset === "parabola_e") {
+        activeKeys = ["p", "theta"];
+      } else {
+        activeKeys = ["e", "p", "theta"];
+      }
+    }
 
     return activeKeys
       .filter((key) => key in paramMeta)
@@ -169,55 +211,96 @@ export function ConicDefinitionAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, studyMode, conicType]);
+  }, [params, studyMode, conicType, activePreset]);
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
+    if (activePreset !== "free") {
+      if (studyMode === "firstDef") {
+        if (activePreset === "critical_degenerate") {
+          return {
+            variant: "danger" as const,
+            badge: "高考退化临界 · 椭圆退化为线段",
+            condition: "动点 P 到两焦点的距离之和等于两焦点间距。",
+            question:
+              "为什么当距离之和等于焦距时，动点轨迹退化为线段而非椭圆？",
+          };
+        }
+        if (activePreset === "equilateral_hyperbola") {
+          return {
+            variant: "primary" as const,
+            badge: "高考经典 · 等轴双曲线",
+            condition: "双曲线实轴长与虚轴长相等，渐近线互相垂直。",
+            question: "如何证明等轴双曲线的离心率为定值，且两渐近线互相垂直？",
+          };
+        }
+        if (activePreset === "hyperbola_degenerate") {
+          return {
+            variant: "danger" as const,
+            badge: "高考退化临界 · 双曲线退化为射线",
+            condition: "动点 P 到两焦点的距离之差绝对值等于两焦点间距。",
+            question:
+              "为什么当距离之差等于焦距时，动点轨迹退化为两条射线而非双曲线？",
+          };
+        }
+      } else {
+        if (activePreset === "parabola_e") {
+          return {
+            variant: "warning" as const,
+            badge: "高考经典 · 统一定义抛物线形态",
+            condition: "动点到焦点的距离与到准线的距离严格相等（焦准比为 1）。",
+            question:
+              "离心率等于 1 时，曲线形态如何由封闭椭圆演变为开口无限延伸的抛物线？",
+          };
+        }
+      }
+    }
+
     if (studyMode === "firstDef") {
       if (conicType === "ellipse") {
         return {
           variant: "info" as const,
           badge: "椭圆第一定义 · 距离和为常数",
           condition:
-            "平面内动点 P 到两定点 F₁, F₂ 距离之和为常数 2a (2a > 2c)。",
+            "平面内动点 P 到两定点 F₁, F₂ 的距离之和为大于焦距的常数 2a。",
           question:
-            "探究动点轨迹方程与退化临界（2a = 2c 退化为线段，2a < 2c 无轨迹）。",
+            "如何由距离之和建立椭圆轨迹方程，并探究常数和与焦距大小关系对形态的影响？",
         };
       }
       if (conicType === "hyperbola") {
         return {
           variant: "warning" as const,
-          badge: "双曲线第一定义 · 距离差绝对值为常数",
+          badge: "双曲线第一定义 · 距离差为常数",
           condition:
-            "动点 P 到两定点 F₁, F₂ 距离之差的绝对值为常数 2a (0 < 2a < 2c)。",
+            "平面内动点 P 到两定点 F₁, F₂ 的距离之差绝对值为小于焦距的正实数 2a。",
           question:
-            "探究双支曲线与退化临界（2a = 2c 为两条射线，2a = 0 为垂直平分线）。",
+            "为什么要取距离差的绝对值？绝对值如何决定双曲线的左右两个分支？",
         };
       }
       return {
         variant: "primary" as const,
         badge: "抛物线定义 · 到定点等于到定直线",
-        condition: "动点 P 到焦点 F 的距离等于到准线 l 的距离 (e = 1)。",
-        question: "探究抛物线焦半径转化法在折线距离最值问题中的应用。",
+        condition:
+          "平面内动点 P 到定焦点 F 的距离与到定准线 l 的垂直距离相等。",
+        question:
+          "如何利用抛物线定义实现折线距离最值问题中的焦半径与准线转化？",
       };
     }
     return {
       variant: "danger" as const,
       badge: "圆锥曲线统一定义 · 焦准比法",
       condition:
-        "动点 P 到焦点 F 的距离与到准线 l 的距离之比为常数 e（离心率）。",
-      question: "探究离心率 e 的数值演变对曲线形态的决定性作用。",
+        "平面内动点 P 到定焦点 F 的距离与到定准线 l 的距离之比为常数 e。",
+      question:
+        "探究离心率 e 在小于 1、等于 1、大于 1 时，如何统一决定曲线的几何形态？",
     };
-  }, [studyMode, conicType]);
+  }, [studyMode, conicType, activePreset]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="定义与研究模式"
-            subtitle="选择圆锥曲线核心定义视角"
-          >
+          <LeftPanelSection title="定义与研究模式">
             <TabSwitcher
               tabs={[
                 { key: "firstDef", label: "第一定义 (距离和差)" },
@@ -257,10 +340,7 @@ export function ConicDefinitionAnimation() {
           </LeftPanelSection>
 
           {/* 黄金 2×2 典型预设 */}
-          <LeftPanelSection
-            title="典型高考预设"
-            subtitle="一键复现教材与高考经典定义模型"
-          >
+          <LeftPanelSection title="典型高考预设">
             <SelectGrid
               items={currentPresets.map((p) => ({
                 key: p.key,
@@ -274,7 +354,7 @@ export function ConicDefinitionAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块联动图形变化">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

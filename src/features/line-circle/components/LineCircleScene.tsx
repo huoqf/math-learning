@@ -455,7 +455,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
             y1={pDesign.y}
             x2={centerDesign.x}
             y2={centerDesign.y}
-            stroke="#8B5CF6"
+            stroke={MATH_COLORS.tangentLine}
             strokeWidth={1.5}
             strokeDasharray="4 3"
           />
@@ -495,7 +495,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
                   y1={pDesign.y}
                   x2={tp.x}
                   y2={tp.y}
-                  stroke="#8B5CF6"
+                  stroke={MATH_COLORS.tangentLine}
                   strokeWidth={2.2}
                 />
                 {/* 切点半径 CT_i */}

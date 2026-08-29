@@ -141,15 +141,27 @@ export function ConicHomogenizationAnimation() {
     }
   };
 
-  // 声明式参数配置按 activeMode 过滤
+  // 声明式参数配置按 activeMode 与预设降维过滤
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<StudyMode, string[]> = {
-      origin: ["a", "b", "lineA", "lineB"],
-      shift: ["a", "b", "px", "py", "lineA", "lineB"],
-      asymmetric: ["a", "b", "px", "py", "lineA", "lineB", "lambda", "mu"],
-    };
+    let keys: string[] = [];
 
-    const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    if (presetKey === "left_vertex_perpendicular") {
+      // 左顶点直角弦：定点锁定为 P(-a, 0)，隐藏 px, py
+      keys = ["a", "b", "lineA", "lineB"];
+    } else if (presetKey === "origin_symmetric_sum") {
+      // 原点对称：定点锁定为 (0, 0)，隐藏 px, py
+      keys = ["a", "b", "lineA", "lineB"];
+    } else if (presetKey === "asymmetric_slope_explore") {
+      // 非对称探究：定点与权重锁定，仅调节曲线与割线
+      keys = ["a", "b", "lineA", "lineB"];
+    } else {
+      const keysByMode: Record<StudyMode, string[]> = {
+        origin: ["a", "b", "lineA", "lineB"],
+        shift: ["a", "b", "px", "py", "lineA", "lineB"],
+        asymmetric: ["a", "b", "px", "py", "lineA", "lineB", "lambda", "mu"],
+      };
+      keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    }
 
     return keys
       .filter((key) => key in paramMeta)
@@ -170,7 +182,7 @@ export function ConicHomogenizationAnimation() {
           group: meta.group,
         };
       });
-  }, [params, studyMode]);
+  }, [params, studyMode, presetKey]);
 
   // 顶部 KaTeX 展示公式（三位一体色彩 Token 绑定）
   const topFormulaLatex = useMemo(() => {
@@ -192,10 +204,8 @@ export function ConicHomogenizationAnimation() {
       return {
         variant: "primary" as const,
         badge: "高考经典 · 左顶点直角弦",
-        condition:
-          "已知椭圆及左顶点 P(-a, 0)，割线 AB 过 x 轴上定点且 PA ⊥ PB。",
-        question:
-          "探究直线 AB 恒过定点的坐标与斜率乘积 k_{PA} · k_{PB} 的定值规律。",
+        condition: "已知椭圆及左顶点 P，割线 AB 与曲线相交且满足 PA ⊥ PB。",
+        question: "如何通过齐次化升次建立斜率方程，证明动割线 AB 恒过定点？",
       };
     }
     if (presetKey === "origin_symmetric_sum") {
@@ -203,8 +213,9 @@ export function ConicHomogenizationAnimation() {
         variant: "warning" as const,
         badge: "高考经典 · 对称斜率和为零",
         condition:
-          "割线 AB 与椭圆相交，原点 O(0,0) 为弦角顶点，k_{OA} + k_{OB} = 0。",
-        question: "探究动弦 AB 斜率与割线在坐标轴截距的几何对称特征。",
+          "中心对称曲线与割线相交，以原点为顶点，两动弦斜率互为相反数。",
+        question:
+          "如何利用齐次方程一次项系数为零，判定动割线在坐标轴截距的几何对称特征？",
       };
     }
     if (presetKey === "asymmetric_slope_explore") {
@@ -212,8 +223,9 @@ export function ConicHomogenizationAnimation() {
         variant: "danger" as const,
         badge: "压轴大招 · 非对称斜率齐次化",
         condition:
-          "过定点 P(x₀,y₀) 的割线交曲线于 A, B，满足 λk_{PA} + μk_{PB} = 0 (λ ≠ μ)。",
-        question: "探究在非对称加权斜率条件下，割线 AB 是否仍恒过定点？",
+          "过定点 P 的割线交曲线于 A, B，两动弦斜率满足非对称加权关系。",
+        question:
+          "在非对称加权斜率条件下，割线 AB 是否仍恒过定点？如何求解定点坐标？",
       };
     }
 
@@ -221,28 +233,26 @@ export function ConicHomogenizationAnimation() {
       return {
         variant: "info" as const,
         badge: "原点对称齐次化模型",
-        condition:
-          "中心曲线 C 与割线 l: Ax+By=1 交于 A, B 两点，定点为原点 O(0,0)。",
+        condition: "中心对称曲线与割线相交于 A, B 两点，弦角顶点取在原点 O。",
         question:
-          "求证动弦 OA, OB 的斜率和 k_{OA}+k_{OB} 与斜率乘积 k_{OA}·k_{OB} 为定值。",
+          "如何将割线方程常数项构造成 1 代入曲线升次，导出关于动弦斜率的齐次二次方程？",
       };
     }
     if (studyMode === "shift") {
       return {
         variant: "primary" as const,
         badge: "顶点/定点平移齐次化",
-        condition:
-          "已知定点 P(x₀,y₀) 在曲线上或轴上，割线 AB 绕定点旋转或与 PA, PB 联动。",
+        condition: "定点 P 位于坐标原点之外的定点或曲线上顶点。",
         question:
-          "探究动角 ∠APB 与动弦 AB 恒过定点、斜率定值之间的等价代数关系。",
+          "如何通过坐标平移换元，将非原点定点齐次化问题转化为标准原点齐次化？",
       };
     }
     return {
       variant: "accent" as const,
       badge: "非对称斜率代数剖析",
-      condition:
-        "割线交曲线于 A, B，且动弦斜率满足 λk_{PA} + μk_{PB} = 0 (如 k₁ + 2k₂ = 0)。",
-      question: "探究非对称关系下直线 AB 恒过定点的存在性与坐标解。",
+      condition: "动弦两斜率满足非对称加权线性组合关系。",
+      question:
+        "如何利用齐次化联立与斜率比例消元，探究割线系恒过定点的存在性与坐标解？",
     };
   }, [studyMode, presetKey]);
 
@@ -267,10 +277,7 @@ export function ConicHomogenizationAnimation() {
           </div>
 
           {/* 第一级：探究模式 Section */}
-          <LeftPanelSection
-            title="探究模式"
-            subtitle="选择齐次化平移与求解模式"
-          >
+          <LeftPanelSection title="探究模式">
             <SelectGrid
               columns={1}
               items={[
@@ -308,10 +315,7 @@ export function ConicHomogenizationAnimation() {
           </LeftPanelSection>
 
           {/* 第二级：典型预设 Section (黄金 2×2 规范) */}
-          <LeftPanelSection
-            title="典型高考预设"
-            subtitle="精选圆锥曲线典型定点与斜率模型"
-          >
+          <LeftPanelSection title="典型高考预设">
             <SelectGrid
               columns={2}
               items={[
@@ -323,17 +327,17 @@ export function ConicHomogenizationAnimation() {
                 {
                   key: "left_vertex_perpendicular",
                   label: "左顶点直角弦",
-                  description: "k_PA·k_PB=定值",
+                  formula: "k_{PA} \\cdot k_{PB}=\\text{定值}",
                 },
                 {
                   key: "origin_symmetric_sum",
                   label: "对称斜率和零",
-                  description: "k_PA+k_PB=0",
+                  formula: "k_{PA}+k_{PB}=0",
                 },
                 {
                   key: "asymmetric_slope_explore",
                   label: "非对称和探究",
-                  description: "k_PA+2k_PB=0",
+                  formula: "k_{PA}+2k_{PB}=0",
                 },
               ]}
               value={presetKey}
@@ -344,10 +348,7 @@ export function ConicHomogenizationAnimation() {
           </LeftPanelSection>
 
           {/* 第三级：参数调节 Section */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块改变割线与曲线系数"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

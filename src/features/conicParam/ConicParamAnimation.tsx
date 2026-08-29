@@ -102,27 +102,55 @@ export function ConicParamAnimation() {
     }));
   }, [studyMode]);
 
-  // 按 studyMode 过滤并结构化分组参数列表
+  // 按 studyMode 与预设降维过滤并结构化分组参数列表
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
     if (studyMode === "lineParam") {
-      modeKeyGroups = [
-        { group: "定点 P₀(x₀, y₀) 坐标", keys: ["x0", "y0"] },
-        { group: "直线方向与动点参数", keys: ["alpha", "t"] },
-        { group: "椭圆几何底模", keys: ["a", "b"] },
-      ];
+      if (activePreset === "center_secant") {
+        // 对称中心割线：定点 P0 锁定为原点 (0,0)
+        modeKeyGroups = [
+          { group: "直线方向与动点参数", keys: ["alpha", "t"] },
+          { group: "椭圆几何底模", keys: ["a", "b"] },
+        ];
+      } else if (activePreset === "vertical_line") {
+        // 垂直割线：alpha 锁定为 90 度
+        modeKeyGroups = [
+          { group: "定点 P₀(x₀, y₀) 坐标", keys: ["x0", "y0"] },
+          { group: "动点参数 t", keys: ["t"] },
+          { group: "椭圆几何底模", keys: ["a", "b"] },
+        ];
+      } else {
+        modeKeyGroups = [
+          { group: "定点 P₀(x₀, y₀) 坐标", keys: ["x0", "y0"] },
+          { group: "直线方向与动点参数", keys: ["alpha", "t"] },
+          { group: "椭圆几何底模", keys: ["a", "b"] },
+        ];
+      }
     } else if (studyMode === "ellipseParam") {
-      modeKeyGroups = [
-        { group: "动点离心角参数", keys: ["theta"] },
-        { group: "椭圆几何半轴", keys: ["a", "b"] },
-      ];
+      if (activePreset === "vertex_right" || activePreset === "vertex_top") {
+        // 顶点预设：theta 锁定
+        modeKeyGroups = [{ group: "椭圆几何半轴", keys: ["a", "b"] }];
+      } else {
+        modeKeyGroups = [
+          { group: "动点离心角参数", keys: ["theta"] },
+          { group: "椭圆几何半轴", keys: ["a", "b"] },
+        ];
+      }
     } else {
-      modeKeyGroups = [
-        { group: "割线定点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
-        { group: "割线倾斜角 α", keys: ["alpha"] },
-        { group: "椭圆几何底模", keys: ["a", "b"] },
-      ];
+      if (activePreset === "center_chord") {
+        // 中点弦：P0 锁定为原点 (0,0)
+        modeKeyGroups = [
+          { group: "割线倾斜角 α", keys: ["alpha"] },
+          { group: "椭圆几何底模", keys: ["a", "b"] },
+        ];
+      } else {
+        modeKeyGroups = [
+          { group: "割线定点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
+          { group: "割线倾斜角 α", keys: ["alpha"] },
+          { group: "椭圆几何底模", keys: ["a", "b"] },
+        ];
+      }
     }
 
     const configs: ParamConfig[] = [];
@@ -149,7 +177,7 @@ export function ConicParamAnimation() {
     });
 
     return configs;
-  }, [params, studyMode]);
+  }, [params, studyMode, activePreset]);
 
   // 构建中屏悬浮 LaTeX 方程
   const equationLatex = useMemo(() => {
@@ -176,38 +204,70 @@ export function ConicParamAnimation() {
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
+    if (activePreset !== "free") {
+      if (activePreset === "center_secant" || activePreset === "center_chord") {
+        return {
+          variant: "primary" as const,
+          badge: "高考经典 · 对称中心割线",
+          condition:
+            "定点 P₀ 位于椭圆中心，割线与椭圆相交于关于原点对称的两点。",
+          question:
+            "探究原点为动弦中点时参数方程一次项系数满足什么条件，并求最大相交弦长？",
+        };
+      }
+      if (activePreset === "vertical_line") {
+        return {
+          variant: "warning" as const,
+          badge: "高考经典 · 铅垂直线参数方程",
+          condition: "直线垂直于 x 轴（倾斜角为 90°）。",
+          question:
+            "直线标准参数方程如何避免传统斜截式中斜率不存在的分类讨论漏洞？",
+        };
+      }
+      if (activePreset === "tangent_limit") {
+        return {
+          variant: "danger" as const,
+          badge: "高考经典 · 相切极限重根",
+          condition: "割线与椭圆相切，直线参数代入二次方程恰有唯一实数重根。",
+          question: "如何由重根性质直接确定切点参数与切线方程？",
+        };
+      }
+    }
+
     if (studyMode === "lineParam") {
       return {
         variant: "info" as const,
         badge: "直线标准参数方程与模长",
-        condition:
-          "直线参数方程 x = x₀ + t cos α, y = y₀ + t sin α 与椭圆相交。",
-        question: "参数 t 的几何意义是什么？如何快速求弦长？",
+        condition: "直线标准参数方程以定点 P₀ 为基准点，与椭圆相交于两点。",
+        question:
+          "参数 t 的正负号与几何有向距离有何对应关系？如何由参数差快速计算弦长？",
       };
     }
     if (studyMode === "ellipseParam") {
       return {
         variant: "primary" as const,
         badge: "椭圆三角参数设点与最值",
-        condition: "椭圆标准参数方程 x = a cos θ, y = b sin θ，θ 为离心角。",
-        question: "求椭圆上的动点到切线/割线的距离最值，或内接四边形最大面积。",
+        condition: "椭圆上动点由离心角 θ 的三角参数方程表示。",
+        question:
+          "如何利用三角函数有界性与辅助角公式，求解椭圆动点到割线的距离最值？",
       };
     }
     return {
       variant: "danger" as const,
-      badge: "高考 t₁与t₂ 设点综合化简",
+      badge: "高考参数 t 设点化简",
       condition:
-        "割线过定点 P₀ 联立椭圆化为 At² + Bt + C = 0，两交点参数为 t₁, t₂。",
-      question: "如何避免繁琐的二次方程求根，快速处理对称/非对称代数式化简？",
+        "割线过定点与椭圆联立导出关于参数 t 的二次方程，两交点参数为 t₁, t₂。",
+      question:
+        "如何利用参数方程的韦达定理，快速化简对称与非对称线段距离代数式？",
     };
-  }, [studyMode]);
+  }, [studyMode, activePreset]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
           {/* 研究模式选择 */}
-          <LeftPanelSection title="研究模式" subtitle="探索参数方程与解题化简">
+          <LeftPanelSection title="研究模式">
             <TabSwitcher
               tabs={[
                 { key: "lineParam", label: "直线参数方程" },
@@ -220,10 +280,7 @@ export function ConicParamAnimation() {
           </LeftPanelSection>
 
           {/* 案例预设 (2x2 对称网格) */}
-          <LeftPanelSection
-            title="典型几何预设"
-            subtitle="一键复现高考经典构型"
-          >
+          <LeftPanelSection title="典型几何预设">
             <SelectGrid
               items={currentPresets}
               value={activePreset}
@@ -234,10 +291,7 @@ export function ConicParamAnimation() {
           </LeftPanelSection>
 
           {/* 参数调节 Section */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块改变几何位置与参数"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

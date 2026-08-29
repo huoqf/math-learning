@@ -107,15 +107,24 @@ export function ParabolaAnimation() {
     });
   };
 
-  // 按 current studyMode 过滤参数配置
+  // 按 current studyMode 与预设过滤参数配置
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      definition: ["p", "tP"],
-      focalChord: ["p", "thetaDeg"],
-      tangentOptical: ["p", "tP", "yQ"],
-    };
+    let activeKeys: string[] = [];
 
-    const activeKeys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    if (activePreset === "latusRectum") {
+      // 通径预设：倾斜角锁定为 90 度，仅调节焦准距 p
+      activeKeys = ["p"];
+    } else if (activePreset === "orthogonalTangents") {
+      // 正交切线：切点联动，仅展示焦准距 p 与动切点 tP
+      activeKeys = ["p", "tP"];
+    } else {
+      const keysByMode: Record<string, string[]> = {
+        definition: ["p", "tP"],
+        focalChord: ["p", "thetaDeg"],
+        tangentOptical: ["p", "tP", "yQ"],
+      };
+      activeKeys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    }
 
     return activeKeys
       .filter((key) => key in paramMeta)
@@ -135,7 +144,7 @@ export function ParabolaAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, studyMode]);
+  }, [params, studyMode, activePreset]);
 
   // 当前模式下的预设列表项
   const currentPresets = useMemo(() => {
@@ -170,17 +179,18 @@ export function ParabolaAnimation() {
         if (activePreset === "latusRectum") {
           return {
             variant: "primary" as const,
-            badge: "高考经典 · 通径性质",
-            condition: "过焦点 F 作垂直于对称轴的弦，交抛物线于 A, B 两点。",
-            question: "求解通径长 |AB| 及其端点坐标。",
+            badge: "高考经典 · 通径极值性质",
+            condition: "过焦点作垂直于对称轴的相交弦（通径）。",
+            question: "求解通径的长度，并证明通径是所有焦点弦中最短的弦。",
           };
         }
         if (activePreset === "orthogonalTangents") {
           return {
             variant: "danger" as const,
-            badge: "高考经典 · 垂直切线与阿基米德三角形",
-            condition: "割线 AB 为焦点弦，分别过 A, B 作切线交于点 P。",
-            question: "探究交点 P 的位置与切线夹角 ∠APB。",
+            badge: "高考经典 · 阿基米德正交切线",
+            condition: "割线 AB 为焦点弦，分别过端点 A, B 作切线交于外点 P。",
+            question:
+              "证明两切线互相垂直且交点 P 必在准线上，探究弦 AB 与连线 PF 的垂直平分关系。",
           };
         }
       }
@@ -189,37 +199,36 @@ export function ParabolaAnimation() {
     if (studyMode === "definition") {
       return {
         variant: "info" as const,
-        badge: "第一定义与焦半径最值",
-        condition: `抛物线标准方程及动点 P，焦点 F 与准线 l（焦准距 p = ${params.p.toFixed(1)}）。`,
+        badge: "第一定义与焦半径转化",
+        condition: "抛物线上动点 P 到焦点与到准线的连线几何系统。",
         question:
-          "探究动点 P 到焦点的距离 |PF| 与到准线垂线段距离的等价转化关系。",
+          "如何利用焦半径与准线垂线段的等长关系，解决折线距离和的最小值问题？",
       };
     }
     if (studyMode === "focalChord") {
       return {
         variant: "primary" as const,
         badge: "高考焦点弦与相切圆",
-        condition: "过焦点 F 的直线交抛物线于 A(x₁,y₁), B(x₂,y₂)，倾斜角为 θ。",
-        question: "求焦点弦长 |AB|，探究以 AB 为直径的圆与准线的位置关系。",
+        condition: "过焦点的割线与抛物线相交于 A, B 两点构成焦点弦。",
+        question:
+          "如何利用横坐标与焦准距表示焦点弦长，并探究以 AB 为直径的圆与准线的位置关系？",
       };
     }
     return {
       variant: "danger" as const,
       badge: "阿基米德三角形与光学性质",
-      condition: "过抛物线上两点 A, B 作切线交于点 P（阿基米德三角形）。",
-      question: "探究焦点弦切线交点 P 的轨迹、正交性及切线光学反射规律。",
+      condition: "过抛物线上两点引切线交于点 P，构成阿基米德三角形。",
+      question:
+        "探究切点弦中点与外点 P 的坐标几何关系，以及平行入射光线经抛物线反射过焦点的光学性质。",
     };
-  }, [studyMode, activePreset, params.p]);
+  }, [studyMode, activePreset]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
           {/* 1. 开口方向选择 Section */}
-          <LeftPanelSection
-            title="抛物线开向"
-            subtitle="选择四种标准抛物线姿态"
-          >
+          <LeftPanelSection title="抛物线开向">
             <TabSwitcher
               tabs={[
                 { key: "right", label: "向右 y²=2px" },
@@ -233,10 +242,7 @@ export function ParabolaAnimation() {
           </LeftPanelSection>
 
           {/* 2. 研究主题 Section */}
-          <LeftPanelSection
-            title="高考焦点与准线几何"
-            subtitle="选择深入研究范畴"
-          >
+          <LeftPanelSection title="高考焦点与准线几何">
             <SelectGrid
               items={[
                 { key: "definition", label: "第一定义与焦半径" },
@@ -251,10 +257,7 @@ export function ParabolaAnimation() {
           </LeftPanelSection>
 
           {/* 3. 典型预设 Section (2x2 对称网格) */}
-          <LeftPanelSection
-            title="典型预设"
-            subtitle="一键切换高考经典几何构型"
-          >
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={currentPresets}
               value={activePreset}
@@ -265,10 +268,7 @@ export function ParabolaAnimation() {
           </LeftPanelSection>
 
           {/* 4. 参数调节 Section */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块探索动态几何规律"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
