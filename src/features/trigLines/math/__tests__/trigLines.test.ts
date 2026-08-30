@@ -4,7 +4,6 @@ import {
   calculateComparisonAreas,
   solveTrigInequality,
   pointToAngleDeg,
-  normalizeAngleDeg,
 } from "../trigLines";
 
 describe("trigLines feature math tests", () => {

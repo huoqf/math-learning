@@ -83,4 +83,39 @@ describe("derivativeMonotonicity math model", () => {
     const keys = Object.keys(MONOTONICITY_MODELS);
     expect(keys.length).toBe(5);
   });
+
+  it("should format simplified derivative LaTeX for ln_x_ratio when a=1 without '0 - ln x'", () => {
+    const res = solveMonotonicityModel("ln_x_ratio", 1.0);
+    expect(res.derivativeLatex).toBe("f'(x) = \\frac{-\\ln x}{x^2}");
+    expect(res.extrema[0].x).toBeCloseTo(1.0); // e^(1-1) = 1
+    expect(res.extrema[0].y).toBeCloseTo(1.0); // (0+1)/1 = 1
+  });
+
+  it("should have correct signTable and discussionSummary for cubic_param a > 0", () => {
+    const res = solveMonotonicityModel("cubic_param", 1.0);
+    expect(res.signTable.length).toBe(5);
+    expect(res.signTable[0].fPrimeSign).toBe("+");
+    expect(res.signTable[1].fPrimeSign).toBe("0");
+    expect(res.signTable[2].fPrimeSign).toBe("-");
+    expect(res.signTable[3].fPrimeSign).toBe("0");
+    expect(res.signTable[4].fPrimeSign).toBe("+");
+    expect(res.discussionSummaryLatex).toContain("有两相异根");
+  });
+
+  it("should correctly handle nike_rational with a <= 0", () => {
+    const res = solveMonotonicityModel("nike_rational", 0.0);
+    expect(res.hasExtrema).toBe(false);
+    expect(res.extrema.length).toBe(0);
+    expect(res.monotonicIntervals.length).toBe(2);
+    expect(res.monotonicIntervals[0].type).toBe("increasing");
+    expect(res.monotonicIntervals[1].type).toBe("increasing");
+    expect(res.discussionSummaryLatex).toContain("无极值点");
+  });
+
+  it("should correctly verify left and right signs of extrema for exp_poly", () => {
+    const res = solveMonotonicityModel("exp_poly", 2.0);
+    expect(res.extrema[0].leftSign).toBe(-1); // 极小值左侧减(-)
+    expect(res.extrema[0].rightSign).toBe(1); // 极小值右侧增(+)
+    expect(res.extrema[0].x).toBeCloseTo(1.0); // a - 1 = 1
+  });
 });

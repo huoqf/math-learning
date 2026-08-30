@@ -66,4 +66,32 @@ describe("secondDerivative 纯数学逻辑测试", () => {
     expect(jensen.diff).toBe(4);
     expect(jensen.isConvexUp).toBe(true);
   });
+
+  it("混合模型 f(x)=axe^x + bx + c 在 x=-2 处产生拐点，b=0 时 x=-1 产生极值点", () => {
+    // a=1, b=0, c=0 => f(x) = xe^x
+    const params = { a: 1, b: 0, c: 0, d: 0, x0: 0, x1: -2, x2: 0 };
+    const inflections = findInflectionPoints("mixed", params);
+    expect(inflections.length).toBe(1);
+    expect(inflections[0].x).toBe(-2);
+    expect(inflections[0].isTrueInflection).toBe(true);
+
+    const extrema = findExtremaPoints("mixed", params);
+    expect(extrema.length).toBe(1);
+    expect(extrema[0].x).toBe(-1);
+    expect(extrema[0].type).toBe("min"); // f''(-1) = (1)e^(-1) > 0 => 极小值
+  });
+
+  it("上凸函数 (凸函数) 弦中点低于弧中点，isConvexUp 为 false", () => {
+    // f(x) = -x^2 (四次退化: a=0, b=-1)
+    const params = { a: 0, b: -1, c: 0, d: 0, x0: 0, x1: -2, x2: 2 };
+    const jensen = evalJensen("quartic", params, -2, 2);
+    expect(jensen.xMid).toBe(0);
+    expect(jensen.yChordMid).toBe(-4);
+    expect(jensen.yCurveMid).toBe(0);
+    expect(jensen.diff).toBe(-4);
+    expect(jensen.isConvexUp).toBe(false);
+
+    const res = evalFunction("quartic", params, 0);
+    expect(res.concavity).toBe("concaveDown");
+  });
 });

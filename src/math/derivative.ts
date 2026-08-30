@@ -189,10 +189,11 @@ export function buildSlopeInterceptLatex(
     ? `\\color{${slopeColor}}{${slopeStr}}`
     : slopeStr;
 
+  const formattedSlopeNum = Number(slopeStr);
   let xTerm = "";
-  if (slope === 1) {
+  if (formattedSlopeNum === 1) {
     xTerm = "x";
-  } else if (slope === -1) {
+  } else if (formattedSlopeNum === -1) {
     xTerm = "-x";
   } else {
     xTerm = `${coloredSlope}x`;

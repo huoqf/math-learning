@@ -463,10 +463,14 @@ export function solveMonotonicityModel(
             ? `f(x) = \\frac{\\ln x + ${aStr}}{x}`
             : `f(x) = \\frac{\\ln x - ${formatFloat(Math.abs(aVal))}}{x}`;
 
-      const derivativeLatex =
-        Math.abs(aVal) < 1e-6
-          ? "f'(x) = \\frac{1 - \\ln x}{x^2}"
-          : `f'(x) = \\frac{${formatFloat(1 - aVal)} - \\ln x}{x^2}`;
+      let derivativeLatex = "";
+      if (Math.abs(aVal) < 1e-6) {
+        derivativeLatex = "f'(x) = \\frac{1 - \\ln x}{x^2}";
+      } else if (Math.abs(1 - aVal) < 1e-6) {
+        derivativeLatex = "f'(x) = \\frac{-\\ln x}{x^2}";
+      } else {
+        derivativeLatex = `f'(x) = \\frac{${formatFloat(1 - aVal)} - \\ln x}{x^2}`;
+      }
 
       const x0 = Math.exp(1 - aVal);
       const x0Str = formatFloat(x0);

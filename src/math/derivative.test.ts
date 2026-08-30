@@ -106,4 +106,73 @@ describe("PRESET_FUNCTIONS", () => {
     expect(PRESET_FUNCTIONS.cubic.fn(1)).toBe(-2);
     expect(PRESET_FUNCTIONS.cubic.fn(-1)).toBe(2);
   });
+
+  it("should correctly compute derivatives for all高中 core preset functions", () => {
+    // 1. rational: f(x) = 1/x => f'(2) = -1/4 = -0.25
+    const resRational = solveDerivative(PRESET_FUNCTIONS.rational.fn, 2);
+    expect(resRational.isValid).toBe(true);
+    expect(resRational.slope).toBeCloseTo(-0.25, 3);
+    expect(resRational.tangentIntercept).toBeCloseTo(1, 3); // y = -0.25x + 1
+
+    // 2. sqrt: f(x) = √x => f'(4) = 1/(2√4) = 0.25
+    const resSqrt = solveDerivative(PRESET_FUNCTIONS.sqrt.fn, 4);
+    expect(resSqrt.isValid).toBe(true);
+    expect(resSqrt.slope).toBeCloseTo(0.25, 3);
+    expect(resSqrt.fx).toBeCloseTo(2, 3);
+
+    // 3. xlnx: f(x) = x ln x => f'(1) = ln(1) + 1 = 1
+    const resXlnx = solveDerivative(PRESET_FUNCTIONS.xlnx.fn, 1);
+    expect(resXlnx.isValid).toBe(true);
+    expect(resXlnx.slope).toBeCloseTo(1, 3);
+    expect(resXlnx.fx).toBeCloseTo(0, 3);
+
+    // 4. lnx_x: f(x) = (ln x)/x => f'(e) = (1 - ln e)/e^2 = 0
+    const resLnxX = solveDerivative(PRESET_FUNCTIONS.lnx_x.fn, Math.E);
+    expect(resLnxX.isValid).toBe(true);
+    expect(resLnxX.slope).toBeCloseTo(0, 3);
+    expect(resLnxX.fx).toBeCloseTo(1 / Math.E, 3);
+
+    // 5. xex: f(x) = x e^x => f'(0) = (0+1)e^0 = 1
+    const resXex = solveDerivative(PRESET_FUNCTIONS.xex.fn, 0);
+    expect(resXex.isValid).toBe(true);
+    expect(resXex.slope).toBeCloseTo(1, 3);
+    expect(resXex.fx).toBeCloseTo(0, 3);
+  });
+
+  it("should handle domain boundaries and invalid points", () => {
+    // 1/x at x=0 is undefined
+    const resRational0 = solveDerivative(PRESET_FUNCTIONS.rational.fn, 0);
+    expect(resRational0.isValid).toBe(false);
+    expect(resRational0.degenerateType).toBe("undefined");
+
+    // ln(x) at x=-1 is undefined
+    const resLnNeg = solveDerivative(PRESET_FUNCTIONS.ln.fn, -1);
+    expect(resLnNeg.isValid).toBe(false);
+
+    // sqrt(x) at x=-2 is undefined
+    const resSqrtNeg = solveDerivative(PRESET_FUNCTIONS.sqrt.fn, -2);
+    expect(resSqrtNeg.isValid).toBe(false);
+  });
+
+  it("formats LaTeX formulas with dynamic semantic colors properly", () => {
+    const coloredPointSlope = buildPointSlopeLatex(1, 2, 3, {
+      x0Color: "#EF4444",
+      y0Color: "#D97706",
+      slopeColor: "#059669",
+    });
+    expect(coloredPointSlope).toBe(
+      "y - \\color{#D97706}{2} = \\color{#059669}{3}(x - \\color{#EF4444}{1})",
+    );
+
+    const coloredSlopeIntercept = buildSlopeInterceptLatex(2, -1, {
+      slopeColor: "#EF4444",
+    });
+    expect(coloredSlopeIntercept).toBe("y = \\color{#EF4444}{2}x - 1");
+  });
+
+  it("ensures slope 1 and -1 omit redundant coefficient numbers (no '1x' or '-1x')", () => {
+    // 即使输入有微小的浮点偏差 1.0000001
+    expect(buildSlopeInterceptLatex(1.00001, 2)).toBe("y = x + 2");
+    expect(buildSlopeInterceptLatex(-1.00001, 3)).toBe("y = -x + 3");
+  });
 });

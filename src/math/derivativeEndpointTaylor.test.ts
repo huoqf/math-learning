@@ -83,5 +83,21 @@ describe("端点效应与洛必达/泰勒拟合数学计算模块", () => {
       const cos2 = calcTaylorPolynomial("cos", 2, 0);
       expect(cos2.taylorFn(0.5)).toBeCloseTo(1 - 0.5 * 0.25, 4);
     });
+
+    it("泰勒多项式残差 residualFn 在展开点附近快速收敛于 0", () => {
+      const resExp3 = calcTaylorPolynomial("exp", 3, 0);
+      expect(resExp3.residualFn(0)).toBe(0);
+      expect(Math.abs(resExp3.residualFn(0.1))).toBeLessThan(1e-4);
+
+      const resLn2 = calcTaylorPolynomial("ln", 2, 0);
+      expect(resLn2.residualFn(0)).toBe(0);
+      expect(Math.abs(resLn2.residualFn(0.05))).toBeLessThan(1e-4);
+    });
+
+    it("端点效应切线函数 tangentFn 正确计算", () => {
+      const res = calcEndpointEffect("exp", 1.0);
+      expect(res.tangentFn(0)).toBe(0); // 端点处相切过 (0,0)
+      expect(res.tangentFn(1)).toBe(0); // 斜率 0 时水平线
+    });
   });
 });

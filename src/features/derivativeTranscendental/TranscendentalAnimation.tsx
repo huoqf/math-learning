@@ -592,7 +592,7 @@ export function TranscendentalAnimation() {
               <div className="space-y-1.5 text-[11px] leading-relaxed">
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【前置条件】
+                    【初始条件】
                   </span>
                   <span className="text-neutral-600 ml-1">
                     {tipConfig.condition}
@@ -600,7 +600,7 @@ export function TranscendentalAnimation() {
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
-                    【破题设问】
+                    【核心设问】
                   </span>
                   <span className="text-neutral-600 ml-1">
                     {tipConfig.question}

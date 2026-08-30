@@ -43,4 +43,38 @@ describe("隐零点定理与极值点偏移数学计算测试", () => {
     expect(res.geoMean).toBeLessThan(res.logMean);
     expect(res.logMean).toBeLessThan(res.ariMean);
   });
+
+  it("应当正确求解 lnx/x 经典高考极值点偏移模型及右偏结论", () => {
+    // f(x) = (ln x) / x, 极值点 x0 = e ≈ 2.71828, 极大值 1/e ≈ 0.367879
+    // 割线 y = 0.3 (k < 1/e)
+    const res = solveExtremumShift(0.3, "lnx_div_x");
+    expect(res.isValid).toBe(true);
+    expect(res.x0).toBeCloseTo(Math.E, 4);
+    expect(res.x1).toBeGreaterThan(1);
+    expect(res.x1).toBeLessThan(Math.E);
+    expect(res.x2).toBeGreaterThan(Math.E);
+    // f(x1) 与 f(x2) 均应接近 k = 0.3
+    expect(res.fn(res.x1)).toBeCloseTo(0.3, 3);
+    expect(res.fn(res.x2)).toBeCloseTo(0.3, 3);
+    // 验证中点右偏 (x1 + x2) / 2 > e
+    expect(res.midX).toBeGreaterThan(Math.E);
+    expect(res.shiftType).toBe("right");
+    // 验证差值函数 F(x1) = f(x1) - f(2e - x1)
+    expect(res.diffFn(res.x1)).toBeDefined();
+  });
+
+  it("应当正确求解 exp_minus_ax 隐零点消参轨迹与退化", () => {
+    // a = e => x0 = ln(e) = 1, y0 = e - e*1 = 0
+    // 轨迹 h(1) = e^1 * (1 - 1) = 0
+    const res = solveImplicitZero(Math.E, "exp_minus_ax");
+    expect(res.isValid).toBe(true);
+    expect(res.x0).toBeCloseTo(1, 4);
+    expect(res.y0).toBeCloseTo(0, 4);
+    expect(res.traceY).toBeCloseTo(0, 4);
+
+    // a <= 0 退化情况
+    const resDegenerate = solveImplicitZero(-1, "exp_minus_ax");
+    expect(resDegenerate.isValid).toBe(false);
+    expect(resDegenerate.isDegenerate).toBe(true);
+  });
 });

@@ -80,16 +80,6 @@ describe("conicHomogenization math calculations", () => {
   });
 
   it("割线与曲线无交点时触发退化保护", () => {
-    const res = computeConicHomogenization({
-      curveType: "ellipse",
-      studyMode: "origin",
-      a: 2.0,
-      b: 1.0,
-      P: { x: 0, y: 0 },
-      lineA: 10, // 割线 10x + 10y = 1 距离原点太近或斜率太大与椭圆无交点？
-      lineB: 10, // 10x + 10y = 1 => x+y=0.1, 与椭圆有交点。如果是 0.001x + 0.001y = 1 => 割线在外部很远
-    });
-
     const resFar = computeConicHomogenization({
       curveType: "ellipse",
       studyMode: "origin",
