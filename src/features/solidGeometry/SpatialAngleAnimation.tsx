@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useLocation } from "react-router-dom";
 import { ThreePanel } from "@/components/Layout/ThreePanel";
 import { ThreeDCanvas } from "@/components/Layout/ThreeDCanvas";
 import {
@@ -36,11 +35,14 @@ import DistanceModeScene from "./modes/DistanceModeScene";
 
 type AngleMode = "skewLines" | "linePlane" | "dihedral" | "distance";
 
-export default function SpatialAngleAnimation() {
-  const location = useLocation();
-  const defaultMode: AngleMode = location.pathname.includes("distance")
-    ? "distance"
-    : "skewLines";
+interface SpatialAngleAnimationProps {
+  initialMode?: AngleMode;
+}
+
+export default function SpatialAngleAnimation({
+  initialMode,
+}: SpatialAngleAnimationProps = {}) {
+  const defaultMode: AngleMode = initialMode ?? "skewLines";
 
   const [activeMode, setActiveMode] = useState<AngleMode>(defaultMode);
   const [modelPreset, setModelPreset] = useState<string>("free");

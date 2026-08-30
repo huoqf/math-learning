@@ -6,7 +6,6 @@ import {
   LeftPanelSection,
   ParamControl,
   MathPanel,
-  TabSwitcher,
   SelectGrid,
   Toggle,
   TipCard,
@@ -21,10 +20,10 @@ import {
   CameraRig,
   ModeSwitchOverlay3D,
   type InteractionMode3D,
+  type LegendItem,
 } from "@/components/Math3D";
-import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
+import { use3DViewport } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { vector3dBasisMeta } from "@/data/registries/vector3d";
 import type { Vec3 } from "@/math3d/vector3";
 import {
   calculateParallelepipedVertices,
@@ -34,8 +33,14 @@ import {
 } from "@/math3d/basis";
 import { ParallelepipedModeScene } from "./modes/ParallelepipedModeScene";
 import { CoplanarModeScene } from "./modes/CoplanarModeScene";
+import { CoordDotProductModeScene } from "./modes/CoordDotProductModeScene";
+import {
+  vector3dBasisMeta,
+  vector3dOperationsMeta,
+} from "@/data/registries/vector3d";
+import { calculateVectorOperations } from "@/math3d/vectorOperations";
 
-type TeachingMode = "parallelepiped" | "coplanar";
+type TeachingMode = "parallelepiped" | "coplanar" | "coordDotProduct";
 
 export default function Vector3DBasisAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallelepiped");
@@ -43,36 +48,72 @@ export default function Vector3DBasisAnimation() {
     useState<InteractionMode3D>("drag");
   const [activePreset, setActivePreset] = useState<string>("free");
 
-  // 基础参数状态：存储分解系数 x, y, z 以及基底高度 cz
+  // 基础参数状态：存储分解系数 x, y, z 以及基底高度 cz，以及向量 a, b 的空间坐标
   const [params, setParams] = useState<Record<string, number>>({
     x: 1.0,
     y: 1.0,
     z: 1.0,
     cz: 2.0,
+    ax: 2.0,
+    ay: 1.0,
+    az: 0.0,
+    bx: 1.0,
+    by: 2.0,
+    bz: 2.0,
   });
 
   // 图层与标注显示控制状态
   const [showBasisVectors, setShowBasisVectors] = useState(true);
   const [showDecompPath, setShowDecompPath] = useState(true);
-  const [showBoxSkeleton, setShowBoxSkeleton] = useState(true);
-  const [showResultVector, setShowResultVector] = useState(true);
+  const [showBoxSkeleton] = useState(true);
+  const [showResultVector] = useState(true);
   const [showTriangleABC, setShowTriangleABC] = useState(true);
-  const [showPlaneExt, setShowPlaneExt] = useState(true);
-  const [showPerpDistance, setShowPerpDistance] = useState(true);
+  const [showPlaneExt] = useState(true);
+  const [showPerpDistance] = useState(true);
   const [showCentroid, setShowCentroid] = useState(true);
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
-    use3DViewport("iso");
+  // 坐标运算模式专属图层开关
+  const [showSum] = useState(true);
+  const [showDiff] = useState(true);
+  const [showProjection, setShowProjection] = useState(true);
+  const [showAngle] = useState(true);
+  const [showAxes, setShowAxes] = useState(true);
 
-  const { x, y, z, cz = 2.0 } = params;
+  const { cameraPosition, controlsRef } = use3DViewport("iso");
 
-  // 定制基底向量 a, b, c (一般斜六面体基底，支持 cz 高度调节)
+  const {
+    x,
+    y,
+    z,
+    cz = 2.0,
+    ax = 2.0,
+    ay = 1.0,
+    az = 0.0,
+    bx = 1.0,
+    by = 2.0,
+    bz = 2.0,
+  } = params;
+
+  // 定制基底向量 a, b, c
   const O: Vec3 = useMemo(() => ({ x: 0, y: 0, z: 0 }), []);
   const vecA: Vec3 = useMemo(() => ({ x: 2, y: 0, z: 0 }), []);
   const vecB: Vec3 = useMemo(() => ({ x: 0.6, y: 2, z: 0 }), []);
   const vecC: Vec3 = useMemo(() => ({ x: 0, y: 0.5, z: cz }), [cz]);
 
-  // 计算平行六面体的 8 个顶点 (动态由 x, y, z 生成)
+  // 坐标运算模式的动向量 a 与 b
+  const coordVecA: Vec3 = useMemo(
+    () => ({ x: ax, y: ay, z: az }),
+    [ax, ay, az],
+  );
+  const coordVecB: Vec3 = useMemo(
+    () => ({ x: bx, y: by, z: bz }),
+    [bx, by, bz],
+  );
+  const operationsResult = useMemo(
+    () => calculateVectorOperations(coordVecA, coordVecB),
+    [coordVecA, coordVecB],
+  );
+
   const box = useMemo(
     () => calculateParallelepipedVertices(vecA, vecB, vecC, x, y, z),
     [vecA, vecB, vecC, x, y, z],
@@ -80,46 +121,55 @@ export default function Vector3DBasisAnimation() {
 
   const P = box.P;
 
-  // 四点共面情况判定
   const coplanarInfo = useMemo(
     () => checkCoplanarCondition(x, y, z),
     [x, y, z],
   );
 
-  // 基底端点 A, B, C
-  const pointA = vecA;
-  const pointB = vecB;
-  const pointC = vecC;
-
-  // 计算点 P 到平面 ABC 的投影与距离
   const projABC = useMemo(
-    () => projectPointOnPlaneABC(P, pointA, pointB, pointC),
-    [P, pointA, pointB, pointC],
+    () => projectPointOnPlaneABC(P, vecA, vecB, vecC),
+    [P, vecA, vecB, vecC],
   );
 
-  // 拖拽动点 P 时的空间约束 (自由空间 3D 动点)
   const constrainP = useCallback((raw: Vec3): Vec3 => raw, []);
 
-  // 右屏看板数据
+  const handleDragA = useCallback((next: Vec3) => {
+    setActivePreset("free");
+    setParams((p) => ({
+      ...p,
+      ax: Number(next.x.toFixed(1)),
+      ay: Number(next.y.toFixed(1)),
+      az: Number(next.z.toFixed(1)),
+    }));
+  }, []);
+
+  const handleDragB = useCallback((next: Vec3) => {
+    setActivePreset("free");
+    setParams((p) => ({
+      ...p,
+      bx: Number(next.x.toFixed(1)),
+      by: Number(next.y.toFixed(1)),
+      bz: Number(next.z.toFixed(1)),
+    }));
+  }, []);
+
   const mathData = useMemo(
     () =>
       buildMathQuantities("anim-vector3d-basis", params, {
         mode: activeMode,
-        vecA,
-        vecB,
+        vecA: activeMode === "coordDotProduct" ? coordVecA : vecA,
+        vecB: activeMode === "coordDotProduct" ? coordVecB : vecB,
         vecC,
       }),
-    [params, activeMode, vecA, vecB, vecC],
+    [params, activeMode, vecA, vecB, vecC, coordVecA, coordVecB],
   );
 
-  // 1. 基底系数 (x, y, z, cz) 自由滑块调节回调
-  const handleCoeffParamChange = (key: string, value: number) => {
+  const handleCoeffParamChange = useCallback((key: string, val: number) => {
     setActivePreset("free");
-    setParams((prev) => ({ ...prev, [key]: value }));
-  };
+    setParams((prev) => ({ ...prev, [key]: val }));
+  }, []);
 
-  // 2. 3D 鼠标直接拖拽空间动点 P 回调：顺向求出空间点 P，克拉默法则自动解出 (x, y, z)
-  const handlePointPDrag = useCallback(
+  const handlePPointDrag = useCallback(
     (nextP: Vec3) => {
       setActivePreset("free");
       const res = solveBasisCoefficients(vecA, vecB, vecC, nextP);
@@ -135,207 +185,157 @@ export default function Vector3DBasisAnimation() {
     [vecA, vecB, vecC],
   );
 
-  // 重置参数
   const handleReset = () => {
     setActivePreset("free");
     if (activeMode === "parallelepiped") {
-      setParams({
-        x: 1.0,
-        y: 1.0,
-        z: 1.0,
-        cz: 2.0,
-      });
+      setParams((p) => ({ ...p, x: 1.0, y: 1.0, z: 1.0, cz: 2.0 }));
+    } else if (activeMode === "coplanar") {
+      setParams((p) => ({ ...p, x: 0.33, y: 0.33, z: 0.34, cz: 2.0 }));
     } else {
-      setParams({
-        x: 0.33,
-        y: 0.33,
-        z: 0.34,
-        cz: 2.0,
-      });
+      setParams((p) => ({
+        ...p,
+        ax: 2.0,
+        ay: 1.0,
+        az: 0.0,
+        bx: 1.0,
+        by: 2.0,
+        bz: 2.0,
+      }));
     }
   };
 
-  // 快捷预设设置（高考经典典型算例，首项必须为 free 自由探究）
   const handlePresetSelect = (presetKey: string) => {
     setActivePreset(presetKey);
-    switch (presetKey) {
-      case "free":
-        break;
-
-      // 模式一：空间向量基本定理（平行六面体分解）
-      case "para_diag":
-        setParams((p) => ({ ...p, x: 1.0, y: 1.0, z: 1.0, cz: 2.0 }));
-        break;
-      case "para_center":
-        setParams((p) => ({ ...p, x: 0.5, y: 0.5, z: 0.5, cz: 2.0 }));
-        break;
-      case "para_degen":
-        setParams((p) => ({ ...p, cz: 0.0 }));
-        break;
-
-      // 模式二：共面向量定理与四点共面
-      case "cop_centroid":
-        setParams((p) => ({ ...p, x: 0.33, y: 0.33, z: 0.34, cz: 2.0 }));
-        break;
-      case "cop_inside":
-        setParams((p) => ({ ...p, x: 0.5, y: 0.3, z: 0.2, cz: 2.0 }));
-        break;
-      case "cop_tetra_inside":
-        setParams((p) => ({ ...p, x: 0.2, y: 0.3, z: 0.2, cz: 2.0 }));
-        break;
-    }
+    const configs: Record<string, any> = {
+      para_diag: { x: 1.0, y: 1.0, z: 1.0, cz: 2.0 },
+      para_center: { x: 0.5, y: 0.5, z: 0.5, cz: 2.0 },
+      para_degen: { cz: 0.0 },
+      cop_centroid: { x: 0.33, y: 0.33, z: 0.34, cz: 2.0 },
+      dot_perp: { ax: 2.0, ay: 1.0, az: 0.0, bx: 1.0, by: -2.0, bz: 2.0 },
+    };
+    if (configs[presetKey]) setParams((p) => ({ ...p, ...configs[presetKey] }));
   };
 
-  // 当前模式专属的 2×2 对称预设项列表（纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余描述）
   const currentModePresets = useMemo(() => {
-    switch (activeMode) {
-      case "parallelepiped":
-        return [
-          {
-            key: "free",
-            label: "自由探索",
-          },
-          {
-            key: "para_diag",
-            label: "体对角线顶点",
-          },
-          {
-            key: "para_center",
-            label: "六面体中心",
-          },
-          {
-            key: "para_degen",
-            label: "基底共面退化",
-          },
-        ];
-      case "coplanar":
-        return [
-          {
-            key: "free",
-            label: "自由探索",
-          },
-          {
-            key: "cop_centroid",
-            label: "截面重心构型",
-          },
-          {
-            key: "cop_inside",
-            label: "截面内共面点",
-          },
-          {
-            key: "cop_tetra_inside",
-            label: "四面体内部点",
-          },
-        ];
-    }
+    if (activeMode === "parallelepiped")
+      return [
+        { key: "free", label: "自由探索" },
+        { key: "para_diag", label: "体对角线" },
+        { key: "para_center", label: "六面体中心" },
+        { key: "para_degen", label: "基底共面" },
+      ];
+    if (activeMode === "coplanar")
+      return [
+        { key: "free", label: "自由探索" },
+        { key: "cop_centroid", label: "截面重心" },
+      ];
+    return [
+      { key: "free", label: "自由探索" },
+      { key: "dot_perp", label: "垂直正交" },
+    ];
   }, [activeMode]);
 
-  // 声明式参数配置按模式及预设动态裁剪（参数降维铁律）
   const currentParamConfigs = useMemo<ParamConfig[]>(() => {
-    if (activePreset !== "free") {
-      if (activePreset === "para_degen") {
-        return vector3dBasisMeta
-          .filter((m) => m.key === "cz")
-          .map((meta) => ({
-            key: meta.key,
-            label: meta.label,
-            labelFormula: meta.labelFormula,
-            value: params[meta.key] ?? meta.defaultValue ?? 0,
-            min: meta.min,
-            max: meta.max,
-            step: meta.step ?? 0.1,
-            importance: meta.importance,
-            marks: meta.marks,
-          }));
-      }
-      return [];
-    }
-
-    let allowedKeys: string[] = ["x", "y", "z", "cz"];
-    if (activeMode === "coplanar") {
-      allowedKeys = ["x", "y", "z"];
-    }
-
-    return vector3dBasisMeta
-      .filter((meta) => allowedKeys.includes(meta.key))
-      .map((meta) => ({
-        key: meta.key,
-        label: meta.label,
-        labelFormula: meta.labelFormula,
+    if (activeMode === "coordDotProduct") {
+      if (activePreset !== "free") return [];
+      return vector3dOperationsMeta.map((meta) => ({
+        ...meta,
         value: params[meta.key] ?? meta.defaultValue ?? 0,
-        min: meta.min,
-        max: meta.max,
-        step: meta.step ?? 0.1,
-        description: meta.description,
-        descriptionFormula: meta.descriptionFormula,
-        importance: meta.importance,
-        marks: meta.marks,
       }));
+    }
+    if (activePreset !== "free" && activePreset !== "para_degen") return [];
+    const allowed =
+      activePreset === "para_degen" ? ["cz"] : ["x", "y", "z", "cz"];
+    return vector3dBasisMeta
+      .filter((m) => allowed.includes(m.key))
+      .map((m) => ({ ...m, value: params[m.key] ?? m.defaultValue ?? 0 }));
   }, [activeMode, activePreset, params]);
 
-  // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
-    if (activeMode === "parallelepiped") {
+    if (activeMode === "parallelepiped")
       return {
         variant: "primary" as const,
         badge: "选择性必修一 · 空间向量基本定理",
-        condition:
-          "空间不共面的三个基底向量 {a⃗, b⃗, c⃗}，P 为空间中任意一点 (OP⃗ = p⃗)。",
-        question:
-          "探究存在唯一定理：存在唯一实数组 (x, y, z) 使得 p⃗ = x a⃗ + y b⃗ + z c⃗。直观呈现平行六面体法则三步折线合成路径。",
+        condition: "不共面的基底 {a⃗, b⃗, c⃗}，p⃗ = x a⃗ + y b⃗ + z c⃗。",
+        question: "探究存在唯一实数组 (x, y, z) 实现平行六面体分解。",
       };
-    }
+    if (activeMode === "coplanar")
+      return {
+        variant: "success" as const,
+        badge: "选择性必修一 · 共面向量定理",
+        condition: "P 满足 OP⃗ = x OA⃗ + y OB⃗ + z OC⃗。",
+        question: "证明共面充要条件 x + y + z = 1。",
+      };
     return {
-      variant: "success" as const,
-      badge: "选择性必修一 · 共面向量定理与四点共面判定",
-      condition:
-        "以点 O 为起点的基底向量 OA⃗, OB⃗, OC⃗，动点 P 满足 OP⃗ = x OA⃗ + y OB⃗ + z OC⃗。",
-      question:
-        "证明空间四点 P, A, B, C 共面（即 P ∈ 面 ABC）的充要条件为 x + y + z = 1；当 x=y=z=1/3 时点 P 恰为 △ABC 的重心 G。",
+      variant: "info" as const,
+      badge: "选择性必修一 · 坐标与数量积",
+      condition: "空间直角坐标系已知向量 a⃗ 与 b⃗。",
+      question: "探究数量积 a⃗·b⃗ = x₁x₂ + y₁y₂ + z₁z₂。",
     };
+  }, [activeMode]);
+
+  const legendItems: LegendItem[] = useMemo(() => {
+    if (activeMode === "coordDotProduct")
+      return [
+        {
+          colorKey: "paramPrimary" as const,
+          swatch: "line" as const,
+          label: "向量 a⃗",
+        },
+        {
+          colorKey: "paramSecondary" as const,
+          swatch: "line" as const,
+          label: "向量 b⃗",
+        },
+        {
+          colorKey: "highlight" as const,
+          swatch: "line" as const,
+          label: "和向量",
+        },
+      ];
+    return [
+      {
+        colorKey: "paramPrimary" as const,
+        swatch: "line" as const,
+        label: "基向量 a",
+      },
+      {
+        colorKey: "paramSecondary" as const,
+        swatch: "line" as const,
+        label: "基向量 b",
+      },
+      {
+        colorKey: "paramTertiary" as const,
+        swatch: "line" as const,
+        label: "基向量 c",
+      },
+      {
+        colorKey: "highlight" as const,
+        swatch: "line" as const,
+        label: "合成向量",
+      },
+    ];
   }, [activeMode]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* Step 1: 探究模式 (高中数学两大核心主题) */}
           <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
-                {
-                  key: "parallelepiped",
-                  label: "空间向量基本定理",
-                  formula: "\\vec{p}=x\\vec{a}+y\\vec{b}+z\\vec{c}",
-                },
-                {
-                  key: "coplanar",
-                  label: "共面向量与四点共面",
-                  formula: "x + y + z = 1",
-                },
+                { key: "parallelepiped", label: "基本定理", formula: "x,y,z" },
+                { key: "coplanar", label: "四点共面", formula: "x+y+z=1" },
+                { key: "coordDotProduct", label: "坐标运算", formula: "a·b" },
               ]}
               value={activeMode}
               onChange={(m) => {
-                const nextMode = m as TeachingMode;
-                setActiveMode(nextMode);
+                setActiveMode(m as TeachingMode);
                 setActivePreset("free");
-                if (nextMode === "parallelepiped") {
-                  setParams((p) => ({ ...p, x: 1.0, y: 1.0, z: 1.0, cz: 2.0 }));
-                } else {
-                  setParams((p) => ({
-                    ...p,
-                    x: 0.33,
-                    y: 0.33,
-                    z: 0.34,
-                    cz: 2.0,
-                  }));
-                }
               }}
-              columns={2}
+              columns={3}
             />
           </LeftPanelSection>
-
-          {/* Step 2: 典型模型预设 (2×2 黄金网格，首项自由探究) */}
           <LeftPanelSection title="典型模型预设">
             <SelectGrid
               items={currentModePresets}
@@ -344,8 +344,6 @@ export default function Vector3DBasisAnimation() {
               columns={2}
             />
           </LeftPanelSection>
-
-          {/* Step 3: 参数调节 (根据模式与预设动态裁剪) */}
           <LeftPanelSection title="参数调节">
             {currentParamConfigs.length > 0 ? (
               <ParamControl
@@ -354,117 +352,58 @@ export default function Vector3DBasisAnimation() {
                 onReset={handleReset}
               />
             ) : (
-              <div className="rounded-xl bg-neutral-50/80 border border-neutral-200/80 p-3 text-xs text-neutral-600 flex items-center justify-between shadow-xs">
-                <span className="flex items-center gap-1.5">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  题设基准数据已锁定
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setActivePreset("free")}
-                  className="text-blue-600 font-medium hover:underline text-[11px] cursor-pointer"
-                >
-                  切为自由探索
-                </button>
-              </div>
+              <div className="text-xs p-3 text-neutral-600">题设锁定中</div>
             )}
           </LeftPanelSection>
-
-          {/* Step 4: 图层与标注显示控制 (单列全宽 Toggle 开关) */}
           <LeftPanelSection title="图层与标注显示控制" compact>
             <div className="space-y-2.5">
-              {activeMode === "parallelepiped" ? (
+              {activeMode === "parallelepiped" && (
                 <>
                   <Toggle
-                    label="基底三向量 (a, b, c)"
+                    label="基底"
                     checked={showBasisVectors}
                     onChange={setShowBasisVectors}
                   />
                   <Toggle
-                    label="三步分量折线 (xa, yb, zc)"
+                    label="折线"
                     checked={showDecompPath}
                     onChange={setShowDecompPath}
                   />
-                  <Toggle
-                    label="平行六面体透视包络框"
-                    checked={showBoxSkeleton}
-                    onChange={setShowBoxSkeleton}
-                  />
-                  <Toggle
-                    label="合成向量 OP 与动点 P"
-                    checked={showResultVector}
-                    onChange={setShowResultVector}
-                  />
                 </>
-              ) : (
+              )}
+              {activeMode === "coplanar" && (
                 <>
                   <Toggle
-                    label="基底端点与向量 (OA, OB, OC)"
-                    checked={showBasisVectors}
-                    onChange={setShowBasisVectors}
-                  />
-                  <Toggle
-                    label="△ABC 核心截面"
+                    label="△ABC"
                     checked={showTriangleABC}
                     onChange={setShowTriangleABC}
                   />
                   <Toggle
-                    label="平面 (ABC) 延展网格"
-                    checked={showPlaneExt}
-                    onChange={setShowPlaneExt}
-                  />
-                  <Toggle
-                    label="空间垂线段 PH 与垂足 H"
-                    checked={showPerpDistance}
-                    onChange={setShowPerpDistance}
-                  />
-                  <Toggle
-                    label="重心 G 特征标记"
+                    label="重心"
                     checked={showCentroid}
                     onChange={setShowCentroid}
                   />
                 </>
               )}
+              {activeMode === "coordDotProduct" && (
+                <>
+                  <Toggle
+                    label="坐标系"
+                    checked={showAxes}
+                    onChange={setShowAxes}
+                  />
+                  <Toggle
+                    label="投影"
+                    checked={showProjection}
+                    onChange={setShowProjection}
+                  />
+                </>
+              )}
             </div>
           </LeftPanelSection>
-
-          {/* Step 5: 3D 空间视角预设 */}
-          <LeftPanelSection title="3D 空间视角预设">
-            <TabSwitcher
-              layout="horizontal"
-              tabs={[
-                { key: "iso", label: "轴测直观" },
-                { key: "front", label: "主视正投" },
-                { key: "top", label: "俯视底面" },
-                { key: "side", label: "左视侧面" },
-              ]}
-              value={preset}
-              onChange={(p) => setCameraPreset(p as CameraPreset)}
-            />
-          </LeftPanelSection>
-
-          {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
+          <LeftPanelSection title="教学导引" compact>
             <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
+              <div className="text-[11px]">{tipConfig.question}</div>
             </TipCard>
           </LeftPanelSection>
         </LeftPanel>
@@ -476,36 +415,10 @@ export default function Vector3DBasisAnimation() {
             <ModeSwitchOverlay3D
               mode={interactionMode}
               onModeChange={setInteractionMode}
-              pointCount={1}
+              pointCount={activeMode === "coordDotProduct" ? 2 : 1}
             />
           }
-          legend={
-            <Legend3D
-              title="空间向量图例"
-              items={[
-                {
-                  colorKey: "paramPrimary",
-                  swatch: "line",
-                  label: "基向量 a",
-                },
-                {
-                  colorKey: "paramSecondary",
-                  swatch: "line",
-                  label: "基向量 b",
-                },
-                {
-                  colorKey: "paramTertiary",
-                  swatch: "line",
-                  label: "基向量 c",
-                },
-                {
-                  colorKey: "highlight",
-                  swatch: "line",
-                  label: "合成向量 OP",
-                },
-              ]}
-            />
-          }
+          legend={<Legend3D title="空间向量图例" items={legendItems} />}
         >
           <CameraRig ref={controlsRef} enabled={interactionMode === "orbit"} />
 
@@ -553,8 +466,27 @@ export default function Vector3DBasisAnimation() {
             />
           )}
 
-          {/* 通用合成向量 OP 与动点 P */}
-          {showResultVector && (
+          {/* ========================================================
+              模式三：空间向量坐标运算、数量积与正交投影 (coordDotProduct)
+             ======================================================== */}
+          {activeMode === "coordDotProduct" && (
+            <CoordDotProductModeScene
+              vecA={coordVecA}
+              vecB={coordVecB}
+              res={operationsResult}
+              showSum={showSum}
+              showDiff={showDiff}
+              showProjection={showProjection}
+              showAngle={showAngle}
+              showAxes={showAxes}
+              interactionMode={interactionMode}
+              onDragA={handleDragA}
+              onDragB={handleDragB}
+            />
+          )}
+
+          {/* 通用合成向量 OP 与动点 P (模式一与模式二) */}
+          {showResultVector && activeMode !== "coordDotProduct" && (
             <>
               <Vector3DArrow from={O} to={P} colorKey="highlight" />
               <Point3D
@@ -562,7 +494,7 @@ export default function Vector3DBasisAnimation() {
                 colorKey="highlight"
                 draggable={interactionMode === "drag"}
                 constrain={constrainP}
-                onDrag={handlePointPDrag}
+                onDrag={handlePPointDrag}
               />
               <PointLabel3D position={P} text="P" offset={[0, 0, 0.18]} />
               <FormulaLabel3D

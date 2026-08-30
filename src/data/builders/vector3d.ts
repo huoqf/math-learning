@@ -11,23 +11,137 @@ import {
   checkCoplanarCondition,
   calculateBasisVectorNorm,
 } from "@/math3d/basis";
+import { calculateVectorOperations } from "@/math3d/vectorOperations";
 import type { Vec3 } from "@/math3d/vector3";
 
 export function buildVector3DBasisPanel(
   params: Record<string, number>,
   extraConfig?: {
-    mode?: "parallelepiped" | "coplanar";
+    mode?: "parallelepiped" | "coplanar" | "coordDotProduct";
     vecA?: Vec3;
     vecB?: Vec3;
     vecC?: Vec3;
   },
 ): MathPanelData {
+  const mode = extraConfig?.mode ?? "parallelepiped";
+
+  if (mode === "coordDotProduct") {
+    const ax = params.ax ?? 2;
+    const ay = params.ay ?? 1;
+    const az = params.az ?? 0;
+    const bx = params.bx ?? 1;
+    const by = params.by ?? 2;
+    const bz = params.bz ?? 2;
+
+    const vecA: Vec3 = { x: ax, y: ay, z: az };
+    const vecB: Vec3 = { x: bx, y: by, z: bz };
+    const res = calculateVectorOperations(vecA, vecB);
+
+    const quantities: MathQuantity[] = [
+      {
+        label: "向量 a 空间坐标",
+        symbol: "\\vec{a}",
+        value: `(${ax.toFixed(1)}, \\; ${ay.toFixed(1)}, \\; ${az.toFixed(1)})`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "向量 b 空间坐标",
+        symbol: "\\vec{b}",
+        value: `(${bx.toFixed(1)}, \\; ${by.toFixed(1)}, \\; ${bz.toFixed(1)})`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "和向量坐标 a + b",
+        symbol: "\\vec{a}+\\vec{b}",
+        value: `(${res.sum.x.toFixed(1)}, \\; ${res.sum.y.toFixed(1)}, \\; ${res.sum.z.toFixed(1)})`,
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "差向量坐标 a - b",
+        symbol: "\\vec{a}-\\vec{b}",
+        value: `(${res.diff.x.toFixed(1)}, \\; ${res.diff.y.toFixed(1)}, \\; ${res.diff.z.toFixed(1)})`,
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "空间向量数量积 a · b",
+        symbol: "\\vec{a}\\cdot\\vec{b}",
+        value: Number(res.dotProduct.toFixed(2)),
+        color: res.isPerp ? MATH_COLORS.paramTertiary : MATH_COLORS.primary,
+      },
+      {
+        label: "向量模长 |a| 与 |b|",
+        symbol: "|\\vec{a}|, |\\vec{b}|",
+        value: `${res.normA.toFixed(2)}, \\; ${res.normB.toFixed(2)}`,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "空间向量夹角 θ",
+        symbol: "\\theta",
+        value: `${res.angleDeg.toFixed(1)}^\\circ \\; (\\cos\\theta=${res.cosTheta.toFixed(3)})`,
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "b 在 a 上的投影向量",
+        symbol: "\\vec{b}_{\\vec{a}}",
+        value: `(${res.projBOnA.x.toFixed(2)}, \\; ${res.projBOnA.y.toFixed(2)}, \\; ${res.projBOnA.z.toFixed(2)})`,
+        color: MATH_COLORS.paramTertiary,
+      },
+    ];
+
+    const theorems: Theorem[] = [
+      {
+        name: "空间向量加减与数乘坐标运算法则",
+        latex: `\\vec{a}\\pm\\vec{b} = (x_1\\pm x_2, \\; y_1\\pm y_2, \\; z_1\\pm z_2), \\quad \\lambda\\vec{a} = (\\lambda x_1, \\lambda y_1, \\lambda z_1)`,
+        level: "core",
+        condition: "各分量分别进行代数加减与数乘",
+      },
+      {
+        name: "空间向量数量积坐标公式与夹角",
+        latex: `\\vec{a}\\cdot\\vec{b} = x_1x_2 + y_1y_2 + z_1z_2 = |\\vec{a}||\\vec{b}|\\cos\\theta, \\quad \\cos\\theta = \\frac{x_1x_2+y_1y_2+z_1z_2}{\\sqrt{x_1^2+y_1^2+z_1^2}\\sqrt{x_2^2+y_2^2+z_2^2}}`,
+        level: "core",
+        condition:
+          "垂直判定：\\vec{a}\\perp\\vec{b} \\iff \\vec{a}\\cdot\\vec{b} = 0",
+      },
+      {
+        name: "空间正交投影向量与投影数量",
+        latex: `\\vec{b}_{\\vec{a}} = \\left(\\frac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}|^2}\\right)\\vec{a} = (|\\vec{b}|\\cos\\theta)\\frac{\\vec{a}}{|\\vec{a}|}`,
+        level: "important",
+        condition: "投影数量为标量，投影向量方向与 a 相同或相反",
+      },
+    ];
+
+    const gaokaoPoints: GaokaoPoint[] = [
+      {
+        text: "【两向量垂直充要条件】空间中两非零向量垂直 ⟺ x₁x₂ + y₁y₂ + z₁z₂ = 0，常用于求空间平面的法向量！",
+        importance: "gaokao",
+      },
+      {
+        text: "【投影向量与点线距】向量 b 在向量 a 上的投影向量为 (a·b / |a|²) a，其模长为点到直线垂线段勾股计算的基础！",
+        importance: "gaokao",
+      },
+    ];
+
+    const warnings: WarningItem[] = [];
+    if (res.isPerp) {
+      warnings.push({
+        text: "🎯 空间向量正交：a · b = 0 (θ = 90°)，两向量相互垂直！",
+        level: "warning",
+      });
+    } else if (res.isParallel) {
+      warnings.push({
+        text: "⚠️ 空间向量共线：各对应坐标成比例 (θ = 0° 或 180°)！",
+        level: "warning",
+      });
+    }
+
+    return { quantities, theorems, gaokaoPoints, warnings };
+  }
+
   const x = params.x ?? 1.5;
   const y = params.y ?? 1.2;
   const z = params.z ?? 1.8;
   const cz = params.cz ?? 2.0;
 
-  const mode = extraConfig?.mode ?? "parallelepiped";
   const modeLabelMap: Record<string, string> = {
     parallelepiped: "空间向量基本定理 (基底分解)",
     coplanar: "共面向量定理与四点共面 (x+y+z=1)",

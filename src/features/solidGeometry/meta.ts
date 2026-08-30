@@ -139,7 +139,7 @@ export const solidSurfaceRelationLoader = () =>
 export const solidSectionLoader = () => import("./section/SectionCuboidDemo");
 export const solidFoldingLoader = () => import("./FoldingAnimation");
 export const solidAngleLoader = () => import("./SpatialAngleAnimation");
-export const solidDistanceLoader = () => import("./SpatialAngleAnimation");
+export const solidDistanceLoader = () => import("./SpatialDistanceAnimation");
 export const solidParametricLoader = () => import("./ParametricPointAnimation");
 export const solidBallLoader = () => import("./CircumInSphereAnimation");
 export const solidBallModelsLoader = () =>

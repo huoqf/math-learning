@@ -64,7 +64,7 @@ export default function LinePlaneModeScene({
       {showAxes && showCoordinates ? (
         <FormulaLabel3D
           position={E}
-          tex={`E(0,0,${(lambda * c).toFixed(1)})`}
+          tex={`E(0,0,${Number((lambda * c).toFixed(2))})`}
           offset={[-0.25, -0.2, 0.1]}
         />
       ) : (
@@ -149,7 +149,11 @@ export default function LinePlaneModeScene({
             colorKey="highlight"
           />
           <FormulaLabel3D
-            position={{ x: a - 0.35, y: b - 0.35, z: 0.15 }}
+            position={{
+              x: a - Math.min(0.45, Math.max(0.2, a * 0.18)),
+              y: b - Math.min(0.35, Math.max(0.15, b * 0.18)),
+              z: Math.min(0.3, Math.max(0.1, c * 0.12)),
+            }}
             tex="\theta"
           />
         </>

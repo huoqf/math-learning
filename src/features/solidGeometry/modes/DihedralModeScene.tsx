@@ -53,7 +53,7 @@ export default function DihedralModeScene({
       {showAxes && showCoordinates ? (
         <FormulaLabel3D
           position={E}
-          tex={`E(0,0,${(lambda * c).toFixed(1)})`}
+          tex={`E(0,0,${Number((lambda * c).toFixed(2))})`}
           offset={[-0.25, -0.2, 0.1]}
         />
       ) : (
@@ -202,7 +202,8 @@ export default function DihedralModeScene({
 
           {(() => {
             const G1 = dihedralData.centroidBase;
-            const n1Target: Vec3 = { x: G1.x, y: G1.y, z: 1.6 };
+            const n1Height = Math.min(1.6, Math.max(0.8, c * 0.75));
+            const n1Target: Vec3 = { x: G1.x, y: G1.y, z: G1.z + n1Height };
             return (
               <>
                 <Vector3DArrow from={G1} to={n1Target} colorKey="secondary" />

@@ -517,12 +517,6 @@ export const rotationBodyMeta: ParamMeta[] = [
     importance: "advanced",
     marks: [
       {
-        value: 1.5,
-        label: "圆柱退化(r₂=r₁)",
-        labelFormula: "r_2=r_1",
-        variant: "critical",
-      },
-      {
         value: 0.1,
         label: "圆锥退化(r₂≈0)",
         labelFormula: "r_2 \\approx 0",

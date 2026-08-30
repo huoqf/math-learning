@@ -128,7 +128,11 @@ export default function SkewLinesModeScene({
             colorKey="highlight"
           />
           <FormulaLabel3D
-            position={{ x: a - 0.3, y: b - 0.3, z: 0.15 }}
+            position={{
+              x: a - Math.min(0.45, Math.max(0.2, a * 0.18)),
+              y: b - Math.min(0.35, Math.max(0.15, b * 0.18)),
+              z: Math.min(0.3, Math.max(0.1, c * 0.12)),
+            }}
             tex="\theta"
           />
         </>
