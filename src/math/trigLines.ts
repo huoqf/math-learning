@@ -208,25 +208,50 @@ export function solveTrigInequality(
       latexSolution =
         "x \\in \\mathbb{R} \\setminus \\{2k\\pi - \\frac{\\pi}{2}\\}";
     } else {
-      const alpha0 = Math.asin(c); // [-pi/2, pi/2]
-      const rad1 = alpha0 >= 0 ? alpha0 : 2 * Math.PI + alpha0;
-      const rad2 = Math.PI - alpha0;
-      const [startRad, endRad] = rad1 < rad2 ? [rad1, rad2] : [rad2, rad1];
-      intervals = [
-        {
-          startRad,
-          endRad,
-          startDeg: (startRad * 180) / Math.PI,
-          endDeg: (endRad * 180) / Math.PI,
-        },
-      ];
-      boundaryPoints.push(
-        { x: Math.cos(startRad), y: Math.sin(startRad) },
-        { x: Math.cos(endRad), y: Math.sin(endRad) },
-      );
-      const s1 = (startRad / Math.PI).toFixed(2);
-      const s2 = (endRad / Math.PI).toFixed(2);
-      latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+      const alpha0 = Math.asin(c); // (-pi/2, pi/2)
+      if (c >= 0) {
+        const startRad = alpha0;
+        const endRad = Math.PI - alpha0;
+        intervals = [
+          {
+            startRad,
+            endRad,
+            startDeg: (startRad * 180) / Math.PI,
+            endDeg: (endRad * 180) / Math.PI,
+          },
+        ];
+        boundaryPoints.push(
+          { x: Math.cos(startRad), y: Math.sin(startRad) },
+          { x: Math.cos(endRad), y: Math.sin(endRad) },
+        );
+        const s1 = (startRad / Math.PI).toFixed(2);
+        const s2 = (endRad / Math.PI).toFixed(2);
+        latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+      } else {
+        const r1 = Math.PI - alpha0; // in (pi, 3pi/2)
+        const r2 = 2 * Math.PI + alpha0; // in (3pi/2, 2pi)
+        intervals = [
+          {
+            startRad: 0,
+            endRad: r1,
+            startDeg: 0,
+            endDeg: (r1 * 180) / Math.PI,
+          },
+          {
+            startRad: r2,
+            endRad: 2 * Math.PI,
+            startDeg: (r2 * 180) / Math.PI,
+            endDeg: 360,
+          },
+        ];
+        boundaryPoints.push(
+          { x: Math.cos(r1), y: Math.sin(r1) },
+          { x: Math.cos(r2), y: Math.sin(r2) },
+        );
+        const s1 = (alpha0 / Math.PI).toFixed(2);
+        const s2 = ((Math.PI - alpha0) / Math.PI).toFixed(2);
+        latexSolution = `x \\in \\left( 2k\\pi ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+      }
     }
     isSatisfied = Math.sin(normRad) > c;
   } else if (kind === "sin_lt") {
@@ -241,30 +266,49 @@ export function solveTrigInequality(
         "x \\in \\mathbb{R} \\setminus \\{2k\\pi + \\frac{\\pi}{2}\\}";
     } else {
       const alpha0 = Math.asin(c);
-      const rad1 = alpha0 >= 0 ? alpha0 : 2 * Math.PI + alpha0;
-      const rad2 = Math.PI - alpha0;
-      const [rMin, rMax] = rad1 < rad2 ? [rad1, rad2] : [rad2, rad1];
-      intervals = [
-        {
-          startRad: 0,
-          endRad: rMin,
-          startDeg: 0,
-          endDeg: (rMin * 180) / Math.PI,
-        },
-        {
-          startRad: rMax,
-          endRad: 2 * Math.PI,
-          startDeg: (rMax * 180) / Math.PI,
-          endDeg: 360,
-        },
-      ];
-      boundaryPoints.push(
-        { x: Math.cos(rMin), y: Math.sin(rMin) },
-        { x: Math.cos(rMax), y: Math.sin(rMax) },
-      );
-      const s1 = (rMax / Math.PI).toFixed(2);
-      const s2 = ((rMin + 2 * Math.PI) / Math.PI).toFixed(2);
-      latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+      if (c >= 0) {
+        const r1 = alpha0;
+        const r2 = Math.PI - alpha0;
+        intervals = [
+          {
+            startRad: 0,
+            endRad: r1,
+            startDeg: 0,
+            endDeg: (r1 * 180) / Math.PI,
+          },
+          {
+            startRad: r2,
+            endRad: 2 * Math.PI,
+            startDeg: (r2 * 180) / Math.PI,
+            endDeg: 360,
+          },
+        ];
+        boundaryPoints.push(
+          { x: Math.cos(r1), y: Math.sin(r1) },
+          { x: Math.cos(r2), y: Math.sin(r2) },
+        );
+        const s1 = (r2 / Math.PI).toFixed(2);
+        const s2 = ((r1 + 2 * Math.PI) / Math.PI).toFixed(2);
+        latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+      } else {
+        const startRad = Math.PI - alpha0;
+        const endRad = 2 * Math.PI + alpha0;
+        intervals = [
+          {
+            startRad,
+            endRad,
+            startDeg: (startRad * 180) / Math.PI,
+            endDeg: (endRad * 180) / Math.PI,
+          },
+        ];
+        boundaryPoints.push(
+          { x: Math.cos(startRad), y: Math.sin(startRad) },
+          { x: Math.cos(endRad), y: Math.sin(endRad) },
+        );
+        const s1 = (startRad / Math.PI).toFixed(2);
+        const s2 = (endRad / Math.PI).toFixed(2);
+        latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+      }
     }
     isSatisfied = Math.sin(normRad) < c;
   } else if (kind === "cos_gt") {
@@ -277,7 +321,7 @@ export function solveTrigInequality(
       ];
       latexSolution = "x \\in \\mathbb{R} \\setminus \\{2k\\pi + \\pi\\}";
     } else {
-      const alpha0 = Math.acos(c); // [0, pi]
+      const alpha0 = Math.acos(c); // (0, pi)
       intervals = [
         {
           startRad: 0,
@@ -337,41 +381,120 @@ export function solveTrigInequality(
   } else if (kind === "tan_gt") {
     const k = threshold;
     const alpha0 = Math.atan(k); // (-pi/2, pi/2)
-    const baseStart = alpha0 >= 0 ? alpha0 : Math.PI + alpha0;
-    const baseEnd = Math.PI / 2;
-    const secondStart =
-      baseStart + Math.PI > 2 * Math.PI
-        ? baseStart - Math.PI
-        : baseStart + Math.PI;
-    const secondEnd = (3 * Math.PI) / 2;
-
-    intervals = [
-      {
-        startRad: baseStart,
-        endRad: baseEnd,
-        startDeg: (baseStart * 180) / Math.PI,
-        endDeg: 90,
-      },
-      {
-        startRad: secondStart,
-        endRad: secondEnd,
-        startDeg: (secondStart * 180) / Math.PI,
-        endDeg: 270,
-      },
-    ];
-    boundaryPoints.push(
-      { x: Math.cos(baseStart), y: Math.sin(baseStart) },
-      { x: Math.cos(secondStart), y: Math.sin(secondStart) },
-    );
+    if (k >= 0) {
+      const r1 = alpha0;
+      const r2 = Math.PI / 2;
+      const r3 = alpha0 + Math.PI;
+      const r4 = (3 * Math.PI) / 2;
+      intervals = [
+        {
+          startRad: r1,
+          endRad: r2,
+          startDeg: (r1 * 180) / Math.PI,
+          endDeg: 90,
+        },
+        {
+          startRad: r3,
+          endRad: r4,
+          startDeg: (r3 * 180) / Math.PI,
+          endDeg: 270,
+        },
+      ];
+      boundaryPoints.push(
+        { x: Math.cos(r1), y: Math.sin(r1) },
+        { x: Math.cos(r3), y: Math.sin(r3) },
+      );
+    } else {
+      const r1 = Math.PI + alpha0; // in (pi/2, pi)
+      const r2 = (3 * Math.PI) / 2;
+      const r3 = 2 * Math.PI + alpha0; // in (3pi/2, 2pi)
+      intervals = [
+        {
+          startRad: 0,
+          endRad: Math.PI / 2,
+          startDeg: 0,
+          endDeg: 90,
+        },
+        {
+          startRad: r1,
+          endRad: r2,
+          startDeg: (r1 * 180) / Math.PI,
+          endDeg: 270,
+        },
+        {
+          startRad: r3,
+          endRad: 2 * Math.PI,
+          startDeg: (r3 * 180) / Math.PI,
+          endDeg: 360,
+        },
+      ];
+      boundaryPoints.push(
+        { x: Math.cos(r1), y: Math.sin(r1) },
+        { x: Math.cos(r3), y: Math.sin(r3) },
+      );
+    }
     const s1 = (alpha0 / Math.PI).toFixed(2);
-    latexSolution = `x \\in \\left( k\\pi + ${s1}\\pi, \\; k\\pi + \\frac{\\pi}{2} \\right)`;
+    latexSolution = `x \\in \\left( k\\pi ${alpha0 >= 0 ? "+ " + s1 : s1}\\pi, \\; k\\pi + \\frac{\\pi}{2} \\right)`;
     isSatisfied = Math.abs(Math.cos(normRad)) > 1e-7 && Math.tan(normRad) > k;
   } else {
     // tan_lt
     const k = threshold;
     const alpha0 = Math.atan(k);
+    if (k >= 0) {
+      const r1 = alpha0;
+      const r2 = Math.PI / 2;
+      const r3 = Math.PI + alpha0;
+      const r4 = (3 * Math.PI) / 2;
+      intervals = [
+        {
+          startRad: 0,
+          endRad: r1,
+          startDeg: 0,
+          endDeg: (r1 * 180) / Math.PI,
+        },
+        {
+          startRad: r2,
+          endRad: r3,
+          startDeg: 90,
+          endDeg: (r3 * 180) / Math.PI,
+        },
+        {
+          startRad: r4,
+          endRad: 2 * Math.PI,
+          startDeg: 270,
+          endDeg: 360,
+        },
+      ];
+      boundaryPoints.push(
+        { x: Math.cos(r1), y: Math.sin(r1) },
+        { x: Math.cos(r3), y: Math.sin(r3) },
+      );
+    } else {
+      const r1 = Math.PI / 2;
+      const r2 = Math.PI + alpha0;
+      const r3 = (3 * Math.PI) / 2;
+      const r4 = 2 * Math.PI + alpha0;
+      intervals = [
+        {
+          startRad: r1,
+          endRad: r2,
+          startDeg: 90,
+          endDeg: (r2 * 180) / Math.PI,
+        },
+        {
+          startRad: r3,
+          endRad: r4,
+          startDeg: 270,
+          endDeg: (r4 * 180) / Math.PI,
+        },
+      ];
+      boundaryPoints.push(
+        { x: Math.cos(r2), y: Math.sin(r2) },
+        { x: Math.cos(r4), y: Math.sin(r4) },
+      );
+    }
     const s1 = (alpha0 / Math.PI).toFixed(2);
-    latexSolution = `x \\in \\left( k\\pi - \\frac{\\pi}{2}, \\; k\\pi + ${s1}\\pi \\right)`;
+    latexSolution = `x \\in \\left( k\\pi - \\frac{\\pi}{2}, \\; k\\pi ${alpha0 >= 0 ? "+ " + s1 : s1}\\pi \\right)`;
     isSatisfied = Math.abs(Math.cos(normRad)) > 1e-7 && Math.tan(normRad) < k;
   }
 

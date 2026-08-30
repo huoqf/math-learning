@@ -148,8 +148,15 @@ export function calcTrigProperties(
     };
   });
 
-  const incStart = (-Math.PI / 2 - phi) / absOmega;
-  const incEnd = (Math.PI / 2 - phi) / absOmega;
+  const rawIncStart = (-Math.PI / 2 - phi) / absOmega;
+  const rawIncEnd = (Math.PI / 2 - phi) / absOmega;
+  const rawDecStart = (Math.PI / 2 - phi) / absOmega;
+  const rawDecEnd = ((3 * Math.PI) / 2 - phi) / absOmega;
+
+  const mainIncInterval: [number, number] =
+    A >= 0 ? [rawIncStart, rawIncEnd] : [rawDecStart, rawDecEnd];
+  const mainDecInterval: [number, number] =
+    A >= 0 ? [rawDecStart, rawDecEnd] : [rawIncStart, rawIncEnd];
 
   // 生成在 xRange 范围内的所有对称轴与对称中心
   const symmetryAxes: number[] = [];
@@ -181,11 +188,8 @@ export function calcTrigProperties(
     yMax: k + Math.abs(A),
     yMin: k - Math.abs(A),
     fivePoints,
-    mainIncInterval: [incStart, incEnd],
-    mainDecInterval: [
-      incStart > incEnd ? incEnd : incStart,
-      incStart > incEnd ? incStart : incEnd,
-    ],
+    mainIncInterval,
+    mainDecInterval,
     mainSymmetryAxes: symmetryAxes,
     mainSymmetryCenters: symmetryCenters,
   };

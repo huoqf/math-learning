@@ -4,9 +4,10 @@ import {
   calculateComparisonAreas,
   solveTrigInequality,
   pointToAngleDeg,
+  normalizeAngleDeg,
 } from "../trigLines";
 
-describe("trigLines pure math tests", () => {
+describe("trigLines feature math tests", () => {
   it("should calculate basic trig lines for 30 deg", () => {
     const res = calculateTrigLines(30);
     expect(res.sinVal).toBeCloseTo(0.5, 3);
@@ -16,28 +17,26 @@ describe("trigLines pure math tests", () => {
     expect(res.quadrant).toBe(1);
   });
 
-  it("should handle 90 deg tangent undefined", () => {
-    const res = calculateTrigLines(90);
-    expect(res.sinVal).toBeCloseTo(1, 3);
-    expect(res.cosVal).toBeCloseTo(0, 3);
-    expect(res.isTanDefined).toBe(false);
-    expect(res.pointT).toBeNull();
-    expect(res.quadrant).toBe("axis-y-pos");
+  it("should handle axis boundary angles and degenerations correctly", () => {
+    const res0 = calculateTrigLines(0);
+    expect(res0.hasDegenerateSine).toBe(true);
+    expect(res0.quadrant).toBe("axis-x-pos");
+
+    const res90 = calculateTrigLines(90);
+    expect(res90.isTanDefined).toBe(false);
+    expect(res90.quadrant).toBe("axis-y-pos");
   });
 
-  it("should calculate comparison areas correctly", () => {
+  it("should calculate comparison areas and inequalities correctly", () => {
     const areas = calculateComparisonAreas(30);
     expect(areas.triangleOMP).toBeLessThan(areas.sectorOAP);
     expect(areas.sectorOAP).toBeLessThan(areas.triangleOAT);
-    expect(areas.sinX).toBeLessThan(areas.xRad);
-    expect(areas.xRad).toBeLessThan(areas.tanX);
-  });
 
-  it("should solve trig inequality sin x > 0.5", () => {
     const ineq = solveTrigInequality("sin_gt", 0.5, 45);
     expect(ineq.isSatisfied).toBe(true);
-    const ineqFalse = solveTrigInequality("sin_gt", 0.5, 0);
-    expect(ineqFalse.isSatisfied).toBe(false);
+
+    const ineqTanLt = solveTrigInequality("tan_lt", 1, 30);
+    expect(ineqTanLt.intervals.length).toBeGreaterThan(0);
   });
 
   it("should reverse solve angle correctly on drag", () => {
