@@ -4,6 +4,7 @@ import {
   calcPointToLineDistance,
   calcTwoLinesRelation,
   getLineSegmentInBounds,
+  getLineProperties,
 } from "./lineEquation";
 
 describe("lineEquation - 直线方程与位置关系计算", () => {
@@ -98,5 +99,26 @@ describe("lineEquation - 直线方程与位置关系计算", () => {
     expect(seg).not.toBeNull();
     expect(Math.abs(seg!.p1.x - seg!.p1.y)).toBeCloseTo(0, 4);
     expect(Math.abs(seg!.p2.x - seg!.p2.y)).toBeCloseTo(0, 4);
+  });
+
+  it("直线属性解析：斜率、倾斜角 (0°, 90°, 钝角) 与截距", () => {
+    // 1. 锐角倾斜角：x - y + 1 = 0 => k = 1, alpha = 45°, x截距 = -1, y截距 = 1
+    const prop45 = getLineProperties(1, -1, 1);
+    expect(prop45.slope).toBeCloseTo(1, 4);
+    expect(prop45.inclinationDeg).toBeCloseTo(45, 4);
+    expect(prop45.xIntercept).toBeCloseTo(-1, 4);
+    expect(prop45.yIntercept).toBeCloseTo(1, 4);
+
+    // 2. 钝角倾斜角：sqrt(3)x + y - 2 = 0 => k = -sqrt(3), alpha = 120°
+    const prop120 = getLineProperties(Math.sqrt(3), 1, -2);
+    expect(prop120.slope).toBeCloseTo(-Math.sqrt(3), 4);
+    expect(prop120.inclinationDeg).toBeCloseTo(120, 4);
+
+    // 3. 垂直线：x = 3 => x - 3 = 0, 斜率不存在, alpha = 90°, y截距不存在
+    const prop90 = getLineProperties(1, 0, -3);
+    expect(prop90.slope).toBeNull();
+    expect(prop90.inclinationDeg).toBeCloseTo(90, 4);
+    expect(prop90.xIntercept).toBeCloseTo(3, 4);
+    expect(prop90.yIntercept).toBeNull();
   });
 });

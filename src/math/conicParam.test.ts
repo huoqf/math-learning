@@ -48,4 +48,23 @@ describe("calculateEllipseParam - 椭圆参数方程与离心圆", () => {
     expect(res.Paux.x).toBeCloseTo(0);
     expect(res.Paux.y).toBeCloseTo(4);
   });
+
+  it("切线三角形面积极值：当 θ = 45° 时取得最小值 S_min = a * b", () => {
+    const a = 4;
+    const b = 3;
+    const res45 = calculateEllipseParam(a, b, 45);
+    // S_min = a * b = 12
+    expect(res45.triangleArea).toBeCloseTo(12, 4);
+
+    // 当 θ = 30° 时，S = ab / sin(60°) = 12 / (sqrt(3)/2) = 24 / sqrt(3) ≈ 13.856 > 12
+    const res30 = calculateEllipseParam(a, b, 30);
+    expect(res30.triangleArea).toBeCloseTo(24 / Math.sqrt(3), 4);
+    expect(res30.triangleArea).toBeGreaterThan(res45.triangleArea);
+  });
+
+  it("直线割线乘积 |PA| * |PB| = |t1 * t2|", () => {
+    // 椭圆 a=5, b=3, 定点 P(0, 0), alpha = 0° (x 轴), t1 = -5, t2 = 5
+    const res = calculateLineConicParam(0, 0, 0, 0, 5, 3);
+    expect(res.productPA_PB).toBeCloseTo(25, 4);
+  });
 });

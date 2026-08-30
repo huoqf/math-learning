@@ -38,4 +38,35 @@ describe("椭圆与双曲线纯解算逻辑测试 (calculateConicProperties)", (
     const bHyperbola = deriveBFromEccentricity("hyperbola", 3, Math.SQRT2);
     expect(bHyperbola).toBeCloseTo(3, 3);
   });
+
+  it("椭圆焦点三角形内切圆切点与内心横坐标 x_T = x_I = e * x_P", () => {
+    const a = 5;
+    const b = 4;
+    const t = Math.PI / 3; // P(a cos t, b sin t) = (2.5, 4 * sqrt(3)/2)
+    const res = calculateConicProperties("ellipse", a, b, t);
+    const expectedX = res.e * res.pointP.x; // e * xP = (3/5) * 2.5 = 1.5
+
+    // 切点横坐标与内心横坐标必须相等且恒等于 e * xP
+    expect(res.focusTriangle.incircle.tangentBase.x).toBeCloseTo(expectedX, 4);
+    expect(res.focusTriangle.incircle.incenter.x).toBeCloseTo(expectedX, 4);
+    expect(res.focusTriangle.incircle.tangentBase.y).toBe(0);
+
+    // 内切圆面积公式验证 S = r * p_half
+    const pHalf = (res.focusTriangle.r1 + res.focusTriangle.r2 + 2 * res.c) / 2;
+    expect(res.focusTriangle.incircle.inradius * pHalf).toBeCloseTo(
+      res.focusTriangle.areaGeom,
+      4,
+    );
+  });
+
+  it("双曲线焦点三角形内切圆切点恒为实轴右顶点 (a, 0)", () => {
+    const a = 3;
+    const b = 4;
+    const t = 0.5; // 右支动点 P
+    const res = calculateConicProperties("hyperbola", a, b, t);
+
+    // 双曲线焦点三角形内切圆与 x 轴切点横坐标恒等于 a = 3
+    expect(res.focusTriangle.incircle.tangentBase.x).toBeCloseTo(a, 4);
+    expect(res.focusTriangle.incircle.incenter.x).toBeCloseTo(a, 4);
+  });
 });

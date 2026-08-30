@@ -95,4 +95,67 @@ describe("solveConicLineIntersection", () => {
     });
     expect(resMid.pointDiffSlopeProduct).toBeCloseTo(-4 / 9, 3);
   });
+
+  it("应当正确计算双曲线与抛物线点差法", () => {
+    // 双曲线 x^2/9 - y^2/4 = 1 (a=3, b=2)
+    // 中点 M(1, 2) (满足 x0^2/a^2 - y0^2/b^2 < 0 保证中点弦存在)
+    // k_AB * k_OM = b^2/a^2 = 4/9 ≈ 0.4444
+    const resHyp = solveConicLineIntersection({
+      conicType: "hyperbola",
+      studyMode: "midpoint",
+      a: 3,
+      b: 2,
+      p: 2,
+      k: 1,
+      m: 0,
+      midpointX: 1,
+      midpointY: 2,
+    });
+    expect(resHyp.status).toBe("secant");
+    expect(resHyp.pointDiffSlopeProduct).toBeCloseTo(4 / 9, 3);
+
+    // 抛物线 y^2 = 2px (p=2) => k_AB * y0 = p => k_AB = p / y0
+    // 取中点 M(1, 2) => k_AB = 2 / 2 = 1
+    const resPara = solveConicLineIntersection({
+      conicType: "parabola",
+      studyMode: "midpoint",
+      a: 3,
+      b: 2,
+      p: 2,
+      k: 0,
+      m: 0,
+      midpointX: 1,
+      midpointY: 2,
+    });
+    expect(resPara.slopeAB).toBeCloseTo(1, 4);
+    expect(resPara.midpoint?.y).toBeCloseTo(2, 4);
+  });
+
+  it("应当正确计算极点极线/切点弦模式 (polePolar)", () => {
+    // 椭圆 x^2/16 + y^2/9 = 1 (a=4, b=3)
+    // 外部极点 P(4, 3) 引切点弦: (4x)/16 + (3y)/9 = 1 => x/4 + y/3 = 1 => y = -3/4 x + 3
+    const resPolar = solveConicLineIntersection({
+      conicType: "ellipse",
+      studyMode: "polePolar",
+      a: 4,
+      b: 3,
+      p: 2,
+      k: 0,
+      m: 0,
+      poleX: 4,
+      poleY: 3,
+    });
+    // k = -3/4 = -0.75, m = 3
+    expect(resPolar.slopeAB).toBeCloseTo(-0.75, 4);
+    expect(resPolar.status).toBe("secant");
+    expect(resPolar.intersectionCount).toBe(2);
+    // 两切点分别为 (4, 0) 和 (0, 3)
+    const pts = resPolar.intersections;
+    expect(
+      pts.some((pt) => Math.abs(pt.x - 4) < 1e-3 && Math.abs(pt.y) < 1e-3),
+    ).toBe(true);
+    expect(
+      pts.some((pt) => Math.abs(pt.x) < 1e-3 && Math.abs(pt.y - 3) < 1e-3),
+    ).toBe(true);
+  });
 });

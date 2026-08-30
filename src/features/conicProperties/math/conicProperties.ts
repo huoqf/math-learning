@@ -150,8 +150,8 @@ export function calculateConicProperties(
   const inradius = areaGeom / (perimeter / 2 || 1);
 
   // 底边切点坐标 (落在 x 轴上)
-  // 对椭圆：切点坐标 x = e^2 * x_P
-  const tangentBaseX = conicType === "ellipse" ? e * e * px : incenter.x;
+  // 对椭圆：底边切点横坐标与内心横坐标相同，均为 x_T = x_I = e * x_P
+  const tangentBaseX = conicType === "ellipse" ? e * px : incenter.x;
   const tangentBase: Point2D = { x: tangentBaseX, y: 0 };
 
   return {
