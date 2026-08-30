@@ -186,73 +186,73 @@ export default function Vector3DBasisAnimation() {
     }
   };
 
-  // 当前模式专属的 2×2 对称预设项列表（4 项：首项自由探究 + 3 项典型预设）
+  // 当前模式专属的 2×2 对称预设项列表（纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余描述）
   const currentModePresets = useMemo(() => {
     switch (activeMode) {
       case "parallelepiped":
         return [
           {
             key: "free",
-            label: "自由探究",
-            description: "全参数开放",
+            label: "自由探索",
           },
           {
             key: "para_diag",
             label: "体对角线顶点",
-            description: "x=y=z=1",
           },
           {
             key: "para_center",
-            label: "六面体体心",
-            description: "x=y=z=0.5",
+            label: "六面体中心",
           },
           {
             key: "para_degen",
             label: "基底共面退化",
-            description: "cz=0 失效",
           },
         ];
       case "coplanar":
         return [
           {
             key: "free",
-            label: "自由探究",
-            description: "全参数开放",
+            label: "自由探索",
           },
           {
             key: "cop_centroid",
-            label: "△ABC 重心 G",
-            description: "各系数 1/3",
+            label: "截面重心构型",
           },
           {
             key: "cop_inside",
-            label: "截面三角形内",
-            description: "x+y+z=1 内部",
+            label: "截面内共面点",
           },
           {
             key: "cop_tetra_inside",
-            label: "四面体实体内",
-            description: "和<1 内部",
+            label: "四面体内部点",
           },
         ];
     }
   }, [activeMode]);
 
-  // 声明式参数配置按模式及预设动态裁剪
+  // 声明式参数配置按模式及预设动态裁剪（参数降维铁律）
   const currentParamConfigs = useMemo<ParamConfig[]>(() => {
-    let allowedKeys: string[] = ["x", "y", "z", "cz"];
-    if (activeMode === "coplanar") {
-      allowedKeys = ["x", "y", "z"];
+    if (activePreset !== "free") {
+      if (activePreset === "para_degen") {
+        return vector3dBasisMeta
+          .filter((m) => m.key === "cz")
+          .map((meta) => ({
+            key: meta.key,
+            label: meta.label,
+            labelFormula: meta.labelFormula,
+            value: params[meta.key] ?? meta.defaultValue ?? 0,
+            min: meta.min,
+            max: meta.max,
+            step: meta.step ?? 0.1,
+            importance: meta.importance,
+            marks: meta.marks,
+          }));
+      }
+      return [];
     }
 
-    // 针对特定固定特征预设进行动态裁剪展示
-    if (activePreset === "para_diag") {
-      allowedKeys = ["cz"];
-    } else if (activePreset === "para_center") {
-      allowedKeys = ["cz"];
-    } else if (activePreset === "para_degen") {
-      allowedKeys = ["x", "y", "z", "cz"];
-    } else if (activePreset === "cop_centroid") {
+    let allowedKeys: string[] = ["x", "y", "z", "cz"];
+    if (activeMode === "coplanar") {
       allowedKeys = ["x", "y", "z"];
     }
 
@@ -347,11 +347,27 @@ export default function Vector3DBasisAnimation() {
 
           {/* Step 3: 参数调节 (根据模式与预设动态裁剪) */}
           <LeftPanelSection title="参数调节">
-            <ParamControl
-              params={currentParamConfigs}
-              onParamChange={handleCoeffParamChange}
-              onReset={handleReset}
-            />
+            {currentParamConfigs.length > 0 ? (
+              <ParamControl
+                params={currentParamConfigs}
+                onParamChange={handleCoeffParamChange}
+                onReset={handleReset}
+              />
+            ) : (
+              <div className="rounded-xl bg-neutral-50/80 border border-neutral-200/80 p-3 text-xs text-neutral-600 flex items-center justify-between shadow-xs">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  题设基准数据已锁定
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActivePreset("free")}
+                  className="text-blue-600 font-medium hover:underline text-[11px] cursor-pointer"
+                >
+                  切为自由探索
+                </button>
+              </div>
+            )}
           </LeftPanelSection>
 
           {/* Step 4: 图层与标注显示控制 (单列全宽 Toggle 开关) */}

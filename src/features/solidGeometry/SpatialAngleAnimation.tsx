@@ -19,6 +19,7 @@ import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { spatialAngleMeta } from "@/data/registries/solidGeometry";
+import { MATH_COLORS } from "@/theme";
 import {
   solveCuboidVertices,
   solveSkewLines,
@@ -118,118 +119,101 @@ export default function SpatialAngleAnimation() {
     [params, activeMode, modelPreset, animId],
   );
 
-  // 探究模式对应的典型模型预设 (2x2 对称布局：自由探究 + 3大典型母题)
+  // 探究模式对应的典型模型预设 (纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余描述)
   const currentPresets = useMemo(() => {
     const presetsByMode: Record<
       AngleMode,
       {
         key: string;
         label: string;
-        description: string;
         params: Record<string, number>;
       }[]
     > = {
       skewLines: [
         {
           key: "free",
-          label: "自由探究",
-          description: "全参数开放",
+          label: "自由探索",
           params: { a: 3, b: 2, c: 2, lambda: 0.5 },
         },
         {
           key: "cube",
-          label: "正方体",
-          description: "60°秒杀",
+          label: "正方体构型",
           params: { a: 2.5, b: 2.5, c: 2.5, lambda: 0.5 },
         },
         {
           key: "tallPrism",
-          label: "直四棱柱",
-          description: "正方形底",
+          label: "直四棱柱构型",
           params: { a: 2.5, b: 2.5, c: 3.5, lambda: 0.5 },
         },
         {
           key: "standard",
           label: "经典长方体",
-          description: "3:2:2算例",
           params: { a: 3, b: 2, c: 2, lambda: 0.5 },
         },
       ],
       linePlane: [
         {
           key: "free",
-          label: "自由探究",
-          description: "全参数开放",
+          label: "自由探索",
           params: { a: 3, b: 2, c: 2.5, lambda: 0.6 },
         },
         {
           key: "midpoint",
-          label: "中点斜线",
-          description: "λ=0.5中点",
+          label: "中点斜线构型",
           params: { a: 3, b: 2, c: 2.5, lambda: 0.5 },
         },
         {
           key: "bodyDiag",
-          label: "体对角线",
-          description: "正方体对角",
+          label: "体对角线构型",
           params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
         },
         {
           key: "tallPrismMid",
           label: "正棱柱中点",
-          description: "正棱柱中点",
           params: { a: 2.5, b: 2.5, c: 3.5, lambda: 0.5 },
         },
       ],
       dihedral: [
         {
           key: "free",
-          label: "自由探究",
-          description: "全参数开放",
+          label: "自由探索",
           params: { a: 3, b: 2, c: 2, lambda: 0.7 },
         },
         {
           key: "cubeSection",
           label: "正方体截面",
-          description: "正方体截面",
           params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
         },
         {
           key: "midSection",
-          label: "中点截面",
-          description: "λ=0.5中点",
+          label: "中点截面构型",
           params: { a: 3, b: 2, c: 2, lambda: 0.5 },
         },
         {
           key: "tallPrismSection",
           label: "正棱柱截面",
-          description: "正棱柱截面",
           params: { a: 2.5, b: 2.5, c: 3.5, lambda: 1.0 },
         },
       ],
       distance: [
         {
           key: "free",
-          label: "自由探究",
-          description: "全参数开放",
+          label: "自由探索",
           params: { a: 3, b: 2, c: 2, lambda: 0.6 },
         },
         {
           key: "maxVolume",
-          label: "顶点极值",
-          description: "顶点极值",
+          label: "顶点极值构型",
           params: { a: 3, b: 2, c: 2, lambda: 1.0 },
         },
         {
           key: "cubeThird",
-          label: "正方体距",
-          description: "正方体距",
+          label: "正方体等分构型",
           params: { a: 2.5, b: 2.5, c: 2.5, lambda: 1.0 },
         },
         {
           key: "midVolume",
           label: "中点半体积",
-          description: "中点半体积",
           params: { a: 3, b: 2, c: 2, lambda: 0.5 },
         },
       ],
@@ -354,6 +338,10 @@ export default function SpatialAngleAnimation() {
         // 在正方体预设下，将 label 描述提升为“正方体棱长 a”
         const label =
           isCubePreset && meta.key === "a" ? "正方体棱长 a" : meta.label;
+        const labelFormula =
+          isCubePreset && meta.key === "a"
+            ? `\\text{正方体棱长 } \\color{${MATH_COLORS.paramPrimary}}{a}`
+            : meta.labelFormula;
         const description =
           isCubePreset && meta.key === "a"
             ? "长宽高同步 a=b=c"
@@ -364,8 +352,7 @@ export default function SpatialAngleAnimation() {
         return {
           key: meta.key,
           label,
-          labelFormula:
-            isCubePreset && meta.key === "a" ? undefined : meta.labelFormula,
+          labelFormula,
           value: params[meta.key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,

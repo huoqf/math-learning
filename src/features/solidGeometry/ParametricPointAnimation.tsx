@@ -349,22 +349,18 @@ export default function ParametricPointAnimation() {
                 {
                   key: "singlePointAngle",
                   label: "棱上动点与空间角",
-                  description: "存在性与方程求解",
                 },
                 {
                   key: "doublePointDistance",
                   label: "双动点与距离最值",
-                  description: "二次型与公垂线",
                 },
                 {
                   key: "pyramidVolumeExtrema",
                   label: "动点三棱锥体积极值",
-                  description: "动高模型与单调性",
                 },
                 {
                   key: "surfaceShortestPath",
                   label: "表面最短路径",
-                  description: "化曲为平展开图",
                 },
               ]}
               value={activeMode}
@@ -373,62 +369,53 @@ export default function ParametricPointAnimation() {
             />
           </LeftPanelSection>
 
-          {/* Step 2: 典型高考预设 (2×2 黄金预设规范) */}
-          <LeftPanelSection title="典型高考预设">
+          {/* Step 2: 典型模型预设 (黄金 2×2 对称网格) */}
+          <LeftPanelSection title="典型模型预设">
             <SelectGrid
               items={
                 activeMode === "singlePointAngle"
                   ? [
                       {
                         key: "free",
-                        label: "自由探究",
-                        description: "全参数开放",
+                        label: "自由探索",
                       },
                       {
                         key: "perp",
                         label: "垂直存在性",
-                        description: "DP ⊥ AC₁",
                       },
                       {
                         key: "midpoint",
-                        label: "棱上中点",
-                        description: "λ = 0.5",
+                        label: "棱上中点构型",
                       },
                       {
                         key: "targetAngle",
                         label: "目标二面角",
-                        description: `θ = ${targetThetaDeg}°`,
                       },
                     ]
                   : activeMode === "doublePointDistance"
                     ? [
                         {
                           key: "free",
-                          label: "自由探究",
-                          description: "双参自由滑动",
+                          label: "自由探索",
                         },
                         {
                           key: "commonPerp",
                           label: "公垂线最值",
-                          description: "最短异面距",
                         },
                         {
                           key: "vertexDist",
-                          label: "顶点对位",
-                          description: "B₁ 到 A 点",
+                          label: "顶点极值对位",
                         },
                         {
                           key: "diagMidpoint",
-                          label: "中点对位",
-                          description: "双棱中点",
+                          label: "中点对称对位",
                         },
                       ]
                     : activeMode === "pyramidVolumeExtrema"
                       ? [
                           {
                             key: "free",
-                            label: "自由探究",
-                            description: "动点自由滑动",
+                            label: "自由探索",
                           },
                           {
                             key: "maxVolume",
@@ -476,14 +463,7 @@ export default function ParametricPointAnimation() {
           </LeftPanelSection>
 
           {/* Step 3: 参数调节 (根据预设动态裁剪) */}
-          <LeftPanelSection
-            title="几何与动点参数调节"
-            subtitle={
-              presetKey === "free"
-                ? "拖动滑块或在 3D 场景中直接拖拽动点 P / Q"
-                : "当前预设已锁定特征点参数，调参自动切回自由探究"
-            }
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -492,7 +472,7 @@ export default function ParametricPointAnimation() {
           </LeftPanelSection>
 
           {/* Step 4: 视图与视角 */}
-          <LeftPanelSection title="视图与视角">
+          <LeftPanelSection title="3D 空间视角预设">
             <div className="space-y-2">
               <TabSwitcher
                 layout="horizontal"
@@ -507,10 +487,10 @@ export default function ParametricPointAnimation() {
                 <TabSwitcher
                   layout="horizontal"
                   tabs={[
-                    { key: "iso", label: "轴测" },
-                    { key: "front", label: "主视" },
-                    { key: "top", label: "俯视" },
-                    { key: "side", label: "左视" },
+                    { key: "iso", label: "轴测直观" },
+                    { key: "front", label: "主视正投" },
+                    { key: "top", label: "俯视底面" },
+                    { key: "side", label: "左视侧面" },
                   ]}
                   value={preset}
                   onChange={(p) => setCameraPreset(p as CameraPreset)}

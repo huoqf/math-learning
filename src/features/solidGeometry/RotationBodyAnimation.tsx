@@ -23,6 +23,7 @@ import { RotationSweep, SphereCutSection } from "@/components/Math3D/solids";
 import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
 import { rotationBodyMeta } from "@/data/registries/solidGeometry";
 import { buildMathQuantities } from "@/data/mathQuantities";
+import { MATH_COLORS } from "@/theme";
 import {
   cylinderProfile,
   coneProfile,
@@ -179,8 +180,11 @@ export default function RotationBodyAnimation() {
       })
       .map((meta) => ({
         key: meta.key,
-        label: meta.label,
-        labelFormula: meta.labelFormula,
+        label: isSphere && meta.key === "r1" ? "球半径 R" : meta.label,
+        labelFormula:
+          isSphere && meta.key === "r1"
+            ? `\\text{球半径 } \\color{${MATH_COLORS.paramPrimary}}{R}`
+            : meta.labelFormula,
         value: params[meta.key] ?? meta.defaultValue ?? 0,
         min: meta.min,
         max: meta.max,
@@ -322,19 +326,12 @@ export default function RotationBodyAnimation() {
           {/* 2. 旋转体模型选择 */}
           <LeftPanelSection title="几何体模型">
             <SelectGrid
+              columns={2}
               items={[
-                { key: "rectangle", label: "矩形", description: "→ 圆柱" },
-                {
-                  key: "rightTriangle",
-                  label: "直角三角形",
-                  description: "→ 圆锥",
-                },
-                {
-                  key: "rightTrapezoid",
-                  label: "直角梯形",
-                  description: "→ 圆台",
-                },
-                { key: "semicircle", label: "半圆", description: "→ 球体" },
+                { key: "rectangle", label: "圆柱 (矩形旋转)" },
+                { key: "rightTriangle", label: "圆锥 (直角三角)" },
+                { key: "rightTrapezoid", label: "圆台 (直角梯形)" },
+                { key: "semicircle", label: "球体 (半圆绕轴)" },
               ]}
               value={shape}
               onChange={(k) => {
@@ -346,7 +343,6 @@ export default function RotationBodyAnimation() {
                 setParams((p) => ({ ...p, sweepAngleDeg: 360 }));
               }}
               variant="filled"
-              columns={2}
             />
           </LeftPanelSection>
 

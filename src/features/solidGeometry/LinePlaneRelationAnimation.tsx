@@ -216,60 +216,36 @@ export default function LinePlaneRelationAnimation() {
     }
   };
 
-  // 各模式下的 2×2 典型预设配置项
+  // 各模式下的 2×2 典型预设配置项（纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余描述）
   const presetItems = useMemo<SelectGridItem[]>(() => {
     switch (activeMode) {
       case "parallel":
         return [
-          { key: "free", label: "自由探究", description: "全参开放" },
-          {
-            key: "judgeStandard",
-            label: "判定成立",
-            description: "面外h=2平行",
-          },
-          {
-            key: "counterInPlane",
-            label: "面内反例",
-            description: "h=0落入面内",
-          },
-          { key: "propInter", label: "性质交线", description: "辅助面截交线" },
+          { key: "free", label: "自由探索" },
+          { key: "judgeStandard", label: "标准线面平行" },
+          { key: "counterInPlane", label: "面内落入反例" },
+          { key: "propInter", label: "性质定理交线" },
         ];
       case "perpendicular":
         return [
-          { key: "free", label: "自由探究", description: "全参开放" },
-          {
-            key: "judgeIntersect",
-            label: "相交判定",
-            description: "垂直相交两线",
-          },
-          {
-            key: "counterParallel",
-            label: "平行反例",
-            description: "垂直平行两线",
-          },
-          { key: "propAll", label: "性质垂线", description: "垂直面内任意" },
+          { key: "free", label: "自由探索" },
+          { key: "judgeIntersect", label: "垂线相交判定" },
+          { key: "counterParallel", label: "平行两线反例" },
+          { key: "propAll", label: "性质定理垂线" },
         ];
       case "gaokaoPyramid":
         return [
-          { key: "free", label: "自由探究", description: "动点自由拖拽" },
-          { key: "midParallel", label: "中点平行", description: "λE=λF=0.5" },
-          {
-            key: "thirdParallel",
-            label: "三分点平行",
-            description: "λE=λF=0.33",
-          },
-          {
-            key: "intersectCross",
-            label: "相交反例",
-            description: "λE≠λF相交",
-          },
+          { key: "free", label: "自由探索" },
+          { key: "midParallel", label: "中位线平行" },
+          { key: "thirdParallel", label: "等比分点平行" },
+          { key: "intersectCross", label: "不等比相交" },
         ];
       case "vector":
         return [
-          { key: "free", label: "自由探究", description: "全参可调" },
-          { key: "vecParallel", label: "向量平行", description: "l·n=0" },
-          { key: "vecPerp", label: "向量垂直", description: "l∥n成比例" },
-          { key: "vecAngle45", label: "45°线面角", description: "sinθ=√2/2" },
+          { key: "free", label: "自由探索" },
+          { key: "vecParallel", label: "向量平行构型" },
+          { key: "vecPerp", label: "向量垂直构型" },
+          { key: "vecAngle45", label: "45° 特殊线面角" },
         ];
     }
   }, [activeMode]);
@@ -313,8 +289,12 @@ export default function LinePlaneRelationAnimation() {
     }
   };
 
-  // 按模式精准过滤参数
+  // 按模式精准过滤参数（参数降维铁律：特定预设锁定参数）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
+    if (activePreset !== "free") {
+      return [];
+    }
+
     const keysMap: Record<TeachingMode, string[]> = {
       parallel:
         subTheorem === "judge" ? ["zHeight", "phiDeg"] : ["zHeight", "step"],
@@ -335,12 +315,10 @@ export default function LinePlaneRelationAnimation() {
         min: meta.min,
         max: meta.max,
         step: meta.step ?? 0.1,
-        description: meta.description,
-        descriptionFormula: meta.descriptionFormula,
         importance: meta.importance,
         marks: meta.marks,
       }));
-  }, [params, activeMode, subTheorem]);
+  }, [params, activeMode, subTheorem, activePreset]);
 
   // 3D 几何向量解算
   const effectiveZ = inPlaneType === 0 ? 0 : zHeight;
@@ -597,11 +575,27 @@ export default function LinePlaneRelationAnimation() {
 
           {/* Step 3: 参数调节 */}
           <LeftPanelSection title="参数调节">
-            <ParamControl
-              params={paramConfigs}
-              onParamChange={handleParamChange}
-              onReset={handleReset}
-            />
+            {paramConfigs.length > 0 ? (
+              <ParamControl
+                params={paramConfigs}
+                onParamChange={handleParamChange}
+                onReset={handleReset}
+              />
+            ) : (
+              <div className="rounded-xl bg-neutral-50/80 border border-neutral-200/80 p-3 text-xs text-neutral-600 flex items-center justify-between shadow-xs">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  题设基准数据已锁定
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActivePreset("free")}
+                  className="text-blue-600 font-medium hover:underline text-[11px] cursor-pointer"
+                >
+                  切为自由探索
+                </button>
+              </div>
+            )}
           </LeftPanelSection>
 
           {/* Step 4: 图层与标注显示控制 (Toggle 单列流式) */}

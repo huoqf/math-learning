@@ -599,10 +599,7 @@ export default function SectionCuboidDemo() {
 
           {/* 3. 作图推演步骤控制器 (仅在 construction 模式下呈现) */}
           {mode === "construction" && (
-            <LeftPanelSection
-              title="作图推演步骤"
-              subtitle={constructionData.title}
-            >
+            <LeftPanelSection title="作图推演步骤">
               <SelectGrid
                 items={[
                   { key: "1", label: "Step 1", description: "同面连线" },
@@ -656,10 +653,10 @@ export default function SectionCuboidDemo() {
                   <TabSwitcher
                     layout="horizontal"
                     tabs={[
-                      { key: "iso", label: "轴测" },
-                      { key: "front", label: "主视" },
-                      { key: "top", label: "俯视" },
-                      { key: "side", label: "左视" },
+                      { key: "iso", label: "轴测直观" },
+                      { key: "front", label: "主视正投" },
+                      { key: "top", label: "俯视底面" },
+                      { key: "side", label: "左视侧面" },
                     ]}
                     value={preset}
                     onChange={(p) => setCameraPreset(p as CameraPreset)}

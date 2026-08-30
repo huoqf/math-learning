@@ -90,6 +90,7 @@ export default function FoldingAnimation() {
   }, [foldingData, a, b, h]);
 
   // 4. 左屏按 model 过滤参数配置并注入高中数学几何边长描述
+  // 4. 左屏按 model 过滤参数配置并注入高中数学几何边长描述
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByModel: Record<FoldingModelKind, string[]> = {
       trapezoid: ["a", "b", "h", "alphaDeg"],
@@ -100,33 +101,32 @@ export default function FoldingAnimation() {
 
     const descMap: Record<
       FoldingModelKind,
-      Record<string, { label: string; descFormula: string }>
+      Record<string, { label: string; formula: string }>
     > = {
       trapezoid: {
-        a: { label: "下底长 a", descFormula: "\\text{下底 } AD" },
-        b: { label: "上底长 b", descFormula: "\\text{上底 } BC = AE" },
-        h: { label: "垂直腰 h", descFormula: "\\text{垂直腰 } AB = CE" },
-        alphaDeg: { label: "二面角 α", descFormula: "\\text{二面角 } D'-EC-A" },
+        a: { label: "下底长 a", formula: "\\text{下底 } AD" },
+        b: { label: "上底长 b", formula: "\\text{上底 } BC = AE" },
+        h: { label: "垂直腰 h", formula: "\\text{垂直腰 } AB = CE" },
+        alphaDeg: { label: "二面角 α", formula: "\\text{二面角 } D'-EC-A" },
       },
       rectangleDiagonal: {
-        a: { label: "矩形长 a", descFormula: "\\text{长 } AB = CD" },
-        b: { label: "矩形宽 b", descFormula: "\\text{宽 } AD = BC" },
-        alphaDeg: { label: "二面角 α", descFormula: "\\text{二面角 } A'-BD-C" },
+        a: { label: "矩形长 a", formula: "\\text{矩形长 } AB = CD" },
+        b: { label: "矩形宽 b", formula: "\\text{矩形宽 } AD = BC" },
+        alphaDeg: { label: "二面角 α", formula: "\\text{二面角 } A'-BD-C" },
       },
       triangleAltitude: {
-        a: { label: "底边长 a", descFormula: "\\text{底边 } BC" },
-        h: { label: "高线长 h", descFormula: "\\text{高 } AD \\perp BC" },
-        alphaDeg: { label: "二面角 α", descFormula: "\\text{二面角 } B-AD-C'" },
+        a: { label: "底边长 a", formula: "\\text{底边 } BC" },
+        h: { label: "高线长 h", formula: "\\text{高线 } AD \\perp BC" },
+        alphaDeg: { label: "二面角 α", formula: "\\text{二面角 } B-AD-C'" },
       },
       rhombus: {
         a: {
-          label: "菱形边长 a (∠BAD=60°)",
-          descFormula: "\\text{边长 } AB = BC,\\; \\angle BAD = 60^\\circ",
+          label: "菱形边长 a",
+          formula: "\\text{菱形边长 } a",
         },
         alphaDeg: {
           label: "二面角 α",
-          descFormula:
-            "\\text{翻折旋转角 } \\alpha\\;(\\angle A'OA_0 = \\alpha)",
+          formula: "\\text{翻折角 } \\alpha",
         },
       },
     };
@@ -144,7 +144,6 @@ export default function FoldingAnimation() {
         max: meta?.max ?? 180,
         step: meta?.step ?? 1,
         description: meta?.description,
-        descriptionFormula: customDesc?.descFormula ?? meta?.descriptionFormula,
         importance: meta?.importance,
         marks: meta?.marks,
       };
@@ -214,31 +213,28 @@ export default function FoldingAnimation() {
       left={
         <LeftPanel>
           {/* 第 1 步：探究模式与高考折叠模型选择 */}
-          <LeftPanelSection
-            title="探究模式"
-            subtitle="点击选择高中数学 4 大经典平面折叠母题模型"
-          >
+          <LeftPanelSection title="探究模式">
             <SelectGrid
               columns={2}
               items={[
                 {
                   key: "trapezoid",
-                  label: "1. 直角梯形",
+                  label: "直角梯形翻折",
                   formula: "\\text{折痕 } EC",
                 },
                 {
                   key: "rectangleDiagonal",
-                  label: "2. 矩形对角线",
+                  label: "矩形对角线翻折",
                   formula: "\\text{折痕 } BD",
                 },
                 {
                   key: "triangleAltitude",
-                  label: "3. 等腰三角形高",
+                  label: "等腰高线翻折",
                   formula: "\\text{折痕 } AD",
                 },
                 {
                   key: "rhombus",
-                  label: "4. 菱形对角线",
+                  label: "菱形对角线翻折",
                   formula: "\\text{短对角线 } BD",
                 },
               ]}
@@ -248,10 +244,7 @@ export default function FoldingAnimation() {
           </LeftPanelSection>
 
           {/* 第 2 步：原平面图形与 3D 折叠对比 */}
-          <LeftPanelSection
-            title="几何对比模式"
-            subtitle="对比展平前 2D 原图形与翻折后 3D 空间几何体"
-          >
+          <LeftPanelSection title="几何对比模式">
             <TabSwitcher
               tabs={[
                 { key: "both", label: "3D折叠+虚线原图" },
@@ -264,10 +257,7 @@ export default function FoldingAnimation() {
           </LeftPanelSection>
 
           {/* 第 3 步：参数调节 */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="调节边长尺寸与翻折二面角 α"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -276,11 +266,7 @@ export default function FoldingAnimation() {
           </LeftPanelSection>
 
           {/* 第 4 步：辅助图层开关 */}
-          <LeftPanelSection
-            title="图层开关"
-            subtitle="辅助几何与向量建系"
-            compact
-          >
+          <LeftPanelSection title="图层与标注显示控制" compact>
             <div className="space-y-2">
               <Toggle
                 label="二面角平面角弧线"
@@ -296,7 +282,7 @@ export default function FoldingAnimation() {
           </LeftPanelSection>
 
           {/* 第 5 步：视图与视角 */}
-          <LeftPanelSection title="视图与视角">
+          <LeftPanelSection title="3D 空间视角预设">
             <div className="space-y-2">
               <TabSwitcher
                 layout="horizontal"
@@ -311,10 +297,10 @@ export default function FoldingAnimation() {
                 <TabSwitcher
                   layout="horizontal"
                   tabs={[
-                    { key: "iso", label: "轴测" },
-                    { key: "front", label: "主视" },
-                    { key: "top", label: "俯视" },
-                    { key: "side", label: "左视" },
+                    { key: "iso", label: "轴测直观" },
+                    { key: "front", label: "主视正投" },
+                    { key: "top", label: "俯视底面" },
+                    { key: "side", label: "左视侧面" },
                   ]}
                   value={preset}
                   onChange={(p) => setCameraPreset(p as CameraPreset)}

@@ -8,6 +8,7 @@ import {
   MathPanel,
   TabSwitcher,
   SelectGrid,
+  Toggle,
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
@@ -339,12 +340,12 @@ export default function SurfaceRelationAnimation() {
             <LeftPanelSection title="定理与分支">
               <SelectGrid
                 items={[
-                  { key: "standard", label: "两条相交直线 (判定成立)" },
-                  { key: "counterExample", label: "两条平行直线 (反例相交)" },
+                  { key: "standard", label: "相交直线判定" },
+                  { key: "counterExample", label: "平行直线反例" },
                 ]}
                 value={subType}
                 onChange={(val) => setSubType(val)}
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
@@ -353,12 +354,12 @@ export default function SurfaceRelationAnimation() {
             <LeftPanelSection title="定理与分支">
               <SelectGrid
                 items={[
-                  { key: "standard", label: "交线垂线 (推出 a ⊥ α)" },
-                  { key: "dualPerp", label: "双垂直面交线定理" },
+                  { key: "standard", label: "交线垂线定理" },
+                  { key: "dualPerp", label: "双垂直交线定理" },
                 ]}
                 value={subType}
                 onChange={(val) => setSubType(val)}
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
@@ -367,29 +368,54 @@ export default function SurfaceRelationAnimation() {
             <LeftPanelSection title="几何体模型">
               <SelectGrid
                 items={[
-                  { key: "pyramid", label: "四棱锥侧面垂直与作高" },
-                  { key: "cube", label: "正方体平行对角截面" },
+                  { key: "pyramid", label: "垂直侧面四棱锥" },
+                  { key: "cube", label: "正方体平行截面" },
                 ]}
                 value={subType === "cube" ? "cube" : "pyramid"}
                 onChange={(val) => setSubType(val)}
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           {/* 3. 参数调节 */}
-          {paramConfigs.length > 0 && (
-            <LeftPanelSection title="参数调节">
+          <LeftPanelSection title="参数调节">
+            {paramConfigs.length > 0 ? (
               <ParamControl
                 params={paramConfigs}
                 onParamChange={handleParamChange}
                 onReset={handleReset}
               />
-            </LeftPanelSection>
-          )}
+            ) : (
+              <div className="rounded-xl bg-neutral-50/80 border border-neutral-200/80 p-3 text-xs text-neutral-600 flex items-center justify-between shadow-xs">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  题设基准数据已锁定
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSubType("pyramid")}
+                  className="text-blue-600 font-medium hover:underline text-[11px] cursor-pointer"
+                >
+                  切为可调模型
+                </button>
+              </div>
+            )}
+          </LeftPanelSection>
 
-          {/* 4. 视图与视角 */}
-          <LeftPanelSection title="视图与视角">
+          {/* 4. 图层与标注显示控制 */}
+          <LeftPanelSection title="图层与标注显示控制" compact>
+            <div className="space-y-2">
+              <Toggle
+                label="显示空间直角坐标系"
+                checked={showAxes}
+                onChange={setShowAxes}
+              />
+            </div>
+          </LeftPanelSection>
+
+          {/* 5. 3D 空间视角预设 */}
+          <LeftPanelSection title="3D 空间视角预设">
             <div className="space-y-2">
               {activeMode === "gaokaoModel" && subType !== "cube" && (
                 <TabSwitcher
@@ -405,22 +431,13 @@ export default function SurfaceRelationAnimation() {
               <TabSwitcher
                 layout="horizontal"
                 tabs={[
-                  { key: "iso", label: "轴测" },
-                  { key: "front", label: "主视" },
-                  { key: "top", label: "俯视" },
-                  { key: "side", label: "左视" },
+                  { key: "iso", label: "轴测直观" },
+                  { key: "front", label: "主视正投" },
+                  { key: "top", label: "俯视底面" },
+                  { key: "side", label: "左视侧面" },
                 ]}
                 value={preset}
                 onChange={(p) => setCameraPreset(p as CameraPreset)}
-              />
-              <SelectGrid
-                items={[
-                  { key: "0", label: "隐藏坐标轴" },
-                  { key: "1", label: "显示坐标轴" },
-                ]}
-                value={showAxes ? "1" : "0"}
-                onChange={(v) => setShowAxes(v === "1")}
-                columns={2}
               />
             </div>
           </LeftPanelSection>
