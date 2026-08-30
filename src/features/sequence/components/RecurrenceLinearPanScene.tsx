@@ -4,7 +4,7 @@
  */
 import React from "react";
 import { CoordinateGrid, FunctionGraph } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { calcLinearRecurrence } from "@/math/sequence";
 import {
@@ -161,7 +161,7 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
           height={56}
           rx={8}
           fill={withAlpha(MATH_COLORS.white, 0.92)}
-          stroke="#CBD5E1"
+          stroke={CANVAS_COLORS.axis}
           strokeWidth={1}
         />
         <line

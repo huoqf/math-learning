@@ -12,6 +12,7 @@ import {
   SelectGrid,
   TabSwitcher,
   KatexFormula,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -336,6 +337,69 @@ export function RecurrencePage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  const tipConfig = useMemo(() => {
+    const a1v = params.a1 ?? 1;
+    const N = Math.min(12, Math.max(4, Math.round(params.N ?? 6)));
+    const common = `初始项 a₁ = ${a1v}，考察前 ${N} 项的通项演化。`;
+    switch (recurrenceModelType) {
+      case "linear-pan":
+        return {
+          variant: "primary" as const,
+          badge: "高考核心 · 待定系数构造等比",
+          condition: common + " 递推 aₙ₊₁ = paₙ + q（p ≠ 1）。",
+          question:
+            "能否找到常数 λ 使 aₙ₊₁ − λ = p(aₙ − λ)？由此构造等比数列并求通项。",
+        };
+      case "non-homogeneous":
+        return {
+          variant: "info" as const,
+          badge: "高考进阶 · 指数非齐次构造",
+          condition: common + " 递推 aₙ₊₁ = paₙ + q·rⁿ（r ≠ p）。",
+          question:
+            "两边同除以 rⁿ⁺¹ 能否转为等差或等比？r = p 时为何出现『共振等差』？",
+        };
+      case "second-order":
+        return {
+          variant: "accent" as const,
+          badge: "高考进阶 · 二阶特征根法",
+          condition: `初始项 a₁ = ${a1v}，a₂ = ${params.a2 ?? 3}，递推 aₙ₊₂ = paₙ₊₁ + qaₙ。`,
+          question:
+            "特征方程 x² = px + q 的两个根如何决定解的结构？重根与两异根通项有何区别？",
+        };
+      case "accumulation":
+        return {
+          variant: "success" as const,
+          badge: "累加叠代 · 累加法求通项",
+          condition:
+            common + " 递推 aₙ₊₁ − aₙ = f(n)，f(n) 为等差 / 指数 / 裂项。",
+          question:
+            "将相邻差分逐项累加为何能约去中间全部项？最终得到 aₙ = a₁ + Σ f(k)。",
+        };
+      case "multiplication":
+        return {
+          variant: "warning" as const,
+          badge: "连乘约分 · 累乘法求通项",
+          condition: common + " 比值递推 aₙ₊₁ / aₙ = f(n)，f(n) 可连乘约分。",
+          question: "相邻比值逐项连乘能否约去中间项？最终 aₙ = a₁ ∏ f(k)。",
+        };
+      case "reciprocal":
+        return {
+          variant: "info" as const,
+          badge: "倒置转化 · 分式递推构造",
+          condition: common + " 分式递推 aₙ₊₁ = Aaₙ / (Baₙ + C)。",
+          question:
+            "对递推式两边同取倒数，能否化为关于 1/aₙ 的线性递推并求通项？",
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "递推构造求通项",
+          condition: common,
+          question: "观察参数对图像与通项结果的影响。",
+        };
+    }
+  }, [recurrenceModelType, params.a1, params.a2, params.N]);
+
   return (
     <ThreePanel
       left={
@@ -463,6 +527,30 @@ export function RecurrencePage() {
                 }
               }}
             />
+          </LeftPanelSection>
+
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

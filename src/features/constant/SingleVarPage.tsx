@@ -184,12 +184,12 @@ export function SingleVarPage() {
             {
               value: params.m,
               variant: "critical",
-              label: `m=${params.m.toFixed(1)}`,
+              label: `m=${params.m.toFixed(1).replace(/\.0$/, "")}`,
             },
             {
               value: params.n,
               variant: "critical",
-              label: `n=${params.n.toFixed(1)}`,
+              label: `n=${params.n.toFixed(1).replace(/\.0$/, "")}`,
             },
           ];
         }
@@ -225,29 +225,29 @@ export function SingleVarPage() {
         } else if (transModel === "exp_minus_a_x_plus_1") {
           polyStr = `f(x) = \\frac{e^x}{x+1}`;
         }
-        const rangeStr = `x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
-        const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}}`;
+        const rangeStr = `x \\in [${params.m.toFixed(2).replace(/\.?0+$/, "")}, ${params.n.toFixed(2).replace(/\.?0+$/, "")}]`;
+        const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\.?0+$/, "")}}`;
         return { line1: `${polyStr} \\quad ${rangeStr}`, line2: lineStr };
       } else {
-        const polyStr = `f(x) = x^2 - 2x + 2 \\quad x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
-        const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}}`;
+        const polyStr = `f(x) = x^2 - 2x + 2 \\quad x \\in [${params.m.toFixed(2).replace(/\.?0+$/, "")}, ${params.n.toFixed(2).replace(/\.?0+$/, "")}]`;
+        const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\.?0+$/, "")}}`;
         return { line1: polyStr, line2: lineStr };
       }
     } else {
       if (funModel === "transcendent") {
         let line1 = "";
         if (transModel === "ln_x_over_x" || transModel === "exp_minus_ax") {
-          line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2)}}x`;
+          line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\.?0+$/, "")}}x`;
         } else if (transModel === "a_ln_x_minus_x") {
-          line1 = `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2)}}\\ln x - x + 1`;
+          line1 = `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\.?0+$/, "")}}\\ln x - x + 1`;
         } else if (transModel === "exp_minus_a_x_plus_1") {
-          line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2)}}(x+1)`;
+          line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\.?0+$/, "")}}(x+1)`;
         }
-        const line2 = `x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
+        const line2 = `x \\in [${params.m.toFixed(2).replace(/\.?0+$/, "")}, ${params.n.toFixed(2).replace(/\.?0+$/, "")}]`;
         return { line1, line2 };
       } else {
-        const line1 = `f(x) = x^2 - 2\\color{${MATH_COLORS.paramPrimary}}{(${params.a_axis.toFixed(2)})}x + 2`;
-        const line2 = `x \\in [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
+        const line1 = `f(x) = x^2 - 2\\color{${MATH_COLORS.paramPrimary}}{(${params.a_axis.toFixed(2).replace(/\.?0+$/, "")})}x + 2`;
+        const line2 = `x \\in [${params.m.toFixed(2).replace(/\.?0+$/, "")}, ${params.n.toFixed(2).replace(/\.?0+$/, "")}]`;
         return { line1, line2 };
       }
     }
@@ -256,7 +256,7 @@ export function SingleVarPage() {
   // 教学导引与题设背景配置
   const tipConfig = useMemo(() => {
     const isAlways = logic === "always";
-    const rangeText = `区间 [${params.m.toFixed(2)}, ${params.n.toFixed(2)}]`;
+    const rangeText = `区间 [${params.m.toFixed(2).replace(/\.?0+$/, "")}, ${params.n.toFixed(2).replace(/\.?0+$/, "")}]`;
 
     if (funModel === "transcendent") {
       let modelName = "(ln x)/x";

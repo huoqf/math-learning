@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -174,6 +175,45 @@ export function TrigTransformAnimation() {
     return "ω范围与区间零点分布看板";
   }, [studyMode]);
 
+  const tipConfig = useMemo(() => {
+    const A = params.A ?? 1;
+    const omega = params.omega ?? 1;
+    const phi = params.phi ?? 0;
+    const k = params.k ?? 0;
+    switch (studyMode) {
+      case "transformPath":
+        return {
+          variant: "primary" as const,
+          badge: "高考陷阱 · 平移变换次序",
+          condition: `f(x) = ${A} sin(${omega}x + ${phi}) + ${k}，正弦图象平移变换均作用于自变量 x 自身。`,
+          question: "为什么先伸缩后平移时，平移量必须除以 ω（为 |φ|/ω）？",
+        };
+      case "omegaZeros":
+        return {
+          variant: "accent" as const,
+          badge: "区间零点 · 开闭区间计数",
+          condition: `f(x) = ${A} sin(${omega}x + ${phi}) + ${k}，区间 [x₁, x₂] 内统计零点与极值。`,
+          question:
+            "当区间端点恰好为零点时，开闭区间对零点个数有何影响？区间单调性如何判定？",
+        };
+      case "fivePoints":
+        return {
+          variant: "info" as const,
+          badge: "五点作图 · 特征相位定位",
+          condition:
+            "令相位 u = ωx + φ，取 0, π/2, π, 3π/2, 2π 五个特征相位定出关键点。",
+          question: "已知图象求解析式时，为何代入波峰/波谷比代入零点更准确？",
+        };
+      default:
+        return {
+          variant: "info" as const,
+          badge: "图像性质 · 变换参数决定",
+          condition: `f(x) = ${A} sin(${omega}x + ${phi}) + ${k}，周期 T = 2π/|ω|，值域 [k−|A|, k+|A|]。`,
+          question: "对称轴方程与对称中心横坐标之间有哪些内在距离规律？",
+        };
+    }
+  }, [studyMode, params]);
+
   return (
     <ThreePanel
       left={
@@ -283,35 +323,28 @@ export function TrigTransformAnimation() {
           </LeftPanelSection>
 
           {/* 6. 教学引导卡片 (规范 2.3: 置于左屏最底部辅助区) */}
-          <LeftPanelSection title="教学探究引导" subtitle="启发式思考问题">
-            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs space-y-2 text-neutral-700">
-              <div>
-                <span className="font-semibold text-primary-700">
-                  【基础条件】
-                </span>
-                {studyMode === "transformPath" &&
-                  " 正弦函数图象平移变换均作用于自变量 x 自身。"}
-                {studyMode === "omegaZeros" &&
-                  " 令整体相位 u = ωx + φ，将 x 区间转化为 u 范围。"}
-                {studyMode === "fivePoints" &&
-                  " 一个周期内 5 个特征相位为 0, π/2, π, 3π/2, 2π。"}
-                {studyMode === "properties" &&
-                  " 函数周期 T = 2π/|ω|，值域为 [k - |A|, k + |A|]。"}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
               </div>
-              <div>
-                <span className="font-semibold text-amber-700">
-                  【探究问题】
-                </span>
-                {studyMode === "transformPath" &&
-                  " 为什么先伸缩后平移时，平移量必须除以 ω？"}
-                {studyMode === "omegaZeros" &&
-                  " 当区间端点恰好为零点时，开闭区间对零点个数有何影响？"}
-                {studyMode === "fivePoints" &&
-                  " 为什么已知图象求解析式时，代入波峰比代入零点更准确？"}
-                {studyMode === "properties" &&
-                  " 对称轴方程与对称中心横坐标之间有什么内在距离规律？"}
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
               </div>
-            </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

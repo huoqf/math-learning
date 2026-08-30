@@ -6,7 +6,7 @@ import {
   MathPoint,
   VectorArrow,
 } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks";
 import type { ViewportInfo } from "@/utils/useViewport";
@@ -124,7 +124,7 @@ export function TrigTransformScene({
             fontSize={fontScale(11)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="#FFFFFF"
+            stroke={CANVAS_COLORS.white}
             strokeWidth={3}
           >
             y_max = {props.yMax.toFixed(2)}
@@ -147,7 +147,7 @@ export function TrigTransformScene({
             fontSize={fontScale(11)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="#FFFFFF"
+            stroke={CANVAS_COLORS.white}
             strokeWidth={3}
           >
             y_min = {props.yMin.toFixed(2)}
@@ -172,7 +172,7 @@ export function TrigTransformScene({
                 fontSize={fontScale(10)}
                 textAnchor="end"
                 paintOrder="stroke"
-                stroke="#FFFFFF"
+                stroke={CANVAS_COLORS.white}
                 strokeWidth={3}
               >
                 平衡轴 y = {k.toFixed(1)}
@@ -358,7 +358,7 @@ export function TrigTransformScene({
               fontSize={fontScale(11)}
               fontWeight="bold"
               paintOrder="stroke"
-              stroke="#FFFFFF"
+              stroke={CANVAS_COLORS.white}
               strokeWidth={3}
             >
               x₁ = {x1.toFixed(2)}
@@ -371,7 +371,7 @@ export function TrigTransformScene({
               fontSize={fontScale(11)}
               fontWeight="bold"
               paintOrder="stroke"
-              stroke="#FFFFFF"
+              stroke={CANVAS_COLORS.white}
               strokeWidth={3}
             >
               x₂ = {x2.toFixed(2)}
@@ -410,7 +410,7 @@ export function TrigTransformScene({
                   fontSize={fontScale(9.5)}
                   fontWeight="bold"
                   paintOrder="stroke"
-                  stroke="#FFFFFF"
+                  stroke={CANVAS_COLORS.white}
                   strokeWidth={3}
                 >
                   Z{idx + 1}({zero.x.toFixed(2)})
@@ -441,7 +441,7 @@ export function TrigTransformScene({
                   fontSize={fontScale(9)}
                   fontWeight="bold"
                   paintOrder="stroke"
-                  stroke="#FFFFFF"
+                  stroke={CANVAS_COLORS.white}
                   strokeWidth={3}
                 >
                   极大({maxPt.x.toFixed(2)})
@@ -470,7 +470,7 @@ export function TrigTransformScene({
                   fontSize={fontScale(9)}
                   fontWeight="bold"
                   paintOrder="stroke"
-                  stroke="#FFFFFF"
+                  stroke={CANVAS_COLORS.white}
                   strokeWidth={3}
                 >
                   极小({minPt.x.toFixed(2)})

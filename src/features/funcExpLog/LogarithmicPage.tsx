@@ -43,7 +43,7 @@ export function LogarithmicPage() {
   );
 
   const formulaLatex = useMemo(() => {
-    const aVal = (params.baseA ?? 2.0).toFixed(1);
+    const aVal = (params.baseA ?? 2.0).toFixed(1).replace(/\.0$/, "");
     return showInverse
       ? `y = \\log_{\\color{${MATH_COLORS.paramPrimary}}{${aVal}}} x \\iff x = \\color{${MATH_COLORS.paramPrimary}}{${aVal}}^y`
       : `y = \\log_{\\color{${MATH_COLORS.paramPrimary}}{${aVal}}} x`;
@@ -96,7 +96,7 @@ export function LogarithmicPage() {
 
   // 1-to-1 右下角图例配置
   const legendItems = useMemo<SceneLegendItem[]>(() => {
-    const aVal = (params.baseA ?? 2.0).toFixed(1);
+    const aVal = (params.baseA ?? 2.0).toFixed(1).replace(/\.0$/, "");
     const items: SceneLegendItem[] = [
       {
         formula: `y = \\log_{${aVal}} x`,
@@ -141,7 +141,7 @@ export function LogarithmicPage() {
       return {
         variant: "info" as const,
         badge: "高考高频 · 对数与指数反函数对称",
-        condition: `对数函数 y = log_{${a.toFixed(1)}} x 与指数函数 y = ${a.toFixed(1)}ˣ 互为反函数。`,
+        condition: `对数函数 y = log_{${a.toFixed(1).replace(/\.0$/, "")}} x 与指数函数 y = ${a.toFixed(1).replace(/\.0$/, "")}ˣ 互为反函数。`,
         question:
           "观察动点 P 与对称点 P' 关于 y = x 轴垂直平分对称，体会定义域与值域的互换映射 (D ↔ R)。",
       };
@@ -150,7 +150,7 @@ export function LogarithmicPage() {
       return {
         variant: "primary" as const,
         badge: "核心基准 · 对数缓增与垂直渐近线 (a > 1)",
-        condition: `底数 a = ${a.toFixed(1)} > 1，真数 x > 0，恒过定点 (1, 0)，竖直渐近线为 x = 0 (y 轴)。`,
+        condition: `底数 a = ${a.toFixed(1).replace(/\.0$/, "")} > 1，真数 x > 0，恒过定点 (1, 0)，竖直渐近线为 x = 0 (y 轴)。`,
         question:
           "观察 x → 0⁺ 时函数值跌入 -∞ 的垂直渐近行为，以及 x → +∞ 时的减速增长 (凹向下/上凸) 趋势。",
       };
@@ -158,7 +158,7 @@ export function LogarithmicPage() {
       return {
         variant: "warning" as const,
         badge: "核心基准 · 衰减对数模型 (0 < a < 1)",
-        condition: `底数 0 < a = ${a.toFixed(1)} < 1，真数 x > 0，恒过定点 (1, 0)。`,
+        condition: `底数 0 < a = ${a.toFixed(1).replace(/\.0$/, "")} < 1，真数 x > 0，恒过定点 (1, 0)。`,
         question:
           "验证在定义域 (0, +∞) 上的单调递减性质，以及在 x → 0⁺ 时的趋向 +∞ 行为。",
       };

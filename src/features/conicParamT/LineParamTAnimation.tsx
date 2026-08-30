@@ -12,7 +12,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/lineParamT";
 import { LineParamTScene } from "./components/LineParamTScene";
@@ -145,9 +145,9 @@ export function LineParamTAnimation() {
     const sinStr = Math.sin(rad).toFixed(2);
 
     if (mode === "definition") {
-      return `\\begin{cases} x = \\color{#EF4444}{${params.x0.toFixed(
+      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${params.x0.toFixed(
         1,
-      )}} + t (${cosStr}) \\\\ y = \\color{#EF4444}{${params.y0.toFixed(
+      )}} + t (${cosStr}) \\\\ y = \\color{${MATH_COLORS.paramPrimary}}{${params.y0.toFixed(
         1,
       )}} + t (${sinStr}) \\end{cases}`;
     }

@@ -11,6 +11,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -237,6 +238,155 @@ export function SequenceAnimation() {
     setParams({ ...defaultParams });
   };
 
+  const tipConfig = useMemo(() => {
+    const a1 = params.a1 ?? 5;
+    const d = params.d ?? -1.5;
+    const q = params.q ?? 0.5;
+    const N = Math.max(4, Math.min(12, Math.round(params.N ?? 8)));
+    const common = `a₁ = ${a1}，公差 d = ${d}，公比 q = ${q}，考察前 ${N} 项。`;
+
+    if (activeMode === "arithmetic") {
+      switch (arithmeticSubMode) {
+        case "gauss":
+          return {
+            variant: "primary" as const,
+            badge: "经典巧算 · 高斯倒序相加",
+            condition: common + " Sₙ = a₁ + a₂ + … + aₙ，倒序配对。",
+            question: "正序与倒序逐项相加为何每组和恒定？由此推出求和公式。",
+          };
+        case "quadratic":
+          return {
+            variant: "warning" as const,
+            badge: "数形结合 · 前 n 项和为二次函数",
+            condition: `a₁ = ${a1}，公差 d = ${d}，Sₙ = n·a₁ + n(n−1)d/2。`,
+            question: "Sₙ 的二次函数图像对称轴对应什么？何时 Sₙ 取得最值？",
+          };
+        case "segment":
+          return {
+            variant: "accent" as const,
+            badge: "片段性质 · 等长片段和仍等差",
+            condition: `a₁ = ${a1}，公差 d = ${d}，Sₖ, S₂ₖ−Sₖ, S₃ₖ−S₂ₖ… 成等差。`,
+            question: "等长片段和为何仍构成等差数列？公差是多少？",
+          };
+        case "absSum":
+          return {
+            variant: "danger" as const,
+            badge: "分段讨论 · 绝对值数列求和",
+            condition: `a₁ = ${a1}，公差 d = ${d}，求 Σ|aₙ|（n = 1…${N}）。`,
+            question: "数列何时变号？变号点前后如何分段求和？",
+          };
+        default:
+          return {
+            variant: "primary" as const,
+            badge: "基础 · 通项是 x 的一次函数",
+            condition: common + " aₙ = a₁ + (n−1)d。",
+            question: "为何通项点恰好落于同一条直线上？",
+          };
+      }
+    }
+    if (activeMode === "geometric") {
+      return {
+        variant: "info" as const,
+        badge: "几何直观 · 等比与无限剖分",
+        condition:
+          geometricViewType === "tessellation"
+            ? `边长 ${a1}，公比 q = ${q}，观察无限剖分面积之和收敛趋势。`
+            : common + " aₙ = a₁·qⁿ⁻¹。",
+        question:
+          geometricViewType === "tessellation"
+            ? "反复对正方形作等比剖分，面积无限累加为何又能有界收敛？"
+            : "当 |q| < 1 时，无穷项之和 S∞ = a₁/(1−q) 表示什么极限？",
+      };
+    }
+    if (activeMode === "recurrence") {
+      switch (recurrenceModelType) {
+        case "accumulation":
+          return {
+            variant: "success" as const,
+            badge: "累加叠代 · 累加法求通项",
+            condition: common + " 递推 aₙ₊₁ − aₙ = f(n)。",
+            question: "逐项累加能否约去中间项，化为 aₙ = a₁ + Σ f(k)？",
+          };
+        case "multiplication":
+          return {
+            variant: "warning" as const,
+            badge: "连乘约分 · 累乘法求通项",
+            condition: common + " 比值递推 aₙ₊₁ / aₙ = f(n)。",
+            question: "逐项连乘能否约去中间项，化为 aₙ = a₁ ∏ f(k)？",
+          };
+        case "reciprocal":
+          return {
+            variant: "info" as const,
+            badge: "倒置转化 · 分式递推构造",
+            condition: common + " 递推 aₙ₊₁ = Aaₙ/(Baₙ + C)。",
+            question: "两边取倒数能否化为关于 1/aₙ 的线性递推？",
+          };
+        case "second-order":
+          return {
+            variant: "accent" as const,
+            badge: "特征根法 · 二阶线性递推",
+            condition: common + " 递推 aₙ₊₂ = paₙ₊₁ + qaₙ。",
+            question: "特征方程两根如何决定通项结构？重根通项有何不同？",
+          };
+        default:
+          return {
+            variant: "primary" as const,
+            badge: "待定系数 · 一阶线性构造",
+            condition: common + " 递推 aₙ₊₁ = paₙ + q（p ≠ 1）。",
+            question: "能否构造 aₙ₊₁ − λ = p(aₙ − λ)，转成等比求通项？",
+          };
+      }
+    }
+    // models
+    switch (modelType) {
+      case "telescoping":
+        return {
+          variant: "info" as const,
+          badge: "巧算化简 · 裂项相消法",
+          condition: "通项可裂为 1/n − 1/(n+Δ)，相邻各项相消。",
+          question: "裂项后残留哪些项？『差』影响残留项数目？",
+        };
+      case "cross-telescoping":
+        return {
+          variant: "warning" as const,
+          badge: "分段讨论 · 绝对值变号求和",
+          condition: `a₁ = ${a1}，公差 d = ${d}，求 Σ|aₙ|。`,
+          question: "何时变号？零点处如何分段转化为普通求和？",
+        };
+      case "grouped":
+        return {
+          variant: "success" as const,
+          badge: "分流转化 · 分组转化求和",
+          condition: common + " 数列由等差与等比叠加构成。",
+          question: "拆成等差部分与等比部分，能否套用标准公式？",
+        };
+      case "odd-even":
+        return {
+          variant: "accent" as const,
+          badge: "配对并项 · 奇偶并项求和",
+          condition: "数列奇偶项分别满足不同规律，需分 n 奇偶讨论。",
+          question: "n 为奇或偶时 Tₙ 表达式是否不同？如何配对求和？",
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "高考核心 · 错位相减法",
+          condition: common + " cₙ = aₙ × bₙ（等差 × 等比）。",
+          question: "同乘公比错位相减为何能消去中间项？",
+        };
+    }
+  }, [
+    activeMode,
+    arithmeticSubMode,
+    geometricViewType,
+    modelType,
+    recurrenceModelType,
+    params.a1,
+    params.d,
+    params.q,
+    params.N,
+  ]);
+
   // 按 activeMode 过滤并生成声明式 LeftPanel 参数配置
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
@@ -417,7 +567,7 @@ export function SequenceAnimation() {
                   {
                     key: "1",
                     label: "Step 1: 原式列出",
-                    description: "列出原始求和表达式 T_n",
+                    description: "列出原始求和表达式 Tₙ",
                   },
                   {
                     key: "2",
@@ -486,6 +636,30 @@ export function SequenceAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+          </LeftPanelSection>
+
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

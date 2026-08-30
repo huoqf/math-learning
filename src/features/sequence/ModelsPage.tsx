@@ -6,6 +6,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -142,6 +143,66 @@ export function ModelsPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  const tipConfig = useMemo(() => {
+    const a1 = params.a1 ?? 5;
+    const d = params.d ?? -1.5;
+    const q = params.q ?? 0.5;
+    const N = Math.max(4, Math.min(12, Math.round(params.N ?? 8)));
+    const common = `a₁ = ${a1}，公差 d = ${d}，公比 q = ${q}，考察前 ${N} 项求和 Tₙ = Sₙ。`;
+    switch (modelType) {
+      case "arith-geo":
+        return {
+          variant: "primary" as const,
+          badge: "高考核心 · 差比数列错位相减法",
+          condition:
+            common + " 数列 cₙ = aₙ × bₙ（等差 × 等比），求前 n 项和 Tₙ。",
+          question:
+            "同乘公比 q 后错位相减，为何能消去全部中间项？残留哪些项？Tₙ 的最终形式如何？",
+        };
+      case "telescoping":
+        return {
+          variant: "info" as const,
+          badge: "巧算化简 · 裂项相消法",
+          condition:
+            "通项可裂为两项之差 1/n − 1/(n+Δ)，相邻各项首尾伸缩两两相消。",
+          question:
+            "裂项后最终残留哪些项？『差』的大小对残留首尾项的数目有何影响？",
+        };
+      case "abs-sum":
+        return {
+          variant: "warning" as const,
+          badge: "分段讨论 · 绝对值变号求和",
+          condition: `a₁ = ${a1}，公差 d = ${d}，求 Σ|aₙ|（n = 1…${N}）。`,
+          question:
+            "众数列何时变号？零点处如何分段，才能让绝对值求和转化为普通等差求和？",
+        };
+      case "grouped":
+        return {
+          variant: "success" as const,
+          badge: "分流转化 · 分组转化求和",
+          condition: common + " 数列同时由等差与等比两项叠加构成。",
+          question:
+            "将每一项拆成等差部分与等比部分，能否把复合求和拆成两个标准求和公式？",
+        };
+      case "odd-even":
+        return {
+          variant: "accent" as const,
+          badge: "配对并项 · 奇偶并项求和",
+          condition:
+            "数列按奇数项与偶数项交替摆动（含负号交替），需分别考察奇、偶个数的取值。",
+          question:
+            "当 n 为奇数或偶数时，Tₙ 的表达式是否不同？如何利用相邻两项配对求和？",
+        };
+      default:
+        return {
+          variant: "primary" as const,
+          badge: "高考核心求和模型",
+          condition: common,
+          question: "观察参数对图像与求和结果的影响。",
+        };
+    }
+  }, [modelType, params.a1, params.d, params.q, params.N]);
+
   return (
     <ThreePanel
       left={
@@ -194,7 +255,7 @@ export function ModelsPage() {
                   {
                     key: "1",
                     label: "Step 1: 原式列出",
-                    description: "列出原始求和表达式 T_n",
+                    description: "列出原始求和表达式 Tₙ",
                   },
                   {
                     key: "2",
@@ -262,6 +323,30 @@ export function ModelsPage() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

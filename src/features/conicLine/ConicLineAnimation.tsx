@@ -194,18 +194,18 @@ export function ConicLineAnimation() {
 
     let curveTex = "";
     if (conicType === "ellipse") {
-      curveTex = `\\frac{x^2}{\\color{${MATH_COLORS.paramPrimary}}{${a.toFixed(1)}}^2} + \\frac{y^2}{\\color{${MATH_COLORS.paramSecondary}}{${b.toFixed(1)}}^2} = 1`;
+      curveTex = `\\frac{x^2}{\\color{${MATH_COLORS.paramPrimary}}{${a.toFixed(1).replace(/\.0$/, "")}}^2} + \\frac{y^2}{\\color{${MATH_COLORS.paramSecondary}}{${b.toFixed(1).replace(/\.0$/, "")}}^2} = 1`;
     } else if (conicType === "hyperbola") {
-      curveTex = `\\frac{x^2}{\\color{${MATH_COLORS.paramPrimary}}{${a.toFixed(1)}}^2} - \\frac{y^2}{\\color{${MATH_COLORS.paramSecondary}}{${b.toFixed(1)}}^2} = 1`;
+      curveTex = `\\frac{x^2}{\\color{${MATH_COLORS.paramPrimary}}{${a.toFixed(1).replace(/\.0$/, "")}}^2} - \\frac{y^2}{\\color{${MATH_COLORS.paramSecondary}}{${b.toFixed(1).replace(/\.0$/, "")}}^2} = 1`;
     } else {
-      curveTex = `y^2 = 2(\\color{${MATH_COLORS.paramPrimary}}{${p.toFixed(1)}})x`;
+      curveTex = `y^2 = 2(\\color{${MATH_COLORS.paramPrimary}}{${p.toFixed(1).replace(/\.0$/, "")}})x`;
     }
 
     let lineTex = "";
     if (studyMode === "general") {
       const k = params.k ?? 0.5;
       const m = params.m ?? 0.5;
-      lineTex = `L: y = \\color{${MATH_COLORS.paramSecondary}}{${k.toFixed(2)}} x ${m >= 0 ? "+" : ""} \\color{${MATH_COLORS.paramTertiary}}{${m.toFixed(2)}}`;
+      lineTex = `L: y = \\color{${MATH_COLORS.paramSecondary}}{${k.toFixed(2).replace(/\.?0+$/, "")}} x ${m >= 0 ? "+" : ""} \\color{${MATH_COLORS.paramTertiary}}{${m.toFixed(2).replace(/\.?0+$/, "")}}`;
     } else if (studyMode === "focus") {
       const thetaDeg = Math.round(
         ((params.theta ?? Math.PI / 4) * 180) / Math.PI,
@@ -214,11 +214,11 @@ export function ConicLineAnimation() {
     } else if (studyMode === "midpoint") {
       const mx = params.midpointX ?? 1;
       const my = params.midpointY ?? 1;
-      lineTex = `M_{中点}: (\\color{${MATH_COLORS.paramPrimary}}{${mx.toFixed(1)}}, \\color{${MATH_COLORS.paramSecondary}}{${my.toFixed(1)}})`;
+      lineTex = `M_{中点}: (\\color{${MATH_COLORS.paramPrimary}}{${mx.toFixed(1).replace(/\.0$/, "")}}, \\color{${MATH_COLORS.paramSecondary}}{${my.toFixed(1).replace(/\.0$/, "")}})`;
     } else {
       const px = params.poleX ?? 4;
       const py = params.poleY ?? 3;
-      lineTex = `P_{极点}: (\\color{${MATH_COLORS.paramPrimary}}{${px.toFixed(1)}}, \\color{${MATH_COLORS.paramSecondary}}{${py.toFixed(1)}})`;
+      lineTex = `P_{极点}: (\\color{${MATH_COLORS.paramPrimary}}{${px.toFixed(1).replace(/\.0$/, "")}}, \\color{${MATH_COLORS.paramSecondary}}{${py.toFixed(1).replace(/\.0$/, "")}})`;
     }
 
     return `${curveTex} \\quad \\text{与} \\quad ${lineTex}`;

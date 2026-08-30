@@ -182,11 +182,15 @@ export function ConicParamAnimation() {
   // 构建中屏悬浮 LaTeX 方程
   const equationLatex = useMemo(() => {
     if (studyMode === "lineParam") {
-      const cosA = Math.cos((params.alpha * Math.PI) / 180).toFixed(2);
-      const sinA = Math.sin((params.alpha * Math.PI) / 180).toFixed(2);
-      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${params.x0.toFixed(1)}} + \\color{${MATH_COLORS.paramSecondary}}{t} \\cdot (${cosA}) \\\\ y = \\color{${MATH_COLORS.paramSecondary}}{${params.y0.toFixed(1)}} + \\color{${MATH_COLORS.paramSecondary}}{t} \\cdot (${sinA}) \\end{cases}`;
+      const cosA = Math.cos((params.alpha * Math.PI) / 180)
+        .toFixed(2)
+        .replace(/\.?0+$/, "");
+      const sinA = Math.sin((params.alpha * Math.PI) / 180)
+        .toFixed(2)
+        .replace(/\.?0+$/, "");
+      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${params.x0.toFixed(1).replace(/\.0$/, "")}} + \\color{${MATH_COLORS.paramSecondary}}{t} \\cdot (${cosA}) \\\\ y = \\color{${MATH_COLORS.paramSecondary}}{${params.y0.toFixed(1).replace(/\.0$/, "")}} + \\color{${MATH_COLORS.paramSecondary}}{t} \\cdot (${sinA}) \\end{cases}`;
     } else if (studyMode === "ellipseParam") {
-      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(1)}}\\cos\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\\\ y = \\color{${MATH_COLORS.paramSecondary}}{${params.b.toFixed(1)}}\\sin\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\end{cases} \\quad (\\theta = ${params.theta}^\\circ)`;
+      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(1).replace(/\.0$/, "")}}\\cos\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\\\ y = \\color{${MATH_COLORS.paramSecondary}}{${params.b.toFixed(1).replace(/\.0$/, "")}}\\sin\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\end{cases} \\quad (\\theta = ${params.theta}^\\circ)`;
     } else {
       const res = calculateLineConicParam(
         params.x0,
@@ -198,7 +202,7 @@ export function ConicParamAnimation() {
       );
       if (!res.valid)
         return "\\text{判别式 } \\Delta < 0 \\text{ (直线与椭圆无交点)}";
-      return `${res.A.toFixed(2)}t^2 ${res.B >= 0 ? "+" : ""}${res.B.toFixed(2)}t ${res.C >= 0 ? "+" : ""}${res.C.toFixed(2)} = 0 \\quad (\\Delta = ${res.discriminant.toFixed(1)})`;
+      return `${res.A.toFixed(2).replace(/\.?0+$/, "")}t^2 ${res.B >= 0 ? "+" : ""}${res.B.toFixed(2).replace(/\.?0+$/, "")}t ${res.C >= 0 ? "+" : ""}${res.C.toFixed(2).replace(/\.?0+$/, "")} = 0 \\quad (\\Delta = ${res.discriminant.toFixed(1).replace(/\.0$/, "")})`;
     }
   }, [studyMode, params]);
 

@@ -6,10 +6,11 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SequenceScene } from "./components/SequenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
@@ -155,6 +156,53 @@ export function GeometricPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  const tipConfig = useMemo(() => {
+    const a1 = params.a1 ?? 3;
+    const q = params.q ?? 0.5;
+    const N = Math.max(3, Math.min(15, Math.round(params.N ?? 8)));
+    const kSegment = params.kSegment ?? 3;
+    const common = `a₁ = ${a1}，公比 q = ${q}，前 ${N} 项。`;
+    switch (geometricSubMode) {
+      case "staggerSum":
+        return {
+          variant: "primary" as const,
+          badge: "高考经典 · 错位相减推导",
+          condition: common + " 先写 Sₙ，再同乘公比 q 后按位错开作差。",
+          question: "错位相减为何能消去中间全部 q 的连续次幂项？",
+        };
+      case "segment":
+        return {
+          variant: "accent" as const,
+          badge: "片段性质 · 等长片段和仍等比",
+          condition:
+            common + ` 取等长片段 ${kSegment} 项划分：Sₖ, S₂ₖ−Sₖ, S₃ₖ−S₂ₖ…。`,
+          question: "等长片段和之间满足怎样的等比关系？公比是多少？",
+        };
+      case "productMax":
+        return {
+          variant: "warning" as const,
+          badge: "最值探究 · 乘积最大项",
+          condition: common + " 考察前 n 项之积 Pₙ 的最值。",
+          question: "何时 Pₙ 取得最值？与公比绝对值 |q| 的关系如何判定？",
+        };
+      case "tessellation":
+        return {
+          variant: "success" as const,
+          badge: "几何直观 · 无限剖分面积",
+          condition: `边长 a₁ = ${a1}，公比 q = ${q}，观察无限剖分面积之和收敛趋势。`,
+          question: "面积无限累加为何又能有界收敛？（|q| < 1 无穷级数）",
+        };
+      default:
+        return {
+          variant: "info" as const,
+          badge: "通项与指数 · 指数增长模型",
+          condition: common + " aₙ = a₁·qⁿ⁻¹。",
+          question:
+            "当 q > 1 时项如何爆炸增长？q 在 (0,1) 时无穷项之和如何逼近极限？",
+        };
+    }
+  }, [geometricSubMode, params.a1, params.q, params.N, params.kSegment]);
+
   return (
     <ThreePanel
       left={
@@ -223,12 +271,12 @@ export function GeometricPage() {
                   },
                   {
                     key: "const",
-                    formula: "\\color{#EF4444}{q = 1}",
+                    formula: `\\color{${MATH_COLORS.paramPrimary}}{q = 1}`,
                     description: "常数列退化",
                   },
                   {
                     key: "osc-per",
-                    formula: "\\color{#D97706}{q = -1}",
+                    formula: `\\color{${MATH_COLORS.paramSecondary}}{q = -1}`,
                     description: "周期摆动",
                   },
                 ]}
@@ -363,6 +411,31 @@ export function GeometricPage() {
                 setParams({ ...defaultParams, a1: 3, q: 0.5, N: 8 })
               }
             />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引（置于最底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

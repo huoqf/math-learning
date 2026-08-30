@@ -6,6 +6,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   TabSwitcher,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -125,6 +126,58 @@ export function ArithmeticPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 左屏教学提示与题设导引（按子模型差异化地说明初始条件与探究设问）
+  const tipConfig = useMemo(() => {
+    const common = `等差数列 a₁ = ${a1}，公差 d = ${d}，前 N = ${N} 项。`;
+    switch (arithmeticSubMode) {
+      case "linear":
+        return {
+          variant: "primary" as const,
+          badge: "核心基准 · 通项是 x 的一次函数",
+          condition: common,
+          question:
+            "通项 aₙ = a₁ + (n-1)d 在坐标图上为何恰好落于同一条直线上？",
+        };
+      case "gauss":
+        return {
+          variant: "primary" as const,
+          badge: "高考经典 · 首尾配对求和",
+          condition: common + " 首末项配对 (首项 + 末项) × 配对数。",
+          question: "高斯配对法为何能把 N 项求和转化为 N/2 个相等的和？",
+        };
+      case "quadratic":
+        return {
+          variant: "warning" as const,
+          badge: "高考难点 · 前 n 项和的二次最值",
+          condition: common + " 前 n 项和 Sₙ 关于 n 是开口向上的二次函数。",
+          question:
+            "公差 d < 0 时，Sₙ 在何处取得最大值？如何由判别式与对称轴判断？",
+        };
+      case "segment":
+        return {
+          variant: "info" as const,
+          badge: "高考综合 · 绝对值分段求和",
+          condition:
+            common + ` 先由 k = ${kSegment} 找出 aₙ 的变号临界项再分段求和。`,
+          question: "求 |aₙ| 前 n 项和时，如何确定非负项与负项的分界项 n₀？",
+        };
+      case "absSum":
+        return {
+          variant: "warning" as const,
+          badge: "核心考点 · 绝对值和的几何折线",
+          condition: common,
+          question: "｜aₙ｜前 n 项和 Tₙ 的折线在变号项处为何出现极小值尖点？",
+        };
+      default:
+        return {
+          variant: "info" as const,
+          badge: "等差数列探究",
+          condition: common,
+          question: "观察 aₙ 与 Sₙ 的图象关系，体会通项到求和的桥梁作用。",
+        };
+    }
+  }, [arithmeticSubMode, a1, d, N, kSegment]);
+
   return (
     <ThreePanel
       left={
@@ -156,6 +209,31 @@ export function ArithmeticPage() {
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          {/* 教学提示与题设导引（置于最底部） */}
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

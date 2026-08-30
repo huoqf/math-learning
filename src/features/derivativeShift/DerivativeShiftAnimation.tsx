@@ -91,16 +91,16 @@ export function DerivativeShiftAnimation() {
   const topFormulaLatex = useMemo(() => {
     if (activeMode === "implicit_zero") {
       if (subModel === "x_ln_x") {
-        return `f(x) = x \\ln x - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}} x + 1 \\quad (f'(x_0) = 0)`;
+        return `f(x) = x \\ln x - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\.?0+$/, "")}} x + 1 \\quad (f'(x_0) = 0)`;
       }
-      return `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2)}} x \\quad (f'(x_0) = 0)`;
+      return `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\.?0+$/, "")}} x \\quad (f'(x_0) = 0)`;
     } else if (activeMode === "shift_symmetric") {
       if (subModel === "xe_neg_x") {
-        return `f(x) = x e^{-x} = \\color{${MATH_COLORS.secantLine}}{${params.k.toFixed(2)}} \\implies f(x_1) = f(x_2) = k`;
+        return `f(x) = x e^{-x} = \\color{${MATH_COLORS.secantLine}}{${params.k.toFixed(2).replace(/\.?0+$/, "")}} \\implies f(x_1) = f(x_2) = k`;
       }
-      return `f(x) = \\frac{\\ln x}{x} = \\color{${MATH_COLORS.secantLine}}{${params.k.toFixed(2)}} \\implies f(x_1) = f(x_2) = k`;
+      return `f(x) = \\frac{\\ln x}{x} = \\color{${MATH_COLORS.secantLine}}{${params.k.toFixed(2).replace(/\.?0+$/, "")}} \\implies f(x_1) = f(x_2) = k`;
     }
-    return `L(x_1, x_2) = \\frac{x_1 - x_2}{\\ln x_1 - \\ln x_2} \\quad (x_1 = ${params.x1.toFixed(2)},\\, x_2 = ${params.x2.toFixed(2)})`;
+    return `L(x_1, x_2) = \\frac{x_1 - x_2}{\\ln x_1 - \\ln x_2} \\quad (x_1 = ${params.x1.toFixed(2).replace(/\.?0+$/, "")},\\, x_2 = ${params.x2.toFixed(2).replace(/\.?0+$/, "")})`;
   }, [activeMode, subModel, params.a, params.k, params.x1, params.x2]);
 
   // 右下角图例配置 (模式专属：图线 + 特征点标对应)

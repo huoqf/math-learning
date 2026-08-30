@@ -4,7 +4,7 @@
  */
 import React from "react";
 import { CoordinateGrid } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { calcNonHomogeneousExpRecurrence } from "@/math/sequence";
 import {
@@ -135,7 +135,7 @@ export const RecurrenceNonHomogeneousScene: React.FC<
           height={56}
           rx={8}
           fill={withAlpha(MATH_COLORS.white, 0.92)}
-          stroke="#CBD5E1"
+          stroke={CANVAS_COLORS.axis}
           strokeWidth={1}
         />
         <circle cx={14} cy={18} r={4.5} fill={MATH_COLORS.sequence} />

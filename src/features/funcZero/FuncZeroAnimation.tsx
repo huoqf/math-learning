@@ -113,10 +113,10 @@ export function FuncZeroAnimation() {
     const aColor = MATH_COLORS.paramPrimary;
     const bColor = MATH_COLORS.paramSecondary;
     if (prod < 0) {
-      return `${fnLatex} \\quad [\\color{${aColor}}{a}, \\color{${bColor}}{b}] = [${m.toFixed(1)}, ${n.toFixed(1)}] \\implies f(\\color{${aColor}}{a})f(\\color{${bColor}}{b}) < 0`;
+      return `${fnLatex} \\quad [\\color{${aColor}}{a}, \\color{${bColor}}{b}] = [${m.toFixed(1).replace(/\.0$/, "")}, ${n.toFixed(1).replace(/\.0$/, "")}] \\implies f(\\color{${aColor}}{a})f(\\color{${bColor}}{b}) < 0`;
     }
     if (prod > 0) {
-      return `${fnLatex} \\quad [\\color{${aColor}}{a}, \\color{${bColor}}{b}] = [${m.toFixed(1)}, ${n.toFixed(1)}] \\implies f(\\color{${aColor}}{a})f(\\color{${bColor}}{b}) > 0 \\text{ (同号)}`;
+      return `${fnLatex} \\quad [\\color{${aColor}}{a}, \\color{${bColor}}{b}] = [${m.toFixed(1).replace(/\.0$/, "")}, ${n.toFixed(1).replace(/\.0$/, "")}] \\implies f(\\color{${aColor}}{a})f(\\color{${bColor}}{b}) > 0 \\text{ (同号)}`;
     }
     return `${fnLatex} \\quad 端点处 f(x)=0`;
   }, [currentModel.formula, m, n, prod]);
@@ -129,7 +129,7 @@ export function FuncZeroAnimation() {
       return {
         variant: "warning" as const,
         badge: "高考易错点 · 充分非必要辨析",
-        condition: `区间 [${m.toFixed(1)}, ${n.toFixed(1)}] 端点同号 f(a)·f(b) > 0，但不代表无解：内部实际包含 2 个零点。`,
+        condition: `区间 [${m.toFixed(1).replace(/\.0$/, "")}, ${n.toFixed(1).replace(/\.0$/, "")}] 端点同号 f(a)·f(b) > 0，但不代表无解：内部实际包含 2 个零点。`,
         question:
           "核心启示：定理异号条件是零点存在的【充分条件】而非【必要条件】。",
       };
@@ -138,7 +138,7 @@ export function FuncZeroAnimation() {
     return {
       variant: "primary" as const,
       badge: `高考必考 · ${currentModel.name}`,
-      condition: `在 [${m.toFixed(1)}, ${n.toFixed(1)}] 上连续且严格单调，由 f(a)·f(b) < 0 锁定唯一零点。`,
+      condition: `在 [${m.toFixed(1).replace(/\.0$/, "")}, ${n.toFixed(1).replace(/\.0$/, "")}] 上连续且严格单调，由 f(a)·f(b) < 0 锁定唯一零点。`,
       question: `二分迭代 ${steps} 次，误差限折半至 ε ≤ ${len.toFixed(4)}，逼近根 x* ≈ ${currentModel.approxZero.toFixed(3)}。`,
     };
   }, [m, n, steps, currentModel, modelKey]);

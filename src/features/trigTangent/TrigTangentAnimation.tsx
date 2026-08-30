@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   TabSwitcher,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -133,6 +134,44 @@ export function TrigTangentAnimation() {
     return "y = A tan(ωx + φ) + C 看板";
   }, [studyMode]);
 
+  const tipConfig = useMemo(() => {
+    const theta = params.theta ?? Math.PI / 4;
+    const omega = params.omega ?? 1;
+    switch (studyMode) {
+      case "unitCircle":
+        return {
+          variant: "primary" as const,
+          badge: "几何直观 · 单位圆正切线",
+          condition: `单位圆上角 θ = ${theta.toFixed(2)}，过 (1, 0) 作圆切线。`,
+          question:
+            "sinθ 与 cosθ 之比在几何上如何用该切线长度表示？为何 tanθ 在切线所在直线上？",
+        };
+      case "baseFunction":
+        return {
+          variant: "info" as const,
+          badge: "基础性质 · y = tan x",
+          condition: "定义域排除 x = π/2 + kπ，周期为 π，值域为全体实数。",
+          question:
+            "基本周期为何是 π 而非 2π？各个单调开区间为何被渐近线隔开？",
+        };
+      case "gaokaoProblem":
+        return {
+          variant: "accent" as const,
+          badge: "新高考热点 · ω 范围探究",
+          condition: `f(x) = tan(ωx)，考虑在 [0, ${params.targetIntervalEnd?.toFixed(2)}] 上不含渐近线且单调。`,
+          question: "要保证区间内无渐近线，ω 的取值范围应满足怎样的不等式？",
+        };
+      default:
+        return {
+          variant: "warning" as const,
+          badge: "一般型 · y = A tan(ωx + φ) + C",
+          condition: `A = ${params.A ?? 1}，ω = ${omega}，φ = ${params.phi ?? 0}，C = ${params.C ?? 0}。`,
+          question:
+            "A、ω、φ、C 各自如何影响振幅倾向、周期平移与上下平移？渐近线如何随参数移动？",
+        };
+    }
+  }, [studyMode, params]);
+
   return (
     <ThreePanel
       left={
@@ -201,6 +240,30 @@ export function TrigTangentAnimation() {
               />
             </LeftPanelSection>
           )}
+
+          <LeftPanelSection title="教学导引与题设背景" compact>
+            <TipCard variant={tipConfig.variant}>
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>{tipConfig.badge}</span>
+              </div>
+              <div className="space-y-1 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600">
+                    {tipConfig.condition}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【探究设问】
+                  </span>
+                  <span className="text-neutral-600">{tipConfig.question}</span>
+                </div>
+              </div>
+            </TipCard>
+          </LeftPanelSection>
         </LeftPanel>
       }
       center={

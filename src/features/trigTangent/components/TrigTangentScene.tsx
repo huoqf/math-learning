@@ -6,7 +6,7 @@ import { Asymptote } from "@/components/Math/Asymptote";
 import { InteractivePoint } from "@/components/Math/InteractivePoint";
 import { VectorArrow } from "@/components/Math/VectorArrow";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import {
   generateTangentSegments,
   getTangentAsymptotes,
@@ -176,7 +176,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                         width={fontScale(120)}
                         height={fontScale(18)}
                         rx={fontScale(9)}
-                        fill="#FFFFFF"
+                        fill={CANVAS_COLORS.white}
                         stroke={withAlpha(MATH_COLORS.paramPrimary, 0.3)}
                         strokeWidth={1}
                       />
@@ -231,7 +231,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                   width={fontScale(160)}
                   height={fontScale(22)}
                   rx={fontScale(6)}
-                  fill="#FFFFFF"
+                  fill={CANVAS_COLORS.white}
                   stroke={zoneColor}
                   strokeWidth={1}
                 />
@@ -244,7 +244,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                   fontWeight="bold"
                 >
                   {isSafe
-                    ? "✓ 目标区间 [0, x_end] 单调连续"
+                    ? "✓ 目标区间 [0, xMax] 单调连续"
                     : "✕ 发生碰撞！区间包含渐近线"}
                 </text>
               </g>
@@ -352,7 +352,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                 cx={pt.x}
                 cy={pt.y}
                 r={4}
-                fill="#FFFFFF"
+                fill={CANVAS_COLORS.white}
                 stroke={MATH_COLORS.paramTertiary}
                 strokeWidth={2}
               />
@@ -362,7 +362,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                 width={fontScale(52)}
                 height={fontScale(13)}
                 rx={fontScale(3)}
-                fill="#FFFFFF"
+                fill={CANVAS_COLORS.white}
                 opacity={0.88}
               />
               <text
@@ -392,7 +392,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                 y={leftZoneTopLeft.y}
                 width={leftZoneBottomRight.x - leftZoneTopLeft.x}
                 height={leftZoneBottomRight.y - leftZoneTopLeft.y}
-                fill="#FFFFFF"
+                fill={CANVAS_COLORS.white}
                 opacity={0.94}
               />
             );
@@ -586,7 +586,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                     width={fontScale(110)}
                     height={fontScale(16)}
                     rx={fontScale(4)}
-                    fill="#FFFFFF"
+                    fill={CANVAS_COLORS.white}
                     opacity={0.9}
                   />
                   <text
@@ -666,7 +666,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                 width={fontScale(75)}
                 height={fontScale(15)}
                 rx={fontScale(3)}
-                fill="#FFFFFF"
+                fill={CANVAS_COLORS.white}
                 opacity={0.9}
                 stroke={withAlpha(MATH_COLORS.function, 0.3)}
                 strokeWidth={0.8}

@@ -47,30 +47,36 @@ export function SymmetryPage() {
 
   const formulaLatex = useMemo(() => {
     if (subMode === "axis") {
-      const a = (params.axisA ?? 0).toFixed(1);
+      const a = (params.axisA ?? 0).toFixed(1).replace(/\.0$/, "");
       return `f(x) \\text{ 关于直线 } x = ${a} \\text{ 轴对称 } \\iff f(x) = f(${2 * Number(a)} - x)`;
     }
     if (subMode === "center") {
-      const xc = (params.centerX ?? 0).toFixed(1);
-      const yc = (params.centerY ?? 0).toFixed(1);
+      const xc = (params.centerX ?? 0).toFixed(1).replace(/\.0$/, "");
+      const yc = (params.centerY ?? 0).toFixed(1).replace(/\.0$/, "");
       return `f(x) \\text{ 关于点 } (${xc}, ${yc}) \\text{ 中心对称 } \\iff f(x) + f(${2 * Number(xc)} - x) = ${2 * Number(yc)}`;
     }
     if (subMode === "period-dual-axis") {
-      const a = (params.axisA ?? 0).toFixed(1);
-      const b = (params.axisB ?? 2).toFixed(1);
-      const T = (2 * Math.abs(Number(b) - Number(a))).toFixed(1);
+      const a = (params.axisA ?? 0).toFixed(1).replace(/\.0$/, "");
+      const b = (params.axisB ?? 2).toFixed(1).replace(/\.0$/, "");
+      const T = (2 * Math.abs(Number(b) - Number(a)))
+        .toFixed(1)
+        .replace(/\.0$/, "");
       return `x = ${a}, \\ x = ${b} \\text{ 轴对称 } \\Rightarrow T = 2|a - b| = ${T}`;
     }
     if (subMode === "period-dual-center") {
-      const a = (params.axisA ?? 0).toFixed(1);
-      const b = (params.axisB ?? 2).toFixed(1);
-      const T = (2 * Math.abs(Number(b) - Number(a))).toFixed(1);
+      const a = (params.axisA ?? 0).toFixed(1).replace(/\.0$/, "");
+      const b = (params.axisB ?? 2).toFixed(1).replace(/\.0$/, "");
+      const T = (2 * Math.abs(Number(b) - Number(a)))
+        .toFixed(1)
+        .replace(/\.0$/, "");
       return `(${a}, 0), \\ (${b}, 0) \\text{ 中心对称 } \\Rightarrow T = 2|a - b| = ${T}`;
     }
     // period-axis-center
-    const a = (params.axisA ?? 0).toFixed(1);
-    const b = (params.axisB ?? 2).toFixed(1);
-    const T = (4 * Math.abs(Number(b) - Number(a))).toFixed(1);
+    const a = (params.axisA ?? 0).toFixed(1).replace(/\.0$/, "");
+    const b = (params.axisB ?? 2).toFixed(1).replace(/\.0$/, "");
+    const T = (4 * Math.abs(Number(b) - Number(a)))
+      .toFixed(1)
+      .replace(/\.0$/, "");
     return `x = ${a} \\text{ 轴与 } (${b}, 0) \\text{ 中心 } \\Rightarrow T = 4|a - b| = ${T}`;
   }, [subMode, params]);
 
@@ -112,7 +118,7 @@ export function SymmetryPage() {
       return {
         variant: "primary" as const,
         badge: "模型探究 · 函数图象轴对称性质",
-        condition: `函数图象关于垂直直线 x = ${(params.axisA ?? 0).toFixed(1)} 轴对称。`,
+        condition: `函数图象关于垂直直线 x = ${(params.axisA ?? 0).toFixed(1).replace(/\.0$/, "")} 轴对称。`,
         question:
           "观察任意测试点 P 与其对称点 P'，验证两点中点必然落在对称轴上，且 f(x) = f(2a-x)。",
       };
@@ -121,7 +127,7 @@ export function SymmetryPage() {
       return {
         variant: "primary" as const,
         badge: "模型探究 · 函数图象中心对称性质",
-        condition: `函数图象关于点 C(${(params.centerX ?? 0).toFixed(1)}, ${(params.centerY ?? 0).toFixed(1)}) 中心对称。`,
+        condition: `函数图象关于点 C(${(params.centerX ?? 0).toFixed(1).replace(/\.0$/, "")}, ${(params.centerY ?? 0).toFixed(1).replace(/\.0$/, "")}) 中心对称。`,
         question:
           "观察测试点 P 与对称点 P' 的连线必过对称中心 C 并被其平分，验证 f(x) + f(2a-x) = 2b。",
       };
@@ -131,8 +137,8 @@ export function SymmetryPage() {
       return {
         variant: "primary" as const,
         badge: "核心模型 · 双轴对称导出周期",
-        condition: `图象同时具有两条对称轴 x = ${(params.axisA ?? 0).toFixed(1)} 与 x = ${(params.axisB ?? 2).toFixed(1)}。`,
-        question: `两次连续轴反射复合产生水平平移，导出最小正周期 T = 2|a - b| = ${(2 * dist).toFixed(1)}。`,
+        condition: `图象同时具有两条对称轴 x = ${(params.axisA ?? 0).toFixed(1).replace(/\.0$/, "")} 与 x = ${(params.axisB ?? 2).toFixed(1).replace(/\.0$/, "")}。`,
+        question: `两次连续轴反射复合产生水平平移，导出最小正周期 T = 2|a - b| = ${(2 * dist).toFixed(1).replace(/\.0$/, "")}。`,
       };
     }
     if (subMode === "period-dual-center") {
@@ -140,8 +146,8 @@ export function SymmetryPage() {
       return {
         variant: "primary" as const,
         badge: "核心模型 · 双中心对称导出周期",
-        condition: `图象关于点 (${(params.axisA ?? 0).toFixed(1)}, 0) 与 (${(params.axisB ?? 2).toFixed(1)}, 0) 中心对称。`,
-        question: `两次连续中心反射复合产生水平平移，导出最小正周期 T = 2|a - b| = ${(2 * dist).toFixed(1)}。`,
+        condition: `图象关于点 (${(params.axisA ?? 0).toFixed(1).replace(/\.0$/, "")}, 0) 与 (${(params.axisB ?? 2).toFixed(1).replace(/\.0$/, "")}, 0) 中心对称。`,
+        question: `两次连续中心反射复合产生水平平移，导出最小正周期 T = 2|a - b| = ${(2 * dist).toFixed(1).replace(/\.0$/, "")}。`,
       };
     }
     // period-axis-center
@@ -149,8 +155,8 @@ export function SymmetryPage() {
     return {
       variant: "primary" as const,
       badge: "核心模型 · 一轴一中心导出周期",
-      condition: `图象关于轴 x = ${(params.axisA ?? 0).toFixed(1)} 与中心 (${(params.axisB ?? 2).toFixed(1)}, 0) 对称。`,
-      question: `一轴一中心连续反射四次完成完整循环，导出周期 T = 4|a - b| = ${(4 * dist).toFixed(1)}。`,
+      condition: `图象关于轴 x = ${(params.axisA ?? 0).toFixed(1).replace(/\.0$/, "")} 与中心 (${(params.axisB ?? 2).toFixed(1).replace(/\.0$/, "")}, 0) 对称。`,
+      question: `一轴一中心连续反射四次完成完整循环，导出周期 T = 4|a - b| = ${(4 * dist).toFixed(1).replace(/\.0$/, "")}。`,
     };
   }, [subMode, params.axisA, params.axisB, params.centerX, params.centerY]);
 
@@ -296,7 +302,7 @@ export function SymmetryPage() {
                     {
                       style: "dash",
                       color: MATH_COLORS.paramPrimary,
-                      formula: `x = ${(params.axisA ?? 0).toFixed(1)}`,
+                      formula: `x = ${(params.axisA ?? 0).toFixed(1).replace(/\.0$/, "")}`,
                     },
                     {
                       style: "point",
@@ -341,12 +347,12 @@ export function SymmetryPage() {
                       {
                         style: "dash",
                         color: MATH_COLORS.paramPrimary,
-                        formula: `x = ${(params.axisA ?? 0).toFixed(1)}`,
+                        formula: `x = ${(params.axisA ?? 0).toFixed(1).replace(/\.0$/, "")}`,
                       },
                       {
                         style: "dash",
                         color: MATH_COLORS.paramSecondary,
-                        formula: `x = ${(params.axisB ?? 2).toFixed(1)}`,
+                        formula: `x = ${(params.axisB ?? 2).toFixed(1).replace(/\.0$/, "")}`,
                       },
                       {
                         style: "area",
