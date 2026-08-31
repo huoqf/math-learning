@@ -63,6 +63,13 @@ import { DerivativeShiftAnimation } from "@/features/derivativeShift/DerivativeS
 import { ProbabilityDistributionAnimation } from "@/features/probabilityDistribution/ProbabilityDistributionAnimation";
 import { PairedDataAnimation } from "@/features/pairedData/PairedDataAnimation";
 import { ComplexAnimation } from "@/features/complex/ComplexAnimation";
+import { FuncPropertiesAnimation } from "@/features/funcProperties";
+import { FuncExpLogAnimation } from "@/features/funcExpLog";
+import { FuncZeroAnimation } from "@/features/funcZero";
+import { QuadraticAnimation } from "@/features/quadratic/QuadraticAnimation";
+import { NikeAnimation } from "@/features/nike/NikeAnimation";
+import { TransformAnimation } from "@/features/transform";
+import { CompositeAnimation } from "@/features/composite";
 import RotationBodyAnimation from "@/features/solidGeometry/RotationBodyAnimation";
 import LinePlaneRelationAnimation from "@/features/solidGeometry/LinePlaneRelationAnimation";
 import SurfaceRelationAnimation from "@/features/solidGeometry/SurfaceRelationAnimation";
@@ -152,6 +159,42 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
     render(<ComplexAnimation />);
     expect(screen.getByText("探究专题模式")).toBeInTheDocument();
     expect(screen.getByText("复平面与向量加减")).toBeInTheDocument();
+  });
+
+  // ═════════ 函数概念与性质专题页面冒烟测试 ═════════
+  it("FuncPropertiesAnimation mounts properly and renders", () => {
+    render(<FuncPropertiesAnimation />);
+    expect(screen.getByText("探究模式切换")).toBeInTheDocument();
+  });
+
+  it("FuncExpLogAnimation mounts properly and renders", () => {
+    render(<FuncExpLogAnimation />);
+    expect(screen.getByText("函数选择")).toBeInTheDocument();
+  });
+
+  it("FuncZeroAnimation mounts properly and renders", () => {
+    render(<FuncZeroAnimation />);
+    expect(screen.getByText("函数模型")).toBeInTheDocument();
+  });
+
+  it("QuadraticAnimation mounts properly and renders", () => {
+    render(<QuadraticAnimation />);
+    expect(screen.getByText("研究模式")).toBeInTheDocument();
+  });
+
+  it("NikeAnimation mounts properly and renders", () => {
+    render(<NikeAnimation />);
+    expect(screen.getByText("典型形态预设")).toBeInTheDocument();
+  });
+
+  it("TransformAnimation mounts properly and renders", () => {
+    render(<TransformAnimation />);
+    expect(screen.getByText("基准母函数")).toBeInTheDocument();
+  });
+
+  it("CompositeAnimation mounts properly and renders", () => {
+    render(<CompositeAnimation />);
+    expect(screen.getByText("研究主题")).toBeInTheDocument();
   });
 
   // ═════════ 3D 立体几何与空间向量页面冒烟测试 ═════════

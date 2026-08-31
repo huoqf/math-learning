@@ -105,4 +105,26 @@ describe("transform math library", () => {
     });
     expect(resOmega0.isDegenerate).toBe(true);
   });
+
+  it("generates correct Gaokao dual transform routes (shift-first vs scale-first)", () => {
+    // y = sin(2(x - 1)) = sin(2x - 2)
+    const params = { h: 1, k: 0, A: 1, omega: 2, foldMode: "none" as const };
+    const res = calculateTransform("sine", params);
+
+    expect(res.routes.shiftFirst).toContain("右移");
+    expect(res.routes.shiftFirst).toContain("x - 1.00");
+    expect(res.routes.scaleFirst).toContain("2.0x");
+    expect(res.routes.scaleFirst).toContain("2.00");
+  });
+
+  it("handles vertical flip when A < 0", () => {
+    // y = -2 * x^2 + 1
+    const params = { h: 0, k: 1, A: -2, omega: 1, foldMode: "none" as const };
+    const res = calculateTransform("quadratic", params);
+
+    expect(res.transformedFn(0)).toBe(1);
+    expect(res.transformedFn(1)).toBe(-1); // -2(1)^2 + 1 = -1
+    expect(res.description).toContain("x轴翻转");
+    expect(res.description).toContain("2.0倍");
+  });
 });

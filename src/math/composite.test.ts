@@ -40,6 +40,34 @@ describe("calculatePiecewise", () => {
     expect(res.isContinuous).toBe(true);
     expect(res.globalMonotonicity).toBe("increasing");
   });
+
+  it("应正确判定分段函数全域单调递减（单减 + 单减 + 搭接不等式 f1(x0) >= f2(x0) 成立）", () => {
+    const res = calculatePiecewise({
+      x0: 0.0,
+      leftSlope: -2.0,
+      leftConst: 3.0, // f1(0) = 3
+      rightSlope: -1.0,
+      rightConst: 2.0, // f2(0) = 2 (3 >= 2)
+    });
+    expect(res.leftMonotonicity).toBe("decreasing");
+    expect(res.rightMonotonicity).toBe("decreasing");
+    expect(res.globalMonotonicity).toBe("decreasing");
+    expect(res.evaluate(-1)).toBe(5);
+    expect(res.evaluate(1)).toBe(1);
+  });
+
+  it("应正确判定分界点向上跳跃破坏全域单调递减", () => {
+    const res = calculatePiecewise({
+      x0: 0.0,
+      leftSlope: -1.0,
+      leftConst: 1.0, // f1(0) = 1
+      rightSlope: -2.0,
+      rightConst: 4.0, // f2(0) = 4 (1 < 4, 向上跳跃破坏单减)
+    });
+    expect(res.leftMonotonicity).toBe("decreasing");
+    expect(res.rightMonotonicity).toBe("decreasing");
+    expect(res.globalMonotonicity).toBe("non-monotonic");
+  });
 });
 
 describe("calculateComposite", () => {
@@ -64,6 +92,32 @@ describe("calculateComposite", () => {
     expect(resDec.innerMonotonicity).toBe("decreasing");
     expect(resDec.outerMonotonicity).toBe("increasing");
     expect(resDec.compositeMonotonicity).toBe("decreasing");
+  });
+
+  it("二次外层函数（顶点 u=2）在递减区间与内层结合应满足同增异减", () => {
+    // f(u) = -(u-2)^2 + 4, 当 u > 2 时 f'(u) < 0 (递减)
+    // g(x) = x^2, 当 x > 0 时 g'(x) > 0 (递增)
+    // 当 x = 3 时 u = 9 > 2: 内层递增 + 外层递减 => 复合函数单调递减 (异减)
+    const resDec = calculateComposite({
+      xSample: 3.0,
+      innerB: 0,
+      innerC: 0,
+      outerType: "quadratic",
+    });
+    expect(resDec.innerMonotonicity).toBe("increasing");
+    expect(resDec.outerMonotonicity).toBe("decreasing");
+    expect(resDec.compositeMonotonicity).toBe("decreasing");
+
+    // 当 x = -3 时 u = 9 > 2: 内层递减 + 外层递减 => 复合函数单调递增 (同增)
+    const resInc = calculateComposite({
+      xSample: -3.0,
+      innerB: 0,
+      innerC: 0,
+      outerType: "quadratic",
+    });
+    expect(resInc.innerMonotonicity).toBe("decreasing");
+    expect(resInc.outerMonotonicity).toBe("decreasing");
+    expect(resInc.compositeMonotonicity).toBe("increasing");
   });
 
   it("对数复合在真数 u <= 0 时应标记为非法并提示定义域越界", () => {

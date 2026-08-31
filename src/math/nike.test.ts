@@ -60,4 +60,34 @@ describe("Nike Function Math Solver (y = a(x-h) + c + b/(x-h))", () => {
     expect(evalRes.y).toBeCloseTo(4);
     expect(evalRes.derivative).toBeCloseTo(0); // Extreme point derivative is 0
   });
+
+  it("should calculate inverted Nike function (a = -1, b = -4)", () => {
+    const res = solveNike(-1, -4, 0, 0);
+    expect(res.isValid).toBe(true);
+    expect(res.curveType).toBe("nike");
+    expect(res.criticalPoints).toHaveLength(2);
+
+    const minPt = res.criticalPoints.find((p) => p.type === "min");
+    const maxPt = res.criticalPoints.find((p) => p.type === "max");
+    expect(minPt?.x).toBeCloseTo(-2);
+    expect(minPt?.y).toBeCloseTo(4);
+    expect(maxPt?.x).toBeCloseTo(2);
+    expect(maxPt?.y).toBeCloseTo(-4);
+  });
+
+  it("should calculate AM-GM minimum point when a > 0 and b > 0", () => {
+    const res = solveNike(2, 8, 0, 0); // x = sqrt(8/2) = 2, min y = 2*2 + 8/2 = 8
+    expect(res.amgmMinPoint).toBeDefined();
+    expect(res.amgmMinPoint?.x).toBeCloseTo(2);
+    expect(res.amgmMinPoint?.y).toBeCloseTo(8);
+    expect(res.amgmMinPoint?.val1).toBeCloseTo(4);
+    expect(res.amgmMinPoint?.val2).toBeCloseTo(4);
+  });
+
+  it("should handle singularity at x0 = h with invalid derivative and tangent", () => {
+    const evalRes = evalNikeAt(1, 4, 2, 0, 2);
+    expect(evalRes.isValid).toBe(false);
+    expect(Number.isNaN(evalRes.y)).toBe(true);
+    expect(evalRes.tangentEquation).toContain("切线不存在");
+  });
 });

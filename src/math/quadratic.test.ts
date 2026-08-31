@@ -49,4 +49,22 @@ describe("solveQuadratic", () => {
     expect(res.axisX).toBeCloseTo(1);
     expect(res.vertexY).toBeCloseTo(0);
   });
+
+  it("should handle downward facing parabola (a < 0)", () => {
+    // y = -x^2 + 2x + 3 -> axisX = 1, vertexY = 4, roots = -1, 3
+    const res = solveQuadratic(-1, 2, 3);
+    expect(res.direction).toBe("向下");
+    expect(res.axisX).toBeCloseTo(1);
+    expect(res.vertexY).toBeCloseTo(4);
+    expect(res.roots).toHaveLength(2);
+    expect(res.roots[0]).toBeCloseTo(-1);
+    expect(res.roots[1]).toBeCloseTo(3);
+  });
+
+  it("should handle a = 0, b = 0, c = 0 → infinite roots [-Infinity, Infinity]", () => {
+    const res = solveQuadratic(0, 0, 0);
+    expect(res.isDegenerate).toBe(true);
+    expect(res.degenerateType).toBe("constant");
+    expect(res.roots).toEqual([-Infinity, Infinity]);
+  });
 });
