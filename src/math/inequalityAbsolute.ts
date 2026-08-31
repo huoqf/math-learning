@@ -118,8 +118,12 @@ export function solveAbsoluteInequality(
         intervals = [{ x1: a, x2: a }];
       } else {
         intervals = [
-          { x1: -Infinity, x2: a, isLeftInfinity: true },
-          { x1: a, x2: Infinity, isRightInfinity: true },
+          {
+            x1: -Infinity,
+            x2: Infinity,
+            isLeftInfinity: true,
+            isRightInfinity: true,
+          },
         ];
       }
     } else {
@@ -155,7 +159,7 @@ export function solveAbsoluteInequality(
     minVal = distAB;
     minConditionFormula = `x \\in [${minA.toFixed(1)}, ${maxA.toFixed(1)}]`;
 
-    if (m < distAB) {
+    if (m < distAB - 1e-7) {
       if (ineqType === "<=") {
         isDegenerate = true;
         degenerateReason = `m = ${m.toFixed(1)} < |a-b| = ${distAB.toFixed(1)}，解集为空集`;
@@ -170,7 +174,7 @@ export function solveAbsoluteInequality(
           },
         ];
       }
-    } else if (Math.abs(m - distAB) < 1e-7) {
+    } else if (Math.abs(m - distAB) <= 1e-7) {
       intersectionRoots = [minA, maxA];
       if (ineqType === "<=") {
         intervals = [{ x1: minA, x2: maxA }];
@@ -218,13 +222,20 @@ export function solveAbsoluteInequality(
     ];
     minVal = -distAB;
     maxVal = distAB;
-    minConditionFormula = `x \\le ${minA.toFixed(1)} \\text{ 或 } x \\ge ${maxA.toFixed(1)}`;
+    if (a < b) {
+      minConditionFormula = `\\text{最小值在 } x \\le ${a.toFixed(1)}, \\; \\text{最大值在 } x \\ge ${b.toFixed(1)}`;
+    } else if (a > b) {
+      minConditionFormula = `\\text{最小值在 } x \\ge ${a.toFixed(1)}, \\; \\text{最大值在 } x \\le ${b.toFixed(1)}`;
+    } else {
+      minConditionFormula = `x \\in \\mathbb{R}`;
+    }
 
     // |x-a| - |x-b| 的值域为 [-|a-b|, |a-b|]
     const lowerB = -distAB;
     const upperB = distAB;
+    const eps = 1e-7;
 
-    if (m < lowerB) {
+    if (m < lowerB - eps) {
       if (ineqType === "<=") {
         isDegenerate = true;
         degenerateReason = `m = ${m.toFixed(1)} < -|a-b|，解集为空集`;
@@ -239,7 +250,36 @@ export function solveAbsoluteInequality(
           },
         ];
       }
-    } else if (m > upperB) {
+    } else if (Math.abs(m - lowerB) <= eps) {
+      // m === -distAB
+      if (ineqType === ">=") {
+        // f(x) >= minVal 恒成立
+        intervals = [
+          {
+            x1: -Infinity,
+            x2: Infinity,
+            isLeftInfinity: true,
+            isRightInfinity: true,
+          },
+        ];
+      } else {
+        // f(x) <= minVal 仅在取得最小值的那一段恒成立
+        if (a < b) {
+          intervals = [{ x1: -Infinity, x2: a, isLeftInfinity: true }];
+        } else if (a > b) {
+          intervals = [{ x1: a, x2: Infinity, isRightInfinity: true }];
+        } else {
+          intervals = [
+            {
+              x1: -Infinity,
+              x2: Infinity,
+              isLeftInfinity: true,
+              isRightInfinity: true,
+            },
+          ];
+        }
+      }
+    } else if (m > upperB + eps) {
       if (ineqType === "<=") {
         intervals = [
           {
@@ -254,13 +294,37 @@ export function solveAbsoluteInequality(
         degenerateReason = `m = ${m.toFixed(1)} > |a-b|，解集为空集`;
         intervals = [];
       }
+    } else if (Math.abs(m - upperB) <= eps) {
+      // m === distAB
+      if (ineqType === "<=") {
+        // f(x) <= maxVal 恒成立
+        intervals = [
+          {
+            x1: -Infinity,
+            x2: Infinity,
+            isLeftInfinity: true,
+            isRightInfinity: true,
+          },
+        ];
+      } else {
+        // f(x) >= maxVal 仅在取得最大值的那一段恒成立
+        if (a < b) {
+          intervals = [{ x1: b, x2: Infinity, isRightInfinity: true }];
+        } else if (a > b) {
+          intervals = [{ x1: -Infinity, x2: b, isLeftInfinity: true }];
+        } else {
+          intervals = [
+            {
+              x1: -Infinity,
+              x2: Infinity,
+              isLeftInfinity: true,
+              isRightInfinity: true,
+            },
+          ];
+        }
+      }
     } else {
-      // m 在 [-distAB, distAB] 之间
-      // 分析 a 与 b 的大小顺序
-      // 当 a < b 时，f(x) 是从 -distAB (x<=a) 递增到 +distAB (x>=b)，中间 x in (a,b): (x-a) - (b-x) = 2x - a - b
-      // 2x - a - b = m => x = (a + b + m) / 2
-      // 当 a > b 时，f(x) 是从 +distAB (x<=b) 递减到 -distAB (x>=a)，中间 x in (b,a): (a-x) - (x-b) = a + b - 2x
-      // a + b - 2x = m => x = (a + b - m) / 2
+      // m 在 (-distAB, distAB) 开区间之间
       let root: number;
       if (a < b) {
         root = (a + b + m) / 2;
