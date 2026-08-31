@@ -164,44 +164,43 @@ export const PairedDataScene: React.FC<PairedDataSceneProps> = ({
   }, [studyMode, chiPlotWidth]);
 
   // 生成任意区间 [startChi, endChi] 在卡方曲线下方的封闭阴影路径辅助函数
-  const generateChiShadePath = (
-    startChi: number,
-    endChi: number,
-    samplesCount = 30,
-  ) => {
-    const sX = mapChiValueToPixel(startChi, maxChi, chiStartX, chiPlotWidth);
-    const eX = mapChiValueToPixel(endChi, maxChi, chiStartX, chiPlotWidth);
-    const points = sampleChiSquareCurvePoints(startChi, endChi, samplesCount);
-    const segs: string[] = [`M ${sX.toFixed(1)} ${chiPlotBaseY}`];
-    for (const p of points) {
-      const px = mapChiValueToPixel(p.chi, maxChi, chiStartX, chiPlotWidth);
-      const py = chiPlotBaseY - Math.min(chiPlotHeight, p.pdf * 85);
-      segs.push(`L ${px.toFixed(1)} ${py.toFixed(1)}`);
-    }
-    segs.push(`L ${eX.toFixed(1)} ${chiPlotBaseY} Z`);
-    return segs.join(" ");
-  };
+  const generateChiShadePath = useCallback(
+    (startChi: number, endChi: number, samplesCount = 30) => {
+      const sX = mapChiValueToPixel(startChi, maxChi, chiStartX, chiPlotWidth);
+      const eX = mapChiValueToPixel(endChi, maxChi, chiStartX, chiPlotWidth);
+      const points = sampleChiSquareCurvePoints(startChi, endChi, samplesCount);
+      const segs: string[] = [`M ${sX.toFixed(1)} ${chiPlotBaseY}`];
+      for (const p of points) {
+        const px = mapChiValueToPixel(p.chi, maxChi, chiStartX, chiPlotWidth);
+        const py = chiPlotBaseY - Math.min(chiPlotHeight, p.pdf * 85);
+        segs.push(`L ${px.toFixed(1)} ${py.toFixed(1)}`);
+      }
+      segs.push(`L ${eX.toFixed(1)} ${chiPlotBaseY} Z`);
+      return segs.join(" ");
+    },
+    [chiPlotWidth],
+  );
 
   // 多级置信区间阴影路径 (接受域 / 95%拒绝域 / 99%拒绝域 / 99.9%极显著拒绝域)
   const acceptAreaPath = useMemo(() => {
     if (studyMode !== "independence") return "";
     return generateChiShadePath(0.08, 3.841, 40);
-  }, [studyMode, chiPlotWidth]);
+  }, [studyMode, generateChiShadePath]);
 
   const p95AreaPath = useMemo(() => {
     if (studyMode !== "independence") return "";
     return generateChiShadePath(3.841, 6.635, 25);
-  }, [studyMode, chiPlotWidth]);
+  }, [studyMode, generateChiShadePath]);
 
   const p99AreaPath = useMemo(() => {
     if (studyMode !== "independence") return "";
     return generateChiShadePath(6.635, 10.828, 25);
-  }, [studyMode, chiPlotWidth]);
+  }, [studyMode, generateChiShadePath]);
 
   const p999AreaPath = useMemo(() => {
     if (studyMode !== "independence") return "";
     return generateChiShadePath(10.828, maxChi, 25);
-  }, [studyMode, chiPlotWidth]);
+  }, [studyMode, generateChiShadePath]);
 
   // 处理拖拽散点
   const handlePointDrag = (

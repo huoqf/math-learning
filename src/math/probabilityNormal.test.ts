@@ -121,5 +121,8 @@ describe("probabilityNormal math module", () => {
     const rightPos = skewNormalPdf(1, 0, 1, 2);
     const rightNeg = skewNormalPdf(-1, 0, 1, 2);
     expect(rightPos).toBeGreaterThan(rightNeg);
+
+    // 标准正态累积分布镜面对称恒等式: Phi(-z) = 1 - Phi(z)
+    expect(standardNormalCdf(-1.5)).toBeCloseTo(1 - standardNormalCdf(1.5), 5);
   });
 });

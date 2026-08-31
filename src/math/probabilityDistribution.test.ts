@@ -101,4 +101,24 @@ describe("probabilityDistribution math module", () => {
     expect(invest.bestByMean).toBe("B");
     expect(invest.bestByRisk).toBe("A");
   });
+
+  it("empty and extreme boundary conditions", () => {
+    const emptyRes = computeGeneralDiscreteDistribution([]);
+    expect(emptyRes.isValid).toBe(false);
+    expect(emptyRes.mean).toBe(0);
+
+    // 超几何极值: M=0 (无特征个体)
+    const zeroM = computeHypergeometricDistribution(10, 0, 3);
+    expect(zeroM.isValid).toBe(true);
+    expect(zeroM.mean).toBe(0);
+    expect(zeroM.variance).toBe(0);
+    expect(zeroM.outcomes[0].p).toBe(1);
+
+    // 超几何极值: M=N (全部为特征个体)
+    const allM = computeHypergeometricDistribution(10, 10, 3);
+    expect(allM.isValid).toBe(true);
+    expect(allM.mean).toBe(3);
+    expect(allM.variance).toBe(0);
+    expect(allM.outcomes[3].p).toBe(1);
+  });
 });

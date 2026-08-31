@@ -9,6 +9,8 @@ import {
   evaluateAssignments,
   getGridPathMatrix,
   calculateGroupingAllocation,
+  buildAdditionTree,
+  buildMultiplicationTree,
 } from "./probabilityCounting";
 
 describe("probabilityCounting math module", () => {
@@ -86,5 +88,24 @@ describe("probabilityCounting math module", () => {
     expect(groupInfo.divisionOrderFactor).toBe(6);
     expect(groupInfo.groupedWays).toBe(15);
     expect(groupInfo.allocatedWays).toBe(90);
+  });
+
+  it("decision trees and boundary conditions", () => {
+    // 边界与非法参数
+    expect(factorial(-1)).toBe(0);
+    expect(perm(3, 5)).toBe(0);
+    expect(perm(-1, 2)).toBe(0);
+    expect(comb(3, 5)).toBe(0);
+    expect(comb(-1, 2)).toBe(0);
+
+    // 乘法原理树: 2步 * 3步 = 6 个末端叶子
+    const multiTree = buildMultiplicationTree(2, 3);
+    expect(multiTree.nodes.length).toBe(1 + 2 + 6);
+    expect(multiTree.edges.length).toBe(2 + 6);
+
+    // 加法原理树: 类别1(3种) + 类别2(4种) = 7 个选项
+    const addTree = buildAdditionTree(3, 4);
+    expect(addTree.nodes.length).toBe(1 + 3 + 4);
+    expect(addTree.edges.length).toBe(3 + 4);
   });
 });
