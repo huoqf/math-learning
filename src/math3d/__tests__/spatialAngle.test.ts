@@ -76,4 +76,32 @@ describe("spatialAngle 空间角与距离数学求解器测试（新高考母题
     expect(res.maxVolume).toBeCloseTo((1 / 6) * 3 * 2 * 2, 4);
     expect((1 / 3) * res.areaBDE * res.distance).toBeCloseTo(res.volume, 4);
   });
+
+  it("异面直线与线面角数学性质严格满足高中课标值域区间", () => {
+    // 改变长方体各向比例验证角度范围
+    const testDimensions = [
+      { a: 1, b: 1, c: 1, l: 0.2 },
+      { a: 5, b: 2, c: 8, l: 0.8 },
+      { a: 2, b: 6, c: 3, l: 1.0 },
+    ];
+
+    for (const { a, b, c, l } of testDimensions) {
+      const skew = solveSkewLines(a, b, c, l);
+      expect(skew.cosTheta).toBeGreaterThanOrEqual(0);
+      expect(skew.cosTheta).toBeLessThanOrEqual(1);
+      expect(skew.angleDeg).toBeGreaterThan(0);
+      expect(skew.angleDeg).toBeLessThanOrEqual(90);
+
+      const linePlane = solveLinePlaneAngle(a, b, c, l);
+      expect(linePlane.sinTheta).toBeGreaterThan(0);
+      expect(linePlane.sinTheta).toBeLessThanOrEqual(1);
+      expect(linePlane.angleDeg).toBeGreaterThan(0);
+      expect(linePlane.angleDeg).toBeLessThanOrEqual(90);
+
+      const dihedral = solveDihedralAngle(a, b, c, l);
+      expect(dihedral.cosTheta).toBeGreaterThan(0);
+      expect(dihedral.dihedralDeg).toBeGreaterThan(0);
+      expect(dihedral.dihedralDeg).toBeLessThanOrEqual(90);
+    }
+  });
 });

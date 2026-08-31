@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { computeSilhouette } from "./silhouette";
+import { computeSilhouette } from "../silhouette";
 import {
   cylinderProfile,
   coneProfile,
   sphereProfile,
   frustumProfile,
-} from "./rotationProfiles";
+} from "../rotationProfiles";
 
 const DEG = Math.PI / 180;
 

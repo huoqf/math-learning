@@ -4,13 +4,13 @@ import {
   buildRegularPyramidPolyhedron,
   intersectConvexPolyhedronPlane,
   intersectRotationSolidPlane,
-} from "./sectionIntersection";
+} from "../sectionIntersection";
 import {
   cylinderProfile,
   coneProfile,
   sphereProfile,
-} from "./rotationProfiles";
-import type { Plane } from "./plane";
+} from "../rotationProfiles";
+import type { Plane } from "../plane";
 
 describe("intersectConvexPolyhedronPlane", () => {
   it("长方体被水平面在中间高度截开：截面应为与底面全等的矩形", () => {

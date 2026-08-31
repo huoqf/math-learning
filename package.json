@@ -13,7 +13,7 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "test": "vitest run src/math/",
+    "test": "vitest run src/math/ src/math3d/",
     "test:ci": "vitest run",
     "prepare": "husky"
   },

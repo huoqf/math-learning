@@ -9,9 +9,9 @@ import {
   normalize,
   angleBetween,
   distance,
-} from "./vector3";
+} from "../vector3";
 
-describe("vector3", () => {
+describe("vector3 基础向量代数纯函数", () => {
   it("add adds two vectors", () => {
     expect(add({ x: 1, y: 2, z: 3 }, { x: 4, y: 5, z: 6 })).toEqual({
       x: 5,
@@ -67,6 +67,10 @@ describe("vector3", () => {
     expect(
       angleBetween({ x: 1, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }),
     ).toBeCloseTo(0, 5);
+    // 钝角测试
+    expect(
+      angleBetween({ x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 }),
+    ).toBeCloseTo(Math.PI, 5);
   });
 
   it("distance computes Euclidean distance", () => {

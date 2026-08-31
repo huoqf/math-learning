@@ -6,9 +6,9 @@ import {
   regularTetrahedronCircumRadius,
   regularTetrahedronInRadius,
   coneCircumRadius,
-} from "./solidGeometry";
+} from "../solidGeometry";
 
-describe("solidGeometry", () => {
+describe("solidGeometry 空间几何体基础公式", () => {
   it("cuboidCircumRadius for unit cube", () => {
     expect(cuboidCircumRadius(1, 1, 1)).toBeCloseTo(Math.sqrt(3) / 2, 5);
   });

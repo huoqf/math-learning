@@ -9,7 +9,7 @@ import {
   radiusAtZ,
   calculateSphereCut,
   calculateUnfoldParams,
-} from "./rotationProfiles";
+} from "../rotationProfiles";
 
 describe("rotationProfiles", () => {
   it("圆柱母线首尾闭合且半径恒定", () => {

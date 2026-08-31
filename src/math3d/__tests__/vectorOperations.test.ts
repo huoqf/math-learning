@@ -47,4 +47,17 @@ describe("空间向量坐标运算、数量积与投影数学纯函数测试", (
     expect(res.angleDeg).toBeCloseTo(180);
     expect(res.cosTheta).toBeCloseTo(-1);
   });
+
+  it("当空间向量夹角为钝角时，投影数量为负且投影向量与基向量反向", () => {
+    const a: Vec3 = { x: 2, y: 0, z: 0 }; // 沿着 +x 轴
+    const b: Vec3 = { x: -3, y: 4, z: 0 }; // 夹角为钝角
+    const res = calculateVectorOperations(a, b);
+
+    expect(res.dotProduct).toBe(-6);
+    expect(res.projScalar).toBeCloseTo(-3);
+    expect(res.projBOnA.x).toBeCloseTo(-3);
+    expect(res.projBOnA.y).toBeCloseTo(0);
+    expect(res.projBOnA.z).toBeCloseTo(0);
+    expect(res.angleDeg).toBeGreaterThan(90);
+  });
 });

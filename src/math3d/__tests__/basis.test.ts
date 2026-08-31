@@ -168,4 +168,16 @@ describe("3D 空间向量基底分解与共面检验数学纯函数测试", () =
       expect(res.z).toBeCloseTo(z, 4);
     }
   });
+
+  it("四点共面边界情况：当点落在三角形边上或顶点时仍精准判定", () => {
+    // 顶点 A: x=1, y=0, z=0
+    const infoVertex = checkCoplanarCondition(1, 0, 0);
+    expect(infoVertex.isCoplanar).toBe(true);
+    expect(infoVertex.isInsideTriangle).toBe(true);
+
+    // 边 AB 中点: x=0.5, y=0.5, z=0
+    const infoEdge = checkCoplanarCondition(0.5, 0.5, 0);
+    expect(infoEdge.isCoplanar).toBe(true);
+    expect(infoEdge.isInsideTriangle).toBe(true);
+  });
 });

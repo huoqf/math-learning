@@ -4,9 +4,9 @@ import {
   planeAngle,
   linePlaneAngle,
   pointPlaneDistance,
-} from "./plane";
+} from "../plane";
 
-describe("plane", () => {
+describe("plane 空间平面方程与夹角距离纯函数", () => {
   it("planeFromPoints computes correct normal", () => {
     const p = planeFromPoints(
       { x: 0, y: 0, z: 0 },
