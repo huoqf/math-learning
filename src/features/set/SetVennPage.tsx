@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -80,7 +81,7 @@ export function SetVennPage() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="集合运算" subtitle="选择 Venn 图运算类型">
+          <LeftPanelSection title="集合运算">
             <SelectGrid
               items={[
                 { key: "intersection", label: "A ∩ B", formula: "A \\cap B" },
@@ -103,15 +104,27 @@ export function SetVennPage() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="参数调节与位置控制"
-            subtitle="可拖动图形点或调节参数"
-          >
+          <LeftPanelSection title="参数调节与位置控制">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard variant="primary">
+              <div className="space-y-1 text-xs">
+                <div className="font-semibold text-neutral-700">
+                  集合运算与 Venn 图：
+                </div>
+                <div className="leading-relaxed text-neutral-600">
+                  通过拖动圆心 <KatexFormula formula="O_A, O_B" mode="inline" />{" "}
+                  或样本点 <KatexFormula formula="P" mode="inline" />
+                  ，直观理解交集、并集、补集及差集的空间阴影覆盖与元素归属判定。
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

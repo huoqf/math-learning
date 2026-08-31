@@ -82,7 +82,9 @@ export function calculateSetMathState(
 
   let warningMessage: string | undefined;
 
-  if (rA === 0) {
+  if (rA === 0 && rB === 0) {
+    warningMessage = "集合 A 与集合 B 均为空集 (∅)。";
+  } else if (rA === 0) {
     warningMessage = "集合 A 为空集 (∅)。空集是任何集合的子集。";
   } else if (rB === 0) {
     warningMessage = "集合 B 为空集 (∅)。";
@@ -90,7 +92,9 @@ export function calculateSetMathState(
 
   let relation: SetMathState["relation"] = "separate";
 
-  if (rA === 0) {
+  if (rA === 0 && rB === 0) {
+    relation = "equal";
+  } else if (rA === 0) {
     relation = "empty_A";
   } else if (rB === 0) {
     relation = "empty_B";

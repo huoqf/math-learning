@@ -89,7 +89,7 @@ export function SetScene({
       },
       {
         key: "P",
-        text: `P(${xP.toFixed(1)}, ${yP.toFixed(1)})`,
+        text: "P",
         x: mathToDesign(xP, yP, scale).x,
         y: mathToDesign(xP, yP, scale).y,
         anchor: "middle",
@@ -336,7 +336,7 @@ export function SetScene({
                 ? MATH_COLORS.paramSecondary
                 : MATH_COLORS.labelText
         }
-        label={`P(${xP.toFixed(1)}, ${yP.toFixed(1)})`}
+        label="P"
         labelKey="P"
         placedLabels={placedLabels}
         fontScale={fontScale}

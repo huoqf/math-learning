@@ -7,7 +7,7 @@ import globals from 'globals';
 
 export default [
   // 全局忽略
-  { ignores: ['dist', 'out', 'release', 'coverage', '**/*.tsbuildinfo', 'vite.config.d.ts', 'electron/**/*.js'] },
+  { ignores: ['dist', 'out', 'release', 'coverage', '**/*.tsbuildinfo', 'vite.config.d.ts', 'electron/**/*.js', '.agents/**'] },
 
   js.configs.recommended,
 

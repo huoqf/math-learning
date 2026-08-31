@@ -6,6 +6,7 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -64,32 +65,37 @@ export function SetLogicPage() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="充分必要条件"
-            subtitle="探索集合包含与逻辑蕴含"
-          >
-            <div className="text-sm text-neutral-600 mb-3 p-3 bg-neutral-50 rounded-lg">
-              <p className="mb-1">
-                <strong>p ⇒ q</strong>（p 是 q 的充分条件）
-              </p>
-              <p className="mb-1">
-                <strong>q ⇒ p</strong>（p 是 q 的必要条件）
-              </p>
-              <p>
-                <strong>A ⊆ B</strong> ⟺ x∈A ⇒ x∈B
-              </p>
-            </div>
-          </LeftPanelSection>
-
-          <LeftPanelSection
-            title="参数调节与位置控制"
-            subtitle="可拖动图形点或调节参数"
-          >
+          <LeftPanelSection title="参数调节与位置控制">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard variant="primary">
+              <div className="space-y-1 text-xs">
+                <div className="font-semibold text-neutral-700">
+                  充分必要条件判定四步法：
+                </div>
+                <div className="leading-relaxed text-neutral-600">
+                  ① 明确条件 <KatexFormula formula="p" mode="inline" /> 与结论{" "}
+                  <KatexFormula formula="q" mode="inline" />
+                  ；② 确定对应集合{" "}
+                  <KatexFormula
+                    formula="A=\{x \mid p\}, B=\{x \mid q\}"
+                    mode="inline"
+                  />
+                  ；③ 判断集合包含关系（
+                  <KatexFormula
+                    formula="A \subseteq B \iff p \implies q"
+                    mode="inline"
+                  />
+                  ）；④ “小范围推大范围”，得出充要结论。
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }

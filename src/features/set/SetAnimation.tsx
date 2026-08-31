@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -97,10 +98,7 @@ export function SetAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="模式选择"
-            subtitle="切换集合运算与常用逻辑用语"
-          >
+          <LeftPanelSection title="模式选择">
             <TabSwitcher
               tabs={[
                 { key: "venn", label: "集合的基本运算" },
@@ -135,15 +133,45 @@ export function SetAnimation() {
             )}
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="参数调节与位置控制"
-            subtitle="可拖动图形点或调节参数"
-          >
+          <LeftPanelSection title="参数调节与位置控制">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={() => setParams({ ...defaultParams })}
             />
+          </LeftPanelSection>
+
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard variant="primary">
+              <div className="space-y-1 text-xs">
+                <div className="font-semibold text-neutral-700">
+                  {activeTab === "venn"
+                    ? "集合 Venn 图特征："
+                    : "充要条件包含法则："}
+                </div>
+                <div className="leading-relaxed text-neutral-600">
+                  {activeTab === "venn" ? (
+                    <>
+                      直观观察 <KatexFormula formula="A, B" mode="inline" />{" "}
+                      两集合交、并、补、差的区域覆盖，以及样本点{" "}
+                      <KatexFormula formula="P" mode="inline" /> 的归属变化。
+                    </>
+                  ) : (
+                    <>
+                      <KatexFormula
+                        formula="A \subseteq B \iff p \implies q"
+                        mode="inline"
+                      />
+                      。若{" "}
+                      <KatexFormula formula="A \subsetneq B" mode="inline" />
+                      ，则 <KatexFormula formula="p" mode="inline" /> 是{" "}
+                      <KatexFormula formula="q" mode="inline" />{" "}
+                      的充分不必要条件。
+                    </>
+                  )}
+                </div>
+              </div>
+            </TipCard>
           </LeftPanelSection>
         </LeftPanel>
       }
