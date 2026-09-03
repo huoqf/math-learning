@@ -452,7 +452,7 @@ export function TrigIdentityAnimation() {
             transform={vp.transform}
           >
             <TrigIdentityScene
-              params={params as any}
+              params={params}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

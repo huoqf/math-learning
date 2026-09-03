@@ -403,7 +403,7 @@ export default function CircumInSphereAnimation() {
         min: meta.min,
         max: meta.max,
         step: meta.step ?? 0.1,
-        importance: meta.importance as any,
+        importance: meta.importance,
       };
     });
   }, [shape, params, presetKey]);

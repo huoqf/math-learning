@@ -206,7 +206,7 @@ export default function Vector3DBasisAnimation() {
 
   const handlePresetSelect = (presetKey: string) => {
     setActivePreset(presetKey);
-    const configs: Record<string, any> = {
+    const configs: Record<string, Record<string, number>> = {
       para_diag: { x: 1.0, y: 1.0, z: 1.0, cz: 2.0 },
       para_center: { x: 0.5, y: 0.5, z: 0.5, cz: 2.0 },
       para_degen: { cz: 0.0 },

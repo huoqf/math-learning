@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * src/features/sequence/components/RecurrenceShared.tsx
  * RecurrenceScene 各子场景共享的公共类型与通用组件

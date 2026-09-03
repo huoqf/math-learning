@@ -32,6 +32,9 @@ interface TrigTangentSceneProps {
   showMonotoneInterval?: boolean;
 }
 
+const UNIT_CIRCLE_CENTER = { x: -3.8, y: 0 };
+const UNIT_RADIUS = 1.0;
+
 export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
   params,
   scale,
@@ -61,11 +64,11 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
       : C;
 
   // 模式1：单位圆与正切线几何计算（严格数学 1:1 对齐）
-  const unitCircleCenter = { x: -3.8, y: 0 };
-  const r = 1.0; // 单位圆半径严格等于 1.0
+  const unitCircleCenter = UNIT_CIRCLE_CENTER;
+  const r = UNIT_RADIUS;
   const tangentData = useMemo(() => {
-    return calculateUnitCircleTangent(theta, unitCircleCenter, r);
-  }, [theta, unitCircleCenter, r]);
+    return calculateUnitCircleTangent(theta, UNIT_CIRCLE_CENTER, UNIT_RADIUS);
+  }, [theta]);
 
   const centerDesign = mathToDesign(
     unitCircleCenter.x,

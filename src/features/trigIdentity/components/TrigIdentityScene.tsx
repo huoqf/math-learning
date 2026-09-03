@@ -26,19 +26,7 @@ import {
 } from "../math/trigIdentity";
 
 interface TrigIdentitySceneProps {
-  params: {
-    alphaDeg: number;
-    homoA?: number;
-    homoB?: number;
-    homoC?: number;
-    homoD?: number;
-    quadA?: number;
-    quadB?: number;
-    quadC?: number;
-    universalK?: number;
-    universalSign?: number;
-    thetaDeg?: number;
-  };
+  params: Record<string, number>;
   scale: SceneScale;
   vp: ViewportInfo;
   onParamChange: (key: string, value: number) => void;
@@ -47,6 +35,54 @@ interface TrigIdentitySceneProps {
   identitySubMode?: IdentitySubMode;
   inductionSubMode?: InductionSubMode;
   formulaType?: FormulaType;
+}
+
+// 生成角度弧线或多圈阿基米德螺旋线
+function createAngleArcPath(
+  centerPt: { x: number; y: number },
+  startDeg: number,
+  sweepDeg: number,
+  baseR: number,
+  isSpiral: boolean = false,
+): string {
+  if (Math.abs(sweepDeg) < 0.5) return "";
+  const totalRad = (sweepDeg * Math.PI) / 180;
+  const startRad = (startDeg * Math.PI) / 180;
+  const isMultiTurn = Math.abs(sweepDeg) > 360;
+
+  // 单圈且不需要螺旋
+  if (!isMultiTurn && !isSpiral) {
+    const r = baseR;
+    const endRad = startRad + totalRad;
+    const startX = centerPt.x + r * Math.cos(startRad);
+    const startY = centerPt.y - r * Math.sin(startRad);
+    const endX = centerPt.x + r * Math.cos(endRad);
+    const endY = centerPt.y - r * Math.sin(endRad);
+    const largeArc = Math.abs(sweepDeg) > 180 ? 1 : 0;
+    const sweep = sweepDeg >= 0 ? 0 : 1;
+    return `M ${startX} ${startY} A ${r} ${r} 0 ${largeArc} ${sweep} ${endX} ${endY}`;
+  }
+
+  // 多圈阿基米德螺旋线：点采样生成光滑 path
+  const numSteps = Math.max(36, Math.floor(Math.abs(sweepDeg) / 8));
+  const rStart = baseR * 0.7;
+  const rGrowth = (baseR * 0.6) / (Math.abs(sweepDeg) / 360);
+  let pathStr = "";
+
+  for (let i = 0; i <= numSteps; i++) {
+    const t = i / numSteps;
+    const currentAngleRad = startRad + totalRad * t;
+    const currentR = rStart + rGrowth * (Math.abs(sweepDeg) / 360) * t;
+    const px = centerPt.x + currentR * Math.cos(currentAngleRad);
+    const py = centerPt.y - currentR * Math.sin(currentAngleRad);
+
+    if (i === 0) {
+      pathStr += `M ${px} ${py}`;
+    } else {
+      pathStr += ` L ${px} ${py}`;
+    }
+  }
+  return pathStr;
 }
 
 export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
@@ -61,7 +97,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
   formulaType = "pi_plus",
 }) => {
   const {
-    alphaDeg,
+    alphaDeg = 45,
     homoA = 1,
     homoB = 1,
     homoC = 1,
@@ -161,64 +197,17 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
   // 单位圆半径 (像素)
   const unitRadiusPx = scale.scaleX;
 
-  // 生成角度弧线或多圈阿基米德螺旋线
-  const createAngleArcPath = (
-    startDeg: number,
-    sweepDeg: number,
-    baseR: number,
-    isSpiral: boolean = false,
-  ) => {
-    if (Math.abs(sweepDeg) < 0.5) return "";
-    const totalRad = (sweepDeg * Math.PI) / 180;
-    const startRad = (startDeg * Math.PI) / 180;
-    const isMultiTurn = Math.abs(sweepDeg) > 360;
-
-    // 单圈且不需要螺旋
-    if (!isMultiTurn && !isSpiral) {
-      const r = baseR;
-      const endRad = startRad + totalRad;
-      const startX = centerPt.x + r * Math.cos(startRad);
-      const startY = centerPt.y - r * Math.sin(startRad);
-      const endX = centerPt.x + r * Math.cos(endRad);
-      const endY = centerPt.y - r * Math.sin(endRad);
-      const largeArc = Math.abs(sweepDeg) > 180 ? 1 : 0;
-      const sweep = sweepDeg >= 0 ? 0 : 1;
-      return `M ${startX} ${startY} A ${r} ${r} 0 ${largeArc} ${sweep} ${endX} ${endY}`;
-    }
-
-    // 多圈阿基米德螺旋线：点采样生成光滑 path
-    const numSteps = Math.max(36, Math.floor(Math.abs(sweepDeg) / 8));
-    const rStart = baseR * 0.7;
-    const rGrowth = (baseR * 0.6) / (Math.abs(sweepDeg) / 360);
-    let pathStr = "";
-
-    for (let i = 0; i <= numSteps; i++) {
-      const t = i / numSteps;
-      const currentAngleRad = startRad + totalRad * t;
-      const currentR = rStart + rGrowth * (Math.abs(sweepDeg) / 360) * t;
-      const px = centerPt.x + currentR * Math.cos(currentAngleRad);
-      const py = centerPt.y - currentR * Math.sin(currentAngleRad);
-
-      if (i === 0) {
-        pathStr += `M ${px} ${py}`;
-      } else {
-        pathStr += ` L ${px} ${py}`;
-      }
-    }
-    return pathStr;
-  };
-
   // 动角 α 弧线 path
   const alphaArcPath = useMemo(() => {
     const r = Math.min(unitRadiusPx * 0.26, 34);
-    return createAngleArcPath(0, alphaDeg, r);
+    return createAngleArcPath(centerPt, 0, alphaDeg, r);
   }, [alphaDeg, centerPt, unitRadiusPx]);
 
   // 变换角 β 弧线 path (多圈时自动平滑螺旋展开)
   const betaArcPath = useMemo(() => {
     const r = Math.min(unitRadiusPx * 0.42, 54);
     const sweep = activeInd.betaDeg;
-    return createAngleArcPath(0, sweep, r, Math.abs(sweep) > 360);
+    return createAngleArcPath(centerPt, 0, sweep, r, Math.abs(sweep) > 360);
   }, [activeInd.betaDeg, centerPt, unitRadiusPx]);
 
   // 判定 P 与 P' 是否近乎重合 (欧氏距离 < 24px)
