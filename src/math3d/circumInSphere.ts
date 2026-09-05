@@ -46,20 +46,21 @@ export function calculateCuboidSphere(
     const sphereVolume = (4 / 3) * Math.PI * radius ** 3;
     const sphereArea = 4 * Math.PI * radius ** 2;
 
-    const O: Vec3 = { x: 0, y: 0, z: 0 };
-    const B1: Vec3 = { x: a, y: b, z: c };
-    const B: Vec3 = { x: a, y: b, z: 0 };
-    const A: Vec3 = { x: a, y: 0, z: 0 };
+    const A: Vec3 = { x: 0, y: 0, z: 0 };
+    const B: Vec3 = { x: a, y: 0, z: 0 };
+    const D: Vec3 = { x: 0, y: b, z: 0 };
+    const C: Vec3 = { x: a, y: b, z: 0 };
+    const C1: Vec3 = { x: a, y: b, z: c };
 
     return {
       radius,
       center,
-      keyPoints: { O, B, B1, A, Center: center },
+      keyPoints: { A, B, D, C, C1, Center: center },
       auxSegments: [
-        { from: O, to: B1, label: "2R", dashed: true },
-        { from: O, to: B, label: "底面对角线", dashed: true },
-        { from: B, to: B1, label: "高 c", dashed: false },
-        { from: center, to: B1, dashed: true },
+        { from: A, to: C1, label: "2R", dashed: true },
+        { from: A, to: C, label: "底面对角线", dashed: true },
+        { from: C, to: C1, label: "高 c", dashed: false },
+        { from: center, to: C1, label: "R", dashed: true },
       ],
       solidVolume,
       solidArea,
@@ -201,17 +202,21 @@ export function calculatePrismSphere(
 
     const O1: Vec3 = { x: a / 2, y: b / 2, z: 0 };
     const O2: Vec3 = { x: a / 2, y: b / 2, z: h };
-    const C1: Vec3 = { x: 0, y: b, z: h };
+    const A: Vec3 = { x: a, y: 0, z: 0 };
+    const B: Vec3 = { x: 0, y: b, z: 0 };
+    const C: Vec3 = { x: 0, y: 0, z: 0 };
+    const C1: Vec3 = { x: 0, y: 0, z: h };
+    const B1: Vec3 = { x: 0, y: b, z: h };
 
     return {
       radius,
       center,
-      keyPoints: { O1, O2, Center: center, C1 },
+      keyPoints: { O1, O2, A, B, C, C1, B1, Center: center },
       auxSegments: [
         { from: O1, to: O2, label: "外心高线", dashed: true },
         { from: center, to: O1, dashed: true },
-        { from: center, to: C1, label: "R", dashed: true },
-        { from: O2, to: C1, label: "r底", dashed: true },
+        { from: center, to: B1, label: "R", dashed: true },
+        { from: O2, to: B1, label: "r底", dashed: true },
       ],
       solidVolume,
       solidArea,

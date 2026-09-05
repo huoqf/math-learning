@@ -419,28 +419,30 @@ export default function CircumInSphereAnimation() {
           badge: isCircum
             ? "高考母题 · 正方体外接球"
             : "高考核心 · 正方体内切球",
-          condition: "正方体棱长为 a (a=b=h)，中心为 O。",
+          condition: "正方体底面边长 AB=AD=a，高 AA₁=CC₁=a (a=b=h)，中心为 O。",
           question: isCircum
-            ? "正方体体对角线即外接球直径：2R = √3 a，球心与正方体中心重合。"
-            : "正方体内切球直径等于棱长：2r = a，球与正方体 6 个正方形面均内切。",
+            ? "正方体体对角线 AC₁ 即外接球直径：2R = √3 a，球心 O 为体对角线中点。"
+            : "正方体内切球直径等于棱长：2r = a，球心 O 为体中心，球与 6 个正方形面均相切于中心。",
         };
       }
       if (presetKey === "cuboid_std") {
         return {
           variant: "primary" as const,
           badge: "高考经典 · 3-4-12 勾股长方体外接球",
-          condition: "长方体长 a=3、宽 b=4、高 h=12。",
+          condition:
+            "长方体长 AB=a=1.5、宽 AD=b=2、高 CC₁=h=6，底面对角线 AC=2.5。",
           question:
-            "由长方体对角线公式得 (2R)² = 3² + 4² + 12² = 169，秒解外接球直径 2R = 13 (R = 6.5)。",
+            "由体对角线公式 (2R)² = AB² + AD² + CC₁² = 1.5² + 2² + 6² = 42.25，秒解外接球直径 2R = 6.5 (R = 3.25)。",
         };
       }
       return {
         variant: "primary" as const,
         badge: isCircum ? "高考母题 · 长方体外接球" : "高考核心 · 正方体内切球",
-        condition: "长方体长宽高分别为 a, b, h。",
+        condition:
+          "长方体底面顶点 A(0,0,0)，长 AB=a、宽 AD=b、高 CC₁=h，球心为体中心 O。",
         question: isCircum
-          ? "长方体体对角线即外接球直径：(2R)² = a² + b² + h²，球心为体对角线交点。"
-          : "正方体内切球球心为中心，内切球直径等于棱长：2r = a，球与 6 个正方形面相切。",
+          ? "底面对角线 AC=√(a²+b²)，体对角线 AC₁ 即外接球直径：(2R)² = a² + b² + h²，球心 O 为 AC₁ 中点。"
+          : "长宽高相等 (a=b=h) 时才存在与 6 面均相切的内切球，直径等于棱长 2r = a；长宽高不等时显示内部最大切球。",
       };
     }
 
@@ -449,10 +451,11 @@ export default function CircumInSphereAnimation() {
         return {
           variant: "warning" as const,
           badge: "高考经典 · 正八面体半体（侧棱等于底边）",
-          condition: "正四棱锥侧棱等于底面边长 a，高 h = (√2/2)a。",
+          condition:
+            "正四棱锥底面中心为 O₁，底边边长 a，高 SO₁ = h = (√2/2)a，侧棱 SA = a。",
           question: isCircum
-            ? "外接球球心落在底面正方形中心，外接球半径 R = (√2/2)a，侧棱即球半径。"
-            : "轴截面等腰三角形内切圆半径 r = (3V) / S_表 = a / (√2 + 2√3)。",
+            ? "底面外接半径 O₁A = (√2/2)a，球心 O 恰好与底面中心 O₁ 重合，外接球半径 R = SO₁ = (√2/2)a。"
+            : "侧面中点 M 处斜高 SM = (√3/2)a；由等体积法求得内切球半径 r = 3V / S_表 = a / (√2 + 2√3)。",
         };
       }
       return {
@@ -461,10 +464,10 @@ export default function CircumInSphereAnimation() {
           ? "高考经典 · 正四棱锥外接球"
           : "高考大题 · 正四棱锥内切球",
         condition:
-          "正四棱锥底面边长为 a，高为 h，斜高为 h_斜 = √(h² + (a/2)²)。",
+          "正四棱锥底面正方形中心为 O₁、边长为 a，顶点为 S、高 SO₁=h；侧面底边中点为 M、斜高 SM=hs。",
         question: isCircum
-          ? "外接球球心在高线上，设球心到顶点距离为 R，由直角三角形勾股得 R² = (a/√2)² + (h - R)²。"
-          : "轴截面降维为等腰三角形内切圆，或由等体积法得内切球半径 r = (3V) / S_表 = (a·h) / (a + 2h_斜)。",
+          ? "底面外接圆半径 O₁A = a/√2。外接球球心 O 在中心高线 SO₁ 上，勾股列式 R² = (O₁A)² + (h - R)² 解出 R。"
+          : "球心 I 落在高线 SO₁ 上；由空间等体积法（球心向 5 个面分割）得内切球半径 r = 3V / S_表 = (a·h) / (a + 2hs)。",
       };
     }
 
@@ -474,10 +477,10 @@ export default function CircumInSphereAnimation() {
           variant: "success" as const,
           badge: "高考母题 · 等腰直角三棱柱切接球",
           condition:
-            "直三棱柱高为 h，底面为等腰直角三角形 (a=b, 斜边 c=√2 a)。",
+            "底面为等腰直角 △ABC（直角顶点在 C，CA=CB=a，斜边 AB=√2 a），柱高 CC₁=h；上下底斜边中点 O₁, O₂ 为外心。",
           question: isCircum
-            ? "底面外心即斜边中点，底面外接圆半径 r_底 = (√2/2)a，外接球半径 R² = a²/2 + (h/2)²。"
-            : "内切球存在时必须满足 2r = h = 2a - √2 a。",
+            ? "底面外接圆半径 O₁A = (√2/2)a，外接球球心 O 为 O₁O₂ 中点，由空间勾股求得 R² = a²/2 + (h/2)²。"
+            : "内切球存在充要条件为高线等于底面内切圆直径：h = 2r_底 = (2 - √2)a。",
         };
       }
       return {
@@ -486,10 +489,10 @@ export default function CircumInSphereAnimation() {
           ? "高考常考 · 直三棱柱外接球"
           : "高考高频 · 直三棱柱内切球",
         condition:
-          "直三棱柱高为 h，底面为直角三角形（直角边 a, b，斜边 c=√(a²+b²)）。",
+          "直三棱柱底面直角顶点在 C（直角边 CA=a, CB=b，斜边 AB=√(a²+b²)），高 CC₁=h；底面斜边中点 O₁, O₂ 分别为上下底外心。",
         question: isCircum
-          ? "底面外接圆半径 r_底 = c/2，外接球球心为上下底外心连线中点，满足 R² = r_底² + (h/2)²。"
-          : "内切球存在充要条件为底面内切圆直径等于高：2r = h = a + b - c。",
+          ? "底面外接圆半径 O₁A = AB/2。外接球球心 O 为 O₁O₂ 中点，由空间勾股定理计算 R² = (O₁A)² + (h/2)²。"
+          : "底面内切圆半径 r_底 = (a+b-AB)/2；只有当棱柱高度等于底面内切圆直径 (h = 2r_底) 时才存在与 5 面均相切的内切球。",
       };
     }
 
@@ -498,19 +501,21 @@ export default function CircumInSphereAnimation() {
         return {
           variant: "accent" as const,
           badge: "高考模型 · 等边圆锥（轴截面正三角形）",
-          condition: "圆锥底面半径为 r，母线长 l = 2r，高 h = √3 r。",
+          condition:
+            "圆锥底面圆心为 O₁、底面半径 O₁A = r，母线 SA = l = 2r，高 SO₁ = h = √3 r。",
           question: isCircum
-            ? "轴截面为正三角形，外接球半径 R = (2/3)h = (2√3/3)r。"
+            ? "轴截面为边长 2r 的正三角形，外接球半径 R = (2/3)h = (2√3/3)r。"
             : "内切球半径 r_内 = (1/3)h = (√3/3)r，外接球与内切球同心且 R = 2r_内。",
         };
       }
       return {
         variant: "accent" as const,
         badge: isCircum ? "高考模型 · 圆锥外接球" : "高考核心 · 圆锥内切球",
-        condition: "圆锥底面半径为 r_底=a，高为 h，母线长为 l = √(a² + h²)。",
+        condition:
+          "圆锥底面中心为 O₁、底半径 O₁A = r，顶点为 S、高 SO₁ = h，母线 SA = l = √(r² + h²)。",
         question: isCircum
-          ? "轴截面为等腰三角形，外接球半径即等腰三角形外接圆半径：R = l² / (2h)。"
-          : "轴截面等腰三角形内切圆半径即圆锥内切球半径：r = (a·h) / (a + l)。",
+          ? "过轴截面降维为等腰 △SAA'，外接球半径即等腰三角形外接圆半径：R = l² / (2h)。"
+          : "轴截面等腰三角形内切圆半径即圆锥内切球半径：由等面积法求得 r = (r·h) / (r + l)。",
       };
     }
 
@@ -519,19 +524,21 @@ export default function CircumInSphereAnimation() {
         return {
           variant: "info" as const,
           badge: "高考模型 · 等高圆柱（轴截面正方形）",
-          condition: "圆柱底面半径为 r，高 h = 2r，轴截面为边长 2r 的正方形。",
+          condition:
+            "圆柱下底圆心 O₁、上底圆心 O₂，底面半径 O₂A₁ = r，轴高 O₁O₂ = h = 2r（轴截面为 2r×2r 正方形）。",
           question: isCircum
-            ? "外接球直径即正方形对角线：2R = 2√2 r，外接球半径 R = √2 r。"
-            : "恰好存在内切球，内切球球心与圆柱中心重合，内切球半径 r_内 = r = h/2。",
+            ? "外接球直径即正方形对角线：2R = 2√2 r，外接球半径 R = √2 r，球心为 O₁O₂ 中点 O。"
+            : "恰好存在内切球，内切球球心与圆柱中心重合，内切球半径等于底面半径：r_内 = r = h/2。",
         };
       }
       return {
         variant: "info" as const,
         badge: isCircum ? "高考模型 · 圆柱外接球" : "高考模型 · 圆柱内切球",
-        condition: "圆柱底面半径为 r_底=a，高为 h (当 h=2a 时轴截面为正方形)。",
+        condition:
+          "圆柱下底圆心 O₁、上底圆心 O₂，轴长 O₁O₂ = h，底面半径 O₁A = O₂A₁ = r。",
         question: isCircum
-          ? "轴截面为矩形，外接球直径即矩形对角线：(2R)² = (2a)² + h²，R = √(a² + (h/2)²)。"
-          : "当且仅当 h=2a（等高圆柱）时存在内切球，内切球半径 r = a = h/2。",
+          ? "轴截面为宽 2r、高 h 的矩形，矩形体对角线即外接球直径：(2R)² = (2r)² + h²，R = √(r² + (h/2)²)。"
+          : "当且仅当 h = 2r（等高圆柱）时才存在同时与上下底面和侧面相切的内切球，半径 r = h/2。",
       };
     }
 
@@ -547,7 +554,7 @@ export default function CircumInSphereAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* Step 1: 探究模式 (2×2 黄金网格) */}
+          {/* Step 1: 探究模式 (2×2 黄金网格，纯净加粗学术标题，杜绝多余公式干扰) */}
           <LeftPanelSection title="探究模式">
             <SelectGrid
               columns={2}
@@ -555,12 +562,10 @@ export default function CircumInSphereAnimation() {
                 {
                   key: "circum",
                   label: "外接球",
-                  formula: "R_{\\text{外}}",
                 },
                 {
                   key: "inscribed",
                   label: "内切球",
-                  formula: "r_{\\text{内}}",
                 },
               ]}
               value={sphereType}

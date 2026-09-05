@@ -150,39 +150,133 @@ export const CircumInSphereScene = ({
         <>
           <Point3D position={{ x: 0, y: 0, z: 0 }} colorKey="primary" />
           <PointLabel3D position={{ x: 0, y: 0, z: 0 }} text="A" />
+          <Point3D position={{ x: a, y: 0, z: 0 }} colorKey="primary" />
+          <PointLabel3D position={{ x: a, y: 0, z: 0 }} text="B" />
+          <Point3D position={{ x: 0, y: b, z: 0 }} colorKey="primary" />
+          <PointLabel3D position={{ x: 0, y: b, z: 0 }} text="D" />
+          <Point3D position={{ x: a, y: b, z: 0 }} colorKey="primary" />
+          <PointLabel3D position={{ x: a, y: b, z: 0 }} text="C" />
           <Point3D position={{ x: a, y: b, z: c }} colorKey="primary" />
           <CompoundLabel3D
             position={{ x: a, y: b, z: c }}
             base="C"
             subscript="1"
           />
-          <Point3D position={{ x: a, y: b, z: 0 }} colorKey="primary" />
-          <PointLabel3D position={{ x: a, y: b, z: 0 }} text="C" />
         </>
       )}
 
-      {shape === "regularPyramid" && keyPoints.S && (
+      {shape === "regularPyramid" && (
         <>
-          <Point3D position={keyPoints.S} colorKey="primary" />
-          <PointLabel3D position={keyPoints.S} text="S" />
-          <Point3D position={keyPoints.OBase} colorKey="primary" />
-          <CompoundLabel3D position={keyPoints.OBase} base="O" subscript="1" />
+          {keyPoints.S && (
+            <>
+              <Point3D position={keyPoints.S} colorKey="primary" />
+              <PointLabel3D position={keyPoints.S} text="S" />
+            </>
+          )}
+          {keyPoints.OBase && (
+            <>
+              <Point3D position={keyPoints.OBase} colorKey="primary" />
+              <CompoundLabel3D
+                position={keyPoints.OBase}
+                base="O"
+                subscript="1"
+              />
+            </>
+          )}
+          {keyPoints.A && (
+            <>
+              <Point3D position={keyPoints.A} colorKey="primary" />
+              <PointLabel3D position={keyPoints.A} text="A" />
+            </>
+          )}
+          {keyPoints.M && (
+            <>
+              <Point3D position={keyPoints.M} colorKey="primary" />
+              <PointLabel3D position={keyPoints.M} text="M" />
+            </>
+          )}
         </>
       )}
 
-      {shape === "triangularPrism" && keyPoints.O1 && keyPoints.O2 && (
+      {shape === "triangularPrism" && (
         <>
-          <Point3D position={keyPoints.O1} colorKey="primary" />
-          <CompoundLabel3D position={keyPoints.O1} base="O" subscript="1" />
-          <Point3D position={keyPoints.O2} colorKey="primary" />
-          <CompoundLabel3D position={keyPoints.O2} base="O" subscript="2" />
+          <Point3D position={{ x: 0, y: 0, z: 0 }} colorKey="primary" />
+          <PointLabel3D position={{ x: 0, y: 0, z: 0 }} text="C" />
+          <Point3D position={{ x: a, y: 0, z: 0 }} colorKey="primary" />
+          <PointLabel3D position={{ x: a, y: 0, z: 0 }} text="A" />
+          <Point3D position={{ x: 0, y: b, z: 0 }} colorKey="primary" />
+          <PointLabel3D position={{ x: 0, y: b, z: 0 }} text="B" />
+          {keyPoints.O1 && (
+            <>
+              <Point3D position={keyPoints.O1} colorKey="primary" />
+              <CompoundLabel3D position={keyPoints.O1} base="O" subscript="1" />
+            </>
+          )}
+          {keyPoints.O2 && (
+            <>
+              <Point3D position={keyPoints.O2} colorKey="primary" />
+              <CompoundLabel3D position={keyPoints.O2} base="O" subscript="2" />
+            </>
+          )}
+          <Point3D position={{ x: 0, y: 0, z: c }} colorKey="primary" />
+          <CompoundLabel3D
+            position={{ x: 0, y: 0, z: c }}
+            base="C"
+            subscript="1"
+          />
         </>
       )}
 
-      {(shape === "cone" || shape === "cylinder") && keyPoints.O1 && (
+      {shape === "cone" && (
         <>
-          <Point3D position={keyPoints.O1} colorKey="primary" />
-          <CompoundLabel3D position={keyPoints.O1} base="O" subscript="1" />
+          {keyPoints.S && (
+            <>
+              <Point3D position={keyPoints.S} colorKey="primary" />
+              <PointLabel3D position={keyPoints.S} text="S" />
+            </>
+          )}
+          {(keyPoints.OBase || keyPoints.O1) && (
+            <>
+              <Point3D
+                position={keyPoints.OBase || keyPoints.O1}
+                colorKey="primary"
+              />
+              <CompoundLabel3D
+                position={keyPoints.OBase || keyPoints.O1}
+                base="O"
+                subscript="1"
+              />
+            </>
+          )}
+          {keyPoints.A && (
+            <>
+              <Point3D position={keyPoints.A} colorKey="primary" />
+              <PointLabel3D position={keyPoints.A} text="A" />
+            </>
+          )}
+        </>
+      )}
+
+      {shape === "cylinder" && (
+        <>
+          {keyPoints.O1 && (
+            <>
+              <Point3D position={keyPoints.O1} colorKey="primary" />
+              <CompoundLabel3D position={keyPoints.O1} base="O" subscript="1" />
+            </>
+          )}
+          {keyPoints.O2 && (
+            <>
+              <Point3D position={keyPoints.O2} colorKey="primary" />
+              <CompoundLabel3D position={keyPoints.O2} base="O" subscript="2" />
+            </>
+          )}
+          {keyPoints.A1 && (
+            <>
+              <Point3D position={keyPoints.A1} colorKey="primary" />
+              <CompoundLabel3D position={keyPoints.A1} base="A" subscript="1" />
+            </>
+          )}
         </>
       )}
 

@@ -149,8 +149,9 @@ for (const filePath of files) {
     }
 
     // 7. 检查数据层混合文本未加 $ 定界符 (如 "当 \\alpha > 0 时" 或 "y=x^2 偶函数")
+    const isTestFile = filePath.includes('test') || filePath.includes('spec');
     const isCommentLine = /^\s*(\/\/|\/\*|\{\/\*|\*)/.test(line);
-    if (!isCommentLine && (line.includes('text:') || line.includes('prerequisites:') || line.includes('"') || line.includes('\'')) && /[\u4e00-\u9fa5]/.test(line)) {
+    if (!isTestFile && !isCommentLine && (line.includes('text:') || line.includes('prerequisites:') || line.includes('"') || line.includes('\'')) && /[\u4e00-\u9fa5]/.test(line)) {
       if (/(\\[a-zA-Z]+|[a-zA-Z]\^[0-9a-zA-Z]+|[a-zA-Z]_[0-9a-zA-Z]+)/.test(line) && !line.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
         issues.push({
           lineNum,
@@ -171,12 +172,13 @@ for (const filePath of files) {
       });
     }
 
-    // 9. 检查 SelectGrid 堆砌公式
-    if (line.includes('<SelectGrid') && line.includes('formula=')) {
+    // 9. 检查 SelectGrid 选项堆砌公式或孤立代号
+    if ((line.includes('<SelectGrid') && line.includes('formula=')) ||
+        (!isTestFile && /^\s*formula:\s*["'`][^"'`]+["'`]/.test(line) && !line.includes('labelFormula') && !line.includes('descriptionFormula') && (filePath.includes('Animation.tsx') || filePath.includes('LeftPanel.tsx')))) {
       issues.push({
         lineNum,
-        type: 'SelectGrid公式堆砌',
-        message: 'SelectGrid 选项应使用纯净加粗中文标题，严禁配置 formula 堆砌公式（题设归位 TipCard，定理归位 MathPanel）',
+        type: 'SelectGrid选项堆砌公式',
+        message: 'SelectGrid 选项应使用纯净加粗中文标题，严禁在 items 中配置 formula 堆砌公式或孤立代号（题设归位 TipCard，定理归位 MathPanel）',
         snippet: line.trim()
       });
     }
