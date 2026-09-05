@@ -3,7 +3,6 @@ import * as THREE from "three";
 import { Point3D } from "../Point3D";
 import { PointLabel3D } from "../PointLabel3D";
 import { CompoundLabel3D } from "../CompoundLabel3D";
-import { FormulaLabel3D } from "../FormulaLabel3D";
 import { Segment3D } from "../Segment3D";
 import { CircumSphere } from "./CircumSphere";
 import { Cuboid } from "./Cuboid";
@@ -181,7 +180,7 @@ export function PolyhedronSphereScene({
               dashed
             />
             <Point3D position={oppositeP} colorKey="secondary" />
-            <FormulaLabel3D position={oppositeP} tex="P'" />
+            <PointLabel3D position={oppositeP} text="P'" />
           </group>
         )}
 
@@ -300,8 +299,8 @@ export function PolyhedronSphereScene({
     const tetrahedronEdges: [Vec3, Vec3, keyof typeof MATH_COLORS][] = [
       [A, B, "paramPrimary"], // 对棱 a (AB)
       [C, D, "paramPrimary"], // 对棱 a (CD)
-      [A, C, "primary"], // 对棱 b (AC)
-      [B, D, "primary"], // 对棱 b (BD)
+      [A, C, "paramSecondary"], // 对棱 b (AC)
+      [B, D, "paramSecondary"], // 对棱 b (BD)
       [A, D, "paramTertiary"], // 对棱 c (AD)
       [B, C, "paramTertiary"], // 对棱 c (BC)
     ];

@@ -160,6 +160,62 @@ for (const filePath of files) {
         });
       }
     }
+
+    // 8. 检查物理学科残留单位 (严防从物理迁移的代码未清洗)
+    if (/\bunit:\s*["'](m|s|kg|N|m\/s|rad|m²|m³|cm)["']/.test(line)) {
+      issues.push({
+        lineNum,
+        type: '物理单位残留',
+        message: '数学量严禁配置物理学科单位 (m, s, N, kg 等)，纯数学量无物理量纲',
+        snippet: line.trim()
+      });
+    }
+
+    // 9. 检查 SelectGrid 堆砌公式
+    if (line.includes('<SelectGrid') && line.includes('formula=')) {
+      issues.push({
+        lineNum,
+        type: 'SelectGrid公式堆砌',
+        message: 'SelectGrid 选项应使用纯净加粗中文标题，严禁配置 formula 堆砌公式（题设归位 TipCard，定理归位 MathPanel）',
+        snippet: line.trim()
+      });
+    }
+
+    // 10. 检查参数标签是否脱离题设无数学代号
+    if (line.includes('labelFormula:') && !line.includes('//')) {
+      const match = line.match(/labelFormula:\s*["'`](.*)["'`]/);
+      if (match) {
+        const formula = match[1];
+        // 剥离 \text{...} 和 \color{...} 后检查是否包含数学/代数/几何字母
+        const pureMath = formula.replace(/\\text\{[^}]*\}/g, '').replace(/\\color\{[^}]*\}/g, '').trim();
+        const hasSymbol = /[a-zA-Z]/.test(pureMath);
+        if (!hasSymbol) {
+          issues.push({
+            lineNum,
+            type: '参数缺少数学代号',
+            message: '参数标签缺少具体数学代号（如 a, b, x_0, PA, CA），应遵循: \\text{含义 } \\color{...}{代号}',
+            snippet: line.trim()
+          });
+        }
+      }
+    }
+
+    // 11. 检查参数标签色彩 Token 绑定缺失
+    if (line.includes('labelFormula:') && !line.includes('//')) {
+      const match = line.match(/labelFormula:\s*["'`](.*)["'`]/);
+      if (match) {
+        const formula = match[1];
+        // 如果包含数学变量，但完全未配置 \color，提示三位一体色彩缺失
+        if (/[a-zA-Z]/.test(formula) && !formula.includes('\\color')) {
+          issues.push({
+            lineNum,
+            type: '参数未绑定色彩Token',
+            message: '参数标签必须按三位一体原则绑定色彩 Token: \\color{${MATH_COLORS.paramPrimary}}{...}',
+            snippet: line.trim()
+          });
+        }
+      }
+    }
   });
 
   if (issues.length > 0) {

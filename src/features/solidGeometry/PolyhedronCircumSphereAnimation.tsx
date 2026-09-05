@@ -200,16 +200,17 @@ export default function PolyhedronCircumSphereAnimation() {
         next.a = value;
         next.b = value;
         next.c = value;
-      }
-      if (
+      } else if (
         (presetKey === "cyl_regular" || presetKey === "vert_equal") &&
         key === "a"
       ) {
         next.b = value;
+      } else if (presetKey !== "free") {
+        // 其他非联动参数被单独调节时，才自动脱离预设切为自由探索
+        setPresetKey("free");
       }
       return next;
     });
-    setPresetKey("free");
   };
 
   const handleReset = () => {
@@ -246,27 +247,64 @@ export default function PolyhedronCircumSphereAnimation() {
         let label = meta.label;
         let labelFormula = meta.labelFormula;
 
-        if (modelType === "verticalEdge") {
-          if (meta.key === "a") {
-            label = "底面直角边 a";
-            labelFormula = `\\text{底面直角边 } \\color{${MATH_COLORS.paramPrimary}}{a}`;
+        if (modelType === "corner") {
+          if (presetKey === "corner_cube") {
+            label = "正方体棱长 a (PA=PB=PC)";
+            labelFormula = `\\text{正方体棱长 } PA=PB=PC=\\color{${MATH_COLORS.paramPrimary}}{a}`;
+          } else if (meta.key === "a") {
+            label = "垂直侧棱 PA (a)";
+            labelFormula = `\\text{侧棱 } PA = \\color{${MATH_COLORS.paramPrimary}}{a}`;
           } else if (meta.key === "b") {
-            label = "底面直角边 b";
-            labelFormula = `\\text{底面直角边 } \\color{${MATH_COLORS.paramSecondary}}{b}`;
+            label = "垂直侧棱 PB (b)";
+            labelFormula = `\\text{侧棱 } PB = \\color{${MATH_COLORS.paramSecondary}}{b}`;
+          } else if (meta.key === "c") {
+            label = "垂直侧棱 PC (c)";
+            labelFormula = `\\text{侧棱 } PC = \\color{${MATH_COLORS.paramTertiary}}{c}`;
+          }
+        } else if (modelType === "complement") {
+          if (presetKey === "comp_regular") {
+            label = "正四面体棱长 a";
+            labelFormula = `\\text{正四面体棱长 } \\color{${MATH_COLORS.paramPrimary}}{a}`;
+          } else if (meta.key === "a") {
+            label = "对棱长 a (AB, CD)";
+            labelFormula = `\\text{对棱 } AB=CD=\\color{${MATH_COLORS.paramPrimary}}{a}`;
+          } else if (meta.key === "b") {
+            label = "对棱长 b (AC, BD)";
+            labelFormula = `\\text{对棱 } AC=BD=\\color{${MATH_COLORS.paramSecondary}}{b}`;
+          } else if (meta.key === "c") {
+            label = "对棱长 c (AD, BC)";
+            labelFormula = `\\text{对棱 } AD=BC=\\color{${MATH_COLORS.paramTertiary}}{c}`;
+          }
+        } else if (modelType === "verticalEdge") {
+          if (meta.key === "a") {
+            label =
+              presetKey === "vert_equal"
+                ? "等腰直角边 a (CA=CB)"
+                : "底面直角边 a (CA)";
+            labelFormula =
+              presetKey === "vert_equal"
+                ? `\\text{等腰直角边 } CA=CB=\\color{${MATH_COLORS.paramPrimary}}{a}`
+                : `\\text{底面直角边 } CA=\\color{${MATH_COLORS.paramPrimary}}{a}`;
+          } else if (meta.key === "b") {
+            label = "底面直角边 b (CB)";
+            labelFormula = `\\text{底面直角边 } CB=\\color{${MATH_COLORS.paramSecondary}}{b}`;
           } else if (meta.key === "h") {
-            label = "垂直侧棱长 h";
-            labelFormula = `\\text{垂直侧棱高 } \\color{${MATH_COLORS.paramTertiary}}{h}`;
+            label = "垂直侧棱长 h (PA)";
+            labelFormula = `\\text{垂直侧棱 } PA=\\color{${MATH_COLORS.paramTertiary}}{h}`;
           }
         } else if (modelType === "inSphere") {
-          if (meta.key === "a") {
-            label = "直角棱 a";
-            labelFormula = `\\text{直角棱 } \\color{${MATH_COLORS.paramPrimary}}{a}`;
+          if (presetKey === "in_cube") {
+            label = "直角等棱长 a (CA=CB=CP)";
+            labelFormula = `\\text{直角等棱 } CA=CB=CP=\\color{${MATH_COLORS.paramPrimary}}{a}`;
+          } else if (meta.key === "a") {
+            label = "底面直角棱 a (CA)";
+            labelFormula = `\\text{底面直角棱 } CA=\\color{${MATH_COLORS.paramPrimary}}{a}`;
           } else if (meta.key === "b") {
-            label = "直角棱 b";
-            labelFormula = `\\text{直角棱 } \\color{${MATH_COLORS.paramSecondary}}{b}`;
+            label = "底面直角棱 b (CB)";
+            labelFormula = `\\text{底面直角棱 } CB=\\color{${MATH_COLORS.paramSecondary}}{b}`;
           } else if (meta.key === "c") {
-            label = "直角棱 c";
-            labelFormula = `\\text{直角棱 } \\color{${MATH_COLORS.paramTertiary}}{c}`;
+            label = "垂直直角棱 c (CP)";
+            labelFormula = `\\text{垂直直角棱 } CP=\\color{${MATH_COLORS.paramTertiary}}{c}`;
           }
         }
 
@@ -284,34 +322,35 @@ export default function PolyhedronCircumSphereAnimation() {
       });
   }, [params, modelType, presetKey]);
 
-  // 4. 左屏教学提示与题设导引（说明初始条件与探究设问，深度联动当前预设）
+  // 4. 左屏教学提示与题设导引（说明初始条件与探究设问，深度联动当前预设与中屏几何体）
   const tipConfig = useMemo(() => {
     if (modelType === "corner") {
       if (presetKey === "corner_cube") {
         return {
           variant: "primary" as const,
           badge: "高考母题 · 正方体角墙角外接球",
-          condition: "三棱锥三条侧棱两两垂直且等长 PA=PB=PC=a。",
+          condition: "三棱锥原点 P 处三侧棱两两垂直且等长 PA=PB=PC=a。",
           question:
-            "补形为边长为 a 的正方体，体对角线即外接球直径：2R = √3 a，R = (√3/2)a。",
+            "补形为边长为 a 的正方体，体对角线 PP' 即外接球直径：2R = √3 a，R = (√3/2)a，球心 O 为 PP' 中点。",
         };
       }
       if (presetKey === "corner_std") {
         return {
           variant: "primary" as const,
-          badge: "高考经典 · 3-4-12 勾股墙角模型",
-          condition: "三棱锥侧棱两两垂直，侧棱长分别为 a=3, b=4, c=12。",
+          badge: "高考经典 · 勾股墙角模型 (3-4-12 等比放缩)",
+          condition:
+            "三棱锥直角顶点在 P，垂直侧棱长分别取 PA=1.5, PB=2, PC=6。",
           question:
-            "由墙角公式 (2R)² = 3² + 4² + 12² = 169，秒解外接球直径 2R = 13 (R = 6.5)。",
+            "由墙角公式 (2R)² = PA² + PB² + PC² = 1.5² + 2² + 6² = 42.25，秒解外接球直径 2R = 6.5 (R = 3.25)。",
         };
       }
       return {
         variant: "primary" as const,
         badge: "高考母题 · 三棱直角墙角模型",
         condition:
-          "三棱锥 P-ABC 中三条侧棱两两垂直 (PA ⊥ PB, PB ⊥ PC, PC ⊥ PA)，侧棱长分别为 a, b, c。",
+          "三棱锥 P-ABC 直角在原点 P，三条侧棱两两垂直 (PA ⊥ PB, PB ⊥ PC, PC ⊥ PA)，棱长分别为 PA=a, PB=b, PC=c。",
         question:
-          "补形为以 a, b, c 为长宽高的长方体，长方体体对角线即外接球直径：(2R)² = a² + b² + c²，球心 O 为体对角线中点。",
+          "补全为以 a, b, c 为长宽高的长方体，长方体体对角线 PP' 即外接球直径：(2R)² = a² + b² + c²，球心 O 为体对角线中点。",
       };
     }
 
@@ -321,18 +360,18 @@ export default function PolyhedronCircumSphereAnimation() {
           variant: "warning" as const,
           badge: "高考经典 · 等腰直角底面侧棱垂直",
           condition:
-            "三棱锥侧棱 PA ⊥ 底面 ABC，PA=h，底面为等腰直角三角形 (a=b)。",
+            "三棱锥底面 △ABC 为等腰直角三角形 (直角顶点在 C，CA=CB=a)，侧棱 PA ⊥ 底面 ABC (高 PA=h)。",
           question:
-            "底面外接圆半径 r_底 = (√2/2)a，外接球半径 R² = a²/2 + (h/2)²。",
+            "底面外心 O₁ 为斜边 AB 中点，底面半径 r_底 = (√2/2)a；球心 O 到底面距离为 h/2，由勾股定理求得 R² = a²/2 + (h/2)²。",
         };
       }
       return {
         variant: "warning" as const,
         badge: "高考经典 · 侧棱垂直底面模型",
         condition:
-          "三棱锥 P-ABC 中侧棱 PA ⊥ 底面 ABC，高 PA=h，底面 △ABC 的外接圆半径为 r_底。",
+          "三棱锥 P-ABC 底面 △ABC 中 ∠C=90° (直角边 CA=a, CB=b)，侧棱 PA ⊥ 底面 ABC (高 PA=h)。",
         question:
-          "套柱转化为直三棱柱：外接球球心 O 在底面外心正上方 h/2 处，由勾股定理得 R² = r_底² + (h/2)²。",
+          "斜边 AB 中点即为底面外心 O₁ (r_底 = AB/2)；外接球球心 O 在过 O₁ 且垂直底面的轴线上，球心距为 h/2，勾股定理列式：R² = r_底² + (h/2)²。",
       };
     }
 
@@ -342,18 +381,18 @@ export default function PolyhedronCircumSphereAnimation() {
           variant: "success" as const,
           badge: "高考母题 · 正四面体对棱相等补形",
           condition:
-            "正四面体各棱长均为 a，对棱等长 (AB=CD=a, AC=BD=a, BC=AD=a)。",
+            "正四面体 A-BCD 各棱长均为 a，对棱等长 (AB=CD=a, AC=BD=a, AD=BC=a)。",
           question:
-            "补形为边长为 x = (√2/2)a 的正方体，由 8R² = 3a² 得外接球半径 R = (√6/4)a。",
+            "嵌入边长为 x = (√2/2)a 的正方体（对棱为面对角线），由 8R² = 3a² 求得外接球半径 R = (√6/4)a。",
         };
       }
       return {
         variant: "success" as const,
         badge: "高考大招 · 对棱相等补形模型",
         condition:
-          "四面体中三组对棱分别相等 (AB=CD=a, AC=BD=b, BC=AD=c，四面体各面为全等锐角三角形)。",
+          "四面体 A-BCD 中三组对棱分别相等 (红色 AB=CD=a, 橙色 AC=BD=b, 绿色 AD=BC=c)。",
         question:
-          "补形为长方体（四面体各棱为长方体各面的面对角线）：设长方体棱长为 x, y, z，推导得 8R² = a² + b² + c²。",
+          "补全为长宽高为 x, y, z 的长方体（四面体 6 条棱为长方体 6 个面的面对角线）：三式联立解得 8R² = a² + b² + c²。",
       };
     }
 
@@ -363,7 +402,7 @@ export default function PolyhedronCircumSphereAnimation() {
           variant: "accent" as const,
           badge: "高考必备 · 正方体角内切球",
           condition:
-            "三棱锥三直角侧棱长均为 a，四面体三个侧面为等腰直角三角形。",
+            "三棱锥直角在 C，三直角侧棱等长 CA=CB=CP=a，三个侧面为等腰直角三角形。",
           question:
             "等体积法：总体积 V = a³/6，表面积 S_表 = (3 + √3)a²/2，解得内切球半径 r = 3V/S_表 = a / (3 + √3)。",
         };
@@ -372,9 +411,9 @@ export default function PolyhedronCircumSphereAnimation() {
         variant: "accent" as const,
         badge: "高考必备 · 多面体内切球等体积法",
         condition:
-          "凸多面体（如三棱锥）的总体积为 V，表面积为 S_表，内切球球心为 I，切点为 T₁~T₄。",
+          "三棱锥直角在 C（直角棱 CA=a, CB=b, CP=c），斜面为 △PAB；内切球心为 O(in)，切点分别为 T₁~T₄。",
         question:
-          "以球心 I 为顶点将多面体分割为若干个高为 r 的小棱锥，由体积相加原理推导内切球半径公式：r = 3V / S_表。",
+          "以球心 O(in) 为共同顶点剖分为 4 个以各面为底面、高为 r 的小棱锥，由等体积法求解内切球半径：r = 3V/S(表)。",
       };
     }
 
@@ -398,22 +437,18 @@ export default function PolyhedronCircumSphereAnimation() {
                 {
                   key: "corner",
                   label: "墙角模型",
-                  formula: "2R=\\sqrt{a^2+b^2+c^2}",
                 },
                 {
                   key: "verticalEdge",
                   label: "侧棱垂直",
-                  formula: "R^2=r_{\\text{底}}^2+(h/2)^2",
                 },
                 {
                   key: "complement",
                   label: "补形模型",
-                  formula: "8R^2=a^2+b^2+c^2",
                 },
                 {
                   key: "inSphere",
                   label: "内切球模型",
-                  formula: "r=3V/S_{\\text{表}}",
                 },
               ]}
               value={modelType}
@@ -459,15 +494,17 @@ export default function PolyhedronCircumSphereAnimation() {
           {/* Step 4: 图层与标注显示控制 */}
           <LeftPanelSection title="图层与标注显示控制" compact>
             <div className="flex flex-col gap-2.5">
-              <Toggle
-                label={
-                  modelType === "verticalEdge"
-                    ? "显示套柱三棱柱框架"
-                    : "显示补形长方体框架"
-                }
-                checked={showComplementFrame}
-                onChange={setShowComplementFrame}
-              />
+              {modelType !== "inSphere" && (
+                <Toggle
+                  label={
+                    modelType === "verticalEdge"
+                      ? "显示套柱三棱柱框架"
+                      : "显示补形长方体框架"
+                  }
+                  checked={showComplementFrame}
+                  onChange={setShowComplementFrame}
+                />
+              )}
               <Toggle
                 label={
                   modelType === "inSphere"

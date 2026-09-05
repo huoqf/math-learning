@@ -52,16 +52,20 @@ description: >
 4. 画布右上角接入 `ModeSwitchOverlay3D` 支持视角漫游与动点交互互斥。
 
 ### 阶段 4：左屏控制台与右屏看板组装（系统链路）
-1. **左屏**：遵循 `references/left-panel-spec.md` 的五步渲染层级，使用 `SelectGrid`（2+1 布局）与 `ParamControl`（带 KaTeX labelFormula）。
-2. **右屏**：在 `src/data/mathQuantities.ts` 组装 `quantities`、`theorems`（含前提条件）、`gaokaoPoints` 和 `warnings`。
+1. **左屏**：遵循 `references/left-panel-spec.md` 渲染层级，滑块必须标清几何线段代号（如 $\text{侧棱 } PA=\color{red}{a}$），底部 `TipCard` 呈现题设与设问。
+2. **右屏架构组装**（按课型精准分层，位于 `src/data/builders/<topic>.ts`）：
+   - **基础概念课**：组装核心定理 `theorems`（显式前提）、临界警示 `warnings`、几何特征量 `quantities`；
+   - **高考专题课**：全量装配母题定位 `examAnchor`、破题推演链 `reasoningSteps`（带采分点提示）、口诀 `mnemonic`、定值不变量 `invariants` 与秒杀考点 `gaokaoPoints`。
 3. **注册**：在 `src/features/<topic>/meta.ts`、`src/data/routeEntries.ts`（必须配 `guarded3D: true`）和 `src/data/knowledgeTree.ts` 注册。
 
 ### 阶段 5：高考数学习惯门禁验收（验收期）
+- [ ] **三屏符号对账 (SSOT)**：左屏滑块代号（如 $PA$、$CA$）在中屏几何拓扑中必有对应线段，右屏推导公式 100% 带入相同代号。
+- [ ] **色彩三位一体**：主控边/自变量（红）、从属边（橙）、高/角参数（绿）在三屏严格同色。
 - [ ] **范式纯净度**：综合几何中无坐标轴/向量箭头；向量基底中无笛卡尔轴穿刺。
 - [ ] **辅助线完整度**：对照 `geometry-standards.md`，双垂直、射影垂足、二面角平面角、补形框等辅助线是否全部标齐？
 - [ ] **标注合规性**：几何顶点 100% 为纯矢量文字，无白底卡片；公式上色 100% 使用 Token。
 - [ ] **图层从属联动闭环**：当关闭任一父级几何结构（截面、投影、辅助面/线、切接球等）时，其派生的专有从属图元（交点、垂足、特征中心、直角标尺、角弧等）必须 100% 同步隐藏，严禁孤立悬浮。
 - [ ] **数形双向联动**：动点拖拽是否能平滑反算左屏滑块数值且不脱轨？
-- [ ] **工程与测试**：`npx vitest run src/math3d/` 100% 通过，`npm run build` 0 报错。
+- [ ] **工程与测试**：`npm test` 100% 通过（包含三屏契约单测），`audit_page.mjs` 0 违规，`npx tsc -b` 0 报错。
 
 
