@@ -22,6 +22,17 @@ export function colorize(text: string, color: string): string {
 
 // ── Original types.ts exports ──
 
+export type GaokaoTopicKey =
+  | "func_derivative"
+  | "conic_geometry"
+  | "solid_geometry"
+  | "probability_statistics"
+  | "sequence_series"
+  | "vector_triangle";
+
+export type QuestionCategory =
+  "foundation" | "multi_select_hard" | "solution_first" | "solution_final";
+
 export interface KnowledgeNode {
   id: string;
   title: string;
@@ -36,6 +47,17 @@ export interface KnowledgeNode {
   labTitle?: string;
   /** 对应的路由路径（缺失则该节点显示为锁定） */
   route?: string;
+
+  /** 新高考六大专题归属 */
+  gaokaoTopic?: GaokaoTopicKey;
+  /** 题型定位（客观基础 / 多选填空压轴 / 解答第1问 / 解答压轴） */
+  questionCategory?: QuestionCategory;
+  /** 高考核心通法与秒杀大招模型 */
+  examMethod?: string;
+  /** 高考考查权重星级 (1-5) */
+  examWeight?: 1 | 2 | 3 | 4 | 5;
+  /** 跨模块交汇主题 */
+  crossThemes?: string[];
 }
 
 export type ParamImportance = "core" | "advanced" | "display";
