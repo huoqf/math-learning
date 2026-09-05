@@ -85,14 +85,14 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("LineEquationAnimation mounts properly and displays control panel", () => {
     render(<LineEquationAnimation />);
     expect(screen.getByText("研究模式")).toBeInTheDocument();
-    expect(screen.getByText("实时指标看板")).toBeInTheDocument();
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
   });
 
   it("LineCircleAnimation mounts properly and renders titles", () => {
     render(<LineCircleAnimation />);
     expect(screen.getByText("探究主题")).toBeInTheDocument();
     expect(screen.getByText("典型预设")).toBeInTheDocument();
-    expect(screen.getByText("实时指标看板")).toBeInTheDocument();
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
   });
 
   it("TriangleSolveAnimation mounts properly and renders study mode", () => {
@@ -116,7 +116,7 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("SetVennPage mounts properly and renders", () => {
     render(<SetVennPage />);
     expect(screen.getByText("集合运算")).toBeInTheDocument();
-    expect(screen.getByText("实时指标看板")).toBeInTheDocument();
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
   });
 
   it("SequenceAnimation mounts properly and renders", () => {
