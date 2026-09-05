@@ -490,11 +490,12 @@ export default function PolyhedronCircumSphereAnimation() {
           {/* Step 5: 3D 空间视角预设 */}
           <LeftPanelSection title="3D 空间视角预设">
             <TabSwitcher
+              layout="horizontal"
               tabs={[
-                { key: "iso", label: "轴测直观" },
-                { key: "top", label: "俯视底面" },
-                { key: "front", label: "主视正投" },
-                { key: "side", label: "左视侧面" },
+                { key: "iso", label: "轴测" },
+                { key: "front", label: "主视" },
+                { key: "top", label: "俯视" },
+                { key: "side", label: "左视" },
               ]}
               value={preset}
               onChange={(p) => setCameraPreset(p as CameraPreset)}
