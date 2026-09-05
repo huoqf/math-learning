@@ -50,6 +50,8 @@ export { Segment3D } from "./Segment3D";
 export type { Segment3DProps } from "./Segment3D";
 export { Plane3D } from "./Plane3D";
 export { Polygon3DFace } from "./Polygon3DFace";
+export { Circle3D } from "./Circle3D";
+export type { Circle3DProps } from "./Circle3D";
 export { AngleArc3D } from "./AngleArc3D";
 export { LinePlaneAngle3D } from "./LinePlaneAngle3D";
 export { RightTriangle3D } from "./RightTriangle3D";

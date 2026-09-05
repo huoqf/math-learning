@@ -6,6 +6,8 @@ import {
   AlertCircle,
   Info,
   BookOpen,
+  Sparkles,
+  Compass,
 } from "lucide-react";
 import { KatexFormula } from "./KatexFormula";
 import { createDepthState, advanceLatexDepth, isTopLevel } from "./latexUtils";
@@ -18,6 +20,17 @@ export interface MathQuantity {
   unit?: string;
   color?: string;
   highlight?: "positive" | "negative" | "zero" | "extreme";
+  /** 是否为定值不变量（如黄金比例、定长、定值） */
+  isInvariant?: boolean;
+  invariantNote?: string;
+}
+
+export interface ReasoningStep {
+  step: number;
+  title: string;
+  detail?: string;
+  latex?: string;
+  rubric?: string;
 }
 
 export interface Theorem {
@@ -47,6 +60,8 @@ interface MathPanelProps {
   theorems?: Theorem[];
   gaokaoPoints?: GaokaoPoint[];
   warnings?: WarningItem[];
+  reasoningSteps?: ReasoningStep[];
+  examAnchor?: string;
   mnemonic?: string;
   title?: string;
 }
@@ -255,13 +270,17 @@ export const MathPanel: React.FC<MathPanelProps> = ({
   theorems = [],
   gaokaoPoints = [],
   warnings = [],
+  reasoningSteps = [],
+  examAnchor,
   mnemonic,
-  title = "数学量",
+  title = "高考破题与推演看板",
 }) => {
+  const [reasoningOpen, setReasoningOpen] = useState(true);
   const [theoremsOpen, setTheoremsOpen] = useState(true);
   const [warningsOpen, setWarningsOpen] = useState(true);
   const [gaokaoOpen, setGaokaoOpen] = useState(true);
   const [mnemonicOpen, setMnemonicOpen] = useState(true);
+  const [quantitiesOpen, setQuantitiesOpen] = useState(true);
 
   const getValueColor = (quantity: MathQuantity) => {
     if (quantity.highlight === "negative") return colors.danger[600];
@@ -272,7 +291,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
 
   return (
     <div className="w-full min-h-full flex flex-col gap-4 p-4 text-neutral-800 text-sm bg-neutral-50/50">
-      {/* ── 标题 ── */}
+      {/* ── 标题与高考真题原型 ── */}
       <div className="flex items-center justify-between border-b border-neutral-200 pb-2.5">
         <div className="flex items-center gap-2 min-w-0">
           <Award className="w-4 h-4 text-primary-600 shrink-0" />
@@ -280,171 +299,136 @@ export const MathPanel: React.FC<MathPanelProps> = ({
             {title}
           </h3>
         </div>
-        <span className="text-xs text-neutral-500 font-medium shrink-0">
-          实时指标看板
-        </span>
-      </div>
-
-      {/* ── 数学量列表 ── */}
-      <div>
-        <div className="text-xs font-semibold text-neutral-600 mb-2 flex items-center justify-between">
-          <span>核心数值指标</span>
-          <span className="text-[10px] text-neutral-400 font-normal">
-            共 {quantities.length} 项
+        {examAnchor ? (
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-semibold shrink-0 flex items-center gap-1 shadow-2xs">
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            {examAnchor}
           </span>
-        </div>
-        <div className="grid grid-cols-1 gap-1.5">
-          {quantities.map((q, index) => {
-            const valStr =
-              typeof q.value === "string" ? q.value : String(q.value);
-            const isLongSymbol = Boolean(
-              q.symbol &&
-              (q.symbol.length > 8 ||
-                /\\(frac|tan|sin|cos|sqrt|over|sum|int)|=/.test(q.symbol)),
-            );
-            const isLongValue =
-              valStr.length > 14 ||
-              /\\(frac|tan|sin|cos|sqrt|text|begin|aligned)|=|,/.test(valStr);
-            const isStacked =
-              isLongSymbol ||
-              isLongValue ||
-              (Boolean(q.symbol) && q.label.length > 6);
-
-            if (isStacked) {
-              return (
-                <div
-                  key={index}
-                  className="flex flex-col gap-1.5 p-2 rounded-lg bg-white border border-neutral-100 shadow-xs hover:border-neutral-200 transition-colors"
-                >
-                  {/* 顶部行：符号徽章 + 完整标签（标签可整行换行，避免被徽章挤压逐字断行） */}
-                  <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                    {q.symbol && (
-                      <span
-                        className="font-semibold shrink-0 text-xs px-1.5 py-0.5 rounded"
-                        style={{
-                          backgroundColor: q.color ? `${q.color}15` : "#f3f4f6",
-                          color: q.color ?? "#4b5563",
-                        }}
-                      >
-                        {hasLatex(q.symbol) ? (
-                          <KatexFormula
-                            formula={q.symbol}
-                            mode="inline"
-                            className="!text-xs"
-                          />
-                        ) : (
-                          q.symbol
-                        )}
-                      </span>
-                    )}
-                    <span className="text-xs text-neutral-700 font-medium break-words flex-1 basis-28 min-w-0">
-                      {q.label}
-                    </span>
-                  </div>
-
-                  {/* 底部数值/公式展示行：全宽自适应展示，防止重叠挤压与溢出 */}
-                  <div className="w-full flex items-center justify-end overflow-hidden pt-0.5">
-                    <span
-                      className="font-bold text-xs max-w-full text-right"
-                      style={{ color: getValueColor(q) }}
-                    >
-                      {typeof q.value === "number" ? (
-                        q.value.toFixed(2)
-                      ) : typeof q.value === "string" && hasLatex(q.value) ? (
-                        <KatexFormula
-                          formula={q.value}
-                          mode="inline"
-                          responsive={true}
-                          className="!text-xs max-w-full"
-                        />
-                      ) : typeof q.value === "string" ? (
-                        <span className="break-words leading-relaxed text-xs">
-                          {renderMixedLatex(q.value)}
-                        </span>
-                      ) : (
-                        q.value
-                      )}
-                    </span>
-                    {q.unit && (
-                      <span className="text-[11px] text-neutral-400 font-medium shrink-0 ml-1">
-                        {renderMixedLatex(q.unit)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <div
-                key={index}
-                className="flex items-center justify-between p-2 rounded-lg bg-white border border-neutral-100 shadow-xs hover:border-neutral-200 transition-colors gap-2"
-              >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  {q.symbol && (
-                    <span
-                      className="font-semibold shrink-0 text-xs px-1.5 py-0.5 rounded"
-                      style={{
-                        backgroundColor: q.color ? `${q.color}15` : "#f3f4f6",
-                        color: q.color ?? "#4b5563",
-                      }}
-                    >
-                      {hasLatex(q.symbol) ? (
-                        <KatexFormula
-                          formula={q.symbol}
-                          mode="inline"
-                          className="!text-xs"
-                        />
-                      ) : (
-                        q.symbol
-                      )}
-                    </span>
-                  )}
-                  <span className="text-xs text-neutral-600 font-medium break-words min-w-0">
-                    {q.label}
-                  </span>
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0 text-right">
-                  <span
-                    className="font-bold text-xs"
-                    style={{ color: getValueColor(q) }}
-                  >
-                    {typeof q.value === "number" ? (
-                      q.value.toFixed(2)
-                    ) : typeof q.value === "string" && hasLatex(q.value) ? (
-                      <KatexFormula
-                        formula={q.value}
-                        mode="inline"
-                        className="!text-xs"
-                      />
-                    ) : typeof q.value === "string" ? (
-                      renderMixedLatex(q.value)
-                    ) : (
-                      q.value
-                    )}
-                  </span>
-                  {q.unit && (
-                    <span className="text-xs text-neutral-500 font-medium ml-1">
-                      {renderMixedLatex(q.unit)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        ) : (
+          <span className="text-xs text-neutral-500 font-medium shrink-0">
+            数学解析看板
+          </span>
+        )}
       </div>
 
-      {/* ── 定理公式区 ── */}
+      {/* ── 易错与临界警示（置顶展示，杜绝忽略） ── */}
+      {warnings.length > 0 && (
+        <div>
+          <button
+            onClick={() => setWarningsOpen(!warningsOpen)}
+            className="w-full flex items-center justify-between text-xs font-semibold text-danger-700 mb-2.5 hover:text-danger-900 transition-colors focus:outline-none cursor-pointer border-b border-danger-100 pb-1.5"
+          >
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-danger-500" />
+              <span>临界与易错警示</span>
+            </div>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${warningsOpen ? "rotate-0" : "-rotate-90"}`}
+            />
+          </button>
+          {warningsOpen && (
+            <div className="space-y-2 transition-all duration-fast ease-standard">
+              {warnings.map((w, index) => {
+                const style =
+                  WARNING_LEVEL_STYLES[w.level] ?? WARNING_LEVEL_STYLES.info;
+                const IconComponent =
+                  w.level === "danger"
+                    ? AlertCircle
+                    : w.level === "warning"
+                      ? AlertTriangle
+                      : Info;
+                return (
+                  <div
+                    key={index}
+                    className="p-3 rounded-lg border-l-4 text-xs leading-relaxed flex items-start gap-2 shadow-sm border border-neutral-100"
+                    style={{
+                      backgroundColor: style.bg,
+                      borderLeftColor: style.border,
+                      color: style.text,
+                    }}
+                  >
+                    <IconComponent className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span className="min-w-0 break-words">
+                      {renderMixedLatex(w.text)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 高考破题与推导步骤链（核心推演，将定理代入实时代数求解） ── */}
+      {reasoningSteps.length > 0 && (
+        <div>
+          <button
+            onClick={() => setReasoningOpen(!reasoningOpen)}
+            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-800 mb-2.5 hover:text-primary-700 transition-colors focus:outline-none cursor-pointer border-b border-primary-200 pb-1.5"
+          >
+            <div className="flex items-center gap-1.5">
+              <Compass className="w-3.5 h-3.5 text-primary-600" />
+              <span>高考破题三步推演链</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-primary-100 text-primary-700 font-bold">
+                通法
+              </span>
+            </div>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${reasoningOpen ? "rotate-0" : "-rotate-90"}`}
+            />
+          </button>
+          {reasoningOpen && (
+            <div className="space-y-2.5 transition-all duration-fast ease-standard">
+              {reasoningSteps.map((s, idx) => (
+                <div
+                  key={idx}
+                  className="p-3 rounded-lg border border-neutral-200/80 bg-white shadow-2xs text-xs flex flex-col gap-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 font-bold text-neutral-800">
+                      <span className="w-4 h-4 rounded-full bg-primary-600 text-white text-[10px] flex items-center justify-center font-mono">
+                        {s.step}
+                      </span>
+                      <span>{s.title}</span>
+                    </div>
+                    {s.rubric && (
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                        {s.rubric}
+                      </span>
+                    )}
+                  </div>
+                  {s.detail && (
+                    <div className="text-[11px] text-neutral-600 leading-relaxed pl-5">
+                      {renderMixedLatex(s.detail)}
+                    </div>
+                  )}
+                  {s.latex && (
+                    <div className="w-full py-2 px-3 bg-neutral-50 rounded border border-neutral-100/90 overflow-hidden max-w-full">
+                      <KatexFormula
+                        formula={s.latex}
+                        mode="inline"
+                        responsive={true}
+                        className="!text-xs font-medium max-w-full"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 核心定理公式区（首要位置，凸显数学通法模型） ── */}
       {theorems.length > 0 && (
         <div>
           <button
             onClick={() => setTheoremsOpen(!theoremsOpen)}
-            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-600 mb-2.5 hover:text-neutral-900 transition-colors focus:outline-none cursor-pointer border-b border-neutral-100 pb-1.5"
+            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-800 mb-2.5 hover:text-primary-700 transition-colors focus:outline-none cursor-pointer border-b border-neutral-200 pb-1.5"
           >
             <div className="flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-primary-500" />
-              <span>定理公式</span>
+              <BookOpen className="w-3.5 h-3.5 text-primary-600" />
+              <span>核心定理与公式推导</span>
             </div>
             <ChevronDown
               className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${theoremsOpen ? "rotate-0" : "-rotate-90"}`}
@@ -477,11 +461,8 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                         </span>
                       )}
                     </div>
-                    <div className="w-full py-3.5 px-4 bg-white rounded-lg border border-neutral-100/70 my-1 min-h-[54px] flex items-center justify-center overflow-hidden max-w-full">
+                    <div className="w-full py-3 px-3.5 bg-white rounded-lg border border-neutral-100/70 my-1 min-h-[48px] flex items-center justify-center overflow-hidden max-w-full">
                       {(() => {
-                        // 1. 若为纯中文叙述段落（整体恰好是 \text{...}，且内部无数学符号）
-                        //    使用非贪婪 *? 防止 \text{甲} \text{乙} 等多段被贪婪捕获误判；
-                        //    同时把 $ 纳入禁止字符集，避免 \text{含 $x$} 绕过 KaTeX。
                         const textMatch = t.latex.match(
                           /^\s*\\text\{([\s\S]*?)\}\s*$/,
                         );
@@ -495,8 +476,6 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                             </div>
                           );
                         }
-
-                        // 2. 完整数学公式由 KatexFormula 自适应渲染引擎统一承载（原生支持 \text{中文}、分式与推导链）
                         return (
                           <KatexFormula
                             formula={t.latex}
@@ -530,58 +509,10 @@ export const MathPanel: React.FC<MathPanelProps> = ({
                       </div>
                     )}
                     {t.note && (
-                      <div className="text-xs text-neutral-400 mt-0.5 pl-1 break-words leading-relaxed">
+                      <div className="text-xs text-neutral-500 mt-0.5 pl-1 break-words leading-relaxed">
                         💡 {renderMixedLatex(t.note)}
                       </div>
                     )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── 易错警示区 ── */}
-      {warnings.length > 0 && (
-        <div>
-          <button
-            onClick={() => setWarningsOpen(!warningsOpen)}
-            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-600 mb-2.5 hover:text-neutral-900 transition-colors focus:outline-none cursor-pointer border-b border-neutral-100 pb-1.5"
-          >
-            <div className="flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-danger-500" />
-              <span>易错警示</span>
-            </div>
-            <ChevronDown
-              className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${warningsOpen ? "rotate-0" : "-rotate-90"}`}
-            />
-          </button>
-          {warningsOpen && (
-            <div className="space-y-2 transition-all duration-fast ease-standard">
-              {warnings.map((w, index) => {
-                const style =
-                  WARNING_LEVEL_STYLES[w.level] ?? WARNING_LEVEL_STYLES.info;
-                const IconComponent =
-                  w.level === "danger"
-                    ? AlertCircle
-                    : w.level === "warning"
-                      ? AlertTriangle
-                      : Info;
-                return (
-                  <div
-                    key={index}
-                    className="p-3 rounded-lg border-l-4 text-xs leading-relaxed flex items-start gap-2 shadow-sm border border-neutral-100"
-                    style={{
-                      backgroundColor: style.bg,
-                      borderLeftColor: style.border,
-                      color: style.text,
-                    }}
-                  >
-                    <IconComponent className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span className="min-w-0 break-words">
-                      {renderMixedLatex(w.text)}
-                    </span>
                   </div>
                 );
               })}
@@ -671,6 +602,111 @@ export const MathPanel: React.FC<MathPanelProps> = ({
               }}
             >
               {mnemonic}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 特征量与关键解（置于底部，作为核对与不变量附录区） ── */}
+      {quantities.length > 0 && (
+        <div>
+          <button
+            onClick={() => setQuantitiesOpen(!quantitiesOpen)}
+            className="w-full flex items-center justify-between text-xs font-semibold text-neutral-600 mb-2 hover:text-neutral-900 transition-colors focus:outline-none cursor-pointer border-b border-neutral-100 pb-1.5"
+          >
+            <div className="flex items-center gap-1.5">
+              <span>特征量与关键解</span>
+              <span className="text-[10px] text-neutral-400 font-normal">
+                ({quantities.length} 项)
+              </span>
+            </div>
+            <ChevronDown
+              className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${quantitiesOpen ? "rotate-0" : "-rotate-90"}`}
+            />
+          </button>
+          {quantitiesOpen && (
+            <div className="grid grid-cols-2 gap-1.5">
+              {quantities.map((q, index) => {
+                const valStr =
+                  typeof q.value === "string" ? q.value : String(q.value);
+                const isLongSymbol = Boolean(
+                  q.symbol &&
+                  (q.symbol.length > 8 ||
+                    /\\(frac|tan|sin|cos|sqrt|over|sum|int)|=/.test(q.symbol)),
+                );
+                const isLongValue =
+                  valStr.length > 12 ||
+                  /\\(frac|tan|sin|cos|sqrt|text|begin|aligned)|=|,/.test(
+                    valStr,
+                  );
+                const isWide =
+                  isLongSymbol || isLongValue || q.label.length > 8;
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex flex-col justify-between p-2 rounded-lg bg-white border shadow-2xs hover:border-neutral-200 transition-colors gap-1 ${q.isInvariant ? "border-emerald-200 bg-emerald-50/20" : "border-neutral-100"} ${isWide ? "col-span-2" : "col-span-1"}`}
+                  >
+                    <div className="flex items-center justify-between gap-1 min-w-0">
+                      <div className="flex items-center gap-1 min-w-0">
+                        {q.symbol && (
+                          <span
+                            className="font-semibold shrink-0 text-[11px] px-1 py-0.5 rounded"
+                            style={{
+                              backgroundColor: q.color
+                                ? `${q.color}15`
+                                : "#f3f4f6",
+                              color: q.color ?? "#4b5563",
+                            }}
+                          >
+                            {hasLatex(q.symbol) ? (
+                              <KatexFormula
+                                formula={q.symbol}
+                                mode="inline"
+                                className="!text-[11px]"
+                              />
+                            ) : (
+                              q.symbol
+                            )}
+                          </span>
+                        )}
+                        <span
+                          className="text-[11px] text-neutral-600 font-medium truncate"
+                          title={q.label}
+                        >
+                          {q.label}
+                        </span>
+                      </div>
+                      {q.isInvariant && (
+                        <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-100 text-emerald-700 font-bold shrink-0 flex items-center gap-0.5">
+                          🌟 定值
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-baseline justify-end gap-1 overflow-hidden pt-0.5">
+                      <span
+                        className="font-bold text-xs"
+                        style={{ color: getValueColor(q) }}
+                      >
+                        {typeof q.value === "number" ? (
+                          q.value
+                        ) : typeof q.value === "string" && hasLatex(q.value) ? (
+                          <KatexFormula
+                            formula={q.value}
+                            mode="inline"
+                            responsive={true}
+                            className="!text-xs max-w-full"
+                          />
+                        ) : typeof q.value === "string" ? (
+                          renderMixedLatex(q.value)
+                        ) : (
+                          q.value
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

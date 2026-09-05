@@ -103,7 +103,13 @@ const mathData = useMemo(() => buildMathQuantities('anim-xxx', params), [params]
       </AnimationSvgCanvas>
     </div>
   }
-  right={<MathPanel {...mathData} title="xxx看板" />}
+  right={
+    <MathPanel
+      {...mathData}
+      // 💡 右屏按需装配：A类基础概念课重在核心定义、数学性质与特征定点；B类高考专题课装配 reasoningSteps(破题推演)、examAnchor 与 isInvariant(定值不变量)
+      title="xxx看板"
+    />
+  }
 />
 ```
 

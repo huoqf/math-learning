@@ -7,11 +7,21 @@ import type {
 
 export type { MathQuantity, Theorem, GaokaoPoint, WarningItem };
 
+export interface ReasoningStep {
+  step: number;
+  title: string;
+  detail?: string;
+  latex?: string;
+  rubric?: string;
+}
+
 export interface MathPanelData {
   quantities: MathQuantity[];
   theorems: Theorem[];
   gaokaoPoints: GaokaoPoint[];
   warnings: WarningItem[];
+  reasoningSteps?: ReasoningStep[];
+  examAnchor?: string;
   mnemonic?: string;
 }
 

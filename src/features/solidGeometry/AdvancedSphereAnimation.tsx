@@ -32,6 +32,7 @@ export default function AdvancedSphereAnimation() {
   const [showSphere, setShowSphere] = useState<boolean>(true);
   const [showAuxLines, setShowAuxLines] = useState<boolean>(true);
   const [showSection, setShowSection] = useState<boolean>(true);
+  const [showSectionCircles, setShowSectionCircles] = useState<boolean>(true);
   const [showTangentPoints, setShowTangentPoints] = useState<boolean>(true);
 
   const [params, setParams] = useState<Record<string, number>>({
@@ -277,10 +278,10 @@ export default function AdvancedSphereAnimation() {
   const legendItems: LegendItem[] = useMemo(() => {
     if (modelType === "perpPlanes") {
       return [
-        { label: "底面外接半径 r₁", colorKey: "paramPrimary" },
-        { label: "侧面外接半径 r₂", colorKey: "paramSecondary" },
+        { label: "底面截面圆 ⊙O₁ (半径 r₁)", colorKey: "paramPrimary" },
+        { label: "侧面截面圆 ⊙O₂ (半径 r₂)", colorKey: "paramSecondary" },
         { label: "双外心垂线空间矩形", colorKey: "paramTertiary" },
-        { label: "外接球心 O 与外接球", colorKey: "sphereShell" },
+        { label: "外接球心 O 与外接球 (半径 R)", colorKey: "sphereShell" },
       ];
     } else if (modelType === "concentric") {
       return [
@@ -306,44 +307,57 @@ export default function AdvancedSphereAnimation() {
   }, [modelType]);
 
   // 4. 左屏教学提示与题设导引（说明初始条件与探究设问，深度联动当前预设）
+  // 4. 左屏教学提示与题设导引（规范双要素：【初始条件】题设背景 + 【核心设问】探究目标；解题定理与公式全部归位右屏）
   const tipConfig = useMemo(() => {
     if (modelType === "perpPlanes") {
       if (presetKey === "perp_equal") {
         return {
           variant: "primary" as const,
-          badge: "高考压轴 · 对称双垂直面截面圆",
-          condition: "两垂直平面 α ⊥ β 内截面圆半径相等 r₁=r₂=r，交线长为 c。",
+          badge: "高考真题构型 · 对称双垂直截面",
+          condition:
+            "空间两平面 α ⊥ β，底面与侧面截面外接圆半径相等（r₁ = r₂ = r），公共交线弦长为 c。",
           question:
-            "构造对称空间正方形，外接球半径公式简化为：R² = 2r² - (c/2)²。",
+            "观察空间直角矩形 H-O₁-O-O₂ 退化为何种特殊四边形？思考此时外接球半径与 r, c 的简化关系。",
         };
       }
       if (presetKey === "perp_standard") {
         return {
           variant: "primary" as const,
-          badge: "高考母题 · 3-4-5 勾股双垂直面",
-          condition: "面 α ⊥ β，截面圆半径分别为 r₁=2.5, r₂=3，交线长 c=3。",
+          badge: "高考经典构型 · 3-4-5 勾股截面",
+          condition:
+            "平面 α ⊥ β，两截面圆半径分别为 r₁ = 2.5, r₂ = 3，公共交线弦长 c = 3。",
           question:
-            "代入交心公式 R² = 2.5² + 3² - (1.5)² = 13，求得外接球半径 R = √13。",
+            "观察空间垂线矩形与勾股弦心距，如何在三维场景中逐层定位外心 O₁, O₂ 与外接球心 O？",
+        };
+      }
+      if (presetKey === "perp_critical") {
+        return {
+          variant: "warning" as const,
+          badge: "临界演化构型 · 交线弦长极大值",
+          condition:
+            "两截面圆公共交线弦长 c 逼近截面圆直径上限（c → 2·min(r₁, r₂)）。",
+          question:
+            "观察弦心距 d₁ 与截面圆心的极限位置，当交线为直径时，外接球心与截面的空间位置关系如何？",
         };
       }
       return {
         variant: "primary" as const,
-        badge: "高考压轴 · 双垂直平面截面圆交心法",
+        badge: "高考压轴母题 · 双垂直平面截面交心模型",
         condition:
-          "两平面 α ⊥ β 相交于交线 AB (长度为 c)，多面体在面 α, β 内截面外接圆半径分别为 r₁, r₂，外心分别为 O₁, O₂。",
+          "两平面 α ⊥ β 相交于交线 AC (长度为 c)，多面体在面 α, β 内截面外接圆半径分别为 r₁, r₂，外心分别为 O₁, O₂。",
         question:
-          "分别过 O₁, O₂ 作面 α, β 的垂线，两垂线在空间相交于外接球球心 O，构造空间矩形推导外接球半径通式：R² = r₁² + r₂² - (c/2)²。",
+          "如何由两截面外心 O₁, O₂ 构造空间直角矩形确定球心 O？探究外接球半径 R 与截面半径 r₁, r₂ 及交线长 c 的内在规律。",
       };
     }
 
     if (modelType === "concentric") {
       return {
         variant: "warning" as const,
-        badge: "高考秒杀 · 正四面体三球同心模型",
+        badge: "新高考极高频 · 正四面体三球同心模型",
         condition:
-          "棱长为 a 的正四面体 ABCD，外接球球心、棱切球球心、内切球球心同心于中心 O。",
+          "正四面体 ABCD 的棱长为 a，内部同时存在外接球、棱切球与面内切球。",
         question:
-          "探究三球半径秒杀比例 r_内 : r_棱 : R_外 = 1 : √3 : 3（其中 r_内=√6/12 a, r_棱=√2/4 a, R_外=√6/4 a）。",
+          "观察外接球（过4顶点）、棱切球（切6棱中点）与内切球（切4面重心）的几何特征，探究三球同心性质与固定的半径比例关系。",
       };
     }
 
@@ -351,18 +365,40 @@ export default function AdvancedSphereAnimation() {
       if (presetKey === "in_sphere") {
         return {
           variant: "success" as const,
-          badge: "高考大题 · 圆台内切球临界存在条件",
-          condition: "圆台上底半径 r₁、下底半径 r₂，高 h = 2√(r₁ r₂)。",
+          badge: "高考真题探究 · 圆台内切球临界构型",
+          condition:
+            "圆台上底半径 r₁ = 1、下底半径 r₂ = 4，圆台轴高达到临界值 h = 4。",
           question:
-            "此时母线长 l = r₁ + r₂，轴截面等腰梯形对边和相等，恰好存在内切球，内切球半径 r_内 = h/2 = √(r₁ r₂)。",
+            "观察轴截面等腰梯形与内切球大圆的切点分布，检验此时梯形母线与两底半径满足何种等量关系？",
+        };
+      }
+      if (presetKey === "cylinder_limit") {
+        return {
+          variant: "info" as const,
+          badge: "极限退化探究 · 退化为圆柱",
+          condition:
+            "圆台上底半径 r₁ 逼近下底半径 r₂（r₁ → r₂），侧母线趋于平行。",
+          question:
+            "观察此时外接球心与上下底面的对称位置关系，旋转体退化为直圆柱时的几何性质如何演变？",
+        };
+      }
+      if (presetKey === "cone_limit") {
+        return {
+          variant: "info" as const,
+          badge: "极限退化探究 · 退化为圆锥",
+          condition:
+            "圆台上底半径 r₁ 逼近于 0（r₁ → 0），上底面退化为单点顶点。",
+          question:
+            "观察轴截面等腰梯形退化为等腰三角形的临界过程，圆锥切接球模型与圆台模型的几何统一性如何体现？",
         };
       }
       return {
         variant: "success" as const,
-        badge: "高考大题 · 圆台轴截面切接球模型",
-        condition: "圆台上底面半径为 r₁、下底面半径为 r₂、母线长为 l、高为 h。",
+        badge: "高考经典大题 · 圆台轴截面切接球模型",
+        condition:
+          "圆台上底面半径为 r₁、下底面半径为 r₂、轴高为 h，轴截面为对称等腰梯形。",
         question:
-          "轴截面降维为等腰梯形，圆台内切球存在充要条件为梯形对边和相等：l = r₁ + r₂，内切球半径 r = h/2 = √(r₁ r₂)。",
+          "如何通过轴截面降维求解圆台外接球半径？在什么参数条件下圆台内部恰好存在内切球？",
       };
     }
 
@@ -370,36 +406,38 @@ export default function AdvancedSphereAnimation() {
       if (presetKey === "cyl_opt") {
         return {
           variant: "accent" as const,
-          badge: "导数与立几压轴 · 球内接圆柱体积极大值",
-          condition: "半径为 R 的球体内接圆柱，高为 h。",
+          badge: "导数与立几压轴 · 内接圆柱体积极大值",
+          condition:
+            "固定半径为 R 的球体内接圆柱，圆柱的高 h 可在区间 (0, 2R) 内连续调节。",
           question:
-            "体积函数 V(h) = π(R² - h²/4)h，求导得驻点 h = (2√3/3)R 时体积取得最大值 V_max = (4√3/9)πR³（占球体体积 57.7%）。",
+            "拖动滑块观察圆柱体积的变化趋势，观察内接圆柱体积何时达到全局最大值？对应的高与球半径呈何种比例？",
         };
       }
       if (presetKey === "cone_opt") {
         return {
           variant: "accent" as const,
-          badge: "导数与立几压轴 · 球内接圆锥体积极大值",
-          condition: "半径为 R 的球体内接圆锥，高为 h (h ∈ (0, 2R))。",
+          badge: "导数与立几压轴 · 内接圆锥体积极大值",
+          condition:
+            "固定半径为 R 的球体内接圆锥，圆锥底面在球体内、顶点位于球面上，高为 h。",
           question:
-            "底面半径 r² = h(2R - h)，体积 V(h) = (1/3)πh²(2R - h)，求导得驻点 h = (4/3)R 时体积取得最大值 V_max = (32/81)πR³（占球体体积 29.6%）。",
+            "探究内接圆锥体积随高 h 的单调变化规律，何时内接圆锥体积最大？其体积分数占外接球的多少？",
         };
       }
       return {
         variant: "accent" as const,
-        badge: "导数与立几压轴 · 球内接体积极值模型",
+        badge: "导数综合应用 · 球内接旋转体体积极值模型",
         condition:
-          "半径为 R 的球体内接圆柱或圆锥，内接体的高为 h (h ∈ (0, 2R))。",
+          "半径为 R 的外接球内内接圆柱或圆锥，内接体的高为 h (h ∈ (0, 2R))。",
         question:
-          "建立体积函数 V(h) 并利用导数求极值：内接圆柱当 h = 2√3/3 R 时体积最大（占球体 57.7%）；内接圆锥当 h = 4/3 R 时体积最大（占球体 29.6%）。",
+          "如何建立内接几何体体积关于高 h 的函数关系？结合导数求驻点探究体积取得极大值时的空间几何特征。",
       };
     }
 
     return {
       variant: "info" as const,
-      badge: "高阶空间切接模型",
-      condition: "多面体或旋转体在空间中与球体相交或相切。",
-      question: "探究外心垂线交轨、截面降维与函数极值求解通法。",
+      badge: "高中立体几何进阶切接球模型",
+      condition: "空间几何体与球体相接（外接）或相切（内切）。",
+      question: "通过数形结合探究球心空间定位、轴截面降维与函数极值求解方法。",
     };
   }, [modelType, presetKey]);
 
@@ -407,7 +445,7 @@ export default function AdvancedSphereAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* Step 1: 探究模式 (2×2 黄金网格) */}
+          {/* Step 1: 探究模式 (2×2 黄金网格，纯净学术标题，无冗余碎片公式) */}
           <LeftPanelSection title="探究模式">
             <SelectGrid
               columns={2}
@@ -415,22 +453,18 @@ export default function AdvancedSphereAnimation() {
                 {
                   key: "perpPlanes",
                   label: "面面垂直",
-                  formula: "R^2=r_1^2+r_2^2-(c/2)^2",
                 },
                 {
                   key: "concentric",
                   label: "三球同心",
-                  formula: "1 : \\sqrt{3} : 3",
                 },
                 {
                   key: "truncatedCone",
                   label: "圆台切接",
-                  formula: "l = r_1+r_2",
                 },
                 {
                   key: "extrema",
                   label: "体积极值",
-                  formula: "V_{\\max}",
                 },
               ]}
               value={modelType}
@@ -484,11 +518,18 @@ export default function AdvancedSphereAnimation() {
                 label="显示外接球与赤道虚实轮廓"
               />
               {modelType === "perpPlanes" && (
-                <Toggle
-                  checked={showAuxLines}
-                  onChange={setShowAuxLines}
-                  label="显示双外心垂线与空间矩形"
-                />
+                <>
+                  <Toggle
+                    checked={showSectionCircles}
+                    onChange={setShowSectionCircles}
+                    label="显示截面外接圆 ⊙O₁ 与 ⊙O₂"
+                  />
+                  <Toggle
+                    checked={showAuxLines}
+                    onChange={setShowAuxLines}
+                    label="显示双外心垂线与空间矩形"
+                  />
+                </>
               )}
               {modelType === "concentric" && (
                 <Toggle
@@ -568,6 +609,7 @@ export default function AdvancedSphereAnimation() {
             showAuxLines={showAuxLines}
             showSection={showSection}
             showTangentPoints={showTangentPoints}
+            showSectionCircles={showSectionCircles}
           />
         </ThreeDCanvas>
       }
@@ -577,7 +619,9 @@ export default function AdvancedSphereAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
-          title="进阶切接球数学看板"
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
+          title="进阶切接球高考破题看板"
         />
       }
     />

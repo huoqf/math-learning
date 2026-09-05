@@ -4,6 +4,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
 import {
@@ -25,33 +26,44 @@ export function buildAdvancedSpherePanel(
   const theorems: Theorem[] = [];
   const gaokaoPoints: GaokaoPoint[] = [];
   const warnings: WarningItem[] = [];
+  const reasoningSteps: ReasoningStep[] = [];
+  let examAnchor: string | undefined = undefined;
 
   if (modelType === "perpPlanes") {
     const r1 = params.r1 ?? 3;
     const r2 = params.r2 ?? 3.5;
     const c = params.c ?? 3;
     const res = calculatePerpPlanesSphere(r1, r2, c);
-    const S_sphere = 4 * Math.PI * res.radius * res.radius;
-    const V_sphere = (4 / 3) * Math.PI * res.radius ** 3;
+    const halfC = c / 2;
+    const d1 = Math.sqrt(Math.max(0, r1 * r1 - halfC * halfC));
+    const d2 = Math.sqrt(Math.max(0, r2 * r2 - halfC * halfC));
+    const OH = Math.sqrt(d1 * d1 + d2 * d2);
+    const R2 = res.radius * res.radius;
 
     quantities.push(
       {
-        label: "底面外接圆半径 r₁",
-        symbol: "r_1",
-        value: Number(r1.toFixed(2)),
+        label: "底面外心距 d₁ (OO₂)",
+        symbol: "d_1",
+        value: Number(d1.toFixed(2)),
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "侧面外接圆半径 r₂",
-        symbol: "r_2",
-        value: Number(r2.toFixed(2)),
+        label: "侧面外心距 d₂ (OO₁)",
+        symbol: "d_2",
+        value: Number(d2.toFixed(2)),
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "公共交线长 c (AC)",
-        symbol: "c",
-        value: Number(c.toFixed(2)),
+        label: "球心交线距 OH",
+        symbol: "|OH|",
+        value: Number(OH.toFixed(2)),
         color: MATH_COLORS.accent,
+      },
+      {
+        label: "半径平方 R² (勾股差)",
+        symbol: "R^2",
+        value: Number(R2.toFixed(2)),
+        color: MATH_COLORS.sphereShell,
       },
       {
         label: "外接球半径 R",
@@ -60,15 +72,9 @@ export function buildAdvancedSpherePanel(
         color: MATH_COLORS.sphereShell,
       },
       {
-        label: "外接球表面积 S",
+        label: "表面积精确解 S",
         symbol: "S_{\\text{球}}",
-        value: Number(S_sphere.toFixed(2)),
-        color: MATH_COLORS.primary,
-      },
-      {
-        label: "外接球体积 V",
-        symbol: "V_{\\text{球}}",
-        value: Number(V_sphere.toFixed(2)),
+        value: `${(4 * R2).toFixed(1)}\\pi`,
         color: MATH_COLORS.primary,
       },
     );
@@ -87,6 +93,33 @@ export function buildAdvancedSpherePanel(
       },
     );
 
+    examAnchor = "新高考立体几何解答题大招母题";
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "空间垂线构造双外心空间矩形",
+        detail:
+          "过底面外心 O₁ 作底面垂线，过侧面外心 O₂ 作侧面垂线。由两面互相垂直，两垂线在空间必相交于外接球球心 O，构成空间矩形 H-O₁-O-O₂。",
+        latex: `O O_1 \\perp \\text{底面}, \\quad O O_2 \\perp \\text{侧面} \\implies |O O_1| = d_2, \\quad |O O_2| = d_1`,
+        rubric: "[高考采分点] 需写明两垂线共面且垂直于交线得空间矩形 (+2分)",
+      },
+      {
+        step: 2,
+        title: "勾股定理代入已知求弦心距",
+        detail: `代入当前参数 r₁ = ${r1}, r₂ = ${r2}, c = ${c} (交线半长 c/2 = ${halfC.toFixed(1)})，分别在两截面圆中解直角三角形求弦心距：`,
+        latex: `d_1 = \\sqrt{r_1^2 - (c/2)^2} = \\sqrt{${r1}^2 - ${halfC.toFixed(1)}^2} \\approx ${d1.toFixed(2)}, \\quad d_2 = \\sqrt{r_2^2 - (c/2)^2} \\approx ${d2.toFixed(2)}`,
+        rubric: "[高考采分点] 正确利用截面圆弦心距勾股定理 (+2分)",
+      },
+      {
+        step: 3,
+        title: "勾股差定理求解外接球半径与面积",
+        detail:
+          "外接球球心 O 到任意顶点的距离即为半径 R。利用空间矩形对角线与勾股差公式直接解出：",
+        latex: `R^2 = d_1^2 + d_2^2 + \\left(\\frac{c}{2}\\right)^2 = r_1^2 + r_2^2 - \\left(\\frac{c}{2}\\right)^2 = ${r1}^2 + ${r2}^2 - ${halfC.toFixed(1)}^2 = ${R2.toFixed(2)} \\implies R \\approx ${res.radius.toFixed(3)}`,
+        rubric: "[高考采分点] 正确写出外接球半径方程并求解 (+2分)",
+      },
+    );
+
     gaokaoPoints.push({
       text: "【面面垂直外接球秒杀口诀】“一求两面外接圆半径 r₁, r₂，二求公共交线长 c，三代勾股差公式 R² = r₁² + r₂² - (c/2)²”。此模型是高考立体几何大题高频母题！",
       importance: "gaokao",
@@ -101,14 +134,9 @@ export function buildAdvancedSpherePanel(
   } else if (modelType === "concentric") {
     const a = params.a ?? 4;
     const res = calculateConcentricSpheres(a);
+    examAnchor = "高考客观题压轴秒杀模型";
 
     quantities.push(
-      {
-        label: "正四面体棱长 a",
-        symbol: "a",
-        value: Number(a.toFixed(2)),
-        color: MATH_COLORS.paramPrimary,
-      },
       {
         label: "内切球半径 r",
         symbol: "r_{\\text{内}}",
@@ -128,10 +156,37 @@ export function buildAdvancedSpherePanel(
         color: MATH_COLORS.sphereShell,
       },
       {
-        label: "三球半径连比",
+        label: "外内比定值 R/r",
+        symbol: "R : r",
+        value: "3 : 1",
+        color: MATH_COLORS.accent,
+        isInvariant: true,
+        invariantNote: "正四面体外接球与内切球半径之比恒为 3:1",
+      },
+      {
+        label: "三球连比定值",
         symbol: "r : r_{\\text{棱}} : R",
-        value: "1 : 1.732 : 3",
+        value: "1 : \\sqrt{3} : 3",
         color: MATH_COLORS.primary,
+        isInvariant: true,
+        invariantNote: "正四面体三球同心黄金比例，无论棱长 a 为何值恒成立",
+      },
+    );
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "空间对称中心三球同心判定",
+        detail:
+          "正四面体具备高度空间对称性，各面重心、各棱中垂线与顶点高线完全交于一点，即为三球公共球心 O。",
+        latex: `O_{\\text{内}} = O_{\\text{棱}} = O_{\\text{外}} = O`,
+      },
+      {
+        step: 2,
+        title: "代入棱长 a 计算三球特征半径",
+        detail: `代入当前棱长 a = ${a}，直接套用黄金比例解析式求得半径：`,
+        latex: `r_{\\text{内}} = \\frac{\\sqrt{6}}{12}a \\approx ${res.inRadius.toFixed(3)}, \\quad r_{\\text{棱}} = \\frac{\\sqrt{2}}{4}a \\approx ${res.edgeRadius.toFixed(3)}, \\quad R_{\\text{外}} = \\frac{\\sqrt{6}}{4}a \\approx ${res.circumRadius.toFixed(3)}`,
+        rubric: "[秒杀提速] 考场直接应用口诀“一比根三比上三”秒杀填空压轴",
       },
     );
 
@@ -152,30 +207,20 @@ export function buildAdvancedSpherePanel(
     const h = params.h ?? 4.24;
     const res = calculateTruncatedConeSphere(r1, r2, h);
 
+    const d = (h * h + r1 * r1 - r2 * r2) / (2 * h);
+
     quantities.push(
-      {
-        label: "上底半径 r₁",
-        symbol: "r_1",
-        value: Number(r1.toFixed(2)),
-        color: MATH_COLORS.paramPrimary,
-      },
-      {
-        label: "下底半径 r₂",
-        symbol: "r_2",
-        value: Number(r2.toFixed(2)),
-        color: MATH_COLORS.paramPrimary,
-      },
-      {
-        label: "圆台高度 h",
-        symbol: "h",
-        value: Number(h.toFixed(2)),
-        color: MATH_COLORS.paramTertiary,
-      },
       {
         label: "母线长 l",
         symbol: "l",
         value: Number(res.slantHeight.toFixed(3)),
         color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "球心偏心距 d",
+        symbol: "d",
+        value: Number(d.toFixed(2)),
+        color: MATH_COLORS.accent,
       },
       {
         label: "外接球半径 R",
@@ -227,40 +272,34 @@ export function buildAdvancedSpherePanel(
 
     quantities.push(
       {
-        label: "外接球固定半径 R",
-        symbol: "R",
-        value: Number(R.toFixed(2)),
-        color: MATH_COLORS.accent,
-      },
-      {
-        label: "内接体高度 h",
-        symbol: "h",
-        value: Number(h.toFixed(2)),
-        color: MATH_COLORS.paramTertiary,
-      },
-      {
         label: "内接底面半径 r",
         symbol: "r",
         value: Number(res.r.toFixed(3)),
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "当前内接体体积 V",
+        label: "当前内接体积 V",
         symbol: "V_{\\text{内接}}",
         value: Number(res.volume.toFixed(2)),
         color: MATH_COLORS.primary,
       },
       {
-        label: "体积充填率 η = V/V_球",
-        symbol: "\\eta",
-        value: `${(res.volumeRatio * 100).toFixed(1)}%`,
-        color: MATH_COLORS.paramSecondary,
-      },
-      {
         label: "理论最大体积 V_max",
         symbol: "V_{\\max}",
         value: Number(res.maxVolume.toFixed(2)),
-        color: MATH_COLORS.paramPrimary,
+        color: MATH_COLORS.accent,
+      },
+      {
+        label: "极值高 h_opt",
+        symbol: "h_{\\text{opt}}",
+        value: Number(res.optimalH.toFixed(2)),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "体积充填率 η",
+        symbol: "\\eta",
+        value: `${(res.volumeRatio * 100).toFixed(1)}%`,
+        color: MATH_COLORS.paramSecondary,
       },
     );
 
@@ -290,5 +329,12 @@ export function buildAdvancedSpherePanel(
     }
   }
 
-  return { quantities, theorems, gaokaoPoints, warnings };
+  return {
+    quantities,
+    theorems,
+    gaokaoPoints,
+    warnings,
+    reasoningSteps,
+    examAnchor,
+  };
 }

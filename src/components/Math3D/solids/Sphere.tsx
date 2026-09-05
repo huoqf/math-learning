@@ -46,8 +46,8 @@ export const Sphere = ({
   const pos = mathToThree(center);
   const color = MATH_COLORS[colorKey] ?? MATH_COLORS.sphereShell;
   const lineHex = MATH_COLORS[outlineColorKey] ?? MATH_COLORS.line;
-  const [cx, cy, cz] = pos;
 
+  const groupRef = useRef<THREE.Group>(null);
   const rimRef = useRef<THREE.LineLoop>(null);
   const solidEquatorRef = useRef<THREE.Line>(null);
   const dashedEquatorRef = useRef<THREE.Line>(null);
@@ -114,13 +114,15 @@ export const Sphere = ({
   }, [lineHex, depthTest]);
 
   useFrame(({ camera }) => {
-    if (!showOutline) return;
+    if (!showOutline || !groupRef.current) return;
 
-    const cam = camera.position;
-    const dx = cam.x - cx;
-    const dy = cam.y - cy;
-    const dz = cam.z - cz;
-    const d = Math.hypot(dx, dy, dz);
+    // 将相机世界坐标投影到球体自身的局部坐标系中，局部球心精确恒等于 (0, 0, 0)
+    // 无论父级 group 存在何种平移变换，视线向量均保持 100% 精确自洽
+    const camLocal = groupRef.current.worldToLocal(camera.position.clone());
+    const dx = camLocal.x;
+    const dy = camLocal.y;
+    const dz = camLocal.z;
+    const d = camLocal.length();
 
     if (d <= radius || d < 0.001) return;
 
@@ -149,9 +151,9 @@ export const Sphere = ({
     const hRim = (radius * radius) / d;
     const rRim =
       (radius * Math.sqrt(Math.max(0.001, d * d - radius * radius))) / d;
-    const centerRimX = cx + nx * hRim;
-    const centerRimY = cy + ny * hRim;
-    const centerRimZ = cz + nz * hRim;
+    const centerRimX = nx * hRim;
+    const centerRimY = ny * hRim;
+    const centerRimZ = nz * hRim;
 
     const rimPts: THREE.Vector3[] = [];
     for (let i = 0; i < SEGMENTS; i++) {
@@ -171,7 +173,7 @@ export const Sphere = ({
       rimLineLoop.geometry.attributes.position.needsUpdate = true;
     }
 
-    // ── 2. 水平赤道大圆（精确在 Y = cy 水平面上，前实后虚拆分）──
+    // ── 2. 水平赤道大圆（局部 Y = 0 平面上，前实后虚拆分）──
     const phiCam = Math.atan2(dz, dx);
     const halfSeg = SEGMENTS / 2;
 
@@ -179,11 +181,7 @@ export const Sphere = ({
     for (let i = 0; i <= halfSeg; i++) {
       const t = phiCam - Math.PI / 2 + (Math.PI * i) / halfSeg;
       solidPts.push(
-        new THREE.Vector3(
-          cx + radius * Math.cos(t),
-          cy,
-          cz + radius * Math.sin(t),
-        ),
+        new THREE.Vector3(radius * Math.cos(t), 0, radius * Math.sin(t)),
       );
     }
     solidEquatorLine.geometry.setFromPoints(solidPts);
@@ -195,11 +193,7 @@ export const Sphere = ({
     for (let i = 0; i <= halfSeg; i++) {
       const t = phiCam + Math.PI / 2 + (Math.PI * i) / halfSeg;
       dashedPts.push(
-        new THREE.Vector3(
-          cx + radius * Math.cos(t),
-          cy,
-          cz + radius * Math.sin(t),
-        ),
+        new THREE.Vector3(radius * Math.cos(t), 0, radius * Math.sin(t)),
       );
     }
     dashedEquatorLine.geometry.setFromPoints(dashedPts);
@@ -211,8 +205,8 @@ export const Sphere = ({
     // ── 3. 竖直极轴连线 N-S ──
     if (showPolarAxis) {
       const polarPts = [
-        new THREE.Vector3(cx, cy - radius, cz),
-        new THREE.Vector3(cx, cy + radius, cz),
+        new THREE.Vector3(0, -radius, 0),
+        new THREE.Vector3(0, radius, 0),
       ];
       polarAxisLine.geometry.setFromPoints(polarPts);
       if (polarAxisLine.geometry.attributes.position) {
@@ -223,9 +217,9 @@ export const Sphere = ({
   });
 
   return (
-    <group renderOrder={10}>
+    <group ref={groupRef} position={pos} renderOrder={10}>
       {/* 半透明通透球体曲面 */}
-      <mesh position={pos}>
+      <mesh>
         <sphereGeometry args={[radius, SEGMENTS, 32]} />
         <meshStandardMaterial
           color={color}

@@ -5,6 +5,8 @@ import {
   CompoundLabel3D,
   Segment3D,
   Polygon3DFace,
+  Circle3D,
+  AngleArc3D,
 } from "@/components/Math3D";
 import {
   SphereShell,
@@ -19,6 +21,7 @@ import {
   calculateTruncatedConeSphere,
   calculateSphereExtrema,
 } from "@/math3d/advancedSphereModels";
+import { mathToThree } from "@/math3d/coordinateConvention";
 import type { Vec3 } from "@/math3d/vector3";
 
 export type AdvancedSphereModelType =
@@ -31,6 +34,7 @@ export interface AdvancedSphereSceneProps {
   showAuxLines?: boolean;
   showSection?: boolean;
   showTangentPoints?: boolean;
+  showSectionCircles?: boolean;
 }
 
 export const AdvancedSphereScene = ({
@@ -40,6 +44,7 @@ export const AdvancedSphereScene = ({
   showAuxLines = true,
   showSection = true,
   showTangentPoints = true,
+  showSectionCircles = true,
 }: AdvancedSphereSceneProps) => {
   // ─── 1. 面面垂直双外心模型 ───
   const perpPlanesData = useMemo(() => {
@@ -75,11 +80,18 @@ export const AdvancedSphereScene = ({
     return calculateSphereExtrema(R, shapeType, h);
   }, [modelType, params.R, params.shapeType, params.h]);
 
+  // 计算面面垂直模型的居中偏移（将外接球心对准场景原点，避免模型偏心与相机裁切）
+  const perpCenterOffset = useMemo<[number, number, number]>(() => {
+    if (!perpPlanesData) return [0, 0, 0];
+    const [cx, cy, cz] = mathToThree(perpPlanesData.center);
+    return [-cx, -cy, -cz];
+  }, [perpPlanesData]);
+
   return (
     <group>
       {/* ────────────────── 1. 面面垂直双外心模型 ────────────────── */}
       {modelType === "perpPlanes" && perpPlanesData && (
-        <group>
+        <group position={perpCenterOffset}>
           {/* 外接球壳 */}
           {showSphere && (
             <SphereShell
@@ -90,31 +102,69 @@ export const AdvancedSphereScene = ({
             />
           )}
 
-          {/* 四面体骨架 */}
+          {/* 四面体骨架与几何特征 */}
           {(() => {
             const { A, C, B, P } = perpPlanesData.vertices;
             const { O1, O2, H, center } = perpPlanesData;
 
             return (
               <>
-                {/* 底面与侧面三角形半透明面片 */}
-                {showSection && (
+                {/* 截面外接圆 ⊙O1 与 ⊙O2 (直观呈现两截面圆垂直相交于公共弦 AC) */}
+                {showSectionCircles && (
                   <>
-                    <Polygon3DFace
-                      points={[A, C, B]}
+                    {/* 底面截面外接圆 ⊙O1 (位于 XY 平面，法向量 [0,0,1]) */}
+                    <Circle3D
+                      center={O1}
+                      radius={perpPlanesData.r1}
+                      normal={{ x: 0, y: 0, z: 1 }}
                       colorKey="paramPrimary"
-                      opacity={0.12}
+                      fillOpacity={0.06}
+                      lineWidth={1.8}
                     />
-                    <Polygon3DFace
-                      points={[A, C, P]}
+                    {/* 侧面截面外接圆 ⊙O2 (位于 XZ 平面，法向量 [0,1,0]) */}
+                    <Circle3D
+                      center={O2}
+                      radius={perpPlanesData.r2}
+                      normal={{ x: 0, y: 1, z: 0 }}
                       colorKey="paramSecondary"
-                      opacity={0.12}
+                      fillOpacity={0.06}
+                      lineWidth={1.8}
                     />
                   </>
                 )}
 
-                {/* 公共底边 AC (交线) */}
-                <Segment3D from={A} to={C} colorKey="accent" lineWidth={3.5} />
+                {/* 四面体 4 个半透明面片 */}
+                {showSection && (
+                  <>
+                    {/* 底面 ABC */}
+                    <Polygon3DFace
+                      points={[A, C, B]}
+                      colorKey="paramPrimary"
+                      opacity={0.14}
+                    />
+                    {/* 侧面 PAC */}
+                    <Polygon3DFace
+                      points={[A, C, P]}
+                      colorKey="paramSecondary"
+                      opacity={0.14}
+                    />
+                    {/* 前侧面 PAB */}
+                    <Polygon3DFace
+                      points={[P, A, B]}
+                      colorKey="line"
+                      opacity={0.06}
+                    />
+                    {/* 前侧面 PBC */}
+                    <Polygon3DFace
+                      points={[P, B, C]}
+                      colorKey="line"
+                      opacity={0.06}
+                    />
+                  </>
+                )}
+
+                {/* 公共底边 AC (交线，加粗高亮) */}
+                <Segment3D from={A} to={C} colorKey="accent" lineWidth={3.6} />
 
                 {/* 底面两条边 */}
                 <Segment3D
@@ -145,18 +195,19 @@ export const AdvancedSphereScene = ({
                 />
 
                 {/* 连接 PB 形成四面体 */}
-                <Segment3D
-                  from={P}
-                  to={B}
-                  colorKey="line"
-                  dashed
-                  lineWidth={1.8}
-                />
+                <Segment3D from={P} to={B} colorKey="line" lineWidth={2} />
 
-                {/* 辅助线：空间直角矩形与外心垂线 */}
+                {/* 辅助线：空间直角矩形与双外心垂线系统 */}
                 {showAuxLines && (
                   <>
-                    {/* H -> O1 (底面中垂线) */}
+                    {/* 空间矩形 H-O1-O-O2 半透明截面面片 */}
+                    <Polygon3DFace
+                      points={[H, O1, center, O2]}
+                      colorKey="paramTertiary"
+                      opacity={0.16}
+                    />
+
+                    {/* H -> O1 (底面中垂线，长为 d1) */}
                     <Segment3D
                       from={H}
                       to={O1}
@@ -164,7 +215,7 @@ export const AdvancedSphereScene = ({
                       dashed
                       lineWidth={1.8}
                     />
-                    {/* H -> O2 (侧面中垂线) */}
+                    {/* H -> O2 (侧面中垂线，长为 d2) */}
                     <Segment3D
                       from={H}
                       to={O2}
@@ -172,7 +223,7 @@ export const AdvancedSphereScene = ({
                       dashed
                       lineWidth={1.8}
                     />
-                    {/* O1 -> O (底面外心垂线) */}
+                    {/* O1 -> O (底面外心垂线，垂直于底面，长为 d2) */}
                     <Segment3D
                       from={O1}
                       to={center}
@@ -180,7 +231,7 @@ export const AdvancedSphereScene = ({
                       dashed
                       lineWidth={2}
                     />
-                    {/* O2 -> O (侧面外心垂线) */}
+                    {/* O2 -> O (侧面外心垂线，垂直于侧面，长为 d1) */}
                     <Segment3D
                       from={O2}
                       to={center}
@@ -188,62 +239,145 @@ export const AdvancedSphereScene = ({
                       dashed
                       lineWidth={2}
                     />
-                    {/* 外接球半径线 O -> A, O -> C */}
+
+                    {/* 矩形对角线 H -> O (长为 sqrt(d1^2 + d2^2)) */}
+                    <Segment3D
+                      from={H}
+                      to={center}
+                      colorKey="paramTertiary"
+                      dashed
+                      lineWidth={2.2}
+                    />
+
+                    {/* 底面外接半径连线 O1 -> A (长为 r1) */}
+                    <Segment3D
+                      from={O1}
+                      to={A}
+                      colorKey="paramPrimary"
+                      dashed
+                      lineWidth={1.6}
+                    />
+                    {/* 侧面外接半径连线 O2 -> A (长为 r2) */}
+                    <Segment3D
+                      from={O2}
+                      to={A}
+                      colorKey="paramSecondary"
+                      dashed
+                      lineWidth={1.6}
+                    />
+
+                    {/* 外接球半径线 O -> A, O -> B, O -> P (长为 R) */}
                     <Segment3D
                       from={center}
                       to={A}
-                      colorKey="primary"
+                      colorKey="accent"
                       dashed
-                      lineWidth={1.8}
+                      lineWidth={2.2}
                     />
                     <Segment3D
                       from={center}
-                      to={C}
-                      colorKey="primary"
+                      to={B}
+                      colorKey="accent"
                       dashed
-                      lineWidth={1.8}
+                      lineWidth={1.6}
+                    />
+                    <Segment3D
+                      from={center}
+                      to={P}
+                      colorKey="accent"
+                      dashed
+                      lineWidth={1.6}
+                    />
+
+                    {/* 直角标记：H 处二面角直角 */}
+                    <AngleArc3D
+                      vertex={H}
+                      dirA={{ x: 0, y: 1, z: 0 }}
+                      dirB={{ x: 0, y: 0, z: 1 }}
+                      radius={0.35}
+                      isRight={true}
+                      colorKey="accent"
+                    />
+
+                    {/* 直角标记：O1 处外心垂线直角 */}
+                    <AngleArc3D
+                      vertex={O1}
+                      dirA={{ x: 0, y: -1, z: 0 }}
+                      dirB={{ x: 0, y: 0, z: 1 }}
+                      radius={0.35}
+                      isRight={true}
+                      colorKey="paramTertiary"
+                    />
+
+                    {/* 直角标记：O2 处外心垂线直角 */}
+                    <AngleArc3D
+                      vertex={O2}
+                      dirA={{ x: 0, y: 1, z: 0 }}
+                      dirB={{ x: 0, y: 0, z: -1 }}
+                      radius={0.35}
+                      isRight={true}
+                      colorKey="paramTertiary"
                     />
                   </>
                 )}
 
                 {/* 顶点标注 */}
                 <Point3D position={A} colorKey="accent" />
-                <PointLabel3D position={A} text="A" offset={[-0.2, 0, 0]} />
+                <PointLabel3D position={A} text="A" offset={[-0.25, 0, 0]} />
 
                 <Point3D position={C} colorKey="accent" />
-                <PointLabel3D position={C} text="C" offset={[0.2, 0, 0]} />
+                <PointLabel3D position={C} text="C" offset={[0.25, 0, 0]} />
 
                 <Point3D position={B} colorKey="paramPrimary" />
-                <PointLabel3D position={B} text="B" offset={[0, 0.25, 0]} />
+                <PointLabel3D position={B} text="B" offset={[0, 0.3, 0]} />
 
                 <Point3D position={P} colorKey="paramSecondary" />
-                <PointLabel3D position={P} text="P" offset={[0, 0, 0.25]} />
+                <PointLabel3D position={P} text="P" offset={[0, 0, 0.3]} />
 
-                <Point3D position={H} colorKey="line" />
-                <PointLabel3D position={H} text="H" offset={[0, -0.2, -0.2]} />
+                {/* 辅助线交线中点 H 标注（受 showAuxLines 控制） */}
+                {showAuxLines && (
+                  <>
+                    <Point3D position={H} colorKey="line" />
+                    <PointLabel3D
+                      position={H}
+                      text="H"
+                      offset={[0, -0.25, -0.25]}
+                    />
+                  </>
+                )}
 
-                <Point3D position={O1} colorKey="paramTertiary" />
-                <CompoundLabel3D
-                  position={O1}
-                  base="O"
-                  subscript="1"
-                  offset={[0.2, 0.1, 0]}
-                />
+                {/* 截面外接圆心 O1 与 O2（受 showSectionCircles 或 showAuxLines 控制） */}
+                {(showSectionCircles || showAuxLines) && (
+                  <>
+                    <Point3D position={O1} colorKey="paramTertiary" />
+                    <CompoundLabel3D
+                      position={O1}
+                      base="O"
+                      subscript="1"
+                      offset={[0.25, 0.15, 0]}
+                    />
 
-                <Point3D position={O2} colorKey="paramTertiary" />
-                <CompoundLabel3D
-                  position={O2}
-                  base="O"
-                  subscript="2"
-                  offset={[0.2, 0, 0.1]}
-                />
+                    <Point3D position={O2} colorKey="paramTertiary" />
+                    <CompoundLabel3D
+                      position={O2}
+                      base="O"
+                      subscript="2"
+                      offset={[0.25, 0, 0.15]}
+                    />
+                  </>
+                )}
 
-                <Point3D position={center} colorKey="accent" />
-                <PointLabel3D
-                  position={center}
-                  text="O"
-                  offset={[0.2, 0.15, 0.15]}
-                />
+                {/* 外接球心 O（受 showSphere 或 showAuxLines 控制） */}
+                {(showSphere || showAuxLines) && (
+                  <>
+                    <Point3D position={center} colorKey="accent" />
+                    <PointLabel3D
+                      position={center}
+                      text="O"
+                      offset={[0.25, 0.2, 0.2]}
+                    />
+                  </>
+                )}
               </>
             );
           })()}
@@ -355,12 +489,20 @@ export const AdvancedSphereScene = ({
                   offset={[-0.15, -0.15, 0.15]}
                 />
 
-                <Point3D position={concentricData.center} colorKey="accent" />
-                <PointLabel3D
-                  position={concentricData.center}
-                  text="O"
-                  offset={[0.2, 0.1, 0]}
-                />
+                {/* 球心 O（受 showSphere 控制） */}
+                {showSphere && (
+                  <>
+                    <Point3D
+                      position={concentricData.center}
+                      colorKey="accent"
+                    />
+                    <PointLabel3D
+                      position={concentricData.center}
+                      text="O"
+                      offset={[0.2, 0.1, 0]}
+                    />
+                  </>
+                )}
               </>
             );
           })()}
@@ -446,38 +588,46 @@ export const AdvancedSphereScene = ({
                 dashed
                 lineWidth={1.8}
               />
+
+              {/* 轴线端点圆心标注 */}
+              <Point3D
+                position={{ x: 0, y: 0, z: truncatedConeData.height }}
+                colorKey="paramPrimary"
+              />
+              <CompoundLabel3D
+                position={{ x: 0, y: 0, z: truncatedConeData.height }}
+                base="O"
+                subscript="1"
+                offset={[-0.25, 0.1, 0]}
+              />
+
+              <Point3D
+                position={{ x: 0, y: 0, z: 0 }}
+                colorKey="paramPrimary"
+              />
+              <CompoundLabel3D
+                position={{ x: 0, y: 0, z: 0 }}
+                base="O"
+                subscript="2"
+                offset={[-0.25, -0.1, 0]}
+              />
             </>
           )}
 
-          {/* 顶点标注 */}
-          <Point3D
-            position={{ x: 0, y: 0, z: truncatedConeData.height }}
-            colorKey="paramPrimary"
-          />
-          <CompoundLabel3D
-            position={{ x: 0, y: 0, z: truncatedConeData.height }}
-            base="O"
-            subscript="1"
-            offset={[-0.25, 0.1, 0]}
-          />
-
-          <Point3D position={{ x: 0, y: 0, z: 0 }} colorKey="paramPrimary" />
-          <CompoundLabel3D
-            position={{ x: 0, y: 0, z: 0 }}
-            base="O"
-            subscript="2"
-            offset={[-0.25, -0.1, 0]}
-          />
-
-          <Point3D
-            position={truncatedConeData.circumCenter}
-            colorKey="accent"
-          />
-          <PointLabel3D
-            position={truncatedConeData.circumCenter}
-            text="O"
-            offset={[0.25, 0, 0]}
-          />
+          {/* 外接球心 O（受 showSphere 控制） */}
+          {showSphere && (
+            <>
+              <Point3D
+                position={truncatedConeData.circumCenter}
+                colorKey="accent"
+              />
+              <PointLabel3D
+                position={truncatedConeData.circumCenter}
+                text="O"
+                offset={[0.25, 0, 0]}
+              />
+            </>
+          )}
 
           {truncatedConeData.hasInSphere && (
             <>
@@ -532,13 +682,17 @@ export const AdvancedSphereScene = ({
             </group>
           )}
 
-          {/* 球心标注 */}
-          <Point3D position={{ x: 0, y: 0, z: 0 }} colorKey="accent" />
-          <PointLabel3D
-            position={{ x: 0, y: 0, z: 0 }}
-            text="O"
-            offset={[0.15, 0.15, 0.15]}
-          />
+          {/* 球心标注（受 showSphere 控制） */}
+          {showSphere && (
+            <>
+              <Point3D position={{ x: 0, y: 0, z: 0 }} colorKey="accent" />
+              <PointLabel3D
+                position={{ x: 0, y: 0, z: 0 }}
+                text="O"
+                offset={[0.15, 0.15, 0.15]}
+              />
+            </>
+          )}
         </group>
       )}
     </group>

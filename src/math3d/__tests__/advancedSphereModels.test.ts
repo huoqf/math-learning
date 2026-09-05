@@ -17,6 +17,51 @@ describe("advancedSphereModels 进阶切接球数学纯函数测试", () => {
       expect(res.center.z).toBeCloseTo(Math.sqrt(16 - 1), 4);
     });
 
+    it("几何不变量测试：四面体所有 4 个顶点 A, B, C, P 到球心 O 的距离严格等于 R", () => {
+      // 任意选取一组典型参数
+      const testCases = [
+        { r1: 3, r2: 3.5, c: 3 },
+        { r1: 2.5, r2: 3, c: 3 },
+        { r1: 4, r2: 4, c: 5 },
+      ];
+
+      for (const { r1, r2, c } of testCases) {
+        const res = calculatePerpPlanesSphere(r1, r2, c);
+        const { A, B, C, P } = res.vertices;
+        const O = res.center;
+        const R = res.radius;
+
+        const dist = (v: typeof A) =>
+          Math.hypot(v.x - O.x, v.y - O.y, v.z - O.z);
+
+        expect(dist(A)).toBeCloseTo(R, 5);
+        expect(dist(B)).toBeCloseTo(R, 5);
+        expect(dist(C)).toBeCloseTo(R, 5);
+        expect(dist(P)).toBeCloseTo(R, 5);
+      }
+    });
+
+    it("空间正交性测试：底面 ABC (Z=0) 与 侧面 PAC (Y=0) 严格垂直于交线 AC (X轴)", () => {
+      const res = calculatePerpPlanesSphere(3, 3.5, 3);
+      const { A, C, B, P } = res.vertices;
+
+      // AC 在 X 轴上：Y=0, Z=0
+      expect(A.y).toBeCloseTo(0, 5);
+      expect(A.z).toBeCloseTo(0, 5);
+      expect(C.y).toBeCloseTo(0, 5);
+      expect(C.z).toBeCloseTo(0, 5);
+
+      // B 在底面 XY 平面：Z=0
+      expect(B.z).toBeCloseTo(0, 5);
+      // P 在侧面 XZ 平面：Y=0
+      expect(P.y).toBeCloseTo(0, 5);
+
+      // 垂足 H 位于 AC 中点 (0, 0, 0)
+      expect(res.H.x).toBeCloseTo(0, 5);
+      expect(res.H.y).toBeCloseTo(0, 5);
+      expect(res.H.z).toBeCloseTo(0, 5);
+    });
+
     it("交线长度超限保护", () => {
       const res = calculatePerpPlanesSphere(2, 2, 10);
       expect(res.radius).toBeGreaterThan(0);
