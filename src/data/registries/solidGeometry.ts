@@ -417,6 +417,21 @@ export const surfaceRelationMeta: ParamMeta[] = [
 
 export const spatialAngleMeta: ParamMeta[] = [
   {
+    key: "lambda",
+    label: "动点 E 位置比",
+    labelFormula: `\\text{动点 } E \\; \\left(\\lambda = \\frac{AE}{AA_1}\\right)`,
+    min: 0.1,
+    max: 1.0,
+    step: 0.05,
+    defaultValue: 0.6,
+    importance: "core",
+    group: "核心探究动参数",
+    marks: [
+      { value: 0.5, label: "中点", labelFormula: "0.5", variant: "critical" },
+      { value: 1.0, label: "顶端", labelFormula: "1.0", variant: "critical" },
+    ],
+  },
+  {
     key: "a",
     label: "底面棱长 a",
     labelFormula: `\\text{底面边长 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
@@ -424,7 +439,8 @@ export const spatialAngleMeta: ParamMeta[] = [
     max: 5,
     step: 0.1,
     defaultValue: 3,
-    importance: "core",
+    importance: "advanced",
+    group: "长方体基准尺寸",
   },
   {
     key: "b",
@@ -434,7 +450,8 @@ export const spatialAngleMeta: ParamMeta[] = [
     max: 5,
     step: 0.1,
     defaultValue: 2,
-    importance: "core",
+    importance: "advanced",
+    group: "长方体基准尺寸",
   },
   {
     key: "c",
@@ -444,21 +461,8 @@ export const spatialAngleMeta: ParamMeta[] = [
     max: 5,
     step: 0.1,
     defaultValue: 2,
-    importance: "core",
-  },
-  {
-    key: "lambda",
-    label: "动点 E 位置",
-    labelFormula: `\\text{动点 } E \\text{ 分点比 } \\color{${MATH_COLORS.highlight}}{\\lambda}`,
-    min: 0.1,
-    max: 1.0,
-    step: 0.05,
-    defaultValue: 0.6,
     importance: "advanced",
-    marks: [
-      { value: 0.5, label: "中点", labelFormula: "0.5", variant: "critical" },
-      { value: 1.0, label: "顶端", labelFormula: "1.0", variant: "critical" },
-    ],
+    group: "长方体基准尺寸",
   },
 ];
 

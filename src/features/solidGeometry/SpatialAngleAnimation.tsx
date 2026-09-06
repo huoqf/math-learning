@@ -363,6 +363,7 @@ export default function SpatialAngleAnimation({
           descriptionFormula: undefined, // 彻底消除重复公式
           importance: meta.importance,
           marks: meta.marks,
+          group: meta.group,
         };
       });
   }, [params, activeMode, modelPreset]);
@@ -441,7 +442,7 @@ export default function SpatialAngleAnimation({
         ];
       case "distance":
         return [
-          { colorKey: "primary", swatch: "line", label: "三棱锥棱线与截面边" },
+          { colorKey: "accent", swatch: "line", label: "三棱锥截面边与棱线" },
           {
             colorKey: "highlight",
             swatch: "line",
@@ -450,10 +451,15 @@ export default function SpatialAngleAnimation({
           {
             colorKey: "secondary",
             swatch: "area",
-            label: "底面 ABD 与截面 BDE",
+            label: "底面 △ABD",
           },
           {
-            colorKey: "accent",
+            colorKey: "paramTertiary",
+            swatch: "area",
+            label: "斜截面 △BDE",
+          },
+          {
+            colorKey: "paramPrimary",
             swatch: "line",
             label: "竖直侧高 EA (等体积换底)",
           },
@@ -470,44 +476,53 @@ export default function SpatialAngleAnimation({
     }
   }, [activeMode, showNormals]);
 
-  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  // 左屏教学提示与题设导引（符合高中数学题设规范：详实交代几何背景与动点约束，多问递进）
   const tipConfig = useMemo(() => {
     switch (activeMode) {
       case "skewLines":
         return {
           variant: "primary" as const,
-          badge: "高考核心 · 异面直线所成角",
+          badge: "高考核心 · 空间异面直线所成角",
           condition:
-            "长方体 ABCD-A₁B₁C₁D₁ 中棱长分别为 a, b, c，异面直线 A₁B 与 AC。",
-          question:
-            "通过平移向量 D₁C ∥ A₁B 将空间异面直线角转化为相交直线角 ∠ACD₁，或利用方向向量点积公式 cosθ=|u⃗·v⃗|/(|u⃗||v⃗|) 求解。",
+            "在长方体 ABCD-A₁B₁C₁D₁ 中，底面棱长为 AB=a, AD=b，高为 AA₁=c。直线 A₁B 与 AC 分别位于侧面与底面，是一对空间异面直线。",
+          questions: [
+            "平移转化法：寻找与 A₁B 平行的直线 D₁C，将空间异面直线转化为相交直线，探究相交线所成平面角 ∠ACD₁；",
+            "空间向量法：求方向向量 u⃗ = BA₁⃗ 与 v⃗ = AC⃗，利用夹角公式 cosθ = |u⃗·v⃗| / (|u⃗||v⃗|) 求解异面直线所成角的余弦值。",
+          ],
         };
       case "linePlane":
         return {
           variant: "warning" as const,
           badge: "高考经典 · 直线与平面所成角",
           condition:
-            "斜线 EC 与底面 ABCD 相交于点 C，E 为侧棱 AA₁ 上动点 (AE=λc)。",
-          question:
-            "寻找垂线段 EA ⊥ 底面与斜线在底面射影 AC，在直角三角形 △EAC 中求 sinθ=EA/EC，或利用法向量公式 sinθ=|v⃗·n⃗|/(|v⃗||n⃗|) 求解。",
+            "在长方体 ABCD-A₁B₁C₁D₁ 中，底面长宽为 a, b，侧棱高为 c。动点 E 在侧棱 AA₁ 上移动，满足分点比 λ = AE/AA₁ (0 < λ ≤ 1)。线段 EC 为从侧棱到对角顶点的空间斜线。",
+          questions: [
+            "几何射影法：确定侧棱 EA ⊥ 底面 ABCD，找出斜线 EC 在底面上的垂直射影 AC，在 Rt△EAC 中求解线面角 θ = ∠ECA 的正弦值；",
+            "空间向量法：利用底面法向量 n⃗ = (0,0,1) 与斜线方向向量 v⃗ = EC⃗，应用公式 sinθ = |v⃗·n⃗| / (|v⃗||n⃗|) 进行代数求解，观察角度随动点 E 滑动的演化规律。",
+          ],
         };
       case "dihedral":
         return {
           variant: "success" as const,
-          badge: "高考母题 · 空间二面角平面角",
+          badge: "高考母题 · 空间二面角与平面角判定",
           condition:
-            "截面 BDE 与底面 ABCD 相交于交线 BD，E 为侧棱 AA₁ 上定点/动点。",
-          question:
-            "作 AM ⊥ BD 连结 EM（三垂线定理），探究二面角平面角 ∠AME，或利用两平面法向量夹角公式 cosθ=|n⃗₁·n⃗₂|/(|n⃗₁||n⃗₂|) 判定与求解。",
+            "在长方体 ABCD-A₁B₁C₁D₁ 中，E 为侧棱 AA₁ 上动点。截面 BDE 与底面 ABCD 相交于公共棱线 BD。",
+          questions: [
+            "几何三垂线法：作 AM ⊥ BD 于垂足 M，连结 EM。依据三垂线定理判定二面角 E-BD-A 的平面角 ∠AME 并求值；",
+            "双法向量法：分别求解底面法向量 n⃗₁ 与截面法向量 n⃗₂，利用夹角公式 cosθ = |n⃗₁·n⃗₂| / (|n⃗₁||n⃗₂|) 判定二面角大小。",
+          ],
         };
       case "distance":
         return {
           variant: "accent" as const,
-          badge: "高考大题 · 点到平面垂直距离",
+          badge: "高考大题 · 点到平面垂直距离与体积极值",
           condition:
-            "求长方体顶点 A 到斜截面 BDE 的空间垂直距离 d (垂线段 AH)。",
-          question:
-            "利用三棱锥等体积法换底 V_{A-BDE} = V_{E-ABD} 求解高线 d=3V/S_{△BDE}，或利用向量射影公式 d=|AB⃗·n⃗|/|n⃗| 精确计算。",
+            "在长方体 ABCD-A₁B₁C₁D₁ 中，底面棱长分别为 AB=a, AD=b，侧棱长为 AA₁=c（以 A 为原点建立空间直角坐标系 A-xyz）。E 为侧棱 AA₁ 上的动点，满足分点比 λ = AE/AA₁ (0 < λ ≤ 1)。连接 BE, DE, BD 构成斜截面 △BDE 以及三棱锥 E-ABD。",
+          questions: [
+            "求斜截面 △BDE 的法向量 n⃗，并利用空间向量投影公式 d = |AB⃗·n⃗| / |n⃗|，求解顶点 A 到截面 BDE 的垂直距离 d（垂线段 AH 的长度）；",
+            "利用三棱锥等体积换底公式 V_{A-BDE} = V_{E-ABD} = (1/3)S_{△ABD}·z_E 反求高线 d，验证几何法与代数向量法的对账一致性；",
+            "探究当分点比 λ 取何值时，三棱锥 E-ABD 的体积取得最大值？求出最大体积 V_max 并分析几何本质。",
+          ],
         };
     }
   }, [activeMode]);
@@ -667,20 +682,31 @@ export default function SpatialAngleAnimation({
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
                 <span>{tipConfig.badge}</span>
               </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
+              <div className="space-y-2 text-[11px] leading-relaxed">
                 <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
+                  <div className="font-semibold text-neutral-800 mb-1 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block shrink-0" />
+                    <span>【初始条件】</span>
+                  </div>
+                  <div className="text-neutral-700 pl-2 border-l-2 border-blue-200/80 leading-relaxed">
                     {tipConfig.condition}
-                  </span>
+                  </div>
                 </div>
                 <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
+                  <div className="font-semibold text-neutral-800 mb-1 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0" />
+                    <span>【探究设问】</span>
+                  </div>
+                  <div className="space-y-1.5 pl-2 border-l-2 border-amber-200/80 text-neutral-700">
+                    {tipConfig.questions.map((q, idx) => (
+                      <div key={idx} className="flex items-start gap-1">
+                        <span className="font-semibold text-neutral-900 shrink-0">
+                          ({idx + 1})
+                        </span>
+                        <span className="leading-relaxed">{q}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </TipCard>
@@ -791,6 +817,7 @@ export default function SpatialAngleAnimation({
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
           title={
             activeMode === "skewLines"
               ? "异面直线角与公垂线高考看板"
