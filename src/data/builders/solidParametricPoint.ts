@@ -4,6 +4,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
 import {
@@ -30,16 +31,19 @@ export function buildParametricPointPanel(
   const theorems: Theorem[] = [];
   const gaokaoPoints: GaokaoPoint[] = [];
   const warnings: WarningItem[] = [];
+  const reasoningSteps: ReasoningStep[] = [];
+  let examAnchor = "";
 
   if (mode === "singlePointAngle") {
     const res = calculateSinglePointAngle(a, b, c, lambda, targetThetaDeg);
+    examAnchor = "高考解答题 18 题 · 空间向量法探究动点存在性与二面角";
 
     quantities.push(
       {
-        label: "动点参数 λ",
+        label: "动点 P 分点比 λ",
         symbol: "\\lambda = \\frac{BP}{BB_1}",
         value: Number(lambda.toFixed(2)),
-        color: MATH_COLORS.paramPrimary,
+        color: MATH_COLORS.highlight,
       },
       {
         label: "动点 P 空间坐标",
@@ -82,6 +86,33 @@ export function buildParametricPointPanel(
         color: res.isPerpExist
           ? MATH_COLORS.paramTertiary
           : MATH_COLORS.highlight,
+      },
+    );
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "空间直角坐标系建立与动点参数化",
+        detail:
+          "以 A 为坐标原点建立空间直角坐标系 A-xyz。侧棱 BB₁ 上的动点 P 满足 BP = λ·BB₁ (λ ∈ [0, 1])。",
+        latex: `P(${a}, 0, ${(lambda * c).toFixed(2)}), \\quad A(0,0,0), \\quad C(${a}, ${b}, 0), \\quad D(0, ${b}, 0)`,
+        rubric: "【得分点 1】正确建立空间直角坐标系并写出动点 P 坐标 (得 2 分)",
+      },
+      {
+        step: 2,
+        title: "求解截面法向量并列出二面角向量方程",
+        detail:
+          "计算截面 PAC 的法向量 n，根据底面法向量 n₀=(0,0,1) 建立关于动参数 λ 的二面角三角方程。",
+        latex: `\\cos\\theta(\\lambda) = \\frac{|\\vec{n} \\cdot \\vec{n}_0|}{|\\vec{n}|} = \\frac{${(a * b).toFixed(0)}}{\\sqrt{\\lambda^2 \\cdot ${(c * c * (a * a + b * b)).toFixed(0)} + ${(a * a * b * b).toFixed(0)}}} = \\cos ${targetThetaDeg}^\\circ`,
+        rubric: "【得分点 2】准确求出截面法向量并列出二面角代数方程 (得 4 分)",
+      },
+      {
+        step: 3,
+        title: "反解动点参数并严格检验区间存在性",
+        detail: `反解方程求得 λ = ${res.rawLambdaTarget.toFixed(2)}。检验 λ ∈ [0, 1]：${res.isTargetDihedralExist ? "解在闭区间内，侧棱 BB₁ 上存在满足条件的点 P" : "解超出闭区间，侧棱 BB₁ 上不存在满足条件的点 P"}。`,
+        latex: `\\lambda = \\frac{ab\\tan\\theta_0}{c\\sqrt{a^2+b^2}} = ${res.rawLambdaTarget.toFixed(2)} \\; ${res.isTargetDihedralExist ? "\\in [0, 1]" : "\\notin [0, 1]"}`,
+        rubric:
+          "【得分点 3】准确解出参数 λ 并书写区间检验与存在性结论 (得 4 分)",
       },
     );
 
@@ -130,17 +161,18 @@ export function buildParametricPointPanel(
     }
   } else if (mode === "doublePointDistance") {
     const res = calculateDoublePointDistance(a, b, c, lambda, mu);
+    examAnchor = "高考压轴大题 · 空间双动点多元二次型最值与公垂线";
 
     quantities.push(
       {
-        label: "动点 P 比例 λ",
-        symbol: "\\lambda",
+        label: "动点 P 分点比 λ",
+        symbol: "\\lambda = \\frac{BP}{BB_1}",
         value: Number(lambda.toFixed(2)),
-        color: MATH_COLORS.paramPrimary,
+        color: MATH_COLORS.highlight,
       },
       {
-        label: "动点 Q 比例 μ",
-        symbol: "\\mu",
+        label: "动点 Q 分点比 μ",
+        symbol: "\\mu = \\frac{AQ}{AC}",
         value: Number(mu.toFixed(2)),
         color: MATH_COLORS.paramSecondary,
       },
@@ -152,7 +184,7 @@ export function buildParametricPointPanel(
       },
       {
         label: "异面公垂线段最小距离",
-        symbol: "|PQ|_{\\min}",
+        symbol: "d_{\\min} = |PQ|_{\\min}",
         value: Number(res.minDistSkew.toFixed(3)),
         color: MATH_COLORS.paramTertiary,
       },
@@ -176,6 +208,32 @@ export function buildParametricPointPanel(
         symbol: "\\lambda^2 c^2",
         value: Number(res.lambdaTermContrib.toFixed(2)),
         color: MATH_COLORS.primary,
+      },
+    );
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "空间双动点坐标化与位移向量表示",
+        detail:
+          "动点 P 沿侧棱 BB₁ 滑动 (分比 λ)，动点 Q 沿底面对角线 AC 滑动 (分比 μ)。",
+        latex: `\\vec{PQ} = Q - P = (${(a * mu).toFixed(2)} - ${a}, ${(b * mu).toFixed(2)}, -${(lambda * c).toFixed(2)})`,
+        rubric: "【得分点 1】用独立参数 λ, μ 表达双动点坐标与差向量 (得 2 分)",
+      },
+      {
+        step: 2,
+        title: "距离多元二次型函数的完全平方配方",
+        detail: "展开两点间空间距离平方函数，分别对 μ 与 λ 进行独立二次配方。",
+        latex: `|PQ|^2 = ${(a * a + b * b).toFixed(0)}\\left(\\mu - ${res.optimalMu.toFixed(2)}\\right)^2 + ${(res.minDistSkew ** 2).toFixed(2)} + ${c * c}\\lambda^2`,
+        rubric: "【得分点 2】正确展开并配方分离变量为非负项与常数项 (得 4 分)",
+      },
+      {
+        step: 3,
+        title: "确定全局极小值与公垂线段几何意义",
+        detail: `当且仅当完全平方式均为 0，即 λ=0 且 μ=${res.optimalMu.toFixed(2)} 时取得最小值。此时线段 PQ 垂直于 BB₁ 与 AC，即为异面公垂线。`,
+        latex: `|PQ|_{\\min} = \\frac{ab}{\\sqrt{a^2+b^2}} = ${res.minDistSkew.toFixed(3)}`,
+        rubric:
+          "【得分点 3】写出最小值结果并阐明达到最值时的几何公垂线意义 (得 4 分)",
       },
     );
 
@@ -207,13 +265,14 @@ export function buildParametricPointPanel(
     }
   } else if (mode === "pyramidVolumeExtrema") {
     const res = calculatePyramidVolumeExtrema(a, b, c, lambda);
+    examAnchor = "高考经典题型 · 动点几何体极值与等体积转化";
 
     quantities.push(
       {
-        label: "动点 P 比例 λ",
-        symbol: "\\lambda",
+        label: "动点 P 分点比 λ",
+        symbol: "\\lambda = \\frac{BP}{BB_1}",
         value: Number(lambda.toFixed(2)),
-        color: MATH_COLORS.paramPrimary,
+        color: MATH_COLORS.highlight,
       },
       {
         label: "动点 P 空间高度 h",
@@ -238,6 +297,36 @@ export function buildParametricPointPanel(
         symbol: "V_{\\max}",
         value: Number(res.maxVolumePACD.toFixed(3)),
         color: MATH_COLORS.paramPrimary,
+      },
+    );
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "确定定面积底面与线性动高函数",
+        detail:
+          "底面 △ACD 固定于长方体底面，面积为定值；动点 P 在侧棱 BB₁ 上滑动，到底面的垂直距离即为棱锥动高。",
+        latex: `S_{\\Delta ACD} = \\frac{1}{2}ab = ${res.baseAreaACD.toFixed(1)}, \\quad h(\\lambda) = \\lambda c = ${res.heightH.toFixed(2)}`,
+        rubric:
+          "【得分点 1】求出固定底面积并将高线表示为 λ 的一次线性函数 (得 2 分)",
+      },
+      {
+        step: 2,
+        title: "建立体积单调函数并分析极值",
+        detail:
+          "由棱锥体积公式构建 V(λ)。由于高线单调递增，体积函数关于 λ 在区间 [0, 1] 上严格单调递增。",
+        latex: `V(\\lambda) = \\frac{1}{3} S \\cdot h(\\lambda) = \\frac{1}{6}abc\\lambda = ${res.volumePACD.toFixed(3)}`,
+        rubric:
+          "【得分点 2】列出棱锥体积函数式并由函数单调性确定极值位置 (得 4 分)",
+      },
+      {
+        step: 3,
+        title: "端点极值求解与等体积法求点面距离转化",
+        detail:
+          "在端点 λ=1 (顶点 B₁) 处取得最大体积。通过等体积法 V_{P-ACD} = V_{D-PAC}，可反解点 D 到动截面 PAC 的距离。",
+        latex: `V_{\\max} = \\frac{1}{6}abc = ${res.maxVolumePACD.toFixed(2)}, \\quad d_{D-PAC} = \\frac{3V}{S_{\\Delta PAC}}`,
+        rubric:
+          "【得分点 3】写出边界极值并说明利用等体积法转化空间距离的通法 (得 4 分)",
       },
     );
 
@@ -275,13 +364,14 @@ export function buildParametricPointPanel(
   } else {
     // surfaceShortestPath
     const res = calculateSurfacePath(a, b, c, lambda);
+    examAnchor = "高考与竞赛经典 · 多面体表面动点最短路径化曲为平";
 
     quantities.push(
       {
-        label: "动点 P 比例 λ",
-        symbol: "\\lambda",
+        label: "动折点 P 分点比 λ",
+        symbol: "\\lambda = \\frac{BP}{BB_1}",
         value: Number(lambda.toFixed(2)),
-        color: MATH_COLORS.paramPrimary,
+        color: MATH_COLORS.highlight,
       },
       {
         label: "当前折线段 A-P-C₁ 长度",
@@ -296,7 +386,7 @@ export function buildParametricPointPanel(
         color: MATH_COLORS.secondary,
       },
       {
-        label: "最佳折点 λ₁",
+        label: "侧棱最优折点 P₁ 分点比",
         symbol: "\\lambda_1 = \\frac{a}{a+b}",
         value: Number(res.optimalLambda1.toFixed(3)),
         color: MATH_COLORS.paramTertiary,
@@ -312,6 +402,35 @@ export function buildParametricPointPanel(
         symbol: "L_{\\min}",
         value: Number(res.globalMinLength.toFixed(3)),
         color: MATH_COLORS.paramPrimary,
+      },
+    );
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "表面动点折线路径降维展开原理",
+        detail:
+          "立体几何表面动点路径问题基于“两点之间线段最短”原理，需将相邻立体表面沿棱展成同一平面。",
+        latex: `\\text{折线 } A \\to P \\to C_1 \\;\\text{展开为平面直线段 } AC_1`,
+        rubric:
+          "【得分点 1】明确空间立体表面路径展为平面直线段的降维思想 (得 2 分)",
+      },
+      {
+        step: 2,
+        title: "分类讨论所有可能的平面展开途径",
+        detail:
+          "长方体从 A 到相对顶点 C₁ 存在两种本质不同的相交平面展开方式：侧面展开与底侧展开。",
+        latex: `L_{\\text{侧}} = \\sqrt{(a+b)^2+c^2} = ${res.path1Length.toFixed(3)}, \\quad L_{\\text{底}} = \\sqrt{a^2+(b+c)^2} = ${res.path2Length.toFixed(3)}`,
+        rubric:
+          "【得分点 2】分类计算不同展开方式下的直角三角形斜边长度 (得 4 分)",
+      },
+      {
+        step: 3,
+        title: "对比全局极小值与确定侧棱最优折点",
+        detail: `全局最短路径为 min(L_侧, L_底)。当走侧面路线时，利用相似三角形对应边成比例确定侧棱 BB₁ 上的折点 λ₁。`,
+        latex: `L_{\\min} = ${res.globalMinLength.toFixed(3)}, \\quad \\lambda_1 = \\frac{a}{a+b} = ${res.optimalLambda1.toFixed(3)}`,
+        rubric:
+          "【得分点 3】得出全局最小值并精确反解出动折点在棱上的分点比 (得 4 分)",
       },
     );
 
@@ -342,5 +461,12 @@ export function buildParametricPointPanel(
     }
   }
 
-  return { quantities, theorems, gaokaoPoints, warnings };
+  return {
+    quantities,
+    theorems,
+    gaokaoPoints,
+    warnings,
+    reasoningSteps,
+    examAnchor,
+  };
 }

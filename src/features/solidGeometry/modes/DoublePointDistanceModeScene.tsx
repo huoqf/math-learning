@@ -64,7 +64,7 @@ export default function DoublePointDistanceModeScene({
           );
           onQDrag(t);
         }}
-        colorKey="accent"
+        colorKey="paramSecondary"
       />
       <PointLabel3D position={Q} text="Q" offset={[0.15, 0.15, -0.1]} />
 

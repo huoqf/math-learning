@@ -25,7 +25,7 @@ export default function SurfacePathModeScene({
       <Segment3D from={P} to={C1} colorKey="highlight" lineWidth={3} />
 
       {/* 理论最佳折点 P1 指示 */}
-      <Point3D position={resPath.optimalP1} colorKey="secondary" />
+      <Point3D position={resPath.optimalP1} colorKey="paramTertiary" />
       <CompoundLabel3D
         position={resPath.optimalP1}
         base="P"

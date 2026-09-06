@@ -228,6 +228,7 @@ export default function ParametricPointAnimation() {
           step: meta.step ?? 0.01,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
+          group: meta.group,
           importance: meta.importance,
           marks: meta.marks,
         }));
@@ -236,28 +237,28 @@ export default function ParametricPointAnimation() {
   );
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    // 自由探究模式：全量展开当前模式的所有可调参数
+    // 自由探究模式：全量展开当前模式的所有可调参数（核心动点参数置顶优先展示）
     if (presetKey === "free") {
       const keysByMode: Record<ParametricMode, string[]> = {
-        singlePointAngle: ["a", "b", "c", "lambda", "targetThetaDeg"],
-        doublePointDistance: ["a", "b", "c", "lambda", "mu"],
-        pyramidVolumeExtrema: ["a", "b", "c", "lambda"],
-        surfaceShortestPath: ["a", "b", "c", "lambda"],
+        singlePointAngle: ["lambda", "targetThetaDeg", "a", "b", "c"],
+        doublePointDistance: ["lambda", "mu", "a", "b", "c"],
+        pyramidVolumeExtrema: ["lambda", "a", "b", "c"],
+        surfaceShortestPath: ["lambda", "a", "b", "c"],
       };
       return mapKeysToConfigs(
-        keysByMode[activeMode] ?? ["a", "b", "c", "lambda"],
+        keysByMode[activeMode] ?? ["lambda", "a", "b", "c"],
       );
     }
 
-    // 特定预设模式：动态裁剪隐藏已被几何约束或特征点锁定的滑块
+    // 特定预设模式：动态裁剪隐藏已被几何约束或特征点锁定的滑块，重要参数在前
     if (activeMode === "singlePointAngle") {
       if (presetKey === "perp" || presetKey === "midpoint") {
-        // λ 已被锁定，隐藏 λ 滑块，保留几何尺寸与目标二面角
-        return mapKeysToConfigs(["a", "b", "c", "targetThetaDeg"]);
+        // λ 已被锁定，隐藏 λ 滑块，优先调节目标二面角，其下为几何尺寸
+        return mapKeysToConfigs(["targetThetaDeg", "a", "b", "c"]);
       }
       if (presetKey === "targetAngle") {
-        // 目标二面角预设：隐藏被反解锁定的 λ，仅允许调节目标角度及尺寸
-        return mapKeysToConfigs(["a", "b", "c", "targetThetaDeg"]);
+        // 目标二面角预设：隐藏被反解锁定的 λ，优先调节目标角度，其下为几何尺寸
+        return mapKeysToConfigs(["targetThetaDeg", "a", "b", "c"]);
       }
     } else if (activeMode === "doublePointDistance") {
       if (
@@ -288,7 +289,7 @@ export default function ParametricPointAnimation() {
       }
     }
 
-    return mapKeysToConfigs(["a", "b", "c", "lambda"]);
+    return mapKeysToConfigs(["lambda", "a", "b", "c"]);
   }, [activeMode, presetKey, mapKeysToConfigs]);
 
   // 9. 教学提示配置（规范化初始条件与探究设问）
@@ -299,36 +300,36 @@ export default function ParametricPointAnimation() {
           variant: "primary" as const,
           badge: "高考大题 · 空间动点存在性与二面角求解",
           condition:
-            "长方体 ABCD-A₁B₁C₁D₁ 中侧棱 AA₁ 上动点 P(a, 0, λc) (λ ∈ [0, 1])，截面 PAC 与底面夹角为 θ。",
+            "长方体 ABCD-A₁B₁C₁D₁ 中侧棱 BB₁ 上动点 P(λ = BP/BB₁ ∈ [0, 1])，连接 AP, CP 构成动截面 PAC。",
           question:
-            "建立截面 PAC 法向量与底面法向量夹角方程 cosθ(λ) = cosθ_目标，反解动点参数 λ 并严格检验 λ ∈ [0, 1] 判断动点存在性。",
+            "建立截面 PAC 法向量方程，探究使截面与底面二面角为目标角 θ₀ 时动点 P 的位置，并检验是否存在点 P 满足 DP ⊥ AC₁。",
         };
       case "doublePointDistance":
         return {
           variant: "warning" as const,
           badge: "高考压轴 · 双动点空间距离最值与公垂线",
           condition:
-            "动点 P 沿棱 AA₁ 滑动 (分比 λ)，动点 Q 沿面对角线 BC 滑动 (分比 μ)。",
+            "长方体 ABCD-A₁B₁C₁D₁ 中，动点 P 沿侧棱 BB₁ 滑动 (λ = BP/BB₁)，动点 Q 沿底面对角线 AC 滑动 (μ = AQ/AC)。",
           question:
-            "展开空间距离二次型函数 |PQ|²(λ, μ)，通过配方法求极值：当 λ=0 且 μ=a²/(a²+b²) 时，线段 PQ 为异面直线公垂线，取得最短空间距离。",
+            "求解动线段 PQ 空间距离的最小值，并探究取得极小值时线段 PQ 与异面直线 BB₁、AC 的垂直位置关系 (公垂线)。",
         };
       case "pyramidVolumeExtrema":
         return {
           variant: "success" as const,
           badge: "高考经典 · 动点三棱锥体积极值与单调性",
           condition:
-            "三棱锥 P-ACD 中动点 P 沿侧棱 BB₁ 滑动，底面 △ACD 固定于长方体底面。",
+            "三棱锥 P-ACD 的底面 △ACD 固定于长方体底面，动顶点 P 沿侧棱 BB₁ 滑动 (λ = BP/BB₁)。",
           question:
-            "固定底面 △ACD 面积为 ab/2，动高 h(λ)=λc 线性单调递增，分析体积函数 V(λ) = 1/6 ab(λc) 的单调性并在顶点 B₁(λ=1) 处取得最大值。",
+            "分析棱锥动高 h(λ) 与体积 V(λ) 的单调变化规律与极值，并运用等体积法 V_{P-ACD} = V_{D-PAC} 求解点面距离。",
         };
       case "surfaceShortestPath":
         return {
           variant: "accent" as const,
           badge: "立体几何经典 · 表面最短路径化曲为平",
           condition:
-            "在长方体表面寻找从顶点 A 沿外表面爬行至相对顶点 C₁ 的折线最短路径。",
+            "长方体表面寻找从顶点 A 沿外表面到达相对顶点 C₁ 的折线最短路径，动折点 P 位于侧棱 BB₁ 上。",
           question:
-            "将相邻侧面与底面展成平面，由两点之间线段最短比较不同展开路线长 L = min{√((a+b)²+c²), √(a²+(b+c)²)} 并确定侧面最佳折点。",
+            "运用“化曲为平”展开法，比较侧面展开与底侧展开两种路线的长度，求全局最短距离并确定侧棱上的最佳折点 P₁ 位置。",
         };
     }
   }, [activeMode]);
@@ -420,39 +421,32 @@ export default function ParametricPointAnimation() {
                           {
                             key: "maxVolume",
                             label: "体积极大值",
-                            description: "到达顶点 B₁",
                           },
                           {
                             key: "halfVolume",
                             label: "等分体积",
-                            description: "棱中点 λ=0.5",
                           },
                           {
                             key: "degenerate",
                             label: "底面退化",
-                            description: "λ = 0 高为零",
                           },
                         ]
                       : [
                           {
                             key: "free",
                             label: "自由探究",
-                            description: "折点自由滑动",
                           },
                           {
                             key: "optimalSide",
                             label: "侧面最佳折点",
-                            description: "侧面直线最短",
                           },
                           {
                             key: "optimalBottom",
                             label: "底面展开对比",
-                            description: "底侧路线比较",
                           },
                           {
                             key: "midpointPath",
                             label: "中点折线",
-                            description: "λ = 0.5 路径",
                           },
                         ]
               }
@@ -551,24 +545,24 @@ export default function ParametricPointAnimation() {
                           {
                             colorKey: "secondary" as const,
                             swatch: "area" as const,
-                            label: "截面 PAC & 法向量",
+                            label: "截面 PAC & 法向量 n",
                           },
                           {
                             colorKey: "accent" as const,
                             swatch: "line" as const,
-                            label: "动连线 DP",
+                            label: "动连线 DP / 对角线 AC₁",
                           },
                         ]
                       : []),
                     ...(activeMode === "doublePointDistance"
                       ? [
                           {
-                            colorKey: "secondary" as const,
+                            colorKey: "paramSecondary" as const,
                             swatch: "line" as const,
-                            label: "对角线 AC 轨迹",
+                            label: "动点 Q (底面对角线 AC)",
                           },
                           {
-                            colorKey: "accent" as const,
+                            colorKey: "highlight" as const,
                             swatch: "line" as const,
                             label: "动线段 PQ / 公垂线",
                           },
@@ -579,7 +573,7 @@ export default function ParametricPointAnimation() {
                           {
                             colorKey: "secondary" as const,
                             swatch: "area" as const,
-                            label: "底面 △ACD",
+                            label: "固定底面 △ACD",
                           },
                           {
                             colorKey: "paramTertiary" as const,
@@ -591,7 +585,12 @@ export default function ParametricPointAnimation() {
                     ...(activeMode === "surfaceShortestPath"
                       ? [
                           {
-                            colorKey: "secondary" as const,
+                            colorKey: "highlight" as const,
+                            swatch: "line" as const,
+                            label: "表面折线 A-P-C₁",
+                          },
+                          {
+                            colorKey: "paramTertiary" as const,
                             swatch: "line" as const,
                             label: "理论最佳折点 P₁",
                           },
@@ -689,6 +688,8 @@ export default function ParametricPointAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           title="空间向量与动点存在性、最值看板"
         />
       }
