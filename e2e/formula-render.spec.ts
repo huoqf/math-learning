@@ -3,9 +3,9 @@ import { test, expect } from '@playwright/test';
 const ROUTES = [
   { path: '/#/quadratic', name: '二次函数' },
   { path: '/#/derivative', name: '导数几何意义' },
-  { path: '/#/function', name: '函数性质' },
-  { path: '/#/constant', name: '恒成立问题' },
-  { path: '/#/set', name: '集合与逻辑' },
+  { path: '/#/function-domain', name: '函数性质' },
+  { path: '/#/constant-single', name: '恒成立问题' },
+  { path: '/#/set-logic', name: '集合与逻辑' },
   { path: '/#/transform', name: '图象变换' },
   { path: '/#/composite', name: '分段与复合函数' },
 ];
@@ -30,7 +30,7 @@ for (const route of ROUTES) {
 }
 
 test('set page venn buttons use KaTeX', async ({ page }) => {
-  await page.goto('/#/set');
+  await page.goto('/#/set-logic');
   await page.getByText('参数设置').first().waitFor({ timeout: 10000 });
 
   // 检查 A ∩ B 按钮内部是否有 .katex

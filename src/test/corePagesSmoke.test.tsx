@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { MemoryRouter } from "react-router-dom";
 import "@/test/mocks";
 
 // Mock KaTeX and SVG Canvas to ensure fast and isolated UI tree validation
@@ -48,8 +49,18 @@ vi.mock("@/components/Math3D", () => ({
   Scene3DGrid: () => null,
   ThreeViewsPanel: () => null,
   Plane3D: () => null,
+  VertexLabelGroup3D: () => null,
+  RightTriangle3D: () => null,
+  AffineBasis3D: () => null,
+  SectionPlane3D: () => null,
 }));
 
+import { ConicLineAnimation } from "@/features/conicLine/ConicLineAnimation";
+import { ConicDefinitionAnimation } from "@/features/conicDefinition/ConicDefinitionAnimation";
+import { TrigIdentityAnimation } from "@/features/trigIdentity/TrigIdentityAnimation";
+import { VectorLinearAnimation } from "@/features/vectorLinear/VectorLinearAnimation";
+import { DerivativeMonotonicityAnimation } from "@/features/derivative-monotonicity/DerivativeMonotonicityAnimation";
+import { ProbabilityBayesAnimation } from "@/features/probabilityBayes/ProbabilityBayesAnimation";
 import { LineEquationAnimation } from "@/features/lineEquation/LineEquationAnimation";
 import { LineCircleAnimation } from "@/features/line-circle/LineCircleAnimation";
 import { TriangleSolveAnimation } from "@/features/triangleSolve/TriangleSolveAnimation";
@@ -80,6 +91,26 @@ import CircumInSphereAnimation from "@/features/solidGeometry/CircumInSphereAnim
 import PolyhedronCircumSphereAnimation from "@/features/solidGeometry/PolyhedronCircumSphereAnimation";
 import AdvancedSphereAnimation from "@/features/solidGeometry/AdvancedSphereAnimation";
 import Vector3DBasisAnimation from "@/features/vector3d/Vector3DBasisAnimation";
+import { CircleCircleAnimation } from "@/features/circle-circle/CircleCircleAnimation";
+import { ConicParamAnimation } from "@/features/conicParam/ConicParamAnimation";
+import { LineParamTAnimation } from "@/features/conicParamT/LineParamTAnimation";
+import { ConicPropertiesAnimation } from "@/features/conicProperties/ConicPropertiesAnimation";
+import { ConstantAnimation } from "@/features/constant/ConstantAnimation";
+import { DerivativeAnimation } from "@/features/derivative/DerivativeAnimation";
+import { DerivativeEndpointTaylorAnimation } from "@/features/derivative-endpoint-taylor/DerivativeEndpointTaylorAnimation";
+import { TranscendentalAnimation } from "@/features/derivativeTranscendental/TranscendentalAnimation";
+import { InequalityBasicAnimation } from "@/features/inequalityBasic/InequalityBasicAnimation";
+import { ProbabilityCountingAnimation } from "@/features/probabilityCounting/ProbabilityCountingAnimation";
+import { ProbabilityNormalAnimation } from "@/features/probabilityNormal/ProbabilityNormalAnimation";
+import { SecondDerivativeAnimation } from "@/features/second-derivative/SecondDerivativeAnimation";
+import { StatPercentileAnimation } from "@/features/statPercentile/StatPercentileAnimation";
+import { TrigFormulasAnimation } from "@/features/trigFormulas/TrigFormulasAnimation";
+import { TrigLinesAnimation } from "@/features/trigLines/TrigLinesAnimation";
+import { TrigTangentAnimation } from "@/features/trigTangent/TrigTangentAnimation";
+import { TrigTransformAnimation } from "@/features/trigTransform/TrigTransformAnimation";
+import { VectorBasisAnimation } from "@/features/vectorBasis/VectorBasisAnimation";
+import { VectorDotProductAnimation } from "@/features/vectorDotProduct/VectorDotProductAnimation";
+import { VectorPolarizationApolloniusAnimation } from "@/features/vectorPolarizationApollonius/VectorPolarizationApolloniusAnimation";
 
 describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("LineEquationAnimation mounts properly and displays control panel", () => {
@@ -249,5 +280,140 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
     render(<Vector3DBasisAnimation />);
     expect(screen.getAllByText("基本定理").length).toBeGreaterThan(0);
     expect(screen.getAllByText("坐标运算").length).toBeGreaterThan(0);
+  });
+
+  // ═════════ 扩充高考核心专题页面冒烟测试 ═════════
+  it("ConicLineAnimation mounts properly and renders titles", () => {
+    render(<ConicLineAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("ConicDefinitionAnimation mounts properly and renders titles", () => {
+    render(<ConicDefinitionAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("TrigIdentityAnimation mounts properly and renders titles", () => {
+    render(<TrigIdentityAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("VectorLinearAnimation mounts properly and renders titles", () => {
+    render(<VectorLinearAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("DerivativeMonotonicityAnimation mounts properly and renders titles", () => {
+    render(<DerivativeMonotonicityAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("ProbabilityBayesAnimation mounts properly and renders titles", () => {
+    render(
+      <MemoryRouter>
+        <ProbabilityBayesAnimation />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("CircleCircleAnimation mounts properly and renders titles", () => {
+    render(<CircleCircleAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("ConicParamAnimation mounts properly and renders titles", () => {
+    render(<ConicParamAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("LineParamTAnimation mounts properly and renders titles", () => {
+    render(<LineParamTAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("ConicPropertiesAnimation mounts properly and renders titles", () => {
+    render(<ConicPropertiesAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("ConstantAnimation mounts properly and renders titles", () => {
+    render(<ConstantAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("DerivativeAnimation mounts properly and renders titles", () => {
+    render(<DerivativeAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("DerivativeEndpointTaylorAnimation mounts properly and renders titles", () => {
+    render(<DerivativeEndpointTaylorAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("TranscendentalAnimation mounts properly and renders titles", () => {
+    render(<TranscendentalAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("InequalityBasicAnimation mounts properly and renders titles", () => {
+    render(<InequalityBasicAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("ProbabilityCountingAnimation mounts properly and renders titles", () => {
+    render(<ProbabilityCountingAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("ProbabilityNormalAnimation mounts properly and renders titles", () => {
+    render(<ProbabilityNormalAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("SecondDerivativeAnimation mounts properly and renders titles", () => {
+    render(<SecondDerivativeAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("StatPercentileAnimation mounts properly and renders titles", () => {
+    render(<StatPercentileAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("TrigFormulasAnimation mounts properly and renders titles", () => {
+    render(<TrigFormulasAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("TrigLinesAnimation mounts properly and renders titles", () => {
+    render(<TrigLinesAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("TrigTangentAnimation mounts properly and renders titles", () => {
+    render(<TrigTangentAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("TrigTransformAnimation mounts properly and renders titles", () => {
+    render(<TrigTransformAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("VectorBasisAnimation mounts properly and renders titles", () => {
+    render(<VectorBasisAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("VectorDotProductAnimation mounts properly and renders titles", () => {
+    render(<VectorDotProductAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("VectorPolarizationApolloniusAnimation mounts properly and renders titles", () => {
+    render(<VectorPolarizationApolloniusAnimation />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
   });
 });

@@ -248,7 +248,8 @@ for (const filePath of files) {
     // 7. 检查数据层混合文本未加 $ 定界符 (如 "当 \\alpha > 0 时" 或 "y=x^2 偶函数")
     const isTestFile = filePath.includes('test') || filePath.includes('spec');
     const isCommentLine = /^\s*(\/\/|\/\*|\{\/\*|\*)/.test(line);
-    if (!isTestFile && !isCommentLine && (line.includes('text:') || line.includes('prerequisites:') || line.includes('"') || line.includes('\'')) && /[\u4e00-\u9fa5]/.test(line)) {
+    const isJsxElement = /<[A-Za-z][a-zA-Z0-9]*\b/.test(line);
+    if (!isTestFile && !isCommentLine && !isJsxElement && !line.includes('import') && (line.includes('text:') || line.includes('prerequisites:') || line.includes('"') || line.includes('\'')) && /[\u4e00-\u9fa5]/.test(line)) {
       if (/(\\[a-zA-Z]+|[a-zA-Z]\^[0-9a-zA-Z]+|[a-zA-Z]_[0-9a-zA-Z]+)/.test(line) && !line.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
         issues.push({
           lineNum,

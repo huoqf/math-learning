@@ -200,8 +200,33 @@ export function buildPolyhedronSpherePanel(
         importance: "gaokao",
       },
       {
-        text: "【新高考通法】：寻找轴中心线线段 O₁O₂（连接上下底外接圆心），中点即为球心 O，高 half 为 h/2。",
+        text: "【秒杀杀招】：底面直角三角形斜边为外接圆直径，外接球半径 R = ½ √(a² + b² + h²)。",
         importance: "hard",
+      },
+    );
+
+    const cBaseVal = Math.sqrt(a * a + b * b);
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "求底面外接圆心与半径",
+        detail: `底面为直角边分别为 a=${a}, b=${b} 的直角三角形，斜边中点 O₁ 即为底面外接圆心，外接圆半径 r_底 = c_base / 2 = ${(cBaseVal / 2).toFixed(2)}。`,
+        latex: `c_{\\text{base}} = \\sqrt{a^2 + b^2} = ${cBaseVal.toFixed(2)} \\implies r_{\\text{底}} = \\frac{c_{\\text{base}}}{2} = ${(cBaseVal / 2).toFixed(2)}`,
+        rubric: "[高考采分点] 准确求出底面多边形外接圆半径 r_底 (+2分)",
+      },
+      {
+        step: 2,
+        title: "确立球心投影与球心距",
+        detail: `由直棱柱性质，外接球心 O 必在上下底面外接圆心连线 O₁O₂ 的中点处，球心到底面距离等于半高 d = h/2 = ${(h / 2).toFixed(2)}。`,
+        latex: `O \\text{ 在轴线 } O_1 O_2 \\text{ 中点} \\implies d = \\frac{h}{2} = ${(h / 2).toFixed(2)}`,
+        rubric: "[高考采分点] 阐明球心位置及其与底面的垂直距离 (+2分)",
+      },
+      {
+        step: 3,
+        title: "构造直角三角形勾股求半径",
+        detail: `在直角三角形 OO₁A 中，OA = R, OO₁ = h/2, O₁A = r_底。由勾股定理解得外接球半径 R = ${res.radius.toFixed(3)}。`,
+        latex: `R^2 = r_{\\text{底}}^2 + \\left(\\frac{h}{2}\\right)^2 = \\frac{a^2 + b^2 + h^2}{4} \\implies 2R = \\sqrt{a^2 + b^2 + h^2} \\approx ${(2 * res.radius).toFixed(3)}`,
+        rubric: "[高考采分点] 正确利用勾股定理求得外接球半径与直径 (+2分)",
       },
     );
   } else if (modelType === "complement") {

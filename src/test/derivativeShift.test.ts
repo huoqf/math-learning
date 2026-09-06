@@ -8,12 +8,12 @@ import {
 describe("隐零点定理与极值点偏移数学计算测试", () => {
   it("应当正确求解隐零点及代换消元轨迹", () => {
     // f(x) = x ln x - a x + 1, a = 1
-    // f'(x) = ln x = 0 => x0 = 1, y0 = 1 - 1 + 1 = 1
+    // f'(x) = ln x = 0 => x0 = 1, y0 = 1*ln(1) - 1*1 + 1 = 0
     const res = solveImplicitZero(1, "x_ln_x");
     expect(res.isValid).toBe(true);
     expect(res.x0).toBeCloseTo(1, 4);
     expect(res.y0).toBeCloseTo(0, 4);
-    expect(res.traceY).toBeCloseTo(0, 4); // 1 - x0 = 0
+    expect(res.traceY).toBeCloseTo(0, 4); // 轨迹 h(x0) = 1 - x0 = 0
   });
 
   it("应当正确求解极值点偏移及右偏结论", () => {
