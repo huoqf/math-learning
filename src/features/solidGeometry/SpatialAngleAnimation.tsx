@@ -519,9 +519,9 @@ export default function SpatialAngleAnimation({
           condition:
             "在长方体 ABCD-A₁B₁C₁D₁ 中，底面棱长分别为 AB=a, AD=b，侧棱长为 AA₁=c（以 A 为原点建立空间直角坐标系 A-xyz）。E 为侧棱 AA₁ 上的动点，满足分点比 λ = AE/AA₁ (0 < λ ≤ 1)。连接 BE, DE, BD 构成斜截面 △BDE 以及三棱锥 E-ABD。",
           questions: [
-            "求斜截面 △BDE 的法向量 n⃗，并利用空间向量投影公式 d = |AB⃗·n⃗| / |n⃗|，求解顶点 A 到截面 BDE 的垂直距离 d（垂线段 AH 的长度）；",
-            "利用三棱锥等体积换底公式 V_{A-BDE} = V_{E-ABD} = (1/3)S_{△ABD}·z_E 反求高线 d，验证几何法与代数向量法的对账一致性；",
-            "探究当分点比 λ 取何值时，三棱锥 E-ABD 的体积取得最大值？求出最大体积 V_max 并分析几何本质。",
+            "求斜截面 △BDE 的法向量 $\\vec{n}$，并利用空间向量投影公式 $d = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|}$，求解顶点 A 到截面 BDE 的垂直距离 $d$（垂线段 AH 的长度）；",
+            "利用三棱锥等体积换底公式 $V_{A-BDE} = V_{E-ABD} = \\frac{1}{3}S_{\\triangle ABD} \\cdot z_E$ 反求高线 $d$，验证几何法与代数向量法的对账一致性；",
+            "探究当分点比 $\\lambda$ 取何值时，三棱锥 E-ABD 的体积取得最大值？求出最大体积 $V_{\\max}$ 并分析几何本质。",
           ],
         };
     }

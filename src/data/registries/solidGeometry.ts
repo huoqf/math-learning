@@ -29,7 +29,7 @@ export const defaultParams = {
     a: 3,
     b: 2,
     c: 2,
-    ex: 1.2,
+    lambda: 0.6,
   },
   spatialDistance: {
     a: 3,

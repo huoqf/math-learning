@@ -97,7 +97,7 @@ export function buildSpatialAnglePanel(
         latex: `\\cos \\theta = \\frac{|\\vec{u} \\cdot \\vec{v}|}{|\\vec{u}||\\vec{v}|} = \\frac{|x_1 x_2 + y_1 y_2 + z_1 z_2|}{\\sqrt{x_1^2+y_1^2+z_1^2}\\sqrt{x_2^2+y_2^2+z_2^2}} = \\frac{a^2}{\\sqrt{a^2+c^2}\\sqrt{a^2+b^2}}`,
         level: "core",
         condition:
-          "\\theta \\in (0^\\circ, 90^\\circ]，异面直线所成角必须取锐角或直角，公式中必须加绝对值",
+          "$\\theta \\in (0^\\circ, 90^\\circ]$，异面直线所成角必须取锐角或直角，公式中必须加绝对值",
       },
       {
         name: "平移法与向量法等价原理",
@@ -206,13 +206,13 @@ export function buildSpatialAnglePanel(
         latex: `\\sin \\theta = |\\cos \\langle \\vec{u}, \\vec{n} \\rangle| = \\frac{|\\vec{u} \\cdot \\vec{n}|}{|\\vec{u}||\\vec{n}|} = \\frac{z_E}{\\sqrt{a^2+b^2+z_E^2}}`,
         level: "core",
         condition:
-          "\\theta \\in [0^\\circ, 90^\\circ]，正弦值等于方向向量与法向量夹角余弦的绝对值",
+          "$\\theta \\in [0^\\circ, 90^\\circ]$，正弦值等于方向向量与法向量夹角余弦的绝对值",
       },
       {
         name: "空间射影直角三角形定理",
         latex: `EA \\perp \\text{面 } ABCD \\implies CA \\text{ 为 } CE \\text{ 在底面上的射影}, \\; \\triangle EAC \\text{ 为直角三角形}`,
         level: "important",
-        note: "在直角三角形 △EAC 中，sinθ = EA / EC = z_E / √(a² + b² + z_E²)",
+        note: "在直角三角形 $\\triangle EAC$ 中，$\\sin\\theta = \\frac{EA}{EC} = \\frac{z_E}{\\sqrt{a^2 + b^2 + z_E^2}}$",
       },
     );
 
@@ -429,13 +429,13 @@ export function buildSpatialAnglePanel(
         latex: `\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle = \\frac{\\vec{n_1} \\cdot \\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}, \\quad \\cos\\theta_{\\text{二面角}} = \\pm\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle \\;(\\text{由图判定正负})`,
         level: "core",
         condition:
-          "\\theta \\in [0^\\circ, 180^\\circ]，法向量夹角与二面角相等或互补，高考大题须依据空间图形判断正负号！",
+          "$\\theta \\in [0^\\circ, 180^\\circ]$，法向量夹角与二面角相等或互补，高考大题须依据空间图形判断正负号！",
       },
       {
         name: "三垂线定理作二面角平面角（几何法）",
         latex: `AM \\perp BD \\;\\text{于}\\; M, \\; EA \\perp \\text{底面} \\implies EM \\perp BD, \\; \\angle AME \\text{ 即为二面角平面角}`,
         level: "important",
-        note: "在直角三角形 △EAM 中，tan∠AME = EA / AM = z_E / AM",
+        note: "在直角三角形 $\\triangle EAM$ 中，$\\tan\\angle AME = \\frac{EA}{AM} = \\frac{z_E}{AM}$",
       },
       {
         name: "截面法向量求解方程组（标准高考格式）",
