@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { verifyTopicSyncContract } from "./verifySyncContract";
 import { buildTranscendentalPanel } from "@/data/builders/transcendental";
+import { buildSpatialDistancePanel } from "@/data/builders/solidSpatialDistance";
 
 describe("高中数学核心专题三屏数据一致性与高考推演链契约测试", () => {
   it("立体几何：多面体外接球墙角模型应当满足三屏数值一致性与高考三步推演链", () => {
@@ -159,5 +160,27 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     const logPanel = buildTranscendentalPanel({ x0: 1 }, { mode: "log" });
     expect(logPanel.theorems[0].name).toContain("对数基准切线");
     expect(logPanel.theorems[0].level).toBe("core");
+  });
+
+  it("立体几何：异面直线公垂线与空间距离极值应当满足三步推演与极值双直角契约", () => {
+    const a = 3;
+    const b = 3;
+    const c = 3;
+    const minDist = Math.sqrt(3);
+    const panel = buildSpatialDistancePanel(
+      { a, b, c, lambda: 2 / 3, mu: 1 / 3 },
+      { mode: "skewDistance", preset: "cube" },
+    );
+
+    const distQty = panel.quantities.find((q) =>
+      q.label.includes("公垂线最短距离"),
+    );
+    expect(distQty).toBeDefined();
+    expect(Number(distQty?.value)).toBeCloseTo(minDist, 4);
+    expect(panel.reasoningSteps?.length).toBe(3);
+    expect(panel.theorems.some((t) => t.name.includes("公垂线唯一定理"))).toBe(
+      true,
+    );
+    expect(panel.warnings.some((w) => w.text.includes("极值命中"))).toBe(true);
   });
 });

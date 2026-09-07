@@ -74,8 +74,8 @@ export const solidAngleNode: KnowledgeNode = {
 
 export const solidDistanceNode: KnowledgeNode = {
   id: "know-solid-distance",
-  title: "利用空间向量求点到平面的距离与体积极值",
-  labTitle: "点到平面的距离（向量法）",
+  title: "异面直线公垂线与空间距离、体积极值",
+  labTitle: "空间距离与公垂线实验室",
   chapter: "立体几何与空间向量",
   module: "空间向量应用",
   importance: "gaokao",

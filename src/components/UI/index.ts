@@ -46,3 +46,4 @@ export type {
 // ============================================================================
 export { TipCard } from "./TipCard";
 export { KatexFormula } from "./KatexFormula";
+export { renderMixedLatex } from "./mathPanel/mathPanelUtils";

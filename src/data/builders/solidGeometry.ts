@@ -24,3 +24,4 @@ export { buildPolyhedronSpherePanel } from "./solidPolyhedronSphere";
 export { buildSolidFoldingPanel } from "./solidFolding";
 export { buildParametricPointPanel } from "./solidParametricPoint";
 export { buildAdvancedSpherePanel } from "./solidAdvancedSphere";
+export { buildSpatialDistancePanel } from "./solidSpatialDistance";
