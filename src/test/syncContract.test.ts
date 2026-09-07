@@ -183,4 +183,40 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     );
     expect(panel.warnings.some((w) => w.text.includes("极值命中"))).toBe(true);
   });
+
+  it("数列专题：错位相减模型混合通项与前 n 项和数值应当严格同步且包含防坑考点", () => {
+    // a1 = 1, d = 1, q = 2, N = 3: c1=1, c2=4, c3=12, T3 = 17
+    verifyTopicSyncContract([
+      {
+        name: "差比数列错位相减模型",
+        animId: "anim-sequence",
+        modeOptions: { activeMode: "models", subModel: "arith-geo" },
+        params: { a1: 1, d: 1, q: 2, N: 3 },
+        lessonType: "concept",
+        groundTruth: {},
+        expectedQuantityLabels: ["混合通项", "前 $N$ 项和", "公比 $q$ 状态"],
+      },
+    ]);
+  });
+
+  it("解析几何：抛物线第一定义焦半径与准线距离应当严格恒等", () => {
+    // p = 2, 向右开口, 焦点 F(1, 0), 准线 x = -1
+    verifyTopicSyncContract([
+      {
+        name: "抛物线第一定义焦半径模型",
+        animId: "anim-conic-parabola",
+        modeOptions: { studyMode: "definition", direction: "right" },
+        params: { p: 2, tP: 1 },
+        lessonType: "concept",
+        groundTruth: {},
+        expectedQuantityLabels: [
+          "焦参数 p",
+          "焦点 F",
+          "准线方程",
+          "焦半径 |PF|",
+          "准线距离 d(P, l)",
+        ],
+      },
+    ]);
+  });
 });

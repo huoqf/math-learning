@@ -137,30 +137,33 @@ for (const filePath of files) {
         }
       }
 
-      // 规则 B：动参数动线置顶检测 (核心动参数排在静态底模尺寸之后为倒挂)
-      const dynamicKeyRegex = /^(lambda|mu|theta|x0|t|n|alpha|beta|k|phi|progress|step)/i;
-      const staticKeyRegex = /^(a|b|c|width|height|depth|radius|len|r|size)/i;
+      // 规则 B：动参数动线置顶检测 (仅在三维立体几何与空间底模场景下检测：动分点 lambda/mu 应排在底模长宽高 a,b,c 之前)
+      const isSolidContext = filePath.includes('solidGeometry') || /solid|cuboid|prism|pyramid/i.test(metaName);
+      if (isSolidContext) {
+        const dynamicKeyRegex = /^(lambda|mu|theta|phi|progress|step)/i;
+        const staticKeyRegex = /^(a|b|c|width|height|depth|radius|len|r|size)/i;
 
-      let foundStatic = false;
-      let inverted = false;
-      let invertedPair = '';
-      for (const p of paramsList) {
-        if (staticKeyRegex.test(p.key)) {
-          foundStatic = true;
-        } else if (dynamicKeyRegex.test(p.key) && foundStatic) {
-          inverted = true;
-          invertedPair = `静态参数排在动参数 ${p.key} 之前`;
-          break;
+        let foundStatic = false;
+        let inverted = false;
+        let invertedPair = '';
+        for (const p of paramsList) {
+          if (staticKeyRegex.test(p.key)) {
+            foundStatic = true;
+          } else if (dynamicKeyRegex.test(p.key) && foundStatic) {
+            inverted = true;
+            invertedPair = `立体几何底模尺寸排在核心动分点 ${p.key} 之前`;
+            break;
+          }
         }
-      }
 
-      if (inverted) {
-        issues.push({
-          lineNum: 1,
-          type: '动参数动线倒挂',
-          message: `${metaName} 中核心动参数应置顶于静态几何尺寸/背景常数之上，优先展示主要探究自变量`,
-          snippet: invertedPair,
-        });
+        if (inverted) {
+          issues.push({
+            lineNum: 1,
+            type: '动参数动线倒挂',
+            message: `${metaName} 中核心动点参数应置顶于底模尺寸/背景常数之上，优先展示主要探究自变量`,
+            snippet: invertedPair,
+          });
+        }
       }
     }
   }
