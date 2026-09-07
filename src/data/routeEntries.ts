@@ -174,6 +174,10 @@ import {
   node as conicHomogenizationNode,
   loader as conicHomogenizationLoader,
 } from "@/features/conicHomogenization/meta";
+import {
+  parabolaArchimedesNode,
+  parabolaArchimedesLoader,
+} from "@/features/parabolaArchimedes/meta";
 
 // ── 9. 立体几何与空间向量 (3D) ──
 import {
@@ -349,6 +353,10 @@ export const routeEntries: RouteEntry[] = [
   {
     node: conicHomogenizationNode,
     loader: conicHomogenizationLoader as RouteEntry["loader"],
+  },
+  {
+    node: parabolaArchimedesNode,
+    loader: parabolaArchimedesLoader as RouteEntry["loader"],
   },
 
   // 9. 立体几何与空间向量 (3D)

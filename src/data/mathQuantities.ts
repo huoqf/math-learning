@@ -46,6 +46,7 @@ import { buildTrigTangentPanel } from "./builders/trigTangent";
 import { buildTriangleSolvePanel } from "./builders/triangleSolve";
 import { buildTriangleExtremaPanel } from "./builders/triangleExtrema";
 import { buildParabolaPanel } from "./builders/parabola";
+import { buildParabolaArchimedesPanel } from "./builders/parabolaArchimedes";
 import { buildConicLineMathQuantities } from "./builders/conicLine";
 import { buildConicParamPanel } from "./builders/conicParam";
 import { buildInequalityBasicPanel } from "./builders/inequalityBasic";
@@ -200,6 +201,8 @@ export function buildMathQuantities(
       return buildConicPropertiesPanel(params, config);
     case "anim-conic-parabola":
       return buildParabolaPanel(params, config);
+    case "anim-parabola-archimedes":
+      return buildParabolaArchimedesPanel(params, config);
     case "anim-conic-line":
       return buildConicLineMathQuantities(
         params,
