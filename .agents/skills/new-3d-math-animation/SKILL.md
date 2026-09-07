@@ -21,6 +21,8 @@ description: >
 | [references/left-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/left-panel-spec.md) | **左屏五步渲染层级**、模式防截断、操作引导与图层分类规范 | 编写/重构左屏 UI 时必读 |
 | [references/components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/components-guide.md) | **3D 核心组件清单**、`SPACE_3D_COLORS`、动点约束与透视切圆架构 | 编写中屏 3D 场景时查阅 |
 | [examples/Template3DAnimation.tsx](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/examples/Template3DAnimation.tsx) | **3D 页面标准完整骨架模板** | 新建 3D 页面时直接参考复制 |
+| [../new-math-animation/references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md) | **右屏看板 MathPanel 完整 Props 规范**（MathQuantity/Theorem/GaokaoPoint 字段+课型分层+Builder 标准结构） | **编写或审查右屏 builder 时必读** |
+| [../new-math-animation/references/registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md) | **新页面注册四步闭环指南**（KnowledgeNode 必填字段、animId 对应联动、代码片段模板、自检清单） | **新建 3D 页面时必读，保证知识树与右屏正确注册** |
 
 ---
 
@@ -45,18 +47,20 @@ description: >
 1. 在 `src/math3d/<topic>.ts` 编写纯函数求解几何拓扑、射影垂足、法向量、二面角及动点轨迹。
 2. 在 `src/math3d/__tests__/<topic>.test.ts` 补充完备单测，覆盖退化情况（如角度为 0 或 90°、截面过顶点退化等）。
 
-### 阶段 3：中屏 3D 场景与标注实现（渲染期）
-1. 几何顶点使用 `PointLabel3D` / `CompoundLabel3D`（纯 3D 矢量文字）。
-2. 空间公式与向量使用 `FormulaLabel3D(plain)`。
-3. 动点（$r=0.075$ 带脉冲光晕与射线拾取）与固定点（$r=0.042$ 开启 depthTest）严格隔离。
-4. 画布右上角接入 `ModeSwitchOverlay3D` 支持视角漫游与动点交互互斥。
+### 阶段 3：中屏 3D 场景与标注实现（渲染期 · 能用组件绝不手写）
+> 查阅 [references/components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/components-guide.md)
+1. **几何线段与棱**：100% 使用 `Segment3D`（纯几何线段无箭头），❌ 严禁手写 Three.js mesh 或原生 `<line>`，❌ 严禁误用带箭头的 `Vector3DArrow` 绘制棱/斜线/垂线。
+2. **几何顶点**：单字母使用 `PointLabel3D`，带下标使用 `CompoundLabel3D`（纯 3D 矢量文字，彻底杜绝豆腐块）。
+3. **空间公式与向量**：向量使用 `Vector3DArrow`，空间公式使用 `FormulaLabel3D(plain)`。
+4. **空间点**：动点（$r=0.075$ 带脉冲光晕与射线拾取）与固定点（$r=0.042$ 开启 depthTest）严格隔离。
+5. **交互互斥**：画布右上角接入 `ModeSwitchOverlay3D` 支持视角漫游与动点交互互斥。
 
 ### 阶段 4：左屏控制台与右屏看板组装（系统链路）
 1. **左屏**：遵循 `references/left-panel-spec.md` 渲染层级，滑块必须标清几何线段代号（如 $\text{侧棱 } PA=\color{red}{a}$），底部 `TipCard` 呈现题设与设问。
 2. **右屏架构组装**（按课型精准分层，位于 `src/data/builders/<topic>.ts`）：
    - **基础概念课**：组装核心定理 `theorems`（显式前提）、临界警示 `warnings`、几何特征量 `quantities`；
    - **高考专题课**：全量装配母题定位 `examAnchor`、破题推演链 `reasoningSteps`（带采分点提示）、口诀 `mnemonic`、定值不变量 `invariants` 与秒杀考点 `gaokaoPoints`。
-3. **注册**：在 `src/features/<topic>/meta.ts`、`src/data/routeEntries.ts`（必须配 `guarded3D: true`）和 `src/data/knowledgeTree.ts` 注册。
+3. **四步注册**：在 `src/features/<topic>/meta.ts`、`src/data/routeEntries.ts`（向 `routeEntries` 数组添加并配 `guarded3D: true`）和 `src/data/knowledgeTree.ts` 注册。并在 `src/data/mathQuantities.ts` 的 `buildMathQuantities()` switch 中添加 `case 'anim-<topic>'` 分支调用 builder。**完整注册四步闭环指南见 [registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md)。**
 
 ### 阶段 5：高考数学习惯门禁验收（验收期）
 - [ ] **三屏符号对账 (SSOT)**：左屏滑块代号（如 $PA$、$CA$）在中屏几何拓扑中必有对应线段，右屏推导公式 100% 带入相同代号。

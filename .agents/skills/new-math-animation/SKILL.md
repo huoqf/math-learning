@@ -24,6 +24,8 @@ description: >
 | [examples/Template2DScene.tsx](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/examples/Template2DScene.tsx) | **2D 中屏 SVG 标准场景模板**（坐标网格/函数曲线/动切线/智能点标） | 编写中屏 SVG 场景时参考 |
 | [references/2d-components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/2d-components-guide.md) | **2D 核心数学组件速查手册**（Props表、避雷规范、三位一体色系映射） | 组装图形图元时查阅 |
 | [resources/gaokao_function_models.json](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/resources/gaokao_function_models.json) | **高考高频函数模型字典**（定义域保护、解析解、增减区间参数） | 配置预设模型数据时快速查表 |
+| [references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md) | **右屏看板 MathPanel 完整 Props 规范**（MathQuantity/Theorem/GaokaoPoint 等所有字段类型+课型分层表+Builder 标准结构） | **编写或审查右屏 builder 时必读** |
+| [references/registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md) | **新页面注册四步闭环指南**（KnowledgeNode 必填字段、animId 对应联动、代码片段模板、自检清单） | **新建页面时必读，保证知识树与右屏正确注册** |
 
 ---
 
@@ -49,17 +51,27 @@ src/data/
 └── builders/<topic>.ts          # [右屏看板] buildMathQuantities 分支，导出特征量、定理、高考秒杀点
 ```
 
-### Step 1：核心代码骨架装配
+### Step 1：核心代码骨架装配与组件复用铁律
 - **视口与比例**：使用 `useAnimationViewport({ preset: CANVAS_PRESETS.full })` 与 `useSceneScale`。
+- **能用组件绝不手写**（查阅 [references/2d-components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/2d-components-guide.md)）：
+  - ❌ 禁止手写 `<circle>` 绘制点，必须用 `MathPoint`（静态点）或 `InteractivePoint`（可拖拽控制点）；
+  - ❌ 禁止手写 `<line>` + `<polygon>` 做箭头，必须用 `VectorArrow`；
+  - ❌ 禁止手写 `<input type="range">`，必须用 `ParamControl`；
+  - ❌ 禁止手写 `<button>` 按钮组，必须用 `TabSwitcher` / `SelectGrid`；
+  - ❌ 禁止手写散乱 `<text>` 渲染点标/图例，必须用 `SceneLabelGroup`（8 向避让）与 `SceneLegend`（毛玻璃图例）；
+  - ❌ 禁止手写右屏卡片，必须由 `MathPanel` + `src/data/builders/<topic>.ts` 驱动。
 - **左屏控制台**：严格遵循 `TabSwitcher → SelectGrid(双列) → ParamControl → TipCard(双要素)` 动线。
-- **中屏场景**：使用 `AnimationSvgCanvas`，点标使用 `<SceneLabelGroup>` 智能避让，解析式与图例放 `<SceneLegend>`。
+- **右屏看板**：所有内容由 `src/data/builders/<topic>.ts` 导出 `MathPanelData`，查阅 [references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md)。
 - **坐标转换**：拖拽使用 `InteractivePoint`（内部已逆解算，**严禁二次调用 `designToMath`**）。
 
 ### Step 2：工程注册与路由挂载
-1. **创建 `meta.ts`**：在 `src/features/<topic>/meta.ts` 导出 `node` 与 `loader`。
-2. **注册路由**：在 `src/data/routeEntries.ts` 的 `legacyEntries` 中添加 `{ node, loader }`。
-3. **注册知识树**：在 `src/data/knowledgeTree.ts` 中挂载知识节点。
-4. **统一看板接入**：在 `src/data/mathQuantities.ts` 的 `buildMathQuantities` 注册 `animId` 分支。
+
+> 📖 完整四步流程（含代码片段和 KnowledgeNode 字段说明）见 [references/registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md)。
+
+1. **创建 `meta.ts`**：在 `src/features/<topic>/meta.ts` 导出 `node` 与 `loader`，`animationIds` 必须与 Step 4 中的 `case` 字符串完全一致。
+2. **注册路由**：在 `src/data/routeEntries.ts` 的 `routeEntries` 中添加 `{ node, loader }`（3D 页面加 `guarded3D: true`）。
+3. **注册知识树**：在 `src/data/knowledgeTree.ts` 中按章节顺序插入节点。
+4. **统一看板接入**：在 `src/data/mathQuantities.ts` 的 `buildMathQuantities` 中追加 `case 'anim-<topic>'`，调用 builder 函数。
 
 ---
 
