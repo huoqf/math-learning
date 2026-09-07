@@ -11,6 +11,7 @@ import { buildFuncTransformPanel } from "./builders/funcTransform";
 import { buildFuncCompositePanel } from "./builders/funcComposite";
 import { buildNikePanel } from "./builders/nike";
 import { buildTranscendentalPanel } from "./builders/transcendental";
+import { buildTangentScalingPanel } from "./builders/tangentScaling";
 import { buildQuantifiersPanel } from "./builders/quantifiersBuilder";
 
 import { buildDerivativeShiftPanel } from "./builders/derivativeShift";
@@ -116,6 +117,11 @@ export function buildMathQuantities(
       return buildDerivativeShiftPanel(params, config);
     case "anim-derivative-transcendental":
       return buildTranscendentalPanel(params, config);
+    case "anim-derivative-tangent-scaling":
+      return buildTangentScalingPanel(
+        params as unknown as import("./registries/tangentScaling").TangentScalingParams,
+        config as import("./builders/tangentScaling").TangentScalingOptions,
+      );
     case "anim-nike":
     case "anim-nike-standard":
     case "anim-nike-amgm":

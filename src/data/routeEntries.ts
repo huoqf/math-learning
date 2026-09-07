@@ -144,6 +144,10 @@ import {
   derivativeTranscendentalNode,
   derivativeTranscendentalLoader,
 } from "@/features/derivativeTranscendental/meta";
+import {
+  derivativeTangentScalingNode,
+  derivativeTangentScalingLoader,
+} from "@/features/derivativeTangentScaling/meta";
 
 // ── 8. 平面解析几何 ──
 import {
@@ -326,6 +330,10 @@ export const routeEntries: RouteEntry[] = [
   {
     node: derivativeTranscendentalNode,
     loader: derivativeTranscendentalLoader,
+  },
+  {
+    node: derivativeTangentScalingNode,
+    loader: derivativeTangentScalingLoader as RouteEntry["loader"],
   },
 
   // 8. 平面解析几何

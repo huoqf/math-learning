@@ -5,6 +5,7 @@
  */
 
 import { KatexFormula } from "@/components/UI/KatexFormula";
+import { renderMixedLatex } from "@/components/UI";
 import { MATH_COLORS } from "@/theme/math/colors";
 
 export interface SceneLegendItem {
@@ -12,7 +13,15 @@ export interface SceneLegendItem {
   colorKey?: keyof typeof MATH_COLORS;
   label?: string;
   formula?: string;
-  style?: "solid" | "dash" | "dot" | "point" | "hollow-point" | "area";
+  style?:
+    | "solid"
+    | "dash"
+    | "dashed"
+    | "line"
+    | "dot"
+    | "point"
+    | "hollow-point"
+    | "area";
 }
 
 interface SceneLegendProps {
@@ -43,24 +52,31 @@ export const SceneLegend = ({
             item.color ||
             (item.colorKey ? MATH_COLORS[item.colorKey] : MATH_COLORS.function);
 
+          const resolvedStyle =
+            item.style === "dashed"
+              ? "dash"
+              : item.style === "line"
+                ? "solid"
+                : (item.style ?? "solid");
+
           return (
             <div
               key={i}
               className="flex items-center gap-2 text-[11px] text-neutral-700 font-medium leading-none"
             >
-              <LegendSwatch
-                color={resolvedColor}
-                style={item.style ?? "solid"}
-              />
+              <LegendSwatch color={resolvedColor} style={resolvedStyle} />
               {item.formula ? (
-                <KatexFormula
-                  formula={item.formula}
-                  mode="inline"
-                  className="!text-[11px] !my-0"
-                />
-              ) : (
-                <span>{item.label}</span>
-              )}
+                <div className="flex items-center gap-1.5">
+                  {item.label && <span>{renderMixedLatex(item.label)}</span>}
+                  <KatexFormula
+                    formula={item.formula}
+                    mode="inline"
+                    className="!text-[11px] !my-0"
+                  />
+                </div>
+              ) : item.label ? (
+                <span>{renderMixedLatex(item.label)}</span>
+              ) : null}
             </div>
           );
         })}
