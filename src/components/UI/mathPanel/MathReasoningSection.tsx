@@ -61,17 +61,17 @@ export const MathReasoningSection: React.FC<MathReasoningSectionProps> = ({
                 )}
               </div>
               {s.detail && (
-                <div className="text-[11px] text-neutral-600 leading-relaxed pl-5">
+                <div className="text-xs text-neutral-600 leading-relaxed pl-5">
                   {renderMixedLatex(s.detail)}
                 </div>
               )}
               {s.latex && (
-                <div className="w-full py-2 px-3 bg-neutral-50 rounded border border-neutral-100/90 overflow-hidden max-w-full">
+                <div className="w-full py-2 px-3 bg-neutral-50/90 rounded-lg border border-neutral-200/70">
                   <KatexFormula
                     formula={s.latex}
-                    mode="inline"
+                    mode="block"
                     responsive={true}
-                    className="!text-xs font-medium max-w-full"
+                    className="text-sm font-medium text-neutral-800"
                   />
                 </div>
               )}

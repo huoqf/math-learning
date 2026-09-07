@@ -12,11 +12,6 @@ import {
 } from "./latexUtils";
 
 /**
- * 优先换行阈值：
- * 当单行所需缩放比例低于此阈值（空间极窄且公式较长）时，优先尝试按高中数学教材语义换行；
- * 在此阈值之上，优先保持单行高保真完整呈现。
- */
-const MIN_SCALE = 0.72;
 /** 换行后仍溢出（仅见于选项按鈕等极窄容器）时的硬底线，必须允许适度缩小以彻底杜绝文字两端被裁切 */
 const HARD_MIN_SCALE = 0.45;
 
@@ -103,52 +98,52 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
       const contentHeight = innerBox.scrollHeight;
 
       if (containerWidth > 0 && contentWidth > containerWidth) {
-        const needed = (containerWidth - 4) / contentWidth;
-        if (needed < MIN_SCALE) {
-          if (!lines) {
-            // 换行优先级：推导符 → 语义间距\quad/\; → 等号 → 二元运算符+/- → 标点
-            const split =
-              splitAtTopLevelImplies(formula) ??
-              splitAtTopLevelSpacing(formula) ??
-              splitAtTopLevelEquals(formula) ??
-              splitAtTopLevelBinary(formula) ??
-              splitAtTopLevelPunctuation(formula);
+        // 核心原则：只要公式超宽，优先尝试按高中数学教材语义拆行，绝不盲目暴力缩小
+        if (!lines) {
+          // 换行优先级：推导符 → 语义间距\quad/\; → 等号 → 二元运算符+/- → 标点
+          const split =
+            splitAtTopLevelImplies(formula) ??
+            splitAtTopLevelSpacing(formula) ??
+            splitAtTopLevelEquals(formula) ??
+            splitAtTopLevelBinary(formula) ??
+            splitAtTopLevelPunctuation(formula);
 
-            // 断行有效性验证：拆分出来的较长子段必须实质性短于原式
-            if (split) {
-              const origLen = getEffectiveLatexLength(formula);
-              const maxSubLen = Math.max(
-                getEffectiveLatexLength(split[0]),
-                getEffectiveLatexLength(split[1]),
-              );
-              // 如果最长子段相较于原式减少了至少 15% 的有效长度，断行才具备实质降宽价值
-              if (maxSubLen <= origLen * 0.85 || split.length > 2) {
-                setLines(split);
-                return;
-              }
+          // 断行有效性验证：拆分出来的较长子段必须实质性短于原式
+          if (split) {
+            const origLen = getEffectiveLatexLength(formula);
+            const maxSubLen = Math.max(
+              getEffectiveLatexLength(split[0]),
+              getEffectiveLatexLength(split[1]),
+            );
+            // 如果最长子段相较于原式减少了至少 15% 的有效长度，断行具备降宽价值
+            if (maxSubLen <= origLen * 0.85 || split.length > 2) {
+              setLines(split);
+              return;
             }
-          } else {
-            // 多行模式下找出仍然超宽的行，继续按同一优先级拆分
-            for (let i = 0; i < lineDivs.length; i++) {
-              if (lineDivs[i].scrollWidth > containerWidth) {
-                const targetLine = lines[i];
-                const further =
-                  splitAtTopLevelImplies(targetLine) ??
-                  splitAtTopLevelSpacing(targetLine) ??
-                  splitAtTopLevelEquals(targetLine) ??
-                  splitAtTopLevelBinary(targetLine) ??
-                  splitAtTopLevelPunctuation(targetLine);
-                if (further) {
-                  const next = [...lines];
-                  next.splice(i, 1, further[0], further[1]);
-                  setLines(next);
-                  return;
-                }
+          }
+        } else {
+          // 多行模式下找出仍然超宽的行，继续按同一优先级拆分
+          for (let i = 0; i < lineDivs.length; i++) {
+            if (lineDivs[i].scrollWidth > containerWidth) {
+              const targetLine = lines[i];
+              const further =
+                splitAtTopLevelImplies(targetLine) ??
+                splitAtTopLevelSpacing(targetLine) ??
+                splitAtTopLevelEquals(targetLine) ??
+                splitAtTopLevelBinary(targetLine) ??
+                splitAtTopLevelPunctuation(targetLine);
+              if (further) {
+                const next = [...lines];
+                next.splice(i, 1, further[0], further[1]);
+                setLines(next);
+                return;
               }
             }
           }
         }
-        // 动态保底缩放：不论是否换行，绝不刚性截断，确保 100% 完整可见不丢字
+
+        // 仅当公式已无法继续按高中数学习惯拆行时，才进行兜底微幅 Scale-to-Fit 缩放
+        const needed = (containerWidth - 4) / contentWidth;
         const nextScale = Math.max(HARD_MIN_SCALE, needed);
         setScale(nextScale);
         if (lines && lines.length > 1) {
@@ -185,10 +180,15 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   ));
 
   if (isBlock) {
+    const isMultiLine = Boolean(lines && lines.length > 1);
     return (
       <div
         ref={outerRef}
-        className={`w-full my-1 flex items-center justify-center overflow-visible transition-all duration-150 ${className}`}
+        className={`w-full my-1 flex ${
+          isMultiLine
+            ? "items-start justify-start"
+            : "items-center justify-center"
+        } overflow-visible transition-all duration-150 ${className}`}
         style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
       >
         <div
@@ -200,7 +200,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
           }`}
           style={{
             transform: scale < 1 ? `scale(${scale})` : undefined,
-            transformOrigin: "center center",
+            transformOrigin: isMultiLine ? "center left" : "center center",
           }}
         >
           {innerContent}

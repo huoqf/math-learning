@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import katex from "katex";
 import { solidDistanceMeta } from "@/data/registries/solidGeometry";
 import { buildSpatialDistancePanel } from "@/data/builders/solidSpatialDistance";
@@ -144,5 +144,38 @@ describe("空间距离页面左右屏所有 LaTeX 公式合法性全量检测", 
     tipTexts.forEach((text, i) => {
       validateMixedText(text, `TipCard[${i}]`);
     });
+  });
+
+  it("推导步骤严格符合高中数学工程落地规范（无裸代码代号、无超长单行未折行连缀等式）", () => {
+    const testParams = { a: 3, b: 2, c: 2, lambda: 0.5, mu: 0.4 };
+    for (const { mode, presets } of modes) {
+      for (const preset of presets) {
+        const panel = buildSpatialDistancePanel(testParams, { mode, preset });
+        if (!panel.reasoningSteps) continue;
+
+        for (const s of panel.reasoningSteps) {
+          // 1. 严格禁止裸文本代码代号（必须用 LaTeX 包裹）
+          if (s.detail) {
+            expect(s.detail).not.toMatch(/\bvecPQ\b/);
+            expect(s.detail).not.toMatch(/\bBB₁\b/);
+          }
+          // 2. 采分点必须明确标注
+          expect(s.rubric).toBeDefined();
+          expect(s.rubric?.length).toBeGreaterThan(5);
+
+          // 3. 检查单行等号数量：单行内等号不得超过 2 个（超过必须使用 \\ 换行）
+          if (s.latex) {
+            const rawLines = s.latex.split(/\\\\/g);
+            for (const line of rawLines) {
+              const equalsCount = (line.match(/=/g) || []).length;
+              expect(
+                equalsCount,
+                `[${mode}/${preset}] Step ${s.step} 单行内等号数量过多(${equalsCount})，应分行对齐: "${line.trim()}"`,
+              ).toBeLessThanOrEqual(2);
+            }
+          }
+        }
+      }
+    }
   });
 });

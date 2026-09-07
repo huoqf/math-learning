@@ -110,19 +110,19 @@ export function buildSpatialDistancePanel(
     // 2. 核心数学警示（高中数学核心概念与临界辨析，拒绝无意义浮点误差报告）
     if (skew.isAtPerpendicular) {
       warnings.push({
-        text: `【极值命中 · 双垂直成立】动线段 PQ 此时严格重合于公垂线段 H₁H₂！两垂足处建立双直角关系（H₁H₂ ⊥ l₁ 且 H₁H₂ ⊥ l₂），空间两点距离取得全局唯一最小值 d_min = ${skew.minDist.toFixed(4)}。`,
+        text: `【极值命中 · 双垂直成立】动线段 $PQ$ 此时严格重合于公垂线段 $H_1H_2$！两垂足处建立双直角关系（$H_1H_2 \\perp l_1$ 且 $H_1H_2 \\perp l_2$），空间两点距离取得全局唯一最小值 $d_{\\min} = ${skew.minDist.toFixed(4)}$。`,
         level: "info",
       });
     } else {
       warnings.push({
-        text: `【非极值斜线状态】当前线段 PQ 为异面斜线段（|PQ| > d_min）。由空间向量正交基底分解原理，因未同时垂直于两直线，线段长度必严格大于公垂线段。`,
+        text: `【非极值斜线状态】当前线段 $PQ$ 为异面斜线段（$|PQ| > d_{\\min}$）。由空间向量正交基底分解原理，因未同时垂直于两直线，线段长度必严格大于公垂线段。`,
         level: "warning",
       });
     }
 
     warnings.push({
-      text: "【高中数学易错警示】证明公垂线段必须分别交代 H₁H₂ ⊥ l₁ 与 H₁H₂ ⊥ l₂ 两组垂直关系，两者缺一不可；若仅与单条直线垂直，则仅为射影垂线而非公垂线。",
-      level: "info",
+      text: "【高中数学易错警示】证明公垂线段必须分别交代 $H_1H_2 \\perp l_1$ 与 $H_1H_2 \\perp l_2$ 两组垂直关系，两者缺一不可；若仅与单条直线垂直，则仅为射影垂线而非公垂线。",
+      level: "warning",
     });
 
     // 3. 高考大题三步推演链（保留严谨代数参数式，绝非定点数值）
@@ -131,23 +131,24 @@ export function buildSpatialDistancePanel(
         {
           step: 1,
           title: "建立空间直角坐标系并参数化动点代数坐标",
-          detail: `以 A 为原点建立坐标系 A-xyz。侧棱 BB₁ 与对角线 AC 的方向向量及动点代数表达式为：`,
-          latex: `\\begin{aligned} &\\vec{u} = (0, 0, ${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\ &P(\\lambda) = (a, 0, \\lambda c) = (${a}, 0, ${c.toFixed(1)}\\lambda) \\\\ &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
+          detail: `以 $A$ 为原点建立空间直角坐标系 $A\\text{-}xyz$。侧棱 $BB_1$ 与对角线 $AC$ 的方向向量及动点代数坐标为：`,
+          latex: `\\begin{aligned} &\\vec{u} = (0, 0, ${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\[1ex] &P(\\lambda) = (a, 0, \\lambda c) = (${a}, 0, ${c.toFixed(1)}\\lambda) \\\\[1ex] &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
           rubric: "高考大题采分点：建立坐标系与确定动点参数代数式（4分）",
         },
         {
           step: 2,
           title: "利用双垂直正交条件联立求解公垂足参数",
           detail:
-            "公垂向量 vecPQ 同时垂直于侧棱 BB₁ 与对角线 AC，代入垂直正交方程：",
-          latex: `\\begin{cases} \\vec{PQ} \\cdot \\vec{u} = -c^2\\lambda = 0 \\\\ \\vec{PQ} \\cdot \\vec{v} = (a^2+b^2)\\mu - a^2 = 0 \\end{cases} \\implies \\begin{cases} \\lambda^* = 0 \\\\ \\mu^* = \\dfrac{a^2}{a^2+b^2} = ${((a * a) / (a * a + b * b)).toFixed(4)} \\end{cases}`,
+            "公垂向量 $\\vec{PQ}$ 同时垂直于侧棱 $BB_1$ 与底面对角线 $AC$，列出正交方程组：",
+          latex: `\\begin{aligned} &\\begin{cases} \\vec{PQ} \\cdot \\vec{u} = -c^2\\lambda = 0 \\\\[1ex] \\vec{PQ} \\cdot \\vec{v} = (a^2+b^2)\\mu - a^2 = 0 \\end{cases} \\\\[1.5ex] \\implies &\\begin{cases} \\lambda^* = 0 \\\\[1.5ex] \\mu^* = \\dfrac{a^2}{a^2+b^2} = ${((a * a) / (a * a + b * b)).toFixed(4)} \\end{cases} \\end{aligned}`,
           rubric: "高考大题采分点：正交方程组构建与解析解求解（4分）",
         },
         {
           step: 3,
           title: "化归平行平面法与平面几何求解最短距离",
-          detail: "转化为点 B 到截面 ACC₁A₁ 的距离，即 Rt△ABC 斜边 AC 上的高：",
-          latex: `d_{\\min} = \\frac{a b}{\\sqrt{a^2 + b^2}} = \\frac{${a} \\times ${b}}{\\sqrt{${a}^2 + ${b}^2}} \\approx ${skew.minDist.toFixed(4)}`,
+          detail:
+            "转化为点 $B$ 到截面 $ACC_1A_1$ 的距离，即 $\\text{Rt}\\triangle ABC$ 斜边 $AC$ 上的高：",
+          latex: `\\begin{aligned} d_{\\min} &= \\frac{a b}{\\sqrt{a^2 + b^2}} \\\\[1.5ex] &= \\frac{${a} \\times ${b}}{\\sqrt{${a}^2 + ${b}^2}} \\approx ${skew.minDist.toFixed(4)} \\end{aligned}`,
           rubric: "高考大题采分点：线面平行转化与斜边高距离计算（4分）",
         },
       );
@@ -156,26 +157,28 @@ export function buildSpatialDistancePanel(
         {
           step: 1,
           title: "建立空间直角坐标系并参数化动点代数坐标",
-          detail: `以 A 为原点建立坐标系 A-xyz。两异面直线的方向向量与动点参数代数式为：`,
-          latex: `\\begin{aligned} &\\vec{u} = (${a}, 0, -${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\ &P(\\lambda) = (\\lambda a, 0, (1-\\lambda)c) = (${a}\\lambda, 0, ${c.toFixed(1)}(1-\\lambda)) \\\\ &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
+          detail: `以 $A$ 为原点建立空间直角坐标系 $A\\text{-}xyz$。两异面直线的方向向量及动点代数坐标为：`,
+          latex: `\\begin{aligned} &\\vec{u} = (${a}, 0, -${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\[1ex] &P(\\lambda) = (\\lambda a, 0, (1-\\lambda)c) = (${a}\\lambda, 0, ${c.toFixed(1)}(1-\\lambda)) \\\\[1ex] &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
           rubric: "高考大题采分点：建立坐标系与确定动点参数代数式（4分）",
         },
         {
           step: 2,
           title: "利用双垂直正交条件联立求解公垂足参数",
-          detail: "公垂向量 vecPQ 同时垂直于直线 A₁B 与直线 AC：",
+          detail:
+            "公垂向量 $\\vec{PQ}$ 同时垂直于直线 $A_1B$ 与直线 $AC$，列出正交方程组：",
           latex: isCube
-            ? `\\begin{cases} \\vec{PQ} \\cdot \\vec{u} = 2a^2\\lambda - a^2\\mu - a^2 = 0 \\\\ \\vec{PQ} \\cdot \\vec{v} = 2a^2\\mu - a^2\\lambda = 0 \\end{cases} \\implies \\begin{cases} \\lambda^* = \\dfrac{2}{3} \\\\ \\mu^* = \\dfrac{1}{3} \\end{cases}`
-            : `\\begin{cases} (${a}^2+${c}^2)\\lambda - ${a}^2\\mu = ${c}^2 \\\\ (${a}^2+${b}^2)\\mu - ${a}^2\\lambda = 0 \\end{cases} \\implies \\begin{cases} \\lambda^* = \\dfrac{c^2(a^2+b^2)}{a^2b^2+b^2c^2+c^2a^2} = ${skew.optimalLambda.toFixed(4)} \\\\ \\mu^* = \\dfrac{a^2c^2}{a^2b^2+b^2c^2+c^2a^2} = ${skew.optimalMu.toFixed(4)} \\end{cases}`,
+            ? `\\begin{aligned} &\\begin{cases} \\vec{PQ} \\cdot \\vec{u} = 2a^2\\lambda - a^2\\mu - a^2 = 0 \\\\[1ex] \\vec{PQ} \\cdot \\vec{v} = 2a^2\\mu - a^2\\lambda = 0 \\end{cases} \\\\[1.5ex] \\implies &\\begin{cases} \\lambda^* = \\dfrac{2}{3} \\\\[1.5ex] \\mu^* = \\dfrac{1}{3} \\end{cases} \\end{aligned}`
+            : `\\begin{aligned} &\\begin{cases} (${a}^2+${c}^2)\\lambda - ${a}^2\\mu = ${c}^2 \\\\[1ex] (${a}^2+${b}^2)\\mu - ${a}^2\\lambda = 0 \\end{cases} \\\\[1.5ex] \\implies &\\begin{cases} \\lambda^* = \\dfrac{c^2(a^2+b^2)}{a^2b^2+b^2c^2+c^2a^2} = ${skew.optimalLambda.toFixed(4)} \\\\[2ex] \\mu^* = \\dfrac{a^2c^2}{a^2b^2+b^2c^2+c^2a^2} = ${skew.optimalMu.toFixed(4)} \\end{cases} \\end{aligned}`,
           rubric: "高考大题采分点：正交方程组构建与解析解求解（4分）",
         },
         {
           step: 3,
           title: "向量外积法与平行平面法求解公垂线最短距离",
-          detail: "求公垂向量 n = u × v 并代入向量射影距离公式：",
+          detail:
+            "求公垂向量 $\\vec{n} = \\vec{u} \\times \\vec{v}$ 并代入向量射影距离公式：",
           latex: isCube
-            ? `d_{\\min} = \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{a^3}{\\sqrt{3}a^2} = \\frac{\\sqrt{3}}{3} a \\approx ${((Math.sqrt(3) / 3) * a).toFixed(4)}`
-            : `\\vec{n} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\implies d_{\\min} = \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{abc}{\\sqrt{b^2 c^2 + a^2 c^2 + a^2 b^2}} \\approx ${skew.minDist.toFixed(4)}`,
+            ? `\\begin{aligned} \\vec{n} &= \\vec{u} \\times \\vec{v} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\\\[1ex] \\implies d_{\\min} &= \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} \\\\[1.5ex] &= \\frac{a^3}{\\sqrt{3}a^2} = \\frac{\\sqrt{3}}{3} a \\approx ${((Math.sqrt(3) / 3) * a).toFixed(4)} \\end{aligned}`
+            : `\\begin{aligned} \\vec{n} &= \\vec{u} \\times \\vec{v} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\\\[1ex] \\implies d_{\\min} &= \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} \\\\[1.5ex] &= \\frac{abc}{\\sqrt{b^2 c^2 + a^2 c^2 + a^2 b^2}} \\approx ${skew.minDist.toFixed(4)} \\end{aligned}`,
           rubric: "高考大题采分点：公垂向量计算与点乘射影公式代入（4分）",
         },
       );
@@ -296,8 +299,8 @@ export function buildSpatialDistancePanel(
     );
 
     warnings.push({
-      text: "【等体积换底法规范】利用等体积法求高线时，必须明确写出换底等式 V_{A-BDE} = V_{E-ABD}；向量法计算距离时，分子斜向量投影必须带绝对值符号保证距离为非负数。",
-      level: "info",
+      text: "【等体积换底法规范】利用等体积法求高线时，必须明确写出换底等式 $V_{A-BDE} = V_{E-ABD}$；向量法计算距离时，分子斜向量投影必须带绝对值符号保证距离为非负数。",
+      level: "warning",
     });
 
     theorems.push(
@@ -324,22 +327,24 @@ export function buildSpatialDistancePanel(
       {
         step: 1,
         title: "建立空间直角坐标系并求解截面 BDE 法向量",
-        detail: `设平面 BDE 法向量为 n = (x, y, z)，由垂直关系列方程组：`,
-        latex: `\\begin{cases} \\vec{n} \\cdot \\vec{BD} = 0 \\\\ \\vec{n} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\vec{n} = (${distRes.nRaw.x.toFixed(2)}, ${distRes.nRaw.y.toFixed(2)}, ${distRes.nRaw.z.toFixed(2)})`,
+        detail: `设平面 $BDE$ 法向量为 $\\vec{n} = (x, y, z)$，由正交垂直关系列方程组：`,
+        latex: `\\begin{aligned} &\\begin{cases} \\vec{n} \\cdot \\vec{BD} = 0 \\\\[1ex] \\vec{n} \\cdot \\vec{BE} = 0 \\end{cases} \\\\[1.5ex] \\implies &\\vec{n} = (${distRes.nRaw.x.toFixed(2)}, ${distRes.nRaw.y.toFixed(2)}, ${distRes.nRaw.z.toFixed(2)}) \\end{aligned}`,
         rubric: "高考大题采分点：坐标系建立与法向量求解（4分）",
       },
       {
         step: 2,
         title: "代入向量点积射影公式计算垂直距离",
-        detail: "取截面内参考点 B，斜向量在法向量上的投影长度：",
+        detail:
+          "取截面内已知参考点 $B$，斜向量 $\\vec{AB}$ 在法向量 $\\vec{n}$ 上的射影长度：",
         latex: `d = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|} = ${distRes.distance.toFixed(4)}`,
         rubric: "高考大题采分点：向量射影公式代入与准确计算（4分）",
       },
       {
         step: 3,
         title: "利用等体积换底法对账检验计算准确性",
-        detail: "等体积法高线计算结果严格吻合：",
-        latex: `d = \\frac{3 V_{E-ABD}}{S_{\\Delta BDE}} = \\frac{3 \\times ${distRes.volume.toFixed(4)}}{${distRes.areaSection.toFixed(4)}} = ${distRes.distance.toFixed(4)}`,
+        detail:
+          "等体积法换底 $V_{A-BDE} = V_{E-ABD}$ 反求高线 $d$，结果严格自洽：",
+        latex: `\\begin{aligned} d &= \\frac{3 V_{E-ABD}}{S_{\\Delta BDE}} \\\\[1.5ex] &= \\frac{3 \\times ${distRes.volume.toFixed(4)}}{${distRes.areaSection.toFixed(4)}} = ${distRes.distance.toFixed(4)} \\end{aligned}`,
         rubric: "高考大题采分点：等体积反解与结论验证（4分）",
       },
     );
@@ -411,23 +416,23 @@ export function buildSpatialDistancePanel(
         step: 1,
         title: "分析三棱锥底面积的不变性",
         detail:
-          "底面 △ABD 位于长方体底面，边长 a, b 固定，其面积恒定为 (1/2)ab；",
-        latex: `S_{\\Delta ABD} = \\frac{1}{2} a b = \\frac{1}{2} (${a})(${b}) = ${distRes.areaBase.toFixed(2)}`,
+          "底面 $\\triangle ABD$ 位于长方体底面，边长 $a, b$ 固定，其面积恒定为 $\\frac{1}{2}ab$：",
+        latex: `\\begin{aligned} S_{\\Delta ABD} &= \\frac{1}{2} a b \\\\[1ex] &= \\frac{1}{2} (${a})(${b}) = ${distRes.areaBase.toFixed(2)} \\end{aligned}`,
         rubric: "高考大题采分点：定底面积分析（4分）",
       },
       {
         step: 2,
         title: "建立体积关于分点比例 λ 的线性函数",
         detail:
-          "动点 E 在侧棱 AA₁ 上移动，高线 h(λ) = λc 与体积成严格正比例关系：",
-        latex: `V(\\lambda) = \\frac{1}{3} S_{\\Delta ABD} \\cdot (\\lambda c) = \\frac{1}{6} (${a})(${b})(${c}) \\lambda = ${distRes.maxVolume.toFixed(2)} \\lambda`,
+          "动点 $E$ 在侧棱 $AA_1$ 上移动，高线 $h(\\lambda) = \\lambda c$ 与体积成严格正比例关系：",
+        latex: `\\begin{aligned} V(\\lambda) &= \\frac{1}{3} S_{\\Delta ABD} \\cdot (\\lambda c) \\\\[1ex] &= \\frac{1}{6} (${a})(${b})(${c}) \\lambda = ${distRes.maxVolume.toFixed(2)} \\lambda \\end{aligned}`,
         rubric: "高考大题采分点：体积函数构建（4分）",
       },
       {
         step: 3,
         title: "区间端点判定极值结论",
         detail:
-          "由于 λ ∈ (0, 1]，体积函数关于 λ 单调递增，端点处取得最大极值：",
+          "由于 $\\lambda \\in (0, 1]$，体积函数关于 $\\lambda$ 单调递增，端点处取得最大极值：",
         latex: `V_{\\max} = V(1.0) = ${distRes.maxVolume.toFixed(4)}`,
         rubric: "高考大题采分点：端点极值结论明确（4分）",
       },
