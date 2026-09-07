@@ -727,12 +727,12 @@ export function FoldingModelScene3D({
                     lineWidth={2}
                   />
 
-                  {/* 二面角平面角构造垂线对：OA_0 ⊥ BD 与 OA' ⊥ BD */}
+                  {/* 二面角平面角构造垂线对：OC ⊥ BD 与 OA' ⊥ BD (二面角 A'-BD-C 的平面角) */}
                   {showDihedralArc && alphaDeg > 0 && alphaDeg < 180 && (
                     <>
                       <Segment3D
                         from={O}
-                        to={A_0}
+                        to={C}
                         colorKey="paramPrimary"
                         lineWidth={2.5}
                       />
@@ -744,7 +744,7 @@ export function FoldingModelScene3D({
                       />
                       <AngleArc3D
                         vertex={O}
-                        dirA={{ x: -1, y: 0, z: 0 }}
+                        dirA={{ x: 1, y: 0, z: 0 }}
                         dirB={{
                           x: A_prime.x,
                           y: 0,

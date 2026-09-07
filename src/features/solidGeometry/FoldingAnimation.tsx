@@ -18,6 +18,7 @@ import type { InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidFoldingMeta } from "@/data/registries/solidGeometry";
+import { MATH_COLORS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   calculateRightTrapezoidFolding,
@@ -101,32 +102,62 @@ export default function FoldingAnimation() {
 
     const descMap: Record<
       FoldingModelKind,
-      Record<string, { label: string; formula: string }>
+      Record<string, { label: string; labelFormula: string }>
     > = {
       trapezoid: {
-        a: { label: "下底长 a", formula: "\\text{下底 } AD" },
-        b: { label: "上底长 b", formula: "\\text{上底 } BC = AE" },
-        h: { label: "垂直腰 h", formula: "\\text{垂直腰 } AB = CE" },
-        alphaDeg: { label: "二面角 α", formula: "\\text{二面角 } D'-EC-A" },
+        alphaDeg: {
+          label: "翻折角 α",
+          labelFormula: `\\text{翻折角 } \\color{${MATH_COLORS.paramPrimary}}{\\alpha}`,
+        },
+        a: {
+          label: "下底长 a",
+          labelFormula: `\\text{下底长 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
+        },
+        b: {
+          label: "上底长 b",
+          labelFormula: `\\text{上底长 } \\color{${MATH_COLORS.paramSecondary}}{b}`,
+        },
+        h: {
+          label: "垂直腰 h",
+          labelFormula: `\\text{垂直腰 } \\color{${MATH_COLORS.paramTertiary}}{h}`,
+        },
       },
       rectangleDiagonal: {
-        a: { label: "矩形长 a", formula: "\\text{矩形长 } AB = CD" },
-        b: { label: "矩形宽 b", formula: "\\text{矩形宽 } AD = BC" },
-        alphaDeg: { label: "二面角 α", formula: "\\text{二面角 } A'-BD-C" },
+        alphaDeg: {
+          label: "翻折角 α",
+          labelFormula: `\\text{翻折角 } \\color{${MATH_COLORS.paramPrimary}}{\\alpha}`,
+        },
+        a: {
+          label: "矩形长 a",
+          labelFormula: `\\text{矩形长 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
+        },
+        b: {
+          label: "矩形宽 b",
+          labelFormula: `\\text{矩形宽 } \\color{${MATH_COLORS.paramSecondary}}{b}`,
+        },
       },
       triangleAltitude: {
-        a: { label: "底边长 a", formula: "\\text{底边 } BC" },
-        h: { label: "高线长 h", formula: "\\text{高线 } AD \\perp BC" },
-        alphaDeg: { label: "二面角 α", formula: "\\text{二面角 } B-AD-C'" },
+        alphaDeg: {
+          label: "翻折角 α",
+          labelFormula: `\\text{翻折角 } \\color{${MATH_COLORS.paramPrimary}}{\\alpha}`,
+        },
+        a: {
+          label: "底边长 a",
+          labelFormula: `\\text{底边长 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
+        },
+        h: {
+          label: "高线长 h",
+          labelFormula: `\\text{高线长 } \\color{${MATH_COLORS.paramTertiary}}{h}`,
+        },
       },
       rhombus: {
+        alphaDeg: {
+          label: "翻折角 α",
+          labelFormula: `\\text{翻折角 } \\color{${MATH_COLORS.paramPrimary}}{\\alpha}`,
+        },
         a: {
           label: "菱形边长 a",
-          formula: "\\text{菱形边长 } a",
-        },
-        alphaDeg: {
-          label: "二面角 α",
-          formula: "\\text{翻折角 } \\alpha",
+          labelFormula: `\\text{菱形边长 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
         },
       },
     };
@@ -138,7 +169,7 @@ export default function FoldingAnimation() {
       return {
         key,
         label: customDesc?.label ?? meta?.label ?? key,
-        labelFormula: meta?.labelFormula,
+        labelFormula: customDesc?.labelFormula ?? meta?.labelFormula,
         value: params[key] ?? meta?.defaultValue ?? 0,
         min: meta?.min ?? 0,
         max: meta?.max ?? 180,
@@ -146,6 +177,7 @@ export default function FoldingAnimation() {
         description: meta?.description,
         importance: meta?.importance,
         marks: meta?.marks,
+        group: meta?.group,
       };
     });
   }, [params, model]);
@@ -220,22 +252,18 @@ export default function FoldingAnimation() {
                 {
                   key: "trapezoid",
                   label: "直角梯形翻折",
-                  formula: "\\text{折痕 } EC",
                 },
                 {
                   key: "rectangleDiagonal",
                   label: "矩形对角线翻折",
-                  formula: "\\text{折痕 } BD",
                 },
                 {
                   key: "triangleAltitude",
                   label: "等腰高线翻折",
-                  formula: "\\text{折痕 } AD",
                 },
                 {
                   key: "rhombus",
                   label: "菱形对角线翻折",
-                  formula: "\\text{短对角线 } BD",
                 },
               ]}
               value={model}

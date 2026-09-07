@@ -34,18 +34,26 @@ export function buildSolidFoldingPanel(
     const res = calculateRightTrapezoidFolding(a, b, h, alphaDeg);
     const D_prime = res.points["D'"];
 
+    const dihedralBeta = 180 - alphaDeg;
+
     quantities.push(
       {
-        label: "翻折二面角 α",
+        label: "翻折旋转角 α",
         symbol: "\\alpha",
         value: `${alphaDeg}°`,
         color: MATH_COLORS.paramPrimary,
       },
       {
+        label: "空间二面角 β",
+        symbol: "\\beta(D'-EC-A)",
+        value: `${dihedralBeta}°`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
         label: "动点 D' 空间坐标",
         symbol: "D'",
         value: `(${D_prime.x.toFixed(2)}, ${D_prime.y.toFixed(2)}, ${D_prime.z.toFixed(2)})`,
-        color: MATH_COLORS.paramSecondary,
+        color: MATH_COLORS.secondary,
       },
       {
         label: "变动线段 D'A 长度",
@@ -69,10 +77,11 @@ export function buildSolidFoldingPanel(
 
     theorems.push(
       {
-        name: "二面角的平面角定义定理",
-        latex: "\\angle D'EA \\text{ 为二面角 } D'-EC-A \\text{ 的平面角}",
+        name: "二面角平面角与翻折角关系",
+        latex: `\\beta = 180^\\circ - \\alpha \\quad (\\angle D'EA \\text{ 为二面角 } D'-EC-A \\text{ 的平面角})`,
         level: "core",
         condition: "折痕为 EC，在两半平面内分别作 ED' ⊥ EC, EA ⊥ EC",
+        note: "翻折前 A 与 D 分居 EC 两侧成平角；翻折角 α 为旋转偏角，两半平面二面角 β = 180° - α",
       },
       {
         name: "动点 D' 空间坐标参数化公式",
@@ -94,6 +103,10 @@ export function buildSolidFoldingPanel(
       },
       {
         text: "【高考折叠第(2)问向量建系】：以 A 为原点，射线 AB 为 y 轴，AD 为 x 轴，过 A 作底面垂线为 z 轴，带入动点 D' 坐标求线面角/二面角。",
+        importance: "gaokao",
+      },
+      {
+        text: "【二面角钝角防扣分铁律】：用法向量求二面角时，公式 |cos〈n1, n2〉| 给出的是锐角或直角；若直观图中二面角为钝角，余弦值必须添负号！",
         importance: "gaokao",
       },
     );
@@ -175,19 +188,26 @@ export function buildSolidFoldingPanel(
   } else if (model === "triangleAltitude") {
     const res = calculateTriangleAltitudeFolding(a, h, alphaDeg);
     const C_prime = res.points["C'"];
+    const dihedralBeta = 180 - alphaDeg;
 
     quantities.push(
       {
-        label: "翻折二面角 α",
+        label: "翻折旋转角 α",
         symbol: "\\alpha",
         value: `${alphaDeg}°`,
         color: MATH_COLORS.paramPrimary,
       },
       {
+        label: "空间二面角 β",
+        symbol: "\\beta(B-AD-C')",
+        value: `${dihedralBeta}°`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
         label: "动点 C' 空间坐标",
         symbol: "C'",
         value: `(${C_prime.x.toFixed(2)}, ${C_prime.y.toFixed(2)}, ${C_prime.z.toFixed(2)})`,
-        color: MATH_COLORS.paramSecondary,
+        color: MATH_COLORS.secondary,
       },
       {
         label: "变动底边 BC' 长度",
@@ -226,6 +246,7 @@ export function buildSolidFoldingPanel(
     // rhombus
     const res = calculateRhombusFolding(a, alphaDeg);
     const A_prime = res.points["A'"];
+    const dihedralBeta = 180 - alphaDeg;
 
     quantities.push(
       {
@@ -235,16 +256,22 @@ export function buildSolidFoldingPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "翻折二面角 α",
+        label: "翻折旋转角 α",
         symbol: "\\alpha",
         value: `${alphaDeg}°`,
         color: MATH_COLORS.paramPrimary,
       },
       {
+        label: "空间二面角 β",
+        symbol: "\\beta(A'-BD-C)",
+        value: `${dihedralBeta}°`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
         label: "动点 A' 空间坐标",
         symbol: "A'",
         value: `(${A_prime.x.toFixed(2)}, ${A_prime.y.toFixed(2)}, ${A_prime.z.toFixed(2)})`,
-        color: MATH_COLORS.paramSecondary,
+        color: MATH_COLORS.secondary,
       },
       {
         label: "对角顶点距离 |A'C|",
@@ -269,8 +296,9 @@ export function buildSolidFoldingPanel(
       },
       {
         name: "对角顶点距离余弦定理",
-        latex: `|A'C|^2 = \\frac{3}{2} \\color{#EF4444}{a}^2 (1 - \\cos\\color{#EF4444}{\\alpha})`,
+        latex: `|A'C|^2 = \\frac{3}{2} \\color{#EF4444}{a}^2 (1 + \\cos\\color{#EF4444}{\\alpha}) = 3\\color{#EF4444}{a}^2 \\cos^2\\left(\\frac{\\color{#EF4444}{\\alpha}}{2}\\right)`,
         level: "important",
+        note: "折痕两半平面夹角 ∠A'OC = π − α，由余弦定理 |A'C|² = 2(√3a/2)²(1+cosα)",
       },
     );
 

@@ -299,10 +299,10 @@ export function calculateRhombusFolding(
   const heightZ = Math.max(0, A_prime.z);
   const pyramidVolume = (1 / 3) * baseArea * heightZ;
 
-  // 二面角定义垂线对：垂足 O(0,0,0)，底面指向 A_0(-hAO, 0, 0)，翻折面指向 A'
+  // 二面角定义垂线对：垂足 O(0,0,0)，底面指向 C(hAO, 0, 0)，翻折面指向 A'
   const dihedralRays = {
     vertex: O,
-    baseRayEnd: { x: -hAO, y: 0, z: 0 },
+    baseRayEnd: C,
     foldRayEnd: A_prime,
   };
 
