@@ -265,6 +265,7 @@ export function getTangentScalingParamConfigs(
 
     case "sandwich": {
       const isOrigin = options?.sandwichSubModel === "origin_sandwich";
+      const isParallel = options?.sandwichSubModel === "parallel_bands";
       return [
         {
           key: "evalX",
@@ -280,7 +281,7 @@ export function getTangentScalingParamConfigs(
             {
               value: isOrigin ? 0 : 1,
               variant: "critical",
-              label: isOrigin ? "原点相切" : "公切点",
+              label: isOrigin ? "原点相切" : isParallel ? "对数切点" : "公切点",
               labelFormula: isOrigin ? "x=0" : "x=1",
             },
           ],

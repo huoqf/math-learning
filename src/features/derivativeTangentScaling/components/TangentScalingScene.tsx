@@ -83,7 +83,40 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
     const tangent = calculateTangentLine(funcType, params.x0);
     const tangentFn = (x: number) => tangent.slope * x + tangent.intercept;
 
-    return { fn, tangentFn, tangent, xRange };
+    // 高考题设基准切线与基准切点
+    let baseX0 = 0;
+    let baseY0 = 1;
+    let baseSlope = 1;
+    let baseIntercept = 1;
+    if (baseSubModel === "exp_shift_x") {
+      baseX0 = 1;
+      baseY0 = 1;
+      baseSlope = 1;
+      baseIntercept = 0; // y = x
+    } else if (baseSubModel === "exp_ex") {
+      baseX0 = 1;
+      baseY0 = Math.E;
+      baseSlope = Math.E;
+      baseIntercept = 0; // y = ex
+    } else if (baseSubModel === "log_x_minus_1") {
+      baseX0 = 1;
+      baseY0 = 0;
+      baseSlope = 1;
+      baseIntercept = -1; // y = x - 1
+    } else if (baseSubModel === "log_shift_0") {
+      baseX0 = 0;
+      baseY0 = 0;
+      baseSlope = 1;
+      baseIntercept = 0; // y = x
+    } else if (baseSubModel === "log_x_div_e") {
+      baseX0 = Math.E;
+      baseY0 = 1;
+      baseSlope = 1 / Math.E;
+      baseIntercept = 0; // y = (1/e)x
+    }
+    const baseTangentFn = (x: number) => baseSlope * x + baseIntercept;
+
+    return { fn, tangentFn, tangent, baseTangentFn, baseX0, baseY0, xRange };
   }, [mode, baseSubModel, params.x0]);
 
   // ── 模式 2：双切线公切与平行卡位 ──
@@ -198,9 +231,22 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
         color: MATH_COLORS.paramPrimary,
         preferredPlacement: "top",
       });
+
+      // 当切点偏离基准切点时，呈现基准切点 T_0
+      if (Math.abs(baseData.tangent.x0 - baseData.baseX0) > 0.08) {
+        const ptBase = mathToDesign(baseData.baseX0, baseData.baseY0, scale);
+        items.push({
+          key: "pt-base-target",
+          x: ptBase.x,
+          y: ptBase.y,
+          text: "T_0",
+          color: MATH_COLORS.line,
+          preferredPlacement: "bottom-left",
+        });
+      }
     }
 
-    if (mode === "sandwich") {
+    if (mode === "sandwich" && sandwichData) {
       if (sandwichSubModel === "parallel_bands") {
         const p1 = mathToDesign(0, 1, scale);
         const p2 = mathToDesign(1, 0, scale);
@@ -238,6 +284,29 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
           preferredPlacement: "bottom-right",
         });
       }
+
+      // 观察点垂直连线上下交点 P_1, P_2
+      const evalX = params.evalX;
+      const pUp = mathToDesign(evalX, sandwichData.upperFn(evalX), scale);
+      const pLow = mathToDesign(evalX, sandwichData.lowerFn(evalX), scale);
+      items.push(
+        {
+          key: "pt-eval-up",
+          x: pUp.x,
+          y: pUp.y,
+          text: "P_1",
+          color: MATH_COLORS.primary,
+          preferredPlacement: "top",
+        },
+        {
+          key: "pt-eval-low",
+          x: pLow.x,
+          y: pLow.y,
+          text: "P_2",
+          color: MATH_COLORS.secondary,
+          preferredPlacement: "bottom",
+        },
+      );
     }
 
     if (mode === "param_k" && paramKData) {
@@ -263,6 +332,19 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
           preferredPlacement: "bottom-right",
         });
       }
+
+      // 动直线上的检验动点 P_k
+      const ptK = mathToDesign(params.evalX, params.k * params.evalX, scale);
+      items.push({
+        key: "pt-eval-k",
+        x: ptK.x,
+        y: ptK.y,
+        text: "P_k",
+        color: paramKData.evalRes.isSafe
+          ? MATH_COLORS.paramTertiary
+          : MATH_COLORS.highlight,
+        preferredPlacement: "bottom-right",
+      });
     }
 
     if (mode === "secant" && secantData) {
@@ -275,6 +357,19 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
           text: "O",
           color: MATH_COLORS.paramTertiary,
           preferredPlacement: "bottom-left",
+        });
+        const ptTaylor = mathToDesign(
+          params.evalX,
+          secantData.mainFn(params.evalX),
+          scale,
+        );
+        items.push({
+          key: "pt-taylor-eval",
+          x: ptTaylor.x,
+          y: ptTaylor.y,
+          text: "P",
+          color: MATH_COLORS.primary,
+          preferredPlacement: "top",
         });
       } else {
         const aVal = secantData.a;
@@ -305,7 +400,17 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
     }
 
     return items;
-  }, [mode, baseData, sandwichSubModel, paramKData, secantData, scale]);
+  }, [
+    mode,
+    baseData,
+    sandwichData,
+    sandwichSubModel,
+    paramKData,
+    secantData,
+    params.evalX,
+    params.k,
+    scale,
+  ]);
 
   return (
     <>
@@ -322,7 +427,23 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             color={MATH_COLORS.primary}
             strokeWidth={2.5}
           />
-          {/* 切线 */}
+          {/* 高考基准放缩目标参考切线 (浅虚线) */}
+          <FunctionGraph
+            fn={clipFn(baseData.baseTangentFn, [-4, 4.5])}
+            scale={scale}
+            color={withAlpha(MATH_COLORS.line, 0.4)}
+            strokeWidth={1.5}
+            strokeDasharray="5 3"
+          />
+          {/* 基准切点 T_0 */}
+          <MathPoint
+            cx={baseData.baseX0}
+            cy={baseData.baseY0}
+            scale={scale}
+            color={MATH_COLORS.line}
+            fontScale={fontScale}
+          />
+          {/* 动切线 */}
           <FunctionGraph
             fn={clipFn(baseData.tangentFn, [-4, 4.5])}
             scale={scale}
@@ -440,7 +561,7 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             </>
           )}
 
-          {/* 观察点垂直连线指示 */}
+          {/* 观察点垂直连线指示与端点 */}
           {(() => {
             const evalX = params.evalX;
             const yUp = sandwichData.upperFn(evalX);
@@ -457,6 +578,20 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
                   stroke={MATH_COLORS.accent}
                   strokeWidth={1.5}
                   strokeDasharray="3 3"
+                />
+                <MathPoint
+                  cx={evalX}
+                  cy={yUp}
+                  scale={scale}
+                  color={MATH_COLORS.primary}
+                  fontScale={fontScale}
+                />
+                <MathPoint
+                  cx={evalX}
+                  cy={yLow}
+                  scale={scale}
+                  color={MATH_COLORS.secondary}
+                  fontScale={fontScale}
                 />
                 <InteractivePoint
                   cx={evalX}
@@ -556,6 +691,61 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             color={MATH_COLORS.line}
             fontScale={fontScale}
           />
+
+          {/* 检验点 evalX 垂直连线与动直线交互手柄 */}
+          {(() => {
+            const ex = params.evalX;
+            const yLine = params.k * ex;
+            const yExp = Math.exp(ex);
+            const yLog = ex > 0.02 ? Math.log(ex) : -10;
+            const pLine = mathToDesign(ex, yLine, scale);
+            const targetY = paramKSubModel === "log_kx_origin" ? yLog : yExp;
+            const pTarget = mathToDesign(ex, targetY, scale);
+
+            return (
+              <g>
+                <line
+                  x1={pLine.x}
+                  y1={pLine.y}
+                  x2={pTarget.x}
+                  y2={pTarget.y}
+                  stroke={MATH_COLORS.accent}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 3"
+                />
+                <MathPoint
+                  cx={ex}
+                  cy={targetY}
+                  scale={scale}
+                  color={
+                    paramKSubModel === "log_kx_origin"
+                      ? MATH_COLORS.secondary
+                      : MATH_COLORS.primary
+                  }
+                  fontScale={fontScale}
+                />
+                <InteractivePoint
+                  cx={ex}
+                  cy={yLine}
+                  scale={scale}
+                  vp={vp}
+                  color={
+                    paramKData.evalRes.isSafe
+                      ? MATH_COLORS.paramTertiary
+                      : MATH_COLORS.highlight
+                  }
+                  fontScale={fontScale}
+                  onDrag={({ x, y }) => {
+                    onParamChange("evalX", Math.max(0.2, Math.min(3.0, x)));
+                    if (Math.abs(x) > 0.1) {
+                      const newK = Math.max(0.1, Math.min(3.5, y / x));
+                      onParamChange("k", Math.round(newK * 100) / 100);
+                    }
+                  }}
+                />
+              </g>
+            );
+          })()}
         </>
       )}
 
@@ -594,11 +784,12 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
                 color={MATH_COLORS.paramTertiary}
                 fontScale={fontScale}
               />
-              {/* 观察点垂直连线指示 */}
+              {/* 观察点垂直连线指示与三层交点 */}
               {(() => {
                 const evalX = params.evalX;
                 const yUp = secantData.upperFn(evalX);
                 const yLow = secantData.lowerFn(evalX);
+                const yMid = secantData.mainFn(evalX);
                 const pUp = mathToDesign(evalX, yUp, scale);
                 const pLow = mathToDesign(evalX, yLow, scale);
                 return (
@@ -611,6 +802,27 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
                       stroke={MATH_COLORS.accent}
                       strokeWidth={1.5}
                       strokeDasharray="3 3"
+                    />
+                    <MathPoint
+                      cx={evalX}
+                      cy={yUp}
+                      scale={scale}
+                      color={MATH_COLORS.paramTertiary}
+                      fontScale={fontScale}
+                    />
+                    <MathPoint
+                      cx={evalX}
+                      cy={yMid}
+                      scale={scale}
+                      color={MATH_COLORS.primary}
+                      fontScale={fontScale}
+                    />
+                    <MathPoint
+                      cx={evalX}
+                      cy={yLow}
+                      scale={scale}
+                      color={MATH_COLORS.accent}
+                      fontScale={fontScale}
                     />
                     <InteractivePoint
                       cx={evalX}
