@@ -6,6 +6,7 @@ import {
   splitAtTopLevelSpacing,
   normalizeFractionRowSpacing,
   findTopLevelEqualsIndices,
+  findOptimalSplit,
 } from "../latexUtils";
 
 describe("latexUtils 定界符深度追踪与公式换行测试", () => {
@@ -116,5 +117,15 @@ describe("latexUtils 定界符深度追踪与公式换行测试", () => {
     expect(split![0]).toContain("\\begin{cases}");
     expect(split![0]).toContain("\\end{cases}");
     expect(split![1]).toBe("\\Rightarrow\\; (1, 2)");
+  });
+
+  it("findOptimalSplit 能在长右端等式（如基底法模长展开）中自动在加号处拆分，避免缩成微小字号", () => {
+    const f =
+      "|\\vec{OP}|^2 = x^2|\\vec{a}|^2 + y^2|\\vec{b}|^2 + z^2|\\vec{c}|^2 + 2xy(\\vec{a}\\cdot\\vec{b}) + 2yz(\\vec{b}\\cdot\\vec{c}) + 2zx(\\vec{c}\\cdot\\vec{a})";
+    const split = findOptimalSplit(f);
+    expect(split).not.toBeNull();
+    // 应该在中间的 + 号处拆成极其均衡的两段
+    expect(split![0]).toContain("|\\vec{OP}|^2 = x^2|\\vec{a}|^2");
+    expect(split![1].startsWith("+")).toBe(true);
   });
 });

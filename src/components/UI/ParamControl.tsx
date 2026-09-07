@@ -425,31 +425,31 @@ export const ParamControl: React.FC<ParamControlProps> = ({
         {/* 行1：参数标签与数值输入框（两端对齐） */}
         <div className="flex items-center justify-between gap-2">
           <label
-            className="min-w-0 text-xs font-semibold text-neutral-700 inline-flex items-center gap-1.5"
+            className="min-w-0 flex-1 text-xs font-semibold text-neutral-700 flex items-center gap-1.5 overflow-hidden"
             htmlFor={`param-${param.key}`}
           >
             {param.labelFormula ? (
-              <span className="inline-flex items-center gap-1">
+              <span className="min-w-0 flex-1 inline-flex items-center gap-1 overflow-hidden">
                 <KatexFormula
                   formula={param.labelFormula}
                   mode="inline"
-                  className="!text-xs font-bold"
+                  className="!text-xs font-bold max-w-full"
                 />
                 {param.unit && (
-                  <span className="text-xs text-neutral-500">
+                  <span className="text-xs text-neutral-500 shrink-0">
                     ({param.unit})
                   </span>
                 )}
               </span>
             ) : (
-              <span>
+              <span className="truncate">
                 {param.label}
                 {param.unit ? ` (${param.unit})` : ""}
               </span>
             )}
           </label>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 relative z-10">
             <input
               id={`param-${param.key}`}
               type="number"

@@ -4,6 +4,8 @@ import { Vector3DArrow, FormulaLabel3D, Segment3D } from "@/components/Math3D";
 import { MATH_COLORS } from "@/theme";
 import { TriangleMesh } from "../TriangleMesh";
 
+import type { SolidBasisType } from "@/math3d/basis";
+
 interface ParallelepipedModeSceneProps {
   O: Vec3;
   vecA: Vec3;
@@ -14,6 +16,7 @@ interface ParallelepipedModeSceneProps {
   y: number;
   z: number;
   cz: number;
+  carrier?: SolidBasisType;
   showBasisVectors: boolean;
   showDecompPath: boolean;
   showBoxSkeleton: boolean;
@@ -29,6 +32,7 @@ export function ParallelepipedModeScene({
   y,
   z,
   cz,
+  carrier = "parallelepiped",
   showBasisVectors,
   showDecompPath,
   showBoxSkeleton,
@@ -123,113 +127,171 @@ export function ParallelepipedModeScene({
         </>
       )}
 
-      {/* 平行六面体透视骨架与半透明底面 */}
+      {/* 几何体透视骨架与半透明底面 */}
       {showBoxSkeleton && (
         <>
-          <TriangleMesh
-            A={O}
-            B={box.xa}
-            C={box.xy}
-            color={cz < 0.1 ? MATH_COLORS.degeneracy : MATH_COLORS.primary}
-            opacity={0.06}
-          />
-          <TriangleMesh
-            A={O}
-            B={box.xy}
-            C={box.yb}
-            color={cz < 0.1 ? MATH_COLORS.degeneracy : MATH_COLORS.primary}
-            opacity={0.06}
-          />
+          {carrier === "tetrahedron" ? (
+            <>
+              {/* 正四面体底面 O-AB 半透明 */}
+              <TriangleMesh
+                A={O}
+                B={vecA}
+                C={vecB}
+                color={cz < 0.1 ? MATH_COLORS.degeneracy : MATH_COLORS.primary}
+                opacity={0.08}
+              />
+              {/* 四面体 6 条棱 */}
+              <Segment3D
+                from={O}
+                to={vecA}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={vecA}
+                to={vecB}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={vecB}
+                to={O}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={O}
+                to={vecC}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={vecA}
+                to={vecC}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={vecB}
+                to={vecC}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+            </>
+          ) : (
+            <>
+              <TriangleMesh
+                A={O}
+                B={box.xa}
+                C={box.xy}
+                color={cz < 0.1 ? MATH_COLORS.degeneracy : MATH_COLORS.primary}
+                opacity={0.06}
+              />
+              <TriangleMesh
+                A={O}
+                B={box.xy}
+                C={box.yb}
+                color={cz < 0.1 ? MATH_COLORS.degeneracy : MATH_COLORS.primary}
+                opacity={0.06}
+              />
 
-          {/* 底面 4 棱 */}
-          <Segment3D
-            from={O}
-            to={box.xa}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.xa}
-            to={box.xy}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.xy}
-            to={box.yb}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.yb}
-            to={O}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
+              {/* 底面 4 棱 */}
+              <Segment3D
+                from={O}
+                to={box.xa}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.xa}
+                to={box.xy}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.xy}
+                to={box.yb}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.yb}
+                to={O}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
 
-          {/* 顶面 4 棱 */}
-          <Segment3D
-            from={box.zc}
-            to={box.xz}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.xz}
-            to={box.P}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.P}
-            to={box.yz}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.yz}
-            to={box.zc}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
+              {/* 顶面 4 棱 */}
+              <Segment3D
+                from={box.zc}
+                to={box.xz}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.xz}
+                to={box.P}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.P}
+                to={box.yz}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.yz}
+                to={box.zc}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
 
-          {/* 4 条立棱 / 侧棱 */}
-          <Segment3D
-            from={O}
-            to={box.zc}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.xa}
-            to={box.xz}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.xy}
-            to={box.P}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
-          <Segment3D
-            from={box.yb}
-            to={box.yz}
-            colorKey="asymptote"
-            dashed
-            opacity={0.6}
-          />
+              {/* 4 条立棱 / 侧棱 */}
+              <Segment3D
+                from={O}
+                to={box.zc}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.xa}
+                to={box.xz}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.xy}
+                to={box.P}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+              <Segment3D
+                from={box.yb}
+                to={box.yz}
+                colorKey="asymptote"
+                dashed
+                opacity={0.6}
+              />
+            </>
+          )}
         </>
       )}
     </>

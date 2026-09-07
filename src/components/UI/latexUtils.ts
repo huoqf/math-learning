@@ -448,3 +448,90 @@ export function normalizeFractionRowSpacing(latex: string): string {
   // 2. 普通单行公式直接将 \frac 升级为 \dfrac
   return latex.replace(/\\frac(?=\{)/g, "\\dfrac");
 }
+
+/**
+ * 全局最优公式拆行裁决算法：
+ * 综合推导符、语义间距、等号平衡度、多项式二元运算与标点，
+ * 避免单一优先级的短路陷阱（如等号右端超长而左端极短时，应在等号右端的二元运算符处换行），
+ * 确保拆分后的各行长度最均衡，行宽降幅最大，避免暴跌为不可读的微小字号。
+ */
+export function findOptimalSplit(latex: string): [string, string] | null {
+  const origLen = getEffectiveLatexLength(latex);
+  if (origLen <= 8) return null;
+
+  // 1. 优先推导符 \Rightarrow / \iff
+  const impliesSplit = splitAtTopLevelImplies(latex);
+  if (impliesSplit) {
+    const maxLen = Math.max(
+      getEffectiveLatexLength(impliesSplit[0]),
+      getEffectiveLatexLength(impliesSplit[1]),
+    );
+    if (maxLen <= origLen * 0.85) return impliesSplit;
+  }
+
+  // 2. 语义间距 \quad / \qquad / \;
+  const spacingSplit = splitAtTopLevelSpacing(latex);
+  if (spacingSplit) {
+    const maxLen = Math.max(
+      getEffectiveLatexLength(spacingSplit[0]),
+      getEffectiveLatexLength(spacingSplit[1]),
+    );
+    if (maxLen <= origLen * 0.85) return spacingSplit;
+  }
+
+  // 3. 等号与二元运算符协同评估
+  const eqSplit = splitAtTopLevelEquals(latex);
+  const binSplit = splitAtTopLevelBinary(latex);
+
+  if (eqSplit && binSplit) {
+    const eqMax = Math.max(
+      getEffectiveLatexLength(eqSplit[0]),
+      getEffectiveLatexLength(eqSplit[1]),
+    );
+    const binMax = Math.max(
+      getEffectiveLatexLength(binSplit[0]),
+      getEffectiveLatexLength(binSplit[1]),
+    );
+
+    // 如果等号拆分导致某一侧依然占据 75% 以上的长度（短左端+长右端），
+    // 且二元运算符拆分显著更均衡（降宽幅度比等号好 20% 以上），优先采用二元运算符拆分
+    if (eqMax > origLen * 0.75 && binMax < eqMax * 0.8) {
+      return binSplit;
+    }
+
+    if (eqMax <= origLen * 0.85) {
+      return eqSplit;
+    }
+    if (binMax <= origLen * 0.85) {
+      return binSplit;
+    }
+  } else if (eqSplit) {
+    const eqMax = Math.max(
+      getEffectiveLatexLength(eqSplit[0]),
+      getEffectiveLatexLength(eqSplit[1]),
+    );
+    if (eqMax <= origLen * 0.85) return eqSplit;
+  } else if (binSplit) {
+    const binMax = Math.max(
+      getEffectiveLatexLength(binSplit[0]),
+      getEffectiveLatexLength(binSplit[1]),
+    );
+    if (binMax <= origLen * 0.88) return binSplit;
+  }
+
+  // 4. 标点符号（逗号/分号）
+  const puncSplit = splitAtTopLevelPunctuation(latex);
+  if (puncSplit) {
+    const maxLen = Math.max(
+      getEffectiveLatexLength(puncSplit[0]),
+      getEffectiveLatexLength(puncSplit[1]),
+    );
+    if (maxLen <= origLen * 0.85) return puncSplit;
+  }
+
+  // 5. 兜底放宽：存在二元运算符或等号时强行拆分，坚决杜绝缩成微小不可读字号
+  if (binSplit) return binSplit;
+  if (eqSplit) return eqSplit;
+
+  return null;
+}

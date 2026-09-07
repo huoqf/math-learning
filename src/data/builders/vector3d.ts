@@ -164,15 +164,15 @@ export function buildVector3DBasisPanel(
   const quantities: MathQuantity[] = [
     {
       label: "当前探究模式",
-      symbol: "\\text{Mode}",
+      symbol: "\\text{模式}",
       value: modeLabelMap[mode] ?? "基底分解",
       color: MATH_COLORS.primary,
     },
     {
       label: "基底状态判断",
-      symbol: "\\text{基底共面性}",
+      symbol: "\\text{基底有效性}",
       value: decomposition.isValid
-        ? "线性无关 · 构成空间基底"
+        ? "不共面 · 构成空间基底"
         : "三向量共面 · 基底失效!",
       color: decomposition.isValid
         ? MATH_COLORS.primary
@@ -181,7 +181,7 @@ export function buildVector3DBasisPanel(
     {
       label: "基底线性组合表示",
       symbol: "\\vec{OP}",
-      value: `\\color{${MATH_COLORS.paramPrimary}}{${x.toFixed(1)}}\\vec{a} + \\color{${MATH_COLORS.paramSecondary}}{${y.toFixed(1)}}\\vec{b} + \\color{${MATH_COLORS.paramTertiary}}{${z.toFixed(1)}}\\vec{c}`,
+      value: `\\color{${MATH_COLORS.paramPrimary}}{${x.toFixed(2)}}\\vec{a} + \\color{${MATH_COLORS.paramSecondary}}{${y.toFixed(2)}}\\vec{b} + \\color{${MATH_COLORS.paramTertiary}}{${z.toFixed(2)}}\\vec{c}`,
       color: MATH_COLORS.highlight,
     },
     {
@@ -190,85 +190,151 @@ export function buildVector3DBasisPanel(
       value: `(${x.toFixed(2)}, \\; ${y.toFixed(2)}, \\; ${z.toFixed(2)})`,
       color: MATH_COLORS.paramPrimary,
     },
-    {
-      label: "空间直角坐标 P(x, y, z)",
-      symbol: "P(x,y,z)",
-      value: `(${targetP.x.toFixed(2)}, \\; ${targetP.y.toFixed(2)}, \\; ${targetP.z.toFixed(2)})`,
-      color: MATH_COLORS.secondary,
-    },
-    {
-      label: "向量模长与模方",
-      symbol: "|\\vec{OP}|",
-      value: `${normInfo.modulus.toFixed(2)} \\; (\\text{模方}=${normInfo.modulusSq.toFixed(2)})`,
-      color: MATH_COLORS.primary,
-    },
-    {
-      label: "分解系数之和",
-      symbol: "x + y + z",
-      value: Number(coplanarInfo.sum.toFixed(2)),
-      color: coplanarInfo.isCoplanar
-        ? MATH_COLORS.highlight
-        : MATH_COLORS.primary,
-    },
   ];
 
-  // 空间位置判定量
-  let regionDesc = "空间四面体 O-ABC 外部";
-  if (coplanarInfo.spatialRegion === "plane_inside") {
-    regionDesc = coplanarInfo.isCentroid
-      ? "恰为 △ABC 重心 G (1/3, 1/3, 1/3)"
-      : "位于 △ABC 截面三角形内部或边上";
-  } else if (coplanarInfo.spatialRegion === "plane_outside") {
-    regionDesc = "共面 (x+y+z=1)，位于截面外延平面上";
-  } else if (coplanarInfo.spatialRegion === "tetra_inside") {
-    regionDesc = "位于四面体 O-ABC 实体内部 (x,y,z>0 且 和<1)";
+  if (mode === "parallelepiped") {
+    quantities.push(
+      {
+        label: "空间直角坐标 P(x, y, z)",
+        symbol: "P",
+        value: `(${targetP.x.toFixed(2)}, \\; ${targetP.y.toFixed(2)}, \\; ${targetP.z.toFixed(2)})`,
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "基底法向量模长与模方",
+        symbol: "|\\vec{OP}|",
+        value: `${normInfo.modulus.toFixed(2)} \\; (|\\vec{OP}|^2=${normInfo.modulusSq.toFixed(2)})`,
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "大题展开式数值核验",
+        symbol: "\\sum \\text{代数项}",
+        value: `${(x * x * normInfo.lenA * normInfo.lenA).toFixed(1)} + ${(y * y * normInfo.lenB * normInfo.lenB).toFixed(1)} + ${(z * z * normInfo.lenC * normInfo.lenC).toFixed(1)} + ${(2 * x * y * normInfo.dotAB + 2 * y * z * normInfo.dotBC + 2 * z * x * normInfo.dotCA).toFixed(1)}`,
+        color: MATH_COLORS.primary,
+      },
+    );
+  } else {
+    // coplanar 模式专属数量
+    quantities.push(
+      {
+        label: "分解系数之和 (x + y + z)",
+        symbol: "x + y + z",
+        value: Number(coplanarInfo.sum.toFixed(2)),
+        color: coplanarInfo.isCoplanar
+          ? MATH_COLORS.highlight
+          : MATH_COLORS.primary,
+      },
+      {
+        label: "共面状态判定",
+        symbol: "\\text{共面判定}",
+        value: coplanarInfo.isCoplanar
+          ? "四点共面 (x+y+z=1)"
+          : "面外动点 (不共面)",
+        color: coplanarInfo.isCoplanar
+          ? MATH_COLORS.paramTertiary
+          : MATH_COLORS.secondary,
+      },
+    );
+
+    // 空间位置判定量
+    let regionDesc = "空间四面体 O-ABC 外部";
+    if (coplanarInfo.spatialRegion === "plane_inside") {
+      regionDesc = coplanarInfo.isCentroid
+        ? "恰为 △ABC 重心 G (1/3, 1/3, 1/3)"
+        : "位于 △ABC 截面三角形内部或边上";
+    } else if (coplanarInfo.spatialRegion === "plane_outside") {
+      regionDesc = "共面 (x+y+z=1)，位于截面外延平面上";
+    } else if (coplanarInfo.spatialRegion === "tetra_inside") {
+      regionDesc = "位于四面体 O-ABC 实体内部 (x,y,z>0 且 和<1)";
+    }
+
+    quantities.push({
+      label: "动点 P 空间几何定位",
+      symbol: "\\text{Pos}(P)",
+      value: regionDesc,
+      color:
+        coplanarInfo.isCoplanar || coplanarInfo.isInsideTetrahedron
+          ? MATH_COLORS.highlight
+          : MATH_COLORS.primary,
+    });
   }
 
-  quantities.push({
-    label: "动点 P 空间几何定位",
-    symbol: "\\text{Pos}(P)",
-    value: regionDesc,
-    color:
-      coplanarInfo.isCoplanar || coplanarInfo.isInsideTetrahedron
-        ? MATH_COLORS.highlight
-        : MATH_COLORS.primary,
-  });
+  // 定理特化与置顶
+  const theorems: Theorem[] =
+    mode === "parallelepiped"
+      ? [
+          {
+            name: "空间向量基本定理",
+            latex: `\\vec{p} = \\color{${MATH_COLORS.paramPrimary}}{x}\\vec{a} + \\color{${MATH_COLORS.paramSecondary}}{y}\\vec{b} + \\color{${MATH_COLORS.paramTertiary}}{z}\\vec{c} \\quad (\\text{有序实数组 } (x,y,z) \\text{ 存在且唯一})`,
+            level: "core",
+            condition: "前提：a, b, c 是空间中三个【不共面】的基向量",
+          },
+          {
+            name: "基底法数量积与模长展开（高考大题通法）",
+            latex: `|\\vec{OP}|^2 = x^2|\\vec{a}|^2 + y^2|\\vec{b}|^2 + z^2|\\vec{c}|^2 + 2xy(\\vec{a}\\cdot\\vec{b}) + 2yz(\\vec{b}\\cdot\\vec{c}) + 2zx(\\vec{c}\\cdot\\vec{a})`,
+            level: "core",
+            condition: "适用于斜棱柱、正四面体等不易建立直角坐标系的几何体",
+          },
+          {
+            name: "平行六面体体对角线法则",
+            latex: `\\vec{AC_1} = \\vec{AB} + \\vec{AD} + \\vec{AA_1} = \\vec{a} + \\vec{b} + \\vec{c}`,
+            level: "important",
+            condition:
+              "平行六面体从同一顶点出发的三条棱向量之和等于体对角线向量",
+          },
+        ]
+      : [
+          {
+            name: "四点共面充要条件（空间基底形式）",
+            latex: `P, A, B, C \\text{ 共面} \\iff \\vec{OP} = \\color{${MATH_COLORS.paramPrimary}}{x}\\vec{OA} + \\color{${MATH_COLORS.paramSecondary}}{y}\\vec{OB} + \\color{${MATH_COLORS.paramTertiary}}{z}\\vec{OC} \\quad (\\color{${MATH_COLORS.paramPrimary}}{x}+\\color{${MATH_COLORS.paramSecondary}}{y}+\\color{${MATH_COLORS.paramTertiary}}{z}=1)`,
+            level: "core",
+            condition: "前提：A, B, C 三点不共线，对空间任意基点 O 均成立",
+          },
+          {
+            name: "四点共面等价平面基底形式",
+            latex: `\\vec{AP} = y\\vec{AB} + z\\vec{AC} \\iff \\vec{OP} = (1-y-z)\\vec{OA} + y\\vec{OB} + z\\vec{OC}`,
+            level: "core",
+            condition: "消去主基点后等价于平面内两不共线向量的基底分解",
+          },
+          {
+            name: "截面三角形重心向量公式",
+            latex: `\\vec{OG} = \\frac{1}{3}\\vec{OA} + \\frac{1}{3}\\vec{OB} + \\frac{1}{3}\\vec{OC}`,
+            level: "important",
+            condition: "重心处三个基底系数严格相等且和为 1",
+          },
+        ];
 
-  const theorems: Theorem[] = [
-    {
-      name: "空间向量基本定理",
-      latex: `\\vec{p} = \\color{${MATH_COLORS.paramPrimary}}{x}\\vec{a} + \\color{${MATH_COLORS.paramSecondary}}{y}\\vec{b} + \\color{${MATH_COLORS.paramTertiary}}{z}\\vec{c} \\quad (\\text{有序实数组 } (x,y,z) \\text{ 存在且唯一})`,
-      level: "core",
-      condition: "前提：a, b, c 是空间中三个【不共面】的向量（基底向量）",
-    },
-    {
-      name: "共面向量定理与四点共面充要条件",
-      latex: `P, A, B, C \\text{ 共面} \\iff \\vec{OP} = \\color{${MATH_COLORS.paramPrimary}}{x}\\vec{OA} + \\color{${MATH_COLORS.paramSecondary}}{y}\\vec{OB} + \\color{${MATH_COLORS.paramTertiary}}{z}\\vec{OC} \\quad (\\color{${MATH_COLORS.paramPrimary}}{x}+\\color{${MATH_COLORS.paramSecondary}}{y}+\\color{${MATH_COLORS.paramTertiary}}{z}=1)`,
-      level: "core",
-      condition: "充要条件：若 A, B, C 不共线，对空间任一点 O 均满足系数和为 1",
-    },
-    {
-      name: "基底法数量积与模长展开（大题通法）",
-      latex: `|\\vec{OP}|^2 = x^2|\\vec{a}|^2 + y^2|\\vec{b}|^2 + z^2|\\vec{c}|^2 + 2xy(\\vec{a}\\cdot\\vec{b}) + 2yz(\\vec{b}\\cdot\\vec{c}) + 2zx(\\vec{c}\\cdot\\vec{a})`,
-      level: "important",
-      condition: "适用于斜棱柱、任意四面体等不易建立直角坐标系的几何体",
-    },
-  ];
-
-  const gaokaoPoints: GaokaoPoint[] = [
-    {
-      text: "【选填秒杀·四点共面】若已知 OP = x OA + y OB + z OC 且 P 在平面 ABC 上，对任意基点 O 恒有 x + y + z = 1，直接列方程秒杀未知参数！",
-      importance: "gaokao",
-    },
-    {
-      text: "【截面与四面体区域定位】① x,y,z ≥ 0 且 x+y+z=1   ⟹   P 在 △ABC 内部；② x=y=z=1/3   ⟹   重心 G；③ x,y,z > 0 且 x+y+z < 1   ⟹   四面体 O-ABC 实体内部。",
-      importance: "gaokao",
-    },
-    {
-      text: "【两类共面概念严格辨析】① 基底自身共面：为病态退化，无法构成空间基底；② 点 P 与面 ABC 共面：为正常空间基底下的四点共面定理 (x+y+z=1)。",
-      importance: "gaokao",
-    },
-  ];
+  // 高考考点特化与置顶
+  const gaokaoPoints: GaokaoPoint[] =
+    mode === "parallelepiped"
+      ? [
+          {
+            text: "【大题通法·基底法模长与夹角】在正四面体或斜平行六面体中，将待求向量用基底线性表示后平方展开，利用基向量的模长与夹角直接求解！",
+            importance: "gaokao",
+          },
+          {
+            text: "【选填高频·基底判定】判断空间三向量能否作基底，本质是检验是否存在不全为零的数使其和为零向量（即检验三向量是否共面）。",
+            importance: "gaokao",
+          },
+          {
+            text: "【体对角线与中心中点】平行六面体体对角线交于六面体中心，满足 OP = (1/2)(a + b + c)。",
+            importance: "gaokao",
+          },
+        ]
+      : [
+          {
+            text: "【选填秒杀·四点共面】若已知 m OP = OA + 2 OB + 3 OC 且 P 在平面 ABC 上，由 1/m + 2/m + 3/m = 1 直接秒杀参数 m = 6！",
+            importance: "gaokao",
+          },
+          {
+            text: "【截面与四面体区域定位】① x,y,z ≥ 0 且 x+y+z=1   ⟹   P 在 △ABC 内部及边界；② x=y=z=1/3   ⟹   重心 G；③ x,y,z > 0 且 x+y+z < 1   ⟹   四面体 O-ABC 实体内部。",
+            importance: "gaokao",
+          },
+          {
+            text: "【两类共面概念严格辨析】① 基底自身共面：为病态退化，无法构成空间基底；② 点 P 与面 ABC 共面：为正常空间基底下的四点共面充要条件 (x+y+z=1)。",
+            importance: "gaokao",
+          },
+        ];
 
   const warnings: WarningItem[] = [];
 
@@ -279,16 +345,20 @@ export function buildVector3DBasisPanel(
     });
   }
 
-  if (Math.abs(z) < 0.05 && decomposition.isValid) {
+  if (
+    Math.abs(z) < 0.05 &&
+    decomposition.isValid &&
+    mode === "parallelepiped"
+  ) {
     warnings.push({
       text: "当前 z = 0，向量 OP 退化为与基底 a, b 共面的二维向量！",
       level: "warning",
     });
   }
 
-  if (coplanarInfo.isCoplanar) {
+  if (coplanarInfo.isCoplanar && mode === "coplanar") {
     warnings.push({
-      text: "💡 触发高考核心考点：系数和 x + y + z = 1！点 P 落在基底端点 A, B, C 决定的平面 (ABC) 内！",
+      text: "💡 触发高考核心考点：系数和 x + y + z = 1！点 P 落在基底端点 A, B, C 决定的截面 (ABC) 内！",
       level: "warning",
     });
   }

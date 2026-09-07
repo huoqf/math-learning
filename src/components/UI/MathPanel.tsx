@@ -66,7 +66,7 @@ export const MathPanel: React.FC<MathPanelProps> = ({
     !mnemonic;
 
   return (
-    <div className="w-full max-w-full min-h-full flex flex-col gap-4 p-4 text-neutral-800 text-sm bg-neutral-50/50 overflow-x-hidden">
+    <div className="w-full max-w-full min-h-full flex flex-col gap-3.5 p-3 text-neutral-800 text-sm bg-neutral-50/50 overflow-x-hidden">
       {/* 1. 标题与高考真题定位 */}
       <MathPanelHeader title={title} examAnchor={examAnchor} />
 

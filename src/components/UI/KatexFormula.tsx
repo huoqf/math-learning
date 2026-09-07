@@ -1,19 +1,13 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import {
-  splitAtTopLevelEquals,
-  splitAtTopLevelImplies,
-  splitAtTopLevelSpacing,
-  splitAtTopLevelBinary,
-  splitAtTopLevelPunctuation,
-  normalizeFractionRowSpacing,
-  getEffectiveLatexLength,
-} from "./latexUtils";
+import { normalizeFractionRowSpacing, findOptimalSplit } from "./latexUtils";
 
 /**
-/** 换行后仍溢出（仅见于选项按鈕等极窄容器）时的硬底线，必须允许适度缩小以彻底杜绝文字两端被裁切 */
-const HARD_MIN_SCALE = 0.45;
+ * 换行后仍溢出时的硬底线：提升至 0.78，确保高清晰度与大字号，
+ * 绝不允许暴跌至不可读的微小字体（优先多行教材式排版展开）
+ */
+const HARD_MIN_SCALE = 0.78;
 
 interface KatexFormulaProps {
   formula: string;
@@ -77,8 +71,8 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
       }
     }
 
-    // B. 测量实际内容尺寸并执行精准 Scale-to-Fit 缩放（此刻内容已渲染完成，测量必然准确）；缩放触底
-    //    （< MIN_SCALE）时逐级触发教材式换行：优先推出符号、语义间距，次选等号、加减号、标点
+    // B. 测量实际内容尺寸并执行精准 Scale-to-Fit 缩放（此刻内容已渲染完成，测量必然准确）；
+    //    公式超宽优先触发全局最优教材式拆行（推导符/语义间距/等号/二元加减），极大降低行宽并保全大字号
     if (!responsive || !outerRef.current || !inner) {
       setScale(1);
       setScaledHeight(undefined);
@@ -87,7 +81,14 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
 
     const updateScale = () => {
       if (!outerRef.current || !innerRef.current) return;
-      const containerWidth = outerRef.current.clientWidth;
+      const containerWidth =
+        !isBlock && outerRef.current.parentElement
+          ? Math.min(
+              outerRef.current.clientWidth ||
+                outerRef.current.parentElement.clientWidth,
+              outerRef.current.parentElement.clientWidth,
+            )
+          : outerRef.current.clientWidth;
       const innerBox = innerRef.current;
       // 行盒可能被外层 flex 挤压而低报宽度，须取各行容器 scrollWidth 的最大值
       // （行容器的 scrollWidth 包含其溢出的 KaTeX 内容，是真实自然宽度）
@@ -100,43 +101,24 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
       if (containerWidth > 0 && contentWidth > containerWidth) {
         // 核心原则：只要公式超宽，优先尝试按高中数学教材语义拆行，绝不盲目暴力缩小
         if (!lines) {
-          // 换行优先级：推导符 → 语义间距\quad/\; → 等号 → 二元运算符+/- → 标点
-          const split =
-            splitAtTopLevelImplies(formula) ??
-            splitAtTopLevelSpacing(formula) ??
-            splitAtTopLevelEquals(formula) ??
-            splitAtTopLevelBinary(formula) ??
-            splitAtTopLevelPunctuation(formula);
-
-          // 断行有效性验证：拆分出来的较长子段必须实质性短于原式
+          const split = findOptimalSplit(formula);
           if (split) {
-            const origLen = getEffectiveLatexLength(formula);
-            const maxSubLen = Math.max(
-              getEffectiveLatexLength(split[0]),
-              getEffectiveLatexLength(split[1]),
-            );
-            // 如果最长子段相较于原式减少了至少 15% 的有效长度，断行具备降宽价值
-            if (maxSubLen <= origLen * 0.85 || split.length > 2) {
-              setLines(split);
-              return;
-            }
+            setLines(split);
+            return;
           }
         } else {
-          // 多行模式下找出仍然超宽的行，继续按同一优先级拆分
-          for (let i = 0; i < lineDivs.length; i++) {
-            if (lineDivs[i].scrollWidth > containerWidth) {
-              const targetLine = lines[i];
-              const further =
-                splitAtTopLevelImplies(targetLine) ??
-                splitAtTopLevelSpacing(targetLine) ??
-                splitAtTopLevelEquals(targetLine) ??
-                splitAtTopLevelBinary(targetLine) ??
-                splitAtTopLevelPunctuation(targetLine);
-              if (further) {
-                const next = [...lines];
-                next.splice(i, 1, further[0], further[1]);
-                setLines(next);
-                return;
+          // 多行模式下找出仍然超宽的行，继续按最优规则拆分（最多拆至 4 行）
+          if (lines.length < 4) {
+            for (let i = 0; i < lineDivs.length; i++) {
+              if (lineDivs[i].scrollWidth > containerWidth) {
+                const targetLine = lines[i];
+                const further = findOptimalSplit(targetLine);
+                if (further) {
+                  const next = [...lines];
+                  next.splice(i, 1, further[0], further[1]);
+                  setLines(next);
+                  return;
+                }
               }
             }
           }
@@ -161,6 +143,9 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
 
     const resizeObserver = new ResizeObserver(updateScale);
     resizeObserver.observe(outerRef.current);
+    if (outerRef.current.parentElement) {
+      resizeObserver.observe(outerRef.current.parentElement);
+    }
     if (innerRef.current) {
       resizeObserver.observe(innerRef.current);
     }
@@ -212,7 +197,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   return (
     <div
       ref={outerRef}
-      className={`inline-flex items-center justify-center align-middle mx-0.5 my-0.5 max-w-full overflow-hidden ${className}`}
+      className={`inline-flex items-center justify-start align-middle mx-0.5 my-0.5 max-w-full overflow-hidden ${className}`}
       style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
     >
       <div
@@ -220,12 +205,11 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
         className={`text-neutral-800 font-medium ${
           lines && lines.length > 1
             ? "flex flex-col items-start gap-1.5"
-            : "inline-block text-center whitespace-nowrap"
+            : "inline-block text-left whitespace-nowrap"
         }`}
         style={{
           transform: scale < 1 ? `scale(${scale})` : undefined,
-          transformOrigin:
-            lines && lines.length > 1 ? "center left" : "center center",
+          transformOrigin: "left center",
         }}
       >
         {innerContent}

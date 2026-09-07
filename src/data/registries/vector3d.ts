@@ -14,12 +14,13 @@ export const vector3dBasisMeta: ParamMeta[] = [
   {
     key: "x",
     label: "基底 a 的系数 x",
-    labelFormula: `\\text{基向量 } \\vec{a} \\text{ 分解系数 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
+    labelFormula: `\\text{基底 } \\vec{a} \\text{ 系数 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
     min: -2,
     max: 3,
     step: 0.1,
     defaultValue: 1.5,
     importance: "core",
+    group: "线性分解系数",
     marks: [
       {
         value: 0.33,
@@ -32,12 +33,13 @@ export const vector3dBasisMeta: ParamMeta[] = [
   {
     key: "y",
     label: "基底 b 的系数 y",
-    labelFormula: `\\text{基向量 } \\vec{b} \\text{ 分解系数 } \\color{${MATH_COLORS.paramSecondary}}{y}`,
+    labelFormula: `\\text{基底 } \\vec{b} \\text{ 系数 } \\color{${MATH_COLORS.paramSecondary}}{y}`,
     min: -2,
     max: 3,
     step: 0.1,
     defaultValue: 1.2,
     importance: "core",
+    group: "线性分解系数",
     marks: [
       {
         value: 0.33,
@@ -50,12 +52,13 @@ export const vector3dBasisMeta: ParamMeta[] = [
   {
     key: "z",
     label: "基底 c 的系数 z",
-    labelFormula: `\\text{基向量 } \\vec{c} \\text{ 分解系数 } \\color{${MATH_COLORS.paramTertiary}}{z}`,
+    labelFormula: `\\text{基底 } \\vec{c} \\text{ 系数 } \\color{${MATH_COLORS.paramTertiary}}{z}`,
     min: -2,
     max: 3,
     step: 0.1,
     defaultValue: 1.8,
     importance: "core",
+    group: "线性分解系数",
     marks: [
       { value: 0, label: "面退化", labelFormula: "0", variant: "critical" },
       {
@@ -69,12 +72,13 @@ export const vector3dBasisMeta: ParamMeta[] = [
   {
     key: "cz",
     label: "基底 c 偏离高度",
-    labelFormula: `\\text{基向量 } \\vec{c} \\text{ 偏离高 } \\color{${MATH_COLORS.paramTertiary}}{c_z}`,
+    labelFormula: `\\text{基底 } \\vec{c} \\text{ 空间高度 } \\color{${MATH_COLORS.paramTertiary}}{c_z}`,
     min: 0,
     max: 3,
     step: 0.1,
     defaultValue: 2.0,
     importance: "advanced",
+    group: "基底几何形态",
     marks: [
       {
         value: 0,
@@ -131,6 +135,7 @@ export const vector3dOperationsMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 2,
     importance: "core",
+    group: "向量 a 空间坐标",
   },
   {
     key: "ay",
@@ -141,6 +146,7 @@ export const vector3dOperationsMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 1,
     importance: "core",
+    group: "向量 a 空间坐标",
   },
   {
     key: "az",
@@ -151,6 +157,7 @@ export const vector3dOperationsMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 0,
     importance: "core",
+    group: "向量 a 空间坐标",
   },
   {
     key: "bx",
@@ -161,6 +168,7 @@ export const vector3dOperationsMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 1,
     importance: "core",
+    group: "向量 b 空间坐标",
   },
   {
     key: "by",
@@ -171,6 +179,7 @@ export const vector3dOperationsMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 2,
     importance: "core",
+    group: "向量 b 空间坐标",
   },
   {
     key: "bz",
@@ -181,5 +190,6 @@ export const vector3dOperationsMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 2,
     importance: "core",
+    group: "向量 b 空间坐标",
   },
 ];

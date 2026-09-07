@@ -30,6 +30,8 @@ import {
   checkCoplanarCondition,
   projectPointOnPlaneABC,
   solveBasisCoefficients,
+  getPresetBasisVectors,
+  type SolidBasisType,
 } from "@/math3d/basis";
 import { ParallelepipedModeScene } from "./modes/ParallelepipedModeScene";
 import { CoplanarModeScene } from "./modes/CoplanarModeScene";
@@ -44,9 +46,11 @@ type TeachingMode = "parallelepiped" | "coplanar" | "coordDotProduct";
 
 export default function Vector3DBasisAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallelepiped");
+  const [carrier, setCarrier] = useState<SolidBasisType>("parallelepiped");
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode3D>("drag");
   const [activePreset, setActivePreset] = useState<string>("free");
+  const [lockCoplanar, setLockCoplanar] = useState<boolean>(true);
 
   // 基础参数状态：存储分解系数 x, y, z 以及基底高度 cz，以及向量 a, b 的空间坐标
   const [params, setParams] = useState<Record<string, number>>({
@@ -94,11 +98,15 @@ export default function Vector3DBasisAnimation() {
     bz = 2.0,
   } = params;
 
-  // 定制基底向量 a, b, c
+  // 根据选定几何载体动态衍生基底向量 a, b, c
   const O: Vec3 = useMemo(() => ({ x: 0, y: 0, z: 0 }), []);
-  const vecA: Vec3 = useMemo(() => ({ x: 2, y: 0, z: 0 }), []);
-  const vecB: Vec3 = useMemo(() => ({ x: 0.6, y: 2, z: 0 }), []);
-  const vecC: Vec3 = useMemo(() => ({ x: 0, y: 0.5, z: cz }), [cz]);
+  const presetBases = useMemo(
+    () => getPresetBasisVectors(carrier, cz),
+    [carrier, cz],
+  );
+  const vecA: Vec3 = presetBases.a;
+  const vecB: Vec3 = presetBases.b;
+  const vecC: Vec3 = presetBases.c;
 
   // 坐标运算模式的动向量 a 与 b
   const coordVecA: Vec3 = useMemo(
@@ -164,15 +172,37 @@ export default function Vector3DBasisAnimation() {
     [params, activeMode, vecA, vecB, vecC, coordVecA, coordVecB],
   );
 
-  const handleCoeffParamChange = useCallback((key: string, val: number) => {
-    setActivePreset("free");
-    setParams((prev) => ({ ...prev, [key]: val }));
-  }, []);
+  // 参数调节回调（支持共面模式下自动锁定联动 z = 1 - x - y）
+  const handleCoeffParamChange = useCallback(
+    (key: string, val: number) => {
+      setActivePreset("free");
+      if (activeMode === "coplanar" && lockCoplanar) {
+        if (key === "x") {
+          const nextZ = Number((1 - val - y).toFixed(2));
+          setParams((prev) => ({ ...prev, x: val, z: nextZ }));
+          return;
+        }
+        if (key === "y") {
+          const nextZ = Number((1 - x - val).toFixed(2));
+          setParams((prev) => ({ ...prev, y: val, z: nextZ }));
+          return;
+        }
+      }
+      setParams((prev) => ({ ...prev, [key]: val }));
+    },
+    [activeMode, lockCoplanar, x, y],
+  );
 
+  // 动点拖拽回调（在共面锁定下吸附投影到平面 ABC）
   const handlePPointDrag = useCallback(
     (nextP: Vec3) => {
       setActivePreset("free");
-      const res = solveBasisCoefficients(vecA, vecB, vecC, nextP);
+      let targetPoint = nextP;
+      if (activeMode === "coplanar" && lockCoplanar) {
+        const proj = projectPointOnPlaneABC(nextP, vecA, vecB, vecC);
+        targetPoint = proj.projectedPoint;
+      }
+      const res = solveBasisCoefficients(vecA, vecB, vecC, targetPoint);
       if (res.isValid) {
         setParams((prev) => ({
           ...prev,
@@ -182,7 +212,7 @@ export default function Vector3DBasisAnimation() {
         }));
       }
     },
-    [vecA, vecB, vecC],
+    [activeMode, lockCoplanar, vecA, vecB, vecC],
   );
 
   const handleReset = () => {
@@ -207,11 +237,14 @@ export default function Vector3DBasisAnimation() {
   const handlePresetSelect = (presetKey: string) => {
     setActivePreset(presetKey);
     const configs: Record<string, Record<string, number>> = {
-      para_diag: { x: 1.0, y: 1.0, z: 1.0, cz: 2.0 },
-      para_center: { x: 0.5, y: 0.5, z: 0.5, cz: 2.0 },
-      para_degen: { cz: 0.0 },
-      cop_centroid: { x: 0.33, y: 0.33, z: 0.34, cz: 2.0 },
-      dot_perp: { ax: 2.0, ay: 1.0, az: 0.0, bx: 1.0, by: -2.0, bz: 2.0 },
+      paraDiag: { x: 1.0, y: 1.0, z: 1.0, cz: 2.0 },
+      paraCenter: { x: 0.5, y: 0.5, z: 0.5, cz: 2.0 },
+      paraDegen: { cz: 0.0 },
+      copCentroid: { x: 0.33, y: 0.33, z: 0.34, cz: 2.0 },
+      copEdge: { x: 0.5, y: 0.5, z: 0.0, cz: 2.0 },
+      copOutside: { x: 1.2, y: 0.3, z: -0.5, cz: 2.0 },
+      dotPerp: { ax: 2.0, ay: 1.0, az: 0.0, bx: 1.0, by: -2.0, bz: 2.0 },
+      dotParallel: { ax: 2.0, ay: 1.0, az: 0.0, bx: 4.0, by: 2.0, bz: 0.0 },
     };
     if (configs[presetKey]) setParams((p) => ({ ...p, ...configs[presetKey] }));
   };
@@ -220,18 +253,21 @@ export default function Vector3DBasisAnimation() {
     if (activeMode === "parallelepiped")
       return [
         { key: "free", label: "自由探索" },
-        { key: "para_diag", label: "体对角线" },
-        { key: "para_center", label: "六面体中心" },
-        { key: "para_degen", label: "基底共面" },
+        { key: "paraDiag", label: "体对角线" },
+        { key: "paraCenter", label: "六面体中心" },
+        { key: "paraDegen", label: "基底共面" },
       ];
     if (activeMode === "coplanar")
       return [
         { key: "free", label: "自由探索" },
-        { key: "cop_centroid", label: "截面重心" },
+        { key: "copCentroid", label: "截面重心" },
+        { key: "copEdge", label: "截面边上" },
+        { key: "copOutside", label: "截面外延" },
       ];
     return [
       { key: "free", label: "自由探索" },
-      { key: "dot_perp", label: "垂直正交" },
+      { key: "dotPerp", label: "垂直正交" },
+      { key: "dotParallel", label: "空间共线" },
     ];
   }, [activeMode]);
 
@@ -243,34 +279,39 @@ export default function Vector3DBasisAnimation() {
         value: params[meta.key] ?? meta.defaultValue ?? 0,
       }));
     }
-    if (activePreset !== "free" && activePreset !== "para_degen") return [];
-    const allowed =
-      activePreset === "para_degen" ? ["cz"] : ["x", "y", "z", "cz"];
+    if (activePreset !== "free" && activePreset !== "paraDegen") return [];
+    // 共面模式锁定状态下，仅开放 x, y 调节，z 自动约束
+    let allowed = ["x", "y", "z", "cz"];
+    if (activeMode === "coplanar" && lockCoplanar) {
+      allowed = ["x", "y"];
+    } else if (activePreset === "paraDegen") {
+      allowed = ["cz"];
+    }
     return vector3dBasisMeta
       .filter((m) => allowed.includes(m.key))
       .map((m) => ({ ...m, value: params[m.key] ?? m.defaultValue ?? 0 }));
-  }, [activeMode, activePreset, params]);
+  }, [activeMode, activePreset, lockCoplanar, params]);
 
   const tipConfig = useMemo(() => {
     if (activeMode === "parallelepiped")
       return {
         variant: "primary" as const,
         badge: "选择性必修一 · 空间向量基本定理",
-        condition: "不共面的基底 {a⃗, b⃗, c⃗}，p⃗ = x a⃗ + y b⃗ + z c⃗。",
-        question: "探究存在唯一实数组 (x, y, z) 实现平行六面体分解。",
+        condition: "空间中选定三个不共面的基向量，构建空间基底。",
+        question: "探究是否存在唯一的实数组使得空间向量沿棱进行六面体分解？",
       };
     if (activeMode === "coplanar")
       return {
         variant: "success" as const,
         badge: "选择性必修一 · 共面向量定理",
-        condition: "P 满足 OP⃗ = x OA⃗ + y OB⃗ + z OC⃗。",
-        question: "证明共面充要条件 x + y + z = 1。",
+        condition: "三端点 A, B, C 确定一截面，动点 P 满足空间基底线性表示。",
+        question: "探究点 P 落在截面内部、边界及重心时分解系数和满足什么规律？",
       };
     return {
       variant: "info" as const,
       badge: "选择性必修一 · 坐标与数量积",
-      condition: "空间直角坐标系已知向量 a⃗ 与 b⃗。",
-      question: "探究数量积 a⃗·b⃗ = x₁x₂ + y₁y₂ + z₁z₂。",
+      condition: "建立空间直角坐标系，已知两个空间代数向量的坐标分量。",
+      question: "探究空间向量数量积坐标公式与正交投影向量的几何对应关系。",
     };
   }, [activeMode]);
 
@@ -280,12 +321,12 @@ export default function Vector3DBasisAnimation() {
         {
           colorKey: "paramPrimary" as const,
           swatch: "line" as const,
-          label: "向量 a⃗",
+          label: "向量 a",
         },
         {
           colorKey: "paramSecondary" as const,
           swatch: "line" as const,
-          label: "向量 b⃗",
+          label: "向量 b",
         },
         {
           colorKey: "highlight" as const,
@@ -324,9 +365,9 @@ export default function Vector3DBasisAnimation() {
           <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
-                { key: "parallelepiped", label: "基本定理", formula: "x,y,z" },
-                { key: "coplanar", label: "四点共面", formula: "x+y+z=1" },
-                { key: "coordDotProduct", label: "坐标运算", formula: "a·b" },
+                { key: "parallelepiped", label: "基本定理" },
+                { key: "coplanar", label: "四点共面" },
+                { key: "coordDotProduct", label: "坐标运算" },
               ]}
               value={activeMode}
               onChange={(m) => {
@@ -336,6 +377,22 @@ export default function Vector3DBasisAnimation() {
               columns={3}
             />
           </LeftPanelSection>
+
+          {activeMode === "parallelepiped" && (
+            <LeftPanelSection title="空间几何载体">
+              <SelectGrid
+                items={[
+                  { key: "parallelepiped", label: "斜平行六面体" },
+                  { key: "cube", label: "正方体" },
+                  { key: "tetrahedron", label: "正四面体" },
+                ]}
+                value={carrier}
+                onChange={(c) => setCarrier(c as SolidBasisType)}
+                columns={3}
+              />
+            </LeftPanelSection>
+          )}
+
           <LeftPanelSection title="典型模型预设">
             <SelectGrid
               items={currentModePresets}
@@ -344,6 +401,7 @@ export default function Vector3DBasisAnimation() {
               columns={2}
             />
           </LeftPanelSection>
+
           <LeftPanelSection title="参数调节">
             {currentParamConfigs.length > 0 ? (
               <ParamControl
@@ -355,6 +413,7 @@ export default function Vector3DBasisAnimation() {
               <div className="text-xs p-3 text-neutral-600">题设锁定中</div>
             )}
           </LeftPanelSection>
+
           <LeftPanelSection title="图层与标注显示控制" compact>
             <div className="space-y-2.5">
               {activeMode === "parallelepiped" && (
@@ -373,6 +432,11 @@ export default function Vector3DBasisAnimation() {
               )}
               {activeMode === "coplanar" && (
                 <>
+                  <Toggle
+                    label="共面锁定"
+                    checked={lockCoplanar}
+                    onChange={setLockCoplanar}
+                  />
                   <Toggle
                     label="△ABC"
                     checked={showTriangleABC}
@@ -401,6 +465,7 @@ export default function Vector3DBasisAnimation() {
               )}
             </div>
           </LeftPanelSection>
+
           <LeftPanelSection title="教学导引" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="text-[11px]">{tipConfig.question}</div>
@@ -440,6 +505,7 @@ export default function Vector3DBasisAnimation() {
               y={y}
               z={z}
               cz={cz}
+              carrier={carrier}
               showBasisVectors={showBasisVectors}
               showDecompPath={showDecompPath}
               showBoxSkeleton={showBoxSkeleton}
