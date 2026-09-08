@@ -13,159 +13,257 @@ export function buildSectionPanel(
   _params: Record<string, number>,
   config?: Record<string, unknown>,
 ): MathPanelData {
-  const mode = (config?.mode as string) ?? "continuous"; // "continuous" | "construction" | "extrema"
+  const mode = (config?.mode as string) ?? "construction"; // "construction" | "extrema"
   const vertexCount = (config?.vertexCount as number) ?? 0;
   const area3D = (config?.area3D as number) ?? 0;
   const areaProj = (config?.areaProj as number) ?? 0;
   const cosTheta = (config?.cosTheta as number) ?? 1;
-  const solidName = (config?.solidName as string) ?? "长方体 / 正方体";
   const thetaDeg = (config?.thetaDeg as number) ?? 0;
-  const shapeName = (config?.shapeName as string) ?? `${vertexCount} 边形`;
+  const shapeName = (config?.shapeName as string) ?? "截面多边形";
   const perimeter = (config?.perimeter as number) ?? 0;
-  const normalStr = (config?.normalStr as string) ?? "(0, 0, 1)";
-  const rationale = (config?.rationale as string) ?? "";
-  const stepTitle = (config?.stepTitle as string) ?? "";
+  const normalStr = (config?.normalStr as string) ?? "(0.00, 0.00, 1.00)";
+  const solidName = (config?.solidName as string) ?? "长方体 / 正方体";
+  const externalPointsStr = (config?.externalPointsStr as string) ?? "无";
   const minArea = (config?.minArea as number) ?? 0;
   const maxArea = (config?.maxArea as number) ?? 0;
+  const stepNum = (config?.stepNum as number) ?? 1;
+  const stepTitle = (config?.stepTitle as string) ?? "";
+  const rationale = (config?.rationale as string) ?? "";
+  const methodName = (config?.methodName as string) ?? "交轨延长线法";
 
-  const quantities: MathQuantity[] = [];
-  const theorems: Theorem[] = [];
-  const gaokaoPoints: GaokaoPoint[] = [];
-  const warnings: WarningItem[] = [];
-
-  // 1. 核心数学量（与左屏几何体、模式、参数完全同步）
-  quantities.push(
+  // 1. 数学量列表（克制精准，突出几何核心量与代数不变量）
+  const quantities: MathQuantity[] = [
     {
       label: "几何体模型",
-      symbol: "\\text{模型}",
       value: solidName,
-      color: MATH_COLORS.primary,
     },
     {
-      label: "截面几何形状",
-      symbol: "\\text{形状}",
-      value: shapeName,
-      color: vertexCount >= 3 ? MATH_COLORS.highlight : MATH_COLORS.textMuted,
-    },
-    {
-      label: "截面顶点个数",
+      label: "截面拓扑形状",
       symbol: "n",
-      value: vertexCount,
-      color: MATH_COLORS.primary,
-    },
-    {
-      label: "截面 3D 实际面积",
-      symbol: "S_{\\text{截}}",
-      value: vertexCount >= 3 ? Number(area3D.toFixed(3)) : 0,
+      value: `${shapeName} (${vertexCount} 边形)`,
       color: MATH_COLORS.paramPrimary,
     },
     {
-      label: "底面 2D 射影面积",
+      label: "截面面积",
+      symbol: "S_{\\text{截}}",
+      value: area3D.toFixed(2),
+      color: MATH_COLORS.paramPrimary,
+      highlight: "extreme",
+    },
+    {
+      label: "底面射影面积",
       symbol: "S_{\\text{投}}",
-      value: vertexCount >= 3 ? Number(areaProj.toFixed(3)) : 0,
+      value: areaProj.toFixed(2),
       color: MATH_COLORS.secondary,
     },
     {
-      label: "截面与底面所成角余弦",
+      label: "二面角余弦",
       symbol: "\\cos\\theta",
-      value: Number(cosTheta.toFixed(4)),
-      color: MATH_COLORS.paramSecondary,
-    },
-    {
-      label: "截面与底面所成角",
-      symbol: "\\theta",
-      value: `${thetaDeg.toFixed(2)}°`,
-      color: MATH_COLORS.accent,
-    },
-    {
-      label: "截面周长",
-      symbol: "L_{\\text{截}}",
-      value: vertexCount >= 3 ? Number(perimeter.toFixed(3)) : 0,
-      color: MATH_COLORS.paramTertiary,
-    },
-    {
-      label: "切割平面法向量",
-      symbol: "\\vec{n}",
-      value: normalStr,
+      value: `${cosTheta.toFixed(4)} (${thetaDeg.toFixed(1)}°)`,
       color: MATH_COLORS.primary,
     },
-  );
+  ];
 
-  if (mode === "extrema" && maxArea > 0) {
+  if (mode === "construction") {
+    quantities.unshift({
+      label: "作图通法",
+      value: methodName,
+      color: MATH_COLORS.highlight,
+    });
+    quantities.unshift({
+      label: "当前作图步骤",
+      symbol: `\\text{Step } ${stepNum}`,
+      value: stepTitle || `第 ${stepNum} 步`,
+      color: MATH_COLORS.paramPrimary,
+    });
+    if (methodName === "交轨延长线法") {
+      quantities.push({
+        label: "底面交轨外点",
+        symbol: "K_i",
+        value: externalPointsStr,
+        color: MATH_COLORS.paramTertiary,
+      });
+    }
+  } else if (mode === "extrema") {
     quantities.push(
       {
-        label: "动点探究最小面积",
+        label: "截面积理论极小值",
         symbol: "S_{\\min}",
-        value: Number(minArea.toFixed(3)),
-        color: MATH_COLORS.secondary,
+        value: minArea.toFixed(2),
+        color: MATH_COLORS.paramTertiary,
+        isInvariant: true,
+        invariantNote: "动点 P 沿侧棱滑动区间极小值",
       },
       {
-        label: "动点探究最大面积",
+        label: "截面积理论极大值",
         symbol: "S_{\\max}",
-        value: Number(maxArea.toFixed(3)),
+        value: maxArea.toFixed(2),
         color: MATH_COLORS.highlight,
+        isInvariant: true,
+        invariantNote: "动点 P 沿侧棱滑动区间极大值",
       },
     );
+  } else {
+    quantities.push({
+      label: "截面周长",
+      symbol: "C",
+      value: perimeter.toFixed(2),
+    });
   }
 
-  // 2. 定理体系
-  theorems.push(
-    {
-      name: "截面射影面积定理",
-      latex: `S_{\\text{截}} = \\frac{S_{\\text{投}}}{\\cos \\theta} \\quad (\\theta \\in [0^\\circ, 90^\\circ) \\text{ 为截面与底面所成角})`,
-      level: "core",
-      condition:
-        "截面不能垂直于射影参考面 (\\cos \\theta > 0)。若垂直底面则投影退化为线段",
-    },
-    {
-      name: "截面作图三大基本事实与性质依据",
-      latex: `\\begin{cases} \\text{基本事实 1 (同面连线): } A, B \\in \\alpha \\implies AB \\subset \\alpha \\\\ \\text{基本事实 3 (交轨法): } \\alpha \\cap \\beta = l \\\\ \\text{面面平行性质: } \\alpha \\parallel \\beta \\implies l_1 \\parallel l_2 \\end{cases}`,
-      level: "core",
-      note: "同面直接连线；异面延线相交于底面交轨点（外点连线）；平行面截线必平行",
-    },
-  );
+  // 2. 核心定理（高中课标标准定理，随当前作图步骤动态置顶推演依据）
+  const theorems: Theorem[] = [];
 
   if (mode === "construction" && rationale) {
     theorems.push({
-      name: stepTitle || "当前作图步骤依据",
-      latex: `\\text{依据立体几何基本事实与性质推演}`,
-      note: rationale,
-      level: "important",
+      name: `${methodName} · 依据（${stepTitle || `Step ${stepNum}`}）`,
+      latex:
+        methodName === "直接连线法"
+          ? "A, B \\in \\alpha \\implies AB \\subset \\alpha \\quad (\\text{基本事实 1})"
+          : methodName === "面面平行线法"
+            ? "\\alpha \\parallel \\beta, \\, \\gamma \\cap \\alpha = l_1, \\, \\gamma \\cap \\beta = l_2 \\implies l_1 \\parallel l_2"
+            : stepNum === 1
+              ? "A, B \\in \\alpha \\implies AB \\subset \\alpha \\quad (\\text{基本事实 1})"
+              : stepNum === 2
+                ? "P \\in \\alpha \\cap \\beta \\implies P \\in l \\quad (\\text{基本事实 3})"
+                : stepNum === 3
+                  ? "K_1, K_2 \\in \\alpha \\cap \\beta \\implies K_1K_2 = \\alpha \\cap \\beta"
+                  : "\\text{各面截线顺次首尾相接，封闭成多边形}",
+      condition: rationale,
+      level: "core",
     });
   }
 
-  // 3. 高考考点
-  gaokaoPoints.push(
+  theorems.push(
     {
-      text: "【新高考经典题型——截面形状判定】正方体/长方体中的截面多边形边数满足 3 ≤ n ≤ 6，不可能出现七边形（因为正方体仅有 6 个表面，每个面内最多产生 1 条截线段）。",
-      importance: "gaokao",
+      name: "平面的基本性质（基本事实 3）",
+      latex:
+        "P \\in \\alpha \\cap \\beta \\implies \\alpha \\cap \\beta = l, \\quad P \\in l",
+      condition:
+        "如果两个不重合的平面有一个公共点，那么它们有且只有一条过该点的公共交线。",
+      level: "core",
     },
     {
-      text: "【射影面积秒杀法】求倾斜不规则截面面积时，先求该截面在底面的投影多边形面积 S_投，再求截面法向量与底面夹角余弦 cosθ，利用 S_截 = S_投 / cosθ 快速求解，避免复杂的空间三角形拆分。",
-      importance: "gaokao",
+      name: "面积射影定理",
+      latex:
+        "S_{\\text{截}} = \\frac{S_{\\text{投}}}{\\cos\\theta} \\quad (0 \\le \\theta < 90^\\circ)",
+      condition:
+        "平面多边形在另一平面上的正投影面积为 S_投，二面角为 θ，则原平面图形面积等于投影面积除以余弦值。",
+      level: "core",
     },
     {
-      text: "【交轨法作图标准步骤】① 连结同一表面内的已知点；② 延长相交直线交底面/侧面棱直线于外点 K；③ 连结外点与同面第三点确定新交点；④ 结合平行面交线平行的性质补齐封闭多边形。",
-      importance: "gaokao",
+      name: "空间法向量与二面角余弦",
+      latex:
+        "\\cos\\theta = \\frac{|\\vec{n}_1 \\cdot \\vec{n}_2|}{|\\vec{n}_1||\\vec{n}_2|}",
+      condition: "空间两平面的二面角大小等于其法向量夹角（或其补角）的绝对值。",
+      level: "important",
     },
   );
 
-  // 4. 警示与边界
-  if (vertexCount < 3) {
-    warnings.push({
-      text: "当前切割平面与多面体表面无交点或仅有一条切线，截面退化！请调节中心高度或倾斜角使平面穿过几何体内部。",
-      level: "warning",
-    });
-  } else if (cosTheta < 1e-4) {
-    warnings.push({
-      text: "当前截面垂直于底面 (cos θ ≈ 0)，截面在底面的投影退化为一条线段 (S_投 = 0)，射影面积公式不适用，请采用空间向量叉积法或几何分块法计算截面积。",
+  // 3. 高考考点
+  const gaokaoPoints: GaokaoPoint[] = [
+    {
+      text: "【三点定截面作图通法】连结同面已知点求交线；异面已知点则延长与底棱求交轨外点 K，连结外点得出底面交线，封闭截面多边形。",
+      importance: "gaokao",
+    },
+    {
+      text: "【空间向量建系与二面角法向量求解】选择垂直三棱建立空间直角坐标系，写出题设已知点坐标与方向向量，联立垂直方程组求截面法向量。",
+      importance: "core",
+    },
+    {
+      text: "【面积射影法求立体截面积】利用 S_截 = S_投 / cosθ，将复杂空间截面面积转化为底面平面多边形面积计算，极大简化三角分割。",
+      importance: "core",
+    },
+    {
+      text: "【动点截面多边形变异与面积极值探究】随着侧棱动点 P(t) 滑动，截面边数经历退化突变，建立面积分段函数 S(t) 探究单调性与区间极值。",
+      importance: "hard",
+    },
+  ];
+
+  // 4. 退化警示
+  const warnings: WarningItem[] = [
+    {
+      text: "【三已知点共线】无法唯一确定空间切面，基本事实 1 失效。",
       level: "danger",
-    });
-  } else if (shapeName.includes("正六边形")) {
-    warnings.push({
-      text: "🌟【高考特值考点】当前截面为正方体的经典正六边形截面！各边长相等，面积达到同向切面的局部极大值。",
+    },
+    {
+      text: "【截面与投影面垂直 (cosθ ≈ 0)】当 cosθ → 0 时射影面积公式分母为 0 失效，退化为线段，需直接通过空间向量模长计算面积。",
+      level: "warning",
+    },
+    {
+      text: "【动点滑动越出棱线端点 (t ∉ [0, 1])】截面超出多面体物理实体范围，交点脱离几何体。",
       level: "info",
-    });
+    },
+  ];
+
+  // 5. 破题三步推演（紧扣题设与高中实际解题动线）
+  let reasoningSteps: {
+    step: number;
+    title: string;
+    latex: string;
+    detail: string;
+    rubric?: string;
+  }[] = [];
+
+  if (mode === "construction") {
+    reasoningSteps = [
+      {
+        step: 1,
+        title: "作图破题 · 找面求交定位截线",
+        latex: `P, Q \\in \\text{面}_1 \\implies PQ \\text{ 为截线}; \\quad PQ \\cap \\text{底棱延长线} = K_1`,
+        detail:
+          "审视题设已知点 P, Q, R：同在某一侧面的两点直接连结得截线；将截线与底面对应棱延长相交，求出底面的公共交轨外点 K₁、K₂，完成作图第一步。",
+        rubric:
+          "得分点 (4分)：正确指出同面截线，并利用基本事实 3 延长相交求得底面外点 K₁、K₂",
+      },
+      {
+        step: 2,
+        title: "代数建系 · 联立方程求法向量",
+        latex: `\\begin{cases} \\vec{n} \\cdot \\vec{PQ} = 0 \\\\ \\vec{n} \\cdot \\vec{PR} = 0 \\end{cases} \\implies \\vec{n} = ${normalStr}, \\quad \\cos\\theta = ${cosTheta.toFixed(4)}`,
+        detail:
+          "以几何体底面三垂直边建立空间直角坐标系，写出已知点 P, Q, R 的精确坐标与向量 PQ, PR；设截面法向量为 n=(x,y,z)，由垂直条件联立方程组求得法向量，算出二面角余弦 cosθ。",
+        rubric:
+          "得分点 (4分)：准确建立空间直角坐标系，联立方程组求解法向量与二面角余弦",
+      },
+      {
+        step: 3,
+        title: "射影降维 · 面积公式精确求解",
+        latex: `S_{\\text{截}} = \\frac{S_{\\text{投}}}{\\cos\\theta} = \\frac{${areaProj.toFixed(2)}}{${cosTheta.toFixed(4)}} = ${area3D.toFixed(2)}`,
+        detail:
+          "计算截面在底面的正投影多边形面积 S_投；代入面积射影定理 S_截 = S_投 / cosθ，化空间为平面，直接精确求得截面多边形的实际面积！",
+        rubric:
+          "得分点 (4分)：正确求解底面正投影面积并应用射影公式求出截面实际面积",
+      },
+    ];
+  } else {
+    reasoningSteps = [
+      {
+        step: 1,
+        title: "动点建构 · 侧棱参数方程表征",
+        latex: `P(t) = (1-t)A_0 + tA_1 \\quad (t \\in [0.05, 0.95])`,
+        detail:
+          "设动点 P 在侧棱上的位置比例为 t，固定定点 Q, R 坐标已知保持不变，由已知三点解出动切割平面方程。",
+        rubric: "得分点 (2分)：建立动点位置关于参数 t 的空间坐标与参数方程表征",
+      },
+      {
+        step: 2,
+        title: "拓扑形变 · 边数突变与临界分析",
+        latex: `\\text{当前形状: } ${shapeName}, \\quad \\text{顶点数: } n = ${vertexCount}`,
+        detail:
+          "动点 P(t) 沿侧棱从底向顶滑动时，截面与多面体各棱相交状态改变，截面边数在特定临界点发生突变（如三角形 ↔ 四边形 ↔ 六边形）。",
+        rubric:
+          "得分点 (3分)：准确分析截面边数与拓扑状态发生改变的临界分水岭点",
+      },
+      {
+        step: 3,
+        title: "函数极值 · 面积函数区间最值求解",
+        latex: `S(t) = ${area3D.toFixed(2)}, \\quad S_{\\min} = ${minArea.toFixed(2)}, \\quad S_{\\max} = ${maxArea.toFixed(2)}`,
+        detail:
+          "结合几何投影关系或二次分段函数单调性，分析面积函数 S(t) 在区间 [0.05, 0.95] 上的极小值点与极大值点。",
+        rubric:
+          "得分点 (3~5分)：通过函数导数或几何最值原理准确求得截面面积的极值",
+      },
+    ];
   }
 
   return {
@@ -173,6 +271,8 @@ export function buildSectionPanel(
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps,
+    examAnchor: "新高考立体几何 · 多面体截面作图与面积射影专题",
     mnemonic: "同面直接连，异面延线交；射影求面积，投影除以余弦角。",
   };
 }

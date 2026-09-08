@@ -97,7 +97,10 @@ describe("sectionConstruction 作图推演纯函数测试", () => {
       0.5,
       4,
     );
-    expect(tetraSteps.step).toBe(4);
+    // 正四面体直接连线闭合，总步数为 2 步
+    expect(tetraSteps.method).toBe("direct");
+    expect(tetraSteps.totalSteps).toBe(2);
+    expect(tetraSteps.step).toBe(2);
     expect(tetraSteps.partialPolygon.length).toBeGreaterThanOrEqual(3);
   });
 });

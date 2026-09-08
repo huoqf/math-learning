@@ -47,9 +47,11 @@ import { Line } from "@react-three/drei";
 import { mathToThree } from "@/math3d/coordinateConvention";
 import { getPolyhedronEdgeEndpoints } from "@/math3d/sectionConstruction";
 
-type SectionMode = "continuous" | "construction" | "extrema";
+type SectionMode = "construction" | "extrema";
 type SolidKind = "cuboid" | "pyramid" | "prism" | "tetrahedron" | "frustum";
 type ViewMode = "3d" | "views";
+type PresetScenario =
+  "free" | "cubeHexagon" | "cubeTrapezoid" | "cubeTriangle" | "tetraSection";
 
 /**
  * 通用多面体 3D 实体与边线渲染组件
@@ -143,23 +145,49 @@ function getEdgePoint(
 }
 
 export default function SectionCuboidDemo() {
-  const [mode, setMode] = useState<SectionMode>("continuous");
+  const [mode, setMode] = useState<SectionMode>("construction");
+  const [scenario, setScenario] = useState<PresetScenario>("free");
   const [solidKind, setSolidKind] = useState<SolidKind>("cuboid");
   const [viewMode, setViewMode] = useState<ViewMode>("3d");
 
-  // 1. 连续切面参数
-  const [cutHeight, setCutHeight] = useState(2);
-  const [tiltDeg, setTiltDeg] = useState(0);
-  const [azimuthDeg, setAzimuthDeg] = useState(0);
-
-  // 2. 三点交轨推演参数与步骤
+  // 1. 三点交轨与作图参数 (P, Q, R 分别位于前三条侧棱)
   const [posP, setPosP] = useState(0.35);
   const [posQ, setPosQ] = useState(0.7);
   const [posR, setPosR] = useState(0.45);
   const [step, setStep] = useState(1);
 
-  // 3. 动点极值探究参数
+  // 2. 动点极值探究参数 (P(t) 沿第一侧棱滑动)
   const [tParam, setTParam] = useState(0.5);
+
+  // 高考典型情景切换处理
+  const handleScenarioChange = (sc: PresetScenario) => {
+    setScenario(sc);
+    if (sc === "cubeHexagon") {
+      setSolidKind("cuboid");
+      setPosP(0.5);
+      setPosQ(0.5);
+      setPosR(0.5);
+      setStep(4);
+    } else if (sc === "cubeTrapezoid") {
+      setSolidKind("cuboid");
+      setPosP(0.2);
+      setPosQ(0.8);
+      setPosR(0.8);
+      setStep(3);
+    } else if (sc === "cubeTriangle") {
+      setSolidKind("cuboid");
+      setPosP(0.4);
+      setPosQ(0.4);
+      setPosR(0.05);
+      setStep(2);
+    } else if (sc === "tetraSection") {
+      setSolidKind("tetrahedron");
+      setPosP(0.5);
+      setPosQ(0.5);
+      setPosR(0.5);
+      setStep(2);
+    }
+  };
 
   // 3D 交互防冲突模式（视角漫游 vs 动点交互）
   const [interactionMode, setInteractionMode] =
@@ -229,37 +257,10 @@ export default function SectionCuboidDemo() {
     );
   }, [solidKind, width, depth, currentHeight, posP, posQ, posR, step]);
 
-  // 计算切割平面 (Plane)
+  // 计算切割平面 (Plane) 严格由空间三点 P, Q, R 唯一确定（符合高中立体几何三点确定平面基本事实）
   const plane = useMemo((): Plane => {
-    if (mode === "construction" || mode === "extrema") {
-      return planeFromPoints(pointPPos, pointQPos, pointRPos);
-    } else {
-      const tilt = (tiltDeg * Math.PI) / 180;
-      const azim = (azimuthDeg * Math.PI) / 180;
-      const nx = Math.sin(tilt) * Math.cos(azim);
-      const ny = Math.sin(tilt) * Math.sin(azim);
-      const nz = Math.cos(tilt);
-
-      const px = solidKind === "cuboid" ? width / 2 : 0;
-      const py = solidKind === "cuboid" ? depth / 2 : 0;
-
-      return {
-        point: { x: px, y: py, z: cutHeight },
-        normal: { x: nx, y: ny, z: nz },
-      };
-    }
-  }, [
-    mode,
-    solidKind,
-    width,
-    depth,
-    pointPPos,
-    pointQPos,
-    pointRPos,
-    cutHeight,
-    tiltDeg,
-    azimuthDeg,
-  ]);
+    return planeFromPoints(pointPPos, pointQPos, pointRPos);
+  }, [pointPPos, pointQPos, pointRPos]);
 
   // 求交点多边形
   const sectionPoints = useMemo(() => {
@@ -374,9 +375,6 @@ export default function SectionCuboidDemo() {
   // 组装 MathPanel 右屏看板数据
   const mathData = useMemo(() => {
     const paramsMap = {
-      cutHeight,
-      tiltDeg,
-      azimuthDeg,
       posP,
       posQ,
       posR,
@@ -394,6 +392,17 @@ export default function SectionCuboidDemo() {
 
     const normalStr = `(${plane.normal.x.toFixed(2)}, ${plane.normal.y.toFixed(2)}, ${plane.normal.z.toFixed(2)})`;
 
+    const externalPoints =
+      mode === "construction"
+        ? constructionData.activePoints
+            .filter((p) => p.isExternal)
+            .map((p) => p.label)
+        : [];
+    const externalPointsStr =
+      externalPoints.length > 0
+        ? externalPoints.join(", ")
+        : "无 (截线与底棱平行)";
+
     return buildMathQuantities("anim-solid-section", paramsMap, {
       mode,
       solidKind,
@@ -409,15 +418,16 @@ export default function SectionCuboidDemo() {
       rationale:
         mode === "construction" ? constructionData.rationale : undefined,
       stepTitle: mode === "construction" ? constructionData.title : undefined,
+      stepNum: mode === "construction" ? constructionData.step : undefined,
+      methodName:
+        mode === "construction" ? constructionData.methodName : undefined,
+      externalPointsStr,
       minArea: extremaAnalysis.minArea,
       maxArea: extremaAnalysis.maxArea,
     });
   }, [
     mode,
     solidKind,
-    cutHeight,
-    tiltDeg,
-    azimuthDeg,
     posP,
     posQ,
     posR,
@@ -432,23 +442,14 @@ export default function SectionCuboidDemo() {
 
   // 组装左屏参数配置（仅保留纯连续数值参数，步骤控制独立为推演组件）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    let currentKeys: string[] = [];
-    if (mode === "continuous") {
-      currentKeys = ["cutHeight", "tiltDeg", "azimuthDeg"];
-    } else if (mode === "construction") {
-      currentKeys = ["posP", "posQ", "posR"];
-    } else if (mode === "extrema") {
-      currentKeys = ["tParam"];
-    }
+    const currentKeys: string[] =
+      mode === "construction" ? ["posP", "posQ", "posR"] : ["tParam"];
 
     return sectionMeta
       .filter((meta) => currentKeys.includes(meta.key))
       .map((meta) => {
         let val = 0;
-        if (meta.key === "cutHeight") val = cutHeight;
-        else if (meta.key === "tiltDeg") val = tiltDeg;
-        else if (meta.key === "azimuthDeg") val = azimuthDeg;
-        else if (meta.key === "posP") val = posP;
+        if (meta.key === "posP") val = posP;
         else if (meta.key === "posQ") val = posQ;
         else if (meta.key === "posR") val = posR;
         else if (meta.key === "tParam") val = tParam;
@@ -465,15 +466,14 @@ export default function SectionCuboidDemo() {
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
+          group: meta.group,
         };
       });
-  }, [mode, cutHeight, tiltDeg, azimuthDeg, posP, posQ, posR, tParam]);
+  }, [mode, posP, posQ, posR, tParam]);
 
   const handleParamChange = (key: string, value: number) => {
-    if (key === "cutHeight") setCutHeight(value);
-    else if (key === "tiltDeg") setTiltDeg(value);
-    else if (key === "azimuthDeg") setAzimuthDeg(value);
-    else if (key === "posP") setPosP(value);
+    if (scenario !== "free") setScenario("free");
+    if (key === "posP") setPosP(value);
     else if (key === "posQ") setPosQ(value);
     else if (key === "posR") setPosR(value);
     else if (key === "step") setStep(value);
@@ -481,9 +481,7 @@ export default function SectionCuboidDemo() {
   };
 
   const handleReset = () => {
-    setCutHeight(2);
-    setTiltDeg(0);
-    setAzimuthDeg(0);
+    setScenario("free");
     setPosP(0.35);
     setPosQ(0.7);
     setPosR(0.45);
@@ -519,102 +517,98 @@ export default function SectionCuboidDemo() {
     const sName = solidNames[solidKind] ?? "多面体";
 
     switch (mode) {
-      case "continuous":
-        return {
-          variant: "primary" as const,
-          badge: `高考模型 · ${sName}连续截面与面积射影`,
-          condition: `空间切面与${sName}相交，截面法向量与竖直方向倾角为 θ，底面投影多边形面积为 S_射。`,
-          question:
-            "验证面积射影定理 S_截 = S_射 / cosθ，调节倾角与方位角观察截面边数（三角形→四边形→多边形）的拓扑突变。",
-        };
       case "construction":
         return {
           variant: "warning" as const,
-          badge: `高考必考 · ${sName}三点交轨作图通法`,
-          condition: `已知${sName}侧棱上三点 P, Q, R（参数 posP, posQ, posR）。`,
+          badge: `高考必考 · ${sName}截面作图通法 (${constructionData.methodName})`,
+          condition: `已知${sName}三条侧棱上各给定已知定点 P, Q, R。`,
           question:
-            "演示截面作图 4 步通法：①同面直接连线；②相交棱延长求基面交点；③连结基面交线；④求出全部交点封闭截面多边形。",
+            "(1) 作图破题：运用基本事实与平行性质顺次求解交线；(2) 面积求解：建立空间直角坐标系列垂直方程求法向量，用面积射影公式求截面积。",
         };
       case "extrema":
         return {
           variant: "success" as const,
           badge: `高考压轴 · ${sName}动点截面面积极值探究`,
-          condition: `定点 Q, R 位置固定，动点 P(t) 沿第一侧棱从底部向顶部连续滑动 (t ∈ [0.05, 0.95])。`,
+          condition: `定点 Q, R 保持固定，动点 P(t) 沿第一侧棱从底向顶滑动 (t ∈ [0.05, 0.95])。`,
           question:
-            "追踪动点滑动时截面多边形形状突变过程，分析并求解截面面积函数 S(t) 的最大值与最小值点。",
+            "(1) 观察动点滑动过程中截面图形的边数退化临界；(2) 求解截面面积函数 S(t) 在棱上的最小值点与最大值点。",
         };
     }
-  }, [mode, solidKind]);
+  }, [mode, solidKind, constructionData.methodName]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 1. 探究模式选择 */}
+          {/* 1. 探究模式维度 */}
           <LeftPanelSection title="探究模式">
-            <SelectGrid
-              items={[
-                {
-                  key: "continuous",
-                  label: "连续切面",
-                  formula: "S = \\frac{S'}{\\cos\\theta}",
-                },
-                {
-                  key: "construction",
-                  label: "作图推演",
-                  formula: "P, Q, R \\text{ 交轨}",
-                },
-                {
-                  key: "extrema",
-                  label: "动点极值探究",
-                  formula: "S(t) \\to \\max / \\min",
-                  fullWidth: true,
-                },
+            <TabSwitcher
+              tabs={[
+                { key: "construction", label: "三点定截面 (作图与面积)" },
+                { key: "extrema", label: "动点截面 (极值探究)" },
               ]}
               value={mode}
               onChange={(m) => setMode(m as SectionMode)}
-              columns={2}
             />
           </LeftPanelSection>
 
-          {/* 2. 几何体模型选择 */}
-          <LeftPanelSection title="几何体模型">
+          {/* 2. 高考典型情境预设 (SelectGrid) */}
+          <LeftPanelSection title="高考典型情境">
             <SelectGrid
-              items={[
-                {
-                  key: "cuboid",
-                  label: "正方体 / 长方体",
-                  fullWidth: true,
-                },
-                { key: "pyramid", label: "正四棱锥" },
-                { key: "tetrahedron", label: "正四面体" },
-                { key: "prism", label: "正三棱柱" },
-                { key: "frustum", label: "正四棱台" },
-              ]}
-              value={solidKind}
-              onChange={(k) => setSolidKind(k as SolidKind)}
               columns={2}
+              items={[
+                { key: "free", label: "自由探索" },
+                { key: "cubeHexagon", label: "正方体正六边形" },
+                { key: "cubeTrapezoid", label: "正方体等腰梯形" },
+                { key: "cubeTriangle", label: "正方体正三角形" },
+                { key: "tetraSection", label: "正四面体截面" },
+              ]}
+              value={scenario}
+              onChange={(sc) => handleScenarioChange(sc as PresetScenario)}
             />
           </LeftPanelSection>
 
-          {/* 3. 作图推演步骤控制器 (仅在 construction 模式下呈现) */}
-          {mode === "construction" && (
-            <LeftPanelSection title="作图推演步骤">
+          {/* 3. 几何体模型选择 (自由探索下开放全量模型) */}
+          {scenario === "free" && (
+            <LeftPanelSection title="几何体模型">
               <SelectGrid
                 items={[
-                  { key: "1", label: "Step 1", description: "同面连线" },
-                  { key: "2", label: "Step 2", description: "延长求交" },
-                  { key: "3", label: "Step 3", description: "底面交线" },
-                  { key: "4", label: "Step 4", description: "封闭截面" },
+                  {
+                    key: "cuboid",
+                    label: "正方体 / 长方体",
+                    fullWidth: true,
+                  },
+                  { key: "pyramid", label: "正四棱锥" },
+                  { key: "tetrahedron", label: "正四面体" },
+                  { key: "prism", label: "正三棱柱" },
+                  { key: "frustum", label: "正四棱台" },
                 ]}
-                value={String(step)}
+                value={solidKind}
+                onChange={(k) => setSolidKind(k as SolidKind)}
+                columns={2}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 4. 作图推演步骤控制器 (自适应高中三大作图通法：直接法 2 步、平行法 3 步、交轨法 4 步) */}
+          {mode === "construction" && (
+            <LeftPanelSection
+              title={`作图步骤 · ${constructionData.methodName}`}
+            >
+              <SelectGrid
+                items={constructionData.stepOptions.map((opt) => ({
+                  key: String(opt.step),
+                  label: opt.label,
+                  description: opt.description,
+                }))}
+                value={String(Math.min(step, constructionData.totalSteps))}
                 onChange={(s) => setStep(Number(s))}
                 columns={2}
               />
             </LeftPanelSection>
           )}
 
-          {/* 4. 动态参数调节 */}
+          {/* 5. 动态参数调节 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -623,8 +617,8 @@ export default function SectionCuboidDemo() {
             />
           </LeftPanelSection>
 
-          {/* 5. 视图与视角 */}
-          <LeftPanelSection title="视图与视角">
+          {/* 6. 视图模式与视角 */}
+          <LeftPanelSection title="视图模式">
             <div className="space-y-2">
               <TabSwitcher
                 layout="horizontal"
@@ -636,37 +630,22 @@ export default function SectionCuboidDemo() {
                 onChange={(v) => setViewMode(v as ViewMode)}
               />
               {viewMode === "3d" && (
-                <>
-                  {mode !== "continuous" && (
-                    <TabSwitcher
-                      layout="horizontal"
-                      tabs={[
-                        { key: "orbit", label: "🔄 视角漫游" },
-                        { key: "drag", label: "👆 动点交互" },
-                      ]}
-                      value={interactionMode}
-                      onChange={(m) =>
-                        setInteractionMode(m as InteractionMode3D)
-                      }
-                    />
-                  )}
-                  <TabSwitcher
-                    layout="horizontal"
-                    tabs={[
-                      { key: "iso", label: "轴测" },
-                      { key: "front", label: "主视" },
-                      { key: "top", label: "俯视" },
-                      { key: "side", label: "左视" },
-                    ]}
-                    value={preset}
-                    onChange={(p) => setCameraPreset(p as CameraPreset)}
-                  />
-                </>
+                <TabSwitcher
+                  layout="horizontal"
+                  tabs={[
+                    { key: "iso", label: "轴测" },
+                    { key: "front", label: "主视" },
+                    { key: "top", label: "俯视" },
+                    { key: "side", label: "左视" },
+                  ]}
+                  value={preset}
+                  onChange={(p) => setCameraPreset(p as CameraPreset)}
+                />
               )}
             </div>
           </LeftPanelSection>
 
-          {/* 6. 教学提示与题设导引（置于左屏底部） */}
+          {/* 7. 教学提示与题设导引（置于左屏底部） */}
           <LeftPanelSection title="教学导引与题设背景" compact>
             <TipCard variant={tipConfig.variant}>
               <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
@@ -714,7 +693,7 @@ export default function SectionCuboidDemo() {
                 items={[
                   { colorKey: "primary", swatch: "area", label: "多面体表面" },
                   {
-                    colorKey: "accent",
+                    colorKey: "paramPrimary",
                     swatch: "area",
                     label: "截面多边形 S_截",
                   },
@@ -734,25 +713,30 @@ export default function SectionCuboidDemo() {
           >
             <CameraRig
               ref={controlsRef}
-              enabled={interactionMode === "orbit" || mode === "continuous"}
+              enabled={interactionMode === "orbit"}
             />
 
             {/* 3D 几何实体与边线渲染 (严格基于 Polyhedron 拓扑结构，100% 精确吻合) */}
             <PolyhedronSolid polyhedron={currentPolyhedron} opacity={0.15} />
 
-            {/* 3D 截面、底面投影与作图辅助线渲染 */}
+            {/* 3D 截面、底面投影与作图辅助线渲染 (强制绑定 paramPrimary 色彩) */}
             <SectionPlane3D
               sectionPoints={
                 mode === "construction"
-                  ? step === 4
+                  ? step >= constructionData.totalSteps
                     ? sectionPoints
                     : []
                   : sectionPoints
               }
               plane={plane}
+              color={MATH_COLORS.paramPrimary}
               planeExtent={Math.max(width, depth, height) * 0.75}
-              showPlaneQuad={mode !== "construction" || step === 4}
-              showProjection={mode !== "construction" || step === 4}
+              showPlaneQuad={
+                mode === "extrema" || step >= constructionData.totalSteps
+              }
+              showProjection={
+                mode === "extrema" || step >= constructionData.totalSteps
+              }
               constructionLines={
                 mode === "construction"
                   ? constructionData.activeLines.map((l) => ({
@@ -807,7 +791,7 @@ export default function SectionCuboidDemo() {
               </group>
             ))}
 
-            {/* 控制点交互渲染与标签 (P, Q, R，严格使用空间侧棱正交投影 projectPointOnSegment) */}
+            {/* 控制点交互渲染与标签 (P, Q, R，严格使用空间侧棱正交投影 projectPointOnSegment，拖拽联动切回自由探索) */}
             {(mode === "construction" || mode === "extrema") &&
               (() => {
                 const { baseVertices, topVertices } =
@@ -834,6 +818,7 @@ export default function SectionCuboidDemo() {
                         projectPointOnSegment(raw, A0, A1).point
                       }
                       onDrag={(next) => {
+                        if (scenario !== "free") setScenario("free");
                         const proj = projectPointOnSegment(next, A0, A1);
                         const tVal = Number(proj.t.toFixed(2));
                         if (mode === "extrema") setTParam(tVal);
@@ -856,6 +841,7 @@ export default function SectionCuboidDemo() {
                         projectPointOnSegment(raw, B0, B1).point
                       }
                       onDrag={(next) => {
+                        if (scenario !== "free") setScenario("free");
                         const proj = projectPointOnSegment(next, B0, B1);
                         setPosQ(Number(proj.t.toFixed(2)));
                       }}
@@ -876,6 +862,7 @@ export default function SectionCuboidDemo() {
                         projectPointOnSegment(raw, C0, C1).point
                       }
                       onDrag={(next) => {
+                        if (scenario !== "free") setScenario("free");
                         const proj = projectPointOnSegment(next, C0, C1);
                         setPosR(Number(proj.t.toFixed(2)));
                       }}
@@ -891,9 +878,9 @@ export default function SectionCuboidDemo() {
                 );
               })()}
 
-            {/* continuous / extrema 模式下的截面面积与底面射影面积空间卡片标注 */}
+            {/* 截面封闭或动点探究模式下的截面中心与底面射影纯学术代数标签 (杜绝跳动数值，收纳至右屏) */}
             {sectionPoints.length >= 3 &&
-              (mode === "continuous" || mode === "extrema") &&
+              (mode === "extrema" || step >= constructionData.totalSteps) &&
               (() => {
                 const cx =
                   sectionPoints.reduce((sum, p) => sum + p.x, 0) /
@@ -906,16 +893,14 @@ export default function SectionCuboidDemo() {
                   sectionPoints.length;
                 return (
                   <group>
-                    {/* 截面中心面积卡片 S_截 */}
                     <FormulaLabel3D
                       position={{ x: cx, y: cy, z: cz + 0.15 }}
-                      tex={`\\color{${MATH_COLORS.paramPrimary}}{S_{\\text{截}}=${projDetails.area3D.toFixed(2)}}`}
+                      tex={`\\color{${MATH_COLORS.paramPrimary}}{S_{\\text{截}}}`}
                     />
-                    {/* 底面射影中心卡片 S_投 */}
-                    {mode === "continuous" && projDetails.areaProj > 0.05 && (
+                    {projDetails.areaProj > 0.05 && (
                       <FormulaLabel3D
                         position={{ x: cx, y: cy, z: 0.08 }}
-                        tex={`\\color{${MATH_COLORS.paramTertiary}}{S_{\\text{射}}=${projDetails.areaProj.toFixed(2)}}`}
+                        tex={`\\color{${MATH_COLORS.secondary}}{S_{\\text{射}}}`}
                       />
                     )}
                   </group>
@@ -960,6 +945,8 @@ export default function SectionCuboidDemo() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           mnemonic={mathData.mnemonic}
           title="多面体截面数学看板"
         />

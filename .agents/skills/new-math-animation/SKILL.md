@@ -61,7 +61,10 @@ src/data/
   - ❌ 禁止手写散乱 `<text>` 渲染点标/图例，必须用 `SceneLabelGroup`（8 向避让）与 `SceneLegend`（毛玻璃图例）；
   - ❌ 禁止手写右屏卡片，必须由 `MathPanel` + `src/data/builders/<topic>.ts` 驱动。
 - **左屏控制台**：严格遵循 `TabSwitcher → SelectGrid(双列) → ParamControl → TipCard(双要素)` 动线。
+  - 课标参数合规性：100% 对应高中课标标准题设（严禁计算机/工程化自造参数）；
+  - 步骤自适应：若包含作图或推演步数控制器，必须按数学构型动态自适应（严禁教条化一刀切固定步数）。
 - **右屏看板**：所有内容由 `src/data/builders/<topic>.ts` 导出 `MathPanelData`，查阅 [references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md)。
+  - 推导链防断层铁律：遵循“已知条件/设元 $\to$ 核心方程/定理 $\to$ 数值求解代入”三要素闭环，严禁空降浮点数或跳步给答案。
 - **坐标转换**：拖拽使用 `InteractivePoint`（内部已逆解算，**严禁二次调用 `designToMath`**）。
 
 ### Step 2：工程注册与路由挂载
