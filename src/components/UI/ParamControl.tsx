@@ -32,6 +32,11 @@ interface ParamControlProps {
   onParamChange: (key: string, value: number) => void;
   onReset?: () => void;
   disabled?: boolean;
+  /** 呈现形式：embedded（默认透明嵌入 Section，无重复外框）| card（独立卡片模式） */
+  variant?: "embedded" | "card";
+  /** 标题（仅 card 模式或需要显式标题时生效） */
+  title?: string;
+  className?: string;
 }
 
 const clamp = (value: number, min: number, max: number) =>
@@ -205,8 +210,8 @@ function detectMarkConflicts(
   marks: Array<ParamMark & { auto?: boolean }>,
   param: ParamConfig,
 ): Set<number> {
-  const CONTAINER_WIDTH_PX = 140;
-  const MIN_GAP_PX = 38;
+  const CONTAINER_WIDTH_PX = 180;
+  const MIN_GAP_PX = 30;
   const minGapPercent = (MIN_GAP_PX / CONTAINER_WIDTH_PX) * 100;
 
   const conflicts = new Set<number>();
@@ -268,6 +273,9 @@ export const ParamControl: React.FC<ParamControlProps> = ({
   onParamChange,
   onReset,
   disabled = false,
+  variant = "embedded",
+  title,
+  className = "",
 }) => {
   const [localValues, setLocalValues] = useState<Record<string, string>>({});
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -420,12 +428,12 @@ export const ParamControl: React.FC<ParamControlProps> = ({
     return (
       <div
         key={param.key}
-        className="space-y-3 pb-5 border-b border-neutral-100 last:border-0 last:pb-0"
+        className="space-y-1.5 pb-2 border-b border-neutral-100/90 last:border-0 last:pb-0"
       >
         {/* 行1：参数标签与数值输入框（两端对齐） */}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-1.5">
           <label
-            className="min-w-0 flex-1 text-xs font-semibold text-neutral-700 flex items-center gap-1.5 overflow-hidden"
+            className="min-w-0 flex-1 text-[11.5px] font-semibold text-neutral-700 flex items-center gap-1 overflow-hidden"
             htmlFor={`param-${param.key}`}
           >
             {param.labelFormula ? (
@@ -433,10 +441,10 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                 <KatexFormula
                   formula={param.labelFormula}
                   mode="inline"
-                  className="!text-xs font-bold max-w-full"
+                  className="!text-[11px] font-bold max-w-full"
                 />
                 {param.unit && (
-                  <span className="text-xs text-neutral-500 shrink-0">
+                  <span className="text-[10.5px] text-neutral-400 shrink-0">
                     ({param.unit})
                   </span>
                 )}
@@ -449,7 +457,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
             )}
           </label>
 
-          <div className="flex items-center gap-1.5 shrink-0 relative z-10">
+          <div className="flex items-center gap-1 shrink-0 relative z-10">
             <input
               id={`param-${param.key}`}
               type="number"
@@ -463,7 +471,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
               step={step}
               disabled={disabled}
               style={{ width: inputWidth }}
-              className="px-2 py-0.5 text-xs text-right font-mono bg-white border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="h-6 px-1.5 py-0 text-xs text-right font-mono bg-neutral-50/80 border border-neutral-300/80 rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               aria-label={`${param.label}数值`}
             />
           </div>
@@ -471,25 +479,25 @@ export const ParamControl: React.FC<ParamControlProps> = ({
 
         {/* 行2：参数物理/几何意义描述（独占整行 100% 宽度，消除局促断行） */}
         {(param.description || param.descriptionFormula) && (
-          <div className="text-[11px] font-normal leading-relaxed text-neutral-500 -mt-1.5">
+          <div className="text-[10.5px] font-normal leading-normal text-neutral-400 -mt-0.5">
             {renderDescription(param.description, param.descriptionFormula)}
           </div>
         )}
 
-        {/* 行3：滑块轨道与刻度 */}
-        <div className="flex items-center gap-3 pt-0.5">
-          <span className="text-xs text-neutral-400 font-mono w-8 text-right shrink-0">
+        {/* 行3：滑块轨道与刻度（端点紧凑，滑道长度最大化） */}
+        <div className="flex items-center gap-1.5 pt-0.5">
+          <span className="text-[10px] text-neutral-400 font-mono w-6 text-right shrink-0 select-none">
             {formatByStep(param.min, step)}
           </span>
           <div className="relative flex-1">
-            <div className="relative h-2 bg-neutral-200 rounded-full flex items-center">
+            <div className="relative h-1.5 bg-neutral-200/90 rounded-full flex items-center">
               {marks.map((mark) => {
                 const markVariant = mark.variant ?? "recommended";
                 return (
                   <div
                     key={`${param.key}-${mark.value}-${mark.label ?? ""}`}
                     className={[
-                      "absolute top-1/2 -translate-y-1/2 w-px h-3.5 pointer-events-none z-[1]",
+                      "absolute top-1/2 -translate-y-1/2 w-px h-3 pointer-events-none z-[1]",
                       markClass[markVariant].split(" ")[0],
                     ].join(" ")}
                     style={{ left: `${getMarkPercentage(mark.value, param)}%` }}
@@ -511,7 +519,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                   )
                 }
                 disabled={disabled}
-                className="peer absolute -inset-y-2 left-0 w-full h-6 opacity-0 cursor-pointer z-10"
+                className="peer absolute -inset-y-2 left-0 w-full h-5 opacity-0 cursor-pointer z-10"
                 aria-label={`${param.label}滑块`}
               />
               <div
@@ -522,14 +530,14 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                 }}
               />
               <div
-                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-primary-500 rounded-full shadow-sm pointer-events-none transition-all duration-fast ease-standard peer-hover:scale-110 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-300 peer-focus-visible:ring-offset-1 peer-active:scale-95"
+                className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white border-2 border-primary-500 rounded-full shadow-xs pointer-events-none transition-all duration-fast ease-standard peer-hover:scale-110 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-300 peer-active:scale-95"
                 style={{
-                  left: `calc(${percentage}% - 8px)`,
+                  left: `calc(${percentage}% - 7px)`,
                 }}
               />
             </div>
             {marks.some((mark) => mark.label) && (
-              <div className="relative h-4 text-[10px] font-mono font-medium w-full mt-1">
+              <div className="relative h-3 text-[9.5px] font-mono font-medium w-full mt-0.5">
                 {marks
                   .filter((mark) => mark.label)
                   .map((mark) => {
@@ -560,7 +568,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                           <KatexFormula
                             formula={mark.labelFormula}
                             mode="inline"
-                            className="!text-[10px] !my-0"
+                            className="!text-[9.5px] !my-0"
                           />
                         ) : (
                           mark.label
@@ -571,7 +579,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
               </div>
             )}
           </div>
-          <span className="text-xs text-neutral-400 font-mono w-8 text-left shrink-0">
+          <span className="text-[10px] text-neutral-400 font-mono w-6 text-left shrink-0 select-none">
             {formatByStep(param.max, step)}
           </span>
         </div>
@@ -579,49 +587,66 @@ export const ParamControl: React.FC<ParamControlProps> = ({
     );
   };
 
+  const isCard = variant === "card";
+
   return (
     <div
       className={[
-        "bg-white rounded-xl shadow-sm border border-neutral-200 p-4",
+        isCard
+          ? "bg-white rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.03)] border border-neutral-200/90 p-3"
+          : "space-y-2",
         disabled && "opacity-40 pointer-events-none",
+        className,
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-neutral-800">参数设置</h3>
-        {onReset && (
+      {(isCard || title || (onReset && !isCard && title)) && (
+        <div className="flex items-center justify-between mb-1.5">
+          <h3 className="text-xs font-bold text-neutral-700">
+            {title || "参数设置"}
+          </h3>
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              className="p-1 rounded text-neutral-400 hover:text-primary-700 hover:bg-primary-50 active:scale-[0.97] transition-all"
+              aria-label="恢复默认参数"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 嵌入模式且有 onReset 但未配置 title 时的紧凑重置挂件 */}
+      {!isCard && !title && onReset && (
+        <div className="flex justify-end -mb-1">
           <button
             type="button"
             onClick={onReset}
-            className="p-1.5 rounded-md text-neutral-400 hover:text-primary-700 hover:bg-primary-50 active:scale-[0.97] transition-all duration-instant ease-decelerate"
+            className="inline-flex items-center gap-1 text-[10.5px] text-neutral-400 hover:text-primary-600 active:scale-[0.97] transition-all"
             aria-label="恢复默认参数"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3 h-3" />
+            <span>重置</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="space-y-3.5">
+      <div className="space-y-2.5">
         {groupedParams.map((group, groupIdx) => (
-          <div
-            key={`${group.label}-${groupIdx}`}
-            className={
-              showGroupTitle
-                ? "bg-neutral-50/60 border border-neutral-200/80 rounded-xl p-3.5 space-y-3.5"
-                : "space-y-3"
-            }
-          >
+          <div key={`${group.label}-${groupIdx}`} className="space-y-1.5">
             {showGroupTitle && (
-              <div className="flex items-center gap-2 pb-2 border-b border-neutral-200/60">
-                <span className="w-1 h-3.5 bg-primary-500 rounded-full shrink-0" />
-                <div className="text-xs font-bold text-neutral-800 tracking-tight flex-1">
+              <div className="flex items-center gap-1.5 pt-1 pb-0.5 border-b border-neutral-100">
+                <span className="w-1 h-3 bg-primary-500 rounded-full shrink-0" />
+                <div className="text-[11px] font-bold text-neutral-700 tracking-tight flex-1">
                   {renderGroupTitle(group.label)}
                 </div>
               </div>
             )}
 
-            <div className="space-y-3">{group.params.map(renderParam)}</div>
+            <div className="space-y-1.5">{group.params.map(renderParam)}</div>
           </div>
         ))}
       </div>

@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -183,7 +184,7 @@ export function TrigFormulasAnimation() {
       left={
         <LeftPanel>
           {/* 1. 研究模式选择 */}
-          <LeftPanelSection title="研究模式" subtitle="选择三角恒等变换专题">
+          <LeftPanelSection title="研究模式">
             <SelectGrid
               items={[
                 { key: "sum_diff", label: "两角和差公式" },
@@ -198,7 +199,7 @@ export function TrigFormulasAnimation() {
 
           {/* 2. 子公式选择 */}
           {studyMode === "sum_diff" && (
-            <LeftPanelSection title="和差公式分类" subtitle="选择高考和差公式">
+            <LeftPanelSection title="和差公式分类">
               <SelectGrid
                 items={[
                   { key: "cos_minus", formula: "\\cos(\\alpha-\\beta)" },
@@ -218,10 +219,7 @@ export function TrigFormulasAnimation() {
           )}
 
           {studyMode === "double_angle" && (
-            <LeftPanelSection
-              title="倍角与降幂公式"
-              subtitle="选择二倍角或降幂变形"
-            >
+            <LeftPanelSection title="倍角与降幂公式">
               <SelectGrid
                 items={[
                   { key: "sin_2a", formula: "\\sin 2\\alpha" },
@@ -240,14 +238,7 @@ export function TrigFormulasAnimation() {
           )}
 
           {/* 4. 参数调节 */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle={
-              studyMode === "auxiliary"
-                ? "调节系数 a, b 或在中屏直接拖拽点 P"
-                : "调节角 α, β 或在中屏直接拖拽点 A, B"
-            }
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -256,32 +247,29 @@ export function TrigFormulasAnimation() {
           </LeftPanelSection>
 
           {/* 5. 教学引导卡片 (置于底部辅助区，不阻断调参动线) */}
-          <LeftPanelSection title="教学思考与探究" subtitle="启发式问题引导">
-            <div className="bg-neutral-50 rounded-lg p-3 border border-neutral-200 text-xs text-neutral-600 space-y-2">
-              <div>
-                <span className="font-semibold text-neutral-800">
-                  【基础条件】
-                </span>
-                {studyMode === "sum_diff" &&
-                  "两动角终边交于单位圆上的动点 A、B，其几何向量点积对应两角差的余弦。"}
-                {studyMode === "double_angle" &&
-                  "倍角变换将单角 α 投射到 2α，降幂将二次项降为一次项且周期减半。"}
-                {studyMode === "auxiliary" &&
-                  "线性组合 a sin x + b cos x 等价于平面向量 (a, b) 模长与极角合成。"}
-              </div>
-              <div>
-                <span className="font-semibold text-neutral-800">
-                  【探究思考】
-                </span>
-                {studyMode === "sum_diff" &&
-                  "拖动 A、B 观察向量夹角与弦长变化：为什么两角差的余弦公式是整个三角恒等变换的基石？"}
-                {studyMode === "double_angle" &&
-                  "观察曲线 y=sin²x 与 y=(1-cos 2x)/2 的重合轨迹，注意中轴线 y=0.5 和周期的变化。"}
-                {studyMode === "auxiliary" &&
-                  "尝试将 P 拖到第二、三象限，思考为什么初相 φ 的象限必须由点 (a, b) 唯一确定？"}
-              </div>
-            </div>
-          </LeftPanelSection>
+          <TipCard
+            badge={
+              studyMode === "sum_diff"
+                ? "高考基石 · 两角和差与向量点积"
+                : studyMode === "double_angle"
+                  ? "倍角与降幂 · 周期与中轴演化"
+                  : "辅助角公式 · 极坐标与模长合成"
+            }
+            condition={
+              studyMode === "sum_diff"
+                ? "两动角终边交于单位圆上的动点 A、B，其几何向量点积对应两角差的余弦。"
+                : studyMode === "double_angle"
+                  ? "倍角变换将单角 α 投射到 2α，降幂将二次项降为一次项且周期减半。"
+                  : "线性组合 a sin x + b cos x 等价于平面向量 (a, b) 模长与极角合成。"
+            }
+            question={
+              studyMode === "sum_diff"
+                ? "拖动 A、B 观察向量夹角与弦长变化：为什么两角差的余弦公式是整个三角恒等变换的基石？"
+                : studyMode === "double_angle"
+                  ? "观察曲线 y=sin²x 与 y=(1-cos 2x)/2 的重合轨迹，注意中轴线 y=0.5 和周期的变化。"
+                  : "尝试将 P 拖到第二、三象限，思考为什么初相 φ 的象限必须由点 (a, b) 唯一确定？"
+            }
+          />
         </LeftPanel>
       }
       center={

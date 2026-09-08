@@ -444,7 +444,7 @@ export function TangentScalingAnimation() {
                 onChange={(key) =>
                   handleSandwichSubChange(key as SandwichSubModel)
                 }
-                columns={1}
+                columns={2}
               />
             )}
             {mode === "param_k" && (
@@ -452,7 +452,7 @@ export function TangentScalingAnimation() {
                 items={paramKSubModels}
                 value={paramKSubModel}
                 onChange={(key) => handleParamKSubChange(key as ParamKSubModel)}
-                columns={1}
+                columns={2}
               />
             )}
             {mode === "secant" && (
@@ -460,7 +460,7 @@ export function TangentScalingAnimation() {
                 items={secantSubModels}
                 value={secantSubModel}
                 onChange={(key) => handleSecantSubChange(key as SecantSubModel)}
-                columns={1}
+                columns={2}
               />
             )}
           </LeftPanelSection>
@@ -475,31 +475,25 @@ export function TangentScalingAnimation() {
           </LeftPanelSection>
 
           {/* 底部题设与教学导引 TipCard */}
-          <div className="mt-auto pt-4">
-            <TipCard variant="primary">
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-bold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <ul className="list-disc list-inside mt-0.5 space-y-0.5 text-neutral-600">
-                    {tipCardContent.conditions.map((c, i) => (
-                      <li key={i}>{renderMixedLatex(c)}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <span className="font-bold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <ul className="list-disc list-inside mt-0.5 space-y-0.5 text-neutral-600">
-                    {tipCardContent.questions.map((q, i) => (
-                      <li key={i}>{renderMixedLatex(q)}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </TipCard>
+          <div className="mt-auto">
+            <TipCard
+              variant="primary"
+              badge="高考放缩定界探究"
+              condition={
+                <ul className="list-disc list-inside space-y-0.5 text-neutral-600">
+                  {tipCardContent.conditions.map((c, i) => (
+                    <li key={i}>{renderMixedLatex(c)}</li>
+                  ))}
+                </ul>
+              }
+              question={
+                <ul className="list-disc list-inside space-y-0.5 text-neutral-600">
+                  {tipCardContent.questions.map((q, i) => (
+                    <li key={i}>{renderMixedLatex(q)}</li>
+                  ))}
+                </ul>
+              }
+            />
           </div>
         </LeftPanel>
       }

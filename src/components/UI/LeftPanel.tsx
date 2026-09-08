@@ -1,58 +1,71 @@
-import React from 'react'
+import React from "react";
 
 interface LeftPanelProps {
-  children: React.ReactNode
-  className?: string
+  children: React.ReactNode;
+  className?: string;
 }
 
 interface LeftPanelSectionProps {
-  children: React.ReactNode
-  title?: React.ReactNode
-  subtitle?: React.ReactNode
-  action?: React.ReactNode
-  className?: string
-  bodyClassName?: string
-  compact?: boolean
+  children: React.ReactNode;
+  title?: React.ReactNode;
+  subtitle?: React.ReactNode;
+  action?: React.ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  compact?: boolean;
 }
 
-export const LeftPanel: React.FC<LeftPanelProps> = ({ children, className = '' }) => {
+export const LeftPanel: React.FC<LeftPanelProps> = ({
+  children,
+  className = "",
+}) => {
   return (
-    <div className={['relative flex min-h-full flex-col gap-3 p-4', className].filter(Boolean).join(' ')}>
+    <div
+      className={["relative flex min-h-full flex-col gap-2.5 p-3", className]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {children}
     </div>
-  )
-}
+  );
+};
 
 export const LeftPanelSection: React.FC<LeftPanelSectionProps> = ({
   children,
   title,
   subtitle,
   action,
-  className = '',
-  bodyClassName = '',
+  className = "",
+  bodyClassName = "",
   compact = false,
 }) => {
-  const padding = compact ? 'p-2' : 'p-4'
-  const headerSpacing = compact ? 'mb-1' : 'mb-3'
+  const padding = compact ? "p-2" : "p-3";
+  const headerSpacing = compact ? "mb-1" : "mb-2";
 
   return (
     <section
       className={[
-        'shrink-0 rounded-xl border border-neutral-200 bg-white shadow-sm',
+        "shrink-0 rounded-xl border border-neutral-200/90 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.03)]",
         padding,
         className,
-      ].filter(Boolean).join(' ')}
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {(title || subtitle || action) && (
-        <div className={['flex items-start justify-between gap-2', headerSpacing].filter(Boolean).join(' ')}>
-          <div className="min-w-0">
+        <div
+          className={["flex items-start justify-between gap-2", headerSpacing]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <div className="min-w-0 flex-1">
             {title && (
-              <div className="text-[12px] font-semibold text-neutral-600 leading-snug">
+              <div className="text-[12px] font-bold text-neutral-700 leading-snug tracking-tight">
                 {title}
               </div>
             )}
             {subtitle && (
-              <div className="mt-0.5 text-xs text-neutral-400 leading-snug">
+              <div className="mt-0.5 text-[11px] text-neutral-400 leading-snug">
                 {subtitle}
               </div>
             )}
@@ -62,5 +75,5 @@ export const LeftPanelSection: React.FC<LeftPanelSectionProps> = ({
       )}
       <div className={bodyClassName}>{children}</div>
     </section>
-  )
-}
+  );
+};

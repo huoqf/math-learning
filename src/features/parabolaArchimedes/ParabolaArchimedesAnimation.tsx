@@ -299,9 +299,9 @@ export function ParabolaArchimedesAnimation() {
           <LeftPanelSection title="高考研究专题">
             <TabSwitcher
               tabs={[
-                { key: "archimedesTriangle", label: "阿基米德三角形" },
-                { key: "focalChordProperties", label: "焦点弦与相切圆" },
-                { key: "orthogonalChords", label: "双垂直焦点弦" },
+                { key: "archimedesTriangle", label: "阿基米德" },
+                { key: "focalChordProperties", label: "焦点弦性质" },
+                { key: "orthogonalChords", label: "正交垂直弦" },
               ]}
               value={mode}
               onChange={handleModeChange}
@@ -309,7 +309,7 @@ export function ParabolaArchimedesAnimation() {
           </LeftPanelSection>
 
           {/* 2. 典型真题预设 Section (2列排版) */}
-          <LeftPanelSection title="典型高考预设">
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={currentPresets}
               value={activePreset}
@@ -327,30 +327,13 @@ export function ParabolaArchimedesAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 教学导引双要素 TipCard */}
-          <LeftPanelSection title="教学导引与题设设问" compact>
-            <TipCard variant="primary">
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 4. 教学导引双要素 TipCard（置于最底部） */}
+          <TipCard
+            variant="primary"
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

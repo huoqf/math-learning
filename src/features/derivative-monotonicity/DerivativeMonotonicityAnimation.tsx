@@ -263,11 +263,10 @@ export function DerivativeMonotonicityAnimation() {
                 key: k,
                 label: MONOTONICITY_MODELS[k].name,
                 formula: MONOTONICITY_MODELS[k].formula,
-                fullWidth: true,
               }))}
               value={modelKey}
               onChange={handleModelChange}
-              columns={1}
+              columns={2}
             />
           </LeftPanelSection>
 
@@ -279,18 +278,12 @@ export function DerivativeMonotonicityAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="教学导引" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="space-y-1 text-xs">
-                <div className="font-semibold text-neutral-800">
-                  {tipConfig.title}
-                </div>
-                <div className="text-neutral-600 leading-relaxed">
-                  {tipConfig.detail}
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.title}
+            condition="考察目标函数在给定定义域内的导函数符号分布与穿零变号特征。"
+            question={tipConfig.detail}
+          />
         </LeftPanel>
       }
       center={

@@ -478,10 +478,7 @@ export function SequenceAnimation() {
           )}
 
           {activeMode === "geometric" && (
-            <LeftPanelSection
-              title="视口表达形式"
-              subtitle="离散曲线或几何剖分"
-            >
+            <LeftPanelSection title="视口表达形式">
               <SelectGrid
                 items={[
                   { key: "points", label: "离散点与指数" },
@@ -496,10 +493,7 @@ export function SequenceAnimation() {
           )}
 
           {activeMode === "recurrence" && (
-            <LeftPanelSection
-              title="递推构造 5 大核心模型"
-              subtitle="涵盖高考求通项待定系数与构造法"
-            >
+            <LeftPanelSection title="递推构造模型">
               <SelectGrid
                 items={[
                   {
@@ -526,111 +520,93 @@ export function SequenceAnimation() {
                     key: "second-order",
                     label: "二阶特征根法",
                     formula: "a_{n+2}=pa_{n+1}+qa_n",
-                    fullWidth: true,
                   },
                 ]}
                 value={recurrenceModelType}
                 onChange={(val) =>
                   setRecurrenceModelType(val as typeof recurrenceModelType)
                 }
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           {activeMode === "models" && (
-            <LeftPanelSection
-              title="高考 5 大核心求和模型"
-              subtitle="完整覆盖高考解答题与压轴考种"
-            >
+            <LeftPanelSection title="核心求和模型">
               <SelectGrid
                 items={[
                   { key: "arith-geo", label: "错位相减法" },
                   { key: "telescoping", label: "裂项相消法" },
-                  { key: "cross-telescoping", label: "绝对值变号求和" },
+                  { key: "cross-telescoping", label: "绝对值变号" },
                   { key: "grouped", label: "分组转化求和" },
                   { key: "odd-even", label: "奇偶并项求和" },
                 ]}
                 value={modelType}
                 onChange={(val) => setModelType(val as typeof modelType)}
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           {/* 错位相减专属：推导步骤选择卡片 */}
           {activeMode === "models" && modelType === "arith-geo" && (
-            <LeftPanelSection
-              title="推导演化步骤"
-              subtitle="分步展示错位相减标准答题过程"
-            >
+            <LeftPanelSection title="推导演化步骤">
               <SelectGrid
                 items={[
                   {
                     key: "1",
                     label: "Step 1: 原式列出",
-                    description: "列出原始求和表达式 Tₙ",
                   },
                   {
                     key: "2",
                     label: "Step 2: 乘公比错位",
-                    description: "同乘 q 整体向右平移 1 格",
                   },
                   {
                     key: "3",
                     label: "Step 3: 两式相减",
-                    description: "首项直落，中间等比，尾项带负号",
                   },
                   {
                     key: "4",
                     label: "Step 4: 求和化简",
-                    description: "代入等比求和公式完成化简",
                   },
                 ]}
                 value={String(params.sumStep ?? 1)}
                 onChange={(k) => handleParamChange("sumStep", Number(k))}
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           {/* 裂项相消专属：裂项题型选择卡片 */}
           {activeMode === "models" && modelType === "telescoping" && (
-            <LeftPanelSection
-              title="裂项相消题型"
-              subtitle="覆盖新高考 3 大典型裂项构造"
-            >
+            <LeftPanelSection title="裂项相消题型">
               <SelectGrid
                 items={[
                   {
                     key: "1",
                     label: "标准差 1 型",
                     formula: "\\frac{1}{n(n+1)}",
-                    description: "相邻抵消，留首尾各 1 项",
                   },
                   {
                     key: "2",
                     label: "跨项差 2 型",
                     formula: "\\frac{1}{n(n+2)}",
-                    description: "提系数 1/2，留首尾各 2 项",
                   },
                   {
                     key: "3",
                     label: "根式有理化型",
                     formula: "\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}",
-                    description: "分子有理化，前后伸缩抵消",
                   },
                 ]}
                 value={String(params.teleGap ?? 1)}
                 onChange={(k) => handleParamChange("teleGap", Number(k))}
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           {/* 3. 动态声明式参数控制台 */}
-          <LeftPanelSection
-            title="数值参数调节"
-            subtitle="拖动滑块探索参数对数列图像与求和的影响"
-          >
+          <LeftPanelSection title="数值参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -638,29 +614,14 @@ export function SequenceAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <div className="mt-auto">
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
+          </div>
         </LeftPanel>
       }
       center={

@@ -303,8 +303,8 @@ export function ConicDefinitionAnimation() {
           <LeftPanelSection title="定义与研究模式">
             <TabSwitcher
               tabs={[
-                { key: "firstDef", label: "第一定义 (距离和差)" },
-                { key: "unifiedDef", label: "统一定义 (离心率e)" },
+                { key: "firstDef", label: "第一定义" },
+                { key: "unifiedDef", label: "统一定义" },
               ]}
               value={studyMode}
               onChange={handleModeChange}
@@ -312,7 +312,7 @@ export function ConicDefinitionAnimation() {
 
             {/* 仅在第一定义下展示曲线类型切换 */}
             {studyMode === "firstDef" && (
-              <div className="mt-3">
+              <div className="mt-2.5">
                 <SelectGrid
                   items={[
                     { key: "ellipse", label: "椭圆" },
@@ -340,13 +340,12 @@ export function ConicDefinitionAnimation() {
           </LeftPanelSection>
 
           {/* 黄金 2×2 典型预设 */}
-          <LeftPanelSection title="典型高考预设">
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={currentPresets.map((p) => ({
                 key: p.key,
                 label: p.label,
                 formula: p.formula,
-                description: p.description,
               }))}
               value={activePreset}
               onChange={handlePresetSelect}
@@ -362,30 +361,13 @@ export function ConicDefinitionAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

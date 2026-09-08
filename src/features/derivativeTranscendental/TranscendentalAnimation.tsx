@@ -474,10 +474,7 @@ export function TranscendentalAnimation() {
       left={
         <LeftPanel>
           {/* 1. 核心专题模式选择 (SelectGrid 2x2) */}
-          <LeftPanelSection
-            title="探究模式"
-            subtitle="高考压轴切线放缩四大核心模型"
-          >
+          <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
                 { key: "exp", label: "指数放缩", formula: "e^x \\ge x+1" },
@@ -499,32 +496,26 @@ export function TranscendentalAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 高考典型切点与变体 (2x2 黄金规范，微描述精炼 <= 6 字) */}
+          {/* 2. 高考典型切点与变体 */}
           {mode === "exp" && (
-            <LeftPanelSection
-              title="高考典型切点"
-              subtitle="切换基准切点与平移变体"
-            >
+            <LeftPanelSection title="高考典型切点">
               <SelectGrid
                 items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
+                  { key: "free", label: "自由探究" },
                   {
                     key: "tangent_0",
                     label: "基准切点",
                     formula: "x_0=0",
-                    description: "切线 y=x+1",
                   },
                   {
                     key: "tangent_1",
                     label: "次级切点",
                     formula: "x_0=1",
-                    description: "切线 y=ex",
                   },
                   {
                     key: "shift_1",
                     label: "平移变体",
                     formula: "e^{x-1} \\ge x",
-                    description: "等价切线",
                   },
                 ]}
                 value={preset}
@@ -535,30 +526,24 @@ export function TranscendentalAnimation() {
           )}
 
           {mode === "log" && (
-            <LeftPanelSection
-              title="高考典型切点"
-              subtitle="切换基准切点与二次放缩"
-            >
+            <LeftPanelSection title="高考典型切点">
               <SelectGrid
                 items={[
-                  { key: "free", label: "自由探究", description: "全参数开放" },
+                  { key: "free", label: "自由探究" },
                   {
                     key: "tangent_1",
                     label: "基准切点",
                     formula: "x_0=1",
-                    description: "切线 y=x-1",
                   },
                   {
                     key: "tangent_e",
                     label: "次级切点",
                     formula: "x_0=e",
-                    description: "切线 y=x/e",
                   },
                   {
                     key: "quadratic_bound",
                     label: "二次放缩",
                     formula: "\\ln x \\le \\frac{x^2-1}{2}",
-                    description: "抛物线上界",
                   },
                 ]}
                 value={preset}
@@ -569,10 +554,7 @@ export function TranscendentalAnimation() {
           )}
 
           {/* 3. 核心参数调节滑块 */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动观察切线放缩与动点夹逼"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -584,31 +566,14 @@ export function TranscendentalAnimation() {
           </LeftPanelSection>
 
           {/* 4. 教学导引与考题设问 */}
-          <LeftPanelSection title="教学导引与高考设问" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    {tipConfig.question}
-                  </span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <div className="mt-auto">
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
+          </div>
         </LeftPanel>
       }
       center={

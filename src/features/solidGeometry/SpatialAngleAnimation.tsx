@@ -535,26 +535,10 @@ export default function SpatialAngleAnimation({
           <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
-                {
-                  key: "skewLines",
-                  label: "异面直线角",
-                  description: "平移转化",
-                },
-                {
-                  key: "linePlane",
-                  label: "线面夹角",
-                  description: "垂线射影",
-                },
-                {
-                  key: "dihedral",
-                  label: "空间二面角",
-                  description: "三垂线法",
-                },
-                {
-                  key: "distance",
-                  label: "点面距离",
-                  description: "等体积法",
-                },
+                { key: "skewLines", label: "异面直线角" },
+                { key: "linePlane", label: "线面夹角" },
+                { key: "dihedral", label: "空间二面角" },
+                { key: "distance", label: "点面距离" },
               ]}
               value={activeMode}
               onChange={(m) => {
@@ -565,8 +549,8 @@ export default function SpatialAngleAnimation({
             />
           </LeftPanelSection>
 
-          {/* Step 2: 典型模型预设 (2x2 黄金对称布局：自由探究 + 3大典型母题) */}
-          <LeftPanelSection title="典型模型预设">
+          {/* Step 2: 典型模型预设 */}
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={currentPresets}
               value={modelPreset}
@@ -584,73 +568,84 @@ export default function SpatialAngleAnimation({
             />
           </LeftPanelSection>
 
-          {/* Step 4: 几何与向量图层控制 (按高中两大体系分类) */}
-          <LeftPanelSection title="图层与标注显示控制" compact>
-            <div className="space-y-2.5">
+          {/* Step 4: 几何与向量图层控制 */}
+          <LeftPanelSection title="图层控制" compact>
+            <div className="space-y-2">
               {/* 必修二：综合几何法图层 */}
-              <div className="bg-neutral-50/80 p-2.5 rounded-lg border border-neutral-200/70">
-                <div className="text-[11px] font-semibold text-neutral-600 mb-2 flex items-center gap-1.5">
+              <div className="bg-neutral-50/80 p-2 rounded-lg border border-neutral-200/70">
+                <div className="text-[11px] font-semibold text-neutral-600 mb-1.5 flex items-center gap-1.5">
                   <span className="text-xs">📐</span>
                   <span>综合几何法（必修二）</span>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   <Toggle
-                    label="几何辅助线（平移/射影/垂线）"
+                    label="辅助线"
                     checked={showAuxiliary}
                     onChange={setShowAuxiliary}
+                    size="compact"
                   />
                   <Toggle
-                    label="垂直直角符号（⊥）"
+                    label="直角符号"
                     checked={showRightAngles}
                     onChange={setShowRightAngles}
+                    size="compact"
                   />
-                  <Toggle
-                    label="空间特征角弧（θ）"
-                    checked={showAngles}
-                    onChange={setShowAngles}
-                  />
+                  <div className="col-span-2">
+                    <Toggle
+                      label="空间特征角弧 (θ)"
+                      checked={showAngles}
+                      onChange={setShowAngles}
+                      size="compact"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* 选修一：空间向量法图层 */}
-              <div className="bg-blue-50/40 p-2.5 rounded-lg border border-blue-100/80">
-                <div className="text-[11px] font-semibold text-blue-700 mb-2 flex items-center gap-1.5">
+              <div className="bg-blue-50/40 p-2 rounded-lg border border-blue-100/80">
+                <div className="text-[11px] font-semibold text-blue-700 mb-1.5 flex items-center gap-1.5">
                   <span className="text-xs">🧭</span>
                   <span>空间向量法（选修一）</span>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   <Toggle
-                    label="空间直角坐标系（A-xyz）"
+                    label="空间坐标系"
                     checked={showAxes}
                     onChange={setShowAxes}
+                    size="compact"
                   />
                   {showAxes && (
                     <Toggle
-                      label="空间点坐标标注（x, y, z）"
+                      label="点坐标标注"
                       checked={showCoordinates}
                       onChange={setShowCoordinates}
+                      size="compact"
                     />
                   )}
-                  {activeMode === "skewLines" ? (
-                    <Toggle
-                      label="方向向量（代数向量 u⃗, v⃗）"
-                      checked={showNormals}
-                      onChange={setShowNormals}
-                    />
-                  ) : (
-                    <Toggle
-                      label="空间法向量（代数向量 n⃗）"
-                      checked={showNormals}
-                      onChange={setShowNormals}
-                    />
-                  )}
+                  <div className="col-span-2">
+                    {activeMode === "skewLines" ? (
+                      <Toggle
+                        label="方向向量 (u⃗, v⃗)"
+                        checked={showNormals}
+                        onChange={setShowNormals}
+                        size="compact"
+                      />
+                    ) : (
+                      <Toggle
+                        label="空间法向量 (n⃗)"
+                        checked={showNormals}
+                        onChange={setShowNormals}
+                        size="compact"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </LeftPanelSection>
 
           {/* Step 5: 3D 空间视角预设 */}
-          <LeftPanelSection title="3D 空间视角预设">
+          <LeftPanelSection title="视角预设">
             <TabSwitcher
               layout="horizontal"
               tabs={[
@@ -663,54 +658,26 @@ export default function SpatialAngleAnimation({
               onChange={(p) => setCameraPreset(p as CameraPreset)}
             />
             {activeMode === "dihedral" && (
-              <div className="mt-2.5">
+              <div className="mt-2">
                 <button
                   type="button"
                   onClick={handleAlignAlongEdge}
-                  className="w-full py-2 px-3 bg-blue-50 hover:bg-blue-100/80 border border-blue-200/80 rounded-md text-xs text-blue-700 font-medium flex items-center justify-center gap-1.5 transition-colors active:scale-[0.99]"
+                  className="w-full py-1.5 px-2.5 bg-blue-50 hover:bg-blue-100/80 border border-blue-200/80 rounded-md text-xs text-blue-700 font-medium flex items-center justify-center gap-1 transition-colors active:scale-[0.99] cursor-pointer"
                 >
                   <span>📐</span>
-                  <span>沿棱对齐直视（视线沿交线 BD 判定平面角 ∠AME）</span>
+                  <span className="text-[11px]">沿棱对齐直视 (交线 BD)</span>
                 </button>
               </div>
             )}
           </LeftPanelSection>
 
-          {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-2 text-[11px] leading-relaxed">
-                <div>
-                  <div className="font-semibold text-neutral-800 mb-1 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block shrink-0" />
-                    <span>【初始条件】</span>
-                  </div>
-                  <div className="text-neutral-700 pl-2 border-l-2 border-blue-200/80 leading-relaxed">
-                    {tipConfig.condition}
-                  </div>
-                </div>
-                <div>
-                  <div className="font-semibold text-neutral-800 mb-1 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0" />
-                    <span>【探究设问】</span>
-                  </div>
-                  <div className="space-y-1.5 pl-2 border-l-2 border-amber-200/80 text-neutral-700">
-                    {tipConfig.questions.map((q, idx) => (
-                      <div key={idx} className="flex items-start gap-1">
-                        <span className="font-semibold text-neutral-900 shrink-0">
-                          ({idx + 1})
-                        </span>
-                        <span className="leading-relaxed">{q}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* Step 6: 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.questions.join("；")}
+          />
         </LeftPanel>
       }
       center={

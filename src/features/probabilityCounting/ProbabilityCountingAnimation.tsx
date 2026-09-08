@@ -286,7 +286,7 @@ export function ProbabilityCountingAnimation() {
       left={
         <LeftPanel>
           {/* 主题模式选择区 */}
-          <LeftPanelSection title="核心主题" subtitle="切换新高考专题模块">
+          <LeftPanelSection title="核心主题">
             <TabSwitcher
               tabs={[
                 { key: "binomial", label: "二项式定理", formula: "(a+b)^n" },
@@ -316,23 +316,20 @@ export function ProbabilityCountingAnimation() {
                 items={[
                   {
                     key: "0",
-                    label: "杨辉三角与恒等式",
-                    fullWidth: true,
+                    label: "杨辉三角恒等式",
                   },
                   {
                     key: "1",
                     label: "赋值法动态沙盘",
-                    fullWidth: true,
                   },
                   {
                     key: "2",
                     label: "双轨系数对比",
-                    fullWidth: true,
                   },
                 ]}
                 value={String(subMode)}
                 onChange={(k) => setSubMode(Number(k))}
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
@@ -344,22 +341,19 @@ export function ProbabilityCountingAnimation() {
                   {
                     key: "0",
                     label: "排列与组合对比",
-                    fullWidth: true,
                   },
                   {
                     key: "1",
-                    label: "均匀分组消序模型",
-                    fullWidth: true,
+                    label: "均匀分组消序",
                   },
                   {
                     key: "2",
                     label: "捆绑法与插空法",
-                    fullWidth: true,
                   },
                 ]}
                 value={String(subMode)}
                 onChange={(k) => setSubMode(Number(k))}
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
@@ -371,28 +365,25 @@ export function ProbabilityCountingAnimation() {
                   {
                     key: "0",
                     label: "分步乘法决策树",
-                    fullWidth: true,
                   },
                   {
                     key: "1",
-                    label: "分类加法独立通道",
-                    fullWidth: true,
+                    label: "分类加法通道",
                   },
                   {
                     key: "2",
-                    label: "网格路径与标数法",
-                    fullWidth: true,
+                    label: "网格路径标数",
                   },
                 ]}
                 value={String(subMode)}
                 onChange={(k) => setSubMode(Number(k))}
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           {/* 参数调节区 */}
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块探索数形响应">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -401,29 +392,14 @@ export function ProbabilityCountingAnimation() {
           </LeftPanelSection>
 
           {/* 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <div className="mt-auto">
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
+          </div>
         </LeftPanel>
       }
       center={

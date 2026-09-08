@@ -352,7 +352,7 @@ export function SecondDerivativeAnimation() {
       left={
         <LeftPanel>
           {/* 研究模式切换 Section */}
-          <LeftPanelSection title="研究模式" subtitle="选择二阶导数探讨视角">
+          <LeftPanelSection title="研究模式">
             <TabSwitcher
               tabs={[
                 { key: "concavity", label: "凹凸性与切线" },
@@ -365,24 +365,25 @@ export function SecondDerivativeAnimation() {
           </LeftPanelSection>
 
           {/* 函数模型选择 Section */}
-          <LeftPanelSection title="函数模型" subtitle="选择探究的函数类型">
+          <LeftPanelSection title="函数模型">
             <SelectGrid
-              columns={1}
+              columns={2}
               items={[
                 {
                   key: "cubic",
-                  label: "三次函数 (单拐点与对称中心)",
-                  formula: "f(x) = a x^3 + b x^2 + c x + d",
+                  label: "三次多项式",
+                  formula: "ax^3 + bx^2 + cx + d",
                 },
                 {
                   key: "mixed",
-                  label: "指数混合 (极值点与拐点分离)",
-                  formula: "f(x) = a x e^x + b x + c",
+                  label: "指数混合型",
+                  formula: "ax e^x + bx + c",
                 },
                 {
                   key: "quartic",
-                  label: "四次特例 (二阶导为0非拐点)",
-                  formula: "f(x) = a x^4 + b x^2 + c x + d",
+                  label: "四次对称型",
+                  formula: "ax^4 + bx^2 + cx + d",
+                  fullWidth: true,
                 },
               ]}
               value={fnKey}
@@ -392,10 +393,7 @@ export function SecondDerivativeAnimation() {
           </LeftPanelSection>
 
           {/* 参数调节 Section */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块改变函数系数与探针"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -404,29 +402,12 @@ export function SecondDerivativeAnimation() {
           </LeftPanelSection>
 
           {/* 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

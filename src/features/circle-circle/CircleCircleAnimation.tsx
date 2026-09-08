@@ -13,10 +13,11 @@ import {
   SelectGrid,
   KatexFormula,
   TipCard,
+  Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { CANVAS_PRESETS } from "@/theme";
 import {
   CircleCircleScene,
   type CircleLayerOptions,
@@ -257,6 +258,10 @@ export function CircleCircleAnimation() {
     };
   }, [studyMode, preset]);
 
+  const allParamConfigs = useMemo<ParamConfig[]>(() => {
+    return [...circle1Configs, ...circle2Configs];
+  }, [circle1Configs, circle2Configs]);
+
   return (
     <ThreePanel
       left={
@@ -265,20 +270,11 @@ export function CircleCircleAnimation() {
           <LeftPanelSection title="探究主题">
             <SelectGrid<StudyMode>
               items={[
-                {
-                  key: "position",
-                  label: "位置关系",
-                  description: "5种关系判定",
-                },
-                {
-                  key: "commonChord",
-                  label: "公共弦",
-                  description: "方程相减与弦长",
-                },
+                { key: "position", label: "位置关系" },
+                { key: "commonChord", label: "公共弦" },
                 {
                   key: "commonTangent",
                   label: "公切线系统",
-                  description: "内外公切线判定与方程",
                   fullWidth: true,
                 },
               ]}
@@ -292,26 +288,10 @@ export function CircleCircleAnimation() {
           <LeftPanelSection title="典型预设">
             <SelectGrid<PresetKey>
               items={[
-                {
-                  key: "free",
-                  label: "自由探究",
-                  description: "全参数开放",
-                },
-                {
-                  key: "outerTangent",
-                  label: "典型外切",
-                  description: "d = r1 + r2",
-                },
-                {
-                  key: "intersectStandard",
-                  label: "相交弦长",
-                  description: "公共弦垂径",
-                },
-                {
-                  key: "innerTangent",
-                  label: "经典内切",
-                  description: "d = |r1 - r2|",
-                },
+                { key: "free", label: "自由探究" },
+                { key: "outerTangent", label: "典型外切" },
+                { key: "intersectStandard", label: "相交弦长" },
+                { key: "innerTangent", label: "经典内切" },
               ]}
               value={preset}
               onChange={handlePresetChange}
@@ -319,116 +299,55 @@ export function CircleCircleAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 3. 圆 O1 参数调节（红） */}
-          <LeftPanelSection
-            title={
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="w-2.5 h-2.5 rounded-full inline-block"
-                  style={{ backgroundColor: MATH_COLORS.paramPrimary }}
-                />
-                <span>圆 O₁ 参数 (x₁, y₁, r₁)</span>
-              </div>
-            }
-          >
+          {/* 3. 两圆几何参数调节 */}
+          <LeftPanelSection title="两圆几何参数">
             <ParamControl
-              params={circle1Configs}
+              params={allParamConfigs}
               onParamChange={handleParamChange}
             />
           </LeftPanelSection>
 
-          {/* 4. 圆 O2 参数调节（橙） */}
-          <LeftPanelSection
-            title={
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="w-2.5 h-2.5 rounded-full inline-block"
-                  style={{ backgroundColor: MATH_COLORS.paramSecondary }}
-                />
-                <span>圆 O₂ 参数 (x₂, y₂, r₂)</span>
-              </div>
-            }
-          >
-            <ParamControl
-              params={circle2Configs}
-              onParamChange={handleParamChange}
-            />
-          </LeftPanelSection>
-
-          {/* 5. 辅助图层开关 */}
+          {/* 4. 辅助图层开关 (双列紧凑并排) */}
           <LeftPanelSection title="辅助图层">
-            <div className="flex flex-col gap-2 text-xs text-neutral-700">
-              <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-neutral-50 cursor-pointer">
-                <span>连心线 O₁O₂</span>
-                <input
-                  type="checkbox"
-                  checked={layers.showCenterLine}
-                  onChange={(e) =>
-                    setLayers((prev) => ({
-                      ...prev,
-                      showCenterLine: e.target.checked,
-                    }))
-                  }
-                  className="rounded text-primary-600 focus:ring-primary-500 w-4 h-4 cursor-pointer"
-                />
-              </label>
-              <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-neutral-50 cursor-pointer">
-                <span>公共弦 / 根轴</span>
-                <input
-                  type="checkbox"
-                  checked={layers.showChord}
-                  onChange={(e) =>
-                    setLayers((prev) => ({
-                      ...prev,
-                      showChord: e.target.checked,
-                    }))
-                  }
-                  className="rounded text-primary-600 focus:ring-primary-500 w-4 h-4 cursor-pointer"
-                />
-              </label>
+            <div className="grid grid-cols-2 gap-2">
+              <Toggle
+                label="连心线 O₁O₂"
+                checked={layers.showCenterLine}
+                onChange={(checked) =>
+                  setLayers((prev) => ({ ...prev, showCenterLine: checked }))
+                }
+                size="compact"
+              />
+              <Toggle
+                label="公共弦/根轴"
+                checked={layers.showChord}
+                onChange={(checked) =>
+                  setLayers((prev) => ({ ...prev, showChord: checked }))
+                }
+                size="compact"
+              />
               {studyMode === "commonTangent" && (
-                <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-neutral-50 cursor-pointer">
-                  <span>公切线系统</span>
-                  <input
-                    type="checkbox"
+                <div className="col-span-2">
+                  <Toggle
+                    label="公切线系统"
                     checked={layers.showTangents}
-                    onChange={(e) =>
-                      setLayers((prev) => ({
-                        ...prev,
-                        showTangents: e.target.checked,
-                      }))
+                    onChange={(checked) =>
+                      setLayers((prev) => ({ ...prev, showTangents: checked }))
                     }
-                    className="rounded text-primary-600 focus:ring-primary-500 w-4 h-4 cursor-pointer"
+                    size="compact"
                   />
-                </label>
+                </div>
               )}
             </div>
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于最底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 5. 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

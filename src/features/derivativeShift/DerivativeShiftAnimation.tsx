@@ -221,10 +221,7 @@ export function DerivativeShiftAnimation() {
       left={
         <LeftPanel>
           {/* 1. 核心专题模式选择 */}
-          <LeftPanelSection
-            title="模式选择"
-            subtitle="切换高考导数压轴三大核心模型"
-          >
+          <LeftPanelSection title="模式选择">
             <TabSwitcher
               tabs={[
                 { key: "implicit_zero", label: "隐零点与消元" },
@@ -242,7 +239,7 @@ export function DerivativeShiftAnimation() {
 
           {/* 2. 函数模型选择 (2列并排紧凑) */}
           {activeMode !== "log_mean" && (
-            <LeftPanelSection title="函数模型" subtitle="选择经典高考函数">
+            <LeftPanelSection title="函数模型">
               {activeMode === "implicit_zero" ? (
                 <SelectGrid
                   items={[
@@ -284,10 +281,7 @@ export function DerivativeShiftAnimation() {
           )}
 
           {/* 3. 参数调节区 */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块动态观察图形联动"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -296,131 +290,125 @@ export function DerivativeShiftAnimation() {
           </LeftPanelSection>
 
           {/* 5. 教学导引与高考设问 */}
-          <LeftPanelSection title="教学导引与高考设问" compact>
-            {activeMode === "implicit_zero" && (
-              <TipCard variant="primary">
-                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                  <span>高考压轴 · 隐零点定理与消元</span>
+          {activeMode === "implicit_zero" && (
+            <TipCard variant="primary">
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>高考压轴 · 隐零点定理与消元</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600 ml-1">
+                    已知函数{" "}
+                    <KatexFormula
+                      formula={
+                        subModel === "x_ln_x"
+                          ? "f(x) = x\\ln x - ax + 1"
+                          : "f(x) = e^x - ax"
+                      }
+                      mode="inline"
+                    />
+                    ，导数零点 <KatexFormula formula="x_0" mode="inline" />{" "}
+                    无法显式解析求解。
+                  </span>
                 </div>
-                <div className="space-y-1.5 text-[11px] leading-relaxed">
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【初始条件】
-                    </span>
-                    <span className="text-neutral-600 ml-1">
-                      已知函数{" "}
-                      <KatexFormula
-                        formula={
-                          subModel === "x_ln_x"
-                            ? "f(x) = x\\ln x - ax + 1"
-                            : "f(x) = e^x - ax"
-                        }
-                        mode="inline"
-                      />
-                      ，导数零点 <KatexFormula formula="x_0" mode="inline" />{" "}
-                      无法显式解析求解。
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【核心设问】
-                    </span>
-                    <span className="text-neutral-600 ml-1">
-                      设导数零点为 <KatexFormula formula="x_0" mode="inline" />
-                      ，求函数 <KatexFormula
-                        formula="f(x_0)"
-                        mode="inline"
-                      />{" "}
-                      极值范围或证明相关不等式。
-                    </span>
-                  </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600 ml-1">
+                    设导数零点为 <KatexFormula formula="x_0" mode="inline" />
+                    ，求函数 <KatexFormula
+                      formula="f(x_0)"
+                      mode="inline"
+                    />{" "}
+                    极值范围或证明相关不等式。
+                  </span>
                 </div>
-              </TipCard>
-            )}
+              </div>
+            </TipCard>
+          )}
 
-            {activeMode === "shift_symmetric" && (
-              <TipCard variant="warning">
-                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                  <span>高考压轴 · 极值点偏移与对称构造</span>
+          {activeMode === "shift_symmetric" && (
+            <TipCard variant="warning">
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>高考压轴 · 极值点偏移与对称构造</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600 ml-1">
+                    割线 <KatexFormula formula="y = k" mode="inline" /> 与曲线{" "}
+                    <KatexFormula
+                      formula={
+                        subModel === "xe_neg_x"
+                          ? "f(x) = xe^{-x}"
+                          : "f(x) = \\frac{\\ln x}{x}"
+                      }
+                      mode="inline"
+                    />{" "}
+                    交于两不等实根{" "}
+                    <KatexFormula formula="x_1 < x_2" mode="inline" />。
+                  </span>
                 </div>
-                <div className="space-y-1.5 text-[11px] leading-relaxed">
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【初始条件】
-                    </span>
-                    <span className="text-neutral-600 ml-1">
-                      割线 <KatexFormula formula="y = k" mode="inline" /> 与曲线{" "}
-                      <KatexFormula
-                        formula={
-                          subModel === "xe_neg_x"
-                            ? "f(x) = xe^{-x}"
-                            : "f(x) = \\frac{\\ln x}{x}"
-                        }
-                        mode="inline"
-                      />{" "}
-                      交于两不等实根{" "}
-                      <KatexFormula formula="x_1 < x_2" mode="inline" />。
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【核心设问】
-                    </span>
-                    <span className="text-neutral-600 ml-1">
-                      已知{" "}
-                      <KatexFormula
-                        formula="f(x_1) = f(x_2) = k"
-                        mode="inline"
-                      />
-                      ，求证极值点偏移结论{" "}
-                      <KatexFormula formula="x_1 + x_2 > 2x_0" mode="inline" />
-                      。
-                    </span>
-                  </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600 ml-1">
+                    已知{" "}
+                    <KatexFormula formula="f(x_1) = f(x_2) = k" mode="inline" />
+                    ，求证极值点偏移结论{" "}
+                    <KatexFormula formula="x_1 + x_2 > 2x_0" mode="inline" />。
+                  </span>
                 </div>
-              </TipCard>
-            )}
+              </div>
+            </TipCard>
+          )}
 
-            {activeMode === "log_mean" && (
-              <TipCard variant="info">
-                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                  <span>高考压轴 · 对数均值不等式 (L-Mean)</span>
+          {activeMode === "log_mean" && (
+            <TipCard variant="info">
+              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                <span>高考压轴 · 对数均值不等式 (L-Mean)</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] leading-relaxed">
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【初始条件】
+                  </span>
+                  <span className="text-neutral-600 ml-1">
+                    对任意相异正实数{" "}
+                    <KatexFormula formula="x_1 < x_2" mode="inline" />
+                    ，定义对数平均数{" "}
+                    <KatexFormula
+                      formula="L(x_1, x_2) = \frac{x_1 - x_2}{\ln x_1 - \ln x_2}"
+                      mode="inline"
+                    />
+                    。
+                  </span>
                 </div>
-                <div className="space-y-1.5 text-[11px] leading-relaxed">
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【初始条件】
-                    </span>
-                    <span className="text-neutral-600 ml-1">
-                      对任意相异正实数{" "}
-                      <KatexFormula formula="x_1 < x_2" mode="inline" />
-                      ，定义对数平均数{" "}
-                      <KatexFormula
-                        formula="L(x_1, x_2) = \frac{x_1 - x_2}{\ln x_1 - \ln x_2}"
-                        mode="inline"
-                      />
-                      。
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【核心设问】
-                    </span>
-                    <span className="text-neutral-600 ml-1">
-                      探究对数均值与几何均值{" "}
-                      <KatexFormula formula="\sqrt{x_1 x_2}" mode="inline" />
-                      、算术均值{" "}
-                      <KatexFormula
-                        formula="\frac{x_1+x_2}{2}"
-                        mode="inline"
-                      />{" "}
-                      的双边大小关系。
-                    </span>
-                  </div>
+                <div>
+                  <span className="font-semibold text-neutral-800">
+                    【核心设问】
+                  </span>
+                  <span className="text-neutral-600 ml-1">
+                    探究对数均值与几何均值{" "}
+                    <KatexFormula formula="\sqrt{x_1 x_2}" mode="inline" />
+                    、算术均值{" "}
+                    <KatexFormula
+                      formula="\frac{x_1+x_2}{2}"
+                      mode="inline"
+                    />{" "}
+                    的双边大小关系。
+                  </span>
                 </div>
-              </TipCard>
-            )}
-          </LeftPanelSection>
+              </div>
+            </TipCard>
+          )}
         </LeftPanel>
       }
       center={

@@ -274,9 +274,9 @@ export function ConicParamAnimation() {
           <LeftPanelSection title="研究模式">
             <TabSwitcher
               tabs={[
-                { key: "lineParam", label: "直线参数方程" },
-                { key: "ellipseParam", label: "椭圆三角参数" },
-                { key: "tSimplify", label: "高考设点化简" },
+                { key: "lineParam", label: "直线参数" },
+                { key: "ellipseParam", label: "椭圆参数" },
+                { key: "tSimplify", label: "设点化简" },
               ]}
               value={studyMode}
               onChange={(v) => handleModeChange(v as typeof studyMode)}
@@ -284,7 +284,7 @@ export function ConicParamAnimation() {
           </LeftPanelSection>
 
           {/* 案例预设 (2x2 对称网格) */}
-          <LeftPanelSection title="典型几何预设">
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={currentPresets}
               value={activePreset}
@@ -303,30 +303,13 @@ export function ConicParamAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

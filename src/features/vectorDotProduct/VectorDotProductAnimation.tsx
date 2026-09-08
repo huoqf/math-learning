@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -313,30 +314,24 @@ export function VectorDotProductAnimation() {
       left={
         <LeftPanel>
           {/* 1. 模式选择 Section */}
-          <LeftPanelSection
-            title="探究专题模式"
-            subtitle="选择平面向量数量积研讨主题"
-          >
+          <LeftPanelSection title="探究主题">
             <SelectGrid
               items={[
-                { key: "defProj", label: "几何定义与投影 (|a|, |b|, θ)" },
-                { key: "properties", label: "坐标运算与垂直 (x₁, y₁, x₂, y₂)" },
-                { key: "polarization", label: "极化恒等式 (高考极值模型)" },
+                { key: "defProj", label: "定义与投影" },
+                { key: "properties", label: "坐标与垂直" },
+                { key: "polarization", label: "极化恒等式", fullWidth: true },
               ]}
               value={studyMode}
               onChange={(k) =>
                 handleModeChange(k as "defProj" | "properties" | "polarization")
               }
               variant="filled"
-              columns={1}
+              columns={2}
             />
           </LeftPanelSection>
 
           {/* 2. 典型构型预设 (实现参数降维) */}
-          <LeftPanelSection
-            title="典型构型预设"
-            subtitle="一键切换高考经典构型"
-          >
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={presetsByMode[studyMode]}
               value={presetKey}
@@ -348,7 +343,7 @@ export function VectorDotProductAnimation() {
           </LeftPanelSection>
 
           {/* 3. 参数调节 Section (按 group 对象化聚合) */}
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块或画布控制点">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -356,30 +351,19 @@ export function VectorDotProductAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 教学引导与探究问题 (规范排版，接入 KatexFormula) */}
-          <LeftPanelSection
-            title="教学探究引导"
-            subtitle="带着核心问题动手实验"
-          >
-            <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-lg p-2.5 text-xs space-y-2 text-neutral-600 leading-relaxed">
-              <div className="flex items-start gap-1.5">
-                <span className="inline-block px-1.5 py-0.5 rounded bg-primary-100 text-primary-700 font-semibold text-[10px] shrink-0">
-                  基础条件
-                </span>
-                <span className="text-neutral-700">
-                  {currentGuidance.condition}
-                </span>
-              </div>
-              <div className="flex items-start gap-1.5 pt-0.5">
-                <span className="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold text-[10px] shrink-0">
-                  探究问题
-                </span>
-                <span className="text-neutral-700">
-                  {currentGuidance.question}
-                </span>
-              </div>
-            </div>
-          </LeftPanelSection>
+          {/* 4. 教学引导与探究问题（置于最底部） */}
+          <TipCard
+            variant="primary"
+            badge={
+              studyMode === "defProj"
+                ? "向量数量积与投影本质"
+                : studyMode === "properties"
+                  ? "坐标运算与垂直判定"
+                  : "极化恒等式与中线模长"
+            }
+            condition={currentGuidance.condition}
+            question={currentGuidance.question}
+          />
         </LeftPanel>
       }
       center={

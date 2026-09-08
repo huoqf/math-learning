@@ -440,19 +440,19 @@ export function ProbabilityNormalAnimation() {
       <ThreePanel
         left={
           <LeftPanel>
-            {/* 模式选择 Section (遵循铁律 3：省略无意义 subtitle) */}
+            {/* 模式选择 Section */}
             <LeftPanelSection title="探究模式">
               <SelectGrid
                 items={[
                   { key: "histogram", label: "直方图与特征数" },
-                  { key: "normalFit", label: "极限逼近与拟合" },
-                  { key: "paramsShape", label: "参数 μ, σ 与形态" },
-                  { key: "sigmaRule", label: "对称性与高考解题" },
+                  { key: "normalFit", label: "极限逼近拟合" },
+                  { key: "paramsShape", label: "参数 μ, σ 形态" },
+                  { key: "sigmaRule", label: "对称性与解题" },
                 ]}
                 value={studyMode}
                 onChange={(k) => setStudyMode(k as NormalStudyMode)}
                 variant="filled"
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
 
@@ -520,31 +520,14 @@ export function ProbabilityNormalAnimation() {
             </LeftPanelSection>
 
             {/* 教学导引与题设背景 */}
-            <LeftPanelSection title="教学导引与题设背景" compact>
-              <TipCard variant={tipConfig.variant}>
-                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                  <span>{tipConfig.badge}</span>
-                </div>
-                <div className="space-y-1.5 text-[11px] leading-relaxed">
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【初始条件】
-                    </span>
-                    <span className="text-neutral-600">
-                      {tipConfig.condition}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【核心设问】
-                    </span>
-                    <span className="text-neutral-600">
-                      {tipConfig.question}
-                    </span>
-                  </div>
-                </div>
-              </TipCard>
-            </LeftPanelSection>
+            <div className="mt-auto">
+              <TipCard
+                variant={tipConfig.variant}
+                badge={tipConfig.badge}
+                condition={tipConfig.condition}
+                question={tipConfig.question}
+              />
+            </div>
           </LeftPanel>
         }
         center={

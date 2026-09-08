@@ -219,7 +219,7 @@ export function TrigTransformAnimation() {
       left={
         <LeftPanel>
           {/* 1. 研究模式选择 Section (铁律 3: 模式选择置顶) */}
-          <LeftPanelSection title="研究模式" subtitle="选择三角函数探讨维度">
+          <LeftPanelSection title="研究模式">
             <TabSwitcher
               tabs={[
                 { key: "properties", label: "图像性质" },
@@ -236,10 +236,7 @@ export function TrigTransformAnimation() {
 
           {/* 3. 图像性质模式特有配置 */}
           {studyMode === "properties" && (
-            <LeftPanelSection
-              title="对称性特征"
-              subtitle="显示对称轴群与对称中心"
-            >
+            <LeftPanelSection title="对称性特征">
               <TabSwitcher
                 tabs={[
                   { key: "show", label: "显示对称元素" },
@@ -254,10 +251,7 @@ export function TrigTransformAnimation() {
           {/* 4. 高考变换路径特有配置 */}
           {studyMode === "transformPath" && (
             <>
-              <LeftPanelSection
-                title="变换路线"
-                subtitle="对比平移量 |φ| 与 |φ|/ω 的差异"
-              >
+              <LeftPanelSection title="变换路线">
                 <SelectGrid
                   items={[
                     {
@@ -265,7 +259,6 @@ export function TrigTransformAnimation() {
                       label: "路线一: 先平移后伸缩",
                       formula:
                         "\\sin x \\to \\sin(x+\\varphi) \\to \\sin(\\omega x+\\varphi)",
-                      description: "平移 |φ| 单位，再横向伸缩 1/ω",
                       fullWidth: true,
                     },
                     {
@@ -273,7 +266,6 @@ export function TrigTransformAnimation() {
                       label: "路线二: 先伸缩后平移 (高考陷阱)",
                       formula:
                         "\\sin x \\to \\sin(\\omega x) \\to \\sin\\left[\\omega\\left(x+\\frac{\\varphi}{\\omega}\\right)\\right]",
-                      description: "先横向伸缩 1/ω，再平移 |φ|/ω",
                       fullWidth: true,
                     },
                   ]}
@@ -287,10 +279,7 @@ export function TrigTransformAnimation() {
                 />
               </LeftPanelSection>
 
-              <LeftPanelSection
-                title="变换步骤演示"
-                subtitle="点击按步骤观察曲线与位移向量"
-              >
+              <LeftPanelSection title="变换步骤演示">
                 <TabSwitcher
                   tabs={[
                     { key: "0", label: "步0 (基准)" },
@@ -307,14 +296,7 @@ export function TrigTransformAnimation() {
           )}
 
           {/* 5. 参数调节 Section (铁律 3: 声明式 ParamControl) */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle={
-              studyMode === "fivePoints"
-                ? "拖动滑块或画布特征点改变参数"
-                : "拖动滑块改变三角函数特征量"
-            }
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -323,29 +305,12 @@ export function TrigTransformAnimation() {
           </LeftPanelSection>
 
           {/* 6. 教学引导卡片 (规范 2.3: 置于左屏最底部辅助区) */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

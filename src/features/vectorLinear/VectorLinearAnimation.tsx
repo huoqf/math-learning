@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -299,29 +300,24 @@ export function VectorLinearAnimation() {
       left={
         <LeftPanel>
           {/* 模式选择 Section */}
-          <LeftPanelSection
-            title="探究专题模式"
-            subtitle="选择平面向量研究切入点"
-          >
+          <LeftPanelSection title="探究主题">
             <SelectGrid
               items={[
-                { key: "linearCombo", label: "加减与数乘运算" },
-                { key: "collinear", label: "三点共线与分点定理" },
-                { key: "basis", label: "平面向量基本定理", fullWidth: true },
+                { key: "linearCombo", label: "加减与数乘" },
+                { key: "collinear", label: "三点共线" },
+                { key: "basis", label: "基本定理", fullWidth: true },
               ]}
               value={studyMode}
               onChange={(k) =>
                 handleModeChange(k as "linearCombo" | "collinear" | "basis")
               }
               variant="filled"
+              columns={2}
             />
           </LeftPanelSection>
 
           {/* 典型预设 (实现参数降维) */}
-          <LeftPanelSection
-            title="典型构型预设"
-            subtitle="一键切换高考经典探究场景"
-          >
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={presetsByMode[studyMode]}
               value={presetKey}
@@ -333,124 +329,38 @@ export function VectorLinearAnimation() {
           </LeftPanelSection>
 
           {/* 参数调节 Section */}
-          <LeftPanelSection
-            title="参数与坐标调节"
-            subtitle="拖动滑块或画布控制点"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
           </LeftPanelSection>
-
-          {/* 教学引导与探究问题 (规范排版，接入 KatexFormula) */}
-          <LeftPanelSection
-            title="教学探究引导"
-            subtitle="带着核心问题动手实验"
-          >
-            <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-lg p-2.5 text-xs space-y-2 text-neutral-600 leading-relaxed">
-              {studyMode === "linearCombo" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    基准向量{" "}
-                    <KatexFormula formula="\vec{a}, \vec{b}" mode="inline" />{" "}
-                    共起点 O，标量{" "}
-                    <KatexFormula
-                      formula="\lambda, \mu \in [-3, 3]"
-                      mode="inline"
-                    />
-                    。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    调节 <KatexFormula formula="\lambda, \mu" mode="inline" />{" "}
-                    观察合成向量{" "}
-                    <KatexFormula
-                      formula="\vec{s} = \lambda\vec{a} + \mu\vec{b}"
-                      mode="inline"
-                    />{" "}
-                    的对角线变化；思考差向量{" "}
-                    <KatexFormula
-                      formula="\vec{d} = \vec{a} - \vec{b}"
-                      mode="inline"
-                    />{" "}
-                    为何始终从 B 点指向 A 点？
-                  </div>
-                </>
-              )}
-              {studyMode === "collinear" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    点 <KatexFormula formula="C" mode="inline" /> 满足{" "}
-                    <KatexFormula
-                      formula="\vec{OC} = x\vec{OA} + y\vec{OB}"
-                      mode="inline"
-                    />
-                    。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    滑动系数 <KatexFormula formula="x" mode="inline" />
-                    ，观察点 <KatexFormula
-                      formula="C"
-                      mode="inline"
-                    /> 在线段 <KatexFormula formula="AB" mode="inline" />{" "}
-                    内外的分点比例；切换到“全平面自由验证”观察偏离直线时{" "}
-                    <KatexFormula formula="x+y" mode="inline" /> 为何不再等于
-                    1？
-                  </div>
-                </>
-              )}
-              {studyMode === "basis" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    不共线向量{" "}
-                    <KatexFormula
-                      formula="\{\vec{e}_1, \vec{e}_2\}"
-                      mode="inline"
-                    />{" "}
-                    构成一组基底，
-                    <KatexFormula
-                      formula="\det(\vec{e}_1, \vec{e}_2) \neq 0"
-                      mode="inline"
-                    />
-                    。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    拖拽目标向量{" "}
-                    <KatexFormula formula="\vec{v}" mode="inline" />
-                    ，观察过 <KatexFormula
-                      formula="\vec{v}"
-                      mode="inline"
-                    />{" "}
-                    作两基底平行线所唯一确定的分解系数对{" "}
-                    <KatexFormula
-                      formula="(\lambda_1, \lambda_2)"
-                      mode="inline"
-                    />
-                    ；基底共线时为何无解？
-                  </div>
-                </>
-              )}
-            </div>
-          </LeftPanelSection>
+          {/* 教学引导与探究问题（置于最底部） */}
+          <TipCard
+            variant="primary"
+            badge={
+              studyMode === "linearCombo"
+                ? "向量加减与数乘运算"
+                : studyMode === "collinear"
+                  ? "三点共线与分点定理"
+                  : "平面向量基本定理"
+            }
+            condition={
+              studyMode === "linearCombo"
+                ? "基准向量 a, b 共起点 O，实数标量 λ, μ 连续可调。"
+                : studyMode === "collinear"
+                  ? "点 C 满足向量 OC = xOA + yOB。"
+                  : "基底向量 a, b 不共线，v 为平面内的任意目标向量。"
+            }
+            question={
+              studyMode === "linearCombo"
+                ? "调节标量观察合成向量对角线变化；思考差向量为何始终从 B 点指向 A 点？"
+                : studyMode === "collinear"
+                  ? "当且仅当 x + y = 1 时，动点 C 的轨迹为何必然是一条过 A, B 的直线？"
+                  : "任意向量 v 沿不共线基底的分解系数 (x, y) 是否存在且唯一？"
+            }
+          />
         </LeftPanel>
       }
       center={

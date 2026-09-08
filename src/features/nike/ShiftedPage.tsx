@@ -125,7 +125,7 @@ export function ShiftedPage() {
       left={
         <LeftPanel>
           {/* 1. 高考典型真题预设 */}
-          <LeftPanelSection title="高考典型分式模型">
+          <LeftPanelSection title="模型预设">
             <SelectGrid
               items={[
                 {
@@ -147,11 +147,11 @@ export function ShiftedPage() {
               ]}
               value={preset}
               onChange={handlePresetChange}
-              columns={1}
+              columns={2}
             />
           </LeftPanelSection>
 
-          {/* 2. 对象化参数调节 */}
+          {/* 2. 参数调节 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -170,55 +170,33 @@ export function ShiftedPage() {
             />
           </LeftPanelSection>
 
-          {/* 3. 教学导引与探究设问 */}
-          <LeftPanelSection title="教学导引与探究设问" compact>
-            <TipCard variant="primary">
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-primary-700">
-                <span>平移双曲模型与化归探究</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【模型特征 / 条件】
-                  </span>
-                  <span>对称中心为 </span>
+          {/* 3. 教学导引 */}
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard
+              variant="primary"
+              badge="高考模型 · 平移双曲与中心对称化归"
+              condition={
+                <span>
+                  对称中心为{" "}
                   <KatexFormula
-                    formula={`(${params.h.toFixed(1)}, ${params.c.toFixed(1)})`}
+                    formula={`C(${params.h.toFixed(1)}, ${params.c.toFixed(1)})`}
                     mode="inline"
                   />
-                  <span>，渐近线为 </span>
+                  ，渐近线为{" "}
                   <KatexFormula
                     formula={`x = ${params.h.toFixed(1)}`}
                     mode="inline"
                   />
-                  <span> 与 </span>
-                  <KatexFormula
-                    formula={`y = ${params.a.toFixed(1)}(x - ${params.h.toFixed(1)}) + ${params.c.toFixed(1)}`}
-                    mode="inline"
-                  />
-                  <span>。令 </span>
+                  。令{" "}
                   <KatexFormula
                     formula={`u = x - ${params.h.toFixed(1)}`}
                     mode="inline"
-                  />
-                  <span> 可化为标准型 </span>
-                  <KatexFormula
-                    formula={`y - ${params.c.toFixed(1)} = ${params.a.toFixed(1)}u + \\frac{${params.b.toFixed(1)}}{u}`}
-                    mode="inline"
-                  />
-                  <span>。</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问 / 探究】
-                  </span>
-                  <span>
-                    拖拽中心点 C
-                    改变渐近线交点，观察函数图象如何整体平移？对比一次分式与二次分式在分离常数后的核心几何差异是什么？
-                  </span>
-                </div>
-              </div>
-            </TipCard>
+                  />{" "}
+                  可化为标准对勾型。
+                </span>
+              }
+              question="拖拽中心点 C 改变渐近线交点，观察函数图象如何整体平移；对比二次分式与一次分式在分离常数后的核心几何差异。"
+            />
           </LeftPanelSection>
         </LeftPanel>
       }

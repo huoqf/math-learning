@@ -28,6 +28,8 @@ interface TabSwitcherProps<T extends string = string> {
   onChange: (key: T) => void;
   /** 布局方向：vertical(默认单列纵向) | horizontal(单行横向并列) */
   layout?: "vertical" | "horizontal";
+  /** 尺寸紧凑度，默认 normal */
+  size?: "normal" | "compact";
   className?: string;
 }
 
@@ -36,14 +38,21 @@ export const TabSwitcher = <T extends string = string>({
   value,
   onChange,
   layout = "vertical",
+  size = "normal",
   className = "",
 }: TabSwitcherProps<T>) => {
+  const isHorizontal = layout === "horizontal";
+  const isCompact = size === "compact";
+  // 熔断保护：若横向模式下选项 >= 4 项，在左屏窄屏下强制分流为 2 列网格，防止 4 项挤爆
+  const isHorizontalGrid = isHorizontal && tabs.length >= 4;
   const keys = tabs.map((t) => t.key);
+
   const { getItemProps, registerRef } = useRadioGroup({
     value,
     keys,
     onChange: onChange as (key: string) => void,
-    direction: "linear",
+    direction: isHorizontalGrid ? "grid" : "linear",
+    columns: isHorizontalGrid ? 2 : undefined,
   });
 
   const setRef = useCallback(
@@ -53,11 +62,21 @@ export const TabSwitcher = <T extends string = string>({
     [registerRef],
   );
 
-  const isHorizontal = layout === "horizontal";
+  const containerClass = isHorizontalGrid
+    ? "grid grid-cols-2 bg-neutral-100/90 p-1 rounded-lg gap-1"
+    : isHorizontal
+      ? "grid grid-flow-col auto-cols-fr bg-neutral-100/90 p-1 rounded-lg gap-1"
+      : "flex flex-col bg-neutral-100/90 p-1 rounded-lg gap-1";
 
-  const containerClass = isHorizontal
-    ? "grid grid-flow-col auto-cols-fr bg-neutral-100 p-1 rounded-xl gap-1"
-    : "flex flex-col bg-neutral-100 p-1.5 rounded-xl gap-1";
+  const btnPadding = isCompact
+    ? "py-1 px-1.5"
+    : isHorizontalGrid
+      ? "py-1.5 px-2"
+      : isHorizontal
+        ? tabs.length >= 3
+          ? "py-1 px-1"
+          : "py-1.5 px-2"
+        : "py-1.5 px-2";
 
   return (
     <div
@@ -67,6 +86,16 @@ export const TabSwitcher = <T extends string = string>({
       {tabs.map((tab) => {
         const isSelected = value === tab.key;
         const itemProps = getItemProps(tab.key);
+        const titleLength = tab.label.length;
+        const labelSizeClass =
+          isHorizontal && tabs.length >= 3
+            ? titleLength > 5
+              ? "text-[10.5px] leading-tight"
+              : "text-[11px] leading-tight"
+            : isCompact
+              ? "text-[11px] leading-tight"
+              : "text-xs leading-snug";
+
         return (
           <button
             key={tab.key}
@@ -74,28 +103,37 @@ export const TabSwitcher = <T extends string = string>({
             {...itemProps}
             onClick={() => onChange(tab.key as T)}
             className={[
-              "py-2 px-2 text-xs font-bold rounded-lg transition-all duration-200 whitespace-nowrap overflow-hidden text-center",
+              btnPadding,
+              "font-bold rounded-md transition-all duration-150 text-center min-w-0 cursor-pointer select-none active:scale-[0.98]",
               isHorizontal ? "flex justify-center items-center" : "text-left",
               isSelected
-                ? "bg-white text-primary-600 shadow-md ring-1 ring-primary-200"
-                : "text-neutral-500 hover:text-neutral-700 hover:bg-white/50",
+                ? "bg-white text-primary-700 shadow-xs ring-1 ring-black/5"
+                : "text-neutral-500 hover:text-neutral-800 hover:bg-white/60",
             ].join(" ")}
           >
             <div
               className={[
-                "flex flex-row items-center gap-1.5 w-full",
-                isHorizontal ? "justify-center text-center" : "",
+                "flex flex-row items-center gap-1 min-w-0",
+                isHorizontal
+                  ? "justify-center text-center w-full flex-wrap"
+                  : "w-full",
               ].join(" ")}
             >
-              <span className="text-[12px] font-bold leading-tight whitespace-nowrap truncate">
+              <span
+                className={[
+                  labelSizeClass,
+                  "font-bold break-words",
+                  isHorizontal ? "text-center" : "",
+                ].join(" ")}
+              >
                 {tab.label}
               </span>
               {tab.formula && (
-                <span className="whitespace-nowrap opacity-80">
+                <span className="opacity-80 shrink-0">
                   <KatexFormula
                     formula={tab.formula}
                     mode="inline"
-                    className="!text-[11px] !my-0 !mx-0"
+                    className="!text-[10px] !my-0 !mx-0"
                   />
                 </span>
               )}

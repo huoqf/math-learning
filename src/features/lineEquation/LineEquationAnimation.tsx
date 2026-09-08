@@ -564,18 +564,10 @@ export function LineEquationAnimation() {
           <LeftPanelSection title="研究模式">
             <SelectGrid
               items={[
-                { key: "forms", label: "方程形式", description: "5种表达形式" },
-                {
-                  key: "distance",
-                  label: "点到距离",
-                  description: "垂线与距离公式",
-                },
-                {
-                  key: "relation",
-                  label: "两线关系",
-                  description: "平行/垂直/夹角",
-                },
-                { key: "family", label: "直线系", description: "定点与旋转系" },
+                { key: "forms", label: "方程形式" },
+                { key: "distance", label: "点到距离" },
+                { key: "relation", label: "两线关系" },
+                { key: "family", label: "相交直线系" },
               ]}
               value={studyMode}
               onChange={(key) => {
@@ -636,30 +628,13 @@ export function LineEquationAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 4. 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

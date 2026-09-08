@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -170,69 +171,60 @@ export function VectorPolarizationApolloniusAnimation() {
   const presetItems = useMemo(() => {
     if (studyMode === "polarization") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
+        { key: "free", label: "自由探究" },
         {
           key: "equilateral",
           label: "正三角形",
           formula: "\\triangle ABC",
-          description: "边长等于6",
         },
         {
           key: "rightAngle",
           label: "直角正交",
           formula: "\\vec{a} \\perp \\vec{b}",
-          description: "数量积为0",
         },
         {
           key: "obtuseExtrema",
           label: "钝角构型",
           formula: "|AM| < |BM|",
-          description: "数量积为负",
         },
       ];
     }
     if (studyMode === "apollonius") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
+        { key: "free", label: "自由探究" },
         {
           key: "doubleRatio",
           label: "2倍比阿圆",
           formula: "\\lambda = 2.0",
-          description: "经典定比轨迹",
         },
         {
           key: "degenerate",
           label: "中垂线退化",
           formula: "\\lambda = 1.0",
-          description: "直线轨迹",
         },
         {
           key: "halfRatio",
           label: "0.5倍比圆",
           formula: "\\lambda = 0.5",
-          description: "对称圆轨迹",
         },
       ];
     }
     return [
-      { key: "free", label: "自由探究", description: "全参数开放" },
+      { key: "free", label: "自由探究" },
       {
         key: "minPoint",
         label: "数量积最小",
         formula: "P = D",
-        description: "内分点极小值",
       },
       {
         key: "maxPoint",
         label: "数量积最大",
         formula: "P = E",
-        description: "外分点极大值",
       },
       {
         key: "orthogonal",
         label: "零数量积",
         formula: "\\vec{PA} \\perp \\vec{PB}",
-        description: "正交状态",
       },
     ];
   }, [studyMode]);
@@ -326,10 +318,7 @@ export function VectorPolarizationApolloniusAnimation() {
           </LeftPanelSection>
 
           {/* 2. 典型预设 Section (实现参数降维) */}
-          <LeftPanelSection
-            title="典型构型预设"
-            subtitle="一键切换高考经典特值与极值状态"
-          >
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={presetItems}
               value={preset}
@@ -341,10 +330,7 @@ export function VectorPolarizationApolloniusAnimation() {
           </LeftPanelSection>
 
           {/* 3. 参数调节 Section */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块或画布控制点探究规律"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -352,94 +338,31 @@ export function VectorPolarizationApolloniusAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 教学引导卡片 (规范排版，接入 KatexFormula) */}
-          <LeftPanelSection
-            title="教学探究引导"
-            subtitle="带着核心问题动手实验"
-          >
-            <div className="bg-neutral-50/90 border border-neutral-200/80 rounded-lg p-2.5 text-xs space-y-2 text-neutral-600 leading-relaxed">
-              {studyMode === "polarization" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    <KatexFormula formula="M" mode="inline" /> 为底边{" "}
-                    <KatexFormula formula="BC" mode="inline" /> 中点，
-                    <KatexFormula
-                      formula="\vec{AB} \cdot \vec{AC} = |\vec{AM}|^2 - |\vec{BM}|^2"
-                      mode="inline"
-                    />
-                    。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    当底边长固定时，数量积仅由中线长{" "}
-                    <KatexFormula formula="|\vec{AM}|" mode="inline" />{" "}
-                    决定，如何用它秒杀高考模长与数量积最值？
-                  </div>
-                </>
-              )}
-              {studyMode === "apollonius" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    动点 <KatexFormula formula="P" mode="inline" />{" "}
-                    满足到两定点距离比{" "}
-                    <KatexFormula
-                      formula="|PA|/|PB| = \lambda (\lambda \ne 1)"
-                      mode="inline"
-                    />
-                    。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    观察圆直径端点 <KatexFormula formula="D, E" mode="inline" />{" "}
-                    分别为线段 <KatexFormula formula="AB" mode="inline" />{" "}
-                    的内分点与外分点，当{" "}
-                    <KatexFormula formula="\lambda \to 1" mode="inline" />{" "}
-                    时轨迹如何退化为中垂线？
-                  </div>
-                </>
-              )}
-              {studyMode === "combined" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    动点 <KatexFormula formula="P" mode="inline" />{" "}
-                    在阿波罗尼斯圆上运动，求{" "}
-                    <KatexFormula
-                      formula="\vec{PA} \cdot \vec{PB}"
-                      mode="inline"
-                    />{" "}
-                    的最值。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    利用极化恒等式化为{" "}
-                    <KatexFormula
-                      formula="|\vec{PM}|^2 - |\vec{MB}|^2"
-                      mode="inline"
-                    />
-                    ，当 <KatexFormula formula="P" mode="inline" /> 取在内分点{" "}
-                    <KatexFormula formula="D" mode="inline" /> 或外分点{" "}
-                    <KatexFormula formula="E" mode="inline" />{" "}
-                    时如何分别取得最小与最大值？
-                  </div>
-                </>
-              )}
-            </div>
-          </LeftPanelSection>
+          {/* 4. 教学引导卡片（置于最底部） */}
+          <TipCard
+            variant="primary"
+            badge={
+              studyMode === "polarization"
+                ? "极化恒等式与中线模长"
+                : studyMode === "apollonius"
+                  ? "阿波罗尼斯圆轨迹"
+                  : "阿圆上的数量积最值"
+            }
+            condition={
+              studyMode === "polarization"
+                ? "M 为底边 BC 中点，AB·AC = |AM|² - |BM|²。"
+                : studyMode === "apollonius"
+                  ? "动点 P 满足到两定点距离比 |PA|/|PB| = λ (λ ≠ 1)。"
+                  : "动点 P 在阿波罗尼斯圆上运动，求解向量 PA·PB 的最值。"
+            }
+            question={
+              studyMode === "polarization"
+                ? "当底边长固定时，数量积仅由中线长 |AM| 决定，如何用它快速求解最值？"
+                : studyMode === "apollonius"
+                  ? "圆直径端点 D, E 分别为线段 AB 的内分点与外分点，当 λ→1 时轨迹如何退化？"
+                  : "利用极化恒等式转化后，动点 P 取在内分点 D 或外分点 E 时如何分别取得极小与极大值？"
+            }
+          />
         </LeftPanel>
       }
       center={

@@ -279,24 +279,13 @@ export function ConicHomogenizationAnimation() {
           {/* 第一级：探究模式 Section */}
           <LeftPanelSection title="探究模式">
             <SelectGrid
-              columns={1}
+              columns={2}
               items={[
-                {
-                  key: "origin",
-                  label: "原点对称齐次化",
-                  description: "定点为原点 O(0,0)，中心对称",
-                  fullWidth: true,
-                },
-                {
-                  key: "shift",
-                  label: "顶点/定点平移齐次化",
-                  description: "定点 P(x₀,y₀) 平移换元升次",
-                  fullWidth: true,
-                },
+                { key: "origin", label: "原点对称" },
+                { key: "shift", label: "定点平移" },
                 {
                   key: "asymmetric",
-                  label: "非对称斜率代数剖析",
-                  description: "分析 λk_{PA} + μk_{PB} 与消元二次型",
+                  label: "非对称加权",
                   fullWidth: true,
                 },
               ]}
@@ -315,15 +304,11 @@ export function ConicHomogenizationAnimation() {
           </LeftPanelSection>
 
           {/* 第二级：典型预设 Section (黄金 2×2 规范) */}
-          <LeftPanelSection title="典型高考预设">
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               columns={2}
               items={[
-                {
-                  key: "free",
-                  label: "自由探究",
-                  description: "全参数开放",
-                },
+                { key: "free", label: "自由探究" },
                 {
                   key: "left_vertex_perpendicular",
                   label: "左顶点直角弦",
@@ -356,30 +341,13 @@ export function ConicHomogenizationAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

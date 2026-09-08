@@ -3,11 +3,11 @@ import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
   MathPanel,
-  KatexFormula,
   LeftPanel,
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -153,10 +153,7 @@ export function VectorBasisAnimation() {
       left={
         <LeftPanel>
           {/* 1. 模式选择区 */}
-          <LeftPanelSection
-            title="探究专题模式"
-            subtitle="探究平面向量基本定理的核心应用视角"
-          >
+          <LeftPanelSection title="探究主题">
             <TabSwitcher
               tabs={modeTabs}
               value={studyMode}
@@ -165,10 +162,7 @@ export function VectorBasisAnimation() {
           </LeftPanelSection>
 
           {/* 2. 典型预设区 (实现参数降维) */}
-          <LeftPanelSection
-            title="典型几何构型"
-            subtitle="选择高考经典模型或自由探索"
-          >
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={presetItems}
               value={activePreset}
@@ -180,10 +174,7 @@ export function VectorBasisAnimation() {
           </LeftPanelSection>
 
           {/* 3. 参数调节区 */}
-          <LeftPanelSection
-            title="基底与向量控制"
-            subtitle="拖动滑块或中屏控制点实时改变几何坐标"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -191,121 +182,37 @@ export function VectorBasisAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 底部教学引导卡片 (规范排版，接入 KatexFormula) */}
-          <LeftPanelSection
-            title="教学探究引导"
-            subtitle="数形结合思考与探究任务"
-          >
-            <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 text-xs space-y-2 text-neutral-600 leading-relaxed">
-              {studyMode === "basisDecomp" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    基底{" "}
-                    <KatexFormula
-                      formula="\{\vec{e}_1, \vec{e}_2\}"
-                      mode="inline"
-                    />{" "}
-                    不共线（
-                    <KatexFormula formula="\det \neq 0" mode="inline" />
-                    ）且为非零向量。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    拖动基底端点改变夹角，观察目标向量在斜坐标网格中的分解系数{" "}
-                    <KatexFormula formula="\lambda" mode="inline" /> 与{" "}
-                    <KatexFormula formula="\mu" mode="inline" /> 是否唯一确定？
-                  </div>
-                </>
-              )}
-              {studyMode === "orthogonal" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    基底{" "}
-                    <KatexFormula
-                      formula="\{\vec{e}_1', \vec{e}_2'\}"
-                      mode="inline"
-                    />{" "}
-                    模长均为 1 且互相垂直（
-                    <KatexFormula
-                      formula="\vec{e}_1' \perp \vec{e}_2'"
-                      mode="inline"
-                    />
-                    ）。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    旋转坐标轴角度{" "}
-                    <KatexFormula formula="\theta" mode="inline" />
-                    ，观察正交投影系数平方和{" "}
-                    <KatexFormula formula="x'^2 + y'^2" mode="inline" />{" "}
-                    是否始终等于模长平方{" "}
-                    <KatexFormula formula="|\vec{a}|^2" mode="inline" />？
-                  </div>
-                </>
-              )}
-              {studyMode === "collinear" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    <KatexFormula
-                      formula="\vec{OP} = x\vec{OA} + y\vec{OB}"
-                      mode="inline"
-                    />
-                    ，基准点 <KatexFormula formula="O" mode="inline" />{" "}
-                    位于原点。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    当改变权重使{" "}
-                    <KatexFormula formula="x + y = 1" mode="inline" /> 时，点{" "}
-                    <KatexFormula formula="P" mode="inline" /> 是否严格落在直线{" "}
-                    <KatexFormula formula="AB" mode="inline" /> 上？观察等和线族{" "}
-                    <KatexFormula formula="x+y=k" mode="inline" />{" "}
-                    平行移动规律。
-                  </div>
-                </>
-              )}
-              {studyMode === "triangleGeom" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    <KatexFormula formula="P" mode="inline" /> 为线段{" "}
-                    <KatexFormula formula="AB" mode="inline" /> 上的内分点，
-                    <KatexFormula formula="G" mode="inline" /> 为{" "}
-                    <KatexFormula formula="\triangle OAB" mode="inline" />{" "}
-                    的重心。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    滑动分点比率 <KatexFormula formula="t" mode="inline" />
-                    ，观察分点向量{" "}
-                    <KatexFormula formula="\vec{OP}" mode="inline" />{" "}
-                    的系数之和是否恒等于 1？重心{" "}
-                    <KatexFormula formula="G" mode="inline" />{" "}
-                    对应的两系数各为多少？
-                  </div>
-                </>
-              )}
-            </div>
-          </LeftPanelSection>
+          {/* 4. 底部教学引导卡片（置于最底部） */}
+          <TipCard
+            variant="primary"
+            badge={
+              studyMode === "basisDecomp"
+                ? "平面向量基本定理"
+                : studyMode === "orthogonal"
+                  ? "正交分解与旋转基底"
+                  : studyMode === "collinear"
+                    ? "三点共线与等和线"
+                    : "三角形分点与重心"
+            }
+            condition={
+              studyMode === "basisDecomp"
+                ? "基底 {e₁, e₂} 不共线（行列式非零）且为非零向量。"
+                : studyMode === "orthogonal"
+                  ? "基底 {e₁', e₂'} 模长均为 1 且互相垂直。"
+                  : studyMode === "collinear"
+                    ? "向量 OP = xOA + yOB，基准点 O 位于坐标原点。"
+                    : "P 为线段 AB 上的动分点，G 为 △OAB 的几何重心。"
+            }
+            question={
+              studyMode === "basisDecomp"
+                ? "拖动基底端点改变夹角，观察目标向量在斜坐标网格中的分解系数是否唯一确定？"
+                : studyMode === "orthogonal"
+                  ? "旋转坐标轴角度，观察正交投影系数平方和是否始终等于模长平方？"
+                  : studyMode === "collinear"
+                    ? "当改变权重使 x + y = 1 时，动点 P 的轨迹为何必然落在线段 AB 所在直线上？"
+                    : "观察分点向量系数之和是否恒为 1，以及重心 G 对应的两系数为何为 1/3？"
+            }
+          />
         </LeftPanel>
       }
       center={

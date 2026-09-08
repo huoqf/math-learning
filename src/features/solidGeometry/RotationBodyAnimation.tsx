@@ -328,10 +328,10 @@ export default function RotationBodyAnimation() {
             <SelectGrid
               columns={2}
               items={[
-                { key: "rectangle", label: "圆柱 (矩形旋转)" },
-                { key: "rightTriangle", label: "圆锥 (直角三角)" },
-                { key: "rightTrapezoid", label: "圆台 (直角梯形)" },
-                { key: "semicircle", label: "球体 (半圆绕轴)" },
+                { key: "rectangle", label: "圆柱" },
+                { key: "rightTriangle", label: "圆锥" },
+                { key: "rightTrapezoid", label: "圆台" },
+                { key: "semicircle", label: "球体" },
               ]}
               value={shape}
               onChange={(k) => {
@@ -365,8 +365,8 @@ export default function RotationBodyAnimation() {
             )}
           </LeftPanelSection>
 
-          {/* 4. 视图与视角 */}
-          <LeftPanelSection title="视图与视角">
+          {/* 4. 空间视角 */}
+          <LeftPanelSection title="空间视角">
             <div className="space-y-2">
               <TabSwitcher
                 layout="horizontal"
@@ -409,29 +409,12 @@ export default function RotationBodyAnimation() {
           </LeftPanelSection>
 
           {/* 5. 教学提示与题设导引（置于左屏底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

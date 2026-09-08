@@ -228,18 +228,16 @@ export function DerivativeAnimation() {
       left={
         <LeftPanel>
           {/* 1. 核心探究模式 */}
-          <LeftPanelSection title="探究模式" subtitle="选择认知视角">
+          <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
                 {
                   key: "secant_limit",
                   label: "割线极限逼近",
-                  description: "Δx→0 以直代曲",
                 },
                 {
                   key: "tangent_eq",
                   label: "切线方程性质",
-                  description: "点斜式与极值切线",
                 },
               ]}
               value={mode}
@@ -250,7 +248,7 @@ export function DerivativeAnimation() {
           </LeftPanelSection>
 
           {/* 2. 函数模型选择（精选8个经典母题，纯KaTeX公式无重复文本） */}
-          <LeftPanelSection title="函数模型" subtitle="选择教学与高考典型函数">
+          <LeftPanelSection title="函数模型">
             <SelectGrid
               items={CORE_FUNCTION_KEYS.map((key) => {
                 const p = PRESET_FUNCTIONS[key];
@@ -267,12 +265,7 @@ export function DerivativeAnimation() {
           </LeftPanelSection>
 
           {/* 3. 参数与坐标调节（按模式动态裁剪） */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle={
-              mode === "secant_limit" ? "改变切点与割线步长" : "移动切点横坐标"
-            }
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -281,29 +274,12 @@ export function DerivativeAnimation() {
           </LeftPanelSection>
 
           {/* 4. 教学引导与题设背景 (置于最底部) */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant="primary">
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant="primary"
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

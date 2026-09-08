@@ -176,28 +176,24 @@ export function TrigTangentAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="研究模式" subtitle="选择正切函数探讨视角">
+          <LeftPanelSection title="研究模式">
             <SelectGrid
               items={[
                 {
                   key: "unitCircle",
                   label: "正切线生成",
-                  description: "单位圆与外切线",
                 },
                 {
                   key: "baseFunction",
                   label: "y=tan x 性质",
-                  description: "基础图象与周期",
                 },
                 {
                   key: "generalTransform",
                   label: "一般型变换",
-                  description: "A/ω/φ/C 综合参数",
                 },
                 {
                   key: "gaokaoProblem",
                   label: "高考 ω 范围",
-                  description: "区间单调无渐近线",
                 },
               ]}
               value={studyMode}
@@ -216,10 +212,7 @@ export function TrigTangentAnimation() {
           </LeftPanelSection>
 
           {studyMode !== "unitCircle" && (
-            <LeftPanelSection
-              title="单调区间高亮"
-              subtitle="显示与隐藏开区间阴影"
-            >
+            <LeftPanelSection title="单调区间高亮">
               <TabSwitcher
                 tabs={[
                   { key: "show", label: "高亮单调区间" },
@@ -232,7 +225,7 @@ export function TrigTangentAnimation() {
           )}
 
           {paramConfigs.length > 0 && (
-            <LeftPanelSection title="参数调节" subtitle="拖动滑块改变函数参数">
+            <LeftPanelSection title="参数调节">
               <ParamControl
                 params={paramConfigs}
                 onParamChange={handleParamChange}
@@ -241,29 +234,12 @@ export function TrigTangentAnimation() {
             </LeftPanelSection>
           )}
 
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

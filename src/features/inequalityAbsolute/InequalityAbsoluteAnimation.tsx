@@ -13,6 +13,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   TabSwitcher,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -137,8 +138,9 @@ export function InequalityAbsoluteAnimation() {
       left={
         <LeftPanel>
           {/* 模式选择 Section */}
-          <LeftPanelSection title="研究模式" subtitle="选择绝对值几何关系">
+          <LeftPanelSection title="研究模式">
             <TabSwitcher
+              layout="horizontal"
               tabs={[
                 { key: "single", label: "单绝对值" },
                 { key: "sum", label: "距离之和" },
@@ -152,10 +154,7 @@ export function InequalityAbsoluteAnimation() {
 
           {/* 不等号方向 Section (仅非 triangle 模式展示) */}
           {studyMode !== "triangle" && (
-            <LeftPanelSection
-              title="不等号方向"
-              subtitle="选择解集的大于/小于关系"
-            >
+            <LeftPanelSection title="不等号方向">
               <SelectGrid
                 items={[
                   { key: "<=", formula: "f(x) \\le m" },
@@ -170,11 +169,35 @@ export function InequalityAbsoluteAnimation() {
           )}
 
           {/* 参数调节 Section */}
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块改变定点与阈值">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={handleReset}
+            />
+          </LeftPanelSection>
+
+          {/* 教学导引 */}
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard
+              variant="warning"
+              badge="高考重点 · 绝对值几何距离与三角不等式"
+              condition={
+                studyMode === "single"
+                  ? "数轴上动点 x 到定点 a 的几何距离 |x - a|。"
+                  : studyMode === "sum"
+                    ? "动点 x 到两定点 a, b 的距离之和 |x - a| + |x - b|。"
+                    : studyMode === "diff"
+                      ? "动点 x 到两定点 a, b 的距离之差 |x - a| - |x - b|。"
+                      : "实数 a, b 的绝对值三角不等式 ||a| - |b|| ≤ |a ± b| ≤ |a| + |b|。"
+              }
+              question={
+                studyMode === "sum"
+                  ? "探究为何两点距离之和在闭区间 [a, b] 恒取最小值 |a - b|（平底杯杯底）。"
+                  : studyMode === "diff"
+                    ? "探究两点距离之差为何恒在 [-|a - b|, |a - b|] 形成阶梯上下界。"
+                    : "观察阈值截线与折线交点，探究不等式解集的几何区间分布。"
+              }
             />
           </LeftPanelSection>
         </LeftPanel>

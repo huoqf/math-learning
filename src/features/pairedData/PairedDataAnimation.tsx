@@ -342,14 +342,14 @@ export function PairedDataAnimation() {
           {/* 回归模式下的特定控制区 */}
           {studyMode === "regression" && (
             <>
-              <LeftPanelSection title="回归模型类型选择">
+              <LeftPanelSection title="回归模型">
                 <TabSwitcher
                   tabs={[
                     { key: "linear", label: "线性" },
                     { key: "exponential", label: "指数" },
                     { key: "logarithmic", label: "对数" },
                     { key: "power", label: "幂函数" },
-                    { key: "inverse", label: "双曲线逆" },
+                    { key: "inverse", label: "双曲逆" },
                   ]}
                   value={selectedModel}
                   onChange={(key) =>
@@ -358,7 +358,7 @@ export function PairedDataAnimation() {
                 />
               </LeftPanelSection>
 
-              <LeftPanelSection title="高考真实数据集预设">
+              <LeftPanelSection title="数据集预设">
                 <SelectGrid
                   items={REGRESSION_PRESETS.map((p, idx) => ({
                     key: String(idx),
@@ -375,7 +375,7 @@ export function PairedDataAnimation() {
 
           {/* 独立性检验下的情景预设 */}
           {studyMode === "independence" && (
-            <LeftPanelSection title="高考典型情境预设">
+            <LeftPanelSection title="典型情境预设">
               <SelectGrid
                 items={indPresetGridItems}
                 value={indPresetKey}
@@ -402,31 +402,14 @@ export function PairedDataAnimation() {
           </LeftPanelSection>
 
           {/* 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {renderMixedText(tipConfig.condition)}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">
-                    {renderMixedText(tipConfig.question)}
-                  </span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <div className="mt-auto">
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={renderMixedText(tipConfig.condition)}
+              question={renderMixedText(tipConfig.question)}
+            />
+          </div>
         </LeftPanel>
       }
       center={

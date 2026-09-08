@@ -242,17 +242,21 @@ export function ParabolaAnimation() {
           </LeftPanelSection>
 
           {/* 2. 研究主题 Section */}
-          <LeftPanelSection title="高考焦点与准线几何">
+          <LeftPanelSection title="探究主题">
             <SelectGrid
               items={[
                 { key: "definition", label: "第一定义与焦半径" },
-                { key: "focalChord", label: "焦点弦与相切圆" },
-                { key: "tangentOptical", label: "切线光学与准线几何" },
+                { key: "focalChord", label: "焦点弦相切圆" },
+                {
+                  key: "tangentOptical",
+                  label: "切线与光学性质",
+                  fullWidth: true,
+                },
               ]}
               value={studyMode}
               onChange={handleModeChange}
               variant="filled"
-              columns={1}
+              columns={2}
             />
           </LeftPanelSection>
 
@@ -276,30 +280,13 @@ export function ParabolaAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

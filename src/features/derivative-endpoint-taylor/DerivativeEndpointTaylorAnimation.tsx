@@ -298,10 +298,8 @@ export function DerivativeEndpointTaylorAnimation() {
       left={
         <LeftPanel>
           {/* 研究模式切换 */}
-          <LeftPanelSection
-            title="研究模式"
-            subtitle="选择新高考导数压轴研究对象"
-          >
+          {/* 研究模式切换 */}
+          <LeftPanelSection title="研究模式">
             <TabSwitcher
               tabs={[
                 { key: "endpoint", label: "端点效应" },
@@ -315,10 +313,7 @@ export function DerivativeEndpointTaylorAnimation() {
 
           {/* 子模式配置：端点类型 */}
           {activeMode === "endpoint" && (
-            <LeftPanelSection
-              title="端点函数构造"
-              subtitle="选择常见新高考压轴端点类型"
-            >
+            <LeftPanelSection title="端点函数构造">
               <SelectGrid
                 items={[
                   {
@@ -341,6 +336,7 @@ export function DerivativeEndpointTaylorAnimation() {
                 value={endpointType}
                 onChange={(k) => setEndpointType(k as EndpointFuncType)}
                 variant="filled"
+                columns={2}
               />
             </LeftPanelSection>
           )}
@@ -348,10 +344,7 @@ export function DerivativeEndpointTaylorAnimation() {
           {/* 子模式配置：泰勒基底与阶数 */}
           {activeMode === "taylor" && (
             <>
-              <LeftPanelSection
-                title="超越基底函数"
-                subtitle="选择拟合放缩的超越函数"
-              >
+              <LeftPanelSection title="超越基底函数">
                 <SelectGrid
                   items={[
                     { key: "exp", label: "指数函数", formula: "f(x) = e^x" },
@@ -378,15 +371,12 @@ export function DerivativeEndpointTaylorAnimation() {
                 />
               </LeftPanelSection>
 
-              <LeftPanelSection
-                title="拟合多项式阶数"
-                subtitle="选择泰勒展开多项式阶数"
-              >
+              <LeftPanelSection title="拟合多项式阶数">
                 <SelectGrid
                   items={[
-                    { key: "1", label: "1阶切线放缩", formula: "P_1(x)" },
-                    { key: "2", label: "2阶抛物线拟合", formula: "P_2(x)" },
-                    { key: "3", label: "3阶三次多项式", formula: "P_3(x)" },
+                    { key: "1", label: "1阶切线", formula: "P_1(x)" },
+                    { key: "2", label: "2阶抛物线", formula: "P_2(x)" },
+                    { key: "3", label: "3阶多项式", formula: "P_3(x)" },
                   ]}
                   value={String(taylorOrder)}
                   onChange={(k) => setTaylorOrder(Number(k))}
@@ -398,10 +388,7 @@ export function DerivativeEndpointTaylorAnimation() {
           )}
 
           {/* 参数调节区 */}
-          <LeftPanelSection
-            title="动态参数控制"
-            subtitle="拖动滑块或画布控制点实时交互"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -410,29 +397,12 @@ export function DerivativeEndpointTaylorAnimation() {
           </LeftPanelSection>
 
           {/* 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

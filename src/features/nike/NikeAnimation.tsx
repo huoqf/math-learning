@@ -256,8 +256,9 @@ export function NikeAnimation() {
       left={
         <LeftPanel>
           {/* 1. 模式选择区 (TabSwitcher) */}
-          <LeftPanelSection title="探究场景模式">
+          <LeftPanelSection title="探究模式">
             <TabSwitcher
+              layout="horizontal"
               tabs={[
                 { key: "standard", label: "基本性质" },
                 { key: "amgm", label: "均值不等式" },
@@ -347,8 +348,8 @@ export function NikeAnimation() {
             )}
           </LeftPanelSection>
 
-          {/* 3. 对象化参数调节控制台 */}
-          <LeftPanelSection title="动态参数调节">
+          {/* 3. 参数调节 */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -356,8 +357,8 @@ export function NikeAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 教学导引与探究设问 */}
-          <LeftPanelSection title="教学导引与探究设问" compact>
+          {/* 4. 教学导引 */}
+          <LeftPanelSection title="教学导引" compact>
             {activeMode === "standard" && (
               <TipCard
                 variant={
@@ -367,165 +368,78 @@ export function NikeAnimation() {
                       ? "warning"
                       : "danger"
                 }
-              >
-                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
+                badge={
+                  params.a * params.b > 0
+                    ? "高考母题 · 经典对勾函数模型 (ab > 0)"
+                    : params.a * params.b < 0
+                      ? "高考延伸 · 双曲飘带型函数 (ab < 0)"
+                      : "退化模型 · 反比例函数"
+                }
+                condition={
                   <span>
-                    {params.a * params.b > 0
-                      ? "经典对勾函数模型 (ab > 0)"
-                      : params.a * params.b < 0
-                        ? "双曲飘带型函数 (ab < 0)"
-                        : "初等退化函数形态"}
-                  </span>
-                </div>
-                <div className="space-y-1.5 text-[11px] leading-relaxed">
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【模型特征 / 条件】
-                    </span>
-                    <span>定义域去心 </span>
-                    <KatexFormula formula="x \ne 0" mode="inline" />
-                    <span>，为奇函数 </span>
+                    定义域去心 <KatexFormula formula="x \ne 0" mode="inline" />
+                    ，奇函数{" "}
                     <KatexFormula formula="f(-x) = -f(x)" mode="inline" />
-                    <span>
-                      。
-                      {params.a * params.b > 0 ? (
-                        <span>
-                          在第一象限驻点{" "}
-                          <KatexFormula
-                            formula={`x = \\sqrt{b/a} = ${Math.sqrt(Math.max(1e-4, params.b / Math.max(1e-4, params.a))).toFixed(2)}`}
-                            mode="inline"
-                          />{" "}
-                          取得极小值，在{" "}
-                          <KatexFormula
-                            formula="(0, \sqrt{b/a}]"
-                            mode="inline"
-                          />{" "}
-                          单调递减，在{" "}
-                          <KatexFormula
-                            formula="[\sqrt{b/a}, +\infty)"
-                            mode="inline"
-                          />{" "}
-                          单调递增。
-                        </span>
-                      ) : (
-                        <span>
-                          导数{" "}
-                          <KatexFormula
-                            formula="f'(x) = a - b/x^2"
-                            mode="inline"
-                          />{" "}
-                          恒{params.a > 0 ? "正" : "负"}，全域单调
-                          {params.a > 0 ? "递增" : "递减"}无极值。
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【核心设问 / 探究】
-                    </span>
-                    <span>
-                      {params.a * params.b > 0
-                        ? "调节分子系数 b，观察特征驻点如何沿双曲线向外迁移？拖动切点 P 观察切线何时变为水平？"
-                        : "改变斜率 a 的正负，观察为何飘带形态不具备驻点？渐近线与曲线的位置关系如何变化？"}
-                    </span>
-                  </div>
-                </div>
-              </TipCard>
+                    ，渐近线为{" "}
+                    <KatexFormula
+                      formula={`y = ${params.a.toFixed(1)}x`}
+                      mode="inline"
+                    />{" "}
+                    与 <KatexFormula formula="x = 0" mode="inline" />。
+                  </span>
+                }
+                question={
+                  params.a * params.b > 0
+                    ? "调节分子系数 b，观察极值驻点 x = √(b/a) 的迁移规律；拖动切点 P 观察切线水平位置。"
+                    : "改变斜率 a 的正负，观察为何飘带形态全域单调且无极值点。"
+                }
+              />
             )}
 
             {activeMode === "amgm" && (
-              <TipCard variant="success">
-                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-success-800">
-                  <span>均值不等式数形结合 (AM-GM)</span>
-                </div>
-                <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【模型特征 / 条件】
-                    </span>
-                    <span>满足前提“一正” </span>
-                    <KatexFormula formula="a>0, b>0, x>0" mode="inline" />
-                    <span> 与“二定” </span>
+              <TipCard
+                variant="success"
+                badge="高考重点 · 均值不等式配凑最值 (AM-GM)"
+                condition={
+                  <span>
+                    满足前提“一正、二定”，乘积为定值{" "}
                     <KatexFormula
                       formula={`(ax)(\\frac{b}{x}) = ${(params.a * params.b).toFixed(1)}`}
                       mode="inline"
                     />
-                    <span>。在 </span>
-                    <KatexFormula
-                      formula={`x = \\sqrt{b/a} = ${Math.sqrt(Math.max(1e-4, params.b / Math.max(1e-4, params.a))).toFixed(2)}`}
-                      mode="inline"
-                    />
-                    <span> 取得理论最小值 </span>
-                    <KatexFormula
-                      formula={`y_{\\min} = 2\\sqrt{ab} = ${(2 * Math.sqrt(Math.max(0, params.a * params.b))).toFixed(2)}`}
-                      mode="inline"
-                    />
-                    <span>。</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【核心设问 / 探究】
-                    </span>
-                    <span>
-                      拖动探针动点 P
-                      逼近极小值点，观察虚线拆分高线何时满足两项等长{" "}
-                      <KatexFormula formula="ax = b/x" mode="inline" />
-                      ？两项不等时为何和值总是严格偏大？
-                    </span>
-                  </div>
-                </div>
-              </TipCard>
+                    。
+                  </span>
+                }
+                question="拖动动点 P 逼近极小值点，观察虚线何时满足两项等长 ax = b/x？体会积定和最小与等号成立条件。"
+              />
             )}
 
             {activeMode === "shifted" && (
-              <TipCard variant="primary">
-                <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-primary-700">
-                  <span>平移双曲模型与化归探究</span>
-                </div>
-                <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【模型特征 / 条件】
-                    </span>
-                    <span>对称中心为 </span>
+              <TipCard
+                variant="primary"
+                badge="高考模型 · 平移双曲与中心对称化归"
+                condition={
+                  <span>
+                    对称中心为{" "}
                     <KatexFormula
-                      formula={`(${params.h.toFixed(1)}, ${params.c.toFixed(1)})`}
+                      formula={`C(${params.h.toFixed(1)}, ${params.c.toFixed(1)})`}
                       mode="inline"
                     />
-                    <span>，渐近线为 </span>
+                    ，渐近线为{" "}
                     <KatexFormula
                       formula={`x = ${params.h.toFixed(1)}`}
                       mode="inline"
                     />
-                    <span> 与 </span>
-                    <KatexFormula
-                      formula={`y = ${params.a.toFixed(1)}(x - ${params.h.toFixed(1)}) + ${params.c.toFixed(1)}`}
-                      mode="inline"
-                    />
-                    <span>。令 </span>
+                    。令{" "}
                     <KatexFormula
                       formula={`u = x - ${params.h.toFixed(1)}`}
                       mode="inline"
-                    />
-                    <span> 可化为标准型 </span>
-                    <KatexFormula
-                      formula={`y - ${params.c.toFixed(1)} = ${params.a.toFixed(1)}u + \\frac{${params.b.toFixed(1)}}{u}`}
-                      mode="inline"
-                    />
-                    <span>。</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【核心设问 / 探究】
-                    </span>
-                    <span>
-                      拖拽中心点 C
-                      改变渐近线交点，观察函数图象如何整体平移？对比一次分式与二次分式在分离常数后的核心几何差异是什么？
-                    </span>
-                  </div>
-                </div>
-              </TipCard>
+                    />{" "}
+                    可化为标准对勾型。
+                  </span>
+                }
+                question="拖拽中心点 C 改变渐近线交点，观察函数图象如何整体平移；对比二次分式与一次分式在分离常数后的核心几何差异。"
+              />
             )}
           </LeftPanelSection>
         </LeftPanel>

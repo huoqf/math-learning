@@ -582,27 +582,23 @@ export function ProbabilityBayesAnimation() {
           {activeMode === "total_prob" && (
             <LeftPanelSection title="典型情境">
               <SelectGrid
-                columns={1}
+                columns={2}
                 items={[
                   {
                     key: "free",
                     label: "自由探索",
-                    fullWidth: true,
                   },
                   {
                     key: "factory3",
-                    label: "三车间次品模型",
-                    fullWidth: true,
+                    label: "三车间次品",
                   },
                   {
                     key: "balanced",
-                    label: "三等分均衡模型",
-                    fullWidth: true,
+                    label: "三等分均衡",
                   },
                   {
                     key: "warner",
-                    label: "Warner 敏感问题调查",
-                    fullWidth: true,
+                    label: "Warner调查",
                   },
                 ]}
                 value={totalScenario}
@@ -642,22 +638,19 @@ export function ProbabilityBayesAnimation() {
           {activeMode === "bayes" && (
             <LeftPanelSection title="典型情境">
               <SelectGrid
-                columns={1}
+                columns={2}
                 items={[
                   {
                     key: "free",
                     label: "自由探索",
-                    fullWidth: true,
                   },
                   {
                     key: "screening",
-                    label: "罕见病筛查模型",
-                    fullWidth: true,
+                    label: "罕见病筛查",
                   },
                   {
                     key: "factory",
-                    label: "工厂质检次品溯源",
-                    fullWidth: true,
+                    label: "次品溯源",
                   },
                 ]}
                 value={bayesScenario}
@@ -780,29 +773,14 @@ export function ProbabilityBayesAnimation() {
           )}
 
           {/* 第 5 层：教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <div className="mt-auto">
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
+          </div>
         </LeftPanel>
       }
       center={

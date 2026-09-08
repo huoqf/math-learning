@@ -629,25 +629,29 @@ export default function CircumInSphereAnimation() {
           </LeftPanelSection>
 
           {/* Step 5: 图层与标注显示控制 */}
-          <LeftPanelSection title="图层与标注显示控制" compact>
-            <div className="flex flex-col gap-2.5">
+          <LeftPanelSection title="图层控制" compact>
+            <div className="grid grid-cols-2 gap-2">
               <Toggle
+                size="compact"
                 label="几何体实体"
                 checked={showSolid}
                 onChange={setShowSolid}
               />
               <Toggle
-                label="标准切接球壳 (带赤道与极轴)"
+                size="compact"
+                label="标准切接球壳"
                 checked={showSphere}
                 onChange={setShowSphere}
               />
               <Toggle
+                size="compact"
                 label="特征高线与对角线"
                 checked={showAuxLines}
                 onChange={setShowAuxLines}
               />
               {(shape === "cone" || shape === "cylinder") && (
                 <Toggle
+                  size="compact"
                   label="轴截面剖面"
                   checked={showSection}
                   onChange={setShowSection}
@@ -655,7 +659,8 @@ export default function CircumInSphereAnimation() {
               )}
               {sphereType === "inscribed" && (
                 <Toggle
-                  label="相切切点与垂线段"
+                  size="compact"
+                  label="相切点与垂线"
                   checked={showTangentPoints}
                   onChange={setShowTangentPoints}
                 />
@@ -663,8 +668,8 @@ export default function CircumInSphereAnimation() {
             </div>
           </LeftPanelSection>
 
-          {/* Step 6: 3D 空间视角预设 */}
-          <LeftPanelSection title="3D 空间视角预设">
+          {/* Step 6: 空间视角预设 */}
+          <LeftPanelSection title="空间视角">
             <TabSwitcher
               layout="horizontal"
               tabs={[
@@ -679,29 +684,12 @@ export default function CircumInSphereAnimation() {
           </LeftPanelSection>
 
           {/* Step 7: 教学提示与题设导引（置于左屏底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

@@ -119,19 +119,12 @@ export function AmgmPage() {
     ];
   }, [params]);
 
-  const xMinVal = Math.sqrt(
-    Math.max(1e-4, params.b / Math.max(1e-4, params.a)),
-  ).toFixed(2);
-  const minValStr = (2 * Math.sqrt(Math.max(0, params.a * params.b))).toFixed(
-    2,
-  );
-
   return (
     <ThreePanel
       left={
         <LeftPanel>
           {/* 1. 典型均值不等式模型 */}
-          <LeftPanelSection title="均值不等式经典配凑">
+          <LeftPanelSection title="配凑预设">
             <SelectGrid
               items={[
                 {
@@ -157,7 +150,7 @@ export function AmgmPage() {
             />
           </LeftPanelSection>
 
-          {/* 2. 对象化参数调节 */}
+          {/* 2. 参数调节 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -169,49 +162,23 @@ export function AmgmPage() {
             />
           </LeftPanelSection>
 
-          {/* 3. 教学导引与探究设问 */}
-          <LeftPanelSection title="教学导引与探究设问" compact>
-            <TipCard variant="success">
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1 text-success-800">
-                <span>均值不等式数形结合 (AM-GM)</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed text-neutral-700">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【模型特征 / 条件】
-                  </span>
-                  <span>满足前提“一正” </span>
-                  <KatexFormula formula="a>0, b>0, x>0" mode="inline" />
-                  <span> 与“二定” </span>
+          {/* 3. 教学导引 */}
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard
+              variant="success"
+              badge="高考重点 · 均值不等式配凑最值 (AM-GM)"
+              condition={
+                <span>
+                  满足前提“一正、二定”，乘积为定值{" "}
                   <KatexFormula
                     formula={`(ax)(\\frac{b}{x}) = ${(params.a * params.b).toFixed(1)}`}
                     mode="inline"
                   />
-                  <span>。在 </span>
-                  <KatexFormula
-                    formula={`x = \\sqrt{b/a} = ${xMinVal}`}
-                    mode="inline"
-                  />
-                  <span> 取得理论最小值 </span>
-                  <KatexFormula
-                    formula={`y_{\\min} = 2\\sqrt{ab} = ${minValStr}`}
-                    mode="inline"
-                  />
-                  <span>。</span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问 / 探究】
-                  </span>
-                  <span>
-                    拖动探针动点 P
-                    逼近极小值点，观察虚线拆分高线何时满足两项等长{" "}
-                    <KatexFormula formula="ax = b/x" mode="inline" />
-                    ？两项不等时为何和值总是严格偏大？
-                  </span>
-                </div>
-              </div>
-            </TipCard>
+                  。
+                </span>
+              }
+              question="拖动动点 P 逼近极小值点，观察虚线何时满足两项等长 ax = b/x？体会积定和最小与等号成立条件。"
+            />
           </LeftPanelSection>
         </LeftPanel>
       }

@@ -245,7 +245,7 @@ export default function FoldingAnimation() {
       left={
         <LeftPanel>
           {/* 第 1 步：探究模式与高考折叠模型选择 */}
-          <LeftPanelSection title="探究模式">
+          <LeftPanelSection title="探究模型">
             <SelectGrid
               columns={2}
               items={[
@@ -274,10 +274,11 @@ export default function FoldingAnimation() {
           {/* 第 2 步：原平面图形与 3D 折叠对比 */}
           <LeftPanelSection title="几何对比模式">
             <TabSwitcher
+              layout="horizontal"
               tabs={[
                 { key: "both", label: "3D折叠+虚线原图" },
-                { key: "folded", label: "纯 3D 折叠" },
-                { key: "unfolded", label: "2D 展平原图" },
+                { key: "folded", label: "纯3D折叠" },
+                { key: "unfolded", label: "2D展平原图" },
               ]}
               value={foldState}
               onChange={(s) => setFoldState(s as typeof foldState)}
@@ -293,37 +294,42 @@ export default function FoldingAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 第 4 步：辅助图层开关 */}
-          <LeftPanelSection title="图层与标注显示控制" compact>
+          {/* 第 4 步：视图与图层控制（开关并排 + 视角预设） */}
+          <LeftPanelSection title="视图与图层控制" compact>
             <div className="space-y-2">
-              <Toggle
-                label="二面角平面角弧线"
-                checked={showDihedralArc}
-                onChange={setShowDihedralArc}
-              />
-              <Toggle
-                label="空间向量直角坐标系"
-                checked={showVectorBasis}
-                onChange={setShowVectorBasis}
-              />
-            </div>
-          </LeftPanelSection>
+              {/* 开关双列并排 */}
+              <div className="grid grid-cols-2 gap-2">
+                <Toggle
+                  label="二面角弧"
+                  checked={showDihedralArc}
+                  onChange={setShowDihedralArc}
+                  size="compact"
+                />
+                <Toggle
+                  label="空间基底"
+                  checked={showVectorBasis}
+                  onChange={setShowVectorBasis}
+                  size="compact"
+                />
+              </div>
 
-          {/* 第 5 步：视图与视角 */}
-          <LeftPanelSection title="3D 空间视角预设">
-            <div className="space-y-2">
+              {/* 3D / 三视图切换 */}
               <TabSwitcher
                 layout="horizontal"
+                size="compact"
                 tabs={[
-                  { key: "3d", label: "3D 直观图" },
-                  { key: "threeViews", label: "2D 三视图" },
+                  { key: "3d", label: "3D直观图" },
+                  { key: "threeViews", label: "2D三视图" },
                 ]}
                 value={viewMode}
                 onChange={(m) => setViewMode(m as typeof viewMode)}
               />
+
+              {/* 3D 方位预设 */}
               {viewMode === "3d" && (
                 <TabSwitcher
                   layout="horizontal"
+                  size="compact"
                   tabs={[
                     { key: "iso", label: "轴测" },
                     { key: "front", label: "主视" },
@@ -337,29 +343,14 @@ export default function FoldingAnimation() {
             </div>
           </LeftPanelSection>
 
-          {/* 第 6 步：教学提示与题设导引（置于左屏底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
+          {/* 第 5 步：教学提示与题设导引 */}
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }

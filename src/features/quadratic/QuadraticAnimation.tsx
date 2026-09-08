@@ -180,7 +180,7 @@ export function QuadraticAnimation() {
       left={
         <LeftPanel>
           {/* 模式选择 Section */}
-          <LeftPanelSection title="研究模式" subtitle="选择三位一体探讨对象">
+          <LeftPanelSection title="研究模式">
             <SelectGrid
               items={[
                 { key: "function", label: "二次函数性质" },
@@ -195,10 +195,7 @@ export function QuadraticAnimation() {
 
           {/* 不等号方向 Section */}
           {studyMode === "inequality" && (
-            <LeftPanelSection
-              title="不等号方向"
-              subtitle="选择解集的大于/小于关系"
-            >
+            <LeftPanelSection title="不等号方向">
               <SelectGrid
                 items={[
                   { key: ">", label: "f(x) > 0", formula: "f(x) > 0" },
@@ -213,7 +210,7 @@ export function QuadraticAnimation() {
           )}
 
           {/* 参数调节 Section */}
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块改变抛物线系数">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -222,28 +219,13 @@ export function QuadraticAnimation() {
           </LeftPanelSection>
 
           {/* 教学导引与题设背景 */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }

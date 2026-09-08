@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   TabSwitcher,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -144,7 +145,7 @@ export function TrigLinesAnimation() {
       left={
         <LeftPanel>
           {/* 模式选择 Section */}
-          <LeftPanelSection title="研究模式" subtitle="选择教学研讨视角">
+          <LeftPanelSection title="研究模式">
             <TabSwitcher
               tabs={[
                 { key: "lines", label: "定义演化" },
@@ -160,10 +161,7 @@ export function TrigLinesAnimation() {
 
           {/* 模式 1：函数线显隐开关（紧凑 2 列） */}
           {studyMode === "lines" && (
-            <LeftPanelSection
-              title="函数线显隐"
-              subtitle="选择展示的三大有向线段"
-            >
+            <LeftPanelSection title="函数线显隐">
               <SelectGrid
                 items={[
                   {
@@ -223,10 +221,7 @@ export function TrigLinesAnimation() {
 
           {/* 模式 3：不等式类型选择 */}
           {studyMode === "inequality" && (
-            <LeftPanelSection
-              title="不等式结构"
-              subtitle="选择待求解的三角不等式"
-            >
+            <LeftPanelSection title="不等式结构">
               <SelectGrid
                 items={[
                   { key: "sin_gt", formula: "\\sin x > c" },
@@ -247,10 +242,7 @@ export function TrigLinesAnimation() {
           )}
 
           {/* 统一声明式参数调节 Section（内置 marks 快捷点击跳转） */}
-          <LeftPanelSection
-            title="参数控制"
-            subtitle="拖动滑块或点击刻度快速定位"
-          >
+          <LeftPanelSection title="参数控制">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -259,32 +251,29 @@ export function TrigLinesAnimation() {
           </LeftPanelSection>
 
           {/* 教学启发引导卡片 (置于底部辅助区) */}
-          <LeftPanelSection title="教学探究启发" subtitle="数形结合思考引导">
-            <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 text-xs text-neutral-600 space-y-2">
-              <div>
-                <span className="font-semibold text-neutral-800">
-                  【基础条件】
-                </span>
-                {studyMode === "lines" &&
-                  " 单位圆半径 r=1，P(cosα, sinα)，过 A(1,0) 作切线交终边于 T。"}
-                {studyMode === "comparison" &&
-                  " 锐角 x ∈ (0, π/2)，△OMP ⊂ 扇形 OAP ⊂ △OAT。"}
-                {studyMode === "inequality" &&
-                  " 终边扫过单位圆弧，函数线有向长度需越过基准阈值。"}
-              </div>
-              <div>
-                <span className="font-semibold text-neutral-800">
-                  【探究问题】
-                </span>
-                {studyMode === "lines" &&
-                  " 拖拽点 P 观察：当终边进入第二、三象限时，正切线 AT 为何交在反向延长线上？"}
-                {studyMode === "comparison" &&
-                  " 改变锐角 x，观察三者面积比值如何逼近极限值 1？"}
-                {studyMode === "inequality" &&
-                  " 观察交点界值与圆弧旋转方向，如何逆时针规范书写解集区间？"}
-              </div>
-            </div>
-          </LeftPanelSection>
+          <TipCard
+            badge={
+              studyMode === "lines"
+                ? "基础定义 · 三大三角函数线"
+                : studyMode === "comparison"
+                  ? "经典不等式 · 面积放缩法"
+                  : "三角不等式 · 单位圆弧解集"
+            }
+            condition={
+              studyMode === "lines"
+                ? "单位圆半径 r=1，P(cosα, sinα)，过 A(1,0) 作切线交终边于 T。"
+                : studyMode === "comparison"
+                  ? "锐角 x ∈ (0, π/2)，△OMP ⊂ 扇形 OAP ⊂ △OAT。"
+                  : "终边扫过单位圆弧，函数线有向长度需越过基准阈值。"
+            }
+            question={
+              studyMode === "lines"
+                ? "拖拽点 P 观察：当终边进入第二、三象限时，正切线 AT 为何交在反向延长线上？"
+                : studyMode === "comparison"
+                  ? "改变锐角 x，观察三者面积比值如何逼近极限值 1？"
+                  : "观察交点界值与圆弧旋转方向，如何逆时针规范书写解集区间？"
+            }
+          />
         </LeftPanel>
       }
       center={

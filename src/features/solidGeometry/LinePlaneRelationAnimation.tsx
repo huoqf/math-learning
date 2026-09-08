@@ -598,33 +598,36 @@ export default function LinePlaneRelationAnimation() {
             )}
           </LeftPanelSection>
 
-          {/* Step 4: 图层与标注显示控制 (Toggle 单列流式) */}
-          <LeftPanelSection title="图层与标注显示控制" compact>
-            <div className="space-y-2.5">
+          {/* Step 4: 图层控制 (双列网格并排) */}
+          <LeftPanelSection title="图层控制" compact>
+            <div className="grid grid-cols-2 gap-2">
               <Toggle
-                label="显示空间直角坐标系 (Scene3DGrid)"
+                label="空间坐标系"
                 checked={showAxes}
                 onChange={setShowAxes}
+                size="compact"
               />
               {activeMode === "parallel" && subTheorem === "prop" && (
                 <Toggle
-                  label="显示辅助相交平面 β"
+                  label="辅助平面 β"
                   checked={showAuxPlane}
                   onChange={setShowAuxPlane}
+                  size="compact"
                 />
               )}
               {(activeMode === "vector" || activeMode === "perpendicular") && (
                 <Toggle
-                  label="显示线面角 / 垂直标记"
+                  label="线面角/垂标"
                   checked={showAngleArc}
                   onChange={setShowAngleArc}
+                  size="compact"
                 />
               )}
             </div>
           </LeftPanelSection>
 
           {/* Step 5: 3D 空间视角预设 */}
-          <LeftPanelSection title="3D 空间视角预设">
+          <LeftPanelSection title="视角预设">
             <div className="space-y-2">
               {activeMode === "gaokaoPyramid" && (
                 <TabSwitcher
@@ -651,30 +654,13 @@ export default function LinePlaneRelationAnimation() {
             </div>
           </LeftPanelSection>
 
-          {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* Step 6: 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

@@ -492,10 +492,11 @@ export default function PolyhedronCircumSphereAnimation() {
           </LeftPanelSection>
 
           {/* Step 4: 图层与标注显示控制 */}
-          <LeftPanelSection title="图层与标注显示控制" compact>
-            <div className="flex flex-col gap-2.5">
+          <LeftPanelSection title="图层控制" compact>
+            <div className="flex flex-col gap-2">
               {modelType !== "inSphere" && (
                 <Toggle
+                  size="compact"
                   label={
                     modelType === "verticalEdge"
                       ? "显示套柱三棱柱框架"
@@ -506,17 +507,19 @@ export default function PolyhedronCircumSphereAnimation() {
                 />
               )}
               <Toggle
+                size="compact"
                 label={
                   modelType === "inSphere"
-                    ? "显示内切球与赤道虚实轮廓"
-                    : "显示外接球与赤道虚实轮廓"
+                    ? "显示内切球与赤道轮廓"
+                    : "显示外接球与赤道轮廓"
                 }
                 checked={showSphere}
                 onChange={setShowSphere}
               />
               {modelType === "inSphere" && (
                 <Toggle
-                  label="显示切点 T₁~T₄ 与公垂半径"
+                  size="compact"
+                  label="显示切点与公垂半径"
                   checked={showRadiusLines}
                   onChange={setShowRadiusLines}
                 />
@@ -524,8 +527,8 @@ export default function PolyhedronCircumSphereAnimation() {
             </div>
           </LeftPanelSection>
 
-          {/* Step 5: 3D 空间视角预设 */}
-          <LeftPanelSection title="3D 空间视角预设">
+          {/* Step 5: 空间视角预设 */}
+          <LeftPanelSection title="空间视角">
             <TabSwitcher
               layout="horizontal"
               tabs={[
@@ -540,29 +543,12 @@ export default function PolyhedronCircumSphereAnimation() {
           </LeftPanelSection>
 
           {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

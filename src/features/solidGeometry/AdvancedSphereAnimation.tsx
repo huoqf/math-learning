@@ -510,29 +510,33 @@ export default function AdvancedSphereAnimation() {
           </LeftPanelSection>
 
           {/* Step 4: 图层与标注显示控制 */}
-          <LeftPanelSection title="图层与标注显示控制" compact>
-            <div className="flex flex-col gap-2.5">
+          <LeftPanelSection title="图层控制" compact>
+            <div className="flex flex-col gap-2">
               <Toggle
+                size="compact"
                 checked={showSphere}
                 onChange={setShowSphere}
-                label="显示外接球与赤道虚实轮廓"
+                label="外接球与赤道轮廓"
               />
               {modelType === "perpPlanes" && (
                 <>
                   <Toggle
+                    size="compact"
                     checked={showSectionCircles}
                     onChange={setShowSectionCircles}
-                    label="显示截面外接圆 ⊙O₁ 与 ⊙O₂"
+                    label="截面外接圆 ⊙O₁ 与 ⊙O₂"
                   />
                   <Toggle
+                    size="compact"
                     checked={showAuxLines}
                     onChange={setShowAuxLines}
-                    label="显示双外心垂线与空间矩形"
+                    label="双外心垂线与空间矩形"
                   />
                 </>
               )}
               {modelType === "concentric" && (
                 <Toggle
+                  size="compact"
                   checked={showTangentPoints}
                   onChange={setShowTangentPoints}
                   label="显示棱切点与面切点"
@@ -541,11 +545,13 @@ export default function AdvancedSphereAnimation() {
               {modelType === "truncatedCone" && (
                 <>
                   <Toggle
+                    size="compact"
                     checked={showSection}
                     onChange={setShowSection}
                     label="显示轴截面等腰梯形"
                   />
                   <Toggle
+                    size="compact"
                     checked={showTangentPoints}
                     onChange={setShowTangentPoints}
                     label="显示内切球与球心 I"
@@ -555,8 +561,8 @@ export default function AdvancedSphereAnimation() {
             </div>
           </LeftPanelSection>
 
-          {/* Step 5: 3D 空间视角预设 */}
-          <LeftPanelSection title="3D 空间视角预设">
+          {/* Step 5: 空间视角预设 */}
+          <LeftPanelSection title="空间视角">
             <TabSwitcher
               layout="horizontal"
               tabs={[
@@ -571,29 +577,12 @@ export default function AdvancedSphereAnimation() {
           </LeftPanelSection>
 
           {/* Step 6: 教学提示与题设导引（置于左屏底部） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

@@ -348,58 +348,67 @@ export default function SpatialDistanceAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 辅助图层开关（图元内容开关归位在参数之后） */}
+          {/* 4. 辅助图层开关 */}
           {viewMode === "3d" && (
-            <LeftPanelSection title="辅助图层开关">
-              <div className="space-y-2">
+            <LeftPanelSection title="图层控制" compact>
+              <div className="grid grid-cols-2 gap-2">
                 <Toggle
-                  label="直角坐标系 (A-xyz)"
+                  label="坐标系"
                   checked={showAxes}
                   onChange={setShowAxes}
+                  size="compact"
                 />
                 {showAxes && (
                   <Toggle
-                    label="坐标数值标注"
+                    label="数值标注"
                     checked={showCoordinates}
                     onChange={setShowCoordinates}
+                    size="compact"
                   />
                 )}
                 <Toggle
-                  label="垂直直角方框"
+                  label="直角方框"
                   checked={showRightAngles}
                   onChange={setShowRightAngles}
+                  size="compact"
                 />
                 <Toggle
-                  label="公垂 / 平面法向量"
+                  label="公垂/法向量"
                   checked={showNormals}
                   onChange={setShowNormals}
+                  size="compact"
                 />
                 {activeMode === "skewDistance" ? (
                   <>
                     <Toggle
-                      label="化归平行转化平面"
+                      label="平行转化面"
                       checked={showParallelPlane}
                       onChange={setShowParallelPlane}
+                      size="compact"
                     />
                     <Toggle
-                      label="始终显示公垂线参考"
+                      label="公垂线参考"
                       checked={showCommonPerpAlways}
                       onChange={setShowCommonPerpAlways}
+                      size="compact"
                     />
                   </>
                 ) : (
-                  <Toggle
-                    label="三棱锥双高线 (EA 与 AH)"
-                    checked={showAuxiliary}
-                    onChange={setShowAuxiliary}
-                  />
+                  <div className="col-span-2">
+                    <Toggle
+                      label="三棱锥双高线 (EA 与 AH)"
+                      checked={showAuxiliary}
+                      onChange={setShowAuxiliary}
+                      size="compact"
+                    />
+                  </div>
                 )}
               </div>
             </LeftPanelSection>
           )}
 
           {/* 5. 视角与三视图投影预设（观察控制） */}
-          <LeftPanelSection title="空间视角预设">
+          <LeftPanelSection title="视角预设">
             <div className="space-y-2">
               <TabSwitcher
                 layout="horizontal"
@@ -426,12 +435,9 @@ export default function SpatialDistanceAnimation() {
             </div>
           </LeftPanelSection>
 
-          {/* 6. 教学导引题设化 */}
-          <TipCard variant="info">
-            <div className="font-bold text-neutral-800 mb-1">
-              新高考真题设问与破题导引
-            </div>
-            <div className="whitespace-pre-line leading-relaxed">
+          {/* 6. 教学导引题设化（置于最底部） */}
+          <TipCard variant="info" badge="新高考真题设问与破题导引">
+            <div className="whitespace-pre-line leading-relaxed text-[11px]">
               {renderMixedLatex(tipCardContent)}
             </div>
           </TipCard>

@@ -396,10 +396,10 @@ export function LineCircleAnimation() {
           <LeftPanelSection title="探究主题">
             <SelectGrid
               items={[
-                { key: "relation", label: "位置关系与判定" },
-                { key: "chord", label: "相交弦长与极值" },
-                { key: "tangent", label: "切线长与切点弦" },
-                { key: "midpoint", label: "垂径定理与中点" },
+                { key: "relation", label: "位置关系" },
+                { key: "chord", label: "相交弦长" },
+                { key: "tangent", label: "切线系统" },
+                { key: "midpoint", label: "垂径中点" },
               ]}
               value={studyMode}
               onChange={(k) => {
@@ -415,22 +415,10 @@ export function LineCircleAnimation() {
           <LeftPanelSection title="典型预设">
             <SelectGrid
               items={[
-                { key: "free", label: "自由探究", description: "全参数开放" },
-                {
-                  key: "diameter",
-                  label: "过圆心最大弦",
-                  description: "直线过圆心d=0",
-                },
-                {
-                  key: "tangentCritical",
-                  label: "临界切线状态",
-                  description: "d=r切线Δ=0",
-                },
-                {
-                  key: "minChord",
-                  label: "垂直最短弦",
-                  description: "垂直CM垂弦",
-                },
+                { key: "free", label: "自由探究" },
+                { key: "diameter", label: "过圆心最大弦" },
+                { key: "tangentCritical", label: "临界切线状态" },
+                { key: "minChord", label: "垂直最短弦" },
               ]}
               value={preset}
               onChange={(k) => handlePresetSelect(k as LineCirclePresetKey)}
@@ -448,42 +436,25 @@ export function LineCircleAnimation() {
             />
 
             {/* 展开/收起圆心平移辅助参数 (a, b) */}
-            <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
-              <span>圆心平移参数 (a, b)</span>
+            <div className="mt-2.5 pt-2 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
+              <span className="text-[11px]">圆心平移参数 (a, b)</span>
               <button
                 type="button"
                 onClick={() => setShowCenterParams((v) => !v)}
-                className="text-blue-600 hover:text-blue-700 font-medium px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"
+                className="text-primary-600 hover:text-primary-700 text-[11px] font-medium px-2 py-0.5 rounded bg-primary-50 hover:bg-primary-100 transition-colors cursor-pointer"
               >
-                {showCenterParams ? "收起圆心参数" : "展开圆心参数"}
+                {showCenterParams ? "收起圆心" : "展开圆心"}
               </button>
             </div>
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 4. 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

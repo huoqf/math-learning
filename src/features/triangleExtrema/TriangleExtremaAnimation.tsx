@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -100,53 +101,33 @@ export function TriangleExtremaAnimation() {
   const presetItems = useMemo(() => {
     if (studyMode === "angle-transform") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
-        {
-          key: "equilateral_max",
-          label: "等腰最大值",
-          description: "B=(180°-A)/2",
-        },
-        { key: "rt_edge", label: "直角临界点", description: "B=90°边界" },
-        {
-          key: "obtuse_flat",
-          label: "钝角外心构型",
-          description: "A=120°广角",
-        },
+        { key: "free", label: "自由探究" },
+        { key: "equilateral_max", label: "等腰最大值" },
+        { key: "rt_edge", label: "直角临界点" },
+        { key: "obtuse_flat", label: "钝角外心构型" },
       ];
     }
     if (studyMode === "side-ineq") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
-        {
-          key: "equilateral_area",
-          label: "均值等号",
-          description: "b=c 面积最大",
-        },
-        {
-          key: "rt_pythagorean",
-          label: "直角勾股",
-          description: "A=90°特殊角",
-        },
-        { key: "narrow_flat", label: "狭长逼近", description: "A=30°极端比例" },
+        { key: "free", label: "自由探究" },
+        { key: "equilateral_area", label: "均值等号" },
+        { key: "rt_pythagorean", label: "直角勾股" },
+        { key: "narrow_flat", label: "狭长逼近" },
       ];
     }
     if (studyMode === "apollonius") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
-        { key: "top_max", label: "圆心正上方", description: "θ=90° 高度最大" },
-        { key: "left_sharp", label: "斜角动点", description: "θ=45° 锐角构型" },
-        {
-          key: "ratio_large",
-          label: "大比值 k=3",
-          description: "轨迹圆半径缩小",
-        },
+        { key: "free", label: "自由探究" },
+        { key: "top_max", label: "圆心正上方" },
+        { key: "left_sharp", label: "斜角动点" },
+        { key: "ratio_large", label: "大比值 k=3" },
       ];
     }
     return [
-      { key: "free", label: "自由探究", description: "全参数开放" },
-      { key: "vertical_max", label: "中线垂直", description: "θ=90° 面积最大" },
-      { key: "slanted_mid", label: "斜向中线", description: "θ=60° 典型倾斜" },
-      { key: "long_median", label: "长中线模型", description: "m=7 高考大题" },
+      { key: "free", label: "自由探究" },
+      { key: "vertical_max", label: "中线垂直" },
+      { key: "slanted_mid", label: "斜向中线" },
+      { key: "long_median", label: "长中线模型" },
     ];
   }, [studyMode]);
 
@@ -328,10 +309,7 @@ export function TriangleExtremaAnimation() {
       left={
         <LeftPanel>
           {/* 1. 核心专题模式 (2x2 网格) */}
-          <LeftPanelSection
-            title="最值研究模型"
-            subtitle="选择高考四大极值与范围母题"
-          >
+          <LeftPanelSection title="最值研究模型">
             <SelectGrid
               items={[
                 { key: "angle-transform", label: "正弦角化边" },
@@ -347,10 +325,7 @@ export function TriangleExtremaAnimation() {
           </LeftPanelSection>
 
           {/* 2. 典型构型预设 (黄金 2x2 网格) */}
-          <LeftPanelSection
-            title="典型构型预设"
-            subtitle="一键切换高考经典三角形构型"
-          >
+          <LeftPanelSection title="典型构型预设">
             <SelectGrid
               items={presetItems}
               value={preset}
@@ -362,21 +337,16 @@ export function TriangleExtremaAnimation() {
 
           {/* 3. 模式 1 和 2 专属：锐角三角形约束条件切换 */}
           {(studyMode === "angle-transform" || studyMode === "side-ineq") && (
-            <LeftPanelSection
-              title="三角形形态限定"
-              subtitle="探究锐角条件下的定义域截断"
-            >
+            <LeftPanelSection title="三角形形态限定">
               <SelectGrid
                 items={[
                   {
                     key: "any",
                     label: "任意三角形",
-                    description: "内角 ∈ (0, 180°)",
                   },
                   {
                     key: "acute",
                     label: "锐角三角形",
-                    description: "三内角均 < 90° (高考常考)",
                   },
                 ]}
                 value={triangleConstraint}
@@ -389,10 +359,7 @@ export function TriangleExtremaAnimation() {
           )}
 
           {/* 4. 参数调节 Section (支持 group 聚合) */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块或图形顶点探究变化"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -401,26 +368,11 @@ export function TriangleExtremaAnimation() {
           </LeftPanelSection>
 
           {/* 5. 底部教学引导卡片 */}
-          <LeftPanelSection title="探究指引" subtitle="数形结合思考">
-            <div className="bg-neutral-50 rounded-lg p-3 text-xs space-y-2 border border-neutral-200/60">
-              <div>
-                <span className="font-semibold text-neutral-700">
-                  【基础条件】
-                </span>
-                <p className="text-neutral-600 mt-0.5">
-                  {guidanceInfo.condition}
-                </p>
-              </div>
-              <div>
-                <span className="font-semibold text-blue-600">
-                  【探究问题】
-                </span>
-                <p className="text-neutral-600 mt-0.5">
-                  {guidanceInfo.question}
-                </p>
-              </div>
-            </div>
-          </LeftPanelSection>
+          <TipCard
+            badge="高考核心 · 解三角形极值与范围"
+            condition={guidanceInfo.condition}
+            question={guidanceInfo.question}
+          />
         </LeftPanel>
       }
       center={

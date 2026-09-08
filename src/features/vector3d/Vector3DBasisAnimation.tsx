@@ -393,7 +393,7 @@ export default function Vector3DBasisAnimation() {
             </LeftPanelSection>
           )}
 
-          <LeftPanelSection title="典型模型预设">
+          <LeftPanelSection title="典型预设">
             <SelectGrid
               items={currentModePresets}
               value={activePreset}
@@ -414,19 +414,21 @@ export default function Vector3DBasisAnimation() {
             )}
           </LeftPanelSection>
 
-          <LeftPanelSection title="图层与标注显示控制" compact>
-            <div className="space-y-2.5">
+          <LeftPanelSection title="图层控制" compact>
+            <div className="grid grid-cols-2 gap-2">
               {activeMode === "parallelepiped" && (
                 <>
                   <Toggle
                     label="基底"
                     checked={showBasisVectors}
                     onChange={setShowBasisVectors}
+                    size="compact"
                   />
                   <Toggle
                     label="折线"
                     checked={showDecompPath}
                     onChange={setShowDecompPath}
+                    size="compact"
                   />
                 </>
               )}
@@ -436,16 +438,19 @@ export default function Vector3DBasisAnimation() {
                     label="共面锁定"
                     checked={lockCoplanar}
                     onChange={setLockCoplanar}
+                    size="compact"
                   />
                   <Toggle
                     label="△ABC"
                     checked={showTriangleABC}
                     onChange={setShowTriangleABC}
+                    size="compact"
                   />
                   <Toggle
                     label="重心"
                     checked={showCentroid}
                     onChange={setShowCentroid}
+                    size="compact"
                   />
                 </>
               )}
@@ -455,22 +460,26 @@ export default function Vector3DBasisAnimation() {
                     label="坐标系"
                     checked={showAxes}
                     onChange={setShowAxes}
+                    size="compact"
                   />
                   <Toggle
                     label="投影"
                     checked={showProjection}
                     onChange={setShowProjection}
+                    size="compact"
                   />
                 </>
               )}
             </div>
           </LeftPanelSection>
 
-          <LeftPanelSection title="教学导引" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="text-[11px]">{tipConfig.question}</div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 教学导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

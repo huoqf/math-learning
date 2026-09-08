@@ -229,8 +229,8 @@ export function TransformAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 对象化参数调节 */}
-          <LeftPanelSection title="平移与伸缩参数">
+          {/* 参数调节 */}
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -238,31 +238,14 @@ export function TransformAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示 */}
-          <LeftPanelSection title="教学提示" compact>
-            <TipCard variant={tipContent.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipContent.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【模型条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipContent.conditionNode}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【研究问题】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipContent.questionNode}
-                  </span>
-                </div>
-              </div>
-            </TipCard>
+          {/* 教学导引 */}
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard
+              variant={tipContent.variant}
+              badge={tipContent.badge}
+              condition={tipContent.conditionNode}
+              question={tipContent.questionNode}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }

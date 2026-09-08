@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -237,7 +238,7 @@ export function TrigIdentityAnimation() {
       left={
         <LeftPanel>
           {/* 主研究模式 TabSwitcher 顶层轻量切换 */}
-          <LeftPanelSection title="主研究模式" subtitle="选择探索的专题体系">
+          <LeftPanelSection title="主研究模式">
             <TabSwitcher
               tabs={[
                 { key: "identity", label: "同角基本关系" },
@@ -253,26 +254,20 @@ export function TrigIdentityAnimation() {
 
           {/* 同角子模式切换 */}
           {studyMode === "identity" && (
-            <LeftPanelSection
-              title="同角探究专题"
-              subtitle="选择同角三角函数核心模型"
-            >
+            <LeftPanelSection title="同角探究专题">
               <SelectGrid
                 items={[
                   {
                     key: "geometry",
                     label: "几何三角线",
-                    description: "正弦/余弦/正切线",
                   },
                   {
                     key: "known_one",
                     label: "知一求二",
-                    description: "和/差/积与象限",
                   },
                   {
                     key: "homogeneous",
                     label: "齐次化切",
-                    description: "弦化切与“1”的代换",
                   },
                 ]}
                 value={identitySubMode}
@@ -281,33 +276,27 @@ export function TrigIdentityAnimation() {
                 }}
                 variant="outline"
                 color="primary"
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           {/* 诱导公式子模式切换 */}
           {studyMode === "induction" && (
-            <LeftPanelSection
-              title="诱导探究专题"
-              subtitle="选择诱导公式探索视角"
-            >
+            <LeftPanelSection title="诱导探究专题">
               <SelectGrid
                 items={[
                   {
                     key: "standard6",
                     label: "高考常用6大组",
-                    description: "对称几何图形联动",
                   },
                   {
                     key: "universal_k",
-                    label: "万能法则 (k·π/2)",
-                    description: "奇变偶不变三步法",
+                    label: "万能法则",
                   },
                   {
                     key: "complementary",
-                    label: "互余互补配角模型",
-                    description: "新高考角变换技巧",
+                    label: "互余互补配角",
                   },
                 ]}
                 value={inductionSubMode}
@@ -316,48 +305,39 @@ export function TrigIdentityAnimation() {
                 }}
                 variant="outline"
                 color="primary"
-                columns={1}
+                columns={2}
               />
             </LeftPanelSection>
           )}
 
           {/* 常用 6 组诱导公式类型选择 */}
           {studyMode === "induction" && inductionSubMode === "standard6" && (
-            <LeftPanelSection
-              title="6 组诱导公式"
-              subtitle="点击查看不同对称性几何推演"
-            >
+            <LeftPanelSection title="6 组诱导公式">
               <SelectGrid
                 items={[
                   {
                     key: "pi_plus",
                     formula: "\\pi + \\alpha",
-                    description: "关于原点对称",
                   },
                   {
                     key: "neg",
                     formula: "-\\alpha",
-                    description: "关于 x 轴对称",
                   },
                   {
                     key: "pi_minus",
                     formula: "\\pi - \\alpha",
-                    description: "关于 y 轴对称",
                   },
                   {
                     key: "half_pi_minus",
                     formula: "\\frac{\\pi}{2} - \\alpha",
-                    description: "关于 y=x 对称",
                   },
                   {
                     key: "half_pi_plus",
                     formula: "\\frac{\\pi}{2} + \\alpha",
-                    description: "逆时针旋转 90°",
                   },
                   {
                     key: "period",
                     formula: "\\alpha + 2k\\pi",
-                    description: "终边重合(周期)",
                   },
                 ]}
                 value={formulaType}
@@ -373,10 +353,7 @@ export function TrigIdentityAnimation() {
 
           {/* 万能法则模式下的快速 k 选择器 */}
           {studyMode === "induction" && inductionSubMode === "universal_k" && (
-            <LeftPanelSection
-              title="快速设定 k 值"
-              subtitle="快速测试奇变与偶不变"
-            >
+            <LeftPanelSection title="设定 k 值 (k·π/2)">
               <SelectGrid
                 items={[
                   {
@@ -404,10 +381,7 @@ export function TrigIdentityAnimation() {
           )}
 
           {/* 参数调节区 */}
-          <LeftPanelSection
-            title="参数精细调节"
-            subtitle="拖动滑块探索动态数形变化"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -416,27 +390,11 @@ export function TrigIdentityAnimation() {
           </LeftPanelSection>
 
           {/* 教学引导与探究提示（置于底部辅助区） */}
-          <LeftPanelSection
-            title="教学引导与思考"
-            subtitle="带着问题观察数形变化"
-          >
-            <div className="text-xs text-neutral-600 bg-neutral-50 rounded-lg p-3 border border-neutral-200 space-y-2">
-              <div>
-                <span className="font-semibold text-neutral-800">
-                  【基础条件】：
-                </span>
-                单位圆动点 $P(\cos\alpha, \sin\alpha)$，正切线交于 $T(1,
-                \tan\alpha)$。
-              </div>
-              <div>
-                <span className="font-semibold text-neutral-800">
-                  【探究思考】：
-                </span>
-                拖动动点 $P$，观察直角三角形边长平方和如何始终恒等于
-                1；切换诱导公式观察对应三角形的对称位置关系。
-              </div>
-            </div>
-          </LeftPanelSection>
+          <TipCard
+            badge="高考核心 · 同角三角函数与诱导公式"
+            condition="单位圆动点 P(cosα, sinα)，正切线交于 T(1, tanα)。"
+            question="拖动动点 P 观察边长平方和恒等关系；切换诱导公式观察对应三角形的对称位置关系。"
+          />
         </LeftPanel>
       }
       center={

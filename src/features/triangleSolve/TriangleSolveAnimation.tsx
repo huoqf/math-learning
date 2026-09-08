@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -119,66 +120,42 @@ export function TriangleSolveAnimation() {
   const presetItems = useMemo(() => {
     if (studyMode === "sine") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
-        { key: "equilateral", label: "正三角形", description: "A=60°,b=c" },
-        {
-          key: "rt_special",
-          label: "30°特殊角",
-          description: "A=30°,对边 half",
-        },
-        { key: "obtuse", label: "钝角外接", description: "A=120°,外心在形外" },
+        { key: "free", label: "自由探究" },
+        { key: "equilateral", label: "正三角形" },
+        { key: "rt_special", label: "30°特殊角" },
+        { key: "obtuse", label: "钝角外接" },
       ];
     }
     if (studyMode === "ssa") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
-        { key: "tangent_one", label: "相切单解", description: "a=h (直角)" },
-        { key: "double_sol", label: "双解构型", description: "h < a < b" },
-        { key: "no_sol", label: "短边无解", description: "a < h (交点0)" },
+        { key: "free", label: "自由探究" },
+        { key: "tangent_one", label: "相切单解" },
+        { key: "double_sol", label: "双解构型" },
+        { key: "no_sol", label: "短边无解" },
       ];
     }
     if (studyMode === "cosine") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
-        {
-          key: "pythagorean",
-          label: "勾股定理",
-          description: "A=90°,a²=b²+c²",
-        },
-        {
-          key: "obtuse_spread",
-          label: "钝角扩散",
-          description: "A=120°,a²>b²+c²",
-        },
-        { key: "acute_min", label: "对称锐角", description: "A=60°,b=c均值" },
+        { key: "free", label: "自由探究" },
+        { key: "pythagorean", label: "勾股定理" },
+        { key: "obtuse_spread", label: "钝角扩散" },
+        { key: "acute_min", label: "对称锐角" },
       ];
     }
     if (studyMode === "area") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
-        {
-          key: "equilateral_area",
-          label: "正三角形",
-          description: "切接圆同心",
-        },
-        {
-          key: "rt_area",
-          label: "直角面积",
-          description: "S=½ab, r=(a+b-c)/2",
-        },
-        { key: "flat_area", label: "狭长构型", description: "A=25°面积骤降" },
+        { key: "free", label: "自由探究" },
+        { key: "equilateral_area", label: "正三角形" },
+        { key: "rt_area", label: "直角面积" },
+        { key: "flat_area", label: "狭长构型" },
       ];
     }
     // bisector
     return [
-      { key: "free", label: "自由探究", description: "全参数开放" },
-      { key: "isosceles_mid", label: "三线合一", description: "b=c, M与D重合" },
-      {
-        key: "scaled_split",
-        label: "1:2分角",
-        description: "c:b=2:1 分割底边",
-      },
-      { key: "rt_bisect", label: "直角平分", description: "A=90°直角分角" },
+      { key: "free", label: "自由探究" },
+      { key: "isosceles_mid", label: "三线合一" },
+      { key: "scaled_split", label: "1:2分角" },
+      { key: "rt_bisect", label: "直角平分" },
     ];
   }, [studyMode]);
 
@@ -312,10 +289,7 @@ export function TriangleSolveAnimation() {
       left={
         <LeftPanel>
           {/* 1. 核心专题模式 (2列网格 + 第5项独占一行) */}
-          <LeftPanelSection
-            title="解三角形专题模式"
-            subtitle="选择高考核心探讨机制"
-          >
+          <LeftPanelSection title="解三角形专题模式">
             <SelectGrid
               items={[
                 { key: "sine", label: "正弦与外接圆" },
@@ -336,10 +310,7 @@ export function TriangleSolveAnimation() {
           </LeftPanelSection>
 
           {/* 2. 典型构型预设 (黄金 2x2 网格) */}
-          <LeftPanelSection
-            title="典型构型预设"
-            subtitle="一键切换高考经典三角形"
-          >
+          <LeftPanelSection title="典型构型预设">
             <SelectGrid
               items={presetItems}
               value={preset}
@@ -350,10 +321,7 @@ export function TriangleSolveAnimation() {
           </LeftPanelSection>
 
           {/* 3. 参数调节 Section (支持 group 聚合) */}
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块探索解的连续演化"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -362,26 +330,11 @@ export function TriangleSolveAnimation() {
           </LeftPanelSection>
 
           {/* 4. 底部教学引导卡片 */}
-          <LeftPanelSection title="探究指引" subtitle="数形结合思考">
-            <div className="bg-neutral-50 rounded-lg p-3 text-xs space-y-2 border border-neutral-200/60">
-              <div>
-                <span className="font-semibold text-neutral-700">
-                  【基础条件】
-                </span>
-                <p className="text-neutral-600 mt-0.5">
-                  {guidanceInfo.condition}
-                </p>
-              </div>
-              <div>
-                <span className="font-semibold text-blue-600">
-                  【探究问题】
-                </span>
-                <p className="text-neutral-600 mt-0.5">
-                  {guidanceInfo.question}
-                </p>
-              </div>
-            </div>
-          </LeftPanelSection>
+          <TipCard
+            badge="高考核心 · 解三角形定理与模型"
+            condition={guidanceInfo.condition}
+            question={guidanceInfo.question}
+          />
         </LeftPanel>
       }
       center={

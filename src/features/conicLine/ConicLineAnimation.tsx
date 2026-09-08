@@ -312,35 +312,19 @@ export function ConicLineAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 研究视角 Section */}
+          {/* 研究视角 Section (2x2 黄金规范) */}
           <LeftPanelSection title="研究视角">
             <SelectGrid
               items={[
-                {
-                  key: "general",
-                  label: "位置关系与弦长",
-                  formula: "\\text{位置关系与 } |AB|",
-                },
-                {
-                  key: "focus",
-                  label: "过焦点弦模型",
-                  formula: "\\text{过焦点弦与通径}",
-                },
-                {
-                  key: "midpoint",
-                  label: "中点弦与点差法",
-                  formula: "k_{AB} \\cdot k_{OM} \\text{ 点差法}",
-                },
-                {
-                  key: "polePolar",
-                  label: "极点极线与切点弦",
-                  formula: "\\frac{x_0 x}{a^2}+\\frac{y_0 y}{b^2}=1",
-                },
+                { key: "general", label: "位置与弦长" },
+                { key: "focus", label: "过焦点弦" },
+                { key: "midpoint", label: "中点弦/点差" },
+                { key: "polePolar", label: "极点极线弦" },
               ]}
               value={studyMode}
               onChange={(k) => handleModeChange(k as StudyMode)}
               variant="filled"
-              columns={1}
+              columns={2}
             />
           </LeftPanelSection>
 
@@ -356,7 +340,7 @@ export function ConicLineAnimation() {
           </LeftPanelSection>
 
           {/* 参数调节 Section */}
-          <LeftPanelSection title="动态参数调节">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -364,30 +348,13 @@ export function ConicLineAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

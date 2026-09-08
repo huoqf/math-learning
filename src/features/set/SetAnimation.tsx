@@ -141,38 +141,44 @@ export function SetAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="教学导引" compact>
-            <TipCard variant="primary">
-              <div className="space-y-1 text-xs">
-                <div className="font-semibold text-neutral-700">
-                  {activeTab === "venn"
-                    ? "集合 Venn 图特征："
-                    : "充要条件包含法则："}
-                </div>
-                <div className="leading-relaxed text-neutral-600">
-                  {activeTab === "venn" ? (
-                    <>
-                      直观观察 <KatexFormula formula="A, B" mode="inline" />{" "}
-                      两集合交、并、补、差的区域覆盖，以及样本点{" "}
-                      <KatexFormula formula="P" mode="inline" /> 的归属变化。
-                    </>
-                  ) : (
-                    <>
-                      <KatexFormula
-                        formula="A \subseteq B \iff p \implies q"
-                        mode="inline"
-                      />
-                      。若{" "}
-                      <KatexFormula formula="A \subsetneq B" mode="inline" />
-                      ，则 <KatexFormula formula="p" mode="inline" /> 是{" "}
-                      <KatexFormula formula="q" mode="inline" />{" "}
-                      的充分不必要条件。
-                    </>
-                  )}
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <div className="mt-auto">
+            <TipCard
+              variant="primary"
+              badge={
+                activeTab === "venn" ? "集合 Venn 图特征" : "充要条件包含法则"
+              }
+              condition={
+                activeTab === "venn" ? (
+                  <span>
+                    全集 <KatexFormula formula="U" mode="inline" /> 下的两集合{" "}
+                    <KatexFormula formula="A, B" mode="inline" /> 及任意动点{" "}
+                    <KatexFormula formula="P(x_P, y_P)" mode="inline" />。
+                  </span>
+                ) : (
+                  <span>
+                    命题对应集合包含关系{" "}
+                    <KatexFormula
+                      formula="A \subseteq B \iff p \implies q"
+                      mode="inline"
+                    />
+                    。
+                  </span>
+                )
+              }
+              question={
+                activeTab === "venn" ? (
+                  <span>
+                    观察交、并、补、差的区域覆盖与样本点{" "}
+                    <KatexFormula formula="P" mode="inline" /> 的归属变化。
+                  </span>
+                ) : (
+                  <span>
+                    拖拽圆心与半径改变集合大小，观察充分与必要条件的转化。
+                  </span>
+                )
+              }
+            />
+          </div>
         </LeftPanel>
       }
       center={

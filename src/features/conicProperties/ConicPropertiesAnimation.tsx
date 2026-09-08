@@ -207,46 +207,40 @@ export function ConicPropertiesAnimation() {
   const presetItems = useMemo(() => {
     if (conicType === "ellipse") {
       return [
-        { key: "free", label: "自由探究", description: "全参数开放" },
+        { key: "free", label: "自由探究" },
         {
           key: "rightTriangle",
           label: "直角焦点三角形",
           formula: "e=\\frac{\\sqrt{2}}{2}",
-          description: "短轴顶角90°",
         },
         {
           key: "latusRectum",
           label: "通径垂直端点",
           formula: "L=\\frac{2b^2}{a}",
-          description: "最小焦点弦",
         },
         {
           key: "nearCircle",
           label: "近圆退化极限",
           formula: "e \\to 0",
-          description: "短半轴b→a",
         },
       ];
     }
     return [
-      { key: "free", label: "自由探究", description: "全参数开放" },
+      { key: "free", label: "自由探究" },
       {
         key: "equilateral",
         label: "等轴双曲线",
         formula: "e=\\sqrt{2}",
-        description: "渐近线垂直",
       },
       {
         key: "latusRectum",
         label: "通径垂直端点",
         formula: "L=\\frac{2b^2}{a}",
-        description: "焦点垂直弦",
       },
       {
         key: "wideAngle",
         label: "广角渐近构型",
         formula: "e=2",
-        description: "渐近线夹角120°",
       },
     ];
   }, [conicType]);
@@ -441,30 +435,13 @@ export function ConicPropertiesAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学提示与题设导引（置于参数调节下方） */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 教学提示与题设导引（置于最底部） */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

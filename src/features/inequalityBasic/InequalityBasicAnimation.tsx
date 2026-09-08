@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -114,26 +115,42 @@ export function InequalityBasicAnimation() {
       left={
         <LeftPanel>
           {/* 模式选择 Section */}
-          <LeftPanelSection title="几何与应用场景" subtitle="切换均值证明模式">
+          <LeftPanelSection title="探究场景">
             <SelectGrid
               items={[
-                { key: "semicircle", label: "半圆四均值证明", fullWidth: true },
-                { key: "square", label: "赵爽弦图面积法", fullWidth: true },
-                { key: "nike", label: "对勾函数与最值", fullWidth: true },
+                { key: "semicircle", label: "半圆四均值" },
+                { key: "square", label: "弦图面积法" },
+                { key: "nike", label: "对勾函数配凑最值", fullWidth: true },
               ]}
               value={studyMode}
               onChange={(k) => setStudyMode(k as typeof studyMode)}
-              columns={1}
+              columns={2}
               variant="filled"
             />
           </LeftPanelSection>
 
           {/* 参数调节 Section */}
-          <LeftPanelSection title="参数调节" subtitle="拖动滑块改变变量">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={handleReset}
+            />
+          </LeftPanelSection>
+
+          {/* 教学导引 */}
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard
+              variant="primary"
+              badge="高考基石 · 基本不等式几何证明"
+              condition="正实数 a, b > 0，算术平均 (a+b)/2 与几何平均 √(ab)。"
+              question={
+                studyMode === "semicircle"
+                  ? "观察直径上的半弦长与半径关系，探究四均值链条调和 ≤ 几何 ≤ 算术 ≤ 平方的大小顺序。"
+                  : studyMode === "square"
+                    ? "通过大正方形与四个直角三角形面积关系，探究 a²+b² ≥ 2ab 的面积几何证明与等号条件。"
+                    : "探究对勾函数在 x = √k 处取得极小值 2√k 的均值不等式本质。"
+              }
             />
           </LeftPanelSection>
         </LeftPanel>
