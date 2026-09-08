@@ -534,27 +534,19 @@ export default function LinePlaneRelationAnimation() {
               items={[
                 {
                   key: "parallel",
-                  formula: "l \\parallel \\alpha",
                   label: "线面平行",
-                  description: "平行判定/性质",
                 },
                 {
                   key: "perpendicular",
-                  formula: "l \\perp \\alpha",
                   label: "线面垂直",
-                  description: "垂直判定/性质",
                 },
                 {
                   key: "gaokaoPyramid",
-                  formula: "P\\text{-}ABCD",
                   label: "高考母题",
-                  description: "四棱锥动点模型",
                 },
                 {
                   key: "vector",
-                  formula: "\\vec{l} \\cdot \\vec{n}",
                   label: "空间向量",
-                  description: "法向量求线面角",
                 },
               ]}
               value={activeMode}
