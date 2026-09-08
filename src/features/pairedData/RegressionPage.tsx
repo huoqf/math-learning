@@ -14,7 +14,7 @@ import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
-import { PairedDataScene } from "./components/PairedDataScene";
+import { RegressionScene } from "./components/RegressionScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/pairedData";
 import {
@@ -548,17 +548,12 @@ export function RegressionPage() {
             containerRef={containerRef}
             transform={vp.transform}
           >
-            <PairedDataScene
-              studyMode="regression"
+            <RegressionScene
               selectedModel={selectedModel}
               showResidualSquares={showResidualSquares}
               showResidualPlot={showResidualPlot}
               points={activePoints}
               onPointsChange={handlePointsChange}
-              freqA={85}
-              freqB={15}
-              freqC={40}
-              freqD={60}
               presetXName={currentPreset.xName}
               presetYName={currentPreset.yName}
               scale={scale}

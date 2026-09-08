@@ -39,13 +39,15 @@ describe("QuadraticAnimation smoke test", () => {
     render(<QuadraticAnimation />);
     const equationBtn = screen.getByRole("radio", { name: "一元二次方程" });
     fireEvent.click(equationBtn);
-    expect(equationBtn).toHaveClass("bg-primary-500");
+    // 切换后该模式被选中为激活态（SelectGrid 通过 aria-checked 表达选中状态）
+    expect(equationBtn).toHaveAttribute("aria-checked", "true");
   });
 
   it("shows inequality section when inequality mode is selected", () => {
     render(<QuadraticAnimation />);
     fireEvent.click(screen.getByText("一元二次不等式"));
     expect(screen.getByText("不等号方向")).toBeInTheDocument();
-    expect(screen.getByText("选择解集的大于/小于关系")).toBeInTheDocument();
+    // 选项同时渲染 label 与 KaTeX 公式，命中可能为多个，断言至少存在
+    expect(screen.getAllByText("f(x) > 0").length).toBeGreaterThan(0);
   });
 });

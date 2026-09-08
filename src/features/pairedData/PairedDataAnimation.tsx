@@ -13,7 +13,8 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
-import { PairedDataScene } from "./components/PairedDataScene";
+import { RegressionScene } from "./components/RegressionScene";
+import { IndependenceScene } from "./components/IndependenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/pairedData";
 import {
@@ -424,25 +425,31 @@ export function PairedDataAnimation() {
             containerRef={containerRef}
             transform={vp.transform}
           >
-            <PairedDataScene
-              studyMode={studyMode}
-              selectedModel={selectedModel}
-              showResidualSquares={Boolean(params.showResidualSquares ?? 1)}
-              showResidualPlot={Boolean(params.showResidualPlot ?? 0)}
-              points={activePoints}
-              onPointsChange={handlePointsChange}
-              freqA={params.freqA ?? 85}
-              freqB={params.freqB ?? 15}
-              freqC={params.freqC ?? 40}
-              freqD={params.freqD ?? 60}
-              presetXName={currentPreset?.xName ?? "x"}
-              presetYName={currentPreset?.yName ?? "y"}
-              scale={scale}
-              vp={vp}
-              fontScale={canvasSize.font}
-              xStep={xStep}
-              yStep={yStep}
-            />
+            {studyMode === "regression" ? (
+              <RegressionScene
+                selectedModel={selectedModel}
+                showResidualSquares={Boolean(params.showResidualSquares ?? 1)}
+                showResidualPlot={Boolean(params.showResidualPlot ?? 0)}
+                points={activePoints}
+                onPointsChange={handlePointsChange}
+                presetXName={currentPreset?.xName ?? "x"}
+                presetYName={currentPreset?.yName ?? "y"}
+                scale={scale}
+                vp={vp}
+                fontScale={canvasSize.font}
+                xStep={xStep}
+                yStep={yStep}
+              />
+            ) : (
+              <IndependenceScene
+                freqA={params.freqA ?? 85}
+                freqB={params.freqB ?? 15}
+                freqC={params.freqC ?? 40}
+                freqD={params.freqD ?? 60}
+                scaleMultiplier={params.scaleMultiplier ?? 1}
+                fontScale={canvasSize.font}
+              />
+            )}
           </AnimationSvgCanvas>
         </div>
       }

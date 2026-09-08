@@ -11,9 +11,9 @@ import {
   KatexFormula,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
-import { PairedDataScene } from "./components/PairedDataScene";
+import { IndependenceScene } from "./components/IndependenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/pairedData";
 import { INDEPENDENCE_PRESETS } from "@/math/pairedData";
@@ -47,8 +47,6 @@ export function IndependencePage() {
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
-
-  const scale = useSceneScale({ vp, xRange: [-6, 35], yRange: [-4, 30] });
 
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => ({ ...prev, [key]: value }));
@@ -283,10 +281,7 @@ export function IndependencePage() {
             containerRef={containerRef}
             transform={vp.transform}
           >
-            <PairedDataScene
-              studyMode="independence"
-              points={[]}
-              onPointsChange={() => {}}
+            <IndependenceScene
               freqA={params.freqA ?? currentPreset.a}
               freqB={params.freqB ?? currentPreset.b}
               freqC={params.freqC ?? currentPreset.c}
@@ -296,10 +291,6 @@ export function IndependencePage() {
               labelB={currentPreset.labelB}
               labelNotB={currentPreset.labelNotB}
               scaleMultiplier={effectiveScaleMultiplier}
-              presetXName="x"
-              presetYName="y"
-              scale={scale}
-              vp={vp}
               fontScale={canvasSize.font}
             />
           </AnimationSvgCanvas>

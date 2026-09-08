@@ -31,7 +31,10 @@ describe("DerivativeAnimation", () => {
     expect(screen.getByText("探究模式")).toBeInTheDocument();
     expect(screen.getByText("函数模型")).toBeInTheDocument();
     expect(screen.getByText("参数调节")).toBeInTheDocument();
-    expect(screen.getByText("教学导引与题设背景")).toBeInTheDocument();
+    // 教学导引 TipCard 以徽标文案承载题设背景（默认模式为割线逼近）
+    expect(
+      screen.getByText("探究一 · 割线逼近切线（以直代曲 · 极限思想）"),
+    ).toBeInTheDocument();
   });
 
   it("displays mode options properly", () => {
