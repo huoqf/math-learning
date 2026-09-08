@@ -85,4 +85,26 @@ describe("buildSurfaceRelationPanel 测试", () => {
       true,
     );
   });
+
+  it("高考母题模式正确解算正方体平行截面与体对角线三等分", () => {
+    const data = buildSurfaceRelationPanel(
+      {},
+      { mode: "gaokaoModel", subType: "cube" },
+    );
+    expect(data.quantities.find((q) => q.label === "正方体棱长 a")?.value).toBe(
+      "3.00",
+    );
+    expect(
+      data.quantities.find((q) => q.label.includes("体对角线长"))?.value,
+    ).toBe("5.20");
+    expect(
+      data.quantities.find((q) => q.label.includes("平行截面间距"))?.value,
+    ).toBe("1.73");
+    expect(
+      data.theorems.some((t) => t.name.includes("体对角线三等分性质")),
+    ).toBe(true);
+    expect(data.gaokaoPoints.some((g) => g.text.includes("秒杀考点"))).toBe(
+      true,
+    );
+  });
 });

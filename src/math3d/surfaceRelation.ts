@@ -237,3 +237,64 @@ export function calculatePyramidPerpModel(
     isOFoot: Math.abs(P.y - O.y) < 1e-4,
   };
 }
+
+/**
+ * 正方体平行对角面模型几何解算
+ * 面 A1C1D // 面 AB1C，体对角线 BD1 垂直于两截面并被其三等分于 M, N
+ * @param s 正方体边长，默认 3
+ */
+export function calculateCubeDiagonalModel(s: number = 3) {
+  const half = s / 2;
+  const A: Vec3 = { x: -half, y: -half, z: 0 };
+  const B: Vec3 = { x: half, y: -half, z: 0 };
+  const C: Vec3 = { x: half, y: half, z: 0 };
+  const D: Vec3 = { x: -half, y: half, z: 0 };
+
+  const A1: Vec3 = { x: -half, y: -half, z: s };
+  const B1: Vec3 = { x: half, y: -half, z: s };
+  const C1: Vec3 = { x: half, y: half, z: s };
+  const D1: Vec3 = { x: -half, y: half, z: s };
+
+  // 体对角线 BD1 上的三等分点
+  // M 位于面 AB1C 上，即 (2B + D1) / 3
+  const M: Vec3 = {
+    x: (2 * B.x + D1.x) / 3,
+    y: (2 * B.y + D1.y) / 3,
+    z: (2 * B.z + D1.z) / 3,
+  };
+
+  // N 位于面 A1C1D 上，即 (B + 2D1) / 3
+  const N: Vec3 = {
+    x: (B.x + 2 * D1.x) / 3,
+    y: (B.y + 2 * D1.y) / 3,
+    z: (B.z + 2 * D1.z) / 3,
+  };
+
+  const diagonalLength = Math.sqrt(3) * s;
+  const planeDistance = (Math.sqrt(3) / 3) * s;
+
+  // 体对角线向量与单位法向量
+  const normal: Vec3 = {
+    x: (D1.x - B.x) / diagonalLength,
+    y: (D1.y - B.y) / diagonalLength,
+    z: (D1.z - B.z) / diagonalLength,
+  };
+
+  return {
+    s,
+    A,
+    B,
+    C,
+    D,
+    A1,
+    B1,
+    C1,
+    D1,
+    M,
+    N,
+    diagonalLength,
+    planeDistance,
+    segmentLength: planeDistance,
+    normal,
+  };
+}

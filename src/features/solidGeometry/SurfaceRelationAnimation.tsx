@@ -193,12 +193,43 @@ export default function SurfaceRelationAnimation() {
         ];
         break;
       case "gaokaoModel":
-        items = [
-          { colorKey: "secondary", swatch: "area", label: "矩形底面 ABCD" },
-          { colorKey: "paramTertiary", swatch: "area", label: "垂直侧面 PAD" },
-          { colorKey: "paramPrimary", swatch: "line", label: "高线 PO ⊥ 底面" },
-          { colorKey: "highlight", swatch: "line", label: "空间建系轴" },
-        ];
+        items =
+          subType === "cube"
+            ? [
+                {
+                  colorKey: "paramPrimary",
+                  swatch: "area",
+                  label: "截面 AB₁C",
+                },
+                {
+                  colorKey: "paramSecondary",
+                  swatch: "area",
+                  label: "截面 A₁C₁D",
+                },
+                {
+                  colorKey: "highlight",
+                  swatch: "line",
+                  label: "体对角线 BD₁ (三等分)",
+                },
+              ]
+            : [
+                {
+                  colorKey: "secondary",
+                  swatch: "area",
+                  label: "矩形底面 ABCD",
+                },
+                {
+                  colorKey: "paramTertiary",
+                  swatch: "area",
+                  label: "垂直侧面 PAD",
+                },
+                {
+                  colorKey: "paramPrimary",
+                  swatch: "line",
+                  label: "高线 PO ⊥ 底面",
+                },
+                { colorKey: "highlight", swatch: "line", label: "空间建系轴" },
+              ];
         break;
     }
     if (showAxes) {
@@ -209,7 +240,7 @@ export default function SurfaceRelationAnimation() {
       });
     }
     return items;
-  }, [activeMode, showAxes]);
+  }, [activeMode, subType, showAxes]);
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
@@ -277,9 +308,9 @@ export default function SurfaceRelationAnimation() {
           variant: "info" as const,
           badge: "高考经典 · 正方体平行对角截面模型",
           condition:
-            "正方体 ABCD-A₁B₁C₁D₁ 中，截面 AB₁D₁ 与截面 C₁BD 均垂直于体对角线 AC₁。",
+            "正方体 ABCD-A₁B₁C₁D₁ 中，截面 A₁C₁D 与截面 AB₁C 均垂直于体对角线 BD₁。",
           question:
-            "求证截面 AB₁D₁ ∥ 截面 C₁BD，且两平行截面将体对角线 AC₁ 准确三等分。",
+            "求证截面 A₁C₁D ∥ 截面 AB₁C，且两平行截面将体对角线 BD₁ 准确三等分于点 M, N。",
         }
       : {
           variant: "primary" as const,
@@ -301,30 +332,22 @@ export default function SurfaceRelationAnimation() {
               items={[
                 {
                   key: "parallelJudge",
-                  formula:
-                    "a \\cap b \\;\\Rightarrow\\; \\alpha \\parallel \\beta",
                   label: "面面平行判定",
                 },
                 {
                   key: "parallelProp",
-                  formula:
-                    "\\gamma \\cap \\alpha, \\beta \\;\\Rightarrow\\; a \\parallel b",
                   label: "面面平行性质",
                 },
                 {
                   key: "perpJudge",
-                  formula:
-                    "l \\perp \\alpha \\;\\Rightarrow\\; \\beta \\perp \\alpha",
                   label: "面面垂直判定",
                 },
                 {
                   key: "perpProp",
-                  formula: "a \\perp l \\;\\Rightarrow\\; a \\perp \\alpha",
                   label: "面面垂直性质",
                 },
                 {
                   key: "gaokaoModel",
-                  formula: "P\\text{-}ABCD \\; / \\; \\text{Cube}",
                   label: "高考综合母题",
                   fullWidth: true,
                 },

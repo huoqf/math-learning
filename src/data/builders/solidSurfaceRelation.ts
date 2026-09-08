@@ -12,6 +12,7 @@ import {
   calculatePerpJudgeFamily,
   calculatePerpPropState,
   calculatePyramidPerpModel,
+  calculateCubeDiagonalModel,
 } from "@/math3d/surfaceRelation";
 
 // ── know-solid-surface-relation: 面面平行与垂直判定及性质定理 ──
@@ -299,8 +300,78 @@ export function buildSurfaceRelationPanel(
 
     mnemonic =
       "面面垂直找交线，面内垂交垂直面；若非交线垂直线，断难推出线垂直。";
-  } else {
-    // 高考综合模型 (gaokaoModel)
+  } else if (mode === "gaokaoModel" && subType === "cube") {
+    const cube = calculateCubeDiagonalModel(3);
+
+    quantities.push(
+      {
+        label: "正方体棱长 a",
+        symbol: "a",
+        value: cube.s.toFixed(2),
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "体对角线长 BD₁",
+        symbol: "|BD_1| = \\sqrt{3}a",
+        value: cube.diagonalLength.toFixed(2),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "平行截面间距 d",
+        symbol: "d = \\frac{\\sqrt{3}}{3}a",
+        value: cube.planeDistance.toFixed(2),
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "三等分段长 BM=MN=ND₁",
+        symbol: "\\frac{1}{3}|BD_1|",
+        value: cube.segmentLength.toFixed(2),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "截面与体对角线位置",
+        value: "两截面平行且均垂直于 BD₁",
+        color: MATH_COLORS.highlight,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "正方体对角截面平行与垂直定理",
+        latex: `\\begin{cases} \\text{面 } A_1C_1D \\parallel \\text{面 } AB_1C \\\\ BD_1 \\perp \\text{面 } A_1C_1D \\\\ BD_1 \\perp \\text{面 } AB_1C \\end{cases}`,
+        level: "core",
+        condition:
+          "正方体中过互为面对角线的两组三顶点截面平行，且公法线为正方体体对角线",
+      },
+      {
+        name: "体对角线三等分性质",
+        latex: `|BM| = |MN| = |ND_1| = \\frac{1}{3}|BD_1| = \\frac{\\sqrt{3}}{3}a`,
+        level: "core",
+        condition: "交点 M, N 分别为正三角形 △AB₁C 与 △A₁C₁D 的中心",
+      },
+      {
+        name: "平行截面距离公式",
+        latex: `d(\\text{面 } A_1C_1D, \\text{面 } AB_1C) = |MN| = \\frac{\\sqrt{3}}{3}a`,
+        level: "important",
+        note: "两平行平面的距离转化为公垂线段 MN 的长度",
+      },
+    );
+
+    gaokaoPoints.push(
+      {
+        text: "【高考经典母题·秒杀考点】正方体 ABCD-A₁B₁C₁D₁ 中，截面 A₁C₁D ∥ 面 AB₁C，体对角线 BD₁ 垂直于两截面并被其三等分。两平行平面间距离 d = (√3/3)a，顶点 B 到截面 A₁C₁D 的距离等于 (2√3/3)a。",
+        importance: "gaokao",
+      },
+      {
+        text: "【线面垂直两步证明法】在面 AB₁C 中，由于 AC ⊥ BD 且 AC ⊥ DD₁，故 AC ⊥ 面 BDD₁B₁，从而 AC ⊥ BD₁；同理 AB₁ ⊥ BD₁，因 AC 与 AB₁ 相交，故 BD₁ ⊥ 面 AB₁C。",
+        importance: "gaokao",
+      },
+    );
+
+    mnemonic =
+      "对角三顶截平行，体轴垂直穿中行；两面截出三等分，点面距离公式灵。";
+  } else if (mode === "gaokaoModel") {
+    // 高考综合模型：四棱锥 (pyramid)
     const pyr = calculatePyramidPerpModel(
       params.pyramidA ?? 3.6,
       params.pyramidB ?? 2.8,

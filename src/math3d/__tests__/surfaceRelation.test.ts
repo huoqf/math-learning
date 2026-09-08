@@ -5,6 +5,7 @@ import {
   calculatePerpJudgeFamily,
   calculatePerpPropState,
   calculatePyramidPerpModel,
+  calculateCubeDiagonalModel,
 } from "../surfaceRelation";
 
 describe("surfaceRelation 纯数学计算测试", () => {
@@ -59,5 +60,41 @@ describe("surfaceRelation 纯数学计算测试", () => {
     expect(model.isOFoot).toBe(true);
     expect(model.O.y).toBe(1.5);
     expect(model.P.z).toBe(3.5);
+  });
+
+  it("高考正方体平行截面模型：体对角线被两截面三等分且截面间距正确", () => {
+    const cube = calculateCubeDiagonalModel(3);
+    expect(cube.diagonalLength).toBeCloseTo(3 * Math.sqrt(3));
+    expect(cube.planeDistance).toBeCloseTo(Math.sqrt(3));
+
+    // 验证 M 点在面 AB1C 上且为对角线 1/3 处
+    expect(cube.M.x).toBeCloseTo(0.5);
+    expect(cube.M.y).toBeCloseTo(-0.5);
+    expect(cube.M.z).toBeCloseTo(1.0);
+
+    // 验证 N 点在面 A1C1D 上且为对角线 2/3 处
+    expect(cube.N.x).toBeCloseTo(-0.5);
+    expect(cube.N.y).toBeCloseTo(0.5);
+    expect(cube.N.z).toBeCloseTo(2.0);
+
+    // 验证三等分各段长度均等于 planeDistance
+    const distBM = Math.hypot(
+      cube.M.x - cube.B.x,
+      cube.M.y - cube.B.y,
+      cube.M.z - cube.B.z,
+    );
+    const distMN = Math.hypot(
+      cube.N.x - cube.M.x,
+      cube.N.y - cube.M.y,
+      cube.N.z - cube.M.z,
+    );
+    const distND1 = Math.hypot(
+      cube.D1.x - cube.N.x,
+      cube.D1.y - cube.N.y,
+      cube.D1.z - cube.N.z,
+    );
+    expect(distBM).toBeCloseTo(cube.planeDistance);
+    expect(distMN).toBeCloseTo(cube.planeDistance);
+    expect(distND1).toBeCloseTo(cube.planeDistance);
   });
 });

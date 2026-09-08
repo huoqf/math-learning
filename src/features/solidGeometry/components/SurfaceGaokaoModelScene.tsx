@@ -6,6 +6,7 @@ import { Point3D } from "@/components/Math3D/Point3D";
 import { Polygon3DFace } from "@/components/Math3D/Polygon3DFace";
 import { AngleArc3D } from "@/components/Math3D/AngleArc3D";
 import { projectPointOnSegment } from "@/math3d/vector3";
+import { calculateCubeDiagonalModel } from "@/math3d/surfaceRelation";
 
 interface SurfaceGaokaoModelSceneProps {
   modelType: "pyramid" | "cube";
@@ -30,16 +31,8 @@ export const SurfaceGaokaoModelScene: React.FC<
 }) => {
   if (modelType === "cube") {
     // 正方体对角面平行模型：面 A1C1D // 面 AB1C
-    const s = 3;
-    const A = { x: -s / 2, y: -s / 2, z: 0 };
-    const B = { x: s / 2, y: -s / 2, z: 0 };
-    const C = { x: s / 2, y: s / 2, z: 0 };
-    const D = { x: -s / 2, y: s / 2, z: 0 };
-
-    const A1 = { x: -s / 2, y: -s / 2, z: s };
-    const B1 = { x: s / 2, y: -s / 2, z: s };
-    const C1 = { x: s / 2, y: s / 2, z: s };
-    const D1 = { x: -s / 2, y: s / 2, z: s };
+    const cube = calculateCubeDiagonalModel(3);
+    const { A, B, C, D, A1, B1, C1, D1, M, N } = cube;
 
     return (
       <group>
@@ -84,6 +77,41 @@ export const SurfaceGaokaoModelScene: React.FC<
         />
         <Segment3D from={C1} to={D} colorKey="paramSecondary" lineWidth={2.5} />
         <Segment3D from={D} to={A1} colorKey="paramSecondary" lineWidth={2.5} />
+
+        {/* 核心几何高线：体对角线 BD1 垂直穿透两截面并被其三等分 */}
+        <Segment3D
+          from={B}
+          to={D1}
+          colorKey="highlight"
+          lineWidth={2.5}
+          dashed={true}
+        />
+
+        {/* 三等分特征交点 M(在面 AB1C) 与 N(在面 A1C1D) */}
+        <Point3D position={M} colorKey="highlight" radius={0.06} />
+        <Point3D position={N} colorKey="highlight" radius={0.06} />
+        <CompoundLabel3D
+          position={M}
+          base="M"
+          colorKey="highlight"
+          offset={[0.18, -0.18, 0.15]}
+        />
+        <CompoundLabel3D
+          position={N}
+          base="N"
+          colorKey="highlight"
+          offset={[-0.18, 0.18, 0.15]}
+        />
+
+        {/* 体对角线垂直于截面的直角角弧 (BD1 ⊥ AC) */}
+        <AngleArc3D
+          vertex={M}
+          dirA={{ x: C.x - A.x, y: C.y - A.y, z: 0 }}
+          dirB={{ x: D1.x - B.x, y: D1.y - B.y, z: D1.z - B.z }}
+          radius={0.36}
+          colorKey="highlight"
+          isRight={true}
+        />
 
         {/* 几何基准特征点 */}
         <Point3D position={A} colorKey="secondary" radius={0.045} />
