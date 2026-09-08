@@ -30,7 +30,7 @@ describe("buildRotationBodyPanel - 旋转体结构特征指标测试", () => {
     expect(res.theorems.some((t) => t.name.includes("外接球"))).toBe(true);
   });
 
-  it("圆锥 (rightTriangle) 展开角与侧面积计算准确", () => {
+  it("圆锥 (rightTriangle) 展开角、轴截面顶角与全面积计算准确", () => {
     const res = buildRotationBodyPanel(
       toParams({
         shape: "rightTriangle",
@@ -47,10 +47,20 @@ describe("buildRotationBodyPanel - 旋转体结构特征指标测试", () => {
     expect(quantitiesMap["母线长 l"]).toBe("5.00");
     // alpha = (3/5) * 360 = 216
     expect(quantitiesMap["侧面展开圆心角 α"]).toBe("216.0°");
+    // sin(theta) = 3/5 = 0.6 -> theta = 36.87° -> 2theta = 73.7°
+    expect(quantitiesMap["轴截面顶角 2θ"]).toBe("73.7°");
     expect(quantitiesMap["侧面积"]).toBe((Math.PI * 3 * 5).toFixed(2));
+    expect(quantitiesMap["全面积"]).toBe(
+      (Math.PI * 3 * 5 + Math.PI * 9).toFixed(2),
+    );
     expect(quantitiesMap["体积"]).toBe(((Math.PI * 9 * 4) / 3).toFixed(2));
 
-    expect(res.theorems.some((t) => t.name.includes("侧面展开图"))).toBe(true);
+    expect(
+      res.theorems.some((t) =>
+        t.name.includes("侧面展开圆心角与轴截面顶角关系"),
+      ),
+    ).toBe(true);
+    expect(res.theorems.some((t) => t.name.includes("表面积"))).toBe(true);
   });
 
   it("圆台 (rightTrapezoid) 指标与极限演化退化提示正确", () => {
@@ -67,6 +77,7 @@ describe("buildRotationBodyPanel - 旋转体结构特征指标测试", () => {
       res.quantities.map((q) => [q.label, q.value]),
     );
 
+    expect(quantitiesMap["全面积"]).toBeDefined();
     expect(quantitiesMap["体积"]).toBe(
       ((Math.PI * 4 * (9 + 4.5 + 2.25)) / 3).toFixed(2),
     );
@@ -74,6 +85,7 @@ describe("buildRotationBodyPanel - 旋转体结构特征指标测试", () => {
     expect(res.theorems.some((t) => t.name.includes("柱锥台体积统一"))).toBe(
       true,
     );
+    expect(res.theorems.some((t) => t.name.includes("表面积"))).toBe(true);
 
     // 测试 r2 ≈ r1 退化圆柱警告
     const resCylinderWarn = buildRotationBodyPanel(
@@ -117,12 +129,16 @@ describe("buildRotationBodyPanel - 旋转体结构特征指标测试", () => {
 
     expect(quantitiesMap["球表面积"]).toBe((4 * Math.PI * 25).toFixed(2));
     expect(quantitiesMap["球体积"]).toBe(((4 / 3) * Math.PI * 125).toFixed(2));
-    expect(quantitiesMap["截面小圆半径 r_截"]).toBe("4.00");
-    expect(quantitiesMap["截面小圆面积"]).toBe((Math.PI * 16).toFixed(2));
+    expect(quantitiesMap["截面圆半径 r_截"]).toBe("4.00");
+    expect(quantitiesMap["截面面积"]).toBe((Math.PI * 16).toFixed(2));
+    expect(quantitiesMap["位置关系"]).toBe("相交 (截面为小圆)");
 
     expect(res.theorems.some((t) => t.name.includes("截面圆勾股定理"))).toBe(
       true,
     );
+    expect(
+      res.theorems.some((t) => t.name.includes("平面与球的位置关系判定")),
+    ).toBe(true);
   });
 
   it("高考考点应包含降维轴截面、曲面展开与切接模型", () => {

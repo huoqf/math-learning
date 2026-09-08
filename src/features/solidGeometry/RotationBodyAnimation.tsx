@@ -161,6 +161,8 @@ export default function RotationBodyAnimation() {
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const isSphere = shape === "semicircle";
     const isTrapezoid = shape === "rightTrapezoid";
+    const isCylinderOrCone = shape === "rectangle" || shape === "rightTriangle";
+    const currentR = params.r1 ?? 1.5;
 
     return rotationBodyMeta
       .filter((meta) => {
@@ -178,22 +180,43 @@ export default function RotationBodyAnimation() {
         }
         return true;
       })
-      .map((meta) => ({
-        key: meta.key,
-        label: isSphere && meta.key === "r1" ? "球半径 R" : meta.label,
-        labelFormula:
-          isSphere && meta.key === "r1"
-            ? `\\text{球半径 } \\color{${MATH_COLORS.paramPrimary}}{R}`
-            : meta.labelFormula,
-        value: params[meta.key] ?? meta.defaultValue ?? 0,
-        min: meta.min,
-        max: meta.max,
-        step: meta.step ?? 0.1,
-        description: meta.description,
-        descriptionFormula: meta.descriptionFormula,
-        importance: meta.importance,
-        marks: meta.marks,
-      }));
+      .map((meta) => {
+        let label = meta.label;
+        let labelFormula = meta.labelFormula;
+        let min = meta.min;
+        let max = meta.max;
+
+        if (meta.key === "r1") {
+          if (isSphere) {
+            label = "球半径 R";
+            labelFormula = `\\text{球半径 } \\color{${MATH_COLORS.paramPrimary}}{R}`;
+          } else if (isTrapezoid) {
+            label = "下底半径 r₁";
+            labelFormula = `\\text{下底半径 } \\color{${MATH_COLORS.paramPrimary}}{r_1}`;
+          } else if (isCylinderOrCone) {
+            label = "底面半径 r";
+            labelFormula = `\\text{底面半径 } \\color{${MATH_COLORS.paramPrimary}}{r}`;
+          }
+        } else if (meta.key === "cutDistance" && isSphere) {
+          // 球截面小圆模型：截面高度限制在 [-R, R]
+          min = -Number(currentR.toFixed(1));
+          max = Number(currentR.toFixed(1));
+        }
+
+        return {
+          key: meta.key,
+          label,
+          labelFormula,
+          value: params[meta.key] ?? meta.defaultValue ?? 0,
+          min,
+          max,
+          step: meta.step ?? 0.1,
+          description: meta.description,
+          descriptionFormula: meta.descriptionFormula,
+          importance: meta.importance,
+          marks: meta.marks,
+        };
+      });
   }, [params, shape, featureMode]);
 
   // 可选的探究模式 Tab

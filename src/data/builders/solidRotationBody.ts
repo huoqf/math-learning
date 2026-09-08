@@ -97,27 +97,23 @@ export function buildRotationBodyPanel(
     theorems.push(
       {
         name: "圆柱侧面积与全面积",
-        latex:
-          "S_{\\text{侧}}=2\\pi \\color{#EF4444}{r} \\color{#059669}{h},\\; S_{\\text{全}}=2\\pi \\color{#EF4444}{r}(\\color{#EF4444}{r}+\\color{#059669}{h})",
+        latex: `S_{\\text{侧}}=2\\pi \\color{${MATH_COLORS.paramPrimary}}{r} \\color{${MATH_COLORS.paramTertiary}}{h},\\; S_{\\text{全}}=2\\pi \\color{${MATH_COLORS.paramPrimary}}{r}(\\color{${MATH_COLORS.paramPrimary}}{r}+\\color{${MATH_COLORS.paramTertiary}}{h})`,
         level: "core",
       },
       {
         name: "圆柱体积公式",
-        latex:
-          "V=\\pi \\color{#EF4444}{r}^2 \\color{#059669}{h} = S_{\\text{底}} \\color{#059669}{h}",
+        latex: `V=\\pi \\color{${MATH_COLORS.paramPrimary}}{r}^2 \\color{${MATH_COLORS.paramTertiary}}{h} = S_{\\text{底}} \\color{${MATH_COLORS.paramTertiary}}{h}`,
         level: "core",
       },
       {
         name: "圆柱外接球模型",
-        latex:
-          "R_{\\text{外}}^2 = \\color{#EF4444}{r}^2 + \\left(\\frac{\\color{#059669}{h}}{2}\\right)^2",
+        latex: `R_{\\text{外}}^2 = \\color{${MATH_COLORS.paramPrimary}}{r}^2 + \\left(\\frac{\\color{${MATH_COLORS.paramTertiary}}{h}}{2}\\right)^2`,
         level: "important",
         note: "圆柱上下底面圆心连线中点即为外接球球心",
       },
       {
         name: "侧面展开图最短路径（化曲为直）",
-        latex:
-          "L_{\\min} = \\sqrt{(2\\pi \\color{#EF4444}{r})^2 + \\color{#059669}{h}^2}",
+        latex: `L_{\\min} = \\sqrt{(2\\pi \\color{${MATH_COLORS.paramPrimary}}{r})^2 + \\color{${MATH_COLORS.paramTertiary}}{h}^2}`,
         level: "important",
         condition: "从底面一点绕侧面一周到达上底面对应点的最短距离",
       },
@@ -126,6 +122,9 @@ export function buildRotationBodyPanel(
     const l = Math.sqrt(r1 ** 2 + height ** 2);
     const angleDeg = (r1 / l) * 360;
     const angleRad = (angleDeg * Math.PI) / 180;
+    // 轴截面顶角 2θ（高考高频考点）
+    const halfApexAngleDeg = (Math.asin(r1 / l) * 180) / Math.PI;
+    const apexAngleDeg = 2 * halfApexAngleDeg;
     const sSide = Math.PI * r1 * l;
     const sBase = Math.PI * r1 ** 2;
     const sTotal = sSide + sBase;
@@ -160,6 +159,12 @@ export function buildRotationBodyPanel(
         symbol: "\\alpha",
         value: `${angleDeg.toFixed(1)}°`,
         color: MATH_COLORS.sequenceCobweb,
+      },
+      {
+        label: "轴截面顶角 2θ",
+        symbol: "2\\theta",
+        value: `${apexAngleDeg.toFixed(1)}°`,
+        color: MATH_COLORS.secondary,
       },
       {
         label: "轴截面积",
@@ -207,29 +212,26 @@ export function buildRotationBodyPanel(
 
     theorems.push(
       {
-        name: "圆锥特征直角三角形与母线",
-        latex:
-          "\\color{#059669}{l} = \\sqrt{\\color{#EF4444}{r}^2 + \\color{#059669}{h}^2},\\; S_{\\text{侧}} = \\pi \\color{#EF4444}{r} \\color{#059669}{l}",
+        name: "圆锥特征直角三角形与表面积",
+        latex: `\\color{${MATH_COLORS.paramSecondary}}{l} = \\sqrt{\\color{${MATH_COLORS.paramPrimary}}{r}^2 + \\color{${MATH_COLORS.paramTertiary}}{h}^2},\\; S_{\\text{侧}} = \\pi \\color{${MATH_COLORS.paramPrimary}}{r} \\color{${MATH_COLORS.paramSecondary}}{l},\\; S_{\\text{全}} = \\pi \\color{${MATH_COLORS.paramPrimary}}{r}(\\color{${MATH_COLORS.paramPrimary}}{r} + \\color{${MATH_COLORS.paramSecondary}}{l})`,
         level: "core",
         note: "高 h、底面半径 r、母线 l 构成特征直角三角形",
       },
       {
-        name: "侧面展开图圆心角定理",
-        latex:
-          "\\alpha = \\frac{\\color{#EF4444}{r}}{\\color{#059669}{l}} \\cdot 360^\\circ = \\frac{2\\pi \\color{#EF4444}{r}}{\\color{#059669}{l}} \\text{ (rad)}",
+        name: "侧面展开圆心角与轴截面顶角关系",
+        latex: `\\alpha = \\frac{\\color{${MATH_COLORS.paramPrimary}}{r}}{\\color{${MATH_COLORS.paramSecondary}}{l}} \\cdot 360^\\circ = 2\\pi \\sin\\theta,\\quad \\sin\\theta = \\frac{\\color{${MATH_COLORS.paramPrimary}}{r}}{\\color{${MATH_COLORS.paramSecondary}}{l}}`,
         level: "core",
-        condition: "高考侧面上蚂蚁爬行最短折线（化曲为直）核心公式",
+        condition:
+          "高考核心：当展开图为半圆(α=180°)时，sinθ=1/2，顶角2θ=60°(等边三角形)",
       },
       {
         name: "圆锥体积公式",
-        latex:
-          "V = \\frac{1}{3}\\pi \\color{#EF4444}{r}^2 \\color{#059669}{h} = \\frac{1}{3} S_{\\text{底}} \\color{#059669}{h}",
+        latex: `V = \\frac{1}{3}\\pi \\color{${MATH_COLORS.paramPrimary}}{r}^2 \\color{${MATH_COLORS.paramTertiary}}{h} = \\frac{1}{3} S_{\\text{底}} \\color{${MATH_COLORS.paramTertiary}}{h}`,
         level: "core",
       },
       {
         name: "圆锥切接球定理",
-        latex:
-          "R_{\\text{外}} = \\frac{\\color{#059669}{l}^2}{2\\color{#059669}{h}},\\; r_{\\text{内}} = \\frac{\\color{#EF4444}{r}\\color{#059669}{h}}{\\color{#EF4444}{r} + \\color{#059669}{l}}",
+        latex: `R_{\\text{外}} = \\frac{\\color{${MATH_COLORS.paramSecondary}}{l}^2}{2\\color{${MATH_COLORS.paramTertiary}}{h}},\\; r_{\\text{内}} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{r}\\color{${MATH_COLORS.paramTertiary}}{h}}{\\color{${MATH_COLORS.paramPrimary}}{r} + \\color{${MATH_COLORS.paramSecondary}}{l}}`,
         level: "important",
         note: "分别对应轴截面等腰三角形的外接圆与内切圆",
       },
@@ -303,21 +305,19 @@ export function buildRotationBodyPanel(
 
     theorems.push(
       {
-        name: "圆台特征直角梯形与母线",
-        latex:
-          "\\color{#059669}{l} = \\sqrt{(\\color{#EF4444}{r_1}-\\color{#D97706}{r_2})^2+\\color{#059669}{h}^2},\\; S_{\\text{侧}}=\\pi(\\color{#EF4444}{r_1}+\\color{#D97706}{r_2})\\color{#059669}{l}",
+        name: "圆台特征直角梯形与表面积",
+        latex: `\\color{${MATH_COLORS.paramTertiary}}{l} = \\sqrt{(\\color{${MATH_COLORS.paramPrimary}}{r_1}-\\color{${MATH_COLORS.paramSecondary}}{r_2})^2+\\color{${MATH_COLORS.paramTertiary}}{h}^2},\\; S_{\\text{侧}}=\\pi(\\color{${MATH_COLORS.paramPrimary}}{r_1}+\\color{${MATH_COLORS.paramSecondary}}{r_2})\\color{${MATH_COLORS.paramTertiary}}{l},\\; S_{\\text{全}}=S_{\\text{侧}}+\\pi \\color{${MATH_COLORS.paramPrimary}}{r_1}^2+\\pi \\color{${MATH_COLORS.paramSecondary}}{r_2}^2`,
         level: "core",
         note: "高 h、半径差 (r₁-r₂)、母线 l 构成特征直角三角形",
       },
       {
         name: "圆台体积公式",
-        latex:
-          "V=\\frac{1}{3}\\pi \\color{#059669}{h}(\\color{#EF4444}{r_1}^2+\\color{#EF4444}{r_1}\\color{#D97706}{r_2}+\\color{#D97706}{r_2}^2)",
+        latex: `V=\\frac{1}{3}\\pi \\color{${MATH_COLORS.paramTertiary}}{h}(\\color{${MATH_COLORS.paramPrimary}}{r_1}^2+\\color{${MATH_COLORS.paramPrimary}}{r_1}\\color{${MATH_COLORS.paramSecondary}}{r_2}+\\color{${MATH_COLORS.paramSecondary}}{r_2}^2)`,
         level: "core",
       },
       {
         name: "柱锥台体积统一公式",
-        latex: "V=\\frac{1}{3}\\color{#059669}{h}(S_1+\\sqrt{S_1 S_2}+S_2)",
+        latex: `V=\\frac{1}{3}\\color{${MATH_COLORS.paramTertiary}}{h}(S_1+\\sqrt{S_1 S_2}+S_2)`,
         level: "important",
         note: "r₂=r₁ (S₁=S₂) 时演化为圆柱 V=Sh；r₂=0 (S₁=0) 时演化为圆锥 V=⅓Sh",
       },
@@ -325,12 +325,19 @@ export function buildRotationBodyPanel(
   } else {
     // semicircle → sphere
     const R = r1;
-    const absD = Math.min(R, Math.abs(cutDistance));
+    const rawD = Math.abs(cutDistance);
+    const absD = Math.min(R, rawD);
     const rCut = Math.sqrt(Math.max(0, R * R - absD * absD));
     const sGreatCircle = Math.PI * R ** 2;
     const sCut = Math.PI * rCut ** 2;
     const sTotal = 4 * Math.PI * R ** 2;
     const v = (4 / 3) * Math.PI * R ** 3;
+    const relationStr =
+      absD < 1e-4
+        ? "大圆截面 (d=0)"
+        : absD < R - 1e-3
+          ? "相交 (截面为小圆)"
+          : "相切 (截面退化为点)";
 
     quantities.push(
       {
@@ -346,13 +353,19 @@ export function buildRotationBodyPanel(
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "截面小圆半径 r_截",
+        label: "截面圆半径 r_截",
         symbol: "r_{\\text{截}}",
         value: rCut.toFixed(2),
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "截面小圆面积",
+        label: "位置关系",
+        symbol: "\\text{位置}",
+        value: relationStr,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "截面面积",
         symbol: "S_{\\text{截}}",
         value: sCut.toFixed(2),
         color: MATH_COLORS.secondary,
@@ -380,22 +393,25 @@ export function buildRotationBodyPanel(
     theorems.push(
       {
         name: "球截面圆勾股定理（垂径模型）",
-        latex:
-          "\\color{#EF4444}{R}^2 = r_{\\text{截}}^2 + \\color{#D97706}{d}^2 \\implies r_{\\text{截}} = \\sqrt{\\color{#EF4444}{R}^2 - \\color{#D97706}{d}^2}",
+        latex: `\\color{${MATH_COLORS.paramPrimary}}{R}^2 = r_{\\text{截}}^2 + \\color{${MATH_COLORS.paramSecondary}}{d}^2 \\implies r_{\\text{截}} = \\sqrt{\\color{${MATH_COLORS.paramPrimary}}{R}^2 - \\color{${MATH_COLORS.paramSecondary}}{d}^2}`,
         level: "core",
         note: "球心到截面距离 d、截面小圆半径 r_截 与球半径 R 构成直角三角形",
       },
       {
+        name: "平面与球的位置关系判定",
+        latex: `d < \\color{${MATH_COLORS.paramPrimary}}{R} \\Leftrightarrow \\text{相交(圆)},\\; d = \\color{${MATH_COLORS.paramPrimary}}{R} \\Leftrightarrow \\text{相切(点)},\\; d > \\color{${MATH_COLORS.paramPrimary}}{R} \\Leftrightarrow \\text{相离(无公共点)}`,
+        level: "core",
+        condition: "高考判定平面截球图形性质的基础准则",
+      },
+      {
         name: "球表面积与体积公式",
-        latex:
-          "S = 4\\pi \\color{#EF4444}{R}^2,\\; V = \\frac{4}{3}\\pi \\color{#EF4444}{R}^3",
+        latex: `S = 4\\pi \\color{${MATH_COLORS.paramPrimary}}{R}^2,\\; V = \\frac{4}{3}\\pi \\color{${MATH_COLORS.paramPrimary}}{R}^3`,
         level: "core",
         note: "导数微元关系：dV/dR = 4πR² = S（球体由无数薄球壳微元积分累加）",
       },
       {
         name: "球面距离（大圆劣弧）定理",
-        latex:
-          "L = \\color{#EF4444}{R} \\cdot \\theta \\quad (\\theta \\in [0, \\pi])",
+        latex: `L = \\color{${MATH_COLORS.paramPrimary}}{R} \\cdot \\theta \\quad (\\theta \\in [0, \\pi])`,
         level: "important",
         note: "球面上两点间的最短路径即经过这两点的大圆劣弧长度",
       },
@@ -434,6 +450,15 @@ export function buildRotationBodyPanel(
     } else if (r2 < 0.15) {
       warnings.push({
         text: "上底半径接近 0 (r₂ ≈ 0)，圆台演变/退化为圆锥 (V = ⅓Sh)！",
+        level: "warning",
+      });
+    }
+  }
+
+  if (shape === "semicircle") {
+    if (Math.abs(cutDistance) >= r1 - 1e-3) {
+      warnings.push({
+        text: "球心距 d 达到或超过球半径 R，截面平面与球相切退化为单点或相离！",
         level: "warning",
       });
     }
