@@ -319,6 +319,11 @@ export function TangentScalingAnimation() {
         color: MATH_COLORS.paramSecondary,
         style: "point",
       },
+      {
+        label: "中点切点 $M$",
+        color: MATH_COLORS.paramPrimary,
+        style: "point",
+      },
     ];
   }, [mode, baseSubModel, sandwichSubModel, paramKSubModel, secantSubModel]);
 
@@ -418,16 +423,17 @@ export function TangentScalingAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 一级维度 Tab 切换 */}
+          {/* 一级维度 Tab 切换 (2x2 四宫格紧凑排版) */}
           <LeftPanelSection title="放缩与卡位模型">
             <TabSwitcher
               tabs={modeTabs}
               value={mode}
               onChange={(key) => setMode(key as TangentScalingMode)}
+              layout="horizontal"
             />
           </LeftPanelSection>
 
-          {/* 二级典型情景 / 高考题型预设 (双列紧凑排版) */}
+          {/* 二级典型情景 / 高考题型预设 (基准2列对称，长不等式单列整齐展开) */}
           <LeftPanelSection title="典型高考构型">
             {mode === "base" && (
               <SelectGrid
@@ -444,7 +450,7 @@ export function TangentScalingAnimation() {
                 onChange={(key) =>
                   handleSandwichSubChange(key as SandwichSubModel)
                 }
-                columns={2}
+                columns={1}
               />
             )}
             {mode === "param_k" && (
@@ -452,7 +458,7 @@ export function TangentScalingAnimation() {
                 items={paramKSubModels}
                 value={paramKSubModel}
                 onChange={(key) => handleParamKSubChange(key as ParamKSubModel)}
-                columns={2}
+                columns={1}
               />
             )}
             {mode === "secant" && (
@@ -460,7 +466,7 @@ export function TangentScalingAnimation() {
                 items={secantSubModels}
                 value={secantSubModel}
                 onChange={(key) => handleSecantSubChange(key as SecantSubModel)}
-                columns={2}
+                columns={1}
               />
             )}
           </LeftPanelSection>

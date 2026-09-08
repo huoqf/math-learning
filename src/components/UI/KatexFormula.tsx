@@ -15,6 +15,8 @@ interface KatexFormulaProps {
   className?: string;
   /** 是否开启自适应缩放（默认开启） */
   responsive?: boolean;
+  /** 是否允许自动语义拆行（默认仅 block 块级公式开启，inline 行内公式严格禁止断行） */
+  allowLineBreak?: boolean;
 }
 
 export const KatexFormula: React.FC<KatexFormulaProps> = ({
@@ -22,6 +24,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   mode = "inline",
   className = "",
   responsive = true,
+  allowLineBreak,
 }) => {
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -36,6 +39,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   const [lines, setLines] = useState<string[] | null>(null);
 
   const isBlock = mode === "block";
+  const canLineBreak = allowLineBreak ?? isBlock;
 
   // 1+2. 渲染 KaTeX 并测量（合并到同一个 layout effect）：
   //    - 始终先渲染、后测量，保证测量拿到真实内容宽度，
@@ -99,34 +103,37 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
       const contentHeight = innerBox.scrollHeight;
 
       if (containerWidth > 0 && contentWidth > containerWidth) {
-        // 核心原则：只要公式超宽，优先尝试按高中数学教材语义拆行，绝不盲目暴力缩小
-        if (!lines) {
-          const split = findOptimalSplit(formula);
-          if (split) {
-            setLines(split);
-            return;
-          }
-        } else {
-          // 多行模式下找出仍然超宽的行，继续按最优规则拆分（最多拆至 4 行）
-          if (lines.length < 4) {
-            for (let i = 0; i < lineDivs.length; i++) {
-              if (lineDivs[i].scrollWidth > containerWidth) {
-                const targetLine = lines[i];
-                const further = findOptimalSplit(targetLine);
-                if (further) {
-                  const next = [...lines];
-                  next.splice(i, 1, further[0], further[1]);
-                  setLines(next);
-                  return;
+        // 核心原则：只有明确允许拆行（如 block 块级推导）时才尝试教材式拆行
+        if (canLineBreak) {
+          if (!lines) {
+            const split = findOptimalSplit(formula);
+            if (split) {
+              setLines(split);
+              return;
+            }
+          } else {
+            // 多行模式下找出仍然超宽的行，继续按最优规则拆分（最多拆至 4 行）
+            if (lines.length < 4) {
+              for (let i = 0; i < lineDivs.length; i++) {
+                if (lineDivs[i].scrollWidth > containerWidth) {
+                  const targetLine = lines[i];
+                  const further = findOptimalSplit(targetLine);
+                  if (further) {
+                    const next = [...lines];
+                    next.splice(i, 1, further[0], further[1]);
+                    setLines(next);
+                    return;
+                  }
                 }
               }
             }
           }
         }
 
-        // 仅当公式已无法继续按高中数学习惯拆行时，才进行兜底微幅 Scale-to-Fit 缩放
+        // 不允许拆行或拆行后仍超宽时，进行等比 Scale-to-Fit 缩放
         const needed = (containerWidth - 4) / contentWidth;
-        const nextScale = Math.max(HARD_MIN_SCALE, needed);
+        const minScale = canLineBreak ? HARD_MIN_SCALE : 0.65;
+        const nextScale = Math.max(minScale, needed);
         setScale(nextScale);
         if (lines && lines.length > 1) {
           setScaledHeight(Math.ceil(contentHeight * nextScale));
@@ -197,7 +204,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   return (
     <div
       ref={outerRef}
-      className={`inline-flex items-center justify-start align-middle mx-0.5 my-0.5 max-w-full overflow-hidden ${className}`}
+      className={`inline-flex items-center justify-center align-middle mx-0.5 my-0.5 max-w-full overflow-hidden ${className}`}
       style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
     >
       <div
@@ -205,11 +212,11 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
         className={`text-neutral-800 font-medium ${
           lines && lines.length > 1
             ? "flex flex-col items-start gap-1.5"
-            : "inline-block text-left whitespace-nowrap"
+            : "inline-block text-center whitespace-nowrap"
         }`}
         style={{
           transform: scale < 1 ? `scale(${scale})` : undefined,
-          transformOrigin: "left center",
+          transformOrigin: "center center",
         }}
       >
         {innerContent}

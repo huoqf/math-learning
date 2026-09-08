@@ -224,7 +224,7 @@ export const SelectGrid = <T extends string = string>({
               {item.formula && (
                 <div
                   className={[
-                    "flex items-center justify-center opacity-90 py-0.5",
+                    "flex items-center justify-center opacity-90 py-0.5 whitespace-nowrap",
                     isFullWidth
                       ? "shrink-0"
                       : "w-full overflow-x-auto overflow-y-hidden",
@@ -233,7 +233,8 @@ export const SelectGrid = <T extends string = string>({
                   <KatexFormula
                     formula={item.formula}
                     mode="inline"
-                    className="!text-[10px] !my-0 !mx-0 max-w-full"
+                    allowLineBreak={false}
+                    className="!text-[11px] !my-0 !mx-0 max-w-full whitespace-nowrap"
                   />
                 </div>
               )}

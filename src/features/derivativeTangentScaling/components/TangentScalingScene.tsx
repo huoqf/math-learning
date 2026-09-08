@@ -59,25 +59,27 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
     if (mode !== "base") return null;
     let funcType: "exp" | "log" | "exp_shift" | "log_shift" = "exp";
     let fn = (x: number) => Math.exp(x);
-    let xRange: [number, number] = [-4, 3.5];
+    let xRange: [number, number] = [-4, 3.0];
 
     if (baseSubModel === "exp_shift_x") {
       funcType = "exp_shift";
       fn = (x: number) => Math.exp(x - 1);
+      xRange = [-4, 3.5];
     } else if (baseSubModel === "exp_ex") {
       funcType = "exp";
       fn = (x: number) => Math.exp(x);
+      xRange = [-4, 3.0];
     } else if (
       baseSubModel === "log_x_minus_1" ||
       baseSubModel === "log_x_div_e"
     ) {
       funcType = "log";
       fn = (x: number) => (x > 0.01 ? Math.log(x) : -10);
-      xRange = [0.05, 5];
+      xRange = [0.02, 5.0];
     } else if (baseSubModel === "log_shift_0") {
       funcType = "log_shift";
       fn = (x: number) => (x > -0.99 ? Math.log(x + 1) : -10);
-      xRange = [-0.95, 4.5];
+      xRange = [-0.98, 5.0];
     }
 
     const tangent = calculateTangentLine(funcType, params.x0);
@@ -125,28 +127,31 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
     if (sandwichSubModel === "parallel_bands") {
       return {
         upperFn: (x: number) => Math.exp(x),
-        lowerFn: (x: number) => (x > 0.02 ? Math.log(x) : -10),
+        lowerFn: (x: number) => (x > 0.01 ? Math.log(x) : -10),
         upperLineFn: (x: number) => x + 1,
         lowerLineFn: (x: number) => x - 1,
-        xRange: [0.05, 3.2] as [number, number],
+        upperXRange: [-4, 3.0] as [number, number],
+        lowerXRange: [0.02, 5.0] as [number, number],
       };
     }
 
     if (sandwichSubModel === "origin_sandwich") {
       return {
         upperFn: (x: number) => Math.exp(x) - 1,
-        lowerFn: (x: number) => (x > -0.95 ? Math.log(x + 1) : -10),
+        lowerFn: (x: number) => (x > -0.99 ? Math.log(x + 1) : -10),
         middleLineFn: (x: number) => x,
-        xRange: [-0.9, 3.5] as [number, number],
+        upperXRange: [-4, 3.0] as [number, number],
+        lowerXRange: [-0.98, 5.0] as [number, number],
       };
     }
 
     // 默认 common_tangent: e^(x-1) >= x >= ln x + 1
     return {
       upperFn: (x: number) => Math.exp(x - 1),
-      lowerFn: (x: number) => (x > 0.02 ? Math.log(x) + 1 : -10),
+      lowerFn: (x: number) => (x > 0.01 ? Math.log(x) + 1 : -10),
       middleLineFn: (x: number) => x,
-      xRange: [0.05, 3.5] as [number, number],
+      upperXRange: [-4, 3.5] as [number, number],
+      lowerXRange: [0.02, 5.0] as [number, number],
     };
   }, [mode, sandwichSubModel]);
 
@@ -186,16 +191,17 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
       return {
         isTaylor: true as const,
         isLog: false as const,
-        mainFn: (x: number) => (x > -0.9 ? Math.log(1 + x) : -10),
+        mainFn: (x: number) => (x > -0.99 ? Math.log(1 + x) : -10),
         upperFn: (x: number) => x,
         lowerFn: (x: number) => x - 0.5 * x * x,
-        xRange: [-0.8, 3.0] as [number, number],
+        mainXRange: [-0.98, 5.0] as [number, number],
+        lineXRange: [-2.5, 5.0] as [number, number],
       };
     }
 
     const isLog = secantSubModel === "log_secant_tangent";
     const fn = isLog
-      ? (x: number) => (x > 0.02 ? Math.log(x) : -10)
+      ? (x: number) => (x > 0.01 ? Math.log(x) : -10)
       : (x: number) => Math.exp(x);
     const a = params.intervalA;
     const b = params.intervalB;
@@ -213,7 +219,8 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
       b,
       midX,
       midY: fn(midX),
-      xRange: (isLog ? [0.05, 5] : [-0.5, 3.5]) as [number, number],
+      mainXRange: (isLog ? [0.02, 5.0] : [-4.0, 3.0]) as [number, number],
+      lineXRange: (isLog ? [0.02, 5.0] : [-4.0, 5.0]) as [number, number],
     };
   }, [mode, secantSubModel, params.intervalA, params.intervalB]);
 
@@ -333,16 +340,26 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
         });
       }
 
-      // 动直线上的检验动点 P_k
+      // 1. 动直线斜率旋转手柄 Q_k(2.2, 2.2k)
+      const slopeRefX = 2.2;
+      const ptSlope = mathToDesign(slopeRefX, params.k * slopeRefX, scale);
+      items.push({
+        key: "pt-slope-k",
+        x: ptSlope.x,
+        y: ptSlope.y,
+        text: "Q_k",
+        color: MATH_COLORS.paramPrimary,
+        preferredPlacement: "top-left",
+      });
+
+      // 2. 动直线上的检验动点 P
       const ptK = mathToDesign(params.evalX, params.k * params.evalX, scale);
       items.push({
         key: "pt-eval-k",
         x: ptK.x,
         y: ptK.y,
-        text: "P_k",
-        color: paramKData.evalRes.isSafe
-          ? MATH_COLORS.paramTertiary
-          : MATH_COLORS.highlight,
+        text: "P",
+        color: MATH_COLORS.paramSecondary,
         preferredPlacement: "bottom-right",
       });
     }
@@ -378,6 +395,7 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
         const yb = secantData.mainFn(bVal);
         const ptA = mathToDesign(aVal, ya, scale);
         const ptB = mathToDesign(bVal, yb, scale);
+        const ptM = mathToDesign(secantData.midX, secantData.midY, scale);
         items.push(
           {
             key: "pt-sec-a",
@@ -386,6 +404,14 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             text: "A",
             color: MATH_COLORS.paramPrimary,
             preferredPlacement: "left",
+          },
+          {
+            key: "pt-sec-m",
+            x: ptM.x,
+            y: ptM.y,
+            text: "M",
+            color: MATH_COLORS.paramPrimary,
+            preferredPlacement: secantData.isLog ? "bottom" : "top",
           },
           {
             key: "pt-sec-b",
@@ -429,7 +455,7 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
           />
           {/* 高考基准放缩目标参考切线 (浅虚线) */}
           <FunctionGraph
-            fn={clipFn(baseData.baseTangentFn, [-4, 4.5])}
+            fn={clipFn(baseData.baseTangentFn, [-4, 5.0])}
             scale={scale}
             color={withAlpha(MATH_COLORS.line, 0.4)}
             strokeWidth={1.5}
@@ -445,16 +471,16 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
           />
           {/* 动切线 */}
           <FunctionGraph
-            fn={clipFn(baseData.tangentFn, [-4, 4.5])}
+            fn={clipFn(baseData.tangentFn, [-4, 5.0])}
             scale={scale}
             color={MATH_COLORS.paramPrimary}
             strokeWidth={1.8}
             strokeDasharray="4 3"
           />
-          {/* 可拖拽切点 (自适应安全范围) */}
+          {/* 可拖拽切点 (严格对齐左屏滑块安全范围) */}
           {(() => {
-            let minX = -2.5;
-            let maxX = 2.5;
+            let minX = -2.0;
+            let maxX = 2.0;
             if (baseSubModel === "log_x_minus_1") {
               minX = 0.2;
               maxX = 4.0;
@@ -474,15 +500,15 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
 
             return (
               <InteractivePoint
+                snapTo={baseData.fn}
+                xRange={[minX, maxX]}
                 cx={baseData.tangent.x0}
                 cy={baseData.tangent.y0}
                 scale={scale}
                 vp={vp}
                 color={MATH_COLORS.paramPrimary}
                 fontScale={fontScale}
-                onDrag={({ x }) => {
-                  onParamChange("x0", Math.max(minX, Math.min(maxX, x)));
-                }}
+                onChangeX={(x) => onParamChange("x0", x)}
               />
             );
           })()}
@@ -494,14 +520,14 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
         <>
           {/* 上函数曲线 */}
           <FunctionGraph
-            fn={clipFn(sandwichData.upperFn, sandwichData.xRange)}
+            fn={clipFn(sandwichData.upperFn, sandwichData.upperXRange)}
             scale={scale}
             color={MATH_COLORS.primary}
             strokeWidth={2.5}
           />
           {/* 下函数曲线 */}
           <FunctionGraph
-            fn={clipFn(sandwichData.lowerFn, sandwichData.xRange)}
+            fn={clipFn(sandwichData.lowerFn, sandwichData.lowerXRange)}
             scale={scale}
             color={MATH_COLORS.secondary}
             strokeWidth={2.5}
@@ -511,7 +537,7 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             <>
               {/* 平行切线 y = x + 1 */}
               <FunctionGraph
-                fn={clipFn(sandwichData.upperLineFn!, [-3, 4])}
+                fn={clipFn(sandwichData.upperLineFn!, [-4, 5.0])}
                 scale={scale}
                 color={MATH_COLORS.primary}
                 strokeWidth={1.8}
@@ -519,7 +545,7 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
               />
               {/* 平行切线 y = x - 1 */}
               <FunctionGraph
-                fn={clipFn(sandwichData.lowerLineFn!, [-2, 5])}
+                fn={clipFn(sandwichData.lowerLineFn!, [-4, 5.0])}
                 scale={scale}
                 color={MATH_COLORS.secondary}
                 strokeWidth={1.8}
@@ -545,7 +571,7 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             <>
               {/* 中间公切线 y = x */}
               <FunctionGraph
-                fn={clipFn(sandwichData.middleLineFn!, [-2, 4.5])}
+                fn={clipFn(sandwichData.middleLineFn!, [-4, 5.0])}
                 scale={scale}
                 color={MATH_COLORS.paramTertiary}
                 strokeWidth={2}
@@ -594,17 +620,18 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
                   fontScale={fontScale}
                 />
                 <InteractivePoint
+                  axis="x"
+                  xRange={[
+                    sandwichSubModel === "origin_sandwich" ? -0.7 : 0.2,
+                    3.5,
+                  ]}
                   cx={evalX}
                   cy={(yUp + yLow) / 2}
                   scale={scale}
                   vp={vp}
                   color={MATH_COLORS.paramPrimary}
                   fontScale={fontScale}
-                  onDrag={({ x }) => {
-                    const minE =
-                      sandwichSubModel === "origin_sandwich" ? -0.7 : 0.2;
-                    onParamChange("evalX", Math.max(minE, Math.min(3.5, x)));
-                  }}
+                  onChangeX={(x) => onParamChange("evalX", x)}
                 />
               </g>
             );
@@ -619,14 +646,14 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
           {paramKData.showExp && (
             <>
               <FunctionGraph
-                fn={clipFn(paramKData.expFn, [-3, 2.5])}
+                fn={clipFn(paramKData.expFn, [-4, 2.5])}
                 scale={scale}
                 color={MATH_COLORS.primary}
                 strokeWidth={2.5}
               />
               {/* 临界上切线 y = ex */}
               <FunctionGraph
-                fn={clipFn(paramKData.expCritLineFn, [0, 2.2])}
+                fn={clipFn(paramKData.expCritLineFn, [0, 3.0])}
                 scale={scale}
                 color={withAlpha(MATH_COLORS.primary, 0.4)}
                 strokeWidth={1.5}
@@ -647,14 +674,14 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
           {paramKData.showLog && (
             <>
               <FunctionGraph
-                fn={clipFn(paramKData.logFn, [0.05, 5])}
+                fn={clipFn(paramKData.logFn, [0.02, 5.0])}
                 scale={scale}
                 color={MATH_COLORS.secondary}
                 strokeWidth={2.5}
               />
               {/* 临界下切线 y = (1/e)x */}
               <FunctionGraph
-                fn={clipFn(paramKData.logCritLineFn, [0, 5])}
+                fn={clipFn(paramKData.logCritLineFn, [0, 5.0])}
                 scale={scale}
                 color={withAlpha(MATH_COLORS.secondary, 0.4)}
                 strokeWidth={1.5}
@@ -692,13 +719,77 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             fontScale={fontScale}
           />
 
-          {/* 检验点 evalX 垂直连线与动直线交互手柄 */}
+          {/* 动直线斜率旋转手柄 Q_k (专职调节斜率 k，鲜红色与左屏 k 滑块 100% 绑定) */}
+          <InteractivePoint
+            cx={2.2}
+            cy={2.2 * params.k}
+            scale={scale}
+            vp={vp}
+            color={MATH_COLORS.paramPrimary}
+            fontScale={fontScale}
+            onDrag={({ x, y }) => {
+              const effX = Math.max(0.5, x);
+              const newK = Math.max(0.1, Math.min(3.5, y / effX));
+              onParamChange("k", Math.round(newK * 100) / 100);
+            }}
+          />
+
+          {/* 检验点 evalX 垂直连线与横向探针交互手柄 */}
           {(() => {
             const ex = params.evalX;
             const yLine = params.k * ex;
             const yExp = Math.exp(ex);
             const yLog = ex > 0.02 ? Math.log(ex) : -10;
             const pLine = mathToDesign(ex, yLine, scale);
+            const isDual = paramKSubModel === "exp_log_k";
+
+            if (isDual) {
+              const pExp = mathToDesign(ex, yExp, scale);
+              const pLog = mathToDesign(ex, yLog, scale);
+              return (
+                <g>
+                  {/* 双侧贯通垂直指示虚线 (ln x 到 e^x) */}
+                  <line
+                    x1={pExp.x}
+                    y1={pExp.y}
+                    x2={pLog.x}
+                    y2={pLog.y}
+                    stroke={MATH_COLORS.accent}
+                    strokeWidth={1.5}
+                    strokeDasharray="3 3"
+                  />
+                  {/* 上交点 e^x */}
+                  <MathPoint
+                    cx={ex}
+                    cy={yExp}
+                    scale={scale}
+                    color={MATH_COLORS.primary}
+                    fontScale={fontScale}
+                  />
+                  {/* 下交点 ln x */}
+                  <MathPoint
+                    cx={ex}
+                    cy={yLog}
+                    scale={scale}
+                    color={MATH_COLORS.secondary}
+                    fontScale={fontScale}
+                  />
+                  {/* 动直线上的检验探针手柄 P (仅横向滑动调节检验点 x，暖橙色与左屏 x 滑块 100% 绑定) */}
+                  <InteractivePoint
+                    axis="x"
+                    xRange={[0.2, 3.0]}
+                    cx={ex}
+                    cy={yLine}
+                    scale={scale}
+                    vp={vp}
+                    color={MATH_COLORS.paramSecondary}
+                    fontScale={fontScale}
+                    onChangeX={(x) => onParamChange("evalX", x)}
+                  />
+                </g>
+              );
+            }
+
             const targetY = paramKSubModel === "log_kx_origin" ? yLog : yExp;
             const pTarget = mathToDesign(ex, targetY, scale);
 
@@ -724,24 +815,17 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
                   }
                   fontScale={fontScale}
                 />
+                {/* 动直线上的检验探针手柄 P (仅横向滑动调节检验点 x，暖橙色与左屏 x 滑块 100% 绑定) */}
                 <InteractivePoint
+                  axis="x"
+                  xRange={[0.2, 3.0]}
                   cx={ex}
                   cy={yLine}
                   scale={scale}
                   vp={vp}
-                  color={
-                    paramKData.evalRes.isSafe
-                      ? MATH_COLORS.paramTertiary
-                      : MATH_COLORS.highlight
-                  }
+                  color={MATH_COLORS.paramSecondary}
                   fontScale={fontScale}
-                  onDrag={({ x, y }) => {
-                    onParamChange("evalX", Math.max(0.2, Math.min(3.0, x)));
-                    if (Math.abs(x) > 0.1) {
-                      const newK = Math.max(0.1, Math.min(3.5, y / x));
-                      onParamChange("k", Math.round(newK * 100) / 100);
-                    }
-                  }}
+                  onChangeX={(x) => onParamChange("evalX", x)}
                 />
               </g>
             );
@@ -756,14 +840,14 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             <>
               {/* ln(1+x) */}
               <FunctionGraph
-                fn={clipFn(secantData.mainFn, secantData.xRange)}
+                fn={clipFn(secantData.mainFn, secantData.mainXRange)}
                 scale={scale}
                 color={MATH_COLORS.primary}
                 strokeWidth={2.5}
               />
               {/* y = x 上界切线 */}
               <FunctionGraph
-                fn={clipFn(secantData.upperFn, secantData.xRange)}
+                fn={clipFn(secantData.upperFn, secantData.lineXRange)}
                 scale={scale}
                 color={MATH_COLORS.paramTertiary}
                 strokeWidth={1.8}
@@ -771,7 +855,7 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
               />
               {/* y = x - 0.5x^2 下界抛物线 */}
               <FunctionGraph
-                fn={clipFn(secantData.lowerFn, secantData.xRange)}
+                fn={clipFn(secantData.lowerFn, secantData.lineXRange)}
                 scale={scale}
                 color={MATH_COLORS.accent}
                 strokeWidth={2}
@@ -843,7 +927,7 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
             <>
               {/* 主曲线 (e^x 或 ln x) */}
               <FunctionGraph
-                fn={clipFn(secantData.mainFn, secantData.xRange)}
+                fn={clipFn(secantData.mainFn, secantData.mainXRange)}
                 scale={scale}
                 color={
                   secantData.isLog ? MATH_COLORS.secondary : MATH_COLORS.primary
@@ -852,14 +936,14 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
               />
               {/* 割线（弦线） */}
               <FunctionGraph
-                fn={clipFn(secantData.secantFn, secantData.xRange)}
+                fn={clipFn(secantData.secantFn, secantData.lineXRange)}
                 scale={scale}
                 color={MATH_COLORS.accent}
                 strokeWidth={2}
               />
               {/* 切线 */}
               <FunctionGraph
-                fn={clipFn(secantData.tangentFn, secantData.xRange)}
+                fn={clipFn(secantData.tangentFn, secantData.lineXRange)}
                 scale={scale}
                 color={MATH_COLORS.paramPrimary}
                 strokeWidth={1.8}
@@ -895,7 +979,10 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
                       onDrag={({ x }) => {
                         onParamChange(
                           "intervalA",
-                          Math.max(minA, Math.min(bVal - 0.4, x)),
+                          Math.max(
+                            minA,
+                            Math.min(1.5, Math.min(bVal - 0.4, x)),
+                          ),
                         );
                       }}
                     />
@@ -909,7 +996,10 @@ export const TangentScalingScene: React.FC<TangentScalingSceneProps> = ({
                       onDrag={({ x }) => {
                         onParamChange(
                           "intervalB",
-                          Math.max(aVal + 0.4, Math.min(maxB, x)),
+                          Math.max(
+                            1.6,
+                            Math.max(aVal + 0.4, Math.min(maxB, x)),
+                          ),
                         );
                       }}
                     />

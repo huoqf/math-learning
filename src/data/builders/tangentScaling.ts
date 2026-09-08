@@ -63,8 +63,37 @@ export function buildTangentScalingPanel(
       isConvex = false;
     }
 
+    let baseSlope = 1;
+    let baseIntercept = 1;
+    let baseAnchorX = 0;
+    if (baseSub === "exp_shift_x") {
+      baseSlope = 1;
+      baseIntercept = 0;
+      baseAnchorX = 1;
+    } else if (baseSub === "exp_ex") {
+      baseSlope = Math.E;
+      baseIntercept = 0;
+      baseAnchorX = 1;
+    } else if (baseSub === "log_x_minus_1") {
+      baseSlope = 1;
+      baseIntercept = -1;
+      baseAnchorX = 1;
+    } else if (baseSub === "log_shift_0") {
+      baseSlope = 1;
+      baseIntercept = 0;
+      baseAnchorX = 0;
+    } else if (baseSub === "log_x_div_e") {
+      baseSlope = 1 / Math.E;
+      baseIntercept = 0;
+      baseAnchorX = Math.E;
+    }
+
     const tangent = calculateTangentLine(funcType, params.x0);
-    const diff = tangent.y0 - (tangent.slope * params.x0 + tangent.intercept);
+    const baseLineVal = baseSlope * params.x0 + baseIntercept;
+    const baseDiff = isConvex
+      ? tangent.y0 - baseLineVal
+      : baseLineVal - tangent.y0;
+    const isAtAnchor = Math.abs(params.x0 - baseAnchorX) < 0.05;
 
     return {
       examAnchor: "新高考解答题 17/18 题 · 基准切线放缩法",
@@ -91,12 +120,17 @@ export function buildTangentScalingPanel(
           color: MATH_COLORS.primary,
         },
         {
-          label: "切点处切线差",
-          symbol: "f(x_0) - y_0",
-          value: Math.abs(diff).toFixed(4),
-          color: MATH_COLORS.accent,
-          isInvariant: true,
-          invariantNote: "相切点处差值精确为 0，其余点恒满足单向放缩",
+          label: "基准放缩式差值",
+          symbol: isConvex
+            ? "f(x_0) - y_{\\text{base}}"
+            : "y_{\\text{base}} - f(x_0)",
+          value: Math.max(0, baseDiff).toFixed(4),
+          color: isAtAnchor ? MATH_COLORS.paramTertiary : MATH_COLORS.accent,
+          isInvariant: isAtAnchor,
+          invariantNote: isAtAnchor
+            ? "已达基准切点，放缩差值为 0（取等条件达成）"
+            : "当前点差值 > 0，验证不等式恒成立且放缩有裕量",
+          highlight: isAtAnchor ? "positive" : undefined,
         },
       ],
       theorems: [

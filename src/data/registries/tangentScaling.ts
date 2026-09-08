@@ -52,37 +52,37 @@ export const baseSubModels: (SelectGridItem & {
   {
     key: "exp_x_plus_1",
     id: "exp_x_plus_1",
-    label: "自然指数基准",
+    label: "指数基准",
     formula: "e^x \\ge x + 1",
-  },
-  {
-    key: "exp_shift_x",
-    id: "exp_shift_x",
-    label: "指数同构移轴",
-    formula: "e^{x-1} \\ge x",
-  },
-  {
-    key: "exp_ex",
-    id: "exp_ex",
-    label: "指数原点相切",
-    formula: "e^x \\ge ex",
   },
   {
     key: "log_x_minus_1",
     id: "log_x_minus_1",
-    label: "自然对数基准",
+    label: "对数基准",
     formula: "\\ln x \\le x - 1",
+  },
+  {
+    key: "exp_shift_x",
+    id: "exp_shift_x",
+    label: "指数移轴",
+    formula: "e^{x-1} \\ge x",
   },
   {
     key: "log_shift_0",
     id: "log_shift_0",
-    label: "对数同构移轴",
+    label: "对数移轴",
     formula: "\\ln(x+1) \\le x",
+  },
+  {
+    key: "exp_ex",
+    id: "exp_ex",
+    label: "指数过原点",
+    formula: "e^x \\ge ex",
   },
   {
     key: "log_x_div_e",
     id: "log_x_div_e",
-    label: "对数原点相切",
+    label: "对数过原点",
     formula: "\\ln x \\le \\frac{x}{e}",
   },
 ];
@@ -100,7 +100,7 @@ export const sandwichSubModels: (SelectGridItem & {
   {
     key: "parallel_bands",
     id: "parallel_bands",
-    label: "平行双切缓冲差",
+    label: "平行双切差值",
     formula: "e^x - \\ln x \\ge 2",
   },
   {
@@ -124,13 +124,13 @@ export const paramKSubModels: (SelectGridItem & {
   {
     key: "exp_kx_origin",
     id: "exp_kx_origin",
-    label: "指数单侧卡位",
+    label: "指数单侧",
     formula: "e^x \\ge kx",
   },
   {
     key: "log_kx_origin",
     id: "log_kx_origin",
-    label: "对数单侧卡位",
+    label: "对数单侧",
     formula: "\\ln x \\le kx",
   },
 ];
@@ -142,13 +142,13 @@ export const secantSubModels: (SelectGridItem & {
   {
     key: "exp_secant_tangent",
     id: "exp_secant_tangent",
-    label: "指数下凸割切夹逼",
+    label: "指数下凸割切",
     formula: "L_{\\text{tan}} \\le e^x \\le L_{AB}",
   },
   {
     key: "log_secant_tangent",
     id: "log_secant_tangent",
-    label: "对数上凸割切夹逼",
+    label: "对数上凸割切",
     formula: "L_{AB} \\le \\ln x \\le L_{\\text{tan}}",
   },
   {

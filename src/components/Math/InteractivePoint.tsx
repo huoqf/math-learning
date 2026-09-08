@@ -14,9 +14,41 @@ interface InteractivePointProps {
   /** 场景比例尺 */
   scale: SceneScale;
   /** 视口信息（用于坐标逆转换） */
-  vp: ViewportInfo;
-  /** 拖拽回调，返回新的数学坐标 */
-  onDrag: (mathPt: { x: number; y: number }) => void;
+  vp?: ViewportInfo;
+  /**
+   * 拖拽原生回调，返回受约束后的数学坐标 { x, y }。
+   * 注意：参数已是数学坐标，业务层严禁再次调用 designToMath。
+   */
+  onDrag?: (mathPt: { x: number; y: number }) => void;
+  /**
+   * 自由度约束轴：
+   * - 'x': 仅允许水平平移（如卡位检验垂线探针），纵坐标自动锁定不变；
+   * - 'y': 仅允许垂直平移，横坐标自动锁定不变；
+   * - 'both': 全向平面自由拖拽（默认）。
+   */
+  axis?: "x" | "y" | "both";
+  /**
+   * 曲线吸附函数：拖拽时纵坐标由 y = snapTo(x) 强制驱动计算，动点绝对不脱轨。
+   */
+  snapTo?: (x: number) => number;
+  /**
+   * 横向数学有效取值区间 [min, max]。
+   * 拖拽时由底层自动进行 Clamp 截断，业务层无需重复手写 Math.max / Math.min。
+   */
+  xRange?: [number, number];
+  /**
+   * 纵向数学有效取值区间 [min, max]。
+   */
+  yRange?: [number, number];
+  /**
+   * 单自变量变化快捷回调 (newX: number) => void。
+   * 当配置了 axis="x" 或 snapTo 时，直接派发受约束的有效横坐标，业务代码极简。
+   */
+  onChangeX?: (newX: number) => void;
+  /**
+   * 单因变量变化快捷回调 (newY: number) => void。
+   */
+  onChangeY?: (newY: number) => void;
   /** 圆点颜色，默认红色 focusPoint */
   color?: string;
   /** 核心圆点半径，默认 6 */
@@ -36,9 +68,10 @@ interface InteractivePointProps {
 /**
  * 可拖拽数学交互控制点 (InteractivePoint)
  * 专用于中屏由鼠标交互拖拽的特征控制点：
- * - 双环设计：外层半透明交互指示光环（交互手柄标识） + 核心实心圆点 + 白色描边
- * - 明确的 Hover / Active 交互反馈与光晕扩散
- * - 纯数学特征点请使用 `MathPoint`，二者在视觉上有明确的分界
+ * - 底层防呆：内建 axis 单向锁定、snapTo 曲线吸附与 xRange 范围截断，杜绝脱轨与参数打架；
+ * - 双环设计：外层半透明交互指示光环（交互手柄标识） + 核心实心圆点 + 白色描边；
+ * - 明确的 Hover / Active 交互反馈与光晕扩散；
+ * - 纯数学静态特征点请使用 `MathPoint`，二者在视觉上有明确的分工。
  */
 export const InteractivePoint: React.FC<InteractivePointProps> = ({
   cx,
@@ -53,6 +86,12 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
     transform: "",
   },
   onDrag,
+  axis = "both",
+  snapTo,
+  xRange,
+  yRange,
+  onChangeX,
+  onChangeY,
   color = MATH_COLORS.focusPoint,
   r = 6,
   label,
@@ -88,8 +127,34 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
         // SVG 视口坐标 → 设计坐标 → 数学坐标
         const designX = (svgPt.x - vp.tx) / vp.scale;
         const designY = (svgPt.y - vp.ty) / vp.scale;
-        const mathPt = designToMath(designX, designY, scale);
-        onDrag(mathPt);
+        const rawPt = designToMath(designX, designY, scale);
+
+        let targetX = rawPt.x;
+        let targetY = rawPt.y;
+
+        // 1. 横坐标 clamp 约束
+        if (xRange) {
+          targetX = Math.max(xRange[0], Math.min(xRange[1], targetX));
+        }
+
+        // 2. 纵坐标 clamp 约束
+        if (yRange) {
+          targetY = Math.max(yRange[0], Math.min(yRange[1], targetY));
+        }
+
+        // 3. 自由度与几何吸附模式
+        if (snapTo) {
+          targetY = snapTo(targetX);
+        } else if (axis === "x") {
+          targetY = cy; // 锁定初始纵坐标，横向移动绝不上下跳动
+        } else if (axis === "y") {
+          targetX = cx; // 锁定初始横坐标
+        }
+
+        // 4. 派发回调
+        onChangeX?.(targetX);
+        onChangeY?.(targetY);
+        onDrag?.({ x: targetX, y: targetY });
       };
 
       const handlePointerUp = () => {
@@ -102,7 +167,22 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
       window.addEventListener("pointermove", handlePointerMove);
       window.addEventListener("pointerup", handlePointerUp);
     },
-    [disabled, vp.tx, vp.ty, vp.scale, scale, onDrag],
+    [
+      disabled,
+      vp.tx,
+      vp.ty,
+      vp.scale,
+      scale,
+      axis,
+      snapTo,
+      xRange,
+      yRange,
+      cx,
+      cy,
+      onChangeX,
+      onChangeY,
+      onDrag,
+    ],
   );
 
   const pt = mathToDesign(cx, cy, scale);
