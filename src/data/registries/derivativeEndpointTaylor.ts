@@ -11,14 +11,14 @@ export interface DerivativeEndpointTaylorParams {
   a: number;
   /** 洛必达动点 x (用于 x -> 0 无限逼近) */
   xCurr: number;
-  /** 泰勒展开点 x0 */
-  x0: number;
+  /** 泰勒多项式拟合测试自变量 x */
+  xTest: number;
 }
 
 export const defaultParams: DerivativeEndpointTaylorParams = {
   a: 1.2,
   xCurr: 0.5,
-  x0: 0,
+  xTest: 1.0,
 };
 
 export const paramMeta: Record<
@@ -27,53 +27,35 @@ export const paramMeta: Record<
 > = {
   a: {
     key: "a",
-    label: "切线/求参系数 a",
-    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a}`,
+    label: "斜率参数 a",
+    labelFormula: `\\text{斜率参数 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
     min: 0.2,
     max: 2.2,
     step: 0.05,
     defaultValue: 1.2,
-    description: "控制端点 f'(0) 切线斜率及恒成立临界",
-    descriptionFormula: `f'(0) = 1 - \\color{${MATH_COLORS.paramPrimary}}{a} \\ge 0 \\implies a \\le 1 \\text{ (a>1 时端点失效)}`,
     importance: "core",
-    marks: [
-      { value: 0.5, label: "0.5" },
-      { value: 1.0, label: "1.0", variant: "critical" },
-      { value: 1.5, label: "1.5" },
-    ],
+    marks: [{ value: 1.0, label: "1.0", variant: "critical" }],
   },
   xCurr: {
     key: "xCurr",
-    label: "洛必达逼近动点 x",
-    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{x}`,
-    min: -1.5,
-    max: 1.5,
+    label: "极限动点 x",
+    labelFormula: `\\text{逼近自变量 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
+    min: -1.2,
+    max: 1.2,
     step: 0.02,
     defaultValue: 0.5,
-    description: "用于观察 x -> 0 时 0/0 未定式的极限逼近",
-    descriptionFormula: `\\text{动点 } x \\to 0 \\text{ 时逼近洛必达极限值 } 1/2`,
     importance: "core",
-    marks: [
-      { value: -0.8, label: "-0.8" },
-      { value: 0.0, label: "0", variant: "critical" },
-      { value: 0.8, label: "0.8" },
-    ],
+    marks: [{ value: 0.0, label: "0", variant: "critical" }],
   },
-  x0: {
-    key: "x0",
-    label: "泰勒展开点 x₀",
-    labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{x_0}`,
-    min: -1.0,
-    max: 1.0,
-    step: 0.1,
-    defaultValue: 0,
-    description: "泰勒切线及多项式局部拟合展开点",
-    descriptionFormula: `\\text{展开点 } x_0 = 0 \\text{ (麦克劳林展开)}`,
-    importance: "advanced",
-    marks: [
-      { value: -0.5, label: "-0.5" },
-      { value: 0.0, label: "0", variant: "critical" },
-      { value: 0.5, label: "0.5" },
-    ],
+  xTest: {
+    key: "xTest",
+    label: "测试自变量 x",
+    labelFormula: `\\text{测试自变量 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
+    min: 0.1,
+    max: 2.5,
+    step: 0.05,
+    defaultValue: 1.0,
+    importance: "core",
+    marks: [{ value: 1.0, label: "1.0", variant: "critical" }],
   },
 };

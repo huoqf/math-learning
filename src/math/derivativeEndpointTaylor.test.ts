@@ -57,39 +57,45 @@ describe("端点效应与洛必达/泰勒拟合数学计算模块", () => {
 
   describe("泰勒拟合放缩 (calcTaylorPolynomial)", () => {
     it("e^x 展开: 1阶 1+x, 2阶 1+x+x^2/2, 3阶 1+x+x^2/2+x^3/6", () => {
-      const res1 = calcTaylorPolynomial("exp", 1, 0);
+      const res1 = calcTaylorPolynomial("exp", 1, 1.0);
       expect(res1.taylorFn(1)).toBe(2);
       expect(res1.scalingInequality).toContain("e^x \\ge x + 1");
+      expect(res1.fxVal).toBeCloseTo(Math.E, 4);
+      expect(res1.pxVal).toBe(2);
+      expect(res1.residualVal).toBeCloseTo(Math.E - 2, 4);
 
-      const res2 = calcTaylorPolynomial("exp", 2, 0);
+      const res2 = calcTaylorPolynomial("exp", 2, 1.0);
       expect(res2.taylorFn(1)).toBe(2.5);
+      expect(res2.residualVal).toBeCloseTo(Math.E - 2.5, 4);
 
-      const res3 = calcTaylorPolynomial("exp", 3, 0);
+      const res3 = calcTaylorPolynomial("exp", 3, 1.0);
       expect(res3.taylorFn(1)).toBeCloseTo(2.6666, 3);
+      expect(res3.gaokaoProof).toContain("逐阶求导");
     });
 
     it("ln(1+x) 展开: 1阶 x, 2阶 x-x^2/2", () => {
-      const res1 = calcTaylorPolynomial("ln", 1, 0);
+      const res1 = calcTaylorPolynomial("ln", 1, 0.5);
       expect(res1.taylorFn(0.5)).toBe(0.5);
 
-      const res2 = calcTaylorPolynomial("ln", 2, 0);
+      const res2 = calcTaylorPolynomial("ln", 2, 0.5);
       expect(res2.taylorFn(0.5)).toBe(0.375);
+      expect(res2.gaokaoProof).toContain("g'(x) = \\frac{x^2}{1+x}");
     });
 
     it("sin(x) 与 cos(x) 展开正确性", () => {
-      const sin3 = calcTaylorPolynomial("sin", 3, 0);
+      const sin3 = calcTaylorPolynomial("sin", 3, 0.5);
       expect(sin3.taylorFn(0.5)).toBeCloseTo(0.5 - (1 / 6) * 0.125, 4);
 
-      const cos2 = calcTaylorPolynomial("cos", 2, 0);
+      const cos2 = calcTaylorPolynomial("cos", 2, 0.5);
       expect(cos2.taylorFn(0.5)).toBeCloseTo(1 - 0.5 * 0.25, 4);
     });
 
     it("泰勒多项式残差 residualFn 在展开点附近快速收敛于 0", () => {
-      const resExp3 = calcTaylorPolynomial("exp", 3, 0);
+      const resExp3 = calcTaylorPolynomial("exp", 3, 0.1);
       expect(resExp3.residualFn(0)).toBe(0);
       expect(Math.abs(resExp3.residualFn(0.1))).toBeLessThan(1e-4);
 
-      const resLn2 = calcTaylorPolynomial("ln", 2, 0);
+      const resLn2 = calcTaylorPolynomial("ln", 2, 0.05);
       expect(resLn2.residualFn(0)).toBe(0);
       expect(Math.abs(resLn2.residualFn(0.05))).toBeLessThan(1e-4);
     });

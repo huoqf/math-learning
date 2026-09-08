@@ -30,7 +30,7 @@ interface DerivativeEndpointTaylorSceneProps {
   params: {
     a: number;
     xCurr: number;
-    x0: number;
+    xTest: number;
   };
   scale: SceneScale;
   vp: ViewportInfo;
@@ -64,27 +64,29 @@ export const DerivativeEndpointTaylorScene: React.FC<
   // 2. 模式二：洛必达法则
   const lhopitalRes = useMemo(() => calcLHopital(params.xCurr), [params.xCurr]);
 
-  // 3. 模式三：泰勒展开
+  // 3. 模式三：麦克劳林展开与测试动点
   const taylorRes = useMemo(
-    () => calcTaylorPolynomial(taylorBase, taylorOrder, params.x0),
-    [taylorBase, taylorOrder, params.x0],
+    () => calcTaylorPolynomial(taylorBase, taylorOrder, params.xTest),
+    [taylorBase, taylorOrder, params.xTest],
   );
 
   // 拖拽控制回调
   const handleTangentDrag = (pt: { x: number; y: number }) => {
-    const slope = (pt.y - endpointRes.f0) / (pt.x - endpointRes.x0 || 0.1);
+    const dx = pt.x - endpointRes.x0;
+    if (Math.abs(dx) < 0.25) return;
+    const slope = (pt.y - endpointRes.f0) / dx;
     const newA = Math.max(0.2, Math.min(2.2, 1 - slope));
     onParamChange("a", Number(newA.toFixed(2)));
   };
 
   const handleCurrDrag = (pt: { x: number; y: number }) => {
-    const newX = Math.max(-1.4, Math.min(1.4, pt.x));
+    const newX = Math.max(-1.2, Math.min(1.2, pt.x));
     onParamChange("xCurr", Number(newX.toFixed(2)));
   };
 
-  const handleTaylorX0Drag = (pt: { x: number; y: number }) => {
-    const newX0 = Math.max(-2.5, Math.min(2.5, pt.x));
-    onParamChange("x0", Number(newX0.toFixed(2)));
+  const handleTaylorTestDrag = (pt: { x: number; y: number }) => {
+    const newX = Math.max(0.1, Math.min(2.5, pt.x));
+    onParamChange("xTest", Number(newX.toFixed(2)));
   };
 
   // 纯极简学术点标解算 (集中定义学术符号)
@@ -148,32 +150,24 @@ export const DerivativeEndpointTaylorScene: React.FC<
       ];
       return items;
     } else {
-      const x0Pt = mathToDesign(
-        taylorRes.x0,
-        taylorRes.fn(taylorRes.x0),
-        scale,
-      );
-      const testPt = mathToDesign(
-        taylorRes.x0 + 1.0,
-        taylorRes.taylorFn(taylorRes.x0 + 1.0),
-        scale,
-      );
+      const originPt = mathToDesign(0, taylorRes.fn(0), scale);
+      const testPt = mathToDesign(taylorRes.xCurr, taylorRes.pxVal, scale);
       const items: LabelItem[] = [
         {
-          key: "p0",
-          x: x0Pt.x,
-          y: x0Pt.y,
-          text: "P₀",
+          key: "originO",
+          x: originPt.x,
+          y: originPt.y,
+          text: "O",
           color: MATH_COLORS.focusPoint,
           fontSize: fontScale(12),
-          preferredPlacement: "top-left",
+          preferredPlacement: "bottom-left",
         },
         {
           key: "pTest",
           x: testPt.x,
           y: testPt.y,
           text: "P",
-          color: MATH_COLORS.paramSecondary,
+          color: MATH_COLORS.paramPrimary,
           fontSize: fontScale(12),
           preferredPlacement: "top-right",
         },
@@ -209,12 +203,19 @@ export const DerivativeEndpointTaylorScene: React.FC<
             strokeDasharray="5 4"
           />
 
-          {/* 原函数 */}
+          {/* 原函数 (严格限定客观数学定义域，杜绝越界) */}
           <FunctionGraph
             fn={endpointRes.fn}
             scale={scale}
             color={MATH_COLORS.function}
             strokeWidth={2.8}
+            domain={
+              endpointType === "xln"
+                ? [0.01, scale.xMax]
+                : endpointType === "ln"
+                  ? [-0.95, scale.xMax]
+                  : undefined
+            }
           />
 
           {/* 端点 P0 */}
@@ -310,18 +311,19 @@ export const DerivativeEndpointTaylorScene: React.FC<
         </g>
       )}
 
-      {/* 3. 模式三：泰勒展开 */}
+      {/* 3. 模式三：泰勒/麦克劳林展开 */}
       {activeMode === "taylor" && (
         <g>
-          {/* 原函数 */}
+          {/* 原函数 (客观定义域保护) */}
           <FunctionGraph
             fn={taylorRes.fn}
             scale={scale}
             color={MATH_COLORS.function}
             strokeWidth={2.8}
+            domain={taylorBase === "ln" ? [-0.95, scale.xMax] : undefined}
           />
 
-          {/* 泰勒多项式 */}
+          {/* 麦克劳林多项式 */}
           <FunctionGraph
             fn={taylorRes.taylorFn}
             scale={scale}
@@ -330,24 +332,44 @@ export const DerivativeEndpointTaylorScene: React.FC<
             strokeDasharray="5 3"
           />
 
-          {/* 展开中心 P0 */}
-          <InteractivePoint
-            cx={taylorRes.x0}
-            cy={taylorRes.fn(taylorRes.x0)}
+          {/* 垂直残差线段：连接 (x, f(x)) 与 (x, P_n(x)) */}
+          <line
+            x1={mathToDesign(taylorRes.xCurr, taylorRes.fxVal, scale).x}
+            y1={mathToDesign(taylorRes.xCurr, taylorRes.fxVal, scale).y}
+            x2={mathToDesign(taylorRes.xCurr, taylorRes.pxVal, scale).x}
+            y2={mathToDesign(taylorRes.xCurr, taylorRes.pxVal, scale).y}
+            stroke={MATH_COLORS.vectorResult}
+            strokeWidth={2}
+            strokeDasharray="3 2"
+          />
+
+          {/* 展开基准点 O(0, f(0)) */}
+          <MathPoint
+            cx={0}
+            cy={taylorRes.fn(0)}
             scale={scale}
-            vp={vp}
-            onDrag={handleTaylorX0Drag}
             color={MATH_COLORS.focusPoint}
-            r={6}
             fontScale={fontScale}
           />
 
-          {/* 测试点 P */}
+          {/* 原函数对应点 Pf(x, f(x)) */}
           <MathPoint
-            cx={taylorRes.x0 + 1.0}
-            cy={taylorRes.taylorFn(taylorRes.x0 + 1.0)}
+            cx={taylorRes.xCurr}
+            cy={taylorRes.fxVal}
             scale={scale}
-            color={MATH_COLORS.paramSecondary}
+            color={MATH_COLORS.function}
+            fontScale={fontScale}
+          />
+
+          {/* 测试控制动点 P(x, P_n(x)) */}
+          <InteractivePoint
+            cx={taylorRes.xCurr}
+            cy={taylorRes.pxVal}
+            scale={scale}
+            vp={vp}
+            onDrag={handleTaylorTestDrag}
+            color={MATH_COLORS.paramPrimary}
+            r={6}
             fontScale={fontScale}
           />
         </g>

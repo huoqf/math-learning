@@ -1,4 +1,5 @@
 import React from "react";
+import { renderMixedLatex } from "./mathPanel/mathPanelUtils";
 
 export type TipCardVariant =
   "info" | "primary" | "warning" | "danger" | "success" | "accent";
@@ -99,7 +100,11 @@ export const TipCard: React.FC<TipCardProps> = ({
               <span className="font-semibold text-neutral-800">
                 【初始条件】
               </span>
-              <span className="text-neutral-600">{condition}</span>
+              <span className="text-neutral-600">
+                {typeof condition === "string"
+                  ? renderMixedLatex(condition)
+                  : condition}
+              </span>
             </div>
           )}
 
@@ -108,7 +113,11 @@ export const TipCard: React.FC<TipCardProps> = ({
               <span className="font-semibold text-neutral-800">
                 【核心设问】
               </span>
-              <span className="text-neutral-600">{question}</span>
+              <span className="text-neutral-600">
+                {typeof question === "string"
+                  ? renderMixedLatex(question)
+                  : question}
+              </span>
             </div>
           )}
         </div>

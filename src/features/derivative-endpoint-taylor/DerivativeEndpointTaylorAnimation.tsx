@@ -44,11 +44,11 @@ export function DerivativeEndpointTaylorAnimation() {
   const [taylorBase, setTaylorBase] = useState<TaylorBaseType>("exp");
   const [taylorOrder, setTaylorOrder] = useState<number>(2);
 
-  // 4. 参数状态 (a, xCurr, x0)
+  // 4. 参数状态 (a, xCurr, xTest)
   const [params, setParams] = useState(() => ({
     a: defaultParams.a,
     xCurr: defaultParams.xCurr,
-    x0: defaultParams.x0,
+    xTest: defaultParams.xTest,
   }));
 
   // 5. 测量视口与防抖
@@ -86,7 +86,7 @@ export function DerivativeEndpointTaylorAnimation() {
     setParams({
       a: defaultParams.a,
       xCurr: defaultParams.xCurr,
-      x0: defaultParams.x0,
+      xTest: defaultParams.xTest,
     });
   };
 
@@ -95,7 +95,7 @@ export function DerivativeEndpointTaylorAnimation() {
     const keysByMode: Record<string, string[]> = {
       endpoint: ["a"],
       lhopital: ["xCurr"],
-      taylor: ["x0"],
+      taylor: ["xTest"],
     };
 
     const keys = keysByMode[activeMode] ?? ["a"];
@@ -133,8 +133,14 @@ export function DerivativeEndpointTaylorAnimation() {
     } else if (activeMode === "lhopital") {
       return `\\lim_{x \\to 0} \\frac{e^x - 1 - x}{x^2} \\xrightarrow{\\text{L'Hôpital}} \\lim_{x \\to 0} \\frac{e^x - 1}{2x} = \\frac{1}{2}`;
     } else {
+      const expPoly =
+        taylorOrder === 1
+          ? "1+x"
+          : taylorOrder === 2
+            ? "1+x+\\frac{1}{2}x^2"
+            : "1+x+\\frac{1}{2}x^2+\\frac{1}{6}x^3";
       if (taylorBase === "exp") {
-        return `e^x \\ge P_{${taylorOrder}}(x) \\quad (x \\ge 0)`;
+        return `e^x \\ge P_{${taylorOrder}}(x) = ${expPoly} \\quad (x \\ge 0)`;
       } else if (taylorBase === "ln") {
         return `\\ln(1+x) \\le P_{${taylorOrder}}(x) \\quad (x \\ge 0)`;
       } else if (taylorBase === "sin") {
@@ -163,42 +169,52 @@ export function DerivativeEndpointTaylorAnimation() {
       sin: "sin x",
       cos: "cos x",
     };
-    return `${baseMap[taylorBase]} 泰勒 ${taylorOrder} 阶拟合放缩看板`;
+    return `${baseMap[taylorBase]} 麦克劳林 ${taylorOrder} 阶拟合放缩看板`;
   }, [activeMode, endpointType, taylorBase, taylorOrder]);
 
-  // 教学导引与题设背景配置
+  // 教学导引与题设背景配置 (精准严密对齐高中题设与新高考评分标准)
   const tipConfig = useMemo(() => {
     switch (activeMode) {
       case "endpoint": {
-        const typeName =
-          endpointType === "exp"
-            ? "指数切线"
-            : endpointType === "ln"
-              ? "对数切线"
-              : "超越混合";
+        const isLn = endpointType === "ln";
+        const isExp = endpointType === "exp";
         return {
           variant: "primary" as const,
-          badge: `高考压轴 · 端点效应与恒成立 (${typeName})`,
-          condition:
-            "不等式在区间端点处取等号，要求在定义域半区间内 f(x) ≥ 0 恒成立。",
-          question: "求实数参数 a 的取值范围，使得不等式在半区间上恒成立。",
+          badge: `新高考导数压轴 · 端点效应 (${isExp ? "指数切线模型" : isLn ? "对数切线模型" : "超越混合模型"})`,
+          condition: isLn
+            ? "已知函数 $f(x) = \\ln(x+1) - ax$ 在区间 $[0, +\\infty)$ 上恒满足 $f(x) \\le 0$。"
+            : isExp
+              ? "已知函数 $f(x) = e^x - ax - 1$ 在区间 $[0, +\\infty)$ 上恒满足 $f(x) \\ge 0$。"
+              : "已知函数 $f(x) = x\\ln x - a(x-1)$ 在区间 $[1, +\\infty)$ 上恒满足 $f(x) \\ge 0$。",
+          question:
+            "探究端点处的导数保号性以锁定参数 $a$ 的必要取值，并完成大题充分性证明。",
         };
       }
       case "lhopital":
         return {
           variant: "info" as const,
-          badge: "高考压轴 · 0/0 型未定式极限逼近",
-          condition: "当自变量 x 趋向端点时，分式极限呈现 0/0 未定式形态。",
+          badge: "高考解题通法 · 0/0 型未定式极限逼近",
+          condition:
+            "在参数分离求解恒成立问题时，遇端点未定式极限 $\\lim_{x \\to 0} \\frac{e^x - 1 - x}{x^2}$。",
           question:
-            "求自变量逼近端点时分式函数的极限值，确定不等式临界放缩边界。",
+            "草稿纸如何用洛必达法则快速锁定参数临界？卷面如何用导数定义规范证明？",
         };
-      case "taylor":
+      case "taylor": {
+        const baseName =
+          taylorBase === "exp"
+            ? "指数基底 $e^x$"
+            : taylorBase === "ln"
+              ? "对数基底 $\\ln(1+x)$"
+              : taylorBase === "sin"
+                ? "正弦基底 $\\sin x$"
+                : "余弦基底 $\\cos x$";
         return {
           variant: "warning" as const,
-          badge: `高考压轴 · 泰勒 ${taylorOrder} 阶拟合放缩`,
-          condition: `考察超越基底函数 ${taylorBase} 在原点附近的 ${taylorOrder} 阶多项式逼近。`,
-          question: `探究多项式 P_${taylorOrder}(x) 在原点附近的逼近程度，求证对应的多项式放缩不等式。`,
+          badge: `高考命题溯源 · 麦克劳林 ${taylorOrder} 阶拟合放缩`,
+          condition: `考察${baseName}在原点附近截断的 ${taylorOrder} 阶麦克劳林多项式 $P_{${taylorOrder}}(x)$。`,
+          question: `调节测试动点 $x$ 观察残差 $|R_n(x)|$ 的收敛效果，掌握差函数逐阶求导证明通法。`,
         };
+      }
       default:
         return {
           variant: "primary" as const,
@@ -209,38 +225,38 @@ export function DerivativeEndpointTaylorAnimation() {
     }
   }, [activeMode, endpointType, taylorBase, taylorOrder]);
 
-  // 右下角图例配置 (模式专属)
+  // 右下角图例配置 (模式专属，严格规范 KaTeX 与色彩绑定)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
     if (activeMode === "endpoint") {
       return [
         {
           color: MATH_COLORS.function,
-          formula:
+          label:
             endpointType === "exp"
-              ? "f(x) = e^x - ax - 1"
+              ? "原函数 $f(x) = e^x - ax - 1$"
               : endpointType === "ln"
-                ? "f(x) = \\ln(x+1) - ax"
-                : "f(x) = x\\ln x - a(x-1)",
+                ? "原函数 $f(x) = \\ln(x+1) - ax$"
+                : "原函数 $f(x) = x\\ln x - a(x-1)$",
           style: "solid",
         },
         {
           color: MATH_COLORS.paramSecondary,
-          formula: "y = f'(x_0)(x-x_0) \\;(\\text{端点切线})",
+          label: "端点切线 $y = f'(x_0)(x-x_0)$",
           style: "dash",
         },
         {
           color: MATH_COLORS.focusPoint,
-          formula: "P_0(x_0, 0) \\;(\\text{端点})",
+          label: "端点 $P_0$",
           style: "point",
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: "T(x_0+1, y_T) \\;(\\text{切线控制点})",
+          label: "切线控制点 $T$",
           style: "point",
         },
         {
           color: MATH_COLORS.vectorResult,
-          label: "必要条件失效区 f'(x_0) < 0",
+          label: "必要条件失效区 (导数反向穿透)",
           style: "area",
         },
       ];
@@ -248,22 +264,22 @@ export function DerivativeEndpointTaylorAnimation() {
       return [
         {
           color: MATH_COLORS.function,
-          formula: "y = \\frac{f(x)}{g(x)} \\;(\\text{函数比值})",
+          label: "原式函数 $y = N(x)/D(x)$",
           style: "solid",
         },
         {
           color: MATH_COLORS.derivative,
-          formula: "y = \\frac{f'(x)}{g'(x)} \\;(\\text{导数比值})",
+          label: "导数之比 $y = N'(x)/D'(x)$",
           style: "dash",
         },
         {
           color: MATH_COLORS.focusPoint,
-          formula: "L(0, 1/2) \\;(\\text{极限点})",
+          label: "极限点 $L(0, 1/2)$",
           style: "hollow-point",
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: "P(x, \\text{比值}) \\;(\\text{逼近动点})",
+          label: "逼近动点 $P$",
           style: "point",
         },
       ];
@@ -271,22 +287,27 @@ export function DerivativeEndpointTaylorAnimation() {
       return [
         {
           color: MATH_COLORS.function,
-          formula: "f(x) \\;(\\text{原函数})",
+          label: "超越基底函数 $f(x)$",
           style: "solid",
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: `T_{${taylorOrder}}(x) \\;(\\text{${taylorOrder}阶泰勒拟合})`,
+          label: `${taylorOrder} 阶拟合曲线 $P_{${taylorOrder}}(x)$`,
+          style: "dash",
+        },
+        {
+          color: MATH_COLORS.vectorResult,
+          label: "截断绝对残差 $|R_n(x)|$",
           style: "dash",
         },
         {
           color: MATH_COLORS.focusPoint,
-          formula: "P_0(x_0, f(x_0)) \\;(\\text{展开中心})",
+          label: "展开基准原点 $O(0,0)$",
           style: "point",
         },
         {
-          color: MATH_COLORS.paramSecondary,
-          formula: "P(x, f(x)) \\;(\\text{测试点})",
+          color: MATH_COLORS.paramPrimary,
+          label: "测试动点 $P(x, P_n(x))$",
           style: "point",
         },
       ];
@@ -297,7 +318,6 @@ export function DerivativeEndpointTaylorAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 研究模式切换 */}
           {/* 研究模式切换 */}
           <LeftPanelSection title="研究模式">
             <TabSwitcher
@@ -311,25 +331,22 @@ export function DerivativeEndpointTaylorAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 子模式配置：端点类型 */}
+          {/* 子模式配置：端点类型 (纯净加粗中文标题，杜绝选项堆砌公式) */}
           {activeMode === "endpoint" && (
-            <LeftPanelSection title="端点函数构造">
+            <LeftPanelSection title="端点函数模型">
               <SelectGrid
                 items={[
                   {
                     key: "exp",
                     label: "指数切线模型",
-                    formula: "f(x) = e^x - ax - 1",
                   },
                   {
                     key: "ln",
                     label: "对数切线模型",
-                    formula: "f(x) = \\ln(x+1) - ax",
                   },
                   {
                     key: "xln",
                     label: "超越混合模型",
-                    formula: "f(x) = x\\ln x - a(x-1)",
                     fullWidth: true,
                   },
                 ]}
@@ -341,28 +358,16 @@ export function DerivativeEndpointTaylorAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 子模式配置：泰勒基底与阶数 */}
+          {/* 子模式配置：泰勒基底与阶数 (纯净加粗中文标题) */}
           {activeMode === "taylor" && (
             <>
               <LeftPanelSection title="超越基底函数">
                 <SelectGrid
                   items={[
-                    { key: "exp", label: "指数函数", formula: "f(x) = e^x" },
-                    {
-                      key: "ln",
-                      label: "对数函数",
-                      formula: "f(x) = \\ln(1+x)",
-                    },
-                    {
-                      key: "sin",
-                      label: "正弦函数",
-                      formula: "f(x) = \\sin x",
-                    },
-                    {
-                      key: "cos",
-                      label: "余弦函数",
-                      formula: "f(x) = \\cos x",
-                    },
+                    { key: "exp", label: "指数函数" },
+                    { key: "ln", label: "对数函数" },
+                    { key: "sin", label: "正弦函数" },
+                    { key: "cos", label: "余弦函数" },
                   ]}
                   value={taylorBase}
                   onChange={(k) => setTaylorBase(k as TaylorBaseType)}
@@ -374,9 +379,9 @@ export function DerivativeEndpointTaylorAnimation() {
               <LeftPanelSection title="拟合多项式阶数">
                 <SelectGrid
                   items={[
-                    { key: "1", label: "1阶切线", formula: "P_1(x)" },
-                    { key: "2", label: "2阶抛物线", formula: "P_2(x)" },
-                    { key: "3", label: "3阶多项式", formula: "P_3(x)" },
+                    { key: "1", label: "1阶切线" },
+                    { key: "2", label: "2阶抛物线" },
+                    { key: "3", label: "3阶曲线" },
                   ]}
                   value={String(taylorOrder)}
                   onChange={(k) => setTaylorOrder(Number(k))}

@@ -186,81 +186,79 @@ export function calcLHopital(xCurr: number): LHopitalCalcResult {
 }
 
 /**
- * 泰勒多项式拟合计算结果
+ * 泰勒多项式拟合计算结果 (麦克劳林级数截断 x0 = 0，紧扣新高考核心)
  */
 export interface TaylorCalcResult {
   baseType: TaylorBaseType;
   order: number; // 阶数 1, 2, 3
-  x0: number; // 展开点
+  xCurr: number; // 测试动点 x
+  fxVal: number; // 当前原函数值 f(x)
+  pxVal: number; // 当前泰勒多项式值 P_n(x)
+  residualVal: number; // 当前截断绝对残差 |f(x) - P_n(x)|
   fn: (x: number) => number; // 原函数
   taylorFn: (x: number) => number; // 泰勒多项式 P_n(x)
-  residualFn: (x: number) => number; // 残差 R_n(x) = f(x) - P_n(x)
+  residualFn: (x: number) => number; // 残差函数 R_n(x) = f(x) - P_n(x)
   latexFormula: string; // 泰勒展开多项式的 LaTeX 表达式
-  scalingInequality: string; // 常用放缩不等式 LaTeX
+  scalingInequality: string; // 高考常用放缩不等式 LaTeX
+  gaokaoProof: string; // 高考大题规范证明差函数
 }
 
 /**
- * 计算泰勒多项式与拟合函数
+ * 计算麦克劳林多项式与拟合函数 (x0 = 0)
  * @param baseType 函数基底 ('exp' | 'ln' | 'sin' | 'cos')
  * @param order 阶数 (1 | 2 | 3)
- * @param x0 展开点 (默认 0)
+ * @param xCurr 测试动点坐标
  */
 export function calcTaylorPolynomial(
   baseType: TaylorBaseType,
   order: number,
-  x0: number = 0,
+  xCurr: number = 1.0,
 ): TaylorCalcResult {
   if (baseType === "exp") {
     const fn = (x: number) => Math.exp(x);
     let taylorFn: (x: number) => number;
     let latexFormula: string;
     let scalingInequality: string;
-
-    const dx = (x: number) => x - x0;
+    let gaokaoProof: string;
 
     if (order === 1) {
-      // P1(x) = e^x0 + e^x0 * (x - x0)
-      const e0 = Math.exp(x0);
-      taylorFn = (x: number) => e0 * (1 + dx(x));
-      latexFormula =
-        x0 === 0
-          ? "P_1(x) = 1 + x"
-          : `P_1(x) \\approx e^{${x0.toFixed(1)}}(1 + (x - ${x0.toFixed(1)}))`;
+      taylorFn = (x: number) => 1 + x;
+      latexFormula = "P_1(x) = 1 + x";
       scalingInequality = "e^x \\ge x + 1 \\quad (x \\in \\mathbb{R})";
+      gaokaoProof = "g(x) = e^x - x - 1 \\implies g'(x) = e^x - 1";
     } else if (order === 2) {
-      // P2(x) = e^x0 * (1 + dx + dx^2/2)
-      const e0 = Math.exp(x0);
-      taylorFn = (x: number) => e0 * (1 + dx(x) + 0.5 * Math.pow(dx(x), 2));
-      latexFormula =
-        x0 === 0
-          ? "P_2(x) = 1 + x + \\frac{1}{2}x^2"
-          : `P_2(x) \\approx e^{${x0.toFixed(1)}}(1 + \\Delta x + \\frac{1}{2}\\Delta x^2)`;
+      taylorFn = (x: number) => 1 + x + 0.5 * x * x;
+      latexFormula = "P_2(x) = 1 + x + \\frac{1}{2}x^2";
       scalingInequality = "e^x \\ge 1 + x + \\frac{1}{2}x^2 \\quad (x \\ge 0)";
+      gaokaoProof =
+        "g(x) = e^x - (1+x+\\frac{1}{2}x^2) \\implies g'(x) = e^x - 1 - x \\ge 0";
     } else {
-      // P3(x) = e^x0 * (1 + dx + dx^2/2 + dx^3/6)
-      const e0 = Math.exp(x0);
-      taylorFn = (x: number) =>
-        e0 *
-        (1 + dx(x) + 0.5 * Math.pow(dx(x), 2) + (1 / 6) * Math.pow(dx(x), 3));
-      latexFormula =
-        x0 === 0
-          ? "P_3(x) = 1 + x + \\frac{1}{2}x^2 + \\frac{1}{6}x^3"
-          : `P_3(x) \\approx e^{${x0.toFixed(1)}}(...)`;
+      taylorFn = (x: number) => 1 + x + 0.5 * x * x + (1 / 6) * Math.pow(x, 3);
+      latexFormula = "P_3(x) = 1 + x + \\frac{1}{2}x^2 + \\frac{1}{6}x^3";
       scalingInequality =
         "e^x \\ge 1 + x + \\frac{1}{2}x^2 + \\frac{1}{6}x^3 \\quad (x \\ge 0)";
+      gaokaoProof =
+        "逐阶求导：g'''(x) = e^x - 1 \\ge 0 \\implies 逐级回代充分证明";
     }
 
     const residualFn = (x: number) => fn(x) - taylorFn(x);
+    const fxVal = fn(xCurr);
+    const pxVal = taylorFn(xCurr);
+    const residualVal = Math.abs(fxVal - pxVal);
 
     return {
       baseType,
       order,
-      x0,
+      xCurr,
+      fxVal,
+      pxVal,
+      residualVal,
       fn,
       taylorFn,
       residualFn,
       latexFormula,
       scalingInequality,
+      gaokaoProof,
     };
   } else if (baseType === "ln") {
     // f(x) = ln(1+x), 定义域 x > -1
@@ -268,66 +266,91 @@ export function calcTaylorPolynomial(
     let taylorFn: (x: number) => number;
     let latexFormula: string;
     let scalingInequality: string;
+    let gaokaoProof: string;
 
     if (order === 1) {
       taylorFn = (x: number) => x;
       latexFormula = "P_1(x) = x";
       scalingInequality = "\\ln(1+x) \\le x \\quad (x > -1)";
+      gaokaoProof = "g(x) = x - \\ln(1+x) \\implies g'(x) = \\frac{x}{1+x}";
     } else if (order === 2) {
       taylorFn = (x: number) => x - 0.5 * x * x;
       latexFormula = "P_2(x) = x - \\frac{1}{2}x^2";
       scalingInequality =
-        "\\ln(1+x) \\le x - \\frac{1}{2}x^2 + \\dots \\quad (x \\ge 0)";
+        "x - \\frac{1}{2}x^2 \\le \\ln(1+x) \\le x \\quad (x \\ge 0)";
+      gaokaoProof =
+        "g(x) = \\ln(1+x) - (x - \\frac{1}{2}x^2) \\implies g'(x) = \\frac{x^2}{1+x} \\ge 0";
     } else {
       taylorFn = (x: number) => x - 0.5 * x * x + (1 / 3) * Math.pow(x, 3);
       latexFormula = "P_3(x) = x - \\frac{1}{2}x^2 + \\frac{1}{3}x^3";
       scalingInequality =
         "\\ln(1+x) \\le x - \\frac{1}{2}x^2 + \\frac{1}{3}x^3 \\quad (x \\ge 0)";
+      gaokaoProof =
+        "g(x) = x - \\frac{1}{2}x^2 + \\frac{1}{3}x^3 - \\ln(1+x) \\ge 0";
     }
 
     const residualFn = (x: number) => fn(x) - taylorFn(x);
+    const fxVal = fn(xCurr);
+    const pxVal = taylorFn(xCurr);
+    const residualVal = Math.abs(fxVal - pxVal);
 
     return {
       baseType,
       order,
-      x0,
+      xCurr,
+      fxVal,
+      pxVal,
+      residualVal,
       fn,
       taylorFn,
       residualFn,
       latexFormula,
       scalingInequality,
+      gaokaoProof,
     };
   } else if (baseType === "sin") {
     const fn = (x: number) => Math.sin(x);
     let taylorFn: (x: number) => number;
     let latexFormula: string;
     let scalingInequality: string;
+    let gaokaoProof: string;
 
     if (order === 1) {
       taylorFn = (x: number) => x;
       latexFormula = "P_1(x) = x";
       scalingInequality = "\\sin x \\le x \\quad (x \\ge 0)";
+      gaokaoProof = "g(x) = x - \\sin x \\implies g'(x) = 1 - \\cos x \\ge 0";
     } else if (order === 2) {
       taylorFn = (x: number) => x;
       latexFormula = "P_2(x) = x";
       scalingInequality = "\\sin x \\le x \\quad (x \\ge 0)";
+      gaokaoProof = "二阶展开项系数为0，与一阶切线放缩完全一致";
     } else {
       taylorFn = (x: number) => x - (1 / 6) * Math.pow(x, 3);
       latexFormula = "P_3(x) = x - \\frac{1}{6}x^3";
       scalingInequality = "\\sin x \\ge x - \\frac{1}{6}x^3 \\quad (x \\ge 0)";
+      gaokaoProof =
+        "二次求导：g''(x) = x - \\sin x \\ge 0 \\implies g'(x) \\ge 0 \\implies g(x) \\ge 0";
     }
 
     const residualFn = (x: number) => fn(x) - taylorFn(x);
+    const fxVal = fn(xCurr);
+    const pxVal = taylorFn(xCurr);
+    const residualVal = Math.abs(fxVal - pxVal);
 
     return {
       baseType,
       order,
-      x0,
+      xCurr,
+      fxVal,
+      pxVal,
+      residualVal,
       fn,
       taylorFn,
       residualFn,
       latexFormula,
       scalingInequality,
+      gaokaoProof,
     };
   } else {
     // cos(x)
@@ -335,34 +358,46 @@ export function calcTaylorPolynomial(
     let taylorFn: (x: number) => number;
     let latexFormula: string;
     let scalingInequality: string;
+    let gaokaoProof: string;
 
     if (order === 1) {
       taylorFn = () => 1;
       latexFormula = "P_1(x) = 1";
       scalingInequality = "\\cos x \\le 1 \\quad (x \\in \\mathbb{R})";
+      gaokaoProof = "三角函数有界性基本性质";
     } else if (order === 2) {
       taylorFn = (x: number) => 1 - 0.5 * x * x;
       latexFormula = "P_2(x) = 1 - \\frac{1}{2}x^2";
       scalingInequality =
         "\\cos x \\ge 1 - \\frac{1}{2}x^2 \\quad (x \\in \\mathbb{R})";
+      gaokaoProof =
+        "g(x) = \\cos x - (1 - \\frac{1}{2}x^2) \\implies g'(x) = x - \\sin x \\ge 0 \\; (x \\ge 0)";
     } else {
       taylorFn = (x: number) => 1 - 0.5 * x * x;
       latexFormula = "P_3(x) = 1 - \\frac{1}{2}x^2";
       scalingInequality =
         "\\cos x \\ge 1 - \\frac{1}{2}x^2 \\quad (x \\in \\mathbb{R})";
+      gaokaoProof = "三阶奇次项系数为0，抛物线已具备极佳局部逼近精度";
     }
 
     const residualFn = (x: number) => fn(x) - taylorFn(x);
+    const fxVal = fn(xCurr);
+    const pxVal = taylorFn(xCurr);
+    const residualVal = Math.abs(fxVal - pxVal);
 
     return {
       baseType,
       order,
-      x0,
+      xCurr,
+      fxVal,
+      pxVal,
+      residualVal,
       fn,
       taylorFn,
       residualFn,
       latexFormula,
       scalingInequality,
+      gaokaoProof,
     };
   }
 }
