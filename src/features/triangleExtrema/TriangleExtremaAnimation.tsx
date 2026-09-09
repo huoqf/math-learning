@@ -289,7 +289,7 @@ export function TriangleExtremaAnimation() {
     const cC = MATH_COLORS.paramTertiary;
 
     if (studyMode === "angle-transform") {
-      const prefix = isAcuteOnly ? "\\text{[锐角限制]} \\quad " : "";
+      const prefix = isAcuteOnly ? "\\text{[锐角限制]} \\quad " : ""; // formula: LaTeX前缀
       return `${prefix}P = \\color{${cA}}{a} + \\color{${cB}}{b} + \\color{${cC}}{c} = ${extrema.perimeter.toFixed(2)} \\le P_{\\max} = ${extrema.maxPerimeter.toFixed(2)} \\quad (\\text{当 } B = C = ${((180 - angles.A) / 2).toFixed(1)}^\\circ \\text{ 时, } b=c)`;
     }
     if (studyMode === "side-ineq") {

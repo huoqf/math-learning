@@ -88,13 +88,17 @@ export function FuncExpLogAnimation() {
           <LeftPanelSection title="函数选择" subtitle="指数、对数与幂函数">
             <SelectGrid
               items={[
-                { key: "exponential", label: "y = aˣ", formula: "y=a^x" },
+                {
+                  key: "exponential",
+                  label: "指数函数",
+                  description: "y = aˣ",
+                },
                 {
                   key: "logarithmic",
-                  label: "y = logₐx",
-                  formula: "y=\\log_a x",
+                  label: "对数函数",
+                  description: "y = logₐx",
                 },
-                { key: "power", label: "y = xᵅ", formula: "y=x^{\\alpha}" },
+                { key: "power", label: "幂函数", description: "y = xᵅ" },
               ]}
               value={funcType}
               onChange={(k) => setFuncType(k)}

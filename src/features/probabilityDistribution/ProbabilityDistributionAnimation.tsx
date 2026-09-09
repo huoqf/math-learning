@@ -166,10 +166,9 @@ export function ProbabilityDistributionAnimation() {
   );
 
   // 左屏教学提示与题设导引
-  const tipConfig = useMemo(
-    () => getTipConfig(studyMode, decisionScenario),
-    [studyMode, decisionScenario],
-  );
+  const tipConfig = useMemo(() => {
+    return getTipConfig(studyMode, decisionScenario);
+  }, [studyMode, decisionScenario]);
 
   // 中屏右下角图例配置
   const legendItems = useMemo<SceneLegendItem[]>(
@@ -216,12 +215,12 @@ export function ProbabilityDistributionAnimation() {
                   {
                     key: "quality",
                     label: "产品质检",
-                    formula: "\\text{抽检 vs 全检}",
+                    description: "抽检 vs 全检",
                   },
                   {
                     key: "investment",
                     label: "资产配置",
-                    formula: "\\text{理财 vs 股票}",
+                    description: "理财 vs 股票",
                   },
                 ]}
                 value={decisionScenario}

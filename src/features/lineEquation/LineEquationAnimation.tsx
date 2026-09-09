@@ -583,22 +583,26 @@ export function LineEquationAnimation() {
             <LeftPanelSection title="方程表达形式">
               <SelectGrid
                 items={[
-                  { key: "general", label: "一般式", formula: "Ax+By+C=0" },
-                  { key: "slopeIntercept", label: "斜截式", formula: "y=kx+b" },
+                  { key: "general", label: "一般式", description: "Ax+By+C=0" },
+                  {
+                    key: "slopeIntercept",
+                    label: "斜截式",
+                    description: "y=kx+b",
+                  },
                   {
                     key: "pointSlope",
                     label: "点斜式",
-                    formula: "y-y_0=k(x-x_0)",
+                    description: "y-y₀=k(x-x₀)",
                   },
                   {
                     key: "intercept",
                     label: "截距式",
-                    formula: "\\frac{x}{a}+\\frac{y}{b}=1",
+                    description: "x/a + y/b = 1",
                   },
                   {
                     key: "twoPoint",
                     label: "两点式",
-                    formula: "\\frac{y-y_1}{y_2-y_1}=\\frac{x-x_1}{x_2-x_1}",
+                    description: "两点连线标准型",
                     fullWidth: true,
                   },
                 ]}

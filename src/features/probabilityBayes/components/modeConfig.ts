@@ -1,4 +1,4 @@
-﻿import type { ParamConfig } from "@/components/UI";
+import type { ParamConfig } from "@/components/UI";
 import { MATH_COLORS } from "@/theme";
 import { paramMeta } from "@/data/registries/probabilityBayes";
 
@@ -33,7 +33,7 @@ export function getModeFormulaLatex(
     const pBGivenA =
       (params.pA ?? 0.5) > 0
         ? ((params.pAB ?? 0.2) / (params.pA ?? 0.5)).toFixed(3)
-        : "\\text{无意义}";
+        : "\\text{无意义}"; // formula: LaTeX片段
     return `\\color{${MATH_COLORS.function}}{P(B|A)} = \\frac{\\color{${MATH_COLORS.paramTertiary}}{P(AB)}}{\\color{${MATH_COLORS.paramPrimary}}{P(A)}} = \\frac{${pABVal}}{${pAVal}} = ${pBGivenA}`;
   }
   if (activeMode === "total_prob") {

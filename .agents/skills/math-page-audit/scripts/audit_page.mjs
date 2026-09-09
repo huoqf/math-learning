@@ -142,8 +142,17 @@ for (const filePath of files) {
   if (isAnimationPage && content.includes('buildMathQuantities(') && content.includes('<SelectGrid')) {
     const buildCallMatch = content.match(/buildMathQuantities\s*\(\s*[^,]+,\s*[^,]+(?:,\s*\{([^}]*)\})?\s*\)/);
     if (buildCallMatch) {
-      const configObj = buildCallMatch[1] || '';
-      if (!configObj.includes('mode') && !configObj.includes('preset') && !configObj.includes('sub') && !configObj.includes('scenario') && !configObj.includes('type')) {
+      const configObj = (buildCallMatch[1] || "").toLowerCase();
+      if (
+        !configObj.includes("mode") &&
+        !configObj.includes("preset") &&
+        !configObj.includes("sub") &&
+        !configObj.includes("scenario") &&
+        !configObj.includes("type") &&
+        !configObj.includes("tab") &&
+        !configObj.includes("op") &&
+        !configObj.includes("logic")
+      ) {
         issues.push({
           lineNum: 1,
           type: '右屏缺少模式上下文透传',
@@ -430,6 +439,30 @@ for (const filePath of files) {
           lineNum,
           type: '硬编码rgb颜色',
           message: '禁止在业务源码中直接硬编码 rgb() / rgba() 色值，必须使用 MATH_COLORS 或 withAlpha()',
+          snippet: line.trim()
+        });
+      }
+    }
+
+    // 15. 检查 3D 范式 A (综合法) 纯净度
+    if ((filePath.includes('solidGeometry') || filePath.includes('math3d')) && (content.includes('范式 A') || content.includes('综合法') || content.includes('paradigm: "A"'))) {
+      if (/<CoordinateAxes3D\b/.test(line) || /<Vector3DArrow\b/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '3D综合法范式混入坐标轴或向量',
+          message: '综合法 (范式 A) 必须保持纯几何纯净度，严禁混入 <CoordinateAxes3D> 或 <Vector3DArrow>',
+          snippet: line.trim()
+        });
+      }
+    }
+
+    // 16. 检查数列离散点域特征
+    if ((filePath.includes('sequence') || filePath.includes('Sequence')) && filePath.endsWith('Scene.tsx')) {
+      if (/<SplineCurve\b/.test(line) || /<SmoothCurve\b/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '数列图象连续化违规',
+          message: '数列必须严格遵守离散点域规范 (n ∈ N*)，图象主体必须为离散点列或柱状图，严禁光滑样条连续曲线冒充数列',
           snippet: line.trim()
         });
       }

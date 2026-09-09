@@ -409,7 +409,7 @@ export function ComplexAnimation() {
       return `|z - (\\color{${MATH_COLORS.paramPrimary}}{${params.z0x} + ${params.z0y}i})| = \\color{${MATH_COLORS.paramPrimary}}{${params.radius}}`;
     }
     if (subModel === "perp-bisector") {
-      return `|z - z_1| = |z - z_2| \\quad (\\text{垂直平分线轨迹})`;
+      return `|z - z_1| = |z - z_2|`;
     }
     return `||z_1| - |z_2|| \\le |z_1 + z_2| \\le |z_1| + |z_2|`;
   }, [params, studyMode, subModel]);

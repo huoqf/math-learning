@@ -80,7 +80,7 @@ export function LogarithmicPage() {
             value: 1.0,
             variant: "critical",
             label: "退化 (a=1)",
-            labelFormula: "a = 1",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} = 1`,
           },
         ],
       },

@@ -258,6 +258,34 @@ export function SingleVarPage() {
     const isAlways = logic === "always";
     const rangeText = `区间 [${params.m.toFixed(2).replace(/\.?0+$/, "")}, ${params.n.toFixed(2).replace(/\.?0+$/, "")}]`;
 
+    if (presetKey === "trans_critical") {
+      return {
+        variant: "primary" as const,
+        badge: "高考临界 · 极值相切构型",
+        condition: `超越函数在${rangeText}极值点处等号成立。`,
+        question:
+          "观察参数 a 刚好等于极值时的切线位置，分析为何此时构成恒成立临界点？",
+      };
+    }
+    if (presetKey === "axis_left" || presetKey === "axis_right") {
+      return {
+        variant: "info" as const,
+        badge: `单调构型 · 对称轴在区间${presetKey === "axis_left" ? "左侧" : "右侧"}`,
+        condition: `二次函数对称轴 $x = a$ 位于研究${rangeText}之外，函数在区间上严格单调。`,
+        question:
+          "根据单调性，函数最值必在哪个端点取得？如何利用端点值直接列出参数不等式？",
+      };
+    }
+    if (presetKey === "axis_inside") {
+      return {
+        variant: "warning" as const,
+        badge: "顶点构型 · 对称轴在区间内部",
+        condition: `二次函数对称轴 $x = a$ 落在研究${rangeText}内，顶点为极值点。`,
+        question:
+          "最值受顶点直接控制，分类讨论时需重点考量对称轴与区间中点的相对位置。",
+      };
+    }
+
     if (funModel === "transcendent") {
       let modelName = "(ln x)/x";
       if (transModel === "exp_minus_ax") modelName = "eˣ - ax";
@@ -275,18 +303,19 @@ export function SingleVarPage() {
           : "求实数参数 a 的取值范围，使得不等式在给定区间内存在实数解（能成立）。",
       };
     } else {
+      const modeLabel = subMode === "sep" ? "参变分离" : "轴动区间定";
       return {
         variant: (isAlways ? "primary" : "warning") as "primary" | "warning",
         badge: isAlways
-          ? "高考经典 · 二次函数含参恒成立 (轴动区间定)"
-          : "高考经典 · 二次函数含参存在性 (能成立)",
-        condition: `二次函数含参对称轴 x = a，自变量限定在研究${rangeText}内。`,
+          ? `高考经典 · 二次函数含参恒成立 (${modeLabel})`
+          : `高考经典 · 二次函数含参存在性 (${modeLabel})`,
+        condition: `二次函数含参对称轴 x = a，采用【${modeLabel}】探究，自变量限定在研究${rangeText}内。`,
         question: isAlways
           ? "求实数参数 a 的取值范围，使得二次不等式在给定区间上恒成立。"
           : "求实数参数 a 的取值范围，使得二次不等式在给定区间上存在解。",
       };
     }
-  }, [funModel, transModel, logic, params.m, params.n]);
+  }, [funModel, transModel, logic, presetKey, subMode, params.m, params.n]);
 
   return (
     <ThreePanel

@@ -200,8 +200,7 @@ export function ConicParamAnimation() {
         params.a,
         params.b,
       );
-      if (!res.valid)
-        return "\\text{判别式 } \\Delta < 0 \\text{ (直线与椭圆无交点)}";
+      if (!res.valid) return "\\Delta < 0";
       return `${res.A.toFixed(2).replace(/\.?0+$/, "")}t^2 ${res.B >= 0 ? "+" : ""}${res.B.toFixed(2).replace(/\.?0+$/, "")}t ${res.C >= 0 ? "+" : ""}${res.C.toFixed(2).replace(/\.?0+$/, "")} = 0 \\quad (\\Delta = ${res.discriminant.toFixed(1).replace(/\.0$/, "")})`;
     }
   }, [studyMode, params]);

@@ -284,11 +284,12 @@ export function CompositeAnimation() {
             >
               <SelectGrid
                 items={[
-                  { key: "exp", formula: "y = 2^u" },
-                  { key: "log", formula: "y = \\log_2 u" },
+                  { key: "exp", label: "指数型", description: "y = 2^u" },
+                  { key: "log", label: "对数型", description: "y = log_2(u)" },
                   {
                     key: "quadratic",
-                    formula: "y = -(u-2)^2+4",
+                    label: "二次型",
+                    description: "y = -(u-2)²+4",
                     fullWidth: true,
                   },
                 ]}

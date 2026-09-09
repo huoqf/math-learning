@@ -213,7 +213,7 @@ export function ProbabilityNormalAnimation() {
     const sigVal = params.sigma ?? 1;
 
     if (studyMode === "histogram") {
-      return `\\text{直方图矩形面积 } S_i = \\frac{\\text{频率}_i}{\\Delta x} \\times \\Delta x = \\text{频率}_i \\quad \\sum S_i = 1`;
+      return `S_i = \\frac{f_i}{\\Delta x} \\times \\Delta x = f_i \\quad (\\sum S_i = 1)`;
     }
 
     if (studyMode === "normalFit") {
@@ -433,7 +433,7 @@ export function ProbabilityNormalAnimation() {
       question:
         "利用 P(μ-σ<X<μ+σ)≈0.6827、P(μ-2σ<X<μ+2σ)≈0.9545、P(μ-3σ<X<μ+3σ)≈0.9973 求解单侧或任意对称区间概率。",
     };
-  }, [studyMode]);
+  }, [studyMode, preset]);
 
   return (
     <>

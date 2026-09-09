@@ -320,7 +320,7 @@ export default function SurfaceRelationAnimation() {
           question:
             "由面面垂直性质定理得 PO ⊥ 底面 ABCD，以点 O 为坐标原点建立空间直角坐标系求解二面角。",
         };
-  }, [activeMode, subType]);
+  }, [activeMode, subType, interactionMode]);
 
   return (
     <ThreePanel

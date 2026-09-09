@@ -525,7 +525,7 @@ export default function SpatialAngleAnimation({
           ],
         };
     }
-  }, [activeMode]);
+  }, [activeMode, modelPreset]);
 
   return (
     <ThreePanel

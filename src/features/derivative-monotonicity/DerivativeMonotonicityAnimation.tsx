@@ -144,15 +144,14 @@ export function DerivativeMonotonicityAnimation() {
     const fpx0Str = Number.isFinite(fpx0) ? formatFloat(fpx0) : "--";
 
     if (mode === "monotonicity_point") {
-      return `${modelResult.latex} \\quad \\Big| \\quad f'(x_0) = ${fpx0Str} \\; ${
-        Number.isFinite(fpx0)
-          ? fpx0 > 0
-            ? "(\\text{斜率 } > 0 \\implies \\text{单调递增})"
-            : fpx0 < 0
-              ? "(\\text{斜率 } < 0 \\implies \\text{单调递减})"
-              : "(\\text{切线水平, 驻点})"
-          : ""
-      }`;
+      const signStr = Number.isFinite(fpx0)
+        ? fpx0 > 0
+          ? "> 0"
+          : fpx0 < 0
+            ? "< 0"
+            : "= 0"
+        : "";
+      return `${modelResult.latex} \\quad \\Big| \\quad f'(x_0) = ${fpx0Str} ${signStr}`;
     }
 
     if (mode === "extrema_analysis") {
@@ -243,7 +242,7 @@ export function DerivativeMonotonicityAnimation() {
       detail:
         "滑动参数 a，观察零点个数（判别式 Δ 或临界参数）如何改变单调区间的分布与极值点的存在性。",
     };
-  }, [mode, modelResult, params.x0]);
+  }, [mode, modelResult, params.x0, modelKey]);
 
   return (
     <ThreePanel

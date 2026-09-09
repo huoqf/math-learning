@@ -102,7 +102,7 @@ export function TrigLinesAnimation() {
       const sinV = Math.sin(rad).toFixed(3);
       const cosV = Math.cos(rad).toFixed(3);
       const isTanDef = Math.abs(Math.cos(rad)) > 1e-7;
-      const tanV = isTanDef ? Math.tan(rad).toFixed(3) : "\\text{无意义}";
+      const tanV = isTanDef ? Math.tan(rad).toFixed(3) : "\\text{无意义}"; // formula: LaTeX片段
       return `\\sin\\alpha = \\color{${MATH_COLORS.paramPrimary}}{${sinV}}, \\quad \\cos\\alpha = \\color{${MATH_COLORS.paramSecondary}}{${cosV}}, \\quad \\tan\\alpha = \\color{${MATH_COLORS.paramTertiary}}{${tanV}}`;
     }
 
@@ -171,17 +171,17 @@ export function TrigLinesAnimation() {
                   {
                     key: "sin",
                     label: "正弦线",
-                    formula: "\\overrightarrow{MP}",
+                    description: "有向线段 MP",
                   },
                   {
                     key: "cos",
                     label: "余弦线",
-                    formula: "\\overrightarrow{OM}",
+                    description: "有向线段 OM",
                   },
                   {
                     key: "tan",
                     label: "正切线",
-                    formula: "\\overrightarrow{AT}",
+                    description: "有向线段 AT",
                   },
                 ]}
                 value={

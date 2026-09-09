@@ -311,7 +311,7 @@ export function LineCircleAnimation() {
       const pyVal = params.py ?? 0;
       return `\\begin{cases} C: ${circleStr} \\\\ P: (${pxVal.toFixed(1)}, ${pyVal.toFixed(1)}) \\end{cases} \\quad L_{\\text{切线}} = ${calcRes.tangentLength?.toFixed(2) ?? "0"}`;
     } else {
-      return `\\text{垂径定理: } CH \\perp AB \\iff H \\text{ 为弦 } AB \\text{ 中点} \\quad (k_{CH} \\cdot k_{AB} = -1)`;
+      return `CH \\perp AB \\iff AH = HB \\quad (k_{CH} \\cdot k_{AB} = -1)`;
     }
   }, [params, studyMode, calcRes]);
 

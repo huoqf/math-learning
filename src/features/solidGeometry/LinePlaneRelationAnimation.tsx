@@ -469,7 +469,7 @@ export default function LinePlaneRelationAnimation() {
             "探究直线与法向量夹角 〈l⃗, n⃗〉 与线面角 θ 的互余关系：sinθ = |cos〈l⃗, n⃗〉| = |l⃗·n⃗| / (|l⃗||n⃗|)。",
         };
     }
-  }, [activeMode, subTheorem]);
+  }, [activeMode, subTheorem, activePreset]);
 
   return (
     <ThreePanel

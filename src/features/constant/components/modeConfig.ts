@@ -118,9 +118,9 @@ export function buildParamConfigs({
           : "抛物线 g(x) 顶点与对称轴";
 
       if (key === "yf") {
-        description = "【主参数-红】控制抛物线 f(x) 顶点的 y_f 坐标";
+        description = "【主参数-红】控制抛物线 f(x) 顶点的 $y_f$ 坐标";
       } else if (key === "yg") {
-        description = "【次参数-橙】控制抛物线 g(x) 顶点的 y_g 坐标";
+        description = "【次参数-橙】控制抛物线 g(x) 顶点的 $y_g$ 坐标";
       }
     }
 
@@ -200,7 +200,7 @@ export function buildFormulasLatex({
   } else {
     if (selectedLogic === "same_var") {
       const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}}, \\; g(x) = -(x - ${params.xg.toFixed(2)})^2 + \\color{${MATH_COLORS.paramSecondary}}{${params.yg.toFixed(2)}}`;
-      const goalStr = `\\text{目标：对 } \\forall x \\in I_1 \\cap I_2 = [1.50, 2.00], \\; f(x) \\ge g(x)`;
+      const goalStr = `\\forall x \\in I_1 \\cap I_2 = [1.50, 2.00], \\; f(x) \\ge g(x)`;
       return { line1: fStr, line2: goalStr };
     } else {
       const fStr = `f(x) = (x - ${params.xf.toFixed(2)})^2 + \\color{${MATH_COLORS.paramPrimary}}{${params.yf.toFixed(2)}} \\quad x \\in [0.5, 2.0]`;

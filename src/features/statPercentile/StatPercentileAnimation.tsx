@@ -276,7 +276,7 @@ export function StatPercentileAnimation() {
       question:
         "求解分层抽样总样本均值 x̄ 与总样本方差 s² 的组内+组间两项分解合成。",
     };
-  }, [studyMode, params.percentileP, params.sampleN]);
+  }, [studyMode, activeScenario, params.percentileP, params.sampleN]);
 
   return (
     <ThreePanel

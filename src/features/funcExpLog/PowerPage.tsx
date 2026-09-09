@@ -251,7 +251,7 @@ export function PowerPage() {
           "验证在 (0, +∞) 上单调递减，且双坐标轴 x = 0 与 y = 0 均为渐近线。",
       };
     }
-  }, [params.powerAlpha, mode]);
+  }, [params.powerAlpha, mode, currentPresetKey]);
 
   return (
     <ThreePanel

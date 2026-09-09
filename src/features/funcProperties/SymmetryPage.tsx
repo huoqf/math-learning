@@ -158,7 +158,14 @@ export function SymmetryPage() {
       condition: `图象关于轴 x = ${(params.axisA ?? 0).toFixed(1).replace(/\.0$/, "")} 与中心 (${(params.axisB ?? 2).toFixed(1).replace(/\.0$/, "")}, 0) 对称。`,
       question: `一轴一中心连续反射四次完成完整循环，导出周期 T = 4|a - b| = ${(4 * dist).toFixed(1).replace(/\.0$/, "")}。`,
     };
-  }, [subMode, params.axisA, params.axisB, params.centerX, params.centerY]);
+  }, [
+    subMode,
+    fnType,
+    params.axisA,
+    params.axisB,
+    params.centerX,
+    params.centerY,
+  ]);
 
   return (
     <ThreePanel

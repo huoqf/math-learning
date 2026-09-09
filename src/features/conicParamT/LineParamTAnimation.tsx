@@ -223,17 +223,21 @@ export function LineParamTAnimation() {
             <LeftPanelSection title="二次曲线类型">
               <SelectGrid
                 items={[
-                  { key: "circle", label: "圆", formula: "x^2+y^2=R^2" },
+                  { key: "circle", label: "圆", description: "圆的标准方程" },
                   {
                     key: "ellipse",
                     label: "椭圆",
-                    formula: "\\frac{x^2}{a^2}+\\frac{y^2}{b^2}=1",
+                    description: "标准椭圆方程",
                   },
-                  { key: "parabola", label: "抛物线", formula: "y^2=2px" },
+                  {
+                    key: "parabola",
+                    label: "抛物线",
+                    description: "开口向右标准型",
+                  },
                   {
                     key: "hyperbola",
                     label: "双曲线",
-                    formula: "\\frac{x^2}{a^2}-\\frac{y^2}{b^2}=1",
+                    description: "标准双曲线方程",
                   },
                 ]}
                 value={conicType}
@@ -252,12 +256,12 @@ export function LineParamTAnimation() {
                   {
                     key: "midpoint",
                     label: "中点弦模型",
-                    formula: "t_1+t_2=0",
+                    description: "定点为弦中点",
                   },
                   {
                     key: "reciprocal",
                     label: "线段倒数和",
-                    formula: "\\left|\\frac{1}{t_1}+\\frac{1}{t_2}\\right|",
+                    description: "过焦点定值定理",
                   },
                 ]}
                 value={gaokaoModel === "product" ? "midpoint" : gaokaoModel}

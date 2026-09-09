@@ -135,7 +135,7 @@ export function TrigFormulasAnimation() {
       );
       const valStr = res.isTanDefined
         ? res.resultVal.toFixed(3)
-        : "\\text{无意义}";
+        : "\\text{无意义}"; // formula: LaTeX片段
       return `${res.formulaLatex} = ${valStr}`;
     } else if (studyMode === "double_angle") {
       const res = calculateDoubleAngle(params.alphaDeg ?? 45, doubleAngleKey);
@@ -146,7 +146,7 @@ export function TrigFormulasAnimation() {
         valStr =
           res.isTanDefined && res.tan2Alpha !== undefined
             ? res.tan2Alpha.toFixed(3)
-            : "\\text{无意义}";
+            : "\\text{无意义}"; // formula: LaTeX片段
       else if (doubleAngleKey === "sin2_a") valStr = res.sinSqAlpha.toFixed(3);
       else if (doubleAngleKey === "cos2_a") valStr = res.cosSqAlpha.toFixed(3);
       return `${res.formulaLatex} = ${valStr}`;

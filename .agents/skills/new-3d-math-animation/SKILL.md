@@ -59,8 +59,23 @@ description: >
 1. **左屏**：遵循 `references/left-panel-spec.md` 渲染层级，滑块必须标清几何线段代号（如 $\text{侧棱 } PA=\color{red}{a}$），底部 `TipCard` 呈现题设与设问。
 2. **右屏架构组装**（按课型精准分层，位于 `src/data/builders/<topic>.ts`）：
    - **基础概念课**：组装核心定理 `theorems`（显式前提）、临界警示 `warnings`、几何特征量 `quantities`；
-   - **高考专题课**：全量装配母题定位 `examAnchor`、破题推演链 `reasoningSteps`（带采分点提示）、口诀 `mnemonic`、定值不变量 `invariants` 与秒杀考点 `gaokaoPoints`。
-3. **四步注册**：在 `src/features/<topic>/meta.ts`、`src/data/routeEntries.ts`（向 `routeEntries` 数组添加并配 `guarded3D: true`）和 `src/data/knowledgeTree.ts` 注册。并在 `src/data/mathQuantities.ts` 的 `buildMathQuantities()` switch 中添加 `case 'anim-<topic>'` 分支调用 builder。**完整注册四步闭环指南见 [registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md)。**
+3. **四步注册与 `guarded3D: true` WebGL 门禁机制**：
+   - **元数据与路由**：在 `src/features/<topic>/meta.ts` 声明节点，并在 `src/data/routeEntries.ts` 注册路由项。
+   - **⚠️ 核心安全规范：所有 3D 路由必须显式标注 `guarded3D: true`**：
+     ```ts
+     {
+       node: <topic>Node,
+       loader: () => import('@/features/<topic>/<Topic>Animation').then(m => ({ default: m.<Topic>Animation })),
+       guarded3D: true, // 必须显式开启 WebGL 门禁与能力探针
+     }
+     ```
+   - **WebGL 门禁与优雅降级原理（`Guarded3DPage`）**：
+     1. **首屏体积与网络防护**：利用 `isWebGLAvailable()` 进行硬件与上下文探测；不支持设备绝对**不触发** Three.js / R3F chunk 下载，杜绝弱网/低端设备内存暴涨。
+     2. **优雅友好降级**：非 WebGL 环境自动展示引导升级提示；可用环境下由 `<Suspense fallback={<PageLoading />}>` 驱动异步懒加载。
+   - **知识树与右屏看板关联**：
+     - 在 `src/data/knowledgeTree.ts` 挂载对应节点；
+     - 在 `src/data/mathQuantities.ts` 的 `buildMathQuantities()` 中添加 `case 'anim-<topic>': return build<Topic>Panel(params, config);`。
+   - **完整注册四步闭环指南见 [registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md)。**
 
 ### 阶段 5：高考数学习惯门禁验收（验收期）
 - [ ] **三屏符号对账 (SSOT)**：左屏滑块代号（如 $PA$、$CA$）在中屏几何拓扑中必有对应线段，右屏推导公式 100% 带入相同代号。

@@ -166,13 +166,13 @@ export function calculateTrigIdentity(
   let diffSignReason = "";
   if (sinVal > cosVal) {
     diffSignReason =
-      "因 \\sin\\alpha > \\cos\\alpha (终边位于 y=x 上方)，取正号 '+'";
+      "因 $\\sin\\alpha > \\cos\\alpha$ (终边位于 $y=x$ 上方)，取正号 '+'";
   } else if (sinVal < cosVal) {
     diffSignReason =
-      "因 \\sin\\alpha < \\cos\\alpha (终边位于 y=x 下方)，取负号 '-'";
+      "因 $\\sin\\alpha < \\cos\\alpha$ (终边位于 $y=x$ 下方)，取负号 '-'";
   } else {
     diffSignReason =
-      "因 \\sin\\alpha = \\cos\\alpha (终边位于 y=x 上)，差值为 0";
+      "因 $\\sin\\alpha = \\cos\\alpha$ (终边位于 $y=x$ 上)，差值为 0";
   }
 
   // 1. 一次齐次式 (A sinα + B cosα) / (C sinα + D cosα)
@@ -537,7 +537,7 @@ export function calculateComplementaryModel(
 
   const modelName = "高考经典互余配角模型：(α + θ) 与 (π/2 - (α + θ))";
   const formulaLatex = `\\cos\\left[\\frac{\\pi}{2} - (\\alpha + \\theta)\\right] = \\sin(\\alpha + \\theta)`;
-  const explanation = `因为 (\\alpha + \\theta) + [\\frac{\\pi}{2} - (\\alpha + \\theta)] = \\frac{\\pi}{2} (两角互余)，所以一个角的正弦等于另一个角的余弦！`;
+  const explanation = `因为 $(\\alpha + \\theta) + [\\frac{\\pi}{2} - (\\alpha + \\theta)] = \\frac{\\pi}{2}$ (两角互余)，所以一个角的正弦等于另一个角的余弦！`;
 
   return {
     alphaDeg,

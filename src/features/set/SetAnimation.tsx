@@ -112,17 +112,17 @@ export function SetAnimation() {
             {activeTab === "venn" && (
               <SelectGrid
                 items={[
-                  { key: "intersection", label: "A ∩ B", formula: "A \\cap B" },
-                  { key: "union", label: "A ∪ B", formula: "A \\cup B" },
+                  { key: "intersection", label: "交集", description: "A ∩ B" },
+                  { key: "union", label: "并集", description: "A ∪ B" },
                   {
                     key: "complement_A",
-                    label: "∁UA",
-                    formula: "\\complement_U A",
+                    label: "补集",
+                    description: "∁_U A",
                   },
                   {
                     key: "difference_A_B",
-                    label: "A \\ B",
-                    formula: "A \\setminus B",
+                    label: "差集",
+                    description: "A \\ B",
                   },
                 ]}
                 value={vennOp}

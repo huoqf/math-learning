@@ -166,17 +166,15 @@ export function ProbabilityBayesAnimation() {
           <LeftPanelSection title="模式选择">
             <TabSwitcher
               tabs={[
-                { key: "conditional", label: "条件概率", formula: "P(B|A)" },
+                { key: "conditional", label: "条件概率" },
                 {
                   key: "total_prob",
                   label: "全概率",
-                  formula: "P(B)",
                 },
-                { key: "bayes", label: "贝叶斯", formula: "P(A_k|B)" },
+                { key: "bayes", label: "贝叶斯" },
                 {
                   key: "markov",
                   label: "马尔可夫",
-                  formula: "p_{n+1}",
                 },
               ]}
               value={activeMode}
@@ -418,12 +416,12 @@ export function ProbabilityBayesAnimation() {
                   {
                     key: "full",
                     label: "全集视角",
-                    formula: "\\Omega",
+                    description: "样本空间 Ω",
                   },
                   {
                     key: "compressed",
                     label: "条件视角",
-                    formula: "\\Omega' = A",
+                    description: "缩减样本空间 A",
                   },
                 ]}
                 value={isZoomedToA ? "compressed" : "full"}

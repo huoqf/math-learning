@@ -47,8 +47,8 @@ export function FuncZeroAnimation() {
   const currentModel = FUNC_ZERO_MODELS[modelKey] ?? FUNC_ZERO_MODELS.cubic;
 
   const mathData = useMemo(
-    () => buildMathQuantities("anim-func-zero", params),
-    [params],
+    () => buildMathQuantities("anim-func-zero", params, { modelKey }),
+    [params, modelKey],
   );
 
   const handleModelChange = useCallback((key: string) => {

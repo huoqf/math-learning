@@ -30,7 +30,7 @@
 • 参数降维调节 (ParamControl)    • SceneLegend 毛玻璃图例                        • GaokaoPoint 高考压轴考点
 • 教学导引题设 (TipCard)        ❌ 严禁大段长句与推导解释                      • WarningItem 退化预警
 ```
-- **左问右解闭环**：左屏 `TipCard` 只负责抛出【初始条件】与【核心设问】；完整公式推导、零点存在性证明与高考考法 100% 归位右屏 `MathPanel`。
+- **左问右解闭环**：左屏 `TipCard` 只负责抛出【初始条件】与【核心设问】；完整公式推导、零点存在性证明与高考考法 100% 归位右屏 `MathPanel`。具体推导链三要素（审题定法 $\to$ 建模联立 $\to$ 求解反思）与各学科规范以 [.agents/skills/new-math-animation/references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md#7-高中数学学科认知与破题推演准则-理顺思路--助力掌握) 为全库单一事实源（SSOT）。
 - **情景多级联动**：用户在左屏切换任何二级选项，`TipCard` 的题设背景与探究问题必须 100% 动态特化。
 
 ### 公理 3：数形与语义色彩一体化

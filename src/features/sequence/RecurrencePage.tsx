@@ -398,7 +398,7 @@ export function RecurrencePage() {
           question: "观察参数对图像与通项结果的影响。",
         };
     }
-  }, [recurrenceModelType, params.a1, params.a2, params.N]);
+  }, [recurrenceModelType, activePresetKey, params.a1, params.a2, params.N]);
 
   return (
     <ThreePanel

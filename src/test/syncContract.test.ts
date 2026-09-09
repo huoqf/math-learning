@@ -256,4 +256,104 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
       },
     ]);
   });
+
+  it("数列专题：等差数列通项公式与前 n 项和二次函数模型契约验证", () => {
+    // a1 = 3, d = -1, N = 8 => an = 3 - 7 = -4, Sn = 8 * (3 - 4) / 2 = -4
+    verifyTopicSyncContract([
+      {
+        name: "等差数列通项与求和模型",
+        animId: "anim-sequence",
+        modeOptions: { activeMode: "arithmetic", arithmeticSubMode: "linear" },
+        params: { a1: 3, d: -1, N: 8 },
+        lessonType: "concept",
+        groundTruth: {},
+        expectedQuantityLabels: [
+          "末项 a_{8}",
+          "前 8 项和 S_{8}",
+          "变号零点 x_0",
+        ],
+      },
+    ]);
+  });
+
+  it("数列专题：等比数列通项公式与公比分类讨论契约验证", () => {
+    // a1 = 2, q = 3, N = 4 => a4 = 54, S4 = 2 * (1 - 81) / (1 - 3) = 80
+    verifyTopicSyncContract([
+      {
+        name: "等比数列通项与求和模型",
+        animId: "anim-sequence",
+        modeOptions: { activeMode: "geometric" },
+        params: { a1: 2, q: 3, N: 4 },
+        lessonType: "concept",
+        groundTruth: {},
+        expectedQuantityLabels: ["末项 a_{4}", "前 4 项和 S_{4}"],
+      },
+    ]);
+  });
+
+  it("平面向量：向量数量积几何投影与坐标运算契约验证", () => {
+    // |a| = 3, |b| = 4, theta = 60 deg => a·b = 3 * 4 * 0.5 = 6
+    verifyTopicSyncContract([
+      {
+        name: "向量数量积几何投影模型",
+        animId: "anim-vector-dot-product",
+        modeOptions: { studyMode: "defProj" },
+        params: { magA: 3, magB: 4, thetaDeg: 60 },
+        lessonType: "concept",
+        groundTruth: {},
+        expectedQuantityLabels: [
+          "向量 a 的模长",
+          "向量 b 的模长",
+          "数量积 (a · b)",
+        ],
+      },
+    ]);
+  });
+
+  it("平面向量：极化恒等式与中线定理大题推演契约验证", () => {
+    verifyTopicSyncContract([
+      {
+        name: "极化恒等式模型",
+        animId: "anim-vector-polarization-apollonius",
+        modeOptions: { studyMode: "polarization" },
+        params: { bcLength: 6, amLength: 5 },
+        lessonType: "concept",
+        groundTruth: {},
+        expectedQuantityLabels: ["底边全长 |BC|", "中线长 |AM|", "极化算值"],
+      },
+    ]);
+  });
+
+  it("三角函数：三角函数线在单位圆上的几何与代数对应契约验证", () => {
+    verifyTopicSyncContract([
+      {
+        name: "三角函数线单位圆模型",
+        animId: "anim-trig-lines",
+        modeOptions: { studyMode: "lines" },
+        params: { alphaDeg: 45 },
+        lessonType: "concept",
+        groundTruth: {},
+        expectedQuantityLabels: ["正弦线 MP", "余弦线 OM", "正切线 AT"],
+      },
+    ]);
+  });
+
+  it("三角函数：正弦型函数 y=Asin(ωx+φ)+k 图像变换与周期最值契约验证", () => {
+    verifyTopicSyncContract([
+      {
+        name: "三角函数图像变换模型",
+        animId: "anim-trig-transform",
+        modeOptions: { studyMode: "transformPath" },
+        params: { A: 2, omega: 2, phi: 0, k: 1 },
+        lessonType: "concept",
+        groundTruth: {},
+        expectedQuantityLabels: [
+          "变换路线",
+          "相位平移量",
+          "横向周期伸缩比",
+          "纵向振幅伸缩比",
+        ],
+      },
+    ]);
+  });
 });

@@ -221,7 +221,7 @@ export function DerivativeAnimation() {
       question:
         "拖动切点 P 观察切线斜率 k = f'(x₀) 的符号与大小，验证水平切线与单调性/极值的联系。",
     };
-  }, [mode, preset]);
+  }, [mode, preset, fnKey]);
 
   return (
     <ThreePanel
