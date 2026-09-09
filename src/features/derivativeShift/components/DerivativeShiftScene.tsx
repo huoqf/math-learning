@@ -153,6 +153,17 @@ export function DerivativeShiftScene({
       );
       const mid = mathToDesign(shiftResult.midX, shiftResult.k, scale);
 
+      const topPt = mathToDesign(
+        shiftResult.x1,
+        shiftResult.mirrorFn(shiftResult.x1),
+        scale,
+      );
+      const botPt = mathToDesign(
+        shiftResult.x1,
+        shiftResult.fn(shiftResult.x1),
+        scale,
+      );
+
       const items: LabelItem[] = [
         {
           key: "p1",
@@ -191,6 +202,19 @@ export function DerivativeShiftScene({
           preferredPlacement: "bottom",
         },
       ];
+
+      if (!isNaN(topPt.y) && !isNaN(botPt.y)) {
+        items.push({
+          key: "diff_f_x1",
+          x: topPt.x,
+          y: (topPt.y + botPt.y) / 2,
+          text: "F(x₁)",
+          color: MATH_COLORS.paramTertiary,
+          fontSize: fontScale(10),
+          preferredPlacement: "left",
+        });
+      }
+
       return items;
     } else {
       const geo = mathToDesign(logMeanResult.geoMean, 0, scale);
@@ -272,10 +296,10 @@ export function DerivativeShiftScene({
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
     const newX0 = Math.max(0.1, mathPt.x);
     if (subModel === "x_ln_x") {
-      const newA = Math.log(newX0) + 1;
+      const newA = Math.log(newX0) + newX0 + 1;
       onParamChange("a", Math.round(newA * 20) / 20);
     } else {
-      const newA = Math.exp(newX0);
+      const newA = Math.exp(newX0) - newX0;
       onParamChange("a", Math.round(newA * 20) / 20);
     }
   };
@@ -503,26 +527,15 @@ export function DerivativeShiftScene({
             );
             if (!isNaN(topPt.y) && !isNaN(botPt.y)) {
               return (
-                <g>
-                  <line
-                    x1={topPt.x}
-                    y1={topPt.y}
-                    x2={botPt.x}
-                    y2={botPt.y}
-                    stroke={MATH_COLORS.paramTertiary}
-                    strokeWidth={1.8}
-                    strokeDasharray="3 2"
-                  />
-                  <text
-                    x={topPt.x - 45}
-                    y={(topPt.y + botPt.y) / 2}
-                    fill={MATH_COLORS.paramTertiary}
-                    fontSize={fontScale(10)}
-                    fontWeight="bold"
-                  >
-                    高度差 F(x₁)
-                  </text>
-                </g>
+                <line
+                  x1={topPt.x}
+                  y1={topPt.y}
+                  x2={botPt.x}
+                  y2={botPt.y}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1.8}
+                  strokeDasharray="3 2"
+                />
               );
             }
             return null;

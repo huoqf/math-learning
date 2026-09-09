@@ -106,9 +106,9 @@ export function DerivativeShiftAnimation() {
     if (activeMode === "implicit_zero") {
       const aTerm = formatCoeffTerm(params.a, "x", MATH_COLORS.paramPrimary);
       if (subModel === "x_ln_x") {
-        return `f(x) = x \\ln x${aTerm} + 1 \\quad (f'(x_0) = 0)`;
+        return `f(x) = x \\ln x + \\frac{1}{2}x^2${aTerm} \\quad (f'(x_0) = 0)`;
       }
-      return `f(x) = e^x${aTerm} \\quad (f'(x_0) = 0)`;
+      return `f(x) = e^x - \\frac{1}{2}x^2${aTerm} \\quad (f'(x_0) = 0)`;
     } else if (activeMode === "shift_symmetric") {
       const kStr = params.k.toFixed(2).replace(/\.?0+$/, "");
       if (subModel === "xe_neg_x") {
@@ -130,11 +130,13 @@ export function DerivativeShiftAnimation() {
   const tipConfig = useMemo(() => {
     if (activeMode === "implicit_zero") {
       const funcTex =
-        subModel === "x_ln_x" ? "f(x) = x\\ln x - ax + 1" : "f(x) = e^x - ax";
+        subModel === "x_ln_x"
+          ? "f(x) = x\\ln x + \\frac{1}{2}x^2 - ax"
+          : "f(x) = e^x - \\frac{1}{2}x^2 - ax";
       return {
         variant: "primary" as const,
         badge: "高考压轴 · 隐零点定理与消元",
-        condition: `已知超越函数 $${funcTex}$，导数零点 $x_0$ 无法显式解析求解。`,
+        condition: `已知超越函数 $${funcTex}$，导函数零点 $x_0$ 满足超越方程无法显式求解。`,
         question:
           "设导数零点为 $x_0$，如何利用 $f'(x_0) = 0$ 构造消元轨迹方程求极值范围？",
       };
@@ -190,11 +192,11 @@ export function DerivativeShiftAnimation() {
                   items={[
                     {
                       key: "x_ln_x",
-                      label: "对数乘积型",
+                      label: "对数二次混合型",
                     },
                     {
-                      key: "e_x",
-                      label: "指数一次型",
+                      key: "exp_linear",
+                      label: "指数二次混合型",
                     },
                   ]}
                   value={subModel}

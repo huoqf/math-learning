@@ -7,7 +7,7 @@ import type { SceneLegendItem } from "@/components/Math";
 import { MATH_COLORS } from "@/theme";
 
 export type ShiftMode = "implicit_zero" | "shift_symmetric" | "log_mean";
-export type ShiftSubModel = "x_ln_x" | "e_x" | "xe_neg_x" | "ln_x_div_x";
+export type ShiftSubModel = "x_ln_x" | "exp_linear" | "xe_neg_x" | "ln_x_div_x";
 
 export function getDerivativeShiftLegendItems(
   activeMode: ShiftMode,
@@ -19,20 +19,27 @@ export function getDerivativeShiftLegendItems(
         color: MATH_COLORS.function,
         label: "原函数",
         formula:
-          subModel === "x_ln_x" ? "f(x) = x\\ln x - ax + 1" : "f(x) = e^x - ax",
+          subModel === "x_ln_x"
+            ? "f(x) = x\\ln x + \\frac{1}{2}x^2 - ax"
+            : "f(x) = e^x - \\frac{1}{2}x^2 - ax",
         style: "solid",
       },
       {
         color: MATH_COLORS.derivative,
         label: "导函数",
         formula:
-          subModel === "x_ln_x" ? "f'(x) = \\ln x + 1 - a" : "f'(x) = e^x - a",
+          subModel === "x_ln_x"
+            ? "f'(x) = \\ln x + x + 1 - a"
+            : "f'(x) = e^x - x - a",
         style: "dash",
       },
       {
         color: MATH_COLORS.trace,
         label: "消元轨迹",
-        formula: subModel === "x_ln_x" ? "h(x) = 1 - x" : "h(x) = e^x(1 - x)",
+        formula:
+          subModel === "x_ln_x"
+            ? "h(x) = -\\frac{1}{2}x^2 - x"
+            : "h(x) = e^x(1 - x) + \\frac{1}{2}x^2",
         style: "dot",
       },
       {

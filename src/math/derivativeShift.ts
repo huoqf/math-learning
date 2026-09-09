@@ -4,7 +4,7 @@
  * 零 React/DOM/window 依赖
  */
 
-export type ImplicitZeroModel = "x_ln_x" | "exp_minus_ax";
+export type ImplicitZeroModel = "x_ln_x" | "exp_linear";
 export type ExtremumShiftModel = "xe_neg_x" | "lnx_div_x";
 
 export interface ImplicitZeroResult {
@@ -20,13 +20,15 @@ export interface ImplicitZeroResult {
 
 export interface ExtremumShiftResult {
   x0: number; // 极值点
-  y0: number; // 极值 max f(x)
+  y0: number; // 极大值 max f(x)
   k: number; // 割线高度 y = k
   x1: number; // 割线左根
   x2: number; // 割线右根
-  midX: number; // 中点 (x1 + x2) / 2
-  delta: number; // 偏移量 (x1 + x2) / 2 - x0
+  midX: number; // 加法中点 (x1 + x2) / 2
+  delta: number; // 加法偏移量 (x1 + x2) / 2 - x0
   shiftType: "right" | "left" | "none";
+  prod: number; // 乘积 x1 * x2
+  prodShiftType: "greater" | "less" | "none"; // 乘积偏移: x1 * x2 与 x0^2 比较
   isValid: boolean;
   fn: (x: number) => number;
   mirrorFn: (x: number) => number; // 镜像曲线 y = f(2x0 - x)
@@ -44,85 +46,18 @@ export interface LogMeanResult {
 }
 
 /**
- * 隐零点求解与代换消元
- */
-export function solveImplicitZero(
-  a: number,
-  model: ImplicitZeroModel,
-): ImplicitZeroResult {
-  if (model === "x_ln_x") {
-    // f(x) = x ln x - a x + 1, x > 0
-    // f'(x) = ln x + 1 - a = 0  =>  ln x0 = a - 1  =>  x0 = e^(a - 1)
-    // 极值消元: ln x0 = a - 1  =>  f(x0) = x0(a - 1) - a x0 + 1 = 1 - x0
-    const x0 = Math.exp(a - 1);
-    const y0 = x0 * Math.log(x0) - a * x0 + 1;
-    const traceY = 1 - x0;
-
-    const fn = (x: number) => (x > 0 ? x * Math.log(x) - a * x + 1 : NaN);
-    const dfn = (x: number) => (x > 0 ? Math.log(x) + 1 - a : NaN);
-    const traceFn = (x: number) => 1 - x;
-
-    return {
-      x0,
-      y0,
-      traceY,
-      isValid: true,
-      isDegenerate: Math.abs(a) < 1e-4,
-      fn,
-      dfn,
-      traceFn,
-    };
-  } else {
-    // model === 'exp_minus_ax'
-    // f(x) = e^x - a x,  x in R
-    // f'(x) = e^x - a = 0  =>  x0 = ln a  (需 a > 0)
-    // 极值消元: e^x0 = a  =>  f(x0) = a - a ln a = a(1 - ln a) = x0 e^x0 - ... -> 轨迹 h(x) = e^x (1 - x)
-    if (a <= 0.001) {
-      return {
-        x0: 0,
-        y0: 1,
-        traceY: 1,
-        isValid: false,
-        isDegenerate: true,
-        fn: (x: number) => Math.exp(x) - a * x,
-        dfn: (x: number) => Math.exp(x) - a,
-        traceFn: (x: number) => Math.exp(x) * (1 - x),
-      };
-    }
-
-    const x0 = Math.log(a);
-    const y0 = Math.exp(x0) - a * x0;
-    const traceY = Math.exp(x0) * (1 - x0);
-
-    const fn = (x: number) => Math.exp(x) - a * x;
-    const dfn = (x: number) => Math.exp(x) - a;
-    const traceFn = (x: number) => Math.exp(x) * (1 - x);
-
-    return {
-      x0,
-      y0,
-      traceY,
-      isValid: true,
-      isDegenerate: Math.abs(a - 1) < 1e-4,
-      fn,
-      dfn,
-      traceFn,
-    };
-  }
-}
-
-/**
- * 二分逼近法数值求解 f(x) = k 的双根
+ * 二分逼近法求单调函数 f(x) = target 的数值根
  */
 function findRoot(
   fn: (x: number) => number,
   target: number,
   min: number,
   max: number,
+  maxIter = 40,
 ): number {
   let low = min;
   let high = max;
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < maxIter; i++) {
     const mid = (low + high) / 2;
     const val = fn(mid);
     if (isNaN(val)) break;
@@ -138,7 +73,97 @@ function findRoot(
 }
 
 /**
- * 极值点偏移求解
+ * 隐零点求解与代换消元 (真实超越方程，新高考标准)
+ */
+export function solveImplicitZero(
+  a: number,
+  model: ImplicitZeroModel,
+): ImplicitZeroResult {
+  if (model === "x_ln_x") {
+    // f(x) = x ln x + (1/2)x^2 - ax, x > 0 (高考经典对数加线性型)
+    // f'(x) = ln x + x + 1 - a
+    // 零点存在性：f'(x) 在 (0, +∞) 严格递增，f'(0+) -> -∞, 当 a > 1 时 f'(a) = ln a + 1 > 0
+    // 存在唯一超越隐零点 x0: ln x0 + x0 + 1 = a
+    // 极值消元代换：f(x0) = x0(a - 1 - x0) + (1/2)x0^2 - a x0 = -(1/2)x0^2 - x0
+    // 消元轨迹: h(x) = -(1/2)x^2 - x (完全不含参数 a 的抛物线，消参下沉！)
+    const fn = (x: number) =>
+      x > 0 ? x * Math.log(x) + 0.5 * x * x - a * x : NaN;
+    const dfn = (x: number) => (x > 0 ? Math.log(x) + x + 1 - a : NaN);
+    const traceFn = (x: number) => -0.5 * x * x - x;
+
+    if (a < 0.2) {
+      return {
+        x0: 0.1,
+        y0: fn(0.1),
+        traceY: traceFn(0.1),
+        isValid: false,
+        isDegenerate: true,
+        fn,
+        dfn,
+        traceFn,
+      };
+    }
+
+    // 数值求解超越方程 f'(x) = 0
+    const x0 = findRoot(dfn, 0, 0.0001, Math.max(a + 2, 6));
+    const y0 = fn(x0);
+    const traceY = traceFn(x0);
+
+    return {
+      x0,
+      y0,
+      traceY,
+      isValid: true,
+      isDegenerate: false,
+      fn,
+      dfn,
+      traceFn,
+    };
+  } else {
+    // model === 'exp_linear'
+    // f(x) = e^x - (1/2)x^2 - ax, x in R (2018全国II卷/2020新高考I卷原型)
+    // f'(x) = e^x - x - a
+    // 当 a > 1 时，f'(0) = 1 - a < 0, f'(a) = e^a - 2a > 0, 存在唯一正隐零点 x0: e^x0 - x0 = a
+    // 极值消元代换 (消去 a = e^x0 - x0):
+    // f(x0) = e^x0 - (1/2)x0^2 - (e^x0 - x0)x0 = e^x0(1 - x0) + (1/2)x0^2
+    // 消元轨迹: h(x) = e^x(1 - x) + (1/2)x^2
+    const fn = (x: number) => Math.exp(x) - 0.5 * x * x - a * x;
+    const dfn = (x: number) => Math.exp(x) - x - a;
+    const traceFn = (x: number) => Math.exp(x) * (1 - x) + 0.5 * x * x;
+
+    if (a <= 1.001) {
+      return {
+        x0: 0,
+        y0: 1,
+        traceY: 1,
+        isValid: false,
+        isDegenerate: true,
+        fn,
+        dfn,
+        traceFn,
+      };
+    }
+
+    // 数值求解超越方程 f'(x) = 0
+    const x0 = findRoot(dfn, 0, 0, Math.max(Math.log(a) + 1.5, 5));
+    const y0 = fn(x0);
+    const traceY = traceFn(x0);
+
+    return {
+      x0,
+      y0,
+      traceY,
+      isValid: true,
+      isDegenerate: false,
+      fn,
+      dfn,
+      traceFn,
+    };
+  }
+}
+
+/**
+ * 极值点偏移求解 (含对称构造与乘积偏移)
  */
 export function solveExtremumShift(
   kParam: number,
@@ -152,12 +177,13 @@ export function solveExtremumShift(
     const k = Math.min(Math.max(kParam, 0.01), maxY - 0.001);
     const fn = (x: number) => x * Math.exp(-x);
 
-    // 左根 x1 in (0, 1), 右根 x2 in (1, 6)
+    // 左根 x1 in (0, 1), 右根 x2 in (1, 8)
     const x1 = findRoot(fn, k, 0.0001, 0.9999);
     const x2 = findRoot(fn, k, 1.0001, 8.0);
 
     const midX = (x1 + x2) / 2;
     const delta = midX - x0;
+    const prod = x1 * x2;
 
     const mirrorFn = (x: number) => fn(2 * x0 - x);
     const diffFn = (x: number) => fn(x) - mirrorFn(x);
@@ -171,6 +197,8 @@ export function solveExtremumShift(
       midX,
       delta,
       shiftType: delta > 1e-4 ? "right" : delta < -1e-4 ? "left" : "none",
+      prod,
+      prodShiftType: prod > 1 ? "greater" : prod < 1 ? "less" : "none",
       isValid: true,
       fn,
       mirrorFn,
@@ -184,12 +212,14 @@ export function solveExtremumShift(
     const k = Math.min(Math.max(kParam, 0.01), maxY - 0.001);
     const fn = (x: number) => (x > 0 ? Math.log(x) / x : NaN);
 
-    // 左根 x1 in (1, e), 右根 x2 in (e, 15)
+    // 左根 x1 in (1, e), 右根 x2 in (e, 20)
     const x1 = findRoot(fn, k, 1.0001, Math.E - 0.0001);
     const x2 = findRoot(fn, k, Math.E + 0.0001, 20.0);
 
     const midX = (x1 + x2) / 2;
     const delta = midX - x0;
+    const prod = x1 * x2;
+    const x0Sq = x0 * x0;
 
     const mirrorFn = (x: number) => (2 * x0 - x > 0 ? fn(2 * x0 - x) : NaN);
     const diffFn = (x: number) => fn(x) - mirrorFn(x);
@@ -203,6 +233,9 @@ export function solveExtremumShift(
       midX,
       delta,
       shiftType: delta > 1e-4 ? "right" : delta < -1e-4 ? "left" : "none",
+      prod,
+      prodShiftType:
+        prod > x0Sq + 1e-4 ? "greater" : prod < x0Sq - 1e-4 ? "less" : "none",
       isValid: true,
       fn,
       mirrorFn,

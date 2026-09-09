@@ -64,19 +64,19 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
   });
 
   it("导数大题：隐零点定理代换消元模型数值必须严格同步", () => {
-    // f(x) = x ln x - a x + 1, a = 1
-    // f'(x0) = 0 => x0 = 1, y0 = 0, 轨迹 h(1) = 1 - 1 = 0
+    // f(x) = x ln x + 0.5x^2 - a x, a = 2.0
+    // f'(x0) = 0 => x0 = 1, y0 = -1.5, 轨迹 h(1) = -1.5
     verifyTopicSyncContract([
       {
         name: "隐零点消元模型 (x ln x)",
         animId: "anim-derivative-shift",
         modeOptions: { activeMode: "implicit_zero", subModel: "x_ln_x" },
-        params: { a: 1.0 },
+        params: { a: 2.0 },
         lessonType: "concept",
         groundTruth: {
           隐零点横坐标: 1.0,
-          "极值 (未消元)": 0.0,
-          代换消元下沉: 0.0,
+          "极值 (原函数)": -1.5,
+          代换消元下沉: -1.5,
         },
         expectedQuantityLabels: ["隐零点横坐标", "极值 (代换消元下沉)"],
       },
@@ -98,7 +98,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
           "极值点",
           "割线左根",
           "割线右根",
-          "极值点偏移量",
+          "极值点加法偏移",
         ],
       },
     ]);

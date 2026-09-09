@@ -35,7 +35,7 @@ export function buildDerivativeShiftPanel(
 
     if (!izRes.isValid) {
       warnings.push({
-        text: "参数 a 过小，导函数 f'(x) 在定义域内无零点！",
+        text: "参数 a 过小，导函数 f'(x) 在有效定义域内无零点！",
         level: "danger",
       });
     }
@@ -48,7 +48,7 @@ export function buildDerivativeShiftPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "极值 (未消元)",
+        label: "极值 (原函数)",
         symbol: "f(x₀)",
         value: izRes.y0.toFixed(3),
         color: MATH_COLORS.function,
@@ -70,31 +70,38 @@ export function buildDerivativeShiftPanel(
     theorems.push(
       {
         name: "零点存在定理与隐零点设而不求",
-        latex: `f'({\\color{${MATH_COLORS.paramPrimary}}x_0}) = 0 \\implies {\\color{${MATH_COLORS.paramPrimary}}x_0} \\in (a, b)`,
-        condition: "1. f'(x) 在 (a, b) 连续且单调； 2. f'(a) \\cdot f'(b) < 0",
-        note: "设而不求：不直接求出 x0 的显式，而是利用 f'(x0)=0 导出超越项等量代换关系。",
+        latex:
+          subModel === "x_ln_x"
+            ? `f'({\\color{${MATH_COLORS.paramPrimary}}x_0}) = \\ln x_0 + x_0 + 1 - a = 0`
+            : `f'({\\color{${MATH_COLORS.paramPrimary}}x_0}) = e^{x_0} - x_0 - a = 0`,
+        condition: "导数方程为超越方程，无法初等求根，必设而不求",
+        note: "第一步先利用零点存在定理（连续、单调、端点异号）锁定 x0 的存在区间。",
         level: "core",
       },
       {
-        name: "代换下沉消元法",
+        name: "消参下沉法 (构造单变量轨迹)",
         latex:
           subModel === "x_ln_x"
-            ? `\\ln {\\color{${MATH_COLORS.paramPrimary}}x_0} = a-1 \\implies f({\\color{${MATH_COLORS.paramPrimary}}x_0}) = {\\color{${MATH_COLORS.paramSecondary}}1 - x_0}`
-            : `e^{{\\color{${MATH_COLORS.paramPrimary}}x_0}} = a \\implies f({\\color{${MATH_COLORS.paramPrimary}}x_0}) = {\\color{${MATH_COLORS.paramSecondary}}a(1 - \\ln a)}`,
-        condition: "消去极值表达式中的超越项（如 e^{x0} 或 \\ln x0）",
-        note: "将双变量/超越极值转化为仅含 x0 的多项式或代数函数 h(x0)，从而方便求最值。",
+            ? `\\ln x_0 = a - 1 - x_0 \\implies f(x_0) = {\\color{${MATH_COLORS.paramSecondary}}-\\frac{1}{2}x_0^2 - x_0}`
+            : `a = e^{x_0} - x_0 \\implies f(x_0) = {\\color{${MATH_COLORS.paramSecondary}}e^{x_0}(1 - x_0) + \\frac{1}{2}x_0^2}`,
+        condition: "利用 f'(x0) = 0 等量关系消去超越项或消去参数 a",
+        note: "将含参数的极值 f(x0) 转化为关于 x0 的单变量多项式或轨迹函数 h(x0)，实现降维求最值。",
         level: "important",
       },
     );
 
     gaokaoPoints.push(
       {
-        text: "高考压轴第一问：通过特值缩小隐零点 x0 范围，虚设根并代换下沉",
+        text: "高考第一步：利用导数单调性与零点存在定理界定 x0 ∈ (m, n)",
         importance: "gaokao",
       },
       {
-        text: "高考压轴第二问：消去超越项后转换为单变量 h(x0) 求单调性与最值",
+        text: "高考第二步：设而不求，由 f'(x0)=0 建立代换关系，消元下沉为单变量 h(x0)",
         importance: "hard",
+      },
+      {
+        text: "高考第三步：利用 x0 的区间范围，研究 h(x0) 的单调性求出极值最值",
+        importance: "gaokao",
       },
     );
   } else if (mode === "shift_symmetric") {
@@ -133,37 +140,46 @@ export function buildDerivativeShiftPanel(
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "极值点偏移量",
+        label: "极值点加法偏移",
         symbol: "\\Delta = \\frac{x₁+x₂}{2} - x₀",
         value: `${shiftRes.delta > 0 ? "+" : ""}${shiftRes.delta.toFixed(3)} (${shiftRes.shiftType === "right" ? "右偏" : "左偏"})`,
         color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "两根乘积",
+        symbol: "x₁ · x₂",
+        value: `${shiftRes.prod.toFixed(3)} (${shiftRes.prodShiftType === "greater" ? "乘积大于基准" : "乘积偏小"})`,
+        color: MATH_COLORS.labelText,
       },
     );
 
     theorems.push(
       {
-        name: "极值点偏移判定定理",
-        latex: `x_1 + x_2 > 2{\\color{${MATH_COLORS.paramPrimary}}x_0} \\iff \\text{中点 } {\\color{${MATH_COLORS.paramSecondary}}\\frac{x_1+x_2}{2}} > {\\color{${MATH_COLORS.paramPrimary}}x_0}`,
-        condition: "f(x1) = f(x2) = k，且 f(x) 在 x0 两侧单调性相反",
-        note: "口诀：中点在极值点右侧为“右偏”，中点在左侧为“左偏”。",
+        name: "极值点加法与乘积偏移判定",
+        latex:
+          subModel === "xe_neg_x"
+            ? `x_1 + x_2 > 2{\\color{${MATH_COLORS.paramPrimary}}x_0} = 2 \\quad (\\text{加法右偏})`
+            : `x_1 + x_2 > 2e \\quad \\text{且} \\quad x_1 x_2 > e^2 \\quad (\\text{双重右偏})`,
+        condition: "f(x1) = f(x2) = k，且 f(x) 在 x0 左右单调性相反",
+        note: "割线中点落在极值点右侧为右偏；对数模型中乘积严格大于极值点平方。",
         level: "core",
       },
       {
         name: "对称构造法 (构造差值函数)",
-        latex: "F(x) = f(x) - f(2x_0 - x) > 0 \\quad (x \\in (0, x_0))",
-        condition: "利用镜像曲线 y = f(2x0 - x) 与原曲线 y = f(x) 的高度差比较",
-        note: "若 F(x1) < 0，则 f(x1) < f(2x0 - x1)，结合右侧单调性可导出 x1+x2 > 2x0。",
+        latex: `F(x) = f(x) - f(2x_0 - x) < 0 \\quad (x \\in (0, x_0))`,
+        condition: "利用原曲线 y = f(x) 与镜像曲线 y = f(2x0 - x) 的高度差比较",
+        note: "因为 F(x1) < 0，即 f(x1) < f(2x0 - x1) = f(x2)。由右侧单调递减可得 x2 > 2x0 - x1，即 x1 + x2 > 2x0。",
         level: "important",
       },
     );
 
     gaokaoPoints.push(
       {
-        text: "对称构造法四步曲：求极值点 x0 -> 转换目标 x2 > 2x0 - x1 -> 利用单调性转化 -> 构造 F(x)",
+        text: "对称构造四步曲：1.求极值点x0；2.转化目标x2>2x0-x1；3.利用单调性转化f(x2)<f(2x0-x1)；4.构造差值函数F(x)导数定号",
         importance: "gaokao",
       },
       {
-        text: "乘积偏移与对数齐次化：设 t = x2 / x1 > 1 转化为单变量单调性",
+        text: "乘积偏移齐次化：对 lnx/x 模型设 t = x2 / x1 > 1，转化为单变量不等式证明",
         importance: "hard",
       },
     );
@@ -203,15 +219,15 @@ export function buildDerivativeShiftPanel(
         name: "对数均值不等式链",
         latex: `\\sqrt{ab} < {\\color{${MATH_COLORS.paramPrimary}}\\frac{a - b}{\\ln a - \\ln b}} < {\\color{${MATH_COLORS.paramSecondary}}\\frac{a + b}{2}}`,
         condition: "a, b 为正实数且 a ≠ b",
-        note: "对数均值 L(a, b) 严格夹在几何均值与算术均值之间！",
+        note: "对数均值 L(a, b) 严格夹在几何均值与算术均值之间，割线斜率等于切线斜率！",
         level: "core",
       },
       {
         name: "齐次化与答题构造函数",
         latex:
           "g(t) = \\ln t - \\frac{2(t - 1)}{t + 1} > 0 \\quad (t = \\frac{b}{a} > 1)",
-        condition: "高考答题若需直接引用对数均值，需用导数证明该单变量不等式",
-        note: "通过证明 g'(t) = (t-1)^2 / (t(t+1)^2) > 0 即可在考卷上获得满分证明。",
+        condition: "高考解答题若需直接引用对数均值，需用导数证明该单变量不等式",
+        note: "求导得 g'(t) = (t-1)^2 / (t(t+1)^2) > 0，可直接在高考答题卡获得满分证明。",
         level: "important",
       },
     );
