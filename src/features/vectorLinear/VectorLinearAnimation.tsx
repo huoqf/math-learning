@@ -11,7 +11,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { VectorLinearScene } from "./components/VectorLinearScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/vectorLinear";
@@ -54,47 +54,40 @@ export function VectorLinearAnimation() {
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
           key: "parallelogram",
-          label: "平行四边形法则",
-          formula: "\\vec{a} + \\vec{b}",
-          description: "λ=1, μ=1 合成",
+          label: "平行四边形合成",
+          description: "系数均为1向量加法",
         },
         {
           key: "subtraction",
-          label: "三角形减法法则",
-          formula: "\\vec{a} - \\vec{b}",
-          description: "λ=1, μ=-1 差向量",
+          label: "三角形差向量",
+          description: "系数反号差向量",
         },
         {
           key: "scaleUp",
           label: "数乘伸缩倍数",
-          formula: "2\\vec{a} + 0.5\\vec{b}",
-          description: "λ=2, μ=0.5",
+          description: "数乘缩放与方向倍数",
         },
       ],
       collinear: [
         {
           key: "collinear-line",
           label: "三点共线约束",
-          formula: "x + y = 1",
-          description: "单滑块内分外分",
+          description: "系数之和严格为一",
         },
         {
           key: "midpoint",
-          label: "线段 AB 中点",
-          formula: "x = 0.5, y = 0.5",
-          description: "中点向量公式",
+          label: "线段中点向量",
+          description: "等权中点向量合成",
         },
         {
           key: "trisection",
           label: "三等分内分点",
-          formula: "x = \\frac{2}{3}, y = \\frac{1}{3}",
-          description: "2:1 分点比",
+          description: "二比一定比分点",
         },
         {
           key: "plane-free",
           label: "全平面自由验证",
-          formula: "x + y \\ne 1",
-          description: "开放双滑块看偏离",
+          description: "系数和不为一验证偏离",
         },
       ],
       basis: [
@@ -102,20 +95,17 @@ export function VectorLinearAnimation() {
         {
           key: "orthogonal",
           label: "标准正交基底",
-          formula: "\\vec{e}_1 \\perp \\vec{e}_2",
-          description: "笛卡尔坐标系",
+          description: "笛卡尔坐标系正交",
         },
         {
           key: "oblique",
           label: "一般斜坐标基底",
-          formula: "\\text{任意不共线}",
-          description: "唯一分解定理",
+          description: "唯一分解定理验证",
         },
         {
           key: "degenerate",
           label: "基底共线退化",
-          formula: "D = 0",
-          description: "无法张成空间",
+          description: "共线无法张成平面",
         },
       ],
     };
@@ -268,8 +258,8 @@ export function VectorLinearAnimation() {
   // 渲染顶端悬浮 LaTeX 表达式
   const equationLatex = useMemo(() => {
     if (studyMode === "linearCombo") {
-      const lambdaStr = `\\color{#EF4444}{${params.lambda ?? 1}}\\vec{a}`;
-      const muStr = `\\color{#D97706}{${params.mu ?? 1}}\\vec{b}`;
+      const lambdaStr = `\\color{${MATH_COLORS.paramPrimary}}{${params.lambda ?? 1}}\\vec{a}`;
+      const muStr = `\\color{${MATH_COLORS.paramSecondary}}{${params.mu ?? 1}}\\vec{b}`;
       return `\\vec{s} = ${lambdaStr} + ${muStr} = (${mathRes.sumVec.x.toFixed(
         1,
       )}, ${mathRes.sumVec.y.toFixed(1)})`;
@@ -278,11 +268,11 @@ export function VectorLinearAnimation() {
       return `\\vec{OC} = x\\vec{OA} + y\\vec{OB} \\quad (x+y = ${sumStr})`;
     } else {
       if (!mathRes.isBasisValid) {
-        return `\\text{基底共线退化 } x_1 y_2 - x_2 y_1 = 0 \\quad (\\text{无法张成基底})`;
+        return `x_1 y_2 - x_2 y_1 = 0 \\quad (\\vec{e}_1 \\parallel \\vec{e}_2)`;
       }
-      return `\\vec{v} = \\color{#EF4444}{${mathRes.lambda1.toFixed(
+      return `\\vec{v} = \\color{${MATH_COLORS.paramPrimary}}{${mathRes.lambda1.toFixed(
         2,
-      )}}\\vec{e}_1 + \\color{#D97706}{${mathRes.lambda2.toFixed(
+      )}}\\vec{e}_1 + \\color{${MATH_COLORS.paramSecondary}}{${mathRes.lambda2.toFixed(
         2,
       )}}\\vec{e}_2`;
     }

@@ -148,27 +148,29 @@ export function ProbabilityCountingAnimation() {
         return {
           variant: "primary" as const,
           badge: "高考核心 · 二项式展开与通项公式",
-          condition: "已知二项式 (ax+b)ⁿ，各项幂次与组合数遵循杨辉三角规律。",
+          condition:
+            "已知二项式 $(ax+b)^n$，各项幂次与组合数遵循杨辉三角规律。",
           question:
-            "求展开式中第 k+1 项通项公式 T_{k+1}=C_n^k (ax)^{n-k} b^k、常数项或指定次项系数。",
+            "求展开式中第 $k+1$ 项通项公式 $T_{k+1}=C_n^k (ax)^{n-k} b^k$、常数项或指定次项系数。",
         };
       }
       if (subMode === 1) {
         return {
           variant: "warning" as const,
           badge: "高考秒杀 · 赋值法动态沙盘",
-          condition: "已知展开式 f(x)=a₀ + a₁x + a₂x² + ... + aₙxⁿ。",
+          condition:
+            "已知展开式 $f(x)=a_0 + a_1x + a_2x^2 + \\dots + a_nx^n$。",
           question:
-            "快速求各项系数总和 f(1)、交错和 f(-1)、奇数项和、偶数项和以及加权求和 f'(1)。",
+            "快速求各项系数总和 $f(1)$、交错和 $f(-1)$、奇数项和、偶数项和以及加权求和 $f'(1)$。",
         };
       }
       return {
         variant: "accent" as const,
         badge: "高考考点辨析 · 二项式系数 vs 项系数",
         condition:
-          "对比展开式第 k+1 项的组合数 C_n^k 与项系数 A_k = C_n^k a^{n-k} b^k。",
+          "对比展开式第 $k+1$ 项的组合数 $C_n^k$ 与项系数 $A_k = C_n^k a^{n-k} b^k$。",
         question:
-          "辨析二项式系数的最大项（仅由 n 决定，居中取得）与项系数的最大项（与 a,b 大小相关）。",
+          "辨析二项式系数的最大项（仅由 $n$ 决定，居中取得）与项系数的最大项（与 $a,b$ 大小相关）。",
       };
     }
 
@@ -177,8 +179,8 @@ export function ProbabilityCountingAnimation() {
         return {
           variant: "primary" as const,
           badge: "高考基础 · 排列数与组合数区别",
-          condition: "从 n 个不同元素中取出 k 个元素 (k ≤ n)。",
-          question: "探究有序排列 A_n^k 与无序组合 C_n^k 的数理关系。",
+          condition: "从 $n$ 个不同元素中取出 $k$ 个元素 ($k \\le n$)。",
+          question: "探究有序排列 $A_n^k$ 与无序组合 $C_n^k$ 的数理关系。",
         };
       }
       if (subMode === 1) {
@@ -289,16 +291,14 @@ export function ProbabilityCountingAnimation() {
           <LeftPanelSection title="核心主题">
             <TabSwitcher
               tabs={[
-                { key: "binomial", label: "二项式定理", formula: "(a+b)^n" },
+                { key: "binomial", label: "二项式定理" },
                 {
                   key: "perm_comb",
                   label: "排列与组合",
-                  formula: "A_n^k / C_n^k",
                 },
                 {
                   key: "principles",
                   label: "计数原理",
-                  formula: "N_\\text{乘} / N_\\text{加}",
                 },
               ]}
               value={activeMode}

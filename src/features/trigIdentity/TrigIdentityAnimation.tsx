@@ -181,7 +181,7 @@ export function TrigIdentityAnimation() {
         const homoValText =
           trig.isHomoDefined && trig.homoVal !== undefined
             ? trig.homoVal.toFixed(2)
-            : "\\text{无意义}";
+            : "\\text{Undefined}";
         return `${trig.homoFormulaTex} = ${trig.homoStepTex} = ${homoValText}`;
       }
     } else {
@@ -317,27 +317,33 @@ export function TrigIdentityAnimation() {
                 items={[
                   {
                     key: "pi_plus",
-                    formula: "\\pi + \\alpha",
+                    label: "π+α (公式二)",
+                    description: "名不变符号看象限",
                   },
                   {
                     key: "neg",
-                    formula: "-\\alpha",
+                    label: "-α (公式三)",
+                    description: "角相反正弦相反余弦同",
                   },
                   {
                     key: "pi_minus",
-                    formula: "\\pi - \\alpha",
+                    label: "π-α (公式四)",
+                    description: "补角正弦同余弦相反",
                   },
                   {
                     key: "half_pi_minus",
-                    formula: "\\frac{\\pi}{2} - \\alpha",
+                    label: "π/2-α (公式五)",
+                    description: "余角正变余余变正",
                   },
                   {
                     key: "half_pi_plus",
-                    formula: "\\frac{\\pi}{2} + \\alpha",
+                    label: "π/2+α (公式六)",
+                    description: "正弦变余弦符号看象限",
                   },
                   {
                     key: "period",
-                    formula: "\\alpha + 2k\\pi",
+                    label: "2kπ+α (公式一)",
+                    description: "终边相同函数值同",
                   },
                 ]}
                 value={formulaType}
@@ -358,16 +364,24 @@ export function TrigIdentityAnimation() {
                 items={[
                   {
                     key: "1",
-                    formula: "k=1 (\\frac{\\pi}{2})",
-                    description: "奇变",
+                    label: "k=1 奇变",
+                    description: "π/2 角名互变",
                   },
-                  { key: "2", formula: "k=2 (\\pi)", description: "偶不变" },
+                  {
+                    key: "2",
+                    label: "k=2 偶不变",
+                    description: "π 角名不变",
+                  },
                   {
                     key: "3",
-                    formula: "k=3 (\\frac{3\\pi}{2})",
-                    description: "奇变",
+                    label: "k=3 奇变",
+                    description: "3π/2 角名互变",
                   },
-                  { key: "4", formula: "k=4 (2\\pi)", description: "偶不变" },
+                  {
+                    key: "4",
+                    label: "k=4 偶不变",
+                    description: "2π 角名不变",
+                  },
                 ]}
                 value={String(params.universalK ?? 1)}
                 onChange={(kStr) => {

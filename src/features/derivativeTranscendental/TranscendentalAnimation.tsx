@@ -57,23 +57,27 @@ export function TranscendentalAnimation() {
         {
           key: "x0",
           label: "切点横坐标 x₀",
-          labelFormula: "x_0",
+          labelFormula: `\\text{切点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
           group: "切线控制参数",
           value: params.x0 ?? 0,
           min: -2.5,
           max: 2.0,
           step: 0.1,
-          description: "控制 e^x 切点位置",
-          descriptionFormula: "控制 $e^x$ 切线切点 $x_0$",
+          description: "控制 $e^x$ 切点位置",
+          descriptionFormula: `控制 $e^x$ 切线切点 $\\color{${MATH_COLORS.paramPrimary}}{x_0}$`,
           importance: "core",
           marks: [
             {
               value: 0,
               variant: "critical",
               label: "基准",
-              labelFormula: "x_0=0",
+              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=0}`,
             },
-            { value: 1, label: "切点", labelFormula: "x_0=1" },
+            {
+              value: 1,
+              label: "切点",
+              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
+            },
           ],
         },
       ];
@@ -82,23 +86,27 @@ export function TranscendentalAnimation() {
         {
           key: "x0",
           label: "切点横坐标 x₀",
-          labelFormula: "x_0",
+          labelFormula: `\\text{切点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
           group: "切线控制参数",
           value: Math.max(0.1, params.x0 ?? 1.0),
           min: 0.1,
           max: 3.5,
           step: 0.1,
-          description: "控制 ln x 切点位置 (x > 0)",
-          descriptionFormula: "定义域保护 $x_0 > 0$",
+          description: "控制 $\\ln x$ 切点位置 ($x > 0$)",
+          descriptionFormula: `定义域保护 $\\color{${MATH_COLORS.paramPrimary}}{x_0} > 0$`,
           importance: "core",
           marks: [
             {
               value: 1,
               variant: "critical",
               label: "基准",
-              labelFormula: "x_0=1",
+              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
             },
-            { value: 2.7, label: "e点", labelFormula: "x_0=e" },
+            {
+              value: 2.7,
+              label: "e点",
+              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=e}`,
+            },
           ],
         },
       ];
@@ -107,7 +115,7 @@ export function TranscendentalAnimation() {
         {
           key: "x0",
           label: "自变量考察点 x",
-          labelFormula: "x",
+          labelFormula: `\\text{自变量 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
           group: "自变量位置",
           value: Math.max(0.1, params.x0 ?? 1.0),
           min: 0.2,
@@ -121,7 +129,7 @@ export function TranscendentalAnimation() {
               value: 1,
               variant: "critical",
               label: "公切点",
-              labelFormula: "x=1",
+              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x=1}`,
             },
           ],
         },
@@ -131,28 +139,34 @@ export function TranscendentalAnimation() {
         {
           key: "a",
           label: "直线斜率参数 a",
-          labelFormula: "a",
+          labelFormula: `\\text{斜率 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
           group: "参变直线方程",
           value: params.a ?? 1.0,
           min: -1.0,
           max: 4.0,
           step: 0.1,
           description:
-            subMode === "exp_ax" ? "直线 y = ax 斜率" : "直线 y = ax + 1 斜率",
+            subMode === "exp_ax"
+              ? "直线 $y = ax$ 斜率"
+              : "直线 $y = ax + 1$ 斜率",
           importance: "core",
           marks: [
-            { value: 0, label: "水平", labelFormula: "a=0" },
+            {
+              value: 0,
+              label: "水平",
+              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=0}`,
+            },
             {
               value: 1,
               variant: "critical",
               label: "定点临界",
-              labelFormula: "a=1",
+              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=1}`,
             },
             {
               value: 2.7,
               variant: "critical",
               label: "原点临界",
-              labelFormula: "a=e",
+              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=e}`,
             },
           ],
         },
@@ -258,10 +272,50 @@ export function TranscendentalAnimation() {
     }
   };
 
-  // 教学导引与启发式设问配置（全面接入 KatexFormula 专业数学公式渲染）
+  // 教学导引与启发式设问配置（全面接入 KatexFormula 专业数学公式渲染，深度联动 mode/subMode/preset）
   const tipConfig = useMemo(() => {
     switch (mode) {
       case "exp":
+        if (preset === "tangent_0") {
+          return {
+            variant: "primary" as const,
+            badge: "指数放缩 · 基准切点",
+            condition: (
+              <span>
+                切点选定在 <KatexFormula formula="P_0(0,1)" mode="inline" />{" "}
+                处，此时切线方程为{" "}
+                <KatexFormula formula="y=x+1" mode="inline" />。
+              </span>
+            ),
+            question: (
+              <span>
+                观察曲线凹凸性，为何切线能在实数集上始终位于曲线下方且仅在切点处取等？
+              </span>
+            ),
+          };
+        }
+        if (preset === "shift_1") {
+          return {
+            variant: "primary" as const,
+            badge: "指数放缩 · 平移变体",
+            condition: (
+              <span>
+                曲线平移为 <KatexFormula formula="f(x)=e^{x-1}" mode="inline" />
+                ，过切点 <KatexFormula
+                  formula="(1,1)"
+                  mode="inline"
+                /> 的切线为 <KatexFormula formula="y=x" mode="inline" />。
+              </span>
+            ),
+            question: (
+              <span>
+                平移后的放缩形式{" "}
+                <KatexFormula formula="e^{x-1} \ge x" mode="inline" />{" "}
+                如何与对数切线不等式形成对偶互通？
+              </span>
+            ),
+          };
+        }
         return {
           variant: "primary" as const,
           badge: "指数放缩 · 凸性与切线",
@@ -273,14 +327,37 @@ export function TranscendentalAnimation() {
           ),
           question: (
             <span>
-              观察为何仅在基准切点{" "}
-              <KatexFormula formula="x_0=0" mode="inline" /> 处的切线{" "}
-              <KatexFormula formula="y=x+1" mode="inline" /> 能提供截距为 1
-              的全局线性下界？
+              拖动切点 <KatexFormula formula="x_0" mode="inline" />
+              ，观察为何基准切点 <KatexFormula
+                formula="x_0=0"
+                mode="inline"
+              />{" "}
+              处的切线 <KatexFormula formula="y=x+1" mode="inline" />{" "}
+              能够提供截距为 1 的全局线性下界？
             </span>
           ),
         };
       case "log":
+        if (preset === "quadratic_bound") {
+          return {
+            variant: "info" as const,
+            badge: "对数放缩 · 二次包络上界",
+            condition: (
+              <span>
+                在切点 <KatexFormula formula="P_0(1,0)" mode="inline" />{" "}
+                处引入二次抛物线上界{" "}
+                <KatexFormula formula="y=\frac{x^2-1}{2}" mode="inline" />。
+              </span>
+            ),
+            question: (
+              <span>
+                对比线性切线与二次放缩，在{" "}
+                <KatexFormula formula="x>1" mode="inline" />{" "}
+                区间内哪种放缩能提供更优的代数逼近精度？
+              </span>
+            ),
+          };
+        }
         return {
           variant: "info" as const,
           badge: "对数放缩 · 上凸与二次界",
@@ -352,7 +429,7 @@ export function TranscendentalAnimation() {
           question: <span>探究切线方程与曲线凹凸性的代数几何关系。</span>,
         };
     }
-  }, [mode, subMode]);
+  }, [mode, subMode, preset]);
 
   // 右下角图例配置 (模式专属)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
@@ -366,26 +443,25 @@ export function TranscendentalAnimation() {
         },
         {
           color: MATH_COLORS.tangentLine,
-          formula: isShift
-            ? "y = x \\;(\\text{基准切线})"
-            : "y = x + 1 \\;(\\text{基准切线})",
+          label: "基准切线",
+          formula: isShift ? "y = x" : "y = x + 1",
           style: "dash",
         },
         {
           color: MATH_COLORS.focusPoint,
-          formula: isShift
-            ? "P_0(1, 1) \\;(\\text{基准切点})"
-            : "P_0(0, 1) \\;(\\text{基准切点})",
+          label: "基准切点",
+          formula: isShift ? "P_0(1, 1)" : "P_0(0, 1)",
           style: "point",
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: "P(x_0, f(x_0)) \\;(\\text{动切点})",
+          label: "动切点",
+          formula: "P(x_0, f(x_0))",
           style: "point",
         },
         {
           color: MATH_COLORS.paramTertiary,
-          label: "差值阴影区 f(x) - (x+1)",
+          label: "差值阴影区",
           style: "area",
         },
       ];
@@ -399,19 +475,20 @@ export function TranscendentalAnimation() {
         },
         {
           color: isQuad ? MATH_COLORS.paramSecondary : MATH_COLORS.tangentLine,
-          formula: isQuad
-            ? "y = \\frac{x^2-1}{2} \\;(\\text{二次放缩上界})"
-            : "y = x - 1 \\;(\\text{线性切线上界})",
+          label: isQuad ? "二次放缩上界" : "线性切线上界",
+          formula: isQuad ? "y = \\frac{x^2-1}{2}" : "y = x - 1",
           style: "dash",
         },
         {
           color: MATH_COLORS.focusPoint,
-          formula: "P_0(1, 0) \\;(\\text{基准切点})",
+          label: "基准切点",
+          formula: "P_0(1, 0)",
           style: "point",
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: "P(x_0, \\ln x_0) \\;(\\text{动切点})",
+          label: "动切点",
+          formula: "P(x_0, \\ln x_0)",
           style: "point",
         },
         {
@@ -424,27 +501,32 @@ export function TranscendentalAnimation() {
       return [
         {
           color: MATH_COLORS.function,
-          formula: "y = e^{x-1} \\;(\\text{上界指数})",
+          label: "上界指数",
+          formula: "y = e^{x-1}",
           style: "solid",
         },
         {
           color: MATH_COLORS.functionTransformed,
-          formula: "y = \\ln x + 1 \\;(\\text{下界对数})",
+          label: "下界对数",
+          formula: "y = \\ln x + 1",
           style: "solid",
         },
         {
           color: MATH_COLORS.paramSecondary,
-          formula: "y = x \\;(\\text{中轴线 / 公共切线})",
+          label: "中轴公切线",
+          formula: "y = x",
           style: "dash",
         },
         {
           color: MATH_COLORS.paramSecondary,
-          formula: "P_0(1, 1) \\;(\\text{公共切点})",
+          label: "公共切点",
+          formula: "P_0(1, 1)",
           style: "point",
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: "P(x_0, x_0) \\;(\\text{中轴动点})",
+          label: "中轴动点",
+          formula: "P(x_0, x_0)",
           style: "point",
         },
       ];
@@ -462,7 +544,8 @@ export function TranscendentalAnimation() {
         },
         {
           color: MATH_COLORS.tangentLine,
-          formula: "P_0(0, 1) \\;(\\text{临界切点})",
+          label: "临界切点",
+          formula: "P_0(0, 1)",
           style: "point",
         },
       ];
@@ -477,17 +560,25 @@ export function TranscendentalAnimation() {
           <LeftPanelSection title="探究模式">
             <SelectGrid
               items={[
-                { key: "exp", label: "指数放缩", formula: "e^x \\ge x+1" },
-                { key: "log", label: "对数放缩", formula: "\\ln x \\le x-1" },
+                {
+                  key: "exp",
+                  label: "指数放缩",
+                  description: "切线不等式基础",
+                },
+                {
+                  key: "log",
+                  label: "对数放缩",
+                  description: "切线与二次放缩",
+                },
                 {
                   key: "chain",
                   label: "双基准对偶",
-                  formula: "\\ln x+1 \\le x \\le e^{x-1}",
+                  description: "指数对数双向夹逼",
                 },
                 {
                   key: "param",
                   label: "切线求参",
-                  formula: "e^x \\ge ax+1",
+                  description: "临界切线与参变量",
                 },
               ]}
               value={mode}
@@ -501,21 +592,25 @@ export function TranscendentalAnimation() {
             <LeftPanelSection title="高考典型切点">
               <SelectGrid
                 items={[
-                  { key: "free", label: "自由探究" },
+                  {
+                    key: "free",
+                    label: "自由探究",
+                    description: "自选切点位置",
+                  },
                   {
                     key: "tangent_0",
                     label: "基准切点",
-                    formula: "x_0=0",
+                    description: "原点切线 x₀=0",
                   },
                   {
                     key: "tangent_1",
                     label: "次级切点",
-                    formula: "x_0=1",
+                    description: "切点 x₀=1",
                   },
                   {
                     key: "shift_1",
                     label: "平移变体",
-                    formula: "e^{x-1} \\ge x",
+                    description: "指数向右平移",
                   },
                 ]}
                 value={preset}
@@ -529,21 +624,25 @@ export function TranscendentalAnimation() {
             <LeftPanelSection title="高考典型切点">
               <SelectGrid
                 items={[
-                  { key: "free", label: "自由探究" },
+                  {
+                    key: "free",
+                    label: "自由探究",
+                    description: "自选切点位置",
+                  },
                   {
                     key: "tangent_1",
                     label: "基准切点",
-                    formula: "x_0=1",
+                    description: "对数切点 x₀=1",
                   },
                   {
                     key: "tangent_e",
                     label: "次级切点",
-                    formula: "x_0=e",
+                    description: "常数切点 x₀=e",
                   },
                   {
                     key: "quadratic_bound",
                     label: "二次放缩",
-                    formula: "\\ln x \\le \\frac{x^2-1}{2}",
+                    description: "抛物线上界",
                   },
                 ]}
                 value={preset}

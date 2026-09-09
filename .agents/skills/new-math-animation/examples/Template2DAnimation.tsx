@@ -7,13 +7,14 @@ import {
   TabSwitcher,
   SelectGrid,
   TipCard,
-  KatexFormula,
   MathPanel,
 } from '@/components/UI';
 import { SceneLegend, type LegendItem } from '@/components/Math';
 import { useAnimationViewport, useSceneScale } from '@/hooks';
 import { CANVAS_PRESETS } from '@/types';
 import { MATH_COLORS } from '@/theme';
+import type { ScenarioSpec } from '@/types/scenario';
+import { useScenario } from '@/hooks/useScenario';
 import { Template2DScene } from './Template2DScene';
 
 // 1. 参数接口定义 (严格避免无意义的缩写)
@@ -29,11 +30,54 @@ const DEFAULT_PARAMS: TemplateParams = {
   interactiveX: 1.0,
 };
 
+// 2. 场景元数据规范 (SSOT: 单一事实源统一声明)
+const TEMPLATE_SCENARIOS: Record<'free' | 'tangent' | 'extreme', ScenarioSpec<TemplateParams>> = {
+  free: {
+    id: 'free',
+    name: '自由探索',
+    badge: '自主探究 · 任意切点',
+    condition: '已知抛物线 $f(x) = ax^2$，动点 $P(x_0, y_0)$ 在曲线上任意平滑滑动。',
+    question: '(1) 拖拽动点 $P$，观察切线斜率 $k$ 的正负及绝对值变化；(2) 探究主控参数 $a$ 对抛物线开口方向与陡峭度的影响。',
+    variant: 'interactive',
+  },
+  tangent: {
+    id: 'tangent',
+    name: '相切临界',
+    badge: '高考真题 · 切线几何应用',
+    condition: '设定抛物线开口 $a = 1.0$，固定切点横坐标 $x_0 = 1.0$。',
+    question: '(1) 验证切线点斜式方程展开与导函数数值的一致性；(2) 探究当 $x_0 > 0$ 时切线倾斜角所属范围。',
+    presetParams: { paramA: 1.0, paramB: -1.0, interactiveX: 1.0 },
+    lockedParamKeys: ['paramA'],
+    variant: 'primary',
+  },
+  extreme: {
+    id: 'extreme',
+    name: '对称极值',
+    badge: '命题模型 · 顶点极值探究',
+    condition: '主控参数 $a = 2.0$，切点置于抛物线顶点 $x_0 = 0.0$。',
+    question: '(1) 观察极值点处切线斜率与 $x$ 轴平行关系；(2) 探究二阶导数符号与极值性态的代数对应关系。',
+    presetParams: { paramA: 2.0, paramB: 0.0, interactiveX: 0.0 },
+    lockedParamKeys: ['interactiveX'],
+    variant: 'accent',
+  },
+};
+
 export const Template2DAnimation: React.FC = () => {
-  // 模式控制 (A类基础概念课可省略情景选择)
+  // 模式控制
   const [activeMode, setActiveMode] = useState<'concept' | 'gaokao'>('concept');
   const [activePreset, setActivePreset] = useState<'free' | 'tangent' | 'extreme'>('free');
   const [params, setParams] = useState<TemplateParams>(DEFAULT_PARAMS);
+
+  // 统一使用 useScenario 驱动情景、参数锁定与题设联动 (公理 1.2)
+  const { tipProps, selectScenario, isParamLocked } = useScenario<
+    'free' | 'tangent' | 'extreme',
+    TemplateParams
+  >({
+    scenarios: TEMPLATE_SCENARIOS,
+    activeKey: activePreset,
+    params,
+    onParamsChange: setParams,
+  });
 
   // 视口与缩放解构 (铁律 1 & 2)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -58,17 +102,14 @@ export const Template2DAnimation: React.FC = () => {
     setActivePreset('free');
   }, []);
 
-  // 预设情境切换 (参数降维与题设锁定)
+  // 预设情境切换 (由 useScenario 处理预设赋值与降维)
   const handlePresetChange = useCallback((key: string) => {
-    setActivePreset(key as typeof activePreset);
-    if (key === 'tangent') {
-      setParams((prev) => ({ ...prev, paramA: 1.0, paramB: -1.0, interactiveX: 1.0 }));
-    } else if (key === 'extreme') {
-      setParams((prev) => ({ ...prev, paramA: 2.0, paramB: 0.0, interactiveX: 0.0 }));
-    }
-  }, []);
+    const nextKey = key as typeof activePreset;
+    setActivePreset(nextKey);
+    selectScenario(nextKey);
+  }, [selectScenario]);
 
-  // 左屏 ParamControl 配置 (参数标签“含义+代号+色彩”三位一体，marks防撞车)
+  // 左屏 ParamControl 配置 (参数标签“含义+代号+色彩”三位一体，marks防撞车，支持参数锁定)
   const paramConfigs = useMemo(() => [
     {
       key: 'paramA',
@@ -78,9 +119,9 @@ export const Template2DAnimation: React.FC = () => {
       min: -3.0,
       max: 3.0,
       step: 0.1,
-      // 仅在分水岭临界点配置 critical mark
       marks: [{ value: 0, label: '0', variant: 'critical' as const }],
       group: '模型基准参数',
+      disabled: isParamLocked('paramA'),
     },
     {
       key: 'interactiveX',
@@ -91,8 +132,9 @@ export const Template2DAnimation: React.FC = () => {
       max: 4.0,
       step: 0.05,
       group: '核心自变量',
+      disabled: isParamLocked('interactiveX'),
     },
-  ], [params.paramA, params.interactiveX]);
+  ], [params.paramA, params.interactiveX, isParamLocked]);
 
   // 中屏毛玻璃图例 (1-to-1 颜色绑定与 KaTeX 公式)
   const legendItems: LegendItem[] = useMemo(() => [
@@ -130,15 +172,14 @@ export const Template2DAnimation: React.FC = () => {
             />
           </LeftPanelSection>
 
-          {/* ② 典型情景（B类多构型页面开启，双列排版） */}
+          {/* ② 典型情景（B类多构型页面开启，纯中文标题，双列排版） */}
           <LeftPanelSection title="典型模型">
             <SelectGrid
               columns={2}
-              items={[
-                { key: 'free', label: '自由探索' },
-                { key: 'tangent', label: '相切临界' },
-                { key: 'extreme', label: '对称极值' },
-              ]}
+              items={Object.values(TEMPLATE_SCENARIOS).map((s) => ({
+                key: s.id,
+                label: s.name,
+              }))}
               value={activePreset}
               onChange={handlePresetChange}
             />
@@ -153,27 +194,23 @@ export const Template2DAnimation: React.FC = () => {
             />
           </LeftPanelSection>
 
-          {/* ④ 教学导引与题设背景 (高考标准双要素架构，严禁剧透答案) */}
-          <LeftPanelSection title="教学导引" compact>
-            <TipCard variant="interactive">
-              <div className="space-y-1.5 text-xs leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">【初始条件】</span>
-                  <span className="text-neutral-600">
-                    已知曲线 <KatexFormula formula="f(x) = ax^2" mode="inline" />，过曲线上动点{' '}
-                    <KatexFormula formula="P(x_0, y_0)" mode="inline" /> 作切线 <KatexFormula formula="l" mode="inline" />。
-                  </span>
+          {/* ④ 教学导引与题设背景 (由 useScenario 派发高考标准双要素架构，严禁剧透答案) */}
+          {tipProps && (
+            <LeftPanelSection title="教学导引" compact>
+              <TipCard variant={tipProps.variant}>
+                <div className="space-y-1.5 text-xs leading-relaxed">
+                  <div>
+                    <span className="font-semibold text-neutral-800">【初始条件】</span>
+                    <span className="text-neutral-600 ml-1">{tipProps.condition}</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-neutral-800">【核心设问】</span>
+                    <span className="text-neutral-600 ml-1">{tipProps.question}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">【核心设问】</span>
-                  <span className="text-neutral-600">
-                    (1) 拖拽动点 <KatexFormula formula="P" mode="inline" />，观察切线斜率变化；(2) 探究当参数{' '}
-                    <KatexFormula formula="a" mode="inline" /> 异号时曲线凹凸性转变。
-                  </span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+              </TipCard>
+            </LeftPanelSection>
+          )}
         </LeftPanel>
       }
       center={
@@ -202,29 +239,29 @@ export const Template2DAnimation: React.FC = () => {
         </div>
       }
       right={
+        /* 统一从数据层驱动右屏看板 (公理 1.3，由 src/data/builders/<topic>.ts 提供) */
         <MathPanel
-          title="代数特征看板"
+          title="高考破题与推演看板"
           quantities={[
             {
-              id: 'q-slope',
               label: '切线斜率 k',
+              symbol: 'k',
               value: 2 * params.paramA * params.interactiveX,
-              formula: `k = f'(x_0) = 2 \\cdot \\color{${MATH_COLORS.paramPrimary}}{a} \\cdot x_0`,
+              color: MATH_COLORS.paramPrimary,
             },
           ]}
           theorems={[
             {
-              id: 'thm-deriv',
-              title: '导数几何意义',
-              formula: `f'(x_0) = \\lim_{\\Delta x \\to 0} \\frac{f(x_0 + \\Delta x) - f(x_0)}{\\Delta x}`,
+              name: '导数几何意义',
+              latex: "f'(x_0) = \\lim_{\\Delta x \\to 0} \\frac{f(x_0 + \\Delta x) - f(x_0)}{\\Delta x}",
               condition: '函数在 x0 处可导',
+              level: 'core',
             },
           ]}
           gaokaoPoints={[
             {
-              id: 'gk-1',
-              title: '求切线方程两步通法',
-              description: '①代入求点坐标与导数值；②点斜式联立化为一般式。',
+              text: '求切线方程两步通法：①求切点导数值；②点斜式联立化简。',
+              importance: 'gaokao',
             },
           ]}
         />

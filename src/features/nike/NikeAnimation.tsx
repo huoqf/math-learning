@@ -277,17 +277,17 @@ export function NikeAnimation() {
                   {
                     key: "nike_std",
                     label: "经典对勾型",
-                    formula: "y = x + \\frac{4}{x}",
+                    description: "同号象限双极值",
                   },
                   {
                     key: "streamer_std",
                     label: "双曲飘带型",
-                    formula: "y = x - \\frac{4}{x}",
+                    description: "异号象限单调增",
                   },
                   {
                     key: "inverse_std",
                     label: "反比例退化",
-                    formula: "y = \\frac{4}{x}, \\; a = 0",
+                    description: "斜渐近线水平退化",
                     fullWidth: true,
                   },
                 ]}
@@ -302,17 +302,17 @@ export function NikeAnimation() {
                   {
                     key: "amgm_std",
                     label: "标准对勾配凑",
-                    formula: "x + \\frac{4}{x} \\ge 4",
+                    description: "积为定值求极值",
                   },
                   {
                     key: "amgm_double",
                     label: "倍数系数模型",
-                    formula: "2x + \\frac{8}{x} \\ge 8",
+                    description: "系数调整配凑均值",
                   },
                   {
                     key: "amgm_unit",
                     label: "单位系数模型",
-                    formula: "x + \\frac{1}{x} \\ge 2",
+                    description: "最简基本不等式",
                     fullWidth: true,
                   },
                 ]}
@@ -327,17 +327,17 @@ export function NikeAnimation() {
                   {
                     key: "shifted_quad",
                     label: "二次分式对勾",
-                    formula: "y = (x-1) + 2 + \\frac{4}{x-1}",
+                    description: "分离常数法化对勾",
                   },
                   {
                     key: "shifted_linear",
                     label: "分式线性平移",
-                    formula: "y = 1 + \\frac{3}{x-2}",
+                    description: "反比例函数整体平移",
                   },
                   {
                     key: "shifted_streamer",
                     label: "二次分式飘带",
-                    formula: "y = (x-2) - \\frac{4}{x-2}",
+                    description: "分离常数法化飘带",
                     fullWidth: true,
                   },
                 ]}

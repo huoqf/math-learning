@@ -119,71 +119,92 @@ export function DoubleVarPage() {
     let goalStr = "";
     switch (selectedLogic) {
       case "all_all":
-        goalStr = `\\text{博弈目标：} \\forall x_1 \\in I_1, \\; \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
+        goalStr = `\\forall x_1 \\in I_1, \\; \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
         break;
       case "all_exist":
-        goalStr = `\\text{博弈目标：} \\forall x_1 \\in I_1, \\; \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
+        goalStr = `\\forall x_1 \\in I_1, \\; \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
         break;
       case "exist_all":
-        goalStr = `\\text{博弈目标：} \\exists x_1 \\in I_1, \\; \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
+        goalStr = `\\exists x_1 \\in I_1, \\; \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
         break;
       case "exist_exist":
-        goalStr = `\\text{博弈目标：} \\exists x_1 \\in I_1, \\; \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
+        goalStr = `\\exists x_1 \\in I_1, \\; \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2)`;
         break;
       case "same_var":
-        goalStr = `\\text{博弈目标：对 } \\forall x \\in I_1 \\cap I_2 = [1.50, 2.00], \\; f(x) \\ge g(x)`;
+        goalStr = `\\forall x \\in I_1 \\cap I_2 = [1.50, 2.00], \\; f(x) \\ge g(x)`;
         break;
     }
     return { line1: `${fStr}, \\; ${gStr}`, line2: goalStr };
   }, [selectedLogic, params]);
 
-  // 教学导引与启发思考（精简重复，突出本质与设问）
+  // 教学导引与启发思考（联动 selectedLogic 与 presetKey 构型）
   const tipConfig = useMemo(() => {
+    if (presetKey === "touch") {
+      return {
+        variant: "primary" as const,
+        badge: "临界构型 · 极值刚好相切",
+        essence:
+          "当前处于 $f_{\\min} = g_{\\max}$ 的相切临界状态，两函数图象无交点但极值接触。",
+        question:
+          "拖动 $f(x)$ 顶点向上或向下微调，观察不等式恒成立条件在不同量词下的成立情况。",
+      };
+    }
+    if (presetKey === "cross") {
+      return {
+        variant: "info" as const,
+        badge: "交错构型 · 局部重叠超越",
+        essence:
+          "函数值域局部重合：$f_{\\min} < g_{\\max}$ 但满足 $f_{\\min} \\ge g_{\\min}$。",
+        question:
+          "对比“全称对全称”与“全称对存在”，思考为什么此时第二种量词博弈依然成立？",
+      };
+    }
+
     switch (selectedLogic) {
       case "all_all":
         return {
           variant: "primary" as const,
           badge: "∀x₁, ∀x₂ · 任意对任意 (极值隔离)",
           essence:
-            "两动点独立滑动，f 必须在整个区间全面高于 g，最弱项守住底线：f_min ≥ g_max。",
+            "两动点独立滑动，$f$ 必须在整个区间全面高于 $g$，最弱项守住底线：$f_{\\min} \\ge g_{\\max}$。",
           question:
-            "拖动 f(x) 顶点上下移动，观察刚好相切 (f_min = g_max) 时的临界状态。",
+            "拖动 $f(x)$ 顶点上下移动，观察刚好相切 ($f_{\\min} = g_{\\max}$) 时的临界状态。",
         };
       case "all_exist":
         return {
           variant: "info" as const,
           badge: "∀x₁, ∃x₂ · 任意对存在 (极小保底)",
           essence:
-            "对每一个 f(x₁)，只需在 g 域内能找到不大于它的点即可，充要条件化为：f_min ≥ g_min。",
+            "对每一个 $f(x_1)$，只需在 $g$ 域内能找到不大于它的点即可，充要条件化为：$f_{\\min} \\ge g_{\\min}$。",
           question:
-            "尝试制造 f_min < g_max 但 f_min ≥ g_min 的交叉状态，思考为什么此时博弈依然成立？",
+            "尝试制造 $f_{\\min} < g_{\\max}$ 但 $f_{\\min} \\ge g_{\\min}$ 的交叉状态，思考为什么此时博弈依然成立？",
         };
       case "exist_all":
         return {
           variant: "warning" as const,
           badge: "∃x₁, ∀x₂ · 存在对任意 (顶峰压制)",
           essence:
-            "只需 f 的最高点能压住 g 的整个图象，最强项单点击破：f_max ≥ g_max。",
+            "只需 $f$ 的最高点能压住 $g$ 的整个图象，最强项单点击破：$f_{\\max} \\ge g_{\\max}$。",
           question:
-            "观察 f 的峰顶何时突破 g 的极值点，理解“存在”关注最强优势点的数学内涵。",
+            "观察 $f$ 的峰顶何时突破 $g$ 的极值点，理解“存在”关注最强优势点的数学内涵。",
         };
       case "exist_exist":
         return {
           variant: "warning" as const,
           badge: "∃x₁, ∃x₂ · 存在对存在 (门槛超越)",
           essence:
-            "只需两函数值域有重叠或局部超越，充要条件化为最低门槛：f_max ≥ g_min。",
+            "只需两函数值域有重叠或局部超越，充要条件化为最低门槛：$f_{\\max} \\ge g_{\\min}$。",
           question:
-            "只要 f 的最高点没有跌破 g 的最低点，即存在满足条件的点对 (x₁, x₂)。",
+            "只要 $f$ 的最高点没有跌破 $g$ 的最低点，即存在满足条件的点对 $(x_1, x_2)$。",
         };
       case "same_var":
         return {
           variant: "primary" as const,
           badge: "∀x ∈ I₁ ∩ I₂ · 同自变量对垒 (差函数法)",
           essence:
-            "自变量为同一动点，无需极值完全隔离，构造差函数 h(x) = f(x) - g(x) ≥ 0 即可。",
+            "自变量为同一动点，无需极值完全隔离，构造差函数 $h(x) = f(x) - g(x) \\ge 0$ 即可。",
           question:
-            "两曲线可以有高低交叉吗？观察交集 [1.5, 2.0] 内违背区间的动态变化。",
+            "两曲线可以有高低交叉吗？观察交集 $[1.5, 2.0]$ 内违背区间的动态变化。",
         };
       default:
         return {
@@ -193,7 +214,7 @@ export function DoubleVarPage() {
           question: "通过拖拽与预设探索满足不等式的充要条件。",
         };
     }
-  }, [selectedLogic]);
+  }, [selectedLogic, presetKey]);
 
   return (
     <ThreePanel

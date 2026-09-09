@@ -71,4 +71,11 @@ $env:PATH="D:\node-v24;"+$env:PATH; npm run audit -- <path/to/feature>
 | **控件纯净度** | `SelectGrid` 项必须为纯中文标题，严禁堆砌公式或参数值 |
 | **情景联动性** | 凡含 `<SelectGrid value={x}>`，`TipCard` / `useScenario` 依赖必须包含 `x` |
 | **架构纯洁性** | `src/math/` 禁止包含 React/DOM 引用；全库禁止 `BrowserRouter` |
+| **审计严格阻断** | `npm run audit:strict` 全库违规数必须为 0，任何存量/增量违规直接非零退出阻断构建 |
+| **TipCard设问质量** | 严禁“观察图形变化”等空泛词；设问必须包含“求范围/最值/证明/单调性/零点”等数学目标词 |
+| **推导链数学真联动** | `reasoningSteps` 严禁手写假推导；KaTeX 语法与模板插值必须通过自动化单测编译 |
+| **预设参数数学安全** | `presetParams` 必须满足高中课标定义域（分母非零、判别式合规、标准方程参数正定） |
+| **3D 范式纯净度** | 声明为范式 A (综合法) 的场景源码严禁包含 `<CoordinateAxes3D>` 或 `<Vector3DArrow>` |
+| **学科特征线完整性** | 数列页面严禁连续曲线冒充离散点列；立体几何综合法必须包含垂足与垂直标记 |
 | **类型与单测** | `tsc -b` 0 错误；`npm run test` 单元测试 100% 通过 |
+

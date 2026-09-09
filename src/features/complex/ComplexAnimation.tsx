@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -294,19 +295,16 @@ export function ComplexAnimation() {
         {
           key: "conjugate-pair",
           label: "共轭复数对",
-          formula: "z_2 = \\bar{z}_1",
           description: "锁定实轴对称",
         },
         {
           key: "pure-real-imag",
-          label: "实数与纯虚数",
-          formula: "z_1 \\in \\mathbb{R}, z_2 \\in i\\mathbb{R}",
+          label: "实轴与虚轴",
           description: "轴上点对照",
         },
         {
           key: "opposite",
           label: "相反数对",
-          formula: "z_2 = -z_1",
           description: "原点中心对称",
         },
       ];
@@ -316,21 +314,18 @@ export function ComplexAnimation() {
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
           key: "rot-90",
-          label: "乘以 i",
-          formula: "\\times i",
-          description: "锁定逆时针90°",
+          label: "逆时针九十度",
+          description: "锁定逆时针90度",
         },
         {
           key: "rot-180",
-          label: "乘以 -1",
-          formula: "\\times (-1)",
-          description: "锁定中心对称180°",
+          label: "中心对称旋转",
+          description: "锁定中心对称180度",
         },
         {
           key: "rot-45",
-          label: "乘以 (1+i)/√2",
-          formula: "e^{i\\frac{\\pi}{4}}",
-          description: "锁定45°等模旋转",
+          label: "四十五度旋转",
+          description: "锁定45度等模旋转",
         },
       ];
     }
@@ -361,14 +356,12 @@ export function ComplexAnimation() {
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
           key: "horizontal-sym",
-          label: "关于 y 轴对称",
-          formula: "x = 0",
+          label: "关于虚轴对称",
           description: "中垂线为虚轴",
         },
         {
           key: "origin-sym",
           label: "关于原点对称",
-          formula: "M = (0,0)",
           description: "中垂线过原点",
         },
       ];
@@ -379,19 +372,16 @@ export function ComplexAnimation() {
       {
         key: "collinear-same",
         label: "同向共线取等",
-        formula: "|z_1+z_2|=|z_1|+|z_2|",
         description: "最大值状态",
       },
       {
         key: "collinear-opposite",
         label: "反向共线取等",
-        formula: "|z_1+z_2|=||z_1|-|z_2||",
         description: "最小值状态",
       },
       {
         key: "orthogonal",
         label: "正交垂直状态",
-        formula: "|z_1+z_2|=\\sqrt{|z_1|^2+|z_2|^2}",
         description: "勾股定理",
       },
     ];
@@ -476,10 +466,10 @@ export function ComplexAnimation() {
               <SelectGrid
                 columns={1}
                 items={[
-                  { key: "circle", label: "圆轨迹与定点距离 (|z - z₀| = R)" },
+                  { key: "circle", label: "圆周轨迹与定点最值" },
                   {
                     key: "perp-bisector",
-                    label: "垂直平分线轨迹 (|z - z₁| = |z - z₂|)",
+                    label: "垂直平分线距离轨迹",
                   },
                   { key: "triangle-ineq", label: "模的三角不等式夹逼" },
                 ]}
@@ -518,129 +508,46 @@ export function ComplexAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 底部教学引导卡片 (规范排版，接入 KatexFormula) */}
+          {/* 4. 底部教学引导卡片 */}
           <LeftPanelSection
             title="教学探究引导"
             subtitle="带着核心问题在画布中探索"
           >
-            <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs space-y-2 text-neutral-600 leading-relaxed">
-              {studyMode === "plane-operations" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    复数 <KatexFormula formula="z = a + bi" mode="inline" />{" "}
-                    与复平面向量{" "}
-                    <KatexFormula formula="\vec{OZ} = (a, b)" mode="inline" />{" "}
-                    一一对应。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    拖动 <KatexFormula formula="Z_1" mode="inline" /> 与{" "}
-                    <KatexFormula formula="Z_2" mode="inline" />
-                    ，观察和向量与差向量的几何特征，为什么{" "}
-                    <KatexFormula formula="|z_1 - z_2|" mode="inline" />{" "}
-                    能够直接表示两点间欧氏距离？
-                  </div>
-                </>
-              )}
-              {studyMode === "multiplication-rotation" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    复数乘法满足“模长相乘，辐角相加”：
-                    <KatexFormula
-                      formula="z_1 z_2 = (r_1 r_2)e^{i(\theta_1+\theta_2)}"
-                      mode="inline"
-                    />
-                    。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    当模长 <KatexFormula formula="r_2=1" mode="inline" />{" "}
-                    时，复数乘法退化为什么刚体几何变换？连续乘以{" "}
-                    <KatexFormula formula="i" mode="inline" />{" "}
-                    会发生什么周期性循环？
-                  </div>
-                </>
-              )}
-              {studyMode === "locus-extrema" && subModel === "circle" && (
-                <>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【基础条件】：
-                    </span>
-                    方程 <KatexFormula formula="|z - z_0| = R" mode="inline" />{" "}
-                    刻画以 <KatexFormula formula="z_0" mode="inline" /> 为圆心、
-                    <KatexFormula formula="R" mode="inline" /> 为半径的圆周。
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">
-                      【探究问题】：
-                    </span>
-                    拖动定点 <KatexFormula formula="w" mode="inline" /> 和圆心{" "}
-                    <KatexFormula formula="z_0" mode="inline" />
-                    ，观察极值点{" "}
-                    <KatexFormula formula="Z_{\min}" mode="inline" /> 与{" "}
-                    <KatexFormula formula="Z_{\max}" mode="inline" />{" "}
-                    是否始终落在连线所在直线上？
-                  </div>
-                </>
-              )}
-              {studyMode === "locus-extrema" &&
-                subModel === "perp-bisector" && (
-                  <>
-                    <div>
-                      <span className="font-semibold text-neutral-800">
-                        【基础条件】：
-                      </span>
-                      方程{" "}
-                      <KatexFormula
-                        formula="|z - z_1| = |z - z_2|"
-                        mode="inline"
-                      />{" "}
-                      刻画到两定点距离相等的动点轨迹。
-                    </div>
-                    <div>
-                      <span className="font-semibold text-neutral-800">
-                        【探究问题】：
-                      </span>
-                      改变两定点位置，观察中垂线与线段{" "}
-                      <KatexFormula formula="Z_1 Z_2" mode="inline" />{" "}
-                      的垂直平分几何关系。
-                    </div>
-                  </>
-                )}
-              {studyMode === "locus-extrema" &&
-                subModel === "triangle-ineq" && (
-                  <>
-                    <div>
-                      <span className="font-semibold text-neutral-800">
-                        【基础条件】：
-                      </span>
-                      三角形两边之和大于第三边，两边之差小于第三边。
-                    </div>
-                    <div>
-                      <span className="font-semibold text-neutral-800">
-                        【探究问题】：
-                      </span>
-                      在什么几何构型下{" "}
-                      <KatexFormula
-                        formula="|z_1 + z_2| = |z_1| + |z_2|"
-                        mode="inline"
-                      />{" "}
-                      取得最大值？什么构型下取得最小值？
-                    </div>
-                  </>
-                )}
-            </div>
+            <TipCard
+              badge={
+                studyMode === "plane-operations"
+                  ? "复平面向量运算"
+                  : studyMode === "multiplication-rotation"
+                    ? "复数乘法与几何旋转"
+                    : subModel === "circle"
+                      ? "圆轨迹与定点最值"
+                      : subModel === "perp-bisector"
+                        ? "垂直平分线轨迹"
+                        : "模的三角不等式"
+              }
+              condition={
+                studyMode === "plane-operations"
+                  ? "复数 $z = a + bi$ 与复平面向量 $\\vec{OZ} = (a, b)$ 一一对应。"
+                  : studyMode === "multiplication-rotation"
+                    ? "复数乘法满足“模长相乘，辐角相加”：$z_1 z_2 = (r_1 r_2)e^{i(\\theta_1+\\theta_2)}$。"
+                    : subModel === "circle"
+                      ? "方程 $|z - z_0| = R$ 刻画以 $z_0$ 为圆心、$R$ 为半径的圆周动点集合。"
+                      : subModel === "perp-bisector"
+                        ? "方程 $|z - z_1| = |z - z_2|$ 刻画到两定点欧几里得距离相等的动点轨迹。"
+                        : "向量和与差满足三角不等式：$||z_1| - |z_2|| \\le |z_1 + z_2| \\le |z_1| + |z_2|$。"
+              }
+              question={
+                studyMode === "plane-operations"
+                  ? "拖动 $Z_1$ 与 $Z_2$，观察和向量与差向量的几何平行四边形特征，为什么 $|z_1 - z_2|$ 能够直接表示两点间欧氏距离？"
+                  : studyMode === "multiplication-rotation"
+                    ? "当乘数模长 $r_2=1$ 时，复数乘法退化为什么刚体变换？连续乘以虚数单位 $i$ 会产生什么周期性循环？"
+                    : subModel === "circle"
+                      ? "拖动定点 $w$ 和圆心 $z_0$，观察极值点 $Z_{\\min}$ 与 $Z_{\\max}$ 是否始终落在两定点连线所在直线上？"
+                      : subModel === "perp-bisector"
+                        ? "改变两定点坐标，观察中垂线动点轨迹与线段 $Z_1 Z_2$ 的对称与垂直平分关系。"
+                        : "在什么几何构型下 $|z_1 + z_2| = |z_1| + |z_2|$ 取得最大值？什么构型下取得最小值？"
+              }
+            />
           </LeftPanelSection>
         </LeftPanel>
       }

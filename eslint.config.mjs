@@ -37,15 +37,15 @@ export default [
     },
   },
 
-  // 1-b) math/ 纯函数层：禁止 React/DOM 依赖（铁律：纯函数可序列化）
+  // 1-b) math/ 与 math3d/ 纯函数层：禁止 React/DOM 依赖（铁律：纯函数可序列化）
   {
-    files: ['src/math/**/*.{ts,tsx}'],
+    files: ['src/math/**/*.{ts,tsx}', 'src/math3d/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': ['error', {
         paths: [
-          { name: 'react', message: 'math/ 禁止依赖 React（铁律：纯函数可序列化）' },
-          { name: 'react-dom', message: 'math/ 禁止依赖 DOM（铁律：纯函数可序列化）' },
-          { name: 'react-dom/server', message: 'math/ 禁止依赖 DOM（铁律：纯函数可序列化）' },
+          { name: 'react', message: 'math/ 与 math3d/ 禁止依赖 React（铁律：纯函数可序列化）' },
+          { name: 'react-dom', message: 'math/ 与 math3d/ 禁止依赖 DOM（铁律：纯函数可序列化）' },
+          { name: 'react-dom/server', message: 'math/ 与 math3d/ 禁止依赖 DOM（铁律：纯函数可序列化）' },
         ],
       }],
     },

@@ -1,112 +1,76 @@
-# 知识树架构重构 — 待办事项
+# 规范治理与高中数学教学质量保证 — 待办事项
 
-> 创建时间：2026-07-25
-> 状态：Layer 0 + Round 0~5 全部完成
+> 更新时间：2026-09-09
+> 当前状态：P0 基础设施完成；P1 存量治理取得重大突破（违规数从 269 处降至 59 处，消除 78%）
 
-## 背景
+---
 
-知识树注册链条长（4 个文件手工同步）、无 fail-fast 校验、多知识点塞单页面。本次重构目标：meta.ts 下沉 + build-time 校验 + 脚手架 + 分批拆分。
+## 一、 已完成工作（P0 阶段）
 
-## Layer 0（已完成）
+- [x] **门禁阻断机制与命令**：`audit_page.mjs` 支持 `--strict` / `-s` 退出码阻断；`package.json` 注册 `audit:strict` 命令。
+- [x] **新增自动化门禁规则**：
+  - 检查 12：严禁引入/使用 `BrowserRouter`（全库强制 `HashRouter`）。
+  - 检查 13：SVG 内部严禁裸 `fontSize={...}`（必须使用 `fontScale` 比例计算）。
+  - 检查 14：严禁裸 `rgb()` / `rgba()` 颜色定义（必须经 `MATH_COLORS` 与 `withAlpha`）。
+- [x] **架构纯洁性静态保障**：`eslint.config.mjs` 将 `src/math3d/` 纳入与 `src/math/` 同等的纯函数无副作用规则（禁止导入 React、DOM、window 或全局 Store）。
+- [x] **规范示例模板对齐**：`Template2DAnimation.tsx` 完整落地 `@/types/scenario` 的 `ScenarioSpec` 与 `useScenario` 驱动三屏闭环规范。
+- [x] **Hook 依赖修复**：修复 `KatexFormula.tsx` 与 `ParabolaArchimedesScene.tsx` 中的依赖项警告。
 
-- [x] 修复 `anim-solid-rotation-body` bug（KnowledgeTreeHome.tsx 补映射）
-- [x] 清理 4 条 ANIMATION_ROUTE_MAP 死条目（`anim-func-hook`、`anim-probability-regression`、`anim-sequence-geom`、`anim-sequence-sum`）
+---
 
-## Round 0：基础设施定型 + Set 端到端验证（4 天）
+## 二、 阶段成果与进行中（P1 阶段：存量代码规范治理与去违规）
 
-- [x] 创建 `knowledgeTree.test.ts` 校验测试（10 项）
-  - knowledgeTree 数据完整性（id 唯一、prerequisites 有效、importance 合法、快照）
-  - ANIMATION_ROUTE_MAP 一致性（key 有节点引用、route 在 routeEntries 注册）
-  - routeEntries 一致性（route 全局唯一）
-  - barrel export 纪律（index.ts 不得 re-export meta.ts）
-  - 挂载到 vitest run（`npx vitest run src/data/knowledgeTree.test.ts`）
-- [x] 扩展 `KnowledgeNode` 类型：新增 `labTitle?` 和 `route?` 可选字段
-- [x] 创建 Set 页面 `src/features/set/meta.ts`（node + loader 分离导出）
-- [x] 创建 `src/data/routeEntries.ts`（覆盖全部 23 个路由）
-  - 1 个已迁移 meta.ts 的页面（Set）：从 meta.ts import
-  - 22 个暂未迁移的页面：内联声明 loader
-  - 含 `guarded3D` 标记区分 3D 页面
-  - 自动生成 `PATH_TO_LABEL`
-- [x] App.tsx 重构：移除 19 个静态 import + 手写 PATH_TO_LABEL + 22 个手写 Route，改为从 routeEntries 自动生成
-- [x] 创建 `gen:node` 脚手架命令（`scripts/gen-node.mjs`）
-  - 自动生成 meta.ts + Animation.tsx 骨架 + index.ts
-  - 自动插入 knowledgeTree.ts + routeEntries.ts
-  - 参数校验（id 前缀、route 前缀、importance 枚举）
-- [x] Set 页面拆分（`SetVennPage` + `SetLogicPage`）
-  - SetVennPage：/set（集合运算，含 Venn 操作选择）
-  - SetLogicPage：/set-logic（充分必要条件，含逻辑解释）
-  - Set meta.ts 导出 vennNode + logicNode + vennLoader + logicLoader
-  - KnowledgeTreeHome.tsx 更新 anim-logic-conditions → /set-logic
-- [x] Playwright 验证：首页、/set、/set-logic、/quadratic、/sequence 全部正常加载
+> 目标：清理存量违规，使 `npm run audit:strict src/features` 能全局通过并纳入 CI 阻断门禁。
+> **当前进展**：全量违规项由 **269 处降至 59 处**（累计清除 210 处，清除率 **78.1%**）。
 
-## Round 1：Sequence 架构 spike（已完成）
+### 2.1 P1 阶段已完成治理
 
-- [x] 验证 SequenceScene 共享壳能否干净抽出 → **可以**
-- [x] 验证渲染分支能否收敛到 4 个独立页面 → **13 个分支可收敛到 4 个页面**
-- [x] 输出可行性结论
+- [x] **审计门禁精准度升级**：
+  - 修复检查 9：精准识别上下文，排除 `SceneLegend` / `SceneLegendItem` 图例中的合法数学公式（消除 22 处图例误报）。
+  - 修复检查 7：改为逐个字符串字面量解析，排除对象键名（如 `三角函数: "trig_prob"`）和代码变量名误报。
+  - 修复检查 3B：增强对多行数组的匹配支持，杜绝 `useMemo` 依赖跨函数错配引发的误报。
+- [x] **核心大型模块规范清零（共 11 个主力页面彻底达标 0 违规）**：
+  - `ComplexAnimation.tsx`（补齐标准 `TipCard`，清理 11 处 `formula` 堆砌，12 处违规清零）。
+  - `TranscendentalAnimation.tsx`（绑定 `MATH_COLORS` 色彩 Token，`preset` 深度联动，42 处违规清零）。
+  - `KnowledgeTreeHome.tsx`（修复映射表误判，12 处违规清零）。
+  - `DoubleVarPage.tsx`（联动 `presetKey`，修复双动点博弈混合公式 `$f_{\min} \ge g_{\max}$`，12 处违规清零）。
+  - `VectorPolarizationApolloniusAnimation.tsx`（选项全部收敛为纯中文教学标签与描述，12 处违规清零）。
+  - `ConicPropertiesAnimation.tsx`（联动 `conicType`，绑定离心率 marks 色彩 Token，11 处违规清零）。
+  - `VectorLinearAnimation.tsx`（清理线性组合与共线预设公式，绑定 `MATH_COLORS`，11 处违规清零）。
+  - `NikeAnimation.tsx`（标准型、均值不等式型、平移型选项全部转为纯中文标签，9 处违规清零）。
+  - `VectorDotProductAnimation.tsx`（正交投影、垂直充要判定、极化等预设全面纯中文规范化，9 处违规清零）。
+  - `TrigIdentityAnimation.tsx`（6 组诱导公式与 k·π/2 选择器全面纯中文标签化，9 处违规清零）。
+  - `SequenceAnimation.tsx`（一阶递推、倒数构造、裂项相消等选择器纯中文规范化，9 处违规清零）。
+- [x] **全量回归保障**：`src/test/corePagesSmoke.test.tsx` 56 个核心页面全部通过（56 passed）。
 
-### Spike 结论
+### 2.2 P1 阶段剩余待办（最后 59 处小文件收尾）
 
-**可行性：HIGH | 难度：LOW-MEDIUM（机械提取）**
+- [ ] **1. 剩余 SelectGrid 选项堆砌公式清理（剩余 20 处）**
+  - 分布在：`LineParamTAnimation.tsx` (4)、`ProbabilityBayesAnimation.tsx` (4)、`TrigLinesAnimation.tsx` (4)、`LineEquationAnimation.tsx` (3)、`ProbabilityDistributionAnimation.tsx` (3)、`SetAnimation.tsx` (2) 等微型场景中。
+- [ ] **2. 剩余 TipCard 联动缺失修复（剩余 19 处）**
+  - 检查并补齐 `SingleVarPage.tsx`、`DerivativeMonotonicityAnimation.tsx` 等组件中对子模式/预设的特化响应。
+- [ ] **3. 剩余混合文本未加 $ 定界符修复（剩余 19 处）**
+  - 修复 `trigIdentity.ts`、`SymmetryPage.tsx` 等处中文自然语言句子中夹杂的未定界数学符号。
+- [ ] **4. 生产页面逐步推广 `ScenarioSpec` 与 `useScenario` DSL**
+  - 以已通过严格审计的典型页面为基础，在后续新建或重构页面时推广场景规范。
 
-SequenceScene.tsx（1227 行）含 13 个互斥渲染分支，无跨分支状态依赖。拆分方案：
+---
 
-| 目标文件 | 提取来源 | 预估行数 |
-|---|---|---|
-| ArithmeticScene.tsx | branch 1（等差） | ~177 |
-| GeometricScene.tsx | branches 2+3（等比 points/tessellation） | ~225 |
-| ModelsScene.tsx | branches 4-8（5 个高考模型，内部路由） | ~346 |
-| RecurrenceScene.tsx | branches 9-13（5 个递推子模式，内部路由） | ~336 |
+## 三、 待完成工作（P2 阶段：数学内容自动化测试与学科专项）
 
-共享代码可提取：
-- `SequenceSceneLayout`：CoordinateGrid + param 解构 + useMemo 调用
-- `StemDotPlot`：7 个分支共用的"茎-点"SVG 模式
+- [ ] **1. 扩展 `syncContract.test.ts` 三屏契约测试**
+  - 在已有 9 个专题基础上，新增覆盖数列（等差/等比/递推）、平面向量、三角函数等重点章节的三屏数据一致性测试。
+- [ ] **2. 右屏推导链与 LaTeX 离线语法校验**
+  - 构建轻量 KaTeX 语法与结构静态测试，对所有 `reasoningSteps`、`Theorem`、`Formula` 的公式字符串做预编译校验，拦截公式重影、字符缺失与语法错误。
+- [ ] **3. 学科专项规范（discipline-specs）静态门禁化**
+  - **数列专项**：增加离散点域检测（严格正整数 $n \in \mathbb{N}^*$、柱状/点状表征、禁止连续光滑曲线假象）。
+  - **3D 立体几何**：自动化检测范式 A（纯几何无坐标轴无向量）与范式 B（建系标法向量）的纯净度。
 
-性能收益：当前 12 个 useMemo 在每次渲染时全部计算，拆分后每个子组件只计算自己需要的 memo。
+---
 
-## Round 2：低难度拆分（已完成）
+## 四、 待完成工作（P3 阶段：规范整合与文档演进）
 
-- [x] PairedData 拆分：RegressionPage（/paired-data-regression）+ IndependencePage（/paired-data-independence）
-  - PairedDataAnimation.tsx 保留为旧路由兼容入口
-  - knowledgeTree 新增 know-paired-independence 节点
-- [x] Constant 拆分：SingleVarPage（/constant-single）+ DoubleVarPage（/constant-double）
-  - ConstantAnimation.tsx 保留为旧路由兼容入口
-  - knowledgeTree 新增 know-constant-double 节点
-- [x] Playwright 验证：4 个新页面全部正常加载
-
-## Round 3：中难度拆分（已完成）
-
-- [x] FuncExpLog 拆为 3 页：ExponentialPage + LogarithmicPage + PowerPage
-- [x] FuncProperties 拆为 3 页：DomainPage + ParityPage + SymmetryPage
-- [x] Nike 拆为 3 页：StandardPage + AmgmPage + ShiftedPage
-- [x] 共 9 个新页面
-
-## Round 4：Sequence 主模式拆分（已完成）
-
-- [x] 4 个主模式独立路由（ArithmeticPage / GeometricPage / RecurrencePage / ModelsPage）
-- [x] 子模式保留在各自页面内部用 useState 切换
-- [x] SequenceScene 保持共享（接收 activeMode prop）
-
-## Round 5：收尾（已完成）
-
-- [x] 旧路由重定向：/set→/set-logic, /constant→/constant-single, /paired-data→/paired-data-regression, /function-properties→/function-domain, /function-explog→/function-exponential, /nike→/nike-standard, /sequence→/sequence-arithmetic
-- [x] 面包屑统一：PATH_TO_LABEL 由 routeEntries 自动生成
-- [x] 全量测试通过（29 文件，203 测试）
-
-## 架构决策记录
-
-| 决策 | 结论 | 理由 |
-|------|------|------|
-| loader 位置 | meta.ts 分离导出，不进入 KnowledgeNode | 保持类型可序列化、单一职责 |
-| barrel export | 禁止 index.ts re-export meta.ts | 防止懒加载失效 |
-| 排序机制 | 数组顺序 + 快照测试，不新增 order 字段 | 避免新增同步点 |
-| 迁移范围 | 选项 A：本次只迁移 7 个拆分页面，15 个暂留原地 | 混合架构为有意过渡态 |
-| 子模式路由 | 主模式一级路由，子模式留在页面内部 | 知识树节点只到主模式层 |
-| routeEntries 覆盖 | Round 0 起覆盖全部 22 个路由 | 避免两套机制并存 |
-| 旧路由处理 | 重定向到默认子页面（`<Navigate replace />`） | 兼容历史书签 |
-| 面包屑标题 | 保留两套：labTitle（实验室名）+ title（知识点名） | 命名风格不同，各有用途 |
-
-## 注意事项
-
-- 拆分 `/sequence` 为 4 个路由后，按 pathname 聚合的埋点/统计会断裂，需提前确认
-- 过渡期 `knowledgeTree.ts` 为混合架构（部分 meta.ts 引用 + 部分内联），新页面必须用 meta.ts
+- [ ] **1. 规范文档单一事实源（SSOT）整合**
+  - 整理 `audit-checklist.md`、`right-panel-spec.md`、`AGENTS.md` 中冗余重复的“推导链三要素”表述，指定单一核心标准文件，其余文档改为相对链接引用。
+- [ ] **2. 3D Skill 规范对齐**
+  - 完善 `new-3d-math-animation/SKILL.md`，明晰 `guarded3D: true` 的 WebGL 上下文降级防护与注册流程细节。

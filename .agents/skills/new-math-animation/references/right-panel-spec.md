@@ -211,3 +211,12 @@ export function build<Topic>Panel(
 | 组合数与排列数 | `C_n^m` 或 `\binom{n}{m}`, `A_n^m` | `nCr`, `nPr` |
 | 参数色彩绑定 | `\color{${MATH_COLORS.paramPrimary}}{a}` | 硬编码 `#EF4444` 或无颜色 |
 
+### ④ 右屏推导链参数化纯函数生成与自动化校验契约
+1. **纯数学层推导绑定（严禁手写假推导）**：
+   - 右屏 `reasoningSteps` 中的数值结果（如判别式 $\Delta$ 的具体值、法向量坐标、两根之和/积、最值结论）必须通过 `src/math/` 的纯函数计算返回，禁止硬编码固定数字假装联动；
+   - 严禁出现参数滑块已变、但右屏推导步骤中的数字或不等号方向保持不变的“虚假推导”。
+2. **KaTeX 自动化编译门禁**：
+   - 所有的 `formula` 与 `reasoningSteps` LaTeX 字符串必须经由自动化单测（`katex.__parse`）验证，严禁出现语法错误或未捕获的模板未展开 `${...}`；
+   - 严禁在推导中出现 `NaN`、`undefined` 或分母为 0 的未经处理的算式。
+
+

@@ -225,7 +225,7 @@ export const ParabolaArchimedesScene: React.FC<
     }
 
     return avoidLabels(raw);
-  }, [base, archInfo, chordAdv, orthoInfo, mode, scale, focusPt]);
+  }, [archInfo, chordAdv, orthoInfo, mode, scale, focusPt]);
 
   return (
     <g>

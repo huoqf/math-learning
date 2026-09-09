@@ -50,21 +50,18 @@ export function VectorDotProductAnimation() {
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
           key: "perpendicular",
-          label: "正交垂直 (90°)",
-          formula: "\\vec{a} \\perp \\vec{b}",
-          description: "投影数量为0",
+          label: "正交垂直构型",
+          description: "正交垂直投影为零",
         },
         {
           key: "collinearSame",
-          label: "同向共线 (0°)",
-          formula: "\\vec{a} \\uparrow\\!\\uparrow \\vec{b}",
-          description: "投影等于模长",
+          label: "同向共线构型",
+          description: "同向共线投影为模长",
         },
         {
           key: "obtuseAngle",
-          label: "钝角投影 (120°)",
-          formula: "\\theta = 120^\\circ",
-          description: "投影数量为负",
+          label: "钝角反向投影",
+          description: "钝角投影数量为负",
         },
       ],
       properties: [
@@ -72,20 +69,17 @@ export function VectorDotProductAnimation() {
         {
           key: "orthogonalTest",
           label: "垂直充要判定",
-          formula: "x_1x_2+y_1y_2=0",
-          description: "法向正交",
+          description: "坐标数量积为零",
         },
         {
           key: "equalNorm60",
-          label: "等模夹角 (60°)",
-          formula: "|a|=|b|",
-          description: "a·b=|a|²/2",
+          label: "等模六十度角",
+          description: "特殊角与等模关系",
         },
         {
           key: "oppositeCollinear",
-          label: "反向共线 (180°)",
-          formula: "a·b = -|a||b|",
-          description: "取极小值",
+          label: "反向共线极值",
+          description: "数量积取得最小值",
         },
       ],
       polarization: [
@@ -93,20 +87,17 @@ export function VectorDotProductAnimation() {
         {
           key: "equalSides",
           label: "等腰中线垂直",
-          formula: "|OA|=|OB|",
-          description: "中线与底边垂直",
+          description: "中线与底边正交",
         },
         {
           key: "rightHypotenuse",
           label: "直角斜边中线",
-          formula: "|OM|=|MA|",
-          description: "数量积为0",
+          description: "斜边中线等长性质",
         },
         {
           key: "collinearExtrema",
           label: "共线极值构型",
-          formula: "A, O, B \\text{ 共线}",
-          description: "中线与边重合",
+          description: "三点共线极值状态",
         },
       ],
     };

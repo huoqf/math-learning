@@ -498,28 +498,28 @@ export function SequenceAnimation() {
                 items={[
                   {
                     key: "linear-pan",
-                    label: "待定系数/一阶线性",
-                    formula: "a_{n+1}=pa_n+q",
+                    label: "一阶线性递推",
+                    description: "待定系数转化为等比",
                   },
                   {
                     key: "accumulation",
                     label: "累加法求通项",
-                    formula: "a_{n+1}=a_n+f(n)",
+                    description: "差值为自变量函数",
                   },
                   {
                     key: "multiplication",
                     label: "累乘法求通项",
-                    formula: "a_{n+1}=f(n)a_n",
+                    description: "比值为自变量函数",
                   },
                   {
                     key: "reciprocal",
                     label: "倒数构造法",
-                    formula: "a_{n+1}=\\frac{Aa_n}{Ba_n+C}",
+                    description: "取倒数化为线性递推",
                   },
                   {
                     key: "second-order",
                     label: "二阶特征根法",
-                    formula: "a_{n+2}=pa_{n+1}+qa_n",
+                    description: "特征方程特征根求通项",
                   },
                 ]}
                 value={recurrenceModelType}
@@ -584,18 +584,18 @@ export function SequenceAnimation() {
                 items={[
                   {
                     key: "1",
-                    label: "标准差 1 型",
-                    formula: "\\frac{1}{n(n+1)}",
+                    label: "相邻差一型",
+                    description: "相邻两项首尾相消",
                   },
                   {
                     key: "2",
-                    label: "跨项差 2 型",
-                    formula: "\\frac{1}{n(n+2)}",
+                    label: "跨项差二型",
+                    description: "间隔两项保留首尾两项",
                   },
                   {
                     key: "3",
                     label: "根式有理化型",
-                    formula: "\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}",
+                    description: "分子有理化拆分相消",
                   },
                 ]}
                 value={String(params.teleGap ?? 1)}

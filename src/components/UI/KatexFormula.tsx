@@ -158,7 +158,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
     }
 
     return () => resizeObserver.disconnect();
-  }, [formula, isBlock, responsive, lines]);
+  }, [formula, isBlock, responsive, lines, canLineBreak]);
 
   // 3. 公式变化时重置换行状态
   useEffect(() => {

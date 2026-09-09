@@ -11,7 +11,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ConicPropertiesScene } from "./components/ConicPropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/conicProperties";
@@ -207,40 +207,40 @@ export function ConicPropertiesAnimation() {
   const presetItems = useMemo(() => {
     if (conicType === "ellipse") {
       return [
-        { key: "free", label: "自由探究" },
+        { key: "free", label: "自由探究", description: "任意半轴与离心率" },
         {
           key: "rightTriangle",
           label: "直角焦点三角形",
-          formula: "e=\\frac{\\sqrt{2}}{2}",
+          description: "短轴端点张角为直角",
         },
         {
           key: "latusRectum",
           label: "通径垂直端点",
-          formula: "L=\\frac{2b^2}{a}",
+          description: "过焦点垂直于长轴",
         },
         {
           key: "nearCircle",
           label: "近圆退化极限",
-          formula: "e \\to 0",
+          description: "离心率趋近于零",
         },
       ];
     }
     return [
-      { key: "free", label: "自由探究" },
+      { key: "free", label: "自由探究", description: "任意半轴与离心率" },
       {
         key: "equilateral",
         label: "等轴双曲线",
-        formula: "e=\\sqrt{2}",
+        description: "渐近线互相垂直",
       },
       {
         key: "latusRectum",
         label: "通径垂直端点",
-        formula: "L=\\frac{2b^2}{a}",
+        description: "过焦点垂直于实轴",
       },
       {
         key: "wideAngle",
         label: "广角渐近构型",
-        formula: "e=2",
+        description: "渐近线张角趋于钝角",
       },
     ];
   }, [conicType]);
@@ -248,41 +248,36 @@ export function ConicPropertiesAnimation() {
   // 13. 左屏声明式参数配置按 activeMode 与预设降维过滤
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     let activeKeys: string[] = [];
-
-    if (presetKey === "rightTriangle") {
-      // 直角焦点三角形：顶角与离心率已固定，仅调节长半轴 a
-      activeKeys = ["a"];
-    } else if (presetKey === "equilateral" || presetKey === "wideAngle") {
-      // 等轴或广角双曲线：半轴比与离心率已固定，调节主半轴 a 与动点参数 t
-      activeKeys = ["a", "t"];
+    if (studyMode === "basicProperties") {
+      activeKeys = ["a", "b", "t"];
+    } else if (studyMode === "eccentricity") {
+      activeKeys = ["a", "e", "t"];
     } else {
-      const keysByMode: Record<string, string[]> = {
-        basicProperties: ["a", "b", "t"],
-        eccentricity: ["a", "e", "t"],
-        focusTriangle: ["a", "b", "t"],
-      };
-      activeKeys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+      activeKeys = ["a", "b", "t"];
     }
 
-    // 动态 marks 过滤
     const ellipseMarks = [
-      { value: 0.01, label: "$e \\to 0$ 圆", labelFormula: "e \\to 0" },
+      {
+        value: 0.01,
+        label: "近圆极限",
+        labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{e \\to 0}`,
+      },
       {
         value: 0.707,
         label: "直角焦点三角形",
-        labelFormula: "e = \\frac{\\sqrt{2}}{2}",
+        labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{e = \\frac{\\sqrt{2}}{2}}`,
       },
     ];
     const hyperbolaMarks = [
       {
         value: 1.414,
         label: "等轴双曲线",
-        labelFormula: "e = \\sqrt{2}",
+        labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{e = \\sqrt{2}}`,
       },
       {
         value: 2.0,
         label: "广角双曲线",
-        labelFormula: "e = 2",
+        labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{e = 2}`,
       },
     ];
 
@@ -312,14 +307,16 @@ export function ConicPropertiesAnimation() {
       });
   }, [params, studyMode, conicType, presetKey]);
 
-  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  // 左屏教学提示与题设导引
   const tipConfig = useMemo(() => {
+    const isEllipse = conicType === "ellipse";
     if (presetKey !== "free") {
       if (presetKey === "rightTriangle") {
         return {
           variant: "warning" as const,
           badge: "高考经典 · 直角焦点三角形",
-          condition: "动点 P 位于椭圆短轴端点，焦点三角形顶角 ∠F₁PF₂ 为直角。",
+          condition:
+            "动点 $P$ 位于椭圆短轴端点，焦点三角形顶角 $\\angle F_1PF_2$ 为直角。",
           question:
             "探究椭圆存在直角焦点三角形对离心率的范围要求，以及焦点三角形的最大面积。",
         };
@@ -329,14 +326,15 @@ export function ConicPropertiesAnimation() {
           variant: "primary" as const,
           badge: "高考经典 · 等轴双曲线",
           condition: "双曲线实半轴与虚半轴长度相等，渐近线互相垂直。",
-          question: "如何证明等轴双曲线的离心率为定值，且两渐近线夹角为直角？",
+          question:
+            "如何证明等轴双曲线的离心率为定值 $\\sqrt{2}$，且两渐近线夹角为直角？",
         };
       }
       if (presetKey === "latusRectum") {
         return {
           variant: "primary" as const,
           badge: "高考经典 · 通径垂直端点",
-          condition: "过焦点的弦垂直于曲线的主对称轴（通径）。",
+          condition: `过焦点的弦垂直于${isEllipse ? "椭圆长轴" : "双曲线实轴"}（通径）。`,
           question: "如何由曲线方程快速求解通径长度及通径端点到准线的距离？",
         };
       }
@@ -349,33 +347,42 @@ export function ConicPropertiesAnimation() {
             "探究双曲线开口张角与渐近线斜率随离心率增大的单调变化规律。",
         };
       }
+      if (presetKey === "nearCircle") {
+        return {
+          variant: "info" as const,
+          badge: "几何极限 · 近圆退化",
+          condition: "短半轴 $b \\to a$，焦距 $c \\to 0$，椭圆趋向于圆周。",
+          question: "观察离心率 $e \\to 0$ 时焦点与准线的退化极限。",
+        };
+      }
     }
 
     if (studyMode === "basicProperties") {
       return {
         variant: "info" as const,
-        badge: "圆锥曲线基本几何性质",
-        condition: "平面内给定圆锥曲线的标准方程与基本半轴参数。",
+        badge: `${isEllipse ? "椭圆" : "双曲线"}基本几何性质`,
+        condition: `平面内给定${isEllipse ? "椭圆" : "双曲线"}的标准方程与基本半轴参数。`,
         question: "如何由半轴参数确定焦点坐标、准线方程、顶点坐标与对称轴？",
       };
     }
     if (studyMode === "eccentricity") {
       return {
         variant: "primary" as const,
-        badge: "离心率与几何形态",
-        condition: "圆锥曲线的焦距与长半轴（实半轴）比值为离心率 e。",
-        question:
-          "离心率数值的大小如何直观决定椭圆的扁平程度或双曲线的开口张角？",
+        badge: `${isEllipse ? "椭圆" : "双曲线"}离心率与形态`,
+        condition: `${isEllipse ? "椭圆焦距与长半轴比值" : "双曲线焦距与实半轴比值"}为离心率 $e$。`,
+        question: isEllipse
+          ? "离心率数值的大小如何直观决定椭圆的扁平程度？"
+          : "离心率数值的大小如何直观决定双曲线的开口张角与渐近线斜率？",
       };
     }
     return {
       variant: "danger" as const,
-      badge: "焦点三角形与面积探究",
-      condition: "曲线上动点 P 与两焦点 F₁, F₂ 相连构成焦点三角形 △PF₁F₂。",
+      badge: `${isEllipse ? "椭圆" : "双曲线"}焦点三角形`,
+      condition: `曲线上动点 $P$ 与两焦点 $F_1, F_2$ 相连构成焦点三角形 $\\triangle PF_1F_2$。`,
       question:
         "如何结合圆锥曲线定义与余弦定理，求解焦点三角形的面积与顶角最值？",
     };
-  }, [studyMode, presetKey]);
+  }, [studyMode, conicType, presetKey]);
 
   return (
     <ThreePanel
@@ -401,12 +408,12 @@ export function ConicPropertiesAnimation() {
                   {
                     key: "ellipse",
                     label: "椭圆",
-                    formula: "\\frac{x^2}{a^2}+\\frac{y^2}{b^2}=1",
+                    description: "焦点在 x 轴",
                   },
                   {
                     key: "hyperbola",
                     label: "双曲线",
-                    formula: "\\frac{x^2}{a^2}-\\frac{y^2}{b^2}=1",
+                    description: "焦点在 x 轴",
                   },
                 ]}
                 value={conicType}

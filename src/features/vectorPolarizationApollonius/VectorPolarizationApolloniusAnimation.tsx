@@ -171,60 +171,60 @@ export function VectorPolarizationApolloniusAnimation() {
   const presetItems = useMemo(() => {
     if (studyMode === "polarization") {
       return [
-        { key: "free", label: "自由探究" },
+        { key: "free", label: "自由探究", description: "任意动点与底边" },
         {
           key: "equilateral",
           label: "正三角形",
-          formula: "\\triangle ABC",
+          description: "对称正三边构型",
         },
         {
           key: "rightAngle",
           label: "直角正交",
-          formula: "\\vec{a} \\perp \\vec{b}",
+          description: "数量积为零构型",
         },
         {
           key: "obtuseExtrema",
           label: "钝角构型",
-          formula: "|AM| < |BM|",
+          description: "负数量积与钝角",
         },
       ];
     }
     if (studyMode === "apollonius") {
       return [
-        { key: "free", label: "自由探究" },
+        { key: "free", label: "自由探究", description: "连续比例调节" },
         {
           key: "doubleRatio",
-          label: "2倍比阿圆",
-          formula: "\\lambda = 2.0",
+          label: "二倍比阿圆",
+          description: "定比为2的阿氏圆",
         },
         {
           key: "degenerate",
           label: "中垂线退化",
-          formula: "\\lambda = 1.0",
+          description: "比值为1退化为垂直平分线",
         },
         {
           key: "halfRatio",
-          label: "0.5倍比圆",
-          formula: "\\lambda = 0.5",
+          label: "半倍比阿圆",
+          description: "定比为0.5的阿氏圆",
         },
       ];
     }
     return [
-      { key: "free", label: "自由探究" },
+      { key: "free", label: "自由探究", description: "沿圆周自由探索" },
       {
         key: "minPoint",
         label: "数量积最小",
-        formula: "P = D",
+        description: "内侧最近交点",
       },
       {
         key: "maxPoint",
         label: "数量积最大",
-        formula: "P = E",
+        description: "外侧最远交点",
       },
       {
         key: "orthogonal",
-        label: "零数量积",
-        formula: "\\vec{PA} \\perp \\vec{PB}",
+        label: "正交垂直状态",
+        description: "夹角为直角",
       },
     ];
   }, [studyMode]);
@@ -297,17 +297,17 @@ export function VectorPolarizationApolloniusAnimation() {
                 {
                   key: "polarization",
                   label: "向量极化恒等式",
-                  formula: "\\vec{a} \\cdot \\vec{b}",
+                  description: "中线模长与底边数量积",
                 },
                 {
                   key: "apollonius",
                   label: "阿波罗尼斯圆轨迹",
-                  formula: "\\frac{|PA|}{|PB|}=\\lambda",
+                  description: "定比分点距离轨迹",
                 },
                 {
                   key: "combined",
-                  label: "新高考压轴最值模型",
-                  formula: "\\min / \\max (\\vec{PA} \\cdot \\vec{PB})",
+                  label: "高考压轴综合模型",
+                  description: "圆上动点数量积最值",
                   fullWidth: true,
                 },
               ]}

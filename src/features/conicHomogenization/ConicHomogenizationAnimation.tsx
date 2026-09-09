@@ -187,13 +187,11 @@ export function ConicHomogenizationAnimation() {
   // 顶部 KaTeX 展示公式（三位一体色彩 Token 绑定）
   const topFormulaLatex = useMemo(() => {
     const sumVal =
-      result.theoreticalSum !== null
-        ? result.theoreticalSum.toFixed(2)
-        : "\\text{无}";
+      result.theoreticalSum !== null ? result.theoreticalSum.toFixed(2) : "-";
     const prodVal =
       result.theoreticalProduct !== null
         ? result.theoreticalProduct.toFixed(2)
-        : "\\text{无}";
+        : "-";
 
     return `\\text{齐次方程: } ${result.homoEqLatex} \\quad \\implies \\quad \\color{${MATH_COLORS.paramPrimary}}{k_{PA}} + \\color{${MATH_COLORS.paramSecondary}}{k_{PB}} = ${sumVal}, \\quad \\color{${MATH_COLORS.paramPrimary}}{k_{PA}} \\cdot \\color{${MATH_COLORS.paramSecondary}}{k_{PB}} = ${prodVal}`;
   }, [result]);
@@ -308,21 +306,21 @@ export function ConicHomogenizationAnimation() {
             <SelectGrid
               columns={2}
               items={[
-                { key: "free", label: "自由探究" },
+                { key: "free", label: "自由探究", description: "全参数开放" },
                 {
                   key: "left_vertex_perpendicular",
                   label: "左顶点直角弦",
-                  formula: "k_{PA} \\cdot k_{PB}=\\text{定值}",
+                  description: "斜率积为定值",
                 },
                 {
                   key: "origin_symmetric_sum",
                   label: "对称斜率和零",
-                  formula: "k_{PA}+k_{PB}=0",
+                  description: "直线过横轴定点",
                 },
                 {
                   key: "asymmetric_slope_explore",
                   label: "非对称和探究",
-                  formula: "k_{PA}+2k_{PB}=0",
+                  description: "两倍非对称比例",
                 },
               ]}
               value={presetKey}

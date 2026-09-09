@@ -112,30 +112,37 @@ export function FuncPropertiesAnimation() {
 
   const tipConfig = useMemo(() => {
     if (mode === "domain") {
+      const isReciprocal = fnType === "reciprocal";
       return {
         variant: "info" as const,
         badge: "课标基础 · 定义域与值域判定",
-        condition: "研究函数性质前，必须首先确定定义域 D 与值域 R。",
-        question: "拖动测试点验证取值范围，反比例函数特别注意 x = 0 断点。",
+        condition: isReciprocal
+          ? "反比例函数定义域为集合 $\\{x \\mid x \\ne 0\\}$，值域为 $\\{y \\mid y \\ne 0\\}$。"
+          : "研究函数性质前，必须首先确定定义域 $D$ 与值域 $R$。",
+        question: isReciprocal
+          ? "拖动测试点观察趋近于 $x = 0$ 时的奇点间断，理解定义域受限的几何表现。"
+          : "拖动测试点验证取值范围，观察函数图象在平面坐标系中的覆盖区间。",
       };
     }
     if (mode === "parity") {
+      const isEven = fnType === "quadratic" || fnType === "abs";
       return {
         variant: "primary" as const,
-        badge: "核心性质 · 单调性与奇偶性联动",
+        badge: isEven ? "核心性质 · 偶函数轴对称" : "核心性质 · 奇函数中心对称",
         condition: "定义域关于原点对称是讨论函数奇偶性的必要前置条件。",
-        question:
-          "对比测试点 P₀ 与奇偶对称点 P'，观察割线斜率 k 判断区间单调性。",
+        question: isEven
+          ? "观察测试点 $P_0(x_0, y_0)$ 与对称点 $P_0'(-x_0, y_0)$，验证满足 $f(-x) = f(x)$。"
+          : "观察测试点 $P_0(x_0, y_0)$ 与对称点 $P_0'(-x_0, -y_0)$，验证满足 $f(-x) = -f(x)$。",
       };
     }
     const dist = Math.abs((params.axisB ?? 2) - (params.axisA ?? 0));
     return {
       variant: "primary" as const,
       badge: "高考秒杀 · 双轴对称导出周期",
-      condition: `图象同时具有两条纵向对称轴 x = ${(params.axisA ?? 0).toFixed(1)} 与 x = ${(params.axisB ?? 2).toFixed(1)}。`,
-      question: `连续两次轴反射产生水平平移周期，导出 T = 2|a - b| = ${(2 * dist).toFixed(1)}。`,
+      condition: `图象同时具有两条纵向对称轴 $x = ${(params.axisA ?? 0).toFixed(1)}$ 与 $x = ${(params.axisB ?? 2).toFixed(1)}$。`,
+      question: `连续两次轴反射产生水平平移周期，导出 $T = 2|a - b| = ${(2 * dist).toFixed(1)}$。`,
     };
-  }, [mode, params.axisA, params.axisB]);
+  }, [mode, fnType, params.axisA, params.axisB]);
 
   return (
     <ThreePanel
@@ -147,17 +154,17 @@ export function FuncPropertiesAnimation() {
                 {
                   key: "domain",
                   label: "概念定义域",
-                  formula: "x \\in D",
+                  description: "定义域与值域判定",
                 },
                 {
                   key: "parity",
                   label: "单调奇偶性",
-                  formula: "f(-x)=\\pm f(x)",
+                  description: "奇偶对称与单调性",
                 },
                 {
                   key: "symmetry",
                   label: "对称周期性",
-                  formula: "T=2|a-b|",
+                  description: "双对称轴导出周期",
                 },
               ]}
               value={mode}
@@ -170,18 +177,30 @@ export function FuncPropertiesAnimation() {
           <LeftPanelSection title="基准函数选择">
             <SelectGrid
               items={[
-                { key: "cubic", label: "三次曲线", formula: "y=x^3" },
-                { key: "quadratic", label: "二次抛物线", formula: "y=x^2" },
-                { key: "abs", label: "绝对值折线", formula: "y=|x|" },
+                {
+                  key: "cubic",
+                  label: "三次曲线",
+                  description: "原点中心对称奇函数",
+                },
+                {
+                  key: "quadratic",
+                  label: "二次抛物线",
+                  description: "轴对称偶函数",
+                },
+                {
+                  key: "abs",
+                  label: "绝对值折线",
+                  description: "关于纵轴对称折线",
+                },
                 {
                   key: "reciprocal",
                   label: "反比例双曲线",
-                  formula: "y=\\frac{1}{x}",
+                  description: "原点对称间断函数",
                 },
                 {
                   key: "sin",
                   label: "正弦波形",
-                  formula: "y=\\sin x",
+                  description: "周期奇函数",
                 },
               ]}
               value={fnType}

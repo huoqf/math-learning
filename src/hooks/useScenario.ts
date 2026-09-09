@@ -3,7 +3,7 @@ import type { ScenarioSpec, ScenarioTipProps } from "@/types/scenario";
 
 interface UseScenarioOptions<
   TKey extends string,
-  TParams extends Record<string, any>,
+  TParams extends Record<string, unknown>,
 > {
   /** 场景规格列表 */
   scenarios: Record<TKey, ScenarioSpec<TParams>> | ScenarioSpec<TParams>[];
@@ -22,7 +22,7 @@ interface UseScenarioOptions<
  */
 export function useScenario<
   TKey extends string,
-  TParams extends Record<string, any>,
+  TParams extends Record<string, unknown>,
 >({
   scenarios,
   activeKey,

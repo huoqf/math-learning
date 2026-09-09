@@ -23,6 +23,10 @@ export interface ScenarioSpec<TParams = Record<string, number>> {
   theorems?: string[];
   /** 提示卡片视觉色彩变体 */
   variant?: TipCardVariant;
+  /** 3D 几何范式：'synthetic'(综合法，禁坐标轴/向量) | 'vector'(空间向量坐标法，必须含建系或向量) */
+  paradigm?: "synthetic" | "vector";
+  /** 场景必标核心几何/学科特征线（如双垂直、射影垂足、渐近线） */
+  requiredFeatures?: string[];
 }
 
 /**

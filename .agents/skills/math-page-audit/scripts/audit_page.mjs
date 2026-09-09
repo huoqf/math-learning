@@ -2,17 +2,30 @@
 /**
  * .agents/skills/math-page-audit/scripts/audit_page.mjs
  * 高中数学可视化页面自动化只读质量审计工具
- * 
- * 作用：扫描指定文件或 src/features 目录，排查：
- * 1. 孤立参数字母 (如 labelFormula: "a")
- * 2. 轨道刻度密集平铺/冲突 marks
- * 3. 画布内手写 <text> 渲染浮点坐标
- * 4. 手写 <circle> 替代 MathPoint
- * 5. 拖拽二次转换错误 (onDrag -> designToMath)
- * 6. 硬编码 Hex 颜色
- * 7. JSX 属性字符串双斜杠转义陷阱 (formula="...\\\\...")
- * 8. 左屏职责越界文案 (左屏侵入“高考核心/高考题型”)
- * 9. 动画页面缺少 TipCard 教学引导卡片
+ *
+ * 附加 --strict / -s 参数时：检测到违规以 exit(1) 阻断 CI/CD 流程。
+ *
+ * 实际检查项 (共 20 项)：
+ *  1. 孤立参数字母 (如 labelFormula: "a")
+ *  2. mapKeysToConfigs 丢失 group 属性透传
+ *  3. TipCard 设问提前剧透解题结论
+ *  4. TipCard 未联动二级选项 (SelectGrid value 变量)
+ *  5. ParamMeta 参数>=4项未分组 / 动参数动线倒挂
+ *  6. 画布内手写 <text> 渲染浮点坐标
+ *  7. SVG 内裸 LaTeX 源码（应使用 SceneLabelGroup）
+ *  8. 孤立参数代号标签 (labelFormula: "a")
+ *  9. 拖拽二次坐标转换 (onDrag -> designToMath)
+ * 10. 硬编码 Hex 色值 (stroke/fill)
+ * 11. JSX 属性字符串双斜杠转义陷阱
+ * 12. 左屏职责越界（高考核心/高考题型关键词）
+ * 13. 混合文本缺少 $...$  定界符
+ * 14. 物理单位残留（m/s/kg 等）
+ * 15. SelectGrid 选项堆砌公式
+ * 16. 参数标签缺少数学代号
+ * 17. 参数标签未绑定色彩 Token
+ * 18. 全库禁止 BrowserRouter（必须 HashRouter Only）
+ * 19. SVG <text> 裸 fontSize 硬编码数字
+ * 20. 硬编码 rgb()/rgba() 色值
  */
 
 import fs from 'node:fs';
@@ -23,10 +36,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const workspaceRoot = path.resolve(__dirname, '../../../../');
 
-const targetArg = process.argv[2] || 'src/features';
+const args = process.argv.slice(2);
+const isStrict = args.includes('--strict') || args.includes('-s');
+const targetArg = args.find((arg) => !arg.startsWith('-')) || 'src/features';
 const scanDir = path.resolve(workspaceRoot, targetArg);
 
-console.log(`\n🔍 [Math Page Audit] 开始静态代码与高考规范审计: ${targetArg}\n` + '─'.repeat(60));
+console.log(`\n🔍 [Math Page Audit] 开始静态代码与高考规范审计: ${targetArg} (strictMode: ${isStrict ? 'ON' : 'OFF'})\n` + '─'.repeat(60));
 
 let totalFiles = 0;
 let totalIssues = 0;
@@ -108,7 +123,7 @@ for (const filePath of files) {
     const secondaryVars = selectGridValueMatches.map((m) => m[1]);
 
     for (const secVar of secondaryVars) {
-      const hasTipConfig = /const\s+tipConfig\s*=\s*useMemo\([\s\S]*?\[(.*?)\]\s*\)/.exec(content);
+      const hasTipConfig = /const\s+(?:tipConfig|tipProps|tipInfo)\s*=\s*useMemo\([\s\S]*?\}\s*,\s*\[([\s\S]*?)\]\s*\)/.exec(content);
       if (hasTipConfig) {
         const deps = hasTipConfig[1];
         if (!deps.includes(secVar)) {
@@ -273,15 +288,24 @@ for (const filePath of files) {
     const isTestFile = filePath.includes('test') || filePath.includes('spec');
     const isCommentLine = /^\s*(\/\/|\/\*|\{\/\*|\*)/.test(line);
     const isJsxElement = /<[A-Za-z][a-zA-Z0-9]*\b/.test(line);
-    if (!isTestFile && !isCommentLine && !isJsxElement && !line.includes('import') && (line.includes('text:') || line.includes('prerequisites:') || line.includes('"') || line.includes('\'')) && /[\u4e00-\u9fa5]/.test(line)) {
-      const strippedLine = line.replace(/(key|id|prop|variant|colorKey):\s*["'][^"']+["']/g, '');
-      if (/(\\[a-zA-Z]+|[a-zA-Z]\^[0-9a-zA-Z]+|[a-zA-Z]_[0-9a-zA-Z]+)/.test(strippedLine) && !line.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
-        issues.push({
-          lineNum,
-          type: '混合文本缺少$定界符',
-          message: '检测到中文句子中包含 LaTeX 指令或上下标，但未用 $...$ 包裹，会导致公式无法被 KaTeX 正确切分渲染',
-          snippet: line.trim()
-        });
+    if (!isTestFile && !isCommentLine && !isJsxElement && !line.includes('import') && /[\u4e00-\u9fa5]/.test(line)) {
+      const strMatches = line.match(/(["'`])(?:\\.|(?!\1)[^\\])*\1/g) || [];
+      for (const rawStr of strMatches) {
+        const str = rawStr.slice(1, -1);
+        if (/[\u4e00-\u9fa5]/.test(str) && !str.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
+          const hasLatexCmd = /\\[a-zA-Z]{2,}/.test(str);
+          const hasMathSuper = /[a-zA-Z]\^[0-9a-zA-Z]+/.test(str);
+          const hasMathSub = /\b[a-zA-Z]{1,2}_[0-9a-zA-Z]+|\b[fgh]_(?:max|min)\b/.test(str);
+          if (hasLatexCmd || hasMathSuper || hasMathSub) {
+            issues.push({
+              lineNum,
+              type: '混合文本缺少$定界符',
+              message: '检测到中文句子中包含 LaTeX 指令或上下标，但未用 $...$ 包裹，会导致公式无法被 KaTeX 正确切分渲染',
+              snippet: line.trim()
+            });
+            break;
+          }
+        }
       }
     }
 
@@ -298,12 +322,17 @@ for (const filePath of files) {
     // 9. 检查 SelectGrid 选项堆砌公式或孤立代号
     if ((line.includes('<SelectGrid') && line.includes('formula=')) ||
       (!isTestFile && /^\s*formula:\s*["'`][^"'`]+["'`]/.test(line) && !line.includes('labelFormula') && !line.includes('descriptionFormula') && (filePath.includes('Animation.tsx') || filePath.includes('LeftPanel.tsx')))) {
-      issues.push({
-        lineNum,
-        type: 'SelectGrid选项堆砌公式',
-        message: 'SelectGrid 选项应使用纯净加粗中文标题，严禁在 items 中配置 formula 堆砌公式或孤立代号（题设归位 TipCard，定理归位 MathPanel）',
-        snippet: line.trim()
-      });
+      // 排除 SceneLegend / SceneLegendItem 图例中的合法数学公式
+      const contextAround = lines.slice(Math.max(0, index - 8), Math.min(lines.length, index + 8)).join('\n');
+      const isLegendItem = contextAround.includes('legend') || contextAround.includes('Legend') || /style:\s*["'](solid|dash|point|area)["']/.test(contextAround);
+      if (!isLegendItem) {
+        issues.push({
+          lineNum,
+          type: 'SelectGrid选项堆砌公式',
+          message: 'SelectGrid 选项应使用纯净加粗中文标题，严禁在 items 中配置 formula 堆砌公式或孤立代号（题设归位 TipCard，定理归位 MathPanel）',
+          snippet: line.trim()
+        });
+      }
     }
 
     // 10. 检查参数标签是否脱离题设无数学代号 (排除 marks 刻度数字)
@@ -341,6 +370,41 @@ for (const filePath of files) {
         }
       }
     }
+
+    // 12. 检查 BrowserRouter 违规（全库强制 HashRouter）
+    if (/import\s*\{[^}]*BrowserRouter[^}]*\}\s*from\s*['"]react-router-dom['"]/.test(line) || /<BrowserRouter\b/.test(line)) {
+      issues.push({
+        lineNum,
+        type: '全局禁止BrowserRouter',
+        message: '全库禁止使用 BrowserRouter，离线环境与单页路由必须强制使用 HashRouter Only',
+        snippet: line.trim()
+      });
+    }
+
+    // 13. 检查 SVG 内部裸 fontSize 硬编码数字（必须经 fontScale 缩放）
+    if ((filePath.endsWith('.tsx') || filePath.endsWith('.jsx')) && /<text\b[^>]*\bfontSize=\{[0-9.]+\}/.test(line)) {
+      if (!line.includes('fontScale') && !filePath.includes('test')) {
+        issues.push({
+          lineNum,
+          type: 'SVG裸fontSize硬编码',
+          message: 'SVG 标签内严禁直接硬编码裸数字 fontSize={...}，必须通过 fontScale 或 canvasSize.font 进行动态缩放',
+          snippet: line.trim()
+        });
+      }
+    }
+
+    // 14. 检查硬编码 rgb/rgba 颜色（排除 theme 目录与测试文件）
+    if (!filePath.includes('theme') && !filePath.includes('test') && !filePath.includes('css')) {
+      if (/(stroke|fill|color|background|backgroundColor):\s*["']rgba?\([0-9\s.,%]+\)["']/.test(line) ||
+          /(stroke|fill)=["']rgba?\([0-9\s.,%]+\)["']/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '硬编码rgb颜色',
+          message: '禁止在业务源码中直接硬编码 rgb() / rgba() 色值，必须使用 MATH_COLORS 或 withAlpha()',
+          snippet: line.trim()
+        });
+      }
+    }
   });
 
   if (issues.length > 0) {
@@ -358,5 +422,11 @@ if (totalIssues === 0) {
   console.log(`✅ 审计完成：扫描 ${totalFiles} 个文件，全部符合规范，零潜在违规项！\n`);
 } else {
   console.log(`⚠️ 审计完成：扫描 ${totalFiles} 个文件，发现 ${totalIssues} 处需关注项。\n`);
+  if (isStrict) {
+    console.error(`🚨 [门禁拦截] strict 模式下检测到 ${totalIssues} 处规范违规，阻断流程！请修复上述项后再交付。\n`);
+    process.exit(1);
+  } else {
+    console.log(`💡 提示：可附加 --strict 参数在 CI/CD 或预提交时启用阻断拦截。\n`);
+  }
 }
 
