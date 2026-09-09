@@ -10,3 +10,4 @@ export { useRadioGroup } from "./useRadioGroup";
 export { use3DViewport } from "./use3DViewport";
 export type { CameraPreset } from "./use3DViewport";
 export { useFontScale3D } from "./useFontScale3D";
+export { useScenario } from "./useScenario";

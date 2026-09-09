@@ -138,6 +138,35 @@ for (const filePath of files) {
     }
   }
 
+  // 全文级检查 3C：右屏数据装配缺少模式上下文透传 (防止右屏降级到默认分支导致数据显示不相干)
+  if (isAnimationPage && content.includes('buildMathQuantities(') && content.includes('<SelectGrid')) {
+    const buildCallMatch = content.match(/buildMathQuantities\s*\(\s*[^,]+,\s*[^,]+(?:,\s*\{([^}]*)\})?\s*\)/);
+    if (buildCallMatch) {
+      const configObj = buildCallMatch[1] || '';
+      if (!configObj.includes('mode') && !configObj.includes('preset') && !configObj.includes('sub') && !configObj.includes('scenario') && !configObj.includes('type')) {
+        issues.push({
+          lineNum: 1,
+          type: '右屏缺少模式上下文透传',
+          message: '主页面存在多情景切换，但 buildMathQuantities 第三个参数 config 缺少当前模式/二级选项透传，会导致右屏显示默认或不相干内容',
+          snippet: buildCallMatch[0].slice(0, 60),
+        });
+      }
+    }
+  }
+
+  // 全文级检查 3D：Builder 跨模式定理无分支装配风险 (防止右屏同时显示所有模式定理)
+  if (filePath.includes('builders') && content.includes('theorems') && content.includes('mode')) {
+    const hasUnconditionalPush = /theorems\.push\([\s\S]*?theorems\.push\(/g.test(content) && !content.includes('switch') && !content.includes('else if');
+    if (hasUnconditionalPush) {
+      issues.push({
+        lineNum: 1,
+        type: 'Builder定理未按模式隔离',
+        message: '检测到 Builder 函数中可能存在跨模式定理无条件连续追加，必须按 mode 分支或字典映射纯净装配',
+        snippet: 'theorems 缺少模式条件分支隔离',
+      });
+    }
+  }
+
   // 全文级检查 4：数据层 ParamMeta 结构化分组与排序动线扫描
   if (filePath.includes('registries') && content.includes('ParamMeta[]')) {
     const metaArrayRegex = /export\s+const\s+(\w+Meta)\s*:\s*ParamMeta\[\]\s*=\s*\[([\s\S]*?)\];/g;

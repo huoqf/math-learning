@@ -19,6 +19,11 @@ export interface SyncContractTestCase<
   expectedInvariants?: string[]; // 必须标记为 isInvariant: true 的几何不变量
   // 4. 特征量存在性检查 (如检查是否存在某些复杂量标签)
   expectedQuantityLabels?: string[];
+  // 5. 跨模式隔离性核验：防止右屏显示不相干内容
+  expectedTheoremsKeywords?: string[]; // 必须包含的专属定理关键字
+  forbiddenTheoremKeywords?: string[]; // 严禁出现的跨模式不相干定理关键字
+  forbiddenGaokaoKeywords?: string[]; // 严禁出现的跨模式不相干考点关键字
+  expectedWarningCount?: number; // 临界预警数量断言
 }
 
 /**
@@ -109,6 +114,45 @@ export function verifyTopicSyncContract<
           `[${name}] 特征量 [${invLabel}] 应标记为🌟定值不变量 (isInvariant: true)`,
         ).toBe(true);
       });
+    }
+
+    // 5. 跨模式隔离与右屏防污染核验 (防止出现不相干内容)
+    if (tc.expectedTheoremsKeywords) {
+      tc.expectedTheoremsKeywords.forEach((kw) => {
+        const hasKw = mathData.theorems.some((t) => t.name.includes(kw));
+        expect(hasKw, `[${name}] 右屏应当包含专属定理关键字: [${kw}]`).toBe(
+          true,
+        );
+      });
+    }
+
+    if (tc.forbiddenTheoremKeywords) {
+      tc.forbiddenTheoremKeywords.forEach((kw) => {
+        const leaked = mathData.theorems.filter((t) => t.name.includes(kw));
+        expect(
+          leaked.length,
+          `[${name}] 右屏发生跨模式定理污染，检测到不相干定理: ${leaked.map((t) => t.name).join(", ")}`,
+        ).toBe(0);
+      });
+    }
+
+    if (tc.forbiddenGaokaoKeywords) {
+      tc.forbiddenGaokaoKeywords.forEach((kw) => {
+        const leaked = mathData.gaokaoPoints?.filter((gp) =>
+          gp.text.includes(kw),
+        );
+        expect(
+          leaked?.length || 0,
+          `[${name}] 右屏发生跨模式考点污染，检测到不相干考点: ${kw}`,
+        ).toBe(0);
+      });
+    }
+
+    if (tc.expectedWarningCount !== undefined) {
+      expect(
+        mathData.warnings.length,
+        `[${name}] 预警数量不符合预期: 期望 ${tc.expectedWarningCount}，实际 ${mathData.warnings.length}`,
+      ).toBe(tc.expectedWarningCount);
     }
   });
 }

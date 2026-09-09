@@ -36,7 +36,9 @@ export function TranscendentalScene({
   const x0 = params.x0 ?? 0;
   const a = params.a ?? 1.0;
   const isShiftMode = mode === "exp" && subMode === "shift_1";
+  const isTangent1Exp = mode === "exp" && subMode === "tangent_1";
   const isQuadraticBound = mode === "log" && subMode === "quadratic_bound";
+  const isTangentELog = mode === "log" && subMode === "tangent_e";
 
   // 1. 拖拽回调
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
@@ -76,8 +78,8 @@ export function TranscendentalScene({
   const expDiffAreaD = useMemo(() => {
     if (mode !== "exp") return "";
     const points: { x: number; y: number }[] = [];
-    const xMin = isShiftMode ? -1.5 : -2.5;
-    const xMax = isShiftMode ? 3.0 : 2.5;
+    const xMin = isShiftMode ? -1.5 : isTangent1Exp ? -1.0 : -2.5;
+    const xMax = isShiftMode ? 3.0 : isTangent1Exp ? 2.2 : 2.5;
     const steps = 40;
     const dx = (xMax - xMin) / steps;
 
@@ -88,7 +90,7 @@ export function TranscendentalScene({
     }
     for (let i = steps; i >= 0; i--) {
       const x = xMin + i * dx;
-      const y = isShiftMode ? x : x + 1;
+      const y = isShiftMode ? x : isTangent1Exp ? Math.E * x : x + 1;
       points.push(mathToDesign(x, y, scale));
     }
 
@@ -101,19 +103,23 @@ export function TranscendentalScene({
         .join(" ") +
       " Z"
     );
-  }, [mode, isShiftMode, expFn, scale]);
+  }, [mode, isShiftMode, isTangent1Exp, expFn, scale]);
 
   const logDiffAreaD = useMemo(() => {
     if (mode !== "log") return "";
     const points: { x: number; y: number }[] = [];
-    const xMin = isQuadraticBound ? 0.2 : 0.15;
-    const xMax = 3.5;
+    const xMin = isQuadraticBound ? 0.2 : isTangentELog ? 0.3 : 0.15;
+    const xMax = isTangentELog ? 3.8 : 3.5;
     const steps = 40;
     const dx = (xMax - xMin) / steps;
 
     for (let i = 0; i <= steps; i++) {
       const x = xMin + i * dx;
-      const y = isQuadraticBound ? 0.5 * (x * x - 1) : x - 1;
+      const y = isQuadraticBound
+        ? 0.5 * (x * x - 1)
+        : isTangentELog
+          ? x / Math.E
+          : x - 1;
       points.push(mathToDesign(x, y, scale));
     }
     for (let i = steps; i >= 0; i--) {
@@ -131,7 +137,7 @@ export function TranscendentalScene({
         .join(" ") +
       " Z"
     );
-  }, [mode, isQuadraticBound, scale]);
+  }, [mode, isQuadraticBound, isTangentELog, scale]);
 
   const chainDiffAreaD = useMemo(() => {
     if (mode !== "chain") return "";
@@ -166,14 +172,16 @@ export function TranscendentalScene({
   // 6. 纯极简学术点标解算 (利用 SceneLabelGroup 算法)
   const modeLabels = useMemo<LabelItem[]>(() => {
     if (mode === "exp") {
-      const p0 = mathToDesign(isShiftMode ? 1 : 0, 1, scale);
+      const p0X = isShiftMode ? 1 : isTangent1Exp ? 1 : 0;
+      const p0Y = isShiftMode ? 1 : isTangent1Exp ? Math.E : 1;
+      const p0 = mathToDesign(p0X, p0Y, scale);
       const pDyn = mathToDesign(x0, expY0, scale);
       const items: LabelItem[] = [
         {
           key: "p0",
           x: p0.x,
           y: p0.y,
-          text: "P₀",
+          text: isTangent1Exp ? "P₁" : "P₀",
           color: MATH_COLORS.focusPoint,
           fontSize: fontScale(12),
           preferredPlacement: "top-left",
@@ -190,14 +198,16 @@ export function TranscendentalScene({
       ];
       return items;
     } else if (mode === "log") {
-      const p0 = mathToDesign(1, 0, scale);
+      const p0X = isTangentELog ? Math.E : 1;
+      const p0Y = isTangentELog ? 1 : 0;
+      const p0 = mathToDesign(p0X, p0Y, scale);
       const pDyn = mathToDesign(validLogX0, logY0, scale);
       const items: LabelItem[] = [
         {
           key: "p0",
           x: p0.x,
           y: p0.y,
-          text: "P₀",
+          text: isTangentELog ? "P₁" : "P₀",
           color: MATH_COLORS.focusPoint,
           fontSize: fontScale(12),
           preferredPlacement: "bottom-left",
@@ -259,7 +269,8 @@ export function TranscendentalScene({
       ];
       return items;
     } else {
-      const p0 = mathToDesign(0, 1, scale);
+      const isExpAx = subMode === "exp_ax";
+      const p0 = mathToDesign(isExpAx ? 1 : 0, isExpAx ? Math.E : 1, scale);
       const items: LabelItem[] = [
         {
           key: "p0",
@@ -275,7 +286,10 @@ export function TranscendentalScene({
     }
   }, [
     mode,
+    subMode,
     isShiftMode,
+    isTangent1Exp,
+    isTangentELog,
     x0,
     expY0,
     validLogX0,
@@ -304,7 +318,13 @@ export function TranscendentalScene({
 
           {/* 基准切线 */}
           <FunctionGraph
-            fn={isShiftMode ? (x) => x : (x) => x + 1}
+            fn={
+              isShiftMode
+                ? (x) => x
+                : isTangent1Exp
+                  ? (x) => Math.E * x
+                  : (x) => x + 1
+            }
             scale={scale}
             color={MATH_COLORS.tangentLine}
             strokeWidth={2.5}
@@ -328,10 +348,10 @@ export function TranscendentalScene({
             strokeDasharray="3 3"
           />
 
-          {/* 基准切点 P0 */}
+          {/* 基准切点 P0 / P1 */}
           <MathPoint
-            cx={isShiftMode ? 1 : 0}
-            cy={1}
+            cx={isShiftMode ? 1 : isTangent1Exp ? 1 : 0}
+            cy={isShiftMode ? 1 : isTangent1Exp ? Math.E : 1}
             scale={scale}
             color={MATH_COLORS.focusPoint}
             fontScale={fontScale}
@@ -371,6 +391,14 @@ export function TranscendentalScene({
               strokeWidth={2.5}
               strokeDasharray="5 4"
             />
+          ) : isTangentELog ? (
+            <FunctionGraph
+              fn={(x) => x / Math.E}
+              scale={scale}
+              color={MATH_COLORS.tangentLine}
+              strokeWidth={2.5}
+              strokeDasharray="6 4"
+            />
           ) : (
             <FunctionGraph
               fn={(x) => x - 1}
@@ -407,10 +435,10 @@ export function TranscendentalScene({
             fontScale={fontScale}
           />
 
-          {/* 基准切点 P0 */}
+          {/* 基准切点 P0 / P1 */}
           <MathPoint
-            cx={1}
-            cy={0}
+            cx={isTangentELog ? Math.E : 1}
+            cy={isTangentELog ? 1 : 0}
             scale={scale}
             color={MATH_COLORS.focusPoint}
             fontScale={fontScale}
@@ -544,15 +572,23 @@ export function TranscendentalScene({
           />
 
           {/* 临界切点 P0 */}
-          <MathPoint
-            cx={0}
-            cy={1}
-            scale={scale}
-            color={
-              a === 1.0 ? MATH_COLORS.tangentLine : MATH_COLORS.paramSecondary
-            }
-            fontScale={fontScale}
-          />
+          {(() => {
+            const isExpAx = subMode === "exp_ax";
+            const isCrit = isExpAx
+              ? Math.abs(a - Math.E) < 0.05
+              : Math.abs(a - 1.0) < 0.05;
+            return (
+              <MathPoint
+                cx={isExpAx ? 1 : 0}
+                cy={isExpAx ? Math.E : 1}
+                scale={scale}
+                color={
+                  isCrit ? MATH_COLORS.tangentLine : MATH_COLORS.paramSecondary
+                }
+                fontScale={fontScale}
+              />
+            );
+          })()}
         </g>
       )}
 

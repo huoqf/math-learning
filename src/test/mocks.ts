@@ -45,12 +45,16 @@ export const mockContainerRef = {
   current: null,
 } as RefObject<HTMLDivElement | null>;
 
-vi.mock("@/hooks", () => ({
-  useAnimationViewport: () => ({
-    containerRef: mockContainerRef,
-    canvasSize: mockCanvasSize,
-    vp: mockVp,
-    preset: { width: 840, height: 650 },
-  }),
-  useSceneScale: () => mockScale,
-}));
+vi.mock("@/hooks", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    useAnimationViewport: () => ({
+      containerRef: mockContainerRef,
+      canvasSize: mockCanvasSize,
+      vp: mockVp,
+      preset: { width: 840, height: 650 },
+    }),
+    useSceneScale: () => mockScale,
+  };
+});

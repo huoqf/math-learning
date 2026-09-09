@@ -26,6 +26,8 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         expectedMnemonic: "三垂直棱补长方",
         expectedReasoningSymbols: ["2R", "d^2", "a^2 + b^2 + c^2"],
         expectedQuantityLabels: ["补形体对角线", "外接球半径", "外接球表面积"],
+        forbiddenTheoremKeywords: ["柱体", "汉堡"],
+        expectedTheoremsKeywords: ["墙角模型"],
       },
     ]);
   });
@@ -59,6 +61,8 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
           "外接球半径",
           "外接球表面积",
         ],
+        forbiddenTheoremKeywords: ["长方体", "墙角"],
+        expectedTheoremsKeywords: ["柱体模型"],
       },
     ]);
   });
@@ -124,7 +128,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     ]);
   });
 
-  it("超越函数切线放缩：看板构建与临界预警契约验证", () => {
+  it("超越函数切线放缩：看板构建、跨模式隔离与临界预警契约验证", () => {
     // 1. e^x >= ax + 1 模型: a <= 1 无警告, a > 1 有警告
     const panelAx1Ok = buildTranscendentalPanel(
       { a: 1.0 },
@@ -152,14 +156,47 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     );
     expect(panelAxWarn.warnings.length).toBe(1);
 
-    // 3. 定理优先级与模式联动
+    // 3. 跨模式定理与考点隔离核验 (严禁显示不相干内容)
     const expPanel = buildTranscendentalPanel({ x0: 0 }, { mode: "exp" });
     expect(expPanel.theorems[0].name).toContain("指数基准切线");
     expect(expPanel.theorems[0].level).toBe("core");
+    // 严格断言：指数模式下绝不能出现对数定理或夹逼定理
+    expect(
+      expPanel.theorems.some(
+        (t) => t.name.includes("对数") || t.name.includes("夹逼"),
+      ),
+    ).toBe(false);
+    expect(
+      expPanel.gaokaoPoints.some(
+        (gp) => gp.text.includes("对数") || gp.text.includes("夹逼"),
+      ),
+    ).toBe(false);
+
+    // 次级切点 x0=1 下，切线为 y = ex，相切处差值必须为 0.000
+    const expTangent1Panel = buildTranscendentalPanel(
+      { x0: 1.0 },
+      { mode: "exp", subMode: "tangent_1" },
+    );
+    const diffQty = expTangent1Panel.quantities.find((q) =>
+      q.label.includes("放缩差值"),
+    );
+    expect(diffQty).toBeDefined();
+    expect(Number(diffQty?.value)).toBeCloseTo(0.0, 3);
 
     const logPanel = buildTranscendentalPanel({ x0: 1 }, { mode: "log" });
     expect(logPanel.theorems[0].name).toContain("对数基准切线");
     expect(logPanel.theorems[0].level).toBe("core");
+    expect(
+      logPanel.theorems.some(
+        (t) => t.name.includes("指数基准") || t.name.includes("夹逼"),
+      ),
+    ).toBe(false);
+
+    const chainPanel = buildTranscendentalPanel({}, { mode: "chain" });
+    expect(chainPanel.theorems.some((t) => t.name.includes("夹逼"))).toBe(true);
+    expect(chainPanel.theorems.some((t) => t.name.includes("求参"))).toBe(
+      false,
+    );
   });
 
   it("立体几何：异面直线公垂线与空间距离极值应当满足三步推演与极值双直角契约", () => {

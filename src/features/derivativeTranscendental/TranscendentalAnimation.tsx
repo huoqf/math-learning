@@ -11,12 +11,16 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useScenario } from "@/hooks/useScenario";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TranscendentalScene } from "./components/TranscendentalScene";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams } from "@/data/registries/transcendental";
+import {
+  defaultParams,
+  transcendentalScenarios,
+} from "@/data/registries/transcendental";
 import type { TranscendentalMode } from "@/math/transcendental";
 
 export function TranscendentalAnimation() {
@@ -24,7 +28,7 @@ export function TranscendentalAnimation() {
     ...defaultParams,
   }));
   const [mode, setMode] = useState<TranscendentalMode>("exp");
-  const [preset, setPreset] = useState<string>("free");
+  const [preset, setPreset] = useState<string>("tangent_0");
   const [subMode, setSubMode] = useState<string>("tangent_0");
 
   // 1. Viewport 与自适应画布 (840x650 full preset)
@@ -39,7 +43,20 @@ export function TranscendentalAnimation() {
     yRange: [-3, 5],
   });
 
-  // 3. 右屏数学量组装
+  // 3. 当前探究模式下的统一场景列表 (SSOT)
+  const currentScenarios = useMemo(() => {
+    return transcendentalScenarios[mode] ?? [];
+  }, [mode]);
+
+  // 4. 数学情景统一驱动 Hook (三屏严格对账)
+  const { tipProps, selectScenario, isParamLocked } = useScenario({
+    scenarios: currentScenarios,
+    activeKey: preset,
+    params,
+    onParamsChange: setParams,
+  });
+
+  // 5. 右屏数学量组装
   const mathData = useMemo(
     () =>
       buildMathQuantities("anim-derivative-transcendental", params, {
@@ -50,7 +67,7 @@ export function TranscendentalAnimation() {
     [params, mode, subMode, preset],
   );
 
-  // 4. 左屏动态参数配置（根据模式动态调整定义域与特征刻度，彻底杜绝无效负数定义域）
+  // 6. 左屏动态参数配置（根据模式动态调整定义域与特征刻度）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     if (mode === "exp") {
       return [
@@ -66,16 +83,17 @@ export function TranscendentalAnimation() {
           description: "控制 $e^x$ 切点位置",
           descriptionFormula: `控制 $e^x$ 切线切点 $\\color{${MATH_COLORS.paramPrimary}}{x_0}$`,
           importance: "core",
+          disabled: isParamLocked("x0"),
           marks: [
             {
               value: 0,
               variant: "critical",
-              label: "基准",
+              label: "基准一",
               labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=0}`,
             },
             {
               value: 1,
-              label: "切点",
+              label: "基准二",
               labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
             },
           ],
@@ -95,16 +113,17 @@ export function TranscendentalAnimation() {
           description: "控制 $\\ln x$ 切点位置 ($x > 0$)",
           descriptionFormula: `定义域保护 $\\color{${MATH_COLORS.paramPrimary}}{x_0} > 0$`,
           importance: "core",
+          disabled: isParamLocked("x0"),
           marks: [
             {
               value: 1,
               variant: "critical",
-              label: "基准",
+              label: "基准一",
               labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
             },
             {
               value: 2.7,
-              label: "e点",
+              label: "基准二",
               labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=e}`,
             },
           ],
@@ -124,6 +143,7 @@ export function TranscendentalAnimation() {
           description: "观察三曲线夹逼态势",
           descriptionFormula: "观察 $x>0$ 处的包络差",
           importance: "core",
+          disabled: isParamLocked("x0"),
           marks: [
             {
               value: 1,
@@ -150,6 +170,7 @@ export function TranscendentalAnimation() {
               ? "直线 $y = ax$ 斜率"
               : "直线 $y = ax + 1$ 斜率",
           importance: "core",
+          disabled: isParamLocked("a"),
           marks: [
             {
               value: 0,
@@ -172,7 +193,7 @@ export function TranscendentalAnimation() {
         },
       ];
     }
-  }, [params, mode, subMode]);
+  }, [params, mode, subMode, isParamLocked]);
 
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => ({ ...prev, [key]: value }));
@@ -184,15 +205,29 @@ export function TranscendentalAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // 5. 悬浮公式字符串拼接（三位一体色彩绑定：paramPrimary #EF4444）
+  // 7. 悬浮公式字符串拼接（三位一体色彩绑定：paramPrimary #EF4444）
   const equationLatex = useMemo(() => {
     const pColor = MATH_COLORS.paramPrimary;
     if (mode === "exp") {
       const x0Val = params.x0.toFixed(1);
-      return `f(x) = e^x \\ge \\color{${pColor}}{e^{${x0Val}}}(x - \\color{${pColor}}{${x0Val}}) + e^{${x0Val}} \\ge x + 1`;
+      if (subMode === "shift_1") {
+        return `f(x) = e^{x-1} \\ge \\color{${pColor}}{x}`;
+      } else if (subMode === "tangent_1") {
+        return `f(x) = e^x \\ge \\color{${pColor}}{e}x`;
+      } else if (subMode === "tangent_0") {
+        return `f(x) = e^x \\ge \\color{${pColor}}{x + 1}`;
+      }
+      return `f(x) = e^x \\ge \\color{${pColor}}{e^{${x0Val}}}(x - \\color{${pColor}}{${x0Val}}) + e^{${x0Val}}`;
     } else if (mode === "log") {
       const x0Val = params.x0 > 0 ? params.x0.toFixed(1) : "1.0";
-      return `g(x) = \\ln x \\le \\frac{1}{\\color{${pColor}}{${x0Val}}}(x - \\color{${pColor}}{${x0Val}}) + \\ln \\color{${pColor}}{${x0Val}} \\le x - 1`;
+      if (subMode === "quadratic_bound") {
+        return `g(x) = \\ln x \\le \\color{${pColor}}{\\frac{x^2-1}{2}} \\le x - 1`;
+      } else if (subMode === "tangent_e") {
+        return `g(x) = \\ln x \\le \\color{${pColor}}{\\frac{x}{e}}`;
+      } else if (subMode === "tangent_1") {
+        return `g(x) = \\ln x \\le \\color{${pColor}}{x - 1}`;
+      }
+      return `g(x) = \\ln x \\le \\frac{1}{\\color{${pColor}}{${x0Val}}}(x - \\color{${pColor}}{${x0Val}}) + \\ln \\color{${pColor}}{${x0Val}}`;
     } else if (mode === "chain") {
       const x0Val = (params.x0 > 0 ? params.x0 : 1.0).toFixed(1);
       return `\\ln \\color{${pColor}}{${x0Val}} + 1 \\le \\color{${pColor}}{${x0Val}} \\le e^{\\color{${pColor}}{${x0Val}} - 1}`;
@@ -205,236 +240,64 @@ export function TranscendentalAnimation() {
     }
   }, [mode, subMode, params.x0, params.a]);
 
-  // 6. 模式切换重置参数
+  // 8. 模式切换重置参数与默认情景
   const handleModeChange = (newMode: string) => {
     const m = newMode as TranscendentalMode;
     setMode(m);
-    setPreset("free");
     if (m === "exp") {
+      setPreset("tangent_0");
       setSubMode("tangent_0");
       setParams((prev) => ({ ...prev, x0: 0.0 }));
     } else if (m === "log") {
+      setPreset("tangent_1");
       setSubMode("tangent_1");
       setParams((prev) => ({ ...prev, x0: 1.0 }));
     } else if (m === "chain") {
+      setPreset("tangent_1");
       setSubMode("default");
       setParams((prev) => ({ ...prev, x0: 1.0 }));
     } else if (m === "param") {
+      setPreset("exp_ax_1_crit");
       setSubMode("exp_ax_1");
       setParams((prev) => ({ ...prev, a: 1.0 }));
     }
   };
 
-  // 7. 预设选择回调 (黄金 2x2 规范)
-  const handlePresetChange = (k: string) => {
+  // 9. 预设情景选择回调 (useScenario 自动派发参数并特化 subMode)
+  const handleScenarioChange = (k: string) => {
     setPreset(k);
+    selectScenario(k);
+
     if (mode === "exp") {
-      if (k === "tangent_0") {
-        setSubMode("tangent_0");
-        handleParamChange("x0", 0.0);
+      if (k === "shift_1") {
+        setSubMode("shift_1");
       } else if (k === "tangent_1") {
         setSubMode("tangent_1");
-        handleParamChange("x0", 1.0);
-      } else if (k === "shift_1") {
-        setSubMode("shift_1");
-        handleParamChange("x0", 1.0);
+      } else {
+        setSubMode("tangent_0");
       }
     } else if (mode === "log") {
-      if (k === "tangent_1") {
-        setSubMode("tangent_1");
-        handleParamChange("x0", 1.0);
+      if (k === "quadratic_bound") {
+        setSubMode("quadratic_bound");
       } else if (k === "tangent_e") {
         setSubMode("tangent_e");
-        handleParamChange("x0", 2.718);
-      } else if (k === "quadratic_bound") {
-        setSubMode("quadratic_bound");
-        handleParamChange("x0", 1.0);
-      }
-    } else if (mode === "chain") {
-      if (k === "tangent_1") {
-        handleParamChange("x0", 1.0);
-      } else if (k === "pos_2") {
-        handleParamChange("x0", 2.0);
-      } else if (k === "pos_half") {
-        handleParamChange("x0", 0.5);
+      } else {
+        setSubMode("tangent_1");
       }
     } else if (mode === "param") {
-      if (k === "exp_ax_1_crit") {
-        setSubMode("exp_ax_1");
-        handleParamChange("a", 1.0);
-      } else if (k === "exp_ax_crit") {
+      if (k === "exp_ax_crit") {
         setSubMode("exp_ax");
-        handleParamChange("a", Math.E);
-      } else if (k === "horizontal") {
+      } else {
         setSubMode("exp_ax_1");
-        handleParamChange("a", 0.0);
       }
     }
   };
-
-  // 教学导引与启发式设问配置（全面接入 KatexFormula 专业数学公式渲染，深度联动 mode/subMode/preset）
-  const tipConfig = useMemo(() => {
-    switch (mode) {
-      case "exp":
-        if (preset === "tangent_0") {
-          return {
-            variant: "primary" as const,
-            badge: "指数放缩 · 基准切点",
-            condition: (
-              <span>
-                切点选定在 <KatexFormula formula="P_0(0,1)" mode="inline" />{" "}
-                处，此时切线方程为{" "}
-                <KatexFormula formula="y=x+1" mode="inline" />。
-              </span>
-            ),
-            question: (
-              <span>
-                观察曲线凹凸性，为何切线能在实数集上始终位于曲线下方且仅在切点处取等？
-              </span>
-            ),
-          };
-        }
-        if (preset === "shift_1") {
-          return {
-            variant: "primary" as const,
-            badge: "指数放缩 · 平移变体",
-            condition: (
-              <span>
-                曲线平移为 <KatexFormula formula="f(x)=e^{x-1}" mode="inline" />
-                ，过切点 <KatexFormula
-                  formula="(1,1)"
-                  mode="inline"
-                /> 的切线为 <KatexFormula formula="y=x" mode="inline" />。
-              </span>
-            ),
-            question: (
-              <span>
-                平移后的放缩形式{" "}
-                <KatexFormula formula="e^{x-1} \ge x" mode="inline" />{" "}
-                如何与对数切线不等式形成对偶互通？
-              </span>
-            ),
-          };
-        }
-        return {
-          variant: "primary" as const,
-          badge: "指数放缩 · 凸性与切线",
-          condition: (
-            <span>
-              指数曲线 <KatexFormula formula="f(x)=e^x" mode="inline" />{" "}
-              为下凸函数，切线始终位于曲线下方。
-            </span>
-          ),
-          question: (
-            <span>
-              拖动切点 <KatexFormula formula="x_0" mode="inline" />
-              ，观察为何基准切点 <KatexFormula
-                formula="x_0=0"
-                mode="inline"
-              />{" "}
-              处的切线 <KatexFormula formula="y=x+1" mode="inline" />{" "}
-              能够提供截距为 1 的全局线性下界？
-            </span>
-          ),
-        };
-      case "log":
-        if (preset === "quadratic_bound") {
-          return {
-            variant: "info" as const,
-            badge: "对数放缩 · 二次包络上界",
-            condition: (
-              <span>
-                在切点 <KatexFormula formula="P_0(1,0)" mode="inline" />{" "}
-                处引入二次抛物线上界{" "}
-                <KatexFormula formula="y=\frac{x^2-1}{2}" mode="inline" />。
-              </span>
-            ),
-            question: (
-              <span>
-                对比线性切线与二次放缩，在{" "}
-                <KatexFormula formula="x>1" mode="inline" />{" "}
-                区间内哪种放缩能提供更优的代数逼近精度？
-              </span>
-            ),
-          };
-        }
-        return {
-          variant: "info" as const,
-          badge: "对数放缩 · 上凸与二次界",
-          condition: (
-            <span>
-              对数曲线 <KatexFormula formula="g(x)=\ln x" mode="inline" /> (
-              <KatexFormula formula="x>0" mode="inline" />)
-              为上凸函数，切线始终位于曲线上方。
-            </span>
-          ),
-          question: (
-            <span>
-              对比线性切线{" "}
-              <KatexFormula formula="\ln x \le x-1" mode="inline" />{" "}
-              与抛物线上界{" "}
-              <KatexFormula formula="\ln x \le \frac{x^2-1}{2}" mode="inline" />{" "}
-              在 <KatexFormula formula="x>1" mode="inline" /> 时的逼近精度差异。
-            </span>
-          ),
-        };
-      case "chain":
-        return {
-          variant: "warning" as const,
-          badge: "双基准对偶 · 对称与夹逼",
-          condition: (
-            <span>
-              <KatexFormula formula="e^{x-1}" mode="inline" /> 与{" "}
-              <KatexFormula formula="\ln x+1" mode="inline" />{" "}
-              互为反函数，关于中轴线{" "}
-              <KatexFormula formula="y=x" mode="inline" /> 对称。
-            </span>
-          ),
-          question: (
-            <span>
-              三条曲线在 <KatexFormula formula="(1,1)" mode="inline" />{" "}
-              处公共相切，高考中如何利用{" "}
-              <KatexFormula formula="y=x" mode="inline" />{" "}
-              这一“中间桥梁”实现双向链式放缩？
-            </span>
-          ),
-        };
-      case "param":
-        return {
-          variant: "primary" as const,
-          badge: "切线临界 · 恒成立求参",
-          condition: (
-            <span>
-              考察直线{" "}
-              <KatexFormula
-                formula={subMode === "exp_ax" ? "y=ax" : "y=ax+1"}
-                mode="inline"
-              />{" "}
-              与指数曲线 <KatexFormula formula="e^x" mode="inline" />{" "}
-              的位置关系。
-            </span>
-          ),
-          question: (
-            <span>
-              斜率 <KatexFormula formula="a" mode="inline" />{" "}
-              连续增大时，为何“曲线与直线相切”恰好是恒成立与产生交点的临界分水岭？
-            </span>
-          ),
-        };
-      default:
-        return {
-          variant: "primary" as const,
-          badge: "超越函数切线放缩",
-          condition: <span>利用导数切线构造不等式放缩桥梁。</span>,
-          question: <span>探究切线方程与曲线凹凸性的代数几何关系。</span>,
-        };
-    }
-  }, [mode, subMode, preset]);
 
   // 右下角图例配置 (模式专属)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
     if (mode === "exp") {
       const isShift = subMode === "shift_1";
+      const isTangent1 = subMode === "tangent_1";
       return [
         {
           color: MATH_COLORS.function,
@@ -443,14 +306,18 @@ export function TranscendentalAnimation() {
         },
         {
           color: MATH_COLORS.tangentLine,
-          label: "基准切线",
-          formula: isShift ? "y = x" : "y = x + 1",
+          label: isTangent1 ? "次级切线" : "基准切线",
+          formula: isShift ? "y = x" : isTangent1 ? "y = ex" : "y = x + 1",
           style: "dash",
         },
         {
           color: MATH_COLORS.focusPoint,
-          label: "基准切点",
-          formula: isShift ? "P_0(1, 1)" : "P_0(0, 1)",
+          label: isTangent1 ? "次级切点" : "基准切点",
+          formula: isShift
+            ? "P_0(1, 1)"
+            : isTangent1
+              ? "P_1(1, e)"
+              : "P_0(0, 1)",
           style: "point",
         },
         {
@@ -467,6 +334,7 @@ export function TranscendentalAnimation() {
       ];
     } else if (mode === "log") {
       const isQuad = subMode === "quadratic_bound";
+      const isTangentE = subMode === "tangent_e";
       return [
         {
           color: MATH_COLORS.function,
@@ -475,14 +343,22 @@ export function TranscendentalAnimation() {
         },
         {
           color: isQuad ? MATH_COLORS.paramSecondary : MATH_COLORS.tangentLine,
-          label: isQuad ? "二次放缩上界" : "线性切线上界",
-          formula: isQuad ? "y = \\frac{x^2-1}{2}" : "y = x - 1",
+          label: isQuad
+            ? "二次放缩上界"
+            : isTangentE
+              ? "次级切线上界"
+              : "线性切线上界",
+          formula: isQuad
+            ? "y = \\frac{x^2-1}{2}"
+            : isTangentE
+              ? "y = \\frac{x}{e}"
+              : "y = x - 1",
           style: "dash",
         },
         {
           color: MATH_COLORS.focusPoint,
-          label: "基准切点",
-          formula: "P_0(1, 0)",
+          label: isTangentE ? "次级切点" : "基准切点",
+          formula: isTangentE ? "P_1(e, 1)" : "P_0(1, 0)",
           style: "point",
         },
         {
@@ -531,6 +407,7 @@ export function TranscendentalAnimation() {
         },
       ];
     } else {
+      const isExpAx = subMode === "exp_ax";
       return [
         {
           color: MATH_COLORS.function,
@@ -539,13 +416,13 @@ export function TranscendentalAnimation() {
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: subMode === "exp_ax" ? "y = ax" : "y = ax + 1",
+          formula: isExpAx ? "y = ax" : "y = ax + 1",
           style: "solid",
         },
         {
           color: MATH_COLORS.tangentLine,
           label: "临界切点",
-          formula: "P_0(0, 1)",
+          formula: isExpAx ? "P_0(1, e)" : "P_0(0, 1)",
           style: "point",
         },
       ];
@@ -587,70 +464,19 @@ export function TranscendentalAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 高考典型切点与变体 */}
-          {mode === "exp" && (
-            <LeftPanelSection title="高考典型切点">
-              <SelectGrid
-                items={[
-                  {
-                    key: "free",
-                    label: "自由探究",
-                    description: "自选切点位置",
-                  },
-                  {
-                    key: "tangent_0",
-                    label: "基准切点",
-                    description: "原点切线 x₀=0",
-                  },
-                  {
-                    key: "tangent_1",
-                    label: "次级切点",
-                    description: "切点 x₀=1",
-                  },
-                  {
-                    key: "shift_1",
-                    label: "平移变体",
-                    description: "指数向右平移",
-                  },
-                ]}
-                value={preset}
-                onChange={handlePresetChange}
-                columns={2}
-              />
-            </LeftPanelSection>
-          )}
-
-          {mode === "log" && (
-            <LeftPanelSection title="高考典型切点">
-              <SelectGrid
-                items={[
-                  {
-                    key: "free",
-                    label: "自由探究",
-                    description: "自选切点位置",
-                  },
-                  {
-                    key: "tangent_1",
-                    label: "基准切点",
-                    description: "对数切点 x₀=1",
-                  },
-                  {
-                    key: "tangent_e",
-                    label: "次级切点",
-                    description: "常数切点 x₀=e",
-                  },
-                  {
-                    key: "quadratic_bound",
-                    label: "二次放缩",
-                    description: "抛物线上界",
-                  },
-                ]}
-                value={preset}
-                onChange={handlePresetChange}
-                columns={2}
-              />
-            </LeftPanelSection>
-          )}
+          {/* 2. 典型情景与考法 (全模式统一接入 ScenarioSpec DSL 2x2 网格) */}
+          <LeftPanelSection title="典型情景与考法">
+            <SelectGrid
+              items={currentScenarios.map((s) => ({
+                key: s.id,
+                label: s.name,
+                description: s.badge.split(" · ")[1] || s.name,
+              }))}
+              value={preset}
+              onChange={handleScenarioChange}
+              columns={2}
+            />
+          </LeftPanelSection>
 
           {/* 3. 核心参数调节滑块 */}
           <LeftPanelSection title="参数调节">
@@ -664,15 +490,17 @@ export function TranscendentalAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 4. 教学导引与考题设问 */}
-          <div className="mt-auto">
-            <TipCard
-              variant={tipConfig.variant}
-              badge={tipConfig.badge}
-              condition={tipConfig.condition}
-              question={tipConfig.question}
-            />
-          </div>
+          {/* 4. 教学导引与考题设问 (由 useScenario SSOT 驱动闭环) */}
+          {tipProps && (
+            <div className="mt-auto">
+              <TipCard
+                variant={tipProps.variant}
+                badge={tipProps.badge}
+                condition={tipProps.condition}
+                question={tipProps.question}
+              />
+            </div>
+          )}
         </LeftPanel>
       }
       center={
@@ -708,8 +536,10 @@ export function TranscendentalAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           mnemonic={mathData.mnemonic}
-          title="切线放缩模型看板"
+          title="数学解析看板"
         />
       }
     />
