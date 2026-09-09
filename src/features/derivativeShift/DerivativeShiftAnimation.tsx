@@ -23,13 +23,16 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
 import { defaultParams, paramMeta } from "@/data/registries/derivativeShift";
+import {
+  getDerivativeShiftLegendItems,
+  type ShiftMode,
+  type ShiftSubModel,
+} from "./constants";
 
 export function DerivativeShiftAnimation() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
-  const [activeMode, setActiveMode] = useState<
-    "implicit_zero" | "shift_symmetric" | "log_mean"
-  >("implicit_zero");
-  const [subModel, setSubModel] = useState<string>("x_ln_x");
+  const [activeMode, setActiveMode] = useState<ShiftMode>("implicit_zero");
+  const [subModel, setSubModel] = useState<ShiftSubModel>("x_ln_x");
 
   // 1. Viewport + 自适应画布 (固定 Preset: full)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -43,25 +46,26 @@ export function DerivativeShiftAnimation() {
     yRange: [-2.5, 3.5],
   });
 
-  // 3. 右屏数学量数据
-  const mathData = useMemo(
-    () =>
-      buildMathQuantities("anim-derivative-shift", params, {
-        activeMode,
-        subModel,
-      }),
-    [params, activeMode, subModel],
-  );
+  // 3. 右屏看板聚合数据组装
+  const mathData = useMemo(() => {
+    return buildMathQuantities("anim-derivative-shift", params, {
+      activeMode,
+      subModel,
+    });
+  }, [params, activeMode, subModel]);
 
-  // 4. 左屏声明式参数过滤
+  // 4. 左屏动态过滤参数配置列表
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keysByMode: Record<string, string[]> = {
-      implicit_zero: ["a"],
-      shift_symmetric: ["k"],
-      log_mean: ["x1", "x2"],
-    };
-    const keys = keysByMode[activeMode] ?? Object.keys(paramMeta);
-    return keys
+    let allowedKeys: string[] = [];
+    if (activeMode === "implicit_zero") {
+      allowedKeys = ["a"];
+    } else if (activeMode === "shift_symmetric") {
+      allowedKeys = ["k"];
+    } else {
+      allowedKeys = ["x1", "x2"];
+    }
+
+    return allowedKeys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
@@ -69,11 +73,10 @@ export function DerivativeShiftAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          group: meta.group,
           value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
-          step: meta.step ?? 0.05,
+          step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
@@ -87,133 +90,74 @@ export function DerivativeShiftAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 顶部悬浮公式字符串
+  // 顶部悬浮公式字符串（符号自适应与色彩安全绑定）
   const topFormulaLatex = useMemo(() => {
+    const formatCoeffTerm = (
+      coeff: number,
+      varName: string,
+      colorHex: string,
+    ) => {
+      const absVal = Math.abs(coeff);
+      const numStr = absVal.toFixed(2).replace(/\.?0+$/, "");
+      const signStr = coeff >= 0 ? " - " : " + ";
+      return `${signStr}\\color{${colorHex}}{${numStr}}${varName}`;
+    };
+
     if (activeMode === "implicit_zero") {
+      const aTerm = formatCoeffTerm(params.a, "x", MATH_COLORS.paramPrimary);
       if (subModel === "x_ln_x") {
-        return `f(x) = x \\ln x - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\.?0+$/, "")}} x + 1 \\quad (f'(x_0) = 0)`;
+        return `f(x) = x \\ln x${aTerm} + 1 \\quad (f'(x_0) = 0)`;
       }
-      return `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\.?0+$/, "")}} x \\quad (f'(x_0) = 0)`;
+      return `f(x) = e^x${aTerm} \\quad (f'(x_0) = 0)`;
     } else if (activeMode === "shift_symmetric") {
+      const kStr = params.k.toFixed(2).replace(/\.?0+$/, "");
       if (subModel === "xe_neg_x") {
-        return `f(x) = x e^{-x} = \\color{${MATH_COLORS.secantLine}}{${params.k.toFixed(2).replace(/\.?0+$/, "")}} \\implies f(x_1) = f(x_2) = k`;
+        return `f(x) = x e^{-x} = \\color{${MATH_COLORS.secantLine}}{${kStr}} \\implies f(x_1) = f(x_2) = k`;
       }
-      return `f(x) = \\frac{\\ln x}{x} = \\color{${MATH_COLORS.secantLine}}{${params.k.toFixed(2).replace(/\.?0+$/, "")}} \\implies f(x_1) = f(x_2) = k`;
+      return `f(x) = \\frac{\\ln x}{x} = \\color{${MATH_COLORS.secantLine}}{${kStr}} \\implies f(x_1) = f(x_2) = k`;
     }
-    return `L(x_1, x_2) = \\frac{x_1 - x_2}{\\ln x_1 - \\ln x_2} \\quad (x_1 = ${params.x1.toFixed(2).replace(/\.?0+$/, "")},\\, x_2 = ${params.x2.toFixed(2).replace(/\.?0+$/, "")})`;
+    const x1Str = params.x1.toFixed(2).replace(/\.?0+$/, "");
+    const x2Str = params.x2.toFixed(2).replace(/\.?0+$/, "");
+    return `L(x_1, x_2) = \\frac{x_1 - x_2}{\\ln x_1 - \\ln x_2} \\quad (x_1 = ${x1Str},\\, x_2 = ${x2Str})`;
   }, [activeMode, subModel, params.a, params.k, params.x1, params.x2]);
 
-  // 右下角图例配置 (模式专属：图线 + 特征点标对应)
+  // 右下角图例配置 (模式专属：规范解耦)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
+    return getDerivativeShiftLegendItems(activeMode, subModel);
+  }, [activeMode, subModel]);
+
+  // 教学导引结构化题设配置
+  const tipConfig = useMemo(() => {
     if (activeMode === "implicit_zero") {
-      return [
-        {
-          color: MATH_COLORS.function,
-          formula:
-            subModel === "x_ln_x"
-              ? "f(x) = x\\ln x - ax + 1"
-              : "f(x) = e^x - ax",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.derivative,
-          formula:
-            subModel === "x_ln_x"
-              ? "f'(x) = \\ln x + 1 - a"
-              : "f'(x) = e^x - a",
-          style: "dash",
-        },
-        {
-          color: MATH_COLORS.trace,
-          formula: subModel === "x_ln_x" ? "h(x) = 1 - x" : "h(x) = e^x(1 - x)",
-          style: "dot",
-        },
-        {
-          color: MATH_COLORS.paramPrimary,
-          formula: "P(x_0, f(x_0)) \\;(\\text{极值/消元点})",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.derivative,
-          formula: "x_0 \\;(\\text{导数零点})",
-          style: "hollow-point",
-        },
-      ];
-    } else if (activeMode === "shift_symmetric") {
-      return [
-        {
-          color: MATH_COLORS.function,
-          formula:
-            subModel === "xe_neg_x"
-              ? "f(x) = xe^{-x}"
-              : "f(x) = \\frac{\\ln x}{x}",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.functionTransformed,
-          formula: "y = f(2x_0 - x) \\;(\\text{对称曲线})",
-          style: "dash",
-        },
-        {
-          color: MATH_COLORS.secantLine,
-          formula: "y = k \\;(\\text{水平割线})",
-          style: "dot",
-        },
-        {
-          color: MATH_COLORS.function,
-          formula: "P_1, P_2 \\;(\\text{割线双交点})",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.functionTransformed,
-          formula: "P'_1(2x_0 - x_1, k) \\;(\\text{对称点})",
-          style: "hollow-point",
-        },
-        {
-          color: MATH_COLORS.paramSecondary,
-          formula: "M\\left(\\frac{x_1+x_2}{2}, k\\right) \\;(\\text{弦中点})",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.paramTertiary,
-          label: "偏移区间 [x₀, M]",
-          style: "area",
-        },
-      ];
-    } else {
-      return [
-        {
-          color: MATH_COLORS.function,
-          formula: "f(x) = \\ln x",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.secantLine,
-          formula: "P_1P_2 \\;(\\text{割线, 斜率 } 1/L)",
-          style: "dash",
-        },
-        {
-          color: MATH_COLORS.tangentLine,
-          formula: "T(L, \\ln L) \\;(\\text{平行切线点})",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.function,
-          formula: "G = \\sqrt{x_1 x_2} \\;(\\text{几何均值})",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.paramPrimary,
-          formula: "L = L(x_1, x_2) \\;(\\text{对数均值})",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.paramSecondary,
-          formula: "A = \\frac{x_1 + x_2}{2} \\;(\\text{算术均值})",
-          style: "point",
-        },
-      ];
+      const funcTex =
+        subModel === "x_ln_x" ? "f(x) = x\\ln x - ax + 1" : "f(x) = e^x - ax";
+      return {
+        variant: "primary" as const,
+        badge: "高考压轴 · 隐零点定理与消元",
+        condition: `已知超越函数 $${funcTex}$，导数零点 $x_0$ 无法显式解析求解。`,
+        question:
+          "设导数零点为 $x_0$，如何利用 $f'(x_0) = 0$ 构造消元轨迹方程求极值范围？",
+      };
     }
+    if (activeMode === "shift_symmetric") {
+      const funcTex =
+        subModel === "xe_neg_x" ? "f(x) = xe^{-x}" : "f(x) = \\frac{\\ln x}{x}";
+      return {
+        variant: "warning" as const,
+        badge: "高考压轴 · 极值点偏移与对称构造",
+        condition: `水平割线 $y = k$ 与曲线 $${funcTex}$ 交于两不等实根 $x_1 < x_2$。`,
+        question:
+          "已知 $f(x_1) = f(x_2) = k$，如何通过对称构造函数证明极值点偏移结论 $x_1 + x_2 > 2x_0$？",
+      };
+    }
+    return {
+      variant: "info" as const,
+      badge: "高考真题 · 对数均值不等式链",
+      condition:
+        "对于对数曲线 $f(x) = \\ln x$，在两正实数 $x_1 < x_2$ 间连结割线。",
+      question:
+        "验证几何均值 $G$、对数均值 $L$ 与算术均值 $A$ 构成的核心不等式链 $\\sqrt{x_1x_2} < L(x_1, x_2) < \\frac{x_1+x_2}{2}$。",
+    };
   }, [activeMode, subModel]);
 
   return (
@@ -226,13 +170,14 @@ export function DerivativeShiftAnimation() {
               tabs={[
                 { key: "implicit_zero", label: "隐零点与消元" },
                 { key: "shift_symmetric", label: "极值点偏移" },
-                { key: "log_mean", label: "对数均值" },
+                { key: "log_mean", label: "对数均值链" },
               ]}
               value={activeMode}
               onChange={(k) => {
-                setActiveMode(k);
-                if (k === "implicit_zero") setSubModel("x_ln_x");
-                else if (k === "shift_symmetric") setSubModel("xe_neg_x");
+                const mode = k as ShiftMode;
+                setActiveMode(mode);
+                if (mode === "implicit_zero") setSubModel("x_ln_x");
+                else if (mode === "shift_symmetric") setSubModel("xe_neg_x");
               }}
             />
           </LeftPanelSection>
@@ -245,17 +190,15 @@ export function DerivativeShiftAnimation() {
                   items={[
                     {
                       key: "x_ln_x",
-                      label: "对数多项",
-                      formula: "x \\ln x - ax + 1",
+                      label: "对数乘积型",
                     },
                     {
-                      key: "exp_minus_ax",
-                      label: "指数一次",
-                      formula: "e^x - ax",
+                      key: "e_x",
+                      label: "指数一次型",
                     },
                   ]}
                   value={subModel}
-                  onChange={(key) => setSubModel(key)}
+                  onChange={(key) => setSubModel(key as ShiftSubModel)}
                   columns={2}
                 />
               ) : (
@@ -263,17 +206,15 @@ export function DerivativeShiftAnimation() {
                   items={[
                     {
                       key: "xe_neg_x",
-                      label: "指数乘积",
-                      formula: "x e^{-x}",
+                      label: "指数乘积衰减型",
                     },
                     {
-                      key: "lnx_div_x",
-                      label: "对数商型",
-                      formula: "\\frac{\\ln x}{x}",
+                      key: "ln_x_div_x",
+                      label: "对数分式商型",
                     },
                   ]}
                   value={subModel}
-                  onChange={(key) => setSubModel(key)}
+                  onChange={(key) => setSubModel(key as ShiftSubModel)}
                   columns={2}
                 />
               )}
@@ -289,126 +230,13 @@ export function DerivativeShiftAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 5. 教学导引与高考设问 */}
-          {activeMode === "implicit_zero" && (
-            <TipCard variant="primary">
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>高考压轴 · 隐零点定理与消元</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    已知函数{" "}
-                    <KatexFormula
-                      formula={
-                        subModel === "x_ln_x"
-                          ? "f(x) = x\\ln x - ax + 1"
-                          : "f(x) = e^x - ax"
-                      }
-                      mode="inline"
-                    />
-                    ，导数零点 <KatexFormula formula="x_0" mode="inline" />{" "}
-                    无法显式解析求解。
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    设导数零点为 <KatexFormula formula="x_0" mode="inline" />
-                    ，求函数 <KatexFormula
-                      formula="f(x_0)"
-                      mode="inline"
-                    />{" "}
-                    极值范围或证明相关不等式。
-                  </span>
-                </div>
-              </div>
-            </TipCard>
-          )}
-
-          {activeMode === "shift_symmetric" && (
-            <TipCard variant="warning">
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>高考压轴 · 极值点偏移与对称构造</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    割线 <KatexFormula formula="y = k" mode="inline" /> 与曲线{" "}
-                    <KatexFormula
-                      formula={
-                        subModel === "xe_neg_x"
-                          ? "f(x) = xe^{-x}"
-                          : "f(x) = \\frac{\\ln x}{x}"
-                      }
-                      mode="inline"
-                    />{" "}
-                    交于两不等实根{" "}
-                    <KatexFormula formula="x_1 < x_2" mode="inline" />。
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    已知{" "}
-                    <KatexFormula formula="f(x_1) = f(x_2) = k" mode="inline" />
-                    ，求证极值点偏移结论{" "}
-                    <KatexFormula formula="x_1 + x_2 > 2x_0" mode="inline" />。
-                  </span>
-                </div>
-              </div>
-            </TipCard>
-          )}
-
-          {activeMode === "log_mean" && (
-            <TipCard variant="info">
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>高考压轴 · 对数均值不等式 (L-Mean)</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    对任意相异正实数{" "}
-                    <KatexFormula formula="x_1 < x_2" mode="inline" />
-                    ，定义对数平均数{" "}
-                    <KatexFormula
-                      formula="L(x_1, x_2) = \frac{x_1 - x_2}{\ln x_1 - \ln x_2}"
-                      mode="inline"
-                    />
-                    。
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    探究对数均值与几何均值{" "}
-                    <KatexFormula formula="\sqrt{x_1 x_2}" mode="inline" />
-                    、算术均值{" "}
-                    <KatexFormula
-                      formula="\frac{x_1+x_2}{2}"
-                      mode="inline"
-                    />{" "}
-                    的双边大小关系。
-                  </span>
-                </div>
-              </div>
-            </TipCard>
-          )}
+          {/* 4. 教学导引与高考设问 */}
+          <TipCard
+            variant={tipConfig.variant}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
+          />
         </LeftPanel>
       }
       center={

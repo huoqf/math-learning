@@ -170,7 +170,7 @@ export function findInflectionPoints(
 }
 
 /**
- * 求解极值点
+ * 求解极值点（支持三次、四次与混合函数，精准跟踪）
  */
 export function findExtremaPoints(
   fnKey: FnKey,
@@ -179,6 +179,59 @@ export function findExtremaPoints(
   const { a, b, c } = params;
   const extrema: ExtremaPointInfo[] = [];
 
+  // 通用单变量方程在区间 [xMin, xMax] 内的数值求根（网格扫描 + 二分法）
+  const findRoots = (
+    evalDeriv: (x: number) => number,
+    xMin: number,
+    xMax: number,
+    steps = 120,
+  ): number[] => {
+    const roots: number[] = [];
+    const dx = (xMax - xMin) / steps;
+    let prevX = xMin;
+    let prevVal = evalDeriv(prevX);
+
+    for (let i = 1; i <= steps; i++) {
+      const curX = xMin + i * dx;
+      const curVal = evalDeriv(curX);
+
+      if (Math.abs(curVal) < 1e-7) {
+        roots.push(curX);
+        prevX = curX;
+        prevVal = curVal;
+        continue;
+      }
+
+      if (prevVal * curVal < 0) {
+        // 存在变号零点，二分法精化
+        let left = prevX;
+        let right = curX;
+        for (let it = 0; it < 24; it++) {
+          const mid = (left + right) / 2;
+          const midVal = evalDeriv(mid);
+          if (Math.abs(midVal) < 1e-8) {
+            left = mid;
+            break;
+          }
+          if (prevVal * midVal < 0) {
+            right = mid;
+          } else {
+            left = mid;
+            prevVal = midVal;
+          }
+        }
+        const root = (left + right) / 2;
+        // 避免邻近重复点
+        if (!roots.some((r) => Math.abs(r - root) < 0.05)) {
+          roots.push(root);
+        }
+      }
+      prevX = curX;
+      prevVal = curVal;
+    }
+    return roots;
+  };
+
   if (fnKey === "cubic") {
     // f'(x) = 3ax^2 + 2bx + c = 0
     if (Math.abs(a) > 1e-6) {
@@ -186,39 +239,72 @@ export function findExtremaPoints(
       if (delta > 1e-6) {
         const x1 = (-2 * b + Math.sqrt(delta)) / (6 * a);
         const x2 = (-2 * b - Math.sqrt(delta)) / (6 * a);
-        const res1 = evalFunction(fnKey, params, x1);
-        const res2 = evalFunction(fnKey, params, x2);
+        const roots = [x1, x2].sort((p, q) => p - q);
 
-        // 由二阶导符号判定
-        const type1 = res1.ddy < 0 ? "max" : "min";
-        const type2 = res2.ddy < 0 ? "max" : "min";
-
-        extrema.push({
-          x: x1,
-          y: res1.y,
-          type: type1,
-          label: `${type1 === "max" ? "极大值点" : "极小值点"} (${x1.toFixed(2)}, ${res1.y.toFixed(2)})`,
-        });
-        extrema.push({
-          x: x2,
-          y: res2.y,
-          type: type2,
-          label: `${type2 === "max" ? "极大值点" : "极小值点"} (${x2.toFixed(2)}, ${res2.y.toFixed(2)})`,
+        roots.forEach((rx) => {
+          const res = evalFunction(fnKey, params, rx);
+          const type = res.ddy < 0 ? "max" : "min";
+          extrema.push({
+            x: rx,
+            y: res.y,
+            type,
+            label: `${type === "max" ? "极大值点" : "极小值点"} (${rx.toFixed(2)}, ${res.y.toFixed(2)})`,
+          });
         });
       }
-    }
-  } else if (fnKey === "mixed") {
-    // f'(x) = a(x+1)e^x + b = 0
-    // 当 b = 0 时，x = -1 处为极值点
-    if (Math.abs(a) > 1e-6 && Math.abs(b) < 1e-6) {
-      const xExt = -1;
+    } else if (Math.abs(b) > 1e-6) {
+      // 退化为二次函数：f'(x) = 2bx + c = 0 => x = -c / (2b)
+      const xExt = -c / (2 * b);
       const res = evalFunction(fnKey, params, xExt);
       const type = res.ddy < 0 ? "max" : "min";
       extrema.push({
         x: xExt,
         y: res.y,
         type,
-        label: `${type === "max" ? "极大值点" : "极小值点"} (-1, ${res.y.toFixed(2)})`,
+        label: `${type === "max" ? "极大值点" : "极小值点"} (${xExt.toFixed(2)}, ${res.y.toFixed(2)})`,
+      });
+    }
+  } else if (fnKey === "mixed") {
+    // f'(x) = a(x+1)e^x + b = 0
+    if (Math.abs(a) > 1e-6) {
+      const deriv = (x: number) => a * (x + 1) * Math.exp(x) + b;
+      const roots = findRoots(deriv, -5.5, 4.5);
+      roots.forEach((rx) => {
+        const res = evalFunction(fnKey, params, rx);
+        // 若二阶导大于0为极小值，小于0为极大值
+        const type = res.ddy < 0 ? "max" : "min";
+        extrema.push({
+          x: rx,
+          y: res.y,
+          type,
+          label: `${type === "max" ? "极大值点" : "极小值点"} (${rx.toFixed(2)}, ${res.y.toFixed(2)})`,
+        });
+      });
+    }
+  } else {
+    // quartic: f'(x) = 4ax^3 + 2bx + c = 0
+    if (Math.abs(a) > 1e-6 || Math.abs(b) > 1e-6) {
+      const deriv = (x: number) => 4 * a * Math.pow(x, 3) + 2 * b * x + c;
+      const roots = findRoots(deriv, -5.5, 5.5);
+      roots.forEach((rx) => {
+        const res = evalFunction(fnKey, params, rx);
+        let type: "min" | "max" = "min";
+        if (res.ddy > 1e-5) {
+          type = "min";
+        } else if (res.ddy < -1e-5) {
+          type = "max";
+        } else {
+          // 二阶导接近 0，检测一阶导变号
+          const dLeft = deriv(rx - 0.05);
+          const dRight = deriv(rx + 0.05);
+          type = dLeft > 0 && dRight < 0 ? "max" : "min";
+        }
+        extrema.push({
+          x: rx,
+          y: res.y,
+          type,
+          label: `${type === "max" ? "极大值点" : "极小值点"} (${rx.toFixed(2)}, ${res.y.toFixed(2)})`,
+        });
       });
     }
   }

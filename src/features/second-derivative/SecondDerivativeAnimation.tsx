@@ -25,6 +25,8 @@ import { defaultParams, paramMeta } from "@/data/registries/secondDerivative";
 import { SecondDerivativeScene } from "./components/SecondDerivativeScene";
 import { evalFunction, evalJensen, type FnKey } from "@/math/secondDerivative";
 
+import { getSecondDerivativeLegendItems } from "./constants";
+
 export function SecondDerivativeAnimation() {
   // 1. 探究模式：'concavity' | 'inflection' | 'jensen'
   const [studyMode, setStudyMode] = useState<
@@ -143,12 +145,23 @@ export function SecondDerivativeAnimation() {
       colorHex?: string,
     ) => {
       if (Math.abs(val) < 1e-6) return "";
-      const sign = val > 0 ? (isFirst ? "" : " + ") : " - ";
+      const sign = val > 0 ? (isFirst ? "" : " + ") : isFirst ? "-" : " - ";
       const absVal = Math.abs(val);
-      const numStr =
-        Math.abs(absVal - 1) < 1e-6 && varStr !== "" ? "" : absVal.toFixed(1);
-      const valOutput = colorHex ? `\\color{${colorHex}}{${numStr}}` : numStr;
-      return `${sign}${valOutput}${varStr}`;
+      let termBody = "";
+      if (varStr === "") {
+        // 常数项
+        const numStr = absVal.toFixed(1);
+        termBody = colorHex ? `\\color{${colorHex}}{${numStr}}` : numStr;
+      } else if (Math.abs(absVal - 1) < 1e-6) {
+        // 系数绝对值为 1
+        termBody = colorHex ? `\\color{${colorHex}}{${varStr}}` : varStr;
+      } else {
+        const numStr = absVal.toFixed(1);
+        termBody = colorHex
+          ? `\\color{${colorHex}}{${numStr}}${varStr}`
+          : `${numStr}${varStr}`;
+      }
+      return `${sign}${termBody}`;
     };
 
     let fStr = "";
@@ -211,140 +224,156 @@ export function SecondDerivativeAnimation() {
       const eval0 = evalFunction(fnKey, params, x0);
       const dfStr = `f'(\\color{${MATH_COLORS.paramPrimary}}{${x0.toFixed(1)}}) = ${eval0.dy.toFixed(2)}`;
       const ddfStr = `f''(\\color{${MATH_COLORS.paramPrimary}}{${x0.toFixed(1)}}) = ${eval0.ddy.toFixed(2)}`;
-      return `${fStr} \\quad | \\quad ${dfStr}, \\, ${ddfStr}`;
+      let statusStr = "";
+      if (eval0.ddy > 1e-4) {
+        statusStr = "\\implies \\text{下凸 (切线在下方)}"; // latex: 动态公式
+      } else if (eval0.ddy < -1e-4) {
+        statusStr = "\\implies \\text{上凸 (切线在上方)}"; // latex: 动态公式
+      } else {
+        statusStr = "\\implies \\text{二阶导为0 (拐点临界)}"; // latex: 动态公式
+      }
+      return `${fStr} \\quad | \\quad ${dfStr}, \\, ${ddfStr} \\quad ${statusStr}`;
     } else if (studyMode === "inflection") {
       if (fnKey === "cubic") {
-        const xInf = Math.abs(a) > 1e-6 ? (-b / (3 * a)).toFixed(2) : "无";
-        return `${fStr} \\quad | \\quad \\text{拐点/对称中心 } x_{\\text{inf}} = -\\frac{b}{3a} = ${xInf}`;
-      } else if (fnKey === "mixed") {
-        return `${fStr} \\quad | \\quad f''(x) = a(x+2)e^x \\implies \\text{拐点 } x_{\\text{inf}} = -2`;
-      } else {
-        const val = Math.abs(a) > 1e-6 ? -b / (6 * a) : 0;
-        if (val > 1e-6) {
-          const xInf = Math.sqrt(val).toFixed(2);
-          return `${fStr} \\quad | \\quad \\text{双拐点 } x_{\\text{inf}} = \\pm ${xInf}`;
-        } else {
-          return `${fStr} \\quad | \\quad f''(0)=0 \\text{ (极小值点，非拐点反例)}`;
+        if (Math.abs(a) > 1e-6) {
+          const xInf = -b / (3 * a);
+          const yInf = evalFunction(fnKey, params, xInf).y;
+          return `${fStr} \\quad | \\quad \\text{拐点/对称中心 } I(${xInf.toFixed(2)}, ${yInf.toFixed(2)})`; // latex: 动态公式
         }
+        return `${fStr} \\quad | \\quad a=0 \\text{ (退化为二次，无拐点)}`; // latex: 动态公式
+      } else if (fnKey === "mixed") {
+        if (Math.abs(a) > 1e-6) {
+          const yInf = evalFunction(fnKey, params, -2).y;
+          return `${fStr} \\quad | \\quad f''(x) = a(x+2)e^x \\implies \\text{拐点 } I(-2.00, ${yInf.toFixed(2)})`; // latex: 动态公式
+        }
+        return `${fStr} \\quad | \\quad a=0 \\text{ (退化为一次，无拐点)}`; // latex: 动态公式
+      } else {
+        // quartic: 12ax^2 + 2b = 0 => x^2 = -b / (6a)
+        if (Math.abs(a) > 1e-6) {
+          const val = -b / (6 * a);
+          if (val > 1e-5) {
+            const xInf = Math.sqrt(val);
+            const yInf = evalFunction(fnKey, params, xInf).y;
+            return `${fStr} \\quad | \\quad \\text{双拐点 } x_{\\text{inf}} = \\pm ${xInf.toFixed(2)} \\; (y=${yInf.toFixed(2)})`; // latex: 动态公式
+          } else if (Math.abs(b) < 1e-5) {
+            return `${fStr} \\quad | \\quad b=0 \\implies f''(0)=0 \\text{ (极小值点，非拐点反例)}`; // latex: 动态公式
+          } else if (a > 0) {
+            return `${fStr} \\quad | \\quad f''(x) > 0 \\text{ 恒成立 (全域下凸，无拐点)}`; // latex: 动态公式
+          } else {
+            return `${fStr} \\quad | \\quad f''(x) < 0 \\text{ 恒成立 (全域上凸，无拐点)}`; // latex: 动态公式
+          }
+        }
+        return `${fStr} \\quad | \\quad a=0 \\text{ (退化为二次，无拐点)}`; // latex: 动态公式
       }
     } else {
       const jensen = evalJensen(fnKey, params, x1, x2);
       const sign = jensen.diff >= 0 ? "\\ge" : "<";
-      return `${fStr} \\quad | \\quad \\frac{f(x_1)+f(x_2)}{2} ${sign} f\\left(\\frac{x_1+x_2}{2}\\right) \\; (\\Delta y = ${jensen.diff.toFixed(2)})`;
+      const relationStr =
+        jensen.diff >= 0
+          ? "\\text{ (弦在弧上方/下凸)}" // latex: 动态公式
+          : "\\text{ (弧在弦上方/上凸)}"; // latex: 动态公式
+      return `${fStr} \\quad | \\quad \\frac{f(x_1)+f(x_2)}{2} ${sign} f\\left(\\frac{x_1+x_2}{2}\\right) \\; (\\Delta y = ${jensen.diff.toFixed(2)}) \\quad ${relationStr}`;
     }
   }, [params, fnKey, studyMode]);
 
-  // 教学导引与题设背景配置
+  // 教学导引与题设背景配置（深度联动研究模式 studyMode 与函数模型 fnKey，说透题设条件与核心设问）
   const tipConfig = useMemo(() => {
-    switch (studyMode) {
-      case "concavity":
+    if (studyMode === "concavity") {
+      if (fnKey === "cubic") {
         return {
           variant: "primary" as const,
-          badge: "高考难点 · 曲线凹凸性与切线位置",
-          condition: "函数 f(x) 具有连续二阶导数，切点探针位于 x₀ 处。",
+          badge: "高考大招 · 三次曲线凹凸性与切线放缩",
+          condition:
+            "三次多项式 $f(x) = ax^3 + bx^2 + cx + d$，探针切点位于 $x_0$ 处，二阶导为 $f''(x) = 6ax + 2b$。",
           question:
-            "判断函数在不同区间上的凹凸性，并探究曲线与对应切线的上下相对位置关系。",
+            "探究二阶导数 $f''(x_0)$ 符号与切线相对位置：下凸时切线为何恒在曲线下方？上凸时切线为何恒在曲线上方？",
         };
-      case "inflection":
+      }
+      if (fnKey === "mixed") {
+        return {
+          variant: "primary" as const,
+          badge: "高考压轴 · 超越混合函数凹凸性与局部放缩",
+          condition:
+            "超越函数 $f(x) = axe^x + bx + c$，一阶导为 $f'(x) = a(x+1)e^x + b$，二阶导为 $f''(x) = a(x+2)e^x$。",
+          question:
+            "移动探针 $x_0$，观察 $x > -2$ 与 $x < -2$ 两侧凹凸性转换，探究切线放缩法证明不等式的几何充要条件。",
+        };
+      }
+      return {
+        variant: "primary" as const,
+        badge: "高考难点 · 四次对称曲线的分区凹凸性",
+        condition:
+          "四次函数 $f(x) = ax^4 + bx^2 + cx + d$，二阶导数为二次式 $f''(x) = 12ax^2 + 2b$。",
+        question:
+          "调节参数 $b$，观察双拐点将定义域分为三个凹凸区间的几何特征，辨析切线与曲线的局部穿插与整体上下关系。",
+      };
+    }
+
+    if (studyMode === "inflection") {
+      if (fnKey === "cubic") {
         return {
           variant: "warning" as const,
-          badge: "高考核心 · 拐点与极值点对比",
-          condition: "给定函数 f(x)，考察一阶导数驻点与二阶导数变号点。",
+          badge: "高考秒杀 · 三次函数中心对称与极值中点",
+          condition:
+            "三次曲线具有唯一二阶导变号拐点 $x_{\\text{inf}} = -\\frac{b}{3a}$，且当 $\\Delta > 0$ 时存在两极值点 $x_1, x_2$。",
           question:
-            "求函数拐点坐标，并辨析拐点（凹凸性分界点）与极值点（单调性分界点）的本质区别。",
+            "验证拐点为何必然是三次函数的中心对称点？拐点与两极值点满足怎样的中点关系（$x_{\\text{inf}} = \\frac{x_1+x_2}{2}$）？",
         };
-      case "jensen":
+      }
+      if (fnKey === "mixed") {
         return {
-          variant: "info" as const,
-          badge: "高考压轴 · 琴生不等式弦弧关系",
-          condition: "在函数凹凸区间内选取两相异自变量点 x₁ 与 x₂。",
+          variant: "warning" as const,
+          badge: "概念辨析 · 超越函数极值点与拐点分离",
+          condition:
+            "函数 $f(x) = axe^x + bx + c$。一阶导驻点决定单调性与极值，二阶导变号点 $x=-2$ 决定凹凸性与拐点。",
           question:
-            "判断中点函数值 f((x₁+x₂)/2) 与割线中点 (f(x₁)+f(x₂))/2 的大小关系。",
+            "当 $b=0$ 时极值点在 $x=-1$，而拐点在 $x=-2$。探究极值点与拐点在定义域中的分离现象与几何本质。",
         };
-      default:
-        return {
-          variant: "primary" as const,
-          badge: "高考难点 · 二阶导数与拐点",
-          condition: "考察函数的二阶导数符号与图象弯曲特征。",
-          question: "确定函数的拐点坐标与凹凸区间。",
-        };
+      }
+      return {
+        variant: "warning" as const,
+        badge: "易错警示 · 二阶导为零的充要性反例",
+        condition:
+          "高次函数 $f(x) = ax^4 + bx^2 + cx + d$。当 $b=0$ 时，在原点处 $f''(0) = 0$。",
+        question:
+          "导数 $f''(x_0)=0$ 为何不是拐点的充分条件？为何 $f(x)=x^4$ 在原点二阶导为 0 却是极小值点而非拐点？",
+      };
     }
-  }, [studyMode]);
+
+    // jensen 模式
+    if (fnKey === "cubic") {
+      return {
+        variant: "info" as const,
+        badge: "高考压轴 · 割线中点与弧中点（琴生不等式）",
+        condition:
+          "在三次曲线上选取相异自变量 $x_1, x_2$，考察割线中点 $M$ 与对应弧中点 $P$ 的纵坐标差值。",
+        question:
+          "在下凸区间内比较弦与弧的中点高低；当区间 $[x_1, x_2]$ 跨越拐点时，探究琴生不等式前提为何失效？",
+      };
+    }
+    if (fnKey === "mixed") {
+      return {
+        variant: "info" as const,
+        badge: "极值点偏移 · 超越函数割弧中点不等式",
+        condition:
+          "在超越函数单侧下凸区间（$x > -2$）内选取两端点 $x_1, x_2$，割线中点为 $M$，曲线上中点为 $P$。",
+        question:
+          "探究琴生差值 $\\Delta y = \\frac{f(x_1)+f(x_2)}{2} - f\\left(\\frac{x_1+x_2}{2}\\right) \\ge 0$ 在新高考极值点偏移大题中的降维应用。",
+      };
+    }
+    return {
+      variant: "info" as const,
+      badge: "双变量不等式 · 对称双峰与凹凸割线判定",
+      condition:
+        "在四次曲线不同凹凸区间内选取两点 $x_1, x_2$，连结割线段 $S_1S_2$。",
+      question:
+        "比较下凸区间（弦在弧上）与上凸区间（弧在弦上）的中点差值正负号，探究凹凸性对不等式方向的决定性作用。",
+    };
+  }, [studyMode, fnKey]);
 
   // 右下角图例配置 (模式专属，严格使用 MATH_COLORS)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
-    if (studyMode === "concavity") {
-      return [
-        {
-          color: MATH_COLORS.function,
-          formula: "f(x) \\;(\\text{原函数})",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.tangentLine,
-          formula: "y - f(x_0) = f'(x_0)(x - x_0) \\;(\\text{切线})",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.focusPoint,
-          formula: "P_0(x_0, f(x_0)) \\;(\\text{探针切点})",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.paramTertiary,
-          label: "下凸凹区间 f''(x) > 0",
-          style: "area",
-        },
-        {
-          color: MATH_COLORS.paramSecondary,
-          label: "上凸凸区间 f''(x) < 0",
-          style: "area",
-        },
-      ];
-    } else if (studyMode === "inflection") {
-      return [
-        {
-          color: MATH_COLORS.function,
-          formula: "f(x) \\;(\\text{原函数})",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.vectorResult,
-          formula: "I(x, f(x)) \\;(\\text{拐点, } f''(x)=0)",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.paramSecondary,
-          formula: "E(x, f(x)) \\;(\\text{极值点, } f'(x)=0)",
-          style: "point",
-        },
-      ];
-    } else {
-      return [
-        {
-          color: MATH_COLORS.function,
-          formula: "f(x) \\;(\\text{原函数})",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.paramSecondary,
-          formula: "S_1S_2 \\;(\\text{割线段})",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.paramSecondary,
-          formula:
-            "M\\left(\\frac{x_1+x_2}{2}, \\frac{y_1+y_2}{2}\\right) \\;(\\text{弦中点})",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.paramTertiary,
-          formula:
-            "P\\left(\\frac{x_1+x_2}{2}, f\\left(\\frac{x_1+x_2}{2}\\right)\\right) \\;(\\text{弧中点})",
-          style: "point",
-        },
-      ];
-    }
+    return getSecondDerivativeLegendItems(studyMode);
   }, [studyMode]);
 
   return (
@@ -371,18 +400,15 @@ export function SecondDerivativeAnimation() {
               items={[
                 {
                   key: "cubic",
-                  label: "三次多项式",
-                  formula: "ax^3 + bx^2 + cx + d",
+                  label: "三次多项式模型",
                 },
                 {
                   key: "mixed",
-                  label: "指数混合型",
-                  formula: "ax e^x + bx + c",
+                  label: "指数乘积复合型",
                 },
                 {
                   key: "quartic",
-                  label: "四次对称型",
-                  formula: "ax^4 + bx^2 + cx + d",
+                  label: "四次双峰/对称型",
                   fullWidth: true,
                 },
               ]}

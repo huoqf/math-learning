@@ -172,15 +172,21 @@ export function buildSecondDerivativePanel(
       {
         name: "二阶导数与凹凸性判定定理",
         latex:
-          "f''(x) > 0 \\implies \\text{下凸 (凹函数)}, \\quad f''(x) < 0 \\implies \\text{上凸 (凸函数)}",
+          "f''(x) > 0 \\implies \\text{下凸 (凸函数/凹弧)}, \\quad f''(x) < 0 \\implies \\text{上凸 (凹函数/凸弧)}",
         condition:
-          "f(x) 在区间内二阶可导。下凸函数切线恒在下方，上凸函数切线恒在上方。",
+          "f(x) 在区间内二阶可导。下凸时切线恒在曲线下方；上凸时切线恒在曲线上方。",
       },
       {
-        name: "切线放缩基本不等式",
+        name: "切线放缩基本不等式 (新高考核心大招)",
         latex: "f(x) \\ge f'(x_0)(x - x_0) + f(x_0) \\quad (f''(x) \\ge 0)",
         condition:
-          "适用于下凸函数在任意切点 x_0 处的切线局部放缩（凸函数则不等号反向）",
+          "下凸函数在任意切点 x_0 处的切线作为全局下界（如 e^x ≥ x+1，上凸则不等号反向如 ln x ≤ x-1）",
+      },
+      {
+        name: "二阶导判单调性与隐零点存在性",
+        latex: "f''(x) > 0 \\implies f'(x) \\text{ 单调递增}",
+        condition:
+          "新高考导数大题通法：当导函数式复杂不易求根时，求二阶导锁定一阶导单调性并确定唯一零点",
       },
     );
   } else if (studyMode === "inflection") {
@@ -192,26 +198,27 @@ export function buildSecondDerivativePanel(
           "拐点是凹凸性改变的分界点，切线在此穿越曲线；若二阶导不变号则非拐点",
       },
       {
-        name: "二阶导数极值判定法",
+        name: "二阶导数极值充分条件判定法",
         latex:
           "f'(x_0) = 0, \\, f''(x_0) > 0 \\implies \\text{极小值}; \\, f''(x_0) < 0 \\implies \\text{极大值}",
         condition:
-          "若 f''(x_0)=0，则判别法失效，需进一步检测更高阶导数或一阶导左右变号",
+          "驻点处二阶导异于0可直接锁定极值性；若 f''(x_0)=0，则判别法失效需验证一阶导变号",
       },
     );
   } else {
     theorems.push(
       {
-        name: "琴生不等式 (Jensen's Inequality)",
+        name: "琴生不等式割弧形式 (Jensen's Inequality)",
         latex:
           "f\\left(\\frac{x_1+x_2}{2}\\right) \\le \\frac{f(x_1)+f(x_2)}{2} \\quad (f''(x) \\ge 0)",
-        condition: "下凸（凹函数）的割线段中点纵坐标恒大于等于弧上中点纵坐标",
+        condition:
+          "下凸区间内割线中点纵坐标恒大于等于弧上中点纵坐标（上凸区间反向）",
       },
       {
-        name: "琴生不等式加权形式",
+        name: "琴生不等式加权形式 (极值点偏移基石)",
         latex:
           "f(\\lambda x_1 + (1-\\lambda)x_2) \\le \\lambda f(x_1) + (1-\\lambda)f(x_2) \\quad (0 \\le \\lambda \\le 1)",
-        condition: "凸/凹函数代数抽象定义的基石，对应割线段上任意内分点",
+        condition: "凸函数代数定义的本质，割线段上任意内分点均在曲线对应点上方",
       },
     );
   }
@@ -221,11 +228,11 @@ export function buildSecondDerivativePanel(
 
   if (studyMode === "concavity") {
     gaokaoPoints.push({
-      text: "切线放缩法证明不等式：利用下凸函数切线恒在曲线下方（如 e^x ≥ x+1 与 ln x ≤ x-1），在切点 x₀ 处构造切线放缩是一元与双变量不等式证明的高考核心通法。",
+      text: "切线放缩法证明不等式：利用下凸函数切线恒在曲线下方（如 e^x ≥ x+1 与 ln x ≤ x-1），在切点 x₀ 处构造切线放缩是一元与双变量不等式证明的新高考核心通法。",
       importance: "gaokao",
     });
     gaokaoPoints.push({
-      text: "二阶导数决定一阶导单调性：若 f''(x) > 0，则导函数 f'(x) 单调递增；当探讨导函数零点存在性或极值点偏移时，二阶导数符号是判断一阶导单调性的直接依据。",
+      text: "二阶导数决定一阶导单调性：若 f''(x) > 0，则导函数 f'(x) 单调递增；当探讨导函数隐零点存在性或极值点偏移时，二阶导数符号是判断一阶导单调性的直接抓手。",
       importance: "gaokao",
     });
   } else if (studyMode === "inflection") {
@@ -280,6 +287,20 @@ export function buildSecondDerivativePanel(
       text: "f''(x0) = 0 的非充分性 (反例警示)：对于 f(x) = x^4，在 x=0 处 f''(0)=0，但左右两侧 f''(x) 均为正，x=0 为极小值点而非拐点！",
       level: "info",
     });
+  }
+
+  if (studyMode === "jensen") {
+    const minX = Math.min(p.x1, p.x2);
+    const maxX = Math.max(p.x1, p.x2);
+    const hasInflectionInBetween = inflections.some(
+      (ip) => ip.isTrueInflection && ip.x > minX + 1e-3 && ip.x < maxX - 1e-3,
+    );
+    if (hasInflectionInBetween) {
+      warnings.push({
+        text: "跨越拐点警示：当前割线区间 [x₁, x₂] 跨越了拐点，区间内凹凸性发生改变，全局琴生不等式前提不成立！高考解题必须在拐点两侧分段讨论。",
+        level: "warning",
+      });
+    }
   }
 
   return {

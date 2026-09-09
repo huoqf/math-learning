@@ -13,6 +13,7 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "audit": "node .agents/skills/math-page-audit/scripts/audit_page.mjs",
     "test": "vitest run src/math/ src/math3d/ src/test/",
     "test:ci": "vitest run",
     "prepare": "husky"

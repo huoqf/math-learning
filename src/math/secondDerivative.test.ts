@@ -94,4 +94,25 @@ describe("secondDerivative 纯数学逻辑测试", () => {
     const res = evalFunction("quartic", params, 0);
     expect(res.concavity).toBe("concaveDown");
   });
+
+  it("四次双峰函数能正确解出三个极值点与两个拐点", () => {
+    // f(x) = x^4 - 2x^2 => a=1, b=-2, c=0, d=0
+    // f'(x) = 4x^3 - 4x = 4x(x-1)(x+1) = 0 => x = -1, 0, 1
+    // 极大值在 x=0 (y=0)，极小值在 x=±1 (y=-1)
+    const params = { a: 1, b: -2, c: 0, d: 0, x0: 0, x1: -1, x2: 1 };
+    const extrema = findExtremaPoints("quartic", params);
+    expect(extrema.length).toBe(3);
+
+    const inflections = findInflectionPoints("quartic", params);
+    expect(inflections.length).toBe(2); // x = ±√(2/6) = ±1/√3
+  });
+
+  it("三次函数 a=0 退化为二次函数时能正确求出极值点", () => {
+    // f(x) = x^2 - 4x => a=0, b=1, c=-4, d=0 => 极小值在 x = 2
+    const params = { a: 0, b: 1, c: -4, d: 0, x0: 2, x1: 0, x2: 4 };
+    const extrema = findExtremaPoints("cubic", params);
+    expect(extrema.length).toBe(1);
+    expect(extrema[0].x).toBeCloseTo(2, 4);
+    expect(extrema[0].type).toBe("min");
+  });
 });

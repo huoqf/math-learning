@@ -287,45 +287,46 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
         strokeWidth={2.8}
       />
 
-      {/* 拐点与其切线渲染 */}
-      {inflections.map((ip, idx) => {
-        const resIp = evalFunction(fnKey, params, ip.x);
-        const kIp = resIp.dy;
-        const pIpLeft = mathToDesign(
-          scale.xMin,
-          ip.y + kIp * (scale.xMin - ip.x),
-          scale,
-        );
-        const pIpRight = mathToDesign(
-          scale.xMax,
-          ip.y + kIp * (scale.xMax - ip.x),
-          scale,
-        );
+      {/* 拐点与其切线渲染 (仅在拐点探究模式下高亮) */}
+      {studyMode === "inflection" &&
+        inflections.map((ip, idx) => {
+          const resIp = evalFunction(fnKey, params, ip.x);
+          const kIp = resIp.dy;
+          const pIpLeft = mathToDesign(
+            scale.xMin,
+            ip.y + kIp * (scale.xMin - ip.x),
+            scale,
+          );
+          const pIpRight = mathToDesign(
+            scale.xMax,
+            ip.y + kIp * (scale.xMax - ip.x),
+            scale,
+          );
 
-        return (
-          <g key={`inflection-${idx}`}>
-            {/* 拐点切线 */}
-            <line
-              x1={pIpLeft.x}
-              y1={pIpLeft.y}
-              x2={pIpRight.x}
-              y2={pIpRight.y}
-              stroke={MATH_COLORS.vectorResult}
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              strokeOpacity={0.8}
-            />
-            {/* 拐点标准学术点标 */}
-            <MathPoint
-              cx={ip.x}
-              cy={ip.y}
-              scale={scale}
-              color={MATH_COLORS.vectorResult}
-              fontScale={fontScale}
-            />
-          </g>
-        );
-      })}
+          return (
+            <g key={`inflection-${idx}`}>
+              {/* 拐点切线 */}
+              <line
+                x1={pIpLeft.x}
+                y1={pIpLeft.y}
+                x2={pIpRight.x}
+                y2={pIpRight.y}
+                stroke={MATH_COLORS.vectorResult}
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                strokeOpacity={0.8}
+              />
+              {/* 拐点标准学术点标 */}
+              <MathPoint
+                cx={ip.x}
+                cy={ip.y}
+                scale={scale}
+                color={MATH_COLORS.vectorResult}
+                fontScale={fontScale}
+              />
+            </g>
+          );
+        })}
 
       {/* 极值点渲染 */}
       {studyMode === "inflection" &&

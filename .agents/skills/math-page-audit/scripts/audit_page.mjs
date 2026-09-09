@@ -102,6 +102,27 @@ for (const filePath of files) {
     }
   }
 
+  // 全文级检查 3B：TipCard 与二级选项联动静态检测 (全学科多级联动铁律)
+  if (isAnimationPage && content.includes('<SelectGrid') && content.includes('TipCard')) {
+    const selectGridValueMatches = [...content.matchAll(/<SelectGrid[\s\S]*?value=\{([a-zA-Z0-9_]+)\}/g)];
+    const secondaryVars = selectGridValueMatches.map((m) => m[1]);
+
+    for (const secVar of secondaryVars) {
+      const hasTipConfig = /const\s+tipConfig\s*=\s*useMemo\([\s\S]*?\[(.*?)\]\s*\)/.exec(content);
+      if (hasTipConfig) {
+        const deps = hasTipConfig[1];
+        if (!deps.includes(secVar)) {
+          issues.push({
+            lineNum: 1,
+            type: 'TipCard未联动二级选项',
+            message: `左屏存在 SelectGrid (绑定值: ${secVar})，但 tipConfig 的依赖项 [${deps}] 未包含该二级变量，导致选项切换时教学提示无法同步特化`,
+            snippet: `tipConfig 缺少依赖: ${secVar}`,
+          });
+        }
+      }
+    }
+  }
+
   // 全文级检查 4：数据层 ParamMeta 结构化分组与排序动线扫描
   if (filePath.includes('registries') && content.includes('ParamMeta[]')) {
     const metaArrayRegex = /export\s+const\s+(\w+Meta)\s*:\s*ParamMeta\[\]\s*=\s*\[([\s\S]*?)\];/g;
@@ -253,7 +274,8 @@ for (const filePath of files) {
     const isCommentLine = /^\s*(\/\/|\/\*|\{\/\*|\*)/.test(line);
     const isJsxElement = /<[A-Za-z][a-zA-Z0-9]*\b/.test(line);
     if (!isTestFile && !isCommentLine && !isJsxElement && !line.includes('import') && (line.includes('text:') || line.includes('prerequisites:') || line.includes('"') || line.includes('\'')) && /[\u4e00-\u9fa5]/.test(line)) {
-      if (/(\\[a-zA-Z]+|[a-zA-Z]\^[0-9a-zA-Z]+|[a-zA-Z]_[0-9a-zA-Z]+)/.test(line) && !line.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
+      const strippedLine = line.replace(/(key|id|prop|variant|colorKey):\s*["'][^"']+["']/g, '');
+      if (/(\\[a-zA-Z]+|[a-zA-Z]\^[0-9a-zA-Z]+|[a-zA-Z]_[0-9a-zA-Z]+)/.test(strippedLine) && !line.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
         issues.push({
           lineNum,
           type: '混合文本缺少$定界符',
