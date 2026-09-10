@@ -7,6 +7,7 @@ import {
   FunctionGraph,
   InteractivePoint,
   IntervalShadow,
+  MathPoint,
   TangentLine,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
@@ -71,21 +72,35 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         if (transModel === "exp_minus_ax")
           return isSep ? Math.exp(x) / x : Math.exp(x) - a_axis * x;
         if (transModel === "a_ln_x_minus_x")
-          return evalFTransC(x, isSep ? a : a_axis);
+          return isSep
+            ? x === 1
+              ? 1
+              : (x - 1) / Math.log(x)
+            : evalFTransC(x, a_axis);
         if (transModel === "exp_minus_a_x_plus_1")
-          return evalFTransD(x, isSep ? a : a_axis);
+          return isSep ? Math.exp(x) / (x + 1) : evalFTransD(x, a_axis);
         return evalFTrans(x);
       } else {
         return isSep ? evalF(x) : evalGParam(x, a_axis);
       }
     },
-    [isTrans, transModel, isSep, a_axis, a],
+    [isTrans, transModel, isSep, a_axis],
   );
 
   // 计算导函数值
   const evalDerivativeFn = (x: number): number => {
     if (isTrans) {
-      return evalTransDerivative(x, isSep ? a : a_axis, transModel);
+      if (isSep) {
+        if (transModel === "ln_x_over_x")
+          return x > 0 ? (1 - Math.log(x)) / (x * x) : NaN;
+        if (transModel === "exp_minus_ax")
+          return x > 0 ? (Math.exp(x) * (x - 1)) / (x * x) : NaN;
+        if (transModel === "exp_minus_a_x_plus_1")
+          return x > -1 ? (Math.exp(x) * x) / ((x + 1) * (x + 1)) : NaN;
+        return evalTransDerivative(x, a, transModel);
+      } else {
+        return evalTransDerivative(x, a_axis, transModel);
+      }
     } else {
       return isSep ? 2 * x - 2 : 2 * x - 2 * a_axis;
     }
@@ -385,18 +400,18 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
             y1={mathToDesign(m, scale.yMax, scale).y}
             x2={ptM.x}
             y2={mathToDesign(m, scale.yMin, scale).y}
-            stroke={MATH_COLORS.asymptote}
-            strokeWidth={1}
-            strokeDasharray="2 2"
+            stroke={MATH_COLORS.paramSecondary}
+            strokeWidth={1.2}
+            strokeDasharray="3 3"
           />
           <line
             x1={ptN.x}
             y1={mathToDesign(n, scale.yMax, scale).y}
             x2={ptN.x}
             y2={mathToDesign(n, scale.yMin, scale).y}
-            stroke={MATH_COLORS.asymptote}
-            strokeWidth={1}
-            strokeDasharray="2 2"
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.2}
+            strokeDasharray="3 3"
           />
         </g>
       )}
@@ -408,8 +423,8 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         scale={scale}
         vp={vp}
         onDrag={handleMDrag}
-        color={MATH_COLORS.asymptote}
-        r={5}
+        color={MATH_COLORS.paramSecondary}
+        r={5.5}
         label={`m=${m.toFixed(2)}`}
         labelKey="m"
         placedLabels={placedPointLabels}
@@ -423,8 +438,8 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         scale={scale}
         vp={vp}
         onDrag={handleNDrag}
-        color={MATH_COLORS.asymptote}
-        r={5}
+        color={MATH_COLORS.paramTertiary}
+        r={5.5}
         label={`n=${n.toFixed(2)}`}
         labelKey="n"
         placedLabels={placedPointLabels}
@@ -469,91 +484,47 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         />
       )}
 
-      {/* 极值点标注 */}
+      {/* 极值点学术化标注 */}
       {!isCollapsed && (
         <g>
           {isSep ? (
             <g>
-              <circle
-                cx={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).x}
-                cy={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).y}
-                r={4}
-                fill={MATH_COLORS.function}
+              <MathPoint
+                cx={sepResult.xFMin}
+                cy={sepResult.fMin}
+                scale={scale}
+                color={MATH_COLORS.function}
+                variant="focus"
+                label={`Min(${sepResult.fMin.toFixed(2)})`}
+                labelKey="min"
+                placedLabels={placedExtremumLabels}
+                fontScale={fontScale}
               />
-              {(() => {
-                const placed = placedExtremumLabels.find(
-                  (l) => l.key === "min",
-                );
-                return placed ? (
-                  <text
-                    x={placed.x}
-                    y={placed.y}
-                    dy={placed.finalDy}
-                    textAnchor={placed.anchor}
-                    fill={MATH_COLORS.function}
-                    fontSize={fontScale(9)}
-                    className="font-bold font-mono select-none"
-                  >
-                    Min({sepResult.fMin.toFixed(2)})
-                  </text>
-                ) : null;
-              })()}
-
-              <circle
-                cx={mathToDesign(sepResult.xFMax, sepResult.fMax, scale).x}
-                cy={mathToDesign(sepResult.xFMax, sepResult.fMax, scale).y}
-                r={4}
-                fill={MATH_COLORS.derivative}
+              <MathPoint
+                cx={sepResult.xFMax}
+                cy={sepResult.fMax}
+                scale={scale}
+                color={MATH_COLORS.derivative}
+                variant="focus"
+                label={`Max(${sepResult.fMax.toFixed(2)})`}
+                labelKey="max"
+                placedLabels={placedExtremumLabels}
+                fontScale={fontScale}
               />
-              {(() => {
-                const placed = placedExtremumLabels.find(
-                  (l) => l.key === "max",
-                );
-                return placed ? (
-                  <text
-                    x={placed.x}
-                    y={placed.y}
-                    dy={placed.finalDy}
-                    textAnchor={placed.anchor}
-                    fill={MATH_COLORS.derivative}
-                    fontSize={fontScale(9)}
-                    className="font-bold font-mono select-none"
-                  >
-                    Max({sepResult.fMax.toFixed(2)})
-                  </text>
-                ) : null;
-              })()}
             </g>
           ) : (
             <g>
-              <circle
-                cx={
-                  mathToDesign(directResult.xFMin, directResult.fMin, scale).x
-                }
-                cy={
-                  mathToDesign(directResult.xFMin, directResult.fMin, scale).y
-                }
-                r={4.5}
-                fill={MATH_COLORS.function}
+              <MathPoint
+                cx={directResult.xFMin}
+                cy={directResult.fMin}
+                scale={scale}
+                color={MATH_COLORS.function}
+                variant="focus"
+                label={`Min(${directResult.fMin.toFixed(2)})`}
+                labelKey="min"
+                placedLabels={placedExtremumLabels}
+                fontScale={fontScale}
               />
-              {(() => {
-                const placed = placedExtremumLabels.find(
-                  (l) => l.key === "min",
-                );
-                return placed ? (
-                  <text
-                    x={placed.x}
-                    y={placed.y}
-                    dy={placed.finalDy}
-                    textAnchor={placed.anchor}
-                    fill={MATH_COLORS.function}
-                    fontSize={fontScale(9)}
-                    className="font-bold font-mono select-none"
-                  >
-                    Min({directResult.fMin.toFixed(2)})
-                  </text>
-                ) : null;
-              })()}
             </g>
           )}
         </g>
