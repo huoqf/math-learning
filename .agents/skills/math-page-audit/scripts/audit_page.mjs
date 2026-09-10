@@ -531,6 +531,26 @@ for (const filePath of files) {
         });
       }
     }
+
+    // 18. 检查说明文本中未用 $...$ 包裹的裸露 LaTeX 特殊指令 (防止 raw 源码暴露)
+    if ((filePath.includes('builders') || filePath.endsWith('Page.tsx') || filePath.endsWith('Animation.tsx')) && !filePath.includes('test')) {
+      if (/(?:detail|condition|question|prerequisites)\s*:\s*[`'"].*?\\(in|ge|le|Delta|subset|cap|cup)\b.*?[`'"]/.test(line)) {
+        const strMatch = line.match(/(?:detail|condition|question|prerequisites)\s*:\s*([`'"])([\s\S]*?)\1/);
+        if (strMatch) {
+          const text = strMatch[2];
+          // 剥离所有 $...$ 之间的合法 LaTeX 片段后，检查剩余纯文本中是否仍有裸露的 LaTeX 指令
+          const stripped = text.replace(/\$[^$]+\$/g, '');
+          if (/\\(in|ge|le|Delta|subset|cap|cup)\b/.test(stripped)) {
+            issues.push({
+              lineNum,
+              type: '文本缺少$定界符',
+              message: '说明文本中包含 LaTeX 数学指令但未用 $...$ 包裹，会导致界面直接暴露 raw 源码字符',
+              snippet: line.trim()
+            });
+          }
+        }
+      }
+    }
   });
 
   if (issues.length > 0) {

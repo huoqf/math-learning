@@ -31,6 +31,8 @@
 • 教学导引题设 (TipCard)        ❌ 严禁大段长句与推导解释                      • WarningItem 退化预警
 ```
 - **左问右解闭环**：左屏 `TipCard` 只负责抛出【初始条件】与【核心设问】；完整公式推导、零点存在性证明与高考考法 100% 归位右屏 `MathPanel`。具体推导链三要素（审题定法 $\to$ 建模联立 $\to$ 求解反思）与各学科规范以 [.agents/skills/new-math-animation/references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md#7-高中数学学科认知与破题推演准则-理顺思路--助力掌握) 为全库单一事实源（SSOT）。
+- **推导链三部曲（严禁孤立数字）**：推导链必须严格遵循「① 符号表达式 $\to$ ② 代入解析式 $\to$ ③ 结果/解集」，严禁直接跳步给出孤立数值（如 $f_{\min} = 2.50$）；参数求解必须由充要条件列出含参不等式。
+- **内联数学符号 100% 包裹 `$...$`**：所有文本字段（`detail`, `condition`, `question`, `prerequisites`）中凡涉及数学变量、区间、极值与 LaTeX 指令，必须严格用单 `$...$` 包裹，交由 `renderMixedLatex` 渲染，严禁裸露 raw 字符。
 - **情景多级联动**：用户在左屏切换任何二级选项，`TipCard` 的题设背景与探究问题必须 100% 动态特化。
 
 ### 公理 3：数形与语义色彩一体化
@@ -73,7 +75,7 @@ $env:PATH="D:\node-v24;"+$env:PATH; npm run audit -- <path/to/feature>
 | **架构纯洁性** | `src/math/` 禁止包含 React/DOM 引用；全库禁止 `BrowserRouter` |
 | **审计严格阻断** | `npm run audit:strict` 全库违规数必须为 0，任何存量/增量违规直接非零退出阻断构建 |
 | **TipCard设问质量** | 严禁“观察图形变化”等空泛词；设问必须包含“求范围/最值/证明/单调性/零点”等数学目标词 |
-| **推导链数学真联动** | `reasoningSteps` 严禁手写假推导；KaTeX 语法与模板插值必须通过自动化单测编译 |
+| **推导链代数三部曲** | `reasoningSteps` 严禁孤立数字赋值，必须按「符号 $\to$ 解析式代入 $\to$ 结果」演绎；文本涉数学符号 100% 包裹 `$...$` |
 | **预设参数数学安全** | `presetParams` 必须满足高中课标定义域（分母非零、判别式合规、标准方程参数正定） |
 | **3D 范式纯净度** | 声明为范式 A (综合法) 的场景源码严禁包含 `<CoordinateAxes3D>` 或 `<Vector3DArrow>` |
 | **学科特征线完整性** | 数列页面严禁连续曲线冒充离散点列；立体几何综合法必须包含垂足与垂直标记 |

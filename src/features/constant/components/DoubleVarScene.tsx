@@ -5,7 +5,6 @@ import {
   CoordinateGrid,
   FunctionGraph,
   InteractivePoint,
-  MathPoint,
   IntervalShadow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
@@ -21,6 +20,7 @@ interface DoubleVarSceneProps {
   vp: ViewportInfo;
   fontScale?: (v: number) => number;
   onParamChange: (key: string, value: number) => void;
+  onParamsBatchChange?: (patch: Record<string, number>) => void;
 }
 
 export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
@@ -30,6 +30,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
   vp,
   fontScale = (v) => v,
   onParamChange,
+  onParamsBatchChange,
 }) => {
   const yf = params.yf ?? 2.5;
   const xf = params.xf ?? 1.25;
@@ -48,68 +49,68 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
 
   // 2. 拖拽回调：改变抛物线顶点，实现 x 和 y 双向绑定
   const handleFVertexDrag = (mathPt: { x: number; y: number }) => {
-    onParamChange(
-      "xf",
-      Math.max(0.5, Math.min(2.0, Math.round(mathPt.x * 20) / 20)),
-    );
-    onParamChange(
-      "yf",
-      Math.max(1.0, Math.min(4.0, Math.round(mathPt.y * 20) / 20)),
-    );
+    const xfNew = Math.max(0.5, Math.min(2.0, Math.round(mathPt.x * 20) / 20));
+    const yfNew = Math.max(1.0, Math.min(4.0, Math.round(mathPt.y * 20) / 20));
+    if (onParamsBatchChange) {
+      onParamsBatchChange({ xf: xfNew, yf: yfNew });
+    } else {
+      onParamChange("xf", xfNew);
+      onParamChange("yf", yfNew);
+    }
   };
 
   const handleGVertexDrag = (mathPt: { x: number; y: number }) => {
-    onParamChange(
-      "xg",
-      Math.max(1.5, Math.min(3.0, Math.round(mathPt.x * 20) / 20)),
-    );
-    onParamChange(
-      "yg",
-      Math.max(0.0, Math.min(3.0, Math.round(mathPt.y * 20) / 20)),
-    );
+    const xgNew = Math.max(1.5, Math.min(3.0, Math.round(mathPt.x * 20) / 20));
+    const ygNew = Math.max(0.0, Math.min(3.0, Math.round(mathPt.y * 20) / 20));
+    if (onParamsBatchChange) {
+      onParamsBatchChange({ xg: xgNew, yg: ygNew });
+    } else {
+      onParamChange("xg", xgNew);
+      onParamChange("yg", ygNew);
+    }
   };
 
   // 3. 构建 f(x) 和 g(x) 表达式
   const evalFDouble = (x: number) => (x - xf) * (x - xf) + yf;
   const evalGDouble = (x: number) => -(x - xg) * (x - xg) + yg;
 
-  // 4. 对垒两点各自的研究极值语义（使用规范高中数学符号，杜绝 f_min 下划线）
+  // 4. 对垒两点各自的研究极值语义（使用规范高中数学下标结构）
   const battleMeta = useMemo(() => {
     switch (selectedLogic) {
       case "all_all":
         return {
-          fSymbol: "f_{min}",
-          gSymbol: "g_{max}",
-          fName: "f最小",
-          gName: "g最大",
+          fBase: "f",
+          fSub: "min",
+          gBase: "g",
+          gSub: "max",
         };
       case "all_exist":
         return {
-          fSymbol: "f_{min}",
-          gSymbol: "g_{min}",
-          fName: "f最小",
-          gName: "g最小",
+          fBase: "f",
+          fSub: "min",
+          gBase: "g",
+          gSub: "min",
         };
       case "exist_all":
         return {
-          fSymbol: "f_{max}",
-          gSymbol: "g_{max}",
-          fName: "f最大",
-          gName: "g最大",
+          fBase: "f",
+          fSub: "max",
+          gBase: "g",
+          gSub: "max",
         };
       case "exist_exist":
         return {
-          fSymbol: "f_{max}",
-          gSymbol: "g_{min}",
-          fName: "f最大",
-          gName: "g最小",
+          fBase: "f",
+          fSub: "max",
+          gBase: "g",
+          gSub: "min",
         };
       case "same_var":
         return {
-          fSymbol: "f(x_{min})",
-          gSymbol: "g(x_{min})",
-          fName: "f",
-          gName: "g",
+          fBase: "f",
+          fSub: "xmin",
+          gBase: "g",
+          gSub: "xmin",
         };
     }
   }, [selectedLogic]);
@@ -178,8 +179,6 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
   const ptFV = mathToDesign(xf, yf, scale);
   const ptGV = mathToDesign(xg, yg, scale);
 
-  // 高度差计算（Δy = yF - yG）
-  const deltaY = res.battlePointF.y - res.battlePointG.y;
   const isSatisfied = res.isCurrentLogicTrue;
 
   // 区间端点设计坐标
@@ -275,69 +274,75 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         strokeDasharray="3 3"
       />
 
-      {/* X 轴下方的定义域区间线段标注 */}
-      {/* I1 区间标尺 */}
+      {/* X 轴下方的定义域区间线段标注（上下梯级分层，彻底杜绝交集区域黏连撞车） */}
+      {/* 第 1 层：I1 区间标尺 (y + 14) */}
       <line
         x1={ptAxisFStart.x}
-        y1={ptAxisFStart.y + 12}
+        y1={ptAxisFStart.y + 14}
         x2={ptAxisFEnd.x}
-        y2={ptAxisFEnd.y + 12}
+        y2={ptAxisFEnd.y + 14}
         stroke={MATH_COLORS.function}
         strokeWidth={2}
       />
       <circle
         cx={ptAxisFStart.x}
-        cy={ptAxisFStart.y + 12}
-        r={2}
+        cy={ptAxisFStart.y + 14}
+        r={2.5}
         fill={MATH_COLORS.function}
       />
       <circle
         cx={ptAxisFEnd.x}
-        cy={ptAxisFEnd.y + 12}
-        r={2}
+        cy={ptAxisFEnd.y + 14}
+        r={2.5}
         fill={MATH_COLORS.function}
       />
       <text
         x={(ptAxisFStart.x + ptAxisFEnd.x) / 2}
-        y={ptAxisFStart.y + 24}
+        y={ptAxisFStart.y + 25}
         textAnchor="middle"
         fill={MATH_COLORS.function}
         fontSize={fontScale(9.5)}
         fontWeight="bold"
         className="select-none"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={2}
       >
         I₁ = [0.5, 2.0]
       </text>
 
-      {/* I2 区间标尺 */}
+      {/* 第 2 层：I2 区间标尺 (y + 36，纵向错开 22px 保证绝对清晰) */}
       <line
         x1={ptAxisGStart.x}
-        y1={ptAxisGStart.y + 12}
+        y1={ptAxisGStart.y + 36}
         x2={ptAxisGEnd.x}
-        y2={ptAxisGEnd.y + 12}
+        y2={ptAxisGEnd.y + 36}
         stroke={MATH_COLORS.functionSecondary}
         strokeWidth={2}
       />
       <circle
         cx={ptAxisGStart.x}
-        cy={ptAxisGStart.y + 12}
-        r={2}
+        cy={ptAxisGStart.y + 36}
+        r={2.5}
         fill={MATH_COLORS.functionSecondary}
       />
       <circle
         cx={ptAxisGEnd.x}
-        cy={ptAxisGEnd.y + 12}
-        r={2}
+        cy={ptAxisGEnd.y + 36}
+        r={2.5}
         fill={MATH_COLORS.functionSecondary}
       />
       <text
         x={(ptAxisGStart.x + ptAxisGEnd.x) / 2}
-        y={ptAxisGStart.y + 24}
+        y={ptAxisGStart.y + 47}
         textAnchor="middle"
         fill={MATH_COLORS.functionSecondary}
         fontSize={fontScale(9.5)}
         fontWeight="bold"
         className="select-none"
+        paintOrder="stroke"
+        stroke="white"
+        strokeWidth={2}
       >
         I₂ = [1.5, 3.0]
       </text>
@@ -358,6 +363,14 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         color={MATH_COLORS.function}
         strokeWidth={2.8}
       />
+      {/* f(x) 闭区间实心端点（高中数学严谨作图标准：端点可取必须实心） */}
+      <circle
+        cx={ptFStart.x}
+        cy={ptFStart.y}
+        r={2.8}
+        fill={MATH_COLORS.function}
+      />
+      <circle cx={ptFEnd.x} cy={ptFEnd.y} r={2.8} fill={MATH_COLORS.function} />
       {/* f(x) 曲线标签 */}
       <text
         x={mathToDesign(0.6, evalFDouble(0.6), scale).x - 6}
@@ -388,6 +401,19 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         scale={scale}
         color={MATH_COLORS.functionSecondary}
         strokeWidth={2.8}
+      />
+      {/* g(x) 闭区间实心端点 */}
+      <circle
+        cx={ptGStart.x}
+        cy={ptGStart.y}
+        r={2.8}
+        fill={MATH_COLORS.functionSecondary}
+      />
+      <circle
+        cx={ptGEnd.x}
+        cy={ptGEnd.y}
+        r={2.8}
+        fill={MATH_COLORS.functionSecondary}
       />
       {/* g(x) 曲线标签 */}
       <text
@@ -464,43 +490,53 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
             fill={MATH_COLORS.functionSecondary}
           />
 
-          {/* Y 轴决策高度文本标注 */}
+          {/* Y 轴决策高度文本标注（规范高中闭区间全局最值单行排版，平齐稳固） */}
           <text
-            x={ptYAxisF.x - 12}
-            y={ptYAxisF.y + 4}
+            x={ptYAxisF.x - 10}
+            y={ptYAxisF.y + 3.5}
             textAnchor="end"
             fill={MATH_COLORS.function}
-            fontSize={fontScale(9.5)}
+            fontSize={fontScale(10)}
             fontWeight="bold"
             className="select-none"
             paintOrder="stroke"
             stroke="white"
-            strokeWidth={2.5}
+            strokeWidth={3}
           >
-            {battleMeta.fName} {res.battlePointF.y.toFixed(2)}
+            {battleMeta.fBase}
+            {battleMeta.fSub === "min"
+              ? " 最小"
+              : battleMeta.fSub === "max"
+                ? " 最大"
+                : " x₀"}
           </text>
           <text
-            x={ptYAxisG.x + 12}
-            y={ptYAxisG.y + 4}
+            x={ptYAxisG.x + 10}
+            y={ptYAxisG.y + 3.5}
             textAnchor="start"
             fill={MATH_COLORS.functionSecondary}
-            fontSize={fontScale(9.5)}
+            fontSize={fontScale(10)}
             fontWeight="bold"
             className="select-none"
             paintOrder="stroke"
             stroke="white"
-            strokeWidth={2.5}
+            strokeWidth={3}
           >
-            {battleMeta.gName} {res.battlePointG.y.toFixed(2)}
+            {battleMeta.gBase}
+            {battleMeta.gSub === "min"
+              ? " 最小"
+              : battleMeta.gSub === "max"
+                ? " 最大"
+                : " x₀"}
           </text>
 
           {/* Y 轴两侧高度差比较标尺（高中正统高低判定） */}
           <g>
             {/* 标尺竖线 */}
             <line
-              x1={ptYAxisF.x - 22}
+              x1={ptYAxisF.x - 26}
               y1={ptYAxisF.y}
-              x2={ptYAxisF.x - 22}
+              x2={ptYAxisF.x - 26}
               y2={ptYAxisG.y}
               stroke={
                 isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
@@ -509,9 +545,9 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
             />
             {/* 上下端点刻度短横线 */}
             <line
-              x1={ptYAxisF.x - 26}
+              x1={ptYAxisF.x - 30}
               y1={ptYAxisF.y}
-              x2={ptYAxisF.x - 18}
+              x2={ptYAxisF.x - 22}
               y2={ptYAxisF.y}
               stroke={
                 isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
@@ -519,9 +555,9 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
               strokeWidth={2}
             />
             <line
-              x1={ptYAxisF.x - 26}
+              x1={ptYAxisF.x - 30}
               y1={ptYAxisG.y}
-              x2={ptYAxisF.x - 18}
+              x2={ptYAxisF.x - 22}
               y2={ptYAxisG.y}
               stroke={
                 isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
@@ -530,21 +566,20 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
             />
             {/* 高度差结论文本 */}
             <text
-              x={ptYAxisF.x - 28}
+              x={ptYAxisF.x - 32}
               y={(ptYAxisF.y + ptYAxisG.y) / 2 + 4}
               textAnchor="end"
               fill={
                 isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
               }
-              fontSize={fontScale(10)}
+              fontSize={fontScale(9.5)}
               fontWeight="bold"
               className="select-none"
               paintOrder="stroke"
               stroke="white"
-              strokeWidth={3}
+              strokeWidth={3.5}
             >
-              Δy = {deltaY.toFixed(2)}{" "}
-              {isSatisfied ? "≥ 0 (成立)" : "< 0 (违背)"}
+              {isSatisfied ? "Δy ≥ 0 (博弈成立)" : "Δy < 0 (条件违背)"}
             </text>
           </g>
         </g>
@@ -624,8 +659,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
             stroke="white"
             strokeWidth={3}
           >
-            h(x)_{"{min}"} = {(res.sameVarMinDiff ?? 0).toFixed(2)}{" "}
-            {res.isSameVarTrue ? "≥ 0" : "< 0"}
+            {res.isSameVarTrue ? "h(x) ≥ 0 (恒成立)" : "h(x) < 0 (违背)"}
           </text>
 
           {/* 违背区间阴影（若有） */}
@@ -667,31 +701,36 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
                 stroke="white"
                 strokeWidth={3}
               >
-                违背区间 [{sameVarViolatedInterval[0].toFixed(2)},{" "}
-                {sameVarViolatedInterval[1].toFixed(2)}]
+                违背区间 (f(x) &lt; g(x))
               </text>
             </g>
           )}
         </g>
       )}
 
-      {/* 8. 博弈决策特征点（MathPoint 高亮指示参与比较的关键点） */}
-      <MathPoint
-        cx={res.battlePointF.x}
-        cy={res.battlePointF.y}
-        scale={scale}
-        variant="focus"
-        color={MATH_COLORS.function}
-        r={3.8}
-      />
-      <MathPoint
-        cx={res.battlePointG.x}
-        cy={res.battlePointG.y}
-        scale={scale}
-        variant="focus"
-        color={MATH_COLORS.functionSecondary}
-        r={3.8}
-      />
+      {/* 8. 当极值在区间端点取得（而非顶点）时，在端点处高亮虚线光环指示决策位置 */}
+      {Math.abs(res.battlePointF.x - xf) > 0.05 && (
+        <circle
+          cx={ptDecisionF.x}
+          cy={ptDecisionF.y}
+          r={5.5}
+          fill="none"
+          stroke={MATH_COLORS.function}
+          strokeWidth={1.8}
+          strokeDasharray="2 2"
+        />
+      )}
+      {Math.abs(res.battlePointG.x - xg) > 0.05 && (
+        <circle
+          cx={ptDecisionG.x}
+          cy={ptDecisionG.y}
+          r={5.5}
+          fill="none"
+          stroke={MATH_COLORS.functionSecondary}
+          strokeWidth={1.8}
+          strokeDasharray="2 2"
+        />
+      )}
 
       {/* 9. f(x) 可拖拽顶点控制点 */}
       <InteractivePoint
