@@ -218,7 +218,7 @@ export function TriangleSolveAnimation() {
         return {
           condition: "已知边角参数或三边长计算面积与切接圆半径",
           question:
-            "观察内切圆半径 r = S/p 与高线 ha = 2S/a 如何随顶角 A 的张合动态变化？",
+            "探究内切圆半径 r = S/p 与高线 ha = 2S/a 的几何极值，以及取等条件的充要证明。",
         };
       case "bisector":
         return {

@@ -97,7 +97,13 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         modeOptions: { activeMode: "shift_symmetric", subModel: "xe_neg_x" },
         params: { k: 0.25 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          极值点: 1.0,
+        },
+        perturbation: {
+          params: { k: 0.2 },
+          dynamicQuantityLabels: ["割线左根", "割线右根", "极值点加法偏移"],
+        },
         expectedQuantityLabels: [
           "极值点",
           "割线左根",
@@ -109,6 +115,9 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
   });
 
   it("条件概率与贝叶斯：罕见病筛查假阳性反直觉诊断模型一致性", () => {
+    // 先验患病率 2.00%, 真阳性率 95.0%, 假阳性率 5.0%
+    // 总体阳性率 = 0.02 * 0.95 + 0.98 * 0.05 = 6.80%
+    // 后验患病率 = 0.019 / 0.068 ≈ 27.94%
     verifyTopicSyncContract([
       {
         name: "贝叶斯诊断假阳性模型",
@@ -116,7 +125,17 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         modeOptions: { activeMode: "bayes" },
         params: { pPriorD: 0.02, pSensitivity: 0.95, pFalsePositive: 0.05 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          先验患病率: 2.0,
+          真阳性率: 95.0,
+          假阳性误报率: 5.0,
+          总体阳性检出率: 6.8,
+          阳性后验患病率: 27.94,
+        },
+        perturbation: {
+          params: { pPriorD: 0.1, pSensitivity: 0.95, pFalsePositive: 0.05 },
+          dynamicQuantityLabels: ["总体阳性检出率", "阳性后验患病率"],
+        },
         expectedQuantityLabels: [
           "先验患病率",
           "真阳性率",
@@ -230,7 +249,14 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         modeOptions: { activeMode: "models", subModel: "arith-geo" },
         params: { a1: 1, d: 1, q: 2, N: 3 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          "前 $N$ 项和": 17.0,
+          混合通项: 12.0,
+        },
+        perturbation: {
+          params: { a1: 1, d: 1, q: 2, N: 4 },
+          dynamicQuantityLabels: ["前 $N$ 项和"],
+        },
         expectedQuantityLabels: ["混合通项", "前 $N$ 项和", "公比 $q$ 状态"],
       },
     ]);
@@ -245,7 +271,13 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         modeOptions: { studyMode: "definition", direction: "right" },
         params: { p: 2, tP: 1 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          "焦参数 p": 2.0,
+        },
+        perturbation: {
+          params: { p: 4, tP: 1 },
+          dynamicQuantityLabels: ["焦参数 p"],
+        },
         expectedQuantityLabels: [
           "焦参数 p",
           "焦点 F",
@@ -266,7 +298,15 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         modeOptions: { activeMode: "arithmetic", arithmeticSubMode: "linear" },
         params: { a1: 3, d: -1, N: 8 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          "末项 a_{8}": -4.0,
+          "前 8 项和 S_{8}": -4.0,
+          "变号零点 x_0": 4.0,
+        },
+        perturbation: {
+          params: { a1: 3, d: 1, N: 8 },
+          dynamicQuantityLabels: ["末项 a_{8}", "前 8 项和 S_{8}"],
+        },
         expectedQuantityLabels: [
           "末项 a_{8}",
           "前 8 项和 S_{8}",
@@ -285,7 +325,14 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         modeOptions: { activeMode: "geometric" },
         params: { a1: 2, q: 3, N: 4 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          "末项 a_{4}": 54.0,
+          "前 4 项和 S_{4}": 80.0,
+        },
+        perturbation: {
+          params: { a1: 2, q: 2, N: 4 },
+          dynamicQuantityLabels: ["末项 a_{4}", "前 4 项和 S_{4}"],
+        },
         expectedQuantityLabels: ["末项 a_{4}", "前 4 项和 S_{4}"],
       },
     ]);
@@ -298,9 +345,17 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         name: "向量数量积几何投影模型",
         animId: "anim-vector-dot-product",
         modeOptions: { studyMode: "defProj" },
-        params: { magA: 3, magB: 4, thetaDeg: 60 },
+        params: { normA: 3, normB: 4, thetaDeg: 60, usePolarGeom: 1 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          "向量 a 的模长": 3.0,
+          "向量 b 的模长": 4.0,
+          "数量积 (a · b)": 6.0,
+        },
+        perturbation: {
+          params: { normA: 4, normB: 4, thetaDeg: 60, usePolarGeom: 1 },
+          dynamicQuantityLabels: ["数量积 (a · b)"],
+        },
         expectedQuantityLabels: [
           "向量 a 的模长",
           "向量 b 的模长",
@@ -316,9 +371,17 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         name: "极化恒等式模型",
         animId: "anim-vector-polarization-apollonius",
         modeOptions: { studyMode: "polarization" },
-        params: { bcLength: 6, amLength: 5 },
+        params: { bcLength: 6, pointX: 2, pointY: 4 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          "底边全长 |BC|": 6.0,
+          "中线长 |AM|": 4.47,
+          极化算值: 11.0,
+        },
+        perturbation: {
+          params: { bcLength: 8, pointX: 2, pointY: 4 },
+          dynamicQuantityLabels: ["底边全长 |BC|", "极化算值"],
+        },
         expectedQuantityLabels: ["底边全长 |BC|", "中线长 |AM|", "极化算值"],
       },
     ]);
@@ -332,7 +395,15 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         modeOptions: { studyMode: "lines" },
         params: { alphaDeg: 45 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          "正弦线 MP": 0.707,
+          "余弦线 OM": 0.707,
+          "正切线 AT": 1.0,
+        },
+        perturbation: {
+          params: { alphaDeg: 30 },
+          dynamicQuantityLabels: ["正弦线 MP", "正切线 AT"],
+        },
         expectedQuantityLabels: ["正弦线 MP", "余弦线 OM", "正切线 AT"],
       },
     ]);
@@ -346,7 +417,13 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         modeOptions: { studyMode: "transformPath" },
         params: { A: 2, omega: 2, phi: 0, k: 1 },
         lessonType: "concept",
-        groundTruth: {},
+        groundTruth: {
+          纵向振幅伸缩比: 2.0,
+        },
+        perturbation: {
+          params: { A: 3, omega: 2, phi: 0, k: 1 },
+          dynamicQuantityLabels: ["纵向振幅伸缩比"],
+        },
         expectedQuantityLabels: [
           "变换路线",
           "相位平移量",

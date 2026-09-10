@@ -62,6 +62,10 @@ function walkDir(currentPath, fileList = []) {
 }
 
 const files = walkDir(scanDir);
+if (targetArg === 'src/features') {
+  walkDir(path.resolve(workspaceRoot, 'src/math'), files);
+  walkDir(path.resolve(workspaceRoot, 'src/math3d'), files);
+}
 
 for (const filePath of files) {
   totalFiles++;
@@ -114,6 +118,18 @@ for (const filePath of files) {
           snippet: qText.slice(0, 70) + '...',
         });
       }
+
+      // 设问低阶空泛套话拦截 (discipline-specs.md §九)
+      if (
+        /(观察|看一看|体会).*(变化|走势|规律|作用)|(图形|图象|曲线)怎么动|移动滑块看看/.test(qText)
+      ) {
+        issues.push({
+          lineNum: 1,
+          type: 'TipCard设问空泛',
+          message: 'TipCard 核心设问严禁出现“观察图象走势/规律/体会参数”等低阶空泛套话，必须直击高考数学核心目标（如求范围/最值/零点/证明等）',
+          snippet: qText.slice(0, 70) + '...',
+        });
+      }
     }
   }
 
@@ -123,6 +139,11 @@ for (const filePath of files) {
     const secondaryVars = selectGridValueMatches.map((m) => m[1]);
 
     for (const secVar of secondaryVars) {
+      // 若 TipCard 开标签属性（props）中直接引用了该变量，视为已联动
+      // 注意：仅匹配开标签到第一个 > 之间（非贪婪但限定无嵌套 > 出现），防止误匹配 children
+      const directTipCardUsage = new RegExp(`<TipCard[^>]*${secVar}[^>]*>`).test(content);
+      if (directTipCardUsage) continue;
+
       const hasTipConfig = /const\s+(?:tipConfig|tipProps|tipInfo)\s*=\s*useMemo\([\s\S]*?\}\s*,\s*\[([\s\S]*?)\]\s*\)/.exec(content);
       if (hasTipConfig) {
         const deps = hasTipConfig[1];
@@ -244,6 +265,20 @@ for (const filePath of files) {
 
   lines.forEach((line, index) => {
     const lineNum = index + 1;
+
+    // 0. 数学层纯洁性检测 (src/math/ 与 src/math3d/ 必须为无副作用纯函数)
+    const isMathPureLayer = (filePath.includes(path.join('src', 'math')) || filePath.includes(path.join('src', 'math3d'))) && !filePath.includes('test');
+    if (isMathPureLayer) {
+      if (/from\s+['"]react['"]/.test(line) || /from\s+['"]react-dom['"]/.test(line) || /\bdocument\./.test(line) || /\bwindow\./.test(line)) {
+        issues.push({
+          lineNum,
+          type: '数学层纯洁性违规',
+          message: 'src/math/ 与 src/math3d/ 必须为纯函数层，严禁导入 React 或直接访问 DOM / window 全局对象',
+          snippet: line.trim()
+        });
+      }
+      return; // 纯数学算法层跳过前端 UI/JSX 相关检查
+    }
 
     // 1. 检查画布手写 <text> 浮点数
     if (line.includes('<text') && (line.includes('toFixed') || line.includes('${'))) {
@@ -446,15 +481,16 @@ for (const filePath of files) {
 
     // 15. 检查 3D 范式 A (综合法) 纯净度
     if ((filePath.includes('solidGeometry') || filePath.includes('math3d')) && (content.includes('范式 A') || content.includes('综合法') || content.includes('paradigm: "A"'))) {
-      if (/<CoordinateAxes3D\b/.test(line) || /<Vector3DArrow\b/.test(line)) {
+      if (/<CoordinateAxes3D\b/.test(line) || /<Vector3DArrow\b/.test(line) || /<Scene3DGrid\b/.test(line)) {
         issues.push({
           lineNum,
-          type: '3D综合法范式混入坐标轴或向量',
-          message: '综合法 (范式 A) 必须保持纯几何纯净度，严禁混入 <CoordinateAxes3D> 或 <Vector3DArrow>',
+          type: '3D综合法范式混入坐标轴或向量或网格',
+          message: '综合法 (范式 A) 必须保持纯几何纯净度，严禁混入 <CoordinateAxes3D>、<Vector3DArrow> 或 <Scene3DGrid>',
           snippet: line.trim()
         });
       }
     }
+
 
     // 16. 检查数列离散点域特征
     if ((filePath.includes('sequence') || filePath.includes('Sequence')) && filePath.endsWith('Scene.tsx')) {
@@ -463,6 +499,34 @@ for (const filePath of files) {
           lineNum,
           type: '数列图象连续化违规',
           message: '数列必须严格遵守离散点域规范 (n ∈ N*)，图象主体必须为离散点列或柱状图，严禁光滑样条连续曲线冒充数列',
+          snippet: line.trim()
+        });
+      }
+    }
+
+    // 17. 检查高中课标学术符号违规 (禁止大学粗体单字母向量、工程记号等)
+    if ((filePath.includes('builders') || filePath.includes('registries') || filePath.endsWith('Animation.tsx') || filePath.endsWith('Scene.tsx')) && !filePath.includes('test')) {
+      if (/\\mathbf\{[a-zA-Z]/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '课标符号违规',
+          message: '高中向量必须使用 \\vec{a} 或 \\overrightarrow{AB}，严禁大学粗体 \\mathbf{a}',
+          snippet: line.trim()
+        });
+      }
+      if (/\b(nCr|nPr)\b/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '课标符号违规',
+          message: '排列组合必须使用课标标准 C_n^m / \\binom{n}{m} / A_n^m，严禁工程记号 nCr / nPr',
+          snippet: line.trim()
+        });
+      }
+      if (/\\bot\b/.test(line) && !line.includes('bottom')) {
+        issues.push({
+          lineNum,
+          type: '课标符号违规',
+          message: '垂直符号必须使用课标标准 \\perp，严禁底元素符号 \\bot',
           snippet: line.trim()
         });
       }

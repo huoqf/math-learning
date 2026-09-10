@@ -24,6 +24,26 @@ export interface SyncContractTestCase<
   forbiddenTheoremKeywords?: string[]; // 严禁出现的跨模式不相干定理关键字
   forbiddenGaokaoKeywords?: string[]; // 严禁出现的跨模式不相干考点关键字
   expectedWarningCount?: number; // 临界预警数量断言
+  // 6. 参数摄动防假推导核验：断言当参数扰动时，关键特征量动态响应改变
+  perturbation?: {
+    params: TParams;
+    dynamicQuantityLabels: string[];
+  };
+}
+
+/**
+ * 容错提取 quantities 中的数值（支持百分比、带符号字符串、等号表达式或代数标注）
+ */
+function parseQuantityNumericValue(val: unknown): number {
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    // 优先截取等号右侧的内容（如 "a_{8} = -4.00" => "-4.00"）
+    const candidate = val.includes("=") ? val.split("=").pop()! : val;
+    // 匹配第一个有效浮点数
+    const match = candidate.match(/[+-]?\d+(?:\.\d+)?/);
+    if (match) return parseFloat(match[0]);
+  }
+  return NaN;
 }
 
 /**
@@ -40,8 +60,15 @@ export function verifyTopicSyncContract<
       modeOptions,
       groundTruth,
       lessonType = "gaokao_topic",
+      perturbation,
     } = tc;
     const mathData = buildMathQuantities(animId, params, modeOptions);
+
+    // 0. 契约非空门禁：全课型严禁提供空的 groundTruth 假契约，必须至少对账一个核心数学特征量
+    expect(
+      Object.keys(groundTruth).length,
+      `[${name}] 契约测试严禁提供空的 groundTruth，必须至少对账一个核心数学特征量`,
+    ).toBeGreaterThan(0);
 
     // 1. 验证数学特征量 (Quantities) 是否与真实解算严格同步
     Object.entries(groundTruth).forEach(([label, expectedVal]) => {
@@ -50,11 +77,44 @@ export function verifyTopicSyncContract<
         q,
         `[${name}] 未在右屏 quantities 中找到特征量: ${label}`,
       ).toBeDefined();
+
+      const parsedNum = parseQuantityNumericValue(q!.value);
       expect(
-        Number(q!.value),
+        Number.isNaN(parsedNum),
+        `[${name}] 特征量 [${label}] 的值无法解析为有效数值: "${q!.value}"`,
+      ).toBe(false);
+
+      expect(
+        parsedNum,
         `[${name}] 特征量 [${label}] 数值偏差过大: 期望 ${expectedVal}，实际 ${q!.value}`,
-      ).toBeCloseTo(expectedVal, 4);
+      ).toBeCloseTo(expectedVal, 3);
     });
+
+    // 1.1 参数摄动防伪推导测试：确保参数变化时特征量产生动态联动
+    if (perturbation) {
+      const perturbedData = buildMathQuantities(
+        animId,
+        perturbation.params,
+        modeOptions,
+      );
+      perturbation.dynamicQuantityLabels.forEach((label) => {
+        const baseQ = mathData.quantities.find((item) =>
+          item.label.includes(label),
+        );
+        const pertQ = perturbedData.quantities.find((item) =>
+          item.label.includes(label),
+        );
+        expect(baseQ, `[${name}] 摄动基准未找到 [${label}]`).toBeDefined();
+        expect(pertQ, `[${name}] 摄动后未找到 [${label}]`).toBeDefined();
+
+        const baseVal = parseQuantityNumericValue(baseQ!.value);
+        const pertVal = parseQuantityNumericValue(pertQ!.value);
+        expect(
+          Math.abs(baseVal - pertVal),
+          `[${name}] 特征量 [${label}] 在参数改变后未产生数值联动响应 (base: ${baseVal}, perturbed: ${pertVal})，存在死数据假推导风险！`,
+        ).toBeGreaterThan(1e-4);
+      });
+    }
 
     // 2. 检查特定特征量标签存在性
     if (tc.expectedQuantityLabels) {

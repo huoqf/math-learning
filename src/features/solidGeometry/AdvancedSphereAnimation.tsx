@@ -410,7 +410,7 @@ export default function AdvancedSphereAnimation() {
           condition:
             "固定半径为 R 的球体内接圆柱，圆柱的高 h 可在区间 (0, 2R) 内连续调节。",
           question:
-            "拖动滑块观察圆柱体积的变化趋势，观察内接圆柱体积何时达到全局最大值？对应的高与球半径呈何种比例？",
+            "探究球内接圆柱的高取何值时体积达到最大值？并证明此时高与球半径的比例关系。",
         };
       }
       if (presetKey === "cone_opt") {

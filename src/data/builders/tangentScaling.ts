@@ -789,12 +789,12 @@ export function buildTangentScalingPanel(
   }
 
   // 默认指数凸函数割切夹逼 exp_secant_tangent
-  const a = params.intervalA;
-  const b = params.intervalB;
+  const a = params.intervalA ?? 0.5;
+  const b = params.intervalB ?? 2.5;
   const midX = (a + b) / 2;
   const fa = Math.exp(a);
   const fb = Math.exp(b);
-  const secSlope = (fb - fa) / (b - a);
+  const secSlope = (fb - fa) / (b - a || 1);
 
   return {
     examAnchor: "新高考解答题 18 题拔高 · 指数下凸函数割切双向定界",

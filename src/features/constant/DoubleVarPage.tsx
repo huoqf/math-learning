@@ -204,7 +204,7 @@ export function DoubleVarPage() {
           essence:
             "自变量为同一动点，无需极值完全隔离，构造差函数 $h(x) = f(x) - g(x) \\ge 0$ 即可。",
           question:
-            "两曲线可以有高低交叉吗？观察交集 $[1.5, 2.0]$ 内违背区间的动态变化。",
+            "两曲线在交集定义域内可以高低交叉吗？试探究差函数 $h(x) \\ge 0$ 恒成立的充要条件。",
         };
       default:
         return {

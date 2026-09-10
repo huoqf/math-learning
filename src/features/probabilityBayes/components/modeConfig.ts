@@ -128,7 +128,8 @@ export function getModeTipConfig(ctx: BayesScenarioCtx): TipConfig {
       variant: "primary",
       badge: "自由探索 · 条件概率与样本空间压缩",
       condition: "全集 Ω 中已知先验概率 P(A)、P(B) 与联合交集概率 P(AB)。",
-      question: "自由调节各参数，观察样本空间压缩至 A 后的条件概率变化。",
+      question:
+        "在先验条件约束下，探究样本空间压缩至事件 A 后后验条件概率 P(B|A) 的计算通法。",
     };
   }
   if (activeMode === "total_prob") {

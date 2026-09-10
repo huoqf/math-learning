@@ -15,7 +15,7 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "audit": "node .agents/skills/math-page-audit/scripts/audit_page.mjs",
     "audit:strict": "node .agents/skills/math-page-audit/scripts/audit_page.mjs --strict",
-    "test": "vitest run src/math/ src/math3d/ src/test/",
+    "test": "vitest run src/math/ src/math3d/ src/test/ src/features/",
     "test:ci": "vitest run",
     "prepare": "husky"
   },

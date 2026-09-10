@@ -173,7 +173,8 @@ export function ArithmeticPage() {
           variant: "info" as const,
           badge: "等差数列探究",
           condition: common,
-          question: "观察 aₙ 与 Sₙ 的图象关系，体会通项到求和的桥梁作用。",
+          question:
+            "探究等差数列通项公式 aₙ 与前 n 项和 Sₙ 之间离散与连续二次函数最值的对应关系。",
         };
     }
   }, [arithmeticSubMode, a1, d, N, kSegment]);

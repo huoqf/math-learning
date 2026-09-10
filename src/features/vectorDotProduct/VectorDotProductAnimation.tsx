@@ -206,7 +206,7 @@ export function VectorDotProductAnimation() {
         return {
           condition: "两共起点向量 a 与 b，夹角 θ ∈ [0, π]。",
           question:
-            "拖动夹角滑块观察：当 θ 分别为锐角、直角、钝角时，垂足 H 与投影数量正负有什么规律？",
+            "探究当夹角 θ 分别为锐角、直角、钝角时，投影向量的数量正负与数量积正负的对应充要条件。",
         };
       case "properties":
         return {
