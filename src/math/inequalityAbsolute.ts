@@ -14,6 +14,27 @@ export interface SolutionInterval {
   isRightInfinity?: boolean;
 }
 
+export interface VectorSegment {
+  name: string;
+  from: number;
+  to: number;
+  val: number;
+  colorType: "primary" | "secondary" | "tertiary";
+}
+
+export interface TriangleInequalityInfo {
+  isSameSign: boolean;
+  sumModule: number;
+  diffModule: number;
+  modulesSum: number;
+  modulesDiff: number;
+  isSumEqualMax: boolean;
+  isSumEqualMin: boolean;
+  isDiffEqualMax: boolean;
+  isDiffEqualMin: boolean;
+  segments: VectorSegment[];
+}
+
 export interface AbsoluteInequalityResult {
   /** 当前点 x 处的函数值 f(x) */
   yVal: number;
@@ -36,6 +57,8 @@ export interface AbsoluteInequalityResult {
   /** 是否处于无解/全集等退化临界状态 */
   isDegenerate: boolean;
   degenerateReason?: string;
+  /** 三角不等式几何与模长数据 (仅 triangle 模式生效) */
+  triangleInfo?: TriangleInequalityInfo;
 }
 
 /**
@@ -382,6 +405,38 @@ export function solveAbsoluteInequality(
     }
   }
 
+  let triangleInfo: TriangleInequalityInfo | undefined = undefined;
+  if (mode === "triangle") {
+    const sumMod = Math.abs(a + b);
+    const diffMod = Math.abs(a - b);
+    const modSum = Math.abs(a) + Math.abs(b);
+    const modDiff = Math.abs(Math.abs(a) - Math.abs(b));
+    const eps = 1e-6;
+
+    triangleInfo = {
+      isSameSign: a * b >= 0,
+      sumModule: sumMod,
+      diffModule: diffMod,
+      modulesSum: modSum,
+      modulesDiff: modDiff,
+      isSumEqualMax: Math.abs(sumMod - modSum) < eps,
+      isSumEqualMin: Math.abs(sumMod - modDiff) < eps,
+      isDiffEqualMax: Math.abs(diffMod - modSum) < eps,
+      isDiffEqualMin: Math.abs(diffMod - modDiff) < eps,
+      segments: [
+        { name: "向量 a", from: 0, to: a, val: a, colorType: "primary" },
+        { name: "向量 b", from: a, to: a + b, val: b, colorType: "secondary" },
+        {
+          name: "向量 a+b",
+          from: 0,
+          to: a + b,
+          val: a + b,
+          colorType: "tertiary",
+        },
+      ],
+    };
+  }
+
   return {
     yVal,
     distA,
@@ -396,5 +451,6 @@ export function solveAbsoluteInequality(
     },
     isDegenerate,
     degenerateReason,
+    triangleInfo,
   };
 }

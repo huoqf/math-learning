@@ -3,7 +3,7 @@
  * 绝对值不等式几何意义三屏交互编排层
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -16,25 +16,63 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
+import { useAnimationViewport, useSceneScale, useScenario } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { InequalityAbsoluteScene } from "./components/InequalityAbsoluteScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/inequalityAbsolute";
 import type { InequalityMode, InequalityType } from "@/math/inequalityAbsolute";
+import { SCENARIOS_BY_MODE, type ScenarioParams } from "./scenarios";
 
 export function InequalityAbsoluteAnimation() {
   const [studyMode, setStudyMode] = useState<InequalityMode>("sum");
   const [ineqType, setIneqType] = useState<InequalityType>("<=");
+  const [scenarioKey, setScenarioKey] = useState<string>("sum-classic");
 
   // 本地参数状态
-  const [params, setParams] = useState(() => ({
+  const [params, setParams] = useState<ScenarioParams>(() => ({
     a: defaultParams.a,
     b: defaultParams.b,
     c: defaultParams.c,
     m: defaultParams.m,
     x: defaultParams.x,
   }));
+
+  // 当前模式的情景列表
+  const currentScenarios = useMemo(() => {
+    return SCENARIOS_BY_MODE[studyMode];
+  }, [studyMode]);
+
+  // 场景驱动 Hook (SSOT)
+  const { tipProps, selectScenario } = useScenario<string, ScenarioParams>({
+    scenarios: currentScenarios,
+    activeKey: scenarioKey,
+    params,
+    onParamsChange: setParams,
+  });
+
+  // 模式切换
+  const handleStudyModeChange = (modeKey: string) => {
+    const nextMode = modeKey as InequalityMode;
+    setStudyMode(nextMode);
+    const firstScenario = SCENARIOS_BY_MODE[nextMode][0];
+    if (firstScenario) {
+      setScenarioKey(firstScenario.id);
+      if (firstScenario.presetParams) {
+        setParams((prev) => ({
+          ...prev,
+          ...firstScenario.presetParams,
+        }));
+      }
+    }
+  };
+
+  // 情景切换
+  const handleScenarioChange = (id: string) => {
+    setScenarioKey(id);
+    selectScenario(id);
+  };
 
   // 画布视口测量
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -56,30 +94,44 @@ export function InequalityAbsoluteAnimation() {
     });
   }, [params, studyMode, ineqType]);
 
-  const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      setParams((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
+      // 手动调参切回 free 探索
+      const freeId = `${studyMode}-free`;
+      setScenarioKey(freeId);
+    },
+    [studyMode],
+  );
 
   const handleReset = () => {
-    setParams({
-      a: defaultParams.a,
-      b: defaultParams.b,
-      c: defaultParams.c,
-      m: defaultParams.m,
-      x: defaultParams.x,
-    });
+    const activeSpec = currentScenarios.find((s) => s.id === scenarioKey);
+    if (activeSpec?.presetParams) {
+      setParams((prev) => ({
+        ...prev,
+        ...activeSpec.presetParams,
+      }));
+    } else {
+      setParams({
+        a: defaultParams.a,
+        b: defaultParams.b,
+        c: defaultParams.c,
+        m: defaultParams.m,
+        x: defaultParams.x,
+      });
+    }
   };
 
-  // 按 current activeMode 动态过滤参数 (铁律 8)
+  // 动态过滤参数并透传 group 分组
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<InequalityMode, string[]> = {
       single: ["a", "c", "x"],
       sum: ["a", "b", "m", "x"],
       diff: ["a", "b", "m", "x"],
-      triangle: ["a", "b", "x"],
+      triangle: ["a", "b"],
     };
 
     const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
@@ -92,7 +144,7 @@ export function InequalityAbsoluteAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
+          value: params[key as keyof ScenarioParams] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
@@ -100,6 +152,7 @@ export function InequalityAbsoluteAnimation() {
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
+          group: meta.group,
         };
       });
   }, [params, studyMode]);
@@ -133,11 +186,36 @@ export function InequalityAbsoluteAnimation() {
     return titles[studyMode];
   }, [studyMode]);
 
+  // 中屏图例项
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (studyMode === "triangle") {
+      return [
+        { label: "向量 a (OA)", color: MATH_COLORS.paramPrimary },
+        { label: "向量 b (AB)", color: MATH_COLORS.paramSecondary },
+        { label: "和向量 a+b (OB)", color: MATH_COLORS.paramTertiary },
+      ];
+    }
+    return [
+      { label: "折线函数 y = f(x)", color: MATH_COLORS.function },
+      {
+        label: studyMode === "single" ? "常数线 y = c" : "常数线 y = m",
+        color: MATH_COLORS.paramTertiary,
+        isDashed: true,
+      },
+      { label: "解集投影区间", color: MATH_COLORS.inequality },
+      { label: "基准定点 A", color: MATH_COLORS.paramPrimary },
+      ...(studyMode !== "single"
+        ? [{ label: "基准定点 B", color: MATH_COLORS.paramSecondary }]
+        : []),
+      { label: "动点 P(x)", color: MATH_COLORS.focusPoint },
+    ];
+  }, [studyMode]);
+
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 模式选择 Section */}
+          {/* 1. 模式选择 Section */}
           <LeftPanelSection title="研究模式">
             <TabSwitcher
               layout="horizontal"
@@ -148,17 +226,30 @@ export function InequalityAbsoluteAnimation() {
                 { key: "triangle", label: "三角不等式" },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k as InequalityMode)}
+              onChange={handleStudyModeChange}
             />
           </LeftPanelSection>
 
-          {/* 不等号方向 Section (仅非 triangle 模式展示) */}
+          {/* 2. 典型情景 Section */}
+          <LeftPanelSection title="典型情景与考题">
+            <SelectGrid
+              items={currentScenarios.map((s) => ({
+                key: s.id,
+                label: s.name,
+              }))}
+              value={scenarioKey}
+              onChange={handleScenarioChange}
+              columns={2}
+            />
+          </LeftPanelSection>
+
+          {/* 3. 不等号方向 Section (仅非 triangle 模式展示，纯中文选项) */}
           {studyMode !== "triangle" && (
             <LeftPanelSection title="不等号方向">
               <SelectGrid
                 items={[
-                  { key: "<=", formula: "f(x) \\le m" },
-                  { key: ">=", formula: "f(x) \\ge m" },
+                  { key: "<=", label: "小于等于 (求内部区间)" },
+                  { key: ">=", label: "大于等于 (求外部区间)" },
                 ]}
                 value={ineqType}
                 onChange={(k) => setIneqType(k as InequalityType)}
@@ -168,7 +259,7 @@ export function InequalityAbsoluteAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 参数调节 Section */}
+          {/* 4. 参数调节 Section (透传 group) */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -177,29 +268,17 @@ export function InequalityAbsoluteAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学导引 */}
-          <LeftPanelSection title="教学导引" compact>
-            <TipCard
-              variant="warning"
-              badge="高考重点 · 绝对值几何距离与三角不等式"
-              condition={
-                studyMode === "single"
-                  ? "数轴上动点 x 到定点 a 的几何距离 |x - a|。"
-                  : studyMode === "sum"
-                    ? "动点 x 到两定点 a, b 的距离之和 |x - a| + |x - b|。"
-                    : studyMode === "diff"
-                      ? "动点 x 到两定点 a, b 的距离之差 |x - a| - |x - b|。"
-                      : "实数 a, b 的绝对值三角不等式 ||a| - |b|| ≤ |a ± b| ≤ |a| + |b|。"
-              }
-              question={
-                studyMode === "sum"
-                  ? "探究为何两点距离之和在闭区间 [a, b] 恒取最小值 |a - b|（平底杯杯底）。"
-                  : studyMode === "diff"
-                    ? "探究两点距离之差为何恒在 [-|a - b|, |a - b|] 形成阶梯上下界。"
-                    : "观察阈值截线与折线交点，探究不等式解集的几何区间分布。"
-              }
-            />
-          </LeftPanelSection>
+          {/* 5. 教学导引与核心设问 (SSOT useScenario 驱动闭环) */}
+          {tipProps && (
+            <LeftPanelSection title="教学导引" compact>
+              <TipCard
+                variant={tipProps.variant}
+                badge={tipProps.badge}
+                condition={tipProps.condition}
+                question={tipProps.question}
+              />
+            </LeftPanelSection>
+          )}
         </LeftPanel>
       }
       center={
@@ -224,12 +303,16 @@ export function InequalityAbsoluteAnimation() {
               ineqType={ineqType}
             />
           </AnimationSvgCanvas>
+
+          {/* 右下角悬浮图例 */}
+          <SceneLegend items={legendItems} title="几何图元指示" />
         </div>
       }
       right={
         <MathPanel
           quantities={mathData.quantities}
           theorems={mathData.theorems}
+          reasoningSteps={mathData.reasoningSteps}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}

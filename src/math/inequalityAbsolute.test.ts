@@ -171,5 +171,21 @@ describe("inequalityAbsolute - 绝对值不等式几何求解与最值", () => {
         expect(midMinus).toBeLessThanOrEqual(right + 1e-9);
       }
     });
+
+    it("triangle 模式返回结构化的有向线段与同号取等标记", () => {
+      // 同号取等：a=2, b=3 => |a+b| = |a|+|b| = 5
+      const resSame = solveAbsoluteInequality(2, 3, 0, 0, 0, "triangle", "<=");
+      expect(resSame.triangleInfo).toBeDefined();
+      expect(resSame.triangleInfo?.isSameSign).toBe(true);
+      expect(resSame.triangleInfo?.isSumEqualMax).toBe(true);
+      expect(resSame.triangleInfo?.sumModule).toBe(5);
+      expect(resSame.triangleInfo?.segments).toHaveLength(3);
+
+      // 异号下界：a=3, b=-2 => |a+b| = ||a|-|b|| = 1
+      const resDiff = solveAbsoluteInequality(3, -2, 0, 0, 0, "triangle", "<=");
+      expect(resDiff.triangleInfo?.isSameSign).toBe(false);
+      expect(resDiff.triangleInfo?.isSumEqualMin).toBe(true);
+      expect(resDiff.triangleInfo?.sumModule).toBe(1);
+    });
   });
 });
