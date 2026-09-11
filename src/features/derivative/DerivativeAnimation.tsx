@@ -219,7 +219,7 @@ export function DerivativeAnimation() {
       badge: "探究二 · 切线方程与斜率（几何性质 · 点斜式）",
       condition: `考察函数 ${preset.latex} 随切点 P(x₀, y₀) 移动时切线的变化。`,
       question:
-        "拖动切点 P 观察切线斜率 k = f'(x₀) 的符号与大小，验证水平切线与单调性/极值的联系。",
+        "调节切点 P 的横坐标 $x_0$，求解切线斜率 $k = f'(x_0)$ 的符号与大小，验证水平切线与函数极值点存在性的充要联系。",
     };
   }, [mode, preset, fnKey]);
 

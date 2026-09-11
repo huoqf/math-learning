@@ -101,9 +101,9 @@ for (const filePath of files) {
     }
   }
 
-  // 全文级检查 3：TipCard 设问剧透检测 (严禁在设问中提前把配方解或极值答案当问题写出)
-  if (content.includes('TipCard') || content.includes('question:')) {
-    const questionMatches = content.matchAll(/question:\s*["'`]([\s\S]*?)["'`]/g);
+  // 全文级检查 3：TipCard 设问与导引检测 (严禁剧透与低阶空泛套话)
+  if (content.includes('TipCard') || content.includes('question:') || content.includes('detail:')) {
+    const questionMatches = content.matchAll(/(?:question|detail)\s*:\s*["'`]([\s\S]*?)["'`]/g);
     for (const qm of questionMatches) {
       const qText = qm[1];
       if (
@@ -121,12 +121,12 @@ for (const filePath of files) {
 
       // 设问低阶空泛套话拦截 (discipline-specs.md §九)
       if (
-        /(观察|看一看|体会).*(变化|走势|规律|作用)|(图形|图象|曲线)怎么动|移动滑块看看/.test(qText)
+        /(拖动|滑动).*(观察|看一看|体会)|(观察|看一看|体会).*(变化|走势|规律|作用)|(图形|图象|曲线)怎么动|移动滑块看看/.test(qText)
       ) {
         issues.push({
           lineNum: 1,
           type: 'TipCard设问空泛',
-          message: 'TipCard 核心设问严禁出现“观察图象走势/规律/体会参数”等低阶空泛套话，必须直击高考数学核心目标（如求范围/最值/零点/证明等）',
+          message: 'TipCard 教学导引严禁出现“拖动/滑动...观察”、“观察图象走势/规律/体会参数”等低阶空泛套话，必须直击高考数学核心目标（如求范围/最值/零点/证明等）',
           snippet: qText.slice(0, 70) + '...',
         });
       }
@@ -386,17 +386,22 @@ for (const filePath of files) {
       for (const rawStr of strMatches) {
         const str = rawStr.slice(1, -1);
         if (/[\u4e00-\u9fa5]/.test(str) && !str.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
-          const hasLatexCmd = /\\[a-zA-Z]{2,}/.test(str);
-          const hasMathSuper = /[a-zA-Z]\^[0-9a-zA-Z]+/.test(str);
-          const hasMathSub = /\b[a-zA-Z]{1,2}_[0-9a-zA-Z]+|\b[fgh]_(?:max|min)\b/.test(str);
-          if (hasLatexCmd || hasMathSuper || hasMathSub) {
-            issues.push({
-              lineNum,
-              type: '混合文本缺少$定界符',
-              message: '检测到中文句子中包含 LaTeX 指令或上下标，但未用 $...$ 包裹，会导致公式无法被 KaTeX 正确切分渲染',
-              snippet: line.trim()
-            });
-            break;
+          // 关键判定：先剥离合法的纯 LaTeX 文本包装（如 \text{...}, \mathrm{...}, \operatorname{...}）
+          const textFreeStr = str.replace(/\\(?:text|mathrm|operatorname)\{[^}]*\}/g, '');
+          // 若剥离后已无中文字符，说明整个字符串本身就是纯 LaTeX 公式，中文字符在 \text{} 内是合法且推荐的，无需再加 $
+          if (/[\u4e00-\u9fa5]/.test(textFreeStr)) {
+            const hasLatexCmd = /\\[a-zA-Z]{2,}/.test(textFreeStr);
+            const hasMathSuper = /[a-zA-Z]\^[0-9a-zA-Z]+/.test(textFreeStr);
+            const hasMathSub = /\b[a-zA-Z]{1,2}_[0-9a-zA-Z]+|\b[fgh]_(?:max|min)\b/.test(textFreeStr);
+            if (hasLatexCmd || hasMathSuper || hasMathSub) {
+              issues.push({
+                lineNum,
+                type: '混合文本缺少$定界符',
+                message: '检测到中文句子中包含 LaTeX 指令或上下标，但未用 $...$ 包裹，会导致公式无法被 KaTeX 正确切分渲染',
+                snippet: line.trim()
+              });
+              break;
+            }
           }
         }
       }

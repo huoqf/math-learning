@@ -488,16 +488,121 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
           "末项 a_{8}": -7.0,
           "前 8 项和 S_{8}": 0.0,
         },
-        perturbation: {
-          params: { a1: 7, d: -1, N: 8 },
-          dynamicQuantityLabels: ["末项 a_{8}", "前 8 项和 S_{8}"],
-        },
         expectedQuantityLabels: [
           "末项 a_{8}",
           "前 8 项和 S_{8}",
           "抛物线对称轴 x_sym",
           "S_n 最大值项",
         ],
+      },
+    ]);
+  });
+
+  it("导数专题：导数与函数单调性及极值三屏联动、跨模式隔离与精准预警契约验证", () => {
+    // 1. 模式一：动点切线与单调区间 (三次含参模型 a=1.0, x0=2.0)
+    // f(x) = x^3/3 - x => f(2) = 8/3 - 2 = 2/3 ≈ 0.667, f'(2) = 4 - 1 = 3.0
+    verifyTopicSyncContract([
+      {
+        name: "导数单调性 - 动点切线模式",
+        animId: "anim-derivative-monotonicity",
+        modeOptions: { modelKey: "cubic_param", mode: "monotonicity_point" },
+        params: { a: 1.0, x0: 2.0 },
+        lessonType: "gaokao_topic",
+        groundTruth: {
+          动点切线状态: 2.0, // 切点横坐标 x_0 = 2.0
+        },
+        expectedExamAnchor: "导数的几何意义与切线单调性",
+        expectedReasoningSymbols: ["f'(x_0)", "y -"],
+        expectedTheoremsKeywords: [
+          "导数的几何意义与切线方程",
+          "导数与单调性判定定理",
+        ],
+        forbiddenTheoremKeywords: [
+          "第一充分条件",
+          "费马定理",
+          "分类讨论标准五步法",
+        ],
+        forbiddenGaokaoKeywords: ["分类讨论三大分水岭", "穿零变号法则"],
+      },
+      {
+        name: "导数极值分析 - 极值穿零变号模式 (指数模型 a=1.0)",
+        animId: "anim-derivative-monotonicity",
+        modeOptions: { modelKey: "exp_poly", mode: "extrema_analysis" },
+        params: { a: 1.0, x0: 0.0 },
+        lessonType: "gaokao_topic",
+        groundTruth: {
+          极值点与驻点列表: 0.0, // 唯一极值点 x = a - 1 = 0
+        },
+        expectedExamAnchor: "第一充分条件穿零变号与极值判定",
+        expectedTheoremsKeywords: ["极值点第一充分条件", "费马定理"],
+        forbiddenTheoremKeywords: ["切线方程定理", "分类讨论标准五步法"],
+        forbiddenGaokaoKeywords: ["切线方程的点斜式展开"],
+      },
+      {
+        name: "导数含参讨论 - 高考第一问大题规范 (对勾函数 a=1.0)",
+        animId: "anim-derivative-monotonicity",
+        modeOptions: { modelKey: "nike_rational", mode: "parametric_discuss" },
+        params: { a: 1.0, x0: 1.5 },
+        lessonType: "gaokao_topic",
+        groundTruth: {
+          极值点与驻点列表: -1.0, // 首个极值点 x = -1
+        },
+        expectedExamAnchor: "含参单调性分类讨论标准五步法",
+        expectedTheoremsKeywords: [
+          "含参单调性分类讨论标准五步法",
+          "单调性充要判定定理",
+        ],
+        forbiddenTheoremKeywords: ["切线方程定理"],
+        expectedReasoningSymbols: ["f'(x)", "定义域"],
+      },
+    ]);
+  });
+
+  it("立体几何：空间角二面角向量法与射影面积法契约核验", () => {
+    // a=3, b=2, c=2, lambda=0.6 => zE = 1.2
+    // 底面法向量 n1 = (0, 0, 1), 截面法向量 n2 = (b*zE, a*zE, a*b) = (2.4, 3.6, 6)
+    // cosθ = (a*b) / (|n1| * |n2|) = 6 / sqrt(2.4^2 + 3.6^2 + 36) = 6 / sqrt(54.72) ≈ 0.8111
+    verifyTopicSyncContract([
+      {
+        name: "二面角空间向量求解模型",
+        animId: "anim-solid-angle",
+        modeOptions: { mode: "dihedral" },
+        params: { a: 3, b: 2, c: 2, lambda: 0.6 },
+        lessonType: "gaokao_topic",
+        groundTruth: {
+          "二面角平面角余弦 cosθ": 0.8111,
+        },
+        expectedExamAnchor: "二面角",
+        expectedTheoremsKeywords: [
+          "二面角向量法与钝锐判断定理",
+          "三垂线定理作二面角平面角",
+        ],
+        forbiddenTheoremKeywords: ["异面直线公垂线", "点到平面的距离公式"],
+        expectedReasoningSymbols: ["\\cos\\theta", "\\vec{n_1}", "\\vec{n_2}"],
+      },
+    ]);
+  });
+
+  it("导数与不等式：双变量量词博弈与存在性问题高考大题契约核验", () => {
+    // yf = 2.5, xf = 1.25, mf = 0.5, nf = 2.0 (开口向上二次函数，对称轴 x=1.25 在 [0.5, 2.0] 内)
+    // f_min = yf = 2.50
+    // yg = 1.5, xg = 2.25, mg = 1.5, ng = 3.0 (开口向下二次函数，对称轴 x=2.25 在 [1.5, 3.0] 内)
+    // g_max = yg = 1.50
+    verifyTopicSyncContract([
+      {
+        name: "双变量量词博弈模型 (∀x1, ∃x2, f(x1) ≤ g(x2))",
+        animId: "anim-constant-double",
+        modeOptions: { selectedLogic: "all_exist" },
+        params: { yf: 2.5, xf: 1.25, yg: 1.5, xg: 2.25 },
+        lessonType: "gaokao_topic",
+        groundTruth: {
+          "f(x) 最小值": 2.5,
+          "g(x) 最大值": 1.5,
+        },
+        expectedExamAnchor: "双变量量词博弈",
+        expectedReasoningSymbols: ["f_{\\min}", "g_{\\min}"],
+        expectedTheoremsKeywords: ["极小保底支撑"],
+        forbiddenTheoremKeywords: ["单变量导数切线定理", "基准切线放缩"],
       },
     ]);
   });

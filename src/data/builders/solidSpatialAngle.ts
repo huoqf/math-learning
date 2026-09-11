@@ -487,11 +487,29 @@ export function buildSpatialAnglePanel(
     }
   }
 
+  let examAnchor = "";
+  let mnemonic = "";
+  if (mode === "skewLines") {
+    examAnchor = "新高考立体几何 · 异面直线所成角与公垂线";
+    mnemonic = "异面角平移转相交，向量点积模相包";
+  } else if (mode === "linePlane") {
+    examAnchor = "新高考立体几何 · 直线与平面所成角";
+    mnemonic = "线面角求法向量夹，正弦等于余弦绝";
+  } else if (mode === "distance") {
+    examAnchor = "新高考立体几何 · 向量射影法与等体积求点面距";
+    mnemonic = "射影点乘法向量，等体换底互验忙";
+  } else {
+    examAnchor = "新高考立体几何压轴 · 二面角平面角与法向量点积";
+    mnemonic = "两面法向求夹角，结合图形定钝锐";
+  }
+
   return {
     quantities,
     theorems,
     gaokaoPoints,
     warnings,
     reasoningSteps: reasoningSteps.length > 0 ? reasoningSteps : undefined,
+    examAnchor,
+    mnemonic,
   };
 }

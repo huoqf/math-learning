@@ -200,7 +200,7 @@ export function TriangleSolveAnimation() {
         return {
           condition: "在任意 △ABC 中，已知两角一边或两边及对角",
           question:
-            "观察外接圆直径 2R 与正弦比值 a/sinA 是否恒等？拖动顶点 A 观察同弧圆周角 ∠C' 的恒等性。",
+            "证明外接圆直径 $2R$ 与正弦比值 $\\frac{a}{\\sin A}$ 的恒等性，验证同弧圆周角圆周运动不变性。",
         };
       case "ssa":
         return {

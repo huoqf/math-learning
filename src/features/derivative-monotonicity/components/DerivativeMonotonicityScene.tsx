@@ -12,8 +12,9 @@ import {
   TangentLine,
   IntervalShadow,
   SceneLabelGroup,
+  Asymptote,
 } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, GEOMETRY_COLORS, withAlpha } from "@/theme";
 import {
   solveMonotonicityModel,
   type MonotonicityModelKey,
@@ -44,14 +45,20 @@ export const DerivativeMonotonicityScene: React.FC<
 
   const { fn, derivativeFn, extrema, monotonicIntervals } = modelResult;
 
-  // 动点拖拽回调
+  // 动点拖拽回调（严格定义域保护）
   const handleDragPoint = useCallback(
     (newMathPos: { x: number; y: number }) => {
       if (!onParamChange) return;
       let clampedX = newMathPos.x;
+
       // 对数模型定义域保护 x > 0.05
       if (modelKey === "ln_x_ratio" || modelKey === "x_ln_x_param") {
         clampedX = Math.max(0.1, clampedX);
+      } else if (modelKey === "nike_rational") {
+        // 对勾函数 x ≠ 0 保护，避免落在奇点附近
+        if (Math.abs(clampedX) < 0.2) {
+          clampedX = clampedX >= 0 ? 0.2 : -0.2;
+        }
       }
       onParamChange("x0", Number(clampedX.toFixed(2)));
     },
@@ -62,12 +69,11 @@ export const DerivativeMonotonicityScene: React.FC<
   const fpx0 = derivativeFn(x0);
   const isPointValid = Number.isFinite(fx0) && Number.isFinite(fpx0);
 
-  // 智能避让点标标签（使用设计像素坐标）
+  // 智能避让点标标签（使用纯学术标准命名，杜绝 Unicode 下标豆腐块）
   const labelItems = useMemo<LabelItem[]>(() => {
     const items: LabelItem[] = [];
 
     // 极值点标签
-    const subDigits = ["₁", "₂", "₃", "₄"];
     extrema.forEach((ext, idx) => {
       const typeLabel =
         ext.type === "maximum"
@@ -75,13 +81,17 @@ export const DerivativeMonotonicityScene: React.FC<
           : ext.type === "minimum"
             ? "极小值"
             : "驻点";
-      const sub = subDigits[idx] || `${idx + 1}`;
+
       const nameStr =
         ext.type === "maximum"
-          ? `M${sub}`
+          ? extrema.filter((e) => e.type === "maximum").length > 1
+            ? `M${idx + 1}`
+            : "M"
           : ext.type === "minimum"
-            ? `m${sub}`
-            : `S${sub}`;
+            ? extrema.filter((e) => e.type === "minimum").length > 1
+              ? `m${idx + 1}`
+              : "m"
+            : "S";
 
       const pos = mathToDesign(ext.x, ext.y, scale);
       items.push({
@@ -94,14 +104,14 @@ export const DerivativeMonotonicityScene: React.FC<
       });
     });
 
-    // 当前切点动点标签（保持极简学术点标，精确坐标归位右下角图例与右屏看板）
+    // 当前切点动点标签
     if (isPointValid) {
       const pos = mathToDesign(x0, fx0, scale);
       items.push({
         key: "drag-p",
         x: pos.x,
         y: pos.y,
-        text: "P₀",
+        text: "P (切点)",
         color: MATH_COLORS.tangentLine,
         preferredPlacement: fpx0 >= 0 ? "top" : "bottom",
       });
@@ -143,6 +153,40 @@ export const DerivativeMonotonicityScene: React.FC<
     <g>
       {/* 坐标轴网格 */}
       <CoordinateGrid scale={scale} fontScale={fontScale} />
+
+      {/* 渐近线辅助线（严格符合学科规范） */}
+      {modelKey === "nike_rational" && (
+        <>
+          <Asymptote
+            type="vertical"
+            value={0}
+            scale={scale}
+            color={GEOMETRY_COLORS.asymptote}
+            label="x = 0 (垂直渐近线)"
+            fontScale={fontScale}
+          />
+          <Asymptote
+            type="oblique"
+            value={1}
+            intercept={0}
+            scale={scale}
+            color={GEOMETRY_COLORS.asymptote}
+            label="y = x (斜渐近线)"
+            fontScale={fontScale}
+          />
+        </>
+      )}
+
+      {modelKey === "ln_x_ratio" && (
+        <Asymptote
+          type="vertical"
+          value={0}
+          scale={scale}
+          color={GEOMETRY_COLORS.asymptote}
+          label="x = 0 (渐近线)"
+          fontScale={fontScale}
+        />
+      )}
 
       {/* 单调增减区间阴影填充（模式1与模式3展示） */}
       {(mode === "monotonicity_point" || mode === "parametric_discuss") &&

@@ -172,7 +172,7 @@ export function getModeTipConfig(ctx: BayesScenarioCtx): TipConfig {
         badge: "高考压轴 · 罕见病筛查与基率效应",
         condition: "试剂真阳率 95%、假阳误报率 5% 固定（试剂固有技术指标）。",
         question:
-          "滑动自然患病率 P(D)，观察后验患病率从 2% 飙升至 80% 的基率谬误。",
+          "调节自然患病率 $P(D)$，求解后验确诊患病率 $P(D|+)$ 随先验基率剧烈跃迁的数理极值边界。",
       };
     }
     if (bayesScenario === "factory") {
@@ -198,7 +198,7 @@ export function getModeTipConfig(ctx: BayesScenarioCtx): TipConfig {
       condition:
         "甲必传乙 (p₁₁=0)，乙等可能传甲或丙 (p₂₁=0.5)，球初在甲手 (p₁=1)。",
       question:
-        "滑动步数 n，观察特征公比 λ = -0.5 下数列交替摆动逼近 1/3 的全过程。",
+        "改变迭代转移步数 $n$，证明特征公比 $\\lambda = -0.5$ 下交替震荡递推数列收敛于极限值 $1/3$。",
     };
   }
   if (markovScenario === "pass_ball_3") {
@@ -216,7 +216,8 @@ export function getModeTipConfig(ctx: BayesScenarioCtx): TipConfig {
       variant: "danger",
       badge: "高考经典 · 摸球置换转移模型 (单调收敛)",
       condition: "转移矩阵固定 (p₁₁=0.6, p₂₁=0.2)，特征公比 λ = 0.4 > 0。",
-      question: "滑动步数 n，观察概率序列单调渐近收敛于稳态极限 1/3。",
+      question:
+        "增加迭代转移步数 $n$，求解并证明状态概率序列单调收敛于平衡稳态极限值 $1/3$。",
     };
   }
   if (markovScenario === "weather") {

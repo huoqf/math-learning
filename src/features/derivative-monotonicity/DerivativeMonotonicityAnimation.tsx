@@ -161,12 +161,13 @@ export function DerivativeMonotonicityAnimation() {
     return `${modelResult.latex} \\quad \\Big[ ${modelResult.criticalCondition} \\Big]`;
   }, [modelResult, params, mode]);
 
-  // 中屏右下角图例配置
+  // 中屏右下角图例配置（KaTeX与中文分离，杜绝乱码）
   const legendItems = useMemo<SceneLegendItem[]>(() => {
     const items: SceneLegendItem[] = [
       {
         color: MATH_COLORS.function,
-        formula: `f(x) = ${modelResult.name}`,
+        label: "原函数",
+        formula: modelResult.latex,
         style: "solid",
       },
     ];
@@ -174,7 +175,8 @@ export function DerivativeMonotonicityAnimation() {
     if (mode === "extrema_analysis" || mode === "parametric_discuss") {
       items.push({
         color: MATH_COLORS.derivative,
-        formula: `f'(x) \\; (\\text{导函数图象})`,
+        label: "导函数",
+        formula: modelResult.derivativeLatex,
         style: "dash",
       });
     }
@@ -182,12 +184,14 @@ export function DerivativeMonotonicityAnimation() {
     if (mode === "monotonicity_point" || mode === "extrema_analysis") {
       items.push({
         color: MATH_COLORS.tangentLine,
-        formula: `y - f(x_0) = f'(x_0)(x - x_0) \\;(\\text{切线})`,
+        label: "切线",
+        formula: "y - f(x_0) = f'(x_0)(x - x_0)",
         style: "solid",
       });
       items.push({
         color: MATH_COLORS.tangentLine,
-        formula: `P(x_0, f(x_0)) \\;(\\text{切点动点})`,
+        label: "切点动点",
+        formula: "P(x_0, f(x_0))",
         style: "point",
       });
     }
@@ -195,7 +199,7 @@ export function DerivativeMonotonicityAnimation() {
     if (modelResult.extrema.length > 0) {
       items.push({
         color: MATH_COLORS.focusPoint,
-        formula: `\\text{极值点 / 驻点}`,
+        label: "极值点 / 驻点",
         style: "point",
       });
     }
@@ -203,12 +207,14 @@ export function DerivativeMonotonicityAnimation() {
     if (mode === "monotonicity_point" || mode === "parametric_discuss") {
       items.push({
         color: MATH_COLORS.vectorSecondary,
-        formula: `f'(x) > 0 \\;(\\text{单调增区间})`,
+        label: "单调增区间",
+        formula: "f'(x) > 0",
         style: "area",
       });
       items.push({
         color: MATH_COLORS.paramPrimary,
-        formula: `f'(x) < 0 \\;(\\text{单调减区间})`,
+        label: "单调减区间",
+        formula: "f'(x) < 0",
         style: "area",
       });
     }
@@ -216,33 +222,57 @@ export function DerivativeMonotonicityAnimation() {
     return items;
   }, [modelResult, mode]);
 
-  // 教学导引卡片动态提示
+  // 教学导引卡片动态提示（严格落实【初始条件】+【核心设问】闭环）
   const tipConfig = useMemo(() => {
+    const aVal = params.a ?? currentModel.defaultA;
+    const aStr = formatFloat(aVal);
+    const x0Val = params.x0 ?? currentModel.defaultX0;
+    const x0Str = formatFloat(x0Val);
+
+    const domainStr =
+      modelKey === "ln_x_ratio" || modelKey === "x_ln_x_param"
+        ? "(0, +\\infty)"
+        : modelKey === "nike_rational"
+          ? "(-\\infty, 0) \\cup (0, +\\infty)"
+          : "\\mathbb{R}";
+
+    const funcFormula = `$${modelResult.latex}$`;
+    const derivFormula = `$${modelResult.derivativeLatex}$`;
+    const domainFormula = `$x \\in ${domainStr}$`;
+    const x0Formula = `$x_0 = ${x0Str}$`;
+    const aRangeFormula = `$a \\in [${currentModel.aRange[0]}, ${currentModel.aRange[1]}]$`;
+    const aCurrentFormula = `$a = ${aStr}$`;
+
     if (mode === "monotonicity_point") {
-      const fpx0 = modelResult.derivativeFn(params.x0 ?? 1.0);
-      const isInc = fpx0 > 0;
+      const fpx0 = modelResult.derivativeFn(x0Val);
+      const isInc = Number.isFinite(fpx0) && fpx0 > 0;
       return {
         variant: isInc ? ("info" as const) : ("warning" as const),
-        title: "数形结合直观探索",
-        detail:
-          "拖动中屏切点 P 或调节横坐标 x₀，观察切线斜率 k = f'(x₀) 的正负与函数曲线升降的一致性。",
+        badge: "数形结合 · 导数几何意义与单调性",
+        condition: `【初始条件】考察${currentModel.name} ${funcFormula}，定义域 ${domainFormula}，当前切点横坐标取 ${x0Formula}。`,
+        question:
+          "【核心设问】\n(1) 求切点处的导数值 $f'(x_0)$，写出点斜式切线方程；\n(2) 分析切线斜率 $k = f'(x_0)$ 的符号如何充要判定函数在切点附近的局部增减方向。",
       };
     }
+
     if (mode === "extrema_analysis") {
       return {
         variant: "info" as const,
-        title: "第一充分条件判定极值",
-        detail:
-          "观察紫色虚线导函数 f'(x) 与 x 轴交点：穿零变号即为极值点（左正右负极大值，左负右正极小值），不变号为非极值驻点。",
+        badge: "第一充分条件 · 穿零变号与极值判定",
+        condition: `【初始条件】已知${currentModel.name} ${funcFormula}（${domainFormula}），导函数为 ${derivFormula}。`,
+        question:
+          "【核心设问】\n(1) 解方程 $f'(x) = 0$ 确定驻点，分析导数图象在各驻点处的穿零变号方向；\n(2) 结合极值第一充分条件，判定驻点是否为极值点，并求出极值。",
       };
     }
+
     return {
       variant: "warning" as const,
-      title: "高考含参分类讨论核心",
-      detail:
-        "滑动参数 a，观察零点个数（判别式 Δ 或临界参数）如何改变单调区间的分布与极值点的存在性。",
+      badge: "高考真题母题 · 含参单调性分类讨论",
+      condition: `【初始条件】含参函数 ${funcFormula}（${domainFormula}），实数参数 ${aRangeFormula}，当前 ${aCurrentFormula}。`,
+      question:
+        "【核心设问】\n(1) 探究导函数 $f'(x)$ 的零点存在性及判别式/临界分水岭，确定分类讨论的分段边界；\n(2) 按照高考大题规范五步法，分类讨论写出函数在定义域内的单调递增区间与递减区间。",
     };
-  }, [mode, modelResult, params.x0, modelKey]);
+  }, [mode, modelResult, params, currentModel, modelKey]);
 
   return (
     <ThreePanel
@@ -279,9 +309,9 @@ export function DerivativeMonotonicityAnimation() {
 
           <TipCard
             variant={tipConfig.variant}
-            badge={tipConfig.title}
-            condition="考察目标函数在给定定义域内的导函数符号分布与穿零变号特征。"
-            question={tipConfig.detail}
+            badge={tipConfig.badge}
+            condition={tipConfig.condition}
+            question={tipConfig.question}
           />
         </LeftPanel>
       }
@@ -318,8 +348,10 @@ export function DerivativeMonotonicityAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           mnemonic={mathData.mnemonic}
-          title="导数与单调性及极值看板"
+          title="数学解析看板"
         />
       }
     />

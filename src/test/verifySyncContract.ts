@@ -37,8 +37,15 @@ export interface SyncContractTestCase<
 function parseQuantityNumericValue(val: unknown): number {
   if (typeof val === "number") return val;
   if (typeof val === "string") {
+    // 若存在带括号的参数注解（如 "2.50 (x=1.25)"），先提取主值部分，防止括号内的等号干扰
+    const mainText =
+      val.includes("(") && !val.startsWith("(")
+        ? val.split("(")[0].trim()
+        : val;
     // 优先截取等号右侧的内容（如 "a_{8} = -4.00" => "-4.00"）
-    const candidate = val.includes("=") ? val.split("=").pop()! : val;
+    const candidate = mainText.includes("=")
+      ? mainText.split("=").pop()!
+      : mainText;
     // 匹配第一个有效浮点数
     const match = candidate.match(/[+-]?\d+(?:\.\d+)?/);
     if (match) return parseFloat(match[0]);
@@ -126,13 +133,24 @@ export function verifyTopicSyncContract<
 
     // 3. 若为高考专题课，执行严格的大题推演链规范核验
     if (lessonType === "gaokao_topic") {
-      // 必须有母题定位与口诀心法
+      // 必须有母题定位与口诀心法（强制非空契约）
+      expect(
+        mathData.examAnchor,
+        `[${name}] 声明为 gaokao_topic 的高考专题课，必须提供非空的 examAnchor 母题定位`,
+      ).toBeTruthy();
+
       if (tc.expectedExamAnchor) {
         expect(
           mathData.examAnchor,
           `[${name}] 缺少母题定位或不匹配: ${tc.expectedExamAnchor}`,
         ).toContain(tc.expectedExamAnchor);
       }
+
+      expect(
+        mathData.mnemonic,
+        `[${name}] 声明为 gaokao_topic 的高考专题课，必须提供非空的 mnemonic 记忆口诀`,
+      ).toBeTruthy();
+
       if (tc.expectedMnemonic) {
         expect(
           mathData.mnemonic,

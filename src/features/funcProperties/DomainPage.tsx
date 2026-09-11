@@ -88,7 +88,8 @@ export function DomainPage() {
           variant: "primary" as const,
           badge: "核心考点 · 二次函数单侧有界值域",
           condition: "函数 f(x) = x²，x ∈ R，抛物线开口向上且顶点位于原点。",
-          question: "拖动探针 x₀，观察 Y 轴非负投影区间 [0, +∞) 的下界临界点。",
+          question:
+            "移动探针 $x_0$，求解 $Y$ 轴非负投影区间 $[0, +\\infty)$ 的极小值下界临界点。",
         };
       case "abs":
         return {
@@ -103,7 +104,7 @@ export function DomainPage() {
           badge: "易错陷阱 · 反比例分母去心无定义点",
           condition: "函数 f(x) = 1/x，分母限制条件 x ≠ 0。",
           question:
-            "拖动 x₀ 逼近 0，观察双侧趋向无穷大与 X/Y 轴去心零点的间断特征。",
+            "令 $x_0$ 逼近 $0$，求解双侧极限无穷发散趋势与定义域去心间断点 $x \\ne 0$ 的数学特征。",
         };
       case "sin":
         return {
