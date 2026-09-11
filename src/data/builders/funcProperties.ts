@@ -17,7 +17,7 @@ export function buildFuncPropertiesPanel(
     "domain" | "parity" | "symmetry";
   const subMode = (config?.subMode as string) || "axis"; // "axis" | "center" | "period-dual-axis" | "period-dual-center" | "period-axis-center"
   const fnType = ((config?.fnType as string) || "quadratic") as
-    "cubic" | "quadratic" | "abs" | "reciprocal" | "sin";
+    "cubic" | "quadratic" | "root" | "abs" | "reciprocal" | "sin";
 
   const getFn = (x: number): number => {
     switch (fnType) {
@@ -25,6 +25,8 @@ export function buildFuncPropertiesPanel(
         return x * x * x;
       case "quadratic":
         return x * x;
+      case "root":
+        return x >= 0 ? Math.sqrt(x) : NaN;
       case "abs":
         return Math.abs(x);
       case "reciprocal":
@@ -47,16 +49,21 @@ export function buildFuncPropertiesPanel(
   // 1. 定义域与值域模式
   if (mode === "domain") {
     const fx0 = getFn(x0);
+    const isDefined = Number.isFinite(fx0);
     const domainText =
-      fnType === "reciprocal" ? "(-∞, 0) ∪ (0, +∞)" : "R (-∞, +∞)";
+      fnType === "reciprocal"
+        ? "(-∞, 0) ∪ (0, +∞)"
+        : fnType === "root"
+          ? "[0, +∞)"
+          : "ℝ (-∞, +∞)";
     const rangeText =
-      fnType === "quadratic" || fnType === "abs"
+      fnType === "quadratic" || fnType === "abs" || fnType === "root"
         ? "[0, +∞)"
         : fnType === "reciprocal"
           ? "(-∞, 0) ∪ (0, +∞)"
           : fnType === "sin"
             ? "[-1, 1]"
-            : "R (-∞, +∞)";
+            : "ℝ (-∞, +∞)";
 
     const quantities: MathPanelData["quantities"] = [
       {
@@ -68,7 +75,7 @@ export function buildFuncPropertiesPanel(
       {
         label: "函数值 f(x₀)",
         symbol: "f(x₀)",
-        value: Number.isFinite(fx0) ? fx0.toFixed(2) : "无定义",
+        value: isDefined ? fx0.toFixed(2) : "无定义 (超出定义域)",
         color: MATH_COLORS.function,
       },
       {
@@ -83,6 +90,12 @@ export function buildFuncPropertiesPanel(
         value: rangeText,
         color: MATH_COLORS.functionSecondary,
       },
+      {
+        label: "垂线检验状态",
+        symbol: "x = x₀",
+        value: isDefined ? "唯一交点 (单值对应)" : "无交点 (超出定义域)",
+        color: isDefined ? MATH_COLORS.function : MATH_COLORS.degeneracy,
+      },
     ];
 
     const theorems: MathPanelData["theorems"] = [
@@ -92,8 +105,8 @@ export function buildFuncPropertiesPanel(
           "y = f(x), \\quad x \\in D, \\quad R = \\{ y \\mid y = f(x), x \\in D \\}",
         level: "core",
         prerequisites: [
-          "定义域 D 与值域 R 均为非空实数集",
-          "单值对应：定义域 D 内的每一个自变量 x，有且仅有唯一确定的 y 与之对应",
+          "定义域 $D$ 与值域 $R$ 均为非空实数集",
+          "单值对应：定义域 $D$ 内的每一个自变量 $x$，有且仅有唯一确定的 $y$ 与之对应",
         ],
       },
       {
@@ -102,7 +115,7 @@ export function buildFuncPropertiesPanel(
           "\\text{任意直线 } x = c \\ (c \\in D) \\text{ 与函数图象有且仅有 } 1 \\text{ 个交点}",
         level: "core",
         prerequisites: [
-          "若存在直线与曲线交点数大于 1，则该几何图形必不表示函数关系",
+          "若存在直线与曲线交点数大于 $1$，则该几何图形必不表示函数关系",
         ],
       },
       {
@@ -117,7 +130,7 @@ export function buildFuncPropertiesPanel(
         name: "抽象函数复合定义域原则",
         latex: "x \\in D_{\\text{复合}} \\iff g(x) \\in D_f",
         level: "important",
-        prerequisites: ["同一个对应法则 f 的括号内范围必须完全相同"],
+        prerequisites: ["同一个对应法则 $f$ 的括号内范围必须完全相同"],
       },
     ];
 
@@ -127,11 +140,11 @@ export function buildFuncPropertiesPanel(
         importance: "gaokao",
       },
       {
-        text: "同一函数高考辨析陷阱：两函数若要相等，定义域与解析式必须完全一致！例如 f(x)=x 与 g(x)=√(x²)=|x| 法则不同非同一函数；f(x)=1 与 g(x)=x⁰ 定义域不同(x≠0)非同一函数。",
+        text: "同一函数高考辨析陷阱：两函数若要相等，定义域与解析式必须完全一致！例如 $f(x)=x$ 与 $g(x)=\\sqrt{x^2}=|x|$ 法则不同非同一函数；$f(x)=1$ 与 $g(x)=x^0$ 定义域不同 ($x \\ne 0$) 非同一函数。",
         importance: "gaokao",
       },
       {
-        text: "抽象函数定义域速解口诀：“同一 f 括号内范围相同”。已知 f(x) 的定义域为 [a, b]，求 f(g(x)) 的定义域只需解不等式 a ≤ g(x) ≤ b 得出 x 的取值范围。",
+        text: "抽象函数定义域速解口诀：“同一 $f$ 括号内范围相同”。已知 $f(x)$ 的定义域为 $[a, b]$，求 $f(g(x))$ 的定义域只需解不等式 $a \\le g(x) \\le b$ 得出 $x$ 的取值范围。",
         importance: "gaokao",
       },
       {
@@ -146,6 +159,166 @@ export function buildFuncPropertiesPanel(
         text: "x₀ = 0 处反比例函数分母为零无定义！属于定义域外的去心奇点。",
         level: "danger",
       });
+    } else if (fnType === "root" && x0 < 0) {
+      warnings.push({
+        text: "x₀ < 0 时偶次根式在实数域无意义！负数不在函数定义域内。",
+        level: "danger",
+      });
+    }
+
+    // 针对当前函数装配符合高考规范的三步破题推演链
+    let reasoningSteps: MathPanelData["reasoningSteps"] = [];
+    if (fnType === "cubic") {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 解析式无限制结构",
+          detail:
+            "函数解析式为 $f(x) = x^3$。检查初等函数限制条件：无分母、无偶次根号、无对数真数，自变量可取全体实数。",
+          latex:
+            "x \\in \\mathbb{R} \\implies D = \\mathbb{R} = (-\\infty, +\\infty)",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 连续映射遍历实数域",
+          detail:
+            "奇多项式 $f(x) = x^3$ 在定义域 $\\mathbb{R}$ 上严格单调递增，当 $x \\to -\\infty$ 时 $f(x) \\to -\\infty$；当 $x \\to +\\infty$ 时 $f(x) \\to +\\infty$。",
+          latex:
+            "\\lim_{x \\to -\\infty} x^3 = -\\infty, \\quad \\lim_{x \\to +\\infty} x^3 = +\\infty",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 垂线单值对应检验",
+          detail: `当前采样点 $x_0 = ${x0.toFixed(2)}$，代入得唯一函数值 $f(x_0) = ${fx0.toFixed(2)}$。垂线 $x = x_0$ 与曲线有且仅有 $1$ 个交点，满足函数现代定义。`,
+          latex: `f(${x0.toFixed(2)}) = (${x0.toFixed(2)})^3 = ${fx0.toFixed(2)} \\implies R = \\mathbb{R}`,
+        },
+      ];
+    } else if (fnType === "quadratic") {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 多项式定义域确定",
+          detail:
+            "函数 $f(x) = x^2$ 为一元二次整式函数，自变量 $x$ 的取值不受分母或根号限制，定义域为全体实数 $\\mathbb{R}$。",
+          latex: "D = \\{x \\mid x \\in \\mathbb{R}\\} = (-\\infty, +\\infty)",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 平方非负性与顶点最值",
+          detail:
+            "二次项系数 $a = 1 > 0$，抛物线开口向上，顶点在原点 $(0, 0)$。由实数平方性质恒有 $x^2 \\ge 0$，在 $x = 0$ 处取得最小值 $f_{\\min} = 0$。",
+          latex: "\\forall x \\in \\mathbb{R}, \\quad f(x) = x^2 \\ge 0 = f(0)",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 半开半闭值域求解",
+          detail: `图象在 $y$ 轴上的正投影自 $y = 0$ 向上延伸至 $+\\infty$。代入探针 $x_0 = ${x0.toFixed(2)}$ 得 $f(x_0) = ${fx0.toFixed(2)}$，垂线检验唯一确定。`,
+          latex: `R = [0, +\\infty), \\quad f(${x0.toFixed(2)}) = (${x0.toFixed(2)})^2 = ${fx0.toFixed(2)} \\in R`,
+        },
+      ];
+    } else if (fnType === "root") {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 偶次根式被开方数非负",
+          detail:
+            "初等根式函数 $f(x) = \\sqrt{x}$ 的被开方数必须非负，列出定义域充要不等式 $x \\ge 0$。",
+          latex: "x \\ge 0 \\iff D = [0, +\\infty)",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 算术平方根非负性",
+          detail:
+            "由算术平方根的代数定义，恒有 $\\sqrt{x} \\ge 0$。函数在 $[0, +\\infty)$ 上严格单调递增，且 $f(0) = 0$。",
+          latex: "\\sqrt{x} \\ge 0, \\quad f_{\\min} = f(0) = 0",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 垂线单值对应与越界判定",
+          detail: isDefined
+            ? `当前探针 $x_0 = ${x0.toFixed(2)} \\in D$，代入算术平方根得唯一函数值 $f(x_0) = ${fx0.toFixed(2)}$。`
+            : `当前探针 $x_0 = ${x0.toFixed(2)} < 0$，位于定义域外！垂直线与图象无交点，函数无定义。`,
+          latex: isDefined
+            ? `f(${x0.toFixed(2)}) = \\sqrt{${x0.toFixed(2)}} = ${fx0.toFixed(2)} \\implies R = [0, +\\infty)`
+            : `x_0 = ${x0.toFixed(2)} \\notin D \\implies f(x_0) \\text{ 无定义}`,
+        },
+      ];
+    } else if (fnType === "abs") {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 绝对值整式全域可取",
+          detail:
+            "函数 $f(x) = |x|$ 为绝对值函数，自变量 $x$ 取任意实数均有确定绝对值，定义域为全体实数 $\\mathbb{R}$。",
+          latex: "D = \\mathbb{R} = (-\\infty, +\\infty)",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 零点分段与非负下界",
+          detail:
+            "根据绝对值的几何意义（数轴上点到原点距离），恒有 $|x| \\ge 0$。分段表达为 $x \\ge 0$ 时 $f(x) = x$；$x < 0$ 时 $f(x) = -x$。",
+          latex:
+            "f(x) = \\begin{cases} x, & x \\ge 0 \\\\ -x, & x < 0 \\end{cases} \\ge 0",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 投影值域与单值确定",
+          detail: `在折点 $x = 0$ 处取得最小值 $0$。代入探针 $x_0 = ${x0.toFixed(2)}$ 得 $f(x_0) = ${fx0.toFixed(2)}$，垂线与折线图象交于唯一一点。`,
+          latex: `R = [0, +\\infty), \\quad f(${x0.toFixed(2)}) = |${x0.toFixed(2)}| = ${fx0.toFixed(2)}`,
+        },
+      ];
+    } else if (fnType === "reciprocal") {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 分式分母非零约束",
+          detail:
+            "反比例函数 $f(x) = \\frac{1}{x}$ 中，分母不能为 $0$。解不等式 $x \\ne 0$ 得到去心定义域。",
+          latex: "x \\ne 0 \\iff D = (-\\infty, 0) \\cup (0, +\\infty)",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 倒数非零与双支无限趋近",
+          detail:
+            "分子为非零常数 $1$，由分式性质可知 $f(x) = \\frac{1}{x} \\ne 0$ 恒成立。当 $|x| \\to +\\infty$ 时 $f(x) \\to 0$；当 $x \\to 0$ 时 $|f(x)| \\to +\\infty$。",
+          latex:
+            "\\frac{1}{x} \\ne 0 \\implies R = (-\\infty, 0) \\cup (0, +\\infty)",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 渐近线与去心奇点防坑",
+          detail: isDefined
+            ? `采样点 $x_0 = ${x0.toFixed(2)} \\ne 0$，代入得函数值 $f(x_0) = ${fx0.toFixed(2)}$。铅垂渐近线为 $x = 0$，水平渐近线为 $y = 0$。`
+            : "采样点处于奇点 $x_0 = 0$ 处，分母为零！垂直线与双曲线无交点，属于典型高考定义域去心易错陷阱。",
+          latex: isDefined
+            ? `f(${x0.toFixed(2)}) = \\frac{1}{${x0.toFixed(2)}} = ${fx0.toFixed(2)}`
+            : "x_0 = 0 \\notin D \\implies f(0) \\text{ 无定义}",
+        },
+      ];
+    } else if (fnType === "sin") {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 任意角正弦全域存在",
+          detail:
+            "由单位圆三角函数定义，任意实数弧度角 $x$ 均在终边与单位圆有确定交点，定义域为全体实数 $\\mathbb{R}$。",
+          latex:
+            "x \\in \\mathbb{R} \\iff D = \\mathbb{R} = (-\\infty, +\\infty)",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 单位圆投影与周期波动",
+          detail:
+            "终边在单位圆上的交点纵坐标满足 $-1 \\le y \\le 1$。函数在区间 $[-\\frac{\\pi}{2}, \\frac{\\pi}{2}]$ 上单调映射，值域紧致封闭。",
+          latex: "\\forall x \\in \\mathbb{R}, \\quad -1 \\le \\sin x \\le 1",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 紧致值域与周期单值",
+          detail: `在 $x = \\frac{\\pi}{2} + 2k\\pi$ 取极大值 $1$，在 $x = -\\frac{\\pi}{2} + 2k\\pi$ 取极小值 $-1$。代入探针 $x_0 = ${x0.toFixed(2)}$ 验证单值性。`,
+          latex: `R = [-1, 1], \\quad f(${x0.toFixed(2)}) = \\sin(${x0.toFixed(2)}) = ${fx0.toFixed(2)}`,
+        },
+      ];
     }
 
     return {
@@ -153,6 +326,7 @@ export function buildFuncPropertiesPanel(
       theorems,
       gaokaoPoints,
       warnings,
+      reasoningSteps,
       mnemonic: "横看定义域纵看值域，垂线相交唯一解，括号内外范围清。",
     };
   }
@@ -178,6 +352,14 @@ export function buildFuncPropertiesPanel(
         intrinsicMonotonicityHighlight = "negative";
       } else {
         intrinsicMonotonicityText = "跨越对称轴 x = 0，整体不单调";
+        intrinsicMonotonicityHighlight = "extreme";
+      }
+    } else if (fnType === "root") {
+      if (x1 >= 0 && x2 >= 0) {
+        intrinsicMonotonicityText = "同在定义域 [0, +∞) 严格单调递增";
+        intrinsicMonotonicityHighlight = "positive";
+      } else {
+        intrinsicMonotonicityText = "含负数超出定义域 [0, +∞)！";
         intrinsicMonotonicityHighlight = "extreme";
       }
     } else if (fnType === "abs") {

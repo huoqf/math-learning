@@ -64,7 +64,7 @@ export type ParityType = "even" | "odd" | "neither";
  * 评估通用预设函数的奇偶性与对应值
  */
 export function evalFunctionParity(
-  fnType: "cubic" | "quadratic" | "abs" | "reciprocal" | "sin",
+  fnType: "cubic" | "quadratic" | "root" | "abs" | "reciprocal" | "sin",
   x: number,
 ): {
   fx: number;
@@ -90,6 +90,13 @@ export function evalFunctionParity(
       fNegX = -x * -x;
       parity = "even";
       parityDescription = "f(-x) = f(x)，属于偶函数，图象关于 y 轴轴对称。";
+      break;
+    case "root":
+      fx = x >= 0 ? Math.sqrt(x) : NaN;
+      fNegX = -x >= 0 ? Math.sqrt(-x) : NaN;
+      parity = "neither";
+      parityDescription =
+        "定义域 D = [0, +∞) 不关于原点对称，由定义域优先原则直接判定为非奇非偶函数。";
       break;
     case "abs":
       fx = Math.abs(x);

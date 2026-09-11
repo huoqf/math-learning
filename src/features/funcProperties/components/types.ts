@@ -7,7 +7,7 @@ import type { ViewportInfo } from "@/utils/useViewport";
 
 /** 函数类型（奇偶/对称/定义域演示母函数） */
 export type PropertiesFnType =
-  "cubic" | "quadratic" | "abs" | "reciprocal" | "sin";
+  "cubic" | "quadratic" | "root" | "abs" | "reciprocal" | "sin";
 
 /** 三大教学模式：定义域 / 奇偶性 / 对称性 */
 export type PropertiesMode = "domain" | "parity" | "symmetry";

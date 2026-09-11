@@ -141,12 +141,72 @@ describe("buildFuncPropertiesPanel 构建器测试", () => {
     expect(data.reasoningSteps?.[0].title).toContain("中点公式转化");
   });
 
-  it("定义域模式 (domain): 正确提示反比例函数在 x=0 处的无定义", () => {
+  it("定义域模式 (domain): 正确提示反比例函数在 x=0 处的无定义与推导链", () => {
     const data = buildFuncPropertiesPanel(
       { x0: 0 },
       { mode: "domain", fnType: "reciprocal" },
     );
     expect(data.warnings.length).toBeGreaterThan(0);
     expect(data.warnings[0].text).toContain("分母为零");
+    expect(
+      data.quantities.some(
+        (q) =>
+          q.label.includes("垂线检验") && String(q.value).includes("无交点"),
+      ),
+    ).toBe(true);
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
+    expect(data.reasoningSteps?.[0].title).toContain("分式分母非零");
+  });
+
+  it("定义域模式 (domain): 根式函数正确识别 [0, +∞) 定义域与值域及越界告警", () => {
+    const validData = buildFuncPropertiesPanel(
+      { x0: 4 },
+      { mode: "domain", fnType: "root" },
+    );
+    expect(
+      validData.quantities.some(
+        (q) => q.label === "定义域 D" && String(q.value).includes("[0, +∞)"),
+      ),
+    ).toBe(true);
+    expect(
+      validData.quantities.some(
+        (q) => q.label === "值域 R" && String(q.value).includes("[0, +∞)"),
+      ),
+    ).toBe(true);
+    expect(
+      validData.quantities.some(
+        (q) =>
+          q.label.includes("垂线检验") && String(q.value).includes("唯一交点"),
+      ),
+    ).toBe(true);
+    expect(validData.reasoningSteps?.length).toBe(3);
+    expect(validData.reasoningSteps?.[0].title).toContain("偶次根式");
+
+    const outData = buildFuncPropertiesPanel(
+      { x0: -2 },
+      { mode: "domain", fnType: "root" },
+    );
+    expect(
+      outData.warnings.some((w) => w.text.includes("偶次根式在实数域无意义")),
+    ).toBe(true);
+    expect(
+      outData.quantities.some(
+        (q) =>
+          q.label.includes("垂线检验") && String(q.value).includes("无交点"),
+      ),
+    ).toBe(true);
+  });
+
+  it("定义域模式 (domain): 二次函数正确构建单侧有界值域及三步破题推演", () => {
+    const data = buildFuncPropertiesPanel(
+      { x0: 2 },
+      { mode: "domain", fnType: "quadratic" },
+    );
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
+    expect(data.reasoningSteps?.[0].title).toContain("多项式定义域");
+    expect(data.reasoningSteps?.[1].title).toContain("平方非负性");
+    expect(data.reasoningSteps?.[2].latex).toContain("R = [0, +\\infty)");
   });
 });

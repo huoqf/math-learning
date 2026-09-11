@@ -18,11 +18,12 @@ import { PropertiesScene } from "./components/PropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/funcProperties";
 
-type FnType = "cubic" | "quadratic" | "abs" | "reciprocal" | "sin";
+import type { PropertiesFnType } from "./components/types";
 
-const FORMULA_MAP: Record<FnType, string> = {
+const FORMULA_MAP: Record<PropertiesFnType, string> = {
   cubic: "f(x) = x^3 \\quad (D = \\mathbb{R}, \\ R = \\mathbb{R})",
   quadratic: "f(x) = x^2 \\quad (D = \\mathbb{R}, \\ R = [0, +\\infty))",
+  root: "f(x) = \\sqrt{x} \\quad (D = [0, +\\infty), \\ R = [0, +\\infty))",
   abs: "f(x) = |x| \\quad (D = \\mathbb{R}, \\ R = [0, +\\infty))",
   reciprocal:
     "f(x) = \\frac{1}{x} \\quad (D = (-\\infty, 0) \\cup (0, +\\infty), \\ R = (-\\infty, 0) \\cup (0, +\\infty))",
@@ -31,7 +32,7 @@ const FORMULA_MAP: Record<FnType, string> = {
 
 export function DomainPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
-  const [fnType, setFnType] = useState<FnType>("cubic");
+  const [fnType, setFnType] = useState<PropertiesFnType>("cubic");
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -72,47 +73,60 @@ export function DomainPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 动态教学提示配置
+  // 动态教学提示配置（严格包裹 $...$，符合新高考破题设问要求）
   const tipConfig = useMemo(() => {
     switch (fnType) {
       case "cubic":
         return {
           variant: "primary" as const,
           badge: "基础认知 · 三次多项式定义域与值域",
-          condition: "函数 f(x) = x³，无分母、根号或对数等限制结构。",
+          condition:
+            "函数 $f(x) = x^3$，初等解析式中无分母、根号或对数等限制结构。",
           question:
-            "观察 X/Y 轴投影区间，确认自变量与函数值均可遍历全体实数 R。",
+            "求解自变量与函数值的取值范围 $D$ 与 $R$，并检验垂直线 $x = x_0$ 与图象交点的唯一性。",
         };
       case "quadratic":
         return {
           variant: "primary" as const,
           badge: "核心考点 · 二次函数单侧有界值域",
-          condition: "函数 f(x) = x²，x ∈ R，抛物线开口向上且顶点位于原点。",
+          condition:
+            "函数 $f(x) = x^2$ ($x \\in \\mathbb{R}$)，抛物线开口向上且顶点位于原点 $(0, 0)$。",
           question:
-            "移动探针 $x_0$，求解 $Y$ 轴非负投影区间 $[0, +\\infty)$ 的极小值下界临界点。",
+            "移动探针 $x_0$，求解函数在实数域上的最值并写出对应的值域区间。",
+        };
+      case "root":
+        return {
+          variant: "primary" as const,
+          badge: "典型课标 · 偶次根式非负定义域约束",
+          condition:
+            "函数 $f(x) = \\sqrt{x}$，初等算术平方根要求被开方数非负。",
+          question:
+            "列出被开方数满足的充要不等式，求解定义域边界与垂直线检验在越界时的表现。",
         };
       case "abs":
         return {
           variant: "warning" as const,
           badge: "高考高频 · 绝对值非负值域模型",
-          condition: "函数 f(x) = |x|，分段线性并在 x = 0 处折叠。",
-          question: "验证定义域 R 与非负值域 [0, +∞) 在折点处的投影变化。",
+          condition:
+            "函数 $f(x) = |x|$，依据定义在 $x = 0$ 折叠为两支对称射线。",
+          question:
+            "求解绝对值在折点处的极小值下界，并说明为何自变量取任意实数均有唯一定义。",
         };
       case "reciprocal":
         return {
           variant: "danger" as const,
           badge: "易错陷阱 · 反比例分母去心无定义点",
-          condition: "函数 f(x) = 1/x，分母限制条件 x ≠ 0。",
+          condition: "函数 $f(x) = \\frac{1}{x}$，分母包含自变量要求分母非零。",
           question:
-            "令 $x_0$ 逼近 $0$，求解双侧极限无穷发散趋势与定义域去心间断点 $x \\ne 0$ 的数学特征。",
+            "探究 $x_0$ 趋近于奇点 $x = 0$ 时的函数表现，求解去心定义域与渐近线方程。",
         };
       case "sin":
         return {
           variant: "info" as const,
           badge: "周期有界 · 正弦波动紧致值域",
-          condition: "函数 f(x) = sin x，具有 2π 周期性与全局有界性。",
+          condition: "函数 $f(x) = \\sin x$，具有 $2\\pi$ 周期性与全局有界性。",
           question:
-            "观察定义域 R 与闭区间值域 [-1, 1] 之间的周期映射波峰与波谷。",
+            "结合单位圆几何投影，求解正弦函数的上确界与下确界，并确定紧致闭区间值域。",
         };
     }
   }, [fnType]);
@@ -127,17 +141,24 @@ export function DomainPage() {
             ? "y = x^3"
             : fnType === "quadratic"
               ? "y = x^2"
-              : fnType === "abs"
-                ? "y = |x|"
-                : fnType === "reciprocal"
-                  ? "y = \\frac{1}{x}"
-                  : "y = \\sin x",
+              : fnType === "root"
+                ? "y = \\sqrt{x}"
+                : fnType === "abs"
+                  ? "y = |x|"
+                  : fnType === "reciprocal"
+                    ? "y = \\frac{1}{x}"
+                    : "y = \\sin x",
         style: "solid",
       },
       {
         color: MATH_COLORS.paramPrimary,
         label: "动探针 P₀(x₀, f(x₀))",
         style: "point",
+      },
+      {
+        color: MATH_COLORS.paramPrimary,
+        label: "垂线检验 x = x₀",
+        style: "dashed",
       },
       {
         color: MATH_COLORS.functionTransformed,
@@ -157,6 +178,12 @@ export function DomainPage() {
         label: "x = 0 (去心奇点)",
         style: "hollow-point",
       });
+    } else if (fnType === "root") {
+      items.push({
+        color: MATH_COLORS.degeneracy,
+        label: "x < 0 (超出定义域)",
+        style: "hollow-point",
+      });
     }
 
     return items;
@@ -169,18 +196,19 @@ export function DomainPage() {
           <LeftPanelSection title="基准函数选择">
             <SelectGrid
               items={[
-                { key: "cubic", label: "y = x³", formula: "y=x^3" },
-                { key: "quadratic", label: "y = x²", formula: "y=x^2" },
-                { key: "abs", label: "y = |x|", formula: "y=|x|" },
+                { key: "cubic", label: "三次函数", formula: "y=x^3" },
+                { key: "quadratic", label: "二次函数", formula: "y=x^2" },
+                { key: "root", label: "根式函数", formula: "y=\\sqrt{x}" },
+                { key: "abs", label: "绝对值函数", formula: "y=|x|" },
                 {
                   key: "reciprocal",
-                  label: "y = 1/x",
+                  label: "反比例函数",
                   formula: "y=\\frac{1}{x}",
                 },
-                { key: "sin", label: "y = sin x", formula: "y=\\sin x" },
+                { key: "sin", label: "正弦函数", formula: "y=\\sin x" },
               ]}
               value={fnType}
-              onChange={(k) => setFnType(k)}
+              onChange={(k) => setFnType(k as PropertiesFnType)}
               variant="outline"
               className="mb-4"
             />
@@ -232,6 +260,7 @@ export function DomainPage() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
+          reasoningSteps={mathData.reasoningSteps}
           title="定义域与值域看板"
         />
       }

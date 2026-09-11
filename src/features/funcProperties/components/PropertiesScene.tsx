@@ -20,7 +20,7 @@ interface PropertiesSceneProps {
   vp: ViewportInfo;
   onParamChange: (key: string, value: number) => void;
   fontScale?: (v: number) => number;
-  fnType: "cubic" | "quadratic" | "abs" | "reciprocal" | "sin";
+  fnType: PropertiesFnType;
   mode: "domain" | "parity" | "symmetry";
   subMode?:
     | "axis"
@@ -77,6 +77,8 @@ export function PropertiesScene({
           return x * x * x;
         case "quadratic":
           return x * x;
+        case "root":
+          return x >= 0 ? Math.sqrt(x) : NaN;
         case "abs":
           return Math.abs(x);
         case "reciprocal":
