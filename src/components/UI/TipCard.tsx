@@ -89,8 +89,8 @@ export const TipCard: React.FC<TipCardProps> = ({
                   style.dot,
                 ].join(" ")}
               />
-              <span className="font-bold text-[11px] leading-none tracking-tight">
-                {badge}
+              <span className="font-bold text-[11px] leading-none tracking-tight flex items-center gap-1">
+                {typeof badge === "string" ? renderMixedLatex(badge) : badge}
               </span>
             </div>
           )}

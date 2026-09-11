@@ -39,6 +39,7 @@ export type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "./MathPanel";
 
 // ============================================================================

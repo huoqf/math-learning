@@ -7,6 +7,7 @@ import type {
   ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber } from "@/utils/mathFormat";
 import {
   calculateCornerModel,
   calculateCylinderModel,
@@ -117,8 +118,8 @@ export function buildPolyhedronSpherePanel(
       {
         step: 3,
         title: "求解外接球半径与几何量",
-        detail: `解得外接球半径 R = ${res.radius.toFixed(3)}，进而得出球表面积 S = ${(res.surfaceArea / Math.PI).toFixed(2)}π。`,
-        latex: `R = \\frac{1}{2}\\sqrt{a^2 + b^2 + c^2} = \\frac{\\sqrt{${sumSq}}}{2} \\approx ${res.radius.toFixed(3)}, \\quad S_{\\text{球}} = ${(res.surfaceArea / Math.PI).toFixed(2)}\\pi`,
+        detail: `解得外接球半径 R = ${res.radius.toFixed(3)}，进而得出球表面积 S = ${formatMathNumber(res.surfaceArea / Math.PI)}π。`,
+        latex: `R = \\frac{1}{2}\\sqrt{a^2 + b^2 + c^2} = \\frac{\\sqrt{${sumSq}}}{2} \\approx ${res.radius.toFixed(3)}, \\quad S_{\\text{球}} = ${formatMathNumber(res.surfaceArea / Math.PI)}\\pi`,
         rubric: "[高考采分点] 正确计算外接球半径与表面积 (+2分)",
       },
     );

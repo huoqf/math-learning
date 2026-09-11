@@ -29,9 +29,6 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number>(1);
-  const [scaledHeight, setScaledHeight] = useState<number | undefined>(
-    undefined,
-  );
   /**
    * 非空时按教材式多行渲染（缩放触底后的兜底策略）：
    * 首行左端，后续行以 = / \Rightarrow / + / - 起头并缩进，与教材推导书写习惯一致
@@ -79,7 +76,6 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
     //    公式超宽优先触发全局最优教材式拆行（推导符/语义间距/等号/二元加减），极大降低行宽并保全大字号
     if (!responsive || !outerRef.current || !inner) {
       setScale(1);
-      setScaledHeight(undefined);
       return;
     }
 
@@ -100,7 +96,6 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
       const contentWidth = lineDivs.length
         ? Math.max(...lineDivs.map((d) => d.scrollWidth))
         : innerBox.scrollWidth;
-      const contentHeight = innerBox.scrollHeight;
 
       if (containerWidth > 0 && contentWidth > containerWidth) {
         // 核心原则：只有明确允许拆行（如 block 块级推导）时才尝试教材式拆行
@@ -135,14 +130,8 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
         const minScale = canLineBreak ? HARD_MIN_SCALE : 0.65;
         const nextScale = Math.max(minScale, needed);
         setScale(nextScale);
-        if (lines && lines.length > 1) {
-          setScaledHeight(Math.ceil(contentHeight * nextScale));
-        } else {
-          setScaledHeight(undefined);
-        }
       } else {
         setScale(1);
-        setScaledHeight(undefined);
       }
     };
 
@@ -180,8 +169,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
           isMultiLine
             ? "items-start justify-start"
             : "items-center justify-center"
-        } overflow-hidden max-w-full transition-all duration-150 ${className}`}
-        style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
+        } overflow-x-clip max-w-full transition-all duration-150 ${className}`}
       >
         <div
           ref={innerRef}
@@ -192,7 +180,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
           }`}
           style={{
             transform: scale < 1 ? `scale(${scale})` : undefined,
-            transformOrigin: isMultiLine ? "center left" : "center center",
+            transformOrigin: isMultiLine ? "top left" : "center center",
           }}
         >
           {innerContent}
@@ -204,8 +192,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   return (
     <div
       ref={outerRef}
-      className={`inline-flex items-center justify-center align-middle mx-0.5 my-0.5 max-w-full overflow-hidden ${className}`}
-      style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
+      className={`inline-flex items-center justify-center align-middle mx-0.5 my-0.5 max-w-full overflow-x-clip ${className}`}
     >
       <div
         ref={innerRef}

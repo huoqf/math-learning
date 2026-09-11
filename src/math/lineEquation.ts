@@ -3,6 +3,9 @@
  * 直线方程与距离计算纯函数层（零副作用、无 DOM/React 依赖）
  */
 
+import { formatMathNumber } from "@/utils/mathFormat";
+export { formatMathNumber };
+
 export interface GeneralLineCoeffs {
   A: number;
   B: number;
@@ -355,7 +358,34 @@ export function getLineProperties(A: number, B: number, C: number) {
 }
 
 /**
- * 格式化一般式方程 Ax + By + C = 0 的标准 LaTeX
+ * 格式化斜截式方程 y = kx + b 的标准 LaTeX（自动省略系数 1/-1、0 项，整数无小数位）
+ */
+export function formatSlopeInterceptEquationLatex(
+  k: number,
+  b: number,
+): string {
+  const isKZero = Math.abs(k) < 1e-9;
+  const isBZero = Math.abs(b) < 1e-9;
+
+  if (isKZero && isBZero) return "y = 0";
+  if (isKZero) return `y = ${formatMathNumber(b)}`;
+
+  let kTerm = "";
+  if (Math.abs(k - 1) < 1e-9) {
+    kTerm = "x";
+  } else if (Math.abs(k - -1) < 1e-9) {
+    kTerm = "-x";
+  } else {
+    kTerm = `${formatMathNumber(k)}x`;
+  }
+
+  if (isBZero) return `y = ${kTerm}`;
+  const sign = b > 0 ? "+ " : "- ";
+  return `y = ${kTerm} ${sign}${formatMathNumber(Math.abs(b))}`;
+}
+
+/**
+ * 格式化一般式方程 Ax + By + C = 0 的标准 LaTeX（严格遵循高中代数省略 1、符号化简规范）
  */
 export function formatGeneralEquationLatex(
   A: number,
@@ -368,7 +398,7 @@ export function formatGeneralEquationLatex(
   // A*x 项
   if (Math.abs(A) > 1e-9) {
     const aAbs = Math.abs(A);
-    const aStr = aAbs === 1 ? "" : aAbs.toFixed(1);
+    const aStr = Math.abs(aAbs - 1) < 1e-6 ? "" : formatMathNumber(aAbs);
     const sign = A < 0 ? "-" : "";
     const term = `${sign}${aStr}x`;
     parts.push(colors?.cA ? `\\color{${colors.cA}}{${term}}` : term);
@@ -377,7 +407,7 @@ export function formatGeneralEquationLatex(
   // B*y 项
   if (Math.abs(B) > 1e-9) {
     const bAbs = Math.abs(B);
-    const bStr = bAbs === 1 ? "" : bAbs.toFixed(1);
+    const bStr = Math.abs(bAbs - 1) < 1e-6 ? "" : formatMathNumber(bAbs);
     const sign = parts.length > 0 ? (B > 0 ? "+ " : "- ") : B < 0 ? "-" : "";
     const term = `${sign}${bStr}y`;
     parts.push(colors?.cB ? `\\color{${colors.cB}}{${term}}` : term);
@@ -387,7 +417,7 @@ export function formatGeneralEquationLatex(
   if (Math.abs(C) > 1e-9 || parts.length === 0) {
     const cAbs = Math.abs(C);
     const sign = parts.length > 0 ? (C > 0 ? "+ " : "- ") : C < 0 ? "-" : "";
-    const term = `${sign}${cAbs.toFixed(1)}`;
+    const term = `${sign}${formatMathNumber(cAbs)}`;
     parts.push(colors?.cC ? `\\color{${colors.cC}}{${term}}` : term);
   }
 

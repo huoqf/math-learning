@@ -7,7 +7,8 @@ import { useMemo, useCallback } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { mathToDesign } from "@/utils/coordinate";
-import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
+import type { LabelItem } from "@/utils/labelOverlap";
+import { MATH_COLORS } from "@/theme";
 import {
   convertFormToGeneral,
   getLineSegmentInBounds,
@@ -208,148 +209,246 @@ export function useLineEquationScene({
     [onParamChange],
   );
 
-  // 8. 智能避让文本标签
-  const labels = useMemo(() => {
-    const rawEntries: LabelEntry[] = [];
+  // 8. 智能学术标签组 (纯代数符号，杜绝跳动浮点数坐标)
+  const labels = useMemo<LabelItem[]>(() => {
+    const items: LabelItem[] = [];
 
+    // 8.1 点到直线的距离模式
     if (studyMode === "distance") {
-      rawEntries.push({
-        key: "P",
-        text: `P(${x0.toFixed(1)}, ${y0.toFixed(1)})`,
+      items.push({
+        key: "pt-P0",
+        text: "P₀",
         x: pointPDesign.x,
         y: pointPDesign.y,
-        anchor: "start",
-        dy: -14,
-        priority: 3,
+        color: MATH_COLORS.paramPrimary,
+        preferredPlacement: "top-right",
       });
 
       if (distanceResult.isValid) {
-        rawEntries.push({
-          key: "Q",
-          text: `Q(${distanceResult.foot.x.toFixed(1)}, ${distanceResult.foot.y.toFixed(1)})`,
+        items.push({
+          key: "pt-Q",
+          text: "Q",
           x: footDesign.x,
           y: footDesign.y,
-          anchor: "start",
-          dy: 16,
-          priority: 2,
+          color: MATH_COLORS.focusPoint,
+          preferredPlacement: "bottom-left",
         });
 
-        // 距离线段中点标注
+        // 垂线段中点距离符号 d
         const midX = (pointPDesign.x + footDesign.x) / 2;
         const midY = (pointPDesign.y + footDesign.y) / 2;
-        rawEntries.push({
-          key: "d",
-          text: `d = ${distanceResult.distance.toFixed(2)}`,
+        items.push({
+          key: "lbl-d",
+          text: "d",
           x: midX,
           y: midY,
-          anchor: "middle",
-          dy: -10,
-          priority: 1,
+          color: MATH_COLORS.focusPoint,
+          preferredPlacement: "top",
         });
       }
-    } else if (studyMode === "forms") {
-      if (form === "twoPoint") {
-        const p1D = mathToDesign(params.x1 ?? -2, params.y1 ?? -1, scale);
-        const p2D = mathToDesign(params.x2 ?? 2, params.y2 ?? 3, scale);
-        rawEntries.push({
-          key: "P1",
-          text: `P₁(${(params.x1 ?? -2).toFixed(1)}, ${(params.y1 ?? -1).toFixed(1)})`,
-          x: p1D.x,
-          y: p1D.y,
-          anchor: "start",
-          dy: -14,
-          priority: 3,
-        });
-        rawEntries.push({
-          key: "P2",
-          text: `P₂(${(params.x2 ?? 2).toFixed(1)}, ${(params.y2 ?? 3).toFixed(1)})`,
-          x: p2D.x,
-          y: p2D.y,
-          anchor: "start",
-          dy: -14,
-          priority: 3,
-        });
-      } else if (form === "pointSlope") {
-        const p0D = mathToDesign(params.x0 ?? 0, params.y0 ?? 1, scale);
-        rawEntries.push({
-          key: "P0",
-          text: `P₀(${(params.x0 ?? 0).toFixed(1)}, ${(params.y0 ?? 1).toFixed(1)})`,
-          x: p0D.x,
-          y: p0D.y,
-          anchor: "start",
-          dy: -14,
-          priority: 3,
-        });
-      } else {
-        if (lineProps.xIntercept !== null) {
-          const pt = mathToDesign(lineProps.xIntercept, 0, scale);
-          rawEntries.push({
-            key: "xInt",
-            text: `(${lineProps.xIntercept.toFixed(1)}, 0)`,
-            x: pt.x,
-            y: pt.y,
-            anchor: "middle",
-            dy: 16,
-            priority: 2,
-          });
-        }
-        if (lineProps.yIntercept !== null) {
-          const pt = mathToDesign(0, lineProps.yIntercept, scale);
-          rawEntries.push({
-            key: "yInt",
-            text: `(0, ${lineProps.yIntercept.toFixed(1)})`,
-            x: pt.x,
-            y: pt.y,
-            anchor: "start",
-            dy: -10,
-            priority: 2,
-          });
-        }
-      }
-    } else if (studyMode === "relation") {
-      if (intersectionDesign) {
-        rawEntries.push({
-          key: "intersection",
-          text: `交点 (${twoLinesRelation.intersection!.x.toFixed(1)}, ${twoLinesRelation.intersection!.y.toFixed(1)})`,
-          x: intersectionDesign.x,
-          y: intersectionDesign.y,
-          anchor: "start",
-          dy: -16,
-          priority: 3,
-        });
-      }
-    } else if (studyMode === "family") {
-      if (intersectionDesign) {
-        rawEntries.push({
-          key: "familyFixedPoint",
-          text: `恒过定点 P₀(${twoLinesRelation.intersection!.x.toFixed(1)}, ${twoLinesRelation.intersection!.y.toFixed(1)})`,
-          x: intersectionDesign.x,
-          y: intersectionDesign.y,
-          anchor: "start",
-          dy: -16,
-          priority: 3,
+
+      // 直线标注 L
+      if (mainLineDesign) {
+        items.push({
+          key: "lbl-L",
+          text: "L",
+          x: mainLineDesign.p2.x,
+          y: mainLineDesign.p2.y,
+          color: MATH_COLORS.paramPrimary,
+          preferredPlacement: "top-left",
         });
       }
     }
 
-    return avoidLabels(rawEntries, {
-      fontScale,
-      bounds: { width: 840, height: 650 },
-    });
+    // 8.2 直线方程形式模式
+    else if (studyMode === "forms") {
+      if (form === "twoPoint") {
+        const p1D = mathToDesign(params.x1 ?? -2, params.y1 ?? -1, scale);
+        const p2D = mathToDesign(params.x2 ?? 2, params.y2 ?? 3, scale);
+        items.push(
+          {
+            key: "pt-P1",
+            text: "P₁",
+            x: p1D.x,
+            y: p1D.y,
+            color: MATH_COLORS.paramSecondary,
+            preferredPlacement: "top-left",
+          },
+          {
+            key: "pt-P2",
+            text: "P₂",
+            x: p2D.x,
+            y: p2D.y,
+            color: MATH_COLORS.paramTertiary,
+            preferredPlacement: "top-right",
+          },
+        );
+      } else if (form === "pointSlope") {
+        const p0D = mathToDesign(params.x0 ?? 0, params.y0 ?? 1, scale);
+        items.push({
+          key: "pt-P0",
+          text: "P₀",
+          x: p0D.x,
+          y: p0D.y,
+          color: MATH_COLORS.paramSecondary,
+          preferredPlacement: "top-left",
+        });
+      } else if (form === "intercept") {
+        const a = params.a ?? 3;
+        const b = params.b ?? 2;
+        if (Math.abs(a) > 1e-9) {
+          const ptA = mathToDesign(a, 0, scale);
+          items.push({
+            key: "pt-A",
+            text: "A",
+            x: ptA.x,
+            y: ptA.y,
+            color: MATH_COLORS.paramPrimary,
+            preferredPlacement: "bottom",
+          });
+        }
+        if (Math.abs(b) > 1e-9) {
+          const ptB = mathToDesign(0, b, scale);
+          items.push({
+            key: "pt-B",
+            text: "B",
+            x: ptB.x,
+            y: ptB.y,
+            color: MATH_COLORS.paramSecondary,
+            preferredPlacement: "left",
+          });
+        }
+      } else {
+        // 一般式或斜截式，标注坐标轴截距点
+        if (lineProps.xIntercept !== null) {
+          const pt = mathToDesign(lineProps.xIntercept, 0, scale);
+          items.push({
+            key: "pt-xInt",
+            text: "A",
+            x: pt.x,
+            y: pt.y,
+            color: MATH_COLORS.paramPrimary,
+            preferredPlacement: "bottom",
+          });
+        }
+        if (lineProps.yIntercept !== null) {
+          const pt = mathToDesign(0, lineProps.yIntercept, scale);
+          items.push({
+            key: "pt-yInt",
+            text: "B",
+            x: pt.x,
+            y: pt.y,
+            color: MATH_COLORS.paramSecondary,
+            preferredPlacement: "left",
+          });
+        }
+      }
+
+      // 直线标注 L
+      if (mainLineDesign) {
+        items.push({
+          key: "lbl-L",
+          text: "L",
+          x: mainLineDesign.p2.x,
+          y: mainLineDesign.p2.y,
+          color: MATH_COLORS.paramPrimary,
+          preferredPlacement: "top-left",
+        });
+      }
+    }
+
+    // 8.3 两线位置关系模式
+    else if (studyMode === "relation") {
+      if (mainLineDesign) {
+        items.push({
+          key: "lbl-L1",
+          text: "L₁",
+          x: mainLineDesign.p2.x,
+          y: mainLineDesign.p2.y,
+          color: MATH_COLORS.paramPrimary,
+          preferredPlacement: "top-left",
+        });
+      }
+      if (line2Design) {
+        items.push({
+          key: "lbl-L2",
+          text: "L₂",
+          x: line2Design.p2.x,
+          y: line2Design.p2.y,
+          color: MATH_COLORS.paramSecondary,
+          preferredPlacement: "bottom-right",
+        });
+      }
+      if (intersectionDesign) {
+        items.push({
+          key: "pt-Intersect",
+          text: "P",
+          x: intersectionDesign.x,
+          y: intersectionDesign.y,
+          color: MATH_COLORS.vectorResult,
+          preferredPlacement: "top-right",
+        });
+      }
+    }
+
+    // 8.4 直线系模式
+    else if (studyMode === "family") {
+      if (mainLineDesign) {
+        items.push({
+          key: "lbl-L1",
+          text: "L₁",
+          x: mainLineDesign.p2.x,
+          y: mainLineDesign.p2.y,
+          color: MATH_COLORS.paramPrimary,
+          preferredPlacement: "top-left",
+        });
+      }
+      if (line2Design) {
+        items.push({
+          key: "lbl-L2",
+          text: "L₂",
+          x: line2Design.p2.x,
+          y: line2Design.p2.y,
+          color: MATH_COLORS.paramSecondary,
+          preferredPlacement: "bottom-right",
+        });
+      }
+      if (familyLineDesign) {
+        items.push({
+          key: "lbl-Lfam",
+          text: "L(λ)",
+          x: familyLineDesign.p2.x,
+          y: familyLineDesign.p2.y,
+          color: MATH_COLORS.paramTertiary,
+          preferredPlacement: "top-right",
+        });
+      }
+      if (intersectionDesign) {
+        items.push({
+          key: "pt-P0",
+          text: "P₀",
+          x: intersectionDesign.x,
+          y: intersectionDesign.y,
+          color: MATH_COLORS.paramPrimary,
+          preferredPlacement: "bottom-left",
+        });
+      }
+    }
+
+    return items;
   }, [
     studyMode,
     form,
     params,
-    x0,
-    y0,
     pointPDesign,
     distanceResult,
     footDesign,
-    lineProps,
+    mainLineDesign,
+    line2Design,
+    familyLineDesign,
     intersectionDesign,
-    twoLinesRelation,
+    lineProps,
     scale,
-    fontScale,
   ]);
 
   return {

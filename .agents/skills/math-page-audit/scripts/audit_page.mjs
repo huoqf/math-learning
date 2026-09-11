@@ -584,6 +584,44 @@ for (const filePath of files) {
         }
       }
     }
+    if ((filePath.includes('builders') || filePath.includes('src/math') || filePath.includes('src\\math')) && !filePath.includes('test')) {
+      if (/\b\d+\.00(?:[a-zA-Z]|\\[a-zA-Z]+)/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '代数式机器浮点尾零',
+          message: '解析几何与函数代数式严禁使用 .00 机器浮点数污染代数变量（如 1.00x, 1.00\\pi），必须使用纯整数与 formatMathNumber()',
+          snippet: line.trim()
+        });
+      }
+      if (/(?:latex|value)\s*:\s*[`'"].*?[+\-=]\s*1[a-zA-Z]\b/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '代数式未省略系数1',
+          message: '代数多项式中的系数 1 必须省略（如 1x 必须化简为 x），严禁未化简表达式直接呈现在右屏',
+          snippet: line.trim()
+        });
+      }
+      if (/\\iff.*?\\in\s*[A-Za-z]/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '伪命题充要条件滥用',
+          message: '点线位置关系严禁滥用充要双向箭头 \\iff（过定点的直线有无数条，反推不成立），必须使用单向蕴涵 \\implies',
+          snippet: line.trim()
+        });
+      }
+    }
+
+    // 20. 检查右屏及公式组件是否存在引发隐式滚动容器的多轴冲突样式
+    if (filePath.includes('components/UI') && !filePath.includes('test')) {
+      if (/overflow-x-hidden\s+overflow-y-visible/.test(line) || /overflow-y-visible\s+overflow-x-hidden/.test(line)) {
+        issues.push({
+          lineNum,
+          type: '多轴冲突隐式滚动容器',
+          message: '严禁使用 overflow-x-hidden 与 overflow-y-visible 组合，浏览器规范会强制将 visible 降级为 auto 产生嵌套滚动条',
+          snippet: line.trim()
+        });
+      }
+    }
   });
 
   if (issues.length > 0) {

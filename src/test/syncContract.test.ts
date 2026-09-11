@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { verifyTopicSyncContract } from "./verifySyncContract";
+import { buildMathQuantities } from "@/data/mathQuantities";
 import { buildTranscendentalPanel } from "@/data/builders/transcendental";
 import { buildSpatialDistancePanel } from "@/data/builders/solidSpatialDistance";
 
@@ -605,5 +606,50 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         forbiddenTheoremKeywords: ["单变量导数切线定理", "基准切线放缩"],
       },
     ]);
+  });
+
+  it("全域推导链与代数表达规范性巡检：严禁伪充要条件与未化简机器浮点数", () => {
+    const linePanel = buildMathQuantities(
+      "anim-line-equation",
+      { k: 1, b: 1, A: 1, B: -1, C: -1, x0: 0, y0: 1 },
+      { studyMode: "forms", form: "slopeIntercept" },
+    );
+    expect(linePanel.reasoningSteps?.length).toBeGreaterThan(0);
+    for (const step of linePanel.reasoningSteps ?? []) {
+      // 1. 严禁滥用充要双向箭头表示单向点线从属假命题
+      expect(step.latex).not.toMatch(/\\iff.*\\in\s*[A-Za-z]/);
+      // 2. 严禁机械浮点尾零污染代数式 (如 1.00x)
+      expect(step.latex).not.toMatch(/\b\d+\.00[a-zA-Z]/);
+      // 3. 严禁多项式中出现未化简系数 1 (如 1x 必须化简为 x)
+      expect(step.latex).not.toMatch(/[+\-=]\s*1[a-zA-Z]\b/);
+    }
+  });
+
+  it("SSOT工具函数契约：formatSignedTerm与formatMathNumber边界正确性", async () => {
+    const { formatMathNumber, formatSignedTerm } =
+      await import("@/utils/mathFormat");
+    // 1. formatMathNumber 整数无小数位，非整数去尾零，非有限数保护
+    expect(formatMathNumber(1)).toBe("1");
+    expect(formatMathNumber(1.0)).toBe("1");
+    expect(formatMathNumber(2.5)).toBe("2.5");
+    expect(formatMathNumber(0)).toBe("0");
+    expect(formatMathNumber(-0)).toBe("0");
+    expect(formatMathNumber(NaN)).toBe("NaN");
+    expect(formatMathNumber(Infinity)).toBe("Infinity");
+
+    // 2. formatSignedTerm 变量项系数 1/-1 自动省略
+    expect(formatSignedTerm(1, "x", true)).toBe("x");
+    expect(formatSignedTerm(-1, "x", true)).toBe("-x");
+    expect(formatSignedTerm(1, "x", false)).toBe("+ x");
+    expect(formatSignedTerm(-1, "x", false)).toBe("- x");
+    expect(formatSignedTerm(2, "y", false)).toBe("+ 2y");
+    expect(formatSignedTerm(-2, "y", false)).toBe("- 2y");
+
+    // 3. formatSignedTerm 常数项 (variable = "") 绝对不能省略常数 1
+    expect(formatSignedTerm(1, "", false)).toBe("+ 1");
+    expect(formatSignedTerm(-1, "", false)).toBe("- 1");
+    expect(formatSignedTerm(1, "", true)).toBe("1");
+    expect(formatSignedTerm(-1, "", true)).toBe("-1");
+    expect(formatSignedTerm(0, "", false)).toBe("");
   });
 });

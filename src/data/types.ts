@@ -3,17 +3,10 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "@/components/UI";
 
-export type { MathQuantity, Theorem, GaokaoPoint, WarningItem };
-
-export interface ReasoningStep {
-  step: number;
-  title: string;
-  detail?: string;
-  latex?: string;
-  rubric?: string;
-}
+export type { MathQuantity, Theorem, GaokaoPoint, WarningItem, ReasoningStep };
 
 export interface MathPanelData {
   quantities: MathQuantity[];

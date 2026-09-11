@@ -6,7 +6,11 @@
 import React from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { CoordinateGrid, InteractivePoint } from "@/components/Math";
+import {
+  CoordinateGrid,
+  InteractivePoint,
+  SceneLabelGroup,
+} from "@/components/Math";
 import { MATH_COLORS } from "@/theme";
 import { useLineEquationScene } from "../hooks/useLineEquationScene";
 
@@ -55,8 +59,8 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
 
   return (
     <g>
-      {/* 坐标轴与基本网格 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      {/* 坐标轴（解析几何纯净坐标系，showGrid={false}） */}
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* 1. 主直线 L₁ (Ax + By + C = 0) */}
       {mainLineDesign && (
@@ -153,8 +157,8 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
           />
         )}
 
-      {/* 6. 交互控制点 (标签统一由下方 avoidLabels 智能避让渲染，杜绝重叠重影) */}
-      {/* 6.1 点到直线距离模式：动点 P */}
+      {/* 6. 交互控制点 */}
+      {/* 6.1 点到直线距离模式：待测动点 P0 */}
       {studyMode === "distance" && (
         <InteractivePoint
           cx={params.x0 ?? 2}
@@ -208,23 +212,8 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
         />
       )}
 
-      {/* 7. 放置避让后的文本标签 */}
-      {labels.map((l) => (
-        <g key={l.key}>
-          <text
-            x={l.x}
-            y={l.y + l.finalDy}
-            textAnchor={l.anchor}
-            fill={MATH_COLORS.labelText}
-            fontSize={fontScale(11)}
-            fontFamily="monospace"
-            fontWeight="600"
-            className="select-none pointer-events-none"
-          >
-            {l.text}
-          </text>
-        </g>
-      ))}
+      {/* 7. 智能学术标签组 (防穿透、防重叠、无浮点数跳动) */}
+      <SceneLabelGroup items={labels} fontScale={fontScale} />
     </g>
   );
 };

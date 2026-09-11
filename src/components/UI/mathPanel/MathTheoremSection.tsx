@@ -93,7 +93,7 @@ export const MathTheoremSection: React.FC<MathTheoremSectionProps> = ({
                     </span>
                   )}
                 </div>
-                <div className="w-full py-2.5 px-2.5 bg-white rounded-lg border border-neutral-100/70 my-1 min-h-[48px] flex items-center justify-center overflow-hidden max-w-full">
+                <div className="w-full py-2.5 px-2.5 bg-white rounded-lg border border-neutral-100/70 my-1 min-h-[48px] flex items-center justify-center max-w-full">
                   {(() => {
                     const textMatch = t.latex.match(
                       /^\s*\\text\{([\s\S]*?)\}\s*$/,

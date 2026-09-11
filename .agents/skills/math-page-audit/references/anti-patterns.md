@@ -119,13 +119,13 @@ question: "(1) 观察抛物线对称轴随参数的变化；(2) 探究闭区间 
 // 正确范例 2【函数与导数】：根据导函数判别式 Delta 或根的存在性自适应分支
 const reasoningSteps = hasRoots
   ? [
-      { step: 'Step 1', title: '求导定驻点', expression: `f'(x) = 0 \\implies x_1 = ${r1}, x_2 = ${r2}` },
-      { step: 'Step 2', title: '单调性列表', expression: '划分单调区间并判定极值符号' },
-      { step: 'Step 3', title: '最值与端点比较', expression: '综合比较极值与端点函数值' },
+      { step: 1, title: '求导定驻点', latex: `f'(x) = 0 \\implies x_1 = ${r1}, x_2 = ${r2}`, rubric: '采分点：求导与定驻点（2分）' },
+      { step: 2, title: '单调性列表', latex: 'x \\in (-\\infty, x_1) \\implies f\'(x) > 0', rubric: '采分点：单调区间判定（2分）' },
+      { step: 3, title: '最值与端点比较', latex: 'f_{\\min} = \\min\\{f(x_1), f(x_2)\\}', rubric: '采分点：最值与结论（2分）' },
     ]
   : [
-      { step: 'Step 1', title: '求导判断符号', expression: `f'(x) > 0 \\text{ 恒成立}` },
-      { step: 'Step 2', title: '单调性与最值直接求解', expression: '单调递增，最值在区间端点取得' },
+      { step: 1, title: '求导判断符号', latex: 'f\'(x) > 0 \\text{ 恒成立}', rubric: '采分点：导数恒正判定（2分）' },
+      { step: 2, title: '单调性与最值直接求解', latex: 'f(x) \\text{ 在定义域内单调递增}', rubric: '采分点：单调性与区间端点最值（4分）' },
     ];
 ```
 

@@ -4,3 +4,4 @@ export * from "./useCanvasSize";
 export * from "./useViewport";
 export * from "./useViewportPointer";
 export * from "./useBreakpoint";
+export * from "./mathFormat";

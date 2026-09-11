@@ -4,6 +4,7 @@
  */
 
 import type { ParamMarkVariant } from "@/data/types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   // 方程形式
@@ -16,8 +17,8 @@ export const defaultParams = {
 
   // 点斜式 k, x0, y0
   k: 1,
-  x0: 2,
-  y0: 3,
+  x0: 0,
+  y0: 1,
 
   // 斜截式 k, b
   b: 1,
@@ -39,6 +40,10 @@ export const defaultParams = {
   // 直线系参数 lambda
   lambda: 1,
 };
+
+const c1 = MATH_COLORS.paramPrimary; // #EF4444
+const c2 = MATH_COLORS.paramSecondary; // #D97706
+const c3 = MATH_COLORS.paramTertiary; // #059669
 
 export const paramMeta: Record<
   string,
@@ -62,14 +67,13 @@ export const paramMeta: Record<
 > = {
   A: {
     label: "A (x系数)",
-    labelFormula: "A",
+    labelFormula: `\\text{x 系数 } \\color{${c1}}{A}`,
     defaultValue: 1,
     min: -5,
     max: 5,
     step: 0.5,
     description: "直线一般式方程中 x 的系数",
-    descriptionFormula:
-      "\\text{一般式 } Ax + By + C = 0 \\text{ 中 } x \\text{ 的系数}",
+    descriptionFormula: `\\text{一般式 } \\color{${c1}}{A}x + By + C = 0 \\text{ 中 } x \\text{ 的系数}`,
     importance: "core",
     marks: [
       {
@@ -82,14 +86,13 @@ export const paramMeta: Record<
   },
   B: {
     label: "B (y系数)",
-    labelFormula: "B",
+    labelFormula: `\\text{y 系数 } \\color{${c2}}{B}`,
     defaultValue: -1,
     min: -5,
     max: 5,
     step: 0.5,
     description: "直线一般式方程中 y 的系数",
-    descriptionFormula:
-      "\\text{一般式 } Ax + By + C = 0 \\text{ 中 } y \\text{ 的系数}",
+    descriptionFormula: `\\text{一般式 } Ax + \\color{${c2}}{B}y + C = 0 \\text{ 中 } y \\text{ 的系数}`,
     importance: "core",
     marks: [
       {
@@ -102,7 +105,7 @@ export const paramMeta: Record<
   },
   C: {
     label: "C (常数项)",
-    labelFormula: "C",
+    labelFormula: `\\text{常数项 } \\color{${c3}}{C}`,
     defaultValue: -1,
     min: -6,
     max: 6,
@@ -116,13 +119,13 @@ export const paramMeta: Record<
   },
   k: {
     label: "k (斜率)",
-    labelFormula: "k",
+    labelFormula: `\\text{斜率 } \\color{${c1}}{k}`,
     defaultValue: 1,
     min: -4,
     max: 4,
     step: 0.1,
     description: "直线的斜率 (k = tan α)",
-    descriptionFormula: "k = \\tan \\alpha",
+    descriptionFormula: `\\color{${c1}}{k} = \\tan \\alpha`,
     importance: "core",
     marks: [
       { value: 0, label: "k=0 (水平)", labelFormula: "k=0", variant: "zero" },
@@ -130,46 +133,46 @@ export const paramMeta: Record<
   },
   x0: {
     label: "x₀ (点P/定点x)",
-    labelFormula: "x_0",
+    labelFormula: `\\text{横坐标 } \\color{${c1}}{x_0}`,
     defaultValue: 2,
     min: -5,
     max: 5,
     step: 0.2,
     description: "动点 P 或已知定点的 x 坐标",
-    descriptionFormula: "\\text{点 } P(x_0, y_0) \\text{ 的 } x \\text{ 坐标}",
+    descriptionFormula: `\\text{点 } P(\\color{${c1}}{x_0}, y_0) \\text{ 的 } x \\text{ 坐标}`,
     importance: "core",
   },
   y0: {
     label: "y₀ (点P/定点y)",
-    labelFormula: "y_0",
+    labelFormula: `\\text{纵坐标 } \\color{${c2}}{y_0}`,
     defaultValue: 3,
     min: -4,
     max: 4,
     step: 0.2,
     description: "动点 P 或已知定点的 y 坐标",
-    descriptionFormula: "\\text{点 } P(x_0, y_0) \\text{ 的 } y \\text{ 坐标}",
+    descriptionFormula: `\\text{点 } P(x_0, \\color{${c2}}{y_0}) \\text{ 的 } y \\text{ 坐标}`,
     importance: "advanced",
   },
   b: {
     label: "b (y截距)",
-    labelFormula: "b",
+    labelFormula: `\\text{y 截距 } \\color{${c2}}{b}`,
     defaultValue: 1,
     min: -5,
     max: 5,
     step: 0.5,
     description: "直线在 y 轴上的截距",
-    descriptionFormula: "y \\text{ 轴截距 } (0, b)",
+    descriptionFormula: `y \\text{ 轴截距 } (0, \\color{${c2}}{b})`,
     importance: "advanced",
   },
   a: {
     label: "a (x截距)",
-    labelFormula: "a",
+    labelFormula: `\\text{x 截距 } \\color{${c1}}{a}`,
     defaultValue: 3,
     min: -5,
     max: 5,
     step: 0.5,
     description: "直线在 x 轴上的截距（不可为0）",
-    descriptionFormula: "x \\text{ 轴截距 } (a, 0) \\quad a \\neq 0",
+    descriptionFormula: `x \\text{ 轴截距 } (\\color{${c1}}{a}, 0) \\quad a \\neq 0`,
     importance: "core",
     marks: [
       {
@@ -182,94 +185,90 @@ export const paramMeta: Record<
   },
   x1: {
     label: "x₁ (点P₁横坐标)",
-    labelFormula: "x_1",
+    labelFormula: `\\text{点 P₁ 横坐标 } \\color{${c2}}{x_1}`,
     defaultValue: -2,
     min: -5,
     max: 5,
     step: 0.2,
     description: "两点式已知点 P₁ 的 x 坐标",
-    descriptionFormula:
-      "\\text{点 } P_1(x_1, y_1) \\text{ 的 } x \\text{ 坐标}",
+    descriptionFormula: `\\text{点 } P_1(\\color{${c2}}{x_1}, y_1) \\text{ 的 } x \\text{ 坐标}`,
     importance: "core",
   },
   y1: {
     label: "y₁ (点P₁纵坐标)",
-    labelFormula: "y_1",
+    labelFormula: `\\text{点 P₁ 纵坐标 } \\color{${c2}}{y_1}`,
     defaultValue: -1,
     min: -4,
     max: 4,
     step: 0.2,
     description: "两点式已知点 P₁ 的 y 坐标",
-    descriptionFormula:
-      "\\text{点 } P_1(x_1, y_1) \\text{ 的 } y \\text{ 坐标}",
+    descriptionFormula: `\\text{点 } P_1(x_1, \\color{${c2}}{y_1}) \\text{ 的 } y \\text{ 坐标}`,
     importance: "core",
   },
   x2: {
     label: "x₂ (点P₂横坐标)",
-    labelFormula: "x_2",
+    labelFormula: `\\text{点 P₂ 横坐标 } \\color{${c3}}{x_2}`,
     defaultValue: 2,
     min: -5,
     max: 5,
     step: 0.2,
     description: "两点式已知点 P₂ 的 x 坐标",
-    descriptionFormula:
-      "\\text{点 } P_2(x_2, y_2) \\text{ 的 } x \\text{ 坐标}",
+    descriptionFormula: `\\text{点 } P_2(\\color{${c3}}{x_2}, y_2) \\text{ 的 } x \\text{ 坐标}`,
     importance: "core",
   },
   y2: {
     label: "y₂ (点P₂纵坐标)",
-    labelFormula: "y_2",
+    labelFormula: `\\text{点 P₂ 纵坐标 } \\color{${c3}}{y_2}`,
     defaultValue: 3,
     min: -4,
     max: 4,
     step: 0.2,
     description: "两点式已知点 P₂ 的 y 坐标",
-    descriptionFormula:
-      "\\text{点 } P_2(x_2, y_2) \\text{ 的 } y \\text{ 坐标}",
+    descriptionFormula: `\\text{点 } P_2(x_2, \\color{${c3}}{y_2}) \\text{ 的 } y \\text{ 坐标}`,
     importance: "core",
   },
   A2: {
     label: "A₂ (L₂系数)",
-    labelFormula: "A_2",
+    labelFormula: `\\text{L₂ x 系数 } \\color{${c2}}{A_2}`,
     defaultValue: 1,
     min: -5,
     max: 5,
     step: 0.5,
     description: "第二条直线 L₂ 的 x 系数",
-    descriptionFormula: "L_2 \\text{ 的 } x \\text{ 系数 } A_2",
+    descriptionFormula: `L_2 \\text{ 的 } x \\text{ 系数 } \\color{${c2}}{A_2}`,
     importance: "advanced",
   },
   B2: {
     label: "B₂ (L₂系数)",
-    labelFormula: "B_2",
+    labelFormula: `\\text{L₂ y 系数 } \\color{${c2}}{B_2}`,
     defaultValue: 1,
     min: -5,
     max: 5,
     step: 0.5,
     description: "第二条直线 L₂ 的 y 系数",
-    descriptionFormula: "L_2 \\text{ 的 } y \\text{ 系数 } B_2",
+    descriptionFormula: `L_2 \\text{ 的 } y \\text{ 系数 } \\color{${c2}}{B_2}`,
     importance: "advanced",
   },
   C2: {
     label: "C₂ (L₂常数)",
-    labelFormula: "C_2",
+    labelFormula: `\\text{L₂ 常数项 } \\color{${c3}}{C_2}`,
     defaultValue: -2,
     min: -6,
     max: 6,
     step: 0.5,
     description: "第二条直线 L₂ 的常数项",
-    descriptionFormula: "L_2 \\text{ 的常数项 } C_2",
+    descriptionFormula: `L_2 \\text{ 的常数项 } \\color{${c3}}{C_2}`,
     importance: "advanced",
   },
   lambda: {
     label: "λ (直线系参数)",
-    labelFormula: "\\lambda",
+    labelFormula: `\\text{参数 } \\color{${c3}}{\\lambda}`,
     defaultValue: 1,
     min: -5,
     max: 5,
     step: 0.2,
     description: "直线系组合参数 L₁ + λ L₂ = 0",
-    descriptionFormula: "L_1 + \\lambda L_2 = 0",
+    descriptionFormula: `L_1 + \\color{${c3}}{\\lambda} L_2 = 0`,
     importance: "advanced",
   },
 };

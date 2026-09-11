@@ -17,6 +17,7 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { LineEquationScene } from "./components/LineEquationScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/lineEquation";
@@ -427,7 +428,7 @@ export function LineEquationAnimation() {
           return {
             variant: "info" as const,
             badge: "典型情境 · 点在直线上",
-            condition: "待测点 P₀ 位于目标直线 L 上。",
+            condition: "待测点 $P_0$ 位于目标直线 $L$ 上。",
             question: "如何由坐标代入判定点在线上，此时点线距离有何几何特征？",
           };
         }
@@ -444,7 +445,8 @@ export function LineEquationAnimation() {
           return {
             variant: "accent" as const,
             badge: "高考经典 · 勾股数 3-4-5 距离模型",
-            condition: "直线一般式系数 A, B 构成勾股比例，待测点位于坐标原点。",
+            condition:
+              "直线一般式系数 $A, B$ 构成勾股比例，待测点位于坐标原点。",
             question:
               "如何利用勾股数简化分母开方，快速计算原点到直线的垂线段长度？",
           };
@@ -478,8 +480,10 @@ export function LineEquationAnimation() {
         return {
           variant: "danger" as const,
           badge: "高考经典 · 相交直线系与定点",
-          condition: "含变参数 λ 的直线系由两条相交基准直线线性组合构成。",
-          question: "直线系恒过的公共定点如何求解？参数 λ 变动时直线如何旋转？",
+          condition:
+            "含变参数 $\\lambda$ 的直线系由两条相交基准直线线性组合构成。",
+          question:
+            "直线系恒过的公共定点如何求解？参数 $\\lambda$ 变动时直线如何旋转？",
         };
       }
     }
@@ -489,38 +493,42 @@ export function LineEquationAnimation() {
         case "general":
           return {
             variant: "info" as const,
-            badge: "直线一般式 Ax + By + C = 0",
+            badge: "方程形式 · 一般式",
             condition:
-              "系数 A, B 不同时为 0，适用于平面直角坐标系内的所有直线。",
+              "直线一般式方程为 $Ax + By + C = 0$（系数 $A, B$ 不同时为 $0$）。",
             question: "如何由一般式系数确定直线的法向量、方向向量与斜率？",
           };
         case "slopeIntercept":
           return {
             variant: "primary" as const,
-            badge: "斜截式 y = kx + b",
-            condition: "直线斜率 k 存在（不垂直于 x 轴），b 为 y 轴截距。",
-            question: "斜率 k 的几何意义与倾斜角 α 的对应关系是什么？",
+            badge: "方程形式 · 斜截式",
+            condition:
+              "直线斜截式方程为 $y = kx + b$（斜率 $k$ 存在，$b$ 为 $y$ 轴截距）。",
+            question:
+              "斜率 $k$ 的几何意义与倾斜角 $\\alpha$ 的对应关系是什么？",
           };
         case "pointSlope":
           return {
             variant: "warning" as const,
-            badge: "点斜式 y - y₀ = k(x - x₀)",
-            condition: "已知定点 P₀(x₀, y₀) 且直线斜率 k 存在。",
+            badge: "方程形式 · 点斜式",
+            condition:
+              "直线点斜式方程为 $y - y_0 = k(x - x_0)$（过定点 $P_0(x_0, y_0)$ 且斜率 $k$ 存在）。",
             question: "已知过定点求直线方程时，如何防范斜率不存在的遗漏？",
           };
         case "twoPoint":
           return {
             variant: "accent" as const,
-            badge: "两点式方程",
+            badge: "方程形式 · 两点式",
             condition:
-              "已知两不同定点 P₁(x₁,y₁), P₂(x₂,y₂)，且不平行于坐标轴。",
+              "已知两不同定点 $P_1(x_1, y_1), P_2(x_2, y_2)$，方程为 $\\frac{y - y_1}{y_2 - y_1} = \\frac{x - x_1}{x_2 - x_1}$。",
             question: "两点式在直线垂直于坐标轴时的退化情形如何处理？",
           };
         case "intercept":
           return {
             variant: "danger" as const,
-            badge: "截距式 x/a + y/b = 1",
-            condition: "直线不过原点，在 x 轴和 y 轴上的截距均非零。",
+            badge: "方程形式 · 截距式",
+            condition:
+              "直线不过原点，截距式方程为 $\\frac{x}{a} + \\frac{y}{b} = 1$（截距 $a \\neq 0, b \\neq 0$）。",
             question: "如何利用截距式求解直线与两坐标轴围成三角形的面积最值？",
           };
       }
@@ -528,23 +536,26 @@ export function LineEquationAnimation() {
     if (studyMode === "distance") {
       return {
         variant: "primary" as const,
-        badge: "点到直线距离公式",
-        condition: "平面内给定待测定点 P₀ 与目标直线 L。",
+        badge: "几何模型 · 点到直线距离",
+        condition:
+          "给定平面待测定点 $P_0(x_0, y_0)$ 与目标直线 $L: Ax + By + C = 0$。",
         question: "如何构造垂线段求解点到直线的垂直距离及投影垂足坐标？",
       };
     }
     if (studyMode === "relation") {
       return {
         variant: "warning" as const,
-        badge: "两直线位置关系判定",
-        condition: "平面内给定两条直线的一般式方程 L₁ 与 L₂。",
+        badge: "几何模型 · 两直线位置关系",
+        condition:
+          "平面内给定两直线 $L_1: A_1 x + B_1 y + C_1 = 0$ 与 $L_2: A_2 x + B_2 y + C_2 = 0$。",
         question: "如何通过两直线的系数快速判定平行、垂直、相交与重合？",
       };
     }
     return {
       variant: "danger" as const,
-      badge: "相交直线系与恒过定点",
-      condition: "直线系由两条相交直线组合而成，含可变参数 λ。",
+      badge: "高考模型 · 相交直线系与定点",
+      condition:
+        "动直线系方程为 $L_1 + \\lambda L_2 = 0$（含变参数 $\\lambda$）。",
       question: "探究直线系恒过定点的求解通法与动态旋转轨迹。",
     };
   }, [studyMode, form, preset]);
@@ -555,6 +566,124 @@ export function LineEquationAnimation() {
     relation: "两条直线位置关系看板",
     family: "直线系方程看板",
   };
+
+  // 9. 中屏右下角图例配置 (与绘制图元 1-to-1 严格匹配)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (studyMode === "distance") {
+      return [
+        {
+          label: "待测点 $P_0$",
+          color: MATH_COLORS.paramPrimary,
+          style: "point",
+        },
+        {
+          label: "目标直线 $L$",
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          label: "垂线段 $PQ$ 与垂足 $Q$",
+          color: MATH_COLORS.focusPoint,
+          style: "dash",
+        },
+      ];
+    } else if (studyMode === "forms") {
+      if (form === "twoPoint") {
+        return [
+          {
+            label: "已知定点 $P_1$",
+            color: MATH_COLORS.paramSecondary,
+            style: "point",
+          },
+          {
+            label: "已知定点 $P_2$",
+            color: MATH_COLORS.paramTertiary,
+            style: "point",
+          },
+          {
+            label: "目标直线 $L$",
+            color: MATH_COLORS.paramPrimary,
+            style: "solid",
+          },
+        ];
+      } else if (form === "pointSlope") {
+        return [
+          {
+            label: "已知定点 $P_0$",
+            color: MATH_COLORS.paramSecondary,
+            style: "point",
+          },
+          {
+            label: "目标直线 $L$",
+            color: MATH_COLORS.paramPrimary,
+            style: "solid",
+          },
+        ];
+      } else if (form === "intercept") {
+        return [
+          {
+            label: "截距点 $A, B$",
+            color: MATH_COLORS.paramSecondary,
+            style: "point",
+          },
+          {
+            label: "目标直线 $L$",
+            color: MATH_COLORS.paramPrimary,
+            style: "solid",
+          },
+        ];
+      } else {
+        return [
+          {
+            label: "目标直线 $L$",
+            color: MATH_COLORS.paramPrimary,
+            style: "solid",
+          },
+        ];
+      }
+    } else if (studyMode === "relation") {
+      return [
+        {
+          label: "基准直线 $L_1$",
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          label: "关联直线 $L_2$",
+          color: MATH_COLORS.paramSecondary,
+          style: "solid",
+        },
+        {
+          label: "两线交点 $P$",
+          color: MATH_COLORS.vectorResult,
+          style: "point",
+        },
+      ];
+    } else {
+      return [
+        {
+          label: "基准直线 $L_1$",
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          label: "基准直线 $L_2$",
+          color: MATH_COLORS.paramSecondary,
+          style: "dash",
+        },
+        {
+          label: "动直线系 $L(\\lambda)$",
+          color: MATH_COLORS.paramTertiary,
+          style: "solid",
+        },
+        {
+          label: "恒过定点 $P_0$",
+          color: MATH_COLORS.paramPrimary,
+          style: "point",
+        },
+      ];
+    }
+  }, [studyMode, form]);
 
   return (
     <ThreePanel
@@ -663,6 +792,9 @@ export function LineEquationAnimation() {
               form={form}
             />
           </AnimationSvgCanvas>
+
+          {/* 中屏右下角几何图元图例 */}
+          <SceneLegend items={legendItems} title="几何图元图例" />
         </div>
       }
       right={
@@ -671,6 +803,8 @@ export function LineEquationAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           mnemonic={mathData.mnemonic}
           title={panelTitleMap[studyMode]}
         />

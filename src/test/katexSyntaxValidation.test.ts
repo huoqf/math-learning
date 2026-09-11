@@ -132,6 +132,26 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
       params: { yf: 1, yg: -1 },
       config: { selectedLogic: "all_all" },
     },
+    {
+      animId: "anim-line-equation",
+      params: { k: 1, b: 1, A: 1, B: -1, C: -1, x0: 0, y0: 1 },
+      config: { studyMode: "forms", form: "slopeIntercept" },
+    },
+    {
+      animId: "anim-line-equation",
+      params: { A: 3, B: 4, C: -5, x0: 2, y0: 1 },
+      config: { studyMode: "distance" },
+    },
+    {
+      animId: "anim-line-equation",
+      params: { k1: 1, b1: 0, k2: -1, b2: 2 },
+      config: { studyMode: "relation" },
+    },
+    {
+      animId: "anim-conic-line",
+      params: { a: 2, b: 1, k: 0.5, m: 0 },
+      config: { curveType: "ellipse" },
+    },
   ];
 
   topicsToTest.forEach(({ animId, params, config }) => {

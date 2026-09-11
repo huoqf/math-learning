@@ -168,6 +168,26 @@ export function verifyTopicSyncContract<
         `[${name}] 高考破题推演链必须正好为 3 步`,
       ).toBe(3);
 
+      // 全局推导链代数规范与逻辑严谨性断言（防浮点尾零、防未化简系数 1、防伪充要）
+      for (const step of mathData.reasoningSteps ?? []) {
+        if (step.latex) {
+          expect(
+            step.latex,
+            `[${name}] 推导链第 ${step.step} 步严禁滥用充要双向箭头表示点线单向从属: "${step.latex}"`,
+          ).not.toMatch(/\\iff.*\\in\s*[A-Za-z]/);
+
+          expect(
+            step.latex,
+            `[${name}] 推导链第 ${step.step} 步严禁代数变量附带 .00 机器浮点尾零: "${step.latex}"`,
+          ).not.toMatch(/\b\d+\.00(?:[a-zA-Z]|\\[a-zA-Z]+)/);
+
+          expect(
+            step.latex,
+            `[${name}] 推导链第 ${step.step} 步严禁多项式出现未化简系数 1: "${step.latex}"`,
+          ).not.toMatch(/[+\-=]\s*1[a-zA-Z]\b/);
+        }
+      }
+
       // 验证推演链中是否代入了当前的核心符号
       if (tc.expectedReasoningSymbols) {
         const fullReasoningContent =

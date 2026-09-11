@@ -116,7 +116,7 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("LineEquationAnimation mounts properly and displays control panel", () => {
     render(<LineEquationAnimation />);
     expect(screen.getByText("研究模式")).toBeInTheDocument();
-    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+    expect(screen.getByText("直线方程形式看板")).toBeInTheDocument();
   });
 
   it("LineCircleAnimation mounts properly and renders titles", () => {
