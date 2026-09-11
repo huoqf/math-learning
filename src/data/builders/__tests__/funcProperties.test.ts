@@ -29,21 +29,68 @@ describe("buildFuncPropertiesPanel 构建器测试", () => {
     ).toBe(true);
   });
 
-  it("对称性模式 (symmetry - axis): 正确验证双对称轴推导周期性 T = 2|a - b|", () => {
+  it("对称性模式 (symmetry - axis): 正确验证双对称轴推导周期性 T = 2|a - b| 及推导链", () => {
     const data = buildFuncPropertiesPanel(
       { axisA: 1, axisB: 3 },
       { mode: "symmetry", subMode: "period-dual-axis" },
     );
     expect(data.theorems[0].name).toContain("双轴对称");
     expect(data.theorems[0].latex).toContain("2|a - b|");
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
+    expect(data.reasoningSteps?.[0].title).toContain("审题定法");
+    expect(data.reasoningSteps?.[1].title).toContain("建模联立");
+    expect(data.reasoningSteps?.[2].title).toContain("代入求解");
+    expect(data.reasoningSteps?.[2].latex).toContain("T = 2|a - b|");
   });
 
-  it("对称性模式 (symmetry - center): 正确验证双中心对称推导周期性 T = 2|x1 - x2|", () => {
+  it("对称性模式 (symmetry - center): 正确验证双中心对称推导周期性 T = 2|a - b| 及推导链", () => {
     const data = buildFuncPropertiesPanel(
-      { centerX: 0, centerY: 0, x1: 1, x2: 3 },
+      { axisA: 1, axisB: 3 },
       { mode: "symmetry", subMode: "period-dual-center" },
     );
     expect(data.theorems[0].name).toContain("双中心对称");
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
+    expect(data.reasoningSteps?.[2].latex).toContain("T = 2|a - b|");
+  });
+
+  it("对称性模式 (symmetry - axis-center): 正确验证一轴一中心推导周期性 T = 4|a - b| 及推导链", () => {
+    const data = buildFuncPropertiesPanel(
+      { axisA: 0, axisB: 2 },
+      { mode: "symmetry", subMode: "period-axis-center" },
+    );
+    expect(data.theorems[0].name).toContain("一轴一中心");
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
+    expect(data.reasoningSteps?.[1].detail).toContain("半周期反号");
+    expect(data.reasoningSteps?.[2].latex).toContain("T = 4|a - b| = 8");
+  });
+
+  it("单轴对称模式 (axis): 具备完整三步几何转化与代数验证推导链", () => {
+    const data = buildFuncPropertiesPanel(
+      { axisA: 2, x0: 3 },
+      { mode: "symmetry", subMode: "axis" },
+    );
+    expect(data.quantities.some((q) => q.label.includes("对称轴位置"))).toBe(
+      true,
+    );
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
+    expect(data.reasoningSteps?.[0].title).toContain("中垂线转化");
+  });
+
+  it("中心对称模式 (center): 具备完整三步中点公式与求和恒等式推导链", () => {
+    const data = buildFuncPropertiesPanel(
+      { centerX: 1, centerY: 2, x0: 2 },
+      { mode: "symmetry", subMode: "center" },
+    );
+    expect(data.quantities.some((q) => q.label.includes("对称中心"))).toBe(
+      true,
+    );
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
+    expect(data.reasoningSteps?.[0].title).toContain("中点公式转化");
   });
 
   it("定义域模式 (domain): 正确提示反比例函数在 x=0 处的无定义", () => {

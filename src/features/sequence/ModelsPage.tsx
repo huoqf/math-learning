@@ -326,27 +326,12 @@ export function ModelsPage() {
           </LeftPanelSection>
 
           <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }
