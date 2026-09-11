@@ -614,10 +614,13 @@ export function findOptimalSplit(latex: string): [string, string] | null {
     if (maxLen <= origLen * 0.85) return puncSplit;
   }
 
-  // 5. 兜底放宽：存在二元运算符、等号或箭头时强行拆分，坚决杜绝缩成微小不可读字号或超出容器
+  // 5. 兜底放宽：只要公式超宽，存在推导符、箭头、语义间距、二元运算符、等号或标点时均执行拆分，坚决杜绝超出容器
   if (arrowSplit) return arrowSplit;
+  if (impliesSplit) return impliesSplit;
+  if (spacingSplit) return spacingSplit;
   if (binSplit) return binSplit;
   if (eqSplit) return eqSplit;
+  if (puncSplit) return puncSplit;
 
   return null;
 }

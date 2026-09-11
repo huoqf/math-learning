@@ -4,10 +4,10 @@ import "katex/dist/katex.min.css";
 import { normalizeFractionRowSpacing, findOptimalSplit } from "./latexUtils";
 
 /**
- * 换行后仍溢出时的硬底线：提升至 0.78，确保高清晰度与大字号，
- * 绝不允许暴跌至不可读的微小字体（优先多行教材式排版展开）
+ * 换行后仍超宽时的保底缩放硬底线：设为 0.55，
+ * 既保证公式在常规下具备高清晰度字号，又杜绝在右屏 270px 窄容器中因卡死在 0.78 而溢出截断
  */
-const HARD_MIN_SCALE = 0.78;
+const HARD_MIN_SCALE = 0.55;
 
 interface KatexFormulaProps {
   formula: string;
@@ -180,7 +180,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
           isMultiLine
             ? "items-start justify-start"
             : "items-center justify-center"
-        } overflow-x-auto overflow-y-hidden max-w-full transition-all duration-150 ${className}`}
+        } overflow-hidden max-w-full transition-all duration-150 ${className}`}
         style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
       >
         <div

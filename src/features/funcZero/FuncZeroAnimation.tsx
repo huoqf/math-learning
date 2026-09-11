@@ -121,27 +121,28 @@ export function FuncZeroAnimation() {
     return `${fnLatex} \\quad 端点处 f(x)=0`;
   }, [currentModel.formula, m, n, prod]);
 
-  // 动态教学提示配置（精炼去重）
+  // 动态教学提示配置（规范初始条件与探究设问，严禁提前剧透答案）
   const tipConfig = useMemo(() => {
-    const len = Math.abs(n - m) / Math.pow(2, steps);
+    const aStr = m.toFixed(1).replace(/\.0$/, "");
+    const bStr = n.toFixed(1).replace(/\.0$/, "");
 
     if (modelKey === "counterExample") {
       return {
         variant: "warning" as const,
-        badge: "高考易错点 · 充分非必要辨析",
-        condition: `区间 [${m.toFixed(1).replace(/\.0$/, "")}, ${n.toFixed(1).replace(/\.0$/, "")}] 端点同号 f(a)·f(b) > 0，但不代表无解：内部实际包含 2 个零点。`,
+        badge: "高考易错辨析 · 充分非必要模型",
+        condition: `研究函数 $f(x) = x^2 - 2x$ 在区间 $[${aStr}, ${bStr}]$ 上的零点，当前端点满足 $f(a) \\cdot f(b) > 0$。`,
         question:
-          "核心启示：定理异号条件是零点存在的【充分条件】而非【必要条件】。",
+          "(1) 检验当前区间是否满足零点存在性定理前提？(2) 思考端点同号时区间内是否一定不存在零点？说明依据。",
       };
     }
 
     return {
       variant: "primary" as const,
       badge: `高考必考 · ${currentModel.name}`,
-      condition: `在 [${m.toFixed(1).replace(/\.0$/, "")}, ${n.toFixed(1).replace(/\.0$/, "")}] 上连续且严格单调，由 f(a)·f(b) < 0 锁定唯一零点。`,
-      question: `二分迭代 ${steps} 次，误差限折半至 ε ≤ ${len.toFixed(4)}，逼近根 x* ≈ ${currentModel.approxZero.toFixed(3)}。`,
+      condition: `在区间 $[${aStr}, ${bStr}]$ 上探究方程 $${currentModel.formula}$ 的解，当前迭代步数设定为 $k = ${steps}$。`,
+      question: `(1) 验证端点是否满足 $f(a) \\cdot f(b) < 0$ 并判定零点唯一性；(2) 运用二分法迭代计算，求零点近似值并评估误差限。`,
     };
-  }, [m, n, steps, currentModel, modelKey]);
+  }, [m, n, steps, currentModel.name, currentModel.formula, modelKey]);
 
   // 图例说明项（精简几何语义）
   const legendItems: SceneLegendItem[] = useMemo(() => {
@@ -181,7 +182,10 @@ export function FuncZeroAnimation() {
                 return {
                   key: item.key,
                   label: item.name,
-                  formula: item.formula,
+                  description:
+                    item.key === "counterExample"
+                      ? "端点同号多根辨析"
+                      : "单调连续必考模型",
                   fullWidth: true,
                 };
               })}
@@ -210,29 +214,12 @@ export function FuncZeroAnimation() {
 
           {/* 3. 教学导引 */}
           <LeftPanelSection title="教学导引" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【特征】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【收敛】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    {tipConfig.question}
-                  </span>
-                </div>
-              </div>
-            </TipCard>
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }
@@ -260,16 +247,7 @@ export function FuncZeroAnimation() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="零点逼近看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="零点逼近看板" />}
     />
   );
 }

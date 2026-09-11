@@ -127,6 +127,13 @@ export function ZeroScene({
   const ptMidCurve = mathToDesign(currentMid, fMid, scale);
   const ptMidAxis = mathToDesign(currentMid, 0, scale);
 
+  const fM = Number.isFinite(m) ? targetFn(m) : NaN;
+  const fN = Number.isFinite(n) ? targetFn(n) : NaN;
+  const ptMCurve = Number.isFinite(fM) ? mathToDesign(m, fM, scale) : null;
+  const ptMAxis = mathToDesign(m, 0, scale);
+  const ptNCurve = Number.isFinite(fN) ? mathToDesign(n, fN, scale) : null;
+  const ptNAxis = mathToDesign(n, 0, scale);
+
   return (
     <g>
       <CoordinateGrid scale={scale} fontScale={fontScale} />
@@ -159,7 +166,7 @@ export function ZeroScene({
         />
       )}
 
-      {/* 4. 左边界 a 虚线辅助线与控制点 */}
+      {/* 4. 左边界 a 虚线辅助线、曲线上点 (a, f(a)) 与轴上控制点 */}
       <line
         x1={scale.originX + m * scale.scaleX}
         y1={scale.originY - 4.5 * scale.scaleY}
@@ -169,6 +176,26 @@ export function ZeroScene({
         strokeWidth={1.5}
         strokeDasharray="4 4"
       />
+      {ptMCurve && (
+        <>
+          <line
+            x1={ptMAxis.x}
+            y1={ptMAxis.y}
+            x2={ptMCurve.x}
+            y2={ptMCurve.y}
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={1.5}
+          />
+          <MathPoint
+            cx={m}
+            cy={fM}
+            scale={scale}
+            color={MATH_COLORS.paramPrimary}
+            r={3.2}
+            fontScale={fontScale}
+          />
+        </>
+      )}
       <InteractivePoint
         cx={m}
         cy={0}
@@ -182,7 +209,7 @@ export function ZeroScene({
         fontScale={fontScale}
       />
 
-      {/* 5. 右边界 b 虚线辅助线与控制点 */}
+      {/* 5. 右边界 b 虚线辅助线、曲线上点 (b, f(b)) 与轴上控制点 */}
       <line
         x1={scale.originX + n * scale.scaleX}
         y1={scale.originY - 4.5 * scale.scaleY}
@@ -192,6 +219,26 @@ export function ZeroScene({
         strokeWidth={1.5}
         strokeDasharray="4 4"
       />
+      {ptNCurve && (
+        <>
+          <line
+            x1={ptNAxis.x}
+            y1={ptNAxis.y}
+            x2={ptNCurve.x}
+            y2={ptNCurve.y}
+            stroke={MATH_COLORS.paramSecondary}
+            strokeWidth={1.5}
+          />
+          <MathPoint
+            cx={n}
+            cy={fN}
+            scale={scale}
+            color={MATH_COLORS.paramSecondary}
+            r={3.2}
+            fontScale={fontScale}
+          />
+        </>
+      )}
       <InteractivePoint
         cx={n}
         cy={0}
