@@ -100,19 +100,19 @@ export function TangentBaseScene({
       key: "pt-base-tangent",
       x: p.x,
       y: p.y,
-      text: "P_0",
+      text: "P₀",
       color: MATH_COLORS.paramPrimary,
       preferredPlacement: "top",
     });
 
-    // 当切点偏离基准切点时，呈现基准切点 T_0
+    // 当切点偏离基准切点时，呈现基准切点 T₀
     if (Math.abs(baseData.tangent.x0 - baseData.baseX0) > 0.08) {
       const ptBase = mathToDesign(baseData.baseX0, baseData.baseY0, scale);
       items.push({
         key: "pt-base-target",
         x: ptBase.x,
         y: ptBase.y,
-        text: "T_0",
+        text: "T₀",
         color: MATH_COLORS.line,
         preferredPlacement: "bottom-left",
       });

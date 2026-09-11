@@ -79,14 +79,14 @@ export function TangentParamKScene({
       });
     }
 
-    // 1. 动直线斜率旋转手柄 Q_k(2.2, 2.2k)
+    // 1. 动直线斜率旋转手柄 Q(2.2, 2.2k)
     const slopeRefX = 2.2;
     const ptSlope = mathToDesign(slopeRefX, params.k * slopeRefX, scale);
     items.push({
       key: "pt-slope-k",
       x: ptSlope.x,
       y: ptSlope.y,
-      text: "Q_k",
+      text: "Q",
       color: MATH_COLORS.paramPrimary,
       preferredPlacement: "top-left",
     });

@@ -16,6 +16,14 @@ import { FUNC_ZERO_MODELS } from "@/data/registries/funcZero";
 
 const MODEL_KEYS = ["cubic", "logMixed", "expMixed", "counterExample"];
 
+const toSubscript = (num: number) => {
+  const digits = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
+  return String(num)
+    .split("")
+    .map((c) => digits[Number(c)] ?? c)
+    .join("");
+};
+
 interface ZeroSceneProps {
   params: Record<string, number>;
   scale: SceneScale;
@@ -104,7 +112,7 @@ export function ZeroScene({
       const ptMid = mathToDesign(currentMid, 0, scale);
       entries.push({
         key: "c",
-        text: `c_{${steps}}`,
+        text: `c${toSubscript(steps)}`,
         x: ptMid.x,
         y: ptMid.y,
         anchor: "middle",
@@ -273,7 +281,7 @@ export function ZeroScene({
             scale={scale}
             color={MATH_COLORS.paramTertiary}
             r={3.8}
-            label={`c_{${steps}}`}
+            label={`c${toSubscript(steps)}`}
             labelKey="c"
             placedLabels={placedLabels}
             fontScale={fontScale}

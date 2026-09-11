@@ -151,7 +151,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       entries.push(
         {
           key: "min",
-          text: `Min(${sepResult.fMin.toFixed(2)})`,
+          text: "极小值",
           x: ptMin.x,
           y: ptMin.y,
           anchor: "middle",
@@ -159,7 +159,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         },
         {
           key: "max",
-          text: `Max(${sepResult.fMax.toFixed(2)})`,
+          text: "极大值",
           x: ptMax.x,
           y: ptMax.y,
           anchor: "middle",
@@ -170,7 +170,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       const ptMin = mathToDesign(directResult.xFMin, directResult.fMin, scale);
       entries.push({
         key: "min",
-        text: `Min(${directResult.fMin.toFixed(2)})`,
+        text: "极小值",
         x: ptMin.x,
         y: ptMin.y,
         anchor: "middle",
@@ -185,7 +185,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     const entries: LabelEntry[] = [
       {
         key: "m",
-        text: `m=${m.toFixed(2)}`,
+        text: "m",
         x: mathToDesign(m, 0, scale).x,
         y: mathToDesign(m, 0, scale).y,
         anchor: "middle",
@@ -193,7 +193,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       },
       {
         key: "n",
-        text: `n=${n.toFixed(2)}`,
+        text: "n",
         x: mathToDesign(n, 0, scale).x,
         y: mathToDesign(n, 0, scale).y,
         anchor: "middle",
@@ -203,7 +203,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     if (isSep && !isCollapsed) {
       entries.push({
         key: "a",
-        text: `a=${a.toFixed(2)}`,
+        text: "a",
         x: mathToDesign((m + n) / 2, a, scale).x,
         y: mathToDesign((m + n) / 2, a, scale).y,
         anchor: "middle",
@@ -214,7 +214,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       const aX = isTrans && a_axis > 0 ? Math.log(a_axis) : a_axis;
       entries.push({
         key: "a_axis",
-        text: `a=${a_axis.toFixed(2)}`,
+        text: isTrans ? "ln a" : "a",
         x: mathToDesign(aX, 0, scale).x,
         y: mathToDesign(aX, 0, scale).y,
         anchor: "middle",
@@ -234,7 +234,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         value={a}
         scale={scale}
         color={MATH_COLORS.paramPrimary}
-        label={`y = a (${a.toFixed(2)})`}
+        label="y = a"
         fontScale={fontScale}
       />
     );
@@ -252,7 +252,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           value={lna}
           scale={scale}
           color={MATH_COLORS.paramPrimary}
-          label={`驻点/极小值点 x = ln a (${lna.toFixed(2)})`}
+          label="x = ln a (极小值点)"
           fontScale={fontScale}
         />
       );
@@ -263,7 +263,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           value={a_axis}
           scale={scale}
           color={MATH_COLORS.paramPrimary}
-          label={`对称轴 x = a (${a_axis.toFixed(2)})`}
+          label="x = a (对称轴)"
           fontScale={fontScale}
         />
       );
@@ -299,7 +299,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           fontSize={fontScale(10)}
           className="font-bold select-none"
         >
-          违背区间 [{vStart.toFixed(2)}, {vEnd.toFixed(2)}]
+          违背区间
         </text>
       </g>
     );
@@ -425,7 +425,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         onDrag={handleMDrag}
         color={MATH_COLORS.paramSecondary}
         r={5.5}
-        label={`m=${m.toFixed(2)}`}
+        label="m"
         labelKey="m"
         placedLabels={placedPointLabels}
         fontScale={fontScale}
@@ -440,7 +440,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         onDrag={handleNDrag}
         color={MATH_COLORS.paramTertiary}
         r={5.5}
-        label={`n=${n.toFixed(2)}`}
+        label="n"
         labelKey="n"
         placedLabels={placedPointLabels}
         fontScale={fontScale}
@@ -456,7 +456,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           onDrag={handleADrag}
           color={MATH_COLORS.paramPrimary}
           r={6.5}
-          label={`a=${a.toFixed(2)}`}
+          label="a"
           labelKey="a"
           placedLabels={placedPointLabels}
           fontScale={fontScale}
@@ -473,11 +473,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           onDrag={handleAAxisDrag}
           color={MATH_COLORS.paramPrimary}
           r={6.5}
-          label={
-            isTrans
-              ? `驻点 ln a (${(a_axis > 0 ? Math.log(a_axis) : 0).toFixed(2)})`
-              : `轴 a=${a_axis.toFixed(2)}`
-          }
+          label={isTrans ? "ln a" : "a"}
           labelKey="a_axis"
           placedLabels={placedPointLabels}
           fontScale={fontScale}
@@ -495,7 +491,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                 scale={scale}
                 color={MATH_COLORS.function}
                 variant="focus"
-                label={`Min(${sepResult.fMin.toFixed(2)})`}
+                label="极小值"
                 labelKey="min"
                 placedLabels={placedExtremumLabels}
                 fontScale={fontScale}
@@ -506,7 +502,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                 scale={scale}
                 color={MATH_COLORS.derivative}
                 variant="focus"
-                label={`Max(${sepResult.fMax.toFixed(2)})`}
+                label="极大值"
                 labelKey="max"
                 placedLabels={placedExtremumLabels}
                 fontScale={fontScale}
@@ -520,7 +516,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                 scale={scale}
                 color={MATH_COLORS.function}
                 variant="focus"
-                label={`Min(${directResult.fMin.toFixed(2)})`}
+                label="极小值"
                 labelKey="min"
                 placedLabels={placedExtremumLabels}
                 fontScale={fontScale}

@@ -71,7 +71,7 @@ export function TangentSandwichScene({
           key: "pt-band-1",
           x: p1.x,
           y: p1.y,
-          text: "T_1",
+          text: "T₁",
           color: MATH_COLORS.primary,
           preferredPlacement: "top-left",
         },
@@ -79,7 +79,7 @@ export function TangentSandwichScene({
           key: "pt-band-2",
           x: p2.x,
           y: p2.y,
-          text: "T_2",
+          text: "T₂",
           color: MATH_COLORS.secondary,
           preferredPlacement: "bottom-right",
         },
@@ -97,7 +97,7 @@ export function TangentSandwichScene({
       });
     }
 
-    // 观察点垂直连线上下交点 P_1, P_2
+    // 观察点垂直连线上下交点 P₁, P₂
     const pUp = mathToDesign(evalX, sandwichData.upperFn(evalX), scale);
     const pLow = mathToDesign(evalX, sandwichData.lowerFn(evalX), scale);
     items.push(
@@ -105,7 +105,7 @@ export function TangentSandwichScene({
         key: "pt-eval-up",
         x: pUp.x,
         y: pUp.y,
-        text: "P_1",
+        text: "P₁",
         color: MATH_COLORS.primary,
         preferredPlacement: "top",
       },
@@ -113,7 +113,7 @@ export function TangentSandwichScene({
         key: "pt-eval-low",
         x: pLow.x,
         y: pLow.y,
-        text: "P_2",
+        text: "P₂",
         color: MATH_COLORS.secondary,
         preferredPlacement: "bottom",
       },
