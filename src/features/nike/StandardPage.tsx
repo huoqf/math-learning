@@ -36,8 +36,20 @@ export function StandardPage() {
 
   const equationLatex = useMemo(() => {
     const aVal = params.a.toFixed(1);
-    const bVal = params.b.toFixed(1);
-    return `y = \\color{${MATH_COLORS.paramPrimary}}{${aVal}}x + \\frac{\\color{${MATH_COLORS.paramSecondary}}{${bVal}}}{x}`;
+    const absB = Math.abs(params.b).toFixed(1);
+    const aPart =
+      Math.abs(params.a) < 1e-4
+        ? ""
+        : `\\color{${MATH_COLORS.paramPrimary}}{${aVal}}x`;
+    const bSign = params.b >= 0 ? "+" : "-";
+    const bPart = `${bSign} \\frac{\\color{${MATH_COLORS.paramSecondary}}{${absB}}}{x}`;
+
+    if (Math.abs(params.a) < 1e-4) {
+      return params.b >= 0
+        ? `y = \\frac{\\color{${MATH_COLORS.paramSecondary}}{${absB}}}{x}`
+        : `y = -\\frac{\\color{${MATH_COLORS.paramSecondary}}{${absB}}}{x}`;
+    }
+    return `y = ${aPart} ${bPart}`;
   }, [params.a, params.b]);
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -101,7 +113,10 @@ export function StandardPage() {
         style: "dash",
       },
       {
-        label: `斜渐近线 y = ${a.toFixed(1)}x`,
+        label:
+          Math.abs(a) < 1e-4
+            ? "水平渐近线 y = 0 (x轴)"
+            : `斜渐近线 y = ${a.toFixed(1)}x`,
         color: MATH_COLORS.asymptote,
         style: "dash",
       },
@@ -124,17 +139,17 @@ export function StandardPage() {
                 {
                   key: "nike_std",
                   label: "经典对勾型",
-                  formula: "y = x + \\frac{4}{x}",
+                  description: "同号象限双极值 (ab > 0)",
                 },
                 {
                   key: "streamer_std",
                   label: "双曲飘带型",
-                  formula: "y = x - \\frac{4}{x}",
+                  description: "异号象限单调增 (ab < 0)",
                 },
                 {
                   key: "inverse_std",
                   label: "反比例退化",
-                  formula: "y = \\frac{4}{x}, \\; a = 0",
+                  description: "斜渐近线水平退化 (a = 0)",
                   fullWidth: true,
                 },
               ]}
@@ -180,7 +195,11 @@ export function StandardPage() {
                   <KatexFormula formula="f(-x) = -f(x)" mode="inline" />
                   ，渐近线为{" "}
                   <KatexFormula
-                    formula={`y = ${params.a.toFixed(1)}x`}
+                    formula={
+                      Math.abs(params.a) < 1e-4
+                        ? "y = 0"
+                        : `y = ${params.a.toFixed(1)}x`
+                    }
                     mode="inline"
                   />{" "}
                   与 <KatexFormula formula="x = 0" mode="inline" />。
@@ -188,7 +207,9 @@ export function StandardPage() {
               }
               question={
                 params.a * params.b > 0
-                  ? "(1) 求导解驻点并确定单调递减区间；(2) 探究分子系数 $b$ 对第一象限极小值点 $x = \\sqrt{b/a}$ 坐标的迁移影响。"
+                  ? params.a > 0
+                    ? "(1) 求导解驻点并确定单调递减区间；(2) 探究第一象限极小值点与第三象限极大值点的中心对称关系。"
+                    : "(1) 分析导函数符号，确定倒对勾函数的单调递增区间；(2) 求解第四象限极大值点与第二象限极小值点坐标。"
                   : "(1) 求导证明导函数在去心定义域上恒号；(2) 分析为何双曲飘带形态全域单调且无极值点。"
               }
             />

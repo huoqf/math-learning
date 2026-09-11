@@ -128,6 +128,49 @@ export function buildNikePanel(
     });
   }
 
+  // 定义域与值域（高中函数六大基本性质核心要素）
+  quantities.push({
+    label: "函数定义域",
+    value:
+      Math.abs(b) < 1e-4
+        ? "\\mathbb{R}"
+        : `\\{x \\in \\mathbb{R} \\mid x \\ne ${h.toFixed(1)}\\}`,
+  });
+
+  if (Math.abs(a) < 1e-4 && Math.abs(b) < 1e-4) {
+    quantities.push({
+      label: "函数值域",
+      value: `\\{${c.toFixed(1)}\\}`,
+    });
+  } else if (Math.abs(a) < 1e-4) {
+    // 反比例
+    quantities.push({
+      label: "函数值域",
+      value: `\\{y \\in \\mathbb{R} \\mid y \\ne ${c.toFixed(1)}\\}`,
+    });
+  } else if (Math.abs(b) < 1e-4) {
+    // 正比例
+    quantities.push({
+      label: "函数值域",
+      value: "\\mathbb{R}",
+    });
+  } else if (a * b > 0) {
+    // 对勾型
+    const extVal = 2 * Math.sqrt(a * b);
+    const lowBound = (c - extVal).toFixed(2);
+    const highBound = (c + extVal).toFixed(2);
+    quantities.push({
+      label: "函数值域",
+      value: `(-\\infty, ${lowBound}] \\cup [${highBound}, +\\infty)`,
+    });
+  } else {
+    // 飘带双曲线全域值域为 R
+    quantities.push({
+      label: "函数值域",
+      value: "\\mathbb{R}",
+    });
+  }
+
   quantities.push({
     label: "奇偶性与对称中心",
     value: `${res.parityDescription}`,
@@ -342,11 +385,14 @@ export function buildNikePanel(
   } else {
     // standard
     if (a * b > 0) {
+      const isClassic = a > 0;
       theorems.push({
-        name: "对勾函数极值与单调性定理",
-        latex: `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\implies f'(x) = ${col("a", ca)} - \\frac{${col("b", cb)}}{x^2} = 0`,
+        name: isClassic
+          ? "对勾函数极值与单调性定理"
+          : "倒对勾函数极值与单调性定理",
+        latex: `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\implies f'(x) = ${col("a", ca)} - \\frac{${col("b", cb)}}{x^2} = \\frac{${col("a", ca)}x^2 - ${col("b", cb)}}{x^2} = 0`,
         prerequisites: ["a · b > 0", "x ≠ 0"],
-        note: `在 $x = \\pm\\sqrt{\\frac{b}{a}}$ 处分别取得极值，第一象限驻点 $x = ${Math.sqrt(b / a).toFixed(2)}$`,
+        note: `在 $x = \\pm\\sqrt{\\frac{b}{a}}$ 处分别取得局部极值，右侧驻点 $x = ${Math.sqrt(b / a).toFixed(2)}$`,
       });
 
       const statX = Math.sqrt(b / a);
@@ -362,16 +408,23 @@ export function buildNikePanel(
         {
           step: 2,
           title: "建模联立 · 解驻点与单调性讨论",
-          detail: `令 $f'(x) = 0$ 解得对称驻点 $x = \\pm\\sqrt{\\frac{b}{a}} = \\pm ${statX.toFixed(2)}$。在 $(0, ${statX.toFixed(2)})$ 上 $f'(x) < 0$ 单调递减；在 $[${statX.toFixed(2)}, +\\infty)$ 上 $f'(x) > 0$ 单调递增。`,
+          detail: isClassic
+            ? `令 $f'(x) = 0$ 解得对称驻点 $x = \\pm\\sqrt{\\frac{b}{a}} = \\pm ${statX.toFixed(2)}$。在 $(0, ${statX.toFixed(2)}]$ 上 $f'(x) \\le 0$ 单调递减；在 $[${statX.toFixed(2)}, +\\infty)$ 上 $f'(x) \\ge 0$ 单调递增。`
+            : `令 $f'(x) = 0$ 解得对称驻点 $x = \\pm\\sqrt{\\frac{b}{a}} = \\pm ${statX.toFixed(2)}$。由于 $a < 0$，在 $(0, ${statX.toFixed(2)}]$ 上 $f'(x) \\ge 0$ 单调递增；在 $[${statX.toFixed(2)}, +\\infty)$ 上 $f'(x) \\le 0$ 单调递减。`,
           latex: `f'(x) = 0 \\implies x_1 = -${statX.toFixed(2)}, \\; x_2 = ${statX.toFixed(2)}`,
           rubric: "解出驻点并规范划分单调区间得 2 分",
         },
         {
           step: 3,
           title: "求解反思 · 极值求解与奇偶对称",
-          detail: `在第一象限极小值点为 $(${statX.toFixed(2)}, ${extY.toFixed(2)})$，由奇函数性质 $f(-x) = -f(x)$ 确定第二象限极大值点为 $(-${statX.toFixed(2)}, -${extY.toFixed(2)})$。`,
-          latex: `f_{\\min} = f(${statX.toFixed(2)}) = ${extY.toFixed(2)}, \\quad f_{\\max} = f(-${statX.toFixed(2)}) = -${extY.toFixed(2)}`,
-          rubric: "求出极值点坐标与闭区间值域得 2 分",
+          detail: isClassic
+            ? `在第一象限取得极小值点 $(${statX.toFixed(2)}, ${extY.toFixed(2)})$；由奇函数性质 $f(-x) = -f(x)$，关于原点对称在第三象限取得极大值点 $(-${statX.toFixed(2)}, -${extY.toFixed(2)})$。注意：对勾函数在去心全域上无最大值与最小值。`
+            : `在第四象限取得极大值点 $(${statX.toFixed(2)}, -${extY.toFixed(2)})$；由奇函数性质 $f(-x) = -f(x)$，关于原点对称在第二象限取得极小值点 $(-${statX.toFixed(2)}, ${extY.toFixed(2)})$。`,
+          latex: isClassic
+            ? `f_{\\text{极小}} = f(${statX.toFixed(2)}) = ${extY.toFixed(2)}, \\quad f_{\\text{极大}} = f(-${statX.toFixed(2)}) = -${extY.toFixed(2)}`
+            : `f_{\\text{极大}} = f(${statX.toFixed(2)}) = -${extY.toFixed(2)}, \\quad f_{\\text{极小}} = f(-${statX.toFixed(2)}) = ${extY.toFixed(2)}`,
+          rubric:
+            "规范写出局部极值记号（严禁混淆为全域最值）与对称点象限得 2 分",
         },
       );
     } else if (a * b < 0) {

@@ -91,7 +91,14 @@ export function NikeAnimation() {
     if (activeMode === "amgm") {
       return `f(x) = ${colA}x + \\frac{\\color{${MATH_COLORS.paramSecondary}}{${bVal}}}{x} \\ge 2\\sqrt{${colA} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${bVal}}}`;
     }
-    return `y = ${colA}x + \\frac{${colB}}{x}`;
+    const bSign = params.b >= 0 ? "+" : "-";
+    const fracTerm = `${bSign} \\frac{${colB}}{x}`;
+    if (Math.abs(params.a) < 1e-4) {
+      return params.b >= 0
+        ? `y = \\frac{${colB}}{x}`
+        : `y = -\\frac{${colB}}{x}`;
+    }
+    return `y = ${colA}x ${fracTerm}`;
   }, [params.a, params.b, params.h, params.c, activeMode]);
 
   // 5. 左屏参数过滤与配置 (声明式ParamControl，支持动态定义域保护)
@@ -419,7 +426,11 @@ export function NikeAnimation() {
                     <KatexFormula formula="f(-x) = -f(x)" mode="inline" />
                     ，渐近线为{" "}
                     <KatexFormula
-                      formula={`y = ${params.a.toFixed(1)}x`}
+                      formula={
+                        Math.abs(params.a) < 1e-4
+                          ? "y = 0"
+                          : `y = ${params.a.toFixed(1)}x`
+                      }
                       mode="inline"
                     />{" "}
                     与 <KatexFormula formula="x = 0" mode="inline" />。
@@ -427,7 +438,9 @@ export function NikeAnimation() {
                 }
                 question={
                   params.a * params.b > 0
-                    ? "(1) 求导解驻点并确定单调递减区间；(2) 探究分子系数 $b$ 对第一象限极小值点 $x = \\sqrt{b/a}$ 坐标的迁移影响。"
+                    ? params.a > 0
+                      ? "(1) 求导解驻点并确定单调递减区间；(2) 探究第一象限极小值点与第三象限极大值点的中心对称关系。"
+                      : "(1) 分析导函数符号，确定倒对勾函数的单调递增区间；(2) 求解第四象限极大值点与第二象限极小值点坐标。"
                     : "(1) 求导证明导函数在去心定义域上恒号；(2) 分析为何双曲飘带形态全域单调且无极值点。"
                 }
               />
