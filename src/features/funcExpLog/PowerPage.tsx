@@ -214,41 +214,43 @@ export function PowerPage() {
         variant: "primary" as const,
         badge: "高考秒杀 · 5 大基准幂函数同屏对比",
         condition:
-          "课标 5 大基准函数：y = x, y = x², y = x³, y = 1/x, y = √x 同屏对照。",
+          "课标 5 大基准函数：$y = x$, $y = x^2$, $y = x^3$, $y = \\sqrt{x}$, $y = \\frac{1}{x}$ 第一象限同屏对照。",
         question:
-          "探究不同指数在 (0, 1) 与 (1, +∞) 区间内函数值的大小次序，并利用 x = 2 处取值判定指数高低。",
+          "判定不同幂指数在 $(0, 1)$ 与 $(1, +\\infty)$ 上的大小反转关系，并利用参考线 $x = 2$ 处的取值推导【指大图高】高考秒杀法则。",
       };
     }
     if (alpha > 1) {
       return {
         variant: "primary" as const,
-        badge: "高考基础 · 幂函数超线性增长 (α > 1)",
-        condition: `幂指数 α = ${alpha.toFixed(1).replace(/\.0$/, "")} > 1，第一象限图象恒过定点 (0, 0) 与 (1, 1)。`,
+        badge: "高考基础 · 幂函数超线性增长 (指数大于1)",
+        condition: `幂指数 $\\alpha = ${alpha.toFixed(1).replace(/\.0$/, "")} > 1$，图象在第一象限恒过公共定点 $(0, 0)$ 与 $(1, 1)$。`,
         question:
-          "观察在 (0, 1) 区间内增长慢于 y = x，而在 (1, +∞) 区间内增长快于 y = x 且凹弧凸起的形态特征。",
+          "证明图象在原点处的切线方程，并求解在 $(0, 1)$ 与 $(1, +\\infty)$ 上与基准线 $y = x$ 的相对位置及凹凸加速增长特征。",
       };
     } else if (alpha > 0) {
       return {
         variant: "warning" as const,
-        badge: "高考高频 · 幂函数根号型下垂 (0 < α < 1)",
-        condition: `幂指数 0 < α = ${alpha.toFixed(1).replace(/\.0$/, "")} < 1，恒过定点 (0, 0) 与 (1, 1)。`,
+        badge: "高考高频 · 幂函数根号型下垂 (指数介于0与1)",
+        condition: `幂指数 $0 < \\alpha = ${alpha.toFixed(1).replace(/\.0$/, "")} < 1$，图象恒过定点 $(0, 0)$ 与 $(1, 1)$。`,
         question:
-          "观察原点切线竖直趋向无穷大、在 (1, +∞) 上增长逐渐平缓且凸弧下垂的趋势。",
+          "计算 $x \\to 0^+$ 处的切线极限并判定原点可导性，求证函数在 $(0, +\\infty)$ 上单调递增且增长速率逐渐减缓的凸弧形态。",
       };
     } else if (Math.abs(alpha) < 1e-6) {
       return {
         variant: "info" as const,
-        badge: "特殊退化 · 零次常数水平线 (α = 0)",
-        condition: "幂指数 α = 0，定义域去心 x ≠ 0，y = 1。",
-        question: "观察第一象限与第二象限退化为 y = 1 水平线，x = 0 处无定义。",
+        badge: "特殊退化 · 零次常数水平线 (指数为0)",
+        condition:
+          "幂指数 $\\alpha = 0$，函数解析式为 $y = x^0 = 1$，定义域去心 $x \\neq 0$。",
+        question:
+          "判定函数在定义域上的奇偶性与值域，并指出点 $(0, 1)$ 处去心退化的代数根源。",
       };
     } else {
       return {
         variant: "danger" as const,
-        badge: "核心考点 · 负指数双曲线分支 (α < 0)",
-        condition: `幂指数 α = ${alpha.toFixed(1).replace(/\.0$/, "")} < 0，定义域不含原点，图象恒过定点 (1, 1)。`,
+        badge: "核心考点 · 负指数双曲线分支 (指数小于0)",
+        condition: `幂指数 $\\alpha = ${alpha.toFixed(1).replace(/\.0$/, "")} < 0$，定义域不含原点，第一象限图象恒过定点 $(1, 1)$。`,
         question:
-          "验证在 (0, +∞) 上单调递减，且双坐标轴 x = 0 与 y = 0 均为渐近线。",
+          "求解函数的两条渐近线方程，并证明在区间 $(0, +\\infty)$ 上严格单调递减且趋近于两坐标轴的极限特征。",
       };
     }
   }, [params.powerAlpha, mode, currentPresetKey]);
@@ -326,27 +328,12 @@ export function PowerPage() {
 
           {/* 5. 教学导引与设问 */}
           <LeftPanelSection title="教学导引与设问" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【模型特征】
-                  </span>
-                  <span className="text-neutral-600">
-                    {tipConfig.condition}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
-                </div>
-              </div>
-            </TipCard>
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }
@@ -380,6 +367,7 @@ export function PowerPage() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
           mnemonic={mathData.mnemonic}
           title="幂函数看板"
         />

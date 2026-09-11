@@ -173,11 +173,93 @@ export function buildFuncExpLogPanel(
             },
           ];
 
+    const reasoningSteps: MathPanelData["reasoningSteps"] =
+      powerMode === "compare"
+        ? [
+            {
+              step: 1,
+              title: "审题转化 · 定位基准模型",
+              detail:
+                "高考比较大小题型中，面对同底不同指或同指不同底式子，首先识别对应幂函数 $y = x^{\\alpha}$ 模型，将数值比较转化为同一区间内幂函数的函数值比较。",
+              latex:
+                "f(x) = x^{\\alpha}, \\quad \\alpha \\in \\{1, 2, 3, \\tfrac{1}{2}, -1\\}",
+              rubric: "确立所比较式子的自变量 $x$ 所在区间与基准幂函数模型",
+            },
+            {
+              step: 2,
+              title: "枢纽分界 · 引入特征线与定点",
+              detail:
+                "所有幂函数图象在第一象限恒过公共定点 $(1, 1)$。在 $(1, +\\infty)$ 上作垂直参考线 $x = 2$，交各幂函数于点 $(2, 2^{\\alpha})$，利用取值高低直接判定指数大小。",
+              latex:
+                "x = 2 \\implies \\begin{cases} y = x^3: & y = 8 \\\\ y = x^2: & y = 4 \\\\ y = x: & y = 2 \\\\ y = \\sqrt{x}: & y = \\sqrt{2} \\approx 1.41 \\\\ y = 1/x: & y = 0.5 \\end{cases}",
+              rubric: "利用 $x = 2$ 处高低次序确立各幂指数大小关系",
+            },
+            {
+              step: 3,
+              title: "定法总结 · 指大图高与区间反转",
+              detail:
+                "当 $x > 1$ 时，图象在上方的函数幂指数更大（即【指大图高】）；当 $0 < x < 1$ 时，次序完全反转（指数越大图象越在下方）。公共定点 $(1, 1)$ 为旋转枢纽。",
+              latex:
+                "\\begin{cases} x > 1: & x^3 > x^2 > x > x^{1/2} > x^{-1} \\\\ 0 < x < 1: & x^{-1} > x^{1/2} > x > x^2 > x^3 \\end{cases}",
+              rubric: "规范写出高考大小比较最终结论并谨防区间反转",
+            },
+          ]
+        : [
+            {
+              step: 1,
+              title: "符号求导 · 幂函数导数公式",
+              detail:
+                "依据高中基本初等函数导数运算法则，对幂函数 $f(x) = x^{\\alpha}$ 求导，确立切线斜率函数 $f'(x)$。",
+              latex: `f'(x) = \\alpha x^{\\alpha - 1} \\quad (${alpha <= 0 ? "x > 0" : "x \\ge 0"})`,
+              rubric: "写出正确的导函数符号表达式与定义域范围",
+            },
+            {
+              step: 2,
+              title: "代入探究 · 计算切点斜率与切线",
+              detail:
+                powerRes.isValidPoint && powerRes.isTangentDifferentiable
+                  ? `将探究点 $x_0 = ${x0.toFixed(2)}$ 代入导函数，计算切点切线斜率 $k = f'(x_0)$，并利用点斜式展开为切线方程。`
+                  : `当前自变量 $x_0 = ${x0.toFixed(2)}$ 在定义域边界或无定义，导数切线需讨论极限。`,
+              latex:
+                powerRes.isValidPoint && powerRes.isTangentDifferentiable
+                  ? `k = f'(${x0.toFixed(2)}) = ${alpha.toFixed(1)} \\times (${x0.toFixed(2)})^{${(alpha - 1).toFixed(1)}} = ${powerRes.tangentSlopeStr} \\implies ${powerRes.tangentEquationLatex}`
+                  : `x \\to 0^+ \\implies f'(x) \\to ${alpha > 0 && alpha < 1 ? "+\\infty \\; (\\text{切线竖直 } x=0)" : "0 \\; (\\text{切线水平 } y=0)"}`,
+              rubric: "代入坐标计算斜率数值并列出点斜式方程",
+            },
+            {
+              step: 3,
+              title: "几何反思 · 增长速率与凹凸形态",
+              detail:
+                alpha > 1
+                  ? "当 $\\alpha > 1$ 时，导函数 $f'(x)$ 单调递增，切线斜率随 $x$ 增大而变大，图象呈凹弧加速上升；原点处切线水平 $f'(0) = 0$。"
+                  : alpha > 0 && alpha < 1
+                    ? "当 $0 < \\alpha < 1$ 时，导函数 $f'(x)$ 单调递减，切线斜率随 $x$ 增大而变小，图象呈凸弧减速上升；$x \\to 0^+$ 时斜率趋向无穷（不可导）。"
+                    : alpha < 0
+                      ? "当 $\\alpha < 0$ 时，导函数 $f'(x) < 0$ 恒成立，函数在 $(0, +\\infty)$ 上严格减函数，以两坐标轴为渐近线。"
+                      : "$\\alpha = 0$ 退化为去心常数函数 $y = 1$ ($x \\neq 0$)。",
+              latex:
+                alpha > 1
+                  ? `f'(x) \\uparrow \\implies f(x) \\text{ 凹向上加速增长} \\quad (f'(0) = 0)`
+                  : alpha > 0 && alpha < 1
+                    ? `f'(x) \\downarrow \\implies f(x) \\text{ 凸向上平缓增长} \\quad (\\lim_{x \\to 0^+} f'(x) = +\\infty)`
+                    : alpha < 0
+                      ? `\\alpha < 0 \\implies f'(x) < 0 \\text{ 且 } \\lim_{x \\to +\\infty} f(x) = 0`
+                      : `y = 1 \\quad (x \\neq 0)`,
+              rubric: "结合导函数单调性反思几何曲线的凹凸与渐近走势",
+            },
+          ];
+
     const warnings: MathPanelData["warnings"] = [];
     if (powerRes.warningMessage) {
       warnings.push({
         text: powerRes.warningMessage,
         level: "danger",
+      });
+    }
+    if (alpha < 0) {
+      warnings.push({
+        text: "【高考易错警示】反比例型幂函数在 $(-\\infty, 0)$ 和 $(0, +\\infty)$ 上分别单调递减，绝对不可写成并集 $(-\\infty, 0) \\cup (0, +\\infty)$ 单调递减！",
+        level: "warning",
       });
     }
 
@@ -186,6 +268,7 @@ export function buildFuncExpLogPanel(
       theorems,
       gaokaoPoints,
       warnings,
+      reasoningSteps,
       mnemonic:
         powerMode === "compare"
           ? "5大基准必过(1,1)，α大于0增且过原点；作线x=2高者指数大。"

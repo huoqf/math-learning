@@ -3,6 +3,8 @@
  * 零 React/DOM/window 依赖，符合数学层纯净规则
  */
 
+import { MATH_COLORS } from "@/theme";
+
 export interface FunctionPoint {
   x: number;
   y: number;
@@ -467,9 +469,9 @@ export const STANDARD_POWER_FUNCTIONS: StandardPowerInfo[] = [
     latex: "y = x",
     name: "正比例 (α = 1)",
     labelUnicode: "y = x",
-    domain: "x \\in \\mathbb{R}",
+    domain: "$x \\in \\mathbb{R}$",
     parity: "奇函数",
-    colorToken: "#3B82F6",
+    colorToken: MATH_COLORS.function,
   },
   {
     key: "power-2",
@@ -477,9 +479,9 @@ export const STANDARD_POWER_FUNCTIONS: StandardPowerInfo[] = [
     latex: "y = x^2",
     name: "二次抛物线 (α = 2)",
     labelUnicode: "y = x²",
-    domain: "x \\in \\mathbb{R}",
+    domain: "$x \\in \\mathbb{R}$",
     parity: "偶函数",
-    colorToken: "#10B981",
+    colorToken: MATH_COLORS.setIntersection,
   },
   {
     key: "power-3",
@@ -487,9 +489,9 @@ export const STANDARD_POWER_FUNCTIONS: StandardPowerInfo[] = [
     latex: "y = x^3",
     name: "三次曲线 (α = 3)",
     labelUnicode: "y = x³",
-    domain: "x \\in \\mathbb{R}",
+    domain: "$x \\in \\mathbb{R}$",
     parity: "奇函数",
-    colorToken: "#8B5CF6",
+    colorToken: MATH_COLORS.functionSecondary,
   },
   {
     key: "power-half",
@@ -497,9 +499,9 @@ export const STANDARD_POWER_FUNCTIONS: StandardPowerInfo[] = [
     latex: "y = \\sqrt{x}",
     name: "平方根 (α = 1/2)",
     labelUnicode: "y = √x",
-    domain: "[0, +\\infty)",
+    domain: "$[0, +\\infty)$",
     parity: "非奇非偶",
-    colorToken: "#F59E0B",
+    colorToken: MATH_COLORS.paramSecondary,
   },
   {
     key: "power-neg1",
@@ -507,9 +509,9 @@ export const STANDARD_POWER_FUNCTIONS: StandardPowerInfo[] = [
     latex: "y = \\frac{1}{x}",
     name: "反比例 (α = -1)",
     labelUnicode: "y = 1/x",
-    domain: "\\{x \\in \\mathbb{R} \\mid x \\neq 0\\}",
+    domain: "$\\{x \\in \\mathbb{R} \\mid x \\neq 0\\}$",
     parity: "奇函数",
-    colorToken: "#EC4899",
+    colorToken: MATH_COLORS.functionTransformed,
   },
 ];
 
@@ -566,36 +568,41 @@ export function calculatePowerFunction(
   }
 
   // 2. 判定定义域与奇偶性
-  let domainDescription = "x ∈ ℝ";
+  let domainDescription = "$x \\in \\mathbb{R}$";
   let parityDescription = "非奇非偶函数";
 
   if (alpha === 2) {
-    domainDescription = "x ∈ ℝ";
-    parityDescription = "偶函数 (f(-x) = f(x)，图象关于 y 轴对称)";
+    domainDescription = "$x \\in \\mathbb{R}$";
+    parityDescription = "偶函数 ($f(-x) = f(x)$，图象关于 $y$ 轴对称)";
   } else if (alpha === 3 || alpha === 1 || alpha === -1) {
-    domainDescription = alpha === -1 ? "{x ∈ ℝ | x ≠ 0}" : "x ∈ ℝ";
-    parityDescription = "奇函数 (f(-x) = -f(x)，图象关于原点对称)";
+    domainDescription =
+      alpha === -1
+        ? "$\\{x \\in \\mathbb{R} \\mid x \\neq 0\\}$"
+        : "$x \\in \\mathbb{R}$";
+    parityDescription = "奇函数 ($f(-x) = -f(x)$，图象关于原点中心对称)";
   } else if (alpha === 0.5) {
-    domainDescription = "[0, +∞)";
-    parityDescription = "非奇非偶函数 (定义域不对称)";
+    domainDescription = "$[0, +\\infty)$";
+    parityDescription = "非奇非偶函数 (定义域不关于原点对称)";
   } else if (alpha < 0) {
-    domainDescription = Number.isInteger(alpha) ? "{x ∈ ℝ | x ≠ 0}" : "(0, +∞)";
+    domainDescription = Number.isInteger(alpha)
+      ? "$\\{x \\in \\mathbb{R} \\mid x \\neq 0\\}$"
+      : "$(0, +\\infty)$";
     parityDescription = Number.isInteger(alpha)
       ? alpha % 2 === 0
-        ? "偶函数"
-        : "奇函数"
+        ? "偶函数 ($f(-x) = f(x)$)"
+        : "奇函数 ($f(-x) = -f(x)$)"
       : "非奇非偶函数";
   } else if (alpha === 0) {
-    domainDescription = "{x ∈ ℝ | x ≠ 0}";
-    parityDescription = "偶函数 (在 x ≠ 0 时为常数 1)";
+    domainDescription = "$\\{x \\in \\mathbb{R} \\mid x \\neq 0\\}$";
+    parityDescription = "偶函数 (在 $x \\neq 0$ 时为常数 1)";
   }
 
   // 3. 判定在 (0, +∞) 上的单调性
-  let monotonicityPositive = "常数函数 y = 1 (α = 0)";
+  let monotonicityPositive = "常数函数 $y = 1$ ($\\alpha = 0$)";
   if (alpha > 0) {
-    monotonicityPositive = `单调递增 (α = ${alpha} > 0)`;
+    monotonicityPositive = `单调递增 ($\\alpha = ${alpha} > 0$)`;
   } else if (alpha < 0) {
-    monotonicityPositive = `单调递减 (α = ${alpha} < 0)`;
+    monotonicityPositive = `单调递减 ($\\alpha = ${alpha} < 0$)`;
   }
 
   // 4. 导数与切线斜率计算 y' = α * x^(α - 1)
