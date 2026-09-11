@@ -1,9 +1,9 @@
 /**
  * src/features/quadratic/components/QuadraticScene.tsx
- * 纯 SVG 渲染，零物理公式
+ * 纯 SVG 渲染，严格遵循高中数学学术规范与门禁标准
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -11,7 +11,9 @@ import {
   FunctionGraph,
   InteractivePoint,
   IntervalShadow,
+  SceneLabelGroup,
 } from "@/components/Math";
+import type { LabelItem } from "@/utils/labelOverlap";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { useQuadraticScene } from "../hooks/useQuadraticScene";
@@ -43,7 +45,6 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
 
   const {
     axisLine,
-    labels,
     solutionIntervals,
     handleVertexDrag,
     handleYInterceptDrag,
@@ -51,15 +52,124 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
     vertexX,
     vertexY,
     roots,
-    delta,
   } = useQuadraticScene({ params, scale, onParamChange, studyMode, ineqType });
 
   const fn = React.useCallback((x: number) => a * x * x + b * x + c, [a, b, c]);
 
+  // 学术标签组解算（纯学术代数代号，杜绝手写浮点跳动坐标）
+  const labelItems = useMemo<LabelItem[]>(() => {
+    const items: LabelItem[] = [];
+
+    // 1. 顶点 V
+    if (vertexX !== null && vertexY !== null && !isDegenerate) {
+      const ptV = mathToDesign(vertexX, vertexY, scale);
+      items.push({
+        key: "vertex-v",
+        x: ptV.x,
+        y: ptV.y,
+        text: "V",
+        color: MATH_COLORS.focusPoint,
+        preferredPlacement: a > 0 ? "bottom" : "top",
+      });
+    }
+
+    // 2. Y 轴截距点 C
+    const ptC = mathToDesign(0, c, scale);
+    items.push({
+      key: "y-intercept-c",
+      x: ptC.x,
+      y: ptC.y,
+      text: "C",
+      color: MATH_COLORS.paramTertiary,
+      preferredPlacement: "right",
+    });
+
+    // 3. 对应实根/端点
+    if (studyMode !== "inequality") {
+      if (roots.length === 2) {
+        const pt1 = mathToDesign(roots[0], 0, scale);
+        items.push({
+          key: "root-x1",
+          x: pt1.x,
+          y: pt1.y,
+          text: "x₁",
+          color: MATH_COLORS.focusPoint,
+          preferredPlacement: "top",
+        });
+        const pt2 = mathToDesign(roots[1], 0, scale);
+        items.push({
+          key: "root-x2",
+          x: pt2.x,
+          y: pt2.y,
+          text: "x₂",
+          color: MATH_COLORS.focusPoint,
+          preferredPlacement: "top",
+        });
+      } else if (roots.length === 1) {
+        const pt0 = mathToDesign(roots[0], 0, scale);
+        items.push({
+          key: "root-x0",
+          x: pt0.x,
+          y: pt0.y,
+          text: "x₀",
+          color: MATH_COLORS.focusPoint,
+          preferredPlacement: "top",
+        });
+      }
+    } else {
+      solutionIntervals.forEach((interval, idx) => {
+        if (
+          !interval.isLeftInfinity &&
+          interval.x1 >= scale.xMin &&
+          interval.x1 <= scale.xMax
+        ) {
+          const pt = mathToDesign(interval.x1, 0, scale);
+          items.push({
+            key: `ineq-bound-1-${idx}`,
+            x: pt.x,
+            y: pt.y,
+            text: "x₁",
+            color: MATH_COLORS.inequality,
+            preferredPlacement: "bottom",
+          });
+        }
+        if (
+          !interval.isRightInfinity &&
+          interval.x2 >= scale.xMin &&
+          interval.x2 <= scale.xMax
+        ) {
+          const pt = mathToDesign(interval.x2, 0, scale);
+          items.push({
+            key: `ineq-bound-2-${idx}`,
+            x: pt.x,
+            y: pt.y,
+            text: "x₂",
+            color: MATH_COLORS.inequality,
+            preferredPlacement: "bottom",
+          });
+        }
+      });
+    }
+
+    return items;
+  }, [
+    vertexX,
+    vertexY,
+    isDegenerate,
+    a,
+    c,
+    scale,
+    studyMode,
+    roots,
+    solutionIntervals,
+  ]);
+
   return (
     <g>
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      {/* 坐标系（纯净无繁杂网格干扰） */}
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
+      {/* 不等式解集在函数上方的半透明阴影区域 */}
       {studyMode === "inequality" &&
         solutionIntervals.map((interval, index) => (
           <IntervalShadow
@@ -73,6 +183,7 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
           />
         ))}
 
+      {/* 对称轴辅助虚线 x = -b/(2a) */}
       {axisLine && (
         <line
           x1={axisLine.x1}
@@ -85,6 +196,7 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
         />
       )}
 
+      {/* 二次函数图象 */}
       <FunctionGraph
         fn={fn}
         scale={scale}
@@ -92,6 +204,7 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
         strokeWidth={2.5}
       />
 
+      {/* 不等式解集在 X 轴上的投影区间与空心端点 */}
       {studyMode === "inequality" &&
         solutionIntervals.map((interval, index) => {
           const startPt = mathToDesign(
@@ -113,7 +226,7 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
                 y2={endPt.y}
                 stroke={MATH_COLORS.inequality}
                 strokeWidth={5}
-                strokeOpacity={0.5}
+                strokeOpacity={0.6}
                 strokeLinecap="round"
               />
               {!interval.isLeftInfinity &&
@@ -144,18 +257,20 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
           );
         })}
 
+      {/* 可拖拽点：Y 轴截距 (0, c) */}
       <InteractivePoint
         cx={0}
         cy={c}
         scale={scale}
         vp={vp}
         onDrag={handleYInterceptDrag}
-        color={MATH_COLORS.vectorSecondary}
+        color={MATH_COLORS.paramTertiary}
         r={5}
         disabled={false}
         fontScale={fontScale}
       />
 
+      {/* 可拖拽点：抛物线顶点 V(h, k) */}
       {vertexX !== null && vertexY !== null && (
         <InteractivePoint
           cx={vertexX}
@@ -170,6 +285,7 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
         />
       )}
 
+      {/* 方程实根交点 */}
       {studyMode !== "inequality" &&
         roots
           .filter((r) => Number.isFinite(r))
@@ -181,54 +297,15 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
                 cx={pt.x}
                 cy={pt.y}
                 r={4.5}
-                fill={MATH_COLORS.vectorResult}
+                fill={MATH_COLORS.focusPoint}
                 stroke={MATH_COLORS.white}
                 strokeWidth={1.5}
               />
             );
           })}
 
-      {studyMode === "equation" && a !== 0 && delta < 0 && (
-        <g>
-          <rect
-            x={mathToDesign(0, 1.8, scale).x - 90}
-            y={mathToDesign(0, 1.8, scale).y - 18}
-            width={180}
-            height={32}
-            rx={6}
-            fill={withAlpha(MATH_COLORS.vectorResult, 0.08)}
-            stroke={withAlpha(MATH_COLORS.vectorResult, 0.3)}
-            strokeWidth={1}
-          />
-          <text
-            x={mathToDesign(0, 1.8, scale).x}
-            y={mathToDesign(0, 1.8, scale).y + 2}
-            textAnchor="middle"
-            fill={MATH_COLORS.vectorResult}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            Δ = {delta.toFixed(2)} &lt; 0 (无实数根)
-          </text>
-        </g>
-      )}
-
-      {labels.map((l) => (
-        <text
-          key={l.key}
-          x={l.x}
-          y={l.y + l.finalDy}
-          textAnchor={l.anchor}
-          fill={MATH_COLORS.labelText}
-          fontSize={fontScale(10)}
-          fontFamily="monospace"
-          fontWeight="600"
-          className="select-none pointer-events-none"
-        >
-          {l.text}
-        </text>
-      ))}
+      {/* 学术点标防重叠统一渲染 */}
+      <SceneLabelGroup items={labelItems} fontScale={fontScale} />
     </g>
   );
 };

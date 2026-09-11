@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -10,12 +10,14 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS, ALGEBRA_COLORS, CALCULUS_COLORS } from "@/theme";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
+import { useAnimationViewport, useSceneScale, useScenario } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { buildPolyLatex } from "@/utils/polyBuilder";
 import { QuadraticScene } from "./components/QuadraticScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/quadratic";
+import { quadraticScenarios } from "./scenarios";
 
 export function QuadraticAnimation() {
   // 研究模式：'function' | 'equation' | 'inequality'
@@ -31,6 +33,41 @@ export function QuadraticAnimation() {
     b: defaultParams.b,
     c: defaultParams.c,
   }));
+
+  // 当前情景 ID，默认为 "intersect"
+  const [scenarioId, setScenarioId] = useState<string>("intersect");
+
+  const { selectScenario } = useScenario({
+    scenarios: quadraticScenarios,
+    activeKey: scenarioId,
+    params,
+    onParamsChange: (newParams) => {
+      setParams((prev) => ({ ...prev, ...newParams }));
+    },
+  });
+
+  const handleScenarioChange = useCallback(
+    (key: string) => {
+      setScenarioId(key);
+      selectScenario(key);
+    },
+    [selectScenario],
+  );
+
+  // 参数更新处理器（若手动微调则切到自由探索）
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setScenarioId("free");
+    setParams((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }, []);
+
+  // 重置参数
+  const handleReset = useCallback(() => {
+    setScenarioId("intersect");
+    selectScenario("intersect");
+  }, [selectScenario]);
 
   // 2. 视口尺寸测量与防抖
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -52,23 +89,6 @@ export function QuadraticAnimation() {
     });
   }, [params, studyMode, ineqType]);
 
-  // 参数更新处理器
-  const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  // 重置参数
-  const handleReset = () => {
-    setParams({
-      a: defaultParams.a,
-      b: defaultParams.b,
-      c: defaultParams.c,
-    });
-  };
-
   // 构建声明式控制面板配置参数
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     return Object.entries(paramMeta).map(([key, meta]) => ({
@@ -86,17 +106,21 @@ export function QuadraticAnimation() {
     }));
   }, [params]);
 
-  // 计算当前抛物线多项式的 LaTeX 表达式（带参数着色）
+  // 计算当前抛物线多项式的 LaTeX 表达式（统一采用红、橙、绿标准 Token 着色）
   const polyLatex = useMemo(() => {
     const terms = [];
     if (Math.abs(params.a) > 1e-9) {
-      terms.push({ coeff: params.a, power: 2, color: ALGEBRA_COLORS.sequence });
+      terms.push({
+        coeff: params.a,
+        power: 2,
+        color: MATH_COLORS.paramPrimary,
+      });
     }
     if (Math.abs(params.b) > 1e-9) {
       terms.push({
         coeff: params.b,
         power: 1,
-        color: ALGEBRA_COLORS.inequality,
+        color: MATH_COLORS.paramSecondary,
       });
     }
     if (
@@ -106,7 +130,7 @@ export function QuadraticAnimation() {
       terms.push({
         coeff: params.c,
         power: 0,
-        color: CALCULUS_COLORS.derivative,
+        color: MATH_COLORS.paramTertiary,
       });
     }
     return buildPolyLatex(terms);
@@ -130,56 +154,112 @@ export function QuadraticAnimation() {
     return "一元二次不等式指标看板";
   }, [studyMode]);
 
-  // 动态教学提示配置
+  // 中屏毛玻璃图例 (SceneLegend)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const legendList: SceneLegendItem[] = [
+      {
+        label: "二次函数曲线",
+        formula: "y = ax^2 + bx + c",
+        colorKey: "function",
+      },
+    ];
+
+    if (Math.abs(params.a) >= 1e-9) {
+      legendList.push({
+        label: "对称轴",
+        // legend formula
+        formula: "x = -\\frac{b}{2a}",
+        colorKey: "asymptote",
+        style: "dashed",
+      });
+      legendList.push({
+        label: "抛物线顶点",
+        // legend formula
+        formula: "V(h, k)",
+        colorKey: "focusPoint",
+        style: "point",
+      });
+    }
+
+    legendList.push({
+      label: "y 轴截距",
+      // legend formula
+      formula: "(0, c)",
+      colorKey: "paramTertiary",
+      style: "point",
+    });
+
+    if (studyMode === "equation") {
+      legendList.push({
+        label: "方程实根",
+        // legend formula
+        formula: "x_1, x_2",
+        colorKey: "focusPoint",
+        style: "point",
+      });
+    } else if (studyMode === "inequality") {
+      legendList.push({
+        label: `解集区间 (${ineqType === ">" ? "上方" : "下方"})`,
+        // legend formula
+        formula: `f(x) ${ineqType} 0`,
+        colorKey: "inequality",
+        style: "area",
+      });
+    }
+
+    return legendList;
+  }, [params.a, studyMode, ineqType]);
+
+  // 动态教学提示配置（100% LaTeX 包裹，左问右解闭环）
   const tipConfig = useMemo(() => {
+    const matchedScenario = quadraticScenarios.find((s) => s.id === scenarioId);
+    if (matchedScenario && scenarioId !== "free") {
+      return {
+        variant: "primary" as const,
+        badge: matchedScenario.badge,
+        condition: matchedScenario.condition,
+        question: matchedScenario.question,
+      };
+    }
+
     const delta = params.b * params.b - 4 * params.a * params.c;
     switch (studyMode) {
       case "function":
         return {
           variant: "primary" as const,
           badge: "高考核心 · 二次函数图象特征与最值",
-          condition: `二次项系数 a = ${params.a.toFixed(1)}，一次项 b = ${params.b.toFixed(1)}，常数项 c = ${params.c.toFixed(1)}。`,
+          condition: `二次项系数 $a = ${params.a.toFixed(1)}$，一次项 $b = ${params.b.toFixed(1)}$，常数项 $c = ${params.c.toFixed(1)}$。`,
           question:
-            "观察抛物线开口方向、对称轴 x = -b/(2a) 与顶点坐标，确定在给定区间上的最值分布。",
+            "求抛物线对称轴方程 $x = -\\frac{b}{2a}$ 与顶点坐标，并推导函数在给定闭区间上的单调性与最值分布。",
         };
       case "equation":
         return {
           variant: delta >= 0 ? ("success" as const) : ("danger" as const),
-          badge: "高考高频 · 判别式 Δ 与实根个数对应",
-          condition: `一元二次方程 ax² + bx + c = 0，判别式 Δ = b² - 4ac = ${delta.toFixed(2)}。`,
+          badge: "高考高频 · 判别式 Δ 与实根对应",
+          condition: `一元二次方程 $ax^2 + bx + c = 0$，判别式 $\\Delta = b^2 - 4ac = ${delta.toFixed(2)}$。`,
           question:
             delta > 0
-              ? "Δ > 0，抛物线与 x 轴有两个相异交点，求两实根 x₁, x₂。"
+              ? "求两相异实根 $x_1, x_2$，并验证根与系数关系（韦达定理）。"
               : delta === 0
-                ? "Δ = 0，抛物线与 x 轴相切，方程有两相等实根。"
-                : "Δ < 0，抛物线与 x 轴无交点，方程无实数根。",
+                ? "求方程重根 $x_0$，说明抛物线与 $x$ 轴相切的代数几何对应。"
+                : "判定实根个数，说明为何方程在实数集无解以及判别式的几何意义。",
         };
       case "inequality":
         return {
           variant: "warning" as const,
           badge: "高考基石 · 一元二次不等式解集几何化",
-          condition: `探究不等式 ax² + bx + c ${ineqType} 0，抛物线开口与判别式 Δ = ${delta.toFixed(2)}。`,
+          condition: `探究不等式 $ax^2 + bx + c ${ineqType} 0$，开口方向由 $a = ${params.a.toFixed(1)}$ 决定，判别式 $\\Delta = ${delta.toFixed(2)}$。`,
           question:
-            ineqType === ">"
-              ? params.a > 0
-                ? delta > 0
-                  ? "a > 0, Δ > 0：取抛物线上方两侧区间 (-∞, x₁) ∪ (x₂, +∞)。"
-                  : "a > 0, Δ ≤ 0：恒成立或全实数除顶点。"
-                : "a < 0：开口向下，图象上方位于两根之间 (x₁, x₂)。"
-              : params.a > 0
-                ? delta > 0
-                  ? "a > 0, Δ > 0：取抛物线下方中间开区间 (x₁, x₂)。"
-                  : "a > 0, Δ ≤ 0：解集为空集 ∅。"
-                : "a < 0：开口向下，图象下方位于两根外侧。",
+            "结合二次函数图象在 $x$ 轴上下的区间分布，写出不等式的完整解集，并分析端点开闭性。",
         };
     }
-  }, [params.a, params.b, params.c, studyMode, ineqType]);
+  }, [scenarioId, params.a, params.b, params.c, studyMode, ineqType]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 模式选择 Section */}
+          {/* 1. 模式选择 Section */}
           <LeftPanelSection title="研究模式">
             <SelectGrid
               items={[
@@ -188,18 +268,36 @@ export function QuadraticAnimation() {
                 { key: "inequality", label: "一元二次不等式", fullWidth: true },
               ]}
               value={studyMode}
-              onChange={(k) => setStudyMode(k)}
+              onChange={(k) =>
+                setStudyMode(k as "function" | "equation" | "inequality")
+              }
               variant="filled"
             />
           </LeftPanelSection>
 
-          {/* 不等号方向 Section */}
+          {/* 2. 典型高考情景 Section */}
+          <LeftPanelSection title="典型高考情景">
+            <SelectGrid
+              items={[
+                ...quadraticScenarios.map((s) => ({
+                  key: s.id,
+                  label: s.name,
+                })),
+                { key: "free", label: "自由探索" },
+              ]}
+              value={scenarioId}
+              onChange={handleScenarioChange}
+              variant="filled"
+            />
+          </LeftPanelSection>
+
+          {/* 3. 不等号方向 Section（纯中文规范标题） */}
           {studyMode === "inequality" && (
             <LeftPanelSection title="不等号方向">
               <SelectGrid
                 items={[
-                  { key: ">", label: "f(x) > 0", formula: "f(x) > 0" },
-                  { key: "<", label: "f(x) < 0", formula: "f(x) < 0" },
+                  { key: ">", label: "大于零 (上方)" },
+                  { key: "<", label: "小于零 (下方)" },
                 ]}
                 value={ineqType}
                 onChange={(k) => setIneqType(k as ">" | "<")}
@@ -209,7 +307,7 @@ export function QuadraticAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 参数调节 Section */}
+          {/* 4. 参数调节 Section */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -218,7 +316,7 @@ export function QuadraticAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 教学导引与题设背景 */}
+          {/* 5. 教学导引与考题设问 */}
           <LeftPanelSection title="教学导引" compact>
             <TipCard
               variant={tipConfig.variant}
@@ -235,6 +333,9 @@ export function QuadraticAnimation() {
           <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur border border-neutral-200 rounded-lg px-3 py-1.5 shadow-sm">
             <KatexFormula formula={equationLatex} mode="inline" />
           </div>
+
+          {/* 中屏右下角毛玻璃图例 (SceneLegend) */}
+          <SceneLegend items={legendItems} title="图元指引" />
 
           {/* SVG 自适应画布 */}
           <AnimationSvgCanvas
@@ -257,6 +358,7 @@ export function QuadraticAnimation() {
         <MathPanel
           quantities={mathData.quantities}
           theorems={mathData.theorems}
+          reasoningSteps={mathData.reasoningSteps}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
