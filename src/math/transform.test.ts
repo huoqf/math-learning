@@ -106,15 +106,36 @@ describe("transform math library", () => {
     expect(resOmega0.isDegenerate).toBe(true);
   });
 
+  it("evaluates log base function and handles domain safety", () => {
+    expect(evalBaseFunction("log", 2)).toBe(1);
+    expect(evalBaseFunction("log", 4)).toBe(2);
+    expect(Number.isNaN(evalBaseFunction("log", -1))).toBe(true);
+
+    // y = 2 * log2(2(x - 1)) + 1
+    const params = { h: 1, k: 1, A: 2, omega: 2, foldMode: "none" as const };
+    const res = calculateTransform("log", params);
+
+    expect(Number.isNaN(res.transformedFn(1))).toBe(true); // 渐近线 x=1 外
+    expect(res.transformedFn(1.5)).toBe(1); // 2 * log2(2*0.5) + 1 = 1
+    expect(res.symmetryInfo.description).toContain("铅垂渐近线 x = 1.0");
+  });
+
   it("generates correct Gaokao dual transform routes (shift-first vs scale-first)", () => {
-    // y = sin(2(x - 1)) = sin(2x - 2)
+    // y = sin(2(x - 1)) = sin(2x - 2), h = 1, omega = 2
     const params = { h: 1, k: 0, A: 1, omega: 2, foldMode: "none" as const };
     const res = calculateTransform("sine", params);
 
-    expect(res.routes.shiftFirst).toContain("右移");
-    expect(res.routes.shiftFirst).toContain("x - 1.00");
-    expect(res.routes.scaleFirst).toContain("2.0x");
-    expect(res.routes.scaleFirst).toContain("2.00");
+    // 路线一 (先移后缩): 必须向右平移 omega*h = 2 个单位，然后横坐标变为 0.5 倍
+    expect(res.routes.shiftFirst).toContain("右移 \\, 2");
+    expect(res.routes.shiftFirst).toContain("x - 2");
+    expect(res.routes.shiftFirst).toContain("2(x - 1)");
+    expect(res.routes.shiftFirst).toContain("\\text{横坐标变为 } 0.5");
+
+    // 路线二 (先缩后移): 先横坐标变为 0.5 倍，然后向右平移 h = 1 个单位
+    expect(res.routes.scaleFirst).toContain("\\text{横坐标变为 } 0.5");
+    expect(res.routes.scaleFirst).toContain("右移 \\, 1");
+    expect(res.routes.scaleFirst).toContain("2x");
+    expect(res.routes.scaleFirst).toContain("2(x - 1)");
   });
 
   it("handles vertical flip when A < 0", () => {

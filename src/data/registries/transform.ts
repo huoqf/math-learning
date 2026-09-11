@@ -56,7 +56,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     group: "竖直变换 (y 轴)",
     importance: "core",
     description: "图象沿 y 轴上下平移：k > 0 上移，k < 0 下移（上加下减）",
-    descriptionFormula: `y = f(x) + \\color{${MATH_COLORS.paramSecondary}}{k}`,
+    descriptionFormula: `y = f(x) + \\color{${MATH_COLORS.paramTertiary}}{k}`,
     marks: [{ value: 0, label: "0", labelFormula: "0" }],
   },
   A: {
@@ -70,7 +70,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     group: "竖直变换 (y 轴)",
     importance: "core",
     description: "图象纵向拉伸与翻转：|A| > 1 拉伸，A < 0 沿 x 轴翻转",
-    descriptionFormula: `y = \\color{${MATH_COLORS.paramPrimary}}{A} \\cdot f(x)`,
+    descriptionFormula: `y = \\color{${MATH_COLORS.setB}}{A} \\cdot f(x)`,
     marks: [
       {
         value: 0,

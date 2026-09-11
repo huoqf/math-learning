@@ -308,6 +308,82 @@ export function splitAtTopLevelSpacing(latex: string): [string, string] | null {
 }
 
 /**
+ * 寻找公式中顶层 \xrightarrow{...} 变换箭头的位置与完整长度（包括 [下标] 与 {上标} 参数）。
+ */
+export function findTopLevelArrows(
+  latex: string,
+): { index: number; length: number }[] {
+  const matches: { index: number; length: number }[] = [];
+  const state = createDepthState();
+  let i = 0;
+
+  while (i < latex.length) {
+    if (isTopLevel(state) && latex[i] === "\\") {
+      const sub = latex.slice(i);
+      if (sub.startsWith("\\xrightarrow")) {
+        let p = "\\xrightarrow".length;
+        // 匹配可选的下标 [...]
+        if (p < sub.length && sub[p] === "[") {
+          let b = 1;
+          p++;
+          while (p < sub.length && b > 0) {
+            if (sub[p] === "[") b++;
+            else if (sub[p] === "]") b--;
+            p++;
+          }
+        }
+        // 匹配必选的上标 {...}
+        if (p < sub.length && sub[p] === "{") {
+          let b = 1;
+          p++;
+          while (p < sub.length && b > 0) {
+            if (sub[p] === "{") b++;
+            else if (sub[p] === "}") b--;
+            p++;
+          }
+        }
+        matches.push({ index: i, length: p });
+        i += p;
+        continue;
+      }
+    }
+    const step = advanceLatexDepth(latex, i, state);
+    i += step;
+  }
+  return matches;
+}
+
+/**
+ * 教材变换推导折行：在最靠近中点的顶层 \xrightarrow 处把长变换链条拆为两段。
+ * 续行以 \xrightarrow 起头，符合高中教材板书推导习惯。
+ */
+export function splitAtTopLevelArrow(latex: string): [string, string] | null {
+  const arrows = findTopLevelArrows(latex);
+  if (arrows.length === 0) return null;
+
+  // 选最靠近中点的箭头断点
+  const mid = latex.length / 2;
+  let chosen = arrows[0];
+  let minDist = Math.abs(arrows[0].index - mid);
+  for (const a of arrows) {
+    const dist = Math.abs(a.index - mid);
+    if (dist < minDist) {
+      minDist = dist;
+      chosen = a;
+    }
+  }
+
+  let left = latex.slice(0, chosen.index).trim();
+  left = left.replace(/(\s|\\;|\\,|\\!|\\quad|\\qquad)+$/, "").trim();
+  const right = latex.slice(chosen.index).trim();
+
+  if (left && right.length > chosen.length) {
+    return [left, right];
+  }
+  return null;
+}
+
+/**
  * 寻找公式中顶层逻辑推导符（\Rightarrow, \implies, \iff, \Leftrightarrow 等）的位置与长度。
  * 注意：剔除 \to（\to 在高中数学用于极限或极值趋向，非命题逻辑推导）。
  */
@@ -459,7 +535,16 @@ export function findOptimalSplit(latex: string): [string, string] | null {
   const origLen = getEffectiveLatexLength(latex);
   if (origLen <= 8) return null;
 
-  // 1. 优先推导符 \Rightarrow / \iff
+  // 1. 优先变换箭头 \xrightarrow 与推导符 \Rightarrow / \iff
+  const arrowSplit = splitAtTopLevelArrow(latex);
+  if (arrowSplit) {
+    const maxLen = Math.max(
+      getEffectiveLatexLength(arrowSplit[0]),
+      getEffectiveLatexLength(arrowSplit[1]),
+    );
+    if (maxLen <= origLen * 0.85) return arrowSplit;
+  }
+
   const impliesSplit = splitAtTopLevelImplies(latex);
   if (impliesSplit) {
     const maxLen = Math.max(
@@ -529,7 +614,8 @@ export function findOptimalSplit(latex: string): [string, string] | null {
     if (maxLen <= origLen * 0.85) return puncSplit;
   }
 
-  // 5. 兜底放宽：存在二元运算符或等号时强行拆分，坚决杜绝缩成微小不可读字号
+  // 5. 兜底放宽：存在二元运算符、等号或箭头时强行拆分，坚决杜绝缩成微小不可读字号或超出容器
+  if (arrowSplit) return arrowSplit;
   if (binSplit) return binSplit;
   if (eqSplit) return eqSplit;
 

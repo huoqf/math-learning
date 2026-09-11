@@ -51,16 +51,17 @@ export function TransformScene({
   const primaryPt = res.keyPoints[0];
 
   const handleDragPrimaryPoint = (mathPt: { x: number; y: number }) => {
+    // 翻折模式下禁止直接修改 k，避免折返跳跃反模式；仅在无翻折时允许双轴自由拖拽
     const roundH = Math.round(mathPt.x * 2) / 2;
-    let roundK = Math.round(mathPt.y * 2) / 2;
-
-    // 对于指数函数，基准特征定点 y 值为 A + k，因此垂直平移量为 k = y - A
-    if (fnType === "exp") {
-      roundK = Math.round((mathPt.y - A) * 2) / 2;
-    }
-
     onParamChange("h", roundH);
-    onParamChange("k", roundK);
+
+    if (foldMode === "none") {
+      let roundK = Math.round(mathPt.y * 2) / 2;
+      if (fnType === "exp") {
+        roundK = Math.round((mathPt.y - A) * 2) / 2;
+      }
+      onParamChange("k", roundK);
+    }
   };
 
   // 计算指数函数的渐近线 y 位置
@@ -72,7 +73,7 @@ export function TransformScene({
     return k;
   }, [fnType, foldMode, k]);
 
-  // 学术级点标签定义与 8 向防重叠碰撞避让 (彻底去除多余悬空点 P)
+  // 学术级点标签定义与 8 向防重叠碰撞避让
   const labelItems = useMemo<LabelItem[]>(() => {
     const items: LabelItem[] = [];
 
@@ -100,8 +101,31 @@ export function TransformScene({
       });
     });
 
+    // 辅助特征线学术标签
+    if (fnType === "log") {
+      const asymPt = mathToDesign(h, 3.5, scale);
+      items.push({
+        key: "asym_log",
+        text: `x = ${h.toFixed(1)}`,
+        x: asymPt.x + 8,
+        y: asymPt.y,
+        color: MATH_COLORS.paramPrimary,
+        preferredPlacement: "top-right",
+      });
+    } else if (fnType === "quadratic" && foldMode === "none") {
+      const axisPt = mathToDesign(h, 3.8, scale);
+      items.push({
+        key: "axis_quad",
+        text: `x = ${h.toFixed(1)}`,
+        x: axisPt.x + 8,
+        y: axisPt.y,
+        color: MATH_COLORS.paramPrimary,
+        preferredPlacement: "top-right",
+      });
+    }
+
     return items;
-  }, [scale, res.keyPoints]);
+  }, [scale, res.keyPoints, fnType, foldMode, h]);
 
   return (
     <g>
@@ -115,8 +139,47 @@ export function TransformScene({
           y1={scale.originY - asymptoteY * scale.scaleY}
           x2={scale.originX + 6 * scale.scaleX}
           y2={scale.originY - asymptoteY * scale.scaleY}
-          stroke={withAlpha(MATH_COLORS.paramSecondary, 0.45)}
+          stroke={withAlpha(MATH_COLORS.paramTertiary, 0.55)}
           strokeWidth={1.2}
+          strokeDasharray="4 4"
+        />
+      )}
+
+      {/* 对数函数的铅垂渐近线辅助线 x = h */}
+      {fnType === "log" && (
+        <line
+          x1={scale.originX + h * scale.scaleX}
+          y1={scale.originY - 5 * scale.scaleY}
+          x2={scale.originX + h * scale.scaleX}
+          y2={scale.originY + 5 * scale.scaleY}
+          stroke={withAlpha(MATH_COLORS.paramPrimary, 0.5)}
+          strokeWidth={1.2}
+          strokeDasharray="4 4"
+        />
+      )}
+
+      {/* 二次函数对称轴辅助线 x = h */}
+      {fnType === "quadratic" && foldMode === "none" && (
+        <line
+          x1={scale.originX + h * scale.scaleX}
+          y1={scale.originY - 5 * scale.scaleY}
+          x2={scale.originX + h * scale.scaleX}
+          y2={scale.originY + 5 * scale.scaleY}
+          stroke={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
+          strokeWidth={1.2}
+          strokeDasharray="4 4"
+        />
+      )}
+
+      {/* 偶函数翻折对称轴 x = 0 (y 轴高亮辅助线) */}
+      {foldMode === "input" && (
+        <line
+          x1={scale.originX}
+          y1={scale.originY - 5 * scale.scaleY}
+          x2={scale.originX}
+          y2={scale.originY + 5 * scale.scaleY}
+          stroke={withAlpha(MATH_COLORS.setB, 0.5)}
+          strokeWidth={1.5}
           strokeDasharray="4 4"
         />
       )}

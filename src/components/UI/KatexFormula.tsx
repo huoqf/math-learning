@@ -180,7 +180,7 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
           isMultiLine
             ? "items-start justify-start"
             : "items-center justify-center"
-        } overflow-visible transition-all duration-150 ${className}`}
+        } overflow-x-auto overflow-y-hidden max-w-full transition-all duration-150 ${className}`}
         style={{ height: scaledHeight ? `${scaledHeight}px` : "auto" }}
       >
         <div

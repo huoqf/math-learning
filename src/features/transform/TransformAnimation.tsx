@@ -93,6 +93,7 @@ export function TransformAnimation() {
   const legendItems = useMemo<SceneLegendItem[]>(() => {
     const baseNames: Record<BaseFnType, string> = {
       quadratic: "y = x^2",
+      log: "y = \\log_2 x",
       sine: "y = \\sin x",
       cubic: "y = x^3",
       exp: "y = 2^x",
@@ -117,7 +118,7 @@ export function TransformAnimation() {
     ];
   }, [fnType]);
 
-  // 动态教学提示 (说明模型条件和研究问题，防止学生看不懂当前场景)
+  // 动态教学提示 (落实初始条件+核心高考设问，杜绝空泛词，随母函数与翻折模式全动态联动)
   const tipContent = useMemo(() => {
     const { h, k, A, omega } = params;
 
@@ -127,16 +128,16 @@ export function TransformAnimation() {
         badge: "整体绝对值翻折变换",
         conditionNode: (
           <span>
-            基准母函数图象经整体绝对值变换为{" "}
-            <KatexFormula formula="y = |f(x)|" mode="inline" />。
+            目标函数由基准图象经整体绝对值变换得到{" "}
+            <KatexFormula formula={formulaLatex} mode="inline" />。
           </span>
         ),
         questionNode: (
           <span>
-            观察图象如何保留 <KatexFormula formula="x" mode="inline" />{" "}
-            轴上方并将下方翻折向上，理解值域非负 (
-            <KatexFormula formula="y \ge 0" mode="inline" />)
-            与零点处尖点的不可导性。
+            (1) 求解图象与 <KatexFormula formula="x" mode="inline" />{" "}
+            轴交点及不可导尖点坐标；(2) 探究方程{" "}
+            <KatexFormula formula="|f(x)| = m" mode="inline" />{" "}
+            实根个数的分类讨论分界点。
           </span>
         ),
       };
@@ -148,16 +149,17 @@ export function TransformAnimation() {
         badge: "自变量绝对值翻折变换",
         conditionNode: (
           <span>
-            基准母函数图象经自变量绝对值变换为{" "}
-            <KatexFormula formula="y = f(|x|)" mode="inline" />。
+            目标函数由基准图象经自变量绝对值变换得到{" "}
+            <KatexFormula formula={formulaLatex} mode="inline" />。
           </span>
         ),
         questionNode: (
           <span>
-            观察图象如何保留 <KatexFormula formula="y" mode="inline" />{" "}
-            轴右侧并向左对称复制，理解{" "}
-            <KatexFormula formula="f(|-x|) = f(|x|)" mode="inline" />{" "}
-            恒为偶函数且单调性镜像反转。
+            (1) 验证偶函数性质{" "}
+            <KatexFormula formula="f(|-x|) = f(|x|)" mode="inline" /> 及对称轴{" "}
+            <KatexFormula formula="x = 0" mode="inline" />
+            ；(2) 求解函数在区间{" "}
+            <KatexFormula formula="[-3, 3]" mode="inline" /> 上的最值与极值点。
           </span>
         ),
       };
@@ -168,16 +170,82 @@ export function TransformAnimation() {
     const kDesc =
       k >= 0 ? `上移 ${k.toFixed(1)}` : `下移 ${Math.abs(k).toFixed(1)}`;
 
+    if (fnType === "log") {
+      return {
+        variant: "primary" as const,
+        badge: "对数函数图象变换",
+        conditionNode: (
+          <span>
+            基准对数函数经历水平位移 ({hDesc})、竖直位移 ({kDesc})，横缩{" "}
+            <KatexFormula
+              formula={`\\omega = ${omega.toFixed(1)}`}
+              mode="inline"
+            />
+            ，纵缩{" "}
+            <KatexFormula formula={`A = ${A.toFixed(1)}`} mode="inline" />。
+          </span>
+        ),
+        questionNode: (
+          <span>
+            (1) 求解变换后对数函数的定义域与铅垂渐近线方程；(2) 探究定点{" "}
+            <KatexFormula formula="P_0(1, 0)" mode="inline" /> 迁移后的新坐标。
+          </span>
+        ),
+      };
+    }
+
+    if (fnType === "sine") {
+      return {
+        variant: "primary" as const,
+        badge: "正弦型函数图象变换",
+        conditionNode: (
+          <span>
+            正弦母函数经历周期横向缩放{" "}
+            <KatexFormula
+              formula={`\\omega = ${omega.toFixed(1)}`}
+              mode="inline"
+            />
+            、振幅纵缩{" "}
+            <KatexFormula formula={`A = ${A.toFixed(1)}`} mode="inline" />{" "}
+            及双向平移 ({hDesc}, {kDesc})。
+          </span>
+        ),
+        questionNode: (
+          <span>
+            (1) 求解目标函数的最小正周期{" "}
+            <KatexFormula formula="T" mode="inline" /> 与值域；(2)
+            写出“先移后缩”与“先缩后移”公因式提法的严格推导式。
+          </span>
+        ),
+      };
+    }
+
+    if (fnType === "exp") {
+      return {
+        variant: "primary" as const,
+        badge: "指数函数图象变换",
+        conditionNode: (
+          <span>
+            基准指数函数经历水平位移 ({hDesc})、竖直位移 ({kDesc})，纵缩{" "}
+            <KatexFormula formula={`A = ${A.toFixed(1)}`} mode="inline" />。
+          </span>
+        ),
+        questionNode: (
+          <span>
+            (1) 求解变换后指数函数的水平渐近线方程与必过定点；(2)
+            探究单调性随参数 <KatexFormula formula="A" mode="inline" />{" "}
+            符号的镜像反转。
+          </span>
+        ),
+      };
+    }
+
     return {
       variant: "primary" as const,
-      badge: "函数平移与伸缩变换",
+      badge: "幂函数/多项式图象变换",
       conditionNode: (
         <span>
-          基准母函数经历水平平移{" "}
-          <KatexFormula formula={`h = ${h.toFixed(1)}`} mode="inline" /> (
-          {hDesc})、竖直平移{" "}
-          <KatexFormula formula={`k = ${k.toFixed(1)}`} mode="inline" /> (
-          {kDesc})，横向伸缩{" "}
+          基准母函数经历水平平移 ({hDesc})、竖直平移 ({kDesc})，横向伸缩{" "}
           <KatexFormula
             formula={`\\omega = ${omega.toFixed(1)}`}
             mode="inline"
@@ -188,11 +256,12 @@ export function TransformAnimation() {
       ),
       questionNode: (
         <span>
-          探究各参数如何决定图象的位移与形变，体会“先平移后伸缩”与“先伸缩后平移”提公因式的代数本质。
+          (1) 求解变换后曲线的对称中心/顶点坐标；(2)
+          对比并验证先平移后伸缩与先伸缩后平移两类路径的自变量代换等价性。
         </span>
       ),
     };
-  }, [foldMode, params]);
+  }, [fnType, foldMode, formulaLatex, params]);
 
   return (
     <ThreePanel
@@ -203,9 +272,10 @@ export function TransformAnimation() {
             <SelectGrid
               items={[
                 { key: "quadratic", formula: "y = x^2" },
+                { key: "log", formula: "y = \\log_2 x" },
                 { key: "sine", formula: "y = \\sin x" },
-                { key: "cubic", formula: "y = x^3" },
                 { key: "exp", formula: "y = 2^x" },
+                { key: "cubic", formula: "y = x^3" },
               ]}
               value={fnType}
               onChange={(k) => setFnType(k as BaseFnType)}
@@ -279,6 +349,7 @@ export function TransformAnimation() {
         <MathPanel
           quantities={mathData.quantities}
           theorems={mathData.theorems}
+          reasoningSteps={mathData.reasoningSteps}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}

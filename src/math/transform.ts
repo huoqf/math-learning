@@ -3,7 +3,7 @@
  * 零 React/DOM/window 依赖，符合数学层纯净规则
  */
 
-export type BaseFnType = "quadratic" | "sine" | "cubic" | "exp";
+export type BaseFnType = "quadratic" | "sine" | "cubic" | "exp" | "log";
 export type FoldMode = "none" | "global" | "input";
 
 export interface TransformParams {
@@ -65,6 +65,8 @@ export function evalBaseFunction(fnType: BaseFnType, x: number): number {
       return x * x * x;
     case "exp":
       return Math.pow(2, x);
+    case "log":
+      return x > 0 ? Math.log2(x) : NaN;
     default:
       return x;
   }
@@ -86,8 +88,14 @@ export function evalTransformedFunction(
   // 横向伸缩与平移 omega * (x - h)
   const innerArg = omega * (effectiveX - h);
 
-  // 计算原函数值
-  const rawY = evalBaseFunction(fnType, innerArg);
+  // 计算原函数值 (对数函数必须保证真数大于零)
+  let rawY: number;
+  if (fnType === "log") {
+    if (innerArg <= 0) return NaN;
+    rawY = Math.log2(innerArg);
+  } else {
+    rawY = evalBaseFunction(fnType, innerArg);
+  }
 
   // 纵向伸缩与平移
   let y = A * rawY + k;
@@ -167,6 +175,9 @@ export function buildTransformLatex(
       break;
     case "exp":
       baseStr = `2^{${argStr}}`;
+      break;
+    case "log":
+      baseStr = `\\log_2(${argStr})`;
       break;
   }
 
@@ -253,23 +264,31 @@ export function calculateTransform(
         { name: "P_1", x: 1 },
       ];
       break;
+    case "log":
+      origKeyPoints = [
+        { name: "P_0", x: 1 },
+        { name: "P_1", x: 2 },
+      ];
+      break;
   }
 
-  const keyPoints: KeyPointPair[] = origKeyPoints.map((item) => {
-    const xOrig = item.x;
-    const yOrig = baseFn(xOrig);
-    // 反解在变换后函数中的对应点：xTransformed = xOrig / omega + h
-    const xTransformed = omega !== 0 ? xOrig / omega + h : h;
-    const yTransformed = transformedFn(xTransformed);
-    return {
-      name: item.name,
-      original: { x: xOrig, y: yOrig },
-      transformed: { x: xTransformed, y: yTransformed },
-      description: `(${xOrig.toFixed(2)}, ${yOrig.toFixed(2)}) → (${xTransformed.toFixed(2)}, ${yTransformed.toFixed(2)})`,
-    };
-  });
+  const keyPoints: KeyPointPair[] = origKeyPoints
+    .map((item) => {
+      const xOrig = item.x;
+      const yOrig = baseFn(xOrig);
+      // 反解在变换后函数中的对应点：xTransformed = xOrig / omega + h
+      const xTransformed = omega !== 0 ? xOrig / omega + h : h;
+      const yTransformed = transformedFn(xTransformed);
+      return {
+        name: item.name,
+        original: { x: xOrig, y: yOrig },
+        transformed: { x: xTransformed, y: yTransformed },
+        description: `(${xOrig.toFixed(2)}, ${yOrig.toFixed(2)}) → (${xTransformed.toFixed(2)}, ${Number.isFinite(yTransformed) ? yTransformed.toFixed(2) : "—"})`,
+      };
+    })
+    .filter((item) => Number.isFinite(item.transformed.y));
 
-  // 对称性分析
+  // 对称性与特征几何量分析
   let symmetryInfo: TransformResult["symmetryInfo"] = {
     type: "none",
     description: "无对称性",
@@ -299,20 +318,80 @@ export function calculateTransform(
       description: `对称中心 (${h.toFixed(1)}, ${k.toFixed(1)})`,
       center: { x: h, y: k },
     };
+  } else if (fnType === "log") {
+    symmetryInfo = {
+      type: "none",
+      description: `铅垂渐近线 x = ${h.toFixed(1)}，定义域 x > ${h.toFixed(1)}`,
+    };
   }
 
-  // 两种平移伸缩顺序解析
-  const phiEquivalent = -omega * h;
-  const phiSign = phiEquivalent >= 0 ? "+" : "-";
-  const phiAbs = Math.abs(phiEquivalent).toFixed(2);
-  const shiftSign = h >= 0 ? "右移" : "左移";
-  const shiftAbs = Math.abs(h).toFixed(2);
+  // 严格高中数学：两种平移伸缩顺序解析 (严格代数消元：省略系数 1，规范数字与符号)
+  const formatNumStr = (val: number): string => {
+    if (Number.isInteger(val)) return val.toString();
+    const fixed = val.toFixed(2);
+    return fixed.endsWith("0") ? val.toFixed(1) : fixed;
+  };
+
+  const isOmegaOne = Math.abs(omega - 1.0) < 1e-4;
+  const isHZero = Math.abs(h) < 1e-4;
+
+  const shiftFirstDist = Math.abs(omega * h);
+  const shiftFirstSign = h >= 0 ? "右移" : "左移";
+  const shiftFirstAbsStr = formatNumStr(shiftFirstDist);
+
+  const shiftSecondDist = Math.abs(h);
+  const shiftSecondSign = h >= 0 ? "右移" : "左移";
+  const shiftSecondAbsStr = formatNumStr(shiftSecondDist);
+
+  const wStr = formatNumStr(omega);
+  const scaleRatioStr = formatNumStr(1 / omega);
+
+  // 1. omega * x 项代数消元：若 omega = 1 则为 x
+  const wxTerm = isOmegaOne ? "x" : `${wStr}x`;
+
+  // 2. 纯平移后的自变量：(x - h)
+  const shiftOnlyArg = isHZero
+    ? "x"
+    : h > 0
+      ? `x - ${shiftFirstAbsStr}`
+      : `x + ${shiftFirstAbsStr}`;
+
+  // 3. 提公因式后的自变量：omega(x - h)
+  const factoredArg = isOmegaOne
+    ? isHZero
+      ? "x"
+      : h > 0
+        ? `x - ${shiftSecondAbsStr}`
+        : `x + ${shiftSecondAbsStr}`
+    : isHZero
+      ? `${wStr}x`
+      : h > 0
+        ? `${wStr}(x - ${shiftSecondAbsStr})`
+        : `${wStr}(x + ${shiftSecondAbsStr})`;
+
+  let shiftFirstRoute = "";
+  let scaleFirstRoute = "";
+
+  if (isOmegaOne && isHZero) {
+    shiftFirstRoute = "f(x) \\text{ (基准未发生平移与伸缩)}";
+    scaleFirstRoute = "f(x) \\text{ (基准未发生伸缩与平移)}";
+  } else if (isOmegaOne) {
+    // 仅平移，无伸缩（一步到位，杜绝多余的横坐标伸缩 1.00 与等号碎行）
+    shiftFirstRoute = `f(x) \\xrightarrow{${shiftFirstSign} \\, ${shiftFirstAbsStr}} f(${factoredArg})`;
+    scaleFirstRoute = `f(x) \\xrightarrow{${shiftSecondSign} \\, ${shiftSecondAbsStr}} f(${factoredArg})`;
+  } else if (isHZero) {
+    // 仅伸缩，无平移
+    shiftFirstRoute = `f(x) \\xrightarrow{\\text{横坐标变为 } ${scaleRatioStr}} f(${wxTerm})`;
+    scaleFirstRoute = `f(x) \\xrightarrow{\\text{横坐标变为 } ${scaleRatioStr}} f(${wxTerm})`;
+  } else {
+    // 既有平移又有伸缩：两步标准推导
+    shiftFirstRoute = `f(x) \\xrightarrow{${shiftFirstSign} \\, ${shiftFirstAbsStr}} f(${shiftOnlyArg}) \\xrightarrow{\\text{横坐标变为 } ${scaleRatioStr}} f(${factoredArg})`;
+    scaleFirstRoute = `f(x) \\xrightarrow{\\text{横坐标变为 } ${scaleRatioStr}} f(${wxTerm}) \\xrightarrow{${shiftSecondSign} \\, ${shiftSecondAbsStr}} f(${factoredArg})`;
+  }
 
   const routes = {
-    // 路线 1: 先平移后伸缩: f(x) -> f(x - h) -> f(omega(x - h))
-    shiftFirst: `f(x) \\xrightarrow{${shiftSign} \\, ${shiftAbs}} f(x ${h >= 0 ? "-" : "+"} ${shiftAbs}) \\xrightarrow{x \\to ${omega.toFixed(1)}x} f(${omega.toFixed(1)}(x ${h >= 0 ? "-" : "+"} ${shiftAbs}))`,
-    // 路线 2: 先伸缩后平移: f(x) -> f(omega x) -> f(omega(x - h)) = f(omega x + phi)
-    scaleFirst: `f(x) \\xrightarrow{x \\to ${omega.toFixed(1)}x} f(${omega.toFixed(1)}x) \\xrightarrow{${shiftSign} \\, ${shiftAbs}} f(${omega.toFixed(1)}x ${phiSign} ${phiAbs})`,
+    shiftFirst: shiftFirstRoute,
+    scaleFirst: scaleFirstRoute,
   };
 
   const formattedLatex = buildTransformLatex(fnType, params, options);
