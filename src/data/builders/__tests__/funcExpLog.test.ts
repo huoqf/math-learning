@@ -60,15 +60,55 @@ describe("buildFuncExpLogPanel 构建器测试", () => {
     expect(dataWarn.warnings[0].text).toContain("真数必须大于 0");
   });
 
+  it("对数模式 (logarithmic): 单曲线性质三步推导链与切线放缩", () => {
+    const dataSingle = buildFuncExpLogPanel(
+      { baseA: 2.0, x0: 2.0 },
+      { subExpLog: "logarithmic", explogMode: "single" },
+    );
+    expect(dataSingle.reasoningSteps).toBeDefined();
+    expect(dataSingle.reasoningSteps?.length).toBe(3);
+    expect(dataSingle.reasoningSteps?.[0].title).toContain("基准模型");
+    expect(dataSingle.reasoningSteps?.[1].title).toContain("导数切线");
+    expect(dataSingle.reasoningSteps?.[2].title).toContain("高考放缩");
+    expect(
+      dataSingle.quantities.some((q) => q.label.includes("动点切线斜率")),
+    ).toBe(true);
+  });
+
+  it("对数模式 (logarithmic): 反函数对称模式三步推导链、中点M与垂直判定", () => {
+    const dataInverse = buildFuncExpLogPanel(
+      { baseA: 2.0, x0: 2.0 },
+      { subExpLog: "logarithmic", explogMode: "inverse" },
+    );
+    expect(dataInverse.reasoningSteps).toBeDefined();
+    expect(dataInverse.reasoningSteps?.length).toBe(3);
+    expect(dataInverse.reasoningSteps?.[0].title).toContain("反解变元");
+    expect(dataInverse.reasoningSteps?.[1].title).toContain("垂直平分");
+    expect(dataInverse.reasoningSteps?.[2].title).toContain("相切与交点临界");
+
+    // 验证对称中点 M 与垂直判定量
+    expect(dataInverse.quantities.some((q) => q.label.includes("中点 M"))).toBe(
+      true,
+    );
+    expect(
+      dataInverse.quantities.some((q) => q.label.includes("垂直对称轴判定")),
+    ).toBe(true);
+    expect(
+      dataInverse.quantities.some((q) => q.label.includes("相切临界底数")),
+    ).toBe(true);
+  });
+
   it("指对反函数对称与公切线定理", () => {
     const data = buildFuncExpLogPanel(
       { baseA: 2.0, x0: 2.0 },
-      { subExpLog: "exponential" },
+      { subExpLog: "exponential", explogMode: "inverse" },
     );
     expect(
       data.theorems.some(
         (t) => t.name.includes("公切线") || t.name.includes("反函数"),
       ),
     ).toBe(true);
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
   });
 });

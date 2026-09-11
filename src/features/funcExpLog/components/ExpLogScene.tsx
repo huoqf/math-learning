@@ -133,6 +133,16 @@ export function ExpLogScene({
             color: MATH_COLORS.functionTransformed,
             preferredPlacement: "bottom-right",
           });
+          const midMathVal = (x0 + expLogRes.logVal) / 2;
+          const midPt = mathToDesign(midMathVal, midMathVal, scale);
+          items.push({
+            key: "pt-mid-m",
+            text: "M",
+            x: midPt.x,
+            y: midPt.y,
+            color: MATH_COLORS.axis,
+            preferredPlacement: "bottom-left",
+          });
         }
       }
     } else if (funcType === "exponential" && isValidBase) {
@@ -173,6 +183,16 @@ export function ExpLogScene({
             y: invPt.y,
             color: MATH_COLORS.functionTransformed,
             preferredPlacement: "bottom-right",
+          });
+          const midMathVal = (x0 + expLogRes.expVal) / 2;
+          const midPt = mathToDesign(midMathVal, midMathVal, scale);
+          items.push({
+            key: "pt-mid-m",
+            text: "M",
+            x: midPt.x,
+            y: midPt.y,
+            color: MATH_COLORS.axis,
+            preferredPlacement: "bottom-left",
           });
         }
       }
@@ -426,6 +446,29 @@ export function ExpLogScene({
         (() => {
           const invPt = mathToDesign(expLogRes.expVal, x0, scale);
           const pPt = mathToDesign(x0, expLogRes.expVal, scale);
+          const midMathVal = (x0 + expLogRes.expVal) / 2;
+          const midPt = mathToDesign(midMathVal, midMathVal, scale);
+          const dist = Math.hypot(pPt.x - invPt.x, pPt.y - invPt.y);
+
+          let perpPath = "";
+          if (dist > 20) {
+            const ux = (pPt.x - invPt.x) / dist;
+            const uy = (pPt.y - invPt.y) / dist;
+            let vx = -uy;
+            let vy = ux;
+            if (vx - vy < 0) {
+              vx = -vx;
+              vy = -vy;
+            }
+            const s = 7;
+            const p1x = midPt.x + s * ux;
+            const p1y = midPt.y + s * uy;
+            const p2x = midPt.x + s * (ux + vx);
+            const p2y = midPt.y + s * (uy + vy);
+            const p3x = midPt.x + s * vx;
+            const p3y = midPt.y + s * vy;
+            perpPath = `M ${p1x} ${p1y} L ${p2x} ${p2y} L ${p3x} ${p3y}`;
+          }
 
           return (
             <g>
@@ -458,6 +501,24 @@ export function ExpLogScene({
                     strokeWidth={1.2}
                     opacity={0.65}
                   />
+                  {/* 垂直平分直角标记 */}
+                  {perpPath && (
+                    <path
+                      d={perpPath}
+                      stroke={MATH_COLORS.axis}
+                      strokeWidth={1.2}
+                      fill="none"
+                      opacity={0.8}
+                    />
+                  )}
+                  {/* 对称中点 M (在 y = x 上) */}
+                  <MathPoint
+                    cx={midMathVal}
+                    cy={midMathVal}
+                    scale={scale}
+                    variant="solid"
+                    color={MATH_COLORS.axis}
+                  />
                 </>
               )}
             </g>
@@ -471,6 +532,29 @@ export function ExpLogScene({
         (() => {
           const invPt = mathToDesign(expLogRes.logVal, x0, scale);
           const pPt = mathToDesign(x0, expLogRes.logVal, scale);
+          const midMathVal = (x0 + expLogRes.logVal) / 2;
+          const midPt = mathToDesign(midMathVal, midMathVal, scale);
+          const dist = Math.hypot(pPt.x - invPt.x, pPt.y - invPt.y);
+
+          let perpPath = "";
+          if (dist > 20) {
+            const ux = (pPt.x - invPt.x) / dist;
+            const uy = (pPt.y - invPt.y) / dist;
+            let vx = -uy;
+            let vy = ux;
+            if (vx - vy < 0) {
+              vx = -vx;
+              vy = -vy;
+            }
+            const s = 7;
+            const p1x = midPt.x + s * ux;
+            const p1y = midPt.y + s * uy;
+            const p2x = midPt.x + s * (ux + vx);
+            const p2y = midPt.y + s * (uy + vy);
+            const p3x = midPt.x + s * vx;
+            const p3y = midPt.y + s * vy;
+            perpPath = `M ${p1x} ${p1y} L ${p2x} ${p2y} L ${p3x} ${p3y}`;
+          }
 
           return (
             <g>
@@ -502,6 +586,24 @@ export function ExpLogScene({
                     strokeDasharray="3 3"
                     strokeWidth={1.2}
                     opacity={0.65}
+                  />
+                  {/* 垂直平分直角标记 */}
+                  {perpPath && (
+                    <path
+                      d={perpPath}
+                      stroke={MATH_COLORS.axis}
+                      strokeWidth={1.2}
+                      fill="none"
+                      opacity={0.8}
+                    />
+                  )}
+                  {/* 对称中点 M (在 y = x 上) */}
+                  <MathPoint
+                    cx={midMathVal}
+                    cy={midMathVal}
+                    scale={scale}
+                    variant="solid"
+                    color={MATH_COLORS.axis}
                   />
                 </>
               )}

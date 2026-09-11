@@ -9,6 +9,7 @@ import {
   TipCard,
   TabSwitcher,
   Toggle,
+  renderMixedLatex,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
@@ -34,8 +35,9 @@ export function ExponentialPage() {
     () =>
       buildMathQuantities("anim-func-explog", params, {
         subExpLog: "exponential",
+        explogMode: mode,
       }),
-    [params],
+    [params, mode],
   );
 
   const formulaLatex = useMemo(() => {
@@ -96,6 +98,11 @@ export function ExponentialPage() {
         color: MATH_COLORS.labelText,
         style: "dash",
       });
+      items.push({
+        label: "对称中点 M",
+        color: MATH_COLORS.axis,
+        style: "point",
+      });
     }
 
     if (showTangent) {
@@ -112,30 +119,33 @@ export function ExponentialPage() {
   // 动态教学提示配置
   const tipConfig = useMemo(() => {
     const a = params.baseA ?? 2.0;
+
     if (showInverse) {
       return {
         variant: "info" as const,
         badge: "高考高频 · 指数与对数反函数对称",
-        condition: `指数函数 y = ${a.toFixed(1)}ˣ 与对数函数 y = log_{${a.toFixed(1)}} x 互为反函数。`,
+        condition:
+          "设指数函数 $y = a^x$ 与对数函数 $y = \\log_a x$ 互为反函数，对称轴为直线 $y = x$。",
         question:
-          "观察两曲线关于直线 y = x 严格轴对称，且定点 (0,1) 与 (1,0) 互为对称镜像，体会定义域与值域的互换映射 (D ↔ R)。",
+          "证明两曲线关于直线 $y = x$ 轴对称且对应连线被垂直平分，并求解两曲线相切时的底数临界值 $a_c$ 与切点坐标。",
       };
     }
     if (a > 1) {
       return {
         variant: "primary" as const,
         badge: "核心基准 · 指数爆炸与递增模型 (a > 1)",
-        condition: `底数 a = ${a.toFixed(1)} > 1，函数恒过定点 (0, 1)，水平渐近线为 x 轴 (y = 0)。`,
+        condition:
+          "底数 $a > 1$，函数恒过定点 $(0, 1)$，水平渐近线为 $x$ 轴 ($y = 0$)。",
         question:
-          "探究 x → +∞ 时的指数爆炸增长速度，以及 x → -∞ 时图象单侧无限贴近 x 轴的性质。",
+          "探究 $x \\to +\\infty$ 时的指数增长趋势与下凹形态，并求在探究动点处的切线方程及高考切线放缩不等式。",
       };
     } else {
       return {
         variant: "warning" as const,
         badge: "核心基准 · 衰减指数与递减模型 (0 < a < 1)",
-        condition: `底数 0 < a = ${a.toFixed(1)} < 1，函数恒过定点 (0, 1)。`,
+        condition: "底数 $0 < a < 1$，函数恒过定点 $(0, 1)$。",
         question:
-          "验证在 R 上的单调递减性，以及随自变量增大函数值快速趋向 0 的衰减趋势。",
+          "判定在 $\\mathbb{R}$ 上的单调递减性，并证明函数值在 $(-\\infty, 0)$ 与 $(0, +\\infty)$ 上的正负取值范围。",
       };
     }
   }, [params.baseA, showInverse]);
@@ -182,14 +192,16 @@ export function ExponentialPage() {
                     【初始条件】
                   </span>
                   <span className="text-neutral-600">
-                    {tipConfig.condition}
+                    {renderMixedLatex(tipConfig.condition)}
                   </span>
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
                     【核心设问】
                   </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
+                  <span className="text-neutral-600">
+                    {renderMixedLatex(tipConfig.question)}
+                  </span>
                 </div>
               </div>
             </TipCard>
@@ -228,6 +240,7 @@ export function ExponentialPage() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
           mnemonic={mathData.mnemonic}
           title="指数函数看板"
         />

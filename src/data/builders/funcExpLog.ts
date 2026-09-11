@@ -4,7 +4,7 @@ import { MATH_COLORS } from "@/theme";
 
 export function buildFuncExpLogPanel(
   params: Record<string, number>,
-  config?: { subExpLog?: string; powerMode?: string },
+  config?: { subExpLog?: string; powerMode?: string; explogMode?: string },
 ): MathPanelData {
   const subType = config?.subExpLog ?? "exponential";
 
@@ -279,142 +279,215 @@ export function buildFuncExpLogPanel(
   // 2. 指数与对数模式
   const a = params.baseA ?? 2.0;
   const x0 = params.x0 ?? 1.5;
+  const explogMode = config?.explogMode ?? "single";
   const expLogRes = calculateExpLog(a, x0);
 
-  const quantities: MathPanelData["quantities"] =
-    subType === "logarithmic"
-      ? [
-          {
-            label: "底数 a",
-            symbol: "a",
-            value: a.toFixed(1),
-            color: MATH_COLORS.paramPrimary,
-          },
-          {
-            label: "探究真数 x₀",
-            symbol: "x_0",
-            value: x0.toFixed(2),
-            color: MATH_COLORS.function,
-          },
-          {
-            label: "对数函数值 y₀",
-            symbol: "\\log_a(x_0)",
-            value: expLogRes.isLogDefined
-              ? expLogRes.logVal.toFixed(2)
-              : "无定义",
-            color: MATH_COLORS.function,
-          },
-          {
-            label: "对应反函数点 P'",
-            symbol: "P'(y_0, x_0)",
-            value: expLogRes.isLogDefined
-              ? `(${expLogRes.logVal.toFixed(2)}, ${x0.toFixed(2)})`
-              : "无定义",
-            color: MATH_COLORS.functionTransformed,
-          },
-          {
-            label: "反函数指数验证",
-            symbol: `a^{y_0}`,
-            value: expLogRes.isLogDefined
-              ? `${a.toFixed(1)}^{${expLogRes.logVal.toFixed(2)}} = ${x0.toFixed(2)}`
-              : "无定义",
-            color: MATH_COLORS.functionTransformed,
-          },
-          {
-            label: "动点切线斜率",
-            symbol: "f'(x_0)",
-            value: expLogRes.logTangentSlopeStr,
-            highlight: expLogRes.isLogDefined ? "positive" : undefined,
-          },
-          {
-            label: "定点 (1,0) 切线斜率",
-            symbol: "f'(1)",
-            value: expLogRes.logFixedPointSlopeStr,
-          },
-          {
-            label: "符号与分界判定",
-            value: expLogRes.logSignDescription,
-            highlight:
-              expLogRes.logSignState === "positive"
-                ? "positive"
-                : expLogRes.logSignState === "negative"
-                  ? "extreme"
-                  : undefined,
-          },
-          {
-            label: "单调与凹凸性",
-            value:
-              a > 1
-                ? "严格单调递增 · 上凸减速增长"
-                : a > 0 && a < 1
-                  ? "严格单调递减 · 上凸加速衰减"
-                  : "退化/无定义",
-            highlight: a > 1 ? "positive" : "extreme",
-          },
-        ]
-      : [
-          {
-            label: "底数 a",
-            symbol: "a",
-            value: a.toFixed(1),
-            color: MATH_COLORS.paramPrimary,
-          },
-          {
-            label: "自变量 x₀",
-            symbol: "x_0",
-            value: x0.toFixed(2),
-            color: MATH_COLORS.function,
-          },
-          {
-            label: "指数函数值 y₀",
-            symbol: "a^{x_0}",
-            value: expLogRes.isValidBase
-              ? expLogRes.expVal.toFixed(2)
-              : "无定义",
-            color: MATH_COLORS.function,
-          },
-          {
-            label: "对应反函数点 P'",
-            symbol: "P'(y_0, x_0)",
-            value: expLogRes.isValidBase
-              ? `(${expLogRes.expVal.toFixed(2)}, ${x0.toFixed(2)})`
-              : "无定义",
-            color: MATH_COLORS.functionTransformed,
-          },
-          {
-            label: "反函数对数验证",
-            symbol: `\\log_a(y_0)`,
-            value: expLogRes.isValidBase
-              ? `\\log_{${a.toFixed(1)}}(${expLogRes.expVal.toFixed(2)}) = ${x0.toFixed(2)}`
-              : "无定义",
-            color: MATH_COLORS.functionTransformed,
-          },
-          {
-            label: "动点切线斜率",
-            symbol: "f'(x_0)",
-            value: expLogRes.expTangentSlopeStr,
-            highlight: expLogRes.isValidBase ? "positive" : undefined,
-          },
-          {
-            label: "动点切线方程",
-            value: expLogRes.expTangentEquationLatex ?? "无定义",
-          },
-          {
-            label: "定点 (0,1) 切线斜率",
-            symbol: "f'(0)",
-            value: expLogRes.expFixedPointSlopeStr,
-          },
-          {
-            label: "单调与凹凸性",
-            value:
-              a > 1
-                ? "严格单调递增 · 下凹加速增长 (爆炸式)"
-                : a > 0 && a < 1
-                  ? "严格单调递减 · 下凹衰减 (趋于0)"
-                  : "退化/无定义",
-            highlight: a > 1 ? "positive" : "extreme",
-          },
-        ];
+  // 高考相切临界常数 a_c = e^{1/e} ≈ 1.444667861
+  const AC_CRITICAL = Math.exp(1 / Math.E);
+
+  const quantities: MathPanelData["quantities"] = [];
+
+  if (subType === "logarithmic") {
+    quantities.push(
+      {
+        label: "底数 a",
+        symbol: "a",
+        value: a.toFixed(1),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "探究真数 x₀",
+        symbol: "x_0",
+        value: x0.toFixed(2),
+        color: MATH_COLORS.function,
+      },
+      {
+        label: "对数函数值 y₀",
+        symbol: "\\log_a(x_0)",
+        value: expLogRes.isLogDefined ? expLogRes.logVal.toFixed(2) : "无定义",
+        color: MATH_COLORS.function,
+      },
+    );
+
+    if (explogMode === "inverse") {
+      const midX = expLogRes.isLogDefined ? (x0 + expLogRes.logVal) / 2 : NaN;
+      quantities.push(
+        {
+          label: "反函数对称点 P'",
+          symbol: "P'(y_0, x_0)",
+          value: expLogRes.isLogDefined
+            ? `(${expLogRes.logVal.toFixed(2)}, ${x0.toFixed(2)})`
+            : "无定义",
+          color: MATH_COLORS.functionTransformed,
+        },
+        {
+          label: "PP' 中点 M (在 y = x 上)",
+          symbol: "M",
+          value: Number.isFinite(midX)
+            ? `(${midX.toFixed(2)}, ${midX.toFixed(2)})`
+            : "无定义",
+          color: MATH_COLORS.axis,
+          highlight: "positive",
+        },
+        {
+          label: "PP' 垂直对称轴判定",
+          symbol: "k_{PP'} \\cdot 1",
+          value: "-1 (垂直成立)",
+          highlight: "positive",
+        },
+        {
+          label: "反函数指数验证",
+          symbol: "a^{y_0}",
+          value: expLogRes.isLogDefined
+            ? `${a.toFixed(1)}^{${expLogRes.logVal.toFixed(2)}} = ${x0.toFixed(2)}`
+            : "无定义",
+          color: MATH_COLORS.functionTransformed,
+        },
+        {
+          label: "相切临界底数 a_c",
+          symbol: "e^{1/e}",
+          value: `${AC_CRITICAL.toFixed(4)} (切点 (e, e))`,
+        },
+        {
+          label: "两曲线交点情况",
+          value:
+            a > 0 && a < 1
+              ? "有 1 个交点 (必在 y = x 上)"
+              : Math.abs(a - AC_CRITICAL) < 0.05
+                ? "相切于 (e, e) · 唯一公切线 y = x"
+                : a < AC_CRITICAL
+                  ? "有 2 个交点 (均在 y = x 上)"
+                  : "无公共点 (指数在对数上方)",
+          highlight: Math.abs(a - AC_CRITICAL) < 0.05 ? "extreme" : "positive",
+        },
+      );
+    } else {
+      quantities.push(
+        {
+          label: "动点切线斜率",
+          symbol: "f'(x_0)",
+          value: expLogRes.logTangentSlopeStr,
+          highlight: expLogRes.isLogDefined ? "positive" : undefined,
+        },
+        {
+          label: "定点 (1,0) 切线斜率",
+          symbol: "f'(1)",
+          value: expLogRes.logFixedPointSlopeStr,
+        },
+        {
+          label: "符号与分界判定",
+          value: expLogRes.logSignDescription,
+          highlight:
+            expLogRes.logSignState === "positive"
+              ? "positive"
+              : expLogRes.logSignState === "negative"
+                ? "extreme"
+                : undefined,
+        },
+        {
+          label: "单调与凹凸性",
+          value:
+            a > 1
+              ? "严格单调递增 · 上凸减速增长"
+              : a > 0 && a < 1
+                ? "严格单调递减 · 上凸加速衰减"
+                : "退化/无定义",
+          highlight: a > 1 ? "positive" : "extreme",
+        },
+      );
+    }
+  } else {
+    quantities.push(
+      {
+        label: "底数 a",
+        symbol: "a",
+        value: a.toFixed(1),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "自变量 x₀",
+        symbol: "x_0",
+        value: x0.toFixed(2),
+        color: MATH_COLORS.function,
+      },
+      {
+        label: "指数函数值 y₀",
+        symbol: "a^{x_0}",
+        value: expLogRes.isValidBase ? expLogRes.expVal.toFixed(2) : "无定义",
+        color: MATH_COLORS.function,
+      },
+    );
+
+    if (explogMode === "inverse") {
+      const midX = expLogRes.isValidBase ? (x0 + expLogRes.expVal) / 2 : NaN;
+      quantities.push(
+        {
+          label: "反函数对称点 P'",
+          symbol: "P'(y_0, x_0)",
+          value: expLogRes.isValidBase
+            ? `(${expLogRes.expVal.toFixed(2)}, ${x0.toFixed(2)})`
+            : "无定义",
+          color: MATH_COLORS.functionTransformed,
+        },
+        {
+          label: "PP' 中点 M (在 y = x 上)",
+          symbol: "M",
+          value: Number.isFinite(midX)
+            ? `(${midX.toFixed(2)}, ${midX.toFixed(2)})`
+            : "无定义",
+          color: MATH_COLORS.axis,
+          highlight: "positive",
+        },
+        {
+          label: "反函数对数验证",
+          symbol: "\\log_a(y_0)",
+          value: expLogRes.isValidBase
+            ? `\\log_{${a.toFixed(1)}}(${expLogRes.expVal.toFixed(2)}) = ${x0.toFixed(2)}`
+            : "无定义",
+          color: MATH_COLORS.functionTransformed,
+        },
+        {
+          label: "两曲线交点情况",
+          value:
+            a > 0 && a < 1
+              ? "有 1 个交点 (在 y = x 上)"
+              : a < AC_CRITICAL
+                ? "有 2 个交点"
+                : Math.abs(a - AC_CRITICAL) < 0.05
+                  ? "相切于 (e, e)"
+                  : "无公共点",
+        },
+      );
+    } else {
+      quantities.push(
+        {
+          label: "动点切线斜率",
+          symbol: "f'(x_0)",
+          value: expLogRes.expTangentSlopeStr,
+          highlight: expLogRes.isValidBase ? "positive" : undefined,
+        },
+        {
+          label: "动点切线方程",
+          value: expLogRes.expTangentEquationLatex ?? "无定义",
+        },
+        {
+          label: "定点 (0,1) 切线斜率",
+          symbol: "f'(0)",
+          value: expLogRes.expFixedPointSlopeStr,
+        },
+        {
+          label: "单调与凹凸性",
+          value:
+            a > 1
+              ? "严格单调递增 · 下凹加速增长 (爆炸式)"
+              : a > 0 && a < 1
+                ? "严格单调递减 · 下凹衰减 (趋于0)"
+                : "退化/无定义",
+          highlight: a > 1 ? "positive" : "extreme",
+        },
+      );
+    }
+  }
 
   const theorems: MathPanelData["theorems"] =
     subType === "logarithmic"
@@ -542,6 +615,139 @@ export function buildFuncExpLogPanel(
           },
         ];
 
+  // 3. 构建规范的高考推导链 reasoningSteps
+  let reasoningSteps: MathPanelData["reasoningSteps"];
+
+  if (subType === "logarithmic") {
+    if (explogMode === "inverse") {
+      const y0Val = expLogRes.isLogDefined ? expLogRes.logVal : 0;
+      const midX = (x0 + y0Val) / 2;
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "反解变元 · 反函数求解三步法则",
+          detail:
+            "设原函数为 $y = \\log_a x$（$a > 0, a \\neq 1, x > 0$），将方程看作关于 $x$ 的方程解出 $x = a^y$；交换自变量与因变量符号得到反函数解析式 $y = a^x$。原函数定义域 $(0, +\\infty)$ 与值域 $\\mathbb{R}$ 分别对调为反函数的值域与定义域。",
+          latex:
+            "y = \\log_a x \\iff x = a^y \\xrightarrow{x \\leftrightarrow y} y = a^x \\quad (D_{\\log} = R_{\\exp} = (0, +\\infty))",
+          rubric: "规范呈现反解自变量、互换变元符号与定义域值域互易过程",
+        },
+        {
+          step: 2,
+          title: "几何充要 · 垂直平分对称严密证明",
+          detail: `设探究点 $P(${x0.toFixed(2)}, ${y0Val.toFixed(2)})$ 在对数曲线上，其关于直线 $y = x$ 的对称点为 $P'(${y0Val.toFixed(2)}, ${x0.toFixed(2)})$。连线斜率 $k_{PP'} = \\frac{${x0.toFixed(2)} - ${y0Val.toFixed(2)}}{${y0Val.toFixed(2)} - ${x0.toFixed(2)}} = -1$，满足 $k_{PP'} \\cdot 1 = -1 \\implies PP' \\perp (y = x)$；且线段 $PP'$ 的中点 $M(${midX.toFixed(2)}, ${midX.toFixed(2)})$ 纵横坐标严格相等，恒在对称轴 $y = x$ 上，充要证实直线 $y = x$ 是 $PP'$ 的垂直平分线。`,
+          latex:
+            "\\begin{cases} k_{PP'} = -1 \\implies k_{PP'} \\cdot k_{y=x} = -1 \\implies PP' \\perp (y=x) \\\\ M\\left(\\frac{x_0+y_0}{2}, \\frac{x_0+y_0}{2}\\right) \\in \\{ (x, y) \\mid y = x \\} \\end{cases}",
+          rubric: "从斜率乘积为 $-1$ 与中点落在对称轴上两方面充要证明垂直平分",
+        },
+        {
+          step: 3,
+          title: "高考压轴 · 公切相切与交点临界判定",
+          detail:
+            "探究 $y = a^x$ 与 $y = \\log_a x$ 的交点分布。由对称性知，若两曲线相切，公切线必为对称轴 $y = x$，满足切点切线方程联立 $\\begin{cases} a^x = x \\\\ a^x \\ln a = 1 \\end{cases}$。代入得 $x \\ln a = 1 \\implies a^x = e \\implies x = e$。切点为 $(e, e)$，对应临界底数 $a_c = e^{1/e} \\approx 1.4447$。当 $1 < a < e^{1/e}$ 时在 $y = x$ 上有 2 个交点；当 $a > e^{1/e}$ 时无公共点。",
+          latex:
+            "\\begin{cases} a^x = x \\\\ (a^x)' = a^x \\ln a = 1 \\end{cases} \\implies x = e, \\quad a_c = e^{1/e} \\approx 1.445 \\quad (\\text{相切于 } (e, e))",
+          rubric:
+            "联立曲线与对称轴相切充要方程，推导新高考核心相切常数 $e^{1/e}$",
+        },
+      ];
+    } else {
+      const y0Val = expLogRes.isLogDefined ? expLogRes.logVal : 0;
+      const kStr = expLogRes.logTangentSlopeStr;
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "基准模型 · 对数函数定义与必过定点",
+          detail: `对数函数 $y = \\log_a x$（当前底数 $a = ${a.toFixed(1)}$）定义域为 $(0, +\\infty)$，值域为 $\\mathbb{R}$。因为对任意底数恒有 $\\log_a 1 = 0$，故函数图象恒过定点 $(1, 0)$。$y$ 轴（直线 $x = 0$）为曲线的垂直渐近线。`,
+          latex: `f(1) = \\log_{${a.toFixed(1)}} 1 = 0 \\implies \\text{必过定点 } (1, 0), \\quad \\lim_{x \\to 0^+} \\log_{${a.toFixed(1)}} x = ${a > 1 ? "-\\infty" : "+\\infty"}`,
+          rubric: "规范交代定义域、值域、定点坐标与垂直渐近线",
+        },
+        {
+          step: 2,
+          title: "导数切线 · 切点斜率与点斜式展开",
+          detail: expLogRes.isLogDefined
+            ? `对数函数导函数为 $f'(x) = \\frac{1}{x \\ln a}$。将探究点 $x_0 = ${x0.toFixed(2)}$ 代入，求得切点 $P(${x0.toFixed(2)}, ${y0Val.toFixed(2)})$ 处的切线斜率 $k = ${kStr}$，由点斜式展开得切线方程。`
+            : "当前探究点超出定义域范围，无定义导数切线。",
+          latex: expLogRes.isLogDefined
+            ? `f'(${x0.toFixed(2)}) = \\frac{1}{${x0.toFixed(2)} \\ln(${a.toFixed(1)})} = ${kStr} \\implies y - ${y0Val.toFixed(2)} = ${kStr}(x - ${x0.toFixed(2)})`
+            : "x_0 \\le 0 \\implies \\text{无导数}",
+          rubric: "运用对数导数公式准确代入计算斜率并写出切线方程",
+        },
+        {
+          step: 3,
+          title: "高考放缩 · 基准切线与不等式链",
+          detail:
+            "当底数取自然对数底 $e$ 时，曲线 $y = \\ln x$ 在点 $(1, 0)$ 处的切线为 $y = x - 1$。由对数函数上凸性可知曲线恒在切线下方，导出高考第一核心放缩不等式 $\\ln x \\le x - 1$（$x > 0$，当且仅当 $x = 1$ 时取等号），其过原点切线放缩为 $\\ln x \\le \\frac{x}{e}$。",
+          latex:
+            "\\ln x \\le x - 1 \\quad (x > 0, \\text{等号成立当且仅当 } x = 1)",
+          rubric: "结合凸函数几何切线给出高考切线放缩不等式与等号条件",
+        },
+      ];
+    }
+  } else {
+    // 指数函数
+    if (explogMode === "inverse") {
+      const expVal = expLogRes.isValidBase ? expLogRes.expVal : 0;
+      const midX = (x0 + expVal) / 2;
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "反函数定义 · 互逆映射与变元对换",
+          detail:
+            "指数函数 $y = a^x$（$a > 0, a \\neq 1$）为单调映射，反解得 $x = \\log_a y$；自变量因变量互换得反函数 $y = \\log_a x$。指数函数定义域 $\\mathbb{R}$ 成为对数函数值域，值域 $(0, +\\infty)$ 成为对数函数定义域。",
+          latex:
+            "y = a^x \\iff x = \\log_a y \\xrightarrow{x \\leftrightarrow y} y = \\log_a x \\quad (D_{\\exp} = R_{\\log} = \\mathbb{R})",
+          rubric: "规范呈现反解与定义域值域互换",
+        },
+        {
+          step: 2,
+          title: "垂直平分 · 对称中点与斜率判定",
+          detail: `动点 $P(${x0.toFixed(2)}, ${expVal.toFixed(2)})$ 与对称点 $P'(${expVal.toFixed(2)}, ${x0.toFixed(2)})$ 连线斜率为 $-1$，垂直于直线 $y = x$；中点 $M(${midX.toFixed(2)}, ${midX.toFixed(2)})$ 落在直线 $y = x$ 上，证明图象关于 $y = x$ 轴对称。`,
+          latex:
+            "k_{PP'} = -1 \\implies PP' \\perp (y = x), \\quad M \\in \\{ (x, y) \\mid y = x \\}",
+          rubric: "证明两点连线被对称轴垂直平分",
+        },
+        {
+          step: 3,
+          title: "相切临界 · 公切线与切点坐标",
+          detail:
+            "两曲线相切时公切线必为 $y = x$，由联立方程组得相切点为 $(e, e)$，对应相切临界底数 $a = e^{1/e} \\approx 1.4447$。",
+          latex:
+            "a_c = e^{1/e} \\approx 1.445, \\quad \\text{公切线 } y = x, \\quad \\text{切点 } (e, e)",
+          rubric: "阐明相切临界与交点个数讨论准则",
+        },
+      ];
+    } else {
+      const expVal = expLogRes.isValidBase ? expLogRes.expVal : 0;
+      const kStr = expLogRes.expTangentSlopeStr;
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "基准模型 · 指数函数定义与必过定点",
+          detail: `指数函数 $y = a^x$（底数 $a = ${a.toFixed(1)}$）定义域为 $\\mathbb{R}$，值域为 $(0, +\\infty)$，恒过定点 $(0, 1)$。$x$ 轴（直线 $y = 0$）为水平渐近线。`,
+          latex: `f(0) = ${a.toFixed(1)}^0 = 1 \\implies \\text{必过定点 } (0, 1), \\quad \\lim_{x \\to -\\infty} ${a.toFixed(1)}^x = 0`,
+          rubric: "写明指数函数性质与渐近线",
+        },
+        {
+          step: 2,
+          title: "导数切线 · 切点斜率与点斜式展开",
+          detail: `导函数为 $f'(x) = a^x \\ln a$。在探究点 $x_0 = ${x0.toFixed(2)}$ 处，斜率 $k = ${kStr}$，点斜式为 $y - ${expVal.toFixed(2)} = ${kStr}(x - ${x0.toFixed(2)})$。`,
+          latex: `f'(${x0.toFixed(2)}) = ${a.toFixed(1)}^{${x0.toFixed(2)}} \\ln(${a.toFixed(1)}) = ${kStr} \\implies y - ${expVal.toFixed(2)} = ${kStr}(x - ${x0.toFixed(2)})`,
+          rubric: "代入求导公式计算切线斜率",
+        },
+        {
+          step: 3,
+          title: "高考放缩 · 双基准指数切线不等式",
+          detail:
+            "当底数取自然底数 $e$ 时，在 $(0, 1)$ 处切线为 $y = x + 1$；在 $(1, e)$ 处过原点切线为 $y = ex$。由下凹性导出 $e^x \\ge x + 1$ 与 $e^x \\ge ex$ 两大核心放缩式。",
+          latex:
+            "e^x \\ge x + 1 \\quad \\text{且} \\quad e^x \\ge ex \\quad (x \\in \\mathbb{R})",
+          rubric: "给出指数双切线放缩不等式",
+        },
+      ];
+    }
+  }
+
   const warnings: MathPanelData["warnings"] = [];
   if (expLogRes.baseWarning) {
     warnings.push({
@@ -551,7 +757,7 @@ export function buildFuncExpLogPanel(
   }
   if (subType === "logarithmic" && x0 <= 0) {
     warnings.push({
-      text: "真数必须大于 0！x ≤ 0 时对数函数无意义。",
+      text: "真数必须大于 0！$x \\le 0$ 时对数函数无意义。",
       level: "danger",
     });
   }
@@ -561,9 +767,14 @@ export function buildFuncExpLogPanel(
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps,
     mnemonic:
       subType === "logarithmic"
-        ? "对过(1,0)轴渐近，同大为正异大负；y=x对称反函数，切线ln放缩牢记。"
-        : "指过(0,1)对过(1,0)，双切放缩同构破；a为e^(1/e)公切切，y=x对称反函数。",
+        ? explogMode === "inverse"
+          ? "反函数关于y=x垂直平分，中点落在直线上；a为e^(1/e)两线切于(e,e)。"
+          : "对过(1,0)轴渐近，同大为正异大负；单增单减看底数，切线ln放缩牢记。"
+        : explogMode === "inverse"
+          ? "指过(0,1)对过(1,0)，y=x对称反函数；公切临界e^(1/e)，垂直平分中点连。"
+          : "指过(0,1)对过(1,0)，双切放缩同构破；a为e^(1/e)公切切，单调凹凸看底数。",
   };
 }

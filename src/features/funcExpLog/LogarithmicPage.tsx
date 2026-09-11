@@ -9,6 +9,7 @@ import {
   TipCard,
   TabSwitcher,
   Toggle,
+  renderMixedLatex,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
@@ -38,8 +39,9 @@ export function LogarithmicPage() {
     () =>
       buildMathQuantities("anim-func-explog", params, {
         subExpLog: "logarithmic",
+        explogMode: mode,
       }),
-    [params],
+    [params, mode],
   );
 
   const formulaLatex = useMemo(() => {
@@ -82,6 +84,12 @@ export function LogarithmicPage() {
             label: "退化 (a=1)",
             labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} = 1`,
           },
+          {
+            value: 1.4,
+            variant: "recommended",
+            label: "相切临界",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a_c = e^{1/e}}`,
+          },
         ],
       },
     ];
@@ -121,6 +129,11 @@ export function LogarithmicPage() {
         color: MATH_COLORS.labelText,
         style: "dash",
       });
+      items.push({
+        label: "对称中点 M",
+        color: MATH_COLORS.axis,
+        style: "point",
+      });
     }
 
     if (showTangent) {
@@ -137,30 +150,34 @@ export function LogarithmicPage() {
   // 教学提示配置
   const tipConfig = useMemo(() => {
     const a = params.baseA ?? 2.0;
+
     if (showInverse) {
       return {
         variant: "info" as const,
         badge: "高考高频 · 对数与指数反函数对称",
-        condition: `对数函数 y = log_{${a.toFixed(1).replace(/\.0$/, "")}} x 与指数函数 y = ${a.toFixed(1).replace(/\.0$/, "")}ˣ 互为反函数。`,
+        condition:
+          "设对数函数 $y = \\log_a x$ 与指数函数 $y = a^x$ 互为反函数，对称轴为直线 $y = x$。",
         question:
-          "观察动点 P 与对称点 P' 关于 y = x 轴垂直平分对称，体会定义域与值域的互换映射 (D ↔ R)。",
+          "证明动点 $P(x_0, y_0)$ 与对称点 $P'(y_0, x_0)$ 的连线被直线 $y = x$ 垂直平分，并求解两曲线相切时的底数临界值 $a_c$ 与切点坐标。",
       };
     }
     if (a > 1) {
       return {
         variant: "primary" as const,
         badge: "核心基准 · 对数缓增与垂直渐近线 (a > 1)",
-        condition: `底数 a = ${a.toFixed(1).replace(/\.0$/, "")} > 1，真数 x > 0，恒过定点 (1, 0)，竖直渐近线为 x = 0 (y 轴)。`,
+        condition:
+          "底数 $a > 1$，真数定义域 $x \\in (0, +\\infty)$，恒过定点 $(1, 0)$，竖直渐近线为 $x = 0$ (y 轴)。",
         question:
-          "观察 x → 0⁺ 时函数值跌入 -∞ 的垂直渐近行为，以及 x → +∞ 时的减速增长 (凹向下/上凸) 趋势。",
+          "判定函数在定义域 $(0, +\\infty)$ 上的单调性与凹凸形态，并求在探究动点处的切线方程及高考切线放缩不等式。",
       };
     } else {
       return {
         variant: "warning" as const,
         badge: "核心基准 · 衰减对数模型 (0 < a < 1)",
-        condition: `底数 0 < a = ${a.toFixed(1).replace(/\.0$/, "")} < 1，真数 x > 0，恒过定点 (1, 0)。`,
+        condition:
+          "底数 $0 < a < 1$，真数定义域 $x \\in (0, +\\infty)$，恒过定点 $(1, 0)$。",
         question:
-          "验证在定义域 (0, +∞) 上的单调递减性质，以及在 x → 0⁺ 时的趋向 +∞ 行为。",
+          "判定对数值在区间 $(0, 1)$ 与 $(1, +\\infty)$ 上的正负符号分界，并证明函数在区间 $(0, +\\infty)$ 上的严格单调递减性质。",
       };
     }
   }, [params.baseA, showInverse]);
@@ -213,14 +230,16 @@ export function LogarithmicPage() {
                     【初始条件】
                   </span>
                   <span className="text-neutral-600">
-                    {tipConfig.condition}
+                    {renderMixedLatex(tipConfig.condition)}
                   </span>
                 </div>
                 <div>
                   <span className="font-semibold text-neutral-800">
                     【核心设问】
                   </span>
-                  <span className="text-neutral-600">{tipConfig.question}</span>
+                  <span className="text-neutral-600">
+                    {renderMixedLatex(tipConfig.question)}
+                  </span>
                 </div>
               </div>
             </TipCard>
@@ -259,6 +278,7 @@ export function LogarithmicPage() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
           mnemonic={mathData.mnemonic}
           title="对数函数看板"
         />
