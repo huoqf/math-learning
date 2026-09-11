@@ -40,11 +40,32 @@ export function ShiftedPage() {
   );
 
   const equationLatex = useMemo(() => {
-    const aVal = params.a.toFixed(1);
-    const bVal = params.b.toFixed(1);
-    const hVal = params.h.toFixed(1);
-    const cVal = params.c.toFixed(1);
-    return `y = \\color{${MATH_COLORS.paramPrimary}}{${aVal}}(x - \\color{${MATH_COLORS.paramTertiary}}{${hVal}}) + \\color{${MATH_COLORS.paramTertiary}}{${cVal}} + \\frac{\\color{${MATH_COLORS.paramSecondary}}{${bVal}}}{x - \\color{${MATH_COLORS.paramTertiary}}{${hVal}}}`;
+    const { a, b, h, c } = params;
+    const colA = `\\color{${MATH_COLORS.paramPrimary}}{${a.toFixed(1)}}`;
+    const colB = `\\color{${MATH_COLORS.paramSecondary}}{${Math.abs(b).toFixed(1)}}`;
+    const colH = `\\color{${MATH_COLORS.paramTertiary}}{${Math.abs(h).toFixed(1)}}`;
+    const colC = `\\color{${MATH_COLORS.paramTertiary}}{${Math.abs(c).toFixed(1)}}`;
+
+    const hPart =
+      Math.abs(h) < 1e-4 ? "x" : h > 0 ? `(x - ${colH})` : `(x + ${colH})`;
+
+    const fracSign = b >= 0 ? "+" : "-";
+    const fracTerm = `${fracSign} \\frac{${colB}}{${hPart}}`;
+
+    if (Math.abs(a) < 1e-4) {
+      if (Math.abs(c) < 1e-4) {
+        return b >= 0
+          ? `y = \\frac{${colB}}{${hPart}}`
+          : `y = -\\frac{${colB}}{${hPart}}`;
+      }
+      const cSigned = c > 0 ? colC : `-${colC}`;
+      return `y = ${cSigned} ${fracTerm}`;
+    }
+
+    const aTerm = `${colA}${hPart}`;
+    const cTerm = Math.abs(c) < 1e-4 ? "" : c > 0 ? `+ ${colC}` : `- ${colC}`;
+
+    return `y = ${aTerm} ${cTerm} ${fracTerm}`.replace(/\s+/g, " ");
   }, [params.a, params.b, params.h, params.c]);
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -84,10 +105,24 @@ export function ShiftedPage() {
     }
   };
 
-  // 图例配置
+  // 图例配置：严格区分斜渐近线与水平渐近线
   const legendItems = useMemo<SceneLegendItem[]>(() => {
     const { a, b, h, c } = params;
     const isNike = a * b > 0;
+    const isLinear = Math.abs(a) < 1e-4;
+
+    const asymptoteItem: SceneLegendItem = isLinear
+      ? {
+          label: `水平渐近线 y = ${c.toFixed(1)}`,
+          color: MATH_COLORS.asymptote,
+          style: "dash",
+        }
+      : {
+          label: `斜渐近线 y = ${a.toFixed(1)}(x - ${h.toFixed(1)}) + ${c.toFixed(1)}`,
+          color: MATH_COLORS.asymptote,
+          style: "dash",
+        };
+
     return [
       {
         label: isNike
@@ -107,11 +142,7 @@ export function ShiftedPage() {
         color: MATH_COLORS.asymptote,
         style: "dash",
       },
-      {
-        label: `斜渐近线 y = ${a.toFixed(1)}(x-${h.toFixed(1)})+${c.toFixed(1)}`,
-        color: MATH_COLORS.asymptote,
-        style: "dash",
-      },
+      asymptoteItem,
       {
         label: `对称中心 C(${h.toFixed(1)}, ${c.toFixed(1)})`,
         color: MATH_COLORS.focusPoint,
@@ -119,6 +150,73 @@ export function ShiftedPage() {
       },
     ];
   }, [params]);
+
+  // 教学导引动态特化
+  const tipConfig = useMemo(() => {
+    const { a, b, h, c } = params;
+    if (Math.abs(a) < 1e-4 || preset === "shifted_linear") {
+      return {
+        variant: "warning" as const,
+        badge: "高考模型 · 分式线性反比例平移",
+        condition: (
+          <span>
+            满足参数 <KatexFormula formula="a = 0" mode="inline" />
+            ，对称中心为{" "}
+            <KatexFormula
+              formula={`C(${h.toFixed(1)}, ${c.toFixed(1)})`}
+              mode="inline"
+            />
+            ，垂直渐近线{" "}
+            <KatexFormula formula={`x = ${h.toFixed(1)}`} mode="inline" />
+            ，水平渐近线{" "}
+            <KatexFormula formula={`y = ${c.toFixed(1)}`} mode="inline" />。
+          </span>
+        ),
+        question:
+          "(1) 求反比例平移函数的单调递减区间；(2) 探究曲线上的动点 P 到两条垂直渐近线距离乘积的定值性。",
+      };
+    }
+    if (a * b < 0 || preset === "shifted_streamer") {
+      return {
+        variant: "primary" as const,
+        badge: "高考模型 · 二次分式双曲飘带",
+        condition: (
+          <span>
+            满足系数异号 <KatexFormula formula="ab < 0" mode="inline" />
+            ，定义域去心{" "}
+            <KatexFormula formula={`x \\ne ${h.toFixed(1)}`} mode="inline" />
+            ，对称中心为{" "}
+            <KatexFormula
+              formula={`C(${h.toFixed(1)}, ${c.toFixed(1)})`}
+              mode="inline"
+            />
+            。
+          </span>
+        ),
+        question:
+          "(1) 求导分析导数恒号性质，判定全域单调性；(2) 探究方程 f(x) = m 的实根个数与零点存在性分布。",
+      };
+    }
+    return {
+      variant: "primary" as const,
+      badge: "高考模型 · 二次分式化归平移对勾",
+      condition: (
+        <span>
+          满足同号 <KatexFormula formula="ab > 0" mode="inline" />
+          ，对称中心为{" "}
+          <KatexFormula
+            formula={`C(${h.toFixed(1)}, ${c.toFixed(1)})`}
+            mode="inline"
+          />
+          ，令{" "}
+          <KatexFormula formula={`u = x - ${h.toFixed(1)}`} mode="inline" />{" "}
+          可化为标准对勾模型。
+        </span>
+      ),
+      question:
+        "(1) 设 u = x - h，求函数在 (h, +∞) 上的极小值点坐标与极小值；(2) 证明两极值点连线中点恒与中心点 C 重合。",
+    };
+  }, [params, preset]);
 
   return (
     <ThreePanel
@@ -131,17 +229,17 @@ export function ShiftedPage() {
                 {
                   key: "shifted_quad",
                   label: "二次分式对勾型",
-                  formula: "y = (x-1) + 2 + \\frac{4}{x-1}",
+                  description: "分离常数化对勾模型 (ab > 0)",
                 },
                 {
                   key: "shifted_linear",
                   label: "分式线性平移型",
-                  formula: "y = 1 + \\frac{3}{x-2}, \\; a = 0",
+                  description: "反比例平移双曲线 (a = 0)",
                 },
                 {
                   key: "shifted_streamer",
                   label: "二次分式飘带型",
-                  formula: "y = (x-2) - \\frac{4}{x-2}",
+                  description: "分离常数化飘带模型 (ab < 0)",
                   fullWidth: true,
                 },
               ]}
@@ -173,29 +271,10 @@ export function ShiftedPage() {
           {/* 3. 教学导引 */}
           <LeftPanelSection title="教学导引" compact>
             <TipCard
-              variant="primary"
-              badge="高考模型 · 平移双曲与中心对称化归"
-              condition={
-                <span>
-                  对称中心为{" "}
-                  <KatexFormula
-                    formula={`C(${params.h.toFixed(1)}, ${params.c.toFixed(1)})`}
-                    mode="inline"
-                  />
-                  ，渐近线为{" "}
-                  <KatexFormula
-                    formula={`x = ${params.h.toFixed(1)}`}
-                    mode="inline"
-                  />
-                  。令{" "}
-                  <KatexFormula
-                    formula={`u = x - ${params.h.toFixed(1)}`}
-                    mode="inline"
-                  />{" "}
-                  可化为标准对勾型。
-                </span>
-              }
-              question="拖拽中心点 C 改变渐近线交点，观察函数图象如何整体平移；对比二次分式与一次分式在分离常数后的核心几何差异。"
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
             />
           </LeftPanelSection>
         </LeftPanel>
@@ -228,6 +307,7 @@ export function ShiftedPage() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
+          reasoningSteps={mathData.reasoningSteps}
           title="平移双曲线看板"
         />
       }

@@ -39,33 +39,54 @@ export function buildNikePanel(
   const theorems: Theorem[] = [];
   const gaokaoPoints: GaokaoPoint[] = [];
   const warnings: WarningItem[] = [];
+  const reasoningSteps: import("../types").ReasoningStep[] = [];
 
   let mnemonic =
     "对勾函数看系数，ab同号出对勾，极值根号b比a，均值不等双项相等。";
 
+  // 辅助：规范化代数项字符串，杜绝 +- 与双负号
+  const formatHPart = (val: number) => {
+    if (Math.abs(val) < 1e-4) return "x";
+    return val > 0
+      ? `(x - ${col(val.toFixed(1), ct)})`
+      : `(x + ${col(Math.abs(val).toFixed(1), ct)})`;
+  };
+
+  const formatFractionPart = (bVal: number, denomStr: string) => {
+    const absB = Math.abs(bVal).toFixed(1);
+    return bVal >= 0
+      ? `+ \\frac{${col(absB, cb)}}{${denomStr}}`
+      : `- \\frac{${col(absB, cb)}}{${denomStr}}`;
+  };
+
   // 1. 基本量组装
   let funcFormulaStr = "";
   if (h === 0 && c === 0) {
-    const aPart = `${col(a.toFixed(1), ca)}x`;
-    const bPart =
-      b >= 0
-        ? `+ \\frac{${col(b.toFixed(1), cb)}}{x}`
-        : `- \\frac{${col(Math.abs(b).toFixed(1), cb)}}{x}`;
-    funcFormulaStr = `y = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} = ${aPart} ${bPart}`;
+    const aPart = Math.abs(a) < 1e-4 ? "" : `${col(a.toFixed(1), ca)}x`;
+    const bPart = formatFractionPart(b, "x");
+    funcFormulaStr =
+      Math.abs(a) < 1e-4
+        ? `y = \\frac{${col(b.toFixed(1), cb)}}{x}`
+        : `y = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} = ${aPart} ${bPart}`;
   } else {
-    const hPart =
-      h >= 0
-        ? `(x - ${col(h.toFixed(1), ct)})`
-        : `(x + ${col(Math.abs(h).toFixed(1), ct)})`;
-    const cPart =
-      c >= 0
-        ? `+ ${col(c.toFixed(1), ct)}`
-        : `- ${col(Math.abs(c).toFixed(1), ct)}`;
-    const bPart =
-      b >= 0
-        ? `+ \\frac{${col(b.toFixed(1), cb)}}{${hPart}}`
-        : `- \\frac{${col(Math.abs(b).toFixed(1), cb)}}{${hPart}}`;
-    funcFormulaStr = `y = ${col(a.toFixed(1), ca)}${hPart} ${cPart} ${bPart}`;
+    const denom = formatHPart(h);
+    const aTerm = Math.abs(a) < 1e-4 ? "" : `${col(a.toFixed(1), ca)}${denom}`;
+    const cTerm =
+      Math.abs(c) < 1e-4
+        ? ""
+        : c > 0
+          ? `+ ${col(c.toFixed(1), ct)}`
+          : `- ${col(Math.abs(c).toFixed(1), ct)}`;
+    const bTerm = formatFractionPart(b, denom);
+
+    if (Math.abs(a) < 1e-4) {
+      funcFormulaStr =
+        Math.abs(c) < 1e-4
+          ? `y = \\frac{${col(b.toFixed(1), cb)}}{${denom}}`
+          : `y = ${col(c.toFixed(1), ct)} ${bTerm}`;
+    } else {
+      funcFormulaStr = `y = ${aTerm} ${cTerm} ${bTerm}`.replace(/\s+/g, " ");
+    }
   }
 
   quantities.push({
@@ -87,10 +108,25 @@ export function buildNikePanel(
               : "常数退化型",
   });
 
-  quantities.push({
-    label: "渐近线方程",
-    value: `x = ${h.toFixed(1)}, y = ${a.toFixed(1)}x ${c - a * h >= 0 ? "+" : "-"} ${Math.abs(c - a * h).toFixed(1)}`,
-  });
+  // 渐近线方程规范化：当 a=0 时为水平渐近线，绝非斜渐近线
+  if (Math.abs(a) < 1e-4) {
+    quantities.push({
+      label: "渐近线方程",
+      value: `x = ${h.toFixed(1)}, \\; y = ${c.toFixed(1)} \\text{（垂直与水平渐近线）}`,
+    });
+  } else {
+    const intercept = c - a * h;
+    const interceptStr =
+      Math.abs(intercept) < 1e-4
+        ? ""
+        : intercept > 0
+          ? `+ ${intercept.toFixed(1)}`
+          : `- ${Math.abs(intercept).toFixed(1)}`;
+    quantities.push({
+      label: "渐近线方程",
+      value: `x = ${h.toFixed(1)}, \\; y = ${a.toFixed(1)}x ${interceptStr} \\text{（垂直与斜渐近线）}`,
+    });
+  }
 
   quantities.push({
     label: "奇偶性与对称中心",
@@ -101,6 +137,27 @@ export function buildNikePanel(
     label: "单调区间分布",
     value: `${res.monotonicityDescription}`,
   });
+
+  // 平移模式与标准模式下的极值点量化呈现
+  if (res.criticalPoints.length > 0) {
+    const ptsStr = res.criticalPoints
+      .map(
+        (cp) =>
+          `${cp.type === "min" ? "极小值点" : "极大值点"} (${cp.x.toFixed(2)}, ${cp.y.toFixed(2)})`,
+      )
+      .join("，");
+    quantities.push({
+      label: "特征极值点",
+      value: ptsStr,
+    });
+
+    if (activeMode === "shifted") {
+      quantities.push({
+        label: "极值中点定值",
+        value: `\\frac{P_1 + P_2}{2} = C(${h.toFixed(1)}, \\; ${c.toFixed(1)}) \\text{（与对称中心重合）}`,
+      });
+    }
+  }
 
   if (evalPt.isValid) {
     quantities.push({
@@ -151,6 +208,33 @@ export function buildNikePanel(
         text: "高考考点：分式线性函数 $y = \\frac{Ax+B}{Cx+D}$ 的图象与对称性。通过分离常数法化为 $y = k_0 + \\frac{k_1}{x-h}$，快速求出对称中心 $(-\\frac{D}{C}, \\frac{A}{C})$ 与单调区间。",
         importance: "gaokao",
       });
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 分离常数化归",
+          detail: `将一次分式函数化为反比例平移标准型 $y = ${c.toFixed(1)} + \\frac{${b.toFixed(1)}}{x - ${h.toFixed(1)}}$，明确渐近线。`,
+          latex: `f(x) = c + \\frac{b}{x - h} = ${c.toFixed(1)} + \\frac{${b.toFixed(1)}}{x - ${h.toFixed(1)}}`,
+          rubric: "准确确定定义域 $x \\ne h$ 与对称中心 $(h, c)$ 得 2 分",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 对称与渐近性证明",
+          detail: `验证中心对称关系 $f(h + u) + f(h - u) = 2c$，渐近线交点即对称中心。`,
+          latex: `\\lim_{x \\to h} f(x) = \\infty, \\quad \\lim_{x \\to \\infty} f(x) = ${c.toFixed(1)}`,
+          rubric: "写出两条渐近线 $x = h$ 与 $y = c$ 得 2 分",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 分段单调性结论",
+          detail: `由分子 $b = ${b.toFixed(1)} ${b > 0 ? "> 0" : "< 0"}$ 判断各象限分支单调方向。`,
+          latex:
+            b > 0
+              ? `f(x) \\text{ 在 } (-\\infty, ${h.toFixed(1)}) \\text{ 和 } (${h.toFixed(1)}, +\\infty) \\text{ 上分别单调递减}`
+              : `f(x) \\text{ 在 } (-\\infty, ${h.toFixed(1)}) \\text{ 和 } (${h.toFixed(1)}, +\\infty) \\text{ 上分别单调递增}`,
+          rubric: "单调区间规范分写（严禁使用并集符号 $\\cup$）得 2 分",
+        },
+      );
     } else if (a * b > 0) {
       // 二次分式对勾型
       theorems.push({
@@ -164,6 +248,35 @@ export function buildNikePanel(
         text: "高考考点：二次分式 $y = \\frac{x^2+px+q}{x-h}$ 的值域与最值。通过分离常数法化为平移对勾模型，利用换元法 $u = x - h$ 结合基本不等式或导数求解最值与单调性。",
         importance: "gaokao",
       });
+
+      const deltaX = Math.sqrt(b / a);
+      const rX = (h + deltaX).toFixed(2);
+      const lX = (h - deltaX).toFixed(2);
+      const extVal = (2 * Math.sqrt(a * b)).toFixed(2);
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 分离常数与换元",
+          detail: `令 $u = x - ${h.toFixed(1)} \\; (u \\ne 0)$，将二次分式化归为标准对勾型 $g(u) = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}$。`,
+          latex: `u = x - h \\implies f(x) = a\\cdot u + \\frac{b}{u} + c`,
+          rubric: "准确写出换元定义域 $u \\ne 0$ 得 2 分",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 驻点与基本不等式",
+          detail: `当 $u > 0$ 时，应用均值不等式或求导 $f'(x) = ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{(x - ${h.toFixed(1)})^2} = 0$ 解得驻点。`,
+          latex: `u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)} \\implies x = ${rX}, \\quad y_{\\min} = ${c.toFixed(1)} + ${extVal}`,
+          rubric: "验证等号成立条件 $au = \\frac{b}{u}$ 得 2 分",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 极值与对称中心闭环",
+          detail: `由中心对称性得左支极大值点 $(${lX}, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)})$，两极值点中点恰为中心 $C(${h.toFixed(1)}, ${c.toFixed(1)})$。`,
+          latex: `\\text{最值集合：} y \\in (-\\infty, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)}] \\cup [${(c + 2 * Math.sqrt(a * b)).toFixed(2)}, +\\infty)`,
+          rubric: "写出完整值域与极值点坐标得 2 分",
+        },
+      );
     } else {
       // 二次分式飘带型
       theorems.push({
@@ -177,6 +290,30 @@ export function buildNikePanel(
         text: "高考考点：双曲飘带分式函数 $y = \\frac{x^2+px+q}{x-h}$ 的单调性应用。由于导数在定义域内恒大于 0，函数全域无极值，常考方程根的存在性与参数范围求解。",
         importance: "gaokao",
       });
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 识别飘带模型",
+          detail: `由 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 知 $ab = ${(a * b).toFixed(1)} < 0$，属于双曲飘带型。`,
+          latex: `f'(x) = ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{(x - ${h.toFixed(1)})^2} = ${a.toFixed(1)} + \\frac{${Math.abs(b).toFixed(1)}}{(x - ${h.toFixed(1)})^2}`,
+          rubric: "求导并化简导数表达式得 2 分",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 全域单调性证明",
+          detail: `由于平方项非负且分子为正，导数在去心定义域内恒满足 $f'(x) ${a > 0 ? "> 0" : "< 0"}$。`,
+          latex: `\\forall x \\ne ${h.toFixed(1)}, \\quad f'(x) ${a > 0 ? "> 0" : "< 0"}`,
+          rubric: "严密论证导数恒号且无变号零点得 2 分",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 零点存在与方程考法",
+          detail: `函数全域单调且无极值点，在高考中常结合方程 $f(x) = m$ 考查实根个数与零点存在性定理。`,
+          latex: `\\text{单调性：在 } (-\\infty, ${h.toFixed(1)}) \\text{ 与 } (${h.toFixed(1)}, +\\infty) \\text{ 上分别单调}${a > 0 ? "递增" : "递减"}`,
+          rubric: "得出单调区间与零点特征得 2 分",
+        },
+      );
     }
   } else {
     // standard
@@ -241,5 +378,12 @@ export function buildNikePanel(
     });
   }
 
-  return { quantities, theorems, gaokaoPoints, warnings, mnemonic };
+  return {
+    quantities,
+    theorems,
+    gaokaoPoints,
+    warnings,
+    mnemonic,
+    reasoningSteps: reasoningSteps.length > 0 ? reasoningSteps : undefined,
+  };
 }

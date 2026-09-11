@@ -51,19 +51,45 @@ export function NikeAnimation() {
   const equationLatex = useMemo(() => {
     const aVal = params.a.toFixed(1);
     const bVal = params.b.toFixed(1);
-    const hVal = params.h.toFixed(1);
-    const cVal = params.c.toFixed(1);
 
     const colA = `\\color{${MATH_COLORS.paramPrimary}}{${aVal}}`;
-    const colB = `\\color{${MATH_COLORS.paramSecondary}}{${bVal}}`;
-    const colH = `\\color{${MATH_COLORS.paramTertiary}}{${hVal}}`;
-    const colC = `\\color{${MATH_COLORS.paramTertiary}}{${cVal}}`;
+    const colB = `\\color{${MATH_COLORS.paramSecondary}}{${Math.abs(params.b).toFixed(1)}}`;
+    const colH = `\\color{${MATH_COLORS.paramTertiary}}{${Math.abs(params.h).toFixed(1)}}`;
+    const colC = `\\color{${MATH_COLORS.paramTertiary}}{${Math.abs(params.c).toFixed(1)}}`;
 
     if (activeMode === "shifted") {
-      return `y = ${colA}(x - ${colH}) + ${colC} + \\frac{${colB}}{x - ${colH}}`;
+      const hPart =
+        Math.abs(params.h) < 1e-4
+          ? "x"
+          : params.h > 0
+            ? `(x - ${colH})`
+            : `(x + ${colH})`;
+
+      const fracSign = params.b >= 0 ? "+" : "-";
+      const fracTerm = `${fracSign} \\frac{${colB}}{${hPart}}`;
+
+      if (Math.abs(params.a) < 1e-4) {
+        if (Math.abs(params.c) < 1e-4) {
+          return params.b >= 0
+            ? `y = \\frac{${colB}}{${hPart}}`
+            : `y = -\\frac{${colB}}{${hPart}}`;
+        }
+        const cSigned = params.c > 0 ? colC : `-${colC}`;
+        return `y = ${cSigned} ${fracTerm}`;
+      }
+
+      const aTerm = `${colA}${hPart}`;
+      const cTerm =
+        Math.abs(params.c) < 1e-4
+          ? ""
+          : params.c > 0
+            ? `+ ${colC}`
+            : `- ${colC}`;
+
+      return `y = ${aTerm} ${cTerm} ${fracTerm}`.replace(/\s+/g, " ");
     }
     if (activeMode === "amgm") {
-      return `f(x) = ${colA}x + \\frac{${colB}}{x} \\ge 2\\sqrt{${colA} \\cdot ${colB}}`;
+      return `f(x) = ${colA}x + \\frac{\\color{${MATH_COLORS.paramSecondary}}{${bVal}}}{x} \\ge 2\\sqrt{${colA} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${bVal}}}`;
     }
     return `y = ${colA}x + \\frac{${colB}}{x}`;
   }, [params.a, params.b, params.h, params.c, activeMode]);
@@ -166,6 +192,19 @@ export function NikeAnimation() {
     const { a, b, h, c } = params;
     const isNike = a * b > 0;
     if (activeMode === "shifted") {
+      const isLinear = Math.abs(a) < 1e-4;
+      const asymptoteItem: SceneLegendItem = isLinear
+        ? {
+            label: `水平渐近线 y = ${c.toFixed(1)}`,
+            color: MATH_COLORS.asymptote,
+            style: "dash",
+          }
+        : {
+            label: `斜渐近线 y = ${a.toFixed(1)}(x - ${h.toFixed(1)}) + ${c.toFixed(1)}`,
+            color: MATH_COLORS.asymptote,
+            style: "dash",
+          };
+
       return [
         {
           label: isNike
@@ -175,7 +214,9 @@ export function NikeAnimation() {
               : "平移退化曲线",
           color: isNike
             ? MATH_COLORS.function
-            : MATH_COLORS.functionTransformed,
+            : a * b < 0
+              ? MATH_COLORS.functionTransformed
+              : MATH_COLORS.degeneracy,
           style: "solid",
         },
         {
@@ -183,11 +224,7 @@ export function NikeAnimation() {
           color: MATH_COLORS.asymptote,
           style: "dash",
         },
-        {
-          label: `斜渐近线 y = ${a.toFixed(1)}(x-${h.toFixed(1)})+${c.toFixed(1)}`,
-          color: MATH_COLORS.asymptote,
-          style: "dash",
-        },
+        asymptoteItem,
         {
           label: `中心 C(${h.toFixed(1)}, ${c.toFixed(1)})`,
           color: MATH_COLORS.focusPoint,
@@ -416,8 +453,20 @@ export function NikeAnimation() {
 
             {activeMode === "shifted" && (
               <TipCard
-                variant="primary"
-                badge="高考模型 · 平移双曲与中心对称化归"
+                variant={
+                  Math.abs(params.a) < 1e-4
+                    ? "warning"
+                    : params.a * params.b < 0
+                      ? "primary"
+                      : "primary"
+                }
+                badge={
+                  Math.abs(params.a) < 1e-4
+                    ? "高考模型 · 分式线性反比例平移"
+                    : params.a * params.b < 0
+                      ? "高考模型 · 二次分式双曲飘带"
+                      : "高考模型 · 二次分式平移对勾"
+                }
                 condition={
                   <span>
                     对称中心为{" "}
@@ -430,15 +479,35 @@ export function NikeAnimation() {
                       formula={`x = ${params.h.toFixed(1)}`}
                       mode="inline"
                     />
-                    。令{" "}
-                    <KatexFormula
-                      formula={`u = x - ${params.h.toFixed(1)}`}
-                      mode="inline"
-                    />{" "}
-                    可化为标准对勾型。
+                    {Math.abs(params.a) < 1e-4 ? (
+                      <span>
+                        {" "}
+                        与水平渐近线{" "}
+                        <KatexFormula
+                          formula={`y = ${params.c.toFixed(1)}`}
+                          mode="inline"
+                        />
+                      </span>
+                    ) : (
+                      <span>
+                        。令{" "}
+                        <KatexFormula
+                          formula={`u = x - ${params.h.toFixed(1)}`}
+                          mode="inline"
+                        />{" "}
+                        可化为标准型
+                      </span>
+                    )}
+                    。
                   </span>
                 }
-                question="拖拽中心点 C 改变渐近线交点，观察函数图象如何整体平移；对比二次分式与一次分式在分离常数后的核心几何差异。"
+                question={
+                  Math.abs(params.a) < 1e-4
+                    ? "(1) 求分式线性函数的单调递减区间；(2) 探究动点 P 到两条垂直渐近线距离之积的定值性。"
+                    : params.a * params.b < 0
+                      ? "(1) 求导分析导数恒号性质，判定全域单调性；(2) 探究方程 f(x) = m 的实根个数与零点存在性分布。"
+                      : "(1) 设 u = x - h，求函数在 (h, +∞) 上的极小值点坐标与极小值；(2) 证明两极值点连线中点恒与中心点 C 重合。"
+                }
               />
             )}
           </LeftPanelSection>
@@ -475,6 +544,7 @@ export function NikeAnimation() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
+          reasoningSteps={mathData.reasoningSteps}
           title="对勾与双曲型看板"
         />
       }

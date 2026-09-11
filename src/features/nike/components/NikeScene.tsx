@@ -72,9 +72,6 @@ export function NikeScene({
     [a, b, h, c],
   );
 
-  // 4. 渐近线 / 单项拆分函数
-  const fnLine = useCallback((x: number) => a * (x - h) + c, [a, h, c]);
-
   // 5. 设计坐标计算
   const centerDesign = mathToDesign(h, c, scale);
   const probeDesign = evalPt.isValid ? mathToDesign(x0, evalPt.y, scale) : null;
@@ -183,12 +180,18 @@ export function NikeScene({
 
       {/* 斜渐近线 y = a(x-h) + c 或 水平渐近线 y = c (当 a=0 时) */}
       {Math.abs(a) >= 1e-4 ? (
-        <FunctionGraph
-          fn={fnLine}
+        <Asymptote
+          type="oblique"
+          value={a}
+          intercept={c - a * h}
           scale={scale}
-          color={withAlpha(MATH_COLORS.asymptote, 0.7)}
-          strokeWidth={1.5}
-          strokeDasharray="5,5"
+          label={
+            Math.abs(c - a * h) < 1e-4
+              ? `y = ${a.toFixed(1)}x`
+              : `y = ${a.toFixed(1)}x ${c - a * h >= 0 ? "+" : "-"} ${Math.abs(c - a * h).toFixed(1)}`
+          }
+          fontScale={fontScale}
+          color={MATH_COLORS.asymptote}
         />
       ) : (
         <Asymptote
