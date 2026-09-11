@@ -36,7 +36,7 @@ export function PropertiesParityScene({
   const fx1 = getFn(x1);
   const fx2 = getFn(x2);
 
-  const parityRes = evalFunctionParity(fnType === "sin" ? "cubic" : fnType, x0);
+  const parityRes = evalFunctionParity(fnType, x0);
 
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
     onParamChange("x0", Math.round(mathPt.x * 10) / 10);

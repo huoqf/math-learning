@@ -64,7 +64,7 @@ export type ParityType = "even" | "odd" | "neither";
  * 评估通用预设函数的奇偶性与对应值
  */
 export function evalFunctionParity(
-  fnType: "cubic" | "quadratic" | "abs" | "reciprocal",
+  fnType: "cubic" | "quadratic" | "abs" | "reciprocal" | "sin",
   x: number,
 ): {
   fx: number;
@@ -98,8 +98,15 @@ export function evalFunctionParity(
       parityDescription = "f(-x) = f(x)，属于偶函数，图象关于 y 轴轴对称。";
       break;
     case "reciprocal":
-      fx = x !== 0 ? 1 / x : NaN;
-      fNegX = -x !== 0 ? 1 / -x : NaN;
+      fx = Math.abs(x) > 1e-4 ? 1 / x : NaN;
+      fNegX = Math.abs(-x) > 1e-4 ? 1 / -x : NaN;
+      parity = "odd";
+      parityDescription =
+        "f(-x) = -f(x)，属于奇函数，图象关于坐标原点中心对称。";
+      break;
+    case "sin":
+      fx = Math.sin(x);
+      fNegX = Math.sin(-x);
       parity = "odd";
       parityDescription =
         "f(-x) = -f(x)，属于奇函数，图象关于坐标原点中心对称。";
@@ -110,7 +117,7 @@ export function evalFunctionParity(
 }
 
 /**
- * 计算割线斜率与单调性
+ * 计算割线斜率与平均变化率
  */
 export function evalSecantSlope(
   fn: (x: number) => number,
@@ -122,6 +129,7 @@ export function evalSecantSlope(
   deltaX: number;
   deltaY: number;
   slope: number;
+  secantTrend: "upward" | "downward" | "horizontal" | "invalid";
   monotonicity: "increasing" | "decreasing" | "constant" | "invalid";
   description: string;
 } {
@@ -134,6 +142,7 @@ export function evalSecantSlope(
       deltaX: x2 - x1,
       deltaY: NaN,
       slope: NaN,
+      secantTrend: "invalid",
       monotonicity: "invalid",
       description: "自变量包含无定义点",
     };
@@ -147,21 +156,34 @@ export function evalSecantSlope(
       deltaX,
       deltaY: 0,
       slope: NaN,
+      secantTrend: "invalid",
       monotonicity: "invalid",
       description: "x₁ 与 x₂ 重合，割线变为切线",
     };
   }
   const slope = deltaY / deltaX;
+  let secantTrend: "upward" | "downward" | "horizontal" = "horizontal";
   let monotonicity: "increasing" | "decreasing" | "constant" = "constant";
-  let description = "常数函数，割线斜率 k = 0";
+  let description = "割线水平，平均变化率 k = 0";
   if (slope > 1e-4) {
+    secantTrend = "upward";
     monotonicity = "increasing";
-    description = `割线斜率 k = ${slope.toFixed(2)} > 0，在 [${Math.min(x1, x2).toFixed(1)}, ${Math.max(x1, x2).toFixed(1)}] 区间单调递增`;
+    description = `割线斜率 k = ${slope.toFixed(2)} > 0，割线向上倾斜（两点平均变化率为正）`;
   } else if (slope < -1e-4) {
+    secantTrend = "downward";
     monotonicity = "decreasing";
-    description = `割线斜率 k = ${slope.toFixed(2)} < 0，在 [${Math.min(x1, x2).toFixed(1)}, ${Math.max(x1, x2).toFixed(1)}] 区间单调递减`;
+    description = `割线斜率 k = ${slope.toFixed(2)} < 0，割线向下倾斜（两点平均变化率为负）`;
   }
-  return { fx1, fx2, deltaX, deltaY, slope, monotonicity, description };
+  return {
+    fx1,
+    fx2,
+    deltaX,
+    deltaY,
+    slope,
+    secantTrend,
+    monotonicity,
+    description,
+  };
 }
 
 /**

@@ -10,8 +10,10 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { PropertiesScene } from "./components/PropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/funcProperties";
@@ -59,6 +61,7 @@ export function ParityPage() {
           step: meta.step ?? 0.1,
           importance: meta.importance,
           marks: meta.marks,
+          group: key === "x0" ? "奇偶性测试点" : "割线与单调性测试点",
         };
       });
   }, [params]);
@@ -72,44 +75,84 @@ export function ParityPage() {
       case "cubic":
         return {
           variant: "primary" as const,
-          badge: "高考基础 · 三次奇函数中心对称与单调递增",
-          condition: "函数 f(x) = x³，定义域 R 关于坐标原点对称。",
+          badge: "高考基础 · 三次奇函数中心对称与全局单调",
+          condition:
+            "函数 $f(x) = x^3$，定义域 $D = \\mathbb{R}$ 关于坐标原点对称。",
           question:
-            "验证 f(-x) = -f(x) 的原点中心对称性，以及割线斜率 k > 0 的单调递增性。",
+            "验证 $f(-x) = -f(x)$ 的原点中心对称特征，并观察割线斜率 $k > 0$ 恒正的单调递增性。",
         };
       case "quadratic":
         return {
           variant: "primary" as const,
           badge: "核心模型 · 二次偶函数轴对称与分段单调",
-          condition: "函数 f(x) = x²，定义域 R 关于 y 轴对称。",
+          condition:
+            "函数 $f(x) = x^2$，定义域 $D = \\mathbb{R}$ 关于 $y$ 轴对称。",
           question:
-            "验证 f(-x) = f(x) 的 y 轴对称性，观察割线斜率由负转正的单调性转折。",
+            "证明 $f(-x) = f(x)$ 的 $y$ 轴对称性，并求对称轴两侧割线斜率由负转正对应的单调区间。",
         };
       case "abs":
         return {
           variant: "warning" as const,
           badge: "高考高频 · 绝对值 V 型偶函数",
-          condition: "函数 f(x) = |x|，关于 y 轴折叠对称。",
+          condition: "函数 $f(x) = |x|$，图象关于 $y$ 轴折叠对称。",
           question:
-            "对比 x₀ 与 -x₀ 处函数值的相等性，并分析原点两侧固定斜率 ±1 的单调性跃迁。",
+            "对比 $x_0$ 与 $-x_0$ 处函数值的相等性，并分析原点两侧固定斜率 $\\pm 1$ 的单调性跃迁。",
         };
       case "reciprocal":
         return {
           variant: "danger" as const,
-          badge: "易错辨析 · 反比例奇函数与单调区间不能并",
-          condition: "函数 f(x) = 1/x，定义域 (-∞, 0) ∪ (0, +∞) 关于原点对称。",
+          badge: "易错避坑 · 反比例奇函数与单调区间严禁并集",
+          condition:
+            "函数 $f(x) = \\frac{1}{x}$，定义域 $(-\\infty, 0) \\cup (0, +\\infty)$ 关于原点对称。",
           question:
-            "验证 f(-x) = -f(x) 原点对称；警惕‘在定义域内单调递减’的错误表述。",
+            "验证 $f(-x) = -f(x)$ 原点中心对称；警惕跨分支连线斜率 $k > 0$ 的伪单调陷阱，严禁写成并集。",
         };
       case "sin":
         return {
           variant: "info" as const,
           badge: "三角核心 · 正弦奇函数与无穷周期单调区间",
-          condition: "函数 f(x) = sin x，定义域 R，f(-x) = -sin x。",
-          question: "观察原点中心对称特征，以及各单调增区间内部割线斜率正负。",
+          condition:
+            "函数 $f(x) = \\sin x$，定义域 $\\mathbb{R}$，满足 $f(-x) = -\\sin x$。",
+          question:
+            "证明正弦函数满足 $f(-x) = -f(x)$，并求解其在 $[-\\frac{\\pi}{2}, \\frac{\\pi}{2}]$ 上的单调性与割线斜率取值范围。",
         };
     }
   }, [fnType]);
+
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    return [
+      {
+        color: MATH_COLORS.function,
+        label: "基准函数 y = f(x)",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.paramPrimary,
+        label: "测试点 P₀(x₀, f(x₀))",
+        style: "point",
+      },
+      {
+        color: MATH_COLORS.functionTransformed,
+        label: "对称点 P'(-x₀, f(-x₀))",
+        style: "point",
+      },
+      {
+        color: MATH_COLORS.secantLine,
+        label: "割线 (斜率 k)",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.paramSecondary,
+        label: "割线端点 P₁",
+        style: "point",
+      },
+      {
+        color: MATH_COLORS.paramTertiary,
+        label: "割线端点 P₂",
+        style: "point",
+      },
+    ];
+  }, []);
 
   return (
     <ThreePanel
@@ -171,12 +214,14 @@ export function ParityPage() {
               mode="parity"
             />
           </AnimationSvgCanvas>
+          <SceneLegend items={legendItems} />
         </div>
       }
       right={
         <MathPanel
           quantities={mathData.quantities}
           theorems={mathData.theorems}
+          reasoningSteps={mathData.reasoningSteps}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}

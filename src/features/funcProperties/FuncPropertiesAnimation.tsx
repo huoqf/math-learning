@@ -120,8 +120,8 @@ export function FuncPropertiesAnimation() {
           ? "反比例函数定义域为集合 $\\{x \\mid x \\ne 0\\}$，值域为 $\\{y \\mid y \\ne 0\\}$。"
           : "研究函数性质前，必须首先确定定义域 $D$ 与值域 $R$。",
         question: isReciprocal
-          ? "拖动测试点观察趋近于 $x = 0$ 时的奇点间断，理解定义域受限的几何表现。"
-          : "拖动测试点验证取值范围，观察函数图象在平面坐标系中的覆盖区间。",
+          ? "求解当自变量趋近于 $x = 0$ 时的渐近行为，确定去心奇点对定义域的限制。"
+          : "通过垂直线检验与投影判定函数值域，求解函数在给定定义域上的取值范围。",
       };
     }
     if (mode === "parity") {
@@ -131,8 +131,8 @@ export function FuncPropertiesAnimation() {
         badge: isEven ? "核心性质 · 偶函数轴对称" : "核心性质 · 奇函数中心对称",
         condition: "定义域关于原点对称是讨论函数奇偶性的必要前置条件。",
         question: isEven
-          ? "观察测试点 $P_0(x_0, y_0)$ 与对称点 $P_0'(-x_0, y_0)$，验证满足 $f(-x) = f(x)$。"
-          : "观察测试点 $P_0(x_0, y_0)$ 与对称点 $P_0'(-x_0, -y_0)$，验证满足 $f(-x) = -f(x)$。",
+          ? "对比测试点 $P_0(x_0, y_0)$ 与对称点 $P_0'(-x_0, y_0)$，证明满足偶函数条件 $f(-x) = f(x)$。"
+          : "对比测试点 $P_0(x_0, y_0)$ 与对称点 $P_0'(-x_0, -y_0)$，证明满足奇函数条件 $f(-x) = -f(x)$。",
       };
     }
     const dist = Math.abs((params.axisB ?? 2) - (params.axisA ?? 0));
@@ -257,6 +257,7 @@ export function FuncPropertiesAnimation() {
         <MathPanel
           quantities={mathData.quantities}
           theorems={mathData.theorems}
+          reasoningSteps={mathData.reasoningSteps}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}

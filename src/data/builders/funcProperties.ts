@@ -159,85 +159,217 @@ export function buildFuncPropertiesPanel(
 
   // 2. 奇偶性与单调性模式
   if (mode === "parity") {
-    const parityRes = evalFunctionParity(
-      fnType === "sin" ? "cubic" : fnType,
-      x0,
-    );
+    const parityRes = evalFunctionParity(fnType, x0);
     const secantRes = evalSecantSlope(getFn, x1, x2);
+
+    let intrinsicMonotonicityText = "";
+    let intrinsicMonotonicityHighlight:
+      "positive" | "negative" | "extreme" | undefined = undefined;
+
+    if (fnType === "cubic") {
+      intrinsicMonotonicityText = "在 ℝ 上全局严格单调递增";
+      intrinsicMonotonicityHighlight = "positive";
+    } else if (fnType === "quadratic") {
+      if (x1 >= 0 && x2 >= 0) {
+        intrinsicMonotonicityText = "同在单调递增区间 [0, +∞)";
+        intrinsicMonotonicityHighlight = "positive";
+      } else if (x1 <= 0 && x2 <= 0) {
+        intrinsicMonotonicityText = "同在单调递减区间 (-∞, 0]";
+        intrinsicMonotonicityHighlight = "negative";
+      } else {
+        intrinsicMonotonicityText = "跨越对称轴 x = 0，整体不单调";
+        intrinsicMonotonicityHighlight = "extreme";
+      }
+    } else if (fnType === "abs") {
+      if (x1 >= 0 && x2 >= 0) {
+        intrinsicMonotonicityText = "同在单调增区间 [0, +∞) (斜率 +1)";
+        intrinsicMonotonicityHighlight = "positive";
+      } else if (x1 <= 0 && x2 <= 0) {
+        intrinsicMonotonicityText = "同在单调减区间 (-∞, 0] (斜率 -1)";
+        intrinsicMonotonicityHighlight = "negative";
+      } else {
+        intrinsicMonotonicityText = "跨越折点 x = 0，整体不单调";
+        intrinsicMonotonicityHighlight = "extreme";
+      }
+    } else if (fnType === "reciprocal") {
+      if (x1 * x2 > 0) {
+        intrinsicMonotonicityText =
+          x1 > 0 ? "同在右支递减区间 (0, +∞)" : "同在左支递减区间 (-∞, 0)";
+        intrinsicMonotonicityHighlight = "negative";
+      } else {
+        intrinsicMonotonicityText = "跨越去心奇点 x = 0，不可并集！";
+        intrinsicMonotonicityHighlight = "extreme";
+      }
+    } else if (fnType === "sin") {
+      intrinsicMonotonicityText = "无穷多增减区间交替 (周期 T = 2π)";
+      intrinsicMonotonicityHighlight = "extreme";
+    }
 
     const quantities: MathPanelData["quantities"] = [
       {
-        label: "采样点 x₀ / f(x₀)",
-        symbol: "f(x₀)",
+        label: "主测试点 P₀",
+        symbol: "P_0(x_0, y_0)",
         value: Number.isFinite(parityRes.fx)
-          ? parityRes.fx.toFixed(2)
+          ? `(${x0.toFixed(1)}, ${parityRes.fx.toFixed(2)})`
           : "无定义",
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "奇偶性判定",
+        label: "对称测试点 P'",
+        symbol: "P'(-x_0, y')",
+        value: Number.isFinite(parityRes.fNegX)
+          ? `(${(-x0).toFixed(1)}, ${parityRes.fNegX.toFixed(2)})`
+          : "无定义",
+        color: MATH_COLORS.functionTransformed,
+      },
+      {
+        label: "函数奇偶性判定",
         value:
-          fnType === "sin"
-            ? "奇函数 (Odd)"
-            : parityRes.parity === "even"
-              ? "偶函数 (Even)"
-              : parityRes.parity === "odd"
-                ? "奇函数 (Odd)"
-                : "非奇非偶",
+          parityRes.parity === "even"
+            ? "偶函数 (关于 y 轴对称)"
+            : parityRes.parity === "odd"
+              ? "奇函数 (关于原点对称)"
+              : "非奇非偶函数",
         highlight: "extreme",
       },
       {
-        label: "割线斜率 k",
-        symbol: "k",
+        label: "两点割线斜率 k",
+        symbol: "k = \\frac{\\Delta y}{\\Delta x}",
         value: Number.isFinite(secantRes.slope)
           ? secantRes.slope.toFixed(2)
           : "未定义",
         color: MATH_COLORS.secantLine,
       },
       {
-        label: "区间单调性",
+        label: "割线倾斜方向 (平均变化率)",
         value:
-          secantRes.monotonicity === "increasing"
-            ? "单调递增 (k > 0)"
-            : secantRes.monotonicity === "decreasing"
-              ? "单调递减 (k < 0)"
-              : "常数 / 重合",
+          secantRes.secantTrend === "upward"
+            ? "向上倾斜 (k > 0)"
+            : secantRes.secantTrend === "downward"
+              ? "向下倾斜 (k < 0)"
+              : secantRes.secantTrend === "horizontal"
+                ? "水平割线 (k = 0)"
+                : "未定义",
         highlight:
-          secantRes.monotonicity === "increasing" ? "positive" : "negative",
+          secantRes.secantTrend === "upward"
+            ? "positive"
+            : secantRes.secantTrend === "downward"
+              ? "negative"
+              : undefined,
+      },
+      {
+        label: "函数固有的单调性判定",
+        value: intrinsicMonotonicityText,
+        highlight: intrinsicMonotonicityHighlight,
       },
     ];
 
     const theorems: MathPanelData["theorems"] = [
       {
-        name: "奇偶性代数充要条件",
+        name: "函数奇偶性代数充要条件",
         latex:
-          "\\text{偶函数: } f(-x) = f(x), \\quad \\text{奇函数: } f(-x) = -f(x)",
+          "\\text{偶函数: } f(-x) = f(x) \\iff y \\text{ 轴对称}; \\quad \\text{奇函数: } f(-x) = -f(x) \\iff \\text{原点中心对称}",
         level: "core",
-        prerequisites: ["定义域必须关于坐标原点对称！"],
+        prerequisites: [
+          "前提铁律：定义域 D 必须关于坐标原点对称（不对称直接断定非奇非偶）",
+          "全称要求：必须对定义域内的每一个 x 均恒成立",
+        ],
       },
       {
-        name: "单调性割线斜率判定定理",
+        name: "函数单调性严格定义 (全称量词充要条件)",
         latex:
-          "\\frac{f(x_2) - f(x_1)}{x_2 - x_1} > 0 \\iff f(x) \\text{ 单调递增}",
-        level: "important",
-        prerequisites: ["x₁ ≠ x₂ 且均属于定义域区间"],
+          "\\forall x_1 < x_2 \\in I, \\quad \\frac{f(x_2) - f(x_1)}{x_2 - x_1} > 0 \\iff f(x) \\text{ 在区间 } I \\text{ 上单调递增}",
+        level: "core",
+        prerequisites: [
+          "全称性：单调性是区间属性，必须区间内任意两点割线斜率恒为正，两孤立测试点割线斜率大于零绝不等于区间单调递增",
+          "区间独立性：两个单调区间之间严禁用并集符号 ∪ 联结",
+        ],
       },
       {
         name: "奇同偶反单调性定理",
         latex: "\\text{奇函数在对称区间单调性相同；偶函数在对称区间单调性相反}",
         level: "important",
-        prerequisites: ["定义域区间关于原点对称"],
+        prerequisites: ["单调区间必须关于坐标原点对称分布"],
+      },
+      {
+        name: "反比例函数单调区间表述红线",
+        latex:
+          "f(x) = \\frac{1}{x} \\text{ 在 } (-\\infty, 0) \\text{ 与 } (0, +\\infty) \\text{ 分别单调递减}",
+        level: "important",
+        prerequisites: [
+          "严禁书写为在 (-∞, 0) ∪ (0, +∞) 上递减，跨分支斜率为正为伪单调陷阱",
+        ],
+      },
+    ];
+
+    // 高考大题规范推导链三部曲
+    const reasoningSteps: MathPanelData["reasoningSteps"] = [
+      {
+        step: 1,
+        title: "① 审题定法 · 奇偶性定义法代数核验",
+        detail:
+          fnType === "reciprocal"
+            ? "第一步：求得定义域为 $D = (-\\infty, 0) \\cup (0, +\\infty)$，关于原点对称；第二步：代入 $-x$ 计算 $f(-x) = \\frac{1}{-x} = -\\frac{1}{x} = -f(x)$；第三步：满足 $f(-x) = -f(x)$，判定为奇函数，图象关于坐标原点对称。"
+            : fnType === "quadratic"
+              ? "第一步：定义域为 $\\mathbb{R}$ 关于原点对称；第二步：计算 $f(-x) = (-x)^2 = x^2 = f(x)$；第三步：满足偶函数充要条件，图象关于 $y$ 轴轴对称。"
+              : fnType === "abs"
+                ? "第一步：定义域为 $\\mathbb{R}$ 关于原点对称；第二步：计算 $f(-x) = |-x| = |x| = f(x)$；第三步：满足偶函数充要条件，图象关于 $y$ 轴轴对称。"
+                : fnType === "sin"
+                  ? "第一步：定义域为 $\\mathbb{R}$ 关于原点对称；第二步：依据诱导公式计算 $f(-x) = \\sin(-x) = -\\sin x = -f(x)$；第三步：判定为奇函数，图象关于原点对称。"
+                  : "第一步：定义域为 $\\mathbb{R}$ 关于原点对称；第二步：计算 $f(-x) = (-x)^3 = -x^3 = -f(x)$；第三步：判定为奇函数，图象关于原点对称。",
+        latex:
+          fnType === "reciprocal"
+            ? "f(-x) = \\frac{1}{-x} = -\\frac{1}{x} = -f(x) \\implies \\text{奇函数 (关于原点对称)}"
+            : fnType === "quadratic"
+              ? "f(-x) = (-x)^2 = x^2 = f(x) \\implies \\text{偶函数 (关于 } y \\text{ 轴对称)}"
+              : fnType === "abs"
+                ? "f(-x) = |-x| = |x| = f(x) \\implies \\text{偶函数 (关于 } y \\text{ 轴对称)}"
+                : fnType === "sin"
+                  ? "f(-x) = \\sin(-x) = -\\sin x = -f(x) \\implies \\text{奇函数 (关于原点对称)}"
+                  : "f(-x) = (-x)^3 = -x^3 = -f(x) \\implies \\text{奇函数 (关于原点对称)}",
+      },
+      {
+        step: 2,
+        title: "② 建模联立 · 单调性定义法作差因式分解",
+        detail:
+          fnType === "cubic"
+            ? "任取 $x_1 < x_2$，作差变形：$f(x_2) - f(x_1) = x_2^3 - x_1^3 = (x_2 - x_1)(x_2^2 + x_1 x_2 + x_1^2)$。因 $x_2 - x_1 > 0$ 且配方后 $x_2^2 + x_1 x_2 + x_1^2 = (x_2 + \\frac{1}{2}x_1)^2 + \\frac{3}{4}x_1^2 > 0$，故差值恒大于零，在 $\\mathbb{R}$ 上严格递增。"
+            : fnType === "quadratic"
+              ? "任取 $x_1 < x_2$，作差分解：$f(x_2) - f(x_1) = x_2^2 - x_1^2 = (x_2 - x_1)(x_2 + x_1)$。当 $x_1, x_2 \\in [0, +\\infty)$ 时，$x_1+x_2>0$，差式大于零单调递增；当 $x_1, x_2 \\in (-\\infty, 0]$ 时，$x_1+x_2<0$，差式小于零单调递减。"
+              : fnType === "reciprocal"
+                ? "任取 $x_1 < x_2$，作差通分：$f(x_2) - f(x_1) = \\frac{1}{x_2} - \\frac{1}{x_1} = \\frac{x_1 - x_2}{x_1 x_2} = -\\frac{x_2 - x_1}{x_1 x_2}$。当同支时 $x_1 x_2 > 0$，分子大于零故整体小于零，分别单调递减；异支时 $x_1 x_2 < 0$，差式大于零，此为跨分支伪单调！"
+                : "定义法作差因式分解是高考解答题证明单调性的唯一规范步骤，经历「①取值设元 → ②作差变形 → ③判断符号 → ④下定结论」四步闭环。",
+        latex:
+          fnType === "cubic"
+            ? "\\Delta y = (x_2 - x_1)\\left[\\left(x_2 + \\frac{x_1}{2}\\right)^2 + \\frac{3x_1^2}{4}\\right] > 0 \\implies f(x) \\nearrow"
+            : fnType === "quadratic"
+              ? "\\Delta y = (x_2 - x_1)(x_1 + x_2) \\begin{cases} > 0, & x_1, x_2 \\ge 0 \\\\ < 0, & x_1, x_2 \\le 0 \\end{cases}"
+              : fnType === "reciprocal"
+                ? "\\Delta y = -\\frac{x_2 - x_1}{x_1 x_2} < 0 \\quad (x_1 x_2 > 0 \\text{ 同支})"
+                : "\\frac{f(x_2) - f(x_1)}{x_2 - x_1} \\text{ 符号决定单调性}",
+      },
+      {
+        step: 3,
+        title: "③ 求解反思 · 采样割线斜率与避坑辨析",
+        detail: `当前取点 $x_1 = ${x1.toFixed(1)}, x_2 = ${x2.toFixed(1)}$，计算两点平均变化率 $k = \\frac{\\Delta y}{\\Delta x} = ${Number.isFinite(secantRes.slope) ? secantRes.slope.toFixed(2) : "\\text{未定义}"}$。切记：割线斜率 $k$ 仅反映两测试点连线倾角，不可代替定义域内的充要单调性。`,
+        latex: Number.isFinite(secantRes.slope)
+          ? `k = \\frac{f(${x2.toFixed(1)}) - f(${x1.toFixed(1)})}{${x2.toFixed(1)} - (${x1.toFixed(1)})} = ${secantRes.slope.toFixed(2)}`
+          : "x_1 = x_2 \\implies k \\text{ 未定义 (割线退化)}",
       },
     ];
 
     const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
       {
-        text: "奇函数在原点处的性质：若奇函数 f(x) 在 x = 0 处有定义，则必有 f(0) = 0！这是高考赋值法秒杀待定系数的关键。",
+        text: "奇函数在原点处的性质：若奇函数 f(x) 在 x = 0 处有定义，则必有 f(0) = 0！这是高考赋值法秒杀待定系数的关键（如分式、对数含参函数）。",
         importance: "gaokao",
       },
       {
-        text: "单调性与不等式转化：利用单调性可直接脱去外层函数符号，将抽象不等式 f(A) > f(B) 转化为自变量不等式。",
+        text: "单调性与不等式脱括号：利用函数单调性可直接脱去外层 f 符号，将抽象不等式 f(A) > f(B) 转化为内层自变量不等式，脱括号时必须首先强调自变量落在定义域内！",
         importance: "gaokao",
+      },
+      {
+        text: "奇函数导数是偶函数，偶函数导数是奇函数：高考导数压轴题中，利用导函数的奇偶性往往能直接确定导函数极值点与对称中心。",
+        importance: "core",
       },
     ];
 
@@ -249,12 +381,35 @@ export function buildFuncPropertiesPanel(
       });
     }
 
+    if (fnType === "reciprocal") {
+      if (Math.abs(x0) < 1e-4 || Math.abs(x1) < 1e-4 || Math.abs(x2) < 1e-4) {
+        warnings.push({
+          text: "测试点落入 x = 0 去心奇点！分母为零无定义。",
+          level: "danger",
+        });
+      }
+      if (x1 * x2 < 0) {
+        warnings.push({
+          text: "【高考易错警示】x₁ 与 x₂ 分居原点两侧！反比例函数在 (-∞, 0) 与 (0, +∞) 分别单调递减，跨分支割线斜率 k > 0 绝非递增！严禁用并集 ∪ 联结单调区间！",
+          level: "danger",
+        });
+      }
+    }
+
+    if ((fnType === "quadratic" || fnType === "abs") && x1 * x2 < 0) {
+      warnings.push({
+        text: "【概念辨析】x₁ 与 x₂ 跨越对称轴 x = 0！割线斜率仅为两点平均变化率，函数在该闭区间上先减后增，并不单调！",
+        level: "warning",
+      });
+    }
+
     return {
       quantities,
       theorems,
+      reasoningSteps,
       gaokaoPoints,
       warnings,
-      mnemonic: "奇在原点f(0)=0，偶图y轴左右对称，割线斜率为正增。",
+      mnemonic: "奇在原点f(0)=0，偶图y轴对称，单调作差定符号，反比区间不相连。",
     };
   }
 

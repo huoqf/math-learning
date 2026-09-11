@@ -27,6 +27,54 @@ describe("buildFuncPropertiesPanel 构建器测试", () => {
     expect(
       data.quantities.some((q) => String(q.value).includes("奇函数")),
     ).toBe(true);
+    expect(data.reasoningSteps).toBeDefined();
+    expect(data.reasoningSteps?.length).toBe(3);
+  });
+
+  it("奇偶性模式 (parity): 正弦函数正确定为奇函数且生成完整推导链", () => {
+    const data = buildFuncPropertiesPanel(
+      { x0: 1.5, x1: 0.5, x2: 1.2 },
+      { mode: "parity", fnType: "sin" },
+    );
+    expect(
+      data.quantities.some((q) => String(q.value).includes("奇函数")),
+    ).toBe(true);
+    expect(data.reasoningSteps?.[0].latex).toContain("\\sin(-x)");
+  });
+
+  it("单调性模式 (parity): 反比例函数跨支 (x1 < 0 < x2) 触发高考易错警示与伪增防坑提示", () => {
+    const data = buildFuncPropertiesPanel(
+      { x0: 1.5, x1: -1.0, x2: 1.0 },
+      { mode: "parity", fnType: "reciprocal" },
+    );
+    expect(
+      data.warnings?.some(
+        (w) => w.text.includes("高考易错警示") && w.text.includes("严禁用并集"),
+      ),
+    ).toBe(true);
+    expect(
+      data.quantities.some(
+        (q) => q.label.includes("固有") && String(q.value).includes("不可并集"),
+      ),
+    ).toBe(true);
+  });
+
+  it("单调性模式 (parity): 二次函数跨对称轴 (x1 < 0 < x2) 触发概念辨析警示，拒绝盲目断定单调", () => {
+    const data = buildFuncPropertiesPanel(
+      { x0: 1.5, x1: -1.0, x2: 2.0 },
+      { mode: "parity", fnType: "quadratic" },
+    );
+    expect(
+      data.warnings?.some(
+        (w) => w.text.includes("跨越对称轴") && w.text.includes("并不单调"),
+      ),
+    ).toBe(true);
+    expect(
+      data.quantities.some(
+        (q) =>
+          q.label.includes("固有") && String(q.value).includes("整体不单调"),
+      ),
+    ).toBe(true);
   });
 
   it("对称性模式 (symmetry - axis): 正确验证双对称轴推导周期性 T = 2|a - b| 及推导链", () => {
