@@ -15,7 +15,8 @@ export function buildTriangleSolvePanel(
   params: Record<string, number>,
   config?: Record<string, unknown>,
 ): MathPanelData {
-  const studyMode = (config?.studyMode as string) || "sine";
+  const studyMode =
+    (config?.studyMode as string) || (config?.mode as string) || "sine";
 
   const angleA = params.angleA ?? 60;
   const b = params.b ?? 5;

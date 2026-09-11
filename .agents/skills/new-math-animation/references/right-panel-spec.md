@@ -38,7 +38,7 @@ interface MathQuantity {
   label: string;                                  // 中文名称（如"动点 P 实时坐标"）
   symbol?: string;                                // LaTeX 符号（如 "P(\\lambda)"）
   value: number | string;                         // 数值或坐标字符串（实时更新）
-  unit?: string;                                  // 单位（如 "°"、"cm²"）
+  unit?: string;                                  // 单位（纯数学角度如 "°"，严禁 cm/m² 等物理量纲）
   color?: string;                                 // MATH_COLORS.* token（三位一体绑定）
   highlight?: 'positive' | 'negative' | 'zero' | 'extreme'; // 特殊高亮状态
   isInvariant?: boolean;                          // 是否为定值不变量（金色星标显示）

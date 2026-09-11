@@ -99,7 +99,7 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
     },
     {
       animId: "anim-vector-polarization-apollonius",
-      params: { bcLength: 6, amLength: 5 },
+      params: { bcLength: 6, pointX: 2, pointY: 4 },
       config: { studyMode: "polarization" },
     },
     {

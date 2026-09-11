@@ -14,7 +14,14 @@ export function buildVectorDotProductPanel(
 ): MathPanelData {
   const studyMode = (config?.studyMode as string) || "defProj";
 
-  const mathRes = computeVectorDotProduct(params);
+  const effectiveParams = {
+    ...params,
+    usePolarGeom: Boolean(
+      params.usePolarGeom ??
+      (studyMode === "defProj" && params.thetaDeg !== undefined),
+    ),
+  };
+  const mathRes = computeVectorDotProduct(effectiveParams);
 
   const {
     normA,

@@ -271,11 +271,19 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
             Number.isFinite(q.value),
             `[${animId}] 特征量 [${q.label}] 产生了 Infinity 溢出`,
           ).toBe(true);
+
+          // 高中数学学科值域与定义域守卫断言 (Domain Guardians)
+          assertHighSchoolMathDomain(animId, q.label, q.value);
         } else if (typeof q.value === "string") {
           expect(
             q.value.includes("NaN") || q.value.includes("undefined"),
             `[${animId}] 特征量 [${q.label}] 字符串包含未解析的 NaN/undefined: "${q.value}"`,
           ).toBe(false);
+
+          const parsedNum = parseFloat(q.value);
+          if (!Number.isNaN(parsedNum)) {
+            assertHighSchoolMathDomain(animId, q.label, parsedNum);
+          }
         }
       });
 
@@ -308,4 +316,132 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       }
     });
   });
+
+  describe("核心专题数学临界退化点与极端边界参数安全性巡检 (Critical & Degenerate Boundary Safety)", () => {
+    const criticalCases: TestCase[] = [
+      // 1. 二次函数：二次项接近退化 a=0.01、判别式等于零 Delta=0
+      {
+        animId: "anim-quadratic",
+        params: { a: 0.01, b: 2, c: 1 },
+        description: "二次项近退化微小系数",
+      },
+      {
+        animId: "anim-quadratic",
+        params: { a: 1, b: 2, c: 1 },
+        description: "重根判别式零临界 Delta=0",
+      },
+      // 2. 解析几何：大斜率近铅垂直线与切线临界
+      {
+        animId: "anim-conic-line",
+        params: { a: 3, b: 2, k: 10, m: 0.5 },
+        description: "解析几何大斜率近铅垂线",
+      },
+      // 3. 数列：公差为零常数列退化 d=0、等比公比 q=1
+      {
+        animId: "anim-sequence",
+        params: { a1: 5, d: 0, N: 10 },
+        config: { activeMode: "arithmetic" },
+        description: "等差数列常数列退化 d=0",
+      },
+      {
+        animId: "anim-sequence",
+        params: { a1: 2, q: 1, N: 10 },
+        config: { activeMode: "geometric" },
+        description: "等比数列公比为1退化 q=1",
+      },
+      // 4. 导数：原点切点与极值临界
+      {
+        animId: "anim-derivative-tangent",
+        params: { x0: 0, a: 1, b: 0 },
+        description: "导数切点位于原点 x0=0",
+      },
+      // 5. 立体几何：三边相等正方体外接球退化
+      {
+        animId: "anim-solid-ball-models",
+        params: { a: 2, b: 2, c: 2 },
+        config: { modelType: "corner" },
+        description: "外接球正方体墙角退化 a=b=c",
+      },
+    ];
+
+    criticalCases.forEach(({ animId, params, config, description }) => {
+      it(`[${animId}] 临界退化参数巡检 (${description})：面板数据稳健且无 NaN 崩溃`, () => {
+        const data = buildMathQuantities(animId, params, config);
+        expect(data, `[${animId}] 临界参数应当能正常返回数据`).toBeDefined();
+
+        data.quantities.forEach((q) => {
+          if (typeof q.value === "number") {
+            expect(
+              Number.isNaN(q.value),
+              `[${animId}] (${description}) 特征量 [${q.label}] 产生 NaN`,
+            ).toBe(false);
+          } else if (typeof q.value === "string") {
+            expect(
+              q.value.includes("NaN"),
+              `[${animId}] (${description}) 特征量 [${q.label}] 包含 NaN: "${q.value}"`,
+            ).toBe(false);
+          }
+        });
+      });
+    });
+  });
 });
+
+/**
+ * 高中数学学科值域与定义域守卫断言
+ */
+function assertHighSchoolMathDomain(
+  animId: string,
+  label: string,
+  val: number,
+) {
+  // 1. 概率值域守卫：0 <= P <= 1 (或百分比 0 <= P% <= 100)
+  if (
+    label.includes("概率") ||
+    label.includes("后验") ||
+    label.startsWith("P(")
+  ) {
+    if (label.includes("%") || val > 1) {
+      expect(
+        val >= -1e-6 && val <= 100.0001,
+        `[${animId}] 概率百分比特征量 [${label}] 数值 ${val} 超出高中数学 [0, 100]% 合法区间！`,
+      ).toBe(true);
+    } else {
+      expect(
+        val >= -1e-6 && val <= 1.0001,
+        `[${animId}] 概率特征量 [${label}] 数值 ${val} 超出高中数学 [0, 1] 合法概率值域！`,
+      ).toBe(true);
+    }
+  }
+
+  // 2. 几何半径与线段距离非负守卫
+  if (
+    label.includes("外接球半径") ||
+    label.includes("内切球半径") ||
+    label.includes("底面半径") ||
+    label.includes("圆半径") ||
+    label.includes("距离") ||
+    label.includes("全长") ||
+    label.includes("长 |")
+  ) {
+    expect(
+      val >= -1e-5,
+      `[${animId}] 几何长度/半径特征量 [${label}] 出现负数 ${val}，严重违反几何公理！`,
+    ).toBe(true);
+  }
+
+  // 3. 圆锥曲线离心率定义域守卫
+  if (label.includes("离心率")) {
+    if (label.includes("椭圆") || animId.includes("ellipse")) {
+      expect(
+        val > 0 && val < 1.0001,
+        `[${animId}] 椭圆离心率 [${label}] 数值 ${val} 违反高中数学椭圆定义 (0 < e < 1)！`,
+      ).toBe(true);
+    } else if (label.includes("双曲线") || animId.includes("hyperbola")) {
+      expect(
+        val >= 0.9999,
+        `[${animId}] 双曲线离心率 [${label}] 数值 ${val} 违反高中数学双曲线定义 (e > 1)！`,
+      ).toBe(true);
+    }
+  }
+}

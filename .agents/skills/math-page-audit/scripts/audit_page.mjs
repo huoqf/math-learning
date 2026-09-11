@@ -159,6 +159,21 @@ for (const filePath of files) {
     }
   }
 
+  // 全文级检查 3E：左屏动线五级层级顺序刚性校验 (模式 -> 情景 -> 参数 -> 导引)
+  if (isAnimationPage && content.includes('<ParamControl') && content.includes('<TipCard')) {
+    const paramControlIndex = content.indexOf('<ParamControl');
+    const tipCardIndex = content.lastIndexOf('<TipCard');
+
+    if (tipCardIndex !== -1 && paramControlIndex !== -1 && tipCardIndex < paramControlIndex) {
+      issues.push({
+        lineNum: 1,
+        type: '左屏动线倒挂违规',
+        message: 'TipCard 教学导引必须置于左屏最底部，严禁将 TipCard 置于 ParamControl 参数滑块上方导致动线倒挂',
+        snippet: '检测到 TipCard 出现在 ParamControl 之前',
+      });
+    }
+  }
+
   // 全文级检查 3C：右屏数据装配缺少模式上下文透传 (防止右屏降级到默认分支导致数据显示不相干)
   if (isAnimationPage && content.includes('buildMathQuantities(') && content.includes('<SelectGrid')) {
     const buildCallMatch = content.match(/buildMathQuantities\s*\(\s*[^,]+,\s*[^,]+(?:,\s*\{([^}]*)\})?\s*\)/);
@@ -186,7 +201,12 @@ for (const filePath of files) {
 
   // 全文级检查 3D：Builder 跨模式定理无分支装配风险 (防止右屏同时显示所有模式定理)
   if (filePath.includes('builders') && content.includes('theorems') && content.includes('mode')) {
-    const hasUnconditionalPush = /theorems\.push\([\s\S]*?theorems\.push\(/g.test(content) && !content.includes('switch') && !content.includes('else if');
+    const hasModeBranch =
+      content.includes('switch') ||
+      content.includes('else if') ||
+      /if\s*\(\s*(activeMode|subMode|mode|studyMode|modelType|model)\b/.test(content);
+    const hasUnconditionalPush =
+      /theorems\.push\([\s\S]*?theorems\.push\(/g.test(content) && !hasModeBranch;
     if (hasUnconditionalPush) {
       issues.push({
         lineNum: 1,
@@ -479,8 +499,16 @@ for (const filePath of files) {
       }
     }
 
-    // 15. 检查 3D 范式 A (综合法) 纯净度
-    if ((filePath.includes('solidGeometry') || filePath.includes('math3d')) && (content.includes('范式 A') || content.includes('综合法') || content.includes('paradigm: "A"'))) {
+    // 15. 检查 3D 范式 A (综合法) 纯净度 (仅对纯综合法场景组件进行严格限制，排除支持向量/坐标双模式的复合页面)
+    const isDedicatedParadigmA =
+      (filePath.includes('solidGeometry') || filePath.includes('math3d')) &&
+      (content.includes('范式 A') || content.includes('综合法') || content.includes('paradigm: "A"')) &&
+      !content.includes('向量法') &&
+      !content.includes('坐标法') &&
+      !content.includes('vector') &&
+      !content.includes('coordinate');
+
+    if (isDedicatedParadigmA) {
       if (/<CoordinateAxes3D\b/.test(line) || /<Vector3DArrow\b/.test(line) || /<Scene3DGrid\b/.test(line)) {
         issues.push({
           lineNum,

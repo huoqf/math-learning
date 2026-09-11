@@ -433,4 +433,72 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
       },
     ]);
   });
+
+  it("解析几何：直线与椭圆相交联立模型应当满足代数判别式与弦长公式契约", () => {
+    // 椭圆 x^2/9 + y^2/4 = 1, 直线 y = 0.5x + 0.5
+    // 联立: 4x^2 + 9(0.25x^2 + 0.5x + 0.25) = 36 => 6.25x^2 + 4.5x - 33.75 = 0
+    // Delta = 4.5^2 - 4 * 6.25 * (-33.75) = 20.25 + 843.75 = 864
+    // 弦长 L = sqrt(1 + k^2) * sqrt(Delta) / |A| = sqrt(1.25) * sqrt(864) / 6.25 ≈ 5.257
+    const a = 3;
+    const b = 2;
+    const k = 0.5;
+    const m = 0.5;
+    const A = b * b + a * a * k * k; // 4 + 9 * 0.25 = 6.25
+    const B = 2 * a * a * k * m; // 2 * 9 * 0.5 * 0.5 = 4.5
+    const C = a * a * (m * m - b * b); // 9 * (0.25 - 4) = -33.75
+    const delta = B * B - 4 * A * C; // 864
+    const chord = (Math.sqrt(1 + k * k) * Math.sqrt(delta)) / A;
+
+    verifyTopicSyncContract([
+      {
+        name: "直线与椭圆相交弦长模型",
+        animId: "anim-conic-line",
+        modeOptions: { conicType: "ellipse", studyMode: "general" },
+        params: { a, b, k, m, conicTypeIdx: 0, studyModeIdx: 0 },
+        lessonType: "concept",
+        groundTruth: {
+          "判别式 Δ": delta,
+          相交弦长: chord,
+        },
+        perturbation: {
+          params: { a, b, k: 1.0, m: 0.5, conicTypeIdx: 0, studyModeIdx: 0 },
+          dynamicQuantityLabels: ["判别式 Δ", "相交弦长"],
+        },
+        expectedQuantityLabels: ["位置关系", "判别式 Δ", "相交弦长"],
+      },
+    ]);
+  });
+
+  it("数列专题：等差数列前 n 项和二次函数模型与最值项契约验证", () => {
+    // a1 = 7, d = -2, N = 8
+    // 对称轴 x_sym = 0.5 - a1/d = 0.5 - 7/(-2) = 4.00
+    // 首项 7, 公差 -2 => an = 7 + (n-1)*(-2) = 9 - 2n
+    // a3 = 3 > 0, a4 = 1 > 0, a5 = -1 < 0 => n=4 时 S_4 = 4*(7+1)/2 = 16 达到最大
+    verifyTopicSyncContract([
+      {
+        name: "等差数列二次函数最值模型",
+        animId: "anim-sequence",
+        modeOptions: {
+          activeMode: "arithmetic",
+          arithmeticSubMode: "quadratic",
+        },
+        params: { a1: 7, d: -2, N: 8 },
+        lessonType: "concept",
+        groundTruth: {
+          "末项 a_{8}": -7.0,
+          "前 8 项和 S_{8}": 0.0,
+        },
+        perturbation: {
+          params: { a1: 7, d: -1, N: 8 },
+          dynamicQuantityLabels: ["末项 a_{8}", "前 8 项和 S_{8}"],
+        },
+        expectedQuantityLabels: [
+          "末项 a_{8}",
+          "前 8 项和 S_{8}",
+          "抛物线对称轴 x_sym",
+          "S_n 最大值项",
+        ],
+      },
+    ]);
+  });
 });
