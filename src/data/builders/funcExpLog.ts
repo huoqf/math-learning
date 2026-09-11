@@ -439,6 +439,12 @@ export function buildFuncExpLogPanel(
           highlight: "positive",
         },
         {
+          label: "PP' 垂直对称轴判定",
+          symbol: "k_{PP'} \\cdot 1",
+          value: "-1 (垂直成立)",
+          highlight: "positive",
+        },
+        {
           label: "反函数对数验证",
           symbol: "\\log_a(y_0)",
           value: expLogRes.isValidBase
@@ -447,15 +453,21 @@ export function buildFuncExpLogPanel(
           color: MATH_COLORS.functionTransformed,
         },
         {
+          label: "相切临界底数 a_c",
+          symbol: "e^{1/e}",
+          value: `${AC_CRITICAL.toFixed(4)} (切点 (e, e))`,
+        },
+        {
           label: "两曲线交点情况",
           value:
             a > 0 && a < 1
               ? "有 1 个交点 (在 y = x 上)"
-              : a < AC_CRITICAL
-                ? "有 2 个交点"
-                : Math.abs(a - AC_CRITICAL) < 0.05
-                  ? "相切于 (e, e)"
-                  : "无公共点",
+              : Math.abs(a - AC_CRITICAL) < 0.05
+                ? "相切于 (e, e) · 唯一公切线 y = x"
+                : a < AC_CRITICAL
+                  ? "有 2 个交点 (均在 y = x 上)"
+                  : "无公共点 (指数在对数上方)",
+          highlight: Math.abs(a - AC_CRITICAL) < 0.05 ? "extreme" : "positive",
         },
       );
     } else {
@@ -702,19 +714,19 @@ export function buildFuncExpLogPanel(
         {
           step: 2,
           title: "垂直平分 · 对称中点与斜率判定",
-          detail: `动点 $P(${x0.toFixed(2)}, ${expVal.toFixed(2)})$ 与对称点 $P'(${expVal.toFixed(2)}, ${x0.toFixed(2)})$ 连线斜率为 $-1$，垂直于直线 $y = x$；中点 $M(${midX.toFixed(2)}, ${midX.toFixed(2)})$ 落在直线 $y = x$ 上，证明图象关于 $y = x$ 轴对称。`,
+          detail: `设原曲线上探究动点为 $P(${x0.toFixed(2)}, ${expVal.toFixed(2)})$，反函数对应点为 $P'(${expVal.toFixed(2)}, ${x0.toFixed(2)})$。连线斜率 $k_{PP'} = \\frac{${x0.toFixed(2)} - ${expVal.toFixed(2)}}{${expVal.toFixed(2)} - ${x0.toFixed(2)}} = -1$，与直线 $y = x$ 斜率之积为 $-1$，证明 $PP' \\perp (y = x)$；中点 $M(${midX.toFixed(2)}, ${midX.toFixed(2)})$ 纵横坐标严格相等，落在对称轴 $y = x$ 上，充要证实直线 $y = x$ 垂直平分线段 $PP'$。`,
           latex:
-            "k_{PP'} = -1 \\implies PP' \\perp (y = x), \\quad M \\in \\{ (x, y) \\mid y = x \\}",
+            "\\begin{cases} k_{PP'} = \\frac{x_0 - a^{x_0}}{a^{x_0} - x_0} = -1 \\implies PP' \\perp (y = x) \\\\ M\\left(\\frac{x_0 + a^{x_0}}{2}, \\frac{x_0 + a^{x_0}}{2}\\right) \\in \\{ (x, y) \\mid y = x \\} \\end{cases}",
           rubric: "证明两点连线被对称轴垂直平分",
         },
         {
           step: 3,
           title: "相切临界 · 公切线与切点坐标",
           detail:
-            "两曲线相切时公切线必为 $y = x$，由联立方程组得相切点为 $(e, e)$，对应相切临界底数 $a = e^{1/e} \\approx 1.4447$。",
+            "两曲线相切时公切线必为对称轴 $y = x$。联立切点重合与导数相等方程组 $\\begin{cases} a^x = x \\\\ a^x \\ln a = 1 \\end{cases}$，代入消元得 $x \\ln a = 1 \\implies a^x = e \\implies x = e$。因此公切点必为 $(e, e)$，对应相切临界底数 $a_c = e^{1/e} \\approx 1.4447$。当 $1 < a < e^{1/e}$ 时在 $y = x$ 上有 2 个交点；当 $a > e^{1/e}$ 时无公共点。",
           latex:
-            "a_c = e^{1/e} \\approx 1.445, \\quad \\text{公切线 } y = x, \\quad \\text{切点 } (e, e)",
-          rubric: "阐明相切临界与交点个数讨论准则",
+            "\\begin{cases} a^x = x \\\\ (a^x)' = a^x \\ln a = 1 \\end{cases} \\implies x = e, \\quad a_c = e^{1/e} \\approx 1.445 \\quad (\\text{相切于 } (e, e))",
+          rubric: "阐明联立导数方程求解相切临界与交点个数讨论准则",
         },
       ];
     } else {

@@ -110,5 +110,23 @@ describe("buildFuncExpLogPanel 构建器测试", () => {
     ).toBe(true);
     expect(data.reasoningSteps).toBeDefined();
     expect(data.reasoningSteps?.length).toBe(3);
+    // 验证指数反函数模式下的垂直判定与临界底数看板量
+    expect(data.quantities.some((q) => q.label.includes("中点 M"))).toBe(true);
+    expect(
+      data.quantities.some((q) => q.label.includes("垂直对称轴判定")),
+    ).toBe(true);
+    expect(data.quantities.some((q) => q.label.includes("相切临界底数"))).toBe(
+      true,
+    );
+
+    // 验证底数接近临界常数 1.4 时正确命中相切判断
+    const dataTangent = buildFuncExpLogPanel(
+      { baseA: 1.4, x0: 1.5 },
+      { subExpLog: "exponential", explogMode: "inverse" },
+    );
+    const intersectQty = dataTangent.quantities.find((q) =>
+      q.label.includes("两曲线交点情况"),
+    );
+    expect(intersectQty?.value).toContain("相切于 (e, e)");
   });
 });

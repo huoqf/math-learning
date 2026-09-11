@@ -17,7 +17,7 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ExpLogScene } from "./components/ExpLogScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/funcExpLog";
+import { defaultParams } from "@/data/registries/funcExpLog";
 
 export function ExponentialPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
@@ -48,23 +48,44 @@ export function ExponentialPage() {
   }, [showInverse, params.baseA]);
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keys = ["x0", "baseA"];
-    return keys
-      .filter((key) => key in paramMeta)
-      .map((key) => {
-        const meta = paramMeta[key];
-        return {
-          key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
-          step: meta.step ?? 0.1,
-          importance: meta.importance,
-          marks: meta.marks,
-        };
-      });
+    const aVal = params.baseA ?? 2.0;
+    const x0Val = params.x0 ?? 1.5;
+    return [
+      {
+        key: "x0",
+        label: "探究动点 x0",
+        labelFormula: `\\text{探究动点 } \\color{${MATH_COLORS.function}}{x_0}`,
+        value: x0Val,
+        min: -4.0,
+        max: 4.0,
+        step: 0.1,
+        importance: "core",
+      },
+      {
+        key: "baseA",
+        label: "指数底数 a",
+        labelFormula: `\\text{底数 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
+        value: aVal,
+        min: 0.2,
+        max: 4.0,
+        step: 0.1,
+        importance: "core",
+        marks: [
+          {
+            value: 1.0,
+            variant: "critical",
+            label: "退化 (a=1)",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} = 1`,
+          },
+          {
+            value: 1.4,
+            variant: "recommended",
+            label: "相切临界",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a_c = e^{1/e}}`,
+          },
+        ],
+      },
+    ];
   }, [params]);
 
   const handleParamChange = (key: string, value: number) => {
