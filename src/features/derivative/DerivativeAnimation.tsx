@@ -105,8 +105,10 @@ export function DerivativeAnimation() {
           Math.min(currentPreset.x0Range[1], value),
         );
       } else if (key === "dx") {
-        clampedValue = Math.max(-2.0, Math.min(2.0, value));
-        if (Math.abs(clampedValue) < 0.01) clampedValue = 0.01;
+        clampedValue = Math.max(-1.5, Math.min(1.5, value));
+        if (Math.abs(clampedValue) < 0.02) {
+          clampedValue = value >= 0 ? 0.05 : -0.05;
+        }
       }
       setParams((prev) => ({ ...prev, [key]: clampedValue }));
     },
@@ -168,6 +170,8 @@ export function DerivativeAnimation() {
           ];
         }
       } else if (key === "dx") {
+        min = -1.5;
+        max = 1.5;
         marks = [
           { value: -1.0, label: "-1.0" },
           { value: -0.05, label: "左逼近", variant: "critical" },
@@ -210,16 +214,16 @@ export function DerivativeAnimation() {
     if (mode === "secant_limit") {
       return {
         badge: "探究一 · 割线逼近切线（以直代曲 · 极限思想）",
-        condition: `考察函数 ${preset.latex} 在切点 P 处的平均变化率。`,
+        condition: `考察函数 $${preset.latex}$ 在切点 $P(x_0, f(x_0))$ 处的平均变化率。`,
         question:
-          "调节割线步长 Δx 趋近于 0，观察割线 PQ 如何平滑极限逼近切线 l。",
+          "调节割线步长 $\\Delta x \\to 0$（体验左、右双侧逼近），计算割线斜率 $k_{\\text{割}} = \\frac{\\Delta y}{\\Delta x}$ 的极限值，验证其与切点瞬时变化率 $f'(x_0)$ 的代数一致性。",
       };
     }
     return {
       badge: "探究二 · 切线方程与斜率（几何性质 · 点斜式）",
-      condition: `考察函数 ${preset.latex} 随切点 P(x₀, y₀) 移动时切线的变化。`,
+      condition: `考察函数 $${preset.latex}$ 随切点 $P(x_0, y_0)$ 移动时切线 $l$ 的变化。`,
       question:
-        "调节切点 P 的横坐标 $x_0$，求解切线斜率 $k = f'(x_0)$ 的符号与大小，验证水平切线与函数极值点存在性的充要联系。",
+        "调节切点 $P$ 的横坐标 $x_0$，求解切线斜率 $k = f'(x_0)$ 的符号与大小，探究水平切线（$f'(x_0) = 0$）与函数极值点存在的必要条件。",
     };
   }, [mode, preset, fnKey]);
 
