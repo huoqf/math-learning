@@ -177,7 +177,7 @@ export function AmgmPage() {
                   。
                 </span>
               }
-              question="拖动动点 P 逼近极小值点，观察虚线何时满足两项等长 ax = b/x？体会积定和最小与等号成立条件。"
+              question="(1) 验证两项乘积为定值的前提下，应用基本不等式求 $f(x)$ 最小值；(2) 求解等号成立时动点 $P$ 的横坐标，验证 $ax = \\frac{b}{x}$ 的充要条件。"
             />
           </LeftPanelSection>
         </LeftPanel>

@@ -355,7 +355,7 @@ export const InequalityBasicScene: React.FC<InequalityBasicSceneProps> = ({
                   />
                 )}
 
-                {/* 文本说明 */}
+                {/* 面积几何代数说明（纯代数符号标注，杜绝浮点数跳动） */}
                 <text
                   x={p0.x + widthPx / 2}
                   y={pTotal.y - 12}
@@ -364,7 +364,7 @@ export const InequalityBasicScene: React.FC<InequalityBasicSceneProps> = ({
                   fontSize={fontScale(12)}
                   fontWeight="bold"
                 >
-                  大正方形面积 (a+b)² = {squareGeo.totalArea.toFixed(2)}
+                  大正方形面积 S = (a + b)²
                 </text>
                 <text
                   x={p0.x + widthPx / 2}
@@ -374,8 +374,7 @@ export const InequalityBasicScene: React.FC<InequalityBasicSceneProps> = ({
                   fontSize={fontScale(11)}
                   fontWeight="600"
                 >
-                  4个矩形面积 4ab = {squareGeo.fourRectsArea.toFixed(2)} +
-                  中心差值 (a-b)² = {squareGeo.innerSquareArea.toFixed(2)}
+                  4个矩形面积 4ab + 差值正方形 (a - b)²
                 </text>
               </g>
             );
@@ -432,8 +431,7 @@ export const InequalityBasicScene: React.FC<InequalityBasicSceneProps> = ({
                   fontSize={fontScale(11)}
                   fontWeight="bold"
                 >
-                  最小值点 (√k, 2√k) = ({nikeGeo.minX.toFixed(2)},{" "}
-                  {nikeGeo.minY.toFixed(2)})
+                  极小值点 (√k, 2√k)
                 </text>
               </g>
             );

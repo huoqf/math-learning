@@ -9,6 +9,7 @@ import {
   SelectGrid,
   TipCard,
 } from "@/components/UI";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
@@ -70,7 +71,7 @@ export function InequalityBasicAnimation() {
     });
   };
 
-  // 根据模式过滤参数
+  // 根据模式过滤参数，在 nike 模式下特化参数 a 为自变量 x
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<string, string[]> = {
       semicircle: ["a", "b"],
@@ -82,21 +83,91 @@ export function InequalityBasicAnimation() {
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        const isNikeX = studyMode === "nike" && key === "a";
         return {
           key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
+          label: isNikeX ? "自变量 x" : meta.label,
+          labelFormula: isNikeX ? "x" : meta.labelFormula,
           value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
           step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
+          description: isNikeX ? "动点探针的横坐标 x" : meta.description,
+          descriptionFormula: isNikeX ? "x > 0" : meta.descriptionFormula,
           importance: meta.importance,
-          marks: meta.marks,
+          marks: isNikeX ? undefined : meta.marks,
         };
       });
   }, [params, studyMode]);
+
+  // 图例配置
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (studyMode === "semicircle") {
+      return [
+        {
+          label: "算术平均半径 OC (AM)",
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          label: "几何平均半弦 PC (GM)",
+          color: MATH_COLORS.focusPoint,
+          style: "solid",
+        },
+        {
+          label: "调和平均投影段 CD (HM)",
+          color: MATH_COLORS.paramTertiary,
+          style: "solid",
+        },
+        {
+          label: "分比段 AP(a), PB(b)",
+          color: MATH_COLORS.paramSecondary,
+          style: "solid",
+        },
+      ];
+    }
+    if (studyMode === "square") {
+      return [
+        {
+          label: "大正方形边长 (a+b)",
+          color: MATH_COLORS.function,
+          style: "solid",
+        },
+        {
+          label: "矩形乘积项 a×b",
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          label: "中心差值小正方形 (a-b)²",
+          color: MATH_COLORS.focusPoint,
+          style: "dash",
+        },
+      ];
+    }
+    return [
+      {
+        label: "对勾曲线 y = x + k/x",
+        color: MATH_COLORS.function,
+        style: "solid",
+      },
+      {
+        label: "最小值水平线 y = 2√k",
+        color: MATH_COLORS.asymptote,
+        style: "dash",
+      },
+      {
+        label: "极小值驻点 (√k, 2√k)",
+        color: MATH_COLORS.focusPoint,
+        style: "point",
+      },
+      {
+        label: "当前探针动点 P(x, f(x))",
+        color: MATH_COLORS.paramPrimary,
+        style: "point",
+      },
+    ];
+  }, [studyMode]);
 
   // 三位一体公式渲染 (使用参数语义色着色)
   const topFormulaLatex = useMemo(() => {
@@ -109,6 +180,32 @@ export function InequalityBasicAnimation() {
       return `x + \\frac{\\color{${colorK}}{k}}{x} \\ge 2\\sqrt{\\color{${colorK}}{k}} \\quad (x > 0)`;
     }
   }, [studyMode]);
+
+  // 教学导引动态联动
+  const tipConfig = useMemo(() => {
+    if (studyMode === "semicircle") {
+      return {
+        badge: "高考基石 · 半圆射影几何均值模型",
+        condition: `以 $AB = a + b$ 为直径作半圆，$O$ 为圆心，满足正实数 $a = ${params.a.toFixed(1)} > 0, b = ${params.b.toFixed(1)} > 0$。`,
+        question:
+          "(1) 应用射影定理证明半弦长 $PC = \\sqrt{ab}$；(2) 由直角边不大于斜边证明四均值链 $HM \\le GM \\le AM$，指出等号成立条件。",
+      };
+    }
+    if (studyMode === "square") {
+      return {
+        badge: "高考基石 · 赵爽弦图面积割补模型",
+        condition: `大正方形边长为 $a + b = ${(params.a + params.b).toFixed(1)}$，分割为 4 个直角边为 $a, b$ 的矩形与中央差值小正方形。`,
+        question:
+          "(1) 写出大正方形的面积恒等展开式；(2) 利用实数平方非负性 $(a-b)^2 \\ge 0$ 证明基本不等式 $a^2 + b^2 \\ge 2ab$。",
+      };
+    }
+    return {
+      badge: "高考重点 · 积定和最小对勾最值模型",
+      condition: `自变量 $x > 0$，两项乘积为定值 $x \\cdot \\frac{k}{x} = ${params.k.toFixed(1)}$。`,
+      question:
+        "(1) 应用基本不等式求解函数 $f(x) = x + \\frac{k}{x}$ 的理论最小值；(2) 求解等号成立时自变量 $x$ 的极小值驻点坐标。",
+    };
+  }, [studyMode, params]);
 
   return (
     <ThreePanel
@@ -142,15 +239,9 @@ export function InequalityBasicAnimation() {
           <LeftPanelSection title="教学导引" compact>
             <TipCard
               variant="primary"
-              badge="高考基石 · 基本不等式几何证明"
-              condition="正实数 a, b > 0，算术平均 (a+b)/2 与几何平均 √(ab)。"
-              question={
-                studyMode === "semicircle"
-                  ? "观察直径上的半弦长与半径关系，探究四均值链条调和 ≤ 几何 ≤ 算术 ≤ 平方的大小顺序。"
-                  : studyMode === "square"
-                    ? "通过大正方形与四个直角三角形面积关系，探究 a²+b² ≥ 2ab 的面积几何证明与等号条件。"
-                    : "探究对勾函数在 x = √k 处取得极小值 2√k 的均值不等式本质。"
-              }
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
             />
           </LeftPanelSection>
         </LeftPanel>
@@ -176,6 +267,7 @@ export function InequalityBasicAnimation() {
               studyMode={studyMode}
             />
           </AnimationSvgCanvas>
+          <SceneLegend items={legendItems} />
         </div>
       }
       right={
@@ -185,6 +277,7 @@ export function InequalityBasicAnimation() {
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
+          reasoningSteps={mathData.reasoningSteps}
           title="基本不等式看板"
         />
       }

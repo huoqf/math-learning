@@ -59,8 +59,6 @@ export function useInequalityBasicScene({
   const labels = useMemo(() => {
     if (studyMode !== "semicircle") return [];
 
-    const R = semicircleGeo.radius;
-
     const rawLabels = [
       {
         key: "A",
@@ -70,7 +68,7 @@ export function useInequalityBasicScene({
         y:
           mathToDesign(semicircleGeo.pointA.x, semicircleGeo.pointA.y, scale)
             .y + 16,
-        text: `A (-${R.toFixed(1)})`,
+        text: "A",
         anchor: "end" as const,
       },
       {
@@ -81,7 +79,7 @@ export function useInequalityBasicScene({
         y:
           mathToDesign(semicircleGeo.pointB.x, semicircleGeo.pointB.y, scale)
             .y + 16,
-        text: `B (${R.toFixed(1)})`,
+        text: "B",
         anchor: "start" as const,
       },
       {
@@ -91,7 +89,7 @@ export function useInequalityBasicScene({
         y:
           mathToDesign(semicircleGeo.pointP.x, semicircleGeo.pointP.y, scale)
             .y + 18,
-        text: `P(切分点)`,
+        text: "P",
         anchor: "middle" as const,
       },
       {
@@ -101,20 +99,31 @@ export function useInequalityBasicScene({
         y:
           mathToDesign(semicircleGeo.pointC.x, semicircleGeo.pointC.y, scale)
             .y - 12,
-        text: `C (GM = ${means.gm.toFixed(2)})`,
+        text: "C",
         anchor: "middle" as const,
+      },
+      {
+        key: "D",
+        x:
+          mathToDesign(semicircleGeo.pointD.x, semicircleGeo.pointD.y, scale)
+            .x + 10,
+        y:
+          mathToDesign(semicircleGeo.pointD.x, semicircleGeo.pointD.y, scale)
+            .y - 8,
+        text: "D",
+        anchor: "start" as const,
       },
       {
         key: "O",
         x: mathToDesign(0, 0, scale).x,
         y: mathToDesign(0, 0, scale).y + 18,
-        text: `O (AM = ${means.am.toFixed(2)})`,
+        text: "O",
         anchor: "middle" as const,
       },
     ];
 
     return avoidLabelOverlap(rawLabels, 16);
-  }, [semicircleGeo, scale, means, studyMode]);
+  }, [semicircleGeo, scale, studyMode]);
 
   return {
     means,

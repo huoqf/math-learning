@@ -187,6 +187,30 @@ export function buildNikePanel(
         label: "均值不等式最小值",
         value: `y_{\\min} = 2\\sqrt{${a.toFixed(1)} \\times ${b.toFixed(1)}} = ${minY.toFixed(2)} \\quad (x = ${minX.toFixed(2)})`,
       });
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 检验一正与乘积定值",
+          detail: `由题设 $a = ${a.toFixed(1)} > 0, b = ${b.toFixed(1)} > 0$，自变量 $x > 0$，两正数项乘积为定值 $(${a.toFixed(1)}x)\\left(\\frac{${b.toFixed(1)}}{x}\\right) = ${(a * b).toFixed(1)}$。`,
+          latex: `u = ax > 0, \\quad v = \\frac{b}{x} > 0 \\implies u \\cdot v = ab = ${(a * b).toFixed(1)}`,
+          rubric: "准确验证正数前提与乘积定值条件得 2 分",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 应用均值不等式放缩",
+          detail: `由基本不等式 $u + v \\ge 2\\sqrt{uv}$，代入项得 $f(x) \\ge 2\\sqrt{ab}$。`,
+          latex: `f(x) = ${a.toFixed(1)}x + \\frac{${b.toFixed(1)}}{x} \\ge 2\\sqrt{${a.toFixed(1)} \\times ${b.toFixed(1)}} = ${minY.toFixed(2)}`,
+          rubric: "规范写出基本不等式公式与数值代入得 2 分",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 检验等号成立条件",
+          detail: `当且仅当两项相等 $ax = \\frac{b}{x}$，即 $x^2 = \\frac{b}{a}$ 时取等号，因 $x > 0$ 解得极小值点 $x = ${minX.toFixed(2)}$。`,
+          latex: `ax = \\frac{b}{x} \\iff x = \\sqrt{\\frac{b}{a}} = ${minX.toFixed(2)} \\implies f_{\\min} = ${minY.toFixed(2)}`,
+          rubric: "求出等号成立点并在定义域内验证可达性得 2 分",
+        },
+      );
     }
 
     gaokaoPoints.push({
@@ -324,6 +348,32 @@ export function buildNikePanel(
         prerequisites: ["a · b > 0", "x ≠ 0"],
         note: `在 $x = \\pm\\sqrt{\\frac{b}{a}}$ 处分别取得极值，第一象限驻点 $x = ${Math.sqrt(b / a).toFixed(2)}$`,
       });
+
+      const statX = Math.sqrt(b / a);
+      const extY = 2 * Math.sqrt(a * b);
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 求导并通分化简",
+          detail: `求导得 $f'(x) = a - \\frac{b}{x^2} = \\frac{ax^2 - b}{x^2}$，分母在去心定义域上恒正，导数符号完全由分子二次项决定。`,
+          latex: `f'(x) = ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{x^2} = \\frac{${a.toFixed(1)}x^2 - ${b.toFixed(1)}}{x^2}`,
+          rubric: "正确求导并通分因式分解得 2 分",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 解驻点与单调性讨论",
+          detail: `令 $f'(x) = 0$ 解得对称驻点 $x = \\pm\\sqrt{\\frac{b}{a}} = \\pm ${statX.toFixed(2)}$。在 $(0, ${statX.toFixed(2)})$ 上 $f'(x) < 0$ 单调递减；在 $[${statX.toFixed(2)}, +\\infty)$ 上 $f'(x) > 0$ 单调递增。`,
+          latex: `f'(x) = 0 \\implies x_1 = -${statX.toFixed(2)}, \\; x_2 = ${statX.toFixed(2)}`,
+          rubric: "解出驻点并规范划分单调区间得 2 分",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 极值求解与奇偶对称",
+          detail: `在第一象限极小值点为 $(${statX.toFixed(2)}, ${extY.toFixed(2)})$，由奇函数性质 $f(-x) = -f(x)$ 确定第二象限极大值点为 $(-${statX.toFixed(2)}, -${extY.toFixed(2)})$。`,
+          latex: `f_{\\min} = f(${statX.toFixed(2)}) = ${extY.toFixed(2)}, \\quad f_{\\max} = f(-${statX.toFixed(2)}) = -${extY.toFixed(2)}`,
+          rubric: "求出极值点坐标与闭区间值域得 2 分",
+        },
+      );
     } else if (a * b < 0) {
       theorems.push({
         name: "双曲飘带型函数单调性定理",
@@ -331,6 +381,30 @@ export function buildNikePanel(
         prerequisites: ["a · b < 0", "x ≠ 0"],
         note: `导数恒${a > 0 ? "正" : "负"}，函数在 $(-\\infty, 0)$ 和 $(0, +\\infty)$ 上均为单调${a > 0 ? "递增" : "递减"}，全域无极值点`,
       });
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 识别飘带导数符号",
+          detail: `因 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 异号，导数式中 $-\\frac{b}{x^2}$ 与 $a$ 同号。`,
+          latex: `f'(x) = ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{x^2} = ${a.toFixed(1)} + \\frac{${Math.abs(b).toFixed(1)}}{x^2}`,
+          rubric: "求导化简并判断各项符号得 2 分",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 证明全域单调性",
+          detail: `平方项 $x^2 > 0$ 且分子为正，导数在去心定义域上恒有 $f'(x) ${a > 0 ? "> 0" : "< 0"}$，无变号驻点。`,
+          latex: `\\forall x \\ne 0, \\quad f'(x) ${a > 0 ? "> 0" : "< 0"}`,
+          rubric: "严密论证导数恒号且无变号零点得 2 分",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 单调区间规范书写",
+          detail: `函数在两去心分支上分别单调，全域无极值点，结合方程考查根的存在性。`,
+          latex: `f(x) \\text{ 在 } (-\\infty, 0) \\text{ 和 } (0, +\\infty) \\text{ 上分别单调}${a > 0 ? "递增" : "递减"}`,
+          rubric: "规范书写单调区间（严禁使用并集符号）得 2 分",
+        },
+      );
     } else {
       theorems.push({
         name: "退化函数性质定理",
