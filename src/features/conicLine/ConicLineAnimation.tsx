@@ -13,12 +13,13 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { ConicLineScene } from "./components/ConicLineScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   defaultParams,
   paramMeta,
-  presetsByMode,
+  getConicLinePresets,
 } from "@/data/registries/conicLine";
 import type { ConicType, StudyMode } from "@/math/conicLine";
 
@@ -55,19 +56,35 @@ export function ConicLineAnimation() {
     });
   }, [params, conicType, studyMode]);
 
-  // 参数变更处理器（拖拽或手动微调时自动退回 free 自由探究）
+  // 参数变更处理器（拖拽或手动微调时自动退回 free 自由探究，并保证高中数学椭圆 a > b > 0 课标约束）
   const handleParamChange = (key: string, value: number) => {
     setActivePreset("free");
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setParams((prev) => {
+      const next = {
+        ...prev,
+        [key]: value,
+      };
+      if (conicType === "ellipse") {
+        if (key === "a") {
+          const curB = next.b ?? 2;
+          if (value <= curB) {
+            next.b = Number(Math.max(0.5, value - 0.5).toFixed(1));
+          }
+        } else if (key === "b") {
+          const curA = next.a ?? 3;
+          if (value >= curA) {
+            next.a = Number((value + 0.5).toFixed(1));
+          }
+        }
+      }
+      return next;
+    });
   };
 
-  // 典型预设切换处理器
+  // 典型预设切换处理器（依当前曲线与研究视角双重派发）
   const handlePresetChange = (presetKey: string) => {
     setActivePreset(presetKey);
-    const presets = presetsByMode[studyMode] ?? [];
+    const presets = getConicLinePresets(conicType, studyMode);
     const target = presets.find((p) => p.key === presetKey);
     if (target && Object.keys(target.params).length > 0) {
       setParams((prev) => {
@@ -82,29 +99,69 @@ export function ConicLineAnimation() {
     }
   };
 
-  // 模式切换处理器
+  // 曲线类型切换处理器（自动协同应用新曲线在该模式下的自由探究健康基准）
+  const handleConicTypeChange = (type: ConicType) => {
+    setConicType(type);
+    setActivePreset("free");
+    const presets = getConicLinePresets(type, studyMode);
+    const freePreset = presets.find((p) => p.key === "free");
+    if (freePreset && Object.keys(freePreset.params).length > 0) {
+      setParams((prev) => {
+        const next = { ...prev };
+        Object.entries(freePreset.params).forEach(([k, v]) => {
+          if (typeof v === "number") next[k] = v;
+        });
+        return next;
+      });
+    }
+  };
+
+  // 模式切换处理器（自动协同应用当前曲线在新模式下的自由探究健康基准）
   const handleModeChange = (mode: StudyMode) => {
     setStudyMode(mode);
     setActivePreset("free");
+    const presets = getConicLinePresets(conicType, mode);
+    const freePreset = presets.find((p) => p.key === "free");
+    if (freePreset && Object.keys(freePreset.params).length > 0) {
+      setParams((prev) => {
+        const next = { ...prev };
+        Object.entries(freePreset.params).forEach(([k, v]) => {
+          if (typeof v === "number") next[k] = v;
+        });
+        return next;
+      });
+    }
   };
 
-  // 重置参数
+  // 重置参数（重置为当前曲线与当前视角的基准参数）
   const handleReset = () => {
     setActivePreset("free");
-    setParams({
-      ...defaultParams,
-    });
+    const presets = getConicLinePresets(conicType, studyMode);
+    const freePreset = presets.find((p) => p.key === "free");
+    if (freePreset && Object.keys(freePreset.params).length > 0) {
+      setParams((prev) => {
+        const next = { ...prev };
+        Object.entries(freePreset.params).forEach(([k, v]) => {
+          if (typeof v === "number") next[k] = v;
+        });
+        return next;
+      });
+    } else {
+      setParams({
+        ...defaultParams,
+      });
+    }
   };
 
-  // 当前模式下的预设列表
+  // 当前曲线与模式下的精准特化预设列表
   const currentPresets = useMemo(() => {
-    const list = presetsByMode[studyMode] ?? [];
+    const list = getConicLinePresets(conicType, studyMode);
     return list.map((item) => ({
       key: item.key,
       label: item.label,
       description: item.description,
     }));
-  }, [studyMode]);
+  }, [conicType, studyMode]);
 
   // 根据当前圆锥曲线与模式动态过滤并结构化分组 ParamConfig
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -165,6 +222,15 @@ export function ConicLineAnimation() {
       keys.forEach((key) => {
         if (key in paramMeta) {
           const meta = paramMeta[key];
+          const filteredMarks =
+            key === "k" && conicType !== "hyperbola"
+              ? meta.marks?.filter(
+                  (m) =>
+                    !m.label?.includes("渐近线") &&
+                    !m.labelFormula?.includes("b/a"),
+                )
+              : meta.marks;
+
           configs.push({
             key,
             label: meta.label,
@@ -177,7 +243,7 @@ export function ConicLineAnimation() {
             description: meta.description,
             descriptionFormula: meta.descriptionFormula,
             importance: meta.importance,
-            marks: meta.marks,
+            marks: filteredMarks,
           });
         }
       });
@@ -224,12 +290,18 @@ export function ConicLineAnimation() {
     return `${curveTex} \\quad \\text{与} \\quad ${lineTex}`;
   }, [conicType, studyMode, params]);
 
-  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  // 左屏教学提示与题设导引（依当前曲线与研究视角双重深度特化）
   const tipConfig = useMemo(() => {
+    const conicName =
+      conicType === "ellipse"
+        ? "椭圆"
+        : conicType === "hyperbola"
+          ? "双曲线"
+          : "抛物线";
+
     if (activePreset !== "free") {
-      const targetPreset = (presetsByMode[studyMode] ?? []).find(
-        (p) => p.key === activePreset,
-      );
+      const presets = getConicLinePresets(conicType, studyMode);
+      const targetPreset = presets.find((p) => p.key === activePreset);
       if (targetPreset) {
         if (
           activePreset.includes("tangent") ||
@@ -237,10 +309,12 @@ export function ConicLineAnimation() {
         ) {
           return {
             variant: "warning" as const,
-            badge: `高考经典 · ${targetPreset.label}`,
-            condition: "直线与圆锥曲线处于相切临界状态，恰有一个公共切点。",
-            question:
-              "如何由联立方程的判别式确定相切条件，求解切点坐标与切线方程？",
+            badge: `高考典型 · ${conicName}${targetPreset.label}`,
+            condition:
+              "动直线与" +
+              conicName +
+              "处于相切临界状态，此时联立判别式 $\\Delta = 0$，恰有唯一实数切点。",
+            question: `如何列出联立方程求出相切临界参数，并求解唯一公共切点的坐标？`,
           };
         }
         if (
@@ -250,9 +324,23 @@ export function ConicLineAnimation() {
         ) {
           return {
             variant: "primary" as const,
-            badge: `高考经典 · ${targetPreset.label}`,
-            condition: "割线通过圆锥曲线焦点且垂直于对称轴（通径）。",
-            question: "求解最短焦点弦长（通径长），探究通径端点的几何坐标。",
+            badge: `高考压轴 · ${conicName}通径极值`,
+            condition: `割线通过${conicName}焦点且垂直于对称轴（通径，$\\theta = \\pi/2$），此时斜率不存在。`,
+            question: `证明垂直对称轴的焦点弦长（通径）为极小值，并探究通径两端点的代数坐标。`,
+          };
+        }
+        if (
+          activePreset.includes("asymptote") ||
+          activePreset.includes("parallel")
+        ) {
+          return {
+            variant: "danger" as const,
+            badge: `易错陷阱 · ${conicName}降阶一元一次`,
+            condition:
+              conicType === "hyperbola"
+                ? `直线平行于双曲线渐近线（$k = \\pm b/a$），联立方程二次项归零降阶。`
+                : `直线平行于抛物线对称轴（$k = 0$），方程降阶为一元一次。`,
+            question: `分析为什么方程仅有 $1$ 个实交点却绝对不是相切，如何避开高考分类讨论漏解陷阱？`,
           };
         }
       }
@@ -261,39 +349,109 @@ export function ConicLineAnimation() {
     if (studyMode === "general") {
       return {
         variant: "info" as const,
-        badge: "位置关系判定与相交弦长",
-        condition: "平面内给定圆锥曲线方程与一般动割线方程。",
+        badge: `${conicName}位置关系判定与相交弦长`,
+        condition:
+          "平面内给定" +
+          conicName +
+          "标准方程与一般动割线方程 $L: y = kx + m$。",
         question:
-          "如何通过联立消元判别式判定相交、相切与相离，并利用弦长公式求解割线弦长？",
+          "如何通过联立消元判别式 $\\Delta$ 判定相交、相切与相离，并由韦达定理代入弦长公式求 $|AB|$？",
       };
     }
     if (studyMode === "focus") {
       return {
         variant: "primary" as const,
-        badge: "高考焦点弦与通径极值",
-        condition: "割线通过圆锥曲线焦点，交曲线于 A, B 两点。",
+        badge: `${conicName}焦点弦长与焦半径定值`,
+        condition:
+          "动割线通过" + conicName + "右焦点，与曲线交于 $A, B$ 两点。",
         question:
-          "探究焦点弦长的最值变化规律，以及两端点焦半径倒数和的定值性质。",
+          conicType === "parabola"
+            ? "利用抛物线定义证明焦点弦长 $|AB| = x_1 + x_2 + p$，并证明焦半径倒数和 $\\frac{1}{|FA|} + \\frac{1}{|FB|} = \\frac{2}{p}$ 为常数。"
+            : "探究" +
+              conicName +
+              "焦点弦长的最值变化规律，以及两端点焦半径倒数和 $\\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|}$ 的定值性质。",
       };
     }
     if (studyMode === "midpoint") {
       return {
         variant: "warning" as const,
-        badge: "中点弦与点差法",
-        condition: "已知圆锥曲线动弦 AB 的中点为 M(x₀, y₀)。",
+        badge: `${conicName}中点弦与点差法`,
+        condition: "已知" + conicName + "动弦 $AB$ 的中点为 $M(x_0, y_0)$。",
         question:
-          "如何利用点差法快速求解动弦所在直线方程，并检验弦中点的存在性？",
+          "如何利用点差法平方差展开快速求解动弦斜率，并由判别式 $\\Delta > 0$ 检验弦中点存在性（防越界伪根）？",
       };
     }
     return {
       variant: "danger" as const,
-      badge: "极点极线与切点弦对偶",
+      badge: `${conicName}极点极线与切点弦对偶`,
       condition:
-        "从曲线外一点 P₀(x₀, y₀) 引圆锥曲线的两条切线，切点分别为 A, B。",
+        "从" +
+        conicName +
+        "外一点 $P(x_P, y_P)$ 引两条切线，切点分别为 $A, B$。",
       question:
-        "如何求解切点弦 AB 所在的直线方程，探究极点在定直线上运动时切点弦的定点规律？",
+        "如何利用极线对偶公式一步写出切点弦 $AB$ 方程，探究极点在定直线上运动时切点弦的定点规律？",
     };
-  }, [studyMode, activePreset]);
+  }, [conicType, studyMode, activePreset]);
+
+  // 画布图例
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const items: SceneLegendItem[] = [
+      {
+        colorKey: "primary",
+        label:
+          conicType === "ellipse"
+            ? "椭圆曲线"
+            : conicType === "hyperbola"
+              ? "双曲线"
+              : "抛物线",
+        style: "solid",
+      },
+      {
+        colorKey: "paramPrimary",
+        label:
+          studyMode === "focus"
+            ? "焦点割线 / 通径"
+            : studyMode === "polePolar"
+              ? "切点弦 AB"
+              : "动直线 / 割线弦 AB",
+        style: "solid",
+      },
+    ];
+
+    if (studyMode === "general") {
+      items.push({
+        colorKey: "paramTertiary",
+        label: "原点三角形 △OAB",
+        style: "dash",
+      });
+    }
+
+    if (conicType === "parabola") {
+      items.push({
+        colorKey: "paramTertiary",
+        label: "准线与投影",
+        style: "dash",
+      });
+    }
+
+    if (studyMode === "midpoint") {
+      items.push({
+        colorKey: "paramSecondary",
+        label: "中点连线 OM",
+        style: "dash",
+      });
+    }
+
+    if (studyMode === "polePolar") {
+      items.push({
+        colorKey: "paramSecondary",
+        label: "极点切线 PA/PB",
+        style: "dash",
+      });
+    }
+
+    return items;
+  }, [conicType, studyMode]);
 
   return (
     <ThreePanel
@@ -308,7 +466,7 @@ export function ConicLineAnimation() {
                 { key: "parabola", label: "抛物线" },
               ]}
               value={conicType}
-              onChange={(key) => setConicType(key as ConicType)}
+              onChange={(key) => handleConicTypeChange(key as ConicType)}
             />
           </LeftPanelSection>
 
@@ -379,6 +537,9 @@ export function ConicLineAnimation() {
               onParamChange={handleParamChange}
             />
           </AnimationSvgCanvas>
+
+          {/* 画布右下角图例 */}
+          <SceneLegend items={legendItems} />
         </div>
       }
       right={
@@ -387,8 +548,10 @@ export function ConicLineAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           mnemonic={mathData.mnemonic}
-          title="直线与圆锥曲线指标看板"
+          title="数学解析看板"
         />
       }
     />

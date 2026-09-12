@@ -624,3 +624,70 @@ export function findOptimalSplit(latex: string): [string, string] | null {
 
   return null;
 }
+
+/**
+ * 从 LaTeX 中提取原生多行结构（顶层 \\\\ 或 \\begin{aligned} 等）。
+ * 若存在多行且解构后每行非空，返回拆解后的多行数组，使 KatexFormula 能够
+ * 以独立多行 div 进行分行渲染，彻底避免单体超宽导致的极端缩放与容器截断。
+ */
+export function extractLatexLines(latex: string): string[] | null {
+  if (!latex) return null;
+  const trimmed = latex.trim();
+
+  // 1. 如果整体被 \\begin{aligned}...\\end{aligned} 或 \\begin{gathered}...\\end{gathered} 包裹
+  const envMatch = trimmed.match(
+    /^\\begin\{(aligned|gathered)\}([\s\S]*?)\\end\{\1\}$/,
+  );
+  if (envMatch) {
+    const inner = envMatch[2];
+    const rawLines = inner.split(/\\\\(?![ \t]*\[)/);
+    const cleaned = rawLines
+      .map((line) => line.replace(/^\s*&+\s*/, "").trim())
+      .filter((line) => line.length > 0);
+    if (cleaned.length > 1) {
+      return cleaned;
+    }
+  }
+
+  // 2. 如果包含顶层 \\\\（且不在不可拆的复杂矩阵/分段函数 cases, matrix, pmatrix 中）
+  if (
+    !/\\begin\{(cases|matrix|pmatrix|bmatrix|vmatrix|array)\}/.test(trimmed)
+  ) {
+    if (trimmed.includes("\\\\")) {
+      const state = createDepthState();
+      const lines: string[] = [];
+      let lastIdx = 0;
+      let i = 0;
+      while (i < trimmed.length) {
+        if (
+          trimmed[i] === "\\" &&
+          trimmed[i + 1] === "\\" &&
+          isTopLevel(state)
+        ) {
+          lines.push(trimmed.slice(lastIdx, i).trim());
+          i += 2;
+          // 跳过可选的高度调节参数，如 [0.5em]
+          if (trimmed[i] === "[") {
+            const endBracket = trimmed.indexOf("]", i);
+            if (endBracket !== -1) {
+              i = endBracket + 1;
+            }
+          }
+          lastIdx = i;
+          continue;
+        }
+        const step = advanceLatexDepth(trimmed, i, state);
+        i += step;
+      }
+      lines.push(trimmed.slice(lastIdx).trim());
+      const filtered = lines
+        .map((l) => l.replace(/^\s*&+\s*/, "").trim())
+        .filter((l) => l.length > 0);
+      if (filtered.length > 1) {
+        return filtered;
+      }
+    }
+  }
+
+  return null;
+}

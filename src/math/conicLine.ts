@@ -60,6 +60,15 @@ export interface IntersectionResult {
   focusF2: Point2D | null;
   // 是否为焦点弦
   isFocusChord: boolean;
+  // 焦半径与倒数和 (过焦点模式专属)
+  focalRadii: [number, number] | null;
+  harmonicSum: number | null; // 1/|FA| + 1/|FB|
+  theoreticalHarmonicSum: number | null; // 理论定值: 抛物线 2/p, 椭圆 2a/b^2
+  // 直线形式与铅垂标志
+  isVertical: boolean;
+  verticalX: number | null;
+  // 点差法中点有效性 (点是否在曲线内部)
+  isMidpointValid: boolean;
   // 关键说明/几何指标
   description: string;
 }
@@ -89,38 +98,47 @@ export function solveConicLineIntersection(
     focusF2 = null;
   }
 
-  // 2. 根据探究模式计算或修正直线参数 k, m
+  // 2. 根据探究模式计算或修正直线参数 k, m 与垂直标记
   let k = params.k;
   let m = params.m;
+  let isVertical = false;
+  let verticalX: number | null = null;
+  let isMidpointValid = true;
 
   if (studyMode === "focus") {
     // 过右焦点 F1(xF, 0)
     const xF = focusF1.x;
     const theta = params.theta ?? Math.PI / 4;
-    // 如果 theta 接近 PI/2 (垂直线)
+    // 如果 theta 接近 PI/2 (垂直线/通径)
     if (Math.abs(Math.cos(theta)) < 1e-4) {
-      k = 99999;
+      isVertical = true;
+      verticalX = xF;
+      k = 0; // 标记，避免 Infinity
+      m = 0;
     } else {
       k = Math.tan(theta);
+      // y - 0 = k (x - xF) => y = kx - k * xF => m = -k * xF
+      m = -k * xF;
     }
-    // y - 0 = k (x - xF) => y = kx - k * xF => m = -k * xF
-    m = -k * xF;
   } else if (studyMode === "midpoint") {
     // 根据中点 M(x0, y0) 及点差法计算应有的斜率 k
     const x0 = params.midpointX ?? 1;
     const y0 = params.midpointY ?? 1;
     if (conicType === "ellipse") {
+      isMidpointValid = (x0 * x0) / (a * a) + (y0 * y0) / (b * b) < 1;
       // k_AB * k_OM = -b^2/a^2 => k_AB = - (b^2 * x0) / (a^2 * y0)
       if (Math.abs(y0) > 1e-5) {
         k = -(b * b * x0) / (a * a * y0);
       }
     } else if (conicType === "hyperbola") {
-      // k_AB * k_OM = b^2/a^2 => k_AB = (b^2 * x0) / (a^2 * y0)
+      // 双曲线中点弦存在条件：位于两支之间 (x0^2/a^2 - y0^2/b^2 < 0) 或特定区域
       if (Math.abs(y0) > 1e-5) {
         k = (b * b * x0) / (a * a * y0);
       }
+      isMidpointValid = (x0 * x0) / (a * a) - (y0 * y0) / (b * b) < 0;
     } else {
-      // 抛物线 k_AB * y0 = p => k_AB = p / y0
+      // 抛物线 y^2 = 2px, 内部点满足 y0^2 < 2px0
+      isMidpointValid = y0 * y0 < 2 * p * x0;
       if (Math.abs(y0) > 1e-5) {
         k = p / y0;
       }
@@ -147,7 +165,9 @@ export function solveConicLineIntersection(
 
   // 判断是否为过焦点弦
   const xF = focusF1.x;
-  const isFocusChord = Math.abs(k * xF + m) < 1e-3;
+  const isFocusChord = isVertical
+    ? Math.abs(verticalX! - xF) < 1e-3
+    : Math.abs(k * xF + m) < 1e-3;
 
   // 3. 分圆锥曲线类型推导联立方程并求解
   let quadCoeff = 0; // A
@@ -165,11 +185,88 @@ export function solveConicLineIntersection(
   let triangleArea: number | null = null;
   let slopeOM: number | null = null;
   let pointDiffSlopeProduct: number | null = null;
+  let focalRadii: [number, number] | null = null;
+  let harmonicSum: number | null = null;
+  let theoreticalHarmonicSum: number | null = null;
   let description = "";
 
-  if (conicType === "ellipse") {
+  if (isVertical && verticalX !== null) {
+    // 铅垂线 x = verticalX 的闭式解析解（消除数值大数灾难）
+    const x0 = verticalX;
+    if (conicType === "ellipse") {
+      const discriminant = 1 - (x0 * x0) / (a * a);
+      if (discriminant > 1e-6) {
+        status = "secant";
+        const yVal = b * Math.sqrt(discriminant);
+        intersections = [
+          { x: x0, y: yVal },
+          { x: x0, y: -yVal },
+        ];
+        chordLength = 2 * yVal;
+        midpoint = { x: x0, y: 0 };
+        quadCoeff = a * a;
+        linearCoeff = 0;
+        constTerm = -b * b * (a * a - x0 * x0);
+        delta = 4 * a * a * b * b * (a * a - x0 * x0);
+        xSum = 2 * x0;
+        xProd = x0 * x0;
+        ySum = 0;
+        yProd = -yVal * yVal;
+        description = `直线为垂直焦点弦（通径），弦长 |AB| = 2b²/a = ${chordLength.toFixed(3)}`;
+      } else if (Math.abs(discriminant) <= 1e-6) {
+        status = "tangent";
+        intersections = [{ x: x0, y: 0 }];
+        chordLength = 0;
+        midpoint = { x: x0, y: 0 };
+        description = `铅垂线与椭圆相切于顶点 (${x0.toFixed(2)}, 0.00)`;
+      } else {
+        status = "disjoint";
+        intersections = [];
+        description = "铅垂线与椭圆相离";
+      }
+    } else if (conicType === "hyperbola") {
+      const discriminant = (x0 * x0) / (a * a) - 1;
+      if (discriminant > 1e-6) {
+        status = "secant";
+        const yVal = b * Math.sqrt(discriminant);
+        intersections = [
+          { x: x0, y: yVal },
+          { x: x0, y: -yVal },
+        ];
+        chordLength = 2 * yVal;
+        midpoint = { x: x0, y: 0 };
+        description = `直线为垂直焦点弦（通径），弦长 |AB| = 2b²/a = ${chordLength.toFixed(3)}`;
+      } else {
+        status = "disjoint";
+        intersections = [];
+        description = "铅垂线落在两支之间，与双曲线无交点";
+      }
+    } else {
+      // 抛物线 y^2 = 2px, x = x0
+      if (x0 > 1e-5) {
+        status = "secant";
+        const yVal = Math.sqrt(2 * p * x0);
+        intersections = [
+          { x: x0, y: yVal },
+          { x: x0, y: -yVal },
+        ];
+        chordLength = 2 * yVal;
+        midpoint = { x: x0, y: 0 };
+        description = `直线为抛物线通径（垂直焦点弦），弦长 |AB| = 2p = ${chordLength.toFixed(3)}`;
+      } else if (Math.abs(x0) <= 1e-5) {
+        status = "tangent";
+        intersections = [{ x: 0, y: 0 }];
+        chordLength = 0;
+        midpoint = { x: 0, y: 0 };
+        description = "铅垂线为抛物线顶点切线 (y轴)";
+      } else {
+        status = "disjoint";
+        intersections = [];
+        description = "铅垂线在抛物线背后，无交点";
+      }
+    }
+  } else if (conicType === "ellipse") {
     // 椭圆 b^2 x^2 + a^2 y^2 = a^2 b^2, 代入 y = kx + m
-    // (b^2 + a^2 k^2) x^2 + 2 a^2 k m x + a^2 (m^2 - b^2) = 0
     quadCoeff = b * b + a * a * k * k;
     linearCoeff = 2 * a * a * k * m;
     constTerm = a * a * (m * m - b * b);
@@ -211,7 +308,6 @@ export function solveConicLineIntersection(
     }
   } else if (conicType === "hyperbola") {
     // 双曲线 b^2 x^2 - a^2 y^2 = a^2 b^2, 代入 y = kx + m
-    // (b^2 - a^2 k^2) x^2 - 2 a^2 k m x - a^2 (m^2 + b^2) = 0
     quadCoeff = b * b - a * a * k * k;
     linearCoeff = -2 * a * a * k * m;
     constTerm = -a * a * (m * m + b * b);
@@ -219,7 +315,6 @@ export function solveConicLineIntersection(
     // 检查二次项系数是否归零（平行于渐近线 k = ±b/a）
     if (Math.abs(quadCoeff) < 1e-5) {
       status = "degenerated_parallel";
-      // 一元一次方程 linearCoeff * x + constTerm = 0
       if (Math.abs(linearCoeff) > 1e-5) {
         const x0 = -constTerm / linearCoeff;
         const y0 = k * x0 + m;
@@ -265,7 +360,6 @@ export function solveConicLineIntersection(
     }
   } else {
     // 抛物线 y^2 = 2px
-    // 若 k == 0 (直线平行于对称轴 y = m):
     if (Math.abs(k) < 1e-5) {
       status = "degenerated_parallel";
       const x0 = (m * m) / (2 * p);
@@ -273,11 +367,10 @@ export function solveConicLineIntersection(
       intersections = [{ x: x0, y: y0 }];
       description = "直线平行于抛物线对称轴 (k=0)！有且仅有1个交点（非相切）";
     } else {
-      // 代入 x = (y - m) / k => y^2 - (2p/k) y + 2pm/k = 0
       const A_y = 1;
       const B_y = -(2 * p) / k;
       const C_y = (2 * p * m) / k;
-      delta = B_y * B_y - 4 * A_y * C_y; // (4p/k^2) * (p - 2km)
+      delta = B_y * B_y - 4 * A_y * C_y;
 
       quadCoeff = 1;
       if (delta > 1e-6) {
@@ -325,6 +418,22 @@ export function solveConicLineIntersection(
     pointDiffSlopeProduct = k * slopeOM;
   }
 
+  // 6. 计算焦半径与倒数和 (过焦点弦专属)
+  if (intersections.length === 2 && isFocusChord) {
+    const [pA, pB] = intersections;
+    const r1 = Math.sqrt((pA.x - focusF1.x) ** 2 + (pA.y - focusF1.y) ** 2);
+    const r2 = Math.sqrt((pB.x - focusF1.x) ** 2 + (pB.y - focusF1.y) ** 2);
+    focalRadii = [r1, r2];
+    if (r1 > 1e-5 && r2 > 1e-5) {
+      harmonicSum = 1 / r1 + 1 / r2;
+    }
+    if (conicType === "parabola") {
+      theoreticalHarmonicSum = 2 / p;
+    } else if (conicType === "ellipse") {
+      theoreticalHarmonicSum = (2 * a) / (b * b);
+    }
+  }
+
   return {
     conicType,
     studyMode,
@@ -346,6 +455,12 @@ export function solveConicLineIntersection(
     focusF1,
     focusF2,
     isFocusChord,
+    focalRadii,
+    harmonicSum,
+    theoreticalHarmonicSum,
+    isVertical,
+    verticalX,
+    isMidpointValid,
     description,
   };
 }

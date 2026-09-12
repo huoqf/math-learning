@@ -58,11 +58,16 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
   const kEff = k;
   const mEff = m;
 
-  // 直线两端延伸点 (视口边界 Math X = -6 ~ +6)
+  // 直线两端延伸点 (视口边界 Math X = -6 ~ +6，铅垂线则沿 Y 轴 -8 ~ +8 延伸)
   const xMin = -6;
   const xMax = 6;
-  const lineP1 = mathToDesign(xMin, kEff * xMin + mEff, scale);
-  const lineP2 = mathToDesign(xMax, kEff * xMax + mEff, scale);
+  const isVert = result.isVertical && result.verticalX !== null;
+  const lineP1 = isVert
+    ? mathToDesign(result.verticalX!, -8, scale)
+    : mathToDesign(xMin, kEff * xMin + mEff, scale);
+  const lineP2 = isVert
+    ? mathToDesign(result.verticalX!, 8, scale)
+    : mathToDesign(xMax, kEff * xMax + mEff, scale);
 
   // 3. 焦点与原点坐标
   const originD = mathToDesign(0, 0, scale);
@@ -82,6 +87,27 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
   const midpointD = result.midpoint
     ? mathToDesign(result.midpoint.x, result.midpoint.y, scale)
     : null;
+
+  // 准线与垂足坐标 (抛物线专属)
+  const directrixX = -p / 2;
+  const directrixP1 = mathToDesign(directrixX, -8, scale);
+  const directrixP2 = mathToDesign(directrixX, 8, scale);
+
+  // 抛物线焦点弦端点到准线的垂足
+  const projectionPoints = useMemo(() => {
+    if (
+      conicType === "parabola" &&
+      result.isFocusChord &&
+      result.intersections.length === 2
+    ) {
+      return result.intersections.map((pt) => ({
+        from: mathToDesign(pt.x, pt.y, scale),
+        to: mathToDesign(directrixX, pt.y, scale),
+        footMath: { x: directrixX, y: pt.y },
+      }));
+    }
+    return [];
+  }, [conicType, result.isFocusChord, result.intersections, directrixX, scale]);
 
   // 5. 组装待避让的 Label 列表 (纯字母点标规范)
   const rawLabels = useMemo(() => {
@@ -130,12 +156,27 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
       });
     }
 
+    if (projectionPoints.length === 2) {
+      raw.push({
+        key: "A_prime",
+        x: projectionPoints[0].to.x - 12,
+        y: projectionPoints[0].to.y,
+        text: "A'",
+      });
+      raw.push({
+        key: "B_prime",
+        x: projectionPoints[1].to.x - 12,
+        y: projectionPoints[1].to.y,
+        text: "B'",
+      });
+    }
+
     if (midpointD && studyMode === "midpoint") {
       raw.push({
         key: "M",
         x: midpointD.x,
         y: midpointD.y + 14,
-        text: "M",
+        text: result.isMidpointValid ? "M" : "M (曲线外)",
       });
     }
 
@@ -147,7 +188,7 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
         key: "P",
         x: poleD.x + 12,
         y: poleD.y - 12,
-        text: "P",
+        text: result.intersections.length === 2 ? "P" : "P (无切线)",
       });
     }
 
@@ -157,10 +198,13 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
     focus1D,
     focus2D,
     intersectionDesignPoints,
+    projectionPoints,
     midpointD,
     studyMode,
     conicType,
     result.status,
+    result.isMidpointValid,
+    result.intersections.length,
     params.poleX,
     params.poleY,
     scale,
@@ -171,14 +215,14 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
     [rawLabels],
   );
 
-  // 6. 原点三角形 △OAB 填充路径
+  // 6. 原点三角形 △OAB 填充路径 (仅在 general 位置与弦长模式展示，避免干扰焦点弦/中点弦/极线)
   const trianglePath = useMemo(() => {
-    if (intersectionDesignPoints.length === 2) {
+    if (studyMode === "general" && intersectionDesignPoints.length === 2) {
       const [pA, pB] = intersectionDesignPoints;
       return `M ${originD.x} ${originD.y} L ${pA.x} ${pA.y} L ${pB.x} ${pB.y} Z`;
     }
     return "";
-  }, [originD, intersectionDesignPoints]);
+  }, [studyMode, originD, intersectionDesignPoints]);
 
   // 7. 抛物线 path: 以 y 轴为参数 [-9, 9] 采样 x = y^2 / (2p)
   const parabolaPathD = useMemo(() => {
@@ -280,12 +324,55 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
       )}
 
       {conicType === "parabola" && (
-        <path
-          d={parabolaPathD}
-          fill="none"
-          stroke={MATH_COLORS.primary}
-          strokeWidth={2.5}
-        />
+        <>
+          <path
+            d={parabolaPathD}
+            fill="none"
+            stroke={MATH_COLORS.primary}
+            strokeWidth={2.5}
+          />
+          {/* 准线 x = -p/2 */}
+          <line
+            x1={directrixP1.x}
+            y1={directrixP1.y}
+            x2={directrixP2.x}
+            y2={directrixP2.y}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.5}
+            strokeDasharray="5,4"
+          />
+          <text
+            x={directrixP1.x - 8}
+            y={directrixP1.y + 15}
+            fill={MATH_COLORS.paramTertiary}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            textAnchor="end"
+          >
+            {`x = -${(p / 2).toFixed(1).replace(/\.0$/, "")}`}
+          </text>
+          {/* 焦点弦端点到准线的垂直投影特征线 */}
+          {projectionPoints.map((proj, idx) => (
+            <g key={`proj-${idx}`}>
+              <line
+                x1={proj.from.x}
+                y1={proj.from.y}
+                x2={proj.to.x}
+                y2={proj.to.y}
+                stroke={MATH_COLORS.paramTertiary}
+                strokeWidth={1.5}
+                strokeDasharray="3,3"
+              />
+              <MathPoint
+                x={proj.footMath.x}
+                y={proj.footMath.y}
+                scale={scale}
+                color={MATH_COLORS.paramTertiary}
+                fontScale={fontScale}
+              />
+            </g>
+          ))}
+        </>
       )}
 
       {conicType === "hyperbola" && (
@@ -448,7 +535,9 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
                 ? MATH_COLORS.accent
                 : lbl.key === "M"
                   ? MATH_COLORS.paramSecondary
-                  : MATH_COLORS.paramPrimary
+                  : lbl.key === "A_prime" || lbl.key === "B_prime"
+                    ? MATH_COLORS.paramTertiary
+                    : MATH_COLORS.paramPrimary
           }
           fontSize={fontScale(12)}
           fontWeight="bold"

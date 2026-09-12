@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { normalizeFractionRowSpacing, findOptimalSplit } from "./latexUtils";
+import {
+  normalizeFractionRowSpacing,
+  findOptimalSplit,
+  extractLatexLines,
+} from "./latexUtils";
 
 /**
  * 换行后仍超宽时的保底缩放硬底线：设为 0.55，
@@ -29,14 +33,18 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number>(1);
-  /**
-   * 非空时按教材式多行渲染（缩放触底后的兜底策略）：
-   * 首行左端，后续行以 = / \Rightarrow / + / - 起头并缩进，与教材推导书写习惯一致
-   */
-  const [lines, setLines] = useState<string[] | null>(null);
 
   const isBlock = mode === "block";
   const canLineBreak = allowLineBreak ?? isBlock;
+
+  /**
+   * 非空时按教材式多行渲染：
+   * 若输入公式本身包含原生多行（\\\\ 或 \\begin{aligned} 等），优先解构为独立多行；
+   * 若超宽则经 findOptimalSplit 最优语义拆行，与教材推导书写习惯一致。
+   */
+  const [lines, setLines] = useState<string[] | null>(() =>
+    canLineBreak ? extractLatexLines(formula) : null,
+  );
 
   // 1+2. 渲染 KaTeX 并测量（合并到同一个 layout effect）：
   //    - 始终先渲染、后测量，保证测量拿到真实内容宽度，
@@ -149,10 +157,10 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
     return () => resizeObserver.disconnect();
   }, [formula, isBlock, responsive, lines, canLineBreak]);
 
-  // 3. 公式变化时重置换行状态
+  // 3. 公式变化时初始化换行状态（若包含原生多行且允许拆行，优先解构为多行）
   useEffect(() => {
-    setLines(null);
-  }, [formula]);
+    setLines(canLineBreak ? extractLatexLines(formula) : null);
+  }, [formula, canLineBreak]);
 
   // innerContent: 每行一个 div 容器，供 KaTeX 注入内容。
   // whitespace-nowrap 确保 KaTeX 自身不被 CSS 文字折行打断。
@@ -160,27 +168,38 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
     <div key={i} className="whitespace-nowrap" />
   ));
 
+  const hasNativeLineBreaks =
+    formula.includes("\\\\") ||
+    formula.includes("\\begin{aligned}") ||
+    formula.includes("\\begin{cases}") ||
+    formula.includes("\\begin{matrix}") ||
+    formula.includes("\\begin{gathered}") ||
+    formula.includes("&");
+  const isMultiLine = Boolean(
+    (lines && lines.length > 1) || hasNativeLineBreaks,
+  );
+  const shouldAlignLeft = isMultiLine || scale < 1;
+
   if (isBlock) {
-    const isMultiLine = Boolean(lines && lines.length > 1);
     return (
       <div
         ref={outerRef}
         className={`w-full my-1 flex ${
-          isMultiLine
-            ? "items-start justify-start"
-            : "items-center justify-center"
+          shouldAlignLeft
+            ? "items-start justify-start text-left"
+            : "items-center justify-center text-center"
         } overflow-x-clip max-w-full transition-all duration-150 ${className}`}
       >
         <div
           ref={innerRef}
           className={`text-neutral-800 font-medium ${
-            lines && lines.length > 1
-              ? "flex flex-col items-start gap-3.5"
+            isMultiLine
+              ? "flex flex-col items-start gap-2.5 text-left w-max min-w-0"
               : "inline-block text-center whitespace-nowrap"
           }`}
           style={{
             transform: scale < 1 ? `scale(${scale})` : undefined,
-            transformOrigin: isMultiLine ? "top left" : "center center",
+            transformOrigin: shouldAlignLeft ? "top left" : "center center",
           }}
         >
           {innerContent}
