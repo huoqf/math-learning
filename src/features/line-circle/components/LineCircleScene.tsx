@@ -191,7 +191,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
         x: pDesign.x,
         y: pDesign.y,
         text: "P",
-        color: "#8B5CF6",
+        color: MATH_COLORS.complexNum,
       });
       tangentPointsDesign.forEach((tp, idx) => {
         list.push({
@@ -199,7 +199,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
           x: tp.x,
           y: tp.y,
           text: `T${idx + 1}`,
-          color: "#8B5CF6",
+          color: MATH_COLORS.complexNum,
         });
       });
     }
@@ -520,7 +520,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
                 <MathPoint
                   cx={tp.x}
                   cy={tp.y}
-                  color="#8B5CF6"
+                  color={MATH_COLORS.complexNum}
                   fontScale={fontScale}
                 />
               </g>
@@ -531,7 +531,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
           <MathPoint
             cx={pDesign.x}
             cy={pDesign.y}
-            color="#8B5CF6"
+            color={MATH_COLORS.complexNum}
             fontScale={fontScale}
           />
 
@@ -614,7 +614,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
           cy={pDesign.y}
           scale={scale}
           vp={vp}
-          color="#8B5CF6"
+          color={MATH_COLORS.complexNum}
           fontScale={fontScale}
           onDrag={(pt) => {
             onParamChange("px", Math.round(pt.x * 10) / 10);

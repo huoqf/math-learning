@@ -10,12 +10,15 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
+import { SceneLegend } from "@/components/Math";
+import type { SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { LineCircleScene } from "./components/LineCircleScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/lineCircle";
 import { calculateLineCircle } from "@/math/lineCircle";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export type LineCircleStudyMode = "relation" | "chord" | "tangent" | "midpoint";
 export type LineCirclePresetKey =
@@ -86,27 +89,39 @@ export function LineCircleAnimation() {
 
         // 在特定预设下联动从属参数
         if (preset === "diameter") {
-          const kVal = key === "k" ? value : next.k;
-          const aVal = key === "a" ? value : next.a;
-          const bVal = key === "b" ? value : next.b;
-          next.m = Number((bVal - kVal * aVal).toFixed(2));
+          if (key === "m") {
+            setPreset("free");
+          } else {
+            const kVal = key === "k" ? value : next.k;
+            const aVal = key === "a" ? value : next.a;
+            const bVal = key === "b" ? value : next.b;
+            next.m = Number((bVal - kVal * aVal).toFixed(2));
+          }
         } else if (preset === "tangentCritical") {
-          const kVal = key === "k" ? value : next.k;
-          const aVal = key === "a" ? value : next.a;
-          const bVal = key === "b" ? value : next.b;
-          const rVal = key === "r" ? value : next.r;
-          const offset = rVal * Math.hypot(1, kVal);
-          next.m = Number((bVal - kVal * aVal - offset).toFixed(2));
+          if (key === "m") {
+            setPreset("free");
+          } else {
+            const kVal = key === "k" ? value : next.k;
+            const aVal = key === "a" ? value : next.a;
+            const bVal = key === "b" ? value : next.b;
+            const rVal = key === "r" ? value : next.r;
+            const offset = rVal * Math.hypot(1, kVal);
+            next.m = Number((bVal - kVal * aVal - offset).toFixed(2));
+          }
         } else if (preset === "minChord") {
-          const mxVal = key === "mx" ? value : next.mx;
-          const myVal = key === "my" ? value : next.my;
-          const aVal = key === "a" ? value : next.a;
-          const bVal = key === "b" ? value : next.b;
-          const dx = mxVal - aVal;
-          const dy = myVal - bVal;
-          const perpK = Math.abs(dy) > 1e-4 ? -dx / dy : 0;
-          next.k = Number(perpK.toFixed(2));
-          next.m = Number((myVal - perpK * mxVal).toFixed(2));
+          if (key === "k" || key === "m") {
+            setPreset("free");
+          } else {
+            const mxVal = key === "mx" ? value : next.mx;
+            const myVal = key === "my" ? value : next.my;
+            const aVal = key === "a" ? value : next.a;
+            const bVal = key === "b" ? value : next.b;
+            const dx = mxVal - aVal;
+            const dy = myVal - bVal;
+            const perpK = Math.abs(dy) > 1e-4 ? -dx / dy : 0;
+            next.k = Number(perpK.toFixed(2));
+            next.m = Number((myVal - perpK * mxVal).toFixed(2));
+          }
         } else {
           setPreset("free");
         }
@@ -198,13 +213,11 @@ export function LineCircleAnimation() {
       ];
     } else {
       if (preset === "diameter" || preset === "tangentCritical") {
-        // 过圆心最大弦 / 临界切线：截距 m 已锁定，仅展示直线斜率 k 与半径 r
         modeKeyGroups = [
           { group: "直线斜率 k", keys: ["k"] },
           { group: "目标圆半径 r", keys: ["r"] },
         ];
       } else if (preset === "minChord") {
-        // 垂直最短弦：斜率截距已由定点垂直锁定，展示定点坐标与半径
         modeKeyGroups = [
           { group: "定点 M(x₀, y₀) 坐标", keys: ["mx", "my"] },
           { group: "目标圆半径 r", keys: ["r"] },
@@ -261,20 +274,20 @@ export function LineCircleAnimation() {
     // 格式化直线方程
     let lineStr = "";
     if (Math.abs(kVal) < 1e-4) {
-      lineStr = `y = ${mVal.toFixed(1)}`;
+      lineStr = `y = ${formatMathNumber(mVal)}`;
     } else {
       const kStr =
         Math.abs(kVal - 1) < 1e-4
           ? "x"
           : Math.abs(kVal + 1) < 1e-4
             ? "-x"
-            : `${kVal.toFixed(2)}x`;
+            : `${formatMathNumber(kVal)}x`;
       if (Math.abs(mVal) < 1e-4) {
         lineStr = `y = ${kStr}`;
       } else if (mVal > 0) {
-        lineStr = `y = ${kStr} + ${mVal.toFixed(1)}`;
+        lineStr = `y = ${kStr} + ${formatMathNumber(mVal)}`;
       } else {
-        lineStr = `y = ${kStr} - ${Math.abs(mVal).toFixed(1)}`;
+        lineStr = `y = ${kStr} - ${formatMathNumber(Math.abs(mVal))}`;
       }
     }
 
@@ -283,62 +296,133 @@ export function LineCircleAnimation() {
       Math.abs(aVal) < 1e-4
         ? "x^2"
         : aVal > 0
-          ? `(x - ${aVal.toFixed(1)})^2`
-          : `(x + ${Math.abs(aVal).toFixed(1)})^2`;
+          ? `(x - ${formatMathNumber(aVal)})^2`
+          : `(x + ${formatMathNumber(Math.abs(aVal))})^2`;
     const yTerm =
       Math.abs(bVal) < 1e-4
         ? "y^2"
         : bVal > 0
-          ? `(y - ${bVal.toFixed(1)})^2`
-          : `(y + ${Math.abs(bVal).toFixed(1)})^2`;
-    const circleStr = `${xTerm} + ${yTerm} = ${(rVal * rVal).toFixed(1)}`;
+          ? `(y - ${formatMathNumber(bVal)})^2`
+          : `(y + ${formatMathNumber(Math.abs(bVal))})^2`;
+    const circleStr = `${xTerm} + ${yTerm} = ${formatMathNumber(rVal * rVal)}`;
 
     if (studyMode === "relation") {
       if (calcRes.relation === "tangent") {
-        return `\\begin{cases} C: ${circleStr} \\\\ l: ${lineStr} \\end{cases} \\quad d = r = ${rVal.toFixed(1)}, \\; \\Delta = 0 \\; (\\text{相切唯一公共点 } T)`;
+        return `\\begin{cases} C: ${circleStr} \\\\ l: ${lineStr} \\end{cases} \\quad d = r = ${formatMathNumber(rVal)}, \\; \\Delta = 0 \\; (\\text{相切唯一公共点 } T)`;
       }
-      return `\\begin{cases} C: ${circleStr} \\\\ l: ${lineStr} \\end{cases} \\quad d = ${calcRes.distance.toFixed(2)}, \\; r = ${rVal.toFixed(1)} \\implies ${calcRes.relationLabel}`;
+      return `\\begin{cases} C: ${circleStr} \\\\ l: ${lineStr} \\end{cases} \\quad d = ${formatMathNumber(calcRes.distance)}, \\; r = ${formatMathNumber(rVal)} \\implies ${calcRes.relationLabel}`;
     } else if (studyMode === "chord") {
       if (calcRes.relation === "disjoint") {
-        return `\\text{直线与圆相离，无实数弦长} \\quad (d = ${calcRes.distance.toFixed(2)} > r = ${rVal.toFixed(1)})`;
+        return `\\text{直线与圆相离，无实数弦长} \\quad (d = ${formatMathNumber(calcRes.distance)} > r = ${formatMathNumber(rVal)})`;
       }
       if (calcRes.relation === "tangent") {
-        return `\\text{相切临界状态，弦长退化为 } 0 \\quad (d = r = ${rVal.toFixed(1)})`;
+        return `\\text{相切临界状态，弦长退化为 } 0 \\quad (d = r = ${formatMathNumber(rVal)})`;
       }
-      return `L = 2\\sqrt{r^2 - d^2} = 2\\sqrt{${rVal.toFixed(1)}^2 - ${calcRes.distance.toFixed(2)}^2} = ${calcRes.chordLengthGeom.toFixed(2)}`;
+      return `L = 2\\sqrt{r^2 - d^2} = 2\\sqrt{${formatMathNumber(rVal)}^2 - (${formatMathNumber(calcRes.distance)})^2} = ${formatMathNumber(calcRes.chordLengthGeom)}`;
     } else if (studyMode === "tangent") {
       const pxVal = params.px ?? 0;
       const pyVal = params.py ?? 0;
-      return `\\begin{cases} C: ${circleStr} \\\\ P: (${pxVal.toFixed(1)}, ${pyVal.toFixed(1)}) \\end{cases} \\quad L_{\\text{切线}} = ${calcRes.tangentLength?.toFixed(2) ?? "0"}`;
+      return `\\begin{cases} C: ${circleStr} \\\\ P: (${formatMathNumber(pxVal)}, ${formatMathNumber(pyVal)}) \\end{cases} \\quad L_{\\text{切线}} = ${calcRes.tangentLength !== undefined ? formatMathNumber(calcRes.tangentLength) : "0"}`;
     } else {
       return `CH \\perp AB \\iff AH = HB \\quad (k_{CH} \\cdot k_{AB} = -1)`;
     }
   }, [params, studyMode, calcRes]);
 
-  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  // 中屏右下角图例配置 (与绘制图元 1-to-1 严格匹配)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const items: SceneLegendItem[] = [
+      {
+        label: "目标圆 $C$",
+        color: MATH_COLORS.paramPrimary,
+        style: "line",
+      },
+      {
+        label: "割线 / 直线 $l$",
+        color: MATH_COLORS.paramSecondary,
+        style: "solid",
+      },
+    ];
+
+    if (studyMode === "tangent") {
+      items.push(
+        {
+          label: "切线与点 $P$",
+          color: MATH_COLORS.complexNum,
+          style: "solid",
+        },
+        {
+          label: "切点弦 $T_1T_2$",
+          color: MATH_COLORS.paramTertiary,
+          style: "solid",
+        },
+      );
+    } else if (calcRes.relation === "tangent") {
+      items.push({
+        label: "切点半径 $CT$ 与切点 $T$",
+        color: MATH_COLORS.paramTertiary,
+        style: "point",
+      });
+    } else {
+      items.push({
+        label: "弦心距垂线 $CH$ 与垂足 $H$",
+        color: MATH_COLORS.paramTertiary,
+        style: "dash",
+      });
+      if (calcRes.relation === "intersect") {
+        items.push({
+          label: "相交弦 $AB$",
+          color: MATH_COLORS.paramTertiary,
+          style: "solid",
+        });
+      }
+    }
+
+    if (studyMode === "chord") {
+      items.push({
+        label: "圆内定点 $M$",
+        color: MATH_COLORS.paramSecondary,
+        style: "point",
+      });
+    }
+
+    return items;
+  }, [studyMode, calcRes.relation]);
+
+  // 左屏教学提示与题设导引（说明初始条件与探究设问，100%包裹单美元符号并直击高考考点）
   const tipConfig = useMemo(() => {
+    const rVal = formatMathNumber(params.r ?? 3);
+    const aVal = formatMathNumber(params.a ?? 0);
+    const bVal = formatMathNumber(params.b ?? 0);
+    const kVal = formatMathNumber(params.k ?? 0.75);
+    const mVal = formatMathNumber(params.m ?? -1);
+
     if (preset === "diameter") {
       return {
         variant: "primary" as const,
         badge: "高考经典 · 直径最长弦",
-        condition: "割线通过已知圆的圆心 C。",
-        question: "过圆心的割线弦长（直径）与圆内其他割线弦长有何极值关系？",
+        condition: `割线 $l$ 经过圆心 $C(${aVal}, ${bVal})$，斜率 $k = ${kVal}$。`,
+        question:
+          "如何证明过圆心的割线弦长最大且等于直径 $2r$，并求解其最大值？",
       };
     }
     if (preset === "tangentCritical") {
       return {
         variant: "warning" as const,
         badge: "高考经典 · 临界切线相切",
-        condition: "直线与已知圆处于相切临界状态，恰有一个公共切点。",
-        question: "直线与圆相切时，圆心到直线的距离与圆半径满足什么等量关系？",
+        condition: `直线 $l$ 与圆 $C$ 处于相切临界状态，圆心到直线的距离 $d = r = ${rVal}$。`,
+        question:
+          "直线与圆相切时，如何建立 $d = r$ 的充要等式求解直线截距 $m$？",
       };
     }
     if (preset === "minChord") {
+      const mxVal = formatMathNumber(params.mx ?? 1);
+      const myVal = formatMathNumber(params.my ?? 1);
       return {
         variant: "danger" as const,
         badge: "高考经典 · 垂径垂直最短弦",
-        condition: "割线过圆内定点 M 且垂直于连心线 CM。",
-        question: "为什么过圆内定点的所有割线中，垂直于半径的弦长最小？",
+        condition: `割线 $l$ 经过圆内定点 $M(${mxVal}, ${myVal})$ 且垂直于连心线 $CM$。`,
+        question:
+          "如何证明过圆内定点的所有弦中垂直于连心线的弦长最短，并求最小弦长？",
       };
     }
 
@@ -346,34 +430,39 @@ export function LineCircleAnimation() {
       return {
         variant: "info" as const,
         badge: "位置关系与几何判定",
-        condition: "平面内给定目标圆与动直线。",
+        condition: `已知目标圆 $C$ 半径 $r = ${rVal}$，圆心 $C(${aVal}, ${bVal})$，直线 $l: y = ${kVal}x + (${mVal})$。`,
         question:
-          "如何通过圆心到直线的距离与圆半径的大小比较，快速判定交点个数？",
+          "如何运用点到直线距离公式计算 $d$，并与半径 $r$ 比较判定公共点个数？",
       };
     }
     if (studyMode === "chord") {
       return {
         variant: "primary" as const,
         badge: "垂径定理与相交弦长",
-        condition: "直线与圆相交于 A, B 两个不同交点。",
-        question: "如何利用圆半径与弦心距构造直角三角形，求解相交弦长？",
+        condition: `割线 $l: y = ${kVal}x + (${mVal})$ 与圆相交于 $A, B$ 两点，弦心距为 $d$。`,
+        question:
+          "如何利用勾股定理 $r^2 = d^2 + (L/2)^2$ 快速计算相交弦长 $L$？",
       };
     }
     if (studyMode === "tangent") {
+      const pxVal = formatMathNumber(params.px ?? 5);
+      const pyVal = formatMathNumber(params.py ?? 4);
       return {
         variant: "warning" as const,
         badge: "切线长定理与切点弦",
-        condition: "从圆外定点 P 向目标圆引两条切线，切点分别为 A, B。",
-        question: "如何证明两条切线长相等，并求解切点弦 AB 所在的直线方程？",
+        condition: `从圆外点 $P(${pxVal}, ${pyVal})$ 向已知圆引两条切线，切点为 $T_1, T_2$。`,
+        question:
+          "如何应用切线直角三角形求切线长，并写出切点弦 $T_1T_2$ 的标准方程？",
       };
     }
     return {
       variant: "danger" as const,
       badge: "垂径定理与弦中点",
-      condition: "已知圆内动弦 AB 的中点 M。",
-      question: "如何利用圆心与中点连线垂直于弦的几何性质，求解割线斜率？",
+      condition: `已知动弦中点为 $H$，割线斜率为 $k_{AB} = ${kVal}$。`,
+      question:
+        "如何运用垂径定理垂直关系 $k_{CH} \\cdot k_{AB} = -1$（点差法）确定弦方程？",
     };
-  }, [studyMode, preset]);
+  }, [studyMode, preset, params]);
 
   const panelTitle = useMemo(() => {
     switch (studyMode) {
@@ -478,6 +567,9 @@ export function LineCircleAnimation() {
               studyMode={studyMode}
             />
           </AnimationSvgCanvas>
+
+          {/* 中屏右下角毛玻璃图例 (SceneLegend) */}
+          <SceneLegend items={legendItems} title="几何图元图例" />
         </div>
       }
       right={
@@ -486,6 +578,8 @@ export function LineCircleAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           mnemonic={mathData.mnemonic}
           title={panelTitle}
         />

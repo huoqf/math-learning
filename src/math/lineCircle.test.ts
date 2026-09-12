@@ -78,4 +78,49 @@ describe("lineCircle - 直线与圆的位置关系及相交弦长", () => {
     const res = calculateBaseLineCircle(0, 0, -2, 1, 1, 0);
     expect(res.validity).toBe("invalid");
   });
+
+  it("纯数学层返回结构化 deductions 推导链且符合高考三部曲", () => {
+    const res = calculateLineCircle({
+      a: 0,
+      b: 0,
+      r: 5,
+      k: 0,
+      m: -3,
+      px: 5,
+      py: 4,
+      mx: 1,
+      my: 1,
+    });
+
+    expect(res.deductions).toBeDefined();
+    // 距离推演：必须包含符号公式、代入、化简与最终值（至少3个等号）
+    expect(res.deductions.distanceDeduction).toContain(
+      "d = \\frac{|Ax_0 + By_0 + C|}{\\sqrt{A^2 + B^2}}",
+    );
+    expect(
+      (res.deductions.distanceDeduction.match(/=/g) || []).length,
+    ).toBeGreaterThanOrEqual(3);
+
+    // 勾股弦长：必须包含 L = 2\sqrt{r^2 - d^2} 与数值展开（至少3个等号）
+    expect(res.deductions.pythagorasDeduction).toContain(
+      "L = 2\\sqrt{r^2 - d^2}",
+    );
+    expect(
+      (res.deductions.pythagorasDeduction.match(/=/g) || []).length,
+    ).toBeGreaterThanOrEqual(3);
+
+    // 韦达弦长：包含韦达公式展开
+    expect(res.deductions.vietaChordDeduction).toContain(
+      "L = \\sqrt{1+k^2}|x_1 - x_2|",
+    );
+
+    // 切线长推演
+    expect(res.deductions.tangentDeduction).toBeDefined();
+    expect(res.deductions.tangentDeduction).toContain(
+      "PT = \\sqrt{|PC|^2 - r^2}",
+    );
+
+    // 垂径中点斜率推演
+    expect(res.deductions.midpointSlopeDeduction).toContain("k_{CH}");
+  });
 });

@@ -123,7 +123,7 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
     render(<LineCircleAnimation />);
     expect(screen.getByText("探究主题")).toBeInTheDocument();
     expect(screen.getByText("典型预设")).toBeInTheDocument();
-    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+    expect(screen.getByText("位置关系判定看板")).toBeInTheDocument();
   });
 
   it("TriangleSolveAnimation mounts properly and renders study mode", () => {

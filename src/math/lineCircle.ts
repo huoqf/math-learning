@@ -4,6 +4,14 @@
  * 无 React/DOM 依赖，符合项目“铁律 6：数学层纯净”
  */
 
+import {
+  derivePointToLineDistance,
+  deriveChordLengthPythagoras,
+  deriveVietaChordLength,
+  deriveTangentLength,
+  deriveMidpointPerpendicularSlope,
+} from "@/utils/mathDerivation";
+
 export interface Point2D {
   x: number;
   y: number;
@@ -41,12 +49,21 @@ export interface BaseLineCircleResult {
   chordLengthAlg: number;
 }
 
+export interface LineCircleDeductions {
+  distanceDeduction: string;
+  pythagorasDeduction: string;
+  vietaChordDeduction: string;
+  tangentDeduction?: string;
+  midpointSlopeDeduction: string;
+}
+
 export interface LineCircleResult extends BaseLineCircleResult {
   center: Point2D;
   radius: number;
   lineEq: { A: number; B: number; C: number };
   midpoint: Point2D;
   kCH: number | null;
+  deductions: LineCircleDeductions;
   pointP?: Point2D;
   distPC?: number;
   tangentLength?: number;
@@ -307,6 +324,45 @@ export function calculateLineCircle(
     }
   }
 
+  // 6. 生成标准高考三部曲代数推演链元数据
+  const distanceDeduction = derivePointToLineDistance(
+    { x: a, y: b, name: "C" },
+    { A, B, C },
+    baseRes.distance,
+  );
+
+  const pythagorasDeduction = deriveChordLengthPythagoras(
+    r,
+    baseRes.distance,
+    baseRes.chordLengthGeom,
+  );
+
+  const vietaChordDeduction = deriveVietaChordLength(
+    k,
+    baseRes.algebraic.delta,
+    baseRes.chordLengthAlg,
+  );
+
+  let tangentDeduction: string | undefined;
+  if (distPC !== undefined && tangentLength !== undefined) {
+    tangentDeduction = deriveTangentLength(distPC, r, tangentLength);
+  }
+
+  const midpointSlopeDeduction = deriveMidpointPerpendicularSlope(
+    midpoint,
+    { x: a, y: b },
+    kCH,
+    k,
+  );
+
+  const deductions: LineCircleDeductions = {
+    distanceDeduction,
+    pythagorasDeduction,
+    vietaChordDeduction,
+    tangentDeduction,
+    midpointSlopeDeduction,
+  };
+
   return {
     ...baseRes,
     center: { x: a, y: b },
@@ -314,6 +370,7 @@ export function calculateLineCircle(
     lineEq: { A, B, C },
     midpoint,
     kCH,
+    deductions,
     pointP,
     distPC,
     tangentLength,
