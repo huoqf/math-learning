@@ -201,6 +201,13 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                 strokeWidth={1.5}
                 strokeDasharray="4 3"
               />
+              {/* 原点直角标尺 (表明勾股定理 a^2 = b^2 + c^2 的几何直观) */}
+              <path
+                d={`M ${originPt.x + 10},${originPt.y} L ${originPt.x + 10},${originPt.y - 10} L ${originPt.x},${originPt.y - 10}`}
+                fill="none"
+                stroke={MATH_COLORS.paramPrimary}
+                strokeWidth={1.5}
+              />
               {/* 斜边 a (0,b) -> (c,0) */}
               <line
                 x1={b2Pt.x}
@@ -211,8 +218,8 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                 strokeWidth={2.5}
               />
               <text
-                x={(b2Pt.x + f2Pt.x) / 2 + 8}
-                y={(b2Pt.y + f2Pt.y) / 2 - 6}
+                x={(b2Pt.x + f2Pt.x) / 2 + 10}
+                y={(b2Pt.y + f2Pt.y) / 2 - 8}
                 fill={MATH_COLORS.paramPrimary}
                 fontSize={fontScale(13)}
                 fontWeight="bold"
@@ -250,7 +257,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
               </text>
             </g>
           ) : (
-            // 双曲线特征矩形与辅助圆
+            // 双曲线特征矩形与辅助外接圆
             rectPts && (
               <g className="hyperbola-feature-box">
                 <circle
@@ -271,14 +278,15 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                 />
                 <text
                   x={rectPts.p1.x + 4}
-                  y={rectPts.p1.y - 4}
+                  y={rectPts.p1.y - 6}
                   fill={MATH_COLORS.paramSecondary}
                   fontSize={fontScale(11)}
+                  fontWeight="bold"
                   paintOrder="stroke"
                   stroke="white"
                   strokeWidth={3}
                 >
-                  (a, b)
+                  M(a, b)
                 </text>
               </g>
             )
@@ -289,6 +297,13 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
       {/* 离心率与通径 (模式 2: eccentricity) */}
       {studyMode === "eccentricity" && (
         <g className="latus-rectum-group">
+          {/* 通径垂直标尺 (在焦点 F2 处垂直于主轴) */}
+          <path
+            d={`M ${f2Pt.x - 8},${f2Pt.y} L ${f2Pt.x - 8},${f2Pt.y - 8} L ${f2Pt.x},${f2Pt.y - 8}`}
+            fill="none"
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={1.5}
+          />
           <line
             x1={lrTopPt.x}
             y1={lrTopPt.y}
@@ -321,7 +336,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             stroke="white"
             strokeWidth={3}
           >
-            通径 L = {((2 * b * b) / a).toFixed(2)}
+            通径 L
           </text>
         </g>
       )}
@@ -337,8 +352,8 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         />
       ))}
 
-      {/* 焦点三角形 \triangle PF_1F_2 */}
-      {(studyMode === "focusTriangle" || studyMode === "basicProperties") && (
+      {/* 焦点三角形 \triangle PF_1F_2 (仅在 focusTriangle 模式下展示，严禁与几何性质层重叠) */}
+      {studyMode === "focusTriangle" && (
         <g className="focus-triangle-group">
           <polygon
             points={`${f1Pt.x},${f1Pt.y} ${f2Pt.x},${f2Pt.y} ${pPt.x},${pPt.y}`}
@@ -363,34 +378,22 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             stroke={MATH_COLORS.primary}
             strokeWidth={2}
           />
+          {/* 学术代数标注 r1, r2, θ (避免跳动长浮点，数值归位右屏看板) */}
           <text
             x={(pPt.x + f1Pt.x) / 2 - 10}
             y={(pPt.y + f1Pt.y) / 2 - 6}
             fill={MATH_COLORS.paramPrimary}
-            fontSize={fontScale(11)}
+            fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
             stroke="white"
             strokeWidth={3}
           >
-            r₁={focusTriangle.r1.toFixed(2)}
+            r₁
           </text>
           <text
             x={(pPt.x + f2Pt.x) / 2 + 10}
             y={(pPt.y + f2Pt.y) / 2 - 6}
-            fill={MATH_COLORS.primary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            paintOrder="stroke"
-            stroke="white"
-            strokeWidth={3}
-          >
-            r₂={focusTriangle.r2.toFixed(2)}
-          </text>
-          <text
-            x={pPt.x}
-            y={pPt.y - 12}
-            textAnchor="middle"
             fill={MATH_COLORS.primary}
             fontSize={fontScale(12)}
             fontWeight="bold"
@@ -398,7 +401,22 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             stroke="white"
             strokeWidth={3}
           >
-            θ = {focusTriangle.angleDeg.toFixed(1)}°
+            r₂
+          </text>
+          <text
+            x={pPt.x}
+            y={pPt.y - 12}
+            textAnchor="middle"
+            fill={MATH_COLORS.primary}
+            fontSize={fontScale(13)}
+            fontWeight="bold"
+            paintOrder="stroke"
+            stroke="white"
+            strokeWidth={3}
+          >
+            {Math.abs(focusTriangle.angleDeg - 90) < 1.5
+              ? "θ = 90° (直角)"
+              : "θ"}
           </text>
 
           {/* 焦点三角形内切圆与内心 */}
@@ -436,13 +454,13 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                       fontScale={fontScale}
                     />
 
-                    {/* 底边切点 T */}
+                    {/* 底边切点 T (双曲线时切点恒为实轴顶点 A2) */}
                     <MathPoint
                       cx={inc.tangentBase.x}
                       cy={inc.tangentBase.y}
                       scale={scale}
                       color={MATH_COLORS.paramPrimary}
-                      label="T"
+                      label={conicType === "ellipse" ? "T" : "T(A₂)"}
                       labelPosition="bottom"
                       fontScale={fontScale}
                     />
@@ -474,24 +492,29 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         fontScale={fontScale}
       />
 
-      <MathPoint
-        cx={vertices.B1.x}
-        cy={vertices.B1.y}
-        scale={scale}
-        color={MATH_COLORS.paramSecondary}
-        label="B₁"
-        labelPosition="bottom"
-        fontScale={fontScale}
-      />
-      <MathPoint
-        cx={vertices.B2.x}
-        cy={vertices.B2.y}
-        scale={scale}
-        color={MATH_COLORS.paramSecondary}
-        label="B₂"
-        labelPosition="top"
-        fontScale={fontScale}
-      />
+      {/* 虚轴端点/短轴顶点标注 (双曲线下仅在基本性质模式配合特征矩形展示，避免无交点时误导为曲线顶点) */}
+      {(conicType === "ellipse" || studyMode === "basicProperties") && (
+        <>
+          <MathPoint
+            cx={vertices.B1.x}
+            cy={vertices.B1.y}
+            scale={scale}
+            color={MATH_COLORS.paramSecondary}
+            label="B₁"
+            labelPosition="bottom"
+            fontScale={fontScale}
+          />
+          <MathPoint
+            cx={vertices.B2.x}
+            cy={vertices.B2.y}
+            scale={scale}
+            color={MATH_COLORS.paramSecondary}
+            label="B₂"
+            labelPosition="top"
+            fontScale={fontScale}
+          />
+        </>
+      )}
 
       {/* 焦点标注 */}
       <MathPoint

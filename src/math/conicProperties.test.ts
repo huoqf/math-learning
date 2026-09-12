@@ -69,4 +69,33 @@ describe("椭圆与双曲线纯解算逻辑测试 (calculateConicProperties)", (
     expect(res.focusTriangle.incircle.tangentBase.x).toBeCloseTo(a, 4);
     expect(res.focusTriangle.incircle.incenter.x).toBeCloseTo(a, 4);
   });
+
+  it("双曲线离心率与渐近线夹角公式 cos(α/2) = 1/e 验证", () => {
+    // 等轴双曲线: a = b => e = sqrt(2), 渐近线垂直 α = 90°, cos(45°) = 1/sqrt(2) = 1/e
+    const resEquilateral = calculateConicProperties("hyperbola", 3, 3, 0);
+    const cosHalfAlpha1 = 1 / resEquilateral.e;
+    expect(cosHalfAlpha1).toBeCloseTo(Math.SQRT1_2, 4);
+
+    // 广角双曲线: b/a = sqrt(3) => e = 2, 渐近线夹角 120°, cos(60°) = 0.5 = 1/e
+    const resWide = calculateConicProperties(
+      "hyperbola",
+      2,
+      2 * Math.sqrt(3),
+      0,
+    );
+    const cosHalfAlpha2 = 1 / resWide.e;
+    expect(cosHalfAlpha2).toBeCloseTo(0.5, 4);
+  });
+
+  it("椭圆短轴端点处顶角最大值及直角焦点三角形充要条件 e >= sqrt(2)/2", () => {
+    // 临界情况: e = sqrt(2)/2, 则 c = b, tan(θ_max / 2) = c / b = 1, θ_max = 90°
+    const a = 2;
+    const b = Math.SQRT2; // c = sqrt(4 - 2) = sqrt(2) = b
+    const resCritical = calculateConicProperties("ellipse", a, b, Math.PI / 2);
+    expect(resCritical.focusTriangle.maxAngleRad).toBeCloseTo(Math.PI / 2, 4);
+
+    // e < sqrt(2)/2 时，最大顶角小于 90°
+    const resAcute = calculateConicProperties("ellipse", 5, 4, Math.PI / 2); // c=3, e=0.6 < 0.707
+    expect(resAcute.focusTriangle.maxAngleRad).toBeLessThan(Math.PI / 2);
+  });
 });

@@ -12,6 +12,7 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { ConicPropertiesScene } from "./components/ConicPropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/conicProperties";
@@ -66,32 +67,28 @@ export function ConicPropertiesAnimation() {
     setParams((prev) => {
       const next = { ...prev, [key]: value };
 
-      if (presetKey === "rightTriangle") {
+      if (presetKey !== "free") {
+        setPresetKey("free");
+      }
+
+      if (studyMode === "eccentricity") {
+        // 离心率模式下 a 和 e 为主控探究量
         if (key === "a") {
-          const aVal = value;
-          const eVal = Math.SQRT1_2;
-          next.a = aVal;
-          next.e = eVal;
-          next.b = Number((aVal * Math.sqrt(1 - eVal * eVal)).toFixed(2));
-          next.t = Math.PI / 2;
-        }
-      } else if (presetKey === "equilateral") {
-        if (key === "a") {
-          next.a = value;
-          next.b = value;
-          next.e = Number(Math.SQRT2.toFixed(2));
-        }
-      } else if (presetKey === "wideAngle") {
-        if (key === "a") {
-          next.a = value;
-          next.b = Number((value * Math.sqrt(3)).toFixed(2));
-          next.e = 2;
+          next.b = deriveBFromEccentricity(conicType, value, next.e);
+        } else if (key === "e") {
+          next.b = deriveBFromEccentricity(conicType, next.a, value);
         }
       } else {
-        setPresetKey("free");
-        if (key === "e") {
-          next.b = deriveBFromEccentricity(conicType, next.a, value);
-        } else if (key === "a" || key === "b") {
+        // 几何性质或焦点三角形模式下 a 和 b 为主控参数
+        if (key === "a" || key === "b") {
+          if (conicType === "ellipse") {
+            // 椭圆高中课标安全契约：严格保证 a > b > 0
+            if (key === "a" && next.b >= value) {
+              next.b = Math.max(0.5, Number((value - 0.2).toFixed(1)));
+            } else if (key === "b" && value >= next.a) {
+              next.b = Math.max(0.5, Number((next.a - 0.2).toFixed(1)));
+            }
+          }
           const calc = calculateConicProperties(
             conicType,
             next.a,
@@ -106,13 +103,49 @@ export function ConicPropertiesAnimation() {
     });
   };
 
-  // 9. 预设切换
+  // 9. 典型预设切换（按研究模式与曲线类型特化）
   const handlePresetChange = (key: string) => {
     setPresetKey(key);
+    if (key === "free") return;
+
     if (conicType === "ellipse") {
       switch (key) {
+        case "featureTriangle": {
+          const a = 3;
+          const b = 2;
+          const calc = calculateConicProperties("ellipse", a, b, Math.PI / 4);
+          setParams({ a, b, e: calc.e, t: Math.PI / 4 });
+          break;
+        }
+        case "nearCircle": {
+          const a = 3;
+          const e = 0.15;
+          const b = a * Math.sqrt(1 - e * e);
+          setParams({ a, b, e, t: Math.PI / 4 });
+          break;
+        }
+        case "rightCritical": {
+          const a = 3;
+          const e = Math.SQRT1_2;
+          const b = a * Math.sqrt(1 - e * e);
+          setParams({ a, b, e, t: Math.PI / 4 });
+          break;
+        }
+        case "flatLimit": {
+          const a = 3.5;
+          const e = 0.92;
+          const b = a * Math.sqrt(1 - e * e);
+          setParams({ a, b, e, t: Math.PI / 4 });
+          break;
+        }
+        case "maxAngle": {
+          const a = 3;
+          const b = 2;
+          const calc = calculateConicProperties("ellipse", a, b, Math.PI / 2);
+          setParams({ a, b, e: calc.e, t: Math.PI / 2 });
+          break;
+        }
         case "rightTriangle": {
-          // 直角焦点三角形: e = sqrt(2)/2 ≈ 0.707, 顶角在短轴端点 t = PI/2
           const a = 3;
           const e = Math.SQRT1_2;
           const b = a * Math.sqrt(1 - e * e);
@@ -120,7 +153,6 @@ export function ConicPropertiesAnimation() {
           break;
         }
         case "latusRectum": {
-          // 通径端点: x_P = c, t = acos(c/a)
           const a = 3;
           const b = 2;
           const c = Math.sqrt(a * a - b * b);
@@ -129,43 +161,56 @@ export function ConicPropertiesAnimation() {
           setParams({ a, b, e, t });
           break;
         }
-        case "nearCircle": {
-          // 近圆退化: e -> 0.1, b -> a
-          const a = 3;
-          const b = 2.9;
-          const calc = calculateConicProperties("ellipse", a, b, Math.PI / 4);
-          setParams({ a, b, e: calc.e, t: Math.PI / 4 });
-          break;
-        }
         default:
           break;
       }
     } else {
+      // 双曲线
       switch (key) {
         case "equilateral": {
-          // 等轴双曲线: a = b = 2.5, e = sqrt(2) ≈ 1.414
           const a = 2.5;
           const b = 2.5;
           const calc = calculateConicProperties("hyperbola", a, b, 0.6);
           setParams({ a, b, e: calc.e, t: 0.6 });
           break;
         }
-        case "latusRectum": {
-          // 通径端点: x_P = c, sec(t) = c/a => cos(t) = a/c
+        case "wideAngle": {
+          const a = 2;
+          const e = 2.0;
+          const b = a * Math.sqrt(e * e - 1);
+          setParams({ a, b, e, t: 0.5 });
+          break;
+        }
+        case "narrowAngle": {
+          const a = 3;
+          const e = 1.15;
+          const b = a * Math.sqrt(e * e - 1);
+          setParams({ a, b, e, t: 0.6 });
+          break;
+        }
+        case "rightTriangle": {
           const a = 2.5;
-          const b = 2.5;
+          const b = 2;
+          const c = Math.sqrt(a * a + b * b);
+          const t = Math.atan(b / c);
+          const calc = calculateConicProperties("hyperbola", a, b, t);
+          setParams({ a, b, e: calc.e, t });
+          break;
+        }
+        case "latusRectum": {
+          const a = 2.5;
+          const b = 2;
           const c = Math.sqrt(a * a + b * b);
           const t = Math.acos(a / c);
           const calc = calculateConicProperties("hyperbola", a, b, t);
           setParams({ a, b, e: calc.e, t });
           break;
         }
-        case "wideAngle": {
-          // 渐近线夹角 120 度: b/a = sqrt(3), e = 2
-          const a = 2;
-          const bVal = 2 * Math.sqrt(3); // 2 * sqrt(3) ≈ 3.464
-          const calc = calculateConicProperties("hyperbola", a, bVal, 0.5);
-          setParams({ a, b: bVal, e: calc.e, t: 0.5 });
+        case "vertexLimit": {
+          const a = 2.5;
+          const b = 2;
+          const calc = calculateConicProperties("hyperbola", a, b, 0.05);
+          setParams({ a, b, e: calc.e, t: 0.05 });
           break;
         }
         default:
@@ -192,7 +237,7 @@ export function ConicPropertiesAnimation() {
     setParams((prev) => {
       let nextB = prev.b;
       if (newType === "ellipse" && prev.b >= prev.a) {
-        nextB = prev.a - 0.5;
+        nextB = Math.max(0.5, Number((prev.a - 0.5).toFixed(1)));
       }
       const calc = calculateConicProperties(newType, prev.a, nextB, prev.t);
       return {
@@ -203,49 +248,124 @@ export function ConicPropertiesAnimation() {
     });
   };
 
-  // 12. 典型预设选项
+  // 12. 典型预设选项（按 studyMode 和 conicType 精准分流）
   const presetItems = useMemo(() => {
-    if (conicType === "ellipse") {
+    const isEllipse = conicType === "ellipse";
+
+    if (studyMode === "basicProperties") {
+      if (isEllipse) {
+        return [
+          { key: "free", label: "自由探究", description: "任意半轴参数" },
+          {
+            key: "featureTriangle",
+            label: "特征直角三角形",
+            description: "三边长为 c, b, a",
+          },
+          {
+            key: "latusRectum",
+            label: "通径垂直端点",
+            description: "过焦点垂直于长轴",
+          },
+        ];
+      }
       return [
-        { key: "free", label: "自由探究", description: "任意半轴与离心率" },
+        { key: "free", label: "自由探究", description: "任意半轴参数" },
         {
-          key: "rightTriangle",
-          label: "直角焦点三角形",
-          description: "短轴端点张角为直角",
+          key: "equilateral",
+          label: "等轴双曲线",
+          description: "实虚轴相等 a = b",
         },
         {
           key: "latusRectum",
           label: "通径垂直端点",
-          description: "过焦点垂直于长轴",
+          description: "过焦点垂直于实轴",
+        },
+      ];
+    }
+
+    if (studyMode === "eccentricity") {
+      if (isEllipse) {
+        return [
+          { key: "free", label: "自由探究", description: "任意离心率" },
+          {
+            key: "nearCircle",
+            label: "近圆退化极限",
+            description: "e 趋向于 0，b 趋向于 a",
+          },
+          {
+            key: "rightCritical",
+            label: "直角三角形临界",
+            description: "e = √2/2，c = b",
+          },
+          {
+            key: "flatLimit",
+            label: "高扁平极限",
+            description: "e 趋向于 1，b 趋向于 0",
+          },
+        ];
+      }
+      return [
+        { key: "free", label: "自由探究", description: "任意离心率" },
+        {
+          key: "equilateral",
+          label: "等轴双曲线",
+          description: "e = √2，渐近线互相垂直",
         },
         {
-          key: "nearCircle",
-          label: "近圆退化极限",
-          description: "离心率趋近于零",
+          key: "wideAngle",
+          label: "广角渐近构型",
+          description: "e = 2，渐近线夹角 120°",
+        },
+        {
+          key: "narrowAngle",
+          label: "狭角渐近构型",
+          description: "e = 1.15，渐近线夹角约 60°",
+        },
+      ];
+    }
+
+    // focusTriangle 模式
+    if (isEllipse) {
+      return [
+        { key: "free", label: "自由探究", description: "自由拖拽动点 P" },
+        {
+          key: "maxAngle",
+          label: "短轴端点最大角",
+          description: "tan(θ/2) = c/b 取得最大值",
+        },
+        {
+          key: "rightTriangle",
+          label: "直角焦点三角形",
+          description: "顶角为直角 θ = 90°",
+        },
+        {
+          key: "latusRectum",
+          label: "通径垂直三角形",
+          description: "过焦点垂直弦三角形",
         },
       ];
     }
     return [
-      { key: "free", label: "自由探究", description: "任意半轴与离心率" },
+      { key: "free", label: "自由探究", description: "自由拖拽动点 P" },
       {
-        key: "equilateral",
-        label: "等轴双曲线",
-        description: "渐近线互相垂直",
+        key: "rightTriangle",
+        label: "直角焦点三角形",
+        description: "顶角为直角 θ = 90°, S = b²",
       },
       {
         key: "latusRectum",
-        label: "通径垂直端点",
-        description: "过焦点垂直于实轴",
+        label: "通径垂直三角形",
+        description: "过焦点垂直弦三角形",
       },
       {
-        key: "wideAngle",
-        label: "广角渐近构型",
-        description: "渐近线张角趋于钝角",
+        key: "vertexLimit",
+        label: "顶点极限平角",
+        description: "P 趋近顶点，θ 趋向于 180°",
       },
     ];
-  }, [conicType]);
+  }, [conicType, studyMode]);
 
-  // 13. 左屏声明式参数配置按 activeMode 与预设降维过滤
+  // 13. 左屏声明式参数配置按 activeMode 与学科约束过滤
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     let activeKeys: string[] = [];
     if (studyMode === "basicProperties") {
@@ -258,25 +378,25 @@ export function ConicPropertiesAnimation() {
 
     const ellipseMarks = [
       {
-        value: 0.01,
-        label: "近圆极限",
+        value: 0.15,
+        label: "近圆",
         labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{e \\to 0}`,
       },
       {
         value: 0.707,
-        label: "直角焦点三角形",
+        label: "直角临界",
         labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{e = \\frac{\\sqrt{2}}{2}}`,
       },
     ];
     const hyperbolaMarks = [
       {
         value: 1.414,
-        label: "等轴双曲线",
+        label: "等轴",
         labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{e = \\sqrt{2}}`,
       },
       {
         value: 2.0,
-        label: "广角双曲线",
+        label: "广角",
         labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{e = 2}`,
       },
     ];
@@ -285,74 +405,147 @@ export function ConicPropertiesAnimation() {
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        const isA = key === "a";
+        const isB = key === "b";
+        const isE = key === "e";
+
+        let label = meta.label;
+        let labelFormula = meta.labelFormula;
+        if (isA) {
+          label = conicType === "ellipse" ? "长半轴 a" : "实半轴 a";
+          labelFormula = `\\text{${conicType === "ellipse" ? "长半轴 " : "实半轴 "}}\\color{${MATH_COLORS.paramPrimary}}{a}`;
+        } else if (isB) {
+          label = conicType === "ellipse" ? "短半轴 b" : "虚半轴 b";
+          labelFormula = `\\text{${conicType === "ellipse" ? "短半轴 " : "虚半轴 "}}\\color{${MATH_COLORS.paramSecondary}}{b}`;
+        } else if (isE) {
+          label = "离心率 e";
+          labelFormula = `\\text{离心率 }\\color{${MATH_COLORS.primary}}{e}`;
+        } else if (key === "t") {
+          label = "动点位置角 t";
+          labelFormula = "\\text{动点角 }\\theta_P";
+        }
+
+        const maxVal =
+          isB && conicType === "ellipse"
+            ? Math.max(0.6, Number((params.a - 0.1).toFixed(1)))
+            : isE
+              ? conicType === "ellipse"
+                ? 0.98
+                : 2.8
+              : meta.max;
+
         return {
           key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
+          label,
+          labelFormula,
           value:
             (params as Record<string, number>)[key] ?? meta.defaultValue ?? 0,
-          min: key === "e" ? (conicType === "ellipse" ? 0.05 : 1.05) : meta.min,
-          max: key === "e" ? (conicType === "ellipse" ? 0.98 : 2.8) : meta.max,
+          min: isE ? (conicType === "ellipse" ? 0.05 : 1.05) : meta.min,
+          max: maxVal,
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
-          marks:
-            key === "e"
-              ? conicType === "ellipse"
-                ? ellipseMarks
-                : hyperbolaMarks
-              : meta.marks,
+          marks: isE
+            ? conicType === "ellipse"
+              ? ellipseMarks
+              : hyperbolaMarks
+            : meta.marks,
         };
       });
-  }, [params, studyMode, conicType, presetKey]);
+  }, [params, studyMode, conicType]);
 
-  // 左屏教学提示与题设导引
+  // 左屏教学提示与题设导引（带入具体方程与核心高考设问）
   const tipConfig = useMemo(() => {
     const isEllipse = conicType === "ellipse";
+    const aVal = params.a.toFixed(1);
+    const bVal = params.b.toFixed(1);
+    const a2 = (params.a * params.a).toFixed(1);
+    const b2 = (params.b * params.b).toFixed(1);
+
     if (presetKey !== "free") {
+      if (presetKey === "featureTriangle") {
+        return {
+          variant: "primary" as const,
+          badge: "课标核心 · 特征直角三角形",
+          condition: `椭圆标准方程中，半焦距 $c$、短半轴 $b$ 与长半轴 $a$ 构成以 $a$ 为斜边的直角三角形。`,
+          question: `如何根据勾股关系 $a^2 = b^2 + c^2$ 直观推演焦距与长短半轴的代数联系？`,
+        };
+      }
       if (presetKey === "rightTriangle") {
         return {
           variant: "warning" as const,
           badge: "高考经典 · 直角焦点三角形",
-          condition:
-            "动点 $P$ 位于椭圆短轴端点，焦点三角形顶角 $\\angle F_1PF_2$ 为直角。",
-          question:
-            "探究椭圆存在直角焦点三角形对离心率的范围要求，以及焦点三角形的最大面积。",
+          condition: isEllipse
+            ? `椭圆短轴端点处顶角 $\\angle F_1PF_2 = 90^\\circ$（直角临界构型）。`
+            : `双曲线上动点 $P$ 满足焦点三角形顶角 $\\angle F_1PF_2 = 90^\\circ$。`,
+          question: isEllipse
+            ? `求证：椭圆曲线上存在直角焦点三角形的充要条件为离心率 $e \\ge \\frac{\\sqrt{2}}{2}$。`
+            : `如何根据双曲线焦点三角形面积公式，证明直角焦点三角形面积恒为定值 $S = b^2$？`,
+        };
+      }
+      if (presetKey === "maxAngle") {
+        return {
+          variant: "danger" as const,
+          badge: "高考真题 · 顶角极值模型",
+          condition: `动点 $P$ 位于椭圆短轴端点 $(0, \\pm ${bVal})$，顶角 $\\theta$ 取得最大值。`,
+          question: `如何通过半角公式证明 $\\tan\\frac{\\theta_{\\max}}{2} = \\frac{c}{b}$，并求解顶角最大值？`,
         };
       }
       if (presetKey === "equilateral") {
         return {
           variant: "primary" as const,
           badge: "高考经典 · 等轴双曲线",
-          condition: "双曲线实半轴与虚半轴长度相等，渐近线互相垂直。",
-          question:
-            "如何证明等轴双曲线的离心率为定值 $\\sqrt{2}$，且两渐近线夹角为直角？",
+          condition: `双曲线实半轴与虚半轴相等 ($a = b = ${aVal}$)，方程为 $x^2 - y^2 = ${(params.a * params.a).toFixed(1)}$。`,
+          question: `如何证明等轴双曲线的离心率恒为定值 $\\sqrt{2}$，且渐近线互相垂直？`,
         };
       }
       if (presetKey === "latusRectum") {
         return {
           variant: "primary" as const,
-          badge: "高考经典 · 通径垂直端点",
-          condition: `过焦点的弦垂直于${isEllipse ? "椭圆长轴" : "双曲线实轴"}（通径）。`,
-          question: "如何由曲线方程快速求解通径长度及通径端点到准线的距离？",
+          badge: "教材通法 · 通径垂直端点",
+          condition: `过焦点作垂直于${isEllipse ? "长轴" : "实轴"}的弦，交曲线于通径端点。`,
+          question: `如何由圆锥曲线方程快速推导出通径长度公式 $L = \\frac{2b^2}{a}$？`,
         };
       }
       if (presetKey === "wideAngle") {
         return {
           variant: "danger" as const,
           badge: "高考经典 · 广角双曲线",
-          condition: "双曲线离心率增大，渐近线张角趋于钝角。",
-          question:
-            "探究双曲线开口张角与渐近线斜率随离心率增大的单调变化规律。",
+          condition: `双曲线离心率 $e = 2.0$，渐近线方程为 $y = \\pm \\sqrt{3}x$。`,
+          question: `如何利用公式 $\\cos\\frac{\\alpha}{2} = \\frac{1}{e}$ 求解两渐近线的夹角 $\\alpha$？`,
+        };
+      }
+      if (presetKey === "narrowAngle") {
+        return {
+          variant: "info" as const,
+          badge: "高考经典 · 狭角双曲线",
+          condition: `双曲线离心率 $e = 1.15$，渐近线张角较小。`,
+          question: `探究双曲线离心率 $e \\to 1$ 时渐近线与双曲线分支的形态变化趋势。`,
         };
       }
       if (presetKey === "nearCircle") {
         return {
           variant: "info" as const,
           badge: "几何极限 · 近圆退化",
-          condition: "短半轴 $b \\to a$，焦距 $c \\to 0$，椭圆趋向于圆周。",
-          question: "观察离心率 $e \\to 0$ 时焦点与准线的退化极限。",
+          condition: `椭圆短半轴 $b \\to a$，焦距 $c \\to 0$，离心率 $e = ${params.e.toFixed(3)} \\to 0$。`,
+          question: `当离心率 $e \\to 0$ 时，准线方程与焦点坐标呈现怎样的几何极限？`,
+        };
+      }
+      if (presetKey === "flatLimit") {
+        return {
+          variant: "warning" as const,
+          badge: "几何极限 · 扁平线段化",
+          condition: `椭圆短半轴 $b \\to 0$，焦距 $c \\to a$，离心率 $e = ${params.e.toFixed(3)} \\to 1$。`,
+          question: `当离心率 $e \\to 1$ 时，椭圆图形向线段 $F_1F_2$ 退化的几何实质是什么？`,
+        };
+      }
+      if (presetKey === "vertexLimit") {
+        return {
+          variant: "warning" as const,
+          badge: "极限退化 · 顶点平角",
+          condition: `动点 $P$ 沿双曲线右支无限趋近于实轴顶点 $A_2(${aVal}, 0)$。`,
+          question: `当动点趋近顶点时，焦点三角形面积与顶角 $\\theta$ 的极限分别为何值？`,
         };
       }
     }
@@ -360,29 +553,119 @@ export function ConicPropertiesAnimation() {
     if (studyMode === "basicProperties") {
       return {
         variant: "info" as const,
-        badge: `${isEllipse ? "椭圆" : "双曲线"}基本几何性质`,
-        condition: `平面内给定${isEllipse ? "椭圆" : "双曲线"}的标准方程与基本半轴参数。`,
-        question: "如何由半轴参数确定焦点坐标、准线方程、顶点坐标与对称轴？",
+        badge: `${isEllipse ? "椭圆" : "双曲线"}标准方程与基本性质`,
+        condition: isEllipse
+          ? `当前椭圆标准方程为 $\\frac{x^2}{${a2}} + \\frac{y^2}{${b2}} = 1$ ($a=${aVal}, b=${bVal}$)。`
+          : `当前双曲线标准方程为 $\\frac{x^2}{${a2}} - \\frac{y^2}{${b2}} = 1$ ($a=${aVal}, b=${bVal}$)。`,
+        question: isEllipse
+          ? `如何由半轴参数确定焦点坐标、准线方程、顶点坐标与通径长？`
+          : `如何由特征矩形确定渐近线方程 $y = \\pm \\frac{b}{a}x$、焦点与通径长？`,
       };
     }
     if (studyMode === "eccentricity") {
       return {
         variant: "primary" as const,
-        badge: `${isEllipse ? "椭圆" : "双曲线"}离心率与形态`,
-        condition: `${isEllipse ? "椭圆焦距与长半轴比值" : "双曲线焦距与实半轴比值"}为离心率 $e$。`,
+        badge: `${isEllipse ? "椭圆" : "双曲线"}离心率与形态构造`,
+        condition: isEllipse
+          ? `椭圆长半轴 $a = ${aVal}$，离心率 $e = ${params.e.toFixed(3)}$，短半轴 $b = ${bVal}$。`
+          : `双曲线实半轴 $a = ${aVal}$，离心率 $e = ${params.e.toFixed(3)}$，虚半轴 $b = ${bVal}$。`,
         question: isEllipse
-          ? "离心率数值的大小如何直观决定椭圆的扁平程度？"
-          : "离心率数值的大小如何直观决定双曲线的开口张角与渐近线斜率？",
+          ? `离心率数值的大小如何直观决定椭圆的扁平程度与通径长度？`
+          : `离心率数值的大小如何决定渐近线斜率 $k = \\pm\\sqrt{e^2-1}$ 与张角大小？`,
       };
     }
     return {
       variant: "danger" as const,
-      badge: `${isEllipse ? "椭圆" : "双曲线"}焦点三角形`,
-      condition: `曲线上动点 $P$ 与两焦点 $F_1, F_2$ 相连构成焦点三角形 $\\triangle PF_1F_2$。`,
-      question:
-        "如何结合圆锥曲线定义与余弦定理，求解焦点三角形的面积与顶角最值？",
+      badge: `${isEllipse ? "椭圆" : "双曲线"}焦点三角形综合探究`,
+      condition: `动点 $P$ 位于曲线右侧，与两焦点 $F_1, F_2$ 形成顶角 $\\theta$ 的焦点三角形。`,
+      question: isEllipse
+        ? `如何结合第一定义与余弦定理，求解焦点三角形面积 $S = b^2\\tan\\frac{\\theta}{2}$ 与最大顶角？`
+        : `如何结合第一定义与余弦定理，推导双曲线焦点三角形面积公式 $S = \\frac{b^2}{\\tan(\\theta/2)}$？`,
     };
-  }, [studyMode, conicType, presetKey]);
+  }, [studyMode, conicType, presetKey, params]);
+
+  // 14. 中屏几何图例配置 (SceneLegend)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const isEllipse = conicType === "ellipse";
+    const legendList: SceneLegendItem[] = [
+      {
+        colorKey: "primary",
+        label: isEllipse ? "椭圆曲线" : "双曲线",
+        formula: isEllipse
+          ? "\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1"
+          : "\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1",
+        style: "solid",
+      },
+    ];
+
+    if (!isEllipse) {
+      legendList.push({
+        colorKey: "paramSecondary",
+        label: "渐近线",
+        formula: "y = \\pm \\frac{b}{a}x",
+        style: "dash",
+      });
+    }
+
+    if (studyMode === "basicProperties") {
+      if (isEllipse) {
+        legendList.push({
+          colorKey: "paramPrimary",
+          label: "特征直角三角形",
+          formula: "a^2 = b^2 + c^2",
+          style: "dash",
+        });
+      } else {
+        legendList.push({
+          colorKey: "paramSecondary",
+          label: "特征矩形",
+          formula: "2a \\times 2b",
+          style: "dash",
+        });
+        legendList.push({
+          colorKey: "paramTertiary",
+          label: "外接辅助圆",
+          formula: "r = c",
+          style: "dash",
+        });
+      }
+    } else if (studyMode === "eccentricity") {
+      legendList.push({
+        colorKey: "primary",
+        label: "准线",
+        formula: "x = \\pm \\frac{a^2}{c}",
+        style: "dash",
+      });
+      legendList.push({
+        colorKey: "paramPrimary",
+        label: "通径",
+        formula: "L = \\frac{2b^2}{a}",
+        style: "solid",
+      });
+    } else {
+      // focusTriangle legend
+      legendList.push({
+        colorKey: "paramPrimary",
+        label: "焦半径 r₁",
+        formula: "|PF_1|",
+        style: "solid",
+      });
+      legendList.push({
+        colorKey: "primary",
+        label: "焦半径 r₂",
+        formula: "|PF_2|",
+        style: "solid",
+      });
+      legendList.push({
+        colorKey: "paramTertiary",
+        label: "内切圆与内心",
+        formula: "I, r_{\\text{in}}",
+        style: "dash",
+      });
+    }
+
+    return legendList;
+  }, [conicType, studyMode]);
 
   return (
     <ThreePanel
@@ -452,29 +735,34 @@ export function ConicPropertiesAnimation() {
         </LeftPanel>
       }
       center={
-        <AnimationSvgCanvas
-          containerRef={containerRef}
-          transform={vp.transform}
-        >
-          <ConicPropertiesScene
-            params={params}
-            scale={scale}
-            vp={vp}
-            fontScale={canvasSize.font}
-            studyMode={studyMode}
-            conicType={conicType}
-            onParamChange={handleParamChange}
-          />
-        </AnimationSvgCanvas>
+        <div className="relative w-full h-full">
+          <AnimationSvgCanvas
+            containerRef={containerRef}
+            transform={vp.transform}
+          >
+            <ConicPropertiesScene
+              params={params}
+              scale={scale}
+              vp={vp}
+              fontScale={canvasSize.font}
+              studyMode={studyMode}
+              conicType={conicType}
+              onParamChange={handleParamChange}
+            />
+          </AnimationSvgCanvas>
+          <SceneLegend items={legendItems} title="几何图元图例" />
+        </div>
       }
       right={
         <MathPanel
+          examAnchor={mathData.examAnchor}
+          reasoningSteps={mathData.reasoningSteps}
           quantities={mathData.quantities}
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
-          title="高考解析几何看板"
+          title="数学解析看板"
         />
       }
     />
