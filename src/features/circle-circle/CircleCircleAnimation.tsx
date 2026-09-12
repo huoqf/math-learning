@@ -1,9 +1,10 @@
 /**
  * src/features/circle-circle/CircleCircleAnimation.tsx
  * 两圆几何关系与公共弦/公切线动画编排层
+ * 严格遵循系统公理：SSOT 纯净领域模型、useScenario 驱动、规范 SceneLegend 与三屏闭环
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -11,29 +12,33 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
-  KatexFormula,
   TipCard,
   Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import {
+  SceneLegend,
+  type SceneLegendItem,
+} from "@/components/Math/SceneLegend";
+import { useAnimationViewport, useSceneScale, useScenario } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import {
   CircleCircleScene,
   type CircleLayerOptions,
 } from "./components/CircleCircleScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/circleCircle";
-import { calculateCircleCircle } from "@/math/circleCircle";
+import { circleCircleScenarios } from "./meta";
 
 type StudyMode = "position" | "commonChord" | "commonTangent";
-type PresetKey = "free" | "outerTangent" | "intersectStandard" | "innerTangent";
 
 export function CircleCircleAnimation() {
-  // 1. 研究模式状态
-  const [studyMode, setStudyMode] = useState<StudyMode>("position");
-  // 2. 典型预设状态
-  const [preset, setPreset] = useState<PresetKey>("free");
+  // 1. 研究模式状态 (位置关系 / 公共弦 / 公切线系统)
+  const [studyMode, setStudyMode] = useState<StudyMode>("commonChord");
+
+  // 2. 当前典型情景激活 key
+  const [activeScenarioId, setActiveScenarioId] =
+    useState<string>("intersectStandard");
 
   // 3. 图层显隐状态
   const [layers, setLayers] = useState<CircleLayerOptions>({
@@ -42,7 +47,7 @@ export function CircleCircleAnimation() {
     showTangents: true,
   });
 
-  // 4. 参数状态
+  // 4. 几何参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
     x1: defaultParams.x1,
     y1: defaultParams.y1,
@@ -52,12 +57,22 @@ export function CircleCircleAnimation() {
     r2: defaultParams.r2,
   }));
 
-  // 5. 视口尺寸 Hook
+  // 5. useScenario 统一管理情景驱动、TipCard 题设与预设联动
+  const { tipProps, selectScenario } = useScenario({
+    scenarios: circleCircleScenarios,
+    activeKey: activeScenarioId,
+    params,
+    onParamsChange: (newParams) => {
+      setParams((prev) => ({ ...prev, ...newParams }));
+    },
+  });
+
+  // 6. 视口尺寸 Hook
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
 
-  // 6. 坐标系比例尺 [-7, 7] x [-5, 5]
+  // 7. 坐标系比例尺 [-7, 7] x [-5, 5]
   const scale = useSceneScale({
     vp,
     xRange: [-7, 7],
@@ -76,86 +91,55 @@ export function CircleCircleAnimation() {
     [params],
   );
 
-  // 7. 纯数学解算
-  const calcRes = useMemo(
-    () => calculateCircleCircle(parsedCircleParams),
-    [parsedCircleParams],
-  );
-
-  // 8. 右屏看板数据
+  // 8. 右屏看板数据 (纯领域模型计算与数据装配)
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-circle-circle", params, { studyMode });
   }, [params, studyMode]);
 
-  // 参数更新处理器
-  const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => {
-      const next = {
-        ...prev,
-        [key]: value,
-      };
+  // 参数滑块更新处理器
+  const handleParamChange = useCallback((key: string, value: number) => {
+    setParams((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }, []);
 
-      if (preset === "outerTangent") {
-        const x1 = key === "x1" ? value : next.x1;
-        const r1 = key === "r1" ? value : next.r1;
-        const r2 = key === "r2" ? value : next.r2;
-        next.x2 = Number((x1 + r1 + r2).toFixed(1));
-        next.y1 = 0;
-        next.y2 = 0;
-      } else if (preset === "innerTangent") {
-        const x1 = key === "x1" ? value : next.x1;
-        const r1 = key === "r1" ? value : next.r1;
-        const r2 = key === "r2" ? value : next.r2;
-        next.x2 = Number((x1 + Math.max(0.1, r1 - r2)).toFixed(1));
-        next.y1 = 0;
-        next.y2 = 0;
-      } else {
-        setPreset("free");
+  // 场景切换处理器
+  const handleScenarioChange = useCallback(
+    (scenarioId: string) => {
+      setActiveScenarioId(scenarioId);
+      selectScenario(scenarioId);
+      // 若切换到公共弦专题情景，自动同步对应探究模式
+      if (scenarioId === "intersectStandard") {
+        setStudyMode("commonChord");
+      } else if (scenarioId === "disjoint") {
+        setStudyMode("commonTangent");
       }
-
-      return next;
-    });
-  };
-
-  // 典型预设切换
-  const handlePresetChange = (pKey: PresetKey) => {
-    setPreset(pKey);
-    if (pKey === "free") return;
-
-    if (pKey === "outerTangent") {
-      setParams({ x1: -2, y1: 0, r1: 2, x2: 2, y2: 0, r2: 2 });
-    } else if (pKey === "intersectStandard") {
-      setParams({ x1: -1.5, y1: 0, r1: 2.5, x2: 1.5, y2: 0, r2: 2.0 });
-    } else if (pKey === "innerTangent") {
-      setParams({ x1: -0.5, y1: 0, r1: 3.5, x2: 1.5, y2: 0, r2: 1.5 });
-    }
-  };
+    },
+    [selectScenario],
+  );
 
   // 拖拽圆心 O1
-  const handleCenter1Drag = (nx: number, ny: number) => {
-    setPreset("free");
+  const handleCenter1Drag = useCallback((nx: number, ny: number) => {
     setParams((prev) => ({
       ...prev,
       x1: Math.round(nx * 10) / 10,
       y1: Math.round(ny * 10) / 10,
     }));
-  };
+  }, []);
 
   // 拖拽圆心 O2
-  const handleCenter2Drag = (nx: number, ny: number) => {
-    setPreset("free");
+  const handleCenter2Drag = useCallback((nx: number, ny: number) => {
     setParams((prev) => ({
       ...prev,
       x2: Math.round(nx * 10) / 10,
       y2: Math.round(ny * 10) / 10,
     }));
-  };
+  }, []);
 
-  // 分组参数配置：圆 O1 参数（圆心坐标与半径对象化分组，预设下锁定降维）
+  // 分组参数配置：圆 O1 参数
   const circle1Configs = useMemo<ParamConfig[]>(() => {
-    const isTangetPreset =
-      preset === "outerTangent" || preset === "innerTangent";
-    const keys = isTangetPreset ? ["r1"] : ["x1", "y1", "r1"];
+    const keys = ["x1", "y1", "r1"];
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
@@ -176,13 +160,11 @@ export function CircleCircleAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, preset]);
+  }, [params]);
 
-  // 分组参数配置：圆 O2 参数（圆心坐标与半径对象化分组，预设下锁定降维）
+  // 分组参数配置：圆 O2 参数
   const circle2Configs = useMemo<ParamConfig[]>(() => {
-    const isTangetPreset =
-      preset === "outerTangent" || preset === "innerTangent";
-    const keys = isTangetPreset ? ["r2"] : ["x2", "y2", "r2"];
+    const keys = ["x2", "y2", "r2"];
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
@@ -203,64 +185,60 @@ export function CircleCircleAnimation() {
           marks: meta.marks,
         };
       });
-  }, [params, preset]);
-
-  // 左屏教学提示与题设导引（说明初始条件与探究设问）
-  const tipConfig = useMemo(() => {
-    if (preset === "outerTangent") {
-      return {
-        variant: "primary" as const,
-        badge: "高考经典 · 典型外切",
-        condition: "两圆处于外离与相交之间的外切临界状态。",
-        question:
-          "两圆外切时圆心距与两半径满足什么等量关系？此时共有几条公切线？",
-      };
-    }
-    if (preset === "intersectStandard") {
-      return {
-        variant: "warning" as const,
-        badge: "高考经典 · 相交公共弦",
-        condition: "两圆相交于两个不同的实数交点，存在公共弦。",
-        question: "如何由两圆方程快速求解公共弦所在直线方程及相交弦长？",
-      };
-    }
-    if (preset === "innerTangent") {
-      return {
-        variant: "danger" as const,
-        badge: "高考经典 · 典型内切",
-        condition: "两圆处于相交与内含之间的内切临界状态。",
-        question:
-          "两圆内切时圆心距与两半径满足什么等量关系？此时共有几条公切线？",
-      };
-    }
-
-    if (studyMode === "position") {
-      return {
-        variant: "info" as const,
-        badge: "两圆位置关系判定",
-        condition: "平面内给定两已知圆的圆心坐标与半径。",
-        question: "如何通过圆心距与两圆半径的和、差关系，判定五种位置关系？",
-      };
-    }
-    if (studyMode === "commonChord") {
-      return {
-        variant: "warning" as const,
-        badge: "公共弦与根轴方程",
-        condition: "两相交圆的方程已知，交点连线构成公共弦。",
-        question: "如何通过两圆二次方程作差消元，快速导出公共弦直线方程？",
-      };
-    }
-    return {
-      variant: "danger" as const,
-      badge: "公切线长与几何系统",
-      condition: "两圆在不同位置关系下的外公切线与内公切线系统。",
-      question: "如何构造直角梯形与勾股定理，求解外公切线与内公切线的切线长？",
-    };
-  }, [studyMode, preset]);
+  }, [params]);
 
   const allParamConfigs = useMemo<ParamConfig[]>(() => {
     return [...circle1Configs, ...circle2Configs];
   }, [circle1Configs, circle2Configs]);
+
+  // 中屏毛玻璃图例
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    const items: SceneLegendItem[] = [
+      {
+        color: MATH_COLORS.paramPrimary,
+        label: "圆 O₁",
+        style: "solid",
+      },
+      {
+        color: MATH_COLORS.paramSecondary,
+        label: "圆 O₂",
+        style: "solid",
+      },
+    ];
+
+    if (layers.showCenterLine) {
+      items.push({
+        color: MATH_COLORS.primary,
+        label: "连心线 O₁O₂",
+        style: "dashed",
+      });
+    }
+
+    if (layers.showChord) {
+      items.push({
+        color: MATH_COLORS.paramTertiary,
+        label: "公共弦 / 根轴",
+        style: "line",
+      });
+    }
+
+    if (studyMode === "commonTangent" && layers.showTangents) {
+      items.push(
+        {
+          color: MATH_COLORS.primary,
+          label: "外公切线",
+          style: "line",
+        },
+        {
+          color: MATH_COLORS.accent,
+          label: "内公切线",
+          style: "dashed",
+        },
+      );
+    }
+
+    return items;
+  }, [layers, studyMode]);
 
   return (
     <ThreePanel
@@ -270,8 +248,8 @@ export function CircleCircleAnimation() {
           <LeftPanelSection title="探究主题">
             <SelectGrid<StudyMode>
               items={[
-                { key: "position", label: "位置关系" },
-                { key: "commonChord", label: "公共弦" },
+                { key: "commonChord", label: "公共弦专题" },
+                { key: "position", label: "位置关系判定" },
                 {
                   key: "commonTangent",
                   label: "公切线系统",
@@ -284,17 +262,15 @@ export function CircleCircleAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 典型预设 (黄金 2x2 对称网格) */}
-          <LeftPanelSection title="典型预设">
-            <SelectGrid<PresetKey>
-              items={[
-                { key: "free", label: "自由探究" },
-                { key: "outerTangent", label: "典型外切" },
-                { key: "intersectStandard", label: "相交弦长" },
-                { key: "innerTangent", label: "经典内切" },
-              ]}
-              value={preset}
-              onChange={handlePresetChange}
+          {/* 2. 高考典型情景 (通过 ScenarioSpec 驱动) */}
+          <LeftPanelSection title="高考典型情景">
+            <SelectGrid<string>
+              items={circleCircleScenarios.map((sc) => ({
+                key: sc.id,
+                label: sc.name,
+              }))}
+              value={activeScenarioId}
+              onChange={handleScenarioChange}
               columns={2}
             />
           </LeftPanelSection>
@@ -341,13 +317,15 @@ export function CircleCircleAnimation() {
             </div>
           </LeftPanelSection>
 
-          {/* 5. 教学提示与题设导引（置于最底部） */}
-          <TipCard
-            variant={tipConfig.variant}
-            badge={tipConfig.badge}
-            condition={tipConfig.condition}
-            question={tipConfig.question}
-          />
+          {/* 5. 教学提示与题设导引（由 useScenario 统一输出） */}
+          {tipProps && (
+            <TipCard
+              variant={tipProps.variant}
+              badge={tipProps.badge}
+              condition={tipProps.condition}
+              question={tipProps.question}
+            />
+          )}
         </LeftPanel>
       }
       center={
@@ -368,31 +346,15 @@ export function CircleCircleAnimation() {
             />
           </AnimationSvgCanvas>
 
-          {/* 悬浮公式指示牌 (中屏上方) */}
-          <div className="absolute top-4 left-4 pointer-events-none bg-white/90 backdrop-blur px-3.5 py-2.5 rounded-xl border border-neutral-200 shadow-sm flex flex-col gap-1.5 text-xs">
-            <div className="text-neutral-500 font-medium flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-500" />
-              <span>两圆实时几何状态：</span>
-            </div>
-            <div className="flex items-center gap-3 font-semibold text-neutral-800">
-              <KatexFormula
-                formula={`d = ${calcRes.d.toFixed(2)}, \\quad r_1+r_2 = ${calcRes.sumR.toFixed(2)}, \\quad |r_1-r_2| = ${calcRes.diffR.toFixed(2)}`}
-              />
-            </div>
-            {calcRes.commonChord && studyMode === "commonChord" && (
-              <div className="text-emerald-700 font-medium border-t border-neutral-100 pt-1">
-                <KatexFormula
-                  formula={`\\text{公共弦/根轴: } ${calcRes.commonChord.line.latex}`}
-                />
-              </div>
-            )}
-          </div>
+          {/* 中屏规范图例 (位于右下角，避免遮挡中央几何图形) */}
+          <SceneLegend items={legendItems} title="几何图例" />
         </div>
       }
       right={
         <MathPanel
           quantities={mathData.quantities}
           theorems={mathData.theorems}
+          reasoningSteps={mathData.reasoningSteps}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}

@@ -334,7 +334,7 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
             }
 
             const isInner = tan.type === "inner";
-            const color = isInner ? "#8B5CF6" : "#3B82F6";
+            const color = isInner ? MATH_COLORS.accent : MATH_COLORS.primary;
 
             return (
               <g key={`tan-${idx}`}>

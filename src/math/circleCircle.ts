@@ -1,9 +1,4 @@
-/**
- * src/math/circleCircle.ts
- * 两圆几何关系纯数学计算库
- * 包含：圆心距、5种位置关系判定、交点坐标、公共弦/根轴方程、公切线方程与切点
- * 严格遵循纯函数原则，零副作用
- */
+import { formatGeneralEquationLatex } from "@/math/lineEquation";
 
 export type CirclePositionRelation =
   | "disjoint" // 外离 (d > r1 + r2)
@@ -50,10 +45,11 @@ export interface CircleCircleResult {
   intersections: Point2D[];
   commonChord: {
     line: LineEquationCoeffs;
-    length: number | null; // 相交时为弦长，其他为 null
-    midpoint: Point2D | null;
-    distToO1: number | null; // O1 到公共弦距离（弦心距）
-    distToO2: number | null; // O2 到公共弦距离
+    lineType: "chord" | "tangent" | "radical_axis"; // 相交为公共弦，相切为公切线，不相交为根轴
+    length: number | null; // 相交时为公共弦长，其他为 null
+    midpoint: Point2D | null; // 弦中点 / 垂足 M
+    distToO1: number | null; // O1 到公共弦距离（弦心距 d1）
+    distToO2: number | null; // O2 到公共弦距离（弦心距 d2）
   } | null;
   tangents: TangentLineResult[];
   tangentCount: number;
@@ -62,6 +58,65 @@ export interface CircleCircleResult {
 }
 
 const EPS = 1e-4;
+
+function gcd(a: number, b: number): number {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  while (b > 1e-6) {
+    const t = b;
+    b = a % b;
+    a = t;
+  }
+  return a;
+}
+
+/**
+ * 将一般式直线系数 Ax + By + C = 0 规整为高中数学最简整数比（首项系数正定）
+ */
+export function simplifyGeneralLine(
+  A: number,
+  B: number,
+  C: number,
+): LineEquationCoeffs {
+  if (Math.abs(A) < 1e-6 && Math.abs(B) < 1e-6) {
+    return { A: 0, B: 0, C, latex: "0 = 0" };
+  }
+
+  // 尝试将 0.1, 0.25, 0.5 等步长参数缩放为整数
+  let scale = 1;
+  for (const m of [1, 2, 4, 5, 10, 20, 100]) {
+    const aInt = Math.round(A * m);
+    const bInt = Math.round(B * m);
+    const cInt = Math.round(C * m);
+    if (
+      Math.abs(A * m - aInt) < 1e-4 &&
+      Math.abs(B * m - bInt) < 1e-4 &&
+      Math.abs(C * m - cInt) < 1e-4
+    ) {
+      scale = m;
+      break;
+    }
+  }
+
+  let aInt = Math.round(A * scale);
+  let bInt = Math.round(B * scale);
+  let cInt = Math.round(C * scale);
+
+  // 首项系数正规化：A > 0；若 A = 0 则 B > 0
+  if (aInt < 0 || (aInt === 0 && bInt < 0)) {
+    aInt = -aInt;
+    bInt = -bInt;
+    cInt = -cInt;
+  }
+
+  const g = gcd(gcd(aInt, bInt), cInt) || 1;
+  const finalA = Math.round(aInt / g);
+  const finalB = Math.round(bInt / g);
+  const finalC = Math.round(cInt / g);
+
+  const latex = formatGeneralEquationLatex(finalA, finalB, finalC);
+  return { A: finalA, B: finalB, C: finalC, latex };
+}
 
 /**
  * 求解两圆几何关系与相关量
@@ -84,7 +139,7 @@ export function calculateCircleCircle(
 
   if (d < EPS) {
     relation = "concentric";
-    relationText = Math.abs(r1 - r2) < EPS ? "重合" : "同心圆 (内含)";
+    relationText = Math.abs(r1 - r2) < EPS ? "两圆重合" : "同心圆 (内含)";
   } else if (d > sumR + EPS) {
     relation = "disjoint";
     relationText = "外离 (4条公切线)";
@@ -99,31 +154,23 @@ export function calculateCircleCircle(
     relationText = "内切 (1条公切线)";
   } else {
     relation = "contain";
-    relationText = "内含 (无公切线)";
+    relationText = "内含 (0条公切线)";
   }
 
-  // 2. 公共弦 / 根轴方程 (Radical Axis)
-  // C1: (x-x1)^2 + (y-y1)^2 = r1^2 => x^2+y^2 - 2x1 x - 2y1 y + x1^2+y1^2 - r1^2 = 0
-  // C2: (x-x2)^2 + (y-y2)^2 = r2^2 => x^2+y^2 - 2x2 x - 2y2 y + x2^2+y2^2 - r2^2 = 0
-  // C1 - C2: 2(x2-x1)x + 2(y2-y1)y + (x1^2+y1^2 - r1^2) - (x2^2+y2^2 - r2^2) = 0
+  // 2. 作差所得方程 C1 - C2 = 0
+  // C1: (x-x1)^2 + (y-y1)^2 - r1^2 = x^2+y^2 - 2x1 x - 2y1 y + (x1^2+y1^2-r1^2) = 0
+  // C2: (x-x2)^2 + (y-y2)^2 - r2^2 = x^2+y^2 - 2x2 x - 2y2 y + (x2^2+y2^2-r2^2) = 0
+  // C1 - C2 = 0 <=> 2(x2-x1)x + 2(y2-y1)y + (x1^2+y1^2-r1^2 - (x2^2+y2^2-r2^2)) = 0
   let commonChord: CircleCircleResult["commonChord"] = null;
   const intersections: Point2D[] = [];
 
   if (d >= EPS) {
-    const A = 2 * (x2 - x1);
-    const B = 2 * (y2 - y1);
-    const C = x1 * x1 + y1 * y1 - r1 * r1 - (x2 * x2 + y2 * y2 - r2 * r2);
+    const rawA = 2 * (x2 - x1);
+    const rawB = 2 * (y2 - y1);
+    const rawC = x1 * x1 + y1 * y1 - r1 * r1 - (x2 * x2 + y2 * y2 - r2 * r2);
 
-    // 标准化 Ax + By + C = 0 的 LaTeX 表示
-    const norm = Math.hypot(A, B) || 1;
-    const aNorm = A / norm;
-    const bNorm = B / norm;
-    const cNorm = C / norm;
-    const latex = formatLineLatex(aNorm, bNorm, cNorm);
+    const line = simplifyGeneralLine(rawA, rawB, rawC);
 
-    const line: LineEquationCoeffs = { A, B, C, latex };
-
-    // 计算交点（当相交或相切时）
     // 投影距离 a = (r1^2 - r2^2 + d^2) / (2d)
     const aDist = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
     const h2 = r1 * r1 - aDist * aDist;
@@ -132,11 +179,11 @@ export function calculateCircleCircle(
     const ux = dx / d;
     const uy = dy / d;
 
-    // 垂直方向向量
+    // 垂直方向向量 (与连心线垂直)
     const vx = -uy;
     const vy = ux;
 
-    // 垂足 / 弦中点
+    // 垂足 / 弦中点 M
     const midX = x1 + aDist * ux;
     const midY = y1 + aDist * uy;
     const midpoint: Point2D = { x: midX, y: midY };
@@ -146,7 +193,7 @@ export function calculateCircleCircle(
     const distToO2 = Math.abs(d - aDist);
 
     if (h2 > EPS) {
-      // 存在两个交点
+      // 存在两个相异交点
       const h = Math.sqrt(h2);
       chordLen = 2 * h;
       intersections.push(
@@ -154,13 +201,21 @@ export function calculateCircleCircle(
         { x: midX - h * vx, y: midY - h * vy },
       );
     } else if (Math.abs(h2) <= EPS) {
-      // 切点 (单个交点)
+      // 相切 (单个交点/切点)
       chordLen = 0;
       intersections.push({ x: midX, y: midY });
     }
 
+    const lineType: "chord" | "tangent" | "radical_axis" =
+      relation === "intersect"
+        ? "chord"
+        : relation === "outer_tangent" || relation === "inner_tangent"
+          ? "tangent"
+          : "radical_axis";
+
     commonChord = {
       line,
+      lineType,
       length: relation === "intersect" ? chordLen : null,
       midpoint: relation === "intersect" ? midpoint : null,
       distToO1: relation === "intersect" ? distToO1 : null,
@@ -176,11 +231,10 @@ export function calculateCircleCircle(
     if (d >= diffR - EPS) {
       const baseAngle = Math.atan2(dy, dx);
       if (Math.abs(r1 - r2) < EPS) {
-        // 等半径：外公切线平行于圆心连线，距离为 r1
+        // 等半径：外公切线平行于圆心连线，垂直距离为 r1
         const vx = -dy / d;
         const vy = dx / d;
 
-        // 切线 1
         const p1A = { x: x1 + r1 * vx, y: y1 + r1 * vy };
         const p2A = { x: x2 + r1 * vx, y: y2 + r1 * vy };
         tangents.push({
@@ -190,7 +244,6 @@ export function calculateCircleCircle(
           tPoint2: p2A,
         });
 
-        // 切线 2
         const p1B = { x: x1 - r1 * vx, y: y1 - r1 * vy };
         const p2B = { x: x2 - r1 * vx, y: y2 - r1 * vy };
         tangents.push({
@@ -242,7 +295,7 @@ export function calculateCircleCircle(
     // 3.2 内公切线 (当 d >= r1 + r2 时存在)
     if (d >= sumR - EPS) {
       if (Math.abs(d - sumR) <= EPS) {
-        // 外切：恰有1条内公切线
+        // 外切：恰有 1 条内公切线
         const tPoint: Point2D = {
           x: x1 + (r1 / d) * dx,
           y: y1 + (r1 / d) * dy,
@@ -257,7 +310,7 @@ export function calculateCircleCircle(
           tPoint2: tPoint,
         });
       } else {
-        // 外离：有2条内公切线
+        // 外离：有 2 条内公切线
         const alpha = Math.asin(Math.min(1, Math.max(-1, (r1 + r2) / d)));
         const baseAngle = Math.atan2(dy, dx);
 
@@ -313,54 +366,17 @@ export function calculateCircleCircle(
     relation,
     relationText,
     intersections,
-    commonChord,
-    tangents,
+    commonChord: null,
+    tangents: [],
     tangentCount: 0,
     outerTangentLength: null,
     innerTangentLength: null,
   };
 }
 
-/**
- * 格式化一般式直线方程 Ax + By + C = 0 的标准 LaTeX
- */
-export function formatLineLatex(A: number, B: number, C: number): string {
-  const parts: string[] = [];
-
-  // A*x 项
-  if (Math.abs(A) > 1e-4) {
-    const aAbs = Math.abs(A);
-    const aStr =
-      Math.abs(aAbs - 1) < 1e-4 ? "" : aAbs.toFixed(2).replace(/\.?0+$/, "");
-    const sign = A < 0 ? "-" : "";
-    parts.push(`${sign}${aStr}x`);
-  }
-
-  // B*y 项
-  if (Math.abs(B) > 1e-4) {
-    const bAbs = Math.abs(B);
-    const bStr =
-      Math.abs(bAbs - 1) < 1e-4 ? "" : bAbs.toFixed(2).replace(/\.?0+$/, "");
-    const sign = parts.length > 0 ? (B > 0 ? "+ " : "- ") : B < 0 ? "-" : "";
-    parts.push(`${sign}${bStr}y`);
-  }
-
-  // C 项
-  if (Math.abs(C) > 1e-4 || parts.length === 0) {
-    const cAbs = Math.abs(C);
-    const cStr = cAbs.toFixed(2).replace(/\.?0+$/, "");
-    const sign = parts.length > 0 ? (C > 0 ? "+ " : "- ") : C < 0 ? "-" : "";
-    parts.push(`${sign}${cStr}`);
-  }
-
-  return `${parts.join(" ")} = 0`;
-}
-
 function twoPointsToLine(p1: Point2D, p2: Point2D): LineEquationCoeffs {
   const A = p2.y - p1.y;
   const B = p1.x - p2.x;
   const C = p2.x * p1.y - p1.x * p2.y;
-  const norm = Math.hypot(A, B) || 1;
-  const latex = formatLineLatex(A / norm, B / norm, C / norm);
-  return { A, B, C, latex };
+  return simplifyGeneralLine(A, B, C);
 }
