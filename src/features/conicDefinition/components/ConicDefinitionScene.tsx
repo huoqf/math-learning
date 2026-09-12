@@ -91,7 +91,7 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
             y1={line.y1}
             x2={line.x2}
             y2={line.y2}
-            stroke={withAlpha("#94A3B8", 0.55)}
+            stroke={withAlpha(MATH_COLORS.textMuted, 0.55)}
             strokeWidth={1.2}
             strokeDasharray="4 4"
           />
@@ -119,7 +119,7 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
             stroke="white"
             strokeWidth={3}
           >
-            准线 L (x = {directrixLine.x.toFixed(1)})
+            准线 l (x = {directrixLine.x.toFixed(1)})
           </text>
         </g>
       )}
@@ -130,11 +130,17 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
           d={pathD}
           fill="none"
           stroke={
-            conicType === "ellipse"
-              ? cPrimary
-              : conicType === "hyperbola"
-                ? cSecondary
-                : cTertiary
+            studyMode === "firstDef"
+              ? conicType === "ellipse"
+                ? cPrimary
+                : conicType === "hyperbola"
+                  ? cSecondary
+                  : cTertiary
+              : params.e < 1.0
+                ? cPrimary
+                : Math.abs(params.e - 1.0) < 1e-4
+                  ? cTertiary
+                  : cSecondary
           }
           strokeWidth={2.6}
         />

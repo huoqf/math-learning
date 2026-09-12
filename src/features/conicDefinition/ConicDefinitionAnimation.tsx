@@ -221,26 +221,29 @@ export function ConicDefinitionAnimation() {
           return {
             variant: "danger" as const,
             badge: "高考退化临界 · 椭圆退化为线段",
-            condition: "动点 P 到两焦点的距离之和等于两焦点间距。",
+            condition:
+              "动点 $P$ 到两焦点 $F_1, F_2$ 的距离之和等于焦距 $|F_1F_2| = 2c$。",
             question:
-              "为什么当距离之和等于焦距时，动点轨迹退化为线段而非椭圆？",
+              "如何从两点间线段最短证明当 $2a = 2c$ 时，动点 $P$ 的轨迹必退化为线段 $F_1F_2$？",
           };
         }
         if (activePreset === "equilateral_hyperbola") {
           return {
             variant: "primary" as const,
             badge: "高考经典 · 等轴双曲线",
-            condition: "双曲线实轴长与虚轴长相等，渐近线互相垂直。",
-            question: "如何证明等轴双曲线的离心率为定值，且两渐近线互相垂直？",
+            condition: "双曲线实半轴与虚半轴满足 $a = b$，两渐近线互相垂直。",
+            question:
+              "求证等轴双曲线的离心率恒为定值 $e = \\sqrt{2}$，并证明其两渐近线互相垂直。",
           };
         }
         if (activePreset === "hyperbola_degenerate") {
           return {
             variant: "danger" as const,
             badge: "高考退化临界 · 双曲线退化为射线",
-            condition: "动点 P 到两焦点的距离之差绝对值等于两焦点间距。",
+            condition:
+              "动点 $P$ 到两焦点 $F_1, F_2$ 的距离之差绝对值等于焦距 $||PF_1| - |PF_2|| = 2c$。",
             question:
-              "为什么当距离之差等于焦距时，动点轨迹退化为两条射线而非双曲线？",
+              "求证当 $2a = 2c$ 时，动点轨迹退化为以 $F_1, F_2$ 为端点向外延伸的两条反向射线。",
           };
         }
       } else {
@@ -248,9 +251,10 @@ export function ConicDefinitionAnimation() {
           return {
             variant: "warning" as const,
             badge: "高考经典 · 统一定义抛物线形态",
-            condition: "动点到焦点的距离与到准线的距离严格相等（焦准比为 1）。",
+            condition:
+              "动点 $P$ 到焦点 $F$ 的距离与到准线 $l$ 的距离严格相等（焦准比 $e = 1$）。",
             question:
-              "离心率等于 1 时，曲线形态如何由封闭椭圆演变为开口无限延伸的抛物线？",
+              "如何由焦点到准线的几何约束建立抛物线标准方程 $y^2 = 2px$，并探究其开口几何特征？",
           };
         }
       }
@@ -262,9 +266,9 @@ export function ConicDefinitionAnimation() {
           variant: "info" as const,
           badge: "椭圆第一定义 · 距离和为常数",
           condition:
-            "平面内动点 P 到两定点 F₁, F₂ 的距离之和为大于焦距的常数 2a。",
+            "平面内动点 $P$ 到两定点 $F_1, F_2$ 的距离之和为常数 $2a$（且满足 $2a > 2c > 0$）。",
           question:
-            "如何由距离之和建立椭圆轨迹方程，并探究常数和与焦距大小关系对形态的影响？",
+            "如何由距离和关系式列出代数方程，并通过双重平方化简求得椭圆标准方程 $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$？",
         };
       }
       if (conicType === "hyperbola") {
@@ -272,27 +276,27 @@ export function ConicDefinitionAnimation() {
           variant: "warning" as const,
           badge: "双曲线第一定义 · 距离差为常数",
           condition:
-            "平面内动点 P 到两定点 F₁, F₂ 的距离之差绝对值为小于焦距的正实数 2a。",
+            "平面内动点 $P$ 到两定点 $F_1, F_2$ 的距离之差绝对值为常数 $2a$（且满足 $0 < 2a < 2c$）。",
           question:
-            "为什么要取距离差的绝对值？绝对值如何决定双曲线的左右两个分支？",
+            "证明绝对值符号对生成双曲线左支与右支的必要性，并求解双曲线标准方程 $\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1$。",
         };
       }
       return {
         variant: "primary" as const,
         badge: "抛物线定义 · 到定点等于到定直线",
         condition:
-          "平面内动点 P 到定焦点 F 的距离与到定准线 l 的垂直距离相等。",
+          "平面内动点 $P$ 到定焦点 $F\\left(\\frac{p}{2}, 0\\right)$ 的距离与到定准线 $l: x = -\\frac{p}{2}$ 的距离相等。",
         question:
-          "如何利用抛物线定义实现折线距离最值问题中的焦半径与准线转化？",
+          "在高考折线最值问题中，如何运用抛物线定义将焦半径 $|PF|$ 转化为到准线的垂线段求最小值？",
       };
     }
     return {
       variant: "danger" as const,
       badge: "圆锥曲线统一定义 · 焦准比法",
       condition:
-        "平面内动点 P 到定焦点 F 的距离与到定准线 l 的距离之比为常数 e。",
+        "平面内动点 $P$ 到定焦点 $F$ 的距离与到定准线 $l$ 的垂直距离之比恒为常数 $e$（$e > 0$）。",
       question:
-        "探究离心率 e 在小于 1、等于 1、大于 1 时，如何统一决定曲线的几何形态？",
+        "求证离心率 $e$ 在 $(0, 1)$、$= 1$ 和 $(1, +\\infty)$ 三个区间内，如何统一决定二次曲线的标准轨迹方程与几何分支？",
     };
   }, [studyMode, conicType, activePreset]);
 
@@ -392,6 +396,7 @@ export function ConicDefinitionAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
           mnemonic={mathData.mnemonic}
           title="圆锥曲线定义看板"
         />

@@ -1,9 +1,14 @@
 /**
  * src/math/conicDefinition.ts
  * 纯数学函数库，零 React / DOM / Side-effects
- * 专注高中数学与新高考两大核心圆锥曲线范式：
- * 1. 第一定义：距离之和 / 距离之差 / 准线距离
- * 2. 统一定义：离心率 e 焦准距比值法 (d_F / d_l = e)
+ * 严格遵循高中数学课标与新高考规范：
+ * 1. 第一定义：
+ *    - 椭圆: |PF1| + |PF2| = 2a (2a > 2c > 0)；2a = 2c 退化为线段；2a < 2c 无轨迹
+ *    - 双曲线: ||PF1| - |PF2|| = 2a (0 < 2a < 2c)；2a = 2c 退化为两端向外延伸的射线；2a > 2c 无轨迹
+ *    - 抛物线: |PF| = d_l (p > 0)
+ * 2. 统一定义 (第二定义 / 焦准比法):
+ *    - d_F / d_l = e (0 < e < 1 椭圆，e = 1 抛物线，e > 1 包含左右双分支的双曲线)
+ * 3. 精准无跳变的反向拖拽算法，彻底杜绝跨支瞬移与坐标乱飞
  */
 
 export interface Point2D {
@@ -12,9 +17,9 @@ export interface Point2D {
 }
 
 export interface ConicSceneData {
-  points: Point2D[]; // 主轨迹曲线采样点
-  branches?: Point2D[][]; // 多分支曲线 (如双曲线左右两支)
-  asymptotes?: { x1: number; y1: number; x2: number; y2: number }[]; // 双曲线渐近线
+  points: Point2D[]; // 主轨迹曲线采样点 (单支或封闭曲线)
+  branches?: Point2D[][]; // 多分支曲线 (如双曲线左右两支、退化两射线)
+  asymptotes?: { x1: number; y1: number; x2: number; y2: number }[]; // 渐近线
   foci: { f1: Point2D; f2?: Point2D };
   directrix?: { x: number }; // 准线方程 x = const
   pPoint: Point2D; // 动点 P
@@ -27,9 +32,6 @@ export interface ConicSceneData {
 
 /**
  * 1. 求解第一定义模式下的轨迹数据
- * - 椭圆: |PF1| + |PF2| = 2a (a > c)
- * - 双曲线: ||PF1| - |PF2|| = 2a (c > a)
- * - 抛物线: |PF| = d_l (p > 0)
  */
 export function getFirstDefData(
   conicType: "ellipse" | "hyperbola" | "parabola",
@@ -42,27 +44,42 @@ export function getFirstDefData(
     const f1: Point2D = { x: -c, y: 0 };
     const f2: Point2D = { x: c, y: 0 };
 
-    if (a <= c) {
-      // 临界退化: 线段 F1F2 (a = c) 或 无轨迹 (a < c)
+    if (a < c) {
+      // 严格无轨迹
       return {
-        points: [f1, f2],
+        points: [],
         foci: { f1, f2 },
-        pPoint: {
-          x: -c + 2 * c * ((Math.cos(theta) + 1) / 2),
-          y: 0,
-        },
-        d1: c + -c + 2 * c * ((Math.cos(theta) + 1) / 2),
-        d2: c - (-c + 2 * c * ((Math.cos(theta) + 1) / 2)),
+        pPoint: { x: 0, y: 0 },
+        d1: c,
+        d2: c,
         isDegenerate: true,
         degenerateReason:
-          a === c
-            ? "2a = 2c：轨迹退化为连接两焦点 F₁F₂ 的线段"
-            : "2a < 2c：两点间线段最短，平面内不存在满足条件的点",
+          "2a < 2c：两边之和小于第三边，平面内不存在满足轨迹条件的点",
       };
     }
 
+    if (a === c) {
+      // 临界退化: 线段 F1F2
+      const segT = (Math.cos(theta) + 1) / 2; // [0, 1]
+      const px = -c + 2 * c * segT;
+      const py = 0;
+      const d1 = Math.abs(px - f1.x);
+      const d2 = Math.abs(px - f2.x);
+
+      return {
+        points: [f1, f2],
+        foci: { f1, f2 },
+        pPoint: { x: px, y: py },
+        d1,
+        d2,
+        isDegenerate: true,
+        degenerateReason: "2a = 2c：动点轨迹退化为连接两焦点 F₁F₂ 的线段",
+      };
+    }
+
+    // 正常椭圆 a > c
     const b = Math.sqrt(a * a - c * c);
-    const numSamples = 100;
+    const numSamples = 120;
     const points: Point2D[] = [];
     for (let i = 0; i <= numSamples; i++) {
       const ang = (i / numSamples) * 2 * Math.PI;
@@ -90,23 +107,50 @@ export function getFirstDefData(
   if (conicType === "hyperbola") {
     const f1: Point2D = { x: -c, y: 0 };
     const f2: Point2D = { x: c, y: 0 };
+    const maxX = 7.5;
 
-    if (c <= a) {
-      // 临界退化: 射线 (2a = 2c) 或 无轨迹 (2a > 2c)
+    if (a > c) {
+      // 严格无轨迹
       return {
         points: [],
+        branches: [],
         foci: { f1, f2 },
-        pPoint: { x: c, y: 0 },
-        d1: 2 * c,
-        d2: 0,
+        pPoint: { x: 0, y: 0 },
+        d1: c,
+        d2: c,
         isDegenerate: true,
         degenerateReason:
-          a === c
-            ? "2a = 2c：轨迹退化为以 F₁, F₂ 为端点向外延伸的两条射线"
-            : "2a > 2c：三角形两边之差不能大于第三边，无轨迹",
+          "2a > 2c：三角形两边之差不能大于第三边，平面内无满足条件的轨迹",
       };
     }
 
+    if (a === c) {
+      // 临界退化: 以 F1, F2 为端点向外延伸的两条射线
+      const leftRay: Point2D[] = [{ x: -maxX, y: 0 }, f1];
+      const rightRay: Point2D[] = [f2, { x: maxX, y: 0 }];
+
+      // theta 决定在左射线还是右射线
+      const isRight = theta >= 0 && theta < Math.PI;
+      const offset = Math.abs(Math.sin(theta)) * 3.5;
+      const px = isRight ? c + offset : -c - offset;
+      const py = 0;
+      const d1 = Math.abs(px - f1.x);
+      const d2 = Math.abs(px - f2.x);
+
+      return {
+        points: [],
+        branches: [leftRay, rightRay],
+        foci: { f1, f2 },
+        pPoint: { x: px, y: py },
+        d1,
+        d2,
+        isDegenerate: true,
+        degenerateReason:
+          "2a = 2c：动点轨迹退化为以 F₁, F₂ 为端点向外延伸的两条反向射线",
+      };
+    }
+
+    // 正常双曲线 c > a > 0
     const b = Math.sqrt(c * c - a * a);
     const numSamples = 60;
     const leftBranch: Point2D[] = [];
@@ -118,7 +162,7 @@ export function getFirstDefData(
       const tanT = Math.tan(t);
       const rx = a * secT;
       const ry = b * tanT;
-      if (Math.abs(rx) <= 8 && Math.abs(ry) <= 6) {
+      if (Math.abs(rx) <= maxX && Math.abs(ry) <= 5.5) {
         rightBranch.push({ x: rx, y: ry });
         leftBranch.push({ x: -rx, y: ry });
       }
@@ -126,18 +170,21 @@ export function getFirstDefData(
 
     // 渐近线 y = ±(b/a)x
     const slope = b / a;
-    const maxX = 7;
     const asymptotes = [
       { x1: -maxX, y1: -maxX * slope, x2: maxX, y2: maxX * slope },
       { x1: -maxX, y1: maxX * slope, x2: maxX, y2: -maxX * slope },
     ];
 
-    // 动点 P
-    const isRight = Math.cos(theta) >= 0;
-    const t = (Math.sin(theta) * 1.1).toFixed(3);
-    const numT = parseFloat(t);
-    const secT = 1 / Math.cos(numT);
-    const tanT = Math.tan(numT);
+    // 动点 P：[0, π) 为右支，[π, 2π) 为左支，中心均为 y = 0
+    const normTheta = ((theta % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const isRight = normTheta < Math.PI;
+    const subAngle = isRight ? normTheta : normTheta - Math.PI;
+    // u ∈ [-1, 1]
+    const u = (subAngle - Math.PI / 2) / (Math.PI / 2);
+    const t = Math.max(-1.2, Math.min(1.2, u * 1.15));
+    const secT = 1 / Math.cos(t);
+    const tanT = Math.tan(t);
+
     const px = isRight ? a * secT : -a * secT;
     const py = b * tanT;
 
@@ -156,7 +203,7 @@ export function getFirstDefData(
     };
   }
 
-  // 抛物线 y^2 = 2px (标准方程，焦点在 x 轴正半轴)
+  // 抛物线 y^2 = 2px (标准方程，焦点 (p/2, 0)，准线 x = -p/2)
   const validP = Math.max(0.1, p);
   const numSamples = 100;
   const points: Point2D[] = [];
@@ -189,9 +236,9 @@ export function getFirstDefData(
 }
 
 /**
- * 2. 求解统一定义 (第二定义) 模式下的轨迹数据
- * 极坐标标准形式: r = e*p / (1 - e*cosθ) (以焦点为极点，准线在 x = -p/2)
- * 笛卡尔坐标: F(p/2, 0), 准线 L: x = -p/2
+ * 2. 求解统一定义 (第二定义 / 焦准比法) 模式下的轨迹数据
+ * 焦点 F(p/2, 0)，准线 L: x = -p/2 (焦准距为 p)
+ * 几何方程: (x - p/2)^2 + y^2 = e^2 * (x + p/2)^2
  */
 export function getUnifiedDefData(
   e: number,
@@ -203,14 +250,19 @@ export function getUnifiedDefData(
   const f: Point2D = { x: validP / 2, y: 0 };
   const lx = -validP / 2;
   const dFocusDirectrix = validP;
+  const maxX = 7.5;
 
   const points: Point2D[] = [];
+  let branches: Point2D[][] | undefined = undefined;
   let asymptotes:
     { x1: number; y1: number; x2: number; y2: number }[] | undefined =
     undefined;
 
+  let px = 0;
+  let py = 0;
+
   if (validE < 1.0) {
-    // 椭圆: 离心率 e < 1
+    // 椭圆: 极坐标形式 r = e*p / (1 - e*cos(phi))，中心在 (p/2 + e^2*p/(1-e^2), 0)
     const numSamples = 120;
     for (let i = 0; i <= numSamples; i++) {
       const phi = (i / numSamples) * 2 * Math.PI;
@@ -219,75 +271,89 @@ export function getUnifiedDefData(
       const y = f.y + r * Math.sin(phi);
       points.push({ x, y });
     }
+
+    const rP = (validE * dFocusDirectrix) / (1 - validE * Math.cos(theta));
+    px = f.x + rP * Math.cos(theta);
+    py = f.y + rP * Math.sin(theta);
   } else if (Math.abs(validE - 1.0) < 1e-4) {
-    // 抛物线: 离心率 e = 1
-    const maxPhi = 2.4;
+    // 抛物线: e = 1，标准抛物线 y^2 = 2px，顶点在原点 (0, 0)
     const numSamples = 100;
+    const maxY = 4.8;
     for (let i = -numSamples; i <= numSamples; i++) {
-      const phi = (i / numSamples) * maxPhi;
-      const r = dFocusDirectrix / (1 - Math.cos(phi));
-      const x = f.x + r * Math.cos(phi);
-      const y = f.y + r * Math.sin(phi);
-      if (Math.abs(x) <= 8 && Math.abs(y) <= 6) {
-        points.push({ x, y });
-      }
+      const y = (i / numSamples) * maxY;
+      const x = (y * y) / (2 * validP);
+      points.push({ x, y });
     }
+
+    const normT = Math.max(0, Math.min(2 * Math.PI, theta));
+    py = (normT / Math.PI - 1) * 3.8;
+    px = (py * py) / (2 * validP);
   } else {
-    // 双曲线: 离心率 e > 1
-    const phiAsymptote = Math.acos(1 / validE);
-    const maxOffset = phiAsymptote - 0.12;
+    // 双曲线: e > 1，高中数学标准推导包含左右两支！
+    // 中心 x0 = -p*(e^2+1)/(2*(e^2-1))，实半轴 a = e*p/(e^2-1)，虚半轴 b = e*p/sqrt(e^2-1)
+    const e2 = validE * validE;
+    const x0 = (-validP * (e2 + 1)) / (2 * (e2 - 1));
+    const a = (validE * validP) / (e2 - 1);
+    const b = (validE * validP) / Math.sqrt(e2 - 1);
+
     const numSamples = 60;
+    const leftBranch: Point2D[] = [];
+    const rightBranch: Point2D[] = [];
 
     for (let i = -numSamples; i <= numSamples; i++) {
-      const u = (i / numSamples) * maxOffset;
-      const phi = Math.PI + u;
-      const r = (validE * dFocusDirectrix) / (1 - validE * Math.cos(phi));
-      const x = f.x + r * Math.cos(phi);
-      const y = f.y + r * Math.sin(phi);
-      if (Math.abs(x) <= 8 && Math.abs(y) <= 6) {
-        points.push({ x, y });
+      const t = (i / numSamples) * 1.25;
+      const secT = 1 / Math.cos(t);
+      const tanT = Math.tan(t);
+      const rx = x0 + a * secT; // 右支 (靠近右焦点 F)
+      const lxPt = x0 - a * secT; // 左支 (在准线左侧)
+      const y = b * tanT;
+
+      if (Math.abs(rx) <= maxX && Math.abs(y) <= 5.5) {
+        rightBranch.push({ x: rx, y });
+      }
+      if (Math.abs(lxPt) <= maxX && Math.abs(y) <= 5.5) {
+        leftBranch.push({ x: lxPt, y });
       }
     }
 
-    // 渐近线
-    const slope = Math.tan(phiAsymptote);
-    const cVal = (validE * validE * dFocusDirectrix) / (validE * validE - 1);
-    const cx = f.x - cVal;
-    const maxX = 7;
+    branches = [leftBranch, rightBranch];
+
+    // 渐近线过双曲线中心 (x0, 0)，斜率 k = ±b/a = ±sqrt(e^2-1)
+    const slope = b / a;
     asymptotes = [
       {
-        x1: cx - maxX,
+        x1: x0 - maxX,
         y1: -maxX * slope,
-        x2: cx + maxX,
+        x2: x0 + maxX,
         y2: maxX * slope,
       },
       {
-        x1: cx - maxX,
+        x1: x0 - maxX,
         y1: maxX * slope,
-        x2: cx + maxX,
+        x2: x0 + maxX,
         y2: -maxX * slope,
       },
     ];
-  }
 
-  // 计算动点 P
-  let actualPhi = theta;
-  if (validE >= 1.0) {
-    const maxPhi =
-      validE === 1.0 ? 2.4 : Math.PI - Math.acos(1 / validE) - 0.12;
-    const mapped = Math.sin(theta) * maxPhi;
-    actualPhi = Math.PI + mapped;
-  }
+    // 动点 P：[0, π) 映射右支，[π, 2π) 映射左支
+    const normTheta = ((theta % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const isRight = normTheta < Math.PI;
+    const subAngle = isRight ? normTheta : normTheta - Math.PI;
+    const u = (subAngle - Math.PI / 2) / (Math.PI / 2);
+    const t = Math.max(-1.2, Math.min(1.2, u * 1.15));
+    const secT = 1 / Math.cos(t);
+    const tanT = Math.tan(t);
 
-  const rP = (validE * dFocusDirectrix) / (1 - validE * Math.cos(actualPhi));
-  const px = f.x + rP * Math.cos(actualPhi);
-  const py = f.y + rP * Math.sin(actualPhi);
+    px = isRight ? x0 + a * secT : x0 - a * secT;
+    py = b * tanT;
+  }
 
   const df = Math.hypot(px - f.x, py - f.y);
   const dl = Math.abs(px - lx);
 
   return {
     points,
+    branches,
     asymptotes,
     foci: { f1: f },
     directrix: { x: lx },
@@ -299,7 +365,7 @@ export function getUnifiedDefData(
 }
 
 /**
- * 3. 精准反向拖拽解算函数
+ * 3. 精准反向拖拽解算函数（零跳变，稳定闭环）
  */
 export function solveThetaFromDrag(
   studyMode: "firstDef" | "unifiedDef",
@@ -307,27 +373,48 @@ export function solveThetaFromDrag(
   newMathPt: Point2D,
   params: { a: number; c: number; e: number; p: number },
 ): number {
-  const { a, c, p } = params;
+  const { a, c, p, e } = params;
 
   if (studyMode === "firstDef") {
     if (conicType === "ellipse") {
-      const b = a > c ? Math.sqrt(a * a - c * c) : 1;
+      if (a <= c) {
+        // 退化线段上拖拽
+        const clampedX = Math.max(-c, Math.min(c, newMathPt.x));
+        const segT = (clampedX + c) / (2 * c || 1); // [0, 1]
+        const angle = Math.acos(Math.max(-1, Math.min(1, segT * 2 - 1)));
+        return Number(angle.toFixed(3));
+      }
+      const b = Math.sqrt(a * a - c * c);
       let angle = Math.atan2(newMathPt.y / b, newMathPt.x / a);
       if (angle < 0) angle += 2 * Math.PI;
       return Number(angle.toFixed(3));
     }
+
     if (conicType === "hyperbola") {
-      const b = c > a ? Math.sqrt(c * c - a * a) : 1;
+      if (a >= c) {
+        // 退化射线上拖拽
+        const isRight = newMathPt.x >= 0;
+        const offset = Math.max(0, Math.min(3.5, Math.abs(newMathPt.x) - c));
+        const sinVal = Math.min(1, offset / 3.5);
+        const delta = Math.asin(sinVal);
+        const thetaVal = isRight ? delta : Math.PI + delta;
+        return Number(thetaVal.toFixed(3));
+      }
+
+      const b = Math.sqrt(c * c - a * a);
       const isRight = newMathPt.x >= 0;
+      // 反解 t: y = b * tan(t) => t = atan(y / b)
       const t = Math.atan(newMathPt.y / b);
-      const normalizedSubParam = Math.max(-0.95, Math.min(0.95, t / 1.25));
+      const u = Math.max(-0.95, Math.min(0.95, t / 1.15));
+      // 保证 isRight 时 theta 严格落在 [0.025π, 0.975π]，左支严格落在 [1.025π, 1.975π]
       const angle = isRight
-        ? normalizedSubParam * (Math.PI / 2) + Math.PI / 2
-        : normalizedSubParam * (Math.PI / 2) + 1.5 * Math.PI;
+        ? Math.PI / 2 + u * (Math.PI / 2)
+        : 1.5 * Math.PI + u * (Math.PI / 2);
       return Number(
         (((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)).toFixed(3),
       );
     }
+
     if (conicType === "parabola") {
       const clampedY = Math.max(-3.8, Math.min(3.8, newMathPt.y));
       const solvedTheta = (clampedY / 3.8 + 1) * Math.PI;
@@ -336,18 +423,30 @@ export function solveThetaFromDrag(
   }
 
   // 统一定义
-  const fx = p / 2;
-  let angle = Math.atan2(newMathPt.y, newMathPt.x - fx);
-  if (angle < 0) angle += 2 * Math.PI;
-  if (params.e < 1.0) {
+  if (e < 1.0) {
+    const fx = p / 2;
+    let angle = Math.atan2(newMathPt.y, newMathPt.x - fx);
+    if (angle < 0) angle += 2 * Math.PI;
     return Number(angle.toFixed(3));
   }
-  let t = angle - Math.PI;
-  if (t > Math.PI) t -= 2 * Math.PI;
-  if (t < -Math.PI) t += 2 * Math.PI;
-  const maxT =
-    params.e === 1.0 ? 2.4 : Math.PI - Math.acos(1 / params.e) - 0.12;
-  const clampedT = Math.max(-maxT, Math.min(maxT, t));
-  const asinVal = Math.asin(clampedT / maxT);
-  return Number((asinVal >= 0 ? asinVal : asinVal + 2 * Math.PI).toFixed(3));
+
+  if (Math.abs(e - 1.0) < 1e-4) {
+    const clampedY = Math.max(-3.8, Math.min(3.8, newMathPt.y));
+    const solvedTheta = (clampedY / 3.8 + 1) * Math.PI;
+    return Number(solvedTheta.toFixed(3));
+  }
+
+  // 双曲线统一定义 (e > 1)
+  const e2 = e * e;
+  const x0 = (-p * (e2 + 1)) / (2 * (e2 - 1));
+  const b = (e * p) / Math.sqrt(e2 - 1);
+  const isRight = newMathPt.x >= x0;
+  const t = Math.atan(newMathPt.y / b);
+  const u = Math.max(-0.95, Math.min(0.95, t / 1.15));
+  const angle = isRight
+    ? Math.PI / 2 + u * (Math.PI / 2)
+    : 1.5 * Math.PI + u * (Math.PI / 2);
+  return Number(
+    (((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)).toFixed(3),
+  );
 }
