@@ -65,5 +65,24 @@ describe("parabola math library", () => {
     expect(baseUp.focus).toEqual({ x: 0, y: 1 });
     expect(baseUp.directrixIsVertical).toBe(false);
     expect(baseUp.directrixConstant).toBe(-1); // 准线 y = -1
+
+    // 通径检验 (theta = 90 deg)
+    const chordUp = getFocalChordInfo(90, 2, "up");
+    expect(chordUp.lengthAB).toBeCloseTo(4); // 2p = 4
+    expect(chordUp.harmonicSum).toBeCloseTo(1); // 2/p = 1
+    expect(chordUp.midCircle.directrixTangentPoint.x).toBeCloseTo(0);
+    expect(chordUp.midCircle.directrixTangentPoint.y).toBeCloseTo(-1);
+  });
+
+  it("should calculate correct properties for left and down directions", () => {
+    const chordLeft = getFocalChordInfo(90, 2, "left");
+    expect(chordLeft.lengthAB).toBeCloseTo(4);
+    expect(chordLeft.harmonicSum).toBeCloseTo(1);
+    expect(chordLeft.midCircle.isTangentToDirectrix).toBe(true);
+
+    const chordDown = getFocalChordInfo(90, 2, "down");
+    expect(chordDown.lengthAB).toBeCloseTo(4);
+    expect(chordDown.harmonicSum).toBeCloseTo(1);
+    expect(chordDown.midCircle.isTangentToDirectrix).toBe(true);
   });
 });

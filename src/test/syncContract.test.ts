@@ -290,6 +290,53 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     ]);
   });
 
+  it("解析几何：抛物线焦点弦与直径圆切准线模型应当满足通径极小值与三步推演链", () => {
+    // p = 2, thetaDeg = 90° (垂直通径), |AB| = 2p = 4.0, 倒数和 2/p = 1.0
+    verifyTopicSyncContract([
+      {
+        name: "抛物线焦点弦通径与切圆模型",
+        animId: "anim-conic-parabola",
+        modeOptions: { studyMode: "focalChord", direction: "right" },
+        params: { p: 2, thetaDeg: 90 },
+        lessonType: "gaokao_topic",
+        groundTruth: {
+          "焦点弦长 |AB|": 4.0,
+          "倒数和 1/AF + 1/BF": 1.0,
+        },
+        expectedExamAnchor: "焦点弦与相切圆",
+        expectedMnemonic: "弦长二比正弦方",
+        expectedReasoningSymbols: ["2p", "AB"],
+        expectedTheoremsKeywords: ["焦点弦", "直径圆"],
+        forbiddenTheoremKeywords: ["阿基米德", "光学反射"],
+        perturbation: {
+          params: { p: 4, thetaDeg: 90 },
+          dynamicQuantityLabels: ["焦点弦长 |AB|"],
+        },
+      },
+    ]);
+  });
+
+  it("解析几何：抛物线切线性质与阿基米德三角形模型应当满足切点弦与面积契约", () => {
+    // p = 2, 切点 yP = 2, yQ = -2, 构成正交切线，面积 S_QAB >= p^2 = 4.0
+    verifyTopicSyncContract([
+      {
+        name: "抛物线切线与阿基米德三角形模型",
+        animId: "anim-conic-parabola",
+        modeOptions: { studyMode: "tangent", direction: "right" },
+        params: { p: 2, yP: 2, yQ: -2 },
+        lessonType: "gaokao_topic",
+        groundTruth: {
+          "焦参数 p": 2.0,
+        },
+        expectedExamAnchor: "抛物线光学性质与阿基米德",
+        expectedMnemonic: "准线引切必垂直",
+        expectedReasoningSymbols: ["x_0", "y_0"],
+        expectedTheoremsKeywords: ["几何切线", "阿基米德"],
+        forbiddenTheoremKeywords: ["通径", "直径圆必与准线相切"],
+      },
+    ]);
+  });
+
   it("数列专题：等差数列通项公式与前 n 项和二次函数模型契约验证", () => {
     // a1 = 3, d = -1, N = 8 => an = 3 - 7 = -4, Sn = 8 * (3 - 4) / 2 = -4
     verifyTopicSyncContract([

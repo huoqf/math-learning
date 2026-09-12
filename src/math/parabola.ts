@@ -227,8 +227,9 @@ export function getFocalChordInfo(
     A = { x: F.x + r1 * cosT, y: F.y + r1 * sinT };
     B = { x: F.x + r2 * cosT, y: F.y + r2 * sinT };
   } else if (direction === "left") {
+    // 对称轴正向指向开口方向 (-x): x = -p/2 - r cos(theta), y = r sin(theta)
     const aCoeff = sinT * sinT;
-    const bCoeff = 2 * safeP * cosT;
+    const bCoeff = -2 * safeP * cosT;
     const cCoeff = -safeP * safeP;
     const delta = bCoeff * bCoeff - 4 * aCoeff * cCoeff;
     const sqrtD = Math.sqrt(Math.max(0, delta));
@@ -236,14 +237,13 @@ export function getFocalChordInfo(
     const r1 = (-bCoeff + sqrtD) / (2 * aCoeff);
     const r2 = (-bCoeff - sqrtD) / (2 * aCoeff);
 
-    A = { x: F.x + r1 * cosT, y: F.y + r1 * sinT };
-    B = { x: F.x + r2 * cosT, y: F.y + r2 * sinT };
+    A = { x: F.x - r1 * cosT, y: F.y + r1 * sinT };
+    B = { x: F.x - r2 * cosT, y: F.y + r2 * sinT };
   } else if (direction === "up") {
-    // F(0, p/2), 直线: y = p/2 + r sin(theta), x = r cos(theta)
-    // x^2 = 2py => r^2 cos^2(theta) - 2p r sin(theta) - p^2 = 0
-    const cosT_safe = Math.abs(cosT) < 1e-4 ? 1e-4 : cosT;
-    const aCoeff = cosT_safe * cosT_safe;
-    const bCoeff = -2 * safeP * sinT;
+    // 对称轴正向指向开口方向 (+y): x = r sin(theta), y = p/2 + r cos(theta)
+    // theta = 90° 时为水平通径，与对称轴垂直
+    const aCoeff = sinT * sinT;
+    const bCoeff = -2 * safeP * cosT;
     const cCoeff = -safeP * safeP;
     const delta = bCoeff * bCoeff - 4 * aCoeff * cCoeff;
     const sqrtD = Math.sqrt(Math.max(0, delta));
@@ -251,13 +251,12 @@ export function getFocalChordInfo(
     const r1 = (-bCoeff + sqrtD) / (2 * aCoeff);
     const r2 = (-bCoeff - sqrtD) / (2 * aCoeff);
 
-    A = { x: F.x + r1 * cosT_safe, y: F.y + r1 * sinT };
-    B = { x: F.x + r2 * cosT_safe, y: F.y + r2 * sinT };
+    A = { x: F.x + r1 * sinT, y: F.y + r1 * cosT };
+    B = { x: F.x + r2 * sinT, y: F.y + r2 * cosT };
   } else {
-    // down
-    const cosT_safe = Math.abs(cosT) < 1e-4 ? 1e-4 : cosT;
-    const aCoeff = cosT_safe * cosT_safe;
-    const bCoeff = 2 * safeP * sinT;
+    // down: 对称轴正向指向开口方向 (-y): x = r sin(theta), y = -p/2 - r cos(theta)
+    const aCoeff = sinT * sinT;
+    const bCoeff = -2 * safeP * cosT;
     const cCoeff = -safeP * safeP;
     const delta = bCoeff * bCoeff - 4 * aCoeff * cCoeff;
     const sqrtD = Math.sqrt(Math.max(0, delta));
@@ -265,8 +264,8 @@ export function getFocalChordInfo(
     const r1 = (-bCoeff + sqrtD) / (2 * aCoeff);
     const r2 = (-bCoeff - sqrtD) / (2 * aCoeff);
 
-    A = { x: F.x + r1 * cosT_safe, y: F.y + r1 * sinT };
-    B = { x: F.x + r2 * cosT_safe, y: F.y + r2 * sinT };
+    A = { x: F.x + r1 * sinT, y: F.y - r1 * cosT };
+    B = { x: F.x + r2 * sinT, y: F.y - r2 * cosT };
   }
 
   const lengthAF = Math.hypot(A.x - F.x, A.y - F.y);
@@ -280,7 +279,9 @@ export function getFocalChordInfo(
   const prodX = A.x * B.x;
 
   // 以 AB 为直径的圆
-  const midCenter: Point2D = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+  const midX = Math.abs((A.x + B.x) / 2) < 1e-12 ? 0 : (A.x + B.x) / 2;
+  const midY = Math.abs((A.y + B.y) / 2) < 1e-12 ? 0 : (A.y + B.y) / 2;
+  const midCenter: Point2D = { x: midX, y: midY };
   const radius = lengthAB / 2;
   const distToDirectrix = base.directrixIsVertical
     ? Math.abs(midCenter.x - base.directrixConstant)

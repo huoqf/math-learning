@@ -20,6 +20,7 @@ jobs:
       - run: npx eslint src/ --report-unused-disable-directives
       - run: npx tsc --noEmit -p tsconfig.json
       - run: npm run audit:strict
+      - run: npm run build
 
   test:
     name: Tests
