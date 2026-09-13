@@ -2,8 +2,8 @@ import type { KnowledgeNode } from "@/data/types";
 
 export const node: KnowledgeNode = {
   id: "know-conic-homogenization",
-  title: "非对称齐次化求斜率和/斜率积",
-  labTitle: "非对称齐次化实验室",
+  title: "圆锥曲线齐次化与斜率韦达定理",
+  labTitle: "齐次化与斜率韦达定理实验室",
   chapter: "解析几何",
   module: "圆锥曲线压轴",
   importance: "hard",

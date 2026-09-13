@@ -219,51 +219,96 @@ export const ConicHomogenizationScene: React.FC<
             label="B"
           />
 
-          {/* 斜率标注符合高中习惯: k_PA 与 k_PB */}
-          {result.measuredK1 !== null && (
-            <text
-              x={(posP.x + posA.x) / 2 - 28}
-              y={(posP.y + posA.y) / 2 - 10}
-              fill={MATH_COLORS.paramPrimary}
-              fontSize={fontScale(11)}
-              fontWeight="bold"
-              paintOrder="stroke"
-              stroke="white"
-              strokeWidth={3}
-            >
-              k_PA = {result.measuredK1.toFixed(2)}
-            </text>
-          )}
-          {result.measuredK2 !== null && (
-            <text
-              x={(posP.x + posB.x) / 2 + 10}
-              y={(posP.y + posB.y) / 2 + 16}
-              fill={MATH_COLORS.paramSecondary}
-              fontSize={fontScale(11)}
-              fontWeight="bold"
-              paintOrder="stroke"
-              stroke="white"
-              strokeWidth={3}
-            >
-              k_PB = {result.measuredK2.toFixed(2)}
-            </text>
-          )}
+          {/* 直角符号 (当 PA ⊥ PB 时呈现纯几何角标) */}
+          {result.measuredProduct !== null &&
+            Math.abs(result.measuredProduct - -1) < 0.05 &&
+            (() => {
+              const d1x = posA.x - posP.x;
+              const d1y = posA.y - posP.y;
+              const len1 = Math.hypot(d1x, d1y) || 1;
+              const u1x = (d1x / len1) * fontScale(12);
+              const u1y = (d1y / len1) * fontScale(12);
+
+              const d2x = posB.x - posP.x;
+              const d2y = posB.y - posP.y;
+              const len2 = Math.hypot(d2x, d2y) || 1;
+              const u2x = (d2x / len2) * fontScale(12);
+              const u2y = (d2y / len2) * fontScale(12);
+
+              const p1 = { x: posP.x + u1x, y: posP.y + u1y };
+              const p2 = { x: posP.x + u2x, y: posP.y + u2y };
+              const pCorner = { x: posP.x + u1x + u2x, y: posP.y + u1y + u2y };
+
+              return (
+                <path
+                  d={`M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} L ${pCorner.x.toFixed(1)} ${pCorner.y.toFixed(1)} L ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`}
+                  fill="none"
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1.8}
+                />
+              );
+            })()}
         </>
       )}
 
-      {/* 定点 P/O 拖拽手柄 */}
-      <InteractivePoint
-        cx={P.x}
-        cy={P.y}
-        scale={scale}
-        vp={vp}
-        color={MATH_COLORS.paramTertiary}
-        fontScale={fontScale}
-        label={studyMode === "origin" ? "O" : "P"}
-        onDrag={(mathPt) => {
-          if (onPointPDrag) onPointPDrag(mathPt.x, mathPt.y);
-        }}
-      />
+      {/* 割线恒过理论定点 Q 纯点标与虚线定位光环 */}
+      {result.fixedPointQ &&
+        result.theoreticalProduct !== null &&
+        Math.abs(result.theoreticalProduct - -1) < 0.05 &&
+        (() => {
+          const ptQ = mathToDesign(
+            result.fixedPointQ.x,
+            result.fixedPointQ.y,
+            scale,
+          );
+
+          return (
+            <g>
+              <circle
+                cx={ptQ.x}
+                cy={ptQ.y}
+                r={fontScale(7)}
+                fill="none"
+                stroke={MATH_COLORS.tangentLine}
+                strokeWidth={1.5}
+                strokeDasharray="2 2"
+              />
+              <MathPoint
+                cx={result.fixedPointQ.x}
+                cy={result.fixedPointQ.y}
+                scale={scale}
+                color={MATH_COLORS.tangentLine}
+                fontScale={fontScale}
+                label="Q"
+              />
+            </g>
+          );
+        })()}
+
+      {/* 定点 P/O 控制手柄：原点模式固定，非原点模式支持拖拽 */}
+      {studyMode === "origin" ? (
+        <MathPoint
+          cx={0}
+          cy={0}
+          scale={scale}
+          color={MATH_COLORS.paramTertiary}
+          fontScale={fontScale}
+          label="O"
+        />
+      ) : (
+        <InteractivePoint
+          cx={P.x}
+          cy={P.y}
+          scale={scale}
+          vp={vp}
+          color={MATH_COLORS.paramTertiary}
+          fontScale={fontScale}
+          label="P"
+          onDrag={(mathPt) => {
+            if (onPointPDrag) onPointPDrag(mathPt.x, mathPt.y);
+          }}
+        />
+      )}
     </g>
   );
 };

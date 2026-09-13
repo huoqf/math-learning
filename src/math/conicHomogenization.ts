@@ -51,8 +51,13 @@ export interface HomogenizationResult {
   /** 实际斜率积 */
   measuredProduct: number | null;
 
-  /** 非对称加权斜率和 (λ k1 + μ k2) 实测值 */
+  /** 非对称斜率加权和 (λ k1 + μ k2) 实测值 */
   asymmetricWeightedSum: number | null;
+  /** 非对称斜率约束 λ k1 + μ k2 = 0 下的消元偏差量 (λ*μ*S^2 + (λ-μ)^2*P) */
+  asymmetricEliminationResidual: number | null;
+
+  /** 若为左顶点直角弦模型，理论恒过定点 Q 坐标 */
+  fixedPointQ?: Point2D | null;
 
   /** 直线方程描述 LaTeX (原坐标系与平移坐标系) */
   lineEqLatex: string;
@@ -179,6 +184,7 @@ export function computeConicHomogenization(params: {
   let measuredSum: number | null = null;
   let measuredProduct: number | null = null;
   let asymmetricWeightedSum: number | null = null;
+  let asymmetricEliminationResidual: number | null = null;
 
   if (isValidIntersections && pointA && pointB) {
     const dXa = pointA.x - pX;
@@ -192,10 +198,28 @@ export function computeConicHomogenization(params: {
       measuredSum = measuredK1 + measuredK2;
       measuredProduct = measuredK1 * measuredK2;
       asymmetricWeightedSum = lambda * measuredK1 + mu * measuredK2;
+
+      // 若题设满足 λ k1 + μ k2 = 0，代入对称韦达式消去 k1, k2:
+      // 消元充要条件为: λ*μ*S^2 + (λ - μ)^2 * P = 0
+      const s = measuredSum;
+      const p = measuredProduct;
+      asymmetricEliminationResidual =
+        lambda * mu * s * s + Math.pow(lambda - mu, 2) * p;
     }
   }
 
-  // 7. 方程 LaTeX 排版
+  // 7. 若定点 P 在椭圆顶点 (-a, 0)，计算理论直角弦割线定点 Q 坐标
+  let fixedPointQ: Point2D | null = null;
+  if (
+    curveType === "ellipse" &&
+    Math.abs(pX - -a) < 1e-3 &&
+    Math.abs(pY) < 1e-3
+  ) {
+    const qX = (a * (b * b - a * a)) / (a * a + b * b);
+    fixedPointQ = { x: qX, y: 0 };
+  }
+
+  // 8. 方程 LaTeX 排版
   const lineEqLatex =
     studyMode === "origin"
       ? `${formatCoeff(lineA)}x ${formatSign(lineB)}${formatCoeff(Math.abs(lineB))}y = 1`
@@ -223,9 +247,33 @@ export function computeConicHomogenization(params: {
     measuredSum,
     measuredProduct,
     asymmetricWeightedSum,
+    asymmetricEliminationResidual,
+    fixedPointQ,
     lineEqLatex,
     homoEqLatex,
     degenerationReason,
+  };
+}
+
+/**
+ * 计算左顶点直角弦满足 k1 * k2 = -1 的理论割线系数 m (lineA)
+ * m = (a^2 + b^2) / (2 * a * b^2)
+ */
+export function getPerpendicularChordLineA(a: number, b: number): number {
+  return (a * a + b * b) / (2 * a * b * b);
+}
+
+/**
+ * 计算椭圆左顶点直角弦动直线恒过的定点 Q 坐标
+ * Q((a*(b^2 - a^2)) / (a^2 + b^2), 0)
+ */
+export function getLeftVertexPerpendicularFixedPoint(
+  a: number,
+  b: number,
+): Point2D {
+  return {
+    x: (a * (b * b - a * a)) / (a * a + b * b),
+    y: 0,
   };
 }
 

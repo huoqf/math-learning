@@ -13,8 +13,12 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
-import { computeConicHomogenization } from "@/math/conicHomogenization";
+import {
+  computeConicHomogenization,
+  getPerpendicularChordLineA,
+} from "@/math/conicHomogenization";
 import type { CurveType, StudyMode } from "@/math/conicHomogenization";
+import { SceneLegend } from "@/components/Math";
 import { ConicHomogenizationScene } from "./components/ConicHomogenizationScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
@@ -67,8 +71,37 @@ export function ConicHomogenizationAnimation() {
     });
   }, [params, studyMode, curveType]);
 
-  // 参数更新处理器 (画布或滑块变动自动回归 free 预设)
+  // 参数更新处理器 (智能联动与预设状态保护)
   const handleParamChange = (key: string, value: number) => {
+    if (presetKey === "left_vertex_perpendicular") {
+      if (key === "a") {
+        const curB = params.b ?? defaultParams.b;
+        const newLineA = getPerpendicularChordLineA(value, curB);
+        setParams((prev) => ({
+          ...prev,
+          a: value,
+          px: -value,
+          lineA: newLineA,
+        }));
+        return;
+      } else if (key === "b") {
+        const curA = params.a ?? defaultParams.a;
+        const newLineA = getPerpendicularChordLineA(curA, value);
+        setParams((prev) => ({
+          ...prev,
+          b: value,
+          lineA: newLineA,
+        }));
+        return;
+      } else if (key === "lineB") {
+        setParams((prev) => ({
+          ...prev,
+          lineB: value,
+        }));
+        return;
+      }
+    }
+
     setPresetKey("free");
     setParams((prev) => ({
       ...prev,
@@ -76,8 +109,9 @@ export function ConicHomogenizationAnimation() {
     }));
   };
 
-  // 拖拽定点 P
+  // 拖拽定点 P (仅在非原点模式下有效)
   const handlePointPDrag = (nx: number, ny: number) => {
+    if (studyMode === "origin") return;
     setPresetKey("free");
     setParams((prev) => ({
       ...prev,
@@ -98,20 +132,23 @@ export function ConicHomogenizationAnimation() {
     if (key === "free") {
       // 保持当前
     } else if (key === "left_vertex_perpendicular") {
-      // 左顶点直角弦
+      // 左顶点直角弦真实高考参数 (理论求解 m = (a^2+b^2)/(2ab^2))
+      const a = 2.5;
+      const b = 1.5;
+      const exactLineA = getPerpendicularChordLineA(a, b);
       setStudyMode("shift");
       setCurveType("ellipse");
       setParams((prev) => ({
         ...prev,
-        a: 2.5,
-        b: 1.5,
-        px: -2.5,
+        a,
+        b,
+        px: -a,
         py: 0,
-        lineA: 0.4,
-        lineB: 0,
+        lineA: exactLineA,
+        lineB: 0.3, // 稍微倾斜，直角三角形特征更清晰
       }));
     } else if (key === "origin_symmetric_sum") {
-      // 原点中心对称斜率和为 0
+      // 原点中心对称斜率和为 0 (平行于坐标轴割线)
       setStudyMode("origin");
       setCurveType("ellipse");
       setParams((prev) => ({
@@ -124,7 +161,7 @@ export function ConicHomogenizationAnimation() {
         lineB: 0.5,
       }));
     } else if (key === "asymmetric_slope_explore") {
-      // 非对称斜率关系 k_PA + 2k_PB = 0 探究
+      // 非对称斜率约束 k_PA + 2 k_PB = 0 探究
       setStudyMode("asymmetric");
       setCurveType("ellipse");
       setParams((prev) => ({
@@ -146,13 +183,13 @@ export function ConicHomogenizationAnimation() {
     let keys: string[] = [];
 
     if (presetKey === "left_vertex_perpendicular") {
-      // 左顶点直角弦：定点锁定为 P(-a, 0)，隐藏 px, py
-      keys = ["a", "b", "lineA", "lineB"];
+      // 左顶点直角弦：定点锁定为 P(-a, 0)，lineA 锁定为满足 k1*k2=-1 的理论值，仅调节椭圆与割线转角
+      keys = ["a", "b", "lineB"];
     } else if (presetKey === "origin_symmetric_sum") {
       // 原点对称：定点锁定为 (0, 0)，隐藏 px, py
       keys = ["a", "b", "lineA", "lineB"];
     } else if (presetKey === "asymmetric_slope_explore") {
-      // 非对称探究：定点与权重锁定，仅调节曲线与割线
+      // 非对称探究：定点与权重锁定，调节曲线与割线
       keys = ["a", "b", "lineA", "lineB"];
     } else {
       const keysByMode: Record<StudyMode, string[]> = {
@@ -193,7 +230,16 @@ export function ConicHomogenizationAnimation() {
         ? result.theoreticalProduct.toFixed(2)
         : "-";
 
-    return `\\text{齐次方程: } ${result.homoEqLatex} \\quad \\implies \\quad \\color{${MATH_COLORS.paramPrimary}}{k_{PA}} + \\color{${MATH_COLORS.paramSecondary}}{k_{PB}} = ${sumVal}, \\quad \\color{${MATH_COLORS.paramPrimary}}{k_{PA}} \\cdot \\color{${MATH_COLORS.paramSecondary}}{k_{PB}} = ${prodVal}`;
+    const isPerp =
+      result.theoreticalProduct !== null &&
+      Math.abs(result.theoreticalProduct - -1) < 0.05 &&
+      result.fixedPointQ;
+
+    const perpSuffix = isPerp
+      ? ` \\quad \\implies \\quad \\color{${MATH_COLORS.tangentLine}}{\\text{割线 } l \\text{ 恒过定点 } Q(${result.fixedPointQ!.x.toFixed(2)}, 0)}`
+      : "";
+
+    return `\\text{齐次二次方程: } ${result.homoEqLatex} \\quad \\implies \\quad \\color{${MATH_COLORS.paramPrimary}}{k_{PA}} + \\color{${MATH_COLORS.paramSecondary}}{k_{PB}} = ${sumVal}, \\quad \\color{${MATH_COLORS.paramPrimary}}{k_{PA}} \\cdot \\color{${MATH_COLORS.paramSecondary}}{k_{PB}} = ${prodVal}${perpSuffix}`;
   }, [result]);
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
@@ -202,8 +248,9 @@ export function ConicHomogenizationAnimation() {
       return {
         variant: "primary" as const,
         badge: "高考经典 · 左顶点直角弦",
-        condition: "已知椭圆及左顶点 P，割线 AB 与曲线相交且满足 PA ⊥ PB。",
-        question: "如何通过齐次化升次建立斜率方程，证明动割线 AB 恒过定点？",
+        condition:
+          "已知椭圆及左顶点 $P(-a, 0)$，割线 $AB$ 与曲线相交且满足 $PA \\perp PB$。",
+        question: "如何通过齐次化升次建立斜率方程，证明动割线 $AB$ 恒过定点？",
       };
     }
     if (presetKey === "origin_symmetric_sum") {
@@ -211,46 +258,47 @@ export function ConicHomogenizationAnimation() {
         variant: "warning" as const,
         badge: "高考经典 · 对称斜率和为零",
         condition:
-          "中心对称曲线与割线相交，以原点为顶点，两动弦斜率互为相反数。",
+          "中心对称曲线与割线相交，以原点 $O$ 为弦角顶点，两动弦斜率满足 $k_1 + k_2 = 0$。",
         question:
-          "如何利用齐次方程一次项系数为零，判定动割线在坐标轴截距的几何对称特征？",
+          "如何利用齐次二次方程一次项系数为零，判定动割线在坐标轴截距的几何对称特征？",
       };
     }
     if (presetKey === "asymmetric_slope_explore") {
       return {
         variant: "danger" as const,
-        badge: "压轴大招 · 非对称斜率齐次化",
+        badge: "高考压轴 · 非对称斜率消参",
         condition:
-          "过定点 P 的割线交曲线于 A, B，两动弦斜率满足非对称加权关系。",
+          "割线交曲线于 $A, B$，两动弦斜率满足非对称约束 $k_{PA} + 2 k_{PB} = 0$。",
         question:
-          "在非对称加权斜率条件下，割线 AB 是否仍恒过定点？如何求解定点坐标？",
+          "在非对称斜率约束下，如何联立齐次韦达对称式消元，求割线参数的二次型方程？",
       };
     }
 
     if (studyMode === "origin") {
       return {
         variant: "info" as const,
-        badge: "原点对称齐次化模型",
-        condition: "中心对称曲线与割线相交于 A, B 两点，弦角顶点取在原点 O。",
+        badge: "原点齐次化模型",
+        condition:
+          "中心对称曲线与割线相交于 $A, B$ 两点，弦角顶点取在坐标原点 $O$。",
         question:
-          "如何将割线方程常数项构造成 1 代入曲线升次，导出关于动弦斜率的齐次二次方程？",
+          "如何将割线方程构造为 $mx + ny = 1$ 代入曲线升次，导出关于斜率 $k$ 的一元二次方程？",
       };
     }
     if (studyMode === "shift") {
       return {
         variant: "primary" as const,
         badge: "顶点/定点平移齐次化",
-        condition: "定点 P 位于坐标原点之外的定点或曲线上顶点。",
+        condition: "定点 $P(x_0, y_0)$ 位于坐标原点之外的定点或曲线顶点。",
         question:
-          "如何通过坐标平移换元，将非原点定点齐次化问题转化为标准原点齐次化？",
+          "如何通过坐标平移换元 $X=x-x_0, Y=y-y_0$，将非原点定点齐次化问题转化为标准齐次化？",
       };
     }
     return {
       variant: "accent" as const,
-      badge: "非对称斜率代数剖析",
-      condition: "动弦两斜率满足非对称加权线性组合关系。",
+      badge: "非对称斜率代数消参",
+      condition: "动弦两斜率满足已知非对称约束 $\\lambda k_1 + \\mu k_2 = 0$。",
       question:
-        "如何利用齐次化联立与斜率比例消元，探究割线系恒过定点的存在性与坐标解？",
+        "如何结合齐次韦达定理对称式消去斜率 $k_1, k_2$，求解割线系参数的代数约束与几何轨迹？",
     };
   }, [studyMode, presetKey]);
 
@@ -283,7 +331,7 @@ export function ConicHomogenizationAnimation() {
                 { key: "shift", label: "定点平移" },
                 {
                   key: "asymmetric",
-                  label: "非对称加权",
+                  label: "非对称消参",
                   fullWidth: true,
                 },
               ]}
@@ -319,8 +367,8 @@ export function ConicHomogenizationAnimation() {
                 },
                 {
                   key: "asymmetric_slope_explore",
-                  label: "非对称和探究",
-                  description: "两倍非对称比例",
+                  label: "非对称消参",
+                  description: "斜率约束消元",
                 },
               ]}
               value={presetKey}
@@ -368,6 +416,43 @@ export function ConicHomogenizationAnimation() {
               onPointPDrag={handlePointPDrag}
             />
           </AnimationSvgCanvas>
+
+          {/* 中屏右下角毛玻璃图例 */}
+          <SceneLegend
+            items={[
+              {
+                label: curveType === "ellipse" ? "椭圆曲线" : "双曲线",
+                color: MATH_COLORS.function,
+              },
+              {
+                label: "动割线 l",
+                color: MATH_COLORS.tangentLine,
+              },
+              {
+                label: "动弦 PA",
+                color: MATH_COLORS.paramPrimary,
+              },
+              {
+                label: "动弦 PB",
+                color: MATH_COLORS.paramSecondary,
+              },
+              {
+                label: studyMode === "origin" ? "原点 O" : "基准定点 P",
+                color: MATH_COLORS.paramTertiary,
+              },
+              ...(result.fixedPointQ &&
+              result.theoreticalProduct !== null &&
+              Math.abs(result.theoreticalProduct - -1) < 0.05
+                ? [
+                    {
+                      label: "恒过定点 Q",
+                      color: MATH_COLORS.tangentLine,
+                    },
+                  ]
+                : []),
+            ]}
+            title="图元几何语义"
+          />
         </div>
       }
       right={

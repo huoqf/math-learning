@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { computeConicHomogenization } from "./conicHomogenization";
+import {
+  computeConicHomogenization,
+  getPerpendicularChordLineA,
+  getLeftVertexPerpendicularFixedPoint,
+} from "./conicHomogenization";
 
 describe("conicHomogenization math calculations", () => {
   it("should compute valid homogenization for origin mode with ellipse", () => {
@@ -41,6 +45,38 @@ describe("conicHomogenization math calculations", () => {
     expect(res.theoreticalSum!).toBeCloseTo(res.measuredSum!, 3);
   });
 
+  it("新高考压轴真题：左顶点直角弦 PA ⊥ PB 与动割线恒过定点 Q 验证", () => {
+    const a = 2.5;
+    const b = 1.5;
+    const exactLineA = getPerpendicularChordLineA(a, b);
+    const expectedQ = getLeftVertexPerpendicularFixedPoint(a, b);
+
+    const res = computeConicHomogenization({
+      curveType: "ellipse",
+      studyMode: "shift",
+      a,
+      b,
+      P: { x: -a, y: 0 },
+      lineA: exactLineA,
+      lineB: 0.35, // 倾斜动割线
+    });
+
+    expect(res.isValidIntersections).toBe(true);
+    expect(res.theoreticalProduct).not.toBeNull();
+    // 验证理论斜率积严格为 -1 (直角弦)
+    expect(res.theoreticalProduct!).toBeCloseTo(-1, 4);
+    expect(res.measuredProduct!).toBeCloseTo(-1, 3);
+
+    // 验证动割线恒过定点 Q
+    expect(res.fixedPointQ).not.toBeNull();
+    expect(res.fixedPointQ!.x).toBeCloseTo(expectedQ.x, 4);
+    expect(res.fixedPointQ!.y).toBe(0);
+
+    // 验证定点 Q 坐标代入割线方程 lineA*(x - x0) + lineB*(y - y0) = 1 严格成立
+    const lineValAtQ = exactLineA * (expectedQ.x - -a) + 0.35 * (0 - 0);
+    expect(lineValAtQ).toBeCloseTo(1, 4);
+  });
+
   it("双曲线齐次化联立与斜率和/积理论值校验", () => {
     const res = computeConicHomogenization({
       curveType: "hyperbola",
@@ -59,7 +95,7 @@ describe("conicHomogenization math calculations", () => {
     expect(res.theoreticalProduct!).toBeCloseTo(res.measuredProduct!, 3);
   });
 
-  it("新高考压轴题：非对称加权斜率和 λ k1 + μ k2 计算", () => {
+  it("新高考压轴题：非对称斜率约束与韦达消参特征量计算", () => {
     const res = computeConicHomogenization({
       curveType: "ellipse",
       studyMode: "asymmetric",
@@ -77,6 +113,7 @@ describe("conicHomogenization math calculations", () => {
     expect(res.measuredK2).not.toBeNull();
     const expectedWeighted = 2 * res.measuredK1! + 3 * res.measuredK2!;
     expect(res.asymmetricWeightedSum).toBeCloseTo(expectedWeighted, 4);
+    expect(res.asymmetricEliminationResidual).not.toBeNull();
   });
 
   it("割线与曲线无交点时触发退化保护", () => {
