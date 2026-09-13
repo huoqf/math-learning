@@ -142,13 +142,13 @@ export const secantSubModels: (SelectGridItem & {
   {
     key: "exp_secant_tangent",
     id: "exp_secant_tangent",
-    label: "指数下凸割切",
+    label: "指数割切定界",
     formula: "L_{\\text{tan}} \\le e^x \\le L_{AB}",
   },
   {
     key: "log_secant_tangent",
     id: "log_secant_tangent",
-    label: "对数上凸割切",
+    label: "对数割切定界",
     formula: "L_{AB} \\le \\ln x \\le L_{\\text{tan}}",
   },
   {
@@ -229,7 +229,7 @@ export function getTangentScalingParamConfigs(
           value: 0,
           variant: "critical",
           label: "基准切点",
-          labelFormula: "x_0=0",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=0}`,
         },
       ];
 
@@ -241,7 +241,7 @@ export function getTangentScalingParamConfigs(
             value: 1,
             variant: "critical",
             label: "基准切点",
-            labelFormula: "x_0=1",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
           },
         ];
       } else if (baseSub === "log_x_div_e") {
@@ -252,7 +252,7 @@ export function getTangentScalingParamConfigs(
             value: 2.72,
             variant: "critical",
             label: "临界切点 e",
-            labelFormula: "x_0=e",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=e}`,
           },
         ];
       } else if (baseSub === "log_shift_0") {
@@ -263,7 +263,7 @@ export function getTangentScalingParamConfigs(
             value: 0,
             variant: "critical",
             label: "基准切点",
-            labelFormula: "x_0=0",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=0}`,
           },
         ];
       } else if (baseSub === "exp_shift_x" || baseSub === "exp_ex") {
@@ -274,7 +274,7 @@ export function getTangentScalingParamConfigs(
             value: 1,
             variant: "critical",
             label: "基准切点",
-            labelFormula: "x_0=1",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
           },
         ];
       }
@@ -326,10 +326,10 @@ export function getTangentScalingParamConfigs(
       const marks: ParamConfig["marks"] = [];
       if (sub === "exp_log_k" || sub === "log_kx_origin") {
         marks.push({
-          value: 0.37,
+          value: 0.368,
           variant: "critical",
           label: "1/e",
-          labelFormula: "\\frac{1}{e}",
+          labelFormula: `\\text{临界斜率 } \\color{${MATH_COLORS.paramPrimary}}{\\frac{1}{e}}`,
         });
       }
       if (sub === "exp_log_k" || sub === "exp_kx_origin") {
@@ -337,7 +337,7 @@ export function getTangentScalingParamConfigs(
           value: 2.72,
           variant: "critical",
           label: "e",
-          labelFormula: "e",
+          labelFormula: `\\text{临界斜率 } \\color{${MATH_COLORS.paramPrimary}}{e}`,
         });
       }
 
@@ -386,13 +386,13 @@ export function getTangentScalingParamConfigs(
                 value: 0,
                 variant: "critical",
                 label: "展开点",
-                labelFormula: "x=0",
+                labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x=0}`,
               },
               {
                 value: 1,
                 variant: "critical",
                 label: "标准点",
-                labelFormula: "x=1",
+                labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x=1}`,
               },
             ],
           },
