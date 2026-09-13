@@ -63,7 +63,7 @@ describe("直线参数方程 t 的几何意义与圆锥曲线割线定理 (lineP
     expect(res.hasIntersection).toBe(false);
   });
 
-  it("直线与抛物线: 焦点弦倒数和性质 |1/t1 + 1/t2|", () => {
+  it("直线与抛物线: 焦点弦倒数和性质 1/|t1| + 1/|t2| = 2/p", () => {
     // 抛物线 y^2 = 2px (p=2 => y^2 = 4x, 焦点 F(1, 0))
     // 直线过焦点 F(1, 0), 倾斜角 alpha = 60°
     // 直线参数方程: x = 1 + t cos(60°) = 1 + t/2, y = t sin(60°) = t * sqrt(3)/2
@@ -74,7 +74,7 @@ describe("直线参数方程 t 的几何意义与圆锥曲线割线定理 (lineP
     expect(res.t1).toBeCloseTo(-4 / 3, 3);
     expect(res.t2).toBeCloseTo(4, 3);
     expect(res.chordLength).toBeCloseTo(4 - -4 / 3, 3); // 16/3
-    // 倒数和 |1/t1 + 1/t2| = |-3/4 + 1/4| = |-2/4| = 0.5 = 1/p = 1/2
-    expect(res.reciprocalSum).toBeCloseTo(0.5, 3);
+    // 高考抛物线焦点弦倒数和定值 1/|AF| + 1/|BF| = 1/|t1| + 1/|t2| = 3/4 + 1/4 = 1.0 = 2/p
+    expect(res.reciprocalSum).toBeCloseTo(2 / 2, 3);
   });
 });

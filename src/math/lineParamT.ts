@@ -186,7 +186,8 @@ export function calcLineConicIntersection(
 
   let reciprocalSum: number | undefined = undefined;
   if (Math.abs(t1) > 1e-6 && Math.abs(t2) > 1e-6) {
-    reciprocalSum = Math.abs((t1 + t2) / (t1 * t2));
+    // 高中数学几何线段倒数和: 1/|PA| + 1/|PB| = 1/|t1| + 1/|t2|
+    reciprocalSum = 1 / Math.abs(t1) + 1 / Math.abs(t2);
   }
 
   return {

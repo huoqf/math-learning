@@ -177,14 +177,16 @@ export function buildLineParamTPanel(
       );
     } else {
       // reciprocal (倒数和)
+      const isInternal = intersect.hasIntersection && intersect.tProd < 0;
       quantities.push(
         {
-          label: "线段倒数和",
-          labelFormula:
-            "\\left|\\frac{1}{t_1} + \\frac{1}{t_2}\\right| = \\left|\\frac{B}{C}\\right|",
+          label: "几何线段倒数和",
+          labelFormula: isInternal
+            ? "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\frac{\\sqrt{\\Delta}}{|C|}"
+            : "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\left|\\frac{B}{C}\\right|",
           value:
             intersect.reciprocalSum !== undefined
-              ? intersect.reciprocalSum.toFixed(3)
+              ? `${intersect.reciprocalSum.toFixed(3)} (${isInternal ? "内分弦 t₁t₂<0" : "外分点 t₁t₂>0"})`
               : "无意义(过P0)",
           status: "normal" as const,
         },
@@ -297,16 +299,16 @@ export function buildLineParamTPanel(
       );
     } else {
       theorems.push({
-        name: "线段倒数和定理",
+        name: "线段倒数和与同异号分类定理",
         latex:
-          "\\left|\\frac{1}{t_1} + \\frac{1}{t_2}\\right| = \\left|\\frac{t_1 + t_2}{t_1 t_2}\\right| = \\left|\\frac{B}{C}\\right|",
-        note: "当直线过焦点或特定定点时，常出现 1/|PA| + 1/|PB| 为定值的调和性质。",
+          "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\begin{cases} \\frac{\\sqrt{\\Delta}}{|C|} & (t_1 t_2 < 0,\\ P_0 \\text{在内部/焦点弦}) \\\\ \\left|\\frac{B}{C}\\right| & (t_1 t_2 > 0,\\ P_0 \\text{在曲线外部}) \\end{cases}",
+        note: "高考避坑要害：绝对几何距离倒数和 1/|t1| + 1/|t2| 仅在同号时等于 |B/C|；在异号（如过焦点弦）时分子为 |t1-t2|=√Δ/|A|，倒数和为 √Δ/|C|！",
         prerequisites: ["t1 ≠ 0 且 t2 ≠ 0 (P0 不在曲线上)", "Δ > 0"],
         level: "core",
       });
       gaokaoPoints.push(
         {
-          text: "抛物线焦点弦倒数和经典定值：过抛物线焦点 F(p/2, 0) 的弦 AB 满足 1/|AF| + 1/|BF| = 2/p (常数)，是新高考选择填空秒杀题的高频考点。",
+          text: "抛物线焦点弦倒数和秒杀：因焦点在内部必有 t1 t2 < 0，故 1/|AF| + 1/|BF| = √Δ/|C| = 2p/p² = 2/p (常数)，切勿错套同号公式 |B/C|。",
           importance: "gaokao",
         },
         {
