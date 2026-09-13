@@ -19,6 +19,11 @@ import {
   type VectorPolarizationApolloniusParams,
 } from "@/data/registries/vectorPolarizationApollonius";
 import { VectorPolarizationApolloniusScene } from "./components/VectorPolarizationApolloniusScene";
+import {
+  getCombinedExtremaAngles,
+  getOrthogonalAngle,
+} from "@/math/vectorPolarizationApollonius";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 
 export function VectorPolarizationApolloniusAnimation() {
   // 研究模式：'polarization' | 'apollonius' | 'combined'
@@ -63,8 +68,9 @@ export function VectorPolarizationApolloniusAnimation() {
     setPreset("free");
   };
 
-  // 参数更新（手动调节或拖拽时自动回归自由探究）
+  // 参数更新（手动调节滑块时自动回归自由探究，防止虚假高亮）
   const handleParamChange = useCallback((key: string, value: number) => {
+    setPreset("free");
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -135,27 +141,31 @@ export function VectorPolarizationApolloniusAnimation() {
         }));
       }
     } else {
-      // combined 模式
+      // combined 模式: 根据 lambda 动态自适应最值极角，杜绝倒置 Bug
+      const targetLambda = 2.0;
+      const { minAngle, maxAngle } = getCombinedExtremaAngles(targetLambda);
       if (presetKey === "minPoint") {
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
-          lambda: 2.0,
-          pointAngle: 0,
+          lambda: targetLambda,
+          pointAngle: minAngle,
         }));
       } else if (presetKey === "maxPoint") {
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
-          lambda: 2.0,
-          pointAngle: 180,
+          lambda: targetLambda,
+          pointAngle: maxAngle,
         }));
       } else if (presetKey === "orthogonal") {
+        // 动态解算正交垂直极角 (PA · PB = 0 <=> |PM| = c)
+        const orthoAngle = getOrthogonalAngle(6.0, 2.0);
         setParams((prev) => ({
           ...prev,
           bcLength: 6.0,
           lambda: 2.0,
-          pointAngle: 90,
+          pointAngle: orthoAngle,
         }));
       }
     }
@@ -224,7 +234,7 @@ export function VectorPolarizationApolloniusAnimation() {
       {
         key: "orthogonal",
         label: "正交垂直状态",
-        description: "夹角为直角",
+        description: "数量积为零构型",
       },
     ];
   }, [studyMode]);
@@ -276,6 +286,80 @@ export function VectorPolarizationApolloniusAnimation() {
     return `\\vec{PA} \\cdot \\vec{PB} = \\color{${MATH_COLORS.paramPrimary}}{\\|\\vec{PM}\\|^2} - \\color{${MATH_COLORS.paramSecondary}}{\\|\\vec{MB}\\|^2}`;
   }, [studyMode]);
 
+  // 图例项动态生成 (SceneLegend)
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (studyMode === "polarization") {
+      return [
+        {
+          label: "中线 $AM$",
+          color: MATH_COLORS.paramPrimary,
+          style: "dashed",
+        },
+        {
+          label: "向量 $\\vec{AB}$",
+          color: MATH_COLORS.vectorPrimary,
+          style: "line",
+        },
+        {
+          label: "向量 $\\vec{AC}$",
+          color: MATH_COLORS.vectorSecondary,
+          style: "line",
+        },
+        {
+          label: "底边 $BC$",
+          color: MATH_COLORS.paramSecondary,
+          style: "solid",
+        },
+      ];
+    }
+    if (studyMode === "apollonius") {
+      return [
+        {
+          label: "阿氏圆轨迹",
+          color: MATH_COLORS.function,
+          style: "solid",
+        },
+        {
+          label: "向量 $\\vec{PA}$",
+          color: MATH_COLORS.vectorPrimary,
+          style: "line",
+        },
+        {
+          label: "向量 $\\vec{PB}$",
+          color: MATH_COLORS.vectorSecondary,
+          style: "line",
+        },
+        {
+          label: "直径端点 $D, E$",
+          color: MATH_COLORS.paramPrimary,
+          style: "point",
+        },
+      ];
+    }
+    return [
+      {
+        label: "中线 $PM$",
+        color: MATH_COLORS.paramPrimary,
+        style: "dashed",
+      },
+      {
+        label: "阿氏圆轨迹",
+        color: MATH_COLORS.function,
+        style: "solid",
+      },
+      {
+        label: "极小值点 $P_{\\min}$",
+        color: MATH_COLORS.paramTertiary,
+        style: "point",
+      },
+      {
+        label: "极大值点 $P_{\\max}$",
+        color: MATH_COLORS.degeneracy,
+        style: "point",
+      },
+    ];
+  }, [studyMode]);
+
   // 看板标题
   const panelTitle = useMemo(() => {
     if (studyMode === "polarization") return "向量极化恒等式看板";
@@ -293,22 +377,22 @@ export function VectorPolarizationApolloniusAnimation() {
             subtitle="选择数形结合探讨维度"
           >
             <SelectGrid
+              columns={1}
               items={[
                 {
                   key: "polarization",
-                  label: "向量极化恒等式",
-                  description: "中线模长与底边数量积",
+                  label: "极化恒等式",
+                  description: "双矢数量积的中线降维模型",
                 },
                 {
                   key: "apollonius",
-                  label: "阿波罗尼斯圆轨迹",
-                  description: "定比分点距离轨迹",
+                  label: "阿波罗尼斯圆",
+                  description: "两点距离比为定值的动点轨迹",
                 },
                 {
                   key: "combined",
-                  label: "高考压轴综合模型",
-                  description: "圆上动点数量积最值",
-                  fullWidth: true,
+                  label: "极化恒等式 × 阿圆综合",
+                  description: "圆周动点数量积的最值压轴模型",
                 },
               ]}
               value={studyMode}
@@ -343,24 +427,24 @@ export function VectorPolarizationApolloniusAnimation() {
             variant="primary"
             badge={
               studyMode === "polarization"
-                ? "极化恒等式与中线模长"
+                ? "中线降维 · 极化恒等式"
                 : studyMode === "apollonius"
-                  ? "阿波罗尼斯圆轨迹"
-                  : "阿圆上的数量积最值"
+                  ? "距离定比 · 阿波罗尼斯圆"
+                  : "新高考压轴 · 极化恒等式 × 阿圆"
             }
             condition={
               studyMode === "polarization"
-                ? "M 为底边 BC 中点，AB·AC = |AM|² - |BM|²。"
+                ? "取定底边 $BC$ 中点 $M$。由向量加减分解，数量积可降维转化为单变量中线长：$\\vec{AB}\\cdot\\vec{AC} = |\\vec{AM}|^2 - |\\vec{BM}|^2$。"
                 : studyMode === "apollonius"
-                  ? "动点 P 满足到两定点距离比 |PA|/|PB| = λ (λ ≠ 1)。"
-                  : "动点 P 在阿波罗尼斯圆上运动，求解向量 PA·PB 的最值。"
+                  ? "平面内动点 $P$ 到两定点 $A, B$ 的距离比为常数 $\\frac{|PA|}{|PB|} = \\lambda$（$\\lambda > 0, \\lambda \\neq 1$）。"
+                  : "动点 $P$ 在阿波罗尼斯圆上运动，求解向量数量积 $\\vec{PA}\\cdot\\vec{PB}$ 的取值范围。"
             }
             question={
               studyMode === "polarization"
-                ? "当底边长固定时，数量积仅由中线长 |AM| 决定，如何用它快速求解最值？"
+                ? "底边长 $|BC|$ 固定时半底边长 $|\\vec{BM}|$ 为定值。动点 $A$ 如何运动能使数量积为零（直角三角形）？中线长何时代入取得极值？"
                 : studyMode === "apollonius"
-                  ? "圆直径端点 D, E 分别为线段 AB 的内分点与外分点，当 λ→1 时轨迹如何退化？"
-                  : "利用极化恒等式转化后，动点 P 取在内分点 D 或外分点 E 时如何分别取得极小与极大值？"
+                  ? "初高中几何桥梁：线段 $AB$ 的内分点 $D$ 与外分点 $E$ 分别平分 $\\angle APB$ 的内角与外角，为什么必有 $\\angle DPE = 90^\\circ$ 且 $DE$ 为圆直径？当 $\\lambda \\to 1$ 时为何退化为中垂线？"
+                  : "双剑合璧秒杀法：先用极化恒等式将数量积转化为中线长 $|\\vec{PM}|^2 - |\\vec{MB}|^2$，再求圆外中点 $M(0,0)$ 到阿圆的距离最值。为什么极值点必在 $P, M, O_A$ 三点共线时取得？"
             }
           />
         </LeftPanel>
@@ -386,6 +470,9 @@ export function VectorPolarizationApolloniusAnimation() {
               studyMode={studyMode}
             />
           </AnimationSvgCanvas>
+
+          {/* 中屏右下角毛玻璃图例 (SceneLegend) */}
+          <SceneLegend items={legendItems} title="图元与特征指示" />
         </div>
       }
       right={
@@ -394,6 +481,8 @@ export function VectorPolarizationApolloniusAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           mnemonic={mathData.mnemonic}
           title={panelTitle}
         />

@@ -60,7 +60,7 @@ export const paramMeta: Record<
       {
         value: 1.0,
         label: "λ=1",
-        labelFormula: "\\lambda = 1",
+        labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{\\lambda = 1}`,
         variant: "critical",
       },
     ],
@@ -77,8 +77,8 @@ export const paramMeta: Record<
     group: "动点位置参数",
   },
   pointX: {
-    label: "动点横坐标 x_A",
-    labelFormula: `\\text{动点横坐标 } x_A`,
+    label: "动点横坐标 $x_A$",
+    labelFormula: `\\text{动点横坐标 } \\color{${MATH_COLORS.paramPrimary}}{x_A}`,
     defaultValue: 2.0,
     min: -8.0,
     max: 8.0,
@@ -88,8 +88,8 @@ export const paramMeta: Record<
     group: "动点 A 坐标",
   },
   pointY: {
-    label: "动点纵坐标 y_A",
-    labelFormula: `\\text{动点纵坐标 } y_A`,
+    label: "动点纵坐标 $y_A$",
+    labelFormula: `\\text{动点纵坐标 } \\color{${MATH_COLORS.paramPrimary}}{y_A}`,
     defaultValue: 4.0,
     min: -6.0,
     max: 6.0,

@@ -51,8 +51,9 @@ export function useVectorPolarizationApolloniusScene({
     if (studyMode === "apollonius" || studyMode === "combined") {
       const centerO = apolloniusData.centerO;
       if (apolloniusData.isDegenerate) {
-        // 在中垂线上，根据 Y 计算 angleDeg
-        let deg = Math.round((Math.atan2(newY, 3) * 180) / Math.PI);
+        // 在中垂线上，根据 Y 平滑反算 angleDeg
+        const ratio = Math.max(-1, Math.min(1, newY / 4.5));
+        let deg = Math.round((Math.asin(ratio) * 180) / Math.PI);
         if (deg < 0) deg += 360;
         onParamChange("pointAngle", deg);
       } else {
@@ -113,6 +114,15 @@ export function useVectorPolarizationApolloniusScene({
     [combinedData.maxPoint, scale],
   );
 
+  const designApoA = useMemo(
+    () => mathToDesign(apolloniusData.pointA.x, apolloniusData.pointA.y, scale),
+    [apolloniusData.pointA, scale],
+  );
+  const designApoB = useMemo(
+    () => mathToDesign(apolloniusData.pointB.x, apolloniusData.pointB.y, scale),
+    [apolloniusData.pointB, scale],
+  );
+
   // 阿圆设计尺寸半径
   const designRadius = useMemo(() => {
     if (apolloniusData.isDegenerate) return 0;
@@ -140,6 +150,8 @@ export function useVectorPolarizationApolloniusScene({
     designE,
     designMinP,
     designMaxP,
+    designApoA,
+    designApoB,
     designRadius,
   };
 }

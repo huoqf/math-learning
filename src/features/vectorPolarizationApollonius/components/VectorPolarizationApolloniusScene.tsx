@@ -52,6 +52,8 @@ export const VectorPolarizationApolloniusScene: React.FC<
     designE,
     designMinP,
     designMaxP,
+    designApoA,
+    designApoB,
     designRadius,
   } = useVectorPolarizationApolloniusScene({
     params,
@@ -354,15 +356,15 @@ export const VectorPolarizationApolloniusScene: React.FC<
 
           {/* 定点 A (-c, 0) */}
           <MathPoint
-            x={designB.x}
-            y={designB.y}
+            x={designApoA.x}
+            y={designApoA.y}
             variant="solid"
             color={MATH_COLORS.paramSecondary}
             r={3.8}
           />
           <text
-            x={designB.x}
-            y={designB.y + fontScale(16)}
+            x={designApoA.x}
+            y={designApoA.y + fontScale(16)}
             textAnchor="middle"
             fill={MATH_COLORS.labelText}
             fontSize={fontScale(12)}
@@ -377,15 +379,15 @@ export const VectorPolarizationApolloniusScene: React.FC<
 
           {/* 定点 B (c, 0) */}
           <MathPoint
-            x={designC.x}
-            y={designC.y}
+            x={designApoB.x}
+            y={designApoB.y}
             variant="solid"
             color={MATH_COLORS.paramSecondary}
             r={3.8}
           />
           <text
-            x={designC.x}
-            y={designC.y + fontScale(16)}
+            x={designApoB.x}
+            y={designApoB.y + fontScale(16)}
             textAnchor="middle"
             fill={MATH_COLORS.labelText}
             fontSize={fontScale(12)}
@@ -452,9 +454,27 @@ export const VectorPolarizationApolloniusScene: React.FC<
             </g>
           )}
 
-          {/* 内分点 D & 外分点 E */}
+          {/* 内分点 D & 外分点 E 及直径端点辅助连线 (PD ⊥ PE 直角特征) */}
           {!apolloniusData.isDegenerate && studyMode === "apollonius" && (
             <g>
+              <line
+                x1={designP.x}
+                y1={designP.y}
+                x2={designD.x}
+                y2={designD.y}
+                stroke={withAlpha(MATH_COLORS.paramPrimary, 0.65)}
+                strokeWidth={1.5}
+                strokeDasharray="3 3"
+              />
+              <line
+                x1={designP.x}
+                y1={designP.y}
+                x2={designE.x}
+                y2={designE.y}
+                stroke={withAlpha(MATH_COLORS.paramPrimary, 0.65)}
+                strokeWidth={1.5}
+                strokeDasharray="3 3"
+              />
               <MathPoint
                 x={designD.x}
                 y={designD.y}

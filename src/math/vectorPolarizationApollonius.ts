@@ -56,6 +56,8 @@ export interface CombinedModelResult extends ApolloniusCircleResult {
   maxDotProduct: number; // 最大数量积 (PM_max^2 - MB^2)
   minPoint: Vector2D; // 取得最小值时的 P 点位置 (靠近 M 侧)
   maxPoint: Vector2D; // 取得最大值时的 P 点位置 (远离 M 侧)
+  minAngleDeg: number; // 取得最小值时动点 P 在阿圆上的极角 (度数)
+  maxAngleDeg: number; // 取得最大值时动点 P 在阿圆上的极角 (度数)
 }
 
 /**
@@ -160,9 +162,9 @@ export function calcApolloniusCircle(
   // 计算动点 P 坐标
   let pointP: Vector2D;
   if (isDegenerate) {
-    // 在中垂线上: P.x = 0, P.y 根据角度映射为 (-6 到 6)
+    // 在中垂线上: P.x = 0, P.y 平滑周期映射为 [-4.5, 4.5]，彻底杜绝 tan(90°) 奇点爆炸
     const rad = (angleDeg * Math.PI) / 180;
-    const yVal = Math.tan(rad) * 3;
+    const yVal = 4.5 * Math.sin(rad);
     pointP = { x: 0, y: Number.isFinite(yVal) ? yVal : 0 };
   } else {
     const rad = (angleDeg * Math.PI) / 180;
@@ -224,6 +226,8 @@ export function calcCombinedModel(
   let maxDotProduct: number;
   let minPoint: Vector2D;
   let maxPoint: Vector2D;
+  let minAngleDeg: number;
+  let maxAngleDeg: number;
 
   if (baseCircle.isDegenerate) {
     // 退化为中垂线，P 在 (0, y)
@@ -232,6 +236,8 @@ export function calcCombinedModel(
     maxDotProduct = Infinity;
     minPoint = { x: 0, y: 0 };
     maxPoint = { x: 0, y: Infinity };
+    minAngleDeg = 0;
+    maxAngleDeg = 90;
   } else {
     // 圆心到 M 的距离
     const distOM = Math.abs(baseCircle.centerO.x);
@@ -243,8 +249,9 @@ export function calcCombinedModel(
     minDotProduct = minDistPM * minDistPM - lenMB * lenMB;
     maxDotProduct = maxDistPM * maxDistPM - lenMB * lenMB;
 
-    // 定位极值点
+    // 定位极值点与对应极角
     if (baseCircle.centerO.x > 0) {
+      // lambda > 1: 圆心在右侧，近点为内分点 D (θ = 180°)，远点为外分点 E (θ = 0°)
       minPoint =
         baseCircle.pointD.x < baseCircle.pointE.x
           ? baseCircle.pointD
@@ -253,7 +260,10 @@ export function calcCombinedModel(
         baseCircle.pointD.x > baseCircle.pointE.x
           ? baseCircle.pointD
           : baseCircle.pointE;
+      minAngleDeg = 180;
+      maxAngleDeg = 0;
     } else {
+      // lambda < 1: 圆心在左侧，近点为内分点 D (θ = 0°)，远点为外分点 E (θ = 180°)
       minPoint =
         baseCircle.pointD.x > baseCircle.pointE.x
           ? baseCircle.pointD
@@ -262,6 +272,8 @@ export function calcCombinedModel(
         baseCircle.pointD.x < baseCircle.pointE.x
           ? baseCircle.pointD
           : baseCircle.pointE;
+      minAngleDeg = 0;
+      maxAngleDeg = 180;
     }
   }
 
@@ -275,5 +287,40 @@ export function calcCombinedModel(
     maxDotProduct,
     minPoint,
     maxPoint,
+    minAngleDeg,
+    maxAngleDeg,
   };
+}
+
+/**
+ * 快速获取给定 lambda 下综合模型的极值极角
+ */
+export function getCombinedExtremaAngles(lambda: number): {
+  minAngle: number;
+  maxAngle: number;
+} {
+  if (Math.abs(lambda - 1.0) < 1e-4) {
+    return { minAngle: 0, maxAngle: 90 };
+  }
+  return lambda > 1.0
+    ? { minAngle: 180, maxAngle: 0 }
+    : { minAngle: 0, maxAngle: 180 };
+}
+
+/**
+ * 求解使 PA · PB = 0 (正交垂直) 时的动点极角 (度数)
+ * 解析原理：|PM|^2 = c^2 => cos(θ) = (c^2 - xO^2 - R^2) / (2 xO R)
+ */
+export function getOrthogonalAngle(bcLength: number, lambda: number): number {
+  if (Math.abs(lambda - 1.0) < 1e-4) {
+    return 45;
+  }
+  const c = Math.max(0.1, bcLength) / 2;
+  const xO = (c * (lambda * lambda + 1)) / (lambda * lambda - 1);
+  const R = (2 * c * lambda) / Math.abs(lambda * lambda - 1);
+  const cosTheta = (c * c - xO * xO - R * R) / (2 * xO * R);
+  if (cosTheta >= -1 && cosTheta <= 1) {
+    return Math.round((Math.acos(cosTheta) * 180) / Math.PI);
+  }
+  return 90;
 }

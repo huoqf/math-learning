@@ -414,6 +414,6 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
 
   it("VectorPolarizationApolloniusAnimation mounts properly and renders titles", () => {
     render(<VectorPolarizationApolloniusAnimation />);
-    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+    expect(screen.getByText("向量极化恒等式看板")).toBeInTheDocument();
   });
 });

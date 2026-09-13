@@ -92,4 +92,46 @@ describe("vectorPolarizationApollonius", () => {
     // 最大值: |-9|^2 - 3^2 = 81 - 9 = 72
     expect(res2.maxDotProduct).toBeCloseTo(72, 4);
   });
+
+  it("应准确自适应求解不同 lambda 下极值对应的参数极角", async () => {
+    const { getCombinedExtremaAngles } =
+      await import("./vectorPolarizationApollonius");
+
+    // lambda = 2 > 1 时，圆心在正半轴，内分点 D 对应 180°，外分点 E 对应 0°
+    const angles1 = getCombinedExtremaAngles(2.0);
+    expect(angles1.minAngle).toBe(180);
+    expect(angles1.maxAngle).toBe(0);
+
+    // lambda = 0.5 < 1 时，圆心在负半轴，内分点 D 对应 0°，外分点 E 对应 180°
+    const angles2 = getCombinedExtremaAngles(0.5);
+    expect(angles2.minAngle).toBe(0);
+    expect(angles2.maxAngle).toBe(180);
+
+    // lambda = 1 退化时
+    const angles3 = getCombinedExtremaAngles(1.0);
+    expect(angles3.minAngle).toBe(0);
+  });
+
+  it("应保证退化为中垂线时动点纵坐标平滑有界且不产生发散", () => {
+    // 测试 90度奇点与 270度
+    const res90 = calcApolloniusCircle(6, 1.0, 90);
+    expect(res90.isDegenerate).toBe(true);
+    expect(Number.isFinite(res90.pointP.y)).toBe(true);
+    expect(Math.abs(res90.pointP.y)).toBeLessThanOrEqual(5);
+
+    const res270 = calcApolloniusCircle(6, 1.0, 270);
+    expect(Number.isFinite(res270.pointP.y)).toBe(true);
+    expect(Math.abs(res270.pointP.y)).toBeLessThanOrEqual(5);
+  });
+
+  it("应准确求解正交垂直状态极角，使数量积严格为 0", async () => {
+    const { getOrthogonalAngle } =
+      await import("./vectorPolarizationApollonius");
+    const orthoAngle = getOrthogonalAngle(6.0, 2.0);
+    expect(orthoAngle).toBe(143);
+
+    // 验证当 pointAngle = 143 时，两向量点积接近 0
+    const res = calcCombinedModel(6.0, 2.0, orthoAngle);
+    expect(Math.abs(res.dotProductP)).toBeLessThan(0.1);
+  });
 });
