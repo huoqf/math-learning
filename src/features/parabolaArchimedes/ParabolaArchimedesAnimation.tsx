@@ -60,20 +60,29 @@ export function ParabolaArchimedesAnimation() {
     setActivePreset("free");
   }, []);
 
-  // 参数更新处理器
+  // 参数更新处理器（若调节焦准距 p，不强行重置预设情景）
   const handleParamChange = (key: string, value: number) => {
-    setActivePreset("free");
+    if (key !== "p") {
+      setActivePreset("free");
+    }
     setParams((prev) => ({
       ...prev,
       [key]: value,
     }));
   };
 
-  // 切换模式处理器
+  // 切换模式处理器（重置为对应模式的基准参数）
   const handleModeChange = (modeKey: string) => {
     const nextMode = modeKey as typeof mode;
     setMode(nextMode);
     setActivePreset("free");
+    if (nextMode === "archimedesTriangle") {
+      setParams((prev) => ({ ...prev, yQ: 1.5 }));
+    } else if (nextMode === "focalChordProperties") {
+      setParams((prev) => ({ ...prev, thetaDeg: 60.0 }));
+    } else if (nextMode === "orthogonalChords") {
+      setParams((prev) => ({ ...prev, thetaDeg: 45.0 }));
+    }
   };
 
   // 典型预设切换
@@ -153,31 +162,93 @@ export function ParabolaArchimedesAnimation() {
     return `y^2 = \\color{${MATH_COLORS.paramPrimary}}{${pStr}} x \\quad (p=\\color{${MATH_COLORS.paramPrimary}}{${params.p.toFixed(1)}})`;
   }, [params.p]);
 
-  // 教学提示双要素导引 (初始条件 + 探究设问)
+  // 教学提示双要素导引 (初始条件 + 探究设问，全量 12 个预设 100% 动态联动特化)
   const tipConfig = useMemo(() => {
     if (activePreset !== "free") {
+      // 模式 1 预设
       if (activePreset === "min_area") {
         return {
           badge: "高考经典 · 通径正交切线",
           condition:
-            "外点 Q 位于准线与对称轴交点 (-p/2, 0) 处，切点弦 AB 为通径。",
+            "外点 $Q$ 位于准线与对称轴交点 $(-\\frac{p}{2}, 0)$ 处，切点弦 $AB$ 为通径。",
           question:
-            "探究两切线斜率关系，并验证阿基米德三角形面积如何达到全局最小值？",
+            "求两切线斜率乘积，并证明阿基米德三角形面积如何达到全局极小值 $p^2$。",
         };
       }
+      if (activePreset === "symmetric_tangent") {
+        return {
+          badge: "高考高频 · 对称正交切线",
+          condition:
+            "外点 $Q$ 纵坐标设为 $y_Q = 2.0$，向抛物线引两条切线 $QA, QB$。",
+          question:
+            "验证切线斜率 $k_1, k_2$ 是否始终满足 $k_1 k_2 = -1$，并证明切点弦 $AB$ 必过焦点 $F$。",
+        };
+      }
+      if (activePreset === "high_aspect") {
+        return {
+          badge: "高考压轴 · 高偏心切点弦",
+          condition:
+            "外点 $Q$ 移动至远离对称轴的 $y_Q = 3.5$ 处，两切点高度偏斜。",
+          question:
+            "探究高偏斜构型下中线 $QM$ 是否仍被抛物线平分，并分析三角形面积增长规律。",
+        };
+      }
+
+      // 模式 2 预设
       if (activePreset === "latus_rectum") {
         return {
-          badge: "高考经典 · 最短焦点弦",
-          condition: "割线垂直于对称轴通过焦点 F，即通径构型。",
+          badge: "高考经典 · 最短焦点弦 (通径)",
+          condition:
+            "割线垂直于对称轴通过焦点 $F$，即倾角 $\\theta = 90^\\circ$ 的通径构型。",
           question:
-            "验证通径弦长与焦准距 p 的倍数关系，并观察以通径为直径的圆与准线的位置关系。",
+            "证明通径长为 $2p$ 且为最短焦点弦，并验证以通径为直径的圆与准线相切于对称轴交点。",
         };
       }
+      if (activePreset === "ratio_3to1") {
+        return {
+          badge: "高考高频 · 3:1 分割焦点弦",
+          condition:
+            "割线倾斜角为 $\\theta = 60^\\circ$，焦点 $F$ 将弦长分割为两段焦半径。",
+          question:
+            "计算焦半径比值 $\\lambda = |AF|/|BF|$ 并验证其为 $3$，证明焦半径倒数和恒等于 $\\frac{2}{p}$。",
+        };
+      }
+      if (activePreset === "chord_45deg") {
+        return {
+          badge: "高考经典 · 45° 倾斜焦点弦",
+          condition:
+            "焦点弦割线倾角为 $\\theta = 45^\\circ$，割线方程为 $y = x - \\frac{p}{2}$。",
+          question:
+            "求该倾角下的焦点弦长 $|AB| = 4p$，并验证以 $AB$ 为直径的圆与准线的切点坐标。",
+        };
+      }
+
+      // 模式 3 预设
       if (activePreset === "symmetric_45") {
         return {
-          badge: "高考压轴 · 45°对角双垂直弦",
-          condition: "两条焦点弦互相垂直且倾角为 45° 与 135°，构成对称四边形。",
-          question: "探究双垂直弦长和与四边形面积在对称构型下的极值表现。",
+          badge: "高考压轴 · 45° 对角双垂直弦",
+          condition:
+            "两条焦点弦互相垂直且倾角分别为 $45^\\circ$ 与 $135^\\circ$，构成对称四边形。",
+          question:
+            "探究双垂直弦长和与四边形面积在对称构型下的极小值，求出取等充要条件。",
+        };
+      }
+      if (activePreset === "skew_30") {
+        return {
+          badge: "高考高频 · 30°/120° 正交焦点弦",
+          condition:
+            "第一条焦点弦倾角为 $\\theta = 30^\\circ$，第二条垂直弦倾角为 $120^\\circ$。",
+          question:
+            "验证两正交弦长倒数和是否恒等于 $\\frac{1}{2p}$，并比较此时两弦长之和与极小值 $8p$ 的差距。",
+        };
+      }
+      if (activePreset === "skew_60") {
+        return {
+          badge: "高考高频 · 60°/150° 正交焦点弦",
+          condition:
+            "第一条焦点弦倾角为 $\\theta = 60^\\circ$，第二条垂直弦倾角为 $150^\\circ$。",
+          question:
+            "求四边形 $ACBD$ 的具体面积，并分析随倾角旋转四边形面积向极小值 $8p^2$ 回归的规律。",
         };
       }
     }
@@ -185,24 +256,26 @@ export function ParabolaArchimedesAnimation() {
     if (mode === "archimedesTriangle") {
       return {
         badge: "新高考核心 · 准线蒙日正交定理",
-        condition: "从准线上任意一点 Q(-p/2, yQ) 向抛物线引两条切线切于 A, B。",
+        condition:
+          "从准线上任意一点 $Q(-\\frac{p}{2}, y_Q)$ 向抛物线引两条切线切于 $A, B$。",
         question:
-          "探究切线 QA, QB 的垂直关系、弦 AB 与焦点 F 的位置关系，以及中线 QM 如何被抛物线二等分？",
+          "证明两切线互相垂直且切点弦必过焦点，并探究中线 $QM$ 被抛物线平分的几何性质。",
       };
     }
     if (mode === "focalChordProperties") {
       return {
         badge: "新高考高频 · 焦点弦与调和中项",
-        condition: "过焦点 F 作倾斜角为 θ 的割线与抛物线交于 A, B 两点。",
+        condition:
+          "过焦点 $F$ 作倾斜角为 $\\theta$ 的割线与抛物线交于 $A, B$ 两点。",
         question:
-          "探究焦半径倒数和 1/AF + 1/BF 是否恒定，以及以 AB 为直径的圆与准线存在怎样的相切规律？",
+          "探究焦半径倒数和是否为常数定值 $\\frac{2}{p}$，并证明以 $AB$ 为直径的圆必与准线相切。",
       };
     }
     return {
       badge: "新高考压轴 · 双垂直焦点弦极值",
-      condition: "过焦点 F 作互相垂直的两条割线 AB ⊥ CD。",
+      condition: "过焦点 $F$ 作互相垂直的两条割线 $AB \\perp CD$。",
       question:
-        "探究两弦倒数和 1/|AB| + 1/|CD| 的定值性质，并探寻四边形 ACBD 面积取得极小值的几何构型。",
+        "求两垂直弦倒数和的定值，并探寻四边形 $ACBD$ 面积取得全局极小值的几何构型。",
     };
   }, [mode, activePreset]);
 
@@ -369,6 +442,8 @@ export function ParabolaArchimedesAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
+          examAnchor={mathData.examAnchor}
           mnemonic={mathData.mnemonic}
           title="抛物线阿基米德几何看板"
         />
