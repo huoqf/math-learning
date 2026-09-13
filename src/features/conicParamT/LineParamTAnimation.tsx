@@ -18,6 +18,7 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/lineParamT";
 import { LineParamTScene } from "./components/LineParamTScene";
 import { calcLineConicIntersection, type ConicType } from "@/math/lineParamT";
+import { formatMathNumber, formatSignedTerm } from "@/utils/mathFormat";
 
 /**
  * 经典高考情景预设库 (Scenario Preset Params)
@@ -175,17 +176,31 @@ export function LineParamTAnimation() {
       keys.forEach((key) => {
         if (key in paramMeta) {
           const meta = paramMeta[key as keyof typeof paramMeta];
+          const rawValue = params[key] ?? meta.defaultValue ?? 0;
+          // 参数安全契约：椭圆必须满足 a > b > 0，滑块上限随 a 动态收紧
+          const isEllipseB = key === "b" && conicType === "ellipse";
+          const dynamicMax = isEllipseB
+            ? Math.max(
+                meta.min ?? 0.1,
+                (params.a ?? meta.defaultValue ?? 1) - 0.01,
+              )
+            : meta.max;
           configs.push({
             key,
             label: meta.label,
             labelFormula: meta.labelFormula,
-            value: params[key] ?? meta.defaultValue ?? 0,
+            value:
+              dynamicMax !== undefined && rawValue > dynamicMax
+                ? dynamicMax
+                : rawValue,
             min: meta.min,
-            max: meta.max,
+            max: dynamicMax,
             step: meta.step ?? 0.1,
             group,
             description: meta.description,
-            descriptionFormula: meta.descriptionFormula,
+            descriptionFormula: isEllipseB
+              ? `椭圆需满足 $a > b > 0$，当前 $a = ${formatMathNumber(params.a ?? meta.defaultValue ?? 1)}$`
+              : meta.descriptionFormula,
             importance: meta.importance,
             marks: meta.marks,
           });
@@ -229,26 +244,24 @@ export function LineParamTAnimation() {
   // 左上角悬浮动态 KaTeX 公式 (精确代入 A t^2 + B t + C = 0)
   const equationLatex = useMemo(() => {
     const rad = (params.alpha * Math.PI) / 180;
-    const cosStr = Math.cos(rad).toFixed(2);
-    const sinStr = Math.sin(rad).toFixed(2);
+    const cosStr = formatMathNumber(Math.cos(rad));
+    const sinStr = formatMathNumber(Math.sin(rad));
 
     if (mode === "definition") {
-      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${params.x0.toFixed(
-        1,
-      )}} + t (${cosStr}) \\\\ y = \\color{${MATH_COLORS.paramPrimary}}{${params.y0.toFixed(
-        1,
+      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${formatMathNumber(
+        params.x0,
+      )}} + t (${cosStr}) \\\\ y = \\color{${MATH_COLORS.paramPrimary}}{${formatMathNumber(
+        params.y0,
       )}} + t (${sinStr}) \\end{cases}`;
     }
 
-    const aStr = intersect.A.toFixed(2);
-    const bSign = intersect.B >= 0 ? "+" : "";
-    const bStr = intersect.B.toFixed(2);
-    const cSign = intersect.C >= 0 ? "+" : "";
-    const cStr = intersect.C.toFixed(2);
+    const quadTerm = formatSignedTerm(intersect.A, "t^2", true);
+    const linTerm = formatSignedTerm(intersect.B, "t");
+    const constTerm = formatSignedTerm(intersect.C, "");
 
-    return `${aStr} t^2 ${bSign}${bStr} t ${cSign}${cStr} = 0 \\quad (t_1+t_2 = ${intersect.tSum.toFixed(
-      2,
-    )}, \\: t_1 t_2 = ${intersect.tProd.toFixed(2)})`;
+    return `${quadTerm} ${linTerm} ${constTerm} = 0 \\quad (t_1+t_2 = ${formatMathNumber(
+      intersect.tSum,
+    )}, \\: t_1 t_2 = ${formatMathNumber(intersect.tProd)})`;
   }, [params, mode, intersect]);
 
   // 中屏毛玻璃图例 (SceneLegend) 数据
@@ -325,7 +338,7 @@ export function LineParamTAnimation() {
     if (mode === "definition") {
       return {
         variant: "info" as const,
-        badge: "参数 $t$ 的几何意义本质",
+        badge: "拓展 · 参数 $t$ 的几何意义",
         condition: "直线标准参数方程以定点 $P_0$ 为基准点建立。",
         question:
           "参数 $t$ 的正负号与动点 $P$ 到基点 $P_0$ 的几何有向距离有何对应规律？",
@@ -368,9 +381,7 @@ export function LineParamTAnimation() {
       conicType === "hyperbola";
     return {
       variant: "danger" as const,
-      badge: isFocus
-        ? "高考模型 · 焦点弦倒数和定值"
-        : "高考模型 · 割线线段倒数和",
+      badge: isFocus ? "拓展 · 焦点弦倒数和定值" : "拓展 · 割线线段倒数和",
       condition: isFocus
         ? "割线过焦点 $F$（内部定点），与二次曲线交于 $A, B$ 两点。"
         : "割线过定点 $P_0$，与曲线交于 $A, B$ 两点。",
@@ -512,7 +523,7 @@ export function LineParamTAnimation() {
                 ? conicType === "circle"
                   ? "割线定理与圆幂看板"
                   : "二次曲线割线方幂看板"
-                : "高考直线参数方程压轴看板"
+                : "拓展 · 直线参数方程看板"
           }
         />
       }

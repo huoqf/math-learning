@@ -59,7 +59,7 @@ export const sequenceNodes: KnowledgeNode[] = [
     route: "/sequence-recurrence",
     gaokaoTopic: "sequence_series",
     questionCategory: "solution_final",
-    examMethod: "不动点特征方程与待定系数构造等比数列",
+    examMethod: "待定系数构造等比数列求通项",
     examWeight: 5,
   },
 ];

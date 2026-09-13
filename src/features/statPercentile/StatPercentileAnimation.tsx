@@ -263,9 +263,9 @@ export function StatPercentileAnimation() {
       return {
         variant: "warning" as const,
         badge: "高考高频 · 百分位数与累积频率折线",
-        condition: `样本数据按升序排列，当前目标百分位 p = ${params.percentileP ?? 75}%。`,
+        condition: `数据已分组为频率分布直方图（组界由小到大排列），当前目标百分位 p = ${params.percentileP ?? 75}%。`,
         question:
-          "根据 S 型累积折线，求第 p 百分位数的精确线性插值坐标与分界点。",
+          "在直方图内按矩形面积线性插值，估算第 p 百分位数（若数据未分组，则应先升序排列后用 i = np% 直接定位）。",
       };
     }
     // stratified
@@ -276,6 +276,8 @@ export function StatPercentileAnimation() {
       question:
         "求解分层抽样总样本均值 x̄ 与总样本方差 s² 的组内+组间两项分解合成。",
     };
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studyMode, activeScenario, params.percentileP, params.sampleN]);
 
   return (

@@ -16,6 +16,12 @@ export interface DistributionResult {
   variance: number; // 方差 D(X)
   stdDev: number; // 标准差 σ(X)
   sumP: number; // 概率和 ∑p_i (应该为 1)
+  /**
+   * 归一化前的原始概率和（仅一般离散分布会 ≠ 1）。
+   * 用于教学反馈："学生拖出的各柱概率之和是否满足 ∑p_i = 1"，
+   * 避免把"静默归一化"当成"天然满足规范性"。
+   */
+  rawSumP?: number;
   modeX: number[]; // 众数取值
   maxP: number; // 概率峰值
   isValid: boolean;
@@ -208,6 +214,7 @@ export function computeGeneralDiscreteDistribution(
     variance,
     stdDev,
     sumP: 1.0,
+    rawSumP: totalWeight,
     modeX,
     maxP,
     isValid: true,

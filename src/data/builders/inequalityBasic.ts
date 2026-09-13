@@ -57,7 +57,7 @@ export function buildInequalityBasicPanel(
           highlight: isAtMin ? "extreme" : undefined,
         },
         {
-          label: "函数最小值 f_min",
+          label: "函数最小值 $f_min$",
           symbol: "y_{\\min}",
           value: minY.toFixed(2),
           highlight: isAtMin ? "extreme" : undefined,
@@ -79,7 +79,7 @@ export function buildInequalityBasicPanel(
           latex: "x + \\frac{k}{x} \\ge 2\\sqrt{k} \\quad (x > 0, k > 0)",
           prerequisites: ["x > 0", "k > 0"],
           condition:
-            "当且仅当 x = \\sqrt{k} 时取等号，最小值 y_{\\min} = 2\\sqrt{k}",
+            "当且仅当 $x = \\sqrt{k}$ 时取等号，最小值 $y_{\\min} = 2\\sqrt{k}$",
         },
       ],
       gaokaoPoints: [
@@ -192,7 +192,7 @@ export function buildInequalityBasicPanel(
     theorems: [
       {
         name: "基本不等式 (均值不等式)",
-        latex: "\\frac{a+b}{2} \\ge \\sqrt{ab} \\quad (a+b \\ge 2\\sqrt{ab})",
+        latex: "\\frac{a+b}{2} \\ge \\sqrt{ab} \\quad (a>0,\\ b>0)",
         prerequisites: ["a > 0", "b > 0 (一正)"],
         condition: "当且仅当 a = b 时取等号 (三相等)",
       },

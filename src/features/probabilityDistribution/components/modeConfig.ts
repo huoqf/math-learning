@@ -308,7 +308,8 @@ export function getTipConfig(
       badge: "高考高频 · 超几何分布不放回抽样",
       condition:
         "总数 N 件产品中含 M 件次品，不放回随机抽取 n 件，抽中次品数 X ~ H(N, M, n)。",
-      question: "求超几何分布列、期望 E(X)=n·(M/N) 与方差，注意定义域边界。",
+      question:
+        "求超几何分布列与期望 $E(X)=n\\cdot\\frac{M}{N}$，注意定义域边界。（方差公式为选学拓展内容，右屏定理区另有说明）",
     };
   }
   if (studyMode === "compare") {
@@ -349,7 +350,7 @@ export function getTipConfig(
     badge: "高考基础 · 离散分布列与力矩天平平衡",
     condition: "随机变量 X 取值为 xᵢ，对应概率为 pᵢ (pᵢ ≥ 0 且 ∑pᵢ=1)。",
     question:
-      "可在中屏画布直接上下拖拽柱顶调节概率，观察期望支点力矩平衡 ∑(xᵢ-E)pᵢ=0。",
+      "拖拽柱顶调节各概率 $p_i$，验证离散型随机变量必须满足 $p_i \\ge 0$ 且 $\\sum p_i = 1$，并探究使期望的支点力矩平衡 $\\sum (x_i - E)p_i = 0$ 的几何条件。",
   };
 }
 

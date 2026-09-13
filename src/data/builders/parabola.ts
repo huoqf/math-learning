@@ -306,10 +306,9 @@ export function buildParabolaPanel(
       {
         step: 1,
         title: "审题定法 · 焦点弦参数设线与联立展开",
-        detail: `设过焦点 $F$ 且与对称轴正向夹角为 $\\theta = ${formatMathNumber(thetaDeg)}^\\circ$ 的直线，交抛物线于两端点 $A(x_1, y_1), B(x_2, y_2)$。采用直线参数方程联立消元：`,
+        detail: `设过焦点 $F$ 且与对称轴正向夹角为 $\\theta = ${formatMathNumber(thetaDeg)}^\\circ$ 的直线，交抛物线于两端点 $A(x_1, y_1), B(x_2, y_2)$。采用点斜式设直线并联立消元：`,
         latex: `\\begin{cases} x = x_F + r\\cos\\theta \\\\ y = y_F + r\\sin\\theta \\end{cases} \\implies r^2\\sin^2\\theta - 2pr\\cos\\theta - p^2 = 0`,
-        rubric:
-          "采分点：设直线参数方程并代入抛物线方程整理为一元二次方程（3分）",
+        rubric: "采分点：设直线方程并代入抛物线方程整理为一元二次方程（3分）",
       },
       {
         step: 2,

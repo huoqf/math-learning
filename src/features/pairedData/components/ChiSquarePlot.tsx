@@ -131,7 +131,7 @@ export const ChiSquarePlot: React.FC<ChiSquarePlotProps> = ({
       ? "✓ 达 99% 把握关联 (拒绝 H₀, α=0.01)"
       : p95
         ? "✓ 达 95% 把握关联 (拒绝 H₀, α=0.05)"
-        : "✗ 未达 95% 临界 (接受零假设 H₀, 无关联)";
+        : "✗ 未达 95% 临界 (无充分理由推翻独立假设 H₀)";
 
   return (
     <g className="chi-square-plot" transform="translate(0, 5)">
@@ -186,7 +186,7 @@ export const ChiSquarePlot: React.FC<ChiSquarePlotProps> = ({
         fill={CANVAS_COLORS.labelTextLight}
         fontWeight="bold"
       >
-        概率密度函数 f(x) = (2πx)⁻¹/² · e⁻ˣ/²
+        卡方统计量 χ² 的抽样分布曲线（按临界值查表判读）
       </text>
       <text
         x={CHI_END_X - 8}

@@ -239,11 +239,11 @@ export function buildSectionPanel(
     reasoningSteps = [
       {
         step: 1,
-        title: "动点建构 · 侧棱参数方程表征",
+        title: "动点建构 · 侧棱动点比例表征",
         latex: `P(t) = (1-t)A_0 + tA_1 \\quad (t \\in [0.05, 0.95])`,
         detail:
           "设动点 P 在侧棱上的位置比例为 t，固定定点 Q, R 坐标已知保持不变，由已知三点解出动切割平面方程。",
-        rubric: "得分点 (2分)：建立动点位置关于参数 t 的空间坐标与参数方程表征",
+        rubric: "得分点 (2分)：建立动点位置关于比例 t 的空间坐标表征",
       },
       {
         step: 2,

@@ -11,12 +11,24 @@ import { allRules } from '../rules/index.mjs';
 export function walkDirectory(currentPath, fileList = []) {
   if (!fs.existsSync(currentPath)) return fileList;
   const stat = fs.statSync(currentPath);
-  if (stat.isFile() && (currentPath.endsWith('.tsx') || currentPath.endsWith('.ts'))) {
+  if (
+    stat.isFile() &&
+    (currentPath.endsWith('.tsx') || currentPath.endsWith('.ts')) &&
+    // 测试文件不是上屏页面的组成部分，且审计引擎自身的用例会以字符串字面量
+    // 故意写入违规样例（如 BrowserRouter 夹具），纳入扫描会造成稳定误报。
+    !/\.test\.[jt]sx?$/.test(currentPath)
+  ) {
     fileList.push(currentPath);
   } else if (stat.isDirectory()) {
     const files = fs.readdirSync(currentPath);
     for (const file of files) {
-      if (file === 'node_modules' || file === 'dist' || file === '.git') continue;
+      if (
+        file === 'node_modules' ||
+        file === 'dist' ||
+        file === '.git' ||
+        file === '__tests__'
+      )
+        continue;
       walkDirectory(path.join(currentPath, file), fileList);
     }
   }

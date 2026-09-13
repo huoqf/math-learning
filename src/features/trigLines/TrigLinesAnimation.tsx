@@ -270,7 +270,7 @@ export function TrigLinesAnimation() {
               studyMode === "lines"
                 ? "拖拽点 P 观察：当终边进入第二、三象限时，正切线 AT 为何交在反向延长线上？"
                 : studyMode === "comparison"
-                  ? "改变锐角 x，观察三者面积比值如何逼近极限值 1？"
+                  ? "改变锐角 x，比较 $\\sin x$、$x$、$\\tan x$ 三个量的大小，并说明当 $x$ 很小时三者为何彼此近似相等。"
                   : "观察交点界值与圆弧旋转方向，如何逆时针规范书写解集区间？"
             }
           />

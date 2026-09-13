@@ -212,6 +212,8 @@ export function TrigTransformAnimation() {
           question: "对称轴方程与对称中心横坐标之间有哪些内在距离规律？",
         };
     }
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studyMode, pathType, params]);
 
   return (

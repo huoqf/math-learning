@@ -89,9 +89,9 @@ export function PowerPage() {
     return `y = x^{${colorCmd}{${alpha.toFixed(1).replace(/\.0$/, "")}}}`;
   }, [params.powerAlpha, mode, currentPresetInfo]);
 
-  // 根据模式自适应参数项（对比模式下参数降维，锁定 alpha 仅保留 x0）
+  // 课标 5 大基准驱动，两种模式均只暴露 x0 动点（幂指数由基准预设锁定）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keys = mode === "compare" ? ["x0"] : ["x0", "powerAlpha"];
+    const keys = ["x0"];
     return keys
       .filter((key) => key in paramMeta)
       .map((key) => {
@@ -108,7 +108,7 @@ export function PowerPage() {
           marks: meta.marks,
         };
       });
-  }, [params, mode]);
+  }, [params]);
 
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => ({ ...prev, [key]: value }));
@@ -219,13 +219,22 @@ export function PowerPage() {
           "判定不同幂指数在 $(0, 1)$ 与 $(1, +\\infty)$ 上的大小反转关系，并利用参考线 $x = 2$ 处的取值推导【指大图高】高考秒杀法则。",
       };
     }
+    if (Math.abs(alpha - 1) < 1e-4) {
+      return {
+        variant: "info" as const,
+        badge: "高考基础 · 幂函数正比例 (α=1)",
+        condition: "幂指数 $\\alpha = 1$，函数为过原点的正比例直线 $y = x$。",
+        question:
+          "证明 $y = x$ 的图象过原点且平分第一、三象限，并判定其在 $\\mathbb{R}$ 上的单调性。",
+      };
+    }
     if (alpha > 1) {
       return {
         variant: "primary" as const,
         badge: "高考基础 · 幂函数超线性增长 (指数大于1)",
         condition: `幂指数 $\\alpha = ${alpha.toFixed(1).replace(/\.0$/, "")} > 1$，图象在第一象限恒过公共定点 $(0, 0)$ 与 $(1, 1)$。`,
         question:
-          "证明图象在原点处的切线方程，并求解在 $(0, 1)$ 与 $(1, +\\infty)$ 上与基准线 $y = x$ 的相对位置及凹凸加速增长特征。",
+          "证明图象在原点处的切线方程，并求解在 $(0, 1)$ 与 $(1, +\\infty)$ 上与基准线 $y = x$ 的相对位置及增长快慢特征。",
       };
     } else if (alpha > 0) {
       return {
@@ -253,6 +262,8 @@ export function PowerPage() {
           "求解函数的两条渐近线方程，并证明在区间 $(0, +\\infty)$ 上严格单调递减且趋近于两坐标轴的极限特征。",
       };
     }
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.powerAlpha, mode, currentPresetKey]);
 
   return (
@@ -264,43 +275,39 @@ export function PowerPage() {
             <TabSwitcher
               tabs={[
                 { key: "compare", label: "5大基准同屏对比" },
-                { key: "single", label: "自由连续指数探究" },
+                { key: "single", label: "单条基准曲线探究" },
               ]}
               value={mode}
               onChange={(k) => setMode(k as "single" | "compare")}
             />
           </LeftPanelSection>
 
-          {/* 2. 对比模式：展示 5 大基准聚焦选择器；自由模式：隐藏该选择器，完全由连续滑块驱动 */}
-          {mode === "compare" && (
-            <LeftPanelSection title="基准对比聚焦">
-              <SelectGrid
-                items={[
-                  { key: "power-1", label: "正比例", formula: "y=x" },
-                  { key: "power-2", label: "二次抛物线", formula: "y=x^2" },
-                  { key: "power-3", label: "三次曲线", formula: "y=x^3" },
-                  {
-                    key: "power-half",
-                    label: "平方根",
-                    formula: "y=\\sqrt{x}",
-                  },
-                  {
-                    key: "power-neg1",
-                    label: "反比例",
-                    formula: "y=\\frac{1}{x}",
-                  },
-                ]}
-                value={currentPresetKey}
-                onChange={handleSelectPreset}
-                variant="outline"
-              />
-            </LeftPanelSection>
-          )}
+          {/* 2. 5 大基准聚焦选择器：两种模式均以课标基准驱动，不提供连续自由指数 */}
+          <LeftPanelSection title="基准聚焦">
+            <SelectGrid
+              items={[
+                { key: "power-1", label: "正比例", formula: "y=x" },
+                { key: "power-2", label: "二次抛物线", formula: "y=x^2" },
+                { key: "power-3", label: "三次曲线", formula: "y=x^3" },
+                {
+                  key: "power-half",
+                  label: "平方根",
+                  formula: "y=\\sqrt{x}",
+                },
+                {
+                  key: "power-neg1",
+                  label: "反比例",
+                  formula: "y=\\frac{1}{x}",
+                },
+              ]}
+              value={currentPresetKey}
+              onChange={handleSelectPreset}
+              variant="outline"
+            />
+          </LeftPanelSection>
 
-          {/* 3. 参数调节 (对比模式仅保留 x0 动点；自由模式展开 alpha 连续滑块) */}
-          <LeftPanelSection
-            title={mode === "compare" ? "探究动点调节" : "参数连续调节"}
-          >
+          {/* 3. 参数调节 (仅保留 x0 动点；幂指数锁定为课标基准) */}
+          <LeftPanelSection title="探究动点调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

@@ -22,7 +22,7 @@ export const SCENARIOS_BY_MODE: Record<
     {
       id: "single-standard",
       name: "标准对称闭区间",
-      badge: "课标基础 · 数轴距离模型",
+      badge: "拓展 · 数轴距离模型",
       condition:
         "数轴定点 $A(a)$，动点 $P(x)$ 到 $A$ 的距离 $|x - a| \\le c$。",
       question: "探究如何利用数轴几何对称性求出不等式的解集区间 $[a-c, a+c]$。",
@@ -185,7 +185,7 @@ export const SCENARIOS_BY_MODE: Record<
       badge: "自主探究 · 三角不等式链",
       condition: "自由改变实数 $a, b$ 的正负与绝对值大小。",
       question:
-        "验证双向夹逼不等式 $||a| - |b|| \\le |a \\pm b| \\le |a| + |b|$ 的全集成立性。",
+        "验证双向放缩不等式 $||a| - |b|| \\le |a \\pm b| \\le |a| + |b|$ 的全集成立性。",
       variant: "success",
     },
   ],

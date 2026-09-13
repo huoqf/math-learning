@@ -282,7 +282,7 @@ export function SecondDerivativeAnimation() {
       if (fnKey === "cubic") {
         return {
           variant: "primary" as const,
-          badge: "高考大招 · 三次曲线凹凸性与切线放缩",
+          badge: "拓展 · 三次曲线凸性与切线放缩",
           condition:
             "三次多项式 $f(x) = ax^3 + bx^2 + cx + d$，探针切点位于 $x_0$ 处，二阶导为 $f''(x) = 6ax + 2b$。",
           question:
@@ -292,7 +292,7 @@ export function SecondDerivativeAnimation() {
       if (fnKey === "mixed") {
         return {
           variant: "primary" as const,
-          badge: "高考压轴 · 超越混合函数凹凸性与局部放缩",
+          badge: "拓展 · 超越混合函数凹凸性与局部放缩",
           condition:
             "超越函数 $f(x) = axe^x + bx + c$，一阶导为 $f'(x) = a(x+1)e^x + b$，二阶导为 $f''(x) = a(x+2)e^x$。",
           question:
@@ -301,7 +301,7 @@ export function SecondDerivativeAnimation() {
       }
       return {
         variant: "primary" as const,
-        badge: "高考难点 · 四次对称曲线的分区凹凸性",
+        badge: "拓展 · 四次对称曲线的分区凸性",
         condition:
           "四次函数 $f(x) = ax^4 + bx^2 + cx + d$，二阶导数为二次式 $f''(x) = 12ax^2 + 2b$。",
         question:
@@ -313,7 +313,7 @@ export function SecondDerivativeAnimation() {
       if (fnKey === "cubic") {
         return {
           variant: "warning" as const,
-          badge: "高考秒杀 · 三次函数中心对称与极值中点",
+          badge: "拓展 · 三次函数中心对称与极值中点",
           condition:
             "三次曲线具有唯一二阶导变号拐点 $x_{\\text{inf}} = -\\frac{b}{3a}$，且当 $\\Delta > 0$ 时存在两极值点 $x_1, x_2$。",
           question:
@@ -344,7 +344,7 @@ export function SecondDerivativeAnimation() {
     if (fnKey === "cubic") {
       return {
         variant: "info" as const,
-        badge: "高考压轴 · 割线中点与弧中点（琴生不等式）",
+        badge: "拓展 · 割线中点与弧中点（弦弧不等式）",
         condition:
           "在三次曲线上选取相异自变量 $x_1, x_2$，考察割线中点 $M$ 与对应弧中点 $P$ 的纵坐标差值。",
         question:
@@ -354,7 +354,7 @@ export function SecondDerivativeAnimation() {
     if (fnKey === "mixed") {
       return {
         variant: "info" as const,
-        badge: "极值点偏移 · 超越函数割弧中点不等式",
+        badge: "拓展 · 极值点偏移与超越函数割弧中点不等式",
         condition:
           "在超越函数单侧下凸区间（$x > -2$）内选取两端点 $x_1, x_2$，割线中点为 $M$，曲线上中点为 $P$。",
         question:

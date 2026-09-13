@@ -8,11 +8,11 @@ import type { KnowledgeNode } from "@/data/types";
  */
 export const node: KnowledgeNode = {
   id: "know-ineq-absolute",
-  title: "绝对值不等式的几何意义",
+  title: "绝对值不等式的几何意义（拓展 · 超出课标）",
   labTitle: "绝对值不等式实验室",
   chapter: "不等式",
   module: "绝对值不等式",
-  importance: "gaokao",
+  importance: "extend",
   animationIds: ["anim-ineq-absolute"],
   prerequisites: ["know-ineq-basic"],
   route: "/inequality-absolute",

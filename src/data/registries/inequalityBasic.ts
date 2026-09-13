@@ -27,7 +27,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     marks: [
       {
         value: 2.0,
-        label: "a=b (取等)",
+        label: "默认 a=b",
         labelFormula: "a=b",
         variant: "critical",
       },
@@ -47,7 +47,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     marks: [
       {
         value: 4.0,
-        label: "a=b (取等)",
+        label: "默认 a=b",
         labelFormula: "a=b",
         variant: "critical",
       },

@@ -217,7 +217,7 @@ export function ProbabilityNormalAnimation() {
     }
 
     if (studyMode === "normalFit") {
-      return `\\lim_{N \\to \\infty, \\Delta x \\to 0} \\text{直方图} = f(x) = \\frac{1}{\\sqrt{2\\pi} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${sigVal.toFixed(1)}}} e^{-\\frac{(x - \\color{${MATH_COLORS.paramPrimary}}{${muVal.toFixed(1)}})^2}{2 \\cdot \\color{${MATH_COLORS.paramSecondary}}{${sigVal.toFixed(1)}}^2}}`;
+      return `\\text{直方图连续化逼近 } f(x) = \\frac{1}{\\sqrt{2\\pi} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${sigVal.toFixed(1)}}} e^{-\\frac{(x - \\color{${MATH_COLORS.paramPrimary}}{${muVal.toFixed(1)}})^2}{2 \\cdot \\color{${MATH_COLORS.paramSecondary}}{${sigVal.toFixed(1)}}^2}}`;
     }
 
     if (studyMode === "paramsShape") {
@@ -313,7 +313,7 @@ export function ProbabilityNormalAnimation() {
           style: "dash",
         },
         {
-          formula: "\\text{拐点 } \\mu \\pm \\sigma",
+          formula: "\\text{弯曲改变处 } \\mu \\pm \\sigma",
           color: MATH_COLORS.paramSecondary,
           style: "point",
         },
@@ -433,6 +433,8 @@ export function ProbabilityNormalAnimation() {
       question:
         "利用 P(μ-σ<X<μ+σ)≈0.6827、P(μ-2σ<X<μ+2σ)≈0.9545、P(μ-3σ<X<μ+3σ)≈0.9973 求解单侧或任意对称区间概率。",
     };
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studyMode, preset]);
 
   return (

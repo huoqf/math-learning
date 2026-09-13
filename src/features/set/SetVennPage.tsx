@@ -119,9 +119,10 @@ export function SetVennPage() {
                   集合运算与 Venn 图：
                 </div>
                 <div className="leading-relaxed text-neutral-600">
-                  通过拖动圆心 <KatexFormula formula="O_A, O_B" mode="inline" />{" "}
+                  拖动圆心 <KatexFormula formula="O_A, O_B" mode="inline" />{" "}
                   或样本点 <KatexFormula formula="P" mode="inline" />
-                  ，直观理解交集、并集、补集及差集的空间阴影覆盖与元素归属判定。
+                  ，判断 <KatexFormula formula="P" mode="inline" />{" "}
+                  的归属，并写出交集、并集、补集及差集对应阴影区域所满足的关系式。
                 </div>
               </div>
             </TipCard>

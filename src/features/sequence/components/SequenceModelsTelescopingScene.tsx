@@ -65,7 +65,7 @@ export function SequenceModelsTelescopingScene({
           fill={MATH_COLORS.sequenceHighlight}
           fontWeight="bold"
         >
-          极限收敛线 lim T_n = 1
+          趋势参考线 T_n → 1（拓展）
         </text>
 
         {/* 各项对消与残留项锁定 */}
@@ -216,7 +216,7 @@ export function SequenceModelsTelescopingScene({
           fill={MATH_COLORS.sequenceHighlight}
           fontWeight="bold"
         >
-          极限收敛线 lim T_n = 0.75 (½·(1 + ½))
+          趋势参考线 T_n → 0.75 (½·(1 + ½))（拓展）
         </text>
 
         {terms.map((t) => {

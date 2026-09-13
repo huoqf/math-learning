@@ -454,7 +454,7 @@ export function ProbabilityBayesAnimation() {
                     ? "完备事件组与全概率加权模型"
                     : activeMode === "bayes"
                       ? "贝叶斯由果溯因与诊断模型"
-                      : "马尔可夫链状态转移与全概递推模型"}
+                      : "马尔可夫链状态转移与全概递推模型（选学 · 拓展）"}
               </span>
             </div>
             <div className="flex items-center bg-white px-3 py-1 rounded-lg border border-neutral-200 shadow-2xs">

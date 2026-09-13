@@ -230,7 +230,9 @@ export function QuadraticAnimation() {
           badge: "高考核心 · 二次函数图象特征与最值",
           condition: `二次项系数 $a = ${params.a.toFixed(1)}$，一次项 $b = ${params.b.toFixed(1)}$，常数项 $c = ${params.c.toFixed(1)}$。`,
           question:
-            "求抛物线对称轴方程 $x = -\\frac{b}{2a}$ 与顶点坐标，并推导函数在给定闭区间上的单调性与最值分布。",
+            Math.abs(params.a) < 1e-9
+              ? "此时二次项系数 $a = 0$，函数退化为一次函数。判定该直线的单调性与给定闭区间上的最值，并说明为何不存在对称轴与顶点。"
+              : "求抛物线对称轴方程 $x = -\\frac{b}{2a}$ 与顶点坐标，并推导函数在给定闭区间上的单调性与最值分布。",
         };
       case "equation":
         return {

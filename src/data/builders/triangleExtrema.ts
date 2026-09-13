@@ -82,7 +82,7 @@ export function buildTriangleExtremaPanel(
             color: MATH_COLORS.complexNum,
           },
           {
-            label: "角 A 平分线 t_a",
+            label: "角 $A$ 平分线 $t_a$",
             symbol: "t_a",
             value: inscribed.bisectorA.toFixed(2),
             color: MATH_COLORS.tangentLine,
@@ -140,7 +140,7 @@ export function buildTriangleExtremaPanel(
       if (apolloniusCircle) {
         quantities.push(
           {
-            label: "阿氏圆半径 R_A (最大高)",
+            label: "阿氏圆半径 $R_A$ (最大高)",
             symbol: "R_A = \\frac{k}{|k^2-1|}a",
             value: apolloniusCircle.radius.toFixed(2),
             color: MATH_COLORS.paramPrimary,
@@ -153,7 +153,7 @@ export function buildTriangleExtremaPanel(
             color: MATH_COLORS.circle,
           },
           {
-            label: "最大面积 S_max",
+            label: "最大面积 $S_max$",
             symbol: "S_{\\max} = \\frac{1}{2}a R_A",
             value: extrema.maxArea.toFixed(2),
             color: MATH_COLORS.sequenceHighlight,

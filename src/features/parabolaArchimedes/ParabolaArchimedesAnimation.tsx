@@ -168,7 +168,7 @@ export function ParabolaArchimedesAnimation() {
       // 模式 1 预设
       if (activePreset === "min_area") {
         return {
-          badge: "高考经典 · 通径正交切线",
+          badge: "拓展 · 通径正交切线",
           condition:
             "外点 $Q$ 位于准线与对称轴交点 $(-\\frac{p}{2}, 0)$ 处，切点弦 $AB$ 为通径。",
           question:
@@ -177,7 +177,7 @@ export function ParabolaArchimedesAnimation() {
       }
       if (activePreset === "symmetric_tangent") {
         return {
-          badge: "高考高频 · 对称正交切线",
+          badge: "拓展 · 对称正交切线",
           condition:
             "外点 $Q$ 纵坐标设为 $y_Q = 2.0$，向抛物线引两条切线 $QA, QB$。",
           question:
@@ -186,7 +186,7 @@ export function ParabolaArchimedesAnimation() {
       }
       if (activePreset === "high_aspect") {
         return {
-          badge: "高考压轴 · 高偏心切点弦",
+          badge: "拓展 · 高偏心切点弦",
           condition:
             "外点 $Q$ 移动至远离对称轴的 $y_Q = 3.5$ 处，两切点高度偏斜。",
           question:
@@ -197,7 +197,7 @@ export function ParabolaArchimedesAnimation() {
       // 模式 2 预设
       if (activePreset === "latus_rectum") {
         return {
-          badge: "高考经典 · 最短焦点弦 (通径)",
+          badge: "拓展 · 最短焦点弦 (通径)",
           condition:
             "割线垂直于对称轴通过焦点 $F$，即倾角 $\\theta = 90^\\circ$ 的通径构型。",
           question:
@@ -206,7 +206,7 @@ export function ParabolaArchimedesAnimation() {
       }
       if (activePreset === "ratio_3to1") {
         return {
-          badge: "高考高频 · 3:1 分割焦点弦",
+          badge: "拓展 · 3:1 分割焦点弦",
           condition:
             "割线倾斜角为 $\\theta = 60^\\circ$，焦点 $F$ 将弦长分割为两段焦半径。",
           question:
@@ -215,7 +215,7 @@ export function ParabolaArchimedesAnimation() {
       }
       if (activePreset === "chord_45deg") {
         return {
-          badge: "高考经典 · 45° 倾斜焦点弦",
+          badge: "拓展 · 45° 倾斜焦点弦",
           condition:
             "焦点弦割线倾角为 $\\theta = 45^\\circ$，割线方程为 $y = x - \\frac{p}{2}$。",
           question:
@@ -226,7 +226,7 @@ export function ParabolaArchimedesAnimation() {
       // 模式 3 预设
       if (activePreset === "symmetric_45") {
         return {
-          badge: "高考压轴 · 45° 对角双垂直弦",
+          badge: "拓展 · 45° 对角双垂直弦",
           condition:
             "两条焦点弦互相垂直且倾角分别为 $45^\\circ$ 与 $135^\\circ$，构成对称四边形。",
           question:
@@ -235,7 +235,7 @@ export function ParabolaArchimedesAnimation() {
       }
       if (activePreset === "skew_30") {
         return {
-          badge: "高考高频 · 30°/120° 正交焦点弦",
+          badge: "拓展 · 30°/120° 正交焦点弦",
           condition:
             "第一条焦点弦倾角为 $\\theta = 30^\\circ$，第二条垂直弦倾角为 $120^\\circ$。",
           question:
@@ -244,7 +244,7 @@ export function ParabolaArchimedesAnimation() {
       }
       if (activePreset === "skew_60") {
         return {
-          badge: "高考高频 · 60°/150° 正交焦点弦",
+          badge: "拓展 · 60°/150° 正交焦点弦",
           condition:
             "第一条焦点弦倾角为 $\\theta = 60^\\circ$，第二条垂直弦倾角为 $150^\\circ$。",
           question:
@@ -255,7 +255,7 @@ export function ParabolaArchimedesAnimation() {
 
     if (mode === "archimedesTriangle") {
       return {
-        badge: "新高考核心 · 准线蒙日正交定理",
+        badge: "拓展 · 准线蒙日正交定理",
         condition:
           "从准线上任意一点 $Q(-\\frac{p}{2}, y_Q)$ 向抛物线引两条切线切于 $A, B$。",
         question:
@@ -264,7 +264,7 @@ export function ParabolaArchimedesAnimation() {
     }
     if (mode === "focalChordProperties") {
       return {
-        badge: "新高考高频 · 焦点弦与调和中项",
+        badge: "拓展 · 焦点弦与调和中项",
         condition:
           "过焦点 $F$ 作倾斜角为 $\\theta$ 的割线与抛物线交于 $A, B$ 两点。",
         question:
@@ -272,7 +272,7 @@ export function ParabolaArchimedesAnimation() {
       };
     }
     return {
-      badge: "新高考压轴 · 双垂直焦点弦极值",
+      badge: "拓展 · 双垂直焦点弦极值",
       condition: "过焦点 $F$ 作互相垂直的两条割线 $AB \\perp CD$。",
       question:
         "求两垂直弦倒数和的定值，并探寻四边形 $ACBD$ 面积取得全局极小值的几何构型。",
@@ -369,7 +369,7 @@ export function ParabolaArchimedesAnimation() {
       left={
         <LeftPanel>
           {/* 1. 探究主题 Section */}
-          <LeftPanelSection title="高考研究专题">
+          <LeftPanelSection title="拓展研究专题">
             <TabSwitcher
               tabs={[
                 { key: "archimedesTriangle", label: "阿基米德" },

@@ -406,7 +406,7 @@ export function buildConicLineMathQuantities(
     }
   } else {
     // 极点极线切点弦
-    examAnchor = "高考自招拔高 · 极点极线与切点弦对偶定理";
+    examAnchor = "拓展专题 · 切点弦方程与对偶规律";
     const xPVal = formatMathNumber(poleX);
     const yPVal = formatMathNumber(poleY);
 
@@ -420,10 +420,10 @@ export function buildConicLineMathQuantities(
     reasoningSteps.push(
       {
         step: 1,
-        title: "审题定法 · 极点与切点弦对偶方程",
-        detail: `由圆锥曲线切点弦对偶性质，极点 $P(x_P, y_P) = (${xPVal}, ${yPVal})$ 的切点弦（极线）方程为：代入极点坐标可得：`,
+        title: "审题定法 · 切点弦方程",
+        detail: `由切点弦方程公式，点 $P(x_P, y_P) = (${xPVal}, ${yPVal})$ 对应的切点弦方程为：代入 $P$ 点坐标可得：`,
         latex: polarEq,
-        rubric: "写出极点极线对偶方程并代入极点坐标（3分）",
+        rubric: "写出切点弦方程并代入点坐标（3分）",
       },
       {
         step: 2,
@@ -438,7 +438,7 @@ export function buildConicLineMathQuantities(
         detail:
           conicType === "parabola"
             ? "极点在准线 $x = -\\frac{p}{2}$ 上时，向抛物线引出的两条切线互相垂直，且切点弦必过焦点 $F$。"
-            : "极点与切点弦满足对偶关系：极点 $P$ 在定直线上运动时，切点弦必绕定点旋转。",
+            : "对偶规律：点 $P$ 在定直线上运动时，切点弦必绕定点旋转。",
         latex:
           conicType === "parabola"
             ? `x_P = -\\frac{p}{2} \\implies k_1 k_2 = -1`
@@ -477,7 +477,7 @@ export function buildConicLineMathQuantities(
       theorems.push({
         name: "通径极值与焦半径倒数和定理",
         latex:
-          "L_{通径} = \\frac{2b^2}{a}, \\quad \\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|} = \\frac{2a}{b^2}",
+          "$L_{通径} = \\frac{2b^2}{a}, \\quad \\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|} = \\frac{2a}{b^2}$",
         condition: "过焦点垂直于对称轴（$\\theta = \\pi/2$）",
         note: "通径是过焦点最短的焦点弦；弦两端点到焦点的焦半径倒数和在过焦点割线中恒为定值 $\\frac{2a}{b^2}$。",
         level: "core",
@@ -498,7 +498,7 @@ export function buildConicLineMathQuantities(
     });
   } else if (studyMode === "polePolar") {
     theorems.push({
-      name: "极点与极线（切点弦方程对偶定理）",
+      name: "切点弦方程（割线极限法）",
       latex:
         conicType === "ellipse"
           ? "\\frac{x_P x}{a^2} + \\frac{y_P y}{b^2} = 1"
@@ -506,7 +506,7 @@ export function buildConicLineMathQuantities(
             ? "\\frac{x_P x}{a^2} - \\frac{y_P y}{b^2} = 1"
             : "y_P y = p(x + x_P)",
       condition: "极点 $P(x_P, y_P)$ 在曲线外部，切点弦 $AB$ 联立二次曲线",
-      note: "自曲线外一点引两条切线，其切点弦方程可由原方程平方项对偶替换直接写出。",
+      note: "自曲线外一点引两条切线，其切点弦方程可由原方程作平方项对应替换直接写出。",
       level: "core",
     });
   }
@@ -552,11 +552,11 @@ export function buildConicLineMathQuantities(
   } else if (studyMode === "polePolar") {
     gaokaoPoints.push(
       {
-        text: "【切点弦方程一步速写】由二次曲线外一点 $P(x_P, y_P)$ 作两条切线，切点弦 $AB$ 方程无需联立解切点，直接套用极线公式一步写出！",
+        text: "【切点弦方程一步速写】由二次曲线外一点 $P(x_P, y_P)$ 作两条切线，切点弦 $AB$ 方程无需联立解切点，直接套用切点弦方程公式一步写出！",
         importance: "gaokao",
       },
       {
-        text: "【动极点与切点弦定点规律】极点在定直线上运动时，其切点弦必过定点；动直线绕定点旋转时，极点轨迹为定直线（极点极线对偶性）。",
+        text: "【切点弦过定点规律】点 $P$ 在定直线上运动时，其切点弦必过定点；动直线绕定点旋转时，点 $P$ 的轨迹为定直线。",
         importance: "hard",
       },
     );
@@ -613,7 +613,7 @@ export function buildConicLineMathQuantities(
     });
   } else if (studyMode === "polePolar") {
     warnings.push({
-      text: "【极点位置与切线存在性】极点必须在二次曲线外部才能引出真实的两条切线与切点弦；若极点在曲线内部，极线与曲线相离，切点不成立。",
+      text: "【点位置与切线存在性】点 $P$ 必须在二次曲线外部才能引出真实的两条切线与切点弦；若 $P$ 在曲线内部，则不存在满足条件的两条切线。",
       level: "warning",
     });
   }

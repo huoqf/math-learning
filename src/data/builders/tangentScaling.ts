@@ -442,7 +442,7 @@ export function buildTangentScalingPanel(
 
     return {
       examAnchor: "新高考解答题 18 题压轴 · 公切线中轴卡位",
-      mnemonic: "中间公切若卡牢，上下夹逼无需导",
+      mnemonic: "中间公切若卡牢，上下放缩无需导",
       quantities: [
         {
           label: "观察点横坐标",
@@ -471,7 +471,7 @@ export function buildTangentScalingPanel(
       ],
       theorems: [
         {
-          name: "公切线中介夹逼卡位原理",
+          name: "公切线中介放缩卡位原理",
           latex: isOrigin
             ? "e^x - 1 \\ge x \\ge \\ln(x + 1) \\quad (x > -1)"
             : "e^{x-1} \\ge x \\ge \\ln x + 1 \\quad (x > 0)",
@@ -515,7 +515,7 @@ export function buildTangentScalingPanel(
           step: 3,
           title: "三式合并完成卡位",
           detail:
-            "两边夹逼综合，传递得出不等式成立，等号在公共切点处同步取得。",
+            "两侧放缩综合，传递得出不等式成立，等号在公共切点处同步取得。",
           rubric: "采分点：等号同步条件与结论（3分）",
         },
       ],
@@ -762,7 +762,7 @@ export function buildTangentScalingPanel(
         },
         {
           step: 3,
-          title: "几何旋转夹逼确定参数范围",
+          title: "几何旋转放缩确定参数范围",
           detail:
             "要使直线 $y=kx$ 介于两曲线之间，斜率必须满足 $k_2 \\le k \\le k_1$，即 $1/e \\le k \\le e$。",
           rubric: "采分点：综合取交集与边界检验（3分）",
@@ -779,7 +779,7 @@ export function buildTangentScalingPanel(
     const upper = x;
 
     return {
-      examAnchor: "新高考解答题 18 题 · 二阶泰勒多项式精细卡位",
+      examAnchor: "新高考解答题 18 题 · 二阶多项式精细卡位",
       mnemonic: "一阶切线给上限，二阶多项卡下界",
       quantities: [
         {
@@ -809,7 +809,7 @@ export function buildTangentScalingPanel(
       ],
       theorems: [
         {
-          name: "对数二阶泰勒展开卡位不等式",
+          name: "对数二阶多项式卡位不等式",
           latex: "x - \\frac{1}{2}x^2 \\le \\ln(1+x) \\le x \\quad (x \\ge 0)",
           condition: "x \\ge 0, \\; x = 0\\text{ 时取等}",
           level: "core",
@@ -864,7 +864,7 @@ export function buildTangentScalingPanel(
     const secSlope = (fb - fa) / (b - a);
 
     return {
-      examAnchor: "新高考解答题 18 题 · 对数上凸函数弦切夹逼",
+      examAnchor: "新高考解答题 18 题 · 对数上凸函数弦切放缩",
       mnemonic: "上凸对数弦在下，区间切线恒在上",
       quantities: [
         {
@@ -910,7 +910,7 @@ export function buildTangentScalingPanel(
       ],
       gaokaoPoints: [
         {
-          text: "【琴生与弦切】新高考 2021 压轴题考点：利用上凸弦切不等式证明 $\\ln((a+b)/2) > (\\ln a + \\ln b)/2$",
+          text: "【弦弧中点与弦切】高考压轴题考点：利用上凸弦切不等式证明 $\\ln((a+b)/2) > (\\ln a + \\ln b)/2$",
           importance: "gaokao",
         },
       ],
@@ -927,11 +927,11 @@ export function buildTangentScalingPanel(
           title: "构造差函数判定上凸凹性",
           detail:
             "令辅助函数 $g(x) = \\ln x - [m_{AB}(x - a) + \\ln a]$ ($x \\in [a, b]$)，二阶导 $g''(x) = -\\frac{1}{x^2} < 0$ 恒成立。由 $g(a)=g(b)=0$ 知区间内严格有 $g(x) > 0$，故割线在下提供下界。",
-          rubric: "采分点：凹凸性与割线下界严格证明（5分）",
+          rubric: "采分点：图象弯曲方向与割线下界严格证明（5分）",
         },
         {
           step: 3,
-          title: "结合切线上界得出双向夹逼",
+          title: "结合切线上界得出双向放缩",
           detail:
             "由于 $(\\ln x)'' < 0$，切线恒位于曲线之上，综合割线下界与切线上界，得区间内曲线被双向线性锁定。",
           latex: `m_{AB}(x - ${formatMathNumber(a)}) + \\ln ${formatMathNumber(a)} \\le \\ln x \\le \\frac{1}{x_m}(x - x_m) + \\ln x_m`,
@@ -996,7 +996,7 @@ export function buildTangentScalingPanel(
     ],
     gaokaoPoints: [
       {
-        text: "【数列放缩衔接】导数压轴题与数列求和证明结合时，常利用割切夹逼进行定积分面积包围估计",
+        text: "【数列放缩衔接】导数压轴题与数列求和证明结合时，常利用割线切线放缩对和式进行面积包围估计",
         importance: "hard",
       },
     ],
@@ -1017,7 +1017,7 @@ export function buildTangentScalingPanel(
       },
       {
         step: 3,
-        title: "结合切线下界得出双向夹逼",
+        title: "结合切线下界得出双向放缩",
         detail:
           "由于 $(e^x)'' > 0$，切线恒位于曲线下方，综合切线下界与割线上界，得闭区间内曲线被双向线性锁定。",
         latex: `e^{x_m}(x - x_m) + e^{x_m} \\le e^x \\le m_{AB}(x - ${formatMathNumber(a)}) + e^{${formatMathNumber(a)}}`,

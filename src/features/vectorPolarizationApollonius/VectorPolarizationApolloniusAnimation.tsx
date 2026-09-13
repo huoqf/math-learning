@@ -434,17 +434,17 @@ export function VectorPolarizationApolloniusAnimation() {
             }
             condition={
               studyMode === "polarization"
-                ? "取定底边 $BC$ 中点 $M$。由向量加减分解，数量积可降维转化为单变量中线长：$\\vec{AB}\\cdot\\vec{AC} = |\\vec{AM}|^2 - |\\vec{BM}|^2$。"
+                ? "取定底边 $BC$ 的中点 $M$，将 $\\vec{AB}$ 与 $\\vec{AC}$ 分别用 $\\vec{AM}$ 与 $\\vec{MB}$ 线性表示。"
                 : studyMode === "apollonius"
                   ? "平面内动点 $P$ 到两定点 $A, B$ 的距离比为常数 $\\frac{|PA|}{|PB|} = \\lambda$（$\\lambda > 0, \\lambda \\neq 1$）。"
                   : "动点 $P$ 在阿波罗尼斯圆上运动，求解向量数量积 $\\vec{PA}\\cdot\\vec{PB}$ 的取值范围。"
             }
             question={
               studyMode === "polarization"
-                ? "底边长 $|BC|$ 固定时半底边长 $|\\vec{BM}|$ 为定值。动点 $A$ 如何运动能使数量积为零（直角三角形）？中线长何时代入取得极值？"
+                ? "底边长 $|BC|$ 固定时，数量积 $\\vec{AB}\\cdot\\vec{AC}$ 与中线长 $|\\vec{AM}|$ 有怎样的关系？动点 $A$ 位于何处时数量积取得极值？"
                 : studyMode === "apollonius"
                   ? "初高中几何桥梁：线段 $AB$ 的内分点 $D$ 与外分点 $E$ 分别平分 $\\angle APB$ 的内角与外角，为什么必有 $\\angle DPE = 90^\\circ$ 且 $DE$ 为圆直径？当 $\\lambda \\to 1$ 时为何退化为中垂线？"
-                  : "双剑合璧秒杀法：先用极化恒等式将数量积转化为中线长 $|\\vec{PM}|^2 - |\\vec{MB}|^2$，再求圆外中点 $M(0,0)$ 到阿圆的距离最值。为什么极值点必在 $P, M, O_A$ 三点共线时取得？"
+                  : "动点 $P$ 在阿圆上运动时，数量积 $\\vec{PA}\\cdot\\vec{PB}$ 的取值范围如何确定？取到最值的位置与 $P, M, O_A$ 三点的相对位置有何关系？"
             }
           />
         </LeftPanel>

@@ -42,7 +42,7 @@ export const modeTabs: {
   { key: "base", id: "base", label: "基准切线放缩" },
   { key: "sandwich", id: "sandwich", label: "双切线卡位" },
   { key: "param_k", id: "param_k", label: "过定点卡位求参" },
-  { key: "secant", id: "secant", label: "割切双向夹逼" },
+  { key: "secant", id: "secant", label: "割切双向放缩" },
 ];
 
 export const baseSubModels: (SelectGridItem & {
@@ -106,7 +106,7 @@ export const sandwichSubModels: (SelectGridItem & {
   {
     key: "origin_sandwich",
     id: "origin_sandwich",
-    label: "原点对称夹逼",
+    label: "原点对称放缩",
     formula: "e^x - 1 \\ge x \\ge \\ln(x+1)",
   },
 ];

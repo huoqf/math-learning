@@ -211,7 +211,7 @@ export function ConicParamAnimation() {
       if (activePreset === "center_secant" || activePreset === "center_chord") {
         return {
           variant: "primary" as const,
-          badge: "高考经典 · 对称中心割线",
+          badge: "拓展 · 对称中心割线",
           condition:
             "定点 P₀ 位于椭圆中心，割线与椭圆相交于关于原点对称的两点。",
           question:
@@ -221,7 +221,7 @@ export function ConicParamAnimation() {
       if (activePreset === "vertical_line") {
         return {
           variant: "warning" as const,
-          badge: "高考经典 · 铅垂直线参数方程",
+          badge: "拓展 · 铅垂直线参数方程",
           condition: "直线垂直于 x 轴（倾斜角为 90°）。",
           question:
             "直线标准参数方程如何避免传统斜截式中斜率不存在的分类讨论漏洞？",
@@ -230,7 +230,7 @@ export function ConicParamAnimation() {
       if (activePreset === "tangent_limit") {
         return {
           variant: "danger" as const,
-          badge: "高考经典 · 相切极限重根",
+          badge: "拓展 · 相切极限重根",
           condition: "割线与椭圆相切，直线参数代入二次方程恰有唯一实数重根。",
           question: "如何由重根性质直接确定切点参数与切线方程？",
         };
@@ -240,7 +240,7 @@ export function ConicParamAnimation() {
     if (studyMode === "lineParam") {
       return {
         variant: "info" as const,
-        badge: "直线标准参数方程与模长",
+        badge: "拓展 · 直线标准参数方程与模长",
         condition: "直线标准参数方程以定点 P₀ 为基准点，与椭圆相交于两点。",
         question:
           "参数 t 的正负号与几何有向距离有何对应关系？如何由参数差快速计算弦长？",
@@ -249,7 +249,7 @@ export function ConicParamAnimation() {
     if (studyMode === "ellipseParam") {
       return {
         variant: "primary" as const,
-        badge: "椭圆三角参数设点与最值",
+        badge: "拓展 · 椭圆三角参数设点与最值",
         condition: "椭圆上动点由离心角 θ 的三角参数方程表示。",
         question:
           "如何利用三角函数有界性与辅助角公式，求解椭圆动点到割线的距离最值？",
@@ -257,7 +257,7 @@ export function ConicParamAnimation() {
     }
     return {
       variant: "danger" as const,
-      badge: "高考参数 t 设点化简",
+      badge: "拓展 · 参数 t 设点化简",
       condition:
         "割线过定点与椭圆联立导出关于参数 t 的二次方程，两交点参数为 t₁, t₂。",
       question:

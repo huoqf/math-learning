@@ -131,7 +131,7 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     {
       key: "integer-roots",
       name: "整特征根型 (r₁=2, r₂=-1)",
-      desc: "a_{n+2}=a_{n+1}+2a_n，特征方程 (x-2)(x+1)=0",
+      desc: "a_{n+2}=a_{n+1}+2a_n，特征根方程 (x-2)(x+1)=0（拓展）",
       params: { a1: 1, a2: 3, p_rec: 1, q_rec: 2, N: 6 },
     },
     {
@@ -185,7 +185,7 @@ export const paramMeta: Record<string, ParamMeta> = {
       {
         value: 0,
         label: "常数列 (0)",
-        labelFormula: "\\color{#DC2626}{d=0}",
+        labelFormula: `\\color{${MATH_COLORS.degeneracy}}{d=0}`,
       },
       {
         value: 1,
@@ -209,14 +209,14 @@ export const paramMeta: Record<string, ParamMeta> = {
       {
         value: 0,
         label: "0 (退化)",
-        labelFormula: "\\color{#DC2626}{q=0}",
+        labelFormula: `\\color{${MATH_COLORS.degeneracy}}{q=0}`,
         variant: "critical",
       },
       { value: 0.5, label: "0.5 (衰减)", labelFormula: "0.5" },
       {
         value: 1,
         label: "1 (常数)",
-        labelFormula: "\\color{#DC2626}{q=1}",
+        labelFormula: `\\color{${MATH_COLORS.degeneracy}}{q=1}`,
         variant: "critical",
       },
       { value: 1.5, label: "1.5 (激增)", labelFormula: "1.5" },
@@ -285,7 +285,7 @@ export const paramMeta: Record<string, ParamMeta> = {
       {
         value: 1,
         label: "等差 (p=1)",
-        labelFormula: "\\color{#DC2626}{p=1}",
+        labelFormula: `\\color{${MATH_COLORS.degeneracy}}{p=1}`,
         variant: "critical",
       },
       { value: -1, label: "-1", labelFormula: "-1" },
@@ -308,7 +308,7 @@ export const paramMeta: Record<string, ParamMeta> = {
       {
         value: 0,
         label: "纯等比 (q=0)",
-        labelFormula: "\\color{#DC2626}{q=0}",
+        labelFormula: `\\color{${MATH_COLORS.degeneracy}}{q=0}`,
         variant: "critical",
       },
       { value: 1, label: "1", labelFormula: "1" },
@@ -383,7 +383,7 @@ export const paramMeta: Record<string, ParamMeta> = {
       {
         value: 0,
         label: "纯比例 (B=0)",
-        labelFormula: "\\color{#DC2626}{B=0}",
+        labelFormula: `\\color{${MATH_COLORS.degeneracy}}{B=0}`,
         variant: "critical",
       },
     ],

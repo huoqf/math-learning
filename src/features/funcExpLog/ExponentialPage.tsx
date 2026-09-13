@@ -74,13 +74,13 @@ export function ExponentialPage() {
           {
             value: 1.0,
             variant: "critical",
-            label: "退化 (a=1)",
+            label: "退化 (a=1 非指数函数)",
             labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} = 1`,
           },
           {
             value: 1.4,
             variant: "recommended",
-            label: "相切临界",
+            label: "临界相切（拓展）",
             labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a_c = e^{1/e}}`,
           },
         ],

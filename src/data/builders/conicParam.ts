@@ -84,11 +84,11 @@ export function buildConicParamPanel(
     const gaokaoPoints: GaokaoPoint[] = [
       {
         text: "三角代换求最值：对于椭圆上动点与定点距离/线性目标函数 ax+by，代入 x=a cosθ, y=b sinθ 转化为 A cosθ + B sinθ 形式求解。",
-        importance: "gaokao",
+        importance: "extend",
       },
       {
         text: "辅助离心圆几何含义：椭圆是外接离心圆 x²+y²=a² 在 y 轴方向按比例 b/a 压缩得到的图形，参数角 θ 为离心圆半径与 x 轴正向夹角。",
-        importance: "core",
+        importance: "extend",
       },
     ];
 
@@ -186,11 +186,11 @@ export function buildConicParamPanel(
     const gaokaoPoints: GaokaoPoint[] = [
       {
         text: "方向向量单位化：使用 |t| 表示实际几何距离的充要前提是参数方程已归一化，即 cos²α + sin²α = 1。非标准形式必须乘系数修正。",
-        importance: "core",
+        importance: "extend",
       },
       {
         text: "参数正负号指向性：t > 0 表示点 P 位于 P0 沿单位方向向量正向的一侧，t < 0 表示位于反向，常用于射线与有向定比分点判断。",
-        importance: "core",
+        importance: "extend",
       },
     ];
 
@@ -314,11 +314,11 @@ export function buildConicParamPanel(
   const gaokaoPoints: GaokaoPoint[] = [
     {
       text: "设点化简降维威力：求 |PA|·|PB|、1/|PA|+1/|PB|、弦中点等高考压轴问题时，参数设线法相比传统 y=kx+m 减少两步计算量，且无斜率不存在漏洞。",
-      importance: "gaokao",
+      importance: "extend",
     },
     {
       text: "中点弦判定：直接令 B = 0 求解直线斜率或定点坐标，计算量远小于点差法和判别式联立，但必须代入检验判别式 Δ > 0。",
-      importance: "core",
+      importance: "extend",
     },
   ];
 

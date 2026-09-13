@@ -51,8 +51,6 @@ describe("圆锥曲线右屏推导步骤高中答题规范检验", () => {
     for (const conicType of conicTypes) {
       for (const studyMode of studyModes) {
         const params = {
-          conicType,
-          studyMode,
           a: 3,
           b: 2,
           p: 2,
@@ -65,7 +63,7 @@ describe("圆锥曲线右屏推导步骤高中答题规范检验", () => {
           poleY: 2,
         };
 
-        const data = buildConicLineMathQuantities(params as any, {
+        const data = buildConicLineMathQuantities(params, {
           conicType,
           studyMode,
         });

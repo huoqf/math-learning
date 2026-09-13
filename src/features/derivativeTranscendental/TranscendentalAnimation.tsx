@@ -140,7 +140,7 @@ export function TranscendentalAnimation() {
           min: 0.2,
           max: 3.0,
           step: 0.1,
-          description: "观察三曲线夹逼态势",
+          description: "观察三曲线放缩态势",
           descriptionFormula: "观察 $x>0$ 处的包络差",
           importance: "core",
           disabled: isParamLocked("x0"),
@@ -221,7 +221,7 @@ export function TranscendentalAnimation() {
     } else if (mode === "log") {
       const x0Val = params.x0 > 0 ? params.x0.toFixed(1) : "1.0";
       if (subMode === "quadratic_bound") {
-        return `g(x) = \\ln x \\le \\color{${pColor}}{\\frac{x^2-1}{2}} \\le x - 1`;
+        return `g(x) = \\ln x \\le \\color{${pColor}}{\\frac{x^2-1}{2}}`;
       } else if (subMode === "tangent_e") {
         return `g(x) = \\ln x \\le \\color{${pColor}}{\\frac{x}{e}}`;
       } else if (subMode === "tangent_1") {
@@ -450,7 +450,7 @@ export function TranscendentalAnimation() {
                 {
                   key: "chain",
                   label: "双基准对偶",
-                  description: "指数对数双向夹逼",
+                  description: "指数对数双向放缩",
                 },
                 {
                   key: "param",

@@ -227,9 +227,9 @@ export function SymmetryPage() {
                   {
                     key: "quadratic",
                     label: "二次抛物线",
-                    formula: "y=(x-a)^2",
+                    formula: "y=\\frac{1}{2}(x-a)^2-1.5",
                   },
-                  { key: "abs", label: "绝对值折线", formula: "y=|x-a|" },
+                  { key: "abs", label: "绝对值折线", formula: "y=|x-a|-1" },
                   { key: "sin", label: "余弦波形", formula: "y=\\cos(x-a)" },
                 ]}
                 value={fnType}

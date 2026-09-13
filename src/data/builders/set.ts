@@ -81,7 +81,7 @@ export function buildSetPanel(params: Record<string, number>): MathPanelData {
       latex:
         "p: x \\in A, \\quad q: x \\in B, \\quad p \\implies q \\iff A \\subseteq B",
       level: "important",
-      prerequisites: ["A 与 B 为非空集合"],
+      prerequisites: ["A 与 B 为集合（空集 ∅ 是任何集合的子集，同样适用）"],
     },
     {
       name: "摩根定律 (De Morgan's Laws)",

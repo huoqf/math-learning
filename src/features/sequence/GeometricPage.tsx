@@ -188,9 +188,10 @@ export function GeometricPage() {
       case "tessellation":
         return {
           variant: "success" as const,
-          badge: "几何直观 · 无限剖分面积",
-          condition: `边长 a₁ = ${a1}，公比 q = ${q}，观察无限剖分面积之和收敛趋势。`,
-          question: "面积无限累加为何又能有界收敛？（|q| < 1 无穷级数）",
+          badge: "拓展 · 无限剖分面积（超出课标）",
+          condition: `边长 a₁ = ${a1}，公比 q = ${q}，观察无限剖分面积之和的累加趋势。`,
+          question:
+            "面积无限累加为何又能有界？这对理解 |q| < 1 时的和有界性有何直观启发？",
         };
       default:
         return {
@@ -198,7 +199,7 @@ export function GeometricPage() {
           badge: "通项与指数 · 指数增长模型",
           condition: common + " aₙ = a₁·qⁿ⁻¹。",
           question:
-            "当 q > 1 时项如何爆炸增长？q 在 (0,1) 时无穷项之和如何逼近极限？",
+            "当 q > 1 时项如何爆炸增长？q 在 (0,1) 时前 n 项和 Sₙ 有怎样的有界趋势？",
         };
     }
   }, [geometricSubMode, params.a1, params.q, params.N, params.kSegment]);
@@ -236,7 +237,7 @@ export function GeometricPage() {
                 },
                 {
                   key: "tessellation",
-                  label: "自相似无穷求和",
+                  label: "自相似无穷求和（拓展）",
                   formula: "S_\\infty = \\frac{a_1}{1-q}",
                   fullWidth: true,
                 },

@@ -54,7 +54,7 @@ export function buildConicPropertiesPanel(
       color: MATH_COLORS.primary,
     },
     {
-      label: "通径长 L = 2b^2/a",
+      label: "通径长 $L = 2b^2/a$",
       value: latusRectum.length.toFixed(2),
       color: MATH_COLORS.paramPrimary,
     },
@@ -62,7 +62,7 @@ export function buildConicPropertiesPanel(
 
   if (!isEllipse && calc.asymptotes) {
     quantities.push({
-      label: "渐近线斜率 k = \\pm b/a",
+      label: "渐近线斜率 $k = \\pm b/a$",
       value: `\\pm ${calc.asymptotes.slope.toFixed(2)}`,
       color: MATH_COLORS.paramSecondary,
     });
@@ -71,12 +71,12 @@ export function buildConicPropertiesPanel(
   if (studyMode === "focusTriangle") {
     quantities.push(
       {
-        label: "焦半径 r_1",
+        label: "焦半径 $r_1$",
         value: focusTriangle.r1.toFixed(2),
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "焦半径 r_2",
+        label: "焦半径 $r_2$",
         value: focusTriangle.r2.toFixed(2),
         color: MATH_COLORS.primary,
       },

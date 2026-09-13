@@ -155,9 +155,10 @@ export const transcendentalScenarios: Record<
       id: "quadratic_bound",
       name: "二次放缩",
       badge: "对数放缩 · 二次上界",
-      condition: "在切点 $(1,0)$ 处构造二次抛物线上界 $y=\\frac{x^2-1}{2}$。",
+      condition:
+        "在切点 $(1,0)$ 处构造与曲线相切的二次抛物线上界 $y=\\frac{x^2-1}{2}$。",
       question:
-        "证明二次放缩不等式 $\\ln x \\le \\frac{x^2-1}{2}$，并比较其与线性切线在 $x>1$ 时的代数逼近精度。",
+        "证明二次放缩不等式 $\\ln x \\le \\frac{x^2-1}{2}$，并说明该二次曲线与 $y=\\ln x$ 在 $x=1$ 处相切的原因。",
       presetParams: { x0: 1.0 },
       variant: "info",
     },
@@ -166,7 +167,7 @@ export const transcendentalScenarios: Record<
     {
       id: "tangent_1",
       name: "公共切点",
-      badge: "双基准对偶 · 对称夹逼",
+      badge: "双基准对偶 · 对称放缩",
       condition:
         "曲线 $y=e^{x-1}$ 与 $y=\\ln x+1$ 互为反函数，关于中轴线 $y=x$ 对称并在 $(1,1)$ 公切。",
       question:
@@ -181,18 +182,18 @@ export const transcendentalScenarios: Record<
       condition:
         "取自变量考察点 $x=2$，指数呈超线性爆炸增长，对数呈次线性平缓增长。",
       question:
-        "在区间 $x > 1$ 上比较 $e^{x-1}-x$ 与 $x-(\\ln x+1)$ 的差值增幅，求更紧致的单侧放缩区间。",
+        "在区间 $x > 1$ 上比较 $e^{x-1}-x$ 与 $x-(\\ln x+1)$ 的差值增幅，求更贴近的单侧放缩区间。",
       presetParams: { x0: 2.0 },
       variant: "warning",
     },
     {
       id: "pos_half",
-      name: "左侧夹逼",
-      badge: "双基准对偶 · 左侧夹逼",
+      name: "左侧放缩",
+      badge: "双基准对偶 · 左侧放缩",
       condition:
         "取自变量考察点 $x=0.5$，对数曲线急剧跌落至负无穷，指数曲线平滑贴近零点。",
       question:
-        "在 $(0,1)$ 区间内，利用三曲线夹逼态势证明含复合项的导数零点存在性与唯一性。",
+        "在 $(0,1)$ 区间内，利用三曲线放缩态势证明含复合项的导数零点存在性与唯一性。",
       presetParams: { x0: 0.5 },
       variant: "warning",
     },

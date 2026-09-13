@@ -123,10 +123,10 @@ export function DomainPage() {
       case "sin":
         return {
           variant: "info" as const,
-          badge: "周期有界 · 正弦波动紧致值域",
+          badge: "周期有界 · 正弦波动有界值域",
           condition: "函数 $f(x) = \\sin x$，具有 $2\\pi$ 周期性与全局有界性。",
           question:
-            "结合单位圆几何投影，求解正弦函数的上确界与下确界，并确定紧致闭区间值域。",
+            "结合单位圆几何投影，求解正弦函数的最大值与最小值，并确定有界闭区间值域。",
         };
     }
   }, [fnType]);

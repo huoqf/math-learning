@@ -80,11 +80,11 @@ export function buildFuncTransformPanel(
 
   // 3. 高考标准破题推导链 (审题定标 -> 建模代换 -> 求解反思)
   const baseNameMap: Record<BaseFnType, string> = {
-    quadratic: "二次函数 f(x) = x^2",
-    sine: "正弦函数 f(x) = \\sin x",
-    cubic: "三次函数 f(x) = x^3",
+    quadratic: "二次函数 $f(x) = x^2$",
+    sine: "正弦函数 $f(x) = \\sin x$",
+    cubic: "三次函数 $f(x) = x^3$",
     exp: "指数函数 f(x) = 2^x",
-    log: "对数函数 f(x) = \\log_2 x",
+    log: "对数函数 $f(x) = \\log_2 x$",
   };
 
   const domainDesc =

@@ -177,16 +177,16 @@ export function buildSecondDerivativePanel(
           "f(x) 在区间内二阶可导。下凸时切线恒在曲线下方；上凸时切线恒在曲线上方。",
       },
       {
-        name: "切线放缩基本不等式 (新高考核心大招)",
+        name: "切线放缩基本不等式 (拓展工具)",
         latex: "f(x) \\ge f'(x_0)(x - x_0) + f(x_0) \\quad (f''(x) \\ge 0)",
         condition:
-          "下凸函数在任意切点 x_0 处的切线作为全局下界（如 e^x ≥ x+1，上凸则不等号反向如 ln x ≤ x-1）",
+          "下凸函数在任意切点 $x_0$ 处的切线作为全局下界（如 $e^x ≥ x+1$，上凸则不等号反向如 $ln x ≤ x-1$）",
       },
       {
         name: "二阶导判单调性与隐零点存在性",
         latex: "f''(x) > 0 \\implies f'(x) \\text{ 单调递增}",
         condition:
-          "新高考导数大题通法：当导函数式复杂不易求根时，求二阶导锁定一阶导单调性并确定唯一零点",
+          "拓展用法：当导函数式复杂不易求根时，求二阶导锁定一阶导单调性并确定唯一零点",
       },
     );
   } else if (studyMode === "inflection") {
@@ -202,7 +202,7 @@ export function buildSecondDerivativePanel(
         latex:
           "f'(x_0) = 0, \\, f''(x_0) > 0 \\implies \\text{极小值}; \\, f''(x_0) < 0 \\implies \\text{极大值}",
         condition:
-          "驻点处二阶导异于0可直接锁定极值性；若 f''(x_0)=0，则判别法失效需验证一阶导变号",
+          "驻点处二阶导异于0可直接锁定极值性；若 $f''(x_0)=0$，则判别法失效需验证一阶导变号",
       },
     );
   } else {
@@ -228,43 +228,43 @@ export function buildSecondDerivativePanel(
 
   if (studyMode === "concavity") {
     gaokaoPoints.push({
-      text: "切线放缩法证明不等式：利用下凸函数切线恒在曲线下方（如 e^x ≥ x+1 与 ln x ≤ x-1），在切点 x₀ 处构造切线放缩是一元与双变量不等式证明的新高考核心通法。",
-      importance: "gaokao",
+      text: "切线放缩法证明不等式：利用下凸函数切线恒在曲线下方（如 $e^x ≥ x+1$ 与 $ln x ≤ x-1$），在切点 $x₀$ 处构造切线放缩是一元与双变量不等式证明的拓展工具。",
+      importance: "extend",
     });
     gaokaoPoints.push({
       text: "二阶导数决定一阶导单调性：若 f''(x) > 0，则导函数 f'(x) 单调递增；当探讨导函数隐零点存在性或极值点偏移时，二阶导数符号是判断一阶导单调性的直接抓手。",
-      importance: "gaokao",
+      importance: "extend",
     });
   } else if (studyMode === "inflection") {
     if (fnKey === "cubic") {
       gaokaoPoints.push({
-        text: "三次函数中心对称大招：三次函数 f(x)=ax^3+bx^2+cx+d 的拐点 x_0 = -b/(3a) 即为其中心对称点；过对称中心的割线截曲线所得三交点满足 x_1 + x_2 + x_3 = -b/a = 3x_0。",
-        importance: "gaokao",
+        text: "三次函数中心对称大招：三次函数 $f(x)=ax^3+bx^2+cx+d$ 的拐点 $x_0 = -b/(3a)$ 即为其中心对称点；过对称中心的割线截曲线所得三交点满足 $x_1 + x_2 + x_3 = -b/a = 3x_0$。",
+        importance: "extend",
       });
       gaokaoPoints.push({
-        text: "拐点与两极值点的中点关系：当三次函数存在两个极值点 x_1, x_2 时，拐点横坐标恒为其算术中点，即 x_inf = (x_1 + x_2)/2，切线在该点穿越曲线。",
-        importance: "gaokao",
+        text: "拐点与两极值点的中点关系：当三次函数存在两个极值点 $x_1, x_2$ 时，拐点横坐标恒为其算术中点，即 $x_inf = (x_1 + x_2)/2$，切线在该点穿越曲线。",
+        importance: "extend",
       });
     } else if (fnKey === "quartic") {
       gaokaoPoints.push({
-        text: "二阶导为0并非拐点的充要条件：对于 f(x)=x^4，在 x=0 处 f''(0)=0，但两侧 f''(x)=12x^2 均大于0，x=0 是极小值点而非拐点，高考常借此考查概念严谨性与充要条件辨析。",
-        importance: "hard",
+        text: "二阶导为0并非拐点的充要条件：对于 $f(x)=x^4$，在 $x=0$ 处 $f''(0)=0$，但两侧 $f''(x)=12x^2$ 均大于0，$x=0$ 是极小值点而非拐点，高考常借此考查概念严谨性与充要条件辨析。",
+        importance: "extend",
       });
     } else {
       gaokaoPoints.push({
-        text: "超越函数极值点与拐点分离：对于 f(x)=xe^x，极小值点在 x=-1，而拐点在 x=-2；极值点（单调性改变）与拐点（弯曲方向改变）在空间位置上分离。",
-        importance: "gaokao",
+        text: "超越函数极值点与拐点分离：对于 $f(x)=xe^x$，极小值点在 $x=-1$，而拐点在 $x=-2$；极值点（单调性改变）与拐点（弯曲方向改变）在空间位置上分离。",
+        importance: "extend",
       });
     }
   } else {
     // jensen 模式
     gaokaoPoints.push({
-      text: "高考双变量中点放缩题型：在极值点偏移与对数均值不等式大题中，利用琴生不等式 f((x_1+x_2)/2) ≤ (f(x_1)+f(x_2))/2 将中点函数值转化为端点代数和，实现消元降维。",
-      importance: "gaokao",
+      text: "高考双变量中点放缩题型：在极值点偏移与对数均值不等式大题中，利用琴生不等式 $f((x_1+x_2)/2) ≤ (f(x_1)+f(x_2))/2$ 将中点函数值转化为端点代数和，实现消元降维。",
+      importance: "extend",
     });
     gaokaoPoints.push({
       text: "凹凸性对不等式方向的决定性：证明琴生不等式的前提是区间内二阶导数恒正（或恒负），若割线两端跨越拐点，则需在拐点两侧分区间进行局部切线或割线讨论。",
-      importance: "hard",
+      importance: "extend",
     });
   }
 
@@ -284,7 +284,7 @@ export function buildSecondDerivativePanel(
     Math.abs(p.b) < 1e-6
   ) {
     warnings.push({
-      text: "f''(x0) = 0 的非充分性 (反例警示)：对于 f(x) = x^4，在 x=0 处 f''(0)=0，但左右两侧 f''(x) 均为正，x=0 为极小值点而非拐点！",
+      text: "$f''(x0) = 0$ 的非充分性 (反例警示)：对于 $f(x) = x^4$，在 $x=0$ 处 $f''(0)=0$，但左右两侧 $f''(x)$ 均为正，$x=0$ 为极小值点而非拐点！",
       level: "info",
     });
   }

@@ -309,12 +309,12 @@ export function buildFuncPropertiesPanel(
           step: 2,
           title: "建模联立 · 单位圆投影与周期波动",
           detail:
-            "终边在单位圆上的交点纵坐标满足 $-1 \\le y \\le 1$。函数在区间 $[-\\frac{\\pi}{2}, \\frac{\\pi}{2}]$ 上单调映射，值域紧致封闭。",
+            "终边在单位圆上的交点纵坐标满足 $-1 \\le y \\le 1$。函数在区间 $[-\\frac{\\pi}{2}, \\frac{\\pi}{2}]$ 上单调映射，值域为闭区间。",
           latex: "\\forall x \\in \\mathbb{R}, \\quad -1 \\le \\sin x \\le 1",
         },
         {
           step: 3,
-          title: "求解反思 · 紧致值域与周期单值",
+          title: "求解反思 · 有界值域与周期单值",
           detail: `在 $x = \\frac{\\pi}{2} + 2k\\pi$ 取极大值 $1$，在 $x = -\\frac{\\pi}{2} + 2k\\pi$ 取极小值 $-1$。代入探针 $x_0 = ${x0.toFixed(2)}$ 验证单值性。`,
           latex: `R = [-1, 1], \\quad f(${x0.toFixed(2)}) = \\sin(${x0.toFixed(2)}) = ${fx0.toFixed(2)}`,
         },

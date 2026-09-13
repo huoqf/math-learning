@@ -14,7 +14,7 @@ describe("SetQuantifiersPage smoke & interaction test", () => {
 
     expect(screen.getByText("全称命题 ∀")).toBeInTheDocument();
     expect(screen.getByText("存在命题 ∃")).toBeInTheDocument();
-    expect(screen.getByText("双变量博弈")).toBeInTheDocument();
+    expect(screen.getByText("双变量博弈（拓展）")).toBeInTheDocument();
     expect(screen.getByText("量词与逻辑看板")).toBeInTheDocument();
   });
 
@@ -38,10 +38,12 @@ describe("SetQuantifiersPage smoke & interaction test", () => {
       </MemoryRouter>,
     );
 
-    const dualTab = screen.getByText("双变量博弈");
+    const dualTab = screen.getByText("双变量博弈（拓展）");
     fireEvent.click(dualTab);
 
-    expect(screen.getByText("高考双变量模型")).toBeInTheDocument();
+    expect(
+      screen.getByText("双变量模型（拓展 · 超出课标）"),
+    ).toBeInTheDocument();
     expect(screen.getByText("∀x₁ ∀x₂ 恒大压制")).toBeInTheDocument();
     expect(screen.getByText("∀x₁ ∃x₂ 值域包含")).toBeInTheDocument();
   });

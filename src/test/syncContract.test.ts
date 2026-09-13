@@ -180,15 +180,15 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     const expPanel = buildTranscendentalPanel({ x0: 0 }, { mode: "exp" });
     expect(expPanel.theorems[0].name).toContain("指数基准切线");
     expect(expPanel.theorems[0].level).toBe("core");
-    // 严格断言：指数模式下绝不能出现对数定理或夹逼定理
+    // 严格断言：指数模式下绝不能出现对数定理或链式放缩定理
     expect(
       expPanel.theorems.some(
-        (t) => t.name.includes("对数") || t.name.includes("夹逼"),
+        (t) => t.name.includes("对数") || t.name.includes("链式放缩"),
       ),
     ).toBe(false);
     expect(
       expPanel.gaokaoPoints.some(
-        (gp) => gp.text.includes("对数") || gp.text.includes("夹逼"),
+        (gp) => gp.text.includes("对数") || gp.text.includes("链式放缩"),
       ),
     ).toBe(false);
 
@@ -213,7 +213,9 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     ).toBe(false);
 
     const chainPanel = buildTranscendentalPanel({}, { mode: "chain" });
-    expect(chainPanel.theorems.some((t) => t.name.includes("夹逼"))).toBe(true);
+    expect(chainPanel.theorems.some((t) => t.name.includes("链式放缩"))).toBe(
+      true,
+    );
     expect(chainPanel.theorems.some((t) => t.name.includes("求参"))).toBe(
       false,
     );
@@ -349,7 +351,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         groundTruth: {
           "末项 a_{8}": -4.0,
           "前 8 项和 S_{8}": -4.0,
-          "变号零点 x_0": 4.0,
+          "变号零点 $x_0$": 4.0,
         },
         perturbation: {
           params: { a1: 3, d: 1, N: 8 },
@@ -358,7 +360,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         expectedQuantityLabels: [
           "末项 a_{8}",
           "前 8 项和 S_{8}",
-          "变号零点 x_0",
+          "变号零点 $x_0$",
         ],
       },
     ]);
@@ -539,7 +541,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         expectedQuantityLabels: [
           "末项 a_{8}",
           "前 8 项和 S_{8}",
-          "抛物线对称轴 x_sym",
+          "抛物线对称轴 $x_sym$",
           "S_n 最大值项",
         ],
       },
@@ -567,7 +569,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         ],
         forbiddenTheoremKeywords: [
           "第一充分条件",
-          "费马定理",
+          "取极值的必要条件",
           "分类讨论标准五步法",
         ],
         forbiddenGaokaoKeywords: ["分类讨论三大分水岭", "穿零变号法则"],
@@ -582,7 +584,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
           极值点与驻点列表: 0.0, // 唯一极值点 x = a - 1 = 0
         },
         expectedExamAnchor: "第一充分条件穿零变号与极值判定",
-        expectedTheoremsKeywords: ["极值点第一充分条件", "费马定理"],
+        expectedTheoremsKeywords: ["极值点第一充分条件", "取极值的必要条件"],
         forbiddenTheoremKeywords: ["切线方程定理", "分类讨论标准五步法"],
         forbiddenGaokaoKeywords: ["切线方程的点斜式展开"],
       },

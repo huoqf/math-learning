@@ -749,7 +749,7 @@ export function buildLineEquationPanel(
         detail:
           "计算法向量数量积 $\\vec{n}_1 \\cdot \\vec{n}_2 = A_1 A_2 + B_1 B_2 = " +
           dotProd.toFixed(2) +
-          "$；交叉积 $A_1 B_2 - A_2 B_1 = " +
+          "$；系数交叉相乘 $A_1 B_2 - A_2 B_1 = " +
           crossProd.toFixed(2) +
           "$：",
         latex: `A_1 A_2 + B_1 B_2 = ${dotProd.toFixed(2)}, \\quad A_1 B_2 - A_2 B_1 = ${crossProd.toFixed(2)}`,

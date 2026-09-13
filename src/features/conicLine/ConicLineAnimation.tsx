@@ -383,7 +383,7 @@ export function ConicLineAnimation() {
     }
     return {
       variant: "danger" as const,
-      badge: `${conicName}极点极线与切点弦对偶`,
+      badge: `${conicName}切点弦与对偶定理`,
       condition:
         "从" +
         conicName +
@@ -477,7 +477,7 @@ export function ConicLineAnimation() {
                 { key: "general", label: "位置与弦长" },
                 { key: "focus", label: "过焦点弦" },
                 { key: "midpoint", label: "中点弦/点差" },
-                { key: "polePolar", label: "极点极线弦" },
+                { key: "polePolar", label: "切点弦" },
               ]}
               value={studyMode}
               onChange={(k) => handleModeChange(k as StudyMode)}

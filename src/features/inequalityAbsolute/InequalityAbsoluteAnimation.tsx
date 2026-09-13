@@ -159,10 +159,10 @@ export function InequalityAbsoluteAnimation() {
 
   // 构建悬浮 LaTeX 动态公式卡片 (带参数色彩绑定)
   const equationLatex = useMemo(() => {
-    const colorA = `\\color{#EF4444}{a}`;
-    const colorB = `\\color{#D97706}{b}`;
-    const colorC = `\\color{#059669}{c}`;
-    const colorM = `\\color{#059669}{m}`;
+    const colorA = `\\color{${MATH_COLORS.paramPrimary}}{a}`;
+    const colorB = `\\color{${MATH_COLORS.paramSecondary}}{b}`;
+    const colorC = `\\color{${MATH_COLORS.paramTertiary}}{c}`;
+    const colorM = `\\color{${MATH_COLORS.paramTertiary}}{m}`;
     const op = ineqType === "<=" ? "\\le" : "\\ge";
 
     if (studyMode === "single") {

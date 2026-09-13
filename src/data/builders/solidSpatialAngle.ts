@@ -107,7 +107,7 @@ export function buildSpatialAnglePanel(
       },
       {
         name: "异面直线间的距离（向量射影法）",
-        latex: `d_{\\text{异面}} = \\frac{|\\vec{A_1A} \\cdot \\vec{n}_{\\text{公}}|}{|\\vec{n}_{\\text{公}}|}, \\quad \\vec{n}_{\\text{公}} = \\vec{u} \\times \\vec{v} = (bc, -ac, ab)`,
+        latex: `d_{\\text{异面}} = \\frac{|\\vec{A_1A} \\cdot \\vec{n}_{\\text{公}}|}{|\\vec{n}_{\\text{公}}|}, \\quad \\vec{n}_{\\text{公}} \\perp \\vec{u},\\; \\vec{n}_{\\text{公}} \\perp \\vec{v} \\implies \\vec{n}_{\\text{公}} = (bc, -ac, ab)`,
         level: "important",
       },
     );
@@ -166,7 +166,7 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.secondary,
       },
       {
-        label: "底面法向量 n_0",
+        label: "底面法向量 $n_0$",
         symbol: "\\vec{n_0}",
         value: "(0, 0, 1)",
         color: MATH_COLORS.secondary,
@@ -269,13 +269,13 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.primary,
       },
       {
-        label: "截面三角形面积 S_BDE",
+        label: "截面三角形面积 $S_BDE$",
         symbol: "S_{\\Delta BDE}",
         value: Number(distRes.areaBDE.toFixed(3)),
         color: MATH_COLORS.secondary,
       },
       {
-        label: "底面三角形面积 S_ABD",
+        label: "底面三角形面积 $S_ABD$",
         symbol: "S_{\\Delta ABD}",
         value: Number(distRes.areaABD.toFixed(3)),
         color: MATH_COLORS.primary,
@@ -383,13 +383,13 @@ export function buildSpatialAnglePanel(
 
     quantities.push(
       {
-        label: "底面法向量 n_1",
+        label: "底面法向量 $n_1$",
         symbol: "\\vec{n_1}",
         value: "(0, 0, 1)",
         color: MATH_COLORS.secondary,
       },
       {
-        label: "截面法向量 n_2",
+        label: "截面法向量 $n_2$",
         symbol: "\\vec{n_2}",
         value: `(${dih.n2Raw.x.toFixed(1)}, ${dih.n2Raw.y.toFixed(1)}, ${dih.n2Raw.z.toFixed(1)})`,
         color: MATH_COLORS.primary,

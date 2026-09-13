@@ -269,12 +269,12 @@ export function buildDerivativeMonotonicityQuantities(
       {
         name: "导数的几何意义与切线方程定理",
         latex: "k = f'(x_0), \\quad y - f(x_0) = f'(x_0)(x - x_0)",
-        condition: "函数 f(x) 在点 x_0 处可导",
+        condition: "函数 $f(x)$ 在点 $x_0$ 处可导",
         prerequisites: [
-          "导数值 f'(x_0) 即为函数曲线在点 P(x_0, f(x_0)) 处切线的斜率 k",
-          "当 f'(x_0) > 0 时切线倾斜角为锐角；当 f'(x_0) < 0 时为钝角；当 f'(x_0) = 0 时切线水平",
+          "导数值 $f'(x_0)$ 即为函数曲线在点 $P(x_0, f(x_0))$ 处切线的斜率 $k$",
+          "当 $f'(x_0) > 0$ 时切线倾斜角为锐角；当 $f'(x_0) < 0$ 时为钝角；当 $f'(x_0) = 0$ 时切线水平",
         ],
-        note: "导数通过切线斜率定量刻画了函数在点 x_0 处的瞬时变化率与升降走向。",
+        note: "导数通过切线斜率定量刻画了函数在点 $x_0$ 处的瞬时变化率与升降走向。",
         level: "core",
         mode: "block",
       },
@@ -298,22 +298,22 @@ export function buildDerivativeMonotonicityQuantities(
         name: "极值点第一充分条件 (变号零点法则)",
         latex:
           "\\begin{aligned} &\\text{左正右负 } (+\\to 0 \\to -) \\implies \\text{极大值点} \\\\ &\\text{左负右正 } (-\\to 0 \\to +) \\implies \\text{极小值点} \\\\ &\\text{两侧同号 } (+\\to 0 \\to +) \\implies \\text{驻点非极值} \\end{aligned}",
-        condition: "设 f(x) 在 x_0 处连续且在左右邻域内可导，f'(x_0) = 0",
+        condition: "设 $f(x)$ 在 $x_0$ 处连续且在左右邻域内可导，$f'(x_0) = 0$",
         prerequisites: [
           "极值是局部的几何性质，反映点附近的小范围峰谷形态",
           "极大值不一定大于极小值；区间端点绝不能取作极值点",
         ],
-        note: "可导函数在极值点处切线必定水平 (f'(x_0)=0)，但切线水平的点必须穿零变号才是极值点。",
+        note: "可导函数在极值点处切线必定水平 $(f'(x_0)=0)$，但切线水平的点必须穿零变号才是极值点。",
         level: "core",
         mode: "block",
       },
       {
-        name: "费马定理 (可导函数极值必要条件)",
+        name: "可导函数取极值的必要条件",
         latex:
           "f(x) \\text{ 在 } x_0 \\text{ 处取极值且可导} \\implies f'(x_0) = 0",
-        condition: "函数 f(x) 在极值点 x_0 处可导",
+        condition: "函数 $f(x)$ 在极值点 $x_0$ 处可导",
         prerequisites: [
-          "切线水平 (驻点 f'(x_0)=0) 是极值的必要不充分条件",
+          "切线水平 (驻点 $f'(x_0)=0$) 是极值的必要不充分条件",
           "不可导点也可能是极值点（如 f(x)=|x| 在 x=0 处取极小值但不可导）",
         ],
         note: "利用必要条件解题求出候选驻点后，必须结合第一充分条件进行符号穿零检验。",

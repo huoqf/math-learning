@@ -67,8 +67,8 @@ export function SingleVarPage() {
             : "参变分离 · 超越函数存在性",
           condition: `已知超越函数 $f(x) = ${fnName}$，采用【参变分离法】将未知参数 $a$ 孤立，研究区间为 $[m, n]$。`,
           question: isAlways
-            ? `求实数参数 $a$ 的取值范围，使得不等式 $f(x) \\ge a$ 在区间上对任意 $x$ 恒成立（$a \\le f(x)_{\\min}$）。`
-            : `求实数参数 $a$ 的取值范围，使得不等式 $f(x) \\ge a$ 在区间内存在实数解（$a \\le f(x)_{\\max}$）。`,
+            ? `求实数参数 $a$ 的取值范围，使得不等式 $f(x) \\ge a$ 在区间上对任意 $x$ 恒成立。`
+            : `求实数参数 $a$ 的取值范围，使得不等式 $f(x) \\ge a$ 在区间内存在实数解。`,
           variant: isAlways ? "primary" : "warning",
         };
         map.critical_touch = {

@@ -3,6 +3,43 @@
  * 领域规则：高考学科规范与学术符号标准
  */
 
+/**
+ * 超纲术语黑名单（2019 人教A版新课标之外的内容）
+ * 命中即判为 error；若文件已显式声明为"拓展/选学"（importance: "extend" 或含拓展徽标），
+ * 则该文件内的命中降级为 warning（视为"已标注的拓展内容"，允许保留）。
+ */
+const BEYOND_SYLLABUS_TERMS = [
+  '洛必达',
+  "L'Hôpital",
+  'L’Hôpital',
+  '洛比达',
+  '麦克劳林',
+  '泰勒展开',
+  '泰勒公式',
+  '泰勒',
+  '琴生',
+  '凹凸',
+  '极点极线',
+  '克拉默',
+  '外积',
+  '叉积',
+  '夹逼',
+  '等价无穷小',
+  '上确界',
+  '下确界',
+  '紧致',
+  '无穷级数',
+  '数列极限',
+  '特征方程',
+  '马尔可夫链',
+  '卡方分布',
+  '概率密度函数',
+  '微元',
+  '定积分',
+  '极坐标',
+  '参数方程',
+];
+
 export const disciplineRules = [
   {
     id: 'discipline/standard-symbols',
@@ -119,6 +156,51 @@ export const disciplineRules = [
               });
             }
           }
+        }
+      });
+      return issues;
+    },
+  },
+  {
+    id: 'discipline/no-beyond-syllabus-terms',
+    group: 'discipline',
+    type: '超纲术语',
+    severity: 'error',
+    check(ctx) {
+      if (ctx.isTest) return [];
+
+      // 仅扫描承载教学内容与文案的载体文件（不含纯工具/类型/常量文件）
+      const isContentFile =
+        ctx.isBuilder ||
+        ctx.isRegistry ||
+        ctx.filePath.includes('knowledgeTree') ||
+        ctx.filePath.includes('modeConfig') ||
+        ctx.filePath.endsWith('meta.ts') ||
+        ctx.filePath.endsWith('Animation.tsx') ||
+        ctx.filePath.endsWith('Page.tsx') ||
+        ctx.filePath.endsWith('Scene.tsx');
+      if (!isContentFile) return [];
+
+      // 已显式声明"拓展/选学/超出课标"的文件：命中降级为 warning（视为已标注的拓展内容）
+      const declaredExtend =
+        /importance:\s*["']extend["']/.test(ctx.cleanContent) ||
+        /status:\s*["'](拓展|选学|竞赛)["']/.test(ctx.cleanContent) ||
+        /超出课标/.test(ctx.cleanContent) ||
+        /选学/.test(ctx.cleanContent) ||
+        /拓展\s*[·・]/.test(ctx.cleanContent) ||
+        /[（(]\s*(拓展|选学)/.test(ctx.cleanContent);
+
+      const issues = [];
+      ctx.cleanLines.forEach((line, idx) => {
+        const hit = BEYOND_SYLLABUS_TERMS.find((term) => line.includes(term));
+        if (hit) {
+          issues.push({
+            lineNum: idx + 1,
+            type: '超纲术语',
+            severity: declaredExtend ? 'warning' : 'error',
+            message: `检测到超出 2019 人教A版新课标的术语「${hit}」。若确为拓展/强基/竞赛内容，请标注 importance: "extend" 并在页面显示「拓展 · 超出课标」徽标；否则请改用课标内表述。`,
+            snippet: line.trim(),
+          });
         }
       });
       return issues;

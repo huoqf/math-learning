@@ -39,7 +39,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 6,
     step: 0.1,
     group: "形态与相位参数",
-    description: "控制函数周期 T = 2π/ω，横向伸缩",
+    description: "控制函数周期 T = 2π/ω，横向伸缩（ω 恒为正）",
     descriptionFormula:
       "周期 $T = \\frac{2\\pi}{\\omega}$ · 横向伸缩 $\\frac{1}{\\omega}$",
     importance: "core",

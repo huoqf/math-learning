@@ -193,7 +193,7 @@ export function DerivativeEndpointTaylorAnimation() {
       case "lhopital":
         return {
           variant: "info" as const,
-          badge: "高考解题通法 · 0/0 型未定式极限逼近",
+          badge: "拓展 · 0/0 型未定式极限逼近（卷面禁用）",
           condition:
             "在参数分离求解恒成立问题时，遇端点未定式极限 $\\lim_{x \\to 0} \\frac{e^x - 1 - x}{x^2}$。",
           question:
@@ -210,7 +210,7 @@ export function DerivativeEndpointTaylorAnimation() {
                 : "余弦基底 $\\cos x$";
         return {
           variant: "warning" as const,
-          badge: `高考命题溯源 · 麦克劳林 ${taylorOrder} 阶拟合放缩`,
+          badge: `拓展 · 麦克劳林 ${taylorOrder} 阶拟合放缩`,
           condition: `考察${baseName}在原点附近截断的 ${taylorOrder} 阶麦克劳林多项式 $P_{${taylorOrder}}(x)$。`,
           question: `调节测试动点 $x$ 观察残差 $|R_n(x)|$ 的收敛效果，掌握差函数逐阶求导证明通法。`,
         };
@@ -218,7 +218,7 @@ export function DerivativeEndpointTaylorAnimation() {
       default:
         return {
           variant: "primary" as const,
-          badge: "高考压轴 · 端点效应与放缩",
+          badge: "拓展 · 端点效应与放缩",
           condition: "考察函数在端点处的导数性态与极限逼近。",
           question: "求参数范围并验证放缩不等式。",
         };

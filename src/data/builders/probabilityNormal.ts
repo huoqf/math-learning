@@ -47,12 +47,12 @@ export function buildProbabilityNormalPanel(
           color: MATH_COLORS.function,
         },
         {
-          label: "直方图中位数 m_e",
+          label: "直方图中位数 $m_e$",
           value: `${stats.median.toFixed(3)}`,
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "直方图众数 m_o",
+          label: "直方图众数 $m_o$",
           value: `${stats.mode.toFixed(3)}`,
           color: MATH_COLORS.paramPrimary,
         },
@@ -158,26 +158,23 @@ export function buildProbabilityNormalPanel(
       ],
       theorems: [
         {
-          name: "大数定律与极限逼近 (中心极限定理)",
+          name: "频率直方图的连续化逼近（拓展 · 超出课标）",
           latex:
-            "\\lim_{N \\to \\infty, \\Delta x \\to 0} \\sum \\frac{f_i}{\\Delta x}\\Delta x = \\int_{-\\infty}^{+\\infty} f(x)dx = 1",
-          note: "当样本容量 N 趋近无穷大且组距 Δx 趋近 0 时，频率折线图逐步光滑收敛为正态分布密度曲线。",
-          level: "core",
+            "\\text{样本量 } N \\text{ 增大、组距 } \\Delta x \\text{ 减小时，阶梯状频率直方图逐步光滑为钟形密度曲线}",
+          note: "当样本容量足够大且分组足够细时，频率折线图逼近光滑的正态分布密度曲线；直观理解连续化过程即可，不要求极限计算。",
+          level: "supplementary",
         },
         {
-          name: "正态分布密度函数 N(μ, σ²)",
+          name: "正态分布密度曲线 N(μ, σ²)",
           latex: `f(x) = \\frac{1}{\\sqrt{2\\pi}\\color{${MATH_COLORS.paramSecondary}}{\\sigma}} e^{-\\frac{(x - \\color{${MATH_COLORS.paramPrimary}}{\\mu})^2}{2\\color{${MATH_COLORS.paramSecondary}}{\\sigma}^2}}`,
-          prerequisites: [
-            "$\\sigma > 0$",
-            "$\\int_{-\\infty}^{+\\infty} f(x)dx = 1$",
-          ],
+          prerequisites: ["$\\sigma > 0$", "曲线与 $x$ 轴所围图形面积为 1"],
           note: "曲线关于直线 x = μ 对称，且在 x = μ 处取得最大值 1/(√(2π)σ)。",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "【高考考点】理解从直方图离散统计到正态分布连续概率密度的连续化极限过程。",
+          text: "【高考考点】理解从直方图离散统计到正态分布连续概率密度的连续化逼近过程。",
           importance: "gaokao",
         },
       ],
@@ -188,7 +185,7 @@ export function buildProbabilityNormalPanel(
         },
       ],
       mnemonic:
-        "样本增大组距缩，阶梯渐变钟形坡；离散频率积为积，连续积分面积一！",
+        "样本增大组距缩，阶梯渐变钟形坡；离散频率和为积，连续曲线面积一！",
     };
   }
 
@@ -203,22 +200,22 @@ export function buildProbabilityNormalPanel(
     return {
       quantities: [
         {
-          label: "最大概率密度 f_max",
+          label: "曲线最大高度 $f_max$",
           value: `${peakHeight.toFixed(3)}`,
           color: MATH_COLORS.paramPrimary,
         },
         {
-          label: "左拐点 (μ-σ, f)",
+          label: "x = μ-σ 处高度 f",
           value: `(${inflectL.toFixed(2)}, ${inflectHeight.toFixed(3)})`,
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "右拐点 (μ+σ, f)",
+          label: "x = μ+σ 处高度 f",
           value: `(${inflectR.toFixed(2)}, ${inflectHeight.toFixed(3)})`,
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "拐点高度比 f(μ±σ)/f_max",
+          label: "$x = μ±σ$ 处高度比 $f/f_max$",
           value: `${inflectionRatio.toFixed(1)}% (e^{-0.5})`,
           color: MATH_COLORS.paramSecondary,
         },
@@ -242,10 +239,10 @@ export function buildProbabilityNormalPanel(
           level: "core",
         },
         {
-          name: "曲线凹凸性与拐点",
+          name: "曲线对称性与单调区间",
           latex:
-            "x \\in (\\mu-\\sigma, \\mu+\\sigma) \\text{ 为凸区间，} x = \\mu \\pm \\sigma \\text{ 为拐点}",
-          note: "拐点横坐标恰好相距 1 个标准差 σ，拐点处高度固定为最高点的 60.65%。",
+            "x \\in (\\mu-\\sigma, \\mu+\\sigma) \\text{ 内曲线上升，} x = \\mu \\pm \\sigma \\text{ 处弯曲方向改变}",
+          note: "x = μ±σ 相距恰好 1 个标准差 σ，该处曲线高度固定为最高点的 60.65%。",
           level: "important",
         },
       ],
@@ -336,7 +333,7 @@ export function buildProbabilityNormalPanel(
         importance: "gaokao",
       },
       {
-        text: "【高考必考】3-σ 原则结合二项分布综合题：先由 3-σ 计算单件产品合格率 p，再由独立重复试验计算恰有 k 件合格的概率 C_n^k p^k (1-p)^{n-k}。",
+        text: "【高考必考】3-σ 原则结合二项分布综合题：先由 3-σ 计算单件产品合格率 $p$，再由独立重复试验计算恰有 $k$ 件合格的概率 $C_n^k p^k (1-p)^{n-k}$。",
         importance: "gaokao",
       },
     ],

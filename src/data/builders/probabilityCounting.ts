@@ -149,7 +149,7 @@ export function buildProbabilityCountingPanel(
             color: MATH_COLORS.paramSecondary,
           },
           {
-            label: "二项式系数 C_n^k (恒正对称)",
+            label: "二项式系数 $C_n^k$ (恒正对称)",
             symbol: `C_{${n}}^{${k}}`,
             value: termInfo.binomialCoeff,
             color: MATH_COLORS.paramPrimary,
@@ -219,7 +219,7 @@ export function buildProbabilityCountingPanel(
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "二项式系数 C_n^k",
+          label: "二项式系数 $C_n^k$",
           symbol: `C_{${n}}^{${k}}`,
           value: termInfo.binomialCoeff,
           color: MATH_COLORS.paramPrimary,
@@ -484,13 +484,13 @@ export function buildProbabilityCountingPanel(
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "排列数 A_n^m (与顺序有关)",
+          label: "排列数 $A_n^m$ (与顺序有关)",
           symbol: `A_{${n}}^{${k}}`,
           value: P,
           color: MATH_COLORS.paramPrimary,
         },
         {
-          label: "组合数 C_n^m (与顺序无关)",
+          label: "组合数 $C_n^m$ (与顺序无关)",
           symbol: `C_{${n}}^{${k}}`,
           value: C,
           color: MATH_COLORS.paramTertiary,

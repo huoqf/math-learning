@@ -188,7 +188,7 @@ export function SequenceGeometricTessellationScene({
         fontWeight="bold"
       >
         正方形总面积 S∞ = a₁ / (1 - q) = {a1} / (1 - {qFrac}) ={" "}
-        {limitSumFormatted}
+        {limitSumFormatted}（拓展 · 超出课标）
       </text>
 
       {/* 正方形外框 */}

@@ -85,13 +85,13 @@ export function buildSolidFoldingPanel(
       },
       {
         name: "动点 D' 空间坐标参数化公式",
-        latex: `D' = (\\color{#D97706}{b} + (\\color{#EF4444}{a}-\\color{#D97706}{b})\\cos\\color{#EF4444}{\\alpha},\\; 0,\\; (\\color{#EF4444}{a}-\\color{#D97706}{b})\\sin\\color{#EF4444}{\\alpha})`,
+        latex: `D' = (\\color{${MATH_COLORS.paramSecondary}}{b} + (\\color{${MATH_COLORS.paramPrimary}}{a}-\\color{${MATH_COLORS.paramSecondary}}{b})\\cos\\color{${MATH_COLORS.paramPrimary}}{\\alpha},\\; 0,\\; (\\color{${MATH_COLORS.paramPrimary}}{a}-\\color{${MATH_COLORS.paramSecondary}}{b})\\sin\\color{${MATH_COLORS.paramPrimary}}{\\alpha})`,
         level: "important",
         note: "以 A 为原点，AD 为 x 轴，AB 为 y 轴建立空间直角坐标系",
       },
       {
         name: "变动线段 D'A 长度公式",
-        latex: `|D'A|^2 = (\\color{#D97706}{b} + (\\color{#EF4444}{a}-\\color{#D97706}{b})\\cos\\color{#EF4444}{\\alpha})^2 + ((\\color{#EF4444}{a}-\\color{#D97706}{b})\\sin\\color{#EF4444}{\\alpha})^2`,
+        latex: `|D'A|^2 = (\\color{${MATH_COLORS.paramSecondary}}{b} + (\\color{${MATH_COLORS.paramPrimary}}{a}-\\color{${MATH_COLORS.paramSecondary}}{b})\\cos\\color{${MATH_COLORS.paramPrimary}}{\\alpha})^2 + ((\\color{${MATH_COLORS.paramPrimary}}{a}-\\color{${MATH_COLORS.paramSecondary}}{b})\\sin\\color{${MATH_COLORS.paramPrimary}}{\\alpha})^2`,
         level: "important",
       },
     );
@@ -156,13 +156,13 @@ export function buildSolidFoldingPanel(
     theorems.push(
       {
         name: "外接球半径不变量定理（新高考必考）",
-        latex: `R = \\frac{BD}{2} = \\frac{\\sqrt{\\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2}}{2}`,
+        latex: `R = \\frac{BD}{2} = \\frac{\\sqrt{\\color{${MATH_COLORS.paramPrimary}}{a}^2 + \\color{${MATH_COLORS.paramSecondary}}{b}^2}}{2}`,
         level: "core",
         note: "△A'BD 和 △CBD 均为 Rt△ 且共斜边 BD，球心始终为 BD 中点，半径恒定不变！",
       },
       {
         name: "异面直线 A'D ⊥ BC 临界角公式",
-        latex: `\\cos\\color{#EF4444}{\\alpha_\\perp} = -\\frac{\\color{#D97706}{b}^2}{\\color{#EF4444}{a}^2} \\quad (\\color{#EF4444}{a} \\ge \\color{#D97706}{b})`,
+        latex: `\\cos\\color{${MATH_COLORS.paramPrimary}}{\\alpha_\\perp} = -\\frac{\\color{${MATH_COLORS.paramSecondary}}{b}^2}{\\color{${MATH_COLORS.paramPrimary}}{a}^2} \\quad (\\color{${MATH_COLORS.paramPrimary}}{a} \\ge \\color{${MATH_COLORS.paramSecondary}}{b})`,
         level: "important",
         note: res.criticalPerpAlphaDeg
           ? `当 a ≥ b 时存在钝角二面角 α = ${res.criticalPerpAlphaDeg}°，使异面直线 A'D 与 BC 严格垂直`
@@ -170,7 +170,7 @@ export function buildSolidFoldingPanel(
       },
       {
         name: "三棱锥体积最大值定理",
-        latex: `V_{\\max} = \\frac{\\color{#EF4444}{a}^2 \\color{#D97706}{b}^2}{6\\sqrt{\\color{#EF4444}{a}^2 + \\color{#D97706}{b}^2}} \\quad (\\color{#EF4444}{\\alpha} = 90^\\circ \\text{ 时取得})`,
+        latex: `V_{\\max} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a}^2 \\color{${MATH_COLORS.paramSecondary}}{b}^2}{6\\sqrt{\\color{${MATH_COLORS.paramPrimary}}{a}^2 + \\color{${MATH_COLORS.paramSecondary}}{b}^2}} \\quad (\\color{${MATH_COLORS.paramPrimary}}{\\alpha} = 90^\\circ \\text{ 时取得})`,
         level: "important",
       },
     );
@@ -181,7 +181,7 @@ export function buildSolidFoldingPanel(
         importance: "gaokao",
       },
       {
-        text: "【异面直线垂直探究】：通过向量点乘 \\vec{DA'} · \\vec{BC} = 0，可精确解出异面垂直时的二面角 \\alpha_\\perp。",
+        text: "【异面直线垂直探究】：通过向量点乘 $\\vec{DA'} · \\vec{BC} = 0$，可精确解出异面垂直时的二面角 $\\alpha_\\perp$。",
         importance: "gaokao",
       },
     );
@@ -226,13 +226,13 @@ export function buildSolidFoldingPanel(
     theorems.push(
       {
         name: "等腰三角形高折叠变动底边公式",
-        latex: `|BC'| = \\color{#EF4444}{a} \\cos \\left(\\frac{\\color{#EF4444}{\\alpha}}{2}\\right)`,
+        latex: `|BC'| = \\color{${MATH_COLORS.paramPrimary}}{a} \\cos \\left(\\frac{\\color{${MATH_COLORS.paramPrimary}}{\\alpha}}{2}\\right)`,
         level: "core",
         note: "折痕 AD ⊥ DB 且 AD ⊥ DC'，∠BDC' = π − α（B 与 C' 分在折痕两侧），由余弦定理 |BC'|² = 2(a/2)²(1+cosα) = a²cos²(α/2)",
       },
       {
         name: "α = 90° 墙角模型外接球定理",
-        latex: `R = \\frac{\\sqrt{\\color{#059669}{h}^2 + 2 \\cdot (\\color{#EF4444}{a}/2)^2}}{2} = \\frac{\\sqrt{\\color{#059669}{h}^2 + \\frac{\\color{#EF4444}{a}^2}{2}}}{2}`,
+        latex: `R = \\frac{\\sqrt{\\color{${MATH_COLORS.paramTertiary}}{h}^2 + 2 \\cdot (\\color{${MATH_COLORS.paramPrimary}}{a}/2)^2}}{2} = \\frac{\\sqrt{\\color{${MATH_COLORS.paramTertiary}}{h}^2 + \\frac{\\color{${MATH_COLORS.paramPrimary}}{a}^2}{2}}}{2}`,
         level: "important",
         condition: "当 α = 90° 时，DA, DB, DC' 两两垂直组成墙角模型",
       },
@@ -296,7 +296,7 @@ export function buildSolidFoldingPanel(
       },
       {
         name: "对角顶点距离余弦定理",
-        latex: `|A'C|^2 = \\frac{3}{2} \\color{#EF4444}{a}^2 (1 + \\cos\\color{#EF4444}{\\alpha}) = 3\\color{#EF4444}{a}^2 \\cos^2\\left(\\frac{\\color{#EF4444}{\\alpha}}{2}\\right)`,
+        latex: `|A'C|^2 = \\frac{3}{2} \\color{${MATH_COLORS.paramPrimary}}{a}^2 (1 + \\cos\\color{${MATH_COLORS.paramPrimary}}{\\alpha}) = 3\\color{${MATH_COLORS.paramPrimary}}{a}^2 \\cos^2\\left(\\frac{\\color{${MATH_COLORS.paramPrimary}}{\\alpha}}{2}\\right)`,
         level: "important",
         note: "折痕两半平面夹角 ∠A'OC = π − α，由余弦定理 |A'C|² = 2(√3a/2)²(1+cosα)",
       },

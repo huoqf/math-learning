@@ -225,6 +225,8 @@ export function DerivativeAnimation() {
       question:
         "调节切点 $P$ 的横坐标 $x_0$，求解切线斜率 $k = f'(x_0)$ 的符号与大小，探究水平切线（$f'(x_0) = 0$）与函数极值点存在的必要条件。",
     };
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, preset, fnKey]);
 
   return (

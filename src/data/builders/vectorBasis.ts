@@ -77,7 +77,7 @@ export function buildVectorBasisPanel(
         value: modTarget.toFixed(2),
       },
       {
-        label: "基底外积 / 行列式 D",
+        label: "基底不共线判据 D",
         symbol: "D = e_{1x}e_{2y} - e_{1y}e_{2x}",
         value: det.toFixed(2),
       },
@@ -248,7 +248,7 @@ export function buildVectorBasisPanel(
         importance: "gaokao",
       },
       {
-        text: "克拉默消元法则：在基底分解中建立二元一次方程组，唯一解的存在性等价于行列式 D ≠ 0（基底不共线）。",
+        text: "待定系数法求分解：设 OE = λe₁ + μe₂，由坐标相等建立二元一次方程组；方程组有唯一解当且仅当基底不共线（D = e₁ₓe₂ᵧ − e₁ᵧe₂ₓ ≠ 0）。",
         importance: "core",
       },
     );
@@ -281,8 +281,8 @@ export function buildVectorBasisPanel(
         importance: "gaokao",
       },
       {
-        text: "奔驰定理与四心统一：重心向量满足 PA + PB + PC = 0，内心/外心/垂心均可由面积或三角正切比给出对应基底系数。",
-        importance: "core",
+        text: "三角形四心的向量表示（拓展 · 超出课标）：重心满足 GA + GB + GC = 0；内心、外心、垂心可由边长比或向量等式给出。",
+        importance: "extend",
       },
     );
   }
@@ -292,7 +292,7 @@ export function buildVectorBasisPanel(
 
   if (isCollinear) {
     warnings.push({
-      text: "基底向量 e1 与 e2 共线（行列式 D = 0），无法构成平面的一组基底！无法唯一分解任意向量。",
+      text: "基底向量 e1 与 e2 共线（D = e₁ₓe₂ᵧ − e₁ᵧe₂ₓ = 0），无法构成平面的一组基底！无法唯一分解任意向量。",
       level: "danger",
     });
   }

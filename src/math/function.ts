@@ -746,7 +746,7 @@ export function solveBisection(
       approxRoot: NaN,
       errorBound: n - m,
       validity: true,
-      warningMessage: `f(${m.toFixed(1)}) 与 f(${n.toFixed(1)}) 同号 (${fM > 0 ? "+" : "-"})，不满足零点存在性定理前提 f(a)·f(b) < 0！`,
+      warningMessage: `f(${m.toFixed(1)}) 与 f(${n.toFixed(1)}) 同号 (${fM > 0 ? "+" : "-"})，不满足零点存在性定理前提（f 在 [a,b] 上连续且 f(a)·f(b) < 0）！`,
     };
   }
 

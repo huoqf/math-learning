@@ -332,6 +332,8 @@ export default function ParametricPointAnimation() {
             "运用“化曲为平”展开法，比较侧面展开与底侧展开两种路线的长度，求全局最短距离并确定侧棱上的最佳折点 P₁ 位置。",
         };
     }
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMode, presetKey]);
 
   // 10. 三视图数据

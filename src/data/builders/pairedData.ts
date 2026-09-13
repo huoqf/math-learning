@@ -39,7 +39,7 @@ export function buildPairedDataPanel(
           {
             name: "一元线性回归方程与最小二乘法",
             latex: `\\begin{aligned} \\hat{y} &= \\color{${MATH_COLORS.paramPrimary}}{\\hat{b}}x + \\color{${MATH_COLORS.paramSecondary}}{\\hat{a}} \\\\[4pt] \\hat{b} &= \\frac{L_{xy}}{L_{xx}} = \\frac{\\sum_{i=1}^{n}(x_i-\\bar{x})(y_i-\\bar{y})}{\\sum_{i=1}^{n}(x_i-\\bar{x})^2} \\\\[4pt] \\hat{a} &= \\bar{y} - \\hat{b}\\bar{x} \\end{aligned}`,
-            note: "回归直线必过样本中心点 (x̄, ȳ)；最小二乘法使残差平方和 SSE = ∑(y_i - ŷ_i)² 达到全局最小。",
+            note: "回归直线必过样本中心点 $(x̄, ȳ)$；最小二乘法使残差平方和 $SSE = ∑(y_i - ŷ_i)²$ 达到全局最小。",
             level: "core" as const,
           },
           {
@@ -76,7 +76,7 @@ export function buildPairedDataPanel(
             importance: "gaokao" as const,
           },
           {
-            text: "【高考考点·残差分析法】残差 e_i = y_i - ŷ_i，且 ∑e_i = 0。残差点在 e=0 上下带状区域越窄，说明拟合越精确。",
+            text: "【高考考点·残差分析法】残差 $e_i = y_i - ŷ_i$，且 $∑e_i = 0$。残差点在 $e=0$ 上下带状区域越窄，说明拟合越精确。",
             importance: "core" as const,
           },
           {
@@ -87,7 +87,7 @@ export function buildPairedDataPanel(
       : !isLinearMode
         ? [
             {
-              text: `【高考考点·非线性线性化】熟练掌握四大换元模型：指数 y=ce^{kx} (令 z=ln y)、对数 y=a+bln x (令 u=ln x)、幂函数 y=cx^k (令 z=ln y, u=ln x)、双曲线 y=a+b/x (令 u=1/x)。`,
+              text: `【高考考点·非线性线性化】熟练掌握四大换元模型：指数 $y=ce^{kx}$ (令 $z=ln y$)、对数 $y=a+bln x$ (令 $u=ln x$)、幂函数 $y=cx^k$ (令 $z=ln y, u=ln x$)、双曲线 $y=a+b/x$ (令 $u=1/x$)。`,
               importance: "gaokao" as const,
             },
             {
@@ -105,11 +105,11 @@ export function buildPairedDataPanel(
               importance: "gaokao" as const,
             },
             {
-              text: "【高考考点2】相关系数同号性：r 与斜率 b̂ 的符号由 L_xy 唯一决定，正相关时 r>0, b̂>0；负相关时 r<0, b̂<0。",
+              text: "【高考考点2】相关系数同号性：$r$ 与斜率 $b̂$ 的符号由 $L_xy$ 唯一决定，正相关时 $r>0, b̂>0$；负相关时 $r<0, b̂<0$。",
               importance: "gaokao" as const,
             },
             {
-              text: "【高考考点3】残差分析法：残差 e_i = y_i - ŷ_i，且 ∑e_i = 0。残差点在 e=0 上下带状区域越窄，拟合越精确。",
+              text: "【高考考点3】残差分析法：残差 $e_i = y_i - ŷ_i$，且 $∑e_i = 0$。残差点在 $e=0$ 上下带状区域越窄，拟合越精确。",
               importance: "core" as const,
             },
             {
@@ -131,13 +131,13 @@ export function buildPairedDataPanel(
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "离均差乘积和 L_xy",
+          label: "离均差乘积和 $L_xy$",
           value: `${res.lxy.toFixed(2)}`,
           color:
             res.lxy >= 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramTertiary,
         },
         {
-          label: "x离差平方和 L_xx",
+          label: "$x$离差平方和 $L_xx$",
           value: `${res.lxx.toFixed(2)}`,
           color: MATH_COLORS.paramSecondary,
         },
@@ -290,7 +290,8 @@ export function buildPairedDataPanel(
 \\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} = ${res.chiSquare.toFixed(3)} \\\\
 \\text{Step 3 (比临界)} &: \\chi^2 ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}
 \\end{aligned}`,
-            condition: "大样本容量 n ≥ 40 且所有单元格理论期望频数 E_ij ≥ 5",
+            condition:
+              "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
             note: `【Step 4 规范结论】${conclusionDetail}`,
             level: "important" as const,
           },
@@ -301,7 +302,7 @@ export function buildPairedDataPanel(
               name: "完全独立零假设判定定理 (ad - bc = 0)",
               latex: `ad - bc = 0 \\iff \\frac{a}{a+b} = \\frac{c}{c+d} \\iff P(B \\mid A) = P(B \\mid \\overline{A}) \\implies \\chi^2 = 0`,
               condition: "在零假设 H₀ 成立或两分类变量完全不相关时",
-              note: "对角交叉积之差 ad - bc = 0 是两组条件频率完全相等的充分必要条件。此时卡方统计量恒等于 0，完全接受独立零假设。",
+              note: "对角乘积之差 ad - bc = 0 是两组条件频率完全相等的充分必要条件。此时卡方统计量恒等于 0，没有充分证据推断两变量有关联。",
               level: "core" as const,
             },
             {
@@ -311,7 +312,8 @@ export function buildPairedDataPanel(
 \\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} = 0.000 \\\\
 \\text{Step 3 (比临界)} &: \\chi^2 = 0 < 3.841
 \\end{aligned}`,
-              condition: "大样本容量 n ≥ 40 且所有单元格理论期望频数 E_ij ≥ 5",
+              condition:
+                "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
               note: `【Step 4 规范结论】${conclusionDetail}`,
               level: "important" as const,
             },
@@ -319,11 +321,11 @@ export function buildPairedDataPanel(
         : isSmallSampleScenario
           ? [
               {
-                name: "Yates 连续性修正公式 (小样本/小期望频数)",
+                name: "Yates 连续性修正公式（拓展 · 超出课标）",
                 latex: `\\chi^2_{\\text{Yates}} = \\frac{n\\left(|ad - bc| - \\frac{n}{2}\\right)^2}{(a+b)(c+d)(a+c)(b+d)} = ${res.chiSquareYates.toFixed(3)}`,
-                condition: "当 n < 40 或存在理论期望频数 E_ij < 5 时适用",
-                note: "当样本量较小时，离散频数分布用连续卡方分布近似会产生偏大误差，减去 n/2 的连续性修正可有效防止第一类错误被放大。",
-                level: "core" as const,
+                condition: "当 $n < 40$ 或存在理论期望频数 $E_ij < 5$ 时适用",
+                note: "当样本量较小时，离散频数分布用连续分布近似会产生偏大误差，减去 n/2 的连续性修正可有效防止第一类错误被放大。新课标正文只要求 χ² 统计量公式与临界值比较，连续性修正为教材之外的补充内容。",
+                level: "supplementary" as const,
               },
               {
                 name: "新高考四步标准答题规范",
@@ -333,7 +335,7 @@ export function buildPairedDataPanel(
 \\text{Step 3 (比临界)} &: \\chi^2 ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}
 \\end{aligned}`,
                 condition:
-                  "大样本容量 n ≥ 40 且所有单元格理论期望频数 E_ij ≥ 5",
+                  "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
                 note: `【Step 4 规范结论】${conclusionDetail}`,
                 level: "important" as const,
               },
@@ -348,7 +350,7 @@ export function buildPairedDataPanel(
 \\text{Step 3 (比临界)} &: \\chi^2 ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}
 \\end{aligned}`,
                 condition:
-                  "大样本容量 n ≥ 40 且所有单元格理论期望频数 E_ij ≥ 5",
+                  "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
                 note: `【Step 4 规范作答结论】${conclusionDetail}（阅卷采分要点：必须写明小概率值 α 与置信度，严禁表述为因果必然关系）。`,
                 level: "core" as const,
               },
@@ -356,8 +358,8 @@ export function buildPairedDataPanel(
                 name: "2×2 列联表卡方公式本质 (理论偏离度)",
                 latex: `\\chi^2 = \\sum_{i=1}^2 \\sum_{j=1}^2 \\frac{(O_{ij} - E_{ij})^2}{E_{ij}} = \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)}`,
                 condition:
-                  "自由度 df = (2 - 1) × (2 - 1) = 1，E_ij = \\frac{(行和) \\times (列和)}{n}",
-                note: "其中 O_ij 为实际观测频数，E_ij 为 H₀ 成立下的理论期望频数。各格偏离度平方和综合衡量两变量与独立假设的偏离程度。",
+                  "自由度 $df = (2 - 1) × (2 - 1) = 1$，$E_ij = \\frac{(行和) \\times (列和)}{n}$",
+                note: "其中 $O_ij$ 为实际观测频数，$E_ij$ 为 $H₀$ 成立下的理论期望频数。各格偏离度平方和综合衡量两变量与独立假设的偏离程度。",
                 level: "important" as const,
               },
               {
@@ -425,7 +427,7 @@ P(\\chi^2 \\ge 10.828) &= 0.001 \\quad (99.9\\% \\text{ 把握推断有关})
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "交叉积差 |ad - bc|",
+          label: "对角乘积差 |ad - bc|",
           value: `${Math.abs(res.adMinusBc)}`,
           color: MATH_COLORS.paramTertiary,
         },
@@ -435,7 +437,7 @@ P(\\chi^2 \\ge 10.828) &= 0.001 \\quad (99.9\\% \\text{ 把握推断有关})
           color: res.p95 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramTertiary,
         },
         {
-          label: "Yates 连续修正 χ²",
+          label: "Yates 连续修正 χ²（拓展）",
           value: `${res.chiSquareYates.toFixed(3)}`,
           color: MATH_COLORS.textMuted,
         },

@@ -61,7 +61,7 @@ export function buildTriangleSolvePanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "分面积 S_ABD 与 S_ACD",
+        label: "分面积 $S_ABD$ 与 $S_ACD$",
         symbol: "S_{\\triangle ABD}, \\; S_{\\triangle ACD}",
         value: `S₁ = ${areaABD.toFixed(2)}, S₂ = ${areaACD.toFixed(2)} (总 S = ${area.toFixed(2)})`,
         color: MATH_COLORS.sequenceHighlight,
@@ -162,7 +162,7 @@ export function buildTriangleSolvePanel(
         color: MATH_COLORS.tangentLine,
       },
       {
-        label: "解的个数 (N_sol)",
+        label: "解的个数 ($N_sol$)",
         symbol: "N_{\\text{sol}}",
         value: `${solutionCount} 个解 (${a < h - 1e-4 ? "a < h 无解" : Math.abs(a - h) <= 1e-4 ? "a = h 单解(直角)" : a < b ? "h < a < b 双解" : "a ≥ b 单解"})`,
         color:
@@ -471,11 +471,11 @@ export function buildTriangleSolvePanel(
       level: "core",
     },
     {
-      name: "海伦公式 (Heron's Formula)",
+      name: "海伦公式（拓展 · 超出课标） (Heron's Formula)",
       latex: "S = \\sqrt{p(p-a)(p-b)(p-c)}",
       condition: "已知三边长 $a, b, c$",
-      note: "无需计算内角，直接从三边求面积的极速工具。",
-      level: "important",
+      note: "无需计算内角，直接从三边求面积的工具。注：海伦公式不在人教A版课标正文范围内，课标内求解面积应先用余弦定理求角、再用 $S=\\frac{1}{2}ab\\sin C$。",
+      level: "supplementary",
     },
   ];
 

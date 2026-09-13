@@ -313,6 +313,8 @@ export default function Vector3DBasisAnimation() {
       condition: "建立空间直角坐标系，已知两个空间代数向量的坐标分量。",
       question: "探究空间向量数量积坐标公式与正交投影向量的几何对应关系。",
     };
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMode, carrier, activePreset]);
 
   const legendItems: LegendItem[] = useMemo(() => {

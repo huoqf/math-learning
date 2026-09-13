@@ -525,6 +525,8 @@ export default function SpatialAngleAnimation({
           ],
         };
     }
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMode, modelPreset]);
 
   return (

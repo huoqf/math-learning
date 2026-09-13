@@ -17,7 +17,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npx eslint src/ --report-unused-disable-directives
+      - run: npx eslint src/ --report-unused-disable-directives --max-warnings 0
       - run: npx tsc --noEmit -p tsconfig.json
       - run: npm run audit:strict
       - run: npm run build
@@ -33,3 +33,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: E2E (formula render smoke)
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

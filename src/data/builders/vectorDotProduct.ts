@@ -199,8 +199,9 @@ export function buildVectorDotProductPanel(
       name: "数量积几何定义与坐标公式",
       latex: `\\color{${primaryCol}}{\\vec{a}} \\cdot \\color{${secondaryCol}}{\\vec{b}} = |\\color{${primaryCol}}{\\vec{a}}||\\color{${secondaryCol}}{\\vec{b}}|\\cos\\theta = x_1 x_2 + y_1 y_2`,
       prerequisites: [
-        "θ 为向量 a 与 b 的夹角 (θ ∈ [0, π])",
-        "零向量与任意向量的数量积均为 0",
+        "定义前提：a、b 均为非零向量，θ 为 a 与 b 的夹角 (θ ∈ [0, π])",
+        "零向量的补充约定：规定 0 · b = 0（此时夹角无定义，但坐标公式仍成立）",
+        "坐标公式 a·b = x₁x₂ + y₁y₂ 对含零向量的情形同样适用",
       ],
       level: studyMode === "defProj" ? "core" : "important",
     },

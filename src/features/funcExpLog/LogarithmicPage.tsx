@@ -81,7 +81,7 @@ export function LogarithmicPage() {
           {
             value: 1.0,
             variant: "critical",
-            label: "退化 (a=1)",
+            label: "退化 (a=1 非指数函数)",
             labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} = 1`,
           },
           {
@@ -168,7 +168,7 @@ export function LogarithmicPage() {
         condition:
           "底数 $a > 1$，真数定义域 $x \\in (0, +\\infty)$，恒过定点 $(1, 0)$，竖直渐近线为 $x = 0$ (y 轴)。",
         question:
-          "判定函数在定义域 $(0, +\\infty)$ 上的单调性与凹凸形态，并求在探究动点处的切线方程及高考切线放缩不等式。",
+          "判定函数在定义域 $(0, +\\infty)$ 上的单调性与图象形态，并求在探究动点处的切线方程及高考切线放缩不等式。",
       };
     } else {
       return {

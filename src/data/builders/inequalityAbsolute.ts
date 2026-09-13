@@ -335,18 +335,18 @@ export function buildInequalityAbsolutePanel(
     },
     {
       step: 2,
-      title: "② 代数演绎 · 三角不等式双向夹逼",
+      title: "② 代数演绎 · 三角不等式双向界定",
       detail:
-        "利用三角形两边之和大于第三边、两边之差小于第三边，推导实数模长的双向夹逼不等式关系。",
+        "利用三角形两边之和大于第三边、两边之差小于第三边，推导实数模长的双向界定不等式关系。",
       latex: `||a| - |b|| \\le |a + b| \\le |a| + |b| \\implies ${modDiff.toFixed(2)} \\le ${sumMod.toFixed(2)} \\le ${modSum.toFixed(2)}`,
-      rubric: "推导得分点：代入当前参数完成双向模长夹逼计算",
+      rubric: "推导得分点：代入当前参数完成双向模长界定计算",
     },
     {
       step: 3,
       title: "③ 求解反思 · 取等条件与高考秒杀",
       detail: isSameSign
-        ? `当前参数 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 同号（$ab \\ge 0$），向量同向顺接，取到最大值等号 $|a + b| = |a| + |b|$。`
-        : `当前参数 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 异号（$ab \\le 0$），向量反向相消，取到最小值等号 $|a + b| = ||a| - |b||$。`,
+        ? `当前参数 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 满足 $ab \\ge 0$（同号，或至少一个为 0），向量同向顺接，取到最大值等号 $|a + b| = |a| + |b|$。`
+        : `当前参数 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 满足 $ab \\le 0$（异号，或至少一个为 0），向量反向相消，取到最小值等号 $|a + b| = ||a| - |b||$。`,
       latex: isSameSign
         ? `|a + b| = |a| + |b| = ${modSum.toFixed(2)} \\quad (ab \\ge 0)`
         : `|a + b| = ||a| - |b|| = ${modDiff.toFixed(2)} \\quad (ab \\le 0)`,
@@ -386,14 +386,14 @@ export function buildInequalityAbsolutePanel(
         latex: "||a| - |b|| \\le |a \\pm b| \\le |a| + |b|",
         prerequisites: ["a, b \\in \\mathbb{R}"],
         condition:
-          "$|a+b| = |a|+|b|$ 当且仅当 $ab \\ge 0$ (同号)；$|a-b| = |a|+|b|$ 当且仅当 $ab \\le 0$ (异号)",
+          "$|a+b| = |a|+|b|$ 当且仅当 $ab \\ge 0$（同号，或 $a, b$ 中至少一个为 $0$）；$|a-b| = |a|+|b|$ 当且仅当 $ab \\le 0$（异号，或 $a, b$ 中至少一个为 $0$）",
       },
     ],
     reasoningSteps,
     gaokaoPoints: [
       {
-        text: "高考选考/压轴必考：绝对值三角不等式是代数证明与最值求解的核心武器，常用于柯西不等式与函数最值结合分析。",
-        importance: "gaokao",
+        text: "拓展 · 超出课标：绝对值不等式原属《不等式选讲》选修系列，2019 新课标教材已取消该选修系列，本页内容作为衔接与拓展保留（不等式选做已退出新高考必考范围）。",
+        importance: "extend",
       },
       {
         text: "取等条件判断：做题时必须验证 $ab \\ge 0$ 或 $ab \\le 0$ 是否在参数定义域内成立。",

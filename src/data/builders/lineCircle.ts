@@ -132,7 +132,7 @@ export function buildLineCirclePanel(
         symbol: "L = \\frac{\\sqrt{\\Delta}}{\\sqrt{1+k^2}}",
         value: !isDisjoint
           ? `\\frac{\\sqrt{${deltaVal}}}{\\sqrt{${k2Plus1}}} = ${lGeomVal}`
-          : "无 (\\Delta < 0)",
+          : "无 $(\\Delta < 0)$",
         color: cTertiary,
       },
       {
@@ -225,7 +225,7 @@ export function buildLineCirclePanel(
       );
     }
   } else if (studyMode === "tangent") {
-    examAnchor = "高考热点专题 · 圆外一点引切线长定理与极点极线切点弦";
+    examAnchor = "高考热点专题 · 圆外一点引切线长定理与切点弦方程";
 
     const pxVal = formatMathNumber(px);
     const pyVal = formatMathNumber(py);
@@ -288,10 +288,10 @@ export function buildLineCirclePanel(
       },
       {
         step: 3,
-        title: "求解反思 · 切点弦方程（极点极线公式）",
-        detail: `以 $PC$ 为直径的圆与已知圆相交，两交点 $T_1, T_2$ 所在直线方程符合极点极线标准公式 $(x_0 - a)(x - a) + (y_0 - b)(y - b) = r^2$：`,
+        title: "求解反思 · 切点弦方程",
+        detail: `以 $PC$ 为直径的圆与已知圆相交，两交点 $T_1, T_2$ 所在直线方程可代入切点弦方程公式 $(x_0 - a)(x - a) + (y_0 - b)(y - b) = r^2$：`,
         latex: `(x_P - a)(x - a) + (y_P - b)(y - b) = r^2 \\implies (${pxVal} - (${aVal}))(x - (${aVal})) + (${pyVal} - (${bVal}))(y - (${bVal})) = ${rSqVal}`,
-        rubric: "采分点：列出极点极线公式并代入求出切点弦方程（3分）",
+        rubric: "采分点：列出切点弦方程并代入求出方程（3分）",
       },
     );
   } else if (studyMode === "midpoint") {
@@ -326,7 +326,7 @@ export function buildLineCirclePanel(
         color: cSecondary,
       },
       {
-        label: "斜率乘积 k_CH · k_AB",
+        label: "斜率乘积 $k_CH · k_AB$",
         symbol: "k_{CH} \\cdot k_{AB}",
         value: `${kCH} \\times ${kAB} = ${kProd}`,
         color: cPrimary,
@@ -487,7 +487,7 @@ export function buildLineCirclePanel(
       ],
     },
     {
-      name: "切线长定理与切点弦方程 (极点极线)",
+      name: "切线长定理与切点弦方程",
       latex: "(p_x - a)(x - a) + (p_y - b)(y - b) = r^2",
       level: studyMode === "tangent" ? "core" : "important",
       prerequisites: [
@@ -514,7 +514,7 @@ export function buildLineCirclePanel(
       importance: "gaokao",
     },
     {
-      text: "【切点弦恒过定点】若圆外动点 $P$ 在某定直线上运动，其对应的切点弦必恒过定点（极点极线互偶性），是新高考圆锥曲线压轴解答题的高频考法。",
+      text: "【切点弦恒过定点】若圆外动点 $P$ 在某定直线上运动，其对应的切点弦必恒过定点，是解析几何解答题的常见考法。",
       importance: "core",
     },
   );

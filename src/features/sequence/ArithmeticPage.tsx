@@ -166,7 +166,8 @@ export function ArithmeticPage() {
           variant: "warning" as const,
           badge: "核心考点 · 绝对值和的几何折线",
           condition: common,
-          question: "｜aₙ｜前 n 项和 Tₙ 的折线在变号项处为何出现极小值尖点？",
+          question:
+            "求 ｜aₙ｜ 前 n 项和 Tₙ 时，为何折线在变号项处的斜率（增量 ｜aₙ｜）取到最小值？",
         };
       default:
         return {

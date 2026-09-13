@@ -264,7 +264,7 @@ describe("Sequence MathPanel Builder Tests — 数列右屏看板与高考考点
         { a1: 1, a2: 3, p_rec: 3, q_rec: -2, N: 5 },
         { activeMode: "recurrence", subModel: "second-order" },
       );
-      expect(panel.theorems.some((t) => t.name.includes("特征方程法"))).toBe(
+      expect(panel.theorems.some((t) => t.name.includes("特征根法"))).toBe(
         true,
       );
     });

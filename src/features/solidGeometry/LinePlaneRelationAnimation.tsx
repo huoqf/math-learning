@@ -281,13 +281,12 @@ export default function LinePlaneRelationAnimation() {
       return [];
     }
 
+    // 球坐标方位参数（thetaDeg/phiDeg 方向角）锁定为预设基准，退出可调面板
     const keysMap: Record<LinePlaneTeachingMode, string[]> = {
-      parallel:
-        subTheorem === "judge" ? ["zHeight", "phiDeg"] : ["zHeight", "step"],
-      perpendicular:
-        subTheorem === "judge" ? ["thetaDeg", "phiDeg"] : ["phiDeg"],
+      parallel: subTheorem === "judge" ? ["zHeight"] : ["zHeight", "step"],
+      perpendicular: [],
       gaokaoPyramid: ["lambdaE", "lambdaF", "pyramidH", "pyramidA", "pyramidB"],
-      vector: ["thetaDeg", "phiDeg", "zHeight"],
+      vector: ["zHeight"],
     };
 
     return keysMap[activeMode]
@@ -469,6 +468,8 @@ export default function LinePlaneRelationAnimation() {
             "探究直线与法向量夹角 〈l⃗, n⃗〉 与线面角 θ 的互余关系：sinθ = |cos〈l⃗, n⃗〉| = |l⃗·n⃗| / (|l⃗||n⃗|)。",
         };
     }
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMode, subTheorem, activePreset]);
 
   return (

@@ -117,7 +117,7 @@ export function SetQuantifiersPage() {
               tabs={[
                 { key: "universal", label: "全称命题 ∀" },
                 { key: "existential", label: "存在命题 ∃" },
-                { key: "dual", label: "双变量博弈" },
+                { key: "dual", label: "双变量博弈（拓展）" },
               ]}
               value={activeTab}
               onChange={(key) => {
@@ -128,7 +128,7 @@ export function SetQuantifiersPage() {
 
           {/* ② 典型双变量博弈情境（仅在 dual 模式下展示） */}
           {activeTab === "dual" && (
-            <LeftPanelSection title="高考双变量模型">
+            <LeftPanelSection title="双变量模型（拓展 · 超出课标）">
               <SelectGrid
                 columns={1}
                 items={[
@@ -199,7 +199,11 @@ export function SetQuantifiersPage() {
                     双变量量词博弈：
                   </div>
                   <div className="leading-relaxed">
-                    高考压轴题中常考“任意对任意”、“任意对存在”与“存在对存在”，核心本质是转化为值域的包含、最值压制与交集判定。
+                    常考“任意对任意”、“任意对存在”与“存在对存在”，核心本质是转化为值域的包含、最值压制与交集判定。
+                    <span className="text-purple-600 font-semibold">
+                      （拓展 ·
+                      超出课标：嵌套量词复合命题属强基/竞赛延伸，课标正文只要求掌握单一量词命题及其否定。）
+                    </span>
                   </div>
                 </div>
               )}

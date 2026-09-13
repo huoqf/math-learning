@@ -2,11 +2,11 @@ import type { KnowledgeNode } from "@/data/types";
 
 export const secondDerivativeNode: KnowledgeNode = {
   id: "know-derivative-inflection",
-  title: "二阶导数、拐点与函数凹凸性",
+  title: "二阶导数、拐点与函数凹凸性（拓展 · 超出课标）",
   labTitle: "二阶导数与拐点实验室",
   chapter: "导数及其应用",
-  module: "导数压轴",
-  importance: "hard",
+  module: "导数拓展",
+  importance: "extend",
   animationIds: ["anim-derivative-inflection"],
   prerequisites: ["know-derivative-compare"],
   route: "/derivative-inflection",

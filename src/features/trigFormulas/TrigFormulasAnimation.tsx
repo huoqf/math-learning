@@ -253,7 +253,7 @@ export function TrigFormulasAnimation() {
                 ? "高考基石 · 两角和差与向量点积"
                 : studyMode === "double_angle"
                   ? "倍角与降幂 · 周期与中轴演化"
-                  : "辅助角公式 · 极坐标与模长合成"
+                  : "辅助角公式 · 向量合成与模长"
             }
             condition={
               studyMode === "sum_diff"

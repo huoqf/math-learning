@@ -92,7 +92,7 @@ export function buildTrigFormulasPanel(
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "高考变角核心决策树：已知和角与单角，求未知角时优先采用'拼角拆角'技巧：\\alpha = (\\alpha+\\beta) - \\beta，2\\alpha = (\\alpha+\\beta) + (\\alpha-\\beta)",
+        text: "高考变角核心决策树：已知和角与单角，求未知角时优先采用'拼角拆角'技巧：$\\alpha = (\\alpha+\\beta) - \\beta$，$2\\alpha = (\\alpha+\\beta) + (\\alpha-\\beta)$",
         importance: "gaokao",
       },
       {

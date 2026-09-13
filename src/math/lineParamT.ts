@@ -122,7 +122,8 @@ export function calcLineConicIntersection(
     C = x0 * x0 + y0 * y0 - R * R;
   } else if (conicType === "ellipse") {
     const a = shapeParams.a ?? 4;
-    const b = shapeParams.b ?? 2.5;
+    // 参数安全契约：椭圆必须满足 a > b > 0，否则钳制 b 防止滑出非法/退化椭圆
+    const b = Math.min(shapeParams.b ?? 2.5, Math.max(a - 0.01, 0.01));
     const a2 = a * a;
     const b2 = b * b;
     // (x0 + t cos)^2 / a^2 + (y0 + t sin)^2 / b^2 = 1

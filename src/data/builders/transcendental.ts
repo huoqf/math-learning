@@ -189,7 +189,7 @@ export function buildTranscendentalPanel(
         color: MATH_COLORS.functionTransformed,
       },
       {
-        label: "夹逼包络跨度",
+        label: "放缩包络跨度",
         symbol: "e^{x-1} - (\\ln x + 1)",
         value: (expVal - logVal).toFixed(3),
         color: MATH_COLORS.labelText,
@@ -210,13 +210,15 @@ export function buildTranscendentalPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: isOverOrigin ? "e^x ≥ ax 过原点临界" : "e^x ≥ ax + 1 切线临界",
+        label: isOverOrigin
+          ? "$e^x ≥ ax$ 过原点临界"
+          : "$e^x ≥ ax + 1$ 切线临界",
         symbol: "a_{临界}",
         value: isOverOrigin ? Math.E.toFixed(2) : "1.00",
         color: MATH_COLORS.tangentLine,
       },
       {
-        label: "与 e^x 交点个数",
+        label: "与 $e^x$ 交点个数",
         symbol: "N",
         value: `${activeRes.intersections} 个`,
         color:
@@ -275,7 +277,7 @@ export function buildTranscendentalPanel(
         latex: `e^x \\ge x + 1 \\quad (x \\in \\mathbb{R})`,
         level: "core",
         prerequisites: [
-          "f(x) = e^x 为下凸函数",
+          "$f(x) = e^x$ 为下凸函数",
           "在切点 (0, 1) 处切线为 y = x + 1",
           "等号当且仅当 x = 0 时成立",
         ],
@@ -285,11 +287,11 @@ export function buildTranscendentalPanel(
     if (isQuad) {
       currentModeTheorems.push({
         name: "对数二次上界放缩不等式",
-        latex: `\\ln x \\le \\frac{x^2 - 1}{2} \\le x - 1 \\quad (x > 0)`,
+        latex: `\\ln x \\le \\frac{x^2 - 1}{2} \\quad (x > 0)`,
         level: "core",
         prerequisites: [
-          "利用切线进一步构造二次抛物线上界",
-          "在 x > 1 时比线性切线更贴合对数曲线",
+          "由切点 (1,0) 处的切线进一步构造二次抛物线上界",
+          "二次曲线 $y = (x^2 - 1)/2$ 与 $y = ln x$ 在 $x = 1$ 处相切",
           "等号当且仅当 x = 1 时成立",
         ],
       });
@@ -310,7 +312,7 @@ export function buildTranscendentalPanel(
         latex: `\\ln x \\le x - 1 \\quad (x > 0)`,
         level: "core",
         prerequisites: [
-          "g(x) = \\ln x 为上凸函数",
+          "$g(x) = \\ln x$ 为上凸函数",
           "在切点 (1, 0) 处切线为 y = x - 1",
           "等号当且仅当 x = 1 时成立",
         ],
@@ -318,11 +320,11 @@ export function buildTranscendentalPanel(
     }
   } else if (mode === "chain") {
     currentModeTheorems.push({
-      name: "双基准对偶链式夹逼不等式",
+      name: "双基准对偶链式放缩不等式",
       latex: `\\ln x + 1 \\le x \\le e^{x-1} \\quad (x > 0)`,
       level: "core",
       prerequisites: [
-        "e^{x-1} 与 \\ln x + 1 互为反函数",
+        "$e^{x-1}$ 与 $\\ln x + 1$ 互为反函数",
         "在公共切点 (1, 1) 处公切线为 y = x",
         "等号当且仅当 x = 1 时三者取等",
       ],
@@ -337,7 +339,7 @@ export function buildTranscendentalPanel(
         level: "core",
         prerequisites: [
           "过原点切线相切于点 (1, e)，切线斜率 a = e",
-          "当 a \\le e 时直线恒在曲线下方",
+          "当 $a \\le e$ 时直线恒在曲线下方",
           "当 a > e 时割线交于两点破坏恒成立",
         ],
       });
@@ -370,16 +372,16 @@ export function buildTranscendentalPanel(
   if (mode === "exp") {
     gaokaoPoints.push(
       {
-        text: "【新高考通法·指数切线双基准】基准一 e^x ≥ x+1（切点 (0,1)）与基准二 e^x ≥ ex（切点 (1,e)），是高考导数不等式放缩与求参的核心工具。",
+        text: "【新高考通法·指数切线双基准】基准一 $e^x ≥ x+1$（切点 $(0,1)$）与基准二 $e^x ≥ ex$（切点 $(1,e)$），是高考导数不等式放缩与求参的核心工具。",
         importance: "gaokao",
       },
       {
-        text: '凹凸性几何保障：指数函数 f"(x) = e^x > 0 恒成立（下凸函数），任意切线恒位于曲线下方，当且仅当切点处取等。',
+        text: "切线位置保障：指数函数图象上任意一点处的切线恒位于曲线下方，当且仅当切点处取等（构造函数 $g(x)=e^x-(x+1)$ 求导得 $g(x)\\ge 0$ 可证）。",
         importance: "core",
       },
       {
-        text: "泰勒一阶展开渊源：切线放缩本质上是函数在基准点处的一阶泰勒多项式逼近，具有局部最优线性逼近性质。",
-        importance: "gaokao",
+        text: "局部线性逼近：切线放缩本质上是函数在基准点处的最佳局部线性逼近（只看一阶变化率），不涉及高阶展开。",
+        importance: "core",
       },
       {
         text: "平移变体技巧：通过换元 t = x-1，可得对偶式 e^{x-1} ≥ x，常用于对齐线性多项式系数。",
@@ -393,11 +395,11 @@ export function buildTranscendentalPanel(
         importance: "gaokao",
       },
       {
-        text: '凹凸性几何保障：对数函数 g"(x) = -1/x² < 0 恒成立（上凸函数），切线恒位于曲线上方，当且仅当切点处取等。',
+        text: "切线位置保障：对数函数图象上任意一点处的切线恒位于曲线上方，当且仅当切点处取等（构造函数 $h(x)=(x-1)-\\ln x$ 求导得 $h(x)\\ge 0$ 可证）。",
         importance: "core",
       },
       {
-        text: "二次放缩进阶：当线性切线精度不足时，构造二次抛物线上界 ln x ≤ (x²-1)/2 在 x>1 时可提供更紧致的逼近包络。",
+        text: "二次放缩进阶：当线性切线精度不足时，构造二次抛物线上界 ln x ≤ (x²-1)/2 在 x>1 时可提供更贴近的逼近包络。",
         importance: "hard",
       },
       {
@@ -408,11 +410,11 @@ export function buildTranscendentalPanel(
   } else if (mode === "chain") {
     gaokaoPoints.push(
       {
-        text: "【新高考通法·指对跨界拆分通法】题目中同时出现指数 e^x 与对数 ln x 混合项时，优先引入中轴线 y = x 作为中间桥梁进行双向独立放缩。",
+        text: "【新高考通法·指对跨界拆分通法】题目中同时出现指数 $e^x$ 与对数 $ln x$ 混合项时，优先引入中轴线 $y = x$ 作为中间桥梁进行双向独立放缩。",
         importance: "gaokao",
       },
       {
-        text: "反函数几何对称：e^{x-1} 与 ln x + 1 互为反函数，关于直线 y = x 对称并在公共切点 (1,1) 处公切，形成完美双向夹逼包络。",
+        text: "反函数几何对称：e^{x-1} 与 ln x + 1 互为反函数，关于直线 y = x 对称并在公共切点 (1,1) 处公切，形成完美双向放缩包络。",
         importance: "core",
       },
       {
@@ -431,7 +433,7 @@ export function buildTranscendentalPanel(
         importance: "gaokao",
       },
       {
-        text: "充分必要两步闭环：先由相切求出必要条件临界参数 a，再利用辅助函数单调性或凹凸性证明该参数范围充分恒成立。",
+        text: "充分必要两步闭环：先由相切求出必要条件临界参数 a，再利用辅助函数的单调性或图象位置关系证明该参数范围充分恒成立。",
         importance: "core",
       },
     );
@@ -517,16 +519,16 @@ export function buildTranscendentalPanel(
         step: 3,
         title: "全局最值与二次上界闭环",
         detail: isQuad
-          ? "因此 $H(x) \\ge H(1) = 0$，即 $\\ln x \\le \\frac{x^2-1}{2}$；且当 $x>1$ 时 $\\frac{x^2-1}{2} \\le x-1$ 亦成立。"
+          ? "因此 $H(x) \\ge H(1) = 0$，即 $\\ln x \\le \\frac{x^2-1}{2}$ 在 $(0,+\\infty)$ 恒成立，等号当且仅当 $x=1$ 取得。"
           : "因此 $h(x) \\ge h(1) = 0$，即 $\\ln x \\le x - 1$ 在 $(0,+\\infty)$ 恒成立，等号当且仅当 $x=1$ 取得。",
         latex: isQuad
-          ? "\\ln x \\le \\frac{x^2-1}{2} \\le x - 1 \\quad (x>1)"
+          ? "\\ln x \\le \\frac{x^2-1}{2} \\quad (x=1 \\text{ 取等})"
           : "\\ln x \\le x - 1 \\quad (x=1 \\text{ 取等})",
         rubric: "采分点：最值判定与不等式结论（5分）",
       },
     ];
   } else if (mode === "chain") {
-    examAnchor = "新高考解答题 18 题压轴 · 指对跨界双向夹逼";
+    examAnchor = "新高考解答题 18 题压轴 · 指对跨界双向放缩";
     reasoningSteps = [
       {
         step: 1,
@@ -548,7 +550,7 @@ export function buildTranscendentalPanel(
       },
       {
         step: 3,
-        title: "连接中轴线实现链式夹逼",
+        title: "连接中轴线实现链式放缩",
         detail:
           "联立两式即得 $\\ln x + 1 \\le x \\le e^{x-1}$ 在 $x \\in (0,+\\infty)$ 上恒成立，三者在 $x=1$ 时同时取等。",
         latex: "\\ln x + 1 \\le x \\le e^{x-1} \\quad (x=1 \\text{ 取等})",
@@ -573,7 +575,7 @@ export function buildTranscendentalPanel(
       },
       {
         step: 2,
-        title: "充分性验证与凹凸性保证",
+        title: "充分性验证与图象位置保证",
         detail: isOverOrigin
           ? "当 $a \\le e$ 时，由 $e^x \\ge ex \\ge ax$ ($x>0$) 知不等式恒成立；当 $a > e$ 时割线穿过曲线必有两个交点，破坏恒成立。"
           : "当 $a \\le 1$ 时，$e^x \\ge x+1 \\ge ax+1$ 恒成立；当 $a > 1$ 时，由导数局部符号知在 $x<0$ 邻域内存在 $e^x < ax+1$。",
@@ -602,6 +604,6 @@ export function buildTranscendentalPanel(
     reasoningSteps,
     examAnchor,
     mnemonic:
-      "指数切线 x 加一，对数切线 x 减一；凹凸决定上与下，相切即是临界点。",
+      "指数切线 x 加一，对数切线 x 减一；图象位置定上与下，相切即是临界点。",
   };
 }

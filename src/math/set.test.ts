@@ -105,9 +105,9 @@ describe("set - 集合与常用逻辑纯数学计算", () => {
 
       expect(state.relation).toBe("intersect");
       expect(state.logicType).toBe("neither");
-      expect(state.logicRelationLatex).toContain(
-        "A \\cap B \\neq \\varnothing",
-      );
+      // 充要判据：A ⊄ B 且 B ⊄ A（"相交但不包含"不等于"有交集"）
+      expect(state.logicRelationLatex).toContain("A \\not\\subseteq B");
+      expect(state.logicRelationLatex).toContain("B \\not\\subseteq A");
     });
 
     it("8. A 与 B 相离: 既不充分也不必要条件", () => {

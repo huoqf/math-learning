@@ -178,7 +178,7 @@ export function buildProbabilityBayesPanel(
             color: MATH_COLORS.functionTransformed,
           },
           {
-            label: "★ 全概逆解真实具有特征率 p_real",
+            label: "★ 全概逆解真实具有特征率 $p_real$",
             symbol: "p_{\\text{real}}",
             value: warnerRes.isDegenerate
               ? "退化无法解出"
@@ -266,7 +266,7 @@ export function buildProbabilityBayesPanel(
         level: "core" as const,
       });
       scenarioGaokaoPoints.push({
-        text: "【高考工业大题标准答题规范】① 设 A_i 为“产品由第 i 车间生产”，B 为“抽到次品”；② 证明 A₁, A₂, A₃ 构成完备事件组；③ 写出全概公式并代入数值求和。",
+        text: "【高考工业大题标准答题规范】① 设 $A_i$ 为“产品由第 $i$ 车间生产”，$B$ 为“抽到次品”；② 证明 $A₁, A₂, A₃$ 构成完备事件组；③ 写出全概公式并代入数值求和。",
         importance: "gaokao" as const,
       });
     } else if (totalScenario === "balanced") {
@@ -349,11 +349,11 @@ export function buildProbabilityBayesPanel(
       gaokaoPoints: [
         ...scenarioGaokaoPoints,
         {
-          text: "【高考大题核心策略】第一步找到原因划分 A_i，第二步写出各分支条件概率 P(B|A_i)，第三步代入加权累加。",
+          text: "【高考大题核心策略】第一步找到原因划分 $A_i$，第二步写出各分支条件概率 $P(B|A_i)$，第三步代入加权累加。",
           importance: "gaokao",
         },
         {
-          text: "【画树状图求概率】树的第一层节点连线表示先验概率 P(A_i)，第二层连线表示条件概率 P(B|A_i)，路径相乘求联合概率 P(A_i B)。",
+          text: "【画树状图求概率】树的第一层节点连线表示先验概率 $P(A_i)$，第二层连线表示条件概率 $P(B|A_i)$，路径相乘求联合概率 $P(A_i B)$。",
           importance: "core",
         },
       ],
@@ -423,15 +423,15 @@ export function buildProbabilityBayesPanel(
       ],
       theorems: [
         {
-          name: "贝叶斯公式 (Bayes' Theorem)",
+          name: "贝叶斯公式（选学 · 教材拓展）",
           latex: `P(A_k|B) = \\frac{P(A_k B)}{P(B)} = \\frac{P(A_k)P(B|A_k)}{\\sum_{i=1}^n P(A_i)P(B|A_i)}`,
           condition: "已知结果 $B$ 发生，逆向推断特定原因 $A_k$ 的后验概率",
           prerequisites: [
             "$A_1, A_2, \\ldots, A_n$ 构成 $\\Omega$ 的完备划分",
             "$P(B) > 0$",
           ],
-          note: "分子是特定原因分支路径 $P(A_k B)$，分母是全概率求得的总结果 $P(B)$。",
-          level: "core",
+          note: "分子是特定原因分支路径 $P(A_k B)$，分母是全概率求得的总结果 $P(B)$。新课标正文只要求全概率公式，贝叶斯公式为选学拓展内容。",
+          level: "supplementary",
         },
         {
           name: isFactory
@@ -446,8 +446,8 @@ export function buildProbabilityBayesPanel(
       ],
       gaokaoPoints: [
         {
-          text: "【新高考通法·全概与贝叶斯求解 3 步法】①确定原因划分 A_i 与结果事件 B；②画出树状路径图，计算全概率分母 P(B) = ∑ P(A_i)P(B|A_i)；③将目标原因路径作分子，求出后验概率 P(A_k|B) = P(A_k B) / P(B)。",
-          importance: "gaokao",
+          text: "【选学拓展 · 全概与贝叶斯求解 3 步法】①确定原因划分 $A_i$ 与结果事件 $B$；②画出树状路径图，计算全概率分母 $P(B) = ∑ P(A_i)P(B|A_i)$；③将目标原因路径作分子，求出后验概率 $P(A_k|B) = P(A_k B) / P(B)$。",
+          importance: "extend",
         },
         {
           text: isFactory
@@ -495,7 +495,7 @@ export function buildProbabilityBayesPanel(
           ? "摸球替换模型"
           : markovPreset === "weather"
             ? "晴雨天气转移模型"
-            : "自定义马尔可夫链";
+            : "自定义状态转移递推（选学 · 拓展）";
 
   return {
     quantities: [
@@ -506,13 +506,13 @@ export function buildProbabilityBayesPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "自保持概率 P(S_{n+1}=1|S_n=1)",
+        label: "自保持概率 $P(S_{n+1}=1|S_n=1)$",
         symbol: "p_{11}",
         value: p11Val.toFixed(2),
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "跨转移概率 P(S_{n+1}=1|S_n=2)",
+        label: "跨转移概率 $P(S_{n+1}=1|S_n=2)$",
         symbol: "p_{21}",
         value: p21Val.toFixed(2),
         color: MATH_COLORS.paramSecondary,
@@ -556,7 +556,8 @@ export function buildProbabilityBayesPanel(
       {
         name: "【高考第 3 步】不动点法构造等比数列",
         latex: `p_{n+1} - p_\\infty = \\lambda (p_n - p_\\infty) \\quad (\\lambda = p_{11}-p_{21}, p_\\infty = \\frac{p_{21}}{1-\\lambda})`,
-        condition: "特征方程 $x = \\lambda x + p_{21}$ 的不动点解 $p_\\infty$",
+        condition:
+          "由递推式 $p_\\infty = \\lambda p_\\infty + p_{21}$ 解出的不动点 $p_\\infty$",
         note: markovRes.isDegenerate
           ? "公比 $\\lambda = 1$ 时为恒等数列（退化状态）"
           : `两边同减不动点得：$${markovRes.geometricLatex}$`,

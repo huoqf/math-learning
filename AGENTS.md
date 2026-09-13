@@ -68,12 +68,14 @@ $env:PATH="D:\node-v24;"+$env:PATH; npm run audit -- <path/to/feature>
 
 | 门禁检查项 | 自动化拦截标准 |
 |:---|:---|
-| **色彩与硬编码** | 严禁源码中直接出现 `#` 十六进制色值或 `rgb()`，必须走 `MATH_COLORS` |
+| **色彩与硬编码** | 严禁源码中直接出现 `#` 十六进制色值或 `rgb()`，必须走 `MATH_COLORS`。含 JSX 的 `fill="#..."` / `stroke="#..."` 与 LaTeX 的 `\color{#RRGGBB}{...}` 两类写法 |
 | **字体缩放** | SVG 标签内严禁裸 `fontSize={数字}`，必须经 `fontScale` 缩放 |
 | **控件纯净度** | `SelectGrid` 项必须为纯中文标题，严禁堆砌公式或参数值 |
 | **情景联动性** | 凡含 `<SelectGrid value={x}>`，`TipCard` / `useScenario` 依赖必须包含 `x` |
 | **架构纯洁性** | `src/math/` 禁止包含 React/DOM 引用；全库禁止 `BrowserRouter` |
-| **审计严格阻断** | `npm run audit:strict` 全库违规数必须为 0，任何存量/增量违规直接非零退出阻断构建 |
+| **审计严格阻断** | `npm run audit:strict` 默认扫描**全库 `src`**（含 `features` / `components` / `data` / `math` / `math3d`）。采用**存量基线**机制：仅"超出基线的增量违规"非零退出阻断构建，历史存量计入 `.audit-baseline.json` 提示不阻断；整改后用 `npm run audit:update-baseline` 下修基线 |
+| **超纲术语门禁** | `discipline/no-beyond-syllabus-terms` 对 `builders` / `registries` / `knowledgeTree` / `meta.ts` / `Animation.tsx` / `Page.tsx` / `Scene.tsx` 扫描超纲关键词（洛必达/麦克劳林/泰勒/琴生/凹凸/极点极线/克拉默/外积/叉积/夹逼/等价无穷小/上确界/紧致/无穷级数/数列极限/特征方程/马尔可夫链/卡方分布/概率密度函数/微元/定积分/极坐标/参数方程）。未标注拓展即 error 拦截；已声明 `importance: "extend"` 或「拓展 · 超出课标 / 选学」徽标的文件降级为 warning |
+| **学段边界一致性** | `knowledgeTree.test.ts` 强制：`importance === "extend"` 的节点标题必须含「拓展/选学/超出课标/竞赛」；`module`/`chapter` 含"拓展"的节点 `importance` 必须为 `"extend"`；`syllabus.status !== "正文"` 的节点必须标为 `extend` |
 | **TipCard设问质量** | 严禁“观察图形变化”等空泛词；设问必须包含“求范围/最值/证明/单调性/零点”等数学目标词 |
 | **推导链代数三部曲** | `reasoningSteps` 严禁孤立数字赋值，必须按「符号 $\to$ 解析式代入 $\to$ 结果」演绎；文本涉数学符号 100% 包裹 `$...$` |
 | **代数表达与逻辑严谨** | 严禁代数多项式出现机器浮点尾零（如 $1.00x$）与未化简系数（$1x$ 必须化简为 $x$）；几何从属严禁滥用 $\iff$ 伪充要；必须使用 `formatMathNumber` |

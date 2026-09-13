@@ -66,7 +66,7 @@ export function ShiftedPage() {
     const cTerm = Math.abs(c) < 1e-4 ? "" : c > 0 ? `+ ${colC}` : `- ${colC}`;
 
     return `y = ${aTerm} ${cTerm} ${fracTerm}`.replace(/\s+/g, " ");
-  }, [params.a, params.b, params.h, params.c]);
+  }, [params]);
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keys = ["a", "b", "h", "c", "x0"];

@@ -116,10 +116,10 @@ export default function SurfaceRelationAnimation() {
 
   // 按模式精准过滤参数
   const paramConfigs = useMemo<ParamConfig[]>(() => {
+    // 球坐标方位参数（tiltDeg/azimuthDeg 倾斜角与截面方位角）锁定为预设基准，退出可调面板
     const keysMap: Record<TeachingMode, string[]> = {
-      parallelJudge:
-        subType === "counterExample" ? ["zHeight", "tiltDeg"] : ["zHeight"],
-      parallelProp: ["zHeight", "azimuthDeg", "step"],
+      parallelJudge: ["zHeight"],
+      parallelProp: ["zHeight", "step"],
       perpJudge: ["planeRotDeg"],
       perpProp: subType === "dualPerp" ? [] : ["lineThetaDeg"],
       gaokaoModel:
@@ -320,6 +320,8 @@ export default function SurfaceRelationAnimation() {
           question:
             "由面面垂直性质定理得 PO ⊥ 底面 ABCD，以点 O 为坐标原点建立空间直角坐标系求解二面角。",
         };
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMode, subType, interactionMode]);
 
   return (

@@ -108,7 +108,7 @@ function buildSepBranch(
         value: "(0, 1)",
         color: MATH_COLORS.tangentLine,
         isInvariant: true,
-        invariantNote: "切线 e^x ≥ x + 1 在 x = 0 处等号恒成立",
+        invariantNote: "切线 $e^x ≥ x + 1$ 在 $x = 0$ 处等号恒成立",
       });
     }
   } else {
@@ -260,7 +260,7 @@ function buildSepBranch(
         name: "指数放缩与切线下界",
         latex: `e^x \\ge x + 1 \\quad (x = 0 \\text{ 处等号成立})`,
         level: "important",
-        prerequisites: ["切线 y = x+1 为 e^x 的下放缩界"],
+        prerequisites: ["切线 $y = x+1$ 为 $e^x$ 的下放缩界"],
       });
     }
   }
@@ -479,7 +479,7 @@ function buildDirectBranch(
           importance: "gaokao",
         },
         {
-          text: "端点效应：若 $f(x_0) = 0$，可先求 $f'(x_0) \\ge 0$ 获得参数 $a$ 的必要条件，再证明充分性。",
+          text: "端点效应（拓展技法）：若 $f(x_0) = 0$，可先求 $f'(x_0) \\ge 0$ 获得参数 $a$ 的必要条件，再证明充分性。",
           importance: "core",
         },
       ]

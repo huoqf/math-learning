@@ -14,7 +14,9 @@ export function buildProbabilityDistributionPanel(
   const meanVal = distResult ? distResult.mean.toFixed(3) : "0";
   const varVal = distResult ? distResult.variance.toFixed(3) : "0";
   const stdVal = distResult ? distResult.stdDev.toFixed(3) : "0";
-  const sumPVal = distResult ? distResult.sumP.toFixed(4) : "1.000";
+  const sumPVal = distResult
+    ? (distResult.rawSumP ?? distResult.sumP).toFixed(4)
+    : "1.000";
   const maxPVal = distResult ? distResult.maxP.toFixed(3) : "0";
 
   // 1. 二项分布 B(n, p) 专属看板
@@ -57,7 +59,7 @@ export function buildProbabilityDistributionPanel(
           color: MATH_COLORS.asymptote,
         },
         {
-          label: "峰值概率 P_max",
+          label: "峰值概率 $P_max$",
           symbol: "P_{max}",
           value: maxPVal,
           color: MATH_COLORS.barFill,
@@ -186,7 +188,7 @@ export function buildProbabilityDistributionPanel(
               },
             ]
           : [],
-      mnemonic: "无放回抽超几何，分母总组合 C_N^n，期望等于 n 乘占比。",
+      mnemonic: "无放回抽超几何，分母总组合 $C_N^n$，期望等于 $n$ 乘占比。",
     };
   }
 
@@ -231,7 +233,7 @@ export function buildProbabilityDistributionPanel(
           color: MATH_COLORS.tangentLine,
         },
         {
-          label: "★ 方差修正系数 (N-n)/(N-1)",
+          label: "★ 方差修正系数 (N-n)/(N-1)（拓展）",
           symbol: "\\frac{N-n}{N-1}",
           value: factor.toFixed(3),
           color: MATH_COLORS.function,
@@ -245,16 +247,16 @@ export function buildProbabilityDistributionPanel(
       ],
       theorems: [
         {
-          name: "超几何分布与二项分布方差关系定理",
+          name: "超几何分布与二项分布方差关系定理（拓展 · 超出课标）",
           latex: `D(X_{\\text{超}}) = n p (1-p) \\cdot \\frac{N-n}{N-1} = D(X_{\\text{二项}}) \\cdot \\frac{N-n}{N-1}`,
-          note: "不放回抽样的方差恒小于或等于有放回抽样的方差；当 N 很大时，修正系数 (N-n)/(N-1) 趋近于 1。",
-          level: "core",
+          note: "不放回抽样的方差恒小于或等于有放回抽样的方差；当 N 很大时，修正系数 (N-n)/(N-1) 趋近于 1。新课标正文只要求超几何分布的期望，方差为选学拓展内容。",
+          level: "supplementary",
         },
         {
-          name: "大样本二项逼近极限定理 (N → ∞)",
+          name: "大样本二项逼近（拓展 · 超出课标）",
           latex: `\\lim_{N \\to \\infty} P(X_{\\text{超}} = k) = P(X_{\\text{二项}} = k) = C_n^k p^k (1-p)^{n-k}`,
-          note: "当总体容量 N 远大于抽取样本数 n（通常 N ≥ 10n）时，不放回抽样可作为二项分布近似处理。",
-          level: "core",
+          note: "当总体容量 N 远大于抽取样本数 n（通常 N ≥ 10n）时，不放回抽样可作为二项分布近似处理。新课标正文不作极限要求，该逼近结论用于理解超几何向二项转化的直觉。",
+          level: "supplementary",
         },
       ],
       gaokaoPoints: [
@@ -339,7 +341,7 @@ export function buildProbabilityDistributionPanel(
           importance: "gaokao",
         },
         {
-          text: "决策分界点探究：新高考常要求通过不等式 E(A) < E(B) 解出临界概率阈值（如本例中的 p_0），并对 p 分段讨论最优策略。",
+          text: "决策分界点探究：新高考常要求通过不等式 $E(A) < E(B)$ 解出临界概率阈值（如本例中的 $p_0$），并对 $p$ 分段讨论最优策略。",
           importance: "core",
         },
       ],
@@ -450,13 +452,13 @@ export function buildProbabilityDistributionPanel(
         color: MATH_COLORS.asymptote,
       },
       {
-        label: "概率和 ∑p_i (规范性)",
+        label: "概率和 $∑p_i$ (规范性)",
         symbol: "\\sum p_i",
         value: sumPVal,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "最大概率峰值 P_max",
+        label: "最大概率峰值 $P_max$",
         symbol: "P_{max}",
         value: maxPVal,
         color: MATH_COLORS.paramSecondary,
@@ -484,7 +486,7 @@ export function buildProbabilityDistributionPanel(
     ],
     gaokaoPoints: [
       {
-        text: "高考解答题核心考法：首先列出分布列规范表格（第一行 X，第二行 P），其次校验 ∑p_i = 1，最后代入公式求期望 E(X) 与方差 D(X)。",
+        text: "高考解答题核心考法：首先列出分布列规范表格（第一行 $X$，第二行 $P$），其次校验 $∑p_i = 1$，最后代入公式求期望 $E(X)$ 与方差 $D(X)$。",
         importance: "gaokao",
       },
       {
@@ -500,7 +502,16 @@ export function buildProbabilityDistributionPanel(
               level: "danger",
             },
           ]
-        : [],
+        : distResult &&
+            distResult.rawSumP !== undefined &&
+            Math.abs(distResult.rawSumP - 1) > 1e-6
+          ? [
+              {
+                text: `当前各柱概率之和为 $\\sum p_i = ${distResult.rawSumP.toFixed(3)} \\ne 1$，画布已按比例归一化显示。离散型随机变量必须满足 $p_i \\ge 0$ 且 $\\sum p_i = 1$，请调整柱高使概率之和恰为 1。`,
+                level: "danger",
+              },
+            ]
+          : [],
     mnemonic: "分布列出和为一，均值支点平衡处，方差拉伸加平移。",
   };
 }

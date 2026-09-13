@@ -14,11 +14,11 @@ export const bayesNode: KnowledgeNode = {
 
 export const markovNode: KnowledgeNode = {
   id: "know-probability-markov",
-  title: "全概率公式与马尔可夫链状态转移递推",
-  labTitle: "全概与马尔可夫链递推实验室",
+  title: "全概率公式与马尔可夫链状态转移递推（选学 · 拓展）",
+  labTitle: "全概与马尔可夫链递推实验室（选学 · 拓展）",
   chapter: "概率与统计",
   module: "概率压轴",
-  importance: "hard",
+  importance: "extend",
   animationIds: ["anim-probability-markov"],
   prerequisites: ["know-probability-bayes"],
   route: "/probability-markov",

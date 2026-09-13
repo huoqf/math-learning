@@ -4,6 +4,8 @@
  * 包含：坐标平移变换、联立齐次化二次方程系数推导、韦达定理理论值与实测值校验、退化分析
  */
 
+import { formatMathNumber } from "@/utils/mathFormat";
+
 export type CurveType = "ellipse" | "hyperbola";
 export type StudyMode = "origin" | "shift" | "asymmetric";
 
@@ -90,13 +92,18 @@ export function computeConicHomogenization(params: {
     curveType,
     studyMode,
     a,
-    b,
     P,
     lineA,
     lineB,
     lambda = 1,
     mu = 1,
   } = params;
+
+  // 参数安全契约：椭圆必须满足 a > b > 0，否则钳制 b 防止滑出非法/退化椭圆
+  const b =
+    curveType === "ellipse"
+      ? Math.min(params.b, Math.max(a - 0.01, 0.01))
+      : params.b;
 
   // 1. 曲线符号 (椭圆: x^2/a^2 + y^2/b^2 = 1, 双曲线: x^2/a^2 - y^2/b^2 = 1)
   const signY = curveType === "ellipse" ? 1 : -1;
@@ -223,9 +230,9 @@ export function computeConicHomogenization(params: {
   const lineEqLatex =
     studyMode === "origin"
       ? `${formatCoeff(lineA)}x ${formatSign(lineB)}${formatCoeff(Math.abs(lineB))}y = 1`
-      : `${formatCoeff(lineA)}(x ${formatSign(-pX)}${Math.abs(pX).toFixed(1)}) ${formatSign(lineB)}${formatCoeff(Math.abs(lineB))}(y ${formatSign(-pY)}${Math.abs(pY).toFixed(1)}) = 1`;
+      : `${formatCoeff(lineA)}(x ${formatSign(-pX)}${formatMathNumber(Math.abs(pX))}) ${formatSign(lineB)}${formatCoeff(Math.abs(lineB))}(y ${formatSign(-pY)}${formatMathNumber(Math.abs(pY))}) = 1`;
 
-  const homoEqLatex = `${homoC.toFixed(2)} k^2 ${formatSign(homoB)}${Math.abs(homoB).toFixed(2)} k ${formatSign(homoA)}${Math.abs(homoA).toFixed(2)} = 0`;
+  const homoEqLatex = `${formatCoeff(homoC)} k^2 ${formatSign(homoB)}${formatCoeff(Math.abs(homoB))} k ${formatSign(homoA)}${formatCoeff(Math.abs(homoA))} = 0`;
 
   return {
     curveType,
@@ -280,7 +287,7 @@ export function getLeftVertexPerpendicularFixedPoint(
 function formatCoeff(num: number): string {
   const val = Math.abs(num);
   if (Math.abs(val - 1) < 1e-4) return "";
-  return val.toFixed(2);
+  return formatMathNumber(val);
 }
 
 function formatSign(num: number): string {

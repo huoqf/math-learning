@@ -168,12 +168,16 @@ export function SetAnimation() {
               question={
                 activeTab === "venn" ? (
                   <span>
-                    观察交、并、补、差的区域覆盖与样本点{" "}
-                    <KatexFormula formula="P" mode="inline" /> 的归属变化。
+                    拖拽样本点 <KatexFormula formula="P" mode="inline" />{" "}
+                    改变其归属，判断 P 与 A、B
+                    的从属关系，并分别写出交、并、补、差四种运算覆盖的区域。
                   </span>
                 ) : (
                   <span>
-                    拖拽圆心与半径改变集合大小，观察充分与必要条件的转化。
+                    拖拽圆心与半径改变集合大小，判断{" "}
+                    <KatexFormula formula="A \subseteq B" mode="inline" /> 或{" "}
+                    <KatexFormula formula="B \subseteq A" mode="inline" />{" "}
+                    或互不包含，并求出此时 p 是 q 的什么条件。
                   </span>
                 )
               }

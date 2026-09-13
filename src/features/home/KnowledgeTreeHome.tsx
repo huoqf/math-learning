@@ -34,13 +34,14 @@ const SECTION_MAP: Record<string, "algebra" | "geometry" | "trig_prob"> = {
   立体几何与空间向量: "geometry",
   解析几何: "geometry",
   三角函数: "trig_prob",
+  解三角形: "trig_prob",
   概率与统计: "trig_prob",
 };
 
-// 章节到新高考六大专题的健壮回退映射
+// 章节到新高考专题的健壮回退映射
 const CHAPTER_TO_GAOKAO_TOPIC: Record<string, GaokaoTopicKey> = {
-  集合与常用逻辑: "func_derivative",
-  不等式: "func_derivative",
+  集合与常用逻辑: "algebra_basics",
+  不等式: "algebra_basics",
   函数概念与性质: "func_derivative",
   导数及其应用: "func_derivative",
   数列: "sequence_series",
@@ -48,6 +49,7 @@ const CHAPTER_TO_GAOKAO_TOPIC: Record<string, GaokaoTopicKey> = {
   立体几何与空间向量: "solid_geometry",
   解析几何: "conic_geometry",
   三角函数: "vector_triangle",
+  解三角形: "vector_triangle",
   概率与统计: "probability_statistics",
 };
 
@@ -145,7 +147,8 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
     key: "sequence_series",
     title: "数列递推与新定义探索",
     badge: "19 题压轴探索 · 17分",
-    description: "不动点特征方程构造等比、错位裂项求和与高阶新定义数学探究",
+    description:
+      "不动点迭代构造等比、特征根法、错位裂项求和与高阶新定义数学探究",
     icon: Layers,
     gradient: "from-cyan-500 to-sky-600",
     borderLight: "border-cyan-200",
@@ -277,9 +280,10 @@ export function KnowledgeTreeHome() {
     return result;
   }, []);
 
-  // 4. 新高考六大专题聚合
+  // 4. 新高考专题聚合（六大攻坚专题 + 代数基础工具）
   const gaokaoGroupedData = useMemo(() => {
     const result: Record<GaokaoTopicKey, KnowledgeNode[]> = {
+      algebra_basics: [],
       func_derivative: [],
       conic_geometry: [],
       solid_geometry: [],
@@ -292,7 +296,7 @@ export function KnowledgeTreeHome() {
       const topicKey =
         node.gaokaoTopic ||
         CHAPTER_TO_GAOKAO_TOPIC[node.chapter] ||
-        "func_derivative";
+        "algebra_basics";
       result[topicKey].push(node);
     });
 
@@ -347,6 +351,16 @@ export function KnowledgeTreeHome() {
                     考频 {"★".repeat(node.examWeight)}
                   </span>
                 )}
+                {node.syllabus && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold bg-neutral-50 text-neutral-600 border border-neutral-200">
+                    {node.syllabus.book}
+                  </span>
+                )}
+                {node.syllabus && node.syllabus.status !== "正文" && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                    {node.syllabus.status}
+                  </span>
+                )}
                 <span className="text-[10px] px-1.5 py-0.5 rounded font-bold border border-success-200 bg-success-50 text-success-700">
                   实验室已开放
                 </span>
@@ -369,7 +383,8 @@ export function KnowledgeTreeHome() {
               )}
 
               <p className="text-[10px] text-neutral-400 mt-1.5">
-                章节模块：{node.chapter} · {node.module}
+                教材定位：{node.syllabus?.book ?? "—"} · {node.chapter} ·{" "}
+                {node.module}
               </p>
             </div>
             <div className="w-6 h-6 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center group-hover:bg-primary-600 group-hover:text-white transition-colors shrink-0 self-center">
@@ -395,6 +410,11 @@ export function KnowledgeTreeHome() {
                     {qCategory.label}
                   </span>
                 )}
+                {node.syllabus && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border border-neutral-200 bg-neutral-100 text-neutral-500">
+                    {node.syllabus.book}
+                  </span>
+                )}
                 <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border border-neutral-200 bg-neutral-100 text-neutral-500">
                   规划中
                 </span>
@@ -408,7 +428,7 @@ export function KnowledgeTreeHome() {
                 </div>
               )}
               <p className="text-[10px] text-neutral-400 mt-1">
-                模块：{node.module}
+                教材定位：{node.syllabus?.book ?? "—"} · 模块：{node.module}
               </p>
             </div>
             <div className="w-5 h-5 rounded-full border border-neutral-200 text-neutral-400 flex items-center justify-center shrink-0 self-center bg-white">

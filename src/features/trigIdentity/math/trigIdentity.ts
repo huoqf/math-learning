@@ -365,7 +365,7 @@ export function calculateInduction(
         "\\cos\\left(\\frac{\\pi}{2} - \\alpha\\right) = \\sin\\alpha";
       tanFormulaTex =
         "\\tan\\left(\\frac{\\pi}{2} - \\alpha\\right) = \\frac{1}{\\tan\\alpha}";
-      step1Name = "k=1 为奇数 ➔ 奇变：正余弦互换 (sin↔cos, tan↔cot)";
+      step1Name = "k=1 为奇数 ➔ 奇变：正余弦互换 (sin↔cos, tan↔1/tan)";
       step2Sign = "设 α 为锐角，π/2-α 落在第 Ⅰ 象限 ➔ 符号全为正 (+)";
       step3Verify = "动点 P(x, y) 关于 y=x 对称变为 P'(y, x)，横纵坐标对调";
       break;

@@ -461,7 +461,7 @@ export function buildConstantDoublePanel(
     selectedLogic === "same_var"
       ? [
           {
-            text: "同自变量恒成立必用【差函数法】：当自变量 x 限制在重合区间且为同一个动点时，严禁拆成 f_min ≥ g_max，只需构造 h(x) = f(x) - g(x) 并求 h(x)_min ≥ 0。",
+            text: "同自变量恒成立必用【差函数法】：当自变量 $x$ 限制在重合区间且为同一个动点时，严禁拆成 $f_min ≥ g_max$，只需构造 $h(x) = f(x) - g(x)$ 并求 $h(x)_min ≥ 0$。",
             importance: "gaokao",
           },
           {

@@ -172,7 +172,7 @@ s^2 &\\approx \\sum_{i=1}^k (x_{\\text{mid}, i} - \\bar{x})^2 \\cdot f_i
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "前组累积频率 F_prev",
+          label: "前组累积频率 $F_prev$",
           value: `${(prevCum * 100).toFixed(1)}%`,
           color: MATH_COLORS.paramTertiary,
         },
@@ -189,7 +189,7 @@ s^2 &\\approx \\sum_{i=1}^k (x_{\\text{mid}, i} - \\bar{x})^2 \\cdot f_i
       ],
       theorems: [
         {
-          name: "百分位数线性插值公式 (新课标标准)",
+          name: "频率分布直方图中的百分位数近似算法（线性插值）",
           latex: `\\begin{aligned}
 y_p &= a + \\frac{\\color{${MATH_COLORS.paramPrimary}}{\\frac{p}{100} - F_{\\text{prev}}}}{\\color{${MATH_COLORS.paramSecondary}}{h}} \\\\
 &= a + \\frac{\\frac{p}{100} - F_{\\text{prev}}}{f_i} \\cdot d
@@ -199,7 +199,7 @@ y_p &= a + \\frac{\\color{${MATH_COLORS.paramPrimary}}{\\frac{p}{100} - F_{\\tex
             "$F_{\\text{prev}}$ 为此前各组累积频率",
             "$h = \\frac{f_i}{d}$ 为该组矩形高度（$d$ 为组距，$f_i$ 为该组频率）",
           ],
-          note: "累积频率达到 $p\\%$ 时，在该组内按矩形面积线性插值补足所需频率。",
+          note: "在已分组的频率分布直方图中，按矩形面积线性插值以估算横坐标；此为直方图近似法。课标原义是在有序原始数据上按 $i = n\\cdot\\frac{p}{100}$ 是否取整直接定位第 $p$ 百分位数，两者在数据已分组时才需用本式估算。",
           level: "core",
         },
         {
@@ -312,7 +312,7 @@ s^2 &= w_1 s_1^2 + w_2 s_2^2 + w_1 w_2 (\\bar{x}_1 - \\bar{x}_2)^2
           highlight: "positive",
         },
         {
-          label: "• 组内方差贡献 ∑w_i s_i²",
+          label: "• 组内方差贡献 $∑w_i s_i²$",
           value: `${intraVar.toFixed(2)} (${((intraVar / Math.max(0.1, stratResult.totalVar)) * 100).toFixed(0)}%)`,
           color: MATH_COLORS.function,
         },

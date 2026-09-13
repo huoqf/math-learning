@@ -19,6 +19,13 @@ export const styleTokensRules = [
             message: '禁止硬编码 Hex 颜色，必须使用 MATH_COLORS.* 或 CANVAS_COLORS.*',
             snippet: line.trim(),
           });
+        } else if (/\\color\{#[0-9a-fA-F]{3,8}\}/.test(line)) {
+          // LaTeX 内联着色同样受色彩 Token 约束：\\color{#EF4444}{a} → \\color{${MATH_COLORS.paramPrimary}}{a}
+          issues.push({
+            lineNum: idx + 1,
+            message: '禁止在 LaTeX 中硬编码 Hex 颜色 (\\color{#RRGGBB})，必须使用 ${MATH_COLORS.*} 色彩 Token',
+            snippet: line.trim(),
+          });
         }
       });
       return issues;

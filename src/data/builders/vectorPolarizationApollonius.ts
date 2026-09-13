@@ -36,7 +36,7 @@ export function buildVectorPolarizationApolloniusPanel(
   let examAnchor = "";
 
   if (studyMode === "polarization") {
-    examAnchor = "高考核心技巧 · 向量极化恒等式与中线降维秒杀";
+    examAnchor = "拓展专题 · 向量极化恒等式与中线降维";
     const res = calcPolarizationIdentity(pointX, pointY, bcLength);
 
     quantities.push(
@@ -99,7 +99,7 @@ export function buildVectorPolarizationApolloniusPanel(
       },
     );
   } else if (studyMode === "apollonius") {
-    examAnchor = "解析几何母题 · 阿波罗尼斯圆轨迹方程与内外分点";
+    examAnchor = "拓展专题 · 阿波罗尼斯圆轨迹方程与内外分点";
     const res = calcApolloniusCircle(bcLength, lambda, pointAngle);
     const halfD = bcLength / 2;
 
@@ -209,7 +209,7 @@ export function buildVectorPolarizationApolloniusPanel(
     }
   } else {
     // combined 模式
-    examAnchor = "新高考压轴母题 · 极化恒等式 × 阿氏圆综合求最值";
+    examAnchor = "拓展专题 · 极化恒等式 × 阿氏圆综合求最值";
     const res = calcCombinedModel(bcLength, lambda, pointAngle);
 
     quantities.push(
@@ -316,7 +316,7 @@ export function buildVectorPolarizationApolloniusPanel(
           "$M$ 为线段 $BC$ 的中点，$AM$ 为三角形中线",
           "将双矢量数量积完全转化为单线段中线长 $|AM|$ 的最值问题",
         ],
-        level: "core",
+        level: "supplementary",
       },
       {
         name: "数量积正负号几何判据 (钝角/直角/锐角)",
@@ -326,18 +326,18 @@ export function buildVectorPolarizationApolloniusPanel(
           "直角三角形时中线等于斜边一半，数量积为零",
           "中线长小于半底长对应钝角三角形，数量积为负",
         ],
-        level: "important",
+        level: "supplementary",
       },
     );
 
     gaokaoPoints.push(
       {
         text: "极化恒等式核心通法：在解非坐标系下的向量数量积题目时，只要题设包含两定点一动点，立刻连结两定点中点 $M$！将 $\\vec{AB} \\cdot \\vec{AC}$ 化为 $|AM|^2 - |BM|^2$ 实现变量降维。",
-        importance: "gaokao",
+        importance: "extend",
       },
       {
         text: "数形结合定最值：底边定长时 $|\vec{BM}|$ 恒为定值，数量积最值完全等价于中线长 $|\vec{AM}|$ 的几何极值，常与圆的切线、二次函数极值或抛物线轨迹联立考察。",
-        importance: "core",
+        importance: "extend",
       },
     );
   } else if (studyMode === "apollonius") {
@@ -350,7 +350,7 @@ export function buildVectorPolarizationApolloniusPanel(
           "平面内到两定点 $A, B$ 的距离之比为常数 $\\lambda (\\lambda \\neq 1)$ 的动点 $P$ 的轨迹为圆",
           "圆心 $O_A = \\left(\\frac{c(\\lambda^2+1)}{\\lambda^2-1}, 0\\right)$，半径 $R_A = \\frac{2c\\lambda}{|\\lambda^2-1|}$",
         ],
-        level: "core",
+        level: "supplementary",
       },
       {
         name: "角平分线与直径正交定理 (初高中衔接)",
@@ -359,18 +359,18 @@ export function buildVectorPolarizationApolloniusPanel(
           "内分点 $D$ 与外分点 $E$ 分别为 $\\angle APB$ 的内角与外角平分线端点",
           "互补两角的一半相加恒为直角，故 $DE$ 必为阿波罗尼斯圆的直径",
         ],
-        level: "important",
+        level: "supplementary",
       },
     );
 
     gaokaoPoints.push(
       {
         text: "阿波罗尼斯圆速求通法：距离比 $\\lambda \\neq 1$ 轨迹必然是圆！圆心在两定点连线上，直径两端点即为内分点 $D$ 和外分点 $E$，由 $x_D = \\frac{c(\\lambda-1)}{\\lambda+1}, x_E = \\frac{c(\\lambda+1)}{\\lambda-1}$ 快速口算圆心与半径。",
-        importance: "gaokao",
+        importance: "extend",
       },
       {
         text: "退化临界防坑防漏：当 $\\lambda = 1.0$ 时两定点距离相等，轨迹退化为线段 $AB$ 的垂直平分线，属于新高考多选题常见分类讨论临界陷阱。",
-        importance: "hard",
+        importance: "extend",
       },
     );
   } else {
@@ -382,7 +382,7 @@ export function buildVectorPolarizationApolloniusPanel(
           "动点 $P$ 在阿波罗尼斯圆上运动，$M$ 为定线段 $AB$ 的中点",
           "双矢量数量积完全转化为单线段中线长 $|PM|$ 的取值范围问题",
         ],
-        level: "core",
+        level: "supplementary",
       },
       {
         name: "极化恒等式 × 阿圆最值定理 (新高考综合推论)",
@@ -392,18 +392,18 @@ export function buildVectorPolarizationApolloniusPanel(
           "当 $P, M, O_A$ 三点共线时，中线长 $|PM|$ 取得最值",
           "最小值对应圆内侧交点（内分点 $D$），最大值对应圆外侧交点（外分点 $E$）",
         ],
-        level: "core",
+        level: "supplementary",
       },
     );
 
     gaokaoPoints.push(
       {
         text: "双剑合璧压轴秒杀：求阿圆上动点 $P$ 到两定点 $A, B$ 的数量积 $\\vec{PA} \\cdot \\vec{PB}$ 取值范围，先算圆心距 $d_{OM} = |x_O|$，则最大中线为 $d_{OM} + R$，最小中线为 $|d_{OM} - R|$，代入极化公式即可一步秒杀。",
-        importance: "gaokao",
+        importance: "extend",
       },
       {
         text: "正交垂直取等特征：当 $\\vec{PA} \\cdot \\vec{PB} = 0$ 时，三角形 $PAB$ 为直角三角形，动点 $P$ 落在以 $AB$ 为直径的圆与阿氏圆的交点上（$|PM| = c$）。",
-        importance: "core",
+        importance: "extend",
       },
     );
   }

@@ -41,11 +41,13 @@ export interface FoldingResult {
  */
 export function calculateRightTrapezoidFolding(
   a: number,
-  b: number,
+  bRaw: number,
   h: number,
   alphaDeg: number,
 ): FoldingResult {
   const alphaRad = (alphaDeg * Math.PI) / 180;
+  // 参数安全契约：直角梯形必须满足 0 < b < a，否则钳制 b 防止 D'E = a - b 变为负值导致几何崩坏
+  const b = Math.min(bRaw, Math.max(a - 0.01, 0.01));
   const lenED = a - b;
 
   const A: Vec3 = { x: 0, y: 0, z: 0 };

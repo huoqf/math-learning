@@ -533,8 +533,7 @@ export function calculateIndependenceTest(
   const isSampleLargeEnough = n >= 40;
   const isExpectedEnough = eA >= 5 && eB >= 5 && eC >= 5 && eD >= 5;
 
-  let confidenceText =
-    "没有充分理由推翻零假设（接受无关联原假设，不能认为两变量有关联）";
+  let confidenceText = "没有充分理由推翻零假设（不能认为两变量有关联）";
   if (p999) {
     confidenceText = "有 99.9% 以上的把握认为两个分类变量有关联 (α = 0.001)";
   } else if (p99) {
@@ -870,6 +869,6 @@ export const INDEPENDENCE_PRESETS = [
     conditionDesc:
       "完全独立理论样本：两分类组各 $100$ 个样本，对应特征发生频数完全对称相等（各 $50$ 个，频率均为 $50\\%$），交叉积差 $ad - bc = 0$，总样本量 $n=200$。",
     questionDesc:
-      "验证当两分类变量完全独立时，条件频率落差 $\\Delta p = 0$，卡方统计量 $\\chi^2 = 0$，接受零假设 $H_0$。",
+      "探究：当两分类组的条件频率落差 $\\Delta p = 0$ 时，卡方统计量 $\\chi^2$ 取何值？据此说明此时能否推断两变量有关联（提示：χ² 越小，越没有充分理由推翻独立假设）。",
   },
 ];

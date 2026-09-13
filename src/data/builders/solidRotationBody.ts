@@ -407,7 +407,7 @@ export function buildRotationBodyPanel(
         name: "球表面积与体积公式",
         latex: `S = 4\\pi \\color{${MATH_COLORS.paramPrimary}}{R}^2,\\; V = \\frac{4}{3}\\pi \\color{${MATH_COLORS.paramPrimary}}{R}^3`,
         level: "core",
-        note: "导数微元关系：dV/dR = 4πR² = S（球体由无数薄球壳微元积分累加）",
+        note: "球体积与表面积公式均直接给出使用（推导不属高中课标要求）",
       },
       {
         name: "球面距离（大圆劣弧）定理",

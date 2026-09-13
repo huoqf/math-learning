@@ -239,10 +239,13 @@ export function CompositeAnimation() {
         ),
         questionNode: (
           <span>
-            拖动自变量动点 <KatexFormula formula="x" mode="inline" />
-            ，观察中间量 <KatexFormula formula="u = g(x)" mode="inline" />{" "}
-            与终值 <KatexFormula formula="y = f(u)" mode="inline" />{" "}
-            的单调方向，如何运用“同增异减”确定整体单调区间？
+            比较中间量 <KatexFormula formula="u = g(x)" mode="inline" /> 与终值{" "}
+            <KatexFormula formula="y = f(u)" mode="inline" />{" "}
+            的单调方向，运用“同增异减”确定复合函数{" "}
+            <KatexFormula formula="y = f(g(x))" mode="inline" />{" "}
+            的单调区间，并说明为何必须保证{" "}
+            <KatexFormula formula="u = g(x)" mode="inline" /> 的值域落在{" "}
+            <KatexFormula formula="f" mode="inline" /> 的定义域内。
           </span>
         ),
       };

@@ -89,7 +89,7 @@ export function SequenceGeometricExponentialScene({
             fill={MATH_COLORS.sequenceHighlight}
             fontWeight="bold"
           >
-            极限和 S∞ = {limitSum.toFixed(2)}
+            递缩和 S∞（拓展） = {limitSum.toFixed(2)}
           </text>
         </g>
       )}

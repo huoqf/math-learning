@@ -284,13 +284,13 @@ export function buildAdvancedSpherePanel(
         color: MATH_COLORS.primary,
       },
       {
-        label: "理论最大体积 V_max",
+        label: "理论最大体积 $V_max$",
         symbol: "V_{\\max}",
         value: Number(res.maxVolume.toFixed(2)),
         color: MATH_COLORS.accent,
       },
       {
-        label: "极值高 h_opt",
+        label: "极值高 $h_opt$",
         symbol: "h_{\\text{opt}}",
         value: Number(res.optimalH.toFixed(2)),
         color: MATH_COLORS.paramTertiary,
@@ -317,7 +317,7 @@ export function buildAdvancedSpherePanel(
     });
 
     gaokaoPoints.push({
-      text: "【立几与导数交汇大题】球内接柱体与锥体的体积极值是高考微积分实际应用常考模型。圆柱最大体积对应高 h = 2√3/3 R；圆锥最大体积对应高 h = 4/3 R。",
+      text: "【立几与导数交汇大题】球内接柱体与锥体的体积极值是立体几何与导数交汇的常考模型。圆柱最大体积对应高 h = 2√3/3 R；圆锥最大体积对应高 h = 4/3 R。",
       importance: "gaokao",
     });
 

@@ -186,7 +186,7 @@ export function calcLHopital(xCurr: number): LHopitalCalcResult {
 }
 
 /**
- * 泰勒多项式拟合计算结果 (麦克劳林级数截断 x0 = 0，紧扣新高考核心)
+ * 泰勒多项式拟合计算结果 (麦克劳林级数截断 x0 = 0，属拓展内容，仅作命题背景理解)
  */
 export interface TaylorCalcResult {
   baseType: TaylorBaseType;

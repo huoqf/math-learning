@@ -13,11 +13,11 @@ export const nikeStandardNode: KnowledgeNode = {
   id: "know-func-hook",
   title: "对勾函数 y=ax+b/x 基本性质",
   labTitle: "对勾函数实验室",
-  chapter: "函数概念与性质",
-  module: "特殊模型函数",
+  chapter: "不等式",
+  module: "基本不等式",
   importance: "gaokao",
   animationIds: ["anim-nike-standard", "anim-nike"],
-  prerequisites: ["know-func-properties"],
+  prerequisites: ["know-ineq-basic"],
   route: "/nike-standard",
 };
 
@@ -25,11 +25,11 @@ export const nikeAmgmNode: KnowledgeNode = {
   id: "know-nike-amgm",
   title: "均值不等式与对勾函数",
   labTitle: "均值不等式实验室",
-  chapter: "函数概念与性质",
-  module: "特殊模型函数",
+  chapter: "不等式",
+  module: "基本不等式",
   importance: "gaokao",
   animationIds: ["anim-nike-amgm"],
-  prerequisites: ["know-func-properties"],
+  prerequisites: ["know-ineq-basic"],
   route: "/nike-amgm",
 };
 
@@ -37,11 +37,11 @@ export const nikeShiftedNode: KnowledgeNode = {
   id: "know-nike-shifted",
   title: "平移对勾函数与双曲型图像",
   labTitle: "平移双曲线实验室",
-  chapter: "函数概念与性质",
-  module: "特殊模型函数",
+  chapter: "不等式",
+  module: "基本不等式",
   importance: "gaokao",
   animationIds: ["anim-nike-shifted"],
-  prerequisites: ["know-func-properties"],
+  prerequisites: ["know-ineq-basic", "know-func-properties"],
   route: "/nike-shifted",
 };
 

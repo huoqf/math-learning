@@ -4,6 +4,7 @@
  */
 
 import type { ParamMeta } from "@/data/types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   a: 1.0,
@@ -17,13 +18,13 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "定点 A 坐标",
-    labelFormula: "\\text{定点 } A(\\color{#EF4444}{a})",
+    labelFormula: `\\text{定点 } A(\\color{${MATH_COLORS.paramPrimary}}{a})`,
     defaultValue: 1.0,
     min: -5.0,
     max: 5.0,
     step: 0.5,
     description: "数轴上基准定点 A 的坐标",
-    descriptionFormula: "\\text{数轴基准定点 } A(\\color{#EF4444}{a})",
+    descriptionFormula: `\\text{数轴基准定点 } A(\\color{${MATH_COLORS.paramPrimary}}{a})`,
     importance: "core",
     group: "几何基准定点",
     marks: [{ value: 0, label: "原点 (0)", labelFormula: "a = 0" }],
@@ -31,13 +32,13 @@ export const paramMeta: Record<string, ParamMeta> = {
   b: {
     key: "b",
     label: "定点 B 坐标",
-    labelFormula: "\\text{定点 } B(\\color{#D97706}{b})",
+    labelFormula: `\\text{定点 } B(\\color{${MATH_COLORS.paramSecondary}}{b})`,
     defaultValue: 4.0,
     min: -5.0,
     max: 5.0,
     step: 0.5,
     description: "数轴上第二个基准定点 B 的坐标",
-    descriptionFormula: "\\text{数轴基准定点 } B(\\color{#D97706}{b})",
+    descriptionFormula: `\\text{数轴基准定点 } B(\\color{${MATH_COLORS.paramSecondary}}{b})`,
     importance: "core",
     group: "几何基准定点",
     marks: [{ value: 0, label: "原点 (0)", labelFormula: "b = 0" }],
@@ -45,13 +46,13 @@ export const paramMeta: Record<string, ParamMeta> = {
   c: {
     key: "c",
     label: "单绝对值半径",
-    labelFormula: "\\text{半径 } \\color{#059669}{c}",
+    labelFormula: `\\text{半径 } \\color{${MATH_COLORS.paramTertiary}}{c}`,
     defaultValue: 2.5,
     min: 0.0,
     max: 6.0,
     step: 0.5,
     description: "单绝对值不等式距离阈值",
-    descriptionFormula: "\\text{距离阈值 } \\color{#059669}{c} \\ge 0",
+    descriptionFormula: `\\text{距离阈值 } \\color{${MATH_COLORS.paramTertiary}}{c} \\ge 0`,
     importance: "core",
     group: "不等式比较阈值",
     marks: [
@@ -66,13 +67,13 @@ export const paramMeta: Record<string, ParamMeta> = {
   m: {
     key: "m",
     label: "常数线阈值",
-    labelFormula: "\\text{常数线 } y = \\color{#059669}{m}",
+    labelFormula: `\\text{常数线 } y = \\color{${MATH_COLORS.paramTertiary}}{m}`,
     defaultValue: 5.0,
     min: -2.0,
     max: 8.0,
     step: 0.5,
     description: "双绝对值组合的目标比较常数",
-    descriptionFormula: "\\text{目标水平线 } y = \\color{#059669}{m}",
+    descriptionFormula: `\\text{目标水平线 } y = \\color{${MATH_COLORS.paramTertiary}}{m}`,
     importance: "core",
     group: "不等式比较阈值",
     marks: [
@@ -82,13 +83,13 @@ export const paramMeta: Record<string, ParamMeta> = {
   x: {
     key: "x",
     label: "数轴动点",
-    labelFormula: "\\text{动点 } P(\\color{#059669}{x})",
+    labelFormula: `\\text{动点 } P(\\color{${MATH_COLORS.paramTertiary}}{x})`,
     defaultValue: 2.5,
     min: -6.0,
     max: 6.0,
     step: 0.1,
     description: "数轴上实时动点 P 的位置",
-    descriptionFormula: "\\text{数轴动点 } P(\\color{#059669}{x})",
+    descriptionFormula: `\\text{数轴动点 } P(\\color{${MATH_COLORS.paramTertiary}}{x})`,
     importance: "advanced",
     group: "实时试探动点",
   },

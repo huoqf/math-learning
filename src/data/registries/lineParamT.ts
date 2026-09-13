@@ -82,7 +82,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
     key: "kNorm",
     label: "非标准比例",
     labelFormula: "k_{\\text{norm}} = \\sqrt{a^2+b^2}",
-    description: "非标准参数方程方向向量模长比例",
+    description: "非标准方向向量模长比例（拓展 · 归一化修正）",
     descriptionFormula: "归一化比例 $k_{\\text{norm}}$ ($k=1$ 为标准方程)",
     defaultValue: 1.5,
     min: 0.5,

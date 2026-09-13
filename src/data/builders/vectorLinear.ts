@@ -117,7 +117,7 @@ export function buildVectorLinearPanel(
   } else {
     quantities.push(
       {
-        label: "基底行列式 D",
+        label: "不共线判据 D",
         symbol: "D = x_1 y_2 - x_2 y_1",
         value: detAB.toFixed(2),
       },
@@ -217,8 +217,8 @@ export function buildVectorLinearPanel(
   } else if (studyMode === "collinear") {
     gaokaoPoints.push(
       {
-        text: "三点共线分点与面积比（奔驰定理）：若 OC = x·OA + y·OB 且 x+y=1，则 △OAC 与 △OBC 的面积比满足 S_△OBC / S_△OAC = x / y。",
-        importance: "gaokao",
+        text: "三点共线分点与面积比（拓展 · 超出课标）：若 OC = x·OA + y·OB 且 x+y=1，则 △OAC 与 △OBC 的面积比满足 S_△OBC / S_△OAC = x / y。",
+        importance: "extend",
       },
       {
         text: "斜率与坐标秒杀：若两向量平行，则坐标交叉相乘 xa*yb - xb*ya = 0（横纵交乘相等），避免讨论斜率不存在的繁琐分类。",

@@ -143,13 +143,13 @@ export function buildPolyhedronSpherePanel(
 
     quantities.push(
       {
-        label: "底面直角边 a, b 与斜边 c_base",
+        label: "底面直角边 $a, b$ 与斜边 $c_base$",
         symbol: "a, b, c_{\\text{base}}",
         value: `${a}, ${b}, ${Math.sqrt(a * a + b * b).toFixed(2)}`,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "底面外接圆半径 r_base",
+        label: "底面外接圆半径 $r_base$",
         symbol: "r_{\\text{底}}",
         value: Number(res.rBase.toFixed(4)),
         color: MATH_COLORS.paramSecondary,
@@ -459,7 +459,7 @@ export function buildPolyhedronSpherePanel(
         color: MATH_COLORS.secondary,
       },
       {
-        label: "内切球半径 r_in (等体积法)",
+        label: "内切球半径 $r_in$ (等体积法)",
         symbol: "r_{\\text{in}}",
         value: Number(res.inRadius.toFixed(4)),
         color: MATH_COLORS.paramPrimary,
@@ -484,7 +484,7 @@ export function buildPolyhedronSpherePanel(
         latex:
           "\\begin{aligned} V_{\\text{总}} &= \\frac{1}{3} S_{\\text{总}} r_{\\text{in}} \\\\ &= \\frac{1}{3}(S_1 + S_2 + S_3 + S_4) r_{\\text{in}} \\\\ \\implies r_{\\text{in}} &= \\frac{3 V_{\\text{总}}}{S_{\\text{总}}} \\end{aligned}",
         level: "important",
-        note: "以内切球球心 O_in 为共同顶点，向 4 个面画半径垂线段 r_in，将多面体剖分为 4 个以各面为底面的小三棱锥",
+        note: "以内切球球心 $O_in$ 为共同顶点，向 4 个面画半径垂线段 $r_in$，将多面体剖分为 4 个以各面为底面的小三棱锥",
       },
       {
         name: "直角三棱锥各面面积计算",
@@ -518,7 +518,7 @@ export function buildPolyhedronSpherePanel(
     );
 
     gaokaoPoints.push({
-      text: "【内切球高考通法——等体积法】：任何有内切球的多面体，其内切球半径 r_in 均满足 r_in = 3V / S_总。求出几何体总体积 V 与总表面积 S_总 即可求出 r_in。",
+      text: "【内切球高考通法——等体积法】：任何有内切球的多面体，其内切球半径 $r_in$ 均满足 $r_in = 3V / S_总$。求出几何体总体积 $V$ 与总表面积 $S_总$ 即可求出 $r_in$。",
       importance: "gaokao",
     });
   }

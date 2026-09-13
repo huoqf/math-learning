@@ -491,7 +491,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             fill={CANVAS_COLORS.labelText}
             fontWeight="bold"
           >
-            交叉积: ad = {effectiveA * effectiveD}, bc ={" "}
+            对角乘积: ad = {effectiveA * effectiveD}, bc ={" "}
             {effectiveB * effectiveC} ⇒ |ad-bc| ={" "}
             {Math.abs(effectiveA * effectiveD - effectiveB * effectiveC)}
           </text>

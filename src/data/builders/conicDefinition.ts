@@ -279,7 +279,7 @@ export function buildConicDefinitionPanel(
           color: cPrimary,
         },
         {
-          label: "到准线距离 d_l",
+          label: "到准线距离 $d_l$",
           value: dl.toFixed(2),
           color: cSecondary,
         },
@@ -375,31 +375,31 @@ export function buildConicDefinitionPanel(
         value: `(${sceneDataU.pPoint.x.toFixed(2)}, ${sceneDataU.pPoint.y.toFixed(2)})`,
       },
       {
-        label: "到焦点真实距离 d_F",
+        label: "到焦点真实距离 $d_F$",
         value: dfVal.toFixed(2),
         color: cSecondary,
       },
       {
-        label: "到准线真实距离 d_l",
+        label: "到准线真实距离 $d_l$",
         value: dlVal.toFixed(2),
         color: cTertiary,
       },
       {
-        label: "实时比值验算 d_F / d_l",
+        label: "实时比值验算 $d_F / d_l$",
         value: `${ratio.toFixed(3)} ≡ e`,
         color: cPrimary,
       },
     );
 
     theorems.push({
-      name: "圆锥曲线统一定义 (第二定义 / 焦准比法)",
+      name: "圆锥曲线统一定义 (第二定义 / 焦准比法 · 拓展)",
       latex: "\\frac{d_F}{d_l} = e \\quad (e > 0)",
-      note: `动点到定焦点 ${col("F", cSecondary)} 的距离与到定准线 ${col("l", cPrimary)} 的距离之比等于常数 ${col("e", cPrimary)}：$0<e<1$ 椭圆，$e=1$ 抛物线，$e>1$ 双曲线`,
+      note: `动点到定焦点 ${col("F", cSecondary)} 的距离与到定准线 ${col("l", cPrimary)} 的距离之比等于常数 ${col("e", cPrimary)}：$0<e<1$ 椭圆，$e=1$ 抛物线，$e>1$ 双曲线。（抛物线以准线定义属教材正文；椭圆与双曲线的准线（第二定义）属拓展内容）`,
       prerequisites: [
         "焦点 $F$ 不在准线 $l$ 上",
         "$p$ 为焦点到准线距离（$p > 0$）",
       ],
-      level: "core",
+      level: "supplementary",
     });
 
     if (Math.abs(e - 1.0) < 0.05) {
@@ -444,8 +444,8 @@ export function buildConicDefinitionPanel(
         importance: "gaokao",
       },
       {
-        text: "高考准线几何公式：椭圆/双曲线的准线方程为 $x = \\pm \\frac{a^2}{c}$，焦准距 $p = \\frac{b^2}{c}$，满足焦准比 $e = \\frac{c}{a}$ 且 $e\\cdot p = \\frac{b^2}{a}$（半通径）。",
-        importance: "core",
+        text: "拓展 · 超出课标：椭圆/双曲线的准线方程为 $x = \\pm \\frac{a^2}{c}$，焦准距 $p = \\frac{b^2}{c}$，满足焦准比 $e = \\frac{c}{a}$ 且 $e\\cdot p = \\frac{b^2}{a}$（半通径）。",
+        importance: "extend",
       },
     );
   }

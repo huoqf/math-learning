@@ -31,7 +31,7 @@ export const paramMeta: Record<string, ParamMeta> = {
       {
         value: 1.0,
         variant: "critical",
-        label: "退化 (a=1)",
+        label: "退化 (a=1 非指数函数)",
         labelFormula: "a = 1",
       },
     ],

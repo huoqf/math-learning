@@ -570,7 +570,7 @@ export function buildCircumSpherePanel(
       });
 
       gaokaoPoints.push({
-        text: "高考通用内切球神器：等体积法 r_in = 3V / S_全！适用于任意存在内切球的凸多面体和旋转体。",
+        text: "高考通用内切球神器：等体积法 $r_in = 3V / S_全$！适用于任意存在内切球的凸多面体和旋转体。",
         importance: "gaokao",
       });
 
@@ -578,21 +578,21 @@ export function buildCircumSpherePanel(
         {
           step: 1,
           title: "求解棱锥体积与侧面斜高全面积",
-          detail: `底面积 S_底 = a²，体积 V = ⅓ a² h；斜高 h_s = √(h² + a²/4)，侧面全面积 S_全 = a² + 2a h_s。`,
+          detail: `底面积 $S_底 = a²$，体积 $V = ⅓ a² h$；斜高 $h_s = √(h² + a²/4)$，侧面全面积 $S_全 = a² + 2a h_s$。`,
           latex: `V = \\frac{1}{3}a^2 h = ${vSolid.toFixed(3)}, \\quad S_{全} = a^2 + 2a h_s = ${sTotal.toFixed(3)}`,
           rubric: "[高考采分点] 正确计算棱锥体积与全面积 (+2分)",
         },
         {
           step: 2,
           title: "空间等体积剖分方程",
-          detail: `以球心 I 为顶点剖分为 5 个小棱锥，高均为 r_in，总体积等于各分锥体积之和。`,
+          detail: `以球心 $I$ 为顶点剖分为 5 个小棱锥，高均为 $r_in$，总体积等于各分锥体积之和。`,
           latex: `V = \\frac{1}{3} S_{底} r_{in} + \\sum_{i=1}^4 \\frac{1}{3} S_{侧i} r_{in} = \\frac{1}{3} S_{全} r_{in}`,
           rubric: "[高考采分点] 写出等体积剖分核心方程 (+2分)",
         },
         {
           step: 3,
           title: "等体积法解得内切球半径",
-          detail: `由等体积方程解得 r_in = 3V / S_全。`,
+          detail: `由等体积方程解得 $r_in = 3V / S_全$。`,
           latex: `r_{in} = \\frac{3V}{S_{全}} = \\frac{3 \\times ${vSolid.toFixed(3)}}{${sTotal.toFixed(3)}} = ${radius.toFixed(3)}`,
           rubric: "[高考采分点] 正确计算内切球半径 (+2分)",
         },
@@ -718,7 +718,7 @@ export function buildCircumSpherePanel(
       });
 
       gaokaoPoints.push({
-        text: "圆锥内切球降维求解：轴截面为等腰三角形（底 2r，高 h，腰 l），内切圆半径 r_in = rh / (r+l)。",
+        text: "圆锥内切球降维求解：轴截面为等腰三角形（底 $2r$，高 $h$，腰 $l$），内切圆半径 $r_in = rh / (r+l)$。",
         importance: "gaokao",
       });
 
@@ -733,14 +733,14 @@ export function buildCircumSpherePanel(
         {
           step: 2,
           title: "等面积法求解三角形内切圆",
-          detail: `等腰三角形面积 S = rh，半周长 p = r + l，由 S = p r_in 建立方程。`,
+          detail: `等腰三角形面积 $S = rh$，半周长 $p = r + l$，由 $S = p r_in$ 建立方程。`,
           latex: `S = \\frac{1}{2}(2r)h = rh = ${(a * c).toFixed(2)}, \\quad p = r + l = ${(a + l).toFixed(3)}`,
           rubric: "[高考采分点] 应用等面积法 S = p r (+2分)",
         },
         {
           step: 3,
           title: "公式解出内切球半径",
-          detail: `解得内切球半径 r_in = rh / (r + l)。`,
+          detail: `解得内切球半径 $r_in = rh / (r + l)$。`,
           latex: `r_{in} = \\frac{rh}{r + l} = \\frac{${(a * c).toFixed(2)}}{${(a + l).toFixed(3)}} = ${radius.toFixed(3)}`,
           rubric: "[高考采分点] 正确解出内切球半径 (+2分)",
         },

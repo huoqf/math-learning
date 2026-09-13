@@ -154,9 +154,9 @@ export function buildSurfaceRelationPanel(
       },
       {
         name: "平行平面间的距离公式",
-        latex: `d(\\alpha, \\beta) = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{|D_1 - D_2|}{\\sqrt{A^2 + B^2 + C^2}}`,
+        latex: `d(\\alpha, \\beta) = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|}`,
         level: "important",
-        note: "点 A ∈ α, B ∈ β，\\vec{n} 为平面法向量；A, B, C 为平面方程一般式系数",
+        note: "点 $A \\in \\alpha$, $B \\in \\beta$，$\\vec{n}$ 为平面 $\\alpha$ 的法向量（由 $\\vec{n} \\cdot \\vec{PQ} = 0$ 与 $\\vec{n} \\cdot \\vec{PR} = 0$ 联立求得）",
       },
     );
 

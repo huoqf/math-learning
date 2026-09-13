@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   xa: 3,
@@ -69,7 +70,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   lambda: {
     key: "lambda",
     label: "数乘系数 λ",
-    labelFormula: "\\color{#EF4444}{\\lambda}",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{\\lambda}`,
     defaultValue: 1,
     min: -3,
     max: 3,
@@ -86,7 +87,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   mu: {
     key: "mu",
     label: "数乘系数 μ",
-    labelFormula: "\\color{#D97706}{\\mu}",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{\\mu}`,
     defaultValue: 1,
     min: -3,
     max: 3,
@@ -103,7 +104,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   xCoeff: {
     key: "xCoeff",
     label: "共线系数 x",
-    labelFormula: "\\color{#EF4444}{x}",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x}`,
     defaultValue: 0.4,
     min: -1,
     max: 2,
@@ -120,7 +121,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   yCoeff: {
     key: "yCoeff",
     label: "共线系数 y",
-    labelFormula: "\\color{#D97706}{y}",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{y}`,
     defaultValue: 0.6,
     min: -1,
     max: 2,

@@ -403,7 +403,7 @@ export function ComplexAnimation() {
       return `z_1 = \\color{${MATH_COLORS.paramPrimary}}{${z1Str}}, \\quad z_2 = \\color{${MATH_COLORS.paramSecondary}}{${z2Str}}`;
     }
     if (studyMode === "multiplication-rotation") {
-      return `z_1 z_2 = (\\color{${MATH_COLORS.paramPrimary}}{r_1} \\color{${MATH_COLORS.paramSecondary}}{r_2}) \\cdot e^{i (\\color{${MATH_COLORS.paramPrimary}}{\\theta_1} + \\color{${MATH_COLORS.paramSecondary}}{\\theta_2})}`;
+      return `z_1 z_2 = (\\color{${MATH_COLORS.paramPrimary}}{r_1} \\color{${MATH_COLORS.paramSecondary}}{r_2}) \\cdot \\left[\\cos(\\color{${MATH_COLORS.paramPrimary}}{\\theta_1} + \\color{${MATH_COLORS.paramSecondary}}{\\theta_2}) + i\\sin(\\color{${MATH_COLORS.paramPrimary}}{\\theta_1} + \\color{${MATH_COLORS.paramSecondary}}{\\theta_2})\\right]`;
     }
     if (subModel === "circle") {
       return `|z - (\\color{${MATH_COLORS.paramPrimary}}{${params.z0x} + ${params.z0y}i})| = \\color{${MATH_COLORS.paramPrimary}}{${params.radius}}`;
@@ -471,7 +471,7 @@ export function ComplexAnimation() {
                     key: "perp-bisector",
                     label: "垂直平分线距离轨迹",
                   },
-                  { key: "triangle-ineq", label: "模的三角不等式夹逼" },
+                  { key: "triangle-ineq", label: "模的三角不等式放缩" },
                 ]}
                 value={subModel}
                 onChange={(k) => handleSubModelChange(k as LocusSubModel)}
@@ -529,7 +529,7 @@ export function ComplexAnimation() {
                 studyMode === "plane-operations"
                   ? "复数 $z = a + bi$ 与复平面向量 $\\vec{OZ} = (a, b)$ 一一对应。"
                   : studyMode === "multiplication-rotation"
-                    ? "复数乘法满足“模长相乘，辐角相加”：$z_1 z_2 = (r_1 r_2)e^{i(\\theta_1+\\theta_2)}$。"
+                    ? "复数乘法满足“模长相乘，辐角相加”：$z_1 z_2 = (r_1 r_2)\\left[\\cos(\\theta_1+\\theta_2) + i\\sin(\\theta_1+\\theta_2)\\right]$。（复数的三角表示属选学拓展内容）"
                     : subModel === "circle"
                       ? "方程 $|z - z_0| = R$ 刻画以 $z_0$ 为圆心、$R$ 为半径的圆周动点集合。"
                       : subModel === "perp-bisector"

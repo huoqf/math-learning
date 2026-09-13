@@ -25,6 +25,7 @@ import {
   defaultParams,
   paramMeta,
 } from "@/data/registries/conicHomogenization";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export function ConicHomogenizationAnimation() {
   // 1. 模式与曲线类型
@@ -204,22 +205,37 @@ export function ConicHomogenizationAnimation() {
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        const rawValue = params[key] ?? meta.defaultValue ?? 0;
+        // 参数安全契约：椭圆必须满足 a > b > 0，滑块上限随 a 动态收紧，避免滑出非法椭圆
+        const isEllipseB = key === "b" && curveType === "ellipse";
+        const dynamicMax = isEllipseB
+          ? Math.max(
+              meta.min ?? 0.1,
+              (params.a ?? meta.defaultValue ?? 1) - 0.01,
+            )
+          : meta.max;
+        const safeValue =
+          dynamicMax !== undefined && rawValue > dynamicMax
+            ? dynamicMax
+            : rawValue;
         return {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
+          value: safeValue,
           min: meta.min,
-          max: meta.max,
+          max: dynamicMax,
           step: meta.step ?? 0.1,
           description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
+          descriptionFormula: isEllipseB
+            ? `椭圆需满足 $a > b > 0$，当前 $a = ${formatMathNumber(params.a ?? meta.defaultValue ?? 1)}$`
+            : meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
           group: meta.group,
         };
       });
-  }, [params, studyMode, presetKey]);
+  }, [params, studyMode, presetKey, curveType]);
 
   // 顶部 KaTeX 展示公式（三位一体色彩 Token 绑定）
   const topFormulaLatex = useMemo(() => {
@@ -247,7 +263,7 @@ export function ConicHomogenizationAnimation() {
     if (presetKey === "left_vertex_perpendicular") {
       return {
         variant: "primary" as const,
-        badge: "高考经典 · 左顶点直角弦",
+        badge: "拓展 · 左顶点直角弦",
         condition:
           "已知椭圆及左顶点 $P(-a, 0)$，割线 $AB$ 与曲线相交且满足 $PA \\perp PB$。",
         question: "如何通过齐次化升次建立斜率方程，证明动割线 $AB$ 恒过定点？",
@@ -256,7 +272,7 @@ export function ConicHomogenizationAnimation() {
     if (presetKey === "origin_symmetric_sum") {
       return {
         variant: "warning" as const,
-        badge: "高考经典 · 对称斜率和为零",
+        badge: "拓展 · 对称斜率和为零",
         condition:
           "中心对称曲线与割线相交，以原点 $O$ 为弦角顶点，两动弦斜率满足 $k_1 + k_2 = 0$。",
         question:
@@ -266,7 +282,7 @@ export function ConicHomogenizationAnimation() {
     if (presetKey === "asymmetric_slope_explore") {
       return {
         variant: "danger" as const,
-        badge: "高考压轴 · 非对称斜率消参",
+        badge: "拓展 · 非对称斜率消参",
         condition:
           "割线交曲线于 $A, B$，两动弦斜率满足非对称约束 $k_{PA} + 2 k_{PB} = 0$。",
         question:

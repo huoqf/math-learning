@@ -3,6 +3,8 @@
  * 数列纯函数计算模块 — 零 DOM、零 React 依赖、带 validity 状态
  */
 
+import { formatMathNumber } from "@/utils/mathFormat";
+
 export interface ArithmeticTermInfo {
   n: number;
   an: number;
@@ -1107,12 +1109,15 @@ export function calcNonHomogeneousExpRecurrence(
   let formulaLatex = "";
   if (isResonant) {
     // p = r: bn+1 = bn + q/r (等差数列，公差 d = q/r)
-    formulaLatex = `a_n = [a_1 + (n-1)q] \\cdot ${p}^{n-1}`;
+    formulaLatex = `a_n = [a_1 + (n-1)q] \\cdot ${formatMathNumber(p)}^{n-1}`;
   } else {
     // p != r: an = C * p^(n-1) + [q*r/(r-p)] * r^(n-1)
     const lambda = (q * r) / (r - p);
     const C = a1 - lambda;
-    formulaLatex = `a_n = (${C.toFixed(2)}) \\cdot ${p}^{n-1} + (${lambda.toFixed(2)}) \\cdot ${r}^{n-1}`;
+    const cStr = C < 0 ? `(${formatMathNumber(C)})` : formatMathNumber(C);
+    const lStr =
+      lambda < 0 ? `(${formatMathNumber(lambda)})` : formatMathNumber(lambda);
+    formulaLatex = `a_n = ${cStr} \\cdot ${formatMathNumber(p)}^{n-1} + ${lStr} \\cdot ${formatMathNumber(r)}^{n-1}`;
   }
 
   return {

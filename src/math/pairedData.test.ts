@@ -184,7 +184,7 @@ describe("成对数据纯数学计算库单元测试", () => {
     expect(res.confidenceText).toContain("95% 以上的把握");
   });
 
-  it("应当在无关联数据时（ad=bc）χ²=0，接受原假设", () => {
+  it("应当在无关联数据时（ad=bc）χ²=0，无充分理由推翻零假设", () => {
     // (50,50,50,50)：ad-bc=50×50-50×50=0，完全独立
     const res = calculateIndependenceTest(50, 50, 50, 50);
 
@@ -195,7 +195,7 @@ describe("成对数据纯数学计算库单元测试", () => {
     expect(res.p95).toBe(false);
     expect(res.p99).toBe(false);
     expect(res.p999).toBe(false);
-    expect(res.confidenceText).toContain("接受无关联原假设");
+    expect(res.confidenceText).toContain("没有充分理由推翻零假设");
   });
 
   it("应当在期望频数不足（E_ij < 5）且存在关联时正确计算并提示使用 Yates 修正", () => {

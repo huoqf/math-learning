@@ -100,7 +100,7 @@ export function ProbabilityNormalParamsShapeScene({
         );
       })()}
 
-      {/* 左右拐点标注 (μ - σ, μ + σ) - 优化避让与清晰度 */}
+      {/* 左右弯曲方向改变处标注 (μ - σ, μ + σ) - 优化避让与清晰度 */}
       {(() => {
         const inflectY = normalPdf(mu - safeSigma, mu, safeSigma);
         const pL = mathToDesign(mu - safeSigma, inflectY, scale);
@@ -134,7 +134,7 @@ export function ProbabilityNormalParamsShapeScene({
               textAnchor="end"
               className="font-bold select-none drop-shadow-sm"
             >
-              拐点 μ-σ = {(mu - safeSigma).toFixed(2)}
+              弯曲改变处 μ-σ = {(mu - safeSigma).toFixed(2)}
             </text>
             <text
               x={pR.x + offsetDist}
@@ -144,7 +144,7 @@ export function ProbabilityNormalParamsShapeScene({
               textAnchor="start"
               className="font-bold select-none drop-shadow-sm"
             >
-              拐点 μ+σ = {(mu + safeSigma).toFixed(2)}
+              弯曲改变处 μ+σ = {(mu + safeSigma).toFixed(2)}
             </text>
           </g>
         );

@@ -46,7 +46,7 @@ export function buildSpatialDistancePanel(
 
     examAnchor = "新高考解答题 · 空间向量法求异面直线公垂线与动点极值";
     mnemonic =
-      "异面求距选向量，外积法矢射影长；双垂直处公垂足，平行平面化点面。";
+      "异面求距选向量，法矢联立垂直求；射影长度即距离，平行平面化点面。";
 
     // 1. 几何特征量与代数解（附录区）
     quantities.push(
@@ -88,7 +88,7 @@ export function buildSpatialDistancePanel(
         highlight: skew.isAtPerpendicular ? "extreme" : undefined,
       },
       {
-        label: "公垂线最短距离 d_min",
+        label: "公垂线最短距离 $d_min$",
         symbol: isCube ? "d_{\\min} = \\frac{\\sqrt{3}}{3}a" : "d_{\\min}",
         value: Number(skew.minDist.toFixed(4)),
         color: MATH_COLORS.paramTertiary,
@@ -173,12 +173,12 @@ export function buildSpatialDistancePanel(
         },
         {
           step: 3,
-          title: "向量外积法与平行平面法求解公垂线最短距离",
+          title: "向量法与平行平面法求解公垂线最短距离",
           detail:
-            "求公垂向量 $\\vec{n} = \\vec{u} \\times \\vec{v}$ 并代入向量射影距离公式：",
+            "设公垂向量 $\\vec{n} = (x, y, z)$，由 $\\vec{n} \\cdot \\vec{u} = 0$ 与 $\\vec{n} \\cdot \\vec{v} = 0$ 联立解得 $\\vec{n}$，再代入向量射影距离公式：",
           latex: isCube
-            ? `\\begin{aligned} \\vec{n} &= \\vec{u} \\times \\vec{v} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\\\[1ex] \\implies d_{\\min} &= \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} \\\\[1.5ex] &= \\frac{a^3}{\\sqrt{3}a^2} = \\frac{\\sqrt{3}}{3} a \\approx ${((Math.sqrt(3) / 3) * a).toFixed(4)} \\end{aligned}`
-            : `\\begin{aligned} \\vec{n} &= \\vec{u} \\times \\vec{v} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\\\[1ex] \\implies d_{\\min} &= \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} \\\\[1.5ex] &= \\frac{abc}{\\sqrt{b^2 c^2 + a^2 c^2 + a^2 b^2}} \\approx ${skew.minDist.toFixed(4)} \\end{aligned}`,
+            ? `\\begin{aligned} \\begin{cases} \\vec{n} \\cdot \\vec{u} = 0 \\\\ \\vec{n} \\cdot \\vec{v} = 0 \\end{cases} &\\implies \\vec{n} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\\\[1ex] \\implies d_{\\min} &= \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} \\\\[1.5ex] &= \\frac{a^3}{\\sqrt{3}a^2} = \\frac{\\sqrt{3}}{3} a \\approx ${((Math.sqrt(3) / 3) * a).toFixed(4)} \\end{aligned}`
+            : `\\begin{aligned} \\begin{cases} \\vec{n} \\cdot \\vec{u} = 0 \\\\ \\vec{n} \\cdot \\vec{v} = 0 \\end{cases} &\\implies \\vec{n} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\\\[1ex] \\implies d_{\\min} &= \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} \\\\[1.5ex] &= \\frac{abc}{\\sqrt{b^2 c^2 + a^2 c^2 + a^2 b^2}} \\approx ${skew.minDist.toFixed(4)} \\end{aligned}`,
           rubric: "高考大题采分点：公垂向量计算与点乘射影公式代入（4分）",
         },
       );
@@ -202,12 +202,12 @@ export function buildSpatialDistancePanel(
         condition: "H₁H₂ 垂直于 l₁ 且垂直于 l₂，当且仅当 P=H₁, Q=H₂ 时等号成立",
       },
       {
-        name: "向量外积与点乘射影距离公式",
+        name: "向量法与点乘射影距离公式",
         latex: isEdgeModel
-          ? `\\vec{n} = \\vec{u} \\times \\vec{v}, \\quad d_{\\min} = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{a b}{\\sqrt{a^2 + b^2}}`
-          : `\\vec{n} = \\vec{u} \\times \\vec{v}, \\quad d_{\\min} = \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{abc}{\\sqrt{b^2 c^2 + a^2 c^2 + a^2 b^2}}`,
+          ? `\\vec{n} \\perp \\vec{u},\\; \\vec{n} \\perp \\vec{v}, \\quad d_{\\min} = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{a b}{\\sqrt{a^2 + b^2}}`
+          : `\\vec{n} \\perp \\vec{u},\\; \\vec{n} \\perp \\vec{v}, \\quad d_{\\min} = \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{abc}{\\sqrt{b^2 c^2 + a^2 c^2 + a^2 b^2}}`,
         level: "core",
-        note: "向量外积 n 必然垂直于两异面直线的方向向量，为两直线公垂向量",
+        note: "设 $\\vec{n}=(x,y,z)$，由 $\\vec{n}\\cdot\\vec{u}=0$ 与 $\\vec{n}\\cdot\\vec{v}=0$ 联立求得公垂向量",
       },
       {
         name: "化归平行平面定理（线面平行转化法）",
@@ -385,7 +385,7 @@ export function buildSpatialDistancePanel(
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "三棱锥最大体积 V_max",
+        label: "三棱锥最大体积 $V_max$",
         symbol: "V_{\\max} = \\frac{1}{6}abc",
         value: Number(distRes.maxVolume.toFixed(4)),
         color: MATH_COLORS.paramPrimary,

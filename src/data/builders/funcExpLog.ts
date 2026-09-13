@@ -111,7 +111,7 @@ export function buildFuncExpLogPanel(
           ]
         : [
             {
-              name: "幂函数导数与第一象限凹凸性定理",
+              name: "幂函数导数与第一象限图象形态",
               latex:
                 "f'(x) = \\alpha x^{\\alpha - 1} \\implies \\begin{cases} \\alpha > 1: & f''(x) > 0 \\\\ 0 < \\alpha < 1: & f''(x) < 0 \\\\ \\alpha < 0: & f'(x) < 0 \\end{cases}",
               level: "core",
@@ -164,7 +164,7 @@ export function buildFuncExpLogPanel(
               importance: "gaokao",
             },
             {
-              text: "图象凹凸与增长速度：$\\alpha > 1$ 为凹弧加速增长；$0 < \\alpha < 1$ 为凸弧减速增长；高考常用于放缩不等式构造切线。",
+              text: "图象增长快慢：$\\alpha > 1$ 时图象上弯、增长速度越来越快；$0 < \\alpha < 1$ 时图象下弯、增长速度越来越慢，可结合切线直观理解。",
               importance: "gaokao",
             },
             {
@@ -228,7 +228,7 @@ export function buildFuncExpLogPanel(
             },
             {
               step: 3,
-              title: "几何反思 · 增长速率与凹凸形态",
+              title: "几何反思 · 增长速率与图象形态",
               detail:
                 alpha > 1
                   ? "当 $\\alpha > 1$ 时，导函数 $f'(x)$ 单调递增，切线斜率随 $x$ 增大而变大，图象呈凹弧加速上升；原点处切线水平 $f'(0) = 0$。"
@@ -245,7 +245,7 @@ export function buildFuncExpLogPanel(
                     : alpha < 0
                       ? `\\alpha < 0 \\implies f'(x) < 0 \\text{ 且 } \\lim_{x \\to +\\infty} f(x) = 0`
                       : `y = 1 \\quad (x \\neq 0)`,
-              rubric: "结合导函数单调性反思几何曲线的凹凸与渐近走势",
+              rubric: "结合导函数单调性反思几何曲线的弯曲方向与渐近走势",
             },
           ];
 
@@ -344,7 +344,7 @@ export function buildFuncExpLogPanel(
           color: MATH_COLORS.functionTransformed,
         },
         {
-          label: "相切临界底数 a_c",
+          label: "相切临界底数 $a_c$",
           symbol: "e^{1/e}",
           value: `${AC_CRITICAL.toFixed(4)} (切点 (e, e))`,
         },
@@ -385,7 +385,7 @@ export function buildFuncExpLogPanel(
                 : undefined,
         },
         {
-          label: "单调与凹凸性",
+          label: "单调与图象形态",
           value:
             a > 1
               ? "严格单调递增 · 上凸减速增长"
@@ -453,7 +453,7 @@ export function buildFuncExpLogPanel(
           color: MATH_COLORS.functionTransformed,
         },
         {
-          label: "相切临界底数 a_c",
+          label: "相切临界底数 $a_c$",
           symbol: "e^{1/e}",
           value: `${AC_CRITICAL.toFixed(4)} (切点 (e, e))`,
         },
@@ -488,7 +488,7 @@ export function buildFuncExpLogPanel(
           value: expLogRes.expFixedPointSlopeStr,
         },
         {
-          label: "单调与凹凸性",
+          label: "单调与图象形态",
           value:
             a > 1
               ? "严格单调递增 · 下凹加速增长 (爆炸式)"
@@ -787,6 +787,6 @@ export function buildFuncExpLogPanel(
           : "对过(1,0)轴渐近，同大为正异大负；单增单减看底数，切线ln放缩牢记。"
         : explogMode === "inverse"
           ? "指过(0,1)对过(1,0)，y=x对称反函数；公切临界e^(1/e)，垂直平分中点连。"
-          : "指过(0,1)对过(1,0)，双切放缩同构破；a为e^(1/e)公切切，单调凹凸看底数。",
+          : "指过(0,1)对过(1,0)，双切放缩同构破；a为e^(1/e)公切切，单调走势看底数。",
   };
 }

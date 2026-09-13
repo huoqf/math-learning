@@ -185,9 +185,9 @@ export function buildComplexPanel(
           latex:
             "z_1 z_2 = (r_1 r_2) [\\cos(\\theta_1 + \\theta_2) + i \\sin(\\theta_1 + \\theta_2)]",
           prerequisites: [
-            "$z_1 = r_1 e^{i\\theta_1}, z_2 = r_2 e^{i\\theta_2}$",
+            "$z_1 = r_1(\\cos\\theta_1 + i\\sin\\theta_1), z_2 = r_2(\\cos\\theta_2 + i\\sin\\theta_2)$（复数的三角表示，选学拓展）",
           ],
-          note: "模长相乘：$|z_1 z_2| = |z_1| \\cdot |z_2|$；辐角相加：$\\arg(z_1 z_2) = \\theta_1 + \\theta_2$。",
+          note: "模长相乘：$|z_1 z_2| = |z_1| \\cdot |z_2|$；辐角相加：$\\arg(z_1 z_2) = \\theta_1 + \\theta_2$（主辐角意义下允许相差 $2k\\pi$，$k \\in \\mathbb{Z}$）。",
           level: "core",
         },
         {

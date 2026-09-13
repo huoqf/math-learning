@@ -133,7 +133,7 @@ export function calculateSetMathState(
     logicDescription = "p 是 q 的必要不充分条件（B 为 A 的真子集）";
   } else if (relation === "intersect") {
     logicType = "neither";
-    logicRelationLatex = "A \\cap B \\neq \\varnothing \\text{ 且有部分相异}";
+    logicRelationLatex = "A \\not\\subseteq B \\text{ 且 } B \\not\\subseteq A";
     logicDescription =
       "p 是 q 的既不充分也不必要条件（A 与 B 有交集但不相互包含）";
   } else {

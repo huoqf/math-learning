@@ -31,7 +31,8 @@ export type GaokaoTopicKey =
   | "solid_geometry"
   | "probability_statistics"
   | "sequence_series"
-  | "vector_triangle";
+  | "vector_triangle"
+  | "algebra_basics";
 
 export type QuestionCategory =
   "foundation" | "multi_select_hard" | "solution_first" | "solution_final";
@@ -61,6 +62,18 @@ export interface KnowledgeNode {
   examWeight?: 1 | 2 | 3 | 4 | 5;
   /** 跨模块交汇主题 */
   crossThemes?: string[];
+
+  /**
+   * 课标定位（SSOT）：显式声明该知识点所属教材分册与学段状态。
+   * - book：教材分册，如 "必修一" | "必修二" | "选择性必修一/二/三"
+   * - status："正文"（课标必学）|"选学"（课标选学）|"拓展"（超出课标）|"竞赛"
+   * 约定：status !== "正文" 时，importance 必须为 "extend"，
+   *       且页面必须显示「拓展 · 超出课标」或「选学」徽标。
+   */
+  syllabus?: {
+    book: string;
+    status: "正文" | "选学" | "拓展" | "竞赛";
+  };
 }
 
 export type ParamImportance = "core" | "advanced" | "display";

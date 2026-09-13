@@ -1,7 +1,19 @@
 # 规范治理与高中数学教学质量保证 — 待办事项
 
-> 更新时间：2026-09-09
-> 当前状态：P0 基础设施完成；P1 存量规范治理圆满收官（全库 365 文件严格审计 0 违规，清除率 100%）
+> 更新时间：2026-09-13
+> 当前状态：P0 基础设施完成；P1 存量规范治理收官（**`src/features` 502 文件**严格审计 0 违规）；
+> **P2 门禁范围与课标边界治理**：审计范围扩至全库 `src`、新增超纲术语门禁与学段边界一致性测试。
+
+---
+
+## 零、 口径更正说明（重要）
+
+此前文档中"**全库 365 文件**严格审计 0 违规"的表述与实际不符，实为：
+
+- `audit_page.mjs` 默认目标目录为 `src/features`（502 文件），`src/data`（140 文件）、`src/components`（91 文件）**从未被扫描**；
+- 即"0 违规"是**范围缩水后的局部结果**，不是全库真实水位。
+
+现已从根上修正（见"三、P2 门禁范围与课标边界治理"）。
 
 ---
 
@@ -64,3 +76,35 @@
   - 将推导链三要素（审题定法 $\to$ 建模联立 $\to$ 求解反思）及防断层三要素闭环的标准定义，统一收敛至 `new-math-animation/references/right-panel-spec.md`（第 7 节）作为全库单一事实源（SSOT）；`audit-checklist.md` 与 `AGENTS.md` 公理 2 全面改为相对链接引用，彻底消除多处冗余维护。
 - [x] **2. 3D Skill 规范对齐**
   - 完善 `new-3d-math-animation/SKILL.md`，深入阐述 `guarded3D: true` 的 WebGL 门禁防护机制（设备能力探针、非 WebGL 阻止 Three.js chunk 下载、友好升级提示、`<Suspense>` 懒加载闭环），并提供路由声明与四步注册的标准示例。
+
+---
+
+## 五、 已完成工作（P4 阶段：门禁范围与课标边界根本性治理）
+
+> 背景：原门禁只扫 `src/features`、只校验"怎么画"不校验"画什么"。本次从根上补齐。
+
+- [x] **1. 审计范围扩展至全库**
+  - `audit_page.mjs` 默认目标由 `src/features` 改为 `src`，`components` / `data` / `math` / `math3d` 全部纳入。
+- [x] **2. 引入存量基线（Baseline）机制**
+  - 以 `(文件::规则::类型::级别)` 为单位记录存量计数，写入 `.audit-baseline.json`；
+  - `--strict` 仅对"超出基线的增量违规"exit(1)，存量违规提示不阻断，避免历史包袱一上线就红灯；
+  - 新增 `npm run audit:update-baseline` 用于整改后下修基线。
+- [x] **3. 规则收敛：`left/param-label-format` 误报治理**
+  - 原规则把滑块刻度 `ParamMark.labelFormula`（如 `"0"` / `"a=b"`）误判为"参数标签缺失中文含义"，产生 300+ 处噪音；
+  - 现按 `marks: [ ... ]` 作用域 + `\bvalue:` 双重判定跳过 ParamMark，只约束 `ParamMeta`。
+- [x] **4. 新增超纲术语门禁 `discipline/no-beyond-syllabus-terms`**
+  - 覆盖 `builders` / `registries` / `knowledgeTree` / `meta.ts` / `Animation.tsx` / `Page.tsx` / `Scene.tsx`；
+  - 命中未标注的洛必达 / 麦克劳林 / 泰勒 / 琴生 / 凹凸 / 极点极线 / 克拉默 / 外积 / 叉积 / 夹逼 / 等价无穷小 / 上确界 / 紧致 / 无穷级数 / 数列极限 / 特征方程 / 马尔可夫链 / 卡方分布 / 概率密度函数 / 微元 / 定积分 / 极坐标 / 参数方程 → error；
+  - 已声明 `importance: "extend"` 或带「拓展 · 超出课标 / 选学」徽标的文件降级为 warning（视为已标注的拓展内容）。
+- [x] **5. 硬编码色门禁补漏**
+  - `style/no-hardcoded-hex` 补充 LaTeX 内联着色 `\color{#RRGGBB}{...}` 检测；已清理 56 处硬编码并统一改为 `${MATH_COLORS.*}`。
+- [x] **6. 学段边界变成机器可断言的事实**
+  - `KnowledgeNode` 新增可选 `syllabus: { book, status }` 字段；
+  - `knowledgeTree.test.ts` 新增 4 条断言：extend 节点标题必须带拓展语义、含"拓展"的 module 必须 extend、`status !== "正文"` 必须 extend、正文节点不得标"超出课标"。
+- [x] **7. 内容侧课标边界整改**
+  - 超纲术语全部标注为「拓展 · 超出课标 / 选学」，或改写为课标内表述（凹凸→图象形态、夹逼→放缩、参数方程章节标注拓展、马尔可夫链标注选学 · 拓展等）。
+- [x] **8. CI / husky / tsconfig 补齐**
+  - `ci.yml`：`eslint` 加 `--max-warnings 0`；接入 `playwright test`（原 e2e 名存实亡）；
+  - `.husky/pre-commit`：`tsc -b` → `tsc -b --force`（避免 tsbuildinfo 缓存空跑），并加入 `npm run test`；
+  - `tsconfig.json`：`include` 纳入 `e2e` 与 `scripts`；
+  - `package.json`：`npm run test` 纳入 `src/data`。

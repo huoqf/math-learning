@@ -86,7 +86,7 @@ export function buildTrigLinesPanel(
       1: "第一象限 (sin>0, cos>0, tan>0)",
       2: "第二象限 (sin>0, cos<0, tan<0)",
       3: "第三象限 (sin<0, cos<0, tan>0)",
-      4: "第四象限 (sin<0, cos<0, tan<0)",
+      4: "第四象限 (sin<0, cos>0, tan<0)",
       "axis-x-pos": "x 轴正半轴 (0°, 360°)",
       "axis-x-neg": "x 轴负半轴 (180°)",
       "axis-y-pos": "y 轴正半轴 (90°)",
@@ -199,18 +199,18 @@ export function buildTrigLinesPanel(
         level: "core",
       },
       {
-        name: "重要极限与导数几何基石",
+        name: "第一象限三角函数放缩链",
         latex:
-          "\\lim_{x \\to 0^+} \\cos x < \\lim_{x \\to 0^+} \\frac{\\sin x}{x} < 1 \\implies \\lim_{x \\to 0} \\frac{\\sin x}{x} = 1",
-        condition: "夹逼准则 (Squeeze Theorem)",
-        note: "正弦函数导数 (sin x)' = cos x 证明的第一原初几何依据。",
+          "\\text{由 } S_{\\triangle OMP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT} \\implies \\sin x < x < \\tan x \\quad \\left(x \\in \\left(0, \\frac{\\pi}{2}\\right)\\right)",
+        condition: "x \\in \\left(0, \\frac{\\pi}{2}\\right)",
+        note: "同一面积不等式两边同除以 (1/2)cos x 即得 sin x < x < tan x，是三角函数与导数交汇题的常用放缩依据。",
         level: "important",
       },
     ];
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "考点1：高考导数压轴题三大基准放缩：sin x < x (x > 0), e^x ≥ x + 1, ln(x+1) ≤ x",
+        text: "考点1：高考导数压轴题三大基准放缩：$sin x < x$ ($x > 0$), $e^x ≥ x + 1$, $ln(x+1) ≤ x$",
         importance: "hard",
       },
       {
@@ -222,7 +222,7 @@ export function buildTrigLinesPanel(
     const warnings: WarningItem[] = [];
     if (compAlphaDeg < 10) {
       warnings.push({
-        text: `当 x → 0 时，sin x, x, tan x 彼此极度贴近，呈现等价无穷小特性！`,
+        text: `当 x 越来越接近 0 时，sin x、x、tan x 三者彼此极度贴近（直观记忆放缩链 sin x < x < tan x）！`,
         level: "info",
       });
     }

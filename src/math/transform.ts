@@ -82,11 +82,10 @@ export function evalTransformedFunction(
 ): number {
   const { h, k, A, omega, foldMode } = params;
 
-  // 自变量翻折 |x|: y = f(|x|)
-  const effectiveX = foldMode === "input" ? Math.abs(x) : x;
-
-  // 横向伸缩与平移 omega * (x - h)
-  const innerArg = omega * (effectiveX - h);
+  // 自变量绝对值翻折：教材标准式 y = f(|x - h|)
+  // （先关于 y 轴翻折成偶函数，再水平平移 h，对称轴为 x = h）
+  const innerArg =
+    foldMode === "input" ? omega * Math.abs(x - h) : omega * (x - h);
 
   // 计算原函数值 (对数函数必须保证真数大于零)
   let rawY: number;
@@ -139,14 +138,26 @@ export function buildTransformLatex(
     return `y = ${wrapS(kFormatted)}`;
   }
 
-  // 1. 自变量与水平平移项
-  const xSymbol = foldMode === "input" ? "|x|" : "x";
-  let shiftTerm = xSymbol;
-  if (Math.abs(h) > 1e-4) {
-    const hAbs = Math.abs(h);
-    const hStr = Number.isInteger(hAbs) ? hAbs.toString() : hAbs.toFixed(1);
-    shiftTerm =
-      h > 0 ? `${xSymbol} - ${wrapP(hStr)}` : `${xSymbol} + ${wrapP(hStr)}`;
+  // 1. 自变量翻折与水平平移项：教材标准式 y = f(|x - h|)（对称轴 x = h）
+  let shiftTerm: string;
+  if (foldMode === "input") {
+    if (Math.abs(h) > 1e-4) {
+      const hAbs = Math.abs(h);
+      const hStr = Number.isInteger(hAbs) ? hAbs.toString() : hAbs.toFixed(1);
+      shiftTerm =
+        h > 0
+          ? `\\left| x - ${wrapP(hStr)} \\right|`
+          : `\\left| x + ${wrapP(hStr)} \\right|`;
+    } else {
+      shiftTerm = "|x|";
+    }
+  } else {
+    shiftTerm = "x";
+    if (Math.abs(h) > 1e-4) {
+      const hAbs = Math.abs(h);
+      const hStr = Number.isInteger(hAbs) ? hAbs.toString() : hAbs.toFixed(1);
+      shiftTerm = h > 0 ? `x - ${wrapP(hStr)}` : `x + ${wrapP(hStr)}`;
+    }
   }
 
   // 2. 横向伸缩项
@@ -162,7 +173,10 @@ export function buildTransformLatex(
 
   // 3. 基准函数骨架
   let baseStr = "";
-  const isSimpleArg = argStr === "x" || argStr === "|x|";
+  const isSimpleArg =
+    argStr === "x" ||
+    argStr === "|x|" ||
+    /^\\left\|[\s\S]*\\right\|$/.test(argStr);
   switch (fnType) {
     case "quadratic":
       baseStr = isSimpleArg ? `${argStr}^2` : `(${argStr})^2`;
@@ -297,8 +311,8 @@ export function calculateTransform(
   if (foldMode === "input") {
     symmetryInfo = {
       type: "even",
-      description: "恒为偶函数，图象关于 y 轴 (x = 0) 轴对称",
-      axisX: 0,
+      description: `自变量翻折后恒为轴对称图形，对称轴为 x = ${h.toFixed(1)}`,
+      axisX: h,
     };
   } else if (fnType === "quadratic" && foldMode === "none") {
     symmetryInfo = {

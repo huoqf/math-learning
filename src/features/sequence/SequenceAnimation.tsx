@@ -287,15 +287,15 @@ export function SequenceAnimation() {
     if (activeMode === "geometric") {
       return {
         variant: "info" as const,
-        badge: "几何直观 · 等比与无限剖分",
+        badge: "拓展 · 等比与无限剖分（超出课标）",
         condition:
           geometricViewType === "tessellation"
-            ? `边长 ${a1}，公比 q = ${q}，观察无限剖分面积之和收敛趋势。`
+            ? `边长 ${a1}，公比 q = ${q}，观察无限剖分面积之和的累加趋势。`
             : common + " aₙ = a₁·qⁿ⁻¹。",
         question:
           geometricViewType === "tessellation"
-            ? "反复对正方形作等比剖分，面积无限累加为何又能有界收敛？"
-            : "当 |q| < 1 时，无穷项之和 S∞ = a₁/(1−q) 表示什么极限？",
+            ? "反复对正方形作等比剖分，面积无限累加为何又能有界？"
+            : "当 |q| < 1 时，前 n 项和 Sₙ 随 n 增大有怎样的有界趋势？",
       };
     }
     if (activeMode === "recurrence") {
@@ -326,7 +326,7 @@ export function SequenceAnimation() {
             variant: "accent" as const,
             badge: "特征根法 · 二阶线性递推",
             condition: common + " 递推 aₙ₊₂ = paₙ₊₁ + qaₙ。",
-            question: "特征方程两根如何决定通项结构？重根通项有何不同？",
+            question: "递推特征根如何决定通项结构？重根通项有何不同？",
           };
         default:
           return {
@@ -482,7 +482,7 @@ export function SequenceAnimation() {
               <SelectGrid
                 items={[
                   { key: "points", label: "离散点与指数" },
-                  { key: "tessellation", label: "正方形无限剖分" },
+                  { key: "tessellation", label: "正方形无限剖分（拓展）" },
                 ]}
                 value={geometricViewType}
                 onChange={(val) =>
@@ -518,8 +518,8 @@ export function SequenceAnimation() {
                   },
                   {
                     key: "second-order",
-                    label: "二阶特征根法",
-                    description: "特征方程特征根求通项",
+                    label: "二阶特征根法（拓展）",
+                    description: "特征根法求通项",
                   },
                 ]}
                 value={recurrenceModelType}

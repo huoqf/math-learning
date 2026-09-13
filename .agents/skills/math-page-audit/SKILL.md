@@ -17,7 +17,7 @@ description: 高中数学教学与新高考规范审计 / 页面质量检查 / �
 | [references/audit-checklist.md](file:///d:/code/math/math-learning/.agents/skills/math-page-audit/references/audit-checklist.md) | **全学科全流程逐项核查清单**（A/B 课型分流、左中右三屏对账） | **页面交付前自检必查** |
 | [references/anti-patterns.md](file:///d:/code/math/math-learning/.agents/skills/math-page-audit/references/anti-patterns.md) | **前端交互与教学踩坑反例库**（二次转换乱飞/浮点跳动/设问剧透等） | 排查疑难 Bug 或代码走查时比对 |
 | [references/discipline-specs.md](file:///d:/code/math/math-learning/.agents/skills/math-page-audit/references/discipline-specs.md) | **五大分支学科深度审计标准**（函数/导数/解几/立几/概率专属标准） | 深入特定学科模块时针对性核查 |
-| [scripts/audit_page.mjs](file:///d:/code/math/math-learning/.agents/skills/math-page-audit/scripts/audit_page.mjs) | **自动化代码与高考规范静态审计脚本**（9+ 类违规一键检测） | 命令行执行自动化门禁 |
+| [scripts/audit_page.mjs](file:///d:/code/math/math-learning/.agents/skills/math-page-audit/scripts/audit_page.mjs) | **全库静态审计门禁**：色彩 Token / 字号缩放 / 三屏联动 / LaTeX 定界符 / 推导链格式 / **超纲术语**（学段边界）；支持 `--strict`（只拦增量）与 `--update-baseline`（重建存量基线） | 命令行执行自动化门禁 |
 
 ---
 
@@ -50,12 +50,50 @@ description: 高中数学教学与新高考规范审计 / 页面质量检查 / �
 运行以下自动化门禁命令，确保全部通过：
 
 ```bash
-# 门禁 0：一键运行自动化静态代码与规范审计脚本
-node .agents/skills/math-page-audit/scripts/audit_page.mjs src/features/<topic>
+# 门禁 0：静态审计（默认目标已改为全量 src，无需再传 src/features）
+#   - 自动排除 __tests__/ 与 *.test.ts(x)（测试夹具中的违规字符串属预期，不参与扫描）
+node .agents/skills/math-page-audit/scripts/audit_page.mjs
 
-# 门禁 1：TypeScript 全量类型编译
-npx tsc -b
+# 门禁 1：严格模式（CI / 预提交）—— 仅拦截"增量"违规，存量违规由基线豁免
+npm run audit:strict
 
-# 门禁 2：全量单元测试与契约测试
+# 门禁 2：TypeScript 全量类型编译（-b --force 避免 tsbuildinfo 缓存空跑）
+npx tsc -b --force
+
+# 门禁 3：全量单元测试与契约测试
 npm test
 ```
+
+#### ⚠️ 存量基线（Baseline）机制 —— 务必理解后再动手
+
+全量扫描开启后，历史存量违规会立即红灯。因此引入**基线**：以 `(文件::规则::类型::级别)` 为键记录存量，`--strict` **只拦增量**。
+
+| 场景 | 正确操作 |
+| :--- | :--- |
+| 首次接入 / 全库重构后 | `npm run audit:update-baseline` 重建基线 |
+| 治理掉一批存量违规后 | 再次 `npm run audit:update-baseline` **收缩**基线（形成单调收敛） |
+| 正常开发 | 只跑 `npm run audit:strict`；出现**增量**即为本次改动引入，必须修掉 |
+
+> **严禁**用"更新基线"来掩盖自己刚写出来的新违规 —— 基线是给历史存量用的。
+
+#### 🚫 学段边界门禁（新增强制项）
+
+`discipline/no-beyond-syllabus-terms` 会拦截"把超纲内容写成课标正文"：
+
+- 命中黑名单术语（洛必达 / 麦克劳林 / 泰勒 / 琴生 / 凹凸 / 极点极线 / 克拉默 / 外积 / 叉积 / 夹逼 / 等价无穷小 / 上确界 / 下确界 / 紧致 / 数列极限 / 特征方程 / 马尔可夫链 / 卡方分布 / 概率密度函数 / 微元 / 定积分 / 极坐标 / 参数方程 …）且**未声明拓展** → **error（阻断）**；
+- 已声明 `importance: "extend"` 或带「拓展 / 选学」徽标 → **warning（提示，允许）**。
+
+因此，写拓展内容时的标准姿势是：**内容保留 + `importance: "extend"` + 页面显示「拓展 · 超出课标」徽标**，而不是删除。
+
+#### ⚠️ 已知规则冲突：`left/tipcard-secondary-sync` vs ESLint
+
+`left/tipcard-secondary-sync` 要求左屏 `SelectGrid` 绑定的二级选项变量**必须**出现在 `tipConfig` 的 `useMemo` 依赖数组中（保证切换选项时教学提示同步特化）；而 ESLint 的 `react-hooks/exhaustive-deps` 因只做词法分析，会把它判为"多余依赖"。
+
+遇到该冲突时：**保留依赖**（遵循项目纪律），并在依赖数组上一行加定向豁免：
+
+```ts
+// 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [studyMode, pathType, params]);
+```
+

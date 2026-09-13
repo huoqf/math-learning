@@ -3,6 +3,7 @@
  * 构建数列实验室右屏 MathPanel 看板数据 (含 5 大高考模型全量扩展)
  */
 import type { MathPanelData } from "../types";
+import { formatMathNumber } from "@/utils/mathFormat";
 import {
   calcArithmeticSequence,
   calcGeometricSequence,
@@ -63,21 +64,21 @@ export function buildSequencePanel(
     // 通用数学量
     quantities.push({
       label: `末项 a_{${N}} (a_n = ${anLatex})`,
-      value: `a_{${N}} = ${aN.toFixed(2)}`,
+      value: `a_{${N}} = ${formatMathNumber(aN)}`,
       color: MATH_COLORS.sequence,
     });
 
     quantities.push({
       label: `前 ${N} 项和 S_{${N}}`,
-      value: `S_{${N}} = ${SN.toFixed(2)}`,
+      value: `S_{${N}} = ${formatMathNumber(SN)}`,
       color: MATH_COLORS.sequenceSum,
     });
 
     if (subMode === "linear") {
       if (res.zeroPointExact !== null) {
         quantities.push({
-          label: "变号零点 x_0 (a_n = 0 处)",
-          value: `x_0 = ${res.zeroPointExact.toFixed(2)}`,
+          label: "变号零点 $x_0$ ($a_n = 0$ 处)",
+          value: `x_0 = ${formatMathNumber(res.zeroPointExact)}`,
           color: MATH_COLORS.paramTertiary,
         });
       }
@@ -95,13 +96,13 @@ export function buildSequencePanel(
       });
 
       gaokaoPoints.push({
-        text: "数形结合：等差数列 a_n 散点均落在直线 y = dx + (a_1-d) 上。公差 d > 0 时单调递增，d < 0 时单调递减。公差 d 即直线的斜率。",
+        text: "数形结合：等差数列 $a_n$ 散点均落在直线 $y = dx + (a_1-d)$ 上。公差 $d > 0$ 时单调递增，$d < 0$ 时单调递减。公差 $d$ 即直线的斜率。",
         importance: "basic",
       });
     } else if (subMode === "gauss") {
       quantities.push({
         label: `首尾和 (a_1 + a_{${N}})`,
-        value: `${(a1 + aN).toFixed(2)}`,
+        value: `${formatMathNumber(a1 + aN)}`,
         color: MATH_COLORS.sequenceHighlight,
       });
 
@@ -125,8 +126,8 @@ export function buildSequencePanel(
     } else if (subMode === "quadratic") {
       if (res.continuousAxis !== null) {
         quantities.push({
-          label: "抛物线对称轴 x_sym",
-          value: `x = ${res.continuousAxis.toFixed(2)}`,
+          label: "抛物线对称轴 $x_sym$",
+          value: `x = ${formatMathNumber(res.continuousAxis)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
       }
@@ -136,10 +137,10 @@ export function buildSequencePanel(
         quantities.push({
           label: isMax
             ? `S_n 最大值项 ${res.maxSnInfo.isDual ? "(双最值)" : ""}`
-            : "S_n 最小值项",
+            : "$S_n$ 最小值项",
           value: res.maxSnInfo.isDual
-            ? `n = ${res.maxSnInfo.nMax}, ${res.maxSnInfo.dualN}, S = ${res.maxSnInfo.maxSn.toFixed(2)}`
-            : `n = ${res.maxSnInfo.nMax}, S = ${res.maxSnInfo.maxSn.toFixed(2)}`,
+            ? `n = ${res.maxSnInfo.nMax}, ${res.maxSnInfo.dualN}, S = ${formatMathNumber(res.maxSnInfo.maxSn)}`
+            : `n = ${res.maxSnInfo.nMax}, S = ${formatMathNumber(res.maxSnInfo.maxSn)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
       }
@@ -157,21 +158,21 @@ export function buildSequencePanel(
       });
 
       gaokaoPoints.push({
-        text: "高考易错点：抛物线对称轴 x_sym = 0.5 - a1/d 通常非整数，实际最值项取与对称轴距离最近的整数点；若对称轴恰为半整数（如 3.5），则有两个相等的最大值 S_3 = S_4。",
+        text: "高考易错点：抛物线对称轴 $x_sym = 0.5 - a1/d$ 通常非整数，实际最值项取与对称轴距离最近的整数点；若对称轴恰为半整数（如 3.5），则有两个相等的最大值 $S_3 = S_4$。",
         importance: "hard",
       });
     } else if (subMode === "segment") {
       if (res.segmentedSums) {
         quantities.push({
           label: `片段公差 Δ = k²·d (k=${kSegment})`,
-          value: `Δ = ${res.segmentedSums.diff.toFixed(2)}`,
+          value: `Δ = ${formatMathNumber(res.segmentedSums.diff)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
 
         res.segmentedSums.segments.forEach((seg) => {
           quantities.push({
             label: `第 ${seg.segmentIndex} 段和 (n=${seg.startN}..${seg.endN})`,
-            value: `${seg.sumValue.toFixed(2)}`,
+            value: `${formatMathNumber(seg.sumValue)}`,
             color: MATH_COLORS.paramTertiary,
           });
         });
@@ -184,19 +185,19 @@ export function buildSequencePanel(
       });
 
       gaokaoPoints.push({
-        text: "高考小题秒杀技：已知 S_n 和 S_{2n}，直接利用 S_n, S_{2n}-S_n, S_{3n}-S_{2n} 成等差数列可一步口算出 S_{3n}，无需反解 a1 和 d。",
+        text: "高考小题秒杀技：已知 $S_n$ 和 $S_{2n}$，直接利用 $S_n, S_{2n}-S_n, S_{3n}-S_{2n}$ 成等差数列可一步口算出 $S_{3n}$，无需反解 $a1$ 和 $d$。",
         importance: "gaokao",
       });
     } else if (subMode === "absSum") {
       quantities.push({
         label: `绝对值总和 T_{${N}} = \\sum |a_k|`,
-        value: `T_{${N}} = ${TN.toFixed(2)}`,
+        value: `T_{${N}} = ${formatMathNumber(TN)}`,
         color: MATH_COLORS.sequenceHighlight,
       });
 
       if (res.lastPositiveN !== null && d < 0 && a1 > 0) {
         quantities.push({
-          label: `正项分界项数 m (a_m ≥ 0)`,
+          label: `正项分界项数 $m$ ($a_m ≥ 0$)`,
           value: `m = ${res.lastPositiveN}`,
           color: MATH_COLORS.sequence,
         });
@@ -209,14 +210,14 @@ export function buildSequencePanel(
       });
 
       gaokaoPoints.push({
-        text: "新高考大题压轴热点：绝对值求和必须先令 a_n ≥ 0 求出变号分界点 m。当 n > m 时，T_n = S_m - (S_n - S_m) = 2S_m - S_n，转化后直接代入二次求和公式。",
+        text: "新高考大题压轴热点：绝对值求和必须先令 $a_n ≥ 0$ 求出变号分界点 $m$。当 $n > m$ 时，$T_n = S_m - (S_n - S_m) = 2S_m - S_n$，转化后直接代入二次求和公式。",
         importance: "hard",
       });
     }
 
     if (Math.abs(d) < 1e-9) {
       warnings.push({
-        text: "d = 0 (退化常数列)：公差 d 为 0 时，通项 a_n = a_1 为常数，前 n 项和 S_n = n · a_1 呈线性增长，非二次函数。",
+        text: "$d = 0$ (退化常数列)：公差 $d$ 为 0 时，通项 $a_n = a_1$ 为常数，前 $n$ 项和 $S_n = n · a_1$ 呈线性增长，非二次函数。",
         level: "warning",
       });
     }
@@ -328,8 +329,8 @@ export function buildSequencePanel(
 
       theorems.push({
         name: "等长片段和成等比性质",
-        latex: `\\frac{S_{2k} - S_k}{S_k} = \\frac{S_{3k} - S_{2k}}{S_{2k} - S_k} = \\color{${MATH_COLORS.paramSecondary}}{q}^k \\quad (q^k \\neq -1, S_k \\neq 0)`,
-        condition: "连续等长片段累加和构成公比为 q^k 的新等比数列",
+        latex: `\\frac{S_{2k} - S_k}{S_k} = \\frac{S_{3k} - S_{2k}}{S_{2k} - S_k} = \\color{${MATH_COLORS.paramSecondary}}{q}^k \\quad (S_k \\neq 0)`,
+        condition: "连续等长片段累加和构成公比为 $q^k$ 的新等比数列",
       });
 
       theorems.push({
@@ -339,7 +340,7 @@ export function buildSequencePanel(
       });
 
       gaokaoPoints.push({
-        text: "小题秒杀神器：新高考选择填空中已知 S_3 与 S_6 求 S_9 时，直接利用 S_3, S_6-S_3, S_9-S_6 成等比，无需联立繁琐高次方程解 a1 与 q。",
+        text: "小题秒杀神器：新高考选择填空中已知 $S_3$ 与 $S_6$ 求 $S_9$ 时，直接利用 $S_3, S_6-S_3, S_9-S_6$ 成等比，无需联立繁琐高次方程解 $a1$ 与 $q$。",
         importance: "gaokao",
       });
     } else if (subMode === "productMax") {
@@ -353,7 +354,7 @@ export function buildSequencePanel(
         quantities.push({
           label: res.maxPnInfo.isMax
             ? `P_n 最大值项 ${res.maxPnInfo.isDual ? "(双最值)" : ""}`
-            : "P_n 最小值项",
+            : "$P_n$ 最小值项",
           value: res.maxPnInfo.isDual
             ? `n = ${res.maxPnInfo.nMax}, ${res.maxPnInfo.dualN}, P = ${res.maxPnInfo.maxPn.toFixed(4)}`
             : `n = ${res.maxPnInfo.nMax}, P = ${res.maxPnInfo.maxPn.toFixed(4)}`,
@@ -380,21 +381,22 @@ export function buildSequencePanel(
     } else if (subMode === "tessellation") {
       if (res.limitSum !== null) {
         quantities.push({
-          label: "无穷递缩和 S_∞",
-          value: `S_∞ = ${res.limitSum.toFixed(4)}`,
+          label: "无穷递缩和 $S_\\infty$（拓展）",
+          value: `S_\\infty = ${res.limitSum.toFixed(4)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
       }
 
       theorems.push({
-        name: "无穷递缩等比数列求和定理",
+        name: "无穷递缩等比数列的极限和（拓展 · 超出课标）",
         latex: `S_\\infty = \\lim_{n \\to \\infty} S_n = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a_1}}{1 - \\color{${MATH_COLORS.paramSecondary}}{q}} \\quad (|\\color{${MATH_COLORS.paramSecondary}}{q}| < 1)`,
-        condition: "公比绝对值严格小于 1 时，q^n 趋近于 0，和收敛于有限面积",
+        condition:
+          "公比绝对值严格小于 1 时，$q^n$ 趋近于 0，和无界累加却收敛于有限面积",
       });
 
       gaokaoPoints.push({
-        text: "极限与无字证明：正方形自相似细分面积展示了代数无穷累加向几何有限面积的收敛，是新高考考查直观想象与极限思想的重要模型。",
-        importance: "gaokao",
+        text: "拓展 · 超出课标：教材正文只要求有限项求和 $S_n$，无穷递缩求和属选学延伸。正方形自相似细分给出了代数无穷累加向几何有限面积的直观印证，可作直观想象素养的载体，但不作为高考必考结论。",
+        importance: "extend",
       });
     }
 
@@ -468,7 +470,7 @@ export function buildSequencePanel(
 
       if (isCriticalQ1) {
         warnings.push({
-          text: "公比 q = 1 错位相减法失效：(1-q)=0 不能作分母除过去。此时 c_n = a_n 为纯等差数列，前 n 项和应直接使用等差求和公式 T_n = n a_1 + n(n-1)d/2。",
+          text: "公比 $q = 1$ 错位相减法失效：$(1-q)=0$ 不能作分母除过去。此时 $c_n = a_n$ 为纯等差数列，前 $n$ 项和应直接使用等差求和公式 $T_n = n a_1 + n(n-1)d/2$。",
           level: "danger",
         });
       }
@@ -511,7 +513,7 @@ export function buildSequencePanel(
           color: MATH_COLORS.sequenceSum,
         });
         quantities.push({
-          label: "极限值 $\\lim T_N$",
+          label: "无限逼近值 $T_\\infty$（拓展）",
           value: "0.7500",
           color: MATH_COLORS.sequenceHighlight,
         });
@@ -541,7 +543,7 @@ export function buildSequencePanel(
           color: MATH_COLORS.sequenceSum,
         });
         quantities.push({
-          label: "极限收敛值 $\\lim T_N$",
+          label: "无限逼近值 $T_\\infty$（拓展）",
           value: "1.0000",
           color: MATH_COLORS.sequenceHighlight,
         });
@@ -561,14 +563,14 @@ export function buildSequencePanel(
 
       quantities.push({
         label: `前 $N$ 项绝对值和 $T_{${N}}$`,
-        value: `T_{${N}} = ${TN.toFixed(2)}`,
+        value: `T_{${N}} = ${formatMathNumber(TN)}`,
         color: MATH_COLORS.sequenceSum,
       });
 
       if (res.zeroPoint !== null) {
         quantities.push({
           label: "变号零点 $n_0$",
-          value: `n_0 = ${res.zeroPoint.toFixed(2)}`,
+          value: `n_0 = ${formatMathNumber(res.zeroPoint)}`,
           color: MATH_COLORS.paramPrimary,
         });
       }
@@ -602,13 +604,13 @@ export function buildSequencePanel(
 
       quantities.push({
         label: "复合通项 $c_n = a_n + b_n$",
-        value: `c_{${N}} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(2)}`,
+        value: `c_{${N}} = ${formatMathNumber(res.terms[N - 1]?.cn ?? 0)}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
         label: `前 $N$ 项和 $T_{${N}}$`,
-        value: `T_{${N}} = ${TN.toFixed(2)}`,
+        value: `T_{${N}} = ${formatMathNumber(TN)}`,
         color: MATH_COLORS.sequenceSum,
       });
 
@@ -668,20 +670,20 @@ export function buildSequencePanel(
 
       quantities.push({
         label: `原数列第 ${N} 项 $a_{${N}}$`,
-        value: `a_{${N}} = ${aN.toFixed(2)}`,
+        value: `a_{${N}} = ${formatMathNumber(aN)}`,
         color: MATH_COLORS.sequence,
       });
 
       if (res.fixedPoint !== null) {
         quantities.push({
           label: `不动点 $c = \\frac{q}{1-p}$`,
-          value: `c = ${res.fixedPoint.toFixed(2)}`,
+          value: `c = ${formatMathNumber(res.fixedPoint)}`,
           color: MATH_COLORS.paramTertiary,
         });
 
         quantities.push({
           label: `平移等比数列 $b_{${N}}$ ($b_n = a_n - c$)`,
-          value: `b_{${N}} = ${bN.toFixed(2)}`,
+          value: `b_{${N}} = ${formatMathNumber(bN)}`,
           color: MATH_COLORS.paramSecondary,
         });
 
@@ -694,14 +696,14 @@ export function buildSequencePanel(
         theorems.push({
           name: "通项公式推导",
           latex: `a_n = (a_1 - c) \\cdot \\color{${MATH_COLORS.paramPrimary}}{p}^{n-1} + c`,
-          condition: `$a_1=${a1}, p=${p_rec}, c=${res.fixedPoint.toFixed(2)}$`,
+          condition: `$a_1=${a1}, p=${p_rec}, c=${formatMathNumber(res.fixedPoint)}$`,
         });
 
-        // 极限性质
+        // 极限性质（拓展 · 超出课标）
         if (Math.abs(p_rec) < 1) {
           quantities.push({
-            label: `极限稳态 $a_\\infty$`,
-            value: `$a_\\infty = ${res.fixedPoint.toFixed(2)}$ (收敛)`,
+            label: "极限稳态 $a_\\infty$（拓展 · 超出课标）",
+            value: `$a_\\infty = ${formatMathNumber(res.fixedPoint)}$ (收敛)`,
             color: MATH_COLORS.paramTertiary,
           });
         }
@@ -732,13 +734,13 @@ export function buildSequencePanel(
 
       quantities.push({
         label: `通项 $a_{${N}}$`,
-        value: `a_{${N}} = ${aN.toFixed(2)}`,
+        value: `a_{${N}} = ${formatMathNumber(aN)}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
         label: `末阶增量 $\\Delta a_{${N - 1}}$`,
-        value: `\\Delta a = ${deltaLast.toFixed(2)}`,
+        value: `\\Delta a = ${formatMathNumber(deltaLast)}`,
         color: MATH_COLORS.paramSecondary,
       });
 
@@ -797,7 +799,7 @@ export function buildSequencePanel(
 
       quantities.push({
         label: `通项 $a_{${N}}$`,
-        value: `a_{${N}} = ${aN.toFixed(2)}`,
+        value: `a_{${N}} = ${formatMathNumber(aN)}`,
         color: MATH_COLORS.sequence,
       });
 
@@ -860,7 +862,7 @@ export function buildSequencePanel(
         theorems.push({
           name: "倒数构造等差数列 (A = C 特例)",
           latex: `\\frac{1}{a_{n+1}} = \\frac{1}{a_n} + \\frac{\\color{${MATH_COLORS.paramSecondary}}{B}}{\\color{${MATH_COLORS.paramPrimary}}{A}} \\implies b_{n+1} = b_n + d`,
-          condition: `$A = C = ${coefA}$ 时，倒数数列 $\\{\\frac{1}{a_n}\\}$ 为公差 $d = \\frac{B}{A} = ${(coefB / coefA).toFixed(2)}$ 的等差数列`,
+          condition: `$A = C = ${coefA}$ 时，倒数数列 $\\{\\frac{1}{a_n}\\}$ 为公差 $d = \\frac{B}{A} = ${formatMathNumber(coefB / coefA)}$ 的等差数列`,
         });
       } else {
         theorems.push({
@@ -891,52 +893,52 @@ export function buildSequencePanel(
 
       quantities.push({
         label: `二阶递推通项 $a_{${N}}$`,
-        value: `a_{${N}} = ${aN.toFixed(2)}`,
+        value: `a_{${N}} = ${formatMathNumber(aN)}`,
         color: MATH_COLORS.sequence,
       });
 
       if (res.delta >= 0) {
         quantities.push({
           label: `特征根 $r_1, r_2$`,
-          value: `r_1 = ${res.r1.toFixed(2)}, r_2 = ${res.r2.toFixed(2)}`,
+          value: `r_1 = ${formatMathNumber(res.r1)}, r_2 = ${formatMathNumber(res.r2)}`,
           color: MATH_COLORS.paramSecondary,
         });
 
         quantities.push({
           label: `降阶等比项 $b_{${N}}$ ($b_n = a_{n+1} - r_1 a_n$)`,
-          value: `b_{${N}} = ${bN.toFixed(2)}`,
+          value: `b_{${N}} = ${formatMathNumber(bN)}`,
           color: MATH_COLORS.paramSecondary,
         });
 
         if (Math.abs(res.r1 - res.r2) < 1e-9) {
           theorems.push({
             name: "重特征根型 (Δ = 0)",
-            latex: `(x - r)^2 = 0 \\implies a_n = (C_1 + C_2 n) r^{n-1} \\quad (r = ${res.r1.toFixed(2)})`,
-            condition: `特征方程有二重实根 $r_1 = r_2 = ${res.r1.toFixed(2)}$`,
+            latex: `(x - r)^2 = 0 \\implies a_n = (C_1 + C_2 n) r^{n-1} \\quad (r = ${formatMathNumber(res.r1)})`,
+            condition: `特征方程有二重实根 $r_1 = r_2 = ${formatMathNumber(res.r1)}$`,
           });
         } else {
           theorems.push({
-            name: "特征方程法 (二阶常系数线性递推)",
+            name: "特征根法 (二阶线性递推 · 拓展)",
             latex: `x^2 - \\color{${MATH_COLORS.paramPrimary}}{p} x - \\color{${MATH_COLORS.paramSecondary}}{q} = 0 \\implies a_n = C_1 r_1^n + C_2 r_2^n \\quad (r_1 \\neq r_2)`,
-            condition: `判别式 $\\Delta = p^2 + 4q = ${res.delta.toFixed(2)} > 0$，两不同特征根为 $r_1=${res.r1.toFixed(2)}, r_2=${res.r2.toFixed(2)}$`,
+            condition: `判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} > 0$，两不同特征根为 $r_1=${formatMathNumber(res.r1)}, r_2=${formatMathNumber(res.r2)}$`,
           });
         }
 
         theorems.push({
           name: "构造降阶等比数列",
           latex: `a_{n+2} - r_1 a_{n+1} = r_2 (a_{n+1} - r_1 a_n)`,
-          condition: `令 $b_n = a_{n+1} - r_1 a_n$，则 $\\{b_n\\}$ 为公比为 $r_2 = ${res.r2.toFixed(2)}$ 的等比数列`,
+          condition: `令 $b_n = a_{n+1} - r_1 a_n$，则 $\\{b_n\\}$ 为公比为 $r_2 = ${formatMathNumber(res.r2)}$ 的等比数列`,
         });
       } else {
         warnings.push({
-          text: `特征方程判别式 $\\Delta = p^2 + 4q = ${res.delta.toFixed(2)} < 0$，无实特征根（新高考仅考查 $\\Delta \\ge 0$ 实数特征根模型）。`,
+          text: `特征方程判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} < 0$，无实特征根（拓展模型仅考查 $\\Delta \\ge 0$ 的实数特征根情形）。`,
           level: "danger",
         });
       }
 
       gaokaoPoints.push({
-        text: "【新高考二阶递推标准解法】解特征方程求根 $r_1, r_2$，构造等比数列 $b_n = a_{n+1} - r_1 a_n = (a_2 - r_1 a_1) r_2^{n-1}$，再用累加法或待定系数求解 $a_n$。",
-        importance: "hard",
+        text: "拓展 · 超出课标：二阶线性递推不在教材正文范围（教材只要求等差、等比与数学归纳法）。解特征方程求根 $r_1, r_2$，构造等比数列 $b_n = a_{n+1} - r_1 a_n = (a_2 - r_1 a_1) r_2^{n-1}$，再用累加法或待定系数求解 $a_n$，可作强基与竞赛延伸。",
+        importance: "extend",
       });
 
       mnemonic =

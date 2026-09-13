@@ -194,7 +194,7 @@ export function getModeTipConfig(ctx: BayesScenarioCtx): TipConfig {
   if (markovScenario === "pass_ball") {
     return {
       variant: "danger",
-      badge: "高考压轴 · 甲乙传球马尔可夫链 (震荡收敛)",
+      badge: "选学 · 拓展 | 甲乙传球马尔可夫链 (震荡收敛)",
       condition:
         "甲必传乙 (p₁₁=0)，乙等可能传甲或丙 (p₂₁=0.5)，球初在甲手 (p₁=1)。",
       question:
@@ -223,16 +223,18 @@ export function getModeTipConfig(ctx: BayesScenarioCtx): TipConfig {
   if (markovScenario === "weather") {
     return {
       variant: "danger",
-      badge: "高考经典 · 晴雨天气转移模型 (单调收敛)",
-      condition: "转移矩阵固定 (p₁₁=0.7, p₂₁=0.4)，特征公比 λ = 0.3 > 0。",
-      question: "滑动步数 n，探究长期天气概率如何收敛于稳态极限 4/7。",
+      badge: "选学 · 拓展 | 晴雨天气转移模型",
+      condition: "转移矩阵固定 (p₁₁=0.7, p₂₁=0.4)，转移公比 λ = 0.3 > 0。",
+      question:
+        "滑动步数 $n$，探究长期转移概率是否趋于稳定值，并求出该稳定值。",
     };
   }
   return {
     variant: "danger",
-    badge: "自由探索 · 马尔可夫链状态转移",
+    badge: "选学 · 拓展 · 马尔可夫链状态转移",
     condition: "自由设定 2-State 转移概率矩阵与初始状态概率 p₁。",
-    question: "探究公比 λ 与稳态极限 p_∞ 的形成，以及递推数列的收敛特征。",
+    question:
+      "探究转移公比 $\\lambda$ 与稳态概率 $p_\\infty$ 的关系，并求出 $p_\\infty$ 关于 $\\lambda$ 的表达式。",
   };
 }
 

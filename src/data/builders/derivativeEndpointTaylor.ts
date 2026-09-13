@@ -62,7 +62,7 @@ export function buildDerivativeEndpointTaylorPanel(
       ],
       theorems: [
         {
-          name: "新高考压轴两步答题法：必要探路 + 充分证明",
+          name: "压轴常用两步法（拓展）：必要探路 + 充分证明",
           latex:
             endpointType === "exp"
               ? "\\text{① 必要性：} f'(0)=1-a \\ge 0 \\implies a \\le 1; \\quad \\text{② 充分性：当 } a \\le 1 \\text{ 时证明 } f(x) \\ge 0"
@@ -84,12 +84,12 @@ export function buildDerivativeEndpointTaylorPanel(
       ],
       gaokaoPoints: [
         {
-          text: "新高考导数压轴端点效应标准化流程：①取端点求必要条件锁定参数边界；②大题分步验证充分性（临界值与非临界值）；③二阶导判凹凸。",
-          importance: "gaokao",
+          text: "拓展 · 超出课标：端点效应（必要性探路 + 充分性验证）是压轴题的常用处理流程：①取端点求必要条件锁定参数边界；②分步验证充分性（临界值与非临界值）；③二阶导判导函数单调性。",
+          importance: "extend",
         },
         {
-          text: "阅卷防扣分警示：在解答题中仅写必要条件得出的参数范围只能拿到步骤分，必须补全单调性证明闭环才能拿满分。",
-          importance: "hard",
+          text: "卷面规范提醒：在解答题中仅写必要条件得出的参数范围只能拿到步骤分，必须补全单调性证明闭环才能拿满分。",
+          importance: "extend",
         },
       ],
       warnings: res.isSufficientValid
@@ -206,14 +206,14 @@ export function buildDerivativeEndpointTaylorPanel(
               : MATH_COLORS.paramPrimary,
         },
         {
-          label: "高考压轴核心放缩不等式",
+          label: "拓展 · 核心放缩不等式",
           value: res.scalingInequality,
           color: MATH_COLORS.focusPoint,
         },
       ],
       theorems: [
         {
-          name: "新高考放缩不等式母体源头",
+          name: "放缩不等式的由来（拓展）",
           latex: res.scalingInequality,
           note: `当前 ${res.order} 阶麦克劳林拟合在原点附近局部展开，阶数越高拟合精度越高，残差收敛越快。`,
         },
@@ -225,17 +225,17 @@ export function buildDerivativeEndpointTaylorPanel(
       ],
       gaokaoPoints: [
         {
-          text: "放缩不等式的命题渊源：新高考大题常考用 $e^x \\ge 1+x$（切线放缩）或 $e^x \\ge 1+x+\\frac{1}{2}x^2$（抛物线放缩），掌握泰勒展开可秒懂命题人意图。",
-          importance: "gaokao",
+          text: "拓展 · 超出课标：压轴大题常出现的放缩不等式 $e^x \\ge 1+x$（切线放缩）或 $e^x \\ge 1+x+\\frac{1}{2}x^2$（二次放缩），可由泰勒展开理解其命题来源，但卷面不得使用泰勒展开。",
+          importance: "extend",
         },
         {
-          text: "差函数证明通法：任何高阶泰勒放缩，在高考卷面上均通过“逐阶求导 + 符号回代”的方法严格论证，属于高考必备大题基本功。",
-          importance: "gaokao",
+          text: "差函数证明通法：上述放缩在卷面上均需通过“逐阶求导 + 符号回代”的差函数法严格论证（该方法属课标内通法）。",
+          importance: "extend",
         },
       ],
       warnings: [],
       mnemonic:
-        "超越拟合看泰勒，切线抛物层层递；残差包络夹逼紧，差函数法秒破题。",
+        "超越拟合看泰勒，切线抛物层层递；残差包络放缩紧，差函数法秒破题。",
     };
   }
 }

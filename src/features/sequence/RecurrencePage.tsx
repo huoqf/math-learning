@@ -361,10 +361,10 @@ export function RecurrencePage() {
       case "second-order":
         return {
           variant: "accent" as const,
-          badge: "高考进阶 · 二阶特征根法",
+          badge: "拓展 · 二阶递推特征根法（超出课标）",
           condition: `初始项 a₁ = ${a1v}，a₂ = ${params.a2 ?? 3}，递推 aₙ₊₂ = paₙ₊₁ + qaₙ。`,
           question:
-            "特征方程 x² = px + q 的两个根如何决定解的结构？重根与两异根通项有何区别？",
+            "递推对应的特征根（满足 $x^2 = px + q$）如何决定解的结构？重根与两异根通项有何区别？",
         };
       case "accumulation":
         return {
@@ -373,14 +373,15 @@ export function RecurrencePage() {
           condition:
             common + " 递推 aₙ₊₁ − aₙ = f(n)，f(n) 为等差 / 指数 / 裂项。",
           question:
-            "将相邻差分逐项累加为何能约去中间全部项？最终得到 aₙ = a₁ + Σ f(k)。",
+            "将相邻差分逐项累加，中间项如何对消？这给出了怎样的通项表达式？",
         };
       case "multiplication":
         return {
           variant: "warning" as const,
           badge: "连乘约分 · 累乘法求通项",
           condition: common + " 比值递推 aₙ₊₁ / aₙ = f(n)，f(n) 可连乘约分。",
-          question: "相邻比值逐项连乘能否约去中间项？最终 aₙ = a₁ ∏ f(k)。",
+          question:
+            "相邻比值逐项连乘，中间项如何约去？由此能得到怎样的通项表达式？",
         };
       case "reciprocal":
         return {
@@ -395,9 +396,12 @@ export function RecurrencePage() {
           variant: "primary" as const,
           badge: "递推构造求通项",
           condition: common,
-          question: "观察参数对图像与通项结果的影响。",
+          question:
+            "改变首项与递推系数，求通项 $a_n$ 关于 $n$ 的表达式，并判断数列的单调性。",
         };
     }
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recurrenceModelType, activePresetKey, params.a1, params.a2, params.N]);
 
   return (
@@ -406,7 +410,7 @@ export function RecurrencePage() {
         <LeftPanel>
           <LeftPanelSection
             title="递推构造 6 大核心模型"
-            subtitle="覆盖新高考大题核心待定系数与同除构造"
+            subtitle="覆盖待定系数与同除构造核心模型（含 1 项拓展）"
           >
             <SelectGrid
               items={[

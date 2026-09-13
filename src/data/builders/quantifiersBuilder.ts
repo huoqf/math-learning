@@ -189,11 +189,11 @@ export function buildQuantifiersPanel(
         importance: "gaokao",
       },
       {
-        text: "含参不等式恒成立：∀x ∈ I, f(x) ≥ m 转化为求最值问题 f_min ≥ m。",
+        text: "含参不等式恒成立：$∀x ∈ I, f(x) ≥ m$ 转化为求最值问题 $f_min ≥ m$。",
         importance: "core",
       },
       {
-        text: "含参不等式能成立/存在性：∃x ∈ I, f(x) ≤ m 转化为求最值问题 f_min ≤ m。",
+        text: "含参不等式能成立/存在性：$∃x ∈ I, f(x) ≤ m$ 转化为求最值问题 $f_min ≤ m$。",
         importance: "gaokao",
       },
     ],

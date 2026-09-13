@@ -237,38 +237,62 @@ export const leftPanelRules = [
     type: '参数标签格式违规',
     severity: 'error',
     check(ctx) {
+      // 仅约束 ParamMeta 的参数标签，不约束 ParamMark(滑块刻度).labelFormula
+      // ParamMark 位于 `marks: [ ... ]` 数组内，其 labelFormula 表达的是取值本身（如 "0" / "a=b"），
+      // 不属于"参数标签"，此前被误判产生大量噪音。
       const issues = [];
+      const marksStack = [];
+      let depth = 0;
+
       ctx.cleanLines.forEach((line, idx) => {
-        if (/labelFormula:\s*["'][a-zA-Z0-9_]["']/.test(line)) {
-          issues.push({
-            lineNum: idx + 1,
-            type: '孤立参数代号',
-            message: '参数标签缺少中文几何含义，应为: \\text{含义 } \\color{...}{字母}',
-            snippet: line.trim(),
-          });
-        }
-        if (line.includes('labelFormula:') && !line.includes('value:') && !line.includes('variant:')) {
-          const match = line.match(/labelFormula:\s*["'`](.*)["'`]/);
-          if (match) {
-            const formula = match[1];
-            const pureMath = formula.replace(/\\text\{[^}]*\}/g, '').replace(/\\color\{[^}]*\}/g, '').trim();
-            if (!/[a-zA-Z]/.test(pureMath)) {
-              issues.push({
-                lineNum: idx + 1,
-                type: '参数缺少数学代号',
-                message: '参数标签缺少具体数学代号（如 a, b, x_0, PA, CA），应遵循: \\text{含义 } \\color{...}{代号}',
-                snippet: line.trim(),
-              });
-            }
-            if (/[a-zA-Z]/.test(formula) && !formula.includes('\\color') && !formula.includes('\\frac')) {
-              issues.push({
-                lineNum: idx + 1,
-                type: '参数未绑定色彩Token',
-                message: '参数标签必须按三位一体原则绑定色彩 Token: \\color{${MATH_COLORS.paramPrimary}}{...}',
-                snippet: line.trim(),
-              });
+        const insideMarks = marksStack.length > 0;
+
+        // 同时兼容单行 ParamMark 写法（同一行出现 `\bvalue:`，注意排除 defaultValue:）
+        const isInlineMark = /\bvalue:\s*[-\d]/.test(line);
+
+        if (!insideMarks && !isInlineMark) {
+          if (/labelFormula:\s*["'][a-zA-Z0-9_]["']/.test(line)) {
+            issues.push({
+              lineNum: idx + 1,
+              type: '孤立参数代号',
+              message: '参数标签缺少中文几何含义，应为: \\text{含义 } \\color{...}{字母}',
+              snippet: line.trim(),
+            });
+          }
+          if (line.includes('labelFormula:') && !line.includes('value:') && !line.includes('variant:')) {
+            const match = line.match(/labelFormula:\s*["'`](.*)["'`]/);
+            if (match) {
+              const formula = match[1];
+              const pureMath = formula.replace(/\\text\{[^}]*\}/g, '').replace(/\\color\{[^}]*\}/g, '').trim();
+              if (!/[a-zA-Z]/.test(pureMath)) {
+                issues.push({
+                  lineNum: idx + 1,
+                  type: '参数缺少数学代号',
+                  message: '参数标签缺少具体数学代号（如 a, b, x_0, PA, CA），应遵循: \\text{含义 } \\color{...}{代号}',
+                  snippet: line.trim(),
+                });
+              }
+              if (/[a-zA-Z]/.test(formula) && !formula.includes('\\color') && !formula.includes('\\frac')) {
+                issues.push({
+                  lineNum: idx + 1,
+                  type: '参数未绑定色彩Token',
+                  message: '参数标签必须按三位一体原则绑定色彩 Token: \\color{${MATH_COLORS.paramPrimary}}{...}',
+                  snippet: line.trim(),
+                });
+              }
             }
           }
+        }
+
+        // 维护 marks 数组作用域（方括号深度）
+        const opens = (line.match(/\[/g) || []).length;
+        const closes = (line.match(/\]/g) || []).length;
+        if (/marks:\s*\[/.test(line)) {
+          marksStack.push(depth + 1);
+        }
+        depth += opens - closes;
+        while (marksStack.length > 0 && depth < marksStack[marksStack.length - 1]) {
+          marksStack.pop();
         }
       });
       return issues;

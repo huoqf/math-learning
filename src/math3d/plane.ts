@@ -21,7 +21,7 @@ export const pointPlaneDistance = (pt: Vec3, plane: Plane): number =>
 export const projectPointToPlane = (pt: Vec3, plane: Plane): Vec3 =>
   sub(pt, scale(plane.normal, dot(sub(pt, plane.point), plane.normal)));
 
-/** 二面角（取锐角） */
+/** 两平面所成角（取锐角，∈[0, π/2]）。注：二面角本身可取 [0, π]，本函数仅返回其锐角代表值。 */
 export const planeAngle = (p1: Plane, p2: Plane): number => {
   const n1 = p1.normal;
   const n2 = p2.normal;
