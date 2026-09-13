@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { getStepDigits, formatByStep } from "./Slider";
 import { KatexFormula } from "./KatexFormula";
+import { renderMixedLatex } from "./mathPanel/mathPanelUtils";
 import type {
   ParamImportance,
   ParamMark,
@@ -92,80 +93,15 @@ function renderGroupTitle(label: string): React.ReactNode {
 }
 
 // ── 描述文字智能渲染 ──
-// 处理 3 种 descriptionFormula 格式：
-// 1. `$...$` 混合格式（中文 + 数学公式）
-// 2. `\text{...}` 包裹格式（旧格式，限制：不支持嵌套大括号）
-// 3. 纯 LaTeX（无中文）
-
+// 使用全局统一的 renderMixedLatex（内置大括号深度堆栈与 CJK 词法分析），
+// 完美支持 $...$ 混合格式、纯 LaTeX、以及包含嵌套大括号的复杂表达式，彻底根治正则截断事故
 function renderDescription(
   description: string | undefined,
   descriptionFormula: string | undefined,
 ): React.ReactNode {
   const text = descriptionFormula || description;
   if (!text) return null;
-
-  // 纯 LaTeX：无中文字符，直接渲染
-  if (!/[\u4e00-\u9fa5]/.test(text)) {
-    return (
-      <KatexFormula formula={text} mode="inline" className="!text-xs !my-0" />
-    );
-  }
-
-  // `$...$` 混合格式：拆分渲染
-  if (text.includes("$")) {
-    const parts = text.split(/(\$[^$]+\$)/g);
-    return (
-      <span className="inline">
-        {parts.map((part, i) => {
-          if (part.startsWith("$") && part.endsWith("$")) {
-            return (
-              <KatexFormula
-                key={i}
-                formula={part.slice(1, -1)}
-                mode="inline"
-                className="!text-xs !my-0"
-              />
-            );
-          }
-          return <span key={i}>{part}</span>;
-        })}
-      </span>
-    );
-  }
-
-  // `\text{...}` 格式：提取中文，数学部分渲染
-  // 限制：不支持嵌套大括号（当前 28 条数据无嵌套）
-  if (text.includes("\\text{")) {
-    const parts = text.split(/(\\text\{[^}]+\})/g);
-    return (
-      <span className="inline">
-        {parts.map((part, i) => {
-          if (part.startsWith("\\text{") && part.endsWith("}")) {
-            const content = part.slice(6, -1);
-            return <span key={i}>{content}</span>;
-          }
-          if (part.trim()) {
-            try {
-              return (
-                <KatexFormula
-                  key={i}
-                  formula={part}
-                  mode="inline"
-                  className="!text-xs !my-0"
-                />
-              );
-            } catch {
-              return <span key={i}>{part}</span>;
-            }
-          }
-          return null;
-        })}
-      </span>
-    );
-  }
-
-  // 纯文字
-  return <span>{text}</span>;
+  return <span className="inline text-xs">{renderMixedLatex(text)}</span>;
 }
 
 const snapToStep = (value: number, param: ParamConfig) => {

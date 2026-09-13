@@ -41,7 +41,7 @@ export const paramMeta: Record<
     max: 10.0,
     step: 0.5,
     description: "定点跨度全长 |BC| (或 |AB|)",
-    descriptionFormula: "\\text{基底定点距离 } d",
+    descriptionFormula: "基底定点距离 $d$",
     importance: "core",
     group: "几何底模参数",
   },

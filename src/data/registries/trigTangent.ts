@@ -20,8 +20,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: Math.PI / 4,
     importance: "core",
     description: "单位圆终边旋转角，对应正切线 AT = tan θ",
-    descriptionFormula:
-      "\\text{终边旋转角 } \\theta, \\; \\text{对应正切线 } AT = \\tan \\theta",
+    descriptionFormula: "终边旋转角 $\\theta$，对应正切线 $AT = \\tan \\theta$",
   },
   A: {
     key: "A",

@@ -113,9 +113,15 @@ export function buildLineParamTPanel(
           status: "normal" as const,
         },
         {
-          label: "割线/切割线线段乘积",
-          labelFormula: "|PA| \\cdot |PB| = |t_1 t_2|",
-          value: intersect.segmentProduct.toFixed(3),
+          label:
+            conicType === "circle"
+              ? "割线定理线段乘积 (圆幂)"
+              : "二次曲线割线线段乘积",
+          labelFormula: "|P_0A| \\cdot |P_0B| = |t_1 t_2|",
+          value:
+            conicType === "circle"
+              ? `${intersect.segmentProduct.toFixed(3)} (定值, 与α无关)`
+              : `${intersect.segmentProduct.toFixed(3)} (随α变化)`,
           status: "normal" as const,
         },
         {
@@ -211,59 +217,67 @@ export function buildLineParamTPanel(
         name: "直线标准参数方程的几何意义",
         latex:
           "\\begin{cases} x = x_0 + t \\cos\\alpha \\\\ y = y_0 + t \\sin\\alpha \\end{cases}",
-        note: "当直线的方向向量为单位向量 (cosα, sinα) 时，参数 |t| 表示动点 P(x, y) 到定点 P0(x0, y0) 的绝对距离；t 的符号表示在向量方向上的相对指向。",
+        note: "当直线的方向向量为单位向量 $(\\cos\\alpha, \\sin\\alpha)$ 时，参数 $|t|$ 严格表示动点 $P(x, y)$ 到定点 $P_0(x_0, y_0)$ 的实际几何距离；$t$ 的符号表示在单位方向向量上的相对指向。",
         prerequisites: [
-          "直线倾斜角 α ∈ [0, π)",
-          "向量 (cosα, sinα) 必须为单位向量",
+          "直线倾斜角 $\\alpha \\in [0, \\pi)$",
+          "方向向量 $(\\cos\\alpha, \\sin\\alpha)$ 必须为单位向量",
         ],
         level: "core",
       },
       {
         name: "非标准参数方程的距离修正",
         latex: "|P_0P'| = \\sqrt{a^2 + b^2} \\cdot |m|",
-        note: "当直线方程设为 x=x0+am, y=y0+bm 且 a²+b² ≠ 1 时，参数 m 不等于实际距离，必须乘归一化系数 √(a²+b²)。",
-        prerequisites: ["a²+b² > 0"],
+        note: "当直线方程设为 $x=x_0+am, y=y_0+bm$ 且 $a^2+b^2 \\ne 1$ 时，参数 $m$ 不等于实际距离，必须乘以归一化模长系数 $\\sqrt{a^2+b^2}$ 进行距离还原。",
+        prerequisites: ["$a^2+b^2 > 0$"],
         level: "important",
       },
     );
     gaokaoPoints.push(
       {
-        text: "非标准参数方程扣分陷阱（归一化）：当参数方程未归一化（a²+b² ≠ 1）时，m 不等于实际几何距离！高考中若直接令 |AB|=|m1-m2| 将直接导致整步扣分。",
+        text: "非标准参数方程扣分陷阱（归一化）：当参数方程未归一化（$a^2+b^2 \\ne 1$）时，$m$ 不等于实际几何距离！高考中若直接令 $|AB|=|m_1-m_2|$ 将导致整题推导演绎失分。",
         importance: "hard",
       },
       {
-        text: "参数正负的方向性意义：t > 0 表示点 P 在 P0 上方/右方（沿方向向量正向），t < 0 表示在反方向。求解射线或定比分点时需注意符号。",
+        text: "参数正负的方向性意义：$t > 0$ 表示动点 $P$ 在 $P_0$ 沿单位方向向量的正向一侧，$t < 0$ 表示在反方向，常用于高考射线交点与定比分点位置判定。",
         importance: "core",
       },
     );
   } else if (mode === "secant") {
     theorems.push(
       {
-        name: "割线定理与二次曲线幂的统一",
+        name:
+          conicType === "circle"
+            ? "圆的割线定理与圆幂定值"
+            : "二次曲线割线方幂与线段乘积",
         latex:
-          "|P_0A| \\cdot |P_0B| = |t_1 t_2| = \\left| \\frac{C}{A} \\right|",
-        note: "将直线标准参数方程代入二次曲线方程得 A t² + B t + C = 0。若交点为 A(t₁), B(t₂)，则有向线段积 |P₀A|·|P₀B| 等于 |t₁ t₂|，极大地简化了几何距离乘积的求解。",
+          conicType === "circle"
+            ? "|P_0A| \\cdot |P_0B| = |t_1 t_2| = |x_0^2 + y_0^2 - R^2| \\quad (\\text{恒为定值，与 } \\alpha \\text{ 无关})"
+            : "|P_0A| \\cdot |P_0B| = |t_1 t_2| = \\left| \\frac{C}{A(\\alpha)} \\right| \\quad (A(\\alpha) \\text{ 随 } \\alpha \\text{ 改变})",
+        note:
+          conicType === "circle"
+            ? "直线标准参数方程代入圆方程后二次项系数 $A=1$，常数项比值 $C/A$ 仅由定点坐标决定，代数严格证明了初中平面几何的割线定理、切割线定理与相交弦定理。"
+            : "椭圆、双曲线、抛物线代入后二次项系数 $A$ 依赖于直线倾斜角 $\\alpha$，线段乘积 $|P_0A| \\cdot |P_0B|$ 随割线方向连续改变，反映了二次曲线割线方幂与圆幂的学科本质差异。",
         prerequisites: [
-          "判别式 Δ = B² - 4AC ≥ 0",
-          "A ≠ 0（直线不平行于二次曲线的渐近线或轴）",
+          "判别式 $\\Delta = B^2 - 4AC \\ge 0$",
+          "$A \\ne 0$（直线不平行于二次曲线的渐近线或对称轴）",
         ],
         level: "core",
       },
       {
         name: "参数方程弦长公式",
         latex: "|AB| = |t_1 - t_2| = \\frac{\\sqrt{\\Delta}}{|A|}",
-        note: "无需分别求出交点坐标，通过二次方程的判别式与二次项系数直接求解弦长。",
-        prerequisites: ["Δ ≥ 0", "A ≠ 0"],
+        note: "无需分别求出交点坐标，通过参数二次方程的判别式 $\\Delta$ 与二次项系数 $A$ 直接求解弦长，省去直角坐标系的 $\\sqrt{1+k^2}$ 且无斜率奇点。",
+        prerequisites: ["$\\Delta \\ge 0$", "$A \\ne 0$"],
         level: "important",
       },
     );
     gaokaoPoints.push(
       {
-        text: "新高考求线段积与弦长免斜率讨论：传统斜率 y=k(x-x0)+y0 遇到斜率不存在时需要分类讨论。而使用直线参数方程统一用 t1, t2 求解，彻底消除了斜率讨论的冗余。",
+        text: "新高考求线段积与弦长免斜率讨论：传统斜率方程 $y=k(x-x_0)+y_0$ 遇垂直直线必须分类讨论。而使用直线参数方程统一用 $t_1, t_2$ 求解，彻底规避漏解漏洞。",
         importance: "gaokao",
       },
       {
-        text: "圆幂定理的统一推广：圆中 |PA|·|PB| 恒与倾斜角 α 无关（割线定理/相交弦定理）；在椭圆/双曲线中随 α 规律变化，常用于高考中的定值与最值证明。",
+        text: "圆幂定理的统一推广：圆中 $|P_0A| \\cdot |P_0B|$ 恒与倾斜角 $\\alpha$ 无关（割线定理/相交弦定理）；在椭圆/双曲线中随 $\\alpha$ 规律变化，常用于定值与最值证明。",
         importance: "core",
       },
     );
@@ -275,47 +289,114 @@ export function buildLineParamTPanel(
           name: "中点弦判定定理",
           latex:
             "P_0 \\text{ 为弦 } AB \\text{ 中点} \\iff t_1 + t_2 = 0 \\iff B = 0",
-          note: "当定点 P0 恰好是弦 AB 的中点时，对应参数 t1 与 t2 互为相反数，二次方程一次项系数 B 恒为 0。",
-          prerequisites: ["Δ > 0", "A ≠ 0"],
+          note: "当定点 $P_0$ 恰好是弦 $AB$ 的中点时，对应参数 $t_1$ 与 $t_2$ 互为相反数，二次方程一次项系数 $B$ 恒为 $0$。",
+          prerequisites: ["$\\Delta > 0$", "$A \\ne 0$"],
           level: "core",
         },
         {
           name: "中点参数与坐标公式",
           latex: "t_M = \\frac{t_1 + t_2}{2} = -\\frac{B}{2A}",
-          note: "弦中点 M 的坐标为 (x0 + tM cosα, y0 + tM sinα)。",
-          prerequisites: ["Δ ≥ 0"],
+          note: "弦中点 $M$ 的坐标为 $(x_0 + t_M \\cos\\alpha, y_0 + t_M \\sin\\alpha)$。",
+          prerequisites: ["$\\Delta \\ge 0$"],
           level: "important",
         },
       );
       gaokaoPoints.push(
         {
-          text: "秒求中点弦直线斜率：令一次项系数 B = 0 即可直接建立定点 (x0, y0) 与倾斜角 α (或斜率 k) 的代数关系，计算量远小于点差法与判别式联立。",
+          text: "秒求中点弦直线斜率：令一次项系数 $B = 0$ 即可直接建立定点 $(x_0, y_0)$ 与倾斜角 $\\alpha$（或斜率 $k$）的代数关系，计算量远小于点差法与联立方程。",
           importance: "gaokao",
         },
         {
-          text: "中点弦的存在性前提：解出 α (或斜率 k) 后，必须代回检验判别式 Δ = B² - 4AC > 0，确保直线与曲线真实相交（圆锥曲线内部点必有解，外部点无中点弦）。",
+          text: "中点弦的存在性前提：解出 $\\alpha$（或斜率 $k$）后，必须代回检验判别式 $\\Delta = B^2 - 4AC > 0$，确保直线与曲线真实相交（圆锥曲线内部点必有解，外部点无中点弦）。",
           importance: "hard",
         },
       );
     } else {
+      // 倒数和模型根据当前曲线类型高度特化，杜绝跨曲线文本污染
+      let reciprocalName = "线段倒数和与同异号分类定理";
+      let reciprocalFormula =
+        "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\begin{cases} \\frac{\\sqrt{\\Delta}}{|C|} & (t_1 t_2 < 0,\\ P_0 \\text{在内部}) \\\\ \\left|\\frac{B}{C}\\right| & (t_1 t_2 > 0,\\ P_0 \\text{在外部}) \\end{cases}";
+      let reciprocalNote =
+        "高考避坑要害：绝对几何距离倒数和 $\\frac{1}{|t_1|} + \\frac{1}{|t_2|}$ 仅在同号时等于 $\\left|\\frac{B}{C}\\right|$；在异号（如点在曲线内部/焦点弦）时分子为 $|t_1-t_2|=\\frac{\\sqrt{\\Delta}}{|A|}$，倒数和严格等于 $\\frac{\\sqrt{\\Delta}}{|C|}$！";
+      const conicGaokaoPoints: GaokaoPoint[] = [];
+
+      if (conicType === "parabola") {
+        reciprocalName = "抛物线焦点弦倒数和定值定理";
+        reciprocalFormula =
+          "P_0 = F\\left(\\frac{p}{2}, 0\\right) \\implies \\frac{1}{|AF|} + \\frac{1}{|BF|} = \\frac{2}{p} \\quad (\\text{恒为定值})";
+        reciprocalNote =
+          "直线过抛物线 $y^2=2px$ 的焦点 $F$ 时，联立后 $A=\\sin^2\\alpha, B=-2p\\cos\\alpha, C=-p^2$。因焦点在抛物线内部必有 $t_1 t_2 < 0$，判别式 $\\sqrt{\\Delta}=2p$，故倒数和 $\\frac{\\sqrt{\\Delta}}{|C|} = \\frac{2p}{p^2} = \\frac{2}{p}$，与倾斜角 $\\alpha$ 严格无关。";
+        conicGaokaoPoints.push(
+          {
+            text: "抛物线焦点弦定值秒杀：若割线过焦点 $F$，倒数和恒为 $\\frac{1}{|AF|} + \\frac{1}{|BF|} = \\frac{2}{p}$；若弦长为通径（$\\alpha=90^\\circ$），弦长最小为 $2p$。",
+            importance: "gaokao",
+          },
+          {
+            text: "高考防错雷区：因焦点在内部 $t_1 t_2 < 0$，严禁盲目套用同号公式 $\\left|\\frac{B}{C}\\right|$，必须使用异号公式 $\\frac{\\sqrt{\\Delta}}{|C|}$。",
+            importance: "hard",
+          },
+        );
+      } else if (conicType === "ellipse") {
+        reciprocalName = "椭圆焦点弦通径倒数和定理";
+        reciprocalFormula =
+          "P_0 = F_1(c, 0) \\implies \\frac{1}{|AF_1|} + \\frac{1}{|BF_1|} = \\frac{2a}{b^2} \\quad (\\text{半通径倒数的 2 倍})";
+        reciprocalNote =
+          "直线过椭圆 $\\frac{x^2}{a^2}+\\frac{y^2}{b^2}=1$ 的焦点 $F_1(c, 0)$ 时，内部弦满足 $t_1 t_2 < 0$。代入标准方程可推导得出焦点弦倒数和恒为 $\\frac{2a}{b^2}$（定值），即通径长度 $\\frac{2b^2}{a}$ 的倒数乘以 4。";
+        conicGaokaoPoints.push(
+          {
+            text: "椭圆焦点弦定值规律：过焦点的相交弦倒数和恒为 $\\frac{2a}{b^2}$，与倾斜角 $\\alpha$ 无关，常用于圆锥曲线定值选择填空题秒解。",
+            importance: "gaokao",
+          },
+          {
+            text: "非焦点定点极值判定：当定点 $P_0$ 偏离焦点时，倒数和随 $\\alpha$ 连续变化；中点弦与垂直弦构成极值边界。",
+            importance: "core",
+          },
+        );
+      } else if (conicType === "hyperbola") {
+        reciprocalName = "双曲线焦点弦倒数同异支模型";
+        reciprocalFormula =
+          "\\begin{cases} t_1 t_2 < 0 & (\\text{割线交于双曲线两支，倒数和为 } \\frac{\\sqrt{\\Delta}}{|C|}) \\\\ t_1 t_2 > 0 & (\\text{割线交于双曲线同支，倒数差为 } \\left|\\frac{B}{C}\\right|) \\end{cases}";
+        reciprocalNote =
+          "双曲线中割线交于异支时定点在两支之间（$t_1 t_2 < 0$），倒数和套用异号公式；割线交于同支时 $t_1 t_2 > 0$，两交点在定点同侧，倒数之差满足同号代数特征。";
+        conicGaokaoPoints.push(
+          {
+            text: "双曲线渐近线退化边界：当割线倾斜角 $\\alpha$ 趋近渐近线方向时，二次项系数 $A \\to 0$，割线退化为单分支单个交点，韦达定理失效。",
+            importance: "hard",
+          },
+          {
+            text: "同支与异支符号判定：通过韦达定理常数项 $t_1 t_2 = \\frac{C}{A}$ 的正负号快速判定割线是穿过双曲线两支还是交于同支。",
+            importance: "core",
+          },
+        );
+      } else {
+        reciprocalName = "圆内相交弦与圆外割线倒数和模型";
+        reciprocalFormula =
+          "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\begin{cases} \\frac{\\sqrt{\\Delta}}{|x_0^2+y_0^2-R^2|} & (x_0^2+y_0^2 < R^2,\\ P_0 \\text{在圆内}) \\\\ \\frac{|2(x_0\\cos\\alpha+y_0\\sin\\alpha)|}{|x_0^2+y_0^2-R^2|} & (x_0^2+y_0^2 > R^2,\\ P_0 \\text{在圆外}) \\end{cases}";
+        reciprocalNote =
+          "圆中常数项 $C=x_0^2+y_0^2-R^2$ 仅取决于定点到圆心的距离。圆内动弦倒数和在割线过圆心（直径）时取得极小值，在割线垂直于直径（弦长最短）时取得极大值。";
+        conicGaokaoPoints.push(
+          {
+            text: "圆内倒数和极值规律：弦长越短，倒数和越大；过圆心的直径弦长最大（$2R$），此时倒数和取得最小值。",
+            importance: "core",
+          },
+          {
+            text: "与圆幂结合：分母 $|C| = |d^2 - R^2|$ 为圆的方幂，分子随割线倾斜角 $\\alpha$ 呈现三角函数周期极值。",
+            importance: "gaokao",
+          },
+        );
+      }
+
       theorems.push({
-        name: "线段倒数和与同异号分类定理",
-        latex:
-          "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\begin{cases} \\frac{\\sqrt{\\Delta}}{|C|} & (t_1 t_2 < 0,\\ P_0 \\text{在内部/焦点弦}) \\\\ \\left|\\frac{B}{C}\\right| & (t_1 t_2 > 0,\\ P_0 \\text{在曲线外部}) \\end{cases}",
-        note: "高考避坑要害：绝对几何距离倒数和 1/|t1| + 1/|t2| 仅在同号时等于 |B/C|；在异号（如过焦点弦）时分子为 |t1-t2|=√Δ/|A|，倒数和为 √Δ/|C|！",
-        prerequisites: ["t1 ≠ 0 且 t2 ≠ 0 (P0 不在曲线上)", "Δ > 0"],
+        name: reciprocalName,
+        latex: reciprocalFormula,
+        note: reciprocalNote,
+        prerequisites: [
+          "$t_1 \\ne 0$ 且 $t_2 \\ne 0$ ($P_0$ 不在曲线上)",
+          "$\\Delta > 0$",
+        ],
         level: "core",
       });
-      gaokaoPoints.push(
-        {
-          text: "抛物线焦点弦倒数和秒杀：因焦点在内部必有 t1 t2 < 0，故 1/|AF| + 1/|BF| = √Δ/|C| = 2p/p² = 2/p (常数)，切勿错套同号公式 |B/C|。",
-          importance: "gaokao",
-        },
-        {
-          text: "调和点列与极点极线：利用参数倒数和等于常数，可快速证明极线过定点或交比调和性质。",
-          importance: "hard",
-        },
-      );
+      gaokaoPoints.push(...conicGaokaoPoints);
     }
   }
 
@@ -336,7 +417,7 @@ export function buildLineParamTPanel(
       });
     } else {
       warnings.push({
-        text: `无交点退化：判别式 Δ = ${intersect.delta.toFixed(2)} < 0，当前直线与${conicType === "circle" ? "圆" : conicType === "ellipse" ? "椭圆" : conicType === "parabola" ? "抛物线" : "双曲线"}无交点，弦长及割线定理无实数解。`,
+        text: `无交点退化：判别式 Δ = ${intersect.delta.toFixed(2)} < 0，当前直线与${conicType === "circle" ? "圆" : conicType === "ellipse" ? "椭圆" : conicType === "parabola" ? "抛物线" : "双曲线"}无交点，弦长及割线线段乘积无实数解。`,
         level: "warning",
       });
     }
