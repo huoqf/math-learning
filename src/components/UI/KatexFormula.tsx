@@ -115,8 +115,9 @@ export const KatexFormula: React.FC<KatexFormulaProps> = ({
               return;
             }
           } else {
-            // 多行模式下找出仍然超宽的行，继续按最优规则拆分（最多拆至 4 行）
-            if (lines.length < 4) {
+            // 多行模式下找出仍然超宽的行，继续按最优规则拆分（最多拆至 6 行）。
+            // 优先以「增加垂直行数」换取字号不缩小，仅当行数用尽后才退回缩放。
+            if (lines.length < 6) {
               for (let i = 0; i < lineDivs.length; i++) {
                 if (lineDivs[i].scrollWidth > containerWidth) {
                   const targetLine = lines[i];

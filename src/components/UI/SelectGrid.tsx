@@ -227,7 +227,7 @@ export const SelectGrid = <T extends string = string>({
                     "flex items-center justify-center opacity-90 py-0.5 whitespace-nowrap",
                     isFullWidth
                       ? "shrink-0"
-                      : "w-full overflow-x-auto overflow-y-hidden",
+                      : "w-full overflow-x-clip overflow-y-hidden",
                   ].join(" ")}
                 >
                   <KatexFormula
