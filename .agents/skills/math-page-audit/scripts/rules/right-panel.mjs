@@ -78,13 +78,19 @@ export const rightPanelRules = [
             snippet: line.trim(),
           });
         }
-        if (/\\iff.*?\\in\s*[A-Za-z]/.test(line)) {
-          issues.push({
-            lineNum: idx + 1,
-            type: '伪命题充要条件滥用',
-            message: '点线位置关系严禁滥用充要双向箭头 \\iff（过定点的直线有无数条，反推不成立），必须使用单向蕴涵 \\implies',
-            snippet: line.trim(),
-          });
+        // 点线位置关系严禁滥用充要双向箭头 \iff（过定点的直线有无数条，反推不成立）
+        // 需排除 LaTeX 无穷大 \infty，并排除复合函数定义域/集合运算与阿基米德几何充要定理
+        if (/\\iff.*?\\in(?![a-zA-Z])\s*[A-Za-z]/.test(line)) {
+          const isDomainOrSet = /\\in(?![a-zA-Z])\s*(?:D|_|\{|\\mathbb|\\mathcal|\\text\{[^\}]*(?:定义域|集合|复合|值域))/.test(line);
+          const isArchimedesTheorem = line.includes('\\perp') && line.includes('\\iff');
+          if (!isDomainOrSet && !isArchimedesTheorem) {
+            issues.push({
+              lineNum: idx + 1,
+              type: '伪命题充要条件滥用',
+              message: '点线位置关系严禁滥用充要双向箭头 \\iff（过定点的直线有无数条，反推不成立），必须使用单向蕴涵 \\implies',
+              snippet: line.trim(),
+            });
+          }
         }
       });
       return issues;

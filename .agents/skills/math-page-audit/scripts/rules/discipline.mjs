@@ -147,7 +147,9 @@ export const disciplineRules = [
           const strMatch = line.match(/(?:detail|condition|question|prerequisites)\s*:\s*([`'"])([\s\S]*?)\1/);
           if (strMatch) {
             const text = strMatch[2];
-            const stripped = text.replace(/\$[^$]+\$/g, '');
+            // 先将模板字符串中的 ${...} 插值替换为安全占位符，避免其中的 $ 干扰 LaTeX $...$ 定界符配对
+            const textWithoutInterpolation = text.replace(/\$\{[^}]*\}/g, '___EXPR___');
+            const stripped = textWithoutInterpolation.replace(/\$[^$]+\$/g, '');
             if (/\\(in|ge|le|Delta|subset|cap|cup)\b/.test(stripped)) {
               issues.push({
                 lineNum: idx + 1,

@@ -8,15 +8,15 @@ import { styleTokensRules } from "../../.agents/skills/math-page-audit/scripts/r
 // @ts-expect-error -- importing internal mjs audit script
 import { rightPanelRules } from "../../.agents/skills/math-page-audit/scripts/rules/right-panel.mjs";
 // @ts-expect-error -- importing internal mjs audit script
+import { disciplineRules } from "../../.agents/skills/math-page-audit/scripts/rules/discipline.mjs";
+// @ts-expect-error -- importing internal mjs audit script
 import { runAudit } from "../../.agents/skills/math-page-audit/scripts/engine/runner.mjs";
 
 interface AuditRule {
   id: string;
   type: string;
   severity: string;
-  check: (
-    ctx: unknown,
-  ) => Array<{
+  check: (ctx: unknown) => Array<{
     lineNum: number;
     message: string;
     snippet?: string;
@@ -190,5 +190,93 @@ export function buildTestPanel() {
     });
     expect(res.activeRulesCount).toBeGreaterThanOrEqual(3);
     expect(res.totalIssues).toBe(0);
+  });
+
+  it("防误报加固：raw-latex-instructions 不受模板字符串变量插值 ${...} 干扰，且能识别真实裸露指令", () => {
+    const rule = (disciplineRules as AuditRule[]).find(
+      (r: AuditRule) => r.id === "discipline/raw-latex-instructions",
+    )!;
+
+    // 含有 ${...} 插值且公式已包裹 $...$：不应报任何 issue
+    const validInterpolatedCode = `
+export function buildDemo() {
+  const dVal = "1.50";
+  return {
+    detail: \`比较距离与半径：$d = \${dVal} < r = 2.00$，判别式 $\\\\Delta = 3.00 > 0$\`,
+  };
+}
+`;
+    const validCtx = new FileContext(
+      "src/data/builders/demoBuilder.ts",
+      validInterpolatedCode,
+      process.cwd(),
+    );
+    expect(rule.check(validCtx).length).toBe(0);
+
+    // 真实裸露 LaTeX 指令：必须被拦截
+    const invalidCode = `
+export function buildDemo() {
+  return {
+    detail: "判别式为 \\\\Delta > 0，故有两个相异实根",
+  };
+}
+`;
+    const invalidCtx = new FileContext(
+      "src/data/builders/demoBuilder.ts",
+      invalidCode,
+      process.cwd(),
+    );
+    const issues = rule.check(invalidCtx);
+    expect(issues.length).toBe(1);
+    expect(issues[0].message).toContain("未用 $...$ 包裹");
+  });
+
+  it("防误报加固：algebra-rigor 不误伤无穷大 infty 与定义域集合真充要，仍严密防范点线伪充要", () => {
+    const rule = (rightPanelRules as AuditRule[]).find(
+      (r: AuditRule) => r.id === "right/algebra-rigor",
+    )!;
+
+    // 包含无穷大区间与定义域真充要：不应误判为伪命题
+    const validMathCode = `
+export function buildDemo() {
+  return {
+    theorems: [
+      { latex: "x \\\\in D_{\\\\text{复合}} \\\\iff g(x) \\\\in D_f" },
+      { latex: "x \\\\ge 0 \\\\iff D = [0, +\\\\infty)" },
+      { latex: "Q \\\\in l \\\\iff QA \\\\perp QB \\\\iff F \\\\in AB \\\\iff QF \\\\perp AB" }
+    ]
+  };
+}
+`;
+    const validCtx = new FileContext(
+      "src/data/builders/demoBuilder.ts",
+      validMathCode,
+      process.cwd(),
+    );
+    const issues = rule
+      .check(validCtx)
+      .filter((i) => i.type === "伪命题充要条件滥用");
+    expect(issues.length).toBe(0);
+
+    // 真正的点线伪充要滥用（过定点反推直线方程）：必须拦截
+    const invalidCode = `
+export function buildDemo() {
+  return {
+    theorems: [
+      { latex: "l: y = kx + b \\\\iff P(x_0, y_0) \\\\in l" }
+    ]
+  };
+}
+`;
+    const invalidCtx = new FileContext(
+      "src/data/builders/demoBuilder.ts",
+      invalidCode,
+      process.cwd(),
+    );
+    const badIssues = rule
+      .check(invalidCtx)
+      .filter((i) => i.type === "伪命题充要条件滥用");
+    expect(badIssues.length).toBe(1);
+    expect(badIssues[0].message).toContain("点线位置关系严禁滥用充要双向箭头");
   });
 });
