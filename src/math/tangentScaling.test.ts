@@ -72,10 +72,26 @@ describe("导数切线放缩与双切线卡位数学计算库测试", () => {
     expect(gap.normalDistance).toBeCloseTo(2 / Math.SQRT2, 5);
   });
 
-  it("割线斜率与截距计算", () => {
+  it("割线斜率与截距计算及代数规范性（杜绝机器浮点尾零与未化简系数）", () => {
     const sec = calculateSecantLine((x) => x * x, 1, 3);
     expect(sec.isValid).toBe(true);
     expect(sec.slope).toBeCloseTo(4, 5); // (9 - 1) / (3 - 1) = 4
     expect(sec.intercept).toBeCloseTo(-3, 5); // 1 - 4 * 1 = -3
+    expect(sec.latex).toBe("y = 4x - 3");
+    expect(sec.latex).not.toContain("4.00");
+  });
+
+  it("切线方程代数规范化（系数为 1 时省略，无 1.00x 与未化简符号）", () => {
+    const resExp = calculateTangentLine("exp", 0);
+    expect(resExp.equationLatex).toBe("y = x + 1");
+    expect(resExp.equationLatex).not.toContain("1.00x");
+    expect(resExp.equationLatex).not.toContain("+ -");
+
+    const resShift = calculateTangentLine("exp_shift", 1);
+    expect(resShift.equationLatex).toBe("y = x");
+    expect(resShift.equationLatex).not.toContain("+ 0");
+
+    const resLog = calculateTangentLine("log", 1);
+    expect(resLog.equationLatex).toBe("y = x - 1");
   });
 });

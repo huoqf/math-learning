@@ -1,3 +1,5 @@
+import { formatMathNumber } from "@/utils/mathFormat";
+
 /**
  * 导数切线放缩与双切线卡位数学计算库
  * 纯函数实现，零 DOM / React / Store 依赖
@@ -108,30 +110,35 @@ export function calculateTangentLine(
   }
 
   const intercept = y0 - slope * x0;
-  const slopeStr = Math.abs(slope - 1) < 1e-4 ? "" : slope.toFixed(2);
-  const interceptStr =
-    Math.abs(intercept) < 1e-4
-      ? ""
-      : intercept > 0
-        ? ` + ${intercept.toFixed(2)}`
-        : ` - ${Math.abs(intercept).toFixed(2)}`;
-
-  const sign = slope < 0 ? "-" : "";
-  const equationLatex =
-    Math.abs(slope) < 1e-4
-      ? `y = ${intercept.toFixed(2)}`
-      : `y = ${sign}${slopeStr}x${interceptStr}`;
 
   return {
     x0,
     y0,
     slope,
     intercept,
-    equationLatex: equationLatex
-      .replace("+ -", "-")
-      .replace("y = -x", "y = -1.00x"),
+    equationLatex: formatLineEquationLatex(slope, intercept),
     isValid: true,
   };
+}
+
+/**
+ * 格式化直线方程 y = kx + b（符合高中数学代数规范，无 1.00x 机器尾零，系数为 1 省略）
+ */
+function formatLineEquationLatex(slope: number, intercept: number): string {
+  if (Math.abs(slope) < 1e-4) {
+    return `y = ${formatMathNumber(intercept)}`;
+  }
+  const absSlope = Math.abs(slope);
+  const slopeCoeff =
+    Math.abs(absSlope - 1) < 1e-4 ? "" : formatMathNumber(absSlope);
+  const sign = slope < 0 ? "-" : "";
+  const xPart = `${sign}${slopeCoeff}x`;
+
+  if (Math.abs(intercept) < 1e-4) {
+    return `y = ${xPart}`;
+  }
+  const intSign = intercept > 0 ? "+" : "-";
+  return `y = ${xPart} ${intSign} ${formatMathNumber(Math.abs(intercept))}`;
 }
 
 /**
@@ -211,8 +218,7 @@ export function calculateSecantLine(
   const slope = (fb - fa) / (b - a);
   const intercept = fa - slope * a;
 
-  const sign = intercept >= 0 ? "+" : "-";
-  const latex = `y = ${slope.toFixed(2)}x ${sign} ${Math.abs(intercept).toFixed(2)}`;
+  const latex = formatLineEquationLatex(slope, intercept);
 
   return { slope, intercept, latex, isValid: true };
 }

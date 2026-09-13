@@ -179,6 +179,38 @@ export interface TangentScalingConfigOptions {
 }
 
 /**
+ * 获取当前模式及子模型的安全预设参数（用于切换子模型与重置参数时平滑同步）
+ */
+export function getPresetParams(
+  mode: TangentScalingMode,
+  options?: TangentScalingConfigOptions,
+): Partial<TangentScalingParams> {
+  switch (mode) {
+    case "base": {
+      const sub = options?.baseSubModel ?? "exp_x_plus_1";
+      return { x0: subModelDefaultPointMap[sub] ?? 0 };
+    }
+    case "sandwich": {
+      const isOrigin = options?.sandwichSubModel === "origin_sandwich";
+      return { evalX: isOrigin ? 0 : 1.0 };
+    }
+    case "param_k": {
+      const sub = options?.paramKSubModel ?? "exp_log_k";
+      if (sub === "exp_kx_origin") return { k: 2.0, evalX: 1.0 };
+      if (sub === "log_kx_origin") return { k: 0.6, evalX: 1.0 };
+      return { k: 1.0, evalX: 1.0 };
+    }
+    case "secant": {
+      const sub = options?.secantSubModel ?? "exp_secant_tangent";
+      if (sub === "taylor_quadratic") return { evalX: 1.0 };
+      if (sub === "log_secant_tangent")
+        return { intervalA: 0.5, intervalB: 3.0 };
+      return { intervalA: 0.5, intervalB: 2.0 };
+    }
+  }
+}
+
+/**
  * 根据当前激活模式与情景动态生成左屏参数控件列表
  */
 export function getTangentScalingParamConfigs(

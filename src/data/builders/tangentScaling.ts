@@ -1,5 +1,6 @@
 import type { MathPanelData } from "@/data/types";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber } from "@/utils/mathFormat";
 import {
   calculateTangentLine,
   checkParamKBounding,
@@ -95,6 +96,178 @@ export function buildTangentScalingPanel(
       : baseLineVal - tangent.y0;
     const isAtAnchor = Math.abs(params.x0 - baseAnchorX) < 0.05;
 
+    // 针对 6 种基准子模型特化高考解答题标准推导链（构造辅助函数 -> 导数单调性 -> 极值与等号条件）
+    const getBaseReasoningSteps = () => {
+      if (baseSub === "exp_x_plus_1") {
+        return [
+          {
+            step: 1,
+            title: "构造辅助函数并求导",
+            detail:
+              "令辅助函数 $h(x) = e^x - x - 1$ ($x \\in \\mathbb{R}$)，求导得 $h'(x) = e^x - 1$。",
+            latex: "h(x) = e^x - x - 1 \\implies h'(x) = e^x - 1",
+            rubric: "采分点：构造辅助函数与求导（3分）",
+          },
+          {
+            step: 2,
+            title: "判定导数符号确立单调性",
+            detail:
+              "令 $h'(x) = 0$ 得驻点 $x = 0$。当 $x < 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
+            rubric: "采分点：驻点求解与单调区间判定（4分）",
+          },
+          {
+            step: 3,
+            title: "极值结论与取等条件",
+            detail:
+              "故 $h(x)$ 在 $x = 0$ 处取得唯一极小值也是最小值 $h(0) = e^0 - 0 - 1 = 0$。因此 $h(x) \\ge 0 \\iff e^x \\ge x + 1$，当且仅当 $x = 0$ 时等号成立。",
+            latex:
+              "e^x \\ge x + 1 \\quad (\\text{当且仅当 } x = 0 \\text{ 时等号成立})",
+            rubric: "采分点：最小值计算与等号条件（4分）",
+          },
+        ];
+      }
+      if (baseSub === "log_x_minus_1") {
+        return [
+          {
+            step: 1,
+            title: "构造辅助函数并求导",
+            detail:
+              "令辅助函数 $h(x) = \\ln x - x + 1$ ($x > 0$)，求导得 $h'(x) = \\frac{1}{x} - 1 = \\frac{1 - x}{x}$。",
+            latex: "h(x) = \\ln x - x + 1 \\implies h'(x) = \\frac{1 - x}{x}",
+            rubric: "采分点：定义域说明与求导通分（3分）",
+          },
+          {
+            step: 2,
+            title: "判定导数符号确立单调性",
+            detail:
+              "令 $h'(x) = 0$ 得驻点 $x = 1$。当 $0 < x < 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
+            rubric: "采分点：驻点求解与单调区间判定（4分）",
+          },
+          {
+            step: 3,
+            title: "极值结论与取等条件",
+            detail:
+              "故 $h(x)$ 在 $x = 1$ 处取得唯一极大值也是最大值 $h(1) = \\ln 1 - 1 + 1 = 0$。因此 $h(x) \\le 0 \\iff \\ln x \\le x - 1$，当且仅当 $x = 1$ 时等号成立。",
+            latex:
+              "\\ln x \\le x - 1 \\quad (\\text{当且仅当 } x = 1 \\text{ 时等号成立})",
+            rubric: "采分点：最大值计算与等号条件（4分）",
+          },
+        ];
+      }
+      if (baseSub === "exp_shift_x") {
+        return [
+          {
+            step: 1,
+            title: "构造辅助函数并求导",
+            detail:
+              "令辅助函数 $h(x) = e^{x-1} - x$ ($x \\in \\mathbb{R}$)，求导得 $h'(x) = e^{x-1} - 1$。",
+            latex: "h(x) = e^{x-1} - x \\implies h'(x) = e^{x-1} - 1",
+            rubric: "采分点：构造辅助函数与求导（3分）",
+          },
+          {
+            step: 2,
+            title: "判定导数符号确立单调性",
+            detail:
+              "令 $h'(x) = 0$ 得驻点 $x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
+            rubric: "采分点：驻点求解与单调区间判定（4分）",
+          },
+          {
+            step: 3,
+            title: "极值结论与取等条件",
+            detail:
+              "故 $h(x)$ 在 $x = 1$ 处取得唯一极小值也是最小值 $h(1) = e^0 - 1 = 0$。因此 $e^{x-1} \\ge x$，当且仅当 $x = 1$ 时等号成立。",
+            latex:
+              "e^{x-1} \\ge x \\quad (\\text{当且仅当 } x = 1 \\text{ 时等号成立})",
+            rubric: "采分点：最小值计算与等号条件（4分）",
+          },
+        ];
+      }
+      if (baseSub === "log_shift_0") {
+        return [
+          {
+            step: 1,
+            title: "构造辅助函数并求导",
+            detail:
+              "令辅助函数 $h(x) = \\ln(x+1) - x$ ($x > -1$)，求导得 $h'(x) = \\frac{1}{x+1} - 1 = -\\frac{x}{x+1}$。",
+            latex: "h(x) = \\ln(x+1) - x \\implies h'(x) = -\\frac{x}{x+1}",
+            rubric: "采分点：定义域说明与求导化简（3分）",
+          },
+          {
+            step: 2,
+            title: "判定导数符号确立单调性",
+            detail:
+              "令 $h'(x) = 0$ 得驻点 $x = 0$。当 $-1 < x < 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
+            rubric: "采分点：单调区间判定与分类讨论（4分）",
+          },
+          {
+            step: 3,
+            title: "极值结论与取等条件",
+            detail:
+              "故 $h(x)$ 在 $x = 0$ 处取得唯一极大值也是最大值 $h(0) = \\ln 1 - 0 = 0$。因此 $\\ln(x+1) \\le x$，当且仅当 $x = 0$ 时等号成立。",
+            latex:
+              "\\ln(x+1) \\le x \\quad (\\text{当且仅当 } x = 0 \\text{ 时等号成立})",
+            rubric: "采分点：最大值计算与等号条件（4分）",
+          },
+        ];
+      }
+      if (baseSub === "exp_ex") {
+        return [
+          {
+            step: 1,
+            title: "构造辅助函数并求导",
+            detail:
+              "令辅助函数 $h(x) = e^x - ex$ ($x \\in \\mathbb{R}$)，求导得 $h'(x) = e^x - e$。",
+            latex: "h(x) = e^x - ex \\implies h'(x) = e^x - e",
+            rubric: "采分点：构造辅助函数与求导（3分）",
+          },
+          {
+            step: 2,
+            title: "判定导数符号确立单调性",
+            detail:
+              "令 $h'(x) = 0$ 得驻点 $x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
+            rubric: "采分点：驻点求解与单调区间判定（4分）",
+          },
+          {
+            step: 3,
+            title: "极值结论与取等条件",
+            detail:
+              "故 $h(x)$ 在 $x = 1$ 处取得最小值 $h(1) = e - e = 0$。因此 $e^x \\ge ex$，当且仅当 $x = 1$ 时等号成立。",
+            latex:
+              "e^x \\ge ex \\quad (\\text{当且仅当 } x = 1 \\text{ 时等号成立})",
+            rubric: "采分点：最小值计算与等号条件（4分）",
+          },
+        ];
+      }
+      // log_x_div_e
+      return [
+        {
+          step: 1,
+          title: "构造辅助函数并求导",
+          detail:
+            "令辅助函数 $h(x) = \\ln x - \\frac{x}{e}$ ($x > 0$)，求导得 $h'(x) = \\frac{1}{x} - \\frac{1}{e} = \\frac{e - x}{ex}$。",
+          latex:
+            "h(x) = \\ln x - \\frac{x}{e} \\implies h'(x) = \\frac{e - x}{ex}",
+          rubric: "采分点：定义域说明与求导通分（3分）",
+        },
+        {
+          step: 2,
+          title: "判定导数符号确立单调性",
+          detail:
+            "令 $h'(x) = 0$ 得驻点 $x = e$。当 $0 < x < e$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > e$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
+          rubric: "采分点：驻点求解与单调区间判定（4分）",
+        },
+        {
+          step: 3,
+          title: "极值结论与取等条件",
+          detail:
+            "故 $h(x)$ 在 $x = e$ 处取得最大值 $h(e) = \\ln e - 1 = 0$。因此 $\\ln x \\le \\frac{x}{e}$，当且仅当 $x = e$ 时等号成立。",
+          latex:
+            "\\ln x \\le \\frac{x}{e} \\quad (\\text{当且仅当 } x = e \\text{ 时等号成立})",
+          rubric: "采分点：最大值计算与等号条件（4分）",
+        },
+      ];
+    };
+
     return {
       examAnchor: "新高考解答题 17/18 题 · 基准切线放缩法",
       mnemonic: isConvex ? "下凸指数切线在下方支撑" : "上凸对数切线在上方包络",
@@ -162,29 +335,7 @@ export function buildTangentScalingPanel(
           importance: "core",
         },
       ],
-      reasoningSteps: [
-        {
-          step: 1,
-          title: "构造切线差函数并求导",
-          detail:
-            "令辅助函数 $h(x) = f(x) - [f'(x_0)(x - x_0) + f(x_0)]$，求导得 $h'(x) = f'(x) - f'(x_0)$。",
-          rubric: "采分点：构造辅助函数与求导（3分）",
-        },
-        {
-          step: 2,
-          title: "利用导数单调性确立极值",
-          detail: isConvex
-            ? "由 $f''(x) > 0$ 知 $f'(x)$ 单调递增，故 $x < x_0$ 时 $h'(x) < 0$，$x > x_0$ 时 $h'(x) > 0$，$h(x)$ 取得极小值。"
-            : "由 $f''(x) < 0$ 知 $f'(x)$ 单调递减，故 $x < x_0$ 时 $h'(x) > 0$，$x > x_0$ 时 $h'(x) < 0$，$h(x)$ 取得极大值。",
-          rubric: "采分点：单调区间论证与极值符号（4分）",
-        },
-        {
-          step: 3,
-          title: "得出放缩不等式结论",
-          detail: `代入得极值 $h(x_0) = 0$，从而 $${modelFormula}$ 恒成立，等号当且仅当 $${anchorPoint}$ 时成立。`,
-          rubric: "采分点：综合结论与等号条件（4分）",
-        },
-      ],
+      reasoningSteps: getBaseReasoningSteps(),
     };
   }
 
@@ -264,24 +415,25 @@ export function buildTangentScalingPanel(
         reasoningSteps: [
           {
             step: 1,
-            title: "分别列出两曲线的平行切线",
+            title: "分别列出两曲线的平行切线放缩式",
             detail:
-              "由基准放缩：对于 $x > 0$，恒有 $e^x \\ge x + 1$ ($x=0$ 取等) 且 $\\ln x \\le x - 1$ ($x=1$ 取等)。",
-            latex: "e^x \\ge x + 1, \\quad \\ln x \\le x - 1",
+              "由基准放缩：对于 $x > 0$，恒有 $e^x \\ge x + 1$ (当且仅当 $x=0$ 时取等)；同理由 $\\ln x \\le x - 1$ 可得 $-\\ln x \\ge -(x - 1) = 1 - x$ (当且仅当 $x=1$ 时取等)。",
+            latex: "e^x \\ge x + 1, \\quad -\\ln x \\ge 1 - x",
             rubric: "采分点：分别写出切线放缩式（4分）",
           },
           {
             step: 2,
-            title: "两式同向相减求差",
-            detail: "两式相减得：$e^x - \\ln x \\ge (x + 1) - (x - 1) = 2$。",
-            latex: "e^x - \\ln x \\ge (x + 1) - (x - 1) = 2",
-            rubric: "采分点：同向放缩做差（4分）",
+            title: "利用同向同号不等式相加求差",
+            detail:
+              "将两同向不等式相加得：$e^x + (-\\ln x) \\ge (x + 1) + (1 - x) = 2$。",
+            latex: "e^x - \\ln x \\ge (x + 1) + (1 - x) = 2",
+            rubric: "采分点：同向同号相加做差（4分）",
           },
           {
             step: 3,
             title: "等号不同步判定严格大于",
             detail:
-              "因 $x=0$ 与 $x=1$ 不能同时满足，等号不可取，故对一切 $x > 0$ 恒有 $e^x - \\ln x > 2$。",
+              "由于取等条件 $x=0$ 与 $x=1$ 无法同时满足，等号不可兼得，故对一切 $x > 0$ 严格恒有 $e^x - \\ln x > 2$。",
             rubric: "采分点：等号不同步论证严格不等（3分）",
           },
         ],
@@ -765,24 +917,25 @@ export function buildTangentScalingPanel(
       reasoningSteps: [
         {
           step: 1,
-          title: "构造端点割线方程",
-          detail:
-            "连接曲线两端点 $A(a, \\ln a)$ 与 $B(b, \\ln b)$，写出割线方程 $L_{AB}(x)$。",
-          rubric: "采分点：割线解析式（3分）",
+          title: "求解端点割线斜率与中点切线",
+          detail: `连接端点 $A(${formatMathNumber(a)}, \\ln ${formatMathNumber(a)})$ 与 $B(${formatMathNumber(b)}, \\ln ${formatMathNumber(b)})$，割线斜率 $m_{AB} = \\frac{\\ln b - \\ln a}{b - a} \\approx ${secSlope.toFixed(3)}$；中点 $x_m = ${formatMathNumber(midX)}$ 处切线斜率 $k_{\\text{tan}} = \\frac{1}{x_m} \\approx ${(1 / midX).toFixed(3)}$。`,
+          latex: `m_{AB} = \\frac{\\ln ${formatMathNumber(b)} - \\ln ${formatMathNumber(a)}}{${formatMathNumber(b - a)}} \\approx ${secSlope.toFixed(3)}`,
+          rubric: "采分点：割线与切线解析式求解（3分）",
         },
         {
           step: 2,
-          title: "利用二阶导数凹凸性确立夹逼",
+          title: "构造差函数判定上凸凹性",
           detail:
-            "因二阶导恒负，对数函数为严格上凸函数，区间内内点弦线恒低于曲线，切线恒高于曲线。",
-          rubric: "采分点：凹凸性反向论证（5分）",
+            "令辅助函数 $g(x) = \\ln x - [m_{AB}(x - a) + \\ln a]$ ($x \\in [a, b]$)，二阶导 $g''(x) = -\\frac{1}{x^2} < 0$ 恒成立。由 $g(a)=g(b)=0$ 知区间内严格有 $g(x) > 0$，故割线在下提供下界。",
+          rubric: "采分点：凹凸性与割线下界严格证明（5分）",
         },
         {
           step: 3,
-          title: "总结割切双向夹逼范围",
+          title: "结合切线上界得出双向夹逼",
           detail:
-            "从而建立对数函数的双向紧致线性包围，用于极值点偏移或数列积分估计。",
-          rubric: "采分点：双向定界结论（3分）",
+            "由于 $(\\ln x)'' < 0$，切线恒位于曲线之上，综合割线下界与切线上界，得区间内曲线被双向线性锁定。",
+          latex: `m_{AB}(x - ${formatMathNumber(a)}) + \\ln ${formatMathNumber(a)} \\le \\ln x \\le \\frac{1}{x_m}(x - x_m) + \\ln x_m`,
+          rubric: "采分点：双向定界综合结论（3分）",
         },
       ],
     };
@@ -850,24 +1003,25 @@ export function buildTangentScalingPanel(
     reasoningSteps: [
       {
         step: 1,
-        title: "构造端点割线方程",
-        detail:
-          "连接曲线两端点 $A(a, e^a)$ 与 $B(b, e^b)$，写出割线方程 $L_{AB}(x)$。",
-        rubric: "采分点：割线解析式（3分）",
+        title: "求解端点割线斜率与中点切线",
+        detail: `连接端点 $A(${formatMathNumber(a)}, e^{${formatMathNumber(a)}})$ 与 $B(${formatMathNumber(b)}, e^{${formatMathNumber(b)}})$，割线斜率 $m_{AB} = \\frac{e^b - e^a}{b - a} \\approx ${secSlope.toFixed(3)}$；在区间中点 $x_m = ${formatMathNumber(midX)}$ 处切线斜率 $k_{\\text{tan}} = e^{x_m} \\approx ${Math.exp(midX).toFixed(3)}$。`,
+        latex: `m_{AB} = \\frac{e^{${formatMathNumber(b)}} - e^{${formatMathNumber(a)}}}{${formatMathNumber(b - a)}} \\approx ${secSlope.toFixed(3)}`,
+        rubric: "采分点：割线与切线解析式求解（3分）",
       },
       {
         step: 2,
-        title: "利用二阶导数凹凸性确立夹逼",
+        title: "构造差函数判定下凸性",
         detail:
-          "下凸函数的割线内点恒高于曲线，切线内点恒低于曲线，从而建立双向紧约束。",
-        rubric: "采分点：凹凸性几何性质论证（5分）",
+          "令辅助函数 $g(x) = e^x - [m_{AB}(x - a) + e^a]$ ($x \\in [a, b]$)，二阶导 $g''(x) = e^x > 0$ 恒成立。由 $g(a)=g(b)=0$ 知区间内严格有 $g(x) < 0$，故割线在上提供上界。",
+        rubric: "采分点：下凸性与割线上界严格证明（5分）",
       },
       {
         step: 3,
-        title: "总结割切双向夹逼结论",
+        title: "结合切线下界得出双向夹逼",
         detail:
-          "切线提供下界支撑，割线提供上界封顶，区间内曲线被紧紧锁定于两直线之间。",
-        rubric: "采分点：双向定界结论（3分）",
+          "由于 $(e^x)'' > 0$，切线恒位于曲线下方，综合切线下界与割线上界，得闭区间内曲线被双向线性锁定。",
+        latex: `e^{x_m}(x - x_m) + e^{x_m} \\le e^x \\le m_{AB}(x - ${formatMathNumber(a)}) + e^{${formatMathNumber(a)}}`,
+        rubric: "采分点：双向定界综合结论（3分）",
       },
     ],
   };

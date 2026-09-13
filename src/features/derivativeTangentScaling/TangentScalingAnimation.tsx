@@ -25,6 +25,7 @@ import {
   secantSubModels,
   getTangentScalingParamConfigs,
   subModelDefaultPointMap,
+  getPresetParams,
 } from "@/data/registries/tangentScaling";
 import type {
   TangentScalingMode,
@@ -60,10 +61,36 @@ export function TangentScalingAnimation() {
     yRange: [-3, 6],
   });
 
-  // 2. 参数变更分发
+  // 2. 参数变更与模式/预设智能同步分发
   const handleParamChange = useCallback((key: string, value: number) => {
     setParams((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  // 一级模式切换：自动同步平滑重置至目标模式的典型基准参数
+  const handleModeChange = useCallback(
+    (nextMode: TangentScalingMode) => {
+      setMode(nextMode);
+      const preset = getPresetParams(nextMode, {
+        baseSubModel,
+        sandwichSubModel,
+        paramKSubModel,
+        secantSubModel,
+      });
+      setParams((prev) => ({ ...prev, ...preset }));
+    },
+    [baseSubModel, sandwichSubModel, paramKSubModel, secantSubModel],
+  );
+
+  // 参数重置：依据当前激活模式及子模型，重置到安全合规的定义域预设值
+  const handleReset = useCallback(() => {
+    const preset = getPresetParams(mode, {
+      baseSubModel,
+      sandwichSubModel,
+      paramKSubModel,
+      secantSubModel,
+    });
+    setParams((prev) => ({ ...prev, ...preset }));
+  }, [mode, baseSubModel, sandwichSubModel, paramKSubModel, secantSubModel]);
 
   // 二级子模型切换联动
   const handleBaseSubChange = useCallback((key: BaseSubModel) => {
@@ -74,32 +101,20 @@ export function TangentScalingAnimation() {
 
   const handleSandwichSubChange = useCallback((key: SandwichSubModel) => {
     setSandwichSubModel(key);
-    setParams((prev) => ({
-      ...prev,
-      evalX: key === "origin_sandwich" ? 0 : 1.0,
-    }));
+    const preset = getPresetParams("sandwich", { sandwichSubModel: key });
+    setParams((prev) => ({ ...prev, ...preset }));
   }, []);
 
   const handleParamKSubChange = useCallback((key: ParamKSubModel) => {
     setParamKSubModel(key);
-    if (key === "exp_kx_origin") {
-      setParams((prev) => ({ ...prev, k: 2.0 }));
-    } else if (key === "log_kx_origin") {
-      setParams((prev) => ({ ...prev, k: 0.6 }));
-    } else {
-      setParams((prev) => ({ ...prev, k: 1.0 }));
-    }
+    const preset = getPresetParams("param_k", { paramKSubModel: key });
+    setParams((prev) => ({ ...prev, ...preset }));
   }, []);
 
   const handleSecantSubChange = useCallback((key: SecantSubModel) => {
     setSecantSubModel(key);
-    if (key === "taylor_quadratic") {
-      setParams((prev) => ({ ...prev, evalX: 1.0 }));
-    } else if (key === "log_secant_tangent") {
-      setParams((prev) => ({ ...prev, intervalA: 0.5, intervalB: 3.0 }));
-    } else {
-      setParams((prev) => ({ ...prev, intervalA: 0.5, intervalB: 2.0 }));
-    }
+    const preset = getPresetParams("secant", { secantSubModel: key });
+    setParams((prev) => ({ ...prev, ...preset }));
   }, []);
 
   // 3. 右屏纯数据驱动看板
@@ -153,6 +168,11 @@ export function TangentScalingAnimation() {
           style: "dash",
         },
         {
+          label: "基准目标切线",
+          color: MATH_COLORS.line,
+          style: "dash",
+        },
+        {
           label: "切点 $P_0$",
           color: MATH_COLORS.paramPrimary,
           style: "point",
@@ -163,22 +183,27 @@ export function TangentScalingAnimation() {
       if (sandwichSubModel === "parallel_bands") {
         return [
           {
-            label: "指数函数 $e^x$",
+            label: "指数曲线 $e^x$",
             color: MATH_COLORS.primary,
             style: "solid",
           },
           {
-            label: "对数函数 $\\ln x$",
+            label: "指数切线 $y = x + 1$",
+            color: MATH_COLORS.primary,
+            style: "dash",
+          },
+          {
+            label: "对数曲线 $\\ln x$",
             color: MATH_COLORS.secondary,
             style: "solid",
           },
           {
-            label: "平行切线带 $y = x \\pm 1$",
-            color: MATH_COLORS.line,
+            label: "对数切线 $y = x - 1$",
+            color: MATH_COLORS.secondary,
             style: "dash",
           },
           {
-            label: "间距指示 $\\Delta y$",
+            label: "平行缓冲间距 $\\Delta y$",
             color: MATH_COLORS.accent,
             style: "dash",
           },
@@ -222,7 +247,7 @@ export function TangentScalingAnimation() {
           },
           {
             label: "临界切线 $y = ex$",
-            color: MATH_COLORS.line,
+            color: MATH_COLORS.primary,
             style: "dash",
           },
           { label: "临界切点 $A$", color: MATH_COLORS.primary, style: "point" },
@@ -242,7 +267,7 @@ export function TangentScalingAnimation() {
           },
           {
             label: "临界切线 $y = \\frac{1}{e}x$",
-            color: MATH_COLORS.line,
+            color: MATH_COLORS.secondary,
             style: "dash",
           },
           {
@@ -265,8 +290,13 @@ export function TangentScalingAnimation() {
           style: "solid",
         },
         {
-          label: "临界公切线 ($k = e, \\frac{1}{e}$)",
-          color: MATH_COLORS.line,
+          label: "指数临界切线 $y = ex$",
+          color: MATH_COLORS.primary,
+          style: "dash",
+        },
+        {
+          label: "对数临界切线 $y = \\frac{1}{e}x$",
+          color: MATH_COLORS.secondary,
           style: "dash",
         },
       ];
@@ -327,7 +357,7 @@ export function TangentScalingAnimation() {
     ];
   }, [mode, baseSubModel, sandwichSubModel, paramKSubModel, secantSubModel]);
 
-  // 6. 教学导引题设双要素配置
+  // 6. 教学导引题设双要素配置（严格落实高考设问词 + 左问右解闭环，杜绝空泛观察词）
   const tipCardContent = useMemo(() => {
     switch (mode) {
       case "base": {
@@ -352,68 +382,94 @@ export function TangentScalingAnimation() {
 
         return {
           conditions: [
-            `考查新高考基准切线放缩模型 $${name}$`,
-            `对应切点横坐标为 $${pt}$`,
+            `已知基准切线放缩模型 $${name}$，切点横坐标为 $${pt}$`,
+            "切线方程为一阶切线展开式，在定义域内对曲线提供单向线性定界",
           ],
           questions: [
-            "拖动切点滑块，观察动切线如何紧贴曲线并提供单向线性定界",
-            `验证只有在基准切点 $${pt}$ 处差值才为 0 并达成等号成立`,
+            `(1) 构造辅助差函数并求导，严格证明不等式 $${name}$ 恒成立`,
+            `(2) 探究不等式等号成立的充要条件，说明为什么极值点必须取在 $${pt}$`,
           ],
         };
       }
       case "sandwich":
+        if (sandwichSubModel === "parallel_bands") {
+          return {
+            conditions: [
+              "已知指数函数 $e^x$ 与对数函数 $\\ln x$ 在 $(0,1)$ 与 $(1,0)$ 处具有平行切线",
+              "两平行切线分别为 $y = x + 1$ 与 $y = x - 1$",
+            ],
+            questions: [
+              "(1) 分别写出两曲线的切线放缩式，并利用同向不等式相加证明 $e^x - \\ln x \\ge 2$",
+              "(2) 论证为什么取等条件不能同步满足，从而证明严格不等式 $e^x - \\ln x > 2$ 恒成立",
+            ],
+          };
+        }
         return {
           conditions: [
-            sandwichSubModel === "parallel_bands"
-              ? "考查指数曲线 $e^x$ 与对数曲线 $\\ln x$ 的平行切线缓冲带"
-              : "考查指对函数在公共切线处的对称夹逼卡位",
-            sandwichSubModel === "parallel_bands"
-              ? "两平行切线分别为 $y = x + 1$ 与 $y = x - 1$"
-              : "中介过渡公切线为 $y = x$",
+            "已知指对函数在公共切点处具有公切线 $y = x$",
+            "公切线充当上界与下界之间的线性中介过渡轴",
           ],
           questions: [
-            sandwichSubModel === "parallel_bands"
-              ? "体会两切线纵向差值恒为 2，如何秒杀高考大题 $e^x - \\ln x > 2$"
-              : "如何通过引入一次公切线中轴，将高阶综合不等式化解为两个独立基准命题？",
-            "观察观察点横坐标变化时，上函数与下函数的垂直间距变化",
+            "(1) 求解两曲线在相切点处的公切线方程，并验证在切点处函数值与导数值均相等",
+            "(2) 利用基准放缩拆解综合不等式，证明双侧夹逼不等式及等号同步条件",
           ],
         };
       case "param_k":
         return {
           conditions: [
             paramKSubModel === "exp_kx_origin"
-              ? "已知 $e^x \\ge kx$ 对于一切 $x > 0$ 恒成立，直线过原点"
+              ? "已知动直线 $y = kx$ 绕原点 $O(0,0)$ 旋转，要求对一切 $x > 0$ 恒有 $e^x \\ge kx$"
               : paramKSubModel === "log_kx_origin"
-                ? "已知 $\\ln x \\le kx$ 对于一切 $x > 0$ 恒成立，直线过原点"
-                : "已知 $e^x \\ge kx \\ge \\ln x$ 对于一切 $x > 0$ 恒成立，动直线过原点",
-            "动直线围绕原点 $O(0,0)$ 连续旋转，斜率为 $k$",
+                ? "已知动直线 $y = kx$ 绕原点 $O(0,0)$ 旋转，要求对一切 $x > 0$ 恒有 $\\ln x \\le kx$"
+                : "已知动直线 $y = kx$ 绕原点 $O(0,0)$ 旋转，要求对一切 $x > 0$ 恒有 $e^x \\ge kx \\ge \\ln x$",
+            "直线必须介于曲线单侧或双侧之间，全区间无穿透",
           ],
           questions: [
             paramKSubModel === "exp_kx_origin"
-              ? "求解与指数曲线相切的临界斜率 $k = e$ 及允许取值范围 $k \\le e$"
+              ? "(1) 求解过原点与指数曲线 $e^x$ 相切的切点坐标与临界斜率"
               : paramKSubModel === "log_kx_origin"
-                ? "求解与对数曲线相切的临界斜率 $k = 1/e$ 及允许取值范围 $k \\ge 1/e$"
-                : "探究动直线同时卡在指数与对数之间的双切线斜率安全闭区间 $[1/e, e]$",
-            "调节 $k$ 越过临界值，观察动直线如何在切点附近穿透曲线造成命题失效",
+                ? "(1) 求解过原点与对数曲线 $\\ln x$ 相切的切点坐标与临界斜率"
+                : "(1) 分别求解过原点与指数、对数曲线相切的两个临界切点与临界斜率",
+            paramKSubModel === "exp_kx_origin"
+              ? "(2) 结合下凸性与旋转几何特征，求实数 $k$ 的允许取值范围"
+              : paramKSubModel === "log_kx_origin"
+                ? "(2) 转化为函数 $g(x) = \\frac{\\ln x}{x}$ 的最值，求参数 $k$ 的取值范围"
+                : "(2) 取两单侧条件的交集，确定使动直线无穿透的安全闭区间 $[1/e, e]$",
           ],
         };
       case "secant":
+        if (secantSubModel === "taylor_quadratic") {
+          return {
+            conditions: [
+              "已知对数函数 $\\ln(1+x)$ 在 $x \\ge 0$ 处的局部多项式逼近",
+              "一阶线性切线 $y = x$ 与二阶下界多项式 $y = x - \\frac{1}{2}x^2$",
+            ],
+            questions: [
+              "(1) 构造辅助函数 $h(x) = \\ln(1+x) - (x - \\frac{1}{2}x^2)$，通过导数证明其在 $[0, +\\infty)$ 上的单调性",
+              "(2) 证明卡位不等式 $x - \\frac{1}{2}x^2 \\le \\ln(1+x) \\le x$ 并指明其在数列放缩中的应用场景",
+            ],
+          };
+        }
+        if (secantSubModel === "log_secant_tangent") {
+          return {
+            conditions: [
+              "在闭区间 $[a,b]$ 上考查上凸对数函数 $\\ln x$ 的割线与中点切线",
+              "割线连接端点 $A(a, \\ln a)$ 与 $B(b, \\ln b)$",
+            ],
+            questions: [
+              "(1) 求端点割线方程与区间中点切线方程，并计算割线斜率",
+              "(2) 利用二阶导上凸性证明在 $[a,b]$ 上割线在下（下界）、切线在上（上界）",
+            ],
+          };
+        }
         return {
           conditions: [
-            secantSubModel === "taylor_quadratic"
-              ? "考查对数函数 $\\ln(1+x)$ 在 $x \\ge 0$ 处的二阶泰勒多项式局部卡位"
-              : secantSubModel === "log_secant_tangent"
-                ? "在区间 $[a,b]$ 上考查上凸对数函数 $\\ln x$ 的割线与切线"
-                : "在区间 $[a,b]$ 上考查下凸指数函数 $e^x$ 的割线与切线",
-            "割线连接端点 $A, B$，切线取于区间内",
+            "在闭区间 $[a,b]$ 上考查下凸指数函数 $e^x$ 的割线与中点切线",
+            "割线连接端点 $A(a, e^a)$ 与 $B(b, e^b)$",
           ],
           questions: [
-            secantSubModel === "taylor_quadratic"
-              ? "观察一阶上界 $x$ 与二阶下界 $x - 0.5x^2$ 对对数曲线的精确双向钳制"
-              : secantSubModel === "log_secant_tangent"
-                ? "验证上凸函数具有『割线在下（下界）、切线在上（上界）』的反向包围几何特征"
-                : "验证下凸函数『切线在下、割线在上』的闭区间定界原理",
-            "拖拽区间端点 $A, B$，观察割线斜率变化及双向定界区间的收紧过程",
+            "(1) 求端点割线方程与区间中点切线方程，并计算割线斜率",
+            "(2) 利用二阶导下凸性证明在 $[a,b]$ 上切线在下（下界）、割线在上（上界）",
           ],
         };
     }
@@ -428,7 +484,7 @@ export function TangentScalingAnimation() {
             <TabSwitcher
               tabs={modeTabs}
               value={mode}
-              onChange={(key) => setMode(key as TangentScalingMode)}
+              onChange={(key) => handleModeChange(key as TangentScalingMode)}
               layout="horizontal"
             />
           </LeftPanelSection>
@@ -476,7 +532,7 @@ export function TangentScalingAnimation() {
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() => setParams({ ...defaultParams })}
+              onReset={handleReset}
             />
           </LeftPanelSection>
 
