@@ -4,6 +4,8 @@ import {
   solveExtremumShift,
   solveLogMean,
 } from "@/math/derivativeShift";
+import { buildDerivativeShiftPanel } from "@/data/builders/derivativeShift";
+import { getPresets } from "@/data/registries/derivativeShift";
 
 describe("隐零点定理与极值点偏移数学计算测试", () => {
   it("应当正确求解超越隐零点及二次消参消元轨迹 (x ln x + (1/2)x^2 - ax)", () => {
@@ -77,6 +79,12 @@ describe("隐零点定理与极值点偏移数学计算测试", () => {
     expect(res.diffFn(res.x1)).toBeLessThan(0);
   });
 
+  it("应当正确支持 ln_x_div_x 别名模型求解", () => {
+    const res = solveExtremumShift(0.25, "ln_x_div_x");
+    expect(res.isValid).toBe(true);
+    expect(res.x0).toBeCloseTo(Math.E, 3);
+  });
+
   it("应当正确计算对数均值不等式链 G < L < A", () => {
     // x1 = 1, x2 = e^2 ≈ 7.389
     // sqrt(x1 x2) = e ≈ 2.718
@@ -87,5 +95,73 @@ describe("隐零点定理与极值点偏移数学计算测试", () => {
     expect(res.geoMean).toBeCloseTo(Math.E, 2);
     expect(res.geoMean).toBeLessThan(res.logMean);
     expect(res.logMean).toBeLessThan(res.ariMean);
+  });
+
+  it("应当正确组装右屏 MathPanel 数据与高考考点 (三模式完整契约)", () => {
+    // 1. 隐零点模式
+    const panel1 = buildDerivativeShiftPanel(
+      { a: 2.0 },
+      { activeMode: "implicit_zero", subModel: "x_ln_x" },
+    );
+    expect(panel1.quantities.length).toBeGreaterThanOrEqual(4);
+    expect(panel1.theorems.length).toBe(2);
+    expect(panel1.gaokaoPoints.length).toBe(3);
+    expect(panel1.warnings).toHaveLength(0);
+    expect(panel1.reasoningSteps).toBeDefined();
+    expect(panel1.reasoningSteps).toHaveLength(3);
+    expect(panel1.reasoningSteps![0].rubric).toContain("采分点");
+
+    // 隐零点异常参数触发警告
+    const panel1Warn = buildDerivativeShiftPanel(
+      { a: 0.1 },
+      { activeMode: "implicit_zero", subModel: "x_ln_x" },
+    );
+    expect(panel1Warn.warnings.length).toBeGreaterThan(0);
+
+    // 2. 极值点偏移模式
+    const panel2 = buildDerivativeShiftPanel(
+      { k: 0.25 },
+      { activeMode: "shift_symmetric", subModel: "xe_neg_x" },
+    );
+    expect(panel2.quantities.length).toBeGreaterThanOrEqual(5);
+    expect(panel2.theorems.length).toBe(2);
+    expect(panel2.gaokaoPoints.length).toBe(2);
+    expect(panel2.reasoningSteps).toBeDefined();
+    expect(panel2.reasoningSteps).toHaveLength(3);
+
+    // 割线超过极值警告
+    const panel2Warn = buildDerivativeShiftPanel(
+      { k: 0.4 },
+      { activeMode: "shift_symmetric", subModel: "xe_neg_x" },
+    );
+    expect(panel2Warn.warnings.length).toBeGreaterThan(0);
+
+    // 3. 对数均值模式
+    const panel3 = buildDerivativeShiftPanel(
+      { x1: 0.5, x2: 4.0 },
+      { activeMode: "log_mean" },
+    );
+    expect(panel3.quantities.length).toBeGreaterThanOrEqual(4);
+    expect(panel3.theorems.length).toBe(2);
+    expect(panel3.gaokaoPoints.length).toBe(1);
+    expect(panel3.reasoningSteps).toBeDefined();
+    expect(panel3.reasoningSteps).toHaveLength(3);
+  });
+
+  it("应当为所有模式与模型提供有效预设列表 (含 ln_x_div_x)", () => {
+    const presetsImplicit = getPresets("implicit_zero", "x_ln_x");
+    expect(presetsImplicit.length).toBeGreaterThanOrEqual(3);
+
+    const presetsExpLinear = getPresets("implicit_zero", "exp_linear");
+    expect(presetsExpLinear.length).toBeGreaterThanOrEqual(3);
+
+    const presetsShiftXe = getPresets("shift_symmetric", "xe_neg_x");
+    expect(presetsShiftXe.length).toBeGreaterThanOrEqual(3);
+
+    const presetsShiftLnx = getPresets("shift_symmetric", "ln_x_div_x");
+    expect(presetsShiftLnx.length).toBeGreaterThanOrEqual(3);
+
+    const presetsLogMean = getPresets("log_mean");
+    expect(presetsLogMean.length).toBeGreaterThanOrEqual(3);
   });
 });

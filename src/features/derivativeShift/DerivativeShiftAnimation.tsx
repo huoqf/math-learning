@@ -22,7 +22,11 @@ import { DerivativeShiftScene } from "./components/DerivativeShiftScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
-import { defaultParams, paramMeta } from "@/data/registries/derivativeShift";
+import {
+  defaultParams,
+  paramMeta,
+  getPresets,
+} from "@/data/registries/derivativeShift";
 import {
   getDerivativeShiftLegendItems,
   type ShiftMode,
@@ -33,6 +37,7 @@ export function DerivativeShiftAnimation() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
   const [activeMode, setActiveMode] = useState<ShiftMode>("implicit_zero");
   const [subModel, setSubModel] = useState<ShiftSubModel>("x_ln_x");
+  const [activePreset, setActivePreset] = useState<string>("free");
 
   // 1. Viewport + 自适应画布 (固定 Preset: full)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -46,7 +51,7 @@ export function DerivativeShiftAnimation() {
     yRange: [-2.5, 3.5],
   });
 
-  // 3. 右屏看板聚合数据组装
+  // 3. 右屏看板聚合数据组装 (含 reasoningSteps)
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-derivative-shift", params, {
       activeMode,
@@ -54,7 +59,12 @@ export function DerivativeShiftAnimation() {
     });
   }, [params, activeMode, subModel]);
 
-  // 4. 左屏动态过滤参数配置列表
+  // 4. 当前模式与模型下的典型情景预设
+  const currentPresets = useMemo(() => {
+    return getPresets(activeMode, subModel);
+  }, [activeMode, subModel]);
+
+  // 5. 左屏动态过滤参数配置列表
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     let allowedKeys: string[] = [];
     if (activeMode === "implicit_zero") {
@@ -85,12 +95,13 @@ export function DerivativeShiftAnimation() {
       });
   }, [params, activeMode]);
 
-  // 参数更新处理
+  // 参数更新处理 (滑块调节或动点拖拽时自动切回自由探究)
   const handleParamChange = (key: string, value: number) => {
+    setActivePreset("free");
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 顶部悬浮公式字符串（符号自适应与色彩安全绑定）
+  // 顶部悬浮公式字符串（符号自适应、严谨联立与色彩安全绑定）
   const topFormulaLatex = useMemo(() => {
     const formatCoeffTerm = (
       coeff: number,
@@ -106,19 +117,19 @@ export function DerivativeShiftAnimation() {
     if (activeMode === "implicit_zero") {
       const aTerm = formatCoeffTerm(params.a, "x", MATH_COLORS.paramPrimary);
       if (subModel === "x_ln_x") {
-        return `f(x) = x \\ln x + \\frac{1}{2}x^2${aTerm} \\quad (f'(x_0) = 0)`;
+        return `f(x) = x \\ln x + \\frac{1}{2}x^2${aTerm}, \\quad f'(x_0) = 0`;
       }
-      return `f(x) = e^x - \\frac{1}{2}x^2${aTerm} \\quad (f'(x_0) = 0)`;
+      return `f(x) = e^x - \\frac{1}{2}x^2${aTerm}, \\quad f'(x_0) = 0`;
     } else if (activeMode === "shift_symmetric") {
       const kStr = params.k.toFixed(2).replace(/\.?0+$/, "");
       if (subModel === "xe_neg_x") {
-        return `f(x) = x e^{-x} = \\color{${MATH_COLORS.secantLine}}{${kStr}} \\implies f(x_1) = f(x_2) = k`;
+        return `f(x) = x e^{-x}, \\quad \\text{割线 } y = \\color{${MATH_COLORS.secantLine}}{${kStr}} \\implies f(x_1) = f(x_2) = k`;
       }
-      return `f(x) = \\frac{\\ln x}{x} = \\color{${MATH_COLORS.secantLine}}{${kStr}} \\implies f(x_1) = f(x_2) = k`;
+      return `f(x) = \\frac{\\ln x}{x}, \\quad \\text{割线 } y = \\color{${MATH_COLORS.secantLine}}{${kStr}} \\implies f(x_1) = f(x_2) = k`;
     }
     const x1Str = params.x1.toFixed(2).replace(/\.?0+$/, "");
     const x2Str = params.x2.toFixed(2).replace(/\.?0+$/, "");
-    return `L(x_1, x_2) = \\frac{x_1 - x_2}{\\ln x_1 - \\ln x_2} \\quad (x_1 = ${x1Str},\\, x_2 = ${x2Str})`;
+    return `L(x_1, x_2) = \\frac{x_2 - x_1}{\\ln x_2 - \\ln x_1} \\quad (x_1 = ${x1Str},\\, x_2 = ${x2Str})`;
   }, [activeMode, subModel, params.a, params.k, params.x1, params.x2]);
 
   // 右下角图例配置 (模式专属：规范解耦)
@@ -136,9 +147,9 @@ export function DerivativeShiftAnimation() {
       return {
         variant: "primary" as const,
         badge: "高考压轴 · 隐零点定理与消元",
-        condition: `已知超越函数 $${funcTex}$，导函数零点 $x_0$ 满足超越方程无法显式求解。`,
+        condition: `已知超越函数 $${funcTex}$，导函数零点 $x_0$ 满足超越方程无法初等显式求解。`,
         question:
-          "设导数零点为 $x_0$，如何利用 $f'(x_0) = 0$ 构造消元轨迹方程求极值范围？",
+          "设导数零点为 $x_0$，如何利用 $f'(x_0) = 0$ 设代消元，将极值转化为单变量轨迹 $h(x_0)$ 求最值范围？",
       };
     }
     if (activeMode === "shift_symmetric") {
@@ -147,20 +158,22 @@ export function DerivativeShiftAnimation() {
       return {
         variant: "warning" as const,
         badge: "高考压轴 · 极值点偏移与对称构造",
-        condition: `水平割线 $y = k$ 与曲线 $${funcTex}$ 交于两不等实根 $x_1 < x_2$。`,
+        condition: `水平割线 $y = k$ 与曲线 $${funcTex}$ 割于两不等实根 $x_1 < x_2$。`,
         question:
-          "已知 $f(x_1) = f(x_2) = k$，如何通过对称构造函数证明极值点偏移结论 $x_1 + x_2 > 2x_0$？",
+          "已知 $f(x_1) = f(x_2) = k$，如何通过对称构造差函数 $F(x) = f(x) - f(2x_0 - x)$ 证明极值点偏移结论 $x_1 + x_2 > 2x_0$？",
       };
     }
     return {
       variant: "info" as const,
       badge: "高考真题 · 对数均值不等式链",
       condition:
-        "对于对数曲线 $f(x) = \\ln x$，在两正实数 $x_1 < x_2$ 间连结割线。",
+        "对于对数曲线 $f(x) = \\ln x$，在两正实数 $x_1 < x_2$ 间连结割线与平行切线。",
       question:
-        "验证几何均值 $G$、对数均值 $L$ 与算术均值 $A$ 构成的核心不等式链 $\\sqrt{x_1x_2} < L(x_1, x_2) < \\frac{x_1+x_2}{2}$。",
+        "探究几何均值 $G$、对数均值 $L$ 与算术均值 $A$ 的大小排序不等式链 $\\sqrt{x_1x_2} < L(x_1, x_2) < \\frac{x_1+x_2}{2}$。",
     };
-  }, [activeMode, subModel]);
+    // 依赖保留二级选项变量：TipCard 教学提示须随二级选项与预设切换同步特化 (项目纪律 left/tipcard-secondary-sync)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMode, subModel, activePreset, params]);
 
   return (
     <ThreePanel
@@ -178,8 +191,16 @@ export function DerivativeShiftAnimation() {
               onChange={(k) => {
                 const mode = k as ShiftMode;
                 setActiveMode(mode);
-                if (mode === "implicit_zero") setSubModel("x_ln_x");
-                else if (mode === "shift_symmetric") setSubModel("xe_neg_x");
+                setActivePreset("free");
+                if (mode === "implicit_zero") {
+                  setSubModel("x_ln_x");
+                  setParams((prev) => ({ ...prev, a: 2.0 }));
+                } else if (mode === "shift_symmetric") {
+                  setSubModel("xe_neg_x");
+                  setParams((prev) => ({ ...prev, k: 0.25 }));
+                } else {
+                  setParams((prev) => ({ ...prev, x1: 0.3, x2: 3.5 }));
+                }
               }}
             />
           </LeftPanelSection>
@@ -200,7 +221,11 @@ export function DerivativeShiftAnimation() {
                     },
                   ]}
                   value={subModel}
-                  onChange={(key) => setSubModel(key as ShiftSubModel)}
+                  onChange={(key) => {
+                    const model = key as ShiftSubModel;
+                    setSubModel(model);
+                    setActivePreset("free");
+                  }}
                   columns={2}
                 />
               ) : (
@@ -216,23 +241,51 @@ export function DerivativeShiftAnimation() {
                     },
                   ]}
                   value={subModel}
-                  onChange={(key) => setSubModel(key as ShiftSubModel)}
+                  onChange={(key) => {
+                    const model = key as ShiftSubModel;
+                    setSubModel(model);
+                    setActivePreset("free");
+                  }}
                   columns={2}
                 />
               )}
             </LeftPanelSection>
           )}
 
-          {/* 3. 参数调节区 */}
+          {/* 3. 典型情景/真题预设 */}
+          {currentPresets.length > 0 && (
+            <LeftPanelSection title="典型情景">
+              <SelectGrid
+                items={currentPresets.map((p) => ({
+                  key: p.key,
+                  label: p.label,
+                }))}
+                value={activePreset}
+                onChange={(key) => {
+                  setActivePreset(key);
+                  const found = currentPresets.find((p) => p.key === key);
+                  if (found) {
+                    setParams((prev) => ({ ...prev, ...found.params }));
+                  }
+                }}
+                columns={2}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 4. 参数调节区 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() => setParams({ ...defaultParams })}
+              onReset={() => {
+                setActivePreset("free");
+                setParams({ ...defaultParams });
+              }}
             />
           </LeftPanelSection>
 
-          {/* 4. 教学导引与高考设问 */}
+          {/* 5. 教学导引与高考设问 */}
           <TipCard
             variant={tipConfig.variant}
             badge={tipConfig.badge}
@@ -274,6 +327,7 @@ export function DerivativeShiftAnimation() {
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          reasoningSteps={mathData.reasoningSteps}
           mnemonic={mathData.mnemonic}
           title="隐零点与极值点偏移看板"
         />

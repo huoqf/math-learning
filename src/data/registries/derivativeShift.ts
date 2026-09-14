@@ -4,6 +4,7 @@
  */
 
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   a: 2.0, // 隐零点参数 a
@@ -143,6 +144,35 @@ export const presetsByModeAndModel: Record<
         params: { k: 0.12 },
       },
     ],
+    ln_x_div_x: [
+      {
+        key: "free",
+        label: "自由探究",
+        description: "全参数开放",
+        params: { k: 0.25 },
+      },
+      {
+        key: "gaokao_2010",
+        label: "经典双根",
+        formula: "k = 0.25",
+        description: "经典双根割线",
+        params: { k: 0.25 },
+      },
+      {
+        key: "critical_tan",
+        label: "极值相切",
+        formula: "k \\to 1/e",
+        description: "双根无限重合趋向",
+        params: { k: 0.36 },
+      },
+      {
+        key: "deep_secant",
+        label: "深部割线",
+        formula: "k = 0.12",
+        description: "双重右偏显著区域",
+        params: { k: 0.12 },
+      },
+    ],
   },
   log_mean: {
     default: [
@@ -187,7 +217,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "函数参数 a",
-    labelFormula: "a",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a}`,
     group: "隐零点函数参数",
     min: 0.5,
     max: 4.5,
@@ -208,7 +238,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   k: {
     key: "k",
     label: "割线高度 k",
-    labelFormula: "k",
+    labelFormula: `\\color{${MATH_COLORS.secantLine}}{k}`,
     group: "割线截弦参数",
     min: 0.05,
     max: 0.35,
@@ -217,7 +247,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "割线 y = k 截原函数的两根 x1 与 x2 (k_max = 1/e 临界)",
     descriptionFormula:
-      "割线 $y = k$ 截原函数的两根 $x_1, x_2$ (极值临界 $k_{max} = 1/e$)",
+      "割线 $y = k$ 截原函数的两根 $x_1, x_2$ (极值临界 $k_{\\max} = 1/e$)",
     marks: [
       {
         value: 0.368,
@@ -229,8 +259,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   x1: {
     key: "x1",
-    label: "端点 x1",
-    labelFormula: "x_1",
+    label: "左端点 x₁",
+    labelFormula: `\\color{${MATH_COLORS.function}}{x_1}`,
     group: "对数均值区间端点",
     min: 0.1,
     max: 2.0,
@@ -242,8 +272,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   x2: {
     key: "x2",
-    label: "端点 x2",
-    labelFormula: "x_2",
+    label: "右端点 x₂",
+    labelFormula: `\\color{${MATH_COLORS.functionSecondary}}{x_2}`,
     group: "对数均值区间端点",
     min: 2.1,
     max: 8.0,
