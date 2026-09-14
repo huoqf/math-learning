@@ -97,6 +97,77 @@ describe("solveConstantDouble (双变量最值博弈对决)", () => {
     expect(res.battlePointG).toEqual({ x: 2.0, y: 1.0 });
   });
 
+  it("测试值域交错时四大博弈逻辑的分水岭分流", () => {
+    // f(x) = (x-1)^2 + 0.5, I1=[0.5, 2.0], f_min = 0.5, f_max = f(2) = 1.5
+    // g(x) = -(x-2)^2 + 1.0, I2=[1.5, 3.0], g_max = 1.0, g_min = g(3) = 0.0
+    // 此时:
+    // f_min = 0.5 < g_max = 1.0 => all_all 为 false
+    // f_min = 0.5 >= g_min = 0.0 => all_exist 为 true
+    // f_max = 1.5 >= g_max = 1.0 => exist_all 为 true
+    // f_max = 1.5 >= g_min = 0.0 => exist_exist 为 true
+    const resAllAll = solveConstantDouble(
+      0.5,
+      1.0,
+      0.5,
+      2.0,
+      1.0,
+      2.0,
+      1.5,
+      3.0,
+      "all_all",
+    );
+    expect(resAllAll.isAllAllTrue).toBe(false);
+    expect(resAllAll.isCurrentLogicTrue).toBe(false);
+
+    const resAllExist = solveConstantDouble(
+      0.5,
+      1.0,
+      0.5,
+      2.0,
+      1.0,
+      2.0,
+      1.5,
+      3.0,
+      "all_exist",
+    );
+    expect(resAllExist.isAllExistTrue).toBe(true);
+    expect(resAllExist.isCurrentLogicTrue).toBe(true);
+    expect(resAllExist.battlePointF).toEqual({ x: 1.0, y: 0.5 });
+    expect(resAllExist.battlePointG).toEqual({ x: 3.0, y: 0.0 });
+
+    const resExistAll = solveConstantDouble(
+      0.5,
+      1.0,
+      0.5,
+      2.0,
+      1.0,
+      2.0,
+      1.5,
+      3.0,
+      "exist_all",
+    );
+    expect(resExistAll.isExistAllTrue).toBe(true);
+    expect(resExistAll.isCurrentLogicTrue).toBe(true);
+    expect(resExistAll.battlePointF).toEqual({ x: 2.0, y: 1.5 });
+    expect(resExistAll.battlePointG).toEqual({ x: 2.0, y: 1.0 });
+
+    const resExistExist = solveConstantDouble(
+      0.5,
+      1.0,
+      0.5,
+      2.0,
+      1.0,
+      2.0,
+      1.5,
+      3.0,
+      "exist_exist",
+    );
+    expect(resExistExist.isExistExistTrue).toBe(true);
+    expect(resExistExist.isCurrentLogicTrue).toBe(true);
+    expect(resExistExist.battlePointF).toEqual({ x: 2.0, y: 1.5 });
+    expect(resExistExist.battlePointG).toEqual({ x: 3.0, y: 0.0 });
+  });
+
   it("测试 same_var (同自变量) 逻辑判定与博弈点提取", () => {
     // f(x) = (x-1.25)^2 + 2.5, I1=[0.5, 2.0]
     // g(x) = -(x-2.25)^2 + 1.5, I2=[1.5, 3.0]
@@ -118,6 +189,23 @@ describe("solveConstantDouble (双变量最值博弈对决)", () => {
     expect(res.sameVarXMin).toBeCloseTo(1.75);
     expect(res.battlePointF).toEqual({ x: 1.75, y: 2.75 });
     expect(res.battlePointG).toEqual({ x: 1.75, y: 1.25 });
+  });
+
+  it("测试定义域退化异常保护", () => {
+    const resDegenerate = solveConstantDouble(
+      2.0,
+      1.0,
+      2.0,
+      1.0, // mf >= nf
+      1.0,
+      2.0,
+      1.5,
+      3.0,
+      "all_all",
+    );
+    expect(resDegenerate.isValid).toBe(false);
+    expect(resDegenerate.isDegenerate).toBe(true);
+    expect(resDegenerate.degenerateType).toBe("interval_collapse");
   });
 });
 

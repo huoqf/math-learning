@@ -50,7 +50,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
   // 2. 拖拽回调：改变抛物线顶点，实现 x 和 y 双向绑定
   const handleFVertexDrag = (mathPt: { x: number; y: number }) => {
     const xfNew = Math.max(0.5, Math.min(2.0, Math.round(mathPt.x * 20) / 20));
-    const yfNew = Math.max(1.0, Math.min(4.0, Math.round(mathPt.y * 20) / 20));
+    const yfNew = Math.max(-1.5, Math.min(4.0, Math.round(mathPt.y * 20) / 20));
     if (onParamsBatchChange) {
       onParamsBatchChange({ xf: xfNew, yf: yfNew });
     } else {

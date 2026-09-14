@@ -640,14 +640,14 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     // g_max = yg = 1.50
     verifyTopicSyncContract([
       {
-        name: "双变量量词博弈模型 (∀x1, ∃x2, f(x1) ≤ g(x2))",
+        name: "双变量量词博弈模型 (∀x1, ∃x2, f(x1) ≥ g(x2))",
         animId: "anim-constant-double",
         modeOptions: { selectedLogic: "all_exist" },
         params: { yf: 2.5, xf: 1.25, yg: 1.5, xg: 2.25 },
         lessonType: "gaokao_topic",
         groundTruth: {
-          "f(x) 最小值": 2.5,
-          "g(x) 最大值": 1.5,
+          "f(x) 极小决策值": 2.5,
+          "g(x) 极小保底值": 0.94,
         },
         expectedExamAnchor: "双变量量词博弈",
         expectedReasoningSymbols: ["f_{\\min}", "g_{\\min}"],

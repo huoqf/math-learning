@@ -264,7 +264,7 @@ export function DoubleVarPage() {
       if (
         key === "yf" &&
         criticalYf !== undefined &&
-        criticalYf >= -1.0 &&
+        criticalYf >= -1.5 &&
         criticalYf <= 5.0
       ) {
         let critLabel = "临界点";

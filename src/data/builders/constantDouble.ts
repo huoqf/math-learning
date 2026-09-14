@@ -1,6 +1,7 @@
 import type { MathPanelData, ReasoningStep } from "../types";
 import { solveConstantDouble } from "@/math/constant";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber, formatSignedTerm } from "@/utils/mathFormat";
 
 export function buildConstantDoublePanel(
   params: Record<string, number>,
@@ -34,64 +35,64 @@ export function buildConstantDoublePanel(
   let fMinLatex = "";
   let fMaxLatex = "";
   if (xf >= mf && xf <= nf) {
-    fMinLatex = `f_{\\min} &= f(x_f) = y_f = ${res.fMin.toFixed(2)}`;
+    fMinLatex = `f_{\\min} &= f(x_f) = y_f = ${formatMathNumber(res.fMin)}`;
     const distM = Math.abs(mf - xf);
     const distN = Math.abs(nf - xf);
     const farX = distM >= distN ? mf : nf;
-    fMaxLatex = `f_{\\max} &= f(${farX.toFixed(1)}) = (${farX.toFixed(1)} - x_f)^2 + y_f = ${res.fMax.toFixed(2)}`;
+    fMaxLatex = `f_{\\max} &= f(${formatMathNumber(farX)}) = (${formatMathNumber(farX)} - x_f)^2 + y_f = ${formatMathNumber(res.fMax)}`;
   } else if (xf < mf) {
-    fMinLatex = `f_{\\min} &= f(${mf.toFixed(1)}) = (${mf.toFixed(1)} - x_f)^2 + y_f = ${res.fMin.toFixed(2)}`;
-    fMaxLatex = `f_{\\max} &= f(${nf.toFixed(1)}) = (${nf.toFixed(1)} - x_f)^2 + y_f = ${res.fMax.toFixed(2)}`;
+    fMinLatex = `f_{\\min} &= f(${formatMathNumber(mf)}) = (${formatMathNumber(mf)} - x_f)^2 + y_f = ${formatMathNumber(res.fMin)}`;
+    fMaxLatex = `f_{\\max} &= f(${formatMathNumber(nf)}) = (${formatMathNumber(nf)} - x_f)^2 + y_f = ${formatMathNumber(res.fMax)}`;
   } else {
-    fMinLatex = `f_{\\min} &= f(${nf.toFixed(1)}) = (${nf.toFixed(1)} - x_f)^2 + y_f = ${res.fMin.toFixed(2)}`;
-    fMaxLatex = `f_{\\max} &= f(${mf.toFixed(1)}) = (${mf.toFixed(1)} - x_f)^2 + y_f = ${res.fMax.toFixed(2)}`;
+    fMinLatex = `f_{\\min} &= f(${formatMathNumber(nf)}) = (${formatMathNumber(nf)} - x_f)^2 + y_f = ${formatMathNumber(res.fMin)}`;
+    fMaxLatex = `f_{\\max} &= f(${formatMathNumber(mf)}) = (${formatMathNumber(mf)} - x_f)^2 + y_f = ${formatMathNumber(res.fMax)}`;
   }
 
   // 2. g(x) 闭区间代数最值表达式构建 (开口向下，对称轴 x = xg)
   let gMaxLatex = "";
   let gMinLatex = "";
   if (xg >= mg && xg <= ng) {
-    gMaxLatex = `g_{\\max} &= g(x_g) = y_g = ${res.gMax.toFixed(2)}`;
+    gMaxLatex = `g_{\\max} &= g(x_g) = y_g = ${formatMathNumber(res.gMax)}`;
     const distM = Math.abs(mg - xg);
     const distN = Math.abs(ng - xg);
     const farX = distM >= distN ? mg : ng;
-    gMinLatex = `g_{\\min} &= g(${farX.toFixed(1)}) = -(${farX.toFixed(1)} - x_g)^2 + y_g = ${res.gMin.toFixed(2)}`;
+    gMinLatex = `g_{\\min} &= g(${formatMathNumber(farX)}) = -(${formatMathNumber(farX)} - x_g)^2 + y_g = ${formatMathNumber(res.gMin)}`;
   } else if (xg < mg) {
-    gMaxLatex = `g_{\\max} &= g(${mg.toFixed(1)}) = -(${mg.toFixed(1)} - x_g)^2 + y_g = ${res.gMax.toFixed(2)}`;
-    gMinLatex = `g_{\\min} &= g(${ng.toFixed(1)}) = -(${ng.toFixed(1)} - x_g)^2 + y_g = ${res.gMin.toFixed(2)}`;
+    gMaxLatex = `g_{\\max} &= g(${formatMathNumber(mg)}) = -(${formatMathNumber(mg)} - x_g)^2 + y_g = ${formatMathNumber(res.gMax)}`;
+    gMinLatex = `g_{\\min} &= g(${formatMathNumber(ng)}) = -(${formatMathNumber(ng)} - x_g)^2 + y_g = ${formatMathNumber(res.gMin)}`;
   } else {
-    gMaxLatex = `g_{\\max} &= g(${ng.toFixed(1)}) = -(${ng.toFixed(1)} - x_g)^2 + y_g = ${res.gMax.toFixed(2)}`;
-    gMinLatex = `g_{\\min} &= g(${mg.toFixed(1)}) = -(${mg.toFixed(1)} - x_g)^2 + y_g = ${res.gMin.toFixed(2)}`;
+    gMaxLatex = `g_{\\max} &= g(${formatMathNumber(ng)}) = -(${formatMathNumber(ng)} - x_g)^2 + y_g = ${formatMathNumber(res.gMax)}`;
+    gMinLatex = `g_{\\min} &= g(${formatMathNumber(mg)}) = -(${formatMathNumber(mg)} - x_g)^2 + y_g = ${formatMathNumber(res.gMin)}`;
   }
 
   // 3. 详细中文推演说明（供 detail 流式解析，所有数学公式与变量严格用 $...$ 包裹）
   const fMinDetail =
     xf >= mf && xf <= nf
-      ? `$f(x)$ 开口向上，对称轴 $x_f = ${xf.toFixed(2)} \\in [${mf.toFixed(1)}, ${nf.toFixed(1)}]$ 位于区间内，在顶点处取得极小值 $f_{\\min} = f(x_f) = y_f = ${res.fMin.toFixed(2)}$。`
+      ? `$f(x)$ 开口向上，对称轴 $x_f = ${formatMathNumber(xf)} \\in [${formatMathNumber(mf)}, ${formatMathNumber(nf)}]$ 位于区间内，在顶点处取得极小值 $f_{\\min} = f(x_f) = y_f = ${formatMathNumber(res.fMin)}$。`
       : xf < mf
-        ? `$f(x)$ 对称轴 $x_f = ${xf.toFixed(2)} < ${mf.toFixed(1)}$ 位于区间左侧，$f(x)$ 在 $[${mf.toFixed(1)}, ${nf.toFixed(1)}]$ 单调递增，在左端点取得极小值 $f_{\\min} = f(${mf.toFixed(1)}) = ${res.fMin.toFixed(2)}$。`
-        : `$f(x)$ 对称轴 $x_f = ${xf.toFixed(2)} > ${nf.toFixed(1)}$ 位于区间右侧，$f(x)$ 在 $[${mf.toFixed(1)}, ${nf.toFixed(1)}]$ 单调递减，在右端点取得极小值 $f_{\\min} = f(${nf.toFixed(1)}) = ${res.fMin.toFixed(2)}$。`;
+        ? `$f(x)$ 对称轴 $x_f = ${formatMathNumber(xf)} < ${formatMathNumber(mf)}$ 位于区间左侧，$f(x)$ 在 $[${formatMathNumber(mf)}, ${formatMathNumber(nf)}]$ 单调递增，在左端点取得极小值 $f_{\\min} = f(${formatMathNumber(mf)}) = ${formatMathNumber(res.fMin)}$。`
+        : `$f(x)$ 对称轴 $x_f = ${formatMathNumber(xf)} > ${formatMathNumber(nf)}$ 位于区间右侧，$f(x)$ 在 $[${formatMathNumber(mf)}, ${formatMathNumber(nf)}]$ 单调递减，在右端点取得极小值 $f_{\\min} = f(${formatMathNumber(nf)}) = ${formatMathNumber(res.fMin)}$。`;
 
   const fMaxDetail =
     xf >= mf && xf <= nf
-      ? `极大值在离对称轴较远的端点 $x = ${res.xFMax.toFixed(1)}$ 处取得，$f_{\\max} = f(${res.xFMax.toFixed(1)}) = ${res.fMax.toFixed(2)}$。`
+      ? `极大值在离对称轴较远的端点 $x = ${formatMathNumber(res.xFMax)}$ 处取得，$f_{\\max} = f(${formatMathNumber(res.xFMax)}) = ${formatMathNumber(res.fMax)}$。`
       : xf < mf
-        ? `单调递增在右端点取得极大值 $f_{\\max} = f(${nf.toFixed(1)}) = ${res.fMax.toFixed(2)}$。`
-        : `单调递减在左端点取得极大值 $f_{\\max} = f(${mf.toFixed(1)}) = ${res.fMax.toFixed(2)}$。`;
+        ? `单调递增在右端点取得极大值 $f_{\\max} = f(${formatMathNumber(nf)}) = ${formatMathNumber(res.fMax)}$。`
+        : `单调递减在左端点取得极大值 $f_{\\max} = f(${formatMathNumber(mf)}) = ${formatMathNumber(res.fMax)}$。`;
 
   const gMaxDetail =
     xg >= mg && xg <= ng
-      ? `$g(x)$ 开口向下，对称轴 $x_g = ${xg.toFixed(2)} \\in [${mg.toFixed(1)}, ${ng.toFixed(1)}]$ 位于区间内，在顶点处取得极大值 $g_{\\max} = g(x_g) = y_g = ${res.gMax.toFixed(2)}$。`
+      ? `$g(x)$ 开口向下，对称轴 $x_g = ${formatMathNumber(xg)} \\in [${formatMathNumber(mg)}, ${formatMathNumber(ng)}]$ 位于区间内，在顶点处取得极大值 $g_{\\max} = g(x_g) = y_g = ${formatMathNumber(res.gMax)}$。`
       : xg < mg
-        ? `$g(x)$ 对称轴 $x_g = ${xg.toFixed(2)} < ${mg.toFixed(1)}$ 位于区间左侧，$g(x)$ 在 $[${mg.toFixed(1)}, ${ng.toFixed(1)}]$ 单调递减，在左端点取得极大值 $g_{\\max} = g(${mg.toFixed(1)}) = ${res.gMax.toFixed(2)}$。`
-        : `$g(x)$ 对称轴 $x_g = ${xg.toFixed(2)} > ${ng.toFixed(1)}$ 位于区间右侧，$g(x)$ 在 $[${mg.toFixed(1)}, ${ng.toFixed(1)}]$ 单调递增，在右端点取得极大值 $g_{\\max} = g(${ng.toFixed(1)}) = ${res.gMax.toFixed(2)}$。`;
+        ? `$g(x)$ 对称轴 $x_g = ${formatMathNumber(xg)} < ${formatMathNumber(mg)}$ 位于区间左侧，$g(x)$ 在 $[${formatMathNumber(mg)}, ${formatMathNumber(ng)}]$ 单调递减，在左端点取得极大值 $g_{\\max} = g(${formatMathNumber(mg)}) = ${formatMathNumber(res.gMax)}$。`
+        : `$g(x)$ 对称轴 $x_g = ${formatMathNumber(xg)} > ${formatMathNumber(ng)}$ 位于区间右侧，$g(x)$ 在 $[${formatMathNumber(mg)}, ${formatMathNumber(ng)}]$ 单调递增，在右端点取得极大值 $g_{\\max} = g(${formatMathNumber(ng)}) = ${formatMathNumber(res.gMax)}$。`;
 
   const gMinDetail =
     xg >= mg && xg <= ng
-      ? `极小值在离对称轴较远的端点 $x = ${res.xGMin.toFixed(1)}$ 处取得，$g_{\\min} = g(${res.xGMin.toFixed(1)}) = ${res.gMin.toFixed(2)}。`
+      ? `极小值在离对称轴较远的端点 $x = ${formatMathNumber(res.xGMin)}$ 处取得，$g_{\\min} = g(${formatMathNumber(res.xGMin)}) = ${formatMathNumber(res.gMin)}$。`
       : xg < mg
-        ? `单调递减在右端点取得极小值 $g_{\\min} = g(${ng.toFixed(1)}) = ${res.gMin.toFixed(2)}。`
-        : `单调递增在左端点取得极小值 $g_{\\min} = g(${mg.toFixed(1)}) = ${res.gMin.toFixed(2)}。`;
+        ? `单调递减在右端点取得极小值 $g_{\\min} = g(${formatMathNumber(ng)}) = ${formatMathNumber(res.gMin)}$。`
+        : `单调递增在左端点取得极小值 $g_{\\min} = g(${formatMathNumber(mg)}) = ${formatMathNumber(res.gMin)}$。`;
 
   // 计算当前模式下主参数 y_f 的充要临界下限 yf_crit
   let yfCrit = 0;
@@ -113,6 +114,68 @@ export function buildConstantDoublePanel(
     targetCriterionStr = "h(x)_{\\min} \\ge 0";
   }
 
+  const rawDeltaY = res.battlePointF.y - res.battlePointG.y;
+  const deltaY = Math.abs(rawDeltaY) < 1e-6 ? 0 : rawDeltaY;
+
+  // 根据当前博弈模式，动态组装两项核心对垒最值指标，彻底清除与当前逻辑不相干的数值
+  let duelFQuantity: MathPanelData["quantities"][0];
+  let duelGQuantity: MathPanelData["quantities"][0];
+
+  if (selectedLogic === "all_all") {
+    duelFQuantity = {
+      label: "f(x) 极小底线",
+      symbol: "f_{\\min}",
+      value: `${formatMathNumber(res.fMin)} (x=${formatMathNumber(res.xFMin)})`,
+      color: MATH_COLORS.function,
+    };
+    duelGQuantity = {
+      label: "g(x) 极大封顶",
+      symbol: "g_{\\max}",
+      value: `${formatMathNumber(res.gMax)} (x=${formatMathNumber(res.xGMax)})`,
+      color: MATH_COLORS.functionSecondary,
+    };
+  } else if (selectedLogic === "all_exist") {
+    duelFQuantity = {
+      label: "f(x) 极小决策值",
+      symbol: "f_{\\min}",
+      value: `${formatMathNumber(res.fMin)} (x=${formatMathNumber(res.xFMin)})`,
+      color: MATH_COLORS.function,
+    };
+    duelGQuantity = {
+      label: "g(x) 极小保底值",
+      symbol: "g_{\\min}",
+      value: `${formatMathNumber(res.gMin)} (x=${formatMathNumber(res.xGMin)})`,
+      color: MATH_COLORS.functionSecondary,
+    };
+  } else if (selectedLogic === "exist_all") {
+    duelFQuantity = {
+      label: "f(x) 极大冲顶值",
+      symbol: "f_{\\max}",
+      value: `${formatMathNumber(res.fMax)} (x=${formatMathNumber(res.xFMax)})`,
+      color: MATH_COLORS.function,
+    };
+    duelGQuantity = {
+      label: "g(x) 极大压制值",
+      symbol: "g_{\\max}",
+      value: `${formatMathNumber(res.gMax)} (x=${formatMathNumber(res.xGMax)})`,
+      color: MATH_COLORS.functionSecondary,
+    };
+  } else {
+    // exist_exist
+    duelFQuantity = {
+      label: "f(x) 极大冲顶值",
+      symbol: "f_{\\max}",
+      value: `${formatMathNumber(res.fMax)} (x=${formatMathNumber(res.xFMax)})`,
+      color: MATH_COLORS.function,
+    };
+    duelGQuantity = {
+      label: "g(x) 极小准入值",
+      symbol: "g_{\\min}",
+      value: `${formatMathNumber(res.gMin)} (x=${formatMathNumber(res.xGMin)})`,
+      color: MATH_COLORS.functionSecondary,
+    };
+  }
+
   const quantities: MathPanelData["quantities"] =
     selectedLogic === "same_var"
       ? [
@@ -124,19 +187,19 @@ export function buildConstantDoublePanel(
           {
             label: "参数充要解集",
             symbol: "y_f",
-            value: `[${yfCrit.toFixed(2)}, +\\infty)`,
+            value: `[${formatMathNumber(yfCrit)}, +\\infty)`,
             color: MATH_COLORS.paramPrimary,
           },
           {
             label: "差函数最小差值",
             symbol: "h_{\\min}",
-            value: res.sameVarMinDiff ?? 0,
+            value: formatMathNumber(res.sameVarMinDiff ?? 0),
             color: MATH_COLORS.inequality,
           },
           {
             label: "最危险极小位置",
             symbol: "x_{\\min}",
-            value: `x = ${(res.sameVarXMin ?? 0).toFixed(2)}`,
+            value: `x = ${formatMathNumber(res.sameVarXMin ?? 0)}`,
           },
           {
             label: "作用域公共交集",
@@ -155,7 +218,7 @@ export function buildConstantDoublePanel(
           {
             label: "参数充要解集",
             symbol: "y_f",
-            value: `[${yfCrit.toFixed(2)}, +\\infty)`,
+            value: `[${formatMathNumber(yfCrit)}, +\\infty)`,
             color: MATH_COLORS.paramPrimary,
           },
           {
@@ -167,22 +230,11 @@ export function buildConstantDoublePanel(
           {
             label: "比较高度差",
             symbol: "\\Delta y",
-            value: (res.battlePointF.y - res.battlePointG.y).toFixed(2),
-            highlight:
-              res.battlePointF.y >= res.battlePointG.y ? "extreme" : "negative",
+            value: formatMathNumber(deltaY),
+            highlight: deltaY >= 0 ? "extreme" : "negative",
           },
-          {
-            label: "f(x) 最小值",
-            symbol: "f_{\\min}",
-            value: `${res.fMin.toFixed(2)} (x=${res.xFMin.toFixed(2)})`,
-            color: MATH_COLORS.function,
-          },
-          {
-            label: "g(x) 最大值",
-            symbol: "g_{\\max}",
-            value: `${res.gMax.toFixed(2)} (x=${res.xGMax.toFixed(2)})`,
-            color: MATH_COLORS.functionSecondary,
-          },
+          duelFQuantity,
+          duelGQuantity,
         ];
 
   // 动态根据所选逻辑置顶核心定理
@@ -233,9 +285,6 @@ export function buildConstantDoublePanel(
     };
   }
 
-  const constantTerm = (xf * xf + xg * xg - yg).toFixed(2);
-  const symAxis = (xf + xg) / 2;
-
   const theorems: MathPanelData["theorems"] =
     selectedLogic === "same_var"
       ? [
@@ -254,10 +303,10 @@ export function buildConstantDoublePanel(
           {
             name: "双动点不等式四大博弈全景矩阵",
             latex: `\\begin{aligned} 
-              \\forall x_1, \\forall x_2 &\\iff f_{\\min} \\ge g_{\\max} \\\\ 
-              \\forall x_1, \\exists x_2 &\\iff f_{\\min} \\ge g_{\\min} \\\\ 
-              \\exists x_1, \\forall x_2 &\\iff f_{\\max} \\ge g_{\\max} \\\\ 
-              \\exists x_1, \\exists x_2 &\\iff f_{\\max} \\ge g_{\\min} 
+              \\forall x_1 \\in I_1, \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2) &\\iff f_{\\min} \\ge g_{\\max} \\\\ 
+              \\forall x_1 \\in I_1, \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2) &\\iff f_{\\min} \\ge g_{\\min} \\\\ 
+              \\exists x_1 \\in I_1, \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2) &\\iff f_{\\max} \\ge g_{\\max} \\\\ 
+              \\exists x_1 \\in I_1, \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2) &\\iff f_{\\max} \\ge g_{\\min} 
             \\end{aligned}`,
             level: "important",
             prerequisites: [
@@ -297,11 +346,11 @@ export function buildConstantDoublePanel(
         title: "求解反思 · 建立参数不等式求解集",
         detail:
           diff >= 0
-            ? `由充要条件 $f_{\\min} \\ge g_{\\max}$ 列不等式，解得参数范围为 $y_f \\ge ${yfCrit.toFixed(2)}$，即 $y_f \\in [${yfCrit.toFixed(2)}, +\\infty)$。当前 $y_f = ${yf.toFixed(2)}$，高度差 $\\Delta y = ${diff.toFixed(2)} \\ge 0$，全域博弈成立。`
-            : `由充要条件 $f_{\\min} \\ge g_{\\max}$ 列不等式，要求 $y_f \\ge ${yfCrit.toFixed(2)}$。当前 $y_f = ${yf.toFixed(2)} < ${yfCrit.toFixed(2)}$，高度差 $\\Delta y = ${diff.toFixed(2)} < 0$，两函数值域重叠，博弈被违背。`,
+            ? `由充要条件 $f_{\\min} \\ge g_{\\max}$，代入已知极值可得 $y_f \\ge ${formatMathNumber(res.gMax)}$，解得参数范围为 $y_f \\in [${formatMathNumber(yfCrit)}, +\\infty)$。当前 $y_f = ${formatMathNumber(yf)}$，高度差 $\\Delta y = ${formatMathNumber(diff)} \\ge 0$，全域博弈成立。`
+            : `由充要条件 $f_{\\min} \\ge g_{\\max}$，代入已知极值要求 $y_f \\ge ${formatMathNumber(res.gMax)}$。当前 $y_f = ${formatMathNumber(yf)} < ${formatMathNumber(yfCrit)}$，高度差 $\\Delta y = ${formatMathNumber(diff)} < 0$，两函数值域重叠，博弈被违背。`,
         latex: `\\begin{aligned} 
-          f_{\\min} \\ge g_{\\max} &\\iff y_f \\ge g_{\\max} - (f_{\\min} - y_f) \\\\ 
-          &\\iff y_f \\ge ${yfCrit.toFixed(2)} \\quad (\\Delta y = ${diff.toFixed(2)}) 
+          f_{\\min} \\ge g_{\\max} &\\iff y_f \\ge g(x_g) \\\\ 
+          &\\iff y_f \\ge ${formatMathNumber(res.gMax)} 
         \\end{aligned}`,
         rubric:
           "采分点：建立参数不等式并解出充要区间，完成高度差与临界相切反思（4分）",
@@ -334,11 +383,11 @@ export function buildConstantDoublePanel(
         title: "求解反思 · 保底参数解集与值域交叉验证",
         detail:
           diff >= 0
-            ? `建立不等式 $f_{\\min} \\ge g_{\\min}$，解得参数充要范围 $y_f \\ge ${yfCrit.toFixed(2)}$，即 $y_f \\in [${yfCrit.toFixed(2)}, +\\infty)$。当前 $y_f = ${yf.toFixed(2)}$，$\\Delta y = ${diff.toFixed(2)} \\ge 0$，即使两函数图象大幅相交，全称对存在依然稳固成立。`
-            : `建立不等式 $f_{\\min} \\ge g_{\\min}$，要求 $y_f \\ge ${yfCrit.toFixed(2)}$。当前 $y_f = ${yf.toFixed(2)}$，保底差 $\\Delta y = ${diff.toFixed(2)} < 0$，$f(x)$ 跌破了 $g(x)$ 的全域底线，命题失效。`,
+            ? `建立不等式 $f_{\\min} \\ge g_{\\min}$，代入两函数极小值式得 $y_f \\ge ${formatMathNumber(res.gMin)}$，解得参数充要范围 $y_f \\in [${formatMathNumber(yfCrit)}, +\\infty)$。当前 $y_f = ${formatMathNumber(yf)}$，$\\Delta y = ${formatMathNumber(diff)} \\ge 0$，即使两函数图象大幅相交，全称对存在依然稳固成立。`
+            : `建立不等式 $f_{\\min} \\ge g_{\\min}$，代入两函数极小值式要求 $y_f \\ge ${formatMathNumber(res.gMin)}$。当前 $y_f = ${formatMathNumber(yf)}$，保底差 $\\Delta y = ${formatMathNumber(diff)} < 0$，$f(x)$ 跌破了 $g(x)$ 的全域底线，命题失效。`,
         latex: `\\begin{aligned} 
-          f_{\\min} \\ge g_{\\min} &\\iff y_f \\ge g_{\\min} - (f_{\\min} - y_f) \\\\ 
-          &\\iff y_f \\ge ${yfCrit.toFixed(2)} \\quad (\\Delta y = ${diff.toFixed(2)}) 
+          f_{\\min} \\ge g_{\\min} &\\iff y_f \\ge g(${formatMathNumber(res.xGMin)}) \\\\ 
+          &\\iff y_f \\ge ${formatMathNumber(res.gMin)} 
         \\end{aligned}`,
         rubric:
           "采分点：完成参数不等式求解，反思图象相交但保底依然成立的数学内涵（4分）",
@@ -371,11 +420,12 @@ export function buildConstantDoublePanel(
         title: "求解反思 · 顶峰跨越不等式与参数解集",
         detail:
           diff >= 0
-            ? `建立不等式 $f_{\\max} \\ge g_{\\max}$，解得参数范围 $y_f \\ge ${yfCrit.toFixed(2)}$，即 $y_f \\in [${yfCrit.toFixed(2)}, +\\infty)$。当前 $y_f = ${yf.toFixed(2)}$，高度差 $\\Delta y = ${diff.toFixed(2)} \\ge 0$，峰顶成功实现压制。`
-            : `建立不等式 $f_{\\max} \\ge g_{\\max}$，要求 $y_f \\ge ${yfCrit.toFixed(2)}$。当前 $y_f = ${yf.toFixed(2)}$，顶峰差 $\\Delta y = ${diff.toFixed(2)} < 0$，$f(x)$ 的最高点受制于 $g(x)$ 的最高峰，压制失败。`,
+            ? `建立不等式 $f_{\\max} \\ge g_{\\max}$，代入极值式 $y_f + ${formatMathNumber((res.xFMax - xf) ** 2)} \\ge ${formatMathNumber(res.gMax)}$，解得参数范围 $y_f \\in [${formatMathNumber(yfCrit)}, +\\infty)$。当前 $y_f = ${formatMathNumber(yf)}$，高度差 $\\Delta y = ${formatMathNumber(diff)} \\ge 0$，峰顶成功实现压制。`
+            : `建立不等式 $f_{\\max} \\ge g_{\\max}$，代入极值式要求 $y_f + ${formatMathNumber((res.xFMax - xf) ** 2)} \\ge ${formatMathNumber(res.gMax)}$，即要求 $y_f \\ge ${formatMathNumber(yfCrit)}$。当前 $y_f = ${formatMathNumber(yf)}$，顶峰差 $\\Delta y = ${formatMathNumber(diff)} < 0$，压制失败。`,
         latex: `\\begin{aligned} 
-          f_{\\max} \\ge g_{\\max} &\\iff y_f \\ge g_{\\max} - (f_{\\max} - y_f) \\\\ 
-          &\\iff y_f \\ge ${yfCrit.toFixed(2)} \\quad (\\Delta y = ${diff.toFixed(2)}) 
+          f_{\\max} \\ge g_{\\max} &\\iff y_f + (${formatMathNumber(res.xFMax)} - x_f)^2 \\ge g(x_g) \\\\ 
+          &\\iff y_f + ${formatMathNumber((res.xFMax - xf) ** 2)} \\ge ${formatMathNumber(res.gMax)} \\\\ 
+          &\\iff y_f \\ge ${formatMathNumber(yfCrit)} 
         \\end{aligned}`,
         rubric:
           "采分点：求解参数不等式，反思峰顶持平相切时的唯一最优动点位置（4分）",
@@ -408,11 +458,12 @@ export function buildConstantDoublePanel(
         title: "求解反思 · 准入门槛不等式与解集非空判定",
         detail:
           diff >= 0
-            ? `建立不等式 $f_{\\max} \\ge g_{\\min}$，解得参数范围 $y_f \\ge ${yfCrit.toFixed(2)}$，即 $y_f \\in [${yfCrit.toFixed(2)}, +\\infty)$。当前 $y_f = ${yf.toFixed(2)}$，门槛差 $\\Delta y = ${diff.toFixed(2)} \\ge 0$，解对非空。`
-            : `建立不等式 $f_{\\max} \\ge g_{\\min}$，要求 $y_f \\ge ${yfCrit.toFixed(2)}$。当前 $y_f = ${yf.toFixed(2)}$，门槛差 $\\Delta y = ${diff.toFixed(2)} < 0$，$f(x)$ 的最高点亦无法触及 $g(x)$ 的最低点，解集为空集。`,
+            ? `建立不等式 $f_{\\max} \\ge g_{\\min}$，代入极值式 $y_f + ${formatMathNumber((res.xFMax - xf) ** 2)} \\ge ${formatMathNumber(res.gMin)}$，解得参数范围 $y_f \\in [${formatMathNumber(yfCrit)}, +\\infty)$。当前 $y_f = ${formatMathNumber(yf)}$，门槛差 $\\Delta y = ${formatMathNumber(diff)} \\ge 0$，解对非空。`
+            : `建立不等式 $f_{\\max} \\ge g_{\\min}$，代入极值式要求 $y_f + ${formatMathNumber((res.xFMax - xf) ** 2)} \\ge ${formatMathNumber(res.gMin)}$，即要求 $y_f \\ge ${formatMathNumber(yfCrit)}$。当前 $y_f = ${formatMathNumber(yf)}$，门槛差 $\\Delta y = ${formatMathNumber(diff)} < 0$，解集为空集。`,
         latex: `\\begin{aligned} 
-          f_{\\max} \\ge g_{\\min} &\\iff y_f \\ge g_{\\min} - (f_{\\max} - y_f) \\\\ 
-          &\\iff y_f \\ge ${yfCrit.toFixed(2)} \\quad (\\Delta y = ${diff.toFixed(2)}) 
+          f_{\\max} \\ge g_{\\min} &\\iff y_f + (${formatMathNumber(res.xFMax)} - x_f)^2 \\ge g(${formatMathNumber(res.xGMin)}) \\\\ 
+          &\\iff y_f + ${formatMathNumber((res.xFMax - xf) ** 2)} \\ge ${formatMathNumber(res.gMin)} \\\\ 
+          &\\iff y_f \\ge ${formatMathNumber(yfCrit)} 
         \\end{aligned}`,
         rubric:
           "采分点：完成最宽松参数解集求解，反思解集由非空退化为空集的几何本质（4分）",
@@ -421,6 +472,7 @@ export function buildConstantDoublePanel(
   } else if (selectedLogic === "same_var") {
     const xMin = res.sameVarXMin ?? 1.5;
     const minDiff = res.sameVarMinDiff ?? 0;
+    const symAxis = (xf + xg) / 2;
     reasoningSteps = [
       {
         step: 1,
@@ -434,10 +486,12 @@ export function buildConstantDoublePanel(
       {
         step: 2,
         title: "建模联立 · 差函数二次化简与对称轴区间定位",
-        detail: `展开并整理得二次函数开口向上。对称轴 $x_{\\text{sym}} = ${symAxis.toFixed(2)}$，${symAxis < 1.5 ? "位于区间 $[1.5, 2.0]$ 左侧，$h(x)$ 单调递增，在左端点 $x = 1.5$ 处取得极小值。" : symAxis > 2.0 ? "位于区间 $[1.5, 2.0]$ 右侧，$h(x)$ 单调递减，在右端点 $x = 2.0$ 处取得极小值。" : `位于区间内部，在顶点 $x = ${symAxis.toFixed(2)}$ 处取得极小值。`}`,
+        detail: `构造差函数 $h(x) = f(x) - g(x)$，展开并整理得二次函数开口向上。对称轴 $x_{\\text{sym}} = \\frac{x_f + x_g}{2} = ${formatMathNumber(symAxis)}$，${symAxis < 1.5 ? "位于区间 $[1.5, 2.0]$ 左侧，$h(x)$ 在区间内单调递增，在左端点 $x = 1.5$ 处取得极小值。" : symAxis > 2.0 ? "位于区间 $[1.5, 2.0]$ 右侧，$h(x)$ 在区间内单调递减，在右端点 $x = 2.0$ 处取得极小值。" : `位于区间内部，在顶点 $x = ${formatMathNumber(symAxis)}$ 处取得极小值。`}`,
         latex: `\\begin{aligned} 
-          h(x) &= 2x^2 - ${(2 * (xf + xg)).toFixed(2)}x + (${constantTerm} + y_f) \\\\ 
-          x_{\\text{sym}} &= \\frac{x_f + x_g}{2} = ${symAxis.toFixed(2)} 
+          h(x) &= f(x) - g(x) \\\\ 
+          &= 2x^2 - 2(x_f + x_g)x + (x_f^2 + x_g^2 - y_g + y_f) \\\\ 
+          &= 2x^2 - ${formatMathNumber(2 * (xf + xg))}x + y_f ${formatSignedTerm(xf * xf + xg * xg - yg, "")} \\\\ 
+          x_{\\text{sym}} &= \\frac{x_f + x_g}{2} = ${formatMathNumber(symAxis)} 
         \\end{aligned}`,
         rubric: "采分点：正确展开二次多项式并求得对称轴，判定区间单调性（4分）",
       },
@@ -446,11 +500,13 @@ export function buildConstantDoublePanel(
         title: "求解反思 · 极小值求解与参数充要解集",
         detail:
           minDiff >= 0
-            ? `在最危险点 $x = ${xMin.toFixed(2)}$ 处，求得 $h(x)_{\\min} = ${minDiff.toFixed(2)} \\ge 0$。令 $h_{\\min} \\ge 0$ 解得参数充要解集 $y_f \\ge ${yfCrit.toFixed(2)}$，即 $y_f \\in [${yfCrit.toFixed(2)}, +\\infty)$。两曲线即使在极值上交错，同变量依然全域恒成立。`
-            : `在最危险点 $x = ${xMin.toFixed(2)}$ 处，$h(x)_{\\min} = ${minDiff.toFixed(2)} < 0$。要求 $y_f \\ge ${yfCrit.toFixed(2)}$，当前 $y_f = ${yf.toFixed(2)}$ 产生违背区间。`,
+            ? `在最危险点 $x = ${formatMathNumber(xMin)}$ 处，求得 $h(x)_{\\min} = ${formatMathNumber(minDiff)} \\ge 0$。由 $h(${formatMathNumber(xMin)}) \\ge 0$ 列代数式解得 $y_f \\ge ${formatMathNumber(yfCrit)}$，即 $y_f \\in [${formatMathNumber(yfCrit)}, +\\infty)$。两曲线即使在极值上交错，同变量依然全域恒成立。`
+            : `在最危险点 $x = ${formatMathNumber(xMin)}$ 处，$h(x)_{\\min} = ${formatMathNumber(minDiff)} < 0$。要求 $y_f \\ge ${formatMathNumber(yfCrit)}$，当前 $y_f = ${formatMathNumber(yf)}$ 产生违背区间。`,
         latex: `\\begin{aligned} 
-          h(x)_{\\min} \\ge 0 &\\iff h(${xMin.toFixed(2)}) \\ge 0 \\\\ 
-          &\\iff y_f \\ge ${yfCrit.toFixed(2)} \\quad (h_{\\min} = ${minDiff.toFixed(2)}) 
+          h(x)_{\\min} \\ge 0 &\\iff h(${formatMathNumber(xMin)}) \\ge 0 \\\\ 
+          &\\iff 2(${formatMathNumber(xMin)})^2 - ${formatMathNumber(2 * (xf + xg))}(${formatMathNumber(xMin)}) + y_f ${formatSignedTerm(xf * xf + xg * xg - yg, "")} \\ge 0 \\\\ 
+          &\\iff y_f ${formatSignedTerm(2 * xMin * xMin - 2 * (xf + xg) * xMin + (xf * xf + xg * xg - yg), "")} \\ge 0 \\\\ 
+          &\\iff y_f \\ge ${formatMathNumber(yfCrit)} 
         \\end{aligned}`,
         rubric: "采分点：由对称轴位置精确定位极小值点，解出参数充要解集（4分）",
       },
@@ -461,25 +517,25 @@ export function buildConstantDoublePanel(
     selectedLogic === "same_var"
       ? [
           {
-            text: "同自变量恒成立必用【差函数法】：当自变量 $x$ 限制在重合区间且为同一个动点时，严禁拆成 $f_min ≥ g_max$，只需构造 $h(x) = f(x) - g(x)$ 并求 $h(x)_min ≥ 0$。",
+            text: "同自变量恒成立必用【差函数法】：当自变量 $x$ 限制在重合区间且为同一个动点时，严禁拆成 $f_{\\min} \\ge g_{\\max}$，只需构造 $h(x) = f(x) - g(x)$ 并求 $h(x)_{\\min} \\ge 0$。",
             importance: "gaokao",
           },
           {
-            text: "易错点辨析：同自变量成立并不需要 f(x) 的最低点高于 g(x) 的最高点，两曲线可以有高低重叠，只需在相同 x 处 f 图象始终在 g 图象上方即可。",
+            text: "易错点辨析：同自变量成立并不需要 $f(x)$ 的最低点高于 $g(x)$ 的最高点，两曲线可以有高低重叠，只需在相同 $x$ 处 $f(x)$ 图象始终在 $g(x)$ 图象上方即可。",
             importance: "core",
           },
         ]
       : [
           {
-            text: "双自变量极值隔离法则：当 x₁ 与 x₂ 分别在独立区间内自由变动时，不等式转化为两函数各自最值的比较。∀x₁, ∀x₂ 要求 f 的最小值必须压制 g 的最大值。",
+            text: "双自变量极值隔离法则：当 $x_1$ 与 $x_2$ 分别在独立区间内自由变动时，不等式转化为两函数各自最值的比较。$\\forall x_1, \\forall x_2$ 要求 $f(x)$ 的最小值必须压制 $g(x)$ 的最大值。",
             importance: "gaokao",
           },
           {
-            text: "量词转化口诀：'任意对任意'看极限隔绝 (min ≥ max)；'任意对存在'看保底支撑 (min ≥ min)；'存在对任意'看顶峰突围 (max ≥ max)；'存在对存在'看门槛跨越 (max ≥ min)。",
+            text: "量词转化口诀：“任意对任意”看极限隔绝 ($f_{\\min} \\ge g_{\\max}$)；“任意对存在”看保底支撑 ($f_{\\min} \\ge g_{\\min}$)；“存在对任意”看顶峰突围 ($f_{\\max} \\ge g_{\\max}$)；“存在对存在”看门槛跨越 ($f_{\\max} \\ge g_{\\min}$)。",
             importance: "core",
           },
           {
-            text: "题型辨析防混淆：不等式问题比较最值大小；等式问题（如 f(x₁) = g(x₂)）转化为值域包含（子集）或值域交集非空。",
+            text: "题型辨析防混淆：不等式问题比较最值大小；等式问题（如 $f(x_1) = g(x_2)$）转化为值域包含（子集）或值域交集非空。",
             importance: "gaokao",
           },
         ];
@@ -488,14 +544,14 @@ export function buildConstantDoublePanel(
   if (selectedLogic === "same_var") {
     if (!res.isSameVarTrue) {
       warnings.push({
-        text: `同变量恒成立不满足！在最危险位置 x = ${res.sameVarXMin?.toFixed(2)} 处，差值 h(x) = ${res.sameVarMinDiff?.toFixed(2)} (< 0)，要求 y_f ≥ ${yfCrit.toFixed(2)}。`,
+        text: `同变量恒成立不满足！在最危险位置 $x = ${(res.sameVarXMin ?? 0).toFixed(2)}$ 处，差值 $h(x) = ${(res.sameVarMinDiff ?? 0).toFixed(2)} < 0$，要求参数满足 $y_f \\ge ${yfCrit.toFixed(2)}$。`,
         level: "warning",
       });
     }
   } else {
     if (!res.isCurrentLogicTrue) {
       warnings.push({
-        text: `当前博弈条件不满足！对比点高度差 Δy = ${(res.battlePointF.y - res.battlePointG.y).toFixed(2)} (< 0)，要求参数满足 y_f ≥ ${yfCrit.toFixed(2)}。`,
+        text: `当前博弈条件不满足！对比点高度差 $\\Delta y = ${deltaY.toFixed(2)} < 0$，要求参数满足 $y_f \\ge ${yfCrit.toFixed(2)}$。`,
         level: "warning",
       });
     }

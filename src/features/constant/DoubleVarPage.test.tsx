@@ -118,4 +118,22 @@ describe("DoubleVarPage smoke and logic tests", () => {
       screen.getByText(/同变量交叉穿透 · 产生违背区间/),
     ).toBeInTheDocument();
   });
+
+  it("handles exist_exist mode presets including negative yf correctly", () => {
+    render(<DoubleVarPage />);
+    // 切换到存在对存在模式
+    fireEvent.click(screen.getByText("存在对存在"));
+    expect(screen.getAllByText(/门槛局部超越/i).length).toBeGreaterThan(0);
+
+    // 1. 门槛临界 (yf = 0.0)
+    fireEvent.click(screen.getByText("门槛临界"));
+    expect(screen.getByText(/门槛临界 · 极限门槛接触/)).toBeInTheDocument();
+
+    // 2. 门槛落空 (yf = -0.8)
+    fireEvent.click(screen.getByText("门槛落空"));
+    expect(
+      screen.getByText(/门槛落空 · 两函数值域完全背离/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/违背 \(博弈失败\)/)).toBeInTheDocument();
+  });
 });
