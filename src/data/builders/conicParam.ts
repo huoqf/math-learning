@@ -30,8 +30,8 @@ export function buildConicParamPanel(
   const b = params.b ?? 3;
   const theta = params.theta ?? 45;
   const p = params.p ?? 2;
-  const y1 = params.y1 ?? 3;
-  const y2 = params.y2 ?? -1.5;
+  const y1 = params.y1 ?? 4;
+  const y2 = params.y2 ?? -1;
   const m = params.m ?? 0.8;
   const n = params.n ?? 1;
 
@@ -41,44 +41,45 @@ export function buildConicParamPanel(
   if (studyMode === "ellipseTrig") {
     const targetLine = { A: 1, B: -1, C: -6 };
     const res = calculateEllipseParam(a, b, theta, targetLine);
+    const cVal = Math.sqrt(Math.max(0, a * a - b * b));
 
     const quantities: MathQuantity[] = [
       {
-        label: "椭圆半轴 $a, b$",
-        symbol: "a, b",
-        value: `a = ${formatMathNumber(a)}, b = ${formatMathNumber(b)}`,
+        label: "椭圆半轴与焦点",
+        symbol: "a, b, c",
+        value: `a = ${formatMathNumber(a)}, \\; b = ${formatMathNumber(b)} \\implies c = \\sqrt{a^2-b^2} = ${formatMathNumber(cVal)}`,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "参数角 $\\theta$",
+        label: "离心参数角 $\\theta$",
         symbol: "\\theta",
-        value: `${theta}^\\circ`,
+        value: `\\theta = ${theta}^\\circ`,
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "椭圆动点 $P$ 坐标",
+        label: "椭圆动点 $P$ 参数坐标",
         symbol: "P(a\\cos\\theta, b\\sin\\theta)",
-        value: `(${formatMathNumber(res.P.x)}, ${formatMathNumber(res.P.y)})`,
+        value: `(${formatMathNumber(a)}\\cos ${theta}^\\circ, ${formatMathNumber(b)}\\sin ${theta}^\\circ) = (${formatMathNumber(res.P.x)}, ${formatMathNumber(res.P.y)})`,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "辅助离心圆点 $P'$",
+        label: "辅助离心圆对应点 $P'$",
         symbol: "P'(a\\cos\\theta, a\\sin\\theta)",
-        value: `(${formatMathNumber(res.Paux.x)}, ${formatMathNumber(res.Paux.y)})`,
+        value: `(${formatMathNumber(a)}\\cos ${theta}^\\circ, ${formatMathNumber(a)}\\sin ${theta}^\\circ) = (${formatMathNumber(res.Paux.x)}, ${formatMathNumber(res.Paux.y)})`,
         color: MATH_COLORS.paramSecondary,
       },
       {
         label: "切线截距三角形面积 $S$",
         symbol: "S = \\frac{ab}{|\\sin 2\\theta|}",
         value: isFinite(res.triangleArea)
-          ? `${formatMathNumber(res.triangleArea)} (最小值 ${formatMathNumber(a * b)})`
-          : "\\infty",
+          ? `S = \\frac{${formatMathNumber(a * b)}}{|\\sin ${2 * theta}^\\circ|} = ${formatMathNumber(res.triangleArea)} \\; (S_{\\min} = ab = ${formatMathNumber(a * b)})`
+          : "S \\to \\infty",
         color: MATH_COLORS.accent,
       },
       {
-        label: "到直线 $x - y - 6 = 0$ 的当前距离",
+        label: "动点到直线 $x - y - 6 = 0$ 距离",
         symbol: "d_P",
-        value: formatMathNumber(res.distToTargetLine),
+        value: `d_P = \\frac{|${formatMathNumber(res.P.x)} - (${formatMathNumber(res.P.y)}) - 6|}{\\sqrt{2}} = ${formatMathNumber(res.distToTargetLine)}`,
         color: MATH_COLORS.paramTertiary,
       },
     ];
@@ -86,26 +87,26 @@ export function buildConicParamPanel(
     const reasoningSteps: ReasoningStep[] = [
       {
         step: 1,
-        title: "第一步：审题定法 · 椭圆单参数三角设点",
-        latex: `P(a\\cos\\theta, b\\sin\\theta) = (${formatMathNumber(a)}\\cos\\theta, ${formatMathNumber(b)}\\sin\\theta)`,
+        title: "第一步：审题设元 · 椭圆单参数三角设点",
+        latex: `\\text{设 } P(x, y) \\text{ 为椭圆上任一点} \\implies \\begin{cases} x = a\\cos\\theta \\\\ y = b\\sin\\theta \\end{cases} \\quad (\\theta \\in [0, 2\\pi))`,
         detail:
-          "利用 $\\cos^2\\theta + \\sin^2\\theta = 1$ 的三角有界性，将椭圆上二维坐标降维为单自变量 $\\theta \\in [0, 2\\pi)$，免去无理根号与双变量约束。",
-        rubric: "正确设出动点三角参数坐标 (3分)",
+          "根据椭圆标准方程 $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$，利用三角同角平方和公式 $\\cos^2\\theta + \\sin^2\\theta = 1$，将平面二维动点坐标降维为单一角参量 $\\theta$。",
+        rubric: "准确设定三角参数坐标，实现代数单变量降维 (3分)",
       },
       {
         step: 2,
         title: "第二步：建模联立 · 点线距离的辅助角化简",
-        latex: `d(\\theta) = \\frac{|${formatMathNumber(a)}\\cos\\theta - ${formatMathNumber(b)}\\sin\\theta - 6|}{\\sqrt{1^2 + (-1)^2}} = \\frac{|5\\sin(\\theta + \\varphi) - 6|}{\\sqrt{2}}`,
-        detail: `代入直线方程得分子 $(Aa)\\cos\\theta + (Bb)\\sin\\theta + C$。由辅助角公式 $(Aa)\\cos\\theta + (Bb)\\sin\\theta = \\sqrt{(Aa)^2 + (Bb)^2}\\sin(\\theta+\\varphi)$，计算振幅 $R = \\sqrt{(1\\times ${formatMathNumber(a)})^2 + (-1\\times ${formatMathNumber(b)})^2} = 5$。`,
-        rubric: "运用辅助角公式化为单角函数式 (4分)",
+        latex: `d(\\theta) = \\frac{|(Aa)\\cos\\theta + (Bb)\\sin\\theta + C|}{\\sqrt{A^2 + B^2}} = \\frac{|${formatMathNumber(a)}\\cos\\theta - ${formatMathNumber(b)}\\sin\\theta - 6|}{\\sqrt{1^2 + (-1)^2}} = \\frac{|5\\sin(\\theta + \\varphi) - 6|}{\\sqrt{2}}`,
+        detail: `将 $P(${formatMathNumber(a)}\\cos\\theta, ${formatMathNumber(b)}\\sin\\theta)$ 代入目标直线方程 $x - y - 6 = 0$ 的点线距离公式中，提取合振幅 $R = \\sqrt{(1\\times ${formatMathNumber(a)})^2 + (-1\\times ${formatMathNumber(b)})^2} = \\sqrt{16 + 9} = 5$。`,
+        rubric: "运用辅助角公式将二元线段距离化为单一正弦函数 (4分)",
       },
       {
         step: 3,
         title: "第三步：求解反思 · 三角函数有界性求最值",
-        latex: `d_{\\min} = \\frac{|-6 + 5|}{\\sqrt{2}} = \\frac{\\sqrt{2}}{2} \\approx ${formatMathNumber(res.minDist)}, \\quad d_{\\max} = \\frac{|-6 - 5|}{\\sqrt{2}} = \\frac{11\\sqrt{2}}{2} \\approx ${formatMathNumber(res.maxDist)}`,
+        latex: `\\because \\sin(\\theta+\\varphi) \\in [-1, 1] \\implies \\begin{cases} d_{\\min} = \\frac{|5(1) - 6|}{\\sqrt{2}} = \\frac{1}{\\sqrt{2}} = \\frac{\\sqrt{2}}{2} \\approx ${formatMathNumber(res.minDist)} \\\\ d_{\\max} = \\frac{|5(-1) - 6|}{\\sqrt{2}} = \\frac{11}{\\sqrt{2}} = \\frac{11\\sqrt{2}}{2} \\approx ${formatMathNumber(res.maxDist)} \\end{cases}`,
         detail:
-          "当 $\\sin(\\theta+\\varphi) = 1$ 时取到最小值，当 $\\sin(\\theta+\\varphi) = -1$ 时取到最大值。全程无需联立二次方程求判别式 $\\Delta = 0$。",
-        rubric: "准确得出距离最值解集与反思 (3分)",
+          "当 $\\sin(\\theta+\\varphi) = 1$ 时动点距离直线最近，当 $\\sin(\\theta+\\varphi) = -1$ 时距离最远。全程避开联立二次方程求判别式 $\\Delta = 0$ 的冗长运算，实现了运算量降维。",
+        rubric: "由三角函数有界性严密推导出最值区间并完成反思 (3分)",
       },
     ];
 
@@ -166,45 +167,41 @@ export function buildConicParamPanel(
 
     const quantities: MathQuantity[] = [
       {
-        label: "抛物线焦准距 $p$",
-        symbol: "p",
-        value: `p = ${formatMathNumber(p)}, \\text{ 焦点 } F(${formatMathNumber(p / 2)}, 0)`,
+        label: "抛物线焦点坐标",
+        symbol: "F\\left(\\frac{p}{2}, 0\\right)",
+        value: `p = ${formatMathNumber(p)} \\implies F\\left(\\frac{${formatMathNumber(p)}}{2}, 0\\right) = (${formatMathNumber(p / 2)}, 0)`,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "动点 $A, B$ 单参数纵坐标",
-        symbol: "y_1, y_2",
-        value: `y_1 = ${formatMathNumber(y1)}, y_2 = ${formatMathNumber(y2)}`,
-        color: MATH_COLORS.paramSecondary,
-      },
-      {
-        label: "动点 $A, B$ 完整坐标",
+        label: "动点 $A, B$ 坐标表示",
         symbol: "A, B",
-        value: `A(${formatMathNumber(res.pointA.x)}, ${formatMathNumber(y1)}), B(${formatMathNumber(res.pointB.x)}, ${formatMathNumber(y2)})`,
+        value: `A\\left(\\frac{${formatMathNumber(y1)}^2}{${formatMathNumber(2 * p)}}, ${formatMathNumber(y1)}\\right) = (${formatMathNumber(res.pointA.x)}, ${formatMathNumber(y1)}), \\; B\\left(\\frac{(${formatMathNumber(y2)})^2}{${formatMathNumber(2 * p)}}, ${formatMathNumber(y2)}\\right) = (${formatMathNumber(res.pointB.x)}, ${formatMathNumber(y2)})`,
         color: MATH_COLORS.paramSecondary,
       },
       {
         label: "割线 $AB$ 斜率 $k$",
         symbol: "k = \\frac{2p}{y_1 + y_2}",
-        value: isFinite(res.slope) ? formatMathNumber(res.slope) : "\\infty",
+        value: isFinite(res.slope)
+          ? `k = \\frac{${formatMathNumber(2 * p)}}{${formatMathNumber(y1)} + (${formatMathNumber(y2)})} = \\frac{${formatMathNumber(2 * p)}}{${formatMathNumber(ySum)}} = ${formatMathNumber(res.slope)}`
+          : `y_1 + y_2 = 0 \\implies k \\to \\infty \\; (\\text{铅垂割线})`,
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "割线 $x$ 轴截距 $x_0$",
+        label: "割线与 $x$ 轴交点横坐标 $x_0$",
         symbol: "x_0 = -\\frac{y_1 y_2}{2p}",
-        value: `${formatMathNumber(res.xIntercept)} ${res.isFocusChord ? "(过焦点 $F$)" : ""}`,
+        value: `x_0 = -\\frac{(${formatMathNumber(y1)}) \\times (${formatMathNumber(y2)})}{${formatMathNumber(2 * p)}} = -\\frac{${formatMathNumber(yProd)}}{${formatMathNumber(2 * p)}} = ${formatMathNumber(res.xIntercept)} ${res.isFocusChord ? "(等于焦点横坐标)" : ""}`,
         color: res.isFocusChord ? MATH_COLORS.accent : MATH_COLORS.paramPrimary,
       },
       {
         label: "弦中点 $M$ 坐标",
-        symbol: "M\\left(\\frac{y_1^2+y_2^2}{4p}, \\frac{y_1+y_2}{2}\\right)",
-        value: `(${formatMathNumber(res.pointM.x)}, ${formatMathNumber(res.pointM.y)})`,
+        symbol: "M(x_M, y_M)",
+        value: `M\\left(\\frac{${formatMathNumber(res.pointA.x)} + ${formatMathNumber(res.pointB.x)}}{2}, \\frac{${formatMathNumber(y1)} + (${formatMathNumber(y2)})}{2}\\right) = (${formatMathNumber(res.pointM.x)}, ${formatMathNumber(res.pointM.y)})`,
         color: MATH_COLORS.paramTertiary,
       },
       {
         label: "相交弦长 $|AB|$",
         symbol: "|AB|",
-        value: formatMathNumber(res.chordLength),
+        value: `|AB| = \\sqrt{(${formatMathNumber(res.pointA.x)} - ${formatMathNumber(res.pointB.x)})^2 + (${formatMathNumber(y1)} - (${formatMathNumber(y2)}))^2} = ${formatMathNumber(res.chordLength)}`,
         color: MATH_COLORS.accent,
       },
     ];
@@ -213,29 +210,29 @@ export function buildConicParamPanel(
       {
         step: 1,
         title: "第一步：审题设元 · 单参数设纵坐标消元",
-        latex: `A\\left(\\frac{y_1^2}{2p}, y_1\\right), \\quad B\\left(\\frac{y_2^2}{2p}, y_2\\right)`,
+        latex: `\\text{设 } A\\left(\\frac{y_1^2}{2p}, y_1\\right), \\quad B\\left(\\frac{y_2^2}{2p}, y_2\\right) \\quad (y_1 \\ne y_2)`,
         detail:
-          "针对抛物线 $y^2 = 2px$，以纵坐标 $y$ 为单一自由自变量设点，横坐标由 $x = \\frac{y^2}{2p}$ 直接由二次式给出，彻底摆脱根号。",
-        rubric: "设出纵坐标单参数并表示端点坐标 (3分)",
+          "对于抛物线 $y^2 = 2px$，以纵坐标 $y$ 作为唯一的自由参数。横坐标由方程 $x = \\frac{y^2}{2p}$ 自然表达，全过程彻底避免引入带二次根号的代数式。",
+        rubric: "单参数设点并用纵坐标表示端点坐标 (3分)",
       },
       {
         step: 2,
         title: "第二步：建模联立 · 两点式直接推导割线方程",
-        latex: `k_{AB} = \\frac{y_2 - y_1}{x_2 - x_1} = \\frac{2p}{y_1 + y_2} \\implies (y_1 + y_2)y = 2px + y_1 y_2`,
+        latex: `k_{AB} = \\frac{y_2 - y_1}{\\frac{y_2^2 - y_1^2}{2p}} = \\frac{2p}{y_1 + y_2} \\implies (y_1 + y_2)y = 2px + y_1 y_2`,
         detail:
-          "新高考答题神技：两点割线方程无需列一元二次方程与韦达定理，直接由平方差因式分解写出，形式极其对称！",
-        rubric: "化简求出割线对称方程与斜率 (4分)",
+          "利用平方差公式 $y_2^2 - y_1^2 = (y_2 - y_1)(y_2 + y_1)$ 进行因式分解消去公因式。割线方程由两点坐标直接写出，完全无需联立一元二次方程与计算判别式 $\\Delta$。",
+        rubric: "应用点差法因式分解求出割线方程与斜率 (4分)",
       },
       {
         step: 3,
         title: "第三步：求解反思 · 定值结论与弦长代入",
         latex: res.isFocusChord
-          ? `y_1 y_2 = -p^2 = -${formatMathNumber(p * p)} \\implies x_0 = \\frac{p}{2} = ${formatMathNumber(p / 2)}`
-          : `y_1 + y_2 = ${formatMathNumber(ySum)}, \\; y_1 y_2 = ${formatMathNumber(yProd)} \\implies x_0 = ${formatMathNumber(res.xIntercept)}`,
+          ? `\\text{令 } y = 0 \\implies x_0 = -\\frac{y_1 y_2}{2p} = -\\frac{-p^2}{2p} = \\frac{p}{2} \\implies |AB| = x_1 + x_2 + p = ${formatMathNumber(res.pointA.x)} + ${formatMathNumber(res.pointB.x)} + ${formatMathNumber(p)} = ${formatMathNumber(res.chordLength)}`
+          : `\\text{割线截距 } x_0 = -\\frac{y_1 y_2}{2p} = -\\frac{${formatMathNumber(yProd)}}{${formatMathNumber(2 * p)}} = ${formatMathNumber(res.xIntercept)}, \\quad |AB| = \\frac{|y_1-y_2|}{2p}\\sqrt{4p^2+(y_1+y_2)^2} = ${formatMathNumber(res.chordLength)}`,
         detail: res.isFocusChord
-          ? "割线过焦点 $F(p/2, 0)$ 的充要条件是纵坐标乘积为定值 $y_1 y_2 = -p^2$；此时弦长等于焦半径之和 $|AB| = x_1 + x_2 + p$。"
-          : "割线与 $x$ 轴交点横坐标 $x_0 = -\\frac{y_1 y_2}{2p}$；点差法斜率公式 $k_{AB} = \\frac{p}{y_M}$ 一步得出弦中点约束。",
-        rubric: "完成几何结论代换与反思验证 (3分)",
+          ? "割线过焦点 $F(p/2, 0)$ 的充要条件是纵坐标之积为定值 $y_1 y_2 = -p^2$；此时由抛物线定义，焦点弦长直接转化为准线距离之和 $|AB| = x_1 + x_2 + p$。"
+          : "割线与对称轴交点横坐标 $x_0 = -\\frac{y_1 y_2}{2p}$；点差法斜率公式 $k_{AB} = \\frac{p}{y_M}$ 直接建立了中点纵坐标与割线斜率的反比守恒关系。",
+        rubric: "准确代入计算几何量并完成焦点弦定值反思 (3分)",
       },
     ];
 
@@ -305,17 +302,17 @@ export function buildConicParamPanel(
       color: MATH_COLORS.paramSecondary,
     },
     {
-      label: "联立后关于 $y$ 的方程",
-      symbol: "Ay^2 + By + C = 0",
+      label: "联立展开关于 $y$ 的二次方程",
+      symbol: "(b^2m^2+a^2)y^2 + 2b^2mny + b^2(n^2-a^2) = 0",
       value: res.valid
         ? `${formatMathNumber(res.A)}y^2 ${formatSignedTerm(res.B, "y")} ${formatSignedTerm(res.C, "")} = 0`
-        : "无实根",
+        : "无实数交点",
       color: MATH_COLORS.paramTertiary,
     },
     {
       label: "判别式 $\\Delta_y$",
       symbol: "\\Delta_y = 4a^2b^2(b^2m^2+a^2-n^2)",
-      value: `${formatMathNumber(res.deltaY)} ${res.deltaY > 0 ? "(两相交点)" : res.deltaY === 0 ? "(相切)" : "(无交点)"}`,
+      value: `\\Delta_y = 4(${formatMathNumber(a * a)})(${formatMathNumber(b * b)})[${formatMathNumber(b * b)}(${formatMathNumber(m)})^2 + ${formatMathNumber(a * a)} - (${formatMathNumber(n)})^2] = ${formatMathNumber(res.deltaY)}`,
       color: res.valid ? MATH_COLORS.paramTertiary : MATH_COLORS.accent,
     },
   ];
@@ -325,19 +322,19 @@ export function buildConicParamPanel(
       {
         label: "纵坐标和与积 (韦达定理)",
         symbol: "y_1+y_2, \\; y_1 y_2",
-        value: `y_1+y_2 = ${formatMathNumber(res.ySum)}, \\; y_1 y_2 = ${formatMathNumber(res.yProd)}`,
+        value: `y_1+y_2 = -\\frac{B}{A} = ${formatMathNumber(res.ySum)}, \\quad y_1 y_2 = \\frac{C}{A} = ${formatMathNumber(res.yProd)}`,
         color: MATH_COLORS.paramSecondary,
       },
       {
         label: "相交弦长 $|AB|$",
         symbol: "|AB| = \\sqrt{1+m^2}|y_1-y_2|",
-        value: formatMathNumber(res.chordLength),
+        value: `|AB| = \\sqrt{1+(${formatMathNumber(m)})^2}\\sqrt{(${formatMathNumber(res.ySum)})^2 - 4(${formatMathNumber(res.yProd)})} = ${formatMathNumber(res.chordLength)}`,
         color: MATH_COLORS.accent,
       },
       {
         label: "原点三角形面积 $S_{\\triangle OAB}$",
         symbol: "S = \\frac{1}{2}|n||y_1-y_2|",
-        value: formatMathNumber(res.triangleAreaOAB),
+        value: `S = \\frac{1}{2}|${formatMathNumber(n)}|\\times ${formatMathNumber(res.yDiffAbs)} = ${formatMathNumber(res.triangleAreaOAB)}`,
         color: MATH_COLORS.accent,
       },
     );
@@ -347,7 +344,7 @@ export function buildConicParamPanel(
     {
       step: 1,
       title: "第一步：审题定法 · 为何设割线为 $x = my + n$？",
-      latex: `x = my + n \\quad (m = \\cot\\alpha)`,
+      latex: `\\text{设直线方程为 } x = my + n \\quad (m = \\cot\\alpha)`,
       detail:
         "新高考第一命题避坑法则：设 $y=kx+b$ 必须严密分类讨论斜率不存在；设 $x=my+n$ 天然涵盖所有与 $y$ 轴不平行的直线（当 $m=0$ 时为垂直于 $x$ 轴的铅垂割线 $x=n$），无死角且自洽。",
       rubric: "合理设定以 y 为主元的割线方程 (3分)",
@@ -355,17 +352,16 @@ export function buildConicParamPanel(
     {
       step: 2,
       title: "第二步：建模联立 · 代入椭圆展开关于 y 的二次方程",
-      latex: `(${formatMathNumber(res.A)})y^2 ${formatSignedTerm(res.B, "y")} ${formatSignedTerm(res.C, "")} = 0`,
-      detail:
-        "消去 $x$ 得到关于纵坐标 $y$ 的整系数二次方程，无高次分母通分，直接由韦达定理写出 $y_1+y_2$ 与 $y_1 y_2$。",
+      latex: `\\frac{(my+n)^2}{a^2} + \\frac{y^2}{b^2} = 1 \\implies (b^2m^2+a^2)y^2 + 2b^2mny + b^2(n^2-a^2) = 0 \\implies (${formatMathNumber(res.A)})y^2 ${formatSignedTerm(res.B, "y")} ${formatSignedTerm(res.C, "")} = 0`,
+      detail: `消去横坐标 $x$ 得到关于纵坐标 $y$ 的整系数一元二次方程，分母无高次未知数。韦达定理直接给出 $y_1+y_2 = -\\frac{2b^2mn}{b^2m^2+a^2} = ${formatMathNumber(res.ySum)}$ 与 $y_1y_2 = \\frac{b^2(n^2-a^2)}{b^2m^2+a^2} = ${formatMathNumber(res.yProd)}$。`,
       rubric: "联立化简并由韦达定理表达对称项 (4分)",
     },
     {
       step: 3,
       title: "第三步：求解反思 · 面积与弦长代数降维消元",
       latex: res.valid
-        ? `S_{\\triangle OAB} = \\frac{1}{2}|n|\\sqrt{(y_1+y_2)^2 - 4y_1y_2} = ${formatMathNumber(res.triangleAreaOAB)}`
-        : `\\Delta_y < 0 \\text{ (直线与椭圆无交点)}`,
+        ? `S_{\\triangle OAB} = \\frac{1}{2}|n||y_1 - y_2| = \\frac{1}{2}|n|\\sqrt{(y_1+y_2)^2 - 4y_1y_2} = \\frac{1}{2}|${formatMathNumber(n)}|\\sqrt{(${formatMathNumber(res.ySum)})^2 - 4(${formatMathNumber(res.yProd)})} = ${formatMathNumber(res.triangleAreaOAB)}`
+        : `\\Delta_y = 4a^2b^2(b^2m^2+a^2-n^2) < 0 \\implies \\text{割线与椭圆无实数交点}`,
       detail:
         "三角形面积 $S_{\\triangle OAB} = \\frac{1}{2}|x_0||y_1-y_2|$，底边直接取为割线在 $x$ 轴截距 $|n|$，高为纵坐标差 $|y_1-y_2|$，计算步骤精简 60% 以上。",
       rubric: "准确计算目标面积并给出几何结论 (3分)",

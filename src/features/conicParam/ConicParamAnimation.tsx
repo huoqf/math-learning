@@ -28,7 +28,7 @@ import {
 import { formatMathNumber, formatSignedTerm } from "@/utils/mathFormat";
 
 export function ConicParamAnimation() {
-  // 研究模式: 'ellipseTrig' (椭圆三角代换) | 'parabolaYParam' (抛物线纵坐标单参数) | 'lineYForm' (割线 x=my+n 降维)
+  // 研究模式: 'ellipseTrig' (椭圆三角代换法) | 'parabolaYParam' (抛物线单参数法) | 'lineYForm' (斜率倒数设线法)
   const [studyMode, setStudyMode] = useState<
     "ellipseTrig" | "parabolaYParam" | "lineYForm"
   >("ellipseTrig");
@@ -164,8 +164,8 @@ export function ConicParamAnimation() {
     }
     if (studyMode === "parabolaYParam") {
       const p = params.p ?? 2;
-      const y1 = params.y1 ?? 3;
-      const y2 = params.y2 ?? -1.5;
+      const y1 = params.y1 ?? 4;
+      const y2 = params.y2 ?? -1;
       calculateParabolaYParam(p, y1, y2);
       const ySum = y1 + y2;
       const yProd = y1 * y2;
@@ -257,22 +257,46 @@ export function ConicParamAnimation() {
     ];
   }, [studyMode]);
 
-  // 左屏教学提示与题设导引（落实初始条件与核心设问）
+  // 左屏教学提示与题设导引（针对全部预设100%特化动态题设与核心设问）
   const tipConfig = useMemo(() => {
+    const aVal = params.a ?? 4;
+    const bVal = params.b ?? 3;
+    const pVal = params.p ?? 2;
+    const mVal = params.m ?? 0.8;
+    const nVal = params.n ?? 1;
+
     if (studyMode === "ellipseTrig") {
       if (activePreset === "diag_45") {
         return {
           variant: "primary" as const,
-          badge: "高考重点 · 椭圆切线截距面积极值",
-          condition: `椭圆长半轴 a = ${params.a ?? 4}，短半轴 b = ${params.b ?? 3}，切点离心角处于 45° 临界。`,
+          badge: "高考重点 · 切线截距三角形面积极值",
+          condition: `椭圆半轴为 $a = ${formatMathNumber(aVal)}, b = ${formatMathNumber(bVal)}$，切点离心角处于象限平分线 $\\theta = 45^\\circ$ 临界。`,
           question:
-            "探究切线与两坐标轴围成的直角三角形面积何时取得最小值，最小面积与半轴乘积 ab 有何关系？",
+            "探究切线与两坐标轴围成的直角三角形面积何时取得最小值，最小面积与半轴乘积 $ab$ 满足什么等量关系？",
+        };
+      }
+      if (activePreset === "vertex_right") {
+        return {
+          variant: "warning" as const,
+          badge: "几何边界 · 长轴右端点切线状态",
+          condition: `离心角 $\\theta = 0^\\circ$，动点到达椭圆右顶点 $P(${formatMathNumber(aVal)}, 0)$。`,
+          question:
+            "当动点处于长轴端点时，切线方程退化为垂直直线 $x = a$，此时截距三角形面积呈现怎样的极限状态？",
+        };
+      }
+      if (activePreset === "vertex_top") {
+        return {
+          variant: "warning" as const,
+          badge: "几何边界 · 短轴上端点切线状态",
+          condition: `离心角 $\\theta = 90^\\circ$，动点到达椭圆上顶点 $P(0, ${formatMathNumber(bVal)})$。`,
+          question:
+            "当切线平行于 $x$ 轴时，辅助离心圆 $P'$ 与动点 $P$ 的垂直投影关系如何直观反映参数角 $\\theta$ 的几何定义？",
         };
       }
       return {
         variant: "info" as const,
         badge: "标内通法 · 椭圆三角代换求最值",
-        condition: `椭圆动点设为 P(${formatMathNumber(params.a ?? 4)}\\cos\\theta, ${formatMathNumber(params.b ?? 3)}\\sin\\theta)，目标直线为 x - y - 6 = 0。`,
+        condition: `椭圆动点设为 $P(${formatMathNumber(aVal)}\\cos\\theta, ${formatMathNumber(bVal)}\\sin\\theta)$，目标直线为 $x - y - 6 = 0$。`,
         question:
           "如何运用辅助角公式化简点到直线的距离公式，求解椭圆上动点到目标直线的最值范围？",
       };
@@ -283,17 +307,35 @@ export function ConicParamAnimation() {
         return {
           variant: "primary" as const,
           badge: "压轴必考 · 抛物线焦点弦纵坐标定值",
-          condition: `抛物线 y² = ${formatMathNumber(2 * (params.p ?? 2))}x，割线经过焦点 F(${formatMathNumber((params.p ?? 2) / 2)}, 0)。`,
+          condition: `抛物线方程为 $y^2 = ${formatMathNumber(2 * pVal)}x$，割线精准经过焦点 $F(${formatMathNumber(pVal / 2)}, 0)$。`,
           question:
-            "证明过焦点弦两端点纵坐标乘积恒满足 y₁y₂ = -p²，并由此化简焦点弦长公式？",
+            "证明过焦点弦两端点纵坐标乘积恒满足 $y_1 y_2 = -p^2$，并由焦半径定义快速化简焦点弦长公式？",
+        };
+      }
+      if (activePreset === "perp_latus") {
+        return {
+          variant: "primary" as const,
+          badge: "特征性质 · 正交垂直通径最短弦",
+          condition: `割线垂直于对称轴且过焦点，两端点纵坐标为 $y_1 = ${formatMathNumber(pVal)}, y_2 = -${formatMathNumber(pVal)}$。`,
+          question:
+            "探究通径长度为何恰好等于 $2p$，并证明通径是所有过焦点的相交弦中长度最短的极端状态？",
+        };
+      }
+      if (activePreset === "midpoint_axis") {
+        return {
+          variant: "warning" as const,
+          badge: "对称模型 · 轴对称中点弦与铅垂割线",
+          condition: `两端点纵坐标互为相反数 $y_1 + y_2 = 0$，割线弦中点落在对称轴上。`,
+          question:
+            "由点差法斜率公式 $k = \\frac{2p}{y_1+y_2}$ 观察，当中点落在对称轴时割线斜率呈现怎样的几何突变？",
         };
       }
       return {
         variant: "info" as const,
         badge: "新高考秒杀 · 抛物线单参数设点免联立",
-        condition: `抛物线两动点分别设为 A(y₁²/(2p), y₁) 与 B(y₂²/(2p), y₂)。`,
+        condition: `抛物线两动点分别设为 $A\\left(\\frac{y_1^2}{2p}, y_1\\right)$ 与 $B\\left(\\frac{y_2^2}{2p}, y_2\\right)$。`,
         question:
-          "如何由平方差公式直接写出割线方程 (y₁+y₂)y = 2px + y₁y₂，免去二次方程联立与韦达定理？",
+          "如何由平方差公式直接写出割线方程 $(y_1+y_2)y = 2px + y_1 y_2$，免去联立方程求根与判别式计算？",
       };
     }
 
@@ -302,18 +344,36 @@ export function ConicParamAnimation() {
       return {
         variant: "warning" as const,
         badge: "答题安全 · 铅垂割线自洽免分类讨论",
-        condition: "割线方程设为 x = my + n，当前 m = 0，割线垂直于 x 轴。",
+        condition: `割线方程设为 $x = my + n$，当前斜率倒数 $m = 0$，割线处于垂直于 $x$ 轴状态。`,
         question:
-          "相比传统斜截式 y = kx + b 需讨论斜率不存在，设 x = my + n 如何实现全向割线无奇点通法解算？",
+          "相比传统斜截式 $y = kx + b$ 必须讨论斜率不存在，设 $x = my + n$ 如何实现全向割线无奇点通法解算？",
+      };
+    }
+    if (activePreset === "center_chord") {
+      return {
+        variant: "primary" as const,
+        badge: "对称中心 · 过原点对称弦代数消元",
+        condition: `割线横截距 $n = 0$，直线经过坐标原点，原点为相交弦的中点。`,
+        question:
+          "观察联立后一元二次方程的一次项系数 $B = 2b^2mn$，当割线过原点时一次项如何自洽消失？",
+      };
+    }
+    if (activePreset === "tangent_limit") {
+      return {
+        variant: "danger" as const,
+        badge: "临界状态 · 割线相切实数重根判别式",
+        condition: `参数满足勾股临界 $n^2 = b^2 m^2 + a^2$，割线与椭圆处于相切临界状态。`,
+        question:
+          "由判别式 $\\Delta_y = 0$ 导出实数重根，如何直接确定切点坐标并与导数切线方程相互印证？",
       };
     }
 
     return {
       variant: "info" as const,
       badge: "新高考标答 · 割线 x = my + n 韦达消元降维",
-      condition: `割线 x = ${formatMathNumber(params.m ?? 0.8)}y ${formatSignedTerm(params.n ?? 1, "")} 与椭圆联立消去 x，导出关于 y 的一元二次方程。`,
+      condition: `割线 $x = ${formatMathNumber(mVal)}y ${formatSignedTerm(nVal, "")}$ 与椭圆联立消去 $x$，导出关于 $y$ 的二次方程。`,
       question:
-        "如何利用以 y 为主元的韦达定理与横截距 n，极简推导原点三角形 △OAB 的面积计算公式？",
+        "如何利用以 $y$ 为主元的韦达定理与横截距 $n$，极简推导原点三角形 $\\triangle OAB$ 的面积计算公式？",
     };
   }, [studyMode, activePreset, params]);
 
@@ -325,9 +385,9 @@ export function ConicParamAnimation() {
           <LeftPanelSection title="研究模式">
             <TabSwitcher
               tabs={[
-                { key: "ellipseTrig", label: "椭圆三角代换" },
-                { key: "parabolaYParam", label: "抛物线纵坐标" },
-                { key: "lineYForm", label: "割线 x=my+n" },
+                { key: "ellipseTrig", label: "椭圆三角代换法" },
+                { key: "parabolaYParam", label: "抛物线单参数法" },
+                { key: "lineYForm", label: "斜率倒数设线法" },
               ]}
               value={studyMode}
               onChange={(v) => handleModeChange(v as typeof studyMode)}
