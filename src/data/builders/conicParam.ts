@@ -83,12 +83,12 @@ export function buildConicParamPanel(
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "三角代换求最值：对于椭圆上动点与定点距离/线性目标函数 ax+by，代入 x=a cosθ, y=b sinθ 转化为 A cosθ + B sinθ 形式求解。",
-        importance: "extend",
+        text: "【新高考标内通法】三角代换求最值：椭圆上动点 $P(a\\cos\\theta, b\\sin\\theta)$ 属于标内合法换元。求解到定直线距离或面积最值时，代入直接转化为辅助角公式 $A\\cos\\theta + B\\sin\\theta$，避免二次联立的高次方程，2025/2026 模拟卷高频考查。",
+        importance: "core",
       },
       {
-        text: "辅助离心圆几何含义：椭圆是外接离心圆 x²+y²=a² 在 y 轴方向按比例 b/a 压缩得到的图形，参数角 θ 为离心圆半径与 x 轴正向夹角。",
-        importance: "extend",
+        text: "辅助离心圆几何含义：椭圆是外接离心圆 $x^2+y^2=a^2$ 在 $y$ 轴方向按比例 $\\frac{b}{a}$ 压缩得到的图形，参数角 $\\theta$ 为对应离心圆半径与 $x$ 轴正向夹角。",
+        importance: "hard",
       },
     ];
 
@@ -313,12 +313,12 @@ export function buildConicParamPanel(
 
   const gaokaoPoints: GaokaoPoint[] = [
     {
-      text: "设点化简降维威力：求 |PA|·|PB|、1/|PA|+1/|PB|、弦中点等高考压轴问题时，参数设线法相比传统 y=kx+m 减少两步计算量，且无斜率不存在漏洞。",
-      importance: "extend",
+      text: "【2025/2026 命题趋势】设点降维与反套路运算：新高考压轴题重在考查多想少算的化简能力。直线与圆锥曲线相交时，通过单参数设点（如抛物线设纵坐标 $y_1, y_2$ 或向量参数 $\\vec{OP}=(1-\\lambda)\\vec{OA}+\\lambda\\vec{OB}$）可直接消除高次通分，是替代盲目设 $y=kx+b$ 硬联立的标准方案。",
+      importance: "core",
     },
     {
-      text: "中点弦判定：直接令 B = 0 求解直线斜率或定点坐标，计算量远小于点差法和判别式联立，但必须代入检验判别式 Δ > 0。",
-      importance: "extend",
+      text: "中点弦与割线方幂答题安全：选择填空中可直接利用参数方程 $B=0$ 和 $t_1 t_2 = \\frac{C}{A}$ 秒解；在解答题中建议以「向量中点坐标公式」或「点差法」规范书写步骤，且必须检验判别式 $\\Delta > 0$。",
+      importance: "hard",
     },
   ];
 

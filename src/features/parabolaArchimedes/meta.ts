@@ -2,7 +2,7 @@ import type { KnowledgeNode } from "@/data/types";
 
 export const parabolaArchimedesNode: KnowledgeNode = {
   id: "know-parabola-archimedes",
-  title: "抛物线焦点弦性质与阿基米德三角形（拓展 · 超出课标）",
+  title: "抛物线焦点弦性质与阿基米德三角形（拓展 · 模型探究）",
   labTitle: "抛物线阿基米德三角形实验室",
   chapter: "解析几何",
   module: "解析几何拓展",

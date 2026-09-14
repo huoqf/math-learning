@@ -19,8 +19,8 @@ export const inequalityNodes: KnowledgeNode[] = [
   },
   {
     id: "know-ineq-absolute",
-    title: "绝对值不等式的几何意义（拓展 · 超出课标）",
-    labTitle: "绝对值不等式实验室",
+    title: "绝对值不等式的数轴距离几何模型（拓展 · 选学衔接）",
+    labTitle: "绝对值不等式数轴距离实验室",
     chapter: "不等式",
     module: "绝对值不等式",
     importance: "extend",

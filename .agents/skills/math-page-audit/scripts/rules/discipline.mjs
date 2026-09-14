@@ -196,6 +196,20 @@ export const disciplineRules = [
       ctx.cleanLines.forEach((line, idx) => {
         const hit = BEYOND_SYLLABUS_TERMS.find((term) => line.includes(term));
         if (hit) {
+          // 标内白名单放行：新高考倡导的"向量参数方程"、"参数化设点"、"单参数设点"、"三角参数化"属合规技巧，不误判为超纲
+          if (hit === '参数方程') {
+            const isCompliantParametric =
+              line.includes('向量参数') ||
+              line.includes('参数化设点') ||
+              line.includes('单参数设点') ||
+              line.includes('三角参数') ||
+              line.includes('参数化') ||
+              line.includes('参数设点');
+            if (isCompliantParametric && !line.includes('双曲线参数方程')) {
+              return;
+            }
+          }
+
           issues.push({
             lineNum: idx + 1,
             type: '超纲术语',

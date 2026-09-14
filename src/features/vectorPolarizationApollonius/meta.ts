@@ -8,11 +8,11 @@ import type { KnowledgeNode } from "@/data/types";
  */
 export const node: KnowledgeNode = {
   id: "know-conic-polarization",
-  title: "向量极化恒等式与阿波罗尼斯圆（拓展 · 超出课标）",
+  title: "平面向量极化恒等式与阿波罗尼斯圆（新高考核心模型）",
   labTitle: "极化恒等式与阿波罗尼斯圆实验室",
   chapter: "平面向量与复数",
-  module: "平面向量拓展",
-  importance: "extend",
+  module: "平面向量应用",
+  importance: "hard",
   animationIds: [
     "anim-vector-polarization-apollonius",
     "anim-conic-polarization",

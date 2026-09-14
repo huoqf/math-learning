@@ -2,11 +2,11 @@ import type { KnowledgeNode } from "@/data/types";
 
 export const node: KnowledgeNode = {
   id: "know-conic-parametric",
-  title: "圆锥曲线与直线的参数方程及设点化简（拓展 · 超出课标）",
-  labTitle: "圆锥曲线与直线的参数方程及设点化简实验室",
+  title: "圆锥曲线参数化设点与代数降维化简（新高考运算优化）",
+  labTitle: "圆锥曲线参数化设点与代数降维实验室",
   chapter: "解析几何",
-  module: "解析几何拓展",
-  importance: "extend",
+  module: "圆锥曲线",
+  importance: "hard",
   animationIds: ["anim-conic-param"],
   prerequisites: ["know-conic-line"],
   route: "/conic-param",

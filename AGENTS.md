@@ -74,7 +74,7 @@ $env:PATH="D:\node-v24;"+$env:PATH; npm run audit -- <path/to/feature>
 | **情景联动性** | 凡含 `<SelectGrid value={x}>`，`TipCard` / `useScenario` 依赖必须包含 `x` |
 | **架构纯洁性** | `src/math/` 禁止包含 React/DOM 引用；全库禁止 `BrowserRouter` |
 | **审计严格阻断** | `npm run audit:strict` 默认扫描**全库 `src`**（含 `features` / `components` / `data` / `math` / `math3d`）。采用**存量基线**机制：仅"超出基线的增量违规"非零退出阻断构建，历史存量计入 `.audit-baseline.json` 提示不阻断；整改后用 `npm run audit:update-baseline` 下修基线 |
-| **超纲术语门禁** | `discipline/no-beyond-syllabus-terms` 对 `builders` / `registries` / `knowledgeTree` / `meta.ts` / `Animation.tsx` / `Page.tsx` / `Scene.tsx` 扫描超纲关键词（洛必达/麦克劳林/泰勒/琴生/凹凸/极点极线/克拉默/外积/叉积/夹逼/等价无穷小/上确界/紧致/无穷级数/数列极限/特征方程/马尔可夫链/卡方分布/概率密度函数/微元/定积分/极坐标/参数方程）。未标注拓展即 error 拦截；已声明 `importance: "extend"` 或「拓展 · 超出课标 / 选学」徽标的文件降级为 warning |
+| **超纲术语门禁** | `discipline/no-beyond-syllabus-terms` 对 `builders` / `registries` / `knowledgeTree` / `meta.ts` / `Animation.tsx` / `Page.tsx` / `Scene.tsx` 扫描超纲关键词（洛必达/麦克劳林/泰勒/琴生/凹凸/极点极线/克拉默/外积/叉积/夹逼/等价无穷小/上确界/紧致/无穷级数/数列极限/特征方程/马尔可夫链/卡方分布/概率密度函数/微元/定积分/极坐标/参数方程等）。未标注拓展即 error 拦截；已声明 `importance: "extend"` 或「拓展 · 超出课标 / 选学」徽标的文件降级为 warning；标内核心技巧（向量参数方程/参数化设点/单参数设点/三角参数代换）白名单豁免放行 |
 | **学段边界一致性** | `knowledgeTree.test.ts` 强制：`importance === "extend"` 的节点标题必须含「拓展/选学/超出课标/竞赛」；`module`/`chapter` 含"拓展"的节点 `importance` 必须为 `"extend"`；`syllabus.status !== "正文"` 的节点必须标为 `extend` |
 | **TipCard设问质量** | 严禁“观察图形变化”等空泛词；设问必须包含“求范围/最值/证明/单调性/零点”等数学目标词 |
 | **推导链代数三部曲** | `reasoningSteps` 严禁孤立数字赋值，必须按「符号 $\to$ 解析式代入 $\to$ 结果」演绎；文本涉数学符号 100% 包裹 `$...$` |
