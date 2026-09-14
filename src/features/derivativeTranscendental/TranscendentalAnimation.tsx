@@ -233,12 +233,14 @@ export function TranscendentalAnimation() {
       return `\\ln \\color{${pColor}}{${x0Val}} + 1 \\le \\color{${pColor}}{${x0Val}} \\le e^{\\color{${pColor}}{${x0Val}} - 1}`;
     } else {
       const aVal = params.a.toFixed(1);
-      if (subMode === "exp_ax") {
-        return `e^x \\ge \\color{${pColor}}{${aVal}} x \\quad (a_{\\text{临界}} = e)`;
+      if (preset === "horizontal" || Math.abs(params.a) < 1e-4) {
+        return `e^x \\ge 1 \\quad (x \\ge 0)`;
+      } else if (subMode === "exp_ax") {
+        return `e^x \\ge \\color{${pColor}}{${aVal}} x \\quad (x > 0, \\; a_{\\text{临界}} = e)`;
       }
-      return `e^x \\ge \\color{${pColor}}{${aVal}} x + 1 \\quad (a_{\\text{临界}} = 1)`;
+      return `e^x \\ge \\color{${pColor}}{${aVal}} x + 1 \\quad (x \\ge 0, \\; a_{\\text{临界}} = 1)`;
     }
-  }, [mode, subMode, params.x0, params.a]);
+  }, [mode, subMode, preset, params.x0, params.a]);
 
   // 8. 模式切换重置参数与默认情景
   const handleModeChange = (newMode: string) => {
@@ -408,6 +410,7 @@ export function TranscendentalAnimation() {
       ];
     } else {
       const isExpAx = subMode === "exp_ax";
+      const isHorizontal = preset === "horizontal";
       return [
         {
           color: MATH_COLORS.function,
@@ -416,18 +419,18 @@ export function TranscendentalAnimation() {
         },
         {
           color: MATH_COLORS.paramPrimary,
-          formula: isExpAx ? "y = ax" : "y = ax + 1",
+          formula: isExpAx ? "y = ax" : isHorizontal ? "y = 1" : "y = ax + 1",
           style: "solid",
         },
         {
           color: MATH_COLORS.tangentLine,
-          label: "临界切点",
+          label: isExpAx ? "临界切点" : isHorizontal ? "基准交点" : "临界切点",
           formula: isExpAx ? "P_0(1, e)" : "P_0(0, 1)",
           style: "point",
         },
       ];
     }
-  }, [mode, subMode]);
+  }, [mode, subMode, preset]);
 
   return (
     <ThreePanel

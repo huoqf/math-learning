@@ -165,6 +165,16 @@ export const transcendentalScenarios: Record<
   ],
   chain: [
     {
+      id: "free",
+      name: "自由探究",
+      badge: "双基准对偶 · 链式放缩",
+      condition:
+        "考查指数曲线 $y=e^{x-1}$ 与对数曲线 $y=\\ln x+1$ 关于中轴线 $y=x$ 的对称包络。",
+      question:
+        "拖动中轴动点 $x$，探究双侧放缩包络跨度 $e^{x-1} - (\\ln x+1)$ 的变化规律与极小值点。",
+      variant: "warning",
+    },
+    {
       id: "tangent_1",
       name: "公共切点",
       badge: "双基准对偶 · 对称放缩",
@@ -200,12 +210,23 @@ export const transcendentalScenarios: Record<
   ],
   param: [
     {
+      id: "free",
+      name: "自由探究",
+      badge: "切线临界 · 参变直线",
+      condition:
+        "考查参变直线与指数曲线 $y=e^x$ 在不同斜率 $a$ 下的位置关系与交点演化。",
+      question:
+        "调节直线斜率参数 $a$，探究直线穿透曲线破坏恒成立的临界斜率分水岭。",
+      variant: "primary",
+    },
+    {
       id: "exp_ax_1_crit",
       name: "定点相切",
       badge: "切线临界 · 定点相切",
-      condition: "直线 $y=ax+1$ 过定点 $(0,1)$，对应参数临界值 $a=1$。",
+      condition:
+        "直线 $y=ax+1$ 过定点 $(0,1)$，考查非负区间 $x \\ge 0$ 上动直线与指数曲线的位置关系。",
       question:
-        "当斜率 $a$ 增大时，证明直线与曲线的位置关系，求 $e^x \\ge ax+1$ 恒成立的充要条件与 $a$ 范围。",
+        "证明对任意 $x \\ge 0$ 不等式 $e^x \\ge ax+1$ 恒成立的充要条件为 $a \\le 1$；并分析在全域 $\\mathbb{R}$ 上成立的唯一参数值。",
       presetParams: { a: 1.0 },
       variant: "primary",
     },
@@ -214,9 +235,9 @@ export const transcendentalScenarios: Record<
       name: "原点相切",
       badge: "切线临界 · 原点相切",
       condition:
-        "直线 $y=ax$ 过坐标原点，相切于曲线切点 $(1,e)$，临界斜率 $a=e$。",
+        "直线 $y=ax$ 过坐标原点，相切于曲线切点 $(1,e)$，考查区间 $x > 0$ 上的旋转卡位。",
       question:
-        "证明当 $a \\le e$ 时不等式 $e^x \\ge ax$ 恒成立，并求当 $a > e$ 时曲线与直线的交点个数。",
+        "证明对任意 $x > 0$ 不等式 $e^x \\ge ax$ 恒成立的充要条件为 $a \\le e$，并求当 $a > e$ 时在 $x > 0$ 上的交点个数。",
       presetParams: { a: Math.E },
       variant: "primary",
     },

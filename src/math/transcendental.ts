@@ -25,6 +25,28 @@ export interface TangentDiffSample {
   diff: number; // yFunc - yLine or yLine - yFunc
 }
 
+import { formatMathNumber } from "@/utils/mathFormat";
+
+/**
+ * 格式化直线方程 y = kx + b（符合高中数学代数规范，无 1.00x 机器尾零，系数为 1 省略）
+ */
+function formatLineEquation(slope: number, intercept: number): string {
+  if (Math.abs(slope) < 1e-4) {
+    return `y = ${formatMathNumber(intercept)}`;
+  }
+  const absSlope = Math.abs(slope);
+  const slopeCoeff =
+    Math.abs(absSlope - 1) < 1e-4 ? "" : formatMathNumber(absSlope);
+  const sign = slope < 0 ? "-" : "";
+  const xPart = `${sign}${slopeCoeff}x`;
+
+  if (Math.abs(intercept) < 1e-4) {
+    return `y = ${xPart}`;
+  }
+  const intSign = intercept > 0 ? "+" : "-";
+  return `y = ${xPart} ${intSign} ${formatMathNumber(Math.abs(intercept))}`;
+}
+
 /**
  * 求解指数函数 f(x) = e^x 在 x0 处的切线
  */
@@ -45,16 +67,12 @@ export function solveExpTangent(x0: number): TangentLineResult {
   const slope = y0; // d/dx (e^x) = e^x
   const intercept = y0 * (1 - x0); // y - y0 = slope * (x - x0) => y = slope * x + y0 - slope * x0
 
-  const slopeStr = slope.toFixed(2);
-  const interceptSign = intercept >= 0 ? "+" : "-";
-  const interceptStr = Math.abs(intercept).toFixed(2);
-
   return {
     x0,
     y0,
     slope,
     intercept,
-    latexEquation: `y = ${slopeStr}x ${interceptSign} ${interceptStr}`,
+    latexEquation: formatLineEquation(slope, intercept),
     isValid: true,
   };
 }
@@ -79,16 +97,12 @@ export function solveLogTangent(x0: number): TangentLineResult {
   const slope = 1 / x0;
   const intercept = y0 - 1; // y = (1/x0)x + ln(x0) - 1
 
-  const slopeStr = slope.toFixed(2);
-  const interceptSign = intercept >= 0 ? "+" : "-";
-  const interceptStr = Math.abs(intercept).toFixed(2);
-
   return {
     x0,
     y0,
     slope,
     intercept,
-    latexEquation: `y = ${slopeStr}x ${interceptSign} ${interceptStr}`,
+    latexEquation: formatLineEquation(slope, intercept),
     isValid: true,
   };
 }
@@ -113,7 +127,7 @@ export function solveParamExpAx1(a: number): {
       status: "tangent",
       intersections: 1,
       description:
-        "a = 1 时，y = x + 1 恰为 e^x 在 (0, 1) 处的基准切线，全定义域 e^x ≥ x + 1 成立。",
+        "a = 1 时，y = x + 1 恰为 e^x 在 (0, 1) 处的基准切线，全实数域 e^x ≥ x + 1 恒成立。",
     };
   } else if (a > criticalA) {
     return {
@@ -122,22 +136,24 @@ export function solveParamExpAx1(a: number): {
       status: "intersect",
       intersections: 2,
       description:
-        "a > 1 时，直线斜率过大，与 e^x 曲线在 x < 0 区间产生第二个交点，部分区域 e^x < ax + 1，不恒成立。",
+        "a > 1 时，直线斜率过大，在 x > 0 区域割穿曲线产生 2 个交点，e^x ≥ ax + 1 不恒成立。",
     };
   } else {
+    // a < 1 时，在 x >= 0 上 e^x >= ax + 1 恒成立；在 R 上当 0 < a < 1 时负半轴产生第 2 个交点
+    const intersections = a > 0 ? 2 : 1;
     return {
       a,
       criticalA,
       status: "above",
-      intersections: 1,
+      intersections,
       description:
-        "a < 1 时，直线在 e^x 下方，e^x ≥ ax + 1 依然恒成立（放缩变宽松）。",
+        "a < 1 时，在非负区间 x ≥ 0 上 e^x ≥ ax + 1 恒成立；在全域 R 上仅 a = 1 时成立（a < 1 在负半轴存在局部穿插）。",
     };
   }
 }
 
 /**
- * 计算 e^x >= ax 过原点直线模型在参数 a 下的临界与交点关系
+ * 计算 e^x >= ax 过原点直线模型在参数 a 下的临界与交点关系（考察区间 x > 0）
  */
 export function solveParamExpAx(a: number): {
   a: number;
@@ -158,7 +174,7 @@ export function solveParamExpAx(a: number): {
       status: "tangent",
       intersections: 1,
       description:
-        "a = e 时，y = ex 恰为 e^x 在切点 (1, e) 处过原点的切线，e^x ≥ ex 恒成立。",
+        "a = e 时，y = ex 恰为 e^x 在切点 (1, e) 处过原点的切线，对一切 x > 0 恒有 e^x ≥ ex 成立。",
     };
   } else if (a > criticalA) {
     return {
@@ -168,7 +184,7 @@ export function solveParamExpAx(a: number): {
       status: "intersect",
       intersections: 2,
       description:
-        "a > e 时，过原点的直线斜率过大，与 e^x 曲线交于两个点，e^x ≥ ax 不成立。",
+        "a > e 时，过原点的直线割穿曲线，在 x > 0 上产生 2 个交点，e^x ≥ ax 不成立。",
     };
   } else {
     return {
@@ -177,7 +193,8 @@ export function solveParamExpAx(a: number): {
       tangentX: 1.0,
       status: "separated",
       intersections: 0,
-      description: "a < e 时，直线位于 e^x 曲线下方无交点，e^x > ax 严格成立。",
+      description:
+        "a < e 时，在正半轴 x > 0 上动直线位于曲线下方无交点，e^x > ax 严格恒成立。",
     };
   }
 }
