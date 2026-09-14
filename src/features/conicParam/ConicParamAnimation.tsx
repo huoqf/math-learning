@@ -11,6 +11,7 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
+import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ConicParamScene } from "./components/ConicParamScene";
@@ -20,13 +21,17 @@ import {
   paramMeta,
   presetsByMode,
 } from "@/data/registries/conicParam";
-import { calculateLineConicParam } from "@/math/conicParam";
+import {
+  calculateParabolaYParam,
+  calculateLineYFormConic,
+} from "@/math/conicParam";
+import { formatMathNumber, formatSignedTerm } from "@/utils/mathFormat";
 
 export function ConicParamAnimation() {
-  // 研究模式: 'lineParam' (直线参数方程与t意义) | 'ellipseParam' (椭圆参数方程与三角设点) | 'tSimplify' (高考t1,t2设点化简)
+  // 研究模式: 'ellipseTrig' (椭圆三角代换) | 'parabolaYParam' (抛物线纵坐标单参数) | 'lineYForm' (割线 x=my+n 降维)
   const [studyMode, setStudyMode] = useState<
-    "lineParam" | "ellipseParam" | "tSimplify"
-  >("lineParam");
+    "ellipseTrig" | "parabolaYParam" | "lineYForm"
+  >("ellipseTrig");
 
   // 典型预设 key
   const [activePreset, setActivePreset] = useState<string>("free");
@@ -36,7 +41,7 @@ export function ConicParamAnimation() {
     ...defaultParams,
   }));
 
-  // 视口尺寸测量
+  // 视口尺寸测量 (840 x 650)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
@@ -102,55 +107,25 @@ export function ConicParamAnimation() {
     }));
   }, [studyMode]);
 
-  // 按 studyMode 与预设降维过滤并结构化分组参数列表
+  // 按 studyMode 降维过滤并结构化分组参数列表
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     let modeKeyGroups: Array<{ group: string; keys: string[] }> = [];
 
-    if (studyMode === "lineParam") {
-      if (activePreset === "center_secant") {
-        // 对称中心割线：定点 P0 锁定为原点 (0,0)
-        modeKeyGroups = [
-          { group: "直线方向与动点参数", keys: ["alpha", "t"] },
-          { group: "椭圆几何底模", keys: ["a", "b"] },
-        ];
-      } else if (activePreset === "vertical_line") {
-        // 垂直割线：alpha 锁定为 90 度
-        modeKeyGroups = [
-          { group: "定点 P₀(x₀, y₀) 坐标", keys: ["x0", "y0"] },
-          { group: "动点参数 t", keys: ["t"] },
-          { group: "椭圆几何底模", keys: ["a", "b"] },
-        ];
-      } else {
-        modeKeyGroups = [
-          { group: "定点 P₀(x₀, y₀) 坐标", keys: ["x0", "y0"] },
-          { group: "直线方向与动点参数", keys: ["alpha", "t"] },
-          { group: "椭圆几何底模", keys: ["a", "b"] },
-        ];
-      }
-    } else if (studyMode === "ellipseParam") {
-      if (activePreset === "vertex_right" || activePreset === "vertex_top") {
-        // 顶点预设：theta 锁定
-        modeKeyGroups = [{ group: "椭圆几何半轴", keys: ["a", "b"] }];
-      } else {
-        modeKeyGroups = [
-          { group: "动点离心角参数", keys: ["theta"] },
-          { group: "椭圆几何半轴", keys: ["a", "b"] },
-        ];
-      }
+    if (studyMode === "ellipseTrig") {
+      modeKeyGroups = [
+        { group: "核心三角离心角", keys: ["theta"] },
+        { group: "椭圆几何尺寸", keys: ["a", "b"] },
+      ];
+    } else if (studyMode === "parabolaYParam") {
+      modeKeyGroups = [
+        { group: "抛物线动点纵坐标参量", keys: ["y1", "y2"] },
+        { group: "抛物线焦准距", keys: ["p"] },
+      ];
     } else {
-      if (activePreset === "center_chord") {
-        // 中点弦：P0 锁定为原点 (0,0)
-        modeKeyGroups = [
-          { group: "割线倾斜角 α", keys: ["alpha"] },
-          { group: "椭圆几何底模", keys: ["a", "b"] },
-        ];
-      } else {
-        modeKeyGroups = [
-          { group: "割线定点 P₀(x₀, y₀)", keys: ["x0", "y0"] },
-          { group: "割线倾斜角 α", keys: ["alpha"] },
-          { group: "椭圆几何底模", keys: ["a", "b"] },
-        ];
-      }
+      modeKeyGroups = [
+        { group: "割线斜截参数", keys: ["m", "n"] },
+        { group: "椭圆几何底模", keys: ["a", "b"] },
+      ];
     }
 
     const configs: ParamConfig[] = [];
@@ -177,93 +152,170 @@ export function ConicParamAnimation() {
     });
 
     return configs;
-  }, [params, studyMode, activePreset]);
+  }, [params, studyMode]);
 
   // 构建中屏悬浮 LaTeX 方程
   const equationLatex = useMemo(() => {
-    if (studyMode === "lineParam") {
-      const cosA = Math.cos((params.alpha * Math.PI) / 180)
-        .toFixed(2)
-        .replace(/\.?0+$/, "");
-      const sinA = Math.sin((params.alpha * Math.PI) / 180)
-        .toFixed(2)
-        .replace(/\.?0+$/, "");
-      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${params.x0.toFixed(1).replace(/\.0$/, "")}} + \\color{${MATH_COLORS.paramSecondary}}{t} \\cdot (${cosA}) \\\\ y = \\color{${MATH_COLORS.paramSecondary}}{${params.y0.toFixed(1).replace(/\.0$/, "")}} + \\color{${MATH_COLORS.paramSecondary}}{t} \\cdot (${sinA}) \\end{cases}`;
-    } else if (studyMode === "ellipseParam") {
-      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(1).replace(/\.0$/, "")}}\\cos\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\\\ y = \\color{${MATH_COLORS.paramSecondary}}{${params.b.toFixed(1).replace(/\.0$/, "")}}\\sin\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\end{cases} \\quad (\\theta = ${params.theta}^\\circ)`;
-    } else {
-      const res = calculateLineConicParam(
-        params.x0,
-        params.y0,
-        params.alpha,
-        params.t,
-        params.a,
-        params.b,
-      );
-      if (!res.valid) return "\\Delta < 0";
-      return `${res.A.toFixed(2).replace(/\.?0+$/, "")}t^2 ${res.B >= 0 ? "+" : ""}${res.B.toFixed(2).replace(/\.?0+$/, "")}t ${res.C >= 0 ? "+" : ""}${res.C.toFixed(2).replace(/\.?0+$/, "")} = 0 \\quad (\\Delta = ${res.discriminant.toFixed(1).replace(/\.0$/, "")})`;
+    if (studyMode === "ellipseTrig") {
+      const a = params.a ?? 4;
+      const b = params.b ?? 3;
+      const theta = params.theta ?? 45;
+      return `\\begin{cases} x = \\color{${MATH_COLORS.paramPrimary}}{${formatMathNumber(a)}}\\cos\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\\\ y = \\color{${MATH_COLORS.paramSecondary}}{${formatMathNumber(b)}}\\sin\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\end{cases} \\quad (\\theta = ${theta}^\\circ)`;
     }
+    if (studyMode === "parabolaYParam") {
+      const p = params.p ?? 2;
+      const y1 = params.y1 ?? 3;
+      const y2 = params.y2 ?? -1.5;
+      calculateParabolaYParam(p, y1, y2);
+      const ySum = y1 + y2;
+      const yProd = y1 * y2;
+      return `(y_1 + y_2)y = 2px + y_1 y_2 \\implies ${formatMathNumber(ySum)}y = ${formatMathNumber(2 * p)}x ${formatSignedTerm(yProd, "")}`;
+    }
+    // lineYForm
+    const a = params.a ?? 4;
+    const b = params.b ?? 3;
+    const m = params.m ?? 0.8;
+    const n = params.n ?? 1;
+    const res = calculateLineYFormConic(a, b, m, n);
+    if (!res.valid)
+      return `x = ${formatMathNumber(m)}y ${formatSignedTerm(n, "")} \\quad (\\Delta_y < 0)`;
+    return `x = ${formatMathNumber(m)}y ${formatSignedTerm(n, "")} \\implies ${formatMathNumber(res.A)}y^2 ${formatSignedTerm(res.B, "y")} ${formatSignedTerm(res.C, "")} = 0`;
   }, [studyMode, params]);
 
-  // 左屏教学提示与题设导引（说明初始条件与探究设问）
+  // 中屏图例
+  const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (studyMode === "ellipseTrig") {
+      return [
+        {
+          label: "椭圆标准曲线",
+          colorKey: "ellipse",
+          style: "line",
+        },
+        {
+          label: "动点 P(a cosθ, b sinθ)",
+          colorKey: "paramPrimary",
+          style: "point",
+        },
+        {
+          label: "辅助离心圆与中心角",
+          colorKey: "paramPrimary",
+          style: "dashed",
+        },
+        {
+          label: "切线截距三角形",
+          colorKey: "tangentLine",
+          style: "line",
+        },
+      ];
+    }
+    if (studyMode === "parabolaYParam") {
+      return [
+        {
+          label: "抛物线 y²=2px",
+          colorKey: "parabola",
+          style: "line",
+        },
+        {
+          label: "动点 A, B (纵坐标参量)",
+          colorKey: "paramSecondary",
+          style: "point",
+        },
+        {
+          label: "割线 (y₁+y₂)y=2px+y₁y₂",
+          colorKey: "paramPrimary",
+          style: "line",
+        },
+        {
+          label: "弦中点 M",
+          colorKey: "paramTertiary",
+          style: "point",
+        },
+      ];
+    }
+    // lineYForm
+    return [
+      {
+        label: "椭圆基底",
+        colorKey: "ellipse",
+        style: "line",
+      },
+      {
+        label: "割线 x = my + n",
+        colorKey: "paramPrimary",
+        style: "line",
+      },
+      {
+        label: "相交弦与两交点",
+        colorKey: "paramSecondary",
+        style: "point",
+      },
+      {
+        label: "原点三角形 △OAB",
+        colorKey: "accent",
+        style: "area",
+      },
+    ];
+  }, [studyMode]);
+
+  // 左屏教学提示与题设导引（落实初始条件与核心设问）
   const tipConfig = useMemo(() => {
-    if (activePreset !== "free") {
-      if (activePreset === "center_secant" || activePreset === "center_chord") {
+    if (studyMode === "ellipseTrig") {
+      if (activePreset === "diag_45") {
         return {
           variant: "primary" as const,
-          badge: "拓展 · 对称中心割线",
-          condition:
-            "定点 P₀ 位于椭圆中心，割线与椭圆相交于关于原点对称的两点。",
+          badge: "高考重点 · 椭圆切线截距面积极值",
+          condition: `椭圆长半轴 a = ${params.a ?? 4}，短半轴 b = ${params.b ?? 3}，切点离心角处于 45° 临界。`,
           question:
-            "探究原点为动弦中点时参数方程一次项系数满足什么条件，并求最大相交弦长？",
+            "探究切线与两坐标轴围成的直角三角形面积何时取得最小值，最小面积与半轴乘积 ab 有何关系？",
         };
       }
-      if (activePreset === "vertical_line") {
-        return {
-          variant: "warning" as const,
-          badge: "拓展 · 铅垂直线参数方程",
-          condition: "直线垂直于 x 轴（倾斜角为 90°）。",
-          question:
-            "直线标准参数方程如何避免传统斜截式中斜率不存在的分类讨论漏洞？",
-        };
-      }
-      if (activePreset === "tangent_limit") {
-        return {
-          variant: "danger" as const,
-          badge: "拓展 · 相切极限重根",
-          condition: "割线与椭圆相切，直线参数代入二次方程恰有唯一实数重根。",
-          question: "如何由重根性质直接确定切点参数与切线方程？",
-        };
-      }
-    }
-
-    if (studyMode === "lineParam") {
       return {
         variant: "info" as const,
-        badge: "拓展 · 直线标准参数方程与模长",
-        condition: "直线标准参数方程以定点 P₀ 为基准点，与椭圆相交于两点。",
+        badge: "标内通法 · 椭圆三角代换求最值",
+        condition: `椭圆动点设为 P(${formatMathNumber(params.a ?? 4)}\\cos\\theta, ${formatMathNumber(params.b ?? 3)}\\sin\\theta)，目标直线为 x - y - 6 = 0。`,
         question:
-          "参数 t 的正负号与几何有向距离有何对应关系？如何由参数差快速计算弦长？",
+          "如何运用辅助角公式化简点到直线的距离公式，求解椭圆上动点到目标直线的最值范围？",
       };
     }
-    if (studyMode === "ellipseParam") {
+
+    if (studyMode === "parabolaYParam") {
+      if (activePreset === "focus_chord") {
+        return {
+          variant: "primary" as const,
+          badge: "压轴必考 · 抛物线焦点弦纵坐标定值",
+          condition: `抛物线 y² = ${formatMathNumber(2 * (params.p ?? 2))}x，割线经过焦点 F(${formatMathNumber((params.p ?? 2) / 2)}, 0)。`,
+          question:
+            "证明过焦点弦两端点纵坐标乘积恒满足 y₁y₂ = -p²，并由此化简焦点弦长公式？",
+        };
+      }
       return {
-        variant: "primary" as const,
-        badge: "拓展 · 椭圆三角参数设点与最值",
-        condition: "椭圆上动点由离心角 θ 的三角参数方程表示。",
+        variant: "info" as const,
+        badge: "新高考秒杀 · 抛物线单参数设点免联立",
+        condition: `抛物线两动点分别设为 A(y₁²/(2p), y₁) 与 B(y₂²/(2p), y₂)。`,
         question:
-          "如何利用三角函数有界性与辅助角公式，求解椭圆动点到割线的距离最值？",
+          "如何由平方差公式直接写出割线方程 (y₁+y₂)y = 2px + y₁y₂，免去二次方程联立与韦达定理？",
       };
     }
+
+    // lineYForm
+    if (activePreset === "vertical_secant") {
+      return {
+        variant: "warning" as const,
+        badge: "答题安全 · 铅垂割线自洽免分类讨论",
+        condition: "割线方程设为 x = my + n，当前 m = 0，割线垂直于 x 轴。",
+        question:
+          "相比传统斜截式 y = kx + b 需讨论斜率不存在，设 x = my + n 如何实现全向割线无奇点通法解算？",
+      };
+    }
+
     return {
-      variant: "danger" as const,
-      badge: "拓展 · 参数 t 设点化简",
-      condition:
-        "割线过定点与椭圆联立导出关于参数 t 的二次方程，两交点参数为 t₁, t₂。",
+      variant: "info" as const,
+      badge: "新高考标答 · 割线 x = my + n 韦达消元降维",
+      condition: `割线 x = ${formatMathNumber(params.m ?? 0.8)}y ${formatSignedTerm(params.n ?? 1, "")} 与椭圆联立消去 x，导出关于 y 的一元二次方程。`,
       question:
-        "如何利用参数方程的韦达定理，快速化简对称与非对称线段距离代数式？",
+        "如何利用以 y 为主元的韦达定理与横截距 n，极简推导原点三角形 △OAB 的面积计算公式？",
     };
-  }, [studyMode, activePreset]);
+  }, [studyMode, activePreset, params]);
 
   return (
     <ThreePanel
@@ -273,16 +325,16 @@ export function ConicParamAnimation() {
           <LeftPanelSection title="研究模式">
             <TabSwitcher
               tabs={[
-                { key: "lineParam", label: "直线参数" },
-                { key: "ellipseParam", label: "椭圆参数" },
-                { key: "tSimplify", label: "设点化简" },
+                { key: "ellipseTrig", label: "椭圆三角代换" },
+                { key: "parabolaYParam", label: "抛物线纵坐标" },
+                { key: "lineYForm", label: "割线 x=my+n" },
               ]}
               value={studyMode}
               onChange={(v) => handleModeChange(v as typeof studyMode)}
             />
           </LeftPanelSection>
 
-          {/* 案例预设 (2x2 对称网格) */}
+          {/* 典型预设 (2x2 对称网格) */}
           <LeftPanelSection title="典型预设">
             <SelectGrid
               items={currentPresets}
@@ -332,21 +384,25 @@ export function ConicParamAnimation() {
               studyMode={studyMode}
             />
           </AnimationSvgCanvas>
+
+          {/* 右下角语义图例 */}
+          <SceneLegend items={legendItems} />
         </div>
       }
       right={
         <MathPanel
           quantities={mathData.quantities}
+          reasoningSteps={mathData.reasoningSteps}
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
           mnemonic={mathData.mnemonic}
           title={
-            studyMode === "lineParam"
-              ? "直线参数方程与t物理几何意义看板"
-              : studyMode === "ellipseParam"
-                ? "椭圆参数方程与三角化简看板"
-                : "高考设点化简与根代换看板"
+            studyMode === "ellipseTrig"
+              ? "椭圆动点三角设点与极值化简看板"
+              : studyMode === "parabolaYParam"
+                ? "抛物线纵坐标单参数设点免联立看板"
+                : "割线方程 x=my+n 对称韦达降维看板"
           }
         />
       }

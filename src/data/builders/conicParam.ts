@@ -4,90 +4,135 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import {
-  calculateLineConicParam,
   calculateEllipseParam,
+  calculateParabolaYParam,
+  calculateLineYFormConic,
 } from "@/math/conicParam";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber, formatSignedTerm } from "@/utils/mathFormat";
 
 export function buildConicParamPanel(
   params: Record<string, number>,
   config?: Record<string, unknown>,
 ): MathPanelData {
-  const studyMode = (config?.studyMode as string) || "lineParam";
+  let rawMode = (config?.studyMode as string) || "ellipseTrig";
+  // 兼容旧模式 key
+  if (rawMode === "ellipseParam") rawMode = "ellipseTrig";
+  if (rawMode === "lineParam") rawMode = "parabolaYParam";
+  if (rawMode === "tSimplify") rawMode = "lineYForm";
+
+  const studyMode = rawMode;
+
   const a = params.a ?? 4;
   const b = params.b ?? 3;
-  const x0 = params.x0 ?? 1;
-  const y0 = params.y0 ?? 0.5;
-  const alpha = params.alpha ?? 45;
   const theta = params.theta ?? 45;
-  const t = params.t ?? 2;
+  const p = params.p ?? 2;
+  const y1 = params.y1 ?? 3;
+  const y2 = params.y2 ?? -1.5;
+  const m = params.m ?? 0.8;
+  const n = params.n ?? 1;
 
-  const lineRes = calculateLineConicParam(x0, y0, alpha, t, a, b);
-  const ellipseRes = calculateEllipseParam(a, b, theta);
+  // --------------------------------------------------------------------------
+  // 模式 1: 椭圆三角参数设点与辅助角最值化简 (ellipseTrig)
+  // --------------------------------------------------------------------------
+  if (studyMode === "ellipseTrig") {
+    const targetLine = { A: 1, B: -1, C: -6 };
+    const res = calculateEllipseParam(a, b, theta, targetLine);
 
-  // 模式 2: 椭圆参数方程与三角设点化简
-  if (studyMode === "ellipseParam") {
-    const quantities = [
+    const quantities: MathQuantity[] = [
       {
-        label: "椭圆半轴 a, b",
+        label: "椭圆半轴 $a, b$",
         symbol: "a, b",
-        value: `a=${a}, b=${b}`,
+        value: `a = ${formatMathNumber(a)}, b = ${formatMathNumber(b)}`,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "离心参数角 θ",
+        label: "参数角 $\\theta$",
         symbol: "\\theta",
-        value: `${theta}°`,
+        value: `${theta}^\\circ`,
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "椭圆动点 P 坐标",
+        label: "椭圆动点 $P$ 坐标",
         symbol: "P(a\\cos\\theta, b\\sin\\theta)",
-        value: `(${ellipseRes.P.x.toFixed(2)}, ${ellipseRes.P.y.toFixed(2)})`,
+        value: `(${formatMathNumber(res.P.x)}, ${formatMathNumber(res.P.y)})`,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "辅助离心圆对应点 P'",
+        label: "辅助离心圆点 $P'$",
         symbol: "P'(a\\cos\\theta, a\\sin\\theta)",
-        value: `(${ellipseRes.Paux.x.toFixed(2)}, ${ellipseRes.Paux.y.toFixed(2)})`,
+        value: `(${formatMathNumber(res.Paux.x)}, ${formatMathNumber(res.Paux.y)})`,
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "切线截距三角形面积 S",
+        label: "切线截距三角形面积 $S$",
         symbol: "S = \\frac{ab}{|\\sin 2\\theta|}",
-        value: isFinite(ellipseRes.triangleArea)
-          ? `${ellipseRes.triangleArea.toFixed(2)} (最小值为 ${a * b})`
-          : "∞",
+        value: isFinite(res.triangleArea)
+          ? `${formatMathNumber(res.triangleArea)} (最小值 ${formatMathNumber(a * b)})`
+          : "\\infty",
         color: MATH_COLORS.accent,
+      },
+      {
+        label: "到直线 $x - y - 6 = 0$ 的当前距离",
+        symbol: "d_P",
+        value: formatMathNumber(res.distToTargetLine),
+        color: MATH_COLORS.paramTertiary,
+      },
+    ];
+
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "第一步：审题定法 · 椭圆单参数三角设点",
+        latex: `P(a\\cos\\theta, b\\sin\\theta) = (${formatMathNumber(a)}\\cos\\theta, ${formatMathNumber(b)}\\sin\\theta)`,
+        detail:
+          "利用 $\\cos^2\\theta + \\sin^2\\theta = 1$ 的三角有界性，将椭圆上二维坐标降维为单自变量 $\\theta \\in [0, 2\\pi)$，免去无理根号与双变量约束。",
+        rubric: "正确设出动点三角参数坐标 (3分)",
+      },
+      {
+        step: 2,
+        title: "第二步：建模联立 · 点线距离的辅助角化简",
+        latex: `d(\\theta) = \\frac{|${formatMathNumber(a)}\\cos\\theta - ${formatMathNumber(b)}\\sin\\theta - 6|}{\\sqrt{1^2 + (-1)^2}} = \\frac{|5\\sin(\\theta + \\varphi) - 6|}{\\sqrt{2}}`,
+        detail: `代入直线方程得分子 $(Aa)\\cos\\theta + (Bb)\\sin\\theta + C$。由辅助角公式 $(Aa)\\cos\\theta + (Bb)\\sin\\theta = \\sqrt{(Aa)^2 + (Bb)^2}\\sin(\\theta+\\varphi)$，计算振幅 $R = \\sqrt{(1\\times ${formatMathNumber(a)})^2 + (-1\\times ${formatMathNumber(b)})^2} = 5$。`,
+        rubric: "运用辅助角公式化为单角函数式 (4分)",
+      },
+      {
+        step: 3,
+        title: "第三步：求解反思 · 三角函数有界性求最值",
+        latex: `d_{\\min} = \\frac{|-6 + 5|}{\\sqrt{2}} = \\frac{\\sqrt{2}}{2} \\approx ${formatMathNumber(res.minDist)}, \\quad d_{\\max} = \\frac{|-6 - 5|}{\\sqrt{2}} = \\frac{11\\sqrt{2}}{2} \\approx ${formatMathNumber(res.maxDist)}`,
+        detail:
+          "当 $\\sin(\\theta+\\varphi) = 1$ 时取到最小值，当 $\\sin(\\theta+\\varphi) = -1$ 时取到最大值。全程无需联立二次方程求判别式 $\\Delta = 0$。",
+        rubric: "准确得出距离最值解集与反思 (3分)",
       },
     ];
 
     const theorems: Theorem[] = [
       {
-        name: "椭圆标准参数方程",
+        name: "椭圆标准参数三角设点定理",
         latex:
           "\\begin{cases} x = a\\cos\\theta \\\\ y = b\\sin\\theta \\end{cases} \\quad (\\theta \\in [0, 2\\pi))",
         condition:
-          "适用于椭圆上动点的坐标设点，可消除二次根号，将解析几何距离/最值化为辅助角三角函数最值问题。",
+          "适用于椭圆上动点到直线距离、三角形面积或多项式最值；把二次型代数问题转化为一次三角函数辅助角最值问题。",
       },
       {
-        name: "椭圆切线参数方程与面积最值",
+        name: "椭圆切线方程与截距三角形面积",
         latex:
-          "\\frac{x\\cos\\theta}{a} + \\frac{y\\sin\\theta}{b} = 1 \\implies S_{\\triangle} = \\frac{ab}{|\\sin 2\\theta|} \\ge ab",
+          "\\frac{x\\cos\\theta}{a} + \\frac{y\\sin\\theta}{b} = 1 \\implies S = \\frac{ab}{|\\sin 2\\theta|} \\ge ab",
         condition:
-          "由参数设点直接写出切线方程，两轴截距三角形面积在离心角为 45°、135°、225°、315° 时取得最小值 ab。",
+          "在第一象限，当离心角 $\\theta = 45^\\circ$ 时，$\\sin 2\\theta = 1$，切线与坐标轴围成的三角形面积取得最小值 $ab$。",
       },
     ];
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "【新高考标内通法】三角代换求最值：椭圆上动点 $P(a\\cos\\theta, b\\sin\\theta)$ 属于标内合法换元。求解到定直线距离或面积最值时，代入直接转化为辅助角公式 $A\\cos\\theta + B\\sin\\theta$，避免二次联立的高次方程，2025/2026 模拟卷高频考查。",
+        text: "【新高考标内合规】三角换元是课标正文明确认可的代数降维方法。在解析几何解答题中，凡求解椭圆动点最值（如距离最值、内积最值），设 $P(a\\cos\\theta, b\\sin\\theta)$ 可直接运用三角有界性 $[-1, 1]$ 秒杀，避开切线联立的复杂消元。",
         importance: "core",
       },
       {
-        text: "辅助离心圆几何含义：椭圆是外接离心圆 $x^2+y^2=a^2$ 在 $y$ 轴方向按比例 $\\frac{b}{a}$ 压缩得到的图形，参数角 $\\theta$ 为对应离心圆半径与 $x$ 轴正向夹角。",
+        text: "辅助离心圆几何投影：椭圆可视为半径为 $a$ 的离心辅助圆沿纵轴方向按比例 $\\frac{b}{a}$ 压缩而得，参数角 $\\theta$ 具有直观的中心角几何意义。",
         importance: "hard",
       },
     ];
@@ -95,252 +140,285 @@ export function buildConicParamPanel(
     const warnings: WarningItem[] = [];
     if (a <= b) {
       warnings.push({
-        text: "退化警示：长半轴 a 应大于短半轴 b，当前 a <= b。",
+        text: "几何退化警示：焦点在 $x$ 轴上的椭圆必须满足 $a > b > 0$，当前参数 $a \\le b$。",
         level: "warning",
       });
     }
 
     return {
       quantities,
+      reasoningSteps,
       theorems,
       gaokaoPoints,
       warnings,
       mnemonic:
-        "椭圆参数三角代，消去根号最值快；离心辅助圆压缩，几何意义记心怀。",
+        "椭圆动点三角设，消去根号最值捷；辅助角化单自变，有界区间答案现。",
     };
   }
 
-  // 模式 1: 直线参数方程与动点 t 几何意义
-  if (studyMode === "lineParam") {
-    const rad = lineRes.alphaRad;
-    const cosA = Math.cos(rad);
-    const sinA = Math.sin(rad);
+  // --------------------------------------------------------------------------
+  // 模式 2: 抛物线纵坐标单参数设点与免联立模型 (parabolaYParam)
+  // --------------------------------------------------------------------------
+  if (studyMode === "parabolaYParam") {
+    const res = calculateParabolaYParam(p, y1, y2);
+    const ySum = y1 + y2;
+    const yProd = y1 * y2;
 
     const quantities: MathQuantity[] = [
       {
-        label: "定点 P₀ 坐标",
-        symbol: "P_0(x_0, y_0)",
-        value: `(${x0.toFixed(1)}, ${y0.toFixed(1)})`,
+        label: "抛物线焦准距 $p$",
+        symbol: "p",
+        value: `p = ${formatMathNumber(p)}, \\text{ 焦点 } F(${formatMathNumber(p / 2)}, 0)`,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "倾斜角与单位方向向量",
-        symbol: "\\vec{e} = (\\cos\\alpha, \\sin\\alpha)",
-        value: `α = ${alpha}°, e = (${cosA.toFixed(2)}, ${sinA.toFixed(2)})`,
+        label: "动点 $A, B$ 单参数纵坐标",
+        symbol: "y_1, y_2",
+        value: `y_1 = ${formatMathNumber(y1)}, y_2 = ${formatMathNumber(y2)}`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "动点 $A, B$ 完整坐标",
+        symbol: "A, B",
+        value: `A(${formatMathNumber(res.pointA.x)}, ${formatMathNumber(y1)}), B(${formatMathNumber(res.pointB.x)}, ${formatMathNumber(y2)})`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "割线 $AB$ 斜率 $k$",
+        symbol: "k = \\frac{2p}{y_1 + y_2}",
+        value: isFinite(res.slope) ? formatMathNumber(res.slope) : "\\infty",
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "动点 P(t) 坐标",
-        symbol: "P(x_0 + t\\cos\\alpha, y_0 + t\\sin\\alpha)",
-        value: `(${lineRes.Pt.x.toFixed(2)}, ${lineRes.Pt.y.toFixed(2)})`,
-        color: MATH_COLORS.paramSecondary,
+        label: "割线 $x$ 轴截距 $x_0$",
+        symbol: "x_0 = -\\frac{y_1 y_2}{2p}",
+        value: `${formatMathNumber(res.xIntercept)} ${res.isFocusChord ? "(过焦点 $F$)" : ""}`,
+        color: res.isFocusChord ? MATH_COLORS.accent : MATH_COLORS.paramPrimary,
       },
       {
-        label: "参数 t 与有向距离",
-        symbol: "|P_0P| = |t|",
-        value: `t = ${t.toFixed(2)}, 距离 |P_0P| = ${Math.abs(t).toFixed(2)}`,
-        color: MATH_COLORS.paramSecondary,
+        label: "弦中点 $M$ 坐标",
+        symbol: "M\\left(\\frac{y_1^2+y_2^2}{4p}, \\frac{y_1+y_2}{2}\\right)",
+        value: `(${formatMathNumber(res.pointM.x)}, ${formatMathNumber(res.pointM.y)})`,
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "相交弦长 $|AB|$",
+        symbol: "|AB|",
+        value: formatMathNumber(res.chordLength),
+        color: MATH_COLORS.accent,
       },
     ];
 
-    if (lineRes.valid) {
-      quantities.push(
-        {
-          label: "交点 A, B 参数 t₁, t₂",
-          symbol: "t_1, t_2",
-          value: `t1 = ${lineRes.t1.toFixed(2)}, t2 = ${lineRes.t2.toFixed(2)}`,
-          color: MATH_COLORS.accent,
-        },
-        {
-          label: "相交弦长 |AB|",
-          symbol: "|AB| = |t_1 - t_2|",
-          value: lineRes.chordLength.toFixed(2),
-          color: MATH_COLORS.accent,
-        },
-      );
-    } else {
-      quantities.push({
-        label: "相交状态",
-        symbol: "\\Delta < 0",
-        value: "直线与椭圆无交点",
-        color: MATH_COLORS.textMuted,
-      });
-    }
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "第一步：审题设元 · 单参数设纵坐标消元",
+        latex: `A\\left(\\frac{y_1^2}{2p}, y_1\\right), \\quad B\\left(\\frac{y_2^2}{2p}, y_2\\right)`,
+        detail:
+          "针对抛物线 $y^2 = 2px$，以纵坐标 $y$ 为单一自由自变量设点，横坐标由 $x = \\frac{y^2}{2p}$ 直接由二次式给出，彻底摆脱根号。",
+        rubric: "设出纵坐标单参数并表示端点坐标 (3分)",
+      },
+      {
+        step: 2,
+        title: "第二步：建模联立 · 两点式直接推导割线方程",
+        latex: `k_{AB} = \\frac{y_2 - y_1}{x_2 - x_1} = \\frac{2p}{y_1 + y_2} \\implies (y_1 + y_2)y = 2px + y_1 y_2`,
+        detail:
+          "新高考答题神技：两点割线方程无需列一元二次方程与韦达定理，直接由平方差因式分解写出，形式极其对称！",
+        rubric: "化简求出割线对称方程与斜率 (4分)",
+      },
+      {
+        step: 3,
+        title: "第三步：求解反思 · 定值结论与弦长代入",
+        latex: res.isFocusChord
+          ? `y_1 y_2 = -p^2 = -${formatMathNumber(p * p)} \\implies x_0 = \\frac{p}{2} = ${formatMathNumber(p / 2)}`
+          : `y_1 + y_2 = ${formatMathNumber(ySum)}, \\; y_1 y_2 = ${formatMathNumber(yProd)} \\implies x_0 = ${formatMathNumber(res.xIntercept)}`,
+        detail: res.isFocusChord
+          ? "割线过焦点 $F(p/2, 0)$ 的充要条件是纵坐标乘积为定值 $y_1 y_2 = -p^2$；此时弦长等于焦半径之和 $|AB| = x_1 + x_2 + p$。"
+          : "割线与 $x$ 轴交点横坐标 $x_0 = -\\frac{y_1 y_2}{2p}$；点差法斜率公式 $k_{AB} = \\frac{p}{y_M}$ 一步得出弦中点约束。",
+        rubric: "完成几何结论代换与反思验证 (3分)",
+      },
+    ];
 
     const theorems: Theorem[] = [
       {
-        name: "标准直线参数方程与 t 的几何意义",
+        name: "抛物线两点割线与切线统一方程",
         latex:
-          "\\begin{cases} x = x_0 + t\\cos\\alpha \\\\ y = y_0 + t\\sin\\alpha \\end{cases} \\implies \\vec{P_0P} = t\\vec{e}",
+          "(y_1 + y_2)y = 2px + y_1 y_2 \\quad (y_1 = y_2 \\text{ 时为切线 } y_1 y = p(x + x_1))",
         condition:
-          "前提：方向向量必须为单位向量 (cosα, sinα)，此时 |t| 严格表示动点 P 到基准定点 P0 的实际几何距离，符号表示方向正负。",
+          "适用于抛物线上两动点割线问题；过定点时直接代入定点坐标，瞬间得到 $y_1 y_2$ 与 $y_1 + y_2$ 的线性关系。",
       },
       {
-        name: "直线参数方程弦长公式",
-        latex: "|AB| = |t_1 - t_2| = \\sqrt{(t_1+t_2)^2 - 4t_1t_2}",
+        name: "抛物线焦点弦纵坐标定值定理",
+        latex:
+          "AB \\text{ 过焦点 } F\\left(\\frac{p}{2}, 0\\right) \\iff y_1 y_2 = -p^2",
         condition:
-          "相比直角坐标系省去 √(1+k²) 系数，且在倾斜角 α=90°（斜率不存在）时完全自洽无奇点。",
+          "高考小题秒杀法则：过焦点的割线两端点纵坐标之积恒为常数 $-p^2$，弦长等于焦点弦公式 $|AB| = x_1 + x_2 + p$。",
       },
     ];
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "方向向量单位化：使用 |t| 表示实际几何距离的充要前提是参数方程已归一化，即 cos²α + sin²α = 1。非标准形式必须乘系数修正。",
-        importance: "extend",
+        text: "【新高考降维首选】解答题设点优先于设线：传统设直线 $y=kx+b$ 与抛物线联立，需要讨论 $k$ 是否存在，还要算判别式 $\\Delta$ 和韦达定理，代数运算量极大；而设两点纵坐标 $y_1, y_2$，直接写出割线方程 $(y_1+y_2)y=2px+y_1y_2$，免联立直接降维，是全国卷压轴大题的最佳答题路线。",
+        importance: "core",
       },
       {
-        text: "参数正负号指向性：t > 0 表示点 P 位于 P0 沿单位方向向量正向的一侧，t < 0 表示位于反向，常用于射线与有向定比分点判断。",
-        importance: "extend",
+        text: "点差法与中点弦公式：割线斜率 $k_{AB} = \\frac{2p}{y_1+y_2} = \\frac{p}{y_M}$，表明抛物线平行弦的中点轨迹是一条平行于对称轴的射线。",
+        importance: "hard",
       },
     ];
 
     const warnings: WarningItem[] = [];
-    if (!lineRes.valid) {
+    if (Math.abs(y1 - y2) < 0.1) {
       warnings.push({
-        text: "无交点警示：当前直线与椭圆判别式 Δ < 0，无相交弦。",
-        level: "danger",
-      });
-    }
-    if (alpha % 180 === 90) {
-      warnings.push({
-        text: "垂直直线自洽：倾斜角 α = 90° 时传统斜率 k 不存在，但参数方程 x = x0, y = y0 + t 仍完全有效，避免了分类讨论漏洞。",
+        text: "临界状态：$y_1 \\approx y_2$，动点 $A, B$ 重合，割线逼近切线状态。",
         level: "info",
       });
     }
 
     return {
       quantities,
+      reasoningSteps,
       theorems,
       gaokaoPoints,
       warnings,
       mnemonic:
-        "直线参数表有向，单位向量 t 为距离；全倾角通用无奇点，弦长差模直接求。",
+        "抛物设点纵坐标，平方除以两倍 $p$；两点割线免联立，乘积为负定值齐。",
     };
   }
 
-  // 模式 3: 高考设点化简与根代换 (tSimplify)
-  const isInternal = lineRes.valid && lineRes.t1 * lineRes.t2 < 0;
-  const isMidpoint = lineRes.valid && Math.abs(lineRes.t1 + lineRes.t2) < 0.05;
+  // --------------------------------------------------------------------------
+  // 模式 3: 设线降维 x = my + n 与对称韦达消元模型 (lineYForm)
+  // --------------------------------------------------------------------------
+  const res = calculateLineYFormConic(a, b, m, n);
 
   const quantities: MathQuantity[] = [
     {
-      label: "二次方程系数 A, B, C",
-      symbol: "At^2 + Bt + C = 0",
-      value: lineRes.valid
-        ? `A=${lineRes.A.toFixed(1)}, B=${lineRes.B.toFixed(1)}, C=${lineRes.C.toFixed(1)}`
-        : "退化",
+      label: "椭圆方程",
+      symbol: "\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1",
+      value: `\\frac{x^2}{${formatMathNumber(a * a)}} + \\frac{y^2}{${formatMathNumber(b * b)}} = 1`,
       color: MATH_COLORS.paramPrimary,
     },
     {
-      label: "判别式 Δ 与相交状态",
-      symbol: "\\Delta = B^2 - 4AC",
-      value: lineRes.valid
-        ? `Δ = ${lineRes.discriminant.toFixed(1)} ${lineRes.discriminant > 0 ? "(两不同交点)" : "(相切重根)"}`
-        : `Δ = ${lineRes.discriminant.toFixed(1)} (无交点)`,
-      color: lineRes.valid ? MATH_COLORS.paramTertiary : MATH_COLORS.accent,
+      label: "割线方程 (以 $y$ 为主元)",
+      symbol: "x = my + n",
+      value: `x = ${formatMathNumber(m)}y ${formatSignedTerm(n, "")}`,
+      color: MATH_COLORS.paramSecondary,
+    },
+    {
+      label: "联立后关于 $y$ 的方程",
+      symbol: "Ay^2 + By + C = 0",
+      value: res.valid
+        ? `${formatMathNumber(res.A)}y^2 ${formatSignedTerm(res.B, "y")} ${formatSignedTerm(res.C, "")} = 0`
+        : "无实根",
+      color: MATH_COLORS.paramTertiary,
+    },
+    {
+      label: "判别式 $\\Delta_y$",
+      symbol: "\\Delta_y = 4a^2b^2(b^2m^2+a^2-n^2)",
+      value: `${formatMathNumber(res.deltaY)} ${res.deltaY > 0 ? "(两相交点)" : res.deltaY === 0 ? "(相切)" : "(无交点)"}`,
+      color: res.valid ? MATH_COLORS.paramTertiary : MATH_COLORS.accent,
     },
   ];
 
-  if (lineRes.valid) {
+  if (res.valid) {
     quantities.push(
       {
-        label: "韦达定理和 (中点指标)",
-        symbol: "t_1 + t_2 = -\\frac{B}{A}",
-        value: `${(lineRes.t1 + lineRes.t2).toFixed(2)} ${isMidpoint ? "(已平分弦 B≈0)" : ""}`,
-        color: isMidpoint ? MATH_COLORS.accent : MATH_COLORS.paramSecondary,
-      },
-      {
-        label: "韦达定理积 (割线方幂)",
-        symbol: "t_1 t_2 = \\frac{C}{A}",
-        value: `${(lineRes.t1 * lineRes.t2).toFixed(2)} (${isInternal ? "定点在内部 t₁t₂<0" : "定点在外部 t₁t₂>0"})`,
+        label: "纵坐标和与积 (韦达定理)",
+        symbol: "y_1+y_2, \\; y_1 y_2",
+        value: `y_1+y_2 = ${formatMathNumber(res.ySum)}, \\; y_1 y_2 = ${formatMathNumber(res.yProd)}`,
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "相交弦长 |AB|",
-        symbol: "|AB| = \\frac{\\sqrt{\\Delta}}{|A|}",
-        value: lineRes.chordLength.toFixed(2),
+        label: "相交弦长 $|AB|$",
+        symbol: "|AB| = \\sqrt{1+m^2}|y_1-y_2|",
+        value: formatMathNumber(res.chordLength),
         color: MATH_COLORS.accent,
       },
       {
-        label: "线段乘积 |P₀A|·|P₀B|",
-        symbol: "|t_1 t_2| = \\left|\\frac{C}{A}\\right|",
-        value: lineRes.productPA_PB.toFixed(2),
+        label: "原点三角形面积 $S_{\\triangle OAB}$",
+        symbol: "S = \\frac{1}{2}|n||y_1-y_2|",
+        value: formatMathNumber(res.triangleAreaOAB),
         color: MATH_COLORS.accent,
-      },
-      {
-        label: "几何线段倒数和",
-        symbol: isInternal
-          ? "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\frac{\\sqrt{\\Delta}}{|C|}"
-          : "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\left|\\frac{B}{C}\\right|",
-        value:
-          lineRes.invSumPA_PB > 0
-            ? `${lineRes.invSumPA_PB.toFixed(2)} (${isInternal ? "内分弦" : "外分点"})`
-            : "无意义",
-        color: MATH_COLORS.paramTertiary,
-      },
-      {
-        label: "弦中点 M 坐标与参数 tM",
-        symbol: "t_M = -\\frac{B}{2A}",
-        value: `tM = ${lineRes.tM.toFixed(2)}, M(${lineRes.pointM.x.toFixed(2)}, ${lineRes.pointM.y.toFixed(2)})`,
-        color: MATH_COLORS.paramSecondary,
       },
     );
   }
 
+  const reasoningSteps: ReasoningStep[] = [
+    {
+      step: 1,
+      title: "第一步：审题定法 · 为何设割线为 $x = my + n$？",
+      latex: `x = my + n \\quad (m = \\cot\\alpha)`,
+      detail:
+        "新高考第一命题避坑法则：设 $y=kx+b$ 必须严密分类讨论斜率不存在；设 $x=my+n$ 天然涵盖所有与 $y$ 轴不平行的直线（当 $m=0$ 时为垂直于 $x$ 轴的铅垂割线 $x=n$），无死角且自洽。",
+      rubric: "合理设定以 y 为主元的割线方程 (3分)",
+    },
+    {
+      step: 2,
+      title: "第二步：建模联立 · 代入椭圆展开关于 y 的二次方程",
+      latex: `(${formatMathNumber(res.A)})y^2 ${formatSignedTerm(res.B, "y")} ${formatSignedTerm(res.C, "")} = 0`,
+      detail:
+        "消去 $x$ 得到关于纵坐标 $y$ 的整系数二次方程，无高次分母通分，直接由韦达定理写出 $y_1+y_2$ 与 $y_1 y_2$。",
+      rubric: "联立化简并由韦达定理表达对称项 (4分)",
+    },
+    {
+      step: 3,
+      title: "第三步：求解反思 · 面积与弦长代数降维消元",
+      latex: res.valid
+        ? `S_{\\triangle OAB} = \\frac{1}{2}|n|\\sqrt{(y_1+y_2)^2 - 4y_1y_2} = ${formatMathNumber(res.triangleAreaOAB)}`
+        : `\\Delta_y < 0 \\text{ (直线与椭圆无交点)}`,
+      detail:
+        "三角形面积 $S_{\\triangle OAB} = \\frac{1}{2}|x_0||y_1-y_2|$，底边直接取为割线在 $x$ 轴截距 $|n|$，高为纵坐标差 $|y_1-y_2|$，计算步骤精简 60% 以上。",
+      rubric: "准确计算目标面积并给出几何结论 (3分)",
+    },
+  ];
+
   const theorems: Theorem[] = [
     {
-      name: "参数代换一元二次方程与韦达定理",
+      name: "截距式割线方程与韦达降维定理",
       latex:
-        "At^2 + Bt + C = 0 \\implies t_1 + t_2 = -\\frac{B}{A}, \\quad t_1 t_2 = \\frac{C}{A}",
+        "x = my + n \\implies (b^2 m^2 + a^2)y^2 + 2b^2 mn y + b^2(n^2 - a^2) = 0",
       condition:
-        "直线标准方程代入椭圆一般方程后导出。利用韦达定理可直接化简弦长、方幂与几何倒数和，彻底避免分别解交点坐标。",
+        "判别式前提 $\\Delta_y = 4a^2 b^2(b^2 m^2 + a^2 - n^2) > 0$；无需讨论斜率是否存在，弦长为 $|AB| = \\sqrt{1+m^2}|y_1-y_2|$。",
     },
     {
-      name: "中点弦充要条件定理",
-      latex:
-        "P_0 \\text{ 为弦 } AB \\text{ 中点} \\iff t_1 + t_2 = 0 \\iff B = 0",
+      name: "原点弦三角形面积紧凑公式",
+      latex: "S_{\\triangle OAB} = \\frac{1}{2}|n||y_1 - y_2|",
       condition:
-        "一次项系数 B = 2(b² x₀ cosα + a² y₀ sinα) = 0 直接建立中点与割线倾斜角的代数约束关系。",
-    },
-    {
-      name: "高考线段倒数和同异号分类法则",
-      latex:
-        "\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\begin{cases} \\frac{\\sqrt{\\Delta}}{|C|} & (t_1 t_2 < 0,\\ P_0 \\text{在内部/焦点弦}) \\\\ \\left|\\frac{B}{C}\\right| & (t_1 t_2 > 0,\\ P_0 \\text{在外部}) \\end{cases}",
-      condition:
-        "高考解析几何丢分雷区：绝对线段长度倒数和 1/|t1| + 1/|t2| 仅在同号时等于 |B/C|；若定点在内部（如过焦点弦），分子为 |t1-t2|=√Δ/|A|，倒数和为 √Δ/|C|。",
+        "割线与 $x$ 轴交点为 $(n, 0)$，将三角形沿 $x$ 轴拆分为上下两部分，底为 $|n|$，高之和为 $|y_1-y_2|$。",
     },
   ];
 
   const gaokaoPoints: GaokaoPoint[] = [
     {
-      text: "【2025/2026 命题趋势】设点降维与反套路运算：新高考压轴题重在考查多想少算的化简能力。直线与圆锥曲线相交时，通过单参数设点（如抛物线设纵坐标 $y_1, y_2$ 或向量参数 $\\vec{OP}=(1-\\lambda)\\vec{OA}+\\lambda\\vec{OB}$）可直接消除高次通分，是替代盲目设 $y=kx+b$ 硬联立的标准方案。",
+      text: "【规范答题安全】设 $x=my+n$ 是新高考阅卷采分点最高的标准设线形式。若直线不过原点，利用截距 $n$ 将面积转化为 $\\frac{1}{2}|n|\\sqrt{(y_1+y_2)^2-4y_1y_2}$，是全国新高考 I 卷与全国甲卷压轴题官方标答推崇的化简通路。",
       importance: "core",
     },
     {
-      text: "中点弦与割线方幂答题安全：选择填空中可直接利用参数方程 $B=0$ 和 $t_1 t_2 = \\frac{C}{A}$ 秒解；在解答题中建议以「向量中点坐标公式」或「点差法」规范书写步骤，且必须检验判别式 $\\Delta > 0$。",
+      text: "垂直直线自洽性：当 $m=0$ 时，割线为 $x=n$（平行于 $y$ 轴），判别式退化为 $4a^2b^2(a^2-n^2) > 0 \\iff |n| < a$，交点为 $(n, \\pm b\\sqrt{1-n^2/a^2})$，全过程数学逻辑完全闭合。",
       importance: "hard",
     },
   ];
 
   const warnings: WarningItem[] = [];
-  if (!lineRes.valid) {
+  if (!res.valid) {
     warnings.push({
-      text: "无交点警示：当前直线与椭圆判别式 Δ < 0，无实数相交弦。",
+      text: "无交点警示：当前割线与椭圆判别式 $\\Delta_y < 0$，割线与椭圆无实数交点。",
       level: "danger",
     });
-  } else if (lineRes.discriminant === 0) {
+  } else if (res.deltaY === 0) {
     warnings.push({
-      text: "相切极限状态：当前判别式 Δ = 0，t1 = t2 为实数重根，割线退化为切线。",
+      text: "临界状态：判别式 $\\Delta_y = 0$，割线与椭圆相切，两交点重合。",
       level: "info",
     });
   }
 
   return {
     quantities,
+    reasoningSteps,
     theorems,
     gaokaoPoints,
     warnings,
     mnemonic:
-      "代入曲线得二次，韦达定理代换灵；B 为零时中点立，内分外分辨分明。",
+      "设线常设 $x=my+n$，免去斜率不存在；纵标联立韦达巧，弦长面积秒解完。",
   };
 }
