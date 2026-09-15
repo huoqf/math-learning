@@ -29,6 +29,33 @@ export interface LineCircleParams {
   my?: number; // 圆内定点 My (定点弦长极值分析)
 }
 
+/**
+ * 垂径定理反解：由圆心 C(a, b) 与弦中点 M(mx, my) 求弦所在直线的斜截式参数 (k, m)。
+ *
+ * 依据：弦 AB ⊥ CM ⟹ k = -(mx - a) / (my - b)；再由 M 在弦上得 m = my - k·mx。
+ *
+ * ⚠️ 退化情形：当 my = b 时连心线 CM 竖直，弦 AB 亦为竖直直线 x = mx，
+ * 而斜截式 y = kx + m 无法表达竖直直线。此时返回 degenerate = true，
+ * 并给出有限值 (k = 0, m = my) 以保证渲染不崩溃；调用方必须据此给出教学警示，
+ * 严禁静默当作水平弦处理。
+ */
+export function solveChordLineFromMidpoint(
+  a: number,
+  b: number,
+  mx: number,
+  my: number,
+): { k: number; m: number; degenerate: boolean } {
+  const dx = mx - a;
+  const dy = my - b;
+
+  if (Math.abs(dy) <= 1e-4) {
+    return { k: 0, m: my, degenerate: true };
+  }
+
+  const k = -dx / dy;
+  return { k, m: my - k * mx, degenerate: false };
+}
+
 export interface BaseLineCircleResult {
   validity: "valid" | "invalid";
   errorMessage?: string;

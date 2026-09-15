@@ -239,10 +239,10 @@ export function buildProbabilityNormalPanel(
           level: "core",
         },
         {
-          name: "曲线对称性与单调区间",
+          name: "曲线单调性与弯曲特征",
           latex:
-            "x \\in (\\mu-\\sigma, \\mu+\\sigma) \\text{ 内曲线上升，} x = \\mu \\pm \\sigma \\text{ 处弯曲方向改变}",
-          note: "x = μ±σ 相距恰好 1 个标准差 σ，该处曲线高度固定为最高点的 60.65%。",
+            "(-\\infty, \\mu] \\text{ 单调递增，} [\\mu, +\\infty) \\text{ 单调递减，} x = \\mu \\pm \\sigma \\text{ 处弯曲形态改变}",
+          note: "曲线关于直线 $x = \\mu$ 对称；在 $x < \\mu$ 时曲线上升，在 $x > \\mu$ 时曲线下降；$x = \\mu \\pm \\sigma$ 处高度固定为峰值的 $60.65\\%$。",
           level: "important",
         },
       ],

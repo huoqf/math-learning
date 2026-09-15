@@ -25,6 +25,13 @@ export function colorize(text: string, color: string): string {
 
 // ── Original types.ts exports ──
 
+/**
+ * 空间距离面板的模型词表（页面 config.mode 与 builder 分支判定的唯一事实源）。
+ * 页面严禁再使用 "distance" 之类的自有别名，否则会落入 builder 的末位分支而错显内容。
+ */
+export type SpatialDistanceMode =
+  "skewDistance" | "pointPlaneDistance" | "volumeExtrema";
+
 export type GaokaoTopicKey =
   | "func_derivative"
   | "conic_geometry"

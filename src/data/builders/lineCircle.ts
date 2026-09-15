@@ -306,6 +306,15 @@ export function buildLineCirclePanel(
         ? formatMathNumber(calcRes.kCH * k)
         : "-1";
 
+    // 退化警示：弦中点与圆心等高（y₀ = b）时，连心线 CH 与弦 AB 均为竖直直线，
+    // 斜率不存在，不能套用 k_CH · k_AB = -1（斜截式无法表达竖直弦）。
+    if (Math.abs(my - b) <= 1e-4) {
+      warnings.push({
+        text: "弦中点与圆心等高（$y_0 = b$）：连心线 $CH$ 竖直，割线 $AB$ 也是竖直直线，斜率 $k_{AB}$ 不存在！此时应直接写弦方程 $x = x_0$，严禁套用斜率乘积 $-1$。",
+        level: "danger",
+      });
+    }
+
     quantities.push(
       {
         label: "弦中点 / 垂足 H",

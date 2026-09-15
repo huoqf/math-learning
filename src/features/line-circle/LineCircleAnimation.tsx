@@ -17,7 +17,10 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { LineCircleScene } from "./components/LineCircleScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/lineCircle";
-import { calculateLineCircle } from "@/math/lineCircle";
+import {
+  calculateLineCircle,
+  solveChordLineFromMidpoint,
+} from "@/math/lineCircle";
 import { formatMathNumber } from "@/utils/mathFormat";
 
 export type LineCircleStudyMode = "relation" | "chord" | "tangent" | "midpoint";
@@ -56,26 +59,42 @@ export function LineCircleAnimation() {
     yRange: [-5, 5],
   });
 
+  // 单一事实源：midpoint 模式下 (k, m) 并非独立自由度，而是由弦中点 M 派生的从属量。
+  // 依据垂径定理（弦 AB ⊥ CM）实时反解 k = -(mx - a)/(my - b)、m = my - k·mx，
+  // 使左屏滑块 M、中屏弦线、右屏看板三者始终同源；其余模式透传原始参数。
+  const effectiveParams = useMemo(() => {
+    if (studyMode !== "midpoint") return params;
+    const chord = solveChordLineFromMidpoint(
+      params.a ?? defaultParams.a,
+      params.b ?? defaultParams.b,
+      params.mx ?? defaultParams.mx,
+      params.my ?? defaultParams.my,
+    );
+    return { ...params, k: chord.k, m: chord.m };
+  }, [params, studyMode]);
+
   // 6. 数学量看板数据组装
   const mathData = useMemo(() => {
-    return buildMathQuantities("anim-line-circle", params, { studyMode });
-  }, [params, studyMode]);
+    return buildMathQuantities("anim-line-circle", effectiveParams, {
+      studyMode,
+    });
+  }, [effectiveParams, studyMode]);
 
   // 7. 纯数学模型中间量（用于悬浮卡片与预设计算）
   const calcRes = useMemo(
     () =>
       calculateLineCircle({
-        a: params.a ?? defaultParams.a,
-        b: params.b ?? defaultParams.b,
-        r: params.r ?? defaultParams.r,
-        k: params.k ?? defaultParams.k,
-        m: params.m ?? defaultParams.m,
-        px: params.px ?? defaultParams.px,
-        py: params.py ?? defaultParams.py,
-        mx: params.mx ?? defaultParams.mx,
-        my: params.my ?? defaultParams.my,
+        a: effectiveParams.a ?? defaultParams.a,
+        b: effectiveParams.b ?? defaultParams.b,
+        r: effectiveParams.r ?? defaultParams.r,
+        k: effectiveParams.k ?? defaultParams.k,
+        m: effectiveParams.m ?? defaultParams.m,
+        px: effectiveParams.px ?? defaultParams.px,
+        py: effectiveParams.py ?? defaultParams.py,
+        mx: effectiveParams.mx ?? defaultParams.mx,
+        my: effectiveParams.my ?? defaultParams.my,
       }),
-    [params],
+    [effectiveParams],
   );
 
   // 参数更新处理器（学生手动调整时，若在锁定预设下则保持联动，若在free下则自由调整）
@@ -389,12 +408,30 @@ export function LineCircleAnimation() {
   }, [studyMode, calcRes.relation]);
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问，100%包裹单美元符号并直击高考考点）
+  // 典型预设按研究模式过滤：避免出现与本模式无关的预设
+  // （例：中点模式下暴露"临界切线状态"、切线模式下暴露"过圆心最大弦"）
+  const presetItems = useMemo(() => {
+    const free = { key: "free", label: "自由探究" };
+    if (studyMode === "midpoint") {
+      return [free, { key: "minChord", label: "垂直最短弦" }];
+    }
+    if (studyMode === "relation" || studyMode === "chord") {
+      return [
+        free,
+        { key: "diameter", label: "过圆心最大弦" },
+        { key: "tangentCritical", label: "临界切线状态" },
+      ];
+    }
+    return [free];
+  }, [studyMode]);
+
   const tipConfig = useMemo(() => {
-    const rVal = formatMathNumber(params.r ?? 3);
-    const aVal = formatMathNumber(params.a ?? 0);
-    const bVal = formatMathNumber(params.b ?? 0);
-    const kVal = formatMathNumber(params.k ?? 0.75);
-    const mVal = formatMathNumber(params.m ?? -1);
+    const rVal = formatMathNumber(effectiveParams.r ?? 3);
+    const aVal = formatMathNumber(effectiveParams.a ?? 0);
+    const bVal = formatMathNumber(effectiveParams.b ?? 0);
+    // 题设中的割线斜率必须取派生值：midpoint 模式下 (k, m) 由弦中点 M 反解而来
+    const kVal = formatMathNumber(effectiveParams.k ?? 0.75);
+    const mVal = formatMathNumber(effectiveParams.m ?? -1);
 
     if (preset === "diameter") {
       return {
@@ -462,7 +499,7 @@ export function LineCircleAnimation() {
       question:
         "如何运用垂径定理垂直关系 $k_{CH} \\cdot k_{AB} = -1$（点差法）确定弦方程？",
     };
-  }, [studyMode, preset, params]);
+  }, [studyMode, preset, effectiveParams]);
 
   const panelTitle = useMemo(() => {
     switch (studyMode) {
@@ -500,15 +537,10 @@ export function LineCircleAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 2. 典型预设 Section (黄金2x2规范) */}
+          {/* 2. 典型预设 Section (按模式过滤，黄金2x2规范) */}
           <LeftPanelSection title="典型预设">
             <SelectGrid
-              items={[
-                { key: "free", label: "自由探究" },
-                { key: "diameter", label: "过圆心最大弦" },
-                { key: "tangentCritical", label: "临界切线状态" },
-                { key: "minChord", label: "垂直最短弦" },
-              ]}
+              items={presetItems}
               value={preset}
               onChange={(k) => handlePresetSelect(k as LineCirclePresetKey)}
               variant="outline"
@@ -559,7 +591,7 @@ export function LineCircleAnimation() {
             transform={vp.transform}
           >
             <LineCircleScene
-              params={params}
+              params={effectiveParams}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

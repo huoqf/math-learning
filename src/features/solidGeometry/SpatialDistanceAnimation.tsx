@@ -32,12 +32,13 @@ import {
   solveSideEdgeAndFaceDiagonalDistance,
 } from "@/math3d/spatialDistance";
 import { MATH_COLORS } from "@/theme";
+import type { SpatialDistanceMode } from "@/data/types";
 import CuboidBaseScene from "./CuboidBaseScene";
 import SkewPerpendicularModeScene from "./modes/SkewPerpendicularModeScene";
 import DistanceModeScene from "./modes/DistanceModeScene";
 
-export type DistanceMode =
-  "skewDistance" | "pointPlaneDistance" | "volumeExtrema";
+/** 与数据层统一词表同源（SSOT），严禁在此另立一套字符串取值 */
+export type DistanceMode = SpatialDistanceMode;
 
 export default function SpatialDistanceAnimation() {
   const [activeMode, setActiveMode] = useState<DistanceMode>("skewDistance");
@@ -91,6 +92,7 @@ export default function SpatialDistanceAnimation() {
 
   // 纯数学模型解算
   const isSideEdgeModel = modelPreset === "sideEdge";
+  const isCubeModel = modelPreset === "cube" || modelPreset === "cubeThird";
   const skewData = useMemo(() => {
     return isSideEdgeModel
       ? solveSideEdgeAndFaceDiagonalDistance(a, b, c, lambda, mu)
@@ -101,14 +103,17 @@ export default function SpatialDistanceAnimation() {
     return solvePointToPlaneDistance(a, b, c, lambda);
   }, [a, b, c, lambda]);
 
-  // 右屏看板数据
+  // 右屏看板数据 (SSOT: 将正方体判定显式传入 config，使中右屏同源)
+  const isCube =
+    isCubeModel || (Math.abs(a - b) < 1e-4 && Math.abs(b - c) < 1e-4);
   const mathData = useMemo(
     () =>
       buildMathQuantities("anim-solid-distance", params, {
         mode: activeMode,
         preset: modelPreset,
+        isCube,
       }),
-    [params, activeMode, modelPreset],
+    [params, activeMode, modelPreset, isCube],
   );
 
   // 典型情景配置 (纯净加粗中文标题，严禁堆砌公式)
@@ -194,8 +199,6 @@ export default function SpatialDistanceAnimation() {
       setParams(target.params);
     }
   };
-
-  const isCubeModel = modelPreset === "cube" || modelPreset === "cubeThird";
 
   const handleParamChange = (key: string, value: number) => {
     // 若在正方体预设中调节棱长 a，联动更新 b 和 c 保持正方体题设约束

@@ -94,6 +94,13 @@ export function InequalityAbsoluteAnimation() {
     });
   }, [params, studyMode, ineqType]);
 
+  // SSOT：自由情景的 id 由 ScenarioSpec 自身声明，严禁用 `${mode}-free` 拼接
+  // （各模式前缀并不等于 mode 名：triangle 组声明为 tri-*，故拼接会失配导致导引卡消失）
+  const freeScenario = useMemo(
+    () => currentScenarios.find((s) => !s.presetParams),
+    [currentScenarios],
+  );
+
   const handleParamChange = useCallback(
     (key: string, value: number) => {
       setParams((prev) => ({
@@ -101,10 +108,11 @@ export function InequalityAbsoluteAnimation() {
         [key]: value,
       }));
       // 手动调参切回 free 探索
-      const freeId = `${studyMode}-free`;
-      setScenarioKey(freeId);
+      if (freeScenario) {
+        setScenarioKey(freeScenario.id);
+      }
     },
-    [studyMode],
+    [freeScenario],
   );
 
   const handleReset = () => {

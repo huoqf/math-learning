@@ -134,7 +134,7 @@ export const paramMeta: Record<
   x0: {
     label: "x₀ (点P/定点x)",
     labelFormula: `\\text{横坐标 } \\color{${c1}}{x_0}`,
-    defaultValue: 2,
+    defaultValue: 0,
     min: -5,
     max: 5,
     step: 0.2,
@@ -145,7 +145,7 @@ export const paramMeta: Record<
   y0: {
     label: "y₀ (点P/定点y)",
     labelFormula: `\\text{纵坐标 } \\color{${c2}}{y_0}`,
-    defaultValue: 3,
+    defaultValue: 1,
     min: -4,
     max: 4,
     step: 0.2,

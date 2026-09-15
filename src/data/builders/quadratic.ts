@@ -507,7 +507,7 @@ function buildInequalityMode(
     { label: "不等式类型", value: ineqType === ">" ? "f(x) > 0" : "f(x) < 0" },
     {
       label: "解集范围",
-      value: `$${solutionText}$`,
+      value: solutionText,
       color: MATH_COLORS.inequality,
     },
   );

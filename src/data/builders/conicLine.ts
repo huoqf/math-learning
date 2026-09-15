@@ -477,7 +477,7 @@ export function buildConicLineMathQuantities(
       theorems.push({
         name: "通径极值与焦半径倒数和定理",
         latex:
-          "$L_{通径} = \\frac{2b^2}{a}, \\quad \\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|} = \\frac{2a}{b^2}$",
+          "L_{\\text{通径}} = \\frac{2b^2}{a}, \\quad \\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|} = \\frac{2a}{b^2}",
         condition: "过焦点垂直于对称轴（$\\theta = \\pi/2$）",
         note: "通径是过焦点最短的焦点弦；弦两端点到焦点的焦半径倒数和在过焦点割线中恒为定值 $\\frac{2a}{b^2}$。",
         level: "core",

@@ -14,7 +14,11 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { VectorDotProductScene } from "./components/VectorDotProductScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/vectorDotProduct";
+import {
+  defaultParams,
+  isPolarGeomMode,
+  paramMeta,
+} from "@/data/registries/vectorDotProduct";
 import { computeVectorDotProduct } from "@/math/vectorDotProduct";
 
 export function VectorDotProductAnimation() {
@@ -223,12 +227,20 @@ export function VectorDotProductAnimation() {
     }
   }, [studyMode]);
 
+  // 单一事实源（SSOT）：defProj 模式一律以极坐标几何为唯一构型来源。
+  // 中屏 Scene、右屏看板、悬浮公式三处共用同一份派生参数，严禁各自判定几何模型。
+  // 判定规则取自 registries 的 isPolarGeomMode（与数据层同源）。
+  const effectiveParams = useMemo(
+    () => ({ ...params, usePolarGeom: isPolarGeomMode(studyMode) ? 1 : 0 }),
+    [params, studyMode],
+  );
+
   // 右屏看板数据构建
   const mathData = useMemo(() => {
-    return buildMathQuantities("anim-vector-dot-product", params, {
+    return buildMathQuantities("anim-vector-dot-product", effectiveParams, {
       studyMode,
     });
-  }, [params, studyMode]);
+  }, [effectiveParams, studyMode]);
 
   // 左屏 ParamControl 参数配置 (根据模式实现真正降维)
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -268,7 +280,7 @@ export function VectorDotProductAnimation() {
 
   // 计算中屏顶端悬浮的 KaTeX 动态公式（带色彩 Token 绑定）
   const topFormulaLatex = useMemo(() => {
-    const mathRes = computeVectorDotProduct(params);
+    const mathRes = computeVectorDotProduct(effectiveParams);
     const {
       a,
       b,
@@ -291,7 +303,7 @@ export function VectorDotProductAnimation() {
     } else {
       return `\\color{${colA}}{\\vec{OA}} \\cdot \\color{${colB}}{\\vec{OB}} = \\frac{1}{4}(|\\vec{a}+\\vec{b}|^2 - |\\vec{a}-\\vec{b}|^2) = |\\color{${colP}}{\\vec{OM}}|^2 - |\\vec{MB}|^2 = \\mathbf{${polarizationVal.toFixed(2)}}`;
     }
-  }, [params, studyMode]);
+  }, [effectiveParams, studyMode]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
@@ -370,7 +382,7 @@ export function VectorDotProductAnimation() {
             transform={vp.transform}
           >
             <VectorDotProductScene
-              params={params}
+              params={effectiveParams}
               scale={scale}
               vp={vp}
               onBatchParamsChange={handleBatchParamsChange}

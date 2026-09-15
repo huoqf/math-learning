@@ -58,4 +58,22 @@ describe("buildSetPanel 数据看板构建器测试", () => {
     expect(panelData.warnings?.length).toBeGreaterThan(0);
     expect(panelData.warnings?.[0].text).toContain("空集");
   });
+
+  it("集合运算模式 (anim-set-venn) 生成对应定理与口诀", () => {
+    const params = {
+      xA: -1.2,
+      yA: 0.0,
+      rA: 2.2,
+      xB: 1.2,
+      yB: 0.0,
+      rB: 2.2,
+      xP: 0.0,
+      yP: 0.0,
+    };
+
+    const panelData = buildSetPanel(params, { animId: "anim-set-venn" });
+    expect(panelData.theorems.length).toBe(3);
+    expect(panelData.gaokaoPoints.length).toBe(2);
+    expect(panelData.mnemonic).toContain("交集找公共");
+  });
 });

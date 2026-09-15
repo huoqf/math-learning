@@ -5,6 +5,7 @@ import type {
   GaokaoPoint,
   WarningItem,
   ReasoningStep,
+  SpatialDistanceMode,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
 import {
@@ -19,7 +20,10 @@ export function buildSpatialDistancePanel(
   params: Record<string, number>,
   config?: Record<string, unknown>,
 ): MathPanelData {
-  const mode = (config?.mode as string) ?? "skewDistance";
+  // 距离模型词表由 @/data/types 统一声明；页面必须传入其中的合法取值，
+  // 严禁使用 "distance" 这类自有别名（会静默落入 else 分支）。
+  const mode: SpatialDistanceMode =
+    (config?.mode as SpatialDistanceMode) ?? "skewDistance";
   const preset = (config?.preset as string) ?? "free";
   const a = params.a ?? 3;
   const b = params.b ?? 2;
@@ -39,7 +43,9 @@ export function buildSpatialDistancePanel(
     // 异面直线公垂线与距离极值模式
     const isEdgeModel = preset === "sideEdge";
     const isCube =
-      preset === "cube" || (Math.abs(a - b) < 1e-4 && Math.abs(b - c) < 1e-4);
+      Boolean(config?.isCube) ||
+      preset === "cube" ||
+      (Math.abs(a - b) < 1e-4 && Math.abs(b - c) < 1e-4);
     const skew = isEdgeModel
       ? solveSideEdgeAndFaceDiagonalDistance(a, b, c, lambda, mu)
       : solveSkewLinesDistance(a, b, c, lambda, mu);
@@ -185,12 +191,12 @@ export function buildSpatialDistancePanel(
     }
 
     // 4. 定理公式
-    if (preset === "cube") {
+    if (preset === "cube" || isCube) {
       theorems.push({
         name: "正方体面对角线公垂距离秒杀定理",
-        latex: `d_{\\min} = \\frac{\\sqrt{3}}{3} a \\approx ${((Math.sqrt(3) / 3) * a).toFixed(4)}`,
+        latex: "d_{\\min} = \\frac{\\sqrt{3}}{3} a",
         level: "core",
-        note: `在正方体中，面对角线 A₁B 与底面对角线 AC 的公垂足分别为两对角线的 2/3 与 1/3 处，最短距离恒为 (√3/3)a`,
+        note: `在正方体中，面对角线 A₁B 与底面对角线 AC 的公垂足分别为两对角线的 2/3 与 1/3 处，最短距离恒为 (√3/3)a（当前 a=${a.toFixed(1)} 时 d_min ≈ ${((Math.sqrt(3) / 3) * a).toFixed(4)}）`,
       });
     }
 

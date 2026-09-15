@@ -1,5 +1,6 @@
 import type { MathPanelData } from "../types";
 import {
+  createSymmetryFn,
   evalFunctionParity,
   evalSecantSlope,
   evalAxisSymmetry,
@@ -45,6 +46,16 @@ export function buildFuncPropertiesPanel(
   const axisB = params.axisB ?? 2.0;
   const centerX = params.centerX ?? 0.0;
   const centerY = params.centerY ?? 0.0;
+
+  // 单轴 / 中心对称的母函数必须与中屏 PropertiesScene 同源（SSOT），
+  // 否则会出现「图形关于 x = a 对称，而看板残差 ≠ 0」的自相矛盾。
+  const symmetryFn = createSymmetryFn(
+    fnType,
+    subMode === "center" ? "center" : "axis",
+    axisA,
+    centerX,
+    centerY,
+  );
 
   // 1. 定义域与值域模式
   if (mode === "domain") {
@@ -599,7 +610,7 @@ export function buildFuncPropertiesPanel(
   // 3. 对称性与周期性模式 (Symmetry & Periodicity)
   if (subMode === "axis") {
     // 单轴对称探究
-    const axisRes = evalAxisSymmetry(getFn, axisA, x0);
+    const axisRes = evalAxisSymmetry(symmetryFn, axisA, x0);
     const aStr = axisA.toFixed(1).replace(/\.0$/, "");
     const x0Str = x0.toFixed(1).replace(/\.0$/, "");
     const symXStr = axisRes.symX.toFixed(1).replace(/\.0$/, "");
@@ -698,7 +709,7 @@ export function buildFuncPropertiesPanel(
 
   if (subMode === "center") {
     // 一般中心对称探究
-    const centerRes = evalCenterSymmetry(getFn, centerX, centerY, x0);
+    const centerRes = evalCenterSymmetry(symmetryFn, centerX, centerY, x0);
     const xcStr = centerX.toFixed(1).replace(/\.0$/, "");
     const ycStr = centerY.toFixed(1).replace(/\.0$/, "");
     const x0Str = x0.toFixed(1).replace(/\.0$/, "");

@@ -128,6 +128,11 @@ export function AmgmPage() {
             <SelectGrid
               items={[
                 {
+                  key: "free",
+                  label: "自由探究",
+                  formula: "ax + \\frac{b}{x}",
+                },
+                {
                   key: "amgm_std",
                   label: "标准对勾配凑",
                   formula: "x + \\frac{4}{x} \\ge 4",
@@ -141,7 +146,6 @@ export function AmgmPage() {
                   key: "amgm_unit",
                   label: "单位系数模型",
                   formula: "x + \\frac{1}{x} \\ge 2",
-                  fullWidth: true,
                 },
               ]}
               value={preset}

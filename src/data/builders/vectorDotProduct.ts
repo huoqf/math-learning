@@ -1,5 +1,6 @@
 import type { MathPanelData } from "../types";
 import { computeVectorDotProduct } from "@/math/vectorDotProduct";
+import { isPolarGeomMode } from "../registries/vectorDotProduct";
 import type {
   MathQuantity,
   Theorem,
@@ -14,14 +15,15 @@ export function buildVectorDotProductPanel(
 ): MathPanelData {
   const studyMode = (config?.studyMode as string) || "defProj";
 
-  const effectiveParams = {
-    ...params,
-    usePolarGeom: Boolean(
-      params.usePolarGeom ??
-      (studyMode === "defProj" && params.thetaDeg !== undefined),
-    ),
-  };
-  const mathRes = computeVectorDotProduct(effectiveParams);
+  // 几何模型开关（usePolarGeom）由页面统一派生后经 effectiveParams 注入（SSOT，第一优先级）。
+  // 直连数据层的调用方（巡检测试、跨页复用等）未注入时，回退到同一条 isPolarGeomMode 规则，
+  // 保证"defProj ⇒ 极坐标"这一事实在全库只有一处定义，不再与 Scene 判定分裂。
+  const usePolarGeom =
+    params.usePolarGeom !== undefined
+      ? Boolean(params.usePolarGeom)
+      : isPolarGeomMode(studyMode);
+
+  const mathRes = computeVectorDotProduct({ ...params, usePolarGeom });
 
   const {
     normA,

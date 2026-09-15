@@ -180,19 +180,29 @@ export function TrigTransformAnimation() {
     const omega = params.omega ?? 1;
     const phi = params.phi ?? 0;
     const k = params.k ?? 0;
+
+    const signPhi = phi >= 0 ? "+" : "-";
+    const phiLatex =
+      Math.abs(phi) < 1e-4 ? "" : ` ${signPhi} ${formatPiValue(Math.abs(phi))}`;
+    const signK = k >= 0 ? "+" : "-";
+    const kLatex =
+      Math.abs(k) > 1e-5 ? ` ${signK} ${Math.abs(k).toFixed(1)}` : "";
+    const funcExpr = `$f(x) = ${A.toFixed(1)} \\sin(${omega.toFixed(1)}x${phiLatex})${kLatex}$`;
+
     switch (studyMode) {
       case "transformPath":
         return {
           variant: "primary" as const,
           badge: "高考陷阱 · 平移变换次序",
-          condition: `f(x) = ${A} sin(${omega}x + ${phi}) + ${k}，正弦图象平移变换均作用于自变量 x 自身。`,
-          question: "为什么先伸缩后平移时，平移量必须除以 ω（为 |φ|/ω）？",
+          condition: `${funcExpr}，正弦图象平移变换均作用于自变量 $x$ 自身。`,
+          question:
+            "为什么先伸缩后平移时，平移量必须除以 $\\omega$（即 $|\\varphi|/\\omega$）？",
         };
       case "omegaZeros":
         return {
           variant: "accent" as const,
           badge: "区间零点 · 开闭区间计数",
-          condition: `f(x) = ${A} sin(${omega}x + ${phi}) + ${k}，区间 [x₁, x₂] 内统计零点与极值。`,
+          condition: `${funcExpr}，在给定区间 $[x_1, x_2]$ 内统计零点与极值。`,
           question:
             "当区间端点恰好为零点时，开闭区间对零点个数有何影响？区间单调性如何判定？",
         };
@@ -201,14 +211,14 @@ export function TrigTransformAnimation() {
           variant: "info" as const,
           badge: "五点作图 · 特征相位定位",
           condition:
-            "令相位 u = ωx + φ，取 0, π/2, π, 3π/2, 2π 五个特征相位定出关键点。",
+            "令相位 $u = \\omega x + \\varphi$，依次取 $0, \\frac{\\pi}{2}, \\pi, \\frac{3\\pi}{2}, 2\\pi$ 五个特征相位定出关键点。",
           question: "已知图象求解析式时，为何代入波峰/波谷比代入零点更准确？",
         };
       default:
         return {
           variant: "info" as const,
           badge: "图像性质 · 变换参数决定",
-          condition: `f(x) = ${A} sin(${omega}x + ${phi}) + ${k}，周期 T = 2π/|ω|，值域 [k−|A|, k+|A|]。`,
+          condition: `${funcExpr}，周期 $T = \\frac{2\\pi}{|\\omega|}$，值域 $[k-|A|, k+|A|]$。`,
           question: "对称轴方程与对称中心横坐标之间有哪些内在距离规律？",
         };
     }

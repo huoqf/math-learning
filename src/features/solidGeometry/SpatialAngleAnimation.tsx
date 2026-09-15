@@ -17,6 +17,7 @@ import type { LegendItem } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
+import type { SpatialDistanceMode } from "@/data/types";
 import { spatialAngleMeta } from "@/data/registries/solidGeometry";
 import { MATH_COLORS } from "@/theme";
 import {
@@ -112,13 +113,19 @@ export default function SpatialAngleAnimation({
   // 组装右屏看板数据 (精准同步左屏探究模式与典型预设)
   const animId =
     activeMode === "distance" ? "anim-solid-distance" : "anim-solid-angle";
+  // SSOT：本页 AngleMode 的 "distance" 必须映射为数据层统一词表 SpatialDistanceMode 的
+  // "pointPlaneDistance"（对应 DistanceModeScene 的 solvePointToPlaneDistance）。
+  // 严禁把 "distance" 直接透传——builder 只认 skewDistance / pointPlaneDistance，
+  // 否则会落入 else 分支而错显"动点三棱锥体积极值"。
+  const panelMode: SpatialDistanceMode | Exclude<AngleMode, "distance"> =
+    activeMode === "distance" ? "pointPlaneDistance" : activeMode;
   const mathData = useMemo(
     () =>
       buildMathQuantities(animId, params, {
-        mode: activeMode,
+        mode: panelMode,
         preset: modelPreset,
       }),
-    [params, activeMode, modelPreset, animId],
+    [params, panelMode, modelPreset, animId],
   );
 
   // 探究模式对应的典型模型预设 (纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余描述)

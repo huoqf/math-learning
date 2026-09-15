@@ -137,8 +137,14 @@ export function buildFuncZeroPanel(
   }
 
   if (modelKey === "counterExample" && !bisectionRes.hasZero) {
+    const fAStr = Number.isFinite(fA)
+      ? `f(${m.toFixed(1)}) ${fA >= 0 ? ">" : "<"} 0`
+      : "";
+    const fBStr = Number.isFinite(fB)
+      ? `f(${n.toFixed(1)}) ${fB >= 0 ? ">" : "<"} 0`
+      : "";
     warnings.push({
-      text: "当前端点同号 $f(-1)>0, f(3)>0$，不满足定理前提，但区间内实际有两个零点 $x=0$ 与 $x=2$！印证定理只是充分条件而非必要条件。",
+      text: `当前端点同号 $${fAStr}, ${fBStr}$，不满足定理前提，但区间内实际有两个零点 $x=0$ 与 $x=2$！印证定理只是充分条件而非必要条件。`,
       level: "info",
     });
   }

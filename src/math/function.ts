@@ -269,6 +269,52 @@ export function evalCenterSymmetry(
   return { x, fx, symX, symFx, midX, midY, isSymmetric, residual };
 }
 
+/** 母函数族（与 features/funcProperties/components/types.ts 的 PropertiesFnType 同构） */
+export type FunctionFamily =
+  "cubic" | "quadratic" | "root" | "abs" | "reciprocal" | "sin";
+
+/**
+ * 单轴对称 / 中心对称的母函数构造器（全库唯一事实源）
+ *
+ * 中屏 PropertiesScene 与右屏 buildFuncPropertiesPanel 必须共用本构造器，
+ * 否则会出现「中屏图形对称、右屏看板残差却不为 0」的自相矛盾。
+ *
+ * @param subMode "axis" 表示关于直线 x = axisA 轴对称；"center" 表示关于点 C(centerX, centerY) 中心对称
+ */
+export function createSymmetryFn(
+  fnType: FunctionFamily,
+  subMode: "axis" | "center",
+  axisA: number,
+  centerX: number,
+  centerY: number,
+): (x: number) => number {
+  if (subMode === "axis") {
+    switch (fnType) {
+      case "quadratic":
+        return (x) => 0.5 * Math.pow(x - axisA, 2) - 1.5;
+      case "abs":
+        return (x) => Math.abs(x - axisA) - 1.0;
+      case "sin":
+        return (x) => Math.cos(x - axisA);
+      default:
+        return (x) => Math.pow(x - axisA, 2) - 2;
+    }
+  }
+
+  switch (fnType) {
+    case "sin":
+      return (x) => Math.sin(x - centerX) + centerY;
+    case "reciprocal":
+      return (x) => {
+        const dx = x - centerX;
+        return Math.abs(dx) > 1e-3 ? 1 / dx + centerY : NaN;
+      };
+    case "cubic":
+    default:
+      return (x) => 0.3 * Math.pow(x - centerX, 3) + centerY;
+  }
+}
+
 export type PeriodModelType = "dual-axis" | "dual-center" | "axis-center";
 
 /**

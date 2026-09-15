@@ -137,6 +137,11 @@ export function StandardPage() {
             <SelectGrid
               items={[
                 {
+                  key: "free",
+                  label: "自由探究",
+                  description: "自主调节参数与极值点",
+                },
+                {
                   key: "nike_std",
                   label: "经典对勾型",
                   description: "同号象限双极值 (ab > 0)",
@@ -150,7 +155,6 @@ export function StandardPage() {
                   key: "inverse_std",
                   label: "反比例退化",
                   description: "斜渐近线水平退化 (a = 0)",
-                  fullWidth: true,
                 },
               ]}
               value={preset}

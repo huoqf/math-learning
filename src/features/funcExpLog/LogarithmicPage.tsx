@@ -81,7 +81,7 @@ export function LogarithmicPage() {
           {
             value: 1.0,
             variant: "critical",
-            label: "退化 (a=1 非指数函数)",
+            label: "退化 (a=1 非对数函数)",
             labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} = 1`,
           },
           {

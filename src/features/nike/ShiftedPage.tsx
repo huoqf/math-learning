@@ -227,6 +227,11 @@ export function ShiftedPage() {
             <SelectGrid
               items={[
                 {
+                  key: "free",
+                  label: "自由探究",
+                  description: "自主探索中心平移与极值",
+                },
+                {
                   key: "shifted_quad",
                   label: "二次分式对勾型",
                   description: "分离常数化对勾模型 (ab > 0)",
@@ -240,7 +245,6 @@ export function ShiftedPage() {
                   key: "shifted_streamer",
                   label: "二次分式飘带型",
                   description: "分离常数化飘带模型 (ab < 0)",
-                  fullWidth: true,
                 },
               ]}
               value={preset}

@@ -26,6 +26,20 @@ export function buildParabolaPanel(
   const base = getParabolaBaseInfo(p, direction);
   const safeP = base.p;
 
+  // 1.1 方向敏感的符号片段：抛物线开口方向决定对称轴与正负号。
+  //     右屏一切含 x_0 / y_0 / 准线常数的公式必须由此派生，杜绝写死 y²=2px 的向右开向。
+  const isHorizontalAxis = direction === "right" || direction === "left"; // 对称轴是否为 x 轴
+  const axisCoord = isHorizontalAxis ? "x" : "y"; // 动点主坐标符号
+  const radialSign = direction === "right" || direction === "up" ? "" : "-"; // 焦半径正负号
+  // 焦半径纯符号式：right/up → x_0 + p/2；left/down → -x_0 + p/2
+  const focalRadiusSymbolic = `${radialSign}${axisCoord}_0 + \\frac{p}{2}`;
+  // 动点 P 处切线符号式：right → y_0 y = p(x + x_0)；left → y_0 y = -p(x + x_0)；up/down 对偶
+  const tangentSymbolic = `${isHorizontalAxis ? "y_0 y" : "x_0 x"} = ${radialSign}p(${isHorizontalAxis ? "x + x_0" : "y + y_0"})`;
+  // 标准方程符号：right → y²=2px；left → y²=-2px；up → x²=2py；down → x²=-2py
+  const equationSymbol = isHorizontalAxis
+    ? `y^2 = ${radialSign}2px`
+    : `x^2 = ${radialSign}2py`;
+
   // 1. 退化警告
   const warnings: MathPanelData["warnings"] = [];
   if (p <= 0) {
@@ -74,6 +88,9 @@ export function buildParabolaPanel(
   const chordInfo = getFocalChordInfo(thetaDeg, safeP, direction);
   const opticalInfo = getTangentAndOpticalInfo(P, safeP, direction);
   const mongeInfo = getDirectrixMongeInfo(yQ, safeP, direction);
+
+  // 动点 P 主坐标数值（right/left 取 x₀，up/down 取 y₀）：用于焦截距的数値代入
+  const pMainCoord = isHorizontalAxis ? P.x : P.y;
 
   if (studyMode === "definition") {
     quantities.push(
@@ -193,12 +210,8 @@ export function buildParabolaPanel(
     );
   }
 
-  // 3. 动态焦半径公式字符串
-  let focalRadiusFormula = "|PF| = x_0 + \\frac{p}{2}";
-  if (direction === "left") focalRadiusFormula = "|PF| = -x_0 + \\frac{p}{2}";
-  else if (direction === "up") focalRadiusFormula = "|PF| = y_0 + \\frac{p}{2}";
-  else if (direction === "down")
-    focalRadiusFormula = "|PF| = -y_0 + \\frac{p}{2}";
+  // 3. 动态焦半径右式（随开口方向派生；前缀 "|PF| = " 由调用处统一拼接，杜绝重复拼接）
+  const focalRadiusFormula = focalRadiusSymbolic;
 
   // 4. 定理公式（随 studyMode 严格匹配，杜绝不相干内容）
   const theorems: MathPanelData["theorems"] = [];
@@ -226,9 +239,8 @@ export function buildParabolaPanel(
     theorems.push(
       {
         name: "抛物线几何切线与光学反射定理",
-        latex:
-          "|FT| = |PF| = x_0 + \\frac{p}{2} \\implies \\angle TPF = \\angle TPH",
-        note: "切线与对称轴交于点 $T(-x_0, 0)$，$\\triangle PTF$ 为等腰三角形。从焦点 $F$ 发出的光线经抛物线切点 $P$ 反射后平行于对称轴；平行光线经反射后汇聚于焦点 $F$。",
+        latex: `|FT| = |PF| = ${focalRadiusSymbolic} \\implies \\angle TPF = \\angle TPH`,
+        note: `${isHorizontalAxis ? "切线与对称轴交于点 $T(-x_0, 0)$" : "切线与对称轴交于点 $T(0, -y_0)$"}，$\\triangle PTF$ 为等腰三角形。从焦点 $F$ 发出的光线经抛物线切点 $P$ 反射后平行于对称轴；平行光线经反射后汇聚于焦点 $F$。`,
         prerequisites: ["点 $P(x_0, y_0)$ 在抛物线上", "切线斜率存在"],
         level: "core",
       },
@@ -264,7 +276,7 @@ export function buildParabolaPanel(
       {
         step: 1,
         title: "审题定法 · 第一定义等价转化",
-        detail: `已知抛物线焦参数 $p = ${pStr}$，焦点 $F(${xFStr}, ${yFStr})$，准线方程 $l: ${base.directrixIsVertical ? `x = -${pHalf}` : `y = -${pHalf}`}$。根据定义，抛物线上任意动点 $P(x_0, y_0)$ 到焦点的距离恒等于到准线的垂直距离。`,
+        detail: `已知抛物线焦参数 $p = ${pStr}$，焦点 $F(${xFStr}, ${yFStr})$，准线方程 $l: ${base.directrixIsVertical ? `x` : `y`} = ${formatMathNumber(base.directrixConstant)}$。根据定义，抛物线上任意动点 $P(x_0, y_0)$ 到焦点的距离恒等于到准线的垂直距离。`,
         latex: `|PF| = d(P, l) = ${focalRadiusFormula}`,
         rubric:
           "采分点：规范写出焦点坐标与准线方程，明确第一定义几何等价转化（3分）",
@@ -273,7 +285,7 @@ export function buildParabolaPanel(
         step: 2,
         title: "建模代入 · 当前动点两点间距离与垂线距离演绎",
         detail: `当前动点 $P(${xPStr}, ${yPStr})$，代入平面两点间距离公式展开计算焦半径 $|PF|$，同时求点 $P$ 到准线 $l$ 的垂足 $H(${formatMathNumber(radiusInfo.H.x)}, ${formatMathNumber(radiusInfo.H.y)})$ 与垂线段长度：`,
-        latex: `|PF| = \\sqrt{(x_P - x_F)^2 + (y_P - y_F)^2} = \\sqrt{(${xPStr} - ${xFStr})^2 + (${yPStr} - ${yFStr})^2} = ${focalRadiusVal}, \\quad d(P, l) = |x_P - (-${pHalf})| = ${directrixDistVal}`,
+        latex: `|PF| = \\sqrt{(x_P - x_F)^2 + (y_P - y_F)^2} = \\sqrt{(${xPStr} - ${xFStr})^2 + (${yPStr} - ${yFStr})^2} = ${focalRadiusVal}, \\quad d(P, l) = |${axisCoord}_P - (${formatMathNumber(base.directrixConstant)})| = ${directrixDistVal}`,
         rubric:
           "采分点：列出两点间距离代数式并代入具体坐标，精确求得焦半径与准线距离（3分）",
       },
@@ -282,7 +294,7 @@ export function buildParabolaPanel(
         title: "求解反思 · 高考折线距离和最值应用 (化折为直)",
         detail:
           "对于求平面定点 $A(x_A, y_A)$ 与抛物线上动点 $P$ 构成的折线距离和 $|PA| + |PF|$ 的最值问题，利用第一定义将焦半径转化为垂线段：$|PA| + |PF| = |PA| + |PH| \\ge |AH_A|$，当且仅当 $A, P, H_A$ 三点共线时取等号，最小值为点 $A$ 到准线 $l$ 的距离。",
-        latex: `(|PA| + |PF|)_{\\min} = d(A, l) = x_A + \\frac{p}{2} = x_A + ${pHalf}`,
+        latex: `(|PA| + |PF|)_{\\min} = d(A, l) = ${radialSign}${axisCoord}_A + \\frac{p}{2} = ${radialSign}${axisCoord}_A + ${pHalf}`,
         rubric:
           "采分点：应用第一定义化折为直，写出三点共线充要条件与最值结论（4分）",
       },
@@ -337,20 +349,35 @@ export function buildParabolaPanel(
       : "\\infty";
     const areaVal = formatMathNumber(Math.round(mongeInfo.areaQAB * 100) / 100);
 
+    // 方向敏感的数值与符号片段（杜绝写死向右开向）
+    const radialTermNum = formatMathNumber((radialSign ? -1 : 1) * pMainCoord);
+    const interceptT = isHorizontalAxis
+      ? `${formatMathNumber(-P.x)}, 0`
+      : `0, ${formatMathNumber(-P.y)}`;
+    const dirConstStr = formatMathNumber(base.directrixConstant);
+    const qPoint = isHorizontalAxis
+      ? `${dirConstStr}, ${yQStr}`
+      : `${yQStr}, ${dirConstStr}`;
+    const chordOfContact = `${isHorizontalAxis ? "y_Q y" : "x_Q x"} = ${radialSign}p(${isHorizontalAxis ? "x" : "y"} ${radialSign ? "+" : "-"} ${pHalf})`;
+    const productSymbol = isHorizontalAxis ? "y_1 y_2" : "x_1 x_2";
+    const slopeProductLatex = isHorizontalAxis
+      ? "k_{QA} \\cdot k_{QB} = \\frac{p}{y_1} \\cdot \\frac{p}{y_2} = \\frac{p^2}{y_1 y_2} = \\frac{p^2}{-p^2} = -1"
+      : "k_{QA} \\cdot k_{QB} = \\frac{x_1}{p} \\cdot \\frac{x_2}{p} = \\frac{x_1 x_2}{p^2} = \\frac{-p^2}{p^2} = -1";
+
     reasoningSteps.push(
       {
         step: 1,
         title: "审题定法 · 抛物线切线与光学反射等腰三角形推演",
-        detail: `抛物线上动点 $P(${xPStr}, ${yPStr})$ 处的切线方程为 $y_0 y = p(x + x_0)$，切线斜率 $k_P = ${kPStr}$。令 $y = 0$ 得对称轴截距点 $T(-${xPStr}, 0)$。由焦截距公式展开：`,
-        latex: `|FT| = x_0 + \\frac{p}{2} = ${xPStr} + ${pHalf}, \\quad |PF| = d(P, l) = x_0 + \\frac{p}{2} \\implies |FT| = |PF|`,
+        detail: `抛物线上动点 $P(${xPStr}, ${yPStr})$ 处的切线方程为 $${tangentSymbolic}$，切线斜率 $k_P = ${kPStr}$。令 $${isHorizontalAxis ? "y = 0" : "x = 0"}$ 得对称轴截距点 $T(${interceptT})$。由焦截距公式展开：`,
+        latex: `|FT| = ${focalRadiusFormula} = ${radialTermNum} + ${pHalf}, \\quad |PF| = d(P, l) = ${focalRadiusFormula} \\implies |FT| = |PF|`,
         rubric:
           "采分点：求出切线对称轴截距，严格证明 △PTF 为等腰三角形与反射平分线（4分）",
       },
       {
         step: 2,
         title: "建模代入 · 准线动点 Q 切点弦过焦点与正交性证明",
-        detail: `准线上动点 $Q(-${pHalf}, ${yQStr})$，引两条切线切点为 $A(x_1, y_1), B(x_2, y_2)$。切点弦方程为 $y_Q y = p(x - p/2)$。令 $x = p/2$ 得 $y = 0$，故切点弦恒过焦点 $F(p/2, 0)$。联立解得 $y_1 y_2 = -p^2$：`,
-        latex: `k_{QA} \\cdot k_{QB} = \\frac{p}{y_1} \\cdot \\frac{p}{y_2} = \\frac{p^2}{y_1 y_2} = \\frac{p^2}{-p^2} = -1 \\implies QA \\perp QB`,
+        detail: `准线上动点 $Q(${qPoint})$，引两条切线切点为 $A(x_1, y_1), B(x_2, y_2)$。切点弦方程为 $${chordOfContact}$。令 $${isHorizontalAxis ? "x" : "y"} = ${pHalf}$ 得 $${isHorizontalAxis ? "y" : "x"} = 0$，故切点弦恒过焦点 $F(${formatMathNumber(base.focus.x)}, ${formatMathNumber(base.focus.y)})$。联立解得 $${productSymbol} = -p^2$：`,
+        latex: `${slopeProductLatex} \\implies QA \\perp QB`,
         rubric:
           "采分点：写出切点弦方程并代入焦点验证，利用韦达定理完成斜率乘积消元（4分）",
       },
@@ -374,7 +401,7 @@ export function buildParabolaPanel(
         importance: "gaokao",
       },
       {
-        text: "焦半径范围与极值：在 $y^2 = 2px$ 中，焦半径 $|PF| = x_0 + \\frac{p}{2} \\ge \\frac{p}{2}$，当且仅当动点 $P$ 位于抛物线顶点 $(0, 0)$ 时取得最小值 $\\frac{p}{2}$。",
+        text: `焦半径范围与极值：在 $${equationSymbol}$ 中，焦半径 $|PF| = ${focalRadiusSymbolic} \\ge \\frac{p}{2}$，当且仅当动点 $P$ 位于抛物线顶点 $(0, 0)$ 时取得最小值 $\\frac{p}{2}$。`,
         importance: "core",
       },
     );

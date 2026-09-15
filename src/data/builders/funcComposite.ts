@@ -57,12 +57,12 @@ export function buildFuncCompositePanel(
         label: "全域单调性",
         value:
           res.globalMonotonicity === "increasing"
-            ? "🟢 全域单调递增"
+            ? "全域单调递增"
             : res.globalMonotonicity === "decreasing"
-              ? "🔴 全域单调递减"
+              ? "全域单调递减"
               : res.globalMonotonicity === "constant"
                 ? "常数函数"
-                : "❌ 非全域单调",
+                : "非全域单调",
         highlight:
           res.globalMonotonicity === "increasing"
             ? "extreme"
@@ -170,10 +170,10 @@ export function buildFuncCompositePanel(
         label: "复合单调性",
         value:
           res.compositeMonotonicity === "increasing"
-            ? "🟢 复合单调递增 (同增)"
+            ? "复合单调递增 (同增)"
             : res.compositeMonotonicity === "decreasing"
-              ? "🔴 复合单调递减 (异减)"
-              : "🟡 驻点 / 无定义",
+              ? "复合单调递减 (异减)"
+              : "驻点 / 无定义",
         highlight:
           res.compositeMonotonicity === "increasing" ? "extreme" : "negative",
       },

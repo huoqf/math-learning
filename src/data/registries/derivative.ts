@@ -28,7 +28,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: -1.5,
     max: 1.5,
     step: 0.05,
-    defaultValue: 0.8,
+    defaultValue: 1.0,
     description:
       "割线动点 $Q$ 与切点 $P$ 横坐标之差 $\\Delta x$【绑定次色-橙】。调节其由正、负双侧趋近于 0，验证割线极限逼近切线。",
     importance: "advanced",

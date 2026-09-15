@@ -230,7 +230,16 @@ export function RecurrencePage() {
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     return KEYS_BY_MODEL[recurrenceModelType]
-      .filter((key) => key in paramMeta)
+      .filter((key) => {
+        if (
+          recurrenceModelType === "accumulation" &&
+          accumFnType === "telescoping" &&
+          key === "stepParam"
+        ) {
+          return false;
+        }
+        return key in paramMeta;
+      })
       .map((key) => {
         const meta = paramMeta[key];
         return {
@@ -247,7 +256,7 @@ export function RecurrencePage() {
           marks: meta.marks,
         };
       });
-  }, [params, recurrenceModelType]);
+  }, [params, recurrenceModelType, accumFnType]);
 
   // 切换主模型时，自动加载该模型的第一个经典母题预设
   const handleModelChange = (model: RecurrenceModel) => {

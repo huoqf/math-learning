@@ -61,7 +61,8 @@ export interface VectorDotProductParams {
   normA?: number;
   normB?: number;
   thetaDeg?: number;
-  usePolarGeom?: boolean;
+  /** 极坐标几何定义开关（由页面统一派生并注入；支持 1/0 或布尔，内核只做真值判定） */
+  usePolarGeom?: boolean | number;
 }
 
 /**

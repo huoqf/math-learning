@@ -565,16 +565,16 @@ export function buildProbabilityBayesPanel(
       },
       {
         name: "【高考第 4 步】通项公式与稳态极限",
-        latex: markovRes.generalTermLatex
-          ? markovRes.generalTermLatex
-          : `p_n = p_\\infty + (p_1 - p_\\infty)\\lambda^{n-1}`,
-        note: markovRes.isPureOscillating
-          ? "公比 $\\lambda = -1$：序列在两点间永久等幅振荡，不存在稳态极限。"
-          : markovRes.isDegenerate
-            ? "公比 $\\lambda = 1$：系统处于自封闭吸收态，各步概率恒定不变。"
-            : markovRes.isOscillating
-              ? "公比 $-1 < \\lambda < 0$：序列在 $p_\\infty$ 上下交替振荡衰减收敛（如传球模型）。"
-              : "公比 $0 \\le \\lambda < 1$：序列单调渐近收敛于平稳极限 $p_\\infty$。",
+        latex: "p_n = p_\\infty + (p_1 - p_\\infty)\\lambda^{n-1}",
+        note: `${markovRes.generalTermLatex ? `当前代入通项：$${markovRes.generalTermLatex}$；` : ""}${
+          markovRes.isPureOscillating
+            ? "公比 $\\lambda = -1$：序列在两点间永久等幅振荡，不存在稳态极限。"
+            : markovRes.isDegenerate
+              ? "公比 $\\lambda = 1$：系统处于自封闭吸收态，各步概率恒定不变。"
+              : markovRes.isOscillating
+                ? "公比 $-1 < \\lambda < 0$：序列在 $p_\\infty$ 上下交替振荡衰减收敛（如传球模型）。"
+                : "公比 $0 \\le \\lambda < 1$：序列单调渐近收敛于平稳极限 $p_\\infty$。"
+        }`,
         level: "derived",
       },
     ],

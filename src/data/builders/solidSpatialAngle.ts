@@ -194,9 +194,10 @@ export function buildSpatialAnglePanel(
     if (preset === "bodyDiag") {
       theorems.push({
         name: "正方体体对角线线面角模型",
-        latex: `\\text{正方体体对角线与底面角 } \\tan\\theta = \\frac{a}{\\sqrt{2}a} = \\frac{1}{\\sqrt{2}} \\implies \\sin\\theta = \\frac{\\sqrt{3}}{3} \\approx 0.5774 \\; (\\theta \\approx 35.26^\\circ)`,
+        latex:
+          "\\tan\\theta = \\frac{a}{\\sqrt{2}a} = \\frac{\\sqrt{2}}{2} \\implies \\sin\\theta = \\frac{\\sqrt{3}}{3}",
         level: "core",
-        note: "高考极高频母题：正方体体对角线与三个坐标面所成角均相等，且满足 sin²α + sin²β + sin²γ = 1",
+        note: "高考极高频母题：正方体体对角线与三个坐标面所成角均相等，sinθ = √3/3 ≈ 0.5774 (θ ≈ 35.26°)，且满足 sin²α + sin²β + sin²γ = 1",
       });
     }
 
@@ -417,9 +418,10 @@ export function buildSpatialAnglePanel(
     if (preset === "cubeSection") {
       theorems.push({
         name: "正方体截面二面角基角模型",
-        latex: `\\text{正方体截面 } A_1BD \\text{ 与底面二面角 } \\cos\\theta = \\frac{\\sqrt{3}}{3} \\approx 0.5774 \\; (\\theta \\approx 54.74^\\circ)`,
+        latex:
+          "\\text{正方体截面 } A_1BD \\text{ 与底面二面角 } \\cos\\theta = \\frac{\\sqrt{3}}{3}",
         level: "core",
-        note: "在正方体中，tanθ = AA₁ / AM = a / (√2/2 a) = √2，由此推得 cosθ = 1/√(1 + tan²θ) = √3/3",
+        note: "在正方体中，tanθ = AA₁ / AM = a / (√2/2 a) = √2，由此推得 cosθ = 1/√(1 + tan²θ) = √3/3 ≈ 0.5774 (θ ≈ 54.74°)",
       });
     }
 

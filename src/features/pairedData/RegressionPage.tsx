@@ -75,7 +75,9 @@ export function RegressionPage() {
   // 根据当前 noise 扰动、重心平移 meanShiftY 及离群点偏移 outlierOffset 动态计算活跃散点集
   const activePoints = useMemo(() => {
     const noise = params.noise ?? 0;
-    const meanShiftY = params.meanShiftY ?? 0;
+    // 异常点模式下重心平移滑块被隐藏，不累加 meanShiftY 避免暗中偏移
+    const meanShiftY =
+      selectedScenarioKey === "outlier" ? 0 : (params.meanShiftY ?? 0);
     const outlierOffset = params.outlierOffset ?? 0;
 
     return basePoints.map((p, idx) => {
@@ -182,6 +184,12 @@ export function RegressionPage() {
       if (preset.recommendedModel) {
         setSelectedModel(preset.recommendedModel);
       }
+      setParams((prev) => ({
+        ...prev,
+        noise: 0,
+        meanShiftY: 0,
+        outlierOffset: 0,
+      }));
     }
   };
 

@@ -1,6 +1,15 @@
 import type { ParamMeta } from "@/data/types";
 import { MATH_COLORS } from "@/theme";
 
+/**
+ * 几何构型判定的唯一规则（SSOT）：`defProj` 模式恒用极坐标几何定义
+ * （a 沿 x 轴，由 |a| / |b| / θ 驱动），其余模式恒用直角坐标 (xa, ya, xb, yb)。
+ *
+ * 页面与数据层共用此唯一定义，杜绝"同一事实多处判定"导致中屏 Scene 与右屏看板不同源。
+ */
+export const isPolarGeomMode = (studyMode: string): boolean =>
+  studyMode === "defProj";
+
 export const defaultParams = {
   xa: 4,
   ya: 0,

@@ -27,7 +27,14 @@ export const paramMeta: Record<string, ParamMeta> = {
     descriptionFormula: `\\text{数轴基准定点 } A(\\color{${MATH_COLORS.paramPrimary}}{a})`,
     importance: "core",
     group: "几何基准定点",
-    marks: [{ value: 0, label: "原点 (0)", labelFormula: "a = 0" }],
+    marks: [
+      {
+        value: 0,
+        label: "原点 (0)",
+        labelFormula: "a = 0",
+        variant: "critical",
+      },
+    ],
   },
   b: {
     key: "b",
@@ -41,7 +48,14 @@ export const paramMeta: Record<string, ParamMeta> = {
     descriptionFormula: `\\text{数轴基准定点 } B(\\color{${MATH_COLORS.paramSecondary}}{b})`,
     importance: "core",
     group: "几何基准定点",
-    marks: [{ value: 0, label: "原点 (0)", labelFormula: "b = 0" }],
+    marks: [
+      {
+        value: 0,
+        label: "原点 (0)",
+        labelFormula: "b = 0",
+        variant: "critical",
+      },
+    ],
   },
   c: {
     key: "c",

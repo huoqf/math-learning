@@ -52,12 +52,12 @@ export function buildPairedDataPanel(
       : [
           {
             name: `非线性回归转换模型 (${currentModelFit?.name ?? "换元线性化"})`,
-            latex: currentModelFit
-              ? `\\begin{aligned} \\text{原方程: } & ${currentModelFit.originalFormula} \\\\[4pt] \\text{换元法: } & ${currentModelFit.variableSubstitution} \\\\[4pt] \\text{线性型: } & ${currentModelFit.transformedFormula} \\end{aligned}`
-              : `y = c e^{kx} \\xrightarrow{z=\\ln y} z = kx + \\ln c`,
-            note: currentModelFit?.isBest
-              ? "【当前模型拟合优度最高】在候选非线性模型中决定系数 R² 最大、残差平方和 SSE 最小。"
-              : "通过变量代换将非线性关系化为线性方程求解，最后必须代回原变量得到预测方程。",
+            latex: `\\begin{aligned} \\text{原模型: } & y = f(x; \\theta) \\\\[4pt] \\text{换元法: } & z = g(y), \\quad u = h(x) \\\\[4pt] \\text{线性型: } & z = \\hat{a} + \\hat{b}u \\end{aligned}`,
+            note: `${currentModelFit ? `当前回归方程：$${currentModelFit.originalFormula}$；` : ""}${
+              currentModelFit?.isBest
+                ? "【当前模型拟合优度最高】在候选非线性模型中决定系数 R² 最大、残差平方和 SSE 最小。"
+                : "通过变量代换将非线性关系化为线性方程求解，最后必须代回原变量得到预测方程。"
+            }`,
             level: "core" as const,
           },
           {
@@ -275,24 +275,21 @@ export function buildPairedDataPanel(
       ? [
           {
             name: `样本量倍增效应与卡方统计量线性倍增定理 (${mult}×)`,
-            latex: `\\begin{aligned}
-\\chi^2_{k\\cdot n} &= \\frac{(k\\cdot n)[(k\\cdot a)(k\\cdot d) - (k\\cdot b)(k\\cdot c)]^2}{(k\\cdot r_1)(k\\cdot r_2)(k\\cdot c_1)(k\\cdot c_2)} \\\\
-&= k \\cdot \\chi^2_{\\text{base}} = ${mult} \\times ${(res.chiSquare / mult).toFixed(3)} = ${res.chiSquare.toFixed(3)}
-\\end{aligned}`,
+            latex: `\\chi^2_{k\\cdot n} = \\frac{(k\\cdot n)[(ka)(kd) - (kb)(kc)]^2}{(k\\cdot r_1)(k\\cdot r_2)(k\\cdot c_1)(k\\cdot c_2)} = k \\cdot \\chi^2_{\\text{base}}`,
             condition: "条件频率比例维持不变的前提下",
-            note: "【大样本统计功效】样本容量扩大 k 倍，卡方统计量严格等比放大 k 倍。当样本量足够大时，极其微小的比例差异也能达到统计显著性。",
+            note: `【大样本统计功效】样本容量扩大 k 倍，卡方统计量严格等比放大 k 倍（当前 ${mult} \\times ${(res.chiSquare / mult).toFixed(3)} = ${res.chiSquare.toFixed(3)}）。当样本量足够大时，极其微小的比例差异也能达到统计显著性。`,
             level: "core" as const,
           },
           {
             name: "新高考四步标准答题规范",
             latex: `\\begin{aligned}
 \\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立 (无关联)} \\\\
-\\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} = ${res.chiSquare.toFixed(3)} \\\\
-\\text{Step 3 (比临界)} &: \\chi^2 ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}
+\\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\
+\\text{Step 3 (比临界)} &: \\chi^2 \\text{ 与临界值 } k_\\alpha \\text{ 比较判定}
 \\end{aligned}`,
             condition:
               "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
-            note: `【Step 4 规范结论】${conclusionDetail}`,
+            note: `当前实测：$\\chi^2 = ${res.chiSquare.toFixed(3)} ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}；【Step 4 规范结论】${conclusionDetail}`,
             level: "important" as const,
           },
         ]
@@ -322,21 +319,22 @@ export function buildPairedDataPanel(
           ? [
               {
                 name: "Yates 连续性修正公式（拓展 · 超出课标）",
-                latex: `\\chi^2_{\\text{Yates}} = \\frac{n\\left(|ad - bc| - \\frac{n}{2}\\right)^2}{(a+b)(c+d)(a+c)(b+d)} = ${res.chiSquareYates.toFixed(3)}`,
+                latex:
+                  "\\chi^2_{\\text{Yates}} = \\frac{n\\left(|ad - bc| - \\frac{n}{2}\\right)^2}{(a+b)(c+d)(a+c)(b+d)}",
                 condition: "当 $n < 40$ 或存在理论期望频数 $E_ij < 5$ 时适用",
-                note: "当样本量较小时，离散频数分布用连续分布近似会产生偏大误差，减去 n/2 的连续性修正可有效防止第一类错误被放大。新课标正文只要求 χ² 统计量公式与临界值比较，连续性修正为教材之外的补充内容。",
+                note: `当前修正值：$\\chi^2_{\\text{Yates}} = ${res.chiSquareYates.toFixed(3)}$。当样本量较小时，离散频数分布用连续分布近似会产生偏大误差，减去 n/2 的连续性修正可有效防止第一类错误被放大。新课标正文只要求 χ² 统计量公式与临界值比较，连续性修正为教材之外的补充内容。`,
                 level: "supplementary" as const,
               },
               {
                 name: "新高考四步标准答题规范",
                 latex: `\\begin{aligned}
 \\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立 (无关联)} \\\\
-\\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} = ${res.chiSquare.toFixed(3)} \\\\
-\\text{Step 3 (比临界)} &: \\chi^2 ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}
+\\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\
+\\text{Step 3 (比临界)} &: \\chi^2 \\text{ 与临界值 } k_\\alpha \\text{ 比较判定}
 \\end{aligned}`,
                 condition:
                   "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
-                note: `【Step 4 规范结论】${conclusionDetail}`,
+                note: `当前实测：$\\chi^2 = ${res.chiSquare.toFixed(3)} ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}；【Step 4 规范结论】${conclusionDetail}`,
                 level: "important" as const,
               },
             ]
@@ -346,12 +344,11 @@ export function buildPairedDataPanel(
                 latex: `\\begin{aligned}
 \\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立 (无关联)} \\\\
 \\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\
-&= ${res.chiSquare.toFixed(3)} \\\\
-\\text{Step 3 (比临界)} &: \\chi^2 ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}
+\\text{Step 3 (比临界)} &: \\chi^2 \\text{ 与临界值 } k_\\alpha \\text{ 比较判定}
 \\end{aligned}`,
                 condition:
                   "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
-                note: `【Step 4 规范作答结论】${conclusionDetail}（阅卷采分要点：必须写明小概率值 α 与置信度，严禁表述为因果必然关系）。`,
+                note: `当前实测：$\\chi^2 = ${res.chiSquare.toFixed(3)} ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}；【Step 4 规范作答结论】${conclusionDetail}（阅卷采分要点：必须写明小概率值 α 与置信度，严禁表述为因果必然关系）。`,
                 level: "core" as const,
               },
               {

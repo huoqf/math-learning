@@ -145,7 +145,7 @@ export function buildMathQuantities(
       return buildConstantDoublePanel(params, config);
     case "anim-set-venn":
     case "anim-logic-conditions":
-      return buildSetPanel(params);
+      return buildSetPanel(params, { ...config, animId });
     case "anim-logic-quantifiers":
       return buildQuantifiersPanel(
         params,

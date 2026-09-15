@@ -140,7 +140,8 @@ export function buildDerivativePanel(
     },
     {
       name: "切线方程点斜式",
-      latex: pointSlopeFormula,
+      latex: "y - f(x_0) = f'(x_0)(x - x_0)",
+      note: res.isValid ? `当前切点代入：$${pointSlopeFormula}$` : undefined,
       level: mode === "tangent_eq" ? "core" : "important",
       prerequisites: [
         "切点 $P(x_0, f(x_0))$ 在曲线上",
@@ -149,7 +150,10 @@ export function buildDerivativePanel(
     },
     {
       name: "切线方程斜截式 / 一般式",
-      latex: slopeInterceptFormula,
+      latex: "y = f'(x_0)x + [f(x_0) - f'(x_0)x_0]",
+      note: res.isValid
+        ? `当前化简方程：$${slopeInterceptFormula}$`
+        : undefined,
       level: mode === "tangent_eq" ? "important" : "supplementary",
       prerequisites: ["切线斜率 $k = f'(x_0)$ 存在"],
     },

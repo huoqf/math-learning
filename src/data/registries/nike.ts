@@ -61,7 +61,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     marks: [
       {
         value: 0,
-        variant: "critical",
+        variant: "recommended",
         label: "标准型无平移",
         labelFormula: "h = 0",
       },
@@ -80,7 +80,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     marks: [
       {
         value: 0,
-        variant: "critical",
+        variant: "recommended",
         label: "标准型无平移",
         labelFormula: "c = 0",
       },

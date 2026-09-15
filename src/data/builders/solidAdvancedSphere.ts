@@ -310,10 +310,13 @@ export function buildAdvancedSpherePanel(
           : "球内接圆锥最大体积极值定理",
       latex:
         shapeType === 0
-          ? `h_{\\text{opt}} = \\frac{2\\sqrt{3}}{3}R, \\quad V_{\\max} = \\frac{4\\sqrt{3}}{9}\\pi R^3, \\quad \\eta_{\\max} = \\frac{1}{\\sqrt{3}} \\approx 57.7\\%`
-          : `h_{\\text{opt}} = \\frac{4}{3}R, \\quad V_{\\max} = \\frac{32}{81}\\pi R^3, \\quad \\eta_{\\max} = \\frac{8}{27} \\approx 29.6\\%`,
+          ? "h_{\\text{opt}} = \\frac{2\\sqrt{3}}{3}R, \\quad V_{\\max} = \\frac{4\\sqrt{3}}{9}\\pi R^3, \\quad \\eta_{\\max} = \\frac{\\sqrt{3}}{3}"
+          : "h_{\\text{opt}} = \\frac{4}{3}R, \\quad V_{\\max} = \\frac{32}{81}\\pi R^3, \\quad \\eta_{\\max} = \\frac{8}{27}",
       level: "core",
-      note: "通过导数 V'(h) = 0 求驻点，严格证明立体几何体积极值",
+      note:
+        shapeType === 0
+          ? "通过导数 V'(h) = 0 求驻点，严格证明立体几何体积极值（圆柱最大体积容积率约为 57.7%）"
+          : "通过导数 V'(h) = 0 求驻点，严格证明立体几何体积极值（圆锥最大体积容积率约为 29.6%）",
     });
 
     gaokaoPoints.push({

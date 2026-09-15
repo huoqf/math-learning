@@ -605,9 +605,12 @@ export default function PolyhedronCircumSphereAnimation() {
       right={
         <MathPanel
           quantities={mathData.quantities}
+          reasoningSteps={mathData.reasoningSteps}
           theorems={mathData.theorems}
           gaokaoPoints={mathData.gaokaoPoints}
           warnings={mathData.warnings}
+          examAnchor={mathData.examAnchor}
+          mnemonic={mathData.mnemonic}
           title={`${
             modelType === "corner"
               ? "墙角模型"

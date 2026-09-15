@@ -8,7 +8,11 @@ import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { CoordinateGrid, FunctionGraph } from "@/components/Math";
 import { MATH_COLORS } from "@/theme";
-import { evalPeriodicityModel, type PeriodModelType } from "@/math/function";
+import {
+  createSymmetryFn,
+  evalPeriodicityModel,
+  type PeriodModelType,
+} from "@/math/function";
 import { PropertiesDomainScene } from "./PropertiesDomainScene";
 import { PropertiesParityScene } from "./PropertiesParityScene";
 import { PropertiesSymmetryScene } from "./PropertiesSymmetryScene";
@@ -48,29 +52,19 @@ export function PropertiesScene({
   const centerX = params.centerX ?? 0.0;
   const centerY = params.centerY ?? 0.0;
 
-  // 单轴与中心对称的动态适应母函数
+  // 单轴 / 中心对称的母函数统一由 math 层构造器提供（SSOT：与右屏看板共用同一份实现）
+  const symmetryFn = React.useMemo(
+    () =>
+      mode === "symmetry" && (subMode === "axis" || subMode === "center")
+        ? createSymmetryFn(fnType, subMode, axisA, centerX, centerY)
+        : null,
+    [mode, subMode, fnType, axisA, centerX, centerY],
+  );
+
+  // 母函数：对称模式走共享对称模型，其余（定义域/奇偶性）走标准母函数
   const getFn: (x: number) => number = React.useCallback(
     (x: number) => {
-      if (mode === "symmetry") {
-        if (subMode === "axis") {
-          // 关于 x = axisA 对称的二次/绝对值/余弦模型
-          if (fnType === "quadratic") return 0.5 * Math.pow(x - axisA, 2) - 1.5;
-          if (fnType === "abs") return Math.abs(x - axisA) - 1.0;
-          if (fnType === "sin") return Math.cos(x - axisA);
-          return Math.pow(x - axisA, 2) - 2;
-        }
-        if (subMode === "center") {
-          // 关于 C(centerX, centerY) 对称的三次/正弦/反比例模型
-          if (fnType === "cubic")
-            return 0.3 * Math.pow(x - centerX, 3) + centerY;
-          if (fnType === "sin") return Math.sin(x - centerX) + centerY;
-          if (fnType === "reciprocal") {
-            const dx = x - centerX;
-            return Math.abs(dx) > 1e-3 ? 1 / dx + centerY : NaN;
-          }
-          return 0.3 * Math.pow(x - centerX, 3) + centerY;
-        }
-      }
+      if (symmetryFn) return symmetryFn(x);
 
       switch (fnType) {
         case "cubic":
@@ -89,7 +83,7 @@ export function PropertiesScene({
           return x;
       }
     },
-    [fnType, mode, subMode, axisA, centerX, centerY],
+    [fnType, symmetryFn],
   );
 
   // 周期模型计算（父级需 waveFn 绘制主曲线）

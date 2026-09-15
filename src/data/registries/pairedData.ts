@@ -21,7 +21,6 @@ export const defaultParams: Record<string, number> = {
   freqC: 40, // c: 非A 且 B
   freqD: 60, // d: 非A 且 非B
   scaleMultiplier: 1, // 样本容量倍增因子 (探究样本容量对卡方检验的影响)
-  displayMode: 0, // 0: 综合视图(列联表+等高图+卡方曲线), 1: 期望值偏离度对比
 };
 
 export const paramMeta: Record<string, ParamMeta> = {

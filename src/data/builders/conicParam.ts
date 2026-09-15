@@ -43,6 +43,13 @@ export function buildConicParamPanel(
     const res = calculateEllipseParam(a, b, theta, targetLine);
     const cVal = Math.sqrt(Math.max(0, a * a - b * b));
 
+    // 辅助角合振幅 R = √((Aa)² + (Bb)²) = √(a² + b²)：随 a, b 实时变化，严禁写死为常数 5
+    const R = Math.hypot(a, b);
+    const absC = Math.abs(targetLine.C);
+    const lineIntersects = R >= absC;
+    const numMax = absC + R;
+    const numMin = lineIntersects ? 0 : absC - R;
+
     const quantities: MathQuantity[] = [
       {
         label: "椭圆半轴与焦点",
@@ -96,16 +103,17 @@ export function buildConicParamPanel(
       {
         step: 2,
         title: "第二步：建模联立 · 点线距离的辅助角化简",
-        latex: `d(\\theta) = \\frac{|(Aa)\\cos\\theta + (Bb)\\sin\\theta + C|}{\\sqrt{A^2 + B^2}} = \\frac{|${formatMathNumber(a)}\\cos\\theta - ${formatMathNumber(b)}\\sin\\theta - 6|}{\\sqrt{1^2 + (-1)^2}} = \\frac{|5\\sin(\\theta + \\varphi) - 6|}{\\sqrt{2}}`,
-        detail: `将 $P(${formatMathNumber(a)}\\cos\\theta, ${formatMathNumber(b)}\\sin\\theta)$ 代入目标直线方程 $x - y - 6 = 0$ 的点线距离公式中，提取合振幅 $R = \\sqrt{(1\\times ${formatMathNumber(a)})^2 + (-1\\times ${formatMathNumber(b)})^2} = \\sqrt{16 + 9} = 5$。`,
+        latex: `d(\\theta) = \\frac{|(Aa)\\cos\\theta + (Bb)\\sin\\theta + C|}{\\sqrt{A^2 + B^2}} = \\frac{|${formatMathNumber(a)}\\cos\\theta - ${formatMathNumber(b)}\\sin\\theta - 6|}{\\sqrt{1^2 + (-1)^2}} = \\frac{|${formatMathNumber(R)}\\sin(\\theta + \\varphi) - 6|}{\\sqrt{2}}`,
+        detail: `将 $P(${formatMathNumber(a)}\\cos\\theta, ${formatMathNumber(b)}\\sin\\theta)$ 代入目标直线方程 $x - y - 6 = 0$ 的点线距离公式中，提取合振幅 $R = \\sqrt{(1\\times ${formatMathNumber(a)})^2 + (-1\\times ${formatMathNumber(b)})^2} = \\sqrt{${formatMathNumber(a * a)} + ${formatMathNumber(b * b)}} = ${formatMathNumber(R)}$。`,
         rubric: "运用辅助角公式将二元线段距离化为单一正弦函数 (4分)",
       },
       {
         step: 3,
         title: "第三步：求解反思 · 三角函数有界性求最值",
-        latex: `\\because \\sin(\\theta+\\varphi) \\in [-1, 1] \\implies \\begin{cases} d_{\\min} = \\frac{|5(1) - 6|}{\\sqrt{2}} = \\frac{1}{\\sqrt{2}} = \\frac{\\sqrt{2}}{2} \\approx ${formatMathNumber(res.minDist)} \\\\ d_{\\max} = \\frac{|5(-1) - 6|}{\\sqrt{2}} = \\frac{11}{\\sqrt{2}} = \\frac{11\\sqrt{2}}{2} \\approx ${formatMathNumber(res.maxDist)} \\end{cases}`,
-        detail:
-          "当 $\\sin(\\theta+\\varphi) = 1$ 时动点距离直线最近，当 $\\sin(\\theta+\\varphi) = -1$ 时距离最远。全程避开联立二次方程求判别式 $\\Delta = 0$ 的冗长运算，实现了运算量降维。",
+        latex: `\\because \\sin(\\theta+\\varphi) \\in [-1, 1] \\implies ${formatMathNumber(R)}\\sin(\\theta+\\varphi) \\in [-${formatMathNumber(R)},\\ ${formatMathNumber(R)}] \\implies \\begin{cases} d_{\\min} = \\frac{${formatMathNumber(numMin)}}{\\sqrt{2}} \\approx ${formatMathNumber(res.minDist)} \\\\ d_{\\max} = \\frac{${formatMathNumber(numMax)}}{\\sqrt{2}} \\approx ${formatMathNumber(res.maxDist)} \\end{cases}`,
+        detail: lineIntersects
+          ? `合振幅 $R = ${formatMathNumber(R)} \\ge |C| = ${formatMathNumber(absC)}$，直线 $x - y - 6 = 0$ 与椭圆相交，$d = 0$ 可取到（存在 $\\sin(\\theta+\\varphi) = \\frac{${formatMathNumber(absC)}}{${formatMathNumber(R)}}$），故最小距离为 $0$；当 $\\sin(\\theta+\\varphi) = -1$ 时动点距离直线最远。全程避开联立二次方程求判别式 $\\Delta = 0$ 的冗长运算，实现了运算量降维。`
+          : `合振幅 $R = ${formatMathNumber(R)} < |C| = ${formatMathNumber(absC)}$，直线 $x - y - 6 = 0$ 与椭圆相离：当 $\\sin(\\theta+\\varphi) = 1$ 时动点距离直线最近，当 $\\sin(\\theta+\\varphi) = -1$ 时距离最远。全程避开联立二次方程求判别式 $\\Delta = 0$ 的冗长运算，实现了运算量降维。`,
         rubric: "由三角函数有界性严密推导出最值区间并完成反思 (3分)",
       },
     ];

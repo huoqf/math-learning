@@ -17,6 +17,26 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: -Math.PI + 0.08,
     max: Math.PI - 0.08,
     step: 0.02,
+    marks: [
+      {
+        value: -Math.PI / 2,
+        variant: "critical",
+        label: "渐近线无定义",
+        labelFormula: "\\theta = -\\frac{\\pi}{2}",
+      },
+      {
+        value: 0,
+        variant: "recommended",
+        label: "零点",
+        labelFormula: "\\theta = 0",
+      },
+      {
+        value: Math.PI / 2,
+        variant: "critical",
+        label: "渐近线无定义",
+        labelFormula: "\\theta = \\frac{\\pi}{2}",
+      },
+    ],
     defaultValue: Math.PI / 4,
     importance: "core",
     description: "单位圆终边旋转角，对应正切线 AT = tan θ",
@@ -54,10 +74,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     descriptionFormula: "T = \\frac{\\pi}{|\\omega|}",
     marks: [
       {
-        value: 0,
-        variant: "critical",
-        label: "无意义/退化",
-        labelFormula: "\\omega = 0",
+        value: 1.0,
+        variant: "recommended",
+        label: "基准周期 π",
+        labelFormula: "\\omega = 1",
       },
       {
         value: 1.5,
