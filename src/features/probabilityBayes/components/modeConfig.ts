@@ -2,19 +2,16 @@ import type { ParamConfig } from "@/components/UI";
 import { MATH_COLORS } from "@/theme";
 import { paramMeta } from "@/data/registries/probabilityBayes";
 
-export type BayesMode = "conditional" | "total_prob" | "bayes" | "markov";
+export type BayesMode = "conditional" | "total_prob" | "bayes";
 export type CondScenario = "free" | "independent" | "correlated" | "exclusive";
 export type TotalScenario = "free" | "factory3" | "balanced" | "warner";
 export type BayesScenario = "free" | "screening" | "factory";
-export type MarkovScenario =
-  "free" | "pass_ball" | "pass_ball_3" | "urn_ball" | "weather";
 
 export interface BayesScenarioCtx {
   activeMode: BayesMode;
   condScenario: CondScenario;
   totalScenario: TotalScenario;
   bayesScenario: BayesScenario;
-  markovScenario: MarkovScenario;
 }
 
 /* ── 悬浮 KaTeX 公式（三位一体色彩深度绑定与全数值闭环）── */
@@ -33,7 +30,7 @@ export function getModeFormulaLatex(
     const pBGivenA =
       (params.pA ?? 0.5) > 0
         ? ((params.pAB ?? 0.2) / (params.pA ?? 0.5)).toFixed(3)
-        : "\\text{无意义}"; // formula: LaTeX片段
+        : "\\text{无意义}";
     return `\\color{${MATH_COLORS.function}}{P(B|A)} = \\frac{\\color{${MATH_COLORS.paramTertiary}}{P(AB)}}{\\color{${MATH_COLORS.paramPrimary}}{P(A)}} = \\frac{${pABVal}}{${pAVal}} = ${pBGivenA}`;
   }
   if (activeMode === "total_prob") {
@@ -57,29 +54,21 @@ export function getModeFormulaLatex(
 
     return `\\color{${MATH_COLORS.function}}{P(B)} = \\sum_{i=1}^3 P(A_i)P(B|A_i) = \\color{${MATH_COLORS.paramPrimary}}{${pA1.toFixed(2)}}\\times ${pB_A1.toFixed(2)} + \\color{${MATH_COLORS.paramSecondary}}{${pA2.toFixed(2)}}\\times ${pB_A2.toFixed(2)} + \\color{${MATH_COLORS.paramTertiary}}{${pA3.toFixed(2)}}\\times ${pB_A3.toFixed(2)} = ${(pB * 100).toFixed(2)}\\%`;
   }
-  if (activeMode === "bayes") {
-    const pD = params.pPriorD ?? 0.02;
-    const pNotD = 1 - pD;
-    const pSens = params.pSensitivity ?? 0.95;
-    const pFalse = params.pFalsePositive ?? 0.05;
+  // bayes 模式
+  const pD = params.pPriorD ?? 0.02;
+  const pNotD = 1 - pD;
+  const pSens = params.pSensitivity ?? 0.95;
+  const pFalse = params.pFalsePositive ?? 0.05;
 
-    const pTrueJoint = pD * pSens;
-    const pFalseJoint = pNotD * pFalse;
-    const pTotalPos = pTrueJoint + pFalseJoint;
-    const pPosterior = pTotalPos > 0 ? (pTrueJoint / pTotalPos) * 100 : 0;
+  const pTrueJoint = pD * pSens;
+  const pFalseJoint = pNotD * pFalse;
+  const pTotalPos = pTrueJoint + pFalseJoint;
+  const pPosterior = pTotalPos > 0 ? (pTrueJoint / pTotalPos) * 100 : 0;
 
-    const isFactory = bayesScenario === "factory";
-    const targetSymbol = isFactory ? "\\text{Def}" : "D";
+  const isFactory = bayesScenario === "factory";
+  const targetSymbol = isFactory ? "\\text{Def}" : "D";
 
-    return `\\color{${MATH_COLORS.derivative}}{P(${targetSymbol}|+)} = \\frac{${pD.toFixed(3)} \\times ${pSens.toFixed(2)}}{${pD.toFixed(3)} \\times ${pSens.toFixed(2)} + ${pNotD.toFixed(3)} \\times ${pFalse.toFixed(2)}} = ${pPosterior.toFixed(2)}\\%`;
-  }
-  // markov 模式
-  const p11 = params.p11 ?? 0.0;
-  const p21 = params.p21 ?? 0.5;
-  const lambda = p11 - p21;
-  const lambdaStr = lambda >= 0 ? lambda.toFixed(2) : `(${lambda.toFixed(2)})`;
-  const betaStr = p21.toFixed(2);
-  return `\\color{${MATH_COLORS.function}}{p_{n+1}} = p_{11} p_n + p_{21}(1-p_n) = ${lambdaStr} p_n + ${betaStr}`;
+  return `\\color{${MATH_COLORS.derivative}}{P(${targetSymbol}|+)} = \\frac{${pD.toFixed(3)} \\times ${pSens.toFixed(2)}}{${pD.toFixed(3)} \\times ${pSens.toFixed(2)} + ${pNotD.toFixed(3)} \\times ${pFalse.toFixed(2)}} = ${pPosterior.toFixed(2)}\\%`;
 }
 
 export interface TipConfig {
@@ -91,13 +80,7 @@ export interface TipConfig {
 
 /* ── 左屏教学提示与题设导引 ── */
 export function getModeTipConfig(ctx: BayesScenarioCtx): TipConfig {
-  const {
-    activeMode,
-    condScenario,
-    totalScenario,
-    bayesScenario,
-    markovScenario,
-  } = ctx;
+  const { activeMode, condScenario, totalScenario, bayesScenario } = ctx;
 
   if (activeMode === "conditional") {
     if (condScenario === "independent") {
@@ -165,76 +148,29 @@ export function getModeTipConfig(ctx: BayesScenarioCtx): TipConfig {
       question: "自由划分先验权重与条件概率，观察全概率汇总加权演化。",
     };
   }
-  if (activeMode === "bayes") {
-    if (bayesScenario === "screening") {
-      return {
-        variant: "warning",
-        badge: "高考压轴 · 罕见病筛查与基率效应",
-        condition: "试剂真阳率 95%、假阳误报率 5% 固定（试剂固有技术指标）。",
-        question:
-          "调节自然患病率 $P(D)$，求解后验确诊患病率 $P(D|+)$ 随先验基率剧烈跃迁的数理极值边界。",
-      };
-    }
-    if (bayesScenario === "factory") {
-      return {
-        variant: "warning",
-        badge: "高考应用 · 工厂次品溯源与误判容忍度",
-        condition: "流水线自然次品率 8%、检出率 98% 固定。",
-        question: "滑动仪器误判率，探究质检仪器精度对阳性可信度的剧烈影响。",
-      };
-    }
+  // bayes
+  if (bayesScenario === "screening") {
     return {
       variant: "warning",
-      badge: "自由探索 · 贝叶斯公式与由果溯因",
-      condition: "已知先验概率 P(D)、灵敏度 P(+|D) 与误报率 P(+|~D)。",
-      question: "自由输入任意诊断数据，探究全概分母与后验概率的形成过程。",
+      badge: "高考应用 · 罕见病筛查与基率效应",
+      condition: "试剂真阳率 95%、假阳误报率 5% 固定（试剂固有技术指标）。",
+      question:
+        "调节自然患病率 $P(D)$，求解后验确诊患病率 $P(D|+)$ 随先验基率剧烈跃迁的数理极值边界。",
     };
   }
-  // markov
-  if (markovScenario === "pass_ball") {
+  if (bayesScenario === "factory") {
     return {
-      variant: "danger",
-      badge: "选学 · 拓展 | 甲乙传球马尔可夫链 (震荡收敛)",
-      condition:
-        "甲必传乙 (p₁₁=0)，乙等可能传甲或丙 (p₂₁=0.5)，球初在甲手 (p₁=1)。",
-      question:
-        "改变迭代转移步数 $n$，证明特征公比 $\\lambda = -0.5$ 下交替震荡递推数列收敛于极限值 $1/3$。",
-    };
-  }
-  if (markovScenario === "pass_ball_3") {
-    return {
-      variant: "danger",
-      badge: "高考压轴 · 三人环传模型 (对称降维)",
-      condition:
-        "甲乙丙三人轮流传球，球在甲为 S₁，球在乙/丙为 S₂，公比 λ = -0.5。",
-      question:
-        "探究利用 P(乙)=P(丙) 对称性将 3 状态转移矩阵降维为一阶等比递推。",
-    };
-  }
-  if (markovScenario === "urn_ball") {
-    return {
-      variant: "danger",
-      badge: "高考经典 · 摸球置换转移模型 (单调收敛)",
-      condition: "转移矩阵固定 (p₁₁=0.6, p₂₁=0.2)，特征公比 λ = 0.4 > 0。",
-      question:
-        "增加迭代转移步数 $n$，求解并证明状态概率序列单调收敛于平衡稳态极限值 $1/3$。",
-    };
-  }
-  if (markovScenario === "weather") {
-    return {
-      variant: "danger",
-      badge: "选学 · 拓展 | 晴雨天气转移模型",
-      condition: "转移矩阵固定 (p₁₁=0.7, p₂₁=0.4)，转移公比 λ = 0.3 > 0。",
-      question:
-        "滑动步数 $n$，探究长期转移概率是否趋于稳定值，并求出该稳定值。",
+      variant: "warning",
+      badge: "高考应用 · 工厂次品溯源与误判容忍度",
+      condition: "流水线自然次品率 8%、检出率 98% 固定。",
+      question: "滑动仪器误判率，探究质检仪器精度对阳性可信度的剧烈影响。",
     };
   }
   return {
-    variant: "danger",
-    badge: "选学 · 拓展 · 马尔可夫链状态转移",
-    condition: "自由设定 2-State 转移概率矩阵与初始状态概率 p₁。",
-    question:
-      "探究转移公比 $\\lambda$ 与稳态概率 $p_\\infty$ 的关系，并求出 $p_\\infty$ 关于 $\\lambda$ 的表达式。",
+    variant: "warning",
+    badge: "自由探索 · 贝叶斯公式与由果溯因",
+    condition: "已知先验概率 P(D)、灵敏度 P(+|D) 与误报率 P(+|~D)。",
+    question: "自由输入任意诊断数据，探究全概分母与后验概率的形成过程。",
   };
 }
 
@@ -254,18 +190,14 @@ export function applyModeParamLinkage(
     let pAB = key === "pAB" ? value : (next.pAB ?? 0.2);
 
     if (condScenario === "independent") {
-      // 独立情景：自动计算 P(AB) = P(A)P(B)
       pAB = Number((pA * pB).toFixed(2));
     } else if (condScenario === "correlated") {
-      // 包含情景：P(AB) = P(A)，且确保 P(B) >= P(A)
       pAB = pA;
       if (pB < pA) next.pB = pA;
     } else if (condScenario === "exclusive") {
-      // 互斥情景：P(AB) = 0，且确保 P(A) + P(B) <= 1
       pAB = 0;
       if (pA + pB > 1) next.pB = Number((1 - pA).toFixed(2));
     } else {
-      // 自由探索：动态钳制数学上下界
       const maxAB = Math.min(pA, pB);
       const minAB = Math.max(0, Number((pA + pB - 1).toFixed(2)));
       pAB = Math.max(minAB, Math.min(maxAB, pAB));
@@ -288,23 +220,13 @@ export function applyModeParamLinkage(
     next.pA1 = pA1;
     next.pA2 = pA2;
   }
-
-  // 3. 马尔可夫链模式：联动保护 currStep <= maxN
-  if (activeMode === "markov") {
-    if (key === "maxN") {
-      if ((next.currStep ?? 1) > value) {
-        next.currStep = value;
-      }
-    }
-  }
 }
 
 /* ── 看板标题 ── */
 export function getModePanelTitle(activeMode: BayesMode): string {
   if (activeMode === "conditional") return "条件概率指标看板";
   if (activeMode === "total_prob") return "全概率公式指标看板";
-  if (activeMode === "bayes") return "贝叶斯诊断指标看板";
-  return "马尔可夫链状态转移递推看板";
+  return "贝叶斯诊断指标看板";
 }
 
 /* ── 左屏声明式参数配置（情景参数降维 + 自由探索分组）── */
@@ -312,15 +234,8 @@ export function buildParamConfigs(
   ctx: BayesScenarioCtx,
   params: Record<string, number>,
 ): ParamConfig[] {
-  const {
-    activeMode,
-    condScenario,
-    totalScenario,
-    bayesScenario,
-    markovScenario,
-  } = ctx;
+  const { activeMode, condScenario, totalScenario, bayesScenario } = ctx;
 
-  // 依据当前情景决定暴露哪些参数（参数降维矩阵）
   let activeKeys: string[] = [];
   let groupMap: Record<string, string> = {};
 
@@ -328,7 +243,6 @@ export function buildParamConfigs(
     if (condScenario === "free") {
       activeKeys = ["pA", "pB", "pAB"];
     } else {
-      // 典型情景下隐藏 P(AB)（由情景约束自动锁定）
       activeKeys = ["pA", "pB"];
     }
   } else if (activeMode === "total_prob") {
@@ -344,45 +258,20 @@ export function buildParamConfigs(
         pB_A3: "各分支条件概率",
       };
     } else {
-      // 三车间/均衡情景下锁定并隐藏先验划分，仅暴露各分支条件概率
       activeKeys = ["pB_A1", "pB_A2", "pB_A3"];
     }
   } else if (activeMode === "bayes") {
     if (bayesScenario === "free") {
       activeKeys = ["pPriorD", "pSensitivity", "pFalsePositive"];
     } else if (bayesScenario === "screening") {
-      // 罕见病筛查：试剂指标固定，仅开放核心主控滑块：先验患病率
       activeKeys = ["pPriorD"];
     } else {
-      // 工厂次品：次品率先验固定，仅开放核心主控滑块：仪器误判率
       activeKeys = ["pFalsePositive"];
-    }
-  } else {
-    // markov
-    if (markovScenario === "free") {
-      activeKeys = ["p11", "p21", "p1", "currStep", "maxN"];
-      groupMap = {
-        p11: "转移矩阵核心参数",
-        p21: "转移矩阵核心参数",
-        p1: "初始状态与演化步数",
-        currStep: "初始状态与演化步数",
-        maxN: "初始状态与演化步数",
-      };
-    } else if (
-      markovScenario === "pass_ball" ||
-      markovScenario === "pass_ball_3"
-    ) {
-      // 甲乙传球/三人传球：转移矩阵固定，仅开放步数探索
-      activeKeys = ["currStep", "maxN"];
-    } else {
-      // 摸球/天气：仅开放初态与步数
-      activeKeys = ["p1", "currStep", "maxN"];
     }
   }
 
   const isFactory = bayesScenario === "factory";
 
-  // 动态关联边界
   const pA = params.pA ?? 0.5;
   const pB = params.pB ?? 0.4;
   const maxAB = Math.min(pA, pB);
@@ -392,8 +281,6 @@ export function buildParamConfigs(
   const maxA2 = Math.max(0.05, Number((0.95 - pA1).toFixed(2)));
   const pA2 = Math.min(params.pA2 ?? 0.35, maxA2);
   const pA3 = Math.max(0.05, Number((1 - pA1 - pA2).toFixed(2)));
-
-  const maxN = params.maxN ?? 10;
 
   return activeKeys
     .filter((key) => key in paramMeta)
@@ -405,19 +292,16 @@ export function buildParamConfigs(
       let min = meta.min;
       let max = meta.max;
 
-      // 条件概率动态上下限
       if (activeMode === "conditional" && key === "pAB") {
         min = minAB;
         max = maxAB;
       }
 
-      // 全概动态剩余提示与动态上限
       if (activeMode === "total_prob" && key === "pA2") {
         max = maxA2;
         description = `自动剩余 P(A₃) = ${pA3.toFixed(2)}`;
       }
 
-      // 贝叶斯场景动态定制（三位一体色彩标签）
       if (activeMode === "bayes" && isFactory) {
         if (key === "pPriorD") {
           label = "次品先验率";
@@ -429,11 +313,6 @@ export function buildParamConfigs(
           label = "合格误判率";
           labelFormula = `\\text{合格误判 } \\color{${MATH_COLORS.paramTertiary}}{P(+|\\bar{\\text{Def}})}`;
         }
-      }
-
-      // 马尔可夫链步数动态上限
-      if (activeMode === "markov" && key === "currStep") {
-        max = maxN;
       }
 
       return {

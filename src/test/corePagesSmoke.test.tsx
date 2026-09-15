@@ -61,6 +61,7 @@ import { TrigIdentityAnimation } from "@/features/trigIdentity/TrigIdentityAnima
 import { VectorLinearAnimation } from "@/features/vectorLinear/VectorLinearAnimation";
 import { DerivativeMonotonicityAnimation } from "@/features/derivative-monotonicity/DerivativeMonotonicityAnimation";
 import { ProbabilityBayesAnimation } from "@/features/probabilityBayes/ProbabilityBayesAnimation";
+import { ProbabilityMarkovAnimation } from "@/features/probabilityMarkov/ProbabilityMarkovAnimation";
 import { LineEquationAnimation } from "@/features/lineEquation/LineEquationAnimation";
 import { LineCircleAnimation } from "@/features/line-circle/LineCircleAnimation";
 import { TriangleSolveAnimation } from "@/features/triangleSolve/TriangleSolveAnimation";
@@ -312,6 +313,15 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
     render(
       <MemoryRouter>
         <ProbabilityBayesAnimation />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  it("ProbabilityMarkovAnimation mounts properly and renders titles", () => {
+    render(
+      <MemoryRouter>
+        <ProbabilityMarkovAnimation />
       </MemoryRouter>,
     );
     expect(screen.getByText("数学解析看板")).toBeInTheDocument();

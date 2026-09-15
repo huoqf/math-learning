@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T01:25:48.647Z",
+  "generatedAt": "2026-09-15T10:29:19.816Z",
   "note": "存量违规基线：仅用于 strict 模式区分\"历史存量\"与\"本次增量\"。整改后请用 --update-baseline 下修。",
   "counts": {
     "src/components/Math/SceneLabelGroup.tsx::style/no-hardcoded-hex::硬编码颜色::error": 1,
@@ -83,8 +83,6 @@
     "src/features/conicParamT/meta.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 1,
     "src/features/derivative-endpoint-taylor/DerivativeEndpointTaylorAnimation.tsx::discipline/no-beyond-syllabus-terms::超纲术语::warning": 8,
     "src/features/derivative-endpoint-taylor/meta.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 1,
-    "src/features/probabilityBayes/components/modeConfig.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 3,
-    "src/features/probabilityBayes/ProbabilityBayesAnimation.tsx::discipline/no-beyond-syllabus-terms::超纲术语::warning": 1,
     "src/features/second-derivative/meta.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 1,
     "src/features/second-derivative/SecondDerivativeAnimation.tsx::discipline/no-beyond-syllabus-terms::超纲术语::warning": 11
   }

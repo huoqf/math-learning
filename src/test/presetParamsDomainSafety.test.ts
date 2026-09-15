@@ -241,7 +241,10 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     { animId: "anim-paired-data-regression", params: { r: 0.85 } },
     { animId: "anim-parametric-point", params: { t: 0.5 } },
     { animId: "anim-solid-parametric-point", params: { lambda: 0.5, mu: 0.5 } },
-    { animId: "anim-probability-markov", params: { pA: 0.5, pB: 0.5 } },
+    {
+      animId: "anim-probability-markov",
+      params: { p1: 1.0, p11: 0.0, p21: 0.5 },
+    },
     { animId: "anim-sequence-geom", params: { a1: 2, q: 2, N: 4 } },
     {
       animId: "anim-sequence-recurrence",

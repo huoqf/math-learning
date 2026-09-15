@@ -218,12 +218,8 @@ import {
   probabilityCountingNode,
   probabilityCountingLoader,
 } from "@/features/probabilityCounting/meta";
-import {
-  bayesNode,
-  markovNode,
-  bayesLoader,
-  markovLoader,
-} from "@/features/probabilityBayes/meta";
+import { bayesNode, bayesLoader } from "@/features/probabilityBayes/meta";
+import { markovNode, markovLoader } from "@/features/probabilityMarkov/meta";
 import {
   probabilityDistributionNode,
   probabilityDistributionLoader,

@@ -3,7 +3,6 @@ import {
   calculateConditionalProb,
   calculateTotalProb,
   calculateBayesDiagnostic,
-  calculateMarkovChain,
   calculateWarnerModel,
 } from "../../math/probabilityBayes";
 import { MATH_COLORS } from "../../theme";
@@ -470,145 +469,10 @@ export function buildProbabilityBayesPanel(
     };
   }
 
-  // 4. 模式四：马尔可夫链与全概率状态转移递推
-  const p1Val = params.p1 ?? 1.0;
-  const p11Val = params.p11 ?? 0.0;
-  const p21Val = params.p21 ?? 0.5;
-  const maxNVal = params.maxN ?? 10;
-  const currStepVal = Math.min(
-    maxNVal,
-    Math.max(1, Math.round(params.currStep ?? 1)),
-  );
-  const markovPreset = (config?.markovPreset as string) || "pass_ball";
-
-  const markovRes = calculateMarkovChain(p1Val, p11Val, p21Val, maxNVal);
-  const currentStepItem =
-    markovRes.steps.find((s) => s.n === currStepVal) ?? markovRes.steps[0];
-  const lastStepP1 = markovRes.steps[markovRes.steps.length - 1]?.p1 ?? 0;
-
-  const modelName =
-    markovPreset === "pass_ball_3"
-      ? "甲乙丙三人环传模型 (对称降维)"
-      : markovPreset === "pass_ball"
-        ? "甲乙传球模型"
-        : markovPreset === "urn_ball"
-          ? "摸球替换模型"
-          : markovPreset === "weather"
-            ? "晴雨天气转移模型"
-            : "自定义状态转移递推（选学 · 拓展）";
-
   return {
-    quantities: [
-      {
-        label: "初始状态 1 概率 p1",
-        symbol: "p_1",
-        value: p1Val.toFixed(3),
-        color: MATH_COLORS.paramPrimary,
-      },
-      {
-        label: "自保持概率 $P(S_{n+1}=1|S_n=1)$",
-        symbol: "p_{11}",
-        value: p11Val.toFixed(2),
-        color: MATH_COLORS.paramPrimary,
-      },
-      {
-        label: "跨转移概率 $P(S_{n+1}=1|S_n=2)$",
-        symbol: "p_{21}",
-        value: p21Val.toFixed(2),
-        color: MATH_COLORS.paramSecondary,
-      },
-      {
-        label: "特征公比 λ = p_{11} - p_{21}",
-        symbol: "\\lambda",
-        value: markovRes.lambda.toFixed(3),
-        color: MATH_COLORS.functionTransformed,
-      },
-      {
-        label: "平稳分布 (极限概率) p_∞",
-        symbol: "p_\\infty",
-        value: markovRes.isDegenerate
-          ? "退化恒定"
-          : markovRes.pStationary.toFixed(4),
-        color: MATH_COLORS.focusPoint,
-      },
-      {
-        label: `当前第 ${currStepVal} 步状态 1 概率 p_${currStepVal}`,
-        symbol: `p_{${currStepVal}}`,
-        value: currentStepItem.p1.toFixed(4),
-        color: MATH_COLORS.function,
-      },
-      {
-        label: `终态第 ${markovRes.steps.length} 步状态 1 概率 p_${markovRes.steps.length}`,
-        symbol: `p_{${markovRes.steps.length}}`,
-        value: lastStepP1.toFixed(4),
-        color: MATH_COLORS.labelText,
-      },
-    ],
-    theorems: [
-      {
-        name: "【高考第 2 步】全概率一阶线性递推方程",
-        latex: `p_{n+1} = p_{11} p_n + p_{21}(1 - p_n) = (p_{11} - p_{21}) p_n + p_{21}`,
-        condition:
-          "由 $S_n=1$ 与 $S_n=2$ 构成第 $n$ 步完备划分，写出全概递推式",
-        note: `本模型递推化简为：$${markovRes.recurrenceLatex}$`,
-        level: "core",
-      },
-      {
-        name: "【高考第 3 步】不动点法构造等比数列",
-        latex: `p_{n+1} - p_\\infty = \\lambda (p_n - p_\\infty) \\quad (\\lambda = p_{11}-p_{21}, p_\\infty = \\frac{p_{21}}{1-\\lambda})`,
-        condition:
-          "由递推式 $p_\\infty = \\lambda p_\\infty + p_{21}$ 解出的不动点 $p_\\infty$",
-        note: markovRes.isDegenerate
-          ? "公比 $\\lambda = 1$ 时为恒等数列（退化状态）"
-          : `两边同减不动点得：$${markovRes.geometricLatex}$`,
-        level: "important",
-      },
-      {
-        name: "【高考第 4 步】通项公式与稳态极限",
-        latex: "p_n = p_\\infty + (p_1 - p_\\infty)\\lambda^{n-1}",
-        note: `${markovRes.generalTermLatex ? `当前代入通项：$${markovRes.generalTermLatex}$；` : ""}${
-          markovRes.isPureOscillating
-            ? "公比 $\\lambda = -1$：序列在两点间永久等幅振荡，不存在稳态极限。"
-            : markovRes.isDegenerate
-              ? "公比 $\\lambda = 1$：系统处于自封闭吸收态，各步概率恒定不变。"
-              : markovRes.isOscillating
-                ? "公比 $-1 < \\lambda < 0$：序列在 $p_\\infty$ 上下交替振荡衰减收敛（如传球模型）。"
-                : "公比 $0 \\le \\lambda < 1$：序列单调渐近收敛于平稳极限 $p_\\infty$。"
-        }`,
-        level: "derived",
-      },
-    ],
-    gaokaoPoints: [
-      {
-        text: "【新高考大题 4 步规范采分点】①设第 n 步状态事件 An (概率 pn)；②全概列递推 pn+1 = p11 pn + p21(1-pn)；③解不动点同减 p∞ 证明等比数列；④求通项公式并求 n→∞ 稳态极限。",
-        importance: "gaokao",
-      },
-      {
-        text: `【${modelName}考法点睛】${
-          markovRes.isPureOscillating
-            ? "公比 λ = -1 时序列在奇偶步间等幅振荡，通项公式存在但极限不存在。"
-            : markovRes.isDegenerate
-              ? "公比 λ = 1 时系统概率恒定，无需构造等比数列。"
-              : markovRes.isOscillating
-                ? "公比 -1 < λ < 0 时为振荡衰减收敛，偶数步与奇数步分别逼近极限，在求和或极值时需分类讨论。"
-                : "公比 0 ≤ λ < 1 时为单调收敛，可直接通过导数或差分研究单调性。"
-        }`,
-        importance: "gaokao",
-      },
-      {
-        text: "【避坑指南】切勿混淆初始条件下标！若第 1 次传球后为 p1，则第 0 次初始在甲手中的确定状态对应 p0=1；答题需明确首项是 p1 还是 p0。",
-        importance: "core",
-      },
-    ],
-    warnings: markovRes.isDegenerate
-      ? [
-          {
-            text: "当 λ = p11 - p21 = 1 时（即 p11=1 且 p21=0），系统为单向自封闭环，概率恒定不变，无法构造非零等比数列。",
-            level: "warning",
-          },
-        ]
-      : [],
-    mnemonic:
-      "全概递推找分支，构造等比设不动，相减求得通项式，极限逼近稳态值。",
+    quantities: [],
+    theorems: [],
+    gaokaoPoints: [],
+    warnings: [],
   };
 }

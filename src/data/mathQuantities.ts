@@ -18,6 +18,7 @@ import { buildDerivativeShiftPanel } from "./builders/derivativeShift";
 import { buildSecondDerivativePanel } from "./builders/secondDerivative";
 import { buildProbabilityCountingPanel } from "./builders/probabilityCounting";
 import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
+import { buildProbabilityMarkovPanel } from "./builders/probabilityMarkov";
 import { buildProbabilityDistributionPanel } from "./builders/probabilityDistribution";
 import { buildProbabilityNormalPanel } from "./builders/probabilityNormal";
 import { buildPairedDataPanel } from "./builders/pairedData";
@@ -109,8 +110,9 @@ export function buildMathQuantities(
     case "anim-probability-distribution":
       return buildProbabilityDistributionPanel(params, config);
     case "anim-probability-bayes":
-    case "anim-probability-markov":
       return buildProbabilityBayesPanel(params, config);
+    case "anim-probability-markov":
+      return buildProbabilityMarkovPanel(params, config);
     case "anim-probability-counting":
       return buildProbabilityCountingPanel(params, config);
     case "anim-derivative-shift":

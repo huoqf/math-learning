@@ -27,16 +27,13 @@ import {
   type CondScenario,
   type TotalScenario,
   type BayesScenario,
-  type MarkovScenario,
 } from "./components/modeConfig";
 
 export function ProbabilityBayesAnimation() {
   const location = useLocation();
-  const initialMode = location.pathname.includes("markov")
-    ? "markov"
-    : location.pathname.includes("bayes")
-      ? "bayes"
-      : "conditional";
+  const initialMode = location.pathname.includes("bayes")
+    ? "bayes"
+    : "conditional";
 
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
@@ -45,13 +42,11 @@ export function ProbabilityBayesAnimation() {
   const [activeMode, setActiveMode] = useState<BayesMode>(initialMode);
   const [isZoomedToA, setIsZoomedToA] = useState(false);
 
-  // 各模式情境选择（单一事实源：free 自由探索 + 典型高考情景）
+  // 各模式情境选择（自由探索 + 典型课标情景）
   const [condScenario, setCondScenario] = useState<CondScenario>("independent");
   const [totalScenario, setTotalScenario] = useState<TotalScenario>("factory3");
   const [bayesScenario, setBayesScenario] =
     useState<BayesScenario>("screening");
-  const [markovScenario, setMarkovScenario] =
-    useState<MarkovScenario>("pass_ball");
 
   // 1. 视口与缩放设置 (840 x 650 full preset)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -64,29 +59,17 @@ export function ProbabilityBayesAnimation() {
     yRange: [-4.5, 4.5],
   });
 
-  // 2. 右屏 MathPanel 数据组装 (与情景严格同步)
+  // 2. 右屏 MathPanel 数据组装
   const mathData = useMemo(() => {
-    const animId =
-      activeMode === "markov"
-        ? "anim-probability-markov"
-        : "anim-probability-bayes";
-    return buildMathQuantities(animId, params, {
+    return buildMathQuantities("anim-probability-bayes", params, {
       activeMode,
       condScenario,
       totalScenario,
       bayesPreset: bayesScenario === "factory" ? "factory" : "screening",
-      markovPreset: markovScenario === "free" ? "pass_ball" : markovScenario,
     });
-  }, [
-    params,
-    activeMode,
-    condScenario,
-    totalScenario,
-    bayesScenario,
-    markovScenario,
-  ]);
+  }, [params, activeMode, condScenario, totalScenario, bayesScenario]);
 
-  // 3. 悬浮 KaTeX 公式渲染 (三位一体色彩深度绑定与全数值闭环)
+  // 3. 悬浮 KaTeX 公式渲染
   const currentFormulaLatex = useMemo(
     () => getModeFormulaLatex(activeMode, params, totalScenario, bayesScenario),
     [activeMode, params, totalScenario, bayesScenario],
@@ -100,12 +83,11 @@ export function ProbabilityBayesAnimation() {
         condScenario,
         totalScenario,
         bayesScenario,
-        markovScenario,
       }),
-    [activeMode, condScenario, totalScenario, bayesScenario, markovScenario],
+    [activeMode, condScenario, totalScenario, bayesScenario],
   );
 
-  // 4. 参数双向数学联动与情景约束锁定
+  // 4. 参数双向联动
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => {
       const next = { ...prev, [key]: value };
@@ -115,7 +97,6 @@ export function ProbabilityBayesAnimation() {
           condScenario,
           totalScenario,
           bayesScenario,
-          markovScenario,
         },
         key,
         value,
@@ -125,7 +106,7 @@ export function ProbabilityBayesAnimation() {
     });
   };
 
-  // 5. 左屏声明式参数配置（情景参数降维 + 自由探索分组）
+  // 5. 左屏参数配置
   const paramConfigs = useMemo<ParamConfig[]>(
     () =>
       buildParamConfigs(
@@ -134,18 +115,10 @@ export function ProbabilityBayesAnimation() {
           condScenario,
           totalScenario,
           bayesScenario,
-          markovScenario,
         },
         params,
       ),
-    [
-      params,
-      activeMode,
-      condScenario,
-      totalScenario,
-      bayesScenario,
-      markovScenario,
-    ],
+    [params, activeMode, condScenario, totalScenario, bayesScenario],
   );
 
   const handleReset = () => {
@@ -153,7 +126,6 @@ export function ProbabilityBayesAnimation() {
     setCondScenario("independent");
     setTotalScenario("factory3");
     setBayesScenario("screening");
-    setMarkovScenario("pass_ball");
   };
 
   const panelTitle = useMemo(() => getModePanelTitle(activeMode), [activeMode]);
@@ -162,49 +134,29 @@ export function ProbabilityBayesAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 第 1 层：模式选择区 */}
+          {/* 第 1 层：模式选择区 (精简为 3 个课标核心模式) */}
           <LeftPanelSection title="模式选择">
             <TabSwitcher
               tabs={[
                 { key: "conditional", label: "条件概率" },
-                {
-                  key: "total_prob",
-                  label: "全概率",
-                },
-                { key: "bayes", label: "贝叶斯" },
-                {
-                  key: "markov",
-                  label: "马尔可夫",
-                },
+                { key: "total_prob", label: "全概率公式" },
+                { key: "bayes", label: "贝叶斯由果溯因" },
               ]}
               value={activeMode}
               onChange={(k) => setActiveMode(k as typeof activeMode)}
             />
           </LeftPanelSection>
 
-          {/* 第 2 层：典型情境选择（首项统一为自由探索） */}
-          {/* 第 2 层：典型情境选择（首项统一为自由探索） */}
+          {/* 第 2 层：典型情境选择 */}
           {activeMode === "conditional" && (
             <LeftPanelSection title="典型情境">
               <SelectGrid
                 columns={2}
                 items={[
-                  {
-                    key: "free",
-                    label: "自由探索",
-                  },
-                  {
-                    key: "independent",
-                    label: "相互独立模型",
-                  },
-                  {
-                    key: "correlated",
-                    label: "包含/强相关",
-                  },
-                  {
-                    key: "exclusive",
-                    label: "互斥事件模型",
-                  },
+                  { key: "free", label: "自由探索" },
+                  { key: "independent", label: "相互独立模型" },
+                  { key: "correlated", label: "包含/强相关" },
+                  { key: "exclusive", label: "互斥事件模型" },
                 ]}
                 value={condScenario}
                 onChange={(k) => {
@@ -242,22 +194,10 @@ export function ProbabilityBayesAnimation() {
               <SelectGrid
                 columns={2}
                 items={[
-                  {
-                    key: "free",
-                    label: "自由探索",
-                  },
-                  {
-                    key: "factory3",
-                    label: "三车间次品",
-                  },
-                  {
-                    key: "balanced",
-                    label: "三等分均衡",
-                  },
-                  {
-                    key: "warner",
-                    label: "Warner调查",
-                  },
+                  { key: "free", label: "自由探索" },
+                  { key: "factory3", label: "三车间次品" },
+                  { key: "balanced", label: "三等分均衡" },
+                  { key: "warner", label: "Warner调查" },
                 ]}
                 value={totalScenario}
                 onChange={(k) => {
@@ -298,18 +238,9 @@ export function ProbabilityBayesAnimation() {
               <SelectGrid
                 columns={2}
                 items={[
-                  {
-                    key: "free",
-                    label: "自由探索",
-                  },
-                  {
-                    key: "screening",
-                    label: "罕见病筛查",
-                  },
-                  {
-                    key: "factory",
-                    label: "次品溯源",
-                  },
+                  { key: "free", label: "自由探索" },
+                  { key: "screening", label: "罕见病筛查" },
+                  { key: "factory", label: "次品溯源" },
                 ]}
                 value={bayesScenario}
                 onChange={(k) => {
@@ -335,70 +266,7 @@ export function ProbabilityBayesAnimation() {
             </LeftPanelSection>
           )}
 
-          {activeMode === "markov" && (
-            <LeftPanelSection title="典型模型">
-              <SelectGrid
-                columns={2}
-                items={[
-                  {
-                    key: "free",
-                    label: "自由探索",
-                  },
-                  {
-                    key: "pass_ball",
-                    label: "甲乙传球",
-                  },
-                  {
-                    key: "pass_ball_3",
-                    label: "三人环传",
-                  },
-                  {
-                    key: "urn_ball",
-                    label: "摸球置换",
-                  },
-                  {
-                    key: "weather",
-                    label: "晴雨天气",
-                  },
-                ]}
-                value={markovScenario}
-                onChange={(k) => {
-                  const s = k as typeof markovScenario;
-                  setMarkovScenario(s);
-                  if (s === "pass_ball" || s === "pass_ball_3") {
-                    setParams((prev) => ({
-                      ...prev,
-                      p1: 1.0,
-                      p11: 0.0,
-                      p21: 0.5,
-                      currStep: 1,
-                      maxN: 10,
-                    }));
-                  } else if (s === "urn_ball") {
-                    setParams((prev) => ({
-                      ...prev,
-                      p1: 1.0,
-                      p11: 0.6,
-                      p21: 0.2,
-                      currStep: 1,
-                      maxN: 10,
-                    }));
-                  } else if (s === "weather") {
-                    setParams((prev) => ({
-                      ...prev,
-                      p1: 1.0,
-                      p11: 0.7,
-                      p21: 0.4,
-                      currStep: 1,
-                      maxN: 10,
-                    }));
-                  }
-                }}
-              />
-            </LeftPanelSection>
-          )}
-
-          {/* 第 3 层：参数调节区（情景参数降维 + 自由探索分组） */}
+          {/* 第 3 层：参数调节区 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -407,7 +275,7 @@ export function ProbabilityBayesAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 第 4 层：观察视角（仅条件概率模式作为辅助透视开关） */}
+          {/* 第 4 层：观察视角（条件概率模式专属） */}
           {activeMode === "conditional" && (
             <LeftPanelSection title="观察视角">
               <SelectGrid
@@ -430,7 +298,7 @@ export function ProbabilityBayesAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 第 5 层：教学导引与题设背景 */}
+          {/* 第 5 层：教学导引 */}
           <div className="mt-auto">
             <TipCard
               variant={tipConfig.variant}
@@ -443,7 +311,7 @@ export function ProbabilityBayesAnimation() {
       }
       center={
         <div className="w-full h-full relative bg-white flex flex-col overflow-hidden">
-          {/* 顶部优雅数学公式 Bar */}
+          {/* 顶部数学公式 Bar */}
           <div className="h-[48px] shrink-0 border-b border-neutral-200/80 bg-neutral-50/90 backdrop-blur-sm px-4 flex items-center justify-between z-10 shadow-xs">
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full bg-blue-600"></span>
@@ -452,9 +320,7 @@ export function ProbabilityBayesAnimation() {
                   ? "条件概率与样本空间压缩模型"
                   : activeMode === "total_prob"
                     ? "完备事件组与全概率加权模型"
-                    : activeMode === "bayes"
-                      ? "贝叶斯由果溯因与诊断模型"
-                      : "马尔可夫链状态转移与全概递推模型（选学 · 拓展）"}
+                    : "贝叶斯由果溯因与诊断模型"}
               </span>
             </div>
             <div className="flex items-center bg-white px-3 py-1 rounded-lg border border-neutral-200 shadow-2xs">
@@ -462,7 +328,7 @@ export function ProbabilityBayesAnimation() {
             </div>
           </div>
 
-          {/* SVG 动画画布区 */}
+          {/* SVG 画布 */}
           <div className="flex-1 relative w-full h-full flex items-center justify-center">
             <AnimationSvgCanvas
               containerRef={containerRef}
@@ -476,9 +342,6 @@ export function ProbabilityBayesAnimation() {
                 isZoomedToA={isZoomedToA}
                 bayesPreset={
                   bayesScenario === "factory" ? "factory" : "screening"
-                }
-                markovPreset={
-                  markovScenario === "free" ? "pass_ball" : markovScenario
                 }
                 fontScale={canvasSize.font}
               />
