@@ -59,7 +59,7 @@ export function MarkovScene({
 
   return (
     <g>
-      {/* ── 1. 左上：状态转移拓扑 ── */}
+      {/* ── 1. 左上：事件状态转移示意图 ── */}
       <text
         x={45}
         y={50}
@@ -67,7 +67,7 @@ export function MarkovScene({
         fontWeight="bold"
         fill={MATH_COLORS.labelText}
       >
-        1. 状态转移拓扑网络 (2-State)
+        1. 事件状态转移示意图 (2-State)
       </text>
 
       <rect
@@ -133,7 +133,7 @@ export function MarkovScene({
         fill={MATH_COLORS.paramPrimary}
         textAnchor="middle"
       >
-        自保 p₁₁={markovData.p11.toFixed(2)}
+        保持 p₁₁={markovData.p11.toFixed(2)}
       </text>
 
       {/* S2 自环 */}
@@ -152,7 +152,7 @@ export function MarkovScene({
         fill={MATH_COLORS.paramSecondary}
         textAnchor="middle"
       >
-        自保 p₂₂={markovData.p22.toFixed(2)}
+        保持 p₂₂={markovData.p22.toFixed(2)}
       </text>
 
       {/* S1 -> S2 转移弧线 */}
@@ -198,8 +198,8 @@ export function MarkovScene({
         fontSize={fontScale(11)}
         fill={MATH_COLORS.labelTextLight}
       >
-        特征公比 λ = p₁₁ - p₂₁ = {markovData.lambda.toFixed(2)}，待定常数 t ={" "}
-        {markovData.pStationary.toFixed(3)}
+        递推公比 λ = p₁₁ - p₂₁ = {markovData.lambda.toFixed(2)}，不动点
+        (稳态极限) t = {markovData.pStationary.toFixed(3)}
       </text>
 
       {/* ── 2. 左下：高考四步推演核心看板 ── */}

@@ -6,7 +6,6 @@ import {
   KatexFormula,
   LeftPanel,
   LeftPanelSection,
-  TabSwitcher,
   SelectGrid,
   TipCard,
 } from "@/components/UI";
@@ -22,11 +21,9 @@ import {
   getMarkovFormulaLatex,
   getMarkovTipConfig,
   buildMarkovParamConfigs,
-  type MarkovModelType,
 } from "./components/modeConfig";
 
 export function ProbabilityMarkovAnimation() {
-  const [modelType, setModelType] = useState<MarkovModelType>("pass_ball");
   const [scenarioKey, setScenarioKey] = useState<string>("pass_ball_2020");
 
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -51,10 +48,10 @@ export function ProbabilityMarkovAnimation() {
     [params],
   );
 
-  // 4. 左屏教学提示
+  // 4. 左屏教学提示（严格随 scenarioKey 联动特化）
   const tipConfig = useMemo(
-    () => getMarkovTipConfig(modelType, scenarioKey),
-    [modelType, scenarioKey],
+    () => getMarkovTipConfig(scenarioKey),
+    [scenarioKey],
   );
 
   // 5. 参数更改与联动 (带步数上限联动保护与自由探索自动切换)
@@ -80,130 +77,57 @@ export function ProbabilityMarkovAnimation() {
     }
   };
 
-  const paramConfigs = useMemo(() => buildMarkovParamConfigs(params), [params]);
+  const paramConfigs = useMemo(
+    () => buildMarkovParamConfigs(params, scenarioKey),
+    [params, scenarioKey],
+  );
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 第 1 层：典型高考大题模型切换 */}
-          <LeftPanelSection title="典型大题模型">
-            <TabSwitcher
-              tabs={[
-                { key: "pass_ball", label: "传球 (振荡)" },
-                { key: "urn_replace", label: "摸球 (单调)" },
-                { key: "game_match", label: "比赛 (晋级)" },
-                { key: "pure_oscillation", label: "发球 (等幅)" },
+          {/* 第 1 层：典型高考真题模型 (首项为自由探索，后续为正统高考真题模型) */}
+          <LeftPanelSection title="典型高考真题模型">
+            <SelectGrid
+              columns={1}
+              items={[
+                {
+                  key: "free",
+                  label: "自由探索",
+                  description: "自主设定初始概率与转移概率",
+                },
+                {
+                  key: "pass_ball_2020",
+                  label: "甲乙传球问题",
+                  description: "2020全国卷高考真题",
+                },
+                {
+                  key: "pass_ball_3",
+                  label: "三人环传问题",
+                  description: "经典高考对称降维模型",
+                },
+                {
+                  key: "urn_replace",
+                  label: "摸球置换问题",
+                  description: "经典高考状态更新模型",
+                },
+                {
+                  key: "game_pingpong",
+                  label: "乒乓加赛问题",
+                  description: "2021新高考I卷压轴真题",
+                },
               ]}
-              value={modelType}
+              value={scenarioKey}
               onChange={(k) => {
-                const nextType = k as MarkovModelType;
-                setModelType(nextType);
-                if (nextType === "pass_ball") {
-                  setScenarioKey("pass_ball_2020");
-                  setParams({ ...MARKOV_PRESETS.pass_ball_2020.params });
-                } else if (nextType === "urn_replace") {
-                  setScenarioKey("urn_replace");
-                  setParams({ ...MARKOV_PRESETS.urn_replace.params });
-                } else if (nextType === "game_match") {
-                  setScenarioKey("game_pingpong");
-                  setParams({ ...MARKOV_PRESETS.game_pingpong.params });
-                } else if (nextType === "pure_oscillation") {
-                  setScenarioKey("pure_oscillation");
-                  setParams({ ...MARKOV_PRESETS.pure_oscillation.params });
+                setScenarioKey(k);
+                if (MARKOV_PRESETS[k]) {
+                  setParams({ ...MARKOV_PRESETS[k].params });
                 }
               }}
             />
           </LeftPanelSection>
 
-          {/* 第 2 层：典型高考真题情景 (首项规范为自由探索) */}
-          <LeftPanelSection title="典型真题情景">
-            {modelType === "pass_ball" && (
-              <SelectGrid
-                columns={1}
-                items={[
-                  { key: "free", label: "自由探索 (自定义参数)" },
-                  {
-                    key: "pass_ball_2020",
-                    label: "2020全国卷·甲乙传球 (振荡衰减)",
-                  },
-                  {
-                    key: "pass_ball_3",
-                    label: "三人环传·对称降维模型",
-                  },
-                ]}
-                value={scenarioKey}
-                onChange={(k) => {
-                  setScenarioKey(k);
-                  if (MARKOV_PRESETS[k]) {
-                    setParams({ ...MARKOV_PRESETS[k].params });
-                  }
-                }}
-              />
-            )}
-
-            {modelType === "urn_replace" && (
-              <SelectGrid
-                columns={1}
-                items={[
-                  { key: "free", label: "自由探索 (自定义参数)" },
-                  {
-                    key: "urn_replace",
-                    label: "摸球置换·单调递减收敛",
-                  },
-                ]}
-                value={scenarioKey}
-                onChange={(k) => {
-                  setScenarioKey(k);
-                  if (MARKOV_PRESETS[k]) {
-                    setParams({ ...MARKOV_PRESETS[k].params });
-                  }
-                }}
-              />
-            )}
-
-            {modelType === "game_match" && (
-              <SelectGrid
-                columns={1}
-                items={[
-                  { key: "free", label: "自由探索 (自定义参数)" },
-                  {
-                    key: "game_pingpong",
-                    label: "2021新高考I卷·比赛平局加赛",
-                  },
-                ]}
-                value={scenarioKey}
-                onChange={(k) => {
-                  setScenarioKey(k);
-                  if (MARKOV_PRESETS[k]) {
-                    setParams({ ...MARKOV_PRESETS[k].params });
-                  }
-                }}
-              />
-            )}
-
-            {modelType === "pure_oscillation" && (
-              <SelectGrid
-                columns={1}
-                items={[
-                  { key: "free", label: "自由探索 (自定义参数)" },
-                  {
-                    key: "pure_oscillation",
-                    label: "发球权轮换·永久等幅振荡",
-                  },
-                ]}
-                value={scenarioKey}
-                onChange={(k) => {
-                  setScenarioKey(k);
-                  if (MARKOV_PRESETS[k]) {
-                    setParams({ ...MARKOV_PRESETS[k].params });
-                  }
-                }}
-              />
-            )}
-          </LeftPanelSection>
-
-          {/* 第 3 层：参数调节 */}
+          {/* 第 2 层：参数调节 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -212,7 +136,7 @@ export function ProbabilityMarkovAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 第 4 层：教学导引 */}
+          {/* 第 3 层：教学导引 */}
           <div className="mt-auto">
             <TipCard
               variant={tipConfig.variant}

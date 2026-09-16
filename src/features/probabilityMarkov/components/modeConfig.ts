@@ -3,7 +3,7 @@ import { MATH_COLORS } from "@/theme";
 import { paramMeta, MARKOV_PRESETS } from "@/data/registries/probabilityMarkov";
 
 export type MarkovModelType =
-  "pass_ball" | "urn_replace" | "game_match" | "pure_oscillation";
+  "pass_ball" | "urn_replace" | "game_match" | "pure_oscillation" | "all";
 
 export interface TipConfig {
   variant: "info" | "primary" | "warning" | "danger";
@@ -25,19 +25,17 @@ export function getMarkovFormulaLatex(params: Record<string, number>): string {
   return `\\color{${MATH_COLORS.function}}{p_{n+1}} = \\color{${MATH_COLORS.paramPrimary}}{${p11.toFixed(2)}} p_n + \\color{${MATH_COLORS.paramSecondary}}{${p21.toFixed(2)}}(1-p_n) = ${lambdaStr} p_n + ${betaStr} \\implies \\color{${MATH_COLORS.derivative}}{p_{n+1} - ${tStr}} = ${lambdaStr}(p_n - ${tStr})`;
 }
 
-export function getMarkovTipConfig(
-  modelType: MarkovModelType,
-  scenarioKey: string,
-): TipConfig {
+export function getMarkovTipConfig(scenarioKey: string): TipConfig {
   const preset = MARKOV_PRESETS[scenarioKey];
   if (preset) {
+    const variant =
+      scenarioKey === "game_pingpong"
+        ? "warning"
+        : scenarioKey === "pass_ball_2020" || scenarioKey === "pass_ball_3"
+          ? "primary"
+          : "info";
     return {
-      variant:
-        modelType === "pure_oscillation"
-          ? "danger"
-          : modelType === "game_match"
-            ? "warning"
-            : "primary",
+      variant,
       badge: preset.badge,
       condition: preset.condition,
       question: preset.question,
@@ -46,72 +44,126 @@ export function getMarkovTipConfig(
 
   return {
     variant: "primary",
-    badge: "自由探索 · 全概递推与等比数列构造",
+    badge: "自由探索 · 概率递推数列构造",
     condition:
-      "自由设定单步自保持概率 $p_{11}$ 与跨转移概率 $p_{21}$，列出全概率一阶递推式。",
+      "【探究背景】探究二状态离散系统在一阶线性全概率转移下的动态演化规律与等比数列构造通法。\n【初始条件】设第 $n$ 步处于状态 1 的概率为 $p_n$。自主调节先验概率 $p_1$、单步自保持率 $p_{11}$ 与跨步转移率 $p_{21}$。",
     question:
-      "探究公比 $\\lambda = p_{11} - p_{21}$ 正负号对数列振荡与单调收敛特性的决定性影响，并求解稳态极限。",
+      "(1) 由全概率公式写出一阶递推式 $p_{n+1} = (p_{11}-p_{21})p_n + p_{21}$；\n(2) 探究公比 $\\lambda = p_{11}-p_{21}$ 正负号对单调递进与摆动收敛的决定性作用，并求稳态极限。",
   };
 }
 
 export function buildMarkovParamConfigs(
   params: Record<string, number>,
+  scenarioKey: string = "pass_ball_2020",
 ): ParamConfig[] {
+  const isPassBall =
+    scenarioKey === "pass_ball_2020" || scenarioKey === "pass_ball_3";
+  const isUrn = scenarioKey === "urn_replace";
+  const isGame = scenarioKey === "game_pingpong";
+
+  const p1Formula = isPassBall
+    ? `\\text{甲持球 } \\color{${MATH_COLORS.paramPrimary}}{p_1}`
+    : isUrn
+      ? `\\text{摸出白球 } \\color{${MATH_COLORS.paramPrimary}}{p_1}`
+      : isGame
+        ? `\\text{甲领先 } \\color{${MATH_COLORS.paramPrimary}}{p_1}`
+        : `\\text{初始概率 } \\color{${MATH_COLORS.paramPrimary}}{p_1}`;
+
+  const p11Formula = isPassBall
+    ? `\\text{甲留球 } \\color{${MATH_COLORS.paramPrimary}}{P(A_{n+1}|A_n)}`
+    : isUrn
+      ? `\\text{白球放回 } \\color{${MATH_COLORS.paramPrimary}}{P(A_{n+1}|A_n)}`
+      : isGame
+        ? `\\text{甲发甲得分 } \\color{${MATH_COLORS.paramPrimary}}{P(A_{n+1}|A_n)}`
+        : `\\text{保持概率 } \\color{${MATH_COLORS.paramPrimary}}{p_{11}}`;
+
+  const p21Formula = isPassBall
+    ? `\\text{乙传甲 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
+    : isUrn
+      ? `\\text{黑球换白 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
+      : isGame
+        ? `\\text{乙发甲得分 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
+        : `\\text{转移概率 } \\color{${MATH_COLORS.paramSecondary}}{p_{21}}`;
+
+  const p1Desc = isPassBall
+    ? "第 1 次传球前球在甲手中的概率"
+    : isUrn
+      ? "第 1 次摸球摸出白球的先验概率"
+      : isGame
+        ? "平局开局时甲处于领先的初始概率"
+        : "初始处于事件 A 的先验概率 p₁";
+
+  const p11Desc = isPassBall
+    ? "甲拿球留在甲手中的概率 P(Aₙ₊₁|Aₙ)"
+    : isUrn
+      ? "摸出白球后放回白球的概率 P(Aₙ₊₁|Aₙ)"
+      : isGame
+        ? "甲发球局甲得分的概率 P(Aₙ₊₁|Aₙ)"
+        : "同状态保持条件概率 P(Aₙ₊₁|Aₙ)";
+
+  const p21Desc = isPassBall
+    ? "乙拿球后传给甲的概率 P(Aₙ₊₁|Āₙ)"
+    : isUrn
+      ? "摸出黑球后换入白球的概率 P(Aₙ₊₁|Āₙ)"
+      : isGame
+        ? "乙发球局甲得分的概率 P(Aₙ₊₁|Āₙ)"
+        : "对立状态转移条件概率 P(Aₙ₊₁|Āₙ)";
+
   return [
     {
       key: "p1",
       label: "初始概率 p₁",
-      labelFormula: `\\text{初始概率 } \\color{${MATH_COLORS.paramPrimary}}{p_1}`,
+      labelFormula: p1Formula,
       min: paramMeta.p1.min,
       max: paramMeta.p1.max,
       step: paramMeta.p1.step,
       value: params.p1 ?? 1.0,
-      description: paramMeta.p1.description,
-      group: "初始设定",
+      description: p1Desc,
+      group: "题设条件概率",
     },
     {
       key: "p11",
-      label: "自保概率 p₁₁",
-      labelFormula: `\\text{自保概率 } \\color{${MATH_COLORS.paramPrimary}}{p_{11}}`,
+      label: "保持条件概率",
+      labelFormula: p11Formula,
       min: paramMeta.p11.min,
       max: paramMeta.p11.max,
       step: paramMeta.p11.step,
       value: params.p11 ?? 0.0,
-      description: paramMeta.p11.description,
-      group: "转移矩阵",
+      description: p11Desc,
+      group: "题设条件概率",
     },
     {
       key: "p21",
-      label: "跨转概率 p₂₁",
-      labelFormula: `\\text{跨转概率 } \\color{${MATH_COLORS.paramSecondary}}{p_{21}}`,
+      label: "转移条件概率",
+      labelFormula: p21Formula,
       min: paramMeta.p21.min,
       max: paramMeta.p21.max,
       step: paramMeta.p21.step,
       value: params.p21 ?? 0.5,
-      description: paramMeta.p21.description,
-      group: "转移矩阵",
+      description: p21Desc,
+      group: "题设条件概率",
     },
     {
       key: "currStep",
-      label: "当前步数 n",
-      labelFormula: `\\text{当前步数 } \\color{${MATH_COLORS.function}}{n}`,
+      label: "观察步数 n",
+      labelFormula: `\\text{观察步数 } \\color{${MATH_COLORS.function}}{n}`,
       min: paramMeta.currStep.min,
       max: params.maxN ?? 10,
       step: paramMeta.currStep.step,
       value: params.currStep ?? 1,
-      description: paramMeta.currStep.description,
-      group: "时序演化",
+      description: "观察第 n 步状态分布与全概展开",
+      group: "数列步数观察",
     },
     {
       key: "maxN",
-      label: "最大模拟步数",
-      labelFormula: `\\text{最大步数 } \\color{${MATH_COLORS.paramTertiary}}{N}`,
+      label: "最大项数 N",
+      labelFormula: `\\text{最大项数 } \\color{${MATH_COLORS.paramTertiary}}{N}`,
       min: paramMeta.maxN.min,
       max: paramMeta.maxN.max,
       step: paramMeta.maxN.step,
       value: params.maxN ?? 10,
-      description: paramMeta.maxN.description,
-      group: "时序演化",
+      description: "数列散点图观察的最大项数",
+      group: "数列步数观察",
     },
   ];
 }
