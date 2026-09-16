@@ -806,17 +806,7 @@ export function SingleVarPage() {
           <SceneLegend items={legendItems} title="图例说明" />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          mnemonic={mathData.mnemonic}
-          title="单变量恒成立与存在性看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="单变量恒成立与存在性看板" />}
     />
   );
 }

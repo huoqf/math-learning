@@ -784,13 +784,7 @@ export function DoubleVarPage() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          mnemonic={mathData.mnemonic}
-          examAnchor={mathData.examAnchor}
+          {...mathData}
           title={
             selectedLogic === "same_var" ? "同变量差函数看板" : "双动点博弈看板"
           }

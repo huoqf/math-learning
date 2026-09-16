@@ -667,17 +667,7 @@ export default function ParametricPointAnimation() {
           </div>
         )
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          examAnchor={mathData.examAnchor}
-          title="空间向量与动点存在性、最值看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="空间向量与动点存在性、最值看板" />}
     />
   );
 }

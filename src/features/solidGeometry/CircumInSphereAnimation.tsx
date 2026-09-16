@@ -735,13 +735,7 @@ export default function CircumInSphereAnimation() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          reasoningSteps={mathData.reasoningSteps}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          examAnchor={mathData.examAnchor}
-          mnemonic={mathData.mnemonic}
+          {...mathData}
           title={`${
             shape === "cuboid"
               ? "长方体"

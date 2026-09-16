@@ -210,11 +210,7 @@ export function SetAnimation() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
+          {...mathData}
           title={activeTab === "venn" ? "集合运算看板" : "逻辑条件看板"}
         />
       }

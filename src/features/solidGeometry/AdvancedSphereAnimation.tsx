@@ -602,17 +602,7 @@ export default function AdvancedSphereAnimation() {
           />
         </ThreeDCanvas>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          examAnchor={mathData.examAnchor}
-          title="进阶切接球高考破题看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="进阶切接球高考破题看板" />}
     />
   );
 }

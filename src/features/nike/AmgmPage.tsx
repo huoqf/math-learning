@@ -207,16 +207,7 @@ export function AmgmPage() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="均值不等式看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="均值不等式看板" />}
     />
   );
 }

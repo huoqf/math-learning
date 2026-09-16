@@ -350,17 +350,7 @@ export function CircleCircleAnimation() {
           <SceneLegend items={legendItems} title="几何图例" />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          reasoningSteps={mathData.reasoningSteps}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="圆与圆几何看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="圆与圆几何看板" />}
     />
   );
 }

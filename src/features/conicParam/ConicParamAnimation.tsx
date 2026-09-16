@@ -451,12 +451,7 @@ export function ConicParamAnimation() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          reasoningSteps={mathData.reasoningSteps}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
+          {...mathData}
           title={
             studyMode === "ellipseTrig"
               ? "椭圆动点三角设点与极值化简看板"

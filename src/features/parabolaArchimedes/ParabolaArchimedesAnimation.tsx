@@ -436,18 +436,7 @@ export function ParabolaArchimedesAnimation() {
           <SceneLegend items={legendItems} title="几何图元指示" />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          examAnchor={mathData.examAnchor}
-          mnemonic={mathData.mnemonic}
-          title="抛物线阿基米德几何看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="抛物线阿基米德几何看板" />}
     />
   );
 }

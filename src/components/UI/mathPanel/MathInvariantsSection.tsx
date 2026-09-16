@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, Sparkles } from "lucide-react";
 import { KatexFormula } from "../KatexFormula";
-import { hasLatex, renderMixedLatex } from "./mathPanelUtils";
+import { hasLatex, renderMixedLatex, toPlainMathText } from "./mathPanelUtils";
 
 export interface MathQuantity {
   label: string;
@@ -78,9 +78,17 @@ export const MathInvariantsSection: React.FC<MathInvariantsSectionProps> = ({
                         }}
                       >
                         {hasLatex(q.symbol) ? (
+                          /*
+                           * 符号徽标必须关闭自适应缩放。
+                           * 该 <span> 为 shrink-0 且按内容定宽，其可用宽度恒等于公式自然宽度，
+                           * 于是 (containerWidth - 4) / contentWidth 的固定 4px 安全余量
+                           * 在 4~14px 的徽标上占比极高，会把 11px 符号误判为"放不下"并压到硬底线（约 6px）。
+                           * 徽标本就按内容排版、不做收缩，缩放对其是纯损害 —— 直接按自然尺寸渲染。
+                           */
                           <KatexFormula
                             formula={q.symbol}
                             mode="inline"
+                            responsive={false}
                             className="!text-[11px]"
                           />
                         ) : (
@@ -90,9 +98,10 @@ export const MathInvariantsSection: React.FC<MathInvariantsSectionProps> = ({
                     )}
                     <span
                       className="text-[11px] text-neutral-600 font-medium truncate"
-                      title={q.label}
+                      title={toPlainMathText(q.label)}
                     >
-                      {q.label}
+                      {/* 单行省略号标题：公式保持自然字号，由文本省略号负责截断 */}
+                      {renderMixedLatex(q.label, { responsive: false })}
                     </span>
                   </div>
                   {q.isInvariant && (
@@ -104,27 +113,40 @@ export const MathInvariantsSection: React.FC<MathInvariantsSectionProps> = ({
                 </div>
                 <div className="flex items-baseline justify-end gap-1 overflow-hidden pt-0.5">
                   <span
-                    className="font-bold text-xs"
+                    className="font-bold text-xs min-w-0"
                     style={{ color: q.color ?? "#1f2937" }}
                   >
-                    {typeof q.value === "number" ? (
-                      q.value
-                    ) : typeof q.value === "string" && hasLatex(q.value) ? (
-                      <KatexFormula
-                        formula={q.value}
-                        mode="inline"
-                        responsive={true}
-                        className="!text-xs max-w-full"
-                      />
-                    ) : typeof q.value === "string" ? (
-                      renderMixedLatex(q.value)
-                    ) : (
-                      q.value
-                    )}
+                    {typeof q.value === "number"
+                      ? q.value
+                      : hasLatex(valStr) && !valStr.includes("$")
+                        ? /*
+                           * 整串纯 LaTeX 走 KatexFormula 行内渲染。
+                           * 外层 span 已加 min-w-0，flex 布局下可准确测量容器可用宽并触发自适应缩放。
+                           * 含 $...$ 的串不可走此分支——定界符在数学模式中非法，
+                           * 会让 KaTeX 退回「错误源码」显示，必须先用 renderMixedLatex 按定界符切分。
+                           */
+                          (() => {
+                            // 极短单一符号/数值（例如 \hat{b}、\pi、x_0、k 等）本身宽度仅数像素，
+                            // 绝无容器溢出风险，关闭自适应缩放以彻底杜绝微型容器下的误判缩放。
+                            const isShortSymbol =
+                              valStr.length <= 8 &&
+                              !/[=+\-*/]/.test(valStr) &&
+                              !valStr.includes("\\frac") &&
+                              !valStr.includes("\\sqrt");
+                            return (
+                              <KatexFormula
+                                formula={valStr}
+                                mode="inline"
+                                responsive={!isShortSymbol}
+                                className="!text-xs max-w-full"
+                              />
+                            );
+                          })()
+                        : renderMixedLatex(valStr)}
                   </span>
                   {q.unit && (
                     <span className="text-[10px] text-neutral-400 font-normal">
-                      {q.unit}
+                      {renderMixedLatex(q.unit, { responsive: false })}
                     </span>
                   )}
                 </div>

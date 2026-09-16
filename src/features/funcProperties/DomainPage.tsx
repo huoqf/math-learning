@@ -253,17 +253,7 @@ export function DomainPage() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          reasoningSteps={mathData.reasoningSteps}
-          title="定义域与值域看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="定义域与值域看板" />}
     />
   );
 }

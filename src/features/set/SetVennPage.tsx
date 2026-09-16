@@ -151,16 +151,7 @@ export function SetVennPage() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="集合运算看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="集合运算看板" />}
     />
   );
 }

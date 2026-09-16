@@ -789,11 +789,7 @@ export default function SpatialAngleAnimation({
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
+          {...mathData}
           title={
             activeMode === "skewLines"
               ? "异面直线角与公垂线高考看板"

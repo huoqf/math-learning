@@ -368,17 +368,7 @@ export function PowerPage() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          mnemonic={mathData.mnemonic}
-          title="幂函数看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="幂函数看板" />}
     />
   );
 }

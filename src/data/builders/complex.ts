@@ -80,7 +80,7 @@ export function buildComplexPanel(
           label: "模长 $|z_1|$",
           symbol: "|z_1|",
           value: mod1.toFixed(2),
-          unit: "\\sqrt{a_1^2 + b_1^2}",
+          unit: "$\\sqrt{a_1^2 + b_1^2}$",
         },
         {
           label: "共轭 $\\bar{z}_1$",

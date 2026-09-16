@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { colors } from "@/theme/colors";
+import { renderMixedLatex } from "./mathPanelUtils";
 
 interface MathMnemonicSectionProps {
   mnemonic?: string;
@@ -37,7 +38,7 @@ export const MathMnemonicSection: React.FC<MathMnemonicSectionProps> = ({
             color: colors.secondary[700],
           }}
         >
-          {mnemonic}
+          {renderMixedLatex(mnemonic)}
         </div>
       )}
     </div>

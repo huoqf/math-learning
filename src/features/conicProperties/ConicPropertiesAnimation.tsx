@@ -753,18 +753,7 @@ export function ConicPropertiesAnimation() {
           <SceneLegend items={legendItems} title="几何图元图例" />
         </div>
       }
-      right={
-        <MathPanel
-          examAnchor={mathData.examAnchor}
-          reasoningSteps={mathData.reasoningSteps}
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="数学解析看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="数学解析看板" />}
     />
   );
 }

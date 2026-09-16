@@ -420,16 +420,7 @@ export function SymmetryPage() {
           />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="对称与周期看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="对称与周期看板" />}
     />
   );
 }

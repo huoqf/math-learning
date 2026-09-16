@@ -272,17 +272,7 @@ export function LogarithmicPage() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          mnemonic={mathData.mnemonic}
-          title="对数函数看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="对数函数看板" />}
     />
   );
 }

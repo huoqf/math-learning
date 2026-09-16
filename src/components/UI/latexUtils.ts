@@ -460,7 +460,12 @@ export function splitAtTopLevelPunctuation(
   let i = 0;
   while (i < latex.length) {
     if (isTopLevel(state) && (latex[i] === "," || latex[i] === ";")) {
-      candidates.push(i);
+      // 反斜杠前缀判定：\, \; \! 等是 LaTeX 间距命令，
+      // 其末尾的 , / ; 属于命令名的一部分，绝不可作为断点，
+      // 否则左行将以孤立反斜杠结尾，产生非法 LaTeX（KaTeX 渲染为错误文本）。
+      if (latex[i - 1] !== "\\") {
+        candidates.push(i);
+      }
     }
     const step = advanceLatexDepth(latex, i, state);
     i += step;
@@ -479,8 +484,12 @@ export function splitAtTopLevelPunctuation(
     }
   }
 
-  const left = latex.slice(0, chosenIdx).trim();
-  const right = latex.slice(chosenIdx + 1).trim();
+  // 断点标点保留在左行行尾（教材习惯：逗号/分号留在上一行），
+  // 先前 slice(0, chosenIdx) 会把标点直接删除，属于内容级改写。
+  const left = latex.slice(0, chosenIdx + 1).trim();
+  let right = latex.slice(chosenIdx + 1).trim();
+  // 清理右行行首残留的 LaTeX 间距命令（如 \; \quad），避免续行无故缩进
+  right = right.replace(/^(?:\s|\\;|\\,|\\!|\\quad|\\qquad)+/, "").trim();
   if (left && right) return [left, right];
   return null;
 }
@@ -492,7 +501,18 @@ export function splitAtTopLevelPunctuation(
  * 自动注入 0.65em 的行距补偿，彻底消除分式分母下沉导致的上下行挤压。
  * 同时将普通 \frac 自动提升为满尺寸 \dfrac。
  */
-export function normalizeFractionRowSpacing(latex: string): string {
+export function normalizeFractionRowSpacing(
+  latex: string,
+  /**
+   * 是否对「普通单行公式」执行 \frac → \dfrac 满尺寸升级。
+   * 多行数学环境（cases/aligned/array 等）不受此开关影响，始终升级并平衡行距。
+   *
+   * 背景：行内公式（正文中的 $…$）按排版规范应保持 textstyle，
+   * 强制升为 \dfrac 会抬高行高、造成正文行距忽大忽小，
+   * 因此由调用方按「块级/多行排版」显式声明，而非全局静默改写。
+   */
+  displayFraction = false,
+): string {
   if (!latex) return "";
 
   // 1. 如果包含多行环境
@@ -521,8 +541,45 @@ export function normalizeFractionRowSpacing(latex: string): string {
     );
   }
 
-  // 2. 普通单行公式直接将 \frac 升级为 \dfrac
-  return latex.replace(/\\frac(?=\{)/g, "\\dfrac");
+  // 2. 普通单行公式：仅在块级/多行排版下将 \frac 升级为 \dfrac
+  return displayFraction ? latex.replace(/\\frac(?=\{)/g, "\\dfrac") : latex;
+}
+
+/**
+ * 教材续行对齐：取首行中「首个顶层关系符 / 推导符 / 变换箭头」之前的片段，
+ * 作为续行悬挂对齐的基准宽度来源（渲染时以 \phantom 占位）。
+ * 返回 null 表示首行不存在顶层对齐点，或前缀不适合作占位（含环境、过长）。
+ */
+export function getAlignmentPrefix(line: string): string | null {
+  if (!line) return null;
+  const indices: number[] = [];
+  const eq = findTopLevelEqualsIndices(line);
+  if (eq.length > 0) indices.push(eq[0]);
+  const im = findTopLevelImplies(line);
+  if (im.length > 0) indices.push(im[0].index);
+  const ar = findTopLevelArrows(line);
+  if (ar.length > 0) indices.push(ar[0].index);
+  if (indices.length === 0) return null;
+
+  const idx = Math.min(...indices);
+  const prefix = line.slice(0, idx).trim();
+  if (!prefix) return null;
+  // \phantom 不允许承载环境体，且过长前缀会挤占行宽，二者均退回左对齐
+  if (prefix.includes("\\begin{")) return null;
+  if (getEffectiveLatexLength(prefix) > 12) return null;
+  return prefix;
+}
+
+/**
+ * 判断某一行是否以「关系符 / 二元运算符 / 变换箭头」起头——
+ * 这正是教材推导续行的标准形态，也是需要悬挂对齐的行。
+ */
+export function startsWithRelation(line: string): boolean {
+  const s = line.trim();
+  if (!s) return false;
+  return /^(=|\\leq|\\geq|\\neq|\\le\b|\\ge\b|\\ne\b|\\approx|\\equiv|\\cong|\\Rightarrow|\\Leftrightarrow|\\iff|\\implies|\\xrightarrow|\\pm|\\mp|\\cdot|\\times|\\div|\\cap|\\cup|\\subset|\\subseteq|<|>|\+|-)/.test(
+    s,
+  );
 }
 
 /**
@@ -626,68 +683,111 @@ export function findOptimalSplit(latex: string): [string, string] | null {
 }
 
 /**
- * 从 LaTeX 中提取原生多行结构（顶层 \\\\ 或 \\begin{aligned} 等）。
- * 若存在多行且解构后每行非空，返回拆解后的多行数组，使 KatexFormula 能够
- * 以独立多行 div 进行分行渲染，彻底避免单体超宽导致的极端缩放与容器截断。
+ * 深度感知地把公式在**顶层** \\ 处切分为多个可独立排版的片段。
+ *
+ * 三条不变量（缺一即导致独立成行后 KaTeX 编译失败、界面出现红色错误源码）：
+ * 1. 只在顶层的 \\ 处切分。`aligned`/`gathered`/`cases` 等环境内部的 \\ 是该环境自身的
+ *    行分隔，必须留在环境体内——否则环境会被拦腰截断成两个半截，KaTeX 直接报错。
+ * 2. \\ 之后若跟可选高度参数 [..]，一并丢弃——切出的片段由外层以独立行渲染，
+ *    行距由外层 flex gap 统一控制，残留的行距参数在环境外属非法语法。
+ * 3. 切出的片段内**顶层** & 必须剥离（环境体内的 & 位于非顶层，予以保留）。
+ *    顶层 & 没有对齐上下文，KaTeX 会报 "Expected 'EOF', got '&'"。
+ */
+function splitTopLevelRows(latex: string): string[] {
+  const state = createDepthState();
+  const rows: string[] = [];
+  let current = "";
+  let i = 0;
+  while (i < latex.length) {
+    if (latex[i] === "\\" && latex[i + 1] === "\\" && isTopLevel(state)) {
+      rows.push(current);
+      i += 2;
+      while (i < latex.length && (latex[i] === " " || latex[i] === "\t")) i++;
+      if (latex[i] === "[") {
+        const endBracket = latex.indexOf("]", i);
+        i = endBracket === -1 ? i : endBracket + 1;
+      }
+      current = "";
+      continue;
+    }
+    const step = advanceLatexDepth(latex, i, state);
+    current += latex.slice(i, i + step);
+    i += step;
+  }
+  rows.push(current);
+  return rows;
+}
+
+/** 剥离片段中所有顶层对齐符 &（环境体内的 & 保留）。 */
+function stripTopLevelAlignment(row: string): string {
+  const state = createDepthState();
+  let out = "";
+  let i = 0;
+  while (i < row.length) {
+    if (row[i] === "&" && isTopLevel(state)) {
+      i++;
+      continue;
+    }
+    const step = advanceLatexDepth(row, i, state);
+    out += row.slice(i, i + step);
+    i += step;
+  }
+  return out.trim();
+}
+
+/** 统计子串出现次数 */
+function countOccurrences(text: string, token: string): number {
+  return text.split(token).length - 1;
+}
+
+/**
+ * 若整串恰由**一对方括号对齐环境**完整包裹，返回其环境体；否则返回 null。
+ *
+ * 必须严格校验「恰好一对」：形如
+ *   `\begin{aligned}…\end{aligned} \\ \begin{aligned}…\end{aligned}`
+ * 的并列结构首尾虽然也是 begin/end，但内部仍留有完整的第二组环境。
+ * 若仅凭首尾去解包，会剥掉外层 begin/end 却把内层留在环境体里，
+ * 拍平后即产生「有 begin 无 end」的非法片段，KaTeX 直接报错。
+ */
+function unwrapSingleAlignedEnv(latex: string): string | null {
+  const m = latex.match(/^\\begin\{(aligned|gathered)\}/);
+  if (!m) return null;
+  const begin = m[0];
+  const end = `\\end{${m[1]}}`;
+  if (!latex.endsWith(end)) return null;
+  if (countOccurrences(latex, begin) !== 1) return null;
+  if (countOccurrences(latex, end) !== 1) return null;
+  return latex.slice(begin.length, latex.length - end.length);
+}
+
+/** 含不可外部改写的复杂环境（分段函数 / 矩阵 / 数组）：内部行列结构由 KaTeX 自行负责 */
+const RIGID_ENV = /\\begin\{(cases|matrix|pmatrix|bmatrix|vmatrix|array)\}/;
+
+/**
+ * 从 LaTeX 中提取原生多行结构（顶层 \\\\）。
+ *
+ * 行为约定：
+ * 1. 整串恰为一对 aligned / gathered 包裹时解包，再在顶层 \\ 处拍平为独立行——
+ *    拍平后每一行都可能被 findOptimalSplit 继续按语义断行，
+ *    这是窄容器中避免整体暴跌字号的必要前提。
+ * 2. 并列环境（多对）不做解包，改为在顶层 \\ 处切分，
+ *    使每个片段都是**完整闭合**的环境体，交由 KaTeX 原生对齐排版。
+ * 3. 含 cases / matrix / array 等复杂环境且无外层 aligned 可解包时整体交出，
+ *    绝不外部切分。
+ * 4. 无论走哪条路径，均只切顶层 \\、丢弃行距参数 [..]、剥离顶层 &，
+ *    保证每个片段都能被 KaTeX 独立无错编译。
  */
 export function extractLatexLines(latex: string): string[] | null {
   if (!latex) return null;
   const trimmed = latex.trim();
+  if (!trimmed.includes("\\\\")) return null;
 
-  // 1. 如果整体被 \\begin{aligned}...\\end{aligned} 或 \\begin{gathered}...\\end{gathered} 包裹
-  const envMatch = trimmed.match(
-    /^\\begin\{(aligned|gathered)\}([\s\S]*?)\\end\{\1\}$/,
-  );
-  if (envMatch) {
-    const inner = envMatch[2];
-    const rawLines = inner.split(/\\\\(?![ \t]*\[)/);
-    const cleaned = rawLines
-      .map((line) => line.replace(/^\s*&+\s*/, "").trim())
-      .filter((line) => line.length > 0);
-    if (cleaned.length > 1) {
-      return cleaned;
-    }
-  }
+  const inner = unwrapSingleAlignedEnv(trimmed);
+  if (inner === null && RIGID_ENV.test(trimmed)) return null;
 
-  // 2. 如果包含顶层 \\\\（且不在不可拆的复杂矩阵/分段函数 cases, matrix, pmatrix 中）
-  if (
-    !/\\begin\{(cases|matrix|pmatrix|bmatrix|vmatrix|array)\}/.test(trimmed)
-  ) {
-    if (trimmed.includes("\\\\")) {
-      const state = createDepthState();
-      const lines: string[] = [];
-      let lastIdx = 0;
-      let i = 0;
-      while (i < trimmed.length) {
-        if (
-          trimmed[i] === "\\" &&
-          trimmed[i + 1] === "\\" &&
-          isTopLevel(state)
-        ) {
-          lines.push(trimmed.slice(lastIdx, i).trim());
-          i += 2;
-          // 跳过可选的高度调节参数，如 [0.5em]
-          if (trimmed[i] === "[") {
-            const endBracket = trimmed.indexOf("]", i);
-            if (endBracket !== -1) {
-              i = endBracket + 1;
-            }
-          }
-          lastIdx = i;
-          continue;
-        }
-        const step = advanceLatexDepth(trimmed, i, state);
-        i += step;
-      }
-      lines.push(trimmed.slice(lastIdx).trim());
-      const filtered = lines
-        .map((l) => l.replace(/^\s*&+\s*/, "").trim())
-        .filter((l) => l.length > 0);
-      if (filtered.length > 1) {
-        return filtered;
-      }
-    }
-  }
+  const rows = splitTopLevelRows(inner ?? trimmed)
+    .map((row) => stripTopLevelAlignment(row))
+    .filter((row) => row.length > 0);
 
-  return null;
+  return rows.length > 1 ? rows : null;
 }

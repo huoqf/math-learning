@@ -342,18 +342,7 @@ export function DerivativeMonotonicityAnimation() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          examAnchor={mathData.examAnchor}
-          mnemonic={mathData.mnemonic}
-          title="数学解析看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="数学解析看板" />}
     />
   );
 }

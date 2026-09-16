@@ -797,18 +797,7 @@ export function LineEquationAnimation() {
           <SceneLegend items={legendItems} title="几何图元图例" />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          examAnchor={mathData.examAnchor}
-          mnemonic={mathData.mnemonic}
-          title={panelTitleMap[studyMode]}
-        />
-      }
+      right={<MathPanel {...mathData} title={panelTitleMap[studyMode]} />}
     />
   );
 }

@@ -390,17 +390,7 @@ export function ConicDefinitionAnimation() {
           />
         </AnimationSvgCanvas>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          mnemonic={mathData.mnemonic}
-          title="圆锥曲线定义看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="圆锥曲线定义看板" />}
     />
   );
 }

@@ -471,16 +471,7 @@ export function ConicHomogenizationAnimation() {
           />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="圆锥曲线齐次化考向看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="圆锥曲线齐次化考向看板" />}
     />
   );
 }

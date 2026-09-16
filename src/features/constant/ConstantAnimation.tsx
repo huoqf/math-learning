@@ -295,11 +295,7 @@ export function ConstantAnimation() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
+          {...mathData}
           title={activeTab === "single" ? "单自变量看板" : "双动点博弈看板"}
         />
       }

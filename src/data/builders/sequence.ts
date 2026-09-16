@@ -62,8 +62,10 @@ export function buildSequencePanel(
         : `\\color{${MATH_COLORS.paramSecondary}}{${d}}n ${constSign}`;
 
     // 通用数学量
+    // 数学片段统一用 $...$ 包裹（全工程 label 的既定约定，见 katexSyntaxValidation 测试），
+    // 未包裹的裸 LaTeX 会被当作纯文本直接显示给学生。
     quantities.push({
-      label: `末项 a_{${N}} (a_n = ${anLatex})`,
+      label: `末项 a_{${N}} ($a_n = ${anLatex}$)`,
       value: `a_{${N}} = ${formatMathNumber(aN)}`,
       color: MATH_COLORS.sequence,
     });
@@ -190,7 +192,7 @@ export function buildSequencePanel(
       });
     } else if (subMode === "absSum") {
       quantities.push({
-        label: `绝对值总和 T_{${N}} = \\sum |a_k|`,
+        label: `绝对值总和 $T_{${N}} = \\sum |a_k|$`,
         value: `T_{${N}} = ${formatMathNumber(TN)}`,
         color: MATH_COLORS.sequenceHighlight,
       });
@@ -238,7 +240,7 @@ export function buildSequencePanel(
 
     // 基础通量
     quantities.push({
-      label: `末项 a_{${N}} (a_n = ${a1Colored} \\cdot (${qColored})^{n-1})`,
+      label: `末项 a_{${N}} ($a_n = ${a1Colored} \\cdot (${qColored})^{n-1}$)`,
       value: `a_{${N}} = ${aN.toFixed(4)}`,
       color: MATH_COLORS.sequence,
     });

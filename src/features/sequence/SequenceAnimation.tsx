@@ -644,16 +644,7 @@ export function SequenceAnimation() {
           />
         </AnimationSvgCanvas>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="数列数形结合看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="数列数形结合看板" />}
     />
   );
 }

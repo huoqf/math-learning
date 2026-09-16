@@ -922,18 +922,7 @@ export default function SectionCuboidDemo() {
           </ThreeDCanvas>
         )
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          examAnchor={mathData.examAnchor}
-          mnemonic={mathData.mnemonic}
-          title="多面体截面数学看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="多面体截面数学看板" />}
     />
   );
 }

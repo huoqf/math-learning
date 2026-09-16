@@ -237,16 +237,7 @@ export function SetQuantifiersPage() {
           </div>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="量词与逻辑看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="量词与逻辑看板" />}
     />
   );
 }

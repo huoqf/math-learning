@@ -321,17 +321,7 @@ export function DerivativeShiftAnimation() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          mnemonic={mathData.mnemonic}
-          title="隐零点与极值点偏移看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="隐零点与极值点偏移看板" />}
     />
   );
 }

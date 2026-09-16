@@ -133,7 +133,10 @@ export function buildSpatialAnglePanel(
         title: "几何平移法辅助对账互验",
         detail:
           "在侧面 CDD₁C₁ 中连结 D₁C，由 D₁C ∥ A₁B 将空间异面角转化为平面相交角 ∠ACD₁",
-        latex: `\\text{在 } \\triangle ACD_1 \\text{ 中利用余弦定理求 } \\angle ACD_1，\\text{几何平移法求得夹角与向量法完全一致}`,
+        // 原写法把整句中文塞进单个 \text{}，内部全角逗号非顶层，
+        // 拆行算法找不到断点 → 593px 内容被 243px 容器永久裁切。
+        // 改为在「条件」与「结论」之间提供顶层 \; 语义间距断点，内容与标点完全保留。
+        latex: `\\text{在 } \\triangle ACD_1 \\text{ 中利用余弦定理求 } \\angle ACD_1，\\; \\text{几何平移法求得夹角与向量法完全一致}`,
         rubric: "高考大题采分点：几何平移转化与互验说明（4分）",
       },
     );

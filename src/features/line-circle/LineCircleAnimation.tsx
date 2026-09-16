@@ -499,7 +499,18 @@ export function LineCircleAnimation() {
       question:
         "如何运用垂径定理垂直关系 $k_{CH} \\cdot k_{AB} = -1$（点差法）确定弦方程？",
     };
-  }, [studyMode, preset, effectiveParams]);
+  }, [
+    studyMode,
+    preset,
+    effectiveParams,
+    // minChord / tangent 两个分支直接读原始 params 的定点坐标（M 与 P），
+    // 这份数据没有出现在 effectiveParams 的派生结果里，
+    // 因此必须显式声明，而不是依赖 effectiveParams 的引用等价性来间接覆盖。
+    params.mx,
+    params.my,
+    params.px,
+    params.py,
+  ]);
 
   const panelTitle = useMemo(() => {
     switch (studyMode) {
@@ -604,18 +615,7 @@ export function LineCircleAnimation() {
           <SceneLegend items={legendItems} title="几何图元图例" />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          examAnchor={mathData.examAnchor}
-          mnemonic={mathData.mnemonic}
-          title={panelTitle}
-        />
-      }
+      right={<MathPanel {...mathData} title={panelTitle} />}
     />
   );
 }

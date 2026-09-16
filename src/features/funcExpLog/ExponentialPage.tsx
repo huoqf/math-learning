@@ -255,17 +255,7 @@ export function ExponentialPage() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          mnemonic={mathData.mnemonic}
-          title="指数函数看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="指数函数看板" />}
     />
   );
 }

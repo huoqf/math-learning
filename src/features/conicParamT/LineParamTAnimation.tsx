@@ -512,10 +512,7 @@ export function LineParamTAnimation() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
+          {...mathData}
           title={
             mode === "definition"
               ? "直线参数 t 几何意义看板"

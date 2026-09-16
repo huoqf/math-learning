@@ -289,6 +289,9 @@ export function RegressionPage() {
     currentFit,
     linearRes,
     showResidualSquares,
+    // 样本中心的图例条目以 selectedModel === "linear" 为条件，
+    // 必须显式声明为依赖，否则切换模型时该条目可能不被增删。
+    selectedModel,
     params.targetX,
     currentPreset.targetX,
   ]);

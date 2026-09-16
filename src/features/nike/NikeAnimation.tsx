@@ -550,17 +550,7 @@ export function NikeAnimation() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          reasoningSteps={mathData.reasoningSteps}
-          title="对勾与双曲型看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="对勾与双曲型看板" />}
     />
   );
 }

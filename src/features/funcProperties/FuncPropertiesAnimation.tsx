@@ -255,12 +255,7 @@ export function FuncPropertiesAnimation() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          reasoningSteps={mathData.reasoningSteps}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
+          {...mathData}
           title={
             mode === "domain"
               ? "定义域与值域看板"

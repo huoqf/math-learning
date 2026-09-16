@@ -442,16 +442,7 @@ export function GeometricPage() {
           />
         </AnimationSvgCanvas>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="等比数列实验室"
-        />
-      }
+      right={<MathPanel {...mathData} title="等比数列实验室" />}
     />
   );
 }

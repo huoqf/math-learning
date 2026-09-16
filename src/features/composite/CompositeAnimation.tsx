@@ -373,11 +373,7 @@ export function CompositeAnimation() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
+          {...mathData}
           title={subMode === "piecewise" ? "分段函数看板" : "复合函数看板"}
         />
       }

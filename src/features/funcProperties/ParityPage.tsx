@@ -217,17 +217,7 @@ export function ParityPage() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          reasoningSteps={mathData.reasoningSteps}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="单调奇偶性看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="单调奇偶性看板" />}
     />
   );
 }

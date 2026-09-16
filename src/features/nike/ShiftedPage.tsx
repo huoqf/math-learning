@@ -304,17 +304,7 @@ export function ShiftedPage() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          reasoningSteps={mathData.reasoningSteps}
-          title="平移双曲线看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="平移双曲线看板" />}
     />
   );
 }

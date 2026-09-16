@@ -586,16 +586,7 @@ export function RecurrencePage() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="递推与构造法看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="递推与构造法看板" />}
     />
   );
 }

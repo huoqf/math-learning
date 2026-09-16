@@ -475,18 +475,7 @@ export function VectorPolarizationApolloniusAnimation() {
           <SceneLegend items={legendItems} title="图元与特征指示" />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          reasoningSteps={mathData.reasoningSteps}
-          examAnchor={mathData.examAnchor}
-          mnemonic={mathData.mnemonic}
-          title={panelTitle}
-        />
-      }
+      right={<MathPanel {...mathData} title={panelTitle} />}
     />
   );
 }

@@ -251,17 +251,7 @@ export function InteractiveTopicScaffold<
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathPanelData.quantities}
-          theorems={mathPanelData.theorems}
-          warnings={mathPanelData.warnings}
-          reasoningSteps={mathPanelData.reasoningSteps}
-          gaokaoPoints={mathPanelData.gaokaoPoints}
-          examAnchor={mathPanelData.examAnchor}
-          mnemonic={mathPanelData.mnemonic}
-        />
-      }
+      right={<MathPanel {...mathPanelData} />}
     />
   );
 }

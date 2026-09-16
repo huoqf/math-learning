@@ -42,3 +42,14 @@ playwright-report/
 # Tool artifacts
 .codebase-memory/
 .git-rewrite/
+
+# ---- 审计取证产物（本地生成、可由 scripts/audit-*.mjs 重新生成，不入库）----
+# 一次性 / 临时脚本
+scripts/_*
+
+# 审计快照 JSON：除 routes.json（审计脚本共享输入清单）外，全部为本地取证产物
+scripts/*.json
+!scripts/routes.json
+
+# 审计截图目录（*.png 已全局忽略，此处显式声明目录意图）
+scripts/shots/

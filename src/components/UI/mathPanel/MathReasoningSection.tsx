@@ -70,7 +70,7 @@ export const MathReasoningSection: React.FC<MathReasoningSectionProps> = ({
                 {s.rubric && (
                   <div className="pl-5.5">
                     <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80 font-medium leading-relaxed break-words">
-                      {s.rubric}
+                      {renderMixedLatex(s.rubric)}
                     </span>
                   </div>
                 )}

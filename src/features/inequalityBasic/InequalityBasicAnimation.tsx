@@ -270,17 +270,7 @@ export function InequalityBasicAnimation() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          reasoningSteps={mathData.reasoningSteps}
-          title="基本不等式看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="基本不等式看板" />}
     />
   );
 }

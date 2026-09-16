@@ -241,16 +241,7 @@ export function ArithmeticPage() {
           />
         </AnimationSvgCanvas>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="等差数列看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="等差数列看板" />}
     />
   );
 }
