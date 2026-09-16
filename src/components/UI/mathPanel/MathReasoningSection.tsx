@@ -8,6 +8,7 @@ export interface ReasoningStep {
   title: string;
   detail?: string;
   latex?: string;
+  latexBlocks?: string[];
   rubric?: string;
 }
 
@@ -42,46 +43,62 @@ export const MathReasoningSection: React.FC<MathReasoningSectionProps> = ({
       </button>
       {open && (
         <div className="space-y-2.5 transition-all duration-fast ease-standard">
-          {steps.map((s, idx) => (
-            <div
-              key={idx}
-              className="p-3 rounded-lg border border-neutral-200/80 bg-white shadow-2xs text-xs flex flex-col gap-1.5"
-            >
-              {/* 1. 步骤序号与主标题（独占横向空间，自然流动） */}
-              <div className="flex items-start gap-1.5">
-                <span className="w-4 h-4 rounded-full bg-primary-600 text-white text-[10px] flex items-center justify-center font-mono shrink-0 mt-0.5">
-                  {s.step}
-                </span>
-                <span className="font-bold text-neutral-800 text-xs leading-snug flex-1 break-words">
-                  {s.title}
-                </span>
-              </div>
+          {steps.map((s, idx) => {
+            const formulaList =
+              s.latexBlocks && s.latexBlocks.length > 0
+                ? s.latexBlocks.filter((f) => Boolean(f?.trim()))
+                : s.latex
+                  ? [s.latex]
+                  : [];
 
-              {/* 2. 高考采分点（另起一行缩进对齐，醒目展示得分考点，绝不与标题抢夺横向宽度） */}
-              {s.rubric && (
-                <div className="pl-5.5">
-                  <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80 font-medium leading-relaxed break-words">
-                    {s.rubric}
+            return (
+              <div
+                key={idx}
+                className="p-3 rounded-lg border border-neutral-200/80 bg-white shadow-2xs text-xs flex flex-col gap-1.5"
+              >
+                {/* 1. 步骤序号与主标题（独占横向空间，自然流动） */}
+                <div className="flex items-start gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-primary-600 text-white text-[10px] flex items-center justify-center font-mono shrink-0 mt-0.5">
+                    {s.step}
+                  </span>
+                  <span className="font-bold text-neutral-800 text-xs leading-snug flex-1 break-words">
+                    {s.title}
                   </span>
                 </div>
-              )}
-              {s.detail && (
-                <div className="text-xs text-neutral-600 leading-relaxed pl-5">
-                  {renderMixedLatex(s.detail)}
-                </div>
-              )}
-              {s.latex && (
-                <div className="w-full py-2.5 px-3 bg-neutral-50/90 rounded-lg border border-neutral-200/70 max-w-full overflow-hidden">
-                  <KatexFormula
-                    formula={s.latex}
-                    mode="block"
-                    responsive={true}
-                    className="text-xs sm:text-sm font-medium text-neutral-800"
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+
+                {/* 2. 高考采分点（另起一行缩进对齐，醒目展示得分考点，绝不与标题抢夺横向宽度） */}
+                {s.rubric && (
+                  <div className="pl-5.5">
+                    <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80 font-medium leading-relaxed break-words">
+                      {s.rubric}
+                    </span>
+                  </div>
+                )}
+                {s.detail && (
+                  <div className="text-xs text-neutral-600 leading-relaxed pl-5">
+                    {renderMixedLatex(s.detail)}
+                  </div>
+                )}
+                {formulaList.length > 0 && (
+                  <div className="w-full flex flex-col gap-2">
+                    {formulaList.map((formulaItem, fIdx) => (
+                      <div
+                        key={fIdx}
+                        className="w-full py-2 px-3 bg-neutral-50/90 rounded-lg border border-neutral-200/70 max-w-full overflow-hidden"
+                      >
+                        <KatexFormula
+                          formula={formulaItem}
+                          mode="block"
+                          responsive={true}
+                          className="text-xs sm:text-sm font-medium text-neutral-800"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

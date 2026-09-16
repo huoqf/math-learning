@@ -289,7 +289,8 @@ export function fitAllRegressionModels(
       results.push({
         type: "exponential",
         name: "指数模型",
-        variableSubstitution: "令 z = \\ln y \\implies z = kx + \\ln c",
+        variableSubstitution:
+          "\\text{令 } z = \\ln y \\implies z = kx + \\ln c",
         transformedFormula: `\\hat{z} = ${kStr}x + ${Math.log(c).toFixed(3)}`,
         originalFormula: `\\hat{y} = ${cStr} \\cdot e^{${kStr}x}`,
         rSquare,
@@ -332,7 +333,7 @@ export function fitAllRegressionModels(
       results.push({
         type: "logarithmic",
         name: "对数模型",
-        variableSubstitution: "令 u = \\ln x \\implies y = bu + a",
+        variableSubstitution: "\\text{令 } u = \\ln x \\implies y = bu + a",
         transformedFormula: `\\hat{y} = ${bStr}u ${aSign} ${aAbs}`,
         originalFormula: `\\hat{y} = ${bStr}\\ln x ${aSign} ${aAbs}`,
         rSquare,
@@ -374,7 +375,7 @@ export function fitAllRegressionModels(
         type: "power",
         name: "幂函数模型",
         variableSubstitution:
-          "令 z = \\ln y, u = \\ln x \\implies z = ku + \\ln c",
+          "\\text{令 } z = \\ln y, \\; u = \\ln x \\implies z = ku + \\ln c",
         transformedFormula: `\\hat{z} = ${kStr}u + ${Math.log(c).toFixed(3)}`,
         originalFormula: `\\hat{y} = ${cStr} \\cdot x^{${kStr}}`,
         rSquare,
@@ -417,7 +418,8 @@ export function fitAllRegressionModels(
       results.push({
         type: "inverse",
         name: "双曲线逆函数模型",
-        variableSubstitution: "令 u = \\frac{1}{x} \\implies y = bu + a",
+        variableSubstitution:
+          "\\text{令 } u = \\frac{1}{x} \\implies y = bu + a",
         transformedFormula: `\\hat{y} = ${bStr}u ${aSign} ${aAbs}`,
         originalFormula: `\\hat{y} = \\frac{${bStr}}{x} ${aSign} ${aAbs}`,
         rSquare,
@@ -684,6 +686,37 @@ export function mapChiValueToPixel(
 }
 
 /**
+ * 离群点清洗对比结果
+ */
+export interface OutlierComparisonResult {
+  raw: LinearRegressionResult;
+  cleaned: LinearRegressionResult;
+  removedPoint: Point2D;
+  rDrop: number;
+}
+
+/**
+ * 剔除指定异常点（默认最后一个点）并重新计算回归方程，供高考异常点清洗教学对比
+ */
+export function calculateOutlierComparison(
+  points: Point2D[],
+  outlierIndex = points.length - 1,
+): OutlierComparisonResult | null {
+  if (points.length < 3 || outlierIndex < 0 || outlierIndex >= points.length) {
+    return null;
+  }
+  const raw = calculateLinearRegression(points);
+  const cleanedPoints = points.filter((_, idx) => idx !== outlierIndex);
+  const cleaned = calculateLinearRegression(cleanedPoints);
+  return {
+    raw,
+    cleaned,
+    removedPoint: points[outlierIndex],
+    rDrop: Math.abs(cleaned.r) - Math.abs(raw.r),
+  };
+}
+
+/**
  * 高考典型预设数据集（覆盖高考题型情境）
  */
 export const REGRESSION_PRESETS = [
@@ -699,8 +732,11 @@ export const REGRESSION_PRESETS = [
     ],
     xName: "广告支出 x (万元)",
     yName: "销售额 y (万元)",
-    xRange: [0, 10] as [number, number],
-    yRange: [0, 12] as [number, number],
+    xRange: [0, 12] as [number, number],
+    yRange: [0, 14] as [number, number],
+    targetX: 10,
+    targetDesc: "广告支出 x=10 万元时的销售额",
+    targetUnit: "万元",
     recommendedModel: "linear" as RegressionModelType,
   },
   {
@@ -715,8 +751,11 @@ export const REGRESSION_PRESETS = [
     ],
     xName: "气温 x (°C)",
     yName: "用电量 y (度)",
-    xRange: [5, 35] as [number, number],
+    xRange: [5, 40] as [number, number],
     yRange: [5, 25] as [number, number],
+    targetX: 35,
+    targetDesc: "气温 x=35°C 时的用电量",
+    targetUnit: "度",
     recommendedModel: "linear" as RegressionModelType,
   },
   {
@@ -731,8 +770,11 @@ export const REGRESSION_PRESETS = [
     ],
     xName: "年份序号 t",
     yName: "保有量 y (万辆)",
-    xRange: [0, 6] as [number, number],
-    yRange: [0, 20] as [number, number],
+    xRange: [0, 8] as [number, number],
+    yRange: [0, 30] as [number, number],
+    targetX: 6,
+    targetDesc: "第 6 年 (t=6) 的保有量",
+    targetUnit: "万辆",
     recommendedModel: "exponential" as RegressionModelType,
   },
   {
@@ -747,8 +789,11 @@ export const REGRESSION_PRESETS = [
     ],
     xName: "研发投入 x (亿元)",
     yName: "产出指数 y",
-    xRange: [0, 10] as [number, number],
-    yRange: [0, 8] as [number, number],
+    xRange: [0, 12] as [number, number],
+    yRange: [0, 9] as [number, number],
+    targetX: 10,
+    targetDesc: "研发投入 x=10 亿元时的产出指数",
+    targetUnit: "点",
     recommendedModel: "logarithmic" as RegressionModelType,
   },
   {
@@ -763,8 +808,11 @@ export const REGRESSION_PRESETS = [
     ],
     xName: "电阻 R (Ω)",
     yName: "电流 I (A)",
-    xRange: [0, 10] as [number, number],
+    xRange: [0, 12] as [number, number],
     yRange: [0, 12] as [number, number],
+    targetX: 10,
+    targetDesc: "电阻 R=10 Ω 时的电流强度",
+    targetUnit: "A",
     recommendedModel: "inverse" as RegressionModelType,
   },
   {
@@ -779,8 +827,11 @@ export const REGRESSION_PRESETS = [
     ],
     xName: "自变量 x",
     yName: "因变量 y",
-    xRange: [0, 8] as [number, number],
+    xRange: [0, 9] as [number, number],
     yRange: [0, 10] as [number, number],
+    targetX: 7,
+    targetDesc: "当自变量 x=7 时的预报值",
+    targetUnit: "",
     recommendedModel: "linear" as RegressionModelType,
   },
 ];

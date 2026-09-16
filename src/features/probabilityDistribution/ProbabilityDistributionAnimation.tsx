@@ -335,16 +335,7 @@ export function ProbabilityDistributionAnimation() {
           {legendItems.length > 0 && <SceneLegend items={legendItems} />}
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title={panelTitle}
-        />
-      }
+      right={<MathPanel {...mathData} title={panelTitle} />}
     />
   );
 }

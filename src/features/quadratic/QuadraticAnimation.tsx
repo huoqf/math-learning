@@ -356,17 +356,7 @@ export function QuadraticAnimation() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          reasoningSteps={mathData.reasoningSteps}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title={panelTitle}
-        />
-      }
+      right={<MathPanel {...mathData} title={panelTitle} />}
     />
   );
 }

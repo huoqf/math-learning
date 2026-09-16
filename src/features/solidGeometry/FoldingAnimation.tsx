@@ -427,16 +427,7 @@ export default function FoldingAnimation() {
           />
         )
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="翻折二面角看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="翻折二面角看板" />}
     />
   );
 }

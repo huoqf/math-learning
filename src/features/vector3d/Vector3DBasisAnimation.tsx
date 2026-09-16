@@ -582,15 +582,7 @@ export default function Vector3DBasisAnimation() {
           )}
         </ThreeDCanvas>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          title="空间向量分解与共面看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="空间向量分解与共面看板" />}
     />
   );
 }

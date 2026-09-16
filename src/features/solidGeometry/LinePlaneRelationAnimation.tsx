@@ -646,16 +646,7 @@ export default function LinePlaneRelationAnimation() {
           />
         </ThreeDCanvas>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="空间位置关系与判定定理看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="空间位置关系与判定定理看板" />}
     />
   );
 }

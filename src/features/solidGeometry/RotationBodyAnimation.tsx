@@ -496,15 +496,7 @@ export default function RotationBodyAnimation() {
           />
         )
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          title="旋转体数学看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="旋转体数学看板" />}
     />
   );
 }

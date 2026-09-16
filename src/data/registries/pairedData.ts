@@ -15,6 +15,8 @@ export const defaultParams: Record<string, number> = {
   // 是否显示下方残差图 (0: 关, 1: 开)
   showResidualPlot: 0,
 
+  // 高考回归预测目标自变量 x₀
+  targetX: 10,
   // 独立性检验 2x2 频数
   freqA: 85, // a: A 且 B
   freqB: 15, // b: A 且 非B
@@ -51,6 +53,16 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0,
     min: -8,
     max: 8,
+    step: 0.5,
+    importance: "core",
+  },
+  targetX: {
+    key: "targetX",
+    label: "预测目标值 x₀",
+    labelFormula: `\\text{高考预测目标 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
+    defaultValue: 10,
+    min: 0,
+    max: 50,
     step: 0.5,
     importance: "core",
   },

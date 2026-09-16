@@ -2,6 +2,7 @@ import type { MathPanelData, WarningItem, ReasoningStep } from "../types";
 import {
   calculateLinearRegression,
   calculateIndependenceTest,
+  calculateOutlierComparison,
   fitAllRegressionModels,
   REGRESSION_PRESETS,
   INDEPENDENCE_PRESETS,
@@ -17,11 +18,15 @@ export function buildPairedDataPanel(
   const customPoints = config?.points as Point2D[] | undefined;
 
   if (studyMode === "regression") {
-    const presetIndex = Math.min(
-      REGRESSION_PRESETS.length - 1,
-      Math.max(0, Math.round(params.presetIndex ?? 0)),
-    );
-    const preset = REGRESSION_PRESETS[presetIndex];
+    const scenarioKey = (config?.scenarioKey as string) ?? "ad_sales";
+    const preset =
+      REGRESSION_PRESETS.find((p) => p.id === scenarioKey) ??
+      REGRESSION_PRESETS[
+        Math.min(
+          REGRESSION_PRESETS.length - 1,
+          Math.max(0, Math.round(params.presetIndex ?? 0)),
+        )
+      ];
     const points = customPoints ?? preset.points;
 
     const res = calculateLinearRegression(points);
@@ -31,39 +36,41 @@ export function buildPairedDataPanel(
       modelFits.find((m) => m.type === selectedModel) ?? modelFits[0];
 
     const isLinearMode = selectedModel === "linear";
-    const isOutlierScenario = (config?.scenarioKey as string) === "outlier";
+    const isOutlierScenario = scenarioKey === "outlier";
+    const targetX = Number(params.targetX ?? preset.targetX ?? 10);
+    const targetUnit = preset.targetUnit ? ` ${preset.targetUnit}` : "";
 
-    // 动态组装定理体系：根据当前情境与模式特化置顶
+    // 动态组装定理体系：纵向多行对齐，彻底消除超宽缩放
     const dynamicTheorems = isLinearMode
       ? [
           {
             name: "一元线性回归方程与最小二乘法",
-            latex: `\\begin{aligned} \\hat{y} &= \\color{${MATH_COLORS.paramPrimary}}{\\hat{b}}x + \\color{${MATH_COLORS.paramSecondary}}{\\hat{a}} \\\\[4pt] \\hat{b} &= \\frac{L_{xy}}{L_{xx}} = \\frac{\\sum_{i=1}^{n}(x_i-\\bar{x})(y_i-\\bar{y})}{\\sum_{i=1}^{n}(x_i-\\bar{x})^2} \\\\[4pt] \\hat{a} &= \\bar{y} - \\hat{b}\\bar{x} \\end{aligned}`,
-            note: "回归直线必过样本中心点 $(x̄, ȳ)$；最小二乘法使残差平方和 $SSE = ∑(y_i - ŷ_i)²$ 达到全局最小。",
+            latex: `\\begin{aligned} \\hat{y} &= \\color{${MATH_COLORS.paramPrimary}}{\\hat{b}}x + \\color{${MATH_COLORS.paramSecondary}}{\\hat{a}} \\\\[6pt] \\hat{b} &= \\frac{\\sum_{i=1}^{n}(x_i-\\bar{x})(y_i-\\bar{y})}{\\sum_{i=1}^{n}(x_i-\\bar{x})^2} \\\\[6pt] \\hat{a} &= \\bar{y} - \\hat{b}\\bar{x} \\end{aligned}`,
+            note: "回归直线必过样本中心点 $(\\bar{x}, \\bar{y})$；最小二乘法使残差平方和 $\\text{SSE} = \\sum(y_i - \\hat{y}_i)^2$ 达到全局最小。",
             level: "core" as const,
           },
           {
-            name: "相关系数 r 与决定系数 R² 的统计意义",
-            latex: `\\begin{aligned} r &= \\frac{L_{xy}}{\\sqrt{L_{xx} L_{yy}}} \\\\[4pt] R^2 &= 1 - \\frac{\\text{SSE}}{\\text{SST}} = 1 - \\frac{\\sum (y_i - \\hat{y}_i)^2}{\\sum (y_i - \\bar{y})^2} \\end{aligned}`,
-            note: "r 与 b̂ 同号；|r| 越近 1 线性相关性越强；R² 越近 1 说明模型对 y 变异的解释比例越高、拟合优度越好。",
+            name: "样本相关系数 r 与决定系数 R² 的统计意义",
+            latex: `\\begin{aligned} r &= \\frac{\\sum_{i=1}^n(x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum_{i=1}^n(x_i-\\bar{x})^2 \\sum_{i=1}^n(y_i-\\bar{y})^2}} \\\\[6pt] R^2 &= 1 - \\frac{\\sum_{i=1}^n (y_i - \\hat{y}_i)^2}{\\sum_{i=1}^n (y_i - \\bar{y})^2} \\end{aligned}`,
+            note: "$r$ 与 $\\hat{b}$ 同号；$|r| \\ge 0.75$ 认为线性相关性很强；$R^2$ 越接近 $1$ 说明模型拟合优度越高、预报可靠性越强。",
             level: "important" as const,
           },
         ]
       : [
           {
             name: `非线性回归转换模型 (${currentModelFit?.name ?? "换元线性化"})`,
-            latex: `\\begin{aligned} \\text{原模型: } & y = f(x; \\theta) \\\\[4pt] \\text{换元法: } & z = g(y), \\quad u = h(x) \\\\[4pt] \\text{线性型: } & z = \\hat{a} + \\hat{b}u \\end{aligned}`,
-            note: `${currentModelFit ? `当前回归方程：$${currentModelFit.originalFormula}$；` : ""}${
+            latex: `\\begin{aligned} \\text{经验模型: } & y = f(x; \\theta) \\\\[4pt] \\text{换元变换: } & z = g(y), \\quad u = h(x) \\\\[4pt] \\text{线性形式: } & z = \\hat{a}_0 + \\hat{k}u \\end{aligned}`,
+            note: `${currentModelFit ? `当前经验回归方程：$${currentModelFit.originalFormula}$；` : ""}${
               currentModelFit?.isBest
-                ? "【当前模型拟合优度最高】在候选非线性模型中决定系数 R² 最大、残差平方和 SSE 最小。"
-                : "通过变量代换将非线性关系化为线性方程求解，最后必须代回原变量得到预测方程。"
+                ? "【当前模型拟合优度最高】在候选非线性模型中决定系数 $R^2$ 最大、残差平方和 $\\text{SSE}$ 最小。"
+                : "先通过变量代换化为线性方程求解参数，最后务必逆代换回原物理变量得到预测方程。"
             }`,
             level: "core" as const,
           },
           {
             name: "经验模型比较与决定系数 R² 准则",
             latex: `R^2 = 1 - \\frac{\\text{SSE}}{\\text{SST}} = 1 - \\frac{\\sum_{i=1}^n (y_i - \\hat{y}_i)^2}{\\sum_{i=1}^n (y_i - \\bar{y})^2}`,
-            note: "高考大题核心判定：决定系数 R² 越接近 1（残差平方和 SSE 越小），模型的拟合效果越好。",
+            note: "高考大题核心判定依据：决定系数 $R^2$ 越接近 $1$（残差平方和 $\\text{SSE}$ 越小），模型的拟合效果越好。",
             level: "important" as const,
           },
         ];
@@ -72,104 +79,319 @@ export function buildPairedDataPanel(
     const dynamicGaokaoPoints = isOutlierScenario
       ? [
           {
-            text: "【高考考点·离群点检验】异常干扰点（如第5点）会产生巨大的“杠杆拉扯效应”，导致相关系数 r 暴跌、斜率显著偏离，实际解题时应进行残差检验与数据清洗。",
+            text: "【高考考点·离群点检验】异常干扰点会产生巨大的“杠杆拉扯效应”，导致相关系数 $r$ 暴跌、斜率严重偏离，高考大题常考异常点识别与清洗后的重新拟合。",
             importance: "gaokao" as const,
           },
           {
-            text: "【高考考点·残差分析法】残差 $e_i = y_i - ŷ_i$，且 $∑e_i = 0$。残差点在 $e=0$ 上下带状区域越窄，说明拟合越精确。",
+            text: "【高考考点·残差分析法】残差 $e_i = y_i - \\hat{y}_i$，且 $\\sum e_i = 0$。残差点在 $e=0$ 上下带状区域越窄，说明拟合精度越高。",
             importance: "core" as const,
           },
           {
-            text: "【高考考点·样本中心点】不论是否存在离群点，最小二乘回归直线必定严格过样本中心点 (x̄, ȳ)。",
+            text: "【高考考点·样本中心点】不论是否存在离群点，最小二乘回归直线必定严格过样本中心点 $(\\bar{x}, \\bar{y})$。",
             importance: "basic" as const,
           },
         ]
       : !isLinearMode
         ? [
             {
-              text: `【高考考点·非线性线性化】熟练掌握四大换元模型：指数 $y=ce^{kx}$ (令 $z=ln y$)、对数 $y=a+bln x$ (令 $u=ln x$)、幂函数 $y=cx^k$ (令 $z=ln y, u=ln x$)、双曲线 $y=a+b/x$ (令 $u=1/x$)。`,
+              text: "【高考考点·非线性线性化】熟练掌握四大换元模型：指数 $y=c_1 e^{c_2 x}$ (令 $z=\\ln y$)、对数 $y=c_1+c_2\\ln x$ (令 $u=\\ln x$)、幂函数 $y=c_1 x^{c_2}$ (令 $z=\\ln y, u=\\ln x$)、双曲线 $y=c_1+c_2/x$ (令 $u=1/x$)。",
               importance: "gaokao" as const,
             },
             {
-              text: "【高考考点·模型优选决策】在高考大题中比较多种经验模型时，依据决定系数 R² 较大或残差平方和 SSE 较小确定最佳模型。",
+              text: "【高考考点·模型优选决策】在高考大题中比较多种经验模型时，依据决定系数 $R^2$ 较大或残差平方和 $\\text{SSE}$ 较小确定最佳拟合模型。",
               importance: "core" as const,
             },
             {
-              text: "【高考考点·方程代回还原】求解出线性转换方程的系数后，务必逆代换回原物理/实际变量 (如将 z 还原为 ln y 代解 y)。",
+              text: "【高考考点·方程代回还原】求解出线性转换方程后，务必逆代换回原物理自变量与因变量（如将 $z$ 还原为 $\\ln y$ 解出 $y$），严防漏步失分。",
               importance: "core" as const,
             },
           ]
         : [
             {
-              text: "【高考考点1】必过样本中心点：已知 x̄, ȳ 与 b̂，必有 â = ȳ - b̂ x̄（小题高频秒杀考点）。",
+              text: "【高考考点1】必过样本中心点：已知 $(\\bar{x}, \\bar{y})$ 与 $\\hat{b}$，必有 $\\hat{a} = \\bar{y} - \\hat{b}\\bar{x}$（小题高频秒杀点）。",
               importance: "gaokao" as const,
             },
             {
-              text: "【高考考点2】相关系数同号性：$r$ 与斜率 $b̂$ 的符号由 $L_xy$ 唯一决定，正相关时 $r>0, b̂>0$；负相关时 $r<0, b̂<0$。",
+              text: "【高考考点2】相关系数同号性：$r$ 与回归斜率 $\\hat{b}$ 的符号一致，正相关时 $r>0, \\hat{b}>0$；负相关时 $r<0, \\hat{b}<0$。",
               importance: "gaokao" as const,
             },
             {
-              text: "【高考考点3】残差分析法：残差 $e_i = y_i - ŷ_i$，且 $∑e_i = 0$。残差点在 $e=0$ 上下带状区域越窄，拟合越精确。",
+              text: "【高考考点3】残差分析法：残差 $e_i = y_i - \\hat{y}_i$，且 $\\sum e_i = 0$。残差点在 $e=0$ 上下带状区域越窄，拟合越精确。",
               importance: "core" as const,
             },
             {
-              text: "【高考考点4】决定系数与拟合优度：R² 越接近 1 说明回归直线对观测数据的解释能力越强。",
+              text: "【高考考点4】决定系数与拟合优度：$R^2$ 越接近 $1$ 说明回归直线对观测数据的解释能力越强。",
               importance: "basic" as const,
             },
           ];
 
+    // 高考解答题标准三步推演链（纵向分行教材对齐版：每行宽度 ≤ 240px，100% 满字号无缩小）
+    let reasoningSteps: ReasoningStep[] = [];
+
+    // 高考答题数值格式化规范：系数与指标精炼保留2位，相关系数与R²保留4位，消除无脑尾零
+    const fmt2 = (n: number) => {
+      const rounded = Math.round(n * 100) / 100;
+      return rounded.toFixed(2);
+    };
+    const fmt4 = (n: number) => {
+      const rounded = Math.round(n * 10000) / 10000;
+      return rounded.toFixed(4);
+    };
+
+    const bFormatted = fmt2(res.b);
+    const aFormatted = fmt2(res.a);
+    const targetYDesc = preset?.yName
+      ? preset.yName.replace(/\s*\(.*?\)/, "").trim()
+      : "观测值";
+
+    const makeStep = (step: {
+      step: number;
+      title: string;
+      latexBlocks?: string[];
+      latex?: string;
+      detail?: string;
+      rubric?: string;
+    }): ReasoningStep => ({
+      ...step,
+      latex: step.latex ?? step.latexBlocks?.join(" \\\\ ") ?? "",
+      latexBlocks: step.latexBlocks,
+    });
+
+    if (res.isValid) {
+      if (isOutlierScenario) {
+        // 离群点情境：展示“含异常点 vs 剔除异常点”的高考对比作答链
+        const outlierComp = calculateOutlierComparison(points);
+        const lastPt = points[points.length - 1];
+        const cleaned = outlierComp?.cleaned ?? res;
+        const cleanedPred = cleaned.b * targetX + cleaned.a;
+        const cleanedB = fmt2(cleaned.b);
+        const cleanedA = fmt2(cleaned.a);
+
+        reasoningSteps = [
+          makeStep({
+            step: 1,
+            title: "审题定法 · 识别离群点与相关性受损分析",
+            latexBlocks: [
+              `\\begin{aligned} r &= \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum (x_i-\\bar{x})^2 \\sum (y_i-\\bar{y})^2}} \\\\[4pt] &= \\frac{${fmt2(res.lxy)}}{\\sqrt{${fmt2(res.lxx)} \\times ${fmt2(res.lyy)}}} \\approx ${fmt4(res.r)} \\end{aligned}`,
+              `P_{${points.length}}(${lastPt.x}, ${lastPt.y}) \\text{ 显著偏离主样本带}`,
+            ],
+            detail: `受异常干扰点 $P_{${points.length}}(${lastPt.x}, ${lastPt.y})$ 的杠杆拉扯影响，全样本相关系数跌至 $|r| \\approx ${fmt4(Math.abs(res.r))} < 0.75$，线性相关性受损。新高考解答题中需先指出该离群数据并执行剔除。`,
+            rubric: "指出离群点坐标并说明其对相关系数的杠杆拉扯破坏记 2 分",
+          }),
+          makeStep({
+            step: 2,
+            title: "建模联立 · 剔除异常点后重新求解回归方程",
+            latexBlocks: [
+              `\\begin{aligned} \\hat{b} &= \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sum (x_i-\\bar{x})^2} = \\frac{${fmt2(cleaned.lxy)}}{${fmt2(cleaned.lxx)}} \\approx ${cleanedB} \\\\[4pt] \\hat{a} &= \\bar{y} - \\hat{b}\\bar{x} \\approx ${cleanedA} \\end{aligned}`,
+              `\\hat{y} = ${cleanedB}x ${cleaned.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(cleaned.a))}`,
+            ],
+            detail: `剔除异常干扰点后，相关系数跃升至 $r_{\\text{clean}} \\approx ${fmt4(cleaned.r)}$，呈现极强线性相关关系。重新代入求和数据求得经验回归方程。`,
+            rubric: "清洗后正确代入求和数据求出回归方程记 3 分",
+          }),
+          makeStep({
+            step: 3,
+            title: "求解反思 · 目标预报计算与决定系数对比",
+            latexBlocks: [
+              `\\begin{aligned} \\hat{y}_0 &= ${cleanedB} \\times ${targetX} ${cleaned.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(cleaned.a))} \\\\[4pt] &= ${fmt2(cleanedPred)}\\text{ (${targetUnit})} \\end{aligned}`,
+              `\\begin{aligned} R^2_{\\text{clean}} &\\approx ${fmt4(cleaned.rSquare)} \\\\[4pt] (\\text{清洗前 } R^2 &\\approx ${fmt4(res.rSquare)}) \\end{aligned}`,
+            ],
+            detail: `决定系数从剔除前的 $${fmt4(res.rSquare)}$ 飞跃至 $${fmt4(cleaned.rSquare)}$，模型对观测数据的解释能力大幅提升。消除异常点后的预报值 $\\hat{y}_0 = ${fmt2(cleanedPred)}$${targetUnit} 具有高度置信价值。`,
+            rubric: "准确计算目标预报值记 1 分，完成拟合优度对比分析记 1 分",
+          }),
+        ];
+      } else if (isLinearMode) {
+        // 一元线性回归模式：多公式分块卡片化，行宽严格控制在 180px 内，100% 满字号
+        const predictedY = res.b * targetX + res.a;
+
+        reasoningSteps = [
+          makeStep({
+            step: 1,
+            title: "审题定法 · 计算样本中心点与相关系数检验",
+            latexBlocks: [
+              `\\bar{x} = \\frac{${res.sumX.toFixed(1)}}{${res.n}} = ${fmt2(res.meanX)}, \\quad \\bar{y} = \\frac{${res.sumY.toFixed(1)}}{${res.n}} = ${fmt2(res.meanY)}`,
+              `\\begin{aligned} r &= \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum (x_i-\\bar{x})^2 \\sum (y_i-\\bar{y})^2}} \\\\[4pt] &= \\frac{${fmt2(res.lxy)}}{\\sqrt{${fmt2(res.lxx)} \\times ${fmt2(res.lyy)}}} \\approx ${fmt4(res.r)} \\end{aligned}`,
+            ],
+            detail: `因为 $|r| \\approx ${fmt4(Math.abs(res.r))} ${Math.abs(res.r) >= 0.75 ? "\\ge 0.75$" : "< 0.75$"}，说明两变量具有${Math.abs(res.r) >= 0.75 ? "很强的" : "较弱的"}线性相关关系（${res.r >= 0 ? "正相关" : "负相关"}），可以用一元线性回归模型进行拟合。`,
+            rubric:
+              "正确计算样本中心记 1 分，代入求和项求得相关系数 r 并准确判定线性相关性记 2 分",
+          }),
+          makeStep({
+            step: 2,
+            title: "建模联立 · 最小二乘公式求经验回归方程",
+            latexBlocks: [
+              `\\begin{aligned} \\hat{b} &= \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sum (x_i-\\bar{x})^2} \\\\[4pt] &= \\frac{${fmt2(res.lxy)}}{${fmt2(res.lxx)}} \\approx ${bFormatted} \\\\[6pt] \\hat{a} &= \\bar{y} - \\hat{b}\\bar{x} = ${fmt2(res.meanY)} - ${bFormatted} \\times ${fmt2(res.meanX)} \\\\[4pt] &\\approx ${aFormatted} \\end{aligned}`,
+              `\\hat{y} = ${bFormatted}x ${res.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(res.a))}`,
+            ],
+            detail:
+              "高考答题规范：严禁直接跳步书写孤立数值！必须按「① 写出最小二乘求和公式 $\\to$ ② 代入离差乘积和与平方和 $\\to$ ③ 算出斜率截距并写出回归方程」三步完整演绎。",
+            rubric:
+              "写出最小二乘斜率公式及数据代入记 2 分，准确求解截距并规范写出方程记 2 分",
+          }),
+          makeStep({
+            step: 3,
+            title: "求解反思 · 目标预报演算与决定系数评价",
+            latexBlocks: [
+              `\\begin{aligned} \\hat{y}_0 &= ${bFormatted} \\times ${targetX} ${res.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(res.a))} \\\\[4pt] &= ${fmt2(predictedY)}\\text{ (${targetUnit})} \\end{aligned}`,
+              `\\begin{aligned} R^2 &= 1 - \\frac{\\sum (y_i-\\hat{y}_i)^2}{\\sum (y_i-\\bar{y})^2} \\\\[4pt] &= 1 - \\frac{${fmt2(res.sse)}}{${fmt2(res.sst)}} \\approx ${fmt4(res.rSquare)} \\end{aligned}`,
+            ],
+            detail: `决定系数 $R^2 \\approx ${fmt4(res.rSquare)}$ 越接近 $1$，说明所建回归方程对观测数据的解释能力越强。根据回归模型，预测目标自变量 $x = ${targetX}$ 时，${targetYDesc}约为 $${fmt2(predictedY)}$${targetUnit}。`,
+            rubric:
+              "准确代入自变量目标值并求出预报值记 1 分，给出决定系数与拟合评价记 1 分",
+          }),
+        ];
+      } else {
+        // 非线性回归转换模式：变量代换与逆变换还原标准解答链
+        const currentPred =
+          currentModelFit?.predict(targetX) ?? res.b * targetX + res.a;
+
+        reasoningSteps = [
+          makeStep({
+            step: 1,
+            title: `审题定法 · 非线性换元置换 (${currentModelFit?.name ?? "变量代换"})`,
+            latexBlocks: [
+              `y = f(x; \\theta)`,
+              `\\begin{aligned} \\text{换元: } & ${currentModelFit?.variableSubstitution ?? "线性化换元"} \\\\[4pt] \\text{形式: } & ${currentModelFit?.transformedFormula ?? "线性方程"} \\end{aligned}`,
+            ],
+            detail: `针对非线性数据分布特征，通过引入中间变量换元，将非线性回归问题化为关于新变量的一元线性回归模型。`,
+            rubric: "选定合理置换公式并建立线性形式记 2 分",
+          }),
+          makeStep({
+            step: 2,
+            title: "建模联立 · 线性化求参并逆变换还原原方程",
+            latexBlocks: [
+              `\\text{线性方程: } ${currentModelFit?.transformedFormula ?? ""}`,
+              `\\text{还原方程: } ${currentModelFit?.originalFormula ?? ""}`,
+            ],
+            detail:
+              "高考采分关键：在线性化求解出参数后，务必逆代换回原物理变量，还原出以原变量 $x, y$ 表达的经验回归方程。",
+            rubric: "求得转换方程参数记 2 分，准确逆代换还原原方程记 2 分",
+          }),
+          makeStep({
+            step: 3,
+            title: "求解反思 · 目标预报演算与拟合优度 R² 比较",
+            latexBlocks: [
+              `\\hat{y}_0 = ${fmt2(currentPred)}\\text{ (${targetUnit})}`,
+              `\\begin{aligned} R^2 &= 1 - \\frac{\\text{SSE}}{\\text{SST}} \\\\[4pt] &\\approx ${fmt4(currentModelFit?.rSquare ?? res.rSquare)} \\end{aligned}`,
+            ],
+            detail: `当前模型在原观测变量上的决定系数为 $R^2 \\approx ${fmt4(currentModelFit?.rSquare ?? res.rSquare)}$，残差平方和 $\\text{SSE} = ${fmt2(currentModelFit?.sse ?? res.sse)}$。预测目标自变量 $x = ${targetX}$ 时，${targetYDesc}约为 $${fmt2(currentPred)}$${targetUnit}。`,
+            rubric:
+              "准确代入计算预报值记 1 分，结合 R² 评估模型拟合效果记 1 分",
+          }),
+        ];
+      }
+    }
+
+    const denomLxy = res.lxy;
+    const isLxyPos = denomLxy >= 0;
+
+    const quantities = isLinearMode
+      ? [
+          {
+            label: "样本容量 n",
+            value: `${res.n}`,
+            color: MATH_COLORS.paramPrimary,
+          },
+          {
+            label: "样本中心 (x̄, ȳ)",
+            value: `(${res.meanX.toFixed(2)}, ${res.meanY.toFixed(2)})`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: "乘积和 ∑(xᵢ-x̄)(yᵢ-ȳ)",
+            value: `${res.lxy.toFixed(2)}`,
+            color: isLxyPos
+              ? MATH_COLORS.paramPrimary
+              : MATH_COLORS.paramTertiary,
+          },
+          {
+            label: "离差和 ∑(xᵢ-x̄)²",
+            value: `${res.lxx.toFixed(2)}`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: "回归斜率 b̂",
+            value: `${res.b.toFixed(4)}`,
+            color: MATH_COLORS.paramPrimary,
+          },
+          {
+            label: "回归截距 â",
+            value: `${res.a.toFixed(4)}`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: "样本相关系数 r",
+            value: `${res.r.toFixed(4)}`,
+            color:
+              res.r >= 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramTertiary,
+          },
+          {
+            label: "决定系数 R²",
+            value: `${res.rSquare.toFixed(4)}`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: "残差平方和 SSE",
+            value: `${res.sse.toFixed(2)}`,
+            color: MATH_COLORS.tangentLine,
+          },
+          {
+            label: `预报值 ŷ₀ (x₀=${targetX})`,
+            value: `${(res.b * targetX + res.a).toFixed(2)}${targetUnit}`,
+            color: MATH_COLORS.paramPrimary,
+          },
+        ]
+      : [
+          {
+            label: "样本容量 n",
+            value: `${res.n}`,
+            color: MATH_COLORS.paramPrimary,
+          },
+          {
+            label: "拟合模型类型",
+            value: `${currentModelFit?.name ?? "非线性转换"}`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: "换元线性方程",
+            value: `$${currentModelFit?.transformedFormula ?? ""}$`,
+            color: MATH_COLORS.paramPrimary,
+          },
+          {
+            label: "还原经验方程",
+            value: `$${currentModelFit?.originalFormula ?? ""}$`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: "原空间决定系数 R²",
+            value: `${(currentModelFit?.rSquare ?? 0).toFixed(4)}`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: "原空间残差和 SSE",
+            value: `${(currentModelFit?.sse ?? 0).toFixed(2)}`,
+            color: MATH_COLORS.tangentLine,
+          },
+          {
+            label: "最优模型判定",
+            value: currentModelFit?.isBest
+              ? "★ 全候选模型中 R² 最高"
+              : "候选模型比较中",
+            color: currentModelFit?.isBest
+              ? MATH_COLORS.paramPrimary
+              : MATH_COLORS.textMuted,
+          },
+          {
+            label: `预报值 ŷ₀ (x₀=${targetX})`,
+            value: `${(currentModelFit ? currentModelFit.predict(targetX) : 0).toFixed(2)}${targetUnit}`,
+            color: MATH_COLORS.paramPrimary,
+          },
+        ];
+
     return {
-      quantities: [
-        {
-          label: "样本容量 n",
-          value: `${res.n}`,
-          color: MATH_COLORS.paramPrimary,
-        },
-        {
-          label: "样本中心 (x̄, ȳ)",
-          value: `(${res.meanX.toFixed(2)}, ${res.meanY.toFixed(2)})`,
-          color: MATH_COLORS.paramSecondary,
-        },
-        {
-          label: "离均差乘积和 $L_xy$",
-          value: `${res.lxy.toFixed(2)}`,
-          color:
-            res.lxy >= 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramTertiary,
-        },
-        {
-          label: "$x$离差平方和 $L_xx$",
-          value: `${res.lxx.toFixed(2)}`,
-          color: MATH_COLORS.paramSecondary,
-        },
-        {
-          label: "回归斜率 b̂",
-          value: `${res.b.toFixed(4)}`,
-          color: MATH_COLORS.paramPrimary,
-        },
-        {
-          label: "回归截距 â",
-          value: `${res.a.toFixed(4)}`,
-          color: MATH_COLORS.paramSecondary,
-        },
-        {
-          label: "样本相关系数 r",
-          value: `${res.r.toFixed(4)}`,
-          color:
-            res.r >= 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramTertiary,
-        },
-        {
-          label: "决定系数 R²",
-          value: `${(currentModelFit?.rSquare ?? res.rSquare).toFixed(4)}`,
-          color: MATH_COLORS.paramSecondary,
-        },
-        {
-          label: "残差平方和 SSE",
-          value: `${(currentModelFit?.sse ?? res.sse).toFixed(2)}`,
-          color: MATH_COLORS.tangentLine,
-        },
-      ],
+      quantities,
       theorems: dynamicTheorems,
       gaokaoPoints: dynamicGaokaoPoints,
+      reasoningSteps,
       warnings: res.isValid
         ? Math.abs(res.r) < 0.3
           ? [

@@ -28,6 +28,7 @@ interface RegressionSceneProps {
   scale: SceneScale;
   vp: ViewportInfo;
   fontScale: (size: number) => number;
+  targetX?: number;
   xStep?: number;
   yStep?: number;
 }
@@ -43,6 +44,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
   scale,
   vp,
   fontScale,
+  targetX,
   xStep = 1,
   yStep = 1,
 }) => {
@@ -115,7 +117,24 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
   const centerAxisX = mathToDesign(regResult.meanX, 0, scale);
   const centerAxisY = mathToDesign(0, regResult.meanY, scale);
 
-  // 构建学术点标组数据 (散点 P₁~Pₙ 与 样本中心点 (x̄, ȳ))
+  // 高考回归预报靶点 (targetX, targetY) 设计坐标与轴投影
+  const targetY =
+    currentFit?.isValid && targetX !== undefined
+      ? currentFit.predict(targetX)
+      : null;
+  const isTargetValid =
+    targetX !== undefined &&
+    targetY !== null &&
+    Number.isFinite(targetY) &&
+    targetY >= scale.yMin - 10 &&
+    targetY <= scale.yMax + 10;
+  const targetPos = isTargetValid
+    ? mathToDesign(targetX, targetY, scale)
+    : null;
+  const targetAxisX = isTargetValid ? mathToDesign(targetX, 0, scale) : null;
+  const targetAxisY = isTargetValid ? mathToDesign(0, targetY, scale) : null;
+
+  // 构建学术点标组数据 (散点 P₁~Pₙ 与 样本中心点 (x̄, ȳ) 及 预测靶点 (x₀, ŷ₀))
   const subscriptDigits = ["₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₁₀"];
   const regressionLabels = [
     ...points.map((p, idx) => {
@@ -130,7 +149,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
         fontSize: fontScale(11),
       };
     }),
-    ...(regResult.isValid
+    ...(selectedModel === "linear" && regResult.isValid
       ? [
           {
             key: "pt-center",
@@ -139,6 +158,18 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
             text: "(x̄, ȳ)",
             color: MATH_COLORS.paramSecondary,
             fontSize: fontScale(12),
+          },
+        ]
+      : []),
+    ...(targetPos && isTargetValid && targetY !== null
+      ? [
+          {
+            key: "pt-target",
+            x: targetPos.x,
+            y: targetPos.y,
+            text: `(x₀, ŷ₀)=(${targetX}, ${targetY.toFixed(1)})`,
+            color: MATH_COLORS.paramTertiary,
+            fontSize: fontScale(11),
           },
         ]
       : []),
@@ -222,8 +253,8 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
         />
       )}
 
-      {/* 4. 标记样本中心点 (meanX, meanY) - 线性模型下必过重心 */}
-      {regResult.isValid && (
+      {/* 4. 标记样本中心点 (meanX, meanY) - 仅线性模型下必过重心 */}
+      {selectedModel === "linear" && regResult.isValid && (
         <g className="center-point-group">
           {/* 投影到 X 轴虚线 */}
           <line
@@ -259,6 +290,49 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
             cy={centerPos.y}
             r={3.8}
             fill={MATH_COLORS.paramSecondary}
+          />
+        </g>
+      )}
+
+      {/* 5. 高考回归预报靶点 (x₀, ŷ₀) 及其坐标轴投影 */}
+      {targetPos && isTargetValid && targetAxisX && targetAxisY && (
+        <g className="target-forecast-group">
+          {/* 投影到 X 轴虚线 */}
+          <line
+            x1={targetPos.x}
+            y1={targetPos.y}
+            x2={targetAxisX.x}
+            y2={targetAxisX.y}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeDasharray="3 3"
+            strokeWidth={1.3}
+          />
+          {/* 投影到 Y 轴虚线 */}
+          <line
+            x1={targetPos.x}
+            y1={targetPos.y}
+            x2={targetAxisY.x}
+            y2={targetAxisY.y}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeDasharray="3 3"
+            strokeWidth={1.3}
+          />
+          {/* 靶点外圈脉冲指示光晕 */}
+          <circle
+            cx={targetPos.x}
+            cy={targetPos.y}
+            r={10}
+            fill={withAlpha(MATH_COLORS.paramTertiary, 0.22)}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.4}
+            strokeDasharray="2 2"
+          />
+          {/* 靶点核心实心点 */}
+          <circle
+            cx={targetPos.x}
+            cy={targetPos.y}
+            r={4.2}
+            fill={MATH_COLORS.paramTertiary}
           />
         </g>
       )}

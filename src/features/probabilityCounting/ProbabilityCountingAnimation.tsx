@@ -442,16 +442,7 @@ export function ProbabilityCountingAnimation() {
           </div>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="计数原理与二项式定理看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="计数原理与二项式定理看板" />}
     />
   );
 }

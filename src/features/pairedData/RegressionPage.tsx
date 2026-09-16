@@ -72,18 +72,11 @@ export function RegressionPage() {
   const [showResidualSquares, setShowResidualSquares] = useState<boolean>(true);
   const [showResidualPlot, setShowResidualPlot] = useState<boolean>(false);
 
-  // 根据当前 noise 扰动、重心平移 meanShiftY 及离群点偏移 outlierOffset 动态计算活跃散点集
+  // 根据离群点偏移 outlierOffset 动态计算活跃散点集（符合高中课标真实样本机制）
   const activePoints = useMemo(() => {
-    const noise = params.noise ?? 0;
-    // 异常点模式下重心平移滑块被隐藏，不累加 meanShiftY 避免暗中偏移
-    const meanShiftY =
-      selectedScenarioKey === "outlier" ? 0 : (params.meanShiftY ?? 0);
     const outlierOffset = params.outlierOffset ?? 0;
-
     return basePoints.map((p, idx) => {
-      const perturbation =
-        noise > 0.001 ? noise * Math.sin(idx * 2.3 + 1.2) * 0.9 : 0;
-      // 离群点额外偏移（仅在 outlier 情境作用于最后一个异常点）
+      // 离群点额外偏移（仅在 outlier 情境作用于最后一个异常点，探究杠杆破坏效应）
       const extraOutlier =
         selectedScenarioKey === "outlier" && idx === basePoints.length - 1
           ? outlierOffset
@@ -91,33 +84,15 @@ export function RegressionPage() {
       return {
         id: p.id,
         x: p.x,
-        y: Number((p.y + perturbation + meanShiftY + extraOutlier).toFixed(2)),
+        y: Number((p.y + extraOutlier).toFixed(2)),
       };
     });
-  }, [
-    basePoints,
-    params.noise,
-    params.meanShiftY,
-    params.outlierOffset,
-    selectedScenarioKey,
-  ]);
+  }, [basePoints, params.outlierOffset, selectedScenarioKey]);
 
   // 处理散点拖拽更新：自动切入【自由探索 (free)】
   const handlePointsChange = (newActivePoints: Point2D[]) => {
     setSelectedScenarioKey("free");
-    const noise = params.noise ?? 0;
-    const meanShiftY = params.meanShiftY ?? 0;
-    setBasePoints(
-      newActivePoints.map((p, idx) => {
-        const perturbation =
-          noise > 0.001 ? noise * Math.sin(idx * 2.3 + 1.2) * 0.9 : 0;
-        return {
-          id: p.id,
-          x: p.x,
-          y: Number((p.y - perturbation - meanShiftY).toFixed(2)),
-        };
-      }),
-    );
+    setBasePoints(newActivePoints);
   };
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -186,6 +161,7 @@ export function RegressionPage() {
       }
       setParams((prev) => ({
         ...prev,
+        targetX: preset.targetX ?? 10,
         noise: 0,
         meanShiftY: 0,
         outlierOffset: 0,
@@ -194,7 +170,7 @@ export function RegressionPage() {
   };
 
   const handleReset = () => {
-    setParams({ ...defaultParams });
+    setParams({ ...defaultParams, targetX: 10 });
     setAnalysisMode("linear");
     setSelectedModel("linear");
     setSelectedScenarioKey("ad_sales");
@@ -203,17 +179,17 @@ export function RegressionPage() {
     setShowResidualPlot(false);
   };
 
-  // 按情景自适应动态装配核心参数配置
+  // 按情景自适应动态装配核心参数配置（严格遵循高中课标）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const list: ParamConfig[] = [
       {
-        key: "noise",
-        label: paramMeta.noise.label,
-        labelFormula: paramMeta.noise.labelFormula,
-        value: params.noise ?? 0,
-        min: paramMeta.noise.min,
-        max: paramMeta.noise.max,
-        step: paramMeta.noise.step ?? 0.2,
+        key: "targetX",
+        label: paramMeta.targetX.label,
+        labelFormula: paramMeta.targetX.labelFormula,
+        value: params.targetX ?? currentPreset.targetX ?? 10,
+        min: Math.max(0, xRange[0]),
+        max: xRange[1],
+        step: 0.5,
         importance: "core",
       },
     ];
@@ -229,25 +205,15 @@ export function RegressionPage() {
         step: paramMeta.outlierOffset.step ?? 0.5,
         importance: "core",
       });
-    } else {
-      list.push({
-        key: "meanShiftY",
-        label: paramMeta.meanShiftY.label,
-        labelFormula: paramMeta.meanShiftY.labelFormula,
-        value: params.meanShiftY ?? 0,
-        min: paramMeta.meanShiftY.min,
-        max: paramMeta.meanShiftY.max,
-        step: paramMeta.meanShiftY.step ?? 0.5,
-        importance: "core",
-      });
     }
 
     return list;
   }, [
-    params.noise,
-    params.meanShiftY,
+    params.targetX,
     params.outlierOffset,
     selectedScenarioKey,
+    currentPreset.targetX,
+    xRange,
   ]);
 
   const mathData = useMemo(() => {
@@ -286,10 +252,20 @@ export function RegressionPage() {
       },
     ];
 
-    if (linearRes.isValid) {
+    if (selectedModel === "linear" && linearRes.isValid) {
       items.push({
         color: MATH_COLORS.paramSecondary,
-        formula: `\\text{样本重心 } (\\bar{x}=${linearRes.meanX.toFixed(1)}, \\bar{y}=${linearRes.meanY.toFixed(1)})`,
+        formula: `\\text{样本中心 } (\\bar{x}=${linearRes.meanX.toFixed(1)}, \\bar{y}=${linearRes.meanY.toFixed(1)})`,
+        style: "point",
+      });
+    }
+
+    const targetXVal = params.targetX ?? currentPreset.targetX ?? 10;
+    if (currentFit?.isValid && Number.isFinite(targetXVal)) {
+      const predY = currentFit.predict(targetXVal);
+      items.push({
+        color: MATH_COLORS.paramTertiary,
+        formula: `\\text{预报靶点 } (x_0=${targetXVal}, \\hat{y}_0=${predY.toFixed(1)})`,
         style: "point",
       });
     }
@@ -309,11 +285,20 @@ export function RegressionPage() {
     }
 
     return items;
-  }, [currentFit, linearRes, showResidualSquares]);
+  }, [
+    currentFit,
+    linearRes,
+    showResidualSquares,
+    params.targetX,
+    currentPreset.targetX,
+  ]);
 
   // 左屏教学提示与题设导引 (说明初始条件与核心设问)
   const tipConfig = useMemo(() => {
     const isFree = selectedScenarioKey === "free";
+    const targetXVal = params.targetX ?? currentPreset?.targetX ?? 10;
+    const targetDesc =
+      currentPreset?.targetDesc ?? `当自变量 $x_0 = ${targetXVal}$ 时的预报值`;
     const modelNameMap: Record<RegressionModelType, string> = {
       linear: "一元线性模型 $\\hat{y} = bx + a$",
       exponential: "指数模型 $y = c e^{kx}$（变量置换 $z = \\ln y$）",
@@ -328,22 +313,26 @@ export function RegressionPage() {
         variant: "primary" as const,
         badge: "自主探究 · 自由拖拽散点",
         condition: `在画布中自由拖拽散点 $P_1 \\sim P_5$，当前采用【${modelNameMap[selectedModel]}】。`,
-        question:
-          "通过最小二乘法求解拟合参数，观察相关系数 $r$、决定系数 $R^2$ 与残差平方和 $\\text{SSE}$ 的动态响应。",
+        question: `求出样本相关系数 $r$ 与经验回归方程，计算当 $x_0 = ${targetXVal}$ 时的预报值 $\\hat{y}_0$，并利用决定系数 $R^2$ 评估拟合优度。`,
+      };
+    }
+
+    if (selectedScenarioKey === "outlier") {
+      return {
+        variant: "warning" as const,
+        badge: "高考经典 · 离群点检验与数据清洗",
+        condition: `成对观测样本中存在异常干扰点 $P_5(6, 1.5)$，导致全样本相关系数受损暴跌。`,
+        question: `分析异常点对斜率与相关系数 $r$ 的杠杆拉扯破坏；剔除异常点后重新求解经验回归方程，并预测当 $x_0 = ${targetXVal}$ 时的修正预报值。`,
       };
     }
 
     return {
-      variant:
-        selectedScenarioKey === "outlier"
-          ? ("warning" as const)
-          : ("primary" as const),
+      variant: "primary" as const,
       badge: `高考经典 · ${currentPreset?.name ?? "成对数据分析"}`,
       condition: `成对观测样本：自变量【${currentPreset?.xName ?? "x"}】与因变量【${currentPreset?.yName ?? "y"}】共 $5$ 组实测数据，拟合模型为【${modelNameMap[selectedModel]}】。`,
-      question:
-        "建立回归分析方程，评估相关系数 $r$、决定系数 $R^2$ 及残差平方和 $\\sum e_i^2$，检验拟合优度与预报价值。",
+      question: `(1) 检验两变量是否具有显著线性相关关系；(2) 建立经验回归方程；(3) 预测${targetDesc}，并结合决定系数 $R^2$ 进行评价。`,
     };
-  }, [selectedModel, currentPreset, selectedScenarioKey]);
+  }, [selectedModel, currentPreset, selectedScenarioKey, params.targetX]);
 
   return (
     <ThreePanel
@@ -373,10 +362,20 @@ export function RegressionPage() {
                   setSelectedModel("linear");
                   setSelectedScenarioKey("ad_sales");
                   setBasePoints(REGRESSION_PRESETS[0].points);
+                  setParams((prev) => ({
+                    ...prev,
+                    targetX: REGRESSION_PRESETS[0].targetX ?? 10,
+                    outlierOffset: 0,
+                  }));
                 } else {
                   setSelectedModel("exponential");
                   setSelectedScenarioKey("ev_growth");
                   setBasePoints(REGRESSION_PRESETS[2].points);
+                  setParams((prev) => ({
+                    ...prev,
+                    targetX: REGRESSION_PRESETS[2].targetX ?? 6,
+                    outlierOffset: 0,
+                  }));
                 }
               }}
             />
@@ -567,6 +566,7 @@ export function RegressionPage() {
               scale={scale}
               vp={vp}
               fontScale={canvasSize.font}
+              targetX={params.targetX ?? currentPreset.targetX ?? 10}
               xStep={xStep}
               yStep={yStep}
             />
@@ -578,12 +578,9 @@ export function RegressionPage() {
       }
       right={
         <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
+          {...mathData}
           title="成对数据与回归分析看板"
+          examAnchor="高考选择性必修三 · 成对数据统计分析解答题"
         />
       }
     />

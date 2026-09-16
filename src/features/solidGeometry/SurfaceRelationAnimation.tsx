@@ -544,16 +544,7 @@ export default function SurfaceRelationAnimation() {
           )}
         </ThreeDCanvas>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="面面关系指标看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="面面关系指标看板" />}
     />
   );
 }

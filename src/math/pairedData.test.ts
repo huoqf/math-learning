@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   calculateLinearRegression,
   calculateIndependenceTest,
+  calculateOutlierComparison,
   fitAllRegressionModels,
   getChiSquare1Pdf,
 } from "./pairedData";
@@ -240,5 +241,32 @@ describe("成对数据纯数学计算库单元测试", () => {
     const expectedAt2 =
       (1 / Math.sqrt(2 * Math.PI)) * Math.pow(2, -0.5) * Math.exp(-1);
     expect(getChiSquare1Pdf(2)).toBeCloseTo(expectedAt2, 4);
+  });
+
+  it("应当正确计算离群点剔除对比，验证异常点对相关系数 r 的拉扯效应", () => {
+    // 构造含离群点的数据集：前4点线性极佳 (y = 1.5x + 0.5)，第5点异常 (6, 1.5)
+    const points = [
+      { id: "p1", x: 1, y: 2 },
+      { id: "p2", x: 2, y: 3.5 },
+      { id: "p3", x: 3, y: 5 },
+      { id: "p4", x: 4, y: 6.5 },
+      { id: "p5", x: 6, y: 1.5 }, // 离群点
+    ];
+
+    const comp = calculateOutlierComparison(points);
+    expect(comp).not.toBeNull();
+    if (!comp) return;
+
+    // 未清洗时，相关系数低（r 严重偏离 1）
+    expect(Math.abs(comp.raw.r)).toBeLessThan(0.4);
+
+    // 清洗剔除第 5 点后，前 4 点完全共线，r = 1.0
+    expect(comp.cleaned.n).toBe(4);
+    expect(comp.cleaned.r).toBeCloseTo(1.0, 5);
+    expect(comp.cleaned.b).toBeCloseTo(1.5, 4);
+    expect(comp.cleaned.a).toBeCloseTo(0.5, 4);
+
+    // 验证相关系数暴增
+    expect(comp.rDrop).toBeGreaterThan(0.6);
   });
 });

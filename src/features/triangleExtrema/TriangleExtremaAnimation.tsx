@@ -402,16 +402,7 @@ export function TriangleExtremaAnimation() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="解三角形最值看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="解三角形最值看板" />}
     />
   );
 }
