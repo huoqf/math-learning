@@ -99,7 +99,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
           (人教A版选择性必修三 · 统计推断)
         </text>
 
-        {/* 顶部右侧代入公式胶囊 */}
+        {/* 顶部右侧检验统计量卡片：公式与当前计算观测值分离展示 */}
         <g transform="translate(420, -6)">
           <rect
             x={0}
@@ -113,15 +113,23 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             filter="drop-shadow(0 1px 3px rgba(0,0,0,0.04))"
           />
           <text
-            x={197}
+            x={15}
             y={18}
-            textAnchor="middle"
+            fontSize={fontScale(9)}
+            fill={CANVAS_COLORS.labelTextLight}
+            fontWeight="medium"
+          >
+            统计量公式: χ² = n(ad - bc)² / [(a+b)(c+d)(a+c)(b+d)]
+          </text>
+          <text
+            x={380}
+            y={18}
+            textAnchor="end"
             fontSize={fontScale(10)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
-            χ² = n(ad - bc)² / [(a+b)(c+d)(a+c)(b+d)] ={" "}
-            {indResult.chiSquare.toFixed(3)}
+            当前计算观测值 ≈ {indResult.chiSquare.toFixed(3)}
           </text>
         </g>
       </g>
@@ -508,8 +516,8 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             fontWeight="bold"
           >
             {isLargeSampleValid
-              ? "✓ 大样本条件满足 (n≥40, E≥5)"
-              : "⚠ 样本偏小或E<5 (宜参考Yates)"}
+              ? "✓ 大样本条件满足 (n≥40, 期望频数E≥5)"
+              : "⚠ 小样本或理论频数偏小 (近似误差偏大)"}
           </text>
         </g>
       </g>

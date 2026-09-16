@@ -1,4 +1,4 @@
-import type { MathPanelData, WarningItem } from "../types";
+import type { MathPanelData, WarningItem, ReasoningStep } from "../types";
 import {
   calculateLinearRegression,
   calculateIndependenceTest,
@@ -213,21 +213,28 @@ export function buildPairedDataPanel(
 
     // 格式化当前四步答题结论与规范表述
     let conclusionDetail = "";
+    let criticalComparisonLatex = "";
+
     if (res.p999) {
+      criticalComparisonLatex = `\\chi^2 \\approx ${res.chiSquare.toFixed(3)} \\ge 10.828 = x_{0.001}`;
       conclusionDetail =
-        "根据小概率值 α = 0.001 的独立性检验，推断 H₀ 不成立，即有 99.9% 以上的把握认为两个分类变量有关联。";
+        "根据小概率值 $\\alpha = 0.001$ 的独立性检验，推断 $H_0$ 不成立，即有 $99.9\\%$ 以上的把握认为两个分类变量有关联，此推断犯错误的概率不超过 $0.001$。";
     } else if (res.p99) {
+      criticalComparisonLatex = `\\chi^2 \\approx ${res.chiSquare.toFixed(3)} \\ge 6.635 = x_{0.01}`;
       conclusionDetail =
-        "根据小概率值 α = 0.01 的独立性检验，推断 H₀ 不成立，即有 99% 以上的把握认为两个分类变量有关联。";
+        "根据小概率值 $\\alpha = 0.01$ 的独立性检验，推断 $H_0$ 不成立，即有 $99\\%$ 以上的把握认为两个分类变量有关联，此推断犯错误的概率不超过 $0.01$。";
     } else if (res.p95) {
+      criticalComparisonLatex = `\\chi^2 \\approx ${res.chiSquare.toFixed(3)} \\ge 3.841 = x_{0.05}`;
       conclusionDetail =
-        "根据小概率值 α = 0.05 的独立性检验，推断 H₀ 不成立，即有 95% 以上的把握认为两个分类变量有关联。";
+        "根据小概率值 $\\alpha = 0.05$ 的独立性检验，推断 $H_0$ 不成立，即有 $95\\%$ 以上的把握认为两个分类变量有关联，此推断犯错误的概率不超过 $0.05$。";
     } else if (res.p90) {
+      criticalComparisonLatex = `\\chi^2 \\approx ${res.chiSquare.toFixed(3)} \\ge 2.706 = x_{0.10}`;
       conclusionDetail =
-        "根据小概率值 α = 0.10 的独立性检验，推断 H₀ 不成立，即有 90% 以上的把握认为两个分类变量有关联。";
+        "根据小概率值 $\\alpha = 0.10$ 的独立性检验，推断 $H_0$ 不成立，即有 $90\\%$ 以上的把握认为两个分类变量有关联。但未达到高考常用的 $95\\%$ 显著性标准。";
     } else {
+      criticalComparisonLatex = `\\chi^2 \\approx ${res.chiSquare.toFixed(3)} < 3.841 = x_{0.05}`;
       conclusionDetail =
-        "根据小概率值 α = 0.05 的独立性检验，没有充分证据推翻 H₀，不能认为两个分类变量有关联。";
+        "根据小概率值 $\\alpha = 0.05$ 的独立性检验，没有充分证据推翻 $H_0$，不能认为两个分类变量有关联。";
     }
 
     const warnings: WarningItem[] = [];
@@ -239,7 +246,7 @@ export function buildPairedDataPanel(
     } else {
       if (res.n < 40) {
         warnings.push({
-          text: `【样本量过小】当前样本总量 n = ${res.n} < 40，卡方近似误差较大。高考标准要求 n ≥ 40。`,
+          text: `【样本量偏小】当前样本总量 $n = ${res.n} < 40$。新课标大样本独立性检验推荐样本容量 $n \\ge 40$。`,
           level: "warning",
         });
       }
@@ -251,162 +258,129 @@ export function buildPairedDataPanel(
           res.expected.eD,
         );
         warnings.push({
-          text: `【理论频数不足】存在理论期望频数 E_min = ${minE.toFixed(1)} < 5，宜采用 Yates 连续性修正 (χ²_yates = ${res.chiSquareYates.toFixed(3)})。`,
+          text: `【理论频数偏小】存在理论期望频数 $E_{\\min} = ${minE.toFixed(1)} < 5$，小样本下频数连续性近似存在一定偏离。`,
           level: "warning",
-        });
-      }
-      if (Math.abs(res.adMinusBc) === 0) {
-        warnings.push({
-          text: "【完全独立状态】ad - bc = 0，两组条件频率完全相同，χ² = 0，完全符合独立假设。",
-          level: "info",
         });
       }
     }
 
-    // 动态置顶定理与考点体系
+    // 1. 高考解答题标准三步推演链（审题定法 → 建模展开 → 求解反思）
+    const denomProduct = res.row1 * res.row2 * res.col1 * res.col2;
+
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 明确设立零假设与对立假设",
+        latex: `H_0: X \\text{ 与 } Y \\text{ 相互独立}`,
+        detail: `设零假设 $H_0$：${preset.labelA} 与 ${preset.labelB} 相互独立（即两变量无关联）。解答题第一步规范书写 $H_0$，为小概率反证法确立逻辑前提。`,
+        rubric: "规范写出零假设 H₀ 记 1 分",
+      },
+      {
+        step: 2,
+        title: "建模展开 · 列联表数据代入卡方公式求解",
+        latex: `\\chi^2 = \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\ = \\frac{${res.n} \\times (${a} \\times ${d} - ${b} \\times ${c})^2}{${res.row1} \\times ${res.row2} \\times ${res.col1} \\times ${res.col2}} \\\\ = \\frac{${res.n} \\times (${res.adMinusBc})^2}{${denomProduct}} \\approx ${res.chiSquare.toFixed(3)}`,
+        detail:
+          "新高考评分细则：严禁直接跳步给出孤立数值！必须按「符号公式 $\\to$ 四格实际数据代入 $\\to$ 结果化简」三步规范书写，保证得分完整。",
+        rubric: "公式与数据代入正确记 2 分，准确计算化简记 1 分",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 对比分位数临界值合规推断",
+        latex: criticalComparisonLatex,
+        detail: `${conclusionDetail}【阅卷避坑】独立性检验只能推断“两变量具有统计关联”，绝不可断言因果必然关系；未达临界值时严禁表述为“绝对证明两者无关”。`,
+        rubric: "临界值比对正确记 1 分，小概率结论严谨记 1 分",
+      },
+    ];
+
+    // 2. 核心定理与公式模型（纯净课标数学公式，100% 满尺寸无长句缩放）
     const isScaleScenario = activeTab === "scale" && mult > 1;
     const isIndependentScenario =
       indPresetKey === "4" || Math.abs(res.adMinusBc) === 0;
-    const isSmallSampleScenario =
-      !res.isSampleLargeEnough || !res.isExpectedEnough;
 
-    // 1. 定理动态特化
     const dynamicTheorems = isScaleScenario
       ? [
           {
-            name: `样本量倍增效应与卡方统计量线性倍增定理 (${mult}×)`,
-            latex: `\\chi^2_{k\\cdot n} = \\frac{(k\\cdot n)[(ka)(kd) - (kb)(kc)]^2}{(k\\cdot r_1)(k\\cdot r_2)(k\\cdot c_1)(k\\cdot c_2)} = k \\cdot \\chi^2_{\\text{base}}`,
-            condition: "条件频率比例维持不变的前提下",
-            note: `【大样本统计功效】样本容量扩大 k 倍，卡方统计量严格等比放大 k 倍（当前 ${mult} \\times ${(res.chiSquare / mult).toFixed(3)} = ${res.chiSquare.toFixed(3)}）。当样本量足够大时，极其微小的比例差异也能达到统计显著性。`,
+            name: "2×2 列联表卡方检验统计量公式",
+            latex: `\\chi^2 = \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)}`,
+            condition:
+              "大样本容量 $n \\ge 40$ 且各理论期望频数 $E_{ij} \\ge 5$",
+            note: "其中 $n = a+b+c+d$ 为总样本量，对角乘积之差反映两变量关联偏离度。",
             level: "core" as const,
           },
           {
-            name: "新高考四步标准答题规范",
-            latex: `\\begin{aligned}
-\\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立 (无关联)} \\\\
-\\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\
-\\text{Step 3 (比临界)} &: \\chi^2 \\text{ 与临界值 } k_\\alpha \\text{ 比较判定}
-\\end{aligned}`,
-            condition:
-              "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
-            note: `当前实测：$\\chi^2 = ${res.chiSquare.toFixed(3)} ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}；【Step 4 规范结论】${conclusionDetail}`,
+            name: `样本容量线性倍增定理 (${mult}× 放大)`,
+            latex: `\\chi^2_{k \\cdot n} = k \\cdot \\chi^2_{\\text{基准}}`,
+            condition: "各格频数等比例放大 $k$ 倍（即条件频率分布保持不变）",
+            note: `【统计功效】样本容量扩大 $k$ 倍，$\\chi^2$ 严格等比放大 $k$ 倍（基准 ${(res.chiSquare / mult).toFixed(3)} $\\to$ 当前 ${res.chiSquare.toFixed(3)}）。大样本量下极微弱的比例落差也能达到显著性。`,
             level: "important" as const,
           },
         ]
       : isIndependentScenario
         ? [
             {
-              name: "完全独立零假设判定定理 (ad - bc = 0)",
-              latex: `ad - bc = 0 \\iff \\frac{a}{a+b} = \\frac{c}{c+d} \\iff P(B \\mid A) = P(B \\mid \\overline{A}) \\implies \\chi^2 = 0`,
-              condition: "在零假设 H₀ 成立或两分类变量完全不相关时",
-              note: "对角乘积之差 ad - bc = 0 是两组条件频率完全相等的充分必要条件。此时卡方统计量恒等于 0，没有充分证据推断两变量有关联。",
+              name: "2×2 列联表卡方检验统计量公式",
+              latex: `\\chi^2 = \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)}`,
+              condition:
+                "大样本容量 $n \\ge 40$ 且各理论期望频数 $E_{ij} \\ge 5$",
+              note: "其中 $n = a+b+c+d$ 为总样本量。",
               level: "core" as const,
             },
             {
-              name: "新高考四步标准答题规范",
-              latex: `\\begin{aligned}
-\\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立 (无关联)} \\\\
-\\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} = 0.000 \\\\
-\\text{Step 3 (比临界)} &: \\chi^2 = 0 < 3.841
-\\end{aligned}`,
-              condition:
-                "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
-              note: `【Step 4 规范结论】${conclusionDetail}`,
+              name: "零假设独立充要条件定理",
+              latex: `ad - bc = 0 \\iff \\chi^2 = 0`,
+              condition: "两分类变量在样本中完全不相关时",
+              note: "对角乘积之差 $ad - bc = 0$ 是两组条件频率 $\\frac{a}{a+b} = \\frac{c}{c+d}$ 完全相等的充要条件，此时 $\\chi^2$ 恒为 0，完全无法拒绝零假设。",
               level: "important" as const,
             },
           ]
-        : isSmallSampleScenario
-          ? [
-              {
-                name: "Yates 连续性修正公式（拓展 · 超出课标）",
-                latex:
-                  "\\chi^2_{\\text{Yates}} = \\frac{n\\left(|ad - bc| - \\frac{n}{2}\\right)^2}{(a+b)(c+d)(a+c)(b+d)}",
-                condition: "当 $n < 40$ 或存在理论期望频数 $E_ij < 5$ 时适用",
-                note: `当前修正值：$\\chi^2_{\\text{Yates}} = ${res.chiSquareYates.toFixed(3)}$。当样本量较小时，离散频数分布用连续分布近似会产生偏大误差，减去 n/2 的连续性修正可有效防止第一类错误被放大。新课标正文只要求 χ² 统计量公式与临界值比较，连续性修正为教材之外的补充内容。`,
-                level: "supplementary" as const,
-              },
-              {
-                name: "新高考四步标准答题规范",
-                latex: `\\begin{aligned}
-\\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立 (无关联)} \\\\
-\\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\
-\\text{Step 3 (比临界)} &: \\chi^2 \\text{ 与临界值 } k_\\alpha \\text{ 比较判定}
-\\end{aligned}`,
-                condition:
-                  "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
-                note: `当前实测：$\\chi^2 = ${res.chiSquare.toFixed(3)} ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}；【Step 4 规范结论】${conclusionDetail}`,
-                level: "important" as const,
-              },
-            ]
-          : [
-              {
-                name: "新高考四步标准答题规范",
-                latex: `\\begin{aligned}
-\\text{Step 1 (设假设)} &: H_0: X, Y \\text{ 相互独立 (无关联)} \\\\
-\\text{Step 2 (算公式)} &: \\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\
-\\text{Step 3 (比临界)} &: \\chi^2 \\text{ 与临界值 } k_\\alpha \\text{ 比较判定}
-\\end{aligned}`,
-                condition:
-                  "大样本容量 $n ≥ 40$ 且所有单元格理论期望频数 $E_ij ≥ 5$",
-                note: `当前实测：$\\chi^2 = ${res.chiSquare.toFixed(3)} ${res.p95 ? `\\ge ${res.p99 ? (res.p999 ? "10.828" : "6.635") : "3.841"}` : "< 3.841"}；【Step 4 规范作答结论】${conclusionDetail}（阅卷采分要点：必须写明小概率值 α 与置信度，严禁表述为因果必然关系）。`,
-                level: "core" as const,
-              },
-              {
-                name: "2×2 列联表卡方公式本质 (理论偏离度)",
-                latex: `\\chi^2 = \\sum_{i=1}^2 \\sum_{j=1}^2 \\frac{(O_{ij} - E_{ij})^2}{E_{ij}} = \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)}`,
-                condition:
-                  "自由度 $df = (2 - 1) × (2 - 1) = 1$，$E_ij = \\frac{(行和) \\times (列和)}{n}$",
-                note: "其中 $O_ij$ 为实际观测频数，$E_ij$ 为 $H₀$ 成立下的理论期望频数。各格偏离度平方和综合衡量两变量与独立假设的偏离程度。",
-                level: "important" as const,
-              },
-              {
-                name: "新课标高考常用卡方临界值对照表",
-                latex: `\\begin{aligned}
-P(\\chi^2 \\ge 2.706) &= 0.10 \\quad (90\\% \\text{ 把握推断有关}) \\\\
-P(\\chi^2 \\ge 3.841) &= 0.05 \\quad (95\\% \\text{ 把握, 高考核心}) \\\\
-P(\\chi^2 \\ge 6.635) &= 0.01 \\quad (99\\% \\text{ 把握, 高考高频}) \\\\
-P(\\chi^2 \\ge 10.828) &= 0.001 \\quad (99.9\\% \\text{ 把握推断有关})
-\\end{aligned}`,
-                condition: "在零假设 H₀: X 与 Y 相互独立成立的前提下",
-                note: "当计算的 χ² 观测值大于等于对应临界值时，即拒绝零假设 H₀，推断两个分类变量有关联。",
-                level: "core" as const,
-              },
-            ];
+        : [
+            {
+              name: "2×2 列联表卡方检验统计量公式",
+              latex: `\\chi^2 = \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)}`,
+              condition:
+                "大样本容量 $n \\ge 40$ 且各理论期望频数 $E_{ij} \\ge 5$",
+              note: "新课标高考解答题必背公式，其中 $n = a+b+c+d$ 为样本总量。",
+              level: "core" as const,
+            },
+            {
+              name: "新课标高考常用卡方临界值表",
+              latex: `x_{0.05} = 3.841, \\quad x_{0.01} = 6.635, \\quad x_{0.001} = 10.828`,
+              condition: "在零假设 $H_0$ 成立的前提下，用于判断是否拒绝 $H_0$",
+              note: "新高考核心临界点：$\\alpha=0.05$ 对应 $3.841$（$95\\%$ 把握）；$\\alpha=0.01$ 对应 $6.635$（$99\\%$ 把握）。若 $\\chi^2 \\ge x_\\alpha$ 则拒绝 $H_0$。",
+              level: "core" as const,
+            },
+          ];
 
-    // 2. 高考考点动态特化
+    // 3. 高考要点与阅卷防坑指南（精炼直击考法）
     const dynamicGaokaoPoints = isScaleScenario
       ? [
           {
-            text: "【高考高阶·样本量倍增效应】在条件频率比例不变的前提下，样本总量扩大 k 倍，χ² 观测值将严格扩大 k 倍。这也是统计推断中必须控制大样本假阳性（效应量）的核心依据。",
+            text: "【高考高阶·样本量倍增效应】在条件频率比例不变的前提下，样本总量扩大 k 倍，χ² 观测值将严格扩大 k 倍。必须注意控制大样本统计假阳性。",
             importance: "gaokao" as const,
           },
           {
-            text: "【高考避坑·相关性 ≠ 因果性】独立性检验只能得出“变量 X 与 Y 有统计关联”，绝不能推断出“X 是引起 Y 的原因”或“X 导致 Y 的概率是 95%”。",
+            text: "【高考避坑·相关性 ≠ 因果性】独立性检验只能得出“两变量有统计关联”，绝不能推断出“X 是引起 Y 的原因”或“X 导致 Y 的概率是 95%”。",
             importance: "gaokao" as const,
           },
         ]
       : isIndependentScenario
         ? [
             {
-              text: "【高考考点·独立性与零假设】当 ad - bc = 0 时，两分类变量在样本中完全独立，χ² = 0 < 3.841，此时必须作答“没有充分证据认为两变量有关联”。",
+              text: "【高考考点·独立性与零假设】当 ad - bc = 0 时，两分类变量在样本中完全独立，χ² = 0 < 3.841，此时必须规范作答“没有充分证据推翻零假设”。",
               importance: "gaokao" as const,
             },
             {
-              text: "【高考避坑·零假设不能表述为因果】独立检验接受 H₀ 仅代表当前数据无证据拒绝独立，并不等同于绝对证明了两者在总体中 100% 毫无因果联系。",
+              text: "【高考避坑·零假设不能表述为必然】接受 H₀ 仅代表当前数据无证据拒绝独立，绝不能表述为“在总体中已经 100% 证明两者完全无关”。",
               importance: "gaokao" as const,
             },
           ]
         : [
             {
-              text: "【高考考点·小概率反证法】在 H₀ 成立的前提下，χ² ≥ 3.841 是一个小概率事件（概率仅 0.05）。既然小概率事件在一次试验中发生，则有理由拒绝 H₀。",
+              text: "【高考考点·小概率反证法】在 H₀ 成立前提下，χ² ≥ 3.841 属于小概率事件（P ≤ 0.05）。小概率事件在一次试验中发生，故有充分理由拒绝 H₀。",
               importance: "gaokao" as const,
             },
             {
-              text: "【高考避坑·相关性 ≠ 因果性】独立性检验只能得出“变量 X 与 Y 有统计关联”，绝不能推断出“X 是引起 Y 的原因”或“X 导致 Y 的概率是 95%”。",
-              importance: "gaokao" as const,
-            },
-            {
-              text: "【高考规律·样本量效应】条件频率比例不变时，样本容量 n 扩大 k 倍，χ² 观测值将线性扩大 k 倍。样本量足够大时，微小比例差异也能获得统计显著性。",
+              text: "【高考避坑·相关性 ≠ 因果性】独立性检验只能得出“变量 X 与 Y 有统计关联”，绝不能断言因果关系；“95% 把握”指推断犯错误的概率不超过 0.05。",
               importance: "gaokao" as const,
             },
           ];
@@ -414,44 +388,37 @@ P(\\chi^2 \\ge 10.828) &= 0.001 \\quad (99.9\\% \\text{ 把握推断有关})
     return {
       quantities: [
         {
-          label: "样本总量 n",
-          value: `${res.n}${mult > 1 ? ` (${mult}×倍增)` : ""}`,
+          label: "样本总量",
+          symbol: "n",
+          value: `${res.n}${mult > 1 ? ` (${mult}×)` : ""}`,
           color: MATH_COLORS.paramPrimary,
         },
         {
-          label: "行列边际合计",
-          value: `行: ${res.row1}/${res.row2}, 列: ${res.col1}/${res.col2}`,
+          label: "对角乘积差",
+          symbol: "|ad - bc|",
+          value: `${Math.abs(res.adMinusBc)}`,
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "对角乘积差 |ad - bc|",
-          value: `${Math.abs(res.adMinusBc)}`,
-          color: MATH_COLORS.paramTertiary,
-        },
-        {
-          label: "χ² 统计量观测值",
-          value: `${res.chiSquare.toFixed(3)}`,
+          label: "卡方检验值",
+          symbol: "\\chi^2",
+          value: res.chiSquare.toFixed(3),
           color: res.p95 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramTertiary,
         },
         {
-          label: "Yates 连续修正 χ²（拓展）",
-          value: `${res.chiSquareYates.toFixed(3)}`,
-          color: MATH_COLORS.textMuted,
-        },
-        {
-          label: "高考 95% 显著性 (3.841)",
-          value: res.p95 ? "✓ 达到 (拒绝 H₀)" : "✗ 未达到",
+          label: "95% 临界比对",
+          symbol: "x_{0.05}",
+          value: res.p95 ? "3.841 (显著)" : "3.841 (未达)",
           color: res.p95 ? MATH_COLORS.paramPrimary : MATH_COLORS.textMuted,
-        },
-        {
-          label: "高考 99% 显著性 (6.635)",
-          value: res.p99 ? "✓ 达到 (拒绝 H₀)" : "✗ 未达到",
-          color: res.p99 ? MATH_COLORS.paramPrimary : MATH_COLORS.textMuted,
         },
       ],
       theorems: dynamicTheorems,
       gaokaoPoints: dynamicGaokaoPoints,
+      reasoningSteps,
       warnings,
+      examAnchor: "人教A版选必三 · 统计推断解答题高频",
+      mnemonic:
+        "先设独立零假设，四格对角算卡方；临界三八四一跨，有关结论犯错低。",
     };
   }
 }

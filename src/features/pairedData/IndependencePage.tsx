@@ -235,13 +235,58 @@ export function IndependencePage() {
                 onReset={handleReset}
               />
             ) : (
-              <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200/80 text-[11px] text-neutral-600 leading-relaxed space-y-1">
-                <div className="font-semibold text-neutral-800 flex items-center gap-1.5">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  题设基准数据已锁定
+              <div className="space-y-2">
+                <div className="p-2.5 bg-neutral-50 rounded-lg border border-neutral-200/80 text-[11px] text-neutral-600 leading-relaxed">
+                  <div className="font-semibold text-neutral-800 flex items-center justify-between mb-1.5">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      真题观测频数已锁定
+                    </span>
+                    <span className="text-[10px] text-neutral-500">
+                      基准样本量 n ={" "}
+                      {currentPreset.a +
+                        currentPreset.b +
+                        currentPreset.c +
+                        currentPreset.d}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 text-[10.5px]">
+                    <div className="p-1.5 rounded bg-white border border-neutral-200/60 flex items-center justify-between">
+                      <span className="text-neutral-500 truncate mr-1">
+                        a ({currentPreset.labelA}·{currentPreset.labelB})
+                      </span>
+                      <span className="font-bold text-rose-600 font-mono">
+                        {currentPreset.a}
+                      </span>
+                    </div>
+                    <div className="p-1.5 rounded bg-white border border-neutral-200/60 flex items-center justify-between">
+                      <span className="text-neutral-500 truncate mr-1">
+                        b ({currentPreset.labelA}·{currentPreset.labelNotB})
+                      </span>
+                      <span className="font-bold text-amber-600 font-mono">
+                        {currentPreset.b}
+                      </span>
+                    </div>
+                    <div className="p-1.5 rounded bg-white border border-neutral-200/60 flex items-center justify-between">
+                      <span className="text-neutral-500 truncate mr-1">
+                        c ({currentPreset.labelNotA}·{currentPreset.labelB})
+                      </span>
+                      <span className="font-bold text-emerald-600 font-mono">
+                        {currentPreset.c}
+                      </span>
+                    </div>
+                    <div className="p-1.5 rounded bg-white border border-neutral-200/60 flex items-center justify-between">
+                      <span className="text-neutral-500 truncate mr-1">
+                        d ({currentPreset.labelNotA}·{currentPreset.labelNotB})
+                      </span>
+                      <span className="font-bold text-neutral-700 font-mono">
+                        {currentPreset.d}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  当前展示高考真题标准化观测样本。如需自由调节频数，请在上方选择【
+                <div className="text-[10px] text-neutral-400 px-1">
+                  💡 提示：如需自主调节四格频数，请在上方选择【
                   <strong>自由探索</strong>】。
                 </div>
               </div>
@@ -296,16 +341,7 @@ export function IndependencePage() {
           </AnimationSvgCanvas>
         </div>
       }
-      right={
-        <MathPanel
-          quantities={mathData.quantities}
-          theorems={mathData.theorems}
-          gaokaoPoints={mathData.gaokaoPoints}
-          warnings={mathData.warnings}
-          mnemonic={mathData.mnemonic}
-          title="2×2 列联表独立性检验看板"
-        />
-      }
+      right={<MathPanel {...mathData} title="2×2 列联表独立性检验看板" />}
     />
   );
 }
