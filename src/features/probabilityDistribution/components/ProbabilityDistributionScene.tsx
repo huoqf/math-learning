@@ -160,9 +160,47 @@ export function ProbabilityDistributionScene({
             );
           })}
 
-          {/* 2. 主 X 坐标轴与箭头 */}
+          {/* 2. 直角坐标系竖直概率 P 轴与原点 O */}
           <line
-            x1={leftSafeMargin - 10}
+            x1={leftSafeMargin}
+            y1={yAxisZero.y}
+            x2={leftSafeMargin}
+            y2={yAxisMax.y - 22}
+            stroke={CANVAS_COLORS.axis}
+            strokeWidth={2}
+          />
+          <polygon
+            points={`${leftSafeMargin},${yAxisMax.y - 30} ${
+              leftSafeMargin - 4
+            },${yAxisMax.y - 20} ${leftSafeMargin + 4},${yAxisMax.y - 20}`}
+            fill={CANVAS_COLORS.axis}
+          />
+          <text
+            x={leftSafeMargin - fontScale(6)}
+            y={yAxisMax.y - fontScale(26)}
+            fill={CANVAS_COLORS.labelText}
+            fontSize={fontScale(12)}
+            fontWeight="bold"
+            fontStyle="italic"
+            textAnchor="middle"
+          >
+            P
+          </text>
+          {/* 原点 O 标注 */}
+          <text
+            x={leftSafeMargin - fontScale(8)}
+            y={yAxisZero.y + fontScale(15)}
+            fill={CANVAS_COLORS.labelText}
+            fontSize={fontScale(11)}
+            textAnchor="middle"
+            fontStyle="italic"
+          >
+            O
+          </text>
+
+          {/* 3. 主 X 坐标轴与箭头 */}
+          <line
+            x1={leftSafeMargin - 8}
             y1={yAxisZero.y}
             x2={rightSafeMargin + 25}
             y2={yAxisZero.y}
@@ -181,8 +219,15 @@ export function ProbabilityDistributionScene({
             fill={CANVAS_COLORS.labelText}
             fontSize={fontScale(12)}
             fontWeight="bold"
+            fontStyle="italic"
           >
-            {studyMode === "decision" ? "事件" : "x"}
+            {studyMode === "decision"
+              ? "事件"
+              : studyMode === "binomial" ||
+                  studyMode === "hypergeometric" ||
+                  studyMode === "compare"
+                ? "k"
+                : "x"}
           </text>
 
           {/* 3. 基础模式与超几何/一般模式的柱状图 */}

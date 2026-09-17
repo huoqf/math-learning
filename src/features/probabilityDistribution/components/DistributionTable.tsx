@@ -10,6 +10,7 @@ import type {
   DistributionComparisonResult,
   DecisionScenarioResult,
 } from "@/math/probabilityDistribution";
+import { KatexFormula } from "@/components/UI/KatexFormula";
 import type { StudyMode } from "./modeConfig";
 
 interface DistributionTableProps {
@@ -36,13 +37,13 @@ export function DistributionTable({
           <>
             <thead>
               <tr className="bg-neutral-100/80 text-neutral-700 font-bold border-b border-neutral-200">
-                <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-700 font-bold">
-                  k
+                <th className="px-2.5 py-1 border-r border-neutral-200 text-primary-700 font-bold min-w-[80px]">
+                  <KatexFormula formula="k" mode="inline" />
                 </th>
                 {comparisonResult.binomDist.outcomes.map((o) => (
                   <th
                     key={`th-k-${o.x}`}
-                    className="px-2 py-0.5 border-r border-neutral-200 min-w-[36px]"
+                    className="px-2 py-1 border-r border-neutral-200 min-w-[36px]"
                   >
                     {o.x}
                   </th>
@@ -51,8 +52,8 @@ export function DistributionTable({
             </thead>
             <tbody>
               <tr className="bg-blue-50/70 text-blue-900 border-b border-neutral-200">
-                <td className="px-2.5 py-0.5 font-bold text-blue-800 border-r border-neutral-200 bg-blue-100/60">
-                  P_超
+                <td className="px-2.5 py-1 font-bold text-blue-800 border-r border-neutral-200 bg-blue-100/60">
+                  <KatexFormula formula="P(X_{\text{超}}=k)" mode="inline" />
                 </td>
                 {comparisonResult.binomDist.outcomes.map((o) => {
                   const pHyper =
@@ -69,8 +70,8 @@ export function DistributionTable({
                 })}
               </tr>
               <tr className="bg-amber-50/70 text-amber-900">
-                <td className="px-2.5 py-0.5 font-bold text-amber-800 border-r border-neutral-200 bg-amber-100/60">
-                  P_二项
+                <td className="px-2.5 py-1 font-bold text-amber-800 border-r border-neutral-200 bg-amber-100/60">
+                  <KatexFormula formula="P(X_{\text{二项}}=k)" mode="inline" />
                 </td>
                 {comparisonResult.binomDist.outcomes.map((o) => (
                   <td
@@ -87,23 +88,23 @@ export function DistributionTable({
           <>
             <thead>
               <tr className="bg-neutral-100/80 text-neutral-700 font-bold border-b border-neutral-200">
-                <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-700 font-bold">
-                  方案
+                <th className="px-2.5 py-1 border-r border-neutral-200 text-primary-700 font-bold">
+                  决策方案
                 </th>
-                <th className="px-2.5 py-0.5 border-r border-neutral-200 text-neutral-700">
-                  分布状态与概率
+                <th className="px-2.5 py-1 border-r border-neutral-200 text-neutral-700">
+                  离散状态取值与概率
                 </th>
-                <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-800 font-bold">
-                  期望 E
+                <th className="px-2.5 py-1 border-r border-neutral-200 text-primary-800 font-bold">
+                  <KatexFormula formula="E(X)" mode="inline" />
                 </th>
-                <th className="px-2.5 py-0.5 text-primary-800 font-bold">
-                  方差 D
+                <th className="px-2.5 py-1 text-primary-800 font-bold">
+                  <KatexFormula formula="D(X)" mode="inline" />
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr className="bg-emerald-50/70 border-b border-neutral-200">
-                <td className="px-2.5 py-0.5 font-bold text-emerald-800 border-r border-neutral-200 bg-emerald-100/60">
+                <td className="px-2.5 py-1 font-bold text-emerald-800 border-r border-neutral-200 bg-emerald-100/60">
                   方案 A
                 </td>
                 <td className="px-2.5 py-0.5 border-r border-neutral-200 text-left text-neutral-700">
@@ -119,7 +120,7 @@ export function DistributionTable({
                 </td>
               </tr>
               <tr className="bg-rose-50/70">
-                <td className="px-2.5 py-0.5 font-bold text-rose-800 border-r border-neutral-200 bg-rose-100/60">
+                <td className="px-2.5 py-1 font-bold text-rose-800 border-r border-neutral-200 bg-rose-100/60">
                   方案 B
                 </td>
                 <td className="px-2.5 py-0.5 border-r border-neutral-200 text-left text-neutral-700">
@@ -140,13 +141,13 @@ export function DistributionTable({
           <>
             <thead>
               <tr className="bg-neutral-100/80 text-neutral-700 font-bold border-b border-neutral-200">
-                <th className="px-2.5 py-0.5 border-r border-neutral-200 text-primary-700 font-bold">
-                  x_i
+                <th className="px-2.5 py-1 border-r border-neutral-200 text-primary-700 font-bold min-w-[60px]">
+                  <KatexFormula formula="X" mode="inline" />
                 </th>
                 {distResult.outcomes.map((o) => (
                   <th
                     key={`th-x-${o.x}`}
-                    className="px-2 py-0.5 border-r border-neutral-200 min-w-[32px]"
+                    className="px-2 py-1 border-r border-neutral-200 min-w-[32px]"
                   >
                     {o.label || o.x}
                   </th>
@@ -156,8 +157,8 @@ export function DistributionTable({
             <tbody>
               {studyMode === "linear" && (
                 <tr className="bg-amber-50/70 text-amber-900 font-bold border-b border-neutral-200">
-                  <td className="px-2.5 py-0.5 font-bold text-amber-800 border-r border-neutral-200 bg-amber-100/60">
-                    y_i
+                  <td className="px-2.5 py-1 font-bold text-amber-800 border-r border-neutral-200 bg-amber-100/60">
+                    <KatexFormula formula="Y=aX+b" mode="inline" />
                   </td>
                   {distResult.outcomes.map((o) => (
                     <td
@@ -170,8 +171,8 @@ export function DistributionTable({
                 </tr>
               )}
               <tr>
-                <td className="px-2.5 py-0.5 font-bold text-primary-700 border-r border-neutral-200 bg-neutral-100/50">
-                  P_i
+                <td className="px-2.5 py-1 font-bold text-primary-700 border-r border-neutral-200 bg-neutral-100/50">
+                  <KatexFormula formula="P(X=x)" mode="inline" />
                 </td>
                 {distResult.outcomes.map((o) => (
                   <td

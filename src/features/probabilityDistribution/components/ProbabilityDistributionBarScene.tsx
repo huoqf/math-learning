@@ -108,7 +108,7 @@ export function ProbabilityDistributionBarScene({
                   textAnchor="middle"
                   fontWeight="bold"
                 >
-                  众数峰值
+                  概率最大项
                 </text>
               </g>
             )}

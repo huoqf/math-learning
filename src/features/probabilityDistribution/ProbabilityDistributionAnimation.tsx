@@ -46,6 +46,15 @@ export function ProbabilityDistributionAnimation() {
     ...defaultParams,
   }));
 
+  // 决策场景切换 (质检 vs 投资) 并同步联动推荐预设参数
+  const handleDecisionScenarioChange = (scenario: DecisionScenario) => {
+    setDecisionScenario(scenario);
+    setParams((prev) => ({
+      ...prev,
+      decisionParam: scenario === "quality" ? 0.08 : 0.5,
+    }));
+  };
+
   // 1. 视口尺寸测量与自适应
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -224,7 +233,9 @@ export function ProbabilityDistributionAnimation() {
                   },
                 ]}
                 value={decisionScenario}
-                onChange={(k) => setDecisionScenario(k as DecisionScenario)}
+                onChange={(k) =>
+                  handleDecisionScenarioChange(k as DecisionScenario)
+                }
                 variant="filled"
               />
             </LeftPanelSection>
@@ -244,6 +255,7 @@ export function ProbabilityDistributionAnimation() {
             <TipCard
               variant={tipConfig.variant}
               badge={tipConfig.badge}
+              background={tipConfig.background}
               condition={tipConfig.condition}
               question={tipConfig.question}
             />
@@ -258,25 +270,32 @@ export function ProbabilityDistributionAnimation() {
               <KatexFormula formula={topFormulaLatex} mode="inline" />
             </div>
 
-            <div className="bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-xl px-3 py-1.5 shadow-sm pointer-events-auto flex items-center gap-2 text-xs font-mono">
+            <div className="bg-white/95 backdrop-blur-md border border-neutral-200/90 rounded-xl px-3 py-1.5 shadow-sm pointer-events-auto flex items-center gap-2 text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               {studyMode === "compare" && comparisonResult ? (
                 <>
-                  <span className="text-neutral-500 font-bold">方差修正:</span>
-                  <span className="text-primary-700 font-bold">
+                  <span className="text-neutral-500 font-medium">
+                    方差修正:
+                  </span>
+                  <span className="text-primary-700 font-bold font-mono">
                     {comparisonResult.varianceCorrectionFactor.toFixed(3)}
                   </span>
-                  <span className="text-neutral-400">|</span>
-                  <span className="text-neutral-500 font-bold">Δ_max:</span>
-                  <span className="text-amber-700 font-bold">
+                  <span className="text-neutral-300">|</span>
+                  <span className="text-neutral-500 font-medium">
+                    <KatexFormula formula="\Delta_{\max}" mode="inline" />:
+                  </span>
+                  <span className="text-amber-700 font-bold font-mono">
                     {comparisonResult.maxDifference.toFixed(4)}
                   </span>
                 </>
               ) : (
                 <>
-                  <span className="text-neutral-500 font-bold">公理校验:</span>
-                  <span className="text-primary-700 font-bold">
-                    ∑P = {distResult.sumP.toFixed(3)}
+                  <span className="text-neutral-500 font-medium">
+                    公理校验 (<KatexFormula formula="\sum p_i" mode="inline" />
+                    ):
+                  </span>
+                  <span className="text-primary-700 font-bold font-mono">
+                    {distResult.sumP.toFixed(3)}
                   </span>
                 </>
               )}
@@ -331,8 +350,14 @@ export function ProbabilityDistributionAnimation() {
             />
           </AnimationSvgCanvas>
 
-          {/* 4. 中屏右下角毛玻璃图例 */}
-          {legendItems.length > 0 && <SceneLegend items={legendItems} />}
+          {/* 4. 中屏图例：避让顶部 HUD 与底部矩阵表，置于右上偏下位置 */}
+          {legendItems.length > 0 && (
+            <SceneLegend
+              items={legendItems}
+              position="top-right"
+              className="!top-16 !right-4"
+            />
+          )}
         </div>
       }
       right={<MathPanel {...mathData} title={panelTitle} />}
