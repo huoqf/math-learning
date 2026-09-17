@@ -267,11 +267,12 @@ export function BayesScreeningScene({
       </g>
 
       {/* ================= 逆向焦点：阳性汇聚卡片 (x: 45 ~ 475, y: 370 ~ 610) ================= */}
+      {/* ================= 下半区：阳性群体逆向溯源与全概分解可视化 (x: 45 ~ 795, y: 370 ~ 605) ================= */}
       <g transform="translate(45, 370)">
         <rect
           x={0}
           y={0}
-          width={430}
+          width={750}
           height={235}
           rx={12}
           fill={MATH_COLORS.white}
@@ -279,14 +280,15 @@ export function BayesScreeningScene({
           strokeWidth={1.5}
         />
 
+        {/* ─── 左区：检测阳性 (+) 群体构成分析 ─── */}
         <text
           x={16}
           y={26}
-          fontSize={fontScale(13.5)}
+          fontSize={fontScale(14)}
           fontWeight="bold"
           fill={MATH_COLORS.derivative}
         >
-          逆向溯源：检测为阳性 (+) 的总人群 ({totalPositives} 人)
+          1. 阳性检出群体构成 (共 {totalPositives} 件/人)
         </text>
 
         {/* 比例条形图 */}
@@ -294,7 +296,7 @@ export function BayesScreeningScene({
           <rect
             x={0}
             y={0}
-            width={398}
+            width={340}
             height={28}
             rx={6}
             fill={withAlpha(MATH_COLORS.axis, 0.15)}
@@ -304,7 +306,7 @@ export function BayesScreeningScene({
             x={0}
             y={0}
             width={
-              totalPositives > 0 ? (398 * truePosCount) / totalPositives : 0
+              totalPositives > 0 ? (340 * truePosCount) / totalPositives : 0
             }
             height={28}
             rx={6}
@@ -312,10 +314,10 @@ export function BayesScreeningScene({
           />
           {/* 假阳性条 */}
           <rect
-            x={totalPositives > 0 ? (398 * truePosCount) / totalPositives : 0}
+            x={totalPositives > 0 ? (340 * truePosCount) / totalPositives : 0}
             y={0}
             width={
-              totalPositives > 0 ? (398 * falsePosCount) / totalPositives : 0
+              totalPositives > 0 ? (340 * falsePosCount) / totalPositives : 0
             }
             height={28}
             rx={6}
@@ -324,7 +326,7 @@ export function BayesScreeningScene({
         </g>
 
         {/* 图例数据 */}
-        <g transform="translate(16, 90)">
+        <g transform="translate(16, 88)">
           <circle cx={6} cy={6} r={5} fill={MATH_COLORS.paramPrimary} />
           <text
             x={16}
@@ -333,157 +335,152 @@ export function BayesScreeningScene({
             fontWeight="bold"
             fill={MATH_COLORS.paramPrimary}
           >
-            真阳性 ({truePosCount}人, 占 {posteriorPercent.toFixed(1)}%)
+            {truePosLabel} ({truePosCount}，占 {posteriorPercent.toFixed(1)}%)
           </text>
 
-          <circle cx={205} cy={6} r={5} fill={MATH_COLORS.paramSecondary} />
+          <circle cx={180} cy={6} r={5} fill={MATH_COLORS.paramSecondary} />
           <text
-            x={215}
+            x={190}
             y={10}
             fontSize={fontScale(12)}
             fontWeight="bold"
             fill={MATH_COLORS.paramSecondary}
           >
-            假阳性 ({falsePosCount}人, 占 {(100 - posteriorPercent).toFixed(1)}
-            %)
+            {falsePosLabel} ({falsePosCount}，占{" "}
+            {(100 - posteriorPercent).toFixed(1)}%)
           </text>
         </g>
 
-        {/* 贝叶斯后验核心算式 */}
-        <g transform="translate(16, 120)">
-          <rect
+        {/* 左右分割虚线 */}
+        <line
+          x1={375}
+          y1={16}
+          x2={375}
+          y2={220}
+          stroke={MATH_COLORS.axis}
+          strokeWidth={1}
+          strokeDasharray="4 4"
+        />
+
+        {/* ─── 右区：贝叶斯后验与全概分解算式 ─── */}
+        <g transform="translate(395, 0)">
+          <text
             x={0}
-            y={0}
-            width={398}
-            height={100}
-            rx={8}
-            fill={withAlpha(MATH_COLORS.derivative, 0.06)}
-          />
-          <text
-            x={12}
-            y={22}
-            fontSize={fontScale(12)}
-            fontWeight="bold"
-            fill={MATH_COLORS.derivative}
-          >
-            后验患病概率 P({targetSymbol}|+) = 真阳性人数 / 总阳性人数
-          </text>
-          <text
-            x={12}
-            y={52}
-            fontSize={fontScale(14.5)}
+            y={26}
+            fontSize={fontScale(14)}
             fontWeight="bold"
             fill={MATH_COLORS.labelText}
           >
-            = {truePosCount} / ({truePosCount} + {falsePosCount}) ={" "}
-            <tspan fill={MATH_COLORS.derivative} fontSize={fontScale(17)}>
-              {posteriorPercent.toFixed(2)}%
-            </tspan>
+            2. 贝叶斯由果溯因与全概率分解
           </text>
+
+          {/* 全概率分母分解条形图 */}
           <text
-            x={12}
-            y={80}
-            fontSize={fontScale(11)}
-            fill={MATH_COLORS.textMuted}
+            x={0}
+            y={52}
+            fontSize={fontScale(11.5)}
+            fill={MATH_COLORS.labelTextLight}
           >
-            全概率分母：P(+) = P(D)P(+|D) + P(~D)P(+|~D) ={" "}
+            全概分母 P(+) = P({targetSymbol})P(+|{targetSymbol}) + P(~
+            {targetSymbol})P(+|~{targetSymbol}) ={" "}
             {(bayesData.pTotalPositive * 100).toFixed(2)}%
           </text>
+          <g transform="translate(0, 60)">
+            <rect
+              x={0}
+              y={0}
+              width={335}
+              height={16}
+              rx={4}
+              fill={withAlpha(MATH_COLORS.axis, 0.15)}
+            />
+            <rect
+              x={0}
+              y={0}
+              width={
+                bayesData.pTotalPositive > 0
+                  ? (335 * (bayesData.pPriorD * bayesData.pSensitivity)) /
+                    bayesData.pTotalPositive
+                  : 0
+              }
+              height={16}
+              rx={4}
+              fill={MATH_COLORS.paramPrimary}
+            />
+            <rect
+              x={
+                bayesData.pTotalPositive > 0
+                  ? (335 * (bayesData.pPriorD * bayesData.pSensitivity)) /
+                    bayesData.pTotalPositive
+                  : 0
+              }
+              y={0}
+              width={
+                bayesData.pTotalPositive > 0
+                  ? (335 *
+                      ((1 - bayesData.pPriorD) * bayesData.pFalsePositive)) /
+                    bayesData.pTotalPositive
+                  : 0
+              }
+              height={16}
+              rx={4}
+              fill={MATH_COLORS.paramSecondary}
+            />
+          </g>
+
+          {/* 贝叶斯后验算式框 */}
+          <g transform="translate(0, 92)">
+            <rect
+              x={0}
+              y={0}
+              width={335}
+              height={125}
+              rx={8}
+              fill={withAlpha(MATH_COLORS.derivative, 0.06)}
+              stroke={withAlpha(MATH_COLORS.derivative, 0.25)}
+              strokeWidth={1}
+            />
+            <text
+              x={12}
+              y={24}
+              fontSize={fontScale(12)}
+              fontWeight="bold"
+              fill={MATH_COLORS.derivative}
+            >
+              后验确诊率 P({targetSymbol}|+) = 真阳性数 / 总阳性数
+            </text>
+            <text
+              x={12}
+              y={56}
+              fontSize={fontScale(14)}
+              fontWeight="bold"
+              fill={MATH_COLORS.labelText}
+            >
+              = {truePosCount} / ({truePosCount} + {falsePosCount}) ={" "}
+              <tspan fill={MATH_COLORS.derivative} fontSize={fontScale(17)}>
+                {posteriorPercent.toFixed(2)}%
+              </tspan>
+            </text>
+            <text
+              x={12}
+              y={84}
+              fontSize={fontScale(11)}
+              fill={MATH_COLORS.textMuted}
+            >
+              分子真阳性联合概率：
+              {(bayesData.pPriorD * bayesData.pSensitivity * 100).toFixed(2)}%
+            </text>
+            <text
+              x={12}
+              y={106}
+              fontSize={fontScale(11)}
+              fill={MATH_COLORS.paramTertiary}
+              fontWeight="bold"
+            >
+              基率决定论：先验极低时，假阳性产生显著稀释
+            </text>
+          </g>
         </g>
-      </g>
-
-      {/* ================= 右侧：基率谬误认知突破卡片 (x: 490 ~ 795, y: 370 ~ 610) ================= */}
-      <g transform="translate(490, 370)">
-        <rect
-          x={0}
-          y={0}
-          width={305}
-          height={235}
-          rx={12}
-          fill={withAlpha(MATH_COLORS.function, 0.04)}
-          stroke={withAlpha(MATH_COLORS.function, 0.25)}
-          strokeWidth={1.5}
-        />
-        <text
-          x={14}
-          y={26}
-          fontSize={fontScale(13.5)}
-          fontWeight="bold"
-          fill={MATH_COLORS.function}
-        >
-          高考核心：破除“基率谬误”
-        </text>
-
-        <text
-          x={14}
-          y={54}
-          fontSize={fontScale(11)}
-          fill={MATH_COLORS.labelText}
-          fontWeight="bold"
-        >
-          【为什么检测阳性真实患病率仍可能很低？】
-        </text>
-        <text
-          x={14}
-          y={76}
-          fontSize={fontScale(10.5)}
-          fill={MATH_COLORS.labelTextLight}
-        >
-          • 基准患病率 P(D) 极低（如 2%），患病人数仅 {sickCount} 人；
-        </text>
-        <text
-          x={14}
-          y={96}
-          fontSize={fontScale(10.5)}
-          fill={MATH_COLORS.labelTextLight}
-        >
-          • 健康人群基数高达 {healthyCount} 人，哪怕仅 5% 误报率，
-        </text>
-        <text
-          x={14}
-          y={116}
-          fontSize={fontScale(10.5)}
-          fill={MATH_COLORS.paramSecondary}
-          fontWeight="bold"
-        >
-          也会产生高达 {falsePosCount} 个假阳性，反超真阳性！
-        </text>
-
-        <line
-          x1={14}
-          y1={134}
-          x2={291}
-          y2={134}
-          stroke={MATH_COLORS.axis}
-          strokeWidth={1}
-          strokeDasharray="3 3"
-        />
-
-        <text
-          x={14}
-          y={156}
-          fontSize={fontScale(11)}
-          fill={MATH_COLORS.labelText}
-          fontWeight="bold"
-        >
-          【高考通解二步法】：
-        </text>
-        <text
-          x={14}
-          y={178}
-          fontSize={fontScale(10.5)}
-          fill={MATH_COLORS.labelTextLight}
-        >
-          ① 第一步：全概算分母 P(+) = Σ P(A_i)P(+|A_i)
-        </text>
-        <text
-          x={14}
-          y={200}
-          fontSize={fontScale(10.5)}
-          fill={MATH_COLORS.labelTextLight}
-        >
-          ② 第二步：目标分支 P(D+) 作分子求商
-        </text>
       </g>
     </g>
   );

@@ -10,6 +10,7 @@ interface ProbabilityBayesSceneProps {
   vp: ViewportInfo;
   activeMode: "conditional" | "total_prob" | "bayes";
   isZoomedToA?: boolean;
+  totalScenario?: "free" | "factory3" | "balanced" | "warner";
   bayesPreset?: "screening" | "factory" | "survey" | "custom";
   fontScale?: (v: number) => number;
 }
@@ -18,6 +19,7 @@ export function ProbabilityBayesScene({
   params,
   activeMode,
   isZoomedToA = false,
+  totalScenario = "factory3",
   bayesPreset = "screening",
   fontScale = (v) => v,
 }: ProbabilityBayesSceneProps) {
@@ -31,7 +33,11 @@ export function ProbabilityBayesScene({
         />
       )}
       {activeMode === "total_prob" && (
-        <TotalProbScene params={params} fontScale={fontScale} />
+        <TotalProbScene
+          params={params}
+          totalScenario={totalScenario}
+          fontScale={fontScale}
+        />
       )}
       {activeMode === "bayes" && (
         <BayesScreeningScene

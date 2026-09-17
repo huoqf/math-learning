@@ -297,6 +297,24 @@ export function buildParamConfigs(
         max = maxAB;
       }
 
+      if (
+        activeMode === "conditional" &&
+        condScenario === "correlated" &&
+        key === "pB"
+      ) {
+        min = pA;
+        description = `包含约束：P(B) ≥ P(A) = ${pA.toFixed(2)}`;
+      }
+
+      if (
+        activeMode === "conditional" &&
+        condScenario === "exclusive" &&
+        key === "pB"
+      ) {
+        max = Math.max(0.05, Number((1 - pA).toFixed(2)));
+        description = `互斥约束：P(A)+P(B) ≤ 1，即 P(B) ≤ ${(1 - pA).toFixed(2)}`;
+      }
+
       if (activeMode === "total_prob" && key === "pA2") {
         max = maxA2;
         description = `自动剩余 P(A₃) = ${pA3.toFixed(2)}`;

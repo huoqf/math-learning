@@ -227,6 +227,15 @@ export function ProbabilityBayesAnimation() {
                       pCard: 0.8,
                       pReportYes: 0.36,
                     }));
+                  } else if (s === "free") {
+                    setParams((prev) => ({
+                      ...prev,
+                      pA1: 0.4,
+                      pA2: 0.35,
+                      pB_A1: 0.6,
+                      pB_A2: 0.3,
+                      pB_A3: 0.8,
+                    }));
                   }
                 }}
               />
@@ -340,6 +349,7 @@ export function ProbabilityBayesAnimation() {
                 vp={vp}
                 activeMode={activeMode}
                 isZoomedToA={isZoomedToA}
+                totalScenario={totalScenario}
                 bayesPreset={
                   bayesScenario === "factory" ? "factory" : "screening"
                 }

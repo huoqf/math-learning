@@ -418,107 +418,158 @@ export function ConditionalScene({
           本质：将分子 P(AB) 放大 1/P(A) 倍，重新归一化至 A
         </text>
 
-        {/* 卡片 2：新高考核心解题通法 */}
-        <g transform="translate(0, 250)">
+        {/* 卡片 2：数形关联与独立性几何测度 */}
+        <g transform="translate(0, 260)">
           <rect
             x={0}
             y={0}
             width={310}
-            height={240}
+            height={220}
             rx={12}
-            fill={withAlpha(MATH_COLORS.function, 0.04)}
-            stroke={withAlpha(MATH_COLORS.function, 0.3)}
+            fill={MATH_COLORS.white}
+            stroke={MATH_COLORS.axis}
             strokeWidth={1.5}
           />
           <text
             x={16}
-            y={26}
-            fontSize={fontScale(13)}
+            y={28}
+            fontSize={fontScale(14)}
             fontWeight="bold"
-            fill={MATH_COLORS.function}
-          >
-            3. 高考易错点与核心通法
-          </text>
-
-          <text
-            x={16}
-            y={54}
-            fontSize={fontScale(11.5)}
             fill={MATH_COLORS.labelText}
-            fontWeight="bold"
           >
-            【易错辨析】P(AB) 与 P(B|A) 的区别：
-          </text>
-          <text
-            x={16}
-            y={76}
-            fontSize={fontScale(11)}
-            fill={MATH_COLORS.labelTextLight}
-          >
-            • P(AB)：总体视角的两事件同时发生（分母为 Ω）
-          </text>
-          <text
-            x={16}
-            y={96}
-            fontSize={fontScale(11)}
-            fill={MATH_COLORS.labelTextLight}
-          >
-            • P(B|A)：已知 A 发生下的 B 发生率（分母为 A）
+            3. 先验基率与条件概率关系测度
           </text>
 
-          <line
-            x1={16}
-            y1={112}
-            x2={294}
-            y2={112}
-            stroke={MATH_COLORS.axis}
-            strokeWidth={1}
-            strokeDasharray="3 3"
-          />
-
+          {/* 对比条形 1: 先验 P(B) */}
           <text
             x={16}
-            y={134}
-            fontSize={fontScale(11.5)}
-            fill={MATH_COLORS.labelText}
-            fontWeight="bold"
-          >
-            【乘法公式双向互通】：
-          </text>
-          <text
-            x={16}
-            y={156}
-            fontSize={fontScale(11)}
+            y={58}
+            fontSize={fontScale(12)}
             fill={MATH_COLORS.labelTextLight}
           >
-            P(AB) = P(A) · P(B|A) = P(B) · P(A|B)
+            无条件先验概率 P(B) = {(conditionalData.pB * 100).toFixed(1)}%：
           </text>
+          <g transform="translate(16, 68)">
+            <rect
+              x={0}
+              y={0}
+              width={278}
+              height={18}
+              rx={4}
+              fill={withAlpha(MATH_COLORS.axis, 0.15)}
+            />
+            <rect
+              x={0}
+              y={0}
+              width={278 * conditionalData.pB}
+              height={18}
+              rx={4}
+              fill={MATH_COLORS.paramSecondary}
+            />
+            <text
+              x={282}
+              y={14}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+            >
+              {conditionalData.pB.toFixed(2)}
+            </text>
+          </g>
+
+          {/* 对比条形 2: 条件 P(B|A) */}
           <text
             x={16}
-            y={178}
-            fontSize={fontScale(11)}
+            y={112}
+            fontSize={fontScale(12)}
             fill={MATH_COLORS.labelTextLight}
           >
-            若 P(B|A) = P(B)，则 A 与 B 独立，P(AB) = P(A)P(B)
+            已知 A 发生后条件概率 P(B|A) ={" "}
+            {conditionalData.isDegenerate
+              ? "无意义"
+              : `${(conditionalData.pB_given_A * 100).toFixed(1)}%`}
+            ：
           </text>
+          <g transform="translate(16, 122)">
+            <rect
+              x={0}
+              y={0}
+              width={278}
+              height={18}
+              rx={4}
+              fill={withAlpha(MATH_COLORS.axis, 0.15)}
+            />
+            <rect
+              x={0}
+              y={0}
+              width={
+                conditionalData.pA > 0
+                  ? Math.min(278, 278 * conditionalData.pB_given_A)
+                  : 0
+              }
+              height={18}
+              rx={4}
+              fill={MATH_COLORS.function}
+            />
+            <text
+              x={282}
+              y={14}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              fill={MATH_COLORS.function}
+            >
+              {conditionalData.isDegenerate
+                ? "无意义"
+                : conditionalData.pB_given_A.toFixed(2)}
+            </text>
+          </g>
 
-          <rect
-            x={14}
-            y={194}
-            width={282}
-            height={34}
-            rx={6}
-            fill={withAlpha(MATH_COLORS.paramTertiary, 0.1)}
-          />
-          <text
-            x={22}
-            y={215}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramTertiary}
-          >
-            口诀：已知求件缩样本，分子交集分母件！
-          </text>
+          {/* 测度结论标签 */}
+          <g transform="translate(16, 160)">
+            <rect
+              x={0}
+              y={0}
+              width={278}
+              height={44}
+              rx={8}
+              fill={
+                isIndependent
+                  ? withAlpha(MATH_COLORS.setIntersection, 0.1)
+                  : isMutuallyExclusive
+                    ? withAlpha(MATH_COLORS.degeneracy, 0.1)
+                    : withAlpha(MATH_COLORS.function, 0.08)
+              }
+              stroke={
+                isIndependent
+                  ? MATH_COLORS.setIntersection
+                  : isMutuallyExclusive
+                    ? MATH_COLORS.degeneracy
+                    : withAlpha(MATH_COLORS.function, 0.3)
+              }
+              strokeWidth={1}
+            />
+            <text
+              x={14}
+              y={27}
+              fontSize={fontScale(12)}
+              fontWeight="bold"
+              fill={
+                isIndependent
+                  ? MATH_COLORS.setIntersection
+                  : isMutuallyExclusive
+                    ? MATH_COLORS.degeneracy
+                    : MATH_COLORS.function
+              }
+            >
+              {isIndependent
+                ? "P(B|A) = P(B) ⟹ 事件 A 与 B 相互独立"
+                : isMutuallyExclusive
+                  ? "P(B|A) = 0 ⟹ 事件 A 与 B 互斥 (AB = ∅)"
+                  : conditionalData.pB_given_A > conditionalData.pB
+                    ? "P(B|A) > P(B) ⟹ 条件 A 发生正向促进 B"
+                    : "P(B|A) < P(B) ⟹ 条件 A 发生负向抑制 B"}
+            </text>
+          </g>
         </g>
       </g>
     </g>

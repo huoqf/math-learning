@@ -20,13 +20,6 @@ export const defaultParams = {
   pPriorD: 0.02,
   pSensitivity: 0.95,
   pFalsePositive: 0.05,
-
-  // 模式 4: 马尔可夫链递推
-  p1: 1.0,
-  p11: 0.0,
-  p21: 0.5,
-  maxN: 10,
-  currStep: 1,
 } as const;
 
 export const paramMeta: Record<string, ParamMeta> = {
@@ -191,58 +184,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 0.2,
     step: 0.005,
     defaultValue: 0.05,
-    importance: "advanced",
-  },
-
-  // ---------------- 马尔可夫链状态转移 ----------------
-  p1: {
-    key: "p1",
-    label: "初始概率",
-    labelFormula: `\\text{初态 } \\color{${MATH_COLORS.paramPrimary}}{p_1}`,
-    min: 0.0,
-    max: 1.0,
-    step: 0.05,
-    defaultValue: 1.0,
-    importance: "core",
-  },
-  p11: {
-    key: "p11",
-    label: "自保概率",
-    labelFormula: `\\text{自转 } \\color{${MATH_COLORS.paramPrimary}}{p_{11}}`,
-    min: 0.0,
-    max: 1.0,
-    step: 0.05,
-    defaultValue: 0.0,
-    importance: "core",
-  },
-  p21: {
-    key: "p21",
-    label: "跨转概率",
-    labelFormula: `\\text{跨转 } \\color{${MATH_COLORS.paramSecondary}}{p_{21}}`,
-    min: 0.0,
-    max: 1.0,
-    step: 0.05,
-    defaultValue: 0.5,
-    importance: "core",
-  },
-  currStep: {
-    key: "currStep",
-    label: "观察步数",
-    labelFormula: `\\text{高亮步数 } \\color{${MATH_COLORS.function}}{n}`,
-    min: 1,
-    max: 10,
-    step: 1,
-    defaultValue: 1,
-    importance: "advanced",
-  },
-  maxN: {
-    key: "maxN",
-    label: "总步数",
-    labelFormula: `\\text{总步数 } N`,
-    min: 3,
-    max: 15,
-    step: 1,
-    defaultValue: 10,
     importance: "advanced",
   },
 };
