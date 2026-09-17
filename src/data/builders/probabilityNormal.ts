@@ -4,6 +4,7 @@ import {
   estimateHistogramStats,
   normalPdf,
   calcSymmetricNormalIntervals,
+  calcIntervalProbability,
 } from "@/math/probabilityNormal";
 import { MATH_COLORS } from "@/theme";
 
@@ -18,6 +19,8 @@ export function buildProbabilityNormalPanel(
   const skewness = params.skewness ?? 0;
   const percentileP = params.percentileP ?? 50;
   const x0 = params.x0 ?? -1;
+  const x1 = params.x1 ?? -1;
+  const x2 = params.x2 ?? 1;
   const studyMode = (config?.studyMode as string) ?? "histogram";
 
   // 直方图数据与统计计算
@@ -127,8 +130,44 @@ export function buildProbabilityNormalPanel(
     const maxHistDensity = Math.max(...bins.map((b) => b.density));
     const densityDiff = Math.abs(maxHistDensity - peakHeight);
 
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+    const normalIntervalProb = calcIntervalProbability(mu, sigma, minX, maxX);
+
+    let histIntervalFreq = 0;
+    for (const bin of bins) {
+      const overlapLeft = Math.max(bin.xStart, minX);
+      const overlapRight = Math.min(bin.xEnd, maxX);
+      if (overlapRight > overlapLeft) {
+        histIntervalFreq += (overlapRight - overlapLeft) * bin.density;
+      }
+    }
+    const intervalProbDiff = Math.abs(normalIntervalProb - histIntervalFreq);
+
     return {
       quantities: [
+        {
+          label: `目标探究区间 $[x_1, x_2]$`,
+          value: `[${minX.toFixed(2)}, ${maxX.toFixed(2)}]`,
+          color: MATH_COLORS.paramTertiary,
+        },
+        {
+          label: `理论正态概率 $P(${minX.toFixed(1)} \\le X \\le ${maxX.toFixed(1)})$`,
+          value: `${(normalIntervalProb * 100).toFixed(2)}%`,
+          color: MATH_COLORS.paramTertiary,
+          highlight: "positive",
+        },
+        {
+          label: `直方图估算频率 $\\hat{f}$`,
+          value: `${(histIntervalFreq * 100).toFixed(2)}%`,
+          color: MATH_COLORS.barBorder,
+        },
+        {
+          label: "区间拟合逼近差值 $|P - \\hat{f}|$",
+          value: `${(intervalProbDiff * 100).toFixed(2)}%`,
+          color: MATH_COLORS.paramSecondary,
+          highlight: intervalProbDiff < 0.03 ? "positive" : undefined,
+        },
         {
           label: "当前组距 Δx",
           value: `${binWidth.toFixed(3)}`,
@@ -145,7 +184,7 @@ export function buildProbabilityNormalPanel(
           color: MATH_COLORS.barBorder,
         },
         {
-          label: "峰度接近差值",
+          label: "峰度接近差值 $|\\max(h) - f(\\mu)|$",
           value: `${densityDiff.toFixed(4)}`,
           color: MATH_COLORS.paramSecondary,
           highlight: densityDiff < 0.05 ? "positive" : undefined,
@@ -154,6 +193,26 @@ export function buildProbabilityNormalPanel(
           label: "直方图实测总面积",
           value: `${stats.totalArea.toFixed(4)}`,
           color: MATH_COLORS.paramPrimary,
+        },
+      ],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "第一步：累加直方图小矩形频率",
+          latex: `\\hat{f}(${minX.toFixed(1)} \\le X \\le ${maxX.toFixed(1)}) = \\sum_{i \\in [${minX.toFixed(1)}, ${maxX.toFixed(1)}]} \\Delta x_i \\cdot h_i = ${(histIntervalFreq * 100).toFixed(2)}\\%`,
+          detail: `区间 $[${minX.toFixed(1)}, ${maxX.toFixed(1)}]$ 内部包含的小矩形面积总和，代表样本落入该区间的经验频率。`,
+        },
+        {
+          step: 2,
+          title: "第二步：计算总体正态连续分布概率",
+          latex: `P(${minX.toFixed(1)} \\le X \\le ${maxX.toFixed(1)}) = \\Phi\\left(\\frac{${maxX.toFixed(1)} - \\color{${MATH_COLORS.paramPrimary}}{${mu.toFixed(1)}}}{\\color{${MATH_COLORS.paramSecondary}}{${sigma.toFixed(1)}}}\\right) - \\Phi\\left(\\frac{${minX.toFixed(1)} - \\color{${MATH_COLORS.paramPrimary}}{${mu.toFixed(1)}}}{\\color{${MATH_COLORS.paramSecondary}}{${sigma.toFixed(1)}}}\\right) = ${(normalIntervalProb * 100).toFixed(2)}\\%`,
+          detail: `总体正态曲线在区间 $[${minX.toFixed(1)}, ${maxX.toFixed(1)}]$ 下方围成的封闭面积，由标准正态累积分布函数 $\\Phi(z)$ 差值求得。`,
+        },
+        {
+          step: 3,
+          title: "第三步：检验逼近收敛误差",
+          latex: `|P - \\hat{f}| = |${(normalIntervalProb * 100).toFixed(2)}\\% - ${(histIntervalFreq * 100).toFixed(2)}\\%| = ${(intervalProbDiff * 100).toFixed(2)}\\%`,
+          detail: `当组距 $\\Delta x \\to 0$ 且样本容量 $N \\to \\infty$ 时，各组矩形上底边折线无限逼近正态曲线，经验频率收敛于理论概率。`,
         },
       ],
       theorems: [

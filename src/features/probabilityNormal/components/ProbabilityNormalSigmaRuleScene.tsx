@@ -117,6 +117,91 @@ export function ProbabilityNormalSigmaRuleScene({
               />
             );
           })()}
+
+          {/* 3-σ 阶梯标尺与核心高考百分比标注 (利用数学自然高度差自动错开) */}
+          {(() => {
+            // 1-σ 标尺 (位于 f(μ±σ) 高度)
+            const y1 = normalPdf(mu - safeSigma, mu, safeSigma);
+            const pt1L = mathToDesign(mu - safeSigma, y1, scale);
+            const pt1R = mathToDesign(mu + safeSigma, y1, scale);
+
+            // 2-σ 标尺 (位于 f(μ±2σ) 高度)
+            const y2 = normalPdf(mu - 2 * safeSigma, mu, safeSigma);
+            const pt2L = mathToDesign(mu - 2 * safeSigma, y2, scale);
+            const pt2R = mathToDesign(mu + 2 * safeSigma, y2, scale);
+
+            // 3-σ 标尺 (位于基底上方微量高度)
+            const y3 = 0.035;
+            const pt3L = mathToDesign(mu - 3 * safeSigma, y3, scale);
+            const pt3R = mathToDesign(mu + 3 * safeSigma, y3, scale);
+
+            return (
+              <g>
+                {/* 1-σ 标尺线与标注 */}
+                <line
+                  x1={pt1L.x}
+                  y1={pt1L.y}
+                  x2={pt1R.x}
+                  y2={pt1R.y}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 2"
+                />
+                <text
+                  x={(pt1L.x + pt1R.x) / 2}
+                  y={pt1L.y - 6}
+                  fontSize={fontScale(11)}
+                  fill={MATH_COLORS.paramPrimary}
+                  textAnchor="middle"
+                  className="font-bold select-none drop-shadow-sm"
+                >
+                  μ±1σ : 68.27%
+                </text>
+
+                {/* 2-σ 标尺线与标注 */}
+                <line
+                  x1={pt2L.x}
+                  y1={pt2L.y}
+                  x2={pt2R.x}
+                  y2={pt2R.y}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 2"
+                />
+                <text
+                  x={(pt2L.x + pt2R.x) / 2}
+                  y={pt2L.y - 6}
+                  fontSize={fontScale(11)}
+                  fill={MATH_COLORS.paramSecondary}
+                  textAnchor="middle"
+                  className="font-bold select-none drop-shadow-sm"
+                >
+                  μ±2σ : 95.45%
+                </text>
+
+                {/* 3-σ 标尺线与标注 */}
+                <line
+                  x1={pt3L.x}
+                  y1={pt3L.y}
+                  x2={pt3R.x}
+                  y2={pt3R.y}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 2"
+                />
+                <text
+                  x={(pt3L.x + pt3R.x) / 2}
+                  y={pt3L.y - 6}
+                  fontSize={fontScale(11)}
+                  fill={MATH_COLORS.paramTertiary}
+                  textAnchor="middle"
+                  className="font-bold select-none drop-shadow-sm"
+                >
+                  μ±3σ : 99.73%
+                </text>
+              </g>
+            );
+          })()}
         </g>
       )}
 

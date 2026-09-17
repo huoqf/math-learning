@@ -108,11 +108,11 @@ export function ProbabilityNormalAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 直角坐标系比例尺：X 轴量纲 [-6, 6]，Y 轴为概率密度/组距范围 [-0.08, 0.85]
+  // 直角坐标系比例尺：X 轴量纲 [-6, 6]，Y 轴为概率密度/组距范围 [-0.08, 1.08] (确保 σ=0.4 时 f_max=0.997 完整可见)
   const scale = useSceneScale({
     vp,
     xRange: [-6, 6],
-    yRange: [-0.08, 0.85],
+    yRange: [-0.08, 1.08],
     keepAspectRatio: false,
   });
 
@@ -238,6 +238,7 @@ export function ProbabilityNormalAnimation() {
     const x0Val = params.x0 ?? -1;
     const x1Val = params.x1 ?? -1;
     const x2Val = params.x2 ?? 1;
+    const pVal = params.percentileP ?? 50;
 
     if (studyMode === "histogram") {
       const items: SceneLegendItem[] = [
@@ -265,6 +266,13 @@ export function ProbabilityNormalAnimation() {
             style: "dash",
           },
         );
+        if (pVal !== 50) {
+          items.push({
+            formula: `P_{${pVal}} \\text{ 分位数}`,
+            color: MATH_COLORS.paramTertiary,
+            style: "dash",
+          });
+        }
       }
       if (showFrequencyLine) {
         items.push({
@@ -284,6 +292,11 @@ export function ProbabilityNormalAnimation() {
           formula: `f(x) \\sim N(${muVal.toFixed(1)}, ${sigVal.toFixed(1)}^2)`,
           color: MATH_COLORS.paramPrimary,
           style: "solid",
+        },
+        {
+          label: "频率折线图",
+          color: MATH_COLORS.frequencyLine,
+          style: "dash",
         },
         {
           formula: "\\text{样本频率直方图}",

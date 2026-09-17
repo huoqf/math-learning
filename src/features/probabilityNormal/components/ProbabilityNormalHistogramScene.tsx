@@ -111,33 +111,55 @@ export function ProbabilityNormalHistogramScene({
         const rectWidth = Math.max(1, rightBottom.x - leftTop.x);
         const rectHeight = Math.max(1, rightBottom.y - leftTop.y);
 
-        // 如果该矩形位于中位数或指定百分位数左侧，使用更具视觉提示的浅色带
-        const isLeftOfPercentile = bin.xEnd <= stats.percentilePValue;
+        // 判断柱子与当前百分位数（含中位数）的相对位置
+        const isFullyLeft = bin.xEnd <= stats.percentilePValue;
+        const isSpanned =
+          bin.xStart < stats.percentilePValue &&
+          bin.xEnd > stats.percentilePValue;
+
+        const pCutX = isSpanned
+          ? mathToDesign(stats.percentilePValue, 0, scale).x
+          : rightBottom.x;
+        const spannedLeftWidth = Math.max(0, pCutX - leftTop.x);
 
         return (
-          <g key={bin.index}>
+          <g
+            key={bin.index}
+            className="transition-colors duration-150 hover:opacity-80"
+            style={{ cursor: "pointer" }}
+            onMouseEnter={(e) => onBinMouseEnter?.(bin, e)}
+            onMouseMove={onBinMouseMove}
+            onMouseLeave={onBinMouseLeave}
+          >
+            {/* 柱子底面完整矩形 */}
             <rect
               x={leftTop.x}
               y={leftTop.y}
               width={rectWidth}
               height={rectHeight}
               fill={
-                isLeftOfPercentile
+                isFullyLeft
                   ? withAlpha(MATH_COLORS.paramTertiary, 0.4)
                   : withAlpha(MATH_COLORS.barFill, 0.45)
               }
               stroke={
-                isLeftOfPercentile
-                  ? MATH_COLORS.paramTertiary
-                  : MATH_COLORS.barBorder
+                isFullyLeft ? MATH_COLORS.paramTertiary : MATH_COLORS.barBorder
               }
               strokeWidth={1.5}
-              className="transition-colors duration-150 hover:opacity-80"
-              style={{ cursor: "pointer" }}
-              onMouseEnter={(e) => onBinMouseEnter?.(bin, e)}
-              onMouseMove={onBinMouseMove}
-              onMouseLeave={onBinMouseLeave}
             />
+
+            {/* 跨越分位数时，左侧细分子矩形高亮（严格匹配累积频率 p% 几何面积） */}
+            {isSpanned && spannedLeftWidth > 0 && (
+              <rect
+                x={leftTop.x}
+                y={leftTop.y}
+                width={spannedLeftWidth}
+                height={rectHeight}
+                fill={withAlpha(MATH_COLORS.paramTertiary, 0.4)}
+                stroke={MATH_COLORS.paramTertiary}
+                strokeWidth={1.5}
+              />
+            )}
           </g>
         );
       })}

@@ -68,6 +68,33 @@ export function ProbabilityNormalNormalFitScene({
         );
       })}
 
+      {/* 频率折线图（教材核心桥梁：顶边中点折线随组距缩小趋于光滑正态密度曲线） */}
+      {bins.length > 0 &&
+        (() => {
+          const points: string[] = [];
+          const startPt = mathToDesign(bins[0].xStart, 0, scale);
+          points.push(`M ${startPt.x.toFixed(1)} ${startPt.y.toFixed(1)}`);
+          for (const bin of bins) {
+            const pt = mathToDesign(bin.mid, bin.density, scale);
+            points.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+          }
+          const endPt = mathToDesign(bins[bins.length - 1].xEnd, 0, scale);
+          points.push(`L ${endPt.x.toFixed(1)} ${endPt.y.toFixed(1)}`);
+
+          return (
+            <path
+              d={points.join(" ")}
+              fill="none"
+              stroke={MATH_COLORS.frequencyLine}
+              strokeWidth={1.8}
+              strokeDasharray="4 2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.9}
+            />
+          );
+        })()}
+
       {/* 正态拟合曲线 */}
       <path
         d={curvePathD}

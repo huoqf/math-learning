@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { CoordinateGrid } from "@/components/Math";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
+import { MATH_COLORS } from "@/theme";
 import {
   generateHistogramBins,
   estimateHistogramStats,
@@ -230,6 +231,28 @@ export function ProbabilityNormalScene({
         xStep={1}
         yStep={0.1}
       />
+
+      {/* 坐标轴量纲学术标注（新高考规范：明确区分『频率/组距』与『概率密度』） */}
+      {(() => {
+        const yTopPt = mathToDesign(0, scale.yMax, scale);
+        const yLabel =
+          studyMode === "histogram" || studyMode === "normalFit"
+            ? "频率 / 组距"
+            : "概率密度 f(x)";
+
+        return (
+          <text
+            x={yTopPt.x + fontScale(8)}
+            y={yTopPt.y + fontScale(12)}
+            fontSize={fontScale(11)}
+            fill={MATH_COLORS.labelText}
+            fontWeight="bold"
+            className="select-none"
+          >
+            {yLabel}
+          </text>
+        );
+      })()}
 
       {/* ─── 模式 1：直方图与数字特征 ────────────────────────────────────────── */}
       {studyMode === "histogram" && (
