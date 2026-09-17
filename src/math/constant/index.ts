@@ -28,8 +28,16 @@ export {
   evalFTransC,
   evalFTransD,
   evalTransDerivative,
-  solveSepEquation,
-  solveDirectEquation,
   solveConstantSingleSepTrans,
   solveConstantSingleDirectTrans,
+  // 四模型唯一事实源（画布 / 看板 / 求解器共用）
+  evalSepTransFn,
+  evalSepTransDeriv,
+  evalDirectTransFn,
+  evalDirectTransDeriv,
+  sepTransCritical,
+  directTransCritical,
+  TRANS_MODEL_SPEC,
 } from "./transcendental";
+
+export type { TransModelSpec, TransCriticalPoint } from "./transcendental";

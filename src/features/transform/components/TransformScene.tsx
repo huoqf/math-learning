@@ -122,6 +122,17 @@ export function TransformScene({
         color: MATH_COLORS.paramPrimary,
         preferredPlacement: "top-right",
       });
+    } else if (foldMode === "input") {
+      // 自变量翻折的对称轴 x = h 必须显式标注（对数函数已在上方标注同一条 x = h 渐近线，避免重复）
+      const foldAxisPt = mathToDesign(h, 3.8, scale);
+      items.push({
+        key: "axis_fold_input",
+        text: `x = ${h.toFixed(1)}`,
+        x: foldAxisPt.x + 8,
+        y: foldAxisPt.y,
+        color: MATH_COLORS.setB,
+        preferredPlacement: "top-right",
+      });
     }
 
     return items;
@@ -171,12 +182,12 @@ export function TransformScene({
         />
       )}
 
-      {/* 偶函数翻折对称轴 x = 0 (y 轴高亮辅助线) */}
+      {/* 自变量翻折对称轴 x = h：f(|x - h|) 以 x = h 为中轴，绝非 y 轴 */}
       {foldMode === "input" && (
         <line
-          x1={scale.originX}
+          x1={scale.originX + h * scale.scaleX}
           y1={scale.originY - 5 * scale.scaleY}
-          x2={scale.originX}
+          x2={scale.originX + h * scale.scaleX}
           y2={scale.originY + 5 * scale.scaleY}
           stroke={withAlpha(MATH_COLORS.setB, 0.5)}
           strokeWidth={1.5}

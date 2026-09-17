@@ -24,9 +24,13 @@ describe("buildFuncExpLogPanel 构建器测试", () => {
     );
     expect(dataSingleNeg.reasoningSteps).toBeDefined();
     expect(dataSingleNeg.reasoningSteps?.length).toBe(3);
-    expect(dataSingleNeg.reasoningSteps?.[0].title).toContain("符号求导");
-    expect(dataSingleNeg.reasoningSteps?.[1].title).toContain("代入探究");
-    expect(dataSingleNeg.reasoningSteps?.[2].title).toContain("几何反思");
+    expect(dataSingleNeg.reasoningSteps?.[0].title).toContain("作基准线");
+    expect(dataSingleNeg.reasoningSteps?.[1].title).toContain("取点比较");
+    expect(dataSingleNeg.reasoningSteps?.[2].title).toContain("归纳形态");
+    // 幂函数位于必修一：正文与推导链一律不得出现导数记号（f'、f''）与切线方程
+    const singleNegText = JSON.stringify(dataSingleNeg);
+    expect(singleNegText).not.toContain("f'");
+    expect(singleNegText).not.toContain("切线");
     // 验证高考易错警示 (分别单调递减，不可写成并集)
     expect(
       dataSingleNeg.warnings.some((w) => w.text.includes("分别单调递减")),

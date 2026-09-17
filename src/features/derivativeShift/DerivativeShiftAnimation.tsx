@@ -29,6 +29,7 @@ import {
 } from "@/data/registries/derivativeShift";
 import {
   getDerivativeShiftLegendItems,
+  getShiftXRange,
   type ShiftMode,
   type ShiftSubModel,
 } from "./constants";
@@ -45,9 +46,17 @@ export function DerivativeShiftAnimation() {
   });
 
   // 2. 坐标转换比例尺
+  // x 可见域按 (模式, 模型) 取常量：同一模型下拖动参数滑块时坐标轴纹丝不动，
+  // 学生看到的变化只会来自函数本身，而不会掺进「坐标轴跟着缩放」的假象。
+  // 由此产生的右根越界（ln x/x 模型低 k）由画布「空心点 + 右向箭头」越界标记与底部横坐标对照条承担。
+  const xRange = useMemo(
+    () => getShiftXRange(activeMode, subModel),
+    [activeMode, subModel],
+  );
+
   const scale = useSceneScale({
     vp,
-    xRange: [-1.5, 6.5],
+    xRange,
     yRange: [-2.5, 3.5],
   });
 
@@ -165,11 +174,11 @@ export function DerivativeShiftAnimation() {
     }
     return {
       variant: "info" as const,
-      badge: "高考真题 · 对数均值不等式链",
+      badge: "经典模型 · 对数均值不等式链",
       condition:
         "对于对数曲线 $f(x) = \\ln x$，在两正实数 $x_1 < x_2$ 间连结割线与平行切线。",
       question:
-        "探究几何均值 $G$、对数均值 $L$ 与算术均值 $A$ 的大小排序不等式链 $\\sqrt{x_1x_2} < L(x_1, x_2) < \\frac{x_1+x_2}{2}$。",
+        "探究几何均值 $G$、对数均值 $L$ 与算术均值 $A$ 的大小排序不等式链 $\\sqrt{x_1x_2} < L(x_1, x_2) < \\frac{x_1+x_2}{2}$，并说明该结论并非教材正文，解答题引用须现场用导数证明。",
     };
     // 依赖保留二级选项变量：TipCard 教学提示须随二级选项与预设切换同步特化 (项目纪律 left/tipcard-secondary-sync)
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -255,7 +255,7 @@ export function buildTranscendentalPanel(
         latex: `e^{x-1} \\ge x \\quad (x \\in \\mathbb{R})`,
         level: "core",
         prerequisites: [
-          "f(x) = e^{x-1} 为下凸函数",
+          "构造差函数 $F(x)=e^{x-1}-x$ 并求导判号，得 $F(x) \\ge 0$ 恒成立",
           "在切点 (1, 1) 处公切线为 y = x",
           "等号当且仅当 x = 1 时成立",
         ],
@@ -277,7 +277,7 @@ export function buildTranscendentalPanel(
         latex: `e^x \\ge x + 1 \\quad (x \\in \\mathbb{R})`,
         level: "core",
         prerequisites: [
-          "$f(x) = e^x$ 为下凸函数",
+          "构造差函数 $F(x)=e^x-(x+1)$ 并求导判号，得 $F(x) \\ge 0$ 恒成立",
           "在切点 (0, 1) 处切线为 y = x + 1",
           "等号当且仅当 x = 0 时成立",
         ],
@@ -312,7 +312,7 @@ export function buildTranscendentalPanel(
         latex: `\\ln x \\le x - 1 \\quad (x > 0)`,
         level: "core",
         prerequisites: [
-          "$g(x) = \\ln x$ 为上凸函数",
+          "构造差函数 $G(x)=\\ln x-(x-1)$ 并求导判号，得 $G(x) \\le 0$ 恒成立",
           "在切点 (1, 0) 处切线为 y = x - 1",
           "等号当且仅当 x = 1 时成立",
         ],
@@ -527,10 +527,10 @@ export function buildTranscendentalPanel(
           step: 3,
           title: "证明任意切线均为全局线性下界",
           detail:
-            "由极小值即最小值知 $F(x) \\ge F(x_0) = e^{x_0} - e^{x_0} = 0$。故任意点切线恒位于指数曲线下方，体现下凸函数的切线下界几何公理。",
+            "由极小值即最小值知 $F(x) \\ge F(x_0) = e^{x_0} - e^{x_0} = 0$。故任意点处的切线恒位于指数曲线下方，切线下界结论成立。",
           latex:
             "e^x \\ge e^{x_0}(x - x_0) + e^{x_0} \\quad (x = x_0 \\text{ 取等})",
-          rubric: "采分点：凸性切线结论判定（5分）",
+          rubric: "采分点：切线下界结论与取等条件（5分）",
         },
       ];
     } else {
@@ -645,10 +645,10 @@ export function buildTranscendentalPanel(
           step: 3,
           title: "证明任意切线均为全局线性上界",
           detail:
-            "由 $F(x) \\ge F(x_0) = 0$ 知对数函数任意切线均位于曲线上方，等号当且仅当 $x=x_0$ 取得，体现上凸函数的切线上界几何公理。",
+            "由 $F(x) \\ge F(x_0) = 0$ 知对数函数任意点处的切线均位于曲线上方，等号当且仅当 $x=x_0$ 取得，切线上界结论成立。",
           latex:
             "\\ln x \\le \\frac{1}{x_0}x + \\ln x_0 - 1 \\quad (x = x_0 \\text{ 取等})",
-          rubric: "采分点：凸性结论与取等条件（5分）",
+          rubric: "采分点：切线上界结论与取等条件（5分）",
         },
       ];
     } else {

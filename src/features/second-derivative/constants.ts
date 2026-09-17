@@ -31,12 +31,14 @@ export function getSecondDerivativeLegendItems(
       },
       {
         color: MATH_COLORS.paramTertiary,
-        label: "下凸凹区间 f''(x) > 0",
+        label: "切线在下方区间",
+        formula: "f''(x) > 0",
         style: "area",
       },
       {
         color: MATH_COLORS.paramSecondary,
-        label: "上凸凸区间 f''(x) < 0",
+        label: "切线在上方区间",
+        formula: "f''(x) < 0",
         style: "area",
       },
     ];

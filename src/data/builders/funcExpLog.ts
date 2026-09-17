@@ -24,6 +24,25 @@ export function buildFuncExpLogPanel(
     else if (Math.abs(alpha - -1) < 1e-4) currentEqLatex = "y = \\frac{1}{x}";
     else if (Math.abs(alpha) < 1e-4) currentEqLatex = "y = 1 \\;(x \\neq 0)";
 
+    // 必修一范围内讨论幂函数，不得引入导数工具（幂函数位于必修一，导数属选择性必修第二册）。
+    // 因此"增长快慢"一律用图象语言表达：与基准直线 y = x 的高低比较 + 图象弯曲方向。
+    const compareWithLine = !powerRes.isValidPoint
+      ? "—"
+      : Math.abs(powerRes.yVal - x0) < 1e-9
+        ? `$f(x_0) = x_0$`
+        : powerRes.yVal > x0
+          ? `$f(x_0) > x_0$`
+          : `$f(x_0) < x_0$`;
+
+    const shapeDesc =
+      alpha > 1
+        ? "向上弯曲 · 增长越来越快"
+        : alpha > 0
+          ? "向下弯曲 · 增长越来越慢"
+          : alpha < 0
+            ? "向下弯曲 · 递减越来越缓"
+            : "水平直线 (x ≠ 0)";
+
     const quantities: MathPanelData["quantities"] = [
       {
         label: powerMode === "compare" ? "当前聚焦基准" : "当前函数模型",
@@ -49,14 +68,18 @@ export function buildFuncExpLogPanel(
         color: MATH_COLORS.function,
       },
       {
-        label: "切线斜率 k",
-        symbol: "f'(x_0)",
-        value: powerRes.tangentSlopeStr,
-        highlight: powerRes.isTangentDifferentiable ? "positive" : "extreme",
+        label: "与基准线 y = x 的高低",
+        value: compareWithLine,
+        highlight:
+          powerRes.isValidPoint && Math.abs(powerRes.yVal - x0) > 1e-9
+            ? powerRes.yVal > x0
+              ? "positive"
+              : "extreme"
+            : undefined,
       },
       {
-        label: "切线方程",
-        value: powerRes.tangentEquationLatex,
+        label: "图象弯曲方向",
+        value: shapeDesc,
       },
       {
         label: "定义域",
@@ -111,14 +134,14 @@ export function buildFuncExpLogPanel(
           ]
         : [
             {
-              name: "幂函数导数与第一象限图象形态",
+              name: "幂函数第一象限图象形态与增长快慢",
               latex:
-                "f'(x) = \\alpha x^{\\alpha - 1} \\implies \\begin{cases} \\alpha > 1: & f''(x) > 0 \\\\ 0 < \\alpha < 1: & f''(x) < 0 \\\\ \\alpha < 0: & f'(x) < 0 \\end{cases}",
+                "y = x^{\\alpha} \\; (x > 0) \\implies \\begin{cases} \\alpha > 1: & \\text{图象向上弯曲，越增越快} \\\\ 0 < \\alpha < 1: & \\text{图象向下弯曲，越增越慢} \\\\ \\alpha < 0: & \\text{图象递减且趋缓} \\end{cases}",
               level: "core",
               prerequisites: [
-                "$\\alpha > 1$ 时，$f''(x) > 0$，图象凹向上（增长加速）",
-                "$0 < \\alpha < 1$ 时，$f''(x) < 0$，图象凸向上（增长变缓）",
-                "$\\alpha < 0$ 时，$f'(x) < 0$，在 $(0, +\\infty)$ 上严格单调递减",
+                "$\\alpha > 1$ 时图象向上弯曲、增长越来越快：$x > 1$ 时图象在基准线 $y = x$ 上方",
+                "$0 < \\alpha < 1$ 时图象向下弯曲、增长越来越慢：$x > 1$ 时图象在基准线 $y = x$ 下方",
+                "$\\alpha < 0$ 时在 $(0, +\\infty)$ 上严格单调递减，且与两坐标轴无限接近",
               ],
             },
             {
@@ -131,13 +154,13 @@ export function buildFuncExpLogPanel(
               ],
             },
             {
-              name: "渐近线与端点导数极限",
+              name: "原点附近的图象趋势与渐近特征",
               latex:
-                "\\lim_{x \\to 0^+} x^{\\alpha} = \\begin{cases} 0 & (\\alpha > 0) \\\\ +\\infty & (\\alpha < 0) \\end{cases}",
+                "\\text{当 } x \\text{ 从正方向趋近 } 0 \\text{ 时}: \\; x^{\\alpha} \\begin{cases} \\text{趋于 } 0 & (\\alpha > 0) \\\\ \\text{无限增大} & (\\alpha < 0) \\end{cases}",
               level: "important",
               prerequisites: [
-                "$\\alpha < 0$ 时，$x$ 轴 ($y=0$) 与 $y$ 轴 ($x=0$) 均为渐近线",
-                "$0 < \\alpha < 1$ 时，$x \\to 0^+$ 处切线竖直不可导",
+                "$\\alpha < 0$ 时，$x$ 轴 ($y=0$) 与 $y$ 轴 ($x=0$) 均为图象的渐近线",
+                "$0 < \\alpha < 1$ 时，图象在原点附近陡峭上升、紧贴 $y$ 轴",
               ],
             },
           ];
@@ -160,15 +183,15 @@ export function buildFuncExpLogPanel(
           ]
         : [
             {
-              text: "原点切线与端点导数极值：$y = \\sqrt{x}$ 在 $x \\to 0^+$ 时切线斜率趋向 $+\\infty$（竖直切线不可导）；$y = x^{\\alpha} \\; (\\alpha > 1)$ 在 $x = 0$ 处切线水平 ($f'(0) = 0$)。",
+              text: "与基准线 $y = x$ 的高低比较：在 $(1, +\\infty)$ 上，$\\alpha > 1$ 时 $x^{\\alpha} > x$，$0 < \\alpha < 1$ 时 $x^{\\alpha} < x$；在 $(0, 1)$ 上高低次序完全反转。",
               importance: "gaokao",
             },
             {
-              text: "图象增长快慢：$\\alpha > 1$ 时图象上弯、增长速度越来越快；$0 < \\alpha < 1$ 时图象下弯、增长速度越来越慢，可结合切线直观理解。",
+              text: "图象形态判读：$\\alpha > 1$ 时图象向上弯曲、增长速度越来越快；$0 < \\alpha < 1$ 时图象向下弯曲、增长速度越来越慢，可用基准线 $y = x$ 作直观对照。",
               importance: "gaokao",
             },
             {
-              text: "负指数与双渐近线：$\\alpha < 0$ 时定义域不含原点，以两坐标轴为渐近线，在 $(0, +\\infty)$ 上严格单调递减。",
+              text: "负指数与双渐近线：$\\alpha < 0$ 时定义域不含原点，图象与两坐标轴无限接近，在 $(0, +\\infty)$ 上严格单调递减。",
               importance: "gaokao",
             },
           ];
@@ -207,45 +230,46 @@ export function buildFuncExpLogPanel(
         : [
             {
               step: 1,
-              title: "符号求导 · 幂函数导数公式",
+              title: "作基准线 · 锁定比较对象",
               detail:
-                "依据高中基本初等函数导数运算法则，对幂函数 $f(x) = x^{\\alpha}$ 求导，确立切线斜率函数 $f'(x)$。",
-              latex: `f'(x) = \\alpha x^{\\alpha - 1} \\quad (${alpha <= 0 ? "x > 0" : "x \\ge 0"})`,
-              rubric: "写出正确的导函数符号表达式与定义域范围",
+                "在同一坐标系中作出幂函数 $f(x) = x^{\\alpha}$ 与基准直线 $y = x$ 的图象，把「研究幂函数」转化为「比较两条图象的高低与增长快慢」。",
+              latex: `f(x) = x^{${alpha.toFixed(1).replace(/\.0$/, "")}} \\quad \\text{与} \\quad y = x`,
+              rubric:
+                "写出幂函数解析式，并在同一坐标系中作出它与基准线 $y=x$ 的图象",
             },
             {
               step: 2,
-              title: "代入探究 · 计算切点斜率与切线",
-              detail:
-                powerRes.isValidPoint && powerRes.isTangentDifferentiable
-                  ? `将探究点 $x_0 = ${x0.toFixed(2)}$ 代入导函数，计算切点切线斜率 $k = f'(x_0)$，并利用点斜式展开为切线方程。`
-                  : `当前自变量 $x_0 = ${x0.toFixed(2)}$ 在定义域边界或无定义，导数切线需讨论极限。`,
-              latex:
-                powerRes.isValidPoint && powerRes.isTangentDifferentiable
-                  ? `k = f'(${x0.toFixed(2)}) = ${alpha.toFixed(1)} \\times (${x0.toFixed(2)})^{${(alpha - 1).toFixed(1)}} = ${powerRes.tangentSlopeStr} \\implies ${powerRes.tangentEquationLatex}`
-                  : `x \\to 0^+ \\implies f'(x) \\to ${alpha > 0 && alpha < 1 ? "+\\infty \\; (\\text{切线竖直 } x=0)" : "0 \\; (\\text{切线水平 } y=0)"}`,
-              rubric: "代入坐标计算斜率数值并列出点斜式方程",
+              title: "取点比较 · 判定高低位置",
+              detail: powerRes.isValidPoint
+                ? `取探究点 $x_0 = ${x0.toFixed(2)}$，比较 $f(x_0)$ 与 $x_0$ 的大小，判定图象在基准线 $y = x$ 的上方还是下方。`
+                : `当前自变量 $x_0 = ${x0.toFixed(2)}$ 不在定义域内，请把探究点调回定义域内再作比较。`,
+              latex: powerRes.isValidPoint
+                ? `${compareWithLine.replace(/\$/g, "")}`
+                : `x_0 = ${x0.toFixed(2)} \\notin D`,
+              rubric:
+                "代入 x₀ 比较函数值与 x₀ 的大小，并说明图象相对基准线的高低",
             },
             {
               step: 3,
-              title: "几何反思 · 增长速率与图象形态",
+              title: "归纳形态 · 增长快慢与渐近走势",
               detail:
                 alpha > 1
-                  ? "当 $\\alpha > 1$ 时，导函数 $f'(x)$ 单调递增，切线斜率随 $x$ 增大而变大，图象呈凹弧加速上升；原点处切线水平 $f'(0) = 0$。"
+                  ? "当 $\\alpha > 1$ 时，图象向上弯曲、函数值增长越来越快：在 $(1, +\\infty)$ 上高于 $y = x$，在 $(0, 1)$ 上低于 $y = x$。"
                   : alpha > 0 && alpha < 1
-                    ? "当 $0 < \\alpha < 1$ 时，导函数 $f'(x)$ 单调递减，切线斜率随 $x$ 增大而变小，图象呈凸弧减速上升；$x \\to 0^+$ 时斜率趋向无穷（不可导）。"
+                    ? "当 $0 < \\alpha < 1$ 时，图象向下弯曲、函数值增长越来越慢：在 $(1, +\\infty)$ 上低于 $y = x$，在原点附近陡峭上升并紧贴 $y$ 轴。"
                     : alpha < 0
-                      ? "当 $\\alpha < 0$ 时，导函数 $f'(x) < 0$ 恒成立，函数在 $(0, +\\infty)$ 上严格减函数，以两坐标轴为渐近线。"
-                      : "$\\alpha = 0$ 退化为去心常数函数 $y = 1$ ($x \\neq 0$)。",
+                      ? "当 $\\alpha < 0$ 时，函数在 $(0, +\\infty)$ 上严格单调递减，图象向下弯曲、递减越来越缓，并与两坐标轴无限接近。"
+                      : "$\\alpha = 0$ 时函数退化为去心常数函数 $y = 1$（$x \\neq 0$）。",
               latex:
                 alpha > 1
-                  ? `f'(x) \\uparrow \\implies f(x) \\text{ 凹向上加速增长} \\quad (f'(0) = 0)`
+                  ? `x > 1 \\implies x^{\\alpha} > x \\quad ; \\quad 0 < x < 1 \\implies x^{\\alpha} < x`
                   : alpha > 0 && alpha < 1
-                    ? `f'(x) \\downarrow \\implies f(x) \\text{ 凸向上平缓增长} \\quad (\\lim_{x \\to 0^+} f'(x) = +\\infty)`
+                    ? `x > 1 \\implies x^{\\alpha} < x \\quad ; \\quad 0 < x < 1 \\implies x^{\\alpha} > x`
                     : alpha < 0
-                      ? `\\alpha < 0 \\implies f'(x) < 0 \\text{ 且 } \\lim_{x \\to +\\infty} f(x) = 0`
+                      ? `\\alpha < 0 \\implies f(x) \\text{ 在 } (0, +\\infty) \\text{ 上递减、与两坐标轴无限接近}`
                       : `y = 1 \\quad (x \\neq 0)`,
-              rubric: "结合导函数单调性反思几何曲线的弯曲方向与渐近走势",
+              rubric:
+                "归纳幂指数取不同范围时图象的弯曲方向、相对基准线的高低与渐近走势",
             },
           ];
 
@@ -272,7 +296,7 @@ export function buildFuncExpLogPanel(
       mnemonic:
         powerMode === "compare"
           ? "5大基准必过(1,1)，α大于0增且过原点；作线x=2高者指数大。"
-          : "第一象限必过(1,1)，α大于1凹加速，0到1凸减速，负数双渐近。",
+          : "第一象限必过(1,1)，α大于1向上弯增速快，0到1向下弯增速慢，负数双渐近。",
     };
   }
 
@@ -388,9 +412,9 @@ export function buildFuncExpLogPanel(
           label: "单调与图象形态",
           value:
             a > 1
-              ? "严格单调递增 · 上凸减速增长"
+              ? "严格单调递增 · 图象向下弯曲（越增越慢）"
               : a > 0 && a < 1
-                ? "严格单调递减 · 上凸加速衰减"
+                ? "严格单调递减 · 图象向上弯曲（越减越慢）"
                 : "退化/无定义",
           highlight: a > 1 ? "positive" : "extreme",
         },
@@ -491,9 +515,9 @@ export function buildFuncExpLogPanel(
           label: "单调与图象形态",
           value:
             a > 1
-              ? "严格单调递增 · 下凹加速增长 (爆炸式)"
+              ? "严格单调递增 · 图象向上弯曲（越增越快）"
               : a > 0 && a < 1
-                ? "严格单调递减 · 下凹衰减 (趋于0)"
+                ? "严格单调递减 · 图象向上弯曲（越减越慢）"
                 : "退化/无定义",
           highlight: a > 1 ? "positive" : "extreme",
         },
@@ -581,13 +605,13 @@ export function buildFuncExpLogPanel(
             ],
           },
           {
-            name: "指数函数单调与渐近极限性质",
+            name: "指数函数的单调性与图象渐近特征",
             latex:
-              "\\lim_{x \\to -\\infty} a^x = 0 \\;(a > 1), \\quad \\lim_{x \\to +\\infty} a^x = 0 \\;(0 < a < 1)",
+              "a > 1: \\; \\text{当 } x \\text{ 无限减小时 } a^x \\text{ 无限接近 } 0 ; \\quad 0 < a < 1: \\; \\text{当 } x \\text{ 无限增大时 } a^x \\text{ 无限接近 } 0",
             level: "important",
             prerequisites: [
-              "$x$ 轴 ($y = 0$) 为水平渐近线，与对数垂直渐近线 $x = 0$ 轴对称",
-              "$a > 1$ 时为“爆炸式”加速增长 ($f''(x) > 0$ 下凹)",
+              "$x$ 轴 ($y = 0$) 为水平渐近线，与对数函数竖直渐近线 $x = 0$ 关于直线 $y = x$ 对称",
+              "$a > 1$ 时图象向上弯曲，增长速度越来越快",
             ],
           },
         ];
@@ -671,7 +695,7 @@ export function buildFuncExpLogPanel(
           step: 1,
           title: "基准模型 · 对数函数定义与必过定点",
           detail: `对数函数 $y = \\log_a x$（当前底数 $a = ${a.toFixed(1)}$）定义域为 $(0, +\\infty)$，值域为 $\\mathbb{R}$。因为对任意底数恒有 $\\log_a 1 = 0$，故函数图象恒过定点 $(1, 0)$。$y$ 轴（直线 $x = 0$）为曲线的垂直渐近线。`,
-          latex: `f(1) = \\log_{${a.toFixed(1)}} 1 = 0 \\implies \\text{必过定点 } (1, 0), \\quad \\lim_{x \\to 0^+} \\log_{${a.toFixed(1)}} x = ${a > 1 ? "-\\infty" : "+\\infty"}`,
+          latex: `f(1) = \\log_{${a.toFixed(1)}} 1 = 0 \\implies \\text{必过定点 } (1, 0) \\text{，且图象以 } y \\text{ 轴为竖直渐近线}`,
           rubric: "规范交代定义域、值域、定点坐标与垂直渐近线",
         },
         {
@@ -689,10 +713,11 @@ export function buildFuncExpLogPanel(
           step: 3,
           title: "高考放缩 · 基准切线与不等式链",
           detail:
-            "当底数取自然对数底 $e$ 时，曲线 $y = \\ln x$ 在点 $(1, 0)$ 处的切线为 $y = x - 1$。由对数函数上凸性可知曲线恒在切线下方，导出高考第一核心放缩不等式 $\\ln x \\le x - 1$（$x > 0$，当且仅当 $x = 1$ 时取等号），其过原点切线放缩为 $\\ln x \\le \\frac{x}{e}$。",
+            "当底数取自然对数底 $e$ 时，曲线 $y = \\ln x$ 在点 $(1, 0)$ 处的切线为 $y = x - 1$。构造差函数 $g(x) = \\ln x - (x - 1)$，求导判号可得 $g(x) \\le 0$ 恒成立，即曲线恒位于该切线下方，由此导出高考第一核心放缩不等式 $\\ln x \\le x - 1$（$x > 0$，当且仅当 $x = 1$ 时取等号）；过原点的切线为 $y = \\frac{x}{e}$，同法可得 $\\ln x \\le \\frac{x}{e}$。",
           latex:
             "\\ln x \\le x - 1 \\quad (x > 0, \\text{等号成立当且仅当 } x = 1)",
-          rubric: "结合凸函数几何切线给出高考切线放缩不等式与等号条件",
+          rubric:
+            "构造差函数 $g(x)=\\ln x-(x-1)$ 并求导判号，得出切线放缩不等式与等号成立条件",
         },
       ];
     }
@@ -737,7 +762,7 @@ export function buildFuncExpLogPanel(
           step: 1,
           title: "基准模型 · 指数函数定义与必过定点",
           detail: `指数函数 $y = a^x$（底数 $a = ${a.toFixed(1)}$）定义域为 $\\mathbb{R}$，值域为 $(0, +\\infty)$，恒过定点 $(0, 1)$。$x$ 轴（直线 $y = 0$）为水平渐近线。`,
-          latex: `f(0) = ${a.toFixed(1)}^0 = 1 \\implies \\text{必过定点 } (0, 1), \\quad \\lim_{x \\to -\\infty} ${a.toFixed(1)}^x = 0`,
+          latex: `f(0) = ${a.toFixed(1)}^0 = 1 \\implies \\text{必过定点 } (0, 1) \\text{，且图象以 } x \\text{ 轴为水平渐近线}`,
           rubric: "写明指数函数性质与渐近线",
         },
         {
@@ -751,7 +776,7 @@ export function buildFuncExpLogPanel(
           step: 3,
           title: "高考放缩 · 双基准指数切线不等式",
           detail:
-            "当底数取自然底数 $e$ 时，在 $(0, 1)$ 处切线为 $y = x + 1$；在 $(1, e)$ 处过原点切线为 $y = ex$。由下凹性导出 $e^x \\ge x + 1$ 与 $e^x \\ge ex$ 两大核心放缩式。",
+            "当底数取自然底数 $e$ 时，在 $(0, 1)$ 处切线为 $y = x + 1$；在 $(1, e)$ 处过原点切线为 $y = ex$。分别构造差函数 $g(x) = e^x - (x + 1)$ 与 $h(x) = e^x - ex$，求导判号可得两者在定义域上的最小值都为 $0$，从而得到 $e^x \\ge x + 1$ 与 $e^x \\ge ex$ 两大核心放缩式。",
           latex:
             "e^x \\ge x + 1 \\quad \\text{且} \\quad e^x \\ge ex \\quad (x \\in \\mathbb{R})",
           rubric: "给出指数双切线放缩不等式",

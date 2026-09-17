@@ -60,7 +60,7 @@ export function buildSecondDerivativePanel(
         value: `${res0.dy.toFixed(3)}`,
       },
       {
-        label: "二阶导数 f''(x0) [凹凸性]",
+        label: "二阶导数 f''(x0) [弯曲方向]",
         symbol: "f''(x_0)",
         value: `${res0.ddy.toFixed(3)}`,
       },
@@ -68,23 +68,23 @@ export function buildSecondDerivativePanel(
 
     if (res0.concavity === "concaveUp") {
       quantities.push({
-        label: "当前曲线凹凸性",
-        symbol: "\\text{凹凸结论}",
-        value: "下凸 (凹函数 / 切线恒在曲线下方)",
+        label: "曲线与切线的位置关系",
+        symbol: "\\text{切线位置}",
+        value: "切线恒在曲线下方 (二阶导为正)",
         color: MATH_COLORS.function,
       });
     } else if (res0.concavity === "concaveDown") {
       quantities.push({
-        label: "当前曲线凹凸性",
-        symbol: "\\text{凹凸结论}",
-        value: "上凸 (凸函数 / 切线恒在曲线上方)",
+        label: "曲线与切线的位置关系",
+        symbol: "\\text{切线位置}",
+        value: "切线恒在曲线上方 (二阶导为负)",
         color: MATH_COLORS.paramPrimary,
       });
     } else {
       quantities.push({
-        label: "当前曲线凹凸性",
-        symbol: "\\text{凹凸结论}",
-        value: "二阶导为0 (处于拐点，切线穿越曲线)",
+        label: "曲线与切线的位置关系",
+        symbol: "\\text{切线位置}",
+        value: "二阶导为0：切线位置判据失效，须检验二阶导是否变号",
         color: MATH_COLORS.vectorResult,
       });
     }
@@ -172,15 +172,15 @@ export function buildSecondDerivativePanel(
       {
         name: "二阶导数与凹凸性判定定理",
         latex:
-          "f''(x) > 0 \\implies \\text{下凸 (凸函数/凹弧)}, \\quad f''(x) < 0 \\implies \\text{上凸 (凹函数/凸弧)}",
+          "f''(x) > 0 \\implies \\text{切线恒在曲线下方}, \\quad f''(x) < 0 \\implies \\text{切线恒在曲线上方}",
         condition:
-          "f(x) 在区间内二阶可导。下凸时切线恒在曲线下方；上凸时切线恒在曲线上方。",
+          "f(x) 在区间内二阶可导。f''(x) > 0 时切线恒在曲线下方；f''(x) < 0 时切线恒在曲线上方。",
       },
       {
         name: "切线放缩基本不等式 (拓展工具)",
         latex: "f(x) \\ge f'(x_0)(x - x_0) + f(x_0) \\quad (f''(x) \\ge 0)",
         condition:
-          "下凸函数在任意切点 $x_0$ 处的切线作为全局下界（如 $e^x ≥ x+1$，上凸则不等号反向如 $ln x ≤ x-1$）",
+          "二阶导数非负的函数在任意切点 $x_0$ 处的切线作为全局下界（如 $e^x ≥ x+1$；二阶导数非正则不等号反向，如 $\\ln x ≤ x-1$）",
       },
       {
         name: "二阶导判单调性与隐零点存在性",
@@ -195,7 +195,7 @@ export function buildSecondDerivativePanel(
         name: "拐点判定定理 (Inflection Point)",
         latex: "f''(x_0) = 0 \\text{ 且在其左右两侧 } f''(x) \\text{ 严格异号}",
         condition:
-          "拐点是凹凸性改变的分界点，切线在此穿越曲线；若二阶导不变号则非拐点",
+          "拐点是切线与曲线的上下位置关系发生改变的分界点，切线在此穿越曲线；若二阶导不变号则不是拐点",
       },
       {
         name: "二阶导数极值充分条件判定法",
@@ -212,13 +212,14 @@ export function buildSecondDerivativePanel(
         latex:
           "f\\left(\\frac{x_1+x_2}{2}\\right) \\le \\frac{f(x_1)+f(x_2)}{2} \\quad (f''(x) \\ge 0)",
         condition:
-          "下凸区间内割线中点纵坐标恒大于等于弧上中点纵坐标（上凸区间反向）",
+          "二阶导数非负的区间内，割线中点纵坐标恒不小于弧上中点纵坐标（二阶导数非正的区间反向）",
       },
       {
         name: "琴生不等式加权形式 (极值点偏移基石)",
         latex:
           "f(\\lambda x_1 + (1-\\lambda)x_2) \\le \\lambda f(x_1) + (1-\\lambda)f(x_2) \\quad (0 \\le \\lambda \\le 1)",
-        condition: "凸函数代数定义的本质，割线段上任意内分点均在曲线对应点上方",
+        condition:
+          "该式当 $f''(x) \\ge 0$ 时成立，其几何本质是割线段上任意内分点均在曲线对应点上方",
       },
     );
   }
@@ -228,7 +229,7 @@ export function buildSecondDerivativePanel(
 
   if (studyMode === "concavity") {
     gaokaoPoints.push({
-      text: "切线放缩法证明不等式：利用下凸函数切线恒在曲线下方（如 $e^x ≥ x+1$ 与 $ln x ≤ x-1$），在切点 $x₀$ 处构造切线放缩是一元与双变量不等式证明的拓展工具。",
+      text: "切线放缩法证明不等式：利用二阶导数非负的函数其切线恒在曲线下方（如 $e^x ≥ x+1$ 与 $\\ln x ≤ x-1$），在切点 $x_0$ 处构造切线放缩是一元与双变量不等式证明的拓展工具。",
       importance: "extend",
     });
     gaokaoPoints.push({
@@ -263,7 +264,7 @@ export function buildSecondDerivativePanel(
       importance: "extend",
     });
     gaokaoPoints.push({
-      text: "凹凸性对不等式方向的决定性：证明琴生不等式的前提是区间内二阶导数恒正（或恒负），若割线两端跨越拐点，则需在拐点两侧分区间进行局部切线或割线讨论。",
+      text: "切线与曲线的上下位置对不等式方向的决定性：证明琴生不等式的前提是区间内二阶导数恒正（或恒负），若割线两端跨越拐点，则需在拐点两侧分区间进行局部切线或割线讨论。",
       importance: "extend",
     });
   }
@@ -297,7 +298,7 @@ export function buildSecondDerivativePanel(
     );
     if (hasInflectionInBetween) {
       warnings.push({
-        text: "跨越拐点警示：当前割线区间 [x₁, x₂] 跨越了拐点，区间内凹凸性发生改变，全局琴生不等式前提不成立！高考解题必须在拐点两侧分段讨论。",
+        text: "跨越拐点警示：当前割线区间跨越了拐点，区间内二阶导数变号（切线上下位置关系改变），全局琴生不等式前提不成立！高考解题必须在拐点两侧分段讨论。",
         level: "warning",
       });
     }
@@ -309,6 +310,6 @@ export function buildSecondDerivativePanel(
     gaokaoPoints,
     warnings,
     mnemonic:
-      "二阶导，定凹凸；穿曲线，为拐点；弦在弧上为下凸，极值拐点需分清。",
+      "二阶导，定切线；正下负上；穿越曲线，方为拐点；弦在弧上，二阶导正。",
   };
 }

@@ -18,7 +18,6 @@ const BEYOND_SYLLABUS_TERMS = [
   '泰勒公式',
   '泰勒',
   '琴生',
-  '凹凸',
   '极点极线',
   '克拉默',
   '外积',
@@ -40,6 +39,62 @@ const BEYOND_SYLLABUS_TERMS = [
   '极坐标',
   '参数方程',
 ];
+
+/**
+ * 函数凸凹术语（受控模式 + 语境白名单）
+ *
+ * 历史漏洞（见审核报告 B1）：黑名单里只写了 '凹凸' 一个词，于是「下凸 / 上凸 /
+ * 凸弧 / 凹弧 / 凸性 / 凹向上 / 下凹」等同一族超纲表述全部静默通过——改一个词
+ * 就绕过门禁，词表本身不成立。
+ *
+ * 但也不能把「凹」「凸」直接塞进黑名单：这两个字在课标内的合法几何语境中大量
+ * 出现（凸多面体、凸多边形、凸组合、凹陷、凸显…），逐个报错会造成大面积误伤。
+ * 故采用「单字模式命中 + 合法语境白名单放行」，使超纲表述的任意组词形式都无处可逃。
+ */
+const CONCAVITY_PATTERN = /[凹凸]/;
+const CONCAVITY_ALLOWLIST = [
+  // 立体几何 / 组合数学中的合法用法（与函数凸性无关）
+  '凸多面体',
+  '凸多边形',
+  '凸四边形',
+  '凸六边形',
+  '凸组合',
+  '凸图形',
+  '凸体',
+  '凸包',
+  '凸壳',
+  '凸集',
+  '凸出',
+  '凸起',
+  '凸台',
+  '凹槽',
+  '凹陷',
+  '凸显',
+  '凸透镜',
+  '凹透镜',
+];
+const CONCAVITY_TERM_LABEL = '函数凸凹表述（下凸 / 上凸 / 凸弧 / 凹弧 / 凸性 …）';
+
+/**
+ * 必修一函数章节"正文禁用极限记号"门禁
+ *
+ * 口径来源：数列章节已立同款机器门禁（见 src/math/__tests__/probabilityMarkov.test.ts
+ * 与 src/data/builders/__tests__/probabilityDistribution.test.ts），理由是"极限"不在
+ * 高中课标正文内、卷面书写属失分点。但同一份课标下，必修一函数章节却长期使用
+ * 「左端点极限 / 左右极限」这类表述（审核报告 B4），造成全库口径分裂。
+ *
+ * 此处把该口径推广到必修一函数主题：一律改用"分界点左/右侧取值""无限接近"等
+ * 课标内表述。选择性必修（导数、超越函数放缩等）允许使用极限思想，不在此列。
+ */
+const COMPULSORY_ONE_FUNCTION_FILES = [
+  // 展示层
+  /^src\/features\/(composite|funcExpLog|funcProperties|funcZero|transform|quadratic|nike)\//,
+  // 数据层（右屏 MathPanel 文案来源）
+  /^src\/data\/builders\/(funcComposite|funcExpLog|funcProperties|funcZero|funcTransform|quadratic|nike)\.ts$/,
+  // 求解层
+  /^src\/math\/(composite|function)\.ts$/,
+];
+const LIMIT_NOTATION_PATTERN = /\blim\b|极限/;
 
 export const disciplineRules = [
   {
@@ -205,7 +260,12 @@ export const disciplineRules = [
 
       const issues = [];
       ctx.cleanLines.forEach((line, idx) => {
-        const hit = BEYOND_SYLLABUS_TERMS.find((term) => line.includes(term));
+        const termHit = BEYOND_SYLLABUS_TERMS.find((term) => line.includes(term));
+        // 凸凹族单独走"模式 + 白名单"：命中任何「凹/凸」且不含合法语境词组即判超纲，
+        // 从而覆盖「凹凸」之外的 下凸 / 上凸 / 凸弧 / 凹弧 / 凸性 / 凹向上 … 全部变体。
+        const concavityHit =
+          !termHit && !CONCAVITY_ALLOWLIST.some((w) => line.includes(w)) && CONCAVITY_PATTERN.test(line);
+        const hit = termHit || (concavityHit ? CONCAVITY_TERM_LABEL : null);
         if (hit) {
           // 标内白名单放行：新高考倡导的"向量参数方程"、"参数化设点"、"单参数设点"、"三角参数化"属合规技巧，不误判为超纲
           if (hit === '参数方程') {
@@ -229,6 +289,33 @@ export const disciplineRules = [
             snippet: line.trim(),
           });
         }
+      });
+      return issues;
+    },
+  },
+  {
+    id: 'discipline/no-limit-notation-compulsory-one',
+    group: 'discipline',
+    type: '必修一正文极限记号',
+    severity: 'error',
+    check(ctx) {
+      if (ctx.isTest) return [];
+      if (!COMPULSORY_ONE_FUNCTION_FILES.some((re) => re.test(ctx.relPath))) {
+        return [];
+      }
+      const issues = [];
+      ctx.cleanLines.forEach((line, idx) => {
+        if (!LIMIT_NOTATION_PATTERN.test(line)) return;
+        if (ctx.isSuppressed(idx + 1, 'discipline/no-limit-notation-compulsory-one', '必修一正文极限记号')) {
+          return;
+        }
+        issues.push({
+          lineNum: idx + 1,
+          type: '必修一正文极限记号',
+          message:
+            '必修一函数章节尚未学习极限（数列章节已立同款门禁）。请改用「分界点左/右侧取值」「无限接近」等课标内表述，严禁出现 lim 记号与「极限」术语。',
+          snippet: line.trim(),
+        });
       });
       return issues;
     },

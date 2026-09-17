@@ -46,30 +46,77 @@ export interface LogMeanResult {
 }
 
 /**
- * 二分逼近法求单调函数 f(x) = target 的数值根
+ * 二分逼近法求单调函数 f(x) = target 的数值根（纯变号二分，与增减方向无关）。
+ *
+ * 与旧实现的根本差别：**强制要求区间两端严格异号**（即区间内确实存在根）。
+ *  - 两端同号 => 区间内无根，返回 null。旧实现在此情形下会一路缩到端点，
+ *    把「根在搜索上界之外」伪装成「根恰好等于上界」，直接向看板输出错误数字；
+ *  - 迭代中遇到 NaN / Infinity => 返回 null。
  */
 function findRoot(
   fn: (x: number) => number,
   target: number,
   min: number,
   max: number,
-  maxIter = 40,
-): number {
+  maxIter = 80,
+): number | null {
+  if (!(min < max)) return null;
+
+  let gLow = fn(min) - target;
+  let gHigh = fn(max) - target;
+  if (!Number.isFinite(gLow) || !Number.isFinite(gHigh)) return null;
+  if (gLow === 0) return min;
+  if (gHigh === 0) return max;
+  if (gLow * gHigh > 0) return null;
+
   let low = min;
   let high = max;
   for (let i = 0; i < maxIter; i++) {
     const mid = (low + high) / 2;
-    const val = fn(mid);
-    if (isNaN(val)) break;
-    if (fn(low) < fn(high)) {
-      if (val < target) low = mid;
-      else high = mid;
+    const gMid = fn(mid) - target;
+    if (!Number.isFinite(gMid)) return null;
+    if (gMid === 0) return mid;
+    if (gLow * gMid < 0) {
+      high = mid;
+      gHigh = gMid;
     } else {
-      if (val > target) low = mid;
-      else high = mid;
+      low = mid;
+      gLow = gMid;
     }
   }
   return (low + high) / 2;
+}
+
+/**
+ * 单峰函数**下降支**求根：自 from 起向右自适应扩张上界，出现变号后再二分。
+ *
+ * 极值点偏移的右根 x2 随割线高度 k 减小而急剧右移（k -> 0+ 时 x2 -> +∞：
+ * 对数模型 k = 0.05 时 x2 ≈ 90，k = 0.01 时 x2 ≈ 647），任何固定上界都会失效。
+ * 故此处按 1、3、7、15、31… 的跨度倍增扩张，上界封顶 expandCap。
+ */
+function findRootDescending(
+  fn: (x: number) => number,
+  target: number,
+  from: number,
+  expandCap = 1e6,
+): number | null {
+  const gFrom = fn(from) - target;
+  if (!Number.isFinite(gFrom)) return null;
+  if (gFrom === 0) return from;
+  if (gFrom < 0) return null; // 起点已在目标下方：下降支上不存在该根
+
+  let low = from;
+  let span = 1;
+  let high = low + span;
+  while (high <= expandCap) {
+    const gHigh = fn(high) - target;
+    if (!Number.isFinite(gHigh)) return null;
+    if (gHigh <= 0) return findRoot(fn, target, low, high);
+    low = high;
+    span *= 2;
+    high = low + span;
+  }
+  return null;
 }
 
 /**
@@ -104,8 +151,21 @@ export function solveImplicitZero(
       };
     }
 
-    // 数值求解超越方程 f'(x) = 0
+    // 数值求解超越方程 f'(x) = 0 (f'(x) 在 (0, +∞) 严格递增，区间两端严格异号)
     const x0 = findRoot(dfn, 0, 0.0001, Math.max(a + 2, 6));
+    if (x0 === null) {
+      // 根有效性守卫：区间未能括住零点时判为无效解，不输出伪造的零点
+      return {
+        x0: NaN,
+        y0: NaN,
+        traceY: NaN,
+        isValid: false,
+        isDegenerate: true,
+        fn,
+        dfn,
+        traceFn,
+      };
+    }
     const y0 = fn(x0);
     const traceY = traceFn(x0);
 
@@ -144,8 +204,21 @@ export function solveImplicitZero(
       };
     }
 
-    // 数值求解超越方程 f'(x) = 0
+    // 数值求解超越方程 f'(x) = 0 (f'(x) 在 [0, +∞) 严格递增，区间两端严格异号)
     const x0 = findRoot(dfn, 0, 0, Math.max(Math.log(a) + 1.5, 5));
+    if (x0 === null) {
+      // 根有效性守卫：区间未能括住零点时判为无效解，不输出伪造的零点
+      return {
+        x0: NaN,
+        y0: NaN,
+        traceY: NaN,
+        isValid: false,
+        isDegenerate: true,
+        fn,
+        dfn,
+        traceFn,
+      };
+    }
     const y0 = fn(x0);
     const traceY = traceFn(x0);
 
@@ -176,17 +249,37 @@ export function solveExtremumShift(
     // k 处于 (0.01, maxY - 0.001)
     const k = Math.min(Math.max(kParam, 0.01), maxY - 0.001);
     const fn = (x: number) => x * Math.exp(-x);
+    const mirrorFn = (x: number) => fn(2 * x0 - x);
+    const diffFn = (x: number) => fn(x) - mirrorFn(x);
 
-    // 左根 x1 in (0, 1), 右根 x2 in (1, 8)
-    const x1 = findRoot(fn, k, 0.0001, 0.9999);
-    const x2 = findRoot(fn, k, 1.0001, 8.0);
+    // 左根 x1 in (0, x0)：上升支，区间两端严格异号
+    const x1 = findRoot(fn, k, 0.0001, x0 - 0.0001);
+    // 右根 x2 in (x0, +∞)：下降支，搜索上界自适应扩张
+    const x2 = findRootDescending(fn, k, x0 + 0.0001);
+
+    // 根有效性守卫：任一根未被严格括住即判为无解，绝不把搜索上界当作根返回
+    if (x1 === null || x2 === null) {
+      return {
+        x0,
+        y0: maxY,
+        k,
+        x1: NaN,
+        x2: NaN,
+        midX: NaN,
+        delta: NaN,
+        shiftType: "none",
+        prod: NaN,
+        prodShiftType: "none",
+        isValid: false,
+        fn,
+        mirrorFn,
+        diffFn,
+      };
+    }
 
     const midX = (x1 + x2) / 2;
     const delta = midX - x0;
     const prod = x1 * x2;
-
-    const mirrorFn = (x: number) => fn(2 * x0 - x);
-    const diffFn = (x: number) => fn(x) - mirrorFn(x);
 
     return {
       x0,
@@ -205,24 +298,45 @@ export function solveExtremumShift(
       diffFn,
     };
   } else {
-    // model === 'lnx_div_x'
+    // model === 'ln_x_div_x'
     // f(x) = (ln x) / x, 极值点 x0 = e ≈ 2.71828, 极大值 1/e ≈ 0.367879
     const x0 = Math.E;
     const maxY = 1 / Math.E;
     const k = Math.min(Math.max(kParam, 0.01), maxY - 0.001);
     const fn = (x: number) => (x > 0 ? Math.log(x) / x : NaN);
+    const mirrorFn = (x: number) => (2 * x0 - x > 0 ? fn(2 * x0 - x) : NaN);
+    const diffFn = (x: number) => fn(x) - mirrorFn(x);
 
-    // 左根 x1 in (1, e), 右根 x2 in (e, 20)
-    const x1 = findRoot(fn, k, 1.0001, Math.E - 0.0001);
-    const x2 = findRoot(fn, k, Math.E + 0.0001, 20.0);
+    // 左根 x1 in (1, e)：上升支，区间两端严格异号
+    const x1 = findRoot(fn, k, 1.0001, x0 - 0.0001);
+    // 右根 x2 in (e, +∞)：下降支，搜索上界自适应扩张
+    // （固定上界 20 会漏根：k < ln20/20 ≈ 0.1498 时真根已在界外）
+    const x2 = findRootDescending(fn, k, x0 + 0.0001);
+
+    // 根有效性守卫：任一根未被严格括住即判为无解，绝不把搜索上界当作根返回
+    if (x1 === null || x2 === null) {
+      return {
+        x0,
+        y0: maxY,
+        k,
+        x1: NaN,
+        x2: NaN,
+        midX: NaN,
+        delta: NaN,
+        shiftType: "none",
+        prod: NaN,
+        prodShiftType: "none",
+        isValid: false,
+        fn,
+        mirrorFn,
+        diffFn,
+      };
+    }
 
     const midX = (x1 + x2) / 2;
     const delta = midX - x0;
     const prod = x1 * x2;
     const x0Sq = x0 * x0;
-
-    const mirrorFn = (x: number) => (2 * x0 - x > 0 ? fn(2 * x0 - x) : NaN);
-    const diffFn = (x: number) => fn(x) - mirrorFn(x);
 
     return {
       x0,

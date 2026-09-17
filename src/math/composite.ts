@@ -103,9 +103,11 @@ export function calculatePiecewise(params: PiecewiseParams): PiecewiseResult {
     }
   };
 
+  // 分段函数位于必修一，此时学生尚未学习极限记号：
+  // 一律用"分界点左/右侧取值"描述，不写 lim 与"左极限/右极限"。
   const description = isContinuous
-    ? `在分界点 x₀ = ${x0.toFixed(1)} 处连续，左极限 = 右极限 = ${leftValAtX0.toFixed(2)}。`
-    : `在分界点 x₀ = ${x0.toFixed(1)} 处断开，左极限 ${leftValAtX0.toFixed(2)} ≠ 右极限 ${rightValAtX0.toFixed(2)}。`;
+    ? `在分界点 x₀ = ${x0.toFixed(1)} 处图象不断开：左段在分界点的取值 = 右段在分界点的取值 = ${leftValAtX0.toFixed(2)}。`
+    : `在分界点 x₀ = ${x0.toFixed(1)} 处图象断开：左段取值 ${leftValAtX0.toFixed(2)} ≠ 右段取值 ${rightValAtX0.toFixed(2)}。`;
 
   return {
     x0,

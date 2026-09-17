@@ -17,13 +17,12 @@ import {
   solveConstantSingleDirect,
   solveConstantSingleSepTrans,
   solveConstantSingleDirectTrans,
+  evalSepTransFn,
+  evalSepTransDeriv,
+  evalDirectTransFn,
+  evalDirectTransDeriv,
   evalF,
   evalGParam,
-  evalFTrans,
-  evalGParamTrans,
-  evalFTransC,
-  evalFTransD,
-  evalTransDerivative,
   type TransModelKey,
 } from "@/math/constant";
 import { MATH_COLORS, withAlpha } from "@/theme";
@@ -62,27 +61,15 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   const isSep = subMode === "sep";
   const isTrans = funModel === "transcendent";
 
-  // 计算原函数值
+  // 计算原函数值（超越模型一律走 math 层唯一事实源，禁止在此另行硬编码）
   const evalPrimaryFn = useCallback(
     (x: number): number => {
       if (isTrans) {
-        if (x <= 0) return NaN;
-        if (transModel === "ln_x_over_x")
-          return isSep ? evalFTrans(x) : evalGParamTrans(x, a_axis);
-        if (transModel === "exp_minus_ax")
-          return isSep ? Math.exp(x) / x : Math.exp(x) - a_axis * x;
-        if (transModel === "a_ln_x_minus_x")
-          return isSep
-            ? x === 1
-              ? 1
-              : (x - 1) / Math.log(x)
-            : evalFTransC(x, a_axis);
-        if (transModel === "exp_minus_a_x_plus_1")
-          return isSep ? Math.exp(x) / (x + 1) : evalFTransD(x, a_axis);
-        return evalFTrans(x);
-      } else {
-        return isSep ? evalF(x) : evalGParam(x, a_axis);
+        return isSep
+          ? evalSepTransFn(transModel, x)
+          : evalDirectTransFn(transModel, x, a_axis);
       }
+      return isSep ? evalF(x) : evalGParam(x, a_axis);
     },
     [isTrans, transModel, isSep, a_axis],
   );
@@ -90,34 +77,25 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   // 计算导函数值
   const evalDerivativeFn = (x: number): number => {
     if (isTrans) {
-      if (isSep) {
-        if (transModel === "ln_x_over_x")
-          return x > 0 ? (1 - Math.log(x)) / (x * x) : NaN;
-        if (transModel === "exp_minus_ax")
-          return x > 0 ? (Math.exp(x) * (x - 1)) / (x * x) : NaN;
-        if (transModel === "exp_minus_a_x_plus_1")
-          return x > -1 ? (Math.exp(x) * x) / ((x + 1) * (x + 1)) : NaN;
-        return evalTransDerivative(x, a, transModel);
-      } else {
-        return evalTransDerivative(x, a_axis, transModel);
-      }
-    } else {
-      return isSep ? 2 * x - 2 : 2 * x - 2 * a_axis;
+      return isSep
+        ? evalSepTransDeriv(transModel, x)
+        : evalDirectTransDeriv(transModel, x, a_axis);
     }
+    return isSep ? 2 * x - 2 : 2 * x - 2 * a_axis;
   };
 
-  // 计算结果
+  // 计算结果（transModel 贯穿传入：画布与看板必定同解同一个函数）
   const sepResult = useMemo(() => {
     return isTrans
-      ? solveConstantSingleSepTrans(a, m, n)
+      ? solveConstantSingleSepTrans(a, m, n, transModel)
       : solveConstantSingleSep(a, m, n);
-  }, [a, m, n, isTrans]);
+  }, [a, m, n, isTrans, transModel]);
 
   const directResult = useMemo(() => {
     return isTrans
-      ? solveConstantSingleDirectTrans(a_axis, m, n)
+      ? solveConstantSingleDirectTrans(a_axis, m, n, transModel)
       : solveConstantSingleDirect(a_axis, m, n);
-  }, [a_axis, m, n, isTrans]);
+  }, [a_axis, m, n, isTrans, transModel]);
 
   // 1. 拖拽回调
   const handleMDrag = (mathPt: { x: number; y: number }) => {

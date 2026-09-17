@@ -40,7 +40,7 @@ export interface EvalResult {
   y: number;
   dy: number;
   ddy: number;
-  /** 'concaveUp' 表示下凸（凹函数 f''>0）, 'concaveDown' 表示上凸（凸函数 f''<0）, 'flat' 表示二阶导为 0 */
+  /** 'concaveUp' 表示 f''(x) > 0（切线恒在曲线下方）, 'concaveDown' 表示 f''(x) < 0（切线恒在曲线上方）, 'flat' 表示二阶导为 0 */
   concavity: "concaveUp" | "concaveDown" | "flat";
 }
 
@@ -53,7 +53,7 @@ export interface JensenResult {
   yCurveMid: number;
   yChordMid: number;
   diff: number; // yChordMid - yCurveMid
-  isConvexUp: boolean; // 是否满足弦中点 >= 弧中点（下凸/凹函数）
+  isConvexUp: boolean; // 是否满足弦中点 >= 弧中点（即 f''(x) > 0 区间）
 }
 
 /**

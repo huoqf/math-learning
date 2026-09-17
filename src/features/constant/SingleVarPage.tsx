@@ -55,7 +55,8 @@ export function SingleVarPage() {
       if (funModel === "transcendent") {
         let fnName = "\\frac{\\ln x}{x}";
         if (transModel === "exp_minus_ax") fnName = "\\frac{e^x}{x}";
-        else if (transModel === "a_ln_x_minus_x") fnName = "\\ln x - x + 1";
+        else if (transModel === "a_ln_x_minus_x")
+          fnName = "\\frac{x-1}{\\ln x}";
         else if (transModel === "exp_minus_a_x_plus_1")
           fnName = "\\frac{e^x}{x+1}";
 

@@ -65,6 +65,13 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
     () => findInflectionPoints(fnKey, params),
     [fnKey, params],
   );
+  // 仅保留真拐点（两侧 f''(x) 变号）。findInflectionPoints 会为四次函数返回
+  // f''(0)=0 但不变号的「反例点」，它只能在看板文案里作为反例出现，
+  // 绝不能在中屏被标注为拐点 I 并画出「拐点切线」，否则与同屏定理卡自相矛盾。
+  const trueInflections = useMemo(
+    () => inflections.filter((ip) => ip.isTrueInflection),
+    [inflections],
+  );
   const extrema = useMemo(
     () => findExtremaPoints(fnKey, params),
     [fnKey, params],
@@ -170,13 +177,13 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
       return items;
     } else if (studyMode === "inflection") {
       const items: LabelItem[] = [];
-      inflections.forEach((ip, idx) => {
+      trueInflections.forEach((ip, idx) => {
         const pt = mathToDesign(ip.x, ip.y, scale);
         items.push({
           key: `inflection-${idx}`,
           x: pt.x,
           y: pt.y,
-          text: inflections.length > 1 ? `I${idx + 1}` : "I",
+          text: trueInflections.length > 1 ? `I${idx + 1}` : "I",
           color: MATH_COLORS.vectorResult,
           fontSize: fontScale(12),
           preferredPlacement: "top-left",
@@ -243,7 +250,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
     ptJ2,
     ptJChordMid,
     ptJCurveMid,
-    inflections,
+    trueInflections,
     extrema,
     scale,
     fontScale,
@@ -254,7 +261,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
       {/* 坐标轴与纯净背景（无多余方格网干扰） */}
       <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
-      {/* 凹凸性模式下的背景区域高亮（下凸:蓝色, 上凸:浅红） */}
+      {/* 二阶导数符号分区背景高亮（f''(x) > 0:蓝色, f''(x) < 0:浅红） */}
       {studyMode === "concavity" &&
         concavityRegions.map((reg, idx) => {
           const p1 = mathToDesign(reg.xStart, scale.yMax, scale);
@@ -287,9 +294,9 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
         strokeWidth={2.8}
       />
 
-      {/* 拐点与其切线渲染 (仅在拐点探究模式下高亮) */}
+      {/* 拐点与其切线渲染 (仅渲染真拐点：f''(x0)=0 但不变号的反例点不得冒充拐点) */}
       {studyMode === "inflection" &&
-        inflections.map((ip, idx) => {
+        trueInflections.map((ip, idx) => {
           const resIp = evalFunction(fnKey, params, ip.x);
           const kIp = resIp.dy;
           const pIpLeft = mathToDesign(

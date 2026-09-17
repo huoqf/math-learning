@@ -31,14 +31,14 @@ export function buildFuncCompositePanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "左段端点极限",
-        symbol: "f₁(x₀⁻)",
+        label: "左段在分界点的取值",
+        symbol: "f_1(x_0)",
         value: res.leftValAtX0.toFixed(2),
         color: MATH_COLORS.function,
       },
       {
-        label: "右段端点极限",
-        symbol: "f₂(x₀⁺)",
+        label: "右段在分界点的取值",
+        symbol: "f_2(x_0)",
         value: res.rightValAtX0.toFixed(2),
         color: MATH_COLORS.paramPrimary,
       },
@@ -81,11 +81,11 @@ export function buildFuncCompositePanel(
         prerequisites: ["左右两段均单调递增", "分界点处左侧终值不大于右侧初值"],
       },
       {
-        name: "分段函数分界点连续充要条件",
+        name: "分段函数分界点图象不断开的充要条件",
         latex:
-          "\\lim_{x \\to x_0^-} f_1(x) = \\lim_{x \\to x_0^+} f_2(x) = f(x_0)",
+          "f_1(x_0) = f_2(x_0) \\quad \\text{（左段终点值与右段起点值相等）}",
         level: "core",
-        prerequisites: ["左右极限均存在且相等"],
+        prerequisites: ["左段在分界点的取值与右段在分界点的取值相等"],
       },
     ];
 

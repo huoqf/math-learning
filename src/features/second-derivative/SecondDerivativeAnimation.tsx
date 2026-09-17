@@ -226,9 +226,9 @@ export function SecondDerivativeAnimation() {
       const ddfStr = `f''(\\color{${MATH_COLORS.paramPrimary}}{${x0.toFixed(1)}}) = ${eval0.ddy.toFixed(2)}`;
       let statusStr = "";
       if (eval0.ddy > 1e-4) {
-        statusStr = "\\implies \\text{下凸 (切线在下方)}"; // latex: 动态公式
+        statusStr = "\\implies \\text{切线恒在曲线下方}"; // latex: 动态公式
       } else if (eval0.ddy < -1e-4) {
-        statusStr = "\\implies \\text{上凸 (切线在上方)}"; // latex: 动态公式
+        statusStr = "\\implies \\text{切线恒在曲线上方}"; // latex: 动态公式
       } else {
         statusStr = "\\implies \\text{二阶导为0 (拐点临界)}"; // latex: 动态公式
       }
@@ -258,9 +258,9 @@ export function SecondDerivativeAnimation() {
           } else if (Math.abs(b) < 1e-5) {
             return `${fStr} \\quad | \\quad b=0 \\implies f''(0)=0 \\text{ (极小值点，非拐点反例)}`; // latex: 动态公式
           } else if (a > 0) {
-            return `${fStr} \\quad | \\quad f''(x) > 0 \\text{ 恒成立 (全域下凸，无拐点)}`; // latex: 动态公式
+            return `${fStr} \\quad | \\quad f''(x) > 0 \\text{ 恒成立 (切线恒在下方，无拐点)}`; // latex: 动态公式
           } else {
-            return `${fStr} \\quad | \\quad f''(x) < 0 \\text{ 恒成立 (全域上凸，无拐点)}`; // latex: 动态公式
+            return `${fStr} \\quad | \\quad f''(x) < 0 \\text{ 恒成立 (切线恒在上方，无拐点)}`; // latex: 动态公式
           }
         }
         return `${fStr} \\quad | \\quad a=0 \\text{ (退化为二次，无拐点)}`; // latex: 动态公式
@@ -270,8 +270,8 @@ export function SecondDerivativeAnimation() {
       const sign = jensen.diff >= 0 ? "\\ge" : "<";
       const relationStr =
         jensen.diff >= 0
-          ? "\\text{ (弦在弧上方/下凸)}" // latex: 动态公式
-          : "\\text{ (弧在弦上方/上凸)}"; // latex: 动态公式
+          ? "\\text{ (弦在弧上方 / 二阶导为正)}" // latex: 动态公式
+          : "\\text{ (弧在弦上方 / 二阶导为负)}"; // latex: 动态公式
       return `${fStr} \\quad | \\quad \\frac{f(x_1)+f(x_2)}{2} ${sign} f\\left(\\frac{x_1+x_2}{2}\\right) \\; (\\Delta y = ${jensen.diff.toFixed(2)}) \\quad ${relationStr}`;
     }
   }, [params, fnKey, studyMode]);
@@ -282,11 +282,11 @@ export function SecondDerivativeAnimation() {
       if (fnKey === "cubic") {
         return {
           variant: "primary" as const,
-          badge: "拓展 · 三次曲线凸性与切线放缩",
+          badge: "拓展 · 三次曲线切线上界与切线放缩",
           condition:
             "三次多项式 $f(x) = ax^3 + bx^2 + cx + d$，探针切点位于 $x_0$ 处，二阶导为 $f''(x) = 6ax + 2b$。",
           question:
-            "探究二阶导数 $f''(x_0)$ 符号与切线相对位置：下凸时切线为何恒在曲线下方？上凸时切线为何恒在曲线上方？",
+            "探究二阶导数 $f''(x_0)$ 符号与切线相对位置：$f''(x_0) > 0$ 时切线为何恒在曲线下方？$f''(x_0) < 0$ 时切线为何恒在曲线上方？",
         };
       }
       if (fnKey === "mixed") {
@@ -296,16 +296,16 @@ export function SecondDerivativeAnimation() {
           condition:
             "超越函数 $f(x) = axe^x + bx + c$，一阶导为 $f'(x) = a(x+1)e^x + b$，二阶导为 $f''(x) = a(x+2)e^x$。",
           question:
-            "移动探针 $x_0$，观察 $x > -2$ 与 $x < -2$ 两侧凹凸性转换，探究切线放缩法证明不等式的几何充要条件。",
+            "移动探针 $x_0$，观察 $x > -2$ 与 $x < -2$ 两侧二阶导数符号转换（切线上下位置互换），探究切线放缩法证明不等式的几何充要条件。",
         };
       }
       return {
         variant: "primary" as const,
-        badge: "拓展 · 四次对称曲线的分区凸性",
+        badge: "拓展 · 四次对称曲线的分区切线方位",
         condition:
           "四次函数 $f(x) = ax^4 + bx^2 + cx + d$，二阶导数为二次式 $f''(x) = 12ax^2 + 2b$。",
         question:
-          "调节参数 $b$，观察双拐点将定义域分为三个凹凸区间的几何特征，辨析切线与曲线的局部穿插与整体上下关系。",
+          "调节参数 $b$，观察双拐点将定义域分为三段二阶导数符号不同的区间，辨析切线与曲线的局部穿插与整体上下关系。",
       };
     }
 
@@ -325,7 +325,7 @@ export function SecondDerivativeAnimation() {
           variant: "warning" as const,
           badge: "概念辨析 · 超越函数极值点与拐点分离",
           condition:
-            "函数 $f(x) = axe^x + bx + c$。一阶导驻点决定单调性与极值，二阶导变号点 $x=-2$ 决定凹凸性与拐点。",
+            "函数 $f(x) = axe^x + bx + c$。一阶导驻点决定单调性与极值，二阶导变号点 $x=-2$ 决定切线上下位置与拐点。",
           question:
             "当 $b=0$ 时极值点在 $x=-1$，而拐点在 $x=-2$。探究极值点与拐点在定义域中的分离现象与几何本质。",
         };
@@ -348,7 +348,7 @@ export function SecondDerivativeAnimation() {
         condition:
           "在三次曲线上选取相异自变量 $x_1, x_2$，考察割线中点 $M$ 与对应弧中点 $P$ 的纵坐标差值。",
         question:
-          "在下凸区间内比较弦与弧的中点高低；当区间 $[x_1, x_2]$ 跨越拐点时，探究琴生不等式前提为何失效？",
+          "在 $f''(x) > 0$ 的区间内比较弦与弧的中点高低；当区间 $[x_1, x_2]$ 跨越拐点时，探究琴生不等式前提为何失效？",
       };
     }
     if (fnKey === "mixed") {
@@ -356,7 +356,7 @@ export function SecondDerivativeAnimation() {
         variant: "info" as const,
         badge: "拓展 · 极值点偏移与超越函数割弧中点不等式",
         condition:
-          "在超越函数单侧下凸区间（$x > -2$）内选取两端点 $x_1, x_2$，割线中点为 $M$，曲线上中点为 $P$。",
+          "在超越函数单侧 $f''(x) > 0$ 区间（$x > -2$）内选取两端点 $x_1, x_2$，割线中点为 $M$，曲线上中点为 $P$。",
         question:
           "探究琴生差值 $\\Delta y = \\frac{f(x_1)+f(x_2)}{2} - f\\left(\\frac{x_1+x_2}{2}\\right) \\ge 0$ 在新高考极值点偏移大题中的降维应用。",
       };
@@ -365,9 +365,9 @@ export function SecondDerivativeAnimation() {
       variant: "info" as const,
       badge: "双变量不等式 · 对称双峰与凹凸割线判定",
       condition:
-        "在四次曲线不同凹凸区间内选取两点 $x_1, x_2$，连结割线段 $S_1S_2$。",
+        "在四次曲线 $f''(x)$ 符号不同的区间内选取两点 $x_1, x_2$，连结割线段 $S_1S_2$。",
       question:
-        "比较下凸区间（弦在弧上）与上凸区间（弧在弦上）的中点差值正负号，探究凹凸性对不等式方向的决定性作用。",
+        "比较 $f''(x) > 0$ 区间（弦在弧上）与 $f''(x) < 0$ 区间（弧在弦上）的中点差值正负号，探究切线与曲线的上下位置对不等式方向的决定性作用。",
     };
   }, [studyMode, fnKey]);
 

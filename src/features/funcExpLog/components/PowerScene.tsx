@@ -7,7 +7,6 @@ import {
   InteractivePoint,
   MathPoint,
   Asymptote,
-  TangentLine,
   SceneLabelGroup,
 } from "@/components/Math";
 import type { LabelItem } from "@/utils/labelOverlap";
@@ -25,7 +24,8 @@ export interface PowerSceneProps {
   onParamChange: (key: string, value: number) => void;
   fontScale?: (v: number) => number;
   mode?: "single" | "compare";
-  showTangent?: boolean;
+  /** 是否显示基准直线 y = x（必修一的"增长快慢"对照物，替代切线图层） */
+  showBaselineLine?: boolean;
   showCompareLine?: boolean;
 }
 
@@ -36,7 +36,7 @@ export function PowerScene({
   onParamChange,
   fontScale = (v) => v,
   mode = "single",
-  showTangent = false,
+  showBaselineLine = false,
   showCompareLine = false,
 }: PowerSceneProps) {
   const x0 = params.x0 ?? 1.5;
@@ -368,24 +368,37 @@ export function PowerScene({
         </g>
       )}
 
-      {/* 7. 切线辅助线 (当开启 showTangent 且可导时) */}
-      {showTangent && powerRes.isTangentDifferentiable && (
-        <TangentLine
-          fn={(x) => {
-            if (powerAlpha === 0) return Math.abs(x) < 1e-4 ? NaN : 1;
-            if (powerAlpha < 0) {
-              if (Math.abs(x) < 1e-3) return NaN;
-              if (x < 0 && !Number.isInteger(powerAlpha)) return NaN;
-              return Math.pow(x, powerAlpha);
-            }
-            if (x < 0 && !Number.isInteger(powerAlpha)) return NaN;
-            return Math.pow(x, powerAlpha);
-          }}
-          x0={x0}
-          scale={scale}
-          color={MATH_COLORS.tangentLine}
-          strokeWidth={2}
-        />
+      {/* 7. 基准直线 y = x（必修一"增长快慢"的对照物：比较 f(x) 与 x 的大小） */}
+      {showBaselineLine && (
+        <>
+          <FunctionGraph
+            fn={(x) => x}
+            scale={scale}
+            color={MATH_COLORS.line}
+            strokeWidth={1.8}
+            strokeDasharray="6 4"
+          />
+          {(() => {
+            // 标签落在直线与可见域边界的交点上，避免与曲线、坐标轴刻度重叠
+            const labX = Math.min(scale.xMax - 0.4, 4.2);
+            const labPt = mathToDesign(labX, labX, scale);
+            return (
+              <SceneLabelGroup
+                items={[
+                  {
+                    key: "baseline-yx",
+                    text: "y = x",
+                    x: labPt.x,
+                    y: labPt.y,
+                    color: MATH_COLORS.line,
+                    preferredPlacement: "bottom-right",
+                  },
+                ]}
+                fontScale={fontScale}
+              />
+            );
+          })()}
+        </>
       )}
 
       {/* 8. 公共定点 (1, 1) */}

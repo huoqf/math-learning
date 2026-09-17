@@ -183,12 +183,12 @@ export function CompositeAnimation() {
           <span>
             分界点{" "}
             <KatexFormula formula={`x_0 = ${x0.toFixed(1)}`} mode="inline" />
-            ，左端点极限{" "}
+            ，左段在分界点的取值{" "}
             <KatexFormula
               formula={`f_1(x_0) = ${yLeft.toFixed(2)}`}
               mode="inline"
             />
-            ，右端点极限{" "}
+            ，右段在分界点的取值{" "}
             <KatexFormula
               formula={`f_2(x_0) = ${yRight.toFixed(2)}`}
               mode="inline"

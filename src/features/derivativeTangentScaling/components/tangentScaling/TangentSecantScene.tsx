@@ -41,6 +41,9 @@ export function TangentSecantScene({
         lowerFn: (x: number) => x - 0.5 * x * x,
         mainXRange: [-0.98, 5.0] as [number, number],
         lineXRange: [-2.5, 5.0] as [number, number],
+        // x - x^2/2 <= ln(1+x) 仅在 x >= 0 成立：割线下界必须截断在 [0, 5.0]，
+        // 否则 x < 0 段会画出「下界跑到函数上方」的错误图形
+        lowerXRange: [0, 5.0] as [number, number],
       };
     }
 
@@ -154,9 +157,9 @@ export function TangentSecantScene({
             strokeWidth={1.8}
             strokeDasharray="4 3"
           />
-          {/* y = x - 0.5x^2 下界抛物线 */}
+          {/* y = x - 0.5x^2 下界抛物线（仅 x ≥ 0 有效，超出即断线不绘制） */}
           <FunctionGraph
-            fn={clipFn(secantData.lowerFn, secantData.lineXRange)}
+            fn={clipFn(secantData.lowerFn, secantData.lowerXRange)}
             scale={scale}
             color={MATH_COLORS.accent}
             strokeWidth={2}

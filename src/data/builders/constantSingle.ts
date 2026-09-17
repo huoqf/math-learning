@@ -5,6 +5,7 @@ import {
   solveConstantSingleDirect,
   solveConstantSingleSepTrans,
   solveConstantSingleDirectTrans,
+  TRANS_MODEL_SPEC,
   type TransModelKey,
 } from "@/math/constant";
 import { MATH_COLORS } from "@/theme";
@@ -40,8 +41,9 @@ function buildSepBranch(
   col: typeof colorize,
 ): MathPanelData {
   const a = params.a ?? 1.2;
+  const spec = TRANS_MODEL_SPEC[transModel];
   const res = isTranscendent
-    ? solveConstantSingleSepTrans(a, m, n)
+    ? solveConstantSingleSepTrans(a, m, n, transModel)
     : solveConstantSingleSep(a, m, n);
 
   const quantities: MathPanelData["quantities"] = [
@@ -201,18 +203,12 @@ function buildSepBranch(
       step: 2,
       title: "第二步：建模联立 · 求导单调性与极值分析",
       latex: isTranscendent
-        ? transModel === "ln_x_over_x"
-          ? `f'(x) = \\frac{1-\\ln x}{x^2}, \\quad f'(x) = 0 \\iff x = e \\approx 2.72`
-          : transModel === "exp_minus_ax"
-            ? `f'(x) = \\frac{e^x(x-1)}{x^2}, \\quad f'(x) = 0 \\iff x = 1`
-            : transModel === "a_ln_x_minus_x"
-              ? `f'(x) = \\frac{1}{x} - 1, \\quad f'(1) = 0`
-              : `f'(x) = \\frac{x e^x}{(x+1)^2}, \\quad f'(0) = 0`
+        ? `${spec.sepDerivLatex}, \\quad \\text{驻点 } ${spec.sepCriticalLatex}`
         : `f'(x) = 2x - 2, \\quad f'(x) = 0 \\iff x = 1`,
       detail: isTranscendent
         ? transModel === "ln_x_over_x"
           ? `当 $x \\in (0, e)$ 时 $f'(x) > 0$，$f(x)$ 单调递增；当 $x \\in (e, +\\infty)$ 时 $f'(x) < 0$，$f(x)$ 单调递减。在当前区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上，最值由驻点 $x = e$ 与端点共同决定。`
-          : `分析导函数的零点与正负符号，确定函数在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上的单调性变化。`
+          : `目标函数为 $${spec.sepFnLatex}$（定义域 $${spec.sepDomainLatex}$），导函数 $${spec.sepDerivLatex}$。先由导函数零点与正负号确定函数在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上的单调性，再比较驻点函数值与两端点函数值取最值。`
         : `导函数 $f'(x) = 2(x-1)$，在 $(-\\infty, 1)$ 单调递减，在 $(1, +\\infty)$ 单调递增，顶点驻点为 $x = 1$。`,
       rubric: "求导并确定函数在研究区间上的单调性 (5分)",
     },
@@ -322,12 +318,16 @@ function buildDirectBranch(
   m: number,
   n: number,
   isTranscendent: boolean,
-  _transModel: TransModelKey,
+  transModel: TransModelKey,
   col: typeof colorize,
 ): MathPanelData {
   const aAxis = params.a_axis ?? 1.0;
+  const spec = TRANS_MODEL_SPEC[transModel];
+  const aCol = col("a", MATH_COLORS.paramPrimary);
+  // 模型专属驻点表达式（含参着色），供分类讨论与推导链文案共同引用
+  const critTex = isTranscendent ? spec.directCriticalLatex(aCol) : "a";
   const res = isTranscendent
-    ? solveConstantSingleDirectTrans(aAxis, m, n)
+    ? solveConstantSingleDirectTrans(aAxis, m, n, transModel)
     : solveConstantSingleDirect(aAxis, m, n);
 
   const quantities: MathPanelData["quantities"] = [
@@ -345,8 +345,13 @@ function buildDirectBranch(
     },
     {
       label: "驻点相对位置",
-      value:
-        res.discussionType === "left"
+      value: isTranscendent
+        ? res.discussionType === "left"
+          ? `区间左侧 (${spec.directCriticalPlain} < m)`
+          : res.discussionType === "right"
+            ? `区间右侧 (${spec.directCriticalPlain} > n)`
+            : `区间内部 (m ≤ ${spec.directCriticalPlain} ≤ n)`
+        : res.discussionType === "left"
           ? "区间左侧 (a < m)"
           : res.discussionType === "right"
             ? "区间右侧 (a > n)"
@@ -388,19 +393,39 @@ function buildDirectBranch(
       directStep3Detail = `当前处于轴在区间右侧（$a > n = ${n.toFixed(2)}$），单减。最小值在右端点取得：$f(n) \\ge 0 \\iff a \\le ${boundA}$。结合前提 $a > ${n.toFixed(2)}$，充要范围为 $n < a \\le ${boundA}$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
     }
   } else {
+    const fMinStr = res.fMin.toFixed(2);
+    const threshold = spec.directInsideThresholdLatex;
     if (res.discussionType === "left") {
-      const boundA = (Math.exp(m) / m).toFixed(2);
-      directStep3Latex = `f(x)_{\\min} = f(m) = e^{${m.toFixed(2)}} - ${m.toFixed(2)}a \\ge 0 \\iff a \\le \\frac{e^m}{m} = ${boundA}`;
-      directStep3Detail = `当前处于驻点在区间左侧（$\\ln a < m$ 即 $a < e^m$），单增。最小值在左端点取得：$f(m) = e^m - am \\ge 0 \\iff a \\le ${boundA}$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
+      directStep3Latex = `f(x)_{\\min} = f(m) = ${fMinStr} \\ge 0`;
+      directStep3Detail = `当前处于驻点在区间左侧（$${critTex} < m$），函数在区间上严格单调，最小值在左端点取得：$f(m) = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
     } else if (res.discussionType === "inside") {
-      directStep3Latex = `f(x)_{\\min} = f(\\ln a) = a(1 - \\ln a) \\ge 0 \\iff \\ln a \\le 1 \\iff a \\le e \\approx 2.72`;
-      directStep3Detail = `当前处于驻点在区间内部（$m \\le \\ln a \\le n$），极小值即最小值：$f(\\ln a) = a(1 - \\ln a) \\ge 0$。充要条件为 $a \\le e$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "极小值 ≥ 0，满足恒成立要求。" : "极小值跌破 0，产生违背区。"}`;
+      if (spec.directCriticalKind === "min") {
+        directStep3Latex = `f(x)_{\\min} = f(${critTex}) = ${spec.directCriticalValueLatex(aCol)} = ${fMinStr} \\ge 0${threshold ? ` \\iff ${threshold}` : ""}`;
+        directStep3Detail = `当前处于驻点在区间内部（$m \\le ${critTex} \\le n$），驻点为极小值点，故极小值即最小值：$f(${critTex}) = ${spec.directCriticalValueLatex(aCol)} = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$${threshold ? `，即 $${col("a", MATH_COLORS.paramPrimary)} ${threshold}$` : ""}。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "极小值不低于 0，满足恒成立要求。" : "极小值跌破 0，产生违背区。"}`;
+      } else {
+        directStep3Latex = `f(x)_{\\min} = \\min\\{f(m), f(n)\\} = ${fMinStr} \\ge 0`;
+        directStep3Detail = `当前处于驻点在区间内部（$m \\le ${critTex} \\le n$），但驻点为极大值点，最大值在驻点取得，最小值必在两端点中较小者处取得：$\\min\\{f(m), f(n)\\} = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
+      }
     } else {
-      const boundA = (Math.exp(n) / n).toFixed(2);
-      directStep3Latex = `f(x)_{\\min} = f(n) = e^{${n.toFixed(2)}} - ${n.toFixed(2)}a \\ge 0 \\iff a \\le \\frac{e^n}{n} = ${boundA}`;
-      directStep3Detail = `当前处于驻点在区间右侧（$\\ln a > n$ 即 $a > e^n$），单减。最小值在右端点取得：$f(n) = e^n - an \\ge 0 \\iff a \\le ${boundA}$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
+      directStep3Latex = `f(x)_{\\min} = f(n) = ${fMinStr} \\ge 0`;
+      directStep3Detail = `当前处于驻点在区间右侧（$${critTex} > n$），函数在区间上严格单调，最小值在右端点取得：$f(n) = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
     }
   }
+
+  // 第二步分类文案：随模型驻点表达式与驻点类型（极小值型 / 极大值型）自适应
+  const directStep2Detail = !isTranscendent
+    ? res.discussionType === "left"
+      ? `当前参数处于【第一类：轴在区间左侧 ($a < m$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调递增，最小值在左端点取得，即 $f_{\\min} = f(m)$。`
+      : res.discussionType === "inside"
+        ? `当前参数处于【第二类：轴在区间内部 ($m \\le a \\le n$)】：极小值点落在区间内，函数先减后增，最小值在顶点处取得，即 $f_{\\min} = f(a)$。`
+        : `当前参数处于【第三类：轴在区间右侧 ($a > n$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调递减，最小值在右端点取得，即 $f_{\\min} = f(n)$。`
+    : res.discussionType === "left"
+      ? `当前参数处于【第一类：驻点在区间左侧 ($${critTex} < m$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调，最小值在左端点取得，即 $f_{\\min} = f(m)$。`
+      : res.discussionType === "inside"
+        ? spec.directCriticalKind === "min"
+          ? `当前参数处于【第二类：驻点在区间内部 ($m \\le ${critTex} \\le n$)】：驻点为极小值点，函数先减后增，最小值在驻点处取得，即 $f_{\\min} = ${spec.directCriticalValueLatex(aCol)}$。`
+          : `当前参数处于【第二类：驻点在区间内部 ($m \\le ${critTex} \\le n$)】：驻点为极大值点，函数先增后减，最小值在两端点中较小者处取得，即 $f_{\\min} = \\min\\{f(m), f(n)\\}$。`
+        : `当前参数处于【第三类：驻点在区间右侧 ($${critTex} > n$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调，最小值在右端点取得，即 $f_{\\min} = f(n)$。`;
 
   // 高考破题推导链：分类讨论三部曲
   const reasoningSteps: ReasoningStep[] = [
@@ -408,10 +433,10 @@ function buildDirectBranch(
       step: 1,
       title: "第一步：审题定法 · 求导与含参驻点确定",
       latex: isTranscendent
-        ? `f'(x) = e^x - ${col("a", MATH_COLORS.paramPrimary)}, \\quad f'(x) = 0 \\iff x = \\ln ${col("a", MATH_COLORS.paramPrimary)} \\quad (a > 0)`
+        ? `${spec.directDerivLatex(aCol)}, \\quad f'(x) = 0 \\iff x = ${spec.directCriticalLatex(aCol)} \\quad (a > 0)`
         : `f'(x) = 2x - 2${col("a", MATH_COLORS.paramPrimary)}, \\quad f'(x) = 0 \\iff x = ${col("a", MATH_COLORS.paramPrimary)}`,
       detail: isTranscendent
-        ? `对含参超越函数求导，当 $a > 0$ 时导数存在唯一零点 $x_0 = \\ln a$。极小值点随参数 $a$ 动态变化，需就驻点与研究区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 的相对位置分类讨论。`
+        ? `对含参超越函数 $${spec.directFnLatex(aCol)}$ 求导得 $${spec.directDerivLatex(aCol)}$。当 $a > 0$ 时导数存在唯一零点 $x_0 = ${spec.directCriticalLatex(aCol)}$，该驻点随参数 $a$ 动态变化，需就驻点与研究区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 的相对位置分类讨论。`
         : `二次函数对称轴与极小值点为 $x = a$。对称轴随参数 $a$ 平移（轴动区间定），必须根据对称轴落在区间左侧、内部或右侧分类讨论。`,
       rubric: "求导确定含参驻点与分类依据 (3分)",
     },
@@ -420,13 +445,8 @@ function buildDirectBranch(
       title: "第二步：建模联立 · 轴动区间定三类分类推演",
       latex: !isTranscendent
         ? `f(x)_{\\min} = \\begin{cases} f(m) = m^2 - 2am + 2, & a < m \\\\[2pt] f(a) = 2 - a^2, & m \\le a \\le n \\\\[2pt] f(n) = n^2 - 2an + 2, & a > n \\end{cases}`
-        : `f(x)_{\\min} = \\begin{cases} f(m), & \\ln a < m \\\\[2pt] f(\\ln a) = a(1 - \\ln a), & m \\le \\ln a \\le n \\\\[2pt] f(n), & \\ln a > n \\end{cases}`,
-      detail:
-        res.discussionType === "left"
-          ? `当前参数处于【第一类：轴在区间左侧 ($a < m$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调递增，最小值在左端点取得，即 $f_{\\min} = f(m)$。`
-          : res.discussionType === "inside"
-            ? `当前参数处于【第二类：轴在区间内部 ($m \\le a \\le n$)】：极小值点落在区间内，函数先减后增，最小值在顶点处取得，即 $f_{\\min} = f(a)$。`
-            : `当前参数处于【第三类：轴在区间右侧 ($a > n$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调递减，最小值在右端点取得，即 $f_{\\min} = f(n)$。`,
+        : `f(x)_{\\min} = \\begin{cases} f(m), & ${critTex} < m \\\\[2pt] ${spec.directInsideMinLatex(aCol)}, & m \\le ${critTex} \\le n \\\\[2pt] f(n), & ${critTex} > n \\end{cases}`,
+      detail: directStep2Detail,
       rubric: "全面列出三段分类单调性与最小值表达式 (5分)",
     },
     {

@@ -20,6 +20,7 @@ import {
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { LabelItem } from "@/utils/labelOverlap";
+import { ShiftPanoramaAxis } from "./ShiftPanoramaAxis";
 import {
   solveImplicitZero,
   solveExtremumShift,
@@ -114,9 +115,33 @@ export function DerivativeShiftScene({
     () => mathToDesign(tanL + 1.2, tanY0 + tanSlope * 1.2, scale),
     [tanL, tanSlope, tanY0, scale],
   );
+  // 5. 视口越界判定
+  // 画布可见域由 deriveShiftXRange 按模型推导，但等比缩放下存在可读上限：
+  // ln x/x 模型低 k 时右根仍可能远在框外。此处不再让它按原坐标画到画布外被静默裁掉，
+  // 而是收敛到右边界做「轴外」指示，配合底部全轴位置对照条给出真实位置。
+  const frameFlags = useMemo(() => {
+    const xEdge = scale.xMax - (scale.xMax - scale.xMin) * 0.05;
+    const p2OffFrame = shiftResult.isValid && shiftResult.x2 > xEdge;
+    const midOffFrame = shiftResult.isValid && shiftResult.midX > xEdge;
+    // M = (x₁ + x₂) / 2 < x₂，故 M 出框必然 P₂ 出框；同时出框时两者各占一个槽位，保持真实先后
+    const p2MarkerX = p2OffFrame ? xEdge : shiftResult.x2;
+    const midMarkerX = !midOffFrame
+      ? shiftResult.midX
+      : p2OffFrame
+        ? xEdge - (scale.xMax - scale.xMin) * 0.07
+        : xEdge;
+    return { p2OffFrame, midOffFrame, p2MarkerX, midMarkerX };
+  }, [scale, shiftResult]);
+
   const midPt = useMemo(
-    () => mathToDesign(shiftResult.midX, shiftResult.k, scale),
-    [shiftResult, scale],
+    () => mathToDesign(frameFlags.midMarkerX, shiftResult.k, scale),
+    [frameFlags, shiftResult.k, scale],
+  );
+
+  // P₂ 落点：未出框时为真实交点，出框时收在右边界槽位（以箭头表示"还有更远处"）
+  const p2Pt = useMemo(
+    () => mathToDesign(frameFlags.p2MarkerX, shiftResult.k, scale),
+    [frameFlags, shiftResult.k, scale],
   );
 
   // 6. 纯极简学术点标解算 (集中定义学术符号)
@@ -145,13 +170,13 @@ export function DerivativeShiftScene({
       return items;
     } else if (activeMode === "shift_symmetric") {
       const p1 = mathToDesign(shiftResult.x1, shiftResult.k, scale);
-      const p2 = mathToDesign(shiftResult.x2, shiftResult.k, scale);
+      const p2 = mathToDesign(frameFlags.p2MarkerX, shiftResult.k, scale);
       const p1m = mathToDesign(
         2 * shiftResult.x0 - shiftResult.x1,
         shiftResult.k,
         scale,
       );
-      const mid = mathToDesign(shiftResult.midX, shiftResult.k, scale);
+      const mid = mathToDesign(frameFlags.midMarkerX, shiftResult.k, scale);
 
       const topPt = mathToDesign(
         shiftResult.x1,
@@ -181,7 +206,12 @@ export function DerivativeShiftScene({
           text: "P₂",
           color: MATH_COLORS.functionSecondary,
           fontSize: fontScale(12),
-          preferredPlacement: "top-right",
+          // 超出画布时不写「（超出画布）」长标注：该处距右边界仅 50px、下方紧贴坐标轴刻度行，
+          // 119px 宽的长文本必然压住刻度/轴名并被画布裁切。改由「空心点 + 右向箭头」表达越界，
+          // 精确真值与越界说明统一由底部同刻度对照条承担（见 ShiftPanoramaAxis）。
+          preferredPlacement: frameFlags.p2OffFrame
+            ? "bottom-left"
+            : "top-right",
         },
         {
           key: "p1_mirror",
@@ -199,6 +229,7 @@ export function DerivativeShiftScene({
           text: "M",
           color: MATH_COLORS.paramSecondary,
           fontSize: fontScale(12),
+          // 出框说明同 P₂：画布只给短名号，长标注交由底部对照条（该处正下方就是坐标轴刻度行）
           preferredPlacement: "bottom",
         },
       ];
@@ -290,6 +321,7 @@ export function DerivativeShiftScene({
     p1Design,
     p2Design,
     tangentPtDesign,
+    frameFlags,
   ]);
 
   // 拖拽回调
@@ -477,13 +509,32 @@ export function DerivativeShiftScene({
             fontScale={fontScale}
           />
 
-          <MathPoint
-            cx={shiftResult.x2}
-            cy={shiftResult.k}
-            scale={scale}
-            color={MATH_COLORS.functionSecondary}
-            fontScale={fontScale}
-          />
+          {frameFlags.p2OffFrame ? (
+            /* P₂ 越出可见域：空心点 + 右向箭头收在边界槽位，
+               真实横坐标与「超出画布」说明由底部对照条按同一刻度给出，
+               绝不静默裁掉、也不为此缩放坐标轴 */
+            <g>
+              <MathPoint
+                x={p2Pt.x}
+                y={p2Pt.y}
+                variant="hollow"
+                color={MATH_COLORS.functionSecondary}
+                fontScale={fontScale}
+              />
+              <polygon
+                points={`${p2Pt.x + 6},${p2Pt.y - 4.5} ${p2Pt.x + 14},${p2Pt.y} ${p2Pt.x + 6},${p2Pt.y + 4.5}`}
+                fill={MATH_COLORS.functionSecondary}
+              />
+            </g>
+          ) : (
+            <MathPoint
+              cx={shiftResult.x2}
+              cy={shiftResult.k}
+              scale={scale}
+              color={MATH_COLORS.functionSecondary}
+              fontScale={fontScale}
+            />
+          )}
 
           {/* 对称点 P'1(2x0 - x1, k) */}
           <MathPoint
@@ -496,22 +547,43 @@ export function DerivativeShiftScene({
           />
 
           {/* 两根中点 M((x1+x2)/2, k) */}
-          <MathPoint
-            cx={shiftResult.midX}
-            cy={shiftResult.k}
-            scale={scale}
-            color={MATH_COLORS.paramSecondary}
-            fontScale={fontScale}
-          />
-          <line
-            x1={midPt.x}
-            y1={midPt.y}
-            x2={midPt.x}
-            y2={scale.originY}
-            stroke={MATH_COLORS.paramSecondary}
-            strokeWidth={1.5}
-            strokeDasharray="3 3"
-          />
+          {frameFlags.midOffFrame ? (
+            /* M 亦越出可见域：与 P₂ 同一套「空心点 + 右向箭头」语义，
+               两者槽位保持真实先后（midMarkerX < p2MarkerX），越界说明见底部对照条 */
+            <g>
+              <MathPoint
+                x={midPt.x}
+                y={midPt.y}
+                variant="hollow"
+                color={MATH_COLORS.paramSecondary}
+                fontScale={fontScale}
+              />
+              <polygon
+                points={`${midPt.x + 6},${midPt.y - 4.5} ${midPt.x + 14},${midPt.y} ${midPt.x + 6},${midPt.y + 4.5}`}
+                fill={MATH_COLORS.paramSecondary}
+              />
+            </g>
+          ) : (
+            <MathPoint
+              cx={frameFlags.midMarkerX}
+              cy={shiftResult.k}
+              scale={scale}
+              color={MATH_COLORS.paramSecondary}
+              fontScale={fontScale}
+            />
+          )}
+          {/* M 出框时不再画这条垂足线：槽位坐标并非 M 的真实横坐标，画出会造成误导 */}
+          {!frameFlags.midOffFrame && (
+            <line
+              x1={midPt.x}
+              y1={midPt.y}
+              x2={midPt.x}
+              y2={scale.originY}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+            />
+          )}
 
           {/* x1 处的差值垂线段展示 F(x1) = f(x1) - f(2x0-x1) */}
           {(() => {
@@ -540,6 +612,18 @@ export function DerivativeShiftScene({
             }
             return null;
           })()}
+
+          {/* 底部横坐标对照条：与画布同刻度，标明 x₁ / x₀ / P₁′ / M / x₂ 的真实先后 */}
+          <ShiftPanoramaAxis
+            x1={shiftResult.x1}
+            x0={shiftResult.x0}
+            midX={shiftResult.midX}
+            x2={shiftResult.x2}
+            mirrorX={2 * shiftResult.x0 - shiftResult.x1}
+            scale={scale}
+            vp={vp}
+            fontScale={fontScale}
+          />
         </g>
       )}
 

@@ -82,8 +82,9 @@ export const transcendentalScenarios: Record<
     {
       id: "free",
       name: "自由探究",
-      badge: "指数放缩 · 凸性与切线",
-      condition: "指数曲线 $f(x)=e^x$ 为下凸函数，任意切线均位于曲线下方。",
+      badge: "指数放缩 · 切线随切点移动",
+      condition:
+        "在曲线 $f(x)=e^x$ 上任取一点 $P(x_0,\\, e^{x_0})$ 作切线，切线方程随切点移动而改变。",
       question:
         "探究切线方程在不同切点处的斜率与截距关系，求使切线为全局线性下界的最优切点与切线方程。",
       variant: "primary",
@@ -123,9 +124,9 @@ export const transcendentalScenarios: Record<
     {
       id: "free",
       name: "自由探究",
-      badge: "对数放缩 · 上凸与切线",
+      badge: "对数放缩 · 切线随切点移动",
       condition:
-        "对数曲线 $g(x)=\\ln x$ ($x>0$) 为上凸函数，切线始终位于曲线上方。",
+        "在曲线 $g(x)=\\ln x$ ($x>0$) 上任取一点 $P(x_0,\\, \\ln x_0)$ 作切线，切线方程随切点移动而改变。",
       question:
         "探究切点 $x_0>0$ 处切线方程变化，求对数曲线在全局上界约束下的最优放缩线性式。",
       variant: "info",

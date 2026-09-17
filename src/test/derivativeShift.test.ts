@@ -6,6 +6,7 @@ import {
 } from "@/math/derivativeShift";
 import { buildDerivativeShiftPanel } from "@/data/builders/derivativeShift";
 import { getPresets } from "@/data/registries/derivativeShift";
+import { getShiftXRange } from "@/features/derivativeShift/constants";
 
 describe("隐零点定理与极值点偏移数学计算测试", () => {
   it("应当正确求解超越隐零点及二次消参消元轨迹 (x ln x + (1/2)x^2 - ax)", () => {
@@ -60,7 +61,7 @@ describe("隐零点定理与极值点偏移数学计算测试", () => {
   it("应当正确求解 lnx/x 经典高考极值点偏移模型、乘积偏移与双重右偏", () => {
     // f(x) = (ln x) / x, 极值点 x0 = e ≈ 2.71828, 极大值 1/e ≈ 0.367879
     // 割线 y = 0.3 (k < 1/e)
-    const res = solveExtremumShift(0.3, "lnx_div_x");
+    const res = solveExtremumShift(0.3, "ln_x_div_x");
     expect(res.isValid).toBe(true);
     expect(res.x0).toBeCloseTo(Math.E, 4);
     expect(res.x1).toBeGreaterThan(1);
@@ -79,10 +80,16 @@ describe("隐零点定理与极值点偏移数学计算测试", () => {
     expect(res.diffFn(res.x1)).toBeLessThan(0);
   });
 
-  it("应当正确支持 ln_x_div_x 别名模型求解", () => {
-    const res = solveExtremumShift(0.25, "ln_x_div_x");
-    expect(res.isValid).toBe(true);
-    expect(res.x0).toBeCloseTo(Math.E, 3);
+  it("ln x/x 模型与 x·e^(-x) 模型的代换关系应严格成立 (u = ln x)", () => {
+    // ln x / x = k 令 u = ln x 即化为 u·e^(-u) = k，
+    // 故两模型的根满足 x₁ = e^(u₁)、x₂ = e^(u₂)，乘积偏移 x₁x₂ = e^(u₁+u₂) = e^(2·中点_u)
+    const k = 0.25;
+    const lnRes = solveExtremumShift(k, "ln_x_div_x");
+    const xeRes = solveExtremumShift(k, "xe_neg_x");
+    expect(Math.log(lnRes.x1)).toBeCloseTo(xeRes.x1, 3);
+    expect(Math.log(lnRes.x2)).toBeCloseTo(xeRes.x2, 3);
+    expect(lnRes.prod).toBeCloseTo(Math.exp(2 * xeRes.midX), 2);
+    expect(lnRes.x0).toBeCloseTo(Math.exp(xeRes.x0), 4);
   });
 
   it("应当正确计算对数均值不等式链 G < L < A", () => {
@@ -163,5 +170,71 @@ describe("隐零点定理与极值点偏移数学计算测试", () => {
 
     const presetsLogMean = getPresets("log_mean");
     expect(presetsLogMean.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("极值点偏移画布可见域契约（坐标轴不得随参数缩放）", () => {
+  it("可见域只由 (模式, 模型) 决定，与当前参数取值无关", () => {
+    // 拖动滑块调参时坐标轴必须纹丝不动：一旦坐标轴跟着参数缩放，
+    // 学生就无法分辨「图像变了」还是「坐标变了」。
+    // getShiftXRange 不接收参数，返回的又是模块级常量，故同一组合必然全等。
+    const combos: Array<[string, string]> = [
+      ["implicit_zero", "x_ln_x"],
+      ["implicit_zero", "exp_linear"],
+      ["shift_symmetric", "xe_neg_x"],
+      ["shift_symmetric", "ln_x_div_x"],
+      ["log_mean", "default"],
+    ];
+    for (const [mode, model] of combos) {
+      const expected = getShiftXRange(mode, model);
+      expect(getShiftXRange(mode, model)).toBe(expected);
+    }
+    // 隐零点模式沿用原基准域，改动只发生在确有越界的两个组合上
+    expect(getShiftXRange("implicit_zero", "x_ln_x")).toEqual([-1.5, 6.5]);
+    expect(getShiftXRange("shift_symmetric", "xe_neg_x")).toEqual([-1.5, 6.5]);
+  });
+
+  it("x·e^(-x) 模型在整个 k 滑块区间内双根与中点都不越出可见域", () => {
+    const [lo, hi] = getShiftXRange("shift_symmetric", "xe_neg_x");
+    for (let k = 0.05; k <= 0.3500001; k += 0.01) {
+      const res = solveExtremumShift(k, "xe_neg_x");
+      expect(res.isValid).toBe(true);
+      expect(res.x1).toBeGreaterThan(lo);
+      expect(res.x2).toBeLessThan(hi);
+      expect(res.midX).toBeLessThan(hi);
+    }
+  });
+
+  it("ln x/x 模型覆盖默认与相切预设，深部割线预设按设计交由「超出画布」标注承担", () => {
+    const [lo, hi] = getShiftXRange("shift_symmetric", "ln_x_div_x");
+    // 可见域右界 9.3 对应临界 k = ln 9.3 / 9.3 ≈ 0.2398，其上双根与中点全部在框内
+    for (const k of [0.36, 0.32, 0.29, 0.25]) {
+      const res = solveExtremumShift(k, "ln_x_div_x");
+      expect(res.isValid).toBe(true);
+      expect(res.x1).toBeGreaterThan(lo);
+      expect(res.x1).toBeLessThan(hi);
+      expect(res.x2).toBeLessThan(hi);
+      expect(res.midX).toBeLessThan(hi);
+    }
+    // k < 0.24 起右根越界（k = 0.12 深部割线预设时 x₂ ≈ 27.7）：
+    // 这一区段由轴外标注与底部横坐标对照条呈现，**不允许**回头放大坐标轴
+    // （那会把曲线压平、让坐标轴随参数抖动）。若将来可见域被改宽，此断言会立刻失败。
+    for (const k of [0.12, 0.05]) {
+      const res = solveExtremumShift(k, "ln_x_div_x");
+      expect(res.x2).toBeGreaterThan(hi);
+    }
+    const deep = solveExtremumShift(0.12, "ln_x_div_x");
+    expect(deep.midX).toBeGreaterThan(hi);
+  });
+
+  it("对数均值链在右端点参数全域（含预设 e² ≈ 7.39 与滑块上限 8.0）内不越出可见域", () => {
+    const [, hi] = getShiftXRange("log_mean", "default");
+    for (const x2 of [2.1, 3.5, 4.0, 5.0, 7.39, 8.0]) {
+      expect(x2).toBeLessThan(hi);
+    }
+    const presets = getPresets("log_mean");
+    for (const preset of presets) {
+      expect(preset.params.x2 ?? 0).toBeLessThan(hi);
+    }
   });
 });

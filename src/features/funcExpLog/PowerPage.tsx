@@ -18,15 +18,14 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { PowerScene } from "./components/PowerScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/funcExpLog";
-import {
-  calculatePowerFunction,
-  STANDARD_POWER_FUNCTIONS,
-} from "@/math/function";
+import { STANDARD_POWER_FUNCTIONS } from "@/math/function";
 
 export function PowerPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
   const [mode, setMode] = useState<"single" | "compare">("single");
-  const [showTangent, setShowTangent] = useState(false);
+  // 幂函数位于必修一，此时学生尚未学习导数，页面不提供切线图层；
+  // 改为提供基准直线 y = x 作为"增长快慢"的对照物（必修一的图象比较语言）。
+  const [showBaselineLine, setShowBaselineLine] = useState(false);
   const [showCompareLine, setShowCompareLine] = useState(false);
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -41,11 +40,6 @@ export function PowerPage() {
         powerMode: mode,
       }),
     [params, mode],
-  );
-
-  const powerRes = useMemo(
-    () => calculatePowerFunction(params.powerAlpha ?? 2.0, params.x0 ?? 1.5),
-    [params.powerAlpha, params.x0],
   );
 
   // 当前选中的基准元数据
@@ -178,11 +172,11 @@ export function PowerPage() {
       },
     ];
 
-    if (showTangent && powerRes.isTangentDifferentiable) {
+    if (showBaselineLine) {
       items.push({
-        label: "切线",
-        formula: powerRes.tangentEquationLatex,
-        color: MATH_COLORS.tangentLine,
+        label: "基准线",
+        formula: "y = x",
+        color: MATH_COLORS.line,
         style: "dash",
       });
     }
@@ -201,8 +195,7 @@ export function PowerPage() {
     mode,
     params.powerAlpha,
     formulaLatex,
-    showTangent,
-    powerRes,
+    showBaselineLine,
     showCompareLine,
   ]);
 
@@ -234,7 +227,7 @@ export function PowerPage() {
         badge: "高考基础 · 幂函数超线性增长 (指数大于1)",
         condition: `幂指数 $\\alpha = ${alpha.toFixed(1).replace(/\.0$/, "")} > 1$，图象在第一象限恒过公共定点 $(0, 0)$ 与 $(1, 1)$。`,
         question:
-          "证明图象在原点处的切线方程，并求解在 $(0, 1)$ 与 $(1, +\\infty)$ 上与基准线 $y = x$ 的相对位置及增长快慢特征。",
+          "在同一坐标系中作出 $y = x^{\\alpha}$ 与 $y = x$ 的图象，比较它们在 $(0, 1)$ 与 $(1, +\\infty)$ 上的高低位置，并说明图象向上弯曲、增长速度越来越快的特征。",
       };
     } else if (alpha > 0) {
       return {
@@ -242,7 +235,7 @@ export function PowerPage() {
         badge: "高考高频 · 幂函数根号型下垂 (指数介于0与1)",
         condition: `幂指数 $0 < \\alpha = ${alpha.toFixed(1).replace(/\.0$/, "")} < 1$，图象恒过定点 $(0, 0)$ 与 $(1, 1)$。`,
         question:
-          "计算 $x \\to 0^+$ 处的切线极限并判定原点可导性，求证函数在 $(0, +\\infty)$ 上单调递增且增长速率逐渐减缓的凸弧形态。",
+          "比较 $y = x^{\\alpha}$ 与 $y = x$ 在第一象限的高低位置，证明函数在 $(0, +\\infty)$ 上单调递增且增长速度越来越慢，并描述图象在原点附近的变化趋势。",
       };
     } else if (Math.abs(alpha) < 1e-6) {
       return {
@@ -259,7 +252,7 @@ export function PowerPage() {
         badge: "核心考点 · 负指数双曲线分支 (指数小于0)",
         condition: `幂指数 $\\alpha = ${alpha.toFixed(1).replace(/\.0$/, "")} < 0$，定义域不含原点，第一象限图象恒过定点 $(1, 1)$。`,
         question:
-          "求解函数的两条渐近线方程，并证明在区间 $(0, +\\infty)$ 上严格单调递减且趋近于两坐标轴的极限特征。",
+          "说明函数的两条渐近线，并证明在区间 $(0, +\\infty)$ 上严格单调递减、图象与两坐标轴无限接近。",
       };
     }
     // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
@@ -320,9 +313,9 @@ export function PowerPage() {
             <div className="flex flex-col gap-2 p-2.5 bg-neutral-50 rounded-lg border border-neutral-200/60">
               {mode === "single" && (
                 <Toggle
-                  label="显示切线与切点导数"
-                  checked={showTangent}
-                  onChange={setShowTangent}
+                  label="显示 y = x 基准线 (增长快慢对照)"
+                  checked={showBaselineLine}
+                  onChange={setShowBaselineLine}
                 />
               )}
               <Toggle
@@ -360,7 +353,7 @@ export function PowerPage() {
               onParamChange={handleParamChange}
               fontScale={canvasSize.font}
               mode={mode}
-              showTangent={showTangent}
+              showBaselineLine={showBaselineLine}
               showCompareLine={showCompareLine}
             />
           </AnimationSvgCanvas>

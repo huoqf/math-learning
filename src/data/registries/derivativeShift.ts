@@ -70,10 +70,10 @@ export const presetsByModeAndModel: Record<
         params: { a: 1.72 },
       },
       {
-        key: "gaokao_two",
-        label: "高考常考",
+        key: "typical_span",
+        label: "常见跨度",
         formula: "a = 2.5",
-        description: "新高考真题典型跨度",
+        description: "新高考常考参数跨度（模型原型）",
         params: { a: 2.5 },
       },
       {
@@ -94,10 +94,10 @@ export const presetsByModeAndModel: Record<
         params: { k: 0.25 },
       },
       {
-        key: "gaokao_2016",
-        label: "高考真题",
+        key: "classic_double_root",
+        label: "经典双根",
         formula: "k = 0.25",
-        description: "典型双根割线",
+        description: "典型双根割线模型",
         params: { k: 0.25 },
       },
       {
@@ -115,35 +115,6 @@ export const presetsByModeAndModel: Record<
         params: { k: 0.12 },
       },
     ],
-    lnx_div_x: [
-      {
-        key: "free",
-        label: "自由探究",
-        description: "全参数开放",
-        params: { k: 0.25 },
-      },
-      {
-        key: "gaokao_2010",
-        label: "经典双根",
-        formula: "k = 0.25",
-        description: "经典双根割线",
-        params: { k: 0.25 },
-      },
-      {
-        key: "critical_tan",
-        label: "极值相切",
-        formula: "k \\to 1/e",
-        description: "双根无限重合趋向",
-        params: { k: 0.36 },
-      },
-      {
-        key: "deep_secant",
-        label: "深部割线",
-        formula: "k = 0.12",
-        description: "双重右偏显著区域",
-        params: { k: 0.12 },
-      },
-    ],
     ln_x_div_x: [
       {
         key: "free",
@@ -152,10 +123,10 @@ export const presetsByModeAndModel: Record<
         params: { k: 0.25 },
       },
       {
-        key: "gaokao_2010",
+        key: "classic_double_root",
         label: "经典双根",
         formula: "k = 0.25",
-        description: "经典双根割线",
+        description: "经典双根割线模型",
         params: { k: 0.25 },
       },
       {
