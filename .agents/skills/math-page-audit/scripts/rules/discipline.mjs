@@ -320,4 +320,29 @@ export const disciplineRules = [
       return issues;
     },
   },
+  {
+    id: 'discipline/no-hardcoded-white',
+    group: 'discipline',
+    type: '硬编码白色',
+    severity: 'error',
+    check(ctx) {
+      if (ctx.isTest) return [];
+      // 令牌定义文件（theme 层）是白色的合法出处
+      if (/\/theme\//.test(ctx.relPath)) return [];
+      const WHITE_PATTERN =
+        /(?:stroke|fill|color)=\{?"(?:white|#fff\b|#ffffff|white"|'#fff(?:fff)?')/i;
+      const issues = [];
+      ctx.cleanLines.forEach((line, idx) => {
+        if (!WHITE_PATTERN.test(line)) return;
+        issues.push({
+          lineNum: idx + 1,
+          type: '硬编码白色',
+          message:
+            '白色必须使用主题令牌 MATH_COLORS.white（或 Tailwind 语义类），严禁硬编码 "white" / "#fff" 字面量——深色主题或非白底场景下会不可见',
+          snippet: line.trim(),
+        });
+      });
+      return issues;
+    },
+  },
 ];

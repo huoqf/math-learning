@@ -141,7 +141,9 @@ export function buildDerivativeShiftPanel(
       },
       {
         label: "极值点加法偏移",
-        symbol: "\\Delta = \\frac{x₁+x₂}{2} - x₀",
+        // 含 LaTeX 指令的 symbol 走 KaTeX 渲染，下标必须用 _0/_1/_2 语法；
+        // Unicode 下标（x₀）KaTeX 不识别，仅允许出现在纯文本 symbol 中
+        symbol: "\\Delta = \\frac{x_1+x_2}{2} - x_0",
         value: `${shiftRes.delta > 0 ? "+" : ""}${shiftRes.delta.toFixed(3)} (${shiftRes.shiftType === "right" ? "右偏" : "左偏"})`,
         color: MATH_COLORS.paramTertiary,
       },

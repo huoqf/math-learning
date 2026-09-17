@@ -820,7 +820,9 @@ export function solveBisection(
       break;
     }
 
-    if (fLeft * fMid < 0) {
+    // 零点落在闭区间端点或中点左侧时必须向左收缩：
+    // f(left) === 0 时乘积为 0，若按开区间判断走 else 会把真正的零点 left 丢掉
+    if (fLeft * fMid <= 0) {
       right = mid;
     } else {
       left = mid;

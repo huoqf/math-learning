@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
@@ -266,7 +266,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
       >
         l
@@ -301,7 +301,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             r = d
@@ -337,7 +337,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
               fontWeight="bold"
               fontStyle="italic"
               paintOrder="stroke"
-              stroke="white"
+              stroke={MATH_COLORS.white}
               strokeWidth={3}
             >
               d
@@ -414,7 +414,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
                     fontWeight="bold"
                     fontStyle="italic"
                     paintOrder="stroke"
-                    stroke="white"
+                    stroke={MATH_COLORS.white}
                     strokeWidth={3}
                   >
                     r
@@ -638,7 +638,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             strokeLinejoin="round"
           >

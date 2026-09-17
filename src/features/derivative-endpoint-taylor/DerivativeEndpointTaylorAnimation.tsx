@@ -21,6 +21,7 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
 import { DerivativeEndpointTaylorScene } from "./components/DerivativeEndpointTaylorScene";
+import { getEndpointLegendItems } from "./scenePalette";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   defaultParams,
@@ -225,94 +226,16 @@ export function DerivativeEndpointTaylorAnimation() {
     }
   }, [activeMode, endpointType, taylorBase, taylorOrder]);
 
-  // 右下角图例配置 (模式专属，严格规范 KaTeX 与色彩绑定)
-  const legendItems = useMemo<SceneLegendItem[]>(() => {
-    if (activeMode === "endpoint") {
-      return [
-        {
-          color: MATH_COLORS.function,
-          label:
-            endpointType === "exp"
-              ? "原函数 $f(x) = e^x - ax - 1$"
-              : endpointType === "ln"
-                ? "原函数 $f(x) = \\ln(x+1) - ax$"
-                : "原函数 $f(x) = x\\ln x - a(x-1)$",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.paramSecondary,
-          label: "端点切线 $y = f'(x_0)(x-x_0)$",
-          style: "dash",
-        },
-        {
-          color: MATH_COLORS.focusPoint,
-          label: "端点 $P_0$",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.paramPrimary,
-          label: "切线控制点 $T$",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.vectorResult,
-          label: "必要条件失效区 (导数反向穿透)",
-          style: "area",
-        },
-      ];
-    } else if (activeMode === "lhopital") {
-      return [
-        {
-          color: MATH_COLORS.function,
-          label: "原式函数 $y = N(x)/D(x)$",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.derivative,
-          label: "导数之比 $y = N'(x)/D'(x)$",
-          style: "dash",
-        },
-        {
-          color: MATH_COLORS.focusPoint,
-          label: "极限点 $L(0, 1/2)$",
-          style: "hollow-point",
-        },
-        {
-          color: MATH_COLORS.paramPrimary,
-          label: "逼近动点 $P$",
-          style: "point",
-        },
-      ];
-    } else {
-      return [
-        {
-          color: MATH_COLORS.function,
-          label: "超越基底函数 $f(x)$",
-          style: "solid",
-        },
-        {
-          color: MATH_COLORS.paramPrimary,
-          label: `${taylorOrder} 阶拟合曲线 $P_{${taylorOrder}}(x)$`,
-          style: "dash",
-        },
-        {
-          color: MATH_COLORS.vectorResult,
-          label: "截断绝对残差 $|R_n(x)|$",
-          style: "dash",
-        },
-        {
-          color: MATH_COLORS.focusPoint,
-          label: "展开基准原点 $O(0,0)$",
-          style: "point",
-        },
-        {
-          color: MATH_COLORS.paramPrimary,
-          label: "测试动点 $P(x, P_n(x))$",
-          style: "point",
-        },
-      ];
-    }
-  }, [activeMode, endpointType, taylorOrder]);
+  // 右下角图例配置：由 scenePalette 生成（颜色与线型同源取自 palette，不再与画布各写一份）
+  const legendItems = useMemo<SceneLegendItem[]>(
+    () =>
+      getEndpointLegendItems(activeMode, {
+        endpointType,
+        taylorBase,
+        taylorOrder,
+      }),
+    [activeMode, endpointType, taylorBase, taylorOrder],
+  );
 
   return (
     <ThreePanel

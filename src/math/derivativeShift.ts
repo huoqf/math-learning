@@ -5,7 +5,7 @@
  */
 
 export type ImplicitZeroModel = "x_ln_x" | "exp_linear";
-export type ExtremumShiftModel = "xe_neg_x" | "lnx_div_x" | "ln_x_div_x";
+export type ExtremumShiftModel = "xe_neg_x" | "ln_x_div_x";
 
 export interface ImplicitZeroResult {
   x0: number; // 隐零点 (满足 f'(x0) = 0)

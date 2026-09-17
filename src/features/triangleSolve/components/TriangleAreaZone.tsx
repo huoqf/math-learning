@@ -1,4 +1,4 @@
-import { mathToDesign } from "@/utils/coordinate";
+﻿import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { TriangleSolveResult } from "@/math/triangleSolve";
 import type { SceneScale } from "@/hooks/useSceneScale";
@@ -65,7 +65,7 @@ export function TriangleAreaZone({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -89,7 +89,7 @@ export function TriangleAreaZone({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -167,7 +167,7 @@ export function TriangleAreaZone({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(3.5)}
         strokeLinejoin="round"
       >
@@ -183,7 +183,7 @@ export function TriangleAreaZone({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >

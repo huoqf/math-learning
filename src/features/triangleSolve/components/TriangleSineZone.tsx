@@ -1,4 +1,4 @@
-import { MathPoint } from "@/components/Math";
+﻿import { MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { TriangleSolveResult } from "@/math/triangleSolve";
@@ -58,7 +58,7 @@ export function TriangleSineZone({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -82,7 +82,7 @@ export function TriangleSineZone({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -124,7 +124,7 @@ export function TriangleSineZone({
                     fontWeight="bold"
                     fontStyle="italic"
                     paintOrder="stroke"
-                    stroke="white"
+                    stroke={MATH_COLORS.white}
                     strokeWidth={fontScale(3.5)}
                     strokeLinejoin="round"
                   >
@@ -157,7 +157,7 @@ export function TriangleSineZone({
                     fontWeight="bold"
                     fontStyle="italic"
                     paintOrder="stroke"
-                    stroke="white"
+                    stroke={MATH_COLORS.white}
                     strokeWidth={fontScale(4)}
                     strokeLinejoin="round"
                   >
@@ -171,7 +171,7 @@ export function TriangleSineZone({
                     fontSize={fontScale(10)}
                     fontWeight="bold"
                     paintOrder="stroke"
-                    stroke="white"
+                    stroke={MATH_COLORS.white}
                     strokeWidth={fontScale(4)}
                     strokeLinejoin="round"
                   >

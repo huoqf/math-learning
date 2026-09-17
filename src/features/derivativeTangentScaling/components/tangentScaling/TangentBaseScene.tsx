@@ -95,18 +95,21 @@ export function TangentBaseScene({
   // 智能避让点标收集
   const labelItems = useMemo<LabelItem[]>(() => {
     const items: LabelItem[] = [];
+    const isAtBase = Math.abs(baseData.tangent.x0 - baseData.baseX0) <= 0.08;
     const p = mathToDesign(baseData.tangent.x0, baseData.tangent.y0, scale);
     items.push({
       key: "pt-base-tangent",
       x: p.x,
       y: p.y,
-      text: "P₀",
+      // 切点回到基准位置（偏离 ≤ 0.08）时两点评级重合，
+      // 合并标签表达"已回到基准切点"这一临界态，而不是静默隐藏 T₀
+      text: isAtBase ? "P₀ = T₀" : "P₀",
       color: MATH_COLORS.paramPrimary,
       preferredPlacement: "top",
     });
 
-    // 当切点偏离基准切点时，呈现基准切点 T₀
-    if (Math.abs(baseData.tangent.x0 - baseData.baseX0) > 0.08) {
+    // 切点偏离基准切点时，单独呈现基准切点 T₀ 标签
+    if (!isAtBase) {
       const ptBase = mathToDesign(baseData.baseX0, baseData.baseY0, scale);
       items.push({
         key: "pt-base-target",

@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS } from "@/theme";
@@ -104,7 +104,7 @@ export const VectorArrow: React.FC<VectorArrowProps> = ({
           textAnchor="middle"
           dominantBaseline="central"
           fill={color}
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
           paintOrder="stroke"
           fontSize={fontScale(labelSize)}

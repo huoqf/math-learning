@@ -10,11 +10,10 @@ import {
   InteractivePoint,
   MathPoint,
   TangentLine,
-  IntervalShadow,
   SceneLabelGroup,
   Asymptote,
 } from "@/components/Math";
-import { MATH_COLORS, GEOMETRY_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, GEOMETRY_COLORS } from "@/theme";
 import {
   solveMonotonicityModel,
   type MonotonicityModelKey,
@@ -104,8 +103,11 @@ export const DerivativeMonotonicityScene: React.FC<
       });
     });
 
-    // 当前切点动点标签
-    if (isPointValid) {
+    // 当前切点动点标签（与切线同门控：仅探索类模式呈现，含参讨论模式不渲染孤立切点）
+    if (
+      isPointValid &&
+      (mode === "monotonicity_point" || mode === "extrema_analysis")
+    ) {
       const pos = mathToDesign(x0, fx0, scale);
       items.push({
         key: "drag-p",
@@ -118,9 +120,10 @@ export const DerivativeMonotonicityScene: React.FC<
     }
 
     return items;
-  }, [extrema, isPointValid, x0, fx0, fpx0, scale]);
+  }, [extrema, isPointValid, x0, fx0, fpx0, scale, mode]);
 
-  // 计算区间阴影（增区间与减区间）
+  // 计算单调区间：投影为 x 轴色带（区间是 x 的属性，不是曲线下的面积，
+  // 填充曲线与 x 轴之间会被误读成 f(x) > 0 的解集）
   const intervalShadows = useMemo(() => {
     return monotonicIntervals.map((it, idx) => {
       // 避免 Infinity 导致渲染崩溃
@@ -132,22 +135,25 @@ export const DerivativeMonotonicityScene: React.FC<
       if (x2 - x1 < 1e-4) return null;
 
       const isInc = it.type === "increasing";
-      const fillColor = isInc
-        ? withAlpha(MATH_COLORS.vectorSecondary, 0.12)
-        : withAlpha(MATH_COLORS.paramPrimary, 0.12);
+      const bandColor = isInc
+        ? MATH_COLORS.vectorSecondary
+        : MATH_COLORS.paramPrimary;
 
       return (
-        <IntervalShadow
+        <line
           key={`shadow-${idx}-${x1}-${x2}`}
-          fn={fn}
-          x1={x1}
-          x2={x2}
-          scale={scale}
-          fillColor={fillColor}
+          x1={mathToDesign(x1, 0, scale).x}
+          y1={scale.originY}
+          x2={mathToDesign(x2, 0, scale).x}
+          y2={scale.originY}
+          stroke={bandColor}
+          strokeWidth={4}
+          strokeLinecap="round"
+          opacity={0.55}
         />
       );
     });
-  }, [monotonicIntervals, scale, fn]);
+  }, [monotonicIntervals, scale]);
 
   return (
     <g>
@@ -236,17 +242,19 @@ export const DerivativeMonotonicityScene: React.FC<
       ))}
 
       {/* 可拖拽切点动点 */}
-      {isPointValid && (
-        <InteractivePoint
-          cx={x0}
-          cy={fx0}
-          scale={scale}
-          vp={vp}
-          onDrag={handleDragPoint}
-          color={MATH_COLORS.tangentLine}
-          fontScale={fontScale}
-        />
-      )}
+      {/* 可拖拽切点动点（与切线同门控，避免含参讨论模式出现无切线的孤立切点） */}
+      {isPointValid &&
+        (mode === "monotonicity_point" || mode === "extrema_analysis") && (
+          <InteractivePoint
+            cx={x0}
+            cy={fx0}
+            scale={scale}
+            vp={vp}
+            onDrag={handleDragPoint}
+            color={MATH_COLORS.tangentLine}
+            fontScale={fontScale}
+          />
+        )}
 
       {/* 极简学术点标智能避让图层 */}
       <SceneLabelGroup items={labelItems} fontScale={fontScale} />

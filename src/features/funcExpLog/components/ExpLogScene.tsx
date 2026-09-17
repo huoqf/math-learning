@@ -13,6 +13,7 @@ import {
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS } from "@/theme";
 import { calculateExpLog, calculatePowerFunction } from "@/math/function";
+import { paramMeta } from "@/data/registries/funcExpLog";
 
 interface ExpLogSceneProps {
   params: Record<string, number>;
@@ -40,9 +41,12 @@ export function ExpLogScene({
   const powerAlpha = params.powerAlpha ?? 2.0;
 
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    // 对数模式下动态保护真数 x0 > 0.05
-    const clampedX =
-      funcType === "logarithmic" ? Math.max(0.1, mathPt.x) : mathPt.x;
+    // 边界从 paramMeta 读取（与左屏滑块同源）：对数模式下动态保护真数 x0 > 0.1
+    const lo =
+      funcType === "logarithmic"
+        ? Math.max(0.1, paramMeta.x0.min)
+        : paramMeta.x0.min;
+    const clampedX = Math.min(Math.max(lo, mathPt.x), paramMeta.x0.max);
     onParamChange("x0", Math.round(clampedX * 10) / 10);
   };
 
@@ -359,39 +363,39 @@ export function ExpLogScene({
         />
       )}
 
-      {/* 指数特征定点 (0, 1) */}
-      {isValidBase && (
-        <MathPoint
-          cx={0}
-          cy={1}
-          scale={scale}
-          variant="solid"
-          color={
-            funcType === "exponential"
-              ? MATH_COLORS.function
-              : showInverse
-                ? MATH_COLORS.functionTransformed
-                : undefined
-          }
-        />
-      )}
+      {/* 指数特征定点 (0, 1)：只在指数主曲线或对数模式的反函数曲线上出现 */}
+      {(funcType === "exponential" ||
+        (showInverse && funcType === "logarithmic")) &&
+        isValidBase && (
+          <MathPoint
+            cx={0}
+            cy={1}
+            scale={scale}
+            variant="solid"
+            color={
+              funcType === "exponential"
+                ? MATH_COLORS.function
+                : MATH_COLORS.functionTransformed
+            }
+          />
+        )}
 
-      {/* 对数特征定点 (1, 0) */}
-      {isValidBase && (
-        <MathPoint
-          cx={1}
-          cy={0}
-          scale={scale}
-          variant="solid"
-          color={
-            funcType === "logarithmic"
-              ? MATH_COLORS.function
-              : showInverse
-                ? MATH_COLORS.functionTransformed
-                : undefined
-          }
-        />
-      )}
+      {/* 对数特征定点 (1, 0)：只在对数主曲线或指数模式的反函数曲线上出现 */}
+      {(funcType === "logarithmic" ||
+        (showInverse && funcType === "exponential")) &&
+        isValidBase && (
+          <MathPoint
+            cx={1}
+            cy={0}
+            scale={scale}
+            variant="solid"
+            color={
+              funcType === "logarithmic"
+                ? MATH_COLORS.function
+                : MATH_COLORS.functionTransformed
+            }
+          />
+        )}
 
       {/* 切线可视化 */}
       {showTangent &&

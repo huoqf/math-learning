@@ -1,4 +1,4 @@
-import { MathPoint } from "@/components/Math";
+﻿import { MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { solveSSA } from "@/math/triangleSolve";
@@ -90,7 +90,7 @@ export function TriangleSolveSsaScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -123,7 +123,7 @@ export function TriangleSolveSsaScene({
               fontSize={fontScale(10)}
               fontWeight="bold"
               paintOrder="stroke"
-              stroke="white"
+              stroke={MATH_COLORS.white}
               strokeWidth={fontScale(3.5)}
               strokeLinejoin="round"
             >
@@ -167,7 +167,7 @@ export function TriangleSolveSsaScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(3.5)}
         strokeLinejoin="round"
       >
@@ -239,7 +239,7 @@ export function TriangleSolveSsaScene({
               fontWeight="bold"
               fontStyle="italic"
               paintOrder="stroke"
-              stroke="white"
+              stroke={MATH_COLORS.white}
               strokeWidth={fontScale(4)}
               strokeLinejoin="round"
             >
@@ -268,7 +268,7 @@ export function TriangleSolveSsaScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -283,7 +283,7 @@ export function TriangleSolveSsaScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >

@@ -86,15 +86,20 @@ export function TangentSandwichScene({
       );
     } else {
       const isOrigin = sandwichSubModel === "origin_sandwich";
-      const ptCommon = mathToDesign(isOrigin ? 0 : 1, isOrigin ? 0 : 1, scale);
-      items.push({
-        key: "pt-common-tangent",
-        x: ptCommon.x,
-        y: ptCommon.y,
-        text: isOrigin ? "O" : "T",
-        color: MATH_COLORS.paramTertiary,
-        preferredPlacement: "bottom-right",
-      });
+      /* 公切点落在原点时不再自绘 O 点标：CoordinateGrid 已在原点给出标准原点标识，
+         再标一个 O 会让画布上出现两个 O；该情形只保留网格的 O，不另加点标。
+         公切点在 (1,1) 的非原点情形照旧标 T。 */
+      if (!isOrigin) {
+        const ptCommon = mathToDesign(1, 1, scale);
+        items.push({
+          key: "pt-common-tangent",
+          x: ptCommon.x,
+          y: ptCommon.y,
+          text: "T",
+          color: MATH_COLORS.paramTertiary,
+          preferredPlacement: "bottom-right",
+        });
+      }
     }
 
     // 观察点垂直连线上下交点 P₁, P₂

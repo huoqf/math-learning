@@ -160,6 +160,7 @@ export function ZeroScene({
         x1={m}
         x2={n}
         scale={scale}
+        baseline={{ kind: "axis" }}
         fillColor={withAlpha(MATH_COLORS.function, 0.08)}
       />
 
@@ -170,6 +171,7 @@ export function ZeroScene({
           x1={currentStepLeft}
           x2={currentStepRight}
           scale={scale}
+          baseline={{ kind: "axis" }}
           fillColor={withAlpha(MATH_COLORS.paramTertiary, 0.2)}
         />
       )}
@@ -177,9 +179,9 @@ export function ZeroScene({
       {/* 4. 左边界 a 虚线辅助线、曲线上点 (a, f(a)) 与轴上控制点 */}
       <line
         x1={scale.originX + m * scale.scaleX}
-        y1={scale.originY - 4.5 * scale.scaleY}
+        y1={mathToDesign(m, scale.yMax, scale).y}
         x2={scale.originX + m * scale.scaleX}
-        y2={scale.originY + 4.5 * scale.scaleY}
+        y2={mathToDesign(m, scale.yMin, scale).y}
         stroke={MATH_COLORS.paramPrimary}
         strokeWidth={1.5}
         strokeDasharray="4 4"
@@ -220,9 +222,9 @@ export function ZeroScene({
       {/* 5. 右边界 b 虚线辅助线、曲线上点 (b, f(b)) 与轴上控制点 */}
       <line
         x1={scale.originX + n * scale.scaleX}
-        y1={scale.originY - 4.5 * scale.scaleY}
+        y1={mathToDesign(n, scale.yMax, scale).y}
         x2={scale.originX + n * scale.scaleX}
-        y2={scale.originY + 4.5 * scale.scaleY}
+        y2={mathToDesign(n, scale.yMin, scale).y}
         stroke={MATH_COLORS.paramSecondary}
         strokeWidth={1.5}
         strokeDasharray="4 4"
@@ -266,9 +268,9 @@ export function ZeroScene({
           {/* 中点竖向垂线 */}
           <line
             x1={scale.originX + currentMid * scale.scaleX}
-            y1={scale.originY - 4.5 * scale.scaleY}
+            y1={mathToDesign(currentMid, scale.yMax, scale).y}
             x2={scale.originX + currentMid * scale.scaleX}
-            y2={scale.originY + 4.5 * scale.scaleY}
+            y2={mathToDesign(currentMid, scale.yMin, scale).y}
             stroke={MATH_COLORS.paramTertiary}
             strokeWidth={1.75}
             strokeDasharray="2 2"

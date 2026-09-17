@@ -165,6 +165,7 @@ export function PropertiesDomainScene({
             scale={scale}
             x1={scale.xMin}
             x2={-0.05}
+            baseline={{ kind: "axis" }}
             fillColor={withAlpha(MATH_COLORS.functionTransformed, 0.12)}
           />
           <IntervalShadow
@@ -172,6 +173,7 @@ export function PropertiesDomainScene({
             scale={scale}
             x1={0.05}
             x2={scale.xMax}
+            baseline={{ kind: "axis" }}
             fillColor={withAlpha(MATH_COLORS.functionTransformed, 0.12)}
           />
           <Asymptote
@@ -197,6 +199,7 @@ export function PropertiesDomainScene({
           scale={scale}
           x1={0}
           x2={scale.xMax}
+          baseline={{ kind: "axis" }}
           fillColor={withAlpha(MATH_COLORS.functionTransformed, 0.12)}
         />
       ) : (
@@ -205,6 +208,7 @@ export function PropertiesDomainScene({
           scale={scale}
           x1={scale.xMin}
           x2={scale.xMax}
+          baseline={{ kind: "axis" }}
           fillColor={withAlpha(MATH_COLORS.functionTransformed, 0.1)}
         />
       )}

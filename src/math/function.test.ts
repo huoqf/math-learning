@@ -271,4 +271,28 @@ describe("solveBisection", () => {
     expect(res.validity).toBe(false);
     expect(res.warningMessage).toContain("要求左端点 m < 右端点 n");
   });
+
+  it("keeps the root when the left endpoint itself is a zero (f(a) === 0)", () => {
+    const fn = (x: number) => x; // 零点 0 恰为左端点
+    const res = solveBisection(fn, 0, 2, 8);
+    expect(res.hasZero).toBe(true);
+    // 修复前 f(left)*f(mid) === 0 走 else 分支，区间移向 [mid, 2]，把零点 0 丢掉；
+    // 修复后区间始终含零点 0 并向其收敛
+    expect(res.approxRoot).toBeGreaterThan(0);
+    expect(res.approxRoot).toBeLessThanOrEqual(res.errorBound);
+    const last = res.steps[res.steps.length - 1];
+    expect(last.left).toBe(0);
+    expect(last.right).toBeLessThanOrEqual(0.02);
+  });
+
+  it("keeps the root when the right endpoint itself is a zero (f(b) === 0)", () => {
+    const fn = (x: number) => x - 1; // 零点 1 恰为右端点
+    const res = solveBisection(fn, 0, 1, 8);
+    expect(res.hasZero).toBe(true);
+    // 区间始终含零点 1 并从左侧收敛
+    expect(res.approxRoot).toBeLessThan(1);
+    expect(1 - res.approxRoot).toBeLessThanOrEqual(res.errorBound);
+    const last = res.steps[res.steps.length - 1];
+    expect(last.right).toBe(1);
+  });
 });

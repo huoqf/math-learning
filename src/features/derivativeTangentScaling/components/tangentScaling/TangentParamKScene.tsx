@@ -53,6 +53,15 @@ export function TangentParamKScene({
     };
   }, [params.k, params.evalX, paramKSubModel]);
 
+  // 斜率手柄锚定：固定目标纵坐标（可见域上部约 45%，且不超过 y=2.8），
+  // 由 k 反推横坐标。原实现写死 (2.2, 2.2k)，k>2.7 时纵坐标超出可见域上限 6，
+  // 手柄消失导致无法继续拖拽调 k
+  const kHandleY = Math.min(scale.yMax * 0.45, 2.8);
+  const kHandleX = Math.min(
+    Math.max(kHandleY / Math.max(params.k, 0.1), 0.5),
+    Math.max(scale.xMax - 0.8, 0.5),
+  );
+
   // 智能避让点标收集
   const labelItems = useMemo<LabelItem[]>(() => {
     const items: LabelItem[] = [];
@@ -79,9 +88,10 @@ export function TangentParamKScene({
       });
     }
 
-    // 1. 动直线斜率旋转手柄 Q(2.2, 2.2k)
-    const slopeRefX = 2.2;
-    const ptSlope = mathToDesign(slopeRefX, params.k * slopeRefX, scale);
+    // 1. 动直线斜率旋转手柄 Q：标签锚定在手柄实际坐标 (kHandleX, kHandleY)，
+    // 与下方 InteractivePoint 完全同源。原实现按旧公式写死 (2.2, 2.2k)，
+    // k 较大时标签纵坐标飞出可见域（yMax=6），与留在画布内的手柄脱节
+    const ptSlope = mathToDesign(kHandleX, kHandleY, scale);
     items.push({
       key: "pt-slope-k",
       x: ptSlope.x,
@@ -103,7 +113,7 @@ export function TangentParamKScene({
     });
 
     return items;
-  }, [paramKData, params.k, params.evalX, scale]);
+  }, [paramKData, params.k, params.evalX, scale, kHandleX, kHandleY]);
 
   const ex = params.evalX;
   const yLine = params.k * ex;
@@ -200,8 +210,8 @@ export function TangentParamKScene({
 
       {/* 动直线斜率旋转手柄 Q_k (专职调节斜率 k，鲜红色与左屏 k 滑块 100% 绑定) */}
       <InteractivePoint
-        cx={2.2}
-        cy={2.2 * params.k}
+        cx={kHandleX}
+        cy={kHandleY}
         scale={scale}
         vp={vp}
         color={MATH_COLORS.paramPrimary}

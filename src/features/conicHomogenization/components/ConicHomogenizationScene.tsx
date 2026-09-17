@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
@@ -114,9 +114,9 @@ export const ConicHomogenizationScene: React.FC<
             {/* 平移 y' 轴 */}
             <line
               x1={posP.x}
-              y1={mathToDesign(P.x, -4.5, scale).y}
+              y1={mathToDesign(P.x, scale.yMin, scale).y}
               x2={posP.x}
-              y2={mathToDesign(P.x, 4.5, scale).y}
+              y2={mathToDesign(P.x, scale.yMax, scale).y}
             />
             {/* 辅助轴标签符合高中数学规范: x', y' */}
             <text
@@ -171,7 +171,7 @@ export const ConicHomogenizationScene: React.FC<
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
       >
         l

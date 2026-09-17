@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/features/trigIdentity/components/TrigIdentityScene.tsx
  * 纯 SVG 渲染：零硬编码颜色字号，完全遵循铁律
  */
@@ -369,7 +369,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             α
@@ -383,7 +383,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
             fill={MATH_COLORS.paramSecondary}
             textAnchor="middle"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={2.5}
           >
             cos α
@@ -396,7 +396,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
             fill={MATH_COLORS.paramPrimary}
             textAnchor={trig.cosVal >= 0 ? "start" : "end"}
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={2.5}
           >
             sin α
@@ -443,7 +443,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 textAnchor="middle"
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={2.5}
               >
                 S
@@ -720,7 +720,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 fill={MATH_COLORS.paramPrimary}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
               >
                 α
@@ -749,7 +749,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 fill={MATH_COLORS.paramSecondary}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
               >
                 β

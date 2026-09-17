@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -305,7 +305,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         fontWeight="bold"
         className="select-none"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={2}
       >
         I₁ = [0.5, 2.0]
@@ -341,7 +341,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         fontWeight="bold"
         className="select-none"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={2}
       >
         I₂ = [1.5, 3.0]
@@ -380,7 +380,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         fontWeight="bold"
         className="select-none"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
       >
         y = f(x)
@@ -424,7 +424,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         fontWeight="bold"
         className="select-none"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
       >
         y = g(x)
@@ -500,7 +500,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
             fontWeight="bold"
             className="select-none"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             {battleMeta.fBase}
@@ -519,7 +519,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
             fontWeight="bold"
             className="select-none"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             {battleMeta.gBase}
@@ -532,42 +532,84 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
 
           {/* Y 轴两侧高度差比较标尺（高中正统高低判定） */}
           <g>
-            {/* 标尺竖线 */}
-            <line
-              x1={ptYAxisF.x - 26}
-              y1={ptYAxisF.y}
-              x2={ptYAxisF.x - 26}
-              y2={ptYAxisG.y}
-              stroke={
-                isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
-              }
-              strokeWidth={2}
-            />
-            {/* 上下端点刻度短横线 */}
-            <line
-              x1={ptYAxisF.x - 30}
-              y1={ptYAxisF.y}
-              x2={ptYAxisF.x - 22}
-              y2={ptYAxisF.y}
-              stroke={
-                isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
-              }
-              strokeWidth={2}
-            />
-            <line
-              x1={ptYAxisF.x - 30}
-              y1={ptYAxisG.y}
-              x2={ptYAxisF.x - 22}
-              y2={ptYAxisG.y}
-              stroke={
-                isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
-              }
-              strokeWidth={2}
-            />
+            {/* 临界态（Δy≈0，两决策高度重合）：标尺长度退化为 0，
+                改画空心重合环作为非零几何载体，避免"零长度线段"无信息 */}
+            {Math.abs(ptYAxisF.y - ptYAxisG.y) < 2 ? (
+              <>
+                <circle
+                  cx={ptYAxisF.x - 26}
+                  cy={ptYAxisF.y}
+                  r={6}
+                  fill="none"
+                  stroke={
+                    isSatisfied
+                      ? MATH_COLORS.inequality
+                      : MATH_COLORS.degeneracy
+                  }
+                  strokeWidth={2}
+                  strokeDasharray="3 2"
+                />
+                <circle
+                  cx={ptYAxisF.x - 26}
+                  cy={ptYAxisF.y}
+                  r={2.2}
+                  fill={
+                    isSatisfied
+                      ? MATH_COLORS.inequality
+                      : MATH_COLORS.degeneracy
+                  }
+                />
+              </>
+            ) : (
+              <>
+                {/* 标尺竖线 */}
+                <line
+                  x1={ptYAxisF.x - 26}
+                  y1={ptYAxisF.y}
+                  x2={ptYAxisF.x - 26}
+                  y2={ptYAxisG.y}
+                  stroke={
+                    isSatisfied
+                      ? MATH_COLORS.inequality
+                      : MATH_COLORS.degeneracy
+                  }
+                  strokeWidth={2}
+                />
+                {/* 上下端点刻度短横线 */}
+                <line
+                  x1={ptYAxisF.x - 30}
+                  y1={ptYAxisF.y}
+                  x2={ptYAxisF.x - 22}
+                  y2={ptYAxisF.y}
+                  stroke={
+                    isSatisfied
+                      ? MATH_COLORS.inequality
+                      : MATH_COLORS.degeneracy
+                  }
+                  strokeWidth={2}
+                />
+                <line
+                  x1={ptYAxisF.x - 30}
+                  y1={ptYAxisG.y}
+                  x2={ptYAxisF.x - 22}
+                  y2={ptYAxisG.y}
+                  stroke={
+                    isSatisfied
+                      ? MATH_COLORS.inequality
+                      : MATH_COLORS.degeneracy
+                  }
+                  strokeWidth={2}
+                />
+              </>
+            )}
             {/* 高度差结论文本 */}
             <text
               x={ptYAxisF.x - 32}
-              y={(ptYAxisF.y + ptYAxisG.y) / 2 + 4}
+              y={
+                Math.abs(ptYAxisF.y - ptYAxisG.y) < 2
+                  ? ptYAxisF.y + 18
+                  : (ptYAxisF.y + ptYAxisG.y) / 2 + 4
+              }
               textAnchor="end"
               fill={
                 isSatisfied ? MATH_COLORS.inequality : MATH_COLORS.degeneracy
@@ -576,10 +618,14 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
               fontWeight="bold"
               className="select-none"
               paintOrder="stroke"
-              stroke="white"
+              stroke={MATH_COLORS.white}
               strokeWidth={3.5}
             >
-              {isSatisfied ? "Δy ≥ 0 (博弈成立)" : "Δy < 0 (条件违背)"}
+              {Math.abs(ptYAxisF.y - ptYAxisG.y) < 2
+                ? "Δy = 0 (临界相切)"
+                : isSatisfied
+                  ? "Δy ≥ 0 (博弈成立)"
+                  : "Δy < 0 (条件违背)"}
             </text>
           </g>
         </g>
@@ -615,37 +661,72 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
             pointerEvents="none"
           />
 
-          {/* 最危险点垂直差值高度线（同一 x=xmin 处的高度差） */}
-          <line
-            x1={ptDecisionF.x}
-            y1={ptDecisionF.y}
-            x2={ptDecisionG.x}
-            y2={ptDecisionG.y}
-            stroke={
-              res.isSameVarTrue
-                ? MATH_COLORS.inequality
-                : MATH_COLORS.degeneracy
-            }
-            strokeWidth={2.5}
-          />
-          {/* 上下端点 */}
-          <circle
-            cx={ptDecisionF.x}
-            cy={ptDecisionF.y}
-            r={3.2}
-            fill={MATH_COLORS.function}
-          />
-          <circle
-            cx={ptDecisionG.x}
-            cy={ptDecisionG.y}
-            r={3.2}
-            fill={MATH_COLORS.functionSecondary}
-          />
+          {/* 最危险点垂直差值高度线（同一 x=xmin 处的高度差）：
+              h(xmin)≈0 临界时线段长度退化为 0，改画重合空心环打点 */}
+          {Math.abs(ptDecisionF.y - ptDecisionG.y) < 2 ? (
+            <>
+              <circle
+                cx={ptDecisionF.x}
+                cy={ptDecisionF.y}
+                r={7}
+                fill="none"
+                stroke={
+                  res.isSameVarTrue
+                    ? MATH_COLORS.inequality
+                    : MATH_COLORS.degeneracy
+                }
+                strokeWidth={2}
+                strokeDasharray="3 2"
+              />
+              <circle
+                cx={ptDecisionF.x}
+                cy={ptDecisionF.y}
+                r={2.6}
+                fill={
+                  res.isSameVarTrue
+                    ? MATH_COLORS.inequality
+                    : MATH_COLORS.degeneracy
+                }
+              />
+            </>
+          ) : (
+            <>
+              <line
+                x1={ptDecisionF.x}
+                y1={ptDecisionF.y}
+                x2={ptDecisionG.x}
+                y2={ptDecisionG.y}
+                stroke={
+                  res.isSameVarTrue
+                    ? MATH_COLORS.inequality
+                    : MATH_COLORS.degeneracy
+                }
+                strokeWidth={2.5}
+              />
+              {/* 上下端点 */}
+              <circle
+                cx={ptDecisionF.x}
+                cy={ptDecisionF.y}
+                r={3.2}
+                fill={MATH_COLORS.function}
+              />
+              <circle
+                cx={ptDecisionG.x}
+                cy={ptDecisionG.y}
+                r={3.2}
+                fill={MATH_COLORS.functionSecondary}
+              />
+            </>
+          )}
 
           {/* 差函数最值标注 */}
           <text
             x={ptDecisionF.x + 8}
-            y={(ptDecisionF.y + ptDecisionG.y) / 2 + 4}
+            y={
+              Math.abs(ptDecisionF.y - ptDecisionG.y) < 2
+                ? ptDecisionF.y + 22
+                : (ptDecisionF.y + ptDecisionG.y) / 2 + 4
+            }
             textAnchor="start"
             fill={
               res.isSameVarTrue
@@ -656,10 +737,14 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
             fontWeight="bold"
             className="select-none"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
-            {res.isSameVarTrue ? "h(x) ≥ 0 (恒成立)" : "h(x) < 0 (违背)"}
+            {Math.abs(ptDecisionF.y - ptDecisionG.y) < 2
+              ? "h(x) = 0 (临界相切)"
+              : res.isSameVarTrue
+                ? "h(x) ≥ 0 (恒成立)"
+                : "h(x) < 0 (违背)"}
           </text>
 
           {/* 违背区间阴影（若有） */}
@@ -670,16 +755,8 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
                 x1={sameVarViolatedInterval[0]}
                 x2={sameVarViolatedInterval[1]}
                 scale={scale}
+                baseline={{ kind: "curve", fn: evalGDouble }}
                 fillColor={withAlpha(MATH_COLORS.degeneracy, 0.12)}
-                strokeColor={MATH_COLORS.degeneracy}
-                strokeWidth={1.5}
-              />
-              <IntervalShadow
-                fn={evalGDouble}
-                x1={sameVarViolatedInterval[0]}
-                x2={sameVarViolatedInterval[1]}
-                scale={scale}
-                fillColor={withAlpha(MATH_COLORS.degeneracy, 0.05)}
                 strokeColor={MATH_COLORS.degeneracy}
                 strokeWidth={1.5}
               />
@@ -698,7 +775,7 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
                 fontSize={fontScale(10)}
                 className="font-bold select-none"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
               >
                 违背区间 (f(x) &lt; g(x))

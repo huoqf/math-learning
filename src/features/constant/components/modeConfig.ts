@@ -81,8 +81,10 @@ export function buildParamConfigs({
           max = 5.0;
           description = "超越函数研究区间的右端点";
         } else if (key === "a") {
+          // 与 SingleVarPage.tsx 的左屏滑块严格同源（唯一事实源 registries/constant.ts
+          // 提供基础区间，超越分支的覆盖值两处必须一致，否则左右屏滑块范围分叉）
           min = -0.5;
-          max = 2.0;
+          max = 3.0;
           step = 0.02;
           description = "【主参数-红】目标水平直线 y = a 的位置";
           descriptionFormula = "【主参数-红】目标水平直线 $y = a$ 的位置";

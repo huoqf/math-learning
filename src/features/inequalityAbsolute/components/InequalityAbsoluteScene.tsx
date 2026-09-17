@@ -301,6 +301,7 @@ export const InequalityAbsoluteScene: React.FC<
               x1={interval.x1}
               x2={interval.x2}
               scale={scale}
+              baseline={{ kind: "axis" }}
               fillColor={withAlpha(MATH_COLORS.inequality, 0.15)}
               strokeColor="transparent"
             />

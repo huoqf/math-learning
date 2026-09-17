@@ -27,7 +27,7 @@ export interface TangentScalingParams {
 
 export const defaultParams: TangentScalingParams = {
   x0: 0,
-  evalX: 1.0,
+  evalX: 1.8,
   k: 1.0,
   intervalA: 0.5,
   intervalB: 2.5,
@@ -192,7 +192,9 @@ export function getPresetParams(
     }
     case "sandwich": {
       const isOrigin = options?.sandwichSubModel === "origin_sandwich";
-      return { evalX: isOrigin ? 0 : 1.0 };
+      // 默认观察点不设在相切点上（公切点 x=1 / 原点 x=0 处 Δy≡0，画面无信息），
+      // 退化临界帧留给用户主动拖到 marks 标注的切点处观察
+      return { evalX: isOrigin ? 0.8 : 1.8 };
     }
     case "param_k": {
       const sub = options?.paramKSubModel ?? "exp_log_k";

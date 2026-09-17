@@ -47,6 +47,11 @@ export function TransformScene({
   const transformParams = { h, k, A, omega, foldMode };
   const res = calculateTransform(fnType, transformParams);
 
+  // 本页把原点作为「原始特征点 O」与「变换后特征点 O′」成对自绘，
+  // 故网格不再重复标 O（同一个原点只留一个 O）；指数 / 对数基底下特征点不以 O 命名，
+  // 此时原点标识仍由网格给出 —— 两种情况都保证画布上「有且只有一个 O」。
+  const hasOwnOriginLabel = res.keyPoints.some((pt) => pt.name === "O");
+
   // 主控特征点（第 0 个特征点）的拖拽交互：直接绑定在函数图象的核心特征点上
   const primaryPt = res.keyPoints[0];
 
@@ -140,8 +145,13 @@ export function TransformScene({
 
   return (
     <g>
-      {/* 坐标轴网格: 纯净学术底色 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
+      {/* 坐标轴网格: 纯净学术底色 (原点 O 由本页特征点图层承担时不再重复标注) */}
+      <CoordinateGrid
+        scale={scale}
+        fontScale={fontScale}
+        showGrid={false}
+        showOriginLabel={!hasOwnOriginLabel}
+      />
 
       {/* 指数函数的水平渐近线辅助线 y = asymptoteY */}
       {asymptoteY !== null && (
@@ -160,9 +170,9 @@ export function TransformScene({
       {fnType === "log" && (
         <line
           x1={scale.originX + h * scale.scaleX}
-          y1={scale.originY - 5 * scale.scaleY}
+          y1={mathToDesign(h, scale.yMax, scale).y}
           x2={scale.originX + h * scale.scaleX}
-          y2={scale.originY + 5 * scale.scaleY}
+          y2={mathToDesign(h, scale.yMin, scale).y}
           stroke={withAlpha(MATH_COLORS.paramPrimary, 0.5)}
           strokeWidth={1.2}
           strokeDasharray="4 4"
@@ -173,9 +183,9 @@ export function TransformScene({
       {fnType === "quadratic" && foldMode === "none" && (
         <line
           x1={scale.originX + h * scale.scaleX}
-          y1={scale.originY - 5 * scale.scaleY}
+          y1={mathToDesign(h, scale.yMax, scale).y}
           x2={scale.originX + h * scale.scaleX}
-          y2={scale.originY + 5 * scale.scaleY}
+          y2={mathToDesign(h, scale.yMin, scale).y}
           stroke={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
           strokeWidth={1.2}
           strokeDasharray="4 4"
@@ -186,9 +196,9 @@ export function TransformScene({
       {foldMode === "input" && (
         <line
           x1={scale.originX + h * scale.scaleX}
-          y1={scale.originY - 5 * scale.scaleY}
+          y1={mathToDesign(h, scale.yMax, scale).y}
           x2={scale.originX + h * scale.scaleX}
-          y2={scale.originY + 5 * scale.scaleY}
+          y2={mathToDesign(h, scale.yMin, scale).y}
           stroke={withAlpha(MATH_COLORS.setB, 0.5)}
           strokeWidth={1.5}
           strokeDasharray="4 4"

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+﻿import React, { useMemo, useCallback } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -324,7 +324,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             textAnchor="middle"
             dominantBaseline="central"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             {deg2 >= 0 ? `+${deg2}°` : `${deg2}°`}

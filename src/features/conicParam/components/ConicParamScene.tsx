@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
@@ -263,10 +263,10 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
         <>
           {/* 准线 x = -p/2 */}
           <line
-            x1={mathToDesign(-p / 2, -6, scale).x}
-            y1={mathToDesign(-p / 2, -6, scale).y}
-            x2={mathToDesign(-p / 2, 6, scale).x}
-            y2={mathToDesign(-p / 2, 6, scale).y}
+            x1={mathToDesign(-p / 2, scale.yMin, scale).x}
+            y1={mathToDesign(-p / 2, scale.yMin, scale).y}
+            x2={mathToDesign(-p / 2, scale.yMax, scale).x}
+            y2={mathToDesign(-p / 2, scale.yMax, scale).y}
             stroke={withAlpha(MATH_COLORS.textMuted, 0.4)}
             strokeWidth={1.5}
             strokeDasharray="4 4"
@@ -517,7 +517,7 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             textAnchor="middle"
             dominantBaseline="central"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             strokeLinejoin="round"
             className="select-none pointer-events-none"

@@ -16,6 +16,7 @@ import {
   calculatePowerFunction,
   STANDARD_POWER_FUNCTIONS,
 } from "@/math/function";
+import { paramMeta } from "@/data/registries/funcExpLog";
 
 export interface PowerSceneProps {
   params: Record<string, number>;
@@ -43,7 +44,12 @@ export function PowerScene({
   const powerAlpha = params.powerAlpha ?? 2.0;
 
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    onParamChange("x0", Math.round(mathPt.x * 10) / 10);
+    // 边界从 paramMeta 读取（与左屏滑块同源）
+    const clampedX = Math.min(
+      Math.max(paramMeta.x0.min, mathPt.x),
+      paramMeta.x0.max,
+    );
+    onParamChange("x0", Math.round(clampedX * 10) / 10);
   };
 
   const powerRes = useMemo(
@@ -110,18 +116,9 @@ export function PowerScene({
       }
     }
 
-    // 3. 原点 O (当 α > 0 时为必过原点，偏移避免压轴)
-    if (powerAlpha > 0) {
-      const oPt = mathToDesign(-0.25, -0.28, scale);
-      items.push({
-        key: "origin-point",
-        text: "O",
-        x: oPt.x,
-        y: oPt.y,
-        color: MATH_COLORS.labelText,
-        preferredPlacement: "bottom-left",
-      });
-    }
+    // 3. 原点 O 不再自绘：CoordinateGrid 已在原点给出标准原点标识（含 α > 0 的必过原点情形），
+    //    再自绘一个偏移的 O 会让画布上出现两个 O。
+    //    原点位置由网格的 O 承担，该点本身由下方 MathPoint(cx=0, cy=0) 打出。
 
     // 4. α = 0 时的 (0, 1) 去心点说明
     if (powerAlpha === 0) {
@@ -213,9 +210,9 @@ export function PowerScene({
         <>
           <line
             x1={scale.originX + 2 * scale.scaleX}
-            y1={scale.originY - 5 * scale.scaleY}
+            y1={mathToDesign(2, scale.yMax, scale).y}
             x2={scale.originX + 2 * scale.scaleX}
-            y2={scale.originY + 4 * scale.scaleY}
+            y2={mathToDesign(2, scale.yMin, scale).y}
             stroke={MATH_COLORS.axis}
             strokeDasharray="4 4"
             strokeWidth={1.5}

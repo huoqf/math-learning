@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -147,7 +147,7 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
           fontWeight="600"
           className="select-none pointer-events-none"
           paintOrder="stroke"
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
         >
           Δx
@@ -162,7 +162,7 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
           fontWeight="600"
           className="select-none pointer-events-none"
           paintOrder="stroke"
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
         >
           Δy

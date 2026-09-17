@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   CoordinateGrid,
   InteractivePoint,
@@ -123,7 +123,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
           textAnchor="middle"
           dominantBaseline="central"
           paintOrder="stroke"
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
         >
           {`θ = ${angleDeg.toFixed(0)}°`}
@@ -173,7 +173,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
         fontSize={fontScale(13)}
         fontWeight="600"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
       >
         O
@@ -381,7 +381,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
                 fontSize={fontScale(14)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
               >
                 a ⊥ b (a · b = 0)

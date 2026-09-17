@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import {
   CoordinateGrid,
   Asymptote,
@@ -224,7 +224,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                 fontSize={fontScale(13)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
               >
                 a (斜边)
@@ -237,7 +237,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                 fontSize={fontScale(12)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
               >
                 b
@@ -250,7 +250,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                 fontSize={fontScale(12)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
               >
                 c
@@ -283,7 +283,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                   fontSize={fontScale(11)}
                   fontWeight="bold"
                   paintOrder="stroke"
-                  stroke="white"
+                  stroke={MATH_COLORS.white}
                   strokeWidth={3}
                 >
                   M(a, b)
@@ -333,7 +333,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             通径 L
@@ -386,7 +386,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             r₁
@@ -398,7 +398,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             r₂
@@ -411,7 +411,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             fontSize={fontScale(13)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             {Math.abs(focusTriangle.angleDeg - 90) < 1.5

@@ -76,15 +76,9 @@ export function TangentSecantScene({
   const labelItems = useMemo<LabelItem[]>(() => {
     const items: LabelItem[] = [];
     if (secantData.isTaylor) {
-      const pt0 = mathToDesign(0, 0, scale);
-      items.push({
-        key: "pt-taylor-0",
-        x: pt0.x,
-        y: pt0.y,
-        text: "O",
-        color: MATH_COLORS.paramTertiary,
-        preferredPlacement: "bottom-left",
-      });
+      /* 展开原点 (0,0) 不再自绘 O 点标：CoordinateGrid 已在原点给出标准原点标识，
+         再标一个 O 会让画布上出现两个 O。原点位置由网格的 O 承担，
+         该点本身仍由下方 MathPoint(cx=0, cy=0) 打出。 */
       const ptTaylor = mathToDesign(
         params.evalX,
         secantData.mainFn(params.evalX),

@@ -15,9 +15,12 @@ import {
   IntervalShadow,
   SceneLabelGroup,
 } from "@/components/Math";
+/* 调色板辅助是纯数据函数，不经 @/components/Math barrel（该 barrel 会被页面测试整体 mock） */
+import { dashArrayOf } from "@/components/Math/scenePalette";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { withAlpha } from "@/theme";
 import type { LabelItem } from "@/utils/labelOverlap";
+import { getEndpointPalette } from "../scenePalette";
 import {
   calcEndpointEffect,
   calcLHopital,
@@ -70,6 +73,15 @@ export const DerivativeEndpointTaylorScene: React.FC<
     [taylorBase, taylorOrder, params.xTest],
   );
 
+  // 4. 本模式调色板：图例与画布的唯一颜色 / 线型来源（见 ../scenePalette.ts）
+  const P = useMemo(() => getEndpointPalette(activeMode), [activeMode]);
+
+  // 5. 展开基准点 (0, f(0))：ln / sin 基底下 f(0) = 0，该点就是坐标原点本身。
+  //    此时画布不再另打一个点、也不再标 O（CoordinateGrid 已给出标准原点标识），
+  //    否则出现「O 标在非原点」与「一个原点两个 O」两种错。
+  const taylorBaseY = taylorRes.fn(0);
+  const taylorBaseIsOrigin = Math.abs(taylorBaseY) < 0.05;
+
   // 拖拽控制回调
   const handleTangentDrag = (pt: { x: number; y: number }) => {
     const dx = pt.x - endpointRes.x0;
@@ -104,9 +116,7 @@ export const DerivativeEndpointTaylorScene: React.FC<
           x: endPt.x,
           y: endPt.y,
           text: "P₀",
-          color: endpointRes.isSufficientValid
-            ? MATH_COLORS.focusPoint
-            : MATH_COLORS.vectorResult,
+          color: endpointRes.isSufficientValid ? P.p0.color : P.p0Invalid.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-left",
         },
@@ -115,7 +125,7 @@ export const DerivativeEndpointTaylorScene: React.FC<
           x: ctrlPt.x,
           y: ctrlPt.y,
           text: "T",
-          color: MATH_COLORS.paramPrimary,
+          color: P.ctrlT.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-right",
         },
@@ -134,7 +144,7 @@ export const DerivativeEndpointTaylorScene: React.FC<
           x: limitPt.x,
           y: limitPt.y,
           text: "L",
-          color: MATH_COLORS.focusPoint,
+          color: P.limitPt.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-left",
         },
@@ -143,38 +153,51 @@ export const DerivativeEndpointTaylorScene: React.FC<
           x: currPt.x,
           y: currPt.y,
           text: "P",
-          color: MATH_COLORS.paramPrimary,
+          color: P.currP.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-right",
         },
       ];
       return items;
     } else {
-      const originPt = mathToDesign(0, taylorRes.fn(0), scale);
       const testPt = mathToDesign(taylorRes.xCurr, taylorRes.pxVal, scale);
       const items: LabelItem[] = [
-        {
-          key: "originO",
-          x: originPt.x,
-          y: originPt.y,
-          text: "O",
-          color: MATH_COLORS.focusPoint,
-          fontSize: fontScale(12),
-          preferredPlacement: "bottom-left",
-        },
         {
           key: "pTest",
           x: testPt.x,
           y: testPt.y,
           text: "P",
-          color: MATH_COLORS.paramPrimary,
+          color: P.testP.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-right",
         },
       ];
+      // 展开基准点 (0, f(0))：ln / sin 基底下即坐标原点，不再另标（否则与网格自带的 O 重影）
+      if (!taylorBaseIsOrigin) {
+        const basePt = mathToDesign(0, taylorBaseY, scale);
+        items.unshift({
+          key: "basePt",
+          x: basePt.x,
+          y: basePt.y,
+          text: `(0, ${taylorBaseY})`,
+          color: P.basePt.color,
+          fontSize: fontScale(12),
+          preferredPlacement: "bottom-left",
+        });
+      }
       return items;
     }
-  }, [activeMode, endpointRes, lhopitalRes, taylorRes, scale, fontScale]);
+  }, [
+    activeMode,
+    P,
+    taylorBaseIsOrigin,
+    taylorBaseY,
+    endpointRes,
+    lhopitalRes,
+    taylorRes,
+    scale,
+    fontScale,
+  ]);
 
   return (
     <g>
@@ -189,7 +212,8 @@ export const DerivativeEndpointTaylorScene: React.FC<
               x1={endpointRes.x0}
               x2={Math.min(endpointRes.x0 + 2.5, scale.xMax)}
               scale={scale}
-              fillColor={withAlpha(MATH_COLORS.vectorResult, 0.18)}
+              baseline={{ kind: "axis" }}
+              fillColor={withAlpha(P.invalidZone.color, 0.18)}
               strokeColor="transparent"
             />
           )}
@@ -198,17 +222,17 @@ export const DerivativeEndpointTaylorScene: React.FC<
           <FunctionGraph
             fn={endpointRes.tangentFn}
             scale={scale}
-            color={MATH_COLORS.paramSecondary}
-            strokeWidth={1.8}
-            strokeDasharray="5 4"
+            color={P.tangent.color}
+            strokeWidth={P.tangent.width}
+            strokeDasharray={dashArrayOf(P.tangent)}
           />
 
           {/* 原函数 (严格限定客观数学定义域，杜绝越界) */}
           <FunctionGraph
             fn={endpointRes.fn}
             scale={scale}
-            color={MATH_COLORS.function}
-            strokeWidth={2.8}
+            color={P.fn.color}
+            strokeWidth={P.fn.width}
             domain={
               endpointType === "xln"
                 ? [0.01, scale.xMax]
@@ -224,9 +248,7 @@ export const DerivativeEndpointTaylorScene: React.FC<
             cy={endpointRes.f0}
             scale={scale}
             color={
-              endpointRes.isSufficientValid
-                ? MATH_COLORS.focusPoint
-                : MATH_COLORS.vectorResult
+              endpointRes.isSufficientValid ? P.p0.color : P.p0Invalid.color
             }
             fontScale={fontScale}
           />
@@ -238,7 +260,7 @@ export const DerivativeEndpointTaylorScene: React.FC<
             scale={scale}
             vp={vp}
             onDrag={handleTangentDrag}
-            color={MATH_COLORS.paramPrimary}
+            color={P.ctrlT.color}
             r={6}
             fontScale={fontScale}
           />
@@ -254,27 +276,38 @@ export const DerivativeEndpointTaylorScene: React.FC<
             y1={mathToDesign(scale.xMin, 0.5, scale).y}
             x2={mathToDesign(scale.xMax, 0.5, scale).x}
             y2={mathToDesign(scale.xMax, 0.5, scale).y}
-            stroke={MATH_COLORS.tangentLine}
-            strokeWidth={1.5}
-            strokeDasharray="4 4"
+            stroke={P.limitLine.color}
+            strokeWidth={P.limitLine.width}
+            strokeDasharray={dashArrayOf(P.limitLine)}
           />
 
           {/* 分子函数 */}
           <FunctionGraph
             fn={(x) => Math.exp(x) - 1 - x}
             scale={scale}
-            color={MATH_COLORS.vectorResult}
-            strokeWidth={1.8}
-            strokeDasharray="3 3"
+            color={P.numerator.color}
+            strokeWidth={P.numerator.width}
+            strokeDasharray={dashArrayOf(P.numerator)}
           />
 
           {/* 分母函数 */}
           <FunctionGraph
             fn={(x) => x * x}
             scale={scale}
-            color={MATH_COLORS.paramSecondary}
-            strokeWidth={1.8}
-            strokeDasharray="3 3"
+            color={P.denominator.color}
+            strokeWidth={P.denominator.width}
+            strokeDasharray={dashArrayOf(P.denominator)}
+          />
+
+          {/* 导数之比 N'(x)/D'(x) = (e^x - 1)/(2x)：
+              洛必达法则的核心对象，图例早已声明、原画布却漏画，现按图例补齐。
+              x = 0 处不可达值与原式曲线同一约定，配合空心点 L 表达「趋近但不取到」。 */}
+          <FunctionGraph
+            fn={(x) => (Math.abs(x) < 1e-4 ? 0.5 : (Math.exp(x) - 1) / (2 * x))}
+            scale={scale}
+            color={P.dRatio.color}
+            strokeWidth={P.dRatio.width}
+            strokeDasharray={dashArrayOf(P.dRatio)}
           />
 
           {/* 比值函数 */}
@@ -283,8 +316,8 @@ export const DerivativeEndpointTaylorScene: React.FC<
               Math.abs(x) < 1e-4 ? 0.5 : (Math.exp(x) - 1 - x) / (x * x)
             }
             scale={scale}
-            color={MATH_COLORS.function}
-            strokeWidth={2.8}
+            color={P.ratio.color}
+            strokeWidth={P.ratio.width}
           />
 
           {/* 极限空心点 L */}
@@ -293,7 +326,7 @@ export const DerivativeEndpointTaylorScene: React.FC<
             cy={lhopitalRes.limitVal}
             scale={scale}
             variant="hollow"
-            color={MATH_COLORS.focusPoint}
+            color={P.limitPt.color}
             fontScale={fontScale}
           />
 
@@ -304,7 +337,7 @@ export const DerivativeEndpointTaylorScene: React.FC<
             scale={scale}
             vp={vp}
             onDrag={handleCurrDrag}
-            color={MATH_COLORS.paramPrimary}
+            color={P.currP.color}
             r={6}
             fontScale={fontScale}
           />
@@ -318,18 +351,18 @@ export const DerivativeEndpointTaylorScene: React.FC<
           <FunctionGraph
             fn={taylorRes.fn}
             scale={scale}
-            color={MATH_COLORS.function}
-            strokeWidth={2.8}
+            color={P.base.color}
+            strokeWidth={P.base.width}
             domain={taylorBase === "ln" ? [-0.95, scale.xMax] : undefined}
           />
 
-          {/* 麦克劳林多项式 */}
+          {/* 麦克劳林多项式（基底函数的对比对象，用「对比函数」紫） */}
           <FunctionGraph
             fn={taylorRes.taylorFn}
             scale={scale}
-            color={MATH_COLORS.paramPrimary}
-            strokeWidth={2.2}
-            strokeDasharray="5 3"
+            color={P.poly.color}
+            strokeWidth={P.poly.width}
+            strokeDasharray={dashArrayOf(P.poly)}
           />
 
           {/* 垂直残差线段：连接 (x, f(x)) 与 (x, P_n(x)) */}
@@ -338,26 +371,28 @@ export const DerivativeEndpointTaylorScene: React.FC<
             y1={mathToDesign(taylorRes.xCurr, taylorRes.fxVal, scale).y}
             x2={mathToDesign(taylorRes.xCurr, taylorRes.pxVal, scale).x}
             y2={mathToDesign(taylorRes.xCurr, taylorRes.pxVal, scale).y}
-            stroke={MATH_COLORS.vectorResult}
-            strokeWidth={2}
-            strokeDasharray="3 2"
+            stroke={P.residual.color}
+            strokeWidth={P.residual.width}
+            strokeDasharray={dashArrayOf(P.residual)}
           />
 
-          {/* 展开基准点 O(0, f(0)) */}
-          <MathPoint
-            cx={0}
-            cy={taylorRes.fn(0)}
-            scale={scale}
-            color={MATH_COLORS.focusPoint}
-            fontScale={fontScale}
-          />
+          {/* 展开基准点 (0, f(0))：ln / sin 基底下与坐标原点重合，不再另打点（避免一个原点两个 O） */}
+          {!taylorBaseIsOrigin && (
+            <MathPoint
+              cx={0}
+              cy={taylorBaseY}
+              scale={scale}
+              color={P.basePt.color}
+              fontScale={fontScale}
+            />
+          )}
 
           {/* 原函数对应点 Pf(x, f(x)) */}
           <MathPoint
             cx={taylorRes.xCurr}
             cy={taylorRes.fxVal}
             scale={scale}
-            color={MATH_COLORS.function}
+            color={P.fxPt.color}
             fontScale={fontScale}
           />
 
@@ -368,7 +403,7 @@ export const DerivativeEndpointTaylorScene: React.FC<
             scale={scale}
             vp={vp}
             onDrag={handleTaylorTestDrag}
-            color={MATH_COLORS.paramPrimary}
+            color={P.testP.color}
             r={6}
             fontScale={fontScale}
           />

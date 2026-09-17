@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import { resolveLabelPlacements, type LabelItem } from "@/utils/labelOverlap";
 import { MATH_COLORS } from "@/theme";
 
@@ -40,7 +40,7 @@ export const SceneLabelGroup: React.FC<SceneLabelGroupProps> = ({
           fill={lbl.color ?? MATH_COLORS.labelText}
           fontSize={lbl.fontSize ?? fontScale(12)}
           fontWeight="bold"
-          stroke="#ffffff"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
           strokeLinejoin="round"
           paintOrder="stroke"

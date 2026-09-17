@@ -13,7 +13,7 @@ export const defaultParams = {
   d: 0,
   x0: 1.0,
   x1: -1.5,
-  x2: 1.5,
+  x2: 2.5,
 };
 
 export const paramMeta: Record<string, ParamMeta> = {
@@ -95,7 +95,9 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "x2",
     label: "割线右端点 x2",
     labelFormula: `\\text{割线右端点 } \\color{${MATH_COLORS.paramTertiary}}{x_2}`,
-    defaultValue: 1.5,
+    // 默认不与 x1 关于原点对称：cubic 默认参数是奇函数，对称取点会使弦中点
+    // 与弧中点恒重合（Δy≡0），画面零信息；非对称默认帧才有琴生差异可观察
+    defaultValue: 2.5,
     min: -4,
     max: 4,
     step: 0.1,

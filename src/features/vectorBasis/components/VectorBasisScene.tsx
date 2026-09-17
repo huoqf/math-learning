@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   CoordinateGrid,
   VectorArrow,
@@ -428,7 +428,7 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   textAnchor="middle"
                   dominantBaseline="central"
                   paintOrder="stroke"
-                  stroke="white"
+                  stroke={MATH_COLORS.white}
                   strokeWidth={3}
                 >
                   x'
@@ -453,7 +453,7 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   textAnchor="middle"
                   dominantBaseline="central"
                   paintOrder="stroke"
-                  stroke="white"
+                  stroke={MATH_COLORS.white}
                   strokeWidth={3}
                 >
                   y'
@@ -603,7 +603,7 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   fontSize={fontScale(11)}
                   fill={MATH_COLORS.limitPoint}
                   paintOrder="stroke"
-                  stroke="white"
+                  stroke={MATH_COLORS.white}
                   strokeWidth={3}
                   dominantBaseline="central"
                 >
@@ -643,7 +643,7 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   }
                   fontWeight="bold"
                   paintOrder="stroke"
-                  stroke="white"
+                  stroke={MATH_COLORS.white}
                   strokeWidth={3}
                   dominantBaseline="central"
                 >
@@ -799,7 +799,7 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   fontWeight="bold"
                   fontStyle="italic"
                   paintOrder="stroke"
-                  stroke="white"
+                  stroke={MATH_COLORS.white}
                   strokeWidth={3}
                 >
                   M (中点)
@@ -827,7 +827,7 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   fontWeight="bold"
                   fontStyle="italic"
                   paintOrder="stroke"
-                  stroke="white"
+                  stroke={MATH_COLORS.white}
                   strokeWidth={3}
                 >
                   G (重心)

@@ -1,4 +1,4 @@
-import { InteractivePoint, MathPoint } from "@/components/Math";
+﻿import { InteractivePoint, MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
@@ -240,7 +240,7 @@ export function TriangleSolveScene({
           fontWeight="bold"
           fontStyle="italic"
           paintOrder="stroke"
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={fontScale(4)}
           strokeLinejoin="round"
         >
@@ -257,7 +257,7 @@ export function TriangleSolveScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -273,7 +273,7 @@ export function TriangleSolveScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -310,7 +310,7 @@ export function TriangleSolveScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -325,7 +325,7 @@ export function TriangleSolveScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -340,7 +340,7 @@ export function TriangleSolveScene({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >

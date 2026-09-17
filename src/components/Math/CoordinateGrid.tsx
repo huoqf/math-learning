@@ -7,6 +7,12 @@ interface CoordinateGridProps {
   scale: SceneScale;
   showGrid?: boolean;
   showLabels?: boolean;
+  /**
+   * 是否由网格标注原点 O（默认 true）。
+   * 页面若自绘原点标识（例如变换页把原点作为「原始特征点 O」与「变换后特征点 O′」成对呈现），
+   * 必须传 false，否则同一个原点会出现两个 O。
+   */
+  showOriginLabel?: boolean;
   xStep?: number;
   yStep?: number;
   /** 字号缩放函数，默认原样返回 */
@@ -25,6 +31,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   scale,
   showGrid = false, // 默认纯净高中数学坐标系 (无背景虚线方格干扰)
   showLabels = true,
+  showOriginLabel = true,
   xStep = 1,
   yStep = 1,
   fontScale = (v) => v,
@@ -163,7 +170,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     }
 
     // 绘制原点 'O' (标准高中数学坐标原点标识，位于第三象限左下角)
-    if (showLabels) {
+    // 页面若自绘原点标识则传 showOriginLabel=false，避免同一原点出现两个 O
+    if (showLabels && showOriginLabel) {
       const ptZero = mathToDesign(0, 0, scale);
       elements.push(
         <text
@@ -183,7 +191,18 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     }
 
     return elements;
-  }, [scale, showLabels, xStep, yStep, xMin, xMax, yMin, yMax, fontScale]);
+  }, [
+    scale,
+    showLabels,
+    showOriginLabel,
+    xStep,
+    yStep,
+    xMin,
+    xMax,
+    yMin,
+    yMax,
+    fontScale,
+  ]);
 
   // 坐标轴两端主线及其端点
   const xAxisStart = mathToDesign(xMin, 0, scale);

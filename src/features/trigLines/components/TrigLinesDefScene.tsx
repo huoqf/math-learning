@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/features/trigLines/components/TrigLinesDefScene.tsx
  * 模式「lines」：三角函数线定义演化。零物理公式、零硬编码颜色字号，完全遵循铁律。
  * 仅由 TrigLinesScene 在 studyMode === "lines" 时渲染。
@@ -344,7 +344,7 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
         fontSize={fontScale(11)}
         fontWeight="600"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
         className="select-none pointer-events-none"
       >
@@ -359,7 +359,7 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
           fontWeight="bold"
           textAnchor="middle"
           paintOrder="stroke"
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
           className="select-none pointer-events-none"
         >
@@ -410,7 +410,7 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
         fontWeight="bold"
         textAnchor={cosVal >= 0 ? "start" : "end"}
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
         className="select-none pointer-events-none"
       >

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/features/trigLines/components/TrigLinesComparisonScene.tsx
  * 模式「comparison」：面积放缩与不等式。零物理公式、零硬编码颜色字号，完全遵循铁律。
  * 仅由 TrigLinesScene 在 studyMode === "comparison" 时渲染。
@@ -210,7 +210,7 @@ export const TrigLinesComparisonScene: React.FC<
         fontSize={fontScale(11)}
         fontWeight="600"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
         className="select-none pointer-events-none"
       >
@@ -224,7 +224,7 @@ export const TrigLinesComparisonScene: React.FC<
         fontWeight="bold"
         textAnchor="middle"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={3}
         className="select-none pointer-events-none"
       >

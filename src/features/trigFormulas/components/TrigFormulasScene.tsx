@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   CoordinateGrid,
   InteractivePoint,
@@ -182,7 +182,7 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
           fontSize={fontScale(11)}
           fontWeight="bold"
           paintOrder="stroke"
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
         >
           弦 AB
@@ -287,7 +287,7 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
             fill={MATH_COLORS.paramTertiary}
             fontSize={fontScale(11)}
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             中轴 y = 0.5

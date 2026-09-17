@@ -31,8 +31,20 @@ interface TangentScalingSceneProps {
  * 数据解算、避让点标与渲染已下沉到 tangentScaling/ 下的独立子场景。
  */
 export function TangentScalingScene(props: TangentScalingSceneProps) {
-  if (props.mode === "base") return <TangentBaseScene {...props} />;
-  if (props.mode === "sandwich") return <TangentSandwichScene {...props} />;
-  if (props.mode === "param_k") return <TangentParamKScene {...props} />;
-  return <TangentSecantScene {...props} />;
+  switch (props.mode) {
+    case "base":
+      return <TangentBaseScene {...props} />;
+    case "sandwich":
+      return <TangentSandwichScene {...props} />;
+    case "param_k":
+      return <TangentParamKScene {...props} />;
+    case "secant":
+      return <TangentSecantScene {...props} />;
+    default: {
+      // 显式失败：静默回落会把未知模式的参数塞进割切场景，渲染出误导性画面
+      throw new Error(
+        `TangentScalingScene: unknown mode "${String(props.mode)}"`,
+      );
+    }
+  }
 }

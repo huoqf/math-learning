@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+﻿import React, { useMemo, useCallback } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -129,7 +129,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       entries.push(
         {
           key: "min",
-          text: "极小值",
+          text: `极小值 (${sepResult.xFMin.toFixed(2)}, ${sepResult.fMin.toFixed(2)})`,
           x: ptMin.x,
           y: ptMin.y,
           anchor: "middle",
@@ -137,7 +137,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         },
         {
           key: "max",
-          text: "极大值",
+          text: `极大值 (${sepResult.xFMax.toFixed(2)}, ${sepResult.fMax.toFixed(2)})`,
           x: ptMax.x,
           y: ptMax.y,
           anchor: "middle",
@@ -148,7 +148,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       const ptMin = mathToDesign(directResult.xFMin, directResult.fMin, scale);
       entries.push({
         key: "min",
-        text: "极小值",
+        text: `极小值 (${directResult.xFMin.toFixed(2)}, ${directResult.fMin.toFixed(2)})`,
         x: ptMin.x,
         y: ptMin.y,
         anchor: "middle",
@@ -202,7 +202,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     return avoidLabels(entries, { fontScale });
   }, [m, n, a, a_axis, isSep, isCollapsed, isTrans, scale, fontScale]);
 
-  // 3. 水平线 y = a (仅在 sep 模式)
+  // 3. 水平线 y = a (仅在 sep 模式)：标签带当前数值，拖拽 a 时实时跟随
   const sepHorizontalLine = useMemo(() => {
     if (!isSep || isCollapsed) return null;
 
@@ -212,7 +212,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         value={a}
         scale={scale}
         color={MATH_COLORS.paramPrimary}
-        label="y = a"
+        label={`y = ${a.toFixed(1)}`}
         fontScale={fontScale}
       />
     );
@@ -265,6 +265,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           x1={vStart}
           x2={vEnd}
           scale={scale}
+          baseline={isSep ? { kind: "horizontal", y: a } : { kind: "axis" }}
           fillColor={withAlpha(MATH_COLORS.degeneracy, 0.12)}
           strokeColor={MATH_COLORS.degeneracy}
           strokeWidth={2}
@@ -283,6 +284,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     );
   }, [
     isSep,
+    a,
     sepResult,
     directResult,
     scale,
@@ -463,6 +465,38 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         <g>
           {isSep ? (
             <g>
+              {/* 临界相切反馈：a 恰好压在最小值上时，水平线与曲线相切，
+                  在切点处给非零几何载体（空心环）与正反馈文案 */}
+              {Math.abs(a - sepResult.fMin) < 0.05 && (
+                <g>
+                  <circle
+                    cx={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).x}
+                    cy={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).y}
+                    r={9}
+                    fill="none"
+                    stroke={MATH_COLORS.degeneracy}
+                    strokeWidth={2}
+                    strokeDasharray="3 2"
+                  />
+                  <text
+                    x={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).x}
+                    y={
+                      mathToDesign(sepResult.xFMin, sepResult.fMin, scale).y +
+                      24
+                    }
+                    textAnchor="middle"
+                    fill={MATH_COLORS.degeneracy}
+                    fontSize={fontScale(10)}
+                    fontWeight="bold"
+                    className="select-none"
+                    paintOrder="stroke"
+                    stroke={MATH_COLORS.white}
+                    strokeWidth={3}
+                  >
+                    临界：y = {a.toFixed(1)} 恰与曲线相切
+                  </text>
+                </g>
+              )}
               <MathPoint
                 cx={sepResult.xFMin}
                 cy={sepResult.fMin}

@@ -1,4 +1,4 @@
-import { mathToDesign } from "@/utils/coordinate";
+﻿import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type {
   TriangleSolveResult,
@@ -122,7 +122,7 @@ export function TriangleBisectorZone({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -147,7 +147,7 @@ export function TriangleBisectorZone({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -170,7 +170,7 @@ export function TriangleBisectorZone({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -192,7 +192,7 @@ export function TriangleBisectorZone({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >

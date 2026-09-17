@@ -18,6 +18,7 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ZeroScene } from "./components/ZeroScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
+import { solveBisection } from "@/math/function";
 import {
   defaultParams,
   paramMeta,
@@ -144,9 +145,16 @@ export function FuncZeroAnimation() {
     };
   }, [m, n, steps, currentModel.name, currentModel.formula, modelKey]);
 
+  // 与 ZeroScene 同参同解算：端点同号（无零点）时画布不渲染二分元素，
+  // 图例必须同步隐藏"二分中点 c_k"与"收敛误差区间"，避免图文脱节
+  const hasZero = useMemo(
+    () => solveBisection(currentModel.fn, m, n, steps).hasZero,
+    [currentModel.fn, m, n, steps],
+  );
+
   // 图例说明项（精简几何语义）
   const legendItems: SceneLegendItem[] = useMemo(() => {
-    return [
+    const items: SceneLegendItem[] = [
       {
         formula: currentModel.formula.split("=")[0],
         color: MATH_COLORS.function,
@@ -157,18 +165,23 @@ export function FuncZeroAnimation() {
         color: MATH_COLORS.paramPrimary,
         style: "dash",
       },
-      {
-        label: `二分中点 c_{${steps}}`,
-        color: MATH_COLORS.paramTertiary,
-        style: "point",
-      },
-      {
-        label: "收敛误差区间",
-        color: MATH_COLORS.paramTertiary,
-        style: "area",
-      },
     ];
-  }, [currentModel.formula, steps]);
+    if (hasZero) {
+      items.push(
+        {
+          label: `二分中点 c_{${steps}}`,
+          color: MATH_COLORS.paramTertiary,
+          style: "point",
+        },
+        {
+          label: "收敛误差区间",
+          color: MATH_COLORS.paramTertiary,
+          style: "area",
+        },
+      );
+    }
+    return items;
+  }, [currentModel.formula, steps, hasZero]);
 
   return (
     <ThreePanel

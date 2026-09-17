@@ -5,6 +5,13 @@ import {
   calculateWarnerModel,
 } from "@/math/probabilityBayes";
 
+// 完备事件组分区的固定配色（模块级常量：引用稳定，不进入 useMemo 依赖）
+const partitionColors = [
+  MATH_COLORS.paramPrimary,
+  MATH_COLORS.paramSecondary,
+  MATH_COLORS.paramTertiary,
+];
+
 interface TotalProbSceneProps {
   params: Record<string, number>;
   totalScenario?: "free" | "factory3" | "balanced" | "warner";
@@ -89,12 +96,6 @@ export function TotalProbScene({
   const startX = 45;
   const startY = 70;
   const treemapHeight = 420;
-
-  const partitionColors = [
-    MATH_COLORS.paramPrimary,
-    MATH_COLORS.paramSecondary,
-    MATH_COLORS.paramTertiary,
-  ];
 
   // 计算各分区在 Treemap 中的宽度与起点
   const partitionLayouts = useMemo(() => {

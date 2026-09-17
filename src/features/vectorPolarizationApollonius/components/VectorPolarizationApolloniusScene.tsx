@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/features/vectorPolarizationApollonius/components/VectorPolarizationApolloniusScene.tsx
  * 向量极化恒等式与阿波罗尼斯圆纯 SVG 画布场景渲染
  */
@@ -127,7 +127,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
@@ -150,7 +150,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
@@ -173,7 +173,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
@@ -199,7 +199,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(13)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
@@ -214,7 +214,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(11)}
             fontWeight="600"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
@@ -269,7 +269,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 fontSize={fontScale(11)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
                 className="select-none pointer-events-none"
               >
@@ -292,7 +292,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 fontSize={fontScale(11)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
                 className="select-none pointer-events-none"
               >
@@ -321,7 +321,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                     fontSize={fontScale(11)}
                     fontWeight="bold"
                     paintOrder="stroke"
-                    stroke="white"
+                    stroke={MATH_COLORS.white}
                     strokeWidth={3}
                     className="select-none pointer-events-none"
                   >
@@ -370,7 +370,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
@@ -393,7 +393,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
@@ -416,7 +416,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
@@ -441,7 +441,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 fontSize={fontScale(11)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
                 className="select-none pointer-events-none"
               >
@@ -490,7 +490,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 fontSize={fontScale(11)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
                 className="select-none pointer-events-none"
               >
@@ -512,7 +512,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 fontSize={fontScale(11)}
                 fontWeight="bold"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={3}
                 className="select-none pointer-events-none"
               >
@@ -540,7 +540,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             fontSize={fontScale(13)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
             className="select-none pointer-events-none"
           >

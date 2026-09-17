@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/features/conicDefinition/components/ConicDefinitionScene.tsx
  * 纯 SVG 渲染，严格遵循项目规范：
  * - 纯净坐标系 showGrid={false}，无多余网格干扰
@@ -116,7 +116,7 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
             fontSize={fontScale(12)}
             fontWeight="bold"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
             准线 l (x = {directrixLine.x.toFixed(1)})
@@ -230,7 +230,7 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
           fontWeight="bold"
           textAnchor="middle"
           paintOrder="stroke"
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
           strokeLinejoin="round"
         >

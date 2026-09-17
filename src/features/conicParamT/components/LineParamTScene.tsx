@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -473,7 +473,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
           textAnchor="middle"
           dominantBaseline="central"
           paintOrder="stroke"
-          stroke="white"
+          stroke={MATH_COLORS.white}
           strokeWidth={3}
           strokeLinejoin="round"
           className="select-none pointer-events-none"

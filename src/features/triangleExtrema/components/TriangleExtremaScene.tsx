@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
@@ -122,7 +122,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -158,7 +158,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -188,7 +188,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -211,7 +211,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -267,7 +267,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(3.5)}
         strokeLinejoin="round"
       >
@@ -282,7 +282,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(3.5)}
         strokeLinejoin="round"
       >
@@ -311,7 +311,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -326,7 +326,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             fontWeight="bold"
             fontStyle="italic"
             paintOrder="stroke"
-            stroke="white"
+            stroke={MATH_COLORS.white}
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
@@ -349,7 +349,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
                 fontWeight="bold"
                 textAnchor="middle"
                 paintOrder="stroke"
-                stroke="white"
+                stroke={MATH_COLORS.white}
                 strokeWidth={fontScale(4)}
               >
                 ⚠️ 非锐角状态 (角 B ∈ ({acuteRange.minAngleB.toFixed(0)}°,{" "}
@@ -387,7 +387,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
                     fontWeight="bold"
                     fontStyle="italic"
                     paintOrder="stroke"
-                    stroke="white"
+                    stroke={MATH_COLORS.white}
                     strokeWidth={fontScale(3.5)}
                     strokeLinejoin="round"
                   >
@@ -472,7 +472,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontStyle="italic"
         textAnchor="middle"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -486,7 +486,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -501,7 +501,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -519,7 +519,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -553,7 +553,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >
@@ -583,7 +583,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         fontWeight="bold"
         fontStyle="italic"
         paintOrder="stroke"
-        stroke="white"
+        stroke={MATH_COLORS.white}
         strokeWidth={fontScale(4)}
         strokeLinejoin="round"
       >

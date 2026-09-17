@@ -44,7 +44,13 @@ export function SecondDerivativeAnimation() {
     if (mode === "concavity") {
       setParams((prev) => ({ ...prev, x0: 1.0 }));
     } else if (mode === "jensen") {
-      setParams((prev) => ({ ...prev, x1: -1.5, x2: 1.5 }));
+      // 与 registries/secondDerivative.ts 默认值同源：x1/x2 不关于原点对称，
+      // 对称取点在默认奇函数模型上弦中点与弧中点恒重合（Δy≡0），画面零信息
+      setParams((prev) => ({
+        ...prev,
+        x1: defaultParams.x1,
+        x2: defaultParams.x2,
+      }));
     }
   };
 
@@ -81,10 +87,13 @@ export function SecondDerivativeAnimation() {
 
   // 7. 参数改变处理器
   const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setParams((prev) => {
+      const next = { ...prev, [key]: value };
+      // x1/x2 互斥约束与中屏拖拽一致（间距 ≥ 0.2），防止左屏滑块拖出 x1 ≥ x2
+      if (key === "x1") next.x1 = Math.min(value, next.x2 - 0.2);
+      if (key === "x2") next.x2 = Math.max(value, next.x1 + 0.2);
+      return next;
+    });
   };
 
   // 重置参数

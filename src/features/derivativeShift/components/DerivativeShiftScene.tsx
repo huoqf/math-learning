@@ -17,9 +17,13 @@ import {
   IntervalShadow,
   SceneLabelGroup,
 } from "@/components/Math";
+/* 调色板辅助是纯数据函数，不经 @/components/Math barrel（该 barrel 会被页面测试整体 mock） */
+import { dashArrayOf } from "@/components/Math/scenePalette";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { withAlpha } from "@/theme";
 import type { LabelItem } from "@/utils/labelOverlap";
+import { getShiftPalette } from "../scenePalette";
+import { paramMeta } from "@/data/registries/derivativeShift";
 import { ShiftPanoramaAxis } from "./ShiftPanoramaAxis";
 import {
   solveImplicitZero,
@@ -52,6 +56,9 @@ export function DerivativeShiftScene({
   const k = params.k ?? 0.25;
   const x1Param = params.x1 ?? 0.3;
   const x2Param = params.x2 ?? 3.5;
+
+  // 本模式调色板：图例与画布的唯一颜色 / 线型来源（见 ../scenePalette.ts）
+  const P = useMemo(() => getShiftPalette(activeMode), [activeMode]);
 
   // 1. 隐零点计算
   const izResult = useMemo(
@@ -153,7 +160,7 @@ export function DerivativeShiftScene({
           x: zeroPt.x,
           y: zeroPt.y,
           text: "P",
-          color: MATH_COLORS.paramPrimary,
+          color: P.extremumPt.color,
           fontSize: fontScale(13),
           preferredPlacement: "top-right",
         },
@@ -162,7 +169,7 @@ export function DerivativeShiftScene({
           x: zeroFootPt.x,
           y: zeroFootPt.y,
           text: "x₀",
-          color: MATH_COLORS.derivative,
+          color: P.zeroPt.color,
           fontSize: fontScale(12),
           preferredPlacement: "bottom-left",
         },
@@ -195,7 +202,7 @@ export function DerivativeShiftScene({
           x: p1.x,
           y: p1.y,
           text: "P₁",
-          color: MATH_COLORS.function,
+          color: P.p1.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-left",
         },
@@ -204,7 +211,7 @@ export function DerivativeShiftScene({
           x: p2.x,
           y: p2.y,
           text: "P₂",
-          color: MATH_COLORS.functionSecondary,
+          color: P.p2.color,
           fontSize: fontScale(12),
           // 超出画布时不写「（超出画布）」长标注：该处距右边界仅 50px、下方紧贴坐标轴刻度行，
           // 119px 宽的长文本必然压住刻度/轴名并被画布裁切。改由「空心点 + 右向箭头」表达越界，
@@ -218,7 +225,7 @@ export function DerivativeShiftScene({
           x: p1m.x,
           y: p1m.y,
           text: "P'₁",
-          color: MATH_COLORS.functionTransformed,
+          color: P.mirrorPt.color,
           fontSize: fontScale(11),
           preferredPlacement: "bottom-left",
         },
@@ -227,7 +234,7 @@ export function DerivativeShiftScene({
           x: mid.x,
           y: mid.y,
           text: "M",
-          color: MATH_COLORS.paramSecondary,
+          color: P.midPt.color,
           fontSize: fontScale(12),
           // 出框说明同 P₂：画布只给短名号，长标注交由底部对照条（该处正下方就是坐标轴刻度行）
           preferredPlacement: "bottom",
@@ -240,7 +247,7 @@ export function DerivativeShiftScene({
           x: topPt.x,
           y: (topPt.y + botPt.y) / 2,
           text: "F(x₁)",
-          color: MATH_COLORS.paramTertiary,
+          color: P.diffSeg.color,
           fontSize: fontScale(10),
           preferredPlacement: "left",
         });
@@ -258,7 +265,7 @@ export function DerivativeShiftScene({
           x: p1Design.x,
           y: p1Design.y,
           text: "P₁",
-          color: MATH_COLORS.function,
+          color: P.p1.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-left",
         },
@@ -267,7 +274,7 @@ export function DerivativeShiftScene({
           x: p2Design.x,
           y: p2Design.y,
           text: "P₂",
-          color: MATH_COLORS.functionSecondary,
+          color: P.p2.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-right",
         },
@@ -276,7 +283,7 @@ export function DerivativeShiftScene({
           x: tangentPtDesign.x,
           y: tangentPtDesign.y,
           text: "T",
-          color: MATH_COLORS.tangentLine,
+          color: P.tangentPt.color,
           fontSize: fontScale(12),
           preferredPlacement: "top",
         },
@@ -285,7 +292,7 @@ export function DerivativeShiftScene({
           x: geo.x,
           y: geo.y,
           text: "G",
-          color: MATH_COLORS.function,
+          color: P.geoMean.color,
           fontSize: fontScale(11),
           preferredPlacement: "bottom-left",
         },
@@ -294,7 +301,7 @@ export function DerivativeShiftScene({
           x: logM.x,
           y: logM.y,
           text: "L",
-          color: MATH_COLORS.paramPrimary,
+          color: P.logMean.color,
           fontSize: fontScale(11),
           preferredPlacement: "bottom",
         },
@@ -303,7 +310,7 @@ export function DerivativeShiftScene({
           x: ari.x,
           y: ari.y,
           text: "A",
-          color: MATH_COLORS.paramSecondary,
+          color: P.ariMean.color,
           fontSize: fontScale(11),
           preferredPlacement: "bottom-right",
         },
@@ -312,6 +319,7 @@ export function DerivativeShiftScene({
     }
   }, [
     activeMode,
+    P,
     zeroPt,
     zeroFootPt,
     shiftResult,
@@ -324,30 +332,39 @@ export function DerivativeShiftScene({
     frameFlags,
   ]);
 
-  // 拖拽回调
+  // 拖拽回调（边界统一从 paramMeta 读取，与左屏滑块严格同源，杜绝拖出滑块范围）
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
     const newX0 = Math.max(0.1, mathPt.x);
-    if (subModel === "x_ln_x") {
-      const newA = Math.log(newX0) + newX0 + 1;
-      onParamChange("a", Math.round(newA * 20) / 20);
-    } else {
-      const newA = Math.exp(newX0) - newX0;
-      onParamChange("a", Math.round(newA * 20) / 20);
-    }
+    const rawA =
+      subModel === "x_ln_x"
+        ? Math.log(newX0) + newX0 + 1
+        : Math.exp(newX0) - newX0;
+    const newA = Math.min(Math.max(paramMeta.a.min, rawA), paramMeta.a.max);
+    onParamChange("a", Math.round(newA * 20) / 20);
   };
 
   const handleDragSecant = (mathPt: { x: number; y: number }) => {
-    const newK = Math.min(Math.max(0.02, mathPt.y), shiftResult.y0 - 0.005);
+    // k 必须低于极值高度 y0（割线过极值点下方），同时不越出滑块声明范围
+    const newK = Math.min(
+      Math.max(paramMeta.k.min, mathPt.y),
+      Math.min(paramMeta.k.max, shiftResult.y0 - 0.005),
+    );
     onParamChange("k", Math.round(newK * 100) / 100);
   };
 
   const handleDragLogMeanX1 = (mathPt: { x: number; y: number }) => {
-    const newX1 = Math.min(Math.max(0.1, mathPt.x), x2Param - 0.2);
+    const newX1 = Math.min(
+      Math.max(paramMeta.x1.min, mathPt.x),
+      Math.min(paramMeta.x1.max, x2Param - 0.2),
+    );
     onParamChange("x1", Math.round(newX1 * 20) / 20);
   };
 
   const handleDragLogMeanX2 = (mathPt: { x: number; y: number }) => {
-    const newX2 = Math.max(x1Param + 0.2, mathPt.x);
+    const newX2 = Math.min(
+      Math.max(Math.max(paramMeta.x2.min, x1Param + 0.2), mathPt.x),
+      paramMeta.x2.max,
+    );
     onParamChange("x2", Math.round(newX2 * 10) / 10);
   };
 
@@ -363,26 +380,26 @@ export function DerivativeShiftScene({
           <FunctionGraph
             fn={izResult.fn}
             scale={scale}
-            color={MATH_COLORS.function}
-            strokeWidth={2.5}
+            color={P.fn.color}
+            strokeWidth={P.fn.width}
           />
 
           {/* 导函数 f'(x) 曲线 */}
           <FunctionGraph
             fn={izResult.dfn}
             scale={scale}
-            color={MATH_COLORS.derivative}
-            strokeWidth={1.8}
-            strokeDasharray="4 3"
+            color={P.dfn.color}
+            strokeWidth={P.dfn.width}
+            strokeDasharray={dashArrayOf(P.dfn)}
           />
 
           {/* 极值消元轨迹 h(x) 曲线 */}
           <FunctionGraph
             fn={izResult.traceFn}
             scale={scale}
-            color={MATH_COLORS.trace}
-            strokeWidth={2}
-            strokeDasharray="6 4"
+            color={P.trace.color}
+            strokeWidth={P.trace.width}
+            strokeDasharray={dashArrayOf(P.trace)}
           />
 
           {/* 隐零点 x0 处的垂直虚线 */}
@@ -390,7 +407,7 @@ export function DerivativeShiftScene({
             type="vertical"
             value={izResult.x0}
             scale={scale}
-            color={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
+            color={withAlpha(P.x0Guide.color, 0.6)}
             label="x = x₀"
             fontScale={fontScale}
           />
@@ -401,7 +418,7 @@ export function DerivativeShiftScene({
             y1={zeroFootPt.y}
             x2={zeroPt.x}
             y2={zeroPt.y}
-            stroke={MATH_COLORS.paramPrimary}
+            stroke={P.x0Guide.color}
             strokeWidth={1.5}
             strokeDasharray="3 3"
           />
@@ -413,7 +430,7 @@ export function DerivativeShiftScene({
             scale={scale}
             vp={vp}
             onDrag={handleDragX0}
-            color={MATH_COLORS.paramPrimary}
+            color={P.extremumPt.color}
             r={6}
             fontScale={fontScale}
           />
@@ -423,7 +440,7 @@ export function DerivativeShiftScene({
             cx={izResult.x0}
             cy={izResult.traceY}
             scale={scale}
-            color={MATH_COLORS.paramSecondary}
+            color={P.tracePt.color}
             fontScale={fontScale}
           />
 
@@ -432,7 +449,7 @@ export function DerivativeShiftScene({
             cx={izResult.x0}
             cy={0}
             scale={scale}
-            color={MATH_COLORS.derivative}
+            color={P.zeroPt.color}
             variant="hollow"
             fontScale={fontScale}
           />
@@ -446,17 +463,17 @@ export function DerivativeShiftScene({
           <FunctionGraph
             fn={shiftResult.fn}
             scale={scale}
-            color={MATH_COLORS.function}
-            strokeWidth={2.5}
+            color={P.fn.color}
+            strokeWidth={P.fn.width}
           />
 
           {/* 镜像对称曲线 y = f(2x0 - x) */}
           <FunctionGraph
             fn={shiftResult.mirrorFn}
             scale={scale}
-            color={withAlpha(MATH_COLORS.functionTransformed, 0.85)}
-            strokeWidth={2}
-            strokeDasharray="5 4"
+            color={withAlpha(P.mirrorFn.color, 0.85)}
+            strokeWidth={P.mirrorFn.width}
+            strokeDasharray={dashArrayOf(P.mirrorFn)}
           />
 
           {/* 极值点 x0 对称中轴 */}
@@ -464,7 +481,7 @@ export function DerivativeShiftScene({
             type="vertical"
             value={shiftResult.x0}
             scale={scale}
-            color={MATH_COLORS.paramPrimary}
+            color={P.axis.color}
             label="对称轴 x = x₀"
             fontScale={fontScale}
           />
@@ -474,18 +491,19 @@ export function DerivativeShiftScene({
             type="horizontal"
             value={shiftResult.k}
             scale={scale}
-            color={MATH_COLORS.secantLine}
+            color={P.secant.color}
             label="割线 y = k"
             fontScale={fontScale}
           />
 
-          {/* 偏移区间高亮阴影: [x0, midX] */}
+          {/* 偏移区间高亮阴影: [x0, midX]，下边界为割线 y = k（偏移量 |f(x) - k|） */}
           <IntervalShadow
             fn={shiftResult.fn}
             x1={shiftResult.x0}
             x2={shiftResult.midX}
             scale={scale}
-            fillColor={withAlpha(MATH_COLORS.paramTertiary, 0.25)}
+            baseline={{ kind: "horizontal", y: shiftResult.k }}
+            fillColor={withAlpha(P.offsetZone.color, 0.25)}
           />
 
           {/* 水平割线上的控制点：拖动改变 k */}
@@ -495,7 +513,7 @@ export function DerivativeShiftScene({
             scale={scale}
             vp={vp}
             onDrag={handleDragSecant}
-            color={MATH_COLORS.secantLine}
+            color={P.secantHandle.color}
             r={6}
             fontScale={fontScale}
           />
@@ -505,7 +523,7 @@ export function DerivativeShiftScene({
             cx={shiftResult.x1}
             cy={shiftResult.k}
             scale={scale}
-            color={MATH_COLORS.function}
+            color={P.p1.color}
             fontScale={fontScale}
           />
 
@@ -518,12 +536,12 @@ export function DerivativeShiftScene({
                 x={p2Pt.x}
                 y={p2Pt.y}
                 variant="hollow"
-                color={MATH_COLORS.functionSecondary}
+                color={P.p2.color}
                 fontScale={fontScale}
               />
               <polygon
                 points={`${p2Pt.x + 6},${p2Pt.y - 4.5} ${p2Pt.x + 14},${p2Pt.y} ${p2Pt.x + 6},${p2Pt.y + 4.5}`}
-                fill={MATH_COLORS.functionSecondary}
+                fill={P.p2.color}
               />
             </g>
           ) : (
@@ -531,7 +549,7 @@ export function DerivativeShiftScene({
               cx={shiftResult.x2}
               cy={shiftResult.k}
               scale={scale}
-              color={MATH_COLORS.functionSecondary}
+              color={P.p2.color}
               fontScale={fontScale}
             />
           )}
@@ -541,7 +559,7 @@ export function DerivativeShiftScene({
             cx={2 * shiftResult.x0 - shiftResult.x1}
             cy={shiftResult.k}
             scale={scale}
-            color={MATH_COLORS.functionTransformed}
+            color={P.mirrorPt.color}
             variant="hollow"
             fontScale={fontScale}
           />
@@ -555,12 +573,12 @@ export function DerivativeShiftScene({
                 x={midPt.x}
                 y={midPt.y}
                 variant="hollow"
-                color={MATH_COLORS.paramSecondary}
+                color={P.midPt.color}
                 fontScale={fontScale}
               />
               <polygon
                 points={`${midPt.x + 6},${midPt.y - 4.5} ${midPt.x + 14},${midPt.y} ${midPt.x + 6},${midPt.y + 4.5}`}
-                fill={MATH_COLORS.paramSecondary}
+                fill={P.midPt.color}
               />
             </g>
           ) : (
@@ -568,7 +586,7 @@ export function DerivativeShiftScene({
               cx={frameFlags.midMarkerX}
               cy={shiftResult.k}
               scale={scale}
-              color={MATH_COLORS.paramSecondary}
+              color={P.midPt.color}
               fontScale={fontScale}
             />
           )}
@@ -579,7 +597,7 @@ export function DerivativeShiftScene({
               y1={midPt.y}
               x2={midPt.x}
               y2={scale.originY}
-              stroke={MATH_COLORS.paramSecondary}
+              stroke={P.midPt.color}
               strokeWidth={1.5}
               strokeDasharray="3 3"
             />
@@ -604,7 +622,7 @@ export function DerivativeShiftScene({
                   y1={topPt.y}
                   x2={botPt.x}
                   y2={botPt.y}
-                  stroke={MATH_COLORS.paramTertiary}
+                  stroke={P.diffSeg.color}
                   strokeWidth={1.8}
                   strokeDasharray="3 2"
                 />
@@ -634,8 +652,8 @@ export function DerivativeShiftScene({
           <FunctionGraph
             fn={(x) => (x > 0 ? Math.log(x) : NaN)}
             scale={scale}
-            color={MATH_COLORS.function}
-            strokeWidth={2.5}
+            color={P.ln.color}
+            strokeWidth={P.ln.width}
           />
 
           {/* 割线 P1P2 */}
@@ -644,9 +662,9 @@ export function DerivativeShiftScene({
             y1={p1Design.y}
             x2={p2Design.x}
             y2={p2Design.y}
-            stroke={MATH_COLORS.secantLine}
-            strokeWidth={1.8}
-            strokeDasharray="4 3"
+            stroke={P.secant.color}
+            strokeWidth={P.secant.width}
+            strokeDasharray={dashArrayOf(P.secant)}
           />
 
           {/* 切点处的平行切线 */}
@@ -655,8 +673,8 @@ export function DerivativeShiftScene({
             y1={tanLeftDesign.y}
             x2={tanRightDesign.x}
             y2={tanRightDesign.y}
-            stroke={MATH_COLORS.tangentLine}
-            strokeWidth={2}
+            stroke={P.tangentLine.color}
+            strokeWidth={P.tangentLine.width}
           />
 
           {/* 可拖动端点 x1 与 x2 */}
@@ -666,7 +684,7 @@ export function DerivativeShiftScene({
             scale={scale}
             vp={vp}
             onDrag={handleDragLogMeanX1}
-            color={MATH_COLORS.function}
+            color={P.p1.color}
             r={6}
             fontScale={fontScale}
           />
@@ -677,7 +695,7 @@ export function DerivativeShiftScene({
             scale={scale}
             vp={vp}
             onDrag={handleDragLogMeanX2}
-            color={MATH_COLORS.functionSecondary}
+            color={P.p2.color}
             r={6}
             fontScale={fontScale}
           />
@@ -687,7 +705,7 @@ export function DerivativeShiftScene({
             cx={logMeanResult.logMean}
             cy={Math.log(logMeanResult.logMean)}
             scale={scale}
-            color={MATH_COLORS.tangentLine}
+            color={P.tangentPt.color}
             fontScale={fontScale}
           />
 
@@ -697,7 +715,7 @@ export function DerivativeShiftScene({
             y1={tangentPtDesign.y}
             x2={tangentPtDesign.x}
             y2={scale.originY}
-            stroke={MATH_COLORS.paramPrimary}
+            stroke={P.tangentFoot.color}
             strokeWidth={1.5}
             strokeDasharray="3 3"
           />
@@ -707,7 +725,7 @@ export function DerivativeShiftScene({
             cx={logMeanResult.geoMean}
             cy={0}
             scale={scale}
-            color={MATH_COLORS.function}
+            color={P.geoMean.color}
             fontScale={fontScale}
           />
 
@@ -715,7 +733,7 @@ export function DerivativeShiftScene({
             cx={logMeanResult.logMean}
             cy={0}
             scale={scale}
-            color={MATH_COLORS.paramPrimary}
+            color={P.logMean.color}
             fontScale={fontScale}
           />
 
@@ -723,7 +741,7 @@ export function DerivativeShiftScene({
             cx={logMeanResult.ariMean}
             cy={0}
             scale={scale}
-            color={MATH_COLORS.paramSecondary}
+            color={P.ariMean.color}
             fontScale={fontScale}
           />
         </g>

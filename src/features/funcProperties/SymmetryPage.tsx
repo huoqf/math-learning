@@ -25,6 +25,11 @@ type SubMode =
   | "period-axis-center";
 type FnType = "quadratic" | "abs" | "cubic" | "sin" | "reciprocal";
 
+// 各子模式的合法函数模型集合：子模式切换时据此校验，
+// 非法残留值回落到该集合首个成员（非法选项根本不该被持有）
+const AXIS_FN_TYPES: FnType[] = ["quadratic", "abs", "sin"];
+const CENTER_FN_TYPES: FnType[] = ["cubic", "sin", "reciprocal"];
+
 export function SymmetryPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
   const [subMode, setSubMode] = useState<SubMode>("axis");
@@ -214,7 +219,19 @@ export function SymmetryPage() {
                 },
               ]}
               value={subMode}
-              onChange={(k) => setSubMode(k as SubMode)}
+              onChange={(k) => {
+                const next = k as SubMode;
+                setSubMode(next);
+                // 子模式切换时校验 fnType：axis 与 center 的合法模型集合不同，
+                // 跨模式残留的非法值会让 SelectGrid 失去高亮且右侧按非法模型计算
+                setFnType((prev) => {
+                  if (next === "axis")
+                    return AXIS_FN_TYPES.includes(prev) ? prev : "quadratic";
+                  if (next === "center")
+                    return CENTER_FN_TYPES.includes(prev) ? prev : "cubic";
+                  return prev;
+                });
+              }}
               columns={1}
               className="mb-4"
             />
