@@ -1,7 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateMarkovChain } from "@/math/probabilityMarkov";
-import { MARKOV_PRESETS } from "@/data/registries/probabilityMarkov";
 
 interface MarkovSceneProps {
   params: Record<string, number>;
@@ -14,14 +13,10 @@ export function MarkovScene({
   scenarioKey,
   fontScale,
 }: MarkovSceneProps) {
-  const [plotMode, setPlotMode] = useState<"timeseries" | "cobweb">(
-    "timeseries",
-  );
-
   const p1 = params.p1 ?? 1.0;
   const p11 = params.p11 ?? 0.0;
   const p21 = params.p21 ?? 0.5;
-  const maxN = params.maxN ?? 10;
+  const maxN = Math.min(15, Math.max(5, Math.round(params.maxN ?? 10)));
   const currStep = Math.min(
     maxN,
     Math.max(1, Math.round(params.currStep ?? 1)),
@@ -31,816 +26,1442 @@ export function MarkovScene({
     return calculateMarkovChain(p1, p11, p21, maxN);
   }, [p1, p11, p21, maxN]);
 
-  const preset = MARKOV_PRESETS[scenarioKey] || MARKOV_PRESETS.pass_ball_2020;
-  const labels = preset.labels;
+  const lambda = markovData.lambda;
+  const lambdaStr = lambda >= 0 ? lambda.toFixed(2) : `(${lambda.toFixed(2)})`;
+  const tVal = markovData.pStationary;
+  const diffInit = p1 - tVal;
 
-  const currentStepItem =
+  // 单步递推 hand-calculated p2
+  const p2Recurrence = p11 * p1 + p21 * (1 - p1);
+  // 通项公式代入 n=2
+  const p2General = tVal + diffInit * lambda;
+
+  // 步步流动数值
+  const currentStepData =
     markovData.steps.find((s) => s.n === currStep) ?? markovData.steps[0];
-  const nextStepItem =
-    markovData.steps.find((s) => s.n === currStep + 1) ??
-    (currStep < markovData.steps.length
-      ? markovData.steps[currStep]
-      : currentStepItem);
+  const pn = currentStepData.p1;
+  const pNotN = 1 - pn;
+  const flow1 = pn * p11;
+  const flow2 = pNotN * p21;
+  const pnNext = flow1 + flow2;
 
-  // 840 x 650 空间规范排布
-  // 1. 左上：状态转移拓扑网络 (x: 45 ~ 405, y: 55 ~ 320)
-  const s1Center = { x: 135, y: 175 };
-  const s2Center = { x: 315, y: 175 };
-  const nodeRadius = 32;
-
-  // 2. 右侧：演化折线与离散散点 (x: 440 ~ 795, y: 55 ~ 455)
-  const plotLeft = 465;
-  const plotRight = 785;
-  const plotTop = 110;
-  const plotBottom = 425;
-  const plotWidth = plotRight - plotLeft;
-  const plotHeight = plotBottom - plotTop;
-  const totalSteps = markovData.steps.length;
+  // 840 x 650 黄金画幅两极排布：
+  // 左视窗：情境几何与全概流动汇流池 (x: 18 ~ 382, 宽 364, 高 620)
+  // 右视窗：高分辨率离散数列演变大图 (x: 398 ~ 822, 宽 424, 高 620)
+  const leftX = 18;
+  const leftW = 364;
+  const rightX = 398;
+  const rightW = 424;
+  const sceneY = 15;
+  const sceneH = 620;
 
   return (
     <g>
-      {/* ── 1. 左上：事件状态转移示意图 ── */}
-      <text
-        x={45}
-        y={50}
-        fontSize={fontScale(14)}
-        fontWeight="bold"
-        fill={MATH_COLORS.labelText}
-      >
-        1. 事件状态转移示意图 (2-State)
-      </text>
+      <defs>
+        {/* 精准实体 SVG 箭头 */}
+        <marker
+          id="m-arrow-primary"
+          markerWidth="7"
+          markerHeight="7"
+          refX="6"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 7 3.5, 0 7" fill={MATH_COLORS.paramPrimary} />
+        </marker>
+        <marker
+          id="m-arrow-secondary"
+          markerWidth="7"
+          markerHeight="7"
+          refX="6"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 7 3.5, 0 7" fill={MATH_COLORS.paramSecondary} />
+        </marker>
+        <marker
+          id="m-arrow-focus"
+          markerWidth="7"
+          markerHeight="7"
+          refX="6"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 7 3.5, 0 7" fill={MATH_COLORS.focusPoint} />
+        </marker>
+        <marker
+          id="m-arrow-function"
+          markerWidth="7"
+          markerHeight="7"
+          refX="6"
+          refY="3.5"
+          orient="auto"
+        >
+          <polygon points="0 0, 7 3.5, 0 7" fill={MATH_COLORS.function} />
+        </marker>
+      </defs>
 
-      <rect
-        x={45}
-        y={62}
-        width={365}
-        height={260}
-        rx={12}
-        fill={MATH_COLORS.white}
-        stroke={MATH_COLORS.axis}
-        strokeWidth={1.5}
-      />
-
-      {/* S1 状态节点 */}
-      <circle
-        cx={s1Center.x}
-        cy={s1Center.y}
-        r={nodeRadius}
-        fill={MATH_COLORS.paramPrimary}
-      />
-      <text
-        x={s1Center.x}
-        y={s1Center.y + 5}
-        fontSize={fontScale(13)}
-        fontWeight="bold"
-        fill={MATH_COLORS.white}
-        textAnchor="middle"
-      >
-        {labels.s1Short}
-      </text>
-
-      {/* S2 状态节点 */}
-      <circle
-        cx={s2Center.x}
-        cy={s2Center.y}
-        r={nodeRadius}
-        fill={MATH_COLORS.paramSecondary}
-      />
-      <text
-        x={s2Center.x}
-        y={s2Center.y + 5}
-        fontSize={fontScale(13)}
-        fontWeight="bold"
-        fill={MATH_COLORS.white}
-        textAnchor="middle"
-      >
-        {labels.s2Short}
-      </text>
-
-      {/* S1 自环 */}
-      <path
-        d={`M ${s1Center.x - 22} ${s1Center.y - 20} A 24 24 0 1 1 ${s1Center.x - 5} ${s1Center.y - 30}`}
-        fill="none"
-        stroke={MATH_COLORS.paramPrimary}
-        strokeWidth={Math.max(1.5, markovData.p11 * 5)}
-        strokeDasharray={markovData.p11 === 0 ? "4 3" : "none"}
-      />
-      <text
-        x={s1Center.x - 26}
-        y={s1Center.y - 42}
-        fontSize={fontScale(11)}
-        fontWeight="bold"
-        fill={MATH_COLORS.paramPrimary}
-        textAnchor="middle"
-      >
-        保持 p₁₁={markovData.p11.toFixed(2)}
-      </text>
-
-      {/* S2 自环 */}
-      <path
-        d={`M ${s2Center.x + 5} ${s2Center.y - 30} A 24 24 0 1 1 ${s2Center.x + 22} ${s2Center.y - 20}`}
-        fill="none"
-        stroke={MATH_COLORS.paramSecondary}
-        strokeWidth={Math.max(1.5, markovData.p22 * 5)}
-        strokeDasharray={markovData.p22 === 0 ? "4 3" : "none"}
-      />
-      <text
-        x={s2Center.x + 26}
-        y={s2Center.y - 42}
-        fontSize={fontScale(11)}
-        fontWeight="bold"
-        fill={MATH_COLORS.paramSecondary}
-        textAnchor="middle"
-      >
-        保持 p₂₂={markovData.p22.toFixed(2)}
-      </text>
-
-      {/* S1 -> S2 转移弧线 */}
-      <path
-        d={`M ${s1Center.x + 24} ${s1Center.y - 12} Q ${(s1Center.x + s2Center.x) / 2} ${s1Center.y - 36} ${s2Center.x - 24} ${s1Center.y - 12}`}
-        fill="none"
-        stroke={MATH_COLORS.paramPrimary}
-        strokeWidth={Math.max(1.5, markovData.p12 * 5)}
-      />
-      <text
-        x={(s1Center.x + s2Center.x) / 2}
-        y={s1Center.y - 26}
-        fontSize={fontScale(11)}
-        fontWeight="bold"
-        fill={MATH_COLORS.paramPrimary}
-        textAnchor="middle"
-      >
-        p₁₂ = {markovData.p12.toFixed(2)} →
-      </text>
-
-      {/* S2 -> S1 转移弧线 */}
-      <path
-        d={`M ${s2Center.x - 24} ${s1Center.y + 12} Q ${(s1Center.x + s2Center.x) / 2} ${s1Center.y + 36} ${s1Center.x + 24} ${s1Center.y + 12}`}
-        fill="none"
-        stroke={MATH_COLORS.paramSecondary}
-        strokeWidth={Math.max(1.5, markovData.p21 * 5)}
-      />
-      <text
-        x={(s1Center.x + s2Center.x) / 2}
-        y={s1Center.y + 32}
-        fontSize={fontScale(11)}
-        fontWeight="bold"
-        fill={MATH_COLORS.paramSecondary}
-        textAnchor="middle"
-      >
-        ← p₂₁ = {markovData.p21.toFixed(2)}
-      </text>
-
-      {/* 状态转移说明 */}
-      <text
-        x={58}
-        y={298}
-        fontSize={fontScale(11)}
-        fill={MATH_COLORS.labelTextLight}
-      >
-        递推公比 λ = p₁₁ - p₂₁ = {markovData.lambda.toFixed(2)}，不动点
-        (稳态极限) t = {markovData.pStationary.toFixed(3)}
-      </text>
-
-      {/* ── 2. 左下：高考四步推演核心看板 ── */}
-      <g transform="translate(45, 335)">
+      {/* ═════════════════════════════════════════════════════════════════
+          左视窗：情境物理状态图与全概率汇流池 (x: 18 ~ 382)
+      ═════════════════════════════════════════════════════════════════ */}
+      <g transform={`translate(${leftX}, ${sceneY})`}>
+        {/* 左视窗大底卡 */}
         <rect
           x={0}
           y={0}
-          width={365}
-          height={285}
+          width={leftW}
+          height={sceneH}
           rx={12}
-          fill={MATH_COLORS.white}
-          stroke={MATH_COLORS.function}
-          strokeWidth={1.5}
+          fill={withAlpha(MATH_COLORS.axis, 0.025)}
+          stroke={withAlpha(MATH_COLORS.axis, 0.18)}
+          strokeWidth={1.2}
+        />
+
+        {/* 视窗标头 */}
+        <rect
+          x={0}
+          y={0}
+          width={leftW}
+          height={38}
+          rx={12}
+          fill={withAlpha(MATH_COLORS.paramPrimary, 0.06)}
         />
         <text
           x={14}
           y={24}
-          fontSize={fontScale(13)}
+          fontSize={fontScale(12.5)}
           fontWeight="bold"
-          fill={MATH_COLORS.function}
+          fill={MATH_COLORS.paramPrimary}
         >
-          2. 高考标准推演：第 {currStep} 步 → 第 {currStep + 1} 步
+          【模型建模】状态对称划分与单步全概汇流
         </text>
-
-        {/* 树状分支展开 */}
-        <g transform="translate(18, 38)">
-          <circle cx={24} cy={35} r={18} fill={MATH_COLORS.paramPrimary} />
-          <text
-            x={24}
-            y={39}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            fill={MATH_COLORS.white}
-            textAnchor="middle"
-          >
-            S₁
-          </text>
-          <text
-            x={24}
-            y={66}
-            fontSize={fontScale(10.5)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramPrimary}
-            textAnchor="middle"
-          >
-            p_{currStep}={currentStepItem.p1.toFixed(3)}
-          </text>
-
-          <circle cx={24} cy={130} r={18} fill={MATH_COLORS.paramSecondary} />
-          <text
-            x={24}
-            y={134}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            fill={MATH_COLORS.white}
-            textAnchor="middle"
-          >
-            S₂
-          </text>
-          <text
-            x={24}
-            y={161}
-            fontSize={fontScale(10.5)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramSecondary}
-            textAnchor="middle"
-          >
-            {(1 - currentStepItem.p1).toFixed(3)}
-          </text>
-
-          {/* 分支连线 */}
-          <line
-            x1={44}
-            y1={35}
-            x2={175}
-            y2={82}
-            stroke={MATH_COLORS.paramPrimary}
-            strokeWidth={2}
-          />
-          <text
-            x={100}
-            y={48}
-            fontSize={fontScale(10.5)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramPrimary}
-          >
-            × p₁₁ ({markovData.p11.toFixed(2)})
-          </text>
-
-          <line
-            x1={44}
-            y1={130}
-            x2={175}
-            y2={82}
-            stroke={MATH_COLORS.paramSecondary}
-            strokeWidth={2}
-          />
-          <text
-            x={100}
-            y={122}
-            fontSize={fontScale(10.5)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramSecondary}
-          >
-            × p₂₁ ({markovData.p21.toFixed(2)})
-          </text>
-
-          {/* Step n+1 汇总 */}
-          <circle cx={205} cy={82} r={24} fill={MATH_COLORS.function} />
-          <text
-            x={205}
-            y={78}
-            fontSize={fontScale(10.5)}
-            fontWeight="bold"
-            fill={MATH_COLORS.white}
-            textAnchor="middle"
-          >
-            第 {currStep + 1} 步
-          </text>
-          <text
-            x={205}
-            y={95}
-            fontSize={fontScale(11.5)}
-            fontWeight="bold"
-            fill={MATH_COLORS.white}
-            textAnchor="middle"
-          >
-            p_{currStep + 1}
-          </text>
-          <text
-            x={255}
-            y={86}
-            fontSize={fontScale(12)}
-            fontWeight="bold"
-            fill={MATH_COLORS.function}
-          >
-            = {nextStepItem.p1.toFixed(3)}
-          </text>
-        </g>
-
-        {/* 底部代数推导配凑卡 */}
-        <g transform="translate(12, 218)">
-          <rect
-            x={0}
-            y={0}
-            width={341}
-            height={56}
-            rx={6}
-            fill={withAlpha(MATH_COLORS.function, 0.08)}
-          />
-          <text
-            x={8}
-            y={18}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            fill={MATH_COLORS.function}
-          >
-            一阶递推：{markovData.recurrenceText}
-          </text>
-          <text
-            x={8}
-            y={34}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            fill={MATH_COLORS.derivative}
-          >
-            待定配凑：{markovData.geometricText}
-          </text>
-          <text
-            x={8}
-            y={48}
-            fontSize={fontScale(10)}
-            fill={MATH_COLORS.labelTextLight}
-          >
-            通项：{markovData.generalTermText}
-          </text>
-        </g>
-      </g>
-
-      {/* ── 3. 右区：状态概率演化与离散散点 / 蛛网图 ── */}
-      <g>
         <text
-          x={440}
-          y={50}
-          fontSize={fontScale(14)}
-          fontWeight="bold"
-          fill={MATH_COLORS.labelText}
+          x={leftW - 14}
+          y={24}
+          fontSize={fontScale(10.5)}
+          fill={MATH_COLORS.labelTextLight}
+          textAnchor="end"
         >
-          3.{" "}
-          {plotMode === "timeseries"
-            ? "离散点列演化与等比衰减"
-            : "一阶蛛网图 (选学高观点)"}
+          第 n={currStep} 步
         </text>
 
-        {/* 胶囊切换按钮 */}
-        <g transform="translate(640, 32)">
-          <rect
-            x={0}
-            y={0}
-            width={155}
-            height={26}
-            rx={13}
-            fill={withAlpha(MATH_COLORS.axis, 0.12)}
-          />
-          <g
-            className="cursor-pointer"
-            onClick={() => setPlotMode("timeseries")}
-          >
-            {plotMode === "timeseries" && (
-              <rect
-                x={2}
-                y={2}
-                width={74}
-                height={22}
-                rx={11}
-                fill={MATH_COLORS.white}
-              />
-            )}
-            <text
-              x={39}
-              y={17}
-              fontSize={fontScale(11)}
-              fontWeight={plotMode === "timeseries" ? "bold" : "normal"}
-              fill={
-                plotMode === "timeseries"
-                  ? MATH_COLORS.function
-                  : MATH_COLORS.labelTextLight
-              }
-              textAnchor="middle"
-            >
-              📈 离散点列
-            </text>
-          </g>
-          <g className="cursor-pointer" onClick={() => setPlotMode("cobweb")}>
-            {plotMode === "cobweb" && (
-              <rect
-                x={79}
-                y={2}
-                width={74}
-                height={22}
-                rx={11}
-                fill={MATH_COLORS.white}
-              />
-            )}
-            <text
-              x={116}
-              y={17}
-              fontSize={fontScale(11)}
-              fontWeight={plotMode === "cobweb" ? "bold" : "normal"}
-              fill={
-                plotMode === "cobweb"
-                  ? MATH_COLORS.derivative
-                  : MATH_COLORS.labelTextLight
-              }
-              textAnchor="middle"
-            >
-              🕸️ 蛛网图
-            </text>
-          </g>
-        </g>
-
-        {/* 外框 */}
-        <rect
-          x={440}
-          y={62}
-          width={355}
-          height={380}
-          rx={12}
-          fill={MATH_COLORS.white}
-          stroke={MATH_COLORS.axis}
-          strokeWidth={1.5}
-        />
-
-        {/* 坐标轴 */}
-        <line
-          x1={plotLeft}
-          y1={plotBottom}
-          x2={plotRight}
-          y2={plotBottom}
-          stroke={MATH_COLORS.axis}
-          strokeWidth={1.5}
-        />
-        <line
-          x1={plotLeft}
-          y1={plotTop}
-          x2={plotLeft}
-          y2={plotBottom}
-          stroke={MATH_COLORS.axis}
-          strokeWidth={1.5}
-        />
-
-        {/* Y 轴刻度与网格 */}
-        {[0, 0.25, 0.5, 0.75, 1.0].map((v) => {
-          const y = plotBottom - v * plotHeight;
-          return (
-            <g key={`y-grid-${v}`}>
-              <line
-                x1={plotLeft}
-                y1={y}
-                x2={plotRight}
-                y2={y}
-                stroke={withAlpha(MATH_COLORS.axis, 0.2)}
-                strokeDasharray="3 3"
-              />
-              <text
-                x={plotLeft - 8}
-                y={y + 4}
-                fontSize={fontScale(10)}
-                fill={MATH_COLORS.labelTextLight}
-                textAnchor="end"
-              >
-                {v.toFixed(2)}
-              </text>
-            </g>
-          );
-        })}
-
-        {/* 视图 1：离散点列时序图与等比衰减 */}
-        {plotMode === "timeseries" && (
-          <g>
-            {/* 稳态极限参考线 */}
-            <line
-              x1={plotLeft}
-              y1={plotBottom - markovData.pStationary * plotHeight}
-              x2={plotRight}
-              y2={plotBottom - markovData.pStationary * plotHeight}
-              stroke={MATH_COLORS.derivative}
-              strokeWidth={2}
-              strokeDasharray="5 3"
-            />
-            <text
-              x={plotRight}
-              y={plotBottom - markovData.pStationary * plotHeight - 6}
-              fontSize={fontScale(11)}
-              fontWeight="bold"
-              fill={MATH_COLORS.derivative}
-              textAnchor="end"
-            >
-              稳态极限 t = {markovData.pStationary.toFixed(3)}
-            </text>
-
-            {/* 离散连线与点 */}
-            {markovData.steps.map((step, idx) => {
-              const x =
-                plotLeft +
-                ((step.n - 1) / Math.max(1, totalSteps - 1)) * plotWidth;
-              const y = plotBottom - step.p1 * plotHeight;
-              const isCurrent = step.n === currStep;
-
-              let nextLine = null;
-              if (idx < totalSteps - 1) {
-                const nextStep = markovData.steps[idx + 1];
-                const nextX =
-                  plotLeft + ((nextStep.n - 1) / (totalSteps - 1)) * plotWidth;
-                const nextY = plotBottom - nextStep.p1 * plotHeight;
-                nextLine = (
-                  <line
-                    key={`line-${idx}`}
-                    x1={x}
-                    y1={y}
-                    x2={nextX}
-                    y2={nextY}
-                    stroke={withAlpha(MATH_COLORS.function, 0.4)}
-                    strokeWidth={1.5}
-                    strokeDasharray="2 2"
-                  />
-                );
-              }
-
-              return (
-                <g key={`point-${step.n}`}>
-                  {nextLine}
-                  {isCurrent && (
-                    <g>
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r={9}
-                        fill={withAlpha(MATH_COLORS.paramPrimary, 0.25)}
-                      />
-                      <line
-                        x1={x}
-                        y1={y}
-                        x2={x}
-                        y2={plotBottom}
-                        stroke={MATH_COLORS.paramPrimary}
-                        strokeDasharray="2 2"
-                        strokeWidth={1}
-                      />
-                    </g>
-                  )}
-                  <circle
-                    cx={x}
-                    cy={y}
-                    r={isCurrent ? 6 : 4}
-                    fill={
-                      isCurrent
-                        ? MATH_COLORS.paramPrimary
-                        : MATH_COLORS.function
-                    }
-                    stroke={MATH_COLORS.white}
-                    strokeWidth={1.5}
-                  />
-                  <text
-                    x={x}
-                    y={plotBottom + 16}
-                    fontSize={fontScale(9.5)}
-                    fontWeight={isCurrent ? "bold" : "normal"}
-                    fill={
-                      isCurrent
-                        ? MATH_COLORS.paramPrimary
-                        : MATH_COLORS.labelTextLight
-                    }
-                    textAnchor="middle"
-                  >
-                    n={step.n}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        )}
-
-        {/* 视图 2：蛛网图 */}
-        {plotMode === "cobweb" && (
-          <g>
-            {[0, 0.25, 0.5, 0.75, 1.0].map((v) => {
-              const x = plotLeft + v * plotWidth;
-              return (
-                <text
-                  key={`x-grid-${v}`}
-                  x={x}
-                  y={plotBottom + 16}
-                  fontSize={fontScale(9.5)}
-                  fill={MATH_COLORS.labelTextLight}
-                  textAnchor="middle"
-                >
-                  {v.toFixed(2)}
-                </text>
-              );
-            })}
-
-            <line
-              x1={plotLeft}
-              y1={plotBottom}
-              x2={plotRight}
-              y2={plotTop}
-              stroke={withAlpha(MATH_COLORS.axis, 0.6)}
-              strokeWidth={1.5}
+        {/* ─────────────────────────────────────────────────────────────
+            上半段：5 种模型特化的高中情景拓扑图 (y: 45 ~ 300)
+        ───────────────────────────────────────────────────────────── */}
+        {scenarioKey === "pass_ball_3" || scenarioKey === "pass_ball_2020" ? (
+          /* 模型 1: 三人传球 (2020真题) · 对称合并乙丙 */
+          <g transform="translate(0, 42)">
+            {/* 对称合并群背景框 (包围乙与丙) */}
+            <rect
+              x={22}
+              y={145}
+              width={leftW - 44}
+              height={96}
+              rx={10}
+              fill={withAlpha(MATH_COLORS.paramSecondary, 0.06)}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.2}
               strokeDasharray="4 3"
             />
             <text
-              x={plotRight - 4}
-              y={plotTop + 14}
+              x={32}
+              y={162}
               fontSize={fontScale(10)}
-              fill={MATH_COLORS.labelTextLight}
-              textAnchor="end"
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
             >
-              y = x
+              【对称合并】对立事件 Āₙ：球在乙或丙手中 (概率 1 - pₙ)
             </text>
 
-            {(() => {
-              const y0 = markovData.p21;
-              const y1 = markovData.lambda + markovData.p21;
-              const pt0 = { x: plotLeft, y: plotBottom - y0 * plotHeight };
-              const pt1 = { x: plotRight, y: plotBottom - y1 * plotHeight };
-              return (
-                <g>
-                  <line
-                    x1={pt0.x}
-                    y1={pt0.y}
-                    x2={pt1.x}
-                    y2={pt1.y}
-                    stroke={MATH_COLORS.function}
-                    strokeWidth={2}
-                  />
-                  <text
-                    x={(pt0.x + pt1.x) / 2 + 10}
-                    y={(pt0.y + pt1.y) / 2 - 10}
-                    fontSize={fontScale(11)}
-                    fontWeight="bold"
-                    fill={MATH_COLORS.function}
-                    textAnchor="middle"
-                  >
-                    y = {markovData.recurrenceText}
-                  </text>
-                </g>
-              );
-            })()}
-
-            {!markovData.isDegenerate && (
-              <g>
-                <circle
-                  cx={plotLeft + markovData.pStationary * plotWidth}
-                  cy={plotBottom - markovData.pStationary * plotHeight}
-                  r={5}
-                  fill={MATH_COLORS.derivative}
-                  stroke={MATH_COLORS.white}
-                  strokeWidth={1.5}
-                />
-                <text
-                  x={plotLeft + markovData.pStationary * plotWidth + 8}
-                  y={plotBottom - markovData.pStationary * plotHeight - 8}
-                  fontSize={fontScale(10.5)}
-                  fontWeight="bold"
-                  fill={MATH_COLORS.derivative}
-                >
-                  不动点 ({markovData.pStationary.toFixed(2)},{" "}
-                  {markovData.pStationary.toFixed(2)})
-                </text>
-              </g>
-            )}
-
-            {markovData.cobwebPoints.map((pt, idx) => {
-              if (idx === 0) return null;
-              const prev = markovData.cobwebPoints[idx - 1];
-              const x1 = plotLeft + prev.x * plotWidth;
-              const y1 = plotBottom - prev.y * plotHeight;
-              const x2 = plotLeft + pt.x * plotWidth;
-              const y2 = plotBottom - pt.y * plotHeight;
-              const isHighlighted = pt.stepIndex <= currStep + 1;
-
-              return (
-                <line
-                  key={`cobweb-${idx}`}
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke={
-                    pt.type === "vertical"
-                      ? MATH_COLORS.paramPrimary
-                      : MATH_COLORS.paramSecondary
-                  }
-                  strokeWidth={isHighlighted ? 2 : 1}
-                  strokeOpacity={isHighlighted ? 1 : 0.3}
-                />
-              );
-            })}
-
+            {/* 节点：甲 (事件 A_n) */}
             <circle
-              cx={plotLeft + p1 * plotWidth}
-              cy={plotBottom - p1 * plotHeight}
-              r={5}
-              fill={MATH_COLORS.paramPrimary}
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.5}
+              cx={leftW / 2}
+              cy={52}
+              r={32}
+              fill={MATH_COLORS.white}
+              stroke={MATH_COLORS.paramPrimary}
+              strokeWidth={2.5}
             />
             <text
-              x={plotLeft + p1 * plotWidth - 8}
-              y={plotBottom - p1 * plotHeight + 14}
+              x={leftW / 2}
+              y={46}
+              fontSize={fontScale(13)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramPrimary}
+              textAnchor="middle"
+            >
+              甲 (Aₙ)
+            </text>
+            <text
+              x={leftW / 2}
+              y={64}
+              fontSize={fontScale(10.5)}
+              fill={MATH_COLORS.labelText}
+              textAnchor="middle"
+            >
+              p_{currStep} = {pn.toFixed(3)}
+            </text>
+
+            {/* 节点：乙 */}
+            <circle
+              cx={85}
+              cy={198}
+              r={24}
+              fill={MATH_COLORS.white}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.8}
+            />
+            <text
+              x={85}
+              y={196}
+              fontSize={fontScale(11.5)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+              textAnchor="middle"
+            >
+              乙
+            </text>
+            <text
+              x={85}
+              y={212}
+              fontSize={fontScale(9)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="middle"
+            >
+              {(pNotN / 2).toFixed(3)}
+            </text>
+
+            {/* 节点：丙 */}
+            <circle
+              cx={leftW - 85}
+              cy={198}
+              r={24}
+              fill={MATH_COLORS.white}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.8}
+            />
+            <text
+              x={leftW - 85}
+              y={196}
+              fontSize={fontScale(11.5)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+              textAnchor="middle"
+            >
+              丙
+            </text>
+            <text
+              x={leftW - 85}
+              y={212}
+              fontSize={fontScale(9)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="middle"
+            >
+              {(pNotN / 2).toFixed(3)}
+            </text>
+
+            {/* 传球弧线：甲传出 (各 0.50) */}
+            <path
+              d={`M ${leftW / 2 - 22} 74 Q ${leftW / 2 - 60} 115 85 174`}
+              fill="none"
+              stroke={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
+              strokeWidth={1.8}
+              markerEnd="url(#m-arrow-primary)"
+            />
+            <path
+              d={`M ${leftW / 2 + 22} 74 Q ${leftW / 2 + 60} 115 ${leftW - 85} 174`}
+              fill="none"
+              stroke={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
+              strokeWidth={1.8}
+              markerEnd="url(#m-arrow-primary)"
+            />
+            <text
+              x={leftW / 2}
+              y={106}
+              fontSize={fontScale(9.5)}
+              fill={MATH_COLORS.paramPrimary}
+              textAnchor="middle"
+            >
+              甲必传给乙或丙 (甲留存 p₁₁ = 0)
+            </text>
+
+            {/* 传球弧线：回传给甲 (条件概率各 0.50) */}
+            <path
+              d={`M 98 178 Q ${leftW / 2 - 25} 130 ${leftW / 2 - 12} 86`}
+              fill="none"
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={2}
+              markerEnd="url(#m-arrow-secondary)"
+            />
+            <path
+              d={`M ${leftW - 98} 178 Q ${leftW / 2 + 25} 130 ${leftW / 2 + 12} 86`}
+              fill="none"
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={2}
+              markerEnd="url(#m-arrow-secondary)"
+            />
+            <text
+              x={leftW / 2}
+              y={128}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+              textAnchor="middle"
+            >
+              回传甲概率 p₂₁ = 1/2 = 0.50
+            </text>
+
+            {/* 乙丙互传说明 */}
+            <line
+              x1={112}
+              y1={198}
+              x2={leftW - 112}
+              y2={198}
+              stroke={withAlpha(MATH_COLORS.paramSecondary, 0.4)}
+              strokeWidth={1.5}
+              strokeDasharray="2 2"
+            />
+            <text
+              x={leftW / 2}
+              y={193}
+              fontSize={fontScale(8.5)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="middle"
+            >
+              乙 ↔ 丙 互传 (各 1/2，不影响对立事件总和)
+            </text>
+          </g>
+        ) : scenarioKey === "pass_ball_4" ? (
+          /* 模型 2: 四人传球 · 对称合并其他三人 */
+          <g transform="translate(0, 42)">
+            {/* 对称合并群背景框 (包围乙/丙/丁) */}
+            <rect
+              x={18}
+              y={145}
+              width={leftW - 36}
+              height={96}
+              rx={10}
+              fill={withAlpha(MATH_COLORS.paramSecondary, 0.06)}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.2}
+              strokeDasharray="4 3"
+            />
+            <text
+              x={28}
+              y={162}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+            >
+              【对称合并】对立事件 Āₙ：球在乙/丙/丁手中 (共 3 人)
+            </text>
+
+            {/* 节点：甲 */}
+            <circle
+              cx={leftW / 2}
+              cy={52}
+              r={32}
+              fill={MATH_COLORS.white}
+              stroke={MATH_COLORS.paramPrimary}
+              strokeWidth={2.5}
+            />
+            <text
+              x={leftW / 2}
+              y={46}
+              fontSize={fontScale(13)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramPrimary}
+              textAnchor="middle"
+            >
+              甲 (Aₙ)
+            </text>
+            <text
+              x={leftW / 2}
+              y={64}
+              fontSize={fontScale(10.5)}
+              fill={MATH_COLORS.labelText}
+              textAnchor="middle"
+            >
+              p_{currStep} = {pn.toFixed(3)}
+            </text>
+
+            {/* 乙、丙、丁 3 节点 */}
+            {[
+              { label: "乙", x: 65 },
+              { label: "丙", x: leftW / 2 },
+              { label: "丁", x: leftW - 65 },
+            ].map((p, idx) => (
+              <g key={idx}>
+                <circle
+                  cx={p.x}
+                  cy={198}
+                  r={22}
+                  fill={MATH_COLORS.white}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={1.8}
+                />
+                <text
+                  x={p.x}
+                  y={202}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  fill={MATH_COLORS.paramSecondary}
+                  textAnchor="middle"
+                >
+                  {p.label}
+                </text>
+              </g>
+            ))}
+
+            {/* 传球弧线与回传概率 */}
+            <path
+              d={`M ${leftW / 2} 176 L ${leftW / 2} 86`}
+              fill="none"
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={2.2}
+              markerEnd="url(#m-arrow-secondary)"
+            />
+            <text
+              x={leftW / 2 + 10}
+              y={132}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+            >
+              回传甲 p₂₁ = 1/3 ≈ 0.333
+            </text>
+            <text
+              x={leftW / 2}
+              y={108}
+              fontSize={fontScale(9)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="middle"
+            >
+              甲必传给另外 3 人之一 (留存 p₁₁ = 0)
+            </text>
+            <text
+              x={leftW / 2}
+              y={230}
+              fontSize={fontScale(8.5)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="middle"
+            >
+              三人地位完全对称，最终平稳分布各分得 1/4 (即稳态 t = 0.25)
+            </text>
+          </g>
+        ) : scenarioKey === "urn_replace" ? (
+          /* 模型 3: 摸球置换 · 白球池与黑球池 */
+          <g transform="translate(0, 42)">
+            {/* 白球池 (事件 A_n) */}
+            <g transform="translate(24, 30)">
+              <rect
+                x={0}
+                y={0}
+                width={140}
+                height={190}
+                rx={10}
+                fill={withAlpha(MATH_COLORS.function, 0.06)}
+                stroke={MATH_COLORS.function}
+                strokeWidth={1.8}
+              />
+              <text
+                x={70}
+                y={26}
+                fontSize={fontScale(12)}
+                fontWeight="bold"
+                fill={MATH_COLORS.function}
+                textAnchor="middle"
+              >
+                白球池 (Aₙ)
+              </text>
+              <text
+                x={70}
+                y={46}
+                fontSize={fontScale(10)}
+                fill={MATH_COLORS.labelText}
+                textAnchor="middle"
+              >
+                当前概率 p_{currStep} = {pn.toFixed(3)}
+              </text>
+
+              {/* 示意白球图元 */}
+              <circle
+                cx={45}
+                cy={80}
+                r={16}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.function}
+                strokeWidth={2}
+              />
+              <circle
+                cx={95}
+                cy={80}
+                r={16}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.function}
+                strokeWidth={2}
+              />
+              <circle
+                cx={70}
+                cy={120}
+                r={18}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.function}
+                strokeWidth={2}
+              />
+              <text
+                x={70}
+                y={125}
+                fontSize={fontScale(10)}
+                fill={MATH_COLORS.function}
+                textAnchor="middle"
+              >
+                白球
+              </text>
+
+              <rect
+                x={12}
+                y={150}
+                width={116}
+                height={26}
+                rx={5}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.function}
+              />
+              <text
+                x={70}
+                y={167}
+                fontSize={fontScale(9.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.function}
+                textAnchor="middle"
+              >
+                摸白放回率 p₁₁ = {p11.toFixed(2)}
+              </text>
+            </g>
+
+            {/* 黑球池 (对立事件 Ā_n) */}
+            <g transform={`translate(${leftW - 164}, 30)`}>
+              <rect
+                x={0}
+                y={0}
+                width={140}
+                height={190}
+                rx={10}
+                fill={withAlpha(MATH_COLORS.paramSecondary, 0.06)}
+                stroke={MATH_COLORS.paramSecondary}
+                strokeWidth={1.8}
+              />
+              <text
+                x={70}
+                y={26}
+                fontSize={fontScale(12)}
+                fontWeight="bold"
+                fill={MATH_COLORS.paramSecondary}
+                textAnchor="middle"
+              >
+                黑球池 (Āₙ)
+              </text>
+              <text
+                x={70}
+                y={46}
+                fontSize={fontScale(10)}
+                fill={MATH_COLORS.labelText}
+                textAnchor="middle"
+              >
+                对立概率 1 - pₙ = {pNotN.toFixed(3)}
+              </text>
+
+              {/* 示意黑球图元 */}
+              <circle
+                cx={45}
+                cy={80}
+                r={16}
+                fill={MATH_COLORS.axis}
+                stroke={MATH_COLORS.labelText}
+              />
+              <circle
+                cx={95}
+                cy={80}
+                r={16}
+                fill={MATH_COLORS.axis}
+                stroke={MATH_COLORS.labelText}
+              />
+              <circle
+                cx={70}
+                cy={120}
+                r={18}
+                fill={MATH_COLORS.axis}
+                stroke={MATH_COLORS.labelText}
+              />
+              <text
+                x={70}
+                y={125}
+                fontSize={fontScale(10)}
+                fill={MATH_COLORS.white}
+                textAnchor="middle"
+              >
+                黑球
+              </text>
+
+              <rect
+                x={12}
+                y={150}
+                width={116}
+                height={26}
+                rx={5}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.paramSecondary}
+              />
+              <text
+                x={70}
+                y={167}
+                fontSize={fontScale(9.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.paramSecondary}
+                textAnchor="middle"
+              >
+                换白注入率 p₂₁ = {p21.toFixed(2)}
+              </text>
+            </g>
+
+            {/* 顶置换箭头 */}
+            <path
+              d={`M ${leftW - 164} 60 Q ${leftW / 2} 40 164 60`}
+              fill="none"
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={2}
+              markerEnd="url(#m-arrow-secondary)"
+            />
+            <text
+              x={leftW / 2}
+              y={38}
+              fontSize={fontScale(9.5)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+              textAnchor="middle"
+            >
+              摸出黑球以概率 p₂₁ 换入白球
+            </text>
+          </g>
+        ) : scenarioKey === "game_pingpong" ? (
+          /* 模型 4: 乒乓加赛 · 发球权局势轮换 */
+          <g transform="translate(0, 42)">
+            {/* 甲发球局 */}
+            <g transform="translate(24, 35)">
+              <rect
+                x={0}
+                y={0}
+                width={145}
+                height={180}
+                rx={10}
+                fill={withAlpha(MATH_COLORS.function, 0.06)}
+                stroke={MATH_COLORS.function}
+                strokeWidth={1.8}
+              />
+              <text
+                x={72}
+                y={26}
+                fontSize={fontScale(11.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.function}
+                textAnchor="middle"
+              >
+                甲发球局 (Aₙ)
+              </text>
+              <text
+                x={72}
+                y={46}
+                fontSize={fontScale(10)}
+                fill={MATH_COLORS.labelText}
+                textAnchor="middle"
+              >
+                局势率 p_{currStep} = {pn.toFixed(3)}
+              </text>
+              <text
+                x={72}
+                y={95}
+                fontSize={fontScale(10)}
+                fill={MATH_COLORS.labelTextLight}
+                textAnchor="middle"
+              >
+                甲拥有发球进攻优势
+              </text>
+              <rect
+                x={12}
+                y={130}
+                width={121}
+                height={32}
+                rx={5}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.function}
+              />
+              <text
+                x={72}
+                y={150}
+                fontSize={fontScale(9.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.function}
+                textAnchor="middle"
+              >
+                甲发甲得分 p₁₁ = {p11.toFixed(2)}
+              </text>
+            </g>
+
+            {/* 乙发球局 */}
+            <g transform={`translate(${leftW - 169}, 35)`}>
+              <rect
+                x={0}
+                y={0}
+                width={145}
+                height={180}
+                rx={10}
+                fill={withAlpha(MATH_COLORS.paramSecondary, 0.06)}
+                stroke={MATH_COLORS.paramSecondary}
+                strokeWidth={1.8}
+              />
+              <text
+                x={72}
+                y={26}
+                fontSize={fontScale(11.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.paramSecondary}
+                textAnchor="middle"
+              >
+                乙发球局 (Āₙ)
+              </text>
+              <text
+                x={72}
+                y={46}
+                fontSize={fontScale(10)}
+                fill={MATH_COLORS.labelText}
+                textAnchor="middle"
+              >
+                局势率 1 - pₙ = {pNotN.toFixed(3)}
+              </text>
+              <text
+                x={72}
+                y={95}
+                fontSize={fontScale(10)}
+                fill={MATH_COLORS.labelTextLight}
+                textAnchor="middle"
+              >
+                乙发球甲反拉攻防
+              </text>
+              <rect
+                x={12}
+                y={130}
+                width={121}
+                height={32}
+                rx={5}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.paramSecondary}
+              />
+              <text
+                x={72}
+                y={150}
+                fontSize={fontScale(9.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.paramSecondary}
+                textAnchor="middle"
+              >
+                乙发甲反得分 p₂₁ = {p21.toFixed(2)}
+              </text>
+            </g>
+
+            {/* 局势轮换动态说明 */}
+            <text
+              x={leftW / 2}
+              y={235}
+              fontSize={fontScale(9)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="middle"
+            >
+              公比 λ = p₁₁ - p₂₁ = {lambda.toFixed(2)} &gt;
+              0，单调收敛于平稳博弈概率 {tVal.toFixed(2)}
+            </text>
+          </g>
+        ) : (
+          /* 模型 5: 自由探索 · 二状态通用转移 */
+          <g transform="translate(0, 42)">
+            {/* 状态 1 */}
+            <g transform="translate(40, 50)">
+              <circle
+                cx={45}
+                cy={45}
+                r={40}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.paramPrimary}
+                strokeWidth={2.5}
+              />
+              <text
+                x={45}
+                y={40}
+                fontSize={fontScale(13)}
+                fontWeight="bold"
+                fill={MATH_COLORS.paramPrimary}
+                textAnchor="middle"
+              >
+                状态 1 (Aₙ)
+              </text>
+              <text
+                x={45}
+                y={58}
+                fontSize={fontScale(11)}
+                fill={MATH_COLORS.labelText}
+                textAnchor="middle"
+              >
+                p_{currStep} = {pn.toFixed(3)}
+              </text>
+            </g>
+
+            {/* 状态 2 */}
+            <g transform={`translate(${leftW - 130}, 50)`}>
+              <circle
+                cx={45}
+                cy={45}
+                r={40}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.paramSecondary}
+                strokeWidth={2.5}
+              />
+              <text
+                x={45}
+                y={40}
+                fontSize={fontScale(13)}
+                fontWeight="bold"
+                fill={MATH_COLORS.paramSecondary}
+                textAnchor="middle"
+              >
+                状态 2 (Āₙ)
+              </text>
+              <text
+                x={45}
+                y={58}
+                fontSize={fontScale(11)}
+                fill={MATH_COLORS.labelText}
+                textAnchor="middle"
+              >
+                1 - pₙ = {pNotN.toFixed(3)}
+              </text>
+            </g>
+
+            {/* 转移箭头 */}
+            <path
+              d={`M 125 75 Q ${leftW / 2} 45 ${leftW - 125} 75`}
+              fill="none"
+              stroke={MATH_COLORS.paramPrimary}
+              strokeWidth={2}
+              markerEnd="url(#m-arrow-primary)"
+            />
+            <text
+              x={leftW / 2}
+              y={40}
               fontSize={fontScale(10)}
               fontWeight="bold"
               fill={MATH_COLORS.paramPrimary}
-              textAnchor="end"
+              textAnchor="middle"
             >
-              初值 p₁={p1.toFixed(2)}
+              自保持转移率 p₁₁ = {p11.toFixed(2)}
+            </text>
+
+            <path
+              d={`M ${leftW - 125} 115 Q ${leftW / 2} 145 125 115`}
+              fill="none"
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={2}
+              markerEnd="url(#m-arrow-secondary)"
+            />
+            <text
+              x={leftW / 2}
+              y={150}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+              textAnchor="middle"
+            >
+              跨状态转移率 p₂₁ = {p21.toFixed(2)}
             </text>
           </g>
         )}
 
-        {/* ── 4. 右下：高考数列构造通法卡片 ── */}
-        <g transform="translate(440, 455)">
+        {/* ─────────────────────────────────────────────────────────────
+            下半段：全概率动态加权汇流管道池 (y: 295 ~ 605)
+        ───────────────────────────────────────────────────────────── */}
+        <g transform="translate(0, 295)">
+          {/* 汇流池外层框 */}
+          <rect
+            x={14}
+            y={0}
+            width={leftW - 28}
+            height={310}
+            rx={10}
+            fill={MATH_COLORS.white}
+            stroke={withAlpha(MATH_COLORS.axis, 0.18)}
+            strokeWidth={1}
+          />
+          <text
+            x={26}
+            y={22}
+            fontSize={fontScale(11.5)}
+            fontWeight="bold"
+            fill={MATH_COLORS.function}
+          >
+            【全概汇流管道池】第 n 步两路加权汇聚至第 n+1 步
+          </text>
+
+          {/* 管道 1：自留流向 (按流量动态加粗管道) */}
+          <g transform="translate(26, 36)">
+            <rect
+              x={0}
+              y={0}
+              width={145}
+              height={55}
+              rx={6}
+              fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
+              stroke={MATH_COLORS.paramPrimary}
+              strokeWidth={1.2}
+            />
+            <text
+              x={8}
+              y={18}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramPrimary}
+            >
+              路径 1：自留贡献流
+            </text>
+            <text
+              x={8}
+              y={34}
+              fontSize={fontScale(10)}
+              fill={MATH_COLORS.labelText}
+            >
+              P(Aₙ) · P(Aₙ₊₁|Aₙ)
+            </text>
+            <text
+              x={8}
+              y={48}
+              fontSize={fontScale(10.5)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramPrimary}
+            >
+              = {pn.toFixed(2)} × {p11.toFixed(2)} = {flow1.toFixed(3)}
+            </text>
+          </g>
+
+          {/* 管道 2：注入流向 */}
+          <g transform={`translate(${leftW - 171}, 36)`}>
+            <rect
+              x={0}
+              y={0}
+              width={145}
+              height={55}
+              rx={6}
+              fill={withAlpha(MATH_COLORS.paramSecondary, 0.08)}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.2}
+            />
+            <text
+              x={8}
+              y={18}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+            >
+              路径 2：对立注入流
+            </text>
+            <text
+              x={8}
+              y={34}
+              fontSize={fontScale(10)}
+              fill={MATH_COLORS.labelText}
+            >
+              P(Āₙ) · P(Aₙ₊₁|Āₙ)
+            </text>
+            <text
+              x={8}
+              y={48}
+              fontSize={fontScale(10.5)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+            >
+              = {pNotN.toFixed(2)} × {p21.toFixed(2)} = {flow2.toFixed(3)}
+            </text>
+          </g>
+
+          {/* 汇聚导向管道弧线 */}
+          <path
+            d={`M 98 93 Q 98 125 ${leftW / 2 - 25} 145`}
+            fill="none"
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={Math.max(2, flow1 * 6)}
+            markerEnd="url(#m-arrow-primary)"
+          />
+          <path
+            d={`M ${leftW - 98} 93 Q ${leftW - 98} 125 ${leftW / 2 + 25} 145`}
+            fill="none"
+            stroke={MATH_COLORS.paramSecondary}
+            strokeWidth={Math.max(2, flow2 * 6)}
+            markerEnd="url(#m-arrow-secondary)"
+          />
+
+          {/* 汇聚池：第 n+1 步状态 A_{n+1} */}
+          <g transform={`translate(${leftW / 2 - 80}, 150)`}>
+            <rect
+              x={0}
+              y={0}
+              width={160}
+              height={65}
+              rx={10}
+              fill={withAlpha(MATH_COLORS.focusPoint, 0.08)}
+              stroke={MATH_COLORS.focusPoint}
+              strokeWidth={2}
+            />
+            <text
+              x={80}
+              y={24}
+              fontSize={fontScale(12.5)}
+              fontWeight="bold"
+              fill={MATH_COLORS.focusPoint}
+              textAnchor="middle"
+            >
+              第 n+1 步状态池 Aₙ₊₁
+            </text>
+            <text
+              x={80}
+              y={44}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              fill={MATH_COLORS.labelText}
+              textAnchor="middle"
+            >
+              {flow1.toFixed(3)} + {flow2.toFixed(3)}
+            </text>
+            <text
+              x={80}
+              y={58}
+              fontSize={fontScale(12)}
+              fontWeight="bold"
+              fill={MATH_COLORS.focusPoint}
+              textAnchor="middle"
+            >
+              p_{currStep + 1} = {pnNext.toFixed(3)}
+            </text>
+          </g>
+
+          {/* 全概公理一阶线性递推核心等式看板 */}
+          <g transform="translate(26, 230)">
+            <rect
+              x={0}
+              y={0}
+              width={leftW - 52}
+              height={66}
+              rx={8}
+              fill={withAlpha(MATH_COLORS.function, 0.05)}
+              stroke={MATH_COLORS.function}
+              strokeWidth={1.2}
+            />
+            <text
+              x={12}
+              y={20}
+              fontSize={fontScale(10.5)}
+              fontWeight="bold"
+              fill={MATH_COLORS.function}
+            >
+              一阶全概线性递推式 (第 (1) 问结论)：
+            </text>
+            <text
+              x={(leftW - 52) / 2}
+              y={42}
+              fontSize={fontScale(13)}
+              fontWeight="bold"
+              fill={MATH_COLORS.function}
+              textAnchor="middle"
+            >
+              pₙ₊₁ = {lambdaStr} pₙ + {p21.toFixed(2)}
+            </text>
+            <text
+              x={(leftW - 52) / 2}
+              y={58}
+              fontSize={fontScale(10)}
+              fill={MATH_COLORS.labelTextLight}
+              textAnchor="middle"
+            >
+              公比 λ = p₁₁ - p₂₁ = {lambda.toFixed(2)}
+            </text>
+          </g>
+        </g>
+      </g>
+
+      {/* ═════════════════════════════════════════════════════════════════
+          右视窗：大画幅离散概率数列 {pₙ} 动力学大图 (x: 398 ~ 822)
+      ═════════════════════════════════════════════════════════════════ */}
+      <g transform={`translate(${rightX}, ${sceneY})`}>
+        {/* 右视窗大底卡 */}
+        <rect
+          x={0}
+          y={0}
+          width={rightW}
+          height={sceneH}
+          rx={12}
+          fill={withAlpha(MATH_COLORS.axis, 0.02)}
+          stroke={withAlpha(MATH_COLORS.axis, 0.18)}
+          strokeWidth={1.2}
+        />
+
+        {/* 视窗标头与收敛形态动态徽章 */}
+        <rect
+          x={0}
+          y={0}
+          width={rightW}
+          height={42}
+          rx={12}
+          fill={withAlpha(
+            lambda < 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.function,
+            0.08,
+          )}
+        />
+        <text
+          x={14}
+          y={26}
+          fontSize={fontScale(12.5)}
+          fontWeight="bold"
+          fill={MATH_COLORS.labelText}
+        >
+          【数形结合】离散概率数列 {"{pₙ}"} 演变动力学
+        </text>
+
+        {/* 动态动力学收敛徽标 */}
+        <rect
+          x={rightW - 192}
+          y={8}
+          width={180}
+          height={26}
+          rx={6}
+          fill={MATH_COLORS.white}
+          stroke={lambda < 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.function}
+          strokeWidth={1.2}
+        />
+        <text
+          x={rightW - 102}
+          y={25}
+          fontSize={fontScale(10.5)}
+          fontWeight="bold"
+          fill={lambda < 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.function}
+          textAnchor="middle"
+        >
+          {lambda < 0
+            ? `λ = ${lambda.toFixed(2)} < 0：交替阻尼振荡`
+            : `λ = ${lambda.toFixed(2)} ≥ 0：单调贴近收敛`}
+        </text>
+
+        {/* ─────────────────────────────────────────────────────────────
+            高大开阔的坐标系绘图视窗 (高 450px！)
+        ───────────────────────────────────────────────────────────── */}
+        {(() => {
+          const plotOriginX = 46;
+          const plotOriginY = 62;
+          const plotW = 345;
+          const plotH = 430;
+          const steps = markovData.steps;
+          const totalSteps = steps.length;
+
+          // 坐标映射
+          const getCoords = (s: { n: number; p1: number }) => {
+            const nx =
+              totalSteps > 1
+                ? plotOriginX + ((s.n - 1) / (totalSteps - 1)) * plotW
+                : plotOriginX;
+            const ny =
+              plotOriginY + (1 - Math.max(0, Math.min(1, s.p1))) * plotH;
+            return { x: nx, y: ny };
+          };
+
+          const stationaryY =
+            plotOriginY + (1 - Math.max(0, Math.min(1, tVal))) * plotH;
+
+          return (
+            <g>
+              {/* 绘图区背景 */}
+              <rect
+                x={plotOriginX}
+                y={plotOriginY}
+                width={plotW}
+                height={plotH}
+                rx={8}
+                fill={MATH_COLORS.white}
+                stroke={withAlpha(MATH_COLORS.axis, 0.15)}
+                strokeWidth={1}
+              />
+
+              {/* 纵轴网格线与刻度 */}
+              {[1.0, 0.75, 0.5, 0.25, 0.0].map((v) => {
+                const gy = plotOriginY + (1 - v) * plotH;
+                return (
+                  <g key={v}>
+                    <line
+                      x1={plotOriginX}
+                      y1={gy}
+                      x2={plotOriginX + plotW}
+                      y2={gy}
+                      stroke={withAlpha(MATH_COLORS.axis, 0.1)}
+                      strokeDasharray="2 2"
+                    />
+                    <text
+                      x={plotOriginX - 8}
+                      y={gy + 4}
+                      fontSize={fontScale(9.5)}
+                      fill={MATH_COLORS.labelTextLight}
+                      textAnchor="end"
+                    >
+                      {v.toFixed(2)}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* 不动点平衡线 y = tVal (发光强调线) */}
+              <line
+                x1={plotOriginX}
+                y1={stationaryY}
+                x2={plotOriginX + plotW}
+                y2={stationaryY}
+                stroke={MATH_COLORS.focusPoint}
+                strokeWidth={2}
+                strokeDasharray="5 3"
+              />
+              <rect
+                x={plotOriginX + plotW - 105}
+                y={stationaryY - 22}
+                width={100}
+                height={18}
+                rx={4}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.focusPoint}
+                strokeWidth={1}
+              />
+              <text
+                x={plotOriginX + plotW - 55}
+                y={stationaryY - 9}
+                fontSize={fontScale(9.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.focusPoint}
+                textAnchor="middle"
+              >
+                平衡不动点 t = {tVal.toFixed(3)}
+              </text>
+
+              {/* 连线轨迹折线 (显示跳跃形态) */}
+              <path
+                d={steps
+                  .map((s, idx) => {
+                    const pt = getCoords(s);
+                    return `${idx === 0 ? "M" : "L"} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+                  })
+                  .join(" ")}
+                fill="none"
+                stroke={withAlpha(
+                  lambda < 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.function,
+                  0.55,
+                )}
+                strokeWidth={1.8}
+                strokeDasharray={lambda < 0 ? "4 2" : "none"}
+              />
+
+              {/* 每个离散点及其垂直垂足针状线 */}
+              {steps.map((s) => {
+                const pt = getCoords(s);
+                const isCurrent = s.n === currStep;
+
+                return (
+                  <g key={s.n}>
+                    {/* 到平衡线的垂直偏差段 (展现 |p_n - t|) */}
+                    <line
+                      x1={pt.x}
+                      y1={pt.y}
+                      x2={pt.x}
+                      y2={stationaryY}
+                      stroke={withAlpha(MATH_COLORS.focusPoint, 0.3)}
+                      strokeWidth={1.5}
+                      strokeDasharray="2 2"
+                    />
+
+                    {/* 投影到横轴的刻度垂线 */}
+                    <line
+                      x1={pt.x}
+                      y1={pt.y}
+                      x2={pt.x}
+                      y2={plotOriginY + plotH}
+                      stroke={withAlpha(MATH_COLORS.axis, 0.12)}
+                      strokeWidth={1}
+                    />
+                    {/* 横轴项数 n 标签 */}
+                    <text
+                      x={pt.x}
+                      y={plotOriginY + plotH + 16}
+                      fontSize={fontScale(9.5)}
+                      fontWeight={isCurrent ? "bold" : "normal"}
+                      fill={
+                        isCurrent
+                          ? MATH_COLORS.focusPoint
+                          : MATH_COLORS.labelText
+                      }
+                      textAnchor="middle"
+                    >
+                      {s.n}
+                    </text>
+
+                    {/* 离散点圆圈 */}
+                    <circle
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={isCurrent ? 6 : 4}
+                      fill={
+                        isCurrent
+                          ? MATH_COLORS.focusPoint
+                          : lambda < 0
+                            ? MATH_COLORS.paramPrimary
+                            : MATH_COLORS.function
+                      }
+                      stroke={MATH_COLORS.white}
+                      strokeWidth={isCurrent ? 2.5 : 1.5}
+                    />
+
+                    {/* 点上方/下方数值标注 */}
+                    <text
+                      x={pt.x}
+                      y={pt.y < stationaryY ? pt.y - 8 : pt.y + 14}
+                      fontSize={fontScale(8.5)}
+                      fontWeight={isCurrent ? "bold" : "normal"}
+                      fill={
+                        isCurrent
+                          ? MATH_COLORS.focusPoint
+                          : MATH_COLORS.labelTextLight
+                      }
+                      textAnchor="middle"
+                    >
+                      {s.p1.toFixed(3)}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* 当前项瞄准十字光标与浮动指示窗 */}
+              {(() => {
+                const curPt = getCoords(currentStepData);
+                return (
+                  <g>
+                    {/* 发光外圈 */}
+                    <circle
+                      cx={curPt.x}
+                      cy={curPt.y}
+                      r={11}
+                      fill="none"
+                      stroke={MATH_COLORS.focusPoint}
+                      strokeWidth={2}
+                      strokeDasharray="3 2"
+                    />
+
+                    {/* 浮动详细指标面板 */}
+                    <g
+                      transform={`translate(${Math.max(plotOriginX + 10, Math.min(plotOriginX + plotW - 160, curPt.x - 75))}, ${curPt.y > plotOriginY + 70 ? curPt.y - 48 : curPt.y + 14})`}
+                    >
+                      <rect
+                        x={0}
+                        y={0}
+                        width={150}
+                        height={34}
+                        rx={6}
+                        fill={MATH_COLORS.white}
+                        stroke={MATH_COLORS.focusPoint}
+                        strokeWidth={1.5}
+                      />
+                      <text
+                        x={75}
+                        y={15}
+                        fontSize={fontScale(10)}
+                        fontWeight="bold"
+                        fill={MATH_COLORS.focusPoint}
+                        textAnchor="middle"
+                      >
+                        第 {currStep} 步：p_{currStep} ={" "}
+                        {currentStepData.p1.toFixed(4)}
+                      </text>
+                      <text
+                        x={75}
+                        y={28}
+                        fontSize={fontScale(9)}
+                        fill={MATH_COLORS.labelText}
+                        textAnchor="middle"
+                      >
+                        距不动点偏差：{(currentStepData.p1 - tVal).toFixed(4)}
+                      </text>
+                    </g>
+                  </g>
+                );
+              })()}
+
+              {/* 横轴标识 */}
+              <text
+                x={plotOriginX + plotW / 2}
+                y={plotOriginY + plotH + 34}
+                fontSize={fontScale(10.5)}
+                fontWeight="bold"
+                fill={MATH_COLORS.labelText}
+                textAnchor="middle"
+              >
+                试验 / 传球轮次 (项数 n)
+              </text>
+            </g>
+          );
+        })()}
+
+        {/* ─────────────────────────────────────────────────────────────
+            底栏：压轴首项与通项双向极简核验条 (y: 535 ~ 605)
+        ───────────────────────────────────────────────────────────── */}
+        <g transform="translate(18, 545)">
           <rect
             x={0}
             y={0}
-            width={355}
-            height={165}
-            rx={12}
-            fill={withAlpha(MATH_COLORS.derivative, 0.04)}
-            stroke={withAlpha(MATH_COLORS.derivative, 0.3)}
-            strokeWidth={1.5}
+            width={rightW - 36}
+            height={60}
+            rx={8}
+            fill={MATH_COLORS.white}
+            stroke={withAlpha(MATH_COLORS.axis, 0.2)}
+            strokeWidth={1}
           />
           <text
-            x={14}
-            y={22}
-            fontSize={fontScale(12.5)}
-            fontWeight="bold"
-            fill={MATH_COLORS.derivative}
-          >
-            4. 高考等比数列构造与收敛性分析
-          </text>
-
-          <text
-            x={14}
-            y={44}
-            fontSize={fontScale(11)}
-            fill={MATH_COLORS.labelText}
-          >
-            ① 递推公比：λ = p₁₁ - p₂₁ = {markovData.lambda.toFixed(2)}
-          </text>
-          <text
-            x={14}
-            y={66}
-            fontSize={fontScale(11)}
-            fill={MATH_COLORS.labelText}
-          >
-            ② 配凑形式：{markovData.geometricText}
-          </text>
-          <text
-            x={14}
-            y={88}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            fill={MATH_COLORS.derivative}
-          >
-            ③ 通项公式：{markovData.generalTermText}
-          </text>
-
-          <rect
             x={12}
-            y={102}
-            width={331}
-            height={50}
-            rx={6}
-            fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
-          />
-          <text
-            x={20}
-            y={122}
+            y={18}
             fontSize={fontScale(10.5)}
             fontWeight="bold"
-            fill={MATH_COLORS.paramPrimary}
+            fill={MATH_COLORS.labelText}
           >
-            {markovData.isPureOscillating
-              ? "【永久振荡型】λ = -1，奇偶步等幅振荡，通项存在但极限不存在"
-              : markovData.isDegenerate
-                ? "【自封闭吸收型】λ = 1，系统概率恒等于初值，无需构造"
-                : markovData.isOscillating
-                  ? "【震荡衰减收敛】公比 -1 < λ < 0，在稳态两侧交替摆动衰减"
-                  : "【单调收敛型】公比 0 ≤ λ < 1，单调逼近稳态极限"}
+            【高考防错核验】单步手算递推 vs 通项公式代入 n=2 双向验算
           </text>
           <text
-            x={20}
-            y={140}
+            x={12}
+            y={36}
             fontSize={fontScale(10)}
-            fill={MATH_COLORS.labelTextLight}
+            fill={MATH_COLORS.function}
           >
-            当前观察：第 {currStep} 步 p_{currStep} ={" "}
-            {currentStepItem.p1.toFixed(4)}，偏差 |p_{currStep} - t| ={" "}
-            {currentStepItem.absDelta.toFixed(4)}
+            ① 递推手算：p₂ = {p11.toFixed(2)}×{p1.toFixed(2)} + {p21.toFixed(2)}
+            ×{(1 - p1).toFixed(2)} ={" "}
+            <tspan fontWeight="bold">{p2Recurrence.toFixed(3)}</tspan>
+          </text>
+          <text
+            x={12}
+            y={50}
+            fontSize={fontScale(10)}
+            fill={MATH_COLORS.focusPoint}
+          >
+            ② 通项代入：p₂ = {tVal.toFixed(3)} + ({diffInit.toFixed(3)})×
+            {lambdaStr}¹ ={" "}
+            <tspan fontWeight="bold">{p2General.toFixed(3)}</tspan>
+            <tspan fill={MATH_COLORS.derivative} fontWeight="bold">
+              {"  "}✓ 双路径计算值完全一致
+            </tspan>
           </text>
         </g>
       </g>

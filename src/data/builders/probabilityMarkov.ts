@@ -1,6 +1,6 @@
 import type { MathPanelData } from "../types";
 import { calculateMarkovChain } from "../../math/probabilityMarkov";
-import { MARKOV_PRESETS } from "../registries/probabilityMarkov";
+import { MARKOV_PRESETS, FREE_SCENARIO } from "../registries/probabilityMarkov";
 import { MATH_COLORS } from "../../theme";
 
 export function buildProbabilityMarkovPanel(
@@ -15,9 +15,8 @@ export function buildProbabilityMarkovPanel(
     maxNVal,
     Math.max(1, Math.round(params.currStep ?? 1)),
   );
-  const scenarioKey = (config?.scenarioKey as string) || "pass_ball_2020";
-  const currentPreset =
-    MARKOV_PRESETS[scenarioKey] || MARKOV_PRESETS.pass_ball_2020;
+  const scenarioKey = (config?.scenarioKey as string) || "pass_ball_3";
+  const currentPreset = MARKOV_PRESETS[scenarioKey] || FREE_SCENARIO;
 
   const markovRes = calculateMarkovChain(p1Val, p11Val, p21Val, maxNVal);
   const currentStepItem =
@@ -53,8 +52,8 @@ export function buildProbabilityMarkovPanel(
         color: MATH_COLORS.functionTransformed,
       },
       {
-        label: "待定不动点 (稳态极限) t",
-        symbol: "t = \\lim_{n \\to \\infty} p_n",
+        label: "待定不动点 (稳态渐近值) t",
+        symbol: "t",
         value: tVal.toFixed(4),
         color: MATH_COLORS.focusPoint,
       },
@@ -97,21 +96,21 @@ export function buildProbabilityMarkovPanel(
         level: "important",
       },
       {
-        name: "【高考采分步 4】等比数列通项与收敛极限",
+        name: "【高考采分步 4】等比数列通项与渐近演变",
         latex:
           "p_n - t = (p_1 - t)\\lambda^{n-1} \\implies p_n = t + (p_1 - t)\\lambda^{n-1}",
         condition: markovRes.step4_generalTerm,
         note: `${markovRes.generalTermLatex ? `当前代入通项：$${markovRes.generalTermLatex}$；` : ""}${
           markovRes.isOscillating
-            ? "公比 $-1 < \\lambda < 0$：在平衡值两侧交替衰减收敛，奇数项偏大、偶数项偏小。"
-            : "公比 $0 \\le \\lambda < 1$：单调递进逼近稳态极限。"
+            ? "公比 $-1 < \\lambda < 0$：在平衡值两侧交替振荡衰减收敛（高考作答用「随着项数增大振荡趋于定值」表述，规避极限记号失分）。"
+            : "公比 $0 \\le \\lambda < 1$：单调递进逼近（高考作答用「单调递增/递减趋于定值」表述即可）。"
         }`,
         level: "derived",
       },
     ],
     gaokaoPoints: [
       {
-        text: "【新高考大题 17 分标准采分点链路】①设第 $n$ 步状态事件 $A_n$ 与完备对立事件 $\\overline{A_n}$；②列全概率展开式 $p_{n+1} = p_{11}p_n + p_{21}(1-p_n)$；③待定系数配凑辅助等比数列 $\\{p_n - t\\}$；④求通项 $p_n$ 并由 $|\\lambda| < 1$ 求解稳态极限 $\\lim_{n \\to \\infty} p_n = t$。",
+        text: "【新高考大题 17 分标准采分点链路】①设第 $n$ 步状态事件 $A_n$ 与完备对立事件 $\\overline{A_n}$；②列全概率展开式 $p_{n+1} = p_{11}p_n + p_{21}(1-p_n)$；③待定系数配凑辅助等比数列 $\\{p_n - t\\}$；④求通项 $p_n$ 并由 $|\\lambda| < 1$ 分析收敛行为（高考作答使用「随着项数 $n$ 增大趋于定值 $t$」表述，不直接写极限记号）。",
         importance: "gaokao",
       },
       {
@@ -127,7 +126,12 @@ export function buildProbabilityMarkovPanel(
         importance: "core",
       },
     ],
-    warnings: [],
+    warnings: [
+      {
+        text: "【高考答题规范 · 渐近趋势表述避坑】「极限」为高等数学直观，高中课标解答题卷面严禁直接书写未定义的 $\\lim_{n \\to \\infty} p_n$ 记号；设问考查渐近行为时，必须使用「随着项数 $n$ 增大，$p_n$ 在两侧交替振荡（或单调）趋近于定值 $t$」标准中文表述，规避失分！",
+        level: "warning",
+      },
+    ],
     mnemonic:
       "全概递推设划分，待定系数配等比，不动点处寻稳态，通项极限步步清。",
   };

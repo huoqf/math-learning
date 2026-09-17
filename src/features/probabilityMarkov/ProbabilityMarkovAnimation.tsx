@@ -24,7 +24,7 @@ import {
 } from "./components/modeConfig";
 
 export function ProbabilityMarkovAnimation() {
-  const [scenarioKey, setScenarioKey] = useState<string>("pass_ball_2020");
+  const [scenarioKey, setScenarioKey] = useState<string>("pass_ball_3");
 
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
@@ -97,24 +97,24 @@ export function ProbabilityMarkovAnimation() {
                   description: "自主设定初始概率与转移概率",
                 },
                 {
-                  key: "pass_ball_2020",
-                  label: "甲乙传球问题",
-                  description: "2020全国卷高考真题",
+                  key: "pass_ball_3",
+                  label: "三人传球问题",
+                  description: "2020新高考I卷真题第21题",
                 },
                 {
-                  key: "pass_ball_3",
-                  label: "三人环传问题",
-                  description: "经典高考对称降维模型",
+                  key: "pass_ball_4",
+                  label: "四人传球问题",
+                  description: "经典高考压轴多目标对称拓展",
                 },
                 {
                   key: "urn_replace",
                   label: "摸球置换问题",
-                  description: "经典高考状态更新模型",
+                  description: "经典高考状态更新单调模型",
                 },
                 {
                   key: "game_pingpong",
                   label: "乒乓加赛问题",
-                  description: "2021新高考I卷压轴真题",
+                  description: "2021新高考I卷压轴局势递推",
                 },
               ]}
               value={scenarioKey}
@@ -141,6 +141,7 @@ export function ProbabilityMarkovAnimation() {
             <TipCard
               variant={tipConfig.variant}
               badge={tipConfig.badge}
+              background={tipConfig.background}
               condition={tipConfig.condition}
               question={tipConfig.question}
             />

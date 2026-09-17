@@ -1,6 +1,10 @@
 import type { ParamConfig } from "@/components/UI";
 import { MATH_COLORS } from "@/theme";
-import { paramMeta, MARKOV_PRESETS } from "@/data/registries/probabilityMarkov";
+import {
+  paramMeta,
+  MARKOV_PRESETS,
+  FREE_SCENARIO,
+} from "@/data/registries/probabilityMarkov";
 
 export type MarkovModelType =
   "pass_ball" | "urn_replace" | "game_match" | "pure_oscillation" | "all";
@@ -8,6 +12,7 @@ export type MarkovModelType =
 export interface TipConfig {
   variant: "info" | "primary" | "warning" | "danger";
   badge: string;
+  background?: string;
   condition: string;
   question: string;
 }
@@ -31,12 +36,13 @@ export function getMarkovTipConfig(scenarioKey: string): TipConfig {
     const variant =
       scenarioKey === "game_pingpong"
         ? "warning"
-        : scenarioKey === "pass_ball_2020" || scenarioKey === "pass_ball_3"
+        : scenarioKey.startsWith("pass_ball")
           ? "primary"
           : "info";
     return {
       variant,
       badge: preset.badge,
+      background: preset.background,
       condition: preset.condition,
       question: preset.question,
     };
@@ -44,20 +50,21 @@ export function getMarkovTipConfig(scenarioKey: string): TipConfig {
 
   return {
     variant: "primary",
-    badge: "自由探索 · 概率递推数列构造",
-    condition:
-      "【探究背景】探究二状态离散系统在一阶线性全概率转移下的动态演化规律与等比数列构造通法。\n【初始条件】设第 $n$ 步处于状态 1 的概率为 $p_n$。自主调节先验概率 $p_1$、单步自保持率 $p_{11}$ 与跨步转移率 $p_{21}$。",
-    question:
-      "(1) 由全概率公式写出一阶递推式 $p_{n+1} = (p_{11}-p_{21})p_n + p_{21}$；\n(2) 探究公比 $\\lambda = p_{11}-p_{21}$ 正负号对单调递进与摆动收敛的决定性作用，并求稳态极限。",
+    badge: FREE_SCENARIO.badge,
+    background: FREE_SCENARIO.background,
+    condition: FREE_SCENARIO.condition,
+    question: FREE_SCENARIO.question,
   };
 }
 
 export function buildMarkovParamConfigs(
   params: Record<string, number>,
-  scenarioKey: string = "pass_ball_2020",
+  scenarioKey: string = "pass_ball_3",
 ): ParamConfig[] {
-  const isPassBall =
-    scenarioKey === "pass_ball_2020" || scenarioKey === "pass_ball_3";
+  const isPassBall3 =
+    scenarioKey === "pass_ball_3" || scenarioKey === "pass_ball_2020";
+  const isPassBall4 = scenarioKey === "pass_ball_4";
+  const isPassBall = isPassBall3 || isPassBall4;
   const isUrn = scenarioKey === "urn_replace";
   const isGame = scenarioKey === "game_pingpong";
 
@@ -77,13 +84,15 @@ export function buildMarkovParamConfigs(
         ? `\\text{甲发甲得分 } \\color{${MATH_COLORS.paramPrimary}}{P(A_{n+1}|A_n)}`
         : `\\text{保持概率 } \\color{${MATH_COLORS.paramPrimary}}{p_{11}}`;
 
-  const p21Formula = isPassBall
-    ? `\\text{乙传甲 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
-    : isUrn
-      ? `\\text{黑球换白 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
-      : isGame
-        ? `\\text{乙发甲得分 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
-        : `\\text{转移概率 } \\color{${MATH_COLORS.paramSecondary}}{p_{21}}`;
+  const p21Formula = isPassBall3
+    ? `\\text{乙丙传甲 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
+    : isPassBall4
+      ? `\\text{他人传甲 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
+      : isUrn
+        ? `\\text{黑球换白 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
+        : isGame
+          ? `\\text{乙发甲得分 } \\color{${MATH_COLORS.paramSecondary}}{P(A_{n+1}|\\overline{A_n})}`
+          : `\\text{转移概率 } \\color{${MATH_COLORS.paramSecondary}}{p_{21}}`;
 
   const p1Desc = isPassBall
     ? "第 1 次传球前球在甲手中的概率"
@@ -101,13 +110,15 @@ export function buildMarkovParamConfigs(
         ? "甲发球局甲得分的概率 P(Aₙ₊₁|Aₙ)"
         : "同状态保持条件概率 P(Aₙ₊₁|Aₙ)";
 
-  const p21Desc = isPassBall
-    ? "乙拿球后传给甲的概率 P(Aₙ₊₁|Āₙ)"
-    : isUrn
-      ? "摸出黑球后换入白球的概率 P(Aₙ₊₁|Āₙ)"
-      : isGame
-        ? "乙发球局甲得分的概率 P(Aₙ₊₁|Āₙ)"
-        : "对立状态转移条件概率 P(Aₙ₊₁|Āₙ)";
+  const p21Desc = isPassBall3
+    ? "球在乙或丙手中时回传给甲的概率 P(Aₙ₊₁|Āₙ)"
+    : isPassBall4
+      ? "球在乙、丙、丁手中时回传给甲的概率 P(Aₙ₊₁|Āₙ)"
+      : isUrn
+        ? "摸出黑球后换入白球的概率 P(Aₙ₊₁|Āₙ)"
+        : isGame
+          ? "乙发球局甲得分的概率 P(Aₙ₊₁|Āₙ)"
+          : "对立状态转移条件概率 P(Aₙ₊₁|Āₙ)";
 
   return [
     {

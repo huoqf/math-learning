@@ -70,7 +70,7 @@ describe("probabilityBayes math module", () => {
     expect(res.cobwebPoints[0].x).toBeCloseTo(1.0);
 
     // 高考 4 步法生成测试
-    expect(res.gaokaoSteps.step1_define).toContain("设第 n 步系统处于状态");
+    expect(res.gaokaoSteps.step1_define).toContain("设第 $n$ 步系统处于状态");
     expect(res.gaokaoSteps.step2_recurrence).toContain("由全概率公式");
     expect(res.gaokaoSteps.step3_geometric).toContain("等比数列");
     expect(res.gaokaoSteps.step4_generalTerm).toContain("通项公式");
@@ -132,7 +132,7 @@ describe("probabilityBayes math module", () => {
     expect(res.gaokaoSteps.step4_generalTerm).toContain("常数列");
     expect(res.gaokaoSteps.step4_generalTerm).not.toContain("(0.000) \\cdot");
     expect(res.gaokaoSteps.step4_generalTerm).toContain(
-      "初始概率 p_1 = 0.333 恰好等于不动点 0.333",
+      "初始概率 $p_1 = 0.333$ 恰好等于不动点 $0.333$",
     );
   });
 

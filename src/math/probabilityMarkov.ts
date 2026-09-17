@@ -149,7 +149,7 @@ export function calculateMarkovChain(
   }
 
   // 高考四步规范作答 (所有内嵌数学符号 100% 包裹 $...$，供 renderMixedLatex 完美渲染)
-  const step1_partition = `设第 n 步系统处于状态 $S_1$ 的事件为 $A_n$，其发生概率为 $P(A_n) = p_n$，则处于状态 $S_2$ 的概率为 $P(\\overline{A_n}) = 1 - p_n$。显然 $A_n$ 与 $\\overline{A_n}$ 构成完备划分，初始条件 $p_1 = ${initP1.toFixed(2)}$。`;
+  const step1_partition = `设第 $n$ 步系统处于状态 $S_1$ 的事件为 $A_n$，其发生概率为 $P(A_n) = p_n$，则处于状态 $S_2$ 的概率为 $P(\\overline{A_n}) = 1 - p_n$。显然 $A_n$ 与 $\\overline{A_n}$ 构成完备划分，初始条件 $p_1 = ${initP1.toFixed(2)}$。`;
   const step2_recurrence = `由全概率公式，第 $n+1$ 步处于 $S_1$ 的概率满足：$P(A_{n+1}) = P(A_n)P(A_{n+1}|A_n) + P(\\overline{A_n})P(A_{n+1}|\\overline{A_n}) = ${cP11.toFixed(2)} p_n + ${cP21.toFixed(2)}(1 - p_n) = ${recurrenceLatex}$。`;
 
   let step3_geometric: string;
@@ -162,7 +162,7 @@ export function calculateMarkovChain(
     step3_geometric = `求解不动点方程 $x = ${lambdaStr} x + ${betaStr}$，得不动点 $x = ${pInfStr}$。
 两边同减 $${pInfStr}$ 得：$p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})$。
 故数列 $\\{p_n - ${pInfStr}\\}$ 为以 $0$ 为首项的常数数列。`;
-    step4_generalTerm = `初始概率 p_1 = ${initP1.toFixed(3)} 恰好等于不动点 ${pInfStr}，故数列 $\\{p_n - ${pInfStr}\\}$ 为以 $0$ 为首项的常数列，即 $p_n = ${pInfStr}$（常数列）。稳态极限 $\\lim_{n \\to \\infty} p_n = ${pInfStr}$。`;
+    step4_generalTerm = `初始概率 $p_1 = ${initP1.toFixed(3)}$ 恰好等于不动点 $${pInfStr}$，故数列 $\\{p_n - ${pInfStr}\\}$ 为以 $0$ 为首项的常数列，即 $p_n = ${pInfStr}$（常数列）。稳态极限 $\\lim_{n \\to \\infty} p_n = ${pInfStr}$。`;
   } else if (isPureOscillating) {
     step3_geometric = `递推式为 $p_{n+1} = -p_n + ${betaStr}$。设 $p_{n+1} - ${pInfStr} = -1(p_n - ${pInfStr})$，则数列 $\\{p_n - ${pInfStr}\\}$ 是以 $p_1 - ${pInfStr} = ${diffInit.toFixed(3)}$ 为首项、$-1$ 为公比的等比数列。`;
     step4_generalTerm = `通项公式为：$p_n = ${pInfStr} + (${diffInit.toFixed(3)}) \\cdot (-1)^{n-1}$。注意公比 $\\lambda = -1$，序列在两点间永久等幅振荡，不存在稳态极限。`;
