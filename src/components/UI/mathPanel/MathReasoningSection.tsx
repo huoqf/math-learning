@@ -14,10 +14,17 @@ export interface ReasoningStep {
 
 interface MathReasoningSectionProps {
   steps: ReasoningStep[];
+  /**
+   * 聚焦步（1 起）。由左屏「高考标准解答分步走」驱动：
+   * 命中步加主色描边并轻微放大，其余步降透明度，
+   * 使学生一眼看到"现在写到第几步、这一步的采分点在哪"。
+   */
+  focusStep?: number;
 }
 
 export const MathReasoningSection: React.FC<MathReasoningSectionProps> = ({
   steps,
+  focusStep,
 }) => {
   const [open, setOpen] = useState(true);
 
@@ -51,10 +58,20 @@ export const MathReasoningSection: React.FC<MathReasoningSectionProps> = ({
                   ? [s.latex]
                   : [];
 
+            const isFocused = focusStep !== undefined && s.step === focusStep;
+            const isDimmed = focusStep !== undefined && !isFocused;
+
             return (
               <div
                 key={idx}
-                className="p-3 rounded-lg border border-neutral-200/80 bg-white shadow-2xs text-xs flex flex-col gap-1.5"
+                data-focus-step={isFocused ? "true" : undefined}
+                className={`p-3 rounded-lg border bg-white text-xs flex flex-col gap-1.5 transition-all duration-fast ease-standard ${
+                  isFocused
+                    ? "border-primary-400 ring-2 ring-primary-300/60 shadow-sm"
+                    : isDimmed
+                      ? "border-neutral-200/70 opacity-60"
+                      : "border-neutral-200/80 shadow-2xs"
+                }`}
               >
                 {/* 1. 步骤序号与主标题（独占横向空间，自然流动） */}
                 <div className="flex items-start gap-1.5">

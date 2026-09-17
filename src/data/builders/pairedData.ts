@@ -9,6 +9,7 @@ import {
   Point2D,
 } from "@/math/pairedData";
 import { MATH_COLORS } from "@/theme";
+import { INDEPENDENCE_ANSWER_STEPS } from "../registries/pairedData";
 
 export function buildPairedDataPanel(
   params: Record<string, number>,
@@ -487,27 +488,29 @@ export function buildPairedDataPanel(
     }
 
     // 1. 高考解答题标准三步推演链（审题定法 → 建模展开 → 求解反思）
+    //    步号与标题取自 `INDEPENDENCE_ANSWER_STEPS`（SSOT），与左屏 StepNavigator、
+    //    中屏 IndependenceScene 分区高亮三方同源，改标题/调步序不会各改一半而错位。
     const denomProduct = res.row1 * res.row2 * res.col1 * res.col2;
 
     const reasoningSteps: ReasoningStep[] = [
       {
-        step: 1,
-        title: "审题定法 · 明确设立零假设与对立假设",
+        step: INDEPENDENCE_ANSWER_STEPS[0].step,
+        title: INDEPENDENCE_ANSWER_STEPS[0].title,
         latex: `H_0: X \\text{ 与 } Y \\text{ 相互独立}`,
         detail: `设零假设 $H_0$：${preset.labelA} 与 ${preset.labelB} 相互独立（即两变量无关联）。解答题第一步规范书写 $H_0$，为小概率反证法确立逻辑前提。`,
         rubric: "规范写出零假设 H₀ 记 1 分",
       },
       {
-        step: 2,
-        title: "建模展开 · 列联表数据代入卡方公式求解",
+        step: INDEPENDENCE_ANSWER_STEPS[1].step,
+        title: INDEPENDENCE_ANSWER_STEPS[1].title,
         latex: `\\chi^2 = \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\ = \\frac{${res.n} \\times (${a} \\times ${d} - ${b} \\times ${c})^2}{${res.row1} \\times ${res.row2} \\times ${res.col1} \\times ${res.col2}} \\\\ = \\frac{${res.n} \\times (${res.adMinusBc})^2}{${denomProduct}} \\approx ${res.chiSquare.toFixed(3)}`,
         detail:
           "新高考评分细则：严禁直接跳步给出孤立数值！必须按「符号公式 $\\to$ 四格实际数据代入 $\\to$ 结果化简」三步规范书写，保证得分完整。",
         rubric: "公式与数据代入正确记 2 分，准确计算化简记 1 分",
       },
       {
-        step: 3,
-        title: "求解反思 · 对比分位数临界值合规推断",
+        step: INDEPENDENCE_ANSWER_STEPS[2].step,
+        title: INDEPENDENCE_ANSWER_STEPS[2].title,
         latex: criticalComparisonLatex,
         detail: `${conclusionDetail}【阅卷避坑】独立性检验只能推断“两变量具有统计关联”，绝不可断言因果必然关系；未达临界值时严禁表述为“绝对证明两者无关”。`,
         rubric: "临界值比对正确记 1 分，小概率结论严谨记 1 分",

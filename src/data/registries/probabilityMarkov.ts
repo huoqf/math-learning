@@ -8,6 +8,47 @@ export const defaultParams: Record<string, number> = {
   maxN: 10,
 };
 
+/** 「高考标准解答分步走」的单步（左屏导航 / 右屏采分步 / 中屏高亮三方共用） */
+export interface MarkovAnswerStep {
+  step: number;
+  title: string;
+  /** 该步在中屏对应的图元区域说明 */
+  sceneHint: string;
+}
+
+/**
+ * 概率递推模块的解答分步链条（SSOT）。
+ *
+ * 同一份数据被三处消费，保证"左屏点第 N 步、右屏聚焦第 N 张采分步卡片、中屏高亮第 N 步图元"
+ * 三者永远指向同一件事，不会各写一份而漂移：
+ *   - 左屏 `StepNavigator`：step / title / sceneHint
+ *   - 右屏定理区：builder 拼装为 `【高考采分步 N】title` 作为定理名，并写入 `step` 字段
+ *   - 中屏 `MarkovScene`：按 step 高亮对应区域
+ */
+export const MARKOV_ANSWER_STEPS: MarkovAnswerStep[] = [
+  {
+    step: 1,
+    title: "完备划分与规范设元",
+    sceneHint: "左屏上半【模型建模】状态划分拓扑图（事件 Aₙ 与其对立事件 Āₙ）",
+  },
+  {
+    step: 2,
+    title: "全概率公式建立一阶线性递推",
+    sceneHint: "左屏下半【全概汇流管道池】两路加权汇聚至第 n+1 步状态池",
+  },
+  {
+    step: 3,
+    title: "待定系数法配凑构造等比数列",
+    sceneHint:
+      "右屏【平衡不动点 t 水平线】——配凑目标正是把 pₙ 平移到 t 后成等比",
+  },
+  {
+    step: 4,
+    title: "等比数列通项与渐近演变",
+    sceneHint: "右屏数列 {pₙ} 点列轨迹：观察 pₙ 单调逼近或交替越过平衡线 t",
+  },
+];
+
 export const paramMeta: Record<string, ParamMeta> = {
   p1: {
     key: "p1",

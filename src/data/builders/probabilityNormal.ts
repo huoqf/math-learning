@@ -16,115 +16,21 @@ export function buildProbabilityNormalPanel(
   const sigma = Math.max(0.1, params.sigma ?? 1);
   const binCount = params.binCount ?? 10;
   const sampleSize = params.sampleSize ?? 300;
-  const skewness = params.skewness ?? 0;
-  const percentileP = params.percentileP ?? 50;
   const x0 = params.x0 ?? -1;
   const x1 = params.x1 ?? -1;
   const x2 = params.x2 ?? 1;
-  const studyMode = (config?.studyMode as string) ?? "histogram";
+  const studyMode = (config?.studyMode as string) ?? "normalFit";
 
-  // 直方图数据与统计计算
-  const bins = generateHistogramBins(mu, sigma, binCount, sampleSize, skewness);
-  const stats = estimateHistogramStats(bins, percentileP);
+  // 直方图数据与统计计算（此处直方图仅服务于"组距细化 → 轮廓趋于正态曲线"的直观佐证；
+  // 众数/中位数/百分位数等特征数的精细计算属必修二 know-stat-percentile，不在此重复。）
+  const bins = generateHistogramBins(mu, sigma, binCount, sampleSize);
+  const stats = estimateHistogramStats(bins);
 
   // 正态曲线特征
   const peakHeight = normalPdf(mu, mu, sigma);
   const symData = calcSymmetricNormalIntervals(mu, sigma, x0);
 
-  // 1. 直方图与数字特征模式
-  if (studyMode === "histogram") {
-    let skewText = "对称分布 (众数 ≈ 中位数 ≈ 均值)";
-    if (skewness > 0.2) {
-      skewText = "右偏分布 (众数 < 中位数 < 均值)";
-    } else if (skewness < -0.2) {
-      skewText = "左偏分布 (均值 < 中位数 < 众数)";
-    }
-
-    const iqr = stats.q3 - stats.q1;
-
-    return {
-      quantities: [
-        {
-          label: "直方图均值 x̄",
-          value: `${stats.mean.toFixed(3)}`,
-          color: MATH_COLORS.function,
-        },
-        {
-          label: "直方图中位数 $m_e$",
-          value: `${stats.median.toFixed(3)}`,
-          color: MATH_COLORS.paramSecondary,
-        },
-        {
-          label: "直方图众数 $m_o$",
-          value: `${stats.mode.toFixed(3)}`,
-          color: MATH_COLORS.paramPrimary,
-        },
-        {
-          label: `第 ${percentileP}% 百分位数 P_${percentileP}`,
-          value: `${stats.percentilePValue.toFixed(3)}`,
-          color: MATH_COLORS.paramTertiary,
-          highlight: "positive",
-        },
-        {
-          label: "下四分位数 Q₁ (25%)",
-          value: `${stats.q1.toFixed(3)}`,
-          color: MATH_COLORS.paramTertiary,
-        },
-        {
-          label: "上四分位数 Q₃ (75%)",
-          value: `${stats.q3.toFixed(3)}`,
-          color: MATH_COLORS.paramTertiary,
-        },
-        {
-          label: "四分位距 IQR (Q₃-Q₁)",
-          value: `${iqr.toFixed(3)}`,
-          color: MATH_COLORS.paramTertiary,
-        },
-        {
-          label: "矩形总面积 ∑Sᵢ (恒为1)",
-          value: `${stats.totalArea.toFixed(4)}`,
-          color: MATH_COLORS.paramPrimary,
-        },
-      ],
-      theorems: [
-        {
-          name: "频率分布直方图基本性质 (面积即频率)",
-          latex:
-            "S_i = \\frac{\\text{频率}_i}{\\text{组距}_i} \\times \\text{组距}_i = \\text{频率}_i \\quad \\sum_{i=1}^K S_i = 1",
-          note: "纵轴表示『频率/组距』，各矩形面积等于该组频率，所有矩形面积之和恒等于 1。",
-          level: "core",
-        },
-        {
-          name: "三大数字特征估算与偏态关系",
-          latex:
-            "\\bar{x} = \\sum_{i=1}^{k} x_i \\cdot f_i \\quad m_e: \\text{平分面积} \\quad \\text{当前形态: }" +
-            skewText,
-          note: "中位数将直方图面积二等分；众数为最高矩形底边中点；平均数是直方图的物理平衡重心。",
-          level: "important",
-        },
-      ],
-      gaokaoPoints: [
-        {
-          text: "【高考考点】直方图估算平均数 ∑(组中点×频率)、中位数（平分面积线）和众数（最高矩形中点）。",
-          importance: "gaokao",
-        },
-        {
-          text: "【高考考点】百分位数：第 p 百分位数左侧面积占总面积的 p%。四分位数 Q₁(25%)、Q₃(75%)、四分位距 IQR = Q₃ - Q₁ 为新高考热点。",
-          importance: "gaokao",
-        },
-      ],
-      warnings: [
-        {
-          text: "警示：直方图纵轴不是频率！切勿将纵轴读数直接当成频率相加计算。",
-          level: "warning",
-        },
-      ],
-      mnemonic:
-        "面积是频率总和恒为一，中位数平分面积，众数看最高矩形中点，平均数组中值乘频率！",
-    };
-  }
-
-  // 2. 极限逼近与正态拟合模式
+  // 1. 极限逼近与正态拟合模式
   if (studyMode === "normalFit") {
     const binWidth = bins[0]?.width ?? 0;
     const maxHistDensity = Math.max(...bins.map((b) => b.density));

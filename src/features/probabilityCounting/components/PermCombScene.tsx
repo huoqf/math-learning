@@ -2,6 +2,7 @@ import { MATH_COLORS, withAlpha } from "../../../theme";
 import {
   perm,
   comb,
+  factorial,
   calculateGroupingAllocation,
 } from "../../../math/probabilityCounting";
 import type { SceneCommonProps } from "./types";
@@ -292,6 +293,14 @@ export function PermCombScene({
       label: String.fromCharCode(65 + i),
     }));
 
+    // 逐步选堆的组合数连乘链：严格跟随 groupTotal / groupCount 参数推导，杜绝写死 6/4/2
+    const groupingChain = Array.from({ length: groupInfo.groupCount }, (_, i) =>
+      formatComb(
+        groupInfo.totalItems - i * groupInfo.itemsPerGroup,
+        groupInfo.itemsPerGroup,
+      ),
+    ).join(" × ");
+
     return (
       <g transform="translate(40, 45)">
         <rect
@@ -514,8 +523,8 @@ export function PermCombScene({
             fill={MATH_COLORS.labelText}
             fontSize={fontScale(12)}
           >
-            • 均匀分堆（无接收者）：N_均分 = ({formatComb(6, 2)} ×{" "}
-            {formatComb(4, 2)} × {formatComb(2, 2)}) ÷ 3! = 15 种
+            • 均分（无接收者）：N_均分 = ({groupingChain}) ÷{" "}
+            {groupInfo.groupCount}! = {groupInfo.groupedWays} 种
           </text>
           <text
             x={20}
@@ -523,8 +532,10 @@ export function PermCombScene({
             fill={MATH_COLORS.labelText}
             fontSize={fontScale(12)}
           >
-            • 定向分配（分给甲乙丙3人）：N_分配 = N_均分 × {formatPerm(3, 3)} =
-            15 × 6 = 90 种
+            • 定向分配（分给 {groupInfo.groupCount} 个不同对象）：N_分配 ={" "}
+            {groupInfo.groupedWays} ×{" "}
+            {formatPerm(groupInfo.groupCount, groupInfo.groupCount)} ={" "}
+            {groupInfo.allocatedWays} 种
           </text>
         </g>
       </g>
@@ -532,6 +543,89 @@ export function PermCombScene({
   }
 
   // 3. 捆绑法与插空法几何化 (subMode === 2)
+  // 本模型固定 2 个受限元素 A、B（与右屏 builder 的 m = 2 口径完全一致），
+  // 其余 freeCount = n - 2 个为无限制主体元素；全部图形与文案均由 n 推导，严禁写死。
+  const nTotal = n;
+  const bindCount = 2;
+  const freeCount = Math.max(0, nTotal - bindCount);
+  const bindWays = factorial(Math.max(0, nTotal - 1)) * factorial(bindCount);
+  const insertWays = factorial(freeCount) * perm(freeCount + 1, bindCount);
+  const freeLabels = Array.from({ length: freeCount }, (_, i) =>
+    String.fromCharCode(67 + i),
+  );
+
+  // 中屏几何随 n 自适应：元素越多则间距越小，保证全部元素同屏可见且互不重叠
+  const bindFreeSpacing = freeCount > 0 ? Math.min(60, 380 / freeCount) : 0;
+  const insertSlotCount = 2 * freeCount + 1; // 空档与主体元素交替排布
+  const insertUnit = Math.min(110, 600 / Math.max(1, insertSlotCount));
+  const insertRadius = Math.max(9, Math.min(16, insertUnit * 0.34));
+  const insertGapWidth = Math.max(18, Math.min(36, insertUnit * 0.7));
+
+  // 退化保护：捆绑/插空均需同时存在受限元素 A、B，n < 2 时模型不成立
+  if (nTotal < bindCount) {
+    return (
+      <g transform="translate(40, 45)">
+        <rect
+          x={20}
+          y={10}
+          width={720}
+          height={540}
+          fill={MATH_COLORS.poolBg}
+          stroke={MATH_COLORS.poolBorder}
+          strokeWidth={1}
+          rx={14}
+        />
+        <text
+          x={45}
+          y={45}
+          fill={MATH_COLORS.labelText}
+          fontSize={fontScale(15)}
+          fontWeight="bold"
+        >
+          捆绑法与插空法模型（高考排队模型）
+        </text>
+        <rect
+          x={45}
+          y={95}
+          width={665}
+          height={130}
+          fill={MATH_COLORS.white}
+          stroke={MATH_COLORS.paramPrimary}
+          strokeWidth={1.5}
+          strokeDasharray="6 4"
+          rx={10}
+        />
+        <text
+          x={65}
+          y={135}
+          fill={MATH_COLORS.paramPrimary}
+          fontSize={fontScale(13)}
+          fontWeight="bold"
+        >
+          当前 n = {nTotal}，模型不成立
+        </text>
+        <text
+          x={65}
+          y={168}
+          fill={MATH_COLORS.labelText}
+          fontSize={fontScale(12)}
+        >
+          捆绑法（A 与 B 必须相邻）与插空法（A 与 B 互不相邻）都需同时存在 A、B
+          两个受限元素。
+        </text>
+        <text
+          x={65}
+          y={196}
+          fill={MATH_COLORS.labelText}
+          fontSize={fontScale(12)}
+        >
+          请将左屏总数调到 n ≥ {bindCount}；n = {bindCount} 时相邻仅 1
+          种排法，且 A、B 无法做到不相邻（插空为 0 种）。
+        </text>
+      </g>
+    );
+  }
+
   return (
     <g transform="translate(40, 45)">
       <rect
@@ -552,7 +646,8 @@ export function PermCombScene({
         fontSize={fontScale(15)}
         fontWeight="bold"
       >
-        高考两大核心排队模型：捆绑法 (相邻) 与 插空法 (不相邻)
+        高考两大核心排队模型：捆绑法 (相邻) 与 插空法 (不相邻) —— 当前 n ={" "}
+        {nTotal}
       </text>
 
       {/* 捆绑法区域 */}
@@ -574,7 +669,7 @@ export function PermCombScene({
           fontSize={fontScale(13)}
           fontWeight="bold"
         >
-          模型一：捆绑法（要求 A 与 B 必须相邻）
+          模型一：捆绑法（要求 A 与 B 必须相邻，共 {nTotal} 个元素）
         </text>
 
         {/* 捆绑大胶囊 */}
@@ -598,17 +693,37 @@ export function PermCombScene({
             fontSize={fontScale(10)}
             fontWeight="bold"
           >
-            超元素 [AB] (内部 {formatPerm(2, 2)})
+            超元素 [AB] (内部 {formatPerm(bindCount, bindCount)})
           </text>
           <circle cx={48} cy={44} r={14} fill={BALL_COLORS[0]} />
           <circle cx={112} cy={44} r={14} fill={BALL_COLORS[1]} />
         </g>
 
-        {/* 独立元素 */}
+        {/* 无限制主体元素：个数与间距严格由 n 推导 */}
         <g transform="translate(220, 80)">
-          <circle cx={30} cy={13} r={14} fill={BALL_COLORS[2]} />
-          <circle cx={90} cy={13} r={14} fill={BALL_COLORS[3]} />
-          <circle cx={150} cy={13} r={14} fill={BALL_COLORS[4]} />
+          {freeLabels.map((label, idx) => (
+            <g
+              key={`free-el-${idx}`}
+              transform={`translate(${30 + idx * bindFreeSpacing}, 13)`}
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={14}
+                fill={BALL_COLORS[(2 + idx) % BALL_COLORS.length]}
+              />
+              <text
+                x={0}
+                y={4}
+                textAnchor="middle"
+                fill={MATH_COLORS.white}
+                fontSize={fontScale(9)}
+                fontWeight="bold"
+              >
+                {label}
+              </text>
+            </g>
+          ))}
         </g>
 
         <text
@@ -617,9 +732,12 @@ export function PermCombScene({
           fill={MATH_COLORS.labelText}
           fontSize={fontScale(12)}
         >
-          计算逻辑：将 [AB] 视作 1 个元素，与 C,D,E 共 4 个大元素外排{" "}
-          {formatPerm(4, 4)}，再乘内部全排 {formatPerm(2, 2)}：N ={" "}
-          {formatPerm(4, 4)} × {formatPerm(2, 2)} = 48 种
+          计算逻辑：将 [AB] 视作 1 个元素，与其余 {freeCount} 个元素共{" "}
+          {freeCount + 1} 个大元素外排{" "}
+          {formatPerm(freeCount + 1, freeCount + 1)} ={" "}
+          {factorial(freeCount + 1)}，再乘内部全排{" "}
+          {formatPerm(bindCount, bindCount)} = {factorial(bindCount)}：N_捆绑 ={" "}
+          {factorial(freeCount + 1)} × {factorial(bindCount)} = {bindWays} 种
         </text>
       </g>
 
@@ -642,61 +760,96 @@ export function PermCombScene({
           fontSize={fontScale(13)}
           fontWeight="bold"
         >
-          模型二：插空法（要求 A 与 B 互不相邻）
+          模型二：插空法（要求 A 与 B 互不相邻，共 {nTotal} 个元素）
         </text>
 
-        {/* 先排主体 */}
+        {/* 空档与主体元素交替排布：槽位数 = 主体数 + 1 = n - 1，全部由 n 推导 */}
         <g transform="translate(40, 60)">
-          {/* 插空槽位 */}
-          {[-1, 0, 1, 2].map((slotIdx) => (
-            <g
-              key={`slot-gap-${slotIdx}`}
-              transform={`translate(${70 + slotIdx * 110}, 0)`}
-            >
-              <rect
-                x={0}
-                y={0}
-                width={36}
-                height={62}
-                fill={withAlpha(MATH_COLORS.paramTertiary, 0.15)}
-                stroke={MATH_COLORS.paramTertiary}
-                strokeDasharray="2 2"
-                rx={6}
-              />
-              <text
-                x={18}
-                y={36}
-                textAnchor="middle"
-                fill={MATH_COLORS.paramTertiary}
-                fontSize={fontScale(10)}
-                fontWeight="bold"
-              >
-                空
-              </text>
-            </g>
-          ))}
+          {Array.from({ length: insertSlotCount }, (_, slotIdx) => {
+            const gapIndex = slotIdx / 2;
+            const mainIndex = (slotIdx - 1) / 2;
 
-          {/* 无限制主体元素 C, D, E */}
-          {[0, 1, 2].map((idx) => (
-            <circle
-              key={`main-el-${idx}`}
-              cx={125 + idx * 110}
-              cy={31}
-              r={16}
-              fill={BALL_COLORS[2 + idx]}
-            />
-          ))}
+            if (slotIdx % 2 === 0) {
+              return (
+                <g
+                  key={`slot-gap-${gapIndex}`}
+                  transform={`translate(${
+                    slotIdx * insertUnit + (insertUnit - insertGapWidth) / 2
+                  }, 0)`}
+                >
+                  <rect
+                    x={0}
+                    y={0}
+                    width={insertGapWidth}
+                    height={62}
+                    fill={withAlpha(MATH_COLORS.paramTertiary, 0.15)}
+                    stroke={MATH_COLORS.paramTertiary}
+                    strokeDasharray="2 2"
+                    rx={6}
+                  />
+                  {insertGapWidth >= 24 && (
+                    <text
+                      x={insertGapWidth / 2}
+                      y={36}
+                      textAnchor="middle"
+                      fill={MATH_COLORS.paramTertiary}
+                      fontSize={fontScale(9)}
+                      fontWeight="bold"
+                    >
+                      空
+                    </text>
+                  )}
+                </g>
+              );
+            }
+
+            return (
+              <g
+                key={`main-el-${mainIndex}`}
+                transform={`translate(${slotIdx * insertUnit + insertUnit / 2}, 31)`}
+              >
+                <circle
+                  cx={0}
+                  cy={0}
+                  r={insertRadius}
+                  fill={BALL_COLORS[(2 + mainIndex) % BALL_COLORS.length]}
+                />
+                {insertRadius >= 11 && (
+                  <text
+                    x={0}
+                    y={4}
+                    textAnchor="middle"
+                    fill={MATH_COLORS.white}
+                    fontSize={fontScale(9)}
+                    fontWeight="bold"
+                  >
+                    {freeLabels[mainIndex]}
+                  </text>
+                )}
+              </g>
+            );
+          })}
         </g>
 
         <text
           x={20}
-          y={180}
+          y={168}
           fill={MATH_COLORS.labelText}
           fontSize={fontScale(12)}
         >
-          计算逻辑：先排无限制的 C,D,E（{formatPerm(3, 3)} 种），产生 4
-          个空档；将 A,B 插入 4 个空位（{formatPerm(4, 2)} 种）：N ={" "}
-          {formatPerm(3, 3)} × {formatPerm(4, 2)} = 72 种
+          计算逻辑：先排无限制的 {freeCount} 个元素（
+          {formatPerm(freeCount, freeCount)} = {factorial(freeCount)} 种），形成{" "}
+          {freeCount + 1} 个空档；
+        </text>
+        <text
+          x={20}
+          y={196}
+          fill={MATH_COLORS.labelText}
+          fontSize={fontScale(12)}
+        >
+          再将 A、B 插入空档（{formatPerm(freeCount + 1, bindCount)} ={" "}
+          {perm(freeCount + 1, bindCount)} 种）：N_插空 = {factorial(freeCount)}{" "}
+          × {perm(freeCount + 1, bindCount)} = {insertWays} 种
         </text>
       </g>
     </g>

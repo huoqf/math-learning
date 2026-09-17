@@ -54,7 +54,7 @@ export const modeOptions: ModeOption[] = [
   {
     key: "compare",
     label: "双分布逼近收敛",
-    formula: "\\lim_{N \\to \\infty} H = B",
+    formula: "N \\gg n \\Rightarrow H \\approx B",
   },
   { key: "linear", label: "线性变换", formula: "Y = aX + b" },
   { key: "decision", label: "高考决策方案", formula: "E(A) \\text{ vs } E(B)" },
@@ -288,7 +288,8 @@ export function getTopFormulaLatex(
     return `X \\sim H(${params.N}, ${params.M}, ${params.sampleN}) \\quad k \\in [${kMin}, ${kMax}] \\quad P(X=k) = \\frac{C_{${params.M}}^k C_{${params.N - params.M}}^{${params.sampleN}-k}}{C_{${params.N}}^{${params.sampleN}}}`;
   }
   if (studyMode === "compare") {
-    return `\\lim_{N \\to \\infty} H(N, M, n) = B(n, p) \\quad \\text{修正系数 } \\frac{N-n}{N-1} = ${comparisonResult?.varianceCorrectionFactor.toFixed(3)}`;
+    // 新课标正文不作极限要求：以"总体远大于样本"的文字化近似表述替代 \lim 记号
+    return `N \\gg n \\text{ 时 } H(N, M, n) \\approx B(n, p) \\quad \\text{方差修正系数 } \\frac{N-n}{N-1} = ${comparisonResult?.varianceCorrectionFactor.toFixed(3)}`;
   }
   if (studyMode === "decision") {
     return decisionScenario === "quality"
@@ -344,7 +345,7 @@ export function getTipConfig(
       condition:
         "固定抽取样本量 $n$ 和次品比例 $p=\\frac{M}{N}$，逐步扩大总体总量 $N$。",
       question:
-        "探究有限总体不放回抽样向独立重复试验极限收敛的规律，分析方差修正系数 $\\frac{N-n}{N-1}$ 趋近于 $1$ 的几何直观与建模简化依据。",
+        "探究有限总体不放回抽样向独立重复试验逼近的规律，分析方差修正系数 $\\frac{N-n}{N-1}$ 趋近于 $1$ 的几何直观与建模简化依据。",
     };
   }
   if (studyMode === "decision") {
@@ -461,6 +462,73 @@ export function getLegendItems(studyMode: StudyMode): SceneLegendItem[] {
       },
       {
         label: "σ 波动带",
+        color: MATH_COLORS.asymptote,
+        style: "dashed",
+      },
+    ];
+  }
+  if (studyMode === "linear") {
+    // 线性变换为上下双轨道场景：上轨原变量 X、下轨变换后 Y。
+    // 场景中实际绘制了 σ 波动带（asymptote 虚线）与两个期望支点，
+    // 缺失图例会让学生把 σ 带宽误读为普通背景块（审计 P2-1）。
+    return [
+      {
+        label: "原变量 X 分布",
+        formula: "X",
+        color: MATH_COLORS.barFill,
+        style: "solid",
+      },
+      {
+        label: "σ 波动带",
+        color: MATH_COLORS.asymptote,
+        style: "dashed",
+      },
+      {
+        label: "变换后 Y 分布",
+        formula: "Y = aX + b",
+        color: MATH_COLORS.paramSecondary,
+        style: "solid",
+      },
+      {
+        label: "期望支点",
+        formula: "E(Y) = aE(X) + b",
+        color: MATH_COLORS.paramPrimary,
+        style: "point",
+      },
+    ];
+  }
+  if (studyMode === "general") {
+    // 场景中实际绘制了：① 概率柱（barFill，可拖拽调参）② 前 3 项柱顶拖拽控制点（paramPrimary）
+    // ③ 期望支点竖线＋三角（tangentLine，与二项/超几何同约定）④ 力臂力矩连线（左臂 primary / 右臂 paramSecondary）
+    // ⑤ σ 波动带（asymptote 虚线）。缺图例时学生易把 σ 带误读为背景块、把力臂线误读为坐标网格（审计 P2-1）。
+    return [
+      {
+        label: "概率分布柱",
+        formula: "P(X = x_i)",
+        color: MATH_COLORS.barFill,
+        style: "solid",
+      },
+      {
+        label: "可拖拽调参点（前 3 项）",
+        formula: "p_i",
+        color: MATH_COLORS.paramPrimary,
+        style: "point",
+      },
+      {
+        label: "期望平衡支点",
+        formula: "E(X) = \\sum x_i p_i",
+        color: MATH_COLORS.tangentLine,
+        style: "point",
+      },
+      {
+        label: "力臂力矩指示",
+        formula: "\\sum (x_i - E)p_i = 0",
+        color: MATH_COLORS.primary,
+        style: "dash",
+      },
+      {
+        label: "σ 波动带",
+        formula: "[E(X) - \\sigma, \\; E(X) + \\sigma]",
         color: MATH_COLORS.asymptote,
         style: "dashed",
       },

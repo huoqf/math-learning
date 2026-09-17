@@ -212,6 +212,80 @@ describe("学段边界（课标 / 拓展）一致性", () => {
   });
 });
 
+describe("先修拓扑册次门禁（先修不得晚于本节点所在分册）", () => {
+  /**
+   * 背景（来源：概率统计模块审计 P1-2）：
+   *   `know-stat-percentile`（必修二第九章 分层抽样/频率直方图/百分位数）曾把
+   *   `know-probability-normal`（选择性必修三 7.5 正态分布）写成先修——用后学的册次
+   *   给先学的内容当前置，先修方向倒置。旧门禁只校验"先修引用的 id 存在"，
+   *   方向错误不会被拦截。
+   *
+   * 本门禁把"先修册次不得晚于本节点册次"交给机器裁决：
+   *   人教 A 版（2019）分册先后序 = 必修一 → 必修二 → 选择性必修一 → 选择性必修二 → 选择性必修三。
+   *   先修节点所在分册的序号必须 ≤ 本节点分册序号（允许同册内部互相先修）。
+   */
+  const BOOK_ORDER: Record<string, number> = {
+    必修一: 1,
+    必修二: 2,
+    选择性必修一: 3,
+    选择性必修二: 4,
+    选择性必修三: 5,
+  };
+
+  it("先修节点的课标分册不得晚于本节点分册", () => {
+    const byId = new Map(knowledgeTree.map((n) => [n.id, n]));
+    const offenders: string[] = [];
+    for (const node of knowledgeTree) {
+      const nodeRank = BOOK_ORDER[node.syllabus?.book ?? ""];
+      if (!nodeRank) continue;
+      for (const preId of node.prerequisites) {
+        const pre = byId.get(preId);
+        const preRank = BOOK_ORDER[pre?.syllabus?.book ?? ""];
+        if (!preRank) continue;
+        if (preRank > nodeRank) {
+          offenders.push(
+            `${node.id}（${node.syllabus?.book}）← ${preId}（${pre?.syllabus?.book}）`,
+          );
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("概率统计分支：必修二概率基础层存在且被挂到条件概率/分布列先修位", () => {
+    const byId = new Map(knowledgeTree.map((n) => [n.id, n]));
+
+    // 必修二第十章基础层三个节点必须存在，且册次为必修二
+    for (const id of [
+      "know-probability-events",
+      "know-probability-classical",
+      "know-probability-independence",
+    ]) {
+      expect(byId.get(id)?.syllabus?.book).toBe("必修二");
+    }
+
+    // 条件概率（选必三）必须先修古典概型与事件的独立性（必修二）
+    expect(byId.get("know-probability-bayes")?.prerequisites).toEqual(
+      expect.arrayContaining([
+        "know-probability-classical",
+        "know-probability-independence",
+      ]),
+    );
+
+    // 分布列（选必三）必须先修计数原理（二项分布的 C_n^k 来源）
+    expect(byId.get("know-probability-distribution")?.prerequisites).toEqual(
+      expect.arrayContaining(["know-probability-counting"]),
+    );
+
+    // 回归防线：分层抽样（必修二）不得再声明选择性必修三节点为先修
+    expect(byId.get("know-stat-percentile")?.prerequisites).toEqual([]);
+    // 正确方向：正态分布（选必三 7.5）先修频率直方图（必修二第九章）
+    expect(byId.get("know-probability-normal")?.prerequisites).toEqual(
+      expect.arrayContaining(["know-stat-percentile"]),
+    );
+  });
+});
+
 describe("双源定义一致性（knowledgeTree ↔ features/*/meta.ts）", () => {
   /**
    * 背景：src/data/knowledgeTree 目录与各 src/features 下各页面目录中的 meta.ts，

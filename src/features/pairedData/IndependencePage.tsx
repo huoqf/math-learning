@@ -9,13 +9,18 @@ import {
   TabSwitcher,
   TipCard,
   KatexFormula,
+  StepNavigator,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
 import { IndependenceScene } from "./components/IndependenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/pairedData";
+import {
+  defaultParams,
+  paramMeta,
+  INDEPENDENCE_ANSWER_STEPS,
+} from "@/data/registries/pairedData";
 import { INDEPENDENCE_PRESETS } from "@/math/pairedData";
 
 // 辅助渲染混合文本（支持 $...$ 内嵌公式与普通文本自然换行）
@@ -43,6 +48,9 @@ export function IndependencePage() {
   }));
   const [indPresetKey, setIndPresetKey] = useState<string>("0");
   const [activeTab, setActiveTab] = useState<string>("standard");
+
+  // 高考标准解答分步走当前步（1 起）。同时驱动右屏推演链聚焦与中屏图元高亮。
+  const [answerStep, setAnswerStep] = useState<number>(1);
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -207,6 +215,16 @@ export function IndependencePage() {
             />
           </LeftPanelSection>
 
+          {/* 高考标准解答分步走（左屏主线，联动右屏推演链聚焦与中屏图元高亮） */}
+          <LeftPanelSection title="高考标准解答分步走">
+            <StepNavigator
+              steps={INDEPENDENCE_ANSWER_STEPS}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="右屏已同步聚焦对应推演步卡片，中屏高亮该步涉及图元。"
+            />
+          </LeftPanelSection>
+
           <LeftPanelSection title="高考典型情境预设">
             <SelectGrid
               items={presetGridItems}
@@ -337,11 +355,19 @@ export function IndependencePage() {
               labelNotB={currentPreset.labelNotB}
               scaleMultiplier={effectiveScaleMultiplier}
               fontScale={canvasSize.font}
+              activeStep={answerStep}
             />
           </AnimationSvgCanvas>
         </div>
       }
-      right={<MathPanel {...mathData} title="2×2 列联表独立性检验看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          title="2×2 列联表独立性检验看板"
+          focusStep={answerStep}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

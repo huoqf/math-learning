@@ -544,7 +544,7 @@ export function buildProbabilityBayesPanel(
       ],
       theorems: [
         {
-          name: "贝叶斯公式（选学 · 教材拓展）",
+          name: "贝叶斯公式",
           latex: `P(A_k|B) = \\frac{P(A_k B)}{P(B)} = \\frac{P(A_k)P(B|A_k)}{\\sum_{i=1}^n P(A_i)P(B|A_i)}`,
           condition: "已知结果 $B$ 发生，逆向推断特定原因 $A_k$ 的后验概率",
           prerequisites: [
@@ -553,6 +553,8 @@ export function buildProbabilityBayesPanel(
           ],
           note: "分子是特定原因分支路径 $P(A_k B)$，分母是全概率求得的总结果 $P(B)$。新课标正文只要求全概率公式，贝叶斯公式为选学拓展内容。",
           level: "supplementary",
+          isExtension: true,
+          extensionBadge: "拓展 · 选学",
         },
         {
           name: isFactory

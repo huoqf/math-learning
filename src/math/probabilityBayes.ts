@@ -57,7 +57,6 @@ export interface WarnerModelResult {
 
 export {
   type MarkovStepItem,
-  type CobwebPoint,
   type MarkovChainResult,
 } from "./probabilityMarkov";
 

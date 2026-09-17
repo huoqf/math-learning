@@ -26,16 +26,7 @@ import {
 } from "@/data/registries/probabilityNormal";
 import type { NormalStudyMode } from "@/data/registries/probabilityNormal";
 import { calcSymmetricNormalIntervals } from "@/math/probabilityNormal";
-
-interface TooltipBinData {
-  xStart: number;
-  xEnd: number;
-  mid: number;
-  width: number;
-  density: number;
-  frequency: number;
-  count: number;
-}
+import type { HistogramBin } from "@/math/probabilityNormal";
 
 interface TooltipState {
   visible: boolean;
@@ -45,14 +36,13 @@ interface TooltipState {
 }
 
 export function ProbabilityNormalAnimation() {
-  // 一级研究模式：'histogram' | 'normalFit' | 'paramsShape' | 'sigmaRule'
-  const [studyMode, setStudyMode] = useState<NormalStudyMode>("histogram");
+  // 一级研究模式：'normalFit' | 'paramsShape' | 'sigmaRule'
+  // （原 'histogram' 直方图特征数模式已按分册职能边界移除，交由必修二 /stat-percentile 承载）
+  const [studyMode, setStudyMode] = useState<NormalStudyMode>("normalFit");
   // 二级典型情景预设（默认首选 'free' 自由探索）
   const [preset, setPreset] = useState<string>("free");
 
   // 辅助开关
-  const [showStatsLines, setShowStatsLines] = useState(true);
-  const [showFrequencyLine, setShowFrequencyLine] = useState(false);
   const [showSigmaIntervals, setShowSigmaIntervals] = useState(false);
   const [showBenchmarkNormal, setShowBenchmarkNormal] = useState(true);
 
@@ -63,7 +53,7 @@ export function ProbabilityNormalAnimation() {
 
   // 当前模式专属的二级情景集合
   const currentScenarios =
-    MODE_SCENARIOS[studyMode] ?? MODE_SCENARIOS.histogram;
+    MODE_SCENARIOS[studyMode] ?? MODE_SCENARIOS.normalFit;
   const currentScenario =
     currentScenarios.find((s) => s.key === preset) ?? currentScenarios[0];
 
@@ -77,7 +67,7 @@ export function ProbabilityNormalAnimation() {
 
   // Tooltip 事件处理
   const handleBinMouseEnter = useCallback(
-    (bin: TooltipBinData, e: React.MouseEvent) => {
+    (bin: HistogramBin, e: React.MouseEvent) => {
       const items = [
         {
           label: "区间",
@@ -169,14 +159,6 @@ export function ProbabilityNormalAnimation() {
   // 按当前探究模式与二级情景白名单裁剪参数展示（参数降维）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const defaultKeysByMode: Record<NormalStudyMode, string[]> = {
-      histogram: [
-        "mu",
-        "sigma",
-        "binCount",
-        "sampleSize",
-        "skewness",
-        "percentileP",
-      ],
       normalFit: ["mu", "sigma", "binCount", "sampleSize", "blend"],
       paramsShape: ["mu", "sigma"],
       sigmaRule: ["mu", "sigma", "x0"],
@@ -210,10 +192,6 @@ export function ProbabilityNormalAnimation() {
     const muVal = params.mu ?? 0;
     const sigVal = params.sigma ?? 1;
 
-    if (studyMode === "histogram") {
-      return `S_i = \\frac{f_i}{\\Delta x} \\times \\Delta x = f_i \\quad (\\sum S_i = 1)`;
-    }
-
     if (studyMode === "normalFit") {
       return `\\text{直方图连续化逼近 } f(x) = \\frac{1}{\\sqrt{2\\pi} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${sigVal.toFixed(1)}}} e^{-\\frac{(x - \\color{${MATH_COLORS.paramPrimary}}{${muVal.toFixed(1)}})^2}{2 \\cdot \\color{${MATH_COLORS.paramSecondary}}{${sigVal.toFixed(1)}}^2}}`;
     }
@@ -238,51 +216,6 @@ export function ProbabilityNormalAnimation() {
     const x0Val = params.x0 ?? -1;
     const x1Val = params.x1 ?? -1;
     const x2Val = params.x2 ?? 1;
-    const pVal = params.percentileP ?? 50;
-
-    if (studyMode === "histogram") {
-      const items: SceneLegendItem[] = [
-        {
-          formula: "\\text{矩形面积 } S_i \\text{ (频率)}",
-          color: MATH_COLORS.barBorder,
-          style: "area",
-        },
-      ];
-      if (showStatsLines) {
-        items.push(
-          {
-            formula: "\\text{众数 } m_o",
-            color: MATH_COLORS.paramPrimary,
-            style: "dash",
-          },
-          {
-            formula: "\\text{中位数 } m_e",
-            color: MATH_COLORS.paramSecondary,
-            style: "dash",
-          },
-          {
-            formula: "\\text{均值 } \\bar{x}",
-            color: MATH_COLORS.function,
-            style: "dash",
-          },
-        );
-        if (pVal !== 50) {
-          items.push({
-            formula: `P_{${pVal}} \\text{ 分位数}`,
-            color: MATH_COLORS.paramTertiary,
-            style: "dash",
-          });
-        }
-      }
-      if (showFrequencyLine) {
-        items.push({
-          label: "频率折线图",
-          color: MATH_COLORS.frequencyLine,
-          style: "solid",
-        });
-      }
-      return items;
-    }
 
     if (studyMode === "normalFit") {
       const minX = Math.min(x1Val, x2Val);
@@ -388,18 +321,10 @@ export function ProbabilityNormalAnimation() {
         style: "dash",
       },
     ];
-  }, [
-    studyMode,
-    params,
-    showStatsLines,
-    showFrequencyLine,
-    showBenchmarkNormal,
-    showSigmaIntervals,
-  ]);
+  }, [studyMode, params, showBenchmarkNormal, showSigmaIntervals]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
-    if (studyMode === "histogram") return "频率分布直方图与特征数看板";
     if (studyMode === "normalFit") return "直方图向正态分布极限逼近看板";
     if (studyMode === "paramsShape") return "正态分布 μ 与 σ 形态探究看板";
     return "正态分布对称性与高考 3-σ 看板";
@@ -409,13 +334,11 @@ export function ProbabilityNormalAnimation() {
   const tipConfig = useMemo(() => {
     return {
       variant:
-        studyMode === "histogram"
-          ? ("primary" as const)
-          : studyMode === "normalFit"
-            ? ("info" as const)
-            : studyMode === "paramsShape"
-              ? ("warning" as const)
-              : ("danger" as const),
+        studyMode === "normalFit"
+          ? ("info" as const)
+          : studyMode === "paramsShape"
+            ? ("warning" as const)
+            : ("danger" as const),
       badge: currentScenario.badge,
       background: currentScenario.background,
       condition: currentScenario.condition,
@@ -434,7 +357,6 @@ export function ProbabilityNormalAnimation() {
             <LeftPanelSection title="探究模式">
               <SelectGrid
                 items={[
-                  { key: "histogram", label: "直方图与特征数" },
                   { key: "normalFit", label: "极限逼近拟合" },
                   { key: "paramsShape", label: "参数 μ, σ 形态" },
                   { key: "sigmaRule", label: "对称性与解题" },
@@ -461,23 +383,6 @@ export function ProbabilityNormalAnimation() {
             </LeftPanelSection>
 
             {/* 辅助开关 Section */}
-            {studyMode === "histogram" && (
-              <LeftPanelSection title="辅助图元">
-                <div className="space-y-2">
-                  <Toggle
-                    label="显示众数/中位数/均值/百分位"
-                    checked={showStatsLines}
-                    onChange={setShowStatsLines}
-                  />
-                  <Toggle
-                    label="显示频率折线图"
-                    checked={showFrequencyLine}
-                    onChange={setShowFrequencyLine}
-                  />
-                </div>
-              </LeftPanelSection>
-            )}
-
             {studyMode === "paramsShape" && (
               <LeftPanelSection title="对比参考">
                 <Toggle
@@ -545,8 +450,6 @@ export function ProbabilityNormalAnimation() {
                     sigma: number;
                     binCount: number;
                     sampleSize: number;
-                    skewness?: number;
-                    percentileP?: number;
                     blend?: number;
                     x0?: number;
                     x1?: number;
@@ -557,8 +460,6 @@ export function ProbabilityNormalAnimation() {
                 vp={vp}
                 fontScale={canvasSize.font}
                 studyMode={studyMode}
-                showStatsLines={showStatsLines}
-                showFrequencyLine={showFrequencyLine}
                 showSigmaIntervals={showSigmaIntervals}
                 showBenchmarkNormal={showBenchmarkNormal}
                 onParamChange={handleParamChange}

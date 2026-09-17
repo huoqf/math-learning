@@ -25,6 +25,11 @@ interface MathPanelProps {
   mnemonic?: string;
   // ⑧ 右屏标题（默认"高考破题与推演看板"）
   title?: string;
+  // ⑨ 分步作答闭环：左屏 StepNavigator 传入的当前步（1 起）。命中步描边、其余降透明度
+  focusStep?: number;
+  // ⑩ 该步落在哪个区块。默认 'reasoning'（推演链）；把采分步写在定理区的页面传 'theorems'。
+  //    ⚠️ 只向命中的区块派发，同一页严禁两处同时描边（焦点分裂）
+  focusTarget?: 'reasoning' | 'theorems';
 }
 ```
 
@@ -56,8 +61,15 @@ interface Theorem {
   note?: string;                                        // 补充说明（💡 图标显示，涉及数学符号用 $...$ 包裹）
   level?: 'core' | 'important' | 'derived' | 'supplementary'; // 分级（蓝/橙/灰/紫标签）
   mode?: 'inline' | 'block';                            // 公式渲染模式（默认 block）
+  step?: number;                                        // 「高考标准解答分步走」步号（1 起）；缺省回退为数组下标+1
+  isExtension?: boolean;                                // 是否超出新课标正文。为真自动渲染紫色「拓展」徽标
+  extensionBadge?: string;                              // 自定义拓展徽标文案，缺省「拓展 · 选学」
 }
 ```
+
+> **`level` 与 `isExtension` 正交，别混用**：`level` 回答"这条在知识体系里属第几层"（核心 / 重要 / 推导法则 / 补充结论）；`isExtension` 回答"这条是否超出 2019 人教A版新课标正文"。
+> **严禁把「（拓展 · 超出课标）」写进 `name`** —— 超纲属性必须由结构化字段承载，否则条目改名或复用时属性静默丢失；`isExtension: true` 同时被 `discipline/no-beyond-syllabus-terms` 门禁识别为"已声明拓展"。
+> **`step` 只在"采分步写在定理区"的页面显式声明**（如 `builders/probabilityMarkov.ts`）；若解答链落在推演链区，用 `ReasoningStep.step` 即可，定理区不必声明。
 
 ### `WarningItem` — 易错警示
 ```ts
@@ -78,6 +90,8 @@ interface ReasoningStep {
   rubric?: string;                                // 高考采分点（如"采分点：规范建系与设元（4分）"，涉及数学量用 $...$ 包裹）
 }
 ```
+
+> **`step` 是分步作答闭环的锚点**：页面启用左屏 `StepNavigator` 时，各步的 `step` 与 `title` 必须**逐条**取自页面注册表里的链条数据（如 `INDEPENDENCE_ANSWER_STEPS`），由 builder 直接拼装，**严禁在 builder 里另写一份标题**——否则左屏点第 3 步、右屏却聚焦第 1 张卡片。步号须从 1 起连续递增（`src/test/answerStepFocus.test.tsx` 强制）。
 
 ### `GaokaoPoint` — 高考要点
 ```ts

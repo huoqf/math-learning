@@ -1,6 +1,10 @@
 import type { MathPanelData } from "../types";
 import { calculateMarkovChain } from "../../math/probabilityMarkov";
-import { MARKOV_PRESETS, FREE_SCENARIO } from "../registries/probabilityMarkov";
+import {
+  MARKOV_PRESETS,
+  FREE_SCENARIO,
+  MARKOV_ANSWER_STEPS,
+} from "../registries/probabilityMarkov";
 import { MATH_COLORS } from "../../theme";
 
 export function buildProbabilityMarkovPanel(
@@ -24,6 +28,14 @@ export function buildProbabilityMarkovPanel(
 
   const lambdaVal = markovRes.lambda;
   const tVal = markovRes.pStationary;
+
+  /**
+   * 四条定理的名称与步号全部取自 `MARKOV_ANSWER_STEPS`（SSOT）。
+   * 与左屏 StepNavigator、中屏 MarkovScene 分区高亮三方同源：
+   * 任一处改标题/调步序，另两处自动跟随，不会各自写死而漂移。
+   */
+  const answerStepTitle = (index: number) =>
+    `【高考采分步 ${MARKOV_ANSWER_STEPS[index].step}】${MARKOV_ANSWER_STEPS[index].title}`;
 
   return {
     quantities: [
@@ -72,7 +84,8 @@ export function buildProbabilityMarkovPanel(
     ],
     theorems: [
       {
-        name: "【高考采分步 1】完备划分与规范设元",
+        name: answerStepTitle(0),
+        step: MARKOV_ANSWER_STEPS[0].step,
         latex:
           "P(A_n) = p_n, \\quad P(\\overline{A_n}) = 1 - p_n \\quad (A_n \\cup \\overline{A_n} = \\Omega, A_n \\cap \\overline{A_n} = \\emptyset)",
         condition: `设第 $n$ 步事件【${currentPreset.labels.s1}】发生概率为 $P(A_n) = p_n$，则对立事件【${currentPreset.labels.s2}】概率为 $P(\\overline{A_n}) = 1 - p_n$。$A_n$ 与 $\\overline{A_n}$ 构成样本空间 $\\Omega$ 的完备划分，初始先验条件 $p_1 = ${p1Val.toFixed(2)}$。`,
@@ -80,7 +93,8 @@ export function buildProbabilityMarkovPanel(
         level: "core",
       },
       {
-        name: "【高考采分步 2】全概率公式建立一阶线性递推",
+        name: answerStepTitle(1),
+        step: MARKOV_ANSWER_STEPS[1].step,
         latex:
           "P(A_{n+1}) = P(A_n)P(A_{n+1}|A_n) + P(\\overline{A_n})P(A_{n+1}|\\overline{A_n})",
         condition: markovRes.step2_recurrence,
@@ -88,7 +102,8 @@ export function buildProbabilityMarkovPanel(
         level: "core",
       },
       {
-        name: "【高考采分步 3】待定系数法配凑构造等比数列",
+        name: answerStepTitle(2),
+        step: MARKOV_ANSWER_STEPS[2].step,
         latex:
           "p_{n+1} - t = \\lambda (p_n - t) \\iff p_{n+1} = \\lambda p_n + t(1 - \\lambda)",
         condition: markovRes.step3_geometric,
@@ -96,7 +111,8 @@ export function buildProbabilityMarkovPanel(
         level: "important",
       },
       {
-        name: "【高考采分步 4】等比数列通项与渐近演变",
+        name: answerStepTitle(3),
+        step: MARKOV_ANSWER_STEPS[3].step,
         latex:
           "p_n - t = (p_1 - t)\\lambda^{n-1} \\implies p_n = t + (p_1 - t)\\lambda^{n-1}",
         condition: markovRes.step4_generalTerm,
@@ -133,6 +149,6 @@ export function buildProbabilityMarkovPanel(
       },
     ],
     mnemonic:
-      "全概递推设划分，待定系数配等比，不动点处寻稳态，通项极限步步清。",
+      "全概递推设划分，待定系数配等比，不动点处定稳态，通项渐近趋势明。",
   };
 }

@@ -18,8 +18,17 @@ export interface ParamMeta {
   }>;
 }
 
-export type NormalStudyMode =
-  "histogram" | "normalFit" | "paramsShape" | "sigmaRule";
+/**
+ * 正态分布页研究模式。
+ *
+ * 分册职能边界（审计 P1-3 决策）：
+ *   频率分布直方图的**特征数精细计算**（众数 / 中位数 / 平均数 / 百分位数 / 四分位数）
+ *   属人教A版必修二第九章，由 `know-stat-percentile`（/stat-percentile）唯一承载。
+ *   本页（选择性必修三 7.5 正态分布）只保留直方图的**连续化逼近**职能：
+ *   直方图渲染仅作为"组距细化 → 轮廓趋于光滑正态曲线"的直观佐证，不再重复讲解特征数。
+ *   原 `histogram` 模式已移除，避免同一内容在必修二与选必三两页重复呈现。
+ */
+export type NormalStudyMode = "normalFit" | "paramsShape" | "sigmaRule";
 
 export interface NormalScenario {
   key: string;
@@ -38,8 +47,6 @@ export const defaultParams: Record<string, number> = {
   sigma: 1,
   binCount: 10,
   sampleSize: 300,
-  skewness: 0,
-  percentileP: 50,
   blend: 0.5,
   x0: -1,
   x1: -1,
@@ -47,74 +54,13 @@ export const defaultParams: Record<string, number> = {
 };
 
 export const MODE_SCENARIOS: Record<NormalStudyMode, NormalScenario[]> = {
-  histogram: [
-    {
-      key: "free",
-      label: "自由探索",
-      badge: "自主探究 · 直方图与特征量",
-      background:
-        "某校抽样调查学生综合素养评估成绩，分析数据分布形态与集中趋势。",
-      condition:
-        "样本数据划分为若干组，纵轴为『频率/组距』，各矩形面积之和恒等于 1。",
-      question:
-        "求解估算均值、中位数与众数，比较偏态长尾分布对平均数和中位数的拉扯效应。",
-      params: {
-        mu: 0,
-        sigma: 1,
-        binCount: 10,
-        sampleSize: 300,
-        skewness: 0,
-        percentileP: 50,
-      },
-      visibleKeys: ["binCount", "sampleSize", "skewness", "percentileP"],
-    },
-    {
-      key: "examScores",
-      label: "统考成绩标准模型",
-      badge: "高考经典 · 对称统考成绩",
-      background:
-        "期末全市高三年级统考数学成绩抽样，满分按标准分换算，整体呈现对称钟形分布。",
-      condition:
-        "样本量 $N = 500$，划分为 $10$ 组，偏度 $\\alpha = 0$（严格对称）。",
-      question:
-        "求解直方图估算均值、中位数与众数，证明严格对称分布下三者数值重合的性质。",
-      params: {
-        mu: 0,
-        sigma: 1,
-        binCount: 10,
-        sampleSize: 500,
-        skewness: 0,
-        percentileP: 50,
-      },
-      visibleKeys: ["binCount", "sampleSize", "percentileP"],
-    },
-    {
-      key: "skewSalary",
-      label: "偏态右偏长尾模型",
-      badge: "新高考热点 · 偏态分布防坑",
-      background:
-        "高难度数学压轴创新题抽样得分统计：绝大多数学生得分集中在中低分段，少数拔尖学生获得高分拉长右尾。",
-      condition: "样本呈现明显右偏长尾分布，偏态系数 $\\alpha = 0.6$。",
-      question:
-        "比较众数、中位数与平均数的大小次序，证明极端高分如何单向拉大样本平均数。",
-      params: {
-        mu: 0,
-        sigma: 1,
-        binCount: 10,
-        sampleSize: 400,
-        skewness: 0.6,
-        percentileP: 50,
-      },
-      visibleKeys: ["skewness", "percentileP"],
-    },
-  ],
   normalFit: [
     {
       key: "free",
       label: "自由探索",
       badge: "核心思想 · 离散到连续",
       background:
-        "高中数学概率统计核心思想：由离散样本直方图向总体连续正态曲线的过渡演变。",
+        "高中数学概率统计核心思想：由离散样本直方图向总体连续正态曲线的过渡演变。本模式承接必修二第九章频率分布直方图（特征数精细计算已在必修二完成），只聚焦其组距细化、样本量扩大后的连续化延伸。",
       condition:
         "固定总体参数 $\\mu$ 与 $\\sigma$，调节样本容量 $N$、组数 $K$ 与平滑比例。",
       question:
@@ -126,7 +72,8 @@ export const MODE_SCENARIOS: Record<NormalStudyMode, NormalScenario[]> = {
       key: "coarse",
       label: "小样本粗划分阶段",
       badge: "课标对比 · 离散阶梯特征",
-      background: "抽样调查初期样本容量较小且分组较少的情形。",
+      background:
+        "抽样调查初期样本容量较小且分组较少的情形。承接必修二第九章频率分布直方图，本模式只关注组距细化后直方图轮廓向正态曲线的连续化逼近。",
       condition: "样本容量 $N = 80$，划分为 $6$ 组，组距较宽。",
       question:
         "计算当前分组矩形高度与连续理论正态峰值的差值，分析小样本粗分组带来的估算误差。",
@@ -137,7 +84,8 @@ export const MODE_SCENARIOS: Record<NormalStudyMode, NormalScenario[]> = {
       key: "dense",
       label: "大样本密集逼近阶段",
       badge: "极限思想 · 渐近总体曲线",
-      background: "大数据海量抽样情境：样本量充分巨大且组距极细。",
+      background:
+        "大数据海量抽样情境：样本量充分巨大且组距极细。承接必修二第九章——直方图组距不断细分时，其上底边折线轮廓趋于光滑正态曲线。",
       condition: "样本容量 $N = 800$，划分为 $20$ 组，细密网格切分。",
       question:
         "证明各细分组矩形频率累加向总体正态曲线下方积分面积恒等于 $1$ 的收敛过程。",
@@ -301,42 +249,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 50,
     description: "抽样调查的总体数据样本个数",
     importance: "display",
-  },
-  skewness: {
-    label: "偏态系数 α",
-    labelFormula: `\\text{偏度 } \\color{${MATH_COLORS.paramTertiary}}{\\alpha}`,
-    defaultValue: 0,
-    min: -1,
-    max: 1,
-    step: 0.2,
-    description: "数据偏斜状态（-1 左偏，0 对称正态，1 右偏）",
-    importance: "advanced",
-    marks: [
-      {
-        value: 0,
-        label: "对称",
-        labelFormula: "\\alpha = 0",
-        variant: "critical",
-      },
-    ],
-  },
-  percentileP: {
-    label: "百分位数 p%",
-    labelFormula: `\\text{百分位 } \\color{${MATH_COLORS.paramTertiary}}{p\\%}`,
-    defaultValue: 50,
-    min: 5,
-    max: 95,
-    step: 5,
-    description: "累计频率达到 p% 对应的分界值（50% 对应中位数）",
-    importance: "core",
-    marks: [
-      {
-        value: 50,
-        label: "中位数 (50%)",
-        labelFormula: "m_e",
-        variant: "critical",
-      },
-    ],
   },
   blend: {
     label: "拟合过渡比例",

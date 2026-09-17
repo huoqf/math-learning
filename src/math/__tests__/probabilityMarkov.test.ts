@@ -76,3 +76,66 @@ describe("全概率一阶递推数列模型 (calculateMarkovChain)", () => {
     });
   });
 });
+
+/**
+ * 回归防线（来源：概率统计模块审计 P0-2）：
+ * 右屏「高考采分步」正文与口诀必须与同面板「严禁书写 $\lim$ 记号」的答题规范警告保持自洽。
+ * 高中课标不含数列极限，卷面写极限记号属失分点，故此处把口径变成机器可裁决项。
+ */
+describe("答题规范门禁：递推文案严禁极限记号与超纲术语", () => {
+  // 覆盖 step3/step4 的全部分支：退化(λ=1) / 常数列 / 永久振荡(λ=-1) / 振荡(|λ|<1) / 单调(0≤λ<1)
+  const branches: Array<{
+    name: string;
+    args: [number, number, number, number];
+  }> = [
+    { name: "退化恒等 (λ=1)", args: [0.8, 1, 0, 6] },
+    { name: "常数列 (p₁=t)", args: [0.4, 0.4, 0.4, 6] },
+    { name: "永久等幅振荡 (λ=-1)", args: [1, 0, 1, 6] },
+    { name: "交替振荡衰减 (-1<λ<0)", args: [1, 0, 0.5, 6] },
+    { name: "单调趋近 (0≤λ<1)", args: [0.75, 0.7, 0.2, 5] },
+  ];
+
+  function collectStepTexts(
+    res: ReturnType<typeof calculateMarkovChain>,
+  ): string {
+    return [
+      res.step1_partition,
+      res.step2_recurrence,
+      res.step3_geometric,
+      res.step4_generalTerm,
+      res.recurrenceText,
+      res.geometricText,
+      res.generalTermText,
+      ...Object.values(res.gaokaoSteps),
+    ].join("\n");
+  }
+
+  for (const { name, args } of branches) {
+    it(`${name}：正文不得出现 \\lim 与 \\to \\infty 记号`, () => {
+      const text = collectStepTexts(calculateMarkovChain(...args));
+      expect(text).not.toContain("\\lim");
+      expect(text).not.toContain("\\to \\infty");
+      expect(text).not.toContain("极限");
+    });
+  }
+
+  it("全文不得出现超纲术语「马尔可夫链」「平稳分布」「特征方程」", () => {
+    for (const { args } of branches) {
+      const text = collectStepTexts(calculateMarkovChain(...args));
+      expect(text).not.toContain("马尔可夫链");
+      expect(text).not.toContain("平稳分布");
+      expect(text).not.toContain("特征方程");
+      expect(text).not.toContain("特征公比");
+    }
+  });
+
+  it("振荡分支必须改用「随项数增大趋近于定值」的中文规范表述", () => {
+    const osc = calculateMarkovChain(1, 0, 0.5, 6);
+    expect(osc.isOscillating).toBe(true);
+    expect(osc.step4_generalTerm).toContain("趋近于");
+
+    const mono = calculateMarkovChain(0.75, 0.7, 0.2, 5);
+    expect(mono.isOscillating).toBe(false);
+    expect(mono.step4_generalTerm).toContain("趋近于定值");
+  });
+});

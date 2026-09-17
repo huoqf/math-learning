@@ -59,7 +59,7 @@ export function ProbabilityDistributionCompareScene({
           fontWeight="bold"
         >
           方差修正系数 (N-n)/(N-1) = {varianceCorrectionFactor.toFixed(3)}{" "}
-          {isNearConvergence ? "✔ 极限逼近" : "≈ 趋近中"}
+          {isNearConvergence ? "✔ 逼近充分" : "≈ 趋近中"}
         </text>
       </g>
 

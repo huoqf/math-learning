@@ -8,7 +8,7 @@ export const probabilityNormalNode: KnowledgeNode = {
   module: "随机变量及其分布",
   importance: "gaokao",
   animationIds: ["anim-probability-normal"],
-  prerequisites: [],
+  prerequisites: ["know-stat-percentile"],
   route: "/statistics-normal",
 };
 

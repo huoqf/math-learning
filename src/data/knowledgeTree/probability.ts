@@ -2,6 +2,55 @@ import type { KnowledgeNode } from "../types";
 
 // ========== 10. 概率与统计 ==========
 export const probabilityNodes: KnowledgeNode[] = [
+  // ── 必修二 第十章：概率（课标正文基础层）────────────────────────────
+  // 说明：新高考概率统计解答题第 (1) 问几乎都落在这一层（样本空间书写、古典概型、
+  // 互斥与独立辨析）。此层必须先于选择性必修三的"条件概率/分布列"出现，
+  // 否则条件概率与分布列将挂在空先修上（先修拓扑倒置，见审计 P1-2）。
+  // 该层暂无实验室页面，仅作为知识树先修拓扑与教材定位的正式入口。
+  {
+    id: "know-probability-events",
+    title: "随机事件与概率的基本性质",
+    labTitle: "随机事件与概率基本性质实验室",
+    chapter: "概率与统计",
+    module: "概率基础",
+    importance: "basic",
+    animationIds: [],
+    prerequisites: [],
+    gaokaoTopic: "probability_statistics",
+    questionCategory: "foundation",
+    examMethod: "样本空间书写、互斥与对立事件的概率加法公式",
+    examWeight: 3,
+  },
+  {
+    id: "know-probability-classical",
+    title: "古典概型与有限样本空间概率计算",
+    labTitle: "古典概型实验室",
+    chapter: "概率与统计",
+    module: "概率基础",
+    importance: "core",
+    animationIds: [],
+    prerequisites: ["know-probability-events"],
+    gaokaoTopic: "probability_statistics",
+    questionCategory: "foundation",
+    examMethod: "列举法（树状图/列表）求等可能基本事件数并算比值",
+    examWeight: 4,
+  },
+  {
+    id: "know-probability-independence",
+    title: "事件的相互独立性与互斥的辨析",
+    labTitle: "事件独立性与互斥辨析实验室",
+    chapter: "概率与统计",
+    module: "概率基础",
+    importance: "core",
+    animationIds: [],
+    prerequisites: ["know-probability-classical"],
+    gaokaoTopic: "probability_statistics",
+    questionCategory: "solution_first",
+    examMethod: "独立事件乘法公式 $P(AB)=P(A)P(B)$ 与互斥加法公式的辨析",
+    examWeight: 4,
+  },
+
+  // ── 选择性必修三：计数原理与随机变量 ────────────────────────────────
   {
     id: "know-probability-counting",
     title: "计数原理与二项式定理",
@@ -22,10 +71,13 @@ export const probabilityNodes: KnowledgeNode[] = [
     title: "条件概率、全概率公式与贝叶斯",
     labTitle: "条件概率与贝叶斯实验室",
     chapter: "概率与统计",
-    module: "古典与条件概率",
+    module: "条件概率与贝叶斯",
     importance: "gaokao",
     animationIds: ["anim-probability-bayes"],
-    prerequisites: [],
+    prerequisites: [
+      "know-probability-classical",
+      "know-probability-independence",
+    ],
     route: "/probability-bayes",
     gaokaoTopic: "probability_statistics",
     questionCategory: "solution_first",
@@ -40,7 +92,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     module: "随机变量及其分布",
     importance: "gaokao",
     animationIds: ["anim-probability-distribution"],
-    prerequisites: ["know-probability-bayes"],
+    prerequisites: ["know-probability-counting", "know-probability-bayes"],
     route: "/probability-distribution",
     gaokaoTopic: "probability_statistics",
     questionCategory: "solution_first",
@@ -55,7 +107,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     module: "随机变量及其分布",
     importance: "gaokao",
     animationIds: ["anim-probability-normal"],
-    prerequisites: [],
+    prerequisites: ["know-stat-percentile"],
     route: "/statistics-normal",
     gaokaoTopic: "probability_statistics",
     questionCategory: "foundation",
@@ -70,7 +122,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     module: "统计分析",
     importance: "gaokao",
     animationIds: ["anim-stat-percentile"],
-    prerequisites: ["know-probability-normal"],
+    prerequisites: [],
     route: "/stat-percentile",
     gaokaoTopic: "probability_statistics",
     questionCategory: "solution_first",

@@ -106,10 +106,16 @@ export function ProbabilityCountingAnimation() {
         return `N_{\\text{均分}} = \\frac{${gInfo.directCombinationWays}}{\\color{${MATH_COLORS.paramSecondary}}{${gInfo.groupCount}!}} = \\color{${MATH_COLORS.paramPrimary}}{${gInfo.groupedWays}} \\quad (\\text{除以消去虚假顺序})`;
       }
       if (subMode === 2) {
-        const bindWays = factorial(Math.max(0, n - 1)) * 2;
+        // 与右屏 builder 及中屏 Scene 三方同源：受限元素固定 m = 2，主体数 n - 2，空档数 n - 1
+        const bindCount = 2;
+        const freeCount = Math.max(0, n - bindCount);
+        const bindWays = factorial(Math.max(0, n - 1)) * factorial(bindCount);
         const insertWays =
-          factorial(Math.max(0, n - 2)) * perm(Math.max(0, n - 1), 2);
-        return `N_{\\text{捆绑}} = A_{${Math.max(1, n - 1)}}^{${Math.max(1, n - 1)}} \\times A_2^2 = ${bindWays}, \\quad N_{\\text{插空}} = A_{${Math.max(1, n - 2)}}^{${Math.max(1, n - 2)}} \\times A_{${Math.max(1, n - 1)}}^2 = ${insertWays}`;
+          factorial(freeCount) * perm(freeCount + 1, bindCount);
+        if (n < bindCount) {
+          return `\\text{排队模型需 } n \\ge ${bindCount} \\text{，当前 } n = ${n}`;
+        }
+        return `N_{\\text{捆绑}} = A_{${freeCount + 1}}^{${freeCount + 1}} \\times A_{${bindCount}}^{${bindCount}} = ${bindWays}, \\quad N_{\\text{插空}} = A_{${freeCount}}^{${freeCount}} \\times A_{${freeCount + 1}}^{${bindCount}} = ${insertWays}`;
       }
       return `A_{\\color{${MATH_COLORS.paramPrimary}}{${n}}}^{\\color{${
         MATH_COLORS.paramSecondary

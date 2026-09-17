@@ -134,9 +134,9 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   },
   {
     key: "probability_statistics",
-    title: "概率统计与马尔可夫递推",
+    title: "概率统计与概率递推",
     badge: "16/17 题大题 · 15分",
-    description: "全概贝叶斯诊断、马尔可夫链转移递推、正态分布与列联表检验",
+    description: "全概贝叶斯诊断、状态递推建模、正态分布与列联表检验",
     icon: Target,
     gradient: "from-amber-500 to-orange-600",
     borderLight: "border-amber-200",

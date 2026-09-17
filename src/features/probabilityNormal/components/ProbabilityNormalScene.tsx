@@ -5,13 +5,10 @@ import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS } from "@/theme";
 import {
   generateHistogramBins,
-  estimateHistogramStats,
   normalPdf,
   calcSymmetricNormalIntervals,
 } from "@/math/probabilityNormal";
 import type { HistogramBin } from "@/math/probabilityNormal";
-import { ProbabilityNormalHistogramScene } from "./ProbabilityNormalHistogramScene";
-import type { TooltipBinData } from "./ProbabilityNormalHistogramScene";
 import { ProbabilityNormalNormalFitScene } from "./ProbabilityNormalNormalFitScene";
 import { ProbabilityNormalParamsShapeScene } from "./ProbabilityNormalParamsShapeScene";
 import { ProbabilityNormalSigmaRuleScene } from "./ProbabilityNormalSigmaRuleScene";
@@ -22,8 +19,6 @@ interface ProbabilityNormalSceneProps {
     sigma: number;
     binCount: number;
     sampleSize: number;
-    skewness?: number;
-    percentileP?: number;
     blend?: number;
     x0?: number;
     x1?: number;
@@ -32,14 +27,12 @@ interface ProbabilityNormalSceneProps {
   scale: SceneScale;
   vp: ViewportInfo;
   fontScale: (size: number) => number;
-  studyMode: "histogram" | "normalFit" | "paramsShape" | "sigmaRule";
-  showStatsLines?: boolean;
-  showFrequencyLine?: boolean;
+  studyMode: "normalFit" | "paramsShape" | "sigmaRule";
   showSigmaIntervals?: boolean;
   showBenchmarkNormal?: boolean;
   onParamChange: (key: string, value: number) => void;
-  /** Tooltip 事件回调 */
-  onBinMouseEnter?: (bin: TooltipBinData, e: React.MouseEvent) => void;
+  /** Tooltip 事件回调（挂在 normalFit 直方图柱体上，供学生读取该组的频率/组距） */
+  onBinMouseEnter?: (bin: HistogramBin, e: React.MouseEvent) => void;
   onBinMouseMove?: (e: React.MouseEvent) => void;
   onBinMouseLeave?: () => void;
 }
@@ -50,8 +43,6 @@ export function ProbabilityNormalScene({
   vp,
   fontScale,
   studyMode,
-  showStatsLines = true,
-  showFrequencyLine = false,
   showSigmaIntervals = false,
   showBenchmarkNormal = true,
   onParamChange,
@@ -64,8 +55,6 @@ export function ProbabilityNormalScene({
     sigma,
     binCount,
     sampleSize,
-    skewness = 0,
-    percentileP = 50,
     blend = 0.5,
     x0 = -1,
     x1 = -1,
@@ -73,26 +62,13 @@ export function ProbabilityNormalScene({
   } = params;
   const safeSigma = Math.max(0.1, sigma);
 
-  // 1. 直方图分组与估计数据
+  // 1. 直方图分组数据
+  //    分册边界（审计 P1-3 决策）：本页直方图只承担"组距细化 → 上底边折线轮廓趋于
+  //    光滑正态曲线"的连续化直观；众数/中位数/平均数/百分位数等特征数的精细计算
+  //    属必修二 know-stat-percentile，不在此页重复。
   const bins: HistogramBin[] = useMemo(() => {
-    return generateHistogramBins(mu, safeSigma, binCount, sampleSize, skewness);
-  }, [mu, safeSigma, binCount, sampleSize, skewness]);
-
-  const stats = useMemo(() => {
-    return estimateHistogramStats(bins, percentileP);
-  }, [bins, percentileP]);
-
-  // 直方图在特定横坐标处的高度采样辅助函数
-  const getHistDensityAt = useMemo(() => {
-    return (x: number): number => {
-      for (const bin of bins) {
-        if (x >= bin.xStart && x <= bin.xEnd) {
-          return bin.density;
-        }
-      }
-      return 0.1;
-    };
-  }, [bins]);
+    return generateHistogramBins(mu, safeSigma, binCount, sampleSize);
+  }, [mu, safeSigma, binCount, sampleSize]);
 
   // 2. 正态分布密度曲线 Path 采样 (x 从 -6 到 6)
   const curvePathD = useMemo(() => {
@@ -236,9 +212,7 @@ export function ProbabilityNormalScene({
       {(() => {
         const yTopPt = mathToDesign(0, scale.yMax, scale);
         const yLabel =
-          studyMode === "histogram" || studyMode === "normalFit"
-            ? "频率 / 组距"
-            : "概率密度 f(x)";
+          studyMode === "normalFit" ? "频率 / 组距" : "概率密度 f(x)";
 
         return (
           <text
@@ -254,24 +228,7 @@ export function ProbabilityNormalScene({
         );
       })()}
 
-      {/* ─── 模式 1：直方图与数字特征 ────────────────────────────────────────── */}
-      {studyMode === "histogram" && (
-        <ProbabilityNormalHistogramScene
-          bins={bins}
-          stats={stats}
-          getHistDensityAt={getHistDensityAt}
-          percentileP={percentileP}
-          showStatsLines={showStatsLines}
-          showFrequencyLine={showFrequencyLine}
-          scale={scale}
-          fontScale={fontScale}
-          onBinMouseEnter={onBinMouseEnter}
-          onBinMouseMove={onBinMouseMove}
-          onBinMouseLeave={onBinMouseLeave}
-        />
-      )}
-
-      {/* ─── 模式 2：极限逼近与正态拟合 ──────────────────────────────────────── */}
+      {/* ─── 模式 1：极限逼近与正态拟合 ──────────────────────────────────────── */}
       {studyMode === "normalFit" && (
         <ProbabilityNormalNormalFitScene
           bins={bins}
@@ -287,10 +244,13 @@ export function ProbabilityNormalScene({
           fontScale={fontScale}
           onDragX1={handleDragX1}
           onDragX2={handleDragX2}
+          onBinMouseEnter={onBinMouseEnter}
+          onBinMouseMove={onBinMouseMove}
+          onBinMouseLeave={onBinMouseLeave}
         />
       )}
 
-      {/* ─── 模式 3：正态参数与形态探究 ──────────────────────────────────────── */}
+      {/* ─── 模式 2：正态参数与形态探究 ──────────────────────────────────────── */}
       {studyMode === "paramsShape" && (
         <ProbabilityNormalParamsShapeScene
           curvePathD={curvePathD}
@@ -303,7 +263,7 @@ export function ProbabilityNormalScene({
         />
       )}
 
-      {/* ─── 模式 4：对称性与高考 3-σ 解题 ────────────────────────────────────── */}
+      {/* ─── 模式 3：对称性与高考 3-σ 解题 ────────────────────────────────────── */}
       {studyMode === "sigmaRule" && (
         <ProbabilityNormalSigmaRuleScene
           curvePathD={curvePathD}

@@ -14,7 +14,33 @@ interface IndependenceSceneProps {
   labelNotB?: string;
   scaleMultiplier?: number;
   fontScale: (size: number) => number;
+  /**
+   * 左屏「高考标准解答分步走」当前步（1 起）。0 / 未传 = 不分步，整屏正常亮度。
+   *   第 1 步 → 左上列联表区
+   *   第 2 步 → 右上等高条形图区
+   *   第 3 步 → 下半 χ²(1) 分布曲线与临界决策标尺区
+   */
+  activeStep?: number;
 }
+
+/**
+ * 三个分区各自的高亮围栏（主场景坐标系），与下方 regionOpacity 的分区编号一一对应。
+ * 三步恰好各占中屏一块，不重叠：
+ *   1 → 左上 2×2 列联表区（H₀ 的对象：两个分类变量与四格观测频数）
+ *   2 → 右上 等高条形图区（卡方统计量的直观来源：两行条件频率落差）
+ *   3 → 下半 χ²(1) 分布曲线区（临界值拒绝域判读）
+ *
+ * 注：本页中屏没有富余留白（顶部标题条与蓝色公式胶囊横贯整幅、三块内容各自填满，
+ * 中屏不额外挂步骤标牌），当前步的名称与"该看哪里"的提示由左屏 `StepNavigator` 承担。
+ */
+const STEP_FRAMES = [
+  { x: 21, y: 48, w: 393, h: 202 },
+  { x: 426, y: 48, w: 388, h: 202 },
+  { x: 21, y: 266, w: 793, h: 360 },
+] as const;
+
+/** 步进后被压暗的分区亮度（未步进时全部为 1，保持原有整屏观感） */
+const DIM_OPACITY = 0.3;
 
 export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
   freqA,
@@ -27,6 +53,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
   labelNotB = "属性 非B",
   scaleMultiplier = 1,
   fontScale,
+  activeStep = 0,
 }) => {
   // 考虑倍增因子的有效观测频数
   const mult = Math.max(1, Math.round(scaleMultiplier));
@@ -64,6 +91,19 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
     indResult.expected.eD,
   );
   const isLargeSampleValid = totalN >= 40 && minExpected >= 5;
+
+  // ── 分步高亮（左屏点第 N 步 → 中屏只亮该步该看的那一块）────────────────────
+  // 未启用分步（activeStep = 0）时全部为 1，保持原有整屏观感不变。
+  const regionOpacity = (region: 1 | 2 | 3): number => {
+    if (activeStep <= 0) return 1;
+    return activeStep === region ? 1 : DIM_OPACITY;
+  };
+
+  /** 当前步围栏；步号越界时收敛到首/末块，避免取到 undefined */
+  const activeFrame =
+    activeStep <= 0
+      ? null
+      : STEP_FRAMES[Math.max(1, Math.min(activeStep, STEP_FRAMES.length)) - 1];
 
   return (
     <g className="paired-data-scene-independence" transform="translate(0, 0)">
@@ -137,7 +177,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
       {/* ========================================================================= */}
       {/* 模块 1：左上区 —— 2×2 列联表四格矩阵 (四格表 + 边际合计 + 期望频数 E) */}
       {/* ========================================================================= */}
-      <g transform="translate(25, 50)">
+      <g transform="translate(25, 50)" opacity={regionOpacity(1)}>
         <text
           x={4}
           y={11}
@@ -525,7 +565,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
       {/* ========================================================================= */}
       {/* 模块 2：右上区 —— 条件频率等高条形图 (含水平基准落差线 Δp 与直观评价) */}
       {/* ========================================================================= */}
-      <g transform="translate(430, 50)">
+      <g transform="translate(430, 50)" opacity={regionOpacity(2)}>
         <text
           x={4}
           y={11}
@@ -775,13 +815,35 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
       {/* ========================================================================= */}
       {/* 模块 3：下半区 —— χ²(1) 分布曲线 · 多级拒绝域 · 高考决策临界标尺 */}
       {/* ========================================================================= */}
-      <ChiSquarePlot
-        chiSquare={indResult.chiSquare}
-        p95={indResult.p95}
-        p99={indResult.p99}
-        p999={indResult.p999}
-        fontScale={fontScale}
-      />
+      <g opacity={regionOpacity(3)}>
+        <ChiSquarePlot
+          chiSquare={indResult.chiSquare}
+          p95={indResult.p95}
+          p99={indResult.p99}
+          p999={indResult.p999}
+          fontScale={fontScale}
+        />
+      </g>
+
+      {/* ========================================================================= */}
+      {/* 当前步围栏：把"正在讲的那一步"框出来（非当前区已被 regionOpacity 压暗）      */}
+      {/* 描边色沿用主题 glowRing.activeStep = #3B82F6，与右屏推演步卡片聚焦描边同色 */}
+      {/* ========================================================================= */}
+      {activeFrame && (
+        <g pointerEvents="none">
+          <rect
+            x={activeFrame.x}
+            y={activeFrame.y}
+            width={activeFrame.w}
+            height={activeFrame.h}
+            rx={10}
+            fill="none"
+            stroke={MATH_COLORS.interactiveHover}
+            strokeWidth={2}
+            strokeDasharray="7 4"
+          />
+        </g>
+      )}
     </g>
   );
 };

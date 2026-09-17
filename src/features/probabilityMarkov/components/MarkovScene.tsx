@@ -1,17 +1,29 @@
 import { useMemo } from "react";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateMarkovChain } from "@/math/probabilityMarkov";
+import { estimateTextWidth } from "@/utils/labelOverlap";
 
 interface MarkovSceneProps {
   params: Record<string, number>;
   scenarioKey: string;
   fontScale: (v: number) => number;
+  /**
+   * 左屏「高考标准解答分步走」当前步（1 起）。0 / 未传 = 不分步，整屏正常亮度。
+   *   第 1 步 → 左屏上半区（状态划分拓扑）
+   *   第 2 步 → 左屏下半区（全概汇流管道池）
+   *   第 3、4 步 → 右视窗（平衡不动点线与数列点列轨迹）
+   */
+  activeStep?: number;
+  /** 当前步名称，用于中屏围栏标注（由左屏导航同源数据传入） */
+  activeStepLabel?: string;
 }
 
 export function MarkovScene({
   params,
   scenarioKey,
   fontScale,
+  activeStep = 0,
+  activeStepLabel,
 }: MarkovSceneProps) {
   const p1 = params.p1 ?? 1.0;
   const p11 = params.p11 ?? 0.0;
@@ -54,6 +66,30 @@ export function MarkovScene({
   const rightW = 424;
   const sceneY = 15;
   const sceneH = 620;
+
+  // ── 分步高亮（左屏点第 N 步 → 中屏只亮该步该看的那一块）────────────────────
+  // 未启用分步（activeStep = 0）时全部为 1，保持原有整屏观感不变。
+  const regionOpacity = (region: 1 | 2 | 3): number => {
+    if (activeStep <= 0) return 1;
+    const isActive = region === 3 ? activeStep >= 3 : activeStep === region;
+    return isActive ? 1 : 0.3;
+  };
+
+  /** 当前步对应的中屏围栏（与 regionOpacity 的分区一一对应） */
+  const activeFrame =
+    activeStep <= 0
+      ? null
+      : activeStep === 1
+        ? { x: leftX + 4, y: sceneY + 44, w: leftW - 8, h: 240 }
+        : activeStep === 2
+          ? { x: leftX + 4, y: sceneY + 292, w: leftW - 8, h: sceneH - 296 }
+          : { x: rightX + 4, y: sceneY + 44, w: rightW - 8, h: sceneH - 52 };
+
+  /** 围栏顶沿的步骤标牌：文案由左屏 StepNavigator 同源传入，此处只负责排版 */
+  const stepChipW =
+    activeFrame && activeStepLabel
+      ? estimateTextWidth(activeStepLabel, fontScale(11)) + 20
+      : 0;
 
   return (
     <g>
@@ -150,7 +186,7 @@ export function MarkovScene({
         ───────────────────────────────────────────────────────────── */}
         {scenarioKey === "pass_ball_3" || scenarioKey === "pass_ball_2020" ? (
           /* 模型 1: 三人传球 (2020真题) · 对称合并乙丙 */
-          <g transform="translate(0, 42)">
+          <g transform="translate(0, 42)" opacity={regionOpacity(1)}>
             {/* 对称合并群背景框 (包围乙与丙) */}
             <rect
               x={22}
@@ -333,7 +369,7 @@ export function MarkovScene({
           </g>
         ) : scenarioKey === "pass_ball_4" ? (
           /* 模型 2: 四人传球 · 对称合并其他三人 */
-          <g transform="translate(0, 42)">
+          <g transform="translate(0, 42)" opacity={regionOpacity(1)}>
             {/* 对称合并群背景框 (包围乙/丙/丁) */}
             <rect
               x={18}
@@ -446,12 +482,12 @@ export function MarkovScene({
               fill={MATH_COLORS.labelTextLight}
               textAnchor="middle"
             >
-              三人地位完全对称，最终平稳分布各分得 1/4 (即稳态 t = 0.25)
+              四人地位对称，最终各状态概率均趋于同一稳态值 t = 0.25
             </text>
           </g>
         ) : scenarioKey === "urn_replace" ? (
           /* 模型 3: 摸球置换 · 白球池与黑球池 */
-          <g transform="translate(0, 42)">
+          <g transform="translate(0, 42)" opacity={regionOpacity(1)}>
             {/* 白球池 (事件 A_n) */}
             <g transform="translate(24, 30)">
               <rect
@@ -646,7 +682,7 @@ export function MarkovScene({
           </g>
         ) : scenarioKey === "game_pingpong" ? (
           /* 模型 4: 乒乓加赛 · 发球权局势轮换 */
-          <g transform="translate(0, 42)">
+          <g transform="translate(0, 42)" opacity={regionOpacity(1)}>
             {/* 甲发球局 */}
             <g transform="translate(24, 35)">
               <rect
@@ -783,7 +819,7 @@ export function MarkovScene({
           </g>
         ) : (
           /* 模型 5: 自由探索 · 二状态通用转移 */
-          <g transform="translate(0, 42)">
+          <g transform="translate(0, 42)" opacity={regionOpacity(1)}>
             {/* 状态 1 */}
             <g transform="translate(40, 50)">
               <circle
@@ -888,7 +924,7 @@ export function MarkovScene({
         {/* ─────────────────────────────────────────────────────────────
             下半段：全概率动态加权汇流管道池 (y: 295 ~ 605)
         ───────────────────────────────────────────────────────────── */}
-        <g transform="translate(0, 295)">
+        <g transform="translate(0, 295)" opacity={regionOpacity(2)}>
           {/* 汇流池外层框 */}
           <rect
             x={14}
@@ -1097,7 +1133,10 @@ export function MarkovScene({
       {/* ═════════════════════════════════════════════════════════════════
           右视窗：大画幅离散概率数列 {pₙ} 动力学大图 (x: 398 ~ 822)
       ═════════════════════════════════════════════════════════════════ */}
-      <g transform={`translate(${rightX}, ${sceneY})`}>
+      <g
+        transform={`translate(${rightX}, ${sceneY})`}
+        opacity={regionOpacity(3)}
+      >
         {/* 右视窗大底卡 */}
         <rect
           x={0}
@@ -1465,6 +1504,54 @@ export function MarkovScene({
           </text>
         </g>
       </g>
+
+      {/* ═════════════════════════════════════════════════════════════════
+          当前步围栏：把「正在讲的那一步」框出来（非当前区已被 regionOpacity 压暗）
+          描边色沿用主题 glowRing.activeStep = #3B82F6，与右屏采分步卡片聚焦描边同色
+      ═════════════════════════════════════════════════════════════════ */}
+      {activeFrame && (
+        <g pointerEvents="none">
+          <rect
+            x={activeFrame.x}
+            y={activeFrame.y}
+            width={activeFrame.w}
+            height={activeFrame.h}
+            rx={12}
+            fill="none"
+            stroke={MATH_COLORS.interactiveHover}
+            strokeWidth={2}
+            strokeDasharray="7 4"
+          />
+          {activeStepLabel && (
+            <g
+              transform={`translate(${
+                activeFrame.x + activeFrame.w / 2 - stepChipW / 2
+              }, ${activeFrame.y - 12})`}
+            >
+              <rect
+                x={0}
+                y={0}
+                width={stepChipW}
+                height={24}
+                rx={12}
+                fill={MATH_COLORS.white}
+                stroke={MATH_COLORS.interactiveHover}
+                strokeWidth={1.2}
+              />
+              <text
+                x={stepChipW / 2}
+                y={16}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                fill={MATH_COLORS.interactiveHover}
+                textAnchor="middle"
+              >
+                {activeStepLabel}
+              </text>
+            </g>
+          )}
+        </g>
+      )}
     </g>
   );
 }

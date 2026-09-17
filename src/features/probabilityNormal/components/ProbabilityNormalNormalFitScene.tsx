@@ -19,6 +19,10 @@ interface ProbabilityNormalNormalFitSceneProps {
   fontScale: (size: number) => number;
   onDragX1: (mathPt: { x: number; y: number }) => void;
   onDragX2: (mathPt: { x: number; y: number }) => void;
+  /** 柱体悬停读数（读取该组区间 / 组中值 / 频率÷组距） */
+  onBinMouseEnter?: (bin: HistogramBin, e: React.MouseEvent) => void;
+  onBinMouseMove?: (e: React.MouseEvent) => void;
+  onBinMouseLeave?: () => void;
 }
 
 export function ProbabilityNormalNormalFitScene({
@@ -35,6 +39,9 @@ export function ProbabilityNormalNormalFitScene({
   fontScale,
   onDragX1,
   onDragX2,
+  onBinMouseEnter,
+  onBinMouseMove,
+  onBinMouseLeave,
 }: ProbabilityNormalNormalFitSceneProps) {
   return (
     <g>
@@ -64,6 +71,9 @@ export function ProbabilityNormalNormalFitScene({
             fill={withAlpha(MATH_COLORS.barFill, 0.45 * (1 - blend * 0.5))}
             stroke={withAlpha(MATH_COLORS.barBorder, 0.8 * (1 - blend * 0.3))}
             strokeWidth={1.2}
+            onMouseEnter={(e) => onBinMouseEnter?.(bin, e)}
+            onMouseMove={onBinMouseMove}
+            onMouseLeave={onBinMouseLeave}
           />
         );
       })}

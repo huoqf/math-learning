@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  StepNavigator,
   TipCard,
 } from "@/components/UI";
 import { useAnimationViewport } from "@/hooks";
@@ -14,6 +15,7 @@ import { CANVAS_PRESETS } from "@/theme";
 import {
   defaultParams,
   MARKOV_PRESETS,
+  MARKOV_ANSWER_STEPS,
 } from "@/data/registries/probabilityMarkov";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { MarkovScene } from "./components/MarkovScene";
@@ -29,6 +31,9 @@ export function ProbabilityMarkovAnimation() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
   }));
+
+  // 高考标准解答分步走当前步（1 起）。同时驱动右屏采分步卡片聚焦与中屏图元高亮。
+  const [answerStep, setAnswerStep] = useState<number>(1);
 
   // 1. 视口设置 (840 x 650 full preset)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -127,7 +132,17 @@ export function ProbabilityMarkovAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 第 2 层：参数调节 */}
+          {/* 第 2 层：高考标准解答分步走（左屏主线，联动右屏聚焦与中屏高亮） */}
+          <LeftPanelSection title="高考标准解答分步走">
+            <StepNavigator
+              steps={MARKOV_ANSWER_STEPS}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="右屏已同步聚焦对应采分步卡片，中屏高亮该步涉及图元。"
+            />
+          </LeftPanelSection>
+
+          {/* 第 3 层：参数调节 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
@@ -136,7 +151,7 @@ export function ProbabilityMarkovAnimation() {
             />
           </LeftPanelSection>
 
-          {/* 第 3 层：教学导引 */}
+          {/* 第 4 层：教学导引 */}
           <div className="mt-auto">
             <TipCard
               variant={tipConfig.variant}
@@ -173,12 +188,21 @@ export function ProbabilityMarkovAnimation() {
                 params={params}
                 scenarioKey={scenarioKey}
                 fontScale={canvasSize.font}
+                activeStep={answerStep}
+                activeStepLabel={`第 ${answerStep} / ${MARKOV_ANSWER_STEPS.length} 步 · ${MARKOV_ANSWER_STEPS[answerStep - 1].title}`}
               />
             </AnimationSvgCanvas>
           </div>
         </div>
       }
-      right={<MathPanel {...mathData} title="全概递推数列高考采分看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          title="全概递推数列高考采分看板"
+          focusStep={answerStep}
+          focusTarget="theorems"
+        />
+      }
     />
   );
 }

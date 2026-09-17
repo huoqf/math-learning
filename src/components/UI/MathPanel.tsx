@@ -33,6 +33,17 @@ export interface MathPanelProps {
   examAnchor?: string;
   mnemonic?: string;
   title?: string;
+  /**
+   * 「高考标准解答分步走」当前步（1 起），由左屏 StepNavigator 驱动。
+   * 命中步的卡片加主色聚焦描边，其余降透明度，形成"左屏点步 → 右屏聚焦"闭环。
+   */
+  focusStep?: number;
+  /**
+   * 本页解答链落在哪个区块。默认 "reasoning"（破题推演链）；
+   * 概率递推等把 4 采分步写在定理区的页面传 "theorems"。
+   * 只向命中的区块派发 focusStep，避免同一页两处同时描边造成焦点分裂。
+   */
+  focusTarget?: "reasoning" | "theorems";
 }
 
 /**
@@ -56,6 +67,8 @@ export const MathPanel: React.FC<MathPanelProps> = ({
   examAnchor,
   mnemonic,
   title = "高考破题与推演看板",
+  focusStep,
+  focusTarget = "reasoning",
 }) => {
   const isEmpty =
     quantities.length === 0 &&
@@ -74,10 +87,16 @@ export const MathPanel: React.FC<MathPanelProps> = ({
       <MathWarningSection warnings={warnings} />
 
       {/* 3. 高考破题推导步骤链（核心推演，定理代入实时代数求解） */}
-      <MathReasoningSection steps={reasoningSteps} />
+      <MathReasoningSection
+        steps={reasoningSteps}
+        focusStep={focusTarget === "reasoning" ? focusStep : undefined}
+      />
 
       {/* 4. 核心定理与命题模型（显式适用前提条件） */}
-      <MathTheoremSection theorems={theorems} />
+      <MathTheoremSection
+        theorems={theorems}
+        focusStep={focusTarget === "theorems" ? focusStep : undefined}
+      />
 
       {/* 5. 高考要点与题型通法 */}
       <MathGaokaoSection points={gaokaoPoints} />

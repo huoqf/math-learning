@@ -65,10 +65,6 @@ describe("probabilityBayes math module", () => {
     // p_4 = 0 * 0.5 + 0.5 * (1 - 0.5) = 0.25
     expect(res.steps[3].p1).toBeCloseTo(0.25);
 
-    // 蛛网图轨迹测试
-    expect(res.cobwebPoints.length).toBeGreaterThan(0);
-    expect(res.cobwebPoints[0].x).toBeCloseTo(1.0);
-
     // 高考 4 步法生成测试
     expect(res.gaokaoSteps.step1_define).toContain("设第 $n$ 步系统处于状态");
     expect(res.gaokaoSteps.step2_recurrence).toContain("由全概率公式");
@@ -184,9 +180,6 @@ describe("probabilityBayes math module", () => {
     const res = calculateMarkovChain(0.8, 0.7, 0.1, 5);
     expect(res.recurrenceLatex).toContain("p_{n+1}");
     expect(res.geometricLatex).toContain("p_{n+1}");
-    expect(res.cobwebPoints[0].type).toBe("step");
-    expect(res.cobwebPoints[1].type).toBe("vertical");
-    expect(res.cobwebPoints[2].type).toBe("horizontal");
   });
 
   it("should normalize pAi when sum != 1 in total probability", () => {

@@ -32,6 +32,12 @@
 ```
 - **左问右解闭环**：左屏 `TipCard` 统一承载题设三要素闭环：【真实背景 background】（凡属应用题/统计分析/实际建模/高考真题情景必须交代背景，杜绝抽象符号直接空降）+【初始条件 condition】+【核心设问 question】；完整公式推导、零点存在性证明与高考考法 100% 归位右屏 `MathPanel`。具体推导链三要素（审题定法 $\to$ 建模联立 $\to$ 求解反思）与各学科规范以 [.agents/skills/new-math-animation/references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md#7-高中数学学科认知与破题推演准则-理顺思路--助力掌握) 为全库单一事实源（SSOT）。
 - **推导链三部曲（严禁孤立数字）**：推导链必须严格遵循「① 符号表达式 $\to$ ② 代入解析式 $\to$ ③ 结果/解集」，严禁直接跳步给出孤立数值（如 $f_{\min} = 2.50$）；参数求解必须由充要条件列出含参不等式。
+- **分步作答闭环（教具 → 提分）**：支持/已接入分步作答的大题类页面（以概率统计、解析几何与数列等典型高考大题为示范基准），在左屏选用 `StepNavigator` 承载「高考标准解答分步走」主线，带着学生一步一屏地走，而非一次性铺开整块看板。启用该能力的页面，三处必须**同源同频**：
+  1. **左屏** `StepNavigator` 的 `AnswerStepItem[]`（`step` / `title` / `sceneHint`）只写在页面注册表里一份；
+  2. **右屏** `MathPanel` 传 `focusStep`（命中步卡片描边、其余降透明度），并用 `focusTarget` 指定派发到 `reasoning` 还是 `theorems` —— **同一页只允许一处描边**，两处同时聚焦即焦点分裂；
+  3. **中屏** Scene 传 `activeStep`，`regionOpacity` 只点亮该步对应区块、其余压暗，并给当前步围栏（描边色沿用主题 `glowRing.activeStep` = `#3B82F6`，与右屏聚焦描边同色）；
+  4. 右屏条目名与步号（`Theorem.step` / `ReasoningStep.step`）必须由同一份链条数据拼装，**严禁各写一份**——否则改名或调序会只改一半。
+- **条目级拓展声明**：判「超出 2019 人教A版新课标正文」一律用 `Theorem.isExtension` + `extensionBadge`（右屏自动渲染紫色徽标，与 `level` 正交），**严禁**再把「（拓展 · 超出课标）」写进定理名称；该字段同时被 `discipline/no-beyond-syllabus-terms` 门禁识别为"已声明拓展"。
 - **内联数学符号 100% 包裹 `$...$`**：所有文本字段（`background`, `detail`, `condition`, `question`, `prerequisites`）中凡涉及数学变量、区间、极值与 LaTeX 指令，必须严格用单 `$...$` 包裹，交由 `renderMixedLatex` 渲染，严禁裸露 raw 字符。
 - **情景多级联动**：用户在左屏切换任何二级选项，`TipCard` 的题设背景与探究问题必须 100% 动态特化。
 
@@ -74,10 +80,11 @@ $env:PATH="D:\node-v24;"+$env:PATH; npm run audit -- <path/to/feature>
 | **情景联动性** | 凡含 `<SelectGrid value={x}>`，`TipCard` / `useScenario` 依赖必须包含 `x` |
 | **架构纯洁性** | `src/math/` 禁止包含 React/DOM 引用；全库禁止 `BrowserRouter` |
 | **审计严格阻断** | `npm run audit:strict` 默认扫描**全库 `src`**（含 `features` / `components` / `data` / `math` / `math3d`）。采用**存量基线**机制：仅"超出基线的增量违规"非零退出阻断构建，历史存量计入 `.audit-baseline.json` 提示不阻断；整改后用 `npm run audit:update-baseline` 下修基线 |
-| **超纲术语门禁** | `discipline/no-beyond-syllabus-terms` 对 `builders` / `registries` / `knowledgeTree` / `meta.ts` / `Animation.tsx` / `Page.tsx` / `Scene.tsx` 扫描超纲关键词（洛必达/麦克劳林/泰勒/琴生/凹凸/极点极线/克拉默/外积/叉积/夹逼/等价无穷小/上确界/紧致/无穷级数/数列极限/特征方程/马尔可夫链/卡方分布/概率密度函数/微元/定积分/极坐标/参数方程等）。未标注拓展即 error 拦截；已声明 `importance: "extend"` 或「拓展 · 超出课标 / 选学」徽标的文件降级为 warning；标内核心技巧（向量参数方程/参数化设点/单参数设点/三角参数代换）白名单豁免放行 |
-| **学段边界一致性** | `knowledgeTree.test.ts` 强制：`importance === "extend"` 的节点标题必须含「拓展/选学/超出课标/竞赛」；`module`/`chapter` 含"拓展"的节点 `importance` 必须为 `"extend"`；`syllabus.status !== "正文"` 的节点必须标为 `extend` |
+| **超纲术语门禁** | `discipline/no-beyond-syllabus-terms` 扫描 `builders` / `registries` / `knowledgeTree` / `meta.ts` / `modeConfig` / `Animation.tsx` / `Page.tsx` / `Scene.tsx` 以及首页知识树卡片等用户可见文案载体的超纲关键词（洛必达/麦克劳林/泰勒/琴生/凹凸/极点极线/克拉默/外积/叉积/夹逼/等价无穷小/上确界/紧致/无穷级数/数列极限/特征方程/马尔可夫链/平稳分布/卡方分布/概率密度函数/微元/定积分/极坐标/参数方程等）。未标注拓展即 error 拦截；已声明 `importance: "extend"` 或「拓展 · 超出课标 / 选学」徽标的文件降级为 warning；标内核心技巧（向量参数方程/参数化设点/单参数设点/三角参数代换）白名单豁免放行。**学科注记**：针对数列通项收敛与分布列大样本逼近等未定义极限记号的章节，解答题教学正文严禁直接书写高等数学 $\lim_{n \to \infty} p_n$ / $\lim_{N \to \infty}$ 记号，一律改文字化近似表述；人教A版课标正文内的导数概念定义式及显式声明拓展的高等数学专题（如洛必达法则、无穷级数）中的极限记号属合规内容，不受此限 |
+| **学段边界一致性** | `knowledgeTree.test.ts` 强制：`importance === "extend"` 的节点标题必须含「拓展/选学/超出课标/竞赛」；`module`/`chapter` 含"拓展"的节点 `importance` 必须为 `"extend"`；`syllabus.status !== "正文"` 的节点必须标为 `extend`；**先修拓扑册次门禁**：先修节点所在分册序（必修一→必修二→选必一→选必二→选必三）不得晚于本节点分册 |
 | **TipCard设问质量** | 严禁“观察图形变化”等空泛词；设问必须包含“求范围/最值/证明/单调性/零点”等数学目标词 |
 | **推导链代数三部曲** | `reasoningSteps` 严禁孤立数字赋值，必须按「符号 $\to$ 解析式代入 $\to$ 结果」演绎；文本涉数学符号 100% 包裹 `$...$` |
+| **分步作答闭环一致性** | `src/test/answerStepFocus.test.tsx` 针对已接入分步作答的模块强制：左屏步号 1 起、首末步边界禁用、点击可直跳；`focusStep` 只派发给 `focusTarget` 命中的区块（另一区块不得出现 `data-focus-step`）；中屏第 N 步只点亮第 N 块分区、未分步时全亮且不出围栏；右屏条目的步号与标题逐条等于注册表链条（如 `MARKOV_ANSWER_STEPS` / `INDEPENDENCE_ANSWER_STEPS`） |
 | **代数表达与逻辑严谨** | 严禁代数多项式出现机器浮点尾零（如 $1.00x$）与未化简系数（$1x$ 必须化简为 $x$）；几何从属严禁滥用 $\iff$ 伪充要；必须使用 `formatMathNumber` |
 | **单一视口滚动规范** | 垂直滚动条 100% 由 `ThreePanel` 外层统一接管；严禁子卡片/公式使用 `overflow-x-hidden overflow-y-visible` 制造嵌套滚动条 |
 | **预设参数数学安全** | `presetParams` 必须满足高中课标定义域（分母非零、判别式合规、标准方程参数正定） |

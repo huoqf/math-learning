@@ -32,6 +32,7 @@ const BEYOND_SYLLABUS_TERMS = [
   '数列极限',
   '特征方程',
   '马尔可夫链',
+  '平稳分布',
   '卡方分布',
   '概率密度函数',
   '微元',
@@ -171,7 +172,12 @@ export const disciplineRules = [
     check(ctx) {
       if (ctx.isTest) return [];
 
-      // 仅扫描承载教学内容与文案的载体文件（不含纯工具/类型/常量文件）
+      // 扫描范围：凡承载教学内容与学生可见文案的载体文件。
+      //  - 数据层：builders / registries / knowledgeTree / meta.ts
+      //  - 展示层：Animation / Page / Scene / modeConfig
+      //  - 兜底：src/features 下全部非测试源码
+      //    （旧清单按文件名后缀枚举，漏掉了首页知识树卡片等文案载体，
+      //      导致"马尔可夫链"从首页第一屏泄漏，见概率统计模块审计 P0-1）
       const isContentFile =
         ctx.isBuilder ||
         ctx.isRegistry ||
@@ -180,11 +186,16 @@ export const disciplineRules = [
         ctx.filePath.endsWith('meta.ts') ||
         ctx.filePath.endsWith('Animation.tsx') ||
         ctx.filePath.endsWith('Page.tsx') ||
-        ctx.filePath.endsWith('Scene.tsx');
+        ctx.filePath.endsWith('Scene.tsx') ||
+        /^src\/features\//.test(ctx.relPath);
       if (!isContentFile) return [];
 
       // 已显式声明"拓展/选学/超出课标"的文件：命中降级为 warning（视为已标注的拓展内容）
+      //  - 条目级（首选）：右屏 Theorem 上的 `isExtension: true`，会渲染「拓展 · 选学」紫色徽标；
+      //  - 文件级（兼容）：节点/文件声明 importance: "extend" 或 status: 拓展/选学/竞赛，
+      //    以及历史写法中把「（拓展 · 超出课标）」写进文案的情形。
       const declaredExtend =
+        /isExtension:\s*true/.test(ctx.cleanContent) ||
         /importance:\s*["']extend["']/.test(ctx.cleanContent) ||
         /status:\s*["'](拓展|选学|竞赛)["']/.test(ctx.cleanContent) ||
         /超出课标/.test(ctx.cleanContent) ||

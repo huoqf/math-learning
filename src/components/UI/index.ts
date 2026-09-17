@@ -33,6 +33,8 @@ export type { SelectGridItem } from "./SelectGrid";
 // 面板与布局 (Panels & Layout)
 // ============================================================================
 export { LeftPanel, LeftPanelSection } from "./LeftPanel";
+export { StepNavigator } from "./StepNavigator";
+export type { AnswerStepItem } from "./StepNavigator";
 export { MathPanel } from "./MathPanel";
 export type {
   MathQuantity,

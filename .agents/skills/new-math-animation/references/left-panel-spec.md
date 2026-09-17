@@ -90,6 +90,23 @@
 - **尺寸选项**：支持 `size="compact"`（高度缩小为 16px）；
 - **并排建议**：当有两个辅助开关时，使用 `<div className="grid grid-cols-2 gap-2">` 单行并排，节省 50% 高度。
 
+### 7. `StepNavigator`（高考标准解答分步走）
+
+**适用场景**：新高考大题类页面（解答题有明确采分步链的），把"这道大题该怎么一步步写"从右屏文案提升为左屏**可操作的主线**——带着学生一步一屏地走，而不是一次性把整块看板铺开。
+
+- **数据契约**：`steps: AnswerStepItem[]`，每项 `{ step, title, sceneHint }`。这份链条**只写在页面注册表里一份**（如 `MARKOV_ANSWER_STEPS` / `INDEPENDENCE_ANSWER_STEPS`），左屏导航、右屏条目、中屏分区三方共用。
+- **`sceneHint` 必须写**：它是"点了这一步该看中屏哪一块"的唯一交代，缺了分步导航就只剩翻页、没有联动。
+- **摆放位置**：动线第 2 与第 3 级之间（选定情景之后、调参之前），作为左屏主线；参数调节退居其后。
+- **三处联动（缺一即断链）**：
+  ```tsx
+  <StepNavigator steps={STEPS} active={answerStep} onChange={setAnswerStep} hint="…" />
+  <MathPanel {...mathData} focusStep={answerStep} focusTarget="reasoning" />   // 右屏命中文案卡片描边
+  <XxxScene … activeStep={answerStep} />                                       // 中屏只亮该步区块，其余压暗
+  ```
+- **中屏分区约定**：Scene 内用 `regionOpacity(region)`（未分步恒为 1，分步时命中区 1、其余 `0.3`）包住各分区容器，并渲染一个当前步围栏。围栏描边色沿用 `MATH_COLORS.interactiveHover`（= 主题 `glowRing.activeStep` = `#3B82F6`），与右屏聚焦描边同色，**不得新造颜色**。
+- **中屏空间自检**：围栏上的"第 N / M 步 · 标题"标牌需要版面留白。若该页中屏已被标题条与内容填满（如独立性检验页），**宁可不挂标牌也不压住正文**——此时由左屏当前步卡片承担说明，中屏只做"压暗 + 围栏"。
+- **回归防线**：`src/test/answerStepFocus.test.tsx` 会校验步号连续性、聚焦派发唯一性、中屏分区点亮映射与三方同源，改动前先看它。
+
 ---
 
 ## 🚫 四、左屏典型反模式与自查表
@@ -103,3 +120,6 @@
 | 选项包含 6 个字就降为单列导致左屏无限纵向拉长 | `SelectGrid columns={2}` 紧凑字阶自适应 |
 | `TabSwitcher` 横向文字被 `truncate` 截断出省略号 | 移除强制 truncate，采用自适应紧凑排版 |
 | `TipCard` 缺少背景导致抽象难懂，或手写大段重复 JSX | 使用 `TipCard` 结构化三要素 props（`badge`, `background`, `condition`, `question`） |
+| 具备标准解答步的大题页面把采分步只散落在右屏，缺少操作主线 | 引入 `StepNavigator` 主线：`focusStep` + `activeStep` 三处联动，一步一屏 |
+| 分步链条在左屏导航、右屏条目、中屏分区各写一份标题 | 链条只写注册表一份，三方同源（`src/test/answerStepFocus.test.tsx` 强制逐条相等） |
+| `MathPanel` 同时给 `reasoning` 与 `theorems` 派发 `focusStep` | 用 `focusTarget` 只派发给命中的那一个区块，同一页只允许一处描边 |
