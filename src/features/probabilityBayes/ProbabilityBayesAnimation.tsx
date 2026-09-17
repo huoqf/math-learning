@@ -312,6 +312,7 @@ export function ProbabilityBayesAnimation() {
             <TipCard
               variant={tipConfig.variant}
               badge={tipConfig.badge}
+              background={tipConfig.background}
               condition={tipConfig.condition}
               question={tipConfig.question}
             />
