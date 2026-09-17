@@ -7,6 +7,8 @@ export type TipCardVariant =
 interface TipCardProps {
   /** 题型或考点徽章，例如 "高考母题 · 直角梯形翻折" */
   badge?: string;
+  /** 真实教学/高考题设背景说明 */
+  background?: React.ReactNode;
   /** 初始条件 / 题设已知背景 */
   condition?: React.ReactNode;
   /** 核心设问 / 探究目标 */
@@ -15,7 +17,6 @@ interface TipCardProps {
   children?: React.ReactNode;
   /** 色彩变体 */
   variant?: TipCardVariant;
-  /** 是否紧凑模式 */
   compact?: boolean;
   className?: string;
 }
@@ -58,6 +59,7 @@ const variantStyles: Record<
 
 export const TipCard: React.FC<TipCardProps> = ({
   badge,
+  background,
   condition,
   question,
   children,
@@ -66,7 +68,9 @@ export const TipCard: React.FC<TipCardProps> = ({
   className = "",
 }) => {
   const style = variantStyles[variant];
-  const hasStructuredContent = Boolean(badge || condition || question);
+  const hasStructuredContent = Boolean(
+    badge || background || condition || question,
+  );
 
   return (
     <div
@@ -91,6 +95,19 @@ export const TipCard: React.FC<TipCardProps> = ({
               />
               <span className="font-bold text-[11px] leading-none tracking-tight flex items-center gap-1">
                 {typeof badge === "string" ? renderMixedLatex(badge) : badge}
+              </span>
+            </div>
+          )}
+
+          {background && (
+            <div className="text-[11px] leading-relaxed">
+              <span className="font-semibold text-neutral-800">
+                【背景说明】
+              </span>
+              <span className="text-neutral-600">
+                {typeof background === "string"
+                  ? renderMixedLatex(background)
+                  : background}
               </span>
             </div>
           )}

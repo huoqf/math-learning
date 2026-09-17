@@ -2,6 +2,7 @@ import type { ParamMeta } from "../types";
 import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
+  groupCount: 6,
   percentileP: 50,
   shift: 0.0,
   sampleN: 100,
@@ -32,60 +33,81 @@ export const MODE_SCENARIOS: Record<StudyMode, StatScenarioItem[]> = {
     {
       key: "free",
       label: "自由探索",
-      description: "自由调节百分位目标与偏斜度",
-      params: { percentileP: 50, shift: 0.0 },
-      visibleKeys: ["percentileP", "shift"],
+      description: "自由切换组数(5/6/8组)与调节样本偏斜度",
+      params: { groupCount: 6, shift: 0.0 },
+      visibleKeys: ["groupCount", "shift"],
     },
     {
-      key: "symmetric",
-      label: "对称分布 (钟形)",
-      description: "均值 ≈ 中位数 ≈ 众数，锁定对称性 (shift=0)",
-      params: { shift: 0.0 },
-      visibleKeys: ["percentileP"],
+      key: "gaokao6",
+      label: "新高考 6 组模型",
+      description: "全国卷经典百分制 [40, 100]，组距为 10",
+      params: { groupCount: 6, shift: 0.0 },
+      visibleKeys: ["shift"],
+    },
+    {
+      key: "textbook5",
+      label: "课本经典 5 组模型",
+      description: "人教A版必修二基础例题 [50, 100]",
+      params: { groupCount: 5, shift: 0.0 },
+      visibleKeys: ["shift"],
     },
     {
       key: "rightSkewed",
       label: "正偏态 (右偏长尾)",
-      description: "众数 < 中位数 < 均值，锁定右偏 (shift=0.6)",
-      params: { shift: 0.6 },
-      visibleKeys: ["percentileP"],
+      description: "众数 < 中位数 < 均值，高分极端值拉大均值",
+      params: { groupCount: 6, shift: 0.6 },
+      visibleKeys: ["shift"],
     },
     {
       key: "leftSkewed",
       label: "负偏态 (左偏长尾)",
-      description: "均值 < 中位数 < 众数，锁定左偏 (shift=-0.6)",
-      params: { shift: -0.6 },
-      visibleKeys: ["percentileP"],
+      description: "均值 < 中位数 < 众数，低分极端值拉低均值",
+      params: { groupCount: 6, shift: -0.6 },
+      visibleKeys: ["shift"],
+    },
+    {
+      key: "bimodal",
+      label: "双峰分布 (两极分化)",
+      description: "两端局部众数高耸，均值居于低谷处",
+      params: { groupCount: 6, shift: 999 },
+      visibleKeys: [],
     },
   ],
   cumulative: [
     {
       key: "free",
       label: "自由探索",
-      description: "自由拖动目标百分位与调节分布偏斜",
-      params: { percentileP: 50, shift: 0.0 },
-      visibleKeys: ["percentileP", "shift"],
+      description: "自由切换组数、拖动百分位探针与调节分布偏斜",
+      params: { groupCount: 6, percentileP: 50, shift: 0.0 },
+      visibleKeys: ["groupCount", "percentileP", "shift"],
     },
     {
       key: "q1",
       label: "下四分位数 Q₁ (25%)",
-      description: "锁定 p=25%，插值求解下四分位数",
+      description: "前 25% 累积切分点，箱线图左箱界",
       params: { percentileP: 25 },
-      visibleKeys: ["shift"],
+      visibleKeys: ["percentileP", "shift"],
     },
     {
       key: "median",
       label: "中位数 Me (50%)",
-      description: "锁定 p=50%，面积严格二等分插值点",
+      description: "面积二等分点，累积频率达到 50%",
       params: { percentileP: 50 },
-      visibleKeys: ["shift"],
+      visibleKeys: ["percentileP", "shift"],
     },
     {
       key: "q3",
       label: "上四分位数 Q₃ (75%)",
-      description: "锁定 p=75%，求上四分位数与 IQR",
+      description: "前 75% 累积切分点，箱线图右箱界",
       params: { percentileP: 75 },
-      visibleKeys: ["shift"],
+      visibleKeys: ["percentileP", "shift"],
+    },
+    {
+      key: "p90",
+      label: "优秀线 P₉₀ (90%)",
+      description: "前 90% 前沿门槛，高考典型拔尖情境",
+      params: { percentileP: 90 },
+      visibleKeys: ["percentileP", "shift"],
     },
   ],
   stratified: [
@@ -121,7 +143,7 @@ export const MODE_SCENARIOS: Record<StudyMode, StatScenarioItem[]> = {
     {
       key: "twoStrata",
       label: "高考必考: 两层合并",
-      description: "男女生成绩合并模型，隐藏第 3 层参数，降维为 2 层",
+      description: "男女生成绩合并模型，锁定 2 层结构，隐藏第 3 层",
       params: {
         sampleN: 80,
         N1: 400,
@@ -138,7 +160,7 @@ export const MODE_SCENARIOS: Record<StudyMode, StatScenarioItem[]> = {
     {
       key: "equalMean",
       label: "均值无差异模型",
-      description: "各层均值相等 (x̄₁=x̄₂=x̄₃)，组间离差为 0，总方差=组内方差",
+      description: "各层均值相等 (x̄₁=x̄₂=x̄₃)，组间离差=0，总方差=组内方差",
       params: {
         mean1: 75,
         mean2: 75,
@@ -149,7 +171,7 @@ export const MODE_SCENARIOS: Record<StudyMode, StatScenarioItem[]> = {
     {
       key: "largeMeanDiff",
       label: "均值大差异模型",
-      description: "各层方差很小但均值相差悬殊，总方差由组间离差主导暴增",
+      description: "各层方差极小但均值悬殊，总方差由组间离差绝对主导",
       params: {
         sampleN: 120,
         N1: 400,
@@ -168,6 +190,30 @@ export const MODE_SCENARIOS: Record<StudyMode, StatScenarioItem[]> = {
 };
 
 export const paramMeta: Record<string, ParamMeta> = {
+  groupCount: {
+    key: "groupCount",
+    label: "直方图组数",
+    min: 5,
+    max: 8,
+    step: 1,
+    defaultValue: 6,
+    importance: "core",
+    marks: [
+      {
+        value: 5,
+        label: "5组(课本)",
+      },
+      {
+        value: 6,
+        variant: "critical",
+        label: "6组(新高考)",
+      },
+      {
+        value: 8,
+        label: "8组(精细)",
+      },
+    ],
+  },
   percentileP: {
     key: "percentileP",
     label: "百分位数 p%",

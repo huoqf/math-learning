@@ -28,18 +28,32 @@ interface SceneLegendProps {
   items: SceneLegendItem[];
   title?: string;
   className?: string;
+  position?: "top-right" | "bottom-right" | "top-left" | "bottom-left";
 }
+
+const POSITION_CLASSES: Record<
+  NonNullable<SceneLegendProps["position"]>,
+  string
+> = {
+  "top-right": "top-4 right-4",
+  "bottom-right": "bottom-4 right-4",
+  "top-left": "top-4 left-4",
+  "bottom-left": "bottom-4 left-4",
+};
 
 export const SceneLegend = ({
   items,
   title = "图例说明",
   className = "",
+  position = "bottom-right",
 }: SceneLegendProps) => {
   if (!items || items.length === 0) return null;
 
+  const posClass = POSITION_CLASSES[position];
+
   return (
     <div
-      className={`absolute bottom-4 right-4 z-10 bg-white/90 backdrop-blur-md border border-neutral-200/80 rounded-lg shadow-sm px-3 py-2 pointer-events-none select-none transition-all duration-200 ${className}`}
+      className={`absolute ${posClass} z-10 bg-white/90 backdrop-blur-md border border-neutral-200/80 rounded-lg shadow-sm px-3 py-2 pointer-events-none select-none transition-all duration-200 ${className}`}
     >
       {title && (
         <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 border-b border-black/5 pb-1">

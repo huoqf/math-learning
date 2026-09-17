@@ -28,6 +28,8 @@ export interface HistogramStatsResult {
   mode: number;
   /** 估算中位数 (50% 百分位数) */
   median: number;
+  /** 估算方差 ∑(组中值 - 均值)² * 频率 */
+  variance: number;
   /** 25% 百分位数 (下四分位数 Q1) */
   q1: number;
   /** 75% 百分位数 (上四分位数 Q3) */
@@ -65,37 +67,92 @@ export interface StratifiedResult {
   totalStd: number;
 }
 
-/**
- * 预设数据分布样本
- * 提供标准的 5 组数据：如 [50,60), [60,70), [70,80), [80,90), [90,100)
- */
-export const DEFAULT_BIN_INTERVALS = [
-  { min: 50, max: 60 },
-  { min: 60, max: 70 },
-  { min: 70, max: 80 },
-  { min: 80, max: 90 },
-  { min: 90, max: 100 },
-];
-
-/** 基础预设频率配置 */
-const BASE_FREQUENCIES = [0.1, 0.25, 0.35, 0.2, 0.1];
+export type BinCountOption = 5 | 6 | 8;
 
 /**
- * 根据偏斜参数 shift 生成归一化的直方图分组数据
- * @param shift -1 ~ 1 间的偏斜调节
+ * 预设直方图分组区间集合
+ * 5 组：人教A版必修二课本基础模型 [50, 100]
+ * 6 组：新高考全国卷最经典百分制真题模型 [40, 100] (涵盖不及格到优秀，组距为 10)
+ * 8 组：高精度全量样本连续监测模型 [30, 110]
  */
-export function generateHistogramBins(shift: number = 0): HistogramBin[] {
-  // 调整频数分布
-  const rawFreqs = BASE_FREQUENCIES.map((f, idx) => {
-    // 根据 idx 与 shift 微调
-    const factor = 1 + shift * (idx - 2) * 0.4;
-    return Math.max(0.04, f * factor);
-  });
+export const BIN_INTERVAL_PRESETS: Record<
+  BinCountOption,
+  { min: number; max: number }[]
+> = {
+  5: [
+    { min: 50, max: 60 },
+    { min: 60, max: 70 },
+    { min: 70, max: 80 },
+    { min: 80, max: 90 },
+    { min: 90, max: 100 },
+  ],
+  6: [
+    { min: 40, max: 50 },
+    { min: 50, max: 60 },
+    { min: 60, max: 70 },
+    { min: 70, max: 80 },
+    { min: 80, max: 90 },
+    { min: 90, max: 100 },
+  ],
+  8: [
+    { min: 30, max: 40 },
+    { min: 40, max: 50 },
+    { min: 50, max: 60 },
+    { min: 60, max: 70 },
+    { min: 70, max: 80 },
+    { min: 80, max: 90 },
+    { min: 90, max: 100 },
+    { min: 100, max: 110 },
+  ],
+};
+
+export const DEFAULT_BIN_INTERVALS = BIN_INTERVAL_PRESETS[6];
+
+/** 各组数基础频率配置 (默认单峰钟形) */
+const BASE_FREQUENCIES_MAP: Record<BinCountOption, number[]> = {
+  5: [0.1, 0.25, 0.35, 0.2, 0.1],
+  6: [0.05, 0.15, 0.3, 0.25, 0.15, 0.1],
+  8: [0.03, 0.08, 0.18, 0.28, 0.22, 0.12, 0.06, 0.03],
+};
+
+/**
+ * 根据偏斜参数 shift 与组数生成归一化的直方图分组数据
+ * @param shift -1 ~ 1 间的偏斜调节；若为 999 则代表双峰分布
+ * @param binCount 组数（5 | 6 | 8，默认 6 组，对齐新高考百分制真题标准）
+ */
+export function generateHistogramBins(
+  shift: number = 0,
+  binCount: number = 6,
+): HistogramBin[] {
+  const countKey: BinCountOption = binCount === 5 ? 5 : binCount === 8 ? 8 : 6;
+  const intervals = BIN_INTERVAL_PRESETS[countKey];
+  const baseFreqs = BASE_FREQUENCIES_MAP[countKey];
+
+  let rawFreqs: number[];
+
+  if (Math.abs(shift - 999) < 0.1) {
+    // 双峰分布模式 (两头高中间凹陷)
+    if (countKey === 5) {
+      rawFreqs = [0.28, 0.14, 0.16, 0.14, 0.28];
+    } else if (countKey === 6) {
+      rawFreqs = [0.24, 0.12, 0.14, 0.14, 0.12, 0.24];
+    } else {
+      rawFreqs = [0.18, 0.14, 0.08, 0.1, 0.1, 0.08, 0.14, 0.18];
+    }
+  } else {
+    // 偏斜调节
+    const centerIdx = (intervals.length - 1) / 2;
+    rawFreqs = baseFreqs.map((f, idx) => {
+      const factor = 1 + shift * (idx - centerIdx) * 0.35;
+      return Math.max(0.02, f * factor);
+    });
+  }
+
   const sumFreq = rawFreqs.reduce((a, b) => a + b, 0);
   const normalizedFreqs = rawFreqs.map((f) => f / sumFreq);
 
   let cum = 0;
-  return DEFAULT_BIN_INTERVALS.map((interval, i) => {
+  return intervals.map((interval, i) => {
     const freq = normalizedFreqs[i];
     cum += freq;
     const width = interval.max - interval.min;
@@ -141,7 +198,7 @@ export function calculatePercentile(
 }
 
 /**
- * 计算直方图的完整数字特征（均值、众数、中位数、四分位数等）
+ * 计算直方图的完整数字特征（均值、众数、中位数、方差、四分位数等）
  */
 export function calculateHistogramStats(
   bins: HistogramBin[],
@@ -160,6 +217,12 @@ export function calculateHistogramStats(
     }
   });
 
+  // 2. 估算方差 ∑(组中值 - 均值)² * 频率
+  let variance = 0;
+  bins.forEach((bin) => {
+    variance += Math.pow(bin.midpoint - mean, 2) * bin.frequency;
+  });
+
   const mode = bins[modeIndex].midpoint;
   const median = calculatePercentile(bins, 50).value;
   const q1 = calculatePercentile(bins, 25).value;
@@ -172,6 +235,7 @@ export function calculateHistogramStats(
     mean,
     mode,
     median,
+    variance,
     q1,
     q3,
     iqr,

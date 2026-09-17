@@ -11,7 +11,6 @@ import {
   generateHistogramBins,
   calculateHistogramStats,
   calculateStratifiedSampling,
-  calculatePercentileShadeBins,
 } from "@/math/statPercentile";
 import { StatPercentileHistogramScene } from "./StatPercentileHistogramScene";
 import { StatPercentileCumulativeScene } from "./StatPercentileCumulativeScene";
@@ -19,6 +18,7 @@ import { StatPercentileStratifiedScene } from "./StatPercentileStratifiedScene";
 
 interface StatPercentileSceneProps {
   params: {
+    groupCount?: number;
     percentileP: number;
     shift: number;
     sampleN: number;
@@ -48,6 +48,7 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
   studyMode = "histogram",
 }) => {
   const {
+    groupCount = 6,
     percentileP,
     shift,
     sampleN,
@@ -62,16 +63,14 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
     var3,
   } = params;
 
-  const bins = React.useMemo(() => generateHistogramBins(shift), [shift]);
+  const bins = React.useMemo(
+    () => generateHistogramBins(shift, groupCount),
+    [shift, groupCount],
+  );
   const stats = React.useMemo(
     () => calculateHistogramStats(bins, percentileP),
     [bins, percentileP],
   );
-  const shadeBins = React.useMemo(
-    () => calculatePercentileShadeBins(bins, stats.percentileVal),
-    [bins, stats.percentileVal],
-  );
-
   const strat = React.useMemo(
     () =>
       calculateStratifiedSampling(
@@ -117,10 +116,8 @@ export const StatPercentileScene: React.FC<StatPercentileSceneProps> = ({
 
   return (
     <StatPercentileHistogramScene
-      percentileP={percentileP}
       bins={bins}
       stats={stats}
-      shadeBins={shadeBins}
       scale={scale}
       vp={vp}
       onParamChange={onParamChange}
