@@ -16,13 +16,28 @@
 | **`SecantLine`** | `@/components/Math` | `fn`, `x0`, `x1`, `scale`, `color` | 极限与割线逼近组件。 |
 | **`Asymptote`** | `@/components/Math` | `type` ('vertical' \| 'horizontal' \| 'slant'), `value`, `scale` | 渐近线组件，自动虚线化并渲染代号。支持 `fontScale`。 |
 | **`IntervalShadow`** | `@/components/Math` | `fn`, `range`, `scale`, `fillColor`, `baseline` | 定积分/不等式解集面积阴影。 |
-| **`VectorArrow`** | `@/components/Math` | `from`, `to`, `scale`, `color`, `dashed`, `headSize` | 平面向量与视觉指示箭头。❌ 严禁手写 `<line>` + `<polygon>`。 |
-| **`SceneLabelGroup`**| `@/components/Math` | `items`, `scale`, `fontScale` | 智能避让点标。自动执行 8 向防重叠分流与白色微描边。❌ 严禁在画布中央用手写 `<text>` 渲染浮点坐标。 |
-| **`SceneLegend`** | `@/components/Math` | `items` (`label`, `colorKey`, `type`, `dashed`) | 中屏右下角毛玻璃图例卡片。承载完整解析式、特征点与几何释义。 |
+| **`SceneLabelGroup`**| `@/components/Math` | `labels`, `scale`, `fontScale`, `color` | 几何与动点点标统一渲染组件。支持智能防遮挡与 LaTeX 字符渲染。❌ 严禁向动点组件直接传 `label`。 |
+| **`TrackPath`** | `@/components/Math` | `points`, `scale`, `color`, `strokeWidth`, `dashed` | 动点运动轨迹追踪线组件。 |
+| **`PolarGrid`** | `@/components/Math` | `scale`, `fontScale`, `rMax`, `step` | 极坐标系网格与同心圆渲染组件。 |
+| **`SceneLegend`** | `@/components/Math` | `items`, `title`, `position` ('bottom-right' \| 'top-right') | 智能避让毛玻璃图例。承载解析式、特征线与几何释义。默认 `position="bottom-right"`；当场景右下角存在直方图柱、正态长尾、焦点或密集刻度时，必须改用 `position="top-right"` 避让主体，严禁教条硬编码遮挡。 |
 
 ---
 
-## 二、三位一体色彩映射规则
+## 二、三栏布局与核心交互控件清单
+
+| 组件名称 | 导入路径 | 核心 Props | 作用与规范约束 |
+| :--- | :--- | :--- | :--- |
+| **`ThreePanel`** | `@/components/Layout` | `left`, `center`, `right`, `mobileBreakpoint` | 标准三屏容器。100% 接管外层垂直滚动，内层禁止制造双重滚动条。 |
+| **`AnimationSvgCanvas`** | `@/components/Layout` | `width`, `height`, `children` | 中屏标准矢量画布容器。配合 `useAnimationViewport` 响应式缩放。 |
+| **`LeftPanel`** | `@/components/UI` | `children` | 左屏容器（物理宽度 240~280px），`p-3 gap-2.5` 紧凑内边距。 |
+| **`LeftPanelSection`** | `@/components/UI` | `title`, `compact`, `children` | 左屏区块卡片外壳。标题精炼加粗，严禁写口水话副标题。 |
+| **`TabSwitcher`** | `@/components/UI` | `options`, `value`, `onChange`, `layout` | 探索维度/大类模式切换器。支持横向单排与 4 项自动熔断网格。 |
+| **`SelectGrid`** | `@/components/UI` | `options`, `value`, `onChange`, `columns`, `layout` | 典型情境/母题预设选择器。纯中文标题，默认 2 列排版，首项自由探索通栏。 |
+| **`ParamControl`** | `@/components/UI` | `configs`, `onChange` | 核心参数降维调节器。扁平分组，滑轨舒展，三位一体色彩映射。 |
+| **`TipCard`** | `@/components/UI` | `background`, `condition`, `question`, `variant` | 教学导引与题设三要素闭环卡片。置于左屏底部，数学符号 100% 包裹 `$...$`。 |
+| **`MathPanel`** | `@/components/UI` | `quantities`, `theorems`, `gaokaoPoints`, `warnings` | 右屏数学量看板。统一由 `buildMathQuantities` 组装结构化数据接入。 |
+
+## 三、三位一体色彩映射规则
 
 | 角色 | 主题 Token | 典型场景 |
 | :--- | :--- | :--- |
@@ -35,7 +50,7 @@
 
 ---
 
-## 三、fontScale 传递规范
+## 四、fontScale 传递规范
 
 1. **源头**：在 `Animation.tsx` 从 `useAnimationViewport` 获取 `canvasSize.font`。
 2. **中转**：作为 `fontScale` prop 传入 `Scene.tsx`。

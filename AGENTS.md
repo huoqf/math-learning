@@ -30,9 +30,9 @@
 • 参数降维调节 (ParamControl)    • SceneLegend 毛玻璃图例                        • GaokaoPoint 高考压轴考点
 • 教学导引题设 (TipCard)        ❌ 严禁大段长句与推导解释                      • WarningItem 退化预警
 ```
-- **左问右解闭环**：左屏 `TipCard` 只负责抛出【初始条件】与【核心设问】；完整公式推导、零点存在性证明与高考考法 100% 归位右屏 `MathPanel`。具体推导链三要素（审题定法 $\to$ 建模联立 $\to$ 求解反思）与各学科规范以 [.agents/skills/new-math-animation/references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md#7-高中数学学科认知与破题推演准则-理顺思路--助力掌握) 为全库单一事实源（SSOT）。
+- **左问右解闭环**：左屏 `TipCard` 统一承载题设三要素闭环：【真实背景 background】（凡属应用题/统计分析/实际建模/高考真题情景必须交代背景，杜绝抽象符号直接空降）+【初始条件 condition】+【核心设问 question】；完整公式推导、零点存在性证明与高考考法 100% 归位右屏 `MathPanel`。具体推导链三要素（审题定法 $\to$ 建模联立 $\to$ 求解反思）与各学科规范以 [.agents/skills/new-math-animation/references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md#7-高中数学学科认知与破题推演准则-理顺思路--助力掌握) 为全库单一事实源（SSOT）。
 - **推导链三部曲（严禁孤立数字）**：推导链必须严格遵循「① 符号表达式 $\to$ ② 代入解析式 $\to$ ③ 结果/解集」，严禁直接跳步给出孤立数值（如 $f_{\min} = 2.50$）；参数求解必须由充要条件列出含参不等式。
-- **内联数学符号 100% 包裹 `$...$`**：所有文本字段（`detail`, `condition`, `question`, `prerequisites`）中凡涉及数学变量、区间、极值与 LaTeX 指令，必须严格用单 `$...$` 包裹，交由 `renderMixedLatex` 渲染，严禁裸露 raw 字符。
+- **内联数学符号 100% 包裹 `$...$`**：所有文本字段（`background`, `detail`, `condition`, `question`, `prerequisites`）中凡涉及数学变量、区间、极值与 LaTeX 指令，必须严格用单 `$...$` 包裹，交由 `renderMixedLatex` 渲染，严禁裸露 raw 字符。
 - **情景多级联动**：用户在左屏切换任何二级选项，`TipCard` 的题设背景与探究问题必须 100% 动态特化。
 
 ### 公理 3：数形与语义色彩一体化
@@ -52,7 +52,7 @@
    SVG 内部严禁硬编码字号或写死 Tailwind `text-[Npx]`。
 3. **全面原子化复用，严禁手写重复轮子**：
    - 2D 点：纯数学点/交点用 `MathPoint`，拖拽控制点用 `InteractivePoint`；
-   - 2D 标注：点标一律用 `SceneLabelGroup`，图例一律用 `SceneLegend`，向量一律用 `VectorArrow`；
+   - 2D 标注：点标一律用 `SceneLabelGroup`；图例一律用 `SceneLegend`（遵循**智能避让原则**：默认 `bottom-right`，当右下角存在直方图高分柱、正态长尾阴影、焦点或轴标签时，必须切换为 `top-right` 避让主体，严禁教条硬编码遮挡）；向量一律用 `VectorArrow`；
    - 3D 体系：纯几何线段用 `Segment3D`（无箭头），仅法向量/基向量用 `Vector3DArrow`；顶点标签用 `PointLabel3D` 或 `CompoundLabel3D`，杜绝 Unicode 下标豆腐块。
 
 ---

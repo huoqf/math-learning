@@ -88,7 +88,7 @@ export function buildProbabilityNormalPanel(
           name: "频率分布直方图基本性质 (面积即频率)",
           latex:
             "S_i = \\frac{\\text{频率}_i}{\\text{组距}_i} \\times \\text{组距}_i = \\text{频率}_i \\quad \\sum_{i=1}^K S_i = 1",
-          note: "纵轴表示'频率/组距'，各矩形面积等于该组频率，所有矩形面积之和恒等于 1。",
+          note: "纵轴表示『频率/组距』，各矩形面积等于该组频率，所有矩形面积之和恒等于 1。",
           level: "core",
         },
         {
@@ -140,12 +140,12 @@ export function buildProbabilityNormalPanel(
           color: MATH_COLORS.paramPrimary,
         },
         {
-          label: "直方图最大密度",
+          label: "直方图实测最高高度",
           value: `${maxHistDensity.toFixed(3)}`,
           color: MATH_COLORS.barBorder,
         },
         {
-          label: "峰值拟合残差 |Δf|",
+          label: "峰度接近差值",
           value: `${densityDiff.toFixed(4)}`,
           color: MATH_COLORS.paramSecondary,
           highlight: densityDiff < 0.05 ? "positive" : undefined,
@@ -158,29 +158,29 @@ export function buildProbabilityNormalPanel(
       ],
       theorems: [
         {
-          name: "频率直方图的连续化逼近（拓展 · 超出课标）",
+          name: "频率直方图向总体密度曲线逼近",
           latex:
-            "\\text{样本量 } N \\text{ 增大、组距 } \\Delta x \\text{ 减小时，阶梯状频率直方图逐步光滑为钟形密度曲线}",
-          note: "当样本容量足够大且分组足够细时，频率折线图逼近光滑的正态分布密度曲线；直观理解连续化过程即可，不要求极限计算。",
-          level: "supplementary",
+            "\\text{样本容量 } N \\to \\infty \\text{ 且组距 } \\Delta x \\to 0 \\text{ 时，频率折线图无限逼近总体正态曲线 } f(x)",
+          note: "高中数学概率统计核心思想：由离散样本频率矩形逐步光滑演变为连续总体钟形密度曲线。",
+          level: "core",
         },
         {
           name: "正态分布密度曲线 N(μ, σ²)",
           latex: `f(x) = \\frac{1}{\\sqrt{2\\pi}\\color{${MATH_COLORS.paramSecondary}}{\\sigma}} e^{-\\frac{(x - \\color{${MATH_COLORS.paramPrimary}}{\\mu})^2}{2\\color{${MATH_COLORS.paramSecondary}}{\\sigma}^2}}`,
-          prerequisites: ["$\\sigma > 0$", "曲线与 $x$ 轴所围图形面积为 1"],
+          prerequisites: ["$\\sigma > 0$", "曲线与 $x$ 轴所围总面积为 1"],
           note: "曲线关于直线 x = μ 对称，且在 x = μ 处取得最大值 1/(√(2π)σ)。",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "【高考考点】理解从直方图离散统计到正态分布连续概率密度的连续化逼近过程。",
+          text: "【高考考点】理解从直方图离散统计到正态分布连续概率密度的过渡过程；曲线下方全域面积恒为 1。",
           importance: "gaokao",
         },
       ],
       warnings: [
         {
-          text: "提示：样本量越充分、组距越细密，直方图与理论正态曲线的拟合度越高。",
+          text: "提示：样本量越充分、组距越细密，直方图上底边折线与理论正态曲线的贴合度越高。",
           level: "info",
         },
       ],
@@ -194,35 +194,42 @@ export function buildProbabilityNormalPanel(
     const inflectL = mu - sigma;
     const inflectR = mu + sigma;
     const inflectHeight = normalPdf(inflectL, mu, sigma);
-    const fwhm = 2 * Math.sqrt(2 * Math.log(2)) * sigma; // 半峰全宽 ≈ 2.355σ
     const inflectionRatio = (inflectHeight / peakHeight) * 100; // e^(-0.5) ≈ 60.65%
+
+    let dispersionDesc = "标准适中";
+    if (sigma <= 0.6) {
+      dispersionDesc = "陡峭集中型 (数据高度集中在均值附近)";
+    } else if (sigma >= 1.4) {
+      dispersionDesc = "平缓分散型 (数据波动范围较宽)";
+    }
 
     return {
       quantities: [
         {
-          label: "曲线最大高度 $f_max$",
+          label: "对称轴位置 x = μ",
+          value: `${mu.toFixed(2)}`,
+          color: MATH_COLORS.paramPrimary,
+          highlight: "positive",
+        },
+        {
+          label: "曲线最大峰值 $f_{\\max}$",
           value: `${peakHeight.toFixed(3)}`,
           color: MATH_COLORS.paramPrimary,
         },
         {
-          label: "x = μ-σ 处高度 f",
-          value: `(${inflectL.toFixed(2)}, ${inflectHeight.toFixed(3)})`,
+          label: "数据离散状态",
+          value: dispersionDesc,
+          color: MATH_COLORS.function,
+        },
+        {
+          label: "弯曲改变点 x = μ±σ",
+          value: `[${inflectL.toFixed(2)}, ${inflectR.toFixed(2)}]`,
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "x = μ+σ 处高度 f",
-          value: `(${inflectR.toFixed(2)}, ${inflectHeight.toFixed(3)})`,
-          color: MATH_COLORS.paramSecondary,
-        },
-        {
-          label: "$x = μ±σ$ 处高度比 $f/f_max$",
+          label: "μ±σ 处相对峰高比",
           value: `${inflectionRatio.toFixed(1)}% (e^{-0.5})`,
           color: MATH_COLORS.paramSecondary,
-        },
-        {
-          label: "半峰全宽 FWHM",
-          value: `${fwhm.toFixed(3)} (≈ 2.355σ)`,
-          color: MATH_COLORS.function,
         },
         {
           label: "全域理论总概率",
@@ -233,28 +240,28 @@ export function buildProbabilityNormalPanel(
       ],
       theorems: [
         {
-          name: "参数 μ 与 σ 的几何意义",
+          name: "参数 μ 与 σ 的几何与统计意义",
           latex: `\\text{对称轴: } x = \\color{${MATH_COLORS.paramPrimary}}{\\mu} \\quad \\text{最大值: } f_{\\max} = \\frac{1}{\\sqrt{2\\pi}\\color{${MATH_COLORS.paramSecondary}}{\\sigma}}`,
-          note: "μ 决定中心位置（平移）；σ 决定高矮胖瘦（σ 越小越瘦高陡峭，数据越集中；σ 越大越矮胖平缓，数据越分散）。",
+          note: "μ 决定中心对称轴位置（曲线左右刚性平移）；σ 决定高矮胖瘦（σ 越小越瘦高陡峭，数据越集中；σ 越大越矮胖平缓，数据越分散）。",
           level: "core",
         },
         {
-          name: "曲线单调性与弯曲特征",
+          name: "单调性与曲率变化",
           latex:
-            "(-\\infty, \\mu] \\text{ 单调递增，} [\\mu, +\\infty) \\text{ 单调递减，} x = \\mu \\pm \\sigma \\text{ 处弯曲形态改变}",
-          note: "曲线关于直线 $x = \\mu$ 对称；在 $x < \\mu$ 时曲线上升，在 $x > \\mu$ 时曲线下降；$x = \\mu \\pm \\sigma$ 处高度固定为峰值的 $60.65\\%$。",
+            "(-\\infty, \\mu] \\text{ 单调递增，} [\\mu, +\\infty) \\text{ 单调递减，} x = \\mu \\pm \\sigma \\text{ 处弯曲转向}",
+          note: "在 $x < \\mu$ 时曲线上升，在 $x > \\mu$ 时曲线下降；在 $x = \\mu \\pm \\sigma$ 处高度固定为最高峰值的 $e^{-0.5} \\approx 60.65\\%$。",
           level: "important",
         },
       ],
       gaokaoPoints: [
         {
-          text: "【高考考点】新高考常以两组正态数据（如甲乙两班成绩）同图对比，考察“比较两组均值 μ₁ 与 μ₂ 的大小”及“比较标准差 σ₁ 与 σ₂ 的分散程度”。",
+          text: "【高考考点】比较两组正态数据（如甲乙两班模考成绩）：曲线对称轴位置判定均值 μ₁ 与 μ₂ 的大小；曲线峰值高低判定标准差 σ₁ 与 σ₂ 的离散程度。",
           importance: "gaokao",
         },
       ],
       warnings: [
         {
-          text: "核心：无论 μ 和 σ 如何变化，正态曲线与 x 轴所夹的总面积恒等于 1。",
+          text: "核心：无论 μ 如何平移、σ 如何伸缩，正态曲线与 x 轴所围图形的总面积恒等于 1。",
           level: "info",
         },
       ],
@@ -281,7 +288,7 @@ export function buildProbabilityNormalPanel(
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "标准化分位数 Z₀",
+        label: "标准化变量 Z₀",
         value: `${z0.toFixed(2)}`,
         color: MATH_COLORS.function,
       },
@@ -302,9 +309,29 @@ export function buildProbabilityNormalPanel(
         highlight: "positive",
       },
     ],
+    reasoningSteps: [
+      {
+        step: 1,
+        title: "第一步：确定对称轴与镜像点",
+        latex: `x_{\\text{sym}} = 2\\color{${MATH_COLORS.paramPrimary}}{\\mu} - x_0 = 2 \\times ${mu.toFixed(1)} - (${x0.toFixed(1)}) = ${symData.xSym.toFixed(2)}`,
+        detail: `正态分布曲线关于直线 $x = \\mu = ${mu.toFixed(1)}$ 轴对称，基准点 $x_0 = ${x0.toFixed(1)}$ 的镜面对称点为 $2\\mu - x_0 = ${symData.xSym.toFixed(2)}$。`,
+      },
+      {
+        step: 2,
+        title: "第二步：对称转化单侧尾部概率",
+        latex: `P(X \\ge ${symData.rightX.toFixed(1)}) = P(X \\le ${symData.leftX.toFixed(1)}) = ${(symData.tailProb * 100).toFixed(2)}\\%`,
+        detail: `由图形关于对称轴完全对称的几何性质，两端对称尾部的阴影面积严格相等。`,
+      },
+      {
+        step: 3,
+        title: "第三步：利用全概率归一求解对称区间",
+        latex: `P(${symData.leftX.toFixed(1)} \\le X \\le ${symData.rightX.toFixed(1)}) = 1 - 2P(X \\le ${symData.leftX.toFixed(1)}) = ${(symData.centerProb * 100).toFixed(2)}\\%`,
+        detail: `正态曲线与 $x$ 轴所夹总概率恒为 $1$，从总概率中扣除两侧对称尾部，即得中间双侧对称概率。`,
+      },
+    ],
     theorems: [
       {
-        name: "正态分布 3-σ 原则 (高考核心数据)",
+        name: "正态分布 3-σ 原则 (高考必记数据)",
         latex:
           "P(\\mu-\\sigma \\le X \\le \\mu+\\sigma) \\approx 68.27\\% \\quad P(\\mu-2\\sigma \\le X \\le \\mu+2\\sigma) \\approx 95.45\\% \\quad P(\\mu-3\\sigma \\le X \\le \\mu+3\\sigma) \\approx 99.73\\%",
         prerequisites: ["$X \\sim N(\\mu, \\sigma^2)$"],
@@ -315,7 +342,7 @@ export function buildProbabilityNormalPanel(
         name: "高考对称转化公式组",
         latex:
           "P(X \\le \\mu-a) = P(X \\ge \\mu+a) \\quad P(\\mu-a \\le X \\le \\mu+a) = 1 - 2P(X \\le \\mu-a)",
-        note: "利用对称性 P(X ≤ μ) = 0.5，可快速将未知单侧或双侧区间转化为已知面积。",
+        note: "利用对称性 P(X ≤ μ) = 0.5，可快速将未知单侧或双侧区间转化为已知对称面积。",
         level: "core",
       },
       {
@@ -323,7 +350,7 @@ export function buildProbabilityNormalPanel(
         latex: `Z = \\frac{X - \\color{${MATH_COLORS.paramPrimary}}{\\mu}}{\\color{${MATH_COLORS.paramSecondary}}{\\sigma}} \\sim N(0, 1) \\quad \\Rightarrow \\quad P(X \\le x_0) = \\Phi(Z_0)`,
         note: isStandardNormal
           ? "当前已为标准正态分布 N(0, 1)。"
-          : `当前 x₀ = ${x0.toFixed(2)} 对应标准正态分位数 Z₀ = ${z0.toFixed(2)}。`,
+          : `当前 x₀ = ${x0.toFixed(2)} 对应标准正态变量 Z₀ = ${z0.toFixed(2)}。`,
         level: "important",
       },
     ],

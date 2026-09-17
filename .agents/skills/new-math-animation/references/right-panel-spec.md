@@ -42,7 +42,7 @@ interface MathQuantity {
   color?: string;                                 // MATH_COLORS.* token（三位一体绑定）
   highlight?: 'positive' | 'negative' | 'zero' | 'extreme'; // 特殊高亮状态
   isInvariant?: boolean;                          // 是否为定值不变量（金色星标显示）
-  invariantNote?: string;                         // 不变性原因说明（如"正方体面对角线距离恒为..."）
+  invariantNote?: string;                         // 不变性原因说明（涉及数学符号用 $...$ 包裹）
 }
 ```
 
@@ -51,9 +51,9 @@ interface MathQuantity {
 interface Theorem {
   name: string;                                         // 定理名（如"公垂线唯一定理"）
   latex: string;                                        // LaTeX 公式（纯 LaTeX，不加 $...$）
-  condition?: string;                                   // 适用前提（如"当且仅当 P=H₁, Q=H₂"）
+  condition?: string;                                   // 适用前提（如"当且仅当 $P=H_1, Q=H_2$"，涉及数学符号 100% 用 $...$ 包裹）
   prerequisites?: string[];                             // 前置定理（显示为蓝色小标签）
-  note?: string;                                        // 补充说明（💡 图标显示）
+  note?: string;                                        // 补充说明（💡 图标显示，涉及数学符号用 $...$ 包裹）
   level?: 'core' | 'important' | 'derived' | 'supplementary'; // 分级（蓝/橙/灰/紫标签）
   mode?: 'inline' | 'block';                            // 公式渲染模式（默认 block）
 }
@@ -62,7 +62,7 @@ interface Theorem {
 ### `WarningItem` — 易错警示
 ```ts
 interface WarningItem {
-  text: string;                                   // 警示文本（支持混合 LaTeX，用反引号包围代码符号）
+  text: string;                                   // 警示文本（数学变量与公式 100% 用 $...$ 包裹）
   level: 'info' | 'warning' | 'danger';           // 蓝色信息 / 橙色警告 / 红色危险
 }
 ```
@@ -72,16 +72,17 @@ interface WarningItem {
 interface ReasoningStep {
   step: number;                                   // 步骤编号（1, 2, 3...）
   title: string;                                  // 步骤标题（如"建立空间直角坐标系"）
-  detail?: string;                                // 步骤说明文字（可含中文分析）
-  latex?: string;                                 // LaTeX 公式（带入实时参数值）
-  rubric?: string;                                // 高考采分点（如"采分点：建系与参数化（4分）"）
+  detail?: string;                                // 步骤说明文字（中文分析，涉及数学符号 100% 用 $...$ 包裹）
+  latex?: string;                                 // LaTeX 公式（单行公式，纯 LaTeX 不加 $...$）
+  latexBlocks?: string[];                         // 多行公式/分块独立卡片（长推导推荐，纯 LaTeX 不加 $...$）
+  rubric?: string;                                // 高考采分点（如"采分点：规范建系与设元（4分）"，涉及数学量用 $...$ 包裹）
 }
 ```
 
 ### `GaokaoPoint` — 高考要点
 ```ts
 interface GaokaoPoint {
-  text: string;                                   // 要点描述（中文，可含数学符号）
+  text: string;                                   // 要点描述（中文，涉及数学符号必须 100% 用 $...$ 包裹）
   importance: 'gaokao' | 'hard' | 'core' | 'basic' | 'extend'; // 等级色标
 }
 ```

@@ -32,7 +32,7 @@ const handleDrag = (mathX: number, mathY: number) => {
 ```
 ### ✅ 正确写法
 ```tsx
-// 正确：画布内仅保留代数点标 P，精确坐标与公式统一收纳至右下角 SceneLegend 与右屏
+// 正确：画布内仅保留代数点标 P，精确坐标与公式统一收纳至 SceneLegend 与右屏
 <SceneLabelGroup
   items={[{ id: 'p', text: 'P', mathX: x, mathY: y, color: MATH_COLORS.focusPoint }]}
   scale={scale}
@@ -42,17 +42,30 @@ const handleDrag = (mathX: number, mathY: number) => {
 
 ---
 
-## 🚫 反模式 3：TipCard 提前剧透解题过程与最终极值
+## 🚫 反模式 3：TipCard 题设抽象空降或设问提前剧透
 
 ### ❌ 错误写法
 ```tsx
-// 错误：把设问写成答案或推导过程
-question: "通过配方法将解析式化为顶点式，并在 x=2 处取得最大值 4。"
+// 错误 1：缺少真实情境背景，直接空降冰冷数学符号，学生读不懂现实意义与考查意图
+const tipConfig = {
+  condition: "X ~ N(μ, σ²)，纵轴为频率/组距。",
+  question: "拖动滑块观察图形走势。"
+};
+
+// 错误 2：把设问写成解题过程或最终答案（剥夺探究价值）
+const tipConfig = {
+  question: "通过配方法将解析式化为顶点式，并在 x=2 处取得最大值 4。"
+};
 ```
 ### ✅ 正确写法
 ```tsx
-// 正确：提出探究设问，推导过程与结论归位右屏 MathPanel
-question: "(1) 观察抛物线对称轴随参数的变化；(2) 探究闭区间 [0, 3] 上的最值分布与端点取值。"
+// 正确：三要素闭环 —— 真实背景交代命题来源 + 初始条件明确已知 + 核心设问直击求解目标
+const tipConfig = {
+  badge: "新高考真题 · 工件公差 3-σ 质检",
+  background: "自动化流水线机械加工零件直径服从正态分布，超出 [μ-3σ, μ+3σ] 判定为废品。",
+  condition: "工件直径 $X \\sim N(0, 0.8^2)$，检测探针位于 $x_0 = -1.6$。",
+  question: "利用 $2\\sigma$ 准则求解单侧超标废品率与合格品概率区间。"
+};
 ```
 
 ---
@@ -79,17 +92,28 @@ question: "(1) 观察抛物线对称轴随参数的变化；(2) 探究闭区间 
 
 ---
 
-## 🚫 反模式 5：图例（SceneLegend）颜色与实际图形色彩错位
+## 🚫 反模式 5：图例（SceneLegend）色彩错位与教条硬编码遮挡
 
 ### ❌ 错误写法
 ```tsx
-// 场景中画的是紫色曲线
+// 错误 1：色彩错位（图例与实际渲染不一致）
 <FunctionGraph fn={f} scale={scale} color={MATH_COLORS.secondary} />
-// 但图例写的是 primary (蓝色)
 <SceneLegend items={[{ label: 'f(x)', colorKey: 'primary', type: 'line' }]} />
+
+// 错误 2：教条硬编码右下角，完全不顾场景右下角有高分段柱子、正半轴刻度或对称长尾阴影
+<SceneLegend items={legendItems} /> // 💣 默认 bottom-right，直接将右侧图元与轴标签压在身下！
 ```
-### ✅ 正确规范
-中屏 `<SceneLegend>` 中配置的 `colorKey` 必须与实际渲染图元的色彩 Token 1-to-1 绝对一致。
+### ✅ 正确规范（因图制宜，智能避让）
+```tsx
+// 正确：
+// 1. colorKey 必须与实际渲染图元的色彩 Token 1-to-1 绝对一致；
+// 2. 当右下角存在直方图柱子、正态长尾、右焦点或坐标轴标签时，主动置于开阔的右上角：
+<SceneLegend
+  items={legendItems}
+  title="图元说明"
+  position="top-right" // ✨ 利用右上角大面积纯白留白区，彻底消除遮挡
+/>
+```
 
 ---
 

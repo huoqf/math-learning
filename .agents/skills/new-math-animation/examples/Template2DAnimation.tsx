@@ -9,7 +9,7 @@ import {
   TipCard,
   MathPanel,
 } from '@/components/UI';
-import { SceneLegend, type LegendItem } from '@/components/Math';
+import { SceneLegend, type SceneLegendItem } from '@/components/Math';
 import { useAnimationViewport, useSceneScale } from '@/hooks';
 import { CANVAS_PRESETS } from '@/types';
 import { MATH_COLORS } from '@/theme';
@@ -137,7 +137,7 @@ export const Template2DAnimation: React.FC = () => {
   ], [params.paramA, params.interactiveX, isParamLocked]);
 
   // 中屏毛玻璃图例 (1-to-1 颜色绑定与 KaTeX 公式)
-  const legendItems: LegendItem[] = useMemo(() => [
+  const legendItems: SceneLegendItem[] = useMemo(() => [
     {
       label: `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${params.paramA.toFixed(1)}}x^2`,
       colorKey: 'primary',
@@ -194,22 +194,17 @@ export const Template2DAnimation: React.FC = () => {
             />
           </LeftPanelSection>
 
-          {/* ④ 教学导引与题设背景 (由 useScenario 派发高考标准双要素架构，严禁剧透答案) */}
+          {/* ④ 教学导引与题设背景 (由 useScenario 派发高考标准题设三要素架构，严禁剧透答案) */}
           {tipProps && (
-            <LeftPanelSection title="教学导引" compact>
-              <TipCard variant={tipProps.variant}>
-                <div className="space-y-1.5 text-xs leading-relaxed">
-                  <div>
-                    <span className="font-semibold text-neutral-800">【初始条件】</span>
-                    <span className="text-neutral-600 ml-1">{tipProps.condition}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-neutral-800">【核心设问】</span>
-                    <span className="text-neutral-600 ml-1">{tipProps.question}</span>
-                  </div>
-                </div>
-              </TipCard>
-            </LeftPanelSection>
+            <div className="mt-auto">
+              <TipCard
+                variant={tipProps.variant}
+                badge={tipProps.badge}
+                background={tipProps.background}
+                condition={tipProps.condition}
+                question={tipProps.question}
+              />
+            </div>
           )}
         </LeftPanel>
       }
@@ -223,7 +218,7 @@ export const Template2DAnimation: React.FC = () => {
             />
           </div>
 
-          {/* 右下角毛玻璃图例 */}
+          {/* 智能避让毛玻璃图例（默认 bottom-right，右下角有图元或轴刻度时使用 top-right） */}
           <SceneLegend items={legendItems} />
 
           {/* SVG 动画画布 */}

@@ -20,7 +20,7 @@ description: >
 
 | 资源路径 | 作用与内容 | 适用场景 |
 | :--- | :--- | :--- |
-| [examples/Template2DAnimation.tsx](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/examples/Template2DAnimation.tsx) | **2D 页面标准完整编排模板**（三屏组装/双要素TipCard/毛玻璃图例） | **新建 2D 页面时直接参考复制** |
+| [examples/Template2DAnimation.tsx](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/examples/Template2DAnimation.tsx) | **2D 页面标准完整编排模板**（三屏组装/题设三要素TipCard/智能避让图例） | **新建 2D 页面时直接参考复制** |
 | [examples/Template2DScene.tsx](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/examples/Template2DScene.tsx) | **2D 中屏 SVG 标准场景模板**（坐标网格/函数曲线/动切线/智能点标） | 编写中屏 SVG 场景时参考 |
 | [references/2d-components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/2d-components-guide.md) | **2D 核心数学组件速查手册**（Props表、避雷规范、三位一体色系映射） | 组装图形图元时查阅 |
 | [resources/gaokao_function_models.json](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/resources/gaokao_function_models.json) | **高考高频函数模型字典**（定义域保护、解析解、增减区间参数） | 配置预设模型数据时快速查表 |
@@ -60,7 +60,7 @@ src/data/
   - ❌ 禁止手写 `<button>` 按钮组，必须用 `TabSwitcher` / `SelectGrid`；
   - ❌ 禁止手写散乱 `<text>` 渲染点标/图例，必须用 `SceneLabelGroup`（8 向避让）与 `SceneLegend`（毛玻璃图例）；
   - ❌ 禁止手写右屏卡片，必须由 `MathPanel` + `src/data/builders/<topic>.ts` 驱动。
-- **左屏控制台**：严格遵循 `TabSwitcher → SelectGrid(双列) → ParamControl → TipCard(双要素)` 动线。
+- **左屏控制台**：严格遵循 `TabSwitcher → SelectGrid(双列) → ParamControl → TipCard(题设三要素)` 动线。
   - 课标参数合规性：100% 对应高中课标标准题设（严禁计算机/工程化自造参数）；
   - 步骤自适应：若包含作图或推演步数控制器，必须按数学构型动态自适应（严禁教条化一刀切固定步数）。
 - **右屏看板**：所有内容由 `src/data/builders/<topic>.ts` 导出 `MathPanelData`，查阅 [references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md)。
