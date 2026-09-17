@@ -38,10 +38,12 @@ export function getModeFormulaLatex(
       const pCard = params.pCard ?? 0.8;
       const pReportYes = params.pReportYes ?? 0.36;
       const denom = 2 * pCard - 1;
-      const pReal =
-        denom !== 0
-          ? Math.max(0, Math.min(1, (pReportYes - (1 - pCard)) / denom))
-          : 0;
+      const isDegen = Math.abs(denom) < 1e-4;
+      if (isDegen) {
+        return `\\color{${MATH_COLORS.function}}{P(\\text{Yes})} = 0.50 p_{\\text{real}} + 0.50(1 - p_{\\text{real}}) = 0.50 \\implies p_{\\text{real}} \\text{ 无法反解(信息完全抵消)}`;
+      }
+      const rawReal = (pReportYes - (1 - pCard)) / denom;
+      const pReal = Math.max(0, Math.min(1, rawReal));
       return `\\color{${MATH_COLORS.function}}{P(\\text{Yes})} = \\color{${MATH_COLORS.paramPrimary}}{${pCard.toFixed(2)}} p_{\\text{real}} + ${(1 - pCard).toFixed(2)}(1 - p_{\\text{real}}) \\implies \\color{${MATH_COLORS.function}}{p_{\\text{real}}} = ${(pReal * 100).toFixed(1)}\\%`;
     }
     const pA1 = params.pA1 ?? 0.4;

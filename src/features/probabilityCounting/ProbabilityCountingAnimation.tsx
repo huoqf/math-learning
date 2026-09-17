@@ -188,7 +188,7 @@ export function ProbabilityCountingAnimation() {
           variant: "danger" as const,
           badge: "高考高频 · 均匀分组消序模型",
           condition:
-            "将总数 n 个不同元素均分为 k 组，每组分配 m 个元素 (n = k·m)。",
+            "将总数 $n$ 个不同元素均分为 $k$ 组，每组分配 $m$ 个元素 ($n = k \\times m$)。",
           question:
             "求均匀分组（无指定对象）与定向分配（有指定对象如甲乙丙车间）的种数差异。",
         };
@@ -208,7 +208,8 @@ export function ProbabilityCountingAnimation() {
         variant: "primary" as const,
         badge: "高考基础 · 分步乘法计数原理",
         condition: "完成一件事需要连续经过多道步骤，各步骤之间相互依存。",
-        question: "求完成整件事的全部方案数 N = m₁ × m₂ × ... × mₖ。",
+        question:
+          "求完成整件事的全部方案数 $N = m_1 \\times m_2 \\times \\dots \\times m_k$。",
       };
     }
     if (subMode === 1) {
@@ -216,13 +217,14 @@ export function ProbabilityCountingAnimation() {
         variant: "info" as const,
         badge: "高考基础 · 分类加法计数原理",
         condition: "完成一件事有多种互斥的独立途径，每种途径均可独立完成目标。",
-        question: "求完成整件事的方案总数 N = m₁ + m₂ + ... + mₖ。",
+        question: "求完成整件事的方案总数 $N = m_1 + m_2 + \\dots + m_k$。",
       };
     }
     return {
       variant: "accent" as const,
       badge: "高考创新 · 网格最短路径与标数法",
-      condition: "在 m × n 的二维网格中，质点只能沿网格线向右或向上移动。",
+      condition:
+        "在 $m \\times n$ 的二维网格中，质点只能沿网格线向右或向上移动。",
       question: "求从左下角起点到右上角终点的最短路径总数。",
     };
   }, [activeMode, subMode]);

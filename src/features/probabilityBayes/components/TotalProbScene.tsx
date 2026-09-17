@@ -469,8 +469,17 @@ export function TotalProbScene({
                 {(warnerRes.pReportYes * 100).toFixed(1)}%
               </tspan>{" "}
               ⟹ 反解真实比例：
-              <tspan fill={MATH_COLORS.derivative} fontSize={fontScale(14)}>
-                p_real = {(warnerRes.pReal * 100).toFixed(2)}%
+              <tspan
+                fill={
+                  warnerRes.isDegenerate
+                    ? MATH_COLORS.degeneracy
+                    : MATH_COLORS.derivative
+                }
+                fontSize={fontScale(warnerRes.isDegenerate ? 12 : 14)}
+              >
+                {warnerRes.isDegenerate
+                  ? "信息完全抵消，无法反解真实比例"
+                  : `p_real = ${(warnerRes.pReal * 100).toFixed(2)}%`}
               </tspan>
             </text>
           ) : (
