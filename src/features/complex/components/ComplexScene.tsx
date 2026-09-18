@@ -11,6 +11,12 @@ import {
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import {
+  paramDomainRange,
+  paramDragRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/complex";
+import {
   createComplex,
   addComplex,
   mulComplex,
@@ -40,6 +46,61 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
   studyMode,
   subModel = "circle",
 }) => {
+  // 合法拖拽区间 =「参数声明域 ∩ 中屏可见视口」（SSOT 见 utils/paramClamp）。
+  // 复数页声明域到 ±5，而可见 y 仅 ±4.64 —— 不钳制就会出现"拖到 ±5、点画在画布外"。
+  const rangeA1x = useMemo(
+    () => paramDragRange(paramMeta.a1, scale, "x"),
+    [scale],
+  );
+  const rangeB1y = useMemo(
+    () => paramDragRange(paramMeta.b1, scale, "y"),
+    [scale],
+  );
+  const rangeA2x = useMemo(
+    () => paramDragRange(paramMeta.a2, scale, "x"),
+    [scale],
+  );
+  const rangeB2y = useMemo(
+    () => paramDragRange(paramMeta.b2, scale, "y"),
+    [scale],
+  );
+  const rangeZ0x = useMemo(
+    () => paramDragRange(paramMeta.z0x, scale, "x"),
+    [scale],
+  );
+  const rangeZ0y = useMemo(
+    () => paramDragRange(paramMeta.z0y, scale, "y"),
+    [scale],
+  );
+  const rangeWx = useMemo(
+    () => paramDragRange(paramMeta.wx, scale, "x"),
+    [scale],
+  );
+  const rangeWy = useMemo(
+    () => paramDragRange(paramMeta.wy, scale, "y"),
+    [scale],
+  );
+  // 极坐标模式的模长是径向长度、不是平面坐标，只守声明域：
+  // 旧实现把下限写死成 0.5，与滑块下限 0.1 冲突 ⇒ 学生永远拖不到 0.1 的临界状态。
+  const rangeR1 = useMemo(() => paramDomainRange(paramMeta.r1), []);
+  const rangeR2 = useMemo(() => paramDomainRange(paramMeta.r2), []);
+  const rangeDeg1 = useMemo(() => paramDomainRange(paramMeta.deg1), []);
+  const rangeDeg2 = useMemo(() => paramDomainRange(paramMeta.deg2), []);
+
+  // 模长与辐角的标准落点（模长按 0.1、辐角按 5° 取整）
+  const snapPolar = (
+    pt: { x: number; y: number },
+    rRange: [number, number] | undefined,
+    degRange: [number, number] | undefined,
+  ) => {
+    const c = createComplex(pt.x, pt.y);
+    const argDeg = Math.round((argument(c) * 180) / Math.PI / 5) * 5;
+    return {
+      r: snapDragValue(modulus(c), 0.1, rRange),
+      deg: snapDragValue(argDeg, 5, degRange),
+    };
+  };
+
   const toDesign = useCallback(
     (x: number, y: number) => mathToDesign(x, y, scale),
     [scale],
@@ -265,9 +326,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             r={7}
             label="Z₁"
+            xRange={rangeA1x}
+            yRange={rangeB1y}
             onDrag={({ x, y }) => {
-              onParamChange("a1", Math.round(x * 2) / 2);
-              onParamChange("b1", Math.round(y * 2) / 2);
+              onParamChange("a1", snapDragValue(x, 0.5, rangeA1x));
+              onParamChange("b1", snapDragValue(y, 0.5, rangeB1y));
             }}
           />
 
@@ -281,9 +344,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             r={7}
             label="Z₂"
+            xRange={rangeA2x}
+            yRange={rangeB2y}
             onDrag={({ x, y }) => {
-              onParamChange("a2", Math.round(x * 2) / 2);
-              onParamChange("b2", Math.round(y * 2) / 2);
+              onParamChange("a2", snapDragValue(x, 0.5, rangeA2x));
+              onParamChange("b2", snapDragValue(y, 0.5, rangeB2y));
             }}
           />
         </g>
@@ -368,6 +433,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
           />
 
           {/* 可拖拽交互点 Z1 (改变 r1, deg1) */}
+          {/* 可拖拽交互点 Z1（极坐标模式：拖拽反解模长 r1 与辐角 deg1） */}
           <InteractivePoint
             cx={z1Polar.re}
             cy={z1Polar.im}
@@ -378,11 +444,9 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             r={7}
             label="Z₁"
             onDrag={({ x, y }) => {
-              const pt = createComplex(x, y);
-              const mod = Math.min(4.5, Math.max(0.5, modulus(pt)));
-              const argDeg = Math.round((argument(pt) * 180) / Math.PI / 5) * 5;
-              onParamChange("r1", Math.round(mod * 10) / 10);
-              onParamChange("deg1", argDeg);
+              const polar = snapPolar({ x, y }, rangeR1, rangeDeg1);
+              onParamChange("r1", polar.r);
+              onParamChange("deg1", polar.deg);
             }}
           />
 
@@ -397,11 +461,9 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             r={7}
             label="Z₂"
             onDrag={({ x, y }) => {
-              const pt = createComplex(x, y);
-              const mod = Math.min(3.0, Math.max(0.5, modulus(pt)));
-              const argDeg = Math.round((argument(pt) * 180) / Math.PI / 5) * 5;
-              onParamChange("r2", Math.round(mod * 10) / 10);
-              onParamChange("deg2", argDeg);
+              const polar = snapPolar({ x, y }, rangeR2, rangeDeg2);
+              onParamChange("r2", polar.r);
+              onParamChange("deg2", polar.deg);
             }}
           />
         </g>
@@ -479,9 +541,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             r={7}
             label="Z₀"
+            xRange={rangeZ0x}
+            yRange={rangeZ0y}
             onDrag={({ x, y }) => {
-              onParamChange("z0x", Math.round(x * 2) / 2);
-              onParamChange("z0y", Math.round(y * 2) / 2);
+              onParamChange("z0x", snapDragValue(x, 0.5, rangeZ0x));
+              onParamChange("z0y", snapDragValue(y, 0.5, rangeZ0y));
             }}
           />
 
@@ -495,9 +559,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             r={7}
             label={isTargetNearOrigin ? "W (定点)" : "W"}
+            xRange={rangeWx}
+            yRange={rangeWy}
             onDrag={({ x, y }) => {
-              onParamChange("wx", Math.round(x * 2) / 2);
-              onParamChange("wy", Math.round(y * 2) / 2);
+              onParamChange("wx", snapDragValue(x, 0.5, rangeWx));
+              onParamChange("wy", snapDragValue(y, 0.5, rangeWy));
             }}
           />
         </g>
@@ -559,9 +625,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
                 color={MATH_COLORS.paramPrimary}
                 r={7}
                 label="Z₁"
+                xRange={rangeA1x}
+                yRange={rangeB1y}
                 onDrag={({ x, y }) => {
-                  onParamChange("a1", Math.round(x * 2) / 2);
-                  onParamChange("b1", Math.round(y * 2) / 2);
+                  onParamChange("a1", snapDragValue(x, 0.5, rangeA1x));
+                  onParamChange("b1", snapDragValue(y, 0.5, rangeB1y));
                 }}
               />
               {/* 定点 Z2 */}
@@ -574,9 +642,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
                 color={MATH_COLORS.paramSecondary}
                 r={7}
                 label="Z₂"
+                xRange={rangeA2x}
+                yRange={rangeB2y}
                 onDrag={({ x, y }) => {
-                  onParamChange("a2", Math.round(x * 2) / 2);
-                  onParamChange("b2", Math.round(y * 2) / 2);
+                  onParamChange("a2", snapDragValue(x, 0.5, rangeA2x));
+                  onParamChange("b2", snapDragValue(y, 0.5, rangeB2y));
                 }}
               />
             </g>
@@ -626,9 +696,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             r={7}
             label="Z₁"
+            xRange={rangeA1x}
+            yRange={rangeB1y}
             onDrag={({ x, y }) => {
-              onParamChange("a1", Math.round(x * 2) / 2);
-              onParamChange("b1", Math.round(y * 2) / 2);
+              onParamChange("a1", snapDragValue(x, 0.5, rangeA1x));
+              onParamChange("b1", snapDragValue(y, 0.5, rangeB1y));
             }}
           />
           {/* 定点 Z2 */}
@@ -641,9 +713,11 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             r={7}
             label="Z₂"
+            xRange={rangeA2x}
+            yRange={rangeB2y}
             onDrag={({ x, y }) => {
-              onParamChange("a2", Math.round(x * 2) / 2);
-              onParamChange("b2", Math.round(y * 2) / 2);
+              onParamChange("a2", snapDragValue(x, 0.5, rangeA2x));
+              onParamChange("b2", snapDragValue(y, 0.5, rangeB2y));
             }}
           />
         </g>

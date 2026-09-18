@@ -135,6 +135,7 @@ export function pointToAngleDeg(
  */
 export interface ComparisonAreas {
   triangleOMP: number; // 1/2 * sin(x) * cos(x)
+  triangleOAP: number; // 1/2 * sin(x)
   sectorOAP: number; // 1/2 * x (rad)
   triangleOAT: number; // 1/2 * tan(x)
   xRad: number;
@@ -152,6 +153,7 @@ export function calculateComparisonAreas(alphaDeg: number): ComparisonAreas {
 
   return {
     triangleOMP: 0.5 * sinX * cosX,
+    triangleOAP: 0.5 * sinX,
     sectorOAP: 0.5 * xRad,
     triangleOAT: 0.5 * tanX,
     xRad,

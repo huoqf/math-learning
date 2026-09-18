@@ -238,14 +238,24 @@ export const leftPanelRules = [
     severity: 'error',
     check(ctx) {
       // 仅约束 ParamMeta 的参数标签，不约束 ParamMark(滑块刻度).labelFormula
-      // ParamMark 位于 `marks: [ ... ]` 数组内，其 labelFormula 表达的是取值本身（如 "0" / "a=b"），
+      // ParamMark 的 labelFormula 表达的是取值本身（如 "0" / "a=b" / "90^\circ"），
       // 不属于"参数标签"，此前被误判产生大量噪音。
+      //
+      // 刻度存在两种写法，都必须被识别为刻度作用域：
+      //   ① 内联数组：marks: [ { value: ..., labelFormula: ... } ]
+      //   ② 动态刻度工厂：marks: buildSideAMarks(5, 60)
+      //      —— 数组被提取到 `export function buildXxxMarks(...): ParamMark[] { return [...] }`
+      //      工厂里，paramMeta 中不再出现 `marks: [`，仅靠方括号深度会漏判，
+      //      导致工厂体内的刻度 labelFormula 被误当成参数标签报错。
       const issues = [];
       const marksStack = [];
       let depth = 0;
+      // 动态刻度工厂作用域（按函数体花括号深度进出）
+      let inMarkFactory = false;
+      let factoryBrace = 0;
 
       ctx.cleanLines.forEach((line, idx) => {
-        const insideMarks = marksStack.length > 0;
+        const insideMarks = marksStack.length > 0 || inMarkFactory;
 
         // 同时兼容单行 ParamMark 写法（同一行出现 `\bvalue:`，注意排除 defaultValue:）
         const isInlineMark = /\bvalue:\s*[-\d]/.test(line);
@@ -293,6 +303,23 @@ export const leftPanelRules = [
         depth += opens - closes;
         while (marksStack.length > 0 && depth < marksStack[marksStack.length - 1]) {
           marksStack.pop();
+        }
+
+        // 维护"动态刻度工厂"作用域（函数体花括号深度）
+        // 工厂签名形如：export function buildAngleBMarks(angleA: number): ParamMark[] {
+        const isMarkFactory =
+          /function\s+\w*Marks?\s*\([^)]*\)\s*:\s*ParamMark\[\]/.test(line);
+        if (isMarkFactory) {
+          inMarkFactory = true;
+          factoryBrace = 0;
+        }
+        if (inMarkFactory) {
+          factoryBrace += (line.match(/\{/g) || []).length;
+          factoryBrace -= (line.match(/\}/g) || []).length;
+          // 函数体花括号归零即工厂结束（签名行本身不再判出栈）
+          if (factoryBrace <= 0 && !isMarkFactory) {
+            inMarkFactory = false;
+          }
         }
       });
       return issues;

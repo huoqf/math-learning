@@ -33,9 +33,26 @@ export interface TriangleSolveResult {
   projections: { cCosB: number; bCosC: number; footOnBC: Point2D };
 }
 
+/**
+ * SSA 解个数的判据分支（唯一真源 —— 右屏文案直接渲染它，杜绝「数值与说明打架」）。
+ *
+ * 关键：A < 90° 与 A ≥ 90° 的判据**完全不同**。A ≥ 90° 时 A 已是最大角，
+ * 由「大角对大边」必须有 a > b 才存在唯一解，a ≤ b（含 a = h 的退化）一律无解；
+ * 此时若仍套用锐角的四分支判据，会出现「0 个解 (h < a < b 双解)」这类自相矛盾的说明。
+ */
+export type SSACaseKind =
+  | "acute_no_solution" // A < 90° 且 a < h
+  | "acute_right_single" // A < 90° 且 a = h（恰为直角三角形，∠B = 90°）
+  | "acute_double" // A < 90° 且 h < a < b（两解）
+  | "acute_single" // A < 90° 且 a ≥ b
+  | "nonacute_single" // A ≥ 90° 且 a > b
+  | "nonacute_no_solution"; // A ≥ 90° 且 a ≤ b（含 a = h 的退化）
+
 export interface SSASolveResult {
   /** 解的个数: 0 | 1 | 2 */
   solutionCount: 0 | 1 | 2;
+  /** 解个数判据所落的分支 */
+  caseKind: SSACaseKind;
   /** 临界高 h = b * sin(A) */
   h: number;
   /** 顶点 A, C 坐标 */
@@ -174,6 +191,9 @@ export function solveSSA(
   const sinA = Math.sin(radA);
   const h = b * sinA;
 
+  // A ≥ 90°（含直角）时判据必须与锐角情形分流
+  const isNonAcute = Math.cos(radA) <= 1e-9;
+
   const C: Point2D = { x: 0, y: 0 };
   const A: Point2D = { x: -b, y: 0 };
 
@@ -183,13 +203,16 @@ export function solveSSA(
   const diff = a * a - h * h;
 
   let solutionCount: 0 | 1 | 2 = 0;
+  let caseKind: SSACaseKind;
 
   if (diff < -1e-5) {
     solutionCount = 0;
+    caseKind = isNonAcute ? "nonacute_no_solution" : "acute_no_solution";
   } else if (Math.abs(diff) <= 1e-5) {
     const t = b * Math.cos(radA);
     if (t > 1e-6) {
       solutionCount = 1;
+      caseKind = "acute_right_single";
       const B1 = { x: -b + t * Math.cos(radA), y: t * sinA };
       solutions.push(B1);
 
@@ -203,6 +226,9 @@ export function solveSSA(
         angleB,
         angleC,
       });
+    } else {
+      // A ≥ 90° 且 a = h：此时 t = b·cosA ≤ 0，不构成三角形 → 无解
+      caseKind = "nonacute_no_solution";
     }
   } else {
     const sqrtDiff = Math.sqrt(diff);
@@ -214,6 +240,7 @@ export function solveSSA(
 
     if (validTs.length === 2) {
       solutionCount = 2;
+      caseKind = "acute_double";
       for (const t of validTs) {
         const B = { x: -b + t * Math.cos(radA), y: t * sinA };
         solutions.push(B);
@@ -237,6 +264,8 @@ export function solveSSA(
       }
     } else if (validTs.length === 1) {
       solutionCount = 1;
+      // A < 90° 时必为 a ≥ b 分支；A ≥ 90° 时必为 a > b 分支
+      caseKind = isNonAcute ? "nonacute_single" : "acute_single";
       const t = validTs[0];
       const B = { x: -b + t * Math.cos(radA), y: t * sinA };
       solutions.push(B);
@@ -257,11 +286,15 @@ export function solveSSA(
         angleB: radB_calc,
         angleC: radC_calc,
       });
+    } else {
+      // 两个根都不合法 → 无解（A ≥ 90° 且 a ≤ b 即为此情形）
+      caseKind = "nonacute_no_solution";
     }
   }
 
   return {
     solutionCount,
+    caseKind,
     h,
     A,
     C,

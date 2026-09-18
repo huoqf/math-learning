@@ -36,7 +36,7 @@ export function buildVectorPolarizationApolloniusPanel(
   let examAnchor = "";
 
   if (studyMode === "polarization") {
-    examAnchor = "拓展专题 · 向量极化恒等式与中线降维";
+    examAnchor = "新高考核心考点 · 向量极化恒等式与中线降维";
     const res = calcPolarizationIdentity(pointX, pointY, bcLength);
 
     quantities.push(
@@ -99,7 +99,7 @@ export function buildVectorPolarizationApolloniusPanel(
       },
     );
   } else if (studyMode === "apollonius") {
-    examAnchor = "拓展专题 · 阿波罗尼斯圆轨迹方程与内外分点";
+    examAnchor = "新高考核心考点 · 阿波罗尼斯圆轨迹方程与内外分点";
     const res = calcApolloniusCircle(bcLength, lambda, pointAngle);
     const halfD = bcLength / 2;
 
@@ -209,7 +209,7 @@ export function buildVectorPolarizationApolloniusPanel(
     }
   } else {
     // combined 模式
-    examAnchor = "拓展专题 · 极化恒等式 × 阿氏圆综合求最值";
+    examAnchor = "新高考压轴解答题 · 极化恒等式 × 阿氏圆综合求最值";
     const res = calcCombinedModel(bcLength, lambda, pointAngle);
 
     quantities.push(
@@ -333,11 +333,11 @@ export function buildVectorPolarizationApolloniusPanel(
     gaokaoPoints.push(
       {
         text: "极化恒等式核心通法：在解非坐标系下的向量数量积题目时，只要题设包含两定点一动点，立刻连结两定点中点 $M$！将 $\\vec{AB} \\cdot \\vec{AC}$ 化为 $|AM|^2 - |BM|^2$ 实现变量降维。",
-        importance: "extend",
+        importance: "gaokao",
       },
       {
         text: "数形结合定最值：底边定长时 $|\vec{BM}|$ 恒为定值，数量积最值完全等价于中线长 $|\vec{AM}|$ 的几何极值，常与圆的切线、二次函数极值或抛物线轨迹联立考察。",
-        importance: "extend",
+        importance: "hard",
       },
     );
   } else if (studyMode === "apollonius") {
@@ -366,11 +366,11 @@ export function buildVectorPolarizationApolloniusPanel(
     gaokaoPoints.push(
       {
         text: "阿波罗尼斯圆速求通法：距离比 $\\lambda \\neq 1$ 轨迹必然是圆！圆心在两定点连线上，直径两端点即为内分点 $D$ 和外分点 $E$，由 $x_D = \\frac{c(\\lambda-1)}{\\lambda+1}, x_E = \\frac{c(\\lambda+1)}{\\lambda-1}$ 快速口算圆心与半径。",
-        importance: "extend",
+        importance: "gaokao",
       },
       {
         text: "退化临界防坑防漏：当 $\\lambda = 1.0$ 时两定点距离相等，轨迹退化为线段 $AB$ 的垂直平分线，属于新高考多选题常见分类讨论临界陷阱。",
-        importance: "extend",
+        importance: "hard",
       },
     );
   } else {
@@ -399,11 +399,11 @@ export function buildVectorPolarizationApolloniusPanel(
     gaokaoPoints.push(
       {
         text: "双剑合璧压轴秒杀：求阿圆上动点 $P$ 到两定点 $A, B$ 的数量积 $\\vec{PA} \\cdot \\vec{PB}$ 取值范围，先算圆心距 $d_{OM} = |x_O|$，则最大中线为 $d_{OM} + R$，最小中线为 $|d_{OM} - R|$，代入极化公式即可一步秒杀。",
-        importance: "extend",
+        importance: "gaokao",
       },
       {
         text: "正交垂直取等特征：当 $\\vec{PA} \\cdot \\vec{PB} = 0$ 时，三角形 $PAB$ 为直角三角形，动点 $P$ 落在以 $AB$ 为直径的圆与阿氏圆的交点上（$|PM| = c$）。",
-        importance: "extend",
+        importance: "hard",
       },
     );
   }

@@ -5,6 +5,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "@/components/UI";
 
 export function buildVectorLinearPanel(
@@ -261,11 +262,97 @@ export function buildVectorLinearPanel(
     });
   }
 
+  // 推导链（P1-18）：① 符号表达式 → ② 代入解析式 → ③ 结果
+  const reasoningSteps: ReasoningStep[] = [];
+
+  if (studyMode === "linearCombo") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "线性运算法则 · 设合成式",
+        detail:
+          "由向量的数乘与加法法则，平面内任一向量都可写成两个已知向量的线性组合。",
+        latex:
+          "\\vec{s} = \\lambda \\vec{a} + \\mu \\vec{b} = (\\lambda x_a + \\mu x_b,\\; \\lambda y_a + \\mu y_b)",
+        rubric: "采分点：写出线性组合式（2分）",
+      },
+      {
+        step: 2,
+        title: "代入坐标 · 实虚分量合成",
+        detail: `按分量相加得合成向量 $\\vec{s} = (${sumVec.x.toFixed(1)}, ${sumVec.y.toFixed(1)})$，其模长为 $|\\vec{s}| = ${normSum.toFixed(2)}$；$|\\vec{a}| = ${normA.toFixed(2)}$、$|\\vec{b}| = ${normB.toFixed(2)}$。`,
+        latex: `\\vec{s} = \\lambda\\vec{a} + \\mu\\vec{b} = (${sumVec.x.toFixed(1)}, ${sumVec.y.toFixed(1)})`,
+        rubric: "采分点：按分量合成求合成向量（2分）",
+      },
+      {
+        step: 3,
+        title: "模长与夹角 · 数量积收口",
+        detail: `数量积 $\\vec{a}\\cdot\\vec{b} = ${dotProduct.toFixed(2)}$，夹角 $\\theta = ${angleDeg.toFixed(1)}^\\circ$；由 $|\\vec{a}-\\vec{b}|^2 = |\\vec{a}|^2 - 2\\vec{a}\\cdot\\vec{b} + |\\vec{b}|^2$ 可解出差向量模长。`,
+        latex: `\\vec{a}\\cdot\\vec{b} = ${dotProduct.toFixed(2)}, \\quad \\cos\\theta = \\frac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}||\\vec{b}|}`,
+        rubric: "采分点：用数量积求夹角与模长（3分）",
+      },
+    );
+  } else if (studyMode === "collinear") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "三点共线定理 · 分解式",
+        detail:
+          "取基准点 $O$，把点 $C$ 的位置向量用 $\\vec{OA}, \\vec{OB}$ 分解。",
+        latex: "\\vec{OC} = x\\vec{OA} + y\\vec{OB}",
+        rubric: "采分点：写出基底分解式（1分）",
+      },
+      {
+        step: 2,
+        title: "代入系数 · 求系数和",
+        detail: `得 $C(${pointC.x.toFixed(1)}, ${pointC.y.toFixed(1)})$，两系数之和 $x + y = ${coeffSum.toFixed(2)}$。`,
+        latex: `x + y = ${coeffSum.toFixed(2)}`,
+        rubric: "采分点：计算两系数之和（2分）",
+      },
+      {
+        step: 3,
+        title: "共线判定 · 系数和定成败",
+        detail: isThreePointsCollinear
+          ? `$x + y = 1$，故 $A, B, C$ 三点共线，$C$ ${isOnSegmentAB ? "落在线段 $AB$ 内部（内分点）" : "落在直线 $AB$ 的延长线上（外分点）"}。`
+          : `$x + y = ${coeffSum.toFixed(2)} \\neq 1$，$C$ 偏离直线 $AB$，三点不共线。`,
+        latex: `x + y = ${coeffSum.toFixed(2)} \\;\\Rightarrow\\; A, B, C \\text{ 何时共线：} x+y=1`,
+        rubric: "采分点：由系数和判定三点共线（3分）",
+      },
+    );
+  } else {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "平面向量基本定理 · 设分解系数",
+        detail:
+          "若 $\\vec{e}_1, \\vec{e}_2$ 不共线，则平面内任一向量 $\\vec{v}$ 可唯一表示为其线性组合。",
+        latex: "\\vec{v} = \\lambda_1 \\vec{e}_1 + \\lambda_2 \\vec{e}_2",
+        rubric: "采分点：写出基底下唯一分解式（2分）",
+      },
+      {
+        step: 2,
+        title: "待定系数 · 解二元方程组",
+        detail: isBasisValid
+          ? `代入坐标解方程组，得 $\\lambda_1 = ${lambda1.toFixed(2)}$、$\\lambda_2 = ${lambda2.toFixed(2)}$；目标向量 $\\vec{v} = (${targetVecV.x}, ${targetVecV.y})$。`
+          : `判据 $D = ${detAB.toFixed(2)} = 0$，基底共线退化，方程组无唯一解。`,
+        latex: `\\lambda_1 = ${isBasisValid ? lambda1.toFixed(2) : "\\text{无解}"}, \\quad \\lambda_2 = ${isBasisValid ? lambda2.toFixed(2) : "\\text{无解}"}`,
+        rubric: "采分点：解方程组求分解系数（3分）",
+      },
+      {
+        step: 3,
+        title: "唯一性判据 · 交叉相乘非零",
+        detail: `分解唯一当且仅当两基底不共线，即交叉相乘 $D = x_1 y_2 - x_2 y_1 = ${detAB.toFixed(2)} \\neq 0$。`,
+        latex: `D = x_1 y_2 - x_2 y_1 = ${detAB.toFixed(2)}`,
+        rubric: "采分点：说明基底不共线是唯一分解的前提（2分）",
+      },
+    );
+  }
+
   return {
     quantities,
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps,
     mnemonic:
       "首尾相接三角形，同起点平行四边形；三点共线和为一，基底不共线唯一分解！",
   };

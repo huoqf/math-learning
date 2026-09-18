@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { useMemo } from "react";
 import {
   CoordinateGrid,
   VectorArrow,
@@ -7,9 +7,15 @@ import {
 } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import {
+  paramDomainRange,
+  paramDragRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
 import type { SceneScale } from "@/hooks";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { computeVectorBasis, type VectorBasisInput } from "@/math/vectorBasis";
+import { paramMeta } from "@/data/registries/vectorBasis";
 
 // 计算垂直于向量方向的屏幕法向偏移量 (彻底避免共线向量标签相撞)
 function getNormalOffset(
@@ -76,21 +82,52 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
   const p2Design = mathToDesign(p2.x, p2.y, scale);
 
   // 拖拽 e1 终点
+  // 合法拖拽区间 =「参数声明域 ∩ 中屏可见视口」（SSOT 见 utils/paramClamp）。
+  // 基底 e₁、e₂ 与目标向量 a 的坐标直接对应屏幕坐标，故与视口求交；
+  // 而 x/yCoeff、ratioT 是解出来的派生系数，与屏幕坐标不同轴，只守声明域。
+  const rangeE1x = useMemo(
+    () => paramDragRange(paramMeta.e1x, scale, "x"),
+    [scale],
+  );
+  const rangeE1y = useMemo(
+    () => paramDragRange(paramMeta.e1y, scale, "y"),
+    [scale],
+  );
+  const rangeE2x = useMemo(
+    () => paramDragRange(paramMeta.e2x, scale, "x"),
+    [scale],
+  );
+  const rangeE2y = useMemo(
+    () => paramDragRange(paramMeta.e2y, scale, "y"),
+    [scale],
+  );
+  const rangeAx = useMemo(
+    () => paramDragRange(paramMeta.ax, scale, "x"),
+    [scale],
+  );
+  const rangeAy = useMemo(
+    () => paramDragRange(paramMeta.ay, scale, "y"),
+    [scale],
+  );
+  const rangeXCoeff = useMemo(() => paramDomainRange(paramMeta.xCoeff), []);
+  const rangeYCoeff = useMemo(() => paramDomainRange(paramMeta.yCoeff), []);
+  const rangeRatioT = useMemo(() => paramDomainRange(paramMeta.ratioT), []);
+
   const handleDragE1 = (pt: { x: number; y: number }) => {
-    onParamChange("e1x", Math.round(pt.x * 2) / 2);
-    onParamChange("e1y", Math.round(pt.y * 2) / 2);
+    onParamChange("e1x", snapDragValue(pt.x, 0.5, rangeE1x));
+    onParamChange("e1y", snapDragValue(pt.y, 0.5, rangeE1y));
   };
 
   // 拖拽 e2 终点
   const handleDragE2 = (pt: { x: number; y: number }) => {
-    onParamChange("e2x", Math.round(pt.x * 2) / 2);
-    onParamChange("e2y", Math.round(pt.y * 2) / 2);
+    onParamChange("e2x", snapDragValue(pt.x, 0.5, rangeE2x));
+    onParamChange("e2y", snapDragValue(pt.y, 0.5, rangeE2y));
   };
 
   // 拖拽 目标向量 a 终点
   const handleDragTarget = (pt: { x: number; y: number }) => {
-    onParamChange("ax", Math.round(pt.x * 2) / 2);
-    onParamChange("ay", Math.round(pt.y * 2) / 2);
+    onParamChange("ax", snapDragValue(pt.x, 0.5, rangeAx));
+    onParamChange("ay", snapDragValue(pt.y, 0.5, rangeAy));
   };
 
   // 拖拽三点共线模式下的合成点 P
@@ -99,8 +136,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
     if (Math.abs(det) > 1e-4) {
       const x = (pt.x * e2.y - pt.y * e2.x) / det;
       const y = (e1.x * pt.y - e1.y * pt.x) / det;
-      onParamChange("xCoeff", Math.round(x * 100) / 100);
-      onParamChange("yCoeff", Math.round(y * 100) / 100);
+      onParamChange("xCoeff", snapDragValue(x, 0.05, rangeXCoeff));
+      onParamChange("yCoeff", snapDragValue(y, 0.05, rangeYCoeff));
     }
   };
 
@@ -112,8 +149,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
     if (lenSq > 1e-6) {
       const apX = pt.x - e1.x;
       const apY = pt.y - e1.y;
-      const t = Math.max(0, Math.min(1, (apX * abX + apY * abY) / lenSq));
-      onParamChange("ratioT", Math.round(t * 100) / 100);
+      const t = (apX * abX + apY * abY) / lenSq;
+      onParamChange("ratioT", snapDragValue(t, 0.05, rangeRatioT));
     }
   };
 
@@ -279,6 +316,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             scale={scale}
             vp={vp}
+            xRange={rangeE1x}
+            yRange={rangeE1y}
             onDrag={handleDragE1}
             fontScale={fontScale}
           />
@@ -289,6 +328,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             scale={scale}
             vp={vp}
+            xRange={rangeE2x}
+            yRange={rangeE2y}
             onDrag={handleDragE2}
             fontScale={fontScale}
           />
@@ -299,6 +340,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             color={MATH_COLORS.vectorResult}
             scale={scale}
             vp={vp}
+            xRange={rangeAx}
+            yRange={rangeAy}
             onDrag={handleDragTarget}
             fontScale={fontScale}
           />
@@ -562,6 +605,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   color={MATH_COLORS.vectorResult}
                   scale={scale}
                   vp={vp}
+                  xRange={rangeAx}
+                  yRange={rangeAy}
                   onDrag={handleDragTarget}
                   fontScale={fontScale}
                 />
@@ -694,6 +739,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   fontScale={fontScale}
                 />
 
+                {/* P 的平面位置由基底系数 (x, y) 合成，与屏幕坐标不同轴，
+                    故不在此处传 xRange/yRange，钳制在 handleDragCollinearPoint 内按系数声明域完成 */}
                 <InteractivePoint
                   cx={pDesign.x}
                   cy={pDesign.y}
@@ -713,6 +760,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             scale={scale}
             vp={vp}
+            xRange={rangeE1x}
+            yRange={rangeE1y}
             onDrag={handleDragE1}
             fontScale={fontScale}
           />
@@ -722,6 +771,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             scale={scale}
             vp={vp}
+            xRange={rangeE2x}
+            yRange={rangeE2y}
             onDrag={handleDragE2}
             fontScale={fontScale}
           />
@@ -855,6 +906,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                   fontScale={fontScale}
                 />
 
+                {/* P 被吸附在 AB 线段上，由比例 t 唯一决定；
+                    t ∈ [0, 1] 的钳制在 handleDragDivisionPoint 内完成（与屏幕坐标不同轴） */}
                 <InteractivePoint
                   cx={pDesign.x}
                   cy={pDesign.y}
@@ -874,6 +927,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             scale={scale}
             vp={vp}
+            xRange={rangeE1x}
+            yRange={rangeE1y}
             onDrag={handleDragE1}
             fontScale={fontScale}
           />
@@ -883,6 +938,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             scale={scale}
             vp={vp}
+            xRange={rangeE2x}
+            yRange={rangeE2y}
             onDrag={handleDragE2}
             fontScale={fontScale}
           />

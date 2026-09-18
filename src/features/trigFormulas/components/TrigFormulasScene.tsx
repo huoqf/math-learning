@@ -8,6 +8,8 @@ import {
 } from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/trigFormulas";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import type {
@@ -262,9 +264,15 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
       const baselineRight = mathToDesign(6, 0.5, scale);
 
       // 拖拽动点更新 alpha
+      // 曲线横坐标是**弧度**、alphaDeg 是**度**：先把可见视口换算成度，再与声明域求交。
+      // 旧实现不设任何界限 ⇒ 横向拖出画布即可写出 α = ±500°，滑块早已顶到端点、动点却在画布外。
+      const rangeAlphaDegOnCurve: [number, number] = [
+        Math.max(paramMeta.alphaDeg.min, (scale.xMin * 180) / Math.PI),
+        Math.min(paramMeta.alphaDeg.max, (scale.xMax * 180) / Math.PI),
+      ];
       const handleDragAlphaOnCurve = (pt: { x: number }) => {
-        const deg = Math.round((pt.x * 180) / Math.PI);
-        onParamChange("alphaDeg", deg);
+        const deg = (pt.x * 180) / Math.PI;
+        onParamChange("alphaDeg", snapDragValue(deg, 1, rangeAlphaDegOnCurve));
       };
 
       return (
@@ -421,11 +429,16 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
   const { amplitude, isDegenerate, maxPointX, phiRad, quadrantStr } = auxData;
 
   // 点 (a, b) 拖拽回调
+  // 合法拖拽区间 =「参数声明域 ∩ 中屏可见视口」（SSOT 见 utils/paramClamp）。
+  // P(a, b) 的横纵坐标就是 coeffA / coeffB 本身，故与视口求交。
+  // 注：本处位于条件 return 之后，禁止使用 Hook（否则 Hooks 顺序随模式变化），
+  // 故直接计算——两次数组构造的开销可忽略。
+  const rangeCoeffA = paramDragRange(paramMeta.coeffA, scale, "x");
+  const rangeCoeffB = paramDragRange(paramMeta.coeffB, scale, "y");
+
   const handleDragPointP = (pt: { x: number; y: number }) => {
-    const clampedA = Math.max(-5, Math.min(5, Math.round(pt.x * 10) / 10));
-    const clampedB = Math.max(-5, Math.min(5, Math.round(pt.y * 10) / 10));
-    onParamChange("coeffA", clampedA);
-    onParamChange("coeffB", clampedB);
+    onParamChange("coeffA", snapDragValue(pt.x, 0.1, rangeCoeffA));
+    onParamChange("coeffB", snapDragValue(pt.y, 0.1, rangeCoeffB));
   };
 
   const pointP = mathToDesign(coeffA, coeffB, scale);
@@ -521,6 +534,8 @@ export const TrigFormulasScene: React.FC<TrigFormulasSceneProps> = ({
         cy={coeffB}
         scale={scale}
         vp={vp}
+        xRange={rangeCoeffA}
+        yRange={rangeCoeffB}
         onDrag={handleDragPointP}
         color={MATH_COLORS.primary}
         label={`P(a=${coeffA}, b=${coeffB}) [${quadrantStr}]`}

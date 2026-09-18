@@ -73,7 +73,7 @@ export interface InductionResult {
     | "xaxis"
     | "yaxis"
     | "diag_pos"
-    | "diag_neg"
+    | "rotate90"
     | "general";
   symmetryName: string;
   symmetryLineTex?: string;
@@ -374,9 +374,8 @@ export function calculateInduction(
       betaDeg = 90 + alphaDeg;
       formulaTitle = "公式六：π/2 + α";
       formulaTex = "\\frac{\\pi}{2} + \\alpha";
-      symmetryType = "diag_neg";
-      symmetryName = "关于直线 y = -x 对称 / 逆时针旋转 90°";
-      symmetryLineTex = "y = -x";
+      symmetryType = "rotate90";
+      symmetryName = "绕原点逆时针旋转 90° (旋转，不是轴对称)";
       kValue = 1; // 1 * pi/2
       isOdd = true;
       nameChangeDesc = "k=1 (奇数) ➔ 奇变：正余弦互换 sin↔cos";

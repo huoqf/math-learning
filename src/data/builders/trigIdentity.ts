@@ -234,7 +234,7 @@ export function buildTrigIdentityPanel(
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "几何对称关系",
+          label: "几何变换关系",
           symbol: "P \\to P'",
           value: ind.symmetryName,
           color: MATH_COLORS.primary,
@@ -272,7 +272,7 @@ export function buildTrigIdentityPanel(
           name: `诱导公式（${ind.formulaTitle}）`,
           latex: `${ind.sinFormulaTex}, \\quad ${ind.cosFormulaTex}`,
           condition: ind.symmetryName,
-          note: `几何本质：终边 OP 与 OP' 呈现${ind.symmetryName}，对应直角三角形全等。`,
+          note: `几何本质：终边 OP' 与 OP 的关系为「${ind.symmetryName}」，对应直角三角形全等。`,
           level: "core",
         },
         {

@@ -188,19 +188,24 @@ export function generateTangentSegments(
 ): TangentPoint[][] {
   if (Math.abs(omega) < 1e-9) return [];
 
-  const asymptotes = getTangentAsymptotes(xMin - 2, xMax + 2, omega, phi)
+  // 只把**严格落在视口内**的渐近线作为分段边界；
+  // 视口两端 (xMin / xMax) 本身也必须成为边界，
+  // 否则当所有渐近线都在视口之外时 (|ω| 很小时，渐近线间距 T = π/|ω| 远大于视口宽度)
+  // 会一段都构造不出来 → 中屏「一条曲线都没有，只剩坐标轴」。
+  const innerAsymptotes = getTangentAsymptotes(xMin, xMax, omega, phi)
     .map((a) => a.x)
+    .filter((x) => x > xMin + 1e-6 && x < xMax - 1e-6)
     .sort((a, b) => a - b);
 
+  const bounds = [xMin, ...innerAsymptotes, xMax];
   const segments: TangentPoint[][] = [];
 
-  // 根据渐近线划分开区间 (asymptote[i], asymptote[i+1])
-  for (let i = 0; i < asymptotes.length - 1; i++) {
-    const startX = asymptotes[i] + 0.001;
-    const endX = asymptotes[i + 1] - 0.001;
+  // 按相邻边界划分开区间 (bounds[i], bounds[i+1])，每段内部必无渐近线
+  for (let i = 0; i < bounds.length - 1; i++) {
+    const startX = bounds[i] + 0.001;
+    const endX = bounds[i + 1] - 0.001;
 
-    // 剪枝不在视口内的区间
-    if (endX < xMin || startX > xMax) continue;
+    if (endX <= startX) continue;
 
     const segment: TangentPoint[] = [];
     const step = (endX - startX) / samplesPerPeriod;
@@ -220,6 +225,29 @@ export function generateTangentSegments(
   }
 
   return segments;
+}
+
+/**
+ * 取「跨越 x = 0 的那一对相邻渐近线」，用于中屏周期标尺 Δx = T = π/|ω|。
+ *
+ * 相邻渐近线的间距恒等于 π/|ω| = T；而旧实现用 `find` 各取左右第一条渐近线
+ * **并不保证二者相邻** —— 例如 ω = 2 时会取到 -3.927 与 0.785，跨度 4.712 = 3T，
+ * 标尺却写「Δx = T = 1.57」。故必须先定位跨越原点的相邻对。
+ */
+export function pickAdjacentAsymptotePair(
+  asymptotes: { x: number; k: number }[],
+): [{ x: number; k: number }, { x: number; k: number }] | null {
+  if (asymptotes.length < 2) return null;
+
+  for (let i = 0; i < asymptotes.length - 1; i++) {
+    if (asymptotes[i].x < 0 && asymptotes[i + 1].x > 0) {
+      return [asymptotes[i], asymptotes[i + 1]];
+    }
+  }
+
+  // 退化：x = 0 本身是一条渐近线（φ = ±π/2 时），退取最靠近原点的相邻一对
+  const idx = Math.max(0, Math.floor((asymptotes.length - 1) / 2));
+  return [asymptotes[idx], asymptotes[idx + 1]];
 }
 
 /**

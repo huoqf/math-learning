@@ -16,6 +16,7 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   defaultParams,
   paramMeta,
+  VISIBLE_X_LIMIT,
   type VectorPolarizationApolloniusParams,
 } from "@/data/registries/vectorPolarizationApollonius";
 import { VectorPolarizationApolloniusScene } from "./components/VectorPolarizationApolloniusScene";
@@ -44,10 +45,13 @@ export function VectorPolarizationApolloniusAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 数学坐标系 Scale: X [-8, 12], Y [-6.5, 6.5]
+  // 数学坐标系 Scale: X 对称 [−12, 12]、Y [−6.5, 6.5]
+  // 横轴半宽取自 VISIBLE_X_LIMIT（与「E 是否出画布」判据共用同一常量）：
+  // 必须能容纳 λ = 0.5「半倍比阿圆」预设的 E(−9, 0) 与整圆 [−9, −1]，
+  // 否则官方预设一选中就把外分点画到画布外。
   const scale = useSceneScale({
     vp,
-    xRange: [-8, 12],
+    xRange: [-VISIBLE_X_LIMIT, VISIBLE_X_LIMIT],
     yRange: [-6.5, 6.5],
   });
 
@@ -306,7 +310,12 @@ export function VectorPolarizationApolloniusAnimation() {
           style: "line",
         },
         {
-          label: "底边 $BC$",
+          label: "半弦 $BM$",
+          color: MATH_COLORS.paramTertiary,
+          style: "line",
+        },
+        {
+          label: "半底边 $MC$",
           color: MATH_COLORS.paramSecondary,
           style: "solid",
         },

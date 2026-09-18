@@ -335,7 +335,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         </g>
       )}
 
-      {/* 内切圆 (当角化边/均值模式有效时) */}
+      {/* 内切圆 (当边化角/均值模式有效时) */}
       {inscribed &&
         (studyMode === "angle-transform" || studyMode === "side-ineq") && (
           <g id="inscribed-circle-layer">
@@ -560,7 +560,10 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         B
       </text>
 
-      {/* 顶点 A: 交互控制点 */}
+      {/* 顶点 A: 交互控制点。
+          仅 apollonius / polarization 两个模型真正支持拖拽（handleDragA 只有这两个分支）；
+          angle-transform 与 side-ineq 下顶点 A 完全由内角 B 决定，拖拽无任何反应 ——
+          必须 disabled 去掉拖拽光环，否则就是一个「有光环、拖不动」的假手柄。 */}
       <InteractivePoint
         cx={vertices.A.x}
         cy={vertices.A.y}
@@ -568,6 +571,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
         vp={vp}
         fontScale={fontScale}
         color={MATH_COLORS.paramPrimary}
+        disabled={studyMode !== "apollonius" && studyMode !== "polarization"}
         onDrag={(mathPos) => {
           if (onDragVertexA) {
             onDragVertexA(mathPos);

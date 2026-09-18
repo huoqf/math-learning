@@ -148,7 +148,7 @@ export function calcAcuteConstraints(angleADeg: number, sideA: number) {
 }
 
 /**
- * 1. 角化边模式 (angle-transform)：已知 A 和 a，变化内角 B
+ * 1. 边化角模式 (angle-transform)：已知 A 和 a，变化内角 B
  */
 export function solveAngleTransform(
   angleADeg: number,

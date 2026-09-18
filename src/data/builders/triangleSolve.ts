@@ -3,13 +3,29 @@ import type {
   MathQuantity,
   Theorem,
   GaokaoPoint,
+  ReasoningStep,
 } from "../types";
 import {
   solveTriangleFromSAS,
   solveSSA,
   solveBisectorAndMedian,
 } from "@/math/triangleSolve";
+import type { SSACaseKind } from "@/math/triangleSolve";
 import { MATH_COLORS } from "@/theme";
+
+/**
+ * SSA 解个数判据分支 → 右屏说明文案。
+ * 说明文案必须由 math 层返回的 caseKind 渲染，绝不在右屏重新推导判据，
+ * 否则 A ≥ 90° 时会输出「0 个解 (h < a < b 双解)」这类数值与说明打架的内容。
+ */
+const SSA_CASE_LABEL: Record<SSACaseKind, string> = {
+  acute_no_solution: "a < h 无解",
+  acute_right_single: "a = h 单解 (直角)",
+  acute_double: "h < a < b 双解",
+  acute_single: "a ≥ b 单解",
+  nonacute_single: "A ≥ 90°, a > b 单解",
+  nonacute_no_solution: "A ≥ 90°, a ≤ b 无解",
+};
 
 export function buildTriangleSolvePanel(
   params: Record<string, number>,
@@ -122,10 +138,39 @@ export function buildTriangleSolvePanel(
       },
     ];
 
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 等面积拆解半角",
+        detail:
+          "遇内角平分线 $AD$，记 $\\angle BAD = \\angle CAD = \\frac{A}{2}$。以 $A$ 为公共顶点把总面积拆成左右两块，两块都含 $AD$ 与半角。",
+        latex:
+          "S_{\\triangle ABC} = \\frac{1}{2}bc\\sin A = S_{\\triangle ABD} + S_{\\triangle ACD} = \\frac{1}{2}(b+c)\\cdot AD\\sin\\frac{A}{2}",
+        rubric: "采分点：正确拆解面积并识别两段半角（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 约去半角正弦",
+        detail:
+          "把 $\\sin A$ 展成 $2\\sin\\frac{A}{2}\\cos\\frac{A}{2}$；因 $0<A<180^\\circ$ 时 $\\sin\\frac{A}{2}\\neq 0$，两边约去后解出 $AD$。",
+        latex:
+          "\\frac{1}{2}bc\\cdot 2\\sin\\frac{A}{2}\\cos\\frac{A}{2} = \\frac{1}{2}(b+c)AD\\sin\\frac{A}{2} \\implies AD = \\frac{2bc\\cos\\frac{A}{2}}{b+c}",
+        rubric: "采分点：二倍角化简并解出角平分线长公式（4分）",
+      },
+      {
+        step: 3,
+        title: "代入求解 · 数值与分底边",
+        detail: `代入 $b = ${b.toFixed(1)}$、$c = ${c.toFixed(1)}$、$A = ${anglesDeg.A.toFixed(1)}^\\circ$ 求出 $AD$；再由分角定理 $BD:DC = c:b$ 得到两段底边 $BD = ${sideBD.toFixed(2)}$、$DC = ${sideDC.toFixed(2)}$。`,
+        latex: `AD = \\frac{2\\times ${b.toFixed(1)}\\times ${c.toFixed(1)}\\times \\cos ${(angleA / 2).toFixed(1)}^\\circ}{${b.toFixed(1)} + ${c.toFixed(1)}} = ${bisectorLength.toFixed(2)}`,
+        rubric: "采分点：代入数值求出角平分线长与分底边段（3分）",
+      },
+    ];
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
+      reasoningSteps,
       warnings: [],
       mnemonic:
         "角分平分面积和，分段比值邻边夺；中线极化平方差，高考压轴全拿下！",
@@ -164,7 +209,7 @@ export function buildTriangleSolvePanel(
       {
         label: "解的个数 ($N_sol$)",
         symbol: "N_{\\text{sol}}",
-        value: `${solutionCount} 个解 (${a < h - 0.0001 ? "a < h 无解" : Math.abs(a - h) <= 0.0001 ? "a = h 单解(直角)" : a < b ? "h < a < b 双解" : "a ≥ b 单解"})`,
+        value: `${solutionCount} 个解 (${SSA_CASE_LABEL[ssaResult.caseKind]})`,
         color:
           solutionCount === 2
             ? MATH_COLORS.sequenceHighlight
@@ -214,6 +259,53 @@ export function buildTriangleSolvePanel(
       );
     }
 
+    // 推导链必须落到「符号式 → 代入解析式 → 结果」三步：
+    // 先给临界高 h，再给判据比较，最后回代检验增解，避免直接抛「0/1/2 个解」的孤立结论。
+    const sinBVal = (b * Math.sin((angleA * Math.PI) / 180)) / a;
+    const toDeg1 = (rad: number) => ((rad * 180) / Math.PI).toFixed(1);
+    const sol2 = details[1];
+
+    let solveDetail: string;
+    let solveLatex: string;
+    if (solutionCount === 0) {
+      solveDetail = `底边 $a = ${a.toFixed(2)}$ 比临界高 $h = ${h.toFixed(2)}$ 还短，圆弧与射线不相交，三角形不存在，直接作答无解。`;
+      solveLatex = `a = ${a.toFixed(2)} < h = ${h.toFixed(2)} \\implies \\varnothing`;
+    } else if (solutionCount === 2 && sol1 && sol2) {
+      solveDetail = `$\\sin B = ${sinBVal.toFixed(3)}$ 同时对应锐角解 $B_1 = ${toDeg1(sol1.angleB)}^\\circ$ 与钝角解 $B_2 = ${toDeg1(sol2.angleB)}^\\circ$，两解内角和均小于 $180^\\circ$，故有两个三角形，必须都写出。`;
+      solveLatex = `c_1 = \\frac{a\\sin C_1}{\\sin A} = ${sol1.c.toFixed(2)},\\quad c_2 = \\frac{a\\sin C_2}{\\sin A} = ${sol2.c.toFixed(2)}`;
+    } else if (sol1) {
+      solveDetail = `$\\sin B = ${sinBVal.toFixed(3)}$ 解出 $B_1 = ${toDeg1(sol1.angleB)}^\\circ$；其补角会使 $A + B > 180^\\circ$，须舍去。再由内角和得 $C_1 = ${toDeg1(sol1.angleC)}^\\circ$。`;
+      solveLatex = `c_1 = \\frac{a\\sin C_1}{\\sin A} = ${sol1.c.toFixed(2)}`;
+    } else {
+      solveDetail = "当前参数下无合法解。";
+      solveLatex = "\\varnothing";
+    }
+
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 先求临界高",
+        detail:
+          "已知两边 $a, b$ 与其中一边的对角 $A$（SSA 不是全等条件）。过顶点 $C$ 向射线 $AB$ 作垂线，得到临界高 $h$，它把 $a$ 的取值范围切成若干判定区间。",
+        latex: `h = b\\sin A = ${b.toFixed(2)}\\times \\sin ${angleA.toFixed(1)}^\\circ = ${h.toFixed(2)}`,
+        rubric: "采分点：先算出临界高 h = b·sinA（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 比较定解数",
+        detail: `把 $a$ 与 $h$、$b$ 作比较：$A<90^\\circ$ 时 $a<h$ 无解、$a=h$ 一解（直角）、$h<a<b$ 两解、$a\\ge b$ 一解；$A\\ge 90^\\circ$ 时 $a>b$ 一解、$a\\le b$ 无解。当前落入「${SSA_CASE_LABEL[ssaResult.caseKind]}」。`,
+        latex: `a = ${a.toFixed(2)},\\quad h = ${h.toFixed(2)},\\quad b = ${b.toFixed(2)} \\implies N_{\\text{sol}} = ${solutionCount}`,
+        rubric: "采分点：套用判据给出解的个数（4分）",
+      },
+      {
+        step: 3,
+        title: "代入求解 · 回代检验内角和",
+        detail: solveDetail,
+        latex: solveLatex,
+        rubric: "采分点：求出边角并完成增解检验（4分）",
+      },
+    ];
+
     return {
       quantities,
       theorems: [
@@ -232,6 +324,7 @@ export function buildTriangleSolvePanel(
           importance: "gaokao",
         },
       ],
+      reasoningSteps,
       warnings:
         solutionCount === 0
           ? [
@@ -295,7 +388,7 @@ export function buildTriangleSolvePanel(
         latex:
           "\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R",
         condition:
-          "任意 $\\triangle ABC$，$R$ 为外接圆半径。构造直径 $CC'$ 形成 $\\text{Rt}\\triangle BCC'$，同弧圆周角 $\\angle C' = \\angle A \\implies \\sin A = \\frac{a}{2R}$",
+          "任意 $\\triangle ABC$，$R$ 为外接圆半径。构造直径 $CC'$ 形成 $\\text{Rt}\\triangle BCC'$，同弧 $BC$ 所对圆周角 $\\angle C'$ 与 $\\angle A$ 相等或互补 $\\implies \\sin A = \\sin\\angle C' = \\frac{a}{2R}$",
         note: "高考大题第 (1) 问边化角与角化边的绝对主力工具。",
         level: "core",
       },
@@ -320,10 +413,38 @@ export function buildTriangleSolvePanel(
       },
     ];
 
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 锁定公共比值",
+        detail:
+          "正弦定理把三边与各自对角的正弦绑成同一个比值，且该比值恰为外接圆直径 $2R$。先写出符号形式。",
+        latex:
+          "\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R",
+        rubric: "采分点：写出正弦定理的连比形式（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 代入已知边角",
+        detail:
+          "把已知的边 $a$ 与其对角 $A$ 代入求出公共比值，再用同一个比值回代其余边角，实现边角互化。",
+        latex: `\\frac{a}{\\sin A} = \\frac{${sides.a.toFixed(2)}}{\\sin ${anglesDeg.A.toFixed(1)}^\\circ} = ${sineRatios.ratioA.toFixed(2)} = 2R`,
+        rubric: "采分点：代入求比并指出该比值即 2R（4分）",
+      },
+      {
+        step: 3,
+        title: "代入求解 · 边角与半径齐出",
+        detail: `由比例式得 $b = \\frac{a\\sin B}{\\sin A}$、$c = \\frac{a\\sin C}{\\sin A}$；公共比值即外接圆直径，故半径为其一半。`,
+        latex: `b = ${sides.b.toFixed(2)},\\quad c = ${sides.c.toFixed(2)},\\quad R = \\frac{${sineRatios.ratioA.toFixed(2)}}{2} = ${circumcircle.radius.toFixed(2)}`,
+        rubric: "采分点：求出全部边角与外接圆半径（3分）",
+      },
+    ];
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
+      reasoningSteps,
       warnings: [],
       mnemonic:
         "正弦比值等直径，边化角来两角并；大边大角正弦定，高考通法第一步！",
@@ -347,7 +468,7 @@ export function buildTriangleSolvePanel(
       {
         label: "余弦值 cos A",
         symbol: "\\cos A",
-        value: `${cosAVal.toFixed(3)} (${cosAVal > 0 ? "锐角" : cosAVal === 0 ? "直角" : "钝角"})`,
+        value: `${cosAVal.toFixed(3)} (${Math.abs(cosAVal) < 1e-9 ? "直角" : cosAVal > 0 ? "锐角" : "钝角"})`,
         color:
           cosAVal < 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramSecondary,
       },
@@ -404,19 +525,53 @@ export function buildTriangleSolvePanel(
       },
     ];
 
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 两边夹角定第三边",
+        detail:
+          "已知两边 $b, c$ 及其夹角 $A$（SAS 全等型），直接用余弦定理求对边，不必先求其余两角。",
+        latex: "a^2 = b^2 + c^2 - 2bc\\cos A",
+        rubric: "采分点：写出余弦定理并说明属于 SAS 型（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 逐项代入展开",
+        detail:
+          "把 $b, c$ 与 $\\cos A$ 逐项代入：先算两邻边平方和，再算修正项 $2bc\\cos A$。注意 $A$ 为钝角时 $\\cos A < 0$，修正项整体为负，等价于加上其绝对值。",
+        latex: `a^2 = ${(sides.b ** 2).toFixed(2)} + ${(sides.c ** 2).toFixed(2)} - 2\\times ${sides.b.toFixed(2)}\\times ${sides.c.toFixed(2)}\\times \\cos ${anglesDeg.A.toFixed(1)}^\\circ`,
+        rubric: "采分点：代入数值写出 a² 的解析式（4分）",
+      },
+      {
+        step: 3,
+        title: "代入求解 · 结果与射影校验",
+        detail: `得 $a = ${sides.a.toFixed(2)}$。再用射影定理 $a = c\\cos B + b\\cos C$ 作独立校验：两段有向投影之和应恒等于底边。`,
+        latex: `a = ${sides.a.toFixed(2)},\\quad c\\cos B + b\\cos C = ${projections.cCosB.toFixed(2)} + ${projections.bCosC.toFixed(2)} = ${sides.a.toFixed(2)}`,
+        rubric: "采分点：求出 a 并用射影定理回代校验（3分）",
+      },
+    ];
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
+      reasoningSteps,
       warnings:
-        anglesDeg.A >= 90
+        Math.abs(cosAVal) < 1e-9
           ? [
               {
-                text: "钝角/直角警示：当前 A 为钝角 (cosA < 0)，余弦修正项 -2bc·cosA 变为正数，导致 a² > b² + c²！",
+                text: "直角情形：当前 A = 90° (cosA = 0)，余弦修正项 -2bc·cosA = 0，余弦定理退化为勾股定理 a² = b² + c²。",
                 level: "warning",
               },
             ]
-          : [],
+          : cosAVal < 0
+            ? [
+                {
+                  text: "钝角警示：当前 A 为钝角 (cosA < 0)，余弦修正项 -2bc·cosA 变为正数，导致 a² > b² + c²！",
+                  level: "warning",
+                },
+              ]
+            : [],
       mnemonic:
         "余弦点积平方差，射影底边两段夹；二次齐次速求角，均值求极顶呱呱！",
     };
@@ -471,11 +626,16 @@ export function buildTriangleSolvePanel(
       level: "core",
     },
     {
-      name: "海伦公式（拓展 · 超出课标） (Heron's Formula)",
+      name: "海伦公式 (Heron's Formula)",
       latex: "S = \\sqrt{p(p-a)(p-b)(p-c)}",
       condition: "已知三边长 $a, b, c$",
       note: "无需计算内角，直接从三边求面积的工具。注：海伦公式不在人教A版课标正文范围内，课标内求解面积应先用余弦定理求角、再用 $S=\\frac{1}{2}ab\\sin C$。",
       level: "supplementary",
+      // 拓展属性改用**条目级**结构化标注（isExtension + extensionBadge），
+      // 与 probabilityDistribution / sequence 等页保持一致；
+      // 旧写法把「（拓展 · 超出课标）」塞进 name，既污染定理名，也无法被审计工具按条目识别。
+      isExtension: true,
+      extensionBadge: "拓展 · 超出课标",
     },
   ];
 
@@ -490,10 +650,38 @@ export function buildTriangleSolvePanel(
     },
   ];
 
+  const reasoningSteps: ReasoningStep[] = [
+    {
+      step: 1,
+      title: "审题定法 · 面积公式族的主线",
+      detail:
+        "已知两边 $b, c$ 与夹角 $A$，先由两边夹角公式定出面积；内切圆半径 $r$、高线 $h_a$ 都可由面积反解，外接圆半径由三边与面积联系。",
+      latex:
+        "S = \\frac{1}{2}bc\\sin A = \\frac{abc}{4R} = r\\cdot p, \\quad p = \\frac{a+b+c}{2}",
+      rubric: "采分点：写出面积公式族并明确以 S 为中心（3分）",
+    },
+    {
+      step: 2,
+      title: "建模联立 · 代入求面积与半周长",
+      detail:
+        "代入 $b, c$ 与夹角 $A$ 求出面积 $S$；再由三边和求半周长 $p$，为反解内切圆半径做准备。",
+      latex: `S = \\frac{1}{2}\\times ${sides.b.toFixed(2)}\\times ${sides.c.toFixed(2)}\\times \\sin ${angleA.toFixed(1)}^\\circ = ${area.toFixed(2)},\\quad p = ${pVal.toFixed(2)}`,
+      rubric: "采分点：代入求出面积 S 与半周长 p（4分）",
+    },
+    {
+      step: 3,
+      title: "代入求解 · 反解内切圆与外接圆",
+      detail: `由等面积法 $S = rp$ 反解 $r = \\frac{S}{p}$；由 $S = \\frac{abc}{4R}$ 反解 $R = \\frac{abc}{4S}$。高线则由 $S = \\frac{1}{2}ah_a$ 得 $h_a = ${altitudeA.length.toFixed(2)}$。`,
+      latex: `r = \\frac{${area.toFixed(2)}}{${pVal.toFixed(2)}} = ${incircle.radius.toFixed(2)},\\quad R = \\frac{abc}{4S} = ${circumcircle.radius.toFixed(2)}`,
+      rubric: "采分点：由面积反解 $r$、$R$ 与 $h_a$（3分）",
+    },
+  ];
+
   return {
     quantities,
     theorems,
     gaokaoPoints,
+    reasoningSteps,
     warnings: [],
     mnemonic: "半周切圆积为先，四R分母积三边；夹角正弦乘两肋，面积转化题题宣！",
   };

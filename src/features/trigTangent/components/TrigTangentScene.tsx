@@ -6,11 +6,15 @@ import { Asymptote } from "@/components/Math/Asymptote";
 import { InteractivePoint } from "@/components/Math/InteractivePoint";
 import { VectorArrow } from "@/components/Math/VectorArrow";
 import { mathToDesign } from "@/utils/coordinate";
+import { formatPiFraction } from "@/utils/mathFormat";
+import { paramDomainRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/trigTangent";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import {
   generateTangentSegments,
   getTangentAsymptotes,
   getTangentSymmetryCenters,
+  pickAdjacentAsymptotePair,
   calculateUnitCircleTangent,
   checkIntervalAsymptoteFree,
 } from "../math/trigTangent";
@@ -34,6 +38,22 @@ interface TrigTangentSceneProps {
 
 const UNIT_CIRCLE_CENTER = { x: -3.8, y: 0 };
 const UNIT_RADIUS = 1.0;
+
+/**
+ * 拖拽钳制区间 = 参数声明域（SSOT 见 utils/paramClamp）。
+ * θ 是弧度角、A 是振幅、targetIntervalEnd 是区间端点，三者都与屏幕坐标不同轴，故不与视口求交。
+ * 置于模块级：区间恒定，无需每帧重建。
+ */
+const RANGE_THETA = paramDomainRange(paramMeta.theta);
+const RANGE_A = paramDomainRange(paramMeta.A);
+const RANGE_TARGET_END = paramDomainRange(paramMeta.targetIntervalEnd);
+
+/**
+ * θ = ±π/2 处 tanθ 无定义，拖拽必须与该渐近线保持安全距离。
+ * 取 0.08 rad（≈4.6°）：与 theta 声明域两端的内缩量同量级，
+ * 且大于滑块步长 0.02 ⇒ 取整后不会又贴回渐近线。
+ */
+const ASYMPTOTE_GUARD = 0.08;
 
 export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
   params,
@@ -62,6 +82,17 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
     mode === "unitCircle" || mode === "baseFunction" || mode === "gaokaoProblem"
       ? 0.0
       : C;
+
+  /**
+   * 基础正切曲线模式动点的横向可达范围（由视口反解，不再写死常数）：
+   * y = tan x 落在可见分支上需 |tan x| ≤ yMax ⇒ |x| ≤ arctan(yMax)，再留 2% 余量。
+   * 旧实现写死 π/2 − 0.08 = 1.49 ⇒ 纵坐标可达 tan(1.49) ≈ 12.3，是可见高度（±4.64）的 2.6 倍，
+   * 动点一拖就飞出画布且再也抓不回来。
+   */
+  const tangentVisibleXLimit = useMemo(
+    () => Math.atan(Math.max(1, scale.yMax) * 0.98),
+    [scale.yMax],
+  );
 
   // 模式1：单位圆与正切线几何计算（严格数学 1:1 对齐）
   const unitCircleCenter = UNIT_CIRCLE_CENTER;
@@ -283,9 +314,11 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
       {mode !== "unitCircle" && asymptotes.length >= 2 && (
         <g>
           {(() => {
-            const a1 = asymptotes.find((a) => a.x < 0 && a.x > -4);
-            const a2 = asymptotes.find((a) => a.x > 0 && a.x < 4);
-            if (!a1 || !a2) return null;
+            // 必须取「跨越 x = 0 的那一对相邻渐近线」：相邻间距 = π/|ω| = T，
+            // 旧实现用 find 各取左右第一条并不保证相邻（ω=2 时实为 3T），标尺会标成 2T~4T。
+            const pair = pickAdjacentAsymptotePair(asymptotes);
+            if (!pair) return null;
+            const [a1, a2] = pair;
 
             const yLevel = scale.yMax - 0.7;
             const periodVal = (Math.PI / Math.abs(effectiveOmega)).toFixed(2);
@@ -339,15 +372,25 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
         );
       })}
 
-      {/* 对称中心渲染（带防穿透底色与智能坐标轴避让） */}
+      {/* 对称中心渲染（带防穿透底色与智能坐标轴避让）
+          正切的对称中心是 (kπ/2, 0)，k 取**所有**整数 ——
+          其中 k 为奇数（±π/2、±3π/2…）的中心恰好落在渐近线上。
+          旧实现 `if (center.type !== "zero") return null` 把这一半中心全部丢弃，
+          中屏只剩 5 个，与右屏「对称中心 (kπ/2,0)、绝无对称轴」直接矛盾，
+          反而强化了学生「对称中心只有 (kπ, 0)」的高频错误。
+          现按类型分色全量渲染：落在渐近线上的用 paramSecondary，x 轴上的用 paramTertiary。 */}
       {mode !== "unitCircle" &&
         symmetryCenters.map((center, cIdx) => {
-          if (center.type !== "zero") return null;
+          const onAsymptote = center.type === "asymptoteIntersection";
+          const color = onAsymptote
+            ? MATH_COLORS.paramSecondary
+            : MATH_COLORS.paramTertiary;
           const pt = mathToDesign(center.x, center.y, scale);
           const isNearXAxis = Math.abs(center.y) < 0.3;
           const labelY = isNearXAxis
             ? pt.y - fontScale(12)
             : pt.y + fontScale(16);
+          const xLabel = formatPiFraction(center.x) ?? center.x.toFixed(2);
 
           return (
             <g key={`sym-${cIdx}`}>
@@ -356,13 +399,13 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                 cy={pt.y}
                 r={4}
                 fill={CANVAS_COLORS.white}
-                stroke={MATH_COLORS.paramTertiary}
+                stroke={color}
                 strokeWidth={2}
               />
               <rect
-                x={pt.x - fontScale(26)}
+                x={pt.x - fontScale(30)}
                 y={labelY - fontScale(9)}
-                width={fontScale(52)}
+                width={fontScale(60)}
                 height={fontScale(13)}
                 rx={fontScale(3)}
                 fill={CANVAS_COLORS.white}
@@ -372,11 +415,11 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                 x={pt.x}
                 y={labelY}
                 textAnchor="middle"
-                fill={MATH_COLORS.paramTertiary}
+                fill={color}
                 fontSize={fontScale(8.5)}
                 fontWeight="500"
               >
-                ({(center.x / Math.PI).toFixed(1)}π, {center.y.toFixed(1)})
+                ({xLabel}, {center.y.toFixed(1)})
               </text>
             </g>
           );
@@ -699,11 +742,13 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
               const dx = newMath.x - unitCircleCenter.x;
               const dy = newMath.y - unitCircleCenter.y;
               let newAngle = Math.atan2(dy, dx);
-              // 防止落在渐近线 ±π/2
-              if (Math.abs(newAngle - Math.PI / 2) < 0.05)
-                newAngle = Math.PI / 2 - 0.06;
-              if (Math.abs(newAngle + Math.PI / 2) < 0.05)
-                newAngle = -Math.PI / 2 + 0.06;
+              // 先落到滑块刻度（θ 步长 0.02）并守住声明域，再与渐近线保持安全距离；
+              // 顺序不可颠倒：先守渐近线再取整，取整会把角又推回 0.05 灰区。
+              newAngle = snapDragValue(newAngle, 0.02, RANGE_THETA);
+              if (Math.abs(newAngle - Math.PI / 2) < ASYMPTOTE_GUARD)
+                newAngle = Math.PI / 2 - ASYMPTOTE_GUARD;
+              if (Math.abs(newAngle + Math.PI / 2) < ASYMPTOTE_GUARD)
+                newAngle = -Math.PI / 2 + ASYMPTOTE_GUARD;
               onParamChange("theta", newAngle);
             }}
           />
@@ -714,11 +759,14 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
       {mode === "baseFunction" && (
         <InteractivePoint
           cx={Math.max(
-            -Math.PI / 2 + 0.08,
-            Math.min(Math.PI / 2 - 0.08, theta),
+            -tangentVisibleXLimit,
+            Math.min(tangentVisibleXLimit, theta),
           )}
           cy={Math.tan(
-            Math.max(-Math.PI / 2 + 0.08, Math.min(Math.PI / 2 - 0.08, theta)),
+            Math.max(
+              -tangentVisibleXLimit,
+              Math.min(tangentVisibleXLimit, theta),
+            ),
           )}
           scale={scale}
           vp={vp}
@@ -726,10 +774,11 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
           label="P(x₀, tan x₀)"
           fontScale={fontScale}
           onDrag={(newPt) => {
-            const clampedX = Math.max(
-              -Math.PI / 2 + 0.08,
-              Math.min(Math.PI / 2 - 0.08, newPt.x),
-            );
+            // 横向界限由视口反解（|tan x₀| ≤ yMax），保证动点与曲线都在画布内
+            const clampedX = snapDragValue(newPt.x, 0.02, [
+              -tangentVisibleXLimit,
+              tangentVisibleXLimit,
+            ]);
             onParamChange("theta", clampedX);
           }}
         />
@@ -747,8 +796,10 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
           fontScale={fontScale}
           onDrag={(newPt) => {
             const newA = (newPt.y - effectiveC) / Math.tan(Math.PI / 4);
+            // 振幅必须在声明域 [−3, 3] 内：旧实现完全不设上限，
+            // 把特征点往上拖即可写出 A = 8，而滑块最大只到 3。
             if (Number.isFinite(newA)) {
-              onParamChange("A", Math.round(newA * 10) / 10);
+              onParamChange("A", snapDragValue(newA, 0.1, RANGE_A));
             }
           }}
         />
@@ -765,8 +816,10 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
           label="x_end"
           fontScale={fontScale}
           onDrag={(newPt) => {
-            const clamped = Math.max(0.2, Math.min(2.5, newPt.x));
-            onParamChange("targetIntervalEnd", Math.round(clamped * 100) / 100);
+            // 区间右端点守声明域 [0.2, 2.5]（原先写死的 0.2/2.5 与 meta 恰好同值，
+            // 改为引用 paramMeta 后可保证二者永不失同步）
+            const clamped = snapDragValue(newPt.x, 0.1, RANGE_TARGET_END);
+            onParamChange("targetIntervalEnd", clamped);
           }}
         />
       )}

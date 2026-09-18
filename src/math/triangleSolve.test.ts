@@ -54,12 +54,14 @@ describe("triangleSolve - 解三角形与几何计算", () => {
     const res0 = solveSSA(1.5, 4, 30);
     expect(res0.solutionCount).toBe(0);
     expect(res0.solutions).toHaveLength(0);
+    expect(res0.caseKind).toBe("acute_no_solution");
 
     // 2. a = h (a = 2.0) => 唯一解 (直角三角形)
     const res1 = solveSSA(2.0, 4, 30);
     expect(res1.solutionCount).toBe(1);
     expect(res1.solutions).toHaveLength(1);
     expect(res1.details[0].angleB).toBeCloseTo(Math.PI / 2, 4);
+    expect(res1.caseKind).toBe("acute_right_single");
 
     // 3. h < a < b (a = 3.0) => 双解 (一个锐角三角形，一个钝角三角形)
     const res2 = solveSSA(3.0, 4, 30);
@@ -68,20 +70,51 @@ describe("triangleSolve - 解三角形与几何计算", () => {
     const sumDegB =
       (res2.details[0].angleB + res2.details[1].angleB) * (180 / Math.PI);
     expect(sumDegB).toBeCloseTo(180, 2);
+    expect(res2.caseKind).toBe("acute_double");
 
     // 4. a >= b (a = 5.0) => 唯一解
     const resSingle = solveSSA(5.0, 4, 30);
     expect(resSingle.solutionCount).toBe(1);
+    expect(resSingle.caseKind).toBe("acute_single");
 
     // ── 钝角情况 A = 120°, b = 4 ──
     // 5. a <= b (a = 3.5 <= 4) => 0 解 (大角对大边矛盾)
     const resObtuse0 = solveSSA(3.5, 4, 120);
     expect(resObtuse0.solutionCount).toBe(0);
+    expect(resObtuse0.caseKind).toBe("nonacute_no_solution");
 
     // 6. a > b (a = 6.0 > 4) => 唯一钝角三角形解
     const resObtuse1 = solveSSA(6.0, 4, 120);
     expect(resObtuse1.solutionCount).toBe(1);
     expect(resObtuse1.details[0].angleA).toBeCloseTo((120 * Math.PI) / 180, 4);
+    expect(resObtuse1.caseKind).toBe("nonacute_single");
+
+    // ── 回归：A ≥ 90° 时不得再落回锐角四分支（旧右屏文案会输出「0 个解 (h < a < b 双解)」）──
+    // A = 120°, b = 5, a = 4.4 → h = 5·sin120° = 4.3301, a < b 但 A 为钝角 ⇒ 无解
+    const resObtuse2 = solveSSA(4.4, 5, 120);
+    expect(resObtuse2.solutionCount).toBe(0);
+    expect(resObtuse2.caseKind).toBe("nonacute_no_solution");
+
+    // A = 90°, b = 5, a = h = 5 ⇒ 退化（A+B=180°），必须判 0 解而不是「单解(直角)」
+    const resRight = solveSSA(5, 5, 90);
+    expect(resRight.solutionCount).toBe(0);
+    expect(resRight.caseKind).toBe("nonacute_no_solution");
+
+    // A = 90°, b = 5, a = 6 > b ⇒ 唯一解
+    const resRight2 = solveSSA(6, 5, 90);
+    expect(resRight2.solutionCount).toBe(1);
+    expect(resRight2.caseKind).toBe("nonacute_single");
+
+    // 「相切单解」预设取 a = b·sinA 的精确值时必须真的得到唯一解
+    const tangentA = 60;
+    const tangentB = 5;
+    const resTangent = solveSSA(
+      tangentB * Math.sin((tangentA * Math.PI) / 180),
+      tangentB,
+      tangentA,
+    );
+    expect(resTangent.solutionCount).toBe(1);
+    expect(resTangent.caseKind).toBe("acute_right_single");
   });
 
   it("角平分线与中线定理验证", () => {

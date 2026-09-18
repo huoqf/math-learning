@@ -103,7 +103,7 @@ export const trigNodes: KnowledgeNode[] = [
     route: "/triangle-extrema",
     gaokaoTopic: "vector_triangle",
     questionCategory: "multi_select_hard",
-    examMethod: "角化边结合均值不等式与三角有界范围",
+    examMethod: "正弦边化角与余弦均值求最值范围",
     examWeight: 5,
   },
 ];

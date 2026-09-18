@@ -12,9 +12,14 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { paramDomainRange, snapDragValue } from "@/utils/paramClamp";
 import { TriangleExtremaScene } from "./components/TriangleExtremaScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/triangleExtrema";
+import {
+  defaultParams,
+  paramMeta,
+  buildAngleBMarks,
+} from "@/data/registries/triangleExtrema";
 import {
   solveAngleTransform,
   solveSideIneq,
@@ -207,12 +212,21 @@ export function TriangleExtremaAnimation() {
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
-          marks: meta.marks,
+          // 「等腰最值」取等条件 B = (180° − A)/2 随 A 变化，必须动态计算
+          marks:
+            key === "angleB"
+              ? buildAngleBMarks(params.angleA ?? 60)
+              : meta.marks,
         };
       });
   }, [params, studyMode]);
 
   // 顶点 B 拖拽回调（反向更新角 B 参数）
+  // 合法拖拽区间 = 参数声明域（SSOT 见 utils/paramClamp）：
+  // 顶点拖拽解出的是内角 B / 极角 θ 这类**派生角量**，与屏幕坐标不同轴，故不与视口求交。
+  const rangeAngleB = useMemo(() => paramDomainRange(paramMeta.angleB), []);
+  const rangeTheta = useMemo(() => paramDomainRange(paramMeta.thetaDeg), []);
+
   const handleDragB = useCallback(
     (mathPos: { x: number; y: number }) => {
       setPreset("free");
@@ -221,14 +235,15 @@ export function TriangleExtremaAnimation() {
       const dy = mathPos.y;
       if (Math.abs(dy) > 0.1) {
         let angleB = radToDeg(Math.atan2(Math.abs(dy), Math.max(0.1, dx)));
-        angleB = Math.min(
-          180 - params.angleA - 5,
-          Math.max(5, Math.round(angleB)),
-        );
+        // 上界由几何决定（三角形内角和：B < 180° − A），再与声明域 [5, 160] 求交；
+        // 下界同样来自声明域，杜绝"拖到 B = 0° 使三角形退化"却滑块显示 5° 的脱节。
+        const lo = Math.max(5, rangeAngleB?.[0] ?? 5);
+        const hi = Math.min(180 - params.angleA - 5, rangeAngleB?.[1] ?? 180);
+        angleB = snapDragValue(angleB, 1, [lo, hi]);
         setParams((prev) => ({ ...prev, angleB }));
       }
     },
-    [params.sideA, params.angleA],
+    [params.sideA, params.angleA, rangeAngleB],
   );
 
   // 顶点 A 拖拽回调（反向更新 thetaDeg 或相关参数）
@@ -240,13 +255,21 @@ export function TriangleExtremaAnimation() {
         const a = params.sideA;
         const x0 = ((k * k + 1) / (2 * (k * k - 1))) * a;
         const theta = radToDeg(Math.atan2(Math.abs(mathPos.y), mathPos.x - x0));
-        setParams((prev) => ({ ...prev, thetaDeg: Math.round(theta) }));
+        // θ 恒为 [0°, 180°]（已取 |y|），必须再与声明域 [5°, 175°] 求交，
+        // 否则拖到水平位置会写出 θ = 0° —— 滑块量程之外、极值模型同时失效。
+        setParams((prev) => ({
+          ...prev,
+          thetaDeg: snapDragValue(theta, 1, rangeTheta),
+        }));
       } else if (studyMode === "polarization") {
         const theta = radToDeg(Math.atan2(Math.abs(mathPos.y), mathPos.x));
-        setParams((prev) => ({ ...prev, thetaDeg: Math.round(theta) }));
+        setParams((prev) => ({
+          ...prev,
+          thetaDeg: snapDragValue(theta, 1, rangeTheta),
+        }));
       }
     },
-    [studyMode, params.ratioK, params.sideA],
+    [studyMode, params.ratioK, params.sideA, rangeTheta],
   );
 
   // 教学引导与探究提示
@@ -312,7 +335,7 @@ export function TriangleExtremaAnimation() {
           <LeftPanelSection title="最值研究模型">
             <SelectGrid
               items={[
-                { key: "angle-transform", label: "正弦角化边" },
+                { key: "angle-transform", label: "正弦边化角" },
                 { key: "side-ineq", label: "余弦均值式" },
                 { key: "apollonius", label: "阿波罗尼斯圆" },
                 { key: "polarization", label: "极化恒等式" },

@@ -175,7 +175,7 @@ export function TriangleSineZone({
                     strokeWidth={fontScale(4)}
                     strokeLinejoin="round"
                   >
-                    ∠C' = ∠A
+                    ∠C' 与 ∠A 相等或互补
                   </text>
                 </>
               );

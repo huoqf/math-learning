@@ -112,7 +112,7 @@ export function TrigLinesAnimation() {
       const sinV = Math.sin(xRad).toFixed(3);
       const xV = xRad.toFixed(3);
       const tanV = Math.tan(xRad).toFixed(3);
-      return `\\color{${MATH_COLORS.paramPrimary}}{S_{\\triangle OMP}} < \\color{${MATH_COLORS.function}}{S_{\\text{扇形}OAP}} < \\color{${MATH_COLORS.paramTertiary}}{S_{\\triangle OAT}} \\implies \\color{${MATH_COLORS.paramPrimary}}{\\sin x} < \\color{${MATH_COLORS.function}}{x} < \\color{${MATH_COLORS.paramTertiary}}{\\tan x} \\quad (${sinV} < ${xV} < ${tanV})`;
+      return `\\color{${MATH_COLORS.paramPrimary}}{S_{\\triangle OMP}} < \\color{${MATH_COLORS.paramSecondary}}{S_{\\triangle OAP}} < \\color{${MATH_COLORS.function}}{S_{\\text{扇形}OAP}} < \\color{${MATH_COLORS.paramTertiary}}{S_{\\triangle OAT}} \\implies \\color{${MATH_COLORS.paramPrimary}}{\\sin x} < \\color{${MATH_COLORS.function}}{x} < \\color{${MATH_COLORS.paramTertiary}}{\\tan x} \\quad (${sinV} < ${xV} < ${tanV})`;
     }
 
     // inequality

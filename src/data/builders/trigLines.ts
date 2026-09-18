@@ -4,6 +4,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import {
   calculateTrigLines,
@@ -142,7 +143,50 @@ export function buildTrigLinesPanel(
 
     const mnemonic = `当前位置：${quadrantText}。正弦看竖线(MP)，余弦看横线(OM)，正切看右切线(AT)。顺坐标轴方向为正，逆方向为负！`;
 
-    return { quantities, theorems, gaokaoPoints, warnings, mnemonic };
+    // 推导链：① 单位圆上定位 → ② 三条有向线段 → ③ 读出数值
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 单位圆上定位",
+        detail:
+          "把角 $\\alpha$ 的终边与单位圆 $x^2 + y^2 = 1$ 的交点记为 $P$。因为半径是 1，$P$ 的横、纵坐标就分别等于余弦与正弦，这是所有三角函数线的共同起点。",
+        latex: "P(\\cos\\alpha, \\sin\\alpha), \\quad |OP| = r = 1",
+        rubric: "采分点：写出单位圆交点坐标并说明 r = 1（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 三条有向线段",
+        detail:
+          "过 $P$ 作 $x$ 轴垂线得垂足 $M$；再过切点 $A(1,0)$ 作单位圆的切线交终边（或其延长线）于 $T$。三条有向线段各自对应一个三角函数值，方向与坐标轴同向记正、反向记负。",
+        latex:
+          "\\overrightarrow{MP} = \\sin\\alpha, \\quad \\overrightarrow{OM} = \\cos\\alpha, \\quad \\overrightarrow{AT} = \\tan\\alpha",
+        rubric: "采分点：写出三条线的起点终点与有向性（4分）",
+      },
+      {
+        step: 3,
+        title: "代入求解 · 读出三个函数值",
+        detail: `代入 $\\alpha = ${alphaDeg}^\\circ$（即 $${radStr}$）：交点 $P = (${cosStr}, ${sinStr})$，当前位于${quadrantText}。${
+          trig.isTanDefined
+            ? "三条线的有向长度即为所求。"
+            : "注意此时终边与切线 $x = 1$ 平行，交点 $T$ 不存在，故 $\\tan\\alpha$ 无定义。"
+        }`,
+        latex: `\\sin\\alpha = ${sinStr},\\quad \\cos\\alpha = ${cosStr},\\quad \\tan\\alpha = ${
+          trig.isTanDefined && trig.tanVal !== null
+            ? trig.tanVal.toFixed(3)
+            : "\\text{不存在}"
+        }`,
+        rubric: "采分点：由线段长度读出三个函数值并判断符号（3分）",
+      },
+    ];
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings,
+      reasoningSteps,
+      mnemonic,
+    };
   }
 
   // 2. 模式：几何面积逼近与不等式放缩模式 (comparison)
@@ -151,9 +195,12 @@ export function buildTrigLinesPanel(
     const xVal = areas.xRad.toFixed(4);
     const sinVal = areas.sinX.toFixed(4);
     const tanVal = areas.tanX.toFixed(4);
-    const s1 = areas.triangleOMP.toFixed(4);
-    const s2 = areas.sectorOAP.toFixed(4);
-    const s3 = areas.triangleOAT.toFixed(4);
+    // 四阶面积必须与中屏柱状图标签逐一对应（S₁ △OMP / S₂ △OAP / S₃ 扇形 / S₄ △OAT），
+    // 否则右屏少画一层、编号整体错位，与定理区的四阶包含链互相打架。
+    const sOMP = areas.triangleOMP.toFixed(4);
+    const sOAP = areas.triangleOAP.toFixed(4);
+    const sSector = areas.sectorOAP.toFixed(4);
+    const sOAT = areas.triangleOAT.toFixed(4);
 
     const quantities: MathQuantity[] = [
       {
@@ -163,21 +210,27 @@ export function buildTrigLinesPanel(
         color: MATH_COLORS.function,
       },
       {
-        label: "小三角形面积 S_△OMP",
+        label: "小三角形面积 S₁ (△OMP)",
         symbol: "S_1 = \\frac{1}{2}\\sin x \\cos x",
-        value: s1,
+        value: sOMP,
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "扇形面积 S_扇形OAP",
-        symbol: "S_2 = \\frac{1}{2}x",
-        value: s2,
+        label: "中三角形面积 S₂ (△OAP)",
+        symbol: "S_2 = \\frac{1}{2}\\sin x",
+        value: sOAP,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "扇形面积 S₃ (扇形OAP)",
+        symbol: "S_3 = \\frac{1}{2}x",
+        value: sSector,
         color: MATH_COLORS.function,
       },
       {
-        label: "大三角形面积 S_△OAT",
-        symbol: "S_3 = \\frac{1}{2}\\tan x",
-        value: s3,
+        label: "大三角形面积 S₄ (△OAT)",
+        symbol: "S_4 = \\frac{1}{2}\\tan x",
+        value: sOAT,
         color: MATH_COLORS.paramTertiary,
       },
       {
@@ -191,19 +244,19 @@ export function buildTrigLinesPanel(
 
     const theorems: Theorem[] = [
       {
-        name: "第一象限经典面积放缩不等式",
+        name: "第一象限四阶面积包含不等式",
         latex:
-          "S_{\\triangle OMP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT} \\implies \\sin x \\cos x < x < \\tan x",
+          "S_{\\triangle OMP} < S_{\\triangle OAP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT}",
         condition: "$x \\in \\left(0, \\frac{\\pi}{2}\\right)$",
-        note: "同除以 (1/2) 并在两端分别处理，可导出高中极为重要的放缩链条：sin x < x < tan x。",
+        note: "四块图形依次嵌套（共顶点 O、共半径 OA）：△OMP ⊂ △OAP ⊂ 扇形OAP ⊂ △OAT。面积分别为 (1/2)sin x·cos x、(1/2)sin x、(1/2)x、(1/2)tan x，同除以 (1/2) 即得 sin x·cos x < sin x < x < tan x。",
         level: "core",
       },
       {
         name: "第一象限三角函数放缩链",
         latex:
-          "\\text{由 } S_{\\triangle OMP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT} \\implies \\sin x < x < \\tan x \\quad \\left(x \\in \\left(0, \\frac{\\pi}{2}\\right)\\right)",
+          "\\text{由 } S_{\\triangle OAP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT} \\implies \\sin x < x < \\tan x \\quad \\left(x \\in \\left(0, \\frac{\\pi}{2}\\right)\\right)",
         condition: "$x \\in \\left(0, \\frac{\\pi}{2}\\right)$",
-        note: "同一面积不等式两边同除以 (1/2)cos x 即得 sin x < x < tan x，是三角函数与导数交汇题的常用放缩依据。",
+        note: "取中间三块图形 △OAP ⊂ 扇形OAP ⊂ △OAT，面积依次为 (1/2)sin x、(1/2)x、(1/2)tan x，三边同除以 (1/2) 即得 sin x < x < tan x，是三角函数与导数交汇题的常用放缩依据。",
         level: "important",
       },
     ];
@@ -228,9 +281,45 @@ export function buildTrigLinesPanel(
     }
 
     const mnemonic =
-      "面积包含直观见：小直角三角形 ⊂ 扇形 ⊂ 大直角三角形，两端除以 (1/2) 即得 sin x < x < tan x！";
+      "面积包含直观见：△OMP ⊂ △OAP ⊂ 扇形OAP ⊂ △OAT（共顶点 O、共半径 OA），同除以 (1/2) 即得 sin x·cos x < sin x < x < tan x，取后三阶即 sin x < x < tan x！";
 
-    return { quantities, theorems, gaokaoPoints, warnings, mnemonic };
+    // 推导链：① 四阶面积包含（符号） → ② 面积表达式展开 → ③ 数值验证放缩链
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 同一扇形里嵌四块",
+        detail:
+          "在单位圆中取锐角 $x$，四块图形共顶点 $O$、共半径 $OA$，由内到外层层包含，所以面积必然依次递增。",
+        latex:
+          "S_{\\triangle OMP} < S_{\\triangle OAP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT}",
+        rubric: "采分点：写出四阶面积包含关系（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 用面积公式展开",
+        detail:
+          "两块三角形用「底乘高除以二」，扇形用 $S = \\frac{1}{2}r^2\\theta$（$r = 1$）；四式同除以 $\\frac{1}{2}$ 消去系数，即得三阶放缩链。",
+        latex:
+          "\\frac{1}{2}\\sin x\\cos x < \\frac{1}{2}\\sin x < \\frac{1}{2}x < \\frac{1}{2}\\tan x \\implies \\sin x\\cos x < \\sin x < x < \\tan x",
+        rubric: "采分点：写出四块面积表达式并同除系数（4分）",
+      },
+      {
+        step: 3,
+        title: "代入求解 · 数值验证放缩链",
+        detail: `代入 $x = ${compAlphaDeg}^\\circ$（即 $${xVal}$ rad），可得 $S_1 = ${sOMP}$、$S_2 = ${sOAP}$、$S_3 = ${sSector}$、$S_4 = ${sOAT}$，严格递增，放缩链方向得到验证。`,
+        latex: `\\sin x = ${sinVal} < x = ${xVal} < \\tan x = ${tanVal}`,
+        rubric: "采分点：代入数值验证 sin x < x < tan x（3分）",
+      },
+    ];
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings,
+      reasoningSteps,
+      mnemonic,
+    };
   }
 
   // 3. 模式：单位圆解三角不等式模式 (inequality)
@@ -330,5 +419,40 @@ export function buildTrigLinesPanel(
   const mnemonic =
     "解三角不等式口诀：正弦画横线(y=c)，余弦画竖线(x=c)，正切切线连原点。找准交点扫圆弧，逆时针写区间加 2kπ！";
 
-  return { quantities, theorems, gaokaoPoints, warnings, mnemonic };
+  // 推导链：① 界值方程（符号） → ② 单位圆分弧测试 → ③ 补周期得通解集
+  const reasoningSteps: ReasoningStep[] = [
+    {
+      step: 1,
+      title: "审题定法 · 画基准线求界值",
+      detail:
+        "先把不等号换成等号解出界值：正弦画水平线 $y = c$，余弦画竖直线 $x = c$，正切则把切点 $A(1,0)$ 与直线 $x = c$ 上的截距相连。",
+      latex: `${kindLabels[ineqKind]} \\implies c = ${ineqThreshold.toFixed(2)}`,
+      rubric: "采分点：写出界值方程并说明基准线画法（3分）",
+    },
+    {
+      step: 2,
+      title: "建模联立 · 单位圆上分弧测试",
+      detail:
+        "界值点把单位圆切成若干段圆弧；在每段上任取一个测试点，用相应有向线段的正负判断该弧段是否属于解集，最后按逆时针方向书写区间。",
+      latex:
+        "\\text{界值点} \\to \\text{分段圆弧} \\to \\text{取测试点定符号} \\to \\text{逆时针写区间}",
+      rubric: "采分点：给出分弧测试与区间方向的判断流程（4分）",
+    },
+    {
+      step: 3,
+      title: "代入求解 · 补周期得通解集",
+      detail: `当前测试角 $\\alpha = ${alphaDeg}^\\circ$ ${ineq.isSatisfied ? "落在解集内（✓）" : "落在解集外（✗）"}，可与分弧测试的结论互相印证。通解集必须在每个区间后补上周期（正弦、余弦为 $2k\\pi$，正切为 $k\\pi$）并写明 $k \\in \\mathbb{Z}$。`,
+      latex: ineq.latexSolution || "\\text{正在计算}",
+      rubric: "采分点：写出含 $k \\in \\mathbb{Z}$ 的完整通解集（3分）",
+    },
+  ];
+
+  return {
+    quantities,
+    theorems,
+    gaokaoPoints,
+    warnings,
+    reasoningSteps,
+    mnemonic,
+  };
 }

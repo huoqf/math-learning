@@ -5,6 +5,7 @@ import {
   getTangentAsymptotes,
   getTangentSymmetryCenters,
   generateTangentSegments,
+  pickAdjacentAsymptotePair,
   checkIntervalAsymptoteFree,
 } from "./trigTangent";
 
@@ -102,6 +103,60 @@ describe("trigTangent - 正切函数性质与图象纯数学测试", () => {
         expect(seg[i].x).toBeGreaterThan(seg[i - 1].x);
       }
     }
+  });
+
+  it("generateTangentSegments: 渐近线全在视口外时 (小 ω) 仍必须画出完整曲线", () => {
+    // ω = 0.1（滑块下限）：渐近线 x = (kπ+π/2)/0.1 = ±5π ≈ ±15.7，全部落在视口 [-6, 6] 之外。
+    // 旧实现只按「相邻渐近线」划分，此处会得到 segments = []（中屏只剩坐标轴）。
+    const segments = generateTangentSegments(-6, 6, 1, 0.1, 0, 0);
+    expect(segments.length).toBeGreaterThan(0);
+    const xs = segments.flat().map((p) => p.x);
+    expect(Math.min(...xs)).toBeLessThanOrEqual(-6 + 0.05);
+    expect(Math.max(...xs)).toBeGreaterThanOrEqual(6 - 0.05);
+
+    // ω = 0.5：渐近线 ±π 落在视口内，必须切分为 3 段（两侧视口边界段 + 中间段），
+    // 且相邻两段之间不能跨过渐近线连线。
+    const seg05 = generateTangentSegments(-6, 6, 1, 0.5, 0, 0);
+    expect(seg05.length).toBe(3);
+    for (let i = 1; i < seg05.length; i++) {
+      expect(seg05[i][0].x).toBeGreaterThan(
+        seg05[i - 1][seg05[i - 1].length - 1].x,
+      );
+    }
+  });
+
+  it("pickAdjacentAsymptotePair: 周期标尺必须取「相邻」渐近线对，跨度恒为 T = π/|ω|", () => {
+    for (const omega of [0.5, 1, 2, 3]) {
+      for (const phi of [0, Math.PI / 2, Math.PI / 3]) {
+        const asymptotes = getTangentAsymptotes(-6, 6, omega, phi);
+        const pair = pickAdjacentAsymptotePair(asymptotes);
+        if (!pair) continue;
+        expect(pair[1].x - pair[0].x).toBeCloseTo(Math.PI / Math.abs(omega), 9);
+      }
+    }
+
+    // 钉死旧 bug：ω=2 时旧实现取 -3.927 / 0.785，跨度 4.712 = 3T
+    const pair2 = pickAdjacentAsymptotePair(getTangentAsymptotes(-6, 6, 2, 0));
+    expect(pair2).not.toBeNull();
+    expect(Math.abs(pair2![1].x - pair2![0].x)).toBeCloseTo(Math.PI / 2, 9);
+    expect(pair2![0].x).toBeLessThan(0);
+    expect(pair2![1].x).toBeGreaterThan(0);
+  });
+
+  it("getTangentSymmetryCenters: 对称中心是 (kπ/2, 0) 全体，含落在渐近线上的奇数 k", () => {
+    // ω=1, φ=0, 视口 [-6, 6] ⇒ k = -3..3 共 7 个中心，其中 ±π/2、±3π/2 落在渐近线上
+    const centers = getTangentSymmetryCenters(-6, 6, 1, 0, 0);
+    expect(centers).toHaveLength(7);
+    expect(centers.every((c) => Math.abs(c.y) < 1e-9)).toBe(true);
+
+    const onAsymptote = centers.filter(
+      (c) => c.type === "asymptoteIntersection",
+    );
+    expect(onAsymptote.map((c) => Number(c.x.toFixed(4)))).toEqual(
+      [-(3 * Math.PI) / 2, -Math.PI / 2, Math.PI / 2, (3 * Math.PI) / 2].map(
+        (v) => Number(v.toFixed(4)),
+      ),
+    );
   });
 
   it("checkIntervalAsymptoteFree: 高考单调性区间与 omega 上界探究", () => {

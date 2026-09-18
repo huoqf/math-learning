@@ -8,7 +8,7 @@ import {
 } from "./triangleExtrema";
 
 describe("triangleExtrema - 解三角形极值与范围计算", () => {
-  it("角化边模式：固定 A=60°, a=2*sqrt(3)，等腰时周长与面积取得最大值", () => {
+  it("边化角模式：固定 A=60°, a=2*sqrt(3)，等腰时周长与面积取得最大值", () => {
     const a = 2 * Math.sqrt(3);
     const resEquilateral = solveAngleTransform(60, a, 60);
 

@@ -64,6 +64,21 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
   const mDesign = mathToDesign(pointM.x, pointM.y, scale);
   const tDesign = pointT ? mathToDesign(pointT.x, pointT.y, scale) : null;
 
+  // 正切线 AT 的显示状态。
+  //   parallel —— 90° / 270°：终边与切线 x = 1 平行，AT 不存在
+  //   clipped  —— |tanα| 超出中屏视口：AT 画不进画布，必须显式提示
+  //   zero     —— α ≈ 0：AT ≈ 0，等价于不显示
+  //   visible  —— 正常绘制
+  // 旧实现用写死的阈值 3.5 判 `clipped`，而视口 yMax ≈ 1.6，
+  // 于是 α ∈ (74°, 90°) 既画不出 AT、也不给任何提示 —— 一段「中屏空无一物、右屏照常给数」的静默区。
+  const tanState: "parallel" | "clipped" | "zero" | "visible" = !isTanDefined
+    ? "parallel"
+    : Math.abs(tanVal ?? 0) >= scale.yMax
+      ? "clipped"
+      : Math.abs(tanVal ?? 0) <= 1e-4
+        ? "zero"
+        : "visible";
+
   // 生成动角弧阿基米德螺线 path、方向箭头与智能标注位置
   const arcData = useMemo(() => {
     const baseRadius = Math.min(scale.scaleX * 0.28, 36);
@@ -266,58 +281,64 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
       )}
 
       {/* 3. 正切线 AT (翠绿) */}
-      {showTangent === 1 &&
-        isTanDefined &&
-        pointT &&
-        Math.abs(tanVal ?? 0) > 1e-4 &&
-        Math.abs(tanVal ?? 0) < 3.5 && (
-          <VectorArrow
-            from={[1, 0]}
-            to={[1, pointT.y]}
-            scale={scale}
-            color={MATH_COLORS.paramTertiary}
-            strokeWidth={3.5}
-            headLength={9}
-            headWidth={6}
-            fontScale={fontScale}
-            label="AT"
-            labelOffset={[18, 0]}
-            labelSize={10}
-          />
-        )}
-
-      {/* 当正切线不存在 (90°, 270°) 时的平行提示 */}
-      {showTangent === 1 && !isTanDefined && (
-        <g>
-          <line
-            x1={aDesign.x}
-            y1={mathToDesign(1, -1.4, scale).y}
-            x2={aDesign.x}
-            y2={mathToDesign(1, 1.4, scale).y}
-            stroke={MATH_COLORS.paramPrimary}
-            strokeWidth={2.5}
-            strokeDasharray="6 4"
-          />
-          <rect
-            x={aDesign.x + 8}
-            y={centerPt.y - 14}
-            width={136}
-            height={28}
-            rx={4}
-            fill={withAlpha(MATH_COLORS.paramPrimary, 0.9)}
-          />
-          <text
-            x={aDesign.x + 15}
-            y={centerPt.y + 4}
-            fill={MATH_COLORS.white}
-            fontSize={fontScale(10)}
-            fontWeight="bold"
-            className="select-none pointer-events-none"
-          >
-            正切线不存在 (平行)
-          </text>
-        </g>
+      {showTangent === 1 && tanState === "visible" && pointT && (
+        <VectorArrow
+          from={[1, 0]}
+          to={[1, pointT.y]}
+          scale={scale}
+          color={MATH_COLORS.paramTertiary}
+          strokeWidth={3.5}
+          headLength={9}
+          headWidth={6}
+          fontScale={fontScale}
+          label="AT"
+          labelOffset={[18, 0]}
+          labelSize={10}
+        />
       )}
+
+      {/* 正切线状态提示：不存在 (平行) 与 |tanα| 超出画布都必须显式告知 */}
+      {showTangent === 1 &&
+        (tanState === "parallel" || tanState === "clipped") && (
+          <g>
+            {tanState === "parallel" && (
+              <line
+                x1={aDesign.x}
+                y1={mathToDesign(1, -1.4, scale).y}
+                x2={aDesign.x}
+                y2={mathToDesign(1, 1.4, scale).y}
+                stroke={MATH_COLORS.paramPrimary}
+                strokeWidth={2.5}
+                strokeDasharray="6 4"
+              />
+            )}
+            <rect
+              x={aDesign.x + 8}
+              y={centerPt.y - 14}
+              width={104}
+              height={28}
+              rx={4}
+              fill={withAlpha(
+                tanState === "parallel"
+                  ? MATH_COLORS.paramPrimary
+                  : MATH_COLORS.paramTertiary,
+                0.9,
+              )}
+            />
+            <text
+              x={aDesign.x + 16}
+              y={centerPt.y + 4}
+              fill={MATH_COLORS.white}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              className="select-none pointer-events-none"
+            >
+              {tanState === "parallel"
+                ? "AT 不存在 (平行)"
+                : "|tan α| 超出画布"}
+            </text>
+          </g>
+        )}
 
       {/* 原点与垂足/切线直角标尺 ∟ */}
       {Math.abs(sinVal) > 0.08 && Math.abs(cosVal) > 0.08 && (
@@ -376,19 +397,16 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
         fontScale={fontScale}
       />
 
-      {tDesign &&
-        isTanDefined &&
-        Math.abs(tanVal ?? 0) > 1e-4 &&
-        Math.abs(tanVal ?? 0) < 3.5 && (
-          <MathPoint
-            x={tDesign.x}
-            y={tDesign.y}
-            color={MATH_COLORS.paramTertiary}
-            label="T(1, tanα)"
-            labelPosition={(tanVal ?? 0) >= 0 ? "top-right" : "bottom-right"}
-            fontScale={fontScale}
-          />
-        )}
+      {tDesign && tanState === "visible" && (
+        <MathPoint
+          x={tDesign.x}
+          y={tDesign.y}
+          color={MATH_COLORS.paramTertiary}
+          label="T(1, tanα)"
+          labelPosition={(tanVal ?? 0) >= 0 ? "top-right" : "bottom-right"}
+          fontScale={fontScale}
+        />
+      )}
 
       {/* 主控动点 P */}
       <InteractivePoint

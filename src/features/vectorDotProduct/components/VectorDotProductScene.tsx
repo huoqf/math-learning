@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { useMemo } from "react";
 import {
   CoordinateGrid,
   InteractivePoint,
@@ -7,12 +7,15 @@ import {
 } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import { rightAnglePath } from "@/utils/geometryMarks";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
 import type { SceneScale } from "@/hooks";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
   computeVectorDotProduct,
   type VectorDotProductParams,
 } from "@/math/vectorDotProduct";
+import { isPolarGeomMode, paramMeta } from "@/data/registries/vectorDotProduct";
 
 interface VectorDotProductSceneProps {
   params: VectorDotProductParams;
@@ -55,28 +58,81 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
   const posSDesign = mathToDesign(sumVec.x, sumVec.y, scale);
   const posMDesign = mathToDesign(midpointM.x, midpointM.y, scale);
 
+  // 拖拽是否走极坐标：defProj 模式恒用极坐标几何定义（a 沿 x 轴，|a|/|b|/θ 驱动），
+  // 判定规则与数据层同源（registries 的 isPolarGeomMode），严禁在此另立一套。
+  const isPolarGeom = isPolarGeomMode(studyMode);
+
+  // 合法拖拽区间 =「参数声明域 ∩ 中屏可见视口」：
+  // 既不许把参数拖出滑块声明域（否则滑块与图形脱节），也不许拖出可视区域（否则点抓不回来）。
+  const rangeXa = useMemo(
+    () => paramDragRange(paramMeta.xa, scale, "x"),
+    [scale],
+  );
+  const rangeYa = useMemo(
+    () => paramDragRange(paramMeta.ya, scale, "y"),
+    [scale],
+  );
+  const rangeXb = useMemo(
+    () => paramDragRange(paramMeta.xb, scale, "x"),
+    [scale],
+  );
+  const rangeYb = useMemo(
+    () => paramDragRange(paramMeta.yb, scale, "y"),
+    [scale],
+  );
+  const rangeNormA = useMemo(
+    () => paramDragRange(paramMeta.normA, scale, "x"),
+    [scale],
+  );
+  const rangeNormB = useMemo(
+    () => paramDragRange(paramMeta.normB, scale, "x"),
+    [scale],
+  );
+  const rangeTheta = useMemo(
+    () => paramDragRange(paramMeta.thetaDeg, scale, "x"),
+    [scale],
+  );
+
+  // 批量派发（优先走批量回调，避免两次 setState 造成中间态闪动）
+  const applyParams = (updates: Record<string, number>) => {
+    if (onBatchParamsChange) {
+      onBatchParamsChange(updates);
+    } else {
+      Object.entries(updates).forEach(([k, v]) => onParamChange(k, v));
+    }
+  };
+
   // 拖拽 A 点 (数学坐标)
   const handleDragPointA = (pt: { x: number; y: number }) => {
-    const roundX = Math.round(pt.x * 2) / 2;
-    const roundY = Math.round(pt.y * 2) / 2;
-    if (onBatchParamsChange) {
-      onBatchParamsChange({ xa: roundX, ya: roundY });
-    } else {
-      onParamChange("xa", roundX);
-      onParamChange("ya", roundY);
-    }
+    applyParams({
+      xa: snapDragValue(pt.x, 0.5, rangeXa),
+      ya: snapDragValue(pt.y, 0.5, rangeYa),
+    });
   };
 
   // 拖拽 B 点 (数学坐标)
   const handleDragPointB = (pt: { x: number; y: number }) => {
-    const roundX = Math.round(pt.x * 2) / 2;
-    const roundY = Math.round(pt.y * 2) / 2;
-    if (onBatchParamsChange) {
-      onBatchParamsChange({ xb: roundX, yb: roundY });
-    } else {
-      onParamChange("xb", roundX);
-      onParamChange("yb", roundY);
-    }
+    applyParams({
+      xb: snapDragValue(pt.x, 0.5, rangeXb),
+      yb: snapDragValue(pt.y, 0.5, rangeYb),
+    });
+  };
+
+  // defProj 模式：a 恒沿 x 轴，拖 A 只能改 |a|（取指针的 x 投影）。
+  // 旧实现把拖拽结果写回 (xa, ya)，随即被 usePolarGeom 覆盖 ⇒ A 是"假手柄"，拖动毫无反应。
+  const handleDragPolarA = (pt: { x: number; y: number }) => {
+    applyParams({ normA: snapDragValue(Math.abs(pt.x), 0.5, rangeNormA) });
+  };
+
+  // defProj 模式：拖 B 反解 |b| 与 θ（θ ∈ [0°, 180°]，下半平面按角的大小镜像回上半平面，
+  // 保证"拖动"始终连续可见，而不是把角钳到 180° 让点飞到负半轴）。
+  const handleDragPolarB = (pt: { x: number; y: number }) => {
+    const normB = snapDragValue(Math.hypot(pt.x, pt.y), 0.5, rangeNormB);
+    const rawDeg = Math.abs((Math.atan2(pt.y, pt.x) * 180) / Math.PI);
+    applyParams({
+      normB,
+      thetaDeg: snapDragValue(rawDeg, 5, rangeTheta),
+    });
   };
 
   // 计算夹角圆弧 (从 a 到 b)
@@ -133,26 +189,18 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
   };
 
   // 渲染垂足处的直角标记 (Right Angle Indicator) - 固定 9~10px 防畸变
+  // 路径构造统一走共享纯函数 rightAnglePath，避免各页面各写一套
   const renderRightAngleSymbol = (
     corner: { x: number; y: number },
     dir1: { x: number; y: number },
     dir2: { x: number; y: number },
   ) => {
-    const len1 = Math.hypot(dir1.x, dir1.y);
-    const len2 = Math.hypot(dir2.x, dir2.y);
-    if (len1 < 1e-4 || len2 < 1e-4) return null;
-
-    const size = Math.min(10, Math.min(len1, len2) * 0.35);
-    const u1 = { x: (dir1.x / len1) * size, y: (dir1.y / len1) * size };
-    const u2 = { x: (dir2.x / len2) * size, y: (dir2.y / len2) * size };
-
-    const p1 = { x: corner.x + u1.x, y: corner.y + u1.y };
-    const p2 = { x: corner.x + u1.x + u2.x, y: corner.y + u1.y + u2.y };
-    const p3 = { x: corner.x + u2.x, y: corner.y + u2.y };
+    const d = rightAnglePath(corner, dir1, dir2);
+    if (!d) return null;
 
     return (
       <path
-        d={`M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}`}
+        d={d}
         fill="none"
         stroke={MATH_COLORS.textMuted}
         strokeWidth={1.2}
@@ -283,7 +331,12 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             cy={a.y}
             scale={scale}
             vp={vp}
-            onDrag={handleDragPointA}
+            // defProj 模式下 a 恒沿 x 轴 ⇒ A 只允许水平拖动（改 |a|），且横向界限即 |a| 的声明域；
+            // 其余模式自由拖动，受「声明域 ∩ 可见视口」双向钳制。
+            axis={isPolarGeom ? "x" : "both"}
+            xRange={isPolarGeom ? rangeNormA : rangeXa}
+            yRange={isPolarGeom ? undefined : rangeYa}
+            onDrag={isPolarGeom ? handleDragPolarA : handleDragPointA}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
             label="A"
@@ -293,7 +346,10 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             cy={b.y}
             scale={scale}
             vp={vp}
-            onDrag={handleDragPointB}
+            // defProj 模式下 B 由 (|b|, θ) 反解，界限在回调内按极坐标钳制，故此处不再限制平面坐标。
+            xRange={isPolarGeom ? undefined : rangeXb}
+            yRange={isPolarGeom ? undefined : rangeYb}
+            onDrag={isPolarGeom ? handleDragPolarB : handleDragPointB}
             color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
             label="B"
@@ -419,7 +475,12 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             cy={a.y}
             scale={scale}
             vp={vp}
-            onDrag={handleDragPointA}
+            // defProj 模式下 a 恒沿 x 轴 ⇒ A 只允许水平拖动（改 |a|），且横向界限即 |a| 的声明域；
+            // 其余模式自由拖动，受「声明域 ∩ 可见视口」双向钳制。
+            axis={isPolarGeom ? "x" : "both"}
+            xRange={isPolarGeom ? rangeNormA : rangeXa}
+            yRange={isPolarGeom ? undefined : rangeYa}
+            onDrag={isPolarGeom ? handleDragPolarA : handleDragPointA}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
             label="A"
@@ -429,7 +490,10 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             cy={b.y}
             scale={scale}
             vp={vp}
-            onDrag={handleDragPointB}
+            // defProj 模式下 B 由 (|b|, θ) 反解，界限在回调内按极坐标钳制，故此处不再限制平面坐标。
+            xRange={isPolarGeom ? undefined : rangeXb}
+            yRange={isPolarGeom ? undefined : rangeYb}
+            onDrag={isPolarGeom ? handleDragPolarB : handleDragPointB}
             color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
             label="B"
@@ -513,7 +577,12 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             cy={a.y}
             scale={scale}
             vp={vp}
-            onDrag={handleDragPointA}
+            // defProj 模式下 a 恒沿 x 轴 ⇒ A 只允许水平拖动（改 |a|），且横向界限即 |a| 的声明域；
+            // 其余模式自由拖动，受「声明域 ∩ 可见视口」双向钳制。
+            axis={isPolarGeom ? "x" : "both"}
+            xRange={isPolarGeom ? rangeNormA : rangeXa}
+            yRange={isPolarGeom ? undefined : rangeYa}
+            onDrag={isPolarGeom ? handleDragPolarA : handleDragPointA}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
             label="A"
@@ -523,7 +592,10 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             cy={b.y}
             scale={scale}
             vp={vp}
-            onDrag={handleDragPointB}
+            // defProj 模式下 B 由 (|b|, θ) 反解，界限在回调内按极坐标钳制，故此处不再限制平面坐标。
+            xRange={isPolarGeom ? undefined : rangeXb}
+            yRange={isPolarGeom ? undefined : rangeYb}
+            onDrag={isPolarGeom ? handleDragPolarB : handleDragPointB}
             color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
             label="B"

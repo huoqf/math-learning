@@ -8,6 +8,8 @@ import {
 } from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDomainRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/trigTransform";
 import type { SceneScale } from "@/hooks";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -16,6 +18,16 @@ import {
   calculateIntervalZeros,
   solveParamsFromDrag,
 } from "../math/trigTransform";
+
+/**
+ * 拖拽五点反解出来的是 A / φ / k 三个**函数参数**（与屏幕坐标不同轴），
+ * 故只守左屏声明域，不与可见视口求交（SSOT 见 utils/paramClamp）。
+ * 置于模块级：区间恒定，无需每帧重建。
+ */
+const RANGE_A = paramDomainRange(paramMeta.A);
+const RANGE_PHI = paramDomainRange(paramMeta.phi);
+const RANGE_K = paramDomainRange(paramMeta.k);
+const STEP_PHI = Math.PI / 12;
 
 interface TrigTransformSceneProps {
   params: {
@@ -89,9 +101,12 @@ export function TrigTransformScene({
       phi,
       k,
     });
-    onParamChange("A", updated.A);
-    onParamChange("phi", updated.phi);
-    onParamChange("k", updated.k);
+    // 反解结果必须回到声明域内：旧实现对 A 只设了下限 0.2、对 k 完全没有限制，
+    // 把波峰拖到画布顶端即可写出 A = 10（滑块上限 4）、k = 5.5（上限 3），
+    // 于是"图形与左屏滑块彻底对不上号"。
+    onParamChange("A", snapDragValue(updated.A, 0.1, RANGE_A));
+    onParamChange("phi", snapDragValue(updated.phi, STEP_PHI, RANGE_PHI));
+    onParamChange("k", snapDragValue(updated.k, 0.5, RANGE_K));
   };
 
   // 计算区间阴影像素区域
@@ -204,8 +219,8 @@ export function TrigTransformScene({
               return (
                 <MathPoint
                   key={`sym-center-${idx}`}
-                  x={center[0]}
-                  y={center[1]}
+                  cx={center[0]}
+                  cy={center[1]}
                   scale={scale}
                   color={MATH_COLORS.paramSecondary}
                   variant="hollow"
@@ -297,16 +312,16 @@ export function TrigTransformScene({
                 label={currentStep.vectorLabel}
               />
               <MathPoint
-                x={currentStep.vectorFrom[0]}
-                y={currentStep.vectorFrom[1]}
+                cx={currentStep.vectorFrom[0]}
+                cy={currentStep.vectorFrom[1]}
                 scale={scale}
                 color={MATH_COLORS.paramSecondary}
                 variant="solid"
                 fontScale={fontScale}
               />
               <MathPoint
-                x={currentStep.vectorTo[0]}
-                y={currentStep.vectorTo[1]}
+                cx={currentStep.vectorTo[0]}
+                cy={currentStep.vectorTo[1]}
                 scale={scale}
                 color={MATH_COLORS.paramPrimary}
                 variant="solid"
@@ -395,8 +410,8 @@ export function TrigTransformScene({
             return (
               <g key={`zero-${idx}`}>
                 <MathPoint
-                  x={zero.x}
-                  y={zero.y}
+                  cx={zero.x}
+                  cy={zero.y}
                   scale={scale}
                   color={dotColor}
                   variant="solid"
@@ -426,8 +441,8 @@ export function TrigTransformScene({
             return (
               <g key={`max-${idx}`}>
                 <MathPoint
-                  x={maxPt.x}
-                  y={maxPt.y}
+                  cx={maxPt.x}
+                  cy={maxPt.y}
                   scale={scale}
                   color={MATH_COLORS.paramSecondary}
                   variant="solid"
@@ -455,8 +470,8 @@ export function TrigTransformScene({
             return (
               <g key={`min-${idx}`}>
                 <MathPoint
-                  x={minPt.x}
-                  y={minPt.y}
+                  cx={minPt.x}
+                  cy={minPt.y}
                   scale={scale}
                   color={MATH_COLORS.paramTertiary}
                   variant="solid"

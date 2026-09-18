@@ -1,5 +1,28 @@
-import type { ParamMeta } from "../types";
+import type { ParamMeta, ParamMark } from "../types";
 import { MATH_COLORS } from "@/theme";
+
+/**
+ * 内角 B 的动态临界标记。
+ * 「等腰最值」的取等条件是 B = (180° − A)/2，**随 A 变化**：
+ * 静态写死 60 只在 A = 60° 时成立（A = 120° 时应标在 30°，A = 150° 时应标在 15°），
+ * 而「取等条件」恰恰是新高考解三角形最易扣分的考点。
+ */
+export function buildAngleBMarks(angleA: number): ParamMark[] {
+  return [
+    {
+      value: Math.round(((180 - angleA) / 2) * 10) / 10,
+      label: "等腰最值",
+      labelFormula: "B=\\frac{180^\\circ-A}{2}",
+      variant: "critical",
+    },
+    {
+      value: 90,
+      label: "90°",
+      labelFormula: "90^\\circ",
+      variant: "critical",
+    },
+  ];
+}
 
 export const defaultParams: Record<string, number> = {
   angleA: 60,
@@ -68,20 +91,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "自变量内角 B，决定三角形具体形状与高度",
     descriptionFormula: "B \\in (0^\\circ, 180^\\circ - A)",
     importance: "core",
-    marks: [
-      {
-        value: 60,
-        label: "等腰最值",
-        labelFormula: "B=\\frac{180^\\circ-A}{2}",
-        variant: "critical",
-      },
-      {
-        value: 90,
-        label: "90°",
-        labelFormula: "90^\\circ",
-        variant: "critical",
-      },
-    ],
+    marks: buildAngleBMarks(60),
   },
   sideB: {
     key: "sideB",

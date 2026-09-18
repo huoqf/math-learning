@@ -14,7 +14,11 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TriangleSolveScene } from "./components/TriangleSolveScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/triangleSolve";
+import {
+  defaultParams,
+  paramMeta,
+  buildSideAMarks,
+} from "@/data/registries/triangleSolve";
 import {
   solveTriangleFromSAS,
   solveSSA,
@@ -80,8 +84,22 @@ export function TriangleSolveAnimation() {
       if (presetKey === "obtuse")
         setParams((p) => ({ ...p, angleA: 120, b: 5, c: 5 }));
     } else if (studyMode === "ssa") {
-      if (presetKey === "tangent_one")
-        setParams((p) => ({ ...p, angleA: 60, b: 5, a: 4.33 }));
+      if (presetKey === "tangent_one") {
+        // 「相切单解」必须精确取 a = h = b·sinA。
+        // 原实现写死 a = 4.33，而 h = 5·sin60° = 4.330127…，偏差 2.7e-5 会使
+        // a² − h² = −2.3e-4 落到「a < h 无解」分支 → 按钮名与结果相反。
+        // 这里由 b、A 反算写入精确值（显示侧仍按 step 格式化为 4.33）。
+        setParams((p) => {
+          const angleA = 60;
+          const b = 5;
+          return {
+            ...p,
+            angleA,
+            b,
+            a: b * Math.sin((angleA * Math.PI) / 180),
+          };
+        });
+      }
       if (presetKey === "double_sol")
         setParams((p) => ({ ...p, angleA: 60, b: 5, a: 4.6 }));
       if (presetKey === "no_sol")
@@ -188,7 +206,11 @@ export function TriangleSolveAnimation() {
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
-          marks: meta.marks,
+          // a 的两条临界线 (h = b·sinA、a = b) 随 b 与 A 变化，必须动态计算
+          marks:
+            key === "a"
+              ? buildSideAMarks(params.b ?? 5, params.angleA ?? 60)
+              : meta.marks,
         };
       });
   }, [params, studyMode]);

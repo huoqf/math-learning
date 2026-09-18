@@ -136,7 +136,7 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("TriangleExtremaAnimation mounts properly and renders", () => {
     render(<TriangleExtremaAnimation />);
     expect(screen.getByText("最值研究模型")).toBeInTheDocument();
-    expect(screen.getByText("正弦角化边")).toBeInTheDocument();
+    expect(screen.getByText("正弦边化角")).toBeInTheDocument();
   });
 
   it("InequalityAbsoluteAnimation mounts properly and renders", () => {

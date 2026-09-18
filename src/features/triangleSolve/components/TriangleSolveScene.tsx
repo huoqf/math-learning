@@ -1,5 +1,6 @@
 ﻿import { InteractivePoint, MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDomainRange, snapDragValue } from "@/utils/paramClamp";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
   solveTriangleFromSAS,
@@ -12,6 +13,7 @@ import { TriangleSineZone } from "./TriangleSineZone";
 import { TriangleCosineZone } from "./TriangleCosineZone";
 import { TriangleAreaZone } from "./TriangleAreaZone";
 import { TriangleBisectorZone } from "./TriangleBisectorZone";
+import { paramMeta } from "@/data/registries/triangleSolve";
 
 interface TriangleSolveSceneProps {
   params: Record<string, number>;
@@ -21,6 +23,13 @@ interface TriangleSolveSceneProps {
   fontScale: (v: number) => number;
   studyMode: "sine" | "ssa" | "cosine" | "area" | "bisector";
 }
+
+/**
+ * 顶点拖拽解出的是**内角 A**（角量），与屏幕坐标不同轴，
+ * 故只取声明域 [15°, 150°]，不与中屏可见视口求交（SSOT 见 utils/paramClamp）。
+ * 置于模块级：区间恒定，无需每次渲染重建。
+ */
+const RANGE_ANGLE_A = paramDomainRange(paramMeta.angleA);
 
 /** 计算从形心向顶点的向外单位放射向量 */
 function getRadialOutwardOffset(
@@ -290,10 +299,9 @@ export function TriangleSolveScene({
         fontScale={fontScale}
         onDrag={(mathPos) => {
           if (onParamChange) {
-            const newAngle = Math.round(
-              Math.max(15, Math.min(150, Math.abs(mathPos.y) * 15 + 30)),
-            );
-            onParamChange("angleA", newAngle);
+            // 顶点纵向位置 → 内角 A，经声明域钳制与 1° 取整
+            const rawAngle = Math.abs(mathPos.y) * 15 + 30;
+            onParamChange("angleA", snapDragValue(rawAngle, 1, RANGE_ANGLE_A));
           }
         }}
       />

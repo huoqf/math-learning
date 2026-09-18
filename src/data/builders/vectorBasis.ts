@@ -6,6 +6,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "@/components/UI";
 
 export function buildVectorBasisPanel(
@@ -304,11 +305,122 @@ export function buildVectorBasisPanel(
     });
   }
 
+  // 推导链（P1-18）：① 符号表达式 → ② 代入解析式 → ③ 结果，逐模式给出
+  const reasoningSteps: ReasoningStep[] = [];
+
+  if (studyMode === "basisDecomp") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "定理建模 · 设待定分解系数",
+        detail:
+          "由平面向量基本定理，平面内任意向量 $\\vec{a}$ 在基底 $\\{\\vec{e}_1, \\vec{e}_2\\}$ 下分解唯一，设待定系数 $\\lambda, \\mu$。",
+        latex: "\\vec{a} = \\lambda \\vec{e}_1 + \\mu \\vec{e}_2",
+        rubric: "采分点：设出待定分解式（1分）",
+      },
+      {
+        step: 2,
+        title: "坐标对应 · 转二元一次方程组",
+        detail: `比较横纵坐标，得到关于 $\\lambda, \\mu$ 的二元一次方程组；其系数行列式 $D = ${det.toFixed(2)}$。`,
+        latex: `\\begin{cases} ${e1.x.toFixed(1)}\\lambda + ${e2.x.toFixed(1)}\\mu = ${target.x.toFixed(1)} \\\\ ${e1.y.toFixed(1)}\\lambda + ${e2.y.toFixed(1)}\\mu = ${target.y.toFixed(1)} \\end{cases}`,
+        rubric: "采分点：坐标对应建立方程组（2分）",
+      },
+      {
+        step: 3,
+        title: "回代验证 · 唯一性判据",
+        detail: isCollinear
+          ? "基底共线（$D = 0$），分解系数不唯一，方程组无解或有无穷多解，向量无法唯一分解。"
+          : `解得 $\\lambda = ${lambda.toFixed(3)}$、$\\mu = ${mu.toFixed(3)}$；因 $D \\neq 0$，分解唯一。回代得 $(${lambda.toFixed(3)})\\vec{e}_1 + (${mu.toFixed(3)})\\vec{e}_2 = (${target.x.toFixed(1)}, ${target.y.toFixed(1)})$。`,
+        latex: `\\vec{a} = ${lambda.toFixed(3)}\\vec{e}_1 + ${mu.toFixed(3)}\\vec{e}_2`,
+        rubric: "采分点：解方程组并回代验证（3分）",
+      },
+    );
+  } else if (studyMode === "orthogonal") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "正交基底 · 投影系数即坐标",
+        detail:
+          "在标准正交基底 $\\{\\vec{e}_1', \\vec{e}_2'\\}$ 下，分解系数等于向量在两条轴上的正交投影。",
+        latex:
+          "\\vec{a} = (\\vec{a}\\cdot\\vec{e}_1')\\vec{e}_1' + (\\vec{a}\\cdot\\vec{e}_2')\\vec{e}_2'",
+        rubric: "采分点：写出正交分解式（2分）",
+      },
+      {
+        step: 2,
+        title: "代入求投影系数",
+        detail: `投影系数 $x' = ${orthoLambda.toFixed(3)}$、$y' = ${orthoMu.toFixed(3)}$。`,
+        latex: `\\vec{a} = ${orthoLambda.toFixed(3)}\\vec{e}_1' + ${orthoMu.toFixed(3)}\\vec{e}_2'`,
+        rubric: "采分点：代值求正交投影系数（2分）",
+      },
+      {
+        step: 3,
+        title: "勾股验证 · 模长平方守恒",
+        detail: `正交基底下模长满足勾股定理：$x'^2 + y'^2 = ${(orthoLambda ** 2 + orthoMu ** 2).toFixed(2)}$，与直接计算 $|\\vec{a}|^2 = ${(modTarget ** 2).toFixed(2)}$ 一致。`,
+        latex: `x'^2 + y'^2 = (${orthoLambda.toFixed(3)})^2 + (${orthoMu.toFixed(3)})^2 = ${(orthoLambda ** 2 + orthoMu ** 2).toFixed(2)}`,
+        rubric: "采分点：勾股定理回代校验（2分）",
+      },
+    );
+  } else if (studyMode === "collinear") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "等系数线 · 基底分解式",
+        detail:
+          "取基准点 $O$，把动点向量 $\\vec{OP}$ 用两条定向量 $\\vec{OA}, \\vec{OB}$ 分解。",
+        latex: "\\vec{OP} = x\\vec{OA} + y\\vec{OB}",
+        rubric: "采分点：写出基底分解式（1分）",
+      },
+      {
+        step: 2,
+        title: "计算两系数之和",
+        detail: `代入权重 $x = ${(params.xCoeff ?? 0.4).toFixed(2)}$、$y = ${(params.yCoeff ?? 0.6).toFixed(2)}$，得 $x + y = ${sumCoeff.toFixed(2)}$。`,
+        latex: `x + y = ${(params.xCoeff ?? 0.4).toFixed(2)} + ${(params.yCoeff ?? 0.6).toFixed(2)} = ${sumCoeff.toFixed(2)}`,
+        rubric: "采分点：计算两系数之和（2分）",
+      },
+      {
+        step: 3,
+        title: "共线判定 · 系数和定成败",
+        detail: isSumOne
+          ? `$x + y = 1$，故 $A, B, P$ 三点共线，$\\vec{OP}$ 的终点落在直线 $AB$ 上。`
+          : `$x + y = ${sumCoeff.toFixed(2)} \\neq 1$，$P$ 落在平行于 $AB$ 的等系数直线上，不与 $A, B$ 共线。`,
+        latex: `x + y = ${sumCoeff.toFixed(2)} \\;\\Rightarrow\\; A, B, P \\text{ 不共线判据：} x+y=1`,
+        rubric: "采分点：由系数和判定三点共线（3分）",
+      },
+    );
+  } else {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "爪子模型 · 分点向量分解",
+        detail:
+          "点 $P$ 在线段 $AB$ 上，由定比分点公式把 $\\vec{OP}$ 表示为两端点向量的凸组合。",
+        latex: "\\vec{OP} = (1-t)\\vec{OA} + t\\vec{OB}",
+        rubric: "采分点：写出分点向量公式（2分）",
+      },
+      {
+        step: 2,
+        title: "代入数值 · 中点与重心",
+        detail: `取 $t = ${(params.ratioT ?? 0.5).toFixed(2)}$，得内分点 $P(${divisionPoint.x.toFixed(1)}, ${divisionPoint.y.toFixed(1)})$；中点 $M = \\dfrac{1}{2}\\vec{OA} + \\dfrac{1}{2}\\vec{OB}$、重心 $G = \\dfrac{1}{3}\\vec{OA} + \\dfrac{1}{3}\\vec{OB}$ 均为 $t$ 的特殊取值。`,
+        latex: `\\vec{OP} = ${(1 - (params.ratioT ?? 0.5)).toFixed(2)}\\vec{OA} + ${(params.ratioT ?? 0.5).toFixed(2)}\\vec{OB}`,
+        rubric: "采分点：代值求分点坐标（2分）",
+      },
+      {
+        step: 3,
+        title: "系数和恒为 1 · 凸组合本质",
+        detail: `任意分点两系数和恒等于 $1$：$(1-t) + t = 1$，这正是「三点共线 ⟺ 系数和为 1」的根源。此处 $\\vec{OP} = ${(1 - (params.ratioT ?? 0.5)).toFixed(2)}\\vec{OA} + ${(params.ratioT ?? 0.5).toFixed(2)}\\vec{OB}$。`,
+        latex: `(1-t) + t = 1 \\;\\Rightarrow\\; \\vec{OM} = \\tfrac{1}{2}\\vec{OA} + \\tfrac{1}{2}\\vec{OB}`,
+        rubric: "采分点：说明系数和恒为 1 的几何意义（3分）",
+      },
+    );
+  }
+
   return {
     quantities,
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps,
     mnemonic: "基底不共线，分解唯一确定；等和定直线，正交最简捷。",
   };
 }

@@ -13,6 +13,8 @@ import {
   VectorArrow,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/trigIdentity";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
   calculateTrigIdentity,
@@ -187,11 +189,13 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
   };
 
   // Q(B, A) 点拖拽解算分子 A 和 B
+  // 合法拖拽区间 =「声明域 ±3 ∩ 可见视口」：本页可见 y 仅 ±1.548、可见 x 仅 ±2，
+  // 旧实现手写 ±3 钳制 ⇒ 纵向一拖 Q 就跑到画布外，且再也抓不回来。
+  const rangeHomoB = paramDragRange(paramMeta.homoB, scale, "x");
+  const rangeHomoA = paramDragRange(paramMeta.homoA, scale, "y");
   const handleQDrag = (rawMath: { x: number; y: number }) => {
-    const newB = Math.round(rawMath.x * 2) / 2;
-    const newA = Math.round(rawMath.y * 2) / 2;
-    onParamChange("homoB", Math.max(-3, Math.min(3, newB)));
-    onParamChange("homoA", Math.max(-3, Math.min(3, newA)));
+    onParamChange("homoB", snapDragValue(rawMath.x, 0.5, rangeHomoB));
+    onParamChange("homoA", snapDragValue(rawMath.y, 0.5, rangeHomoA));
   };
 
   // 单位圆半径 (像素)
@@ -209,6 +213,31 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
     const sweep = activeInd.betaDeg;
     return createAngleArcPath(centerPt, 0, sweep, r, Math.abs(sweep) > 360);
   }, [activeInd.betaDeg, centerPt, unitRadiusPx]);
+
+  // 公式六 π/2+α：终边 OP 绕原点逆时针旋转 90°（本质是**旋转**，不是轴对称），
+  // 中屏以「旋转弧 + 方向箭头 + 文字」呈现，绝不画任何"对称轴"。
+  const rotArc = useMemo(() => {
+    const r = Math.min(unitRadiusPx * 0.56, 72);
+    const path = createAngleArcPath(centerPt, alphaDeg, 90, r);
+    const endRad = ((alphaDeg + 90) * Math.PI) / 180;
+    const tipX = centerPt.x + r * Math.cos(endRad);
+    const tipY = centerPt.y - r * Math.sin(endRad);
+    // 逆时针（数学正方向）在设计坐标系（y 轴向下）下的单位切向量
+    const ux = -Math.sin(endRad);
+    const uy = -Math.cos(endRad);
+    const backX = tipX - ux * 9;
+    const backY = tipY - uy * 9;
+    const nx = -uy;
+    const ny = ux;
+    const head = `${tipX},${tipY} ${backX + nx * 4.5},${backY + ny * 4.5} ${backX - nx * 4.5},${backY - ny * 4.5}`;
+    const midRad = ((alphaDeg + 45) * Math.PI) / 180;
+    return {
+      path,
+      head,
+      labelX: centerPt.x + (r + 16) * Math.cos(midRad),
+      labelY: centerPt.y - (r + 16) * Math.sin(midRad),
+    };
+  }, [alphaDeg, centerPt, unitRadiusPx]);
 
   // 判定 P 与 P' 是否近乎重合 (欧氏距离 < 24px)
   const isPCoincide = useMemo(() => {
@@ -467,6 +496,8 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 cy={homoA}
                 scale={scale}
                 vp={vp}
+                xRange={rangeHomoB}
+                yRange={rangeHomoA}
                 onDrag={handleQDrag}
                 fontScale={fontScale}
                 color={MATH_COLORS.secondary}
@@ -576,8 +607,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 />
               )}
 
-              {(activeInd.symmetryType === "diag_pos" ||
-                (activeInd.kValue === 1 && activeInd.isOdd)) && (
+              {activeInd.symmetryType === "diag_pos" && (
                 <>
                   <line
                     x1={mathToDesign(-1.5, -1.5, scale).x}
@@ -600,17 +630,29 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 </>
               )}
 
-              {activeInd.symmetryType === "diag_neg" && (
+              {activeInd.symmetryType === "rotate90" && (
                 <>
-                  <line
-                    x1={mathToDesign(-1.5, 1.5, scale).x}
-                    y1={mathToDesign(-1.5, 1.5, scale).y}
-                    x2={mathToDesign(1.5, -1.5, scale).x}
-                    y2={mathToDesign(1.5, -1.5, scale).y}
+                  {/* 逆时针旋转 90° 的方向弧 + 箭头（该变换本质是旋转，不存在固定对称轴） */}
+                  <path
+                    d={rotArc.path}
+                    fill="none"
                     stroke={MATH_COLORS.secondary}
-                    strokeWidth={1.5}
-                    strokeDasharray="4 4"
+                    strokeWidth={2}
+                    strokeDasharray="5 3"
                   />
+                  <polygon points={rotArc.head} fill={MATH_COLORS.secondary} />
+                  <text
+                    x={rotArc.labelX}
+                    y={rotArc.labelY}
+                    fill={MATH_COLORS.secondary}
+                    fontSize={fontScale(11)}
+                    fontWeight="bold"
+                    textAnchor="middle"
+                    className="select-none pointer-events-none"
+                  >
+                    逆时针 90°
+                  </text>
+                  {/* 弦 PP'：仅作辅助连线，绝非对称轴 */}
                   <line
                     x1={pDesign.x}
                     y1={pDesign.y}

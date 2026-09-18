@@ -40,3 +40,36 @@ export function formatSignedTerm(
   const sign = coeff < 0 ? "- " : "+ ";
   return `${sign}${coeffStr}${variable}`;
 }
+
+/**
+ * 把「π 的分数倍」格式化为高中通行写法；若该数值不是 π 的（分母 ≤ maxDenominator 的）分数倍则返回 null。
+ *
+ * 用途：中屏/右屏的角刻度与不等式通解集。
+ * 反面示例：`0.17π` 表示 `sin x > 0.5` 的解 `π/6`（真值为 `π/6`，写成 0.17π 属于形式漏解）。
+ * 正例：0 -> "0"，Math.PI/6 -> "π/6"，-3*Math.PI/2 -> "-3π/2"，2*Math.PI -> "2π"，1.234 -> null
+ */
+export function formatPiFraction(
+  x: number,
+  maxDenominator = 12,
+): string | null {
+  if (!Number.isFinite(x)) return null;
+  if (Math.abs(x) < 1e-9) return "0";
+
+  for (let d = 1; d <= maxDenominator; d++) {
+    const k = Math.round((x * d) / Math.PI);
+    if (k === 0) continue;
+    if (Math.abs((k * Math.PI) / d - x) < 1e-9) {
+      const g = gcd(Math.abs(k), d);
+      const num = Math.abs(k) / g;
+      const den = d / g;
+      const sign = k < 0 ? "-" : "";
+      if (den === 1) return `${sign}${num === 1 ? "" : num}π`;
+      return `${sign}${num === 1 ? "" : num}π/${den}`;
+    }
+  }
+  return null;
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}

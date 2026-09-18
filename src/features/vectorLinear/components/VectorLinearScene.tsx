@@ -6,12 +6,30 @@ import {
 } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import {
+  paramDomainRange,
+  paramDragRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
 import type { SceneScale } from "@/hooks";
 import type { ViewportInfo } from "@/utils/useViewport";
+import { paramMeta } from "@/data/registries/vectorLinear";
 import {
   computeVectorLinear,
   type VectorLinearParams,
 } from "@/math/vectorLinear";
+
+/**
+ * 拖拽钳制区间（SSOT 见 utils/paramClamp）。
+ *
+ * 以前这些界限是写死在回调里的 `Math.max(-5, Math.min(5, …))`：
+ * 与 paramMeta 只是"恰好同值"，一旦改滑块量程就会立刻脱节；
+ * 而且 ±5 的纵坐标其实已经在可见 y（±4.64）之外，点会被拖出画布。
+ * 现统一改成「声明域 ∩ 可见视口」，由 utils/paramClamp 求交。
+ * 其中 xCoeff / yCoeff 是分解**系数**（与屏幕坐标不同轴），只守声明域。
+ */
+const RANGE_COEFF = paramDomainRange(paramMeta.xCoeff);
+const RANGE_COEFF_Y = paramDomainRange(paramMeta.yCoeff);
 
 // 计算垂直于向量方向的屏幕法向偏移量 (彻底避免共线向量标签相撞)
 function getNormalOffset(
@@ -88,10 +106,18 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
   );
   const targetVDesign = mathToDesign(targetVecV.x, targetVecV.y, scale);
 
+  // 合法拖拽区间 =「参数声明域 ∩ 中屏可见视口」
+  const rangeXa = paramDragRange(paramMeta.xa, scale, "x");
+  const rangeYa = paramDragRange(paramMeta.ya, scale, "y");
+  const rangeXb = paramDragRange(paramMeta.xb, scale, "x");
+  const rangeYb = paramDragRange(paramMeta.yb, scale, "y");
+  const rangeXv = paramDragRange(paramMeta.xv, scale, "x");
+  const rangeYv = paramDragRange(paramMeta.yv, scale, "y");
+
   // 拖拽 A 点 (数学坐标)
   const handleDragPointA = (pt: { x: number; y: number }) => {
-    const roundX = Math.max(-5, Math.min(5, Math.round(pt.x * 2) / 2));
-    const roundY = Math.max(-5, Math.min(5, Math.round(pt.y * 2) / 2));
+    const roundX = snapDragValue(pt.x, 0.5, rangeXa);
+    const roundY = snapDragValue(pt.y, 0.5, rangeYa);
     if (onBatchParamsChange) {
       onBatchParamsChange({ xa: roundX, ya: roundY });
     } else {
@@ -102,8 +128,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
 
   // 拖拽 B 点 (数学坐标)
   const handleDragPointB = (pt: { x: number; y: number }) => {
-    const roundX = Math.max(-5, Math.min(5, Math.round(pt.x * 2) / 2));
-    const roundY = Math.max(-5, Math.min(5, Math.round(pt.y * 2) / 2));
+    const roundX = snapDragValue(pt.x, 0.5, rangeXb);
+    const roundY = snapDragValue(pt.y, 0.5, rangeYb);
     if (onBatchParamsChange) {
       onBatchParamsChange({ xb: roundX, yb: roundY });
     } else {
@@ -123,8 +149,9 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
         const acX = pt.x - a.x;
         const acY = pt.y - a.y;
         const t = Math.max(-1, Math.min(2, (acX * abX + acY * abY) / lenSq));
-        const roundY = Math.round(t * 20) / 20; // 0.05 步长
-        const roundX = Math.round((1 - roundY) * 100) / 100;
+        const roundY = snapDragValue(t, 0.05, RANGE_COEFF_Y);
+        // 共线约束 x + y = 1：x 由 y 反解，再统一钳制到系数声明域（SSOT）
+        const roundX = snapDragValue(1 - roundY, 0.05, RANGE_COEFF);
         if (onBatchParamsChange) {
           onBatchParamsChange({ xCoeff: roundX, yCoeff: roundY });
         } else {
@@ -138,8 +165,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
       if (Math.abs(det) > 1e-4) {
         const rawX = (pt.x * b.y - pt.y * b.x) / det;
         const rawY = (a.x * pt.y - a.y * pt.x) / det;
-        const clampX = Math.max(-1, Math.min(2, Math.round(rawX * 20) / 20));
-        const clampY = Math.max(-1, Math.min(2, Math.round(rawY * 20) / 20));
+        const clampX = snapDragValue(rawX, 0.05, RANGE_COEFF);
+        const clampY = snapDragValue(rawY, 0.05, RANGE_COEFF_Y);
         if (onBatchParamsChange) {
           onBatchParamsChange({ xCoeff: clampX, yCoeff: clampY });
         } else {
@@ -152,8 +179,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
 
   // 模式三拖拽目标向量 V (数学坐标)
   const handleDragPointV = (pt: { x: number; y: number }) => {
-    const roundX = Math.max(-5, Math.min(5, Math.round(pt.x * 2) / 2));
-    const roundY = Math.max(-5, Math.min(5, Math.round(pt.y * 2) / 2));
+    const roundX = snapDragValue(pt.x, 0.5, rangeXv);
+    const roundY = snapDragValue(pt.y, 0.5, rangeYv);
     if (onBatchParamsChange) {
       onBatchParamsChange({ xv: roundX, yv: roundY });
     } else {
@@ -285,6 +312,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             cy={a.y}
             scale={scale}
             vp={vp}
+            xRange={rangeXa}
+            yRange={rangeYa}
             onDrag={handleDragPointA}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
@@ -295,6 +324,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             cy={b.y}
             scale={scale}
             vp={vp}
+            xRange={rangeXb}
+            yRange={rangeYb}
             onDrag={handleDragPointB}
             color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
@@ -425,6 +456,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             cy={a.y}
             scale={scale}
             vp={vp}
+            xRange={rangeXa}
+            yRange={rangeYa}
             onDrag={handleDragPointA}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
@@ -435,11 +468,15 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             cy={b.y}
             scale={scale}
             vp={vp}
+            xRange={rangeXb}
+            yRange={rangeYb}
             onDrag={handleDragPointB}
             color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
             label="B"
           />
+          {/* C 的平面位置由分解系数 (x, y) 合成，与屏幕坐标不同轴：
+              故不传 xRange/yRange，钳制在 handleDragPointC 内按系数声明域完成 */}
           <InteractivePoint
             cx={pointC.x}
             cy={pointC.y}
@@ -598,6 +635,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             cy={a.y}
             scale={scale}
             vp={vp}
+            xRange={rangeXa}
+            yRange={rangeYa}
             onDrag={handleDragPointA}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
@@ -608,6 +647,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             cy={b.y}
             scale={scale}
             vp={vp}
+            xRange={rangeXb}
+            yRange={rangeYb}
             onDrag={handleDragPointB}
             color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
@@ -618,6 +659,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             cy={targetVecV.y}
             scale={scale}
             vp={vp}
+            xRange={rangeXv}
+            yRange={rangeYv}
             onDrag={handleDragPointV}
             color={MATH_COLORS.paramTertiary}
             fontScale={fontScale}

@@ -119,6 +119,29 @@ export function buildComplexPanel(
         },
       ],
       warnings,
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "代数表示 · 复数写成 a + bi",
+          detail: `由复数的代数形式，$z_1 = ${formatComplexLatex(z1)}$、$z_2 = ${formatComplexLatex(z2)}$，对应复平面上的点 $Z_1(${a1}, ${b1})$、$Z_2(${a2}, ${b2})$。`,
+          latex: `z_1 = ${a1} + ${b1}i, \\quad z_2 = ${a2} + ${b2}i`,
+          rubric: "采分点：写出两复数的代数形式（1分）",
+        },
+        {
+          step: 2,
+          title: "加减运算 · 实虚部分别合并",
+          detail: `实部与实部、虚部与虚部分别相加：$z_1 + z_2 = (${a1} + ${a2}) + (${b1} + ${b2})i = ${formatComplexLatex(zSum)}$；相减同理。`,
+          latex: `z_1 + z_2 = (${a1} + ${a2}) + (${b1} + ${b2})i = ${formatComplexLatex(zSum)}`,
+          rubric: "采分点：按实虚部合并求复数加法（2分）",
+        },
+        {
+          step: 3,
+          title: "几何意义 · 差模长即两点距离",
+          detail: `$z_1 - z_2$ 对应向量 $\\vec{Z_2 Z_1}$，其模长为两点欧氏距离 $|z_1 - z_2| = ${dist.toFixed(2)}$；由勾股关系，$|z_1| = ${mod1.toFixed(2)}$。`,
+          latex: `|z_1 - z_2| = \\sqrt{(${a1 - a2})^2 + (${b1 - b2})^2} = ${dist.toFixed(2)}`,
+          rubric: "采分点：用模长公式求两点距离（3分）",
+        },
+      ],
       mnemonic: "实部对实部，虚部对虚部；减法求距离，平行四边形。",
     };
   }
@@ -217,6 +240,29 @@ export function buildComplexPanel(
         },
       ],
       warnings,
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "化为三角形式",
+          detail: `把两复数写成模长与辐角形式：$z_1$ 的模 $r_1 = ${r1.toFixed(1)}$、辐角 $\\theta_1 = ${deg1}^\\circ$；$z_2$ 的模 $r_2 = ${r2.toFixed(1)}$、辐角 $\\theta_2 = ${deg2}^\\circ$。`,
+          latex: `z_1 = ${r1.toFixed(1)}\\left(\\cos ${deg1}^\\circ + i\\sin ${deg1}^\\circ\\right), \\quad z_2 = ${r2.toFixed(1)}\\left(\\cos ${deg2}^\\circ + i\\sin ${deg2}^\\circ\\right)`,
+          rubric: "采分点：写出两复数的三角形式（2分）",
+        },
+        {
+          step: 2,
+          title: "乘法法则 · 模长相乘角相加",
+          detail: `模长相乘、辐角相加：$|z_1 z_2| = r_1 r_2 = ${r1.toFixed(1)} \\times ${r2.toFixed(1)} = ${prodMod.toFixed(2)}$，$\\arg(z_1 z_2) = \\theta_1 + \\theta_2 = ${deg1}^\\circ + ${deg2}^\\circ = ${deg1 + deg2}^\\circ$。`,
+          latex: `z_1 z_2 = ${r1.toFixed(1)} \\times ${r2.toFixed(1)}\\left[\\cos(${deg1}^\\circ + ${deg2}^\\circ) + i\\sin(${deg1}^\\circ + ${deg2}^\\circ)\\right]`,
+          rubric: "采分点：用乘法法则求模长与辐角（3分）",
+        },
+        {
+          step: 3,
+          title: "几何解释 · 一次旋转伸缩",
+          detail: `乘 $z_2$ 相当于把 $z_1$ 绕原点逆时针旋转 $${deg2}^\\circ$、模长伸缩为原来的 $${r2.toFixed(1)}$ 倍，得 $z_1 z_2 = ${formatComplexLatex(zProd)}$。图中显示的主辐角 $${prodArgDeg.toFixed(1)}^\\circ$ 与 $${deg1 + deg2}^\\circ$ 相差 $2k\\pi$，二者表征同一终边。`,
+          latex: `|z_1 z_2| = ${prodMod.toFixed(2)}, \\quad \\arg(z_1 z_2) = ${deg1 + deg2}^\\circ + 2k\\pi`,
+          rubric: "采分点：说明乘法的旋转伸缩几何意义（2分）",
+        },
+      ],
       mnemonic:
         "乘法几何真神奇，模长相乘角相加；乘以虚数单位 i，逆转直角九十度。",
     };
@@ -285,6 +331,31 @@ export function buildComplexPanel(
             },
           ]
         : [],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "条件翻译 · 等距方程",
+          detail: `$|z - z_1| = |z - z_2|$ 表示动点 $z$ 到两定点 $z_1 = ${formatComplexLatex(z1)}$、$z_2 = ${formatComplexLatex(z2)}$ 的距离相等。`,
+          latex: "|z - z_1| = |z - z_2|",
+          rubric: "采分点：把复数等式翻译为等距条件（2分）",
+        },
+        {
+          step: 2,
+          title: "几何定位 · 求中点",
+          detail: `到两定点距离相等的点集是线段 $Z_1 Z_2$ 的垂直平分线，垂足即中点 $M = \\dfrac{z_1 + z_2}{2} = ${formatComplexLatex(bisector.midPoint)}$，两点距离 $|z_1 - z_2| = ${bisector.dist.toFixed(2)}$。`,
+          latex: `M = \\frac{z_1 + z_2}{2} = ${formatComplexLatex(bisector.midPoint)}`,
+          rubric: "采分点：求中点坐标（2分）",
+        },
+        {
+          step: 3,
+          title: "写出轨迹 · 垂线方程",
+          detail: bisector.valid
+            ? `直线 $Z_1 Z_2$ 的斜率 $k = \\dfrac{${b2} - ${b1}}{${a2} - ${a1}}$，垂直平分线斜率满足 $k' \\cdot k = -1$，过中点 $M$ 即得轨迹方程。`
+            : "两定点重合（$z_1 = z_2$），等距条件退化为全平面，不存在唯一直线轨迹。",
+          latex: `k_{Z_1 Z_2} = \\frac{${b2} - ${b1}}{${a2} - ${a1}}, \\quad k_{\\perp} \\cdot k_{Z_1 Z_2} = -1`,
+          rubric: "采分点：由垂直关系写出轨迹直线方程（3分）",
+        },
+      ],
       mnemonic: "等距方程中垂线，找准中点定法向。",
     };
   }

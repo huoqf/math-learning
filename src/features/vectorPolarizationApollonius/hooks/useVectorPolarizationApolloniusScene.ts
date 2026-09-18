@@ -7,11 +7,19 @@ import { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { mathToDesign } from "@/utils/coordinate";
 import {
+  paramDomainRange,
+  paramDragRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
+import {
   calcPolarizationIdentity,
   calcApolloniusCircle,
   calcCombinedModel,
 } from "@/math/vectorPolarizationApollonius";
-import type { VectorPolarizationApolloniusParams } from "@/data/registries/vectorPolarizationApollonius";
+import {
+  paramMeta,
+  type VectorPolarizationApolloniusParams,
+} from "@/data/registries/vectorPolarizationApollonius";
 
 interface UseVectorPolarizationApolloniusSceneProps {
   params: VectorPolarizationApolloniusParams;
@@ -41,10 +49,23 @@ export function useVectorPolarizationApolloniusScene({
     return calcCombinedModel(bcLength, lambda, pointAngle);
   }, [bcLength, lambda, pointAngle]);
 
+  // 合法拖拽区间 =「参数声明域 ∩ 中屏可见视口」（SSOT 见 utils/paramClamp）：
+  // 旧实现直接回写四舍五入后的坐标，绕过声明域，A 点可被拖到 pointX ∈ [−8, 8] / pointY ∈ [−6, 6] 之外。
+  const rangePointX = useMemo(
+    () => paramDragRange(paramMeta.pointX, scale, "x"),
+    [scale],
+  );
+  const rangePointY = useMemo(
+    () => paramDragRange(paramMeta.pointY, scale, "y"),
+    [scale],
+  );
+  // P 被约束在阿氏圆轨道上，角度是纯参数（非平面坐标），只守声明域 [0°, 360°]
+  const rangeAngle = useMemo(() => paramDomainRange(paramMeta.pointAngle), []);
+
   // 2. 拖拽回调 (反向求解参数，铁律 7)
   const handlePointADrag = (newX: number, newY: number) => {
-    onParamChange("pointX", Math.round(newX * 10) / 10);
-    onParamChange("pointY", Math.round(newY * 10) / 10);
+    onParamChange("pointX", snapDragValue(newX, 0.1, rangePointX));
+    onParamChange("pointY", snapDragValue(newY, 0.1, rangePointY));
   };
 
   const handlePointPDrag = (newX: number, newY: number) => {
@@ -55,12 +76,12 @@ export function useVectorPolarizationApolloniusScene({
         const ratio = Math.max(-1, Math.min(1, newY / 4.5));
         let deg = Math.round((Math.asin(ratio) * 180) / Math.PI);
         if (deg < 0) deg += 360;
-        onParamChange("pointAngle", deg);
+        onParamChange("pointAngle", snapDragValue(deg, 1, rangeAngle));
       } else {
         let rad = Math.atan2(newY - centerO.y, newX - centerO.x);
         let deg = Math.round((rad * 180) / Math.PI);
         if (deg < 0) deg += 360;
-        onParamChange("pointAngle", deg);
+        onParamChange("pointAngle", snapDragValue(deg, 1, rangeAngle));
       }
     }
   };
@@ -153,5 +174,7 @@ export function useVectorPolarizationApolloniusScene({
     designApoA,
     designApoB,
     designRadius,
+    rangePointX,
+    rangePointY,
   };
 }

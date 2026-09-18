@@ -9,8 +9,13 @@ import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { InteractivePoint, MathPoint, VectorArrow } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDomainRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/trigLines";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateComparisonAreas } from "../math/trigLines";
+
+/** 放缩角 α 的声明域 [5°, 85°]（模块级：区间恒定，无需每帧重建） */
+const RANGE_COMP_ALPHA = paramDomainRange(paramMeta.compAlphaDeg);
 
 interface TrigLinesComparisonSceneProps {
   params: {
@@ -81,8 +86,16 @@ export const TrigLinesComparisonScene: React.FC<
       Math.max(0.01, rawMath.y),
       Math.max(0.01, rawMath.x),
     );
-    const deg = Math.max(5, Math.min(85, Math.round((rad * 180) / Math.PI)));
+    // 角度守声明域 [5°, 85°]（SSOT 见 utils/paramClamp）：面积放缩链只在锐角副区间成立，
+    // 越界会让 sin x < x < tan x 的图元次序崩掉。动点恒在单位圆上，无需平面钳制。
+    const deg = snapDragValue((rad * 180) / Math.PI, 1, RANGE_COMP_ALPHA);
     onParamChange("compAlphaDeg", deg);
+  };
+
+  // 柱状图宽度：以最大面积 (△OAT) 为基准等比缩放，避免大角度下端值饱和造成的 S₃ ≈ S₄ 失真
+  const barWidth = (area: number) => {
+    const maxArea = Math.max(compData.areas.triangleOAT, 1e-6);
+    return Math.max(4, Math.min(62, (62 * area) / maxArea));
   };
 
   return (
@@ -102,6 +115,15 @@ export const TrigLinesComparisonScene: React.FC<
         fill={withAlpha(MATH_COLORS.function, 0.18)}
         stroke={MATH_COLORS.function}
         strokeWidth={2}
+      />
+
+      {/* 2.5 三角形 OAP（放缩链的中间项，面积 = ½·sin x，与柱状图 S₂ 同色） */}
+      <polygon
+        points={`${centerPt.x},${centerPt.y} ${aDesign.x},${aDesign.y} ${compData.pDes.x},${compData.pDes.y}`}
+        fill={withAlpha(MATH_COLORS.paramSecondary, 0.14)}
+        stroke={MATH_COLORS.paramSecondary}
+        strokeWidth={1.5}
+        strokeDasharray="6 3"
       />
 
       {/* 3. 小直角三角形 OMP 填充 */}
@@ -308,7 +330,7 @@ export const TrigLinesComparisonScene: React.FC<
         </text>
       </g>
 
-      {/* 面积比较三阶柱状图挂件（放置于第二象限开阔安全区，彻底避开坐标轴与单位圆） */}
+      {/* 面积比较四阶柱状图挂件（放置于第二象限开阔安全区，彻底避开坐标轴与单位圆） */}
       <g
         transform={`translate(${centerPt.x - unitRadiusPx - 100}, ${centerPt.y - unitRadiusPx + 15})`}
       >
@@ -316,7 +338,7 @@ export const TrigLinesComparisonScene: React.FC<
           x={0}
           y={0}
           width={188}
-          height={108}
+          height={134}
           rx={6}
           fill={withAlpha(MATH_COLORS.white, 0.96)}
           stroke={withAlpha(MATH_COLORS.axis, 0.3)}
@@ -329,61 +351,93 @@ export const TrigLinesComparisonScene: React.FC<
           fontSize={fontScale(10)}
           fontWeight="bold"
         >
-          面积三阶包含关系 S₁ &lt; S₂ &lt; S₃
+          面积四阶包含 S₁ &lt; S₂ &lt; S₃ &lt; S₄
         </text>
 
         {/* S1: △OMP */}
         <text
           x={10}
-          y={38}
+          y={36}
           fill={MATH_COLORS.paramPrimary}
-          fontSize={fontScale(9)}
+          fontSize={fontScale(8.5)}
         >
           S₁ (△OMP) = {compData.areas.triangleOMP.toFixed(3)}
         </text>
         <rect
-          x={116}
-          y={29}
-          width={Math.max(4, Math.min(60, compData.areas.triangleOMP * 80))}
-          height={9}
+          x={112}
+          y={27}
+          width={barWidth(compData.areas.triangleOMP)}
+          height={8}
           rx={2}
           fill={MATH_COLORS.paramPrimary}
         />
 
-        {/* S2: 扇形 OAP */}
-        <text x={10} y={58} fill={MATH_COLORS.function} fontSize={fontScale(9)}>
-          S₂ (扇形) = {compData.areas.sectorOAP.toFixed(3)}
+        {/* S2: △OAP */}
+        <text
+          x={10}
+          y={53}
+          fill={MATH_COLORS.paramSecondary}
+          fontSize={fontScale(8.5)}
+        >
+          S₂ (△OAP) = {compData.areas.triangleOAP.toFixed(3)}
         </text>
         <rect
-          x={116}
-          y={49}
-          width={Math.max(4, Math.min(60, compData.areas.sectorOAP * 80))}
-          height={9}
+          x={112}
+          y={44}
+          width={barWidth(compData.areas.triangleOAP)}
+          height={8}
+          rx={2}
+          fill={MATH_COLORS.paramSecondary}
+        />
+
+        {/* S3: 扇形 OAP */}
+        <text
+          x={10}
+          y={70}
+          fill={MATH_COLORS.function}
+          fontSize={fontScale(8.5)}
+        >
+          S₃ (扇形) = {compData.areas.sectorOAP.toFixed(3)}
+        </text>
+        <rect
+          x={112}
+          y={61}
+          width={barWidth(compData.areas.sectorOAP)}
+          height={8}
           rx={2}
           fill={MATH_COLORS.function}
         />
 
-        {/* S3: △OAT */}
+        {/* S4: △OAT */}
         <text
           x={10}
-          y={78}
+          y={87}
           fill={MATH_COLORS.paramTertiary}
-          fontSize={fontScale(9)}
+          fontSize={fontScale(8.5)}
         >
-          S₃ (△OAT) = {compData.areas.triangleOAT.toFixed(3)}
+          S₄ (△OAT) = {compData.areas.triangleOAT.toFixed(3)}
         </text>
         <rect
-          x={116}
-          y={69}
-          width={Math.max(4, Math.min(60, compData.areas.triangleOAT * 80))}
-          height={9}
+          x={112}
+          y={78}
+          width={barWidth(compData.areas.triangleOAT)}
+          height={8}
           rx={2}
           fill={MATH_COLORS.paramTertiary}
         />
 
         <text
           x={10}
-          y={98}
+          y={104}
+          fill={MATH_COLORS.labelTextLight}
+          fontSize={fontScale(8.5)}
+        >
+          同除以 ½ 得 sin x·cos x &lt; sin x &lt; x &lt; tan x
+        </text>
+
+        <text
+          x={10}
+          y={122}
           fill={MATH_COLORS.paramPrimary}
           fontSize={fontScale(9.5)}
           fontWeight="bold"

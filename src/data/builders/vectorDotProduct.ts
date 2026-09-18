@@ -6,6 +6,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "@/components/UI";
 import { MATH_COLORS } from "@/theme";
 
@@ -242,7 +243,7 @@ export function buildVectorDotProductPanel(
       importance: "gaokao",
     },
     {
-      text: "易错点辨析：a·b = 0 是 a ⊥ b 的充分不必要条件 (需排除零向量)。a ⊥ b 充要条件为 x1x2 + y1y2 = 0；而 a // b 充要条件为 x1y2 - x2y1 = 0，严禁记混！",
+      text: "易错点辨析：a·b = 0 是 a ⊥ b 的必要不充分条件。a ⊥ b 时必有 a·b = 0；但反过来 a·b = 0 不能推出 a ⊥ b (零向量与任意向量的数量积都是 0，而零向量方向不定)，故必须先排除零向量。对非零向量 a、b，a ⊥ b 充要条件为 x1x2 + y1y2 = 0；而 a // b 充要条件为 x1y2 - x2y1 = 0，严禁记混！",
       importance: "gaokao",
     },
     {
@@ -273,11 +274,93 @@ export function buildVectorDotProductPanel(
     });
   }
 
+  // 推导链（P1-18）：① 符号表达式 → ② 代入解析式 → ③ 结果，逐模式给出
+  const reasoningSteps: ReasoningStep[] = [];
+
+  if (studyMode === "defProj") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "定义入手 · 数量积的模角形式",
+        detail: "写出数量积的几何定义：两向量模长与夹角余弦之积。",
+        latex: "\\vec{a} \\cdot \\vec{b} = |\\vec{a}||\\vec{b}|\\cos\\theta",
+        rubric: "采分点：写出数量积定义式（1分）",
+      },
+      {
+        step: 2,
+        title: "代入数据 · 模长乘余弦",
+        detail: `代入 $|\\vec{a}| = ${normA.toFixed(2)}$、$|\\vec{b}| = ${normB.toFixed(2)}$、$\\cos\\theta = ${cosTheta.toFixed(3)}$（夹角 $${angleDeg.toFixed(1)}^\\circ$）。`,
+        latex: `\\vec{a} \\cdot \\vec{b} = ${normA.toFixed(2)} \\times ${normB.toFixed(2)} \\times ${cosTheta.toFixed(3)} = ${dotProduct.toFixed(2)}`,
+        rubric: "采分点：代入模长与夹角余弦算出数量积（2分）",
+      },
+      {
+        step: 3,
+        title: "投影降维 · 标量与矢量分清",
+        detail: `投影数量是带正负的标量 $|\\vec{b}|\\cos\\theta = \\dfrac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}|} = ${scalarProjBtoA.toFixed(2)}$；投影向量与 $\\vec{a}$ 共线，为 $\\dfrac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}|^2}\\vec{a} = (${projVecBtoA.x.toFixed(2)}, ${projVecBtoA.y.toFixed(2)})$。`,
+        latex: `|\\vec{b}|\\cos\\theta = \\frac{${dotProduct.toFixed(2)}}{${normA.toFixed(2)}} = ${scalarProjBtoA.toFixed(2)}`,
+        rubric: "采分点：区分投影数量（标量）与投影向量（矢量）（3分）",
+      },
+    );
+  } else if (studyMode === "properties") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "平方展开 · 模长与数量积的桥梁",
+        detail:
+          "把和（差）向量的模长平方写成自身数量积展开，沟通模长与数量积。",
+        latex:
+          "|\\vec{a} \\pm \\vec{b}|^2 = |\\vec{a}|^2 \\pm 2\\vec{a}\\cdot\\vec{b} + |\\vec{b}|^2",
+        rubric: "采分点：写出模长平方展开式（2分）",
+      },
+      {
+        step: 2,
+        title: "代入分量 · 和差模长齐算",
+        detail: `代入 $|\\vec{a}|^2 = ${normA2.toFixed(2)}$、$|\\vec{b}|^2 = ${normB2.toFixed(2)}$、$\\vec{a}\\cdot\\vec{b} = ${dotProduct.toFixed(2)}$，得 $|\\vec{a}+\\vec{b}| = ${normSum.toFixed(2)}$、$|\\vec{a}-\\vec{b}| = ${normDiff.toFixed(2)}$。`,
+        latex: `|\\vec{a}+\\vec{b}|^2 = ${normA2.toFixed(2)} + 2\\times${dotProduct.toFixed(2)} + ${normB2.toFixed(2)} = ${normSum2.toFixed(2)}`,
+        rubric: "采分点：代值算出和向量模长平方（2分）",
+      },
+      {
+        step: 3,
+        title: "垂直判定 · 数量积归零检验",
+        detail: `垂直的充要条件是数量积为 $0$。此处坐标计算 $x_1x_2 + y_1y_2 = ${dotProduct.toFixed(2)}$，故两向量${isPerpendicular ? "垂直" : "不垂直"}。`,
+        latex: `x_1 x_2 + y_1 y_2 = ${dotProduct.toFixed(2)}`,
+        rubric: "采分点：用数量积为零判定垂直（2分）",
+      },
+    );
+  } else {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "极化拆分 · 平行四边形展开",
+        detail:
+          "把双向量数量积改写成和、差向量模长平方之差，配 $\\dfrac14$ 系数。",
+        latex:
+          "\\vec{OA}\\cdot\\vec{OB} = \\frac{1}{4}\\left(|\\vec{OA}+\\vec{OB}|^2 - |\\vec{OA}-\\vec{OB}|^2\\right)",
+        rubric: "采分点：写出极化恒等式（2分）",
+      },
+      {
+        step: 2,
+        title: "代入模方 · 和差平方作差",
+        detail: `代入 $|\\vec{OA}+\\vec{OB}|^2 = ${normSum2.toFixed(2)}$、$|\\vec{OA}-\\vec{OB}|^2 = ${normDiff2.toFixed(2)}$。`,
+        latex: `\\vec{OA}\\cdot\\vec{OB} = \\frac{1}{4}(${normSum2.toFixed(2)} - ${normDiff2.toFixed(2)}) = ${polarizationVal.toFixed(2)}`,
+        rubric: "采分点：代值算出数量积（2分）",
+      },
+      {
+        step: 3,
+        title: "中点形式 · 双变量降为单动点",
+        detail: `取 $AB$ 中点 $M(${midpointM.x.toFixed(2)}, ${midpointM.y.toFixed(2)})$，则 $|\\vec{OM}| = ${normOM.toFixed(2)}$、$|\\vec{MB}| = ${normMB.toFixed(2)}$，数量积完全由动点到定点 $M$ 的距离决定。`,
+        latex: `\\vec{OA}\\cdot\\vec{OB} = |\\vec{OM}|^2 - |\\vec{MB}|^2 = (${normOM.toFixed(2)})^2 - (${normMB.toFixed(2)})^2 = ${polarizationMidVal.toFixed(2)}`,
+        rubric: "采分点：化为 |OM|² − |MB|² 并代值（3分）",
+      },
+    );
+  }
+
   return {
     quantities,
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps,
     mnemonic:
       "数量乘模余弦角，坐标相乘加起来；投影数量带正负，极化恒等中点秒！",
   };

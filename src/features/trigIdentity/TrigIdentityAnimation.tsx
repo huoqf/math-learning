@@ -226,7 +226,7 @@ export function TrigIdentityAnimation() {
       if (identitySubMode === "known_one") return "知一求二与符号决策看板";
       return "新高考齐次式化切与代换看板";
     } else {
-      if (inductionSubMode === "standard6") return "诱导公式6大组动态对称看板";
+      if (inductionSubMode === "standard6") return "诱导公式6大组动态变换看板";
       if (inductionSubMode === "universal_k")
         return "万能法则奇变偶不变推演看板";
       return "新高考配角与互余互补看板";
@@ -242,7 +242,7 @@ export function TrigIdentityAnimation() {
             <TabSwitcher
               tabs={[
                 { key: "identity", label: "同角基本关系" },
-                { key: "induction", label: "诱导公式对称" },
+                { key: "induction", label: "诱导公式变换" },
               ]}
               value={studyMode}
               onChange={(k) => {
@@ -407,7 +407,7 @@ export function TrigIdentityAnimation() {
           <TipCard
             badge="高考核心 · 同角三角函数与诱导公式"
             condition="单位圆动点 P(cosα, sinα)，正切线交于 T(1, tanα)。"
-            question="拖动动点 P 观察边长平方和恒等关系；切换诱导公式观察对应三角形的对称位置关系。"
+            question="拖动动点 P 观察边长平方和恒等关系；切换诱导公式观察终边的对称位置或旋转关系（π/2+α 是旋转 90°，不是轴对称）。"
           />
         </LeftPanel>
       }

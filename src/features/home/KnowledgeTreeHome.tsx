@@ -158,10 +158,10 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   },
   {
     key: "vector_triangle",
-    title: "平面向量与解三角形综合",
+    title: "三角函数、平面向量与解三角形",
     badge: "16 题解答 · 15分",
     description:
-      "正余弦定理与结构不良题型、投影向量与极化恒等式、阿波罗尼斯圆轨迹",
+      "三角函数图像与恒等变换、正余弦定理解三角形最值、投影向量与极化恒等式、阿波罗尼斯圆与复数几何",
     icon: Award,
     gradient: "from-purple-500 to-fuchsia-600",
     borderLight: "border-purple-200",

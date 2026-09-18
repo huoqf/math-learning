@@ -3,7 +3,7 @@
  * 向量极化恒等式与阿波罗尼斯圆纯 SVG 画布场景渲染
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -13,6 +13,7 @@ import {
   MathPoint,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { rightAnglePath } from "@/utils/geometryMarks";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { VectorPolarizationApolloniusParams } from "@/data/registries/vectorPolarizationApollonius";
 import { useVectorPolarizationApolloniusScene } from "../hooks/useVectorPolarizationApolloniusScene";
@@ -55,12 +56,50 @@ export const VectorPolarizationApolloniusScene: React.FC<
     designApoA,
     designApoB,
     designRadius,
+    rangePointX,
+    rangePointY,
   } = useVectorPolarizationApolloniusScene({
     params,
     scale,
     onParamChange,
     studyMode,
   });
+
+  /**
+   * ∠DPE = 90° 的直角符号。
+   *
+   * 几何依据：D 是 AB 的内分点、E 是外分点，故 PD、PE 分别是 ∠APB 的内角平分线与外角平分线，
+   * 二者必然垂直（这也正是 DE 为阿氏圆直径的原因）。
+   * 左屏提问、右屏定理都在讲这条结论，中屏必须把直角符号画出来，否则"文字讲垂直、画面没符号"。
+   */
+  const rightAngleDPE = useMemo(() => {
+    if (apolloniusData.isDegenerate) return null;
+    return rightAnglePath(
+      designP,
+      { x: designD.x - designP.x, y: designD.y - designP.y },
+      { x: designE.x - designP.x, y: designE.y - designP.y },
+    );
+  }, [apolloniusData.isDegenerate, designP, designD, designE]);
+
+  /**
+   * 外分点 E 是否已越出可见视口。
+   *
+   * 阿氏圆上 x 方向的极端点就是 E（λ < 1 时最左、λ > 1 时最右），
+   * 而 |x_E| = c(1 + λ)/|λ − 1| 在 λ → 1 时发散，
+   * 因此 λ 存在一段"圆与 E 一起胀出画布"的行程。此处显式提示，
+   * 取代原先"E 悄悄消失、圆被静默切掉一角"的观感错误。
+   * 注意判据用 scale.xMin/xMax（实际可见范围）而非标称常量，视口变化时自动跟随。
+   */
+  const isEOutOfView =
+    !apolloniusData.isDegenerate &&
+    (apolloniusData.pointE.x < scale.xMin ||
+      apolloniusData.pointE.x > scale.xMax);
+
+  /** 越界提示文字的锚点：可见区域左下角内侧（数学坐标 → 设计坐标） */
+  const clipNoticeAt = useMemo(
+    () => mathToDesign(scale.xMin + 0.3, scale.yMin + 0.5, scale),
+    [scale],
+  );
 
   return (
     <g>
@@ -101,14 +140,38 @@ export const VectorPolarizationApolloniusScene: React.FC<
             strokeWidth={2.5}
             fontScale={fontScale}
           />
-          {/* 底边 BC */}
+          {/* 半底边 BM 与 MC 分色绘制：
+              |BM| 是与 |AM| 配对参与极化恒等式的语义量，必须与整条底边区分颜色
+              （规范要求：中线 AM 与半弦 MB 必须语义色差分）。 */}
           <line
             x1={designB.x}
             y1={designB.y}
+            x2={designM.x}
+            y2={designM.y}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={3}
+          />
+          <line
+            x1={designM.x}
+            y1={designM.y}
             x2={designC.x}
             y2={designC.y}
-            stroke={MATH_COLORS.paramSecondary}
+            stroke={withAlpha(MATH_COLORS.paramSecondary, 0.55)}
             strokeWidth={2}
+          />
+
+          {/* 数量积正负号分界圆：以 M 为圆心、|BM| 为半径 (Thales 圆)。
+              圆内 |AM| < |BM| ⇒ AB·AC < 0 (∠A 钝角)；圆外 |AM| > |BM| ⇒ AB·AC > 0 (∠A 锐角)；
+              圆周上 |AM| = |BM| ⇒ AB·AC = 0 (∠A 直角)。
+              右屏「数量积正负号几何判据」讲的就是这条圆，中屏必须画出来。 */}
+          <circle
+            cx={designM.x}
+            cy={designM.y}
+            r={Math.hypot(designC.x - designM.x, designC.y - designM.y)}
+            fill="none"
+            stroke={withAlpha(MATH_COLORS.circle, 0.6)}
+            strokeWidth={1.5}
+            strokeDasharray="6 4"
           />
 
           {/* 定点 B */}
@@ -180,12 +243,14 @@ export const VectorPolarizationApolloniusScene: React.FC<
             M
           </text>
 
-          {/* 动点 A (可拖拽) */}
+          {/* 动点 A (可拖拽)，受「声明域 ∩ 可见视口」钳制 */}
           <InteractivePoint
             cx={polarizationData.pointA.x}
             cy={polarizationData.pointA.y}
             scale={scale}
             vp={vp}
+            xRange={rangePointX}
+            yRange={rangePointY}
             onDrag={(pt) => handlePointADrag(pt.x, pt.y)}
             color={MATH_COLORS.focusPoint}
             r={7}
@@ -475,6 +540,16 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 strokeWidth={1.5}
                 strokeDasharray="3 3"
               />
+              {/* ∠DPE = 90°：PD、PE 为内/外角平分线，必互相垂直 */}
+              {rightAngleDPE && (
+                <path
+                  d={rightAngleDPE}
+                  fill="none"
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={1.6}
+                  strokeLinejoin="miter"
+                />
+              )}
               <MathPoint
                 x={designD.x}
                 y={designD.y}
@@ -521,7 +596,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             </g>
           )}
 
-          {/* 动点 P (可沿阿圆轨道拖拽) */}
+          {/* 动点 P (沿阿圆轨道拖拽；平面位置由极角唯一决定，故无需平面钳制) */}
           <InteractivePoint
             cx={apolloniusData.pointP.x}
             cy={apolloniusData.pointP.y}
@@ -546,6 +621,25 @@ export const VectorPolarizationApolloniusScene: React.FC<
           >
             P
           </text>
+
+          {/* 外分点 E / 阿氏圆越界显式提示（替代静默裁切） */}
+          {studyMode === "apollonius" && isEOutOfView && (
+            <text
+              x={clipNoticeAt.x}
+              y={clipNoticeAt.y}
+              textAnchor="start"
+              fill={MATH_COLORS.degeneracy}
+              fontSize={fontScale(11)}
+              fontWeight="600"
+              paintOrder="stroke"
+              stroke={MATH_COLORS.white}
+              strokeWidth={3}
+              className="select-none pointer-events-none"
+            >
+              外分点 E(x = {apolloniusData.pointE.x.toFixed(1)}) 已超出画布：λ →
+              1 时阿氏圆半径 2cλ/|λ²−1| 发散
+            </text>
+          )}
         </g>
       )}
     </g>
