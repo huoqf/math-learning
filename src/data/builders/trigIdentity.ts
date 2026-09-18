@@ -4,6 +4,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
 import {
@@ -204,11 +205,98 @@ export function buildTrigIdentityPanel(
       });
     }
 
+    const reasoningSteps: ReasoningStep[] = [];
+
+    if (identitySubMode === "homogeneous") {
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 齐次分式弦化切",
+          detail:
+            "分子分母各项均为正弦与余弦的一次齐次式，只要 $\\cos\\alpha \\neq 0$，即可分子分母同除以 $\\cos\\alpha$ 转化为 $\\tan\\alpha$ 的单变量有理分式。",
+          latex: `\\frac{A\\sin\\alpha + B\\cos\\alpha}{C\\sin\\alpha + D\\cos\\alpha} = \\frac{A\\tan\\alpha + B}{C\\tan\\alpha + D}`,
+          rubric: "采分点：写出分子分母同除以 cosα 弦化切通法（3分）",
+        },
+        {
+          step: 2,
+          title: "代入化简 · 转化为正切分式",
+          detail: `代入当前参数 $A=${homoA}, B=${homoB}, C=${homoC}, D=${homoD}$，得到含 $\\tan\\alpha$ 的化简式。`,
+          latex: `${trig.homoFormulaTex} = ${trig.homoStepTex}`,
+          rubric: "采分点：代入参数求出正切代数式（3分）",
+        },
+        {
+          step: 3,
+          title: "代值收口 · 求出分式最终值",
+          detail: trig.isHomoDefined
+            ? `代入 $\\tan(${alphaDeg}^\\circ) = ${tanStr}$，计算得出分式的值为 $${trig.homoVal?.toFixed(3)}$。`
+            : "当前分母为 0，分式无意义。",
+          latex: trig.isHomoDefined
+            ? `${trig.homoFormulaTex} = ${trig.homoVal?.toFixed(3)}`
+            : "\\text{无意义 (分母为0)}",
+          rubric: "采分点：代入正切值算出数值结果（4分）",
+        },
+      );
+    } else if (identitySubMode === "known_one") {
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 平方联系和差与积",
+          detail:
+            "已知 $\\sin\\alpha + \\cos\\alpha = S$ 时，两边平方利用 $\\sin^2\\alpha + \\cos^2\\alpha = 1$ 与二倍角公式，即可求出积 $P = \\sin\\alpha\\cos\\alpha$。",
+          latex:
+            "(\\sin\\alpha + \\cos\\alpha)^2 = 1 + 2\\sin\\alpha\\cos\\alpha = 1 + \\sin 2\\alpha",
+          rubric: "采分点：写出和的平方展开式（3分）",
+        },
+        {
+          step: 2,
+          title: "代入求解 · 计算乘积 P",
+          detail: `当前 $S = \\sin(${alphaDeg}^\\circ) + \\cos(${alphaDeg}^\\circ) = ${trig.sumSC.toFixed(3)}$，代入平方公式求积。`,
+          latex: `P = \\sin\\alpha\\cos\\alpha = \\frac{S^2 - 1}{2} = \\frac{(${trig.sumSC.toFixed(3)})^2 - 1}{2} = ${trig.prodSC.toFixed(3)}`,
+          rubric: "采分点：代值求出乘积 P（3分）",
+        },
+        {
+          step: 3,
+          title: "符号取舍 · 差值开方定符号",
+          detail: `由 $(\\sin\\alpha - \\cos\\alpha)^2 = 1 - 2P = 2 - S^2$，当前角 $\\alpha = ${alphaDeg}^\\circ$ 处于第 ${trig.quadrant} 象限，${trig.diffSignReason}。`,
+          latex: `D = \\sin\\alpha - \\cos\\alpha = ${trig.diffSC >= 0 ? "" : "-"}\\sqrt{2 - S^2} = ${trig.diffSC.toFixed(3)}`,
+          rubric: "采分点：结合象限角判定差值正负号（4分）",
+        },
+      );
+    } else {
+      // geometry / pythagorean 基础模式
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 同角三角函数基本关系",
+          detail:
+            "终边在单位圆上的任意动点坐标满足 $P(\\cos\\alpha, \\sin\\alpha)$，由单位圆方程直接导出同角基本关系。",
+          latex:
+            "\\sin^2\\alpha + \\cos^2\\alpha = 1, \\quad \\tan\\alpha = \\frac{\\sin\\alpha}{\\cos\\alpha} \\quad (\\cos\\alpha \\neq 0)",
+          rubric: "采分点：写出同角基本关系式（3分）",
+        },
+        {
+          step: 2,
+          title: "代入数据 · 终边坐标代换",
+          detail: `当前角 $\\alpha = ${alphaDeg}^\\circ$ (${radStr})，计算正弦、余弦与正切数值。`,
+          latex: `\\sin\\alpha = ${sinStr}, \\quad \\cos\\alpha = ${cosStr}, \\quad \\tan\\alpha = ${tanStr}`,
+          rubric: "采分点：代入求出各三角函数值（3分）",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 平方和与商数互证",
+          detail: `代入验证平方和：$(${sinStr})^2 + (${cosStr})^2 = ${(trig.sinSq + trig.cosSq).toFixed(3)} = 1$；商数 $\\frac{${sinStr}}{${cosStr}} = ${tanStr}$。`,
+          latex: `\\sin^2\\alpha + \\cos^2\\alpha = (${sinStr})^2 + (${cosStr})^2 = 1.000`,
+          rubric: "采分点：代入验证平方和为1（4分）",
+        },
+      );
+    }
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
       warnings,
+      reasoningSteps,
       mnemonic:
         "同角关系口诀：平方和为1，商数即正切；知一求二看象限，齐次化切妙用“1”！",
     };
@@ -400,11 +488,90 @@ export function buildTrigIdentityPanel(
       });
     }
 
+    const reasoningSteps: ReasoningStep[] = [];
+
+    if (inductionSubMode === "standard6") {
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 奇变偶不变",
+          detail: `当前变换式为 ${ind.formulaTitle}。角可表示为 $k\\cdot\\frac{\\pi}{2} \\pm \\alpha$，其中 $k = ${ind.kValue}$ 为${ind.isOdd ? "奇数" : "偶数"}，${ind.nameChangeDesc}。`,
+          latex: `k = ${ind.kValue} \\implies ${ind.isOdd ? "\\text{奇变 (正余互换)}" : "\\text{偶不变 (函数名保持)}"}`,
+          rubric: "采分点：判定 k 的奇偶并确定函数名是否互换（3分）",
+        },
+        {
+          step: 2,
+          title: "符号判定 · 符号看象限",
+          detail: ind.step2Sign,
+          latex: `\\alpha \\in \\left(0, \\frac{\\pi}{2}\\right) \\implies \\beta = ${ind.formulaTex} \\in \\text{${ind.assumedQuadrant.includes("Ⅱ") ? "第Ⅱ象限" : ind.assumedQuadrant.includes("Ⅲ") ? "第Ⅲ象限" : ind.assumedQuadrant.includes("Ⅳ") ? "第Ⅳ象限" : "第Ⅰ象限"}}`,
+          rubric: "采分点：视 α 为锐角判定原函数所在象限的正负号（3分）",
+        },
+        {
+          step: 3,
+          title: "几何验算 · 动点坐标变换",
+          detail: ind.step3Verify,
+          latex: `${ind.sinFormulaTex}, \\quad ${ind.cosFormulaTex}`,
+          rubric: "采分点：写出诱导公式并与单位圆动点变换对应（4分）",
+        },
+      );
+    } else if (inductionSubMode === "complementary") {
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 观察配角关系",
+          detail: `两角和 $(\\alpha + \\theta) + [\\frac{\\pi}{2} - (\\alpha + \\theta)] = \\frac{\\pi}{2}$，构成经典的互余配角结构。`,
+          latex: `(\\alpha + \\theta) + \\left[\\frac{\\pi}{2} - (\\alpha + \\theta)\\right] = \\frac{\\pi}{2}`,
+          rubric: "采分点：写出两角互余恒等式（3分）",
+        },
+        {
+          step: 2,
+          title: "建模转化 · 互余函数正余对调",
+          detail:
+            "利用诱导公式一，互余两角中一个角的余弦恒等于另一个角的正弦。",
+          latex: `\\cos\\left[\\frac{\\pi}{2} - (\\alpha + \\theta)\\right] = \\sin(\\alpha + \\theta)`,
+          rubric: "采分点：应用互余公式正余对调（3分）",
+        },
+        {
+          step: 3,
+          title: "代值收口 · 具体角度数值验证",
+          detail: `当前 $\\alpha = ${alphaDeg}^\\circ, \\theta = ${thetaDeg}^\\circ$，两角分别为 ${comp.angle1Deg}^\\circ$ 与 ${comp.angle2Deg}^\\circ$。`,
+          latex: `\\cos(${comp.angle2Deg}^\\circ) = \\sin(${comp.angle1Deg}^\\circ) = ${Math.sin((comp.angle1Deg * Math.PI) / 180).toFixed(3)}`,
+          rubric: "采分点：代入数值验证等式成立（4分）",
+        },
+      );
+    } else {
+      // universal
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 万能诱导参数化",
+          detail: `考察 $k\\cdot\\frac{\\pi}{2} ${universalSign === 1 ? "+" : "-"} \\alpha$，当前 $k = ${universalK}$。`,
+          latex: univInd.formulaTex,
+          rubric: "采分点：写出 k·π/2 ± α 标准形式（3分）",
+        },
+        {
+          step: 2,
+          title: "定名定号 · 奇变偶不变与看象限",
+          detail: `${univInd.nameChangeDesc}；${univInd.assumedQuadrant}。`,
+          latex: `${univInd.isOdd ? "\\sin \\leftrightarrow \\cos" : "\\text{函数名不变}"}, \\quad \\text{符号根据原函数象限确定}`,
+          rubric: "采分点：判断奇偶换名与象限符号（3分）",
+        },
+        {
+          step: 3,
+          title: "化简结论 · 写出全部对应式",
+          detail: "由上述规则化简得出正弦、余弦与正切的诱导公式。",
+          latex: `${univInd.sinFormulaTex}, \\quad ${univInd.cosFormulaTex}`,
+          rubric: "采分点：得出化简结论（4分）",
+        },
+      );
+    }
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
       warnings,
+      reasoningSteps,
       mnemonic:
         "诱导公式总口诀：奇变偶不变，符号看象限！（把 α 看作第一象限锐角判断原函数符号）",
     };

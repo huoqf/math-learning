@@ -182,14 +182,57 @@ export function calculateTrigIdentity(
     ? (homoA * sinVal + homoB * cosVal) / denom
     : undefined;
 
-  const homoFormulaTex = `\\frac{${homoA}\\sin\\alpha + ${homoB}\\cos\\alpha}{${homoC}\\sin\\alpha + ${homoD}\\cos\\alpha}`;
-  const homoStepTex = `\\frac{${homoA}\\tan\\alpha + ${homoB}}{${homoC}\\tan\\alpha + ${homoD}}`;
+  const formatHomoPoly = (
+    c1: number,
+    c2: number,
+    t1: string,
+    t2: string,
+  ): string => {
+    let s = "";
+    if (c1 !== 0) {
+      s = c1 === 1 ? t1 : c1 === -1 ? `-${t1}` : `${c1}${t1}`;
+    }
+    if (c2 !== 0) {
+      const sign = c2 > 0 ? (s ? " + " : "") : s ? " - " : "-";
+      const absC2 = Math.abs(c2);
+      const c2Str = absC2 === 1 && t2 !== "" ? t2 : `${absC2}${t2}`;
+      s += `${sign}${c2Str}`;
+    }
+    return s || "0";
+  };
+
+  const homoNumeratorTex = formatHomoPoly(
+    homoA,
+    homoB,
+    "\\sin\\alpha",
+    "\\cos\\alpha",
+  );
+  const homoDenominatorTex = formatHomoPoly(
+    homoC,
+    homoD,
+    "\\sin\\alpha",
+    "\\cos\\alpha",
+  );
+  const homoFormulaTex = `\\frac{${homoNumeratorTex}}{${homoDenominatorTex}}`;
+  const homoStepTex = isTanDefined
+    ? `\\frac{${formatHomoPoly(homoA, homoB, "\\tan\\alpha", "")}}{${formatHomoPoly(homoC, homoD, "\\tan\\alpha", "")}}`
+    : `\\text{因 } \\cos\\alpha=0, \\; \\text{代入得 } \\frac{${homoA}}{${homoC}}`;
 
   // 2. 二次齐次式 (a sin^2α + b sinα cosα + c cos^2α)
   const quadVal = quadA * sinSq + quadB * sinVal * cosVal + quadC * cosSq;
-  const isQuadDefined = isTanDefined;
-  const quadFormulaTex = `${quadA}\\sin^2\\alpha + ${quadB}\\sin\\alpha\\cos\\alpha + ${quadC}\\cos^2\\alpha`;
-  const quadStepTex = `\\frac{${quadA}\\tan^2\\alpha + ${quadB}\\tan\\alpha + ${quadC}}{\\tan^2\\alpha + 1}`;
+  const isQuadDefined = isTanDefined || Math.abs(cosVal) < 1e-4;
+  const quadFormulaTex = `${formatHomoPoly(quadA, quadB, "\\sin^2\\alpha", "\\sin\\alpha\\cos\\alpha")}${
+    quadC !== 0
+      ? quadC > 0
+        ? ` + ${quadC === 1 ? "" : quadC}\\cos^2\\alpha`
+        : ` - ${Math.abs(quadC) === 1 ? "" : Math.abs(quadC)}\\cos^2\\alpha`
+      : ""
+  }`;
+  const quadStepTex = isTanDefined
+    ? `\\frac{${formatHomoPoly(quadA, quadB, "\\tan^2\\alpha", "\\tan\\alpha")}${
+        quadC !== 0 ? (quadC > 0 ? ` + ${quadC}` : ` - ${Math.abs(quadC)}`) : ""
+      }}{\\tan^2\\alpha + 1}`
+    : `\\text{因 } \\cos\\alpha=0, \\; \\text{代入得 } ${quadA}`;
 
   return {
     alphaDeg,
@@ -532,7 +575,7 @@ export function calculateComplementaryModel(
   const angle2Deg = 90 - (alphaDeg + thetaDeg);
 
   const isComplementary = Math.abs(angle1Deg + angle2Deg - 90) < 1e-4;
-  const isSupplementary = Math.abs(angle1Deg + (180 - angle1Deg) - 180) < 1e-4;
+  const isSupplementary = Math.abs(angle1Deg + angle2Deg - 180) < 1e-4;
 
   const modelName = "高考经典互余配角模型：(α + θ) 与 (π/2 - (α + θ))";
   const formulaLatex = `\\cos\\left[\\frac{\\pi}{2} - (\\alpha + \\theta)\\right] = \\sin(\\alpha + \\theta)`;

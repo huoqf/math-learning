@@ -93,7 +93,7 @@ export const GAOKAO_PRESETS: GaokaoPreset[] = [
     mode: "omegaZeros",
     params: { A: 1, omega: 3, phi: Math.PI / 6, k: 0, x1: 0, x2: Math.PI / 2 },
     keyTakeaway:
-      "令 u = ωx + π/6 ∈ [π/6, ωπ/2 + π/6]，恰有2个零点要求 π < ωπ/2 + π/6 ≤ 2π，即 5/3 < ω ≤ 11/3。",
+      "令 u = ωx + π/6 ∈ [π/6, ωπ/2 + π/6]，恰有2个零点要求 2π ≤ ωπ/2 + π/6 < 3π，即 11/3 ≤ ω < 17/3。",
   },
   {
     id: "five-points-fit",
@@ -124,6 +124,31 @@ export function formatPiValue(val: number): string {
   if (Math.abs(absR - 5 / 6) < 1e-4) return `${prefix}\\frac{5\\pi}{6}`;
   if (Math.abs(absR - 4 / 3) < 1e-4) return `${prefix}\\frac{4\\pi}{3}`;
   if (Math.abs(absR - 5 / 3) < 1e-4) return `${prefix}\\frac{5\\pi}{3}`;
+
+  return val.toFixed(2);
+}
+
+/**
+ * 供纯文本、tooltip 与 SVG 标注使用的友好格式化（避免 raw LaTeX 字符泄漏）
+ */
+export function formatPiPlainText(val: number): string {
+  if (Math.abs(val) < 1e-4) return "0";
+  const ratio = val / Math.PI;
+  const isNeg = ratio < 0;
+  const absR = Math.abs(ratio);
+  const prefix = isNeg ? "-" : "";
+
+  if (Math.abs(absR - 1) < 1e-4) return isNeg ? "-π" : "π";
+  if (Math.abs(absR - 2) < 1e-4) return isNeg ? "-2π" : "2π";
+  if (Math.abs(absR - 0.5) < 1e-4) return `${prefix}π/2`;
+  if (Math.abs(absR - 1 / 3) < 1e-4) return `${prefix}π/3`;
+  if (Math.abs(absR - 2 / 3) < 1e-4) return `${prefix}2π/3`;
+  if (Math.abs(absR - 0.25) < 1e-4) return `${prefix}π/4`;
+  if (Math.abs(absR - 0.75) < 1e-4) return `${prefix}3π/4`;
+  if (Math.abs(absR - 1 / 6) < 1e-4) return `${prefix}π/6`;
+  if (Math.abs(absR - 5 / 6) < 1e-4) return `${prefix}5π/6`;
+  if (Math.abs(absR - 4 / 3) < 1e-4) return `${prefix}4π/3`;
+  if (Math.abs(absR - 5 / 3) < 1e-4) return `${prefix}5π/3`;
 
   return val.toFixed(2);
 }
@@ -281,7 +306,7 @@ export function getTransformPathSteps(
 
   if (pathType === "shift-first") {
     const direction = phi >= 0 ? "左" : "右";
-    const absPhiStr = formatPiValue(Math.abs(phi));
+    const absPhiStr = formatPiPlainText(Math.abs(phi));
     return [
       {
         step: 0,
@@ -334,7 +359,7 @@ export function getTransformPathSteps(
     ];
   } else {
     const direction = shiftAmountPath2 >= 0 ? "左" : "右";
-    const absShiftStr = formatPiValue(Math.abs(shiftAmountPath2));
+    const absShiftStr = formatPiPlainText(Math.abs(shiftAmountPath2));
     const shiftSign = shiftAmountPath2 >= 0 ? "+" : "";
     const shiftFormatted =
       Math.abs(shiftAmountPath2) < 1e-4

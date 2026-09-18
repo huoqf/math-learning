@@ -4,6 +4,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import {
   calcTrigProperties,
@@ -133,11 +134,36 @@ export function buildTrigTransformPanel(
       });
     }
 
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 整体换元求相位区间",
+        detail: `令整体相位角 $u = \\omega x + \\varphi$，由 $x \\in [${intervalInfo.x1.toFixed(2)}, ${intervalInfo.x2.toFixed(2)}]$，求出 $u$ 的取值区间 $[u_1, u_2]$。`,
+        latex: `u = \\omega x + \\varphi \\in [${u1Str}, \\; ${u2Str}], \\quad \\Delta u = u_2 - u_1 = ${deltaUStr}`,
+        rubric: "采分点：写出整体换元表达式及相位取值区间（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 零点落点约束个数",
+        detail: `正弦型函数 $y = A\\sin u$ 的零点为 $u = m\\pi (m \\in \\mathbb{Z})$。区间 $[u_1, u_2]$ 内恰有 ${intervalInfo.zeros.length} 个零点。`,
+        latex: `m\\pi \\in [${u1Str}, \\; ${u2Str}] \\implies \\text{共 } ${intervalInfo.zeros.length} \\text{ 个整数点}`,
+        rubric: "采分点：根据相位区间跨度与端点界定零点个数（4分）",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 验证端点开闭性",
+        detail: `当前区间内各零点对应原自变量位置：${intervalInfo.zeros.map((z, idx) => `Z_{${idx + 1}}(${z.x.toFixed(2)})`).join("，")}。高考必须严格核查开闭区间边界取等条件。`,
+        latex: `\\text{零点集: } \\{x \\mid \\omega x + \\varphi = m\\pi\\}`,
+        rubric: "采分点：代入回算原坐标并检验端点包含性（3分）",
+      },
+    ];
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
       warnings,
+      reasoningSteps,
       mnemonic: "整体换元看相位，零点落点数跨度，端点等号必带回！",
     };
   }
@@ -205,11 +231,48 @@ export function buildTrigTransformPanel(
       },
     ];
 
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 确定变换主路径",
+        detail:
+          pathType === "shift-first"
+            ? "选择路线一：先相位平移，后横向伸缩，再纵向伸缩与偏置。"
+            : "选择路线二：先横向伸缩，后相位平移，再纵向伸缩与偏置。",
+        latex:
+          pathType === "shift-first"
+            ? "\\sin x \\xrightarrow{\\text{平移 } |\\varphi|} \\sin(x+\\varphi) \\xrightarrow{\\text{伸缩 } \\omega} \\sin(\\omega x+\\varphi)"
+            : "\\sin x \\xrightarrow{\\text{伸缩 } \\omega} \\sin(\\omega x) \\xrightarrow{\\text{平移 } \\frac{|\\varphi|}{\\omega}} \\sin(\\omega x+\\varphi)",
+        rubric: "采分点：写出图象变换完整推导路径（3分）",
+      },
+      {
+        step: 2,
+        title: "自变量代换 · 准确计算平移量",
+        detail:
+          pathType === "shift-first"
+            ? `直接对自变量 $x$ 平移 $|\\varphi| = ${phiStr}$ 个单位，向${phi >= 0 ? "左" : "右"}平移。`
+            : `括号内提取公因数 $\\omega$：$\\sin[\\omega(x + \\frac{\\varphi}{\\omega})]$，自变量实际平移量为 $\\frac{|\\varphi|}{\\omega} = ${absShiftPath2}$。`,
+        latex:
+          pathType === "shift-first"
+            ? `\\Delta x = |\\varphi| = ${phiStr}`
+            : `\\Delta x = \\frac{|\\varphi|}{\\omega} = ${absShiftPath2}`,
+        rubric: "采分点：准确计算平移量并辨析先伸缩后平移陷阱（4分）",
+      },
+      {
+        step: 3,
+        title: "振幅与偏置 · 综合得到目标式",
+        detail: `最后纵向拉伸 $A = ${A.toFixed(1)}$ 倍，并整体沿 $y$ 轴平移 $k = ${k.toFixed(1)}$，得到最终解析式。`,
+        latex: `y = ${A.toFixed(1)}\\sin(${omega.toFixed(1)} x + ${phiStr}) ${k >= 0 ? "+" : ""}${k.toFixed(1)}`,
+        rubric: "采分点：写出完成全部变换后的标准解析式（3分）",
+      },
+    ];
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
       warnings: [],
+      reasoningSteps,
       mnemonic: "先平移移 phi，后平移移 phi 比 omega！",
     };
   }
@@ -279,11 +342,38 @@ export function buildTrigTransformPanel(
       },
     ];
 
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 特征相位五点设值",
+        detail: `令整体相位角 $u = \\omega x + \\varphi$ 依次取 $0, \\frac{\\pi}{2}, \\pi, \\frac{3\\pi}{2}, 2\\pi$，对应一个完整周期内的关键骨架点。`,
+        latex:
+          "u = \\omega x + \\varphi \\in \\left\\{ 0, \\; \\frac{\\pi}{2}, \\; \\pi, \\; \\frac{3\\pi}{2}, \\; 2\\pi \\right\\}",
+        rubric: "采分点：写出五点法特征相位取值（3分）",
+      },
+      {
+        step: 2,
+        title: "代入反解 · 求五个特征点坐标",
+        detail: `由 $x = \\frac{u - \\varphi}{\\omega}$ 反解出横坐标：零点 $P_1(${props.fivePoints[0].x.toFixed(2)}, ${props.fivePoints[0].y.toFixed(2)})$、波峰 $P_2(${props.fivePoints[1].x.toFixed(2)}, ${props.fivePoints[1].y.toFixed(2)})$、零点 $P_3(${props.fivePoints[2].x.toFixed(2)}, ${props.fivePoints[2].y.toFixed(2)})$、波谷 $P_4(${props.fivePoints[3].x.toFixed(2)}, ${props.fivePoints[3].y.toFixed(2)})$、零点 $P_5(${props.fivePoints[4].x.toFixed(2)}, ${props.fivePoints[4].y.toFixed(2)})$。`,
+        latex: `P_2 = \\left(\\frac{\\frac{\\pi}{2} - \\varphi}{\\omega}, \\; A+k\\right) = (${props.fivePoints[1].x.toFixed(2)}, \\; ${(A + k).toFixed(2)})`,
+        rubric: "采分点：反解求出五点横纵坐标（4分）",
+      },
+      {
+        step: 3,
+        title: "反思通法 · 由图求式代波峰原则",
+        detail:
+          "高考由波形图求解析式时，求初相 $\\varphi$ 应优先代入波峰坐标 $\\omega x + \\varphi = \\frac{\\pi}{2} + 2k\\pi$（唯一确定），避免代入零点导致增解或符号判反。",
+        latex: `\\omega x_{\\max} + \\varphi = \\frac{\\pi}{2} + 2k\\pi \\implies \\varphi = ${phiStr}`,
+        rubric: "采分点：说明代入波峰定初相的防坑规范（3分）",
+      },
+    ];
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
       warnings: [],
+      reasoningSteps,
       mnemonic: "五点作图看相位，由图求式代波峰！",
     };
   }
@@ -312,14 +402,14 @@ export function buildTrigTransformPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "最大值 $y_max$",
-        symbol: "y_{max} = k + A",
+        label: "最大值 $y_{\\max}$",
+        symbol: "y_{\\max} = k + A",
         value: props.yMax.toFixed(2),
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "最小值 $y_min$",
-        symbol: "y_{min} = k - A",
+        label: "最小值 $y_{\\min}$",
+        symbol: "y_{\\min} = k - A",
         value: props.yMin.toFixed(2),
         color: MATH_COLORS.paramTertiary,
       },
@@ -365,6 +455,29 @@ export function buildTrigTransformPanel(
       },
     ],
     warnings,
+    reasoningSteps: [
+      {
+        step: 1,
+        title: "审题定法 · 解析式三要素定型",
+        detail: `标准正弦型函数 $y = A\\sin(\\omega x + \\varphi) + k$，由系数确定振幅 $A = ${A.toFixed(2)}$、周期 $T = \\frac{2\\pi}{\\omega} = ${periodStr}$、初相 $\\varphi = ${phiStr}$。`,
+        latex: `T = \\frac{2\\pi}{|\\omega|} = \\frac{2\\pi}{${omega.toFixed(2)}} = ${periodStr}, \\quad y \\in [${props.yMin.toFixed(2)}, \\; ${props.yMax.toFixed(2)}]`,
+        rubric: "采分点：写出周期公式并求出值域与振幅（3分）",
+      },
+      {
+        step: 2,
+        title: "整体换元 · 求单调递增区间",
+        detail: `令整体角处于递增主区间 $2k\\pi - \\frac{\\pi}{2} \\le \\omega x + \\varphi \\le 2k\\pi + \\frac{\\pi}{2}$，移项同除以 $\\omega$ 解出 $x$ 的范围。`,
+        latex: `2k\\pi - \\frac{\\pi}{2} \\le ${omega.toFixed(2)} x + ${phiStr} \\le 2k\\pi + \\frac{\\pi}{2}`,
+        rubric: "采分点：列出整体角单调区间不等式并求解（4分）",
+      },
+      {
+        step: 3,
+        title: "对称特征 · 轴与中心通项公式",
+        detail: `令 $\\omega x + \\varphi = m\\pi + \\frac{\\pi}{2}$ 得对称轴方程；令 $\\omega x + \\varphi = m\\pi$ 得对称中心横坐标，纵坐标恒为平衡位置 $y = ${k.toFixed(2)}$。`,
+        latex: `x_{\\text{轴}} = \\frac{m\\pi + \\frac{\\pi}{2} - \\varphi}{\\omega}, \\quad \\text{中心: } \\left(\\frac{m\\pi - \\varphi}{\\omega}, \\; ${k.toFixed(2)}\\right) \\quad (m \\in \\mathbb{Z})`,
+        rubric: "采分点：写出对称轴与对称中心的通项公式（3分）",
+      },
+    ],
     mnemonic:
       "先平移移 phi，后平移移 phi 比 omega；对称轴过最值点，对称中心在平衡！",
   };

@@ -185,6 +185,28 @@ export interface TrigInequalityResult {
 }
 
 /**
+ * 将弧度规范化为 LaTeX 格式的 (2kπ 或 kπ) + 有理分数 π 表达
+ */
+function formatPiTerm(rad: number, prefix = "2k\\pi"): string {
+  const ratio = rad / Math.PI;
+  for (const d of [1, 2, 3, 4, 6, 12]) {
+    const k = Math.round(ratio * d);
+    if (Math.abs(ratio - k / d) < 1e-4) {
+      if (k === 0) return prefix;
+      const sign = k > 0 ? "+" : "-";
+      const absK = Math.abs(k);
+      const numer = absK === 1 ? "\\pi" : `${absK}\\pi`;
+      const term = d === 1 ? numer : `\\frac{${numer}}{${d}}`;
+      return `${prefix} ${sign} ${term}`;
+    }
+  }
+  const s = (rad / Math.PI).toFixed(2);
+  const num = Number(s);
+  const sign = num >= 0 ? "+" : "-";
+  return `${prefix} ${sign} ${Math.abs(num)}\\pi`;
+}
+
+/**
  * 解一元三角不等式纯函数
  */
 export function solveTrigInequality(
@@ -226,9 +248,7 @@ export function solveTrigInequality(
           { x: Math.cos(startRad), y: Math.sin(startRad) },
           { x: Math.cos(endRad), y: Math.sin(endRad) },
         );
-        const s1 = (startRad / Math.PI).toFixed(2);
-        const s2 = (endRad / Math.PI).toFixed(2);
-        latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+        latexSolution = `x \\in \\left( ${formatPiTerm(startRad)}, \\; ${formatPiTerm(endRad)} \\right)`;
       } else {
         const r1 = Math.PI - alpha0; // in (pi, 3pi/2)
         const r2 = 2 * Math.PI + alpha0; // in (3pi/2, 2pi)
@@ -250,9 +270,7 @@ export function solveTrigInequality(
           { x: Math.cos(r1), y: Math.sin(r1) },
           { x: Math.cos(r2), y: Math.sin(r2) },
         );
-        const s1 = (alpha0 / Math.PI).toFixed(2);
-        const s2 = ((Math.PI - alpha0) / Math.PI).toFixed(2);
-        latexSolution = `x \\in \\left( 2k\\pi ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+        latexSolution = `x \\in \\left( ${formatPiTerm(alpha0)}, \\; ${formatPiTerm(Math.PI - alpha0)} \\right)`;
       }
     }
     isSatisfied = Math.sin(normRad) > c;
@@ -289,9 +307,7 @@ export function solveTrigInequality(
           { x: Math.cos(r1), y: Math.sin(r1) },
           { x: Math.cos(r2), y: Math.sin(r2) },
         );
-        const s1 = (r2 / Math.PI).toFixed(2);
-        const s2 = ((r1 + 2 * Math.PI) / Math.PI).toFixed(2);
-        latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+        latexSolution = `x \\in \\left( ${formatPiTerm(r2)}, \\; ${formatPiTerm(r1 + 2 * Math.PI)} \\right)`;
       } else {
         const startRad = Math.PI - alpha0;
         const endRad = 2 * Math.PI + alpha0;
@@ -307,9 +323,7 @@ export function solveTrigInequality(
           { x: Math.cos(startRad), y: Math.sin(startRad) },
           { x: Math.cos(endRad), y: Math.sin(endRad) },
         );
-        const s1 = (startRad / Math.PI).toFixed(2);
-        const s2 = (endRad / Math.PI).toFixed(2);
-        latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+        latexSolution = `x \\in \\left( ${formatPiTerm(startRad)}, \\; ${formatPiTerm(endRad)} \\right)`;
       }
     }
     isSatisfied = Math.sin(normRad) < c;
@@ -345,8 +359,7 @@ export function solveTrigInequality(
           y: Math.sin(2 * Math.PI - alpha0),
         },
       );
-      const s1 = (alpha0 / Math.PI).toFixed(2);
-      latexSolution = `x \\in \\left( 2k\\pi - ${s1}\\pi, \\; 2k\\pi + ${s1}\\pi \\right)`;
+      latexSolution = `x \\in \\left( ${formatPiTerm(-alpha0)}, \\; ${formatPiTerm(alpha0)} \\right)`;
     }
     isSatisfied = Math.cos(normRad) > c;
   } else if (kind === "cos_lt") {
@@ -375,9 +388,7 @@ export function solveTrigInequality(
           y: Math.sin(2 * Math.PI - alpha0),
         },
       );
-      const s1 = (alpha0 / Math.PI).toFixed(2);
-      const s2 = ((2 * Math.PI - alpha0) / Math.PI).toFixed(2);
-      latexSolution = `x \\in \\left( 2k\\pi + ${s1}\\pi, \\; 2k\\pi + ${s2}\\pi \\right)`;
+      latexSolution = `x \\in \\left( ${formatPiTerm(alpha0)}, \\; ${formatPiTerm(2 * Math.PI - alpha0)} \\right)`;
     }
     isSatisfied = Math.cos(normRad) < c;
   } else if (kind === "tan_gt") {
@@ -435,8 +446,7 @@ export function solveTrigInequality(
         { x: Math.cos(r3), y: Math.sin(r3) },
       );
     }
-    const s1 = (alpha0 / Math.PI).toFixed(2);
-    latexSolution = `x \\in \\left( k\\pi ${alpha0 >= 0 ? "+ " + s1 : s1}\\pi, \\; k\\pi + \\frac{\\pi}{2} \\right)`;
+    latexSolution = `x \\in \\left( ${formatPiTerm(alpha0, "k\\pi")}, \\; k\\pi + \\frac{\\pi}{2} \\right)`;
     isSatisfied = Math.abs(Math.cos(normRad)) > 1e-7 && Math.tan(normRad) > k;
   } else {
     // tan_lt
@@ -495,8 +505,7 @@ export function solveTrigInequality(
         { x: Math.cos(r4), y: Math.sin(r4) },
       );
     }
-    const s1 = (alpha0 / Math.PI).toFixed(2);
-    latexSolution = `x \\in \\left( k\\pi - \\frac{\\pi}{2}, \\; k\\pi ${alpha0 >= 0 ? "+ " + s1 : s1}\\pi \\right)`;
+    latexSolution = `x \\in \\left( k\\pi - \\frac{\\pi}{2}, \\; ${formatPiTerm(alpha0, "k\\pi")} \\right)`;
     isSatisfied = Math.abs(Math.cos(normRad)) > 1e-7 && Math.tan(normRad) < k;
   }
 

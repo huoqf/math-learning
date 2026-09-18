@@ -381,7 +381,7 @@ export function buildTrigLinesPanel(
       name: "单位圆三角函数线法解题通法",
       latex:
         "\\text{作基准线} \\to \\text{求交点界值} \\to \\text{按有向线段扫定弧区} \\to \\text{加周期 } 2k\\pi",
-      condition: "正弦画水平线 y=c，余弦画坚直线 x=c，正切在 x=1 找截距",
+      condition: "正弦画水平线 y=c，余弦画竖直线 x=c，正切在 x=1 找截距",
       note: "逆时针书写区间：起点弧度 < 终点弧度，保证区间合法性。",
       level: "core",
     },
