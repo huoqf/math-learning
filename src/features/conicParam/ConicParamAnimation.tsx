@@ -61,10 +61,18 @@ export function ConicParamAnimation() {
   // 参数更新处理器（拖拽或微调时自动切回 free）
   const handleParamChange = (key: string, value: number) => {
     setActivePreset("free");
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setParams((prev) => {
+      const next = { ...prev, [key]: value };
+      // 高中课标安全契约：焦点在 x 轴的椭圆必须满足 a > b > 0。
+      // 在状态层耦合钳制，保证左屏滑块、中屏图形与右屏数值三者始终一致，
+      // 不出现 b ≥ a 时半焦距 c = 0、两焦点退化重合于原点的非法构型。
+      if (key === "a" && next.b >= value) {
+        next.b = Math.max(1.2, Number((value - 0.1).toFixed(1)));
+      } else if (key === "b" && value >= next.a) {
+        next.b = Math.max(1.2, Number((next.a - 0.1).toFixed(1)));
+      }
+      return next;
+    });
   };
 
   // 预设切换处理器
@@ -133,13 +141,22 @@ export function ConicParamAnimation() {
       keys.forEach((key) => {
         if (key in paramMeta) {
           const meta = paramMeta[key];
+          // 高中课标安全契约：椭圆 b 的滑块上限随 a 动态收紧，保证 a > b > 0
+          const dynamicMax =
+            key === "b"
+              ? Math.max(meta.min ?? 0.1, (params.a ?? 4) - 0.1)
+              : meta.max;
+          const rawValue = params[key] ?? meta.defaultValue ?? 0;
           configs.push({
             key,
             label: meta.label,
             labelFormula: meta.labelFormula,
-            value: params[key] ?? meta.defaultValue ?? 0,
+            value:
+              dynamicMax !== undefined && rawValue > dynamicMax
+                ? dynamicMax
+                : rawValue,
             min: meta.min,
-            max: meta.max,
+            max: dynamicMax,
             step: meta.step ?? 0.1,
             group,
             description: meta.description,

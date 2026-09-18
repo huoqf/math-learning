@@ -917,12 +917,18 @@ export function buildSequencePanel(
             name: "重特征根型 (Δ = 0)",
             latex: `(x - r)^2 = 0 \\implies a_n = (C_1 + C_2 n) r^{n-1} \\quad (r = ${formatMathNumber(res.r1)})`,
             condition: `特征方程有二重实根 $r_1 = r_2 = ${formatMathNumber(res.r1)}$`,
+            // 条目级课标边界标注：解特征方程求根本身超出教材正文（教材只要求等差、等比与数学归纳法）
+            isExtension: true,
+            extensionBadge: "拓展 · 超出课标",
           });
         } else {
           theorems.push({
             name: "特征根法 (二阶线性递推 · 拓展)",
             latex: `x^2 - \\color{${MATH_COLORS.paramPrimary}}{p} x - \\color{${MATH_COLORS.paramSecondary}}{q} = 0 \\implies a_n = C_1 r_1^n + C_2 r_2^n \\quad (r_1 \\neq r_2)`,
             condition: `判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} > 0$，两不同特征根为 $r_1=${formatMathNumber(res.r1)}, r_2=${formatMathNumber(res.r2)}$`,
+            // “拓展”此前只写在定理名称里，属隐式标注；改为条目级显式字段后右屏会出拓展徽标
+            isExtension: true,
+            extensionBadge: "拓展 · 超出课标",
           });
         }
 
@@ -935,6 +941,7 @@ export function buildSequencePanel(
         warnings.push({
           text: `特征方程判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} < 0$，无实特征根（拓展模型仅考查 $\\Delta \\ge 0$ 的实数特征根情形）。`,
           level: "danger",
+          isExtension: true,
         });
       }
 

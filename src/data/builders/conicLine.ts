@@ -150,6 +150,7 @@ export function buildConicLineMathQuantities(
 
     if (result.focalRadii) {
       const [r1, r2] = result.focalRadii;
+      const isDiff = result.focalRadiusRelationKind === "difference";
       quantities.push(
         {
           label: "焦半径 |FA| 与 |FB|",
@@ -157,30 +158,36 @@ export function buildConicLineMathQuantities(
           value: `r_1=${formatMathNumber(r1)}, r_2=${formatMathNumber(r2)}`,
         },
         {
-          label: "焦半径倒数和 (定值验证)",
-          symbol: "\\frac{1}{|FA|} + \\frac{1}{|FB|}",
-          value: result.harmonicSum
-            ? `${formatMathNumber(result.harmonicSum)} (理论定值: ${formatMathNumber(result.theoreticalHarmonicSum ?? 0)})`
-            : "未构成两端点",
+          label: isDiff ? "焦半径倒数差 (定值验证)" : "焦半径倒数和 (定值验证)",
+          symbol: isDiff
+            ? "\\left|\\frac{1}{|FA|} - \\frac{1}{|FB|}\\right|"
+            : "\\frac{1}{|FA|} + \\frac{1}{|FB|}",
+          value:
+            result.focalRadiusRelation !== null
+              ? `${formatMathNumber(result.focalRadiusRelation)} (理论定值: ${formatMathNumber(result.theoreticalFocalRadiusRelation ?? 0)})`
+              : "未构成两端点",
         },
       );
     }
   } else if (studyMode === "midpoint") {
     const theoreticalVal =
-      conicType === "ellipse"
-        ? `-${formatMathNumber((b * b) / (a * a))}`
-        : conicType === "hyperbola"
-          ? `${formatMathNumber((b * b) / (a * a))}`
-          : `${formatMathNumber(p / (midpointY || 1))}`;
+      result.pointDiffTheoretical !== null
+        ? formatMathNumber(result.pointDiffTheoretical)
+        : "—";
 
     quantities.push({
-      label: "点差法斜率积",
+      label:
+        conicType === "parabola"
+          ? "点差法不变量（斜率与 y₀ 之积）"
+          : "点差法斜率积",
       symbol:
-        conicType === "parabola" ? "k_{AB} \\cdot y_0" : "k_{AB} \\cdot k_{OM}",
+        conicType === "parabola"
+          ? "k_{AB} \\cdot y_0 = p"
+          : "k_{AB} \\cdot k_{OM}",
       value:
         result.pointDiffSlopeProduct !== null
-          ? `${result.pointDiffSlopeProduct.toFixed(4)} (理论值: ${theoreticalVal})`
-          : `理论值: ${theoreticalVal}`,
+          ? `${result.pointDiffSlopeProduct.toFixed(4)} (理论定值: ${theoreticalVal})`
+          : `理论定值: ${theoreticalVal}`,
     });
   } else if (studyMode === "polePolar") {
     quantities.push({
@@ -233,14 +240,20 @@ export function buildConicLineMathQuantities(
         title: "建模展开 · 判别式检验与韦达代换",
         detail:
           result.delta > 1e-5
-            ? `代入系数计算根的判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal} > 0$。割线与曲线交于两点。由韦达定理得两根之和 $x_1 + x_2 = -\\frac{B}{A} = ${formatMathNumber(result.xSum ?? 0)}$，两根之积 $x_1 x_2 = \\frac{C}{A} = ${formatMathNumber(result.xProd ?? 0)}$。`
+            ? conicType === "parabola"
+              ? `代入系数计算关于 $y$ 的二次方程判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal} > 0$。割线与抛物线交于两点。由韦达定理得以 $y$ 为主元的两根之和 $y_1 + y_2 = -\\frac{B}{A} = ${formatMathNumber(result.ySum ?? 0)}$，两根之积 $y_1 y_2 = \\frac{C}{A} = ${formatMathNumber(result.yProd ?? 0)}$。`
+              : `代入系数计算根的判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal} > 0$。割线与曲线交于两点。由韦达定理得两根之和 $x_1 + x_2 = -\\frac{B}{A} = ${formatMathNumber(result.xSum ?? 0)}$，两根之积 $x_1 x_2 = \\frac{C}{A} = ${formatMathNumber(result.xProd ?? 0)}$。`
             : Math.abs(result.delta) <= 1e-5
               ? `代入系数计算判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = 0$。方程有唯一实数重根，直线与曲线相切。`
               : `代入系数计算判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal} < 0$。方程无实数根，直线与曲线相离。`,
         latex:
-          result.xSum !== null && result.xProd !== null
-            ? `\\Delta = ${deltaVal} > 0 \\\\ x_1 + x_2 = -\\frac{${quadBVal}}{${quadAVal}} = ${formatMathNumber(result.xSum)}`
-            : `\\Delta = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal}`,
+          conicType === "parabola"
+            ? result.ySum !== null && result.yProd !== null
+              ? `\\Delta = ${deltaVal} > 0 \\\\ y_1 + y_2 = -\\frac{${quadBVal}}{${quadAVal}} = ${formatMathNumber(result.ySum)}`
+              : `\\Delta = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal}`
+            : result.xSum !== null && result.xProd !== null
+              ? `\\Delta = ${deltaVal} > 0 \\\\ x_1 + x_2 = -\\frac{${quadBVal}}{${quadAVal}} = ${formatMathNumber(result.xSum)}`
+              : `\\Delta = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal}`,
         rubric: "准确计算判别式并写出韦达定理代换式（3分）",
       },
       {
@@ -248,17 +261,21 @@ export function buildConicLineMathQuantities(
         title: "求解反思 · 割线弦长公式代入求解",
         detail:
           result.status === "secant" && result.chordLength !== null
-            ? `代入解析几何标准弦长公式 $|AB| = \\sqrt{1+k^2} \\cdot \\frac{\\sqrt{\\Delta}}{|A|} = \\sqrt{1 + (${kVal})^2} \\cdot \\frac{\\sqrt{${deltaVal}}}{|${quadAVal}|}$，求解得割线长：`
+            ? conicType === "parabola"
+              ? `代入以 $y$ 为主元的抛物线弦长公式 $|AB| = \\sqrt{1 + \\frac{1}{k^2}} \\cdot \\frac{\\sqrt{\\Delta}}{|A|} = \\sqrt{1 + \\frac{1}{(${kVal})^2}} \\cdot \\frac{\\sqrt{${deltaVal}}}{|${quadAVal}|}$，求解得割线长：`
+              : `代入解析几何标准弦长公式 $|AB| = \\sqrt{1+k^2} \\cdot \\frac{\\sqrt{\\Delta}}{|A|} = \\sqrt{1 + (${kVal})^2} \\cdot \\frac{\\sqrt{${deltaVal}}}{|${quadAVal}|}$，求解得割线长：`
             : "判别式 $\\Delta \\le 0$，直线与曲线无两相异公共交点，割线弦长不存在。",
         latex:
           result.chordLength !== null
-            ? `|AB| = \\sqrt{1 + k^2}\\frac{\\sqrt{\\Delta}}{|A|} = ${formatMathNumber(result.chordLength)}`
+            ? conicType === "parabola"
+              ? `|AB| = \\sqrt{1 + \\frac{1}{k^2}}\\frac{\\sqrt{\\Delta}}{|A|} = ${formatMathNumber(result.chordLength)}`
+              : `|AB| = \\sqrt{1 + k^2}\\frac{\\sqrt{\\Delta}}{|A|} = ${formatMathNumber(result.chordLength)}`
             : "\\text{割线弦长不存在}",
         rubric: "准确代入弦长公式并化简求得精确数值（4分）",
       },
     );
   } else if (studyMode === "focus") {
-    examAnchor = "高考焦点弦模型 · 通径极值与焦半径倒数和定值证明";
+    examAnchor = "高考焦点弦模型 · 通径极值与焦半径倒数定值证明";
 
     if (conicType === "parabola") {
       reasoningSteps.push(
@@ -306,9 +323,18 @@ export function buildConicLineMathQuantities(
         },
         {
           step: 3,
-          title: "求解反思 · 焦半径倒数和定值性质",
-          detail: `焦点割线两端点的焦半径倒数和恒等于定值 $\\frac{2a}{b^2}$，代入已知参数：`,
-          latex: `\\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|} = \\frac{2a}{b^2} = ${formatMathNumber((2 * a) / (b * b))}`,
+          title: "求解反思 · 焦半径倒数定值性质",
+          detail:
+            conicType === "hyperbola"
+              ? result.focalRadiusRelationKind === "difference"
+                ? `双曲线焦点弦两端点在焦点同侧（分居两支，焦点不在弦 $AB$ 内部），此时两端焦半径的倒数差绝对值恒等于定值 $\\frac{2a}{b^2}$，代入已知参数：`
+                : `双曲线焦点弦两端点分居焦点两侧（同在一支上，焦点落在弦 $AB$ 内部），此时两端焦半径的倒数和恒等于定值 $\\frac{2a}{b^2}$，代入已知参数：`
+              : `焦点割线两端点的焦半径倒数和恒等于定值 $\\frac{2a}{b^2}$，代入已知参数：`,
+          latex:
+            conicType === "hyperbola" &&
+            result.focalRadiusRelationKind === "difference"
+              ? `\\left|\\frac{1}{|F_1 A|} - \\frac{1}{|F_1 B|}\\right| = \\frac{2a}{b^2} = ${formatMathNumber((2 * a) / (b * b))}`
+              : `\\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|} = \\frac{2a}{b^2} = ${formatMathNumber((2 * a) / (b * b))}`,
           rubric: "得出定值并反思高考设问考法（3分）",
         },
       );
@@ -417,20 +443,27 @@ export function buildConicLineMathQuantities(
           ? `\\frac{${xPVal}x}{${aVal}^2} - \\frac{${yPVal}y}{${bVal}^2} = 1`
           : `${yPVal}y = ${pVal}(x + ${xPVal})`;
 
+    const tangentAtA =
+      conicType === "ellipse"
+        ? `\\frac{x_1 x}{${aVal}^2} + \\frac{y_1 y}{${bVal}^2} = 1`
+        : conicType === "hyperbola"
+          ? `\\frac{x_1 x}{${aVal}^2} - \\frac{y_1 y}{${bVal}^2} = 1`
+          : `y_1 y = ${pVal}(x + x_1)`;
+
     reasoningSteps.push(
       {
         step: 1,
-        title: "审题定法 · 切点弦方程",
-        detail: `由切点弦方程公式，点 $P(x_P, y_P) = (${xPVal}, ${yPVal})$ 对应的切点弦方程为：代入 $P$ 点坐标可得：`,
-        latex: polarEq,
-        rubric: "写出切点弦方程并代入点坐标（3分）",
+        title: "审题定法 · 设两切点并写出切点处切线方程",
+        detail: `设过点 $P(${xPVal}, ${yPVal})$ 所作两条切线的切点分别为 $A(x_1, y_1)$、$B(x_2, y_2)$。由圆锥曲线在切点处的切线方程（把标准方程中的 $x^2$ 换成 $x_1 x$、$y^2$ 换成 $y_1 y$ 即得），切线 $PA$ 的方程为：`,
+        latex: tangentAtA,
+        rubric: "设出两切点坐标并写出切点处切线方程（3分）",
       },
       {
         step: 2,
-        title: "建模展开 · 化为直线斜截式标准方程",
-        detail: `将切点弦方程化简整理为斜截式标准方程 $y = kx + m$：`,
-        latex: `L: y = ${kVal}x ${m >= 0 ? "+" : ""} ${formatMathNumber(m)}`,
-        rubric: "准确化简极线方程求得斜率与截距（3分）",
+        title: "建模展开 · 代入外部点对偶推出切点弦方程",
+        detail: `切线 $PA$ 过外部点 $P$，把 $P(${xPVal}, ${yPVal})$ 代入切线方程；对切点 $B$ 同理。两式结构完全相同，说明 $A$、$B$ 两点坐标都满足同一个一次方程，由“两点确定一条直线”即得切点弦 $AB$ 的方程，再化为斜截式 $y = kx + m$：`,
+        latex: `${polarEq} \\\\ \\implies y = ${kVal}x ${m >= 0 ? "+" : ""} ${formatMathNumber(m)}`,
+        rubric: "用切线对偶三步推出切点弦方程并化简（3分）",
       },
       {
         step: 3,
@@ -454,14 +487,26 @@ export function buildConicLineMathQuantities(
   const theorems: Theorem[] = [];
 
   if (studyMode === "general") {
-    theorems.push({
-      name: "通用弦长公式与判别式定理",
-      latex:
-        "|AB| = \\sqrt{1+k^2} \\cdot \\sqrt{(x_1+x_2)^2 - 4x_1 x_2} = \\sqrt{1+k^2} \\cdot \\frac{\\sqrt{\\Delta}}{|A|}",
-      condition: "方程二次项系数 $A \\neq 0$ 且判别式 $\\Delta > 0$",
-      note: "直线与曲线联立消元后，判别式 $\\Delta$ 决定交点个数，韦达定理直接代入求弦长，避开繁琐的解交点过程。",
-      level: "core",
-    });
+    if (conicType === "parabola") {
+      theorems.push({
+        name: "以 y 为主元的弦长公式与判别式定理",
+        latex:
+          "|AB| = \\sqrt{1 + \\frac{1}{k^2}} \\cdot \\sqrt{(y_1+y_2)^2 - 4y_1 y_2} = \\sqrt{1 + \\frac{1}{k^2}} \\cdot \\frac{\\sqrt{\\Delta}}{|A|}",
+        condition:
+          "割线设为 $x = \\frac{1}{k}y - \\frac{m}{k}$（非水平直线）且判别式 $\\Delta > 0$",
+        note: "抛物线联立时以 $y$ 为主元（方程为 $Ay^2 + By + C = 0$，其中 $A = 1$），因此弦长公式的斜率系数是 $\\sqrt{1 + \\frac{1}{k^2}}$ 而不是 $\\sqrt{1+k^2}$——这正是高考常“设 $x = my + n$”以避开斜率不存在讨论的由来。",
+        level: "core",
+      });
+    } else {
+      theorems.push({
+        name: "通用弦长公式与判别式定理",
+        latex:
+          "|AB| = \\sqrt{1+k^2} \\cdot \\sqrt{(x_1+x_2)^2 - 4x_1 x_2} = \\sqrt{1+k^2} \\cdot \\frac{\\sqrt{\\Delta}}{|A|}",
+        condition: "方程二次项系数 $A \\neq 0$ 且判别式 $\\Delta > 0$",
+        note: "直线与曲线联立消元后，判别式 $\\Delta$ 决定交点个数，韦达定理直接代入求弦长，避开繁琐的解交点过程。",
+        level: "core",
+      });
+    }
   } else if (studyMode === "focus") {
     if (conicType === "parabola") {
       theorems.push({
@@ -471,6 +516,16 @@ export function buildConicLineMathQuantities(
         condition:
           "割线过焦点 $F(\\frac{p}{2}, 0)$ 且倾角 $\\theta \\in (0, \\pi)$",
         note: "由抛物线定义，端点到焦点距离转化为到准线距离；通径 $\\theta = \\pi/2$ 时弦长取极小值 $2p$；两端点焦半径倒数和恒为常数 $\\frac{2}{p}$。",
+        level: "core",
+      });
+    } else if (conicType === "hyperbola") {
+      theorems.push({
+        name: "通径极值与焦半径倒数定值定理",
+        latex:
+          "L_{\\text{通径}} = \\frac{2b^2}{a}, \\quad \\begin{cases} \\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|} = \\frac{2a}{b^2} & (\\text{焦点在弦内：两端点同支}) \\\\ \\left| \\frac{1}{|F_1 A|} - \\frac{1}{|F_1 B|} \\right| = \\frac{2a}{b^2} & (\\text{焦点在弦外：两端点异支}) \\end{cases}",
+        condition:
+          "过焦点垂直于对称轴（$\\theta = \\pi/2$）时弦长取极小值 $\\frac{2b^2}{a}$",
+        note: "通径是过焦点最短的焦点弦。过双曲线焦点的弦须分两种构型讨论：两端点同在一支上（焦点落在弦内部）时焦半径倒数和为定值；两端点分居两支（焦点在弦外部）时焦半径倒数差的绝对值为定值——两种构型共用同一常数 $\\frac{2a}{b^2}$，切勿只记其中一种。",
         level: "core",
       });
     } else {
@@ -498,15 +553,15 @@ export function buildConicLineMathQuantities(
     });
   } else if (studyMode === "polePolar") {
     theorems.push({
-      name: "切点弦方程（割线极限法）",
+      name: "切点弦方程（切线对偶法）",
       latex:
         conicType === "ellipse"
           ? "\\frac{x_P x}{a^2} + \\frac{y_P y}{b^2} = 1"
           : conicType === "hyperbola"
             ? "\\frac{x_P x}{a^2} - \\frac{y_P y}{b^2} = 1"
             : "y_P y = p(x + x_P)",
-      condition: "极点 $P(x_P, y_P)$ 在曲线外部，切点弦 $AB$ 联立二次曲线",
-      note: "自曲线外一点引两条切线，其切点弦方程可由原方程作平方项对应替换直接写出。",
+      condition: "曲线外一点 $P(x_P, y_P)$ 向曲线引两条切线，$A$、$B$ 为两切点",
+      note: "自曲线外一点引两条切线：分别写出两切点处的切线方程并代入点 $P$，可得两个结构相同的一次方程，说明 $A$、$B$ 均满足同一方程，由“两点确定一条直线”即得切点弦方程。高考解答题按此链条书写即可满分，不建议直接套用结论。",
       level: "core",
     });
   }
@@ -552,7 +607,7 @@ export function buildConicLineMathQuantities(
   } else if (studyMode === "polePolar") {
     gaokaoPoints.push(
       {
-        text: "【切点弦方程一步速写】由二次曲线外一点 $P(x_P, y_P)$ 作两条切线，切点弦 $AB$ 方程无需联立解切点，直接套用切点弦方程公式一步写出！",
+        text: "【切点弦对偶通法】标准答题链：设两切点 $A(x_1,y_1)$、$B(x_2,y_2)$ $\\to$ 写出切点处切线方程 $\\to$ 代入外部点 $P$ $\\to$ 由“两点确定一条直线”推出切点弦方程。高考解答题务必写出这条链，直接套用结论会丢掉推导分。",
         importance: "gaokao",
       },
       {
@@ -612,10 +667,20 @@ export function buildConicLineMathQuantities(
       level: "warning",
     });
   } else if (studyMode === "polePolar") {
-    warnings.push({
-      text: "【点位置与切线存在性】点 $P$ 必须在二次曲线外部才能引出真实的两条切线与切点弦；若 $P$ 在曲线内部，则不存在满足条件的两条切线。",
-      level: "warning",
-    });
+    if (result.isPoleInside) {
+      // 极点落入曲线内部：实切线不存在，切点弦随之不存在。
+      // 代数上极线方程仍可写出，但它与曲线相离，不是「两切点确定的弦」——必须显式点破，
+      // 否则基础薄弱的学生会误以为右屏那条直线就是切点弦。
+      warnings.push({
+        text: `【极点位于曲线内部】当前点 $P(${formatMathNumber(poleX)}, ${formatMathNumber(poleY)})$ 位于曲线内部，不存在真实切线；对应极线与曲线相离，无法产生切点弦。请把 $P$ 拖到曲线外部，才能观察到「两切线 → 两切点 → 切点弦」的对偶关系。`,
+        level: "danger",
+      });
+    } else {
+      warnings.push({
+        text: "【点位置与切线存在性】点 $P$ 必须在二次曲线外部才能引出真实的两条切线与切点弦；若 $P$ 在曲线内部，则不存在满足条件的两条切线。",
+        level: "warning",
+      });
+    }
   }
 
   return {

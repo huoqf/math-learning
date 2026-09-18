@@ -33,6 +33,12 @@ export interface EllipseTrigResult {
   // 动点到目标直线 Ax + By + C = 0 的距离极值 (例如 x - y - 6 = 0)
   targetLine: { A: number; B: number; C: number };
   distToTargetLine: number;
+  /**
+   * 动点 P 在目标直线上的垂足 H（即「过 P 作目标直线垂线」的落点）。
+   * 中屏据此绘制「定直线 + 动态垂线段 P→H」，让右屏「点线距离」推导链与画面 100% 对应。
+   * 直线系数退化（A² + B² ≈ 0）时为 null。
+   */
+  footOnTargetLine: Point2D | null;
   maxDist: number;
   minDist: number;
   phiRad: number; // 辅助角 phi
@@ -108,6 +114,7 @@ export function calculateEllipseParam(
       triangleArea: 0,
       targetLine,
       distToTargetLine: 0,
+      footOnTargetLine: null,
       maxDist: 0,
       minDist: 0,
       phiRad: 0,
@@ -118,15 +125,20 @@ export function calculateEllipseParam(
   const cosT = Math.cos(thetaRad);
   const sinT = Math.sin(thetaRad);
 
-  const P: Point2D = { x: a * cosT, y: b * sinT };
-  const Paux: Point2D = { x: a * cosT, y: a * sinT };
-  const Pin: Point2D = { x: b * cosT, y: b * sinT };
+  // 高中课标安全契约：焦点在 x 轴的椭圆必须满足 a > b > 0。
+  // 越界参数在此钳制，避免 b ≥ a 时半焦距 c = √(a²-b²) 归零、两个焦点退化重合于原点。
+  const safeA = Math.max(0.1, a);
+  const safeB = Math.min(Math.max(0.01, b), Math.max(0.01, safeA - 0.01));
+
+  const P: Point2D = { x: safeA * cosT, y: safeB * sinT };
+  const Paux: Point2D = { x: safeA * cosT, y: safeA * sinT };
+  const Pin: Point2D = { x: safeB * cosT, y: safeB * sinT };
 
   // 切线 (cosT / a) x + (sinT / b) y = 1
-  const tangentA = cosT / a;
-  const tangentB = sinT / b;
-  const interceptX = Math.abs(cosT) > 1e-6 ? a / cosT : Infinity;
-  const interceptY = Math.abs(sinT) > 1e-6 ? b / sinT : Infinity;
+  const tangentA = cosT / safeA;
+  const tangentB = sinT / safeB;
+  const interceptX = Math.abs(cosT) > 1e-6 ? safeA / cosT : Infinity;
+  const interceptY = Math.abs(sinT) > 1e-6 ? safeB / sinT : Infinity;
   const triangleArea =
     isFinite(interceptX) && isFinite(interceptY)
       ? 0.5 * Math.abs(interceptX * interceptY)
@@ -137,9 +149,20 @@ export function calculateEllipseParam(
   const denom = Math.sqrt(A * A + B * B);
   const curDist = denom > 1e-6 ? Math.abs(A * P.x + B * P.y + C) / denom : 0;
 
+  // 垂足 H = P − [(A·Px + B·Py + C) / (A² + B²)] · (A, B)
+  // 与上面的点线距离公式同源：|PH| 恰等于 curDist，故中屏垂线段长度可被右屏数值校验。
+  const sqDenom = A * A + B * B;
+  const footOnTargetLine: Point2D | null =
+    sqDenom > 1e-12
+      ? {
+          x: P.x - ((A * P.x + B * P.y + C) / sqDenom) * A,
+          y: P.y - ((A * P.x + B * P.y + C) / sqDenom) * B,
+        }
+      : null;
+
   // 辅助角公式：A*a*cosθ + B*b*sinθ = sqrt((A a)^2 + (B b)^2) * sin(θ + φ)
-  const coefCos = A * a;
-  const coefSin = B * b;
+  const coefCos = A * safeA;
+  const coefSin = B * safeB;
   const R = Math.sqrt(coefCos * coefCos + coefSin * coefSin);
   const phiRad = Math.atan2(coefCos, coefSin);
 
@@ -156,8 +179,8 @@ export function calculateEllipseParam(
 
   return {
     valid: true,
-    a,
-    b,
+    a: safeA,
+    b: safeB,
     thetaDeg,
     thetaRad,
     P,
@@ -170,6 +193,7 @@ export function calculateEllipseParam(
     triangleArea,
     targetLine,
     distToTargetLine: curDist,
+    footOnTargetLine,
     maxDist,
     minDist,
     phiRad,

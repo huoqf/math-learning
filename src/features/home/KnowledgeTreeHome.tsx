@@ -102,7 +102,7 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "func_derivative",
     title: "函数性质与导数压轴通法",
-    badge: "17/18 题大题 · 17分",
+    badge: "19 题压轴 · 17分",
     description: "指对同构化简、极值点偏移、隐零点虚设代换与端点效应",
     icon: Flame,
     gradient: "from-rose-500 to-red-600",
@@ -112,9 +112,10 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   },
   {
     key: "conic_geometry",
-    title: "解析几何四大几何破题工具",
-    badge: "17/18 题大题 · 17分",
-    description: "非对称齐次化、极化恒等式与阿氏圆、点差中点弦与参数 t 割线",
+    title: "圆锥曲线通法与新高考破题工具",
+    badge: "18 题大题 · 17分",
+    description:
+      "直线与圆基础、联立韦达弦长通法、点差中点弦、单参数设点降维与齐次化斜率消元（拓展）",
     icon: Compass,
     gradient: "from-indigo-500 to-blue-600",
     borderLight: "border-indigo-200",
@@ -124,7 +125,7 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "solid_geometry",
     title: "立体几何空间直观与代数建系",
-    badge: "15/16 题大题 · 15分",
+    badge: "15 题解答 · 13分",
     description: "四大外接球模型、二面角动态翻折、空间截面与法向量空间角/距",
     icon: Box,
     gradient: "from-emerald-500 to-teal-600",
@@ -135,7 +136,7 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "probability_statistics",
     title: "概率统计与概率递推",
-    badge: "16/17 题大题 · 15分",
+    badge: "17 题解答 · 15分",
     description: "全概贝叶斯诊断、状态递推建模、正态分布与列联表检验",
     icon: Target,
     gradient: "from-amber-500 to-orange-600",
@@ -146,9 +147,9 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "sequence_series",
     title: "数列递推与新定义探索",
-    badge: "19 题压轴探索 · 17分",
+    badge: "选填小题定位 · 10分",
     description:
-      "不动点迭代构造等比、特征根法、错位裂项求和与高阶新定义数学探究",
+      "不动点迭代构造等比、错位裂项求和与文化情境递推（2026 卷数列无独立大题）",
     icon: Layers,
     gradient: "from-cyan-500 to-sky-600",
     borderLight: "border-cyan-200",
@@ -158,8 +159,9 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "vector_triangle",
     title: "平面向量与解三角形综合",
-    badge: "15 题首选解答 · 13分",
-    description: "正余弦定理与结构不良题型、投影向量数量积与斜基底分解",
+    badge: "16 题解答 · 15分",
+    description:
+      "正余弦定理与结构不良题型、投影向量与极化恒等式、阿波罗尼斯圆轨迹",
     icon: Award,
     gradient: "from-purple-500 to-fuchsia-600",
     borderLight: "border-purple-200",

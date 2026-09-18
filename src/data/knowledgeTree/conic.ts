@@ -130,7 +130,7 @@ export const conicNodes: KnowledgeNode[] = [
     labTitle: "极化恒等式与阿波罗尼斯圆实验室",
     chapter: "平面向量与复数",
     module: "平面向量应用",
-    importance: "hard",
+    importance: "gaokao",
     animationIds: [
       "anim-vector-polarization-apollonius",
       "anim-conic-polarization",
@@ -144,11 +144,11 @@ export const conicNodes: KnowledgeNode[] = [
   },
   {
     id: "know-conic-homogenization",
-    title: "圆锥曲线齐次化联立与斜率消元（新高考压轴技巧）",
+    title: "圆锥曲线齐次化联立与斜率消元（拓展 · 新高考压轴技巧）",
     labTitle: "齐次化与斜率韦达定理实验室",
     chapter: "解析几何",
     module: "圆锥曲线",
-    importance: "hard",
+    importance: "extend",
     animationIds: ["anim-conic-homogenization"],
     prerequisites: ["know-conic-line"],
     route: "/conic-homogenization",

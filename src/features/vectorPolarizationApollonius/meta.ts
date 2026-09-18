@@ -12,7 +12,7 @@ export const node: KnowledgeNode = {
   labTitle: "极化恒等式与阿波罗尼斯圆实验室",
   chapter: "平面向量与复数",
   module: "平面向量应用",
-  importance: "hard",
+  importance: "gaokao",
   animationIds: [
     "anim-vector-polarization-apollonius",
     "anim-conic-polarization",

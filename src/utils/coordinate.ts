@@ -28,6 +28,63 @@ export function designToMath(dx: number, dy: number, scale: SceneScale): Point {
   };
 }
 
+/**
+ * 把数学平面上的无限直线 A·x + B·y + C = 0 裁剪到当前可见视口，
+ * 返回可直接交给 <line> 绘制的两个数学坐标端点；直线与视口不相交时返回 null。
+ *
+ * 用途：中屏绘制「定直线 / 准线 / 渐近线」这类参考直线。若直接取
+ * x ∈ [xMin, xMax] 求 y，遇到近铅垂直线会得到爆炸或 Infinity 的坐标，
+ * 因此统一改为与视口四条边求交、再取相距最远的一对端点。
+ */
+export function clipLineToScale(
+  scale: SceneScale,
+  A: number,
+  B: number,
+  C: number,
+): [Point, Point] | null {
+  const { xMin, xMax, yMin, yMax } = scale;
+  const eps = 1e-9;
+  const candidates: Point[] = [];
+
+  // 与左右两条竖直边界求交
+  if (Math.abs(B) > eps) {
+    for (const x of [xMin, xMax]) {
+      const y = -(A * x + C) / B;
+      if (y >= yMin - eps && y <= yMax + eps) candidates.push({ x, y });
+    }
+  }
+  // 与上下两条水平边界求交
+  if (Math.abs(A) > eps) {
+    for (const y of [yMin, yMax]) {
+      const x = -(B * y + C) / A;
+      if (x >= xMin - eps && x <= xMax + eps) candidates.push({ x, y });
+    }
+  }
+
+  // 去重：视口顶点处会被相邻两条边界各命中一次
+  const uniq = candidates.filter(
+    (p, i) =>
+      candidates.findIndex(
+        (q) => Math.abs(q.x - p.x) < 1e-9 && Math.abs(q.y - p.y) < 1e-9,
+      ) === i,
+  );
+  if (uniq.length < 2) return null;
+
+  // 取相距最远的一对作为可视端点
+  let best: [Point, Point] = [uniq[0], uniq[1]];
+  let bestLen = -1;
+  for (let i = 0; i < uniq.length; i++) {
+    for (let j = i + 1; j < uniq.length; j++) {
+      const len = Math.hypot(uniq[i].x - uniq[j].x, uniq[i].y - uniq[j].y);
+      if (len > bestLen) {
+        bestLen = len;
+        best = [uniq[i], uniq[j]];
+      }
+    }
+  }
+  return best;
+}
+
 // ─── 3D → 2D 投影 ─────────────────────────────────────────────────────────────
 
 export interface Point3D {

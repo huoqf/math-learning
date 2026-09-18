@@ -98,4 +98,22 @@ describe("椭圆与双曲线纯解算逻辑测试 (calculateConicProperties)", (
     const resAcute = calculateConicProperties("ellipse", 5, 4, Math.PI / 2); // c=3, e=0.6 < 0.707
     expect(resAcute.focusTriangle.maxAngleRad).toBeLessThan(Math.PI / 2);
   });
+
+  it("双曲线 t 有效域被钳制在 (-1.35, 1.35)：越域输入不得再改变动点位置", () => {
+    // 参数方程 x = a·sec t, y = b·tan t 在 |t| → π/2 处发散，
+    // 故左屏 t 滑块量程必须与 math 层钳制域一致，否则轨道两端空转。
+    const atBound = calculateConicProperties("hyperbola", 3, 2, 1.35);
+    const beyond = calculateConicProperties("hyperbola", 3, 2, 2.5);
+    const wayBeyond = calculateConicProperties("hyperbola", 3, 2, -3.0);
+
+    expect(beyond.pointP.x).toBeCloseTo(atBound.pointP.x, 10);
+    expect(beyond.pointP.y).toBeCloseTo(atBound.pointP.y, 10);
+    // 负向越域对称钳制：sec 为偶函数，tan 为奇函数
+    expect(wayBeyond.pointP.x).toBeCloseTo(atBound.pointP.x, 10);
+    expect(wayBeyond.pointP.y).toBeCloseTo(-atBound.pointP.y, 10);
+
+    // 域内取值必须真实生效（防止钳制过度把整条轨道压死）
+    const inside = calculateConicProperties("hyperbola", 3, 2, 0.9);
+    expect(inside.pointP.y).not.toBeCloseTo(atBound.pointP.y, 3);
+  });
 });

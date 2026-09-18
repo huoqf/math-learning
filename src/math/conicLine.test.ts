@@ -134,6 +134,9 @@ describe("solveConicLineIntersection", () => {
     });
     expect(resPara.slopeAB).toBeCloseTo(1, 4);
     expect(resPara.midpoint?.y).toBeCloseTo(2, 4);
+    // 抛物线点差法不变量为 k_AB · y_0 = p（而非椭圆/双曲线的 k_AB · k_OM）
+    expect(resPara.pointDiffSlopeProduct).toBeCloseTo(2, 4); // k_AB · y_0 = 1 × 2 = p
+    expect(resPara.pointDiffTheoretical).toBeCloseTo(2, 4); // 理论定值即 p
   });
 
   it("应当正确计算极点极线/切点弦模式 (polePolar)", () => {
@@ -164,6 +167,107 @@ describe("solveConicLineIntersection", () => {
     ).toBe(true);
   });
 
+  it("极点落入曲线内部时 isPoleInside 必须为真，且极线与曲线相离（三类曲线对照）", () => {
+    // ── 椭圆 x²/16 + y²/9 = 1：内部判据 x²/a² + y²/b² < 1 ──
+    const ellIn = solveConicLineIntersection({
+      conicType: "ellipse",
+      studyMode: "polePolar",
+      a: 4,
+      b: 3,
+      p: 2,
+      k: 0,
+      m: 0,
+      poleX: 1,
+      poleY: 1,
+    });
+    expect(ellIn.isPoleInside).toBe(true);
+    expect(ellIn.status).toBe("disjoint");
+
+    const ellOut = solveConicLineIntersection({
+      conicType: "ellipse",
+      studyMode: "polePolar",
+      a: 4,
+      b: 3,
+      p: 2,
+      k: 0,
+      m: 0,
+      poleX: 4,
+      poleY: 3,
+    });
+    expect(ellOut.isPoleInside).toBe(false);
+    expect(ellOut.status).toBe("secant");
+    expect(ellOut.intersectionCount).toBe(2);
+
+    // ── 双曲线 x²/9 − y²/4 = 1：内部判据 x²/a² − y²/b² > 1（方向与椭圆相反）──
+    const hypOut = solveConicLineIntersection({
+      conicType: "hyperbola",
+      studyMode: "polePolar",
+      a: 3,
+      b: 2,
+      p: 2,
+      k: 0,
+      m: 0,
+      poleX: 1,
+      poleY: 0,
+    });
+    expect(hypOut.isPoleInside).toBe(false);
+
+    const hypIn = solveConicLineIntersection({
+      conicType: "hyperbola",
+      studyMode: "polePolar",
+      a: 3,
+      b: 2,
+      p: 2,
+      k: 0,
+      m: 0,
+      poleX: 6,
+      poleY: 0,
+    });
+    expect(hypIn.isPoleInside).toBe(true);
+    expect(hypIn.status).toBe("disjoint");
+
+    // ── 抛物线 y² = 4x (p=2)：内部判据 y² < 2px ──
+    const parIn = solveConicLineIntersection({
+      conicType: "parabola",
+      studyMode: "polePolar",
+      a: 3,
+      b: 2,
+      p: 2,
+      k: 0,
+      m: 0,
+      poleX: 3,
+      poleY: 0,
+    });
+    expect(parIn.isPoleInside).toBe(true);
+    expect(parIn.status).toBe("disjoint");
+
+    const parOut = solveConicLineIntersection({
+      conicType: "parabola",
+      studyMode: "polePolar",
+      a: 3,
+      b: 2,
+      p: 2,
+      k: 0,
+      m: 0,
+      poleX: -1,
+      poleY: 0,
+    });
+    expect(parOut.isPoleInside).toBe(false);
+    expect(parOut.status).toBe("secant");
+
+    // ── 非极点极线模式：该字段无数学意义，必须恒为 false ──
+    const general = solveConicLineIntersection({
+      conicType: "ellipse",
+      studyMode: "general",
+      a: 4,
+      b: 3,
+      p: 2,
+      k: 0.5,
+      m: 0,
+    });
+    expect(general.isPoleInside).toBe(false);
+  });
+
   it("应当正确计算椭圆通径铅垂线解析解与焦半径倒数和", () => {
     // 椭圆 a=3, b=2 => 通径 2b^2/a = 8/3 ≈ 2.6667, 理论倒数和 2a/b^2 = 6/4 = 1.5
     const res = solveConicLineIntersection({
@@ -179,8 +283,42 @@ describe("solveConicLineIntersection", () => {
     expect(res.isVertical).toBe(true);
     expect(res.status).toBe("secant");
     expect(res.chordLength).toBeCloseTo(8 / 3, 4);
-    expect(res.harmonicSum).toBeCloseTo(1.5, 4);
-    expect(res.theoreticalHarmonicSum).toBeCloseTo(1.5, 4);
+    expect(res.focalRadiusRelationKind).toBe("sum");
+    expect(res.focalRadiusRelation).toBeCloseTo(1.5, 4);
+    expect(res.theoreticalFocalRadiusRelation).toBeCloseTo(1.5, 4);
+  });
+
+  it("双曲线焦点弦：焦点在弦内取倒数和、在弦外取倒数差，二者共用定值 2a/b²", () => {
+    // 双曲线 x^2/9 - y^2/4 = 1 => 渐近线斜率 b/a = 2/3 ≈ 0.6667, 定值 2a/b^2 = 1.5
+    const solve = (theta: number) =>
+      solveConicLineIntersection({
+        conicType: "hyperbola",
+        studyMode: "focus",
+        a: 3,
+        b: 2,
+        p: 2,
+        k: 0,
+        m: 0,
+        theta,
+      });
+
+    // θ = 60°（tanθ = 1.732 > b/a）：两端点同支，焦点落在弦内 => 倒数和 = 2a/b²
+    const sameBranch = solve(Math.PI / 3);
+    expect(sameBranch.isFocusChord).toBe(true);
+    expect(sameBranch.focalRadiusRelationKind).toBe("sum");
+    expect(sameBranch.focalRadiusRelation).toBeCloseTo(1.5, 3);
+    expect(sameBranch.theoreticalFocalRadiusRelation).toBeCloseTo(1.5, 4);
+
+    // θ = 30°（tanθ = 0.577 < b/a）：两端点异支，焦点在弦外 => 倒数差 = 2a/b²
+    const crossBranch = solve(Math.PI / 6);
+    expect(crossBranch.isFocusChord).toBe(true);
+    expect(crossBranch.focalRadiusRelationKind).toBe("difference");
+    expect(crossBranch.focalRadiusRelation).toBeCloseTo(1.5, 3);
+    expect(crossBranch.theoreticalFocalRadiusRelation).toBeCloseTo(1.5, 4);
+
+    // 两种构型的实测值都必须落在理论定值 1.5 上，而不是与它无关的伪定值
+    expect(Math.abs(sameBranch.focalRadiusRelation! - 1.5)).toBeLessThan(0.01);
+    expect(Math.abs(crossBranch.focalRadiusRelation! - 1.5)).toBeLessThan(0.01);
   });
 
   it("应当正确验证抛物线焦半径倒数和与倾斜角无关（定值 2/p）", () => {
@@ -195,7 +333,8 @@ describe("solveConicLineIntersection", () => {
       m: 0,
       theta: Math.PI / 4,
     });
-    expect(resTheta1.harmonicSum).toBeCloseTo(1, 4);
+    expect(resTheta1.focalRadiusRelationKind).toBe("sum");
+    expect(resTheta1.focalRadiusRelation).toBeCloseTo(1, 4);
 
     const resTheta2 = solveConicLineIntersection({
       conicType: "parabola",
@@ -207,7 +346,8 @@ describe("solveConicLineIntersection", () => {
       m: 0,
       theta: Math.PI / 3,
     });
-    expect(resTheta2.harmonicSum).toBeCloseTo(1, 4);
+    expect(resTheta2.focalRadiusRelationKind).toBe("sum");
+    expect(resTheta2.focalRadiusRelation).toBeCloseTo(1, 4);
   });
 
   it("应当正确识别点差法中点落在曲线外部的越界相离情形", () => {

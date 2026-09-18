@@ -51,24 +51,42 @@ export interface IntersectionResult {
   midpoint: Point2D | null; // M((x1+x2)/2, (y1+y2)/2)
   // 面积
   triangleArea: number | null; // S_△OAB
-  // 点差法斜率积
+  // 点差法不变量
   slopeAB: number; // k_AB
   slopeOM: number | null; // k_OM
-  pointDiffSlopeProduct: number | null; // k_AB * k_OM
+  // 点差法不变量实测值：椭圆/双曲线为 k_AB * k_OM；抛物线为 k_AB * y_0
+  pointDiffSlopeProduct: number | null;
+  // 点差法不变量理论定值：椭圆 -b^2/a^2，双曲线 b^2/a^2，抛物线 p
+  pointDiffTheoretical: number | null;
   // 焦点坐标
   focusF1: Point2D;
   focusF2: Point2D | null;
   // 是否为焦点弦
   isFocusChord: boolean;
-  // 焦半径与倒数和 (过焦点模式专属)
+  // 焦半径关系式 (过焦点模式专属)
   focalRadii: [number, number] | null;
-  harmonicSum: number | null; // 1/|FA| + 1/|FB|
-  theoreticalHarmonicSum: number | null; // 理论定值: 抛物线 2/p, 椭圆 2a/b^2
+  // 焦半径关系式实测值：焦点在弦内取倒数和 1/r1+1/r2；两端点位于焦点同侧取倒数差 |1/r1-1/r2|
+  focalRadiusRelation: number | null;
+  focalRadiusRelationKind: "sum" | "difference" | null;
+  // 理论定值: 抛物线 2/p, 椭圆/双曲线 2a/b^2（两种构型共用同一常数）
+  theoreticalFocalRadiusRelation: number | null;
   // 直线形式与铅垂标志
   isVertical: boolean;
   verticalX: number | null;
   // 点差法中点有效性 (点是否在曲线内部)
   isMidpointValid: boolean;
+  /**
+   * 极点极线模式专属：极点 P 是否落在曲线「内部」（即自 P 引不出任何真实切线）。
+   *
+   * 判据由「过 P(x₀, y₀) 的直线与曲线相切的切点方程有实根」反解得到，三类曲线各不相同：
+   *  - 椭圆 x²/a² + y²/b² = 1：x₀²/a² + y₀²/b² < 1 时引不出实切线；
+   *  - 双曲线 x²/a² − y²/b² = 1：x₀²/a² − y₀²/b² > 1 时引不出实切线（注意不等式方向与椭圆相反）；
+   *  - 抛物线 y² = 2px：y₀² < 2px₀ 时引不出实切线（与中点弦存在性同域）。
+   *
+   * 该字段只在 `studyMode === "polePolar"` 下有数学意义，其余模式恒为 false。
+   * 与 `status === "disjoint"` 在非退化点处互为印证（切点弦与曲线相离 ⟺ 极点无实切线）。
+   */
+  isPoleInside: boolean;
   // 关键说明/几何指标
   description: string;
 }
@@ -104,6 +122,7 @@ export function solveConicLineIntersection(
   let isVertical = false;
   let verticalX: number | null = null;
   let isMidpointValid = true;
+  let isPoleInside = false;
 
   if (studyMode === "focus") {
     // 过右焦点 F1(xF, 0)
@@ -161,6 +180,18 @@ export function solveConicLineIntersection(
       k = p / safeY0;
       m = (p * x0) / safeY0;
     }
+
+    // 极点是否落在曲线内部：等价于「自 P 引不出任何真实切线」。
+    // 由「过 P 且与曲线相切的切点方程须有实根」反解得下列判据（三类曲线不等式方向不同）。
+    // 边界（恰好落在曲线上）不属于内部——此时恰有 1 条切线，故用 epsilon 排除。
+    const EG = 1e-9;
+    if (conicType === "ellipse") {
+      isPoleInside = (x0 * x0) / (a * a) + (y0 * y0) / (b * b) < 1 - EG;
+    } else if (conicType === "hyperbola") {
+      isPoleInside = (x0 * x0) / (a * a) - (y0 * y0) / (b * b) > 1 + EG;
+    } else {
+      isPoleInside = y0 * y0 < 2 * p * x0 - EG;
+    }
   }
 
   // 判断是否为过焦点弦
@@ -185,9 +216,11 @@ export function solveConicLineIntersection(
   let triangleArea: number | null = null;
   let slopeOM: number | null = null;
   let pointDiffSlopeProduct: number | null = null;
+  let pointDiffTheoretical: number | null = null;
   let focalRadii: [number, number] | null = null;
-  let harmonicSum: number | null = null;
-  let theoreticalHarmonicSum: number | null = null;
+  let focalRadiusRelation: number | null = null;
+  let focalRadiusRelationKind: "sum" | "difference" | null = null;
+  let theoreticalFocalRadiusRelation: number | null = null;
   let description = "";
 
   if (isVertical && verticalX !== null) {
@@ -412,26 +445,48 @@ export function solveConicLineIntersection(
     triangleArea = 0.5 * Math.abs(x1 * y2 - x2 * y1);
   }
 
-  // 5. 计算点差法斜率关系 (k_AB 和 k_OM)
-  if (midpoint && Math.abs(midpoint.x) > 1e-5) {
-    slopeOM = midpoint.y / midpoint.x;
-    pointDiffSlopeProduct = k * slopeOM;
+  // 5. 计算点差法不变量
+  //    椭圆/双曲线：k_AB · k_OM（理论值 ∓b²/a²）；抛物线：k_AB · y_0（理论值 p）
+  if (midpoint) {
+    if (Math.abs(midpoint.x) > 1e-5) {
+      slopeOM = midpoint.y / midpoint.x;
+    }
+    if (conicType === "parabola") {
+      pointDiffSlopeProduct = k * midpoint.y;
+      pointDiffTheoretical = p;
+    } else if (slopeOM !== null) {
+      pointDiffSlopeProduct = k * slopeOM;
+      pointDiffTheoretical =
+        conicType === "ellipse" ? -(b * b) / (a * a) : (b * b) / (a * a);
+    }
   }
 
-  // 6. 计算焦半径与倒数和 (过焦点弦专属)
+  // 6. 计算焦半径关系式 (过焦点弦专属)
+  //    几何判据：两端点相对焦点的方位。点积为正 ⇒ 两端点位于焦点同侧（焦点不在弦内）；
+  //    点积为负 ⇒ 焦点落在弦 AB 内部。
+  //    椭圆（焦点在内部区域）与抛物线恒为“焦点在弦内” ⇒ 倒数和；
+  //    双曲线两种构型都可能出现 ⇒ 焦点在弦内取倒数和、焦点在弦外取倒数差。
+  //    两种构型共用同一理论常数：椭圆/双曲线 2a/b²，抛物线 2/p。
   if (intersections.length === 2 && isFocusChord) {
     const [pA, pB] = intersections;
     const r1 = Math.sqrt((pA.x - focusF1.x) ** 2 + (pA.y - focusF1.y) ** 2);
     const r2 = Math.sqrt((pB.x - focusF1.x) ** 2 + (pB.y - focusF1.y) ** 2);
     focalRadii = [r1, r2];
+    const focusInsideChord =
+      (pA.x - focusF1.x) * (pB.x - focusF1.x) +
+        (pA.y - focusF1.y) * (pB.y - focusF1.y) <
+      0;
     if (r1 > 1e-5 && r2 > 1e-5) {
-      harmonicSum = 1 / r1 + 1 / r2;
+      if (focusInsideChord) {
+        focalRadiusRelationKind = "sum";
+        focalRadiusRelation = 1 / r1 + 1 / r2;
+      } else {
+        focalRadiusRelationKind = "difference";
+        focalRadiusRelation = Math.abs(1 / r1 - 1 / r2);
+      }
     }
-    if (conicType === "parabola") {
-      theoreticalHarmonicSum = 2 / p;
-    } else if (conicType === "ellipse") {
-      theoreticalHarmonicSum = (2 * a) / (b * b);
-    }
+    theoreticalFocalRadiusRelation =
+      conicType === "parabola" ? 2 / p : (2 * a) / (b * b);
   }
 
   return {
@@ -452,15 +507,18 @@ export function solveConicLineIntersection(
     slopeAB: k,
     slopeOM,
     pointDiffSlopeProduct,
+    pointDiffTheoretical,
     focusF1,
     focusF2,
     isFocusChord,
     focalRadii,
-    harmonicSum,
-    theoreticalHarmonicSum,
+    focalRadiusRelation,
+    focalRadiusRelationKind,
+    theoreticalFocalRadiusRelation,
     isVertical,
     verticalX,
     isMidpointValid,
+    isPoleInside,
     description,
   };
 }

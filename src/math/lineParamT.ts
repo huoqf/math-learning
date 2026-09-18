@@ -96,6 +96,85 @@ export interface ConicShapeParams {
 }
 
 /**
+ * 椭圆半轴安全契约（单一事实来源）
+ *
+ * 高中椭圆必须满足 a > b > 0。但 params 的写入路径不止一条（滑块、场景预设、
+ * 程序化写入、组件被外部直接挂载），任一条都可能把越界值带进状态。可达场景：
+ * 先在某个 a 下把 b 拖到它的上限，随后再把 a 拖小 —— 此时 b 不会自动回缩，
+ * 状态里就出现了 b ≥ a。
+ *
+ * 越界后果不是"参数难看"，而是双输：
+ *   1. 画面：<ellipse rx={a} ry={b}> 直接画成纵向椭圆；
+ *   2. 数形不一致：本文件 calcLineConicIntersection 内部会把 b 钳制到 a − ε，
+ *      于是交点、弦长、定值全部按钳制后的椭圆算，图却按越界的椭圆画。
+ *
+ * 因此所有消费方（数学层 / 场景 / 控件）都必须经由这里取半轴，
+ * 不允许再各自抄一份 Math.min(b, Math.max(a - 0.01, 0.01))。
+ */
+
+/** 半轴安全间隔 ε：保证 a 与 b 之间留出不致退化的间隙 */
+export const ELLIPSE_AXIS_EPS = 0.01;
+
+/**
+ * 椭圆短半轴 b 的合法上限（= a − ε，且不低于 floor）。
+ * floor 对应两种场景：数学层取 ε 以保证 b > 0；
+ * 滑块取控件自身最小值，以免出现 min > max 的非法区间。
+ */
+export function getEllipseBMax(a: number, floor = ELLIPSE_AXIS_EPS): number {
+  return Math.max(floor, a - ELLIPSE_AXIS_EPS);
+}
+
+/**
+ * 把任意 (a, b) 归一化为满足 a > b > 0 的合法半轴，采取「保 a、收缩 b」策略。
+ * 合法输入原样返回（对现有页面零影响）；越界输入才被收敛。
+ */
+export function normalizeEllipseAxes(
+  a: number,
+  b: number,
+): { a: number; b: number } {
+  // a 兜底：a ≤ 2ε（含负数与 NaN）时抬到 2ε。
+  // 这同时保证 rx > 0 —— SVG 中 rx ≤ 0 会使该 <ellipse> 静默不渲染。
+  const safeA =
+    Number.isFinite(a) && a > 2 * ELLIPSE_AXIS_EPS ? a : 2 * ELLIPSE_AXIS_EPS;
+  const bMax = getEllipseBMax(safeA);
+  // b 兜底：下限 ε 保证 b > 0，上限 a − ε 保证 b < a
+  const raw = Number.isFinite(b) ? b : bMax;
+  const safeB = Math.min(Math.max(raw, ELLIPSE_AXIS_EPS), bMax);
+  return { a: safeA, b: safeB };
+}
+
+/**
+ * 求解圆锥曲线的右焦点 F 坐标（"割线过焦点"这一前提的几何载体）
+ * - 抛物线 y² = 2px：F(p/2, 0)
+ * - 椭圆 x²/a² + y²/b² = 1：c = √(a² − b²)，F₁(c, 0)
+ * - 双曲线 x²/a² − y²/b² = 1：c = √(a² + b²)，F₁(c, 0)
+ * - 圆：无焦点
+ * 非法参数（非正 a/b/p、椭圆 b ≥ a）一律返回 null，由调用方决定是否标注。
+ */
+export function getConicFocus(
+  conicType: ConicType,
+  shapeParams: ConicShapeParams,
+): LineParamPoint | null {
+  if (conicType === "circle") return null;
+
+  if (conicType === "parabola") {
+    const p = shapeParams.p ?? 2;
+    return p > 0 ? { x: p / 2, y: 0 } : null;
+  }
+
+  const a = shapeParams.a ?? 3;
+  const b = shapeParams.b ?? 2;
+  if (!(a > 0) || !(b > 0)) return null;
+
+  if (conicType === "ellipse") {
+    if (b >= a) return null; // 椭圆必须满足 a > b > 0
+    return { x: Math.sqrt(a * a - b * b), y: 0 };
+  }
+
+  return { x: Math.sqrt(a * a + b * b), y: 0 };
+}
+
+/**
  * 求解直线与各类二次曲线相交的代数与几何量
  */
 export function calcLineConicIntersection(
@@ -121,9 +200,11 @@ export function calcLineConicIntersection(
     B = 2 * (x0 * cos + y0 * sin);
     C = x0 * x0 + y0 * y0 - R * R;
   } else if (conicType === "ellipse") {
-    const a = shapeParams.a ?? 4;
-    // 参数安全契约：椭圆必须满足 a > b > 0，否则钳制 b 防止滑出非法/退化椭圆
-    const b = Math.min(shapeParams.b ?? 2.5, Math.max(a - 0.01, 0.01));
+    // 参数安全契约：椭圆必须满足 a > b > 0，统一走 normalizeEllipseAxes（单一事实来源）
+    const { a, b } = normalizeEllipseAxes(
+      shapeParams.a ?? 4,
+      shapeParams.b ?? 2.5,
+    );
     const a2 = a * a;
     const b2 = b * b;
     // (x0 + t cos)^2 / a^2 + (y0 + t sin)^2 / b^2 = 1

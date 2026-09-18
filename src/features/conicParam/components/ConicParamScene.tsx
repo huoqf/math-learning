@@ -1,8 +1,9 @@
 ﻿import React, { useMemo } from "react";
 import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
-import { mathToDesign } from "@/utils/coordinate";
+import { clipLineToScale, mathToDesign } from "@/utils/coordinate";
 import { avoidLabelOverlap, type LabelItem } from "@/utils/labelOverlap";
+import { formatMathNumber } from "@/utils/mathFormat";
 import {
   calculateEllipseParam,
   calculateParabolaYParam,
@@ -46,9 +47,60 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
     return calculateEllipseParam(a, b, theta, { A: 1, B: -1, C: -6 });
   }, [a, b, theta]);
 
-  const c = Math.sqrt(Math.max(0, a * a - b * b));
+  // 高中课标安全契约：焦点在 x 轴的椭圆必须满足 a > b > 0。
+  // 统一以数学层钳制后的半轴绘制，避免 b ≥ a 时半焦距 c 归零、两焦点退化重合于原点。
+  const safeA = ellipseRes.a;
+  const safeB = ellipseRes.b;
+
+  const c = Math.sqrt(Math.max(0, safeA * safeA - safeB * safeB));
   const f1D = useMemo(() => mathToDesign(c, 0, scale), [c, scale]);
   const f2D = useMemo(() => mathToDesign(-c, 0, scale), [c, scale]);
+
+  // 目标直线 Ax + By + C = 0（本页为 x − y − 6 = 0）裁剪到可见视口后的可绘制段。
+  // 右屏推导链第 1~3 步全部围绕这条定直线展开，中屏必须画出它，否则设问的证据链在画面上不存在。
+  const targetLineSeg = useMemo(
+    () =>
+      clipLineToScale(
+        scale,
+        ellipseRes.targetLine.A,
+        ellipseRes.targetLine.B,
+        ellipseRes.targetLine.C,
+      ),
+    [ellipseRes, scale],
+  );
+
+  // 动点 P 到目标直线的垂足 H 的设计坐标
+  const footMath = ellipseRes.footOnTargetLine;
+  const footD = useMemo(() => {
+    return footMath ? mathToDesign(footMath.x, footMath.y, scale) : null;
+  }, [footMath, scale]);
+
+  // 椭圆动点 P 的设计坐标（垂线段起点，同时供标签定位复用）
+  const pointPD = useMemo(
+    () => mathToDesign(ellipseRes.P.x, ellipseRes.P.y, scale),
+    [ellipseRes, scale],
+  );
+
+  // 垂线段 P→H 的中点，用于挂「d = …」数值标注
+  const perpMidD = useMemo(() => {
+    const foot = ellipseRes.footOnTargetLine;
+    if (!foot) return null;
+    return mathToDesign(
+      (ellipseRes.P.x + foot.x) / 2,
+      (ellipseRes.P.y + foot.y) / 2,
+      scale,
+    );
+  }, [ellipseRes, scale]);
+
+  // 目标直线可视段的中点，用于挂直线方程标注
+  const targetLineMidD = useMemo(() => {
+    if (!targetLineSeg) return null;
+    return mathToDesign(
+      (targetLineSeg[0].x + targetLineSeg[1].x) / 2,
+      (targetLineSeg[0].y + targetLineSeg[1].y) / 2,
+      scale,
+    );
+  }, [targetLineSeg, scale]);
 
   // 3. 模式 2 数据 (抛物线纵坐标单参数)
   const parabolaRes = useMemo(() => {
@@ -57,8 +109,8 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
 
   // 4. 模式 3 数据 (设线降维 x = my + n)
   const lineYRes = useMemo(() => {
-    return calculateLineYFormConic(a, b, m, n);
-  }, [a, b, m, n]);
+    return calculateLineYFormConic(safeA, safeB, m, n);
+  }, [safeA, safeB, m, n]);
 
   // -------------------------------------------------------------
   // 点标签计算与防重叠
@@ -73,10 +125,29 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
         { key: "F1", x: f1D.x, y: f1D.y - 12, text: "F₁" },
         { key: "F2", x: f2D.x, y: f2D.y - 12, text: "F₂" },
       );
-      const pD = mathToDesign(ellipseRes.P.x, ellipseRes.P.y, scale);
-      labels.push({ key: "P", x: pD.x, y: pD.y - 12, text: "P" });
+      labels.push({ key: "P", x: pointPD.x, y: pointPD.y - 12, text: "P" });
       const pAuxD = mathToDesign(ellipseRes.Paux.x, ellipseRes.Paux.y, scale);
       labels.push({ key: "Paux", x: pAuxD.x, y: pAuxD.y - 12, text: "P'" });
+      if (footD) {
+        labels.push({ key: "H", x: footD.x, y: footD.y + 14, text: "H" });
+      }
+      if (targetLineMidD) {
+        labels.push({
+          key: "l",
+          x: targetLineMidD.x,
+          y: targetLineMidD.y + 16,
+          text: "l: x − y − 6 = 0",
+        });
+      }
+      if (perpMidD) {
+        // 垂线段中点挂当前距离值，与右屏「动点到直线 x − y − 6 = 0 距离」实时同源
+        labels.push({
+          key: "d",
+          x: perpMidD.x,
+          y: perpMidD.y - 8,
+          text: `d = ${formatMathNumber(ellipseRes.distToTargetLine)}`,
+        });
+      }
     } else if (studyMode === "parabolaYParam") {
       const focusD = mathToDesign(p / 2, 0, scale);
       labels.push({ key: "F", x: focusD.x, y: focusD.y - 12, text: "F" });
@@ -121,6 +192,10 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
     f2D,
     ellipseRes,
     scale,
+    pointPD,
+    footD,
+    perpMidD,
+    targetLineMidD,
     p,
     parabolaRes,
     lineYRes,
@@ -161,8 +236,8 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
           <ellipse
             cx={originD.x}
             cy={originD.y}
-            rx={a * scale.scaleX}
-            ry={b * scale.scaleY}
+            rx={safeA * scale.scaleX}
+            ry={safeB * scale.scaleY}
             fill={withAlpha(MATH_COLORS.ellipse, 0.06)}
             stroke={MATH_COLORS.ellipse}
             strokeWidth={2.5}
@@ -188,8 +263,8 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
           <ellipse
             cx={originD.x}
             cy={originD.y}
-            rx={a * scale.scaleX}
-            ry={a * scale.scaleY}
+            rx={safeA * scale.scaleX}
+            ry={safeA * scale.scaleY}
             fill="none"
             stroke={MATH_COLORS.paramPrimary}
             strokeWidth={1.5}
@@ -238,6 +313,40 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             />
           )}
 
+          {/* 目标定直线 l: x − y − 6 = 0（裁剪到可见视口）：右屏推导链围绕该定直线展开，中屏此前完全未画 */}
+          {targetLineSeg && (
+            <line
+              x1={mathToDesign(targetLineSeg[0].x, targetLineSeg[0].y, scale).x}
+              y1={mathToDesign(targetLineSeg[0].x, targetLineSeg[0].y, scale).y}
+              x2={mathToDesign(targetLineSeg[1].x, targetLineSeg[1].y, scale).x}
+              y2={mathToDesign(targetLineSeg[1].x, targetLineSeg[1].y, scale).y}
+              stroke={MATH_COLORS.line}
+              strokeWidth={1.5}
+            />
+          )}
+
+          {/* 动态垂线段 PH 与垂足 H —— 右屏点线距离公式的几何落点，随 θ 联动 */}
+          {footMath && footD && (
+            <>
+              <line
+                x1={pointPD.x}
+                y1={pointPD.y}
+                x2={footD.x}
+                y2={footD.y}
+                stroke={MATH_COLORS.normalLine}
+                strokeWidth={2}
+                strokeDasharray="5 4"
+              />
+              <MathPoint
+                x={footMath.x}
+                y={footMath.y}
+                scale={scale}
+                color={MATH_COLORS.normalLine}
+                fontScale={fontScale}
+              />
+            </>
+          )}
+
           {/* 椭圆动点 P(a cosθ, b sinθ) 可拖拽 */}
           <InteractivePoint
             cx={ellipseRes.P.x}
@@ -247,7 +356,7 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
             onDrag={({ x, y }) => {
-              let rad = Math.atan2(y / b, x / a);
+              let rad = Math.atan2(y / safeB, x / safeA);
               if (rad < 0) rad += 2 * Math.PI;
               const deg = Math.round((rad * 180) / Math.PI);
               onParamChange("theta", deg);
@@ -386,8 +495,8 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
           <ellipse
             cx={originD.x}
             cy={originD.y}
-            rx={a * scale.scaleX}
-            ry={b * scale.scaleY}
+            rx={safeA * scale.scaleX}
+            ry={safeB * scale.scaleY}
             fill={withAlpha(MATH_COLORS.ellipse, 0.06)}
             stroke={MATH_COLORS.ellipse}
             strokeWidth={2.5}
@@ -506,13 +615,15 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             fontSize={fontScale(12)}
             fontWeight="bold"
             fill={
-              lbl.key === "O"
+              lbl.key === "O" || lbl.key === "H" || lbl.key === "l"
                 ? MATH_COLORS.line
                 : lbl.key === "F" || lbl.key === "F1" || lbl.key === "F2"
                   ? MATH_COLORS.accent
                   : lbl.key === "M"
                     ? MATH_COLORS.paramTertiary
-                    : MATH_COLORS.paramPrimary
+                    : lbl.key === "d"
+                      ? MATH_COLORS.normalLine
+                      : MATH_COLORS.paramPrimary
             }
             textAnchor="middle"
             dominantBaseline="central"

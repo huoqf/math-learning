@@ -17,7 +17,13 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/lineParamT";
 import { LineParamTScene } from "./components/LineParamTScene";
-import { calcLineConicIntersection, type ConicType } from "@/math/lineParamT";
+import {
+  calcLineConicIntersection,
+  getConicFocus,
+  getEllipseBMax,
+  normalizeEllipseAxes,
+  type ConicType,
+} from "@/math/lineParamT";
 import { formatMathNumber, formatSignedTerm } from "@/utils/mathFormat";
 
 /**
@@ -88,6 +94,31 @@ function getScenarioPresetParams(
   return { x0: 1.0, y0: 0.0, alpha: 45, R: 3.0 };
 }
 
+/**
+ * 椭圆半轴不变量守卫：任何写 params 的路径（滑块、拖拽、场景预设）都必须经过它。
+ *
+ * 背景：椭圆必须满足 a > b > 0。此前只有 b 的**滑块显示值**随 a 动态收紧，
+ * 既不回写 state、也不会在 a 变小时回缩 b —— 于是"先把 b 拖到上限、再把 a 拖小"
+ * 就能让 state 里出现 b ≥ a，中屏会画出纵向椭圆，且与按钳制值计算的交点不一致。
+ *
+ * 这里在写入侧收敛，使 state 永不持有越界半轴（治根因）；
+ * 场景侧仍保留同一契约做纵深防御，两边共用 normalizeEllipseAxes。
+ *
+ * 仅当 a、b 均为有限数才收敛：mode="definition" 阶段尚无半轴，
+ * 不得被凭空写入 a/b。合法输入原样返回同一引用，避免无谓重渲染。
+ */
+function withEllipseInvariant(
+  next: Record<string, number>,
+  conicType: ConicType,
+): Record<string, number> {
+  if (conicType !== "ellipse") return next;
+  const { a, b } = next;
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return next;
+  const safe = normalizeEllipseAxes(a, b);
+  if (safe.a === a && safe.b === b) return next;
+  return { ...next, a: safe.a, b: safe.b };
+}
+
 export function LineParamTAnimation() {
   // 核心交互模式：'definition' ($t$的几何意义) | 'secant' (割线与二次曲线) | 'gaokao' (高考模型)
   const [mode, setMode] = useState<"definition" | "secant" | "gaokao">(
@@ -129,7 +160,21 @@ export function LineParamTAnimation() {
     [params, conicType],
   );
 
-  // 5. 组装右屏 MathPanel 看板数据
+  // 5. "线段倒数和"模型的焦点几何载体（圆无焦点 → 该模型对圆退化为普通割线倒数和）
+  const isReciprocalFocusModel = useMemo(
+    () =>
+      mode === "gaokao" &&
+      gaokaoModel === "reciprocal" &&
+      getConicFocus(conicType, {
+        R: params.R,
+        a: params.a,
+        b: params.b,
+        p: params.p,
+      }) !== null,
+    [mode, gaokaoModel, conicType, params.R, params.a, params.b, params.p],
+  );
+
+  // 6. 组装右屏 MathPanel 看板数据
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-conic-param-t", params, {
       mode,
@@ -178,11 +223,12 @@ export function LineParamTAnimation() {
           const meta = paramMeta[key as keyof typeof paramMeta];
           const rawValue = params[key] ?? meta.defaultValue ?? 0;
           // 参数安全契约：椭圆必须满足 a > b > 0，滑块上限随 a 动态收紧
+          // （上限公式与数学层的钳制同源，见 math/lineParamT 的 getEllipseBMax）
           const isEllipseB = key === "b" && conicType === "ellipse";
           const dynamicMax = isEllipseB
-            ? Math.max(
+            ? getEllipseBMax(
+                params.a ?? meta.defaultValue ?? 1,
                 meta.min ?? 0.1,
-                (params.a ?? meta.defaultValue ?? 1) - 0.01,
               )
             : meta.max;
           configs.push({
@@ -211,34 +257,41 @@ export function LineParamTAnimation() {
     return configs;
   }, [params, mode, conicType]);
 
+  /**
+   * 统一的 params 写入口：滑块、拖拽、场景预设全部经此写入，
+   * 保证椭圆半轴不变量 a > b > 0 在 state 中恒成立。
+   * effectiveConicType 用于"曲线类型切换"这一路径 —— 此刻闭包里的 conicType 还是旧值。
+   */
+  const commitParams = (
+    value: Record<string, number>,
+    effectiveConicType: ConicType = conicType,
+  ) => {
+    setParams((prev) =>
+      withEllipseInvariant({ ...prev, ...value }, effectiveConicType),
+    );
+  };
+
   const handleParamChange = (key: string, value: number) => {
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    commitParams({ [key]: value });
   };
 
   const handleModeChange = (newMode: typeof mode) => {
     setMode(newMode);
-    const preset = getScenarioPresetParams(newMode, conicType, gaokaoModel);
-    setParams((prev) => ({ ...prev, ...preset }));
+    commitParams(getScenarioPresetParams(newMode, conicType, gaokaoModel));
   };
 
   const handleConicTypeChange = (newType: ConicType) => {
     setConicType(newType);
-    const preset = getScenarioPresetParams(mode, newType, gaokaoModel);
-    setParams((prev) => ({ ...prev, ...preset }));
+    commitParams(getScenarioPresetParams(mode, newType, gaokaoModel), newType);
   };
 
   const handleGaokaoModelChange = (newModel: "midpoint" | "reciprocal") => {
     setGaokaoModel(newModel);
-    const preset = getScenarioPresetParams(mode, conicType, newModel);
-    setParams((prev) => ({ ...prev, ...preset }));
+    commitParams(getScenarioPresetParams(mode, conicType, newModel));
   };
 
   const handleReset = () => {
-    const preset = getScenarioPresetParams(mode, conicType, gaokaoModel);
-    setParams((prev) => ({ ...prev, ...preset }));
+    commitParams(getScenarioPresetParams(mode, conicType, gaokaoModel));
   };
 
   // 左上角悬浮动态 KaTeX 公式 (精确代入 A t^2 + B t + C = 0)
@@ -321,9 +374,19 @@ export function LineParamTAnimation() {
         style: "solid",
       },
       {
-        color: MATH_COLORS.paramPrimary,
-        label: "基准定点 $P_0$",
-        style: "point",
+        // "线段倒数和"模型的题设前提是割线过焦点 F，此处的基准定点即焦点，
+        // 图例同步改称 F（与中屏标签联动，避免同一实体两个名字）
+        ...(isReciprocalFocusModel
+          ? {
+              color: MATH_COLORS.accent,
+              label: "焦点 $F$（倒数和定值前提）",
+              style: "point" as const,
+            }
+          : {
+              color: MATH_COLORS.paramPrimary,
+              label: "基准定点 $P_0$",
+              style: "point" as const,
+            }),
       },
       {
         color: MATH_COLORS.paramSecondary,
@@ -331,7 +394,7 @@ export function LineParamTAnimation() {
         style: "point",
       },
     ];
-  }, [mode, conicType, params.kNorm]);
+  }, [mode, conicType, params.kNorm, isReciprocalFocusModel]);
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {

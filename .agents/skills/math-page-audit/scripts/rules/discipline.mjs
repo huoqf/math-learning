@@ -3,10 +3,15 @@
  * 领域规则：高考学科规范与学术符号标准
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { FileContext } from '../engine/context.mjs';
+
 /**
  * 超纲术语黑名单（2019 人教A版新课标之外的内容）
- * 命中即判为 error；若文件已显式声明为"拓展/选学"（importance: "extend" 或含拓展徽标），
- * 则该文件内的命中降级为 warning（视为"已标注的拓展内容"，允许保留）。
+ * 命中即判为 error；仅当**命中所在条目**（或该条目所属知识树节点）已显式声明为拓展
+ * （`isExtension: true` / `importance: "extend"` / `status: 拓展|选学|竞赛`）时，
+ * 该条命中才降级为 warning。判定为条目级，详见下方「已声明拓展」的条目级解析。
  */
 const BEYOND_SYLLABUS_TERMS = [
   '洛必达',
@@ -95,6 +100,380 @@ const COMPULSORY_ONE_FUNCTION_FILES = [
   /^src\/math\/(composite|function)\.ts$/,
 ];
 const LIMIT_NOTATION_PATTERN = /\blim\b|极限/;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 「已声明拓展」的条目级解析（no-beyond-syllabus-terms 反外溢）
+// ─────────────────────────────────────────────────────────────────────────────
+// 旧实现把「文件内出现过拓展 / 选学 / 超出课标等字样」当作整个文件的豁免开关，
+// 由此产生两个结构性漏洞（见解析几何专项治理报告 §4.1）：
+//   ① 局部词外溢：文件里任意一处文案含「拓展 ·」，其余**未标注**的条目一并被豁免；
+//   ② 改名即绕过：把超纲术语换成课标词、只在注释里保留原词，字面匹配即静默通过。
+// 现收紧为条目级：豁免只认**结构化声明**，且作用域 = 该声明所属的条目 / 知识树节点。
+//
+// 豁免判定（任一成立即可）：
+//   A. 命中行所属的**数据条目对象**（花括号配对得到、且形如 `{ 键: ... }`）在**自身直接属性**上
+//      声明了 `isExtension: true` / `importance: "extend"` / `status: "拓展|选学|竞赛"`；
+//   B. 该文件所属**知识树节点** importance === "extend"：
+//      - `src/features/<f>/**`      → 同目录 `meta.ts` 的节点声明；
+//      - `src/data/builders/<b>.ts` → 经 `mathQuantities.ts` 的 animId→builder 映射反查节点；
+//      - `src/data/knowledgeTree/*.ts` → 交由 A 覆盖（同文件多节点，文件级豁免必然串味）。
+// 自由文本（`超出课标` / `选学` / `拓展 ·` / `（拓展`）**不再**作为任何豁免依据。
+//
+// 注意 A 的两个限定（缺一即退化为"换层级的外溢豁免"）：
+//   ① 必须是**数据条目对象**——函数体 / if 体 / 箭头函数体的花括号不得计入，否则整函数被豁免；
+//   ② 判定必须落在对象**自身直接属性**上，不能拿整个子树文本去匹配，否则
+//      `return { theorems: [...], warnings: [...] }` 这类外层聚合对象会因内部某一条目标了拓展
+//      而把全文件所有超纲命中一并降级（见 ownDeclaresExtend / topLevelProps）。
+const EXT_DECL_PATTERN =
+  /isExtension:\s*true|importance:\s*["']extend["']|status:\s*["'](?:拓展|选学|竞赛)["']/;
+
+/** 数据条目对象的头部特征：花括号后第一个内容就是 `键:`，而非语句（函数体 / if 体 / 箭头函数体） */
+const ITEM_SHAPE_PATTERN = /^\s*[A-Za-z_$][\w$]*\s*:/;
+
+/**
+ * 把字符串字面量内容整体替换为空格（保留引号与换行结构），
+ * 使花括号配对不被字符串内部的 `{` `}` 干扰。注释已由 FileContext 预先清除。
+ */
+function maskStringLiterals(lines) {
+  const out = [];
+  let inSingle = false;
+  let inDouble = false;
+  let inBacktick = false;
+  let escaped = false;
+  for (const line of lines) {
+    let masked = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (escaped) {
+        masked += ' ';
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        masked += ' ';
+        escaped = true;
+        continue;
+      }
+      if (inSingle) {
+        if (ch === "'") {
+          inSingle = false;
+          masked += "'";
+        } else masked += ' ';
+        continue;
+      }
+      if (inDouble) {
+        if (ch === '"') {
+          inDouble = false;
+          masked += '"';
+        } else masked += ' ';
+        continue;
+      }
+      if (inBacktick) {
+        if (ch === '`') {
+          inBacktick = false;
+          masked += '`';
+        } else masked += ' ';
+        continue;
+      }
+      if (ch === "'") {
+        inSingle = true;
+        masked += "'";
+        continue;
+      }
+      if (ch === '"') {
+        inDouble = true;
+        masked += '"';
+        continue;
+      }
+      if (ch === '`') {
+        inBacktick = true;
+        masked += '`';
+        continue;
+      }
+      masked += ch;
+    }
+    out.push(masked);
+  }
+  return out;
+}
+
+/**
+ * 对掩码后的代码做一次花括号配对，得到
+ *  - `openAtLineStart[i]`：第 i 行**行首**仍然打开的对象区间（由外向内）
+ *  - `openedOnLine[i]`   ：在第 i 行**内部**打开的对象区间（用于单行对象字面量）
+ * 区间为引用对象 `{ start, col, end }`，`col` 为该 `{` 在本行中的列号，`end` 在配对闭合时回填。
+ */
+function buildObjectIndex(maskedLines) {
+  const openAtLineStart = new Array(maskedLines.length);
+  const openedOnLine = new Array(maskedLines.length);
+  for (let i = 0; i < maskedLines.length; i++) openedOnLine[i] = [];
+  const stack = [];
+  for (let i = 0; i < maskedLines.length; i++) {
+    openAtLineStart[i] = stack.slice();
+    const line = maskedLines[i];
+    for (let j = 0; j < line.length; j++) {
+      const ch = line[j];
+      if (ch === '{') {
+        const range = { start: i, col: j, end: maskedLines.length - 1 };
+        stack.push(range);
+        openedOnLine[i].push(range);
+      } else if (ch === '}') {
+        const range = stack.pop();
+        if (range) range.end = i;
+      }
+    }
+  }
+  return { openAtLineStart, openedOnLine };
+}
+
+/**
+ * 取命中行所属的「数据条目对象」链（由内向外的顺序），已剔除函数体 / 语句块等非条目花括号。
+ *
+ * 花括号常常出现在行中间（如 `theorems.push({`），因此条目头的判定必须从该 `{` 的
+ * **列号之后**开始取文本，而不能拿整行文本去匹配。
+ */
+function enclosingItems(cleanLines, maskedLines, objectIndex, lineIdx) {
+  const chain = objectIndex.openAtLineStart[lineIdx].concat(
+    objectIndex.openedOnLine[lineIdx],
+  );
+  const items = [];
+  for (let k = chain.length - 1; k >= 0; k--) {
+    const range = chain[k];
+    const bodyText =
+      maskedLines[range.start].slice(range.col + 1) +
+      '\n' +
+      maskedLines.slice(range.start + 1, range.end + 1).join('\n');
+    // 函数体 / if 体 / 箭头函数体虽然也是 {}，但内容以语句开头，不是数据条目；
+    // 若不排除，整个函数体文本里任意一处 importance:"extend" 都会把全函数豁免掉（旧漏洞的翻版）。
+    if (!ITEM_SHAPE_PATTERN.test(bodyText)) continue;
+    items.push({
+      range,
+      text: cleanLines.slice(range.start, range.end + 1).join('\n'),
+    });
+  }
+  return items;
+}
+
+/**
+ * 取对象「自身直接属性」的文本片段（不含嵌套对象 / 数组 / 调用实参内部的内容）。
+ *
+ * 为什么必须做这一层切分：
+ *   `enclosingItems` 给出的 `item.text` 是**整个子树**的文本。若直接拿它匹配
+ *   `isExtension: true`，则「外层聚合对象」会因**内部任意一个条目**标了拓展而整体被豁免——
+ *   这是"局部含拓展字样导致整页检测失效"的换层级翻版。典型泄漏点：
+ *   builders 的 `return { theorems: [...], warnings: [...] }`，其首个键同样呈 `键:` 形态，
+ *   会被 ITEM_SHAPE 误判为数据条目，从而把该文件里所有超纲命中一律降级为 warning。
+ *
+ * 实现：结构定位用掩码行（字符串内容已抹白，括号配对可靠），文本切片用原始行
+ *   （保证 "extend" / "拓展" 这类**字符串值**在判定时可见）。深度以当前对象为基准，
+ *   因此只在该对象自身直接属性的逗号处切分。
+ */
+function topLevelProps(cleanLines, maskedLines, range) {
+  const props = [];
+  let depth = 0;
+  let buf = [];
+  for (let i = range.start; i <= range.end; i++) {
+    const mLine = maskedLines[i] || '';
+    const cLine = cleanLines[i] || '';
+    for (let j = i === range.start ? range.col + 1 : 0; j < mLine.length; j++) {
+      const ch = mLine[j];
+      if (ch === '{' || ch === '[' || ch === '(') {
+        depth++;
+        continue;
+      }
+      if (ch === '}' || ch === ']' || ch === ')') {
+        if (depth === 0) {
+          // 当前对象自身的闭合括号
+          props.push(buf.join(''));
+          return props;
+        }
+        depth--;
+        continue;
+      }
+      // 嵌套对象 / 数组 / 实参的内容一律丢弃：豁免判定只看自身直接属性
+      if (depth > 0) continue;
+      if (ch === ',') {
+        props.push(buf.join(''));
+        buf = [];
+        continue;
+      }
+      buf.push(cLine[j]);
+    }
+    buf.push('\n');
+  }
+  props.push(buf.join(''));
+  return props;
+}
+
+/**
+ * 条目级豁免的唯一结构化依据：该对象是否在**自身直接属性**上声明了拓展。
+ * 这是"文件级豁免 → 条目级"升级的判定核心，禁止回退为子树全文匹配。
+ */
+function ownDeclaresExtend(cleanLines, maskedLines, range) {
+  return topLevelProps(cleanLines, maskedLines, range).some((prop) =>
+    EXT_DECL_PATTERN.test(prop),
+  );
+}
+
+let __nodeGraphCache = null;
+
+function readFileSafe(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf-8');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 收集「动画 id → 知识树节点 importance」。
+ * 知识树节点（`src/data/knowledgeTree/*.ts`）与各 feature 的 `meta.ts` 都同时声明了
+ * `animationIds: [...]` 与 `importance: "..."`，因此按「animationIds 所属条目对象」取值即可。
+ * 同一 id 被多个节点引用时，只要有一个标为 extend 就以 extend 为准（从严）。
+ */
+function collectAnimImportance(filePath, workspaceRoot, animImportance) {
+  const content = readFileSafe(filePath);
+  if (content === null) return;
+  const ctx = new FileContext(filePath, content, workspaceRoot);
+  const masked = maskStringLiterals(ctx.cleanLines);
+  const objectIndex = buildObjectIndex(masked);
+
+  ctx.cleanLines.forEach((line, idx) => {
+    const match = line.match(/animationIds\s*:\s*\[([^\]]*)\]/);
+    if (!match) return;
+    const ids = (match[1].match(/["']([^"']+)["']/g) || []).map((s) =>
+      s.slice(1, -1),
+    );
+    if (ids.length === 0) return;
+    const owner = enclosingItems(ctx.cleanLines, masked, objectIndex, idx)[0];
+    if (!owner) return;
+    let importance = null;
+    for (const prop of topLevelProps(ctx.cleanLines, masked, owner.range)) {
+      const propMatch = prop.match(/importance\s*:\s*["']([^"']+)["']/);
+      if (propMatch) {
+        importance = propMatch[1];
+        break;
+      }
+    }
+    for (const id of ids) {
+      if (importance === 'extend' || !animImportance.has(id)) {
+        animImportance.set(id, importance);
+      }
+    }
+  });
+}
+
+/**
+ * 从 `src/data/mathQuantities.ts` 的 `switch (animId)` 中解析「builder 模块名 → 动画 id 列表」。
+ * 这是 builder 文件与其所属知识树节点之间**唯一**的映射桥梁（builder 不被 feature 直接 import）。
+ */
+function collectBuilderAnimIds(workspaceRoot, builderAnimIds) {
+  const content = readFileSafe(
+    path.join(workspaceRoot, 'src/data/mathQuantities.ts'),
+  );
+  if (!content) return;
+  const switchStart = content.indexOf('switch (animId)');
+  if (switchStart < 0) return;
+  const chunks = content
+    .slice(switchStart)
+    .split(/case\s+"([^"]+)"\s*:|default\s*:/);
+
+  let pending = [];
+  for (let i = 1; i < chunks.length; i += 2) {
+    const animId = chunks[i];
+    const body = chunks[i + 1] || '';
+    if (animId) pending.push(animId);
+    const returnMatch = body.match(/return\s+build(\w+)\s*\(/);
+    if (!returnMatch || pending.length === 0) continue;
+    const moduleName =
+      returnMatch[1].replace(/^build/, '').replace(/Panel$/, '');
+    const key = moduleName.charAt(0).toLowerCase() + moduleName.slice(1);
+    const list = builderAnimIds.get(key) || [];
+    for (const id of pending) if (!list.includes(id)) list.push(id);
+    builderAnimIds.set(key, list);
+    pending = [];
+  }
+}
+
+function loadNodeGraph(workspaceRoot) {
+  if (__nodeGraphCache && __nodeGraphCache.root === workspaceRoot) {
+    return __nodeGraphCache;
+  }
+  const graph = {
+    root: workspaceRoot,
+    animImportance: new Map(),
+    builderAnimIds: new Map(),
+    featureExtend: new Map(),
+  };
+
+  // ① 知识树节点文件
+  const knowledgeTreeDir = path.join(workspaceRoot, 'src/data/knowledgeTree');
+  let entries = [];
+  try {
+    entries = fs.readdirSync(knowledgeTreeDir);
+  } catch {
+    entries = [];
+  }
+  for (const entry of entries) {
+    if (!entry.endsWith('.ts') || entry.includes('test')) continue;
+    collectAnimImportance(
+      path.join(knowledgeTreeDir, entry),
+      workspaceRoot,
+      graph.animImportance,
+    );
+  }
+
+  // ② 各 feature 的 meta.ts（同时建立 feature 目录 → 是否 extend 的映射）
+  const featuresDir = path.join(workspaceRoot, 'src/features');
+  let featureDirs = [];
+  try {
+    featureDirs = fs.readdirSync(featuresDir);
+  } catch {
+    featureDirs = [];
+  }
+  for (const dir of featureDirs) {
+    const metaPath = path.join(featuresDir, dir, 'meta.ts');
+    const content = readFileSafe(metaPath);
+    if (content === null) continue;
+    collectAnimImportance(metaPath, workspaceRoot, graph.animImportance);
+    graph.featureExtend.set(
+      dir,
+      /importance:\s*["']extend["']/.test(content),
+    );
+  }
+
+  // ③ builder 模块 → 动画 id
+  collectBuilderAnimIds(workspaceRoot, graph.builderAnimIds);
+
+  __nodeGraphCache = graph;
+  return graph;
+}
+
+/**
+ * 判定 ctx 所描述的文件「所属节点」是否已声明为拓展（豁免判定链 B）。
+ * 注意：`src/data/knowledgeTree/*.ts` 单文件含多节点，不能用文件级豁免，故直接返回 false。
+ */
+function resolveOwnerNodeExtend(ctx) {
+  const rel = ctx.relPath;
+  if (!rel) return false;
+  const graph = loadNodeGraph(ctx.workspaceRoot);
+
+  // ① src/features/<feature>/** → 同目录 meta.ts 的节点声明
+  const featureMatch = rel.match(/^src\/features\/([^/]+)\//);
+  if (featureMatch) {
+    return graph.featureExtend.get(featureMatch[1]) === true;
+  }
+
+  // ② src/data/builders/<builder>.ts → animId 映射反查节点
+  const builderMatch = rel.match(/^src\/data\/builders\/([^/]+)\.ts$/);
+  if (builderMatch) {
+    const animIds = graph.builderAnimIds.get(builderMatch[1]);
+    if (!animIds) return false;
+    return animIds.some((id) => graph.animImportance.get(id) === 'extend');
+  }
+
+  return false;
+}
 
 export const disciplineRules = [
   {
@@ -245,18 +624,19 @@ export const disciplineRules = [
         /^src\/features\//.test(ctx.relPath);
       if (!isContentFile) return [];
 
-      // 已显式声明"拓展/选学/超出课标"的文件：命中降级为 warning（视为已标注的拓展内容）
-      //  - 条目级（首选）：右屏 Theorem 上的 `isExtension: true`，会渲染「拓展 · 选学」紫色徽标；
-      //  - 文件级（兼容）：节点/文件声明 importance: "extend" 或 status: 拓展/选学/竞赛，
-      //    以及历史写法中把「（拓展 · 超出课标）」写进文案的情形。
-      const declaredExtend =
-        /isExtension:\s*true/.test(ctx.cleanContent) ||
-        /importance:\s*["']extend["']/.test(ctx.cleanContent) ||
-        /status:\s*["'](拓展|选学|竞赛)["']/.test(ctx.cleanContent) ||
-        /超出课标/.test(ctx.cleanContent) ||
-        /选学/.test(ctx.cleanContent) ||
-        /拓展\s*[·・]/.test(ctx.cleanContent) ||
-        /[（(]\s*(拓展|选学)/.test(ctx.cleanContent);
+      // 条目级豁免解析（见文件头「已声明拓展」的条目级解析说明）
+      const maskedLines = maskStringLiterals(ctx.cleanLines);
+      const objectIndex = buildObjectIndex(maskedLines);
+      const ownerNodeIsExtend = resolveOwnerNodeExtend(ctx);
+      const itemDeclaresExtend = (lineIdx) =>
+        enclosingItems(
+          ctx.cleanLines,
+          maskedLines,
+          objectIndex,
+          lineIdx,
+        ).some((item) =>
+          ownDeclaresExtend(ctx.cleanLines, maskedLines, item.range),
+        );
 
       const issues = [];
       ctx.cleanLines.forEach((line, idx) => {
@@ -281,11 +661,12 @@ export const disciplineRules = [
             }
           }
 
+          const declaredExtend = itemDeclaresExtend(idx) || ownerNodeIsExtend;
           issues.push({
             lineNum: idx + 1,
             type: '超纲术语',
             severity: declaredExtend ? 'warning' : 'error',
-            message: `检测到超出 2019 人教A版新课标的术语「${hit}」。若确为拓展/强基/竞赛内容，请标注 importance: "extend" 并在页面显示「拓展 · 超出课标」徽标；否则请改用课标内表述。`,
+            message: `检测到超出 2019 人教A版新课标的术语「${hit}」。若确为拓展/强基/竞赛内容，请在该**条目**上标注 isExtension: true（右屏定理/警示）或让条目所属知识树节点声明 importance: "extend"；否则请改用课标内表述。（条目级判定：不再接受"文件里出现过拓展字样"这类文件级豁免）`,
             snippet: line.trim(),
           });
         }

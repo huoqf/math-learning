@@ -239,11 +239,18 @@ export function ConicPropertiesAnimation() {
       if (newType === "ellipse" && prev.b >= prev.a) {
         nextB = Math.max(0.5, Number((prev.a - 0.5).toFixed(1)));
       }
-      const calc = calculateConicProperties(newType, prev.a, nextB, prev.t);
+      // 双曲线 t 的有效域为 (-1.35, 1.35)：切换曲线时必须回收越域值，
+      // 否则滑块读数（如 t = 3）会与 math 层钳制后的画面（点停在 t = 1.35）脱节。
+      const nextT =
+        newType === "hyperbola"
+          ? Math.max(-1.35, Math.min(1.35, prev.t))
+          : prev.t;
+      const calc = calculateConicProperties(newType, prev.a, nextB, nextT);
       return {
         ...prev,
         b: nextB,
         e: calc.e,
+        t: nextT,
       };
     });
   };
@@ -425,6 +432,11 @@ export function ConicPropertiesAnimation() {
           labelFormula = "\\text{动点角 }\\theta_P";
         }
 
+        // 双曲线参数方程 x = a·sec t, y = b·tan t 在 |t| → π/2 处发散，
+        // math 层已把 t 钳制在 (-1.35, 1.35)；滑块量程必须与之一致，
+        // 否则轨道两端各约 28% 空转（拖到底曲线与动点都不动）。
+        const isHyperbolaT = key === "t" && conicType === "hyperbola";
+
         const maxVal =
           isB && conicType === "ellipse"
             ? Math.max(0.6, Number((params.a - 0.1).toFixed(1)))
@@ -432,7 +444,9 @@ export function ConicPropertiesAnimation() {
               ? conicType === "ellipse"
                 ? 0.98
                 : 2.8
-              : meta.max;
+              : isHyperbolaT
+                ? 1.35
+                : meta.max;
 
         return {
           key,
@@ -440,7 +454,13 @@ export function ConicPropertiesAnimation() {
           labelFormula,
           value:
             (params as Record<string, number>)[key] ?? meta.defaultValue ?? 0,
-          min: isE ? (conicType === "ellipse" ? 0.05 : 1.05) : meta.min,
+          min: isHyperbolaT
+            ? -1.35
+            : isE
+              ? conicType === "ellipse"
+                ? 0.05
+                : 1.05
+              : meta.min,
           max: maxVal,
           step: meta.step ?? 0.1,
           description: meta.description,

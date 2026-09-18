@@ -4,6 +4,7 @@ import type { ViewportInfo } from "@/utils/useViewport";
 import {
   CoordinateGrid,
   InteractivePoint,
+  MathPoint,
   VectorArrow,
   FunctionGraph,
 } from "@/components/Math";
@@ -12,8 +13,10 @@ import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabelOverlap, type LabelItem } from "@/utils/labelOverlap";
 import {
   calcLineConicIntersection,
+  getConicFocus,
   getLinePoint,
   getNonStandardLinePoint,
+  normalizeEllipseAxes,
   type ConicType,
 } from "@/math/lineParamT";
 
@@ -40,6 +43,18 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
 }) => {
   const { x0, y0, alpha, t, kNorm, R, a, b, p } = params;
 
+  /**
+   * 椭圆半轴安全契约（与纯数学层同源）：
+   * 状态里一旦出现 b ≥ a（例如先在某 a 下把 b 拖到上限、再把 a 拖小），
+   * 裸取 ry={b} 会把椭圆画成纵向，而 calcLineConicIntersection 内部按钳制后的 b 算交点，
+   * 造成"推导按 A 算、图按 B 画"的数形不一致。
+   * 故画面与数学层统一取这一组归一化半轴；非椭圆类型不受影响，原样透传。
+   */
+  const axes = useMemo(
+    () => (conicType === "ellipse" ? normalizeEllipseAxes(a, b) : { a, b }),
+    [conicType, a, b],
+  );
+
   // 1. 直线方向向量 e = (cosα, sinα)
   const rad = (alpha * Math.PI) / 180;
   const dirX = Math.cos(rad);
@@ -58,12 +73,31 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
     () =>
       calcLineConicIntersection(x0, y0, alpha, conicType, {
         R,
-        a,
-        b,
+        a: axes.a,
+        b: axes.b,
         p,
       }),
-    [x0, y0, alpha, conicType, R, a, b, p],
+    [x0, y0, alpha, conicType, R, axes, p],
   );
+
+  /**
+   * 焦点可见性（仅"线段倒数和"模型需要）：
+   * 该模型的题设前提是"割线过焦点 F"，但中屏原本既不画焦点、又把该点恒标为 P₀，
+   * 学生看不到前提，拖离焦点后左屏却仍称"过焦点"。故：
+   * - P₀ 与焦点重合（容差 0.05，覆盖滑块步长 0.1 与预设的 √5 取整误差）→ 该点即焦点，标 F；
+   * - P₀ 偏离焦点 → 该点回落为 P₀，并在真实焦点处补一个静态 F 标记，让偏离一目了然。
+   */
+  const focusPt = useMemo(
+    () => getConicFocus(conicType, { R, a: axes.a, b: axes.b, p }),
+    [conicType, R, axes, p],
+  );
+  const isReciprocalFocusModel =
+    mode === "gaokao" && gaokaoModel === "reciprocal";
+  // 仅在"倒数和"模型下激活焦点语义，其余模式一律保持纯 定点 P₀ 视角
+  const activeFocus = isReciprocalFocusModel ? focusPt : null;
+  const isAtFocus =
+    activeFocus !== null &&
+    Math.hypot(ptP0.x - activeFocus.x, ptP0.y - activeFocus.y) < 0.05;
 
   // 4. 坐标映射到 Design 空间
   const originDesign = useMemo(() => mathToDesign(0, 0, scale), [scale]);
@@ -85,12 +119,24 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
         text: "O",
       },
       {
-        key: "P0",
+        // 定点与焦点重合时，该点就是题设里的 F，直接标 F；偏离时回落为 P₀
+        key: isAtFocus ? "F" : "P0",
         x: desP0.x,
         y: desP0.y - 12,
-        text: "P₀",
+        text: isAtFocus ? "F" : "P₀",
       },
     ];
+
+    // 偏离焦点时，在真实焦点处补一个静态 F 标记，让"已离开焦点"可见
+    if (activeFocus && !isAtFocus) {
+      const desFocus = mathToDesign(activeFocus.x, activeFocus.y, scale);
+      labels.push({
+        key: "F",
+        x: desFocus.x,
+        y: desFocus.y - 12,
+        text: "F",
+      });
+    }
 
     if (mode === "definition") {
       labels.push({
@@ -149,7 +195,18 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
       }
     }
     return labels;
-  }, [desP0, desP, desPNon, originDesign, mode, kNorm, intersect, scale]);
+  }, [
+    desP0,
+    desP,
+    desPNon,
+    originDesign,
+    mode,
+    kNorm,
+    intersect,
+    scale,
+    isAtFocus,
+    activeFocus,
+  ]);
 
   const adjustedLabels = useMemo(
     () => avoidLabelOverlap(rawLabels, 16),
@@ -237,13 +294,14 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
             />
           )}
 
-          {/* 椭圆：使用 SVG 原生 <ellipse> 4个坐标轴顶点 100% 圆滑显现 */}
+          {/* 椭圆：使用 SVG 原生 <ellipse> 4个坐标轴顶点 100% 圆滑显现
+              rx/ry 必须取自归一化半轴 axes，禁止裸取 params.a / params.b */}
           {conicType === "ellipse" && (
             <ellipse
               cx={originDesign.x}
               cy={originDesign.y}
-              rx={a * scale.scaleX}
-              ry={b * scale.scaleY}
+              rx={axes.a * scale.scaleX}
+              ry={axes.b * scale.scaleY}
               fill="none"
               stroke={conicColor}
               strokeWidth={2.5}
@@ -390,7 +448,8 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
             />
           )}
 
-          {/* 交点 A */}
+          {/* 交点 A：由割线与曲线联立唯一确定，无独立自由度，
+              故标记 disabled——不渲染可拖拽光环，避免"能抓住却拖不动"的假交互 */}
           {intersect.pointA && (
             <InteractivePoint
               cx={intersect.pointA.x}
@@ -400,11 +459,11 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
               color={MATH_COLORS.paramPrimary}
               r={6}
               fontScale={fontScale}
-              onDrag={() => {}}
+              disabled
             />
           )}
 
-          {/* 交点 B */}
+          {/* 交点 B：同 A，静态展示 */}
           {intersect.pointB && (
             <InteractivePoint
               cx={intersect.pointB.x}
@@ -414,7 +473,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
               color={MATH_COLORS.paramPrimary}
               r={6}
               fontScale={fontScale}
-              onDrag={() => {}}
+              disabled
             />
           )}
 
@@ -434,13 +493,24 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
         </>
       )}
 
-      {/* 可拖拽定点 P0 */}
+      {/* 真实焦点 F：只在定点已偏离焦点时出现，直观提示"过焦点"这一前提已不成立 */}
+      {activeFocus && !isAtFocus && (
+        <MathPoint
+          cx={activeFocus.x}
+          cy={activeFocus.y}
+          scale={scale}
+          color={MATH_COLORS.accent}
+          fontScale={fontScale}
+        />
+      )}
+
+      {/* 可拖拽定点 P0（与焦点重合时即焦点 F，改用强调色显示） */}
       <InteractivePoint
         cx={ptP0.x}
         cy={ptP0.y}
         scale={scale}
         vp={vp}
-        color={MATH_COLORS.paramPrimary}
+        color={isAtFocus ? MATH_COLORS.accent : MATH_COLORS.paramPrimary}
         r={8}
         fontScale={fontScale}
         onDrag={(mathPt) => {
@@ -458,15 +528,17 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
           fill={
             lbl.key === "O"
               ? MATH_COLORS.line
-              : lbl.key === "P0"
-                ? MATH_COLORS.paramPrimary
-                : lbl.key === "P"
-                  ? MATH_COLORS.paramSecondary
-                  : lbl.key === "PNon"
-                    ? MATH_COLORS.paramTertiary
-                    : lbl.key === "M"
-                      ? MATH_COLORS.paramSecondary
-                      : MATH_COLORS.paramPrimary
+              : lbl.key === "F"
+                ? MATH_COLORS.accent
+                : lbl.key === "P0"
+                  ? MATH_COLORS.paramPrimary
+                  : lbl.key === "P"
+                    ? MATH_COLORS.paramSecondary
+                    : lbl.key === "PNon"
+                      ? MATH_COLORS.paramTertiary
+                      : lbl.key === "M"
+                        ? MATH_COLORS.paramSecondary
+                        : MATH_COLORS.paramPrimary
           }
           fontSize={fontScale(12)}
           fontWeight="bold"

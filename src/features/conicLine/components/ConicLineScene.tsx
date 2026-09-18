@@ -17,6 +17,7 @@ import {
   type ConicLineParams,
   type Point2D,
 } from "@/math/conicLine";
+import { paramMeta } from "@/data/registries/conicLine";
 
 interface ConicLineSceneProps {
   params: Record<string, number>;
@@ -42,6 +43,26 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
   const p = params.p ?? 2;
   const k = params.k ?? 1;
   const m = params.m ?? 0;
+
+  /**
+   * 拖拽钳制域 = 左屏参数声明域 ∩ 中屏可见视口（取交集后交给 InteractivePoint 底层 clamp）。
+   * 1) 不越出滑块量程：否则数值与滑块脱节（滑块卡在端点，实际值却继续增长）；
+   * 2) 不越出可见画布：否则控制点被拖出视口后彻底抓不回来，只能靠左屏滑块救回。
+   */
+  const dragBounds = (xMetaKey: string, yMetaKey: string) => {
+    const xMeta = paramMeta[xMetaKey];
+    const yMeta = paramMeta[yMetaKey];
+    return {
+      xRange: [
+        Math.max(xMeta.min, scale.xMin),
+        Math.min(xMeta.max, scale.xMax),
+      ] as [number, number],
+      yRange: [
+        Math.max(yMeta.min, scale.yMin),
+        Math.min(yMeta.max, scale.yMax),
+      ] as [number, number],
+    };
+  };
 
   // 1. 求解相交计算结果
   const result = useMemo(
@@ -500,6 +521,7 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
                   scale={scale}
                   vp={vp}
                   onDrag={handlePoleDrag}
+                  {...dragBounds("poleX", "poleY")}
                   color={MATH_COLORS.paramPrimary}
                   fontScale={fontScale}
                 />
@@ -517,6 +539,7 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
           scale={scale}
           vp={vp}
           onDrag={handleMidpointDrag}
+          {...dragBounds("midpointX", "midpointY")}
           color={MATH_COLORS.paramSecondary}
           fontScale={fontScale}
         />

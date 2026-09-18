@@ -23,6 +23,24 @@ describe("calculateEllipseParam - 椭圆三角参数设点与辅助角最值", (
     expect(res.Paux.y).toBeCloseTo(4);
   });
 
+  it("课标契约：b ≥ a 的非法输入须钳制为 a > b > 0，保证焦点不退化重合", () => {
+    // 模拟滑块越界组合 a = 2, b = 5（原实现下 c = 0，两焦点退化重合于原点）
+    const res = calculateEllipseParam(2, 5, 45);
+    expect(res.valid).toBe(true);
+    expect(res.a).toBeCloseTo(2, 6);
+    expect(res.b).toBeLessThan(res.a);
+
+    // 半焦距 c = √(a² - b²) 必须严格为正
+    const c = Math.sqrt(Math.max(0, res.a * res.a - res.b * res.b));
+    expect(c).toBeGreaterThan(0);
+
+    // 钳制后的动点必须仍严格落在椭圆上：x²/a² + y²/b² = 1
+    expect(
+      (res.P.x * res.P.x) / (res.a * res.a) +
+        (res.P.y * res.P.y) / (res.b * res.b),
+    ).toBeCloseTo(1, 6);
+  });
+
   it("切线截距三角形面积极值：当 θ = 45° 时取得最小值 S_min = a * b", () => {
     const a = 4;
     const b = 3;
@@ -44,6 +62,47 @@ describe("calculateEllipseParam - 椭圆三角参数设点与辅助角最值", (
     const res = calculateEllipseParam(4, 3, 0, { A: 1, B: -1, C: -6 });
     expect(res.maxDist).toBeCloseTo(11 / Math.SQRT2, 3);
     expect(res.minDist).toBeCloseTo(1 / Math.SQRT2, 3);
+  });
+
+  it("垂足 H 必须落在目标直线上，且 |PH| 恒等于点线距离（中屏垂线段与右屏数值同源）", () => {
+    const line = { A: 1, B: -1, C: -6 };
+
+    for (const thetaDeg of [0, 45, 90, 210]) {
+      const res = calculateEllipseParam(4, 3, thetaDeg, line);
+      const foot = res.footOnTargetLine;
+      expect(foot, `θ=${thetaDeg} 垂足不应为 null`).not.toBeNull();
+      if (!foot) continue;
+
+      // ① H 在直线上：A·Hx + B·Hy + C = 0
+      expect(
+        line.A * foot.x + line.B * foot.y + line.C,
+        `θ=${thetaDeg} 垂足须落在定直线上`,
+      ).toBeCloseTo(0, 9);
+
+      // ② |PH| 必须等于同一次计算给出的点线距离（二者同源，不得各算各的）
+      const phLen = Math.hypot(res.P.x - foot.x, res.P.y - foot.y);
+      expect(phLen, `θ=${thetaDeg} |PH| 须等于 d`).toBeCloseTo(
+        res.distToTargetLine,
+        9,
+      );
+
+      // ③ PH 垂直于直线方向向量 (B, -A)：内积须为 0
+      expect(
+        (res.P.x - foot.x) * line.B + (res.P.y - foot.y) * -line.A,
+        `θ=${thetaDeg} PH 须垂直于目标直线`,
+      ).toBeCloseTo(0, 9);
+    }
+
+    // ④ 垂足随 θ 联动（「动态垂线段」而非静态装饰）
+    const f0 = calculateEllipseParam(4, 3, 0, line).footOnTargetLine;
+    const f90 = calculateEllipseParam(4, 3, 90, line).footOnTargetLine;
+    expect(f0 && f90 && Math.hypot(f0.x - f90.x, f0.y - f90.y)).toBeGreaterThan(
+      0.1,
+    );
+
+    // ⑤ 退化直线（A = B = 0）不得给出垂足，避免中屏画出 NaN 坐标
+    const degenerate = calculateEllipseParam(4, 3, 45, { A: 0, B: 0, C: -6 });
+    expect(degenerate.footOnTargetLine).toBeNull();
   });
 });
 

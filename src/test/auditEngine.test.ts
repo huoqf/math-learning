@@ -21,6 +21,7 @@ interface AuditRule {
     message: string;
     snippet?: string;
     type?: string;
+    severity?: string;
   }>;
 }
 
@@ -278,5 +279,131 @@ export function buildDemo() {
       .filter((i) => i.type === "伪命题充要条件滥用");
     expect(badIssues.length).toBe(1);
     expect(badIssues[0].message).toContain("点线位置关系严禁滥用充要双向箭头");
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 门禁升级：discipline/no-beyond-syllabus-terms 由「文件级豁免」收紧为「条目级豁免」
+  // 背景：旧实现只要文件里出现过「拓展」字样就整份豁免，导致「局部含拓展 → 整页超纲检测失效」。
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("超纲术语门禁：文件级豁免 → 条目级豁免", () => {
+    const beyondRule = (disciplineRules as AuditRule[]).find(
+      (r: AuditRule) => r.id === "discipline/no-beyond-syllabus-terms",
+    )!;
+
+    const checkAt = (relPath: string, code: string) =>
+      beyondRule.check(new FileContext(relPath, code, process.cwd()));
+
+    const checkDemo = (code: string) =>
+      checkAt("src/data/builders/demoBuilder.ts", code);
+
+    it("条目自身标注 isExtension: true → 降级为 warning（合法拓展）", () => {
+      const code = `
+export function buildDemo() {
+  return {
+    theorems: [
+      {
+        name: "洛必达法则的适用边界",
+        latex: "x",
+        isExtension: true,
+      },
+    ],
+  };
+}
+`;
+      const issues = checkDemo(code);
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("warning");
+    });
+
+    it("漏洞封堵：兄弟条目标了拓展，不得外溢豁免本条目（必须 error）", () => {
+      const code = `
+export function buildDemo() {
+  return {
+    theorems: [
+      { name: "合法条目", latex: "x", isExtension: true },
+    ],
+    warnings: [
+      { text: "本页用洛必达法则求解该极限问题。" },
+    ],
+  };
+}
+`;
+      const issues = checkDemo(code);
+      expect(issues.length).toBe(1);
+      // 旧实现会把 return 外层聚合对象整体豁免，从而降级为 warning —— 这里锁死为 error
+      expect(issues[0].severity).toBe("error");
+    });
+
+    it("条目级隔离：同一条目内标注可豁免，另一未标条目仍须 error", () => {
+      const code = `
+export function buildDemo() {
+  return {
+    gaokaoPoints: [
+      { text: "拓展延伸：特征方程法求通项。", importance: "extend" },
+      { text: "本页用洛必达法则求解该极限问题。" },
+    ],
+  };
+}
+`;
+      const severities = checkDemo(code).map((i) => i.severity);
+      expect(severities).toContain("warning");
+      expect(severities).toContain("error");
+    });
+
+    it("自由文本「拓展 · 选学」不再构成任何豁免依据（必须 error）", () => {
+      const code = `
+export function buildDemo() {
+  return {
+    meta: { note: "拓展 · 选学（超出课标，仅供参考）" },
+    warnings: [
+      { text: "本页用洛必达法则求解该极限问题。" },
+    ],
+  };
+}
+`;
+      const issues = checkDemo(code);
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("error");
+    });
+
+    it("节点级豁免有效：真实 extend 节点的 builder 文件 → warning", () => {
+      const code = `
+export function buildDemo() {
+  return {
+    warnings: [{ text: "本页用洛必达法则求解该极限问题。" }],
+  };
+}
+`;
+      const issues = checkAt("src/data/builders/lineParamT.ts", code);
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("warning");
+    });
+
+    it("节点级豁免有效：真实 extend feature 目录 → warning", () => {
+      const code = `
+export function LineParamTAnimation() {
+  return { warnings: [{ text: "本页用洛必达法则求解该极限问题。" }] };
+}
+`;
+      const issues = checkAt(
+        "src/features/conicParamT/LineParamTAnimation.tsx",
+        code,
+      );
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("warning");
+    });
+
+    it("非 extend 节点文件不得豁免：真实普通 builder → error", () => {
+      const code = `
+export function buildDemo() {
+  return {
+    warnings: [{ text: "本页用洛必达法则求解该极限问题。" }],
+  };
+}
+`;
+      const issues = checkAt("src/data/builders/sequence.ts", code);
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("error");
+    });
   });
 });
