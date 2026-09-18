@@ -104,7 +104,7 @@ export function buildTrigTransformPanel(
         name: "零点个数与单调区间充要判据",
         latex:
           "\\begin{cases} \\text{恰有 } n \\text{ 个零点} \\implies (n-1)\\pi < \\Delta u \\le (n+1)\\pi \\text{ (需验证端点)} \\\\ \\text{在 } [x_1, x_2] \\text{ 上单调} \\implies \\Delta u \\le \\pi \\text{ 且区间不含极值点 } \\frac{\\pi}{2}+m\\pi \\end{cases}",
-        condition: "\\Delta u = \\omega(x_2 - x_1) > 0",
+        condition: "$\\Delta u = \\omega(x_2 - x_1) > 0$",
         note: "高考求解 ω 范围核心：先求开区间必要条件，再将端点 ω 值代入检验闭区间端点是否产生多余零点。",
         level: "important",
       },
@@ -270,7 +270,7 @@ export function buildTrigTransformPanel(
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "由图求式大题必考：代入特征点求 φ 时优先使用波峰点 (ω x_max + φ = π/2 + 2kπ)，避免零点多解符号错误。",
+        text: "由图求式大题必考：代入特征点求 $φ$ 时优先使用波峰点 $(ω x_max + φ = π/2 + 2kπ)$，避免零点多解符号错误。",
         importance: "gaokao",
       },
       {
@@ -312,13 +312,13 @@ export function buildTrigTransformPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "最大值 y_max",
+        label: "最大值 $y_max$",
         symbol: "y_{max} = k + A",
         value: props.yMax.toFixed(2),
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "最小值 y_min",
+        label: "最小值 $y_min$",
         symbol: "y_{min} = k - A",
         value: props.yMin.toFixed(2),
         color: MATH_COLORS.paramTertiary,

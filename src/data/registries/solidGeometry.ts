@@ -153,6 +153,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 2,
     importance: "core",
+    group: "线面关系与角度配置",
   },
   {
     key: "thetaDeg",
@@ -163,6 +164,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 1,
     defaultValue: 0,
     importance: "core",
+    group: "线面关系与角度配置",
     marks: [
       {
         value: 0,
@@ -187,6 +189,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 5,
     defaultValue: 30,
     importance: "core",
+    group: "线面关系与角度配置",
   },
   {
     key: "pyramidH",
@@ -197,6 +200,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 3.5,
     importance: "core",
+    group: "四棱锥底模尺寸",
   },
   {
     key: "pyramidA",
@@ -207,6 +211,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 3.6,
     importance: "core",
+    group: "四棱锥底模尺寸",
   },
   {
     key: "pyramidB",
@@ -217,6 +222,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 2.8,
     importance: "core",
+    group: "四棱锥底模尺寸",
   },
   {
     key: "lambdaE",
@@ -227,6 +233,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 0.05,
     defaultValue: 0.5,
     importance: "core",
+    group: "动点分比参数",
     marks: [
       { value: 0.5, label: "中点", labelFormula: "0.5", variant: "critical" },
     ],
@@ -240,6 +247,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 0.05,
     defaultValue: 0.5,
     importance: "core",
+    group: "动点分比参数",
     marks: [
       { value: 0.5, label: "中点", labelFormula: "0.5", variant: "critical" },
     ],
@@ -253,10 +261,22 @@ export const linePlaneRelationMeta: ParamMeta[] = [
     step: 0.05,
     defaultValue: 1,
     importance: "advanced",
+    group: "演示推进进度",
   },
 ];
 
 export const surfaceRelationMeta: ParamMeta[] = [
+  {
+    key: "step",
+    label: "演示推进进度",
+    labelFormula: `\\text{推导演示 } \\color{${MATH_COLORS.highlight}}{t}`,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    defaultValue: 1,
+    importance: "advanced",
+    group: "演示推进进度",
+  },
   {
     key: "zHeight",
     label: "平面间距 / 高度 d",
@@ -266,6 +286,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 2.2,
     importance: "core",
+    group: "空间位置与夹角",
   },
   {
     key: "tiltDeg",
@@ -276,6 +297,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 1,
     defaultValue: 0,
     importance: "core",
+    group: "空间位置与夹角",
     marks: [
       {
         value: 0,
@@ -294,6 +316,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 5,
     defaultValue: 30,
     importance: "advanced",
+    group: "空间位置与夹角",
   },
   {
     key: "planeRotDeg",
@@ -304,6 +327,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 5,
     defaultValue: 45,
     importance: "core",
+    group: "空间位置与夹角",
     marks: [
       {
         value: 90,
@@ -322,6 +346,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 1,
     defaultValue: 90,
     importance: "core",
+    group: "空间位置与夹角",
     marks: [
       {
         value: 90,
@@ -340,6 +365,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 0.05,
     defaultValue: 0.5,
     importance: "advanced",
+    group: "空间位置与夹角",
     marks: [
       { value: 0.5, label: "中点", labelFormula: "0.5", variant: "critical" },
     ],
@@ -353,6 +379,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 3.6,
     importance: "core",
+    group: "四棱锥底模尺寸",
   },
   {
     key: "pyramidB",
@@ -363,6 +390,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 2.8,
     importance: "core",
+    group: "四棱锥底模尺寸",
   },
   {
     key: "pyramidH",
@@ -373,16 +401,7 @@ export const surfaceRelationMeta: ParamMeta[] = [
     step: 0.2,
     defaultValue: 3.2,
     importance: "core",
-  },
-  {
-    key: "step",
-    label: "演示推进进度",
-    labelFormula: `\\text{推导演示 } \\color{${MATH_COLORS.highlight}}{t}`,
-    min: 0,
-    max: 1,
-    step: 0.05,
-    defaultValue: 1,
-    importance: "advanced",
+    group: "四棱锥底模尺寸",
   },
 ];
 
@@ -544,6 +563,7 @@ export const rotationBodyMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 1.5,
     importance: "core",
+    group: "旋转体底模尺寸",
   },
   {
     key: "r2",
@@ -554,6 +574,7 @@ export const rotationBodyMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 0.8,
     importance: "advanced",
+    group: "旋转体底模尺寸",
     marks: [
       {
         value: 0.1,
@@ -572,6 +593,7 @@ export const rotationBodyMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 3,
     importance: "core",
+    group: "旋转体底模尺寸",
   },
   {
     key: "sweepAngleDeg",
@@ -582,6 +604,7 @@ export const rotationBodyMeta: ParamMeta[] = [
     step: 1,
     defaultValue: 360,
     importance: "core",
+    group: "旋转扫掠角度",
     marks: [
       { value: 180, label: "180°半体", labelFormula: "180^\\circ" },
       {
@@ -601,6 +624,7 @@ export const rotationBodyMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 0.8,
     importance: "core",
+    group: "截面位置参数",
     marks: [
       {
         value: 0,
@@ -766,6 +790,7 @@ export const polyhedronSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 3,
     importance: "core",
+    group: "多面体特征尺寸",
   },
   {
     key: "b",
@@ -776,6 +801,7 @@ export const polyhedronSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 4,
     importance: "core",
+    group: "多面体特征尺寸",
   },
   {
     key: "c",
@@ -786,6 +812,7 @@ export const polyhedronSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 5,
     importance: "core",
+    group: "多面体特征尺寸",
   },
   {
     key: "h",
@@ -796,6 +823,7 @@ export const polyhedronSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 4,
     importance: "core",
+    group: "多面体特征尺寸",
   },
 ];
 
@@ -809,6 +837,7 @@ export const advancedSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 3,
     importance: "core",
+    group: "外接球面半径",
   },
   {
     key: "r2",
@@ -819,6 +848,7 @@ export const advancedSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 3.5,
     importance: "core",
+    group: "外接球面半径",
   },
   {
     key: "c",
@@ -829,6 +859,7 @@ export const advancedSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 3,
     importance: "core",
+    group: "球面交线参数",
   },
   {
     key: "a",
@@ -839,6 +870,7 @@ export const advancedSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 4,
     importance: "core",
+    group: "球面交线参数",
   },
   {
     key: "h",
@@ -849,6 +881,7 @@ export const advancedSphereMeta: ParamMeta[] = [
     step: 0.05,
     defaultValue: 4.24,
     importance: "core",
+    group: "球面交线参数",
   },
   {
     key: "R",
@@ -859,5 +892,6 @@ export const advancedSphereMeta: ParamMeta[] = [
     step: 0.1,
     defaultValue: 3,
     importance: "core",
+    group: "外接球面半径",
   },
 ];

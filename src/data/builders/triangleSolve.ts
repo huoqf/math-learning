@@ -164,7 +164,7 @@ export function buildTriangleSolvePanel(
       {
         label: "解的个数 ($N_sol$)",
         symbol: "N_{\\text{sol}}",
-        value: `${solutionCount} 个解 (${a < h - 1e-4 ? "a < h 无解" : Math.abs(a - h) <= 1e-4 ? "a = h 单解(直角)" : a < b ? "h < a < b 双解" : "a ≥ b 单解"})`,
+        value: `${solutionCount} 个解 (${a < h - 0.0001 ? "a < h 无解" : Math.abs(a - h) <= 0.0001 ? "a = h 单解(直角)" : a < b ? "h < a < b 双解" : "a ≥ b 单解"})`,
         color:
           solutionCount === 2
             ? MATH_COLORS.sequenceHighlight

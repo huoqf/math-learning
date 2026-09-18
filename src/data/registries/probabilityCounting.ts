@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   n: 5,
@@ -20,7 +21,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   n: {
     key: "n",
     label: "总数/二项式指数 n",
-    labelFormula: "n",
+    labelFormula: `\\text{总数/二项式指数 }\\color{${MATH_COLORS.paramPrimary}}{n}`,
     min: 0,
     max: 10,
     step: 1,
@@ -37,20 +38,20 @@ export const paramMeta: Record<string, ParamMeta> = {
   k: {
     key: "k",
     label: "选取数/展开项 k",
-    labelFormula: "k",
+    labelFormula: `\\text{选取数/展开项 }\\color{${MATH_COLORS.paramSecondary}}{k}`,
     min: 0,
     max: 10,
     step: 1,
     defaultValue: 2,
     importance: "core",
-    description: "二项展开式第 k+1 项 (T_{k+1}) 或组合数 C_n^k 中的 k",
+    description: "二项展开式第 $k+1$ 项 ($T_{k+1}$) 或组合数 $C_n^k$ 中的 $k$",
     descriptionFormula: "通项 $T_{k+1}$ 或组合数 $C_n^k$ 中的 $k$",
     marks: [{ value: 0, variant: "zero", labelFormula: "k=0" }],
   },
   a: {
     key: "a",
     label: "x 前系数 a",
-    labelFormula: "a",
+    labelFormula: `\\text{x 前系数 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     min: -3,
     max: 3,
     step: 1,
@@ -69,7 +70,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   b: {
     key: "b",
     label: "常数项 b",
-    labelFormula: "b",
+    labelFormula: `\\text{常数项 }\\color{${MATH_COLORS.paramSecondary}}{b}`,
     min: -3,
     max: 3,
     step: 1,
@@ -83,7 +84,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   m1: {
     key: "m1",
     label: "步骤1 / 类别1 选择数",
-    labelFormula: "m_1",
+    labelFormula: `\\text{步骤1 / 类别1 选择数 }\\color{${MATH_COLORS.paramTertiary}}{m_1}`,
     min: 1,
     max: 5,
     step: 1,
@@ -95,7 +96,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   m2: {
     key: "m2",
     label: "步骤2 / 类别2 选择数",
-    labelFormula: "m_2",
+    labelFormula: `\\text{步骤2 / 类别2 选择数 }\\color{${MATH_COLORS.paramTertiary}}{m_2}`,
     min: 1,
     max: 4,
     step: 1,
@@ -107,7 +108,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   m3: {
     key: "m3",
     label: "步骤3 选择数",
-    labelFormula: "m_3",
+    labelFormula: `\\text{步骤3 选择数 }\\color{${MATH_COLORS.paramTertiary}}{m_3}`,
     min: 0,
     max: 3,
     step: 1,
@@ -120,7 +121,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   gridM: {
     key: "gridM",
     label: "横向步数 m",
-    labelFormula: "m",
+    labelFormula: `\\text{横向步数 }\\color{${MATH_COLORS.paramTertiary}}{m}`,
     min: 1,
     max: 6,
     step: 1,
@@ -132,7 +133,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   gridN: {
     key: "gridN",
     label: "纵向步数 n",
-    labelFormula: "n",
+    labelFormula: `\\text{纵向步数 }\\color{${MATH_COLORS.paramPrimary}}{n}`,
     min: 1,
     max: 5,
     step: 1,
@@ -144,7 +145,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   groupTotal: {
     key: "groupTotal",
     label: "均分总元素数",
-    labelFormula: "N",
+    labelFormula: `\\text{均分总元素数 }\\color{${MATH_COLORS.paramTertiary}}{N}`,
     min: 4,
     max: 8,
     step: 2,
@@ -156,7 +157,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   groupCount: {
     key: "groupCount",
     label: "均分组数 k",
-    labelFormula: "k",
+    labelFormula: `\\text{均分组数 }\\color{${MATH_COLORS.paramSecondary}}{k}`,
     min: 2,
     max: 4,
     step: 1,

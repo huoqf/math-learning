@@ -61,7 +61,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   d: {
     key: "d",
     label: "常数项 d",
-    labelFormula: "\\text{常数项 } d",
+    labelFormula: `\\text{常数项 }\\color{${MATH_COLORS.paramTertiary}}{d}`,
     defaultValue: 0,
     min: -3,
     max: 3,

@@ -140,7 +140,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   int2Min: {
     key: "int2Min",
     label: "g 区间左端点",
-    labelFormula: `\\text{g 区间左端点 } c`,
+    labelFormula: `\\text{g 区间左端点 }\\color{${MATH_COLORS.paramTertiary}}{c}`,
     min: -5.0,
     max: 3.0,
     step: 0.2,
@@ -151,7 +151,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   int2Max: {
     key: "int2Max",
     label: "g 区间右端点",
-    labelFormula: `\\text{g 区间右端点 } d`,
+    labelFormula: `\\text{g 区间右端点 }\\color{${MATH_COLORS.paramTertiary}}{d}`,
     min: -3.0,
     max: 5.0,
     step: 0.2,

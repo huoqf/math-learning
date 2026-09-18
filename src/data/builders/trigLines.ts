@@ -194,7 +194,7 @@ export function buildTrigLinesPanel(
         name: "第一象限经典面积放缩不等式",
         latex:
           "S_{\\triangle OMP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT} \\implies \\sin x \\cos x < x < \\tan x",
-        condition: "x \\in \\left(0, \\frac{\\pi}{2}\\right)",
+        condition: "$x \\in \\left(0, \\frac{\\pi}{2}\\right)$",
         note: "同除以 (1/2) 并在两端分别处理，可导出高中极为重要的放缩链条：sin x < x < tan x。",
         level: "core",
       },
@@ -202,7 +202,7 @@ export function buildTrigLinesPanel(
         name: "第一象限三角函数放缩链",
         latex:
           "\\text{由 } S_{\\triangle OMP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT} \\implies \\sin x < x < \\tan x \\quad \\left(x \\in \\left(0, \\frac{\\pi}{2}\\right)\\right)",
-        condition: "x \\in \\left(0, \\frac{\\pi}{2}\\right)",
+        condition: "$x \\in \\left(0, \\frac{\\pi}{2}\\right)$",
         note: "同一面积不等式两边同除以 (1/2)cos x 即得 sin x < x < tan x，是三角函数与导数交汇题的常用放缩依据。",
         level: "important",
       },
@@ -299,7 +299,7 @@ export function buildTrigLinesPanel(
     {
       name: "当前不等式通解集",
       latex: ineq.latexSolution || "\\text{正在计算}",
-      condition: "k \\in \\mathbb{Z}",
+      condition: "$k \\in \\mathbb{Z}$",
       note: "高考解答题务必书写 k ∈ Z，否则扣分。",
       level: "important",
     },

@@ -4,6 +4,7 @@
  */
 
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   a: 2.5,
@@ -20,7 +21,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "长半轴 a",
-    labelFormula: "a",
+    labelFormula: `\\text{长半轴 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     defaultValue: 2.5,
     min: 1.0,
     max: 4.0,
@@ -33,7 +34,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   b: {
     key: "b",
     label: "短半轴 b",
-    labelFormula: "b",
+    labelFormula: `\\text{短半轴 }\\color{${MATH_COLORS.paramSecondary}}{b}`,
     defaultValue: 1.5,
     min: 1.0,
     max: 3.0,
@@ -46,7 +47,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   lineA: {
     key: "lineA",
     label: "割线系数 A (或 m)",
-    labelFormula: "A",
+    labelFormula: `\\text{割线系数 }\\color{${MATH_COLORS.paramTertiary}}{A}`,
     defaultValue: 0.3,
     min: -1.5,
     max: 1.5,
@@ -60,7 +61,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   lineB: {
     key: "lineB",
     label: "割线系数 B (或 n)",
-    labelFormula: "B",
+    labelFormula: `\\text{割线系数 }\\color{${MATH_COLORS.paramTertiary}}{B}`,
     defaultValue: 0.4,
     min: -1.5,
     max: 1.5,
@@ -74,7 +75,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   px: {
     key: "px",
     label: "定点横坐标 x₀",
-    labelFormula: "x_0",
+    labelFormula: `\\text{定点横坐标 }\\color{${MATH_COLORS.paramTertiary}}{x_0}`,
     defaultValue: -2.5,
     min: -3.5,
     max: 3.5,
@@ -92,7 +93,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   py: {
     key: "py",
     label: "定点纵坐标 y₀",
-    labelFormula: "y_0",
+    labelFormula: `\\text{定点纵坐标 }\\color{${MATH_COLORS.paramTertiary}}{y_0}`,
     defaultValue: 0,
     min: -2.5,
     max: 2.5,
@@ -106,7 +107,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   lambda: {
     key: "lambda",
     label: "斜率权重 λ",
-    labelFormula: "\\lambda",
+    labelFormula: `\\text{斜率权重 }\\color{${MATH_COLORS.paramTertiary}}{\\lambda}`,
     defaultValue: 1,
     min: 0.5,
     max: 3.0,
@@ -119,7 +120,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   mu: {
     key: "mu",
     label: "斜率权重 μ",
-    labelFormula: "\\mu",
+    labelFormula: `\\text{斜率权重 }\\color{${MATH_COLORS.paramTertiary}}{\\mu}`,
     defaultValue: 1,
     min: 0.5,
     max: 3.0,

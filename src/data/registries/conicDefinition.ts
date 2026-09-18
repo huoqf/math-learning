@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export interface ConicParams {
   a: number;
@@ -20,7 +21,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "长半轴 / 实半轴 a",
-    labelFormula: "a",
+    labelFormula: `\\text{长半轴 / 实半轴 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     min: 1.0,
     max: 5.0,
     step: 0.1,
@@ -39,7 +40,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   c: {
     key: "c",
     label: "半焦距 c",
-    labelFormula: "c",
+    labelFormula: `\\text{半焦距 }\\color{${MATH_COLORS.paramTertiary}}{c}`,
     min: 0.5,
     max: 4.5,
     step: 0.1,
@@ -57,8 +58,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   e: {
     key: "e",
-    label: "离心率 e (d_F / d_l)",
-    labelFormula: "e",
+    label: "离心率 $e$ ($d_F / d_l$)",
+    labelFormula: `\\text{离心率 }\\color{${MATH_COLORS.paramSecondary}}{e}`,
     min: 0.1,
     max: 2.5,
     step: 0.05,
@@ -77,7 +78,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   p: {
     key: "p",
     label: "焦准距 p",
-    labelFormula: "p",
+    labelFormula: `\\text{焦准距 }\\color{${MATH_COLORS.paramTertiary}}{p}`,
     min: 0.5,
     max: 4.0,
     step: 0.1,
@@ -88,7 +89,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   theta: {
     key: "theta",
     label: "动点参数 θ / t",
-    labelFormula: "\\theta",
+    labelFormula: `\\text{动点参数 }\\color{${MATH_COLORS.paramTertiary}}{\\theta}`,
     min: 0,
     max: 6.28,
     step: 0.02,

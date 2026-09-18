@@ -144,7 +144,7 @@ export function buildTrigIdentityPanel(
       {
         name: "同角平方关系 (单位圆勾股定理)",
         latex: "\\sin^2\\alpha + \\cos^2\\alpha = 1",
-        condition: "\\alpha \\in \\mathbb{R}",
+        condition: "$\\alpha \\in \\mathbb{R}$",
         note: "直观几何解释：单位圆上动点 P(cosα, sinα) 到原点距离 OP² = x² + y² = 1。",
         level: "core",
       },
@@ -324,7 +324,7 @@ export function buildTrigIdentityPanel(
           name: "万能诱导法则口诀解析",
           latex:
             "f\\left(k\\cdot\\frac{\\pi}{2} \\pm \\alpha\\right) = \\pm g(\\alpha)",
-          condition: "k \\in \\mathbb{Z}",
+          condition: "$k \\in \\mathbb{Z}$",
           note: "奇变偶不变（k 为奇数时正余弦互换，偶数时函数名保持不变）；符号看象限（把 α 视作锐角，观察变换角落在第几象限，取原函数在该象限的正负符号）。",
           level: "core",
         },

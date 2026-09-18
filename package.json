@@ -96,5 +96,8 @@
       "target": "AppImage",
       "artifactName": "${productName}-${version}.${ext}"
     }
+  },
+  "overrides": {
+    "three": "$three"
   }
 }

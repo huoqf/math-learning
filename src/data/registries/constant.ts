@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   a: 1.2,
@@ -15,7 +16,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "水平线高度 a",
-    labelFormula: "a",
+    labelFormula: `\\text{水平线高度 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -35,7 +36,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a_axis: {
     key: "a_axis",
     label: "参数 a (讨论项)",
-    labelFormula: "a",
+    labelFormula: `\\text{讨论参数 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -58,7 +59,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   m: {
     key: "m",
     label: "区间左边界 m",
-    labelFormula: "m",
+    labelFormula: `\\text{区间左边界 }\\color{${MATH_COLORS.paramSecondary}}{m}`,
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -70,7 +71,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   n: {
     key: "n",
     label: "区间右边界 n",
-    labelFormula: "n",
+    labelFormula: `\\text{区间右边界 }\\color{${MATH_COLORS.paramTertiary}}{n}`,
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -81,8 +82,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   yf: {
     key: "yf",
-    label: "顶点纵坐标 y_f",
-    labelFormula: "y_f",
+    label: "顶点纵坐标 $y_f$",
+    labelFormula: `\\text{顶点纵坐标 }\\color{${MATH_COLORS.paramPrimary}}{y_f}`,
     min: -1.5,
     max: 4.0,
     step: 0.05,
@@ -94,8 +95,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   xf: {
     key: "xf",
-    label: "对称轴位置 x_f",
-    labelFormula: "x_f",
+    label: "对称轴位置 $x_f$",
+    labelFormula: `\\text{对称轴位置 }\\color{${MATH_COLORS.paramTertiary}}{x_f}`,
     min: 0.5,
     max: 2.0,
     step: 0.05,
@@ -107,8 +108,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   yg: {
     key: "yg",
-    label: "顶点纵坐标 y_g",
-    labelFormula: "y_g",
+    label: "顶点纵坐标 $y_g$",
+    labelFormula: `\\text{顶点纵坐标 }\\color{${MATH_COLORS.paramSecondary}}{y_g}`,
     min: 0.0,
     max: 3.0,
     step: 0.05,
@@ -120,8 +121,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   xg: {
     key: "xg",
-    label: "对称轴位置 x_g",
-    labelFormula: "x_g",
+    label: "对称轴位置 $x_g$",
+    labelFormula: `\\text{对称轴位置 }\\color{${MATH_COLORS.paramTertiary}}{x_g}`,
     min: 1.5,
     max: 3.0,
     step: 0.05,

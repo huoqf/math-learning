@@ -135,7 +135,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   tP: {
     key: "tP",
-    label: "动点参数 t_P",
+    label: "动点参数 $t_P$",
     labelFormula: `\\text{动点位置 } \\color{${MATH_COLORS.paramSecondary}}{t_P}`,
     min: -5.0,
     max: 5.0,
@@ -167,7 +167,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   yQ: {
     key: "yQ",
-    label: "准线点参数 y_Q",
+    label: "准线点参数 $y_Q$",
     labelFormula: `\\text{准线点位置 } \\color{${MATH_COLORS.paramTertiary}}{y_Q}`,
     min: -5.0,
     max: 5.0,

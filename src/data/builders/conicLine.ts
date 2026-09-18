@@ -93,7 +93,7 @@ export function buildConicLineMathQuantities(
   quantities.push({
     label: "联立判别式 Δ",
     symbol: "\\Delta = B^2 - 4AC",
-    value: `${deltaVal} (${result.delta > 1e-5 ? "> 0" : Math.abs(result.delta) <= 1e-5 ? "= 0" : "< 0"})`,
+    value: `${deltaVal} (${result.delta > 0.00001 ? "> 0" : Math.abs(result.delta) <= 0.00001 ? "= 0" : "< 0"})`,
   });
 
   if (result.chordLength !== null && result.status === "secant") {

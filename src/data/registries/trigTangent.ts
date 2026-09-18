@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   theta: Math.PI / 4, // 0.7854
@@ -13,7 +14,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   theta: {
     key: "theta",
     label: "动角 θ (弧度)",
-    labelFormula: "\\theta",
+    labelFormula: `\\text{动角 }\\color{${MATH_COLORS.paramTertiary}}{\\theta}`,
     min: -Math.PI + 0.08,
     max: Math.PI - 0.08,
     step: 0.02,
@@ -45,7 +46,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   A: {
     key: "A",
     label: "振幅/伸缩因子 A",
-    labelFormula: "A",
+    labelFormula: `\\text{振幅/伸缩因子 }\\color{${MATH_COLORS.paramPrimary}}{A}`,
     min: -3.0,
     max: 3.0,
     step: 0.1,
@@ -64,7 +65,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   omega: {
     key: "omega",
     label: "周期因子 ω",
-    labelFormula: "\\omega",
+    labelFormula: `\\text{周期因子 }\\color{${MATH_COLORS.paramSecondary}}{\\omega}`,
     min: 0.1,
     max: 3.0,
     step: 0.1,
@@ -89,7 +90,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   phi: {
     key: "phi",
     label: "初相 φ",
-    labelFormula: "\\varphi",
+    labelFormula: `\\text{初相 }\\color{${MATH_COLORS.paramTertiary}}{\\varphi}`,
     min: -Math.PI,
     max: Math.PI,
     step: Math.PI / 12,
@@ -101,7 +102,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   C: {
     key: "C",
     label: "垂直平移 C",
-    labelFormula: "C",
+    labelFormula: `\\text{垂直平移 }\\color{${MATH_COLORS.paramTertiary}}{C}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -113,7 +114,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   targetIntervalEnd: {
     key: "targetIntervalEnd",
     label: "目标区间右端点",
-    labelFormula: "x_{\\text{end}}",
+    labelFormula: `\\text{目标区间右端点 }\\color{${MATH_COLORS.paramTertiary}}{x_{\\text{end}}}`,
     min: 0.2,
     max: 2.5,
     step: 0.1,

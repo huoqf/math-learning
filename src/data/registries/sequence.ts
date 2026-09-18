@@ -61,7 +61,7 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     {
       key: "geometric",
       name: "标准等比待定系数",
-      desc: "p=2, q=1, 构造 b_n = a_n + 1 为等比",
+      desc: "$p=2, q=1$, 构造 $b_n = a_n + 1$ 为等比",
       params: { a1: 1, p_rec: 2, q_rec: 1, N: 6 },
     },
     {
@@ -89,13 +89,13 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     {
       key: "arithmetic-step",
       name: "等差增量 f(n)=2n",
-      desc: "a_{n+1}-a_n=2n，累加得 a_n=n^2-n+1",
+      desc: "$a_{n+1}-a_n=2n$，累加得 $a_n=n^2-n+1$",
       params: { a1: 1, stepParam: 2, N: 6 },
     },
     {
       key: "geometric-step",
       name: "指数增量 f(n)=2ⁿ",
-      desc: "a_{n+1}-a_n=2^n，累加等比求和",
+      desc: "$a_{n+1}-a_n=2^n$，累加等比求和",
       params: { a1: 1, stepParam: 2, N: 6 },
     },
   ],
@@ -103,13 +103,13 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     {
       key: "telescope-mul",
       name: "因式对消 f(n)=n/(n+1)",
-      desc: "a_{n+1}/a_n=n/(n+1)，累乘得 a_n=a_1/n",
+      desc: "$a_{n+1}/a_n=n/(n+1)$，累乘得 $a_n=a_1/n$",
       params: { a1: 6, N: 6 },
     },
     {
       key: "expand-mul",
       name: "阶乘型 f(n)=(n+1)/n",
-      desc: "a_{n+1}/a_n=(n+1)/n，累乘得 a_n=n·a_1",
+      desc: "$a_{n+1}/a_n=(n+1)/n$，累乘得 $a_n=n·a_1$",
       params: { a1: 1, N: 6 },
     },
   ],
@@ -117,7 +117,7 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     {
       key: "harmonic",
       name: "标准倒数等差 (A=C=1)",
-      desc: "a_{n+1}=a_n/(a_n+1)，取倒数得 1/a_n=n",
+      desc: "$a_{n+1}=a_n/(a_n+1)$，取倒数得 $1/a_n=n$",
       params: { a1: 1, coefA: 1, coefB: 1, coefC: 1, N: 6 },
     },
     {
@@ -137,7 +137,7 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     {
       key: "fibonacci",
       name: "斐波那契模型 (p=1, q=1)",
-      desc: "a_{n+2}=a_{n+1}+a_n，黄金分割比 φ≈1.618",
+      desc: "$a_{n+2}=a_{n+1}+a_n$，黄金分割比 $φ≈1.618$",
       params: { a1: 1, a2: 1, p_rec: 1, q_rec: 1, N: 6 },
     },
     {
@@ -237,7 +237,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: 2,
     max: 4,
     step: 1,
-    description: "等长片段大小 k（展示 S_k, S_2k-S_k, S_3k-S_2k 的等差性）",
+    description:
+      "等长片段大小 $k$（展示 $S_k, S_{2k}-S_k, S_{3k}-S_{2k}$ 的等差性）",
     importance: "core",
     marks: [
       { value: 2, label: "k=2", labelFormula: "k=2" },
@@ -248,7 +249,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   gaussRatio: {
     key: "gaussRatio",
     label: "倒序拼图进度 λ",
-    labelFormula: "\\lambda",
+    labelFormula: `\\text{倒序拼图进度 }\\color{${MATH_COLORS.paramTertiary}}{\\lambda}`,
     defaultValue: 1,
     min: 0,
     max: 1,
@@ -264,7 +265,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   N: {
     key: "N",
     label: "展示项数 N",
-    labelFormula: "N",
+    labelFormula: `\\text{展示项数 }\\color{${MATH_COLORS.paramTertiary}}{N}`,
     defaultValue: 6,
     min: 4,
     max: 12,
@@ -285,7 +286,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: -3,
     max: 3,
     step: 0.5,
-    description: "递推关系式 a_{n+1} = p * a_n + q 中的系数 p",
+    description: "递推关系式 $a_{n+1} = p * a_n + q$ 中的系数 $p$",
     descriptionFormula: `a_{n+1} = \\color{${MATH_COLORS.paramPrimary}}{p} a_n + q`,
     importance: "core",
     marks: [
@@ -308,7 +309,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 5,
     step: 1,
     description:
-      "递推关系式 a_{n+1} = p * a_n + q 中的常数项 q (q=0 时退化为纯等比)",
+      "递推关系式 $a_{n+1} = p * a_n + q$ 中的常数项 $q$ ($q=0$ 时退化为纯等比)",
     descriptionFormula: `a_{n+1} = p a_n + \\color{${MATH_COLORS.paramSecondary}}{q}`,
     importance: "core",
     marks: [
@@ -329,7 +330,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: 1,
     max: 5,
     step: 1,
-    description: "非齐次项 a_{n+1} = p*a_n + q*r^n 中的指数底数 r",
+    description: "非齐次项 $a_{n+1} = p*a_n + q*r^n$ 中的指数底数 $r$",
     descriptionFormula: `a_{n+1} = p a_n + q \\cdot \\color{${MATH_COLORS.paramTertiary}}{r}^n`,
     importance: "core",
     marks: [
@@ -361,7 +362,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: -5,
     max: 10,
     step: 1,
-    description: "二阶递推数列第二项 a_2",
+    description: "二阶递推数列第二项 $a_2$",
     importance: "core",
     marks: [
       { value: 1, label: "1", labelFormula: "1" },
@@ -376,7 +377,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: 0.5,
     max: 5,
     step: 0.5,
-    description: "分式递推 a_{n+1} = A*a_n / (B*a_n + C) 的分子系数 A",
+    description: "分式递推 $a_{n+1} = A*a_n / (B*a_n + C)$ 的分子系数 $A$",
     importance: "core",
   },
   coefB: {
@@ -388,7 +389,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 3,
     step: 0.5,
     description:
-      "分式递推 a_{n+1} = A*a_n / (B*a_n + C) 的分母系数 B (B=0 时退化为纯比例)",
+      "分式递推 $a_{n+1} = A*a_n / (B*a_n + C)$ 的分母系数 $B$ ($B=0$ 时退化为纯比例)",
     importance: "core",
     marks: [
       {
@@ -407,7 +408,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     min: 0.5,
     max: 5,
     step: 0.5,
-    description: "分式递推 a_{n+1} = A*a_n / (B*a_n + C) 的分母常数 C",
+    description: "分式递推 $a_{n+1} = A*a_n / (B*a_n + C)$ 的分母常数 $C$",
     importance: "core",
   },
 };

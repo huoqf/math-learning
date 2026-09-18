@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export interface InequalityBasicParams {
   a: number;
@@ -16,7 +17,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "正数 a",
-    labelFormula: "a",
+    labelFormula: `\\text{正数 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     defaultValue: 4.0,
     min: 0.1,
     max: 10.0,
@@ -36,7 +37,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   b: {
     key: "b",
     label: "正数 b",
-    labelFormula: "b",
+    labelFormula: `\\text{正数 }\\color{${MATH_COLORS.paramSecondary}}{b}`,
     defaultValue: 2.0,
     min: 0.1,
     max: 10.0,
@@ -56,7 +57,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   k: {
     key: "k",
     label: "积定值 k",
-    labelFormula: "k",
+    labelFormula: `\\text{积定值 }\\color{${MATH_COLORS.paramTertiary}}{k}`,
     defaultValue: 4.0,
     min: 0.5,
     max: 16.0,

@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   xA: -1.2,
@@ -15,7 +16,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   xA: {
     key: "xA",
     label: "圆 A 圆心 X (xA)",
-    labelFormula: "x_A",
+    labelFormula: `\\text{圆 A 圆心 }\\color{${MATH_COLORS.paramPrimary}}{x_A}`,
     min: -4.0,
     max: 4.0,
     step: 0.1,
@@ -26,7 +27,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   yA: {
     key: "yA",
     label: "圆 A 圆心 Y (yA)",
-    labelFormula: "y_A",
+    labelFormula: `\\text{圆 A 圆心 }\\color{${MATH_COLORS.paramPrimary}}{y_A}`,
     min: -3.0,
     max: 3.0,
     step: 0.1,
@@ -37,7 +38,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   rA: {
     key: "rA",
     label: "集合 A 半径 (rA)",
-    labelFormula: "r_A",
+    labelFormula: `\\text{集合 A 半径 }\\color{${MATH_COLORS.paramPrimary}}{r_A}`,
     min: 0.0,
     max: 4.0,
     step: 0.1,
@@ -56,7 +57,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   xB: {
     key: "xB",
     label: "圆 B 圆心 X (xB)",
-    labelFormula: "x_B",
+    labelFormula: `\\text{圆 B 圆心 }\\color{${MATH_COLORS.paramSecondary}}{x_B}`,
     min: -4.0,
     max: 4.0,
     step: 0.1,
@@ -67,7 +68,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   yB: {
     key: "yB",
     label: "圆 B 圆心 Y (yB)",
-    labelFormula: "y_B",
+    labelFormula: `\\text{圆 B 圆心 }\\color{${MATH_COLORS.paramSecondary}}{y_B}`,
     min: -3.0,
     max: 3.0,
     step: 0.1,
@@ -78,7 +79,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   rB: {
     key: "rB",
     label: "集合 B 半径 (rB)",
-    labelFormula: "r_B",
+    labelFormula: `\\text{集合 B 半径 }\\color{${MATH_COLORS.paramSecondary}}{r_B}`,
     min: 0.0,
     max: 4.0,
     step: 0.1,
@@ -97,7 +98,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   xP: {
     key: "xP",
     label: "测试元素 P(x)",
-    labelFormula: "P(x)",
+    labelFormula: `\\text{测试元素 }\\color{${MATH_COLORS.paramTertiary}}{P(x)}`,
     min: -5.0,
     max: 5.0,
     step: 0.1,
@@ -108,7 +109,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   yP: {
     key: "yP",
     label: "测试元素 P(y)",
-    labelFormula: "P(y)",
+    labelFormula: `\\text{测试元素 }\\color{${MATH_COLORS.paramTertiary}}{P(y)}`,
     min: -4.0,
     max: 4.0,
     step: 0.1,

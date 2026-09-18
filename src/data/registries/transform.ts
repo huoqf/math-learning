@@ -12,7 +12,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   h: {
     key: "h",
     label: "水平平移量 h",
-    labelFormula: "h",
+    labelFormula: `\\text{水平平移量 }\\color{${MATH_COLORS.paramPrimary}}{h}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -26,7 +26,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   omega: {
     key: "omega",
     label: "横向伸缩 ω",
-    labelFormula: "\\omega",
+    labelFormula: `\\text{横向伸缩 }\\color{${MATH_COLORS.paramSecondary}}{\\omega}`,
     min: 0.2,
     max: 3.0,
     step: 0.2,
@@ -48,7 +48,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   k: {
     key: "k",
     label: "竖直平移量 k",
-    labelFormula: "k",
+    labelFormula: `\\text{竖直平移量 }\\color{${MATH_COLORS.paramTertiary}}{k}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -62,7 +62,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   A: {
     key: "A",
     label: "纵向伸缩 A",
-    labelFormula: "A",
+    labelFormula: `\\text{纵向伸缩 }\\color{${MATH_COLORS.paramTertiary}}{A}`,
     min: -2.5,
     max: 2.5,
     step: 0.5,

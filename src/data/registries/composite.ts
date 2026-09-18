@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   x0: 1.0,
@@ -15,7 +16,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   x0: {
     key: "x0",
     label: "分界点 x0",
-    labelFormula: "x_0",
+    labelFormula: `\\text{分界点 }\\color{${MATH_COLORS.paramPrimary}}{x_0}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -31,7 +32,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   leftSlope: {
     key: "leftSlope",
     label: "左段斜率 k1",
-    labelFormula: "k_1",
+    labelFormula: `\\text{左段斜率 }\\color{${MATH_COLORS.paramSecondary}}{k_1}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -45,7 +46,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   leftConst: {
     key: "leftConst",
     label: "左段截距 b1",
-    labelFormula: "b_1",
+    labelFormula: `\\text{左段截距 }\\color{${MATH_COLORS.paramTertiary}}{b_1}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -55,7 +56,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   rightSlope: {
     key: "rightSlope",
     label: "右段斜率 k2",
-    labelFormula: "k_2",
+    labelFormula: `\\text{右段斜率 }\\color{${MATH_COLORS.paramSecondary}}{k_2}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -69,7 +70,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   rightConst: {
     key: "rightConst",
     label: "右段截距 b2",
-    labelFormula: "b_2",
+    labelFormula: `\\text{右段截距 }\\color{${MATH_COLORS.paramTertiary}}{b_2}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -79,7 +80,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   xSample: {
     key: "xSample",
     label: "自变量动点 x",
-    labelFormula: "x",
+    labelFormula: `\\text{自变量动点 }\\color{${MATH_COLORS.paramTertiary}}{x}`,
     min: -3.0,
     max: 3.0,
     step: 0.1,
@@ -93,7 +94,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   innerB: {
     key: "innerB",
     label: "内层系数 b",
-    labelFormula: "b",
+    labelFormula: `\\text{内层系数 }\\color{${MATH_COLORS.paramTertiary}}{b}`,
     min: -4.0,
     max: 4.0,
     step: 0.5,
@@ -107,7 +108,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   innerC: {
     key: "innerC",
     label: "内层常数 c",
-    labelFormula: "c",
+    labelFormula: `\\text{内层常数 }\\color{${MATH_COLORS.paramTertiary}}{c}`,
     min: -3.0,
     max: 4.0,
     step: 0.5,

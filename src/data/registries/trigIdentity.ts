@@ -19,7 +19,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   alphaDeg: {
     key: "alphaDeg",
     label: "动角 α (°)",
-    labelFormula: "\\alpha",
+    labelFormula: `\\text{动角 }\\color{${MATH_COLORS.paramPrimary}}{\\alpha}`,
     min: -360,
     max: 360,
     step: 1,
@@ -91,7 +91,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   homoC: {
     key: "homoC",
     label: "分母 sin 系数 C",
-    labelFormula: "C",
+    labelFormula: `\\text{分母 sin 系数 }\\color{${MATH_COLORS.paramTertiary}}{C}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -104,7 +104,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   homoD: {
     key: "homoD",
     label: "分母 cos 系数 D",
-    labelFormula: "D",
+    labelFormula: `\\text{分母 cos 系数 }\\color{${MATH_COLORS.paramTertiary}}{D}`,
     min: -3.0,
     max: 3.0,
     step: 0.5,
@@ -156,7 +156,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   universalK: {
     key: "universalK",
     label: "诱导系数 k",
-    labelFormula: "k",
+    labelFormula: `\\text{诱导系数 }\\color{${MATH_COLORS.paramTertiary}}{k}`,
     min: -4,
     max: 4,
     step: 1,
@@ -177,7 +177,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   universalSign: {
     key: "universalSign",
     label: "角度符号 sign (±)",
-    labelFormula: "\\pm",
+    labelFormula: `\\text{角度符号 }\\color{${MATH_COLORS.paramTertiary}}{\\pm}`,
     min: -1,
     max: 1,
     step: 2,
@@ -194,7 +194,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   thetaDeg: {
     key: "thetaDeg",
     label: "配角参数 θ (°)",
-    labelFormula: "\\theta",
+    labelFormula: `\\text{配角参数 }\\color{${MATH_COLORS.paramTertiary}}{\\theta}`,
     min: 0,
     max: 90,
     step: 15,

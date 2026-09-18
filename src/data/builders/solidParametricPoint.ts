@@ -230,7 +230,7 @@ export function buildParametricPointPanel(
       {
         step: 3,
         title: "确定全局极小值与公垂线段几何意义",
-        detail: `当且仅当完全平方式均为 0，即 λ=0 且 μ=${res.optimalMu.toFixed(2)} 时取得最小值。此时线段 PQ 垂直于 BB₁ 与 AC，即为异面公垂线。`,
+        detail: `令两个完全平方式分别取零（求解得 λ=0 且 μ=${res.optimalMu.toFixed(2)}），二次型便只剩常数项即距离平方的下界。该极小点对应的线段 PQ 同时垂直于 BB₁ 与 AC，恰为异面直线公垂线段。`,
         latex: `|PQ|_{\\min} = \\frac{ab}{\\sqrt{a^2+b^2}} = ${res.minDistSkew.toFixed(3)}`,
         rubric:
           "【得分点 3】写出最小值结果并阐明达到最值时的几何公垂线意义 (得 4 分)",

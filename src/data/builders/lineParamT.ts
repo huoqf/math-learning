@@ -4,6 +4,7 @@ import type {
   GaokaoPoint,
   WarningItem,
 } from "../types";
+import { MATH_COLORS } from "@/theme";
 import { calcLineConicIntersection, type ConicType } from "@/math/lineParamT";
 
 export function buildLineParamTPanel(
@@ -38,25 +39,25 @@ export function buildLineParamTPanel(
     quantities.push(
       {
         label: "定点 P0 坐标",
-        labelFormula: "P_0(x_0, y_0)",
+        labelFormula: `\\text{定点坐标 }\\color{${MATH_COLORS.paramPrimary}}{P_0(x_0, y_0)}`,
         value: `(${x0.toFixed(2)}, ${y0.toFixed(2)})`,
       },
       {
         label: "倾斜角与方向向量",
-        labelFormula: "(\\cos\\alpha, \\sin\\alpha)",
+        labelFormula: `\\text{方向向量 }\\color{${MATH_COLORS.paramPrimary}}{(\\cos\\alpha, \\sin\\alpha)}`,
         value: `α = ${alpha}°, e = (${Math.cos((alpha * Math.PI) / 180).toFixed(
           2,
         )}, ${Math.sin((alpha * Math.PI) / 180).toFixed(2)})`,
       },
       {
         label: "标准动点 P 参数与距离",
-        labelFormula: "|P_0P| = |t|",
+        labelFormula: `\\text{参数距离 }\\color{${MATH_COLORS.paramPrimary}}{|P_0P| = |t|}`,
         value: `t = ${t.toFixed(2)}, 距离 |P_0P| = ${Math.abs(t).toFixed(2)}`,
         status: "normal" as const,
       },
       {
         label: "非标准点 P' 参数与位移",
-        labelFormula: "|P_0P'| = k_{\\text{norm}}|m|",
+        labelFormula: `\\text{修正位移 }\\color{${MATH_COLORS.paramPrimary}}{|P_0P'| = k_{\\text{norm}}|m|}`,
         value: `m = ${t.toFixed(2)}, k_norm = ${kNorm.toFixed(
           2,
         )}, 实际距离 = ${(Math.abs(t) * kNorm).toFixed(2)}`,
@@ -70,19 +71,19 @@ export function buildLineParamTPanel(
     quantities.push(
       {
         label: "定点 P0 坐标",
-        labelFormula: "P_0(x_0, y_0)",
+        labelFormula: `\\text{定点坐标 }\\color{${MATH_COLORS.paramPrimary}}{P_0(x_0, y_0)}`,
         value: `(${x0.toFixed(2)}, ${y0.toFixed(2)})`,
       },
       {
         label: "二次方程系数 A, B, C",
-        labelFormula: "A t^2 + B t + C = 0",
+        labelFormula: `\\text{二次方程系数 }\\color{${MATH_COLORS.paramPrimary}}{A t^2 + B t + C = 0}`,
         value: `A=${intersect.A.toFixed(3)}, B=${intersect.B.toFixed(
           3,
         )}, C=${intersect.C.toFixed(3)}`,
       },
       {
         label: "判别式 Δ",
-        labelFormula: "\\Delta = B^2 - 4AC",
+        labelFormula: `\\text{判别式 }\\color{${MATH_COLORS.paramPrimary}}{\\Delta = B^2 - 4AC}`,
         value: intersect.delta.toFixed(3),
         status: intersect.hasIntersection
           ? ("normal" as const)
@@ -94,14 +95,14 @@ export function buildLineParamTPanel(
       quantities.push(
         {
           label: "交点 A, B 的参数 t1, t2",
-          labelFormula: "t_1, t_2",
+          labelFormula: `\\text{交点参数 }\\color{${MATH_COLORS.paramPrimary}}{t_1, t_2}`,
           value: `t1 = ${intersect.t1.toFixed(2)}, t2 = ${intersect.t2.toFixed(
             2,
           )}`,
         },
         {
           label: "韦达定理和与积",
-          labelFormula: "t_1+t_2, \\quad t_1 t_2",
+          labelFormula: `\\text{韦达和与积 }\\color{${MATH_COLORS.paramPrimary}}{t_1+t_2, \\quad t_1 t_2}`,
           value: `t1+t2 = ${intersect.tSum.toFixed(2)}, t1·t2 = ${intersect.tProd.toFixed(
             2,
           )}`,
@@ -117,7 +118,7 @@ export function buildLineParamTPanel(
             conicType === "circle"
               ? "割线定理线段乘积 (圆幂)"
               : "二次曲线割线线段乘积",
-          labelFormula: "|P_0A| \\cdot |P_0B| = |t_1 t_2|",
+          labelFormula: `\\text{线段乘积 }\\color{${MATH_COLORS.paramPrimary}}{|P_0A| \\cdot |P_0B| = |t_1 t_2|}`,
           value:
             conicType === "circle"
               ? `${intersect.segmentProduct.toFixed(3)} (定值, 与α无关)`
@@ -147,7 +148,7 @@ export function buildLineParamTPanel(
         },
         {
           label: "二次方程一次项系数 B",
-          labelFormula: "B = 0 \\iff P_0 \\text{ 为弦中点}",
+          labelFormula: `\\text{中点弦条件 }\\color{${MATH_COLORS.paramSecondary}}{B = 0} \\iff P_0 \\text{ 为弦中点}`,
           value: `B = ${intersect.B.toFixed(3)}`,
         },
         {
@@ -172,12 +173,12 @@ export function buildLineParamTPanel(
         },
         {
           label: "二次曲线幂/常数项 C",
-          labelFormula: "C = f(x_0, y_0)",
+          labelFormula: `\\text{常数项 }\\color{${MATH_COLORS.paramTertiary}}{C = f(x_0, y_0)}`,
           value: `C = ${intersect.C.toFixed(3)}`,
         },
         {
           label: "转动角度 α 下方幂不变性",
-          labelFormula: "\\text{圆中与倾斜角 } \\alpha \\text{ 无关}",
+          labelFormula: `\\text{圆中与倾斜角 }\\color{${MATH_COLORS.paramPrimary}}{\\alpha} \\text{ 无关}`,
           value: conicType === "circle" ? "为定值 (与α无关)" : "随倾斜角α改变",
         },
       );

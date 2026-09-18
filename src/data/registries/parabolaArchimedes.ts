@@ -113,7 +113,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   yQ: {
     key: "yQ",
-    label: "外点纵标 y_Q",
+    label: "外点纵标 $y_Q$",
     labelFormula: `\\text{准线外点 } \\color{${MATH_COLORS.paramSecondary}}{y_Q}`,
     min: -5.0,
     max: 5.0,

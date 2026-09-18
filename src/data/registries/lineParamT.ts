@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export interface LineParamTParams extends Record<string, number> {
   x0: number;
@@ -28,7 +29,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   x0: {
     key: "x0",
     label: "定点 x0",
-    labelFormula: "x_0",
+    labelFormula: `\\text{定点 }\\color{${MATH_COLORS.paramPrimary}}{x_0}`,
     description: "直线上定点 P0 的横坐标",
     descriptionFormula: "$P_0(x_0, y_0)$ 的横坐标",
     defaultValue: 0.5,
@@ -40,7 +41,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   y0: {
     key: "y0",
     label: "定点 y0",
-    labelFormula: "y_0",
+    labelFormula: `\\text{定点 }\\color{${MATH_COLORS.paramPrimary}}{y_0}`,
     description: "直线上定点 P0 的纵坐标",
     descriptionFormula: "$P_0(x_0, y_0)$ 的纵坐标",
     defaultValue: 0.8,
@@ -52,7 +53,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   alpha: {
     key: "alpha",
     label: "倾斜角 α",
-    labelFormula: "\\alpha (^\\circ)",
+    labelFormula: `\\text{倾斜角 }\\color{${MATH_COLORS.paramPrimary}}{\\alpha} (^\\circ)`,
     description: "直线的倾斜角 (0° ~ 180°)",
     descriptionFormula: "直线倾斜角 $\\alpha \\in [0^\\circ, 180^\\circ)$",
     defaultValue: 45,
@@ -68,7 +69,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   t: {
     key: "t",
     label: "参数 t",
-    labelFormula: "t",
+    labelFormula: `\\text{参数 }\\color{${MATH_COLORS.paramPrimary}}{t}`,
     description: "动点 P 到 P0 的有向距离",
     descriptionFormula: "动点 $P$ 到 $P_0$ 的有向距离 $t$",
     defaultValue: 2.5,
@@ -81,7 +82,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   kNorm: {
     key: "kNorm",
     label: "非标准比例",
-    labelFormula: "k_{\\text{norm}} = \\sqrt{a^2+b^2}",
+    labelFormula: `\\text{非标准比例 }\\color{${MATH_COLORS.paramPrimary}}{k_{\\text{norm}} = \\sqrt{a^2+b^2}}`,
     description: "非标准方向向量模长比例（拓展 · 归一化修正）",
     descriptionFormula: "归一化比例 $k_{\\text{norm}}$ ($k=1$ 为标准方程)",
     defaultValue: 1.5,
@@ -94,7 +95,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   R: {
     key: "R",
     label: "圆半径 R",
-    labelFormula: "R",
+    labelFormula: `\\text{圆半径 }\\color{${MATH_COLORS.paramTertiary}}{R}`,
     description: "圆的半径",
     descriptionFormula: "圆方程 $x^2+y^2=R^2$",
     defaultValue: 3.0,
@@ -106,7 +107,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   a: {
     key: "a",
     label: "半轴 a",
-    labelFormula: "a",
+    labelFormula: `\\text{半轴 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     description: "椭圆/双曲线的长/实半轴 a",
     descriptionFormula: "半轴 $a$",
     defaultValue: 3.5,
@@ -118,7 +119,7 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   b: {
     key: "b",
     label: "半轴 b",
-    labelFormula: "b",
+    labelFormula: `\\text{半轴 }\\color{${MATH_COLORS.paramSecondary}}{b}`,
     description: "椭圆/双曲线的短/虚半轴 b",
     descriptionFormula: "半轴 $b$",
     defaultValue: 2.0,
@@ -130,8 +131,8 @@ export const paramMeta: Record<keyof LineParamTParams, ParamMeta> = {
   p: {
     key: "p",
     label: "焦准距 p",
-    labelFormula: "p",
-    description: "抛物线焦准距 p (y^2 = 2px)",
+    labelFormula: `\\text{焦准距 }\\color{${MATH_COLORS.paramTertiary}}{p}`,
+    description: "抛物线焦准距 $p$ ($y^2 = 2px$)",
     descriptionFormula: "抛物线参数 $y^2=2px$",
     defaultValue: 1.5,
     min: 0.5,

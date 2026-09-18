@@ -91,7 +91,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   px: {
     key: "px",
-    label: "点 P 横坐标 x_P",
+    label: "点 P 横坐标 $x_P$",
     labelFormula: `\\color{${MATH_COLORS.complexNum}}{x_P}`,
     min: -6.0,
     max: 6.0,
@@ -103,7 +103,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   py: {
     key: "py",
-    label: "点 P 纵坐标 y_P",
+    label: "点 P 纵坐标 $y_P$",
     labelFormula: `\\color{${MATH_COLORS.complexNum}}{y_P}`,
     min: -5.0,
     max: 5.0,
@@ -115,7 +115,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   mx: {
     key: "mx",
-    label: "定点 M 横坐标 x_M",
+    label: "定点 M 横坐标 $x_M$",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{x_M}`,
     min: -3.0,
     max: 3.0,
@@ -127,7 +127,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   my: {
     key: "my",
-    label: "定点 M 纵坐标 y_M",
+    label: "定点 M 纵坐标 $y_M$",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{y_M}`,
     min: -3.0,
     max: 3.0,

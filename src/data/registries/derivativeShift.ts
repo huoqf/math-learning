@@ -216,7 +216,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.01,
     defaultValue: 0.25,
     importance: "core",
-    description: "割线 y = k 截原函数的两根 x1 与 x2 (k_max = 1/e 临界)",
+    description:
+      "割线 $y = k$ 截原函数的两根 $x_1$ 与 $x_2$ ($k_{max} = 1/e$ 临界)",
     descriptionFormula:
       "割线 $y = k$ 截原函数的两根 $x_1, x_2$ (极值临界 $k_{\\max} = 1/e$)",
     marks: [

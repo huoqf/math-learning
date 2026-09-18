@@ -92,7 +92,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   x1: {
     key: "x1",
     label: "区间左端点 x₁",
-    labelFormula: "x_1",
+    labelFormula: `\\text{区间左端点 }\\color{${MATH_COLORS.paramTertiary}}{x_1}`,
     defaultValue: 0,
     min: -Math.PI,
     max: Math.PI,
@@ -109,7 +109,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   x2: {
     key: "x2",
     label: "区间右端点 x₂",
-    labelFormula: "x_2",
+    labelFormula: `\\text{区间右端点 }\\color{${MATH_COLORS.paramTertiary}}{x_2}`,
     defaultValue: Math.PI,
     min: 0,
     max: 2 * Math.PI,

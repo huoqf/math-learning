@@ -187,7 +187,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   ax: {
     key: "ax",
     label: "目标向量 a 的 x 坐标",
-    labelFormula: "a_x",
+    labelFormula: `\\text{目标向量横坐标 }\\color{${MATH_COLORS.paramPrimary}}{a_x}`,
     defaultValue: 3.5,
     min: -5,
     max: 5,
@@ -199,7 +199,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   ay: {
     key: "ay",
     label: "目标向量 a 的 y 坐标",
-    labelFormula: "a_y",
+    labelFormula: `\\text{目标向量纵坐标 }\\color{${MATH_COLORS.paramPrimary}}{a_y}`,
     defaultValue: 3.0,
     min: -5,
     max: 5,
@@ -211,7 +211,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   thetaDeg: {
     key: "thetaDeg",
     label: "正交基底旋转角 θ",
-    labelFormula: "\\theta",
+    labelFormula: `\\text{旋转角 }\\color{${MATH_COLORS.paramPrimary}}{\\theta}`,
     defaultValue: 30,
     min: 0,
     max: 180,
@@ -262,7 +262,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   ratioT: {
     key: "ratioT",
     label: "线段 AB 分点比率 t",
-    labelFormula: "t",
+    labelFormula: `\\text{分点比率 }\\color{${MATH_COLORS.paramPrimary}}{t}`,
     defaultValue: 0.5,
     min: 0,
     max: 1,

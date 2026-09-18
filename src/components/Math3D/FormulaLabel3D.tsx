@@ -1,6 +1,7 @@
 import { Html } from "@react-three/drei";
 import { KatexFormula } from "@/components/UI/KatexFormula";
 import { mathToThree } from "@/math3d/coordinateConvention";
+import { MATH_COLORS, withAlpha } from "@/theme";
 import type { Vec3 } from "@/math3d/vector3";
 
 interface FormulaLabel3DProps {
@@ -75,7 +76,7 @@ export const FormulaLabel3D = ({
                     "0 0 3px #FFFFFF, 0 0 3px #FFFFFF, 0 0 5px #FFFFFF, 0 0 8px #FFFFFF",
                 }
               : {
-                  background: "rgba(255, 255, 255, 0.92)",
+                  background: withAlpha(MATH_COLORS.background, 0.92),
                   backdropFilter: "blur(4px)",
                   padding: "2px 6px",
                   borderRadius: "4px",

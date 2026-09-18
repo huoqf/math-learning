@@ -66,7 +66,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   t: {
     key: "t",
     label: "动点 P 位置角 t",
-    labelFormula: "\\theta_P",
+    labelFormula: `\\text{动点 P 位置角 }\\color{${MATH_COLORS.paramTertiary}}{\\theta_P}`,
     defaultValue: Math.PI / 4,
     min: -Math.PI + 0.05,
     max: Math.PI - 0.05,

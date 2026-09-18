@@ -247,7 +247,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   shift: {
     key: "shift",
     label: "分布偏斜度 shift",
-    labelFormula: `\\text{分布偏斜 } \\color{${MATH_COLORS.paramSecondary}}{\\text{shift}}`,
+    labelFormula: `\\text{分布偏斜 }\\color{${MATH_COLORS.paramSecondary}}{s}`,
     min: -1.0,
     max: 1.0,
     step: 0.1,

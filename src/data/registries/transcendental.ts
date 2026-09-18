@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   x0: 0.0, // 指数/对数切点横坐标
@@ -9,13 +10,14 @@ export const paramMeta: Record<string, ParamMeta> = {
   x0: {
     key: "x0",
     label: "切点横坐标 x₀",
-    labelFormula: "x_0",
+    labelFormula: `\\text{切点横坐标 }\\color{${MATH_COLORS.paramPrimary}}{x_0}`,
     min: -2.0,
     max: 3.0,
     step: 0.1,
     defaultValue: 0.0,
     importance: "core",
-    description: "控制超越函数切线的切点位置 (e^x 基准 x₀=0，ln x 基准 x₀=1)",
+    description:
+      "控制超越函数切线的切点位置 ($e^x$ 基准 $x₀=0$，$\\ln x$ 基准 $x₀=1$)",
     descriptionFormula:
       "控制超越函数切线的切点位置 ($e^x$ 基准 $x_0=0$，$e^x$ 次级 $x_0=1$，$\\ln x$ 基准 $x_0=1$)",
     marks: [
@@ -41,7 +43,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "放缩/放缩斜率 a",
-    labelFormula: "a",
+    labelFormula: `\\text{放缩斜率 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     min: -1.0,
     max: 4.0,
     step: 0.1,

@@ -1,4 +1,5 @@
 import type { ParamMeta } from "@/data/types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
   angleA: 60,
@@ -11,7 +12,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   angleA: {
     key: "angleA",
     label: "内角 A (角A)",
-    labelFormula: "A",
+    labelFormula: `\\text{内角 }\\color{${MATH_COLORS.paramPrimary}}{A}`,
     group: "角与邻边底模",
     defaultValue: 60,
     min: 15,
@@ -36,7 +37,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   b: {
     key: "b",
     label: "边长 b (AC)",
-    labelFormula: "b",
+    labelFormula: `\\text{边长 }\\color{${MATH_COLORS.paramSecondary}}{b}`,
     group: "角与邻边底模",
     defaultValue: 5,
     min: 1,
@@ -49,7 +50,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   c: {
     key: "c",
     label: "边长 c (AB)",
-    labelFormula: "c",
+    labelFormula: `\\text{边长 }\\color{${MATH_COLORS.paramTertiary}}{c}`,
     group: "角与邻边底模",
     defaultValue: 6,
     min: 1,
@@ -62,7 +63,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   a: {
     key: "a",
     label: "对边 a (BC)",
-    labelFormula: "a",
+    labelFormula: `\\text{对边 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
     group: "SSA 动圆半径 a",
     defaultValue: 4.5,
     min: 0.5,

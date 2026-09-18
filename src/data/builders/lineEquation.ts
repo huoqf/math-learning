@@ -426,7 +426,7 @@ export function buildLineEquationPanel(
           step: 3,
           title: "求解反思 · 求解两轴截距与几何图象",
           detail: `令 $y = 0$ 解得 $x$ 轴截距 $a = -\\frac{C}{A}$；令 $x = 0$ 解得 $y$ 轴截距 $b = -\\frac{C}{B}$：`,
-          latex: `a = ${lineProps.xIntercept !== null ? formatMathNumber(lineProps.xIntercept) : "\\text{不存在}"}, \\quad b = ${lineProps.yIntercept !== null ? formatMathNumber(lineProps.yIntercept) : "\\text{不存在}"}`,
+          latex: `a = -\\frac{C}{A} = -\\frac{${formatMathNumber(C)}}{${formatMathNumber(A)}} = ${lineProps.xIntercept !== null ? formatMathNumber(lineProps.xIntercept) : "\\text{不存在}"}, \\quad b = -\\frac{C}{B} = -\\frac{${formatMathNumber(C)}}{${formatMathNumber(B)}} = ${lineProps.yIntercept !== null ? formatMathNumber(lineProps.yIntercept) : "\\text{不存在}"}`,
           rubric: "采分点：正确求解坐标轴截距（3分）",
         },
       );
@@ -924,7 +924,7 @@ export function buildLineEquationPanel(
         name: "平行/垂直直线系",
         latex:
           "\\text{平行系: } Ax + By + \\lambda = 0, \\quad \\text{垂直系: } Bx - Ay + \\lambda = 0",
-        condition: "\\lambda \\in \\mathbb{R}",
+        condition: "$\\lambda \\in \\mathbb{R}$",
         level: "important",
       },
     );

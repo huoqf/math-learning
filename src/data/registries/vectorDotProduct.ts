@@ -48,7 +48,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   thetaDeg: {
     key: "thetaDeg",
     label: "向量 a 与 b 的夹角 θ",
-    labelFormula: "\\theta",
+    labelFormula: `\\text{夹角 }\\color{${MATH_COLORS.paramTertiary}}{\\theta}`,
     defaultValue: 60,
     min: 0,
     max: 180,

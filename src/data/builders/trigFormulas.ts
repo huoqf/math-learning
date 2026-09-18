@@ -75,7 +75,7 @@ export function buildTrigFormulasPanel(
       {
         name: "两角和与差的三角公式",
         latex: res.formulaLatex,
-        condition: "\\alpha, \\beta \\in \\mathbb{R}",
+        condition: "$\\alpha, \\beta \\in \\mathbb{R}$",
         note: "几何本质：单位圆上向量数量积 $\\vec{u}\\cdot\\vec{v} = x_1 x_2 + y_1 y_2 = \\cos(\\alpha-\\beta)$，奠定整个高中三角恒等变换的基石。",
         level: "core",
       },
@@ -167,7 +167,7 @@ export function buildTrigFormulasPanel(
         name: "二倍角公式（三大变式）",
         latex:
           "\\sin 2\\alpha = 2\\sin\\alpha\\cos\\alpha, \\quad \\cos 2\\alpha = \\cos^2\\alpha - \\sin^2\\alpha = 2\\cos^2\\alpha - 1 = 1 - 2\\sin^2\\alpha",
-        condition: "\\alpha \\in \\mathbb{R}",
+        condition: "$\\alpha \\in \\mathbb{R}$",
         note: "在两角和公式中令 $\\beta = \\alpha$ 即可导出。$\\cos 2\\alpha$ 的三种变形是升降幂与代数消元的神器。",
         level: "core",
       },
@@ -264,7 +264,7 @@ export function buildTrigFormulasPanel(
         name: "辅助角函数的最值、周期与对称轴",
         latex:
           "y_{max} = \\sqrt{a^2+b^2}, \\quad y_{min} = -\\sqrt{a^2+b^2}, \\quad T = 2\\pi, \\quad x_{sym} = k\\pi + \\frac{\\pi}{2} - \\varphi",
-        condition: "x \\in \\mathbb{R}",
+        condition: "$x \\in \\mathbb{R}$",
         note: "高考结合区间限定求最值时，注意将 $x \\in [m, n]$ 转化为整体角 $x+\\varphi \\in [m+\\varphi, n+\\varphi]$。",
         level: "important",
       },

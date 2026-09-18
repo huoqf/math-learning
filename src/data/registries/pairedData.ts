@@ -122,7 +122,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   showResidualPlot: {
     key: "showResidualPlot",
     label: "残差分析图",
-    labelFormula: `\\text{残差分布图 } (x_i, e_i)`,
+    labelFormula: `\\text{残差分布图 }\\color{${MATH_COLORS.paramTertiary}}{(x_i, e_i)}`,
     defaultValue: 0,
     min: 0,
     max: 1,

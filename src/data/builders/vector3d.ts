@@ -100,7 +100,7 @@ export function buildVector3DBasisPanel(
         latex: `\\vec{a}\\cdot\\vec{b} = x_1x_2 + y_1y_2 + z_1z_2 = |\\vec{a}||\\vec{b}|\\cos\\theta, \\quad \\cos\\theta = \\frac{x_1x_2+y_1y_2+z_1z_2}{\\sqrt{x_1^2+y_1^2+z_1^2}\\sqrt{x_2^2+y_2^2+z_2^2}}`,
         level: "core",
         condition:
-          "垂直判定：\\vec{a}\\perp\\vec{b} \\iff \\vec{a}\\cdot\\vec{b} = 0",
+          "垂直判定：$\\vec{a}\\perp\\vec{b} \\iff \\vec{a}\\cdot\\vec{b} = 0$",
       },
       {
         name: "空间正交投影向量与投影数量",

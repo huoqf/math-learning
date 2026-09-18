@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
   alphaDeg: 45,
@@ -15,7 +16,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   alphaDeg: {
     key: "alphaDeg",
     label: "动角 α (度)",
-    labelFormula: "\\alpha",
+    labelFormula: `\\text{动角 }\\color{${MATH_COLORS.paramPrimary}}{\\alpha}`,
     min: -360,
     max: 720,
     step: 1,
@@ -50,7 +51,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   compAlphaDeg: {
     key: "compAlphaDeg",
     label: "放缩探究角 x (锐角)",
-    labelFormula: "x \\in (0^\\circ, 90^\\circ)",
+    labelFormula: `\\text{放缩探究角 }\\color{${MATH_COLORS.paramPrimary}}{x \\in (0^\\circ, 90^\\circ)}`,
     min: 5,
     max: 85,
     step: 1,
@@ -69,7 +70,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   ineqThreshold: {
     key: "ineqThreshold",
     label: "不等式常数阈值",
-    labelFormula: "c \\text{ 或 } k",
+    labelFormula: `\\text{不等式常数阈值 }\\color{${MATH_COLORS.paramTertiary}}{c \\text{ 或 } k}`,
     min: -1,
     max: 1,
     step: 0.05,

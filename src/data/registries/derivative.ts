@@ -1,10 +1,11 @@
 import type { ParamMeta } from "../types";
+import { MATH_COLORS } from "@/theme";
 
 export const paramMeta: Record<string, ParamMeta> = {
   x0: {
     key: "x0",
     label: "切点横坐标 x₀",
-    labelFormula: "x_0",
+    labelFormula: `\\text{切点横坐标 }\\color{${MATH_COLORS.paramPrimary}}{x_0}`,
     group: "切点与割线参数",
     min: -4,
     max: 4,
@@ -23,7 +24,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   dx: {
     key: "dx",
     label: "割线步长 Δx",
-    labelFormula: "\\Delta x",
+    labelFormula: `\\text{割线步长 }\\color{${MATH_COLORS.paramSecondary}}{\\Delta x}`,
     group: "切点与割线参数",
     min: -1.5,
     max: 1.5,
