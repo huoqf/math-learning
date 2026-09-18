@@ -27,6 +27,24 @@ function adaptLoader(
   };
 }
 
+/** 模块级惰性组件单例缓存，避免父级重渲染造成子树重复卸载挂载 */
+const lazyComponentCache = new Map<
+  string,
+  React.LazyExoticComponent<ComponentType>
+>();
+
+function getLazyComponent(
+  entry: RouteEntry,
+): React.LazyExoticComponent<ComponentType> {
+  const routeKey = entry.node.route || entry.node.id;
+  let comp = lazyComponentCache.get(routeKey);
+  if (!comp) {
+    comp = lazy(adaptLoader(entry));
+    lazyComponentCache.set(routeKey, comp);
+  }
+  return comp;
+}
+
 function Header() {
   const location = useLocation();
   const currentLabel = PATH_TO_LABEL[location.pathname];
@@ -137,7 +155,7 @@ export default function App() {
                   );
                 }
 
-                const LazyComponent = lazy(adaptLoader(entry));
+                const LazyComponent = getLazyComponent(entry);
                 return (
                   <Route key={route} path={route} element={<LazyComponent />} />
                 );

@@ -10,6 +10,10 @@ export const conicDefinitionNode: KnowledgeNode = {
   animationIds: ["anim-conic-definition"],
   prerequisites: [],
   route: "/conic-definition",
+  gaokaoTopic: "conic_geometry",
+  questionCategory: "solution_first",
+  examMethod: "圆锥曲线第一/第二定义与轨迹方程",
+  examWeight: 5,
 };
 
 export const conicDefinitionLoader = () => import("./ConicDefinitionAnimation");

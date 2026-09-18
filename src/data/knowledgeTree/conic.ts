@@ -1,4 +1,5 @@
 import type { KnowledgeNode } from "../types";
+import { conicDefinitionNode } from "@/features/conicDefinition/meta";
 
 // ========== 9. 解析几何 ==========
 export const conicNodes: KnowledgeNode[] = [
@@ -47,21 +48,7 @@ export const conicNodes: KnowledgeNode[] = [
     examMethod: "两圆作差公共弦方程与圆系方程",
     examWeight: 4,
   },
-  {
-    id: "know-conic-definition",
-    title: "圆锥曲线的定义与轨迹生成",
-    labTitle: "圆锥曲线定义与轨迹实验室",
-    chapter: "解析几何",
-    module: "圆锥曲线",
-    importance: "gaokao",
-    animationIds: ["anim-conic-definition"],
-    prerequisites: [],
-    route: "/conic-definition",
-    gaokaoTopic: "conic_geometry",
-    questionCategory: "solution_first",
-    examMethod: "圆锥曲线第一/第二定义与轨迹方程",
-    examWeight: 5,
-  },
+  conicDefinitionNode,
   {
     id: "know-conic-properties",
     title: "椭圆与双曲线的几何性质及离心率",
