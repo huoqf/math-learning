@@ -41,9 +41,17 @@ export interface BoundingBox {
 }
 
 /**
- * 估算中英文字符串在指定字号下的像素宽度
+ * 估算中英文字符串在指定字号下的**标签包围盒**像素宽度（纯函数）
+ *
+ * ⚠️ 与 `src/utils/layout.ts` 的 `estimateTextWidth` 是**两套刻意独立的模型**：
+ *    · 本函数服务于"标签避让"——按 Unicode 区段**保守超估**（汉字/全角 1.05em、
+ *      其余 0.62em）并额外 +4px 包围盒余量，**宁可估宽**，因为估窄会让碰撞检测放行、
+ *      标签真重叠；
+ *    · layout 的 estimateTextWidth 服务于"胶囊底框"——按字体**实测表**逼近真实宽度，
+ *      并加 30px 内边距。
+ *    两者已用不同命名区分，禁止互相替换，也不得同时 `export *` 到 `@/utils`。
  */
-export function estimateTextWidth(text: string, fontSize = 11): number {
+export function estimateLabelTextWidth(text: string, fontSize = 11): number {
   let width = 0;
   for (let i = 0; i < text.length; i++) {
     const code = text.charCodeAt(i);
@@ -211,7 +219,7 @@ export function resolveLabelPlacements<T extends LabelItem>(
   // 2. 初始化各标签的候选状态
   const itemData = items.map((item, idx) => {
     const fontSize = item.fontSize ?? 11;
-    const width = estimateTextWidth(item.text, fontSize);
+    const width = estimateLabelTextWidth(item.text, fontSize);
     const height = fontSize + 4;
 
     // 默认候选列表

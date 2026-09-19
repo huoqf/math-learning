@@ -27,7 +27,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{|\\vec{a}|}`,
     defaultValue: 4.0,
     min: 0.5,
-    max: 6.0,
+    // defProj（默认模式）下中屏由极坐标驱动：A = (|a|, 0)、B = (|b|cosθ, |b|sinθ)。
+    // 这条派生路径不经过 xa/ya/xb/yb 的 min/max，故 |a|、|b| 的上限必须自己保证派生量落在声明域内：
+    // |b|·sinθ ≤ |b| ≤ 4.5 ⇒ yb 不越 ±4.5（可见 y ±4.643）。取 4.5 与 y 分量同口径。
+    max: 4.5,
     step: 0.5,
     description: "基准向量 a 的几何长度",
     importance: "core",
@@ -39,7 +42,8 @@ export const paramMeta: Record<string, ParamMeta> = {
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{|\\vec{b}|}`,
     defaultValue: 3.5,
     min: 0.5,
-    max: 6.0,
+    // 同 normA：|b| 同时是 B 点的极径，上限 4.5 才能保证 yb = |b|·sinθ ≤ 4.5（θ ∈ [0°,180°] ⇒ sinθ ≥ 0）。
+    max: 4.5,
     step: 0.5,
     description: "投影向量 b 的几何长度",
     importance: "core",
@@ -67,8 +71,11 @@ export const paramMeta: Record<string, ParamMeta> = {
     label: "向量 a 的横坐标 x₁",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_1}`,
     defaultValue: 4,
-    min: -6,
-    max: 6,
+    // 横向声明域与 y 一样必须留在可见视口内：840×650 + xRange ±6 ⇒ scale = 70，
+    // 可见 x 恰为 ±6（0 余量），x = 6 时点圆心落在画布左右边界线上被裁一半。
+    // 收到 ±5 与 vectorLinear / vectorBasis / complex 的 x 分量同口径（余量 70px）。
+    min: -5,
+    max: 5,
     step: 0.5,
     description: "向量 a 在 x 轴上的坐标分量",
     descriptionFormula: `\\vec{a} = (\\color{${MATH_COLORS.paramPrimary}}{x_1}, y_1)`,
@@ -93,8 +100,9 @@ export const paramMeta: Record<string, ParamMeta> = {
     label: "向量 b 的横坐标 x₂",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{x_2}`,
     defaultValue: 2,
-    min: -6,
-    max: 6,
+    // 同 xa：±6 恰贴画布左右边界，收至 ±5 与全库 x 分量口径一致。
+    min: -5,
+    max: 5,
     step: 0.5,
     description: "向量 b 在 x 轴上的坐标分量",
     descriptionFormula: `\\vec{b} = (\\color{${MATH_COLORS.paramSecondary}}{x_2}, y_2)`,

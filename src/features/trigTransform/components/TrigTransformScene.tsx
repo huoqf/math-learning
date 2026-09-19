@@ -17,6 +17,8 @@ import {
   getTransformPathSteps,
   calculateIntervalZeros,
   solveParamsFromDrag,
+  partitionFivePointsByView,
+  DEFAULT_TRIG_XRANGE,
 } from "../math/trigTransform";
 
 /**
@@ -63,8 +65,8 @@ export function TrigTransformScene({
   const x1 = params.x1 ?? 0;
   const x2 = params.x2 ?? Math.PI;
 
-  const props = useMemo(
-    () => calcTrigProperties(A, omega, phi, k, [-8, 8]),
+  const trigData = useMemo(
+    () => calcTrigProperties(A, omega, phi, k, DEFAULT_TRIG_XRANGE),
     [A, omega, phi, k],
   );
 
@@ -124,16 +126,16 @@ export function TrigTransformScene({
           {/* 最值参考虚线与右侧避让标注 */}
           <line
             x1={0}
-            y1={mathToDesign(0, props.yMax, scale).y}
+            y1={mathToDesign(0, trigData.yMax, scale).y}
             x2={840}
-            y2={mathToDesign(0, props.yMax, scale).y}
+            y2={mathToDesign(0, trigData.yMax, scale).y}
             stroke={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
             strokeDasharray="4 4"
             strokeWidth={1.5}
           />
           <text
             x={820}
-            y={mathToDesign(0, props.yMax, scale).y - fontScale(6)}
+            y={mathToDesign(0, trigData.yMax, scale).y - fontScale(6)}
             textAnchor="end"
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(11)}
@@ -142,21 +144,21 @@ export function TrigTransformScene({
             stroke={CANVAS_COLORS.white}
             strokeWidth={3}
           >
-            y_max = {props.yMax.toFixed(2)}
+            y_max = {trigData.yMax.toFixed(2)}
           </text>
 
           <line
             x1={0}
-            y1={mathToDesign(0, props.yMin, scale).y}
+            y1={mathToDesign(0, trigData.yMin, scale).y}
             x2={840}
-            y2={mathToDesign(0, props.yMin, scale).y}
+            y2={mathToDesign(0, trigData.yMin, scale).y}
             stroke={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
             strokeDasharray="4 4"
             strokeWidth={1.5}
           />
           <text
             x={820}
-            y={mathToDesign(0, props.yMin, scale).y + fontScale(14)}
+            y={mathToDesign(0, trigData.yMin, scale).y + fontScale(14)}
             textAnchor="end"
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(11)}
@@ -165,7 +167,7 @@ export function TrigTransformScene({
             stroke={CANVAS_COLORS.white}
             strokeWidth={3}
           >
-            y_min = {props.yMin.toFixed(2)}
+            y_min = {trigData.yMin.toFixed(2)}
           </text>
 
           {/* 平衡轴 y = k */}
@@ -197,7 +199,7 @@ export function TrigTransformScene({
 
           {/* 对称轴虚线群 */}
           {showSymmetry &&
-            props.mainSymmetryAxes.map((xAxis, idx) => {
+            trigData.mainSymmetryAxes.map((xAxis, idx) => {
               const pAxis = mathToDesign(xAxis, 0, scale);
               return (
                 <line
@@ -215,7 +217,7 @@ export function TrigTransformScene({
 
           {/* 对称中心标记 (空心 MathPoint) */}
           {showSymmetry &&
-            props.mainSymmetryCenters.map((center, idx) => {
+            trigData.mainSymmetryCenters.map((center, idx) => {
               return (
                 <MathPoint
                   key={`sym-center-${idx}`}
@@ -250,32 +252,70 @@ export function TrigTransformScene({
             strokeWidth={2.5}
           />
 
-          {/* 五点作图的关键控制点（支持反向拖拽联动） */}
-          {props.fivePoints.map((pt) => {
-            const isPeak = pt.type === "max";
-            const isTrough = pt.type === "min";
+          {/* 超出视口友好提示与手柄同源过滤 */}
+          {(() => {
+            const { visiblePoints, outCount } = partitionFivePointsByView(
+              trigData.fivePoints,
+              scale.xMin,
+              scale.xMax,
+            );
+            const pillW = Math.max(260, Math.round(fontScale(11) * 20));
 
             return (
-              <InteractivePoint
-                key={pt.index}
-                cx={pt.x}
-                cy={pt.y}
-                scale={scale}
-                vp={vp ?? ({} as ViewportInfo)}
-                onDrag={(newPos) => handlePointDrag(pt.index, newPos)}
-                color={
-                  isPeak
-                    ? MATH_COLORS.paramPrimary
-                    : isTrough
-                      ? MATH_COLORS.paramSecondary
-                      : MATH_COLORS.paramTertiary
-                }
-                r={6}
-                fontScale={fontScale}
-                label={`P${pt.index + 1}`}
-              />
+              <>
+                {outCount > 0 && (
+                  <g transform="translate(24, 28)">
+                    <rect
+                      x={0}
+                      y={0}
+                      width={pillW}
+                      height={24}
+                      rx={4}
+                      fill={withAlpha(MATH_COLORS.paramSecondary, 0.9)}
+                    />
+                    <text
+                      x={pillW / 2}
+                      y={16}
+                      fill={MATH_COLORS.white}
+                      fontSize={fontScale(11)}
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      className="select-none pointer-events-none"
+                    >
+                      {outCount} 个特征点超出视口 · 建议增大 ω 观察
+                    </text>
+                  </g>
+                )}
+
+                {/* 五点作图的关键控制点（支持反向拖拽联动，超界点不渲染避免不可见手柄） */}
+                {visiblePoints.map((pt) => {
+                  const isPeak = pt.type === "max";
+                  const isTrough = pt.type === "min";
+
+                  return (
+                    <InteractivePoint
+                      key={pt.index}
+                      cx={pt.x}
+                      cy={pt.y}
+                      scale={scale}
+                      vp={vp ?? ({} as ViewportInfo)}
+                      onDrag={(newPos) => handlePointDrag(pt.index, newPos)}
+                      color={
+                        isPeak
+                          ? MATH_COLORS.paramPrimary
+                          : isTrough
+                            ? MATH_COLORS.paramSecondary
+                            : MATH_COLORS.paramTertiary
+                      }
+                      r={6}
+                      fontScale={fontScale}
+                      label={`P${pt.index + 1}`}
+                    />
+                  );
+                })}
+              </>
             );
-          })}
+          })()}
         </>
       )}
 

@@ -21,6 +21,7 @@ import {
   calculateInduction,
   calculateUniversalInduction,
   calculateComplementaryModel,
+  getIdentityViewport,
   type FormulaType,
   type IdentitySubMode,
   type InductionSubMode,
@@ -63,11 +64,12 @@ export function TrigIdentityAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 单位圆与直角坐标系比例尺：数学范围 X [-2.0, 2.0]，Y [-1.5, 1.5]
+  // 单位圆与直角坐标系比例尺：齐次式模式与默认模式由 getIdentityViewport 纯函数统一派发
+  const activeViewport = getIdentityViewport(studyMode, identitySubMode);
   const scale = useSceneScale({
     vp,
-    xRange: [-2.0, 2.0],
-    yRange: [-1.5, 1.5],
+    xRange: activeViewport.xRange,
+    yRange: activeViewport.yRange,
   });
 
   // 数学量看板数据组算

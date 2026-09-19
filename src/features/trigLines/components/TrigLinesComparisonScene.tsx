@@ -7,15 +7,34 @@
 import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { InteractivePoint, MathPoint, VectorArrow } from "@/components/Math";
+import {
+  InteractivePoint,
+  MathPoint,
+  VectorArrow,
+  INTERACTIVE_POINT_GEOMETRY,
+} from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { paramDomainRange, snapDragValue } from "@/utils/paramClamp";
+import {
+  calculateWarningCapsuleWidth,
+  calculateWarningCapsuleHeight,
+} from "@/utils";
 import { paramMeta } from "@/data/registries/trigLines";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateComparisonAreas } from "../math/trigLines";
 
 /** 放缩角 α 的声明域 [5°, 85°]（模块级：区间恒定，无需每帧重建） */
 const RANGE_COMP_ALPHA = paramDomainRange(paramMeta.compAlphaDeg);
+
+/**
+ * 正切超出视口提示胶囊的排版基准（文案 / 基准字号 / 最小底框宽）。
+ * 渲染与单测都只能引用本对象，禁止在别处再写这三项字面量。
+ */
+export const TAN_CAPSULE_SPEC = {
+  text: "T(1, tan x) 超出视口",
+  baseFontPx: 10,
+  minWidth: 124,
+} as const;
 
 interface TrigLinesComparisonSceneProps {
   params: {
@@ -24,7 +43,7 @@ interface TrigLinesComparisonSceneProps {
   scale: SceneScale;
   vp: ViewportInfo;
   onParamChange: (key: string, value: number) => void;
-  fontScale: (v: number) => number;
+  fontScale: (size: number) => number;
   centerPt: { x: number; y: number };
   aDesign: { x: number; y: number };
   unitRadiusPx: number;
@@ -43,6 +62,14 @@ export const TrigLinesComparisonScene: React.FC<
   onParamChange,
 }) => {
   const { compAlphaDeg } = params;
+  // 正切超出视口胶囊尺寸：宽/高均由统一排版纯函数推导，随字号自适应
+  const tanCapsuleFontPx = fontScale(TAN_CAPSULE_SPEC.baseFontPx);
+  const tanCapsuleW = calculateWarningCapsuleWidth(
+    TAN_CAPSULE_SPEC.text,
+    tanCapsuleFontPx,
+    TAN_CAPSULE_SPEC.minWidth,
+  );
+  const tanCapsuleH = calculateWarningCapsuleHeight(tanCapsuleFontPx);
 
   // 面积放缩模式下的计算与路径
   const compData = useMemo(() => {
@@ -299,25 +326,33 @@ export const TrigLinesComparisonScene: React.FC<
           </g>
         </>
       ) : (
-        <g transform={`translate(${aDesign.x + 8}, 24)`}>
+        <g
+          transform={`translate(${Math.min(
+            aDesign.x + 8,
+            vp.designLeft + vp.designVisibleW - tanCapsuleW - 10,
+          )}, ${vp.designTop + 24})`}
+        >
           <rect
             x={0}
             y={0}
-            width={124}
-            height={22}
+            width={tanCapsuleW}
+            height={tanCapsuleH}
             rx={4}
             fill={withAlpha(MATH_COLORS.paramTertiary, 0.9)}
           />
           <text
-            x={62}
-            y={15}
+            x={tanCapsuleW / 2}
+            y={
+              tanCapsuleH / 2 +
+              tanCapsuleFontPx * (INTERACTIVE_POINT_GEOMETRY.capHeightRatio / 2)
+            }
             fill={MATH_COLORS.white}
-            fontSize={fontScale(10)}
+            fontSize={tanCapsuleFontPx}
             fontWeight="bold"
             textAnchor="middle"
             className="select-none pointer-events-none"
           >
-            T(1, tan x) 超出视口
+            {TAN_CAPSULE_SPEC.text}
           </text>
         </g>
       )}

@@ -319,13 +319,13 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
   });
 
   it("解析几何：抛物线切线性质与阿基米德三角形模型应当满足切点弦与面积契约", () => {
-    // p = 2, 切点 yP = 2, yQ = -2, 构成正交切线，面积 S_QAB >= p^2 = 4.0
+    // p = 2, 切点参数 tP = 2, yQ = -2, 构成正交切线，面积 S_QAB >= p^2 = 4.0
     verifyTopicSyncContract([
       {
         name: "抛物线切线与阿基米德三角形模型",
         animId: "anim-conic-parabola",
         modeOptions: { studyMode: "tangent", direction: "right" },
-        params: { p: 2, yP: 2, yQ: -2 },
+        params: { p: 2, tP: 2, yQ: -2 },
         lessonType: "gaokao_topic",
         groundTruth: {
           "焦参数 p": 2.0,

@@ -535,3 +535,43 @@ function createInvalidState(warning: string): TriangleExtremaState {
     },
   };
 }
+
+/**
+ * 当角 A 改变时，确保角 B 在声明域 [5, 160] 与几何约束 180 - A - 1 内自适应收缩。
+ * 在 angleA 声明域 [15, 150] 及几何可行域 A <= 174 内，严格保证 B >= 5 且 C >= 1°。
+ */
+export function clampAngleBOnAChange(
+  currentB: number | undefined,
+  newA: number,
+  maxDomainB = 160,
+): number {
+  const geometricMaxB = 180 - newA - 1;
+  // 若 A > 174 导致几何上界小于业务声明下限 5°，收敛返回声明域下限 5
+  if (geometricMaxB < 5) {
+    return 5;
+  }
+  const upperB = Math.min(maxDomainB, geometricMaxB);
+  const safeCurrent = currentB ?? 45;
+  return Math.min(upperB, Math.max(5, safeCurrent));
+}
+
+export interface TriangleParamsLike {
+  angleA?: number;
+  angleB?: number;
+  [key: string]: number | undefined;
+}
+
+/**
+ * 解三角形参数更新纯函数（统一处理联动，供 UI 与单测接入）
+ */
+export function applyTriangleParamChange<T extends TriangleParamsLike>(
+  prev: T,
+  key: string,
+  value: number,
+): T {
+  const next = { ...prev, [key]: value };
+  if (key === "angleA") {
+    next.angleB = clampAngleBOnAChange(next.angleB, value);
+  }
+  return next;
+}

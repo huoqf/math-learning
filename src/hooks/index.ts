@@ -3,8 +3,12 @@ export type {
   CanvasPreset,
   AnimationViewportResult,
 } from "./useAnimationViewport";
-export { useSceneScale } from "./useSceneScale";
-export type { SceneScale } from "./useSceneScale";
+export { useSceneScale, calculateSceneScale } from "./useSceneScale";
+export type {
+  SceneScale,
+  SceneScaleOptions,
+  CalculateSceneScaleParams,
+} from "./useSceneScale";
 export type { ViewportInfo } from "../utils/useViewport";
 export { useRadioGroup } from "./useRadioGroup";
 export { use3DViewport } from "./use3DViewport";

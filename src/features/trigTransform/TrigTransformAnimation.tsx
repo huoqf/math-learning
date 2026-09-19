@@ -20,6 +20,7 @@ import {
   getTransformPathSteps,
   formatPiValue,
   calculateIntervalZeros,
+  DEFAULT_TRIG_XRANGE,
 } from "./math/trigTransform";
 
 export function TrigTransformAnimation() {
@@ -52,7 +53,7 @@ export function TrigTransformAnimation() {
   // 3. 构建直角坐标系比例尺：数学范围 X [-8, 8]，Y [-4.5, 4.5]
   const scale = useSceneScale({
     vp,
-    xRange: [-8, 8],
+    xRange: DEFAULT_TRIG_XRANGE,
     yRange: [-4.5, 4.5],
   });
 

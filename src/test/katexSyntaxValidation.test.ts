@@ -94,7 +94,7 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
     },
     {
       animId: "anim-vector-dot-product",
-      params: { magA: 3, magB: 4, thetaDeg: 60 },
+      params: { normA: 3, normB: 4, thetaDeg: 60 },
       config: { studyMode: "defProj" },
     },
     {
@@ -144,7 +144,7 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
     },
     {
       animId: "anim-line-equation",
-      params: { k1: 1, b1: 0, k2: -1, b2: 2 },
+      params: { A: 1, B: -1, C: -1, A2: 1, B2: 1, C2: -2 },
       config: { studyMode: "relation" },
     },
     {

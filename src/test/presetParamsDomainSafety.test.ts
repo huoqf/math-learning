@@ -9,10 +9,15 @@ interface TestCase {
 }
 
 describe("全库预设参数与定义域数值安全性自动化巡检 (Domain & Numerical Safety)", () => {
+  // ⚠️ 契约：`params` 的键必须是该 `animId` 对应 registry 声明过的键
+  //    （paramMeta 条目 / defaultParams 顶层键 / Params 接口字段三者之一）。
+  //    历史上本表混入了大量已废弃键名（如 magA/magB、A_deg、order、setA_left…），
+  //    它们在全库既无声明也无 `params.x` 读取 ⇒ builder 永远读不到 ⇒ 用例实际跑的是默认值。
+  //    处置后：无对应键的一律删除；删除后为空 `{}` 表示"使用该页声明域默认值"。
   const safetyCases: TestCase[] = [
     // 1. 函数与导数系列
     { animId: "anim-quadratic", params: { a: 1, b: -2, c: -3 } },
-    { animId: "anim-derivative-tangent", params: { x0: 1, a: 1, b: 0 } },
+    { animId: "anim-derivative-tangent", params: { x0: 1 } },
     {
       animId: "anim-derivative-monotonicity",
       params: { a: 1 },
@@ -34,17 +39,17 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     },
     {
       animId: "anim-derivative-tangent-scaling",
-      params: { k: 1, x0: 0, a: 1 },
+      params: { k: 1, x0: 0 },
       config: { mode: "tangent_exp" },
     },
     {
       animId: "anim-derivative-endpoint-taylor",
-      params: { a: 1, order: 2 },
+      params: { a: 1 },
     },
     { animId: "anim-constant-single", params: { a: 1, m: 1, n: 2 } },
     { animId: "anim-constant-double", params: { yf: 1, yg: -1 } },
     { animId: "anim-nike", params: { a: 1, b: 4 } },
-    { animId: "anim-func-properties", params: { a: 1, b: 0 } },
+    { animId: "anim-func-properties", params: {} },
     {
       animId: "anim-func-explog",
       params: { baseA: 2 },
@@ -55,18 +60,18 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       params: { intervalM: -2, intervalN: 2 },
       config: { modelKey: "cubic" },
     },
-    { animId: "anim-func-transform", params: { A: 1, omega: 1, phi: 0, k: 0 } },
+    { animId: "anim-func-transform", params: { A: 1, omega: 1, h: 0, k: 0 } },
     {
       animId: "anim-func-composite",
-      params: { a: 1, b: 0 },
+      params: {},
       config: { outerType: "exp" },
     },
 
     // 2. 集合与逻辑
-    { animId: "anim-set-venn", params: { a: 1, b: 2 } },
+    { animId: "anim-set-venn", params: {} },
     {
       animId: "anim-logic-quantifiers",
-      params: { a: 1 },
+      params: {},
       config: { statementType: "universal" },
     },
 
@@ -77,16 +82,19 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     { animId: "anim-trig-formulas", params: { alphaDeg: 30, betaDeg: 45 } },
     { animId: "anim-trig-transform", params: { A: 2, omega: 2, phi: 0, k: 1 } },
     { animId: "anim-triangle-solve", params: { a: 3, b: 4, c: 5 } },
-    { animId: "anim-triangle-extrema", params: { b: 3, c: 4, A_deg: 60 } },
+    {
+      animId: "anim-triangle-extrema",
+      params: { angleA: 60, sideA: 4, sideB: 3 },
+    },
     { animId: "anim-vector-linear", params: { lambda: 2, mu: 1 } },
     {
       animId: "anim-vector-dot-product",
-      params: { magA: 3, magB: 4, thetaDeg: 60 },
+      params: { normA: 3, normB: 4, thetaDeg: 60 },
     },
-    { animId: "anim-vector-basis", params: { lambda: 1, mu: 1 } },
+    { animId: "anim-vector-basis", params: { xCoeff: 1, yCoeff: 1 } },
     {
       animId: "anim-vector-polarization-apollonius",
-      params: { bcLength: 6, amLength: 5 },
+      params: { bcLength: 6 },
     },
     {
       animId: "anim-vector3d-basis",
@@ -96,11 +104,11 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
 
     // 4. 解析几何系列
     { animId: "anim-line-equation", params: { k: 1, b: 0 } },
-    { animId: "anim-line-circle", params: { r: 2, d: 1 } },
-    { animId: "anim-circle-circle", params: { r1: 3, r2: 2, d: 4 } },
+    { animId: "anim-line-circle", params: { r: 2 } },
+    { animId: "anim-circle-circle", params: { r1: 3, r2: 2 } },
     {
       animId: "anim-conic-definition",
-      params: { a: 4, b: 3 },
+      params: { a: 4 },
       config: { conicType: "ellipse" },
     },
     {
@@ -109,20 +117,20 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       config: { conicType: "ellipse" },
     },
     { animId: "anim-conic-parabola", params: { p: 2, tP: 1 } },
-    { animId: "anim-parabola-archimedes", params: { p: 2, y1: -2, y2: 4 } },
+    { animId: "anim-parabola-archimedes", params: { p: 2 } },
     {
       animId: "anim-conic-line",
       params: { a: 3, b: 2, k: 0.5, m: 0 },
       config: { conicType: "ellipse" },
     },
-    { animId: "anim-conic-param", params: { a: 3, b: 2, thetaDeg: 45 } },
+    { animId: "anim-conic-param", params: { a: 3, b: 2, theta: 45 } },
     {
       animId: "anim-conic-param-t",
-      params: { x0: 0, y0: 0, alphaDeg: 45, t: 2 },
+      params: { x0: 0, y0: 0, alpha: 45, t: 2 },
     },
     {
       animId: "anim-conic-homogenization",
-      params: { a: 3, b: 2, k: 0.5, m: 1 },
+      params: { a: 3, b: 2 },
       config: { curveType: "ellipse" },
     },
 
@@ -154,11 +162,11 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       params: { a: 3, b: 3, c: 3, lambda: 0.5, mu: 0.5 },
       config: { mode: "skewDistance", preset: "cube" },
     },
-    { animId: "anim-solid-position", params: { t: 0.5 } },
+    { animId: "anim-solid-position", params: { step: 0.5 } },
     { animId: "anim-solid-surface-relation", params: { alphaDeg: 60 } },
     {
       animId: "anim-solid-section",
-      params: { pPos: 0.5, qPos: 0.5, rPos: 0.5 },
+      params: { posP: 0.5, posQ: 0.5, posR: 0.5 },
       config: { solidType: "cube" },
     },
     { animId: "anim-solid-ball", params: { a: 2, b: 2, c: 2 } },
@@ -169,15 +177,15 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     },
     {
       animId: "anim-solid-advanced-sphere",
-      params: { r: 3, h: 2 },
+      params: { r1: 3, h: 2 },
       config: { modelType: "cylinder_in_sphere" },
     },
-    { animId: "anim-solid-rotation-body", params: { r: 2, h: 3 } },
-    { animId: "anim-solid-folding", params: { foldAngleDeg: 60 } },
+    { animId: "anim-solid-rotation-body", params: { r1: 2, height: 3 } },
+    { animId: "anim-solid-folding", params: { alphaDeg: 60 } },
     { animId: "anim-solid-parametric", params: { lambda: 0.5 } },
 
     // 7. 概率与统计
-    { animId: "anim-probability-counting", params: { n: 5, m: 3 } },
+    { animId: "anim-probability-counting", params: { n: 5, k: 3 } },
     {
       animId: "anim-probability-bayes",
       params: { pPriorD: 0.02, pSensitivity: 0.95, pFalsePositive: 0.05 },
@@ -193,8 +201,8 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       animId: "anim-probability-independence",
       params: { pA: 0.5, pB: 0.4, overlapRatio: 0.2 },
     },
-    { animId: "anim-paired-data", params: { r: 0.85 } },
-    { animId: "anim-stat-percentile", params: { p: 75 } },
+    { animId: "anim-paired-data", params: {} },
+    { animId: "anim-stat-percentile", params: { percentileP: 75 } },
 
     // 8. 复数与不等式
     {
@@ -210,9 +218,9 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     { animId: "anim-ineq-absolute", params: { a: 1, b: 2, c: 3 } },
 
     // 9. 扩展专题补全 (函数性质、数列衍生、概率马尔可夫、几何动点)
-    { animId: "anim-func-domain", params: { a: 1, b: 0 } },
-    { animId: "anim-func-parity", params: { a: 1, b: 0 } },
-    { animId: "anim-func-symmetry", params: { a: 1, b: 0 } },
+    { animId: "anim-func-domain", params: {} },
+    { animId: "anim-func-parity", params: {} },
+    { animId: "anim-func-symmetry", params: {} },
     {
       animId: "anim-func-exponential",
       params: { baseA: 2 },
@@ -225,7 +233,7 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     },
     {
       animId: "anim-func-power",
-      params: { baseA: 2, alpha: 2 },
+      params: { baseA: 2, powerAlpha: 2 },
       config: { funcType: "power" },
     },
     {
@@ -233,17 +241,14 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       params: { a: 1 },
       config: { activeMode: "cubic" },
     },
-    { animId: "anim-derivative-endpoint", params: { a: 1, order: 2 } },
-    {
-      animId: "anim-logic-conditions",
-      params: { setA_left: 1, setA_right: 3, setB_left: 0, setB_right: 4 },
-    },
+    { animId: "anim-derivative-endpoint", params: { a: 1 } },
+    { animId: "anim-logic-conditions", params: {} },
     { animId: "anim-nike-standard", params: { a: 1, b: 4 } },
     { animId: "anim-nike-amgm", params: { a: 1, b: 4 } },
-    { animId: "anim-nike-shifted", params: { a: 1, b: 4, h: 1, k: 0 } },
-    { animId: "anim-paired-data-independence", params: { r: 0.85 } },
-    { animId: "anim-paired-data-regression", params: { r: 0.85 } },
-    { animId: "anim-parametric-point", params: { t: 0.5 } },
+    { animId: "anim-nike-shifted", params: { a: 1, b: 4, h: 1, c: 0 } },
+    { animId: "anim-paired-data-independence", params: {} },
+    { animId: "anim-paired-data-regression", params: {} },
+    { animId: "anim-parametric-point", params: { lambda: 0.5 } },
     { animId: "anim-solid-parametric-point", params: { lambda: 0.5, mu: 0.5 } },
     {
       animId: "anim-probability-markov",
@@ -363,7 +368,7 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       // 4. 导数：原点切点与极值临界
       {
         animId: "anim-derivative-tangent",
-        params: { x0: 0, a: 1, b: 0 },
+        params: { x0: 0 },
         description: "导数切点位于原点 x0=0",
       },
       // 5. 立体几何：三边相等正方体外接球退化

@@ -516,3 +516,47 @@ export function calculateIntervalZeros(
     monotoneType,
   };
 }
+
+/**
+ * 三角函数图象变换默认基准横向视口范围
+ */
+export const DEFAULT_TRIG_XRANGE: [number, number] = [-8, 8];
+
+/**
+ * 判断点在横向视口范围内（严格判定，零容差盲区，模块内部私有）
+ */
+function isPointInHorizontalView(
+  x: number,
+  xMin: number,
+  xMax: number,
+): boolean {
+  return x >= xMin && x <= xMax;
+}
+
+/**
+ * 五点作图视口划分结构
+ */
+export interface FivePointsPartition {
+  visiblePoints: FivePointInfo[];
+  outCount: number;
+}
+
+/**
+ * 五点作图视口划分纯函数（一次遍历同时计算可见集合与超界点计数，100% 同源）
+ */
+export function partitionFivePointsByView(
+  points: FivePointInfo[],
+  xMin: number,
+  xMax: number,
+): FivePointsPartition {
+  const visiblePoints: FivePointInfo[] = [];
+  let outCount = 0;
+  for (const pt of points) {
+    if (isPointInHorizontalView(pt.x, xMin, xMax)) {
+      visiblePoints.push(pt);
+    } else {
+      outCount++;
+    }
+  }
+  return { visiblePoints, outCount };
+}

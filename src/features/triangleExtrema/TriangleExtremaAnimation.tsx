@@ -26,6 +26,7 @@ import {
   solveApollonius,
   solvePolarization,
   radToDeg,
+  applyTriangleParamChange,
 } from "@/math/triangleExtrema";
 
 export function TriangleExtremaAnimation() {
@@ -172,10 +173,7 @@ export function TriangleExtremaAnimation() {
   // 参数修改回调
   const handleParamChange = (key: string, value: number) => {
     setPreset("free");
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setParams((prev) => applyTriangleParamChange(prev, key, value));
   };
 
   // 重置参数
@@ -244,7 +242,7 @@ export function TriangleExtremaAnimation() {
         // 上界由几何决定（三角形内角和：B < 180° − A），再与声明域 [5, 160] 求交；
         // 下界同样来自声明域，杜绝"拖到 B = 0° 使三角形退化"却滑块显示 5° 的脱节。
         const lo = Math.max(5, rangeAngleB?.[0] ?? 5);
-        const hi = Math.min(180 - params.angleA - 5, rangeAngleB?.[1] ?? 180);
+        const hi = Math.min(180 - params.angleA - 1, rangeAngleB?.[1] ?? 180);
         angleB = snapDragValue(angleB, 1, [lo, hi]);
         setParams((prev) => ({ ...prev, angleB }));
       }

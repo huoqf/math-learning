@@ -16,7 +16,7 @@
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { ViewportInfo } from "@/utils/useViewport";
 import type { SceneScale } from "@/hooks/useSceneScale";
-import { estimateTextWidth } from "@/utils/labelOverlap";
+import { estimateLabelTextWidth } from "@/utils/labelOverlap";
 
 interface ShiftPanoramaAxisProps {
   /** 割线左根 */
@@ -111,7 +111,7 @@ export function ShiftPanoramaAxis({
   const rowRightEdge = new Array<number>(LABEL_ROWS).fill(bandLeft + 6);
   const placed = markers.map((m) => {
     const tickX = toAxisX(m.value);
-    const width = estimateTextWidth(m.text, fontScale(11));
+    const width = estimateLabelTextWidth(m.text, fontScale(11));
 
     let row = -1;
     for (let r = 0; r < LABEL_ROWS; r++) {

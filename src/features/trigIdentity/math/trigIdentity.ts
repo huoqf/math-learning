@@ -615,3 +615,31 @@ export function pointToAngleDeg(
 
   return Math.round(currentDeg + diff);
 }
+
+/**
+ * 齐次式模式下的专用数学视口范围（容纳 A, B ∈ [-3.0, 3.0] 并预留边距）
+ */
+export const HOMO_VIEWPORT = {
+  xRange: [-3.6, 3.6] as [number, number],
+  yRange: [-3.4, 3.4] as [number, number],
+};
+
+/**
+ * 默认非齐次模式数学视口范围
+ */
+export const DEFAULT_IDENTITY_VIEWPORT = {
+  xRange: [-2.0, 2.0] as [number, number],
+  yRange: [-1.5, 1.5] as [number, number],
+};
+
+/**
+ * 根据研究模式计算视口范围（纯函数，供组件与测试同源调用）
+ */
+export function getIdentityViewport(
+  studyMode: "identity" | "induction",
+  subMode?: IdentitySubMode | InductionSubMode,
+): { xRange: [number, number]; yRange: [number, number] } {
+  return studyMode === "identity" && subMode === "homogeneous"
+    ? HOMO_VIEWPORT
+    : DEFAULT_IDENTITY_VIEWPORT;
+}

@@ -11,9 +11,14 @@ import {
   InteractivePoint,
   MathPoint,
   VectorArrow,
+  INTERACTIVE_POINT_GEOMETRY,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import {
+  calculateWarningCapsuleWidth,
+  calculateWarningCapsuleHeight,
+} from "@/utils";
 import { paramMeta } from "@/data/registries/trigIdentity";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
@@ -26,6 +31,16 @@ import {
   type IdentitySubMode,
   type InductionSubMode,
 } from "../math/trigIdentity";
+
+/**
+ * 正切超出视口提示胶囊的排版基准（文案 / 基准字号 / 最小底框宽）。
+ * 渲染与单测都只能引用本对象，禁止在别处再写这三项字面量。
+ */
+export const TAN_CAPSULE_SPEC = {
+  text: "|tan α| 超出视口",
+  baseFontPx: 10,
+  minWidth: 110,
+} as const;
 
 interface TrigIdentitySceneProps {
   params: Record<string, number>;
@@ -189,14 +204,23 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
   };
 
   // Q(B, A) 点拖拽解算分子 A 和 B
-  // 合法拖拽区间 =「声明域 ±3 ∩ 可见视口」：本页可见 y 仅 ±1.548、可见 x 仅 ±2，
-  // 旧实现手写 ±3 钳制 ⇒ 纵向一拖 Q 就跑到画布外，且再也抓不回来。
+  // 合法拖拽区间 =「声明域 ±3 ∩ 可见视口」：齐次式专属视口 (x: ±3.6, y: ±3.4) 完整包容声明域，
+  // paramDragRange 统一约束，确保动点绝不出画布且可自由拖拽回拉。
   const rangeHomoB = paramDragRange(paramMeta.homoB, scale, "x");
   const rangeHomoA = paramDragRange(paramMeta.homoA, scale, "y");
   const handleQDrag = (rawMath: { x: number; y: number }) => {
     onParamChange("homoB", snapDragValue(rawMath.x, 0.5, rangeHomoB));
     onParamChange("homoA", snapDragValue(rawMath.y, 0.5, rangeHomoA));
   };
+
+  // 正切超出视口胶囊尺寸：宽/高均由统一排版纯函数推导，随字号自适应
+  const tanCapsuleFontPx = fontScale(TAN_CAPSULE_SPEC.baseFontPx);
+  const tanCapsuleW = calculateWarningCapsuleWidth(
+    TAN_CAPSULE_SPEC.text,
+    tanCapsuleFontPx,
+    TAN_CAPSULE_SPEC.minWidth,
+  );
+  const tanCapsuleH = calculateWarningCapsuleHeight(tanCapsuleFontPx);
 
   // 单位圆半径 (像素)
   const unitRadiusPx = scale.scaleX;
@@ -320,9 +344,9 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
               {/* x = 1 垂直切线参考基准 */}
               <line
                 x1={aDesign.x}
-                y1={centerPt.y - scale.scaleY * 2.0}
+                y1={centerPt.y - scale.scaleY * scale.yMax}
                 x2={aDesign.x}
-                y2={centerPt.y + scale.scaleY * 2.0}
+                y2={centerPt.y + scale.scaleY * scale.yMax}
                 stroke={withAlpha(MATH_COLORS.labelText, 0.35)}
                 strokeWidth={1}
                 strokeDasharray="3 3"
@@ -362,28 +386,37 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 </>
               ) : (
                 <g
-                  transform={`translate(${aDesign.x + 8}, ${
-                    (trig.tanVal ?? 0) > 0 ? 24 : vp.visibleH - 36
+                  transform={`translate(${Math.min(
+                    aDesign.x + 8,
+                    vp.designLeft + vp.designVisibleW - tanCapsuleW - 10,
+                  )}, ${
+                    (trig.tanVal ?? 0) > 0
+                      ? vp.designTop + 24
+                      : vp.designTop + vp.designVisibleH - tanCapsuleH - 14
                   })`}
                 >
                   <rect
                     x={0}
                     y={0}
-                    width={110}
-                    height={22}
+                    width={tanCapsuleW}
+                    height={tanCapsuleH}
                     rx={4}
                     fill={withAlpha(MATH_COLORS.paramTertiary, 0.9)}
                   />
                   <text
-                    x={55}
-                    y={15}
+                    x={tanCapsuleW / 2}
+                    y={
+                      tanCapsuleH / 2 +
+                      tanCapsuleFontPx *
+                        (INTERACTIVE_POINT_GEOMETRY.capHeightRatio / 2)
+                    }
                     fill={MATH_COLORS.white}
-                    fontSize={fontScale(10)}
+                    fontSize={tanCapsuleFontPx}
                     fontWeight="bold"
                     textAnchor="middle"
                     className="select-none pointer-events-none"
                   >
-                    |tan α| 超出视口
+                    {TAN_CAPSULE_SPEC.text}
                   </text>
                 </g>
               )}
@@ -512,7 +545,7 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
             </>
           )}
 
-          {/* 齐次式模式下的系数向量与点 Q */}
+          {/* 齐次式模式下的系数向量与点 Q（宽视口下 A, B ∈ [-3, 3] 恒在视口内，无需缩放与伪胶囊） */}
           {identitySubMode === "homogeneous" && (
             <>
               <VectorArrow

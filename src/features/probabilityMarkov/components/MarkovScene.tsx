@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateMarkovChain } from "@/math/probabilityMarkov";
-import { estimateTextWidth } from "@/utils/labelOverlap";
+import { estimateLabelTextWidth } from "@/utils/labelOverlap";
 
 interface MarkovSceneProps {
   params: Record<string, number>;
@@ -88,7 +88,7 @@ export function MarkovScene({
   /** 围栏顶沿的步骤标牌：文案由左屏 StepNavigator 同源传入，此处只负责排版 */
   const stepChipW =
     activeFrame && activeStepLabel
-      ? estimateTextWidth(activeStepLabel, fontScale(11)) + 20
+      ? estimateLabelTextWidth(activeStepLabel, fontScale(11)) + 20
       : 0;
 
   return (

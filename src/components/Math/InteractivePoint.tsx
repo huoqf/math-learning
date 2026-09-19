@@ -5,6 +5,7 @@ import { mathToDesign, designToMath } from "@/utils/coordinate";
 import { clientToSvgPoint } from "@/utils/useViewportPointer";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { PlacedLabel } from "@/utils/labelAvoider";
+import { INTERACTIVE_POINT_GEOMETRY } from "./pointGeometry";
 
 interface InteractivePointProps {
   /** 数学坐标 x */
@@ -93,7 +94,7 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
   onChangeX,
   onChangeY,
   color = MATH_COLORS.focusPoint,
-  r = 6,
+  r = INTERACTIVE_POINT_GEOMETRY.defaultR,
   label,
   labelKey,
   placedLabels,
@@ -192,7 +193,9 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
     placedLabels && labelKey
       ? placedLabels.find((p) => p.key === labelKey)
       : undefined;
-  const labelDy = placedLabel ? placedLabel.finalDy : -(r + 8);
+  const labelDy = placedLabel
+    ? placedLabel.finalDy
+    : -(r + INTERACTIVE_POINT_GEOMETRY.labelDyOffset);
 
   const haloR = isDragging ? r + 7 : isHovered ? r + 5.5 : r + 4;
   const haloFillAlpha = isDragging ? 0.35 : isHovered ? 0.25 : 0.15;
@@ -258,7 +261,7 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
           dy={labelDy}
           textAnchor={placedLabel?.anchor ?? "middle"}
           fill={MATH_COLORS.labelText}
-          fontSize={fontScale(11)}
+          fontSize={fontScale(INTERACTIVE_POINT_GEOMETRY.defaultFontSize)}
           fontFamily="system-ui, -apple-system, sans-serif"
           fontWeight="600"
           className="select-none pointer-events-none"

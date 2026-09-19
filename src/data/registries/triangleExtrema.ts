@@ -17,7 +17,7 @@ export function buildAngleBMarks(angleA: number): ParamMark[] {
       variant: "critical",
     },
   ];
-  if (90 < maxB - 1) {
+  if (90 <= maxB - 1) {
     marks.push({
       value: 90,
       label: "90°",
@@ -95,7 +95,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "自变量内角 B，决定三角形具体形状与高度",
     descriptionFormula: "B \\in (0^\\circ, 180^\\circ - A)",
     importance: "core",
-    marks: buildAngleBMarks(60),
   },
   sideB: {
     key: "sideB",

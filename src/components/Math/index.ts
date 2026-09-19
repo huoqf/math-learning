@@ -3,6 +3,7 @@ export { FunctionGraph } from "./FunctionGraph";
 export { VectorArrow } from "./VectorArrow";
 export { PolarGrid } from "./PolarGrid";
 export { InteractivePoint } from "./InteractivePoint";
+export { INTERACTIVE_POINT_GEOMETRY } from "./pointGeometry";
 export { MathPoint } from "./MathPoint";
 export type {
   MathPointProps,
