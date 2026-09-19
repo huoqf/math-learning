@@ -156,7 +156,7 @@ export function buildTriangleExtremaPanel(
             color: MATH_COLORS.circle,
           },
           {
-            label: "最大面积 $S_max$",
+            label: "最大面积 $S_{\\max}$",
             symbol: "S_{\\max} = \\frac{1}{2}a R_A",
             value: extrema.maxArea.toFixed(2),
             color: MATH_COLORS.sequenceHighlight,

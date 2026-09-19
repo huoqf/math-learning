@@ -13,6 +13,7 @@ import {
   type TrigInequalityKind,
 } from "@/features/trigLines/math/trigLines";
 import { MATH_COLORS } from "@/theme";
+import { formatPiFractionLatex } from "@/utils/mathFormat";
 
 export function buildTrigLinesPanel(
   params: Record<string, number>,
@@ -25,7 +26,7 @@ export function buildTrigLinesPanel(
   const ineqKind = (config?.ineqKind as TrigInequalityKind) || "sin_gt";
 
   const trig = calculateTrigLines(alphaDeg);
-  const radStr = `${(trig.alphaRad / Math.PI).toFixed(2)}\\pi`;
+  const radStr = formatPiFractionLatex(trig.alphaRad);
   const sinStr = trig.sinVal.toFixed(3);
   const cosStr = trig.cosVal.toFixed(3);
   const tanStr =
@@ -39,7 +40,7 @@ export function buildTrigLinesPanel(
       {
         label: "动角 α",
         symbol: `\\alpha = ${alphaDeg}^\\circ`,
-        value: `${alphaDeg}° (${radStr})`,
+        value: `${alphaDeg}° ($${radStr}$)`,
       },
       {
         label: "单位圆交点 P",
@@ -344,7 +345,7 @@ export function buildTrigLinesPanel(
     {
       label: "当前测试角 α",
       symbol: `\\alpha = ${alphaDeg}^\\circ`,
-      value: `${alphaDeg}° (${radStr})`,
+      value: `${alphaDeg}° ($${radStr}$)`,
     },
     {
       label: "当前函数值",

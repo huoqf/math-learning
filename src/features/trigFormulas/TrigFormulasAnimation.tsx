@@ -52,7 +52,7 @@ export function TrigFormulasAnimation() {
     yRange: [number, number];
   }>(() => {
     if (studyMode === "auxiliary") {
-      return { xRange: [-6.0, 6.0], yRange: [-5.5, 5.5] };
+      return { xRange: [-7.0, 7.0], yRange: [-7.5, 7.5] };
     }
     return { xRange: [-2.0, 2.0], yRange: [-1.5, 1.5] };
   }, [studyMode]);

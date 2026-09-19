@@ -7,6 +7,7 @@ import type {
   ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatPiFractionLatex } from "@/utils/mathFormat";
 import {
   calculateTrigIdentity,
   calculateInduction,
@@ -59,7 +60,7 @@ export function buildTrigIdentityPanel(
   );
   const comp = calculateComplementaryModel(alphaDeg, thetaDeg);
 
-  const radStr = `${(trig.alphaRad / Math.PI).toFixed(2)}\\pi`;
+  const radStr = formatPiFractionLatex(trig.alphaRad);
   const sinStr = trig.sinVal.toFixed(3);
   const cosStr = trig.cosVal.toFixed(3);
   const tanStr =
@@ -72,7 +73,7 @@ export function buildTrigIdentityPanel(
       {
         label: "角 α 角度/弧度",
         symbol: "\\alpha",
-        value: `${alphaDeg}° (${radStr})`,
+        value: `${alphaDeg}° ($${radStr}$)`,
         color: MATH_COLORS.paramPrimary,
       },
       {
@@ -277,7 +278,7 @@ export function buildTrigIdentityPanel(
         {
           step: 2,
           title: "代入数据 · 终边坐标代换",
-          detail: `当前角 $\\alpha = ${alphaDeg}^\\circ$ (${radStr})，计算正弦、余弦与正切数值。`,
+          detail: `当前角 $\\alpha = ${alphaDeg}^\\circ$ ($${radStr}$)，计算正弦、余弦与正切数值。`,
           latex: `\\sin\\alpha = ${sinStr}, \\quad \\cos\\alpha = ${cosStr}, \\quad \\tan\\alpha = ${tanStr}`,
           rubric: "采分点：代入求出各三角函数值（3分）",
         },

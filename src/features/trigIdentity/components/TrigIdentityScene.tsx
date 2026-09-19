@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/features/trigIdentity/components/TrigIdentityScene.tsx
  * 纯 SVG 渲染：零硬编码颜色字号，完全遵循铁律
  */
@@ -338,23 +338,55 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
                 strokeDasharray="4 4"
               />
               {/* 正切线段 AT (翠绿 paramTertiary) */}
-              <line
-                x1={aDesign.x}
-                y1={aDesign.y}
-                x2={tDesign.x}
-                y2={tDesign.y}
-                stroke={MATH_COLORS.paramTertiary}
-                strokeWidth={3}
-              />
-              {/* 切点 T */}
-              <MathPoint
-                x={tDesign.x}
-                y={tDesign.y}
-                color={MATH_COLORS.paramTertiary}
-                label="T"
-                labelPosition={trig.tanVal! >= 0 ? "top-right" : "bottom-right"}
-                fontScale={fontScale}
-              />
+              {Math.abs(trig.tanVal ?? 0) <= scale.yMax ? (
+                <>
+                  <line
+                    x1={aDesign.x}
+                    y1={aDesign.y}
+                    x2={tDesign.x}
+                    y2={tDesign.y}
+                    stroke={MATH_COLORS.paramTertiary}
+                    strokeWidth={3}
+                  />
+                  {/* 切点 T */}
+                  <MathPoint
+                    x={tDesign.x}
+                    y={tDesign.y}
+                    color={MATH_COLORS.paramTertiary}
+                    label="T"
+                    labelPosition={
+                      trig.tanVal! >= 0 ? "top-right" : "bottom-right"
+                    }
+                    fontScale={fontScale}
+                  />
+                </>
+              ) : (
+                <g
+                  transform={`translate(${aDesign.x + 8}, ${
+                    (trig.tanVal ?? 0) > 0 ? 24 : vp.visibleH - 36
+                  })`}
+                >
+                  <rect
+                    x={0}
+                    y={0}
+                    width={110}
+                    height={22}
+                    rx={4}
+                    fill={withAlpha(MATH_COLORS.paramTertiary, 0.9)}
+                  />
+                  <text
+                    x={55}
+                    y={15}
+                    fill={MATH_COLORS.white}
+                    fontSize={fontScale(10)}
+                    fontWeight="bold"
+                    textAnchor="middle"
+                    className="select-none pointer-events-none"
+                  >
+                    |tan α| 超出视口
+                  </text>
+                </g>
+              )}
             </>
           )}
 

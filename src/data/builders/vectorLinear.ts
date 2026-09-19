@@ -218,11 +218,11 @@ export function buildVectorLinearPanel(
   } else if (studyMode === "collinear") {
     gaokaoPoints.push(
       {
-        text: "三点共线分点与面积比（拓展 · 超出课标）：若 OC = x·OA + y·OB 且 x+y=1，则 △OAC 与 △OBC 的面积比满足 S_△OBC / S_△OAC = x / y。",
+        text: "三点共线分点与面积比（拓展 · 超出课标）：若 $\\vec{OC} = x\\vec{OA} + y\\vec{OB}$ 且 $x+y=1$，则 $\\triangle OAC$ 与 $\\triangle OBC$ 的面积比满足 $\\frac{S_{\\triangle OBC}}{S_{\\triangle OAC}} = \\frac{x}{y}$。",
         importance: "extend",
       },
       {
-        text: "斜率与坐标秒杀：若两向量平行，则坐标交叉相乘 xa*yb - xb*ya = 0（横纵交乘相等），避免讨论斜率不存在的繁琐分类。",
+        text: "斜率与坐标秒杀：若两向量平行，则坐标交叉相乘 $x_a y_b - x_b y_a = 0$（横纵交乘相等），避免讨论斜率不存在的繁琐分类。",
         importance: "gaokao",
       },
     );

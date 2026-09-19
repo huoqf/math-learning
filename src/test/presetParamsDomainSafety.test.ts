@@ -189,6 +189,10 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       config: { distType: "binomial" },
     },
     { animId: "anim-probability-normal", params: { mu: 0, sigma: 1 } },
+    {
+      animId: "anim-probability-independence",
+      params: { pA: 0.5, pB: 0.4, overlapRatio: 0.2 },
+    },
     { animId: "anim-paired-data", params: { r: 0.85 } },
     { animId: "anim-stat-percentile", params: { p: 75 } },
 

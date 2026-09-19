@@ -206,7 +206,13 @@ export function TriangleExtremaAnimation() {
           group: meta.group,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
-          max: meta.max,
+          max:
+            key === "angleB"
+              ? Math.min(
+                  meta.max,
+                  Math.max(meta.min, 180 - (params.angleA ?? 60) - 1),
+                )
+              : meta.max,
           step: meta.step ?? 0.1,
           unit: meta.unit,
           description: meta.description,

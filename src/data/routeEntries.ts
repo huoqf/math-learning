@@ -223,6 +223,10 @@ import {
   classicalProbabilityLoader,
 } from "@/features/probabilityClassical/meta";
 import {
+  probabilityIndependenceNode,
+  probabilityIndependenceLoader,
+} from "@/features/probabilityIndependence/meta";
+import {
   probabilityCountingNode,
   probabilityCountingLoader,
 } from "@/features/probabilityCounting/meta";
@@ -436,6 +440,7 @@ export const routeEntries: RouteEntry[] = [
   // 10. 概率与统计
   { node: probabilityEventsNode, loader: probabilityEventsLoader },
   { node: classicalProbabilityNode, loader: classicalProbabilityLoader },
+  { node: probabilityIndependenceNode, loader: probabilityIndependenceLoader },
   { node: probabilityCountingNode, loader: probabilityCountingLoader },
   { node: bayesNode, loader: bayesLoader },
   { node: markovNode, loader: markovLoader },

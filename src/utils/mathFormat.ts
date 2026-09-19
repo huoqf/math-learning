@@ -70,6 +70,28 @@ export function formatPiFraction(
   return null;
 }
 
+/**
+ * 将数值格式化为 π 的 LaTeX 分数倍（如 \frac{\pi}{6}），非特殊角则返回近似值 \approx 0.xx\pi
+ */
+export function formatPiFractionLatex(x: number, maxDenominator = 12): string {
+  if (!Number.isFinite(x)) return "";
+  if (Math.abs(x) < 1e-9) return "0";
+
+  for (let d = 1; d <= maxDenominator; d++) {
+    const k = Math.round((x * d) / Math.PI);
+    if (k === 0) continue;
+    if (Math.abs((k * Math.PI) / d - x) < 1e-6) {
+      const g = gcd(Math.abs(k), d);
+      const num = Math.abs(k) / g;
+      const den = d / g;
+      const sign = k < 0 ? "-" : "";
+      if (den === 1) return `${sign}${num === 1 ? "" : num}\\pi`;
+      return `${sign}\\frac{${num === 1 ? "" : num}\\pi}{${den}}`;
+    }
+  }
+  return `\\approx ${(x / Math.PI).toFixed(2)}\\pi`;
+}
+
 function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b);
 }

@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   CoordinateGrid,
   VectorArrow,
@@ -311,8 +311,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
 
           {/* 可拖拽控制点 */}
           <InteractivePoint
-            cx={e1Design.x}
-            cy={e1Design.y}
+            cx={e1.x}
+            cy={e1.y}
             color={MATH_COLORS.paramPrimary}
             scale={scale}
             vp={vp}
@@ -323,8 +323,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
           />
 
           <InteractivePoint
-            cx={e2Design.x}
-            cy={e2Design.y}
+            cx={e2.x}
+            cy={e2.y}
             color={MATH_COLORS.paramSecondary}
             scale={scale}
             vp={vp}
@@ -335,8 +335,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
           />
 
           <InteractivePoint
-            cx={targetDesign.x}
-            cy={targetDesign.y}
+            cx={target.x}
+            cy={target.y}
             color={MATH_COLORS.vectorResult}
             scale={scale}
             vp={vp}
@@ -441,7 +441,7 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                 u1x * rtSize * sgnLam,
               y:
                 projE2Pos.y -
-                u2x * rtSize * (orthoMu >= 0 ? 1 : -1) +
+                u2y * rtSize * (orthoMu >= 0 ? 1 : -1) +
                 u1y * rtSize * sgnLam,
             };
             const rtH2P3 = {
@@ -600,8 +600,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                 />
 
                 <InteractivePoint
-                  cx={targetDesign.x}
-                  cy={targetDesign.y}
+                  cx={target.x}
+                  cy={target.y}
                   color={MATH_COLORS.vectorResult}
                   scale={scale}
                   vp={vp}
@@ -722,11 +722,6 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
 
           {/* 合成动点向量 OP (P) */}
           {(() => {
-            const pDesign = mathToDesign(
-              collinearPoint.x,
-              collinearPoint.y,
-              scale,
-            );
             return (
               <>
                 <VectorArrow
@@ -742,8 +737,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                 {/* P 的平面位置由基底系数 (x, y) 合成，与屏幕坐标不同轴，
                     故不在此处传 xRange/yRange，钳制在 handleDragCollinearPoint 内按系数声明域完成 */}
                 <InteractivePoint
-                  cx={pDesign.x}
-                  cy={pDesign.y}
+                  cx={collinearPoint.x}
+                  cy={collinearPoint.y}
                   color={MATH_COLORS.paramTertiary}
                   scale={scale}
                   vp={vp}
@@ -755,8 +750,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
           })()}
 
           <InteractivePoint
-            cx={e1Design.x}
-            cy={e1Design.y}
+            cx={e1.x}
+            cy={e1.y}
             color={MATH_COLORS.paramPrimary}
             scale={scale}
             vp={vp}
@@ -766,8 +761,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             fontScale={fontScale}
           />
           <InteractivePoint
-            cx={e2Design.x}
-            cy={e2Design.y}
+            cx={e2.x}
+            cy={e2.y}
             color={MATH_COLORS.paramSecondary}
             scale={scale}
             vp={vp}
@@ -889,11 +884,6 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
 
           {/* 爪子动点分点向量 OP */}
           {(() => {
-            const pDesign = mathToDesign(
-              divisionPoint.x,
-              divisionPoint.y,
-              scale,
-            );
             return (
               <>
                 <VectorArrow
@@ -909,8 +899,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                 {/* P 被吸附在 AB 线段上，由比例 t 唯一决定；
                     t ∈ [0, 1] 的钳制在 handleDragDivisionPoint 内完成（与屏幕坐标不同轴） */}
                 <InteractivePoint
-                  cx={pDesign.x}
-                  cy={pDesign.y}
+                  cx={divisionPoint.x}
+                  cy={divisionPoint.y}
                   color={MATH_COLORS.paramTertiary}
                   scale={scale}
                   vp={vp}
@@ -922,8 +912,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
           })()}
 
           <InteractivePoint
-            cx={e1Design.x}
-            cy={e1Design.y}
+            cx={e1.x}
+            cy={e1.y}
             color={MATH_COLORS.paramPrimary}
             scale={scale}
             vp={vp}
@@ -933,8 +923,8 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
             fontScale={fontScale}
           />
           <InteractivePoint
-            cx={e2Design.x}
-            cy={e2Design.y}
+            cx={e2.x}
+            cy={e2.y}
             color={MATH_COLORS.paramSecondary}
             scale={scale}
             vp={vp}

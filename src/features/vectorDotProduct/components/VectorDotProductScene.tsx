@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   CoordinateGrid,
   InteractivePoint,
@@ -8,9 +8,13 @@ import {
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { rightAnglePath } from "@/utils/geometryMarks";
-import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
-import type { SceneScale } from "@/hooks";
+import {
+  paramDomainRange,
+  paramDragRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
 import type { ViewportInfo } from "@/utils/useViewport";
+import type { SceneScale } from "@/hooks/useSceneScale";
 import {
   computeVectorDotProduct,
   type VectorDotProductParams,
@@ -88,10 +92,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
     () => paramDragRange(paramMeta.normB, scale, "x"),
     [scale],
   );
-  const rangeTheta = useMemo(
-    () => paramDragRange(paramMeta.thetaDeg, scale, "x"),
-    [scale],
-  );
+  const rangeTheta = useMemo(() => paramDomainRange(paramMeta.thetaDeg), []);
 
   // 批量派发（优先走批量回调，避免两次 setState 造成中间态闪动）
   const applyParams = (updates: Record<string, number>) => {

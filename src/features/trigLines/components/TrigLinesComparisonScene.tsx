@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/features/trigLines/components/TrigLinesComparisonScene.tsx
  * 模式「comparison」：面积放缩与不等式。零物理公式、零硬编码颜色字号，完全遵循铁律。
  * 仅由 TrigLinesScene 在 studyMode === "comparison" 时渲染。
@@ -69,6 +69,8 @@ export const TrigLinesComparisonScene: React.FC<
       y: centerPt.y - (arcR + 12) * Math.sin(xRad / 2),
     };
 
+    const isTanClipped = Math.tan(xRad) >= scale.yMax;
+
     return {
       areas,
       pMath,
@@ -78,6 +80,7 @@ export const TrigLinesComparisonScene: React.FC<
       sectorPath,
       angleArcPath,
       angleLabelPos,
+      isTanClipped,
     };
   }, [compAlphaDeg, scale, centerPt, aDesign, unitRadiusPx]);
 
@@ -262,36 +265,62 @@ export const TrigLinesComparisonScene: React.FC<
       />
 
       {/* 交点 T(1, tan x) */}
-      <MathPoint
-        x={compData.tDes.x}
-        y={compData.tDes.y}
-        color={MATH_COLORS.paramTertiary}
-      />
-      <g
-        transform={`translate(${compData.tDes.x + 10}, ${compData.tDes.y - 12})`}
-      >
-        <rect
-          x={0}
-          y={0}
-          width={76}
-          height={20}
-          rx={4}
-          fill={withAlpha(MATH_COLORS.white, 0.9)}
-          stroke={withAlpha(MATH_COLORS.paramTertiary, 0.4)}
-          strokeWidth={1}
-        />
-        <text
-          x={38}
-          y={14}
-          fill={MATH_COLORS.paramTertiary}
-          fontSize={fontScale(10)}
-          fontWeight="bold"
-          textAnchor="middle"
-          className="select-none pointer-events-none"
-        >
-          T(1, tan x)
-        </text>
-      </g>
+      {!compData.isTanClipped ? (
+        <>
+          <MathPoint
+            x={compData.tDes.x}
+            y={compData.tDes.y}
+            color={MATH_COLORS.paramTertiary}
+          />
+          <g
+            transform={`translate(${compData.tDes.x + 10}, ${compData.tDes.y - 12})`}
+          >
+            <rect
+              x={0}
+              y={0}
+              width={76}
+              height={20}
+              rx={4}
+              fill={withAlpha(MATH_COLORS.white, 0.9)}
+              stroke={withAlpha(MATH_COLORS.paramTertiary, 0.4)}
+              strokeWidth={1}
+            />
+            <text
+              x={38}
+              y={14}
+              fill={MATH_COLORS.paramTertiary}
+              fontSize={fontScale(10)}
+              fontWeight="bold"
+              textAnchor="middle"
+              className="select-none pointer-events-none"
+            >
+              T(1, tan x)
+            </text>
+          </g>
+        </>
+      ) : (
+        <g transform={`translate(${aDesign.x + 8}, 24)`}>
+          <rect
+            x={0}
+            y={0}
+            width={124}
+            height={22}
+            rx={4}
+            fill={withAlpha(MATH_COLORS.paramTertiary, 0.9)}
+          />
+          <text
+            x={62}
+            y={15}
+            fill={MATH_COLORS.white}
+            fontSize={fontScale(10)}
+            fontWeight="bold"
+            textAnchor="middle"
+            className="select-none pointer-events-none"
+          >
+            T(1, tan x) 超出视口
+          </text>
+        </g>
+      )}
 
       {/* 动点 P 拖拽 */}
       <InteractivePoint

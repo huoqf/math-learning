@@ -333,7 +333,7 @@ export function buildTrigTransformPanel(
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "由图求式大题必考：代入特征点求 $φ$ 时优先使用波峰点 $(ω x_max + φ = π/2 + 2kπ)$，避免零点多解符号错误。",
+        text: "由图求式大题必考：代入特征点求 $\\varphi$ 时优先使用波峰点 $(\\omega x_{\\max} + \\varphi = \\pi/2 + 2k\\pi)$，避免零点多解符号错误。",
         importance: "gaokao",
       },
       {

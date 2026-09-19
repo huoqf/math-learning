@@ -77,7 +77,7 @@ export function buildTriangleSolvePanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "分面积 $S_ABD$ 与 $S_ACD$",
+        label: "分面积 $S_{\\triangle ABD}$ 与 $S_{\\triangle ACD}$",
         symbol: "S_{\\triangle ABD}, \\; S_{\\triangle ACD}",
         value: `S₁ = ${areaABD.toFixed(2)}, S₂ = ${areaACD.toFixed(2)} (总 S = ${area.toFixed(2)})`,
         color: MATH_COLORS.sequenceHighlight,
@@ -207,7 +207,7 @@ export function buildTriangleSolvePanel(
         color: MATH_COLORS.tangentLine,
       },
       {
-        label: "解的个数 ($N_sol$)",
+        label: "解的个数 ($N_{\\text{sol}}$)",
         symbol: "N_{\\text{sol}}",
         value: `${solutionCount} 个解 (${SSA_CASE_LABEL[ssaResult.caseKind]})`,
         color:
@@ -268,8 +268,13 @@ export function buildTriangleSolvePanel(
     let solveDetail: string;
     let solveLatex: string;
     if (solutionCount === 0) {
-      solveDetail = `底边 $a = ${a.toFixed(2)}$ 比临界高 $h = ${h.toFixed(2)}$ 还短，圆弧与射线不相交，三角形不存在，直接作答无解。`;
-      solveLatex = `a = ${a.toFixed(2)} < h = ${h.toFixed(2)} \\implies \\varnothing`;
+      if (ssaResult.caseKind === "nonacute_no_solution") {
+        solveDetail = `内角 $A = ${angleA.toFixed(1)}^\\circ \\ge 90^\\circ$ 为直角或钝角，大角对大边要求对边 $a$ 必须严格大于邻边 $b$。当前 $a = ${a.toFixed(2)} \\le b = ${b.toFixed(2)}$，无法构成三角形，直接作答无解。`;
+        solveLatex = `A \\ge 90^\\circ,\\quad a = ${a.toFixed(2)} \\le b = ${b.toFixed(2)} \\implies \\varnothing`;
+      } else {
+        solveDetail = `底边 $a = ${a.toFixed(2)}$ 比临界高 $h = ${h.toFixed(2)}$ 还短，圆弧与射线不相交，三角形不存在，直接作答无解。`;
+        solveLatex = `a = ${a.toFixed(2)} < h = ${h.toFixed(2)} \\implies \\varnothing`;
+      }
     } else if (solutionCount === 2 && sol1 && sol2) {
       solveDetail = `$\\sin B = ${sinBVal.toFixed(3)}$ 同时对应锐角解 $B_1 = ${toDeg1(sol1.angleB)}^\\circ$ 与钝角解 $B_2 = ${toDeg1(sol2.angleB)}^\\circ$，两解内角和均小于 $180^\\circ$，故有两个三角形，必须都写出。`;
       solveLatex = `c_1 = \\frac{a\\sin C_1}{\\sin A} = ${sol1.c.toFixed(2)},\\quad c_2 = \\frac{a\\sin C_2}{\\sin A} = ${sol2.c.toFixed(2)}`;
@@ -329,7 +334,10 @@ export function buildTriangleSolvePanel(
         solutionCount === 0
           ? [
               {
-                text: "无解警示：当前对边 a < h (b·sinA)，圆弧与射线无交点！",
+                text:
+                  ssaResult.caseKind === "nonacute_no_solution"
+                    ? "无解警示：内角 A ≥ 90° 且对边 a ≤ b，大角对大边不成立，无交点！"
+                    : "无解警示：当前对边 a < h (b·sinA)，圆弧与射线无交点！",
                 level: "danger",
               },
             ]

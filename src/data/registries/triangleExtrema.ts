@@ -8,20 +8,24 @@ import { MATH_COLORS } from "@/theme";
  * 而「取等条件」恰恰是新高考解三角形最易扣分的考点。
  */
 export function buildAngleBMarks(angleA: number): ParamMark[] {
-  return [
+  const maxB = 180 - angleA;
+  const marks: ParamMark[] = [
     {
       value: Math.round(((180 - angleA) / 2) * 10) / 10,
       label: "等腰最值",
       labelFormula: "B=\\frac{180^\\circ-A}{2}",
       variant: "critical",
     },
-    {
+  ];
+  if (90 < maxB - 1) {
+    marks.push({
       value: 90,
       label: "90°",
       labelFormula: "90^\\circ",
       variant: "critical",
-    },
-  ];
+    });
+  }
+  return marks;
 }
 
 export const defaultParams: Record<string, number> = {

@@ -52,13 +52,19 @@ export function buildTrigFormulasPanel(
         color: MATH_COLORS.primary,
       },
       {
-        label: "向量 OA 与 OB 点积",
+        label:
+          sumDiffKey === "cos_minus"
+            ? "向量 OA 与 OB 点积"
+            : "基准向量点积 (几何源头)",
         symbol: "\\vec{u} \\cdot \\vec{v} = \\cos(\\alpha-\\beta)",
         value: res.dotProduct.toFixed(3),
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "弦长 AB 距离",
+        label:
+          sumDiffKey === "cos_minus"
+            ? "弦长 AB 距离"
+            : "基准弦长 AB (互证几何)",
         symbol: "|AB| = \\sqrt{2-2\\cos(\\alpha-\\beta)}",
         value: res.chordLength.toFixed(3),
         color: MATH_COLORS.paramTertiary,
@@ -126,14 +132,23 @@ export function buildTrigFormulasPanel(
         step: 2,
         title: "代入数据 · 单角函数逐项相乘",
         detail: `代入 $\\alpha = ${alphaDeg}^\\circ, \\beta = ${betaDeg}^\\circ$：$\\sin\\alpha = ${res.sinAlpha.toFixed(3)}, \\cos\\alpha = ${res.cosAlpha.toFixed(3)}$；$\\sin\\beta = ${res.sinBeta.toFixed(3)}, \\cos\\beta = ${res.cosBeta.toFixed(3)}$。`,
-        latex: `${res.formulaTitle} = ${res.resultVal.toFixed(3)}`,
+        latex: `${res.formulaTitle} = ${res.isTanDefined && !Number.isNaN(res.resultVal) ? res.resultVal.toFixed(3) : "\\text{无定义}"}`,
         rubric: "采分点：代入单角三角函数值算出结果（4分）",
       },
       {
         step: 3,
-        title: "数形反思 · 向量点积与几何互证",
-        detail: `单位圆上两动点向量 $\\vec{u}=(\\cos\\alpha, \\sin\\alpha), \\vec{v}=(\\cos\\beta, \\sin\\beta)$ 的数量积 $\\vec{u}\\cdot\\vec{v} = \\cos(\\alpha-\\beta) = ${res.dotProduct.toFixed(3)}$，弦长 $|AB| = ${res.chordLength.toFixed(3)}$。`,
-        latex: `\\vec{u}\\cdot\\vec{v} = \\cos\\alpha\\cos\\beta + \\sin\\alpha\\sin\\beta = ${res.dotProduct.toFixed(3)}`,
+        title:
+          sumDiffKey === "cos_minus"
+            ? "数形反思 · 向量点积与几何互证"
+            : "数形反思 · 以余弦差角为母式推导",
+        detail:
+          sumDiffKey === "cos_minus"
+            ? `单位圆上两动点向量 $\\vec{u}=(\\cos\\alpha, \\sin\\alpha), \\vec{v}=(\\cos\\beta, \\sin\\beta)$ 的数量积 $\\vec{u}\\cdot\\vec{v} = \\cos(\\alpha-\\beta) = ${res.dotProduct.toFixed(3)}$，弦长 $|AB| = ${res.chordLength.toFixed(3)}$。`
+            : `新课标以余弦差角公式为全部和差角体系的几何公理基础。中屏以 $\\cos(\\alpha-\\beta)$ 建立单位圆向量数量积互证（$\\vec{u}\\cdot\\vec{v} = ${res.dotProduct.toFixed(3)}$），其余和差公式均由诱导公式代换推导得出。`,
+        latex:
+          sumDiffKey === "cos_minus"
+            ? `\\vec{u}\\cdot\\vec{v} = \\cos\\alpha\\cos\\beta + \\sin\\alpha\\sin\\beta = ${res.dotProduct.toFixed(3)}`
+            : `\\cos(\\alpha-\\beta) = \\cos\\alpha\\cos\\beta + \\sin\\alpha\\sin\\beta \\implies ${res.formulaTitle}`,
         rubric: "采分点：结合单位圆向量数量积建立数形互证（3分）",
       },
     ];
@@ -174,19 +189,24 @@ export function buildTrigFormulasPanel(
         value: res.cos2Alpha.toFixed(3),
         color: MATH_COLORS.paramSecondary,
       },
-      {
-        label: "降幂后周期 T",
-        symbol: "T = \\frac{2\\pi}{2}",
-        value: "\\pi \\approx 3.142",
-        color: MATH_COLORS.paramTertiary,
-      },
-      {
-        label: "降幂后平衡中轴",
-        symbol: "y_0",
-        value: "y = 0.5",
-        color: MATH_COLORS.paramTertiary,
-      },
     ];
+
+    if (doubleAngleKey === "sin2_a" || doubleAngleKey === "cos2_a") {
+      quantities.push(
+        {
+          label: "降幂后周期 T",
+          symbol: "T = \\frac{2\\pi}{2}",
+          value: "\\pi \\approx 3.142",
+          color: MATH_COLORS.paramTertiary,
+        },
+        {
+          label: "降幂后平衡中轴",
+          symbol: "y_0",
+          value: "y = 0.5",
+          color: MATH_COLORS.paramTertiary,
+        },
+      );
+    }
 
     const theorems: Theorem[] = [
       {
@@ -239,7 +259,11 @@ export function buildTrigFormulasPanel(
         step: 2,
         title: "代入单角 · 展开逐项化简",
         detail: `当前单角 $\\alpha = ${alphaDeg}^\\circ$，$\\sin\\alpha = ${res.sinAlpha.toFixed(3)}, \\cos\\alpha = ${res.cosAlpha.toFixed(3)}$，代入解析式。`,
-        latex: `${res.formulaTitle} = ${(doubleAngleKey === "sin_2a" ? res.sin2Alpha : doubleAngleKey === "cos_2a" ? res.cos2Alpha : doubleAngleKey === "tan_2a" ? (res.tan2Alpha ?? 0) : doubleAngleKey === "sin2_a" ? res.sinSqAlpha : res.cosSqAlpha).toFixed(3)}`,
+        latex:
+          doubleAngleKey === "tan_2a" &&
+          (!res.isTanDefined || res.tan2Alpha === undefined)
+            ? `${res.formulaTitle} = \\text{无定义}`
+            : `${res.formulaTitle} = ${(doubleAngleKey === "sin_2a" ? res.sin2Alpha : doubleAngleKey === "cos_2a" ? res.cos2Alpha : doubleAngleKey === "tan_2a" ? res.tan2Alpha! : doubleAngleKey === "sin2_a" ? res.sinSqAlpha : res.cosSqAlpha).toFixed(3)}`,
         rubric: "采分点：代入单角三角函数值算出结果（4分）",
       },
       {

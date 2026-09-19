@@ -112,6 +112,7 @@ import { TrigTransformAnimation } from "@/features/trigTransform/TrigTransformAn
 import { VectorBasisAnimation } from "@/features/vectorBasis/VectorBasisAnimation";
 import { VectorDotProductAnimation } from "@/features/vectorDotProduct/VectorDotProductAnimation";
 import { VectorPolarizationApolloniusAnimation } from "@/features/vectorPolarizationApollonius/VectorPolarizationApolloniusAnimation";
+import { ProbabilityIndependenceAnimation } from "@/features/probabilityIndependence/ProbabilityIndependenceAnimation";
 
 describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("LineEquationAnimation mounts properly and displays control panel", () => {
@@ -425,5 +426,14 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("VectorPolarizationApolloniusAnimation mounts properly and renders titles", () => {
     render(<VectorPolarizationApolloniusAnimation />);
     expect(screen.getByText("向量极化恒等式看板")).toBeInTheDocument();
+  });
+
+  it("ProbabilityIndependenceAnimation mounts properly and renders controls", () => {
+    render(
+      <MemoryRouter>
+        <ProbabilityIndependenceAnimation />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("辨析情境选择")).toBeInTheDocument();
   });
 });

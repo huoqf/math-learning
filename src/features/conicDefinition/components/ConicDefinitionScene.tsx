@@ -1,4 +1,4 @@
-﻿/**
+/**
  * src/features/conicDefinition/components/ConicDefinitionScene.tsx
  * 纯 SVG 渲染，严格遵循项目规范：
  * - 纯净坐标系 showGrid={false}，无多余网格干扰
@@ -41,6 +41,7 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
   onParamChange,
 }) => {
   const {
+    sceneData,
     pathD,
     f1Design,
     f2Design,
@@ -240,8 +241,8 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
 
       {/* 9. 可拖拽动点 P (外光晕手柄，全轨迹拖拽) */}
       <InteractivePoint
-        cx={pDesign.x}
-        cy={pDesign.y}
+        cx={sceneData.pPoint?.x ?? 0}
+        cy={sceneData.pPoint?.y ?? 0}
         scale={scale}
         vp={vp}
         color={cPrimary}
