@@ -11,6 +11,8 @@ export interface ScenarioSpec<TParams = Record<string, number>> {
   name: string;
   /** 场景徽章，例如 "高考真题 · 极值点偏移" */
   badge: string;
+  /** 真实应用/高考背景说明（杜绝抽象符号直接空降） */
+  background?: string;
   /** 初始条件 / 题设已知（支持混合 LaTeX 渲染） */
   condition: string;
   /** 核心设问 / 探究目标（直击数学本质，与右屏推导构成闭环） */
@@ -34,6 +36,7 @@ export interface ScenarioSpec<TParams = Record<string, number>> {
  */
 export interface ScenarioTipProps {
   badge: string;
+  background?: string;
   condition: string;
   question: string;
   variant: TipCardVariant;

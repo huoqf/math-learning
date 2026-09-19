@@ -49,6 +49,7 @@ export function useScenario<
     if (!currentScenario) return null;
     return {
       badge: currentScenario.badge,
+      background: currentScenario.background,
       condition: currentScenario.condition,
       question: currentScenario.question,
       variant: currentScenario.variant ?? "primary",
