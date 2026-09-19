@@ -17,6 +17,7 @@ import { buildQuantifiersPanel } from "./builders/quantifiersBuilder";
 import { buildDerivativeShiftPanel } from "./builders/derivativeShift";
 import { buildSecondDerivativePanel } from "./builders/secondDerivative";
 import { buildProbabilityEventsPanel } from "./builders/probabilityEvents";
+import { buildClassicalProbabilityPanel } from "./builders/probabilityClassical";
 import { buildProbabilityCountingPanel } from "./builders/probabilityCounting";
 import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
 import { buildProbabilityMarkovPanel } from "./builders/probabilityMarkov";
@@ -108,6 +109,8 @@ export function buildMathQuantities(
       return buildPairedDataPanel(params, config);
     case "anim-probability-events":
       return buildProbabilityEventsPanel(params, config);
+    case "anim-probability-classical":
+      return buildClassicalProbabilityPanel(params, config);
     case "anim-probability-normal":
       return buildProbabilityNormalPanel(params, config);
     case "anim-probability-distribution":

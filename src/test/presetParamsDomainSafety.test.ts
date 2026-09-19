@@ -252,6 +252,10 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     },
     { animId: "anim-sequence-sum", params: { a1: 1, d: 2, N: 4 } },
     { animId: "anim-trig-unit-circle", params: { thetaDeg: 45 } },
+    {
+      animId: "anim-probability-classical",
+      params: { targetSum: 7 },
+    },
   ];
 
   safetyCases.forEach(({ animId, params, config }) => {
