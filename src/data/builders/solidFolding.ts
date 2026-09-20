@@ -4,6 +4,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
 import {
@@ -33,10 +34,31 @@ export function buildSolidFoldingPanel(
   if (model === "trapezoid") {
     const res = calculateRightTrapezoidFolding(a, b, h, alphaDeg);
     const D_prime = res.points["D'"];
+    const safeA = res.safeParams?.a ?? a;
+    const safeB = res.safeParams?.b ?? b;
+
+    if (res.safeParams?.isClamped) {
+      warnings.push({
+        text: `直角梯形参数已自动适配为安全几何边界 (b < a)，确保折展结构自洽有效。`,
+        level: "info",
+      });
+    }
 
     const dihedralBeta = 180 - alphaDeg;
 
     quantities.push(
+      {
+        label: "底边边长 a",
+        symbol: "a",
+        value: safeA,
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "折痕参数 b",
+        symbol: "b",
+        value: safeB,
+        color: MATH_COLORS.paramSecondary,
+      },
       {
         label: "翻折旋转角 α",
         symbol: "\\alpha",
@@ -140,18 +162,21 @@ export function buildSolidFoldingPanel(
         color: MATH_COLORS.highlight,
       },
       {
-        label: "三棱锥 A'-BCD 外接球半径 R",
-        symbol: "R",
-        value: Number(res.circumSphereRadius?.toFixed(3)),
-        color: MATH_COLORS.secondary,
-      },
-      {
         label: "三棱锥 A'-BCD 体积 V",
         symbol: "V_{A'-BCD}",
         value: Number(res.pyramidVolume.toFixed(3)),
         color: MATH_COLORS.accent,
       },
     );
+
+    if (res.circumSphereRadius != null) {
+      quantities.push({
+        label: "三棱锥 A'-BCD 外接球半径 R",
+        symbol: "R",
+        value: Number(res.circumSphereRadius.toFixed(3)),
+        color: MATH_COLORS.secondary,
+      });
+    }
 
     theorems.push(
       {
@@ -308,23 +333,53 @@ export function buildSolidFoldingPanel(
     });
   }
 
-  if (alphaDeg === 0 || alphaDeg === 180) {
+  if (alphaDeg <= 2 || alphaDeg >= 178) {
     warnings.push({
-      text: `翻折二面角 α = ${alphaDeg}°，图形退化为平面图形！`,
+      text: `翻折二面角 α = ${alphaDeg}° 接近展开或贴合临界，图形退化为平面极限状态！`,
       level: "warning",
     });
-  } else if (alphaDeg === 90) {
+  } else if (Math.abs(alphaDeg - 90) < 1e-4) {
     warnings.push({
-      text: "翻折二面角 α = 90°，两半平面垂直！高线达到最大值，四面体体积取得极大值。",
+      text: "翻折二面角 α = 90°，两半平面垂直！高线达到最大值，几何体体积取得极大值。",
       level: "info",
     });
   }
+
+  const reasoningSteps: ReasoningStep[] = [
+    {
+      step: 1,
+      title: "审题定法 · 区分翻折不变量与变动量",
+      detail:
+        "平面图形折叠问题关键在于抓住“不变量”：折痕两侧半平面内部的边长、线段长度与平面角在折叠过程中完全不变：",
+      latex: `\\text{折痕长度不变, 各半平面内线段长度恒定}`,
+      rubric: "[高考采分点] 明确指出翻折过程中的长度与角度不变量 (+4分)",
+    },
+    {
+      step: 2,
+      title: "建模联立 · 构造空间高线函数与体积模型",
+      detail:
+        "过变动顶点向折痕作垂线，垂足为垂底。二面角为 α 时，空间几何体的高等于面内垂线长乘以 sinα：",
+      latex: `h(\\alpha) = d \\cdot \\sin\\alpha \\implies V(\\alpha) = \\frac{1}{3} S_{\\text{底}} \\cdot d \\cdot \\sin\\alpha`,
+      rubric:
+        "[高考采分点] 准确建立关于二面角 α 的射影高线与体积函数关系式 (+5分)",
+    },
+    {
+      step: 3,
+      title: "求解反思 · 求导或极值分析确定最优角",
+      detail:
+        "由于 α ∈ (0°, 180°)，正弦函数在 α = 90° 处取得最大值 1。两半平面垂直时，多面体的高与体积同时达到极大值：",
+      latex: `\\sin\\alpha \\le 1 \\implies \\max V = V(90^\\circ) = \\frac{1}{3} S_{\\text{底}} \\cdot d`,
+      rubric:
+        "[高考采分点] 正确得出体积最大值及对应的充要二面角 α = 90° (+4分)",
+    },
+  ];
 
   return {
     quantities,
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps,
     mnemonic:
       "折前折后辨不变，面内几何度量同；二面求角两垂线，向量建系通法全。",
   };

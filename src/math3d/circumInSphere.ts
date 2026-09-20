@@ -6,6 +6,8 @@
 
 import type { Vec3 } from "./vector3";
 
+const EPSILON = 1e-4;
+
 export type SphereType = "circum" | "inscribed";
 export type ShapeType =
   "cuboid" | "regularPyramid" | "triangularPrism" | "cone" | "cylinder";
@@ -25,6 +27,16 @@ export interface SphereModelResult {
   sphereVolume: number;
   /** 球表面积 */
   sphereArea: number;
+  /** 棱锥侧面斜高 */
+  slantHeight?: number;
+  /** 圆锥母线长 */
+  generatrixLength?: number;
+  /** 直三棱柱底面直角三角形斜边长（仅 triangularPrism 适用） */
+  baseHypotenuse?: number;
+  /** 直三棱柱底面外接圆半径（仅 triangularPrism 适用） */
+  baseCircumRadius?: number;
+  /** 直三棱柱底面内切圆半径（仅 triangularPrism 适用） */
+  baseInRadius?: number;
 }
 
 /**
@@ -68,36 +80,56 @@ export function calculateCuboidSphere(
       sphereArea,
     };
   } else {
-    // 内切球
+    // 内切球（非正方体时为最大相切球）
     const radius = Math.min(a, b, c) / 2;
     const sphereVolume = (4 / 3) * Math.PI * radius ** 3;
     const sphereArea = 4 * Math.PI * radius ** 2;
 
-    const tBottom: Vec3 = { x: a / 2, y: b / 2, z: 0 };
-    const tTop: Vec3 = { x: a / 2, y: b / 2, z: c };
-    const tFront: Vec3 = { x: a, y: b / 2, z: c / 2 };
-    const tBack: Vec3 = { x: 0, y: b / 2, z: c / 2 };
-    const tRight: Vec3 = { x: a / 2, y: b, z: c / 2 };
-    const tLeft: Vec3 = { x: a / 2, y: 0, z: c / 2 };
+    const keyPoints: Record<string, Vec3> = { Center: center };
+    const auxSegments: {
+      from: Vec3;
+      to: Vec3;
+      label?: string;
+      dashed?: boolean;
+    }[] = [];
+
+    // 仅当各面到球心距离等于半径时，该面才是真正的相切面并生成切点与半径线
+    if (Math.abs(c / 2 - radius) < EPSILON) {
+      const tBottom: Vec3 = { x: a / 2, y: b / 2, z: 0 };
+      const tTop: Vec3 = { x: a / 2, y: b / 2, z: c };
+      keyPoints.tBottom = tBottom;
+      keyPoints.tTop = tTop;
+      auxSegments.push(
+        { from: center, to: tBottom, label: "r", dashed: true },
+        { from: center, to: tTop, label: "r", dashed: true },
+      );
+    }
+    if (Math.abs(b / 2 - radius) < EPSILON) {
+      const tRight: Vec3 = { x: a / 2, y: b, z: c / 2 };
+      const tLeft: Vec3 = { x: a / 2, y: 0, z: c / 2 };
+      keyPoints.tRight = tRight;
+      keyPoints.tLeft = tLeft;
+      auxSegments.push(
+        { from: center, to: tRight, label: "r", dashed: true },
+        { from: center, to: tLeft, label: "r", dashed: true },
+      );
+    }
+    if (Math.abs(a / 2 - radius) < EPSILON) {
+      const tFront: Vec3 = { x: a, y: b / 2, z: c / 2 };
+      const tBack: Vec3 = { x: 0, y: b / 2, z: c / 2 };
+      keyPoints.tFront = tFront;
+      keyPoints.tBack = tBack;
+      auxSegments.push(
+        { from: center, to: tFront, label: "r", dashed: true },
+        { from: center, to: tBack, label: "r", dashed: true },
+      );
+    }
 
     return {
       radius,
       center,
-      keyPoints: {
-        Center: center,
-        tBottom,
-        tTop,
-        tFront,
-        tBack,
-        tRight,
-        tLeft,
-      },
-      auxSegments: [
-        { from: center, to: tBottom, label: "r", dashed: true },
-        { from: center, to: tTop, label: "r", dashed: true },
-        { from: center, to: tFront, label: "r", dashed: true },
-        { from: center, to: tRight, label: "r", dashed: true },
-      ],
+      keyPoints,
+      auxSegments,
       solidVolume,
       solidArea,
       sphereVolume,
@@ -145,6 +177,7 @@ export function calculatePyramidSphere(
       solidArea,
       sphereVolume,
       sphereArea,
+      slantHeight: hs,
     };
   } else {
     // r = 3V / S表 = a*h / (a + 2hs)
@@ -174,6 +207,7 @@ export function calculatePyramidSphere(
       solidArea,
       sphereVolume,
       sphereArea,
+      slantHeight: hs,
     };
   }
 }
@@ -222,6 +256,9 @@ export function calculatePrismSphere(
       solidArea,
       sphereVolume,
       sphereArea,
+      baseHypotenuse: cHyp,
+      baseCircumRadius: rBaseCircum,
+      baseInRadius: rBaseIn,
     };
   } else {
     const radius = Math.min(rBaseIn, h / 2);
@@ -229,25 +266,47 @@ export function calculatePrismSphere(
     const sphereVolume = (4 / 3) * Math.PI * radius ** 3;
     const sphereArea = 4 * Math.PI * radius ** 2;
 
-    const tBottom: Vec3 = { x: rBaseIn, y: rBaseIn, z: 0 };
-    const tTop: Vec3 = { x: rBaseIn, y: rBaseIn, z: h };
-    const tSideA: Vec3 = { x: rBaseIn, y: 0, z: h / 2 };
-    const tSideB: Vec3 = { x: 0, y: rBaseIn, z: h / 2 };
+    const keyPoints: Record<string, Vec3> = { Center: center };
+    const auxSegments: {
+      from: Vec3;
+      to: Vec3;
+      label?: string;
+      dashed?: boolean;
+    }[] = [];
+
+    if (Math.abs(h / 2 - radius) < EPSILON) {
+      const tBottom: Vec3 = { x: rBaseIn, y: rBaseIn, z: 0 };
+      const tTop: Vec3 = { x: rBaseIn, y: rBaseIn, z: h };
+      keyPoints.tBottom = tBottom;
+      keyPoints.tTop = tTop;
+      auxSegments.push(
+        { from: center, to: tBottom, label: "r", dashed: true },
+        { from: center, to: tTop, label: "r", dashed: true },
+      );
+    }
+    if (Math.abs(rBaseIn - radius) < EPSILON) {
+      const tSideA: Vec3 = { x: rBaseIn, y: 0, z: h / 2 };
+      const tSideB: Vec3 = { x: 0, y: rBaseIn, z: h / 2 };
+      keyPoints.tSideA = tSideA;
+      keyPoints.tSideB = tSideB;
+      auxSegments.push(
+        { from: center, to: tSideA, label: "r", dashed: true },
+        { from: center, to: tSideB, label: "r", dashed: true },
+      );
+    }
 
     return {
       radius,
       center,
-      keyPoints: { Center: center, tBottom, tTop, tSideA, tSideB },
-      auxSegments: [
-        { from: center, to: tBottom, label: "r", dashed: true },
-        { from: center, to: tTop, label: "r", dashed: true },
-        { from: center, to: tSideA, label: "r", dashed: true },
-        { from: center, to: tSideB, label: "r", dashed: true },
-      ],
+      keyPoints,
+      auxSegments,
       solidVolume,
       solidArea,
       sphereVolume,
       sphereArea,
+      baseHypotenuse: cHyp,
+      baseCircumRadius: rBaseCircum,
+      baseInRadius: rBaseIn,
     };
   }
 }
@@ -289,6 +348,7 @@ export function calculateConeSphere(
       solidArea,
       sphereVolume,
       sphereArea,
+      generatrixLength: l,
     };
   } else {
     // rIn = r*h / (r + l)
@@ -321,6 +381,7 @@ export function calculateConeSphere(
       solidArea,
       sphereVolume,
       sphereArea,
+      generatrixLength: l,
     };
   }
 }
@@ -365,17 +426,33 @@ export function calculateCylinderSphere(
     const sphereVolume = (4 / 3) * Math.PI * radius ** 3;
     const sphereArea = 4 * Math.PI * radius ** 2;
 
-    const tSide: Vec3 = { x: r, y: 0, z: h / 2 };
+    const keyPoints: Record<string, Vec3> = { O1, O2, Center: center };
+    const auxSegments: {
+      from: Vec3;
+      to: Vec3;
+      label?: string;
+      dashed?: boolean;
+    }[] = [];
+
+    if (Math.abs(h / 2 - radius) < EPSILON) {
+      keyPoints.tBottom = O1;
+      keyPoints.tTop = O2;
+      auxSegments.push(
+        { from: center, to: O1, label: "r", dashed: true },
+        { from: center, to: O2, label: "r", dashed: true },
+      );
+    }
+    if (Math.abs(r - radius) < EPSILON) {
+      const tSide: Vec3 = { x: r, y: 0, z: h / 2 };
+      keyPoints.tSide = tSide;
+      auxSegments.push({ from: center, to: tSide, label: "r", dashed: true });
+    }
 
     return {
       radius,
       center,
-      keyPoints: { O1, O2, Center: center, tSide },
-      auxSegments: [
-        { from: center, to: O1, label: "r", dashed: true },
-        { from: center, to: O2, label: "r", dashed: true },
-        { from: center, to: tSide, label: "r", dashed: true },
-      ],
+      keyPoints,
+      auxSegments,
       solidVolume,
       solidArea,
       sphereVolume,

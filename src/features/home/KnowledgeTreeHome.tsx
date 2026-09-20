@@ -126,7 +126,8 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
     key: "solid_geometry",
     title: "立体几何空间直观与代数建系",
     badge: "15 题解答 · 13分",
-    description: "四大外接球模型、二面角动态翻折、空间截面与法向量空间角/距",
+    description:
+      "旋转体、位置判定、空间向量基底、四大外接球模型、动态翻折、截面与空间角距等 12 个考点",
     icon: Box,
     gradient: "from-emerald-500 to-teal-600",
     borderLight: "border-emerald-200",

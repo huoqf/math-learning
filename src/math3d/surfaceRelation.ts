@@ -24,9 +24,9 @@ export function calculateParallelJudgeState(
   const lineAStart: Vec3 = {
     x: -2.5,
     y: 0,
-    z: isIntersect ? zHeight : zHeight,
+    z: zHeight,
   };
-  const lineAEnd: Vec3 = { x: 2.5, y: 0, z: isIntersect ? zHeight : zHeight };
+  const lineAEnd: Vec3 = { x: 2.5, y: 0, z: zHeight };
 
   let lineBStart: Vec3;
   let lineBEnd: Vec3;

@@ -18,7 +18,6 @@ import type { Vec3 } from "@/math3d/vector3";
 
 interface DihedralModeSceneProps {
   c: number;
-  lambda: number;
   vertices: CuboidVertices;
   dihedralData: DihedralAngleResult;
   showAxes: boolean;
@@ -33,7 +32,6 @@ interface DihedralModeSceneProps {
 
 export default function DihedralModeScene({
   c,
-  lambda,
   vertices,
   dihedralData,
   showAxes,
@@ -53,7 +51,7 @@ export default function DihedralModeScene({
       {showAxes && showCoordinates ? (
         <FormulaLabel3D
           position={E}
-          tex={`E(0,0,${Number((lambda * c).toFixed(2))})`}
+          tex={`E(0,0,${Number(E.z.toFixed(2))})`}
           offset={[-0.25, -0.2, 0.1]}
         />
       ) : (

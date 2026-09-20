@@ -34,23 +34,20 @@ export function buildAdvancedSpherePanel(
     const r2 = params.r2 ?? 3.5;
     const c = params.c ?? 3;
     const res = calculatePerpPlanesSphere(r1, r2, c);
-    const halfC = c / 2;
-    const d1 = Math.sqrt(Math.max(0, r1 * r1 - halfC * halfC));
-    const d2 = Math.sqrt(Math.max(0, r2 * r2 - halfC * halfC));
-    const OH = Math.sqrt(d1 * d1 + d2 * d2);
+    const OH = res.centerDistance;
     const R2 = res.radius * res.radius;
 
     quantities.push(
       {
         label: "底面外心距 d₁ (OO₂)",
         symbol: "d_1",
-        value: Number(d1.toFixed(2)),
+        value: Number(res.d1.toFixed(2)),
         color: MATH_COLORS.paramPrimary,
       },
       {
         label: "侧面外心距 d₂ (OO₁)",
         symbol: "d_2",
-        value: Number(d2.toFixed(2)),
+        value: Number(res.d2.toFixed(2)),
         color: MATH_COLORS.paramSecondary,
       },
       {
@@ -106,8 +103,8 @@ export function buildAdvancedSpherePanel(
       {
         step: 2,
         title: "勾股定理代入已知求弦心距",
-        detail: `代入当前参数 r₁ = ${r1}, r₂ = ${r2}, c = ${c} (交线半长 c/2 = ${halfC.toFixed(1)})，分别在两截面圆中解直角三角形求弦心距：`,
-        latex: `d_1 = \\sqrt{r_1^2 - (c/2)^2} = \\sqrt{${r1}^2 - ${halfC.toFixed(1)}^2} \\approx ${d1.toFixed(2)}, \\quad d_2 = \\sqrt{r_2^2 - (c/2)^2} \\approx ${d2.toFixed(2)}`,
+        detail: `代入当前参数 r₁ = ${res.r1.toFixed(1)}, r₂ = ${res.r2.toFixed(1)}, c = ${res.c.toFixed(2)} (交线半长 c/2 = ${res.halfC.toFixed(2)})，分别在两截面圆中解直角三角形求弦心距：`,
+        latex: `d_1 = \\sqrt{r_1^2 - (c/2)^2} = \\sqrt{${res.r1.toFixed(1)}^2 - ${res.halfC.toFixed(2)}^2} \\approx ${res.d1.toFixed(2)}, \\quad d_2 = \\sqrt{r_2^2 - (c/2)^2} \\approx ${res.d2.toFixed(2)}`,
         rubric: "[高考采分点] 正确利用截面圆弦心距勾股定理 (+2分)",
       },
       {
@@ -115,7 +112,7 @@ export function buildAdvancedSpherePanel(
         title: "勾股差定理求解外接球半径与面积",
         detail:
           "外接球球心 O 到任意顶点的距离即为半径 R。利用空间矩形对角线与勾股差公式直接解出：",
-        latex: `R^2 = d_1^2 + d_2^2 + \\left(\\frac{c}{2}\\right)^2 = r_1^2 + r_2^2 - \\left(\\frac{c}{2}\\right)^2 = ${r1}^2 + ${r2}^2 - ${halfC.toFixed(1)}^2 = ${R2.toFixed(2)} \\implies R \\approx ${res.radius.toFixed(3)}`,
+        latex: `R^2 = d_1^2 + d_2^2 + \\left(\\frac{c}{2}\\right)^2 = r_1^2 + r_2^2 - \\left(\\frac{c}{2}\\right)^2 = ${res.r1.toFixed(1)}^2 + ${res.r2.toFixed(1)}^2 - ${res.halfC.toFixed(2)}^2 = ${R2.toFixed(2)} \\implies R \\approx ${res.radius.toFixed(3)}`,
         rubric: "[高考采分点] 正确写出外接球半径方程并求解 (+2分)",
       },
     );
@@ -125,9 +122,9 @@ export function buildAdvancedSpherePanel(
       importance: "gaokao",
     });
 
-    if (c >= 2 * Math.min(r1, r2)) {
+    if (res.isClamped) {
       warnings.push({
-        text: `当前交线长 c = ${c} 接近外接圆直径 2·min(r₁, r₂)，三角形在对应外接圆上达到极限临界！`,
+        text: `当前输入交线长 c = ${c} 超过两外接圆容许上限，已被几何约束收敛为安全值 ${res.c.toFixed(2)}，以保证截面圆弦心距有效。`,
         level: "warning",
       });
     }
@@ -180,13 +177,15 @@ export function buildAdvancedSpherePanel(
         detail:
           "正四面体具备高度空间对称性，各面重心、各棱中垂线与顶点高线完全交于一点，即为三球公共球心 O。",
         latex: `O_{\\text{内}} = O_{\\text{棱}} = O_{\\text{外}} = O`,
+        rubric: "[高考采分点] 判定正四面体空间对称中心为公共球心 (+4分)",
       },
       {
         step: 2,
-        title: "代入棱长 a 计算三球特征半径",
-        detail: `代入当前棱长 a = ${a}，直接套用黄金比例解析式求得半径：`,
-        latex: `r_{\\text{内}} = \\frac{\\sqrt{6}}{12}a \\approx ${res.inRadius.toFixed(3)}, \\quad r_{\\text{棱}} = \\frac{\\sqrt{2}}{4}a \\approx ${res.edgeRadius.toFixed(3)}, \\quad R_{\\text{外}} = \\frac{\\sqrt{6}}{4}a \\approx ${res.circumRadius.toFixed(3)}`,
-        rubric: "[秒杀提速] 考场直接应用口诀“一比根三比上三”秒杀填空压轴",
+        title: "代入棱长 a 计算三球特征半径与固定倍数",
+        detail: `代入当前棱长 a = ${a}，直接套用黄金比例解析式求得三球半径。外接球半径是内切球半径的 3 倍，棱切球切于 6 条棱的中点：`,
+        latex: `r_{\\text{内}} = \\frac{\\sqrt{6}}{12}a \\approx ${res.inRadius.toFixed(3)}, \\quad r_{\\text{棱}} = \\frac{\\sqrt{2}}{4}a \\approx ${res.edgeRadius.toFixed(3)}, \\quad R_{\\text{外}} = \\frac{\\sqrt{6}}{4}a \\approx ${res.circumRadius.toFixed(3)} \\implies \\frac{R_{\\text{外}}}{r_{\\text{内}}} = 3`,
+        rubric:
+          "[高考采分点] 准确计算三球特征半径数值并说明内外球固定倍数 (+5分)",
       },
     );
 
@@ -195,6 +194,10 @@ export function buildAdvancedSpherePanel(
       latex: `r_{\\text{内}} = \\frac{\\sqrt{6}}{12}a, \\quad r_{\\text{棱}} = \\frac{\\sqrt{2}}{4}a, \\quad R_{\\text{外}} = \\frac{\\sqrt{6}}{4}a`,
       level: "core",
       note: "内切球（切4个面重心）、棱切球（切6条棱中点）、外接球（过4个顶点）三球球心完全重合于中心 O",
+      // 「棱切球」（与 6 条棱均相切）在 2019 人教A版正文未列，属常用拓展模型，
+      // 按项目条目级拓展标注契约显式声明，避免被超纲术语门禁误判为未声明超纲。
+      isExtension: true,
+      extensionBadge: "拓展 · 超出课标",
     });
 
     gaokaoPoints.push({
@@ -207,8 +210,6 @@ export function buildAdvancedSpherePanel(
     const h = params.h ?? 4.24;
     const res = calculateTruncatedConeSphere(r1, r2, h);
 
-    const d = (h * h + r1 * r1 - r2 * r2) / (2 * h);
-
     quantities.push(
       {
         label: "母线长 l",
@@ -219,7 +220,7 @@ export function buildAdvancedSpherePanel(
       {
         label: "球心偏心距 d",
         symbol: "d",
-        value: Number(d.toFixed(2)),
+        value: Number(res.centerOffsetBottom.toFixed(2)),
         color: MATH_COLORS.accent,
       },
       {
@@ -229,6 +230,13 @@ export function buildAdvancedSpherePanel(
         color: MATH_COLORS.sphereShell,
       },
     );
+
+    if (res.isClamped) {
+      warnings.push({
+        text: `圆台几何参数已自动调整为安全边界（下底半径已约束大于上底），确保几何结构有效。`,
+        level: "info",
+      });
+    }
 
     if (res.hasInSphere) {
       quantities.push({
@@ -254,13 +262,13 @@ export function buildAdvancedSpherePanel(
     );
 
     gaokaoPoints.push({
-      text: "【圆台切接球降维通法】旋转体的切接球问题一律通过“轴截面”转化为平面等腰梯形的外接圆与内切圆问题。注意内切球存在的充要临界条件为 h = 2√(r₁r₂)。",
+      text: "【圆台切接球降维通法】通过圆台轴截面转化为等腰梯形切接圆问题，内切球存在充要条件为母线等于上下底半径和 $l = r_1 + r_2$，此时高 $h = 2\\sqrt{r_1 r_2}$。（本页口径：$r_1$ 为上底半径、$r_2$ 为下底半径，与「旋转体」页 $r_1$ 为下底、$r_2$ 为上底相反，套公式时注意对应）",
       importance: "gaokao",
     });
 
     if (res.hasInSphere) {
       warnings.push({
-        text: `当前高度 h ≈ 2√(r₁r₂)，严格满足等腰梯形内切圆充要条件，内切球完美呈现！`,
+        text: `当前高度 h ≈ 2√(r₁r₂)，在数值容差 |h − 2√(r₁r₂)| < 0.1 内可视为满足等腰梯形内切圆充要条件（该判据为近似判定，非严格相等），内切球按此呈现。`,
         level: "info",
       });
     }
@@ -284,13 +292,13 @@ export function buildAdvancedSpherePanel(
         color: MATH_COLORS.primary,
       },
       {
-        label: "理论最大体积 $V_max$",
+        label: "理论最大体积 $V_{\\max}$",
         symbol: "V_{\\max}",
         value: Number(res.maxVolume.toFixed(2)),
         color: MATH_COLORS.accent,
       },
       {
-        label: "极值高 $h_opt$",
+        label: "极值高 $h_{\\text{opt}}$",
         symbol: "h_{\\text{opt}}",
         value: Number(res.optimalH.toFixed(2)),
         color: MATH_COLORS.paramTertiary,

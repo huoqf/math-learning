@@ -87,7 +87,7 @@ describe("多面体与旋转体外接球、内切球：通用三屏契约同步�
         },
         expectedExamAnchor: "等体积剖分",
         expectedMnemonic: "总体积等于各分锥之和",
-        expectedReasoningSymbols: ["3V", "S_{全}"],
+        expectedReasoningSymbols: ["3V", "S_{\\text{全}}"],
       },
     ]);
   });

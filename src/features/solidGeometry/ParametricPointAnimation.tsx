@@ -80,11 +80,6 @@ export default function ParametricPointAnimation() {
   const C1: Vec3 = { x: a, y: b, z: c };
   const D1: Vec3 = { x: 0, y: b, z: c };
 
-  // 动点 P 在侧棱 BB1 上 (z 方向参数化)
-  const P: Vec3 = { x: a, y: 0, z: lambda * c };
-  // 动点 Q 在底面对角线 AC 上 (参数化)
-  const Q: Vec3 = { x: a * mu, y: b * mu, z: 0 };
-
   // 2. 纯数学算法解算
   const resSingle = useMemo(
     () => calculateSinglePointAngle(a, b, c, lambda, targetThetaDeg),
@@ -94,6 +89,10 @@ export default function ParametricPointAnimation() {
     () => calculateDoublePointDistance(a, b, c, lambda, mu),
     [a, b, c, lambda, mu],
   );
+
+  // 动点 P, Q 均由纯函数结构化结果直接透出，杜绝手算
+  const P: Vec3 = resSingle.P;
+  const Q: Vec3 = resDouble.Q;
   const resVolume = useMemo(
     () => calculatePyramidVolumeExtrema(a, b, c, lambda),
     [a, b, c, lambda],
@@ -165,6 +164,14 @@ export default function ParametricPointAnimation() {
         }));
       } else if (pKey === "optimalBottom") {
         setParams((prev) => ({ ...prev, lambda: 0.4 }));
+      } else if (pKey === "optimalFront") {
+        setParams((prev) => ({
+          ...prev,
+          a: 2,
+          b: 5,
+          c: 1,
+          lambda: 0.28,
+        }));
       } else if (pKey === "midpointPath") {
         setParams((prev) => ({ ...prev, lambda: 0.5 }));
       }
@@ -327,9 +334,9 @@ export default function ParametricPointAnimation() {
           variant: "accent" as const,
           badge: "立体几何经典 · 表面最短路径化曲为平",
           condition:
-            "长方体表面寻找从顶点 A 沿外表面到达相对顶点 C₁ 的折线最短路径，动折点 P 位于侧棱 BB₁ 上。",
+            "长方体表面寻找从顶点 $A$ 沿外表面到达相对顶点 $C_1$ 的折线最短路径，动折点 $P$ 可位于侧棱 $BB_1$ 或经顶侧、底侧前棱展开。",
           question:
-            "运用“化曲为平”展开法，比较侧面展开与底侧展开两种路线的长度，求全局最短距离并确定侧棱上的最佳折点 P₁ 位置。",
+            "运用“化曲为平”展开法，比较侧面展开（跨棱 $BB_1$）、跨底后棱 $DC$（等价于跨顶棱 $A_1B_1$）与跨底前棱 $BC$ 三种路线的长度，求全局最短距离并确定各棱上的最佳折点位置。",
         };
     }
     // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
@@ -445,6 +452,10 @@ export default function ParametricPointAnimation() {
                           {
                             key: "optimalBottom",
                             label: "底面展开对比",
+                          },
+                          {
+                            key: "optimalFront",
+                            label: "前棱展开对比",
                           },
                           {
                             key: "midpointPath",

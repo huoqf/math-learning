@@ -86,5 +86,16 @@ describe("parametricPoint 纯数学算法单元测试", () => {
     // 最优 lambda1 = 4 / 7 ≈ 0.5714
     expect(res.optimalLambda1).toBeCloseTo(4 / 7);
     expect(res.globalMinLength).toBeLessThanOrEqual(res.currentPathLength);
+
+    // 反例测试：a=2, b=5, c=1
+    // path1 = sqrt(7^2 + 1^2) = sqrt(50) ≈ 7.0711
+    // path2 = sqrt(2^2 + 6^2) = sqrt(40) ≈ 6.3246
+    // path3 = sqrt(3^2 + 5^2) = sqrt(34) ≈ 5.8310
+    const resCounter = calculateSurfacePath(2, 5, 1, 0.5);
+    expect(resCounter.path1Length).toBeCloseTo(Math.sqrt(50), 4);
+    expect(resCounter.path2Length).toBeCloseTo(Math.sqrt(40), 4);
+    expect(resCounter.path3Length).toBeCloseTo(Math.sqrt(34), 4);
+    expect(resCounter.globalMinLength).toBeCloseTo(Math.sqrt(34), 4);
+    expect(resCounter.bestPathType).toBe("bottom_BC");
   });
 });

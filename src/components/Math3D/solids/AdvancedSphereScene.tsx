@@ -503,6 +503,38 @@ export const AdvancedSphereScene = ({
                     />
                   </>
                 )}
+
+                {/* 三球半径连线（同源于球心 O）：外接 R = |OV₀|、棱切 r_棱、内切 r_内。
+                    此前只有球壳与切点，三条半径的长度关系（1 : √3 : 3）无法从图上读出。 */}
+                {showSphere && showAuxLines && (
+                  <>
+                    <Segment3D
+                      from={concentricData.center}
+                      to={V0}
+                      colorKey="sphereShell"
+                      dashed
+                      lineWidth={2.2}
+                    />
+                    {concentricData.edgeTangents[0] && (
+                      <Segment3D
+                        from={concentricData.center}
+                        to={concentricData.edgeTangents[0]}
+                        colorKey="paramTertiary"
+                        dashed
+                        lineWidth={1.8}
+                      />
+                    )}
+                    {concentricData.faceTangents[0] && (
+                      <Segment3D
+                        from={concentricData.center}
+                        to={concentricData.faceTangents[0]}
+                        colorKey="inSphereShell"
+                        dashed
+                        lineWidth={1.8}
+                      />
+                    )}
+                  </>
+                )}
               </>
             );
           })()}

@@ -28,6 +28,8 @@ export interface CylinderModelResult {
   center: Vec3;
   /** 底面外接圆半径 r_base */
   rBase: number;
+  /** 底面直角三角形斜边长 c_base */
+  cBase: number;
   /** 高度 h */
   height: number;
   /** 外接球半径 R */
@@ -149,6 +151,7 @@ export function calculateCylinderModel(
     topCenter,
     center,
     rBase,
+    cBase,
     height: safeH,
     radius,
     surfaceArea,
@@ -230,6 +233,8 @@ export interface VerticalEdgeModelResult {
   center: Vec3;
   /** 底面外接圆半径 r_base */
   rBase: number;
+  /** 底面直角三角形斜边长 c_base */
+  cBase: number;
   /** 侧棱长 h */
   height: number;
   /** 外接球半径 R = sqrt(r_base^2 + (h/2)^2) */
@@ -273,7 +278,8 @@ export function calculateVerticalEdgeModel(
   const B: Vec3 = { x: 0, y: safeB, z: 0 };
   const P: Vec3 = { x: safeA, y: 0, z: safeH }; // PA ⊥ 底面 ABC
 
-  const rBase = Math.sqrt(safeA * safeA + safeB * safeB) / 2;
+  const cBase = Math.sqrt(safeA * safeA + safeB * safeB);
+  const rBase = cBase / 2;
   const bottomCenter: Vec3 = { x: safeA / 2, y: safeB / 2, z: 0 };
   const center: Vec3 = { x: safeA / 2, y: safeB / 2, z: safeH / 2 };
 
@@ -287,6 +293,7 @@ export function calculateVerticalEdgeModel(
     bottomCenter,
     center,
     rBase,
+    cBase,
     height: safeH,
     radius,
     surfaceArea,

@@ -75,21 +75,6 @@ export default function SpatialDistanceAnimation() {
   const lambda = params.lambda ?? 0.5;
   const mu = params.mu ?? 0.4;
 
-  // 长方体 8 个顶点坐标
-  const vertices: CuboidVertices = useMemo(() => {
-    const A: Vec3 = { x: 0, y: 0, z: 0 };
-    const B: Vec3 = { x: a, y: 0, z: 0 };
-    const C: Vec3 = { x: a, y: b, z: 0 };
-    const D: Vec3 = { x: 0, y: b, z: 0 };
-    const A1: Vec3 = { x: 0, y: 0, z: c };
-    const B1: Vec3 = { x: a, y: 0, z: c };
-    const C1: Vec3 = { x: a, y: b, z: c };
-    const D1: Vec3 = { x: 0, y: b, z: c };
-    const E: Vec3 = { x: 0, y: 0, z: lambda * c };
-
-    return { A, B, C, D, A1, B1, C1, D1, E };
-  }, [a, b, c, lambda]);
-
   // 纯数学模型解算
   const isSideEdgeModel = modelPreset === "sideEdge";
   const isCubeModel = modelPreset === "cube" || modelPreset === "cubeThird";
@@ -102,6 +87,21 @@ export default function SpatialDistanceAnimation() {
   const pointPlaneData = useMemo(() => {
     return solvePointToPlaneDistance(a, b, c, lambda);
   }, [a, b, c, lambda]);
+
+  // 几何顶点与动点 (SSOT 绑定纯数学层 pointPlaneData.E，消除 lambda=0 退化不同源)
+  const vertices: CuboidVertices = useMemo(() => {
+    const A: Vec3 = { x: 0, y: 0, z: 0 };
+    const B: Vec3 = { x: a, y: 0, z: 0 };
+    const C: Vec3 = { x: a, y: b, z: 0 };
+    const D: Vec3 = { x: 0, y: b, z: 0 };
+    const A1: Vec3 = { x: 0, y: 0, z: c };
+    const B1: Vec3 = { x: a, y: 0, z: c };
+    const C1: Vec3 = { x: a, y: b, z: c };
+    const D1: Vec3 = { x: 0, y: b, z: c };
+    const E: Vec3 = { x: 0, y: 0, z: pointPlaneData.zE };
+
+    return { A, B, C, D, A1, B1, C1, D1, E };
+  }, [a, b, c, pointPlaneData]);
 
   // 右屏看板数据 (SSOT: 将正方体判定显式传入 config，使中右屏同源)
   const isCube =
@@ -492,7 +492,6 @@ export default function SpatialDistanceAnimation() {
                   activeMode === "volumeExtrema") && (
                   <DistanceModeScene
                     c={c}
-                    lambda={lambda}
                     vertices={vertices}
                     distanceData={pointPlaneData}
                     showAxes={showAxes}

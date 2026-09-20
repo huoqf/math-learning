@@ -25,35 +25,17 @@ vi.mock("@/components/Math", () => ({
   SceneLabelGroup: () => null,
 }));
 
-vi.mock("@/components/Layout/ThreeDCanvas", () => ({
-  ThreeDCanvas: ({
-    legend,
-  }: {
-    children?: React.ReactNode;
-    legend?: React.ReactNode;
-  }) => <div data-testid="threed-canvas">{legend}</div>,
-}));
+// P1-14：不再把 3D 层整包 mock 成 null（那会让 3D 元素树永不渲染），
+// 改为只替身「必须 WebGL / 必须 R3F 上下文」的边界，Math3D/* 与各 Scene 真实执行。
+vi.mock("@react-three/fiber", async () => {
+  const h = await import("@/test/harness/threeTestLayer");
+  return h.fiberMock;
+});
 
-vi.mock("@/components/Math3D", () => ({
-  Legend3D: () => <div data-testid="legend-3d" />,
-  CameraRig: () => null,
-  ModeSwitchOverlay3D: () => null,
-  Segment3D: () => null,
-  Vector3DArrow: () => null,
-  Point3D: () => null,
-  PointLabel3D: () => null,
-  FormulaLabel3D: () => null,
-  CompoundLabel3D: () => null,
-  AngleArc3D: () => null,
-  Polygon3DFace: () => null,
-  Scene3DGrid: () => null,
-  ThreeViewsPanel: () => null,
-  Plane3D: () => null,
-  VertexLabelGroup3D: () => null,
-  RightTriangle3D: () => null,
-  AffineBasis3D: () => null,
-  SectionPlane3D: () => null,
-}));
+vi.mock("@react-three/drei", async () => {
+  const h = await import("@/test/harness/threeTestLayer");
+  return h.dreiMock;
+});
 
 import { ConicLineAnimation } from "@/features/conicLine/ConicLineAnimation";
 import { ConicDefinitionAnimation } from "@/features/conicDefinition/ConicDefinitionAnimation";

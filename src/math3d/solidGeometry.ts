@@ -5,10 +5,6 @@
  *       正四面体外接/内切球、球体积与表面积。
  */
 
-/** 长方体外接球半径：R = √(a²+b²+c²)/2 */
-export const cuboidCircumRadius = (a: number, b: number, c: number): number =>
-  Math.sqrt(a * a + b * b + c * c) / 2;
-
 /** 正四面体外接球半径：R = (√6/4)a */
 export const regularTetrahedronCircumRadius = (edge: number): number =>
   (edge * Math.sqrt(6)) / 4;
@@ -48,3 +44,26 @@ export const regularPolygonCircumRadius = (
 /** 正 n 棱锥底面面积 */
 export const regularPolygonArea = (sideLength: number, n: number): number =>
   (n * sideLength * sideLength) / (4 * Math.tan(Math.PI / n));
+
+/** 圆柱轴截面对角线：d = √((2r)² + h²) */
+export const cylinderAxialDiagonal = (r: number, h: number): number =>
+  Math.sqrt(4 * r * r + h * h);
+
+/** 圆柱侧面展开最短路径：L = √((2πr)² + h²) */
+export const cylinderLateralShortestPath = (r: number, h: number): number =>
+  Math.sqrt((2 * Math.PI * r) ** 2 + h * h);
+
+/**
+ * 球截面圆半径（球心距 d 截球）：r = √(R² − d²)
+ * d ≥ R 时截面退化为切点或无公共点，返回 0
+ */
+export const sphereSectionRadius = (R: number, d: number): number =>
+  Math.abs(d) >= R ? 0 : Math.sqrt(Math.max(0, R * R - d * d));
+
+/** 圆锥母线长：l = √(r² + h²) */
+export const coneGeneratrix = (r: number, h: number): number =>
+  Math.hypot(r, h);
+
+/** 圆台母线长：l = √((r1 - r2)² + h²) */
+export const frustumGeneratrix = (r1: number, r2: number, h: number): number =>
+  Math.hypot(r1 - r2, h);

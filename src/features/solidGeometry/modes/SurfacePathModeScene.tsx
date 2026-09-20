@@ -18,13 +18,15 @@ export default function SurfacePathModeScene({
   C1,
   resPath,
 }: SurfacePathModeSceneProps) {
+  const isOptimalSide = resPath.bestPathType === "side_BB1";
+
   return (
     <>
-      {/* 折线段 AP 与 PC1 (纯几何线段，无箭头) */}
+      {/* 实时探索折线段 AP 与 PC1 (纯几何线段，无箭头) */}
       <Segment3D from={A} to={P} colorKey="highlight" lineWidth={3} />
       <Segment3D from={P} to={C1} colorKey="highlight" lineWidth={3} />
 
-      {/* 理论最佳折点 P1 指示 */}
+      {/* 侧棱 BB1 上的理论最佳折点 P1 */}
       <Point3D position={resPath.optimalP1} colorKey="paramTertiary" />
       <CompoundLabel3D
         position={resPath.optimalP1}
@@ -32,6 +34,33 @@ export default function SurfacePathModeScene({
         subscript="1"
         offset={[-0.3, 0, 0.1]}
       />
+
+      {/* 若全局最优不在侧棱 BB1 上，额外高亮标出全局最优折点 P* (如前底棱或后底棱) */}
+      {!isOptimalSide && (
+        <>
+          <Point3D position={resPath.globalOptimalP} colorKey="paramPrimary" />
+          <CompoundLabel3D
+            position={resPath.globalOptimalP}
+            base="P"
+            subscript="*"
+            offset={[0, -0.2, 0.15]}
+          />
+          <Segment3D
+            from={A}
+            to={resPath.globalOptimalP}
+            colorKey="paramPrimary"
+            lineWidth={2}
+            dashed
+          />
+          <Segment3D
+            from={resPath.globalOptimalP}
+            to={C1}
+            colorKey="paramPrimary"
+            lineWidth={2}
+            dashed
+          />
+        </>
+      )}
     </>
   );
 }

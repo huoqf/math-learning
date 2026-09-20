@@ -87,20 +87,16 @@ export function buildSectionPanel(
   } else if (mode === "extrema") {
     quantities.push(
       {
-        label: "截面积理论极小值",
+        label: "截面积采样极小值",
         symbol: "S_{\\min}",
         value: minArea.toFixed(2),
         color: MATH_COLORS.paramTertiary,
-        isInvariant: true,
-        invariantNote: "动点 P 沿侧棱滑动区间极小值",
       },
       {
-        label: "截面积理论极大值",
+        label: "截面积采样极大值",
         symbol: "S_{\\max}",
         value: maxArea.toFixed(2),
         color: MATH_COLORS.highlight,
-        isInvariant: true,
-        invariantNote: "动点 P 沿侧棱滑动区间极大值",
       },
     );
   } else {
@@ -119,11 +115,11 @@ export function buildSectionPanel(
       name: `${methodName} · 依据（${stepTitle || `Step ${stepNum}`}）`,
       latex:
         methodName === "直接连线法"
-          ? "A, B \\in \\alpha \\implies AB \\subset \\alpha \\quad (\\text{基本事实 1})"
+          ? "A, B \\in \\alpha \\implies AB \\subset \\alpha \\quad (\\text{基本事实 2})"
           : methodName === "面面平行线法"
             ? "\\alpha \\parallel \\beta, \\, \\gamma \\cap \\alpha = l_1, \\, \\gamma \\cap \\beta = l_2 \\implies l_1 \\parallel l_2"
             : stepNum === 1
-              ? "A, B \\in \\alpha \\implies AB \\subset \\alpha \\quad (\\text{基本事实 1})"
+              ? "A, B \\in \\alpha \\implies AB \\subset \\alpha \\quad (\\text{基本事实 2})"
               : stepNum === 2
                 ? "P \\in \\alpha \\cap \\beta \\implies P \\in l \\quad (\\text{基本事实 3})"
                 : stepNum === 3
@@ -214,7 +210,7 @@ export function buildSectionPanel(
         detail:
           "审视题设已知点 P, Q, R：同在某一侧面的两点直接连结得截线；将截线与底面对应棱延长相交，求出底面的公共交轨外点 K₁、K₂，完成作图第一步。",
         rubric:
-          "得分点 (4分)：正确指出同面截线，并利用基本事实 3 延长相交求得底面外点 K₁、K₂",
+          "[高考采分点] 正确指出同面截线，并利用基本事实 3 延长相交求得底面外点 K₁、K₂ (+4分)",
       },
       {
         step: 2,
@@ -223,16 +219,16 @@ export function buildSectionPanel(
         detail:
           "以几何体底面三垂直边建立空间直角坐标系，写出已知点 P, Q, R 的精确坐标与向量 PQ, PR；设截面法向量为 n=(x,y,z)，由垂直条件联立方程组求得法向量，算出二面角余弦 cosθ。",
         rubric:
-          "得分点 (4分)：准确建立空间直角坐标系，联立方程组求解法向量与二面角余弦",
+          "[高考采分点] 准确建立空间直角坐标系，联立方程组求解法向量与二面角余弦 (+5分)",
       },
       {
         step: 3,
         title: "射影降维 · 面积公式精确求解",
         latex: `S_{\\text{截}} = \\frac{S_{\\text{投}}}{\\cos\\theta} = \\frac{${areaProj.toFixed(2)}}{${cosTheta.toFixed(4)}} = ${area3D.toFixed(2)}`,
         detail:
-          "计算截面在底面的正投影多边形面积 S_投；代入面积射影定理 S_截 = S_投 / cosθ，化空间为平面，直接精确求得截面多边形的实际面积！",
+          "计算截面在底面的正投影多边形面积 $S_{\\text{投}}$；代入面积射影定理 $S_{\\text{截}} = S_{\\text{投}} / \\cos\\theta$，化空间为平面，直接精确求得截面多边形的实际面积！",
         rubric:
-          "得分点 (4分)：正确求解底面正投影面积并应用射影公式求出截面实际面积",
+          "[高考采分点] 正确求解底面正投影面积并应用射影公式求出截面实际面积 (+4分)",
       },
     ];
   } else {
@@ -243,7 +239,7 @@ export function buildSectionPanel(
         latex: `P(t) = (1-t)A_0 + tA_1 \\quad (t \\in [0.05, 0.95])`,
         detail:
           "设动点 P 在侧棱上的位置比例为 t，固定定点 Q, R 坐标已知保持不变，由已知三点解出动切割平面方程。",
-        rubric: "得分点 (2分)：建立动点位置关于比例 t 的空间坐标表征",
+        rubric: "[高考采分点] 建立动点位置关于比例 t 的空间坐标表征 (+4分)",
       },
       {
         step: 2,
@@ -252,16 +248,16 @@ export function buildSectionPanel(
         detail:
           "动点 P(t) 沿侧棱从底向顶滑动时，截面与多面体各棱相交状态改变，截面边数在特定临界点发生突变（如三角形 ↔ 四边形 ↔ 六边形）。",
         rubric:
-          "得分点 (3分)：准确分析截面边数与拓扑状态发生改变的临界分水岭点",
+          "[高考采分点] 准确分析截面边数与拓扑状态发生改变的临界分水岭点 (+5分)",
       },
       {
         step: 3,
         title: "函数极值 · 面积函数区间最值求解",
-        latex: `S(t) = ${area3D.toFixed(2)}, \\quad S_{\\min} = ${minArea.toFixed(2)}, \\quad S_{\\max} = ${maxArea.toFixed(2)}`,
+        latex: `S(t_0) = ${area3D.toFixed(2)}, \\quad S_{\\min} \\approx ${minArea.toFixed(2)}, \\quad S_{\\max} \\approx ${maxArea.toFixed(2)}`,
         detail:
-          "结合几何投影关系或二次分段函数单调性，分析面积函数 S(t) 在区间 [0.05, 0.95] 上的极小值点与极大值点。",
+          "在区间 $t \\in [0.05, 0.95]$ 上等距采样求得近似极小值与极大值（理论分析可结合几何投影面积公式与二次分段函数单调性严格验证）。",
         rubric:
-          "得分点 (3~5分)：通过函数导数或几何最值原理准确求得截面面积的极值",
+          "[高考采分点] 结合几何最值或函数极值原理准确求得截面面积的极值 (+4分)",
       },
     ];
   }

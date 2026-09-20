@@ -12,6 +12,16 @@ export interface PerpPlanesSphereResult {
   center: Vec3;
   /** 外接球半径 R */
   radius: number;
+  /** 底面截面弦心距 d1 */
+  d1: number;
+  /** 侧面截面弦心距 d2 */
+  d2: number;
+  /** 球心到交线中点距离 |OH| = √(d₁² + d₂²) */
+  centerDistance: number;
+  /** 截面交线半长 c/2 */
+  halfC: number;
+  /** 参数是否触发安全边界钳制 */
+  isClamped: boolean;
   /** 底面外心 O1 */
   O1: Vec3;
   /** 侧面外心 O2 */
@@ -74,6 +84,11 @@ export function calculatePerpPlanesSphere(
     c: safeC,
     center,
     radius,
+    d1,
+    d2,
+    centerDistance: Math.hypot(d1, d2),
+    halfC,
+    isClamped: safeR1 !== r1 || safeR2 !== r2 || safeC !== c,
     O1,
     O2,
     H,
@@ -179,6 +194,8 @@ export interface TruncatedConeSphereResult {
   inCenter: Vec3;
   /** 理想内切临界高度 2*sqrt(r1*r2) */
   idealHForInSphere: number;
+  /** 参数是否触发安全边界钳制 */
+  isClamped: boolean;
 }
 
 /**
@@ -223,6 +240,7 @@ export function calculateTruncatedConeSphere(
     inRadius,
     inCenter,
     idealHForInSphere,
+    isClamped: safeR1 !== r1 || safeR2 !== r2 || safeH !== h,
   };
 }
 

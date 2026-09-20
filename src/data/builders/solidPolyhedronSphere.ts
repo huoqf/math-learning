@@ -145,7 +145,7 @@ export function buildPolyhedronSpherePanel(
       {
         label: "底面直角边 $a, b$ 与斜边 $c_base$",
         symbol: "a, b, c_{\\text{base}}",
-        value: `${a}, ${b}, ${Math.sqrt(a * a + b * b).toFixed(2)}`,
+        value: `${a}, ${b}, ${res.cBase.toFixed(2)}`,
         color: MATH_COLORS.paramPrimary,
       },
       {
@@ -206,7 +206,7 @@ export function buildPolyhedronSpherePanel(
       },
     );
 
-    const cBaseVal = Math.sqrt(a * a + b * b);
+    const cBaseVal = res.cBase;
     reasoningSteps.push(
       {
         step: 1,
@@ -278,6 +278,10 @@ export function buildPolyhedronSpherePanel(
         latex: `R = \\frac{1}{2}\\sqrt{x^2 + y^2 + z^2} = \\frac{1}{2}\\sqrt{\\frac{\\color{${MATH_COLORS.paramPrimary}}{a}^2 + \\color{${MATH_COLORS.paramSecondary}}{b}^2 + \\color{${MATH_COLORS.paramTertiary}}{c}^2}{2}}`,
         level: "important",
         note: "若四面体对棱两两相等为 a, b, c，可将其 4 个顶点嵌入长宽高为 x, y, z 的长方体对角线上，长方体外接球与四面体外接球完全重合",
+        // 「对棱相等四面体补形（汉堡模型）」是教材正文未列的常用拓展模型，
+        // 按项目条目级拓展标注契约显式声明（与 triangleSolve 海伦公式同一处理）。
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
       },
       {
         name: "长方体边长与对棱关系组",
@@ -391,8 +395,8 @@ export function buildPolyhedronSpherePanel(
       },
     );
 
-    const cBase = Math.sqrt(a * a + b * b);
     const rBaseVal = res.rBase;
+    const cBase = res.cBase;
     const halfH = h / 2;
     const rSq = Number((res.radius * res.radius).toFixed(2));
     reasoningSteps.push(

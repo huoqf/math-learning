@@ -39,7 +39,6 @@ export {
 } from "./rotationProfiles";
 
 export {
-  cuboidCircumRadius,
   regularTetrahedronCircumRadius,
   regularTetrahedronInRadius,
   regularPyramidCircumRadius,
@@ -49,6 +48,9 @@ export {
   inSphereRadiusByVolume,
   regularPolygonCircumRadius,
   regularPolygonArea,
+  cylinderAxialDiagonal,
+  cylinderLateralShortestPath,
+  sphereSectionRadius,
 } from "./solidGeometry";
 
 export type { LinePlaneRelation } from "./lineRelation";

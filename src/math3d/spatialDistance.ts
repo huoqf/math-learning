@@ -55,6 +55,13 @@ export interface SkewLinesDistanceResult {
 export interface PointPlaneDistanceResult {
   /** 动点 E 坐标 */
   E: Vec3;
+  /** 动点 E 实际高度 (钳制后安全值) */
+  zE: number;
+  /** 实际安全几何尺寸 */
+  safeA: number;
+  safeB: number;
+  safeC: number;
+  safeLambda: number;
   /** 垂足 H 坐标 */
   footH: Vec3;
   /** 截面 BDE 法向量 (整数组合) */
@@ -318,6 +325,11 @@ export function solvePointPlaneDistance(
 
   return {
     E,
+    zE,
+    safeA,
+    safeB,
+    safeC,
+    safeLambda,
     footH,
     nRaw,
     nUnit,

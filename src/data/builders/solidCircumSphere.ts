@@ -8,12 +8,13 @@ import type {
 } from "../types";
 import { MATH_COLORS } from "@/theme";
 import {
-  cuboidCircumRadius,
-  regularPyramidCircumRadius,
-  coneCircumRadius,
-  sphereVolume,
-  sphereSurfaceArea,
-} from "@/math3d/solidGeometry";
+  calculateCuboidSphere,
+  calculatePyramidSphere,
+  calculatePrismSphere,
+  calculateConeSphere,
+  calculateCylinderSphere,
+} from "@/math3d/circumInSphere";
+import { sphereVolume, sphereSurfaceArea } from "@/math3d/solidGeometry";
 
 // ── know-solid-ball: 外接球与内切球 ──
 
@@ -44,7 +45,8 @@ export function buildCircumSpherePanel(
   if (sphereType === "circum") {
     // ── 外接球模式 ──
     if (shape === "cuboid") {
-      radius = cuboidCircumRadius(a, b, c);
+      const res = calculateCuboidSphere(a, b, c, "circum");
+      radius = res.radius;
       examAnchor = "高考立体几何基础母题 · 墙角与长方体外接球模型";
       mnemonic = "体对角线即直径，(2R)² = a² + b² + c²，球心体对角线取中点。";
 
@@ -132,8 +134,9 @@ export function buildCircumSpherePanel(
       );
     } else if (shape === "regularPyramid") {
       // 正四棱锥 (底边长 a, 高 c)
-      const rBase = a / Math.sqrt(2);
-      radius = regularPyramidCircumRadius(rBase, c);
+      const res = calculatePyramidSphere(a, c, "circum");
+      radius = res.radius;
+      const rBase = (a * Math.SQRT2) / 2;
       examAnchor = "新高考高频常考题 · 正棱锥轴截面勾股法";
       mnemonic = "球心落在高线上，轴截面内列勾股，R² = r_底² + (h - R)²。";
 
@@ -208,8 +211,10 @@ export function buildCircumSpherePanel(
       );
     } else if (shape === "triangularPrism") {
       // 直三棱柱 (底面直角边 a, b, 高 c)
-      const rBase = Math.sqrt(a * a + b * b) / 2;
-      radius = Math.sqrt(rBase * rBase + (c / 2) ** 2);
+      const res = calculatePrismSphere(a, b, c, "circum");
+      radius = res.radius;
+      // calculatePrismSphere 恒定返回底面斜边/外接圆半径，故此处安全断言
+      const rBase = res.baseCircumRadius!;
       examAnchor = "高考柱体切接黄金模型 · 直棱柱双外心垂直平分线法";
       mnemonic =
         "底面外心定水平，高线一半定竖直，黄金公式 R² = r_底² + (h/2)²。";
@@ -284,8 +289,9 @@ export function buildCircumSpherePanel(
       );
     } else if (shape === "cone") {
       // 圆锥 (底半径 a, 高 c)
-      radius = coneCircumRadius(a, c);
-      const l = Math.sqrt(a * a + c * c);
+      const res = calculateConeSphere(a, c, "circum");
+      radius = res.radius;
+      const l = res.generatrixLength!;
       examAnchor = "高考旋转体切接母题 · 轴截面降维法";
       mnemonic = "过轴截面降为三角形，等腰三角形外接圆，R = l²/(2h)。";
 
@@ -360,7 +366,8 @@ export function buildCircumSpherePanel(
       );
     } else {
       // 圆柱 (底半径 a, 高 c)
-      radius = Math.sqrt(a * a + (c / 2) ** 2);
+      const res = calculateCylinderSphere(a, c, "circum");
+      radius = res.radius;
       examAnchor = "高考旋转体切接经典模型 · 轴截面矩形对角线法";
       mnemonic = "轴截面矩形对角线即球直径，(2R)² = (2r)² + h²。";
 
@@ -441,7 +448,8 @@ export function buildCircumSpherePanel(
   } else {
     // ── 内切球模式 ──
     if (shape === "cuboid") {
-      radius = Math.min(a, b, c) / 2;
+      const res = calculateCuboidSphere(a, b, c, "inscribed");
+      radius = res.radius;
       const isCube = a === b && b === c;
       examAnchor = "高考特殊构型检验 · 正方体内切球";
       mnemonic = "正方体内切球直径等于棱长：2r = a。";
@@ -467,7 +475,7 @@ export function buildCircumSpherePanel(
         },
         {
           label: "内切/容纳球半径",
-          symbol: "r_{in}",
+          symbol: "r_{\\text{in}}",
           value: Number(radius.toFixed(4)),
           color: MATH_COLORS.highlight,
         },
@@ -475,14 +483,14 @@ export function buildCircumSpherePanel(
 
       theorems.push({
         name: "正方体内切球公式",
-        latex: `r_{in} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a}}{2} \\quad (\\color{${MATH_COLORS.paramPrimary}}{a} = \\color{${MATH_COLORS.paramSecondary}}{b} = \\color{${MATH_COLORS.paramTertiary}}{h} \\text{ 时成立})`,
+        latex: `r_{\\text{in}} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a}}{2} \\quad (\\color{${MATH_COLORS.paramPrimary}}{a} = \\color{${MATH_COLORS.paramSecondary}}{b} = \\color{${MATH_COLORS.paramTertiary}}{h} \\text{ 时成立})`,
         level: "core",
         note: "一般长方体 (a ≠ b 或 b ≠ h) 不存在同时切 6 个面的内切球",
       });
 
       if (!isCube) {
         warnings.push({
-          text: "当前长方体长宽高不相等 (a ≠ b ≠ h)，不存在同时与 6 个面相切的内切球！图中展示为最大内部相切球。",
+          text: "当前长方体长宽高不全相等，不存在同时与 6 个面相切的内切球！图中展示为最大内部相切球。",
           level: "warning",
         });
       }
@@ -493,33 +501,34 @@ export function buildCircumSpherePanel(
           title: "多面体内切球存在性判定",
           detail: isCube
             ? `正方体六个面全等且对称，必存在同时切 6 个正方形面的内切球。`
-            : `长方体 a=${a}, b=${b}, h=${c} 互不相等，无法同时切 6 面，展示最大内部切球。`,
+            : `长方体 a=${a}, b=${b}, h=${c} 不全相等，无法同时相切 6 面，展示最大内部切球。`,
           latex: isCube
             ? `a = b = h = ${a} \\implies \\text{存在内切球}`
-            : `a \\neq b \\neq h \\implies \\text{退化为局部切球}`,
+            : `\\neg(a=b=h) \\implies \\text{退化为最大内部相切球}`,
           rubric: "[高考采分点] 判断多面体是否存在内切球 (+2分)",
         },
         {
           step: 2,
           title: "对称中心到各面的切线距离",
           detail: `正方体内切球球心与体中心重合，球心到 6 个面的垂直距离均等于半棱长。`,
-          latex: `d(I, \\text{各面}) = r_{in} = \\frac{a}{2}`,
+          latex: `d(I, \\text{各面}) = r_{\\text{in}} = \\frac{a}{2}`,
           rubric: "[高考采分点] 指出切点在各面中心且 2r = a (+2分)",
         },
         {
           step: 3,
           title: "求解内切球半径及度量",
           detail: `求得内切球半径为 ${radius.toFixed(3)}。`,
-          latex: `r_{in} = \\frac{${Math.min(a, b, c)}}{2} = ${radius.toFixed(3)}`,
+          latex: `r_{\\text{in}} = \\frac{${Math.min(a, b, c)}}{2} = ${radius.toFixed(3)}`,
           rubric: "[高考采分点] 准确计算内切球半径 (+2分)",
         },
       );
     } else if (shape === "regularPyramid") {
       // 正四棱锥 (底边长 a, 高 c)
-      const hs = Math.sqrt(c * c + (a / 2) ** 2); // 斜高
-      const vSolid = (1 / 3) * a * a * c;
-      const sTotal = a * a + 2 * a * hs;
-      radius = (3 * vSolid) / sTotal;
+      const res = calculatePyramidSphere(a, c, "inscribed");
+      radius = res.radius;
+      const hs = res.slantHeight!; // 斜高直接取自数学解算模型
+      const vSolid = res.solidVolume;
+      const sTotal = res.solidArea;
       examAnchor = "新高考内切球通用杀手锏 · 空间等体积剖分法";
       mnemonic = "以球心为顶点向各面剖分，总体积等于各分锥之和：r = 3V/S_全。";
 
@@ -556,7 +565,7 @@ export function buildCircumSpherePanel(
         },
         {
           label: "内切球半径 r",
-          symbol: "r_{in}",
+          symbol: "r_{\\text{in}}",
           value: Number(radius.toFixed(4)),
           color: MATH_COLORS.highlight,
         },
@@ -564,13 +573,13 @@ export function buildCircumSpherePanel(
 
       theorems.push({
         name: "等体积法求内切球公式",
-        latex: `r_{in} = \\frac{3V_{\\text{几何体}}}{S_{\\text{全面积}}} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a} \\color{${MATH_COLORS.paramTertiary}}{h}}{\\color{${MATH_COLORS.paramPrimary}}{a} + 2\\sqrt{\\color{${MATH_COLORS.paramTertiary}}{h}^2 + \\frac{\\color{${MATH_COLORS.paramPrimary}}{a}^2}{4}}}`,
+        latex: `r_{\\text{in}} = \\frac{3V_{\\text{几何体}}}{S_{\\text{全面积}}} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a} \\color{${MATH_COLORS.paramTertiary}}{h}}{\\color{${MATH_COLORS.paramPrimary}}{a} + 2\\sqrt{\\color{${MATH_COLORS.paramTertiary}}{h}^2 + \\frac{\\color{${MATH_COLORS.paramPrimary}}{a}^2}{4}}}`,
         level: "core",
         condition: "将多面体拆分为以各面为底、球心为顶点的锥体分割",
       });
 
       gaokaoPoints.push({
-        text: "高考通用内切球神器：等体积法 $r_in = 3V / S_全$！适用于任意存在内切球的凸多面体和旋转体。",
+        text: "高考通用内切球神器：等体积法 $r_{\\text{in}} = 3V / S_{\\text{全}}$！适用于任意存在内切球的凸多面体和旋转体。",
         importance: "gaokao",
       });
 
@@ -578,30 +587,31 @@ export function buildCircumSpherePanel(
         {
           step: 1,
           title: "求解棱锥体积与侧面斜高全面积",
-          detail: `底面积 $S_底 = a²$，体积 $V = ⅓ a² h$；斜高 $h_s = √(h² + a²/4)$，侧面全面积 $S_全 = a² + 2a h_s$。`,
-          latex: `V = \\frac{1}{3}a^2 h = ${vSolid.toFixed(3)}, \\quad S_{全} = a^2 + 2a h_s = ${sTotal.toFixed(3)}`,
+          detail: `底面积 $S_{\\text{底}} = a^2$，体积 $V = \\frac{1}{3} a^2 h$；斜高 $h_s = \\sqrt{h^2 + a^2/4}$，全面积 $S_{\\text{全}} = a^2 + 2a h_s$。`,
+          latex: `V = \\frac{1}{3}a^2 h = ${vSolid.toFixed(3)}, \\quad S_{\\text{全}} = a^2 + 2a h_s = ${sTotal.toFixed(3)}`,
           rubric: "[高考采分点] 正确计算棱锥体积与全面积 (+2分)",
         },
         {
           step: 2,
           title: "空间等体积剖分方程",
-          detail: `以球心 $I$ 为顶点剖分为 5 个小棱锥，高均为 $r_in$，总体积等于各分锥体积之和。`,
-          latex: `V = \\frac{1}{3} S_{底} r_{in} + \\sum_{i=1}^4 \\frac{1}{3} S_{侧i} r_{in} = \\frac{1}{3} S_{全} r_{in}`,
+          detail: `以球心 $I$ 为顶点剖分为 5 个小棱锥，高均为 $r_{\\text{in}}$，总体积等于各分锥体积之和。`,
+          latex: `V = \\frac{1}{3} S_{\\text{底}} r_{\\text{in}} + \\sum_{i=1}^4 \\frac{1}{3} S_{\\text{侧}i} r_{\\text{in}} = \\frac{1}{3} S_{\\text{全}} r_{\\text{in}}`,
           rubric: "[高考采分点] 写出等体积剖分核心方程 (+2分)",
         },
         {
           step: 3,
           title: "等体积法解得内切球半径",
-          detail: `由等体积方程解得 $r_in = 3V / S_全$。`,
-          latex: `r_{in} = \\frac{3V}{S_{全}} = \\frac{3 \\times ${vSolid.toFixed(3)}}{${sTotal.toFixed(3)}} = ${radius.toFixed(3)}`,
+          detail: `由等体积方程解得 $r_{\\text{in}} = 3V / S_{\\text{全}}$。`,
+          latex: `r_{\\text{in}} = \\frac{3V}{S_{\\text{全}}} = \\frac{3 \\times ${vSolid.toFixed(3)}}{${sTotal.toFixed(3)}} = ${radius.toFixed(3)}`,
           rubric: "[高考采分点] 正确计算内切球半径 (+2分)",
         },
       );
     } else if (shape === "triangularPrism") {
       // 直三棱柱 (底面直角边 a, b, 高 c)
-      const cHyp = Math.sqrt(a * a + b * b);
-      const rBaseIn = (a + b - cHyp) / 2;
-      radius = Math.min(rBaseIn, c / 2);
+      const res = calculatePrismSphere(a, b, c, "inscribed");
+      radius = res.radius;
+      const cHyp = res.baseHypotenuse!;
+      const rBaseIn = res.baseInRadius!;
       examAnchor = "高考棱柱内切存在充要条件分析";
       mnemonic =
         "柱体存在内切球充要条件：柱高必须等于底面内切圆直径 h = 2r_底。";
@@ -678,8 +688,9 @@ export function buildCircumSpherePanel(
       );
     } else if (shape === "cone") {
       // 圆锥 (底半径 a, 高 c)
-      const l = Math.sqrt(a * a + c * c);
-      radius = (a * c) / (a + l);
+      const res = calculateConeSphere(a, c, "inscribed");
+      radius = res.radius;
+      const l = res.generatrixLength!; // 母线长直接取自数学解算模型
       examAnchor = "高考旋转体内切降维 · 轴截面等腰三角形内切圆";
       mnemonic = "轴截面等腰三角形内切圆即球内切圆，r = rh / (r + l)。";
 
@@ -704,7 +715,7 @@ export function buildCircumSpherePanel(
         },
         {
           label: "内切球半径 r",
-          symbol: "r_{in}",
+          symbol: "r_{\\text{in}}",
           value: Number(radius.toFixed(4)),
           color: MATH_COLORS.highlight,
         },
@@ -712,13 +723,13 @@ export function buildCircumSpherePanel(
 
       theorems.push({
         name: "圆锥内切球公式 (轴截面法)",
-        latex: `r_{in} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{r} \\cdot \\color{${MATH_COLORS.paramTertiary}}{h}}{\\color{${MATH_COLORS.paramPrimary}}{r} + l} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{r} \\cdot \\color{${MATH_COLORS.paramTertiary}}{h}}{\\color{${MATH_COLORS.paramPrimary}}{r} + \\sqrt{\\color{${MATH_COLORS.paramPrimary}}{r}^2+\\color{${MATH_COLORS.paramTertiary}}{h}^2}}`,
+        latex: `r_{\\text{in}} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{r} \\cdot \\color{${MATH_COLORS.paramTertiary}}{h}}{\\color{${MATH_COLORS.paramPrimary}}{r} + l} = \\frac{\\color{${MATH_COLORS.paramPrimary}}{r} \\cdot \\color{${MATH_COLORS.paramTertiary}}{h}}{\\color{${MATH_COLORS.paramPrimary}}{r} + \\sqrt{\\color{${MATH_COLORS.paramPrimary}}{r}^2+\\color{${MATH_COLORS.paramTertiary}}{h}^2}}`,
         level: "core",
         note: "在轴截面等腰三角形中，内切圆半径即为圆锥内切球半径",
       });
 
       gaokaoPoints.push({
-        text: "圆锥内切球降维求解：轴截面为等腰三角形（底 $2r$，高 $h$，腰 $l$），内切圆半径 $r_in = rh / (r+l)$。",
+        text: "圆锥内切球降维求解：轴截面为等腰三角形（底 $2r$，高 $h$，腰 $l$），内切圆半径 $r_{\\text{in}} = rh / (r+l)$。",
         importance: "gaokao",
       });
 
@@ -733,21 +744,22 @@ export function buildCircumSpherePanel(
         {
           step: 2,
           title: "等面积法求解三角形内切圆",
-          detail: `等腰三角形面积 $S = rh$，半周长 $p = r + l$，由 $S = p r_in$ 建立方程。`,
+          detail: `等腰三角形面积 $S = rh$，半周长 $p = r + l$，由 $S = p r_{\\text{in}}$ 建立方程。`,
           latex: `S = \\frac{1}{2}(2r)h = rh = ${(a * c).toFixed(2)}, \\quad p = r + l = ${(a + l).toFixed(3)}`,
           rubric: "[高考采分点] 应用等面积法 S = p r (+2分)",
         },
         {
           step: 3,
           title: "公式解出内切球半径",
-          detail: `解得内切球半径 $r_in = rh / (r + l)$。`,
-          latex: `r_{in} = \\frac{rh}{r + l} = \\frac{${(a * c).toFixed(2)}}{${(a + l).toFixed(3)}} = ${radius.toFixed(3)}`,
+          detail: `解得内切球半径 $r_{\\text{in}} = rh / (r + l)$。`,
+          latex: `r_{\\text{in}} = \\frac{rh}{r + l} = \\frac{${(a * c).toFixed(2)}}{${(a + l).toFixed(3)}} = ${radius.toFixed(3)}`,
           rubric: "[高考采分点] 正确解出内切球半径 (+2分)",
         },
       );
     } else {
       // 圆柱 (底半径 a, 高 c)
-      radius = Math.min(a, c / 2);
+      const res = calculateCylinderSphere(a, c, "inscribed");
+      radius = res.radius;
       examAnchor = "高考圆柱内切球充要条件 · 等高圆柱";
       mnemonic = "等高圆柱 (h=2r) 轴截面为正方形，内切球半径等于底面半径 r。";
 
@@ -766,7 +778,7 @@ export function buildCircumSpherePanel(
         },
         {
           label: "内切/容纳半径",
-          symbol: "r_{in}",
+          symbol: "r_{\\text{in}}",
           value: radius.toFixed(3),
           color: MATH_COLORS.highlight,
         },
@@ -805,7 +817,7 @@ export function buildCircumSpherePanel(
           step: 3,
           title: "确定内切球半径与度量",
           detail: `满足条件时内切球半径为底面半径 r。`,
-          latex: `r_{in} = \\min\\left(r, \\frac{h}{2}\\right) = ${radius.toFixed(3)}`,
+          latex: `r_{\\text{in}} = \\min\\left(r, \\frac{h}{2}\\right) = ${radius.toFixed(3)}`,
           rubric: "[高考采分点] 准确计算内切球半径与度量 (+2分)",
         },
       );

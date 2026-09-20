@@ -133,9 +133,11 @@ describe("buildRotationBodyPanel - 旋转体结构特征指标测试", () => {
     expect(quantitiesMap["截面面积"]).toBe((Math.PI * 16).toFixed(2));
     expect(quantitiesMap["位置关系"]).toBe("相交 (截面为小圆)");
 
-    expect(res.theorems.some((t) => t.name.includes("截面圆勾股定理"))).toBe(
-      true,
-    );
+    expect(
+      res.theorems.some(
+        (t) => t.name.includes("球截面") && t.latex.includes("r_{\\text{截}}"),
+      ),
+    ).toBe(true);
     expect(
       res.theorems.some((t) => t.name.includes("平面与球的位置关系判定")),
     ).toBe(true);
@@ -154,7 +156,7 @@ describe("buildRotationBodyPanel - 旋转体结构特征指标测试", () => {
     expect(res.gaokaoPoints.some((g) => g.text.includes("化曲为直"))).toBe(
       true,
     );
-    expect(res.gaokaoPoints.some((g) => g.text.includes("垂径定理"))).toBe(
+    expect(res.gaokaoPoints.some((g) => g.text.includes("截面勾股"))).toBe(
       true,
     );
   });

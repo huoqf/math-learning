@@ -8,6 +8,7 @@ import {
   FormulaLabel3D,
   AngleArc3D,
 } from "@/components/Math3D";
+import { distance } from "@/math3d/vector3";
 import type { FoldingSceneCommonProps } from "./types";
 
 /** 矩形沿对角线 BD 翻折模型场景 */
@@ -22,7 +23,7 @@ export function FoldingRectangleDiagonalScene({
 }: FoldingSceneCommonProps) {
   const { A, B, C, D, HA, "A'": A_prime } = foldingData.points;
   const showUnfolded = foldState === "both" || foldState === "unfolded";
-  const rA = Math.sqrt((A.x - HA.x) ** 2 + (A.y - HA.y) ** 2);
+  const rA = distance(A, HA);
 
   return (
     <>

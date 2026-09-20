@@ -43,6 +43,14 @@ const BEYOND_SYLLABUS_TERMS = [
   '定积分',
   '极坐标',
   '参数方程',
+  '行列式',
+  '混合积',
+  '\\det',
+  'det[',
+  '\\begin{vmatrix}',
+  'e_{1x}e_{2y}',
+  'e_{1x} e_{2y}',
+  'e₁ₓe₂ᵧ',
 ];
 
 /**
@@ -621,7 +629,9 @@ export const disciplineRules = [
         ctx.filePath.endsWith('Animation.tsx') ||
         ctx.filePath.endsWith('Page.tsx') ||
         ctx.filePath.endsWith('Scene.tsx') ||
-        /^src\/features\//.test(ctx.relPath);
+        /^src\/features\//.test(ctx.relPath) ||
+        /^src\/math\//.test(ctx.relPath) ||
+        /^src\/math3d\//.test(ctx.relPath);
       if (!isContentFile) return [];
 
       // 条目级豁免解析（见文件头「已声明拓展」的条目级解析说明）

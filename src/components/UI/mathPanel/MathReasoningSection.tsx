@@ -48,6 +48,18 @@ export const MathReasoningSection: React.FC<MathReasoningSectionProps> = ({
           className={`w-3.5 h-3.5 transition-transform duration-fast ease-standard ${open ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
+      {/* 分值口径说明：解除「 drilldown 里各步分值累加 ≠ 页面标注的整题分值」造成的误解。
+          各 builder 的 rubric 是**单问内部**的采分点拆分（如 4+5+4=13），
+          而客观题页面走的是小题分制（如球类页 2 分制），两套口径互不等价。 */}
+      {steps.some((s) => s.rubric) && (
+        <p className="text-[10px] text-neutral-500 leading-relaxed mb-2">
+          分步所列分值为
+          <span className="text-neutral-600 font-semibold">
+            单问内的采分点拆分
+          </span>
+          ， 累加不等于整题分值
+        </p>
+      )}
       {open && (
         <div className="space-y-2.5 transition-all duration-fast ease-standard">
           {steps.map((s, idx) => {

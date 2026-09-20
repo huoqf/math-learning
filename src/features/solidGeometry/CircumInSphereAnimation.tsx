@@ -428,11 +428,14 @@ export default function CircumInSphereAnimation() {
       if (presetKey === "cuboid_std") {
         return {
           variant: "primary" as const,
-          badge: "高考经典 · 3-4-12 勾股长方体外接球",
+          badge: isCircum
+            ? "高考经典 · 3-4-12 勾股长方体外接球"
+            : "高考陷阱 · 长方体一般无内切球",
           condition:
             "长方体长 AB=a=1.5、宽 AD=b=2、高 CC₁=h=6，底面对角线 AC=2.5。",
-          question:
-            "由体对角线公式 (2R)² = AB² + AD² + CC₁² = 1.5² + 2² + 6² = 42.25，秒解外接球直径 2R = 6.5 (R = 3.25)。",
+          question: isCircum
+            ? "由体对角线公式 (2R)² = AB² + AD² + CC₁² = 1.5² + 2² + 6² = 42.25，秒解外接球直径 2R = 6.5 (R = 3.25)。"
+            : "a、b、h 三边不全相等 ⇒ 不存在与 6 个面同时相切的内切球。图中所示为半径 r = min(a,b,h)/2 = 0.75 的「内部最大相切球」，只与相距最近的一对面（间距 a=1.5）相切，其余 4 面均不相切 —— 高考常以此设陷阱。",
         };
       }
       return {

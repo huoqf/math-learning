@@ -88,11 +88,15 @@ export interface SurfacePathResult {
   /** 侧棱 BB1 上的理论最优折点 P1 坐标及 lambda */
   optimalP1: Vec3;
   optimalLambda1: number;
-  /** 底面/侧面展开路径 2 长度 (经过棱 BC) */
+  /** 展开路径 2 长度 (跨棱 DC: 底面 ABCD + 侧面 DCC1D1) */
   path2Length: number;
-  /** 全局表面最短路径长度 */
+  /** 展开路径 3 长度 (跨棱 BC: 底面 ABCD + 侧面 BCC1B1) */
+  path3Length: number;
+  /** 全局表面最短路径长度 (三类路径取极小值) */
   globalMinLength: number;
-  bestPathType: "side" | "bottom";
+  bestPathType: "side_BB1" | "bottom_DC" | "bottom_BC";
+  /** 当前全局最短路径对应的最佳折点 */
+  globalOptimalP: Vec3;
 }
 
 /**
@@ -310,16 +314,34 @@ export function calculateSurfacePath(
   // 当前折线段 A -> P -> C1
   const currentPathLength = distance(A, P) + distance(P, C1);
 
-  // 路径 1 (侧面展开 ABB1A1 + BCC1B1): A(0,0) -> C1(a+b, c)
+  // 路径 1 (跨棱 BB1: 侧面展开 ABB1A1 + BCC1B1): A(0,0) -> C1(a+b, c)
   const path1Length = Math.sqrt((a + b) ** 2 + c ** 2);
   const optimalLambda1 = a / (a + b);
   const optimalP1: Vec3 = { x: a, y: 0, z: optimalLambda1 * c };
 
-  // 路径 2 (底侧展开 ABCD + BCC1B1): A(0,0) -> C1(a, b+c)
+  // 路径 2 (跨棱 DC: 底面与后侧面展开 ABCD + DCC1D1): A(0,0) -> C1(a, b+c)
   const path2Length = Math.sqrt(a ** 2 + (b + c) ** 2);
+  const optimalP2: Vec3 = { x: (a * b) / (b + c), y: b, z: 0 };
 
-  const globalMinLength = Math.min(path1Length, path2Length);
-  const bestPathType = path1Length <= path2Length ? "side" : "bottom";
+  // 路径 3 (跨棱 BC: 底面与右侧面展开 ABCD + BCC1B1): A(0,0) -> C1(a+c, b)
+  const path3Length = Math.sqrt((a + c) ** 2 + b ** 2);
+  const optimalP3: Vec3 = { x: a, y: (a * b) / (a + c), z: 0 };
+
+  const globalMinLength = Math.min(path1Length, path2Length, path3Length);
+  const EPSILON = 1e-4;
+  let bestPathType: "side_BB1" | "bottom_DC" | "bottom_BC" = "side_BB1";
+  let globalOptimalP = optimalP1;
+
+  if (Math.abs(globalMinLength - path1Length) < EPSILON) {
+    bestPathType = "side_BB1";
+    globalOptimalP = optimalP1;
+  } else if (Math.abs(globalMinLength - path2Length) < EPSILON) {
+    bestPathType = "bottom_DC";
+    globalOptimalP = optimalP2;
+  } else if (Math.abs(globalMinLength - path3Length) < EPSILON) {
+    bestPathType = "bottom_BC";
+    globalOptimalP = optimalP3;
+  }
 
   return {
     P,
@@ -328,7 +350,9 @@ export function calculateSurfacePath(
     optimalP1,
     optimalLambda1,
     path2Length,
+    path3Length,
     globalMinLength,
     bestPathType,
+    globalOptimalP,
   };
 }

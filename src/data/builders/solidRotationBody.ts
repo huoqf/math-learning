@@ -4,8 +4,17 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { calculateCylinderSphere } from "@/math3d/circumInSphere";
+import {
+  coneGeneratrix,
+  frustumGeneratrix,
+  cylinderAxialDiagonal,
+  cylinderLateralShortestPath,
+  sphereSectionRadius,
+} from "@/math3d/solidGeometry";
 
 // ── know-solid-rotation-body: 旋转体的结构特征 ──
 
@@ -33,9 +42,9 @@ export function buildRotationBodyPanel(
     const sTotal = sSide + 2 * sBase;
     const sAxial = 2 * r1 * height;
     const v = Math.PI * r1 ** 2 * height;
-    const diagAxial = Math.sqrt(4 * r1 ** 2 + height ** 2);
-    const shortestPath = Math.sqrt((2 * Math.PI * r1) ** 2 + height ** 2);
-    const rCircum = Math.sqrt(r1 ** 2 + (height / 2) ** 2);
+    const diagAxial = cylinderAxialDiagonal(r1, height);
+    const shortestPath = cylinderLateralShortestPath(r1, height);
+    const rCircum = calculateCylinderSphere(r1, height, "circum").radius;
 
     quantities.push(
       {
@@ -119,7 +128,7 @@ export function buildRotationBodyPanel(
       },
     );
   } else if (shape === "rightTriangle") {
-    const l = Math.sqrt(r1 ** 2 + height ** 2);
+    const l = coneGeneratrix(r1, height);
     const angleDeg = (r1 / l) * 360;
     const angleRad = (angleDeg * Math.PI) / 180;
     // 轴截面顶角 2θ（高考高频考点）
@@ -236,15 +245,25 @@ export function buildRotationBodyPanel(
         note: "分别对应轴截面等腰三角形的外接圆与内切圆",
       },
     );
+    // 展开圆心角超过 180° 时，扇形不再是凸图形：连接两条母线的直线段会穿出扇形（离开锥面），
+    // 此时绕侧一周的最短路不再是弦长 2l·sin(α/2)，而退化为经过顶点的两段母线 2l。
+    // 该分支 math 层与 builder 取值的口径一致（rotationProfiles.ts:190-191 / 本文件 :144-145）。
+    if (angleDeg > 180) {
+      warnings.push({
+        text: `当前展开圆心角 α = ${angleDeg.toFixed(1)}° > 180°，展开扇形不再是凸图形，连接两条母线的直线段会穿出扇形（即离开锥面），故绕侧一周的最短路退化为经过顶点的两段母线：L_min = 2l = ${(2 * l).toFixed(2)}（而非弦长 ${(2 * l * Math.sin((angleDeg * Math.PI) / 360)).toFixed(2)}）。`,
+        level: "warning",
+      });
+    }
   } else if (shape === "rightTrapezoid") {
-    const l = Math.sqrt((r1 - r2) ** 2 + height ** 2);
+    const l = frustumGeneratrix(r1, r2, height);
     const sSide = Math.PI * (r1 + r2) * l;
     const sTop = Math.PI * r2 ** 2;
     const sBottom = Math.PI * r1 ** 2;
     const sTotal = sSide + sTop + sBottom;
     const sAxial = (r1 + r2) * height;
     const v = (Math.PI * height * (r1 ** 2 + r1 * r2 + r2 ** 2)) / 3;
-    const unfoldAngleDeg = r1 > r2 && l > 0 ? ((r1 - r2) / l) * 360 : 0;
+    const deltaR = Math.abs(r1 - r2);
+    const unfoldAngleDeg = deltaR > 1e-4 && l > 0 ? (deltaR / l) * 360 : 0;
 
     quantities.push(
       {
@@ -308,7 +327,7 @@ export function buildRotationBodyPanel(
         name: "圆台特征直角梯形与表面积",
         latex: `\\color{${MATH_COLORS.paramTertiary}}{l} = \\sqrt{(\\color{${MATH_COLORS.paramPrimary}}{r_1}-\\color{${MATH_COLORS.paramSecondary}}{r_2})^2+\\color{${MATH_COLORS.paramTertiary}}{h}^2},\\; S_{\\text{侧}}=\\pi(\\color{${MATH_COLORS.paramPrimary}}{r_1}+\\color{${MATH_COLORS.paramSecondary}}{r_2})\\color{${MATH_COLORS.paramTertiary}}{l},\\; S_{\\text{全}}=S_{\\text{侧}}+\\pi \\color{${MATH_COLORS.paramPrimary}}{r_1}^2+\\pi \\color{${MATH_COLORS.paramSecondary}}{r_2}^2`,
         level: "core",
-        note: "高 h、半径差 (r₁-r₂)、母线 l 构成特征直角三角形",
+        note: "高 h、半径差 |r₁-r₂|、母线 l 构成特征直角三角形",
       },
       {
         name: "圆台体积公式",
@@ -319,15 +338,16 @@ export function buildRotationBodyPanel(
         name: "柱锥台体积统一公式",
         latex: `V=\\frac{1}{3}\\color{${MATH_COLORS.paramTertiary}}{h}(S_1+\\sqrt{S_1 S_2}+S_2)`,
         level: "important",
-        note: "r₂=r₁ (S₁=S₂) 时演化为圆柱 V=Sh；r₂=0 (S₁=0) 时演化为圆锥 V=⅓Sh",
+        note: "r₂=r₁ (S₁=S₂) 时演化为圆柱 V=Sh；r₂=0 (S₂=0) 时演化为圆锥 V=⅓Sh",
       },
     );
   } else {
     // semicircle → sphere
     const R = r1;
-    const rawD = Math.abs(cutDistance);
-    const absD = Math.min(R, rawD);
-    const rCut = Math.sqrt(Math.max(0, R * R - absD * absD));
+    const absD = Math.abs(cutDistance);
+    const isIntersect = absD < R - 1e-4;
+    const isTangent = Math.abs(absD - R) <= 1e-4;
+    const rCut = sphereSectionRadius(R, absD);
     const sGreatCircle = Math.PI * R ** 2;
     const sCut = Math.PI * rCut ** 2;
     const sTotal = 4 * Math.PI * R ** 2;
@@ -335,9 +355,11 @@ export function buildRotationBodyPanel(
     const relationStr =
       absD < 1e-4
         ? "大圆截面 (d=0)"
-        : absD < R - 1e-3
+        : isIntersect
           ? "相交 (截面为小圆)"
-          : "相切 (截面退化为点)";
+          : isTangent
+            ? "相切 (截面退化为点)"
+            : "相离 (截面无公共点)";
 
     quantities.push(
       {
@@ -392,7 +414,7 @@ export function buildRotationBodyPanel(
 
     theorems.push(
       {
-        name: "球截面圆勾股定理（垂径模型）",
+        name: "球截面性质定理（小圆半径公式）",
         latex: `\\color{${MATH_COLORS.paramPrimary}}{R}^2 = r_{\\text{截}}^2 + \\color{${MATH_COLORS.paramSecondary}}{d}^2 \\implies r_{\\text{截}} = \\sqrt{\\color{${MATH_COLORS.paramPrimary}}{R}^2 - \\color{${MATH_COLORS.paramSecondary}}{d}^2}`,
         level: "core",
         note: "球心到截面距离 d、截面小圆半径 r_截 与球半径 R 构成直角三角形",
@@ -418,6 +440,56 @@ export function buildRotationBodyPanel(
     );
   }
 
+  const reasoningSteps: ReasoningStep[] = [
+    {
+      step: 1,
+      title: "审题定法 · 轴截面降维与基本度量提取",
+      detail:
+        "立体几何旋转体问题关键在于提取“轴截面”平面图形。根据旋转母线与旋转轴特征，列出底面半径、高与母线长的几何关系：",
+      latex:
+        shape === "semicircle"
+          ? `R = ${r1.toFixed(2)}, \\quad d = ${Math.abs(cutDistance).toFixed(2)}`
+          : shape === "rightTrapezoid"
+            ? `r_1 = ${r1.toFixed(2)}, \\; r_2 = ${r2.toFixed(2)}, \\; h = ${height.toFixed(2)} \\implies l = \\sqrt{(r_1-r_2)^2 + h^2}`
+            : shape === "rectangle"
+              ? `r = ${r1.toFixed(2)}, \\quad h = ${height.toFixed(2)}, \\quad \\text{母线} \\parallel \\text{轴} \\implies l = h`
+              : `r = ${r1.toFixed(2)}, \\quad h = ${height.toFixed(2)} \\implies l = \\sqrt{r^2 + h^2}`,
+      rubric: "[高考采分点] 作轴截面平面图并标清基本度量特征 (+4分)",
+    },
+    {
+      step: 2,
+      title: "建模联立 · 代入表面积与体积解析通式",
+      detail:
+        "利用旋转体面积与体积公式建立数学模型。底面积、侧面积展开图与体积满足标准代数多项式：",
+      latex:
+        shape === "semicircle"
+          ? Math.abs(cutDistance) < r1
+            ? `r_{\\text{截}} = \\sqrt{R^2 - d^2}, \\quad S_{\\text{截}} = \\pi r_{\\text{截}}^2, \\quad V = \\frac{4}{3}\\pi R^3`
+            : `d \\ge R \\implies \\text{截面无小圆 (相切或相离)}, \\quad V = \\frac{4}{3}\\pi R^3`
+          : shape === "rightTrapezoid"
+            ? `S_{\\text{侧}} = \\pi(r_1+r_2)l, \\quad V = \\frac{1}{3}\\pi h (r_1^2 + r_1 r_2 + r_2^2)`
+            : shape === "rectangle"
+              ? `S_{\\text{侧}} = 2\\pi r h, \\quad S_{\\text{全}} = 2\\pi r(r+h), \\quad V = \\pi r^2 h`
+              : `S_{\\text{侧}} = \\pi r l, \\quad V = \\frac{1}{3}\\pi r^2 h`,
+      rubric: "[高考采分点] 正确列出侧面积/截面积与体积计算公式 (+5分)",
+    },
+    {
+      step: 3,
+      title: "求解反思 · 展开图圆心角与退化临界检验",
+      detail:
+        "侧面沿母线展开后化曲为平，或球截面考察相切相离边界。检验几何极值与充分必要条件：",
+      latex:
+        shape === "semicircle"
+          ? `d < R \\iff \\text{截面为圆}, \\quad d = R \\iff \\text{相切}, \\quad d > R \\iff \\text{相离}`
+          : shape === "rightTrapezoid"
+            ? `\\alpha = \\frac{|r_1 - r_2|}{l} \\times 360^\\circ, \\quad r_1 = r_2 \\iff \\text{演化为圆柱}`
+            : shape === "rectangle"
+              ? `\\text{侧面展开为矩形：两边分别为} \\; 2\\pi r \\; \\text{(底面周长)} \\; \\text{与} \\; h, \\quad L_{\\min} = \\sqrt{(2\\pi r)^2 + h^2}`
+              : `\\alpha = \\frac{r}{l} \\times 360^\\circ = (\\sin\\theta) \\times 360^\\circ`,
+      rubric: "[高考采分点] 精确解出最终结果并说明几何临界与展开性质 (+4分)",
+    },
+  ];
+
   gaokaoPoints.push(
     {
       text: "降维核心（轴截面法）：旋转体由平面图形绕轴旋转生成。轴截面（矩形、等腰三角形、等腰梯形、大圆）是把 3D 空间几何问题降维至 2D 平面特征几何图形快速求参数的核心方法。",
@@ -428,7 +500,7 @@ export function buildRotationBodyPanel(
       importance: "gaokao",
     },
     {
-      text: "球截面小圆模型（垂径定理）：高考立体几何小题高频考点。无论平面从何角度截球，截面均为圆。抓住球心 O、截面圆心 O'、截面圆周上一点 P 构成的 Rt△OO'P，满足 R² = r_截² + d²。",
+      text: "球截面小圆模型（截面勾股定理 / 轴截面直角三角形）：高考立体几何小题高频考点。无论平面从何角度截球，截面均为圆。抓住球心 O、截面圆心 O'、截面圆周上一点 P 构成的 Rt△OO'P，满足 R² = r_截² + d²。",
       importance: "gaokao",
     },
     {
@@ -436,7 +508,7 @@ export function buildRotationBodyPanel(
       importance: "gaokao",
     },
     {
-      text: "斜二测画法（直观图）：① 横轴 x 长度不变，纵轴 y 长度折半；② 坐标轴夹角为 45° 或 135°；③ 原平面图形面积与直观图面积满足 S_直观 = (√2 / 4) S_原。",
+      text: "斜二测画法（直观图）：① 横轴 x 长度不变，纵轴 y 长度折半；② 坐标轴夹角为 45° 或 135°；③ 原平面图形面积与直观图面积满足 $S_{\\text{直观}} = (\\sqrt{2} / 4) S_{\\text{原}}$。",
       importance: "core",
     },
   );
@@ -471,5 +543,5 @@ export function buildRotationBodyPanel(
     });
   }
 
-  return { quantities, theorems, gaokaoPoints, warnings };
+  return { quantities, theorems, gaokaoPoints, warnings, reasoningSteps };
 }

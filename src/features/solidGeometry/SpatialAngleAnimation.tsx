@@ -87,10 +87,7 @@ export default function SpatialAngleAnimation({
   };
 
   // 异面直线模型计算
-  const skewData = useMemo(
-    () => solveSkewLines(a, b, c, lambda),
-    [a, b, c, lambda],
-  );
+  const skewData = useMemo(() => solveSkewLines(a, b, c), [a, b, c, lambda]);
 
   // 空间斜线线面角模型计算
   const linePlaneData = useMemo(
@@ -730,7 +727,6 @@ export default function SpatialAngleAnimation({
                 a={a}
                 b={b}
                 c={c}
-                lambda={lambda}
                 vertices={vertices}
                 linePlaneData={linePlaneData}
                 showAxes={showAxes}
@@ -748,7 +744,6 @@ export default function SpatialAngleAnimation({
             {activeMode === "dihedral" && (
               <DihedralModeScene
                 c={c}
-                lambda={lambda}
                 vertices={vertices}
                 dihedralData={dihedralData}
                 showAxes={showAxes}
@@ -766,7 +761,6 @@ export default function SpatialAngleAnimation({
             {activeMode === "distance" && (
               <DistanceModeScene
                 c={c}
-                lambda={lambda}
                 vertices={vertices}
                 distanceData={distanceData}
                 showAxes={showAxes}

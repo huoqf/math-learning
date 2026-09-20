@@ -406,4 +406,268 @@ export function buildDemo() {
       expect(issues[0].severity).toBe("error");
     });
   });
+
+  describe("arch/no-builder-raw-calc 门禁规则对抗性拦截测试 (10/10 守护验证)", () => {
+    const rule = (architectureRules as AuditRule[]).find(
+      (r: AuditRule) => r.id === "arch/no-builder-raw-calc",
+    )!;
+
+    it("1. 拦截长变量名 Math.sqrt: const circumRadius = Math.sqrt(...)", () => {
+      const code = `const circumRadius = Math.sqrt(a * a + b * b + c * c) / 2;`;
+      const ctx = new FileContext(
+        "src/data/builders/solidA.ts",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("2. 拦截 Math.hypot: const dist = Math.hypot(x, y)", () => {
+      const code = `const dist = Math.hypot(x, y);`;
+      const ctx = new FileContext(
+        "src/data/builders/solidB.ts",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("3. 拦截单字母 R: const R = Math.sqrt(...)", () => {
+      const code = `const R = Math.sqrt(a * a + b * b + c * c) / 2;`;
+      const ctx = new FileContext(
+        "src/data/builders/solidC.ts",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("4. 拦截单字母 d: const d = Math.sqrt(...)", () => {
+      const code = `const d = Math.sqrt(x * x + y * y);`;
+      const ctx = new FileContext(
+        "src/data/builders/solidD.ts",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("5. 拦截斜高 hs 与 Math.pow: const hs = Math.pow(c * c + a * a, 0.5)", () => {
+      const code = `const hs = Math.pow(c * c + a * a, 0.5);`;
+      const ctx = new FileContext(
+        "src/data/builders/solidE.ts",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("6. 拦截 let 声明与 ** 0.5 语法: let l = (r * r + h * h) ** 0.5", () => {
+      const code = `let l = (r * r + h * h) ** 0.5;`;
+      const ctx = new FileContext(
+        "src/data/builders/solidF.ts",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("7. 拦截直接赋值: radius = Math.sqrt(rBase * rBase + h * h)", () => {
+      const code = `radius = Math.sqrt(rBase * rBase + h * h);`;
+      const ctx = new FileContext(
+        "src/data/builders/solidG.ts",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("8. 拦截 src/features/** 场景组件内的裸重算: modes/DistanceModeScene.tsx", () => {
+      const code = `const d = Math.sqrt(dx * dx + dy * dy);`;
+      const ctx = new FileContext(
+        "src/features/solidGeometry/modes/DistanceModeScene.tsx",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("9. 拦截 Scene 组件内手算动点坐标: lambda * c", () => {
+      const code = `tex={\`E(0,0,\${(lambda * c).toFixed(2)})\`}`;
+      const ctx = new FileContext(
+        "src/features/solidGeometry/modes/DistanceModeScene.tsx",
+        code,
+        process.cwd(),
+      );
+      const issues = rule.check(ctx);
+      expect(issues.length).toBe(1);
+      expect(issues[0].message).toContain("3D场景组件严禁直接手算 lambda * c");
+    });
+
+    it("10. 合规消费 math 纯函数解算结果时不误报", () => {
+      const code = `
+const res = calculateCuboidSphere(a, b, c, "circum");
+const radius = res.radius;
+const center = res.center;
+`;
+      const ctx = new FileContext(
+        "src/data/builders/solidCircumSphere.ts",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(0);
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 门禁召回率加固：四类「行级正则必然漏过」的写法 + 精度守护
+  // 1) 跨行赋值（prettier 折行会让行级匹配周期性失效）
+  // 2) 内联无变量（模板串里直接开方）
+  // 3) 白名单外的标识符（单字母 e / s、拼音式命名）
+  // 4) 手算动点坐标时多余的括号 lambda * (c)
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("arch/no-builder-raw-calc 召回率加固（跨行 / 内联 / 任意标识符 / 容错括号）", () => {
+    const rule = (architectureRules as AuditRule[]).find(
+      (r: AuditRule) => r.id === "arch/no-builder-raw-calc",
+    )!;
+
+    const checkSolid = (code: string) =>
+      rule.check(
+        new FileContext(
+          "src/data/builders/solidInjected.ts",
+          code,
+          process.cwd(),
+        ),
+      );
+
+    it("加固 1. 跨行赋值：`const circumRadius =` 换行后接 Math.sqrt", () => {
+      const code = `
+const circumRadius =
+  Math.sqrt(a * a + b * b + c * c) / 2;
+`;
+      expect(checkSolid(code).length).toBe(1);
+    });
+
+    it("加固 2. 调用实参跨行：Math.sqrt( 换行到参数行", () => {
+      const code = `
+const inRadius = Math.sqrt(
+  a * a + b * b + c * c,
+) / 2;
+`;
+      expect(checkSolid(code).length).toBe(1);
+    });
+
+    it("加固 3. 内联无变量：模板串内直接开方", () => {
+      const code = `const value = \`\${Math.sqrt(a * a + b * b).toFixed(2)}\`;`;
+      expect(checkSolid(code).length).toBe(1);
+    });
+
+    it("加固 4. 白名单外单字母 e：const e = Math.sqrt(...)", () => {
+      const code = `const e = Math.sqrt(a * a + b * b);`;
+      expect(checkSolid(code).length).toBe(1);
+    });
+
+    it("加固 5. 白名单外单字母 s 与 Math.hypot", () => {
+      const code = `const s = Math.hypot(x, y);`;
+      expect(checkSolid(code).length).toBe(1);
+    });
+
+    it("加固 6. 非几何式命名同样拦截：const halfH = Math.sqrt(...)", () => {
+      const code = `const halfH = Math.sqrt(r * r + h * h);`;
+      expect(checkSolid(code).length).toBe(1);
+    });
+
+    it("加固 7. 场景内手算动点坐标容忍多余括号：lambda * (c)", () => {
+      const code = `tex={\`E(0,0,\${(lambda * (c)).toFixed(2)})\`}`;
+      const ctx = new FileContext(
+        "src/features/solidGeometry/modes/DistanceModeScene.tsx",
+        code,
+        process.cwd(),
+      );
+      const issues = rule.check(ctx);
+      expect(issues.length).toBe(1);
+      expect(issues[0].message).toContain("3D场景组件严禁直接手算 lambda * c");
+    });
+
+    it("加固 8. 场景内手算动点坐标容忍左侧括号：(lambda) * c", () => {
+      const code = `tex={\`E(0,0,\${((lambda) * c).toFixed(2)})\`}`;
+      const ctx = new FileContext(
+        "src/features/solidGeometry/modes/DihedralModeScene.tsx",
+        code,
+        process.cwd(),
+      );
+      expect(rule.check(ctx).length).toBe(1);
+    });
+
+    it("加固 9. 跨行的 ** 0.5 同样拦截", () => {
+      const code = `
+const generatrix = (r * r + h * h)
+  ** 0.5;
+`;
+      expect(checkSolid(code).length).toBe(1);
+    });
+
+    it("精度守护 1. 纯常数开方不误报：Math.sqrt(3)", () => {
+      const code = `const ratio = (Math.sqrt(3) / 3) * a;`;
+      expect(checkSolid(code).length).toBe(0);
+    });
+
+    it("精度守护 2. 常数系数式不误报：(Math.sqrt(2) / 2) * value", () => {
+      const code = `next.c = Number(((Math.sqrt(2) / 2) * value).toFixed(2));`;
+      expect(checkSolid(code).length).toBe(0);
+    });
+
+    it("精度守护 3. 常数幂不误报：2 ** 0.5", () => {
+      const code = `const ratio = 2 ** 0.5;`;
+      expect(checkSolid(code).length).toBe(0);
+    });
+
+    it("精度守护 4. 非 0.5 指数的 Math.pow 不误报（体积/立方）", () => {
+      const code = `const inVolume = (4 / 3) * Math.PI * Math.pow(res.inRadius, 3);`;
+      expect(checkSolid(code).length).toBe(0);
+    });
+
+    it("精度守护 5. 通用 builder 的几何族命名才拦截，非几何开方放行", () => {
+      const nikeLike = `const extVal = 2 * Math.sqrt(a * b);`;
+      expect(
+        rule.check(
+          new FileContext("src/data/builders/nike.ts", nikeLike, process.cwd()),
+        ).length,
+      ).toBe(0);
+
+      const geometric = `const dist = Math.hypot(dx, dy);`;
+      expect(
+        rule.check(
+          new FileContext(
+            "src/data/builders/demoBuilder.ts",
+            geometric,
+            process.cwd(),
+          ),
+        ).length,
+      ).toBe(1);
+    });
+
+    it("精度守护 6. 消费 math3d 产物（含结构化字段与 norm/distance）不误报", () => {
+      const code = `
+const res = calculatePrismSphere(a, b, c, "circum");
+const rBase = res.baseCircumRadius!;
+const cBase = res.cBase;
+const rA = distance(A, HA);
+const rCut = sphereSectionRadius(R, absD);
+const l = cylinderAxialDiagonal(r1, height);
+`;
+      expect(checkSolid(code).length).toBe(0);
+    });
+
+    it("精度守护 7. 同文件正常消费 + 一处裸算：只报裸算那一行", () => {
+      const code = `
+const res = calculateCuboidSphere(a, b, c, "circum");
+const radius = res.radius;
+const diagAxial = Math.sqrt(4 * r1 ** 2 + height ** 2);
+`;
+      const issues = checkSolid(code);
+      expect(issues.length).toBe(1);
+      expect(issues[0].lineNum).toBe(4);
+    });
+  });
 });

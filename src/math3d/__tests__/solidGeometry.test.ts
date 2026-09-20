@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  cuboidCircumRadius,
   sphereVolume,
   sphereSurfaceArea,
   regularTetrahedronCircumRadius,
@@ -9,14 +8,6 @@ import {
 } from "../solidGeometry";
 
 describe("solidGeometry 空间几何体基础公式", () => {
-  it("cuboidCircumRadius for unit cube", () => {
-    expect(cuboidCircumRadius(1, 1, 1)).toBeCloseTo(Math.sqrt(3) / 2, 5);
-  });
-
-  it("cuboidCircumRadius for 3x4x5", () => {
-    expect(cuboidCircumRadius(3, 4, 5)).toBeCloseTo(Math.sqrt(50) / 2, 5);
-  });
-
   it("sphereVolume", () => {
     expect(sphereVolume(1)).toBeCloseTo((4 / 3) * Math.PI, 5);
   });

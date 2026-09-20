@@ -20,7 +20,7 @@ describe("spatialAngle 空间角与距离数学求解器测试（新高考母题
   });
 
   it("正确计算长方体面对角线 A1B 与 AC 的异面直线角与平移模型", () => {
-    const res = solveSkewLines(3, 2, 2, 0.6);
+    const res = solveSkewLines(3, 2, 2);
     expect(res.u).toEqual({ x: 3, y: 0, z: -2 });
     expect(res.v).toEqual({ x: 3, y: 2, z: 0 });
     expect(res.uParallel).toEqual({ x: 3, y: 0, z: -2 });
@@ -86,7 +86,7 @@ describe("spatialAngle 空间角与距离数学求解器测试（新高考母题
     ];
 
     for (const { a, b, c, l } of testDimensions) {
-      const skew = solveSkewLines(a, b, c, l);
+      const skew = solveSkewLines(a, b, c);
       expect(skew.cosTheta).toBeGreaterThanOrEqual(0);
       expect(skew.cosTheta).toBeLessThanOrEqual(1);
       expect(skew.angleDeg).toBeGreaterThan(0);

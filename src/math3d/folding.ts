@@ -30,6 +30,13 @@ export interface FoldingResult {
   skewLinesAngleDeg?: number;
   /** 矩形对角线翻折时异面直线 A'D ⊥ BC 对应的临界二面角 (度数) */
   criticalPerpAlphaDeg?: number;
+  /** 安全几何参数回流 (SSOT) */
+  safeParams?: {
+    a: number;
+    b: number;
+    h?: number;
+    isClamped?: boolean;
+  };
 }
 
 /**
@@ -47,8 +54,9 @@ export function calculateRightTrapezoidFolding(
 ): FoldingResult {
   const alphaRad = (alphaDeg * Math.PI) / 180;
   // 参数安全契约：直角梯形必须满足 0 < b < a，否则钳制 b 防止 D'E = a - b 变为负值导致几何崩坏
-  const b = Math.min(bRaw, Math.max(a - 0.01, 0.01));
-  const lenED = a - b;
+  const safeA = Math.max(1, a);
+  const b = Math.max(0.1, Math.min(bRaw, safeA - 0.1));
+  const lenED = safeA - b;
 
   const A: Vec3 = { x: 0, y: 0, z: 0 };
   const B: Vec3 = { x: 0, y: h, z: 0 };
@@ -93,6 +101,12 @@ export function calculateRightTrapezoidFolding(
     movingSegmentLength,
     movingSegmentName: "|D'A|",
     pyramidVolume,
+    safeParams: {
+      a: safeA,
+      b,
+      h,
+      isClamped: b !== bRaw || safeA !== a,
+    },
   };
 }
 

@@ -196,7 +196,7 @@ export function VectorBasisAnimation() {
             }
             condition={
               studyMode === "basisDecomp"
-                ? "基底 {e₁, e₂} 不共线（行列式非零）且为非零向量。"
+                ? "基底 {e₁, e₂} 为同一平面内两个不共线的非零向量。"
                 : studyMode === "orthogonal"
                   ? "基底 {e₁', e₂'} 模长均为 1 且互相垂直。"
                   : studyMode === "collinear"

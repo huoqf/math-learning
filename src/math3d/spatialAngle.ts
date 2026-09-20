@@ -60,7 +60,6 @@ export function solveSkewLines(
   a: number,
   b: number,
   c: number,
-  _lambda: number,
 ): SkewLinesResult {
   // 异面直线 1: A1(0,0,c) -> B(a,0,0), u = A1B = (a, 0, -c)
   // 异面直线 2: A(0,0,0) -> C(a,b,0), v = AC = (a, b, 0)
@@ -168,6 +167,7 @@ export interface DihedralAngleResult {
   n1: Vec3; // 底面法向量: (0, 0, 1)
   n2: Vec3; // 截面 BDE 法向量: (b*zE, a*zE, a*b) 归一化
   n2Raw: Vec3; // 未归一化法向量
+  normalLength: number; // 未归一化法向量模长 |n2Raw|
   cosTheta: number; // 二面角余弦值 (由几何直观确认为锐二面角)
   dihedralDeg: number; // 二面角大小 [0°, 180°]
   edgeFootM: Vec3; // 垂足 M (过 A 向 BD 作垂线 AM ⊥ BD，由三垂线定理 EM ⊥ BD)
@@ -220,6 +220,7 @@ export function solveDihedralAngle(
     n1,
     n2,
     n2Raw,
+    normalLength: lenN2,
     cosTheta,
     dihedralDeg,
     edgeFootM,

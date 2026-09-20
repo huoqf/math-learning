@@ -26,3 +26,8 @@ vi.spyOn(console, "warn").mockImplementation((...args: unknown[]) => {
     return;
   _warn(...args);
 });
+
+// 注：`src/test/harness/threeTestLayer.tsx` 用 React DOM 渲染 R3F 内建元素时，
+// React 会发出 "The tag <mesh> is unrecognized" / "is using incorrect casing" 告警。
+// 该告警**不经**可被 `vi.spyOn(console, "error")` 拦截的路径（实测），
+// 故统一在 runner 层过滤 —— 见 `vite.config.ts` 的 `test.onConsoleLog`。

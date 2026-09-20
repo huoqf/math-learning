@@ -285,10 +285,17 @@ export const CircumInSphereScene = ({
         sphereType === "inscribed" &&
         Object.entries(keyPoints)
           .filter(([k]) => k.startsWith("t"))
-          .map(([k, pt]) => (
+          .map(([k, pt], idx) => (
             <group key={k}>
               <Point3D position={pt} colorKey="inSphereShell" />
-              <PointLabel3D position={pt} text="T" />
+              {/* 切点加下标 T₁, T₂ …：同一内切球可能有多个切点（正方体 6 个），
+                  统一标 "T" 会无法与右屏点名的切点对应 */}
+              <CompoundLabel3D
+                position={pt}
+                base="T"
+                subscript={String(idx + 1)}
+                colorKey="inSphereShell"
+              />
             </group>
           ))}
 

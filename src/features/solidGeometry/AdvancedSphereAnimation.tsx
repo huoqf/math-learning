@@ -23,6 +23,10 @@ import type { CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { advancedSphereMeta } from "@/data/registries/solidGeometry";
 import { MATH_COLORS } from "@/theme";
+import {
+  calculateTruncatedConeSphere,
+  calculateSphereExtrema,
+} from "@/math3d/advancedSphereModels";
 
 export default function AdvancedSphereAnimation() {
   const [modelType, setModelType] =
@@ -183,13 +187,19 @@ export default function AdvancedSphereAnimation() {
       if (presetKey === "in_sphere" && (key === "r1" || key === "r2")) {
         const r1 = key === "r1" ? value : (prev.r1 ?? 1);
         const r2 = key === "r2" ? value : (prev.r2 ?? 4);
-        next.h = Number((2 * Math.sqrt(r1 * r2)).toFixed(2));
+        next.h = Number(
+          calculateTruncatedConeSphere(r1, r2, 1).idealHForInSphere.toFixed(2),
+        );
       }
       if (key === "R") {
         if (presetKey === "cyl_opt") {
-          next.h = Number((((2 * Math.sqrt(3)) / 3) * value).toFixed(2));
+          next.h = Number(
+            calculateSphereExtrema(value, 0, 1).optimalH.toFixed(2),
+          );
         } else if (presetKey === "cone_opt") {
-          next.h = Number(((4 / 3) * value).toFixed(2));
+          next.h = Number(
+            calculateSphereExtrema(value, 1, 1).optimalH.toFixed(2),
+          );
         } else if (presetKey === "cyl_std") {
           next.h = value;
         }

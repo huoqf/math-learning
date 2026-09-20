@@ -18,7 +18,6 @@ import type { Vec3 } from "@/math3d/vector3";
 
 interface DistanceModeSceneProps {
   c: number;
-  lambda: number;
   vertices: CuboidVertices;
   distanceData: DistanceVolumeResult;
   showAxes: boolean;
@@ -32,7 +31,6 @@ interface DistanceModeSceneProps {
 
 export default function DistanceModeScene({
   c,
-  lambda,
   vertices,
   distanceData,
   showAxes,
@@ -51,7 +49,7 @@ export default function DistanceModeScene({
       {showAxes && showCoordinates ? (
         <FormulaLabel3D
           position={E}
-          tex={`E(0,0,${Number((lambda * c).toFixed(2))})`}
+          tex={`E(0,0,${Number(E.z.toFixed(2))})`}
           offset={[-0.25, -0.2, 0.1]}
         />
       ) : (

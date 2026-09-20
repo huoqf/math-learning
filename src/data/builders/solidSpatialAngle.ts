@@ -8,6 +8,7 @@ import type {
 } from "../types";
 import { MATH_COLORS } from "@/theme";
 import {
+  solveCuboidVertices,
   solveSkewLines,
   solveLinePlaneAngle,
   solveDihedralAngle,
@@ -26,7 +27,7 @@ export function buildSpatialAnglePanel(
   const b = params.b ?? 2;
   const c = params.c ?? 2;
   const lambda = params.lambda ?? (params.ex ? params.ex / c : 0.6);
-  const zE = Math.max(0.01, Math.min(c, lambda * c));
+  const zE = solveCuboidVertices(a, b, c, lambda).E.z;
 
   const quantities: MathQuantity[] = [];
   const theorems: Theorem[] = [];
@@ -35,7 +36,7 @@ export function buildSpatialAnglePanel(
   const reasoningSteps: ReasoningStep[] = [];
 
   if (mode === "skewLines") {
-    const skew = solveSkewLines(a, b, c, lambda);
+    const skew = solveSkewLines(a, b, c);
 
     quantities.push(
       {
@@ -119,14 +120,14 @@ export function buildSpatialAnglePanel(
         detail:
           "以 A 为原点建立坐标系 A-xyz，写出异面直线 A₁B 与 AC 的方向向量",
         latex: `A_1(0, 0, ${c}),\\; B(${a}, 0, 0),\\; C(${a}, ${b}, 0) \\implies \\vec{u} = \\vec{A_1B} = (${a}, 0, -${c}),\\; \\vec{v} = \\vec{AC} = (${a}, ${b}, 0)`,
-        rubric: "高考大题采分点：空间建系与方向向量坐标表示（4分）",
+        rubric: "[高考采分点] 建立空间直角坐标系并写出方向向量坐标 (+4分)",
       },
       {
         step: 2,
         title: "代入异面直线夹角余弦绝对值公式求解",
         detail: "异面直线所成角必须为锐角或直角，公式中点积必须取绝对值",
         latex: `\\cos\\theta = \\frac{|\\vec{u} \\cdot \\vec{v}|}{|\\vec{u}||\\vec{v}|} = \\frac{|${a} \\times ${a} + 0 + 0|}{\\sqrt{${a}^2+${c}^2}\\sqrt{${a}^2+${b}^2}} = ${skew.cosTheta.toFixed(4)} \\implies \\theta = ${skew.angleDeg.toFixed(2)}^\\circ`,
-        rubric: "高考大题采分点：余弦绝对值公式代入与计算结果（4分）",
+        rubric: "[高考采分点] 正确代入余弦绝对值公式并精确求得夹角结果 (+5分)",
       },
       {
         step: 3,
@@ -137,7 +138,7 @@ export function buildSpatialAnglePanel(
         // 拆行算法找不到断点 → 593px 内容被 243px 容器永久裁切。
         // 改为在「条件」与「结论」之间提供顶层 \; 语义间距断点，内容与标点完全保留。
         latex: `\\text{在 } \\triangle ACD_1 \\text{ 中利用余弦定理求 } \\angle ACD_1，\\; \\text{几何平移法求得夹角与向量法完全一致}`,
-        rubric: "高考大题采分点：几何平移转化与互验说明（4分）",
+        rubric: "[高考采分点] 结合几何平移法与余弦定理进行对账验证说明 (+4分)",
       },
     );
   } else if (mode === "linePlane") {
@@ -238,21 +239,21 @@ export function buildSpatialAnglePanel(
         detail:
           "侧棱 EA ⊥ 底面 ABCD，射影为 AC，直角三角形 △EAC 中 ∠ECA 即为线面角",
         latex: `EA \\perp \\text{面 } ABCD \\implies CA \\text{ 为 } CE \\text{ 在底面的垂直射影}, \\; \\angle ECA = \\theta, \\; \\sin\\theta = \\frac{EA}{EC} = \\frac{${zE.toFixed(2)}}{\\sqrt{${a}^2+${b}^2+${zE.toFixed(2)}^2}}`,
-        rubric: "高考大题采分点：线面垂直判定与射影三角形寻找（4分）",
+        rubric: "[高考采分点] 证明线面垂直并准确作出线面角射影三角形 (+4分)",
       },
       {
         step: 2,
         title: "建立空间直角坐标系与确定向量坐标",
         detail: "斜线向量为 EC，底面 ABCD 的单位法向量取 z 轴正向",
         latex: `C(${a}, ${b}, 0), \\; E(0, 0, ${zE.toFixed(2)}) \\implies \\vec{EC} = (${a}, ${b}, -${zE.toFixed(2)}), \\; \\vec{n} = (0, 0, 1)`,
-        rubric: "高考大题采分点：空间直角坐标系建立与向量坐标化（4分）",
+        rubric: "[高考采分点] 建立空间坐标系并写出斜线与法向量坐标 (+5分)",
       },
       {
         step: 3,
         title: "代入线面角正弦绝对值公式计算",
         detail: "线面角正弦值等于斜线向量与平面法向量夹角余弦的绝对值",
         latex: `\\sin\\theta = \\frac{|\\vec{EC} \\cdot \\vec{n}|}{|\\vec{EC}||\\vec{n}|} = \\frac{|-${zE.toFixed(2)}|}{\\sqrt{${(a * a + b * b + zE * zE).toFixed(2)}} \\times 1} = ${lp.sinTheta.toFixed(4)} \\implies \\theta = ${lp.angleDeg.toFixed(2)}^\\circ`,
-        rubric: "高考大题采分点：线面角公式代入与计算结果（4分）",
+        rubric: "[高考采分点] 正确代入线面角正弦公式求解精确角值 (+4分)",
       },
     );
 
@@ -351,7 +352,7 @@ export function buildSpatialAnglePanel(
         title: "建立空间直角坐标系并求截面 BDE 的法向量",
         detail: `以 A 为原点建立坐标系 A-xyz，设平面 BDE 法向量为 n = (x, y, z)`,
         latex: `\\begin{cases} \\vec{n} \\cdot \\vec{BD} = 0 \\\\ \\vec{n} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\begin{cases} -${a}x + ${b}y = 0 \\\\ -${a}x + ${zE.toFixed(2)}z = 0 \\end{cases} \\implies \\vec{n} = (${(b * zE).toFixed(2)},\\; ${(a * zE).toFixed(2)},\\; ${(a * b).toFixed(2)})`,
-        rubric: "高考大题采分点：建立空间直角坐标系与法向量解方程组（4分）",
+        rubric: "[高考采分点] 建立空间坐标系并联立方程组求截面法向量 (+4分)",
       },
       {
         step: 2,
@@ -359,14 +360,14 @@ export function buildSpatialAnglePanel(
         detail:
           "取平面内参考点 B，点 A 到截面 BDE 的垂直距离等于斜向量在法向量上的射影长",
         latex: `d = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|} = \\frac{|${a} \\times ${(b * zE).toFixed(2)}|}{${(2 * distRes.areaBDE).toFixed(2)}} = ${distRes.distance.toFixed(4)}`,
-        rubric: "高考大题采分点：空间距离向量射影公式代入与精确计算（4分）",
+        rubric: "[高考采分点] 正确代入点面距离向量射影公式完成精确求解 (+5分)",
       },
       {
         step: 3,
         title: "等体积换底法对账与动点体积极值判定",
         detail: "底面 △ABD 面积恒定，三棱锥体积关于高线 zE = λc 严格单调递增",
         latex: `V_{E-ABD} = \\frac{1}{3} S_{\\Delta ABD} \\cdot z_E = \\frac{1}{6}(${a})(${b})(${zE.toFixed(2)}) = ${distRes.volume.toFixed(4)} \\;\\le\\; V_{\\max} = ${distRes.maxVolume.toFixed(4)}`,
-        rubric: "高考大题采分点：等体积法换底推导与端点极值结论（4分）",
+        rubric: "[高考采分点] 利用等体积换底法验证对账并给出极值分析 (+4分)",
       },
     );
 
@@ -405,7 +406,7 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.accent,
       },
       {
-        label: "二面角 B-DE-A 大小",
+        label: "二面角 E-BD-A 大小",
         symbol: "\\theta",
         value: `${dih.dihedralDeg.toFixed(2)}°`,
         color: MATH_COLORS.highlight,
@@ -466,21 +467,21 @@ export function buildSpatialAnglePanel(
         title: "几何三垂线法作二面角平面角",
         detail: "在底面矩形中作 AM ⊥ BD 于 M，由三垂线定理得 EM ⊥ BD",
         latex: `AM \\perp BD, \\; EA \\perp \\text{底面} \\implies EM \\perp BD \\implies \\angle AME \\text{ 为二面角 } E-BD-A \\text{ 的平面角}`,
-        rubric: "高考大题采分点：三垂线定理判定二面角平面角（4分）",
+        rubric: "[高考采分点] 运用三垂线定理作出并判定二面角的平面角 (+4分)",
       },
       {
         step: 2,
         title: "解方程组求截面 BDE 的法向量",
         detail: "底面法向量取 n₁=(0,0,1)，设截面 BDE 法向量 n₂=(x,y,z)",
         latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\begin{cases} -${a}x + ${b}y = 0 \\\\ -${a}x + ${zE.toFixed(2)}z = 0 \\end{cases} \\implies \\vec{n_2} = (${dih.n2Raw.x.toFixed(2)},\\; ${dih.n2Raw.y.toFixed(2)},\\; ${dih.n2Raw.z.toFixed(2)})`,
-        rubric: "高考大题采分点：法向量方程组联立求解特解（4分）",
+        rubric: "[高考采分点] 联立正交方程组精确求得截面法向量坐标 (+5分)",
       },
       {
         step: 3,
         title: "代入二面角余弦公式并结合图形判定锐钝角",
         detail: "由几何直观可知该二面角为锐角，余弦值取正值",
-        latex: `\\cos\\theta = \\frac{|\\vec{n_1} \\cdot \\vec{n_2}|}{|\\vec{n_1}||\\vec{n_2}|} = \\frac{${(a * b).toFixed(2)}}{${Math.sqrt(dih.n2Raw.x * dih.n2Raw.x + dih.n2Raw.y * dih.n2Raw.y + dih.n2Raw.z * dih.n2Raw.z).toFixed(2)}} = ${dih.cosTheta.toFixed(4)} \\implies \\theta = ${dih.dihedralDeg.toFixed(2)}^\\circ`,
-        rubric: "高考大题采分点：向量夹角代入与空间直观钝锐判断（4分）",
+        latex: `\\cos\\theta = \\frac{|\\vec{n_1} \\cdot \\vec{n_2}|}{|\\vec{n_1}||\\vec{n_2}|} = \\frac{${(a * b).toFixed(2)}}{${dih.normalLength.toFixed(2)}} = ${dih.cosTheta.toFixed(4)} \\implies \\theta = ${dih.dihedralDeg.toFixed(2)}^\\circ`,
+        rubric: "[高考采分点] 代入法向量夹角余弦公式并结合直观定锐钝 (+4分)",
       },
     );
 

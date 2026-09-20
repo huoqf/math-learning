@@ -37,8 +37,11 @@ export const SphereCutSection = ({
   );
 
   const sphereProf = useMemo(() => sphereProfile(R), [R]);
-  const cutZ = cutDistance; // 截面高度即球心距有向值
-  const rCut = cutInfo.cutRadius;
+  const cutZ = cutDistance; // 截面平面真实所在高度（球心距有向值，允许 |d| > R 的相离态）
+  // 仅当平面与球严格相交（|d| < R）时才存在截面小圆与 Rt△OO'P；
+  // |d| = R 为相切（圆退化为一点）、|d| > R 为相离（无公共点），此时不得画出小圆与斜边 R。
+  const hasCut = Math.abs(cutDistance) < R - 1e-6;
+  const rCut = hasCut ? cutInfo.cutRadius : 0;
 
   // 截面小圆圆周点
   const circlePoints = useMemo(() => {
@@ -67,25 +70,29 @@ export const SphereCutSection = ({
         showOutline={true}
       />
 
-      {/* 截面小圆圆面 */}
-      <mesh position={[0, cutZ, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[rCut, 48]} />
-        <meshBasicMaterial
-          color={MATH_COLORS.secondary}
-          transparent
-          opacity={0.3}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
+      {/* 截面小圆圆面（仅相交态存在小圆；相切退化为点、相离无公共点，均不画） */}
+      {hasCut && (
+        <mesh position={[0, cutZ, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[rCut, 48]} />
+          <meshBasicMaterial
+            color={MATH_COLORS.secondary}
+            transparent
+            opacity={0.3}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
 
       {/* 截面小圆边缘 */}
-      <Line
-        points={circlePoints}
-        color={MATH_COLORS.secondary}
-        lineWidth={2.5}
-      />
+      {hasCut && (
+        <Line
+          points={circlePoints}
+          color={MATH_COLORS.secondary}
+          lineWidth={2.5}
+        />
+      )}
 
-      {/* 垂径直角三角形三边 */}
+      {/* 垂径直角三角形三边（仅相交态成立 R^2 = r_截^2 + d^2） */}
       {/* 1. 球心距 d (O -> O') */}
       <Line
         points={[O, OPrime]}
@@ -94,14 +101,22 @@ export const SphereCutSection = ({
       />
 
       {/* 2. 截面圆半径 r_截 (O' -> P) */}
-      <Line
-        points={[OPrime, P]}
-        color={MATH_COLORS.paramTertiary}
-        lineWidth={3}
-      />
+      {hasCut && (
+        <Line
+          points={[OPrime, P]}
+          color={MATH_COLORS.paramTertiary}
+          lineWidth={3}
+        />
+      )}
 
       {/* 3. 球半径 R (O -> P) */}
-      <Line points={[O, P]} color={MATH_COLORS.paramPrimary} lineWidth={3.5} />
+      {hasCut && (
+        <Line
+          points={[O, P]}
+          color={MATH_COLORS.paramPrimary}
+          lineWidth={3.5}
+        />
+      )}
 
       {/* 特征直角标记 Rt∠OO_1A */}
       {Math.abs(cutDistance) > 0.25 && rCut > 0.25 && (
@@ -134,11 +149,13 @@ export const SphereCutSection = ({
         })}
         onDrag={(next) => onDragCutDistance?.(Number(next.z.toFixed(2)))}
       />
-      <Point3D
-        position={{ x: rCut, y: 0, z: cutZ }}
-        colorKey="paramTertiary"
-        radius={0.05}
-      />
+      {hasCut && (
+        <Point3D
+          position={{ x: rCut, y: 0, z: cutZ }}
+          colorKey="paramTertiary"
+          radius={0.05}
+        />
+      )}
 
       {/* 顶点名称标签 (高中数学斜体 O, O_1, A) */}
       <CompoundLabel3D
@@ -154,12 +171,14 @@ export const SphereCutSection = ({
         colorKey="paramSecondary"
         offset={[-0.24, 0.14, 0]}
       />
-      <CompoundLabel3D
-        position={{ x: rCut, y: 0, z: cutZ }}
-        base="A"
-        colorKey="paramTertiary"
-        offset={[0.18, 0, 0]}
-      />
+      {hasCut && (
+        <CompoundLabel3D
+          position={{ x: rCut, y: 0, z: cutZ }}
+          base="A"
+          colorKey="paramTertiary"
+          offset={[0.18, 0, 0]}
+        />
+      )}
 
       {/* 空间公式尺寸标签 (红-橙-绿三位一体) */}
       <FormulaLabel3D
@@ -167,20 +186,33 @@ export const SphereCutSection = ({
         tex={`\\color{${MATH_COLORS.paramSecondary}}{d=${Math.abs(cutDistance).toFixed(1)}}`}
         offset={[-0.36, 0, 0]}
       />
-      <FormulaLabel3D
-        position={{ x: rCut / 2, y: 0, z: cutZ }}
-        tex={`\\color{${MATH_COLORS.paramTertiary}}{r=${rCut.toFixed(1)}}`}
-        offset={[0, 0, 0.2]}
-      />
-      <FormulaLabel3D
-        position={{
-          x: rCut / 2,
-          y: 0,
-          z: cutZ / 2,
-        }}
-        tex={`\\color{${MATH_COLORS.paramPrimary}}{R=${R.toFixed(1)}}`}
-        offset={[0.22, 0, -0.1]}
-      />
+      {hasCut && (
+        <FormulaLabel3D
+          position={{ x: rCut / 2, y: 0, z: cutZ }}
+          tex={`\\color{${MATH_COLORS.paramTertiary}}{r=${rCut.toFixed(1)}}`}
+          offset={[0, 0, 0.2]}
+        />
+      )}
+      {hasCut && (
+        <FormulaLabel3D
+          position={{
+            x: rCut / 2,
+            y: 0,
+            z: cutZ / 2,
+          }}
+          tex={`\\color{${MATH_COLORS.paramPrimary}}{R=${R.toFixed(1)}}`}
+          offset={[0.22, 0, -0.1]}
+        />
+      )}
+
+      {/* 相切 / 相离态：明确无截面小圆，避免把 |d| >= R 的状态画成带小圆的相交态 */}
+      {!hasCut && (
+        <FormulaLabel3D
+          position={{ x: 0, y: 0, z: cutZ }}
+          tex={`\\color{${MATH_COLORS.paramPrimary}}{d \\ge R : \\text{${Math.abs(cutDistance) > R + 1e-6 ? "相离，无公共点" : "相切，圆退化为一点"}}}`}
+          offset={[0.3, 0.16, 0]}
+        />
+      )}
     </group>
   );
 };
