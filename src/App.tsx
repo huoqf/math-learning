@@ -142,15 +142,7 @@ export default function App() {
                     <Route
                       key={route}
                       path={route}
-                      element={
-                        <Guarded3DPage
-                          loader={
-                            entry.loader as unknown as () => Promise<{
-                              default: ComponentType;
-                            }>
-                          }
-                        />
-                      }
+                      element={<Guarded3DPage loader={entry.loader} />}
                     />
                   );
                 }

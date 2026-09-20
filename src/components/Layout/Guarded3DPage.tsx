@@ -2,7 +2,7 @@ import { lazy, Suspense, useMemo, type ComponentType } from "react";
 import { isWebGLAvailable } from "@/utils/webglSupport";
 
 interface Guarded3DPageProps {
-  loader: () => Promise<{ default: ComponentType }>;
+  loader: () => Promise<Record<string, unknown> | { default: ComponentType }>;
 }
 
 function PageLoading() {
@@ -18,14 +18,27 @@ function PageLoading() {
  *
  * 仅当 WebGL 可用时才构造 lazy()，dynamic import()（连带 three/r3f/drei chunk）
  * 只会在 <LazyPage/> 真正渲染时才发起网络请求。
+ * 内部兼容 default 默认导出与首个具名组件导出。
  */
 export const Guarded3DPage = ({ loader }: Guarded3DPageProps) => {
   const supported = useMemo(() => isWebGLAvailable(), []);
 
-  const LazyPage = useMemo(
-    () => (supported ? lazy(loader) : null),
-    [supported, loader],
-  );
+  const LazyPage = useMemo(() => {
+    if (!supported) return null;
+    return lazy(async () => {
+      const mod = await loader();
+      if ("default" in mod && typeof mod.default === "function") {
+        return { default: mod.default as ComponentType };
+      }
+      const Component = Object.values(mod).find(
+        (v): v is ComponentType => typeof v === "function",
+      );
+      if (!Component) {
+        throw new Error("3D 页面模块未找到可用的 React 组件导出");
+      }
+      return { default: Component };
+    });
+  }, [supported, loader]);
 
   if (!supported) {
     return (

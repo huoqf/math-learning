@@ -53,3 +53,7 @@ scripts/*.json
 
 # 审计截图目录（*.png 已全局忽略，此处显式声明目录意图）
 scripts/shots/
+
+# Config build artifacts
+*.config.js
+*.config.d.ts

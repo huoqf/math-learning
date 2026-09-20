@@ -7,7 +7,7 @@
 ## 一、 项目定位与技术栈
 
 - **定位**：覆盖全高中数学（代数/几何/概率统计/解析几何/立体几何）的“数形结合”交互探索平台。
-- **技术栈**：React 19 + TypeScript 5.5+ (strict) + TailwindCSS 4 + Vite 6 (`base: './'`) + Zustand。
+- **技术栈**：React 19 + TypeScript 5.5+ (strict) + TailwindCSS 4 + Vite 6 (`base: './'`) + 纯 React Hooks。
 - **离线与路由**：KaTeX 完全离线渲染；全局路由 **HashRouter Only**。
 
 ---
