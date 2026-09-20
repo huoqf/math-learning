@@ -4,6 +4,30 @@
  */
 import { MATH_COLORS } from "@/theme";
 import type { ParamMeta } from "@/data/types";
+import type { AnswerStepItem } from "@/components/UI";
+
+export const LINEAR_RECURRENCE_ANSWER_STEPS: AnswerStepItem[] = [
+  {
+    step: 1,
+    title: "待定系数设不动点方程",
+    sceneHint: "寻找常数 c 满足 c=pc+q，确定平移基准量",
+  },
+  {
+    step: 2,
+    title: "构造平移等比数列",
+    sceneHint: "两边同减 c，构造以 p 为公比的辅助等比数列 bn",
+  },
+  {
+    step: 3,
+    title: "求出辅助数列通项",
+    sceneHint: "写出 bn 首项 b1=a1-c 与通项公式 bn=(a1-c)p^(n-1)",
+  },
+  {
+    step: 4,
+    title: "还原主通项并检验首项",
+    sceneHint: "移项得 an=bn+c，并代入 n=1 严格核验首项吻合",
+  },
+];
 
 export interface SequenceParams {
   a1: number;
@@ -69,6 +93,18 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
       name: "退化等差型 (p=1)",
       desc: "p=1, q=2, 退化为公差 d=2 的等差数列",
       params: { a1: 1, p_rec: 1, q_rec: 2, N: 6 },
+    },
+    {
+      key: "drug-metabolism",
+      name: "新高考情境 · 药物代谢递推",
+      desc: "a₁=10, p=0.5, q=3，每日吸收 3mg、代谢半衰期 50%，稳态 c=6",
+      params: { a1: 10, p_rec: 0.5, q_rec: 3, N: 6 },
+    },
+    {
+      key: "new-def-diff",
+      name: "新高考19题 · 差分等比新定义",
+      desc: "a₁=2, p=3, q=-2，一阶差分 Δaₙ 成等比数列的新定义探究",
+      params: { a1: 2, p_rec: 3, q_rec: -2, N: 6 },
     },
   ],
   "non-homogeneous": [

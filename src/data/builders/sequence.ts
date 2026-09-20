@@ -43,6 +43,7 @@ export function buildSequencePanel(
   const theorems: MathPanelData["theorems"] = [];
   const gaokaoPoints: MathPanelData["gaokaoPoints"] = [];
   const warnings: MathPanelData["warnings"] = [];
+  const reasoningSteps: NonNullable<MathPanelData["reasoningSteps"]> = [];
   let mnemonic: string | undefined = undefined;
 
   if (activeMode === "arithmetic") {
@@ -727,6 +728,76 @@ export function buildSequencePanel(
         importance: "gaokao",
       });
 
+      if (res.fixedPoint !== null) {
+        const cVal = res.fixedPoint;
+        const b1Val = a1 - cVal;
+        reasoningSteps.push(
+          {
+            step: 1,
+            title: "待定系数设不动点方程",
+            latex: `a_{n+1} - c = \\color{${MATH_COLORS.paramPrimary}}{p}(a_n - c) \\implies c = \\frac{\\color{${MATH_COLORS.paramSecondary}}{q}}{1-\\color{${MATH_COLORS.paramPrimary}}{p}}`,
+            detail: `设常数 $c$ 满足 $c = ${p_rec}c + ${q_rec}$，移项解得平移不动点 $c = \\frac{${q_rec}}{1 - (${p_rec})} = ${formatMathNumber(cVal)}$。`,
+            rubric:
+              "【审题定法 · 2分】设立方程 $c = pc + q$ 并正确求出常数 $c$",
+          },
+          {
+            step: 2,
+            title: "构造平移等比数列",
+            latex: `a_{n+1} - (${formatMathNumber(cVal)}) = ${p_rec} \\left[ a_n - (${formatMathNumber(cVal)}) \\right]`,
+            detail: `令 $b_n = a_n - (${formatMathNumber(cVal)})$，则 $\\frac{b_{n+1}}{b_n} = ${p_rec}$ (常数)，故 $\\{b_n\\}$ 是以公比 $p = ${p_rec}$ 的等比数列。`,
+            rubric:
+              "【同减构造 · 3分】两端同减 $c$，严密写出比值为常数 $p$ 的等比证明",
+          },
+          {
+            step: 3,
+            title: "求出辅助数列通项",
+            latex: `b_n = b_1 \\cdot p^{n-1} = (a_1 - c) p^{n-1} = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1}`,
+            detail: `计算首项 $b_1 = a_1 - c = ${a1} - (${formatMathNumber(cVal)}) = ${formatMathNumber(b1Val)}$，套用通项公式得 $b_n = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1}$。`,
+            rubric:
+              "【辅助通项 · 3分】正确求出首项 $b_1 = a_1 - c$ 并写出 $b_n$ 通项表达式",
+          },
+          {
+            step: 4,
+            title: "还原主通项并检验首项",
+            latex: `a_n = b_n + c = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1} + (${formatMathNumber(cVal)})`,
+            detail: `由 $a_n = b_n + c$ 移项还原；当 $n = 1$ 时，$a_1 = ${formatMathNumber(b1Val)} \\times 1 + (${formatMathNumber(cVal)}) = ${a1}$，检验首项完全吻合。`,
+            rubric:
+              "【反思还原 · 2分】还原 $a_n$，且答题卷必须显式写出『检验 $n=1$ 吻合』防扣分",
+          },
+        );
+      } else {
+        reasoningSteps.push(
+          {
+            step: 1,
+            title: "待定系数设不动点方程",
+            latex: `p = 1 \\implies a_{n+1} - a_n = \\color{${MATH_COLORS.paramSecondary}}{q}`,
+            detail: `因 $p = 1$，待定系数分母 $1-p=0$ 无解，递推式退化为相邻项差为常数的等差模型。`,
+            rubric: "【审题识别 · 2分】识别 $p=1$ 临界退化为标准等差数列",
+          },
+          {
+            step: 2,
+            title: "构造平移等比数列",
+            latex: `a_{n+1} - a_n = ${q_rec} = d`,
+            detail: `直接识别公差 $d = ${q_rec}$，无需再平移构造等比数列。`,
+            rubric: "【确定公差 · 3分】写出公差 $d = q$",
+          },
+          {
+            step: 3,
+            title: "求出辅助数列通项",
+            latex: `a_n = a_1 + (n-1)d = ${a1} + (n-1)(${q_rec})`,
+            detail: `套用等差数列通项公式 $a_n = a_1 + (n-1)d$。`,
+            rubric: "【代数计算 · 3分】套用等差数列通项公式计算",
+          },
+          {
+            step: 4,
+            title: "还原主通项并检验首项",
+            latex: `a_n = ${q_rec}n + (${a1 - q_rec})`,
+            detail: `化简通项；当 $n=1$ 时，$a_1 = ${a1}$，检验吻合。`,
+            rubric: "【化简检验 · 2分】写出最简式并检验 $n=1$ 成立",
+          },
+        );
+      }
+
       mnemonic =
         "常数一阶找不动，平移同减成等比；公比绝对值小于一，蛛网收敛稳态期。";
     } else if (subModel === "accumulation") {
@@ -960,6 +1031,7 @@ export function buildSequencePanel(
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps: reasoningSteps.length > 0 ? reasoningSteps : undefined,
     mnemonic,
   };
 }

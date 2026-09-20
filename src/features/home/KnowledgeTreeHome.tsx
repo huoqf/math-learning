@@ -148,9 +148,9 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "sequence_series",
     title: "数列递推与新定义探索",
-    badge: "选填小题定位 · 10分",
+    badge: "解答题通法与 19 题压轴 · 15~17分",
     description:
-      "不动点迭代构造等比、错位裂项求和与文化情境递推（2026 卷数列无独立大题）",
+      "平移构造等比、错位裂项求和、药物代谢情境建模与新高考 19 题新定义差分探索",
     icon: Layers,
     gradient: "from-cyan-500 to-sky-600",
     borderLight: "border-cyan-200",

@@ -13,6 +13,7 @@ import {
   TabSwitcher,
   KatexFormula,
   TipCard,
+  StepNavigator,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -23,6 +24,7 @@ import {
   defaultParams,
   paramMeta,
   RECURRENCE_PRESETS,
+  LINEAR_RECURRENCE_ANSWER_STEPS,
 } from "@/data/registries/sequence";
 import {
   calcLinearRecurrence,
@@ -84,6 +86,10 @@ export function RecurrencePage() {
     "n_over_n1" | "n1_over_n" | "pow_two"
   >("n_over_n1");
   const [highlightN, setHighlightN] = useState<number>(1);
+  const [linearViewMode, setLinearViewMode] = useState<"shift" | "cobweb">(
+    "shift",
+  );
+  const [activeStep, setActiveStep] = useState<number>(1);
 
   // 初始化参数
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -114,29 +120,68 @@ export function RecurrencePage() {
   // 动态自适应计算最佳数学区间与刻度步长 (Nice-Number 算法)
   const { xRange, yRange, xStep, yStep, keepAspectRatio } = useMemo(() => {
     if (recurrenceModelType === "linear-pan") {
-      const linearData = calcLinearRecurrence(a1, p_rec, q_rec, N);
-      const allVals = [
-        ...linearData.terms.map((t) => t.an),
-        ...(linearData.fixedPoint !== null ? [linearData.fixedPoint] : []),
-      ].filter(Number.isFinite);
+      if (linearViewMode === "cobweb") {
+        const linearData = calcLinearRecurrence(a1, p_rec, q_rec, N);
+        const allVals = [
+          ...linearData.terms.map((t) => t.an),
+          ...(linearData.fixedPoint !== null ? [linearData.fixedPoint] : []),
+        ].filter(Number.isFinite);
 
-      let minV = Math.min(-2, ...allVals);
-      let maxV = Math.max(6, ...allVals);
-      const span = Math.max(8, maxV - minV);
-      const pad = span * 0.18;
-      minV = Math.floor(minV - pad);
-      maxV = Math.ceil(maxV + pad);
+        let minV = Math.min(-2, ...allVals);
+        let maxV = Math.max(6, ...allVals);
+        const span = Math.max(8, maxV - minV);
+        const pad = span * 0.18;
+        minV = Math.floor(minV - pad);
+        maxV = Math.ceil(maxV + pad);
 
-      const totalSpan = maxV - minV;
-      const step = calcNiceStep(totalSpan, 6);
+        const totalSpan = maxV - minV;
+        const step = calcNiceStep(totalSpan, 6);
 
-      return {
-        xRange: [minV, maxV] as [number, number],
-        yRange: [minV, maxV] as [number, number],
-        xStep: step,
-        yStep: step,
-        keepAspectRatio: true, // 蛛网图保持 1:1 对角线 45 度角
-      };
+        return {
+          xRange: [minV, maxV] as [number, number],
+          yRange: [minV, maxV] as [number, number],
+          xStep: step,
+          yStep: step,
+          keepAspectRatio: true, // 蛛网图保持 1:1 对角线 45 度角
+        };
+      } else {
+        // 平移构造双轴图模式：x 为项数 [0, N + 0.8]，y 涵盖原数列 an 与辅助等比数列 bn
+        const linearData = calcLinearRecurrence(a1, p_rec, q_rec, N);
+        const allY = [
+          ...linearData.terms.map((t) => t.an),
+          ...linearData.terms.map((t) => t.bn),
+          ...(linearData.fixedPoint !== null ? [linearData.fixedPoint] : []),
+          0,
+        ].filter(Number.isFinite);
+
+        let minY = Math.min(...allY);
+        let maxY = Math.max(...allY);
+        if (maxY - minY < 4) maxY = minY + 4;
+
+        let visualMaxY = maxY;
+        if (visualMaxY > 60) {
+          const sortedY = [...allY].sort((a, b) => a - b);
+          const medianTop = sortedY[Math.min(sortedY.length - 2, 4)] ?? 40;
+          visualMaxY = Math.min(visualMaxY, Math.max(30, medianTop * 1.6));
+        }
+
+        const hSpan = visualMaxY - minY;
+        const padY = Math.max(1, hSpan * 0.15);
+        const yR: [number, number] = [
+          Math.floor(minY - padY),
+          Math.ceil(visualMaxY + padY),
+        ];
+        const totalH = yR[1] - yR[0];
+        const yS = calcNiceStep(totalH, 6);
+
+        return {
+          xRange: [-0.6, N + 0.8] as [number, number],
+          yRange: yR,
+          xStep: 1,
+          yStep: yS,
+          keepAspectRatio: false,
+        };
+      }
     }
 
     // 散点图模式：x 轴为项数区间 [0, N + 0.8]，xStep 恒为 1
@@ -262,6 +307,8 @@ export function RecurrencePage() {
   const handleModelChange = (model: RecurrenceModel) => {
     setRecurrenceModelType(model);
     setHighlightN(1);
+    setActiveStep(1);
+    setLinearViewMode("shift");
     const presets = RECURRENCE_PRESETS[model] ?? [];
     if (presets.length > 0) {
       const first = presets[0];
@@ -349,15 +396,17 @@ export function RecurrencePage() {
   const tipConfig = useMemo(() => {
     const a1v = params.a1 ?? 1;
     const N = Math.min(12, Math.max(4, Math.round(params.N ?? 6)));
-    const common = `初始项 a₁ = ${a1v}，考察前 ${N} 项的通项演化。`;
+    const common = `初始项 $a_1 = ${a1v}$，考察前 $N = ${N}$ 项的通项演化。`;
     switch (recurrenceModelType) {
       case "linear-pan":
         return {
           variant: "primary" as const,
           badge: "高考核心 · 待定系数构造等比",
-          condition: common + " 递推 aₙ₊₁ = paₙ + q（p ≠ 1）。",
+          background:
+            "【真实情境建模】新高考常以药物代谢补充、房贷等额本息或差分新定义为背景，前后项满足一阶线性递推。",
+          condition: `初始项 $a_1 = ${a1v}$，前 $N = ${N}$ 项演化，递推式 $a_{n+1} = ${p_rec}a_n + ${q_rec}$。`,
           question:
-            "能否找到常数 λ 使 aₙ₊₁ − λ = p(aₙ − λ)？由此构造等比数列并求通项。",
+            "能否找到基准平移量 $c$ 使 $a_{n+1}-c = p(a_n-c)$？如何规范写出证明步并求得 $a_n$？",
         };
       case "non-homogeneous":
         return {
@@ -484,6 +533,21 @@ export function RecurrencePage() {
             </LeftPanelSection>
           )}
 
+          {/* 一阶线性递推专属：高考标准解答分步走 */}
+          {recurrenceModelType === "linear-pan" && (
+            <LeftPanelSection
+              title="高考标准解答分步走"
+              subtitle="对齐解答题 4 步规范采分模板"
+            >
+              <StepNavigator
+                steps={LINEAR_RECURRENCE_ANSWER_STEPS}
+                active={activeStep}
+                onChange={setActiveStep}
+                hint="右屏已同步聚焦该采分步卡片"
+              />
+            </LeftPanelSection>
+          )}
+
           {/* 累加法函数类型切换 */}
           {recurrenceModelType === "accumulation" && (
             <LeftPanelSection
@@ -546,6 +610,7 @@ export function RecurrencePage() {
             <TipCard
               variant={tipConfig.variant}
               badge={tipConfig.badge}
+              background={tipConfig.background}
               condition={tipConfig.condition}
               question={tipConfig.question}
             />
@@ -582,11 +647,25 @@ export function RecurrencePage() {
               onSelectN={setHighlightN}
               xStep={xStep}
               yStep={yStep}
+              activeStep={activeStep}
+              linearViewMode={linearViewMode}
+              onToggleLinearViewMode={() =>
+                setLinearViewMode((v) => (v === "shift" ? "cobweb" : "shift"))
+              }
             />
           </AnimationSvgCanvas>
         </div>
       }
-      right={<MathPanel {...mathData} title="递推与构造法看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          title="递推与构造法看板"
+          focusStep={
+            recurrenceModelType === "linear-pan" ? activeStep : undefined
+          }
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

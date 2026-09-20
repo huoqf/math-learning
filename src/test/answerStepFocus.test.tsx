@@ -23,6 +23,8 @@ import {
   INDEPENDENCE_ANSWER_STEPS,
   defaultParams as pairedDefaultParams,
 } from "@/data/registries/pairedData";
+import { buildSequencePanel } from "@/data/builders/sequence";
+import { LINEAR_RECURRENCE_ANSWER_STEPS } from "@/data/registries/sequence";
 
 /**
  * 回归防线（来源：概率统计模块审计 · 决策项 3.1「分步作答闭环」）。
@@ -305,13 +307,30 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
     );
   });
 
-  it("两条链条的步号必须从 1 连续递增——否则左屏清单与右屏聚焦会错位", () => {
-    for (const steps of [MARKOV_ANSWER_STEPS, INDEPENDENCE_ANSWER_STEPS]) {
+  it("一阶线性递推：右屏推演链的步号与标题完全由 LINEAR_RECURRENCE_ANSWER_STEPS 生成", () => {
+    const panel = buildSequencePanel(
+      { a1: 1, p_rec: 2, q_rec: 1, N: 6 },
+      { activeMode: "recurrence", subModel: "linear-pan" },
+    );
+    expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+      LINEAR_RECURRENCE_ANSWER_STEPS.map((s) => s.step),
+    );
+    expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+      LINEAR_RECURRENCE_ANSWER_STEPS.map((s) => s.title),
+    );
+  });
+
+  it("所有解答链条的步号必须从 1 连续递增——否则左屏清单与右屏聚焦会错位", () => {
+    for (const steps of [
+      MARKOV_ANSWER_STEPS,
+      INDEPENDENCE_ANSWER_STEPS,
+      LINEAR_RECURRENCE_ANSWER_STEPS,
+    ]) {
       expect(steps.map((s) => s.step)).toEqual(steps.map((_, i) => i + 1));
       // 每一步都要给出"该看中屏哪一块"，否则分步导航就只剩翻页没有联动
       for (const s of steps) {
         expect(s.title.trim().length).toBeGreaterThan(0);
-        expect(s.sceneHint.trim().length).toBeGreaterThan(0);
+        expect(s.sceneHint ? s.sceneHint.trim().length : 0).toBeGreaterThan(0);
       }
     }
   });

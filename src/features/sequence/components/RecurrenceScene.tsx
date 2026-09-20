@@ -32,6 +32,9 @@ export interface RecurrenceSceneProps {
   onSelectN?: (n: number) => void;
   xStep?: number;
   yStep?: number;
+  activeStep?: number;
+  linearViewMode?: "shift" | "cobweb";
+  onToggleLinearViewMode?: () => void;
 }
 
 export const RecurrenceScene: React.FC<RecurrenceSceneProps> = (props) => {
@@ -45,6 +48,9 @@ export const RecurrenceScene: React.FC<RecurrenceSceneProps> = (props) => {
     onSelectN: props.onSelectN,
     xStep: props.xStep,
     yStep: props.yStep,
+    activeStep: props.activeStep,
+    linearViewMode: props.linearViewMode,
+    onToggleLinearViewMode: props.onToggleLinearViewMode,
   };
 
   switch (recurrenceModelType) {

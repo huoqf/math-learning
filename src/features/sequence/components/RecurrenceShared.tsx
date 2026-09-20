@@ -16,6 +16,9 @@ export interface RecurrenceSceneBaseProps {
   onSelectN?: (n: number) => void;
   xStep?: number;
   yStep?: number;
+  activeStep?: number;
+  linearViewMode?: "shift" | "cobweb";
+  onToggleLinearViewMode?: () => void;
 }
 
 /** 从参数中安全解析项数 N（钳制到 [4, 12]） */
