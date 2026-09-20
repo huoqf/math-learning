@@ -23,6 +23,7 @@
  * > 已在 `src/test/setup.ts` 按**R3F 内建标签白名单**屏蔽（见该文件注释）。
  */
 
+/* eslint-disable react-refresh/only-export-components -- 本文件是 jsdom 环境下 R3F 层的模块替身 harness，需同时导出替身组件与纯函数/对象 mock；React Fast Refresh (HMR) 不适用于测试 mock，拆分文件反增混乱。 */
 import type { ReactNode } from "react";
 
 /** 3D 场景容器替身：保留 children，使 3D 元素树真实进入 DOM。 */

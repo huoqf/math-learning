@@ -86,8 +86,8 @@ export default function SpatialAngleAnimation({
     }));
   };
 
-  // 异面直线模型计算
-  const skewData = useMemo(() => solveSkewLines(a, b, c), [a, b, c, lambda]);
+  // 异面直线模型计算（与 lambda 无关，仅依赖长宽高）
+  const skewData = useMemo(() => solveSkewLines(a, b, c), [a, b, c]);
 
   // 空间斜线线面角模型计算
   const linePlaneData = useMemo(
