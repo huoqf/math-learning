@@ -432,6 +432,9 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
                   <ParamControl
                     params={ballParams}
                     onParamChange={handleParamChange}
+                    disabled={
+                      isParamLocked("redBalls") || isParamLocked("whiteBalls")
+                    }
                   />
                 </div>
               </>

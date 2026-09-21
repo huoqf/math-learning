@@ -98,10 +98,10 @@ export function ProbabilityNormalAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 直角坐标系比例尺：X 轴量纲 [-6, 6]，Y 轴为概率密度/组距范围 [-0.08, 1.08] (确保 σ=0.4 时 f_max=0.997 完整可见)
+  // 直角坐标系比例尺：X 轴量纲 [-8, 8]，Y 轴为概率密度/组距范围 [-0.08, 1.08] (确保 σ=0.4 时 f_max=0.997 完整可见，且极值下 3σ 区域完整落入视口)
   const scale = useSceneScale({
     vp,
-    xRange: [-6, 6],
+    xRange: [-8, 8],
     yRange: [-0.08, 1.08],
     keepAspectRatio: false,
   });

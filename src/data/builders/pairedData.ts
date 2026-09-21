@@ -177,7 +177,8 @@ export function buildPairedDataPanel(
               `P_{${points.length}}(${lastPt.x}, ${lastPt.y}) \\text{ 显著偏离主样本带}`,
             ],
             detail: `受异常干扰点 $P_{${points.length}}(${lastPt.x}, ${lastPt.y})$ 的杠杆拉扯影响，全样本相关系数跌至 $|r| \\approx ${fmt4(Math.abs(res.r))} < 0.75$，线性相关性受损。新高考解答题中需先指出该离群数据并执行剔除。`,
-            rubric: "指出离群点坐标并说明其对相关系数的杠杆拉扯破坏记 2 分",
+            rubric:
+              "【高考采分点】指出离群点坐标并说明其对相关系数的杠杆拉扯破坏得 2 分。",
           }),
           makeStep({
             step: 2,
@@ -187,7 +188,7 @@ export function buildPairedDataPanel(
               `\\hat{y} = ${cleanedB}x ${cleaned.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(cleaned.a))}`,
             ],
             detail: `剔除异常干扰点后，相关系数跃升至 $r_{\\text{clean}} \\approx ${fmt4(cleaned.r)}$，呈现极强线性相关关系。重新代入求和数据求得经验回归方程。`,
-            rubric: "清洗后正确代入求和数据求出回归方程记 3 分",
+            rubric: "【高考采分点】清洗后正确代入求和数据求出回归方程得 3 分。",
           }),
           makeStep({
             step: 3,
@@ -197,7 +198,8 @@ export function buildPairedDataPanel(
               `\\begin{aligned} R^2_{\\text{clean}} &\\approx ${fmt4(cleaned.rSquare)} \\\\[4pt] (\\text{清洗前 } R^2 &\\approx ${fmt4(res.rSquare)}) \\end{aligned}`,
             ],
             detail: `决定系数从剔除前的 $${fmt4(res.rSquare)}$ 飞跃至 $${fmt4(cleaned.rSquare)}$，模型对观测数据的解释能力大幅提升。消除异常点后的预报值 $\\hat{y}_0 = ${fmt2(cleanedPred)}$${targetUnit} 具有高度置信价值。`,
-            rubric: "准确计算目标预报值记 1 分，完成拟合优度对比分析记 1 分",
+            rubric:
+              "【高考采分点】准确计算目标预报值并完成拟合优度对比分析得 2 分。",
           }),
         ];
       } else if (isLinearMode) {
@@ -214,7 +216,7 @@ export function buildPairedDataPanel(
             ],
             detail: `因为 $|r| \\approx ${fmt4(Math.abs(res.r))} ${Math.abs(res.r) >= 0.75 ? "\\ge 0.75$" : "< 0.75$"}，说明两变量具有${Math.abs(res.r) >= 0.75 ? "很强的" : "较弱的"}线性相关关系（${res.r >= 0 ? "正相关" : "负相关"}），可以用一元线性回归模型进行拟合。`,
             rubric:
-              "正确计算样本中心记 1 分，代入求和项求得相关系数 r 并准确判定线性相关性记 2 分",
+              "【高考采分点】正确计算样本中心并代入求和项求得相关系数 r 判定线性相关性得 3 分。",
           }),
           makeStep({
             step: 2,
@@ -226,7 +228,7 @@ export function buildPairedDataPanel(
             detail:
               "高考答题规范：严禁直接跳步书写孤立数值！必须按「① 写出最小二乘求和公式 $\\to$ ② 代入离差乘积和与平方和 $\\to$ ③ 算出斜率截距并写出回归方程」三步完整演绎。",
             rubric:
-              "写出最小二乘斜率公式及数据代入记 2 分，准确求解截距并规范写出方程记 2 分",
+              "【高考采分点】写出最小二乘斜率公式代入数据并规范求出回归方程得 4 分。",
           }),
           makeStep({
             step: 3,
@@ -237,7 +239,7 @@ export function buildPairedDataPanel(
             ],
             detail: `决定系数 $R^2 \\approx ${fmt4(res.rSquare)}$ 越接近 $1$，说明所建回归方程对观测数据的解释能力越强。根据回归模型，预测目标自变量 $x = ${targetX}$ 时，${targetYDesc}约为 $${fmt2(predictedY)}$${targetUnit}。`,
             rubric:
-              "准确代入自变量目标值并求出预报值记 1 分，给出决定系数与拟合评价记 1 分",
+              "【高考采分点】准确代入自变量目标值求出预报值并给出决定系数评价得 2 分。",
           }),
         ];
       } else {
@@ -254,7 +256,7 @@ export function buildPairedDataPanel(
               `\\begin{aligned} \\text{换元: } & ${currentModelFit?.variableSubstitution ?? "线性化换元"} \\\\[4pt] \\text{形式: } & ${currentModelFit?.transformedFormula ?? "线性方程"} \\end{aligned}`,
             ],
             detail: `针对非线性数据分布特征，通过引入中间变量换元，将非线性回归问题化为关于新变量的一元线性回归模型。`,
-            rubric: "选定合理置换公式并建立线性形式记 2 分",
+            rubric: "【高考采分点】选定合理置换公式并建立线性形式得 2 分。",
           }),
           makeStep({
             step: 2,
@@ -265,7 +267,8 @@ export function buildPairedDataPanel(
             ],
             detail:
               "高考采分关键：在线性化求解出参数后，务必逆代换回原物理变量，还原出以原变量 $x, y$ 表达的经验回归方程。",
-            rubric: "求得转换方程参数记 2 分，准确逆代换还原原方程记 2 分",
+            rubric:
+              "【高考采分点】求得转换方程参数并准确逆代换还原原方程得 4 分。",
           }),
           makeStep({
             step: 3,
@@ -276,7 +279,7 @@ export function buildPairedDataPanel(
             ],
             detail: `当前模型在原观测变量上的决定系数为 $R^2 \\approx ${fmt4(currentModelFit?.rSquare ?? res.rSquare)}$，残差平方和 $\\text{SSE} = ${fmt2(currentModelFit?.sse ?? res.sse)}$。预测目标自变量 $x = ${targetX}$ 时，${targetYDesc}约为 $${fmt2(currentPred)}$${targetUnit}。`,
             rubric:
-              "准确代入计算预报值记 1 分，结合 R² 评估模型拟合效果记 1 分",
+              "【高考采分点】准确代入计算预报值并结合 R² 评估模型拟合效果得 2 分。",
           }),
         ];
       }
@@ -498,7 +501,7 @@ export function buildPairedDataPanel(
         title: INDEPENDENCE_ANSWER_STEPS[0].title,
         latex: `H_0: X \\text{ 与 } Y \\text{ 相互独立}`,
         detail: `设零假设 $H_0$：${preset.labelA} 与 ${preset.labelB} 相互独立（即两变量无关联）。解答题第一步规范书写 $H_0$，为小概率反证法确立逻辑前提。`,
-        rubric: "规范写出零假设 H₀ 记 1 分",
+        rubric: "【高考采分点】规范写出零假设 H₀ 得 1 分。",
       },
       {
         step: INDEPENDENCE_ANSWER_STEPS[1].step,
@@ -506,14 +509,14 @@ export function buildPairedDataPanel(
         latex: `\\chi^2 = \\frac{n(ad - bc)^2}{(a+b)(c+d)(a+c)(b+d)} \\\\ = \\frac{${res.n} \\times (${a} \\times ${d} - ${b} \\times ${c})^2}{${res.row1} \\times ${res.row2} \\times ${res.col1} \\times ${res.col2}} \\\\ = \\frac{${res.n} \\times (${res.adMinusBc})^2}{${denomProduct}} \\approx ${res.chiSquare.toFixed(3)}`,
         detail:
           "新高考评分细则：严禁直接跳步给出孤立数值！必须按「符号公式 $\\to$ 四格实际数据代入 $\\to$ 结果化简」三步规范书写，保证得分完整。",
-        rubric: "公式与数据代入正确记 2 分，准确计算化简记 1 分",
+        rubric: "【高考采分点】公式与数据代入正确并准确计算化简得 3 分。",
       },
       {
         step: INDEPENDENCE_ANSWER_STEPS[2].step,
         title: INDEPENDENCE_ANSWER_STEPS[2].title,
         latex: criticalComparisonLatex,
         detail: `${conclusionDetail}【阅卷避坑】独立性检验只能推断“两变量具有统计关联”，绝不可断言因果必然关系；未达临界值时严禁表述为“绝对证明两者无关”。`,
-        rubric: "临界值比对正确记 1 分，小概率结论严谨记 1 分",
+        rubric: "【高考采分点】临界值比对正确且小概率推断结论严谨得 2 分。",
       },
     ];
 

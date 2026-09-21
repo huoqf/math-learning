@@ -71,7 +71,7 @@ export function buildProbabilityBayesPanel(
         title: "审题定法：设元与样本空间缩减判定",
         detail: `已知条件事件 $A$ 的概率 $P(A) = ${res.pA.toFixed(2)}$，目标事件 $B$ 的先验概率 $P(B) = ${res.pB.toFixed(2)}$，联合概率 $P(AB) = ${res.pAB.toFixed(2)}$。${res.pA > 0 ? "满足适用前提 $P(A) > 0$，样本空间由 $\\Omega$ 严格缩减至事件 $A$。" : "因 $P(A) = 0$，条件概率无意义。"}`,
         latex: "P(A) > 0 \\implies \\Omega' = A",
-        rubric: "明确条件事件并确认分母非零（2分）",
+        rubric: "【高考采分点】明确条件事件并确认分母非零得 2 分。",
       },
       {
         step: 2,
@@ -81,7 +81,7 @@ export function buildProbabilityBayesPanel(
         latex: res.isDegenerate
           ? "P(B|A) = \\frac{P(AB)}{P(A)} \\quad (\\text{分母为 0 无意义})"
           : `P(B|A) = \\frac{P(AB)}{P(A)} = \\frac{${res.pAB.toFixed(2)}}{${res.pA.toFixed(2)}} = ${res.pB_given_A.toFixed(4)}`,
-        rubric: "列出标准商式并代入具体数值求解（4分）",
+        rubric: "【高考采分点】列出标准商式并代入具体数值求解得 4 分。",
       },
       {
         step: 3,
@@ -102,7 +102,7 @@ export function buildProbabilityBayesPanel(
               : condScenario === "exclusive"
                 ? "A \\cap B = \\emptyset \\implies P(B|A) = 0"
                 : "P(AB) = P(A)P(B|A)",
-        rubric: "得出确切结论并给出充要条件判定（2分）",
+        rubric: "【高考采分点】得出确切结论并给出充要条件判定得 2 分。",
       },
     ];
 
@@ -205,14 +205,16 @@ export function buildProbabilityBayesPanel(
           detail: `设被调查群体具有真实敏感特征的比例为 $p_{\\text{real}}$。受访者随机抽取卡片 $C_1$（正面“我是”）的先验概率为 $P(C_1) = ${warnerRes.pCard.toFixed(2)}$，抽取卡片 $C_2$（反面“我不是”）的概率为 $P(C_2) = ${(1 - warnerRes.pCard).toFixed(2)}$。`,
           latex:
             "P(C_1) + P(C_2) = 1.00, \\quad P(\\text{Yes}|C_1) = p_{\\text{real}}, \\quad P(\\text{Yes}|C_2) = 1 - p_{\\text{real}}",
-          rubric: "准确设定未知参数并写清互斥卡片先验概率（2分）",
+          rubric:
+            "【高考采分点】准确设定未知参数并写清互斥卡片先验概率得 2 分。",
         },
         {
           step: 2,
           title: "建模联立：由全概率公式建立一元线性方程",
           detail: `统计调查得到回答 Yes 的总概率为 $P(\\text{Yes}) = ${(warnerRes.pReportYes * 100).toFixed(1)}\\%$。由全概率公式展开路径加权：`,
           latex: `P(\\text{Yes}) = P(C_1)P(\\text{Yes}|C_1) + P(C_2)P(\\text{Yes}|C_2) = (2P(C_1) - 1)p_{\\text{real}} + (1 - P(C_1))`,
-          rubric: "运用全概率公式建立含未知参数的线性方程（4分）",
+          rubric:
+            "【高考采分点】运用全概率公式建立含未知参数的线性方程得 4 分。",
         },
         {
           step: 3,
@@ -223,7 +225,7 @@ export function buildProbabilityBayesPanel(
           latex: warnerRes.isDegenerate
             ? "2P(C_1) - 1 = 0 \\implies \\text{退化无法解出}"
             : `p_{\\text{real}} = \\frac{P(\\text{Yes}) - (1 - P(C_1))}{2P(C_1) - 1} = ${(warnerRes.pReal * 100).toFixed(2)}\\%`,
-          rubric: "准确求解一元一次方程并给出统计结论（2分）",
+          rubric: "【高考采分点】准确求解一元一次方程并给出统计结论得 2 分。",
         },
       ];
 
@@ -361,21 +363,21 @@ export function buildProbabilityBayesPanel(
         detail: `设原因事件组 $A_1, A_2, A_3$ 对应各划分分支，先验权重分别为 $P(A_1) = ${pA1.toFixed(2)}$，$P(A_2) = ${pA2.toFixed(2)}$，$P(A_3) = ${pA3.toFixed(2)}$。满足两两互斥且并集为 $\\Omega$（和为 1.00），构成完备事件组。`,
         latex:
           "\\bigcup_{i=1}^3 A_i = \\Omega, \\quad A_i \\cap A_j = \\emptyset (i \\ne j), \\quad \\sum_{i=1}^3 P(A_i) = 1.00",
-        rubric: "明确设出各划分原因事件并证明完备性（2分）",
+        rubric: "【高考采分点】明确设出各划分原因事件并证明完备性得 2 分。",
       },
       {
         step: 2,
         title: "建模联立：写出全概率公式展开式",
         detail: `目标事件 $B$ 在各划分下的条件概率分别为 $P(B|A_1) = ${inputs[0].pB_given_Ai.toFixed(2)}$，$P(B|A_2) = ${inputs[1].pB_given_Ai.toFixed(2)}$，$P(B|A_3) = ${inputs[2].pB_given_Ai.toFixed(2)}$。由全概率定理写出展开式：`,
         latex: "P(B) = P(A_1)P(B|A_1) + P(A_2)P(B|A_2) + P(A_3)P(B|A_3)",
-        rubric: "写出标准全概率加权求和公式（3分）",
+        rubric: "【高考采分点】写出标准全概率加权求和公式得 3 分。",
       },
       {
         step: 3,
         title: "求解反思：各分支联合贡献相加与加权分析",
         detail: `代入具体数值累加：$P(B) = ${pA1.toFixed(2)} \\times ${inputs[0].pB_given_Ai.toFixed(2)} + ${pA2.toFixed(2)} \\times ${inputs[1].pB_given_Ai.toFixed(2)} + ${pA3.toFixed(2)} \\times ${inputs[2].pB_given_Ai.toFixed(2)} = ${res.partitions[0].pJoint.toFixed(3)} + ${res.partitions[1].pJoint.toFixed(3)} + ${res.partitions[2].pJoint.toFixed(3)} = ${res.pB.toFixed(4)}$。`,
         latex: `P(B) = ${res.pB.toFixed(4)} \\quad (${(res.pB * 100).toFixed(2)}\\%)`,
-        rubric: "代入数值准确求解并写出最终概率（3分）",
+        rubric: "【高考采分点】代入数值准确求解并写出最终概率得 3 分。",
       },
     ];
 
@@ -485,21 +487,22 @@ export function buildProbabilityBayesPanel(
         title: "审题定法：确定完备划分与先验概率",
         detail: `设真实目标事件为 $${targetSymbol}$（先验概率 $P(${targetSymbol}) = ${(pPriorD * 100).toFixed(2)}\\%$），对立事件为 $\\bar{${targetSymbol}}$（先验概率 $P(\\bar{${targetSymbol}}) = ${((1 - pPriorD) * 100).toFixed(2)}\\%$）。检测灵敏度 $P(+|${targetSymbol}) = ${(pSensitivity * 100).toFixed(1)}\\%$，误报率 $P(+|\\bar{${targetSymbol}}) = ${(pFalsePositive * 100).toFixed(1)}\\%$。`,
         latex: `P(${targetSymbol}) + P(\\bar{${targetSymbol}}) = 1.00`,
-        rubric: "准确设定原因事件与对立事件及其先验条件（2分）",
+        rubric: "【高考采分点】准确设定原因事件与对立事件及其先验条件得 2 分。",
       },
       {
         step: 2,
         title: "建模联立：由全概率公式计算阳性总概率（分母）",
         detail: `由全概率公式，受检样本检测为阳性 (+) 的总概率等于“真阳性”与“假阳性”之和：$P(+) = P(${targetSymbol})P(+|${targetSymbol}) + P(\\bar{${targetSymbol}})P(+|\\bar{${targetSymbol}}) = ${pPriorD.toFixed(3)} \\times ${pSensitivity.toFixed(2)} + ${(1 - pPriorD).toFixed(3)} \\times ${pFalsePositive.toFixed(2)} = ${(res.pTotalPositive * 100).toFixed(2)}\\%$。`,
         latex: `P(+) = P(${targetSymbol})P(+|${targetSymbol}) + P(\\bar{${targetSymbol}})P(+|\\bar{${targetSymbol}}) = ${res.pTotalPositive.toFixed(4)}`,
-        rubric: "运用全概率公式规范求出分母总概率（3分）",
+        rubric: "【高考采分点】运用全概率公式规范求出分母总概率得 3 分。",
       },
       {
         step: 3,
         title: "求解反思：贝叶斯后验逆概率与基率效应",
         detail: `由贝叶斯公式，在检测为阳性 (+) 的条件下，实际为真目标事件的后验概率为：$P(${targetSymbol}|+) = \\frac{P(${targetSymbol}+)}{P(+)} = \\frac{${(pPriorD * pSensitivity).toFixed(4)}}{${res.pTotalPositive.toFixed(4)}} = ${(res.pPosteriorD * 100).toFixed(2)}\\%$。即使仪器准确率高，极低先验下仍会被大量假阳性稀释。`,
         latex: `P(${targetSymbol}|+) = \\frac{P(${targetSymbol})P(+|${targetSymbol})}{P(+)} = ${(res.pPosteriorD * 100).toFixed(2)}\\%`,
-        rubric: "列出后验计算式求得确切概率并做出合理反思（3分）",
+        rubric:
+          "【高考采分点】列出后验计算式求得确切概率并做出合理反思得 3 分。",
       },
     ];
 

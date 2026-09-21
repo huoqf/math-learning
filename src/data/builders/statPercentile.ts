@@ -2,7 +2,9 @@ import type { MathPanelData } from "../types";
 import {
   generateHistogramBins,
   calculateHistogramStats,
-  calculateStratifiedSampling,
+  calculateStratifiedSample,
+  evaluateSkewness,
+  type BinCountOption,
 } from "@/math/statPercentile";
 import { MATH_COLORS } from "@/theme";
 
@@ -13,7 +15,10 @@ export function buildStatPercentilePanel(
   const studyMode = (config?.studyMode as string) ?? "histogram";
   const scenarioKey = (config?.activeScenario as string) ?? "free";
 
-  const groupCount = params.groupCount ?? 6;
+  const binCount =
+    (params.binCount as BinCountOption) ??
+    (params.groupCount as BinCountOption) ??
+    6;
   const percentileP = params.percentileP ?? 50;
   const shift = params.shift ?? 0;
   const sampleN = params.sampleN ?? 100;
@@ -27,9 +32,9 @@ export function buildStatPercentilePanel(
   const var2 = params.var2 ?? 49;
   const var3 = params.var3 ?? 25;
 
-  const bins = generateHistogramBins(shift, groupCount);
+  const bins = generateHistogramBins(shift, binCount);
   const stats = calculateHistogramStats(bins, percentileP);
-  const stratResult = calculateStratifiedSampling(
+  const stratResult = calculateStratifiedSample(
     sampleN,
     N1,
     N2,
@@ -44,13 +49,13 @@ export function buildStatPercentilePanel(
 
   if (studyMode === "histogram") {
     const isBimodal = Math.abs(shift - 999) < 0.1;
-    const skewText = isBimodal
-      ? "双峰分布: 存在两个局部众数，均值处于低谷"
-      : shift > 0.1
-        ? "正偏态 (右偏长尾): 众数 < 中位数 < 均值"
-        : shift < -0.1
-          ? "负偏态 (左偏长尾): 均值 < 中位数 < 众数"
-          : "对称钟形分布: 众数 ≈ 中位数 ≈ 均值";
+    const skewAnalysis = evaluateSkewness(
+      stats.mode,
+      stats.median,
+      stats.mean,
+      isBimodal,
+    );
+    const skewText = `${skewAnalysis.title}: ${skewAnalysis.relationText}`;
 
     return {
       quantities: [
@@ -141,6 +146,34 @@ s^2 &\\approx \\sum_{i=1}^k (x_{\\text{mid}, i} - \\bar{x})^2 \\cdot f_i
         {
           text: "易错警示：切勿把纵轴高度 $h_i$ 直接当成频率！各组频率为 $f_i = h_i \\times d$（$d$ 为组距）。",
           level: "warning",
+        },
+      ],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 矩形高度与面积换算频率",
+          latex: `\\sum_{i=1}^{${bins.length}} f_i = \\sum_{i=1}^{${bins.length}} (h_i \\cdot d) = 1.00`,
+          detail:
+            "纵轴为频率/组距 $h$，各组频率为对应矩形面积 $f_i = h_i \\cdot d$。所有矩形面积和恒等于 $1$。",
+          rubric:
+            "【高考采分点】正确写出频率与组距、高度的换算关系并验算面积和为 1，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 组中值加权估算均值与众数",
+          latex: `\\bar{x} \\approx \\sum_{i=1}^{${bins.length}} x_{\\text{mid}, i} f_i = ${stats.mean.toFixed(2)}, \\quad M_o = ${stats.mode.toFixed(1)}`,
+          detail:
+            "均值等于各组组中值与该组频率乘积的累加和（力学力矩重心）；众数取最高矩形底边区间的中点值。",
+          rubric:
+            "【高考采分点】正确列出各组组中值与对应频率的加权和并计算均值与众数，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 面积二等分求中位数与偏态评估",
+          latex: `M_o = ${stats.mode.toFixed(1)}, \\quad M_e = ${stats.median.toFixed(2)}, \\quad \\bar{x} = ${stats.mean.toFixed(2)} \\implies ${skewAnalysis.relationLatex}`,
+          detail: `按 $\\bar{x}$ 与 $M_e$ 的相对位置判定：当前总体呈现${skewAnalysis.title}（${skewAnalysis.relationText}）。${skewAnalysis.detail}`,
+          rubric:
+            "【高考采分点】根据面积平分线求出中位数并结合特征量给出形态判定，得 2 分。",
         },
       ],
       mnemonic:
@@ -265,6 +298,33 @@ Q_3 &= P_{75} \\quad (\\text{上四分位数}) \\\\
           level: "warning",
         },
       ],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定位 · 锁定目标累积频率与落入区间",
+          latex: `p\\% = ${(percentileP / 100).toFixed(2)}, \\quad F_{\\text{prev}} = ${prevCum.toFixed(2)} \\implies [a, b) = [${activeBin.xMin}, ${activeBin.xMax})`,
+          detail: `由前组累积频率 $F_{\\text{prev}} = ${(prevCum * 100).toFixed(1)}\\%$，判定第 $${percentileP}\\%$ 百分位数位于第 $${stats.percentileBinIndex + 1}$ 组 $[${activeBin.xMin}, ${activeBin.xMax})$ 内。`,
+          rubric:
+            "【高考采分点】根据前组累积频率正确锁定目标百分位数所在的组区间，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 计算组内待补频率比与矩形高度",
+          latex: `\\Delta f = ${(percentileP / 100).toFixed(2)} - ${prevCum.toFixed(2)} = ${neededRatio.toFixed(3)}, \\quad h = \\frac{f_i}{d} = ${activeBin.height.toFixed(4)}`,
+          detail:
+            "组内所需补齐的面积为目标百分位与前组累积频率之差，结合该组矩形高度求得横向深入距离。",
+          rubric:
+            "【高考采分点】正确计算组内所需补足的频率与对应矩形的高度，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 线性插值求解目标百分位数",
+          latex: `P_{${percentileP}} = a + \\frac{\\Delta f}{h} = ${activeBin.xMin} + \\frac{${neededRatio.toFixed(3)}}{${activeBin.height.toFixed(3)}} = ${stats.percentileVal.toFixed(2)}`,
+          detail: `求得第 $${percentileP}\\%$ 百分位数为 $${stats.percentileVal.toFixed(2)}$，统计意义代表样本中至少有 $${percentileP}\\%$ 的数据不大于该值。`,
+          rubric:
+            "【高考采分点】代入线性插值公式正确计算出第 $p$ 百分位数并指出统计意义，得 2 分。",
+        },
+      ],
       mnemonic:
         "定位区间看累加，缺多少频率向上插；除以高度加左界，百分位数轻松拿！",
     };
@@ -373,6 +433,33 @@ s^2 &= w_1 s_1^2 + w_2 s_2^2 + w_1 w_2 (\\bar{x}_1 - \\bar{x}_2)^2
         {
           text: "特别提醒：总体方差 $s^2$ 绝非简单的 $\\sum w_i s_i^2$！必须加上组间均值偏差项 $\\sum w_i (\\bar{x}_i - \\bar{x})^2$。",
           level: "warning",
+        },
+      ],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 按比例分配各层抽样容量",
+          latex: `f = \\frac{n}{N} = \\frac{${stratResult.sampleN}}{${stratResult.totalN}} = ${stratResult.samplingRatio.toFixed(4)} \\implies n_i = N_i \\cdot f`,
+          detail: `总体规模 $N=${stratResult.totalN}$，抽样总数 $n=${stratResult.sampleN}$。各层分配样本量分别为 $(${stratResult.strataSampleN.join(", ")})$，满足 $\\sum n_i = n$。`,
+          rubric:
+            "【高考采分点】按分层抽样比例正确分配各层抽取的样本容量，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 总体加权均值与层内方差合成",
+          latex: `\\bar{x} = \\sum w_i \\bar{x}_i = ${stratResult.totalMean.toFixed(2)}, \\quad \\sum w_i s_i^2 = ${intraVar.toFixed(2)}`,
+          detail:
+            "由各层人数占比 $w_i = N_i/N$ 计算总体均值，并求出各层内部方差的加权贡献。",
+          rubric:
+            "【高考采分点】正确计算各层权重并求出总体样本均值与层内方差加权和，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 组间离差平方和与总体方差总装",
+          latex: `s^2 = \\sum w_i s_i^2 + \\sum w_i (\\bar{x}_i - \\bar{x})^2 = ${intraVar.toFixed(2)} + ${interMeanVar.toFixed(2)} = ${stratResult.totalVar.toFixed(2)}`,
+          detail: `总体方差由组内方差与组间均值离差平方和合成，标准差 $s = \\sqrt{${stratResult.totalVar.toFixed(2)}} = ${stratResult.totalStd.toFixed(2)}$。`,
+          rubric:
+            "【高考采分点】计入组间均值离差平方和，正确合成总体方差与标准差，得 2 分。",
         },
       ],
       mnemonic:

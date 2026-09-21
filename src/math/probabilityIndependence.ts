@@ -1,3 +1,5 @@
+import { MATH_PROB_DECIMALS } from "@/utils/mathFormat";
+
 /**
  * 事件相互独立性与互斥辨析纯数学计算引擎
  * 严格遵循纯函数规范，Zero Side-effects，严禁导入 React/DOM
@@ -94,6 +96,14 @@ export const DISCRETE_DICE_EVENTS: Record<
 const EPSILON = 1e-4;
 
 /**
+ * 把概率量化到「显示网格」上的整数编码，用于「判定 ⟺ 显示」同源的相等比较。
+ * 与 formatMathProb（src/utils/mathFormat.ts）共用 MATH_PROB_DECIMALS，二者精度必须一致。
+ */
+export function quantizeProb(value: number): number {
+  return Math.round(value * 10 ** MATH_PROB_DECIMALS);
+}
+
+/**
  * 连续测度模式计算
  * @param pA 事件 A 的先验概率 [0, 1]
  * @param pB 事件 B 的先验概率 [0, 1]
@@ -136,23 +146,28 @@ export function calculateIndependenceMeasure(
   const pNotANotB = Math.max(0, 1 - pAUnionB);
 
   const productDiff = pAB - independentPAB;
-  const isIndependent =
-    Math.abs(productDiff) < 0.015 && safePA > 0 && safePB > 0;
-  const isMutuallyExclusive = pAB < EPSILON;
+  const isMutuallyExclusive = pAB < 1e-5;
 
   const pConditionalBGivenA = safePA > EPSILON ? pAB / safePA : null;
   const pConditionalAGivenB = safePB > EPSILON ? pAB / safePB : null;
 
+  // 独立性判定与右屏显示同源：直接比较 P(B|A) 与 P(B) 量化到显示精度后的整数编码。
+  // 「显示相同 ⇔ 判定独立」恒成立，既不会出现「两数显示相同却印 ≠」的反向假不等式，
+  // 也不再用 1e-3 量级的自适应容差把显著非独立状态吞成「独立」。
+  const isIndependent =
+    !isMutuallyExclusive &&
+    pConditionalBGivenA !== null &&
+    quantizeProb(pConditionalBGivenA) === quantizeProb(safePB) &&
+    safePA > EPSILON &&
+    safePB > EPSILON;
+
   let relationType: IndependenceMathResult["relationType"];
-  if (safePA < EPSILON || safePB < EPSILON) {
+  if (safePA < 1e-4 || safePB < 1e-4) {
     relationType = "degenerate";
-  } else if (isMutuallyExclusive && isIndependent) {
-    // 正概率下不可兼得，若发生仅为极低概率逼近
-    relationType = "neither";
-  } else if (isIndependent) {
-    relationType = "independent_not_exclusive";
   } else if (isMutuallyExclusive) {
     relationType = "exclusive_not_independent";
+  } else if (isIndependent) {
+    relationType = "independent_not_exclusive";
   } else {
     relationType = "neither";
   }

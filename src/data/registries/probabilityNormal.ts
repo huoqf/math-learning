@@ -161,14 +161,14 @@ export const MODE_SCENARIOS: Record<NormalStudyMode, NormalScenario[]> = {
     },
     {
       key: "partQuality",
-      label: "零件尺寸 3-σ 质检模型",
+      label: "零件尺寸 2-σ 质检模型",
       badge: "新高考真题 · 实际工业应用",
       background:
-        "新高考全国卷经典工业质检背景：机械加工零件直径服从正态分布，超出 $[\\mu - 3\\sigma, \\mu + 3\\sigma]$ 的零件视为次品。",
+        "新高考全国卷经典工业质检背景：精密零件加工中，尺寸偏差超出 $[\\mu - 2\\sigma, \\mu + 2\\sigma]$ 的零件视为超标次品。",
       condition:
-        "零件尺寸 $X \\sim N(0, 0.8^2)$，取 $x_0 = -1.6$ 恰好偏离均值 $2\\sigma$。",
+        "零件尺寸 $X \\sim N(0, 0.8^2)$，取下限警戒线 $x_0 = -1.6$ 恰好偏离均值 $-2\\sigma$。",
       question:
-        "利用 $2\\sigma$ 准则 $P(\\mu - 2\\sigma \\le X \\le \\mu + 2\\sigma) \\approx 95.45\\%$，求解次品率与单侧超标废品率。",
+        "利用 $2\\sigma$ 准则 $P(\\mu - 2\\sigma \\le X \\le \\mu + 2\\sigma) \\approx 95.45\\%$，求解次品率与单侧超标废品率 $P(X < -1.6)$。",
       params: { mu: 0, sigma: 0.8, x0: -1.6 },
       visibleKeys: ["mu", "sigma", "x0"],
       showSigmaIntervals: true,

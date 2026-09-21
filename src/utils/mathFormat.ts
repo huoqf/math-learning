@@ -18,6 +18,28 @@ export function formatMathNumber(n: number): string {
 }
 
 /**
+ * 概率类数值的显示精度（小数位数）。
+ *
+ * 这是「判定 ⟺ 显示」同源的唯一事实源：独立性判定直接比较两个概率量化到该位数后的
+ * 整数编码，因此只要两数显示相同就绝不可能印出不等号，反之亦然。
+ * 若显示精度高于判定精度，就会出现「两个数显示完全相同却印 ≠」的反向假不等式
+ * （实测旧实现 29 189 个可达参数组合中有 513 组命中）。
+ * 同步点：src/math/probabilityIndependence.ts 以本常量驱动 quantizeProb。
+ */
+export const MATH_PROB_DECIMALS = 4;
+
+/**
+ * 将概率格式化为定点小数并去除尾随零（负零归一为 "0"）
+ * 示例：0.095 -> "0.095"，0.1 -> "0.1"，0.366666 -> "0.3667"，0 -> "0"
+ */
+export function formatMathProb(n: number): string {
+  if (!Number.isFinite(n)) return String(n);
+  const factor = 10 ** MATH_PROB_DECIMALS;
+  const quantized = Math.round(n * factor) / factor;
+  return quantized.toFixed(MATH_PROB_DECIMALS).replace(/\.?0+$/, "") || "0";
+}
+
+/**
  * 格式化带符号的代数项（用于多项式拼接，自动处理正负号并省略代数变量系数 1 / -1，常数项 1 不省略）
  * 示例：(1, 'x') -> "+ x", (-1, 'x') -> "- x", (2, 'y') -> "+ 2y", (1, '') -> "+ 1"
  */

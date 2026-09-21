@@ -33,7 +33,7 @@ export const MODE_SCENARIOS: Record<StudyMode, StatScenarioItem[]> = {
     {
       key: "free",
       label: "自由探索",
-      description: "自由切换组数(5/6/8组)与调节样本偏斜度",
+      description: "自由切换组数(5/6/7/8组)与调节样本偏斜度",
       params: { groupCount: 6, shift: 0.0 },
       visibleKeys: ["groupCount", "shift"],
     },
@@ -207,6 +207,10 @@ export const paramMeta: Record<string, ParamMeta> = {
         value: 6,
         variant: "critical",
         label: "6组(新高考)",
+      },
+      {
+        value: 7,
+        label: "7组(过渡)",
       },
       {
         value: 8,

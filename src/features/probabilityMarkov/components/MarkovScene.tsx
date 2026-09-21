@@ -482,7 +482,7 @@ export function MarkovScene({
               fill={MATH_COLORS.labelTextLight}
               textAnchor="middle"
             >
-              四人地位对称，最终各状态概率均趋于同一稳态值 t = 0.25
+              四人地位对称，最终各状态概率均趋于同一平衡值 t = 0.25
             </text>
           </g>
         ) : scenarioKey === "urn_replace" ? (
@@ -813,8 +813,8 @@ export function MarkovScene({
               fill={MATH_COLORS.labelTextLight}
               textAnchor="middle"
             >
-              公比 λ = p₁₁ - p₂₁ = {lambda.toFixed(2)} &gt;
-              0，单调收敛于平稳博弈概率 {tVal.toFixed(2)}
+              公比 λ = p₁₁ - p₂₁ = {lambda.toFixed(2)}，数列单调趋近于平衡概率{" "}
+              {tVal.toFixed(2)}
             </text>
           </g>
         ) : (
@@ -1173,26 +1173,41 @@ export function MarkovScene({
 
         {/* 动态动力学收敛徽标 */}
         <rect
-          x={rightW - 192}
+          x={rightW - 200}
           y={8}
-          width={180}
+          width={190}
           height={26}
           rx={6}
-          fill={MATH_COLORS.white}
-          stroke={lambda < 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.function}
-          strokeWidth={1.2}
+          fill={withAlpha(
+            markovData.isPureOscillating || markovData.isOscillating
+              ? MATH_COLORS.paramPrimary
+              : markovData.isDegenerate
+                ? MATH_COLORS.labelTextLight
+                : MATH_COLORS.function,
+            0.12,
+          )}
         />
         <text
-          x={rightW - 102}
+          x={rightW - 105}
           y={25}
-          fontSize={fontScale(10.5)}
+          fontSize={fontScale(10)}
           fontWeight="bold"
-          fill={lambda < 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.function}
+          fill={
+            markovData.isPureOscillating || markovData.isOscillating
+              ? MATH_COLORS.paramPrimary
+              : markovData.isDegenerate
+                ? MATH_COLORS.labelTextLight
+                : MATH_COLORS.function
+          }
           textAnchor="middle"
         >
-          {lambda < 0
-            ? `λ = ${lambda.toFixed(2)} < 0：交替阻尼振荡`
-            : `λ = ${lambda.toFixed(2)} ≥ 0：单调贴近收敛`}
+          {markovData.isDegenerate
+            ? "λ = 1.00：退化为恒等常数列"
+            : markovData.isPureOscillating
+              ? "λ = -1.00：两点间等幅振荡 (无衰减)"
+              : markovData.isOscillating
+                ? `λ = ${lambda.toFixed(2)} < 0：交替阻尼振荡`
+                : `λ = ${lambda.toFixed(2)} ≥ 0：单调递进趋近`}
         </text>
 
         {/* ─────────────────────────────────────────────────────────────
@@ -1271,9 +1286,9 @@ export function MarkovScene({
                 strokeDasharray="5 3"
               />
               <rect
-                x={plotOriginX + plotW - 105}
+                x={plotOriginX + plotW - (markovData.isDegenerate ? 140 : 105)}
                 y={stationaryY - 22}
-                width={100}
+                width={markovData.isDegenerate ? 135 : 100}
                 height={18}
                 rx={4}
                 fill={MATH_COLORS.white}
@@ -1281,14 +1296,16 @@ export function MarkovScene({
                 strokeWidth={1}
               />
               <text
-                x={plotOriginX + plotW - 55}
+                x={plotOriginX + plotW - (markovData.isDegenerate ? 72 : 55)}
                 y={stationaryY - 9}
-                fontSize={fontScale(9.5)}
+                fontSize={fontScale(markovData.isDegenerate ? 8.5 : 9.5)}
                 fontWeight="bold"
                 fill={MATH_COLORS.focusPoint}
                 textAnchor="middle"
               >
-                平衡不动点 t = {tVal.toFixed(3)}
+                {markovData.isDegenerate
+                  ? `恒等基准线 p₁ = ${tVal.toFixed(3)}`
+                  : `平衡不动点 t = ${tVal.toFixed(3)}`}
               </text>
 
               {/* 连线轨迹折线 (显示跳跃形态) */}

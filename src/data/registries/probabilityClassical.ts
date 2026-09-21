@@ -131,7 +131,13 @@ export const PROBABILITY_CLASSICAL_SCENARIOS: Record<
       activeView: "matrix",
       currentStep: 1,
     },
-    lockedParamKeys: ["modelType", "targetEvent", "drawMode"],
+    lockedParamKeys: [
+      "modelType",
+      "targetEvent",
+      "drawMode",
+      "redBalls",
+      "whiteBalls",
+    ],
     variant: "warning",
   },
   coin_three_times: {

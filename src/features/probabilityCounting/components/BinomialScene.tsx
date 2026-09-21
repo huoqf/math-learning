@@ -24,7 +24,7 @@ export function BinomialScene({
   const W = 840;
 
   const pascalTriangle = useMemo(() => {
-    return getPascalTriangle(Math.min(n, 7));
+    return getPascalTriangle(Math.min(n, 10));
   }, [n]);
 
   const pascalProps = useMemo(() => {
@@ -67,184 +67,195 @@ export function BinomialScene({
           />
 
           {/* 杨辉三角节点与连线 */}
-          {pascalTriangle.map((row, r) => {
-            const count = row.length;
-            const startY = 40;
-            const rowGap = 48;
-            const nodeRadius = 18;
-            const y = startY + r * rowGap;
+          {(() => {
+            const rowGap = n <= 7 ? 48 : Math.max(34, 350 / Math.max(1, n));
+            const colGap = n <= 7 ? 58 : Math.max(44, 58 - (n - 7) * 4);
+            const nodeRadius = n <= 7 ? 18 : Math.max(14, 18 - (n - 7));
+            const startY = n <= 7 ? 40 : Math.max(28, 40 - (n - 7) * 3);
 
-            return (
-              <g key={`row-${r}`}>
-                {/* 行标 */}
-                <text
-                  x={55}
-                  y={y + 5}
-                  fill={
-                    r === n ? MATH_COLORS.paramPrimary : MATH_COLORS.textMuted
-                  }
-                  fontSize={fontScale(12)}
-                  fontWeight={r === n ? "bold" : "normal"}
-                >
-                  n = {r}
-                </text>
+            return pascalTriangle.map((row, r) => {
+              const count = row.length;
+              const y = startY + r * rowGap;
 
-                {row.map((val, c) => {
-                  const totalWidth = (count - 1) * 58;
-                  const x = W / 2 - totalWidth / 2 + c * 58;
+              return (
+                <g key={`row-${r}`}>
+                  {/* 行标 */}
+                  <text
+                    x={45}
+                    y={y + 5}
+                    fill={
+                      r === n ? MATH_COLORS.paramPrimary : MATH_COLORS.textMuted
+                    }
+                    fontSize={fontScale(n <= 7 ? 12 : 11)}
+                    fontWeight={r === n ? "bold" : "normal"}
+                  >
+                    n = {r}
+                  </text>
 
-                  const isCurrentRow = r === n;
-                  const isSelectedNode = isCurrentRow && c === k;
-                  const isMaxNode =
-                    isCurrentRow && pascalProps.maxIndices.includes(c);
-                  const isHockeyPoint = pascalProps.hockeyStick.points.some(
-                    (p) => p.r === r && p.c === c,
-                  );
-                  const isHockeyTarget =
-                    pascalProps.hockeyStick.target.r === r &&
-                    pascalProps.hockeyStick.target.c === c;
+                  {row.map((val, c) => {
+                    const totalWidth = (count - 1) * colGap;
+                    const x = W / 2 - totalWidth / 2 + c * colGap;
 
-                  return (
-                    <g
-                      key={`node-${r}-${c}`}
-                      onClick={() => {
-                        onParamChange("n", r);
-                        onParamChange("k", c);
-                      }}
-                      className="cursor-pointer transition-all duration-300"
-                    >
-                      {/* 递推连线 */}
-                      {r > 0 && (
-                        <g>
-                          {c > 0 && (
-                            <line
-                              x1={x}
-                              y1={y}
-                              x2={W / 2 - ((r - 1) * 58) / 2 + (c - 1) * 58}
-                              y2={y - rowGap}
-                              stroke={
-                                isSelectedNode
-                                  ? MATH_COLORS.paramPrimary
-                                  : MATH_COLORS.pascalLinkLine
-                              }
-                              strokeWidth={isSelectedNode ? 2.5 : 1}
-                              strokeOpacity={isSelectedNode ? 1 : 0.35}
-                            />
-                          )}
-                          {c < r && (
-                            <line
-                              x1={x}
-                              y1={y}
-                              x2={W / 2 - ((r - 1) * 58) / 2 + c * 58}
-                              y2={y - rowGap}
-                              stroke={
-                                isSelectedNode
-                                  ? MATH_COLORS.paramPrimary
-                                  : MATH_COLORS.pascalLinkLine
-                              }
-                              strokeWidth={isSelectedNode ? 2.5 : 1}
-                              strokeOpacity={isSelectedNode ? 1 : 0.35}
-                            />
-                          )}
-                        </g>
-                      )}
+                    const isCurrentRow = r === n;
+                    const isSelectedNode = isCurrentRow && c === k;
+                    const isMaxNode =
+                      isCurrentRow && pascalProps.maxIndices.includes(c);
+                    const isHockeyPoint = pascalProps.hockeyStick.points.some(
+                      (p) => p.r === r && p.c === c,
+                    );
+                    const isHockeyTarget =
+                      pascalProps.hockeyStick.target.r === r &&
+                      pascalProps.hockeyStick.target.c === c;
 
-                      {/* 选中发光环 */}
-                      {isSelectedNode && (
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r={nodeRadius + 6}
-                          fill={MATH_COLORS.pascalSelectedGlow}
-                          stroke={MATH_COLORS.paramPrimary}
-                          strokeWidth={2}
-                          className="animate-pulse"
-                        />
-                      )}
-
-                      {/* 最大值特殊冠冕光晕 */}
-                      {isMaxNode && !isSelectedNode && (
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r={nodeRadius + 3}
-                          fill="none"
-                          stroke={MATH_COLORS.paramSecondary}
-                          strokeWidth={1.5}
-                          strokeDasharray="2 2"
-                        />
-                      )}
-
-                      {/* 节点底色圆 */}
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r={nodeRadius}
-                        fill={
-                          isSelectedNode
-                            ? MATH_COLORS.paramPrimary
-                            : isHockeyPoint
-                              ? withAlpha(MATH_COLORS.paramTertiary, 0.25)
-                              : isHockeyTarget
-                                ? withAlpha(
-                                    MATH_COLORS.functionTransformed,
-                                    0.25,
-                                  )
-                                : isCurrentRow
-                                  ? withAlpha(MATH_COLORS.paramSecondary, 0.15)
-                                  : MATH_COLORS.pascalNodeBg
-                        }
-                        stroke={
-                          isSelectedNode
-                            ? MATH_COLORS.paramPrimary
-                            : isHockeyPoint
-                              ? MATH_COLORS.paramTertiary
-                              : isHockeyTarget
-                                ? MATH_COLORS.functionTransformed
-                                : isCurrentRow
-                                  ? MATH_COLORS.paramSecondary
-                                  : MATH_COLORS.pascalNodeBorder
-                        }
-                        strokeWidth={isSelectedNode || isCurrentRow ? 2 : 1}
-                      />
-
-                      {/* 数值 */}
-                      <text
-                        x={x}
-                        y={y + 4}
-                        textAnchor="middle"
-                        fill={
-                          isSelectedNode
-                            ? MATH_COLORS.white
-                            : MATH_COLORS.labelText
-                        }
-                        fontSize={fontScale(val > 99 ? 10 : 12)}
-                        fontWeight={
-                          isSelectedNode || isMaxNode ? "bold" : "normal"
-                        }
+                    return (
+                      <g
+                        key={`node-${r}-${c}`}
+                        onClick={() => {
+                          onParamChange("n", r);
+                          onParamChange("k", c);
+                        }}
+                        className="cursor-pointer transition-all duration-300"
                       >
-                        {val}
-                      </text>
+                        {/* 递推连线 */}
+                        {r > 0 && (
+                          <g>
+                            {c > 0 && (
+                              <line
+                                x1={x}
+                                y1={y}
+                                x2={
+                                  W / 2 -
+                                  ((r - 1) * colGap) / 2 +
+                                  (c - 1) * colGap
+                                }
+                                y2={y - rowGap}
+                                stroke={
+                                  isSelectedNode
+                                    ? MATH_COLORS.paramPrimary
+                                    : MATH_COLORS.pascalLinkLine
+                                }
+                                strokeWidth={isSelectedNode ? 2.5 : 1}
+                                strokeOpacity={isSelectedNode ? 1 : 0.35}
+                              />
+                            )}
+                            {c < r && (
+                              <line
+                                x1={x}
+                                y1={y}
+                                x2={W / 2 - ((r - 1) * colGap) / 2 + c * colGap}
+                                y2={y - rowGap}
+                                stroke={
+                                  isSelectedNode
+                                    ? MATH_COLORS.paramPrimary
+                                    : MATH_COLORS.pascalLinkLine
+                                }
+                                strokeWidth={isSelectedNode ? 2.5 : 1}
+                                strokeOpacity={isSelectedNode ? 1 : 0.35}
+                              />
+                            )}
+                          </g>
+                        )}
 
-                      {/* 最大值小标志 */}
-                      {isMaxNode && (
+                        {/* 选中发光环 */}
+                        {isSelectedNode && (
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r={nodeRadius + 6}
+                            fill={MATH_COLORS.pascalSelectedGlow}
+                            stroke={MATH_COLORS.paramPrimary}
+                            strokeWidth={2}
+                            className="animate-pulse"
+                          />
+                        )}
+
+                        {/* 最大值特殊冠冕光晕 */}
+                        {isMaxNode && !isSelectedNode && (
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r={nodeRadius + 3}
+                            fill="none"
+                            stroke={MATH_COLORS.paramSecondary}
+                            strokeWidth={1.5}
+                            strokeDasharray="2 2"
+                          />
+                        )}
+
+                        {/* 节点底色圆 */}
+                        <circle
+                          cx={x}
+                          cy={y}
+                          r={nodeRadius}
+                          fill={
+                            isSelectedNode
+                              ? MATH_COLORS.paramPrimary
+                              : isHockeyPoint
+                                ? withAlpha(MATH_COLORS.paramTertiary, 0.25)
+                                : isHockeyTarget
+                                  ? withAlpha(
+                                      MATH_COLORS.functionTransformed,
+                                      0.25,
+                                    )
+                                  : isCurrentRow
+                                    ? withAlpha(
+                                        MATH_COLORS.paramSecondary,
+                                        0.15,
+                                      )
+                                    : MATH_COLORS.pascalNodeBg
+                          }
+                          stroke={
+                            isSelectedNode
+                              ? MATH_COLORS.paramPrimary
+                              : isHockeyPoint
+                                ? MATH_COLORS.paramTertiary
+                                : isHockeyTarget
+                                  ? MATH_COLORS.functionTransformed
+                                  : isCurrentRow
+                                    ? MATH_COLORS.paramSecondary
+                                    : MATH_COLORS.pascalNodeBorder
+                          }
+                          strokeWidth={isSelectedNode || isCurrentRow ? 2 : 1}
+                        />
+
+                        {/* 数值 */}
                         <text
                           x={x}
-                          y={y - nodeRadius - 2}
+                          y={y + 4}
                           textAnchor="middle"
-                          fill={MATH_COLORS.paramSecondary}
-                          fontSize={fontScale(8)}
-                          fontWeight="bold"
+                          fill={
+                            isSelectedNode
+                              ? MATH_COLORS.white
+                              : MATH_COLORS.labelText
+                          }
+                          fontSize={fontScale(val > 99 ? 10 : 12)}
+                          fontWeight={
+                            isSelectedNode || isMaxNode ? "bold" : "normal"
+                          }
                         >
-                          MAX
+                          {val}
                         </text>
-                      )}
-                    </g>
-                  );
-                })}
-              </g>
-            );
-          })}
+
+                        {/* 最大值小标志 */}
+                        {isMaxNode && (
+                          <text
+                            x={x}
+                            y={y - nodeRadius - 2}
+                            textAnchor="middle"
+                            fill={MATH_COLORS.paramSecondary}
+                            fontSize={fontScale(8)}
+                            fontWeight="bold"
+                          >
+                            MAX
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+                </g>
+              );
+            });
+          })()}
 
           {/* 底部展开通项动态横向卡片 */}
           <g transform="translate(45, 438)">

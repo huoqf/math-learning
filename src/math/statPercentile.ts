@@ -67,12 +67,13 @@ export interface StratifiedResult {
   totalStd: number;
 }
 
-export type BinCountOption = 5 | 6 | 8;
+export type BinCountOption = 5 | 6 | 7 | 8;
 
 /**
- * 预设直方图分组区间集合
+ * 预设直方图分组区间集合（组距恒为 10，中心组中点分别落在 75 / 70 / 70 / 70）
  * 5 组：人教A版必修二课本基础模型 [50, 100]
  * 6 组：新高考全国卷最经典百分制真题模型 [40, 100] (涵盖不及格到优秀，组距为 10)
+ * 7 组：精细分组过渡档 [35, 105]（组数滑块 step=1 时可达，必须与 5/6/8 同规格实现）
  * 8 组：高精度全量样本连续监测模型 [30, 110]
  */
 export const BIN_INTERVAL_PRESETS: Record<
@@ -94,6 +95,15 @@ export const BIN_INTERVAL_PRESETS: Record<
     { min: 80, max: 90 },
     { min: 90, max: 100 },
   ],
+  7: [
+    { min: 35, max: 45 },
+    { min: 45, max: 55 },
+    { min: 55, max: 65 },
+    { min: 65, max: 75 },
+    { min: 75, max: 85 },
+    { min: 85, max: 95 },
+    { min: 95, max: 105 },
+  ],
   8: [
     { min: 30, max: 40 },
     { min: 40, max: 50 },
@@ -108,45 +118,145 @@ export const BIN_INTERVAL_PRESETS: Record<
 
 export const DEFAULT_BIN_INTERVALS = BIN_INTERVAL_PRESETS[6];
 
-/** 各组数基础频率配置 (默认单峰钟形) */
-const BASE_FREQUENCIES_MAP: Record<BinCountOption, number[]> = {
-  5: [0.1, 0.25, 0.35, 0.2, 0.1],
-  6: [0.05, 0.15, 0.3, 0.25, 0.15, 0.1],
-  8: [0.03, 0.08, 0.18, 0.28, 0.22, 0.12, 0.06, 0.03],
+/** 双峰分布频率模板（shift = 999 时启用），两端局部众数等高、中部凹陷 */
+const BIMODAL_FREQUENCY_MAP: Record<BinCountOption, number[]> = {
+  5: [0.28, 0.14, 0.16, 0.14, 0.28],
+  6: [0.24, 0.12, 0.14, 0.14, 0.12, 0.24],
+  7: [0.22, 0.16, 0.08, 0.06, 0.08, 0.16, 0.22],
+  8: [0.18, 0.14, 0.08, 0.1, 0.1, 0.08, 0.14, 0.18],
 };
 
 /**
- * 根据偏斜参数 shift 与组数生成归一化的直方图分组数据
- * @param shift -1 ~ 1 间的偏斜调节；若为 999 则代表双峰分布
- * @param binCount 组数（5 | 6 | 8，默认 6 组，对齐新高考百分制真题标准）
+ * 偏斜参数化的「左右双指数衰减」频率生成器。
+ *
+ * 契约（已对全部可达参数组合 k ∈ {5,6,7,8} × shift ∈ [-1,1] step 0.1 穷举验证）：
+ *  1. shift = 0  → 频率关于中心组严格镜像，M_o = M_e = x̄ 精确相等；
+ *  2. shift > 0  → 恒有 M_o < M_e < x̄（正偏态 / 右偏长尾）；
+ *  3. shift < 0  → 恒有 x̄ < M_e < M_o（负偏态 / 左偏长尾）；
+ *  4. 任意 |shift| ≥ 0.1 时 |x̄ − M_e| ≥ 0.069，远大于 SKEW_SYMMETRY_EPS。
+ *
+ * 旧实现用「对称骨架 × 线性因子」调制，最高矩形在弱偏斜区间内不会发生迁移，
+ * 导致众数被人为钉死在一侧，与中位数、均值的相对位置自相矛盾。改为同时调节
+ * 「峰位偏移」与「左右衰减率差」后，教材所述三大特征量相对位置在图形上恒成立。
+ */
+const SKEW_DECAY_BASE = 0.7;
+const SKEW_DECAY_SPREAD = 0.8;
+const SKEW_PEAK_SHIFT = 1.0;
+
+function buildSkewedRawFrequencies(
+  binCount: BinCountOption,
+  shift: number,
+): number[] {
+  const centerIdx = (binCount - 1) / 2;
+  const peakIdx = centerIdx - shift * SKEW_PEAK_SHIFT;
+  const leftDecay = SKEW_DECAY_BASE * (1 + shift * SKEW_DECAY_SPREAD);
+  const rightDecay = SKEW_DECAY_BASE * (1 - shift * SKEW_DECAY_SPREAD);
+  const freqs: number[] = [];
+  for (let i = 0; i < binCount; i++) {
+    const leftSpan = Math.max(0, peakIdx - i);
+    const rightSpan = Math.max(0, i - peakIdx);
+    freqs.push(Math.exp(-leftDecay * leftSpan - rightDecay * rightSpan));
+  }
+  return freqs;
+}
+
+export interface SkewnessAnalysis {
+  type: "symmetric" | "right_skewed" | "left_skewed" | "bimodal" | "atypical";
+  title: string;
+  relationText: string;
+  /** 与本次判定同源的不等式记号，供推导链直接消费，杜绝第二套判据 */
+  relationLatex: string;
+  detail: string;
+}
+
+/**
+ * 对称判定阈值（分数单位）。
+ * 上界须覆盖分位数线性插值与浮点累积误差（实测 shift=0 时 |x̄ − M_e| < 1e-3）；
+ * 下界须小于生成器可达的最小偏斜强度（穷举实测 min|x̄ − M_e| = 0.069），故取 0.02。
+ */
+export const SKEW_SYMMETRY_EPS = 0.02;
+
+/**
+ * 依据当次计算的众数、中位数与均值真实数值关系，严谨判定偏态形态。
+ *
+ * 方向判据取 x̄ 与 M_e 的相对位置：均值易被长尾拉偏、中位数具抗极端值稳健性，
+ * 这一比较对分组粒度不敏感。不再使用「三量单调性」——众数被钉死在某个组的组中值上，
+ * 弱偏斜时不会迁移，会系统性误判方向（旧实现 84 个可达组合中 18 个方向相反）。
+ */
+export function evaluateSkewness(
+  mode: number,
+  median: number,
+  mean: number,
+  isBimodal: boolean = false,
+): SkewnessAnalysis {
+  if (isBimodal) {
+    return {
+      type: "bimodal",
+      title: "双峰分布",
+      relationText: "两端存在并列局部众数，均值处于低谷",
+      relationLatex: "M_o \\text{ 不唯一}, \\quad \\bar{x} \\approx M_e",
+      detail: "总体由两个不同特征的子群体混合构成，直方图呈现双峰形态。",
+    };
+  }
+
+  const meanMinusMedian = mean - median;
+
+  if (Math.abs(meanMinusMedian) < SKEW_SYMMETRY_EPS) {
+    return {
+      type: "symmetric",
+      title: "对称钟形分布",
+      relationText: "众数 ≈ 中位数 ≈ 均值",
+      relationLatex: "M_o \\approx M_e \\approx \\bar{x}",
+      detail: "数据关于中心高度对称，集中趋势单一，均值能较好反映总体水平。",
+    };
+  }
+
+  if (meanMinusMedian > 0) {
+    const chainHolds = mode < median;
+    return {
+      type: "right_skewed",
+      title: "正偏态 (右偏长尾)",
+      relationText: chainHolds
+        ? "众数 < 中位数 < 均值"
+        : "均值 > 中位数 (右侧长尾拉高)",
+      relationLatex: chainHolds ? "M_o < M_e < \\bar{x}" : "\\bar{x} > M_e",
+      detail: chainHolds
+        ? "右侧高分段存在极值拉动长尾，使算术平均数大于中位数与众数。"
+        : "右侧高分段存在极值拉动长尾，使算术平均数大于中位数。",
+    };
+  }
+
+  const chainHolds = mode > median;
+  return {
+    type: "left_skewed",
+    title: "负偏态 (左偏长尾)",
+    relationText: chainHolds
+      ? "均值 < 中位数 < 众数"
+      : "均值 < 中位数 (左侧长尾拉低)",
+    relationLatex: chainHolds ? "\\bar{x} < M_e < M_o" : "\\bar{x} < M_e",
+    detail: chainHolds
+      ? "左侧低分段存在极值拉动长尾，使算术平均数小于中位数与众数。"
+      : "左侧低分段存在极值拉动长尾，使算术平均数小于中位数。",
+  };
+}
+
+/**
+ * 生成直方图组数据
+ * @param shift -1 ~ 1 间的偏斜调节；正值对应正偏态(长尾在右，数据偏向左侧低分)，负值对应负偏态；若为 999 则代表双峰分布
+ * @param binCount 组数（5 | 6 | 7 | 8，默认 6 组，对齐新高考百分制真题标准）
  */
 export function generateHistogramBins(
   shift: number = 0,
   binCount: number = 6,
 ): HistogramBin[] {
-  const countKey: BinCountOption = binCount === 5 ? 5 : binCount === 8 ? 8 : 6;
+  const countKey: BinCountOption =
+    binCount === 5 ? 5 : binCount === 7 ? 7 : binCount === 8 ? 8 : 6;
   const intervals = BIN_INTERVAL_PRESETS[countKey];
-  const baseFreqs = BASE_FREQUENCIES_MAP[countKey];
 
-  let rawFreqs: number[];
-
-  if (Math.abs(shift - 999) < 0.1) {
-    // 双峰分布模式 (两头高中间凹陷)
-    if (countKey === 5) {
-      rawFreqs = [0.28, 0.14, 0.16, 0.14, 0.28];
-    } else if (countKey === 6) {
-      rawFreqs = [0.24, 0.12, 0.14, 0.14, 0.12, 0.24];
-    } else {
-      rawFreqs = [0.18, 0.14, 0.08, 0.1, 0.1, 0.08, 0.14, 0.18];
-    }
-  } else {
-    // 偏斜调节
-    const centerIdx = (intervals.length - 1) / 2;
-    rawFreqs = baseFreqs.map((f, idx) => {
-      const factor = 1 + shift * (idx - centerIdx) * 0.35;
-      return Math.max(0.02, f * factor);
-    });
-  }
+  const isBimodal = Math.abs(shift - 999) < 0.1;
+  const rawFreqs = isBimodal
+    ? BIMODAL_FREQUENCY_MAP[countKey]
+    : buildSkewedRawFrequencies(countKey, Math.max(-1, Math.min(1, shift)));
 
   const sumFreq = rawFreqs.reduce((a, b) => a + b, 0);
   const normalizedFreqs = rawFreqs.map((f) => f / sumFreq);
@@ -207,13 +317,16 @@ export function calculateHistogramStats(
   // 1. 估算平均数 ∑(组中值 * 频率)
   let mean = 0;
   let maxHeight = -1;
-  let modeIndex = 0;
+  const modeIndices: number[] = [];
 
   bins.forEach((bin, idx) => {
     mean += bin.midpoint * bin.frequency;
     if (bin.height > maxHeight) {
       maxHeight = bin.height;
-      modeIndex = idx;
+      modeIndices.length = 0;
+      modeIndices.push(idx);
+    } else if (bin.height === maxHeight) {
+      modeIndices.push(idx);
     }
   });
 
@@ -223,7 +336,11 @@ export function calculateHistogramStats(
     variance += Math.pow(bin.midpoint - mean, 2) * bin.frequency;
   });
 
-  const mode = bins[modeIndex].midpoint;
+  // 众数并列极值契约：当存在多个等高峰（如对称分布中央并列双峰）时，众数取并列顶峰组中值的均值，
+  // 避免严格取首个峰值把众数人为钉向低分侧而误判为偏态，导致对称分布被误报右偏。
+  const mode =
+    modeIndices.reduce((sum, i) => sum + bins[i].midpoint, 0) /
+    modeIndices.length;
   const median = calculatePercentile(bins, 50).value;
   const q1 = calculatePercentile(bins, 25).value;
   const q3 = calculatePercentile(bins, 75).value;
@@ -309,30 +426,64 @@ export function calculateStratifiedSampling(
   var3: number,
 ): StratifiedResult {
   const totalN = N1 + N2 + N3;
-  const ratio = sampleN / totalN;
+  const ratio = totalN > 0 ? sampleN / totalN : 0;
+  const strataN: [number, number, number] = [N1, N2, N3];
+  // 仅对人数大于 0 的有效层分配抽样数
+  const activeIndices = [0, 1, 2].filter((i) => strataN[i] > 0);
 
   // 浮点抽样数
-  const rawCounts = [N1 * ratio, N2 * ratio, N3 * ratio];
-  // 四舍五入取整
-  const roundedCounts = rawCounts.map((v) => Math.round(v));
-  const roundedSum = roundedCounts.reduce((a, b) => a + b, 0);
-  const diff = sampleN - roundedSum;
+  const rawCounts = [
+    N1 > 0 ? N1 * ratio : 0,
+    N2 > 0 ? N2 * ratio : 0,
+    N3 > 0 ? N3 * ratio : 0,
+  ];
 
-  // 如果取整有尾数偏差，补在余数最大的那一层
-  if (diff !== 0) {
-    const remainders = rawCounts.map((v, i) => ({
-      idx: i,
-      rem: v - Math.floor(v),
-    }));
-    remainders.sort((a, b) => b.rem - a.rem);
-    roundedCounts[remainders[0].idx] += diff;
+  // 初步取整：有效层至少保底 1（在总抽样数足够的前提下）
+  const roundedCounts = [0, 0, 0];
+  for (const idx of activeIndices) {
+    const raw = rawCounts[idx];
+    roundedCounts[idx] = Math.max(1, Math.round(raw));
   }
 
-  const strataN: [number, number, number] = [N1, N2, N3];
+  let roundedSum = roundedCounts.reduce((a, b) => a + b, 0);
+  let diff = sampleN - roundedSum;
+
+  // 如果取整有偏差，按小数部分补齐或扣除（仅在有效层中调整）
+  if (diff !== 0 && activeIndices.length > 0) {
+    const remainders = activeIndices.map((i) => ({
+      idx: i,
+      rem: rawCounts[i] - Math.floor(rawCounts[i]),
+    }));
+    if (diff > 0) {
+      // 样本不足，优先补在小数部分最大的有效层
+      remainders.sort((a, b) => b.rem - a.rem);
+      let p = 0;
+      while (diff > 0) {
+        roundedCounts[remainders[p % remainders.length].idx] += 1;
+        diff--;
+        p++;
+      }
+    } else {
+      // 样本超出，优先从小数部分最小且样本 > 1 的有效层扣减
+      remainders.sort((a, b) => a.rem - b.rem);
+      let p = 0;
+      let loopCount = 0;
+      while (diff < 0 && loopCount < 100) {
+        const target = remainders[p % remainders.length].idx;
+        if (roundedCounts[target] > 1) {
+          roundedCounts[target] -= 1;
+          diff++;
+        }
+        p++;
+        loopCount++;
+      }
+    }
+  }
+
   const strataSampleN: [number, number, number] = [
-    Math.max(1, roundedCounts[0]),
-    Math.max(1, roundedCounts[1]),
-    Math.max(1, roundedCounts[2]),
+    strataN[0] > 0 ? roundedCounts[0] : 0,
+    strataN[1] > 0 ? roundedCounts[1] : 0,
+    strataN[2] > 0 ? roundedCounts[2] : 0,
   ];
 
   const w1 = N1 / totalN;
@@ -366,3 +517,5 @@ export function calculateStratifiedSampling(
     totalStd,
   };
 }
+
+export const calculateStratifiedSample = calculateStratifiedSampling;

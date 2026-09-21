@@ -141,28 +141,28 @@ export function buildClassicalProbabilityPanel(
         "n(\\Omega) < +\\infty,\\quad P(\\omega_1) = P(\\omega_2) = \\cdots = P(\\omega_n)",
       detail:
         "试验所有可能结果有限，且每个基本事件发生的机会均等，试验满足有限性与等可能性，属于古典概型。",
-      rubric: "确认古典概型两大特征：有限性与等可能性",
+      rubric: "【高考采分点】确认古典概型两大特征：有限性与等可能性得 2 分。",
     },
     {
       step: 2,
       title: step2Title,
       latex: `n(\\Omega) = ${mathRes.totalCount}`,
       detail: `运用${enumMethodName}规范列出样本空间 $\\Omega$，求得等可能基本事件总数为 $n(\\Omega) = ${mathRes.totalCount}$。`,
-      rubric: "完整书写样本空间集合并计算基本事件总数",
+      rubric: "【高考采分点】完整书写样本空间集合并计算基本事件总数得 3 分。",
     },
     {
       step: 3,
       title: step3Title,
       latex: `${mathRes.matchedPointsListLatex},\\quad n(A) = ${mathRes.eventCount}`,
       detail: `记事件 $A$ 为“${mathRes.eventName}”，筛选符合题设条件的基本事件为 $${mathRes.matchedPointsListLatex}$，统计得包含的基本事件个数为 $n(A) = ${mathRes.eventCount}$。`,
-      rubric: "列出事件集合并统计包含的基本事件个数",
+      rubric: "【高考采分点】列出事件集合并统计包含的基本事件个数得 3 分。",
     },
     {
       step: 4,
       title: step4Title,
       latex: step4Formula,
       detail: `代入古典概型概率计算公式 $P(A) = \\frac{n(A)}{n(\\Omega)}$，计算得事件 $A$ 发生的概率为 $${mathRes.reducedFractionLatex}$。对立事件概率 $P(\\overline{A}) = 1 - P(A) = ${mathRes.complementFractionLatex}$。`,
-      rubric: "代入比值公式化简并用对立事件核验",
+      rubric: "【高考采分点】代入比值公式化简并用对立事件核验得 2 分。",
     },
   ];
 

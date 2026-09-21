@@ -17,7 +17,8 @@ export function buildProbabilityCountingPanel(
   const subMode = Number(config?.subMode ?? 0);
 
   const n = Math.floor(params.n ?? 5);
-  const k = Math.min(Math.floor(params.k ?? 2), n);
+  const rawK = Math.floor(params.k ?? 2);
+  const k = Math.min(rawK, n);
   const a = params.a ?? 1;
   const b = params.b ?? 1;
   const m1 = Math.floor(params.m1 ?? 3);
@@ -127,6 +128,34 @@ export function buildProbabilityCountingPanel(
               ]
             : []),
         ],
+        reasoningSteps: [
+          {
+            step: 1,
+            title: "审题定法 · 识别多项式恒等式特征",
+            latex: `f(x) = (${a}x + ${b})^{${n}} = a_n x^n + \\dots + a_1 x + a_0`,
+            detail:
+              "多项式展开为关于自变量 $x$ 的恒等式，对任意实数 $x$ 两端恒等，具备特殊值代入求解基础。",
+            rubric:
+              "【高考采分点】识别展开式为关于 $x$ 的代数恒等式，明确各项系数与对应幂次关系，得 2 分。",
+          },
+          {
+            step: 2,
+            title: "建模联立 · 构造特定赋值消除变量",
+            latex: `${curAssign.name}: \\quad ${curAssign.latexExpr}`,
+            detail: `${curAssign.description}。根据目标设问选取特征值消去多项式幂次。`,
+            rubric:
+              "【高考采分点】针对设问目标选取特征自变量赋值并代入左右两端，得 2 分。",
+          },
+          {
+            step: 3,
+            title: "求解反思 · 求解结果与奇偶消元",
+            latex: `\\text{计算结果} = ${Number.isInteger(curAssign.evaluatedValue) ? curAssign.evaluatedValue : curAssign.evaluatedValue.toFixed(2)}`,
+            detail:
+              "得出目标系数和精确数值，常用奇偶交错方程组联立求解特定次项和。",
+            rubric:
+              "【高考采分点】正确计算出目标系数和数值，必要时联立方程组消元，得 2 分。",
+          },
+        ],
         mnemonic:
           "恒等赋值看需求，求和代一常数零；奇偶加减除以二，导数降幂带权求。",
       };
@@ -197,6 +226,26 @@ export function buildProbabilityCountingPanel(
                 },
               ]
             : []),
+        ],
+        reasoningSteps: [
+          {
+            step: 1,
+            title: "审题定法 · 标定项序号与二项式系数",
+            latex: `T_{${k + 1}} = C_{${n}}^{${k}} (${a}x)^{${n - k}} (${b})^{${k}}`,
+            detail: `考察展开式的第 $k+1 = ${k + 1}$ 项，其二项式系数为组合数 $C_{${n}}^{${k}} = ${termInfo.binomialCoeff}$，恒为正数。`,
+          },
+          {
+            step: 2,
+            title: "建模联立 · 乘入底数参数求项的系数",
+            latex: `A_{${k}} = C_{${n}}^{${k}} \\cdot (${a})^{${n - k}} \\cdot (${b})^{${k}} = ${termInfo.binomialCoeff} \\times ${Math.pow(a, n - k)} \\times ${Math.pow(b, k)} = ${termInfo.termCoeff}`,
+            detail: `项的系数受底数参数影响，常数项 $b$ 的正负和奇偶次方直接决定该项符号与绝对值。`,
+          },
+          {
+            step: 3,
+            title: "求解反思 · 二项式系数与项的系数概念区分",
+            latex: `C_{${n}}^{${k}} = ${termInfo.binomialCoeff} \\quad \\text{vs} \\quad A_{${k}} = ${termInfo.termCoeff}`,
+            detail: `二项式系数仅与指数 $n$ 和序号 $k$ 有关，在中间项达到最大；项的系数必须由相邻项比值不等式组确定最大项。`,
+          },
         ],
         mnemonic:
           "二项系数恒为正，中间最大两边平；项之系数看正负，大小求导列不等。",
@@ -313,6 +362,34 @@ export function buildProbabilityCountingPanel(
             ]
           : []),
       ],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 确定通项公式与参数下标",
+          latex: `T_{k+1} = C_n^k a^{n-k} b^k x^{n-k} \\quad (n = ${n}, \\; k = ${k})`,
+          detail: `由二项式定理，展开式第 $${k + 1}$ 项对应通项公式中的参数下标 $k = ${k}$。`,
+          rubric:
+            "【高考采分点】正确写出二项式展开通项公式，标定项序号与对应下标 $k$，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 计算二项式系数与项的系数",
+          latex: `C_{${n}}^{${k}} = ${termInfo.binomialCoeff}, \\quad A_{${k}} = C_{${n}}^{${k}} \\cdot (${a})^{${n - k}} \\cdot (${b})^{${k}} = ${termInfo.termCoeff}`,
+          detail:
+            "区分二项式系数（恒为正数 $C_n^k$）与项的系数（代入参数 $a, b$ 后的实际代数积）。",
+          rubric:
+            "【高考采分点】正确计算组合数并乘入底数参数，分清二项式系数与项的系数，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 系数极值与全项求和核验",
+          latex: `\\sum_{k=0}^{${n}} C_{${n}}^k = 2^{${n}} = ${binomCoeffSum}, \\quad f(1) = (${a}+${b})^{${n}} = ${Math.pow(a + b, n)}`,
+          detail:
+            "利用二项式系数和公式 $2^n$ 与赋值法 $x=1$ 双向核验展开项总规模与代数自洽性。",
+          rubric:
+            "【高考采分点】结合二项式系数和与特殊赋值法完成核验与性质总结，得 2 分。",
+        },
+      ],
       mnemonic:
         "二项展开共 $n+1$ 项，通项看准 $k$ 加 $1$；二项系数对称大，赋值求和特殊 $x$。",
     };
@@ -383,6 +460,32 @@ export function buildProbabilityCountingPanel(
           },
         ],
         warnings: [],
+        reasoningSteps: [
+          {
+            step: 1,
+            title: "审题定法 · 判定均分模型与每组元素数",
+            latex: `N = ${groupInfo.totalItems}, \\quad k = ${groupInfo.groupCount}, \\quad m = \\frac{N}{k} = ${groupInfo.itemsPerGroup}`,
+            detail:
+              "元素被等分成若干组且各组无名称标签时属于均分模型，先判断总数能否被组数整除。",
+            rubric: "【高考采分点】判定为均分模型并求出每组元素数，得 2 分。",
+          },
+          {
+            step: 2,
+            title: "建模联立 · 逐步组合得到含序堆数",
+            latex: `\\prod C = C_{${groupInfo.totalItems}}^{${groupInfo.itemsPerGroup}} \\cdot C_{${groupInfo.totalItems - groupInfo.itemsPerGroup}}^{${groupInfo.itemsPerGroup}} \\cdots C_m^m = ${groupInfo.directCombinationWays}`,
+            detail:
+              "按组依次选出元素，得到的是带有「先选后选」人为顺序的堆数。",
+            rubric: "【高考采分点】列出逐步组合式并计算含序堆数，得 3 分。",
+          },
+          {
+            step: 3,
+            title: "求解反思 · 除以 k! 消去组间顺序",
+            latex: `N_{\\text{均分}} = \\frac{\\prod C}{k!} = \\frac{${groupInfo.directCombinationWays}}{${groupInfo.groupCount}!} = ${groupInfo.groupedWays}`,
+            detail:
+              "无名称标签的组之间不可区分，每组内元素个数相同，故须除以组数阶乘消去重复计数。",
+            rubric: "【高考采分点】除以 $k!$ 消序得出均分总数，得 3 分。",
+          },
+        ],
         mnemonic:
           "均分无名除阶乘，消去先后重复算；分配有名乘阶乘，各就各位排座次。",
       };
@@ -458,6 +561,33 @@ export function buildProbabilityCountingPanel(
                 },
               ]
             : []),
+        ],
+        reasoningSteps: [
+          {
+            step: 1,
+            title: "审题定法 · 区分相邻与不相邻约束",
+            latex: `n = ${nTotal}, \\quad m = ${bindCount}`,
+            detail:
+              "共有 $n$ 个元素参与排队，其中 $m$ 个元素受位置约束：要求相邻用捆绑法，要求不相邻用插空法。",
+            rubric:
+              "【高考采分点】识别相邻/不相邻约束并确定 $n$ 与 $m$，得 2 分。",
+          },
+          {
+            step: 2,
+            title: "建模联立 · 捆绑法求解相邻排列数",
+            latex: `N_{\\text{捆绑}} = A_{${nTotal - bindCount + 1}}^{${nTotal - bindCount + 1}} \\times A_{${bindCount}}^{${bindCount}} = ${bindWays}`,
+            detail:
+              "把要求相邻的 $m$ 个元素捆绑成一个整体，与其余元素一起全排列，整体内部再全排列。",
+            rubric: "【高考采分点】用捆绑法列出并计算相邻排列数，得 3 分。",
+          },
+          {
+            step: 3,
+            title: "求解反思 · 插空法求解不相邻排列数",
+            latex: `N_{\\text{插空}} = A_{${nTotal - bindCount}}^{${nTotal - bindCount}} \\times A_{${nTotal - bindCount + 1}}^{${bindCount}} = ${insertWays}`,
+            detail:
+              "先排无限制的 $n-m$ 个元素形成 $n-m+1$ 个空档，再把限制元素插入空档，即保证互不相邻。",
+            rubric: "【高考采分点】用插空法列出并计算不相邻排列数，得 3 分。",
+          },
         ],
         mnemonic:
           "捆绑相邻做整体，内部全排莫忘记；插空留隙后选位，先排无约后插空。",
@@ -540,7 +670,7 @@ export function buildProbabilityCountingPanel(
         },
       ],
       warnings: [
-        ...(k > n
+        ...(rawK > n
           ? [
               {
                 level: "danger" as const,
@@ -548,6 +678,32 @@ export function buildProbabilityCountingPanel(
               },
             ]
           : []),
+      ],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 判定与顺序是否有关",
+          latex: `n = ${n}, \\quad m = ${k}`,
+          detail:
+            "交换所选出的任意两个元素，若事件结果改变则与顺序有关（排列），不变则与顺序无关（组合）。",
+          rubric: "【高考采分点】正确判定问题与顺序是否有关，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 逐步相乘法求排列数",
+          latex: `A_{${n}}^{${k}} = n(n-1)\\cdots(n-m+1) = ${P}`,
+          detail:
+            "从 $n$ 个不同元素中有序取出 $m$ 个，依次有 $n, n-1, \\dots, n-m+1$ 种选法，逐步相乘即得排列数。",
+          rubric: "【高考采分点】列出并列式计算排列数，得 3 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 除以 m! 消序得组合数",
+          latex: `C_{${n}}^{${k}} = \\frac{A_{${n}}^{${k}}}{m!} = \\frac{${P}}{${KFact}} = ${C}`,
+          detail:
+            "同一组 $m$ 个元素在排列中被重复计为 $m!$ 次，除以 $m!$ 即得与顺序无关的组合数。",
+          rubric: "【高考采分点】由排列数正确消序得出组合数，得 3 分。",
+        },
       ],
       mnemonic:
         "区分顺序列阵排，消去顺序组合算；捆绑相邻做整体，插空留隙解间隔。",
@@ -613,6 +769,33 @@ export function buildProbabilityCountingPanel(
         },
       ],
       warnings: [],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 把路径翻译为定长步序列",
+          latex: `m = ${gridM}, \\quad n = ${gridN}, \\quad m + n = ${totalSteps}`,
+          detail:
+            "从原点走到 $(m, n)$ 必须恰好向右 $m$ 步、向上 $n$ 步，合计 $m+n$ 步，与走法顺序无关。",
+          rubric: "【高考采分点】把最短路径问题转化为定长步序列，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 定位「向右」步所处位置",
+          latex: `\\text{在 } ${totalSteps} \\text{ 个位置中选出 } ${gridM} \\text{ 个放「向右」} \\implies C_{${totalSteps}}^{${gridM}}`,
+          detail:
+            "步序列仅由「向右」与「向上」两种指令构成，只要确定向右指令的位置，整条路径即唯一确定。",
+          rubric: "【高考采分点】建立组合模型并写出组合数表达式，得 3 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 求值并对照标数法",
+          latex: `N = C_{${totalSteps}}^{${gridM}} = C_{${totalSteps}}^{${gridN}} = ${totalWays}`,
+          detail:
+            "组合数求值即为最短路径总数；若路径含障碍点、必过点或禁止转向，可改用逐点相加的标数法。",
+          rubric:
+            "【高考采分点】求出最短路径总数并说明受限情形的处理方式，得 3 分。",
+        },
+      ],
       mnemonic:
         "网格漫步步步加，杨辉倒转映格花；总步选向定乾坤，遇障标数最无暇。",
     };
@@ -710,6 +893,37 @@ export function buildProbabilityCountingPanel(
       },
     ],
     warnings: [],
+    reasoningSteps: [
+      {
+        step: 1,
+        title: "审题定法 · 判定为分步还是分类",
+        latex: `\\text{需依次完成各步方能完成} \\implies \\text{分步乘法}`,
+        detail:
+          "若必须依次完成所有步骤才能完成这件事，缺少任何一步都不行，则属于分步计数问题，应当使用乘法原理。",
+        rubric: "【高考采分点】判定为分步计数并说明判定依据，得 2 分。",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 逐步统计各步方法数",
+        latex:
+          m3 > 0
+            ? `m_1 = ${m1}, \\quad m_2 = ${m2}, \\quad m_3 = ${m3}`
+            : `m_1 = ${m1}, \\quad m_2 = ${m2}`,
+        detail: "分别统计每一步可选择的方法数，各步依次相依、各自独立计数。",
+        rubric: "【高考采分点】逐步统计各步方法数，得 2 分。",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 连乘得总方法数",
+        latex:
+          m3 > 0
+            ? `N = m_1 \\times m_2 \\times m_3 = ${m1} \\times ${m2} \\times ${m3} = ${multTotal}`
+            : `N = m_1 \\times m_2 = ${m1} \\times ${m2} = ${multTotal}`,
+        detail:
+          "各步方法数连乘即为总方法数，本质对应树状分支的逐层展开；若与分类结合，则先分类、类内再分步。",
+        rubric: "【高考采分点】正确连乘得出总方法数，得 3 分。",
+      },
+    ],
     mnemonic:
       "分步相依环环扣，缺一步骤事未成；树状展开连乘积，相依相随用乘法。",
   };

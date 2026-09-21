@@ -105,7 +105,7 @@ export function buildProbabilityDistributionPanel(
           title: "审题定法 · 试验性质判定与设元",
           detail: `由题设已知，每次试验结果相互独立且成功概率恒为 $p = ${p}$，进行 $n = ${n}$ 次独立重复试验，故随机变量 $X \\sim B(${n}, ${p})$。`,
           latex: `X \\sim B(n, p) \\implies P(X=k) = C_n^k p^k (1-p)^{n-k} \\quad (k = 0, 1, \\dots, n)`,
-          rubric: "采分点：判定二项分布并写出通项概率模型（2分）",
+          rubric: "【高考采分点】判定二项分布并写出通项概率模型得 2 分。",
         },
         {
           step: 2,
@@ -113,14 +113,14 @@ export function buildProbabilityDistributionPanel(
           detail:
             "根据二项分布均值方差公式直接计算数字特征；利用比值递推 $\\frac{P(X=k)}{P(X=k-1)} \\ge 1$ 导出最值项（众数）满足的不等式组 $(n+1)p - 1 \\le k \\le (n+1)p$。",
           latex: `\\begin{cases} E(X) = n p = ${n} \\times ${p} = ${(n * p).toFixed(2)} \\\\ D(X) = n p (1-p) = ${n} \\times ${p} \\times ${(1 - p).toFixed(2)} = ${(n * p * (1 - p)).toFixed(2)} \\\\ (n+1)p - 1 = ${((n + 1) * p - 1).toFixed(2)} \\le k \\le ${((n + 1) * p).toFixed(2)} = (n+1)p \\end{cases}`,
-          rubric: "采分点：代入期望方差公式并列出最值项不等式组（4分）",
+          rubric: "【高考采分点】代入期望方差公式并列出最值项不等式组得 4 分。",
         },
         {
           step: 3,
           title: "求解反思 · 整数解与最大概率项结论",
           detail: `在整数区间内求解 $k$，得到概率最大项为 $k_{\\max} = ${distResult?.modeX.join(", ") ?? "0"}$，对应最大概率 $P_{\\max} = ${maxPVal}$。`,
           latex: `k = ${distResult?.modeX.join(", ") ?? "0"} \\implies P(X=${distResult?.modeX[0] ?? 0}) = ${maxPVal}`,
-          rubric: "采分点：确定众数取值并规范作答（2分）",
+          rubric: "【高考采分点】确定众数取值并规范作答得 2 分。",
         },
       ],
     };
@@ -160,7 +160,7 @@ export function buildProbabilityDistributionPanel(
           color: MATH_COLORS.tangentLine,
         },
         {
-          label: "样本方差 D(X)",
+          label: "方差 D(X)",
           symbol: "D(X)",
           value: varVal,
           color: MATH_COLORS.function,
@@ -221,21 +221,22 @@ export function buildProbabilityDistributionPanel(
           title: "审题定法 · 特征提取与取值范围界定",
           detail: `从含有 $M = ${M}$ 件次品的 $N = ${N}$ 件总体中不放回随机抽取 $n = ${sampleN}$ 件，抽中次品数记为 $X \\sim H(${N}, ${M}, ${sampleN})$。确定 $X$ 的所有可能取值。`,
           latex: `X \\sim H(N, M, n), \\quad \\max(0, n-N+M) \\le k \\le \\min(n, M)`,
-          rubric: "采分点：判定超几何模型并规范确定随机变量可能取值（3分）",
+          rubric:
+            "【高考采分点】判定超几何模型并规范确定随机变量可能取值得 3 分。",
         },
         {
           step: 2,
           title: "建模联立 · 组合数分布列计算",
           detail: `样本总组合数为 $C_N^n = C_{${N}}^{${sampleN}}$，恰好抽中 $k$ 件次品的组合数为 $C_M^k C_{N-M}^{n-k}$，代入计算各点概率并列成规范表格。`,
           latex: `P(X=k) = \\frac{C_M^k C_{N-M}^{n-k}}{C_N^n} = \\frac{C_{${M}}^k C_{${N - M}}^{${sampleN}-k}}{C_{${N}}^{${sampleN}}}`,
-          rubric: "采分点：代入组合数公式并列出分布列规范表格（4分）",
+          rubric: "【高考采分点】代入组合数公式并列出分布列规范表格得 4 分。",
         },
         {
           step: 3,
           title: "求解反思 · 数学期望计算与结论",
           detail: `根据超几何分布数学期望公式 $E(X) = n \\cdot \\frac{M}{N}$，直接代入样本量与次品比例完成求解。`,
           latex: `E(X) = n \\cdot \\frac{M}{N} = ${sampleN} \\times \\frac{${M}}{${N}} = ${theoreticalMean}`,
-          rubric: "采分点：正确计算数学期望并给出结论（3分）",
+          rubric: "【高考采分点】正确计算数学期望并给出结论得 3 分。",
         },
       ],
     };
@@ -250,17 +251,25 @@ export function buildProbabilityDistributionPanel(
     const N = comparisonResult?.N ?? params.compareN ?? 30;
     const p = comparisonResult?.p ?? params.compareP ?? 0.35;
     const n = comparisonResult?.sampleN ?? params.compareSampleN ?? 4;
+    const MVal = comparisonResult?.M ?? Math.round(N * p);
+    const actualPVal = comparisonResult?.actualP ?? MVal / N;
+    const hyperMean = comparisonResult?.hyperDist.mean ?? n * actualPVal;
+    // 二项分布与超几何分布共用同一特征比例 p₀ = M/N，故两分布期望恒相等
+    const binomMean = comparisonResult?.binomDist.mean ?? n * actualPVal;
     const factor =
       comparisonResult?.varianceCorrectionFactor ??
       (N > 1 ? (N - n) / (N - 1) : 1);
+    const hyperVariance =
+      comparisonResult?.hyperDist.variance ??
+      n * actualPVal * (1 - actualPVal) * factor;
     const maxDiff = comparisonResult?.maxDifference ?? 0;
 
     return {
       quantities: [
         {
-          label: "总体容量 N",
-          symbol: "N",
-          value: `${N}`,
+          label: "总体容量与次品数 (N, M)",
+          symbol: "(N, M)",
+          value: `(${N}, ${MVal})`,
           color: MATH_COLORS.paramPrimary,
         },
         {
@@ -270,16 +279,22 @@ export function buildProbabilityDistributionPanel(
           color: MATH_COLORS.paramSecondary,
         },
         {
-          label: "特征比例 p = M/N",
-          symbol: "p_0",
-          value: `${p}`,
+          label: "实际特征比例 p₀ (两分布共用)",
+          symbol: "p_0 = \\frac{M}{N}",
+          value: `${actualPVal.toFixed(4)} (由设定 p=${p} 取整得来)`,
           color: MATH_COLORS.paramTertiary,
         },
         {
-          label: "共同数学期望 E",
-          symbol: "E",
-          value: (n * p).toFixed(3),
+          label: "超几何分布期望 E(X_超)",
+          symbol: "E(X_{\\text{超}})",
+          value: hyperMean.toFixed(3),
           color: MATH_COLORS.tangentLine,
+        },
+        {
+          label: "二项分布期望 E(X_二项)",
+          symbol: "E(X_{\\text{二项}})",
+          value: binomMean.toFixed(3),
+          color: MATH_COLORS.function,
         },
         {
           label: "★ 方差修正系数 (N-n)/(N-1)（拓展）",
@@ -297,15 +312,15 @@ export function buildProbabilityDistributionPanel(
       theorems: [
         {
           name: "超几何分布与二项分布方差关系定理",
-          latex: `D(X_{\\text{超}}) = n p (1-p) \\cdot \\frac{N-n}{N-1} = D(X_{\\text{二项}}) \\cdot \\frac{N-n}{N-1}`,
-          note: "不放回抽样的方差恒小于或等于有放回抽样的方差；当 N 很大时，修正系数 (N-n)/(N-1) 趋近于 1。新课标正文只要求超几何分布的期望，方差为选学拓展内容。",
+          latex: `D(X_{\\text{超}}) = n p_0 (1-p_0) \\cdot \\frac{N-n}{N-1}, \\quad p_0 = \\frac{M}{N}`,
+          note: "两分布取同一特征比例 $p_0 = \\frac{M}{N}$ 时期望恒相等（$E(X) = n p_0$）；不放回抽样的方差比有放回抽样的方差恰小一个有限总体修正系数 $\\frac{N-n}{N-1} \\le 1$，当 $N$ 很大时该系数趋近于 $1$。新课标正文只要求超几何分布的期望，方差为选学拓展内容。",
           level: "supplementary",
           isExtension: true,
           extensionBadge: "拓展 · 超出课标",
         },
         {
           name: "大样本二项逼近",
-          latex: `N \\gg n \\implies P(X_{\\text{超}} = k) \\approx P(X_{\\text{二项}} = k) = C_n^k p^k (1-p)^{n-k}`,
+          latex: `N \\gg n \\implies P(X_{\\text{超}} = k) \\approx P(X_{\\text{二项}} = k) = C_n^k p_0^k (1-p_0)^{n-k}, \\quad p_0 = \\frac{M}{N}`,
           note: "当总体容量 $N$ 远大于抽取样本数 $n$（通常 $N \\ge 10n$）时，不放回抽样可作为二项分布近似处理。该逼近结论用于建立超几何分布向二项分布转化的直觉，属拓展内容；书写时用「$N$ 远大于 $n$ 时近似相等」表述，不使用高等数学记号。",
           level: "supplementary",
           isExtension: true,
@@ -330,23 +345,23 @@ export function buildProbabilityDistributionPanel(
         {
           step: 1,
           title: "审题定法 · 建模背景与特征比例提取",
-          detail: `固定抽取样本容量 $n = ${n}$ 及总体中目标特征比例 $p = \\frac{M}{N} = ${p}$，将超几何分布与参数相同的二项分布建立映射。`,
-          latex: `X_{\\text{超}} \\sim H(N, M, n) \\quad \\text{与} \\quad X_{\\text{二项}} \\sim B(n, p) \\quad \\left(p = \\frac{M}{N}\\right)`,
-          rubric: "采分点：明确两分布共有期望与参数对应关系（3分）",
+          detail: `固定抽取样本容量 $n = ${n}$ 及总体中目标特征比例 $p_0 = \\frac{M}{N} = ${actualPVal.toFixed(4)}$，将超几何分布与参数相同的二项分布建立映射。`,
+          latex: `X_{\\text{超}} \\sim H(N, M, n) \\quad \\text{与} \\quad X_{\\text{二项}} \\sim B(n, p_0) \\quad \\left(p_0 = \\frac{M}{N} = ${actualPVal.toFixed(4)}\\right)`,
+          rubric: "【高考采分点】明确两分布共有期望与参数对应关系得 3 分。",
         },
         {
           step: 2,
           title: "建模联立 · 大样本近似展开与方差修正",
-          detail: `当总体容量 $N$ 远大于抽取数 $n$ 时，不放回抽样的条件概率近乎不变，组合商逼近二项展开项；方差修正系数 $\\frac{N-n}{N-1}$ 趋向于 $1$。`,
-          latex: `\\frac{N-n}{N-1} = \\frac{${N}-${n}}{${N}-1} = ${factor.toFixed(3)}, \\quad D(X_{\\text{超}}) = n p (1-p) \\cdot \\frac{N-n}{N-1}`,
-          rubric: "采分点：量化方差修正系数与概率偏差（4分）",
+          detail: `两分布共用特征比例 $p_0 = \\frac{M}{N} = ${actualPVal.toFixed(4)}$。当总体容量 $N$ 远大于抽取数 $n$ 时，不放回抽样的条件概率近乎不变，组合商逼近二项展开项，$D(X_{\\text{超}}) \\to D(X_{\\text{二项}})$；方差修正系数 $\\frac{N-n}{N-1}$ 趋向于 $1$。`,
+          latex: `\\frac{N-n}{N-1} = \\frac{${N}-${n}}{${N}-1} = ${factor.toFixed(3)}, \\quad D(X_{\\text{超}}) = n p_0 (1-p_0) \\cdot \\frac{N-n}{N-1} = ${hyperVariance.toFixed(4)}`,
+          rubric: "【高考采分点】量化方差修正系数与概率偏差得 4 分。",
         },
         {
           step: 3,
           title: "求解反思 · 大样本建模简化准则",
           detail: `最大概率绝对偏差 $\\Delta_{\\max} = ${maxDiff.toFixed(4)}$。当 $N \\ge 10n$ 时，不放回抽样在工程与统计上可安全近似为二项分布计算。`,
-          latex: `N \\gg n \\implies P(X_{\\text{超}} = k) \\approx P(X_{\\text{二项}} = k) = C_n^k p^k (1-p)^{n-k}`,
-          rubric: "采分点：给出大样本建模判定结论（3分）",
+          latex: `N \\gg n \\implies P(X_{\\text{超}} = k) \\approx P(X_{\\text{二项}} = k) = C_n^k p_0^k (1-p_0)^{n-k}, \\quad p_0 = \\frac{M}{N}`,
+          rubric: "【高考采分点】给出大样本建模判定结论得 3 分。",
         },
       ],
     };
@@ -486,7 +501,7 @@ export function buildProbabilityDistributionPanel(
             (config?.decisionScenario as string) === "quality"
               ? `\\begin{cases} P(X_A = 0) = ${(decisionResult?.schemeADist.outcomes[0]?.p ?? 0).toFixed(2)}, \\; P(X_A = 2) = 0.20, \\; P(X_A = 50) = ${(decisionResult?.schemeADist.outcomes[2]?.p ?? 0).toFixed(2)} \\\\ P(X_B = 8) = 1.00 \\end{cases}`
               : `\\begin{cases} P(X_A = 4) = 1.00 \\\\ P(X_B = 20) = p, \\; P(X_B = -10) = 1-p \\end{cases}`,
-          rubric: "采分点：规范写出两方案的分布列（4分）",
+          rubric: "【高考采分点】规范写出两方案的分布列得 4 分。",
         },
         {
           step: 2,
@@ -499,7 +514,7 @@ export function buildProbabilityDistributionPanel(
             (config?.decisionScenario as string) === "quality"
               ? `0.4 + 40p_0 = 8.00 \\implies 40p_0 = 7.6 \\implies p_0 = 0.19 \\; (19.0\\%)`
               : `30p_0 - 10 = 4.0 \\implies 30p_0 = 14 \\implies p_0 = \\frac{14}{30} \\approx 0.467`,
-          rubric: "采分点：联立期望方程并解出临界阈值（4分）",
+          rubric: "【高考采分点】联立期望方程并解出临界阈值得 4 分。",
         },
         {
           step: 3,
@@ -512,7 +527,7 @@ export function buildProbabilityDistributionPanel(
             (config?.decisionScenario as string) === "quality"
               ? `E(A) = \\text{¥}${meanA} \\quad \\text{vs} \\quad E(B) = \\text{¥}${meanB}`
               : `E(A) = 4.0\\% \\quad \\text{vs} \\quad E(B) = ${meanB}\\%`,
-          rubric: "采分点：分类讨论明确最优方案结论（2分）",
+          rubric: "【高考采分点】分类讨论明确最优方案结论得 2 分。",
         },
       ],
     };
@@ -601,21 +616,21 @@ export function buildProbabilityDistributionPanel(
           title: "审题定法 · 原变量特征提取",
           detail: `提取原随机变量 $X$ 的数学期望 $E(X) = ${meanVal}$ 与方差 $D(X) = ${varVal}$。`,
           latex: `E(X) = ${meanVal}, \\quad D(X) = ${varVal}, \\quad \\sigma(X) = ${stdVal}`,
-          rubric: "采分点：明确原变量期望与方差（2分）",
+          rubric: "【高考采分点】明确原变量期望与方差得 2 分。",
         },
         {
           step: 2,
           title: "建模联立 · 线性算子展开定理",
           detail: `根据线性变换性质，常数平移 $b = ${b}$ 仅平移期望而不改变离散度；缩放系数 $a = ${a}$ 对期望一次缩放，对方差二次方缩放。`,
           latex: `\\begin{cases} E(aX+b) = a E(X) + b = ${a} \\times ${meanVal} + (${b}) \\\\ D(aX+b) = a^2 D(X) = (${a})^2 \\times ${varVal} \\end{cases}`,
-          rubric: "采分点：正确应用线性性质展开公式（4分）",
+          rubric: "【高考采分点】正确应用线性性质展开公式得 4 分。",
         },
         {
           step: 3,
           title: "求解反思 · 新变量数字特征计算",
           detail: `代入参数计算新变量 $Y$ 的数字特征，得到 $E(Y) = ${transformedDist ? transformedDist.mean.toFixed(3) : "0"}$，$D(Y) = ${transformedDist ? transformedDist.variance.toFixed(3) : "0"}$。`,
           latex: `E(Y) = ${transformedDist ? transformedDist.mean.toFixed(3) : "0"}, \\quad D(Y) = ${transformedDist ? transformedDist.variance.toFixed(3) : "0"}, \\quad \\sigma(Y) = ${transformedDist ? transformedDist.stdDev.toFixed(3) : "0"}`,
-          rubric: "采分点：准确计算新变量期望方差并完成作答（2分）",
+          rubric: "【高考采分点】准确计算新变量期望方差并完成作答得 2 分。",
         },
       ],
     };
@@ -711,21 +726,21 @@ export function buildProbabilityDistributionPanel(
         title: "审题定法 · 概率非负与归一化公理校验",
         detail: `核查分布列规范性：各点概率必须满足 $p_i \\ge 0$，且概率总和 $\\sum_{i=0}^3 p_i = 1$。`,
         latex: `p_i \\ge 0 \\quad \\text{且} \\quad \\sum_{i=0}^3 p_i = ${sumPVal}`,
-        rubric: "采分点：写出分布列公理前提并完成校验（2分）",
+        rubric: "【高考采分点】写出分布列公理前提并完成校验得 2 分。",
       },
       {
         step: 2,
         title: "建模联立 · 数学期望加权和展开",
         detail: `按定义式 $E(X) = \\sum x_i p_i$ 逐项展开计算数学期望，反映分布的均值位置与物理受力重心。`,
         latex: `E(X) = \\sum_{i=0}^3 x_i p_i = ${meanVal}`,
-        rubric: "采分点：依据定义列出期望展开式并求解（4分）",
+        rubric: "【高考采分点】依据定义列出期望展开式并求解得 4 分。",
       },
       {
         step: 3,
         title: "求解反思 · 物理力矩平衡验证与方差离散度",
         detail: `检验各点关于均值的偏差加权和 $\\sum (x_i - E)p_i = 0$（杠杆合力矩为 0），并计算方差 $D(X) = \\sum (x_i - E)^2 p_i = ${varVal}$。`,
         latex: `\\sum_{i=0}^3 (x_i - E)p_i = 0, \\quad D(X) = E(X^2) - [E(X)]^2 = ${varVal}`,
-        rubric: "采分点：计算方差并给出波动度结论（2分）",
+        rubric: "【高考采分点】计算方差并给出波动度结论得 2 分。",
       },
     ],
   };

@@ -289,7 +289,7 @@ export function getTopFormulaLatex(
   }
   if (studyMode === "compare") {
     // 新课标正文不作极限要求：以"总体远大于样本"的文字化近似表述替代 \lim 记号
-    return `N \\gg n \\text{ 时 } H(N, M, n) \\approx B(n, p) \\quad \\text{方差修正系数 } \\frac{N-n}{N-1} = ${comparisonResult?.varianceCorrectionFactor.toFixed(3)}`;
+    return `N \\gg n \\text{ 时 } H(N, M, n) \\approx B(n, p_0) \\quad \\text{方差修正系数 } \\frac{N-n}{N-1} = ${comparisonResult?.varianceCorrectionFactor.toFixed(3)}`;
   }
   if (studyMode === "decision") {
     return decisionScenario === "quality"

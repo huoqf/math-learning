@@ -2,6 +2,7 @@ import React, { useId, useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { MATH_COLORS, withAlpha } from "@/theme";
+import { formatMathProb } from "@/utils/mathFormat";
 import type { DiscreteDiceEventKey } from "@/math/probabilityIndependence";
 import {
   calculateIndependenceMeasure,
@@ -151,17 +152,17 @@ export const ProbabilityIndependenceScene: React.FC<
               fontSize={fontScale(14)}
               fontWeight="bold"
               fill={
-                vennRes.isIndependent
-                  ? MATH_COLORS.primary
-                  : vennRes.isMutuallyExclusive
-                    ? MATH_COLORS.paramPrimary
+                vennRes.isMutuallyExclusive
+                  ? MATH_COLORS.paramPrimary
+                  : vennRes.isIndependent
+                    ? MATH_COLORS.primary
                     : MATH_COLORS.labelText
               }
             >
-              {vennRes.isIndependent
-                ? "★ 相互独立 (P(AB) = P(A)P(B))"
-                : vennRes.isMutuallyExclusive
-                  ? "✕ 互斥事件 (P(AB) = 0，必不独立)"
+              {vennRes.isMutuallyExclusive
+                ? "✕ 互斥事件 (P(AB) = 0，正概率下必不独立)"
+                : vennRes.isIndependent
+                  ? "★ 相互独立 (P(AB) = P(A)P(B))"
                   : "相关事件 (P(AB) ≠ P(A)P(B))"}
             </text>
           </g>
@@ -225,7 +226,7 @@ export const ProbabilityIndependenceScene: React.FC<
             fontSize={fontScale(14)}
             fill={MATH_COLORS.paramPrimary}
           >
-            P(A) = {vennRes.pA.toFixed(2)}
+            P(A) = {formatMathProb(vennRes.pA)}
           </text>
 
           {/* 集合 B 文字标签 */}
@@ -246,7 +247,7 @@ export const ProbabilityIndependenceScene: React.FC<
             fontSize={fontScale(14)}
             fill={MATH_COLORS.paramSecondary}
           >
-            P(B) = {vennRes.pB.toFixed(2)}
+            P(B) = {formatMathProb(vennRes.pB)}
           </text>
 
           {/* 交集文字标注 */}
@@ -277,7 +278,7 @@ export const ProbabilityIndependenceScene: React.FC<
                     : MATH_COLORS.paramTertiary
                 }
               >
-                P(AB) = {vennRes.pAB.toFixed(2)}
+                P(AB) = {formatMathProb(vennRes.pAB)}
               </text>
             </g>
           ) : (

@@ -13,6 +13,12 @@
  *    - lambda = 1: 退化恒等序列 (自封闭吸收态)
  */
 
+export type MarkovDynamicType =
+  | "convergent_monotonic" // 0 <= lambda < 1 单调趋近
+  | "convergent_damped" // -1 < lambda < 0 阻尼振荡衰减
+  | "pure_oscillating" // lambda = -1 永久等幅振荡（无衰减）
+  | "degenerate_constant"; // lambda = 1 退化为恒等常数列
+
 export interface MarkovStepItem {
   n: number;
   p1: number;
@@ -33,6 +39,7 @@ export interface MarkovChainResult {
   isOscillating: boolean;
   isPureOscillating: boolean;
   isDegenerate: boolean;
+  dynamicType: MarkovDynamicType;
   steps: MarkovStepItem[];
   recurrenceLatex: string;
   geometricLatex: string;
@@ -91,16 +98,31 @@ export function calculateMarkovChain(
     currP1 = currP1 * cP11 + (1 - currP1) * cP21;
   }
 
+  let dynamicType: MarkovDynamicType;
+  if (isDegenerate) {
+    dynamicType = "degenerate_constant";
+  } else if (isPureOscillating) {
+    dynamicType = "pure_oscillating";
+  } else if (isOscillating) {
+    dynamicType = "convergent_damped";
+  } else {
+    dynamicType = "convergent_monotonic";
+  }
+
   const lambdaBaseStr = lambda.toFixed(2);
   const lambdaStr = lambda >= 0 ? lambdaBaseStr : `(${lambdaBaseStr})`;
   const betaStr = cP21.toFixed(2);
   const pInfStr = pStationary.toFixed(3);
 
   const recurrenceLatex = `p_{n+1} = ${lambdaStr} p_n + ${betaStr}`;
-  const geometricLatex = `p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})`;
+  const geometricLatex = isDegenerate
+    ? `p_{n+1} = p_n \\implies p_n = ${pInfStr}`
+    : `p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})`;
 
   const recurrenceText = `pₙ₊₁ = ${lambdaStr} pₙ + ${betaStr}`;
-  const geometricText = `pₙ₊₁ - ${pInfStr} = ${lambdaStr}(pₙ - ${pInfStr})`;
+  const geometricText = isDegenerate
+    ? `pₙ₊₁ = pₙ ⟹ pₙ = ${pInfStr}`
+    : `pₙ₊₁ - ${pInfStr} = ${lambdaStr}(pₙ - ${pInfStr})`;
 
   const diffInit = initP1 - pStationary;
   let generalTermLatex = "";
@@ -125,22 +147,22 @@ export function calculateMarkovChain(
   let step4_generalTerm: string;
 
   if (isDegenerate) {
-    step3_geometric = `公共比 $\\lambda = 1.00$，系统处于吸收/自封闭退化状态，状态概率恒定不变，无需构造等比数列。`;
-    step4_generalTerm = `系统处于吸收退化态（$\\lambda = 1$），各步状态概率恒为初始值，即 $p_n = ${pInfStr}$（常数列）。`;
+    step3_geometric = `公比 $\\lambda = 1.00$，递推式退化为 $p_{n+1} = p_n$。数列为恒等常数列，无需配凑辅助等比数列。`;
+    step4_generalTerm = `公比 $\\lambda = 1.00$，递推关系退化，各步状态概率恒为初始值 $p_1$，即 $p_n = ${pInfStr}$（常数列）。`;
   } else if (Math.abs(diffInit) < 1e-6) {
-    step3_geometric = `求解不动点方程 $x = ${lambdaStr} x + ${betaStr}$，得不动点 $x = ${pInfStr}$。
+    step3_geometric = `求解不动点方程 $x = ${lambdaStr} x + ${betaStr}$，得平衡不动点 $x = ${pInfStr}$。
 两边同减 $${pInfStr}$ 得：$p_{n+1} - ${pInfStr} = ${lambdaStr}(p_n - ${pInfStr})$。
 故数列 $\\{p_n - ${pInfStr}\\}$ 为以 $0$ 为首项的常数数列。`;
     step4_generalTerm = `初始概率 $p_1 = ${initP1.toFixed(3)}$ 恰好等于不动点 $${pInfStr}$，故数列 $\\{p_n - ${pInfStr}\\}$ 为以 $0$ 为首项的常数列，即 $p_n = ${pInfStr}$（常数列），各项概率恒定不变。`;
   } else if (isPureOscillating) {
     step3_geometric = `递推式为 $p_{n+1} = -p_n + ${betaStr}$。设 $p_{n+1} - ${pInfStr} = -1(p_n - ${pInfStr})$，则数列 $\\{p_n - ${pInfStr}\\}$ 是以 $p_1 - ${pInfStr} = ${diffInit.toFixed(3)}$ 为首项、$-1$ 为公比的等比数列。`;
-    step4_generalTerm = `通项公式为：$p_n = ${pInfStr} + (${diffInit.toFixed(3)}) \\cdot (-1)^{n-1}$。注意公比 $\\lambda = -1$，序列在两点间永久等幅振荡，不会趋近于单一稳定值。`;
+    step4_generalTerm = `通项公式为：$p_n = ${pInfStr} + (${diffInit.toFixed(3)}) \\cdot (-1)^{n-1}$。公比 $\\lambda = -1$，序列在两个数值间交替进行永久等幅振荡（无衰减）。`;
   } else if (isOscillating) {
-    step3_geometric = `设 $p_{n+1} - t = ${lambdaStr}(p_n - t)$，展开对比系数得待定常数 $t = \\frac{${betaStr}}{1 - (${lambdaBaseStr})} = ${pInfStr}$。因此数列 $\\{p_n - ${pInfStr}\\}$ 是以 $p_1 - ${pInfStr} = ${diffInit.toFixed(3)}$ 为首项、$\\lambda = ${lambdaBaseStr}$ 为公比的等比数列。`;
-    step4_generalTerm = `由此得通项公式为：$p_n = ${generalTermLatex}$。由于 $|\\lambda| < 1$，随着项数 $n$ 增大，$\\lambda^{n-1}$ 迅速衰减，故 $p_n$ 在定值两侧交替振荡地趋近于 ${pInfStr}$。`;
+    step3_geometric = `设 $p_{n+1} - t = ${lambdaStr}(p_n - t)$，展开对比常数项得平衡不动点 $t = \\frac{${betaStr}}{1 - (${lambdaBaseStr})} = ${pInfStr}$。因此数列 $\\{p_n - ${pInfStr}\\}$ 是以 $p_1 - ${pInfStr} = ${diffInit.toFixed(3)}$ 为首项、$\\lambda = ${lambdaBaseStr}$ 为公比的等比数列。`;
+    step4_generalTerm = `由此得通项公式为：$p_n = ${generalTermLatex}$。由于 $-1 < \\lambda < 0$，随着项数 $n$ 增大，$(\\lambda)^{n-1}$ 振荡衰减，故 $p_n$ 在平衡值两侧交替振荡趋近于定值 ${pInfStr}$。`;
   } else {
-    step3_geometric = `设 $p_{n+1} - t = ${lambdaStr}(p_n - t)$，代入待定系数求得不动点 $t = \\frac{${betaStr}}{1 - ${lambdaBaseStr}} = ${pInfStr}$。故数列 $\\{p_n - ${pInfStr}\\}$ 为公比 $\\lambda = ${lambdaBaseStr}$ 的等比数列。`;
-    step4_generalTerm = `由此得通项公式为：$p_n = ${generalTermLatex}$。由于 $0 \\le \\lambda < 1$，随着项数 $n$ 增大，$p_n$ 单调趋近于定值 ${pInfStr}$。`;
+    step3_geometric = `设 $p_{n+1} - t = ${lambdaStr}(p_n - t)$，代入求得平衡不动点 $t = \\frac{${betaStr}}{1 - ${lambdaBaseStr}} = ${pInfStr}$。故数列 $\\{p_n - ${pInfStr}\\}$ 为公比 $\\lambda = ${lambdaBaseStr}$ 的等比数列。`;
+    step4_generalTerm = `由此得通项公式为：$p_n = ${generalTermLatex}$。由于 $0 \\le \\lambda < 1$，随着项数 $n$ 增大，$p_n$ 单调递进趋近于定值 ${pInfStr}$。`;
   }
 
   return {
@@ -154,6 +176,7 @@ export function calculateMarkovChain(
     isOscillating,
     isPureOscillating,
     isDegenerate,
+    dynamicType,
     steps,
     recurrenceLatex,
     geometricLatex,

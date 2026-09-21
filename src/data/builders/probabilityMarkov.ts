@@ -64,21 +64,23 @@ export function buildProbabilityMarkovPanel(
         color: MATH_COLORS.functionTransformed,
       },
       {
-        label: "待定不动点 (稳态渐近值) t",
+        label: "待定系数平衡不动点 t",
         symbol: "t",
-        value: tVal.toFixed(4),
+        value: markovRes.isDegenerate ? "无唯一解" : tVal.toFixed(4),
         color: MATH_COLORS.focusPoint,
       },
       {
-        label: `当前第 ${currStepVal} 步概率 p_${currStepVal}`,
+        label: `当前第 ${currStepVal} 步概率 $p_{${currStepVal}}$`,
         symbol: `p_{${currStepVal}}`,
         value: currentStepItem.p1.toFixed(4),
         color: MATH_COLORS.function,
       },
       {
-        label: `当前步与稳态偏差 |p_${currStepVal} - t|`,
+        label: `当前步与不动点偏差 $|p_{${currStepVal}} - t|$`,
         symbol: `|p_{${currStepVal}} - t|`,
-        value: currentStepItem.absDelta.toFixed(4),
+        value: markovRes.isDegenerate
+          ? "0.0000"
+          : currentStepItem.absDelta.toFixed(4),
         color: MATH_COLORS.derivative,
       },
     ],
@@ -104,22 +106,30 @@ export function buildProbabilityMarkovPanel(
       {
         name: answerStepTitle(2),
         step: MARKOV_ANSWER_STEPS[2].step,
-        latex:
-          "p_{n+1} - t = \\lambda (p_n - t) \\iff p_{n+1} = \\lambda p_n + t(1 - \\lambda)",
+        latex: markovRes.isDegenerate
+          ? "p_{n+1} = p_n \\implies p_n = p_1"
+          : "p_{n+1} - t = \\lambda (p_n - t) \\iff p_{n+1} = \\lambda p_n + t(1 - \\lambda)",
         condition: markovRes.step3_geometric,
-        note: `对比常数项 $t(1 - \\lambda) = p_{21}$，解得平衡不动点 $t = \\frac{p_{21}}{1 - \\lambda} = ${tVal.toFixed(3)}$。新高考阅卷要求展示配凑过程，严禁空降特征根。`,
+        note: markovRes.isDegenerate
+          ? `公比 $\\lambda = 1.00$，递推式退化为 $p_{n+1} = p_n$。数列为恒等常数列，各项恒等于 $p_1 = ${p1Val.toFixed(3)}$，无需待定系数配凑。`
+          : `对比常数项 $t(1 - \\lambda) = p_{21}$，解得平衡不动点 $t = \\frac{p_{21}}{1 - \\lambda} = ${tVal.toFixed(3)}$。新高考阅卷要求展示配凑过程，严禁直接跳步给出平衡值。`,
         level: "important",
       },
       {
         name: answerStepTitle(3),
         step: MARKOV_ANSWER_STEPS[3].step,
-        latex:
-          "p_n - t = (p_1 - t)\\lambda^{n-1} \\implies p_n = t + (p_1 - t)\\lambda^{n-1}",
+        latex: markovRes.isDegenerate
+          ? `p_n = ${p1Val.toFixed(3)}`
+          : "p_n - t = (p_1 - t)\\lambda^{n-1} \\implies p_n = t + (p_1 - t)\\lambda^{n-1}",
         condition: markovRes.step4_generalTerm,
         note: `${markovRes.generalTermLatex ? `当前代入通项：$${markovRes.generalTermLatex}$；` : ""}${
-          markovRes.isOscillating
-            ? "公比 $-1 < \\lambda < 0$：在平衡值两侧交替振荡衰减收敛（高考作答用「随着项数增大振荡趋于定值」表述，规避极限记号失分）。"
-            : "公比 $0 \\le \\lambda < 1$：单调递进逼近（高考作答用「单调递增/递减趋于定值」表述即可）。"
+          markovRes.dynamicType === "degenerate_constant"
+            ? "公比 $\\lambda = 1.00$：系统处于吸收退化态，状态概率恒等于初始值。"
+            : markovRes.dynamicType === "pure_oscillating"
+              ? "公比 $\\lambda = -1.00$：在两个数值间交替进行永久等幅振荡（无衰减），不会趋于单一稳定值。"
+              : markovRes.dynamicType === "convergent_damped"
+                ? "公比 $-1 < \\lambda < 0$：在平衡值两侧交替振荡衰减收敛（高考作答用「随着项数增大振荡趋近于定值」表述，规避极限记号失分）。"
+                : "公比 $0 \\le \\lambda < 1$：单调递进逼近（高考作答用「单调递增/递减趋近于定值」表述即可）。"
         }`,
         level: "derived",
       },
@@ -131,9 +141,13 @@ export function buildProbabilityMarkovPanel(
       },
       {
         text: `【情景特征分析 · ${currentPreset.name}】${
-          markovRes.isOscillating
-            ? "公比 $-1 < \\lambda < 0$：交替振荡衰减收敛。若设问求前 $n$ 项和 $S_n$，需注意利用等比求和公式处理 $(-|\\lambda|)^{n-1}$ 项的正负交错。"
-            : "公比 $0 \\le \\lambda < 1$：单调收敛。可直接通过作差 $p_{n+1} - p_n$ 判断单调递增/递减，规范解答单调性证明与最值问题。"
+          markovRes.dynamicType === "degenerate_constant"
+            ? "公比 $\\lambda = 1.00$：自封闭恒等常数列，状态概率保持恒定。"
+            : markovRes.dynamicType === "pure_oscillating"
+              ? "公比 $\\lambda = -1.00$：等幅交替振荡，无衰减性。"
+              : markovRes.dynamicType === "convergent_damped"
+                ? "公比 $-1 < \\lambda < 0$：交替振荡衰减收敛。若设问求前 $n$ 项和 $S_n$，需注意利用等比求和公式处理 $(-|\\lambda|)^{n-1}$ 项的正负交错。"
+                : "公比 $0 \\le \\lambda < 1$：单调收敛。可直接通过作差 $p_{n+1} - p_n$ 判断单调递增/递减，规范解答单调性证明与最值问题。"
         }`,
         importance: "gaokao",
       },
@@ -148,7 +162,53 @@ export function buildProbabilityMarkovPanel(
         level: "warning",
       },
     ],
+    reasoningSteps: [
+      {
+        step: 1,
+        title: "审题定法 · 设全集事件与完备划分",
+        latex: "P(A_n) = p_n, \\quad P(\\overline{A_n}) = 1 - p_n",
+        detail: `设第 $n$ 步事件【${currentPreset.labels.s1}】发生概率为 $p_n$，对立事件【${currentPreset.labels.s2}】为 $1-p_n$。两事件构成完备划分，初始 $p_1 = ${p1Val.toFixed(2)}$。`,
+        rubric:
+          "【高考采分点】设出第 $n$ 步状态事件，说明与对立事件构成完备划分并写出初始概率，得 2 分。",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 全概率公式列出递推关系",
+        latex: `p_{n+1} = p_{11} p_n + p_{21}(1 - p_n) = ${markovRes.recurrenceLatex}`,
+        detail: `由全概率公式展开状态转移，化简整理为一阶线性递推数列 $p_{n+1} = \\lambda p_n + p_{21}$，公比 $\\lambda = ${lambdaVal.toFixed(2)}$。`,
+        rubric:
+          "【高考采分点】应用全概率公式建立 $p_{n+1}$ 与 $p_n$ 的线性递推关系式，得 3 分。",
+      },
+      {
+        step: 3,
+        title: "待定系数 · 配凑辅助等比数列",
+        latex: markovRes.isDegenerate
+          ? "p_{n+1} = p_n \\implies p_n = p_1"
+          : `p_{n+1} - ${tVal.toFixed(3)} = ${lambdaVal.toFixed(2)}(p_n - ${tVal.toFixed(3)})`,
+        detail: markovRes.isDegenerate
+          ? "公比 $\\lambda = 1.00$，递推关系退化为常数列，无需待定系数配凑。"
+          : `设 $p_{n+1} - t = \\lambda(p_n - t)$，对比常数项解得平衡不动点 $t = \\frac{p_{21}}{1-\\lambda} = ${tVal.toFixed(3)}$，构成公比为 $\\lambda$ 的等比数列。`,
+        rubric:
+          "【高考采分点】待定系数配凑构造辅助等比数列，求出平衡不动点参数，得 3 分。",
+      },
+      {
+        step: 4,
+        title: "求解反思 · 通项公式与动态收敛分析",
+        latex: markovRes.generalTermLatex,
+        detail: `代入等比数列通项公式求出 $p_n$。${
+          markovRes.dynamicType === "degenerate_constant"
+            ? "序列恒为常数列。"
+            : markovRes.dynamicType === "pure_oscillating"
+              ? "公比 $\\lambda = -1$，序列永久等幅振荡。"
+              : markovRes.dynamicType === "convergent_damped"
+                ? "公比 $-1 < \\lambda < 0$，序列在平衡值两侧振荡趋于定值。"
+                : "公比 $0 \\le \\lambda < 1$，序列单调趋于定值。"
+        }`,
+        rubric:
+          "【高考采分点】正确求解通项公式 $p_n$ 并按课标规范表述渐近动态变化趋势，得 2 分。",
+      },
+    ],
     mnemonic:
-      "全概递推设划分，待定系数配等比，不动点处定稳态，通项渐近趋势明。",
+      "全概递推设划分，待定系数配等比，不动点处定平衡，通项渐近趋势明。",
   };
 }

@@ -272,7 +272,9 @@ export interface DistributionComparisonResult {
   varianceCorrectionFactor: number; // (N - n) / (N - 1)
   maxDifference: number; // 两分布各点最大概率绝对偏差
   N: number;
+  M: number;
   p: number;
+  actualP: number;
   sampleN: number;
 }
 
@@ -282,8 +284,12 @@ export function computeHypergeometricBinomialComparison(
   sampleN: number,
 ): DistributionComparisonResult {
   const M = Math.round(N * p);
+  const actualP = N > 0 ? M / N : p;
   const hyperDist = computeHypergeometricDistribution(N, M, sampleN);
-  const binomDist = computeBinomialDistribution(sampleN, p);
+  // 二项分布必须共用同一个「实际特征比例」p₀ = M/N：否则两条柱状图的差异会同时混入
+  // 「M 取整带来的比例偏差」与「放回/不放回」两种来源，期望不再相等、方差修正系数
+  // 也不再是唯一差异，教学结论无从归因。
+  const binomDist = computeBinomialDistribution(sampleN, actualP);
 
   let maxDiff = 0;
   for (let k = 0; k <= sampleN; k++) {
@@ -301,7 +307,9 @@ export function computeHypergeometricBinomialComparison(
     varianceCorrectionFactor: factor,
     maxDifference: maxDiff,
     N,
+    M,
     p,
+    actualP,
     sampleN,
   };
 }

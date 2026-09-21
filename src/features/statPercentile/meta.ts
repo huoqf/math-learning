@@ -8,7 +8,7 @@ export const statPercentileNode: KnowledgeNode = {
   module: "统计分析",
   importance: "gaokao",
   animationIds: ["anim-stat-percentile"],
-  prerequisites: ["know-probability-normal"],
+  prerequisites: [],
   route: "/stat-percentile",
 };
 

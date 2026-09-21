@@ -25,8 +25,11 @@ export function getMarkovFormulaLatex(params: Record<string, number>): string {
   const lambdaStr = lambda >= 0 ? lambdaBaseStr : `(${lambdaBaseStr})`;
   const betaStr = p21.toFixed(2);
   const denom = 1 - lambda;
-  const tStr = Math.abs(denom) > 1e-6 ? (p21 / denom).toFixed(3) : "1.000";
+  if (Math.abs(denom) <= 1e-6) {
+    return `\\color{${MATH_COLORS.function}}{p_{n+1}} = \\color{${MATH_COLORS.paramPrimary}}{${p11.toFixed(2)}} p_n + \\color{${MATH_COLORS.paramSecondary}}{${p21.toFixed(2)}}(1-p_n) = p_n \\implies \\color{${MATH_COLORS.derivative}}{p_n \\equiv p_1}`;
+  }
 
+  const tStr = (p21 / denom).toFixed(3);
   return `\\color{${MATH_COLORS.function}}{p_{n+1}} = \\color{${MATH_COLORS.paramPrimary}}{${p11.toFixed(2)}} p_n + \\color{${MATH_COLORS.paramSecondary}}{${p21.toFixed(2)}}(1-p_n) = ${lambdaStr} p_n + ${betaStr} \\implies \\color{${MATH_COLORS.derivative}}{p_{n+1} - ${tStr}} = ${lambdaStr}(p_n - ${tStr})`;
 }
 

@@ -199,7 +199,7 @@ export function evaluateAssignments(
       name: "全部系数和 (令 x = 1)",
       latexExpr: `f(1) = (${a} + ${b})^{${n}} = ${valX1}`,
       evaluatedValue: valX1,
-      description: `各项展开项系数相加：a_0 + a_1 + \\dots + a_n = (${a}+${b})^n`,
+      description: `各项展开项系数相加：a₀ + a₁ + ⋯ + aₙ = (${a}+${b})ⁿ`,
       itemValues: itemsX1,
     },
     sum_alt: {
@@ -207,7 +207,7 @@ export function evaluateAssignments(
       name: "奇偶交错和 (令 x = -1)",
       latexExpr: `f(-1) = (${-a} + ${b})^{${n}} = ${valXNeg1}`,
       evaluatedValue: valXNeg1,
-      description: `各项正负交替相加：a_0 - a_1 + a_2 - \\dots = (-${a}+${b})^n`,
+      description: `各项正负交替相加：a₀ - a₁ + a₂ - ⋯ = (-${a}+${b})ⁿ`,
       itemValues: itemsXNeg1,
     },
     sum_even: {
@@ -215,7 +215,7 @@ export function evaluateAssignments(
       name: "偶次项系数和",
       latexExpr: `\\frac{f(1) + f(-1)}{2} = ${Number.isInteger(valEven) ? valEven : valEven.toFixed(2)}`,
       evaluatedValue: valEven,
-      description: "偶次项系数之和：a_0 + a_2 + a_4 + \\dots",
+      description: "偶次项系数之和：a₀ + a₂ + a₄ + ⋯",
       itemValues: terms.map((t) => ({
         k: t.k,
         val: t.powerA % 2 === 0 ? t.termCoeff : 0,
@@ -227,7 +227,7 @@ export function evaluateAssignments(
       name: "奇次项系数和",
       latexExpr: `\\frac{f(1) - f(-1)}{2} = ${Number.isInteger(valOdd) ? valOdd : valOdd.toFixed(2)}`,
       evaluatedValue: valOdd,
-      description: "奇次项系数之和：a_1 + a_3 + a_5 + \\dots",
+      description: "奇次项系数之和：a₁ + a₃ + a₅ + ⋯",
       itemValues: terms.map((t) => ({
         k: t.k,
         val: t.powerA % 2 !== 0 ? t.termCoeff : 0,
@@ -239,7 +239,7 @@ export function evaluateAssignments(
       name: "导数加权和 (f'(1))",
       latexExpr: `f'(1) = ${n} \\cdot ${a} \\cdot (${a}+${b})^{${Math.max(0, n - 1)}} = ${valDerivative}`,
       evaluatedValue: valDerivative,
-      description: "两边求导赋值令 x=1：\\sum k a_k = f'(1)",
+      description: "两边求导赋值令 x=1：Σ k·aₖ = f′(1)",
       itemValues: terms.map((t) => ({
         k: t.k,
         val: t.powerA * t.termCoeff,
@@ -251,7 +251,7 @@ export function evaluateAssignments(
       name: "常数项 (令 x = 0)",
       latexExpr: `f(0) = (${b})^{${n}} = ${valX0}`,
       evaluatedValue: valX0,
-      description: `展开式中的常数项（x^0 的系数）：b^n = ${valX0}`,
+      description: `展开式中的常数项（x⁰ 的系数）：bⁿ = ${valX0}`,
       itemValues: itemsX0,
     },
   };

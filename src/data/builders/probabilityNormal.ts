@@ -277,21 +277,24 @@ export function buildProbabilityNormalPanel(
     reasoningSteps: [
       {
         step: 1,
-        title: "第一步：确定对称轴与镜像点",
+        title: "审题定法 · 确定对称轴与镜像点",
         latex: `x_{\\text{sym}} = 2\\color{${MATH_COLORS.paramPrimary}}{\\mu} - x_0 = 2 \\times ${mu.toFixed(1)} - (${x0.toFixed(1)}) = ${symData.xSym.toFixed(2)}`,
         detail: `正态分布曲线关于直线 $x = \\mu = ${mu.toFixed(1)}$ 轴对称，基准点 $x_0 = ${x0.toFixed(1)}$ 的镜面对称点为 $2\\mu - x_0 = ${symData.xSym.toFixed(2)}$。`,
+        rubric: "【高考采分点】利用对称轴 x = μ 准确求出对称镜像点得 2 分。",
       },
       {
         step: 2,
-        title: "第二步：对称转化单侧尾部概率",
+        title: "建模联立 · 对称转化单侧尾部概率",
         latex: `P(X \\ge ${symData.rightX.toFixed(1)}) = P(X \\le ${symData.leftX.toFixed(1)}) = ${(symData.tailProb * 100).toFixed(2)}\\%`,
         detail: `由图形关于对称轴完全对称的几何性质，两端对称尾部的阴影面积严格相等。`,
+        rubric: "【高考采分点】由轴对称性转化单侧尾部概率并求得精确值得 3 分。",
       },
       {
         step: 3,
-        title: "第三步：利用全概率归一求解对称区间",
+        title: "求解反思 · 利用全概率归一求解对称区间",
         latex: `P(${symData.leftX.toFixed(1)} \\le X \\le ${symData.rightX.toFixed(1)}) = 1 - 2P(X \\le ${symData.leftX.toFixed(1)}) = ${(symData.centerProb * 100).toFixed(2)}\\%`,
         detail: `正态曲线与 $x$ 轴所夹总概率恒为 $1$，从总概率中扣除两侧对称尾部，即得中间双侧对称概率。`,
+        rubric: "【高考采分点】利用对立与归一性求解区间概率并规范作答得 3 分。",
       },
     ],
     theorems: [

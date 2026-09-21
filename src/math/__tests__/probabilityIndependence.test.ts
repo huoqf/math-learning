@@ -47,4 +47,21 @@ describe("事件独立性与互斥纯数学引擎测试", () => {
     expect(res.isMutuallyExclusive).toBe(true);
     expect(res.isIndependent).toBe(false);
   });
+
+  it("极端小概率边界：pA=0.1, pB=0.1, lambda=0 时互斥且绝不判定为独立", () => {
+    const res = calculateIndependenceMeasure(0.1, 0.1, 0);
+    expect(res.pAB).toBe(0);
+    expect(res.isMutuallyExclusive).toBe(true);
+    expect(res.isIndependent).toBe(false);
+    expect(res.relationType).toBe("exclusive_not_independent");
+  });
+
+  it("近独立但未达容差边界：差异大于相对容差时判定为不独立", () => {
+    // 独立点 overlapRatio = 0.5，此时 pAB = 0.2
+    // 当 overlapRatio = 0.3 时，pAB = 0.12，显著偏离 0.2
+    const res = calculateIndependenceMeasure(0.4, 0.5, 0.3);
+    expect(res.isIndependent).toBe(false);
+    expect(res.isMutuallyExclusive).toBe(false);
+    expect(res.relationType).toBe("neither");
+  });
 });
