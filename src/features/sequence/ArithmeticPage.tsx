@@ -126,48 +126,71 @@ export function ArithmeticPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 左屏教学提示与题设导引（按子模型差异化地说明初始条件与探究设问）
+  // 切换子模式时提供针对该教学目标的经典适配参数
+  const handleModeChange = (mode: typeof arithmeticSubMode) => {
+    setArithmeticSubMode(mode);
+    if (mode === "gauss" && (params.d ?? -1) <= 0) {
+      setParams((prev) => ({ ...prev, a1: 1, d: 1, N: 6, gaussRatio: 1 }));
+    } else if (mode === "quadratic" && (params.d ?? 1) >= 0) {
+      setParams((prev) => ({ ...prev, a1: 5, d: -1.5, N: 8 }));
+    } else if (
+      mode === "segment" &&
+      Math.floor((params.N ?? 8) / (params.kSegment ?? 3)) < 2
+    ) {
+      setParams((prev) => ({ ...prev, N: 8, kSegment: 3 }));
+    } else if (mode === "absSum" && (params.d ?? 1) >= 0) {
+      setParams((prev) => ({ ...prev, a1: 5, d: -1.5, N: 8 }));
+    }
+  };
+
+  // 左屏教学提示与题设导引（按子模型差异化地说明初始条件与探究设问，内联符号严格包裹 $...$）
   const tipConfig = useMemo(() => {
-    const common = `等差数列 a₁ = ${a1}，公差 d = ${d}，前 N = ${N} 项。`;
+    const common = `等差数列 $a_1 = ${a1}$，公差 $d = ${d}$，前 $N = ${N}$ 项。`;
     switch (arithmeticSubMode) {
       case "linear":
         return {
           variant: "primary" as const,
-          badge: "核心基准 · 通项是 x 的一次函数",
+          badge: "核心基准 · 通项是一次函数",
           condition: common,
           question:
-            "通项 aₙ = a₁ + (n-1)d 在坐标图上为何恰好落于同一条直线上？",
+            "通项 $a_n = a_1 + (n-1)d$ 在坐标图上为何离散点均精确落在同一直线上？",
         };
       case "gauss":
         return {
           variant: "primary" as const,
-          badge: "高考经典 · 首尾配对求和",
-          condition: common + " 首末项配对 (首项 + 末项) × 配对数。",
-          question: "高斯配对法为何能把 N 项求和转化为 N/2 个相等的和？",
+          badge: "高考经典 · 高斯倒序相加",
+          condition:
+            common +
+            " 正序柱与倒序柱扣合，首末项配对 $(a_1 + a_n) \\times n$。",
+          question:
+            "高斯几何拼图为何能把 $n$ 个阶梯柱的面积和转化为一个完整长方形的一半？",
         };
       case "quadratic":
         return {
           variant: "warning" as const,
-          badge: "高考难点 · 前 n 项和的二次最值",
-          condition: common + " 前 n 项和 Sₙ 关于 n 是开口向上的二次函数。",
+          badge: "高考难点 · 前 n 项和二次函数最值",
+          condition:
+            common +
+            " 前 $n$ 项和 $S_n = \\frac{d}{2}n^2 + (a_1 - \\frac{d}{2})n$ 是过原点的二次函数。",
           question:
-            "公差 d < 0 时，Sₙ 在何处取得最大值？如何由判别式与对称轴判断？",
+            "公差 $d < 0$ 时抛物线开口向下，如何结合连续对称轴 $x_0$ 与离散变号项确定 $S_n$ 最大值？",
         };
       case "segment":
         return {
           variant: "info" as const,
-          badge: "高考综合 · 绝对值分段求和",
+          badge: "高考综合 · 等长片段和成等差",
           condition:
-            common + ` 先由 k = ${kSegment} 找出 aₙ 的变号临界项再分段求和。`,
-          question: "求 |aₙ| 前 n 项和时，如何确定非负项与负项的分界项 n₀？",
+            common + ` 按每组 $k = ${kSegment}$ 项连续分段，考察连续片段和。`,
+          question:
+            "连续等长片段和 $S_k, S_{2k}-S_k, S_{3k}-S_{2k}$ 为何仍成等差数列，新公差与 $d$ 有何代数联系？",
         };
       case "absSum":
         return {
           variant: "warning" as const,
-          badge: "核心考点 · 绝对值和的几何折线",
+          badge: "核心考点 · 绝对值和折线几何",
           condition: common,
           question:
-            "求 ｜aₙ｜ 前 n 项和 Tₙ 时，为何折线在变号项处的斜率（增量 ｜aₙ｜）取到最小值？",
+            "求 $|a_n|$ 前 $n$ 项和 $T_n$ 时，折线在变号零点 $x_0$ 处的斜率增量如何从负变正？",
         };
       default:
         return {
@@ -175,7 +198,7 @@ export function ArithmeticPage() {
           badge: "等差数列探究",
           condition: common,
           question:
-            "探究等差数列通项公式 aₙ 与前 n 项和 Sₙ 之间离散与连续二次函数最值的对应关系。",
+            "探究等差数列通项公式 $a_n$ 与前 $n$ 项和 $S_n$ 之间离散与连续二次函数最值的对应关系。",
         };
     }
   }, [arithmeticSubMode, a1, d, N, kSegment]);
@@ -198,7 +221,7 @@ export function ArithmeticPage() {
               ]}
               value={arithmeticSubMode}
               onChange={(val) =>
-                setArithmeticSubMode(val as typeof arithmeticSubMode)
+                handleModeChange(val as typeof arithmeticSubMode)
               }
             />
           </LeftPanelSection>

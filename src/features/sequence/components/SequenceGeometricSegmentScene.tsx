@@ -24,7 +24,7 @@ export function SequenceGeometricSegmentScene({
   highlightN = 1,
   onSelectN,
 }: SequenceGeometricSegmentSceneProps) {
-  const { geoData } = useSequenceParams(params);
+  const { kSegment, geoData } = useSequenceParams(params);
   const { terms, segmentedSums } = geoData;
 
   const segColors = [
@@ -33,7 +33,7 @@ export function SequenceGeometricSegmentScene({
     MATH_COLORS.sequenceHighlight,
     MATH_COLORS.inequality,
   ];
-  const validK = segmentedSums?.k ?? 3;
+  const validK = segmentedSums?.k ?? kSegment;
   // toSup using top-level helper
 
   return (
@@ -154,6 +154,44 @@ export function SequenceGeometricSegmentScene({
             </g>
           );
         })}
+
+      {/* 2. 项数不足成段时的空态引导卡 */}
+      {!segmentedSums && (
+        <g
+          transform={`translate(${mathToDesign((1 + terms.length) / 2, 0, scale).x}, 40)`}
+        >
+          <rect
+            x={-175}
+            y={-20}
+            width={350}
+            height={46}
+            rx={8}
+            fill={withAlpha(MATH_COLORS.white, 0.95)}
+            stroke={MATH_COLORS.paramSecondary}
+            strokeWidth={1.2}
+            strokeDasharray="4,3"
+          />
+          <text
+            x={0}
+            y={-2}
+            textAnchor="middle"
+            fontSize={fontScale(10)}
+            fill={MATH_COLORS.paramSecondary}
+            fontWeight="bold"
+          >
+            项数不足成段 (当前 N={terms.length}, k={validK})
+          </text>
+          <text
+            x={0}
+            y={15}
+            textAnchor="middle"
+            fontSize={fontScale(8.5)}
+            fill={MATH_COLORS.textMuted}
+          >
+            至少需要 N ≥ 2k ({2 * validK} 项) 才能形成连续两组等长片段和
+          </text>
+        </g>
+      )}
     </g>
   );
 }

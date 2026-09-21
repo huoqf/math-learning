@@ -156,50 +156,70 @@ export function GeometricPage() {
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleModeChange = (mode: typeof geometricSubMode) => {
+    setGeometricSubMode(mode);
+    if (mode === "productMax" && (params.a1 ?? 1) <= 1) {
+      setParams((prev) => ({ ...prev, a1: 4, q: 0.5, N: 6 }));
+    } else if (
+      mode === "segment" &&
+      Math.floor((params.N ?? 8) / (params.kSegment ?? 3)) < 2
+    ) {
+      setParams((prev) => ({ ...prev, N: 8, kSegment: 3 }));
+    }
+  };
+
   const tipConfig = useMemo(() => {
     const a1 = params.a1 ?? 3;
     const q = params.q ?? 0.5;
     const N = Math.max(3, Math.min(15, Math.round(params.N ?? 8)));
     const kSegment = params.kSegment ?? 3;
-    const common = `a₁ = ${a1}，公比 q = ${q}，前 ${N} 项。`;
+    const common = `等比数列 $a_1 = ${a1}$，公比 $q = ${q}$，前 $N = ${N}$ 项。`;
     switch (geometricSubMode) {
       case "staggerSum":
         return {
           variant: "primary" as const,
           badge: "高考经典 · 错位相减推导",
-          condition: common + " 先写 Sₙ，再同乘公比 q 后按位错开作差。",
-          question: "错位相减为何能消去中间全部 q 的连续次幂项？",
+          condition:
+            common +
+            " 先写出 $S_n$，再两边同乘公比 $q$ 得 $qS_n$，上下错开对齐相减。",
+          question:
+            "错位相减 $(1-q)S_n$ 为何能消去中间全部连续项？最终首尾残留哪些项？",
         };
       case "segment":
         return {
           variant: "accent" as const,
           badge: "片段性质 · 等长片段和仍等比",
           condition:
-            common + ` 取等长片段 ${kSegment} 项划分：Sₖ, S₂ₖ−Sₖ, S₃ₖ−S₂ₖ…。`,
-          question: "等长片段和之间满足怎样的等比关系？公比是多少？",
+            common +
+            ` 按每组 $k = ${kSegment}$ 项等长连续划分：$S_k, S_{2k}-S_k, S_{3k}-S_{2k}$。`,
+          question:
+            "等长片段和之间满足怎样的等比关系？为何其新公比恰好为 $q^k$？",
         };
       case "productMax":
         return {
           variant: "warning" as const,
-          badge: "最值探究 · 乘积最大项",
-          condition: common + " 考察前 n 项之积 Pₙ 的最值。",
-          question: "何时 Pₙ 取得最值？与公比绝对值 |q| 的关系如何判定？",
+          badge: "最值探究 · 乘积最大项与基准线",
+          condition:
+            common +
+            " 考察前 $n$ 项累乘积 $P_n = a_1 a_2 \\cdots a_n$ 的离散最值。",
+          question:
+            "当 $a_1 > 1$ 且 $0 < q < 1$ 时，通项 $a_n$ 递减，为何当 $a_n > 1$ 时 $P_n$ 递增，跨过基准线 $y=1$ 后 $P_n$ 开始递减？",
         };
       case "tessellation":
         return {
           variant: "success" as const,
-          badge: "拓展 · 无限剖分面积（超出课标）",
-          condition: `边长 a₁ = ${a1}，公比 q = ${q}，观察无限剖分面积之和的累加趋势。`,
+          badge: "拓展 · 自相似几何无穷剖分（超出课标）",
+          condition: `边长 $a_1 = ${a1}$，公比 $q = ${q}$，观察二维正方形面积无线剖分累加。`,
           question:
-            "面积无限累加为何又能有界？这对理解 |q| < 1 时的和有界性有何直观启发？",
+            "项数趋于无限时面积累加为何能保持有界？这与无穷等比级数和 $S_\\infty = \\frac{a_1}{1-q}$ 有何对应直观？",
         };
       default:
         return {
           variant: "info" as const,
-          badge: "通项与指数 · 指数增长模型",
-          condition: common + " aₙ = a₁·qⁿ⁻¹。",
+          badge: "通项与指数 · 离散指数模型",
+          condition: common + " 通项公式 $a_n = a_1 q^{n-1}$。",
           question:
-            "当 q > 1 时项如何爆炸增长？q 在 (0,1) 时前 n 项和 Sₙ 有怎样的有界趋势？",
+            "公比 $q$ 处于增长 ($q>1$)、衰减 ($0<q<1$) 或震荡 ($q<0$) 时，点列分布形态有何根本区别？",
         };
     }
   }, [geometricSubMode, params.a1, params.q, params.N, params.kSegment]);
@@ -244,7 +264,7 @@ export function GeometricPage() {
               ]}
               value={geometricSubMode}
               onChange={(val) =>
-                setGeometricSubMode(val as typeof geometricSubMode)
+                handleModeChange(val as typeof geometricSubMode)
               }
             />
           </LeftPanelSection>

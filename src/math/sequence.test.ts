@@ -404,6 +404,28 @@ describe("Sequence Math Calculations — 高中数学数列核心计算与高考
       expect(classicRes.terms[0].bn).toBe(1);
       expect(classicRes.terms[1].bn).toBe(1);
       expect(classicRes.terms[2].bn).toBe(1);
+      // 3. Δ < 0 无实特征根模型防回归：p=-3, q=-5 => delta = 9 - 20 = -11 < 0
+      const negDeltaRes = calcSecondOrderRecurrence(1, 3, -3, -5, 5);
+      expect(negDeltaRes.delta).toBe(-11);
+      expect(negDeltaRes.delta < 0).toBe(true);
+    });
+
+    it("边界与有效域防回归：等差与等比片段和在 N < 2k 时为 null", () => {
+      // 等差：N=6, k=4 => totalSegments = floor(6/4) = 1 < 2 => null
+      const arithSegRes = calcArithmeticSequence(1, 1, 6, 4);
+      expect(arithSegRes.segmentedSums).toBeNull();
+
+      // 等差：N=8, k=4 => totalSegments = 2 => non-null
+      const arithValidSeg = calcArithmeticSequence(1, 1, 8, 4);
+      expect(arithValidSeg.segmentedSums).not.toBeNull();
+      expect(arithValidSeg.segmentedSums?.segments.length).toBe(2);
+
+      // 倒数一阶线性预设 a1=3 不退化为常数列
+      const recipRes = calcReciprocalRecurrence(3, 2, 1, 1, 5);
+      expect(recipRes.terms[0].an).toBe(3);
+      expect(recipRes.terms[1].an).toBe(1.5);
+      expect(recipRes.terms[2].an).toBe(1.2);
+      expect(recipRes.isReciprocalLinear).toBe(false);
     });
   });
 });

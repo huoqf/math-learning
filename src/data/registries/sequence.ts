@@ -159,8 +159,8 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     {
       key: "linear-recip",
       name: "倒数一阶线性 (A=2, C=1)",
-      desc: "取倒数化归为一阶待定系数等比",
-      params: { a1: 1, coefA: 2, coefB: 1, coefC: 1, N: 6 },
+      desc: "取倒数化归为一阶待定系数等比 ($b_{n+1}=0.5b_n+0.5$)",
+      params: { a1: 3, coefA: 2, coefB: 1, coefC: 1, N: 6 },
     },
   ],
   "second-order": [

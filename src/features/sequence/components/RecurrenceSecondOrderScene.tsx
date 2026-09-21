@@ -95,42 +95,48 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
               />
             )}
 
-            {/* 构造降阶等比数列 */}
-            <circle
-              cx={posBn.x}
-              cy={posBn.y}
-              r={4}
-              fill={MATH_COLORS.paramSecondary}
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.5}
-            />
-            {showLabel && (
-              <MathSubText
-                x={posBn.x}
-                y={posBn.y + 16}
-                base="b"
-                sub={t.n}
-                val={t.bn.toFixed(1)}
-                fill={MATH_COLORS.paramSecondary}
-                fontScale={fontScale}
-                fontSize={10}
-                fontWeight="normal"
-              />
+            {/* 仅在特征方程判别式 delta >= 0 时构造降阶等比数列 */}
+            {secondData.delta >= 0 && (
+              <>
+                <circle
+                  cx={posBn.x}
+                  cy={posBn.y}
+                  r={4}
+                  fill={MATH_COLORS.paramSecondary}
+                  stroke={MATH_COLORS.white}
+                  strokeWidth={1.5}
+                />
+                {showLabel && (
+                  <MathSubText
+                    x={posBn.x}
+                    y={posBn.y + 16}
+                    base="b"
+                    sub={t.n}
+                    val={t.bn.toFixed(1)}
+                    fill={MATH_COLORS.paramSecondary}
+                    fontScale={fontScale}
+                    fontSize={10}
+                    fontWeight="normal"
+                  />
+                )}
+              </>
             )}
           </g>
         );
       })}
 
-      {/* 右上角图例说明 */}
+      {/* 右上角图例与模型适用域状态说明 */}
       <g transform={`translate(${legendX}, 20)`}>
         <rect
           x={0}
           y={0}
           width={210}
-          height={56}
+          height={secondData.delta >= 0 ? 56 : 64}
           rx={8}
-          fill={withAlpha(MATH_COLORS.white, 0.92)}
-          stroke={CANVAS_COLORS.axis}
+          fill={withAlpha(MATH_COLORS.white, 0.94)}
+          stroke={
+            secondData.delta >= 0 ? CANVAS_COLORS.axis : MATH_COLORS.degeneracy
+          }
           strokeWidth={1}
         />
         <circle cx={14} cy={18} r={4.5} fill={MATH_COLORS.sequence} />
@@ -145,17 +151,32 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
           <tspan fontStyle="italic">a</tspan>
           <tspan fontSize={fontScale(8)}>ₙ</tspan>
         </text>
-        <circle cx={14} cy={38} r={4.5} fill={MATH_COLORS.paramSecondary} />
-        <text
-          x={26}
-          y={42}
-          fontSize={fontScale(10.5)}
-          fill={MATH_COLORS.labelText}
-        >
-          <tspan>构造降阶等比 </tspan>
-          <tspan fontStyle="italic">b</tspan>
-          <tspan fontSize={fontScale(8)}>ₙ</tspan>
-        </text>
+
+        {secondData.delta >= 0 ? (
+          <>
+            <circle cx={14} cy={38} r={4.5} fill={MATH_COLORS.paramSecondary} />
+            <text
+              x={26}
+              y={42}
+              fontSize={fontScale(10.5)}
+              fill={MATH_COLORS.labelText}
+            >
+              <tspan>构造降阶等比 </tspan>
+              <tspan fontStyle="italic">b</tspan>
+              <tspan fontSize={fontScale(8)}>ₙ</tspan>
+            </text>
+          </>
+        ) : (
+          <text
+            x={14}
+            y={44}
+            fontSize={fontScale(9)}
+            fill={MATH_COLORS.degeneracy}
+            fontWeight="bold"
+          >
+            <tspan>Δ = p²+4q &lt; 0，降阶等比不适用</tspan>
+          </text>
+        )}
       </g>
     </g>
   );

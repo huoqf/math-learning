@@ -148,57 +148,60 @@ export function ModelsPage() {
     const d = params.d ?? -1.5;
     const q = params.q ?? 0.5;
     const N = Math.max(4, Math.min(12, Math.round(params.N ?? 8)));
-    const common = `a₁ = ${a1}，公差 d = ${d}，公比 q = ${q}，考察前 ${N} 项求和 Tₙ = Sₙ。`;
+    const common = `参数基准：$a_1 = ${a1}$，公差 $d = ${d}$，公比 $q = ${q}$，考察前 $N = ${N}$ 项。`;
     switch (modelType) {
       case "arith-geo":
         return {
           variant: "primary" as const,
           badge: "高考核心 · 差比数列错位相减法",
           condition:
-            common + " 数列 cₙ = aₙ × bₙ（等差 × 等比），求前 n 项和 Tₙ。",
+            common +
+            " 通项 $c_n = a_n \\cdot b_n = (a_1 + (n-1)d) \\cdot q^{n-1}$，求前 $n$ 项和 $T_n$。",
           question:
-            "同乘公比 q 后错位相减，为何能消去全部中间项？残留哪些项？Tₙ 的最终形式如何？",
+            "两式错位相减 $(1-q)T_n$ 后中间 $n-1$ 项如何转化为等比求和？如何规范讨论 $q=1$ 临界情形？",
         };
       case "telescoping":
         return {
           variant: "info" as const,
           badge: "巧算化简 · 裂项相消法",
           condition:
-            "通项可裂为两项之差 1/n − 1/(n+Δ)，相邻各项首尾伸缩两两相消。",
+            "通项可拆裂为两项差 $\\frac{1}{n(n+\\Delta)} = \\frac{1}{\\Delta}(\\frac{1}{n} - \\frac{1}{n+\\Delta})$，各项首尾伸缩对消。",
           question:
-            "裂项后最终残留哪些项？『差』的大小对残留首尾项的数目有何影响？",
+            "裂项相消后正负抵消链条最终残留哪些首末项？跨度 $\\Delta$ 对残留项数有何决定性影响？",
         };
       case "abs-sum":
         return {
           variant: "warning" as const,
           badge: "分段讨论 · 绝对值变号求和",
-          condition: `a₁ = ${a1}，公差 d = ${d}，求 Σ|aₙ|（n = 1…${N}）。`,
+          condition: `等差通项 $a_n = ${a1} + (n-1)(${d})$，求绝对值和 $T_n = \\sum_{k=1}^n |a_k|$ ($n = 1 \\dots ${N}$)。`,
           question:
-            "众数列何时变号？零点处如何分段，才能让绝对值求和转化为普通等差求和？",
+            "如何由公差符号与变号零点 $x_0 = 1 - a_1/d$ 确定非负项与负项分界项 $n_0$，进而分段去绝对值？",
         };
       case "grouped":
         return {
           variant: "success" as const,
           badge: "分流转化 · 分组转化求和",
-          condition: common + " 数列同时由等差与等比两项叠加构成。",
+          condition:
+            common + " 通项由等差与等比两项线性叠加 $c_n = a_n + b_n$。",
           question:
-            "将每一项拆成等差部分与等比部分，能否把复合求和拆成两个标准求和公式？",
+            "将通项拆为等差与等比两部分分别求和，如何联立等差前 $n$ 项和公式与等比前 $n$ 项和公式？",
         };
       case "odd-even":
         return {
           variant: "accent" as const,
           badge: "配对并项 · 奇偶并项求和",
           condition:
-            "数列按奇数项与偶数项交替摆动（含负号交替），需分别考察奇、偶个数的取值。",
+            "通项含符号交替因子 $(-1)^n$ 或奇偶分段定义，前 $n$ 项和需对项数 $n$ 的奇偶性分类讨论。",
           question:
-            "当 n 为奇数或偶数时，Tₙ 的表达式是否不同？如何利用相邻两项配对求和？",
+            "当项数 $n$ 为偶数与奇数时，$T_n$ 表达式有何区别？相邻两两配对成组后公差或公比如何确定？",
         };
       default:
         return {
           variant: "primary" as const,
           badge: "高考核心求和模型",
           condition: common,
-          question: "观察参数对图像与求和结果的影响。",
+          question:
+            "探究典型求和模型中离散通项与前 $n$ 项和 $T_n$ 之间的代数转化与裂相对消机理。",
         };
     }
   }, [modelType, params.a1, params.d, params.q, params.N]);

@@ -349,17 +349,17 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         params: { a1: 3, d: -1, N: 8 },
         lessonType: "concept",
         groundTruth: {
-          "末项 a_{8}": -4.0,
-          "前 8 项和 S_{8}": -4.0,
+          "末项 $a_{8}$": -4.0,
+          "前 8 项和 $S_{8}$": -4.0,
           "变号零点 $x_0$": 4.0,
         },
         perturbation: {
           params: { a1: 3, d: 1, N: 8 },
-          dynamicQuantityLabels: ["末项 a_{8}", "前 8 项和 S_{8}"],
+          dynamicQuantityLabels: ["末项 $a_{8}$", "前 8 项和 $S_{8}$"],
         },
         expectedQuantityLabels: [
-          "末项 a_{8}",
-          "前 8 项和 S_{8}",
+          "末项 $a_{8}$",
+          "前 8 项和 $S_{8}$",
           "变号零点 $x_0$",
         ],
       },
@@ -376,14 +376,14 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         params: { a1: 2, q: 3, N: 4 },
         lessonType: "concept",
         groundTruth: {
-          "末项 a_{4}": 54.0,
-          "前 4 项和 S_{4}": 80.0,
+          "末项 $a_{4}$": 54.0,
+          "前 4 项和 $S_{4}$": 80.0,
         },
         perturbation: {
           params: { a1: 2, q: 2, N: 4 },
-          dynamicQuantityLabels: ["末项 a_{4}", "前 4 项和 S_{4}"],
+          dynamicQuantityLabels: ["末项 $a_{4}$", "前 4 项和 $S_{4}$"],
         },
-        expectedQuantityLabels: ["末项 a_{4}", "前 4 项和 S_{4}"],
+        expectedQuantityLabels: ["末项 $a_{4}$", "前 4 项和 $S_{4}$"],
       },
     ]);
   });
@@ -535,13 +535,13 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         params: { a1: 7, d: -2, N: 8 },
         lessonType: "concept",
         groundTruth: {
-          "末项 a_{8}": -7.0,
-          "前 8 项和 S_{8}": 0.0,
+          "末项 $a_{8}$": -7.0,
+          "前 8 项和 $S_{8}$": 0.0,
         },
         expectedQuantityLabels: [
-          "末项 a_{8}",
-          "前 8 项和 S_{8}",
-          "抛物线对称轴 $x_sym$",
+          "末项 $a_{8}$",
+          "前 8 项和 $S_{8}$",
+          "抛物线对称轴 $x_0$",
           "S_n 最大值项",
         ],
       },

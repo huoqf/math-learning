@@ -241,6 +241,7 @@ export function RecurrencePage() {
     };
   }, [
     recurrenceModelType,
+    linearViewMode,
     a1,
     p_rec,
     q_rec,
@@ -412,42 +413,47 @@ export function RecurrencePage() {
         return {
           variant: "info" as const,
           badge: "高考进阶 · 指数非齐次构造",
-          condition: common + " 递推 aₙ₊₁ = paₙ + q·rⁿ（r ≠ p）。",
+          condition:
+            common + " 递推式 $a_{n+1} = pa_n + q \\cdot r^n$ ($r \\neq p$)。",
           question:
-            "两边同除以 rⁿ⁺¹ 能否转为等差或等比？r = p 时为何出现『共振等差』？",
+            "两边同除以 $r^{n+1}$ 能否转为关于辅助数列 $\\frac{a_n}{r^n}$ 的一阶线性递推？当 $r = p$ 时为何呈现等差递推？",
         };
       case "second-order":
         return {
           variant: "accent" as const,
           badge: "拓展 · 二阶递推特征根法（超出课标）",
-          condition: `初始项 a₁ = ${a1v}，a₂ = ${params.a2 ?? 3}，递推 aₙ₊₂ = paₙ₊₁ + qaₙ。`,
+          condition: `初始项 $a_1 = ${a1v}$，$a_2 = ${params.a2 ?? 3}$，递推式 $a_{n+2} = pa_{n+1} + qa_n$。`,
           question:
-            "递推对应的特征根（满足 $x^2 = px + q$）如何决定解的结构？重根与两异根通项有何区别？",
+            "对应二次方程 $x^2 - px - q = 0$ 的实根结构如何决定辅助等比数列 $b_n = a_{n+1} - r_1 a_n$ 的构造？",
         };
       case "accumulation":
         return {
           variant: "success" as const,
           badge: "累加叠代 · 累加法求通项",
           condition:
-            common + " 递推 aₙ₊₁ − aₙ = f(n)，f(n) 为等差 / 指数 / 裂项。",
+            common +
+            " 递推式 $a_{n+1} - a_n = f(n)$，其中 $f(n)$ 为等差、等比或裂项形式。",
           question:
-            "将相邻差分逐项累加，中间项如何对消？这给出了怎样的通项表达式？",
+            "将相邻差分式从 $n=1$ 到 $n-1$ 逐项累加，中间项如何对消？求和公式如何给出通项 $a_n$？",
         };
       case "multiplication":
         return {
           variant: "warning" as const,
           badge: "连乘约分 · 累乘法求通项",
-          condition: common + " 比值递推 aₙ₊₁ / aₙ = f(n)，f(n) 可连乘约分。",
+          condition:
+            common +
+            " 比值递推 $\\frac{a_{n+1}}{a_n} = f(n)$，其中 $f(n)$ 可逐项约分相消。",
           question:
-            "相邻比值逐项连乘，中间项如何约去？由此能得到怎样的通项表达式？",
+            "相邻比值逐项连乘，中间分子分母如何交替对消？由此如何求得通项 $a_n$？",
         };
       case "reciprocal":
         return {
           variant: "info" as const,
           badge: "倒置转化 · 分式递推构造",
-          condition: common + " 分式递推 aₙ₊₁ = Aaₙ / (Baₙ + C)。",
+          condition:
+            common + " 分式递推 $a_{n+1} = \\frac{A a_n}{B a_n + C}$。",
           question:
-            "对递推式两边同取倒数，能否化为关于 1/aₙ 的线性递推并求通项？",
+            "对递推式两边同取倒数，能否转化为关于辅助数列 $b_n = \\frac{1}{a_n}$ 的线性递推并求出通项？",
         };
       default:
         return {
@@ -486,7 +492,7 @@ export function RecurrencePage() {
                 },
                 {
                   key: "second-order",
-                  label: "二阶特征根法",
+                  label: "二阶特征根法（拓展）",
                   formula: "a_{n+2}=pa_{n+1}+qa_n",
                   fullWidth: true,
                 },

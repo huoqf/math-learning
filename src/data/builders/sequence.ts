@@ -63,16 +63,15 @@ export function buildSequencePanel(
         : `\\color{${MATH_COLORS.paramSecondary}}{${d}}n ${constSign}`;
 
     // 通用数学量
-    // 数学片段统一用 $...$ 包裹（全工程 label 的既定约定，见 katexSyntaxValidation 测试），
-    // 未包裹的裸 LaTeX 会被当作纯文本直接显示给学生。
+    // 数学片段统一用 $...$ 包裹（全工程 label 的既定约定，见 katexSyntaxValidation 测试）
     quantities.push({
-      label: `末项 a_{${N}} ($a_n = ${anLatex}$)`,
+      label: `末项 $a_{${N}}$ ($a_n = ${anLatex}$)`,
       value: `a_{${N}} = ${formatMathNumber(aN)}`,
       color: MATH_COLORS.sequence,
     });
 
     quantities.push({
-      label: `前 ${N} 项和 S_{${N}}`,
+      label: `前 ${N} 项和 $S_{${N}}$`,
       value: `S_{${N}} = ${formatMathNumber(SN)}`,
       color: MATH_COLORS.sequenceSum,
     });
@@ -104,7 +103,7 @@ export function buildSequencePanel(
       });
     } else if (subMode === "gauss") {
       quantities.push({
-        label: `首尾和 (a_1 + a_{${N}})`,
+        label: `首尾和 $(a_1 + a_{${N}})$`,
         value: `${formatMathNumber(a1 + aN)}`,
         color: MATH_COLORS.sequenceHighlight,
       });
@@ -129,7 +128,7 @@ export function buildSequencePanel(
     } else if (subMode === "quadratic") {
       if (res.continuousAxis !== null) {
         quantities.push({
-          label: "抛物线对称轴 $x_sym$",
+          label: "抛物线对称轴 $x_0$",
           value: `x = ${formatMathNumber(res.continuousAxis)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
@@ -161,7 +160,7 @@ export function buildSequencePanel(
       });
 
       gaokaoPoints.push({
-        text: "高考易错点：抛物线对称轴 $x_sym = 0.5 - a1/d$ 通常非整数，实际最值项取与对称轴距离最近的整数点；若对称轴恰为半整数（如 3.5），则有两个相等的最大值 $S_3 = S_4$。",
+        text: "高考易错点：抛物线对称轴 $x_0 = \\frac{1}{2} - \\frac{a_1}{d}$ 通常非整数，实际最值项取与对称轴距离最近的整数点；若对称轴恰为半整数（如 3.5），则有两个相等的最大值 $S_3 = S_4$。",
         importance: "hard",
       });
     } else if (subMode === "segment") {
@@ -178,6 +177,11 @@ export function buildSequencePanel(
             value: `${formatMathNumber(seg.sumValue)}`,
             color: MATH_COLORS.paramTertiary,
           });
+        });
+      } else {
+        warnings.push({
+          text: `当前项数 $N=${N}$ 不足两组等长片段（$k=${kSegment}$，需 $N \\ge 2k$）。请在左屏增大项数或减小 $k$ 以观察等差片段性质。`,
+          level: "info",
         });
       }
 
@@ -241,13 +245,13 @@ export function buildSequencePanel(
 
     // 基础通量
     quantities.push({
-      label: `末项 a_{${N}} ($a_n = ${a1Colored} \\cdot (${qColored})^{n-1}$)`,
+      label: `末项 $a_{${N}}$ ($a_n = ${a1Colored} \\cdot (${qColored})^{n-1}$)`,
       value: `a_{${N}} = ${aN.toFixed(4)}`,
       color: MATH_COLORS.sequence,
     });
 
     quantities.push({
-      label: `前 ${N} 项和 S_{${N}}`,
+      label: `前 ${N} 项和 $S_{${N}}$`,
       value: `S_{${N}} = ${SN.toFixed(4)}`,
       color: MATH_COLORS.sequenceSum,
     });
@@ -286,13 +290,13 @@ export function buildSequencePanel(
       });
     } else if (subMode === "staggerSum") {
       quantities.push({
-        label: `错位项 q · S_{${N}}`,
+        label: `错位项 $q \\cdot S_{${N}}$`,
         value: `q S_{${N}} = ${(q * SN).toFixed(4)}`,
         color: MATH_COLORS.sequenceSecondary,
       });
 
       quantities.push({
-        label: `两式差 (1 - q) S_{${N}}`,
+        label: `两式差 $(1 - q) S_{${N}}$`,
         value: `(1-q)S_{${N}} = ${(SN - q * SN).toFixed(4)}`,
         color: MATH_COLORS.sequenceHighlight,
       });
@@ -316,17 +320,22 @@ export function buildSequencePanel(
     } else if (subMode === "segment") {
       if (res.segmentedSums) {
         quantities.push({
-          label: `片段公比 q^k (k=${res.segmentedSums.k})`,
+          label: `片段公比 $q^k$ ($k=${res.segmentedSums.k}$)`,
           value: `q^${res.segmentedSums.k} = ${res.segmentedSums.ratio.toFixed(4)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
 
         res.segmentedSums.segments.forEach((seg) => {
           quantities.push({
-            label: `片段 ${seg.segmentIndex} 和 (a_{${seg.startN}}..a_{${seg.endN}})`,
+            label: `片段 ${seg.segmentIndex} 和 ($a_{${seg.startN}}..a_{${seg.endN}}$)`,
             value: `${seg.sumValue.toFixed(4)}`,
             color: MATH_COLORS.sequence,
           });
+        });
+      } else {
+        warnings.push({
+          text: `当前项数 $N=${N}$ 不足两组等长片段（$k=${kSegment}$，需 $N \\ge 2k$）。请在左侧调整项数或减小 $k$ 以观察等比片段性质。`,
+          level: "info",
         });
       }
 
@@ -348,7 +357,7 @@ export function buildSequencePanel(
       });
     } else if (subMode === "productMax") {
       quantities.push({
-        label: `前 ${N} 项积 P_{${N}}`,
+        label: `前 ${N} 项积 $P_{${N}}$`,
         value: `P_{${N}} = ${PN.toFixed(4)}`,
         color: MATH_COLORS.sequenceHighlight,
       });

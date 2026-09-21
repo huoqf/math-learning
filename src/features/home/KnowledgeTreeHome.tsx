@@ -148,7 +148,7 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "sequence_series",
     title: "数列递推与新定义探索",
-    badge: "解答题通法与 19 题压轴 · 15~17分",
+    badge: "选填小题通法与新定义探索 · 10分",
     description:
       "平移构造等比、错位裂项求和、药物代谢情境建模与新高考 19 题新定义差分探索",
     icon: Layers,

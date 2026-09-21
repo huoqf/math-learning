@@ -50,7 +50,12 @@ import { TriangleSolveAnimation } from "@/features/triangleSolve/TriangleSolveAn
 import { TriangleExtremaAnimation } from "@/features/triangleExtrema/TriangleExtremaAnimation";
 import { InequalityAbsoluteAnimation } from "@/features/inequalityAbsolute/InequalityAbsoluteAnimation";
 import { SetVennPage } from "@/features/set/SetVennPage";
-import { SequenceAnimation } from "@/features/sequence/SequenceAnimation";
+import {
+  ArithmeticPage,
+  GeometricPage,
+  RecurrencePage,
+  ModelsPage,
+} from "@/features/sequence";
 import { ParabolaAnimation } from "@/features/parabola/ParabolaAnimation";
 import { ConicHomogenizationAnimation } from "@/features/conicHomogenization/ConicHomogenizationAnimation";
 import { DerivativeShiftAnimation } from "@/features/derivativeShift/DerivativeShiftAnimation";
@@ -134,10 +139,22 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
     expect(screen.getByText("数学解析看板")).toBeInTheDocument();
   });
 
-  it("SequenceAnimation mounts properly and renders", () => {
-    render(<SequenceAnimation />);
-    expect(screen.getByText("数列类型与研究模式")).toBeInTheDocument();
-    expect(screen.getByText("等差数列")).toBeInTheDocument();
+  it("Sequence pages mount properly and render", () => {
+    const { unmount: u1 } = render(<ArithmeticPage />);
+    expect(screen.getByText("等差数列看板")).toBeInTheDocument();
+    u1();
+
+    const { unmount: u2 } = render(<GeometricPage />);
+    expect(screen.getByText("等比数列实验室")).toBeInTheDocument();
+    u2();
+
+    const { unmount: u3 } = render(<RecurrencePage />);
+    expect(screen.getByText("递推与构造法看板")).toBeInTheDocument();
+    u3();
+
+    const { unmount: u4 } = render(<ModelsPage />);
+    expect(screen.getByText("高考求和模型看板")).toBeInTheDocument();
+    u4();
   });
 
   it("ParabolaAnimation mounts properly and renders", () => {
