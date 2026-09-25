@@ -39,6 +39,7 @@ import {
   buildAdvancedSpherePanel,
   buildSpatialDistancePanel,
 } from "./builders/solidGeometry";
+import { buildSphereDerivationPanel } from "./builders/solidSphereDerivation";
 import { buildVector3DBasisPanel } from "./builders/vector3d";
 import { buildSequencePanel } from "./builders/sequence";
 import { buildConicDefinitionPanel } from "./builders/conicDefinition";
@@ -196,6 +197,8 @@ export function buildMathQuantities(
       return buildAdvancedSpherePanel(params, config);
     case "anim-solid-rotation-body":
       return buildRotationBodyPanel(params, config);
+    case "anim-solid-sphere-derivation":
+      return buildSphereDerivationPanel(params, config);
     case "anim-solid-folding":
       return buildSolidFoldingPanel(params, config);
     case "anim-solid-parametric":

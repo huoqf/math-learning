@@ -50,8 +50,9 @@ import ParametricPointAnimation from "@/features/solidGeometry/ParametricPointAn
 import CircumInSphereAnimation from "@/features/solidGeometry/CircumInSphereAnimation";
 import PolyhedronCircumSphereAnimation from "@/features/solidGeometry/PolyhedronCircumSphereAnimation";
 import AdvancedSphereAnimation from "@/features/solidGeometry/AdvancedSphereAnimation";
+import SphereDerivationAnimation from "@/features/solidSphereDerivation/SphereDerivationAnimation";
 
-/** 知识点节点 key 与页面组件的对应（`src/data/knowledgeTree/solid.ts` 12 节点） */
+/** 知识点节点 key 与页面组件的对应（`src/data/knowledgeTree/solid.ts` 13 节点） */
 const PAGES: {
   key: string;
   name: string;
@@ -61,6 +62,11 @@ const PAGES: {
     key: "know-solid-rotation-body",
     name: "旋转体的结构特征",
     Component: RotationBodyAnimation,
+  },
+  {
+    key: "know-solid-sphere-derivation",
+    name: "祖暅原理与球公式推导",
+    Component: SphereDerivationAnimation,
   },
   {
     key: "know-solid-position",
