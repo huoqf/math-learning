@@ -343,3 +343,75 @@ export function calculateYangmaBienao(
     parts: [partYangma, partBienao],
   };
 }
+
+export interface ConePyramidEquivalenceData {
+  radius: number; // 圆锥底面半径 r
+  height: number; // 共同高度 h
+  heightCut: number; // 截面距底面高度 z ∈ [0, h]
+  baseArea: number; // 共同底面积 S = π r²
+  pyramidSide: number; // 正四棱锥底面边长 a = √(π r²)
+  coneCutRadius: number; // 高度 z 处的截面圆半径 r(z) = r * (h - z) / h
+  coneCutArea: number; // 高度 z 处的截面圆面积 S_圆(z) = π [r(z)]²
+  pyramidCutSide: number; // 高度 z 处的截面正方形边长 a(z) = a * (h - z) / h
+  pyramidCutArea: number; // 高度 z 处的截面正方形面积 S_棱(z) = [a(z)]²
+  areaDifference: number; // |S_圆(z) - S_棱(z)|
+  isAreaEqual: boolean; // 是否在数值容差内恒等 (< 1e-5)
+  ratioFromApex: number; // (h - z) / h
+  areaRatio: number; // ((h - z) / h)²
+  volume: number; // 共同理论体积 V = (1/3) S h
+}
+
+/**
+ * 模式三：祖暅原理证明圆锥与同底等高正四棱锥体积等价
+ * 设圆锥底面半径为 r，高为 h；底面积 S = π r²。
+ * 伴随几何体为同底等高的正四棱锥：底面正方形边长 a = √(π r²)，高同为 h。
+ * 在任意高度 z (0 ≤ z ≤ h) 处作平行于底面的截面：
+ * 距顶点距离为 (h - z)，截面相似比为 (h - z) / h。
+ * - 圆锥截面为圆，半径 r(z) = r · (h - z) / h，截面积 S_圆(z) = π r² · ((h - z) / h)²
+ * - 棱锥截面为正方形，边长 a(z) = a · (h - z) / h，截面积 S_棱(z) = a² · ((h - z) / h)² = π r² · ((h - z) / h)²
+ * 因为在任意高度 0 ≤ z ≤ h 处 S_圆(z) ≡ S_棱(z)，
+ * 由祖暅原理：V_圆锥 ≡ V_棱锥 = (1/3) S h = (1/3) π r² h。
+ */
+export function calculateConePyramidEquivalence(
+  r: number,
+  h: number,
+  heightCut: number,
+): ConePyramidEquivalenceData {
+  const safeR = Math.max(0.5, r);
+  const safeH = Math.max(0.5, h);
+  const safeCut = Math.max(0, Math.min(safeH, heightCut));
+
+  const baseArea = Math.PI * safeR * safeR;
+  const pyramidSide = Math.sqrt(baseArea); // 正方形边长 a = √(π r²)
+
+  const ratioFromApex = (safeH - safeCut) / safeH;
+  const areaRatio = ratioFromApex * ratioFromApex;
+
+  const coneCutRadius = safeR * ratioFromApex;
+  const coneCutArea = Math.PI * coneCutRadius * coneCutRadius;
+
+  const pyramidCutSide = pyramidSide * ratioFromApex;
+  const pyramidCutArea = pyramidCutSide * pyramidCutSide;
+
+  const areaDifference = Math.abs(coneCutArea - pyramidCutArea);
+  const isAreaEqual = areaDifference < 1e-5;
+
+  const volume = (1 / 3) * baseArea * safeH;
+
+  return {
+    radius: safeR,
+    height: safeH,
+    heightCut: safeCut,
+    baseArea,
+    pyramidSide,
+    coneCutRadius,
+    coneCutArea,
+    pyramidCutSide,
+    pyramidCutArea,
+    areaDifference,
+    isAreaEqual,
+    ratioFromApex,
+    areaRatio,
+    volume,
+  };
+}

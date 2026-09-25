@@ -16,17 +16,22 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   calculatePrismTripartition,
   calculateYangmaBienao,
+  calculateConePyramidEquivalence,
 } from "@/math3d/pyramidDerivation";
 import { PyramidDerivationScene } from "./PyramidDerivationScene";
 
 export function PyramidDerivationAnimation() {
-  const [mode, setMode] = useState<"tripartition" | "yangma">("tripartition");
+  const [mode, setMode] = useState<
+    "tripartition" | "yangma" | "coneEquivalence"
+  >("tripartition");
   const [activePartId, setActivePartId] = useState<string | null>(null);
 
   const [params, setParams] = useState<Record<string, number>>({
     a: 2.6,
     b: 2.2,
     h: 3.2,
+    r: 1.8,
+    heightCut: 1.6,
     explode: 0.35,
   });
 
@@ -46,6 +51,16 @@ export function PyramidDerivationAnimation() {
   const yangmaData = useMemo(
     () => calculateYangmaBienao(params.a, params.b, params.h),
     [params.a, params.b, params.h],
+  );
+
+  const coneEquivalenceData = useMemo(
+    () =>
+      calculateConePyramidEquivalence(
+        params.r ?? 1.8,
+        params.h,
+        params.heightCut ?? 1.6,
+      ),
+    [params.r, params.h, params.heightCut],
   );
 
   // 右屏统一看板数据 (SSOT)
@@ -92,39 +107,66 @@ export function PyramidDerivationAnimation() {
           step: 0.02,
         },
       ];
+    } else if (mode === "yangma") {
+      return [
+        {
+          key: "a",
+          label: "长方体长 a",
+          value: params.a,
+          min: 1.0,
+          max: 4.5,
+          step: 0.1,
+        },
+        {
+          key: "b",
+          label: "长方体宽 b",
+          value: params.b,
+          min: 1.0,
+          max: 4.5,
+          step: 0.1,
+        },
+        {
+          key: "h",
+          label: "长方体高 c",
+          value: params.h,
+          min: 1.5,
+          max: 5.0,
+          step: 0.1,
+        },
+        {
+          key: "explode",
+          label: "爆炸拆解进度",
+          value: params.explode,
+          min: 0,
+          max: 1.0,
+          step: 0.02,
+        },
+      ];
     }
     return [
       {
-        key: "a",
-        label: "长方体长 a",
-        value: params.a,
+        key: "r",
+        label: "圆锥底面半径 r",
+        value: params.r ?? 1.8,
         min: 1.0,
-        max: 4.5,
-        step: 0.1,
-      },
-      {
-        key: "b",
-        label: "长方体宽 b",
-        value: params.b,
-        min: 1.0,
-        max: 4.5,
+        max: 3.0,
         step: 0.1,
       },
       {
         key: "h",
-        label: "长方体高 c",
+        label: "锥体高 h",
         value: params.h,
         min: 1.5,
         max: 5.0,
         step: 0.1,
       },
       {
-        key: "explode",
-        label: "爆炸拆解进度",
-        value: params.explode,
-        min: 0,
-        max: 1.0,
-        step: 0.02,
+        key: "heightCut",
+        label: "水平截面高度 z",
+        value: params.heightCut ?? 1.6,
+        min: 0.1,
+        max: Math.max(1.0, params.h - 0.1),
+        step: 0.05,
       },
     ];
   }, [mode, params]);
@@ -138,11 +180,18 @@ export function PyramidDerivationAnimation() {
         { key: "part-pyramid-2", label: "三棱锥二" },
         { key: "part-pyramid-3", label: "三棱锥三" },
       ];
+    } else if (mode === "yangma") {
+      return [
+        { key: "all", label: "全部显示" },
+        { key: "part-yangma", label: "四棱锥阳马" },
+        { key: "part-bienao", label: "三棱锥鳖臑" },
+      ];
     }
     return [
       { key: "all", label: "全部显示" },
-      { key: "part-yangma", label: "四棱锥阳马" },
-      { key: "part-bienao", label: "三棱锥鳖臑" },
+      { key: "part-cone", label: "圆锥主体" },
+      { key: "part-pyramid", label: "伴随棱锥" },
+      { key: "part-cut", label: "等高截面" },
     ];
   }, [mode]);
 
@@ -157,14 +206,23 @@ export function PyramidDerivationAnimation() {
         question:
           "求证剖分得到的三个三棱锥体积两两严格相等，并由此导出一般锥体体积公式 $V = \\frac{1}{3} S_{\\text{底}} h$。",
       };
+    } else if (mode === "yangma") {
+      return {
+        badge: "《九章算术》刘徽割体术 · 阳马与鳖臑",
+        background:
+          "魏晋数学家刘徽在《九章算术注》中首创割体无限细分逼近思想。他将直角三棱柱（堑堵）剖分为底面为矩形且有一侧棱垂直底面的四棱锥（阳马）和四个面皆为直角三角形的三棱锥（鳖臑），奠定了锥体体积的基础公理。",
+        condition: `直角三棱柱（堑堵）尺寸为 $a = ${params.a.toFixed(1)}, b = ${params.b.toFixed(1)}, c = ${params.h.toFixed(1)}$。沿对角截面 $A_1OB$ 剖分为一个阳马和一个鳖臑。`,
+        question:
+          "探究并证明阳马与鳖臑的体积之比恒为 $2:1$（“阳马居二，鳖臑居一”），并证明鳖臑的四个面均为直角三角形。",
+      };
     }
     return {
-      badge: "《九章算术》刘徽割体术 · 阳马与鳖臑",
+      badge: "祖暅原理 · 圆锥与棱锥等积",
       background:
-        "魏晋数学家刘徽在《九章算术注》中首创割体无限细分逼近思想。他将直角三棱柱（堑堵）剖分为底面为矩形且有一侧棱垂直底面的四棱锥（阳马）和四个面皆为直角三角形的三棱锥（鳖臑），奠定了锥体体积的基础公理。",
-      condition: `直角三棱柱（堑堵）尺寸为 $a = ${params.a.toFixed(1)}, b = ${params.b.toFixed(1)}, c = ${params.h.toFixed(1)}$。沿对角截面 $A_1OB$ 剖分为一个阳马和一个鳖臑。`,
+        "人教A版必修第二册第8章立体几何探究：利用《九章算术注》刘徽与祖暅提出的“祖暅原理”（幂势既同，则积不容异），不仅能推导球体体积，还能将多面体棱锥的体积公式无缝平移至旋转体圆锥，实现从多面体到旋转体的严密过渡。",
+      condition: `圆锥底面半径为 $r = ${(params.r ?? 1.8).toFixed(1)}$，同高伴随正四棱锥底面正方形边长为 $a = \\sqrt{\\pi} r \\approx ${((params.r ?? 1.8) * Math.sqrt(Math.PI)).toFixed(2)}$，二者高均为 $h = ${params.h.toFixed(1)}$。水平截面高度为 $z = ${(params.heightCut ?? 1.6).toFixed(1)}$。`,
       question:
-        "探究并证明阳马与鳖臑的体积之比恒为 $2:1$（“阳马居二，鳖臑居一”），并证明鳖臑的四个面均为直角三角形。",
+        "求证在任意相同高度 $z$ 处截面圆面积与正方形面积恒等（$S_1(z) \\equiv S_2(z)$），并借助祖暅原理证明圆锥体积公式 $V = \\frac{1}{3} \\pi r^2 h$。",
     };
   }, [mode, params]);
 
@@ -172,7 +230,8 @@ export function PyramidDerivationAnimation() {
   const legendItems = useMemo<
     Array<{
       label: string;
-      colorKey: "paramPrimary" | "paramSecondary" | "paramTertiary";
+      colorKey:
+        "paramPrimary" | "paramSecondary" | "paramTertiary" | "highlight";
       swatch?: "area";
     }>
   >(() => {
@@ -190,16 +249,34 @@ export function PyramidDerivationAnimation() {
           swatch: "area",
         },
       ];
+    } else if (mode === "yangma") {
+      return [
+        {
+          label: "阳马 A₁-OBB₁O₁ (V=1/3 abc)",
+          colorKey: "paramPrimary",
+          swatch: "area",
+        },
+        {
+          label: "鳖臑 A₁-OAB (V=1/6 abc)",
+          colorKey: "paramSecondary",
+          swatch: "area",
+        },
+      ];
     }
     return [
       {
-        label: "阳马 A₁-OBB₁O₁ (V=1/3 abc)",
+        label: "圆锥体 (底半径 r)",
         colorKey: "paramPrimary",
         swatch: "area",
       },
       {
-        label: "鳖臑 A₁-OAB (V=1/6 abc)",
+        label: "伴随四棱锥 (底边 √π r)",
         colorKey: "paramSecondary",
+        swatch: "area",
+      },
+      {
+        label: "等高平行截面 (S₁ ≡ S₂)",
+        colorKey: "highlight",
         swatch: "area",
       },
     ];
@@ -214,10 +291,11 @@ export function PyramidDerivationAnimation() {
               tabs={[
                 { key: "tripartition", label: "三棱柱三分法" },
                 { key: "yangma", label: "刘徽阳马与鳖臑" },
+                { key: "coneEquivalence", label: "祖暅圆锥等积" },
               ]}
               value={mode}
               onChange={(tab) => {
-                setMode(tab as "tripartition" | "yangma");
+                setMode(tab as "tripartition" | "yangma" | "coneEquivalence");
                 setActivePartId(null);
               }}
             />
@@ -230,7 +308,7 @@ export function PyramidDerivationAnimation() {
             />
           </LeftPanelSection>
 
-          <LeftPanelSection title="子多面体聚焦">
+          <LeftPanelSection title="子体聚焦">
             <SelectGrid
               items={focusItems}
               value={activePartId ?? "all"}
@@ -260,6 +338,7 @@ export function PyramidDerivationAnimation() {
             mode={mode}
             tripartitionData={tripartitionData}
             yangmaData={yangmaData}
+            coneEquivalenceData={coneEquivalenceData}
             explode={params.explode}
             activePartId={activePartId}
           />

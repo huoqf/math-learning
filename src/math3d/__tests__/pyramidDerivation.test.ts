@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   calculatePrismTripartition,
   calculateYangmaBienao,
+  calculateConePyramidEquivalence,
 } from "../pyramidDerivation";
 
 describe("pyramidDerivation 数学纯计算层", () => {
@@ -77,6 +78,40 @@ describe("pyramidDerivation 数学纯计算层", () => {
         const len = Math.sqrt(x * x + y * y + z * z);
         expect(len).toBeCloseTo(1, 4);
       });
+    });
+  });
+
+  describe("3. 祖暅圆锥与正四棱锥等积 (Cone-Pyramid Equivalence)", () => {
+    it("在任意高度截面，圆截面积与正方形截面积严格恒等，且体积恒为 (1/3)Sh", () => {
+      const r = 2;
+      const h = 4;
+      const cut = 1.5;
+      const res = calculateConePyramidEquivalence(r, h, cut);
+
+      // 底面积相等
+      expect(res.baseArea).toBeCloseTo(Math.PI * 4, 6);
+      expect(res.pyramidSide * res.pyramidSide).toBeCloseTo(res.baseArea, 6);
+
+      // 截面积严格恒等
+      expect(res.isAreaEqual).toBe(true);
+      expect(res.coneCutArea).toBeCloseTo(res.pyramidCutArea, 5);
+      expect(res.areaDifference).toBeLessThan(1e-5);
+
+      // 体积自洽
+      expect(res.volume).toBeCloseTo((1 / 3) * res.baseArea * h, 6);
+    });
+
+    it("截面在底面 (z=0) 与顶点 (z=h) 的临界性质", () => {
+      const r = 2;
+      const h = 3;
+      const baseRes = calculateConePyramidEquivalence(r, h, 0);
+      expect(baseRes.coneCutArea).toBeCloseTo(baseRes.baseArea, 6);
+      expect(baseRes.isAreaEqual).toBe(true);
+
+      const apexRes = calculateConePyramidEquivalence(r, h, h);
+      expect(apexRes.coneCutArea).toBeCloseTo(0, 6);
+      expect(apexRes.pyramidCutArea).toBeCloseTo(0, 6);
+      expect(apexRes.isAreaEqual).toBe(true);
     });
   });
 });

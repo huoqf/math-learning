@@ -57,4 +57,25 @@ describe("PyramidDerivationAnimation 页面契约测试", () => {
     expect(screen.getByText(/阳马 A₁-OBB₁O₁/)).toBeInTheDocument();
     expect(screen.getByText(/鳖臑 A₁-OAB/)).toBeInTheDocument();
   });
+
+  it("点击切换到祖暅圆锥等积模式，三屏联动同步更新", () => {
+    render(<PyramidDerivationAnimation />);
+
+    const coneTab = screen.getByText("祖暅圆锥等积");
+    fireEvent.click(coneTab);
+
+    // TipCard 徽标更新
+    expect(screen.getByText("祖暅原理 · 圆锥与棱锥等积")).toBeInTheDocument();
+
+    // 右屏更新为圆锥与伴随四棱锥等积指标
+    expect(screen.getByText("共同底面积 S_底")).toBeInTheDocument();
+    expect(screen.getByText("伴随正棱锥底边长 a")).toBeInTheDocument();
+    expect(screen.getByText("圆锥截面圆面积 S₁")).toBeInTheDocument();
+    expect(screen.getByText("四棱锥截面面积 S₂")).toBeInTheDocument();
+
+    // 中屏图例同步更新
+    expect(screen.getByText(/圆锥体 \(底半径 r\)/)).toBeInTheDocument();
+    expect(screen.getByText(/伴随四棱锥/)).toBeInTheDocument();
+    expect(screen.getByText("等高平行截面 (S₁ ≡ S₂)")).toBeInTheDocument();
+  });
 });

@@ -10,6 +10,7 @@ import { MATH_COLORS } from "@/theme";
 import {
   calculatePrismTripartition,
   calculateYangmaBienao,
+  calculateConePyramidEquivalence,
 } from "@/math3d/pyramidDerivation";
 
 // ── know-solid-pyramid-derivation: 锥体体积公式推导与刘徽割体术 ──
@@ -21,11 +22,13 @@ export function buildPyramidDerivationPanel(
   const mode =
     ((params as Record<string, unknown>).mode as string) ??
     (config?.mode as string) ??
-    "tripartition"; // "tripartition" | "yangma"
+    "tripartition"; // "tripartition" | "yangma" | "coneEquivalence"
 
   const a = params.a ?? 2.5;
   const b = params.b ?? 2.0;
   const h = params.h ?? 3.0;
+  const r = params.r ?? 1.8;
+  const heightCut = params.heightCut ?? 1.2;
   const explode = params.explode ?? 0.3; // 0 ~ 1 爆炸拆解进度
 
   const quantities: MathQuantity[] = [];
@@ -148,7 +151,7 @@ export function buildPyramidDerivationPanel(
       level: "info",
       text: "【避免孤立视点】证明三棱锥体积相等时，不要局限于固定顶点；通过灵活转换顶点与底面（换底法），能将复杂空间关系转化为侧面平面几何图形的面积对账。",
     });
-  } else {
+  } else if (mode === "yangma") {
     // 模式二：刘徽割体术（阳马与鳖臑）
     const data = calculateYangmaBienao(a, b, h);
 
@@ -259,6 +262,136 @@ export function buildPyramidDerivationPanel(
     warnings.push({
       level: "info",
       text: "【概念辨析】鳖臑读音为 biē nào（鳖的四肢）。阳马必须有一条侧棱垂直于矩形底面，若侧棱倾斜则仅为一般四棱锥而非阳马。",
+    });
+  } else {
+    // 模式三：祖暅原理圆锥与正四棱锥等积
+    const data = calculateConePyramidEquivalence(r, h, heightCut);
+
+    quantities.push(
+      {
+        label: "圆锥底面半径 r",
+        symbol: "r",
+        value: data.radius.toFixed(2),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "锥体共同高 h",
+        symbol: "h",
+        value: data.height.toFixed(2),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "截面距底面高度 z",
+        symbol: "z",
+        value: data.heightCut.toFixed(2),
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "共同底面积 S_底",
+        symbol: "S_{\\text{底}}",
+        value: data.baseArea.toFixed(2),
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "伴随正棱锥底边长 a",
+        symbol: "a = \\sqrt{S}",
+        value: data.pyramidSide.toFixed(2),
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "圆锥截面圆面积 S₁",
+        symbol: "S_{\\text{圆}}(z)",
+        value: data.coneCutArea.toFixed(2),
+        color: MATH_COLORS.primary,
+      },
+      {
+        label: "四棱锥截面面积 S₂",
+        symbol: "S_{\\text{棱}}(z)",
+        value: data.pyramidCutArea.toFixed(2),
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "截面积差值 |S₁ - S₂|",
+        symbol: "|S_1 - S_2|",
+        value: data.isAreaEqual
+          ? "0.00 (严格恒等)"
+          : data.areaDifference.toFixed(4),
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "截面相似比 (h-z)/h",
+        symbol: "\\lambda",
+        value: data.ratioFromApex.toFixed(3),
+        color: MATH_COLORS.accent,
+      },
+      {
+        label: "共同锥体体积",
+        symbol: "V_{\\text{锥}}",
+        value: data.volume.toFixed(2),
+        color: MATH_COLORS.highlight,
+      },
+    );
+
+    theorems.push(
+      {
+        name: "锥体等高平行截面面积比定理",
+        latex: `\\frac{S(z)}{S_{\\text{底}}} = \\left(\\frac{\\color{${MATH_COLORS.paramTertiary}}{h} - \\color{${MATH_COLORS.paramSecondary}}{z}}{\\color{${MATH_COLORS.paramTertiary}}{h}}\\right)^2`,
+        level: "core",
+        note: "平行于锥体底面的截面多边形（或截面圆）与底面相似，截面面积之比等于顶点到截面距离与高的比值的平方。",
+      },
+      {
+        name: "祖暅原理（卡瓦列里原理）",
+        latex: `S_1(z) \\equiv S_2(z) \\implies V_{\\text{圆锥}} = V_{\\text{正棱锥}}`,
+        level: "core",
+        note: "夹在两个平行平面间的两个几何体，被平行于这两个平面的任意平面所截，如果截得的截面面积总相等，那么这两个几何体的体积相等。",
+      },
+      {
+        name: "圆锥体积统一通式",
+        latex: `V_{\\text{圆锥}} = \\frac{1}{3} S_{\\text{底}} \\color{${MATH_COLORS.paramTertiary}}{h} = \\frac{1}{3}\\pi \\color{${MATH_COLORS.paramPrimary}}{r}^2 \\color{${MATH_COLORS.paramTertiary}}{h}`,
+        level: "core",
+        condition:
+          "正四棱锥由两个三棱锥拼合，体积已知为 (1/3)Sh；由祖暅原理，圆锥体积严格等于 (1/3)πr²h",
+      },
+    );
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "审题定法 · 构造等底等高伴随棱锥",
+        detail:
+          "设圆锥底面半径为 $r$，高为 $h$，底面积为 $S = \\pi r^2$。在同基准面上并排放置一个同底等高的正四棱锥，其底面正方形边长为 $a = \\sqrt{\\pi} r$，高同样为 $h$。正四棱锥可沿对角面剖分为两个底面积各为 $\\frac{1}{2}S$ 的三棱锥，体积已知为 $V_{\\text{棱锥}} = \\frac{1}{3} S h$。",
+        latex: `S_{\\text{圆}} = \\pi r^2, \\quad S_{\\text{棱}} = a^2 = (\\sqrt{\\pi}r)^2 = \\pi r^2 \\implies S_{\\text{圆}} = S_{\\text{棱}}`,
+        rubric:
+          "[高考规范采分] 明确构造等底等高伴随正四棱锥并列出底面积恒等式 (+3分)",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 代入等高切片截面面积解析式",
+        detail:
+          "在任意高度 $z$（$0 \\le z \\le h$）处作平行于底面的水平截面。截面到顶点的距离为 $h - z$。由相似三角形性质，圆锥截面圆半径为 $r(z) = r \\cdot \\frac{h-z}{h}$；正四棱锥截面正方形边长为 $a(z) = a \\cdot \\frac{h-z}{h}$。代入面积公式对账：",
+        latex: `S_1(z) = \\pi [r(z)]^2 = \\pi r^2 \\left(\\frac{h-z}{h}\\right)^2, \\quad S_2(z) = [a(z)]^2 = a^2 \\left(\\frac{h-z}{h}\\right)^2 \\implies S_1(z) \\equiv S_2(z)`,
+        rubric:
+          "[高考规范采分] 准确运用相似比写出截面积解析式并严格证明恒等 (+5分)",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 祖暅公理导出圆锥体积通式",
+        detail:
+          "由于对任意高度 $z \\in [0, h]$，截面面积总相等 $S_1(z) \\equiv S_2(z)$，由祖暅原理得圆锥体积等于伴随正四棱锥体积，从而完成从多面体到旋转体锥体体积的严格演绎闭环：",
+        latex: `V_{\\text{圆锥}} = V_{\\text{正棱锥}} = \\frac{1}{3} S_{\\text{底}} h = \\frac{1}{3}\\pi \\color{${MATH_COLORS.paramPrimary}}{r}^2 \\color{${MATH_COLORS.paramTertiary}}{h} = \\frac{1}{3} \\cdot \\pi \\times (${data.radius.toFixed(2)})^2 \\times ${data.height.toFixed(2)} = ${data.volume.toFixed(2)}`,
+        rubric:
+          "[高考规范采分] 准确引用祖暅原理给出最终体积代数式与计算值 (+4分)",
+      },
+    );
+
+    gaokaoPoints.push({
+      importance: "gaokao",
+      text: "【旋转体等积转化大招】利用祖暅原理将曲面旋转体（圆锥、球体）转化为易于建系或容易计算的多面体，是破解高考多面体与旋转体交汇综合题的降维核心。",
+    });
+
+    warnings.push({
+      level: "info",
+      text: "【定义域与临界条件】截面高度 z 必须满足 0 ≤ z ≤ h。当 z = h 时，截面收缩退化为单一点（顶点），面积退化为 0。",
     });
   }
 
