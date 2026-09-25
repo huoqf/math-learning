@@ -405,6 +405,23 @@ export function buildDemo() {
       expect(issues.length).toBe(1);
       expect(issues[0].severity).toBe("error");
     });
+
+    it("黑名单已覆盖「三垂线」：未声明拓展的正文命中即 error", () => {
+      // 三垂线定理属旧大纲、2019 人教A版课标已删，本库统一改用「线面垂直的判定与性质」；
+      // 此用例锁死黑名单条目，防止日后误删导致该术语再次静默流入正文。
+      const code = `
+export function buildDemo() {
+  return {
+    reasoningSteps: [
+      { step: 1, detail: "由三垂线定理得 EM ⊥ BD" },
+    ],
+  };
+}
+`;
+      const issues = checkDemo(code);
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("error");
+    });
   });
 
   describe("arch/no-builder-raw-calc 门禁规则对抗性拦截测试 (10/10 守护验证)", () => {

@@ -412,7 +412,7 @@ export function buildSpatialAnglePanel(
         color: MATH_COLORS.highlight,
       },
       {
-        label: "三垂线定理垂足 M",
+        label: "几何法垂足 M",
         symbol: "M",
         value: `(${dih.edgeFootM.x.toFixed(2)}, ${dih.edgeFootM.y.toFixed(2)}, 0)`,
         color: MATH_COLORS.paramTertiary,
@@ -438,7 +438,7 @@ export function buildSpatialAnglePanel(
           "$\\theta \\in [0^\\circ, 180^\\circ]$，法向量夹角与二面角相等或互补，高考大题须依据空间图形判断正负号！",
       },
       {
-        name: "三垂线定理作二面角平面角（几何法）",
+        name: "线面垂直的判定与性质作二面角平面角（几何法）",
         latex: `AM \\perp BD \\;\\text{于}\\; M, \\; EA \\perp \\text{底面} \\implies EM \\perp BD, \\; \\angle AME \\text{ 即为二面角平面角}`,
         level: "important",
         note: "在直角三角形 $\\triangle EAM$ 中，$\\tan\\angle AME = \\frac{EA}{AM} = \\frac{z_E}{AM}$",
@@ -464,10 +464,11 @@ export function buildSpatialAnglePanel(
     reasoningSteps.push(
       {
         step: 1,
-        title: "几何三垂线法作二面角平面角",
-        detail: "在底面矩形中作 AM ⊥ BD 于 M，由三垂线定理得 EM ⊥ BD",
+        title: "几何法作二面角平面角（线面垂直转化）",
+        detail: "在底面矩形中作 AM ⊥ BD 于 M，由线面垂直的判定与性质得 EM ⊥ BD",
         latex: `AM \\perp BD, \\; EA \\perp \\text{底面} \\implies EM \\perp BD \\implies \\angle AME \\text{ 为二面角 } E-BD-A \\text{ 的平面角}`,
-        rubric: "[高考采分点] 运用三垂线定理作出并判定二面角的平面角 (+4分)",
+        rubric:
+          "[高考采分点] 运用线面垂直的判定与性质作出并判定二面角的平面角 (+4分)",
       },
       {
         step: 2,

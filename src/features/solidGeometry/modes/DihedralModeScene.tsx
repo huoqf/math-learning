@@ -1,5 +1,5 @@
 /**
- * 模式三：二面角 子场景（三垂线几何角与重心法向量）
+ * 模式三：二面角 子场景（几何法平面角与重心法向量）
  */
 import {
   Polygon3DFace,
@@ -80,7 +80,7 @@ export default function DihedralModeScene({
       {/* 二面角的棱 BD (几何线段) */}
       <Segment3D from={B} to={D} colorKey="highlight" lineWidth={3} />
 
-      {/* 几何辅助线：三垂线定理垂足 M 及垂线 AM ⊥ BD, EM ⊥ BD */}
+      {/* 几何辅助线：垂足 M 及垂线 AM ⊥ BD, EM ⊥ BD（由线面垂直的判定与性质得出） */}
       {showAuxiliary && (
         <>
           <Segment3D

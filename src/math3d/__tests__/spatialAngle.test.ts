@@ -55,7 +55,7 @@ describe("spatialAngle 空间角与距离数学求解器测试（新高考母题
     expect(res.normalAngleDeg + res.angleDeg).toBeCloseTo(90, 4);
   });
 
-  it("正确计算截面 BDE 与底面的二面角及三垂线垂足", () => {
+  it("正确计算截面 BDE 与底面的二面角及垂足 M", () => {
     const res = solveDihedralAngle(3, 2, 2, 0.6);
     expect(res.n1).toEqual({ x: 0, y: 0, z: 1 });
     expect(res.n2Raw).toEqual({ x: 2 * 1.2, y: 3 * 1.2, z: 6 });

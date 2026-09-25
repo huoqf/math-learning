@@ -421,7 +421,7 @@ export default function SpatialAngleAnimation({
           {
             colorKey: "accent",
             swatch: "line",
-            label: "三垂线 AM⊥BD 与 EM⊥BD",
+            label: "辅助垂线 AM⊥BD 与 EM⊥BD",
           },
           { colorKey: "secondary", swatch: "area", label: "截面 BDE 与底面" },
           {
@@ -512,7 +512,7 @@ export default function SpatialAngleAnimation({
           condition:
             "在长方体 ABCD-A₁B₁C₁D₁ 中，E 为侧棱 AA₁ 上动点。截面 BDE 与底面 ABCD 相交于公共棱线 BD。",
           questions: [
-            "几何三垂线法：作 AM ⊥ BD 于垂足 M，连结 EM。依据三垂线定理判定二面角 E-BD-A 的平面角 ∠AME 并求值；",
+            "几何法：作 AM ⊥ BD 于垂足 M，连结 EM。由线面垂直的判定与性质可证 BD ⊥ EM，故 ∠AME 是二面角 E-BD-A 的平面角并求值；",
             "双法向量法：分别求解底面法向量 n⃗₁ 与截面法向量 n⃗₂，利用夹角公式 cosθ = |n⃗₁·n⃗₂| / (|n⃗₁||n⃗₂|) 判定二面角大小。",
           ],
         };
@@ -740,7 +740,7 @@ export default function SpatialAngleAnimation({
               />
             )}
 
-            {/* ═════════ 模式三：二面角 (三垂线几何角与重心法向量) ═════════ */}
+            {/* ═════════ 模式三：二面角 (几何法平面角与重心法向量) ═════════ */}
             {activeMode === "dihedral" && (
               <DihedralModeScene
                 c={c}

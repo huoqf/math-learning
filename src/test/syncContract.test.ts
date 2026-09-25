@@ -625,7 +625,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         expectedExamAnchor: "二面角",
         expectedTheoremsKeywords: [
           "二面角向量法与钝锐判断定理",
-          "三垂线定理作二面角平面角",
+          "线面垂直的判定与性质作二面角平面角（几何法）",
         ],
         forbiddenTheoremKeywords: ["异面直线公垂线", "点到平面的距离公式"],
         expectedReasoningSymbols: ["\\cos\\theta", "\\vec{n_1}", "\\vec{n_2}"],

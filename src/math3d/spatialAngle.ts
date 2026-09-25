@@ -170,14 +170,14 @@ export interface DihedralAngleResult {
   normalLength: number; // 未归一化法向量模长 |n2Raw|
   cosTheta: number; // 二面角余弦值 (由几何直观确认为锐二面角)
   dihedralDeg: number; // 二面角大小 [0°, 180°]
-  edgeFootM: Vec3; // 垂足 M (过 A 向 BD 作垂线 AM ⊥ BD，由三垂线定理 EM ⊥ BD)
+  edgeFootM: Vec3; // 垂足 M (过 A 向 BD 作垂线 AM ⊥ BD，由线面垂直的判定与性质得 EM ⊥ BD)
   centroidBase: Vec3; // 底面 △ABD 重心 G1(a/3, b/3, 0)
   centroidSection: Vec3; // 截面 △BDE 重心 G2(a/3, b/3, zE/3)
   zE: number; // 实际动点高度
 }
 
 /**
- * 求解截面 BDE 与底面 ABCD 的二面角（三垂线定理平面角 + 双法向量）
+ * 求解截面 BDE 与底面 ABCD 的二面角（几何法平面角 + 双法向量）
  */
 export function solveDihedralAngle(
   a: number,
@@ -202,7 +202,7 @@ export function solveDihedralAngle(
   const dihedralRad = Math.acos(Math.min(1, Math.max(-1, cosTheta)));
   const dihedralDeg = (dihedralRad * 180) / Math.PI;
 
-  // 三垂线定理垂足 M: 在直线 BD 上，A(0,0,0) 向 BD 作垂线
+  // 几何法垂足 M: 在直线 BD 上，A(0,0,0) 向 BD 作垂线
   const bdDen = a * a + b * b;
   const edgeFootM: Vec3 =
     bdDen > 1e-6
