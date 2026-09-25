@@ -2,6 +2,11 @@ import { describe, it, expect } from "vitest";
 import katex from "katex";
 import { solidDistanceMeta } from "@/data/registries/solidGeometry";
 import { buildSpatialDistancePanel } from "@/data/builders/solidSpatialDistance";
+import {
+  getSpatialDistancePresets,
+  getSpatialDistanceTip,
+  type DistanceMode,
+} from "@/features/solidGeometry/spatialDistancePresets";
 
 function validateLatex(formula: string, context: string) {
   try {
@@ -52,17 +57,17 @@ describe("空间距离页面左右屏所有 LaTeX 公式合法性全量检测", 
     }
   });
 
-  const modes = [
-    {
-      mode: "skewDistance",
-      presets: ["free", "cube", "sideEdge", "goldenPerp"],
-    },
-    {
-      mode: "pointPlaneDistance",
-      presets: ["free", "cubeThird", "midSection"],
-    },
-    { mode: "volumeExtrema", presets: ["free", "maxVolume", "midVolume"] },
+  // SSOT：模式与典型情景清单直接取自页面模块，测试侧不得另抄一份 key 清单
+  const DISTANCE_MODES: DistanceMode[] = [
+    "skewDistance",
+    "pointPlaneDistance",
+    "volumeExtrema",
   ];
+  const PROBE_OPTIMAL = { lambda: 0.5, mu: 0.4 };
+  const modes = DISTANCE_MODES.map((mode) => ({
+    mode,
+    presets: getSpatialDistancePresets(mode, PROBE_OPTIMAL).map((p) => p.key),
+  }));
 
   it("右屏 MathPanel 的所有模式与典型情景下，所有公式与混合文本全部合法", () => {
     const testParams = { a: 3, b: 2, c: 2, lambda: 0.5, mu: 0.4 };
@@ -135,15 +140,16 @@ describe("空间距离页面左右屏所有 LaTeX 公式合法性全量检测", 
   });
 
   it("左屏 TipCard 中的题设设问文本中的所有 $...$ 公式全部合法", () => {
-    const tipTexts = [
-      "【初始条件】在直棱柱/长方体 $ABCD-A_1B_1C_1D_1$ 中，动点 $P$ 在异面直线 $l_1$ 上移动，动点 $Q$ 在异面直线 $l_2$ 上移动。\n\n【核心设问】\n(1) 动线段 $PQ$ 的长度在何时取得最小值？证明此时线段 $PQ$ 垂直于两直线且恰为公垂线段；\n(2) 如何过直线 $AC$ 作平行于 $A_1B$ 的截面，将异面直线距离转化为线面距离与点面距离？",
-      "【初始条件】长方体底面尺寸为 $a, b$，侧棱高为 $c$，动点 $E$ 在侧棱 $AA_1$ 上滑动（$AE = \\lambda c$）。\n\n【核心设问】\n(1) 建立空间直角坐标系，求平面 $BDE$ 的法向量 $\\vec{n}$ 与原点 $A$ 到平面的垂线距离 $d$；\n(2) 利用三棱锥等体积公式 $V_{A-BDE} = V_{E-ABD}$ 反求高线 $d$，验证向量法与等体积法的对账一致性。",
-      "【初始条件】三棱锥 $E-ABD$ 的底面 $\\triangle ABD$ 位于长方体底面，顶点 $E$ 沿棱 $AA_1$ 滑动。\n\n【核心设问】\n(1) 探究当分点比例 $\\lambda$ 为何值时，三棱锥的体积取得最大值？\n(2) 分析底面积不变情况下，棱锥体积与动点空间距离的单调性本质。",
-    ];
-
-    tipTexts.forEach((text, i) => {
-      validateMixedText(text, `TipCard[${i}]`);
-    });
+    // 直接引用页面模块的同一份文案（SSOT），杜绝"测试内复制一份文案"的假覆盖：
+    // 历史上此处曾硬编码三份旧文案，源文案几经改写后测试仍全绿。
+    for (const { mode, presets } of modes) {
+      for (const preset of presets) {
+        validateMixedText(
+          getSpatialDistanceTip(mode, preset),
+          `TipCard[${mode}/${preset}]`,
+        );
+      }
+    }
   });
 
   it("推导步骤严格符合高中数学工程落地规范（无裸代码代号、无超长单行未折行连缀等式）", () => {

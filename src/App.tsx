@@ -19,10 +19,15 @@ function adaptLoader(
 ): () => Promise<{ default: ComponentType }> {
   return async () => {
     const mod = await entry.loader();
-    // 取模块中第一个导出的组件作为 default
-    const Component = Object.values(mod).find(
-      (v): v is ComponentType => typeof v === "function",
-    );
+    // 与 Guarded3DPage 同源：优先模块的 default 导出，缺省时才回退「首个函数导出」。
+    // 页面模块除页面组件外还可能导出辅助纯函数（预设表、文案函数等），
+    // 若只认「首个函数导出」，辅助函数会被误当成页面组件挂载，该路由直接崩页。
+    const Component =
+      typeof mod.default === "function"
+        ? mod.default
+        : Object.values(mod).find(
+            (v): v is ComponentType => typeof v === "function",
+          );
     return { default: Component! };
   };
 }
@@ -104,11 +109,10 @@ export default function App() {
           <Suspense fallback={<PageLoading />}>
             <Routes>
               <Route path="/" element={<KnowledgeTreeHome />} />
-              {/* 旧路由重定向 */}
-              <Route
-                path="/set"
-                element={<Navigate to="/set-logic" replace />}
-              />
+              {/* 旧路由重定向。
+                  注意：此处路径不得与 routeEntries 的现行 route 重名——<Routes> 取首个匹配项，
+                  重名会把正典路由静默劫持掉（历史事故：/set 曾被重定向到 /set-logic，
+                  导致「集合的基本运算」页 SetVennPage 在应用内完全不可达）。 */}
               <Route
                 path="/constant"
                 element={<Navigate to="/constant-single" replace />}

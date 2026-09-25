@@ -222,7 +222,7 @@ export function LineCircleAnimation() {
 
     if (studyMode === "tangent") {
       modeKeyGroups = [
-        { group: "圆外极点 P₀(x₀, y₀) 坐标", keys: ["px", "py"] },
+        { group: "圆外一点 P₀(x₀, y₀) 坐标", keys: ["px", "py"] },
         { group: "目标圆半径 r", keys: ["r"] },
       ];
     } else if (studyMode === "midpoint") {

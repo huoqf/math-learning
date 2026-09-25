@@ -2,7 +2,12 @@ import type { KnowledgeNode } from "./types";
 
 export interface RouteEntry {
   node: KnowledgeNode;
-  /** 动态 import，返回的模块中第一个命名导出即为组件 */
+  /**
+   * 动态 import。组件解算约定（App.tsx / Guarded3DPage 两处同源实现）：
+   * **优先取模块的 default 导出**，缺省时才回退「首个函数导出」。
+   * 页面模块可能额外导出辅助纯函数（预设表、文案函数等），
+   * 只认「首个函数导出」会把这些辅助函数误当成页面组件挂载并崩页。
+   */
   loader: () => Promise<Record<string, React.ComponentType>>;
   /** 3D 页面需要 Guarded3DPage 包裹（WebGL 门禁 + 懒加载） */
   guarded3D?: boolean;

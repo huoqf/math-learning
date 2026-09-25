@@ -422,6 +422,52 @@ export function buildDemo() {
       expect(issues.length).toBe(1);
       expect(issues[0].severity).toBe("error");
     });
+
+    it("黑名单已覆盖「极点/极线」族拆分变体：未声明拓展即 error", () => {
+      // 圆锥曲线的「极点极线」属超纲内容，但曾有一页把它包装成课标内的「切点弦」，
+      // 正文只用「极线对偶公式」「外部极点」这类拆分写法，因黑名单仅收录四字整串而被静默放行。
+      // 此用例锁死拆分变体，防止该术语再次以"换词"方式绕开门禁。
+      const poleCode = `
+export function buildDemo() {
+  return {
+    theorems: [
+      { name: "切点弦方程", condition: "外部极点 $P$ 向曲线引两条切线，$A$、$B$ 为两切点" },
+    ],
+  };
+}
+`;
+      const poleIssues = checkDemo(poleCode);
+      expect(poleIssues.length).toBe(1);
+      expect(poleIssues[0].severity).toBe("error");
+      expect(poleIssues[0].message).toContain("极点");
+
+      const polarCode = `
+export function buildDemo() {
+  return {
+    reasoningSteps: [{ step: 1, detail: "利用极线对偶公式一步写出切点弦方程" }],
+  };
+}
+`;
+      const polarIssues = checkDemo(polarCode);
+      expect(polarIssues.length).toBe(1);
+      expect(polarIssues[0].severity).toBe("error");
+      expect(polarIssues[0].message).toContain("极线");
+    });
+
+    it("已声明拓展的条目使用极点/极线表述 → 降级为 warning（合法拓展）", () => {
+      const code = `
+export function buildDemo() {
+  return {
+    warnings: [
+      { text: "极点位于曲线内部时不存在真实切线。", isExtension: true },
+    ],
+  };
+}
+`;
+      const issues = checkDemo(code);
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("warning");
+    });
   });
 
   describe("arch/no-builder-raw-calc 门禁规则对抗性拦截测试 (10/10 守护验证)", () => {

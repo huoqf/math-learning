@@ -297,4 +297,25 @@ describe("右屏数学文本渲染契约门禁", () => {
       }
     });
   });
+
+  describe("animId 派发完整性", () => {
+    it("registry 注册的每个 animId 都必须落到真实 builder，严禁静默落到 EMPTY 兜底", () => {
+      // mathQuantities 的 switch 未登记的 animId 会返回 EMPTY：右屏整片空白，
+      // 而「文本契约类」断言在空数据上全部恒真（无可检字段），故必须有此显式门禁。
+      // 该断言按 routeEntries 全量驱动，新增页面/新增 animId 自动纳入，不会漂移。
+      const fallen: string[] = [];
+      for (const { animId, data } of panelSamples) {
+        const isEmpty =
+          data.quantities.length === 0 &&
+          data.theorems.length === 0 &&
+          data.gaokaoPoints.length === 0 &&
+          data.warnings.length === 0;
+        if (isEmpty) fallen.push(animId);
+      }
+      expect(
+        fallen,
+        `以下 animId 未在 mathQuantities 的 switch 中登记，右屏将渲染为空：${fallen.join(", ")}`,
+      ).toEqual([]);
+    });
+  });
 });

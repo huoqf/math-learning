@@ -54,7 +54,17 @@ export default defineConfig({
               if (id.includes('@react-three/drei')) return 'vendor-drei'
               if (id.includes('troika-three')) return 'vendor-troika'
               if (id.includes('katex')) return 'vendor-katex'
-              if (id.includes('react-dom') || /[\\/]react[\\/]/.test(id) || id.includes('react-router')) return 'vendor-react'
+              // react-dom 依赖 scheduler：必须与 react 同桶，否则会形成
+              // vendor-react ↔ vendor-misc 循环分包，模块初始化顺序错位后
+              // 消费方在模块顶层读到的 React 绑定为 undefined（表现为启动即崩：
+              // "Cannot read properties of undefined (reading 'forwardRef')"）。
+              if (
+                id.includes('react-dom') ||
+                id.includes('react-router') ||
+                /[\\/]react[\\/]/.test(id) ||
+                /[\\/]scheduler[\\/]/.test(id)
+              )
+                return 'vendor-react'
               return 'vendor-misc'
             }
 

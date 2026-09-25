@@ -212,7 +212,7 @@ export function ConicLineAnimation() {
       ];
     } else {
       modeKeyGroups = [
-        { group: "曲线外极点 P₀(x₀, y₀) 坐标", keys: ["poleX", "poleY"] },
+        { group: "曲线外一点 P₀(x₀, y₀) 坐标", keys: ["poleX", "poleY"] },
         { group: conicGroupName, keys: conicKeys },
       ];
     }
@@ -284,7 +284,7 @@ export function ConicLineAnimation() {
     } else {
       const px = params.poleX ?? 4;
       const py = params.poleY ?? 3;
-      lineTex = `P_{极点}: (\\color{${MATH_COLORS.paramPrimary}}{${px.toFixed(1).replace(/\.0$/, "")}}, \\color{${MATH_COLORS.paramSecondary}}{${py.toFixed(1).replace(/\.0$/, "")}})`;
+      lineTex = `P: (\\color{${MATH_COLORS.paramPrimary}}{${px.toFixed(1).replace(/\.0$/, "")}}, \\color{${MATH_COLORS.paramSecondary}}{${py.toFixed(1).replace(/\.0$/, "")}})`;
     }
 
     return `${curveTex} \\quad \\text{与} \\quad ${lineTex}`;
@@ -383,13 +383,13 @@ export function ConicLineAnimation() {
     }
     return {
       variant: "danger" as const,
-      badge: `${conicName}切点弦与对偶定理`,
+      badge: `${conicName}切点弦方程与定点规律`,
       condition:
         "从" +
         conicName +
         "外一点 $P(x_P, y_P)$ 引两条切线，切点分别为 $A, B$。",
       question:
-        "如何利用极线对偶公式一步写出切点弦 $AB$ 方程，探究极点在定直线上运动时切点弦的定点规律？",
+        "如何由两条切点处的切线方程一步写出切点弦 $AB$ 的方程，并探究点 $P$ 沿定直线运动时切点弦所过的定点？",
     };
   }, [conicType, studyMode, activePreset]);
 
@@ -445,7 +445,7 @@ export function ConicLineAnimation() {
     if (studyMode === "polePolar") {
       items.push({
         colorKey: "paramSecondary",
-        label: "极点切线 PA/PB",
+        label: "外点切线 PA/PB",
         style: "dash",
       });
     }

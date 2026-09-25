@@ -18,6 +18,7 @@
     "audit:update-baseline": "node .agents/skills/math-page-audit/scripts/audit_page.mjs --update-baseline",
     "test": "vitest run src/math/ src/math3d/ src/data/ src/test/ src/features/",
     "test:ci": "vitest run",
+    "test:e2e": "vite build && playwright test",
     "prepare": "husky"
   },
   "lint-staged": {

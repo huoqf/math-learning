@@ -191,7 +191,7 @@ export function buildConicLineMathQuantities(
     });
   } else if (studyMode === "polePolar") {
     quantities.push({
-      label: "外部极点坐标 P",
+      label: "曲线外一点坐标 P",
       symbol: "P(x_P, y_P)",
       value: `(${formatMathNumber(poleX)}, ${formatMathNumber(poleY)})`,
     });
@@ -432,7 +432,7 @@ export function buildConicLineMathQuantities(
     }
   } else {
     // 极点极线切点弦
-    examAnchor = "拓展专题 · 切点弦方程与对偶规律";
+    examAnchor = "拓展专题 · 切点弦方程与定点规律";
     const xPVal = formatMathNumber(poleX);
     const yPVal = formatMathNumber(poleY);
 
@@ -460,22 +460,22 @@ export function buildConicLineMathQuantities(
       },
       {
         step: 2,
-        title: "建模展开 · 代入外部点对偶推出切点弦方程",
+        title: "建模展开 · 代入外部点推出切点弦方程",
         detail: `切线 $PA$ 过外部点 $P$，把 $P(${xPVal}, ${yPVal})$ 代入切线方程；对切点 $B$ 同理。两式结构完全相同，说明 $A$、$B$ 两点坐标都满足同一个一次方程，由“两点确定一条直线”即得切点弦 $AB$ 的方程，再化为斜截式 $y = kx + m$：`,
         latex: `${polarEq} \\\\ \\implies y = ${kVal}x ${m >= 0 ? "+" : ""} ${formatMathNumber(m)}`,
-        rubric: "用切线对偶三步推出切点弦方程并化简（3分）",
+        rubric: "用切线方程三步推出切点弦方程并化简（3分）",
       },
       {
         step: 3,
         title: "求解反思 · 几何性质与切线垂直定值",
         detail:
           conicType === "parabola"
-            ? "极点在准线 $x = -\\frac{p}{2}$ 上时，向抛物线引出的两条切线互相垂直，且切点弦必过焦点 $F$。"
-            : "对偶规律：点 $P$ 在定直线上运动时，切点弦必绕定点旋转。",
+            ? "点 $P$ 在准线 $x = -\\frac{p}{2}$ 上时，向抛物线引出的两条切线互相垂直，且切点弦必过焦点 $F$。"
+            : "规律：点 $P$ 在定直线上运动时，切点弦必绕定点旋转。",
         latex:
           conicType === "parabola"
             ? `x_P = -\\frac{p}{2} \\implies k_1 k_2 = -1`
-            : "\\text{极点在定直线} \\iff \\text{切点弦绕定点旋转}",
+            : "\\text{点 } P \\text{ 在定直线} \\iff \\text{切点弦绕定点旋转}",
         rubric: "总结几何定值与高考大题定点规律（3分）",
       },
     );
@@ -553,7 +553,7 @@ export function buildConicLineMathQuantities(
     });
   } else if (studyMode === "polePolar") {
     theorems.push({
-      name: "切点弦方程（切线对偶法）",
+      name: "切点弦方程（切点切线法）",
       latex:
         conicType === "ellipse"
           ? "\\frac{x_P x}{a^2} + \\frac{y_P y}{b^2} = 1"
@@ -607,7 +607,7 @@ export function buildConicLineMathQuantities(
   } else if (studyMode === "polePolar") {
     gaokaoPoints.push(
       {
-        text: "【切点弦对偶通法】标准答题链：设两切点 $A(x_1,y_1)$、$B(x_2,y_2)$ $\\to$ 写出切点处切线方程 $\\to$ 代入外部点 $P$ $\\to$ 由“两点确定一条直线”推出切点弦方程。高考解答题务必写出这条链，直接套用结论会丢掉推导分。",
+        text: "【切点弦通法】标准答题链：设两切点 $A(x_1,y_1)$、$B(x_2,y_2)$ $\\to$ 写出切点处切线方程 $\\to$ 代入外部点 $P$ $\\to$ 由“两点确定一条直线”推出切点弦方程。高考解答题务必写出这条链，直接套用结论会丢掉推导分。",
         importance: "gaokao",
       },
       {
@@ -672,7 +672,7 @@ export function buildConicLineMathQuantities(
       // 代数上极线方程仍可写出，但它与曲线相离，不是「两切点确定的弦」——必须显式点破，
       // 否则基础薄弱的学生会误以为右屏那条直线就是切点弦。
       warnings.push({
-        text: `【极点位于曲线内部】当前点 $P(${formatMathNumber(poleX)}, ${formatMathNumber(poleY)})$ 位于曲线内部，不存在真实切线；对应极线与曲线相离，无法产生切点弦。请把 $P$ 拖到曲线外部，才能观察到「两切线 → 两切点 → 切点弦」的对偶关系。`,
+        text: `【点位于曲线内部】当前点 $P(${formatMathNumber(poleX)}, ${formatMathNumber(poleY)})$ 位于曲线内部，不存在真实切线，无法产生切点弦。请把 $P$ 拖到曲线外部，才能观察到「两切线 → 两切点 → 切点弦」的对应关系。`,
         level: "danger",
       });
     } else {

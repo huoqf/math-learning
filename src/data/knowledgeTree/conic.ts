@@ -131,10 +131,7 @@ export const conicNodes: KnowledgeNode[] = [
     chapter: "平面向量与复数",
     module: "平面向量应用",
     importance: "gaokao",
-    animationIds: [
-      "anim-vector-polarization-apollonius",
-      "anim-conic-polarization",
-    ],
+    animationIds: ["anim-vector-polarization-apollonius"],
     prerequisites: ["know-conic-line", "know-vector-dot-product"],
     route: "/vector-polarization-apollonius",
     gaokaoTopic: "vector_triangle",
