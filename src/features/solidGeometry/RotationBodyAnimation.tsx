@@ -248,7 +248,7 @@ export default function RotationBodyAnimation() {
         {
           colorKey: "paramTertiary",
           swatch: "line",
-          label: "截面半径 r_截",
+          tex: "r_{\\text{截}}",
         },
         {
           colorKey: "secondary",

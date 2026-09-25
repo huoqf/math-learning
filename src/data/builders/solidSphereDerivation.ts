@@ -50,13 +50,13 @@ export function buildSphereDerivationPanel(
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "半球截面半径 r_半",
+        label: "半球截面半径",
         symbol: "r_{\\text{半}}",
         value: zuxuan.hemisphereCutRadius.toFixed(2),
         color: MATH_COLORS.paramTertiary,
       },
       {
-        label: "挖锥柱体内截面半径 r_内",
+        label: "挖锥柱体内截面半径",
         symbol: "r_{\\text{内}}",
         value: zuxuan.coneInnerRadius.toFixed(2),
         color: MATH_COLORS.paramSecondary,
@@ -76,20 +76,38 @@ export function buildSphereDerivationPanel(
       {
         label: "截面积差值 |S₁ - S₂|",
         symbol: "|S_1 - S_2|",
-        value:
-          zuxuan.areaDifference < 1e-4
-            ? "0.00 (严格恒等)"
-            : zuxuan.areaDifference.toFixed(4),
+        // 判据与纯数学层同源（1e-6 容差的 isAreaEqual），不在此处另立阈值
+        value: zuxuan.isAreaEqual
+          ? "0.00 (严格恒等)"
+          : zuxuan.areaDifference.toFixed(4),
         color: MATH_COLORS.highlight,
       },
       {
-        label: "推导半球体积 V_半球",
+        label: "圆柱体积",
+        symbol: "V_{\\text{柱}}",
+        value: zuxuan.cylinderVolume.toFixed(2),
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "倒圆锥体积",
+        symbol: "V_{\\text{锥}}",
+        value: zuxuan.invertedConeVolume.toFixed(2),
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "挖锥柱体体积 (= 半球)",
+        symbol: "V_{\\text{挖}}",
+        value: zuxuan.hollowCylinderVolume.toFixed(2),
+        color: MATH_COLORS.highlight,
+      },
+      {
+        label: "推导半球体积",
         symbol: "V_{\\text{半球}}",
         value: zuxuan.hemisphereVolume.toFixed(2),
         color: MATH_COLORS.accent,
       },
       {
-        label: "完整球体体积 V_球",
+        label: "完整球体体积",
         symbol: "V_{\\text{球}}",
         value: zuxuan.sphereVolume.toFixed(2),
         color: MATH_COLORS.primary,
@@ -99,7 +117,7 @@ export function buildSphereDerivationPanel(
     theorems.push(
       {
         name: "祖暅原理（卡瓦列里原理）",
-        latex: `\\text{“幂势既同，则积不容异”} \\implies \\text{若两等高立体在任意等高截面面积均恒等：} S_1(h) = S_2(h), \\; \\text{则} V_1 = V_2`,
+        latex: `S_1(h) \\equiv S_2(h) \\implies V_1 = V_2`,
         level: "core",
         note: "中国南北朝数学家祖暅提出。夹在两个平行平面间的两个几何体，被平行于这两个平面的任意平面所截，如果截得的两个截面的面积总相等，那么这两个几何体的体积相等。",
       },
@@ -169,15 +187,19 @@ export function buildSphereDerivationPanel(
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "球面分割小棱锥总数",
+        label: "球面分割微锥总数 (n × 2n)",
         symbol: "N",
         value: `${micro.totalMicroPyramids} 块`,
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "采样微锥高 h_锥",
-        symbol: "h_{\\text{锥}}",
-        value: micro.samplePyramid.height.toFixed(2),
+        // 真实几何高（球心到弦面），随细分加密**单调趋于 R**。这一读数就是中屏那条
+        // 标注 h_i ≈ R 的虚线的长度，两边同源同值。
+        // 历史缺陷：此处恒报 R（= 球半径，两个卡片数字完全重复），既掩盖了"趋于 R"
+        // 这一取极限的关键事实，也与中屏真实画出的短线长度不符。
+        label: "采样微锥高（随细分加密趋于 R）",
+        symbol: "h_i",
+        value: micro.samplePyramid.height.toFixed(3),
         color: MATH_COLORS.paramTertiary,
       },
       {
@@ -204,6 +226,20 @@ export function buildSphereDerivationPanel(
         value: micro.exactSurfaceArea.toFixed(2),
         color: MATH_COLORS.accent,
       },
+      {
+        // 「以平代曲」的收敛判据：N 越大，多边形底面积之和越逼近球面面积。
+        // 注：∑ΔV = (1/3)R·∑ΔS ⇒ 体积相对误差率与此恒等，故只列一个。
+        // 这一张卡由左屏「细分密度」滑块连续驱动，学生拖动即可看到 δ 单调下降；
+        // 不再另列 δ(8)/δ(16)/δ(32) 静态阶梯——那是把动态探究降格成静态数据表，
+        // 还挤占了采样微锥 ΔS / ΔV 等核心教学量的展示位。
+        label: "当前细分下的相对误差率",
+        symbol: "\\delta",
+        value: `${(micro.surfaceAreaError * 100).toFixed(2)}%`,
+        color: MATH_COLORS.highlight,
+      },
+    );
+
+    quantities.push(
       {
         label: "近似求和体积 ∑ΔV",
         symbol: "\\sum \\Delta V",
@@ -235,6 +271,16 @@ export function buildSphereDerivationPanel(
         latex: `S_{\\text{球}} = 4 \\times S_{\\text{大圆}} = 4\\pi \\color{${MATH_COLORS.paramPrimary}}{R}^2`,
         level: "important",
         note: "球的表面积恰好等于其最大大圆截面面积的 4 倍（阿基米德著名发现）。",
+      },
+      {
+        // 课标内表述。⚠️ 严禁改写成"误差按细分密度的平方反比衰减"这类
+        // 大学数值分析式的量级表述：人教A版必修二只要求领会定性的
+        //「分割 → 近似 → 求和 → 取极限」，量级符号与阶数概念高中生从未学过、
+        // 高考绝不涉及（同类表述已进 audit 超纲词表，注释同样会被扫描）。
+        name: "以平代曲与取极限原理",
+        latex: `\\text{细分越密：}\\; \\sum_{i=1}^{N} \\Delta S_i \\to 4\\pi \\color{${MATH_COLORS.paramPrimary}}{R}^2, \\qquad \\sum_{i=1}^{N} \\Delta V_i \\to \\color{${MATH_COLORS.paramPrimary}}{V}_{\\text{球}} = \\frac{4}{3}\\pi \\color{${MATH_COLORS.paramPrimary}}{R}^3`,
+        level: "important",
+        note: "把球面分成的小块越来越多、越来越小时，多边形底面越来越贴近球面，微锥体积之和也越来越接近球体积。「分割 → 近似 → 求和」之后，最后一步「取极限」就是把细分密度不断加大，使近似等式在无限接近的意义下成为精确等式。拖动左屏「球面网格细分密度」滑块，右屏的相对误差率 δ 会随之不断减小——这正是「取极限」过程的可视化，而不是只验证了某几个分法。",
       },
     );
 
@@ -278,7 +324,7 @@ export function buildSphereDerivationPanel(
 
   gaokaoPoints.push(
     {
-      text: "祖暅原理与传统数学文化：新高考极为推崇将中国古代数学典籍（《九章算术》、《算经十书》中祖暅、刘徽、赵爽的思想）融入立体几何试题。考题常以“牟合方盖”、等高截面面积比、旋转体积等为情景设问。",
+      text: "祖暅原理与传统数学文化：数学文化入题是近年高考的稳定热点，立体几何方向的真题锚点如 2019 课标Ⅱ·16（独孤信印·半正多面体）、2020 新高考Ⅰ·4（日晷）、2020 课标Ⅰ·3（胡夫金字塔）；“牟合方盖”与祖暅原理则多见于各地模拟题（如 2022 潍坊抽测），常以等高截面面积比为切口设问。",
       importance: "gaokao",
     },
     {
@@ -290,7 +336,7 @@ export function buildSphereDerivationPanel(
       importance: "gaokao",
     },
     {
-      text: "球体四大倍数关系：大圆周长 C = 2πR，大圆面积 S_大 = πR²，球表面积 S_球 = 4 S_大 = 4πR²，圆柱容球体积比 V_柱 : V_球 : V_锥 = 3 : 2 : 1（阿基米德墓碑铭文图形）。",
+      text: "球体四大倍数关系：大圆周长 $C = 2\\pi R$，大圆面积 $S_{\\text{大}} = \\pi R^2$，球表面积 $S_{\\text{球}} = 4 S_{\\text{大}} = 4\\pi R^2$，圆柱容球体积比 $V_{\\text{柱}} : V_{\\text{球}} : V_{\\text{锥}} = 3 : 2 : 1$（阿基米德墓碑铭文图形）。",
       importance: "core",
     },
   );
