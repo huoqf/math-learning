@@ -1,0 +1,60 @@
+import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import "@/test/mocks";
+
+vi.mock("@react-three/fiber", async () => {
+  const h = await import("@/test/harness/threeTestLayer");
+  return h.fiberMock;
+});
+
+vi.mock("@react-three/drei", async () => {
+  const h = await import("@/test/harness/threeTestLayer");
+  return h.dreiMock;
+});
+
+import PyramidDerivationAnimation from "../PyramidDerivationAnimation";
+
+describe("PyramidDerivationAnimation 页面契约测试", () => {
+  it("默认渲染三棱柱三分法模式，左中右三屏正常加载", () => {
+    render(<PyramidDerivationAnimation />);
+
+    // 左屏标题与 Tab
+    expect(screen.getByText("推导范式选择")).toBeInTheDocument();
+    expect(screen.getByText("三棱柱三分法")).toBeInTheDocument();
+    expect(screen.getByText("刘徽阳马与鳖臑")).toBeInTheDocument();
+
+    // 探究导引 TipCard
+    expect(screen.getByText("欧几里得分割 · 三等分三棱柱")).toBeInTheDocument();
+
+    // 右屏核心量或定理
+    expect(screen.getByText("三棱柱总体积")).toBeInTheDocument();
+    expect(screen.getByText("单个三棱锥体积")).toBeInTheDocument();
+
+    // 中屏图例一致性校验
+    expect(screen.getByText("三棱锥① A₁-ABC")).toBeInTheDocument();
+    expect(screen.getByText("三棱锥② A₁-BCC₁")).toBeInTheDocument();
+    expect(screen.getByText("三棱锥③ C₁-A₁B₁B")).toBeInTheDocument();
+  });
+
+  it("点击切换到刘徽阳马与鳖臑模式，三屏联动同步更新", () => {
+    render(<PyramidDerivationAnimation />);
+
+    const yangmaTab = screen.getByText("刘徽阳马与鳖臑");
+    fireEvent.click(yangmaTab);
+
+    // TipCard 徽标更新
+    expect(
+      screen.getByText("《九章算术》刘徽割体术 · 阳马与鳖臑"),
+    ).toBeInTheDocument();
+
+    // 右屏更新为阳马与鳖臑指标
+    expect(screen.getByText("母体堑堵体积")).toBeInTheDocument();
+    expect(screen.getByText("阳马体积")).toBeInTheDocument();
+    expect(screen.getByText("鳖臑体积")).toBeInTheDocument();
+
+    // 中屏图例一致性校验（阳马与鳖臑图例同步切换）
+    expect(screen.getByText(/阳马 A₁-OBB₁O₁/)).toBeInTheDocument();
+    expect(screen.getByText(/鳖臑 A₁-OAB/)).toBeInTheDocument();
+  });
+});
