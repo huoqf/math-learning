@@ -230,7 +230,8 @@ export function calculatePrismTripartition(
  *    顶点 A₁(a, 0, c)
  *    底面直角三角形 △OAB（在面 z=0 上，直角边 a, b，面积 (1/2)ab）
  *    高为 AA₁ = c（侧棱垂直于底面）
- *    四个面全为直角三角形：△OAB, △AA₁O, △AA₁B, △A₁OB（三垂线定理）！
+ *    四个面全为直角三角形：△OAB, △AA₁O, △AA₁B, △A₁OB
+ *    （△OBA₁ 的直角由线面垂直判定定理得出：OB⊥OA 且 OB⊥AA₁ ⟹ OB⊥平面 OAA₁ ⟹ OB⊥OA₁）
  *    体积 V_鳖臑 = (1/3) * (1/2 ab) * c = (1/6) a b c = (1/3) V_堑堵。
  *
  * 两者之和：(1/3)abc + (1/6)abc = (1/2)abc = V_堑堵！

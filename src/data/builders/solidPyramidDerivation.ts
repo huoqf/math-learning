@@ -27,6 +27,9 @@ export function buildPyramidDerivationPanel(
   const a = params.a ?? 2.5;
   const b = params.b ?? 2.0;
   const h = params.h ?? 3.0;
+  // 模式二堑堵的高度 c 与三棱柱高 h 解耦：左屏滑块 key 为 c、中屏 Scene 亦取 params.c，
+  // 右屏必须同源读取 c，否则出现「中屏变、右屏不变」的不同源缺陷。默认值与 Animation 一致。
+  const c = params.c ?? 3.2;
   const r = params.r ?? 1.8;
   const heightCut = params.heightCut ?? 1.2;
   const explode = params.explode ?? 0.3; // 0 ~ 1 爆炸拆解进度
@@ -153,23 +156,23 @@ export function buildPyramidDerivationPanel(
     });
   } else if (mode === "yangma") {
     // 模式二：刘徽割体术（阳马与鳖臑）
-    const data = calculateYangmaBienao(a, b, h);
+    const data = calculateYangmaBienao(a, b, c);
 
     quantities.push(
       {
-        label: "长方体长 a",
+        label: "堑堵底面直角边 a",
         symbol: "a",
         value: data.a.toFixed(2),
         color: MATH_COLORS.paramPrimary,
       },
       {
-        label: "长方体宽 b",
+        label: "堑堵底面直角边 b",
         symbol: "b",
         value: data.b.toFixed(2),
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "长方体高 c",
+        label: "堑堵高 c",
         symbol: "c",
         value: data.c.toFixed(2),
         color: MATH_COLORS.paramTertiary,
@@ -223,7 +226,7 @@ export function buildPyramidDerivationPanel(
         name: "鳖臑四直角面性质定理",
         latex: `\\triangle OAB, \\; \\triangle OAA_1, \\; \\triangle ABA_1, \\; \\triangle OBA_1 \\text{ 均为直角三角形}`,
         level: "important",
-        note: "高考立体几何高频模型：利用侧棱垂直与三垂线定理证明鳖臑的四个面全为直角三角形。",
+        note: "高考立体几何高频模型：由 $AA_1 \\perp$ 底面得 $AA_1 \\perp OB$，又 $OB \\perp OA$，故 $OB \\perp$ 平面 $OAA_1$，从而 $OB \\perp OA_1$——四个面均为直角三角形，全程只用线面垂直的判定与性质定理。",
       },
     );
 
@@ -240,7 +243,7 @@ export function buildPyramidDerivationPanel(
         step: 2,
         title: "建模联立 · 刘徽割体细分与体积比对账",
         detail:
-          "刘徽将阳马与鳖臑各高截半，各自得到一个小长方体、两个小堑堵、以及更小的阳马与鳖臑。在有限分割步中，已明确体积部分阳马恒为鳖臑的 2 倍；余下微小部分通过“割之弥细，所失弥少，割之又割，以至于不可割”逼近，得出极限意义下阳马与鳖臑体积比恒为 $2:1$：",
+          "刘徽平分堑堵的长、宽、高（取各棱中点）作割补：阳马被分成 $1$ 个小长方体、$2$ 个小堑堵与 $2$ 个更小的阳马；鳖臑被分成 $2$ 个小堑堵与 $2$ 个更小的鳖臑。其中“已知”部分（小长方体与 $4$ 个小堑堵）体积恰为鳖臑“已知”部分的 $2$ 倍，且共占原堑堵的 $\\frac{3}{4}$；剩余部分照此反复细分，“半之弥少，其余弥细；至细曰微，微则无形”，逐轮逼近后阳马与鳖臑体积比恒为 $2:1$：",
         latex: `V_{\\text{阳马}} : V_{\\text{鳖臑}} = 2 : 1 \\implies V_{\\text{阳马}} = \\frac{2}{3} V_{\\text{堑堵}} = \\frac{1}{3}abc`,
         rubric: "[高考规范采分] 清晰阐述阳马居二鳖臑居一的比例证明思想 (+5分)",
       },
@@ -256,7 +259,7 @@ export function buildPyramidDerivationPanel(
 
     gaokaoPoints.push({
       importance: "gaokao",
-      text: "【《九章算术》真题考向】新高考常以《九章算术》中‘阳马’或‘鳖臑’为背景命制立体几何大题，考查线面垂直证明（三垂线定理）及几何体体积和外接球计算。",
+      text: "【《九章算术》真题考向】新高考常以《九章算术》中‘阳马’或‘鳖臑’为背景命制立体几何大题，考查线面垂直的判定与性质（或用空间向量建系求角）及几何体体积、外接球计算。",
     });
 
     warnings.push({

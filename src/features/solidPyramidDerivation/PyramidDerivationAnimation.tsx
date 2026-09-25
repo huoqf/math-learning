@@ -30,9 +30,12 @@ export function PyramidDerivationAnimation() {
     a: 2.6,
     b: 2.2,
     h: 3.2,
+    c: 3.2, // 阳马模式下堑堵的高度独立参数，与三棱柱高 h 解耦
     r: 1.8,
     heightCut: 1.6,
-    explode: 0.35,
+    // 默认不拆解：先呈现完整母体与剖分截面（A/B/C/O… 顶点字母可见），
+    // 由学生拖动滑块观察子体分离，避免初始即停在字母标注被隐藏的拆解态。
+    explode: 0,
   });
 
   const handleParamChange = (key: string, value: number) => {
@@ -49,8 +52,8 @@ export function PyramidDerivationAnimation() {
   );
 
   const yangmaData = useMemo(
-    () => calculateYangmaBienao(params.a, params.b, params.h),
-    [params.a, params.b, params.h],
+    () => calculateYangmaBienao(params.a, params.b, params.c ?? 3.2),
+    [params.a, params.b, params.c],
   );
 
   const coneEquivalenceData = useMemo(
@@ -111,7 +114,7 @@ export function PyramidDerivationAnimation() {
       return [
         {
           key: "a",
-          label: "长方体长 a",
+          label: "堑堵底面直角边 a",
           value: params.a,
           min: 1.0,
           max: 4.5,
@@ -119,16 +122,16 @@ export function PyramidDerivationAnimation() {
         },
         {
           key: "b",
-          label: "长方体宽 b",
+          label: "堑堵底面直角边 b",
           value: params.b,
           min: 1.0,
           max: 4.5,
           step: 0.1,
         },
         {
-          key: "h",
-          label: "长方体高 c",
-          value: params.h,
+          key: "c",
+          label: "堑堵高 c",
+          value: params.c ?? 3.2,
           min: 1.5,
           max: 5.0,
           step: 0.1,
@@ -201,7 +204,7 @@ export function PyramidDerivationAnimation() {
       return {
         badge: "欧几里得分割 · 三等分三棱柱",
         background:
-          "人教A版必修第二册第8章立体几何探究：求空间几何体体积的核心在于“割补法”与等底同高转化。欧几里得在《几何原本》中通过作两个截面对角剖分，将任意三棱柱严格剖分为三个等底同高的三棱锥。",
+          "人教A版必修第二册第8章立体几何探究：求空间几何体体积的核心在于“割补法”与等底同高转化。欧几里得在《几何原本》中通过作两个截面对角剖分，将任意三棱柱严格剖分为三个体积相等的三棱锥（①与②同底 $\\triangle A_1BC$ 等高，②与③同底 $\\triangle A_1BC_1$ 等高）。",
         condition: `直三棱柱 $ABC-A_1B_1C_1$ 底面直角边为 $a = ${params.a.toFixed(1)}, b = ${params.b.toFixed(1)}$，高为 $h = ${params.h.toFixed(1)}$。作剖分截面 $A_1BC$ 与 $A_1BC_1$。`,
         question:
           "求证剖分得到的三个三棱锥体积两两严格相等，并由此导出一般锥体体积公式 $V = \\frac{1}{3} S_{\\text{底}} h$。",
@@ -211,7 +214,7 @@ export function PyramidDerivationAnimation() {
         badge: "《九章算术》刘徽割体术 · 阳马与鳖臑",
         background:
           "魏晋数学家刘徽在《九章算术注》中首创割体无限细分逼近思想。他将直角三棱柱（堑堵）剖分为底面为矩形且有一侧棱垂直底面的四棱锥（阳马）和四个面皆为直角三角形的三棱锥（鳖臑），奠定了锥体体积的基础公理。",
-        condition: `直角三棱柱（堑堵）尺寸为 $a = ${params.a.toFixed(1)}, b = ${params.b.toFixed(1)}, c = ${params.h.toFixed(1)}$。沿对角截面 $A_1OB$ 剖分为一个阳马和一个鳖臑。`,
+        condition: `直角三棱柱（堑堵）尺寸为 $a = ${params.a.toFixed(1)}, b = ${params.b.toFixed(1)}, c = ${(params.c ?? 3.2).toFixed(1)}$。沿对角截面 $A_1OB$ 剖分为一个阳马和一个鳖臑。`,
         question:
           "探究并证明阳马与鳖臑的体积之比恒为 $2:1$（“阳马居二，鳖臑居一”），并证明鳖臑的四个面均为直角三角形。",
       };

@@ -58,6 +58,29 @@ describe("PyramidDerivationAnimation 页面契约测试", () => {
     expect(screen.getByText(/鳖臑 A₁-OAB/)).toBeInTheDocument();
   });
 
+  it("默认态显示母体顶点字母，拖大爆炸进度后改由子体名称接替", () => {
+    const { container } = render(<PyramidDerivationAnimation />);
+
+    // 3D 层标注文本被 drei Text 替身为 <sprite/>（文本内容不进 DOM），
+    // 故以 sprite 数量作为「当前显示几个标注」的结构代理（本页仅 PointLabel3D 产出 sprite）。
+    const labelCount = () => container.querySelectorAll("sprite").length;
+
+    // 默认不拆解：显示母体 6 个顶点字母 A/B/C/A₁/B₁/C₁，此刻不显示子体名称
+    expect(labelCount()).toBe(6);
+
+    // 拖动「爆炸拆解进度」（唯一 min=0 / max=1 的滑块）使子体分离
+    const explodeSlider = Array.from(
+      container.querySelectorAll<HTMLInputElement>('input[type="range"]'),
+    ).find(
+      (s) => s.getAttribute("min") === "0" && s.getAttribute("max") === "1",
+    );
+    expect(explodeSlider).toBeTruthy();
+    fireEvent.change(explodeSlider!, { target: { value: "0.6" } });
+
+    // 分离后顶点字母退场（位置已漂移），改由 3 个子体名称标注接替
+    expect(labelCount()).toBe(3);
+  });
+
   it("点击切换到祖暅圆锥等积模式，三屏联动同步更新", () => {
     render(<PyramidDerivationAnimation />);
 

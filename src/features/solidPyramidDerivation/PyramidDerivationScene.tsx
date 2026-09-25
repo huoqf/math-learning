@@ -159,6 +159,7 @@ function PartPolyhedronMesh({
           />
         ))}
 
+      {/* 子体名称标注：仅在子体已分离（explode > 0.15）时显示，与顶点字母门互补不重叠 */}
       {explode > 0.15 && (
         <PointLabel3D
           position={partCenter}
@@ -199,18 +200,21 @@ function ConePyramidEquivalenceMesh({
   const rightCenterY = offset;
 
   // 1. 圆锥几何体 (左侧)：顶点 (0, leftCenterY, h)，底面圆心 (0, leftCenterY, 0)
+  // openEnded 必须为 false：祖暅原理比较的正是「同底面积」，底面圆盘缺失会看不出等高同底。
   const coneGeo = useMemo(() => {
-    return new THREE.ConeGeometry(r, h, 48, 1, true);
+    return new THREE.ConeGeometry(r, h, 48, 1, false);
   }, [r, h]);
 
-  // 2. 正四棱锥几何体 (右侧)：顶点 (0, rightCenterY, h)，底面四点 (±a/2, rightCenterY ± a/2, 0)
+  // 2. 正四棱锥几何体 (右侧)：数学坐标 apex={x:0,y:rightCenterY,z:h}，底面四点 {x:±half,y:rightCenterY±half,z:0}
+  // mathToThree: [v.y, v.z, v.x]，即 Three.js [X=数学y, Y=数学z, Z=数学x]
   const pyramidGeo = useMemo(() => {
     const half = a / 2;
-    const vApex: [number, number, number] = [0, h, rightCenterY];
-    const v0: [number, number, number] = [-half, 0, rightCenterY - half];
-    const v1: [number, number, number] = [half, 0, rightCenterY - half];
-    const v2: [number, number, number] = [half, 0, rightCenterY + half];
-    const v3: [number, number, number] = [-half, 0, rightCenterY + half];
+    // 以数学坐标构造后统一经 mathToThree 规则转换：[math.y, math.z, math.x]
+    const vApex: [number, number, number] = [rightCenterY, h, 0]; // math{x:0, y:rightCenterY, z:h}
+    const v0: [number, number, number] = [rightCenterY - half, 0, -half]; // math{x:-half, y:rightCenterY-half, z:0}
+    const v1: [number, number, number] = [rightCenterY - half, 0, half]; // math{x:half,  y:rightCenterY-half, z:0}
+    const v2: [number, number, number] = [rightCenterY + half, 0, half]; // math{x:half,  y:rightCenterY+half, z:0}
+    const v3: [number, number, number] = [rightCenterY + half, 0, -half]; // math{x:-half, y:rightCenterY+half, z:0}
 
     const positions: number[] = [
       // 4 个侧面三角形
@@ -491,7 +495,10 @@ export function PyramidDerivationScene({
             );
           })}
 
-          {explode < 0.25 &&
+          {/* 顶点字母仅在子体基本合拢时显示（与子体名称门的 0.15 阈值互补、不同时出现）：
+              此时字母仍严格锚定在原母体的真实顶点上；一旦爆炸分离，顶点归属子体且位置漂移，
+              改用各子体自身的名称标注。 */}
+          {explode <= 0.15 &&
             baseLabels.map((lbl) => (
               <PointLabel3D
                 key={`lbl-base-${lbl.name}`}
