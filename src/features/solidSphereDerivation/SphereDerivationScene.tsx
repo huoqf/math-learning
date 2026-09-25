@@ -22,7 +22,7 @@ interface SphereDerivationSceneProps {
   fontScale?: number;
 }
 
-/** Three.js 场景空间点 (x向右, y向上, z向前) 转为数学 Vec3 (x向前, y向右, z向上) */
+/** Three.js 场景空间局部点 (x向右, y向上, z向前) 转为数学 Vec3 (x向前, y向右, z向上) */
 const toMathVec3 = (threeX: number, threeY: number, threeZ: number): Vec3 => ({
   x: threeZ,
   y: threeX,
@@ -46,8 +46,8 @@ export function SphereDerivationScene({
   // ─────────────────────────────────────────────────────────────
   const zuxuan = useMemo(() => calculateZuxuanSection(R, h), [R, h]);
   const offsetDistance = R * 1.55;
-  const leftX = -offsetDistance; // 半球中心 X
-  const rightX = offsetDistance; // 挖锥圆柱中心 X
+  const leftX = -offsetDistance; // 半球中心世界 X
+  const rightX = offsetDistance; // 挖锥圆柱中心世界 X
 
   // 1. 半球几何体数据 (y >= 0)
   const hemisphereGeo = useMemo(() => {
@@ -70,6 +70,11 @@ export function SphereDerivationScene({
     return new THREE.CylinderGeometry(R, R, R, 48, 1, true);
   }, [R]);
 
+  // 内部挖空的倒圆锥几何体 (顶点在原点，底面在顶端高 R 处，半径 R)
+  const invertedConeGeo = useMemo(() => {
+    return new THREE.ConeGeometry(R, R, 48, 1, true);
+  }, [R]);
+
   // 挖锥圆柱在高度 h 处的截面圆环几何体
   const ringCutGeo = useMemo(() => {
     const innerR = Math.max(0.001, zuxuan.coneInnerRadius);
@@ -77,7 +82,7 @@ export function SphereDerivationScene({
     return new THREE.RingGeometry(innerR, outerR, 48);
   }, [zuxuan.coneInnerRadius, zuxuan.cylinderOuterRadius]);
 
-  // 内部倒圆锥线框母线
+  // 内部倒圆锥局部线框母线 (局部坐标：从 [0,0,0] 到 [topX, R, topZ])
   const coneGeneratrixLines = useMemo(() => {
     const lines: [number, number, number][][] = [];
     const count = 16;
@@ -86,15 +91,15 @@ export function SphereDerivationScene({
       const topX = R * Math.cos(angle);
       const topZ = R * Math.sin(angle);
       lines.push([
-        [rightX, 0, 0],
-        [rightX + topX, R, topZ],
+        [0, 0, 0],
+        [topX, R, topZ],
       ]);
     }
     return lines;
-  }, [R, rightX]);
+  }, [R]);
 
   // ─────────────────────────────────────────────────────────────
-  // 模式二：微元分割锥体金字塔
+  // 模式二：球面微小棱锥分割累加
   // ─────────────────────────────────────────────────────────────
   const microData = useMemo(
     () => calculateSphereMicroPyramids(R, subdivisions),
@@ -103,7 +108,8 @@ export function SphereDerivationScene({
 
   const sample = microData.samplePyramid;
   const sampleBaseCenter = sample.center;
-  const popRatio = 0.08;
+  // 采样小棱锥沿法向轻微抽出浮起 (形成抽离拆解教学视觉)
+  const popRatio = 0.12;
   const poppedCenter: [number, number, number] = [
     sampleBaseCenter[0] * (1 + popRatio),
     sampleBaseCenter[1] * (1 + popRatio),
@@ -152,7 +158,7 @@ export function SphereDerivationScene({
     return geo;
   }, [poppedVertices]);
 
-  // 底面圆与圆环线数据
+  // 底面圆与圆环线数据 (局部坐标)
   const hemisphereBasePoints = useMemo(() => {
     const arr = new Float32Array(65 * 3);
     for (let i = 0; i <= 64; i++) {
@@ -196,15 +202,15 @@ export function SphereDerivationScene({
     <group>
       {mode === "zuxuan" ? (
         <group>
-          {/* ════════════════ 左侧：半球 ════════════════ */}
+          {/* ════════════════ 左侧：半球 (局部中心为 0) ════════════════ */}
           <group position={[leftX, 0, 0]}>
             {/* 半球面半透明外壳 */}
             <mesh geometry={hemisphereGeo}>
               <meshStandardMaterial
                 color={MATH_COLORS.primary}
                 transparent
-                opacity={0.35}
-                roughness={0.2}
+                opacity={0.32}
+                roughness={0.25}
                 metalness={0.1}
                 side={THREE.DoubleSide}
               />
@@ -219,7 +225,7 @@ export function SphereDerivationScene({
               <meshBasicMaterial
                 color={MATH_COLORS.paramPrimary}
                 transparent
-                opacity={0.15}
+                opacity={0.12}
                 side={THREE.DoubleSide}
               />
             </mesh>
@@ -248,7 +254,7 @@ export function SphereDerivationScene({
                   <meshStandardMaterial
                     color={MATH_COLORS.accent}
                     transparent
-                    opacity={0.7}
+                    opacity={0.75}
                     side={THREE.DoubleSide}
                   />
                 </mesh>
@@ -267,19 +273,15 @@ export function SphereDerivationScene({
               </group>
             )}
 
-            {/* 半球辅助高线与勾股直角三角形 */}
+            {/* 半球辅助高线与勾股直角三角形 (局部坐标全部以 0 为原点) */}
             {showAuxLines && (
               <>
-                {/* 勾股直角三角形 */}
+                {/* 勾股直角三角形 Rt△O₁O'₁P₁ */}
                 {h > 0.15 && zuxuan.hemisphereCutRadius > 0.15 ? (
                   <RightTriangle3D
-                    vertexA={toMathVec3(leftX, 0, 0)}
-                    rightVertex={toMathVec3(leftX, h, 0)}
-                    vertexB={toMathVec3(
-                      leftX + zuxuan.hemisphereCutRadius,
-                      h,
-                      0,
-                    )}
+                    vertexA={toMathVec3(0, 0, 0)}
+                    rightVertex={toMathVec3(0, h, 0)}
+                    vertexB={toMathVec3(zuxuan.hemisphereCutRadius, h, 0)}
                     colorKeyA="paramSecondary"
                     colorKeyB="paramTertiary"
                     colorKeyHyp="paramPrimary"
@@ -292,25 +294,25 @@ export function SphereDerivationScene({
                       zuxuan.hemisphereCutRadius * 0.35,
                     )}
                     fillMesh={true}
-                    opacity={0.15}
+                    opacity={0.18}
                   />
                 ) : (
                   <>
                     <Segment3D
-                      from={toMathVec3(leftX, 0, 0)}
-                      to={toMathVec3(leftX, h, 0)}
+                      from={toMathVec3(0, 0, 0)}
+                      to={toMathVec3(0, h, 0)}
                       colorKey="paramSecondary"
                       lineWidth={3}
                     />
                     <Segment3D
-                      from={toMathVec3(leftX, h, 0)}
-                      to={toMathVec3(leftX + zuxuan.hemisphereCutRadius, h, 0)}
+                      from={toMathVec3(0, h, 0)}
+                      to={toMathVec3(zuxuan.hemisphereCutRadius, h, 0)}
                       colorKey="paramTertiary"
                       lineWidth={3}
                     />
                     <Segment3D
-                      from={toMathVec3(leftX, 0, 0)}
-                      to={toMathVec3(leftX + zuxuan.hemisphereCutRadius, h, 0)}
+                      from={toMathVec3(0, 0, 0)}
+                      to={toMathVec3(zuxuan.hemisphereCutRadius, h, 0)}
                       colorKey="paramPrimary"
                       lineWidth={3.5}
                     />
@@ -319,42 +321,38 @@ export function SphereDerivationScene({
 
                 {/* 特征点 */}
                 <Point3D
-                  position={toMathVec3(leftX, 0, 0)}
+                  position={toMathVec3(0, 0, 0)}
                   colorKey="textMuted"
                   radius={0.045}
                 />
                 <Point3D
-                  position={toMathVec3(leftX, h, 0)}
+                  position={toMathVec3(0, h, 0)}
                   colorKey="paramSecondary"
                   radius={0.045}
                 />
                 <Point3D
-                  position={toMathVec3(
-                    leftX + zuxuan.hemisphereCutRadius,
-                    h,
-                    0,
-                  )}
+                  position={toMathVec3(zuxuan.hemisphereCutRadius, h, 0)}
                   colorKey="paramTertiary"
                   radius={0.045}
                 />
 
                 {/* 点标签 */}
                 <PointLabel3D
-                  position={toMathVec3(leftX, 0, 0)}
+                  position={toMathVec3(0, -0.2, 0)}
                   text="O_1"
                   colorKey="textMuted"
                   fontSize={0.21 * fontScale}
                 />
                 <PointLabel3D
-                  position={toMathVec3(leftX - 0.15, h, 0)}
+                  position={toMathVec3(-0.15, h + 0.1, 0)}
                   text="O'_1"
                   colorKey="paramSecondary"
                   fontSize={0.21 * fontScale}
                 />
                 <PointLabel3D
                   position={toMathVec3(
-                    leftX + zuxuan.hemisphereCutRadius + 0.15,
-                    h,
+                    zuxuan.hemisphereCutRadius + 0.15,
+                    h + 0.1,
                     0,
                   )}
                   text="P_1"
@@ -366,7 +364,7 @@ export function SphereDerivationScene({
 
             {/* 顶部标题指示 */}
             <CompoundLabel3D
-              position={toMathVec3(leftX, R + 0.35, 0)}
+              position={toMathVec3(0, R + 0.35, 0)}
               base="半球"
               subscript="V₁"
               colorKey="primary"
@@ -374,15 +372,30 @@ export function SphereDerivationScene({
             />
           </group>
 
-          {/* ════════════════ 右侧：挖锥圆柱 ════════════════ */}
+          {/* ════════════════ 右侧：挖锥圆柱 (局部中心为 0) ════════════════ */}
           <group position={[rightX, 0, 0]}>
             {/* 外圆柱侧面半透明 */}
             <mesh geometry={cylinderGeo} position={[0, R / 2, 0]}>
               <meshStandardMaterial
                 color={MATH_COLORS.secondary}
                 transparent
-                opacity={0.25}
+                opacity={0.22}
                 roughness={0.3}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+
+            {/* 内部挖空的倒圆锥半透明曲面 (顶点在原点，顶底面在上) */}
+            <mesh
+              geometry={invertedConeGeo}
+              position={[0, R / 2, 0]}
+              rotation={[Math.PI, 0, 0]}
+            >
+              <meshStandardMaterial
+                color={MATH_COLORS.paramTertiary}
+                transparent
+                opacity={0.16}
+                roughness={0.35}
                 side={THREE.DoubleSide}
               />
             </mesh>
@@ -415,7 +428,7 @@ export function SphereDerivationScene({
               />
             </lineLoop>
 
-            {/* 倒圆锥特征母线虚线 */}
+            {/* 倒圆锥特征母线虚线 (局部坐标由原点到顶面圆周) */}
             {coneGeneratrixLines.map(([start, end], idx) => (
               <Segment3D
                 key={`cone-line-${idx}`}
@@ -436,7 +449,7 @@ export function SphereDerivationScene({
                   <meshStandardMaterial
                     color={MATH_COLORS.accent}
                     transparent
-                    opacity={0.7}
+                    opacity={0.75}
                     side={THREE.DoubleSide}
                   />
                 </mesh>
@@ -469,72 +482,72 @@ export function SphereDerivationScene({
               </group>
             )}
 
-            {/* 辅助线段：外半径 R 与内半径 h */}
+            {/* 辅助线段：外半径 R 与内半径 h (局部坐标) */}
             {showAuxLines && (
               <>
                 <Segment3D
-                  from={toMathVec3(rightX, 0, 0)}
-                  to={toMathVec3(rightX, R, 0)}
+                  from={toMathVec3(0, 0, 0)}
+                  to={toMathVec3(0, R, 0)}
                   colorKey="textMuted"
                   lineWidth={1.5}
                   dashed
                 />
                 <Segment3D
-                  from={toMathVec3(rightX, h, 0)}
-                  to={toMathVec3(rightX + R, h, 0)}
+                  from={toMathVec3(0, h, 0)}
+                  to={toMathVec3(R, h, 0)}
                   colorKey="paramPrimary"
                   lineWidth={3}
                 />
                 <Segment3D
-                  from={toMathVec3(rightX, h, 0)}
-                  to={toMathVec3(rightX - zuxuan.coneInnerRadius, h, 0)}
+                  from={toMathVec3(0, h, 0)}
+                  to={toMathVec3(-zuxuan.coneInnerRadius, h, 0)}
                   colorKey="paramSecondary"
                   lineWidth={3}
                 />
 
                 <Point3D
-                  position={toMathVec3(rightX, 0, 0)}
+                  position={toMathVec3(0, 0, 0)}
                   colorKey="textMuted"
                   radius={0.045}
                 />
                 <Point3D
-                  position={toMathVec3(rightX, h, 0)}
+                  position={toMathVec3(0, h, 0)}
                   colorKey="paramSecondary"
                   radius={0.045}
                 />
                 <Point3D
-                  position={toMathVec3(rightX + R, h, 0)}
+                  position={toMathVec3(R, h, 0)}
                   colorKey="paramPrimary"
                   radius={0.045}
                 />
                 <Point3D
-                  position={toMathVec3(rightX - zuxuan.coneInnerRadius, h, 0)}
+                  position={toMathVec3(-zuxuan.coneInnerRadius, h, 0)}
                   colorKey="paramSecondary"
                   radius={0.045}
                 />
 
                 <PointLabel3D
-                  position={toMathVec3(rightX, 0, 0)}
+                  position={toMathVec3(0, -0.2, 0)}
                   text="O_2"
                   colorKey="textMuted"
                   fontSize={0.21 * fontScale}
                 />
                 <PointLabel3D
-                  position={toMathVec3(rightX + 0.15, h, 0)}
+                  position={toMathVec3(0.15, h + 0.1, 0)}
                   text="O'_2"
                   colorKey="paramSecondary"
                   fontSize={0.21 * fontScale}
                 />
                 <PointLabel3D
-                  position={toMathVec3(rightX + R + 0.15, h, 0)}
+                  position={toMathVec3(R + 0.15, h + 0.1, 0)}
                   text="Q_1"
                   colorKey="paramPrimary"
                   fontSize={0.21 * fontScale}
                 />
                 <PointLabel3D
                   position={toMathVec3(
-                    rightX - zuxuan.coneInnerRadius - 0.15,
-                    h,
+                    -zuxuan.coneInnerRadius - 0.15,
+                    h + 0.1,
                     0,
                   )}
                   text="Q_2"
@@ -545,7 +558,7 @@ export function SphereDerivationScene({
             )}
 
             <CompoundLabel3D
-              position={toMathVec3(rightX, R + 0.35, 0)}
+              position={toMathVec3(0, R + 0.35, 0)}
               base="挖锥柱体"
               subscript="V₂"
               colorKey="secondary"
@@ -553,7 +566,7 @@ export function SphereDerivationScene({
             />
           </group>
 
-          {/* ════════════════ 跨体等高连线（说明 h 严格一致） ════════════════ */}
+          {/* ════════════════ 跨体等高连线（全局世界坐标） ════════════════ */}
           {showAuxLines && (
             <Segment3D
               from={toMathVec3(leftX + zuxuan.hemisphereCutRadius, h, 0)}
@@ -568,17 +581,15 @@ export function SphereDerivationScene({
         </group>
       ) : (
         // ─────────────────────────────────────────────────────────────
-        // 模式二：球面微锥体金字塔累加场景
+        // 模式二：球面微小棱锥分割累加场景 (以平代曲、以锥积球)
         // ─────────────────────────────────────────────────────────────
         <group position={[0, 0, 0]}>
           <mesh>
-            <sphereGeometry
-              args={[R, subdivisions, Math.round(subdivisions / 2)]}
-            />
+            <sphereGeometry args={[R, subdivisions * 2, subdivisions]} />
             <meshStandardMaterial
               color={MATH_COLORS.primary}
               transparent
-              opacity={0.2}
+              opacity={0.18}
               wireframe={true}
               roughness={0.4}
             />
@@ -590,17 +601,18 @@ export function SphereDerivationScene({
             radius={0.05}
           />
           <PointLabel3D
-            position={toMathVec3(0, 0, 0)}
+            position={toMathVec3(0, -0.25, 0)}
             text="O"
             colorKey="textMuted"
-            fontSize={0.21 * fontScale}
+            fontSize={0.22 * fontScale}
           />
 
+          {/* 抽出的代表性微棱锥 */}
           <mesh geometry={pyramidFaceGeo}>
             <meshStandardMaterial
               color={MATH_COLORS.highlight}
               transparent
-              opacity={0.8}
+              opacity={0.85}
               roughness={0.2}
               side={THREE.DoubleSide}
             />
@@ -616,6 +628,7 @@ export function SphereDerivationScene({
             />
           ))}
 
+          {/* 微棱锥底面多边形轮廓 */}
           <lineLoop>
             <bufferGeometry>
               <bufferAttribute
@@ -631,6 +644,7 @@ export function SphereDerivationScene({
 
           {showAuxLines && (
             <>
+              {/* 球心到微底面中心的高线 R */}
               <Segment3D
                 from={toMathVec3(0, 0, 0)}
                 to={toMathVec3(
@@ -650,7 +664,7 @@ export function SphereDerivationScene({
                   poppedCenter[1] * 1.15,
                   poppedCenter[2] * 1.15,
                 )}
-                text="ΔS"
+                text="ΔS_i"
                 colorKey="highlight"
                 fontSize={0.22 * fontScale}
               />
