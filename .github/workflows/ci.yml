@@ -36,7 +36,11 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: E2E (formula render smoke)
-        run: npx playwright test
+        # 必须走 test:e2e：它内部先 `vite build` 产出 dist/ 再跑 Playwright。
+        # playwright.config.ts 的 webServer 是 `vite preview`，只认 dist/；而 dist/ 不入库
+        # （.gitignore），本 job 若不先构建，vite preview 会因找不到产物而启动失败。
+        # 不能用 `npm run build`（= electron-vite build）：它产出 out/renderer/，dist/ 仍为空。
+        run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
