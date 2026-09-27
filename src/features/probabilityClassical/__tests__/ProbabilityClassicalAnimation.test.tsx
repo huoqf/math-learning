@@ -89,7 +89,7 @@ describe("ProbabilityClassicalAnimation 页面集成与三屏交互测试", () =
   it("摸球情景下展示抽样方式切换", () => {
     renderWithRouter();
     fireEvent.click(screen.getByText("摸球正难则反"));
-    expect(screen.getByText("不放回抽样 (n=20)")).toBeInTheDocument();
-    expect(screen.getByText("有放回抽样 (n=25)")).toBeInTheDocument();
+    expect(screen.getByText("不放回抽样（n=20）")).toBeInTheDocument();
+    expect(screen.getByText("有放回抽样（n=25）")).toBeInTheDocument();
   });
 });

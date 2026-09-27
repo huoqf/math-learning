@@ -17,11 +17,20 @@ export interface ProbabilityClassicalSceneProps {
   activeStep?: number;
 }
 
+/**
+ * 中屏是纯 SVG <text>，无法走 KaTeX 混排；而 eventName 携带 $…$ 定界符（供右屏 KaTeX 消费），
+ * 直接渲染会让学生看到字面美元符号。此处按右屏 mathPanelUtils 的同款正则剥离定界符，
+ * 保证同一字段在两屏显示一致（如 `点数和等于 $7$` → `点数和等于 7`）。
+ */
+const stripMathDelimiters = (text: string) =>
+  text.replace(/\$([^$\n]*)\$/g, "$1");
+
 export const ProbabilityClassicalScene: React.FC<
   ProbabilityClassicalSceneProps
 > = ({ modelType, mathRes, activeView, fontScale, activeStep = 1 }) => {
   const { totalCount, eventCount, samplePoints, treeNodes, eventName } =
     mathRes;
+  const plainEventName = stripMathDelimiters(eventName);
 
   // 1. 网格矩阵视图布局参数 (Matrix View)
   const matrixLayout = useMemo(() => {
@@ -143,7 +152,7 @@ export const ProbabilityClassicalScene: React.FC<
           fontSize={fontScale(14)}
           fontWeight="600"
         >
-          {`古典概型：${eventName}`}
+          {`古典概型：${plainEventName}`}
         </text>
         <text
           x={0}

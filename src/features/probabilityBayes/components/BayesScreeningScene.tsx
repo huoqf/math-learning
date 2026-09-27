@@ -86,6 +86,11 @@ export function BayesScreeningScene({
   const totalPositives = truePosCount + falsePosCount;
   const posteriorPercent =
     totalPositives > 0 ? (truePosCount / totalPositives) * 100 : 0;
+  // 理论贝叶斯后验值（精确公式，与右屏同源）与点阵模拟频率的偏差。
+  // 点阵是「1000 人整数样本」的模拟，人数取整会放大真阳性数（如 9.5 人进为 10 人），
+  // 因此两者不可用等号连接，必须分别标注口径。
+  const theoreticalPosteriorPercent = bayesData.pPosteriorD * 100;
+  const latticeGap = Math.abs(posteriorPercent - theoreticalPosteriorPercent);
 
   return (
     <g>
@@ -288,7 +293,7 @@ export function BayesScreeningScene({
           fontWeight="bold"
           fill={MATH_COLORS.derivative}
         >
-          1. 阳性检出群体构成 (共 {totalPositives} 件/人)
+          1. 阳性检出群体构成（点阵模拟，共 {totalPositives} 件/人）
         </text>
 
         {/* 比例条形图 */}
@@ -428,13 +433,13 @@ export function BayesScreeningScene({
             />
           </g>
 
-          {/* 贝叶斯后验算式框 */}
+          {/* 贝叶斯后验算式框：点阵模拟频率与理论值分列，取消伪等号 */}
           <g transform="translate(0, 92)">
             <rect
               x={0}
               y={0}
               width={335}
-              height={125}
+              height={140}
               rx={8}
               fill={withAlpha(MATH_COLORS.derivative, 0.06)}
               stroke={withAlpha(MATH_COLORS.derivative, 0.25)}
@@ -442,38 +447,56 @@ export function BayesScreeningScene({
             />
             <text
               x={12}
-              y={24}
+              y={22}
               fontSize={fontScale(12)}
               fontWeight="bold"
               fill={MATH_COLORS.derivative}
             >
-              后验确诊率 P({targetSymbol}|+) = 真阳性数 / 总阳性数
+              后验{isFactory ? "次品率" : "确诊率"} P({targetSymbol}|+)
+              {"："}点阵模拟与理论值
             </text>
             <text
               x={12}
-              y={56}
-              fontSize={fontScale(14)}
-              fontWeight="bold"
+              y={50}
+              fontSize={fontScale(12)}
               fill={MATH_COLORS.labelText}
             >
-              = {truePosCount} / ({truePosCount} + {falsePosCount}) ={" "}
-              <tspan fill={MATH_COLORS.derivative} fontSize={fontScale(17)}>
-                {posteriorPercent.toFixed(2)}%
+              ① 点阵模拟频率 = {truePosCount} / ({truePosCount} +{" "}
+              {falsePosCount}) ={" "}
+              <tspan fontWeight="bold">{posteriorPercent.toFixed(2)}%</tspan>
+            </text>
+            <text
+              x={12}
+              y={74}
+              fontSize={fontScale(12)}
+              fill={MATH_COLORS.labelText}
+            >
+              ② 理论值 = P({targetSymbol})P(+|{targetSymbol}) / P(+) ={" "}
+              <tspan fontWeight="bold" fill={MATH_COLORS.derivative}>
+                {theoreticalPosteriorPercent.toFixed(2)}%
               </tspan>
             </text>
             <text
               x={12}
-              y={84}
-              fontSize={fontScale(11)}
+              y={96}
+              fontSize={fontScale(10)}
               fill={MATH_COLORS.textMuted}
             >
-              分子真阳性联合概率：
-              {(bayesData.pPriorD * bayesData.pSensitivity * 100).toFixed(2)}%
+              偏差 |① − ②| = {latticeGap.toFixed(2)}
+              %（点阵按整数人数取整所致）
             </text>
             <text
               x={12}
-              y={106}
-              fontSize={fontScale(11)}
+              y={116}
+              fontSize={fontScale(10)}
+              fill={MATH_COLORS.textMuted}
+            >
+              样本量越大 ① 越逼近 ②；卷面计算一律以 ② 为准。
+            </text>
+            <text
+              x={12}
+              y={134}
+              fontSize={fontScale(10.5)}
               fill={MATH_COLORS.paramTertiary}
               fontWeight="bold"
             >

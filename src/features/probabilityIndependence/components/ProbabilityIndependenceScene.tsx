@@ -50,29 +50,37 @@ export const ProbabilityIndependenceScene: React.FC<
     [dicePresetA, dicePresetB],
   );
 
-  // Venn 几何尺寸换算（在 SVG 视口像素坐标系中居中排布）
+  // Venn 几何尺寸换算（设计坐标系居中排布）
+  // AnimationSvgCanvas 外层已套 translate(tx ty) scale(s)（见 useViewport），因此本组件内
+  // 输出的一律是「设计坐标」；visibleW/H 是容器 CSS 像素，必须经 scale 折算，
+  // 否则容器尺寸一变（如 1680×1300 时 s=2）整张图会随之偏移并被裁切。
   const rectOmega = useMemo(() => {
     const w = 740;
     const h = 500;
-    const x = (vp.visibleW - w) / 2;
-    const y = (vp.visibleH - h) / 2;
+    const x = vp.designLeft + (vp.designVisibleW - w) / 2;
+    const y = vp.designTop + (vp.designVisibleH - h) / 2;
     return { x, y, width: w, height: h };
-  }, [vp.visibleW, vp.visibleH]);
+  }, [vp.designLeft, vp.designTop, vp.designVisibleW, vp.designVisibleH]);
 
   // 圆半径正比于 sqrt(P)
   const rA = Math.max(60, Math.sqrt(vennRes.pA) * 170);
   const rB = Math.max(60, Math.sqrt(vennRes.pB) * 170);
 
-  // 严格依据交集测度 P(AB) 解算几何两圆心距离：
-  // 当 P(AB) = 0 时，两圆分离 (currentD = rA + rB + 40)
-  // 当 P(AB) 达到最大重叠 min(pA, pB) 时，两圆最大内聚 (currentD = |rA - rB| + 15)
-  const maxD = rA + rB + 40;
-  const minD = Math.max(15, Math.abs(rA - rB) + 15);
+  // 严格依据交集测度 P(AB) 解算几何两圆心距离（三段契约）：
+  //  ① P(AB) = 0（互斥）      ⇒ 两圆相离，currentD = rA + rB + 40；
+  //  ② P(AB) → 0⁺             ⇒ 两圆恰好外切，currentD = rA + rB（保证「有交集必有交叠」的数形一致）；
+  //  ③ P(AB) 达最大重叠 min(pA, pB) ⇒ 两圆最大内聚，currentD = |rA − rB| + 15。
+  // 旧实现只在 ① 与 ③ 之间线性插值，导致 P(AB) 低于满量程约 27.6% 时两圆已几何分离，
+  // 出现「数值有正交集、图形却无交叠」的数形分裂。
+  const outerD = rA + rB + 40;
+  const tangentD = rA + rB;
+  const innerD = Math.max(15, Math.abs(rA - rB) + 15);
   const maxPossiblePAB = Math.min(vennRes.pA, vennRes.pB);
-  const currentD =
-    maxPossiblePAB > 1e-4
-      ? maxD - (vennRes.pAB / maxPossiblePAB) * (maxD - minD)
-      : maxD;
+  const currentD = vennRes.isMutuallyExclusive
+    ? outerD
+    : maxPossiblePAB > 1e-4
+      ? tangentD - (vennRes.pAB / maxPossiblePAB) * (tangentD - innerD)
+      : tangentD;
 
   const centerX = rectOmega.x + rectOmega.width / 2;
   const centerY = rectOmega.y + rectOmega.height / 2 + 10;
@@ -81,6 +89,16 @@ export const ProbabilityIndependenceScene: React.FC<
   const centerAY = centerY;
   const centerBX = centerX + currentD / 2;
   const centerBY = centerY;
+
+  // 交集标注几何：透镜（两圆交叠区）横向宽度与质心横向锚点。
+  // 交叠细窄时标签必须落在圆外，用引线回指质心，避免学生误读标注位置。
+  const overlapColor = vennRes.isIndependent
+    ? MATH_COLORS.primary
+    : MATH_COLORS.paramTertiary;
+  const lensWidth = Math.max(0, rA + rB - currentD);
+  const lensAnchorX = centerX + (rA - rB) / 2;
+  const needLeader = !vennRes.isMutuallyExclusive && lensWidth < 26;
+  const overlapLabelTopY = needLeader ? centerY - 44 : centerY - 10;
 
   return (
     <g>
@@ -193,17 +211,8 @@ export const ProbabilityIndependenceScene: React.FC<
               cx={centerBX}
               cy={centerBY}
               r={rB}
-              fill={withAlpha(
-                vennRes.isIndependent
-                  ? MATH_COLORS.primary
-                  : MATH_COLORS.paramTertiary,
-                0.45,
-              )}
-              stroke={
-                vennRes.isIndependent
-                  ? MATH_COLORS.primary
-                  : MATH_COLORS.paramTertiary
-              }
+              fill={withAlpha(overlapColor, 0.45)}
+              stroke={overlapColor}
               strokeWidth={2}
             />
           </g>
@@ -250,33 +259,39 @@ export const ProbabilityIndependenceScene: React.FC<
             P(B) = {formatMathProb(vennRes.pB)}
           </text>
 
-          {/* 交集文字标注 */}
-          {vennRes.pAB > 0.01 ? (
+          {/* 交集文字标注：判据取数学层的 isMutuallyExclusive（P(AB) ≈ 0），
+              仅在真正互斥时提示 A ∩ B = ∅；只要 P(AB) > 0 就必须标注交集，
+              细窄交集用「质心锚点 + 引线」对位，避免标签浮于两圆之间的空隙。 */}
+          {!vennRes.isMutuallyExclusive ? (
             <g>
+              <circle cx={lensAnchorX} cy={centerY} r={4} fill={overlapColor} />
+              {needLeader && (
+                <line
+                  x1={lensAnchorX}
+                  y1={centerY - 5}
+                  x2={centerX}
+                  y2={overlapLabelTopY + 8}
+                  stroke={overlapColor}
+                  strokeWidth={1.2}
+                  strokeDasharray="3 2"
+                />
+              )}
               <text
                 x={centerX}
-                y={centerY - 10}
+                y={overlapLabelTopY}
                 textAnchor="middle"
                 fontSize={fontScale(16)}
                 fontWeight="bold"
-                fill={
-                  vennRes.isIndependent
-                    ? MATH_COLORS.primary
-                    : MATH_COLORS.paramTertiary
-                }
+                fill={overlapColor}
               >
                 AB
               </text>
               <text
                 x={centerX}
-                y={centerY + 16}
+                y={overlapLabelTopY + 26}
                 textAnchor="middle"
                 fontSize={fontScale(13)}
-                fill={
-                  vennRes.isIndependent
-                    ? MATH_COLORS.primary
-                    : MATH_COLORS.paramTertiary
-                }
+                fill={overlapColor}
               >
                 P(AB) = {formatMathProb(vennRes.pAB)}
               </text>

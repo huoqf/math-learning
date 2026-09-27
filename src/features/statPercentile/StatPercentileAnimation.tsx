@@ -23,6 +23,21 @@ import {
 } from "@/data/registries/statPercentile";
 import type { StudyMode } from "@/data/registries/statPercentile";
 
+/**
+ * 分层抽样防呆联动：抽样总数 n 不得超过各层总体人数之和（n ≤ N）。
+ * 与超几何分布「M / 样本数 ≤ 总体数 N」同款参数降维钳制，
+ * 杜绝出现「从 100 人里抽 150 人」这类在物理与题设上都不存在的情景。
+ */
+function clampSampleNToStrata(
+  next: Record<string, number>,
+): Record<string, number> {
+  const strataTotalN = (next.N1 ?? 0) + (next.N2 ?? 0) + (next.N3 ?? 0);
+  if (strataTotalN > 0 && (next.sampleN ?? 0) > strataTotalN) {
+    return { ...next, sampleN: strataTotalN };
+  }
+  return next;
+}
+
 export function StatPercentileAnimation() {
   // 一级探究模式：'histogram' | 'cumulative' | 'stratified'
   const [studyMode, setStudyMode] = useState<StudyMode>("histogram");
@@ -76,18 +91,17 @@ export function StatPercentileAnimation() {
     (key: string, value: number) => {
       // 若当前在两层合并情景下调参，保持两层结构（N3=0），不弹回三层
       if (activeScenario === "twoStrata") {
-        setParams((prev) => ({
-          ...prev,
-          N3: 0,
-          var3: 0,
-          [key]: value,
-        }));
+        setParams((prev) =>
+          clampSampleNToStrata({
+            ...prev,
+            N3: 0,
+            var3: 0,
+            [key]: value,
+          }),
+        );
       } else {
         setActiveScenario("free");
-        setParams((prev) => ({
-          ...prev,
-          [key]: value,
-        }));
+        setParams((prev) => clampSampleNToStrata({ ...prev, [key]: value }));
       }
     },
     [activeScenario],
@@ -146,17 +160,24 @@ export function StatPercentileAnimation() {
     const allowedKeys =
       currentScenario.visibleKeys ?? defaultKeysByMode[studyMode];
 
+    // 分层抽样 n ≤ N 的前提在参数面板上同步生效：抽样总数上限 = 各层总体人数之和
+    const strataTotalN = (params.N1 ?? 0) + (params.N2 ?? 0) + (params.N3 ?? 0);
+
     return allowedKeys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        const maxVal =
+          studyMode === "stratified" && key === "sampleN" && strataTotalN > 0
+            ? Math.min(meta.max, strataTotalN)
+            : meta.max;
         return {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
-          max: meta.max,
+          max: maxVal,
           step: meta.step ?? 1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,

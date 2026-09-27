@@ -229,13 +229,21 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
     [],
   );
 
-  const drawModeTabs = useMemo(
-    () => [
-      { key: "without_replacement", label: "不放回抽样 (n=20)" },
-      { key: "with_replacement", label: "有放回抽样 (n=25)" },
-    ],
-    [],
-  );
+  // 抽样方式的样本空间总数随红白球数实时联动：n(Ω) = (r+w)(r+w−1)（不放回）/ (r+w)²（有放回）。
+  // 旧实现把默认档 (r=2, w=3) 的 20 / 25 写死进标签，自由探究调参后标签即与真值脱节（如各调 4 时真值 56/64）。
+  const drawModeTabs = useMemo(() => {
+    const totalBalls = params.redBalls + params.whiteBalls;
+    return [
+      {
+        key: "without_replacement",
+        label: `不放回抽样（n=${totalBalls * (totalBalls - 1)}）`,
+      },
+      {
+        key: "with_replacement",
+        label: `有放回抽样（n=${totalBalls ** 2}）`,
+      },
+    ];
+  }, [params.redBalls, params.whiteBalls]);
 
   const handleScenarioChange = useCallback(
     (key: string) => {

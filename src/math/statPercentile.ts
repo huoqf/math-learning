@@ -40,6 +40,10 @@ export interface HistogramStatsResult {
   percentileVal: number;
   /** 指定 p% 百分位落在哪一个 bin 索引 */
   percentileBinIndex: number;
+  /** 全部并列峰值组的组中值（按组序升序）；单峰时长度为 1 */
+  modeValues: number[];
+  /** 是否存在两个及以上彼此不相邻的最高组（多众数 / 双峰分布） */
+  isMultimodal: boolean;
 }
 
 export interface StratifiedResult {
@@ -47,11 +51,13 @@ export interface StratifiedResult {
   totalN: number;
   /** 抽样总数 n */
   sampleN: number;
-  /** 抽样比 f = n / N */
+  /** 抽样比 f = min(1, n / N)：可行前提下即 n / N，超抽样时饱和为 1 */
   samplingRatio: number;
+  /** 抽样总数是否不超过总体人数（n ≤ N）；为 false 时分层抽样在物理意义上不成立 */
+  isFeasible: boolean;
   /** 各层总体人数 N_i */
   strataN: [number, number, number];
-  /** 各层分配抽样数 n_i (和恰好等于 sampleN) */
+  /** 各层分配抽样数 n_i（恒满足 n_i ≤ N_i；可行前提下两者之和恰好等于 sampleN） */
   strataSampleN: [number, number, number];
   /** 各层权重 w_i = N_i / N */
   strataWeights: [number, number, number];
@@ -336,11 +342,17 @@ export function calculateHistogramStats(
     variance += Math.pow(bin.midpoint - mean, 2) * bin.frequency;
   });
 
-  // 众数并列极值契约：当存在多个等高峰（如对称分布中央并列双峰）时，众数取并列顶峰组中值的均值，
+  // 众数并列极值契约：当存在多个等高峰（如对称分布中央并列双峰）时，标量 mode 取并列顶峰组中值的均值，
   // 避免严格取首个峰值把众数人为钉向低分侧而误判为偏态，导致对称分布被误报右偏。
-  const mode =
-    modeIndices.reduce((sum, i) => sum + bins[i].midpoint, 0) /
-    modeIndices.length;
+  // 但多众数分布（双峰）下「众数」本质是一个集合，标量均值恰好落在谷底、不具备代表性，
+  // 故同时输出全部峰值 modeValues 供中屏逐个标注，并置 isMultimodal 供右屏切换文案。
+  const modeValues = modeIndices.map((i) => bins[i].midpoint);
+  // 多众数判据：≥2 个最高组且彼此不相邻（中间至少隔一组），即两峰之间存在真实低谷。
+  // 相邻并列（如 8 组对称基形中央两柱等高）只是分组粒度造成的粗化，不属于双峰分布。
+  const isMultimodal =
+    modeValues.length >= 2 &&
+    modeIndices[modeIndices.length - 1] - modeIndices[0] >= 2;
+  const mode = modeValues.reduce((sum, v) => sum + v, 0) / modeValues.length;
   const median = calculatePercentile(bins, 50).value;
   const q1 = calculatePercentile(bins, 25).value;
   const q3 = calculatePercentile(bins, 75).value;
@@ -358,6 +370,8 @@ export function calculateHistogramStats(
     iqr,
     percentileVal: targetP.value,
     percentileBinIndex: targetP.binIndex,
+    modeValues,
+    isMultimodal,
   };
 }
 
@@ -426,42 +440,50 @@ export function calculateStratifiedSampling(
   var3: number,
 ): StratifiedResult {
   const totalN = N1 + N2 + N3;
-  const ratio = totalN > 0 ? sampleN / totalN : 0;
+  // 分层抽样的物理前提是 n ≤ N：抽样比 f 不得超过 1，否则会推出「从 100 人里抽 150 人」的
+  // 非法分配（n_i > N_i）。此处对 f 做饱和兜底，配合左屏 sampleN 上限联动钳制形成双保险。
+  const isFeasible = totalN > 0 && sampleN <= totalN;
+  const ratio = totalN > 0 ? Math.min(1, sampleN / totalN) : 0;
   const strataN: [number, number, number] = [N1, N2, N3];
   // 仅对人数大于 0 的有效层分配抽样数
   const activeIndices = [0, 1, 2].filter((i) => strataN[i] > 0);
 
-  // 浮点抽样数
+  // 浮点抽样数（f ≤ 1 保证 rawCounts[i] ≤ N_i）
   const rawCounts = [
     N1 > 0 ? N1 * ratio : 0,
     N2 > 0 ? N2 * ratio : 0,
     N3 > 0 ? N3 * ratio : 0,
   ];
 
-  // 初步取整：有效层至少保底 1（在总抽样数足够的前提下）
+  // 初步取整：有效层至少保底 1（在总抽样数足够的前提下），且不得超过该层总体人数 N_i
   const roundedCounts = [0, 0, 0];
   for (const idx of activeIndices) {
     const raw = rawCounts[idx];
-    roundedCounts[idx] = Math.max(1, Math.round(raw));
+    roundedCounts[idx] = Math.min(strataN[idx], Math.max(1, Math.round(raw)));
   }
 
   let roundedSum = roundedCounts.reduce((a, b) => a + b, 0);
   let diff = sampleN - roundedSum;
 
-  // 如果取整有偏差，按小数部分补齐或扣除（仅在有效层中调整）
+  // 如果取整有偏差，按小数部分补齐或扣除（仅在有效层中调整，且恒受 n_i ≤ N_i 约束）
   if (diff !== 0 && activeIndices.length > 0) {
     const remainders = activeIndices.map((i) => ({
       idx: i,
       rem: rawCounts[i] - Math.floor(rawCounts[i]),
     }));
     if (diff > 0) {
-      // 样本不足，优先补在小数部分最大的有效层
+      // 样本不足，优先补在小数部分最大的有效层（已达该层上限 N_i 的层跳过）
       remainders.sort((a, b) => b.rem - a.rem);
       let p = 0;
-      while (diff > 0) {
-        roundedCounts[remainders[p % remainders.length].idx] += 1;
-        diff--;
+      let loopCount = 0;
+      while (diff > 0 && loopCount < 1000) {
+        const target = remainders[p % remainders.length].idx;
+        if (roundedCounts[target] < strataN[target]) {
+          roundedCounts[target] += 1;
+          diff--;
+        }
         p++;
+        loopCount++;
       }
     } else {
       // 样本超出，优先从小数部分最小且样本 > 1 的有效层扣减
@@ -507,6 +529,7 @@ export function calculateStratifiedSampling(
     totalN,
     sampleN,
     samplingRatio: ratio,
+    isFeasible,
     strataN,
     strataSampleN,
     strataWeights,

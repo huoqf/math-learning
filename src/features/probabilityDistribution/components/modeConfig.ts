@@ -81,7 +81,14 @@ export function computeDistResult(
     );
   }
   if (studyMode === "compare") {
-    return computeBinomialDistribution(params.compareSampleN, params.compareP);
+    // 中屏支点必须与两支柱体同源于「实际特征比例」p₀ = M/N。
+    // 直接复用对比函数返回的 binomDist（其内部已用 p₀ = round(N·p)/N 构建），
+    // 杜绝再用设计比例 p 造成支点偏离柱体真实重心、中右两屏数字打架。
+    return computeHypergeometricBinomialComparison(
+      params.compareN,
+      params.compareP,
+      params.compareSampleN,
+    ).binomDist;
   }
   if (studyMode === "linear") {
     return computeBinomialDistribution(params.n, params.p);
@@ -144,10 +151,41 @@ export function computeTransformedDist(
   return undefined;
 }
 
+/**
+ * 决策模式（模式 5）柱状项等距排布契约：首柱 x = 0.8，步长 1.3。
+ * 柱位、X 轴自适应上界必须共用这一组常量，避免出现第二套排布口径。
+ */
+export const DECISION_BAR_FIRST_X = 0.8;
+export const DECISION_BAR_STRIDE = 1.3;
+export const DECISION_BAR_MARGIN = 1.0;
+
+/** 决策模式实际渲染的柱状项数（方案 A 各状态 + 方案 B 各状态） */
+export function getDecisionBarCount(
+  decisionResult?: DecisionScenarioResult,
+): number {
+  return decisionResult
+    ? decisionResult.schemeADist.outcomes.length +
+        decisionResult.schemeBDist.outcomes.length
+    : 4;
+}
+
+/** 决策模式 X 轴自适应上界：末柱横坐标 + 安全边距（与柱位排布同源，随情境柱数自动伸缩） */
+export function getDecisionMaxX(
+  decisionResult?: DecisionScenarioResult,
+): number {
+  const count = getDecisionBarCount(decisionResult);
+  return (
+    DECISION_BAR_FIRST_X +
+    Math.max(0, count - 1) * DECISION_BAR_STRIDE +
+    DECISION_BAR_MARGIN
+  );
+}
+
 /** 4. 数据驱动的自适应 X 轴范围 */
 export function computeXRange(
   studyMode: StudyMode,
   params: Record<string, number>,
+  decisionResult?: DecisionScenarioResult,
 ): [number, number] {
   if (studyMode === "compare") {
     const n = params.compareSampleN || 4;
@@ -162,7 +200,7 @@ export function computeXRange(
     return [-0.8, n + 0.8];
   }
   if (studyMode === "decision") {
-    return [-0.3, 5.0];
+    return [-0.3, getDecisionMaxX(decisionResult)];
   }
   if (studyMode === "general") {
     return [-0.8, 3.8];

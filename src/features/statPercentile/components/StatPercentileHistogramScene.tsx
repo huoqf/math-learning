@@ -21,6 +21,9 @@ interface StatPercentileHistogramSceneProps {
   fontScale?: (v: number) => number;
 }
 
+/** 并列众数的序号下标（双峰场景逐个标注：众数₁、众数₂ …） */
+const MODE_SUBSCRIPT = ["₁", "₂", "₃", "₄"];
+
 export const StatPercentileHistogramScene: React.FC<
   StatPercentileHistogramSceneProps
 > = ({ bins, stats, scale, vp, onParamChange, fontScale = (v) => v }) => {
@@ -163,7 +166,11 @@ export const StatPercentileHistogramScene: React.FC<
           const pBR = mathToDesign(bin.xMax, 0, scale);
           const widthPx = Math.abs(pBR.x - pTL.x);
           const heightPx = Math.abs(pBR.y - pTL.y);
-          const isHighest = Math.abs(bin.midpoint - stats.mode) < 0.1;
+          // 并列峰契约：命中任一并列峰值即视为最高组，双峰分布下两峰顶柱同时高亮，
+          // 绝不落在谷底柱上（众数标量在双峰时等于两峰组中值均值，恰好指向谷底）。
+          const isHighest = stats.modeValues.some(
+            (modeVal) => Math.abs(bin.midpoint - modeVal) < 0.1,
+          );
 
           return (
             <g key={`histogram-bin-${i}`}>
@@ -271,7 +278,10 @@ export const StatPercentileHistogramScene: React.FC<
 
       {/* ────────────────── 4. 三大特征量线系统 (众数/中位数/平均数) ────────────────── */}
       {(() => {
+        // 仅当众数唯一、且三量确实重合时才允许出现「三量相等」合并卡；
+        // 多众数（双峰）时众数是一个集合，其标量均值恰好落在谷底，绝不可与中位/均值合并。
         const isCoincident =
+          !stats.isMultimodal &&
           Math.abs(stats.mode - stats.mean) < 0.35 &&
           Math.abs(stats.median - stats.mean) < 0.35;
 
@@ -339,9 +349,9 @@ export const StatPercentileHistogramScene: React.FC<
           );
         }
 
-        // 非对称分布时：按高低梯次分层渲染，互不遮挡
-        const ptMode = mathToDesign(stats.mode, 0, scale);
-        const yModeTopPx = mathToDesign(stats.mode, 0.044, scale).y;
+        // 非对称 / 多众数分布时：按高低梯次分层渲染，互不遮挡
+        const peakValues = stats.modeValues;
+        const yModeTopPx = mathToDesign(peakValues[0], 0.044, scale).y;
 
         const ptMed = mathToDesign(stats.median, 0, scale);
         const yMedTopPx = mathToDesign(stats.median, 0.048, scale).y;
@@ -351,38 +361,49 @@ export const StatPercentileHistogramScene: React.FC<
 
         return (
           <g key="separated-indicators">
-            {/* 1. 众数 Mo (绿色虚线 + 倒三角标注) */}
-            <line
-              x1={ptMode.x}
-              y1={yModeTopPx}
-              x2={ptMode.x}
-              y2={ptMode.y}
-              stroke={MATH_COLORS.paramTertiary}
-              strokeWidth={2}
-              strokeDasharray="4 2"
-            />
-            <polygon
-              points={`${ptMode.x},${yModeTopPx + 14} ${ptMode.x - 5},${yModeTopPx + 5} ${ptMode.x + 5},${yModeTopPx + 5}`}
-              fill={MATH_COLORS.paramTertiary}
-            />
-            <rect
-              x={ptMode.x - 36}
-              y={yModeTopPx - 16}
-              width={72}
-              height={18}
-              rx={4}
-              fill={MATH_COLORS.paramTertiary}
-            />
-            <text
-              x={ptMode.x}
-              y={yModeTopPx - 3}
-              textAnchor="middle"
-              fill={CANVAS_COLORS.white}
-              fontSize={fontScale(9.5)}
-              fontWeight="bold"
-            >
-              众数={stats.mode.toFixed(1)}
-            </text>
+            {/* 1. 众数 Mo (绿色虚线 + 倒三角标注)：双峰时逐个并列峰顶各标一枚，避免单一标量落在谷底 */}
+            {peakValues.map((modeVal, peakIdx) => {
+              const ptMode = mathToDesign(modeVal, 0, scale);
+              const isMulti = peakValues.length > 1;
+              const labelWidth = isMulti ? 84 : 72;
+              return (
+                <g key={`mode-marker-${peakIdx}`}>
+                  <line
+                    x1={ptMode.x}
+                    y1={yModeTopPx}
+                    x2={ptMode.x}
+                    y2={ptMode.y}
+                    stroke={MATH_COLORS.paramTertiary}
+                    strokeWidth={2}
+                    strokeDasharray="4 2"
+                  />
+                  <polygon
+                    points={`${ptMode.x},${yModeTopPx + 14} ${ptMode.x - 5},${yModeTopPx + 5} ${ptMode.x + 5},${yModeTopPx + 5}`}
+                    fill={MATH_COLORS.paramTertiary}
+                  />
+                  <rect
+                    x={ptMode.x - labelWidth / 2}
+                    y={yModeTopPx - 16}
+                    width={labelWidth}
+                    height={18}
+                    rx={4}
+                    fill={MATH_COLORS.paramTertiary}
+                  />
+                  <text
+                    x={ptMode.x}
+                    y={yModeTopPx - 3}
+                    textAnchor="middle"
+                    fill={CANVAS_COLORS.white}
+                    fontSize={fontScale(9.5)}
+                    fontWeight="bold"
+                  >
+                    {isMulti
+                      ? `众数${MODE_SUBSCRIPT[peakIdx] ?? peakIdx + 1}=${modeVal.toFixed(1)}`
+                      : `众数=${modeVal.toFixed(1)}`}
+                  </text>
+                </g>
+              );
+            })}
 
             {/* 2. 中位数 Me (橙色虚线，面积二等分线) */}
             <line

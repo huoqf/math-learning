@@ -48,7 +48,9 @@ export function buildStatPercentilePanel(
   );
 
   if (studyMode === "histogram") {
-    const isBimodal = Math.abs(shift - 999) < 0.1;
+    // 双峰形态与多众数结构同源判定：一律取自 calculateHistogramStats 的 isMultimodal，
+    // 不再单独判断 shift === 999，避免出现第二套形态判据。
+    const isBimodal = stats.isMultimodal;
     const skewAnalysis = evaluateSkewness(
       stats.mode,
       stats.median,
@@ -56,6 +58,14 @@ export function buildStatPercentilePanel(
       isBimodal,
     );
     const skewText = `${skewAnalysis.title}: ${skewAnalysis.relationText}`;
+    // 多众数（双峰）下「众数」是集合而非单值：标量 stats.mode 恰落在两峰之间的谷底，
+    // 仅作兼容标量，右屏条目与推导链必须披露全部并列局部众数。
+    const modeInline = isBimodal
+      ? stats.modeValues.map((v) => v.toFixed(1)).join(" 与 ")
+      : stats.mode.toFixed(1);
+    const modeLatex = isBimodal
+      ? stats.modeValues.map((v) => v.toFixed(1)).join(" \\text{ 与 } ")
+      : stats.mode.toFixed(1);
 
     return {
       quantities: [
@@ -65,8 +75,10 @@ export function buildStatPercentilePanel(
           color: MATH_COLORS.axis,
         },
         {
-          label: "估算众数 Mo (最高组中点)",
-          value: `${stats.mode.toFixed(1)}`,
+          label: isBimodal
+            ? "估算众数 Mo (并列局部众数)"
+            : "估算众数 Mo (最高组中点)",
+          value: modeInline,
           color: MATH_COLORS.paramTertiary,
           highlight: "positive",
         },
@@ -161,16 +173,17 @@ s^2 &\\approx \\sum_{i=1}^k (x_{\\text{mid}, i} - \\bar{x})^2 \\cdot f_i
         {
           step: 2,
           title: "建模联立 · 组中值加权估算均值与众数",
-          latex: `\\bar{x} \\approx \\sum_{i=1}^{${bins.length}} x_{\\text{mid}, i} f_i = ${stats.mean.toFixed(2)}, \\quad M_o = ${stats.mode.toFixed(1)}`,
-          detail:
-            "均值等于各组组中值与该组频率乘积的累加和（力学力矩重心）；众数取最高矩形底边区间的中点值。",
+          latex: `\\bar{x} \\approx \\sum_{i=1}^{${bins.length}} x_{\\text{mid}, i} f_i = ${stats.mean.toFixed(2)}, \\quad M_o = ${modeLatex}`,
+          detail: isBimodal
+            ? "均值等于各组组中值与该组频率乘积的累加和（力学力矩重心）；双峰分布下最高矩形有两处，众数为两个并列局部众数（不唯一），不可用单一数值代表总体集中趋势。"
+            : "均值等于各组组中值与该组频率乘积的累加和（力学力矩重心）；众数取最高矩形底边区间的中点值。",
           rubric:
             "【高考采分点】正确列出各组组中值与对应频率的加权和并计算均值与众数，得 2 分。",
         },
         {
           step: 3,
           title: "求解反思 · 面积二等分求中位数与偏态评估",
-          latex: `M_o = ${stats.mode.toFixed(1)}, \\quad M_e = ${stats.median.toFixed(2)}, \\quad \\bar{x} = ${stats.mean.toFixed(2)} \\implies ${skewAnalysis.relationLatex}`,
+          latex: `M_o = ${modeLatex}, \\quad M_e = ${stats.median.toFixed(2)}, \\quad \\bar{x} = ${stats.mean.toFixed(2)} \\implies ${skewAnalysis.relationLatex}`,
           detail: `按 $\\bar{x}$ 与 $M_e$ 的相对位置判定：当前总体呈现${skewAnalysis.title}（${skewAnalysis.relationText}）。${skewAnalysis.detail}`,
           rubric:
             "【高考采分点】根据面积平分线求出中位数并结合特征量给出形态判定，得 2 分。",
@@ -373,6 +386,21 @@ s^2 &= w_1 s_1^2 + w_2 s_2^2 + w_1 w_2 (\\bar{x}_1 - \\bar{x}_2)^2
         ? [allTheorems[2], allTheorems[0], allTheorems[1]]
         : allTheorems;
 
+    const varianceWarning = {
+      text: "特别提醒：总体方差 $s^2$ 绝非简单的 $\\sum w_i s_i^2$！必须加上组间均值偏差项 $\\sum w_i (\\bar{x}_i - \\bar{x})^2$。",
+      level: "warning" as const,
+    };
+    // 数学层兜底：正常情况下左屏已把 n 钳制在 N 以内，此处仅在参数被程序化写入非法值时兜底提示。
+    const stratWarnings = stratResult.isFeasible
+      ? [varianceWarning]
+      : [
+          {
+            text: `参数不合法：抽样总数 $n = ${stratResult.sampleN}$ 已超过总体总人数 $N = ${stratResult.totalN}$。分层抽样必须满足 $n \\le N$，请调小抽取样本量或调大各层总体人数。`,
+            level: "danger" as const,
+          },
+          varianceWarning,
+        ];
+
     return {
       quantities: [
         {
@@ -429,12 +457,7 @@ s^2 &= w_1 s_1^2 + w_2 s_2^2 + w_1 w_2 (\\bar{x}_1 - \\bar{x}_2)^2
           importance: "gaokao",
         },
       ],
-      warnings: [
-        {
-          text: "特别提醒：总体方差 $s^2$ 绝非简单的 $\\sum w_i s_i^2$！必须加上组间均值偏差项 $\\sum w_i (\\bar{x}_i - \\bar{x})^2$。",
-          level: "warning",
-        },
-      ],
+      warnings: stratWarnings,
       reasoningSteps: [
         {
           step: 1,

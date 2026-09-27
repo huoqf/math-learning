@@ -2,6 +2,7 @@ import type { DecisionScenarioResult } from "@/math/probabilityDistribution";
 import { mathToDesign, type Point } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
+import { DECISION_BAR_FIRST_X, DECISION_BAR_STRIDE } from "./modeConfig";
 
 interface ProbabilityDistributionDecisionSceneProps {
   decisionResult: DecisionScenarioResult;
@@ -72,7 +73,7 @@ export function ProbabilityDistributionDecisionScene({
         ];
 
         return allItems.map((item, idx) => {
-          const posXVal = 0.8 + idx * 1.3;
+          const posXVal = DECISION_BAR_FIRST_X + idx * DECISION_BAR_STRIDE;
           const topPos = mathToDesign(posXVal, item.p, scale);
           const bPos = mathToDesign(posXVal, 0, scale);
           const height = Math.abs(bPos.y - topPos.y);

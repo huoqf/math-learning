@@ -115,8 +115,8 @@ export function ProbabilityDistributionAnimation() {
 
   // 4. 数据驱动的自适应坐标范围
   const xRange = useMemo(
-    () => computeXRange(studyMode, params),
-    [studyMode, params],
+    () => computeXRange(studyMode, params, decisionResult),
+    [studyMode, params, decisionResult],
   );
   const yRange = useMemo(() => computeYRange(studyMode), [studyMode]);
 

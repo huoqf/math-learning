@@ -12,6 +12,7 @@ import { ProbabilityDistributionLinearScene } from "./ProbabilityDistributionLin
 import { ProbabilityDistributionBarScene } from "./ProbabilityDistributionBarScene";
 import { ProbabilityDistributionCompareScene } from "./ProbabilityDistributionCompareScene";
 import { ProbabilityDistributionDecisionScene } from "./ProbabilityDistributionDecisionScene";
+import { getDecisionMaxX } from "./modeConfig";
 
 interface ProbabilityDistributionSceneProps {
   distResult: DistributionResult;
@@ -61,7 +62,8 @@ export function ProbabilityDistributionScene({
       return comparisonResult.sampleN + 0.6;
     }
     if (studyMode === "decision") {
-      return 4.8;
+      // 与 computeXRange 的决策分支同源：上界随情境柱数（质检 4 柱 / 投资 3 柱）自动伸缩
+      return getDecisionMaxX(decisionResult);
     }
     if (studyMode === "linear" && transformedDist) {
       const allX = [
@@ -71,7 +73,7 @@ export function ProbabilityDistributionScene({
       return Math.max(...allX) + 0.8;
     }
     return Math.max(...outcomes.map((o) => o.x), 0) + 0.6;
-  }, [studyMode, comparisonResult, transformedDist, outcomes]);
+  }, [studyMode, comparisonResult, decisionResult, transformedDist, outcomes]);
 
   const minXVal = useMemo(() => {
     if (studyMode === "linear" && transformedDist) {
