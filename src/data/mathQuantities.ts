@@ -43,6 +43,7 @@ import {
   buildAdvancedSpherePanel,
   buildSpatialDistancePanel,
   buildPyramidDerivationPanel,
+  buildObliqueDrawingPanel,
 } from "./builders/solidGeometry";
 import { buildSphereDerivationPanel } from "./builders/solidSphereDerivation";
 import { buildVector3DBasisPanel } from "./builders/vector3d";
@@ -218,6 +219,8 @@ export function buildMathQuantities(
       return buildAdvancedSpherePanel(params, config);
     case "anim-solid-rotation-body":
       return buildRotationBodyPanel(params, config);
+    case "anim-solid-oblique-drawing":
+      return buildObliqueDrawingPanel(params, config);
     case "anim-solid-pyramid-derivation":
       return buildPyramidDerivationPanel(params, config);
     case "anim-solid-sphere-derivation":

@@ -26,3 +26,4 @@ export { buildParametricPointPanel } from "./solidParametricPoint";
 export { buildAdvancedSpherePanel } from "./solidAdvancedSphere";
 export { buildSpatialDistancePanel } from "./solidSpatialDistance";
 export { buildPyramidDerivationPanel } from "./solidPyramidDerivation";
+export { buildObliqueDrawingPanel } from "./solidObliqueDrawing";

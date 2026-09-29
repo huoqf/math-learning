@@ -234,6 +234,10 @@ import {
   solidPyramidDerivationLoader,
 } from "@/features/solidPyramidDerivation/meta";
 import {
+  solidObliqueDrawingNode,
+  solidObliqueDrawingLoader,
+} from "@/features/solidObliqueDrawing/meta";
+import {
   solidSphereDerivationNode,
   solidSphereDerivationLoader,
 } from "@/features/solidSphereDerivation/meta";
@@ -425,6 +429,10 @@ export const routeEntries: RouteEntry[] = [
     node: solidRotationBodyNode,
     loader: solidRotationBodyLoader,
     guarded3D: true,
+  },
+  {
+    node: solidObliqueDrawingNode,
+    loader: solidObliqueDrawingLoader,
   },
   {
     node: solidPyramidDerivationNode,

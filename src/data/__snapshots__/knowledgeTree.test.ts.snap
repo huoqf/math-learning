@@ -48,6 +48,7 @@ exports[`knowledgeTree 数据完整性 > 快照：节点顺序不可被意外调
   "know-sequence-sum",
   "know-sequence-recurrence",
   "know-solid-rotation-body",
+  "know-solid-oblique-drawing",
   "know-solid-pyramid-derivation",
   "know-solid-sphere-derivation",
   "know-solid-position",
