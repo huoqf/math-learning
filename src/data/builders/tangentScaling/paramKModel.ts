@@ -146,8 +146,8 @@ export function buildParamKModel(
           step: 1,
           title: "参变量分离或切线法",
           detail:
-            "令 $g(x) = \\frac{\\ln x}{x}$，求导得 $g'(x) = \\frac{1 - \\ln x}{x^2}$，驻点为 $x = e$。",
-          rubric: "采分点：求导与驻点（4分）",
+            "令 $g(x) = \\frac{\\ln x}{x}$，求导得 $g'(x) = \\frac{1 - \\ln x}{x^2}$，令 $g'(x) = 0$ 得 $x = e$。",
+          rubric: "采分点：求导与解导数为零的方程（4分）",
         },
         {
           step: 2,

@@ -1,4 +1,4 @@
-import type { MathPanelData } from "../types";
+import type { MathPanelData, ReasoningStep } from "../types";
 import {
   solveDerivative,
   PRESET_FUNCTIONS,
@@ -178,6 +178,63 @@ export function buildDerivativePanel(
     },
   ];
 
+  const deltaY = Number.isFinite(fy2) ? fy2 - res.fx : NaN;
+
+  const reasoningSteps: ReasoningStep[] = res.isValid
+    ? [
+        {
+          step: 1,
+          title: "审题定法 · 求切点坐标并核验可导",
+          detail: `由切点横坐标 $x_0 = ${x0.toFixed(2)}$ 代入解析式求函数值 $f(x_0) = ${res.fx.toFixed(2)}$，得切点 $P(${x0.toFixed(2)}, ${res.fx.toFixed(2)})$；再核验曲线在 $P$ 处连续光滑、切线不垂直于 $x$ 轴，满足「在点处可导」前提。`,
+          latex: `P(x_0, f(x_0)) = \\left(${x0.toFixed(2)},\\ ${res.fx.toFixed(2)}\\right)`,
+          rubric: "求出切点坐标并说明可导性前提得 2 分",
+        },
+        mode === "secant_limit"
+          ? {
+              step: 2,
+              title: "建模联立 · 计算割线斜率（平均变化率）",
+              detail: `在 $P$ 邻近取动点 $Q(x_0 + \\Delta x, f(x_0 + \\Delta x))$，本例步长 $\\Delta x = ${dx.toFixed(2)}$，对应 $Q(${x2.toFixed(2)}, ${Number.isFinite(fy2) ? fy2.toFixed(2) : "无定义"})$；割线 $PQ$ 的斜率即为区间上的平均变化率。`,
+              latex: `k_{\\text{割}} = \\frac{f(x_0 + \\Delta x) - f(x_0)}{\\Delta x} = \\frac{${Number.isFinite(deltaY) ? deltaY.toFixed(3) : "\\text{无定义}"}}{${dx.toFixed(2)}} = ${Number.isFinite(kSecant) ? kSecant.toFixed(3) : "\\text{无定义}"}`,
+              rubric: "列出差商计算式并算出割线斜率得 2 分",
+            }
+          : {
+              step: 2,
+              title: "建模联立 · 求导函数并代入求斜率",
+              detail: `先求导函数 $f'(x)$，再把横坐标 $x = x_0$ 代入，得该点切线斜率 $k = f'(x_0) = ${Number.isFinite(res.fpx) ? res.fpx.toFixed(3) : "不存在"}$。`,
+              latex: `f'(x_0) = ${Number.isFinite(res.fpx) ? res.fpx.toFixed(3) : "\\text{不存在}"}`,
+              rubric: "正确求导并代入切点得切线斜率得 2 分",
+            },
+        mode === "secant_limit"
+          ? {
+              step: 3,
+              title: "求解反思 · 令 Δx→0 得瞬时切线斜率",
+              detail: `令 $\\Delta x \\to 0$，割线 $PQ$ 的极限位置即为切线，割线斜率的极限即为瞬时导数 $f'(${x0.toFixed(2)}) = ${Number.isFinite(res.fpx) ? res.fpx.toFixed(3) : "不存在"}$；两者之差 $|k_{\\text{割}} - k_{\\text{切}}| = ${Number.isFinite(kSecant) ? Math.abs(kSecant - res.slope).toFixed(3) : "—"}$，随 $\\Delta x$ 减小而趋于 0。`,
+              latex: `\\lim_{\\Delta x \\to 0} k_{\\text{割}} = f'(x_0) = ${Number.isFinite(res.fpx) ? res.fpx.toFixed(3) : "\\text{不存在}"}`,
+              rubric: "写出导数定义极限并由点斜式写出切线方程得 2 分",
+            }
+          : {
+              step: 3,
+              title: "求解反思 · 由点斜式写出切线方程",
+              detail: `由点斜式 $y - f(x_0) = f'(x_0)(x - x_0)$，代入切点坐标与切线斜率，化简即得所求切线方程。`,
+              latex: pointSlopeFormula,
+              rubric: "由点斜式代入切点与斜率写出切线方程得 2 分",
+            },
+      ]
+    : [
+        {
+          step: 1,
+          title: "审题定法 · 核验定义域与可导性",
+          detail: `切点横坐标 $x_0 = ${x0.toFixed(2)}$ 处，${res.degenerateType === "undefined" ? "函数无定义，超出定义域" : "函数不可导（存在尖点或切线为铅垂线）"}，须先排除，不能直接套用求导公式。`,
+          rubric: "识别切点不在定义域或不可导得 2 分",
+        },
+        {
+          step: 2,
+          title: "求解反思 · 调整切点后重做",
+          detail: `请调整切点横坐标，使其落入函数定义域且曲线光滑，再按「定切点 → 求导 → 代斜率 → 写方程」四步规范重做。`,
+          rubric: "说明错误原因并给出修正方向得 2 分",
+        },
+      ];
+
   const warnings: MathPanelData["warnings"] = [];
   if (!res.isValid) {
     warnings.push({
@@ -194,7 +251,7 @@ export function buildDerivativePanel(
     });
   } else if (Math.abs(res.slope) < 1e-6) {
     warnings.push({
-      text: `切线斜率 $f'(x_0) = 0$，切线为水平直线 $y = ${res.fx.toFixed(2)}$，此处对应驻点（可能为极值点或单调台阶点）。`,
+      text: `切线斜率 $f'(x_0) = 0$，切线为水平直线 $y = ${res.fx.toFixed(2)}$，此处对应导数为零的点（可能为极值点或单调台阶点）。`,
       level: "info",
     });
   }
@@ -204,6 +261,7 @@ export function buildDerivativePanel(
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps,
     mnemonic: "导数即斜率，切线看切点；在点直接代，过点设参数。",
   };
 }

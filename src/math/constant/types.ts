@@ -39,7 +39,7 @@ export interface ConstantSingleDirectResult extends MathState {
   xFMax: number;
   isAlwaysTrue: boolean; // f(x) >= 0 恒成立
   violatedInterval: [number, number] | null; // f(x) < 0 的区间交集
-  discussionType: "left" | "inside" | "right"; // 驻点/极值点在区间的：左侧、内部、右侧
+  discussionType: "left" | "inside" | "right"; // 导数为零的点/极值点在区间的：左侧、内部、右侧
   tangentSlope?: number;
   implicitZero?: number | null;
 }

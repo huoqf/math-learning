@@ -7,17 +7,17 @@ export type ExtremaType =
   "maximum" | "minimum" | "inflection_stationary" | "none";
 
 export interface ExtremaPoint {
-  /** 驻点横坐标 */
+  /** 导数为零的点横坐标 */
   x: number;
-  /** 驻点纵坐标 f(x) */
+  /** 导数为零的点纵坐标 f(x) */
   y: number;
   /** 极值类型 */
   type: ExtremaType;
-  /** 说明标签，如 "极大值点", "极小值点", "驻点(非极值)" */
+  /** 说明标签，如 "极大值点", "极小值点", "导数为零点(非极值)" */
   label: string;
-  /** 导数在驻点左侧符号 */
+  /** 导数在导数为零的点左侧符号 */
   leftSign: number;
-  /** 导数在驻点右侧符号 */
+  /** 导数在导数为零的点右侧符号 */
   rightSign: number;
 }
 
@@ -31,11 +31,11 @@ export interface MonotonicityInterval {
 }
 
 export interface SignTableRow {
-  /** x 取值或区间描述 */
+  /** x 取值或区间的 LaTeX 片段（如「x < -\\sqrt{a}」），不含列分隔符 & */
   xDesc: string;
-  /** f'(x) 的符号描述 (+, -, 0, 无定义) */
+  /** f'(x) 符号的 LaTeX 片段（「+」「-」「0」或「\\text{无定义}」），不含列分隔符 & */
   fPrimeSign: string;
-  /** f(x) 的单调性或极值行为 (↗ 单调递增, ↘ 单调递减, 极大值, 极小值) */
+  /** f(x) 单调性或极值行为的 LaTeX 片段（如「\\text{极大值 }1.5」），不含列分隔符 & */
   fxBehavior: string;
 }
 
@@ -52,7 +52,7 @@ export interface MonotonicityModelResult {
   derivativeFn: (x: number) => number;
   /** 定义域区间集合 */
   domainIntervals: Array<[number, number]>;
-  /** 极值点与驻点集合 */
+  /** 极值点与导数为零的点集合 */
   extrema: ExtremaPoint[];
   /** 单调区间集合 */
   monotonicIntervals: MonotonicityInterval[];
@@ -156,6 +156,23 @@ export function formatFloat(num: number, digits = 2): string {
 }
 
 /**
+ * 判定一个导数为零的点是否为「真极值点」（极大值点或极小值点）。
+ *
+ * 排除 `inflection_stationary`：该类型导数为零的点两侧导数同号（如 f(x)=x³ 在 x=0 处），
+ * 切线虽水平却不是极值点 —— 把它画成极值特征线会直接误导学生。
+ *
+ * 本判定是三屏共享的唯一口径：中屏极值特征线（竖虚线 + 水平切线）与图例、
+ * 右屏符号表条目均以此为准，杜绝各处自行 `map/filter` 造成判定分叉。
+ */
+export function isTrueExtremum(ext: ExtremaPoint): boolean {
+  return (
+    (ext.type === "maximum" || ext.type === "minimum") &&
+    Number.isFinite(ext.x) &&
+    Number.isFinite(ext.y)
+  );
+}
+
+/**
  * 计算导数与单调性/极值核心解析数据
  */
 export function solveMonotonicityModel(
@@ -248,27 +265,27 @@ export function solveMonotonicityModel(
           {
             xDesc: `x < -\\sqrt{${aStr}}`,
             fPrimeSign: "+",
-            fxBehavior: "↗ 严格单调递增",
+            fxBehavior: "\\text{严格单调递增}",
           },
           {
             xDesc: `x = -\\sqrt{${aStr}}`,
             fPrimeSign: "0",
-            fxBehavior: `极大值 ${formatFloat(y1)}`,
+            fxBehavior: `\\text{极大值 }${formatFloat(y1)}`,
           },
           {
             xDesc: `-\\sqrt{${aStr}} < x < \\sqrt{${aStr}}`,
             fPrimeSign: "-",
-            fxBehavior: "↘ 严格单调递减",
+            fxBehavior: "\\text{严格单调递减}",
           },
           {
             xDesc: `x = \\sqrt{${aStr}}`,
             fPrimeSign: "0",
-            fxBehavior: `极小值 ${formatFloat(y2)}`,
+            fxBehavior: `\\text{极小值 }${formatFloat(y2)}`,
           },
           {
             xDesc: `x > \\sqrt{${aStr}}`,
             fPrimeSign: "+",
-            fxBehavior: "↗ 严格单调递增",
+            fxBehavior: "\\text{严格单调递增}",
           },
         ];
 
@@ -292,7 +309,7 @@ export function solveMonotonicityModel(
             x: 0,
             y: 0,
             type: "inflection_stationary",
-            label: "驻点(非极值) (0, 0)",
+            label: "导数为零点(非极值) (0, 0)",
             leftSign: 1,
             rightSign: 1,
           },
@@ -307,13 +324,21 @@ export function solveMonotonicityModel(
         ];
 
         const signTable: SignTableRow[] = [
-          { xDesc: "x < 0", fPrimeSign: "+", fxBehavior: "↗ 严格单调递增" },
+          {
+            xDesc: "x < 0",
+            fPrimeSign: "+",
+            fxBehavior: "\\text{严格单调递增}",
+          },
           {
             xDesc: "x = 0",
             fPrimeSign: "0",
-            fxBehavior: "切线斜率0 (驻点非极值)",
+            fxBehavior: "\\text{导数为零点(非极值), 切线水平}",
           },
-          { xDesc: "x > 0", fPrimeSign: "+", fxBehavior: "↗ 严格单调递增" },
+          {
+            xDesc: "x > 0",
+            fPrimeSign: "+",
+            fxBehavior: "\\text{严格单调递增}",
+          },
         ];
 
         return {
@@ -328,7 +353,7 @@ export function solveMonotonicityModel(
           signTable,
           discussionSummaryLatex: `a = 0 \\implies f'(x) = x^2 \\ge 0 \\text{ 恒成立，} f(x) \\text{ 在 } \\mathbb{R} \\text{ 上单调递增，无极值点}`,
           hasExtrema: false,
-          criticalCondition: "a = 0 \\iff \\text{临界驻点，导数切于零点不变号}",
+          criticalCondition: "a = 0 \\iff \\text{导数为零点，切于零点不变号}",
         };
       } else {
         const monotonicIntervals: MonotonicityInterval[] = [
@@ -343,7 +368,7 @@ export function solveMonotonicityModel(
           {
             xDesc: "x \\in \\mathbb{R}",
             fPrimeSign: "+",
-            fxBehavior: "↗ 全域严格单调递增",
+            fxBehavior: "\\text{全域严格单调递增}",
           },
         ];
 
@@ -418,17 +443,17 @@ export function solveMonotonicityModel(
         {
           xDesc: `x < ${x0Str}`,
           fPrimeSign: "-",
-          fxBehavior: "↘ 严格单调递减",
+          fxBehavior: "\\text{严格单调递减}",
         },
         {
           xDesc: `x = ${x0Str}`,
           fPrimeSign: "0",
-          fxBehavior: `极小值 ${y0Str} = -e^{${x0Str}}`,
+          fxBehavior: `\\text{极小值 }${y0Str} = -e^{${x0Str}}`,
         },
         {
           xDesc: `x > ${x0Str}`,
           fPrimeSign: "+",
-          fxBehavior: "↗ 严格单调递增",
+          fxBehavior: "\\text{严格单调递增}",
         },
       ];
 
@@ -501,17 +526,17 @@ export function solveMonotonicityModel(
         {
           xDesc: `0 < x < ${x0Str}`,
           fPrimeSign: "+",
-          fxBehavior: "↗ 严格单调递增",
+          fxBehavior: "\\text{严格单调递增}",
         },
         {
           xDesc: `x = ${x0Str}`,
           fPrimeSign: "0",
-          fxBehavior: `极大值 ${y0Str}`,
+          fxBehavior: `\\text{极大值 }${y0Str}`,
         },
         {
           xDesc: `x > ${x0Str}`,
           fPrimeSign: "-",
-          fxBehavior: "↘ 严格单调递减",
+          fxBehavior: "\\text{严格单调递减}",
         },
       ];
 
@@ -584,17 +609,17 @@ export function solveMonotonicityModel(
         {
           xDesc: `0 < x < ${x0Str}`,
           fPrimeSign: "-",
-          fxBehavior: "↘ 严格单调递减",
+          fxBehavior: "\\text{严格单调递减}",
         },
         {
           xDesc: `x = ${x0Str}`,
           fPrimeSign: "0",
-          fxBehavior: `极小值 ${y0Str} = -e^{${formatFloat(aVal - 1)}}`,
+          fxBehavior: `\\text{极小值 }${y0Str} = -e^{${formatFloat(aVal - 1)}}`,
         },
         {
           xDesc: `x > ${x0Str}`,
           fPrimeSign: "+",
-          fxBehavior: "↗ 严格单调递增",
+          fxBehavior: "\\text{严格单调递增}",
         },
       ];
 
@@ -690,37 +715,37 @@ export function solveMonotonicityModel(
           {
             xDesc: `x < -\\sqrt{${aStr}}`,
             fPrimeSign: "+",
-            fxBehavior: "↗ 严格单调递增",
+            fxBehavior: "\\text{严格单调递增}",
           },
           {
             xDesc: `x = -\\sqrt{${aStr}}`,
             fPrimeSign: "0",
-            fxBehavior: `极大值 ${formatFloat(y1)} = -2\\sqrt{${aStr}}`,
+            fxBehavior: `\\text{极大值 }${formatFloat(y1)} = -2\\sqrt{${aStr}}`,
           },
           {
             xDesc: `-\\sqrt{${aStr}} < x < 0`,
             fPrimeSign: "-",
-            fxBehavior: "↘ 严格单调递减",
+            fxBehavior: "\\text{严格单调递减}",
           },
           {
             xDesc: "x = 0",
-            fPrimeSign: "无定义",
-            fxBehavior: "奇点/渐近线 (无定义)",
+            fPrimeSign: "\\text{无定义}",
+            fxBehavior: "\\text{奇点 (渐近线)}",
           },
           {
             xDesc: `0 < x < \\sqrt{${aStr}}`,
             fPrimeSign: "-",
-            fxBehavior: "↘ 严格单调递减",
+            fxBehavior: "\\text{严格单调递减}",
           },
           {
             xDesc: `x = \\sqrt{${aStr}}`,
             fPrimeSign: "0",
-            fxBehavior: `极小值 ${formatFloat(y2)} = 2\\sqrt{${aStr}}`,
+            fxBehavior: `\\text{极小值 }${formatFloat(y2)} = 2\\sqrt{${aStr}}`,
           },
           {
             xDesc: `x > \\sqrt{${aStr}}`,
             fPrimeSign: "+",
-            fxBehavior: "↗ 严格单调递增",
+            fxBehavior: "\\text{严格单调递增}",
           },
         ];
 
@@ -749,13 +774,21 @@ export function solveMonotonicityModel(
         ];
 
         const signTable: SignTableRow[] = [
-          { xDesc: "x < 0", fPrimeSign: "+", fxBehavior: "↗ 严格单调递增" },
+          {
+            xDesc: "x < 0",
+            fPrimeSign: "+",
+            fxBehavior: "\\text{严格单调递增}",
+          },
           {
             xDesc: "x = 0",
-            fPrimeSign: "无定义",
-            fxBehavior: "奇点/渐近线 (无定义)",
+            fPrimeSign: "\\text{无定义}",
+            fxBehavior: "\\text{奇点 (渐近线)}",
           },
-          { xDesc: "x > 0", fPrimeSign: "+", fxBehavior: "↗ 严格单调递增" },
+          {
+            xDesc: "x > 0",
+            fPrimeSign: "+",
+            fxBehavior: "\\text{严格单调递增}",
+          },
         ];
 
         return {

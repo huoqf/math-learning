@@ -423,7 +423,7 @@ export function DerivativeShiftScene({
             strokeDasharray="3 3"
           />
 
-          {/* 极值点 (x0, f(x0)) 可拖拽点 */}
+          {/* 极值点 (x0, f(x0)) 可拖拽点（当 a > 3.7 极值点下沉飞出视口时，边缘吸附手柄允许用户横向拉回） */}
           <InteractivePoint
             cx={izResult.x0}
             cy={izResult.y0}
@@ -433,6 +433,7 @@ export function DerivativeShiftScene({
             color={P.extremumPt.color}
             r={6}
             fontScale={fontScale}
+            edgeClampProjection
           />
 
           {/* 代换消元下的轨迹点 (x0, h(x0)) */}

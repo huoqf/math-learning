@@ -143,7 +143,7 @@ export function buildInequalityAbsolutePanel(
       },
       {
         step: 2,
-        title: "② 代数演绎 · 三角放缩与杯底极值",
+        title: "② 代数演绎 · 三角放缩与杯底最值",
         detail:
           "由绝对值三角不等式放缩：$|x - a| + |x - b| = |x - a| + |b - x| \\ge |(x - a) + (b - x)| = |a - b|$，当且仅当动点 $P$ 在线段 $AB$ 上时取最小值。",
         latex: `f(x)_{\\min} = |a - b| = |${a.toFixed(1)} - (${b.toFixed(1)})| = ${distAB.toFixed(2)}`,
@@ -196,7 +196,7 @@ export function buildInequalityAbsolutePanel(
       ],
       theorems: [
         {
-          name: "双绝对值和 (平底杯函数) 极值定理",
+          name: "双绝对值和 (平底杯函数) 最值定理",
           latex: "|x - a| + |x - b| \\ge |a - b|",
           prerequisites: ["a, b \\in \\mathbb{R}"],
           condition: `当且仅当 $x$ 位于 $a, b$ 之间 (即 $x \\in [${minA.toFixed(1)}, ${maxA.toFixed(1)}]$) 时取最小值 $|a - b|$`,
@@ -239,7 +239,7 @@ export function buildInequalityAbsolutePanel(
         step: 2,
         title: "② 代数演绎 · 阶梯值域与平台界限",
         detail:
-          "由三角形两边之差性质与有向线段投影，距离之差的值域限定在闭区间 $[-|a - b|, |a - b|]$ 之间。动点位于两定点外侧时达到极值平台。",
+          "由三角形两边之差性质与有向线段投影，距离之差的值域限定在闭区间 $[-|a - b|, |a - b|]$ 之间。动点位于两定点外侧时达到最值平台。",
         latex: `-|a - b| \\le g(x) \\le |a - b| \\implies g(x) \\in [${(-distAB).toFixed(2)}, ${distAB.toFixed(2)}]`,
         rubric: "建模得分点：导出最大值与最小值平台常数",
       },

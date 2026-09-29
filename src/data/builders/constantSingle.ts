@@ -87,12 +87,12 @@ function buildSepBranch(
   if (isTranscendent) {
     if (transModel === "ln_x_over_x") {
       quantities.push({
-        label: "驻点理论极值",
+        label: "理论极值点",
         symbol: "f(e) = \\frac{1}{e}",
         value: 0.368,
         color: MATH_COLORS.tangentLine,
         isInvariant: true,
-        invariantNote: "驻点 x=e 处理论峰值，为恒成立关键分水岭",
+        invariantNote: "导数为零的点 x=e 处理论峰值，为恒成立关键分水岭",
       });
     } else if (transModel === "a_ln_x_minus_x") {
       quantities.push({
@@ -159,7 +159,7 @@ function buildSepBranch(
       if (!isAlways) {
         if (m <= e && e <= n) {
           step3Latex = `f(x)_{\\max} = f(e) = \\frac{\\ln e}{e} = \\frac{1}{e} \\approx 0.37 \\implies ${col("a", MATH_COLORS.paramPrimary)} \\le \\frac{1}{e}`;
-          step3Detail = `驻点 $x = e \\approx 2.72$ 落在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 内，故极大值即为最大值 $f(e) = 1/e \\approx 0.37$。存在性充要条件为 $a \\le f(x)_{\\max}$，解得 $a \\le 1/e$。当前设定 $a = ${a.toFixed(2)}$，${res.isExistTrue ? "满足存在性条件。" : "已超出全域峰值，无解。"}`;
+          step3Detail = `导数为零的点 $x = e \\approx 2.72$ 落在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 内，故极大值即为最大值 $f(e) = 1/e \\approx 0.37$。存在性充要条件为 $a \\le f(x)_{\\max}$，解得 $a \\le 1/e$。当前设定 $a = ${a.toFixed(2)}$，${res.isExistTrue ? "满足存在性条件。" : "已超出全域峰值，无解。"}`;
         } else {
           const xMaxName = res.xFMax === m ? "m" : "n";
           const xMaxVal = res.xFMax;
@@ -203,13 +203,13 @@ function buildSepBranch(
       step: 2,
       title: "第二步：建模联立 · 求导单调性与极值分析",
       latex: isTranscendent
-        ? `${spec.sepDerivLatex}, \\quad \\text{驻点 } ${spec.sepCriticalLatex}`
+        ? `${spec.sepDerivLatex}, \\quad \\text{导数为零的点 } ${spec.sepCriticalLatex}`
         : `f'(x) = 2x - 2, \\quad f'(x) = 0 \\iff x = 1`,
       detail: isTranscendent
         ? transModel === "ln_x_over_x"
-          ? `当 $x \\in (0, e)$ 时 $f'(x) > 0$，$f(x)$ 单调递增；当 $x \\in (e, +\\infty)$ 时 $f'(x) < 0$，$f(x)$ 单调递减。在当前区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上，最值由驻点 $x = e$ 与端点共同决定。`
-          : `目标函数为 $${spec.sepFnLatex}$（定义域 $${spec.sepDomainLatex}$），导函数 $${spec.sepDerivLatex}$。先由导函数零点与正负号确定函数在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上的单调性，再比较驻点函数值与两端点函数值取最值。`
-        : `导函数 $f'(x) = 2(x-1)$，在 $(-\\infty, 1)$ 单调递减，在 $(1, +\\infty)$ 单调递增，顶点驻点为 $x = 1$。`,
+          ? `当 $x \\in (0, e)$ 时 $f'(x) > 0$，$f(x)$ 单调递增；当 $x \\in (e, +\\infty)$ 时 $f'(x) < 0$，$f(x)$ 单调递减。在当前区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上，最值由导数为零的点 $x = e$ 与端点共同决定。`
+          : `目标函数为 $${spec.sepFnLatex}$（定义域 $${spec.sepDomainLatex}$），导函数 $${spec.sepDerivLatex}$。先由导函数零点与正负号确定函数在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上的单调性，再比较导数为零的点处的函数值与两端点函数值取最值。`
+        : `导函数 $f'(x) = 2(x-1)$，在 $(-\\infty, 1)$ 单调递减，在 $(1, +\\infty)$ 单调递增，顶点为 $x = 1$。`,
       rubric: "求导并确定函数在研究区间上的单调性 (5分)",
     },
     {
@@ -313,6 +313,81 @@ function buildSepBranch(
   };
 }
 
+/**
+ * 直接讨论法「端点最值」分支的充要范围推导（必须与 math 层同源，禁止只写结论）。
+ *
+ * 数学依据：f(p) = p² - 2ap + 2 ≥ 0 ⟺ 2ap ≤ p² + 2。
+ * 对两端同除 2p 时**必须按 p 的符号讨论**：
+ *   - p > 0 保号，得 a ≤ (p²+2)/(2p)；
+ *   - p < 0 变号，得 a ≥ (p²+2)/(2p)；
+ *   - p = 0 时 f(0) = 2 ≥ 0 与 a 无关（旧写法会算出 “= Infinity”）。
+ * 且仅有单个不等式还不够，必须再与分支前提（左分支 a < m / 右分支 a > n）取交集，
+ * 交集为空时要如实说明「该分类下无解」，严禁把空集写成区间（旧写法一律输出 “a ≤ …”）。
+ */
+function endpointConclusion(
+  p: number,
+  pName: "m" | "n",
+  side: "left" | "right",
+): { latex: string; detail: string } {
+  const premiseTex =
+    side === "left"
+      ? `$a < ${pName} = ${p.toFixed(2)}$`
+      : `$a > ${pName} = ${p.toFixed(2)}$`;
+
+  // p = 0：端点值退化为常数，与参数无关，充要范围即前提本身
+  if (Math.abs(p) < 1e-9) {
+    return {
+      latex: `f(0) = 2 \\ge 0 \\text{ 恒成立，与 } a \\text{ 无关}`,
+      detail: `端点处 $f(0) = 2 \\ge 0$ 恒成立、与参数 $a$ 无关，故充要范围即前提 ${premiseTex}。`,
+    };
+  }
+
+  const bound = (p * p + 2) / (2 * p);
+  const boundStr = bound.toFixed(2);
+  const fracTex = `\\frac{${pName}^2+2}{2${pName}}`;
+  const boundTex = `${fracTex} = ${boundStr}`;
+
+  if (p > 0) {
+    // 同除正数：不等号保向
+    const latex = `a \\le ${boundTex}`;
+    if (side === "left") {
+      return {
+        latex,
+        detail:
+          bound >= p
+            ? `由 $f(${pName}) = ${pName}^2 - 2${pName}a + 2 \\ge 0 \\iff a \\le ${boundTex}$。再与前提 ${premiseTex} 取交：因 $${boundStr} \\ge ${pName}$，该约束自动满足，充要范围即 $a < ${pName}$。`
+            : `由 $f(${pName}) = ${pName}^2 - 2${pName}a + 2 \\ge 0 \\iff a \\le ${boundTex}$。再与前提 ${premiseTex} 取交：因 $${boundStr} < ${pName}$，充要范围收紧为 $a \\le ${boundStr}$。`,
+      };
+    }
+    return {
+      latex,
+      detail:
+        bound > p
+          ? `由 $f(${pName}) = ${pName}^2 - 2${pName}a + 2 \\ge 0 \\iff a \\le ${boundTex}$。再与前提 ${premiseTex} 取交得 $${pName} < a \\le ${boundStr}$，此即充要范围。`
+          : `由 $f(${pName}) = ${pName}^2 - 2${pName}a + 2 \\ge 0 \\iff a \\le ${boundTex}$。与前提 ${premiseTex} 无交集（$${boundStr} \\le ${pName}$），故该分类下不存在使 $f(x) \\ge 0$ 恒成立的参数 $a$。`,
+    };
+  }
+
+  // p < 0：同除负数，不等号必须变向（旧实现漏此变号，结论方向与数学事实相反）
+  const latex = `a \\ge ${boundTex}`;
+  if (side === "left") {
+    return {
+      latex,
+      detail:
+        bound < p
+          ? `因 $${pName} < 0$，对 $f(${pName}) = ${pName}^2 - 2${pName}a + 2 \\ge 0$ 两端同除以负数 $2${pName}$ 须变向，得 $a \\ge ${boundTex}$。再与前提 ${premiseTex} 取交得 $${boundStr} \\le a < ${pName}$，此即充要范围。`
+          : `因 $${pName} < 0$，同除以 $2${pName}$ 变向得 $a \\ge ${boundTex}$。与前提 ${premiseTex} 无交集（$${boundStr} \\ge ${pName}$），故该分类下不存在使 $f(x) \\ge 0$ 恒成立的参数 $a$。`,
+    };
+  }
+  return {
+    latex,
+    detail:
+      bound > p
+        ? `因 $${pName} < 0$，对 $f(${pName}) \\ge 0$ 两端同除以负数 $2${pName}$ 须变向，得 $a \\ge ${boundTex}$。再与前提 ${premiseTex} 取交得 $a \\ge ${boundStr}$，此即充要范围。`
+        : `因 $${pName} < 0$，同除以 $2${pName}$ 变向得 $a \\ge ${boundTex}$。与前提 ${premiseTex} 取交：因 $${boundStr} \\le ${pName}$，该约束被前提自动包含，充要范围即 $a > ${pName}$。`,
+  };
+}
+
 function buildDirectBranch(
   params: Record<string, number>,
   m: number,
@@ -324,7 +399,7 @@ function buildDirectBranch(
   const aAxis = params.a_axis ?? 1.0;
   const spec = TRANS_MODEL_SPEC[transModel];
   const aCol = col("a", MATH_COLORS.paramPrimary);
-  // 模型专属驻点表达式（含参着色），供分类讨论与推导链文案共同引用
+  // 模型专属导数为零的点表达式（含参着色），供分类讨论与推导链文案共同引用
   const critTex = isTranscendent ? spec.directCriticalLatex(aCol) : "a";
   const res = isTranscendent
     ? solveConstantSingleDirectTrans(aAxis, m, n, transModel)
@@ -338,13 +413,13 @@ function buildDirectBranch(
       color: MATH_COLORS.function,
     },
     {
-      label: "极值/驻点横坐标",
+      label: "极值点/导数为零点的横坐标",
       symbol: "x_{min}",
       value: res.xFMin,
       color: MATH_COLORS.function,
     },
     {
-      label: "驻点相对位置",
+      label: "导数为零的点的相对位置",
       value: isTranscendent
         ? res.discussionType === "left"
           ? `区间左侧 (${spec.directCriticalPlain} < m)`
@@ -381,38 +456,46 @@ function buildDirectBranch(
   let directStep3Detail = "";
   if (!isTranscendent) {
     if (res.discussionType === "left") {
-      const boundA = ((m * m + 2) / (2 * m)).toFixed(2);
-      directStep3Latex = `f(x)_{\\min} = f(m) = (${m.toFixed(2)})^2 - 2(${m.toFixed(2)})a + 2 \\ge 0 \\iff a \\le \\frac{m^2+2}{2m} = ${boundA}`;
-      directStep3Detail = `当前处于轴在区间左侧（$a < m = ${m.toFixed(2)}$），单增。最小值在左端点取得：$f(m) \\ge 0 \\iff a \\le ${boundA}$。结合前提 $a < ${m.toFixed(2)}$，由于 $m < ${boundA}$，此时 $a < ${m.toFixed(2)}$ 全部满足。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
+      const { latex: boundLatex, detail: conclusion } = endpointConclusion(
+        m,
+        "m",
+        "left",
+      );
+      directStep3Latex = `f(x)_{\\min} = f(m) = (${m.toFixed(2)})^2 - 2(${m.toFixed(2)})a + 2 \\ge 0 \\iff ${boundLatex}`;
+      directStep3Detail = `当前处于轴在区间左侧（$a < m = ${m.toFixed(2)}$），函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上单调递增，最小值在左端点取得。${conclusion}当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
     } else if (res.discussionType === "inside") {
       directStep3Latex = `f(x)_{\\min} = f(a) = 2 - a^2 \\ge 0 \\iff a^2 \\le 2 \\iff -\\sqrt{2} \\le a \\le \\sqrt{2} \\approx 1.41`;
       directStep3Detail = `当前处于轴在区间内部（$m \\le a \\le n$），顶点即最小值：$f(a) = 2 - a^2 \\ge 0 \\iff -\\sqrt{2} \\le a \\le \\sqrt{2}$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "顶点高度 ≥ 0，满足恒成立要求。" : "顶点高度跌破 0，产生违背区。"}`;
     } else {
-      const boundA = ((n * n + 2) / (2 * n)).toFixed(2);
-      directStep3Latex = `f(x)_{\\min} = f(n) = (${n.toFixed(2)})^2 - 2(${n.toFixed(2)})a + 2 \\ge 0 \\iff a \\le \\frac{n^2+2}{2n} = ${boundA}`;
-      directStep3Detail = `当前处于轴在区间右侧（$a > n = ${n.toFixed(2)}$），单减。最小值在右端点取得：$f(n) \\ge 0 \\iff a \\le ${boundA}$。结合前提 $a > ${n.toFixed(2)}$，充要范围为 $n < a \\le ${boundA}$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
+      const { latex: boundLatex, detail: conclusion } = endpointConclusion(
+        n,
+        "n",
+        "right",
+      );
+      directStep3Latex = `f(x)_{\\min} = f(n) = (${n.toFixed(2)})^2 - 2(${n.toFixed(2)})a + 2 \\ge 0 \\iff ${boundLatex}`;
+      directStep3Detail = `当前处于轴在区间右侧（$a > n = ${n.toFixed(2)}$），函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上单调递减，最小值在右端点取得。${conclusion}当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
     }
   } else {
     const fMinStr = res.fMin.toFixed(2);
     const threshold = spec.directInsideThresholdLatex;
     if (res.discussionType === "left") {
       directStep3Latex = `f(x)_{\\min} = f(m) = ${fMinStr} \\ge 0`;
-      directStep3Detail = `当前处于驻点在区间左侧（$${critTex} < m$），函数在区间上严格单调，最小值在左端点取得：$f(m) = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
+      directStep3Detail = `当前处于导数为零的点位于区间左侧（$${critTex} < m$），函数在区间上严格单调，最小值在左端点取得：$f(m) = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
     } else if (res.discussionType === "inside") {
       if (spec.directCriticalKind === "min") {
         directStep3Latex = `f(x)_{\\min} = f(${critTex}) = ${spec.directCriticalValueLatex(aCol)} = ${fMinStr} \\ge 0${threshold ? ` \\iff ${threshold}` : ""}`;
-        directStep3Detail = `当前处于驻点在区间内部（$m \\le ${critTex} \\le n$），驻点为极小值点，故极小值即最小值：$f(${critTex}) = ${spec.directCriticalValueLatex(aCol)} = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$${threshold ? `，即 $${col("a", MATH_COLORS.paramPrimary)} ${threshold}$` : ""}。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "极小值不低于 0，满足恒成立要求。" : "极小值跌破 0，产生违背区。"}`;
+        directStep3Detail = `当前处于导数为零的点位于区间内部（$m \\le ${critTex} \\le n$），导数为零的点为极小值点，故极小值即最小值：$f(${critTex}) = ${spec.directCriticalValueLatex(aCol)} = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$${threshold ? `，即 $${col("a", MATH_COLORS.paramPrimary)} ${threshold}$` : ""}。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "极小值不低于 0，满足恒成立要求。" : "极小值跌破 0，产生违背区。"}`;
       } else {
         directStep3Latex = `f(x)_{\\min} = \\min\\{f(m), f(n)\\} = ${fMinStr} \\ge 0`;
-        directStep3Detail = `当前处于驻点在区间内部（$m \\le ${critTex} \\le n$），但驻点为极大值点，最大值在驻点取得，最小值必在两端点中较小者处取得：$\\min\\{f(m), f(n)\\} = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
+        directStep3Detail = `当前处于导数为零的点位于区间内部（$m \\le ${critTex} \\le n$），但导数为零的点为极大值点，最大值在导数为零的点取得，最小值必在两端点中较小者处取得：$\\min\\{f(m), f(n)\\} = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
       }
     } else {
       directStep3Latex = `f(x)_{\\min} = f(n) = ${fMinStr} \\ge 0`;
-      directStep3Detail = `当前处于驻点在区间右侧（$${critTex} > n$），函数在区间上严格单调，最小值在右端点取得：$f(n) = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
+      directStep3Detail = `当前处于导数为零的点位于区间右侧（$${critTex} > n$），函数在区间上严格单调，最小值在右端点取得：$f(n) = ${fMinStr}$。恒成立要求 $f(x)_{\\min} \\ge 0$。当前设定 $a = ${aAxis.toFixed(2)}$，${res.isAlwaysTrue ? "满足恒成立要求。" : "不满足恒成立。"}`;
     }
   }
 
-  // 第二步分类文案：随模型驻点表达式与驻点类型（极小值型 / 极大值型）自适应
+  // 第二步分类文案：随模型导数为零的点表达式与导数为零的点类型（极小值型 / 极大值型）自适应
   const directStep2Detail = !isTranscendent
     ? res.discussionType === "left"
       ? `当前参数处于【第一类：轴在区间左侧 ($a < m$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调递增，最小值在左端点取得，即 $f_{\\min} = f(m)$。`
@@ -420,25 +503,25 @@ function buildDirectBranch(
         ? `当前参数处于【第二类：轴在区间内部 ($m \\le a \\le n$)】：极小值点落在区间内，函数先减后增，最小值在顶点处取得，即 $f_{\\min} = f(a)$。`
         : `当前参数处于【第三类：轴在区间右侧 ($a > n$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调递减，最小值在右端点取得，即 $f_{\\min} = f(n)$。`
     : res.discussionType === "left"
-      ? `当前参数处于【第一类：驻点在区间左侧 ($${critTex} < m$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调，最小值在左端点取得，即 $f_{\\min} = f(m)$。`
+      ? `当前参数处于【第一类：导数为零的点位于区间左侧 ($${critTex} < m$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调，最小值在左端点取得，即 $f_{\\min} = f(m)$。`
       : res.discussionType === "inside"
         ? spec.directCriticalKind === "min"
-          ? `当前参数处于【第二类：驻点在区间内部 ($m \\le ${critTex} \\le n$)】：驻点为极小值点，函数先减后增，最小值在驻点处取得，即 $f_{\\min} = ${spec.directCriticalValueLatex(aCol)}$。`
-          : `当前参数处于【第二类：驻点在区间内部 ($m \\le ${critTex} \\le n$)】：驻点为极大值点，函数先增后减，最小值在两端点中较小者处取得，即 $f_{\\min} = \\min\\{f(m), f(n)\\}$。`
-        : `当前参数处于【第三类：驻点在区间右侧 ($${critTex} > n$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调，最小值在右端点取得，即 $f_{\\min} = f(n)$。`;
+          ? `当前参数处于【第二类：导数为零的点位于区间内部 ($m \\le ${critTex} \\le n$)】：导数为零的点为极小值点，函数先减后增，最小值在导数为零的点处取得，即 $f_{\\min} = ${spec.directCriticalValueLatex(aCol)}$。`
+          : `当前参数处于【第二类：导数为零的点位于区间内部 ($m \\le ${critTex} \\le n$)】：导数为零的点为极大值点，函数先增后减，最小值在两端点中较小者处取得，即 $f_{\\min} = \\min\\{f(m), f(n)\\}$。`
+        : `当前参数处于【第三类：导数为零的点位于区间右侧 ($${critTex} > n$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调，最小值在右端点取得，即 $f_{\\min} = f(n)$。`;
 
   // 高考破题推导链：分类讨论三部曲
   const reasoningSteps: ReasoningStep[] = [
     {
       step: 1,
-      title: "第一步：审题定法 · 求导与含参驻点确定",
+      title: "第一步：审题定法 · 求导与含参导数为零点的确定",
       latex: isTranscendent
         ? `${spec.directDerivLatex(aCol)}, \\quad f'(x) = 0 \\iff x = ${spec.directCriticalLatex(aCol)} \\quad (a > 0)`
         : `f'(x) = 2x - 2${col("a", MATH_COLORS.paramPrimary)}, \\quad f'(x) = 0 \\iff x = ${col("a", MATH_COLORS.paramPrimary)}`,
       detail: isTranscendent
-        ? `对含参超越函数 $${spec.directFnLatex(aCol)}$ 求导得 $${spec.directDerivLatex(aCol)}$。当 $a > 0$ 时导数存在唯一零点 $x_0 = ${spec.directCriticalLatex(aCol)}$，该驻点随参数 $a$ 动态变化，需就驻点与研究区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 的相对位置分类讨论。`
+        ? `对含参超越函数 $${spec.directFnLatex(aCol)}$ 求导得 $${spec.directDerivLatex(aCol)}$。当 $a > 0$ 时导数存在唯一零点 $x_0 = ${spec.directCriticalLatex(aCol)}$，该导数为零的点随参数 $a$ 动态变化，需就它与研究区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 的相对位置分类讨论。`
         : `二次函数对称轴与极小值点为 $x = a$。对称轴随参数 $a$ 平移（轴动区间定），必须根据对称轴落在区间左侧、内部或右侧分类讨论。`,
-      rubric: "求导确定含参驻点与分类依据 (3分)",
+      rubric: "求导确定含参导数为零点与分类依据 (3分)",
     },
     {
       step: 2,

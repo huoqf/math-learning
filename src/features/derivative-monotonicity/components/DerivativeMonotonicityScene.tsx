@@ -16,11 +16,21 @@ import {
 import { MATH_COLORS, GEOMETRY_COLORS } from "@/theme";
 import {
   solveMonotonicityModel,
+  isTrueExtremum,
   type MonotonicityModelKey,
 } from "@/math/derivativeMonotonicity";
 import type { ViewportInfo, SceneScale } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
 import type { LabelItem } from "@/utils/labelOverlap";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import { getDynamicParamMeta } from "@/data/registries/derivativeMonotonicity";
+
+/**
+ * 极值点处水平切线（即切线 y = y*）的设计像素半长。
+ * 取「短段」而非贯穿画布的长线：贯穿线会被误读为渐近线或参考线，
+ * 而短线段就读作「该点附近的一条切线」，与「极值点处切线水平」这一结论直接对应。
+ */
+const EXTREMUM_TANGENT_HALF_PX = 46;
 
 interface DerivativeMonotonicitySceneProps {
   params: Record<string, number>;
@@ -44,24 +54,43 @@ export const DerivativeMonotonicityScene: React.FC<
 
   const { fn, derivativeFn, extrema, monotonicIntervals } = modelResult;
 
+  // 真极值点（极大 / 极小）：排除类型为 inflection_stationary 的「导数为零的点非极值」——
+  // 该点处 f'(x) = 0 但两侧导数同号，切线虽然水平却并非极值，画极值特征线会造成误读。
+  // 判定口径由 math 层 isTrueExtremum 唯一提供，三屏共用，杜绝分化。
+  const trueExtrema = useMemo(() => extrema.filter(isTrueExtremum), [extrema]);
+
+  // 极值特征线的呈现门控：极值判定 / 含参讨论两个维度。
+  // （与右屏「单调性与极值符号表」同一门控，保证三屏信息同源）
+  const showExtremumGuides =
+    mode === "extrema_analysis" || mode === "parametric_discuss";
+
+  // 参数域 SSOT：x0 的可用区间随模型变化（对数模型的 xRange 天然排除 x ≤ 0），
+  // 因此必须读取动态元数据，而不能退化成静态 paramMeta.x0。
+  const x0Meta = useMemo(() => getDynamicParamMeta(modelKey).x0, [modelKey]);
+
   // 动点拖拽回调（严格定义域保护）
   const handleDragPoint = useCallback(
     (newMathPos: { x: number; y: number }) => {
       if (!onParamChange) return;
-      let clampedX = newMathPos.x;
 
-      // 对数模型定义域保护 x > 0.05
-      if (modelKey === "ln_x_ratio" || modelKey === "x_ln_x_param") {
-        clampedX = Math.max(0.1, clampedX);
-      } else if (modelKey === "nike_rational") {
-        // 对勾函数 x ≠ 0 保护，避免落在奇点附近
-        if (Math.abs(clampedX) < 0.2) {
-          clampedX = clampedX >= 0 ? 0.2 : -0.2;
-        }
+      // ① 视口 ∩ 参数域 求交后按步长吸附（SSOT：paramClamp）。
+      //    绝不粗暴钳死横坐标：视口收窄时交集自然收紧，视口宽裕时完全放开。
+      let nextX = snapDragValue(
+        newMathPos.x,
+        x0Meta.step,
+        paramDragRange(x0Meta, scale, "x"),
+      );
+
+      // ② 奇点保护：对勾模型 f(x) = x + a/x 在 x = 0 处无定义，
+      //    这属于「点排除」而非「区间收缩」，无法并入 ① 的区间求交，必须单独兜底。
+      //    （对数模型的 x > 0 已由 x0Meta.min 统一表达，此处不再重复手写。）
+      if (modelKey === "nike_rational" && Math.abs(nextX) < 0.2) {
+        nextX = nextX >= 0 ? 0.2 : -0.2;
       }
-      onParamChange("x0", Number(clampedX.toFixed(2)));
+
+      onParamChange("x0", nextX);
     },
-    [onParamChange, modelKey],
+    [onParamChange, modelKey, scale, x0Meta],
   );
 
   const fx0 = fn(x0);
@@ -79,7 +108,7 @@ export const DerivativeMonotonicityScene: React.FC<
           ? "极大值"
           : ext.type === "minimum"
             ? "极小值"
-            : "驻点";
+            : "导数为零的点";
 
       const nameStr =
         ext.type === "maximum"
@@ -229,7 +258,7 @@ export const DerivativeMonotonicityScene: React.FC<
           />
         )}
 
-      {/* 极值点与驻点（纯数学特征点） */}
+      {/* 极值点与导数为零的点（纯数学特征点） */}
       {extrema.map((ext, idx) => (
         <MathPoint
           key={`ext-${idx}-${ext.x}`}
@@ -240,6 +269,41 @@ export const DerivativeMonotonicityScene: React.FC<
           fontScale={fontScale}
         />
       ))}
+
+      {/* 极值特征线：竖虚线把极值点的横坐标 x* 落到 x 轴上；短水平线就是该点处的切线
+          y = y*（极值点处 f'(x*) = 0，切线必然水平）。
+          两条线 + 极值点 + 极值点标签同取 focusPoint 色，保证「同一数学对象同一颜色」。
+          越界部分由画布容器 overflow-hidden 裁掉，故无需再对 ext.y 做钳制——
+          钳回视口反而会让水平线偏离 y = y*，不再是该点的切线（数学上是错的）。 */}
+      {showExtremumGuides &&
+        trueExtrema.map((ext, idx) => {
+          const px = mathToDesign(ext.x, 0, scale).x;
+          const py = mathToDesign(ext.x, ext.y, scale).y;
+          return (
+            <React.Fragment key={`extremum-guide-${idx}-${ext.x}`}>
+              <line
+                x1={px}
+                y1={scale.originY}
+                x2={px}
+                y2={py}
+                stroke={MATH_COLORS.focusPoint}
+                strokeWidth={1.2}
+                strokeDasharray="4 4"
+                opacity={0.7}
+              />
+              <line
+                x1={px - EXTREMUM_TANGENT_HALF_PX}
+                y1={py}
+                x2={px + EXTREMUM_TANGENT_HALF_PX}
+                y2={py}
+                stroke={MATH_COLORS.focusPoint}
+                strokeWidth={1.8}
+                strokeDasharray="6 3"
+                opacity={0.9}
+              />
+            </React.Fragment>
+          );
+        })}
 
       {/* 可拖拽切点动点 */}
       {/* 可拖拽切点动点（与切线同门控，避免含参讨论模式出现无切线的孤立切点） */}
@@ -253,6 +317,7 @@ export const DerivativeMonotonicityScene: React.FC<
             onDrag={handleDragPoint}
             color={MATH_COLORS.tangentLine}
             fontScale={fontScale}
+            edgeClampProjection
           />
         )}
 

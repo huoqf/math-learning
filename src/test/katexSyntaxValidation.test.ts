@@ -152,6 +152,31 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
       params: { a: 2, b: 1, k: 0.5, m: 0 },
       config: { curveType: "ellipse" },
     },
+    // 导数与单调性：右屏「单调性与极值符号表」为 \begin{array}{c|c|c} 三列表格，
+    // 单元格由 math 层 signTable 拼装。以下 4 组覆盖全部形态不同的表格：
+    // ① 三次 a>0（极大/极小两行）；② 三次 a=0（导数为零的点非极值行）；
+    // ③ 对勾 a>0（含 \sqrt 的极值行 + x=0 奇点「无定义」行）；
+    // ④ 对数乘积（极小值写作 -e^{a-1} 的指数行）。
+    {
+      animId: "anim-derivative-monotonicity",
+      params: { a: 1, x0: 1 },
+      config: { modelKey: "cubic_param", mode: "extrema_analysis" },
+    },
+    {
+      animId: "anim-derivative-monotonicity",
+      params: { a: 0, x0: 1 },
+      config: { modelKey: "cubic_param", mode: "parametric_discuss" },
+    },
+    {
+      animId: "anim-derivative-monotonicity",
+      params: { a: 1, x0: 1 },
+      config: { modelKey: "nike_rational", mode: "extrema_analysis" },
+    },
+    {
+      animId: "anim-derivative-monotonicity",
+      params: { a: 1, x0: 1 },
+      config: { modelKey: "x_ln_x_param", mode: "parametric_discuss" },
+    },
   ];
 
   topicsToTest.forEach(({ animId, params, config }) => {

@@ -22,7 +22,10 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "baseA",
     label: "指对数底数 a",
     labelFormula: `\\text{底数 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
-    min: 0.1,
+    // 下界取 0.2 而非 0.1：活跃页面 ExponentialPage / LogarithmicPage 的左屏滑块下限即为 0.2，
+    // 且 0 < a < 0.2 时 a^x 在 x 负半轴瞬间冲出视口 (a = 0.1, x = -4 ⇒ y = 10⁴)，教学上不可用。
+    // 本条目此前为 0.1，仅被非路由容器 FuncExpLogAnimation 消费，属口径不一致（P2-8）。
+    min: 0.2,
     max: 4.0,
     step: 0.1,
     defaultValue: 2.0,

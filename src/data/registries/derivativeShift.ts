@@ -191,7 +191,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a}`,
     group: "隐零点函数参数",
     min: 0.5,
-    max: 4.5,
+    max: 3.6,
     step: 0.05,
     defaultValue: 2.0,
     importance: "core",

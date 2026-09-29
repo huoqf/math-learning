@@ -334,7 +334,7 @@ export function SecondDerivativeAnimation() {
           variant: "warning" as const,
           badge: "概念辨析 · 超越函数极值点与拐点分离",
           condition:
-            "函数 $f(x) = axe^x + bx + c$。一阶导驻点决定单调性与极值，二阶导变号点 $x=-2$ 决定切线上下位置与拐点。",
+            "函数 $f(x) = axe^x + bx + c$。一阶导的零点决定单调性与极值，二阶导变号点 $x=-2$ 决定切线上下位置与拐点。",
           question:
             "当 $b=0$ 时极值点在 $x=-1$，而拐点在 $x=-2$。探究极值点与拐点在定义域中的分离现象与几何本质。",
         };

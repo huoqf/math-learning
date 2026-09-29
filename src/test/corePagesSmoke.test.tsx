@@ -85,6 +85,10 @@ import { LineParamTAnimation } from "@/features/conicParamT/LineParamTAnimation"
 import { ConicPropertiesAnimation } from "@/features/conicProperties/ConicPropertiesAnimation";
 import { ConstantAnimation } from "@/features/constant/ConstantAnimation";
 import { DerivativeAnimation } from "@/features/derivative/DerivativeAnimation";
+import { DerivativeFormulasAnimation } from "@/features/derivativeFormulas/DerivativeFormulasAnimation";
+import { DerivativeOperationsAnimation } from "@/features/derivativeOperations/DerivativeOperationsAnimation";
+import { DerivativeChainAnimation } from "@/features/derivativeChain/DerivativeChainAnimation";
+import { DerivativeOptimizationAnimation } from "@/features/derivativeOptimization/DerivativeOptimizationAnimation";
 import { DerivativeEndpointTaylorAnimation } from "@/features/derivative-endpoint-taylor/DerivativeEndpointTaylorAnimation";
 import { TranscendentalAnimation } from "@/features/derivativeTranscendental/TranscendentalAnimation";
 import { InequalityBasicAnimation } from "@/features/inequalityBasic/InequalityBasicAnimation";
@@ -365,6 +369,27 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
   it("TranscendentalAnimation mounts properly and renders titles", () => {
     render(<TranscendentalAnimation />);
     expect(screen.getByText("数学解析看板")).toBeInTheDocument();
+  });
+
+  // ═════════ 导数「基础运算层」四页（公式表 / 四则 / 复合 / 优化建模）═════════
+  it("DerivativeFormulasAnimation mounts properly and renders titles", () => {
+    render(<DerivativeFormulasAnimation />);
+    expect(screen.getByText("基本初等函数求导公式看板")).toBeInTheDocument();
+  });
+
+  it("DerivativeOperationsAnimation mounts properly and renders titles", () => {
+    render(<DerivativeOperationsAnimation />);
+    expect(screen.getByText("导数四则运算法则看板")).toBeInTheDocument();
+  });
+
+  it("DerivativeChainAnimation mounts properly and renders titles", () => {
+    render(<DerivativeChainAnimation />);
+    expect(screen.getByText("简单复合函数求导看板")).toBeInTheDocument();
+  });
+
+  it("DerivativeOptimizationAnimation mounts properly and renders titles", () => {
+    render(<DerivativeOptimizationAnimation />);
+    expect(screen.getByText("导数实际优化建模看板")).toBeInTheDocument();
   });
 
   it("InequalityBasicAnimation mounts properly and renders titles", () => {

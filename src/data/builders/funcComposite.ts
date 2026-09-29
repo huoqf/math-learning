@@ -155,7 +155,7 @@ export function buildFuncCompositePanel(
             ? "单调递增 (↗)"
             : res.innerMonotonicity === "decreasing"
               ? "单调递减 (↘)"
-              : "极值/驻点 (—)",
+              : "采样点恰在对称轴 (—)",
       },
       {
         label: "外层单调性",
@@ -164,7 +164,7 @@ export function buildFuncCompositePanel(
             ? "单调递增 (↗)"
             : res.outerMonotonicity === "decreasing"
               ? "单调递减 (↘)"
-              : "极值/驻点 (—)",
+              : "采样点恰在顶点 (—)",
       },
       {
         label: "复合单调性",
@@ -173,7 +173,9 @@ export function buildFuncCompositePanel(
             ? "复合单调递增 (同增)"
             : res.compositeMonotonicity === "decreasing"
               ? "复合单调递减 (异减)"
-              : "驻点 / 无定义",
+              : res.isValid
+                ? "采样点恰在转折点 (—)"
+                : "无定义（真数 ≤ 0）",
         highlight:
           res.compositeMonotonicity === "increasing" ? "extreme" : "negative",
       },

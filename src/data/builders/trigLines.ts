@@ -257,14 +257,14 @@ export function buildTrigLinesPanel(
         latex:
           "\\text{由 } S_{\\triangle OAP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT} \\implies \\sin x < x < \\tan x \\quad \\left(x \\in \\left(0, \\frac{\\pi}{2}\\right)\\right)",
         condition: "$x \\in \\left(0, \\frac{\\pi}{2}\\right)$",
-        note: "取中间三块图形 △OAP ⊂ 扇形OAP ⊂ △OAT，面积依次为 (1/2)sin x、(1/2)x、(1/2)tan x，三边同除以 (1/2) 即得 sin x < x < tan x，是三角函数与导数交汇题的常用放缩依据。",
+        note: "取中间三块图形 △OAP ⊂ 扇形OAP ⊂ △OAT，面积依次为 (1/2)sin x、(1/2)x、(1/2)tan x，三边同除以 (1/2) 即得 sin x < x < tan x，是必修阶段比较三角函数值大小与判定三角函数图象位置的几何依据。",
         level: "important",
       },
     ];
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "考点1：高考导数压轴题三大基准放缩：$sin x < x$ ($x > 0$), $e^x ≥ x + 1$, $ln(x+1) ≤ x$",
+        text: "考点1：单位圆面积法证明三角不等式 $\\sin x < x < \\tan x\\ \\left(0 < x < \\frac{\\pi}{2}\\right)$，考频极高，是三角函数值大小比较与估值题的核心依据。",
         importance: "hard",
       },
       {

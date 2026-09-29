@@ -20,6 +20,7 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   defaultParams,
   transcendentalScenarios,
+  transcendentalParamMeta,
 } from "@/data/registries/transcendental";
 import type { TranscendentalMode } from "@/math/transcendental";
 
@@ -67,132 +68,36 @@ export function TranscendentalAnimation() {
     [params, mode, subMode, preset],
   );
 
-  // 6. 左屏动态参数配置（根据模式动态调整定义域与特征刻度）
+  // 6. 左屏动态参数配置：参数域一律取自注册表的按模式 SSOT
+  //    （transcendentalParamMeta），与中屏拖拽落值严格同源。
+  //    页面只负责「渲染期」的两件事：显示值夹到声明域内、按 subMode 特化文案。
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    if (mode === "exp") {
-      return [
-        {
-          key: "x0",
-          label: "切点横坐标 x₀",
-          labelFormula: `\\text{切点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
-          group: "切线控制参数",
-          value: params.x0 ?? 0,
-          min: -2.5,
-          max: 2.0,
-          step: 0.1,
-          description: "控制 $e^x$ 切点位置",
-          descriptionFormula: `控制 $e^x$ 切线切点 $\\color{${MATH_COLORS.paramPrimary}}{x_0}$`,
-          importance: "core",
-          disabled: isParamLocked("x0"),
-          marks: [
-            {
-              value: 0,
-              variant: "critical",
-              label: "基准一",
-              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=0}`,
-            },
-            {
-              value: 1,
-              label: "基准二",
-              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
-            },
-          ],
-        },
-      ];
-    } else if (mode === "log") {
-      return [
-        {
-          key: "x0",
-          label: "切点横坐标 x₀",
-          labelFormula: `\\text{切点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
-          group: "切线控制参数",
-          value: Math.max(0.1, params.x0 ?? 1.0),
-          min: 0.1,
-          max: 3.5,
-          step: 0.1,
-          description: "控制 $\\ln x$ 切点位置 ($x > 0$)",
-          descriptionFormula: `定义域保护 $\\color{${MATH_COLORS.paramPrimary}}{x_0} > 0$`,
-          importance: "core",
-          disabled: isParamLocked("x0"),
-          marks: [
-            {
-              value: 1,
-              variant: "critical",
-              label: "基准一",
-              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
-            },
-            {
-              value: 2.7,
-              label: "基准二",
-              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=e}`,
-            },
-          ],
-        },
-      ];
-    } else if (mode === "chain") {
-      return [
-        {
-          key: "x0",
-          label: "自变量考察点 x",
-          labelFormula: `\\text{自变量 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
-          group: "自变量位置",
-          value: Math.max(0.1, params.x0 ?? 1.0),
-          min: 0.2,
-          max: 3.0,
-          step: 0.1,
-          description: "观察三曲线放缩态势",
-          descriptionFormula: "观察 $x>0$ 处的包络差",
-          importance: "core",
-          disabled: isParamLocked("x0"),
-          marks: [
-            {
-              value: 1,
-              variant: "critical",
-              label: "公切点",
-              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x=1}`,
-            },
-          ],
-        },
-      ];
-    } else {
-      return [
-        {
-          key: "a",
-          label: "直线斜率参数 a",
-          labelFormula: `\\text{斜率 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
-          group: "参变直线方程",
-          value: params.a ?? 1.0,
-          min: -1.0,
-          max: 4.0,
-          step: 0.1,
-          description:
-            subMode === "exp_ax"
-              ? "直线 $y = ax$ 斜率"
-              : "直线 $y = ax + 1$ 斜率",
-          importance: "core",
-          disabled: isParamLocked("a"),
-          marks: [
-            {
-              value: 0,
-              label: "水平",
-              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=0}`,
-            },
-            {
-              value: 1,
-              variant: "critical",
-              label: "定点临界",
-              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=1}`,
-            },
-            {
-              value: 2.7,
-              variant: "critical",
-              label: "原点临界",
-              labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=e}`,
-            },
-          ],
-        },
-      ];
-    }
+    const metaMap = transcendentalParamMeta[mode] ?? {};
+
+    return Object.keys(metaMap).map((key) => {
+      const meta = metaMap[key];
+
+      return {
+        key,
+        label: meta.label,
+        labelFormula: meta.labelFormula,
+        group: meta.group,
+        // 显示值必须落在声明域内：历史实现只在 log/chain 写了 Math.max(0.1, …)，
+        // 与各自的 min（0.1 / 0.2）并不一致，且漏掉了 exp 模式的下界。
+        value: Math.max(meta.min, params[key] ?? meta.defaultValue ?? 0),
+        min: meta.min,
+        max: meta.max,
+        step: meta.step ?? 0.1,
+        description:
+          mode === "param" && subMode === "exp_ax"
+            ? "直线 $y = ax$ 斜率"
+            : meta.description,
+        descriptionFormula: meta.descriptionFormula,
+        importance: meta.importance,
+        disabled: isParamLocked(key),
+        marks: meta.marks,
+      };
+    });
   }, [params, mode, subMode, isParamLocked]);
 
   const handleParamChange = (key: string, value: number) => {
@@ -426,6 +331,16 @@ export function TranscendentalAnimation() {
           color: MATH_COLORS.tangentLine,
           label: isExpAx ? "临界切点" : isHorizontal ? "基准交点" : "临界切点",
           formula: isExpAx ? "P_0(1, e)" : "P_0(0, 1)",
+          style: "point",
+        },
+        {
+          // 手柄是参变直线自身的控制点（落在直线上），故与直线同取 paramPrimary、同色同族；
+          // 本页其余模式的可拖拽点（动切点 / 中轴动点）同样单列一行，此处保持一致。
+          color: MATH_COLORS.paramPrimary,
+          label: "斜率手柄",
+          formula: isExpAx
+            ? "拖动旋转直线 $y = ax$"
+            : "拖动旋转直线 $y = ax + 1$",
           style: "point",
         },
       ];

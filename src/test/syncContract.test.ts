@@ -581,7 +581,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         params: { a: 1.0, x0: 0.0 },
         lessonType: "gaokao_topic",
         groundTruth: {
-          极值点与驻点列表: 0.0, // 唯一极值点 x = a - 1 = 0
+          极值点与导数为零的点列表: 0.0, // 唯一极值点 x = a - 1 = 0
         },
         expectedExamAnchor: "第一充分条件穿零变号与极值判定",
         expectedTheoremsKeywords: ["极值点第一充分条件", "取极值的必要条件"],
@@ -595,7 +595,7 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
         params: { a: 1.0, x0: 1.5 },
         lessonType: "gaokao_topic",
         groundTruth: {
-          极值点与驻点列表: -1.0, // 首个极值点 x = -1
+          极值点与导数为零的点列表: -1.0, // 首个极值点 x = -1
         },
         expectedExamAnchor: "含参单调性分类讨论标准五步法",
         expectedTheoremsKeywords: [

@@ -27,9 +27,10 @@ import {
   defaultParams,
   paramMeta,
 } from "@/data/registries/derivativeEndpointTaylor";
-import type {
-  EndpointFuncType,
-  TaylorBaseType,
+import {
+  calcTaylorPolynomial,
+  type EndpointFuncType,
+  type TaylorBaseType,
 } from "@/math/derivativeEndpointTaylor";
 
 export function DerivativeEndpointTaylorAnimation() {
@@ -134,21 +135,12 @@ export function DerivativeEndpointTaylorAnimation() {
     } else if (activeMode === "lhopital") {
       return `\\lim_{x \\to 0} \\frac{e^x - 1 - x}{x^2} \\xrightarrow{\\text{L'Hôpital}} \\lim_{x \\to 0} \\frac{e^x - 1}{2x} = \\frac{1}{2}`;
     } else {
-      const expPoly =
-        taylorOrder === 1
-          ? "1+x"
-          : taylorOrder === 2
-            ? "1+x+\\frac{1}{2}x^2"
-            : "1+x+\\frac{1}{2}x^2+\\frac{1}{6}x^3";
-      if (taylorBase === "exp") {
-        return `e^x \\ge P_{${taylorOrder}}(x) = ${expPoly} \\quad (x \\ge 0)`;
-      } else if (taylorBase === "ln") {
-        return `\\ln(1+x) \\le P_{${taylorOrder}}(x) \\quad (x \\ge 0)`;
-      } else if (taylorBase === "sin") {
-        return `\\sin x \\ge P_{${taylorOrder}}(x) \\quad (x \\ge 0)`;
-      } else {
-        return `\\cos x \\ge P_{${taylorOrder}}(x) \\quad (x \\in \\mathbb{R})`;
-      }
+      // 与右屏同源：直接取 math 层的放缩不等式。
+      // 严禁在此另写一份方向 —— 曾按「exp ≥ / ln ≤ / sin ≥ / cos ≥」固定硬编码，
+      // 导致默认 2 阶时 ln 与 sin 的不等号与右屏定理、与数学事实均相反
+      // （ln(1+x) ≤ P_n 只在奇阶成立，sin x ≥ P_n 只在 3 阶成立）。
+      return calcTaylorPolynomial(taylorBase, taylorOrder, params.xTest ?? 0)
+        .scalingInequality;
     }
   }, [activeMode, endpointType, taylorBase, taylorOrder, params]);
 

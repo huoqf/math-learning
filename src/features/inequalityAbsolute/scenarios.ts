@@ -72,7 +72,7 @@ export const SCENARIOS_BY_MODE: Record<
         "动点 $P(x)$ 到两定点 $A(1), B(4)$ 的距离之和满足 $|x - 1| + |x - 4| \\le 5$。",
       question: "求出该绝对值和不等式的解集区间，并确定临界交点坐标。",
       presetParams: { a: 1.0, b: 4.0, m: 5.0, x: 2.5 },
-      theorems: ["双绝对值和 (平底杯函数) 极值定理"],
+      theorems: ["双绝对值和 (平底杯函数) 最值定理"],
       variant: "primary",
     },
     {
@@ -84,7 +84,7 @@ export const SCENARIOS_BY_MODE: Record<
       question:
         "利用两点间线段最短求解函数最小值 $|a - b|$，确定参数 $m$ 的最大取值范围。",
       presetParams: { a: 1.0, b: 4.0, m: 3.0, x: 3.0 },
-      theorems: ["双绝对值和 (平底杯函数) 极值定理"],
+      theorems: ["双绝对值和 (平底杯函数) 最值定理"],
       variant: "warning",
     },
     {
@@ -96,7 +96,7 @@ export const SCENARIOS_BY_MODE: Record<
       question:
         "证明当水平线低于平底杯杯底时，不等式解集为空集 $\\varnothing$。",
       presetParams: { a: 1.0, b: 4.0, m: 2.0, x: 2.0 },
-      theorems: ["双绝对值和 (平底杯函数) 极值定理"],
+      theorems: ["双绝对值和 (平底杯函数) 最值定理"],
       variant: "danger",
     },
     {
@@ -124,7 +124,7 @@ export const SCENARIOS_BY_MODE: Record<
     {
       id: "diff-max-platform",
       name: "最大值平台射线",
-      badge: "极值结构 · 同侧差为定值",
+      badge: "最值结构 · 同侧差为定值",
       condition:
         "动点 $P$ 位于两定点同侧（$x \\ge \\max(a, b)$），满足距离差达到理论最大值 $|a - b|$。",
       question:
@@ -136,7 +136,7 @@ export const SCENARIOS_BY_MODE: Record<
     {
       id: "diff-min-platform",
       name: "最小值平台射线",
-      badge: "极值结构 · 反向差为定值",
+      badge: "最值结构 · 反向差为定值",
       condition:
         "动点 $P$ 位于两定点左侧（$x \\le \\min(a, b)$），距离差达到理论最小值 $-|a - b|$。",
       question:

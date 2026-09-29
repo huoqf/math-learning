@@ -14,6 +14,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS } from "@/theme";
 import { calculateExpLog, calculatePowerFunction } from "@/math/function";
 import { paramMeta } from "@/data/registries/funcExpLog";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
 
 interface ExpLogSceneProps {
   params: Record<string, number>;
@@ -23,6 +24,7 @@ interface ExpLogSceneProps {
   fontScale?: (v: number) => number;
   funcType: "exponential" | "logarithmic" | "power";
   showInverse?: boolean;
+  /** 拓展图层（选必二前瞻）：切线，默认关闭。见 ExponentialPage 顶部注释与门禁 `EXTENSION_ALLOWLIST` */
   showTangent?: boolean;
 }
 
@@ -41,13 +43,20 @@ export function ExpLogScene({
   const powerAlpha = params.powerAlpha ?? 2.0;
 
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    // 边界从 paramMeta 读取（与左屏滑块同源）：对数模式下动态保护真数 x0 > 0.1
+    // 参数域 SSOT：与左屏滑块同源（paramMeta），并与当前可见视口求交后再按步长吸附；
+    // 对数模式的真数保护 x > 0.1 统一由 lo 表达，不再另写一套 Math.max/Math.min。
     const lo =
       funcType === "logarithmic"
         ? Math.max(0.1, paramMeta.x0.min)
         : paramMeta.x0.min;
-    const clampedX = Math.min(Math.max(lo, mathPt.x), paramMeta.x0.max);
-    onParamChange("x0", Math.round(clampedX * 10) / 10);
+    onParamChange(
+      "x0",
+      snapDragValue(
+        mathPt.x,
+        paramMeta.x0.step,
+        paramDragRange({ ...paramMeta.x0, min: lo }, scale, "x"),
+      ),
+    );
   };
 
   const powerRes = React.useMemo(
@@ -278,6 +287,7 @@ export function ExpLogScene({
             onDrag={handleDragX0}
             color={MATH_COLORS.function}
             fontScale={fontScale}
+            edgeClampProjection
           />
         )}
 
@@ -397,7 +407,7 @@ export function ExpLogScene({
           />
         )}
 
-      {/* 切线可视化 */}
+      {/* @syllabus-extension:begin 拓展图层：切线可视化（选必二前瞻），受左屏开关控制，默认关闭 */}
       {showTangent &&
         isValidBase &&
         funcType === "logarithmic" &&
@@ -442,6 +452,7 @@ export function ExpLogScene({
             />
           </>
         )}
+      {/* @syllabus-extension:end */}
 
       {/* 指数模式下的动点与对称点 */}
       {isValidBase &&
@@ -484,6 +495,7 @@ export function ExpLogScene({
                 onDrag={handleDragX0}
                 color={MATH_COLORS.function}
                 fontScale={fontScale}
+                edgeClampProjection
               />
               {showInverse && (
                 <>
@@ -570,6 +582,7 @@ export function ExpLogScene({
                 onDrag={handleDragX0}
                 color={MATH_COLORS.function}
                 fontScale={fontScale}
+                edgeClampProjection
               />
               {showInverse && (
                 <>

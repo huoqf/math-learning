@@ -18,6 +18,8 @@ import {
   type PresetFunctionKey,
 } from "@/math/derivative";
 import { MATH_COLORS } from "@/theme";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/derivative";
 
 interface DerivativeSceneProps {
   mode: "secant_limit" | "tangent_eq";
@@ -62,9 +64,28 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
   const handleDrag = React.useCallback(
     (mathPt: { x: number; y: number }) => {
       onDragStart?.();
-      onParamChange("x0", Math.round(mathPt.x * 100) / 100);
+      // 落值统一走 paramClamp SSOT：先取「参数域 ∩ 当前可见视口」求交，再按 paramMeta.step
+      // 逐步长吸附。严禁手写 Math.round(x * 100) / 100 —— 它与左屏滑块的 0.05 步长不同源，
+      // 拖出的值滑块无法表示，用户一动滑块就会跳变；且没有任何视口约束，手柄可被拖出画布。
+      //
+      // ⚠ 参数域必须取**当前母函数的** `preset.x0Range`，而不是注册表里的 `paramMeta.x0`：
+      //   左屏滑块与 `handleParamChange` 都用 `preset.x0Range`（如 cubic 为 [-3,3]、
+      //   sine/cosine 为 [-6.28,6.28]），注册表那份是 [-4,4] 的兜底值。两者混用会让
+      //   「拖得到、滑块表示不了」或「滑块到得了、拖不到」两种脱节同时发生。
+      onParamChange(
+        "x0",
+        snapDragValue(
+          mathPt.x,
+          paramMeta.x0.step,
+          paramDragRange(
+            { ...paramMeta.x0, min: preset.x0Range[0], max: preset.x0Range[1] },
+            scale,
+            "x",
+          ),
+        ),
+      );
     },
-    [onParamChange, onDragStart],
+    [onParamChange, onDragStart, scale, preset],
   );
 
   // 纯极简学术点标：切点 P、割线动点 Q
@@ -241,6 +262,7 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
         r={6}
         disabled={!res.isValid}
         fontScale={fontScale}
+        edgeClampProjection
       />
 
       {/* 极简学术点标 */}

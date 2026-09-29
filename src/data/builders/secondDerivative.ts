@@ -171,6 +171,8 @@ export function buildSecondDerivativePanel(
     theorems.push(
       {
         name: "二阶导数与凹凸性判定定理",
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
         latex:
           "f''(x) > 0 \\implies \\text{切线恒在曲线下方}, \\quad f''(x) < 0 \\implies \\text{切线恒在曲线上方}",
         condition:
@@ -178,12 +180,16 @@ export function buildSecondDerivativePanel(
       },
       {
         name: "切线放缩基本不等式 (拓展工具)",
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
         latex: "f(x) \\ge f'(x_0)(x - x_0) + f(x_0) \\quad (f''(x) \\ge 0)",
         condition:
           "二阶导数非负的函数在任意切点 $x_0$ 处的切线作为全局下界（如 $e^x ≥ x+1$；二阶导数非正则不等号反向，如 $\\ln x ≤ x-1$）",
       },
       {
         name: "二阶导判单调性与隐零点存在性",
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
         latex: "f''(x) > 0 \\implies f'(x) \\text{ 单调递增}",
         condition:
           "拓展用法：当导函数式复杂不易求根时，求二阶导锁定一阶导单调性并确定唯一零点",
@@ -193,22 +199,28 @@ export function buildSecondDerivativePanel(
     theorems.push(
       {
         name: "拐点判定定理 (Inflection Point)",
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
         latex: "f''(x_0) = 0 \\text{ 且在其左右两侧 } f''(x) \\text{ 严格异号}",
         condition:
           "拐点是切线与曲线的上下位置关系发生改变的分界点，切线在此穿越曲线；若二阶导不变号则不是拐点",
       },
       {
         name: "二阶导数极值充分条件判定法",
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
         latex:
           "f'(x_0) = 0, \\, f''(x_0) > 0 \\implies \\text{极小值}; \\, f''(x_0) < 0 \\implies \\text{极大值}",
         condition:
-          "驻点处二阶导异于0可直接锁定极值性；若 $f''(x_0)=0$，则判别法失效需验证一阶导变号",
+          "导数为零的点处二阶导异于0可直接锁定极值性；若 $f''(x_0)=0$，则判别法失效需验证一阶导变号",
       },
     );
   } else {
     theorems.push(
       {
         name: "琴生不等式割弧形式 (Jensen's Inequality)",
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
         latex:
           "f\\left(\\frac{x_1+x_2}{2}\\right) \\le \\frac{f(x_1)+f(x_2)}{2} \\quad (f''(x) \\ge 0)",
         condition:
@@ -216,6 +228,8 @@ export function buildSecondDerivativePanel(
       },
       {
         name: "琴生不等式加权形式 (极值点偏移基石)",
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
         latex:
           "f(\\lambda x_1 + (1-\\lambda)x_2) \\le \\lambda f(x_1) + (1-\\lambda)f(x_2) \\quad (0 \\le \\lambda \\le 1)",
         condition:

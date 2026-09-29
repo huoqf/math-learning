@@ -159,7 +159,7 @@ export function buildFuncPropertiesPanel(
         importance: "gaokao",
       },
       {
-        text: "求值域与最值的新高考通法：①直接图象投影法；②二次函数配方法；③代数/三角换元法（换元必先定新元范围）；④基本不等式法（一正二定三相等）；⑤分离常数法（分式）；⑥导数单调性极值法。",
+        text: "求值域与最值的新高考通法：①直接图象投影法；②二次函数配方法；③代数/三角换元法（换元必先定新元范围）；④基本不等式法（一正二定三相等）；⑤分离常数法（分式型）。",
         importance: "core",
       },
     ];
@@ -195,7 +195,7 @@ export function buildFuncPropertiesPanel(
           detail:
             "奇多项式 $f(x) = x^3$ 在定义域 $\\mathbb{R}$ 上严格单调递增，当 $x \\to -\\infty$ 时 $f(x) \\to -\\infty$；当 $x \\to +\\infty$ 时 $f(x) \\to +\\infty$。",
           latex:
-            "\\lim_{x \\to -\\infty} x^3 = -\\infty, \\quad \\lim_{x \\to +\\infty} x^3 = +\\infty",
+            "x \\to -\\infty \\text{ 时 } x^3 \\to -\\infty, \\quad x \\to +\\infty \\text{ 时 } x^3 \\to +\\infty",
         },
         {
           step: 3,
@@ -561,7 +561,7 @@ export function buildFuncPropertiesPanel(
         importance: "gaokao",
       },
       {
-        text: "奇函数导数是偶函数，偶函数导数是奇函数：高考导数压轴题中，利用导函数的奇偶性往往能直接确定导函数极值点与对称中心。",
+        text: "奇偶性的图象价值：奇函数图象关于原点中心对称、偶函数图象关于 y 轴对称，据此可「知一半画全体」；比较 f(-a) 与 f(b) 这类异号自变量的大小时，先用奇偶性把负自变量转化到正半轴，再用单调性判定。",
         importance: "core",
       },
     ];
@@ -788,7 +788,7 @@ export function buildFuncPropertiesPanel(
 
     const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
       {
-        text: "高考中心对称识别大招：若 $f(a+x) + f(b-x) = 2c$ 恒成立，则对称中心必为 $(\\frac{a+b}{2}, c)$！三次函数中心对称点必为其二阶导零点（拐点）。",
+        text: "高考中心对称识别大招：若 $f(a+x) + f(b-x) = 2c$ 恒成立，则对称中心必为 $(\\frac{a+b}{2}, c)$！三次函数的图象是中心对称图形，其对称中心位于图象上，由该恒等式即可直接读出。",
         importance: "gaokao",
       },
       {
@@ -962,7 +962,7 @@ export function buildFuncPropertiesPanel(
       importance: "gaokao",
     },
     {
-      text: "抽象周期公式速记：$f(x+a) = -f(x) \\implies T = 2a$；$f(x+a) = \\frac{1}{f(x)} \\implies T = 2a$；$f(x+a) = -\\frac{1}{f(x)} \\implies T = 2a$；$f(x+a) = \\frac{1-f(x)}{1+f(x)} \\implies T = 4a$。",
+      text: "抽象周期公式速记：$f(x+a) = -f(x) \\implies T = 2a$；$f(x+a) = \\frac{1}{f(x)} \\implies T = 2a$；$f(x+a) = -\\frac{1}{f(x)} \\implies T = 2a$；$f(x+a) = \\frac{1-f(x)}{1+f(x)} \\implies T = 2a$。",
       importance: "gaokao",
     },
   ];

@@ -15,8 +15,19 @@ import {
   SceneLabelGroup,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { withAlpha } from "@/theme";
+import { dashArrayOf } from "@/components/Math/scenePalette";
 import type { LabelItem } from "@/utils/labelOverlap";
+import {
+  AREA_FILL_ALPHA,
+  getSecondDerivativePalette,
+} from "@/features/second-derivative/scenePalette";
+import { paramMeta } from "@/data/registries/secondDerivative";
+import {
+  clampCoupledRange,
+  paramDragRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
 import {
   evalFunction,
   findInflectionPoints,
@@ -25,6 +36,9 @@ import {
   type FnKey,
   type SecondDerivativeParams,
 } from "@/math/secondDerivative";
+
+/** 割线两端点必须保持的最小间距（与左屏滑块的耦合约束同源） */
+const MIN_SECANT_GAP = 0.2;
 
 interface SecondDerivativeSceneProps {
   params: SecondDerivativeParams;
@@ -46,6 +60,9 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
   fnKey = "cubic",
 }) => {
   const { x0, x1, x2 } = params;
+
+  // 本模式调色板：图例与画布的唯一颜色来源（见 scenePalette.ts）
+  const P = useMemo(() => getSecondDerivativePalette(studyMode), [studyMode]);
 
   // 1. 原函数求值回调
   const fn = useCallback(
@@ -84,26 +101,48 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
   );
 
   // 5. 拖拽处理器
+  // 落值统一走 paramClamp SSOT：先取「参数声明域 ∩ 可见视口」求交，再按 paramMeta.step 吸附。
+  // 严禁手写 Math.max(scale.xMin, Math.min(scale.xMax, x)) + toFixed(2) ——
+  // 它既丢了注册表声明域（拖出的值滑块表示不了），又把步长写死成 0.01 而非滑块真实的 0.05。
   const handleX0Drag = useCallback(
     (mathPos: { x: number; y: number }) => {
-      const clampedX = Math.max(scale.xMin, Math.min(scale.xMax, mathPos.x));
-      onParamChange("x0", Number(clampedX.toFixed(2)));
+      onParamChange(
+        "x0",
+        snapDragValue(
+          mathPos.x,
+          paramMeta.x0.step,
+          paramDragRange(paramMeta.x0, scale, "x"),
+        ),
+      );
     },
     [scale, onParamChange],
   );
 
+  // x₁ / x₂ 是严格偏序的耦合端点：除各自声明域外还须保持最小间距，
+  // 该约束依赖另一端点的实时取值，无法并入「区间求交」，
+  // 故用原子算子 clampCoupledRange —— 极限紧绷时自动锁定，杜绝穿越。
   const handleX1Drag = useCallback(
     (mathPos: { x: number; y: number }) => {
-      const clampedX = Math.max(scale.xMin, Math.min(x2 - 0.2, mathPos.x));
-      onParamChange("x1", Number(clampedX.toFixed(2)));
+      const range = clampCoupledRange(
+        x2,
+        MIN_SECANT_GAP,
+        paramDragRange(paramMeta.x1, scale, "x"),
+        true,
+      );
+      onParamChange("x1", snapDragValue(mathPos.x, paramMeta.x1.step, range));
     },
     [scale, x2, onParamChange],
   );
 
   const handleX2Drag = useCallback(
     (mathPos: { x: number; y: number }) => {
-      const clampedX = Math.min(scale.xMax, Math.max(x1 + 0.2, mathPos.x));
-      onParamChange("x2", Number(clampedX.toFixed(2)));
+      const range = clampCoupledRange(
+        x1,
+        MIN_SECANT_GAP,
+        paramDragRange(paramMeta.x2, scale, "x"),
+        false,
+      );
+      onParamChange("x2", snapDragValue(mathPos.x, paramMeta.x2.step, range));
     },
     [scale, x1, onParamChange],
   );
@@ -169,7 +208,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           x: pt0.x,
           y: pt0.y,
           text: "P₀",
-          color: MATH_COLORS.paramPrimary,
+          color: P.probe.color,
           fontSize: fontScale(13),
           preferredPlacement: "top-right",
         },
@@ -184,7 +223,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           x: pt.x,
           y: pt.y,
           text: trueInflections.length > 1 ? `I${idx + 1}` : "I",
-          color: MATH_COLORS.vectorResult,
+          color: P.inflection.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-left",
         });
@@ -196,7 +235,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           x: pt.x,
           y: pt.y,
           text: extrema.length > 1 ? `E${idx + 1}` : "E",
-          color: MATH_COLORS.paramSecondary,
+          color: P.extrema.color,
           fontSize: fontScale(12),
           preferredPlacement: "bottom-right",
         });
@@ -209,7 +248,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           x: ptJ1.x,
           y: ptJ1.y,
           text: "S₁",
-          color: MATH_COLORS.paramSecondary,
+          color: P.probeS1.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-left",
         },
@@ -218,7 +257,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           x: ptJ2.x,
           y: ptJ2.y,
           text: "S₂",
-          color: MATH_COLORS.paramTertiary,
+          color: P.probeS2.color,
           fontSize: fontScale(12),
           preferredPlacement: "top-right",
         },
@@ -227,7 +266,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           x: ptJChordMid.x,
           y: ptJChordMid.y,
           text: "M",
-          color: MATH_COLORS.paramSecondary,
+          color: P.chordMid.color,
           fontSize: fontScale(12),
           preferredPlacement: "top",
         },
@@ -236,7 +275,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           x: ptJCurveMid.x,
           y: ptJCurveMid.y,
           text: "P",
-          color: MATH_COLORS.paramTertiary,
+          color: P.curveMid.color,
           fontSize: fontScale(12),
           preferredPlacement: "bottom",
         },
@@ -254,6 +293,11 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
     extrema,
     scale,
     fontScale,
+    // 点位标签的色值取自 palette（图例↔画布同源）。
+    // 这里整体列 `P` 而**不能**逐个列 `P.probe.color` 之类：本页 palette 是**按模式分表**的
+    // （CONCAVITY 无 chordMid、JENSEN 无 probe…），逐个列会在非对应模式下读到 undefined 而崩页；
+    // `P` 本身由 `useMemo(..., [studyMode])` 产生、且 `PALETTES` 是模块级常量，引用稳定，不会多算。
+    P,
   ]);
 
   return (
@@ -261,7 +305,8 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
       {/* 坐标轴与纯净背景（无多余方格网干扰） */}
       <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
-      {/* 二阶导数符号分区背景高亮（f''(x) > 0:蓝色, f''(x) < 0:浅红） */}
+      {/* 二阶导数符号分区背景高亮（凹向上凸区 / 凹向下凹区，配色取自本页 palette，
+          见 scenePalette.ts 的 zoneConvex / zoneConcave —— 图例与画布同源） */}
       {studyMode === "concavity" &&
         concavityRegions.map((reg, idx) => {
           const p1 = mathToDesign(reg.xStart, scale.yMax, scale);
@@ -270,8 +315,8 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           const height = Math.abs(p2.y - p1.y);
           const color =
             reg.type === "concaveUp"
-              ? withAlpha(MATH_COLORS.function, 0.06)
-              : withAlpha(MATH_COLORS.paramPrimary, 0.06);
+              ? withAlpha(P.zoneConvex.color, AREA_FILL_ALPHA)
+              : withAlpha(P.zoneConcave.color, AREA_FILL_ALPHA);
 
           return (
             <rect
@@ -286,11 +331,67 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           );
         })}
 
+      {/* 二阶导数曲线 f''(x)：本页两个模式的判定主体（此前该曲线在中屏完全缺席，
+          学生只能凭 f 的弯曲方向「猜」f'' 的符号，凹凸性与拐点都失去了判定依据）。
+            f''(x) > 0 ⟺ 曲线凹向上（分区底色：凸区）  f''(x) < 0 ⟺ 凹向下（分区底色：凹区）
+            f''(x) 穿零变号 ⟺ 拐点；只与 x 轴相切而不变号 ⟺ 反例点
+            （如四次函数 f''(x)=6x² 在 x=0 处只碰轴不变号，故该点不是拐点）。
+          FunctionGraph 自带纵向容错过滤（超出视口 2 倍带宽即断笔），
+          f'' 陡峭时自动只画可见带内片段，不会出现撑爆画布的飞线。 */}
+      {(studyMode === "concavity" || studyMode === "inflection") && (
+        <>
+          <FunctionGraph
+            fn={(x) => evalFunction(fnKey, params, x).ddy}
+            scale={scale}
+            color={P.fpp.color}
+            strokeWidth={P.fpp.width}
+            strokeDasharray={dashArrayOf(P.fpp)}
+          />
+
+          {/* f'' 的零点：其横坐标就是拐点候选的横坐标，故直接落在 x 轴上（该处 f''(x)=0）。
+              同一横坐标处 f'' 是「穿过」还是「相切」x 轴，正是拐点第一充分条件的可视判别。
+              此处取 inflections（含不变号的反例点）而非 trueInflections —— 反例点必须被显示，
+              学生才能亲眼看到「f'' 只碰轴不穿轴 ⇒ 不是拐点」。 */}
+          {inflections.map((ip, idx) => (
+            <MathPoint
+              key={`fpp-zero-${idx}-${ip.x}`}
+              cx={ip.x}
+              cy={0}
+              scale={scale}
+              variant="solid"
+              color={P.fpp.color}
+              fontScale={fontScale}
+            />
+          ))}
+
+          {/* 拐点横坐标对照线：把拐点 I 与它正下方 f'' 的零点连起来，
+              直观呈现「拐点的横坐标 = f'' 零点的横坐标」这一等价关系。 */}
+          {studyMode === "inflection" &&
+            trueInflections.map((ip, idx) => {
+              const pTop = mathToDesign(ip.x, ip.y, scale);
+              const pBottom = mathToDesign(ip.x, 0, scale);
+              return (
+                <line
+                  key={`fpp-guide-${idx}-${ip.x}`}
+                  x1={pTop.x}
+                  y1={pTop.y}
+                  x2={pBottom.x}
+                  y2={pBottom.y}
+                  stroke={P.fpp.color}
+                  strokeWidth={1.2}
+                  strokeDasharray="3 3"
+                  strokeOpacity={0.75}
+                />
+              );
+            })}
+        </>
+      )}
+
       {/* 原函数曲线 */}
       <FunctionGraph
         fn={fn}
         scale={scale}
-        color={MATH_COLORS.function}
+        color={P.fn.color}
         strokeWidth={2.8}
       />
 
@@ -318,7 +419,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
                 y1={pIpLeft.y}
                 x2={pIpRight.x}
                 y2={pIpRight.y}
-                stroke={MATH_COLORS.vectorResult}
+                stroke={P.inflectTangent.color}
                 strokeWidth={1.5}
                 strokeDasharray="4 4"
                 strokeOpacity={0.8}
@@ -328,7 +429,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
                 cx={ip.x}
                 cy={ip.y}
                 scale={scale}
-                color={MATH_COLORS.vectorResult}
+                color={P.inflection.color}
                 fontScale={fontScale}
               />
             </g>
@@ -343,7 +444,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
             cx={ext.x}
             cy={ext.y}
             scale={scale}
-            color={MATH_COLORS.paramSecondary}
+            color={P.extrema.color}
             fontScale={fontScale}
           />
         ))}
@@ -355,7 +456,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           y1={tangentSegment.pLeft.y}
           x2={tangentSegment.pRight.x}
           y2={tangentSegment.pRight.y}
-          stroke={MATH_COLORS.tangentLine}
+          stroke={P.tangent.color}
           strokeWidth={2}
           strokeOpacity={0.9}
         />
@@ -369,7 +470,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
           scale={scale}
           vp={vp}
           onDrag={handleX0Drag}
-          color={MATH_COLORS.paramPrimary}
+          color={P.probe.color}
           r={6}
           fontScale={fontScale}
         />
@@ -384,7 +485,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
             y1={ptJ1.y}
             x2={ptJ2.x}
             y2={ptJ2.y}
-            stroke={MATH_COLORS.paramSecondary}
+            stroke={P.chord.color}
             strokeWidth={2.5}
           />
           {/* 垂直连接线 (弦中点 -> 弧中点) */}
@@ -393,7 +494,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
             y1={ptJChordMid.y}
             x2={ptJCurveMid.x}
             y2={ptJCurveMid.y}
-            stroke={MATH_COLORS.vectorResult}
+            stroke={P.connector.color}
             strokeWidth={2}
             strokeDasharray="3 3"
           />
@@ -403,7 +504,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
             cx={jensen.xMid}
             cy={jensen.yChordMid}
             scale={scale}
-            color={MATH_COLORS.paramSecondary}
+            color={P.chordMid.color}
             fontScale={fontScale}
           />
 
@@ -412,7 +513,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
             cx={jensen.xMid}
             cy={jensen.yCurveMid}
             scale={scale}
-            color={MATH_COLORS.paramTertiary}
+            color={P.curveMid.color}
             fontScale={fontScale}
           />
 
@@ -423,7 +524,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
             scale={scale}
             vp={vp}
             onDrag={handleX1Drag}
-            color={MATH_COLORS.paramSecondary}
+            color={P.probeS1.color}
             r={6}
             fontScale={fontScale}
           />
@@ -434,7 +535,7 @@ export const SecondDerivativeScene: React.FC<SecondDerivativeSceneProps> = ({
             scale={scale}
             vp={vp}
             onDrag={handleX2Drag}
-            color={MATH_COLORS.paramTertiary}
+            color={P.probeS2.color}
             r={6}
             fontScale={fontScale}
           />

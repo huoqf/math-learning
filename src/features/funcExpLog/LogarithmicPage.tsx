@@ -19,6 +19,18 @@ import { ExpLogScene } from "./components/ExpLogScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams } from "@/data/registries/funcExpLog";
 
+/**
+ * 拓展图层（选择性必修二前瞻）——**默认关闭**。
+ *
+ * 本页正文属必修一「指数函数与对数函数」：正文、图例、推导链一律不出现导数记号，
+ * 由 `src/test/syllabusContentBoundary.test.ts` 的内容边界门禁守护。
+ * 「切线」图层来自选必二「一元函数的导数及其应用」，属前瞻性拓展，
+ * 打开后徽标切换为「选必二前瞻 · 拓展（非必修一正文要求）」，与正文明确区分。
+ * 该图层在门禁中以**声明式放行**登记（`EXTENSION_ALLOWLIST`），不是漏检。
+ */
+const EXTENSION_LAYER_LABEL = "展示切线（选必二前瞻 · 拓展）";
+const EXTENSION_BADGE = "选必二前瞻 · 拓展（非必修一正文要求）";
+
 export function LogarithmicPage() {
   const [params, setParams] = useState(() => ({
     ...defaultParams,
@@ -85,10 +97,10 @@ export function LogarithmicPage() {
             labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} = 1`,
           },
           {
-            value: 1.4,
+            value: 2.7,
             variant: "recommended",
-            label: "相切临界",
-            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a_c = e^{1/e}}`,
+            label: "自然底数 e ≈ 2.718",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a = e \\approx 2.7}`,
           },
         ],
       },
@@ -136,6 +148,7 @@ export function LogarithmicPage() {
       });
     }
 
+    // @syllabus-extension:begin 拓展图层图例（选必二前瞻 · 切线）
     if (showTangent) {
       items.push({
         label: "切线 $f'(x_0)$",
@@ -143,6 +156,7 @@ export function LogarithmicPage() {
         style: "solid",
       });
     }
+    // @syllabus-extension:end
 
     return items;
   }, [params.baseA, showInverse, showTangent]);
@@ -151,6 +165,29 @@ export function LogarithmicPage() {
   const tipConfig = useMemo(() => {
     const a = params.baseA ?? 2.0;
 
+    // ⚠ 拓展图层（选必二前瞻）：仅当切线开关打开时，才把设问切到导数口径，
+    //   并以 EXTENSION_BADGE 显式标注——保证默认状态下页面不出现任何选必二内容。
+    // @syllabus-extension:begin 拓展设问（选必二前瞻 · 切线方程 / 切线放缩 / 相切临界）
+    if (showTangent) {
+      return showInverse
+        ? {
+            variant: "accent" as const,
+            badge: EXTENSION_BADGE,
+            condition:
+              "设对数函数 $y = \\log_a x$ 与指数函数 $y = a^x$ 互为反函数，对称轴为直线 $y = x$。",
+            question:
+              "（拓展）证明动点 $P(x_0, y_0)$ 与其对称点 $P'(y_0, x_0)$ 的连线被直线 $y = x$ 垂直平分，并求解两曲线相切时的底数临界值 $a_c$ 与切点坐标。",
+          }
+        : {
+            variant: "accent" as const,
+            badge: EXTENSION_BADGE,
+            condition: `底数 $a = ${a.toFixed(1)}$，真数定义域 $x \\in (0, +\\infty)$，恒过定点 $(1, 0)$。`,
+            question:
+              "（拓展）求函数在探究动点处的切线方程，并写出该点处的高考切线放缩不等式。",
+          };
+    }
+    // @syllabus-extension:end
+
     if (showInverse) {
       return {
         variant: "info" as const,
@@ -158,7 +195,7 @@ export function LogarithmicPage() {
         condition:
           "设对数函数 $y = \\log_a x$ 与指数函数 $y = a^x$ 互为反函数，对称轴为直线 $y = x$。",
         question:
-          "证明动点 $P(x_0, y_0)$ 与对称点 $P'(y_0, x_0)$ 的连线被直线 $y = x$ 垂直平分，并求解两曲线相切时的底数临界值 $a_c$ 与切点坐标。",
+          "证明动点 $P(x_0, y_0)$ 与其对称点 $P'(y_0, x_0)$ 的连线被直线 $y = x$ 垂直平分，并据此说明两图象关于直线 $y = x$ 对称。",
       };
     }
     if (a > 1) {
@@ -168,7 +205,7 @@ export function LogarithmicPage() {
         condition:
           "底数 $a > 1$，真数定义域 $x \\in (0, +\\infty)$，恒过定点 $(1, 0)$，竖直渐近线为 $x = 0$ (y 轴)。",
         question:
-          "判定函数在定义域 $(0, +\\infty)$ 上的单调性与图象形态，并求在探究动点处的切线方程及高考切线放缩不等式。",
+          "判定函数在定义域 $(0, +\\infty)$ 上的单调性与图象形态，并比较底数 $a > 1$ 增大时图象陡缓的变化规律（底数越大，图象越过定点后越平缓）。",
       };
     } else {
       return {
@@ -180,7 +217,7 @@ export function LogarithmicPage() {
           "判定对数值在区间 $(0, 1)$ 与 $(1, +\\infty)$ 上的正负符号分界，并证明函数在区间 $(0, +\\infty)$ 上的严格单调递减性质。",
       };
     }
-  }, [params.baseA, showInverse]);
+  }, [params.baseA, showInverse, showTangent]);
 
   return (
     <ThreePanel
@@ -196,11 +233,13 @@ export function LogarithmicPage() {
               onChange={(val) => setMode(val as "single" | "inverse")}
             />
             <div className="pt-2">
+              {/* @syllabus-extension:begin 拓展图层开关（选必二前瞻），默认关闭 */}
               <Toggle
-                label="展示导数切线"
+                label={EXTENSION_LAYER_LABEL}
                 checked={showTangent}
                 onChange={setShowTangent}
               />
+              {/* @syllabus-extension:end */}
             </div>
           </LeftPanelSection>
 

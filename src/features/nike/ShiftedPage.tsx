@@ -194,7 +194,7 @@ export function ShiftedPage() {
           </span>
         ),
         question:
-          "(1) 求导分析导数恒号性质，判定全域单调性；(2) 探究方程 $f(x) = m$ 的实根个数与零点分布。",
+          "(1) 分离常数后用作差法证明两支各自单调；(2) 探究方程 $f(x) = m$ 的实根个数与零点分布。",
       };
     }
     return {
@@ -214,7 +214,7 @@ export function ShiftedPage() {
         </span>
       ),
       question:
-        "(1) 设 $u = x - h$，求函数在 $(h, +\\infty)$ 上的极小值点坐标与极小值；(2) 证明两极值点连线中点恒与对称中心 $C$ 重合。",
+        "(1) 设 $u = x - h$，用基本不等式求函数在 $(h, +\\infty)$ 支上的最小值点坐标与最小值；(2) 证明两支最值点连线的中点恒与对称中心 $C$ 重合。",
     };
   }, [params, preset]);
 
@@ -229,7 +229,7 @@ export function ShiftedPage() {
                 {
                   key: "free",
                   label: "自由探究",
-                  description: "自主探索中心平移与极值",
+                  description: "自主探索中心平移与最值",
                 },
                 {
                   key: "shifted_quad",

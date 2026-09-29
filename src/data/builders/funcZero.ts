@@ -33,6 +33,11 @@ export function buildFuncZeroPanel(
     ? bisectionRes.currentStep.right
     : n;
 
+  // 下标与数据同源：一律取「实际完成的折半次数」，禁止直接引用滑块目标值。
+  // 端点同号时二分流程根本没有启动（currentStep 为 null），此时区间就是 I_0 = [m, n]，
+  // 若仍写成滑块设定的 [a_k, b_k] 就与同屏展示的 [m, n] 自相矛盾。
+  const kActual = bisectionRes.currentStep?.step ?? 0;
+
   const quantities: MathPanelData["quantities"] = [
     {
       label: "端点异号判定",
@@ -48,7 +53,7 @@ export function buildFuncZeroPanel(
     },
     {
       label: "当前收敛区间",
-      symbol: `[a_{${steps}}, b_{${steps}}]`,
+      symbol: `[a_{${kActual}}, b_{${kActual}}]`,
       value: bisectionRes.hasZero
         ? `[${currentLeft.toFixed(4)}, ${currentRight.toFixed(4)}]`
         : `[${m.toFixed(2)}, ${n.toFixed(2)}]`,
@@ -56,7 +61,7 @@ export function buildFuncZeroPanel(
     },
     {
       label: "近似零点根",
-      symbol: `x^* \\approx c_{${steps}}`,
+      symbol: `x^* \\approx c_{${kActual}}`,
       value: Number.isFinite(bisectionRes.approxRoot)
         ? bisectionRes.approxRoot.toFixed(4)
         : "未收敛",
@@ -73,7 +78,7 @@ export function buildFuncZeroPanel(
     {
       label: "区间折半收缩率",
       symbol: "\\frac{1}{2^k}",
-      value: `\\frac{1}{${Math.pow(2, steps)}} = ${(1 / Math.pow(2, steps)).toFixed(4)}`,
+      value: `\\frac{1}{${Math.pow(2, kActual)}} = ${(1 / Math.pow(2, kActual)).toFixed(4)}`,
       color: MATH_COLORS.paramPrimary,
     },
   ];
@@ -178,10 +183,10 @@ export function buildFuncZeroPanel(
       title: "二分迭代 · 逐次折半收缩误差",
       rubric: "采分点：写出中点坐标与新区间更替逻辑，输出近似值与误差界（4分）",
       latex: bisectionRes.hasZero
-        ? `c_{${steps}} = ${bisectionRes.approxRoot.toFixed(4)}, \\quad |x^* - c_{${steps}}| \\le ${bisectionRes.errorBound.toFixed(4)}`
+        ? `c_{${kActual}} = ${bisectionRes.approxRoot.toFixed(4)}, \\quad |x^* - c_{${kActual}}| \\le ${bisectionRes.errorBound.toFixed(4)}`
         : `\\text{端点未异号，未收敛}`,
       detail: bisectionRes.hasZero
-        ? `经过 $k = ${steps}$ 步折半迭代，当前锁定区间为 $[${currentLeft.toFixed(4)}, ${currentRight.toFixed(4)}]$，取区间中点作为近似根 $x^* \\approx ${bisectionRes.approxRoot.toFixed(4)}$，截断误差不超过 $${bisectionRes.errorBound.toFixed(4)}$。`
+        ? `经过 $k = ${kActual}$ 步折半迭代，当前锁定区间为 $[${currentLeft.toFixed(4)}, ${currentRight.toFixed(4)}]$，取区间中点作为近似根 $x^* \\approx ${bisectionRes.approxRoot.toFixed(4)}$，截断误差不超过 $${bisectionRes.errorBound.toFixed(4)}$。`
         : `请调整区间端点使 $f(a) \\cdot f(b) < 0$ 后再进行二分逼近。`,
     },
   ];

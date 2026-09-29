@@ -134,7 +134,7 @@ export const functionNodes: KnowledgeNode[] = [
     route: "/nike-amgm",
     gaokaoTopic: "algebra_basics",
     questionCategory: "multi_select_hard",
-    examMethod: "积定和最小配凑与驻点极值",
+    examMethod: "积定和最小配凑与最值",
     examWeight: 4,
   },
   {

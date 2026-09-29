@@ -172,7 +172,7 @@ export function buildDerivativeShiftPanel(
         latex: `F(x) = f(x) - f(2x_0 - x) < 0 \\quad (x \\in (0, x_0))`,
         condition:
           "利用原曲线 $y = f(x)$ 与镜像曲线 $y = f(2x_0 - x)$ 的高度差比较",
-        note: "由 $F(x_1) < 0$ 得 $f(x_1) < f(2x_0 - x_1) = f(x_2)$。再由右侧单调递减得到 $x_2 > 2x_0 - x_1$，即 $x_1 + x_2 > 2x_0$。",
+        note: "由 $F(x_1) < 0$ 得 $f(x_1) < f(2x_0 - x_1)$；代入 $f(x_1) = f(x_2)$ 得 $f(x_2) < f(2x_0 - x_1)$。再由 $f(x)$ 在极值点右侧单调递减得到 $x_2 > 2x_0 - x_1$，即 $x_1 + x_2 > 2x_0$。",
         level: "important",
       },
     );
@@ -310,7 +310,7 @@ export function buildDerivativeShiftPanel(
         step: 3,
         title: "求导定号与偏移结论",
         detail: `通过导数分析证明 $F'(x) > 0$，由 $F(x_0) = 0$ 推出 $F(x_1) < 0$，从而 $x_1 + x_2 > 2x_0$ 获证。当前中点 $(x_1+x_2)/2 \\approx ${shiftRes.midX.toFixed(3)} > x_0$。`,
-        latex: `F(x_1) < 0 \\implies f(x_1) < f(2x_0 - x_1) = f(x_2) \\implies x_1 + x_2 > 2x_0`,
+        latex: `F(x_1) < 0 \\implies f(x_1) < f(2x_0 - x_1) \\xrightarrow{f(x_1) = f(x_2)} f(x_2) < f(2x_0 - x_1) \\implies x_1 + x_2 > 2x_0`,
         rubric: "单调性定号与结论落地 (采分点 +4分)",
       },
     );

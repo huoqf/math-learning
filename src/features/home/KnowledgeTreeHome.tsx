@@ -103,7 +103,8 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
     key: "func_derivative",
     title: "函数性质与导数压轴通法",
     badge: "19 题压轴 · 17分",
-    description: "指对同构化简、极值点偏移、隐零点虚设代换与端点效应",
+    description:
+      "求导公式表与四则运算法则打底，切线方程、单调性与极值、复合函数求导、恒成立与双变量压轴（极值点偏移 / 隐零点 / 端点效应）及生活优化建模",
     icon: Flame,
     gradient: "from-rose-500 to-red-600",
     borderLight: "border-rose-200",

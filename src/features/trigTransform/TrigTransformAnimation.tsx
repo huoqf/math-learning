@@ -203,7 +203,7 @@ export function TrigTransformAnimation() {
         return {
           variant: "accent" as const,
           badge: "区间零点 · 开闭区间计数",
-          condition: `${funcExpr}，在给定区间 $[x_1, x_2]$ 内统计零点与极值。`,
+          condition: `${funcExpr}，在给定区间 $[x_1, x_2]$ 内统计零点与波峰波谷。`,
           question:
             "当区间端点恰好为零点时，开闭区间对零点个数有何影响？区间单调性如何判定？",
         };
@@ -358,7 +358,7 @@ export function TrigTransformAnimation() {
                 </span>
                 <span className="text-neutral-300">|</span>
                 <span className="font-semibold text-neutral-800">
-                  极值:{" "}
+                  峰谷:{" "}
                   <span className="font-bold text-amber-600 font-mono">
                     {intervalInfo.extremumCount}
                   </span>{" "}

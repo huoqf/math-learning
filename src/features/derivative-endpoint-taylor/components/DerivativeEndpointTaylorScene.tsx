@@ -365,6 +365,20 @@ export const DerivativeEndpointTaylorScene: React.FC<
             strokeDasharray={dashArrayOf(P.poly)}
           />
 
+          {/* 残差函数曲线 R_n(x) = f(x) − P_n(x)：高考放缩不等式证明中的「差函数 g(x)」。
+              此前该曲线在中屏完全缺席（math 层的 residualFn 已算出却无人消费），
+              学生只能看到动点处一根竖线段，看不到 R_n 在全区间上的正负与增长趋势，
+              「构造差函数 → 判其符号 → 得放缩不等式」这条证明主线因而断裂。
+              ln 基底下 f(x)=ln(1+x) 要求 x > −1，与基底曲线同域降级，避免 NaN 飞线。 */}
+          <FunctionGraph
+            fn={taylorRes.residualFn}
+            scale={scale}
+            color={P.residual.color}
+            strokeWidth={P.residual.width}
+            strokeDasharray={dashArrayOf(P.residual)}
+            domain={taylorBase === "ln" ? [-0.95, scale.xMax] : undefined}
+          />
+
           {/* 垂直残差线段：连接 (x, f(x)) 与 (x, P_n(x)) */}
           <line
             x1={mathToDesign(taylorRes.xCurr, taylorRes.fxVal, scale).x}

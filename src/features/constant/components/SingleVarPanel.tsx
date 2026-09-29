@@ -114,7 +114,7 @@ export function SingleVarPanel({
                 {
                   key: "exp_minus_ax",
                   formula: "e^x - ax",
-                  description: "驻点 x=ln a",
+                  description: "导数为零的点 x=ln a",
                 },
                 {
                   key: "a_ln_x_minus_x",

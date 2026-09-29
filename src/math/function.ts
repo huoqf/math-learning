@@ -10,10 +10,22 @@ export interface FunctionPoint {
   y: number;
 }
 
+/**
+ * 二分法单步记录。
+ *
+ * 约定（必须与右屏定理口径一致，禁止混用两套 c_k）：
+ *   I_0 = [a_0, b_0] = [m, n]，第 k 次折半后得 I_k = [a_k, b_k]（长 (b-a)/2^k）；
+ *   c_k 取 **I_k 的中点**作为近似根 ⇒ |x* − c_k| ≤ |I_k| / 2 = (b-a)/2^{k+1}。
+ * 见 builders/funcZero.ts 的「二分法误差收敛公式」。曾用「第 k 次试探点（I_{k-1} 的中点）」
+ * 作为 c_k 返回，导致看板把 I_{k-1} 标成 [a_k, b_k]、把 c_{k-1} 标成 c_k，数值与同屏定理差一个 2 的因子。
+ */
 export interface BisectionStepInfo {
   step: number;
+  /** 第 k 次折半后的区间左端 a_k */
   left: number;
+  /** 第 k 次折半后的区间右端 b_k */
   right: number;
+  /** 第 k 次折半后区间的中点 c_k = (a_k + b_k) / 2，即当前近似根 */
   mid: number;
   fLeft: number;
   fRight: number;
@@ -23,8 +35,11 @@ export interface BisectionStepInfo {
 export interface BisectionResult {
   hasZero: boolean;
   steps: BisectionStepInfo[];
+  /** 末次折半后的区间记录 I_k（未收敛时为 null） */
   currentStep: BisectionStepInfo | null;
+  /** 近似根 c_k（= I_k 的中点） */
   approxRoot: number;
+  /** 截断误差界 |I_k| / 2 = (b-a)/2^{k+1}，与右屏定理同式 */
   errorBound: number;
   validity: boolean;
   warningMessage?: string;
@@ -790,7 +805,7 @@ export function solveBisection(
       steps: [],
       currentStep: null,
       approxRoot: NaN,
-      errorBound: n - m,
+      errorBound: (n - m) / 2,
       validity: true,
       warningMessage: `f(${m.toFixed(1)}) 与 f(${n.toFixed(1)}) 同号 (${fM > 0 ? "+" : "-"})，不满足零点存在性定理前提（f 在 [a,b] 上连续且 f(a)·f(b) < 0）！`,
     };
@@ -802,31 +817,32 @@ export function solveBisection(
 
   for (let k = 1; k <= maxSteps; k++) {
     const mid = (left + right) / 2;
-    const fLeft = fn(left);
-    const fRight = fn(right);
     const fMid = fn(mid);
 
-    steps.push({
-      step: k,
-      left,
-      right,
-      mid,
-      fLeft,
-      fRight,
-      fMid,
-    });
-
-    if (Math.abs(fMid) < 1e-9) {
-      break;
-    }
-
-    // 零点落在闭区间端点或中点左侧时必须向左收缩：
-    // f(left) === 0 时乘积为 0，若按开区间判断走 else 会把真正的零点 left 丢掉
-    if (fLeft * fMid <= 0) {
+    // 精确命中零点（f(mid) 严格为 0）时把区间收缩成一点，后续迭代自动稳定在该点上。
+    // 不提前 break：保证 steps.length 恒等于 maxSteps，看板下标 k 与实际迭代次数不会错位。
+    // 注意只认严格 0 —— 若用 |f(mid)| < ε 就收缩，误差界会被报成 0，等于谎称已精确求解。
+    if (fMid === 0) {
+      left = mid;
+      right = mid;
+    } else if (fn(left) * fMid <= 0) {
+      // 零点落在闭区间端点或中点左侧时必须向左收缩：
+      // f(left) === 0 时乘积为 0，若按开区间判断走 else 会把真正的零点 left 丢掉
       right = mid;
     } else {
       left = mid;
     }
+
+    const cMid = (left + right) / 2;
+    steps.push({
+      step: k,
+      left,
+      right,
+      mid: cMid,
+      fLeft: fn(left),
+      fRight: fn(right),
+      fMid: fn(cMid),
+    });
   }
 
   const currentStep = steps.length > 0 ? steps[steps.length - 1] : null;

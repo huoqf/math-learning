@@ -11,7 +11,7 @@
 | **`CoordinateGrid`** | `@/components/Math` | `scale`, `fontScale`, `showGrid`, `step` | ❌ 严禁漏传 `fontScale`；解析几何与综合函数建议 `showGrid={false}` 呈现学术纯净白底。 |
 | **`FunctionGraph`** | `@/components/Math` | `fn`, `scale`, `color`, `domain`, `strokeWidth` | ❌ 严禁在 `fn` 中引入未定义域计算（如负数开方、除以 0），必须做 `isNaN/isFinite` 防御。 |
 | **`InteractivePoint`**| `@/components/Math` | `cx`, `cy`, `scale`, `vp`, `onDrag`, `color` | ❌ **严禁向其传 `label`**（点标统一归 `<SceneLabelGroup>`）；❌ **严禁在 `onDrag` 回调内二次调用 `designToMath`**（回调值已是数学坐标）。 |
-| **`MathPoint`** | `@/components/Math` | `cx`, `cy`, `scale`, `color`, `variant` ('solid' \| 'hollow') | 纯数学静态交点/驻点/焦点，实心 $r=3.2$，去心点用空心 $r=3.8$。❌ 严禁手写 `<circle>`。 |
+| **`MathPoint`** | `@/components/Math` | `cx`, `cy`, `scale`, `color`, `variant` ('solid' \| 'hollow') | 纯数学静态交点/零点/焦点，实心 $r=3.2$，去心点用空心 $r=3.8$。❌ 严禁手写 `<circle>`。 |
 | **`TangentLine`** | `@/components/Math` | `fn`, `dfn`, `x0`, `scale`, `color`, `strokeDasharray` | 动切线组件。需同时提供原函数值与导数值。 |
 | **`SecantLine`** | `@/components/Math` | `fn`, `x0`, `x1`, `scale`, `color` | 极限与割线逼近组件。 |
 | **`Asymptote`** | `@/components/Math` | `type` ('vertical' \| 'horizontal' \| 'slant'), `value`, `scale` | 渐近线组件，自动虚线化并渲染代号。支持 `fontScale`。 |

@@ -12,6 +12,8 @@ import {
 } from "@/components/Math";
 import type { LabelItem } from "@/utils/labelOverlap";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/funcProperties";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
   evalAxisSymmetry,
@@ -53,8 +55,17 @@ export function PropertiesSymmetryScene({
   const axisSymRes = evalAxisSymmetry(getFn, axisA, x0);
   const centerSymRes = evalCenterSymmetry(getFn, centerX, centerY, x0);
 
+  // 落值统一走 paramClamp SSOT：参数域 ∩ 可见视口 求交后按步长吸附，
+  // 杜绝「手写 Math.round(x * 10) / 10」导致的视口外脱手与步长重复写死。
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    onParamChange("x0", Math.round(mathPt.x * 10) / 10);
+    onParamChange(
+      "x0",
+      snapDragValue(
+        mathPt.x,
+        paramMeta.x0.step,
+        paramDragRange(paramMeta.x0, scale, "x"),
+      ),
+    );
   };
 
   // 对称性模式点标
@@ -229,6 +240,7 @@ export function PropertiesSymmetryScene({
                 onDrag={handleDragX0}
                 color={MATH_COLORS.paramSecondary}
                 fontScale={fontScale}
+                edgeClampProjection
               />
             </g>
           )}
@@ -275,6 +287,7 @@ export function PropertiesSymmetryScene({
                 onDrag={handleDragX0}
                 color={MATH_COLORS.paramSecondary}
                 fontScale={fontScale}
+                edgeClampProjection
               />
             </g>
           )}

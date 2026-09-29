@@ -11,6 +11,8 @@ import {
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import type { LabelItem } from "@/utils/labelOverlap";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/transform";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import {
   evalBaseFunction,
@@ -55,17 +57,38 @@ export function TransformScene({
   // 主控特征点（第 0 个特征点）的拖拽交互：直接绑定在函数图象的核心特征点上
   const primaryPt = res.keyPoints[0];
 
+  // 参数域 SSOT：h 沿 x 轴、k 沿 y 轴，均取「paramMeta 参数域 ∩ 可见视口」求交。
+  // 指数基底下主特征点的纵坐标是 A + k（f(0) = 1），拖拽纵坐标与 k 之间相差常量 A；
+  // 该偏移必须在换算成 k 之后再交给 paramClamp，否则 k 的上下界会被整体平移。
+  const kOffset = fnType === "exp" ? A : 0;
+
   const handleDragPrimaryPoint = (mathPt: { x: number; y: number }) => {
     // 翻折模式下禁止直接修改 k，避免折返跳跃反模式；仅在无翻折时允许双轴自由拖拽
-    const roundH = Math.round(mathPt.x * 2) / 2;
-    onParamChange("h", roundH);
+    onParamChange(
+      "h",
+      snapDragValue(
+        mathPt.x,
+        paramMeta.h.step,
+        paramDragRange(paramMeta.h, scale, "x"),
+      ),
+    );
 
     if (foldMode === "none") {
-      let roundK = Math.round(mathPt.y * 2) / 2;
-      if (fnType === "exp") {
-        roundK = Math.round((mathPt.y - A) * 2) / 2;
+      // 避免边缘投影导致的点击跳变（Jump on Click）：
+      // 若特征点纵向已超出当前可见视口（处于边缘投影吸附态），此时手柄在边界作为替身，
+      // 用户横向拖拽旨在调节水平位移 h，禁止将边界吸附纵坐标误写进 k 造成参数突变。
+      const curY = primaryPt.transformed.y;
+      const isYProjected = curY < scale.yMin || curY > scale.yMax;
+      if (!isYProjected) {
+        onParamChange(
+          "k",
+          snapDragValue(
+            mathPt.y - kOffset,
+            paramMeta.k.step,
+            paramDragRange(paramMeta.k, scale, "y"),
+          ),
+        );
       }
-      onParamChange("k", roundK);
     }
   };
 
@@ -275,7 +298,7 @@ export function TransformScene({
         </g>
       ))}
 
-      {/* 变换后主特征点（自带可拖拽光晕手柄，直接绑定在图象核心特征点上，如顶点/拐点/定点） */}
+      {/* 变换后主特征点（自带可拖拽光晕手柄，直接绑定在图象核心特征点上，如顶点/折点/定点） */}
       {primaryPt && (
         <InteractivePoint
           cx={primaryPt.transformed.x}
@@ -285,6 +308,7 @@ export function TransformScene({
           onDrag={handleDragPrimaryPoint}
           color={MATH_COLORS.paramPrimary}
           fontScale={fontScale}
+          edgeClampProjection
         />
       )}
 

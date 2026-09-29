@@ -30,6 +30,7 @@ import {
 import {
   getDerivativeShiftLegendItems,
   getShiftXRange,
+  SHIFT_Y_RANGE,
   type ShiftMode,
   type ShiftSubModel,
 } from "./constants";
@@ -57,7 +58,9 @@ export function DerivativeShiftAnimation() {
   const scale = useSceneScale({
     vp,
     xRange,
-    yRange: [-2.5, 3.5],
+    // y 可见域同为常量：下界由消元轨迹 h(x) = -x²/2 - x 的预设极值点定死，
+    // 详见 constants.ts 中 SHIFT_Y_RANGE 的说明。
+    yRange: SHIFT_Y_RANGE,
   });
 
   // 3. 右屏看板聚合数据组装 (含 reasoningSteps)

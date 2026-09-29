@@ -42,7 +42,7 @@ export function buildNikePanel(
   const reasoningSteps: import("../types").ReasoningStep[] = [];
 
   let mnemonic =
-    "对勾函数看系数，ab同号出对勾，极值根号b比a，均值不等双项相等。";
+    "对勾函数看系数，ab同号出对勾，最值根号b比a，均值不等双项相等。";
 
   // 辅助：规范化代数项字符串，杜绝 +- 与双负号
   const formatHPart = (val: number) => {
@@ -181,22 +181,22 @@ export function buildNikePanel(
     value: `${res.monotonicityDescription}`,
   });
 
-  // 平移模式与标准模式下的极值点量化呈现
+  // 平移模式与标准模式下的最值点量化呈现
   if (res.criticalPoints.length > 0) {
     const ptsStr = res.criticalPoints
       .map(
         (cp) =>
-          `${cp.type === "min" ? "极小值点" : "极大值点"} (${cp.x.toFixed(2)}, ${cp.y.toFixed(2)})`,
+          `${cp.type === "min" ? "最小值点" : "最大值点"} (${cp.x.toFixed(2)}, ${cp.y.toFixed(2)})`,
       )
       .join("，");
     quantities.push({
-      label: "特征极值点",
+      label: "特征最值点",
       value: ptsStr,
     });
 
     if (activeMode === "shifted") {
       quantities.push({
-        label: "极值中点定值",
+        label: "最值点中点定值",
         value: `\\frac{P_1 + P_2}{2} = C(${h.toFixed(1)}, \\; ${c.toFixed(1)}) \\text{（与对称中心重合）}`,
       });
     }
@@ -206,10 +206,6 @@ export function buildNikePanel(
     quantities.push({
       label: `探针动点 P(${x0.toFixed(1)}, f(${x0.toFixed(1)}))`,
       value: `P(${col(x0.toFixed(2), ct)}, \\; ${col(evalPt.y.toFixed(2), ct)})`,
-    });
-    quantities.push({
-      label: "点 P 处切线斜率 k",
-      value: `k = f'(${x0.toFixed(1)}) = ${evalPt.derivative.toFixed(2)}`,
     });
   }
 
@@ -249,7 +245,7 @@ export function buildNikePanel(
         {
           step: 3,
           title: "求解反思 · 检验等号成立条件",
-          detail: `当且仅当两项相等 $ax = \\frac{b}{x}$，即 $x^2 = \\frac{b}{a}$ 时取等号，因 $x > 0$ 解得极小值点 $x = ${minX.toFixed(2)}$。`,
+          detail: `当且仅当两项相等 $ax = \\frac{b}{x}$，即 $x^2 = \\frac{b}{a}$ 时取等号，因 $x > 0$ 解得最小值点 $x = ${minX.toFixed(2)}$。`,
           latex: `ax = \\frac{b}{x} \\iff x = \\sqrt{\\frac{b}{a}} = ${minX.toFixed(2)} \\implies f_{\\min} = ${minY.toFixed(2)}`,
           rubric: "求出等号成立点并在定义域内验证可达性得 2 分",
         },
@@ -288,7 +284,7 @@ export function buildNikePanel(
           step: 2,
           title: "建模联立 · 对称与渐近性证明",
           detail: `验证中心对称关系 $f(h + u) + f(h - u) = 2c$，渐近线交点即对称中心。`,
-          latex: `\\lim_{x \\to h} f(x) = \\infty, \\quad \\lim_{x \\to \\infty} f(x) = ${c.toFixed(1)}`,
+          latex: `x \\to ${h.toFixed(1)} \\text{ 时 } f(x) \\text{ 无限增大}, \\quad x \\to \\infty \\text{ 时 } f(x) \\to ${c.toFixed(1)}`,
           rubric: "写出两条渐近线 $x = h$ 与 $y = c$ 得 2 分",
         },
         {
@@ -312,7 +308,7 @@ export function buildNikePanel(
       });
 
       gaokaoPoints.push({
-        text: "高考考点：二次分式 $y = \\frac{x^2+px+q}{x-h}$ 的值域与最值。通过分离常数法化为平移对勾模型，利用换元法 $u = x - h$ 结合基本不等式或导数求解最值与单调性。",
+        text: "高考考点：二次分式 $y = \\frac{x^2+px+q}{x-h}$ 的值域与最值。通过分离常数法化为平移对勾模型，利用换元法 $u = x - h$ 结合基本不等式求解最值与单调区间。",
         importance: "gaokao",
       });
 
@@ -331,17 +327,20 @@ export function buildNikePanel(
         },
         {
           step: 2,
-          title: "建模联立 · 驻点与基本不等式",
-          detail: `当 $u > 0$ 时，应用均值不等式或求导 $f'(x) = ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{(x - ${h.toFixed(1)})^2} = 0$ 解得驻点。`,
+          title: "建模联立 · 基本不等式求最小值",
+          detail:
+            a > 0
+              ? `当 $u > 0$ 时，由基本不等式 $${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} \\ge 2\\sqrt{${a.toFixed(1)} \\cdot ${b.toFixed(1)}} = ${extVal}$，等号当且仅当 $${a.toFixed(1)}u = \\frac{${b.toFixed(1)}}{u}$，即 $u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)}$ 时成立。`
+              : `当 $u > 0$ 时，由基本不等式 $${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} \\le -2\\sqrt{${a.toFixed(1)} \\cdot ${b.toFixed(1)}} = -${extVal}$，等号当且仅当 $${a.toFixed(1)}u = \\frac{${b.toFixed(1)}}{u}$，即 $u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)}$ 时成立。`,
           latex: `u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)} \\implies x = ${rX}, \\quad y_{\\min} = ${c.toFixed(1)} + ${extVal}`,
           rubric: "验证等号成立条件 $au = \\frac{b}{u}$ 得 2 分",
         },
         {
           step: 3,
-          title: "求解反思 · 极值与对称中心闭环",
-          detail: `由中心对称性得左支极大值点 $(${lX}, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)})$，两极值点中点恰为中心 $C(${h.toFixed(1)}, ${c.toFixed(1)})$。`,
+          title: "求解反思 · 最值与对称中心闭环",
+          detail: `由中心对称性得左支最大值点 $(${lX}, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)})$，两最值点中点恰为中心 $C(${h.toFixed(1)}, ${c.toFixed(1)})$。`,
           latex: `\\text{最值集合：} y \\in (-\\infty, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)}] \\cup [${(c + 2 * Math.sqrt(a * b)).toFixed(2)}, +\\infty)`,
-          rubric: "写出完整值域与极值点坐标得 2 分",
+          rubric: "写出完整值域与最值点坐标得 2 分",
         },
       );
     } else {
@@ -350,33 +349,33 @@ export function buildNikePanel(
         name: "二次分式分离常数化飘带双曲定理",
         latex: `f(x) = \\frac{x^2 + px + q}{x - h} = (x - h) + (p + 2h) - \\frac{|b|}{x - h}`,
         prerequisites: ["x ≠ h", "分子系数 b < 0"],
-        note: `转化为平移双曲飘带型，在 $(-\\infty, ${h.toFixed(1)})$ 和 $(${h.toFixed(1)}, +\\infty)$ 上严格单调递增，全域无极值点`,
+        note: `转化为平移双曲飘带型，在 $(-\\infty, ${h.toFixed(1)})$ 和 $(${h.toFixed(1)}, +\\infty)$ 上严格单调递增，全域既无最大值也无最小值`,
       });
 
       gaokaoPoints.push({
-        text: "高考考点：双曲飘带分式函数 $y = \\frac{x^2+px+q}{x-h}$ 的单调性应用。由于导数在定义域内恒大于 0，函数全域无极值，常考方程根的存在性与参数范围求解。",
+        text: "高考考点：双曲飘带分式函数 $y = \\frac{x^2+px+q}{x-h}$ 的单调性应用。分离常数后含一项 $\\frac{b}{x-h}$，其符号与 $x - h$ 相反，据此可判定两支各自单调、全域无最值，常考方程根的存在性与参数范围求解。",
         importance: "gaokao",
       });
 
       reasoningSteps.push(
         {
           step: 1,
-          title: "审题定法 · 识别飘带模型",
-          detail: `由 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 知 $ab = ${(a * b).toFixed(1)} < 0$，属于双曲飘带型。`,
-          latex: `f'(x) = ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{(x - ${h.toFixed(1)})^2} = ${a.toFixed(1)} + \\frac{${Math.abs(b).toFixed(1)}}{(x - ${h.toFixed(1)})^2}`,
-          rubric: "求导并化简导数表达式得 2 分",
+          title: "审题定法 · 识别飘带模型并分离常数",
+          detail: `由 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 知 $ab = ${(a * b).toFixed(1)} < 0$，属于双曲飘带型。令 $u = x - ${h.toFixed(1)} \\; (u \\ne 0)$，分离常数后化归为 $f = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}$。`,
+          latex: `u = x - ${h.toFixed(1)} \\implies f(x) = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}`,
+          rubric: "准确换元并写出分离常数后的表达式得 2 分",
         },
         {
           step: 2,
-          title: "建模联立 · 全域单调性证明",
-          detail: `由于平方项非负且分子为正，导数在去心定义域内恒满足 $f'(x) ${a > 0 ? "> 0" : "< 0"}$。`,
-          latex: `\\forall x \\ne ${h.toFixed(1)}, \\quad f'(x) ${a > 0 ? "> 0" : "< 0"}`,
-          rubric: "严密论证导数恒号且无变号零点得 2 分",
+          title: "建模联立 · 作差法证双支单调",
+          detail: `在 $(0, +\\infty)$ 上任取 $0 < u_1 < u_2$，作差并通分：$f(u_1) - f(u_2) = (u_1 - u_2)\\left(${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{u_1 u_2}\\right)$。因 $ab < 0$ 时括号内恒与 $a$ 同号，而 $u_1 - u_2 < 0$，故 $f$ 在 $(0, +\\infty)$ 上单调${a > 0 ? "递增" : "递减"}；由中心对称性，$(-\\infty, 0)$ 上同向单调。`,
+          latex: `f(u_1) - f(u_2) = (u_1 - u_2)\\left(${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{u_1 u_2}\\right); \\quad ab < 0 \\implies \\text{括号与 } a \\text{ 同号}`,
+          rubric: "作差并通分因式分解，判定括号符号得 2 分",
         },
         {
           step: 3,
           title: "求解反思 · 零点存在与方程考法",
-          detail: `函数全域单调且无极值点，在高考中常结合方程 $f(x) = m$ 考查实根个数与零点存在性定理。`,
+          detail: `函数在各分支上单调且全域无最值，在高考中常结合方程 $f(x) = m$ 考查实根个数与零点存在性定理。`,
           latex: `\\text{单调性：在 } (-\\infty, ${h.toFixed(1)}) \\text{ 与 } (${h.toFixed(1)}, +\\infty) \\text{ 上分别单调}${a > 0 ? "递增" : "递减"}`,
           rubric: "得出单调区间与零点特征得 2 分",
         },
@@ -388,11 +387,13 @@ export function buildNikePanel(
       const isClassic = a > 0;
       theorems.push({
         name: isClassic
-          ? "对勾函数极值与单调性定理"
-          : "倒对勾函数极值与单调性定理",
-        latex: `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\implies f'(x) = ${col("a", ca)} - \\frac{${col("b", cb)}}{x^2} = \\frac{${col("a", ca)}x^2 - ${col("b", cb)}}{x^2} = 0`,
+          ? "对勾函数最值与单调性定理"
+          : "倒对勾函数最值与单调性定理",
+        latex: `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\; (x > 0) \\implies f(x) \\ge 2\\sqrt{${col("a", ca)} \\cdot ${col("b", cb)}} = 2\\sqrt{ab}`,
         prerequisites: ["a · b > 0", "x ≠ 0"],
-        note: `在 $x = \\pm\\sqrt{\\frac{b}{a}}$ 处分别取得局部极值，右侧驻点 $x = ${Math.sqrt(b / a).toFixed(2)}$`,
+        note: isClassic
+          ? `由单调性定义作差法与基本不等式，在 $x = \\sqrt{\\frac{b}{a}}$（$x > 0$ 分支）处取得最小值、在 $x = -\\sqrt{\\frac{b}{a}}$（$x < 0$ 分支）处取得最大值，右侧最低点横坐标 $x = ${Math.sqrt(b / a).toFixed(2)}$`
+          : `由单调性定义作差法与基本不等式，在 $x = \\sqrt{\\frac{b}{a}}$（$x > 0$ 分支）处取得最大值、在 $x = -\\sqrt{\\frac{b}{a}}$（$x < 0$ 分支）处取得最小值，右侧最高点横坐标 $x = ${Math.sqrt(b / a).toFixed(2)}$`,
       });
 
       const statX = Math.sqrt(b / a);
@@ -400,60 +401,60 @@ export function buildNikePanel(
       reasoningSteps.push(
         {
           step: 1,
-          title: "审题定法 · 求导并通分化简",
-          detail: `求导得 $f'(x) = a - \\frac{b}{x^2} = \\frac{ax^2 - b}{x^2}$，分母在去心定义域上恒正，导数符号完全由分子二次项决定。`,
-          latex: `f'(x) = ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{x^2} = \\frac{${a.toFixed(1)}x^2 - ${b.toFixed(1)}}{x^2}`,
-          rubric: "正确求导并通分因式分解得 2 分",
+          title: "审题定法 · 任取两元作差变形",
+          detail: `在区间 $(0, +\\infty)$ 上任取 $0 < x_1 < x_2$，作差并通分因式分解：$f(x_1) - f(x_2) = a(x_1 - x_2) + b\\left(\\frac{1}{x_1} - \\frac{1}{x_2}\\right) = (x_1 - x_2)\\frac{a x_1 x_2 - b}{x_1 x_2}$。`,
+          latex: `f(x_1) - f(x_2) = (x_1 - x_2)\\left( ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{x_1 x_2} \\right) = \\frac{(x_1 - x_2)(${a.toFixed(1)}x_1 x_2 - ${b.toFixed(1)})}{x_1 x_2}`,
+          rubric: "规范设元、作差并通分因式分解得 2 分",
         },
         {
           step: 2,
-          title: "建模联立 · 解驻点与单调性讨论",
+          title: "建模联立 · 讨论因子符号定单调性",
           detail: isClassic
-            ? `令 $f'(x) = 0$ 解得对称驻点 $x = \\pm\\sqrt{\\frac{b}{a}} = \\pm ${statX.toFixed(2)}$。在 $(0, ${statX.toFixed(2)}]$ 上 $f'(x) \\le 0$ 单调递减；在 $[${statX.toFixed(2)}, +\\infty)$ 上 $f'(x) \\ge 0$ 单调递增。`
-            : `令 $f'(x) = 0$ 解得对称驻点 $x = \\pm\\sqrt{\\frac{b}{a}} = \\pm ${statX.toFixed(2)}$。由于 $a < 0$，在 $(0, ${statX.toFixed(2)}]$ 上 $f'(x) \\ge 0$ 单调递增；在 $[${statX.toFixed(2)}, +\\infty)$ 上 $f'(x) \\le 0$ 单调递减。`,
-          latex: `f'(x) = 0 \\implies x_1 = -${statX.toFixed(2)}, \\; x_2 = ${statX.toFixed(2)}`,
-          rubric: "解出驻点并规范划分单调区间得 2 分",
+            ? `因 $0 < x_1 < x_2$，故 $x_1 - x_2 < 0, x_1 x_2 > 0$。当 $x_1, x_2 \\in (0, \\sqrt{\\frac{b}{a}}]$ 时，$x_1 x_2 < \\frac{b}{a} \\implies a x_1 x_2 - b < 0$，得 $f(x_1) - f(x_2) > 0$，函数单调递减；当 $x_1, x_2 \\in [\\sqrt{\\frac{b}{a}}, +\\infty)$ 时，$x_1 x_2 > \\frac{b}{a} \\implies a x_1 x_2 - b > 0$，得 $f(x_1) - f(x_2) < 0$，函数单调递增。`
+            : `因 $a < 0, b < 0$ 且 $0 < x_1 < x_2$，同理可知：在 $(0, \\sqrt{\\frac{b}{a}}]$ 上单调递增；在 $[\\sqrt{\\frac{b}{a}}, +\\infty)$ 上单调递减。单调性分界点为 $x = \\sqrt{\\frac{b}{a}} = ${statX.toFixed(2)}$。`,
+          latex: `x_1 x_2 = \\frac{b}{a} \\iff x = \\sqrt{\\frac{b}{a}} = ${statX.toFixed(2)}`,
+          rubric: "严密分析各因式符号并给出单调区间得 2 分",
         },
         {
           step: 3,
-          title: "求解反思 · 极值求解与奇偶对称",
+          title: "求解反思 · 最值求解与奇偶对称",
           detail: isClassic
-            ? `在第一象限取得极小值点 $(${statX.toFixed(2)}, ${extY.toFixed(2)})$；由奇函数性质 $f(-x) = -f(x)$，关于原点对称在第三象限取得极大值点 $(-${statX.toFixed(2)}, -${extY.toFixed(2)})$。注意：对勾函数在去心全域上无最大值与最小值。`
-            : `在第四象限取得极大值点 $(${statX.toFixed(2)}, -${extY.toFixed(2)})$；由奇函数性质 $f(-x) = -f(x)$，关于原点对称在第二象限取得极小值点 $(-${statX.toFixed(2)}, ${extY.toFixed(2)})$。`,
+            ? `在第一象限取得最小值点 $(${statX.toFixed(2)}, ${extY.toFixed(2)})$；由奇函数性质 $f(-x) = -f(x)$，关于原点对称在第三象限取得最大值点 $(-${statX.toFixed(2)}, -${extY.toFixed(2)})$。注意：这两个最值只在各自分支上取得，函数在去心全域上无最大值与最小值。`
+            : `在第四象限取得最大值点 $(${statX.toFixed(2)}, -${extY.toFixed(2)})$；由奇函数性质 $f(-x) = -f(x)$，关于原点对称在第二象限取得最小值点 $(-${statX.toFixed(2)}, ${extY.toFixed(2)})$。`,
           latex: isClassic
-            ? `f_{\\text{极小}} = f(${statX.toFixed(2)}) = ${extY.toFixed(2)}, \\quad f_{\\text{极大}} = f(-${statX.toFixed(2)}) = -${extY.toFixed(2)}`
-            : `f_{\\text{极大}} = f(${statX.toFixed(2)}) = -${extY.toFixed(2)}, \\quad f_{\\text{极小}} = f(-${statX.toFixed(2)}) = ${extY.toFixed(2)}`,
+            ? `f_{\\max} = f(-${statX.toFixed(2)}) = -${extY.toFixed(2)}, \\quad f_{\\min} = f(${statX.toFixed(2)}) = ${extY.toFixed(2)}`
+            : `f_{\\max} = f(${statX.toFixed(2)}) = -${extY.toFixed(2)}, \\quad f_{\\min} = f(-${statX.toFixed(2)}) = ${extY.toFixed(2)}`,
           rubric:
-            "规范写出局部极值记号（严禁混淆为全域最值）与对称点象限得 2 分",
+            "规范写出各分支最值记号（注明仅在对应分支取得，严禁误认为全域最值）与对称点象限得 2 分",
         },
       );
     } else if (a * b < 0) {
       theorems.push({
         name: "双曲飘带型函数单调性定理",
-        latex: `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\implies f'(x) = ${col("a", ca)} - \\frac{${col("b", cb)}}{x^2} ${a > 0 ? "> 0" : "< 0"}`,
+        latex: `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\implies f(x_1) - f(x_2) = (x_1 - x_2)\\left(${col("a", ca)} - \\frac{${col("b", cb)}}{x_1 x_2}\\right)`,
         prerequisites: ["a · b < 0", "x ≠ 0"],
-        note: `导数恒${a > 0 ? "正" : "负"}，函数在 $(-\\infty, 0)$ 和 $(0, +\\infty)$ 上均为单调${a > 0 ? "递增" : "递减"}，全域无极值点`,
+        note: `因 $a \\cdot b < 0$，括号内两项同号且恒不为零，函数在 $(-\\infty, 0)$ 和 $(0, +\\infty)$ 上均为单调${a > 0 ? "递增" : "递减"}，全域既无最大值也无最小值`,
       });
 
       reasoningSteps.push(
         {
           step: 1,
-          title: "审题定法 · 识别飘带导数符号",
-          detail: `因 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 异号，导数式中 $-\\frac{b}{x^2}$ 与 $a$ 同号。`,
-          latex: `f'(x) = ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{x^2} = ${a.toFixed(1)} + \\frac{${Math.abs(b).toFixed(1)}}{x^2}`,
-          rubric: "求导化简并判断各项符号得 2 分",
+          title: "审题定法 · 作差变形与异号分析",
+          detail: `因 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 异号，在去心定义域上任取 $x_1 < x_2$（同号），差式因式分解中 $-\\frac{b}{x_1 x_2}$ 与 $a$ 同号。`,
+          latex: `f(x_1) - f(x_2) = (x_1 - x_2)\\left( ${a.toFixed(1)} + \\frac{${Math.abs(b).toFixed(1)}}{x_1 x_2} \\right)`,
+          rubric: "作差变形并识别括号内各项符号同号得 2 分",
         },
         {
           step: 2,
           title: "建模联立 · 证明全域单调性",
-          detail: `平方项 $x^2 > 0$ 且分子为正，导数在去心定义域上恒有 $f'(x) ${a > 0 ? "> 0" : "< 0"}$，无变号驻点。`,
-          latex: `\\forall x \\ne 0, \\quad f'(x) ${a > 0 ? "> 0" : "< 0"}`,
-          rubric: "严密论证导数恒号且无变号零点得 2 分",
+          detail: `两元同号时 $x_1 x_2 > 0$，因式 $a - \\frac{b}{x_1 x_2}$ 与 $a$ 恒同号，且 $x_1 - x_2 < 0$，故差值符号恒定，函数在 $(0, +\\infty)$ 和 $(-\\infty, 0)$ 上分别严格单调${a > 0 ? "递增" : "递减"}。`,
+          latex: `\\forall 0 < x_1 < x_2, \\quad \\frac{f(x_1) - f(x_2)}{x_1 - x_2} ${a > 0 ? "> 0" : "< 0"}`,
+          rubric: "严密论证割线斜率恒号且全域单调得 2 分",
         },
         {
           step: 3,
           title: "求解反思 · 单调区间规范书写",
-          detail: `函数在两去心分支上分别单调，全域无极值点，结合方程考查根的存在性。`,
+          detail: `函数在两去心分支上分别单调，全域无最值，结合方程考查根的存在性。`,
           latex: `f(x) \\text{ 在 } (-\\infty, 0) \\text{ 和 } (0, +\\infty) \\text{ 上分别单调}${a > 0 ? "递增" : "递减"}`,
           rubric: "规范书写单调区间（严禁使用并集符号）得 2 分",
         },
@@ -473,7 +474,7 @@ export function buildNikePanel(
     }
 
     gaokaoPoints.push({
-      text: "高考考点：对勾与双曲型函数的单调性与闭区间最值。结合导数正负与极值点位置，在有限闭区间 $[m, n]$ 上进行分类讨论求参数范围。",
+      text: "高考考点：对勾与双曲型函数的单调性与闭区间最值。先在 $x > 0$（或 $x < 0$）的每一支上用基本不等式确定最值点位置，再依据该最值点与区间端点 $m, n$ 的相对位置进行分类讨论求参数范围。",
       importance: "gaokao",
     });
   }

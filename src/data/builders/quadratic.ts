@@ -178,11 +178,11 @@ function buildFunctionMode(
       importance: "gaokao",
     },
     {
-      text: "二次函数单调性：在对称轴 $x = -\\frac{b}{2a}$ 处取得极值。若 $a > 0$，在 $(-\\infty, -\\frac{b}{2a}]$ 单调递减，在 $[-\\frac{b}{2a}, +\\infty)$ 单调递增；若 $a < 0$ 则单调性相反。",
+      text: "二次函数单调性：在对称轴 $x = -\\frac{b}{2a}$ 处取得最值。若 $a > 0$，在 $(-\\infty, -\\frac{b}{2a}]$ 单调递减，在 $[-\\frac{b}{2a}, +\\infty)$ 单调递增；若 $a < 0$ 则单调性相反。",
       importance: "core",
     },
     {
-      text: "高考轴动区间定模型：对称轴 $x = -\\frac{b}{2a}$ 与闭区间 $[m, n]$ 的位置关系分为三类：对称轴在区间左侧、内部与右侧，极值分布完全由此分类讨论决定。",
+      text: "高考轴动区间定模型：对称轴 $x = -\\frac{b}{2a}$ 与闭区间 $[m, n]$ 的位置关系分为三类：对称轴在区间左侧、内部与右侧，最值分布完全由此分类讨论决定。",
       importance: "hard",
     },
   );
@@ -214,7 +214,7 @@ function buildFunctionMode(
         title: "求解反思 · 对称轴与最值结论",
         latex: `\\text{对称轴: } x = ${h.toFixed(2)}, \\quad f(x)_{${a > 0 ? "\\min" : "\\max"}} = ${k.toFixed(2)}`,
         detail: `因为 $a ${a > 0 ? "> 0" : "< 0"}$，抛物线开口${a > 0 ? "向上" : "向下"}，故当 $x = ${h.toFixed(2)}$ 时取得全局${a > 0 ? "最小值" : "最大值"} ${k.toFixed(2)}。`,
-        rubric: "结合开口方向与对称轴得出极值",
+        rubric: "结合开口方向与对称轴得出最值",
       },
     );
   } else {

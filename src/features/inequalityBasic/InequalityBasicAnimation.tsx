@@ -157,7 +157,7 @@ export function InequalityBasicAnimation() {
         style: "dash",
       },
       {
-        label: "极小值驻点 (√k, 2√k)",
+        label: "最小值点 (√k, 2√k)",
         color: MATH_COLORS.focusPoint,
         style: "point",
       },
@@ -203,7 +203,7 @@ export function InequalityBasicAnimation() {
       badge: "高考重点 · 积定和最小对勾最值模型",
       condition: `自变量 $x > 0$，两项乘积为定值 $x \\cdot \\frac{k}{x} = ${params.k.toFixed(1)}$。`,
       question:
-        "(1) 应用基本不等式求解函数 $f(x) = x + \\frac{k}{x}$ 的理论最小值；(2) 求解等号成立时自变量 $x$ 的极小值驻点坐标。",
+        "(1) 应用基本不等式求解函数 $f(x) = x + \\frac{k}{x}$ 的理论最小值；(2) 求解等号成立时自变量 $x$ 的最小值点坐标。",
     };
   }, [studyMode, params]);
 

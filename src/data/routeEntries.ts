@@ -124,9 +124,25 @@ import {
 // ── 7. 导数及其应用 ──
 import { derivativeNode, derivativeLoader } from "@/features/derivative/meta";
 import {
+  derivativeFormulasNode,
+  derivativeFormulasLoader,
+} from "@/features/derivativeFormulas/meta";
+import {
+  derivativeOperationsNode,
+  derivativeOperationsLoader,
+} from "@/features/derivativeOperations/meta";
+import {
+  derivativeChainNode,
+  derivativeChainLoader,
+} from "@/features/derivativeChain/meta";
+import {
   derivativeMonotonicityNode,
   derivativeMonotonicityLoader,
 } from "@/features/derivative-monotonicity/meta";
+import {
+  derivativeOptimizationNode,
+  derivativeOptimizationLoader,
+} from "@/features/derivativeOptimization/meta";
 import {
   secondDerivativeNode,
   secondDerivativeLoader,
@@ -337,8 +353,24 @@ export const routeEntries: RouteEntry[] = [
   // 7. 导数及其应用
   { node: derivativeNode, loader: derivativeLoader },
   {
+    node: derivativeFormulasNode,
+    loader: derivativeFormulasLoader as RouteEntry["loader"],
+  },
+  {
+    node: derivativeOperationsNode,
+    loader: derivativeOperationsLoader as RouteEntry["loader"],
+  },
+  {
+    node: derivativeChainNode,
+    loader: derivativeChainLoader as RouteEntry["loader"],
+  },
+  {
     node: derivativeMonotonicityNode,
     loader: derivativeMonotonicityLoader,
+  },
+  {
+    node: derivativeOptimizationNode,
+    loader: derivativeOptimizationLoader as RouteEntry["loader"],
   },
   { node: secondDerivativeNode, loader: secondDerivativeLoader },
   {

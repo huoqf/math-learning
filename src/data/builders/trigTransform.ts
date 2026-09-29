@@ -73,9 +73,9 @@ export function buildTrigTransformPanel(
         highlight: intervalInfo.zeroCount > 0 ? "positive" : "zero",
       },
       {
-        label: "区间内极值点个数",
+        label: "区间内最值点个数",
         symbol: "N_{extrema}",
-        value: `${intervalInfo.extremumCount} 个 (极大 ${intervalInfo.maxima.length}, 极小 ${intervalInfo.minima.length})`,
+        value: `${intervalInfo.extremumCount} 个 (最大 ${intervalInfo.maxima.length}, 最小 ${intervalInfo.minima.length})`,
         color: MATH_COLORS.paramTertiary,
       },
       {
@@ -85,7 +85,7 @@ export function buildTrigTransformPanel(
           ? intervalInfo.monotoneType === "increasing"
             ? "严格单调递增"
             : "严格单调递减"
-          : "非单调 (跨越极值点)",
+          : "非单调 (跨越最值点)",
         color: intervalInfo.isMonotone
           ? MATH_COLORS.paramTertiary
           : MATH_COLORS.paramPrimary,
@@ -104,7 +104,7 @@ export function buildTrigTransformPanel(
       {
         name: "零点个数与单调区间充要判据",
         latex:
-          "\\begin{cases} \\text{恰有 } n \\text{ 个零点} \\implies (n-1)\\pi < \\Delta u \\le (n+1)\\pi \\text{ (需验证端点)} \\\\ \\text{在 } [x_1, x_2] \\text{ 上单调} \\implies \\Delta u \\le \\pi \\text{ 且区间不含极值点 } \\frac{\\pi}{2}+m\\pi \\end{cases}",
+          "\\begin{cases} \\text{恰有 } n \\text{ 个零点} \\implies (n-1)\\pi < \\Delta u \\le (n+1)\\pi \\text{ (需验证端点)} \\\\ \\text{在 } [x_1, x_2] \\text{ 上单调} \\implies \\Delta u \\le \\pi \\text{ 且区间不含最值点 } \\frac{\\pi}{2}+m\\pi \\end{cases}",
         condition: "$\\Delta u = \\omega(x_2 - x_1) > 0$",
         note: "高考求解 ω 范围核心：先求开区间必要条件，再将端点 ω 值代入检验闭区间端点是否产生多余零点。",
         level: "important",
@@ -121,7 +121,7 @@ export function buildTrigTransformPanel(
         importance: "hard",
       },
       {
-        text: "零点个数 vs 极值点个数：若函数在区间内恰有 n 个零点，极值点个数可能为 n-1, n 或 n+1，需看两端相位。",
+        text: "零点个数 vs 最值点个数：若函数在区间内恰有 n 个零点，最值点个数可能为 n-1, n 或 n+1，需看两端相位。",
         importance: "gaokao",
       },
     ];

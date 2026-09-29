@@ -410,15 +410,19 @@ export function buildTranscendentalPanel(
   } else if (mode === "chain") {
     gaokaoPoints.push(
       {
-        text: "【新高考通法·指对跨界拆分通法】题目中同时出现指数 $e^x$ 与对数 $ln x$ 混合项时，优先引入中轴线 $y = x$ 作为中间桥梁进行双向独立放缩。",
+        text: "【新高考通法·指对跨界拆分通法】题目中同时出现指数 $e^x$ 与对数 $\\ln x$ 混合项时，优先引入中轴线 $y = x$ 作为中间桥梁进行双向独立放缩。",
         importance: "gaokao",
       },
       {
-        text: "反函数几何对称：e^{x-1} 与 ln x + 1 互为反函数，关于直线 y = x 对称并在公共切点 (1,1) 处公切，形成完美双向放缩包络。",
+        text: "【反函数几何对称与公切包络】$e^{x-1}$ 与 $\\ln x + 1$ 互为反函数，关于直线 $y = x$ 对称并在公共切点 $(1,1)$ 处公切，形成完美双向放缩包络：$\\ln x + 1 \\le x \\le e^{x-1}$ ($x > 0$)。",
         importance: "core",
       },
       {
-        text: "双向不等式链：ln x + 1 ≤ x ≤ e^{x-1} (x > 0)，三者等号当且仅当 x = 1 时同时成立。",
+        text: "【反函数公切相切临界常数】指数曲线 $y = a^x$ 与对数曲线 $y = \\log_a x$ 关于 $y = x$ 轴对称：当两曲线相切时，公共切线必为对称轴 $y = x$。联立 $a^x = x$ 与 $(a^x)' = a^x \\ln a = 1$ 解得唯一切点 $(e, e)$，对应相切临界底数 $a_c = e^{1/e} \\approx 1.4447$。当 $1 < a < e^{1/e}$ 时两曲线有 2 个交点；当 $a > e^{1/e}$ 时两曲线无交点。",
+        importance: "gaokao",
+      },
+      {
+        text: "双向不等式链：$\\ln x + 1 \\le x \\le e^{x-1}$ ($x > 0$)，三者等号当且仅当 $x = 1$ 时同时成立。",
         importance: "hard",
       },
     );
@@ -519,7 +523,7 @@ export function buildTranscendentalPanel(
           step: 2,
           title: "构造通径差函数并求导分析",
           detail:
-            "令 $F(x) = e^x - [e^{x_0}(x - x_0) + e^{x_0}]$，求导得 $F'(x) = e^x - e^{x_0}$。当 $x < x_0$ 时 $F'(x) < 0$；当 $x > x_0$ 时 $F'(x) > 0$。$x = x_0$ 为唯一驻点与极小值点。",
+            "令 $F(x) = e^x - [e^{x_0}(x - x_0) + e^{x_0}]$，求导得 $F'(x) = e^x - e^{x_0}$。当 $x < x_0$ 时 $F'(x) < 0$；当 $x > x_0$ 时 $F'(x) > 0$。$x = x_0$ 为唯一极小值点。",
           latex: "F'(x) = e^x - e^{x_0} = 0 \\iff x = x_0",
           rubric: "采分点：通式差函数求导（4分）",
         },

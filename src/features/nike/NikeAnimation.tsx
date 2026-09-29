@@ -257,7 +257,7 @@ export function NikeAnimation() {
           style: "dash",
         },
         {
-          label: "均值等号极小点",
+          label: "均值等号最小值点",
           color: MATH_COLORS.vertexPoint,
           style: "point",
         },
@@ -288,7 +288,7 @@ export function NikeAnimation() {
         style: "dash",
       },
       {
-        label: "特征极值点",
+        label: "两支的最值点",
         color: MATH_COLORS.vertexPoint,
         style: "point",
       },
@@ -321,7 +321,7 @@ export function NikeAnimation() {
                   {
                     key: "nike_std",
                     label: "经典对勾型",
-                    description: "同号象限双极值",
+                    description: "同号象限双最值",
                   },
                   {
                     key: "streamer_std",
@@ -346,7 +346,7 @@ export function NikeAnimation() {
                   {
                     key: "amgm_std",
                     label: "标准对勾配凑",
-                    description: "积为定值求极值",
+                    description: "积为定值求最值",
                   },
                   {
                     key: "amgm_double",
@@ -439,9 +439,9 @@ export function NikeAnimation() {
                 question={
                   params.a * params.b > 0
                     ? params.a > 0
-                      ? "(1) 求导解驻点并确定单调递减区间；(2) 探究第一象限极小值点与第三象限极大值点的中心对称关系。"
-                      : "(1) 分析导函数符号，确定倒对勾函数的单调递增区间；(2) 求解第四象限极大值点与第二象限极小值点坐标。"
-                    : "(1) 求导证明导函数在去心定义域上恒号；(2) 分析为何双曲飘带形态全域单调且无极值点。"
+                      ? "(1) 用基本不等式求出第一象限支最小值点的横坐标；(2) 探究第一象限支最小值点与第三象限支最大值点关于原点的中心对称关系。"
+                      : "(1) 分析系数为负时两支的取值方向，确定倒对勾函数在第四象限支的最大值点；(2) 求解第二象限支最小值点坐标，并说明两支最值点关于原点的对称关系。"
+                    : "(1) 先分离常数化为 $a + \\frac{b'}{x}$，再用作差法证明两支各自单调；(2) 分析为何双曲飘带形态在每一支上都单调、因而没有最值点。"
                 }
               />
             )}
@@ -518,8 +518,8 @@ export function NikeAnimation() {
                   Math.abs(params.a) < 1e-4
                     ? "(1) 求分式线性函数的单调递减区间；(2) 证明动点 $P$ 到两条渐近线距离之积为定值 $|b|$。"
                     : params.a * params.b < 0
-                      ? "(1) 求导分析导数恒号性质，判定全域单调性；(2) 探究方程 $f(x) = m$ 的实根个数与零点分布。"
-                      : "(1) 设 $u = x - h$，求函数在 $(h, +\\infty)$ 上的极小值点坐标与极小值；(2) 证明两极值点连线中点恒与对称中心 $C$ 重合。"
+                      ? "(1) 分离常数后用作差法证明两支各自单调；(2) 探究方程 $f(x) = m$ 的实根个数与零点分布。"
+                      : "(1) 设 $u = x - h$，用基本不等式求函数在 $(h, +\\infty)$ 支上的最小值点坐标与最小值；(2) 证明两支最值点连线的中点恒与对称中心 $C$ 重合。"
                 }
               />
             )}

@@ -10,6 +10,8 @@ import {
 } from "@/components/Math";
 import type { LabelItem } from "@/utils/labelOverlap";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/funcProperties";
 import { MATH_COLORS } from "@/theme";
 import { evalFunctionParity } from "@/math/function";
 import type { PropertiesCommonProps, PropertiesFnType } from "./types";
@@ -38,14 +40,37 @@ export function PropertiesParityScene({
 
   const parityRes = evalFunctionParity(fnType, x0);
 
+  // 三个手柄落值统一走 paramClamp SSOT：参数域 ∩ 可见视口 求交后按步长吸附，
+  // 杜绝「手写 Math.round(x * 10) / 10」导致的视口外脱手与步长重复写死。
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    onParamChange("x0", Math.round(mathPt.x * 10) / 10);
+    onParamChange(
+      "x0",
+      snapDragValue(
+        mathPt.x,
+        paramMeta.x0.step,
+        paramDragRange(paramMeta.x0, scale, "x"),
+      ),
+    );
   };
   const handleDragX1 = (mathPt: { x: number; y: number }) => {
-    onParamChange("x1", Math.round(mathPt.x * 10) / 10);
+    onParamChange(
+      "x1",
+      snapDragValue(
+        mathPt.x,
+        paramMeta.x1.step,
+        paramDragRange(paramMeta.x1, scale, "x"),
+      ),
+    );
   };
   const handleDragX2 = (mathPt: { x: number; y: number }) => {
-    onParamChange("x2", Math.round(mathPt.x * 10) / 10);
+    onParamChange(
+      "x2",
+      snapDragValue(
+        mathPt.x,
+        paramMeta.x2.step,
+        paramDragRange(paramMeta.x2, scale, "x"),
+      ),
+    );
   };
 
   // 奇偶性模式点标
@@ -144,6 +169,7 @@ export function PropertiesParityScene({
           onDrag={handleDragX0}
           color={MATH_COLORS.paramPrimary}
           fontScale={fontScale}
+          edgeClampProjection
         />
       )}
 
@@ -156,6 +182,7 @@ export function PropertiesParityScene({
           onDrag={handleDragX1}
           color={MATH_COLORS.paramSecondary}
           fontScale={fontScale}
+          edgeClampProjection
         />
       )}
 
@@ -168,6 +195,7 @@ export function PropertiesParityScene({
           onDrag={handleDragX2}
           color={MATH_COLORS.paramTertiary}
           fontScale={fontScale}
+          edgeClampProjection
         />
       )}
 

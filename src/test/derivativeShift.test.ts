@@ -6,7 +6,11 @@ import {
 } from "@/math/derivativeShift";
 import { buildDerivativeShiftPanel } from "@/data/builders/derivativeShift";
 import { getPresets } from "@/data/registries/derivativeShift";
-import { getShiftXRange } from "@/features/derivativeShift/constants";
+import {
+  getShiftXRange,
+  SHIFT_Y_RANGE,
+} from "@/features/derivativeShift/constants";
+import { calculateSceneScale } from "@/hooks/useSceneScale";
 
 describe("隐零点定理与极值点偏移数学计算测试", () => {
   it("应当正确求解超越隐零点及二次消参消元轨迹 (x ln x + (1/2)x^2 - ax)", () => {
@@ -236,5 +240,83 @@ describe("极值点偏移画布可见域契约（坐标轴不得随参数缩放�
     for (const preset of presets) {
       expect(preset.params.x2 ?? 0).toBeLessThan(hi);
     }
+  });
+});
+
+/**
+ * 隐零点的「结论点」是消元轨迹 h(x) = -(1/2)x² - x 上的极值点 P(x₀, h(x₀))。
+ * 它才是本模式要学生看到的东西：一旦被裁出画布，点开预设只能看到一条断掉的轨迹。
+ *
+ * 本组用例把「预设 ↔ 可见 y 域」的一致性固化下来，且断言的是 useSceneScale **实际推导出**的
+ * 可见域（scale.yMin/yMax），而不是配置里的声明值 —— 这样连「keepAspectRatio 导致比例尺
+ * 换轴、可见域与声明值不一致」这类二次失真也一并覆盖。
+ */
+describe("隐零点预设 P 点可见性守卫（预设 × 可见 y 域）", () => {
+  const [xLo, xHi] = getShiftXRange("implicit_zero", "x_ln_x");
+
+  /** 与 DerivativeShiftAnimation 同构：CANVAS_PRESETS.full = 840×650，overlay 全为 0 */
+  function buildScale(yRange: [number, number]) {
+    return calculateSceneScale({
+      designVisibleW: 840,
+      designVisibleH: 650,
+      designLeft: 0,
+      designTop: 0,
+      xRange: [xLo, xHi],
+      yRange,
+    });
+  }
+
+  it("已发布预设「深部隐零」(a = 3.4) 的隐零点纵坐标为 -3.442，必须落在可见域内", () => {
+    const scale = buildScale(SHIFT_Y_RANGE);
+    const deep = getPresets("implicit_zero", "x_ln_x").find(
+      (p) => p.key === "deep_zero",
+    );
+    expect(deep).toBeDefined();
+
+    const res = solveImplicitZero(deep!.params.a, "x_ln_x");
+    expect(res.isValid).toBe(true);
+    expect(res.traceY).toBeCloseTo(-3.442, 3);
+
+    // 关键：P 的横纵坐标都必须落在 useSceneScale 实际推导出的可见域内
+    expect(res.x0).toBeGreaterThanOrEqual(scale.xMin);
+    expect(res.x0).toBeLessThanOrEqual(scale.xMax);
+    expect(res.traceY).toBeGreaterThanOrEqual(scale.yMin);
+    expect(res.traceY).toBeLessThanOrEqual(scale.yMax);
+  });
+
+  it("全部已发布隐零点预设的 P 点都在可见域内（不得只修一个好一个）", () => {
+    const scale = buildScale(SHIFT_Y_RANGE);
+    const presets = getPresets("implicit_zero", "x_ln_x");
+    expect(presets.length).toBeGreaterThanOrEqual(4);
+
+    for (const preset of presets) {
+      const res = solveImplicitZero(preset.params.a, "x_ln_x");
+      expect(res.isValid).toBe(true);
+      expect(res.x0).toBeGreaterThanOrEqual(scale.xMin);
+      expect(res.x0).toBeLessThanOrEqual(scale.xMax);
+      expect(res.traceY).toBeGreaterThanOrEqual(scale.yMin);
+      expect(res.traceY).toBeLessThanOrEqual(scale.yMax);
+    }
+  });
+
+  it("回归控制：旧 yMin = -2.5 必然把 deep_zero 的 P 裁出画布（锁定该缺陷）", () => {
+    // 这不是「顺手补一条」，而是把「缺陷真实存在过」写成可执行的证据：
+    // 若将来有人把 SHIFT_Y_RANGE 的下界改回 -2.5，本用例与上一条会同时红灯。
+    const legacyScale = buildScale([-2.5, 3.5]);
+    const res = solveImplicitZero(3.4, "x_ln_x");
+    expect(res.traceY).toBeLessThan(legacyScale.yMin);
+    // 而当前的常量必须让它进入画布
+    const fixedScale = buildScale(SHIFT_Y_RANGE);
+    expect(res.traceY).toBeGreaterThanOrEqual(fixedScale.yMin);
+  });
+
+  it("滑块上限收敛至 3.6，极值点在整个可达参数域内 100% 保持在可见画布内", () => {
+    const fixedScale = buildScale(SHIFT_Y_RANGE);
+    const atPresetMax = solveImplicitZero(3.4, "x_ln_x");
+    expect(atPresetMax.traceY).toBeGreaterThanOrEqual(fixedScale.yMin);
+
+    const atSliderMax = solveImplicitZero(3.6, "x_ln_x");
+    // a = 3.6 时，隐零点极值点纵坐标约为 -3.67，依然在 yMin = -3.8 之内，全域不再出框
+    expect(atSliderMax.traceY).toBeGreaterThanOrEqual(fixedScale.yMin);
   });
 });

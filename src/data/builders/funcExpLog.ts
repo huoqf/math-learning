@@ -4,9 +4,14 @@ import { MATH_COLORS } from "@/theme";
 
 export function buildFuncExpLogPanel(
   params: Record<string, number>,
-  config?: { subExpLog?: string; powerMode?: string; explogMode?: string },
+  config?: {
+    subExpLog?: string;
+    funcType?: string;
+    powerMode?: string;
+    explogMode?: string;
+  },
 ): MathPanelData {
-  const subType = config?.subExpLog ?? "exponential";
+  const subType = config?.subExpLog ?? config?.funcType ?? "exponential";
 
   // 1. 幂函数模式
   if (subType === "power") {
@@ -306,9 +311,6 @@ export function buildFuncExpLogPanel(
   const explogMode = config?.explogMode ?? "single";
   const expLogRes = calculateExpLog(a, x0);
 
-  // 高考相切临界常数 a_c = e^{1/e} ≈ 1.444667861
-  const AC_CRITICAL = Math.exp(1 / Math.E);
-
   const quantities: MathPanelData["quantities"] = [];
 
   if (subType === "logarithmic") {
@@ -367,36 +369,23 @@ export function buildFuncExpLogPanel(
             : "无定义",
           color: MATH_COLORS.functionTransformed,
         },
-        {
-          label: "相切临界底数 $a_c$",
-          symbol: "e^{1/e}",
-          value: `${AC_CRITICAL.toFixed(4)} (切点 (e, e))`,
-        },
-        {
-          label: "两曲线交点情况",
-          value:
-            a > 0 && a < 1
-              ? "有 1 个交点 (必在 y = x 上)"
-              : Math.abs(a - AC_CRITICAL) < 0.05
-                ? "相切于 (e, e) · 唯一公切线 y = x"
-                : a < AC_CRITICAL
-                  ? "有 2 个交点 (均在 y = x 上)"
-                  : "无公共点 (指数在对数上方)",
-          highlight: Math.abs(a - AC_CRITICAL) < 0.05 ? "extreme" : "positive",
-        },
       );
     } else {
       quantities.push(
         {
-          label: "动点切线斜率",
-          symbol: "f'(x_0)",
-          value: expLogRes.logTangentSlopeStr,
-          highlight: expLogRes.isLogDefined ? "positive" : undefined,
+          label: "恒过定点检验",
+          symbol: "f(1)",
+          value: "0 (对数图象恒过定点 (1, 0))",
+          highlight: "positive",
         },
         {
-          label: "定点 (1,0) 切线斜率",
-          symbol: "f'(1)",
-          value: expLogRes.logFixedPointSlopeStr,
+          label: "基准特征点",
+          symbol: "f(a)",
+          value: `1 (对应点 (${a.toFixed(1)}, 1))`,
+        },
+        {
+          label: "垂直渐近线",
+          value: "x 轴垂线 x = 0 (y 轴)",
         },
         {
           label: "符号与分界判定",
@@ -476,40 +465,23 @@ export function buildFuncExpLogPanel(
             : "无定义",
           color: MATH_COLORS.functionTransformed,
         },
-        {
-          label: "相切临界底数 $a_c$",
-          symbol: "e^{1/e}",
-          value: `${AC_CRITICAL.toFixed(4)} (切点 (e, e))`,
-        },
-        {
-          label: "两曲线交点情况",
-          value:
-            a > 0 && a < 1
-              ? "有 1 个交点 (在 y = x 上)"
-              : Math.abs(a - AC_CRITICAL) < 0.05
-                ? "相切于 (e, e) · 唯一公切线 y = x"
-                : a < AC_CRITICAL
-                  ? "有 2 个交点 (均在 y = x 上)"
-                  : "无公共点 (指数在对数上方)",
-          highlight: Math.abs(a - AC_CRITICAL) < 0.05 ? "extreme" : "positive",
-        },
       );
     } else {
       quantities.push(
         {
-          label: "动点切线斜率",
-          symbol: "f'(x_0)",
-          value: expLogRes.expTangentSlopeStr,
-          highlight: expLogRes.isValidBase ? "positive" : undefined,
+          label: "恒过定点检验",
+          symbol: "f(0)",
+          value: "1 (指数图象恒过定点 (0, 1))",
+          highlight: "positive",
         },
         {
-          label: "动点切线方程",
-          value: expLogRes.expTangentEquationLatex ?? "无定义",
+          label: "基准特征点",
+          symbol: "f(1)",
+          value: `${a.toFixed(1)} (对应点 (1, ${a.toFixed(1)}))`,
         },
         {
-          label: "定点 (0,1) 切线斜率",
-          symbol: "f'(0)",
-          value: expLogRes.expFixedPointSlopeStr,
+          label: "水平渐近线",
+          value: "x 轴水平线 y = 0",
         },
         {
           label: "单调与图象形态",
@@ -561,13 +533,14 @@ export function buildFuncExpLogPanel(
             ],
           },
           {
-            name: "高考基准切线放缩不等式",
-            latex: "\\ln x \\le x - 1 \\quad (x > 0)",
+            name: "初等模型增长速度比较定理",
+            latex:
+              "\\log_a x < x < a^x \\quad (a > 1, \\text{当 } x \\text{ 充分大时})",
             level: "important",
             prerequisites: [
-              "当且仅当 $x = 1$ 时等号成立",
-              "几何意义：曲线 $y = \\ln x$ 位于其在点 $(1, 0)$ 处切线 $y = x - 1$ 下方",
-              "高考衍生放缩：$\\ln x \\le \\frac{x}{e}$ (在 $x = e$ 处相切)",
+              "在区间 $(0, +\\infty)$ 上，对数增长远慢于线性增长与指数增长",
+              "底数 $a > 1$ 时，对数曲线随自变量增大越来越平缓",
+              "新高考函数建模应用题中常用于描述缓慢增长与饱和增长过程",
             ],
           },
         ]
@@ -583,31 +556,31 @@ export function buildFuncExpLogPanel(
             ],
           },
           {
-            name: "反函数公切线与相切临界定理",
+            name: "指数爆炸与增长模型比较定理",
             latex:
-              "a = e^{1/e} \\approx 1.4447 \\iff y = a^x \\text{ 与 } y = \\log_a x \\text{ 相切于 } (e, e)",
+              "a^x > x^k > \\log_a x \\quad (a > 1, k > 0, \\text{当 } x \\text{ 充分大时})",
             level: "core",
             prerequisites: [
-              "当 $1 < a < e^{1/e}$ 时，两曲线在直线 $y = x$ 上有 2 个交点",
-              "当 $a = e^{1/e}$ 时，两曲线相切于唯一公共点 $(e, e)$，公切线为 $y = x$",
-              "当 $a > e^{1/e}$ 时，两曲线无交点，指数曲线恒在对数曲线上方",
+              "指数增长速度（指数爆炸）最终远超任意一次多项式增长",
+              "应用建模：复利计息、细胞分裂与放射性衰变核心数学模型",
+              "比较大小高频模型：指数底数判定与中间媒介 0、1 联立",
             ],
           },
           {
-            name: "高考双基准指数切线放缩不等式",
+            name: "指数幂运算法则与根式化简定理",
             latex:
-              "e^x \\ge x + 1 \\quad \\text{且} \\quad e^x \\ge ex \\quad (x \\in \\mathbb{R})",
+              "a^r a^s = a^{r+s}, \\quad (a^r)^s = a^{rs}, \\quad (ab)^r = a^r b^r",
             level: "important",
             prerequisites: [
-              "$e^x \\ge x + 1$：在点 $(0, 1)$ 处与切线相切，高考常用于局部极值放缩",
-              "$e^x \\ge ex$：在点 $(1, e)$ 处与过原点切线相切，常用于全局下界估计",
-              "反函数对偶形式：$\\ln x \\le x - 1$ 与 $\\ln x \\le \\frac{x}{e}$",
+              "实数指数幂运算性质 ($a > 0, b > 0, r, s \\in \\mathbb{R}$)",
+              "负指数与分数指数转化：$a^{-p} = \\frac{1}{a^p}, \\; a^{m/n} = \\sqrt[n]{a^m}$",
+              "利用底数相同与指数单调性比较数的大小",
             ],
           },
           {
             name: "指数函数的单调性与图象渐近特征",
             latex:
-              "a > 1: \\; \\text{当 } x \\text{ 无限减小时 } a^x \\text{ 无限接近 } 0 ; \\quad 0 < a < 1: \\; \\text{当 } x \\text{ 无限增大时 } a^x \\text{ 无限接近 } 0",
+              "a > 1: \\; \\text{当 } x \\to -\\infty \\text{ 时 } a^x \\to 0 ; \\quad 0 < a < 1: \\; \\text{当 } x \\to +\\infty \\text{ 时 } a^x \\to 0",
             level: "important",
             prerequisites: [
               "$x$ 轴 ($y = 0$) 为水平渐近线，与对数函数竖直渐近线 $x = 0$ 关于直线 $y = x$ 对称",
@@ -624,25 +597,21 @@ export function buildFuncExpLogPanel(
             importance: "gaokao",
           },
           {
-            text: "【反函数三要素与公切线】① 定义域与值域互换；② 图象关于 $y = x$ 轴对称；③ 当 $a > 1$ 且 $y = \\log_a x$ 与 $y = a^x$ 有交点时，交点必在直线 $y = x$ 上（相切临界为 $a = e^{1/e} \\approx 1.445$）。",
+            text: "【反函数三要素与对称映射】① 定义域与值域互换 ($D_{\\log} = R_{\\exp}$)；② 图象关于 $y = x$ 轴对称；③ 定点 $(1, 0) \\leftrightarrow (0, 1)$ 互为对称镜像；④ 竖直渐近线 $x = 0$ 与水平渐近线 $y = 0$ 对称。",
             importance: "gaokao",
           },
           {
-            text: "【指对同构大题破题思维】新高考导数压轴题常利用指对同构构造单调函数：如将 $x e^x = \\ln x + x$ 或 $a e^a = b + \\ln b$ 转化为 $f(t) = t e^t$ 或 $g(t) = t + \\ln t$ 的单调性求解。",
+            text: "【对数模型在实际情景中的应用】高中数学建模中，声强级（分贝）、地震里氏震级与溶液酸碱度（pH）均基于常用对数定义：将大跨度物理量转化为线性刻度。",
             importance: "gaokao",
           },
         ]
       : [
           {
-            text: "【指对同构大题破题思维】新高考导数压轴题第一大招：利用指数对数互逆性质，将含 $e^x$ 与 $\\ln x$ 的复杂方程同构化。例如 $x e^x = \\ln x + x \\iff x e^x = \\ln(x e^x)$，设 $t = x e^x$ 转化为单一函数单调性破题。",
+            text: "【指数增长与实际生活模型】人口增长、复利计息与放射性元素半衰期模型中，函数 $N(t) = N_0 a^t$ 呈现爆炸式激增或快速衰减，在高考实际应用题中常考查对数转化求解。",
             importance: "gaokao",
           },
           {
-            text: "【高考双基准切线放缩】基准一 $e^x \\ge x + 1$（切点 $(0, 1)$）与基准二 $e^x \\ge ex$（切点 $(1, e)$），结合对偶式 $\\ln x \\le x - 1$ 与 $\\ln x \\le \\frac{x}{e}$，是证明高考导数不等式与求参数范围的必背工具。",
-            importance: "gaokao",
-          },
-          {
-            text: "【反函数公切线与交点临界】指数与对数曲线关于 $y = x$ 对称：当 $a = e^{1/e} \\approx 1.445$ 时相切于 $(e, e)$；$1 < a < e^{1/e}$ 时有 2 个交点；$a > e^{1/e}$ 时无交点。新高考常以交点个数作为含参分类讨论压轴设问。",
+            text: "【指数比较大小四步破题法】① 同底数比指数（利用单调性）；② 同指数比底数（利用幂函数单调性）；③ 异底异指找中间媒介（如 0、1 或特殊值）；④ 构图利用图象高低判断。",
             importance: "gaokao",
           },
           {
@@ -678,18 +647,15 @@ export function buildFuncExpLogPanel(
         },
         {
           step: 3,
-          title: "高考压轴 · 公切相切与交点临界判定",
+          title: "性质对偶 · 定点渐近线与单调性互映",
           detail:
-            "探究 $y = a^x$ 与 $y = \\log_a x$ 的交点分布。由对称性知，若两曲线相切，公切线必为对称轴 $y = x$，满足切点切线方程联立 $\\begin{cases} a^x = x \\\\ a^x \\ln a = 1 \\end{cases}$。代入得 $x \\ln a = 1 \\implies a^x = e \\implies x = e$。切点为 $(e, e)$，对应临界底数 $a_c = e^{1/e} \\approx 1.4447$。当 $1 < a < e^{1/e}$ 时在 $y = x$ 上有 2 个交点；当 $a > e^{1/e}$ 时无公共点。",
+            "由互为反函数的图象关于直线 $y = x$ 轴对称可知：指数函数定点 $(0, 1)$ 与对数函数定点 $(1, 0)$ 互为镜像；指数函数的水平渐近线 $y = 0$ 镜像为对数函数的竖直渐近线 $x = 0$；且两者在各定义域上的单调增减性严格保持同向。",
           latex:
-            "\\begin{cases} a^x = x \\\\ (a^x)' = a^x \\ln a = 1 \\end{cases} \\implies x = e, \\quad a_c = e^{1/e} \\approx 1.445 \\quad (\\text{相切于 } (e, e))",
-          rubric:
-            "联立曲线与对称轴相切充要方程，推导新高考核心相切常数 $e^{1/e}$",
+            "(0, 1) \\xleftrightarrow{y=x} (1, 0), \\quad (y = 0) \\xleftrightarrow{y=x} (x = 0)",
+          rubric: "准确阐释反函数对称映射下定点、渐近线与单调性的对应规律",
         },
       ];
     } else {
-      const y0Val = expLogRes.isLogDefined ? expLogRes.logVal : 0;
-      const kStr = expLogRes.logTangentSlopeStr;
       reasoningSteps = [
         {
           step: 1,
@@ -700,24 +666,19 @@ export function buildFuncExpLogPanel(
         },
         {
           step: 2,
-          title: "导数切线 · 切点斜率与点斜式展开",
-          detail: expLogRes.isLogDefined
-            ? `对数函数导函数为 $f'(x) = \\frac{1}{x \\ln a}$。将探究点 $x_0 = ${x0.toFixed(2)}$ 代入，求得切点 $P(${x0.toFixed(2)}, ${y0Val.toFixed(2)})$ 处的切线斜率 $k = ${kStr}$，由点斜式展开得切线方程。`
-            : "当前探究点超出定义域范围，无定义导数切线。",
-          latex: expLogRes.isLogDefined
-            ? `f'(${x0.toFixed(2)}) = \\frac{1}{${x0.toFixed(2)} \\ln(${a.toFixed(1)})} = ${kStr} \\implies y - ${y0Val.toFixed(2)} = ${kStr}(x - ${x0.toFixed(2)})`
-            : "x_0 \\le 0 \\implies \\text{无导数}",
-          rubric: "运用对数导数公式准确代入计算斜率并写出切线方程",
+          title: "单调判号 · 底数与真数同大异大律",
+          detail: `对数函数单调性由底数 $a$ 严格决定：当底数 $a = ${a.toFixed(1)} > 1$ 时，在 $(0, +\\infty)$ 上严格单调递增；当 $0 < a < 1$ 时，在 $(0, +\\infty)$ 上严格单调递减。在当前探究点 $x_0 = ${x0.toFixed(2)}$ 处，结合定义域与底数大小，准确判定函数值正负与大小。`,
+          latex: `a > 1 \\implies \\forall 0 < x_1 < x_2, \\; \\log_a x_1 < \\log_a x_2`,
+          rubric: "准确阐明底数对单调性的决定作用并由单调性定号",
         },
         {
           step: 3,
-          title: "高考放缩 · 基准切线与不等式链",
+          title: "图象走势 · 渐近线与对数增长特征",
           detail:
-            "当底数取自然对数底 $e$ 时，曲线 $y = \\ln x$ 在点 $(1, 0)$ 处的切线为 $y = x - 1$。构造差函数 $g(x) = \\ln x - (x - 1)$，求导判号可得 $g(x) \\le 0$ 恒成立，即曲线恒位于该切线下方，由此导出高考第一核心放缩不等式 $\\ln x \\le x - 1$（$x > 0$，当且仅当 $x = 1$ 时取等号）；过原点的切线为 $y = \\frac{x}{e}$，同法可得 $\\ln x \\le \\frac{x}{e}$。",
+            "当 $x \\to 0^+$ 时，$\\log_a x \\to -\\infty$（$a > 1$ 时），以 $y$ 轴（直线 $x = 0$）为竖直渐近线；当 $x$ 充分大时，对数增长远慢于线性增长与指数增长，图象呈现随 $x$ 增大而越来越平缓的向下弯曲特征。",
           latex:
-            "\\ln x \\le x - 1 \\quad (x > 0, \\text{等号成立当且仅当 } x = 1)",
-          rubric:
-            "构造差函数 $g(x)=\\ln x-(x-1)$ 并求导判号，得出切线放缩不等式与等号成立条件",
+            "x \\to 0^+ \\implies y \\to -\\infty \\; (x=0 \\text{ 为竖直渐近线})",
+          rubric: "规范描述对数曲线以 y 轴为渐近线及大自变量下的走势特征",
         },
       ];
     }
@@ -746,17 +707,16 @@ export function buildFuncExpLogPanel(
         },
         {
           step: 3,
-          title: "相切临界 · 公切线与切点坐标",
+          title: "性质对偶 · 定点渐近线与单调性互映",
           detail:
-            "两曲线相切时公切线必为对称轴 $y = x$。联立切点重合与导数相等方程组 $\\begin{cases} a^x = x \\\\ a^x \\ln a = 1 \\end{cases}$，代入消元得 $x \\ln a = 1 \\implies a^x = e \\implies x = e$。因此公切点必为 $(e, e)$，对应相切临界底数 $a_c = e^{1/e} \\approx 1.4447$。当 $1 < a < e^{1/e}$ 时在 $y = x$ 上有 2 个交点；当 $a > e^{1/e}$ 时无公共点。",
+            "由互为反函数的图象关于直线 $y = x$ 轴对称可知：指数函数定点 $(0, 1)$ 与对数函数定点 $(1, 0)$ 互为镜像；指数函数的水平渐近线 $y = 0$ 镜像为对数函数的竖直渐近线 $x = 0$；且两者在各定义域上的单调增减性严格保持同向。",
           latex:
-            "\\begin{cases} a^x = x \\\\ (a^x)' = a^x \\ln a = 1 \\end{cases} \\implies x = e, \\quad a_c = e^{1/e} \\approx 1.445 \\quad (\\text{相切于 } (e, e))",
-          rubric: "阐明联立导数方程求解相切临界与交点个数讨论准则",
+            "(0, 1) \\xleftrightarrow{y=x} (1, 0), \\quad (y = 0) \\xleftrightarrow{y=x} (x = 0)",
+          rubric: "全面总结反函数关于直线 y=x 对称下的关键特征对偶规律",
         },
       ];
     } else {
       const expVal = expLogRes.isValidBase ? expLogRes.expVal : 0;
-      const kStr = expLogRes.expTangentSlopeStr;
       reasoningSteps = [
         {
           step: 1,
@@ -767,19 +727,19 @@ export function buildFuncExpLogPanel(
         },
         {
           step: 2,
-          title: "导数切线 · 切点斜率与点斜式展开",
-          detail: `导函数为 $f'(x) = a^x \\ln a$。在探究点 $x_0 = ${x0.toFixed(2)}$ 处，斜率 $k = ${kStr}$，点斜式为 $y - ${expVal.toFixed(2)} = ${kStr}(x - ${x0.toFixed(2)})$。`,
-          latex: `f'(${x0.toFixed(2)}) = ${a.toFixed(1)}^{${x0.toFixed(2)}} \\ln(${a.toFixed(1)}) = ${kStr} \\implies y - ${expVal.toFixed(2)} = ${kStr}(x - ${x0.toFixed(2)})`,
-          rubric: "代入求导公式计算切线斜率",
+          title: "单调判号 · 底数分类与单调性分析",
+          detail: `指数函数 $y = a^x$（当前底数 $a = ${a.toFixed(1)}$）单调性完全由底数大小决定：当 $a > 1$ 时，在 $\\mathbb{R}$ 上严格单调递增；当 $0 < a < 1$ 时，在 $\\mathbb{R}$ 上严格单调递减。当前探究点 $x_0 = ${x0.toFixed(2)}$，对应函数值 $f(x_0) = ${expVal.toFixed(2)}$。`,
+          latex: `a > 1 \\implies \\forall x_1 < x_2, \\; a^{x_1} < a^{x_2}`,
+          rubric: "根据底数大小准确分类并阐明全域单调性",
         },
         {
           step: 3,
-          title: "高考放缩 · 双基准指数切线不等式",
+          title: "图象走势 · 水平渐近线与指数爆炸模型",
           detail:
-            "当底数取自然底数 $e$ 时，在 $(0, 1)$ 处切线为 $y = x + 1$；在 $(1, e)$ 处过原点切线为 $y = ex$。分别构造差函数 $g(x) = e^x - (x + 1)$ 与 $h(x) = e^x - ex$，求导判号可得两者在定义域上的最小值都为 $0$，从而得到 $e^x \\ge x + 1$ 与 $e^x \\ge ex$ 两大核心放缩式。",
+            "当 $a > 1$ 且 $x \\to -\\infty$ 时，$a^x \\to 0$ 恒大于 0，故 $x$ 轴（直线 $y = 0$）为水平渐近线；当 $x > 0$ 且增大时，函数值呈现指数爆炸式急剧增长，增长速度最终远超任何一次多项式。",
           latex:
-            "e^x \\ge x + 1 \\quad \\text{且} \\quad e^x \\ge ex \\quad (x \\in \\mathbb{R})",
-          rubric: "给出指数双切线放缩不等式",
+            "x \\to -\\infty \\implies a^x \\to 0 \\; (y=0 \\text{ 为水平渐近线})",
+          rubric: "规范交代水平渐近线及指数增长的几何特征",
         },
       ];
     }
@@ -808,10 +768,10 @@ export function buildFuncExpLogPanel(
     mnemonic:
       subType === "logarithmic"
         ? explogMode === "inverse"
-          ? "反函数关于y=x垂直平分，中点落在直线上；a为e^(1/e)两线切于(e,e)。"
-          : "对过(1,0)轴渐近，同大为正异大负；单增单减看底数，切线ln放缩牢记。"
+          ? "反函数关于y=x垂直平分，中点落在直线上；定点(1,0)映射(0,1)，轴对称渐近线换。"
+          : "对过(1,0)轴渐近，同大为正异大负；单增单减看底数，缓慢增长对数律。"
         : explogMode === "inverse"
-          ? "指过(0,1)对过(1,0)，y=x对称反函数；公切临界e^(1/e)，垂直平分中点连。"
-          : "指过(0,1)对过(1,0)，双切放缩同构破；a为e^(1/e)公切切，单调走势看底数。",
+          ? "指过(0,1)对过(1,0)，y=x对称反函数；定点渐近全镜像，垂直平分中点连。"
+          : "指过(0,1)轴渐近，底大于一增得急；爆炸增长超多项，单调走势看底数。",
   };
 }

@@ -121,7 +121,7 @@ export function StandardPage() {
         style: "dash",
       },
       {
-        label: "特征极值点",
+        label: "两支的最值点",
         color: MATH_COLORS.vertexPoint,
         style: "point",
       },
@@ -139,12 +139,12 @@ export function StandardPage() {
                 {
                   key: "free",
                   label: "自由探究",
-                  description: "自主调节参数与极值点",
+                  description: "自主调节参数与最值点",
                 },
                 {
                   key: "nike_std",
                   label: "经典对勾型",
-                  description: "同号象限双极值 (ab > 0)",
+                  description: "同号象限双最值 (ab > 0)",
                 },
                 {
                   key: "streamer_std",
@@ -212,9 +212,9 @@ export function StandardPage() {
               question={
                 params.a * params.b > 0
                   ? params.a > 0
-                    ? "(1) 求导解驻点并确定单调递减区间；(2) 探究第一象限极小值点与第三象限极大值点的中心对称关系。"
-                    : "(1) 分析导函数符号，确定倒对勾函数的单调递增区间；(2) 求解第四象限极大值点与第二象限极小值点坐标。"
-                  : "(1) 求导证明导函数在去心定义域上恒号；(2) 分析为何双曲飘带形态全域单调且无极值点。"
+                    ? "(1) 用基本不等式求出第一象限支最小值点的横坐标；(2) 探究第一象限支最小值点与第三象限支最大值点关于原点的中心对称关系。"
+                    : "(1) 分析系数为负时两支的取值方向，确定倒对勾函数在第四象限支的最大值点；(2) 求解第二象限支最小值点坐标，并说明两支最值点关于原点的对称关系。"
+                  : "(1) 先分离常数化为 $a + \\frac{b'}{x}$，再用作差法证明两支各自单调；(2) 分析为何双曲飘带形态在每一支上都单调、因而没有最值点。"
               }
             />
           </LeftPanelSection>

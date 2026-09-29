@@ -27,6 +27,27 @@ import {
   getEndpointLegendItems,
   getEndpointPalette,
 } from "@/features/derivative-endpoint-taylor/scenePalette";
+import {
+  getSecondDerivativeLegendItems,
+  getSecondDerivativePalette,
+  type SecondDerivativeMode,
+} from "@/features/second-derivative/scenePalette";
+import {
+  getFormulasLegendItems,
+  getFormulasPalette,
+} from "@/features/derivativeFormulas/scenePalette";
+import {
+  getChainLegendItems,
+  getChainPalette,
+} from "@/features/derivativeChain/scenePalette";
+import {
+  getOperationsLegendItems,
+  getOperationsPalette,
+} from "@/features/derivativeOperations/scenePalette";
+import {
+  getOptimizationLegendItems,
+  getOptimizationPalette,
+} from "@/features/derivativeOptimization/scenePalette";
 import { mockScale } from "@/test/mocks";
 
 interface PageCase {
@@ -49,12 +70,35 @@ const PAGES: PageCase[] = [
     mode,
     palette: getEndpointPalette(mode),
   })),
+  ...(["concavity", "inflection", "jensen"] as const).map((mode) => ({
+    page: "secondDerivative",
+    mode,
+    palette: getSecondDerivativePalette(mode),
+  })),
+  // 导数「基础运算层」四页（单模式页：配色不随页面内的模式切换而变）
+  { page: "derivativeFormulas", mode: "all", palette: getFormulasPalette() },
+  { page: "derivativeChain", mode: "all", palette: getChainPalette() },
+  {
+    page: "derivativeOperations",
+    mode: "all",
+    palette: getOperationsPalette(),
+  },
+  {
+    page: "derivativeOptimization",
+    mode: "all",
+    palette: getOptimizationPalette(),
+  },
 ];
 
 /** 已接入 palette 的场景文件：颜色只允许来自 palette，不允许直接取色 */
 const PALETTE_DRIVEN_SCENES = [
   "src/features/derivativeShift/components/DerivativeShiftScene.tsx",
   "src/features/derivative-endpoint-taylor/components/DerivativeEndpointTaylorScene.tsx",
+  "src/features/second-derivative/components/SecondDerivativeScene.tsx",
+  "src/features/derivativeFormulas/components/DerivativeFormulasScene.tsx",
+  "src/features/derivativeChain/components/DerivativeChainScene.tsx",
+  "src/features/derivativeOperations/components/DerivativeOperationsScene.tsx",
+  "src/features/derivativeOptimization/components/DerivativeOptimizationScene.tsx",
 ];
 
 describe("场景调色板契约：图例与画布同源", () => {
@@ -92,6 +136,39 @@ describe("场景调色板契约：图例与画布同源", () => {
           taylorOrder: 2,
         }),
       })),
+      ...(["concavity", "inflection", "jensen"] as const).map(
+        (mode: SecondDerivativeMode) => ({
+          page: "secondDerivative",
+          mode,
+          palette: getSecondDerivativePalette(mode),
+          legend: getSecondDerivativeLegendItems(mode),
+        }),
+      ),
+      {
+        page: "derivativeFormulas",
+        mode: "all",
+        palette: getFormulasPalette(),
+        // 导函数曲线是可开关图层：此处按「已勾选」登记，此时图例与 palette 条目一一对应
+        legend: getFormulasLegendItems({ showDerivativeGraph: true }),
+      },
+      {
+        page: "derivativeChain",
+        mode: "all",
+        palette: getChainPalette(),
+        legend: getChainLegendItems(),
+      },
+      {
+        page: "derivativeOperations",
+        mode: "all",
+        palette: getOperationsPalette(),
+        legend: getOperationsLegendItems(),
+      },
+      {
+        page: "derivativeOptimization",
+        mode: "all",
+        palette: getOptimizationPalette(),
+        legend: getOptimizationLegendItems(),
+      },
     ];
 
     for (const { page, mode, palette, legend } of cases) {

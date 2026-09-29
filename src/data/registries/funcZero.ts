@@ -114,3 +114,22 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
   },
 };
+
+/**
+ * 按当前模型取「有效参数域」—— 模型盒覆盖注册表默认域。
+ *
+ * 为什么必须由注册表统一出口：左屏滑块与中屏拖拽各自手写这份覆盖逻辑时，
+ * 一旦只有一侧写全（历史实现里左屏覆盖了 minM/maxM/minN/maxN 四个边界，
+ * 中屏拖拽却只覆盖了 minM 与 maxN），就会出现「拖得到但滑块表达不出」、
+ * 以及端点被拖出模型定义域的双向错位。二者必须消费同一份定义。
+ */
+export function getDynamicParamMeta(
+  modelKey: string,
+): Record<string, ParamMeta> {
+  const model = FUNC_ZERO_MODELS[modelKey] ?? FUNC_ZERO_MODELS.cubic;
+  return {
+    ...paramMeta,
+    intervalM: { ...paramMeta.intervalM, min: model.minM, max: model.maxM },
+    intervalN: { ...paramMeta.intervalN, min: model.minN, max: model.maxN },
+  };
+}

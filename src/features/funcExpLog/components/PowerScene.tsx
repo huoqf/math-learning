@@ -17,6 +17,7 @@ import {
   STANDARD_POWER_FUNCTIONS,
 } from "@/math/function";
 import { paramMeta } from "@/data/registries/funcExpLog";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
 
 export interface PowerSceneProps {
   params: Record<string, number>;
@@ -44,12 +45,16 @@ export function PowerScene({
   const powerAlpha = params.powerAlpha ?? 2.0;
 
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    // 边界从 paramMeta 读取（与左屏滑块同源）
-    const clampedX = Math.min(
-      Math.max(paramMeta.x0.min, mathPt.x),
-      paramMeta.x0.max,
+    // 边界与步长统一走 paramClamp SSOT：既与左屏滑块同源（paramMeta），
+    // 又与可见视口求交（paramDragRange），避免手柄被拖到画布外的不可见区域。
+    onParamChange(
+      "x0",
+      snapDragValue(
+        mathPt.x,
+        paramMeta.x0.step,
+        paramDragRange(paramMeta.x0, scale, "x"),
+      ),
     );
-    onParamChange("x0", Math.round(clampedX * 10) / 10);
   };
 
   const powerRes = useMemo(
@@ -444,6 +449,13 @@ export function PowerScene({
           color={activeCurveColor}
           labelKey="P"
           fontScale={fontScale}
+          // 本页是整批里纵坐标飞出最远的一处：α 上界 3.0、x₀ 上界 4.0 ⇒ y₀ 最大 4³ = 64，
+          // 而 `CANVAS_PRESETS.full`(840×650) 下 keepAspectRatio 反推出的可见纵域只有 ±4.6429
+          //（x 轴锁定比例尺 scale = 840/12 = 70；可见横域恰为 ±6，故 paramDragRange 不收紧 x₀）。
+          // 出框临界 x₀ = 4.6429^(1/α)：α=1 时 4.643、α=2 时 ≈2.155、α=3 时 ≈1.668，
+          // 全部落在 x₀ 滑块可达区间（[-4, 4]）内 ⇒ 该手柄确实会飞出画布。
+          // 开启投影后手柄贴顶边并保留方向引线，学生仍可横向拖回。
+          edgeClampProjection
         />
       )}
 

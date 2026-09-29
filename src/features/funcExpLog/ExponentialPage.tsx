@@ -19,6 +19,18 @@ import { ExpLogScene } from "./components/ExpLogScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams } from "@/data/registries/funcExpLog";
 
+/**
+ * 拓展图层（选择性必修二前瞻）——**默认关闭**。
+ *
+ * 本页正文属必修一「指数函数与对数函数」：正文、图例、推导链一律不出现导数记号，
+ * 由 `src/test/syllabusContentBoundary.test.ts` 的内容边界门禁守护。
+ * 「切线」图层来自选必二「一元函数的导数及其应用」，属前瞻性拓展，
+ * 打开后徽标切换为「选必二前瞻 · 拓展（非必修一正文要求）」，与正文明确区分。
+ * 该图层在门禁中以**声明式放行**登记（`EXTENSION_ALLOWLIST`），不是漏检。
+ */
+const EXTENSION_LAYER_LABEL = "展示切线（选必二前瞻 · 拓展）";
+const EXTENSION_BADGE = "选必二前瞻 · 拓展（非必修一正文要求）";
+
 export function ExponentialPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
   const [mode, setMode] = useState<"single" | "inverse">("single");
@@ -78,10 +90,10 @@ export function ExponentialPage() {
             labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} = 1`,
           },
           {
-            value: 1.4,
+            value: 2.7,
             variant: "recommended",
-            label: "临界相切（拓展）",
-            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a_c = e^{1/e}}`,
+            label: "自然底数 e ≈ 2.718",
+            labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a = e \\approx 2.7}`,
           },
         ],
       },
@@ -126,6 +138,7 @@ export function ExponentialPage() {
       });
     }
 
+    // @syllabus-extension:begin 拓展图层图例（选必二前瞻 · 切线）
     if (showTangent) {
       items.push({
         label: "切线 $f'(x_0)$",
@@ -133,6 +146,7 @@ export function ExponentialPage() {
         style: "solid",
       });
     }
+    // @syllabus-extension:end
 
     return items;
   }, [params.baseA, showInverse, showTangent]);
@@ -141,6 +155,29 @@ export function ExponentialPage() {
   const tipConfig = useMemo(() => {
     const a = params.baseA ?? 2.0;
 
+    // ⚠ 拓展图层（选必二前瞻）：仅当切线开关打开时，才把设问切到导数口径，
+    //   并以 EXTENSION_BADGE 显式标注——保证默认状态下页面不出现任何选必二内容。
+    // @syllabus-extension:begin 拓展设问（选必二前瞻 · 切线方程 / 切线放缩 / 相切临界）
+    if (showTangent) {
+      return showInverse
+        ? {
+            variant: "accent" as const,
+            badge: EXTENSION_BADGE,
+            condition:
+              "设指数函数 $y = a^x$ 与对数函数 $y = \\log_a x$ 互为反函数，对称轴为直线 $y = x$。",
+            question:
+              "（拓展）证明两曲线关于直线 $y = x$ 轴对称且对应连线被垂直平分，并求解两曲线相切时的底数临界值 $a_c$ 与切点坐标。",
+          }
+        : {
+            variant: "accent" as const,
+            badge: EXTENSION_BADGE,
+            condition: `底数 $a = ${a.toFixed(1)}$，函数恒过定点 $(0, 1)$。`,
+            question:
+              "（拓展）求函数在探究动点处的切线方程，并写出该点处的高考切线放缩不等式。",
+          };
+    }
+    // @syllabus-extension:end
+
     if (showInverse) {
       return {
         variant: "info" as const,
@@ -148,7 +185,7 @@ export function ExponentialPage() {
         condition:
           "设指数函数 $y = a^x$ 与对数函数 $y = \\log_a x$ 互为反函数，对称轴为直线 $y = x$。",
         question:
-          "证明两曲线关于直线 $y = x$ 轴对称且对应连线被垂直平分，并求解两曲线相切时的底数临界值 $a_c$ 与切点坐标。",
+          "证明两曲线关于直线 $y = x$ 轴对称、对应连线被直线 $y = x$ 垂直平分，并说明 $y = a^x$ 上的点 $(x_0, y_0)$ 与其对称点 $(y_0, x_0)$ 的坐标互换关系。",
       };
     }
     if (a > 1) {
@@ -158,7 +195,7 @@ export function ExponentialPage() {
         condition:
           "底数 $a > 1$，函数恒过定点 $(0, 1)$，水平渐近线为 $x$ 轴 ($y = 0$)。",
         question:
-          "探究指数函数的增长趋势与图象向上弯曲的特征，并求在探究动点处的切线方程及高考切线放缩不等式。",
+          "探究指数函数的增长趋势（图象上升得越来越快），并比较不同底数 $a > 1$ 时增长快慢的差异。",
       };
     } else {
       return {
@@ -169,7 +206,7 @@ export function ExponentialPage() {
           "判定在 $\\mathbb{R}$ 上的单调递减性，并证明函数值在 $(-\\infty, 0)$ 与 $(0, +\\infty)$ 上的正负取值范围。",
       };
     }
-  }, [params.baseA, showInverse]);
+  }, [params.baseA, showInverse, showTangent]);
 
   return (
     <ThreePanel
@@ -185,11 +222,13 @@ export function ExponentialPage() {
               onChange={(val) => setMode(val as "single" | "inverse")}
             />
             <div className="pt-2">
+              {/* @syllabus-extension:begin 拓展图层开关（选必二前瞻），默认关闭 */}
               <Toggle
-                label="展示导数切线"
+                label={EXTENSION_LAYER_LABEL}
                 checked={showTangent}
                 onChange={setShowTangent}
               />
+              {/* @syllabus-extension:end */}
             </div>
           </LeftPanelSection>
 

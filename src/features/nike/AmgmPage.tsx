@@ -112,7 +112,7 @@ export function AmgmPage() {
         style: "dash",
       },
       {
-        label: "均值等号成立极小点",
+        label: "均值等号成立最小值点",
         color: MATH_COLORS.vertexPoint,
         style: "point",
       },

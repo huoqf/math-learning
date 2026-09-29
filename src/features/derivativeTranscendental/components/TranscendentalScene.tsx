@@ -13,6 +13,12 @@ import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { LabelItem } from "@/utils/labelOverlap";
 import type { TranscendentalMode } from "@/math/transcendental";
+import {
+  paramDomainRange,
+  paramDragRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
+import { transcendentalParamMeta } from "@/data/registries/transcendental";
 
 interface SceneProps {
   params: Record<string, number>;
@@ -41,15 +47,38 @@ export function TranscendentalScene({
   const isTangentELog = mode === "log" && subMode === "tangent_e";
 
   // 1. 拖拽回调
+  // 参数域 SSOT：与左屏滑块同源（transcendentalParamMeta 按模式拆分），
+  // 再与当前可见视口求交后逐步长吸附。
+  // 严禁在此手写 Math.round / Math.max —— 历史实现只在 log/chain 兜了一句
+  // `newX0 <= 0.05`，既低于滑块自己的下界（0.1 / 0.2），又完全没有上界
+  // （指数模式可把切点拖到视口边缘，滑块却停在 2.0）。
+  const x0Meta = transcendentalParamMeta[mode]?.x0;
+
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    let newX0 = Math.round(mathPt.x * 10) / 10;
-    if (mode === "log" && newX0 <= 0.05) {
-      newX0 = 0.05;
-    }
-    if (mode === "chain" && newX0 <= 0.05) {
-      newX0 = 0.05;
-    }
-    onParamChange("x0", newX0);
+    onParamChange(
+      "x0",
+      snapDragValue(mathPt.x, x0Meta?.step, paramDragRange(x0Meta, scale, "x")),
+    );
+  };
+
+  // param 模式没有切点，可拖拽的是参变直线自己的斜率 a。
+  // 落值口径：把指针的**纵坐标**反解成斜率（手柄横坐标取固定的参考点 x_A），
+  // 于是手柄的 y 始终精确跟随指针，拖拽手感是 1:1 的；若改用「指针当作直线上任意一点」
+  // 反解（pts.y - b)/pts.x，手柄会横向乱跑而纵向跟手，手感反而错位。
+  // a 是派生系数、与屏幕坐标不同轴，故区间只能取「参数声明域」paramDomainRange，
+  // 不能与可见视口求交（视口求交是横坐标类参数的规则）。步长仍从注册表读，严禁写死。
+  // 参考点横坐标按 subMode 取：均避开自身的切线临界点（exp_ax_1 临界在 x=0，exp_ax 在 x=1），
+  // 且保证 a 取满声明域 [−1, 4] 时手柄纵坐标仍落在可见视口 y ∈ [−3, 5] 内。
+  const paramHandleX = subMode === "exp_ax" ? 0.5 : 0.8;
+  const paramLineIntercept = subMode === "exp_ax" ? 0 : 1;
+  const aMeta = transcendentalParamMeta.param?.a;
+
+  const handleDragParamLine = (mathPt: { x: number; y: number }) => {
+    const rawA = (mathPt.y - paramLineIntercept) / paramHandleX;
+    onParamChange(
+      "a",
+      snapDragValue(rawA, aMeta?.step, paramDomainRange(aMeta)),
+    );
   };
 
   // 2. 指数切线与放缩计算
@@ -357,7 +386,12 @@ export function TranscendentalScene({
             fontScale={fontScale}
           />
 
-          {/* 可拖拽切点 P */}
+          {/* 可拖拽切点 P
+              本模式是本页唯一会出现「手柄飞出画布」的位置：切点纵坐标是 e^{x₀}，
+              而 x₀ 的合法上界是 2.0（e² ≈ 7.39）＞ 可见纵域上界 5（x₀ > ln 5 ≈ 1.609 即出框）。
+              故开启边缘投影，让手柄贴顶边显示并可横向拖回。
+              对数模式 ln x₀ ≥ ln 0.1 ≈ -2.30、双基准模式 y = x₀ ≤ 3.0，
+              均被各自参数域天然约束在可见纵域 [-3, 5] 内，无需该保护。 */}
           <InteractivePoint
             cx={x0}
             cy={expY0}
@@ -367,6 +401,7 @@ export function TranscendentalScene({
             color={MATH_COLORS.paramPrimary}
             r={6}
             fontScale={fontScale}
+            edgeClampProjection
           />
         </g>
       )}
@@ -589,6 +624,20 @@ export function TranscendentalScene({
               />
             );
           })()}
+          {/* 参变直线的斜率手柄：拖动它即旋转直线，直接观察「直线何时与 y = e^x 相切」。
+              此前 param 模式是本页唯一一个没有任何中屏手柄的模式 —— 学生只能在左屏拖滑块，
+              无法把「直线穿透曲线」这一临界现象与手势建立联系。
+              手柄落在直线上（cy = a·x_A + b），与直线同取 paramPrimary，同色即同族。 */}
+          <InteractivePoint
+            cx={paramHandleX}
+            cy={paramHandleX * a + paramLineIntercept}
+            scale={scale}
+            vp={vp}
+            onDrag={handleDragParamLine}
+            color={MATH_COLORS.paramPrimary}
+            r={6}
+            fontScale={fontScale}
+          />
         </g>
       )}
 

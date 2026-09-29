@@ -13,7 +13,7 @@ export const quadraticScenarios: ScenarioSpec[] = [
   },
   {
     id: "tangent",
-    name: "相切临界",
+    name: "与 x 轴相切",
     badge: "高考临界 · 二次方程两重实根",
     condition:
       "二次函数 $f(x) = x^2 - 2x + 1$，此时判别式 $\\Delta = (-2)^2 - 4 \\times 1 \\times 1 = 0$。",

@@ -63,10 +63,10 @@ describe("SingleVarPage left panel and reasoning tests", () => {
     const directBtn = screen.getByText("直接分类讨论");
     fireEvent.click(directBtn);
 
-    // 预设自适应变为“驻点在左 / 驻点在内 / 驻点在右”
-    expect(screen.getByText("驻点在左")).toBeInTheDocument();
-    expect(screen.getByText("驻点在内")).toBeInTheDocument();
-    expect(screen.getByText("驻点在右")).toBeInTheDocument();
+    // 预设自适应变为“导数为零的点在左 / 导数为零的点在内 / 导数为零的点在右”
+    expect(screen.getByText("导数为零的点在左")).toBeInTheDocument();
+    expect(screen.getByText("导数为零的点在内")).toBeInTheDocument();
+    expect(screen.getByText("导数为零的点在右")).toBeInTheDocument();
   });
 
   it("safely enforces domain requirements when switching between quadratic and transcendent models", () => {

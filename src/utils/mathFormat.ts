@@ -64,6 +64,43 @@ export function formatSignedTerm(
 }
 
 /**
+ * 线性式 `ax + b` 的高中规范书写（LaTeX 与纯文本通用）。
+ *
+ * 为什么必须统一：内层线性函数 `u = ax + b` 在右屏、中屏、推导链里出现多次，
+ * 若各调用点各自用 `${a}x + ${b}` 拼接，当 `b < 0` 时会印出 `2x + -3`（负负相连）、
+ * 当 `a = 1 / -1` 时会印出 `1x` / `-1x`（漏省系数）、当 `a = 0 / b = 0` 时会多出 `0x` / `+ 0`
+ * —— 这四种写法都是初中就已被纠正的不规范书写。收敛到本函数后只可能有一种输出。
+ *
+ * 示例：(2, -3) -> "2x - 3"；(1, 1) -> "x + 1"；(-1, 2) -> "-x + 2"；(0, 1) -> "1"；(2, 0) -> "2x"
+ */
+export function formatLinearExpr(a: number, b: number, variable = "x"): string {
+  if (Math.abs(a) < 1e-9) return formatMathNumber(b);
+  const head = formatSignedTerm(a, variable, true);
+  if (Math.abs(b) < 1e-9) return head;
+  return `${head} ${formatSignedTerm(b, "", false)}`;
+}
+
+/**
+ * 形如 `y - f(x_0)` 中减号一侧的书写：把「减号 + 负值」合并为单个 `+`。
+ *
+ * 反面示例：`f(x_0) = -0.91` 时直接写 `y - ${v}` 会印出 `y - -0.91` 的双负号。
+ * 正例：(-0.91) -> "+ 0.91"；(2.13) -> "- 2.13"；(0) -> "- 0"
+ */
+export function formatSubtractTerm(v: number): string {
+  return v < 0 ? `+ ${formatMathNumber(-v)}` : `- ${formatMathNumber(v)}`;
+}
+
+/**
+ * 形如 `(x - x_0)` 中括号减式的书写：同样避免 `(x - -2)` 的双负号。
+ * 正例：(-2) -> "(x + 2)"；(1.5) -> "(x - 1.5)"
+ */
+export function formatParenSubtractTerm(v: number, variable = "x"): string {
+  return v < 0
+    ? `(${variable} + ${formatMathNumber(-v)})`
+    : `(${variable} - ${formatMathNumber(v)})`;
+}
+
+/**
  * 把「π 的分数倍」格式化为高中通行写法；若该数值不是 π 的（分母 ≤ maxDenominator 的）分数倍则返回 null。
  *
  * 用途：中屏/右屏的角刻度与不等式通解集。

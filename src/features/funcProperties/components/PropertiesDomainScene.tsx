@@ -12,6 +12,8 @@ import {
 } from "@/components/Math";
 import type { LabelItem } from "@/utils/labelOverlap";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/funcProperties";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { PropertiesCommonProps, PropertiesFnType } from "./types";
 
@@ -31,8 +33,18 @@ export function PropertiesDomainScene({
 }: PropertiesDomainSceneProps) {
   const fx0 = getFn(x0);
 
+  // 落值统一走 paramClamp SSOT：先取「paramMeta 参数域 ∩ 当前可见视口」求交，
+  // 再按 paramMeta.step 逐步长吸附。严禁手写 Math.round(x * 10) / 10 —— 它既没有视口约束
+  // （手柄可被拖出画布），也把步长重复写死了一遍。
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    onParamChange("x0", Math.round(mathPt.x * 10) / 10);
+    onParamChange(
+      "x0",
+      snapDragValue(
+        mathPt.x,
+        paramMeta.x0.step,
+        paramDragRange(paramMeta.x0, scale, "x"),
+      ),
+    );
   };
 
   const isDefined = Number.isFinite(fx0);
@@ -470,6 +482,7 @@ export function PropertiesDomainScene({
             onDrag={handleDragX0}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
+            edgeClampProjection
           />
         </g>
       ) : (

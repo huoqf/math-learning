@@ -12,9 +12,20 @@ import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { solveBisection } from "@/math/function";
-import { FUNC_ZERO_MODELS } from "@/data/registries/funcZero";
+import {
+  clampCoupledRange,
+  paramDragRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
+import {
+  FUNC_ZERO_MODELS,
+  getDynamicParamMeta,
+} from "@/data/registries/funcZero";
 
 const MODEL_KEYS = ["cubic", "logMixed", "expMixed", "counterExample"];
+
+/** 区间端点 a、b 必须保持的最小间距（二分法要求 a < b，且不得退化到同一点） */
+const MIN_ENDPOINT_GAP = 0.2;
 
 const toSubscript = (num: number) => {
   const digits = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
@@ -53,26 +64,27 @@ export function ZeroScene({
   const targetFn = model.fn;
   const bisectionRes = solveBisection(targetFn, m, n, steps);
 
+  // 与左屏滑块同源的有效参数域（模型盒覆盖注册表默认域），再与「可见视口」求交：
+  // 手柄既不会越出模型定义域，也不会被拖出画布（拖出即失联的根因之一）。
+  const intervalMeta = getDynamicParamMeta(modelKey);
+  const mRange = paramDragRange(intervalMeta.intervalM, scale, "x");
+  const nRange = paramDragRange(intervalMeta.intervalN, scale, "x");
+
   const handleDragM = (mathPt: { x: number; y: number }) => {
-    let newM = Math.round(mathPt.x * 10) / 10;
-    if (model.minM !== undefined) {
-      newM = Math.max(model.minM, newM);
-    }
-    if (newM >= n - 0.2) {
-      newM = n - 0.2;
-    }
-    onParamChange("intervalM", Math.round(newM * 10) / 10);
+    // 采用原子算子 clampCoupledRange 保证严格偏序，极限紧绷时自动锁定，杜绝穿透
+    const range = clampCoupledRange(n, MIN_ENDPOINT_GAP, mRange, true);
+    onParamChange(
+      "intervalM",
+      snapDragValue(mathPt.x, intervalMeta.intervalM.step, range),
+    );
   };
 
   const handleDragN = (mathPt: { x: number; y: number }) => {
-    let newN = Math.round(mathPt.x * 10) / 10;
-    if (model.maxN !== undefined) {
-      newN = Math.min(model.maxN, newN);
-    }
-    if (newN <= m + 0.2) {
-      newN = m + 0.2;
-    }
-    onParamChange("intervalN", Math.round(newN * 10) / 10);
+    const range = clampCoupledRange(m, MIN_ENDPOINT_GAP, nRange, false);
+    onParamChange(
+      "intervalN",
+      snapDragValue(mathPt.x, intervalMeta.intervalN.step, range),
+    );
   };
 
   const currentMid = bisectionRes.currentStep

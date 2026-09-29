@@ -1,6 +1,10 @@
 import type { MathPanelData } from "./types";
 import { buildQuadraticPanel } from "./builders/quadratic";
 import { buildDerivativePanel } from "./builders/derivative";
+import { buildDerivativeFormulasPanel } from "./builders/derivativeFormulas";
+import { buildDerivativeOperationsPanel } from "./builders/derivativeOperations";
+import { buildDerivativeChainPanel } from "./builders/derivativeChain";
+import { buildDerivativeOptimizationPanel } from "./builders/derivativeOptimization";
 import { buildConstantSinglePanel } from "./builders/constantSingle";
 import { buildConstantDoublePanel } from "./builders/constantDouble";
 import { buildSetPanel } from "./builders/set";
@@ -142,6 +146,14 @@ export function buildMathQuantities(
       return buildNikePanel(params, config);
     case "anim-quadratic":
       return buildQuadraticPanel(params, config);
+    case "anim-derivative-formulas":
+      return buildDerivativeFormulasPanel(params, config);
+    case "anim-derivative-operations":
+      return buildDerivativeOperationsPanel(params, config);
+    case "anim-derivative-chain":
+      return buildDerivativeChainPanel(params, config);
+    case "anim-derivative-optimization":
+      return buildDerivativeOptimizationPanel(params, config);
     case "anim-derivative-tangent":
       return buildDerivativePanel(params, config);
     case "anim-derivative-monotonicity":
@@ -171,9 +183,17 @@ export function buildMathQuantities(
       return buildFuncPropertiesPanel(params, config);
     case "anim-func-explog":
     case "anim-func-exponential":
+      return buildFuncExpLogPanel(params, {
+        funcType: "exponential",
+        ...config,
+      });
     case "anim-func-logarithmic":
+      return buildFuncExpLogPanel(params, {
+        funcType: "logarithmic",
+        ...config,
+      });
     case "anim-func-power":
-      return buildFuncExpLogPanel(params, config);
+      return buildFuncExpLogPanel(params, { funcType: "power", ...config });
     case "anim-func-zero":
       return buildFuncZeroPanel(params);
     case "anim-func-transform":

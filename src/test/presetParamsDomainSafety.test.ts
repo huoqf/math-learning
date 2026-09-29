@@ -46,6 +46,95 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       animId: "anim-derivative-endpoint-taylor",
       params: { a: 1 },
     },
+
+    // 1.1 导数「基础运算层」四页（公式表 / 四则运算 / 复合函数 / 优化建模）
+    {
+      animId: "anim-derivative-formulas",
+      params: { x0: 1.5, deltaX: 0.8, paramA: 2 },
+      config: { funcType: "power" },
+    },
+    {
+      // P0 回归锁：底数 a = 1 时对数函数退化，面板必须给「无定义」而非 Infinity/NaN
+      animId: "anim-derivative-formulas",
+      params: { x0: 1.5, deltaX: 0.8, paramA: 1 },
+      config: { funcType: "log" },
+    },
+    {
+      // 幂指数 α = 3/2 时定义域由 ℝ 收紧为 [0, +∞)，面板不得再印 ℝ
+      animId: "anim-derivative-formulas",
+      params: { x0: 1.5, deltaX: 0.8, paramA: 1.5 },
+      config: { funcType: "power" },
+    },
+    {
+      animId: "anim-derivative-formulas",
+      params: { x0: 1.5, deltaX: 0.8, paramA: 0.5 },
+      config: { funcType: "power" },
+    },
+    {
+      animId: "anim-derivative-formulas",
+      params: { x0: 1.5, deltaX: 0.8, paramA: 2.5 },
+      config: { funcType: "exp" },
+    },
+    {
+      animId: "anim-derivative-formulas",
+      params: { x0: 1.5, deltaX: 0.8, paramA: -3 },
+      config: { funcType: "constant" },
+    },
+    {
+      animId: "anim-derivative-operations",
+      params: { x0: 1.2, deltaX: 0.3 },
+      config: { opType: "multiply" },
+    },
+    {
+      // 商法则退化边界：g(x₀) = 0 时商函数无定义，右屏不得泄漏 NaN
+      animId: "anim-derivative-operations",
+      params: { x0: 0, deltaX: 0.3 },
+      config: { opType: "divide" },
+    },
+    {
+      animId: "anim-derivative-operations",
+      params: { x0: 1.2, deltaX: 0.3 },
+      config: { opType: "add" },
+    },
+    {
+      animId: "anim-derivative-chain",
+      params: { a: 2, b: 1, x0: 0.5 },
+      config: { outerType: "exp" },
+    },
+    {
+      // 内层系数 a = 0 时 u ≡ b 退化为常数，面板必须给出提示而非静默
+      animId: "anim-derivative-chain",
+      params: { a: 0, b: 1, x0: 0.5 },
+      config: { outerType: "ln" },
+    },
+    {
+      // ln 外层要求 u > 0：u₀ = ax₀ + b ≤ 0 时中间变量越界
+      animId: "anim-derivative-chain",
+      params: { a: -1, b: -3, x0: 1 },
+      config: { outerType: "ln" },
+    },
+    {
+      animId: "anim-derivative-optimization",
+      params: { box_x: 10 },
+      config: { modelType: "box" },
+    },
+    {
+      animId: "anim-derivative-optimization",
+      params: { can_r: 4.5 },
+      config: { modelType: "can" },
+    },
+    {
+      animId: "anim-derivative-optimization",
+      params: { profit_x: 30 },
+      config: { modelType: "profit" },
+    },
+    {
+      // 越出物理定义域：必须截断到数值安全边界并给出 warning，而非放任求值
+      animId: "anim-derivative-optimization",
+      params: { box_x: 1000 },
+      config: { modelType: "box" },
+    },
+
     { animId: "anim-constant-single", params: { a: 1, m: 1, n: 2 } },
     { animId: "anim-constant-double", params: { yf: 1, yg: -1 } },
     { animId: "anim-nike", params: { a: 1, b: 4 } },
@@ -64,7 +153,25 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     {
       animId: "anim-func-composite",
       params: {},
-      config: { outerType: "exp" },
+      config: { subMode: "composite", outerType: "exp" },
+    },
+    {
+      // 采样点恰落内层对称轴（paramMeta.xSample 的 "1(轴)" 临界标记）：单调性兜底文案分支
+      animId: "anim-func-composite",
+      params: { xSample: 1, innerB: -2, innerC: 2 },
+      config: { subMode: "composite", outerType: "exp" },
+    },
+    {
+      // 采样点恰落二次外层顶点 u = 2：外层单调性兜底文案分支
+      animId: "anim-func-composite",
+      params: { xSample: 0, innerB: -2, innerC: 2 },
+      config: { subMode: "composite", outerType: "quadratic" },
+    },
+    {
+      // 对数外层真数越界（u = -1 ≤ 0）：必须给「无定义」而非 NaN 泄漏
+      animId: "anim-func-composite",
+      params: { xSample: 0, innerB: 0, innerC: -1 },
+      config: { subMode: "composite", outerType: "log" },
     },
 
     // 2. 集合与逻辑

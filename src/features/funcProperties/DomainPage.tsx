@@ -110,7 +110,7 @@ export function DomainPage() {
           condition:
             "函数 $f(x) = |x|$，依据定义在 $x = 0$ 折叠为两支对称射线。",
           question:
-            "求解绝对值在折点处的极小值下界，并说明为何自变量取任意实数均有唯一定义。",
+            "求解绝对值在折点处取得的最小值（下界），并说明为何自变量取任意实数均有唯一定义。",
         };
       case "reciprocal":
         return {

@@ -58,11 +58,11 @@ export function buildFuncTransformPanel(
       ],
     },
     {
-      name: "绝对值翻折法则与不可导折点 (尖点)",
+      name: "绝对值翻折法则与折点 (尖点)",
       latex: "y = |f(x)| \\quad \\text{与} \\quad y = f(|x|)",
       level: "important",
       prerequisites: [
-        "整体绝对值 y = |f(x)|：保留 x 轴及上方图象，将 x 轴下方图象沿 x 轴翻折至上方；原相交零点处导数左右符号突变，形成不可导尖点",
+        "整体绝对值 y = |f(x)|：保留 x 轴及上方图象，将 x 轴下方图象沿 x 轴翻折至上方；与 x 轴的交点处出现折点（尖点），解析式需分段讨论",
         "自变量绝对值 y = f(|x|)：保留 y 轴右侧 (x ≥ 0) 图象并擦除左侧，以 y 轴为对称轴镜像复制到左侧，恒为偶函数",
       ],
     },
@@ -128,7 +128,7 @@ export function buildFuncTransformPanel(
       latex: res.formattedLatex,
       detail: `目标解析式为 $${res.formattedLatex}$，${res.symmetryInfo.description}。${
         foldMode === "global"
-          ? "整体翻折将图象限定在 $y \\ge 0$，与 $x$ 轴交点处左右导数变号，构成高考典型的不可导尖点。"
+          ? "整体翻折将图象限定在 $y \\ge 0$，与 $x$ 轴的交点处出现折点，翻折前后需分段写出解析式，是高考数形结合题的典型临界位置。"
           : foldMode === "input"
             ? "自变量绝对值翻折以 $x = " +
               h.toFixed(1) +
@@ -147,11 +147,11 @@ export function buildFuncTransformPanel(
       importance: "gaokao",
     },
     {
-      text: "【数形结合破题 · 绝对值零点问题】：对于方程 |f(x)| = kx + b 的实根个数问题，转化为 y = |f(x)| 翻折图象与动直线交点个数，切线斜率与尖点坐标是分类讨论的临界分界点。",
+      text: "【数形结合破题 · 绝对值零点问题】：对于方程 |f(x)| = kx + b 的实根个数问题，转化为 y = |f(x)| 翻折图象与动直线交点个数，翻折图象的尖点横坐标与动直线过尖点时的位置是分类讨论的临界分界点。",
       importance: "gaokao",
     },
     {
-      text: "【奇偶性与对称性代数秒杀】：f(|x|) 恒为偶函数且导数在 x=0 处若存在则必为 0；f(x) 为奇函数时 |f(x)| 变为偶函数。",
+      text: "【奇偶性与对称性代数秒杀】：y = f(|x|) 恒为偶函数（图象由 y = f(x) 的右半支沿 y 轴翻折得到），y = |f(x)| 则把 x 轴下方的部分翻折到上方；据此可直接判定新图象的对称性与值域。",
       importance: "core",
     },
   ];

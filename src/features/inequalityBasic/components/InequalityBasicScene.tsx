@@ -431,7 +431,7 @@ export const InequalityBasicScene: React.FC<InequalityBasicSceneProps> = ({
                   fontSize={fontScale(11)}
                   fontWeight="bold"
                 >
-                  极小值点 (√k, 2√k)
+                  最小值点 (√k, 2√k)
                 </text>
               </g>
             );

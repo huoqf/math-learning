@@ -105,13 +105,13 @@ export function evalDirectTransDeriv(
   }
 }
 
-/** 唯一驻点（无驻点或驻点不可达时返回 null） */
+/** 唯一导数为零的点（无导数为零的点或导数为零的点不可达时返回 null） */
 export interface TransCriticalPoint {
   x: number;
   kind: "min" | "max";
 }
 
-/** sep 目标函数的唯一驻点 */
+/** sep 目标函数的唯一导数为零的点 */
 export function sepTransCritical(
   transModel: TransModelKey,
 ): TransCriticalPoint | null {
@@ -121,7 +121,7 @@ export function sepTransCritical(
     case "exp_minus_ax":
       return { x: 1, kind: "min" }; // f' = e^x (x - 1)/x^2
     case "a_ln_x_minus_x":
-      return null; // (x - 1)/ln x 在 (0, +∞) 严格递增，无驻点
+      return null; // (x - 1)/ln x 在 (0, +∞) 严格递增，无导数为零的点
     case "exp_minus_a_x_plus_1":
       return { x: 0, kind: "min" }; // f' = e^x x/(x + 1)^2
     default:
@@ -129,18 +129,18 @@ export function sepTransCritical(
   }
 }
 
-/** direct 含参函数的唯一驻点 */
+/** direct 含参函数的唯一导数为零的点 */
 export function directTransCritical(
   transModel: TransModelKey,
   a: number,
 ): TransCriticalPoint | null {
-  if (!(a > 0)) return null; // a <= 0 时四个模型均无驻点
+  if (!(a > 0)) return null; // a <= 0 时四个模型均无导数为零的点
   switch (transModel) {
     case "ln_x_over_x":
     case "exp_minus_ax":
       return { x: Math.log(a), kind: "min" }; // e^x - a x
     case "a_ln_x_minus_x":
-      // a ln x - x + 1，二阶导 -a/x^2 < 0，驻点为极大值点
+      // a ln x - x + 1，二阶导 -a/x^2 < 0，导数为零的点为极大值点
       return { x: a, kind: "max" };
     case "exp_minus_a_x_plus_1":
       return { x: Math.log(a), kind: "min" }; // e^x - a(x + 1)
@@ -226,9 +226,9 @@ function rootsInInterval(
 }
 
 /**
- * 闭区间最小值/最大值及其横坐标（端点 + 区间内驻点）。
- * 对「驻点为极大值」的模型同样成立：此时最小值必然在端点取得，
- * 把驻点一并纳入取最小运算不会改变结果。
+ * 闭区间最小值/最大值及其横坐标（端点 + 区间内导数为零的点）。
+ * 对「导数为零的点为极大值」的模型同样成立：此时最小值必然在端点取得，
+ * 把导数为零的点一并纳入取最小运算不会改变结果。
  */
 function extremumInInterval(
   fn: (x: number) => number,
@@ -405,7 +405,7 @@ export function solveConstantSingleDirectTrans(
   } else if (crit !== null) {
     discussionType = "right";
   } else {
-    // 无驻点：函数在区间上单调，由两端函数值判定最小值所在端
+    // 无导数为零的点：函数在区间上单调，由两端函数值判定最小值所在端
     discussionType = fnN > fm ? "left" : "right";
   }
 
@@ -480,25 +480,25 @@ export interface TransModelSpec {
   sepDomainLatex: string;
   /** 参变分离目标函数导函数 */
   sepDerivLatex: string;
-  /** 参变分离驻点（无驻点时描述单调性） */
+  /** 参变分离导数为零的点（无导数为零的点时描述单调性） */
   sepCriticalLatex: string;
-  /** 参变分离驻点处函数值（无驻点为空串） */
+  /** 参变分离导数为零的点处函数值（无导数为零的点为空串） */
   sepCriticalValueLatex: string;
   /** 直接讨论含参函数（aTex 为已着色的参数符号） */
   directFnLatex: (aTex: string) => string;
   /** 直接讨论含参函数导函数 */
   directDerivLatex: (aTex: string) => string;
-  /** 直接讨论驻点表达式 */
+  /** 直接讨论导数为零的点表达式 */
   directCriticalLatex: (aTex: string) => string;
-  /** 直接讨论驻点的纯文本写法（用于看板 value 栏，避免暴露 LaTeX 源码） */
+  /** 直接讨论导数为零的点的纯文本写法（用于看板 value 栏，避免暴露 LaTeX 源码） */
   directCriticalPlain: string;
-  /** 直接讨论驻点类型（决定「驻点在区间内」时最小值所在位置） */
+  /** 直接讨论导数为零的点类型（决定「导数为零的点在区间内」时最小值所在位置） */
   directCriticalKind: "min" | "max";
-  /** 直接讨论驻点处函数值 */
+  /** 直接讨论导数为零的点处函数值 */
   directCriticalValueLatex: (aTex: string) => string;
-  /** 驻点落在区间内部时的最小值表达式（整体作为分类讨论中段行） */
+  /** 导数为零的点落在区间内部时的最小值表达式（整体作为分类讨论中段行） */
   directInsideMinLatex: (aTex: string) => string;
-  /** 驻点落在区间内部时的充要阈值（无解析阈值时为空串） */
+  /** 导数为零的点落在区间内部时的充要阈值（无解析阈值时为空串） */
   directInsideThresholdLatex: string;
 }
 
@@ -542,7 +542,7 @@ export const TRANS_MODEL_SPEC: Record<TransModelKey, TransModelSpec> = {
     sepFnLatex: "f(x) = \\frac{x-1}{\\ln x}",
     sepDomainLatex: "x > 0,\\ x \\ne 1",
     sepDerivLatex: "f'(x) = \\frac{\\ln x + \\frac{1}{x} - 1}{(\\ln x)^{2}}",
-    sepCriticalLatex: "无驻点（区间上严格单调递增）",
+    sepCriticalLatex: "无极值点（区间上严格单调递增）",
     sepCriticalValueLatex: "",
     directFnLatex: (aTex) => `f(x) = ${aTex}\\ln x - x + 1`,
     directDerivLatex: (aTex) => `f'(x) = \\frac{${aTex}}{x} - 1`,

@@ -23,6 +23,7 @@ import {
   MONOTONICITY_MODELS,
   solveMonotonicityModel,
   formatFloat,
+  isTrueExtremum,
   type MonotonicityModelKey,
 } from "@/math/derivativeMonotonicity";
 import { DerivativeMonotonicityScene } from "./components/DerivativeMonotonicityScene";
@@ -199,8 +200,22 @@ export function DerivativeMonotonicityAnimation() {
     if (modelResult.extrema.length > 0) {
       items.push({
         color: MATH_COLORS.focusPoint,
-        label: "极值点 / 驻点",
+        label: "极值点 / 导数为零的点",
         style: "point",
+      });
+    }
+
+    // 极值特征线（竖虚线 + 水平切线）：与中屏、右屏符号表同一门控，
+    // 判定口径统一取自 math 层 isTrueExtremum（导数为零的点非极值不参与）。
+    if (
+      (mode === "extrema_analysis" || mode === "parametric_discuss") &&
+      modelResult.extrema.some(isTrueExtremum)
+    ) {
+      items.push({
+        color: MATH_COLORS.focusPoint,
+        label: "极值特征线 (切线水平)",
+        formula: "f'(x^*) = 0",
+        style: "dash",
       });
     }
 
@@ -261,7 +276,7 @@ export function DerivativeMonotonicityAnimation() {
         badge: "第一充分条件 · 穿零变号与极值判定",
         condition: `【初始条件】已知${currentModel.name} ${funcFormula}（${domainFormula}），导函数为 ${derivFormula}。`,
         question:
-          "【核心设问】\n(1) 解方程 $f'(x) = 0$ 确定驻点，分析导数图象在各驻点处的穿零变号方向；\n(2) 结合极值第一充分条件，判定驻点是否为极值点，并求出极值。",
+          "【核心设问】\n(1) 解方程 $f'(x) = 0$ 确定导数为零的点，分析导数图象在这些点处的穿零变号方向；\n(2) 结合极值第一充分条件，判定导数为零的点是否为极值点，并求出极值。",
       };
     }
 

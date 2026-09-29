@@ -36,7 +36,7 @@ describe("QuadraticAnimation 页面测试与高考规范核查", () => {
     render(<QuadraticAnimation />);
     expect(screen.getByText("典型高考情景")).toBeInTheDocument();
     expect(screen.getByText("相交两点")).toBeInTheDocument();
-    expect(screen.getByText("相切临界")).toBeInTheDocument();
+    expect(screen.getByText("与 x 轴相切")).toBeInTheDocument();
     expect(screen.getByText("相离悬空")).toBeInTheDocument();
     expect(screen.getByText("开口向下")).toBeInTheDocument();
     expect(screen.getByText("退化直线")).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe("QuadraticAnimation 页面测试与高考规范核查", () => {
 
   it("切换典型情景并驱动题设与推导步骤", () => {
     render(<QuadraticAnimation />);
-    const tangentBtn = screen.getByRole("radio", { name: "相切临界" });
+    const tangentBtn = screen.getByRole("radio", { name: "与 x 轴相切" });
     fireEvent.click(tangentBtn);
     expect(tangentBtn).toHaveAttribute("aria-checked", "true");
     // 检查 TipCard 题设包含相切特征

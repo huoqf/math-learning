@@ -148,9 +148,14 @@ const TAYLOR: ScenePalette = {
   residual: {
     color: MATH_COLORS.vectorResult,
     kind: "line",
-    dash: "dot",
+    dash: "dash",
     width: 2,
-    label: "截断绝对残差 $|R_n(x)| = |f(x) - P_n(x)|$",
+    label: "残差函数 $R_n(x) = f(x) - P_n(x)$（竖线段的长度即 $|R_n|$）",
+    note:
+      "一个数学对象（残差 $R_n$）、两种视觉编码：贯穿画布的曲线是 $R_n(x)$ 本身" +
+      "（高考放缩不等式证明中的差函数 $g(x)$），动点处的竖线段是其长度的绝对值。" +
+      "故同色同线型、合并为一条图例，不另立第二行" +
+      "（差函数曲线原先完全缺席，学生看不到「差函数恒正 / 恒负」这一证明要点）。",
   },
   basePt: {
     color: MATH_COLORS.paramTertiary,

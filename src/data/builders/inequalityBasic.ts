@@ -37,9 +37,9 @@ export function buildInequalityBasicPanel(
       {
         step: 3,
         title: "求解反思 · 检验等号成立条件",
-        detail: `当且仅当两项相等 $x = \\frac{k}{x}$ 即 $x^2 = k$ 时取等号，因 $x > 0$ 解得极小值点 $x = \\sqrt{k} = ${minX.toFixed(2)}$。`,
+        detail: `当且仅当两项相等 $x = \\frac{k}{x}$ 即 $x^2 = k$ 时取等号，因 $x > 0$ 解得最小值点 $x = \\sqrt{k} = ${minX.toFixed(2)}$。`,
         latex: `x = \\frac{k}{x} \\iff x = \\sqrt{k} = ${minX.toFixed(2)} \\implies f_{\\min} = ${minY.toFixed(2)}`,
-        rubric: "解出极小值点并完成闭环反思得 2 分",
+        rubric: "解出最小值点并完成闭环反思得 2 分",
       },
     ];
 
@@ -51,7 +51,7 @@ export function buildInequalityBasicPanel(
           value: k.toFixed(2),
         },
         {
-          label: "极小值驻点 x",
+          label: "最小值点 x",
           symbol: "x_{\\min}",
           value: minX.toFixed(2),
           highlight: isAtMin ? "extreme" : undefined,
@@ -94,7 +94,7 @@ export function buildInequalityBasicPanel(
       ],
       warnings: [
         {
-          text: "定义域正数限制：当 $x < 0$ 时，$y = x + \\frac{k}{x}$ 为奇函数，无最小值，仅有极大值 $-2\\sqrt{k}$。",
+          text: "定义域正数限制：当 $x < 0$ 时，$y = x + \\frac{k}{x}$ 为奇函数，无最小值，仅有最大值 $-2\\sqrt{k}$。",
           level: "danger",
         },
       ],

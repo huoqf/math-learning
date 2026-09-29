@@ -1,73 +1,145 @@
 import type { ParamMeta } from "../types";
 import { MATH_COLORS } from "@/theme";
+import type { TranscendentalMode } from "@/math/transcendental";
 
 export const defaultParams: Record<string, number> = {
   x0: 0.0, // 指数/对数切点横坐标
   a: 1.0, // 高考恒成立参数 a
 };
 
-export const paramMeta: Record<string, ParamMeta> = {
-  x0: {
-    key: "x0",
-    label: "切点横坐标 x₀",
-    labelFormula: `\\text{切点横坐标 }\\color{${MATH_COLORS.paramPrimary}}{x_0}`,
-    min: -2.0,
-    max: 3.0,
-    step: 0.1,
-    defaultValue: 0.0,
-    importance: "core",
-    description:
-      "控制超越函数切线的切点位置 ($e^x$ 基准 $x₀=0$，$\\ln x$ 基准 $x₀=1$)",
-    descriptionFormula:
-      "控制超越函数切线的切点位置 ($e^x$ 基准 $x_0=0$，$e^x$ 次级 $x_0=1$，$\\ln x$ 基准 $x_0=1$)",
-    marks: [
-      {
-        value: 0,
-        variant: "critical",
-        label: "基准一",
-        labelFormula: "x_0=0",
-      },
-      {
-        value: 1,
-        variant: "critical",
-        label: "基准二",
-        labelFormula: "x_0=1",
-      },
-      {
-        value: 2.7,
-        label: "对数基准二",
-        labelFormula: "x_0=e",
-      },
-    ],
+/* ------------------------------------------------------------------ *
+ * 参数域 SSOT（**按模式拆分**）
+ *
+ * 四种探究模式的可拖拽参数域互不相同：指数模式要覆盖 e^{x₀} 的自然切点范围
+ * （含 x₀ < 0），而对数 / 双基准模式必须整体排开 ln 的负真数区（x₀ > 0）。
+ *
+ * 历史缺陷：左屏滑块把这三套区间**直接写死在渲染函数里**，注册表却只留了一份
+ * x₀ ∈ [-2.0, 3.0] 的死数据（全库无人引用），中屏拖拽又各自手写
+ * `Math.round` / `Math.max` 兜底 —— 同一个参数出现三套口径：
+ *   · 拖拽下界 0.05 比滑块自己的下界（log 0.1 / chain 0.2）还低；
+ *   · 拖拽完全没有上界，指数模式可把切点拖到视口边缘 x = 4，而滑块上限只有 2.0。
+ *
+ * 现统一收敛到本表：左屏滑块与中屏拖拽**必须**消费同一份定义，
+ * 二者一旦脱节，`src/data/registries/__tests__/transcendentalParamMeta.test.ts` 立刻红灯。
+ *
+ * 注：param 模式的可拖拽参数是直线斜率 a（该模式没有 x₀ 手柄），故 a 只挂在 param 下。
+ * ------------------------------------------------------------------ */
+export const transcendentalParamMeta: Record<
+  TranscendentalMode,
+  Record<string, ParamMeta>
+> = {
+  exp: {
+    x0: {
+      key: "x0",
+      label: "切点横坐标 x₀",
+      labelFormula: `\\text{切点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
+      group: "切线控制参数",
+      min: -2.5,
+      max: 2.0,
+      step: 0.1,
+      defaultValue: 0.0,
+      importance: "core",
+      description: "控制 $e^x$ 切点位置",
+      descriptionFormula: `控制 $e^x$ 切线切点 $\\color{${MATH_COLORS.paramPrimary}}{x_0}$`,
+      marks: [
+        {
+          value: 0,
+          variant: "critical",
+          label: "基准一",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=0}`,
+        },
+        {
+          value: 1,
+          label: "基准二",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
+        },
+      ],
+    },
   },
-  a: {
-    key: "a",
-    label: "放缩/放缩斜率 a",
-    labelFormula: `\\text{放缩斜率 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
-    min: -1.0,
-    max: 4.0,
-    step: 0.1,
-    defaultValue: 1.0,
-    importance: "core",
-    description:
-      "控制直线 y = ax + 1 或 y = ax 的斜率，观察相切临界与恒成立范围",
-    descriptionFormula:
-      "控制直线 $y = ax + 1$ 或 $y = ax$ 的斜率，观察相切临界与恒成立范围",
-    marks: [
-      { value: 0, variant: "critical", label: "水平线", labelFormula: "a = 0" },
-      {
-        value: 1,
-        variant: "critical",
-        label: "基准切线临界",
-        labelFormula: "a = 1",
-      },
-      {
-        value: 2.7,
-        variant: "critical",
-        label: "过原点切线",
-        labelFormula: "a = e",
-      },
-    ],
+  log: {
+    x0: {
+      key: "x0",
+      label: "切点横坐标 x₀",
+      labelFormula: `\\text{切点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
+      group: "切线控制参数",
+      min: 0.1,
+      max: 3.5,
+      step: 0.1,
+      defaultValue: 1.0,
+      importance: "core",
+      description: "控制 $\\ln x$ 切点位置 ($x > 0$)",
+      descriptionFormula: `定义域保护 $\\color{${MATH_COLORS.paramPrimary}}{x_0} > 0$`,
+      marks: [
+        {
+          value: 1,
+          variant: "critical",
+          label: "基准一",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=1}`,
+        },
+        {
+          value: 2.7,
+          label: "基准二",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x_0=e}`,
+        },
+      ],
+    },
+  },
+  chain: {
+    x0: {
+      key: "x0",
+      label: "自变量考察点 x",
+      labelFormula: `\\text{自变量 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
+      group: "自变量位置",
+      min: 0.2,
+      max: 3.0,
+      step: 0.1,
+      defaultValue: 1.0,
+      importance: "core",
+      description: "观察三曲线放缩态势",
+      descriptionFormula: "观察 $x>0$ 处的包络差",
+      marks: [
+        {
+          value: 1,
+          variant: "critical",
+          label: "公切点",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x=1}`,
+        },
+      ],
+    },
+  },
+  param: {
+    a: {
+      key: "a",
+      label: "直线斜率参数 a",
+      labelFormula: `\\text{斜率 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
+      group: "参变直线方程",
+      min: -1.0,
+      max: 4.0,
+      step: 0.1,
+      defaultValue: 1.0,
+      importance: "core",
+      // y = ax 形态的文案由页面按 subMode 特化，此处只保存公共定义
+      description: "直线 $y = ax + 1$ 斜率",
+      marks: [
+        {
+          value: 0,
+          label: "水平",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=0}`,
+        },
+        {
+          value: 1,
+          variant: "critical",
+          label: "定点临界",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=1}`,
+        },
+        {
+          value: 2.7,
+          variant: "critical",
+          label: "原点临界",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a=e}`,
+        },
+      ],
+    },
   },
 };
 

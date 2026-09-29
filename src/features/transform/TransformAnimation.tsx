@@ -135,7 +135,7 @@ export function TransformAnimation() {
         questionNode: (
           <span>
             (1) 求解图象与 <KatexFormula formula="x" mode="inline" />{" "}
-            轴交点及不可导尖点坐标；(2) 探究方程{" "}
+            轴交点及翻折折点（尖点）坐标；(2) 探究方程{" "}
             <KatexFormula formula="|f(x)| = m" mode="inline" />{" "}
             实根个数的分类讨论分界点。
           </span>
@@ -159,7 +159,8 @@ export function TransformAnimation() {
             <KatexFormula formula="f(|-x|) = f(|x|)" mode="inline" /> 及对称轴{" "}
             <KatexFormula formula="x = 0" mode="inline" />
             ；(2) 求解函数在区间{" "}
-            <KatexFormula formula="[-3, 3]" mode="inline" /> 上的最值与极值点。
+            <KatexFormula formula="[-3, 3]" mode="inline" />{" "}
+            上的最大值、最小值及取得最值的位置。
           </span>
         ),
       };

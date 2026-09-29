@@ -64,6 +64,19 @@ interface InteractivePointProps {
   disabled?: boolean;
   /** 字号与尺寸缩放函数，默认原样返回 */
   fontScale?: (v: number) => number;
+  /**
+   * 边缘投影手柄（Edge Clamp Projection），默认关闭。
+   *
+   * 开启后，当动点的设计纵坐标越出可见绘图区的上下边界时，手柄不再「飞出画布即失联」，
+   * 而是沿垂直方向吸附到最近边界的内侧，并以「半透明实心点 + 虚线光环 + 指向边界的
+   * 虚线引线」标记，表明真实位置位于画布之外。
+   *
+   * 关键在于：拖拽链路只依赖 `cx/cy + scale + vp`，与渲染位置完全解耦，因此投影手柄
+   * 保有与真实手柄完全一致的拖拽能力，用户可直接按住投影点把动点拖回视口。
+   *
+   * 本开关只影响渲染，不改变任何拖拽约束语义；关闭时（默认）渲染结果与旧版逐像素一致。
+   */
+  edgeClampProjection?: boolean;
 }
 
 /**
@@ -100,6 +113,7 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
   placedLabels,
   disabled = false,
   fontScale = (v) => v,
+  edgeClampProjection = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -188,6 +202,46 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
 
   const pt = mathToDesign(cx, cy, scale);
 
+  // ─── 边缘投影（Edge Clamp Projection）────────────────────────────────────────
+  // plotTop / plotBottom / plotLeft / plotRight 由 SceneScale 反推，
+  // 构成「可见绘图区」矩形边界设计坐标：
+  //   designTop = originY - yMax * scaleY ；designBottom = originY - yMin * scaleY
+  //   designLeft = originX + xMin * scaleX ；designRight = originX + xMax * scaleX
+  // 注意这里钳制的是「渲染位置」，真实数学坐标 pt 原封不动，故：
+  //   1) 拖拽链路（见 handlePointerDown）不读取 renderPt，投影手柄照样可拖；
+  //   2) 若场景另有依赖 (cx, cy) 的辅助图形（连线、标签避让），其数据源不受影响。
+  const plotTop = scale.originY - scale.yMax * scale.scaleY;
+  const plotBottom = scale.originY - scale.yMin * scale.scaleY;
+  const plotLeft = scale.originX + scale.xMin * scale.scaleX;
+  const plotRight = scale.originX + scale.xMax * scale.scaleX;
+
+  const overflowTop = edgeClampProjection && pt.y < plotTop;
+  const overflowBottom = edgeClampProjection && pt.y > plotBottom;
+  const overflowLeft = edgeClampProjection && pt.x < plotLeft;
+  const overflowRight = edgeClampProjection && pt.x > plotRight;
+  const isProjected =
+    overflowTop || overflowBottom || overflowLeft || overflowRight;
+
+  const inset = INTERACTIVE_POINT_GEOMETRY.edgeProjectionInset;
+  const renderPt = {
+    x: overflowLeft
+      ? plotLeft + inset
+      : overflowRight
+        ? plotRight - inset
+        : pt.x,
+    y: overflowTop
+      ? plotTop + inset
+      : overflowBottom
+        ? plotBottom - inset
+        : pt.y,
+  };
+
+  // 引线目标点：指向被越过的外边界
+  const targetEdgePt = {
+    x: overflowLeft ? plotLeft : overflowRight ? plotRight : renderPt.x,
+    y: overflowTop ? plotTop : overflowBottom ? plotBottom : renderPt.y,
+  };
+
   // 从 placedLabels 中查找匹配的标签位置
   const placedLabel =
     placedLabels && labelKey
@@ -200,29 +254,54 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
   const haloR = isDragging ? r + 7 : isHovered ? r + 5.5 : r + 4;
   const haloFillAlpha = isDragging ? 0.35 : isHovered ? 0.25 : 0.15;
   const haloStrokeAlpha = isDragging ? 0.7 : isHovered ? 0.55 : 0.35;
+  // 投影态光环恒为虚线（表示「手柄是占位替身」），并适当降低填充不透明度；
+  // 悬停/拖拽时仍保留虚线，避免用户误以为它就是真实位置。
+  const haloDash = isProjected
+    ? "3 2"
+    : isHovered || isDragging
+      ? undefined
+      : "3 2";
 
   return (
     <g className="select-none">
+      {/* 0. 边缘投影方向引线：由投影手柄指向被越过的绘图区边界，提示真实位置在画布之外 */}
+      {isProjected && (
+        <line
+          x1={renderPt.x}
+          y1={renderPt.y}
+          x2={targetEdgePt.x}
+          y2={targetEdgePt.y}
+          stroke={withAlpha(color, 0.5)}
+          strokeWidth={1.5}
+          strokeDasharray="4 3"
+          className="pointer-events-none"
+        />
+      )}
+
       {/* 1. 外层交互指示光环（可拖拽视觉线索） */}
       {!disabled && (
         <circle
-          cx={pt.x}
-          cy={pt.y}
+          cx={renderPt.x}
+          cy={renderPt.y}
           r={haloR}
-          fill={withAlpha(color, haloFillAlpha)}
-          stroke={withAlpha(color, haloStrokeAlpha)}
+          fill={withAlpha(
+            color,
+            isProjected ? haloFillAlpha * 0.7 : haloFillAlpha,
+          )}
+          stroke={withAlpha(color, isProjected ? 0.6 : haloStrokeAlpha)}
           strokeWidth={1.5}
-          strokeDasharray={isHovered || isDragging ? undefined : "3 2"}
+          strokeDasharray={haloDash}
           className="pointer-events-none transition-all duration-200"
         />
       )}
 
-      {/* 2. 核心圆点 */}
+      {/* 2. 核心圆点（投影态半透明，视觉上弱于真实手柄） */}
       <circle
-        cx={pt.x}
-        cy={pt.y}
+        cx={renderPt.x}
+        cy={renderPt.y}
         r={isDragging ? r + 0.5 : r}
         fill={color}
+        fillOpacity={isProjected ? 0.55 : 1}
         stroke={MATH_COLORS.white}
         strokeWidth={2}
         className="pointer-events-none transition-all duration-150"
@@ -237,8 +316,8 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
 
       {/* 3. 扩大点击与手势响应区域的透明交互圆 */}
       <circle
-        cx={pt.x}
-        cy={pt.y}
+        cx={renderPt.x}
+        cy={renderPt.y}
         r={r + 10}
         fill="transparent"
         className={
@@ -253,11 +332,11 @@ export const InteractivePoint: React.FC<InteractivePointProps> = ({
         onPointerLeave={() => setIsHovered(false)}
       />
 
-      {/* 4. 标签文字 */}
+      {/* 4. 标签文字（跟随投影位置，避免随真实点一起飞出画布） */}
       {label && (
         <text
-          x={pt.x}
-          y={pt.y}
+          x={renderPt.x}
+          y={renderPt.y}
           dy={labelDy}
           textAnchor={placedLabel?.anchor ?? "middle"}
           fill={MATH_COLORS.labelText}

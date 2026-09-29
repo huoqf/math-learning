@@ -89,6 +89,67 @@ const topicsToTest: Array<{
     params: { k: 0.25 },
     config: { activeMode: "shift_symmetric", subModel: "xe_neg_x" },
   },
+  // 导数「基础运算层」四页：新增页若不登记，其右屏公式永远不进入拆行裁决
+  {
+    animId: "anim-derivative-formulas",
+    params: { x0: 1.5, deltaX: 0.8, paramA: 2 },
+    config: { funcType: "power" },
+  },
+  {
+    animId: "anim-derivative-formulas",
+    params: { x0: 1.5, deltaX: 0.8, paramA: 1.5 },
+    config: { funcType: "power" },
+  },
+  {
+    animId: "anim-derivative-formulas",
+    params: { x0: 1.5, deltaX: 0.8, paramA: 1 },
+    config: { funcType: "log" },
+  },
+  {
+    animId: "anim-derivative-formulas",
+    params: { x0: 1.5, deltaX: 0.8, paramA: 2.5 },
+    config: { funcType: "exp" },
+  },
+  {
+    animId: "anim-derivative-formulas",
+    params: { x0: 1.5, deltaX: 0.8, paramA: -3 },
+    config: { funcType: "constant" },
+  },
+  {
+    animId: "anim-derivative-operations",
+    params: { x0: 1.2, deltaX: 0.3 },
+    config: { opType: "multiply" },
+  },
+  {
+    animId: "anim-derivative-operations",
+    params: { x0: 0, deltaX: 0.3 },
+    config: { opType: "divide" },
+  },
+  {
+    animId: "anim-derivative-chain",
+    params: { a: 2, b: 1, x0: 0.5 },
+    config: { outerType: "exp" },
+  },
+  {
+    animId: "anim-derivative-chain",
+    params: { a: -1, b: 3, x0: 2 },
+    config: { outerType: "ln" },
+  },
+  {
+    animId: "anim-derivative-optimization",
+    params: { box_x: 10 },
+    config: { modelType: "box" },
+  },
+  {
+    animId: "anim-derivative-optimization",
+    params: { can_r: 4.5 },
+    config: { modelType: "can" },
+  },
+  {
+    animId: "anim-derivative-optimization",
+    params: { profit_x: 30 },
+    config: { modelType: "profit" },
+  },
   {
     animId: "anim-probability-bayes",
     params: { pPriorD: 0.02, pSensitivity: 0.95, pFalsePositive: 0.05 },

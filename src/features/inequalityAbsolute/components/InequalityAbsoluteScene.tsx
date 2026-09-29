@@ -179,7 +179,7 @@ export const InequalityAbsoluteScene: React.FC<
       preferredPlacement: "top-right",
     });
 
-    // 关键转折点（拐点 / 零点）
+    // 关键转折点（尖点 / 零点）
     result.turningPoints.forEach((tp, idx) => {
       const des = mathToDesign(tp.x, tp.y, scale);
       items.push({

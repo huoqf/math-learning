@@ -63,6 +63,8 @@ export function buildDerivativeEndpointTaylorPanel(
       theorems: [
         {
           name: "压轴常用两步法（拓展）：必要探路 + 充分证明",
+          isExtension: true,
+          extensionBadge: "拓展 · 超出课标",
           latex:
             endpointType === "exp"
               ? "\\text{① 必要性：} f'(0)=1-a \\ge 0 \\implies a \\le 1; \\quad \\text{② 充分性：当 } a \\le 1 \\text{ 时证明 } f(x) \\ge 0"
@@ -73,6 +75,8 @@ export function buildDerivativeEndpointTaylorPanel(
         },
         {
           name: "二阶导数凹凸性与充分性验证链",
+          isExtension: true,
+          extensionBadge: "拓展 · 超出课标",
           latex:
             endpointType === "exp"
               ? "f''(x) = e^x > 0 \\implies f'(x) \\text{ 单调递增} \\implies f'(x) \\ge f'(0) = 1-a \\ge 0 \\implies f(x) \\ge f(0) = 0"
@@ -134,6 +138,8 @@ export function buildDerivativeEndpointTaylorPanel(
       theorems: [
         {
           name: "草稿纸探路神器：洛必达法则 (L'Hôpital's Rule)",
+          isExtension: true,
+          extensionBadge: "拓展 · 超出课标",
           latex:
             "\\lim_{x \\to 0} \\frac{e^x - 1 - x}{x^2} = \\lim_{x \\to 0} \\frac{e^x - 1}{2x} = \\lim_{x \\to 0} \\frac{e^x}{2} = \\frac{1}{2}",
           note: "若 $N(0)=D(0)=0$ 且导数商极限存在，上下分别求导可瞬间秒算参数临界界限。",
@@ -214,6 +220,8 @@ export function buildDerivativeEndpointTaylorPanel(
       theorems: [
         {
           name: "放缩不等式的由来（拓展）",
+          isExtension: true,
+          extensionBadge: "拓展 · 超出课标",
           latex: res.scalingInequality,
           note: `当前 ${res.order} 阶麦克劳林拟合在原点附近局部展开，阶数越高拟合精度越高，残差收敛越快。`,
         },

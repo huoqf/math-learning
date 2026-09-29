@@ -42,6 +42,7 @@ export interface CompositeResult {
   outerMonotonicity: "increasing" | "decreasing" | "stationary";
   compositeMonotonicity: "increasing" | "decreasing" | "stationary";
   evaluateInner: (x: number) => number;
+  evaluateOuter: (u: number) => number;
   evaluateComposite: (x: number) => number;
   ruleMnemonic: string;
   isValid: boolean;
@@ -142,17 +143,25 @@ export function calculateComposite(params: CompositeParams): CompositeResult {
         ? "decreasing"
         : "stationary";
 
-  const evaluateComposite = (x: number): number => {
-    const ux = evaluateInner(x);
+  /**
+   * 外层映射 f(u) —— 本页 f 的唯一定义处。
+   * 「复合函数求值」「当前终值 y 的求解」「中屏外层映射小图的作图」三处共用同一份定义，
+   * 杜绝 f 的口径分散（历史上 f 的表达式在本函数内被写了两遍，改一处漏一处即三屏不一致）。
+   * 对数外层在 u ≤ 0 处无定义，统一返回 NaN，由调用方按各自语义处理（求值失败 / 曲线断笔）。
+   */
+  const evaluateOuter = (u: number): number => {
     switch (outerType) {
       case "exp":
-        return Math.pow(2, ux);
+        return Math.pow(2, u);
       case "log":
-        return ux > 0 ? Math.log2(ux) : NaN;
+        return u > 0 ? Math.log2(u) : NaN;
       case "quadratic":
-        return -Math.pow(ux - 2, 2) + 4;
+        return -Math.pow(u - 2, 2) + 4;
     }
   };
+
+  const evaluateComposite = (x: number): number =>
+    evaluateOuter(evaluateInner(x));
 
   let y = NaN;
   let outerMono: "increasing" | "decreasing" | "stationary" = "increasing";
@@ -162,7 +171,7 @@ export function calculateComposite(params: CompositeParams): CompositeResult {
 
   switch (outerType) {
     case "exp":
-      y = Math.pow(2, u);
+      y = evaluateOuter(u);
       outerMono = "increasing";
       domainNote = "外层定义域 u ∈ ℝ，复合函数定义域为 ℝ。";
       break;
@@ -174,12 +183,12 @@ export function calculateComposite(params: CompositeParams): CompositeResult {
         warningMessage = `中间变量 u = g(${xSample.toFixed(1)}) = ${u.toFixed(2)} ≤ 0，超出对数外层定义域 (u > 0)！`;
         y = NaN;
       } else {
-        y = Math.log2(u);
+        y = evaluateOuter(u);
         outerMono = "increasing";
       }
       break;
     case "quadratic":
-      y = -Math.pow(u - 2, 2) + 4;
+      y = evaluateOuter(u);
       outerMono = u < 2 ? "increasing" : u > 2 ? "decreasing" : "stationary";
       domainNote = "外层为二次函数 y = -(u-2)²+4，顶点在 u = 2 处。";
       break;
@@ -207,6 +216,7 @@ export function calculateComposite(params: CompositeParams): CompositeResult {
     outerMonotonicity: outerMono,
     compositeMonotonicity: compositeMono,
     evaluateInner,
+    evaluateOuter,
     evaluateComposite,
     ruleMnemonic,
     isValid,

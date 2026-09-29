@@ -39,7 +39,7 @@ export function buildDerivativeMonotonicityQuantities(
   let slopeHighlight: MathQuantity["highlight"] = undefined;
   if (Number.isFinite(fpx0)) {
     if (Math.abs(fpx0) < 1e-5) {
-      slopeStatus = "切线水平 (驻点 f'(x₀) = 0)";
+      slopeStatus = "切线水平 (导数为零的点 f'(x₀) = 0)";
       slopeHighlight = "zero";
     } else if (fpx0 > 0) {
       slopeStatus = "单调递增 (f'(x₀) > 0, 切线斜率 k > 0)";
@@ -110,18 +110,18 @@ export function buildDerivativeMonotonicityQuantities(
     },
   );
 
-  // 极值点与驻点：模式 2（极值分析）和模式 3（含参讨论）的核心量
+  // 极值点与导数为零的点：模式 2（极值分析）和模式 3（含参讨论）的核心量
   if (mode === "extrema_analysis" || mode === "parametric_discuss") {
     if (result.extrema.length > 0) {
       const extremaStr = result.extrema
         .map(
           (e) =>
-            `x = ${formatFloat(e.x)} (${e.type === "maximum" ? "极大值 " : e.type === "minimum" ? "极小值 " : "驻点 "}${formatFloat(e.y)})`,
+            `x = ${formatFloat(e.x)} (${e.type === "maximum" ? "极大值 " : e.type === "minimum" ? "极小值 " : "导数为零的点 "}${formatFloat(e.y)})`,
         )
         .join("；");
 
       quantities.push({
-        label: "极值点与驻点列表",
+        label: "极值点与导数为零的点列表",
         value: extremaStr,
         color: MATH_COLORS.focusPoint,
         highlight: "extreme",
@@ -178,9 +178,9 @@ export function buildDerivativeMonotonicityQuantities(
             ? `因 $f'(${formatFloat(x0)}) = ${fpx0Str} > 0$，切线倾斜角为锐角，函数在 $x_0$ 的邻域内严格单调递增。`
             : fpx0 < 0
               ? `因 $f'(${formatFloat(x0)}) = ${fpx0Str} < 0$，切线倾斜角为钝角，函数在 $x_0$ 的邻域内严格单调递减。`
-              : `因 $f'(${formatFloat(x0)}) = 0$，切线处于水平状态，为函数的临界驻点。`
+              : `因 $f'(${formatFloat(x0)}) = 0$，切线处于水平状态，即该点处导数为零。`
           : "切点超出函数定义域。",
-        latex: `f'(x_0) ${fpx0 > 0 ? "> 0 \\implies \\text{局部递增}" : fpx0 < 0 ? "< 0 \\implies \\text{局部递减}" : "= 0 \\implies \\text{水平驻点}"}`,
+        latex: `f'(x_0) ${fpx0 > 0 ? "> 0 \\implies \\text{局部递增}" : fpx0 < 0 ? "< 0 \\implies \\text{局部递减}" : "= 0 \\implies \\text{切线水平的点}"}`,
         rubric: "单调性结论完整得 2 分",
       },
     );
@@ -191,10 +191,10 @@ export function buildDerivativeMonotonicityQuantities(
         ? result.extrema
             .map(
               (e) =>
-                `在驻点 $x = ${formatFloat(e.x)}$ 处：左侧 $f'(x) ${e.leftSign > 0 ? "> 0" : "< 0"}$，右侧 $f'(x) ${e.rightSign > 0 ? "> 0" : "< 0"}$，符号${e.leftSign * e.rightSign < 0 ? "穿零变号" : "不变号"}，故为${e.label}。`,
+                `在导数为零的点 $x = ${formatFloat(e.x)}$ 处：左侧 $f'(x) ${e.leftSign > 0 ? "> 0" : "< 0"}$，右侧 $f'(x) ${e.rightSign > 0 ? "> 0" : "< 0"}$，符号${e.leftSign * e.rightSign < 0 ? "穿零变号" : "不变号"}，故为${e.label}。`,
             )
             .join(" ")
-        : "导函数在定义域内恒同号或无驻点，未发生穿零变号，全域单调，无极值点。";
+        : "导函数在定义域内恒同号或无导数为零的点，未发生穿零变号，全域单调，无极值点。";
 
     reasoningSteps.push(
       {
@@ -202,7 +202,7 @@ export function buildDerivativeMonotonicityQuantities(
         title: "求解导函数零点 (必要条件)",
         detail: `在定义域 $x \\in ${domainLatex}$ 内，令导函数 $f'(x) = 0$：`,
         latex: `${result.derivativeLatex} = 0`,
-        rubric: "求出所有驻点得 2 分",
+        rubric: "求出所有导数为零点得 2 分",
       },
       {
         step: 2,
@@ -219,7 +219,7 @@ export function buildDerivativeMonotonicityQuantities(
         title: "代入原函数规范下结论",
         detail:
           result.extrema.length > 0
-            ? `代入驻点求出对应的极值：${result.extrema.map((e) => `f(${formatFloat(e.x)}) = ${formatFloat(e.y)}`).join("，")}。`
+            ? `代入导数为零的点求出对应的极值：${result.extrema.map((e) => `f(${formatFloat(e.x)}) = ${formatFloat(e.y)}`).join("，")}。`
             : "函数在整个定义域内保持单调，无极大值亦无极小值。",
         latex:
           result.extrema.length > 0
@@ -297,7 +297,7 @@ export function buildDerivativeMonotonicityQuantities(
       {
         name: "极值点第一充分条件 (变号零点法则)",
         latex:
-          "\\begin{aligned} &\\text{左正右负 } (+\\to 0 \\to -) \\implies \\text{极大值点} \\\\ &\\text{左负右正 } (-\\to 0 \\to +) \\implies \\text{极小值点} \\\\ &\\text{两侧同号 } (+\\to 0 \\to +) \\implies \\text{驻点非极值} \\end{aligned}",
+          "\\begin{aligned} &\\text{左正右负 } (+\\to 0 \\to -) \\implies \\text{极大值点} \\\\ &\\text{左负右正 } (-\\to 0 \\to +) \\implies \\text{极小值点} \\\\ &\\text{两侧同号 } (+\\to 0 \\to +) \\implies \\text{导数为零的点非极值} \\end{aligned}",
         condition: "设 $f(x)$ 在 $x_0$ 处连续且在左右邻域内可导，$f'(x_0) = 0$",
         prerequisites: [
           "极值是局部的几何性质，反映点附近的小范围峰谷形态",
@@ -313,10 +313,10 @@ export function buildDerivativeMonotonicityQuantities(
           "f(x) \\text{ 在 } x_0 \\text{ 处取极值且可导} \\implies f'(x_0) = 0",
         condition: "函数 $f(x)$ 在极值点 $x_0$ 处可导",
         prerequisites: [
-          "切线水平 (驻点 $f'(x_0)=0$) 是极值的必要不充分条件",
+          "切线水平 (导数为零的点 $f'(x_0)=0$) 是极值的必要不充分条件",
           "不可导点也可能是极值点（如 f(x)=|x| 在 x=0 处取极小值但不可导）",
         ],
-        note: "利用必要条件解题求出候选驻点后，必须结合第一充分条件进行符号穿零检验。",
+        note: "利用必要条件解题求出候选导数为零的点后，必须结合第一充分条件进行符号穿零检验。",
         level: "core",
         mode: "block",
       },
@@ -352,6 +352,37 @@ export function buildDerivativeMonotonicityQuantities(
     );
   }
 
+  // ── 3b. 单调性与极值符号表 ──
+  // 「列表下结论」是高考解答题讨论单调性的标准书写形式，也是本页 reasoningSteps
+  // 第 3 步「列表汇总与单调区间规范书写」的实体化呈现。
+  // 数据源为 math 层 result.signTable（此前在全库零消费的死数据：产出后一路丢弃），
+  // 其单元格已由 math 层统一产出为 LaTeX 片段，此处只做「拼装成 array 表格」这一
+  // 纯展示层动作，不再二次加工任何数学内容。
+  // 门控在极值判定 / 含参讨论两个维度：动点切线维度的教学目标是"切线斜率符号
+  // ⇔ 局部增减"，其动态数学量已完整承载该信息，避免无关条目堆砌。
+  if (
+    (mode === "extrema_analysis" || mode === "parametric_discuss") &&
+    result.signTable.length > 0
+  ) {
+    const tableRows = result.signTable
+      .map((row) => `${row.xDesc} & ${row.fPrimeSign} & ${row.fxBehavior} \\\\`)
+      .join(" \\hline ");
+
+    theorems.push({
+      name: "单调性与极值符号表 (列表下结论)",
+      latex: `\\begin{array}{c|c|c} \\text{x 范围} & f'(x) \\text{ 符号} & f(x) \\text{ 的单调性 / 极值} \\\\ \\hline ${tableRows} \\end{array}`,
+      condition:
+        "函数 $f(x)$ 在定义域内可导；$f'(x) = 0$ 的全部根与无定义点按从小到大排序后划分区间",
+      prerequisites: [
+        "每一行对应一个区间或一个 $f'(x)=0$ 的点，必须按 $x$ 从小到大逐行填写，不得跳序",
+        "由 $f'(x)$ 的符号格直接读出 $f(x)$ 的单调区间；符号由正转负处取极大值、由负转正处取极小值",
+      ],
+      note: "解答题中「列表」本身即为采分点：表格逐行写完，单调区间与极值直接照抄表格即得满分，切忌跳过列表直接写结论。",
+      level: "important",
+      mode: "block",
+    });
+  }
+
   // ── 4. 高考考点 (结合当前模式与当前模型的针对性考法) ──
   const gaokaoPoints: GaokaoPoint[] = [];
 
@@ -377,7 +408,7 @@ export function buildDerivativeMonotonicityQuantities(
     }
   } else if (mode === "extrema_analysis") {
     gaokaoPoints.push({
-      text: "极值穿零变号法则：导函数穿过 x 轴变号才是极值点；仅切于 x 轴不变号为非极值驻点（如三次函数在 a=0 时）",
+      text: "极值穿零变号法则：导函数穿过 x 轴变号才是极值点；仅切于 x 轴不变号为非极值导数为零点（如三次函数在 a=0 时）",
       importance: "gaokao",
     });
     gaokaoPoints.push({
@@ -439,10 +470,10 @@ export function buildDerivativeMonotonicityQuantities(
     });
   }
 
-  // (4) 三次模型 a=0 临界驻点非极值警示
+  // (4) 三次模型 a=0 导数为零点非极值警示
   if (modelKey === "cubic_param" && Math.abs(a) < 1e-5) {
     warnings.push({
-      text: "典型反例警示：当前 a = 0 时 f'(x) = x² ≥ 0，x = 0 处切线水平但两侧导数均为正，函数穿过该点单调递增，故 x = 0 是驻点但非极值点！",
+      text: "典型反例警示：当前 a = 0 时 f'(x) = x² ≥ 0，x = 0 处切线水平但两侧导数均为正，函数穿过该点单调递增，故 x = 0 是导数为零的点但非极值点！",
       level: "danger",
     });
   }

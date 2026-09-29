@@ -114,6 +114,11 @@ export function CompositeAnimation() {
           style: "dash",
         },
         {
+          color: MATH_COLORS.functionSecondary,
+          label: "外层映射 f(u)（左下小图）",
+          style: "solid",
+        },
+        {
           color: MATH_COLORS.paramTertiary,
           label: "传导路径 (x, u) → (x, y)",
           style: "dot",

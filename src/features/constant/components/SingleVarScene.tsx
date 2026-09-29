@@ -43,6 +43,7 @@ interface SingleVarSceneProps {
 
 export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   subMode,
+  logic,
   funModel,
   transModel = "ln_x_over_x",
   showDerivative = false,
@@ -60,6 +61,13 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
 
   const isSep = subMode === "sep";
   const isTrans = funModel === "transcendent";
+
+  // 量词分流：右屏（builders/constantSingle.ts §sep）与 math 层均按「∀ ⇒ f_min / ∃ ⇒ f_max」
+  // 分流判定，左屏亦提供 ∀/∃ 切换。中屏此前完全忽略 logic，导致 ∃ 模式下把 {f(x) < a}
+  // 涂成「违背区间」而与右屏「满足条件」直接对撞。
+  // 注意：直接讨论法分支的 builder 目前只有「f(x) ≥ 0 恒成立」单一口径（未接量词），
+  // 故此处仅在参变分离法下响应 ∃，避免与右屏产生新的口径分叉。
+  const existMode = isSep && logic === "exist";
 
   // 计算原函数值（超越模型一律走 math 层唯一事实源，禁止在此另行硬编码）
   const evalPrimaryFn = useCallback(
@@ -248,7 +256,12 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     }
   }, [isSep, a_axis, scale, fontScale, isCollapsed, isTrans]);
 
-  // 5. 违背区间与高亮线
+  // 5. 参照线下方区域（量词分流）
+  // ∀（恒成立）：曲线跌破参照线的那一段就是必须被消灭的「违背区间」——沿用警示色。
+  // ∃（存在性）：判据只看峰值 f_max 是否够高，曲线低于参照线的部分不参与判定，
+  //   故降级为中性弱化色并改写文案，严禁再出现「违背区间」字样（否则与右屏「满足条件」矛盾）。
+  // 说明：math 层 maxViolationInterval 对多处违背仅返回最长的一段，
+  //   因此这里不能靠「取补集」高亮 {f(x) ≥ a} 成立域（双穿越时补集会吞掉真实违背段）。
   const violatedVisuals = useMemo(() => {
     if (isCollapsed) return null;
     const violated = isSep
@@ -257,6 +270,10 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     if (!violated) return null;
 
     const [vStart, vEnd] = violated;
+    const refLabel = isSep ? `f(x) < ${a.toFixed(1)}` : "f(x) < 0";
+    const zoneColor = existMode
+      ? MATH_COLORS.textMuted
+      : MATH_COLORS.degeneracy;
 
     return (
       <g>
@@ -266,19 +283,21 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           x2={vEnd}
           scale={scale}
           baseline={isSep ? { kind: "horizontal", y: a } : { kind: "axis" }}
-          fillColor={withAlpha(MATH_COLORS.degeneracy, 0.12)}
-          strokeColor={MATH_COLORS.degeneracy}
+          fillColor={withAlpha(zoneColor, 0.12)}
+          strokeColor={zoneColor}
           strokeWidth={2}
         />
         <text
           x={mathToDesign((vStart + vEnd) / 2, 0, scale).x}
           y={mathToDesign(0, scale.yMin + 0.3, scale).y}
           textAnchor="middle"
-          fill={MATH_COLORS.degeneracy}
+          fill={zoneColor}
           fontSize={fontScale(10)}
           className="font-bold select-none"
         >
-          违背区间
+          {existMode
+            ? `${refLabel}（不参与 ∃ 判定）`
+            : `违背区间 (${refLabel})`}
         </text>
       </g>
     );
@@ -291,7 +310,52 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
     fontScale,
     isCollapsed,
     evalPrimaryFn,
+    existMode,
   ]);
+
+  // 6. ∃ 判据可视化：存在性只看「区间最大值够不够高」，与右屏「存在性状态 (f(x) ≥ a)」同源。
+  // 把 f_max 的水平投影画成虚线段并与水平线 y = a 并列对照，达成 / 未达成用双色区分。
+  const existCriterionVisuals = useMemo(() => {
+    if (!existMode || isCollapsed || sepResult.isDegenerate) return null;
+
+    const hold = sepResult.fMax >= a;
+    const color = hold ? MATH_COLORS.setIntersection : MATH_COLORS.degeneracy;
+    const yAtMax = mathToDesign(0, sepResult.fMax, scale).y;
+
+    return (
+      <g>
+        <line
+          x1={ptM.x}
+          y1={yAtMax}
+          x2={ptN.x}
+          y2={yAtMax}
+          stroke={color}
+          strokeWidth={1.4}
+          strokeDasharray="5 3"
+        />
+        <text
+          x={ptN.x}
+          y={yAtMax - 6}
+          textAnchor="end"
+          fill={color}
+          fontSize={fontScale(10)}
+          fontWeight="bold"
+          className="select-none"
+          paintOrder="stroke"
+          stroke={MATH_COLORS.white}
+          strokeWidth={3}
+        >
+          {`f(x)max = ${sepResult.fMax.toFixed(2)} ${hold ? "≥" : "<"} a ${
+            hold ? "⟹ 存在性成立" : "⟹ 存在性不成立"
+          }`}
+        </text>
+      </g>
+    );
+  }, [existMode, isCollapsed, sepResult, a, scale, fontScale, ptM.x, ptN.x]);
+
+  // 6.1 临界反馈的判据点：∀ 取最小值点，∃ 取最大值点
+  const critX = existMode ? sepResult.xFMax : sepResult.xFMin;
+  const critY = existMode ? sepResult.fMax : sepResult.fMin;
 
   return (
     <g>
@@ -369,8 +433,9 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
       {sepHorizontalLine}
       {directAxisLine}
 
-      {/* 违背区间 */}
+      {/* 参照线下方区域 + ∃ 判据线 */}
       {violatedVisuals}
+      {existCriterionVisuals}
 
       {/* 区间端点垂直虚线 */}
       {!isCollapsed && (
@@ -443,7 +508,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         />
       )}
 
-      {/* 对称轴/驻点 dragging 点 */}
+      {/* 对称轴/导数为零的点 dragging 点 */}
       {!isSep && !isCollapsed && (
         <InteractivePoint
           cx={isTrans && a_axis > 0 ? Math.log(a_axis) : a_axis}
@@ -465,13 +530,14 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
         <g>
           {isSep ? (
             <g>
-              {/* 临界相切反馈：a 恰好压在最小值上时，水平线与曲线相切，
-                  在切点处给非零几何载体（空心环）与正反馈文案 */}
-              {Math.abs(a - sepResult.fMin) < 0.05 && (
+              {/* 临界相切反馈：a 恰好压在临界最值上时，参照线与曲线在该点相切，
+                  在切点处给非零几何载体（空心环）与正反馈文案。
+                  判据点随量词切换：∀ 看最小值点，∃ 看最大值点（与右屏判据同源）。 */}
+              {!sepResult.isDegenerate && Math.abs(a - critY) < 0.05 && (
                 <g>
                   <circle
-                    cx={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).x}
-                    cy={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).y}
+                    cx={mathToDesign(critX, critY, scale).x}
+                    cy={mathToDesign(critX, critY, scale).y}
                     r={9}
                     fill="none"
                     stroke={MATH_COLORS.degeneracy}
@@ -479,11 +545,8 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                     strokeDasharray="3 2"
                   />
                   <text
-                    x={mathToDesign(sepResult.xFMin, sepResult.fMin, scale).x}
-                    y={
-                      mathToDesign(sepResult.xFMin, sepResult.fMin, scale).y +
-                      24
-                    }
+                    x={mathToDesign(critX, critY, scale).x}
+                    y={mathToDesign(critX, critY, scale).y + 24}
                     textAnchor="middle"
                     fill={MATH_COLORS.degeneracy}
                     fontSize={fontScale(10)}
@@ -493,7 +556,9 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                     stroke={MATH_COLORS.white}
                     strokeWidth={3}
                   >
-                    临界：y = {a.toFixed(1)} 恰与曲线相切
+                    {existMode
+                      ? `临界：y = ${a.toFixed(1)} 恰过最大值点 (存在性分水岭)`
+                      : `临界：y = ${a.toFixed(1)} 恰与曲线相切`}
                   </text>
                 </g>
               )}

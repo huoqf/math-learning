@@ -1,96 +1,15 @@
 /**
  * src/features/second-derivative/constants.ts
- * 二阶导数与拐点实验室常量与图例配置
+ * 二阶导数 · 拐点 · 琴生不等式实验室常量与图例转出
+ *
+ * 图例与画布的颜色 / 线型统一由 `./scenePalette` 提供（唯一事实源），
+ * 此处只做转出，便于页面按既有路径引用。
+ * 面积填充透明度 `AREA_FILL_ALPHA` 亦一并转出，避免场景自造常量。
  */
 
-import type { SceneLegendItem } from "@/components/Math";
-import { MATH_COLORS } from "@/theme";
-
-export function getSecondDerivativeLegendItems(
-  studyMode: "concavity" | "inflection" | "jensen",
-): SceneLegendItem[] {
-  if (studyMode === "concavity") {
-    return [
-      {
-        color: MATH_COLORS.function,
-        label: "原函数",
-        formula: "f(x)",
-        style: "solid",
-      },
-      {
-        color: MATH_COLORS.tangentLine,
-        label: "切线",
-        formula: "y = f'(x_0)(x - x_0) + f(x_0)",
-        style: "solid",
-      },
-      {
-        color: MATH_COLORS.focusPoint,
-        label: "探针切点",
-        formula: "P_0(x_0, f(x_0))",
-        style: "point",
-      },
-      {
-        color: MATH_COLORS.paramTertiary,
-        label: "切线在下方区间",
-        formula: "f''(x) > 0",
-        style: "area",
-      },
-      {
-        color: MATH_COLORS.paramSecondary,
-        label: "切线在上方区间",
-        formula: "f''(x) < 0",
-        style: "area",
-      },
-    ];
-  }
-
-  if (studyMode === "inflection") {
-    return [
-      {
-        color: MATH_COLORS.function,
-        label: "原函数",
-        formula: "f(x)",
-        style: "solid",
-      },
-      {
-        color: MATH_COLORS.vectorResult,
-        label: "拐点",
-        formula: "I(x_{\\text{inf}}, y_{\\text{inf}})",
-        style: "point",
-      },
-      {
-        color: MATH_COLORS.paramSecondary,
-        label: "极值点",
-        formula: "E(x_{\\text{ext}}, y_{\\text{ext}})",
-        style: "point",
-      },
-    ];
-  }
-
-  return [
-    {
-      color: MATH_COLORS.function,
-      label: "原函数",
-      formula: "f(x)",
-      style: "solid",
-    },
-    {
-      color: MATH_COLORS.paramSecondary,
-      label: "割线段",
-      formula: "S_1S_2",
-      style: "solid",
-    },
-    {
-      color: MATH_COLORS.paramSecondary,
-      label: "弦中点",
-      formula: "M",
-      style: "point",
-    },
-    {
-      color: MATH_COLORS.paramTertiary,
-      label: "弧中点",
-      formula: "P",
-      style: "point",
-    },
-  ];
-}
+export {
+  AREA_FILL_ALPHA,
+  getSecondDerivativeLegendItems,
+  getSecondDerivativePalette,
+} from "./scenePalette";
+export type { SecondDerivativeMode } from "./scenePalette";

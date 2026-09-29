@@ -99,9 +99,9 @@ describe("Nike Function Math Solver (y = a(x-h) + c + b/(x-h))", () => {
 
     // 2. 验证推导链中正确标出第三象限，杜绝第二象限常识错误
     const step3 = panel.reasoningSteps?.find((s) => s.step === 3);
-    expect(step3?.detail).toContain("第三象限取得极大值点");
-    expect(step3?.detail).not.toContain("第二象限极大值点");
-    expect(step3?.latex).toContain("f_{\\text{极小}}");
-    expect(step3?.latex).toContain("f_{\\text{极大}}");
+    expect(step3?.detail).toContain("第三象限取得最大值点");
+    expect(step3?.detail).not.toContain("第二象限最大值点");
+    expect(step3?.latex).toContain("f_{\\max}");
+    expect(step3?.latex).toContain("f_{\\min}");
   });
 });

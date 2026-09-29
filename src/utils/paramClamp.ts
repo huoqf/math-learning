@@ -10,6 +10,10 @@
  * 二者取交集即"合法拖拽区间"。此前各 Scene 各写一套 `Math.max / Math.min`，
  * 甚至写死常量（如 `Math.max(-5, Math.min(5, …))`），口径不一、容易与 paramMeta 失同步。
  * 现统一收敛到本文件，各 Scene 只负责"把 meta 与 scale 传进来"。
+ *
+ * ⚠ **纵坐标越界不走本文件**：`P(x₀, f(x₀))` 的 y 溢出绝不通过钳制 x₀ 来回避
+ * （那会粗暴剥夺学生在 `x₀` 全区间上探究的能力）。统一走 `InteractivePoint` 的
+ * `edgeClampProjection` 投影吸附手柄 —— 点贴边显示并保留方向引线，仍可横向拖回。
  */
 
 import type { SceneScale } from "@/hooks/useSceneScale";
@@ -56,16 +60,54 @@ export function paramDomainRange(
  * （视口上限 5.6、步长 0.5 时，5.6 取整成 6.0 就又跑出去了）。
  *
  * @param raw   拖拽得到的原始数学坐标
- * @param step  对应滑块步长（≤ 0 表示不取整）
+ * @param step  对应滑块步长（缺省或 ≤ 0 表示不取整）
  * @param range 合法区间，来自 {@link paramDragRange}
  */
 export function snapDragValue(
   raw: number,
-  step: number,
+  step: number | undefined,
   range?: [number, number],
 ): number {
+  // step 缺省表示「该参数在注册表里没有声明步长」，此时保持连续值而非就地编造一个 fallback。
+  // 若各调用点各自写 `meta.step ?? 0.1`，同一参数在滑块、拖拽、看板三处就可能拿到不同粒度，
+  // 又回到口径分裂的老路上 —— 宁可不离散化，也不允许隐式兜底。
   const snapped =
-    step > 0 ? Number((Math.round(raw / step) * step).toFixed(6)) : raw;
+    step != null && step > 0
+      ? Number((Math.round(raw / step) * step).toFixed(6))
+      : raw;
   if (!range) return snapped;
   return Math.min(range[1], Math.max(range[0], snapped));
+}
+
+/**
+ * 耦合区间端点原子安全范围计算。
+ *
+ * 适用于有严格偏序关系的双变量耦合区间（如二分法区间 [m, n] 要求 m < n 且间距 ≥ minGap）：
+ *   - 当作为左端点（isLower = true）时：上界受制于 otherVal - minGap；
+ *   - 当作为右端点（isLower = false）时：下界受制于 otherVal + minGap；
+ *   - 当边界处于极限紧绷态（lo > hi）时，强制收缩锁定在唯一边界上，绝不回退为 undefined。
+ *
+ * @param otherVal 另一端点的当前值
+ * @param minGap   两端点必须保持的最小正间距
+ * @param baseRange 该端点自身的独立物理/视口范围 [min, max]
+ * @param isLower   当前计算的是否为左端点
+ */
+export function clampCoupledRange(
+  otherVal: number,
+  minGap: number,
+  baseRange?: [number, number],
+  isLower: boolean = true,
+): [number, number] | undefined {
+  if (!baseRange) return undefined;
+  const [bMin, bMax] = baseRange;
+
+  if (isLower) {
+    const lo = bMin;
+    const hi = Math.min(bMax, otherVal - minGap);
+    return lo <= hi ? [lo, hi] : [lo, lo];
+  } else {
+    const lo = Math.max(bMin, otherVal + minGap);
+    const hi = bMax;
+    return lo <= hi ? [lo, hi] : [hi, hi];
+  }
 }

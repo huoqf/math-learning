@@ -76,7 +76,7 @@ export function SingleVarPage() {
           id: "critical_touch",
           name: "极值相切",
           badge: "高考临界 · 极值公切线构型",
-          condition: `超越函数 $f(x) = ${fnName}$ 在驻点处取得极值，水平直线 $y = a$ 刚好与曲线相切。`,
+          condition: `超越函数 $f(x) = ${fnName}$ 在导数为零的点处取得极值，水平直线 $y = a$ 刚好与曲线相切。`,
           question:
             "观察水平线 $y = a$ 与极值点相切时的临界位置，分析为何此时构成恒成立与存在性的关键分水岭？",
           presetParams:
@@ -93,7 +93,7 @@ export function SingleVarPage() {
           id: "mono_increase",
           name: "左偏增区",
           badge: "单调构型 · 严格单调增区间",
-          condition: `研究区间 $[m, n]$ 位于驻点左侧，导函数 $f'(x) > 0$，函数在区间上严格单调递增。`,
+          condition: `研究区间 $[m, n]$ 位于导数为零的点左侧，导函数 $f'(x) > 0$，函数在区间上严格单调递增。`,
           question:
             "在严格单调递增区间上，函数最小值与最大值分别在哪个端点取得？如何利用端点值直接求出参数 $a$ 的范围？",
           presetParams: { m: 0.2, n: 1.5 },
@@ -103,7 +103,7 @@ export function SingleVarPage() {
           id: "mono_decrease",
           name: "右偏减区",
           badge: "单调构型 · 严格单调减区间",
-          condition: `研究区间 $[m, n]$ 位于驻点右侧，导函数 $f'(x) < 0$，函数在区间上严格单调递减。`,
+          condition: `研究区间 $[m, n]$ 位于导数为零的点右侧，导函数 $f'(x) < 0$，函数在区间上严格单调递减。`,
           question:
             "在严格单调递减区间上，函数最值分布如何逆转？如何利用右端点值建立不等式？",
           presetParams: { m: 2.8, n: 5.0 },
@@ -159,7 +159,7 @@ export function SingleVarPage() {
         };
       }
     } else {
-      // 直接最值讨论法场景体系 (轴动区间定 / 驻点动态偏移)
+      // 直接最值讨论法场景体系 (轴动区间定 / 导数为零的点动态偏移)
       if (funModel === "transcendent") {
         map.free = {
           id: "free",
@@ -173,10 +173,10 @@ export function SingleVarPage() {
         };
         map.axis_left = {
           id: "axis_left",
-          name: "驻点在左",
+          name: "导数为零的点在左",
           badge: "单调构型 · 极值点在区间左侧",
           condition:
-            "驻点位于研究区间左侧 ($\\ln a < m$)，函数在区间 $[m, n]$ 上严格单调递增。",
+            "导数为零的点位于研究区间左侧 ($\\ln a < m$)，函数在区间 $[m, n]$ 上严格单调递增。",
           question:
             "根据单调性，函数最小值在左端点 $f(m)$ 取得，如何代入左端点求参数 $a$ 的充要解集？",
           presetParams: { a_axis: 0.3, m: 0.5, n: 2.5 },
@@ -184,21 +184,21 @@ export function SingleVarPage() {
         };
         map.axis_inside = {
           id: "axis_inside",
-          name: "驻点在内",
+          name: "导数为零的点在内",
           badge: "极值构型 · 极小值点在区间内部",
           condition:
-            "驻点落在研究区间内部 ($m \\le \\ln a \\le n$)，函数先减后增，极小值为最小值。",
+            "导数为零的点落在研究区间内部 ($m \\le \\ln a \\le n$)，函数先减后增，极小值为最小值。",
           question:
-            "函数在驻点处取得极小值，如何利用 $f(\\ln a) \\ge 0$ 列出含参不等式求解参数？",
+            "函数在导数为零的点处取得极小值，如何利用 $f(\\ln a) \\ge 0$ 列出含参不等式求解参数？",
           presetParams: { a_axis: 1.5, m: 0.1, n: 2.0 },
           variant: "warning",
         };
         map.axis_right = {
           id: "axis_right",
-          name: "驻点在右",
+          name: "导数为零的点在右",
           badge: "单调构型 · 极值点在区间右侧",
           condition:
-            "驻点位于研究区间右侧 ($\\ln a > n$)，函数在区间 $[m, n]$ 上严格单调递减。",
+            "导数为零的点位于研究区间右侧 ($\\ln a > n$)，函数在区间 $[m, n]$ 上严格单调递减。",
           question:
             "根据单调性，函数最小值在右端点 $f(n)$ 取得，如何代入右端点列出参数不等式？",
           presetParams: { a_axis: 4.0, m: 0.2, n: 1.2 },
@@ -492,7 +492,7 @@ export function SingleVarPage() {
           subMode === "sep"
             ? "目标水平线 y = a"
             : funModel === "transcendent"
-              ? "驻点/极小值 x = ln a"
+              ? "导数为零点/极小值 x = ln a"
               : "对称轴 x = a",
         color: MATH_COLORS.paramPrimary,
         style: "dash",
@@ -562,7 +562,7 @@ export function SingleVarPage() {
                     {
                       key: "exp_minus_ax",
                       label: "指数线性模型",
-                      description: "驻点 x=ln a",
+                      description: "导数为零的点 x=ln a",
                     },
                     {
                       key: "a_ln_x_minus_x",
@@ -724,19 +724,25 @@ export function SingleVarPage() {
                   {
                     key: "axis_left",
                     label:
-                      funModel === "transcendent" ? "驻点在左" : "轴在区间左",
+                      funModel === "transcendent"
+                        ? "导数为零的点在左"
+                        : "轴在区间左",
                     description: "区间严格单调增",
                   },
                   {
                     key: "axis_inside",
                     label:
-                      funModel === "transcendent" ? "驻点在内" : "轴在区间内",
+                      funModel === "transcendent"
+                        ? "导数为零的点在内"
+                        : "轴在区间内",
                     description: "顶点极值在区间",
                   },
                   {
                     key: "axis_right",
                     label:
-                      funModel === "transcendent" ? "驻点在右" : "轴在区间右",
+                      funModel === "transcendent"
+                        ? "导数为零的点在右"
+                        : "轴在区间右",
                     description: "区间严格单调减",
                   },
                 ]}

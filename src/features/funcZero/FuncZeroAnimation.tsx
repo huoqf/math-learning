@@ -21,7 +21,7 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { solveBisection } from "@/math/function";
 import {
   defaultParams,
-  paramMeta,
+  getDynamicParamMeta,
   FUNC_ZERO_MODELS,
 } from "@/data/registries/funcZero";
 
@@ -69,36 +69,32 @@ export function FuncZeroAnimation() {
     setParams((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // 动态参数范围自适应
+  // 动态参数范围自适应：有效参数域（模型盒覆盖注册表默认域）统一由注册表出口提供，
+  // 与中屏拖拽落值严格同源。
+  const dynamicParamMeta = useMemo(
+    () => getDynamicParamMeta(modelKey),
+    [modelKey],
+  );
+
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keys = ["intervalM", "intervalN", "bisectionSteps"];
     return keys
-      .filter((key) => key in paramMeta)
+      .filter((key) => key in dynamicParamMeta)
       .map((key) => {
-        const meta = paramMeta[key];
-        let min = meta.min;
-        let max = meta.max;
-        if (key === "intervalM") {
-          if (currentModel.minM !== undefined) min = currentModel.minM;
-          if (currentModel.maxM !== undefined) max = currentModel.maxM;
-        }
-        if (key === "intervalN") {
-          if (currentModel.minN !== undefined) min = currentModel.minN;
-          if (currentModel.maxN !== undefined) max = currentModel.maxN;
-        }
+        const meta = dynamicParamMeta[key];
 
         return {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
           value: params[key] ?? meta.defaultValue ?? 0,
-          min,
-          max,
+          min: meta.min,
+          max: meta.max,
           step: meta.step ?? 0.1,
           importance: meta.importance,
         };
       });
-  }, [params, currentModel]);
+  }, [params, dynamicParamMeta]);
 
   const m = params.intervalM ?? currentModel.defaultM;
   const n = params.intervalN ?? currentModel.defaultN;

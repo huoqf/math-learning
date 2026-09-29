@@ -87,12 +87,12 @@ export function NikeScene({
   const labelItems = useMemo<LabelItem[]>(() => {
     const items: LabelItem[] = [];
 
-    // 极值特征点标签
+    // 最值特征点标签
     res.criticalPoints.forEach((cp, idx) => {
       const pt = mathToDesign(cp.x, cp.y, scale);
       items.push({
         key: `cp-${idx}`,
-        text: cp.type === "min" ? "极小值" : "极大值",
+        text: cp.type === "min" ? "最小值" : "最大值",
         x: pt.x,
         y: pt.y,
         color: MATH_COLORS.vertexPoint,
@@ -279,12 +279,12 @@ export function NikeScene({
         strokeWidth={2.5}
       />
 
-      {/* 5. 极值点切线标尺 (当存在极值点时) */}
+      {/* 5. 最值参考水平线 (当存在最值点时) */}
       {res.criticalPoints.map((cp, idx) => {
         const pt = mathToDesign(cp.x, cp.y, scale);
         return (
           <g key={`crit-${idx}`}>
-            {/* 水平切线线段 */}
+            {/* 水平参考线段 */}
             <line
               x1={pt.x - 24}
               y1={pt.y}
@@ -294,7 +294,7 @@ export function NikeScene({
               strokeWidth={1.5}
               strokeDasharray="4,2"
             />
-            {/* 极值特征点 */}
+            {/* 最值特征点 */}
             <MathPoint
               x={cp.x}
               y={cp.y}

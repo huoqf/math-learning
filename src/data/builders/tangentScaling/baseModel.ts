@@ -25,8 +25,8 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
-          "令 $h'(x) = 0$ 得驻点 $x = 0$。当 $x < 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
-        rubric: "采分点：驻点求解与单调区间判定（4分）",
+          "令 $h'(x) = 0$ 得 $x = 0$。当 $x < 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
+        rubric: "采分点：求导数为零点与单调区间判定（4分）",
       },
       {
         step: 3,
@@ -53,8 +53,8 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
-          "令 $h'(x) = 0$ 得驻点 $x = 1$。当 $0 < x < 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
-        rubric: "采分点：驻点求解与单调区间判定（4分）",
+          "令 $h'(x) = 0$ 得 $x = 1$。当 $0 < x < 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
+        rubric: "采分点：求导数为零点与单调区间判定（4分）",
       },
       {
         step: 3,
@@ -81,8 +81,8 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
-          "令 $h'(x) = 0$ 得驻点 $x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
-        rubric: "采分点：驻点求解与单调区间判定（4分）",
+          "令 $h'(x) = 0$ 得 $x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
+        rubric: "采分点：求导数为零点与单调区间判定（4分）",
       },
       {
         step: 3,
@@ -109,7 +109,7 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
-          "令 $h'(x) = 0$ 得驻点 $x = 0$。当 $-1 < x < 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
+          "令 $h'(x) = 0$ 得 $x = 0$。当 $-1 < x < 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
         rubric: "采分点：单调区间判定与分类讨论（4分）",
       },
       {
@@ -137,8 +137,8 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
-          "令 $h'(x) = 0$ 得驻点 $x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
-        rubric: "采分点：驻点求解与单调区间判定（4分）",
+          "令 $h'(x) = 0$ 得 $x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
+        rubric: "采分点：求导数为零点与单调区间判定（4分）",
       },
       {
         step: 3,
@@ -165,8 +165,8 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
       step: 2,
       title: "判定导数符号确立单调性",
       detail:
-        "令 $h'(x) = 0$ 得驻点 $x = e$。当 $0 < x < e$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > e$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
-      rubric: "采分点：驻点求解与单调区间判定（4分）",
+        "令 $h'(x) = 0$ 得 $x = e$。当 $0 < x < e$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > e$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
+      rubric: "采分点：求导数为零点与单调区间判定（4分）",
     },
     {
       step: 3,
