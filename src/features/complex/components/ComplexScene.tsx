@@ -20,12 +20,21 @@ import {
   createComplex,
   addComplex,
   mulComplex,
+  divComplex,
+  conjugate,
   modulus,
   argument,
   fromPolar,
+  powerOfI,
+  formatComplexLatex,
   calcCircleLocusExtrema,
   calcPerpBisectorLocus,
 } from "@/math/complex";
+import type {
+  ComplexAlgebraicSubModel,
+  ComplexStudyMode,
+  ComplexSubModel,
+} from "../sceneConfig";
 
 interface ComplexSceneProps {
   params: Record<string, number>;
@@ -33,8 +42,22 @@ interface ComplexSceneProps {
   vp: ViewportInfo;
   onParamChange: (key: string, value: number) => void;
   fontScale?: (v: number) => number;
-  studyMode: "plane-operations" | "multiplication-rotation" | "locus-extrema";
-  subModel?: "circle" | "perp-bisector" | "triangle-ineq";
+  studyMode: ComplexStudyMode;
+  subModel?: ComplexSubModel;
+}
+
+/**
+ * 代数运算模式的子情景归一化：
+ * 只有 power-cycle / conjugate-rationalize 会走专属画面，其余（含脏值）一律回落到
+ * 乘除展开 —— 与 `builders/complex.ts` 的末位分支判定保持同一口径。
+ */
+function normalizeAlgebraicSubModel(
+  subModel: ComplexSubModel,
+): ComplexAlgebraicSubModel {
+  if (subModel === "power-cycle" || subModel === "conjugate-rationalize") {
+    return subModel;
+  }
+  return "multiply-divide";
 }
 
 export const ComplexScene: React.FC<ComplexSceneProps> = ({
@@ -196,14 +219,44 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
   // 定点 W 是否靠近原点
   const isTargetNearOrigin = Math.hypot(wx, wy) < 0.6;
 
+  // ─────────────────────────────────────────────────────────────
+  // 模式四：复数代数运算与 i 的周期幂
+  // ─────────────────────────────────────────────────────────────
+  const isAlgebraic = studyMode === "algebraic-operations";
+  const algebraSubModel = normalizeAlgebraicSubModel(subModel);
+
+  const powerN = params.powerN ?? 1;
+  const powerCur = powerOfI(powerN);
+  // i 的幂从 i⁰ = 1 出发，每乘一次 i 逆时针转 90°；负指数则顺时针。
+  const powerDir = powerN < 0 ? -1 : 1;
+  const powerSteps =
+    powerDir > 0 ? ((powerN % 4) + 4) % 4 : ((-powerN % 4) + 4) % 4;
+  const powerFullCycles = Math.trunc(powerN / 4);
+
+  // 代数运算模式的落点（乘积 / 商 / |z₂|²）模长可达输入模长之积，可能越出可见视口。
+  // 越界时不把箭头画到画布外「失联」，而是在画布内给出方向提示。
+  const inView = (re: number, im: number, margin = 0.4) =>
+    re >= scale.xMin + margin &&
+    re <= scale.xMax - margin &&
+    im >= scale.yMin + margin &&
+    im <= scale.yMax - margin;
+
+  // 画布内提示文字的落点（可见绘图区右上角内侧）
+  const hintX = scale.originX + scale.xMax * scale.scaleX - 12;
+  const hintY = scale.originY - scale.yMax * scale.scaleY + 18;
+
+  const usePolarGrid =
+    studyMode === "multiplication-rotation" ||
+    (isAlgebraic && algebraSubModel === "power-cycle");
+
   return (
     <g>
       {/* 极简网格底图 */}
-      {studyMode === "multiplication-rotation" ? (
+      {usePolarGrid ? (
         <PolarGrid
           scale={scale}
           fontScale={fontScale}
-          maxRadius={5}
+          maxRadius={isAlgebraic ? 3 : 5}
           radiusStep={1}
           angleStep={Math.PI / 6}
           showAngleLabels={false}
@@ -722,6 +775,519 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
           />
         </g>
       )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 模式四 · 子情景 A：复数代数乘除展开（运算结果落点） */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isAlgebraic &&
+        algebraSubModel === "multiply-divide" &&
+        (() => {
+          const zProdAlgebra = mulComplex(z1, z2);
+          const quoAlgebra = divComplex(z1, z2);
+          const prodInView = inView(zProdAlgebra.re, zProdAlgebra.im);
+          const quoInView =
+            quoAlgebra.valid &&
+            inView(quoAlgebra.result.re, quoAlgebra.result.im);
+          return (
+            <g key="mode-algebraic-multiply">
+              {/* 输入向量 z₁、z₂ */}
+              <VectorArrow
+                from={[0, 0]}
+                to={[z1.re, z1.im]}
+                scale={scale}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramPrimary}
+                strokeWidth={2.5}
+                label="z₁"
+                labelSize={12}
+              />
+              <VectorArrow
+                from={[0, 0]}
+                to={[z2.re, z2.im]}
+                scale={scale}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramSecondary}
+                strokeWidth={2.5}
+                label="z₂"
+                labelSize={12}
+              />
+
+              {/* 乘积向量 z₁z₂：代数展开 (ac−bd) + (ad+bc)i 的几何落点 */}
+              {prodInView && (
+                <VectorArrow
+                  from={[0, 0]}
+                  to={[zProdAlgebra.re, zProdAlgebra.im]}
+                  scale={scale}
+                  fontScale={fontScale}
+                  color={MATH_COLORS.paramTertiary}
+                  strokeWidth={3}
+                  label="z₁z₂"
+                  labelPositionRatio={0.82}
+                  labelSize={12}
+                />
+              )}
+              {!prodInView && (
+                <text
+                  x={hintX}
+                  y={hintY}
+                  fill={MATH_COLORS.paramTertiary}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  textAnchor="end"
+                  paintOrder="stroke"
+                  stroke={MATH_COLORS.white}
+                  strokeWidth={3}
+                >
+                  {`z₁z₂ = ${formatComplexLatex(zProdAlgebra)}（在视口外）`}
+                </text>
+              )}
+
+              {/* 商向量 z₁ ÷ z₂：共轭分母实数化后的落点 */}
+              {quoInView && (
+                <VectorArrow
+                  from={[0, 0]}
+                  to={[quoAlgebra.result.re, quoAlgebra.result.im]}
+                  scale={scale}
+                  fontScale={fontScale}
+                  color={MATH_COLORS.function}
+                  strokeWidth={3}
+                  strokeDasharray="6 3"
+                  label="z₁ ÷ z₂"
+                  labelPositionRatio={0.8}
+                  labelSize={12}
+                />
+              )}
+              <text
+                x={hintX}
+                y={hintY + fontScale(17)}
+                fill={MATH_COLORS.function}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                textAnchor="end"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+              >
+                {!quoAlgebra.valid
+                  ? "除数为 0，z₁ ÷ z₂ 无意义"
+                  : quoInView
+                    ? ""
+                    : `z₁ ÷ z₂ = ${formatComplexLatex(quoAlgebra.result)}（在视口外）`}
+              </text>
+
+              {/* 可拖拽交互点 Z₁ / Z₂ */}
+              <InteractivePoint
+                cx={z1.re}
+                cy={z1.im}
+                scale={scale}
+                vp={vp}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramPrimary}
+                r={7}
+                label="Z₁"
+                xRange={rangeA1x}
+                yRange={rangeB1y}
+                onDrag={({ x, y }) => {
+                  onParamChange("a1", snapDragValue(x, 0.5, rangeA1x));
+                  onParamChange("b1", snapDragValue(y, 0.5, rangeB1y));
+                }}
+              />
+              <InteractivePoint
+                cx={z2.re}
+                cy={z2.im}
+                scale={scale}
+                vp={vp}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramSecondary}
+                r={7}
+                label="Z₂"
+                xRange={rangeA2x}
+                yRange={rangeB2y}
+                onDrag={({ x, y }) => {
+                  onParamChange("a2", snapDragValue(x, 0.5, rangeA2x));
+                  onParamChange("b2", snapDragValue(y, 0.5, rangeB2y));
+                }}
+              />
+            </g>
+          );
+        })()}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 模式四 · 子情景 B：共轭分母实数化（分母被「转到」实轴） */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isAlgebraic &&
+        algebraSubModel === "conjugate-rationalize" &&
+        (() => {
+          const z2Conj = conjugate(z2);
+          const denomValue = z2.re * z2.re + z2.im * z2.im;
+          const quoAlgebra = divComplex(z1, z2);
+          const hasZ2 = Math.hypot(z2.re, z2.im) > 1e-9;
+          const denomInView = hasZ2 && inView(denomValue, 0);
+          const quoInView =
+            quoAlgebra.valid &&
+            inView(quoAlgebra.result.re, quoAlgebra.result.im);
+          const pOrigin = toDesign(0, 0);
+          const pDenom = toDesign(denomValue, 0);
+          const pZ2 = toDesign(z2.re, z2.im);
+          const pZ2Conj = toDesign(z2Conj.re, z2Conj.im);
+          return (
+            <g key="mode-algebraic-rationalize">
+              {/* 分子向量 z₁ */}
+              <VectorArrow
+                from={[0, 0]}
+                to={[z1.re, z1.im]}
+                scale={scale}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramPrimary}
+                strokeWidth={2.5}
+                label="z₁"
+                labelSize={12}
+              />
+
+              {/* 分母 z₂ 与其共轭 z̄₂ 关于实轴的镜像连线 */}
+              <line
+                x1={pZ2.x}
+                y1={pZ2.y}
+                x2={pZ2Conj.x}
+                y2={pZ2Conj.y}
+                stroke={withAlpha(MATH_COLORS.paramSecondary, 0.45)}
+                strokeWidth={1.5}
+                strokeDasharray="4 3"
+              />
+              <VectorArrow
+                from={[0, 0]}
+                to={[z2Conj.re, z2Conj.im]}
+                scale={scale}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramSecondary}
+                strokeWidth={2}
+                strokeDasharray="5 3"
+                label="z̄₂"
+                labelSize={11}
+              />
+              <VectorArrow
+                from={[0, 0]}
+                to={[z2.re, z2.im]}
+                scale={scale}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramSecondary}
+                strokeWidth={2.5}
+                label="z₂"
+                labelSize={12}
+              />
+
+              {/* 分母实数化：z₂·z̄₂ = |z₂|² 必定落回实轴 —— 这正是「除法变乘法」的关键 */}
+              {denomInView && (
+                <>
+                  <line
+                    x1={pOrigin.x}
+                    y1={pOrigin.y}
+                    x2={pDenom.x}
+                    y2={pDenom.y}
+                    stroke={withAlpha(MATH_COLORS.paramTertiary, 0.5)}
+                    strokeWidth={2}
+                    strokeDasharray="6 3"
+                  />
+                  <MathPoint
+                    cx={denomValue}
+                    cy={0}
+                    scale={scale}
+                    fontScale={fontScale}
+                    color={MATH_COLORS.paramTertiary}
+                    variant="focus"
+                    r={4.2}
+                    label="z₂z̄₂ = |z₂|²"
+                    labelPosition="top"
+                  />
+                </>
+              )}
+              <text
+                x={hintX}
+                y={hintY}
+                fill={MATH_COLORS.paramTertiary}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                textAnchor="end"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+              >
+                {!hasZ2
+                  ? "z₂ = 0，分母无法实数化"
+                  : denomInView
+                    ? ""
+                    : `z₂z̄₂ = |z₂|² = ${denomValue.toFixed(2)}（在视口外）`}
+              </text>
+
+              {/* 商向量 z₁ ÷ z₂ */}
+              {quoInView && (
+                <VectorArrow
+                  from={[0, 0]}
+                  to={[quoAlgebra.result.re, quoAlgebra.result.im]}
+                  scale={scale}
+                  fontScale={fontScale}
+                  color={MATH_COLORS.function}
+                  strokeWidth={3}
+                  strokeDasharray="6 3"
+                  label="z₁ ÷ z₂"
+                  labelPositionRatio={0.8}
+                  labelSize={12}
+                />
+              )}
+              <text
+                x={hintX}
+                y={hintY + fontScale(17)}
+                fill={MATH_COLORS.function}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                textAnchor="end"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+              >
+                {!quoAlgebra.valid || quoInView
+                  ? ""
+                  : `z₁ ÷ z₂ = ${formatComplexLatex(quoAlgebra.result)}（在视口外）`}
+              </text>
+
+              {/* 可拖拽交互点 Z₁ / Z₂ */}
+              <InteractivePoint
+                cx={z1.re}
+                cy={z1.im}
+                scale={scale}
+                vp={vp}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramPrimary}
+                r={7}
+                label="Z₁"
+                xRange={rangeA1x}
+                yRange={rangeB1y}
+                onDrag={({ x, y }) => {
+                  onParamChange("a1", snapDragValue(x, 0.5, rangeA1x));
+                  onParamChange("b1", snapDragValue(y, 0.5, rangeB1y));
+                }}
+              />
+              <InteractivePoint
+                cx={z2.re}
+                cy={z2.im}
+                scale={scale}
+                vp={vp}
+                fontScale={fontScale}
+                color={MATH_COLORS.paramSecondary}
+                r={7}
+                label="Z₂"
+                xRange={rangeA2x}
+                yRange={rangeB2y}
+                onDrag={({ x, y }) => {
+                  onParamChange("a2", snapDragValue(x, 0.5, rangeA2x));
+                  onParamChange("b2", snapDragValue(y, 0.5, rangeB2y));
+                }}
+              />
+            </g>
+          );
+        })()}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 模式四 · 子情景 C：i 的周期幂（单位圆上的四张牌） */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {isAlgebraic &&
+        algebraSubModel === "power-cycle" &&
+        (() => {
+          const RADIUS = 1;
+          // 从 i⁰ = 1 出发的动态步进弧：n > 0 逆时针，n < 0 顺时针，步数 = |n| mod 4
+          const arcPath = (() => {
+            if (powerSteps === 0) return null;
+            const total = (powerDir * powerSteps * Math.PI) / 2;
+            const segs = powerSteps * 12;
+            const pts: string[] = [];
+            for (let i = 0; i <= segs; i += 1) {
+              const a = (total * i) / segs;
+              const pt = toDesign(RADIUS * Math.cos(a), RADIUS * Math.sin(a));
+              pts.push(
+                `${i === 0 ? "M" : "L"} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`,
+              );
+            }
+            return pts.join(" ");
+          })();
+          // 弧线末端箭头（用倒数第二点确定切线方向）
+          const arrowPath = (() => {
+            if (powerSteps === 0) return null;
+            const endA = (powerDir * powerSteps * Math.PI) / 2;
+            const backA = endA - (powerDir * Math.PI) / 24;
+            const e = toDesign(
+              RADIUS * Math.cos(endA),
+              RADIUS * Math.sin(endA),
+            );
+            const b = toDesign(
+              RADIUS * Math.cos(backA),
+              RADIUS * Math.sin(backA),
+            );
+            const len = Math.hypot(e.x - b.x, e.y - b.y) || 1;
+            const ux = (e.x - b.x) / len;
+            const uy = (e.y - b.y) / len;
+            const nx = -uy;
+            const ny = ux;
+            const s = 9;
+            return `M ${(e.x + ux * s * 0.7).toFixed(1)} ${(e.y + uy * s * 0.7).toFixed(1)} L ${(e.x - ux * s * 0.4 + nx * s * 0.55).toFixed(1)} ${(e.y - uy * s * 0.4 + ny * s * 0.55).toFixed(1)} L ${(e.x - ux * s * 0.4 - nx * s * 0.55).toFixed(1)} ${(e.y - uy * s * 0.4 - ny * s * 0.55).toFixed(1)} Z`;
+          })();
+          const midA = (powerDir * powerSteps * Math.PI) / 4;
+          const arcLabelPt = toDesign(
+            1.34 * Math.cos(midA),
+            1.34 * Math.sin(midA),
+          );
+          const stations = [
+            { re: 1, im: 0 },
+            { re: 0, im: 1 },
+            { re: -1, im: 0 },
+            { re: 0, im: -1 },
+          ] as const;
+          const cur = stations[powerCur.residue];
+          const pCur = toDesign(cur.re, cur.im);
+          const noteX = scale.originX + scale.xMin * scale.scaleX + 14;
+          const noteY = scale.originY - scale.yMin * scale.scaleY - 14;
+          return (
+            <g key="mode-algebraic-power">
+              {/* 单位圆 */}
+              <circle
+                cx={scale.originX}
+                cy={scale.originY}
+                r={RADIUS * scale.scaleX}
+                fill="none"
+                stroke={withAlpha(MATH_COLORS.paramPrimary, 0.5)}
+                strokeWidth={2}
+              />
+
+              {/* 动态步进弧线 + 箭头 */}
+              {arcPath && (
+                <path
+                  d={arcPath}
+                  fill="none"
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={2.5}
+                />
+              )}
+              {arrowPath && (
+                <path d={arrowPath} fill={MATH_COLORS.paramTertiary} />
+              )}
+              {powerSteps > 0 && (
+                <text
+                  x={arcLabelPt.x}
+                  y={arcLabelPt.y}
+                  fill={MATH_COLORS.paramTertiary}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  paintOrder="stroke"
+                  stroke={MATH_COLORS.white}
+                  strokeWidth={3}
+                >
+                  {`× i（${powerSteps} 次）`}
+                </text>
+              )}
+
+              {/* 当前幂的落点高亮环 */}
+              <circle
+                cx={pCur.x}
+                cy={pCur.y}
+                r={12}
+                fill="none"
+                stroke={MATH_COLORS.paramTertiary}
+                strokeWidth={1.5}
+                strokeDasharray="3 3"
+              />
+
+              {/* 四个站点：1 / i / −1 / −i */}
+              <MathPoint
+                cx={1}
+                cy={0}
+                scale={scale}
+                fontScale={fontScale}
+                color={
+                  powerCur.residue === 0
+                    ? MATH_COLORS.paramTertiary
+                    : MATH_COLORS.axis
+                }
+                variant="solid"
+                r={powerCur.residue === 0 ? 5.2 : 3.4}
+                label="1"
+                labelPosition="right"
+              />
+              <MathPoint
+                cx={0}
+                cy={1}
+                scale={scale}
+                fontScale={fontScale}
+                color={
+                  powerCur.residue === 1
+                    ? MATH_COLORS.paramTertiary
+                    : MATH_COLORS.axis
+                }
+                variant="solid"
+                r={powerCur.residue === 1 ? 5.2 : 3.4}
+                label="i"
+                labelPosition="top"
+              />
+              <MathPoint
+                cx={-1}
+                cy={0}
+                scale={scale}
+                fontScale={fontScale}
+                color={
+                  powerCur.residue === 2
+                    ? MATH_COLORS.paramTertiary
+                    : MATH_COLORS.axis
+                }
+                variant="solid"
+                r={powerCur.residue === 2 ? 5.2 : 3.4}
+                label="-1"
+                labelPosition="left"
+              />
+              <MathPoint
+                cx={0}
+                cy={-1}
+                scale={scale}
+                fontScale={fontScale}
+                color={
+                  powerCur.residue === 3
+                    ? MATH_COLORS.paramTertiary
+                    : MATH_COLORS.axis
+                }
+                variant="solid"
+                r={powerCur.residue === 3 ? 5.2 : 3.4}
+                label="-i"
+                labelPosition="bottom"
+              />
+
+              {/* 同步读数：指数 / 余数 / 结果 + 整周期提示 */}
+              <text
+                x={noteX}
+                y={noteY}
+                fill={MATH_COLORS.labelText}
+                fontSize={fontScale(12)}
+                fontWeight="bold"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+              >
+                {`n = ${powerN}，n mod 4 = ${powerCur.residue}，i^n = ${powerCur.latex}`}
+              </text>
+              <text
+                x={noteX}
+                y={noteY - fontScale(17)}
+                fill={MATH_COLORS.axis}
+                fontSize={fontScale(11)}
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+              >
+                {powerFullCycles === 0
+                  ? "落点只由 n 除以 4 的余数决定"
+                  : `另有 ${Math.abs(powerFullCycles)} 个整周期（每 4 次转回 1），不改变落点`}
+              </text>
+            </g>
+          );
+        })()}
     </g>
   );
 };

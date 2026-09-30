@@ -122,6 +122,26 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
       params: { a1: 1, b1: 1, a2: 2, b2: -1 },
       config: { studyMode: "plane-operations" },
     },
+    // 第四模式 algebraic-operations 的 3 个子情景：既有门禁按默认 config 驱动，
+    // 看不到这些分支，故在此显式登记以纳入 KaTeX 编译校验。
+    {
+      animId: "anim-complex-geometry",
+      params: { a1: 3, b1: 2, a2: 1, b2: 3 },
+      config: { mode: "algebraic-operations", subModel: "multiply-divide" },
+    },
+    {
+      animId: "anim-complex-geometry",
+      params: { a1: 3, b1: 2, a2: 1, b2: 3 },
+      config: {
+        mode: "algebraic-operations",
+        subModel: "conjugate-rationalize",
+      },
+    },
+    {
+      animId: "anim-complex-geometry",
+      params: { powerN: -1 },
+      config: { mode: "algebraic-operations", subModel: "power-cycle" },
+    },
     {
       animId: "anim-constant-single",
       params: { m: 1, n: 3, a: 2 },

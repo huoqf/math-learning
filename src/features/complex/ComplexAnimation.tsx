@@ -15,17 +15,120 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ComplexScene } from "./components/ComplexScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/complex";
-import { createComplex, formatComplexLatex } from "@/math/complex";
+import {
+  createComplex,
+  formatComplexLatex,
+  mulComplex,
+  powerOfI,
+} from "@/math/complex";
+import {
+  COMPLEX_ALGEBRAIC_PRESETS,
+  resolveComplexViewport,
+  type ComplexAlgebraicSubModel,
+  type ComplexLocusSubModel,
+  type ComplexSubModel,
+  type ComplexStudyMode,
+} from "./sceneConfig";
 
-type StudyMode =
-  "plane-operations" | "multiplication-rotation" | "locus-extrema";
+type StudyMode = ComplexStudyMode;
+type LocusSubModel = ComplexLocusSubModel;
+type AlgebraicSubModel = ComplexAlgebraicSubModel;
 
-type LocusSubModel = "circle" | "perp-bisector" | "triangle-ineq";
+/**
+ * 左屏教学引导卡文案：按「模式 × 子情景」解析。
+ *
+ * 纯函数、模块级：文案只由三个选择变量决定，无需挂在组件里做 memo。
+ * 设问一律直击高考核心目标（写出代数形式 / 求最值 / 证明取等），
+ * 不使用「拖动…观察」这类低阶空泛句式（`audit:strict` 的
+ * `left/tipcard-quality` 规则会拦截此类表述）。
+ */
+function resolveTipContent(
+  studyMode: StudyMode,
+  subModel: LocusSubModel,
+  algebraicSub: AlgebraicSubModel,
+): { badge: string; condition: string; question: string } {
+  if (studyMode === "plane-operations") {
+    return {
+      badge: "复平面向量运算",
+      condition:
+        "复数 $z = a + bi$ 与复平面向量 $\\vec{OZ} = (a, b)$ 一一对应。",
+      question:
+        "已知 $z_1$、$z_2$ 的代数形式，能否不解方程直接写出两点距离 $|z_1 - z_2|$ 与对角线长 $|z_1 + z_2|$？当 $z_1$、$z_2$ 满足什么条件时，平行四边形 $OZ_1ZZ_2$ 会退化为菱形、矩形或正方形？",
+    };
+  }
+  if (studyMode === "multiplication-rotation") {
+    return {
+      badge: "复数乘法与几何旋转",
+      condition:
+        "复数乘法满足“模长相乘，辐角相加”：$z_1 z_2 = (r_1 r_2)\\left[\\cos(\\theta_1+\\theta_2) + i\\sin(\\theta_1+\\theta_2)\\right]$。（复数的三角表示属选学拓展内容）",
+      question:
+        "当乘数模长 $r_2=1$ 时，复数乘法退化为什么刚体变换？连续乘以虚数单位 $i$ 会产生什么周期性循环？",
+    };
+  }
+  if (studyMode === "algebraic-operations") {
+    if (algebraicSub === "power-cycle") {
+      return {
+        badge: "i 的幂周期与分组求和",
+        condition:
+          "$i$ 的幂以 $4$ 为周期循环：$i$、$-1$、$-i$、$1$，故 $i^n$ 只由 $n$ 除以 $4$ 的余数决定。",
+        question:
+          "计算 $i^{2026}$ 需要连乘多少次 $i$？若要求 $i + i^2 + i^3 + \\cdots + i^{2026}$，能否利用「连续四项之和为零」把它化成不超过三项的求和？",
+      };
+    }
+    if (algebraicSub === "conjugate-rationalize") {
+      return {
+        badge: "共轭分母实数化",
+        condition:
+          "分母乘其共轭必得实数：$(c+di)(c-di) = c^2 + d^2 = |z_2|^2$。",
+        question:
+          "化简 $\\dfrac{z_1}{z_2}$ 时，为什么必须同乘 $\\overline{z_2}$ 而不是 $z_2$？$z_2 \\cdot \\overline{z_2}$ 为什么必然是非负实数，它等于 $|z_2|$ 的几次方？",
+      };
+    }
+    return {
+      badge: "复数代数乘除展开",
+      condition:
+        "乘法按多项式展开：$(a+bi)(c+di) = (ac-bd) + (ad+bc)i$，其中 $bd\\,i^2 = -bd$ 并入实部。",
+      question:
+        "能否直接口算出 $(3+2i)(1+3i)$ 与 $\\dfrac{3+2i}{1+3i}$ 的代数形式？为什么乘积的模长总等于两模长之积，而交换两个因式后乘积却不变？",
+    };
+  }
+  if (subModel === "circle") {
+    return {
+      badge: "圆轨迹与定点最值",
+      condition:
+        "方程 $|z - z_0| = R$ 刻画以 $z_0$ 为圆心、$R$ 为半径的圆周动点集合。",
+      question:
+        "动点满足 $|z - z_0| = R$ 时，能否不解方程直接写出 $|z - w|$ 的最大值与最小值？取到最值的那一刻，$Z$、$Z_0$、$w$ 三点为什么必然共线？",
+    };
+  }
+  if (subModel === "perp-bisector") {
+    return {
+      badge: "垂直平分线轨迹",
+      condition:
+        "方程 $|z - z_1| = |z - z_2|$ 刻画到两定点欧几里得距离相等的动点轨迹。",
+      question:
+        "由 $|z - z_1| = |z - z_2|$ 如何直接写出垂直平分线的方程？当两定点关于虚轴或原点对称时，这条中垂线会退化成哪一条特殊直线？",
+    };
+  }
+  return {
+    badge: "模的三角不等式",
+    condition:
+      "向量和与差满足三角不等式：$||z_1| - |z_2|| \\le |z_1 + z_2| \\le |z_1| + |z_2|$。",
+    question:
+      "$z_1$、$z_2$ 满足什么位置关系时 $|z_1 + z_2|$ 取到上界 $|z_1| + |z_2|$、什么关系时取到下界 $\\bigl||z_1| - |z_2|\\bigr|$？请给出取等条件并说明理由。",
+  };
+}
 
 export function ComplexAnimation() {
   const [studyMode, setStudyMode] = useState<StudyMode>("plane-operations");
   const [activePreset, setActivePreset] = useState<string>("free");
   const [subModel, setSubModel] = useState<LocusSubModel>("circle");
+  const [algebraicSub, setAlgebraicSub] =
+    useState<AlgebraicSubModel>("multiply-divide");
+
+  // 当前生效的子情景：两个模式族各自保留选择记忆，切换模式不丢选择。
+  const activeSubModel: ComplexSubModel =
+    studyMode === "algebraic-operations" ? algebraicSub : subModel;
 
   // 参数状态控制
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -37,11 +140,17 @@ export function ComplexAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 比例尺坐标系：[-6, 6] x [-4.5, 4.5]
+  // 比例尺坐标系：默认 [-6, 6] × [-4.5, 4.5]；
+  // 代数运算模式的落点是「乘积 / 商」，模长可达输入模长之积，须放大视口才装得下
+  // （见 sceneConfig 中 COMPLEX_VIEWPORT_ALGEBRAIC 的说明）。
+  const sceneViewport = useMemo(
+    () => resolveComplexViewport(studyMode, activeSubModel),
+    [studyMode, activeSubModel],
+  );
   const scale = useSceneScale({
     vp,
-    xRange: [-6, 6],
-    yRange: [-4.5, 4.5],
+    xRange: sceneViewport.xRange,
+    yRange: sceneViewport.yRange,
   });
 
   // 状态变化更新处理器（若在约束预设下，联动更新约束参数）
@@ -82,6 +191,12 @@ export function ComplexAnimation() {
   // 子模型切换
   const handleSubModelChange = (model: LocusSubModel) => {
     setSubModel(model);
+    setActivePreset("free");
+  };
+
+  // 代数运算子情景切换
+  const handleAlgebraicSubChange = (model: AlgebraicSubModel) => {
+    setAlgebraicSub(model);
     setActivePreset("free");
   };
 
@@ -193,6 +308,11 @@ export function ComplexAnimation() {
           }));
         }
       }
+    } else if (studyMode === "algebraic-operations") {
+      const preset = COMPLEX_ALGEBRAIC_PRESETS[algebraicSub].find(
+        (item) => item.key === presetKey,
+      );
+      if (preset) setParams((prev) => ({ ...prev, ...preset.params }));
     }
   };
 
@@ -241,7 +361,7 @@ export function ComplexAnimation() {
           { group: "旋转算子 z₂ (缩放与转角)", keys: ["r2", "deg2"] },
         ];
       }
-    } else {
+    } else if (studyMode === "locus-extrema") {
       if (subModel === "circle") {
         modeKeyGroups = [
           { group: "圆心定点 z₀ (实部与虚部)", keys: ["z0x", "z0y"] },
@@ -257,6 +377,17 @@ export function ComplexAnimation() {
         modeKeyGroups = [
           { group: "复数 z₁ 向量分量", keys: ["a1", "b1"] },
           { group: "复数 z₂ 向量分量", keys: ["a2", "b2"] },
+        ];
+      }
+    } else if (studyMode === "algebraic-operations") {
+      if (algebraicSub === "power-cycle") {
+        modeKeyGroups = [
+          { group: "幂指数 n（i 的幂以 4 为周期循环）", keys: ["powerN"] },
+        ];
+      } else {
+        modeKeyGroups = [
+          { group: "复数 z₁ = a₁ + b₁i (实部与虚部)", keys: ["a1", "b1"] },
+          { group: "复数 z₂ = a₂ + b₂i (实部与虚部)", keys: ["a2", "b2"] },
         ];
       }
     }
@@ -285,7 +416,7 @@ export function ComplexAnimation() {
     });
 
     return configs;
-  }, [params, studyMode, activePreset, subModel]);
+  }, [params, studyMode, activePreset, subModel, algebraicSub]);
 
   // 典型预设项
   const presetItems = useMemo(() => {
@@ -330,7 +461,7 @@ export function ComplexAnimation() {
       ];
     }
 
-    if (subModel === "circle") {
+    if (studyMode === "locus-extrema" && subModel === "circle") {
       return [
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
@@ -351,7 +482,7 @@ export function ComplexAnimation() {
       ];
     }
 
-    if (subModel === "perp-bisector") {
+    if (studyMode === "locus-extrema" && subModel === "perp-bisector") {
       return [
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
@@ -365,6 +496,12 @@ export function ComplexAnimation() {
           description: "中垂线过原点",
         },
       ];
+    }
+
+    if (studyMode === "algebraic-operations") {
+      return COMPLEX_ALGEBRAIC_PRESETS[algebraicSub].map(
+        ({ key, label, description }) => ({ key, label, description }),
+      );
     }
 
     return [
@@ -385,15 +522,15 @@ export function ComplexAnimation() {
         description: "勾股定理",
       },
     ];
-  }, [studyMode, subModel]);
+  }, [studyMode, subModel, algebraicSub]);
 
   // 数学量看板数据计算与组装
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-complex-geometry", params, {
       mode: studyMode,
-      subModel,
+      subModel: activeSubModel,
     });
-  }, [params, studyMode, subModel]);
+  }, [params, studyMode, activeSubModel]);
 
   // 实时悬浮公式计算（严格使用色彩 Token）
   const equationLatex = useMemo(() => {
@@ -405,6 +542,25 @@ export function ComplexAnimation() {
     if (studyMode === "multiplication-rotation") {
       return `z_1 z_2 = (\\color{${MATH_COLORS.paramPrimary}}{r_1} \\color{${MATH_COLORS.paramSecondary}}{r_2}) \\cdot \\left[\\cos(\\color{${MATH_COLORS.paramPrimary}}{\\theta_1} + \\color{${MATH_COLORS.paramSecondary}}{\\theta_2}) + i\\sin(\\color{${MATH_COLORS.paramPrimary}}{\\theta_1} + \\color{${MATH_COLORS.paramSecondary}}{\\theta_2})\\right]`;
     }
+    if (studyMode === "algebraic-operations") {
+      if (algebraicSub === "power-cycle") {
+        const n = params.powerN ?? 1;
+        const cur = powerOfI(n);
+        return `n = ${n}, \\quad n \\bmod 4 = ${cur.residue}, \\quad i^{n} = \\color{${MATH_COLORS.paramPrimary}}{${cur.latex}}`;
+      }
+      const z1Str = formatComplexLatex(createComplex(params.a1, params.b1));
+      const z2Str = formatComplexLatex(createComplex(params.a2, params.b2));
+      if (algebraicSub === "conjugate-rationalize") {
+        return `\\dfrac{z_1}{z_2} = \\dfrac{z_1 \\overline{z_2}}{|z_2|^2}, \\quad z_1 = \\color{${MATH_COLORS.paramPrimary}}{${z1Str}}, \\quad z_2 = \\color{${MATH_COLORS.paramSecondary}}{${z2Str}}`;
+      }
+      const prodStr = formatComplexLatex(
+        mulComplex(
+          createComplex(params.a1, params.b1),
+          createComplex(params.a2, params.b2),
+        ),
+      );
+      return `z_1 z_2 = (\\color{${MATH_COLORS.paramPrimary}}{${z1Str}}) (\\color{${MATH_COLORS.paramSecondary}}{${z2Str}}) = \\color{${MATH_COLORS.paramTertiary}}{${prodStr}}`;
+    }
     if (subModel === "circle") {
       return `|z - (\\color{${MATH_COLORS.paramPrimary}}{${params.z0x} + ${params.z0y}i})| = \\color{${MATH_COLORS.paramPrimary}}{${params.radius}}`;
     }
@@ -412,16 +568,24 @@ export function ComplexAnimation() {
       return `|z - z_1| = |z - z_2|`;
     }
     return `||z_1| - |z_2|| \\le |z_1 + z_2| \\le |z_1| + |z_2|`;
-  }, [params, studyMode, subModel]);
+  }, [params, studyMode, algebraicSub, subModel]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
     if (studyMode === "plane-operations") return "复平面与代数运算看板";
     if (studyMode === "multiplication-rotation") return "乘法旋转与伸缩看板";
+    if (studyMode === "algebraic-operations") {
+      if (algebraicSub === "power-cycle") return "i 的周期幂看板";
+      if (algebraicSub === "conjugate-rationalize") return "共轭分母实数化看板";
+      return "复数代数乘除展开看板";
+    }
     if (subModel === "circle") return "复数圆轨迹与最值看板";
     if (subModel === "perp-bisector") return "垂直平分线轨迹看板";
     return "模的三角不等式看板";
-  }, [studyMode, subModel]);
+  }, [studyMode, subModel, algebraicSub]);
+
+  // 左屏教学引导卡文案（纯函数派生，定义见文件顶部 resolveTipContent）
+  const tipContent = resolveTipContent(studyMode, subModel, algebraicSub);
 
   return (
     <ThreePanel
@@ -450,6 +614,11 @@ export function ComplexAnimation() {
                   label: "复数轨迹与模长最值",
                   fullWidth: true,
                 },
+                {
+                  key: "algebraic-operations",
+                  label: "复数代数运算与 i 的幂",
+                  fullWidth: true,
+                },
               ]}
               value={studyMode}
               onChange={(k) => handleModeChange(k as StudyMode)}
@@ -475,6 +644,29 @@ export function ComplexAnimation() {
                 ]}
                 value={subModel}
                 onChange={(k) => handleSubModelChange(k as LocusSubModel)}
+                variant="filled"
+                color="primary"
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 1.2 代数运算模式下的子情景选择 */}
+          {studyMode === "algebraic-operations" && (
+            <LeftPanelSection
+              title="代数运算情景"
+              subtitle="选择高考必考的代数运算专项"
+            >
+              <SelectGrid
+                columns={1}
+                items={[
+                  { key: "multiply-divide", label: "乘除展开与共轭实数化" },
+                  { key: "conjugate-rationalize", label: "分母实数化专项" },
+                  { key: "power-cycle", label: "i 的幂周期与分组求和" },
+                ]}
+                value={algebraicSub}
+                onChange={(k) =>
+                  handleAlgebraicSubChange(k as AlgebraicSubModel)
+                }
                 variant="filled"
                 color="primary"
               />
@@ -514,39 +706,9 @@ export function ComplexAnimation() {
             subtitle="带着核心问题在画布中探索"
           >
             <TipCard
-              badge={
-                studyMode === "plane-operations"
-                  ? "复平面向量运算"
-                  : studyMode === "multiplication-rotation"
-                    ? "复数乘法与几何旋转"
-                    : subModel === "circle"
-                      ? "圆轨迹与定点最值"
-                      : subModel === "perp-bisector"
-                        ? "垂直平分线轨迹"
-                        : "模的三角不等式"
-              }
-              condition={
-                studyMode === "plane-operations"
-                  ? "复数 $z = a + bi$ 与复平面向量 $\\vec{OZ} = (a, b)$ 一一对应。"
-                  : studyMode === "multiplication-rotation"
-                    ? "复数乘法满足“模长相乘，辐角相加”：$z_1 z_2 = (r_1 r_2)\\left[\\cos(\\theta_1+\\theta_2) + i\\sin(\\theta_1+\\theta_2)\\right]$。（复数的三角表示属选学拓展内容）"
-                    : subModel === "circle"
-                      ? "方程 $|z - z_0| = R$ 刻画以 $z_0$ 为圆心、$R$ 为半径的圆周动点集合。"
-                      : subModel === "perp-bisector"
-                        ? "方程 $|z - z_1| = |z - z_2|$ 刻画到两定点欧几里得距离相等的动点轨迹。"
-                        : "向量和与差满足三角不等式：$||z_1| - |z_2|| \\le |z_1 + z_2| \\le |z_1| + |z_2|$。"
-              }
-              question={
-                studyMode === "plane-operations"
-                  ? "拖动 $Z_1$ 与 $Z_2$，观察和向量与差向量的几何平行四边形特征，为什么 $|z_1 - z_2|$ 能够直接表示两点间欧氏距离？"
-                  : studyMode === "multiplication-rotation"
-                    ? "当乘数模长 $r_2=1$ 时，复数乘法退化为什么刚体变换？连续乘以虚数单位 $i$ 会产生什么周期性循环？"
-                    : subModel === "circle"
-                      ? "拖动定点 $w$ 和圆心 $z_0$，观察极值点 $Z_{\\min}$ 与 $Z_{\\max}$ 是否始终落在两定点连线所在直线上？"
-                      : subModel === "perp-bisector"
-                        ? "改变两定点坐标，观察中垂线动点轨迹与线段 $Z_1 Z_2$ 的对称与垂直平分关系。"
-                        : "在什么几何构型下 $|z_1 + z_2| = |z_1| + |z_2|$ 取得最大值？什么构型下取得最小值？"
-              }
+              badge={tipContent.badge}
+              condition={tipContent.condition}
+              question={tipContent.question}
             />
           </LeftPanelSection>
         </LeftPanel>
@@ -570,7 +732,7 @@ export function ComplexAnimation() {
               onParamChange={handleDragParamChange}
               fontScale={canvasSize.font}
               studyMode={studyMode}
-              subModel={subModel}
+              subModel={activeSubModel}
             />
           </AnimationSvgCanvas>
         </div>

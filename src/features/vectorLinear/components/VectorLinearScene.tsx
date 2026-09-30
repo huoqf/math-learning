@@ -13,7 +13,11 @@ import {
 } from "@/utils/paramClamp";
 import type { SceneScale } from "@/hooks";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { paramMeta } from "@/data/registries/vectorLinear";
+import {
+  paramMeta,
+  VECTOR_PHYSICS_PRESETS,
+  type VectorPhysicsContext,
+} from "@/data/registries/vectorLinear";
 import {
   computeVectorLinear,
   type VectorLinearParams,
@@ -30,6 +34,15 @@ import {
  */
 const RANGE_COEFF = paramDomainRange(paramMeta.xCoeff);
 const RANGE_COEFF_Y = paramDomainRange(paramMeta.yCoeff);
+
+/**
+ * 单位圆标注的放置半径（数学单位）。
+ *
+ * 取 0.42 —— 落在单位圆**内部**的左上象限：该象限在本页恒为空
+ * （a / e_a 朝右上、b / e_b 朝下、s 沿横轴），
+ * 故文字既不会压住圆弧，也不会撞上坐标轴刻度与任何向量标签。
+ */
+const UNIT_CIRCLE_LABEL_R = 0.42;
 
 // 计算垂直于向量方向的屏幕法向偏移量 (彻底避免共线向量标签相撞)
 function getNormalOffset(
@@ -55,6 +68,21 @@ interface VectorLinearSceneProps {
   fontScale: (size: number) => number;
   studyMode: "linearCombo" | "collinear" | "basis";
   lockCollinear?: boolean;
+  /**
+   * 是否叠加「单位向量化」图层（单位圆 + e_a / e_b）。
+   * 由左屏「单位向量化」典型预设开启；仅在加减与数乘模式下生效
+   * （模式二/三里的 a、b 分别叫 OA / OB 与 e₁ / e₂，再叠加 e_a / e_b 会造成命名冲突）。
+   */
+  showUnitVectors?: boolean;
+  /**
+   * 实际背景情景（必修二 6.4.2）：由左屏物理预设派生，非物理预设传 null / 不传。
+   *
+   * 只影响「加减与数乘」模式，作用有二：
+   *   ① 把 a / b / s 的短标签换成物理量名（F₁ / F₂ / F / v 水 / 船速 …）；
+   *   ② 三力平衡情景补画首尾相接的第三边（平衡力 F₃），并让位给它必然重合的合力箭头。
+   * 数值一律仍由 computeVectorLinear 给出 —— 中屏不另起一套口径。
+   */
+  physicsContext?: VectorPhysicsContext | null;
 }
 
 export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
@@ -66,6 +94,8 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
   fontScale,
   studyMode,
   lockCollinear = false,
+  showUnitVectors = false,
+  physicsContext = null,
 }) => {
   const mathRes = computeVectorLinear({
     ...params,
@@ -78,6 +108,10 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
     lambdaA,
     muB,
     sumVec,
+    unitA,
+    unitB,
+    isUnitADefined,
+    isUnitBDefined,
     pointC,
     targetVecV,
     isBasisValid,
@@ -85,6 +119,22 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
     basisComponent2,
     coeffSum,
   } = mathRes;
+
+  /** 物理情景命名（非物理情景为 null，一切标签回落为数学记号） */
+  const labels =
+    studyMode === "linearCombo" && physicsContext
+      ? VECTOR_PHYSICS_PRESETS[physicsContext].naming
+      : null;
+
+  /**
+   * 三力平衡情景：第三力 F₃ = −(F₁ + F₂) 与合力箭头方向相反、长度相等，
+   * 两条箭头画在一起必然完全重合并抢标签，因此该情景**让位**：
+   * 合力箭头不画，改为把「平移后的 F₂」与「F₃」接成闭合三角形。
+   */
+  const closeTriangle = labels?.third ?? null;
+
+  const firstLabel = labels ? labels.first.canvas : "a";
+  const secondLabel = labels ? labels.second.canvas : "b";
 
   const originDesign = mathToDesign(0, 0, scale);
   const posADesign = mathToDesign(a.x, a.y, scale);
@@ -189,6 +239,26 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
     }
   };
 
+  /**
+   * 合成向量的箭头标签。
+   *
+   * 物理情景用情景名（合力 F / 实际速度 v）；数学情景只有 λ = μ = 1 时才写 a + b，
+   * 否则化简为 s —— 文字必须与箭头实际的几何意义一致。
+   */
+  const isPureAddition =
+    Math.abs((params.lambda ?? 1) - 1) < 1e-4 &&
+    Math.abs((params.mu ?? 1) - 1) < 1e-4;
+  const sumLabel = labels
+    ? labels.resultant.canvas
+    : isPureAddition
+      ? "a + b"
+      : "s";
+
+  /** 三力平衡情景：平移后的第二力（闭合三角形第二条边）标签，「(平移)」明示它是等价的平移像 */
+  const translatedSecondLabel = closeTriangle
+    ? `${labels?.second.canvas ?? "b"}(平移)`
+    : "";
+
   return (
     <g>
       {/* 1. 坐标轴网格 (内置标准原点 O，无需重复渲染) */}
@@ -197,27 +267,112 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
       {/* ===================== 模式一：加减与数乘 ===================== */}
       {studyMode === "linearCombo" && (
         <>
-          {/* 平行四边形虚线边 1: lambdaA 到 sumVec */}
-          <line
-            x1={lambdaADesign.x}
-            y1={lambdaADesign.y}
-            x2={sumDesign.x}
-            y2={sumDesign.y}
-            stroke={withAlpha(MATH_COLORS.paramSecondary, 0.6)}
-            strokeWidth={1.5}
-            strokeDasharray="4,4"
-          />
+          {/* ————「单位向量化」叠加图层（由左屏预设开启）————
+              非零向量各自除以自己的模长：方向不变、长度归一为 1，
+              终点必然落在单位圆上 —— 这就是「单位化只改长度、不改方向」的直接证据。
+              半径用 ellipse 的 rx / ry 分别承接 x / y 比例尺，
+              即使将来视口改成非等比也不会把单位圆画歪。 */}
+          {showUnitVectors && (
+            <>
+              <ellipse
+                cx={originDesign.x}
+                cy={originDesign.y}
+                rx={scale.scaleX}
+                ry={scale.scaleY}
+                fill="none"
+                stroke={withAlpha(MATH_COLORS.line, 0.55)}
+                strokeWidth={1.5}
+                strokeDasharray="5,4"
+              />
+              <text
+                x={originDesign.x - scale.scaleX * UNIT_CIRCLE_LABEL_R}
+                y={originDesign.y - scale.scaleY * UNIT_CIRCLE_LABEL_R}
+                fill={MATH_COLORS.labelText}
+                fontSize={fontScale(11)}
+                textAnchor="middle"
+                dominantBaseline="central"
+                className="select-none"
+              >
+                单位圆
+              </text>
 
-          {/* 平行四边形虚线边 2: muB 到 sumVec */}
-          <line
-            x1={muBDesign.x}
-            y1={muBDesign.y}
-            x2={sumDesign.x}
-            y2={sumDesign.y}
-            stroke={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
-            strokeWidth={1.5}
-            strokeDasharray="4,4"
-          />
+              {/* 单位向量 e_a：与 a 同向、长度 1（零向量时不存在，不渲染） */}
+              {isUnitADefined && (
+                <VectorArrow
+                  from={[0, 0]}
+                  to={[unitA.x, unitA.y]}
+                  scale={scale}
+                  color={withAlpha(MATH_COLORS.paramPrimary, 0.9)}
+                  strokeWidth={2.5}
+                  fontScale={fontScale}
+                  label="e_a"
+                  labelOffset={getNormalOffset(unitA.x, unitA.y, 16)}
+                />
+              )}
+
+              {/* 单位向量 e_b：与 b 同向、长度 1 */}
+              {isUnitBDefined && (
+                <VectorArrow
+                  from={[0, 0]}
+                  to={[unitB.x, unitB.y]}
+                  scale={scale}
+                  color={withAlpha(MATH_COLORS.paramSecondary, 0.9)}
+                  strokeWidth={2.5}
+                  fontScale={fontScale}
+                  label="e_b"
+                  labelOffset={getNormalOffset(unitB.x, unitB.y, 16)}
+                />
+              )}
+            </>
+          )}
+
+          {/* ———— 平行四边形辅助边（数学情景） / 闭合三角形第二条边（三力平衡）————
+              数学情景：两条无标签虚线，交待「对角线 = 和向量」的几何来源；
+              三力平衡：lambdaA → sum 这一段正是「把 F₂ 平移到 F₁ 的终点」，
+              升级为带标签的虚线箭头 —— 它就是闭合三角形的第二条边。
+              平移得到故用虚线，与 O 点处真实作用的实线 F₂ 区分开，
+              否则同一个力会在画布上出现两个实线箭头，学生会误以为物体受了四个力。 */}
+          {closeTriangle ? (
+            <VectorArrow
+              from={[lambdaA.x, lambdaA.y]}
+              to={[sumVec.x, sumVec.y]}
+              scale={scale}
+              color={withAlpha(MATH_COLORS.paramSecondary, 0.85)}
+              strokeWidth={2.5}
+              strokeDasharray="6,4"
+              fontScale={fontScale}
+              label={translatedSecondLabel}
+              labelOffset={getNormalOffset(
+                sumVec.x - lambdaA.x,
+                sumVec.y - lambdaA.y,
+                -14,
+              )}
+            />
+          ) : (
+            <>
+              {/* 平行四边形虚线边 1: lambdaA 到 sumVec */}
+              <line
+                x1={lambdaADesign.x}
+                y1={lambdaADesign.y}
+                x2={sumDesign.x}
+                y2={sumDesign.y}
+                stroke={withAlpha(MATH_COLORS.paramSecondary, 0.6)}
+                strokeWidth={1.5}
+                strokeDasharray="4,4"
+              />
+
+              {/* 平行四边形虚线边 2: muB 到 sumVec */}
+              <line
+                x1={muBDesign.x}
+                y1={muBDesign.y}
+                x2={sumDesign.x}
+                y2={sumDesign.y}
+                stroke={withAlpha(MATH_COLORS.paramPrimary, 0.6)}
+                strokeWidth={1.5}
+                strokeDasharray="4,4"
+              />
+            </>
+          )}
 
           {/* 数乘向量 λa (沿法向正向偏移，与 a 严格错开两侧) */}
           {Math.abs((params.lambda ?? 1) - 1) > 1e-4 && (
@@ -249,38 +404,55 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             />
           )}
 
-          {/* 差向量 d = a - b (三角形减法法则：从减向量终点 B 指向被减向量终点 A) */}
-          <VectorArrow
-            from={[b.x, b.y]}
-            to={[a.x, a.y]}
-            scale={scale}
-            color={MATH_COLORS.accent}
-            strokeWidth={2.5}
-            fontScale={fontScale}
-            label="a - b"
-            labelPositionRatio={0.75}
-            labelOffset={getNormalOffset(a.x - b.x, a.y - b.y, 14)}
-          />
+          {/* 差向量 d = a - b (三角形减法法则：从减向量终点 B 指向被减向量终点 A)
+              物理情景不画：两力之差在静力学里没有对应物理量，
+              画出来只会与合力抢视线、干扰「首尾相接」的主叙事。 */}
+          {!labels && (
+            <VectorArrow
+              from={[b.x, b.y]}
+              to={[a.x, a.y]}
+              scale={scale}
+              color={MATH_COLORS.accent}
+              strokeWidth={2.5}
+              fontScale={fontScale}
+              label="a - b"
+              labelPositionRatio={0.75}
+              labelOffset={getNormalOffset(a.x - b.x, a.y - b.y, 14)}
+            />
+          )}
 
-          {/* 合成向量 s (平行四边形对角线/三角形法则主和向量，标签置于 0.8 处避开差向量交点) */}
-          <VectorArrow
-            from={[0, 0]}
-            to={[sumVec.x, sumVec.y]}
-            scale={scale}
-            color={MATH_COLORS.paramTertiary}
-            strokeWidth={3.5}
-            fontScale={fontScale}
-            label={
-              Math.abs((params.lambda ?? 1) - 1) < 1e-4 &&
-              Math.abs((params.mu ?? 1) - 1) < 1e-4
-                ? "a + b"
-                : "s"
-            }
-            labelPositionRatio={0.8}
-            labelOffset={getNormalOffset(sumVec.x, sumVec.y, 16)}
-          />
+          {/* 合成向量 s (平行四边形对角线/三角形法则主和向量，标签置于 0.8 处避开差向量交点)
+              三力平衡时 F₃ 与它必然等长反向、完全重合，故让位给下面的 F₃ 箭头。 */}
+          {!closeTriangle && (
+            <VectorArrow
+              from={[0, 0]}
+              to={[sumVec.x, sumVec.y]}
+              scale={scale}
+              color={MATH_COLORS.paramTertiary}
+              strokeWidth={3.5}
+              fontScale={fontScale}
+              label={sumLabel}
+              labelPositionRatio={0.8}
+              labelOffset={getNormalOffset(sumVec.x, sumVec.y, 16)}
+            />
+          )}
 
-          {/* 基础向量 a (沿法向反向偏移) */}
+          {/* 平衡力 F₃ = −(F₁ + F₂)：由合力终点指回 O，三力首尾相接恰好闭合。
+              取 paramTertiary（三号参数色）呼应「第三个力」，与 F₁ / F₂ 色相三足鼎立。 */}
+          {closeTriangle && (
+            <VectorArrow
+              from={[sumVec.x, sumVec.y]}
+              to={[0, 0]}
+              scale={scale}
+              color={MATH_COLORS.paramTertiary}
+              strokeWidth={3.5}
+              fontScale={fontScale}
+              label={closeTriangle.canvas}
+              labelOffset={getNormalOffset(-sumVec.x, -sumVec.y, 16)}
+            />
+          )}
+
+          {/* 第一向量 a (沿法向反向偏移) —— 物理情景下即第一力 F₁ / 水流速度 */}
           <VectorArrow
             from={[0, 0]}
             to={[a.x, a.y]}
@@ -288,12 +460,12 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             color={MATH_COLORS.paramPrimary}
             strokeWidth={3}
             fontScale={fontScale}
-            label="a"
+            label={firstLabel}
             labelPositionRatio={0.55}
             labelOffset={getNormalOffset(a.x, a.y, -15)}
           />
 
-          {/* 基础向量 b (沿法向反向偏移) */}
+          {/* 第二向量 b (沿法向反向偏移) —— 物理情景下即第二力 F₂ / 静水船速 */}
           <VectorArrow
             from={[0, 0]}
             to={[b.x, b.y]}
@@ -301,7 +473,7 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             strokeWidth={3}
             fontScale={fontScale}
-            label="b"
+            label={secondLabel}
             labelPositionRatio={0.55}
             labelOffset={getNormalOffset(b.x, b.y, -15)}
           />
@@ -476,12 +648,16 @@ export const VectorLinearScene: React.FC<VectorLinearSceneProps> = ({
             label="B"
           />
           {/* C 的平面位置由分解系数 (x, y) 合成，与屏幕坐标不同轴：
-              故不传 xRange/yRange，钳制在 handleDragPointC 内按系数声明域完成 */}
+              故不传 xRange/yRange，钳制在 handleDragPointC 内按系数声明域完成。
+              ⚠ 系数声明域 [−1, 2] × 基底 (±5, ±4.5) 的像可达视口纵域的 3 倍
+              （实测越界比例 65.6%，见 src/test/geometryHandleViewport.test.ts），
+              故必须开启边缘投影手柄，否则 C 一旦被拖出画布即不可见、不可抓、拖不回来。 */}
           <InteractivePoint
             cx={pointC.x}
             cy={pointC.y}
             scale={scale}
             vp={vp}
+            edgeClampProjection
             onDrag={handleDragPointC}
             color={
               Math.abs(coeffSum - 1) < 1e-4

@@ -287,8 +287,8 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
           />
           {/* 切点 T 实心点 */}
           <MathPoint
-            cx={footDesign.x}
-            cy={footDesign.y}
+            x={footDesign.x}
+            y={footDesign.y}
             color={MATH_COLORS.paramTertiary}
             fontScale={fontScale}
           />
@@ -322,8 +322,8 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
           />
           {/* 垂足 H 实心点 */}
           <MathPoint
-            cx={footDesign.x}
-            cy={footDesign.y}
+            x={footDesign.x}
+            y={footDesign.y}
             color={MATH_COLORS.paramTertiary}
             fontScale={fontScale}
           />
@@ -383,12 +383,12 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
               />
             )}
 
-            {/* 交点 A, B 实心点 */}
+            {/* 交点 A, B 实心点（ipt 已是 mathToDesign 结果 ⇒ 走设计坐标 x/y） */}
             {intersectionsDesign.map((ipt, idx) => (
               <MathPoint
                 key={idx}
-                cx={ipt.x}
-                cy={ipt.y}
+                x={ipt.x}
+                y={ipt.y}
                 color={MATH_COLORS.paramTertiary}
                 fontScale={fontScale}
               />
@@ -438,8 +438,8 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
             strokeDasharray="4 3"
           />
           <MathPoint
-            cx={mDesign.x}
-            cy={mDesign.y}
+            x={mDesign.x}
+            y={mDesign.y}
             color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
           />
@@ -518,8 +518,8 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
                 )}
                 {/* 切点 T_i 实心点 */}
                 <MathPoint
-                  cx={tp.x}
-                  cy={tp.y}
+                  x={tp.x}
+                  y={tp.y}
                   color={MATH_COLORS.complexNum}
                   fontScale={fontScale}
                 />
@@ -529,8 +529,8 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
 
           {/* 点 P 实心点 */}
           <MathPoint
-            cx={pDesign.x}
-            cy={pDesign.y}
+            x={pDesign.x}
+            y={pDesign.y}
             color={MATH_COLORS.complexNum}
             fontScale={fontScale}
           />
@@ -550,10 +550,15 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
       )}
 
       {/* 6. 可拖拽控制点 (严格遵守单源渲染：不传 label 属性以防重叠重影) */}
+      {/* ⚠ 坐标系契约（与 MathPoint 正好相反，本项目最易踩的一处）：
+          MathPoint 的 cx/cy 是数学坐标（必须同时给 scale），x/y 是设计坐标；
+          InteractivePoint 的 cx/cy 才是数学坐标（内部会再调 mathToDesign）。
+          故：MathPoint 传 mathToDesign 结果时必须走 x/y；
+              InteractivePoint 必须传 p.* 原始参数，传 mathToDesign 结果会二次变换到画布外。 */}
       {/* 圆心 C(a, b) 拖拽点 */}
       <InteractivePoint
-        cx={centerDesign.x}
-        cy={centerDesign.y}
+        cx={p.a}
+        cy={p.b}
         scale={scale}
         vp={vp}
         color={MATH_COLORS.paramPrimary}
@@ -564,10 +569,11 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
         }}
       />
 
-      {/* 半径控制点 (a+r, b) */}
+      {/* 半径控制点 (a+r, b) —— cx/cy 必须传数学坐标 (p.a + p.r, p.b)，
+          传 mathToDesign 结果会被 InteractivePoint 内部二次变换到画布外 */}
       <InteractivePoint
-        cx={mathToDesign(p.a + p.r, p.b, scale).x}
-        cy={mathToDesign(p.a + p.r, p.b, scale).y}
+        cx={p.a + p.r}
+        cy={p.b}
         scale={scale}
         vp={vp}
         color={MATH_COLORS.paramPrimary}
@@ -578,10 +584,10 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
         }}
       />
 
-      {/* 直线 y 截距控制点 (0, m) */}
+      {/* 直线 y 截距控制点 (0, m) —— 同理传数学坐标 */}
       <InteractivePoint
-        cx={mathToDesign(0, p.m, scale).x}
-        cy={mathToDesign(0, p.m, scale).y}
+        cx={0}
+        cy={p.m}
         scale={scale}
         vp={vp}
         color={MATH_COLORS.paramSecondary}
@@ -594,8 +600,8 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
       {/* 弦长模式下定点 M(mx, my) 拖拽点 */}
       {studyMode === "chord" && (
         <InteractivePoint
-          cx={mDesign.x}
-          cy={mDesign.y}
+          cx={p.mx}
+          cy={p.my}
           scale={scale}
           vp={vp}
           color={MATH_COLORS.paramSecondary}
@@ -610,8 +616,8 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
       {/* 切线模式下点 P(px, py) 拖拽 */}
       {studyMode === "tangent" && (
         <InteractivePoint
-          cx={pDesign.x}
-          cy={pDesign.y}
+          cx={p.px}
+          cy={p.py}
           scale={scale}
           vp={vp}
           color={MATH_COLORS.complexNum}

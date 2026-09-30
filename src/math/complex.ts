@@ -215,6 +215,172 @@ export function calcPerpBisectorLocus(
   };
 }
 
+/**
+ * 复数代数乘法展开的中间量。
+ *
+ * 教学用途：把 `(a+bi)(c+di)` 的「逐项相乘 → i² 归并 → 合并同类项」三步
+ * 显式暴露出来，供推导链逐步展示，而不是直接给出结果。
+ *
+ * 展开过程（高中通法）：
+ * ```
+ * (a+bi)(c+di) = ac + adi + bci + bd·i²
+ *              = ac + (ad+bc)i - bd      （用 i² = -1）
+ *              = (ac - bd) + (ad + bc)i  （合并同类项）
+ * ```
+ */
+export interface ComplexMultiplyExpansion {
+  /** 实部×实部 a·c */
+  ac: number;
+  /** 虚部×虚部 b·d（乘 i² 后作为实数项参与合并） */
+  bd: number;
+  /** 交叉项 a·d（落在虚部） */
+  ad: number;
+  /** 交叉项 b·c（落在虚部） */
+  bc: number;
+  /** 虚部平方项 bd·i² 归并后的实部贡献 = −bd */
+  iSquaredTerm: number;
+  /** 合并同类项后的实部 = ac − bd */
+  re: number;
+  /** 合并同类项后的虚部 = ad + bc */
+  im: number;
+}
+
+/** 复数代数乘法展开（返回逐项中间量） */
+export function expandComplexMultiply(
+  z1: ComplexNumber,
+  z2: ComplexNumber,
+): ComplexMultiplyExpansion {
+  const ac = z1.re * z2.re;
+  const bd = z1.im * z2.im;
+  const ad = z1.re * z2.im;
+  const bc = z1.im * z2.re;
+  // i² = -1 ⇒ bd·i² = -bd，作为实数项与 ac 合并
+  const iSquaredTerm = -bd;
+  return {
+    ac,
+    bd,
+    ad,
+    bc,
+    iSquaredTerm,
+    re: ac - bd,
+    im: ad + bc,
+  };
+}
+
+/**
+ * 共轭分母实数化的中间量。
+ *
+ * 教学用途：展示 `z1 / z2`（z2 ≠ 0）「分子分母同乘分母的共轭 →
+ * 分母化为实数 |z2|² → 分子展开 → 实虚部同除以分母」的完整过程。
+ *
+ * 推导过程：
+ * ```
+ *   a+bi   (a+bi)(c-di)   (ac+bd) + (bc-ad)i   ac+bd    bc-ad
+ *   ──── = ──────────── = ────────────────── = ────── + ────── i
+ *   c+di   (c+di)(c-di)        c²+d²           c²+d²    c²+d²
+ * ```
+ */
+export interface ComplexRationalizeResult {
+  /** 分母能否实数化（c² + d² 是否显著非零） */
+  valid: boolean;
+  /** 分母的实数化结果 c² + d²（= |z2|²），分子分母同乘其共轭后分母恒为实数 */
+  denominator: number;
+  /** 分母展开项 c² */
+  c2: number;
+  /** 分母展开项 d² */
+  d2: number;
+  /** 分子乘共轭后的实部 = ac + bd */
+  numeratorRe: number;
+  /** 分子乘共轭后的虚部 = bc − ad */
+  numeratorIm: number;
+  /** 商 = (numeratorRe + numeratorIm·i) / denominator */
+  result: ComplexNumber;
+}
+
+/** 共轭分母实数化（返回分母 |z2|² 与分子展开中间量） */
+export function rationalizeComplexDivision(
+  z1: ComplexNumber,
+  z2: ComplexNumber,
+): ComplexRationalizeResult {
+  const c2 = z2.re * z2.re;
+  const d2 = z2.im * z2.im;
+  const denominator = c2 + d2;
+
+  if (denominator < 1e-12) {
+    // 除数为 0：分母 |z2|² 退化为 0，实数化无意义
+    return {
+      valid: false,
+      denominator: 0,
+      c2,
+      d2,
+      numeratorRe: 0,
+      numeratorIm: 0,
+      result: { re: 0, im: 0 },
+    };
+  }
+
+  // (a+bi)(c-di) = (ac+bd) + (bc-ad)i
+  const numeratorRe = z1.re * z2.re + z1.im * z2.im;
+  const numeratorIm = z1.im * z2.re - z1.re * z2.im;
+
+  return {
+    valid: true,
+    denominator,
+    c2,
+    d2,
+    numeratorRe,
+    numeratorIm,
+    result: {
+      re: numeratorRe / denominator,
+      im: numeratorIm / denominator,
+    },
+  };
+}
+
+/** i^n 周期幂的结果（以 4 为周期，余数唯一决定取值） */
+export interface ComplexPowerIResult {
+  /** 指数 n（整数，允许为负） */
+  n: number;
+  /** n 对 4 取最小非负余数，∈ {0,1,2,3} */
+  residue: 0 | 1 | 2 | 3;
+  /** i^n 的代数形式 */
+  value: ComplexNumber;
+  /** i^n 的简洁 LaTeX 写法：1 / i / -1 / -i */
+  latex: string;
+}
+
+/**
+ * 计算 i 的整数次幂（周期幂）。
+ *
+ * 高中核心结论：`i` 的幂以 4 为周期循环 ——
+ * ```
+ * i^1 = i,  i^2 = -1,  i^3 = -i,  i^4 = 1,  i^5 = i, ...
+ * ```
+ * 故只需按 `n mod 4` 的余数取值（负数指数按最小非负余数归一，
+ * 如 `i^(-1) = 1/i = -i`，余数 3）。
+ */
+export function powerOfI(n: number): ComplexPowerIResult {
+  const integerN = Math.round(n);
+  // JS 的 % 对负数返回负值，需再归一化到 [0, 3]
+  const residue = (((integerN % 4) + 4) % 4) as 0 | 1 | 2 | 3;
+
+  const table: Record<0 | 1 | 2 | 3, { value: ComplexNumber; latex: string }> =
+    {
+      0: { value: { re: 1, im: 0 }, latex: "1" },
+      1: { value: { re: 0, im: 1 }, latex: "i" },
+      2: { value: { re: -1, im: 0 }, latex: "-1" },
+      3: { value: { re: 0, im: -1 }, latex: "-i" },
+    };
+
+  const hit = table[residue];
+  return {
+    n: integerN,
+    residue,
+    value: hit.value,
+    latex: hit.latex,
+  };
+}
+
 /** 计算两复数模的三角不等式范围 ||z1|-|z2|| <= |z1±z2| <= |z1|+|z2| */
 export function calcModulusTriangleInequality(
   z1: ComplexNumber,

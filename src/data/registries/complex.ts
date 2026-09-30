@@ -20,6 +20,9 @@ export const defaultParams = {
   radius: 2.0,
   wx: 0.0,
   wy: 0.0,
+
+  // 模式 4：代数运算与 i 的周期幂参数
+  powerN: 1,
 };
 
 export const paramMeta: Record<string, ParamMeta> = {
@@ -205,5 +208,43 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.5,
     description: "计算 |z - w| 最值的目标定点 w 虚部",
     importance: "core",
+  },
+  powerN: {
+    key: "powerN",
+    label: "幂指数 n",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{n}`,
+    defaultValue: 1,
+    min: -8,
+    max: 12,
+    step: 1,
+    description:
+      "计算 $i^n$ 的整数指数；$i$ 的幂以 $4$ 为周期循环（$i$、$-1$、$-i$、$1$），只需看 $n$ 除以 $4$ 的余数",
+    importance: "core",
+    marks: [
+      {
+        value: 0,
+        label: "0",
+        labelFormula: "n=0",
+        variant: "critical",
+      },
+      {
+        value: 4,
+        label: "4",
+        labelFormula: "n=4",
+        variant: "critical",
+      },
+      {
+        value: 8,
+        label: "8",
+        labelFormula: "n=8",
+        variant: "critical",
+      },
+      {
+        value: 12,
+        label: "12",
+        labelFormula: "n=12",
+        variant: "critical",
+      },
+    ],
   },
 };

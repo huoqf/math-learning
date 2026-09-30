@@ -14,6 +14,9 @@ import {
   calcCircleLocusExtrema,
   calcPerpBisectorLocus,
   calcModulusTriangleInequality,
+  expandComplexMultiply,
+  rationalizeComplexDivision,
+  powerOfI,
 } from "./complex";
 
 describe("complex math pure functions", () => {
@@ -148,5 +151,103 @@ describe("complex math pure functions", () => {
     expect(res.modSum).toBeCloseTo(5);
     expect(res.lowerBound).toBeCloseTo(1); // |3 - 4|
     expect(res.upperBound).toBeCloseTo(7); // 3 + 4
+  });
+
+  it("should expand complex multiplication into term-by-term intermediates", () => {
+    const z1 = createComplex(1, 2); // a=1, b=2
+    const z2 = createComplex(3, -4); // c=3, d=-4
+
+    const exp = expandComplexMultiply(z1, z2);
+
+    // 逐项：ac=3, bd=-8, ad=-4, bc=6
+    expect(exp.ac).toBeCloseTo(3);
+    expect(exp.bd).toBeCloseTo(-8);
+    expect(exp.ad).toBeCloseTo(-4);
+    expect(exp.bc).toBeCloseTo(6);
+
+    // i² 归并：bd·i² = -bd = 8，与实部 ac 合并
+    expect(exp.iSquaredTerm).toBeCloseTo(8);
+
+    // (1+2i)(3-4i) = 3 - 4i + 6i - 8i² = (3+8) + (-4+6)i = 11 + 2i
+    expect(exp.re).toBeCloseTo(11);
+    expect(exp.im).toBeCloseTo(2);
+
+    // 展开式必须与既有乘法实现完全一致（同源校验）
+    const direct = mulComplex(z1, z2);
+    expect(exp.re).toBeCloseTo(direct.re);
+    expect(exp.im).toBeCloseTo(direct.im);
+  });
+
+  it("should rationalize complex division via conjugate and expose denominator |z2|^2", () => {
+    const z1 = createComplex(11, 2);
+    const z2 = createComplex(3, -4); // |z2|² = 9 + 16 = 25
+
+    const res = rationalizeComplexDivision(z1, z2);
+
+    expect(res.valid).toBe(true);
+    expect(res.c2).toBeCloseTo(9);
+    expect(res.d2).toBeCloseTo(16);
+    // 分母实数化：c² + d² = |z2|² = 25
+    expect(res.denominator).toBeCloseTo(25);
+
+    // 分子乘共轭：(11+2i)(3+4i) = 33 + 44i + 6i + 8i² = (33-8) + (44+6)i = 25 + 50i
+    expect(res.numeratorRe).toBeCloseTo(25);
+    expect(res.numeratorIm).toBeCloseTo(50);
+
+    // 商 = (25 + 50i) / 25 = 1 + 2i
+    expect(res.result.re).toBeCloseTo(1);
+    expect(res.result.im).toBeCloseTo(2);
+
+    // 与既有除法实现同源校验
+    const direct = divComplex(z1, z2);
+    expect(direct.valid).toBe(true);
+    expect(res.result.re).toBeCloseTo(direct.result.re);
+    expect(res.result.im).toBeCloseTo(direct.result.im);
+  });
+
+  it("should mark division by zero as invalid during rationalization", () => {
+    const res = rationalizeComplexDivision(
+      createComplex(1, 1),
+      createComplex(0, 0),
+    );
+    expect(res.valid).toBe(false);
+    expect(res.denominator).toBe(0);
+    expect(res.result).toEqual({ re: 0, im: 0 });
+  });
+
+  it("should compute i^n by cycle 4 and agree with repeated multiplication", () => {
+    // 一个周期内的四张牌：i^1=i, i^2=-1, i^3=-i, i^4=1
+    expect(powerOfI(1).value).toEqual({ re: 0, im: 1 });
+    expect(powerOfI(1).latex).toBe("i");
+    expect(powerOfI(2).value).toEqual({ re: -1, im: 0 });
+    expect(powerOfI(2).latex).toBe("-1");
+    expect(powerOfI(3).value).toEqual({ re: 0, im: -1 });
+    expect(powerOfI(3).latex).toBe("-i");
+    expect(powerOfI(4).value).toEqual({ re: 1, im: 0 });
+    expect(powerOfI(4).latex).toBe("1");
+
+    // 周期性与余数
+    expect(powerOfI(0).residue).toBe(0);
+    expect(powerOfI(5).residue).toBe(1);
+    expect(powerOfI(5).value).toEqual({ re: 0, im: 1 }); // i^5 = i
+    expect(powerOfI(2026).residue).toBe(2); // 2026 mod 4 = 2
+    expect(powerOfI(2026).value).toEqual({ re: -1, im: 0 });
+
+    // 负指数按最小非负余数归一：i^(-1) = 1/i = -i（余数 3）
+    expect(powerOfI(-1).residue).toBe(3);
+    expect(powerOfI(-1).value).toEqual({ re: 0, im: -1 });
+    expect(powerOfI(-4).residue).toBe(0);
+    expect(powerOfI(-4).value).toEqual({ re: 1, im: 0 });
+
+    // 交叉校验：i^n 必须等于把 i 连乘 n 次的结果
+    for (let n = 0; n <= 12; n += 1) {
+      let acc = createComplex(1, 0);
+      for (let k = 0; k < n; k += 1) {
+        acc = mulComplex(acc, createComplex(0, 1));
+      }
+      const cycle = powerOfI(n).value;
+      expect(cycle.re).toBeCloseTo(acc.re);
+      expect(cycle.im).toBeCloseTo(acc.im);
+    }
   });
 });

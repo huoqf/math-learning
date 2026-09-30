@@ -735,13 +735,17 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                 />
 
                 {/* P 的平面位置由基底系数 (x, y) 合成，与屏幕坐标不同轴，
-                    故不在此处传 xRange/yRange，钳制在 handleDragCollinearPoint 内按系数声明域完成 */}
+                    故不在此处传 xRange/yRange，钳制在 handleDragCollinearPoint 内按系数声明域完成。
+                    ⚠ 系数声明域 [−1.5, 2.5] × 基底 (±5, ±4.5) 的像可达视口纵域的 5 倍
+                    （实测越界比例 84.4%，见 src/test/geometryHandleViewport.test.ts），
+                    故必须开启边缘投影手柄，否则合成点一旦被拖出画布即不可见、不可抓、拖不回来。 */}
                 <InteractivePoint
                   cx={collinearPoint.x}
                   cy={collinearPoint.y}
                   color={MATH_COLORS.paramTertiary}
                   scale={scale}
                   vp={vp}
+                  edgeClampProjection
                   onDrag={handleDragCollinearPoint}
                   fontScale={fontScale}
                 />
