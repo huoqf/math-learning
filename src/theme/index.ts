@@ -28,10 +28,6 @@ export { spacing, LAYOUT, DENSITY, CANVAS_PRESETS } from "./spacing";
 export { radius } from "./radius";
 export type { RadiusKey } from "./radius";
 
-// ─── 阴影 ─────────────────────────────────────────────────────────────────────
-export { shadow, glowRing } from "./shadow";
-export type { ShadowKey } from "./shadow";
-
 // ─── 动效 ─────────────────────────────────────────────────────────────────────
 export { duration, easing, transition, canvasAnimation } from "./motion";
 

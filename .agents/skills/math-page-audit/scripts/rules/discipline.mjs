@@ -13,7 +13,7 @@ import { FileContext } from '../engine/context.mjs';
  * （`isExtension: true` / `importance: "extend"` / `status: 拓展|选学|竞赛`）时，
  * 该条命中才降级为 warning。判定为条目级，详见下方「已声明拓展」的条目级解析。
  */
-const BEYOND_SYLLABUS_TERMS = [
+export const BEYOND_SYLLABUS_TERMS = [
   '洛必达',
   "L'Hôpital",
   'L’Hôpital',
@@ -58,7 +58,7 @@ const BEYOND_SYLLABUS_TERMS = [
   '紧致',
   '无穷级数',
   '数列极限',
-  '特征方程',
+  // 「特征方程」已上移为词族模式 BEYOND_SYLLABUS_PATTERNS（见下），不再作单字符串登记
   '马尔可夫链',
   '平稳分布',
   '卡方分布',
@@ -81,6 +81,23 @@ const BEYOND_SYLLABUS_TERMS = [
 ];
 
 /**
+ * 超纲术语**词族**（受控模式，与上面的单字符串黑名单并列生效）
+ *
+ * 为什么必须词族化：「特征方程」曾以单字符串登记，于是同族的
+ * 「特征根」「特征根方程」「重特征根型」全部静默通过——2026-10-01 实测
+ * `特征根方程 (x-2)(x+1)=0` 可绕过门禁，同一份数据里「重特征根型」与
+ * 「待定系数二次方程」两套术语并存却全绿。这与 `CONCAVITY_PATTERN` 那条注释
+ * 记下的教训是同一个：「改一个词就绕过门禁，词表本身不成立」。
+ * 故此处一律用**模式**表达词族，`hit` 取 `label`。
+ */
+export const BEYOND_SYLLABUS_PATTERNS = [
+  {
+    pattern: /特征(?:方程|根)/,
+    label: '特征方程/特征根（二阶线性递推的特征根法词族）',
+  },
+];
+
+/**
  * 函数凸凹术语（受控模式 + 语境白名单）
  *
  * 历史漏洞（见审核报告 B1）：黑名单里只写了 '凹凸' 一个词，于是「下凸 / 上凸 /
@@ -91,7 +108,7 @@ const BEYOND_SYLLABUS_TERMS = [
  * 出现（凸多面体、凸多边形、凸组合、凹陷、凸显…），逐个报错会造成大面积误伤。
  * 故采用「单字模式命中 + 合法语境白名单放行」，使超纲表述的任意组词形式都无处可逃。
  */
-const CONCAVITY_PATTERN = /[凹凸]/;
+export const CONCAVITY_PATTERN = /[凹凸]/;
 const CONCAVITY_ALLOWLIST = [
   // 立体几何 / 组合数学中的合法用法（与函数凸性无关）
   '凸多面体',
@@ -113,7 +130,7 @@ const CONCAVITY_ALLOWLIST = [
   '凸透镜',
   '凹透镜',
 ];
-const CONCAVITY_TERM_LABEL = '函数凸凹表述（下凸 / 上凸 / 凸弧 / 凹弧 / 凸性 …）';
+export const CONCAVITY_TERM_LABEL = '函数凸凹表述（下凸 / 上凸 / 凸弧 / 凹弧 / 凸性 …）';
 
 /**
  * 必修一函数章节"正文禁用极限记号"门禁
@@ -510,46 +527,116 @@ function resolveOwnerNodeExtend(ctx) {
   return false;
 }
 
-const EXTEND_MODULE_AUTHORIZED_TERMS = {
-  // 二阶导数与拐点专题
-  'second-derivative': ['二阶导', '拐点', '凹凸', CONCAVITY_TERM_LABEL, '琴生'],
-  secondDerivative: ['二阶导', '拐点', '凹凸', CONCAVITY_TERM_LABEL, '琴生'],
-  // 泰勒展开与端点效应专题
-  'derivative-endpoint-taylor': ['泰勒', '麦克劳林', '洛必达', "L'Hôpital", "L’Hôpital", '等价无穷小', '二阶导'],
-  derivativeEndpointTaylor: ['泰勒', '麦克劳林', '洛必达', "L'Hôpital", "L’Hôpital", '等价无穷小', '二阶导'],
-  // 直线参数方程专题
-  conicParamT: ['参数方程'],
-  lineParamT: ['参数方程'],
-};
+/**
+ * 专属拓展模块授权术语登记表（条目化 · 每条必须写清成立依据 reason）
+ *
+ * 设计缘起：经批准设立的专属选学拓展专页（二阶导数、泰勒、参数方程…），其**页面主题词**
+ * 必然就是黑名单里的超纲术语——把它们判成"超纲违规"属误报。但此前的实现有两个缺陷
+ * （2026-10-01 审查发现）：
+ *   ① 条目里混入了永不命中的**死条目**（`'凹凸'` 不在 `BEYOND_SYLLABUS_TERMS` 中，
+ *      凸凹族命中的 `hit` 恒为 `CONCAVITY_TERM_LABEL`，而该标签文本是"凸凹"不是"凹凸"）；
+ *   ② `knowledgeTree` 分支取**全部条目术语的并集**且不校验命中所在节点，
+ *      与同文件 `resolveOwnerNodeExtend` 上"单文件多节点，不能用文件级豁免"的既定原则冲突。
+ * 故重构为：条目化 + 必填 reason + 分载体精确登记（features / builders / registries），
+ * 并新增 `src/test/auditEngine.test.ts` 的**活跃性自检**兜住死条目。
+ *
+ * 粒度说明（已知折中）：条目本身仍是**文件级**。对 `sequence` 这类"一个 builder 服务多个
+ * 知识树节点"的载体，二阶线性递推子模型的左屏标签、口诀、情景名没有条目级声明挂点，
+ * 只能整文件登记——故此条 reason 必须写明该事实，供后续换成子模型级判定时收敛。
+ */
+export const EXTEND_MODULE_AUTHORIZED_TERMS = [
+  {
+    key: 'second-derivative',
+    features: ['second-derivative'],
+    builders: ['secondDerivative'],
+    registries: [],
+    terms: ['二阶导', '拐点', '琴生', CONCAVITY_TERM_LABEL],
+    reason:
+      '节点 know-derivative-inflection 为 importance:"extend" 且标题带「拓展 · 超出课标」，其唯一授课主题就是二阶导数、拐点、函数凹凸性与琴生不等式——这些词即页面主题名。',
+  },
+  {
+    key: 'derivative-endpoint-taylor',
+    features: ['derivative-endpoint-taylor'],
+    builders: ['derivativeEndpointTaylor'],
+    registries: [],
+    terms: ['泰勒', '麦克劳林', '洛必达', "L'Hôpital", '二阶导'],
+    reason:
+      '节点 know-derivative-endpoint 为 extend 专页；洛必达/泰勒在页内定位为草稿工具，正文已显式提示「卷面严禁写『由洛必达法则』/『由泰勒展开得』」，属正当教学内容。terms 只登记该模块实际用到的写法（`等价无穷小`、弯引号 `L’Hôpital` 在该模块源码中零出现，属死条目，已剔除；二者仍保留在 BEYOND_SYLLABUS_TERMS 中，一旦被引入即会如实报出）。',
+  },
+  {
+    key: 'conic-param-t',
+    features: ['conicParamT'],
+    builders: ['lineParamT'],
+    registries: [],
+    terms: ['参数方程'],
+    reason:
+      '节点 know-conic-param-t 为 extend 专页，直线参数方程 t 的几何意义即页面主题。注意「双曲线参数方程」是另一条超出课标内容线，沿原标内豁免的显式排除继续拦截，不随本条放行。',
+  },
+  {
+    key: 'sequence-second-order',
+    features: ['sequence'],
+    builders: ['sequence'],
+    registries: ['sequence'],
+    terms: ['特征方程', '特征根'],
+    reason:
+      '二阶线性递推是右屏条目级 isExtension+extensionBadge 披露的拓展子模型，其宿主节点 know-sequence-recurrence 是课标内 hard 节点（不得整体降级为 extend）。按 09-21 结案确立的尺度——正文陈述统一用「对应二次方程」，仅定理名/左屏标签/拓展徽标/情景名点名「特征根法」——本条用于覆盖这些**无条目级声明挂点**的载体。文件级粒度折中，收紧时改为子模型级。',
+  },
+];
 
-function isAuthorizedExtendModuleTerm(ctx, hit) {
+/** 全部授权术语的并集（知识树按节点级判定时使用） */
+const ALL_AUTHORIZED_TERMS = EXTEND_MODULE_AUTHORIZED_TERMS.flatMap((m) => m.terms);
+
+/** 取相对路径所属的模块载体坐标（feature 目录 / builder / registry 三者可同时命中） */
+function moduleScopes(rel) {
+  const scopes = [];
+  const feature = rel.match(/^src\/features\/([^/]+)\//);
+  if (feature) scopes.push(['features', feature[1]]);
+  const builder = rel.match(/^src\/data\/builders\/([^/]+)\.ts$/);
+  if (builder) scopes.push(['builders', builder[1]]);
+  const registry = rel.match(/^src\/data\/registries\/([^/]+)\.ts$/);
+  if (registry) scopes.push(['registries', registry[1]]);
+  return scopes;
+}
+
+function termMatches(hit, list) {
+  return list.some((t) => hit === t || hit.includes(t));
+}
+
+/**
+ * 命中是否属于「已登记的专属拓展模块主题词」。
+ * @param nodeExtend 仅对 knowledgeTree 有效：命中所在**节点对象**自身是否声明为拓展。
+ *   知识树单文件多节点，必须逐节点判定；`null` 表示该路径不是知识树。
+ */
+function isAuthorizedExtendModuleTerm(ctx, hit, line, nodeExtend) {
   const rel = ctx.relPath;
   if (!rel) return false;
 
-  // ① src/features/<feature>/**
-  const featureMatch = rel.match(/^src\/features\/([^/]+)\//);
-  if (featureMatch) {
-    const list = EXTEND_MODULE_AUTHORIZED_TERMS[featureMatch[1]];
-    if (list && list.some((t) => hit.includes(t) || t === hit)) return true;
-  }
+  // 负向用例：原标内豁免已显式排除「双曲线参数方程」，不得因模块登记而回流放行
+  if (hit === '参数方程' && line.includes('双曲线参数方程')) return false;
 
-  // ② src/data/builders/<builder>.ts
-  const builderMatch = rel.match(/^src\/data\/builders\/([^/]+)\.ts$/);
-  if (builderMatch) {
-    const list = EXTEND_MODULE_AUTHORIZED_TERMS[builderMatch[1]];
-    if (list && list.some((t) => hit.includes(t) || t === hit)) return true;
-  }
-
-  // ③ 知识树本身在定义对应拓展节点时，合法出现其标题词
+  // ① 知识树：只放行**命中所在节点**自身已声明拓展的情形（对齐 resolveOwnerNodeExtend 的既定原则）
   if (rel.includes('knowledgeTree')) {
-    const allAuthorized = Object.values(EXTEND_MODULE_AUTHORIZED_TERMS).flat();
-    if (allAuthorized.some((t) => hit.includes(t) || t === hit)) {
-      return true;
-    }
+    return nodeExtend === true && termMatches(hit, ALL_AUTHORIZED_TERMS);
   }
 
-  return false;
+  // ② features / builders / registries：按模块登记放行
+  const scopes = moduleScopes(rel);
+  if (scopes.length === 0) return false;
+  return scopes.some(([kind, name]) =>
+    EXTEND_MODULE_AUTHORIZED_TERMS.some(
+      (m) => m[kind].includes(name) && termMatches(hit, m.terms),
+    ),
+  );
 }
+
+/** 命中行所属知识树节点对象是否在自身直接属性上声明了拓展（非知识树返回 null） */
+function resolveEnclosingNodeExtend(ctx, maskedLines, objectIndex, lineIdx) {
+  if (!ctx.relPath.includes('knowledgeTree')) return null;
+  const owner = enclosingItems(ctx.cleanLines, maskedLines, objectIndex, lineIdx)[0];
+  if (!owner) return false;
+  return ownDeclaresExtend(ctx.cleanLines, maskedLines, owner.range);
+}
+
 
 export const disciplineRules = [
   {
@@ -719,11 +806,17 @@ export const disciplineRules = [
       const issues = [];
       ctx.cleanLines.forEach((line, idx) => {
         const termHit = BEYOND_SYLLABUS_TERMS.find((term) => line.includes(term));
+        // 词族走受控模式（如「特征方程 / 特征根」整族），避免"多写/少写一个字就绕过词表"
+        const familyHit = BEYOND_SYLLABUS_PATTERNS.find((f) => f.pattern.test(line));
         // 凸凹族单独走"模式 + 白名单"：命中任何「凹/凸」且不含合法语境词组即判超纲，
         // 从而覆盖「凹凸」之外的 下凸 / 上凸 / 凸弧 / 凹弧 / 凸性 / 凹向上 … 全部变体。
         const concavityHit =
-          !termHit && !CONCAVITY_ALLOWLIST.some((w) => line.includes(w)) && CONCAVITY_PATTERN.test(line);
-        const hit = termHit || (concavityHit ? CONCAVITY_TERM_LABEL : null);
+          !termHit &&
+          !familyHit &&
+          !CONCAVITY_ALLOWLIST.some((w) => line.includes(w)) &&
+          CONCAVITY_PATTERN.test(line);
+        const hit =
+          termHit || (familyHit ? familyHit.label : null) || (concavityHit ? CONCAVITY_TERM_LABEL : null);
         if (hit) {
           // 标内白名单放行：新高考倡导的"向量参数方程"、"参数化设点"、"单参数设点"、"三角参数化"属合规技巧，不误判为超纲
           if (hit === '参数方程') {
@@ -739,11 +832,14 @@ export const disciplineRules = [
             }
           }
 
-          // 专属拓展模块合法主题闭环放行（方案三）：
-          // 经批准设立的专属选学拓展专页（二阶导数、泰勒公式、参数方程等），在其专属组件与
-          // builder 中使用其被授权的核心授课术语属合法正当教学内容，直接闭环放行；
-          // 若在专属专页中出现非本专题超纲术语（如参数方程页写洛必达），则继续保留 warning 提醒。
-          if (isAuthorizedExtendModuleTerm(ctx, hit)) {
+          // 专属拓展模块合法主题闭环放行（方案三 · 条目化登记）：
+          // 经批准设立的专属选学拓展专页（二阶导数、泰勒公式、参数方程、二阶线性递推等），
+          // 在其专属组件/builder/registries 中使用**已登记**的核心授课术语属正当教学内容，直接放行。
+          // 两点约束（2026-10-01 审查后加固）：
+          //   ① 知识树按**节点级**判定——命中所在节点自身未声明拓展即不放行（单文件多节点，禁止文件级豁免）；
+          //   ② 未登记的术语仍照常报出（如参数方程页写洛必达），不因模块被登记而整体免疫。
+          const nodeExtend = resolveEnclosingNodeExtend(ctx, maskedLines, objectIndex, idx);
+          if (isAuthorizedExtendModuleTerm(ctx, hit, line, nodeExtend)) {
             return;
           }
 

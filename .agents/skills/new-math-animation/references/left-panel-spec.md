@@ -103,7 +103,8 @@
   <MathPanel {...mathData} focusStep={answerStep} focusTarget="reasoning" />   // 右屏命中文案卡片描边
   <XxxScene … activeStep={answerStep} />                                       // 中屏只亮该步区块，其余压暗
   ```
-- **中屏分区约定**：Scene 内用 `regionOpacity(region)`（未分步恒为 1，分步时命中区 1、其余 `0.3`）包住各分区容器，并渲染一个当前步围栏。围栏描边色沿用 `MATH_COLORS.interactiveHover`（= 主题 `glowRing.activeStep` = `#3B82F6`），与右屏聚焦描边同色，**不得新造颜色**。
+- **中屏分区约定**：Scene 内用 `regionOpacity(region)`（未分步恒为 1，分步时命中区 1、其余 `0.3`）包住各分区容器，并渲染一个当前步围栏。围栏描边与标牌文字取 `MATH_COLORS.answerStepFrame`（分步作答三处同源令牌，`#3B82F6`），与右屏聚焦卡片描边同色，**不得自行调色**。
+  ⚠️ 历史坑（2026-10-01 修正）：本行曾写「沿用 `MATH_COLORS.interactiveHover`（= 主题 `glowRing.activeStep`）」——两者都是错的：`interactiveHover` 的声明语义是「拖拽点悬停外圈发光色」（实际零处按该语义消费），`glowRing.activeStep` 是 **box-shadow 字符串且全库零消费**。该错误曾扩散到 `AGENTS.md` 与两处 Scene 注释，故一律以 `MATH_COLORS.answerStepFrame` 为准。同批已确认 `src/theme/shadow.ts`（`shadow` / `ShadowKey` / `glowRing`）**全库零消费**，整模块连同 `@/theme` 导出已删除，勿再引入。
 - **中屏空间自检**：围栏上的"第 N / M 步 · 标题"标牌需要版面留白。若该页中屏已被标题条与内容填满（如独立性检验页），**宁可不挂标牌也不压住正文**——此时由左屏当前步卡片承担说明，中屏只做"压暗 + 围栏"。
 - **回归防线**：`src/test/answerStepFocus.test.tsx` 会校验步号连续性、聚焦派发唯一性、中屏分区点亮映射与三方同源，改动前先看它。
 

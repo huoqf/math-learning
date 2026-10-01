@@ -1524,7 +1524,7 @@ export function MarkovScene({
 
       {/* ═════════════════════════════════════════════════════════════════
           当前步围栏：把「正在讲的那一步」框出来（非当前区已被 regionOpacity 压暗）
-          描边色沿用主题 glowRing.activeStep = #3B82F6，与右屏采分步卡片聚焦描边同色
+          描边色取 MATH_COLORS.answerStepFrame（分步作答三处同源令牌），与右屏采分步卡片聚焦描边同色
       ═════════════════════════════════════════════════════════════════ */}
       {activeFrame && (
         <g pointerEvents="none">
@@ -1535,7 +1535,7 @@ export function MarkovScene({
             height={activeFrame.h}
             rx={12}
             fill="none"
-            stroke={MATH_COLORS.interactiveHover}
+            stroke={MATH_COLORS.answerStepFrame}
             strokeWidth={2}
             strokeDasharray="7 4"
           />
@@ -1552,7 +1552,7 @@ export function MarkovScene({
                 height={24}
                 rx={12}
                 fill={MATH_COLORS.white}
-                stroke={MATH_COLORS.interactiveHover}
+                stroke={MATH_COLORS.answerStepFrame}
                 strokeWidth={1.2}
               />
               <text
@@ -1560,7 +1560,7 @@ export function MarkovScene({
                 y={16}
                 fontSize={fontScale(11)}
                 fontWeight="bold"
-                fill={MATH_COLORS.interactiveHover}
+                fill={MATH_COLORS.answerStepFrame}
                 textAnchor="middle"
               >
                 {activeStepLabel}

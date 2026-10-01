@@ -167,7 +167,7 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     {
       key: "integer-roots",
       name: "整特征根型 (r₁=2, r₂=-1)",
-      desc: "a_{n+2}=a_{n+1}+2a_n，特征根方程 (x-2)(x+1)=0（拓展）",
+      desc: "a_{n+2}=a_{n+1}+2a_n，特征方程 (x-2)(x+1)=0（拓展）",
       params: { a1: 1, a2: 3, p_rec: 1, q_rec: 2, N: 6 },
     },
     {

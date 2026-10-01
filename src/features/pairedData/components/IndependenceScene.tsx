@@ -827,7 +827,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
 
       {/* ========================================================================= */}
       {/* 当前步围栏：把"正在讲的那一步"框出来（非当前区已被 regionOpacity 压暗）      */}
-      {/* 描边色沿用主题 glowRing.activeStep = #3B82F6，与右屏推演步卡片聚焦描边同色 */}
+      {/* 描边色取 MATH_COLORS.answerStepFrame（分步作答三处同源令牌），与右屏推演步卡片聚焦描边同色 */}
       {/* ========================================================================= */}
       {activeFrame && (
         <g pointerEvents="none">
@@ -838,7 +838,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             height={activeFrame.h}
             rx={10}
             fill="none"
-            stroke={MATH_COLORS.interactiveHover}
+            stroke={MATH_COLORS.answerStepFrame}
             strokeWidth={2}
             strokeDasharray="7 4"
           />

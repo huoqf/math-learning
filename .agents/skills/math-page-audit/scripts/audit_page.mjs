@@ -163,6 +163,14 @@ if (isStrict && !hasBaseline) {
   process.exit(1);
 }
 
+// 基线登记为"零存量"时给一句显式提示：此时任何一处 error 都会按增量阻断，
+// 避免重演"基线被误清空 / 误填 0 却毫无感知"的静默失控（2026-10-01 审查发现）。
+if (hasBaseline && Object.keys(baselineCounts).length === 0 && !isQuiet) {
+  console.log(
+    `ℹ️  ${c.gray}存量基线为空（零存量登记）：本次全库任何一处 error 都将按"增量"计并阻断 strict 门禁。${c.reset}\n`
+  );
+}
+
 for (const report of result.fileReports) {
   console.log(`\n📄 ${c.bold}${report.relPath}${c.reset} (${report.issues.length} 处需关注):`);
   report.issues.forEach((iss) => {

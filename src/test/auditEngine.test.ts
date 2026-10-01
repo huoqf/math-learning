@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync, readdirSync } from "node:fs";
+import { resolve } from "node:path";
 // @ts-expect-error -- importing internal mjs audit script
 import { FileContext } from "../../.agents/skills/math-page-audit/scripts/engine/context.mjs";
 // @ts-expect-error -- importing internal mjs audit script
@@ -8,7 +10,7 @@ import { styleTokensRules } from "../../.agents/skills/math-page-audit/scripts/r
 // @ts-expect-error -- importing internal mjs audit script
 import { rightPanelRules } from "../../.agents/skills/math-page-audit/scripts/rules/right-panel.mjs";
 // @ts-expect-error -- importing internal mjs audit script
-import { disciplineRules } from "../../.agents/skills/math-page-audit/scripts/rules/discipline.mjs";
+import * as disciplineMeta from "../../.agents/skills/math-page-audit/scripts/rules/discipline.mjs";
 // @ts-expect-error -- importing internal mjs audit script
 import { runAudit } from "../../.agents/skills/math-page-audit/scripts/engine/runner.mjs";
 
@@ -24,6 +26,31 @@ interface AuditRule {
     severity?: string;
   }>;
 }
+
+/** 专属拓展模块主题词登记表条目（EXTEND_MODULE_AUTHORIZED_TERMS 的结构） */
+interface AuthorizedModule {
+  key: string;
+  features: string[];
+  builders: string[];
+  registries: string[];
+  terms: string[];
+  reason: string;
+}
+
+/** 受控超纲词族模式条目（BEYOND_SYLLABUS_PATTERNS 的结构） */
+interface SyllabusPattern {
+  pattern: RegExp;
+  label: string;
+}
+
+const disciplineRules = disciplineMeta.disciplineRules as AuditRule[];
+const whiteList =
+  disciplineMeta.EXTEND_MODULE_AUTHORIZED_TERMS as AuthorizedModule[];
+const beyondTerms = disciplineMeta.BEYOND_SYLLABUS_TERMS as string[];
+const beyondPatterns =
+  disciplineMeta.BEYOND_SYLLABUS_PATTERNS as SyllabusPattern[];
+const concavityLabel = disciplineMeta.CONCAVITY_TERM_LABEL as string;
+const concavityPattern = disciplineMeta.CONCAVITY_PATTERN as RegExp;
 
 describe("Audit Engine & Suppression Tests", () => {
   it("应正确检测 BrowserRouter 架构违规", () => {
@@ -194,7 +221,7 @@ export function buildTestPanel() {
   });
 
   it("防误报加固：raw-latex-instructions 不受模板字符串变量插值 ${...} 干扰，且能识别真实裸露指令", () => {
-    const rule = (disciplineRules as AuditRule[]).find(
+    const rule = disciplineRules.find(
       (r: AuditRule) => r.id === "discipline/raw-latex-instructions",
     )!;
 
@@ -286,7 +313,7 @@ export function buildDemo() {
   // 背景：旧实现只要文件里出现过「拓展」字样就整份豁免，导致「局部含拓展 → 整页超纲检测失效」。
   // ───────────────────────────────────────────────────────────────────────────
   describe("超纲术语门禁：文件级豁免 → 条目级豁免", () => {
-    const beyondRule = (disciplineRules as AuditRule[]).find(
+    const beyondRule = disciplineRules.find(
       (r: AuditRule) => r.id === "discipline/no-beyond-syllabus-terms",
     )!;
 
@@ -467,6 +494,158 @@ export function buildDemo() {
       const issues = checkDemo(code);
       expect(issues.length).toBe(1);
       expect(issues[0].severity).toBe("warning");
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 门禁加固（2026-10-01 审查闭环）：拓展模块白名单条目化 + 特征方程词族 + 知识树节点级判定
+  // 此前白名单有两个可被利用的洞：
+  //   ① knowledgeTree 分支取「全部条目术语的并集」且不校验命中所在节点 ⇒ 非拓展节点里写
+  //      洛必达 / 泰勒会静默通过，与同文件 resolveOwnerNodeExtend 的「单文件多节点、禁止文件级
+  //      豁免」原则正面冲突；
+  //   ② 黑名单只登记「特征方程」单字符串 ⇒ 同族的「特征根 / 特征根方程」可绕过（实测
+  //      `特征根方程 (x-2)(x+1)=0` 静默通过，且同一份数据里两套术语并存却全绿）。
+  // 下方用例把这三点（含白名单死条目护栏）全部锁死。
+  // ───────────────────────────────────────────────────────────────────────────
+  describe("超纲术语门禁：拓展模块白名单条目化与知识树节点级判定", () => {
+    const beyondRule = disciplineRules.find(
+      (r: AuditRule) => r.id === "discipline/no-beyond-syllabus-terms",
+    )!;
+
+    const checkAt = (relPath: string, code: string) =>
+      beyondRule.check(new FileContext(relPath, code, process.cwd()));
+
+    /** 合成一个知识树节点块（importance 由用例指定） */
+    const nodeBlock = (id: string, importance: string, title: string) => `
+import type { KnowledgeNode } from "../types";
+export const nodes: KnowledgeNode[] = [
+  {
+    id: "${id}",
+    importance: "${importance}",
+    title: "${title}",
+  },
+];
+`;
+
+    it("特征方程词族：同族「特征根方程」不得再绕过黑名单（原静默通过）", () => {
+      const issues = checkAt(
+        "src/data/builders/probabilityDistribution.ts",
+        `export function buildDemo() {
+  return {
+    warnings: [{ text: "特征根方程 (x-2)(x+1)=0" }],
+  };
+}
+`,
+      );
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("error");
+    });
+
+    it("知识树非拓展节点：写洛必达必须判 error（原静默通过）", () => {
+      const issues = checkAt(
+        "src/data/knowledgeTree/conic.ts",
+        nodeBlock(
+          "know-conic-polarization",
+          "gaokao",
+          "洛必达法则速解圆锥曲线",
+        ),
+      );
+      expect(issues.length).toBe(1);
+      expect(issues[0].severity).toBe("error");
+    });
+
+    it("知识树拓展节点：节点自身声明 extend 时才放行其主题词", () => {
+      const issues = checkAt(
+        "src/data/knowledgeTree/derivative.ts",
+        nodeBlock(
+          "know-derivative-endpoint",
+          "extend",
+          "端点效应与泰勒拟合放缩（拓展 · 超出课标）",
+        ),
+      );
+      expect(issues).toEqual([]);
+    });
+
+    it("专页登记不构成整体免疫：二阶导数页写洛必达仍须报出", () => {
+      const issues = checkAt(
+        "src/features/second-derivative/SecondDerivativeAnimation.tsx",
+        `export const label = "洛必达法则";`,
+      );
+      expect(issues.length).toBe(1);
+      expect(issues[0].type).toBe("超纲术语");
+    });
+
+    it("参数方程专页：原标内豁免已排除的「双曲线参数方程」不得被模块登记吞掉", () => {
+      const issues = checkAt(
+        "src/features/conicParamT/LineParamTAnimation.tsx",
+        `export const label = "双曲线参数方程与渐近线";`,
+      );
+      expect(issues.length).toBe(1);
+      expect(issues[0].type).toBe("超纲术语");
+    });
+
+    it("已登记模块：数列二阶递推的「特征根」按登记放行（显式登记，非漏检）", () => {
+      const issues = checkAt(
+        "src/data/builders/sequence.ts",
+        "export const label = `特征根 $r_1, r_2$`;",
+      );
+      expect(issues).toEqual([]);
+    });
+
+    // ── 白名单元数据护栏：条目必须能真正成为 hit，且在该模块源码中真实存在 ──
+    const isProducible = (term: string) =>
+      beyondTerms.some((bt) => bt === term || bt.includes(term)) ||
+      beyondPatterns.some((f) => f.label.includes(term)) ||
+      term === concavityLabel;
+
+    const collectSourceText = (mod: AuthorizedModule) => {
+      const files: string[] = [];
+      const walk = (dir: string) => {
+        for (const entry of readdirSync(resolve(process.cwd(), dir), {
+          withFileTypes: true,
+        })) {
+          const rel = `${dir}/${entry.name}`;
+          if (entry.isDirectory()) walk(rel);
+          else if (/\.tsx?$/.test(entry.name)) files.push(rel);
+        }
+      };
+      for (const f of mod.features) walk(`src/features/${f}`);
+      for (const b of mod.builders) files.push(`src/data/builders/${b}.ts`);
+      for (const r of mod.registries) files.push(`src/data/registries/${r}.ts`);
+      return files
+        .map((f) => readFileSync(resolve(process.cwd(), f), "utf-8"))
+        .join("\n");
+    };
+
+    it("白名单不得留死条目：每个术语都必须能真正命中门禁（`凹凸` 类空条目已剔除）", () => {
+      const dead = whiteList.flatMap((m) =>
+        m.terms.filter((t) => !isProducible(t)).map((t) => `${m.key}:${t}`),
+      );
+      expect(dead).toEqual([]);
+      // 锁死历史死条目：`凹凸` 不在黑名单中，hit 恒为 CONCAVITY_TERM_LABEL，永不匹配
+      expect(whiteList.flatMap((m) => m.terms)).not.toContain("凹凸");
+    });
+
+    it("白名单活跃性：每个被登记的术语都必须在对应模块源码中真实出现", () => {
+      const missing: string[] = [];
+      for (const m of whiteList) {
+        const text = collectSourceText(m);
+        for (const t of m.terms) {
+          const hit =
+            t === concavityLabel
+              ? concavityPattern.test(text)
+              : text.includes(t);
+          if (!hit) missing.push(`${m.key}:${t}`);
+        }
+      }
+      expect(missing).toEqual([]);
+    });
+
+    it("白名单条目必须写明成立依据 reason（禁止无理由登记）", () => {
+      const noReason = whiteList
+        .filter((m) => !m.reason || m.reason.trim().length < 20)
+        .map((m) => m.key);
+      expect(noReason).toEqual([]);
     });
   });
 

@@ -996,17 +996,18 @@ export function buildSequencePanel(
           theorems.push({
             name: "重特征根型 (Δ = 0)",
             latex: `(x - r)^2 = 0 \\implies a_n = (C_1 + C_2 n) r^{n-1} \\quad (r = ${formatMathNumber(res.r1)})`,
-            condition: `待定系数二次方程有二重实根 $r_1 = r_2 = ${formatMathNumber(res.r1)}$`,
-            // 条目级课标边界标注：解特征根求根本身超出教材正文（教材只要求等差、等比与数学归纳法）
+            condition: `对应二次方程有二重实根 $r_1 = r_2 = ${formatMathNumber(res.r1)}$`,
+            // 条目级课标边界标注：解对应二次方程求根本身超出教材正文（教材只要求等差、等比与数学归纳法）
             isExtension: true,
             extensionBadge: "拓展 · 超出课标",
           });
         } else {
           theorems.push({
-            name: "特征根法 (二阶线性递推 · 拓展)",
+            name: "特征根法 (二阶线性递推)",
             latex: `x^2 - \\color{${MATH_COLORS.paramPrimary}}{p} x - \\color{${MATH_COLORS.paramSecondary}}{q} = 0 \\implies a_n = C_1 r_1^n + C_2 r_2^n \\quad (r_1 \\neq r_2)`,
-            condition: `判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} > 0$，两不同特征根为 $r_1=${formatMathNumber(res.r1)}, r_2=${formatMathNumber(res.r2)}$`,
-            // “拓展”此前只写在定理名称里，属隐式标注；改为条目级显式字段后右屏会出拓展徽标
+            condition: `判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} > 0$，对应二次方程的两实根为 $r_1=${formatMathNumber(res.r1)}, r_2=${formatMathNumber(res.r2)}$`,
+            // 条目级课标边界标注：正文陈述统一用课标内表述（「对应二次方程」），方法名只出现在
+            // 定理名 / 左屏标签 / 拓展徽标等命名载体上；「拓展」字样一律不进定理名（AGENTS.md 条目级声明约定）
             isExtension: true,
             extensionBadge: "拓展 · 超出课标",
           });
@@ -1019,14 +1020,14 @@ export function buildSequencePanel(
         });
       } else {
         warnings.push({
-          text: `待定系数二次方程判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} < 0$，无实特征根（拓展模型仅考查 $\\Delta \\ge 0$ 的实数特征根情形）。`,
+          text: `对应二次方程判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} < 0$，无实根（拓展模型仅考查 $\\Delta \\ge 0$ 的实根情形）。`,
           level: "danger",
           isExtension: true,
         });
       }
 
       gaokaoPoints.push({
-        text: "拓展 · 超出课标：二阶线性递推不在教材正文范围（教材只要求等差、等比与数学归纳法）。求待定系数二次方程根 $r_1, r_2$，构造等比数列 $b_n = a_{n+1} - r_1 a_n = (a_2 - r_1 a_1) r_2^{n-1}$，再用累加法或待定系数求解 $a_n$，可作强基与竞赛延伸。",
+        text: "拓展 · 超出课标：二阶线性递推不在教材正文范围（教材只要求等差、等比与数学归纳法）。求对应二次方程 $x^2 - px - q = 0$ 的两根 $r_1, r_2$，构造等比数列 $b_n = a_{n+1} - r_1 a_n = (a_2 - r_1 a_1) r_2^{n-1}$，再用累加法或待定系数求解 $a_n$，可作强基与竞赛延伸。",
         importance: "extend",
       });
 

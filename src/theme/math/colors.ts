@@ -98,10 +98,17 @@ export const PARAM_COLORS = {
 
 // ─── 交互反馈与特殊状态 (Interactive Feedback & Status) ────────────────────────
 export const STATUS_COLORS = {
-  interactiveHover: "#3B82F6", // 拖拽点悬停外圈发光色
   interactiveActive: "#2563EB", // 拖拽中激活色
   degeneracy: "#DC2626", // 退化/无解/空集警示色
   limitPoint: "#D97706", // 极限逼近目标点
+} as const;
+
+// ─── 分步作答三处同源 (Answer Step Sync) ──────────────────────────────────────
+// 当前步围栏（中屏）、聚焦卡片描边（右屏）与围栏标牌文字必须同色，是本页面的
+// 「当前步」唯一语义色。此前该角色被借用 `STATUS_COLORS.interactiveHover`（其声明语义为
+// 「拖拽点悬停外圈发光色」，实际零处按该语义消费，属语义错配），已于 2026-10-01 正名为此令牌。
+export const ANSWER_STEP_COLORS = {
+  answerStepFrame: "#3B82F6", // 当前步围栏描边 / 标牌文字（中屏）— 与右屏聚焦描边同色
 } as const;
 
 // ─── 概率、统计与组合计数 (Probability, Statistics & Combinatorics) ────────────
@@ -189,6 +196,7 @@ export const MATH_COLORS = {
   ...SPACE_3D_COLORS,
   ...PARAM_COLORS,
   ...STATUS_COLORS,
+  ...ANSWER_STEP_COLORS,
   ...PROBABILITY_COLORS,
   ...COMBINATORICS_COLORS,
   ...CANVAS_COLORS,
