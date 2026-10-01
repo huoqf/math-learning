@@ -1,19 +1,5 @@
 {
-  "generatedAt": "2026-10-01T04:02:49.410Z",
+  "generatedAt": "2026-10-01T07:12:35.619Z",
   "note": "存量违规基线：仅用于 strict 模式区分\"历史存量\"与\"本次增量\"。整改后请用 --update-baseline 下修。",
-  "counts": {
-    "src/data/builders/derivativeEndpointTaylor.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 14,
-    "src/data/builders/lineParamT.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 17,
-    "src/data/builders/secondDerivative.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 32,
-    "src/data/builders/sequence.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 3,
-    "src/data/knowledgeTree/conic.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 2,
-    "src/data/knowledgeTree/derivative.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 5,
-    "src/features/conicParamT/LineParamTAnimation.tsx::discipline/no-beyond-syllabus-terms::超纲术语::warning": 3,
-    "src/features/conicParamT/meta.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 1,
-    "src/features/derivative-endpoint-taylor/DerivativeEndpointTaylorAnimation.tsx::discipline/no-beyond-syllabus-terms::超纲术语::warning": 8,
-    "src/features/derivative-endpoint-taylor/meta.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 1,
-    "src/features/second-derivative/meta.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 2,
-    "src/features/second-derivative/scenePalette.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 3,
-    "src/features/second-derivative/SecondDerivativeAnimation.tsx::discipline/no-beyond-syllabus-terms::超纲术语::warning": 33
-  }
+  "counts": {}
 }

@@ -510,6 +510,47 @@ function resolveOwnerNodeExtend(ctx) {
   return false;
 }
 
+const EXTEND_MODULE_AUTHORIZED_TERMS = {
+  // 二阶导数与拐点专题
+  'second-derivative': ['二阶导', '拐点', '凹凸', CONCAVITY_TERM_LABEL, '琴生'],
+  secondDerivative: ['二阶导', '拐点', '凹凸', CONCAVITY_TERM_LABEL, '琴生'],
+  // 泰勒展开与端点效应专题
+  'derivative-endpoint-taylor': ['泰勒', '麦克劳林', '洛必达', "L'Hôpital", "L’Hôpital", '等价无穷小', '二阶导'],
+  derivativeEndpointTaylor: ['泰勒', '麦克劳林', '洛必达', "L'Hôpital", "L’Hôpital", '等价无穷小', '二阶导'],
+  // 直线参数方程专题
+  conicParamT: ['参数方程'],
+  lineParamT: ['参数方程'],
+};
+
+function isAuthorizedExtendModuleTerm(ctx, hit) {
+  const rel = ctx.relPath;
+  if (!rel) return false;
+
+  // ① src/features/<feature>/**
+  const featureMatch = rel.match(/^src\/features\/([^/]+)\//);
+  if (featureMatch) {
+    const list = EXTEND_MODULE_AUTHORIZED_TERMS[featureMatch[1]];
+    if (list && list.some((t) => hit.includes(t) || t === hit)) return true;
+  }
+
+  // ② src/data/builders/<builder>.ts
+  const builderMatch = rel.match(/^src\/data\/builders\/([^/]+)\.ts$/);
+  if (builderMatch) {
+    const list = EXTEND_MODULE_AUTHORIZED_TERMS[builderMatch[1]];
+    if (list && list.some((t) => hit.includes(t) || t === hit)) return true;
+  }
+
+  // ③ 知识树本身在定义对应拓展节点时，合法出现其标题词
+  if (rel.includes('knowledgeTree')) {
+    const allAuthorized = Object.values(EXTEND_MODULE_AUTHORIZED_TERMS).flat();
+    if (allAuthorized.some((t) => hit.includes(t) || t === hit)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export const disciplineRules = [
   {
     id: 'discipline/standard-symbols',
@@ -696,6 +737,14 @@ export const disciplineRules = [
             if (isCompliantParametric && !line.includes('双曲线参数方程')) {
               return;
             }
+          }
+
+          // 专属拓展模块合法主题闭环放行（方案三）：
+          // 经批准设立的专属选学拓展专页（二阶导数、泰勒公式、参数方程等），在其专属组件与
+          // builder 中使用其被授权的核心授课术语属合法正当教学内容，直接闭环放行；
+          // 若在专属专页中出现非本专题超纲术语（如参数方程页写洛必达），则继续保留 warning 提醒。
+          if (isAuthorizedExtendModuleTerm(ctx, hit)) {
+            return;
           }
 
           const declaredExtend = itemDeclaresExtend(idx) || ownerNodeIsExtend;

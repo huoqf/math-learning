@@ -149,10 +149,10 @@ for (const [key, count] of Object.entries(currentCounts)) {
     legacyWarnings += Math.min(count, base);
   }
 }
-const hasBaseline = Object.keys(baselineCounts).length > 0;
+const hasBaseline = fs.existsSync(baselinePath);
 
 // 门禁守卫：strict 模式强制要求存量基线文件已纳入版本控制。
-// 防止 .audit-baseline.json 未随变更提交（CI 检出后缺失）时，全库 402 处存量被误判为增量导致构建全面红灯。
+// 防止 .audit-baseline.json 未随变更提交（CI 检出后缺失）时，全库违规被误判为增量导致构建全面红灯。
 if (isStrict && !hasBaseline) {
   console.error(
     `🚨 ${c.red}${c.bold}[门禁拦截]${c.reset} strict 模式未检测到存量基线 .audit-baseline.json，全库违规将全部按"增量"判定并阻断构建。`

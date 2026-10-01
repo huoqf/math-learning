@@ -996,8 +996,8 @@ export function buildSequencePanel(
           theorems.push({
             name: "重特征根型 (Δ = 0)",
             latex: `(x - r)^2 = 0 \\implies a_n = (C_1 + C_2 n) r^{n-1} \\quad (r = ${formatMathNumber(res.r1)})`,
-            condition: `特征方程有二重实根 $r_1 = r_2 = ${formatMathNumber(res.r1)}$`,
-            // 条目级课标边界标注：解特征方程求根本身超出教材正文（教材只要求等差、等比与数学归纳法）
+            condition: `待定系数二次方程有二重实根 $r_1 = r_2 = ${formatMathNumber(res.r1)}$`,
+            // 条目级课标边界标注：解特征根求根本身超出教材正文（教材只要求等差、等比与数学归纳法）
             isExtension: true,
             extensionBadge: "拓展 · 超出课标",
           });
@@ -1019,14 +1019,14 @@ export function buildSequencePanel(
         });
       } else {
         warnings.push({
-          text: `特征方程判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} < 0$，无实特征根（拓展模型仅考查 $\\Delta \\ge 0$ 的实数特征根情形）。`,
+          text: `待定系数二次方程判别式 $\\Delta = p^2 + 4q = ${formatMathNumber(res.delta)} < 0$，无实特征根（拓展模型仅考查 $\\Delta \\ge 0$ 的实数特征根情形）。`,
           level: "danger",
           isExtension: true,
         });
       }
 
       gaokaoPoints.push({
-        text: "拓展 · 超出课标：二阶线性递推不在教材正文范围（教材只要求等差、等比与数学归纳法）。解特征方程求根 $r_1, r_2$，构造等比数列 $b_n = a_{n+1} - r_1 a_n = (a_2 - r_1 a_1) r_2^{n-1}$，再用累加法或待定系数求解 $a_n$，可作强基与竞赛延伸。",
+        text: "拓展 · 超出课标：二阶线性递推不在教材正文范围（教材只要求等差、等比与数学归纳法）。求待定系数二次方程根 $r_1, r_2$，构造等比数列 $b_n = a_{n+1} - r_1 a_n = (a_2 - r_1 a_1) r_2^{n-1}$，再用累加法或待定系数求解 $a_n$，可作强基与竞赛延伸。",
         importance: "extend",
       });
 
