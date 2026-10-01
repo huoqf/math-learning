@@ -389,7 +389,11 @@ export function LineEquationAnimation() {
       const C = params.C ?? -1;
       const x0 = params.x0 ?? 2;
       const y0 = params.y0 ?? 3;
-      const d = Math.abs(A * x0 + B * y0 + C) / Math.hypot(A, B);
+      const denom = Math.hypot(A, B);
+      if (denom < 1e-6) {
+        return `A = 0, B = 0 \\implies \\text{直线不成立 (无距离定义)}`;
+      }
+      const d = Math.abs(A * x0 + B * y0 + C) / denom;
 
       return `d = \\frac{|\\color{${c1}}{${A.toFixed(1)}} \\cdot (${x0.toFixed(1)}) + \\color{${c2}}{${B.toFixed(1)}} \\cdot (${y0.toFixed(1)}) + (${C.toFixed(1)})|}{\\sqrt{\\color{${c1}}{${A.toFixed(1)}}^2 + (\\color{${c2}}{${B.toFixed(1)}})^2}} = \\mathbf{${d.toFixed(2)}}`;
     } else if (studyMode === "relation") {

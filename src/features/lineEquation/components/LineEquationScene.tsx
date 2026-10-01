@@ -12,6 +12,8 @@ import {
   SceneLabelGroup,
 } from "@/components/Math";
 import { MATH_COLORS } from "@/theme";
+import { paramMeta } from "@/data/registries/lineEquation";
+import { paramDragBounds } from "@/utils/paramClamp";
 import { useLineEquationScene } from "../hooks/useLineEquationScene";
 
 interface LineEquationSceneProps {
@@ -56,6 +58,14 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
     studyMode,
     form,
   });
+
+  /**
+   * 拖拽钳制域 = 左屏参数声明域 ∩ 中屏可见视口（SSOT：@/utils/paramClamp）。
+   * 中屏每个可拖拽点都必须同时守住两条边界：越过滑块量程则读数与图形脱节，
+   * 越过可见画布则控制点被拖出视口后再也抓不回来。此处仅做「参数键 → 合法区间」转接。
+   */
+  const dragBounds = (xMetaKey: string, yMetaKey: string) =>
+    paramDragBounds(paramMeta[xMetaKey], paramMeta[yMetaKey], scale);
 
   return (
     <g>
@@ -169,6 +179,7 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
           color={MATH_COLORS.paramPrimary}
           r={6}
           fontScale={fontScale}
+          {...dragBounds("x0", "y0")}
         />
       )}
 
@@ -184,6 +195,7 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
             color={MATH_COLORS.paramSecondary}
             r={6}
             fontScale={fontScale}
+            {...dragBounds("x1", "y1")}
           />
           <InteractivePoint
             cx={params.x2 ?? 2}
@@ -194,6 +206,7 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
             color={MATH_COLORS.paramTertiary}
             r={6}
             fontScale={fontScale}
+            {...dragBounds("x2", "y2")}
           />
         </>
       )}
@@ -209,6 +222,7 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
           color={MATH_COLORS.paramSecondary}
           r={6}
           fontScale={fontScale}
+          {...dragBounds("x0", "y0")}
         />
       )}
 

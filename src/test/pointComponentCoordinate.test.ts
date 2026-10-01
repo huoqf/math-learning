@@ -1,6 +1,6 @@
 /**
  * src/test/pointComponentCoordinate.test.ts
- * 「点组件坐标系」全库静态契约（2026-09-30 新增）
+ * 「点组件坐标系」全库静态契约（2026-09-30 新增，2026-10-01 补回第三条规则）
  *
  * 本项目有两个语义**正好相反**的点组件，是全库最隐蔽的坐标系陷阱：
  *   · `MathPoint`       —— `cx/cy` 是**数学坐标**（且必须同时给 `scale`），`x/y` 才是**设计像素**；
@@ -15,12 +15,19 @@
  *      全部 11 个特征点/手柄位置错误。`corePagesSmoke` 把点组件 mock 成 null，结构上测不出来。
  *   2. 历史上 `vectorBasis` 的 10 处手柄坐标错位（09-19 报告 N2）同理。
  *
- * 本文件用**纯静态扫描**把两条契约钉死（不依赖 `cx/cy` 命名是否带 `Design` 后缀这种运气）：
+ * 本文件用**纯静态扫描**把三条契约钉死（不依赖 `cx/cy` 命名是否带 `Design` 后缀这种运气）：
  *   ① 每个 `<MathPoint>` 必须满足 `(cx & cy & scale)` 或 `(x & y)`；
- *   ② 每个 `<InteractivePoint>` 必须含 `scale`，且 `cx/cy` 不得是
+ *   ② 每个 `<MathPoint>` **一旦传了 `scale`**，就必须用 `cx/cy`，**严禁**把 `x/y` 与 `scale` 混用
+ *      （`x/y` 分支会忽略 `scale`，故"设计像素 + scale"= 数学坐标被丢进像素槽，即 P0-1 的写法）；
+ *   ③ 每个 `<InteractivePoint>` 必须含 `scale`，且 `cx/cy` 不得是
  *      `mathToDesign(...)` 的直接调用、也不得是 `*Design.*` 这类已换算变量。
  *
- * ⚠ 这是**结构守卫**，不是行为测试：它只能拦住上述两类已知写法，拦不住"变量名叫 e1 但其实
+ * ⚠ ① 与 ② 是**互补**而非包含关系，缺一不可：
+ *   · `<MathPoint cx={..} cy={..} />`（漏 scale）→ 只有 ① 能拦；
+ *   · `<MathPoint x={..} y={..} scale={..} />`（即 P0-1）→ ① 误判为"设计坐标合法"而放行，
+ *     只有 ② 能拦。
+ *
+ * ⚠ 这是**结构守卫**，不是行为测试：它只能拦住上述几类已知写法，拦不住"变量名叫 e1 但其实
  *   装的是设计像素"这类改名式错误（见 09-19 N2）。真正的行为覆盖仍需渲染层断言。
  */
 
@@ -90,6 +97,28 @@ describe("点组件坐标系静态契约（全库 src/features/**/*.tsx）", () 
       violations,
       "MathPoint 的 cx/cy 需与 scale 同时传入（src/components/Math/MathPoint.tsx:89）；" +
         "若手上已是 mathToDesign 结果，请改传 x/y",
+    ).toEqual([]);
+  });
+
+  it("每个 <MathPoint> 使用 scale 时必须用 cx/cy，严禁把 x/y 与 scale 混用", () => {
+    // x/y 分支会**忽略** scale（MathPoint.tsx:89）。故 "设计像素 + scale" 等价于
+    // 把数学坐标灌进像素槽 ⇒ 点塌到画布左上角。这是 P0-1 的确切写法，而规则 ① 拦不住它
+    // （① 看到 x/y 就认为"设计坐标合法"）。
+    const violations = collectBlocks(tsxFiles, "MathPoint")
+      .filter(({ body }) => {
+        const hasScale = /\bscale\s*=/.test(body);
+        const hasDirectX = /\bx\s*=/.test(body) && !/\bcx\s*=/.test(body);
+        const hasDirectY = /\by\s*=/.test(body) && !/\bcy\s*=/.test(body);
+        return hasScale && (hasDirectX || hasDirectY);
+      })
+      .map(
+        ({ file, line, body }) =>
+          `${file}:${line} —— ${body.split("\n")[0].trim()}（x/y 与 scale 混用，scale 会被忽略）`,
+      );
+
+    expect(
+      violations,
+      "发现 MathPoint 误用 x/y 搭配 scale（应改用 cx/cy 传数学坐标）",
     ).toEqual([]);
   });
 

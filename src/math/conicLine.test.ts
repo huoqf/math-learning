@@ -367,6 +367,61 @@ describe("solveConicLineIntersection", () => {
     expect(res.status).toBe("disjoint");
   });
 
+  it("应当正确识别双曲线中点弦同支(w>1)与异支(w<0)存在性，并能准确解出弦端点", () => {
+    // 双曲线 a=2, b=2, M(2.9, 0.2) => w = 2.9^2/4 - 0.2^2/4 = 2.0925 > 1 (同支实弦)
+    const resSameBranch = solveConicLineIntersection({
+      conicType: "hyperbola",
+      studyMode: "midpoint",
+      a: 2,
+      b: 2,
+      p: 2,
+      k: 0,
+      m: 0,
+      midpointX: 2.9,
+      midpointY: 0.2,
+    });
+    expect(resSameBranch.isMidpointValid).toBe(true);
+    expect(resSameBranch.status).toBe("secant");
+    expect(resSameBranch.intersections.length).toBe(2);
+    // 两交点中点与 M 一致
+    const midX =
+      (resSameBranch.intersections[0].x + resSameBranch.intersections[1].x) / 2;
+    const midY =
+      (resSameBranch.intersections[0].y + resSameBranch.intersections[1].y) / 2;
+    expect(midX).toBeCloseTo(2.9, 3);
+    expect(midY).toBeCloseTo(0.2, 3);
+
+    // 双曲线 a=2, b=2, M(1, 2) => w = 1/4 - 4/4 = -0.75 < 0 (异支实弦)
+    const resCrossBranch = solveConicLineIntersection({
+      conicType: "hyperbola",
+      studyMode: "midpoint",
+      a: 2,
+      b: 2,
+      p: 2,
+      k: 0,
+      m: 0,
+      midpointX: 1,
+      midpointY: 2,
+    });
+    expect(resCrossBranch.isMidpointValid).toBe(true);
+    expect(resCrossBranch.status).toBe("secant");
+    expect(resCrossBranch.intersections.length).toBe(2);
+
+    // 双曲线 a=2, b=2, M(1.2, 0.5) => w = 1.44/4 - 0.25/4 = 0.2975 ∈ [0, 1] (无实数中点弦)
+    const resInvalid = solveConicLineIntersection({
+      conicType: "hyperbola",
+      studyMode: "midpoint",
+      a: 2,
+      b: 2,
+      p: 2,
+      k: 0,
+      m: 0,
+      midpointX: 1.2,
+      midpointY: 0.5,
+    });
+    expect(resInvalid.isMidpointValid).toBe(false);
+  });
+
   it("应当针对不同圆锥曲线返回深度特化的典型预设", async () => {
     const { getConicLinePresets } = await import("@/data/registries/conicLine");
     const ellipseGeneral = getConicLinePresets("ellipse", "general");

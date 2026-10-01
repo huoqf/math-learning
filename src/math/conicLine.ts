@@ -150,11 +150,13 @@ export function solveConicLineIntersection(
         k = -(b * b * x0) / (a * a * y0);
       }
     } else if (conicType === "hyperbola") {
-      // 双曲线中点弦存在条件：位于两支之间 (x0^2/a^2 - y0^2/b^2 < 0) 或特定区域
+      // 双曲线中点弦存在充要条件：Δ = 4a²b²·w(w-1) > 0 ⟺ w < 0 (异支弦) 或 w > 1 (同支弦)
+      // 其中 w = x0²/a² - y0²/b²，点 M(x0, y0) 不在渐近线上
       if (Math.abs(y0) > 1e-5) {
         k = (b * b * x0) / (a * a * y0);
       }
-      isMidpointValid = (x0 * x0) / (a * a) - (y0 * y0) / (b * b) < 0;
+      const w = (x0 * x0) / (a * a) - (y0 * y0) / (b * b);
+      isMidpointValid = w * (w - 1) > 0;
     } else {
       // 抛物线 y^2 = 2px, 内部点满足 y0^2 < 2px0
       isMidpointValid = y0 * y0 < 2 * p * x0;

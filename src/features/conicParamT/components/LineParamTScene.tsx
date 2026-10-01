@@ -19,6 +19,8 @@ import {
   normalizeEllipseAxes,
   type ConicType,
 } from "@/math/lineParamT";
+import { paramDragBounds } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/lineParamT";
 
 export interface LineParamTSceneProps {
   params: Record<string, number>;
@@ -517,6 +519,7 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
           onParamChange("x0", Number(mathPt.x.toFixed(2)));
           onParamChange("y0", Number(mathPt.y.toFixed(2)));
         }}
+        {...paramDragBounds(paramMeta.x0, paramMeta.y0, scale)}
       />
 
       {/* SVG 内标注 (使用避让算法排布，带白色微描边防遮挡) */}

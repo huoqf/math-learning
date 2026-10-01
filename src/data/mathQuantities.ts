@@ -51,6 +51,7 @@ import { buildSequencePanel } from "./builders/sequence";
 import { buildConicDefinitionPanel } from "./builders/conicDefinition";
 import { buildConicPropertiesPanel } from "./builders/conicProperties";
 import { buildLineEquationPanel } from "./builders/lineEquation";
+import { buildCircleEquationPanel } from "./builders/circleEquation";
 import { buildTrigLinesPanel } from "./builders/trigLines";
 import { buildTrigIdentityPanel } from "./builders/trigIdentity";
 import { buildTrigFormulasPanel } from "./builders/trigFormulas";
@@ -260,6 +261,8 @@ export function buildMathQuantities(
       return buildLineParamTPanel(params, config);
     case "anim-line-equation":
       return buildLineEquationPanel(params, config);
+    case "anim-circle-equation":
+      return buildCircleEquationPanel(params, config);
     case "anim-line-circle":
       return buildLineCirclePanel(params, config);
     case "anim-circle-circle":

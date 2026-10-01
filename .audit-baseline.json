@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-29T00:44:10.607Z",
+  "generatedAt": "2026-10-01T04:02:49.410Z",
   "note": "存量违规基线：仅用于 strict 模式区分\"历史存量\"与\"本次增量\"。整改后请用 --update-baseline 下修。",
   "counts": {
     "src/data/builders/derivativeEndpointTaylor.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 14,
-    "src/data/builders/lineParamT.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 6,
+    "src/data/builders/lineParamT.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 17,
     "src/data/builders/secondDerivative.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 32,
     "src/data/builders/sequence.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 3,
     "src/data/knowledgeTree/conic.ts::discipline/no-beyond-syllabus-terms::超纲术语::warning": 2,

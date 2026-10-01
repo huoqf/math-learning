@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
@@ -6,6 +6,8 @@ import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabelOverlap } from "@/utils/labelOverlap";
 import { calculateLineCircle } from "@/math/lineCircle";
+import { paramMeta } from "@/data/registries/lineCircle";
+import { paramDragBounds, paramDragRange } from "@/utils/paramClamp";
 import type { LineCircleStudyMode } from "../LineCircleAnimation";
 
 interface LineCircleSceneProps {
@@ -50,8 +52,17 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
   const footDesign = mathToDesign(calcRes.foot.x, calcRes.foot.y, scale);
 
   // 3. 计算直线在屏幕视口延伸的端点 P1, P2
-  const lineP1 = mathToDesign(-12, p.k * -12 + p.m, scale);
-  const lineP2 = mathToDesign(12, p.k * 12 + p.m, scale);
+  const isVerticalLine = Math.abs(p.k) > 1e4;
+  const lineP1 = mathToDesign(
+    isVerticalLine ? p.mx : -12,
+    isVerticalLine ? scale.yMin - 2 : p.k * -12 + p.m,
+    scale,
+  );
+  const lineP2 = mathToDesign(
+    isVerticalLine ? p.mx : 12,
+    isVerticalLine ? scale.yMax + 2 : p.k * 12 + p.m,
+    scale,
+  );
 
   // 4. 交点 A, B
   const intersectionsDesign = calcRes.intersections.map((pt) =>
@@ -232,6 +243,18 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
           y: (centerDesign.y + intersectionsDesign[0].y) / 2,
         }
       : null;
+
+  // 9. 拖拽钳制 (SSOT)：左屏声明域 ∩ 中屏可见视口，逐点展开到 <InteractivePoint>
+  const dragBounds = (xMetaKey: string, yMetaKey: string) =>
+    paramDragBounds(paramMeta[xMetaKey], paramMeta[yMetaKey], scale);
+
+  // 半径手柄横坐标是派生量 a + r (受控量是 r)，故须把 r 的声明域整体平移 a 后再与
+  // 可见视口求交；平移后若区间塌陷 (lo > hi)，paramDragRange 返回 undefined，手柄退化
+  // 为"该轴不钳制"，绝不传非法区间把它钉死。
+  const rMeta = paramMeta.r;
+  const radiusHandleXRange = rMeta
+    ? paramDragRange({ min: p.a + rMeta.min, max: p.a + rMeta.max }, scale, "x")
+    : undefined;
 
   return (
     <g>
@@ -561,6 +584,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
         cy={p.b}
         scale={scale}
         vp={vp}
+        {...dragBounds("a", "b")}
         color={MATH_COLORS.paramPrimary}
         fontScale={fontScale}
         onDrag={(pt) => {
@@ -576,6 +600,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
         cy={p.b}
         scale={scale}
         vp={vp}
+        xRange={radiusHandleXRange}
         color={MATH_COLORS.paramPrimary}
         fontScale={fontScale}
         onDrag={(pt) => {
@@ -590,6 +615,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
         cy={p.m}
         scale={scale}
         vp={vp}
+        {...paramDragBounds(undefined, paramMeta.m, scale)}
         color={MATH_COLORS.paramSecondary}
         fontScale={fontScale}
         onDrag={(pt) => {
@@ -604,6 +630,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
           cy={p.my}
           scale={scale}
           vp={vp}
+          {...dragBounds("mx", "my")}
           color={MATH_COLORS.paramSecondary}
           fontScale={fontScale}
           onDrag={(pt) => {
@@ -620,6 +647,7 @@ export const LineCircleScene: React.FC<LineCircleSceneProps> = ({
           cy={p.py}
           scale={scale}
           vp={vp}
+          {...dragBounds("px", "py")}
           color={MATH_COLORS.complexNum}
           fontScale={fontScale}
           onDrag={(pt) => {

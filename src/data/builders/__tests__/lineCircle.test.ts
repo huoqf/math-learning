@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildLineCirclePanel } from "../lineCircle";
+import { solveChordLineFromMidpoint } from "@/math/lineCircle";
 
 describe("buildLineCirclePanel 右屏数据构造器测试", () => {
   it("位置关系模式 (relation): 正确生成三步破题推演链与双轨判定指标", () => {
@@ -98,6 +99,47 @@ describe("buildLineCirclePanel 右屏数据构造器测试", () => {
     expect(data.reasoningSteps).toBeDefined();
     expect(data.reasoningSteps?.length).toBe(3);
     expect(data.reasoningSteps?.[2].title).toContain("点差法原理");
+  });
+
+  it("垂径中点模式 (midpoint) 退化：连心线水平 ⇒ 割线铅垂，严禁播报渲染哨兵 1000000", () => {
+    // 圆心 C(0,0)，弦中点 M(3,0) 与圆心等高（my = b）⇒ 连心线 CH 水平 ⇒ 割线 AB 为铅垂线 x = 3。
+    // 斜截式无法表达铅垂线，solveChordLineFromMidpoint 会返回渲染哨兵 k = 1e6。
+    // 修复前：看板直接把该哨兵经 formatMathNumber 播报成 "1000000"，
+    // 且推导链输出 "k_{AB} = -1/0 = 1000000" 这类学生可当场代入推翻的假等式。
+    const chord = solveChordLineFromMidpoint(0, 0, 3, 0);
+    expect(chord.degenerate).toBe(true);
+
+    const data = buildLineCirclePanel(
+      { a: 0, b: 0, r: 5, k: chord.k, m: chord.m, mx: 3, my: 0 },
+      { studyMode: "midpoint" },
+    );
+
+    const kAB = data.quantities.find((q) => q.label.includes("割线 AB 斜率"));
+    expect(kAB).toBeDefined();
+    expect(String(kAB?.value)).toBe("不存在");
+    expect(String(kAB?.value)).not.toContain("1000000");
+
+    const kProd = data.quantities.find((q) => q.label.includes("斜率乘积"));
+    expect(String(kProd?.value)).toContain("退化不适用");
+
+    // 推导链第 2 步（斜率垂直乘积）必须显式判退化，不得输出哨兵
+    const step2 = data.reasoningSteps?.[1];
+    expect(step2?.latex).toBeTruthy();
+    expect(String(step2?.latex)).not.toContain("1000000");
+    expect(String(step2?.latex)).toContain("不存在");
+
+    // 全看板与全推导链都不允许出现哨兵值
+    data.quantities.forEach((q) => {
+      expect(String(q.value)).not.toContain("1000000");
+    });
+    data.reasoningSteps?.forEach((step) => {
+      expect(String(step.latex)).not.toContain("1000000");
+    });
+
+    // 必须有针对铅垂割线的教学警示
+    expect(data.warnings.some((w) => w.text.includes("$k_{AB}$ 不存在"))).toBe(
+      true,
+    );
   });
 
   it("契约保证：计算型推导步骤绝无孤立数字，严格遵循等号链三部曲 (公式 -> 代入 -> 结果)", () => {

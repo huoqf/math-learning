@@ -20,6 +20,8 @@ import {
   type LabelEntry,
   type PlacedLabel,
 } from "@/utils/labelAvoider";
+import { paramDragRange } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/parabolaArchimedes";
 
 interface ParabolaArchimedesSceneProps {
   params: {
@@ -126,9 +128,10 @@ export const ParabolaArchimedesScene: React.FC<
     const dy = mathPt.y - base.focus.y;
     let deg = (Math.atan2(dy, dx) * 180) / Math.PI;
     if (deg < 0) deg += 360;
-    // 限制在 (20°, 160°) 焦点弦合理区间
+    // 限制在 (20°, 160°) 焦点弦合理区间；正交弦模式限制在 (20°, 75°)
     if (deg > 180) deg = 360 - deg;
-    const clamped = Math.max(20, Math.min(160, deg));
+    const maxDeg = mode === "orthogonalChords" ? 75 : 160;
+    const clamped = Math.max(20, Math.min(maxDeg, deg));
     onParamChange("thetaDeg", Math.round(clamped));
   };
 
@@ -394,6 +397,7 @@ export const ParabolaArchimedesScene: React.FC<
             scale={scale}
             vp={vp}
             onDrag={handleQDrag}
+            yRange={paramDragRange(paramMeta.yQ, scale, "y")}
             color={MATH_COLORS.paramSecondary}
             r={5.5}
             fontScale={fontScale}

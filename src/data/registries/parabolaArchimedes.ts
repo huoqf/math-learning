@@ -41,8 +41,8 @@ export const PARABOLA_ARCHIMEDES_PRESETS: Record<
     },
     {
       key: "high_aspect",
-      label: "高偏心切点",
-      params: { p: 2.0, yQ: 3.5 },
+      label: "偏心切点",
+      params: { p: 1.5, yQ: 1.8 },
     },
   ],
   focalChordProperties: [

@@ -217,6 +217,22 @@ export function useParabolaScene({
           dy: -8,
           text: "K",
         },
+        {
+          key: "label-A-prime",
+          x: mathToDesign(base.directrixConstant, chordInfo.A.y, scale).x,
+          y: mathToDesign(base.directrixConstant, chordInfo.A.y, scale).y,
+          anchor: "end",
+          dy: -8,
+          text: "A'",
+        },
+        {
+          key: "label-B-prime",
+          x: mathToDesign(base.directrixConstant, chordInfo.B.y, scale).x,
+          y: mathToDesign(base.directrixConstant, chordInfo.B.y, scale).y,
+          anchor: "end",
+          dy: 14,
+          text: "B'",
+        },
       );
     } else if (studyMode === "tangentOptical") {
       const Q_d = mathToDesign(mongeInfo.Q.x, mongeInfo.Q.y, scale);
@@ -237,6 +253,30 @@ export function useParabolaScene({
         anchor: "start",
         dy: -8,
         text: "P",
+      });
+
+      const T_d = mathToDesign(
+        opticalInfo.axisIntercept.x,
+        opticalInfo.axisIntercept.y,
+        scale,
+      );
+      rawLabels.push({
+        key: "label-T-opt",
+        x: T_d.x,
+        y: T_d.y,
+        anchor: "end",
+        dy: 14,
+        text: "T",
+      });
+
+      const H_d = mathToDesign(base.directrixConstant, P.y, scale);
+      rawLabels.push({
+        key: "label-H-opt",
+        x: H_d.x,
+        y: H_d.y,
+        anchor: "end",
+        dy: -8,
+        text: "H",
       });
 
       const A_d = mathToDesign(mongeInfo.A.x, mongeInfo.A.y, scale);
@@ -262,7 +302,16 @@ export function useParabolaScene({
     }
 
     return avoidLabels(rawLabels);
-  }, [base, P, radiusInfo, chordInfo, mongeInfo, studyMode, scale]);
+  }, [
+    base,
+    P,
+    radiusInfo,
+    chordInfo,
+    mongeInfo,
+    opticalInfo,
+    studyMode,
+    scale,
+  ]);
 
   return {
     base,

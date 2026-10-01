@@ -425,8 +425,16 @@ export function buildLineEquationPanel(
         {
           step: 3,
           title: "求解反思 · 求解两轴截距与几何图象",
-          detail: `令 $y = 0$ 解得 $x$ 轴截距 $a = -\\frac{C}{A}$；令 $x = 0$ 解得 $y$ 轴截距 $b = -\\frac{C}{B}$：`,
-          latex: `a = -\\frac{C}{A} = -\\frac{${formatMathNumber(C)}}{${formatMathNumber(A)}} = ${lineProps.xIntercept !== null ? formatMathNumber(lineProps.xIntercept) : "\\text{不存在}"}, \\quad b = -\\frac{C}{B} = -\\frac{${formatMathNumber(C)}}{${formatMathNumber(B)}} = ${lineProps.yIntercept !== null ? formatMathNumber(lineProps.yIntercept) : "\\text{不存在}"}`,
+          detail: `令 $y = 0$ 讨论 $x$ 轴截距；令 $x = 0$ 讨论 $y$ 轴截距：`,
+          latex: `${
+            Math.abs(A) > 1e-9
+              ? `a = -\\frac{C}{A} = -\\frac{${formatMathNumber(C)}}{${formatMathNumber(A)}} = ${formatMathNumber(lineProps.xIntercept ?? 0)}`
+              : `A = 0 \\implies \\text{平行于 } x \\text{ 轴，} a \\text{ 不存在}`
+          }, \\quad ${
+            Math.abs(B) > 1e-9
+              ? `b = -\\frac{C}{B} = -\\frac{${formatMathNumber(C)}}{${formatMathNumber(B)}} = ${formatMathNumber(lineProps.yIntercept ?? 0)}`
+              : `B = 0 \\implies \\text{平行于 } y \\text{ 轴，} b \\text{ 不存在}`
+          }`,
           rubric: "采分点：正确求解坐标轴截距（3分）",
         },
       );

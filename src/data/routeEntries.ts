@@ -175,6 +175,10 @@ import {
   lineEquationNode,
   lineEquationLoader,
 } from "@/features/lineEquation/meta";
+import {
+  circleEquationNode,
+  circleEquationLoader,
+} from "@/features/circleEquation/meta";
 import { lineCircleNode, lineCircleLoader } from "@/features/line-circle/meta";
 import {
   circleCircleNode,
@@ -397,6 +401,10 @@ export const routeEntries: RouteEntry[] = [
   {
     node: lineEquationNode,
     loader: lineEquationLoader as RouteEntry["loader"],
+  },
+  {
+    node: circleEquationNode,
+    loader: circleEquationLoader as RouteEntry["loader"],
   },
   { node: lineCircleNode, loader: lineCircleLoader },
   { node: circleCircleNode, loader: circleCircleLoader },

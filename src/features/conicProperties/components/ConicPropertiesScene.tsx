@@ -9,8 +9,10 @@ import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import { paramDragBounds } from "@/utils/paramClamp";
 import {
   calculateConicProperties,
+  hyperbolaTMaxOnCanvas,
   type ConicType,
 } from "../math/conicProperties";
 
@@ -63,6 +65,32 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
   const b2Pt = mathToDesign(vertices.B2.x, vertices.B2.y, scale);
   const pPt = mathToDesign(pointP.x, pointP.y, scale);
 
+  /**
+   * 动点 P 的拖拽钳制域。
+   *
+   * P 的坐标是参数 t 的**曲线像**：椭圆 (a·cos t, b·sin t)、双曲线 (a·sec t, b·tan t)，
+   * 与屏幕坐标不同轴，故不能直接套 `paramMeta.t` 的角度声明域（把 [−π, π] 当成横坐标会把手柄钉死）。
+   * 改取「像的包围盒 ∩ 中屏可见视口」，交由 SSOT `paramDragBounds` 求交并对非法区间 (lo > hi) 兜底：
+   *   · 椭圆   : x ∈ [−a, a]，y ∈ [−b, b]
+   *   · 双曲线 : x ∈ [a, a·sec tMax]，y ∈ [−b·tan tMax, b·tan tMax]
+   *     其中 tMax 与左屏 t 滑块量程、中屏曲线绘制**同源**（`hyperbolaTMaxOnCanvas` doc 点名的 ③ 拖拽钳制上界）；
+   *     拖拽反解 t = arctan(y / b)，故 yRange 即等价于「t ∈ [−tMax, tMax]」，点绝不出画布。
+   */
+  const visibleHalfX = Math.max(Math.abs(scale.xMin), Math.abs(scale.xMax));
+  const visibleHalfY = Math.max(Math.abs(scale.yMin), Math.abs(scale.yMax));
+  const hyperbolaTMax = hyperbolaTMaxOnCanvas(a, b, visibleHalfX, visibleHalfY);
+  const dragBounds =
+    conicType === "hyperbola"
+      ? paramDragBounds(
+          { min: a, max: a / Math.cos(hyperbolaTMax) },
+          {
+            min: -b * Math.tan(hyperbolaTMax),
+            max: b * Math.tan(hyperbolaTMax),
+          },
+          scale,
+        )
+      : paramDragBounds({ min: -a, max: a }, { min: -b, max: b }, scale);
+
   // 1. 生成曲线 SVG 路径
   const curvePaths = useMemo(() => {
     if (conicType === "ellipse") {
@@ -81,7 +109,9 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
     } else {
       // 双曲线：右支与左支
       const steps = 60;
-      const tMax = 1.35;
+      // 绘制范围与左屏 t 滑块量程、拖拽钳制**同源**（就用组件级已算好的 hyperbolaTMax），
+      // 否则曲线会画到滑块永远够不到的位置（讲画不一致）。
+      const tMax = hyperbolaTMax;
       const rightPts: string[] = [];
       const leftPts: string[] = [];
 
@@ -108,7 +138,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
       }
       return [rightPts.join(" "), leftPts.join(" ")];
     }
-  }, [conicType, a, b, scale]);
+  }, [conicType, a, b, scale, hyperbolaTMax]);
 
   // 2. 双曲线特征矩形与辅助外接圆
   const rectPts = useMemo(() => {
@@ -542,6 +572,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         cy={pointP.y}
         scale={scale}
         vp={vp}
+        {...dragBounds}
         color={MATH_COLORS.primary}
         label="P"
         fontScale={fontScale}

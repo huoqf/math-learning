@@ -233,6 +233,9 @@ export function buildLineCirclePanel(
     const distPCSq = formatMathNumber(
       Math.pow(px - a, 2) + Math.pow(py - b, 2),
     );
+    const isOutside = (calcRes.distPC ?? 0) > r + 1e-4;
+    const isTangent = Math.abs((calcRes.distPC ?? 0) - r) <= 1e-4;
+    const compSymbol = isOutside ? ">" : isTangent ? "=" : "<";
     const tanLenVal = formatMathNumber(calcRes.tangentLength ?? 0);
     const rSqVal = formatMathNumber(r * r);
 
@@ -273,17 +276,20 @@ export function buildLineCirclePanel(
       {
         step: 1,
         title: "审题定法 · 两点间距离公式与点圆关系",
-        detail: `已知圆方程为 $${circleEqLatex}$，圆心 $C(${aVal}, ${bVal})$，半径 $r = ${rVal}$。由两点间距离公式求外点 $P(${pxVal}, ${pyVal})$ 到圆心距离：`,
-        latex: `|PC| = \\sqrt{(x_P - a)^2 + (y_P - b)^2} = \\sqrt{(${pxVal} - (${aVal}))^2 + (${pyVal} - (${bVal}))^2} = \\sqrt{${distPCSq}} = ${distPCVal} > r = ${rVal}`,
+        detail: `已知圆方程为 $${circleEqLatex}$，圆心 $C(${aVal}, ${bVal})$，半径 $r = ${rVal}$。由两点间距离公式求点 $P(${pxVal}, ${pyVal})$ 到圆心距离：`,
+        latex: `|PC| = \\sqrt{(x_P - a)^2 + (y_P - b)^2} = \\sqrt{(${pxVal} - (${aVal}))^2 + (${pyVal} - (${bVal}))^2} = \\sqrt{${distPCSq}} = ${distPCVal} ${compSymbol} r = ${rVal}`,
         rubric: "采分点：写出两点距离公式并代入判定点在圆外（2分）",
       },
       {
         step: 2,
         title: "建模展开 · 切线直角三角形与切线长公式",
-        detail: `设从点 $P$ 引出的切点为 $T_1, T_2$。由切线性质知半径与切线垂直 $CT \\perp PT$。在 $\\text{Rt}\\triangle PTC$ 中应用勾股定理：`,
-        latex:
-          calcRes.deductions.tangentDeduction ??
-          `PT = \\sqrt{|PC|^2 - r^2} = ${tanLenVal}`,
+        detail: isOutside
+          ? `设从点 $P$ 引出的切点为 $T_1, T_2$。由切线性质知半径与切线垂直 $CT \\perp PT$。在 $\\text{Rt}\\triangle PTC$ 中应用勾股定理：`
+          : `点 $P$ 位于圆内部或圆上，无法引出两条切线：`,
+        latex: isOutside
+          ? (calcRes.deductions.tangentDeduction ??
+            `PT = \\sqrt{|PC|^2 - r^2} = ${tanLenVal}`)
+          : `|PC| = ${distPCVal} < r = ${rVal} \\implies \\text{点在圆内，无实数切线长}`,
         rubric: "采分点：写出切线长公式并代入求解（3分）",
       },
       {
@@ -299,18 +305,24 @@ export function buildLineCirclePanel(
 
     const midX = formatMathNumber(calcRes.midpoint.x);
     const midY = formatMathNumber(calcRes.midpoint.y);
-    const kAB = formatMathNumber(k);
     const kCH = calcRes.kCH !== null ? formatMathNumber(calcRes.kCH) : "不存在";
-    const kProd =
-      calcRes.kCH !== null && k !== 0
-        ? formatMathNumber(calcRes.kCH * k)
-        : "-1";
+    // 退化拆两支：连心线水平 ⇒ 割线铅垂（k_AB 不存在）；连心线铅垂 ⇒ 割线水平（k_AB = 0）
+    const isVerticalChord = Math.abs(my - b) <= 1e-4;
+    const isHorizontalChord = Math.abs(calcRes.midpoint.x - a) <= 1e-4;
+    const isDegenerate = isVerticalChord || isHorizontalChord;
+    // 铅垂割线没有斜率：solveChordLineFromMidpoint 返回的哨兵值（1e6）只用于中屏渲染，
+    // 严禁当作真实斜率播报——否则看板会显示 "1000000" 与相邻警示「斜率不存在」自相矛盾。
+    const kAB = isVerticalChord ? "不存在" : formatMathNumber(k);
 
-    // 退化警示：弦中点与圆心等高（y₀ = b）时，连心线 CH 与弦 AB 均为竖直直线，
-    // 斜率不存在，不能套用 k_CH · k_AB = -1（斜截式无法表达竖直弦）。
-    if (Math.abs(my - b) <= 1e-4) {
+    // 退化警示：弦中点与圆心等高或等横坐标时的斜率退化
+    if (isVerticalChord) {
       warnings.push({
-        text: "弦中点与圆心等高（$y_0 = b$）：连心线 $CH$ 竖直，割线 $AB$ 也是竖直直线，斜率 $k_{AB}$ 不存在！此时应直接写弦方程 $x = x_0$，严禁套用斜率乘积 $-1$。",
+        text: "弦中点与圆心等高（$y_0 = b$）：连心线 $CH$ 水平（$k_{CH}=0$），割线 $AB$ 为竖直直线，斜率 $k_{AB}$ 不存在！此时应直接写弦方程 $x = x_0$，严禁套用斜率乘积 $-1$。",
+        level: "danger",
+      });
+    } else if (isHorizontalChord) {
+      warnings.push({
+        text: "弦中点与圆心同横坐标（$x_0 = a$）：连心线 $CH$ 竖直，斜率 $k_{CH}$ 不存在！此时割线 $AB$ 为水平直线（$k_{AB}=0$），弦方程直接为 $y = y_0$。",
         level: "danger",
       });
     }
@@ -335,9 +347,12 @@ export function buildLineCirclePanel(
         color: cSecondary,
       },
       {
-        label: "斜率乘积 $k_CH · k_AB$",
+        label: "斜率乘积 $k_{CH} \\cdot k_{AB}$",
         symbol: "k_{CH} \\cdot k_{AB}",
-        value: `${kCH} \\times ${kAB} = ${kProd}`,
+        value:
+          !isDegenerate && calcRes.kCH !== null && k !== 0
+            ? `${kCH} \\times ${kAB} = -1`
+            : "退化不适用 (含水平/竖直直线)",
         color: cPrimary,
       },
     );

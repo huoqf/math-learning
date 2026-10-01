@@ -10,6 +10,8 @@ import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateCircleCircle } from "@/math/circleCircle";
+import { paramMeta } from "@/data/registries/circleCircle";
+import { paramDragBounds } from "@/utils/paramClamp";
 
 export interface CircleLayerOptions {
   showCenterLine: boolean;
@@ -231,16 +233,16 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
 
               {/* 两个交点 A 与 B */}
               <MathPoint
-                x={res.intersections[0].x}
-                y={res.intersections[0].y}
+                cx={res.intersections[0].x}
+                cy={res.intersections[0].y}
                 scale={scale}
                 fontScale={fontScale}
                 label="A"
                 color={MATH_COLORS.paramTertiary}
               />
               <MathPoint
-                x={res.intersections[1].x}
-                y={res.intersections[1].y}
+                cx={res.intersections[1].x}
+                cy={res.intersections[1].y}
                 scale={scale}
                 fontScale={fontScale}
                 label="B"
@@ -250,8 +252,8 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
               {/* 弦中点 M */}
               {res.commonChord.midpoint && (
                 <MathPoint
-                  x={res.commonChord.midpoint.x}
-                  y={res.commonChord.midpoint.y}
+                  cx={res.commonChord.midpoint.x}
+                  cy={res.commonChord.midpoint.y}
                   scale={scale}
                   fontScale={fontScale}
                   label="M"
@@ -296,8 +298,8 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
                 );
               })()}
               <MathPoint
-                x={res.intersections[0].x}
-                y={res.intersections[0].y}
+                cx={res.intersections[0].x}
+                cy={res.intersections[0].y}
                 scale={scale}
                 fontScale={fontScale}
                 label="T"
@@ -348,16 +350,16 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
                   strokeDasharray={isInner ? "5 3" : undefined}
                 />
                 <MathPoint
-                  x={tPoint1.x}
-                  y={tPoint1.y}
+                  cx={tPoint1.x}
+                  cy={tPoint1.y}
                   scale={scale}
                   fontScale={fontScale}
                   color={color}
                   variant="hollow"
                 />
                 <MathPoint
-                  x={tPoint2.x}
-                  y={tPoint2.y}
+                  cx={tPoint2.x}
+                  cy={tPoint2.y}
                   scale={scale}
                   fontScale={fontScale}
                   color={color}
@@ -379,6 +381,7 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
         label="O₁"
         color={MATH_COLORS.paramPrimary}
         onDrag={(mathPt) => onCenter1Drag?.(mathPt.x, mathPt.y)}
+        {...paramDragBounds(paramMeta.x1, paramMeta.y1, scale)}
       />
 
       <InteractivePoint
@@ -390,6 +393,7 @@ export const CircleCircleScene: React.FC<CircleCircleSceneProps> = ({
         label="O₂"
         color={MATH_COLORS.paramSecondary}
         onDrag={(mathPt) => onCenter2Drag?.(mathPt.x, mathPt.y)}
+        {...paramDragBounds(paramMeta.x2, paramMeta.y2, scale)}
       />
     </g>
   );

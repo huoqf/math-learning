@@ -34,10 +34,11 @@ export interface LineCircleParams {
  *
  * 依据：弦 AB ⊥ CM ⟹ k = -(mx - a) / (my - b)；再由 M 在弦上得 m = my - k·mx。
  *
- * ⚠️ 退化情形：当 my = b 时连心线 CM 竖直，弦 AB 亦为竖直直线 x = mx，
- * 而斜截式 y = kx + m 无法表达竖直直线。此时返回 degenerate = true，
- * 并给出有限值 (k = 0, m = my) 以保证渲染不崩溃；调用方必须据此给出教学警示，
- * 严禁静默当作水平弦处理。
+ * ⚠️ 退化情形：当 my = b 时连心线 CM 水平，弦 AB 亦为铅垂直线 x = mx，
+ * 而斜截式 y = kx + m 无法表达铅垂直线。此时返回 degenerate = true，
+ * 并用一个大数斜率（k = 1e6，令 y = kx + m 在视觉上退化为铅垂线）保证渲染不崩溃；
+ * 该哨兵值**仅供中屏绘制**，严禁当作真实斜率播报（看板/推导链必须显式判退化）。
+ * 调用方必须据此给出教学警示，严禁静默当作水平弦处理。
  */
 export function solveChordLineFromMidpoint(
   a: number,
@@ -49,7 +50,9 @@ export function solveChordLineFromMidpoint(
   const dy = my - b;
 
   if (Math.abs(dy) <= 1e-4) {
-    return { k: 0, m: my, degenerate: true };
+    // 弦中点与圆心等高，弦为竖直直线 x = mx
+    const hugeK = 1e6;
+    return { k: hugeK, m: -hugeK * mx, degenerate: true };
   }
 
   const k = -dx / dy;

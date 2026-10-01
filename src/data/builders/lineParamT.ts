@@ -3,6 +3,7 @@ import type {
   Theorem,
   GaokaoPoint,
   WarningItem,
+  ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
 import { calcLineConicIntersection, type ConicType } from "@/math/lineParamT";
@@ -356,9 +357,9 @@ export function buildLineParamTPanel(
       } else if (conicType === "hyperbola") {
         reciprocalName = "双曲线焦点弦倒数同异支模型";
         reciprocalFormula =
-          "\\begin{cases} t_1 t_2 < 0 & (\\text{割线交于双曲线两支，倒数和为 } \\frac{\\sqrt{\\Delta}}{|C|}) \\\\ t_1 t_2 > 0 & (\\text{割线交于双曲线同支，倒数差为 } \\left|\\frac{B}{C}\\right|) \\end{cases}";
+          "\\begin{cases} t_1 t_2 < 0 & (\\text{割线交于双曲线同支，倒数和为 } \\frac{\\sqrt{\\Delta}}{|C|}) \\\\ t_1 t_2 > 0 & (\\text{割线交于双曲线两支，倒数差为 } \\left|\\frac{B}{C}\\right|) \\end{cases}";
         reciprocalNote =
-          "双曲线中割线交于异支时定点在两支之间（$t_1 t_2 < 0$），倒数和套用异号公式；割线交于同支时 $t_1 t_2 > 0$，两交点在定点同侧，倒数之差满足同号代数特征。";
+          "割线交于双曲线同支时焦点在两交点之间（$t_1 t_2 < 0$ 为内分），倒数和套用异号公式；割线交于异支时两交点在焦点同侧（$t_1 t_2 > 0$ 为外分），倒数之差满足同号代数特征。";
         conicGaokaoPoints.push(
           {
             text: "双曲线渐近线退化边界：当割线倾斜角 $\\alpha$ 趋近渐近线方向时，二次项系数 $A \\to 0$，割线退化为单分支单个交点，韦达定理失效。",
@@ -424,10 +425,90 @@ export function buildLineParamTPanel(
     }
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // 5. 高考解答题标准推导链（审题定法 → 建模联立 → 求解反思）
+  // ─────────────────────────────────────────────────────────────
+  const reasoningSteps: ReasoningStep[] = [];
+
+  if (mode === "definition") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "审题定法 · 直线标准参数方程建立",
+        detail: `设定点 $P_0(${x0.toFixed(2)}, ${y0.toFixed(2)})$，直线倾斜角 $\\alpha = ${alpha.toFixed(1)}^\\circ$。由方向余弦建立标准参数方程：`,
+        latex: `\\begin{cases} x = x_0 + t\\cos\\alpha = ${x0.toFixed(2)} + t\\cos(${alpha.toFixed(1)}^\\circ) \\\\ y = y_0 + t\\sin\\alpha = ${y0.toFixed(2)} + t\\sin(${alpha.toFixed(1)}^\\circ) \\end{cases}`,
+        rubric: "采分点：正确写出过定点的直线标准参数方程（2分）",
+      },
+      {
+        step: 2,
+        title: "建模代入 · 参数 t 的几何意义验证",
+        detail: `对于直线上任意动点 $P(x, y)$，代入两点间距离公式化简：`,
+        latex: `|P_0P| = \\sqrt{(x - x_0)^2 + (y - y_0)^2} = \\sqrt{(t\\cos\\alpha)^2 + (t\\sin\\alpha)^2} = \\sqrt{t^2(\\cos^2\\alpha + \\sin^2\\alpha)} = |t| = ${Math.abs(t).toFixed(2)}`,
+        rubric: "采分点：推导验证单位方向向量下参数绝对值即为几何距离（3分）",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 归一化判定与非标准参数换算",
+        detail: `若参数方程形式为 $x = x_0 + a\\cdot m, y = y_0 + b\\cdot m$，其归一化因子 $k_{\\text{norm}} = \\sqrt{a^2 + b^2}$。仅当 $k_{\\text{norm}} = 1$ 时参数才具有真实几何距离意义：`,
+        latex: `k_{\\text{norm}} = \\sqrt{a^2 + b^2} = ${kNorm.toFixed(2)} \\implies |P_0P| = k_{\\text{norm}} \\cdot |m|`,
+        rubric: "采分点：指出非标准参数方程与距离的比例换算关系（3分）",
+      },
+    );
+  } else if (mode === "secant") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "审题定法 · 参数方程与二次曲线联立",
+        detail: `将过点 $P_0(${x0.toFixed(2)}, ${y0.toFixed(2)})$ 的参数方程代入${conicType === "circle" ? "圆" : conicType === "ellipse" ? "椭圆" : conicType === "parabola" ? "抛物线" : "双曲线"}方程，整理为关于参数 $t$ 的一元二次方程：`,
+        latex: `A t^2 + B t + C = 0 \\implies (${intersect.A.toFixed(2)}) t^2 + (${intersect.B.toFixed(2)}) t + (${intersect.C.toFixed(2)}) = 0`,
+        rubric: "采分点：代入参数方程并准确化简为一元二次方程标准形式（3分）",
+      },
+      {
+        step: 2,
+        title: "建模代入 · 韦达定理代数核代入",
+        detail: `设两交点对应参数分别为 $t_1, t_2$。由一元二次方程根与系数关系：`,
+        latex: `t_1 + t_2 = -\\frac{B}{A} = ${intersect.A !== 0 ? (-intersect.B / intersect.A).toFixed(2) : "0"}, \\quad t_1 t_2 = \\frac{C}{A} = ${intersect.A !== 0 ? (intersect.C / intersect.A).toFixed(2) : "0"}`,
+        rubric: "采分点：列出韦达定理并求得根之和与根之积（3分）",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 几何弦长与割线积提炼",
+        detail: `利用参数几何意义，相交弦长与割线线段乘积可由参数差与参数积直接秒解：`,
+        latex: `|AB| = |t_1 - t_2| = \\frac{\\sqrt{\\Delta}}{|A|} = ${intersect.chordLength !== undefined ? intersect.chordLength.toFixed(2) : "0"}, \\quad |P_0A| \\cdot |P_0B| = |t_1 t_2| = \\left|\\frac{C}{A}\\right| = ${intersect.segmentProduct !== undefined ? intersect.segmentProduct.toFixed(2) : "0"}`,
+        rubric: "采分点：应用参数差公式求出弦长与线段乘积（2分）",
+      },
+    );
+  } else {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "审题定法 · 焦点/定点弦参数方程设定",
+        detail: `设直线倾斜角为 $\\alpha$，过定点 $P_0(${x0.toFixed(2)}, ${y0.toFixed(2)})$。建立参数方程并联立消元求解两根符号：`,
+        latex: `x = x_0 + t\\cos\\alpha, \\quad y = y_0 + t\\sin\\alpha \\implies A t^2 + B t + C = 0`,
+        rubric: "采分点：设出参数方程并代入曲线方程（2分）",
+      },
+      {
+        step: 2,
+        title: "建模代入 · 倒数和通式代数化简",
+        detail: `由焦半径几何线段倒数和公式，按内分与外分符号分类求和：`,
+        latex: `\\frac{1}{|P_0A|} + \\frac{1}{|P_0B|} = \\frac{|t_1| + |t_2|}{|t_1 t_2|} = \\begin{cases} \\frac{|t_1 - t_2|}{|t_1 t_2|} = \\frac{\\sqrt{\\Delta}}{|C|} & (t_1 t_2 < 0,\\ \\text{内分}) \\\\ \\frac{|t_1 + t_2|}{|t_1 t_2|} = \\left|\\frac{B}{C}\\right| & (t_1 t_2 > 0,\\ \\text{外分}) \\end{cases}`,
+        rubric: "采分点：准确分类讨论内分外分并写出倒数和化简表达式（4分）",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 焦点弦定值与几何极值验证",
+        detail: `当定点取为圆锥曲线焦点时，倒数和与倾斜角 $\\alpha$ 无关，恒为定值：`,
+        latex: `\\frac{1}{|AF|} + \\frac{1}{|BF|} = ${intersect.reciprocalSum !== undefined ? intersect.reciprocalSum.toFixed(2) : "\\text{定值}"}`,
+        rubric: "采分点：推导并验证焦点弦倒数和定值结论（2分）",
+      },
+    );
+  }
+
   return {
     quantities,
     theorems,
     gaokaoPoints,
     warnings,
+    reasoningSteps,
   };
 }

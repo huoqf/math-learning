@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatPiFraction } from "./mathFormat";
+import { formatMathRational, formatPiFraction } from "./mathFormat";
 
 describe("mathFormat - π 分数倍格式化", () => {
   it("高中常用角一律输出分数 π 形式，杜绝 0.17π 这类形式漏解", () => {
@@ -32,5 +32,50 @@ describe("mathFormat - π 分数倍格式化", () => {
   it("分母上限可放宽", () => {
     expect(formatPiFraction(Math.PI / 18)).toBeNull(); // 10° 不在默认 12 分母内
     expect(formatPiFraction(Math.PI / 18, 36)).toBe("π/18");
+  });
+});
+
+describe("mathFormat - 有理数最简分数格式化", () => {
+  it("整数与 0 直接输出十进制，不凭空加 \\frac（对既有整数参数零副作用）", () => {
+    expect(formatMathRational(0)).toBe("0");
+    expect(formatMathRational(3)).toBe("3");
+    expect(formatMathRational(-4)).toBe("-4");
+    expect(formatMathRational(16)).toBe("16");
+    expect(formatMathRational(-0)).toBe("0");
+  });
+
+  it("真分数输出最简分数 LaTeX，负号写在第 1 层（与卷面一致）", () => {
+    expect(formatMathRational(2 / 3)).toBe("\\frac{2}{3}");
+    expect(formatMathRational(-1 / 3)).toBe("-\\frac{1}{3}");
+    expect(formatMathRational(-4 / 9)).toBe("-\\frac{4}{9}");
+    expect(formatMathRational(16 / 9)).toBe("\\frac{16}{9}");
+  });
+
+  it("自动约分：0.25 → 1/4，不输出 4/16 这类未化简写法", () => {
+    expect(formatMathRational(0.25)).toBe("\\frac{1}{4}");
+    expect(formatMathRational(1.5)).toBe("\\frac{3}{2}");
+    expect(formatMathRational(0.5)).toBe("\\frac{1}{2}");
+  });
+
+  it("经浮点运算得到的分数（如配方半径 √(16/9)/2）仍能识别", () => {
+    const deltaC = (2 / 3) ** 2 + (-4 / 3) ** 2 - 4 * (1 / 9); // = 16/9
+    expect(formatMathRational(deltaC)).toBe("\\frac{16}{9}");
+    const radius = Math.sqrt(deltaC) / 2; // = 2/3
+    expect(formatMathRational(radius)).toBe("\\frac{2}{3}");
+    expect(formatMathRational(radius * radius)).toBe("\\frac{4}{9}");
+  });
+
+  it("无理数与非法值返回 null，绝不强行套分数", () => {
+    expect(formatMathRational(Math.PI)).toBeNull();
+    expect(formatMathRational(Math.SQRT2)).toBeNull();
+    expect(formatMathRational(Math.sqrt(7) / 2)).toBeNull();
+    expect(formatMathRational(Number.NaN)).toBeNull();
+    expect(formatMathRational(Number.POSITIVE_INFINITY)).toBeNull();
+  });
+
+  it("分母上限可收紧，避免把 1.2345 之类误判成分数", () => {
+    expect(formatMathRational(1 / 97)).toBe("\\frac{1}{97}");
+    expect(formatMathRational(1 / 97, 50)).toBeNull();
+    expect(formatMathRational(0.6667)).toBeNull(); // 滑块值 0.6667 ≠ 2/3，不得当作 2/3
   });
 });

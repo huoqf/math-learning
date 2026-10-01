@@ -1,5 +1,6 @@
 import type { KnowledgeNode } from "../types";
 import { conicDefinitionNode } from "@/features/conicDefinition/meta";
+import { circleEquationNode } from "@/features/circleEquation/meta";
 
 // ========== 9. 解析几何 ==========
 export const conicNodes: KnowledgeNode[] = [
@@ -18,6 +19,7 @@ export const conicNodes: KnowledgeNode[] = [
     examMethod: "点斜式方程与点到直线距离公式",
     examWeight: 4,
   },
+  circleEquationNode,
   {
     id: "know-line-circle",
     title: "直线与圆的位置关系及相交弦长",
@@ -26,7 +28,7 @@ export const conicNodes: KnowledgeNode[] = [
     module: "直线与圆",
     importance: "gaokao",
     animationIds: ["anim-line-circle"],
-    prerequisites: ["know-line-equation"],
+    prerequisites: ["know-circle-equation"],
     route: "/line-circle",
     gaokaoTopic: "conic_geometry",
     questionCategory: "solution_first",

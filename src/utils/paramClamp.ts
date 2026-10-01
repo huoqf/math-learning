@@ -40,6 +40,28 @@ export function paramDragRange(
 }
 
 /**
+ * 最常见的拖拽形态：被拖拽点的 `(x, y)` 恰好**同轴**对应两个参数
+ * （如极点 `(poleX, poleY)`、弦中点 `(midpointX, midpointY)`）。
+ *
+ * 一次性给出两个轴向的合法拖拽区间，可直接展开到组件：
+ * ```tsx
+ * <InteractivePoint cx={x} cy={y} scale={scale} vp={vp}
+ *   onDrag={handleDrag} {...paramDragBounds(paramMeta.px, paramMeta.py, scale)} />
+ * ```
+ * 返回 `undefined` 时组件退化为"该轴不钳制"，语义与 {@link paramDragRange} 一致。
+ */
+export function paramDragBounds(
+  metaX: BoundMeta | undefined,
+  metaY: BoundMeta | undefined,
+  scale: SceneScale,
+): { xRange?: [number, number]; yRange?: [number, number] } {
+  return {
+    xRange: paramDragRange(metaX, scale, "x"),
+    yRange: paramDragRange(metaY, scale, "y"),
+  };
+}
+
+/**
  * 仅按参数**声明域**钳制（不与可见视口求交）。
  *
  * 适用于"被拖拽量是派生系数、与屏幕坐标不同轴"的情形：

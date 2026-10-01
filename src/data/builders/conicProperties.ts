@@ -270,8 +270,8 @@ export function buildConicPropertiesPanel(
           ? `代入 $S = \\frac{1}{2}r_1r_2\\sin\\theta = b^2\\tan\\frac{\\theta}{2}$；底边切点横坐标 $x_T = ex_P = ${(e * calc.pointP.x).toFixed(2)}$，动点切线长 $l_P = a - c = ${(a - c).toFixed(2)}$。`
           : `代入 $S = \\frac{1}{2}r_1r_2\\sin\\theta = \\frac{b^2}{\\tan(\\theta/2)}$；内切圆切点恒为实轴顶点 $A_2(${a.toFixed(2)}, 0)$。`,
         latex: isEllipse
-          ? `S_{\\triangle PF_1F_2} = ${b.toFixed(2)}^2 \\times \\tan(${((focusTriangle.angleDeg / 2) * (Math.PI / 180)).toFixed(2)}) = ${focusTriangle.areaGeom.toFixed(2)}`
-          : `S_{\\triangle PF_1F_2} = \\frac{${b.toFixed(2)}^2}{\\tan(${((focusTriangle.angleDeg / 2) * (Math.PI / 180)).toFixed(2)})} = ${focusTriangle.areaGeom.toFixed(2)}`,
+          ? `S_{\\triangle PF_1F_2} = b^2\\tan\\frac{\\theta}{2} = ${b.toFixed(2)}^2 \\times \\tan(${(focusTriangle.angleDeg / 2).toFixed(2)}^\\circ) = ${focusTriangle.areaGeom.toFixed(2)}`
+          : `S_{\\triangle PF_1F_2} = \\frac{b^2}{\\tan(\\theta/2)} = \\frac{${b.toFixed(2)}^2}{\\tan(${(focusTriangle.angleDeg / 2).toFixed(2)}^\\circ)} = ${focusTriangle.areaGeom.toFixed(2)}`,
         rubric: "采分点：准确代入半角正切公式求出面积与内切圆特征量（2分）",
       },
     );

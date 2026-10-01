@@ -1,6 +1,8 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
+import { paramMeta } from "@/data/registries/conicParam";
+import { paramDragRange } from "@/utils/paramClamp";
 import { clipLineToScale, mathToDesign } from "@/utils/coordinate";
 import { avoidLabelOverlap, type LabelItem } from "@/utils/labelOverlap";
 import { formatMathNumber } from "@/utils/mathFormat";
@@ -245,15 +247,15 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
 
           {/* 焦点 F1, F2 */}
           <MathPoint
-            x={c}
-            y={0}
+            cx={c}
+            cy={0}
             scale={scale}
             color={MATH_COLORS.accent}
             fontScale={fontScale}
           />
           <MathPoint
-            x={-c}
-            y={0}
+            cx={-c}
+            cy={0}
             scale={scale}
             color={MATH_COLORS.accent}
             fontScale={fontScale}
@@ -294,8 +296,8 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
 
           {/* 离心圆对应点 P' */}
           <MathPoint
-            x={ellipseRes.Paux.x}
-            y={ellipseRes.Paux.y}
+            cx={ellipseRes.Paux.x}
+            cy={ellipseRes.Paux.y}
             scale={scale}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
@@ -338,8 +340,8 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
                 strokeDasharray="5 4"
               />
               <MathPoint
-                x={footMath.x}
-                y={footMath.y}
+                cx={footMath.x}
+                cy={footMath.y}
                 scale={scale}
                 color={MATH_COLORS.normalLine}
                 fontScale={fontScale}
@@ -347,7 +349,11 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             </>
           )}
 
-          {/* 椭圆动点 P(a cosθ, b sinθ) 可拖拽 */}
+          {/*
+            椭圆动点 P(a cosθ, b sinθ) 可拖拽。
+            位置由角度参数 θ 决定、且拖拽经 atan2 反解并回落到 [0,360)，任意拖拽结果都落在 θ 声明域内，
+            无法（也不应）用单轴一维区间钳制，故刻意不设 xRange/yRange。
+          */}
           <InteractivePoint
             cx={ellipseRes.P.x}
             cy={ellipseRes.P.y}
@@ -391,8 +397,8 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
 
           {/* 焦点 F(p/2, 0) */}
           <MathPoint
-            x={p / 2}
-            y={0}
+            cx={p / 2}
+            cy={0}
             scale={scale}
             color={MATH_COLORS.accent}
             fontScale={fontScale}
@@ -449,14 +455,19 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
 
           {/* 弦中点 M */}
           <MathPoint
-            x={parabolaRes.pointM.x}
-            y={parabolaRes.pointM.y}
+            cx={parabolaRes.pointM.x}
+            cy={parabolaRes.pointM.y}
             scale={scale}
             color={MATH_COLORS.paramTertiary}
             fontScale={fontScale}
           />
 
-          {/* 动点 A 可沿抛物线纵坐标拖拽 */}
+          {/*
+            动点 A 可沿抛物线纵坐标拖拽。
+            手柄纵坐标 cy = y₁ 即参数 y₁ 本身，故守 yRange（声明域 ∩ 可见视口）；
+            横坐标 x = y₁²/(2p) 是派生量（在 [-5,5] 上非单调、无法用一维区间守护），
+            且 onDrag 仅读取 y，故 xRange 保持缺省不强行捏造区间。
+          */}
           <InteractivePoint
             cx={parabolaRes.pointA.x}
             cy={parabolaRes.pointA.y}
@@ -464,13 +475,14 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             vp={vp}
             color={MATH_COLORS.paramSecondary}
             fontScale={fontScale}
+            yRange={paramDragRange(paramMeta.y1, scale, "y")}
             onDrag={({ y }) => {
               const clampedY = Math.max(-5, Math.min(5, y));
               onParamChange("y1", Number(clampedY.toFixed(1)));
             }}
           />
 
-          {/* 动点 B 可沿抛物线纵坐标拖拽 */}
+          {/* 动点 B 可沿抛物线纵坐标拖拽（同 A：cy = y₂ 守 yRange，x 为派生量不设区间） */}
           <InteractivePoint
             cx={parabolaRes.pointB.x}
             cy={parabolaRes.pointB.y}
@@ -478,6 +490,7 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             vp={vp}
             color={MATH_COLORS.paramTertiary}
             fontScale={fontScale}
+            yRange={paramDragRange(paramMeta.y2, scale, "y")}
             onDrag={({ y }) => {
               const clampedY = Math.max(-5, Math.min(5, y));
               onParamChange("y2", Number(clampedY.toFixed(1)));
@@ -504,15 +517,15 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
 
           {/* 焦点 F1, F2 */}
           <MathPoint
-            x={c}
-            y={0}
+            cx={c}
+            cy={0}
             scale={scale}
             color={MATH_COLORS.accent}
             fontScale={fontScale}
           />
           <MathPoint
-            x={-c}
-            y={0}
+            cx={-c}
+            cy={0}
             scale={scale}
             color={MATH_COLORS.accent}
             fontScale={fontScale}
@@ -564,15 +577,15 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
 
               {/* 交点 A, B */}
               <MathPoint
-                x={lineYRes.pointA.x}
-                y={lineYRes.pointA.y}
+                cx={lineYRes.pointA.x}
+                cy={lineYRes.pointA.y}
                 scale={scale}
                 color={MATH_COLORS.paramSecondary}
                 fontScale={fontScale}
               />
               <MathPoint
-                x={lineYRes.pointB.x}
-                y={lineYRes.pointB.y}
+                cx={lineYRes.pointB.x}
+                cy={lineYRes.pointB.y}
                 scale={scale}
                 color={MATH_COLORS.paramSecondary}
                 fontScale={fontScale}
@@ -580,8 +593,8 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
 
               {/* 弦中点 M */}
               <MathPoint
-                x={lineYRes.pointM.x}
-                y={lineYRes.pointM.y}
+                cx={lineYRes.pointM.x}
+                cy={lineYRes.pointM.y}
                 scale={scale}
                 color={MATH_COLORS.paramTertiary}
                 fontScale={fontScale}
@@ -589,7 +602,10 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             </>
           )}
 
-          {/* 割线横截距点 (n, 0) 可拖拽调整 n */}
+          {/*
+            割线横截距点 (n, 0) 可拖拽调整 n。
+            手柄横坐标 cx = n 即参数 n 本身，故守 xRange；纵坐标恒为常量 0 且 onDrag 仅读取 x，故不设 yRange。
+          */}
           <InteractivePoint
             cx={n}
             cy={0}
@@ -597,6 +613,7 @@ export const ConicParamScene: React.FC<ConicParamSceneProps> = ({
             vp={vp}
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
+            xRange={paramDragRange(paramMeta.n, scale, "x")}
             onDrag={({ x }) => {
               const clampedN = Math.max(-5, Math.min(5, x));
               onParamChange("n", Number(clampedN.toFixed(1)));

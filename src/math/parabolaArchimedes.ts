@@ -340,9 +340,9 @@ export function getOrthogonalChordsInfo(
 ): OrthogonalChordsInfo {
   const safeP = p > 0 && Number.isFinite(p) ? p : 2;
 
-  // 限制 theta 在 (15°, 75°) 使得第二条垂直弦都在合法范围内
+  // 限制 theta 在 [20°, 75°] 使得第二条垂直弦都在合法范围内
   let theta = thetaDeg;
-  if (theta < 15) theta = 15;
+  if (theta < 20) theta = 20;
   if (theta > 75) theta = 75;
 
   const chordAB = getFocalChordAdvInfo(safeP, theta);

@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   calculateConicProperties,
   deriveBFromEccentricity,
+  ellipseBMaxOnCanvas,
+  hyperbolaTMaxOnCanvas,
+  HYPERBOLA_T_SAFE_MAX,
 } from "../features/conicProperties/math/conicProperties";
 
 describe("椭圆与双曲线纯解算逻辑测试 (calculateConicProperties)", () => {
@@ -115,5 +118,68 @@ describe("椭圆与双曲线纯解算逻辑测试 (calculateConicProperties)", (
     // 域内取值必须真实生效（防止钳制过度把整条轨道压死）
     const inside = calculateConicProperties("hyperbola", 3, 2, 0.9);
     expect(inside.pointP.y).not.toBeCloseTo(atBound.pointP.y, 3);
+  });
+});
+
+describe("中屏可见范围约束 (2026-10-01 新增：P1-5b / P1-5c 回归)", () => {
+  // 中屏 CANVAS_PRESETS.full = 840×650、xRange [-6,6]、yRange [-4.5,4.5] ⇒ scale = 70
+  // ⇒ 可见半宽 6、可见半高 325/70 ≈ 4.6429。以下用例固定用这一组真实值。
+  const HALF_X = 6;
+  const HALF_Y = 325 / 70;
+
+  it("hyperbolaTMaxOnCanvas：动点在整个可达域内都不越出可见范围", () => {
+    const cases = [
+      { a: 2.5, b: 2 },
+      { a: 1, b: 0.5 },
+      { a: 5, b: 4 },
+      { a: 3, b: 1.2, hx: 3.2, hy: 3.25 },
+      { a: 0.5, b: 0.5, hx: 6, hy: 6 },
+    ];
+    for (const c of cases) {
+      const hx = c.hx ?? HALF_X;
+      const hy = c.hy ?? HALF_Y;
+      const tMax = hyperbolaTMaxOnCanvas(c.a, c.b, hx, hy);
+
+      expect(tMax).toBeGreaterThan(0);
+      expect(tMax).toBeLessThanOrEqual(HYPERBOLA_T_SAFE_MAX + 1e-12);
+
+      for (let i = 0; i <= 20; i++) {
+        const t = (i / 20) * tMax;
+        expect(Math.abs(c.a / Math.cos(t))).toBeLessThanOrEqual(hx + 1e-9);
+        expect(Math.abs(c.b * Math.tan(t))).toBeLessThanOrEqual(hy + 1e-9);
+      }
+    }
+  });
+
+  it("hyperbolaTMaxOnCanvas：取 x 侧与 y 侧约束的较小者（不虚耗滑块行程）", () => {
+    // a=2.5, b=2 ⇒ x 侧 arccos(2.5/6)=1.1410 先到界（y 侧 arctan(4.6429/2)=1.1648）
+    expect(hyperbolaTMaxOnCanvas(2.5, 2, HALF_X, HALF_Y)).toBeCloseTo(
+      Math.acos(2.5 / 6),
+      6,
+    );
+    // a=1, b=4 ⇒ y 侧 arctan(4.6429/4)=0.8590 先到界（x 侧 arccos(1/6)=1.4033）
+    expect(hyperbolaTMaxOnCanvas(1, 4, HALF_X, HALF_Y)).toBeCloseTo(
+      Math.atan(HALF_Y / 4),
+      6,
+    );
+  });
+
+  it("hyperbolaTMaxOnCanvas：受溢出保护上限约束（两侧都很宽松时取 1.35）", () => {
+    expect(hyperbolaTMaxOnCanvas(0.5, 0.5, 6, 6)).toBe(HYPERBOLA_T_SAFE_MAX);
+  });
+
+  it("ellipseBMaxOnCanvas：上下顶点不越出可见半高，且保证 a > b", () => {
+    expect(ellipseBMaxOnCanvas(5, HALF_Y)).toBe(4.6); // 4.6 < 4.6429
+    expect(ellipseBMaxOnCanvas(3, HALF_Y)).toBe(2.9); // a − 0.1 更紧
+    expect(ellipseBMaxOnCanvas(1, HALF_Y)).toBe(0.9);
+    expect(ellipseBMaxOnCanvas(5, 2.4)).toBe(2.4); // 可见半高更紧
+
+    for (const a of [1, 2, 3, 4, 5]) {
+      for (const hy of [1, 2, 3, 4, HALF_Y, 6]) {
+        const bMax = ellipseBMaxOnCanvas(a, hy);
+        expect(bMax).toBeLessThan(a);
+        expect(bMax).toBeLessThanOrEqual(Math.max(0.6, hy));
+      }
+    }
   });
 });

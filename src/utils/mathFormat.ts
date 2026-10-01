@@ -101,6 +101,62 @@ export function formatParenSubtractTerm(v: number, variable = "x"): string {
 }
 
 /**
+ * 把数值格式化为高中数学卷面通行的「最简分数」LaTeX；若无法用分母 ≤ maxDenominator
+ * 的分数精确表示，则返回 null，由调用方回退到 `formatMathNumber`。
+ *
+ * 为什么必须存在：`formatMathNumber` 只保留两位小数，`2/3` 会被印成 `0.67`、`1/9` 印成 `0.11`。
+ * 而在「一般方程配方」「待定系数法」这类题型里，系数与圆心、半径的真值本来就是分数——
+ * 教材考的正是分数的通分与配方运算。若退化成机器小数，等于把考点换成近似值，学生照抄会算错。
+ *
+ * 分工：`formatPiFraction` 处理 π 的分数倍（结果带 π）；本函数只处理纯有理数。
+ * 整数直接返回十进制字符串，因此对既有整数参数完全零副作用（不会凭空多出 `\frac`）。
+ * 负号位置遵循卷面写法：`-2/3 -> "-\frac{2}{3}"`，而非 `\frac{-2}{3}`。
+ *
+ * 正例：`0 -> "0"`、`3 -> "3"`、`-4 -> "-4"`、`2/3 -> "\frac{2}{3}"`、
+ *       `-1/3 -> "-\frac{1}{3}"`、`0.25 -> "\frac{1}{4}"`；
+ * 反例：`Math.PI -> null`、`Math.SQRT2 -> null`（分子含无理数，不是有理数）。
+ */
+export function formatMathRational(
+  x: number,
+  maxDenominator = 100,
+): string | null {
+  if (!Number.isFinite(x)) return null;
+  if (Math.abs(x) < 1e-9) return "0";
+  if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
+
+  for (let d = 2; d <= maxDenominator; d++) {
+    const k = Math.round(x * d);
+    if (k === 0) continue;
+    if (Math.abs(k / d - x) < 1e-9) {
+      const g = gcd(Math.abs(k), d);
+      const num = Math.abs(k) / g;
+      const den = d / g;
+      const sign = k < 0 ? "-" : "";
+      if (den === 1) return `${sign}${num}`;
+      return `${sign}\\frac{${num}}{${den}}`;
+    }
+  }
+  return null;
+}
+
+/**
+ * 「分数优先、小数兜底」的显示策略：能化为简分数则输出分数 LaTeX，否则回退两位小数。
+ *
+ * 适用对象：真值本来就是分数的量——一般方程的系数 $D,E,F$、配方求得的圆心与半径、
+ * 判别式 $\Delta_c$。这些量在教材题里就是分数形态，印成小数会把考点变成近似值。
+ * 不适用于「由滑块选定的几何量」（如标准方程里的圆心 $a,b$ 与半径 $r$）——那里小数更自然。
+ *
+ * 对整数返回十进制字符串，因此替换 `formatMathNumber` 时对既有整数参数零副作用。
+ * 唯一附带效益：`16.00`、`-9.00` 这类 `toFixed(2)` 产生的浮点尾零会被一并消除。
+ */
+export function formatMathRationalOrNumber(
+  x: number,
+  maxDenominator = 100,
+): string {
+  return formatMathRational(x, maxDenominator) ?? formatMathNumber(x);
+}
+
+/**
  * 把「π 的分数倍」格式化为高中通行写法；若该数值不是 π 的（分母 ≤ maxDenominator 的）分数倍则返回 null。
  *
  * 用途：中屏/右屏的角刻度与不等式通解集。

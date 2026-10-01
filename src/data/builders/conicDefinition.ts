@@ -392,7 +392,7 @@ export function buildConicDefinitionPanel(
     );
 
     theorems.push({
-      name: "圆锥曲线统一定义 (第二定义 / 焦准比法 · 拓展)",
+      name: "圆锥曲线统一定义 (第二定义 / 焦准比法)",
       latex: "\\frac{d_F}{d_l} = e \\quad (e > 0)",
       note: `动点到定焦点 ${col("F", cSecondary)} 的距离与到定准线 ${col("l", cPrimary)} 的距离之比等于常数 ${col("e", cPrimary)}：$0<e<1$ 椭圆，$e=1$ 抛物线，$e>1$ 双曲线。（抛物线以准线定义属教材正文；椭圆与双曲线的准线（第二定义）属拓展内容）`,
       prerequisites: [
@@ -400,6 +400,8 @@ export function buildConicDefinitionPanel(
         "$p$ 为焦点到准线距离（$p > 0$）",
       ],
       level: "supplementary",
+      isExtension: true,
+      extensionBadge: "选学拓展",
     });
 
     if (Math.abs(e - 1.0) < 0.05) {

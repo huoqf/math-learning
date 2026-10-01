@@ -128,5 +128,11 @@ export function deriveMidpointPerpendicularSlope(
     return `k_{CH} = \\text{不存在 (铅垂线 } x = ${x0Val}) \\implies k_{AB} = 0 \\text{ (水平弦)}`;
   }
 
+  // 连心线水平（k_CH = 0）⇒ 割线铅垂，斜率不存在。此时严禁用 -1/k_CH 展开
+  // （-1/0 无意义；且传入的 kAB 在退化态是渲染哨兵值，不是真实斜率）。
+  if (Math.abs(kCH) <= 1e-4) {
+    return `k_{CH} = \\frac{${y0Val} - (${bVal})}{${x0Val} - (${aVal})} = 0 \\implies \\text{连心线 } CH \\text{ 水平} \\implies \\text{割线 } AB \\text{ 为铅垂线，} k_{AB} \\text{ 不存在}`;
+  }
+
   return `k_{CH} = \\frac{y_0 - b}{x_0 - a} = \\frac{${y0Val} - (${bVal})}{${x0Val} - (${aVal})} = ${kCHVal} \\implies k_{AB} = -\\frac{1}{k_{CH}} = -\\frac{1}{${kCHVal}} = ${kABVal}`;
 }

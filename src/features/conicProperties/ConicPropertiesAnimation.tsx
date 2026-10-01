@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
@@ -19,6 +19,8 @@ import { defaultParams, paramMeta } from "@/data/registries/conicProperties";
 import {
   deriveBFromEccentricity,
   calculateConicProperties,
+  ellipseBMaxOnCanvas,
+  hyperbolaTMaxOnCanvas,
   type ConicType,
 } from "./math/conicProperties";
 
@@ -53,6 +55,29 @@ export function ConicPropertiesAnimation() {
     xRange: [-6, 6],
     yRange: [-4.5, 4.5],
   });
+
+  // 6.1 中屏**可见数学范围**半宽/半高（由 scale 反推，随容器尺寸自适应，避免硬编码 4.6429 这类常量）。
+  //     可见区以原点为中心，故取 |xMin|/|xMax| 的较大者即为半宽。
+  const visibleHalfX = Math.max(Math.abs(scale.xMin), Math.abs(scale.xMax));
+  const visibleHalfY = Math.max(Math.abs(scale.yMin), Math.abs(scale.yMax));
+
+  // 6.2 双曲线动点 t 的**可达上界**：既保证 P 不飞出画布，又保证滑块量程与画面同源。
+  //     统一由 math 层 hyperbolaTMaxOnCanvas 给出（滑块量程 / 曲线绘制 / 拖拽钳制共用同一规则）。
+  const hyperbolaTMax = useMemo(
+    () => hyperbolaTMaxOnCanvas(params.a, params.b, visibleHalfX, visibleHalfY),
+    [params.a, params.b, visibleHalfX, visibleHalfY],
+  );
+
+  // 6.3 不变量回收：参数 a/b、曲线类型或容器尺寸变化都可能让当前 t 越出可达域，
+  //     此时必须把**状态**里的 t 收回来——否则左屏滑块读数会与中屏画面脱节
+  //     （见 handleConicTypeChange 的历史注释）。仅在真正越界时 setState，避免渲染循环。
+  useEffect(() => {
+    if (conicType !== "hyperbola") return;
+    setParams((prev) => {
+      const clamped = Math.max(-hyperbolaTMax, Math.min(hyperbolaTMax, prev.t));
+      return clamped === prev.t ? prev : { ...prev, t: clamped };
+    });
+  }, [conicType, hyperbolaTMax]);
 
   // 7. 右屏看板数据
   const mathData = useMemo(() => {
@@ -239,12 +264,18 @@ export function ConicPropertiesAnimation() {
       if (newType === "ellipse" && prev.b >= prev.a) {
         nextB = Math.max(0.5, Number((prev.a - 0.5).toFixed(1)));
       }
-      // 双曲线 t 的有效域为 (-1.35, 1.35)：切换曲线时必须回收越域值，
-      // 否则滑块读数（如 t = 3）会与 math 层钳制后的画面（点停在 t = 1.35）脱节。
-      const nextT =
-        newType === "hyperbola"
-          ? Math.max(-1.35, Math.min(1.35, prev.t))
-          : prev.t;
+      // 切换曲线时必须回收越域的 t，否则滑块读数（如 t = 3）会与 math 层钳制后的画面脱节。
+      // 上界与滑块/中屏绘制同源：按新曲线的 a/b 与当前可见范围重算。
+      let nextT = prev.t;
+      if (newType === "hyperbola") {
+        const tMax = hyperbolaTMaxOnCanvas(
+          prev.a,
+          nextB,
+          visibleHalfX,
+          visibleHalfY,
+        );
+        nextT = Math.max(-tMax, Math.min(tMax, prev.t));
+      }
       const calc = calculateConicProperties(newType, prev.a, nextB, nextT);
       return {
         ...prev,
@@ -432,20 +463,24 @@ export function ConicPropertiesAnimation() {
           labelFormula = "\\text{动点角 }\\theta_P";
         }
 
-        // 双曲线参数方程 x = a·sec t, y = b·tan t 在 |t| → π/2 处发散，
-        // math 层已把 t 钳制在 (-1.35, 1.35)；滑块量程必须与之一致，
-        // 否则轨道两端各约 28% 空转（拖到底曲线与动点都不动）。
+        // 双曲线参数方程 x = a·sec t, y = b·tan t 在 |t| → π/2 处发散。
+        // 量程取「math 层溢出保护上限 ∩ 中屏可见范围反解出的可达上界」= hyperbolaTMax，
+        // 与中屏曲线绘制、拖拽钳制同源；否则要么轨道两端空转，要么动点飞出画布抓不回来。
         const isHyperbolaT = key === "t" && conicType === "hyperbola";
+
+        // 椭圆短半轴 b 的上限：既要 a > b，也不能让上下顶点 (0, ±b) 超出可见半高。
+        // 规则与证明在 math 层 ellipseBMaxOnCanvas（可单测），此处只消费。
+        const ellipseBMax = ellipseBMaxOnCanvas(params.a, visibleHalfY);
 
         const maxVal =
           isB && conicType === "ellipse"
-            ? Math.max(0.6, Number((params.a - 0.1).toFixed(1)))
+            ? ellipseBMax
             : isE
               ? conicType === "ellipse"
                 ? 0.98
                 : 2.8
               : isHyperbolaT
-                ? 1.35
+                ? hyperbolaTMax
                 : meta.max;
 
         return {
@@ -455,7 +490,7 @@ export function ConicPropertiesAnimation() {
           value:
             (params as Record<string, number>)[key] ?? meta.defaultValue ?? 0,
           min: isHyperbolaT
-            ? -1.35
+            ? -hyperbolaTMax
             : isE
               ? conicType === "ellipse"
                 ? 0.05
@@ -473,7 +508,7 @@ export function ConicPropertiesAnimation() {
             : meta.marks,
         };
       });
-  }, [params, studyMode, conicType]);
+  }, [params, studyMode, conicType, hyperbolaTMax, visibleHalfY]);
 
   // 左屏教学提示与题设导引（带入具体方程与核心高考设问）
   const tipConfig = useMemo(() => {

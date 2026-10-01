@@ -5,6 +5,8 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import type { HomogenizationResult } from "@/math/conicHomogenization";
+import { paramDragBounds } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/conicHomogenization";
 
 interface ConicHomogenizationSceneProps {
   result: HomogenizationResult;
@@ -285,7 +287,8 @@ export const ConicHomogenizationScene: React.FC<
           );
         })()}
 
-      {/* 定点 P/O 控制手柄：原点模式固定，非原点模式支持拖拽 */}
+      {/* 定点 P/O 控制手柄：原点模式固定，非原点模式支持拖拽。
+          P 与 params.px / params.py 同轴，钳制域直接取「声明域 ∩ 可见视口」(SSOT)。 */}
       {studyMode === "origin" ? (
         <MathPoint
           cx={0}
@@ -301,6 +304,7 @@ export const ConicHomogenizationScene: React.FC<
           cy={P.y}
           scale={scale}
           vp={vp}
+          {...paramDragBounds(paramMeta.px, paramMeta.py, scale)}
           color={MATH_COLORS.paramTertiary}
           fontScale={fontScale}
           label="P"

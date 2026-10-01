@@ -5,6 +5,43 @@ export interface Point2D {
   y: number;
 }
 
+/**
+ * 双曲线参数 t 的**溢出保护**上限（与中屏视口无关的硬边界）。
+ * |t| → π/2 时 a·sec t 与 b·tan t 均发散，超过此值曲线增长过快、渲染无意义。
+ */
+export const HYPERBOLA_T_SAFE_MAX = 1.35;
+
+/**
+ * 双曲线动点在中屏可见范围内**可达**的参数上界（|t| ≤ 返回值）。
+ *
+ * 由参数方程 x = a·sec t、y = b·tan t 反解可见范围约束：
+ *   |x| ≤ visibleHalfX ⟹ |t| ≤ arccos(a / visibleHalfX)
+ *   |y| ≤ visibleHalfY ⟹ |t| ≤ arctan(visibleHalfY / b)
+ * 再与溢出保护上限取 min。
+ *
+ * 用途（三者必须同源，否则"滑块拉到底但点不动"或"点飞出画布抓不回来"）：
+ *   ① 左屏 t 滑块量程；② 中屏曲线绘制范围；③ 拖拽钳制上界。
+ */
+export function hyperbolaTMaxOnCanvas(
+  a: number,
+  b: number,
+  visibleHalfX: number,
+  visibleHalfY: number,
+): number {
+  const byX = Math.acos(Math.min(1, Math.max(0, a / visibleHalfX)));
+  const byY = Math.atan(visibleHalfY / Math.max(Math.abs(b), 1e-6));
+  return Math.min(HYPERBOLA_T_SAFE_MAX, byX, byY);
+}
+
+/**
+ * 椭圆短半轴 b 的连标上界：既保证 a > b，又保证上下顶点 (0, ±b) 不越出可见半高。
+ * 取 min(a − 0.1, ⌊visibleHalfY·10⌋/10) 并向下取整到 0.1，**绝不越过可见边界**；
+ * 另设 0.6 的下限保证滑块仍可操作（仅当视口异常矮时才触发）。
+ */
+export function ellipseBMaxOnCanvas(a: number, visibleHalfY: number): number {
+  return Math.max(0.6, Math.min(a - 0.1, Math.floor(visibleHalfY * 10) / 10));
+}
+
 export interface ConicMathResult {
   conicType: ConicType;
   a: number;
@@ -100,8 +137,11 @@ export function calculateConicProperties(
     px = safeA * Math.cos(t);
     py = safeB * Math.sin(t);
   } else {
-    // 双曲线右支参数方程 x = a sec(t), y = b tan(t)，限制 t \in (-1.35, 1.35) 避免溢出
-    const safeT = Math.max(-1.35, Math.min(1.35, t));
+    // 双曲线右支参数方程 x = a sec(t), y = b tan(t)，限制 t ∈ (-HYPERBOLA_T_SAFE_MAX, +HYPERBOLA_T_SAFE_MAX) 避免溢出
+    const safeT = Math.max(
+      -HYPERBOLA_T_SAFE_MAX,
+      Math.min(HYPERBOLA_T_SAFE_MAX, t),
+    );
     px = safeA / Math.cos(safeT);
     py = safeB * Math.tan(safeT);
   }

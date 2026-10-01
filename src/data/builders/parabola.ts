@@ -251,6 +251,11 @@ export function buildParabolaPanel(
         note: "从准线上任意点 $Q$ 引抛物线的两条切线 $QA, QB$：① 两切线互相垂直 $QA \\perp QB$；② 切点弦 $AB$ 必过焦点 $F$ 且 $QF \\perp AB$；③ $\\triangle QAB$ 面积在通径端点切线处取得极小值 $p^2$。",
         prerequisites: ["点 $Q$ 在准线 $l$ 上"],
         level: "important",
+        // 课标边界：本结论超出 2019 人教A版正文范围，系统内另有专页承载
+        // （/parabola-archimedes，importance: "extend"）。此处按条目级显式声明拓展，
+        // 避免与专页形成"同一内容两页、层级不明"的定位冲突（09-30 P1-6b）。
+        isExtension: true,
+        extensionBadge: "选学拓展",
       },
     );
   }
@@ -300,19 +305,10 @@ export function buildParabolaPanel(
       },
     );
   } else if (studyMode === "focalChord") {
-    const sinVal = Math.sin((thetaDeg * Math.PI) / 180);
-    const sin2Val = Math.round(sinVal * sinVal * 1000) / 1000;
-    const sin2Str = formatMathNumber(sin2Val);
     const twoPStr = formatMathNumber(2 * safeP);
-    const chordLen = formatMathNumber(
-      Math.round(chordInfo.lengthAB * 1000) / 1000,
-    );
-    const radiusVal = formatMathNumber(
-      Math.round(chordInfo.midCircle.radius * 1000) / 1000,
-    );
-    const harmonicVal = formatMathNumber(
-      Math.round(chordInfo.harmonicSum * 1000) / 1000,
-    );
+    const chordLen = formatMathNumber(chordInfo.lengthAB);
+    const radiusVal = formatMathNumber(chordInfo.midCircle.radius);
+    const harmonicVal = formatMathNumber(chordInfo.harmonicSum);
 
     reasoningSteps.push(
       {
@@ -326,7 +322,7 @@ export function buildParabolaPanel(
         step: 2,
         title: "建模代入 · 韦达代数核代入计算弦长",
         detail: `方程两根 $r_1, r_2$ 分别对应向径 $|AF|, -|BF|$。由韦达定理 $r_1 + r_2 = \\frac{2p\\cos\\theta}{\\sin^2\\theta}, r_1 r_2 = -\\frac{p^2}{\\sin^2\\theta}$，代入弦长展开式演绎计算：`,
-        latex: `|AB| = r_1 - r_2 = \\frac{\\sqrt{(2p\\cos\\theta)^2 - 4(\\sin^2\\theta)(-p^2)}}{\\sin^2\\theta} = \\frac{2p}{\\sin^2\\theta} = \\frac{${twoPStr}}{\\sin^2(${formatMathNumber(thetaDeg)}^\\circ)} = \\frac{${twoPStr}}{${sin2Str}} = ${chordLen}`,
+        latex: `|AB| = r_1 - r_2 = \\frac{\\sqrt{(2p\\cos\\theta)^2 - 4(\\sin^2\\theta)(-p^2)}}{\\sin^2\\theta} = \\frac{2p}{\\sin^2\\theta} = \\frac{${twoPStr}}{\\sin^2(${formatMathNumber(thetaDeg)}^\\circ)} = ${chordLen}`,
         rubric:
           "采分点：根与系数关系代数消元，代入具体角度精确求出焦点弦长（4分）",
       },
@@ -417,14 +413,17 @@ export function buildParabolaPanel(
       },
     );
   } else {
+    // 本分支（准线蒙日 / 光学综合）承载的是阿基米德三角形一类**拓展**结论：
+    // 2019 人教A版正文不含该内容，系统内另有专页 /parabola-archimedes（importance: "extend"）。
+    // 故逐条按 `importance: "extend"` 显式降级标注，避免与专页形成层级不明的定位冲突（09-30 P1-6b）。
     gaokaoPoints.push(
       {
         text: "阿基米德三角形四大等价链条：点 $Q$ 在准线上 $\\iff QA \\perp QB \\iff$ 切点弦 $AB$ 过焦点 $F \\iff QF \\perp AB$。",
-        importance: "hard",
+        importance: "extend",
       },
       {
         text: "面积与极值秒杀结论：$S_{\\triangle QAB} = \\frac{p^2}{\\sin^3\\theta} \\ge p^2$，在通径端点切线处取得最小值 $p^2$，常用于高考客观压轴速解。",
-        importance: "gaokao",
+        importance: "extend",
       },
     );
   }

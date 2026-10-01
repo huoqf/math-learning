@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import {
@@ -18,6 +18,7 @@ import {
   type Point2D,
 } from "@/math/conicLine";
 import { paramMeta } from "@/data/registries/conicLine";
+import { paramDragBounds } from "@/utils/paramClamp";
 
 interface ConicLineSceneProps {
   params: Record<string, number>;
@@ -48,21 +49,10 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
    * 拖拽钳制域 = 左屏参数声明域 ∩ 中屏可见视口（取交集后交给 InteractivePoint 底层 clamp）。
    * 1) 不越出滑块量程：否则数值与滑块脱节（滑块卡在端点，实际值却继续增长）；
    * 2) 不越出可见画布：否则控制点被拖出视口后彻底抓不回来，只能靠左屏滑块救回。
+   * 钳制规则统一由 @/utils/paramClamp 提供（SSOT），此处仅做「参数键 → 合法区间」的转接。
    */
-  const dragBounds = (xMetaKey: string, yMetaKey: string) => {
-    const xMeta = paramMeta[xMetaKey];
-    const yMeta = paramMeta[yMetaKey];
-    return {
-      xRange: [
-        Math.max(xMeta.min, scale.xMin),
-        Math.min(xMeta.max, scale.xMax),
-      ] as [number, number],
-      yRange: [
-        Math.max(yMeta.min, scale.yMin),
-        Math.min(yMeta.max, scale.yMax),
-      ] as [number, number],
-    };
-  };
+  const dragBounds = (xMetaKey: string, yMetaKey: string) =>
+    paramDragBounds(paramMeta[xMetaKey], paramMeta[yMetaKey], scale);
 
   // 1. 求解相交计算结果
   const result = useMemo(
@@ -385,8 +375,8 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
                 strokeDasharray="3,3"
               />
               <MathPoint
-                x={proj.footMath.x}
-                y={proj.footMath.y}
+                cx={proj.footMath.x}
+                cy={proj.footMath.y}
                 scale={scale}
                 color={MATH_COLORS.paramTertiary}
                 fontScale={fontScale}
@@ -462,16 +452,16 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
 
       {/* 焦点点标 */}
       <MathPoint
-        x={result.focusF1.x}
-        y={result.focusF1.y}
+        cx={result.focusF1.x}
+        cy={result.focusF1.y}
         scale={scale}
         color={MATH_COLORS.accent}
         fontScale={fontScale}
       />
       {result.focusF2 && (
         <MathPoint
-          x={result.focusF2.x}
-          y={result.focusF2.y}
+          cx={result.focusF2.x}
+          cy={result.focusF2.y}
           scale={scale}
           color={MATH_COLORS.accent}
           fontScale={fontScale}
@@ -482,8 +472,8 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
       {result.intersections.map((pt, idx) => (
         <MathPoint
           key={`intersect-${idx}`}
-          x={pt.x}
-          y={pt.y}
+          cx={pt.x}
+          cy={pt.y}
           scale={scale}
           color={MATH_COLORS.paramPrimary}
           fontScale={fontScale}

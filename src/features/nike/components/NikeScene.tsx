@@ -237,16 +237,16 @@ export function NikeScene({
               />
               {/* 项一高亮点 P1(x0, ax0) */}
               <MathPoint
-                x={x0}
-                y={amgmY1}
+                cx={x0}
+                cy={amgmY1}
                 scale={scale}
                 color={MATH_COLORS.paramPrimary}
                 fontScale={fontScale}
               />
               {/* 项二高亮点 P2(x0, b/x0) */}
               <MathPoint
-                x={x0}
-                y={amgmY2}
+                cx={x0}
+                cy={amgmY2}
                 scale={scale}
                 color={MATH_COLORS.paramSecondary}
                 fontScale={fontScale}
@@ -296,8 +296,8 @@ export function NikeScene({
             />
             {/* 最值特征点 */}
             <MathPoint
-              x={cp.x}
-              y={cp.y}
+              cx={cp.x}
+              cy={cp.y}
               scale={scale}
               color={MATH_COLORS.vertexPoint}
               fontScale={fontScale}

@@ -139,8 +139,10 @@ export function ParabolaArchimedesAnimation() {
           label: meta.label,
           labelFormula: meta.labelFormula,
           value: params[key as keyof typeof params] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
+          min:
+            mode === "orthogonalChords" && key === "thetaDeg" ? 20 : meta.min,
+          max:
+            mode === "orthogonalChords" && key === "thetaDeg" ? 75 : meta.max,
           step: meta.step ?? 0.1,
           group: meta.group,
           marks: meta.marks,

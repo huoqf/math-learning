@@ -172,6 +172,56 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
       params: { a: 2, b: 1, k: 0.5, m: 0 },
       config: { curveType: "ellipse" },
     },
+    // 圆的方程（2026-10-01 新建页）：三种模式与两类退化分支各自生成不同的配方
+    // latex 与警示文案，逐条登记以纳入 KaTeX 编译校验（原清单未覆盖该页）。
+    {
+      animId: "anim-circle-equation",
+      params: { a: 0, b: 0, r: 3, px: 4, py: 3 },
+      config: { studyMode: "standard" },
+    },
+    {
+      animId: "anim-circle-equation",
+      params: { D: -4, E: 6, F: -3 },
+      config: { studyMode: "general" },
+    },
+    {
+      animId: "anim-circle-equation",
+      params: { D: 4, E: -6, F: 13 },
+      config: { studyMode: "general" }, // Δ_c = 0：退化为单点
+    },
+    {
+      animId: "anim-circle-equation",
+      params: { D: 2, E: 2, F: 10 },
+      config: { studyMode: "general" }, // Δ_c < 0：无实数轨迹
+    },
+    // 分数系数预设：走 \frac 分支（系数、圆心、半径、Δ_c/4 全为分数），
+    // 是 LaTeX 嵌套分式最密集的路径，必须纳入校验。
+    {
+      animId: "anim-circle-equation",
+      params: { D: 2 / 3, E: -4 / 3, F: 1 / 9 },
+      config: { studyMode: "general" },
+    },
+    {
+      animId: "anim-circle-equation",
+      params: { D: -4 / 3, E: 2 / 3, F: -4 / 9 },
+      config: { studyMode: "general" },
+    },
+    {
+      animId: "anim-circle-equation",
+      params: { x1: 2, y1: 1, x2: -2, y2: 3, x3: 0, y3: -3 },
+      config: { studyMode: "threePoints" },
+    },
+    {
+      animId: "anim-circle-equation",
+      params: { x1: 1, y1: 1, x2: 2, y2: 2, x3: 3, y3: 3 },
+      config: { studyMode: "threePoints" }, // 三点共线：不生成推导链
+    },
+    {
+      // 三点式分数解：D=-5/3, E=-7/3, F=2/3，外心 (5/6, 7/6)，R²=25/18
+      animId: "anim-circle-equation",
+      params: { x1: 1, y1: 0, x2: 2, y2: 1, x3: 0, y3: 2 },
+      config: { studyMode: "threePoints" },
+    },
     // 导数与单调性：右屏「单调性与极值符号表」为 \begin{array}{c|c|c} 三列表格，
     // 单元格由 math 层 signTable 拼装。以下 4 组覆盖全部形态不同的表格：
     // ① 三次 a>0（极大/极小两行）；② 三次 a=0（导数为零的点非极值行）；

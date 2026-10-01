@@ -18,6 +18,8 @@ import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { ParabolaDirection } from "@/math/parabola";
 import { useParabolaScene } from "../hooks/useParabolaScene";
+import { paramMeta } from "@/data/registries/parabola";
+import { paramDragRange } from "@/utils/paramClamp";
 import type { PlacedLabel } from "@/utils/labelAvoider";
 
 interface ParabolaSceneProps {
@@ -89,6 +91,16 @@ export const ParabolaScene: React.FC<ParabolaSceneProps> = ({
   });
 
   const focusPt = mathToDesign(base.focus.x, base.focus.y, scale);
+
+  // 中屏拖拽钳制（SSOT：参数声明域 ∩ 可见视口）。
+  // P（抛物线上动点）与 Q（准线上动点）的手柄坐标均由单一自由参数派生：
+  //   · 受控轴与自由参数同轴 —— 准线竖直（right/left）时是 y，准线水平（up/down）时是 x，
+  //     取 paramMeta 声明域与可见视口的交集作为钳制区间；
+  //   · 另一轴由同一参数单值派生（P: ±t²/(2p)；Q: 恒为准线常数），并非独立自由度，
+  //     且钩子里的拖拽处理器只读取受控轴，故该轴保持 undefined（不钳制）。
+  const controlAxis: "x" | "y" = base.directrixIsVertical ? "y" : "x";
+  const tPRange = paramDragRange(paramMeta.tP, scale, controlAxis);
+  const yQRange = paramDragRange(paramMeta.yQ, scale, controlAxis);
 
   return (
     <g>
@@ -251,6 +263,42 @@ export const ParabolaScene: React.FC<ParabolaSceneProps> = ({
             strokeDasharray="3 3"
           />
 
+          {/* 端点 A, B 到准线的垂直垂线 AA', BB' (梯形中位线推导依据) */}
+          <line
+            x1={mathToDesign(chordInfo.A.x, chordInfo.A.y, scale).x}
+            y1={mathToDesign(chordInfo.A.x, chordInfo.A.y, scale).y}
+            x2={mathToDesign(base.directrixConstant, chordInfo.A.y, scale).x}
+            y2={mathToDesign(base.directrixConstant, chordInfo.A.y, scale).y}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.5}
+            strokeDasharray="3 3"
+          />
+          <line
+            x1={mathToDesign(chordInfo.B.x, chordInfo.B.y, scale).x}
+            y1={mathToDesign(chordInfo.B.x, chordInfo.B.y, scale).y}
+            x2={mathToDesign(base.directrixConstant, chordInfo.B.y, scale).x}
+            y2={mathToDesign(base.directrixConstant, chordInfo.B.y, scale).y}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.5}
+            strokeDasharray="3 3"
+          />
+          <MathPoint
+            cx={base.directrixConstant}
+            cy={chordInfo.A.y}
+            scale={scale}
+            color={MATH_COLORS.paramTertiary}
+            r={3.2}
+            fontScale={fontScale}
+          />
+          <MathPoint
+            cx={base.directrixConstant}
+            cy={chordInfo.B.y}
+            scale={scale}
+            color={MATH_COLORS.paramTertiary}
+            r={3.2}
+            fontScale={fontScale}
+          />
+
           {/* 准线切点 K 处的直角标尺 */}
           {(() => {
             const kPt = mathToDesign(
@@ -373,6 +421,35 @@ export const ParabolaScene: React.FC<ParabolaSceneProps> = ({
             strokeWidth={1.8}
           />
 
+          {/* 准线垂线 PH 与垂足 H */}
+          <line
+            x1={mathToDesign(P.x, P.y, scale).x}
+            y1={mathToDesign(P.x, P.y, scale).y}
+            x2={mathToDesign(base.directrixConstant, P.y, scale).x}
+            y2={mathToDesign(base.directrixConstant, P.y, scale).y}
+            stroke={MATH_COLORS.paramSecondary}
+            strokeWidth={1.8}
+            strokeDasharray="3 3"
+          />
+          <MathPoint
+            cx={base.directrixConstant}
+            cy={P.y}
+            scale={scale}
+            color={MATH_COLORS.paramSecondary}
+            r={3.5}
+            fontScale={fontScale}
+          />
+
+          {/* 切点/切线与对称轴交点 T */}
+          <MathPoint
+            cx={opticalInfo.axisIntercept.x}
+            cy={opticalInfo.axisIntercept.y}
+            scale={scale}
+            color={MATH_COLORS.tangentLine}
+            r={3.5}
+            fontScale={fontScale}
+          />
+
           {/* 6B: 阿基米德三角形与准线上点 Q 的双切线 QA, QB */}
           {/* 阿基米德三角形 QAB 半透明浅底 */}
           <polygon
@@ -485,6 +562,8 @@ export const ParabolaScene: React.FC<ParabolaSceneProps> = ({
             scale={scale}
             vp={vp}
             onDrag={handleQDrag}
+            xRange={controlAxis === "x" ? yQRange : undefined}
+            yRange={controlAxis === "y" ? yQRange : undefined}
             color={MATH_COLORS.paramTertiary}
             r={5.5}
             fontScale={fontScale}
@@ -510,6 +589,8 @@ export const ParabolaScene: React.FC<ParabolaSceneProps> = ({
           scale={scale}
           vp={vp}
           onDrag={handlePDrag}
+          xRange={controlAxis === "x" ? tPRange : undefined}
+          yRange={controlAxis === "y" ? tPRange : undefined}
           color={MATH_COLORS.vectorSecondary}
           r={5.5}
           fontScale={fontScale}
