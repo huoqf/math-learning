@@ -84,20 +84,46 @@ export default defineConfig({
           if (/[\\/]src[\\/](data[\\/]builders[\\/]solid|math3d[\\/])/.test(id)) {
             return 'math-solid-3d'
           }
+          // ── src/math/ 工具层补全规则 ──────────────────────────────────────────────
+          // 历史上只给 src/data/builders/ 配了学科分包，而 src/math/ 下 25 个工具文件
+          // 没有命中任何规则，全部落入 index chunk，形成：
+          //   math-basic(builders) → index(math/quadratic,degeneration…)
+          //                        → math-derivative(builders/secondDerivative → index)
+          // 即传递循环，导致 Rollup 报 "Circular chunk" 警告并虚胖 index chunk。
+          // 规则顺序与 builders 侧保持一致（先 solid→derivative→probability→conic→function→algebra→basic）。
+          if (/[\\/]src[\\/]math[\\/](obliqueDrawing)/.test(id)) {
+            return 'math-solid-3d'
+          }
           if (/[\\/]src[\\/](data[\\/]builders[\\/]derivative|math[\\/]derivative)/.test(id)) {
             return 'math-derivative'
           }
-          if (/[\\/]src[\\/](data[\\/]builders[\\/]probability|math[\\/](probability|stat))/.test(id)) {
+          // secondDerivative / tangentScaling / transcendental 属于导数应用学科
+          if (/[\\/]src[\\/]math[\\/](secondDerivative|tangentScaling|transcendental)/.test(id)) {
+            return 'math-derivative'
+          }
+          if (/[\\/]src[\\/](data[\\/]builders[\\/]probability|math[\\/](probability|stat|pairedData))/.test(id)) {
             return 'math-probability'
           }
-          if (/[\\/]src[\\/](data[\\/]builders[\\/](conic|line|parabola)|math[\\/](conic|parabola|line))/.test(id)) {
+          if (/[\\/]src[\\/](data[\\/]builders[\\/](conic|line|parabola)|math[\\/](conic|parabola|line|circleCircle|circleEquation))/.test(id)) {
             return 'math-conic'
+          }
+          // 函数/三角/解三角形工具层
+          if (/[\\/]src[\\/]math[\\/](function|transform|composite|trig|triangleSolve|triangleExtrema)/.test(id)) {
+            return 'math-function'
           }
           if (/[\\/]src[\\/]data[\\/]builders[\\/](func|triangle|trig)/.test(id)) {
             return 'math-function'
           }
+          // 向量/复数/数列/均值不等式工具层
+          if (/[\\/]src[\\/]math[\\/](vector|complex|nike|sequence)/.test(id)) {
+            return 'math-algebra'
+          }
           if (/[\\/]src[\\/]data[\\/]builders[\\/](vector|complex|nike|sequence)/.test(id)) {
             return 'math-algebra'
+          }
+          // 基础层：集合/不等式/二次函数及其退化检测工具
+          if (/[\\/]src[\\/]math[\\/](quadratic|degeneration|set|quantifiers|inequalityAbsolute)/.test(id)) {
+            return 'math-basic'
           }
           if (/[\\/]src[\\/]data[\\/]builders[\\/](quadratic|constant|set|inequality|quantifiers)/.test(id)) {
             return 'math-basic'

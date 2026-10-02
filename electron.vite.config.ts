@@ -78,20 +78,38 @@ export default defineConfig({
             if (/[\\/]src[\\/](data[\\/]builders[\\/]solid|math3d[\\/])/.test(id)) {
               return 'math-solid-3d'
             }
+            // ── src/math/ 工具层补全规则（与 vite.config.ts 保持同步）──────────────────────
+            // src/math/ 下 25 个工具文件无规则覆盖，全部落入 index chunk，
+            // 导致传递循环（math-basic→index→math-derivative）。
+            if (/[\\/]src[\\/]math[\\/](obliqueDrawing)/.test(id)) {
+              return 'math-solid-3d'
+            }
             if (/[\\/]src[\\/](data[\\/]builders[\\/]derivative|math[\\/]derivative)/.test(id)) {
               return 'math-derivative'
             }
-            if (/[\\/]src[\\/](data[\\/]builders[\\/]probability|math[\\/](probability|stat))/.test(id)) {
+            if (/[\\/]src[\\/]math[\\/](secondDerivative|tangentScaling|transcendental)/.test(id)) {
+              return 'math-derivative'
+            }
+            if (/[\\/]src[\\/](data[\\/]builders[\\/]probability|math[\\/](probability|stat|pairedData))/.test(id)) {
               return 'math-probability'
             }
-            if (/[\\/]src[\\/](data[\\/]builders[\\/](conic|line|parabola)|math[\\/](conic|parabola|line))/.test(id)) {
+            if (/[\\/]src[\\/](data[\\/]builders[\\/](conic|line|parabola)|math[\\/](conic|parabola|line|circleCircle|circleEquation))/.test(id)) {
               return 'math-conic'
+            }
+            if (/[\\/]src[\\/]math[\\/](function|transform|composite|trig|triangleSolve|triangleExtrema)/.test(id)) {
+              return 'math-function'
             }
             if (/[\\/]src[\\/]data[\\/]builders[\\/](func|triangle|trig)/.test(id)) {
               return 'math-function'
             }
+            if (/[\\/]src[\\/]math[\\/](vector|complex|nike|sequence)/.test(id)) {
+              return 'math-algebra'
+            }
             if (/[\\/]src[\\/]data[\\/]builders[\\/](vector|complex|nike|sequence)/.test(id)) {
               return 'math-algebra'
+            }
+            if (/[\\/]src[\\/]math[\\/](quadratic|degeneration|set|quantifiers|inequalityAbsolute)/.test(id)) {
+              return 'math-basic'
             }
             if (/[\\/]src[\\/]data[\\/]builders[\\/](quadratic|constant|set|inequality|quantifiers)/.test(id)) {
               return 'math-basic'
