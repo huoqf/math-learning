@@ -4,7 +4,7 @@
  * (支持 3 种模式：标准差1型 / 跨项差2型 / 根式有理化型)
  */
 import { CoordinateGrid } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import type {
@@ -13,6 +13,8 @@ import type {
   RadicalTelescopingResult,
 } from "@/math/sequence";
 import { toSub } from "./SequenceText";
+
+const DESIGN_CENTER_X = CANVAS_PRESETS.full.width / 2;
 
 interface SequenceModelsTelescopingSceneProps {
   teleGap: number;
@@ -327,7 +329,7 @@ export function SequenceModelsTelescopingScene({
         {/* 顶部总和横幅 */}
         <g className="radical-banner">
           <rect
-            x={vp.centerX - 220}
+            x={DESIGN_CENTER_X - 220}
             y={bannerY}
             width={440}
             height={28}
@@ -337,7 +339,7 @@ export function SequenceModelsTelescopingScene({
             strokeWidth={1.2}
           />
           <text
-            x={vp.centerX}
+            x={DESIGN_CENTER_X}
             y={bannerY + 18}
             textAnchor="middle"
             fontSize={fontScale(10.5)}

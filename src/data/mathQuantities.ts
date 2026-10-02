@@ -238,9 +238,12 @@ export function buildMathQuantities(
         config as Parameters<typeof buildVector3DBasisPanel>[1],
       );
     case "anim-sequence":
+    case "anim-sequence-arithmetic":
     case "anim-sequence-geom":
+    case "anim-sequence-geometric":
     case "anim-sequence-recurrence":
     case "anim-sequence-sum":
+    case "anim-sequence-models":
       return buildSequencePanel(params, config);
     case "anim-conic-definition":
       return buildConicDefinitionPanel(params, config);

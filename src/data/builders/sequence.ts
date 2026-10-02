@@ -135,11 +135,11 @@ export function buildSequencePanel(
       }
 
       if (res.maxSnInfo) {
-        const isMax = d < 0;
+        const isMax = res.maxSnInfo.isMax ?? d < 0;
         quantities.push({
           label: isMax
-            ? `S_n 最大值项 ${res.maxSnInfo.isDual ? "(双最值)" : ""}`
-            : "$S_n$ 最小值项",
+            ? `$S_n$ 最大值项 ${res.maxSnInfo.isDual ? "(双最值)" : ""}`
+            : `$S_n$ 最小值项 ${res.maxSnInfo.isDual ? "(双最值)" : ""}`,
           value: res.maxSnInfo.isDual
             ? `n = ${res.maxSnInfo.nMax}, ${res.maxSnInfo.dualN}, S = ${formatMathNumber(res.maxSnInfo.maxSn)}`
             : `n = ${res.maxSnInfo.nMax}, S = ${formatMathNumber(res.maxSnInfo.maxSn)}`,
@@ -159,10 +159,13 @@ export function buildSequencePanel(
         condition: "离散极值与连续顶点对称轴邻近取整",
       });
 
-      gaokaoPoints.push({
-        text: "高考易错点：抛物线对称轴 $x_0 = \\frac{1}{2} - \\frac{a_1}{d}$ 通常非整数，实际最值项取与对称轴距离最近的整数点；若对称轴恰为半整数（如 3.5），则有两个相等的最大值 $S_3 = S_4$。",
-        importance: "hard",
-      });
+      if (Math.abs(d) > 1e-9) {
+        const extremaWord = d > 0 ? "最小值" : "最大值";
+        gaokaoPoints.push({
+          text: `高考易错点：抛物线对称轴 $x_0 = \\frac{1}{2} - \\frac{a_1}{d}$ 通常非整数，实际最值项取与对称轴距离最近的整数点；若对称轴恰为半整数（如 3.5），则有两个相等的${extremaWord} $S_3 = S_4$。`,
+          importance: "hard",
+        });
+      }
     } else if (subMode === "segment") {
       if (res.segmentedSums) {
         quantities.push({
@@ -224,7 +227,7 @@ export function buildSequencePanel(
 
     if (Math.abs(d) < 1e-9) {
       warnings.push({
-        text: "$d = 0$ (退化常数列)：公差 $d$ 为 0 时，通项 $a_n = a_1$ 为常数，前 $n$ 项和 $S_n = n · a_1$ 呈线性增长，非二次函数。",
+        text: "$d = 0$ (退化常数列)：公差 $d$ 为 0 时，通项 $a_n = a_1$ 为常数，前 $n$ 项和 $S_n = n \\cdot a_1$ 呈线性单调变化，非二次函数。",
         level: "warning",
       });
     }
@@ -365,8 +368,8 @@ export function buildSequencePanel(
       if (res.maxPnInfo) {
         quantities.push({
           label: res.maxPnInfo.isMax
-            ? `P_n 最大值项 ${res.maxPnInfo.isDual ? "(双最值)" : ""}`
-            : "$P_n$ 最小值项",
+            ? `$P_n$ 最大值项 ${res.maxPnInfo.isDual ? "(双最值)" : ""}`
+            : `$P_n$ 最小值项 ${res.maxPnInfo.isDual ? "(双最值)" : ""}`,
           value: res.maxPnInfo.isDual
             ? `n = ${res.maxPnInfo.nMax}, ${res.maxPnInfo.dualN}, P = ${res.maxPnInfo.maxPn.toFixed(4)}`
             : `n = ${res.maxPnInfo.nMax}, P = ${res.maxPnInfo.maxPn.toFixed(4)}`,

@@ -178,9 +178,9 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
     },
     {
       key: "equal-roots",
-      name: "重特征根型 (r₁=r₂=2)",
-      desc: "a_{n+2}=4a_{n+1}-4a_n，(x-2)²=0 重根构造",
-      params: { a1: 1, a2: 4, p_rec: 4, q_rec: -4, N: 6 },
+      name: "重特征根型 (r₁=r₂=1)",
+      desc: "$a_{n+2}=2a_{n+1}-a_n$，$(x-1)^2=0$ 重根构造",
+      params: { a1: 1, a2: 3, p_rec: 2, q_rec: -1, N: 6 },
     },
   ],
 };

@@ -90,6 +90,78 @@ describe("Sequence Math Calculations — 高中数学数列核心计算与高考
       expect(constRes.isValid).toBe(true);
       expect(constRes.terms[3].Sn).toBe(12);
       expect(constRes.continuousAxis).toBeNull();
+      expect(constRes.maxSnInfo?.isMax).toBe(true);
+      expect(constRes.maxSnInfo?.nMax).toBe(4);
+      expect(constRes.maxSnInfo?.maxSn).toBe(12);
+
+      // a1 < 0, d = 0: 递减常数列，最大值在 n=1
+      const constResNeg = calcArithmeticSequence(-3, 0, 6);
+      expect(constResNeg.isValid).toBe(true);
+      expect(constResNeg.maxSnInfo?.isMax).toBe(true);
+      expect(constResNeg.maxSnInfo?.nMax).toBe(1);
+      expect(constResNeg.maxSnInfo?.maxSn).toBe(-3);
+    });
+
+    it("公差 d > 0 对称轴为半整数时应正确识别双最小值 (如 S3 = S4)", () => {
+      // a1 = -3, d = 1, N = 6 => terms: -3, -2, -1, 0, 1, 2 => Sn: -3, -5, -6, -6, -5, -3
+      const res = calcArithmeticSequence(-3, 1, 6);
+      expect(res.continuousAxis).toBe(3.5);
+      expect(res.maxSnInfo?.isDual).toBe(true);
+      expect(res.maxSnInfo?.nMax).toBe(3);
+      expect(res.maxSnInfo?.dualN).toBe(4);
+      expect(res.maxSnInfo?.maxSn).toBe(-6);
+      expect(res.maxSnInfo?.isMax).toBe(false);
+    });
+
+    it("【参数扫掠】等差数列 Sn 极值与双最值在全参数空间网格下必须 100% 吻合离散真值", () => {
+      const a1List = [-10, -5, -3, -1, 0, 1, 3, 5, 10];
+      const dList = [-4, -2, -1, -0.5, 0, 0.5, 1, 2, 4];
+      const nList = [3, 4, 5, 8, 12, 16];
+
+      let sweepCount = 0;
+      for (const a1 of a1List) {
+        for (const d of dList) {
+          for (const N of nList) {
+            sweepCount++;
+            const res = calcArithmeticSequence(a1, d, N);
+            expect(res.isValid).toBe(true);
+            const { maxSnInfo, terms } = res;
+            expect(maxSnInfo).not.toBeNull();
+            if (!maxSnInfo) continue;
+
+            const isMax = maxSnInfo.isMax;
+            const snValues = terms.map((t) => t.Sn);
+            const trueExtremum = isMax
+              ? Math.max(...snValues)
+              : Math.min(...snValues);
+
+            // 1. 极值数值必须完全一致
+            expect(maxSnInfo.maxSn).toBeCloseTo(trueExtremum, 5);
+
+            // 2. 找到所有达到此极值的离散项下标
+            const matchIndices = terms
+              .filter((t) => Math.abs(t.Sn - trueExtremum) < 1e-7)
+              .map((t) => t.n);
+
+            expect(matchIndices).toContain(maxSnInfo.nMax);
+
+            // 3. 双最值判定：当 d !== 0 时，有两个相邻项同时达到极值当且仅当 isDual 为 true
+            if (Math.abs(d) > 1e-9) {
+              if (matchIndices.length >= 2) {
+                expect(maxSnInfo.isDual).toBe(true);
+                expect(maxSnInfo.dualN).toBeDefined();
+                expect(matchIndices).toContain(maxSnInfo.dualN);
+              } else {
+                expect(maxSnInfo.isDual).toBe(false);
+              }
+            } else {
+              // 常数列退化，无抛物线对称轴，isDual 恒为 false
+              expect(maxSnInfo.isDual).toBe(false);
+            }
+          }
+        }
+      }
+      expect(sweepCount).toBe(a1List.length * dList.length * nList.length);
     });
   });
 
@@ -135,6 +207,75 @@ describe("Sequence Math Calculations — 高中数学数列核心计算与高考
       expect(res.maxPnInfo?.maxPn).toBe(0.125);
     });
 
+    it("应正确计算衰减型但首项 a1 <= 1 的乘积最大值 (严格递减时在 n=1 取最大)", () => {
+      // a1 = 0.5, q = 0.5, N = 8 => Pn 严格递减，P1 = 0.5 最大
+      const res = calcGeometricSequence(0.5, 0.5, 8);
+      expect(res.maxPnInfo?.isMax).toBe(true);
+      expect(res.maxPnInfo?.nMax).toBe(1);
+      expect(res.maxPnInfo?.maxPn).toBeCloseTo(0.5, 4);
+
+      // a1 = 1, q = 0.5, N = 8
+      const res1 = calcGeometricSequence(1, 0.5, 8);
+      expect(res1.maxPnInfo?.isMax).toBe(true);
+      expect(res1.maxPnInfo?.nMax).toBe(1);
+      expect(res1.maxPnInfo?.maxPn).toBeCloseTo(1, 4);
+    });
+
+    it("应正确计算增长型且首项 a1 >= 1 的乘积最大值 (严格递增时在 n=N 取最大)", () => {
+      // a1 = 2, q = 2, N = 4 => Pn 严格递增: 2, 8, 64, 1024
+      const res = calcGeometricSequence(2, 2, 4);
+      expect(res.maxPnInfo?.isMax).toBe(true);
+      expect(res.maxPnInfo?.nMax).toBe(4);
+      expect(res.maxPnInfo?.maxPn).toBe(1024);
+    });
+
+    it("【参数扫掠】正项等比数列 Pn 极值在全参数空间网格下必须 100% 吻合离散真值", () => {
+      const a1List = [0.1, 0.25, 0.5, 1, 2, 4, 8];
+      const qList = [0.2, 0.25, 0.5, 0.8, 1, 1.25, 2, 3, 4];
+      const nList = [3, 4, 6, 8, 10];
+
+      let sweepCount = 0;
+      for (const a1 of a1List) {
+        for (const q of qList) {
+          for (const N of nList) {
+            sweepCount++;
+            const res = calcGeometricSequence(a1, q, N);
+            expect(res.isValid).toBe(true);
+            const { maxPnInfo, terms } = res;
+            expect(maxPnInfo).not.toBeNull();
+            if (!maxPnInfo) continue;
+
+            const isMax = maxPnInfo.isMax;
+            const pnValues = terms.map((t) => t.Pn);
+            const trueExtremum = isMax
+              ? Math.max(...pnValues)
+              : Math.min(...pnValues);
+
+            // 1. 极值数值必须完全一致 (允许浮点相对误差)
+            expect(maxPnInfo.maxPn).toBeCloseTo(trueExtremum, 4);
+
+            // 2. 找到所有达到此极值的离散项下标
+            const matchIndices = terms
+              .filter(
+                (t) =>
+                  Math.abs(t.Pn - trueExtremum) /
+                    Math.max(1, Math.abs(trueExtremum)) <
+                  1e-5,
+              )
+              .map((t) => t.n);
+
+            expect(matchIndices).toContain(maxPnInfo.nMax);
+
+            // 3. 若有多项取最值 (如 dual 情况)，确保判定不遗漏
+            if (maxPnInfo.isDual && maxPnInfo.dualN) {
+              expect(matchIndices).toContain(maxPnInfo.dualN);
+            }
+          }
+        }
+      }
+      expect(sweepCount).toBe(a1List.length * qList.length * nList.length);
+    });
+
     it("应正确识别负公比衰减震荡 (-1 < q < 0)", () => {
       const res = calcGeometricSequence(2, -0.5, 4);
       expect(res.terms[0].an).toBe(2);
@@ -162,6 +303,24 @@ describe("Sequence Math Calculations — 高中数学数列核心计算与高考
       const constRes = calcGeometricSequence(3, 1, 5);
       expect(constRes.qType).toBe("constant");
       expect(constRes.terms[4].Sn).toBe(15);
+
+      // a1 = 3 > 1: Pn = 3^n 严格递增 => 最大值在 n = N = 5
+      expect(constRes.maxPnInfo?.isMax).toBe(true);
+      expect(constRes.maxPnInfo?.nMax).toBe(5);
+      expect(constRes.maxPnInfo?.maxPn).toBe(243);
+
+      // a1 = 1: Pn ≡ 1（各项并列取最大）=> 统一报告首个取最值的项 n = 1，且不得误报双最值
+      const constOneRes = calcGeometricSequence(1, 1, 8);
+      expect(constOneRes.maxPnInfo?.isMax).toBe(true);
+      expect(constOneRes.maxPnInfo?.nMax).toBe(1);
+      expect(constOneRes.maxPnInfo?.maxPn).toBeCloseTo(1, 6);
+      expect(constOneRes.maxPnInfo?.isDual).toBe(false);
+
+      // 0 < a1 < 1: Pn = 0.5^n 严格递减 => 最大值在 n = 1
+      const constHalfRes = calcGeometricSequence(0.5, 1, 8);
+      expect(constHalfRes.maxPnInfo?.isMax).toBe(true);
+      expect(constHalfRes.maxPnInfo?.nMax).toBe(1);
+      expect(constHalfRes.maxPnInfo?.maxPn).toBeCloseTo(0.5, 6);
 
       const zeroQRes = calcGeometricSequence(5, 0, 4);
       expect(zeroQRes.isValid).toBe(true);
@@ -426,6 +585,46 @@ describe("Sequence Math Calculations — 高中数学数列核心计算与高考
       expect(recipRes.terms[1].an).toBe(1.5);
       expect(recipRes.terms[2].an).toBe(1.2);
       expect(recipRes.isReciprocalLinear).toBe(false);
+    });
+  });
+
+  // ==========================================
+  // 6. 全参数空间扫掠与几何布局安全测试 (防回退核心防线)
+  // ==========================================
+  describe("6. 全参数空间扫掠与几何排版安全测试 (Sweep Invariants)", () => {
+    it("错位相减排版：全 N 档位 [4..12] 下最右侧元素几何边界恒 <= 820px（840 画布保留至少 20px 安全余量）", () => {
+      for (let N = 4; N <= 12; N++) {
+        const cardWidth = Math.min(
+          68,
+          Math.max(38, Math.floor((740 - 8 * N) / (N + 2))),
+        );
+        // 最右侧元素为下方的保留末项框: startX = 70, 起点 70 + N*(cardWidth + 8), 宽度 cardWidth*2 + 10
+        const rightEdge = 70 + N * (cardWidth + 8) + cardWidth * 2 + 10;
+        expect(
+          rightEdge,
+          `N=${N} 时右边缘 ${rightEdge} 超过了 820px 安全线`,
+        ).toBeLessThanOrEqual(820);
+      }
+    });
+
+    it("等差数列极值项全参数扫掠不变式：所报告的 nMax 项确为全体 Sn 的真最大/最小值", () => {
+      for (let a1 = -6; a1 <= 6; a1 += 2) {
+        for (let d = -3; d <= 3; d += 1) {
+          for (let N = 4; N <= 10; N += 2) {
+            const res = calcArithmeticSequence(a1, d, N);
+            if (!res.maxSnInfo) continue;
+            const reportedVal = res.maxSnInfo.maxSn;
+            const allSn = res.terms.map((t) => t.Sn);
+            if (res.maxSnInfo.isMax) {
+              const trueMax = Math.max(...allSn);
+              expect(reportedVal).toBeCloseTo(trueMax, 5);
+            } else {
+              const trueMin = Math.min(...allSn);
+              expect(reportedVal).toBeCloseTo(trueMin, 5);
+            }
+          }
+        }
+      }
     });
   });
 });

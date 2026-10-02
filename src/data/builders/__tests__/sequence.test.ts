@@ -41,6 +41,37 @@ describe("Sequence MathPanel Builder Tests — 数列右屏看板与高考考点
       expect(panel.theorems.some((t) => t.name.includes("二次函数模型"))).toBe(
         true,
       );
+
+      // d = 0 退化测试
+      const panelD0 = buildSequencePanel(
+        { a1: -3, d: 0, N: 6 },
+        { activeMode: "arithmetic", arithmeticSubMode: "quadratic" },
+      );
+      expect(panelD0.quantities.some((q) => q.label.includes("最大值项"))).toBe(
+        true,
+      );
+      expect(panelD0.quantities.some((q) => q.label.includes("最小值项"))).toBe(
+        false,
+      );
+      expect(
+        panelD0.gaokaoPoints.some((p) => p.text.includes("抛物线对称轴")),
+      ).toBe(false);
+
+      // d > 0 双最小值测试
+      const panelDualMin = buildSequencePanel(
+        { a1: -3, d: 1, N: 6 },
+        { activeMode: "arithmetic", arithmeticSubMode: "quadratic" },
+      );
+      expect(
+        panelDualMin.quantities.some(
+          (q) => q.label.includes("最小值项") && q.label.includes("双最值"),
+        ),
+      ).toBe(true);
+      expect(
+        panelDualMin.quantities.some((q) =>
+          String(q.value).includes("n = 3, 4"),
+        ),
+      ).toBe(true);
     });
 
     it("等长片段和 (segment)", () => {
@@ -106,6 +137,18 @@ describe("Sequence MathPanel Builder Tests — 数列右屏看板与高考考点
       expect(
         panel.theorems.some((t) => t.name.includes("对数二次函数模型")),
       ).toBe(true);
+
+      // a1 <= 1, 0 < q < 1 递减数列测试：必须输出最大值项，严禁标成最小值项
+      const panelDecay = buildSequencePanel(
+        { a1: 0.5, q: 0.5, N: 8 },
+        { activeMode: "geometric", geometricSubMode: "productMax" },
+      );
+      expect(
+        panelDecay.quantities.some((q) => q.label.includes("最大值项")),
+      ).toBe(true);
+      expect(
+        panelDecay.quantities.some((q) => q.label.includes("最小值项")),
+      ).toBe(false);
     });
 
     it("无穷递缩等比几何 (tessellation)", () => {

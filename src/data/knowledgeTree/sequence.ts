@@ -63,3 +63,8 @@ export const sequenceNodes: KnowledgeNode[] = [
     examWeight: 5,
   },
 ];
+
+export const arithmeticSequenceNode = sequenceNodes[0];
+export const geometricSequenceNode = sequenceNodes[1];
+export const modelsSequenceNode = sequenceNodes[2];
+export const recurrenceSequenceNode = sequenceNodes[3];

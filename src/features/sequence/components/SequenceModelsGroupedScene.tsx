@@ -3,11 +3,13 @@
  * 数列实验室 - 高考求和模型 4：分组转化求和法 (等差 + 等比层叠)
  */
 import { CoordinateGrid } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import type { GroupedResult } from "@/math/sequence";
 import { toSub } from "./SequenceText";
+
+const DESIGN_CENTER_X = CANVAS_PRESETS.full.width / 2;
 
 interface SequenceModelsGroupedSceneProps {
   groupedData: GroupedResult;
@@ -34,7 +36,7 @@ export function SequenceModelsGroupedScene({
       {/* 图例提示栏 */}
       <g className="grouped-legend">
         <rect
-          x={vp.centerX - 160}
+          x={DESIGN_CENTER_X - 160}
           y={bannerY}
           width={320}
           height={26}
@@ -44,7 +46,7 @@ export function SequenceModelsGroupedScene({
           strokeWidth={1.2}
         />
         <rect
-          x={vp.centerX - 140}
+          x={DESIGN_CENTER_X - 140}
           y={bannerY + 7}
           width={12}
           height={12}
@@ -53,7 +55,7 @@ export function SequenceModelsGroupedScene({
           stroke={MATH_COLORS.sequence}
         />
         <text
-          x={vp.centerX - 122}
+          x={DESIGN_CENTER_X - 122}
           y={bannerY + 17}
           fontSize={fontScale(9.5)}
           fill={MATH_COLORS.sequence}
@@ -62,7 +64,7 @@ export function SequenceModelsGroupedScene({
           等差分量 aₙ
         </text>
         <rect
-          x={vp.centerX + 15}
+          x={DESIGN_CENTER_X + 15}
           y={bannerY + 7}
           width={12}
           height={12}
@@ -71,7 +73,7 @@ export function SequenceModelsGroupedScene({
           stroke={MATH_COLORS.sequenceSecondary}
         />
         <text
-          x={vp.centerX + 33}
+          x={DESIGN_CENTER_X + 33}
           y={bannerY + 17}
           fontSize={fontScale(9.5)}
           fill={MATH_COLORS.sequenceSecondary}

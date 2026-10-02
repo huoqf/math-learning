@@ -52,9 +52,12 @@ export function ModelsPage() {
       xR = [-1, N + 2];
       const res = calcArithGeoSplit(a1, d, q, N);
       const allVals = res.terms.flatMap((t) => [t.cn, t.cn * q, t.an, t.bn]);
-      const minV = Math.min(0, ...allVals);
-      const maxV = Math.max(3, ...allVals);
-      yR = [Math.floor(minV - 1.5), Math.ceil(maxV + 2.5)];
+      const minV = Math.max(-40, Math.min(0, ...allVals));
+      // 科学教学比例尺：错位相减教学重点在展现前几项的错位对齐与中间相消过程。
+      // 为杜绝指数爆炸使前项高度缩成看不见的 0 像素细线，将视口教学上限收敛在 120；
+      // 超高柱体由 fitVertical 自然收束于视口天花板内，并在柱顶标注真实精确值。
+      const maxV = Math.min(120, Math.max(3, ...allVals));
+      yR = [Math.floor(minV - 3), Math.ceil(maxV * 1.15 + 4)];
       if (yR[1] - yR[0] < 6) yR = [yR[0], yR[0] + 6];
     } else if (modelType === "telescoping") {
       xR = [-1, N + 1.5];
@@ -79,8 +82,9 @@ export function ModelsPage() {
       xR = [-1, N + 1.5];
       const res = calcGroupedSequence(a1, d, q, N);
       const allVals = res.terms.flatMap((t) => [t.an, t.bn, t.cn]);
-      const minV = Math.min(0, ...allVals);
-      const maxV = Math.max(3, ...allVals);
+      const minV = Math.max(-30, Math.min(0, ...allVals));
+      // 分组模型同构上限钳制（100），兼顾等差分量与等比分量的可读性
+      const maxV = Math.min(100, Math.max(3, ...allVals));
       yR = [Math.floor(minV - 2), Math.ceil(maxV + 3)];
       if (yR[1] - yR[0] < 6) yR = [yR[0], yR[0] + 6];
     } else if (modelType === "odd-even") {

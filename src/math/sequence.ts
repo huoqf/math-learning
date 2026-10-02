@@ -46,6 +46,7 @@ export interface ArithmeticSequenceResult {
   maxSnInfo: {
     nMax: number;
     maxSn: number;
+    isMax?: boolean;
     isDual?: boolean;
     dualN?: number;
   } | null;
@@ -288,29 +289,44 @@ export function calcArithmeticSequence(
   let bestSn = terms[0].Sn;
   let isDual = false;
   let dualN: number | undefined;
+  let isMax = true;
 
   if (d < 0) {
+    isMax = true;
     for (let i = 0; i < terms.length; i++) {
       if (terms[i].Sn > bestSn) {
         bestSn = terms[i].Sn;
         bestN = terms[i].n;
       }
     }
-    // 检查是否存在两个相邻且相等的极大值 (即 a_{k+1} = 0)
-    if (continuousAxis !== null) {
-      const k = Math.round(continuousAxis - 0.5);
-      if (Math.abs(continuousAxis - (k + 0.5)) < 1e-9 && k >= 1 && k < N) {
-        if (Math.abs(terms[k - 1].Sn - terms[k].Sn) < 1e-9) {
-          isDual = true;
-          dualN = k + 1;
-        }
-      }
-    }
   } else if (d > 0) {
+    isMax = false;
     for (let i = 0; i < terms.length; i++) {
       if (terms[i].Sn < bestSn) {
         bestSn = terms[i].Sn;
         bestN = terms[i].n;
+      }
+    }
+  } else {
+    // d === 0: 退化为常数项为 0 的直线 Sn = n * a1
+    isMax = true;
+    if (a1 >= 0) {
+      bestN = N;
+      bestSn = terms[N - 1].Sn;
+    } else {
+      bestN = 1;
+      bestSn = terms[0].Sn;
+    }
+  }
+
+  // 对称轴非空时，检查是否存在两个相邻且相等的极值项 (即 a_{k+1} = 0)
+  // 无论是 d < 0 (双最大值) 还是 d > 0 (双最小值)，该准则均成立
+  if (continuousAxis !== null) {
+    const k = Math.round(continuousAxis - 0.5);
+    if (Math.abs(continuousAxis - (k + 0.5)) < 1e-9 && k >= 1 && k < N) {
+      if (Math.abs(terms[k - 1].Sn - terms[k].Sn) < 1e-9) {
+        isDual = true;
+        dualN = k + 1;
       }
     }
   }
@@ -354,6 +370,7 @@ export function calcArithmeticSequence(
     maxSnInfo: {
       nMax: bestN,
       maxSn: bestSn,
+      isMax,
       isDual,
       dualN,
     },
@@ -455,29 +472,63 @@ export function calcGeometricSequence(
     logLineFn = (x: number) => lnA1 + (x - 1) * lnQ;
   }
 
-  // 4. 前 n 项积最值分析 (当 a1 > 0 且 q > 0 且 q != 1 时最具教学代表性)
+  // 4. 前 n 项积最值分析 (当 a1 > 0 且 q > 0 时)
   let maxPnInfo: GeometricSequenceResult["maxPnInfo"] = null;
-  if (a1 > 0 && q > 0 && Math.abs(q - 1) > 1e-9) {
-    const isSeekingMax = q < 1 && a1 > 1; // 递减数列找极大值
-    const isSeekingMin = q > 1 && a1 < 1; // 递增数列找极小值
-
+  if (a1 > 0 && q > 0) {
+    let isMax = true;
     let targetN = 1;
     let targetPn = terms[0].Pn;
 
-    for (let i = 0; i < terms.length; i++) {
-      if (isSeekingMax && terms[i].Pn > targetPn) {
-        targetPn = terms[i].Pn;
-        targetN = terms[i].n;
-      } else if (isSeekingMin && terms[i].Pn < targetPn) {
-        targetPn = terms[i].Pn;
-        targetN = terms[i].n;
+    if (Math.abs(q - 1) < 1e-9) {
+      // q === 1 退化常数列: Pn = a1^n
+      // a1 > 1: Pn 严格递增，最大值在 n = N；
+      // 0 < a1 <= 1: a1 < 1 时 Pn 严格递减、a1 = 1 时 Pn ≡ 1（各项并列取最大），
+      //              两种情形均统一报告首个取到最大值的项 n = 1（与递减边界约定一致）。
+      if (a1 > 1) {
+        isMax = true;
+        targetN = N;
+        targetPn = terms[N - 1].Pn;
+      } else {
+        isMax = true;
+        targetN = 1;
+        targetPn = terms[0].Pn;
+      }
+    } else if (q < 1) {
+      // 0 < q < 1: 无论 a1 > 1 (先增后减) 还是 a1 <= 1 (单调递减)，均求最大值
+      isMax = true;
+      for (let i = 0; i < terms.length; i++) {
+        if (terms[i].Pn > targetPn) {
+          targetPn = terms[i].Pn;
+          targetN = terms[i].n;
+        }
+      }
+    } else {
+      // q > 1
+      if (a1 < 1) {
+        // a1 < 1: 先减后增，求极小值
+        isMax = false;
+        for (let i = 0; i < terms.length; i++) {
+          if (terms[i].Pn < targetPn) {
+            targetPn = terms[i].Pn;
+            targetN = terms[i].n;
+          }
+        }
+      } else {
+        // a1 >= 1: 严格单调递增，最大值在 n = N
+        isMax = true;
+        targetN = N;
+        targetPn = terms[N - 1].Pn;
       }
     }
 
-    // 判断双最值
+    // 判断双最值 (当且仅当存在相邻项比为 1 即 a_{k+1} = 1 且 q != 1 时成立)
     let isDual = false;
     let dualN: number | undefined;
-    if (targetN < N && Math.abs(terms[targetN].an - 1) < 1e-6) {
+    if (
+      Math.abs(q - 1) >= 1e-9 &&
+      targetN < N &&
+      Math.abs(terms[targetN].an - 1) < 1e-6
+    ) {
       isDual = true;
       dualN = targetN + 1;
     }
@@ -485,7 +536,7 @@ export function calcGeometricSequence(
     maxPnInfo = {
       nMax: targetN,
       maxPn: targetPn,
-      isMax: isSeekingMax,
+      isMax,
       isDual,
       dualN,
     };

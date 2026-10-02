@@ -4,11 +4,25 @@
  * (支持 4 步推导演化视图与矩阵错位对齐)
  */
 import { CoordinateGrid } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import type { ArithGeoSplitTerm } from "@/math/sequence";
 import { toSub, toSup } from "./SequenceText";
+
+const DESIGN_CENTER_X = CANVAS_PRESETS.full.width / 2;
+
+/**
+ * 将柱体/框选矩形的纵向区间收进画布内。
+ * 先保证最小可见高度 minH，再把 y 上移，使 y + height 恒不超过画布底边。
+ * 目的：杜绝「取值恰在视口下边界、自然高度小于最小高度」时，
+ * 被最小高度顶出画布（历史缺陷：cn = 0 且零线贴近底边时底边溢出 ~2px）。
+ */
+function fitVertical(topY: number, botY: number, minH: number) {
+  const height = Math.max(minH, botY - topY);
+  const y = Math.min(topY, CANVAS_PRESETS.full.height - height);
+  return { y, height };
+}
 
 interface SequenceModelsArithGeoSceneProps {
   terms: ArithGeoSplitTerm[];
@@ -63,7 +77,7 @@ export function SequenceModelsArithGeoScene({
       {/* 顶部步骤标题胶囊 */}
       <g className="step-banner">
         <rect
-          x={vp.centerX - 240}
+          x={DESIGN_CENTER_X - 240}
           y={bannerY}
           width={480}
           height={30}
@@ -73,7 +87,7 @@ export function SequenceModelsArithGeoScene({
           strokeWidth={1.5}
         />
         <text
-          x={vp.centerX}
+          x={DESIGN_CENTER_X}
           y={bannerY + 19}
           textAnchor="middle"
           fontSize={fontScale(11)}
@@ -88,7 +102,7 @@ export function SequenceModelsArithGeoScene({
       {isCriticalQ1 && (
         <g className="q1-warning-banner">
           <rect
-            x={vp.centerX - 200}
+            x={DESIGN_CENTER_X - 200}
             y={bannerY + 36}
             width={400}
             height={26}
@@ -99,7 +113,7 @@ export function SequenceModelsArithGeoScene({
             strokeDasharray="4,3"
           />
           <text
-            x={vp.centerX}
+            x={DESIGN_CENTER_X}
             y={bannerY + 53}
             textAnchor="middle"
             fontSize={fontScale(10)}
@@ -116,14 +130,18 @@ export function SequenceModelsArithGeoScene({
         terms.map((t) => {
           const pt = mathToDesign(t.n, t.cn, scale);
           const ptZero = mathToDesign(t.n, 0, scale);
+          const topY = Math.max(0, Math.min(pt.y, ptZero.y));
+          const botY = Math.min(
+            CANVAS_PRESETS.full.height,
+            Math.max(pt.y, ptZero.y),
+          );
 
           return (
             <g key={`ag-s1-${t.n}`}>
               <rect
                 x={pt.x - barW / 2}
-                y={Math.min(pt.y, ptZero.y)}
+                {...fitVertical(topY, botY, 2)}
                 width={barW}
-                height={Math.max(2, Math.abs(pt.y - ptZero.y))}
                 fill={withAlpha(MATH_COLORS.sequence, 0.35)}
                 stroke={MATH_COLORS.sequence}
                 strokeWidth={1.5}
@@ -131,7 +149,7 @@ export function SequenceModelsArithGeoScene({
               />
               <text
                 x={pt.x}
-                y={Math.min(pt.y, ptZero.y) - 7}
+                y={Math.max(14, topY - 7)}
                 textAnchor="middle"
                 fontSize={fontScale(9.5)}
                 fill={MATH_COLORS.sequence}
@@ -141,7 +159,7 @@ export function SequenceModelsArithGeoScene({
               </text>
               <text
                 x={pt.x}
-                y={ptZero.y + 18}
+                y={Math.min(CANVAS_PRESETS.full.height - 12, ptZero.y + 16)}
                 textAnchor="middle"
                 fontSize={fontScale(8.5)}
                 fill={MATH_COLORS.labelText}
@@ -159,13 +177,18 @@ export function SequenceModelsArithGeoScene({
           {terms.map((t) => {
             const pt = mathToDesign(t.n, t.cn, scale);
             const ptZero = mathToDesign(t.n, 0, scale);
+            const topY = Math.max(0, Math.min(pt.y, ptZero.y));
+            const botY = Math.min(
+              CANVAS_PRESETS.full.height,
+              Math.max(pt.y, ptZero.y),
+            );
+
             return (
               <g key={`ag-s2-tn-${t.n}`}>
                 <rect
                   x={pt.x - barW / 2}
-                  y={Math.min(pt.y, ptZero.y)}
+                  {...fitVertical(topY, botY, 2)}
                   width={barW}
-                  height={Math.max(2, Math.abs(pt.y - ptZero.y))}
                   fill={withAlpha(MATH_COLORS.sequence, 0.3)}
                   stroke={MATH_COLORS.sequence}
                   strokeWidth={1.2}
@@ -173,7 +196,7 @@ export function SequenceModelsArithGeoScene({
                 />
                 <text
                   x={pt.x}
-                  y={Math.min(pt.y, ptZero.y) - 6}
+                  y={Math.max(14, topY - 6)}
                   textAnchor="middle"
                   fontSize={fontScale(9)}
                   fill={MATH_COLORS.sequence}
@@ -191,6 +214,11 @@ export function SequenceModelsArithGeoScene({
             const pt = mathToDesign(shiftedN, shiftedCn, scale);
             const ptZero = mathToDesign(shiftedN, 0, scale);
             const origPt = mathToDesign(t.n, t.cn, scale);
+            const topY = Math.max(0, Math.min(pt.y, ptZero.y));
+            const botY = Math.min(
+              CANVAS_PRESETS.full.height,
+              Math.max(pt.y, ptZero.y),
+            );
 
             return (
               <g key={`ag-s2-qtn-${t.n}`}>
@@ -204,9 +232,8 @@ export function SequenceModelsArithGeoScene({
                 />
                 <rect
                   x={pt.x - barW / 2}
-                  y={Math.min(pt.y, ptZero.y)}
+                  {...fitVertical(topY, botY, 2)}
                   width={barW}
-                  height={Math.max(2, Math.abs(pt.y - ptZero.y))}
                   fill={withAlpha(MATH_COLORS.paramSecondary, 0.35)}
                   stroke={MATH_COLORS.paramSecondary}
                   strokeWidth={1.5}
@@ -214,7 +241,7 @@ export function SequenceModelsArithGeoScene({
                 />
                 <text
                   x={pt.x}
-                  y={Math.min(pt.y, ptZero.y) - 6}
+                  y={Math.max(14, topY - 6)}
                   textAnchor="middle"
                   fontSize={fontScale(8.5)}
                   fill={MATH_COLORS.paramSecondary}
@@ -234,36 +261,39 @@ export function SequenceModelsArithGeoScene({
           {/* 首项: a1*b1 直落 (无相减对象) */}
           {terms[0] && (
             <g className="lead-term">
-              <rect
-                x={mathToDesign(1, terms[0].cn, scale).x - barW / 2 - 4}
-                y={
-                  Math.min(
-                    mathToDesign(1, terms[0].cn, scale).y,
-                    mathToDesign(1, 0, scale).y,
-                  ) - 4
-                }
-                width={barW + 8}
-                height={
-                  Math.abs(
-                    mathToDesign(1, terms[0].cn, scale).y -
-                      mathToDesign(1, 0, scale).y,
-                  ) + 8
-                }
-                fill={withAlpha(MATH_COLORS.paramPrimary, 0.15)}
-                stroke={MATH_COLORS.paramPrimary}
-                strokeWidth={1.5}
-                rx={4}
-              />
-              <text
-                x={mathToDesign(1, 0, scale).x}
-                y={mathToDesign(1, terms[0].cn, scale).y - 10}
-                textAnchor="middle"
-                fontSize={fontScale(9.5)}
-                fill={MATH_COLORS.paramPrimary}
-                fontWeight="bold"
-              >
-                首项 a₁b₁
-              </text>
+              {(() => {
+                const ptCn = mathToDesign(1, terms[0].cn, scale);
+                const ptZero = mathToDesign(1, 0, scale);
+                const topY = Math.max(0, Math.min(ptCn.y, ptZero.y) - 4);
+                const botY = Math.min(
+                  CANVAS_PRESETS.full.height,
+                  Math.max(ptCn.y, ptZero.y) + 4,
+                );
+
+                return (
+                  <>
+                    <rect
+                      x={ptCn.x - barW / 2 - 4}
+                      {...fitVertical(topY, botY, 2)}
+                      width={barW + 8}
+                      fill={withAlpha(MATH_COLORS.paramPrimary, 0.15)}
+                      stroke={MATH_COLORS.paramPrimary}
+                      strokeWidth={1.5}
+                      rx={4}
+                    />
+                    <text
+                      x={ptZero.x}
+                      y={Math.max(14, topY - 6)}
+                      textAnchor="middle"
+                      fontSize={fontScale(9.5)}
+                      fill={MATH_COLORS.paramPrimary}
+                      fontWeight="bold"
+                    >
+                      首项 a₁b₁
+                    </text>
+                  </>
+                );
+              })()}
             </g>
           )}
 
@@ -273,21 +303,25 @@ export function SequenceModelsArithGeoScene({
               {(() => {
                 const xStart = mathToDesign(2, 0, scale).x - barW / 2 - 6;
                 const xEnd = mathToDesign(N, 0, scale).x + barW / 2 + 6;
-                const topY =
+                const topY = Math.max(
+                  16,
                   Math.min(
                     ...terms
                       .slice(1)
                       .map((t) => mathToDesign(t.n, t.cn, scale).y),
-                  ) - 16;
-                const bottomY = mathToDesign(0, 0, scale).y + 6;
+                  ) - 16,
+                );
+                const bottomY = Math.min(
+                  CANVAS_PRESETS.full.height,
+                  mathToDesign(0, 0, scale).y + 6,
+                );
 
                 return (
                   <>
                     <rect
                       x={xStart}
-                      y={topY}
+                      {...fitVertical(topY, bottomY, 30)}
                       width={xEnd - xStart}
-                      height={Math.max(30, bottomY - topY)}
                       fill={withAlpha(MATH_COLORS.paramSecondary, 0.08)}
                       stroke={MATH_COLORS.paramSecondary}
                       strokeWidth={1.5}
@@ -296,7 +330,7 @@ export function SequenceModelsArithGeoScene({
                     />
                     <text
                       x={(xStart + xEnd) / 2}
-                      y={topY - 6}
+                      y={Math.max(14, topY - 6)}
                       textAnchor="middle"
                       fontSize={fontScale(10)}
                       fill={MATH_COLORS.paramSecondary}
@@ -316,22 +350,20 @@ export function SequenceModelsArithGeoScene({
             <g className="tail-warning-term">
               {(() => {
                 const tailX = mathToDesign(N + 1, 0, scale).x;
-                const tailH = Math.max(
-                  30,
-                  Math.abs(
-                    mathToDesign(N + 1, terms[N - 1].cn * q, scale).y -
-                      mathToDesign(N + 1, 0, scale).y,
-                  ),
+                const ptCn = mathToDesign(N + 1, terms[N - 1].cn * q, scale);
+                const ptZero = mathToDesign(N + 1, 0, scale);
+                const topY = Math.max(0, Math.min(ptCn.y, ptZero.y));
+                const botY = Math.min(
+                  CANVAS_PRESETS.full.height,
+                  Math.max(ptCn.y, ptZero.y),
                 );
-                const topY = mathToDesign(N + 1, 0, scale).y - tailH;
 
                 return (
                   <>
                     <rect
                       x={tailX - barW / 2 - 4}
-                      y={topY}
+                      {...fitVertical(topY, botY, 30)}
                       width={barW + 8}
-                      height={tailH}
                       fill={withAlpha(MATH_COLORS.paramPrimary, 0.22)}
                       stroke={MATH_COLORS.paramPrimary}
                       strokeWidth={2}
@@ -339,7 +371,7 @@ export function SequenceModelsArithGeoScene({
                     />
                     <text
                       x={tailX}
-                      y={topY - 8}
+                      y={Math.max(14, topY - 8)}
                       textAnchor="middle"
                       fontSize={fontScale(9.5)}
                       fill={MATH_COLORS.paramPrimary}
@@ -349,7 +381,10 @@ export function SequenceModelsArithGeoScene({
                     </text>
                     <text
                       x={tailX}
-                      y={mathToDesign(0, 0, scale).y + 18}
+                      y={Math.min(
+                        CANVAS_PRESETS.full.height - 12,
+                        mathToDesign(0, 0, scale).y + 18,
+                      )}
                       textAnchor="middle"
                       fontSize={fontScale(8.5)}
                       fill={MATH_COLORS.paramPrimary}

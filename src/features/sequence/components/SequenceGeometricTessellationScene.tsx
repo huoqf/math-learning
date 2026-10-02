@@ -2,20 +2,20 @@
  * src/features/sequence/components/SequenceGeometricTessellationScene.tsx
  * 等比模型 - 专题 E: 正方形自相似无限剖分 (无字证明)
  */
-import { MATH_COLORS, withAlpha } from "@/theme";
-import type { ViewportInfo } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { toSub } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
 
+const DESIGN_CENTER_X = CANVAS_PRESETS.full.width / 2;
+const DESIGN_CENTER_Y = CANVAS_PRESETS.full.height / 2;
+
 interface SequenceGeometricTessellationSceneProps {
   params: Record<string, number>;
-  vp: ViewportInfo;
   fontScale: (size: number) => number;
 }
 
 export function SequenceGeometricTessellationScene({
   params,
-  vp,
   fontScale,
 }: SequenceGeometricTessellationSceneProps) {
   const { a1, q, N, geoData } = useSequenceParams(params);
@@ -24,12 +24,15 @@ export function SequenceGeometricTessellationScene({
   const isValidTess = a1 > 0 && q > 0 && q < 1;
   // toSub using top-level helper
 
+  const centerX = DESIGN_CENTER_X;
+  const centerY = DESIGN_CENTER_Y;
+
   if (!isValidTess) {
     return (
       <g className="sequence-scene-tessellation-invalid">
         <rect
-          x={vp.centerX - 240}
-          y={vp.centerY - 90}
+          x={centerX - 240}
+          y={centerY - 90}
           width={480}
           height={180}
           rx={12}
@@ -39,8 +42,8 @@ export function SequenceGeometricTessellationScene({
           strokeDasharray="5,4"
         />
         <text
-          x={vp.centerX}
-          y={vp.centerY - 35}
+          x={centerX}
+          y={centerY - 35}
           textAnchor="middle"
           fontSize={fontScale(14)}
           fill={MATH_COLORS.paramPrimary}
@@ -49,8 +52,8 @@ export function SequenceGeometricTessellationScene({
           ⚠️ 自相似几何面积剖分前提条件
         </text>
         <text
-          x={vp.centerX}
-          y={vp.centerY + 5}
+          x={centerX}
+          y={centerY + 5}
           textAnchor="middle"
           fontSize={fontScale(11)}
           fill={MATH_COLORS.labelText}
@@ -58,8 +61,8 @@ export function SequenceGeometricTessellationScene({
           无字证明面积细分要求：首项 a₁ &gt; 0 且公比 0 &lt; q &lt; 1
         </text>
         <text
-          x={vp.centerX}
-          y={vp.centerY + 40}
+          x={centerX}
+          y={centerY + 40}
           textAnchor="middle"
           fontSize={fontScale(11)}
           fill={MATH_COLORS.sequenceHighlight}
@@ -72,8 +75,8 @@ export function SequenceGeometricTessellationScene({
   }
 
   const size = 350;
-  const x0 = vp.centerX - size / 2;
-  const y0 = vp.centerY - size / 2 - 5;
+  const x0 = centerX - size / 2;
+  const y0 = centerY - size / 2 - 5;
 
   const getFracStr = (val: number): string => {
     if (Math.abs(val - 1 / 2) < 0.008) return "1/2";
@@ -180,7 +183,7 @@ export function SequenceGeometricTessellationScene({
     <g className="sequence-scene-tessellation">
       {/* 顶部标题：准确的代数推导等式，绝非单调数字 */}
       <text
-        x={vp.centerX}
+        x={centerX}
         y={y0 - 24}
         textAnchor="middle"
         fontSize={fontScale(12.5)}

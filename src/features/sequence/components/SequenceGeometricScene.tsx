@@ -13,7 +13,7 @@ import { SequenceGeometricTessellationScene } from "./SequenceGeometricTessellat
 interface SequenceGeometricSceneProps {
   params: Record<string, number>;
   scale: SceneScale;
-  vp: ViewportInfo;
+  vp?: ViewportInfo;
   fontScale: (size: number) => number;
   geometricViewType?: "points" | "tessellation";
   geometricSubMode?:
@@ -25,7 +25,6 @@ interface SequenceGeometricSceneProps {
 export function SequenceGeometricScene({
   params,
   scale,
-  vp,
   fontScale,
   geometricSubMode = "exponential",
   geometricViewType = "points",
@@ -48,11 +47,7 @@ export function SequenceGeometricScene({
   // 专题 B: 错位相减法推导 (两行对齐、中间相消、保留首尾)
   if (geometricSubMode === "staggerSum") {
     return (
-      <SequenceGeometricStaggerSumScene
-        params={params}
-        vp={vp}
-        fontScale={fontScale}
-      />
+      <SequenceGeometricStaggerSumScene params={params} fontScale={fontScale} />
     );
   }
 
@@ -90,7 +85,6 @@ export function SequenceGeometricScene({
     return (
       <SequenceGeometricTessellationScene
         params={params}
-        vp={vp}
         fontScale={fontScale}
       />
     );

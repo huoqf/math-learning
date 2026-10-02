@@ -2,28 +2,28 @@
  * src/features/sequence/components/SequenceGeometricStaggerSumScene.tsx
  * 等比模型 - 专题 B: 错位相减法推导 (两行对齐、中间相消、保留首尾)
  */
-import { MATH_COLORS, withAlpha } from "@/theme";
-import type { ViewportInfo } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { toSub, toSup } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
 
+const DESIGN_CENTER_X = CANVAS_PRESETS.full.width / 2;
+
 interface SequenceGeometricStaggerSumSceneProps {
   params: Record<string, number>;
-  vp: ViewportInfo;
   fontScale: (size: number) => number;
 }
 
 export function SequenceGeometricStaggerSumScene({
   params,
-  vp,
   fontScale,
 }: SequenceGeometricStaggerSumSceneProps) {
-  const { N, geoData } = useSequenceParams(params);
+  const { N, a1, q, geoData } = useSequenceParams(params);
   const { staggerData } = geoData;
+  const isQ1 = Math.abs(q - 1) < 1e-6;
 
   const cardWidth = Math.min(
     68,
-    Math.max(44, (vp.centerX * 2 - 160) / (N + 2)),
+    Math.max(38, Math.floor((740 - 8 * N) / (N + 2))),
   );
   const cardHeight = 36;
   const startX = 70;
@@ -37,7 +37,7 @@ export function SequenceGeometricStaggerSumScene({
     <g className="sequence-scene-stagger-sum">
       {/* 标题说明 */}
       <text
-        x={vp.centerX}
+        x={DESIGN_CENTER_X}
         y={50}
         textAnchor="middle"
         fontSize={fontScale(12)}
@@ -83,11 +83,15 @@ export function SequenceGeometricStaggerSumScene({
               x={cx + cardWidth / 2}
               y={row1Y + cardHeight / 2 + 4}
               textAnchor="middle"
-              fontSize={fontScale(9.5)}
+              fontSize={fontScale(cardWidth < 52 ? 9 : 9.5)}
               fill={isHead ? MATH_COLORS.paramPrimary : MATH_COLORS.labelText}
               fontWeight={isHead ? "bold" : "normal"}
             >
-              {isHead ? `a₁ (${t.val.toFixed(1)})` : `a${toSub(t.n)}`}
+              {isHead
+                ? cardWidth < 52
+                  ? "a₁"
+                  : `a₁ (${t.val.toFixed(1)})`
+                : `a${toSub(t.n)}`}
             </text>
             {idx < N - 1 && (
               <text
@@ -213,7 +217,7 @@ export function SequenceGeometricStaggerSumScene({
           x={startX + cardWidth + 5}
           y={row2Y + cardHeight + 65}
           textAnchor="middle"
-          fontSize={fontScale(11)}
+          fontSize={fontScale(cardWidth < 52 ? 10 : 11)}
           fill={MATH_COLORS.paramPrimary}
           fontWeight="bold"
         >
@@ -234,7 +238,7 @@ export function SequenceGeometricStaggerSumScene({
           x={startX + N * (cardWidth + 8) + cardWidth + 5}
           y={row2Y + cardHeight + 65}
           textAnchor="middle"
-          fontSize={fontScale(11)}
+          fontSize={fontScale(cardWidth < 52 ? 10 : 11)}
           fill={MATH_COLORS.paramSecondary}
           fontWeight="bold"
         >
@@ -243,14 +247,16 @@ export function SequenceGeometricStaggerSumScene({
 
         {/* 结论公式 */}
         <text
-          x={vp.centerX}
+          x={DESIGN_CENTER_X}
           y={row2Y + cardHeight + 120}
           textAnchor="middle"
-          fontSize={fontScale(13)}
-          fill={MATH_COLORS.sequenceHighlight}
+          fontSize={fontScale(12.5)}
+          fill={isQ1 ? MATH_COLORS.degeneracy : MATH_COLORS.sequenceHighlight}
           fontWeight="bold"
         >
-          (1 - q) · S{toSub(N)} = a₁ - a₁·q{toSup(N)} = a₁(1 - q{toSup(N)})
+          {isQ1
+            ? `⚠️ 当 q = 1 时，(1-q)=0 导致错位相减失效！直接相加：S${toSub(N)} = ${N} · a₁ = ${(N * a1).toFixed(1)}`
+            : `(1 - q) · S${toSub(N)} = a₁ - a₁·q${toSup(N)} = a₁(1 - q${toSup(N)})`}
         </text>
       </g>
     </g>

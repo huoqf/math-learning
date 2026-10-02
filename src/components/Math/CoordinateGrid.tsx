@@ -27,6 +27,35 @@ function formatTick(val: number): string {
   return Number(val.toFixed(2)).toString();
 }
 
+/**
+ * 计算安全的刻度步长：
+ * 当刻度数量 <= MAX_SAFE_TICKS (50) 时，100% 保持传入的原始步长（全库已有正常场景视觉完全不受任何影响）；
+ * 仅当刻度跨度 > 50 时，自动升档到标准 1-2-5 序列步长，杜绝超大值域引发数十万 DOM 节点卡死浏览器。
+ */
+function getSafeStep(min: number, max: number, requestedStep: number): number {
+  if (requestedStep <= 0 || !Number.isFinite(requestedStep)) return 1;
+  const span = Math.abs(max - min);
+  if (!Number.isFinite(span) || span <= 0) return requestedStep;
+
+  const MAX_SAFE_TICKS = 50;
+  const rawTicks = span / requestedStep;
+  if (rawTicks <= MAX_SAFE_TICKS) {
+    return requestedStep;
+  }
+
+  // 粗略步长对齐到 1, 2, 5 * 10^k
+  const roughStep = span / 20;
+  const power = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const frac = roughStep / power;
+  let niceFrac = 1;
+  if (frac >= 5) niceFrac = 5;
+  else if (frac >= 2) niceFrac = 2;
+  else niceFrac = 1;
+
+  const niceStep = niceFrac * power;
+  return Math.max(requestedStep, niceStep);
+}
+
 export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   scale,
   showGrid = false, // 默认纯净高中数学坐标系 (无背景虚线方格干扰)
@@ -37,6 +66,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   fontScale = (v) => v,
 }) => {
   const { xMin, xMax, yMin, yMax } = scale;
+  const safeXStep = getSafeStep(xMin, xMax, xStep);
+  const safeYStep = getSafeStep(yMin, yMax, yStep);
 
   // 生成网格线（若显式开启 showGrid）
   const gridLines = React.useMemo(() => {
@@ -44,9 +75,9 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     if (!showGrid) return lines;
 
     // 垂直网格线（X 轴刻度处）
-    const xStart = Math.ceil(xMin / xStep) * xStep;
-    const xEnd = Math.floor(xMax / xStep) * xStep;
-    for (let x = xStart; x <= xEnd; x += xStep) {
+    const xStart = Math.ceil(xMin / safeXStep) * safeXStep;
+    const xEnd = Math.floor(xMax / safeXStep) * safeXStep;
+    for (let x = xStart; x <= xEnd; x += safeXStep) {
       if (Math.abs(x) < 1e-9) continue; // 避开 Y 轴主轴
       const startPt = mathToDesign(x, yMin, scale);
       const endPt = mathToDesign(x, yMax, scale);
@@ -65,9 +96,9 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     }
 
     // 水平网格线（Y 轴刻度处）
-    const yStart = Math.ceil(yMin / yStep) * yStep;
-    const yEnd = Math.floor(yMax / yStep) * yStep;
-    for (let y = yStart; y <= yEnd; y += yStep) {
+    const yStart = Math.ceil(yMin / safeYStep) * safeYStep;
+    const yEnd = Math.floor(yMax / safeYStep) * safeYStep;
+    for (let y = yStart; y <= yEnd; y += safeYStep) {
       if (Math.abs(y) < 1e-9) continue; // 避开 X 轴主轴
       const startPt = mathToDesign(xMin, y, scale);
       const endPt = mathToDesign(xMax, y, scale);
@@ -86,7 +117,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     }
 
     return lines;
-  }, [scale, showGrid, xStep, yStep, xMin, xMax, yMin, yMax]);
+  }, [scale, showGrid, safeXStep, safeYStep, xMin, xMax, yMin, yMax]);
 
   // 生成刻度线与文本标签
   const ticksAndLabels = React.useMemo(() => {
@@ -94,9 +125,9 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     const tickSize = 3.5; // 刻度线半长 (px)
 
     // X 轴刻度
-    const xStart = Math.ceil(xMin / xStep) * xStep;
-    const xEnd = Math.floor(xMax / xStep) * xStep;
-    for (let x = xStart; x <= xEnd; x += xStep) {
+    const xStart = Math.ceil(xMin / safeXStep) * safeXStep;
+    const xEnd = Math.floor(xMax / safeXStep) * safeXStep;
+    for (let x = xStart; x <= xEnd; x += safeXStep) {
       if (Math.abs(x) < 1e-4) continue; // 避开原点
 
       const pt = mathToDesign(x, 0, scale);
@@ -132,9 +163,9 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     }
 
     // Y 轴刻度
-    const yStart = Math.ceil(yMin / yStep) * yStep;
-    const yEnd = Math.floor(yMax / yStep) * yStep;
-    for (let y = yStart; y <= yEnd; y += yStep) {
+    const yStart = Math.ceil(yMin / safeYStep) * safeYStep;
+    const yEnd = Math.floor(yMax / safeYStep) * safeYStep;
+    for (let y = yStart; y <= yEnd; y += safeYStep) {
       if (Math.abs(y) < 1e-4) continue; // 避开原点
 
       const pt = mathToDesign(0, y, scale);
@@ -195,8 +226,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     scale,
     showLabels,
     showOriginLabel,
-    xStep,
-    yStep,
+    safeXStep,
+    safeYStep,
     xMin,
     xMax,
     yMin,

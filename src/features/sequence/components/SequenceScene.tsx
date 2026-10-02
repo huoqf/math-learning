@@ -7,14 +7,13 @@ import type { SceneScale, ViewportInfo } from "@/hooks";
 import { SequenceArithmeticScene } from "./SequenceArithmeticScene";
 import { SequenceGeometricScene } from "./SequenceGeometricScene";
 import { SequenceModelsScene } from "./SequenceModelsScene";
-import { SequenceRecurrenceScene } from "./SequenceRecurrenceScene";
 
 export interface SequenceSceneProps {
   params: Record<string, number>;
   scale: SceneScale;
   vp: ViewportInfo;
   fontScale: (size: number) => number;
-  activeMode: "arithmetic" | "geometric" | "models" | "recurrence";
+  activeMode: "arithmetic" | "geometric" | "models";
   arithmeticSubMode?: "linear" | "gauss" | "quadratic" | "segment" | "absSum";
   geometricViewType?: "points" | "tessellation";
   geometricSubMode?:
@@ -26,12 +25,6 @@ export interface SequenceSceneProps {
     | "grouped"
     | "odd-even"
     | "abs-sum";
-  recurrenceModelType?:
-    | "linear-pan"
-    | "accumulation"
-    | "multiplication"
-    | "reciprocal"
-    | "second-order";
   highlightN?: number;
   onSelectN?: (n: number) => void;
 }
@@ -46,7 +39,6 @@ export function SequenceScene({
   geometricViewType = "points",
   geometricSubMode = "exponential",
   modelType = "arith-geo",
-  recurrenceModelType = "linear-pan",
   highlightN = 1,
   onSelectN,
 }: SequenceSceneProps) {
@@ -87,20 +79,6 @@ export function SequenceScene({
         vp={vp}
         fontScale={fontScale}
         modelType={modelType}
-        highlightN={highlightN}
-        onSelectN={onSelectN}
-      />
-    );
-  }
-
-  if (activeMode === "recurrence") {
-    return (
-      <SequenceRecurrenceScene
-        params={params}
-        scale={scale}
-        vp={vp}
-        fontScale={fontScale}
-        recurrenceModelType={recurrenceModelType}
         highlightN={highlightN}
         onSelectN={onSelectN}
       />

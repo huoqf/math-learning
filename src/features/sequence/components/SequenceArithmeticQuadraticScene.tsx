@@ -190,7 +190,8 @@ export function SequenceArithmeticQuadraticScene({
                     fill={MATH_COLORS.sequenceHighlight}
                     fontWeight="bold"
                   >
-                    最值项 S{toSub(t.n)} = {t.Sn.toFixed(1)}
+                    {(maxSnInfo?.isMax ?? d < 0) ? "最大值项" : "最小值项"} S
+                    {toSub(t.n)} = {t.Sn.toFixed(1)}
                   </text>
                 )}
 

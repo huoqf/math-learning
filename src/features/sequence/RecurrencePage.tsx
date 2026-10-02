@@ -351,8 +351,11 @@ export function RecurrencePage() {
     }
     if (recurrenceModelType === "second-order") {
       const delta = p_rec * p_rec + 4 * q_rec;
-      const r1 = delta >= 0 ? (p_rec + Math.sqrt(delta)) / 2 : p_rec / 2;
-      const r2 = delta >= 0 ? (p_rec - Math.sqrt(delta)) / 2 : p_rec / 2;
+      if (delta < 0) {
+        return `a_{n+2} = ${p_rec} a_{n+1} + ${q_rec} a_n \\quad (\\Delta = ${delta.toFixed(1)} < 0，\\text{降阶等比不适用})`;
+      }
+      const r1 = (p_rec + Math.sqrt(delta)) / 2;
+      const r2 = (p_rec - Math.sqrt(delta)) / 2;
       return `a_{n+2} = ${p_rec} a_{n+1} + ${q_rec} a_n \\iff a_{n+2} - (${r1.toFixed(2)}) a_{n+1} = (${r2.toFixed(2)})(a_{n+1} - (${r1.toFixed(2)}) a_n)`;
     }
     if (recurrenceModelType === "accumulation") {
