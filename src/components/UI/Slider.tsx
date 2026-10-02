@@ -1,48 +1,48 @@
 /* eslint-disable react-refresh/only-export-components */
-import React from 'react'
-import type { FontScaler } from '@/theme/fontScaler'
+import { type FC } from "react";
+import type { FontScaler } from "@/theme/fontScaler";
 
 const getStepDigits = (step: number): number => {
-  if (!Number.isFinite(step) || step <= 0) return 1
-  const text = step.toString()
-  if (text.includes('e-')) {
-    const [, exp] = text.split('e-')
-    return Number.parseInt(exp, 10)
+  if (!Number.isFinite(step) || step <= 0) return 1;
+  const text = step.toString();
+  if (text.includes("e-")) {
+    const [, exp] = text.split("e-");
+    return Number.parseInt(exp, 10);
   }
-  return text.includes('.') ? text.split('.')[1].length : 0
-}
+  return text.includes(".") ? text.split(".")[1].length : 0;
+};
 
 const formatByStep = (value: number, step: number): string => {
-  const digits = Math.min(4, getStepDigits(step))
-  return value.toFixed(digits)
-}
+  const digits = Math.min(4, getStepDigits(step));
+  return value.toFixed(digits);
+};
 
 interface SliderProps {
-  value: number
-  min: number
-  max: number
-  step?: number
-  unit?: string
-  label?: string
-  onChange: (value: number) => void
-  disabled?: boolean
-  minLabel?: string
-  maxLabel?: string
-  midLabel?: string
-  formatValue?: (v: number) => string
-  description?: string
-  fillAnchor?: number
-  ariaLabel?: string
-  ariaValueText?: string
-  font?: FontScaler
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  unit?: string;
+  label?: string;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+  minLabel?: string;
+  maxLabel?: string;
+  midLabel?: string;
+  formatValue?: (v: number) => string;
+  description?: string;
+  fillAnchor?: number;
+  ariaLabel?: string;
+  ariaValueText?: string;
+  font?: FontScaler;
 }
 
-export const Slider: React.FC<SliderProps> = ({
+export const Slider: FC<SliderProps> = ({
   value,
   min,
   max,
   step = 0.1,
-  unit = '',
+  unit = "",
   label,
   onChange,
   disabled = false,
@@ -55,21 +55,31 @@ export const Slider: React.FC<SliderProps> = ({
   ariaLabel,
   ariaValueText,
 }) => {
-  const safeStep = Number.isFinite(step) && step > 0 ? step : 0.1
-  const percentage = ((value - min) / (max - min)) * 100
+  const safeStep = Number.isFinite(step) && step > 0 ? step : 0.1;
+  const percentage = ((value - min) / (max - min)) * 100;
 
-  const displayValue = formatValue ? formatValue(value) : formatByStep(value, safeStep)
+  const displayValue = formatValue
+    ? formatValue(value)
+    : formatByStep(value, safeStep);
 
-  const anchor = Math.max(min, Math.min(max, fillAnchor))
-  const anchorPct = ((anchor - min) / (max - min)) * 100
-  const fillLeft = Math.min(percentage, anchorPct)
-  const fillWidth = Math.abs(percentage - anchorPct)
+  const anchor = Math.max(min, Math.min(max, fillAnchor));
+  const anchorPct = ((anchor - min) / (max - min)) * 100;
+  const fillLeft = Math.min(percentage, anchorPct);
+  const fillWidth = Math.abs(percentage - anchorPct);
 
   return (
-    <div className={['w-full', disabled && 'opacity-40 pointer-events-none'].filter(Boolean).join(' ')}>
+    <div
+      className={["w-full", disabled && "opacity-40 pointer-events-none"]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {(label || unit) && (
         <div className="flex items-center justify-between mb-2">
-          {label && <span className="text-sm font-medium text-neutral-700">{label}</span>}
+          {label && (
+            <span className="text-sm font-medium text-neutral-700">
+              {label}
+            </span>
+          )}
           <span className="text-sm font-mono text-neutral-600">
             {displayValue}
             {unit && <span className="ml-1 text-neutral-500">{unit}</span>}
@@ -77,7 +87,9 @@ export const Slider: React.FC<SliderProps> = ({
         </div>
       )}
       {description && (
-        <div className="text-right text-xs text-neutral-400 -mt-1 mb-2">{description}</div>
+        <div className="text-right text-xs text-neutral-400 -mt-1 mb-2">
+          {description}
+        </div>
       )}
       <div className="relative h-2 bg-neutral-200 rounded-full flex items-center">
         <input
@@ -93,7 +105,9 @@ export const Slider: React.FC<SliderProps> = ({
           aria-valuemin={min}
           aria-valuemax={max}
           aria-valuenow={value}
-          aria-valuetext={ariaValueText ?? `${displayValue}${unit ? ` ${unit}` : ''}`}
+          aria-valuetext={
+            ariaValueText ?? `${displayValue}${unit ? ` ${unit}` : ""}`
+          }
         />
         <div
           className="absolute top-0 h-full bg-primary-500 rounded-full pointer-events-none transition-all duration-fast ease-standard peer-hover:bg-primary-600"
@@ -108,13 +122,15 @@ export const Slider: React.FC<SliderProps> = ({
         <div className="relative flex justify-between text-xs text-neutral-400 mt-0.5">
           <span>{minLabel}</span>
           {midLabel && (
-            <span className="absolute left-1/2 -translate-x-1/2">{midLabel}</span>
+            <span className="absolute left-1/2 -translate-x-1/2">
+              {midLabel}
+            </span>
           )}
           <span>{maxLabel}</span>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export { getStepDigits, formatByStep }
+export { getStepDigits, formatByStep };

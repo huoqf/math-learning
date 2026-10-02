@@ -81,6 +81,13 @@ export default defineConfig({
           // solidGeometry.ts 只是它们的 re-export 桶；历史规则写成 solidGeometry[\\/] 要求
           // 一个从未被创建出来的目录，导致 13 个 solid builder 全部回落到 mathQuantities。
           // 同理，分发包名以 *-3d 结尾的立体几何 builder 与 src/math3d 同桶，可避免二者互引成环。
+          // ── 全局共享层：主题色彩、工具函数 ────────────────────────────────────────────────
+          // src/theme/ 含 MATH_COLORS 等所有学科 chunk 共用的常量与常用工具函数。
+          // 若落入任何学科 chunk，其他学科 chunk 就会对它产生跨模块依赖甚至循环引用，
+          // 因此优先置顶提取为独立的 'shared-utils' 共享底座。
+          if (/[\\/]src[\\/](theme|utils)[\\/]/.test(id)) {
+            return 'shared-utils'
+          }
           if (/[\\/]src[\\/](data[\\/]builders[\\/]solid|math3d[\\/])/.test(id)) {
             return 'math-solid-3d'
           }
@@ -98,7 +105,11 @@ export default defineConfig({
             return 'math-derivative'
           }
           // secondDerivative / tangentScaling / transcendental 属于导数应用学科
+          // tangentScaling 是子目录（builders/tangentScaling/index.ts），正则须匹配目录前缀
           if (/[\\/]src[\\/]math[\\/](secondDerivative|tangentScaling|transcendental)/.test(id)) {
+            return 'math-derivative'
+          }
+          if (/[\\/]src[\\/]data[\\/]builders[\\/](tangentScaling|transcendental)/.test(id)) {
             return 'math-derivative'
           }
           if (/[\\/]src[\\/](data[\\/]builders[\\/]probability|math[\\/](probability|stat|pairedData))/.test(id)) {
