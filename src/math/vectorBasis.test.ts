@@ -51,6 +51,7 @@ describe("computeVectorBasis 纯数学计算层测试", () => {
     });
     expect(res1.isCollinear).toBe(true);
     expect(res1.det).toBe(0);
+    expect(res1.isAngleDefined).toBe(true);
 
     // 2. 基向量为零向量
     const resZero = computeVectorBasis({
@@ -62,6 +63,7 @@ describe("computeVectorBasis 纯数学计算层测试", () => {
       ay: 6,
     });
     expect(resZero.isCollinear).toBe(true);
+    expect(resZero.isAngleDefined).toBe(false);
   });
 
   it("应正确计算正交基底模式 (thetaDeg 旋转与投影)", () => {

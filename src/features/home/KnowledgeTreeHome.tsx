@@ -163,7 +163,7 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
     title: "三角函数、平面向量与解三角形",
     badge: "16 题解答 · 15分",
     description:
-      "三角函数图像与恒等变换、正余弦定理解三角形最值、投影向量与极化恒等式、阿波罗尼斯圆与复数几何",
+      "三角函数图像与恒等变换、正余弦定理解三角形最值、投影向量与极化恒等式、阿波罗尼斯圆与复数代数及几何",
     icon: Award,
     gradient: "from-purple-500 to-fuchsia-600",
     borderLight: "border-purple-200",

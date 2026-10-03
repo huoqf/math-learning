@@ -53,6 +53,8 @@ import { buildConicPropertiesPanel } from "./builders/conicProperties";
 import { buildLineEquationPanel } from "./builders/lineEquation";
 import { buildCircleEquationPanel } from "./builders/circleEquation";
 import { buildTrigLinesPanel } from "./builders/trigLines";
+import { buildRadianMeasurePanel } from "./builders/radianMeasure";
+import { buildTrigModelPanel } from "./builders/trigModel";
 import { buildTrigIdentityPanel } from "./builders/trigIdentity";
 import { buildTrigFormulasPanel } from "./builders/trigFormulas";
 import { buildTrigTangentPanel } from "./builders/trigTangent";
@@ -272,8 +274,12 @@ export function buildMathQuantities(
       return buildCircleCirclePanel(params, config);
     case "anim-trig-lines":
       return buildTrigLinesPanel(params, config);
+    case "anim-radian-measure":
+      return buildRadianMeasurePanel(params, config);
     case "anim-trig-transform":
       return buildTrigTransformPanel(params, config);
+    case "anim-trig-model":
+      return buildTrigModelPanel(params, config);
     case "anim-triangle-solve":
       return buildTriangleSolvePanel(params, config);
     case "anim-vector-linear":

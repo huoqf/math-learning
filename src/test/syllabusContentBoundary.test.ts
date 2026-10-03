@@ -73,12 +73,15 @@ import { paramMeta as inequalityAbsoluteParamMeta } from "@/data/registries/ineq
 import { paramMeta as inequalityBasicParamMeta } from "@/data/registries/inequalityBasic";
 import { paramMeta as nikeParamMeta } from "@/data/registries/nike";
 import { paramMeta as quadraticParamMeta } from "@/data/registries/quadratic";
+import { paramMeta as radianMeasureParamMeta } from "@/data/registries/radianMeasure";
 import { paramMeta as transformParamMeta } from "@/data/registries/transform";
 import { paramMeta as trigFormulasParamMeta } from "@/data/registries/trigFormulas";
 import { paramMeta as trigIdentityParamMeta } from "@/data/registries/trigIdentity";
 import { paramMeta as trigLinesParamMeta } from "@/data/registries/trigLines";
 import { paramMeta as trigTangentParamMeta } from "@/data/registries/trigTangent";
 import { paramMeta as trigTransformParamMeta } from "@/data/registries/trigTransform";
+import { paramMeta as trigModelParamMeta } from "@/data/registries/trigModel";
+import { TRIG_SCENARIOS } from "@/math/trigModel";
 
 /**
  * 选必二导数章节专属记号（必修一严禁包含）——**词根级**
@@ -363,6 +366,14 @@ const PAGE_BRANCHES: Record<string, Branch[]> = {
       config: { subMode: "piecewise" },
     },
   ],
+  "know-radian-measure": (
+    ["definition", "conversion", "arcSector"] as const
+  ).map((studyMode) => ({
+    from: `RadianMeasureAnimation/${studyMode}`,
+    animId: "anim-radian-measure",
+    params: { alphaRad: Math.PI / 3, radius: 1.5 },
+    config: { studyMode },
+  })),
   "know-trig-lines": (["lines", "comparison", "inequality"] as const).map(
     (studyMode) => ({
       from: `TrigLinesAnimation/${studyMode}`,
@@ -417,6 +428,32 @@ const PAGE_BRANCHES: Record<string, Branch[]> = {
     params: { omega: 1, phi: 0 },
     config: { studyMode },
   })),
+  "know-trig-model": [
+    // 简谐运动模型：四个量各管什么
+    {
+      from: "TrigModelAnimation/harmonic",
+      animId: "anim-trig-model",
+      params: { A: 2, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.75 },
+      config: { studyMode: "harmonic" },
+    },
+    // 由图象求解析式：读数顺序（最值 → 周期 → 特殊点）
+    {
+      from: "TrigModelAnimation/fromGraph",
+      animId: "anim-trig-model",
+      params: { A: 2, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.75 },
+      config: { studyMode: "fromGraph" },
+    },
+    // 实际情境应用：三个情境的文案互不相同，必须逐一枚举（scenarioKey 是改变文案的二级选项）
+    ...TRIG_SCENARIOS.map((scenario) => ({
+      from: `TrigModelAnimation/modeling-${scenario.key}`,
+      animId: "anim-trig-model",
+      params: {
+        ...scenario.params,
+        tRatio: scenario.probeTime / scenario.params.period,
+      },
+      config: { studyMode: "modeling", scenarioKey: scenario.key },
+    })),
+  ],
 };
 
 /**
@@ -438,12 +475,14 @@ const ANIM_PARAM_META: Record<string, Record<string, ParamMeta>> = {
   "anim-ineq-basic": inequalityBasicParamMeta,
   "anim-nike": nikeParamMeta,
   "anim-quadratic": quadraticParamMeta,
+  "anim-radian-measure": radianMeasureParamMeta,
   "anim-func-transform": transformParamMeta,
   "anim-trig-formulas": trigFormulasParamMeta,
   "anim-trig-identity": trigIdentityParamMeta,
   "anim-trig-lines": trigLinesParamMeta,
   "anim-trig-tangent": trigTangentParamMeta,
   "anim-trig-transform": trigTransformParamMeta,
+  "anim-trig-model": trigModelParamMeta,
 };
 
 /**
@@ -485,6 +524,7 @@ const COMPULSORY_ONE_FEATURE_DIRS = [
   "inequalityBasic",
   "nike",
   "quadratic",
+  "radianMeasure",
   "set",
   "transform",
   "trigFormulas",
@@ -492,6 +532,7 @@ const COMPULSORY_ONE_FEATURE_DIRS = [
   "trigLines",
   "trigTangent",
   "trigTransform",
+  "trigModel",
 ] as const;
 
 const FEATURES_DIR = path.resolve(
@@ -513,6 +554,7 @@ const COMPULSORY_ONE_REGISTRY_FILES = [
   "nike.ts",
   "quadratic.ts",
   "quantifiers.ts",
+  "radianMeasure.ts",
   "set.ts",
   "transform.ts",
   "trigFormulas.ts",
@@ -520,6 +562,7 @@ const COMPULSORY_ONE_REGISTRY_FILES = [
   "trigLines.ts",
   "trigTangent.ts",
   "trigTransform.ts",
+  "trigModel.ts",
 ] as const;
 
 const REGISTRIES_DIR = path.resolve(

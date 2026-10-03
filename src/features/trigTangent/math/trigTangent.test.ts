@@ -7,6 +7,7 @@ import {
   generateTangentSegments,
   pickAdjacentAsymptotePair,
   checkIntervalAsymptoteFree,
+  computeTangentVisibleXLimit,
 } from "./trigTangent";
 
 describe("trigTangent - 正切函数性质与图象纯数学测试", () => {
@@ -169,5 +170,24 @@ describe("trigTangent - 正切函数性质与图象纯数学测试", () => {
     const resUnsafe = checkIntervalAsymptoteFree(0, Math.PI / 3, 2.0, 0);
     expect(resUnsafe.hasAsymptote).toBe(true);
     expect(resUnsafe.firstAsymptote).toBeCloseTo(Math.PI / 4, 4);
+  });
+
+  it("computeTangentVisibleXLimit: 动点上限由视口反解，Animation 与 Scene 共用同一真源", () => {
+    // 默认视口 yMax ≈ 4.643（CANVAS_PRESETS.full 840×650 + yRange ±4.5）⇒ 上限 ≈ 1.3546 rad
+    const limit = computeTangentVisibleXLimit(4.643);
+    expect(limit).toBeCloseTo(Math.atan(4.643 * 0.98), 9);
+    // 动点纵坐标必须留在可见高度以内
+    expect(Math.tan(limit)).toBeLessThanOrEqual(4.643);
+
+    // 单调性：可见范围越大，允许的横向范围越大
+    expect(computeTangentVisibleXLimit(10)).toBeGreaterThan(
+      computeTangentVisibleXLimit(2),
+    );
+
+    // 栅栏：yMax < 1 时必须取保护值，不得退回「π/2 − 0.08 = 1.49」那类写死常量
+    const narrow = computeTangentVisibleXLimit(0.5);
+    expect(narrow).toBeCloseTo(Math.atan(0.98), 9);
+    expect(narrow).toBeLessThan(Math.PI / 4);
+    expect(Math.tan(narrow)).toBeLessThan(1);
   });
 });

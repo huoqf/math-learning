@@ -24,6 +24,21 @@ export interface CanvasSize {
   height: number;
   scale: number;
   rawScale: number;
+  /**
+   * 基准尺寸 → 当前尺寸的 CSS 像素换算（`v * scale`，`scale = rawScale × presetCompensation`）。
+   *
+   * ⚠️ **仅可用于 CSS / DOM 上下文**（内联 style、canvas 2D 绘制等）。
+   *
+   * 中屏 SVG 内的坐标是 design 坐标，且整棵子树被 `AnimationSvgCanvas` 的
+   * `<g transform="scale(vp.scale)">` 统一缩放（`vp.scale` 与 `rawScale` 数值上往往相等，
+   * 语义却是「design → 屏幕」的呈现倍率，**不可与之混用**）。
+   * 在 SVG 里再乘一次倍率会得到 `v × scale²` 的平方律误差 —— 基准窗口下隐形、
+   * 窗口放大即暴露。SVG 内把 CSS 像素换算成 design 坐标请用
+   * `useViewport` 导出的 `cssToDesignLength(vp, css)`（除法）。
+   *
+   * 全库当前无任何 SVG 场景调用本函数；页面若需要「与图形等比的几何量」，
+   * 应直接取 design 常量或几何基准的比例，不要经过本函数。
+   */
   px: (v: number) => number;
   font: (v: number) => number;
 }

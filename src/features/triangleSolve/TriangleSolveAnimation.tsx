@@ -23,12 +23,13 @@ import {
   solveTriangleFromSAS,
   solveSSA,
   solveBisectorAndMedian,
+  solveTriangleFromSSS,
 } from "@/math/triangleSolve";
 
 export function TriangleSolveAnimation() {
-  // 研究模式: 'sine' | 'ssa' | 'cosine' | 'area' | 'bisector'
+  // 研究模式: 'sine' | 'ssa' | 'cosine' | 'area' | 'sss' | 'bisector'
   const [studyMode, setStudyMode] = useState<
-    "sine" | "ssa" | "cosine" | "area" | "bisector"
+    "sine" | "ssa" | "cosine" | "area" | "bisector" | "sss"
   >("sine");
 
   // 典型构型预设状态 (默认自由探究)
@@ -125,6 +126,16 @@ export function TriangleSolveAnimation() {
         setParams((p) => ({ ...p, angleA: 60, b: 4, c: 8 }));
       if (presetKey === "rt_bisect")
         setParams((p) => ({ ...p, angleA: 90, b: 6, c: 8 }));
+    } else if (studyMode === "sss") {
+      if (presetKey === "rt_345")
+        setParams((p) => ({ ...p, a: 3, b: 4, c: 5 }));
+      if (presetKey === "acute_iso")
+        setParams((p) => ({ ...p, a: 5, b: 5, c: 6 }));
+      if (presetKey === "obtuse_sss")
+        setParams((p) => ({ ...p, a: 5, b: 4, c: 7 }));
+      // 3 + 4 = 7：三角不等式取等号 ⇒ 三点共线退化，用于展示「无解」分支
+      if (presetKey === "degenerate")
+        setParams((p) => ({ ...p, a: 3, b: 4, c: 7 }));
     }
   };
 
@@ -168,6 +179,14 @@ export function TriangleSolveAnimation() {
         { key: "flat_area", label: "狭长构型" },
       ];
     }
+    if (studyMode === "sss") {
+      return [
+        { key: "free", label: "自由探究" },
+        { key: "rt_345", label: "勾股 3-4-5" },
+        { key: "acute_iso", label: "等腰锐角" },
+        { key: "degenerate", label: "退化无解" },
+      ];
+    }
     // bisector
     return [
       { key: "free", label: "自由探究" },
@@ -185,9 +204,12 @@ export function TriangleSolveAnimation() {
       cosine: ["angleA", "b", "c"],
       area: ["angleA", "b", "c"],
       bisector: ["angleA", "b", "c"],
+      // SSS：三边同时作为自变量，与 SAS 共享 a / b / c 三个滑块
+      sss: ["a", "b", "c"],
     };
 
     const keys = keysByMode[studyMode] ?? Object.keys(paramMeta);
+    const isSssMode = studyMode === "sss";
 
     return keys
       .filter((key) => key in paramMeta)
@@ -197,7 +219,8 @@ export function TriangleSolveAnimation() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          group: meta.group,
+          // SSS 下三边同属一组（a 的默认 group 是「SSA 动圆半径」，在该模式语义不符）
+          group: isSssMode ? "三边底模" : meta.group,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
@@ -206,10 +229,13 @@ export function TriangleSolveAnimation() {
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
-          // a 的两条临界线 (h = b·sinA、a = b) 随 b 与 A 变化，必须动态计算
+          // a 的两条临界线 (h = b·sinA、a = b) 是 SSA 专属，随 b 与 A 变化必须动态计算；
+          // SSS 模式下它们无意义，必须显式清空，否则会在滑块上留下误导性刻度。
           marks:
             key === "a"
-              ? buildSideAMarks(params.b ?? 5, params.angleA ?? 60)
+              ? studyMode === "ssa"
+                ? buildSideAMarks(params.b ?? 5, params.angleA ?? 60)
+                : undefined
               : meta.marks,
         };
       });
@@ -232,15 +258,22 @@ export function TriangleSolveAnimation() {
         };
       case "cosine":
         return {
-          condition: "在任意 △ABC 中，已知两边及夹角或三边长",
+          condition:
+            "在任意 △ABC 中，已知两边及夹角（SAS），求第三边与其余两角",
           question:
             "当 A 从锐角变为钝角时，余弦修正项 -2bc·cosA 的正负号如何改变 a² 与 b²+c² 的大小关系？",
         };
       case "area":
         return {
-          condition: "已知边角参数或三边长计算面积与切接圆半径",
+          condition: "已知两边及夹角（SAS）计算面积、内切圆与外接圆半径",
           question:
             "探究内切圆半径 r = S/p 与高线 ha = 2S/a 的几何极值，以及取等条件的充要证明。",
+        };
+      case "sss":
+        return {
+          condition: "已知三边长 a, b, c（SSS 条件）",
+          question:
+            "三边满足什么条件才能构成三角形？为什么三边一旦确定，三角形的形状与大小就完全唯一确定？",
         };
       case "bisector":
         return {
@@ -275,6 +308,14 @@ export function TriangleSolveAnimation() {
       const aSq = (sas.sides.a ** 2).toFixed(2);
       return `\\color{${cA}}{a}^2 = \\color{${cB}}{b}^2 + \\color{${cC}}{c}^2 - 2\\color{${cB}}{b}\\color{${cC}}{c} \\cos \\color{${cA}}{A} \\implies \\color{${cA}}{a}^2 = ${aSq} \\quad (\\color{${cA}}{a} = ${aVal})`;
     }
+    if (studyMode === "sss") {
+      const sss = solveTriangleFromSSS(params.a, params.b, params.c);
+      if (!sss.isValid || !sss.full) {
+        return `\\text{三边不满足三角不等式} \\implies \\text{无法构成三角形}`;
+      }
+      const { anglesDeg } = sss.full;
+      return `\\cos \\color{${cA}}{A} = \\frac{\\color{${cB}}{b}^2 + \\color{${cC}}{c}^2 - \\color{${cA}}{a}^2}{2\\color{${cB}}{b}\\color{${cC}}{c}} \\implies \\color{${cA}}{A} \\approx ${anglesDeg.A.toFixed(1)}^\\circ`;
+    }
     if (studyMode === "bisector") {
       const bm = solveBisectorAndMedian(params.b, params.c, params.angleA);
       const taStr = bm.bisectorLength.toFixed(2);
@@ -299,6 +340,8 @@ export function TriangleSolveAnimation() {
         return "余弦定理与投影定理看板";
       case "area":
         return "三角形面积与切接圆看板";
+      case "sss":
+        return "SSS 三边定形与形状判定看板";
       case "bisector":
         return "角平分线与中线模型看板";
       default:
@@ -318,6 +361,7 @@ export function TriangleSolveAnimation() {
                 { key: "ssa", label: "SSA双解探究" },
                 { key: "cosine", label: "余弦与射影" },
                 { key: "area", label: "面积与切接圆" },
+                { key: "sss", label: "SSS 三边定形" },
                 {
                   key: "bisector",
                   label: "角平分线与中线模型",

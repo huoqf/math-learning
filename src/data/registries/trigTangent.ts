@@ -1,5 +1,23 @@
-import type { ParamMeta } from "../types";
+import type { ParamMeta, ParamMark } from "../types";
 import { MATH_COLORS } from "@/theme";
+
+/**
+ * 主支动点 x₀ 的整数刻度（−1 / 0 / +1）。
+ *
+ * 为什么提取为工厂、而不内联在 Animation.tsx：
+ * `left/param-label-format` 门禁以「`marks:` 与 `[` 是否同行」判定刻度作用域，
+ * 而覆盖刻度只能写成 `marks: isBase ? [...] : meta.marks` 的三元形式，命中不了该模式；
+ * 一旦 Prettier 按 printWidth 把刻度项折成多行，`labelFormula` 就会独占一行、
+ * 被误判成「参数未绑定色彩 Token」。工厂写法（与 buildSideAMarks / buildAngleBMarks
+ * 同构）是该门禁显式支持的第二种载体，可同时满足 Prettier 与审计门禁。
+ */
+export function buildBasePointMarks(): ParamMark[] {
+  return [
+    { value: -1.0, label: "-1.0", labelFormula: "x_0=-1.0" },
+    { value: 0, label: "0", labelFormula: "x_0=0", variant: "critical" },
+    { value: 1.0, label: "1.0", labelFormula: "x_0=1.0" },
+  ];
+}
 
 export const defaultParams = {
   theta: Math.PI / 4, // 0.7854

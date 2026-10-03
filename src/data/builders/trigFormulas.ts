@@ -107,7 +107,7 @@ export function buildTrigFormulasPanel(
         importance: "gaokao",
       },
       {
-        text: "解三角形边角互化：一次齐次式优先角化边或边化角，运用两角和差公式展开消除复杂角",
+        text: "解三角形边角互化：一次齐次式优先「边化角」，运用两角和差公式展开消除复杂角",
         importance: "gaokao",
       },
     ];

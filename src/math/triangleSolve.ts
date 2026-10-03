@@ -179,6 +179,46 @@ export function solveTriangleFromSAS(
   };
 }
 
+export interface SSSSolveResult {
+  /** 三边是否满足三角不等式（严格） */
+  isValid: boolean;
+  /** 不满足时的说明文案 */
+  warning?: string;
+  /** 有效时复用 SAS 的完整几何结果（坐标、外接圆、内切圆、投影…） */
+  full?: TriangleSolveResult;
+}
+
+/**
+ * SSS：已知三边 a, b, c 解三角形（三边确定唯一三角形）。
+ *
+ * 实现策略 —— **先求角、再委托 SAS**：由余弦定理反解出角 A
+ *   cos A = (b² + c² − a²) / (2bc)
+ * 然后交给 solveTriangleFromSAS(b, c, A) 产出全部几何量。因为
+ *   √(b² + c² − 2bc·cos A) ≡ a
+ * 两条路径给出的是**同一个三角形**，故坐标、外接圆、内切圆、投影等内容无需重复实现。
+ *
+ * 边界：三角不等式必须**严格**成立（取等号即三点共线退化，不构成三角形）。
+ */
+export function solveTriangleFromSSS(
+  a: number,
+  b: number,
+  c: number,
+): SSSSolveResult {
+  if (a <= 0 || b <= 0 || c <= 0) {
+    return { isValid: false, warning: "三边长必须为正数。" };
+  }
+  const EPS = 1e-9;
+  if (a + b <= c + EPS || a + c <= b + EPS || b + c <= a + EPS) {
+    return {
+      isValid: false,
+      warning: `三边 a = ${a.toFixed(2)}、b = ${b.toFixed(2)}、c = ${c.toFixed(2)} 不满足三角不等式：任意两边之和必须大于第三边（取等号时为三点共线退化，不构成三角形）。`,
+    };
+  }
+  const cosA = Math.max(-1, Math.min(1, (b * b + c * c - a * a) / (2 * b * c)));
+  const angleADeg = (Math.acos(cosA) * 180) / Math.PI;
+  return { isValid: true, full: solveTriangleFromSAS(b, c, angleADeg) };
+}
+
 /**
  * SSA 探究模式：已知对角 A(deg)、已知边 b、已知对边 a
  */
@@ -377,4 +417,104 @@ export function solveBisectorAndMedian(
     areaACD,
     vectorWeights: { lambda, mu },
   };
+}
+
+/**
+ * 由顶点 A 的拖拽数学位置及顶点 B, C 坐标反解内角 A (角度制)
+ * 几何本质：向量 AB 与 AC 的夹角 arccos((AB · AC) / (|AB| * |AC|))
+ * 当拖拽点位于理论点时，反解角精准等于原角 A，握点跳变严格为 0
+ *
+ * 注意：**中屏顶点 A 的拖拽已改用 solveAngleAFromVertexPosition（轨迹最近点投影）**。
+ * 本函数把光标位置当作 A 直接代入夹角公式，而 A 的竖直坐标对角度非单调，
+ * 在 A ≲ 32° 区间会导致手柄逆光标；横坐标也只是相对单调（b > c 反向、b = c 恒为 0）。
+ * 故本函数保留作为通用「由三点求内角」几何工具，不再承担拖拽映射职责。
+ */
+export function solveAngleAFromVertices(
+  posA: Point2D,
+  posB: Point2D,
+  posC: Point2D,
+  fallbackAngle: number = 60,
+): number {
+  const vAB = { x: posB.x - posA.x, y: posB.y - posA.y };
+  const vAC = { x: posC.x - posA.x, y: posC.y - posA.y };
+  const modAB = Math.hypot(vAB.x, vAB.y);
+  const modAC = Math.hypot(vAC.x, vAC.y);
+  if (modAB < 1e-5 || modAC < 1e-5) {
+    return fallbackAngle;
+  }
+  const dot = vAB.x * vAC.x + vAB.y * vAC.y;
+  const cosA = Math.max(-1, Math.min(1, dot / (modAB * modAC)));
+  return (Math.acos(cosA) * 180) / Math.PI;
+}
+
+/** 顶点 A 在给定内角下的数学坐标（含形心平移），与 solveTriangleFromSAS 的几何约定完全一致 */
+function vertexPositionAt(angleADeg: number, b: number, c: number): Point2D {
+  return solveTriangleFromSAS(b, c, angleADeg).points.A;
+}
+
+/**
+ * 由**拖拽光标的数学位置**反解内角 A —— 顶点 A 拖拽映射的唯一真源。
+ *
+ * 为什么不沿用「光标相对 B、C 的夹角」反解（solveAngleAFromVertices，旧实现）：
+ * 顶点 A 的**竖直**坐标对角度 A° 并非单调（b = 5, c = 6 时 A.y 在 ≈ 32° 处取极大），
+ * 于是 A ≲ 32° 的区间里手柄会逆着光标方向运动；而 A 的**横坐标**也只是相对单调
+ * （实测 b < c 时严格递减、b > c 时严格递增、b = c 时恒为 0 完全退化），
+ * 任何「单分量反解」都必然在某个参数区间失效。
+ *
+ * 因此这里改用对任意 (b, c) 都成立的**轨迹最近点投影**：在 [minA, maxA] 上粗采样
+ * 定位离光标最近的轨迹点，再在该点邻域内用黄金分割细化。返回角度所对应的 A
+ * 一定落在真实轨迹上，且随光标连续变化 —— 拖拽方向不再逆光标，也不会震荡。
+ *
+ * @param px,py 拖拽光标的数学坐标
+ * @param b,c   已知两边（A 的两条邻边，a 为对边 BC）
+ * @param minA,maxA 角度搜索域（度）
+ * @returns 反解出的内角 A（度）
+ */
+export function solveAngleAFromVertexPosition(
+  px: number,
+  py: number,
+  b: number,
+  c: number,
+  minA = 1,
+  maxA = 179,
+): number {
+  const sqDistAt = (angleADeg: number): number => {
+    const p = vertexPositionAt(angleADeg, b, c);
+    const dx = p.x - px;
+    const dy = p.y - py;
+    return dx * dx + dy * dy;
+  };
+
+  // 1. 粗采样定位全局极小（步长 ≈ 0.75°，足以把极小锁定在单峰邻域内）
+  const SAMPLES = 240;
+  const step = (maxA - minA) / SAMPLES;
+  let bestA = minA;
+  let bestD = Infinity;
+  for (let i = 0; i <= SAMPLES; i++) {
+    const angle = minA + step * i;
+    const d = sqDistAt(angle);
+    if (d < bestD) {
+      bestD = d;
+      bestA = angle;
+    }
+  }
+
+  // 2. 在极小点邻域内黄金分割细化（距离函数在极小附近单峰）
+  const INV_PHI = (Math.sqrt(5) - 1) / 2;
+  let lo = Math.max(minA, bestA - step);
+  let hi = Math.min(maxA, bestA + step);
+  let x1 = hi - INV_PHI * (hi - lo);
+  let x2 = lo + INV_PHI * (hi - lo);
+  for (let i = 0; i < 60; i++) {
+    if (sqDistAt(x1) < sqDistAt(x2)) {
+      hi = x2;
+      x2 = x1;
+      x1 = hi - INV_PHI * (hi - lo);
+    } else {
+      lo = x1;
+      x1 = x2;
+      x2 = lo + INV_PHI * (hi - lo);
+    }
+  }
+  return (lo + hi) / 2;
 }

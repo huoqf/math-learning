@@ -459,6 +459,57 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
     ]);
   });
 
+  it("三角函数：弧度制、弧长与扇形面积契约验证", () => {
+    verifyTopicSyncContract([
+      {
+        name: "弧度定义与比值不变性模型",
+        animId: "anim-radian-measure",
+        modeOptions: { studyMode: "definition" },
+        // 定义模式半径由单一真源固定为 1，故弧长读数即为弧度数
+        params: { alphaRad: 1, radius: 1.5 },
+        lessonType: "concept",
+        groundTruth: {
+          半径: 1.0,
+          弧长与半径之比: 1.0,
+        },
+        expectedQuantityLabels: ["弧长与半径之比", "圆心角 α（弧度制读数）"],
+      },
+      {
+        name: "弧长与扇形面积公式模型",
+        animId: "anim-radian-measure",
+        modeOptions: { studyMode: "arcSector" },
+        params: { alphaRad: Math.PI / 3, radius: 1.5 },
+        lessonType: "concept",
+        groundTruth: {
+          "弧长 l = |α| r": 1.5708,
+          "扇形面积 S = ½|α| r²": 1.1781,
+        },
+        perturbation: {
+          params: { alphaRad: Math.PI / 3, radius: 3 },
+          dynamicQuantityLabels: ["弧长 l = |α| r", "扇形面积 S = ½|α| r²"],
+        },
+        expectedQuantityLabels: [
+          "弧长 l = |α| r",
+          "扇形面积 S = ½|α| r²",
+          "扇形面积 S = ½ l r（对照）",
+          "扇形周长（两半径 + 弧）",
+        ],
+      },
+      {
+        name: "角度制与弧度制互化模型",
+        animId: "anim-radian-measure",
+        modeOptions: { studyMode: "conversion" },
+        params: { alphaRad: Math.PI, radius: 1.5 },
+        lessonType: "concept",
+        groundTruth: {
+          "圆心角 α（角度制）": 180,
+          "圆心角 α（弧度制）": 3.1416,
+        },
+        expectedQuantityLabels: ["换算关系", "与 π 的关系"],
+      },
+    ]);
+  });
+
   it("三角函数：正弦型函数 y=Asin(ωx+φ)+k 图像变换与周期最值契约验证", () => {
     verifyTopicSyncContract([
       {
@@ -480,6 +531,123 @@ describe("高中数学核心专题三屏数据一致性与高考推演链契约�
           "横向周期伸缩比",
           "纵向振幅伸缩比",
         ],
+      },
+    ]);
+  });
+
+  it("三角函数：模型应用 h=Asin(ωt+φ)+k 的简谐运动、读图求式与情境建模契约验证", () => {
+    verifyTopicSyncContract([
+      {
+        name: "简谐运动四量模型",
+        animId: "anim-trig-model",
+        modeOptions: { studyMode: "harmonic" },
+        // A=2, T=2 ⇒ ω=π；φ=π/2 表示 t=0 恰在波峰，故 t=1（半周期）时到达波谷 −2
+        params: { A: 2, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.5 },
+        lessonType: "concept",
+        groundTruth: {
+          振幅: 2,
+          "周期 T": 2,
+          "频率 f": 0.5,
+          平衡位置: 0,
+          观测点位移: -2,
+        },
+        perturbation: {
+          params: { A: 3, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.5 },
+          dynamicQuantityLabels: ["振幅", "观测点位移"],
+        },
+        expectedQuantityLabels: [
+          "振幅 A",
+          "周期 T",
+          "角频率",
+          "频率 f",
+          "初相 φ",
+          "平衡位置 k",
+          "值域",
+          "观测点位移",
+        ],
+        expectedTheoremsKeywords: [
+          "简谐运动的标准形式",
+          "周期、频率与角频率的关系",
+          "三个关键相位",
+        ],
+        forbiddenTheoremKeywords: ["由图象求解析式", "三步法"],
+      },
+      {
+        name: "由图象求解析式模型",
+        animId: "anim-trig-model",
+        modeOptions: { studyMode: "fromGraph" },
+        // h_max = 2.5、h_min = −0.5 ⇒ A = 1.5、k = 1；T = 4、波峰 t_max = 1 ⇒ φ = 0
+        params: { A: 1.5, period: 4, phi: 0, k: 1, tRatio: 0.75 },
+        lessonType: "concept",
+        groundTruth: {
+          最高点横坐标: 1,
+          最高点纵坐标: 2.5,
+          最低点纵坐标: -0.5,
+          "反解 振幅 A": 1.5,
+          "反解 平衡位置 k": 1,
+          "反解 初相 φ": 0,
+        },
+        perturbation: {
+          params: { A: 2.5, period: 4, phi: 0, k: 1, tRatio: 0.75 },
+          dynamicQuantityLabels: ["最高点纵坐标", "反解 振幅 A"],
+        },
+        expectedQuantityLabels: [
+          "最高点横坐标",
+          "最高点纵坐标",
+          "最低点纵坐标",
+          "周期（横向读数）",
+          "反解 振幅 A",
+          "反解 平衡位置 k",
+          "反解 角频率 ω",
+          "反解 初相 φ",
+        ],
+        expectedTheoremsKeywords: [
+          "由图象求解析式的读数顺序",
+          "由最值反解振幅与平衡位置",
+          "由波峰反解初相",
+        ],
+        forbiddenTheoremKeywords: ["简谐运动的标准形式", "三步法"],
+      },
+      {
+        name: "摩天轮情境建模模型",
+        animId: "anim-trig-model",
+        modeOptions: { studyMode: "modeling", scenarioKey: "ferris" },
+        // 最低离地 1、最高离地 4 ⇒ A = 1.5、k = 2.5；T = 12、t=0 在最低点 ⇒ φ = −π/2
+        // 观测点 t = 3（四分之一周）时相位归零，故 h = k = 2.5
+        params: { A: 1.5, period: 12, phi: -Math.PI / 2, k: 2.5, tRatio: 0.25 },
+        lessonType: "concept",
+        groundTruth: {
+          振幅: 1.5,
+          "周期 T": 12,
+          平衡位置: 2.5,
+          预测值: 2.5,
+        },
+        perturbation: {
+          params: {
+            A: 1.5,
+            period: 12,
+            phi: -Math.PI / 2,
+            k: 2.5,
+            tRatio: 0.5,
+          },
+          dynamicQuantityLabels: ["预测值"],
+        },
+        expectedQuantityLabels: [
+          "建模对象",
+          "振幅 A",
+          "周期 T",
+          "角频率",
+          "初相 φ",
+          "平衡位置 k",
+          "取值范围",
+          "预测值",
+        ],
+        expectedTheoremsKeywords: [
+          "三角函数建模的三步法",
+          "本情境的解析式",
+          "值域与最值",
+        ],
+        forbiddenTheoremKeywords: ["简谐运动的标准形式", "由图象求解析式"],
       },
     ]);
   });

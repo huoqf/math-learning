@@ -15,6 +15,10 @@ import type { TrigInequalityKind } from "../math/trigLines";
 import { TrigLinesDefScene } from "./TrigLinesDefScene";
 import { TrigLinesComparisonScene } from "./TrigLinesComparisonScene";
 import { TrigLinesInequalityScene } from "./TrigLinesInequalityScene";
+import { paramDomainRange, snapDragValue } from "@/utils/paramClamp";
+import { paramMeta } from "@/data/registries/trigLines";
+
+const RANGE_ALPHA_DEG = paramDomainRange(paramMeta.alphaDeg);
 
 interface TrigLinesSceneProps {
   params: {
@@ -59,10 +63,10 @@ export const TrigLinesScene: React.FC<TrigLinesSceneProps> = ({
   const unitRadiusPx = scale.scaleX; // 半径 r = 1 的像素数
   const aDesign = mathToDesign(1, 0, scale);
 
-  // 动点拖拽回调 (定义模式 / 三角不等式模式共享)
+  // 动点拖拽回调 (定义模式 / 三角不等式模式共享，经声明域钳制)
   const handlePDrag = (rawMath: { x: number; y: number }) => {
     const newDeg = pointToAngleDeg(rawMath.x, rawMath.y, alphaDeg);
-    onParamChange("alphaDeg", newDeg);
+    onParamChange("alphaDeg", snapDragValue(newDeg, 1, RANGE_ALPHA_DEG));
   };
 
   return (

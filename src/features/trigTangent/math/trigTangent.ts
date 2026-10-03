@@ -281,3 +281,22 @@ export function checkIntervalAsymptoteFree(
     maxAllowedOmega,
   };
 }
+
+/**
+ * 基础正切曲线 y = tan x 在给定纵轴可见半高下的**动点横向可达界限**（单一真源）。
+ *
+ * 主支上的动点必须落在可见分支内，即 |tan x| ≤ yMax，于是 |x| ≤ arctan(yMax)；
+ * 再留 2% 余量，避免动点恰好压在画布上下边界上。
+ *
+ * 反例（旧实现的教训）：写死 π/2 − 0.08 = 1.49 时，纵坐标可达 tan(1.49) ≈ 12.3，
+ * 是默认可见高度（±4.64）的 2.6 倍 —— 动点一拖就飞出画布且再也抓不回来。
+ *
+ * **本函数是滑块 min/max、滑块值钳制、以及中屏动点拖拽钳制的唯一口径**：
+ * Animation 与 Scene 必须都调用它，严禁任何一处再写死常数，否则两处上限一旦不等，
+ * 就会出现「滑块还拖得动、手柄却已出画布」的假象（即两面口径分裂）。
+ *
+ * @param yMax 视口纵向可见半高（数学坐标），由 useSceneScale 的派生值提供
+ */
+export function computeTangentVisibleXLimit(yMax: number): number {
+  return Math.atan(Math.max(1, yMax) * 0.98);
+}

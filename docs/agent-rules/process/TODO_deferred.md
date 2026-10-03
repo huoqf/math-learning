@@ -1,8 +1,9 @@
 # 规范治理与高中数学教学质量保证 — 待办事项
 
-> 更新时间：2026-09-13
+> 更新时间：2026-10-03
 > 当前状态：P0 基础设施完成；P1 存量规范治理收官（**`src/features` 502 文件**严格审计 0 违规）；
 > **P2 门禁范围与课标边界治理**：审计范围扩至全库 `src`、新增超纲术语门禁与学段边界一致性测试。
+> **P3 / P4 已完成**（分节见下）。**新增「六、 待裁决 / 延后项」**：中屏「CSS 像素 ↔ design 坐标」换算链路治理（已修）与 `CoordinateGrid` 定位量误用 `fontScale`（待裁决）。
 
 ---
 
@@ -108,3 +109,74 @@
   - `.husky/pre-commit`：`tsc -b` → `tsc -b --force`（避免 tsbuildinfo 缓存空跑），并加入 `npm run test`；
   - `tsconfig.json`：`include` 纳入 `e2e` 与 `scripts`；
   - `package.json`：`npm run test` 纳入 `src/data`。
+
+---
+
+## 六、 待裁决 / 延后项（Deferred）
+
+> 本节条目均为**已定位到行、已量化、但未动手**的问题，供裁决后直接执行。
+> 口径约定：**不做无证据的"疑似"**——每条必须给出可执行定位（`文件:行`）与可复算的量化依据；数量必须逐行清点，不得估算（参见 `docs/reports/审查报告09-13.md:91` 关于"口径前后不一"的教训）。
+
+### 6.1 中屏「CSS 像素 ↔ design 坐标」换算链路（2026-10-03 发现，已部分治理）
+
+**架构事实**：中屏分辨率适配由共享组件/hook 单一链路承担，页面不得自造视口逻辑：
+
+```
+useAnimationViewport({ preset })
+ ├─ useCanvasSize(preset)     → containerRef + canvasSize{ scale, rawScale, px(), font() }
+ └─ useViewport(canvasSize)   → vp{ scale, tx, ty, transform, designVisibleW/H, designLeft/Top }
+        ↓
+ useSceneScale({ vp, xRange, yRange }) → scale{ scaleX, scaleY, originX/Y, xMin…yMax }
+        ↓
+ <AnimationSvgCanvas transform={vp.transform}>   ← 内部 <g transform="translate(tx ty) scale(vp.scale)">
+        ↓
+ 原子件 CoordinateGrid / MathPoint / InteractivePoint（只吃 scale + fontScale）
+```
+
+**根因 — 两条 `scale` 语义从未被区分**：
+
+|                    | 定义                                      | 是否已在 `<g transform>` 里生效 | 正确用法                                 |
+| ------------------ | ----------------------------------------- | ------------------------------- | ---------------------------------------- |
+| `vp.scale`         | `min(visibleW/designW, visibleH/designH)` | **是**                          | 换算 CSS 像素：`design = css / vp.scale` |
+| `canvasSize.scale` | `min(raw.w/init.w, raw.h/init.h)`         | 否                              | 仅 CSS / DOM 上下文                      |
+
+- `canvasSize.px`（`v * scale`）**全仓零调用**（`px={` 与 `canvasSize.px` 均无匹配）—— 有 API 无人敢用的死接口；
+- 项目此前**没有**「SVG 内 CSS px → design」的官方工具，页面便各自发明：`trigModel` 写 `const px = (v) => v * vp.scale`，`radianMeasure` 照抄 ⇒ 屏幕长度成 **`v × vp.scale²`**（基准窗口 `vp.scale ≈ 1` 时完全隐形，1.3754 倍窗口虚胖 89%）；
+- **同一模块内方向相反的既有铁证**：`src/features/trigModel/viewport.ts:66` 的 `topChromeBottomY` 用 `(PX − ty) / scale`（**除法，正确**），而同 feature 的 `TrigModelScene.tsx:93` 用 `v * vp.scale`（**乘法，错误**）；
+- **规范缺口**：`AGENTS.md` 公理 4 只有 4.1 Preset / 4.2 字号链路 / 4.3 原子化复用——**「定位链路」不在宪法里**，是代码注释自造的概念。
+
+- [x] **本轮已落地**（2026-10-03）：
+  - `src/utils/useViewport.ts` 新增并导出 `cssToDesignLength(viewport, css) = css / vp.scale` 作为唯一换算真源（附反例文档）；
+  - `src/utils/useCanvasSize.ts` 的 `CanvasSize.px` 补「⚠️ 仅 CSS / DOM 上下文」规范注释；
+  - `src/features/trigModel/components/TrigModelScene.tsx` 改走真源（除法）；
+  - `src/test/trigModelSceneRender.test.tsx` 修正被固化的错误期望值：`(SPAN_TICK_BOTTOM_DY − SPAN_TICK_TOP_DY) * TALL_VP.scale` → `/ TALL_VP.scale`（原期望 `12 × 1.2 = 14.4` 是错的，正确为 `12 / 1.2 = 10`，屏幕恒 12px）；
+  - `src/features/radianMeasure/sceneGeometry.ts` 新增（比例常量 + 视口区间单一真源），Scene 的 `angleArcR / labelDist / rLabelNormalOffset` 改为 `radiusPx × 比例`，删除自造 `px` / `vpScale`；
+  - 整角分支由死代码变可达：`isFull` 阈值 `TAU − 1e−4` → `TAU − step/2`（实机坐实 `alphaRad` 的可达上界仅 6.28，距 TAU 有 0.0032，旧阈值下双半圆路径与 `<circle>` 角标记恒不可达）；
+  - 新增 `src/test/radianMeasureSceneRender.test.tsx`（6 用例，跨三视口断言比例恒等，含优角 `largeArc=1/sweep=0`、整角双半圆、`O` 唯一、三模式无 NaN）。
+  - 验收：`tsc -b --force` exit 0 ｜ vitest **172 文件 / 1790 用例** ｜ `audit:strict` **788 文件 / 0 error** ｜ `eslint src --max-warnings 0` exit 0 ｜ 实机三视口（`vp.scale` = 0.56 / 0.9908 / 1.3754）`angleArcR ÷ mainR` 恒 `0.3333`（修复前为 `29.72 ↔ 41.26`，差 38.8%）。
+
+- [ ] **6.1.1 待裁决：`CoordinateGrid` 有 9 处把「定位偏移量」喂给 `fontScale`（字号链路）**
+  - **逐行定位** —— `src/components/Math/CoordinateGrid.tsx` 全文共 14 处 `fontScale(`，其中 **9 处为定位量、5 处为字号**：
+    - 横轴数值标签：`:153 y={pt.y + fontScale(14)}`、`:190 x={pt.x - fontScale(6)}`、`:191 y={pt.y + fontScale(3.5)}`
+    - 原点 `O`：`:210 x={ptZero.x - fontScale(6)}`、`:211 y={ptZero.y + fontScale(13)}`
+    - `x` 轴名与箭头：`:274 x={xAxisEnd.x - fontScale(2)}`、`:275 y={xAxisEnd.y + fontScale(15)}`
+    - `y` 轴名与箭头：`:292 x={yAxisEnd.x - fontScale(12)}`、`:293 y={yAxisEnd.y + fontScale(10)}`
+    - （`:156 / :194 / :214 / :278 / :296` 的 `fontSize={fontScale(...)}` 属**字号**，为正确用法，不在本条范围）
+  - **性质**：`fontScale = clamp(v * scale, 7, 16)`（`useCanvasSize.ts:19-20`），偏移量经它换算会**先于字号被 clamp 钉死**。`scale = 1.3754` 时：偏移 `fontScale(14) = clamp(19.26, 7, 16) = 16`，而字号 `fontScale(10.5) = 14.44` 尚未触顶 ⇒ 「偏移 ÷ 字号」由基准 `14 / 10.5 = 1.333` 畸变为 `16 / 14.44 = 1.108`（**约 17%**），表现为大窗口下刻度标签逐渐贴近轴线。
+  - **为何未动**：① 畸变有 `clamp` 缓冲、幅度轻微；② 意图可解释（偏移跟着字号走，视觉自洽）；③ `CoordinateGrid` 是**全库共享原子件**，实测有 **80 个** feature 文件引用它（其中 73 个为 `Scene.tsx` / `Animation.tsx`，`grep -rl "CoordinateGrid" src/features --include=*.tsx | wc -l` 可复算），改动会波及这些页面的坐标网格视觉，需全库回归而非局部验证。
+  - **⚠️ 内部标准本就不统一（这是需要裁决的核心理由）**：同库 `src/components/Math/MathPoint.tsx:123` 的标签偏移用的是**纯 design 常量** `const offset = finalR + 5`，即「几何量走几何常量」。两套做法并存 ⇒ 规范本身未定。
+  - **候选方案**：
+    - **A（对齐既有正确范本）**：偏移量改为纯 design 常量（`14 / 6 / 13 / 15 / 10 / 2 / 3.5`），与 `MathPoint` 一致。语义 = 偏移与图形等比，跨分辨率比例恒定。
+    - **B（保留"跟字号走"意图）**：若确要偏移随字号缩放，应走 `fontScale` 的**未截断形式**（`canvasSize.px` 或 `v * scale`），并把「定位链路」在 `AGENTS.md` 4.2 正式定义后下传，使偏移与字号始终同比例。
+    - **C（维持现状）**：仅登记，不修改，接受 ≤17% 的偏移畸变。
+  - **裁决后需同步**：无论选 A 还是 B，都应在 `AGENTS.md` 公理 4.2 **正式补入「定位链路（PositionScale Chain）」定义**，填上当前规范缺口 —— 否则"该用哪条链路"仍靠注释口耳相传，同类问题会第四次出现。
+  - **验收方式**：`npx tsc -b --force` + `npx vitest run src/math src/data src/test src/features` + `npm run audit:strict` + `npx eslint src --max-warnings 0` 全绿；并在 ≥2 种窗口尺寸下对含 `CoordinateGrid` 的代表页面（如 `radian-measure`、`trig-model`）抽样复核标签与轴线的间距，确认跨分辨率视觉稳定。
+
+### 6.2 全库存量（与 6.1 无因果关系，一并登记备查）
+
+- [ ] 全库 **119 处** `prettier --check` 格式不符（含 `src/utils/useViewport.ts` 等既有「单引号 + 无分号」风格文件与 `.prettierrc` 的 `semi: true` 长期冲突）；
+- [ ] **19 处**文件带 BOM（判定须用字节级 `git grep -lI $'\xef\xbb\xbf'`，勿用 `grep -r`）；
+- [ ] `.agents/skills/new-3d-math-animation/examples/Template3DAnimation.tsx:157` 存在 1 处 JSX 语法错误（多余 `/>`）。
+
+> ⚠️ 上述三项**长期存在且未阻断任何门禁**（`audit:strict` 的存量基线机制只对「增量」exit(1)）。是否清理需单独裁决。
+> ⚠️ **勿在功能修复的提交里夹带全库重排** —— 格式化工具会连带重排无关行，使 diff 失去可读性。本轮已有一次实际教训：对 `src/utils/useViewport.ts` 误跑 `prettier --write` 产生 `+82 / −42` 无关重排，已 `git checkout` 回退并按原风格改为纯增量 `+26 / −0`（该文件的 prettier warn 属 HEAD 既有存量，用 `git show HEAD:<file> | npx prettier --check --stdin-filepath <file>` 复核确认）。

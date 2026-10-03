@@ -15,7 +15,12 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TrigTangentScene } from "./components/TrigTangentScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/trigTangent";
+import {
+  defaultParams,
+  paramMeta,
+  buildBasePointMarks,
+} from "@/data/registries/trigTangent";
+import { computeTangentVisibleXLimit } from "./math/trigTangent";
 
 export function TrigTangentAnimation() {
   // 研究模式：'unitCircle' | 'baseFunction' | 'generalTransform' | 'gaokaoProblem'
@@ -47,6 +52,11 @@ export function TrigTangentAnimation() {
     xRange: [-6, 6],
     yRange: [-4.5, 4.5],
   });
+
+  // 基础正切曲线主支的动点横向可达界限：与中屏 Scene 共用同一真源（见 math/trigTangent.ts）。
+  // 默认视口下 scale.yMax ≈ 4.643 ⇒ 上限 ≈ 1.3546 rad。此前 Animation 侧写死 1.35、
+  // Scene 侧用派生值，两者仅靠 0.0043 的余量侥幸一致；一旦 yMax < 1 便会再度分裂。
+  const tangentXLimit = computeTangentVisibleXLimit(scale.yMax);
 
   // 右屏 MathPanel 数据来源
   const mathData = useMemo(() => {
@@ -88,21 +98,35 @@ export function TrigTangentAnimation() {
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        const isBase = studyMode === "baseFunction" && key === "theta";
+        const minVal = isBase ? -tangentXLimit : meta.min;
+        const maxVal = isBase ? tangentXLimit : meta.max;
+        const rawVal = params[key] ?? meta.defaultValue ?? 0;
+        const curVal = isBase
+          ? Math.max(-tangentXLimit, Math.min(tangentXLimit, rawVal))
+          : rawVal;
+
         return {
           key,
-          label: meta.label,
-          labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
-          step: meta.step ?? 0.1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
+          label: isBase ? "主支动点横坐标 x₀" : meta.label,
+          labelFormula: isBase
+            ? `\\color{${MATH_COLORS.paramPrimary}}{x_0}`
+            : meta.labelFormula,
+          value: curVal,
+          min: minVal,
+          max: maxVal,
+          step: meta.step ?? 0.02,
+          description: isBase
+            ? "主周期单调分支 (-π/2, π/2) 内的可视探究角度 x₀"
+            : meta.description,
+          descriptionFormula: isBase
+            ? "x_0 \\in (-\\pi/2, \\pi/2)"
+            : meta.descriptionFormula,
           importance: meta.importance,
-          marks: meta.marks,
+          marks: isBase ? buildBasePointMarks() : meta.marks,
         };
       });
-  }, [params, studyMode]);
+  }, [params, studyMode, tangentXLimit]);
 
   // 构建当前公式 LaTeX（三位一体色彩绑定）
   const formulaLatex = useMemo(() => {
@@ -112,9 +136,14 @@ export function TrigTangentAnimation() {
       return `\\tan(\\color{${MATH_COLORS.paramPrimary}}{${params.theta.toFixed(2)}}) = \\color{${MATH_COLORS.paramSecondary}}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
     }
     if (studyMode === "baseFunction") {
-      const cosT = Math.cos(params.theta ?? Math.PI / 4);
-      const tanVal = Math.abs(cosT) > 1e-4 ? Math.tan(params.theta) : Infinity;
-      return `f(x) = \\tan x, \\quad \\tan(\\color{${MATH_COLORS.paramPrimary}}{${params.theta.toFixed(2)}}) = \\color{${MATH_COLORS.function}}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
+      const effectiveTheta = Math.max(
+        -tangentXLimit,
+        Math.min(tangentXLimit, params.theta ?? Math.PI / 4),
+      );
+      const cosT = Math.cos(effectiveTheta);
+      const tanVal =
+        Math.abs(cosT) > 1e-4 ? Math.tan(effectiveTheta) : Infinity;
+      return `f(x) = \\tan x, \\quad \\tan(\\color{${MATH_COLORS.paramPrimary}}{${effectiveTheta.toFixed(2)}}) = \\color{${MATH_COLORS.function}}{${Number.isFinite(tanVal) ? tanVal.toFixed(3) : "\\infty"}}`;
     }
     if (studyMode === "gaokaoProblem") {
       const { omega, targetIntervalEnd } = params;
@@ -125,13 +154,13 @@ export function TrigTangentAnimation() {
       phi >= 0 ? `+ ${phi.toFixed(2)}` : `- ${Math.abs(phi).toFixed(2)}`;
     const cStr = C >= 0 ? `+ ${C}` : `- ${Math.abs(C)}`;
     return `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${A}}\\tan\\left(\\color{${MATH_COLORS.paramSecondary}}{${omega}}x \\color{${MATH_COLORS.paramTertiary}}{${phiStr}}\\right) ${cStr}`;
-  }, [studyMode, params]);
+  }, [studyMode, params, tangentXLimit]);
 
   const panelTitle = useMemo(() => {
     if (studyMode === "unitCircle") return "正切线与单位圆极限看板";
-    if (studyMode === "baseFunction") return "y = tan x 基础性质看板";
-    if (studyMode === "gaokaoProblem") return "新高考 ω 范围探究看板";
-    return "y = A tan(ωx + φ) + C 看板";
+    if (studyMode === "baseFunction") return "$y = \\tan x$ 基础性质看板";
+    if (studyMode === "gaokaoProblem") return "新高考 $\\omega$ 范围探究看板";
+    return "$y = A \\tan(\\omega x + \\varphi) + C$ 看板";
   }, [studyMode]);
 
   const tipConfig = useMemo(() => {
@@ -142,32 +171,34 @@ export function TrigTangentAnimation() {
         return {
           variant: "primary" as const,
           badge: "几何直观 · 单位圆正切线",
-          condition: `单位圆上角 θ = ${theta.toFixed(2)}，过 (1, 0) 作圆切线。`,
+          condition: `单位圆上角 $\\theta = ${theta.toFixed(2)}$，过 $(1, 0)$ 作圆切线。`,
           question:
-            "sinθ 与 cosθ 之比在几何上如何用该切线长度表示？为何 tanθ 在切线所在直线上？",
+            "$\\sin\\theta$ 与 $\\cos\\theta$ 之比在几何上如何用该切线长度表示？为何 $\\tan\\theta$ 在切线所在直线上？",
         };
       case "baseFunction":
         return {
           variant: "info" as const,
-          badge: "基础性质 · y = tan x",
-          condition: "定义域排除 x = π/2 + kπ，周期为 π，值域为全体实数。",
+          badge: "基础性质 · $y = \\tan x$",
+          condition:
+            "定义域排除 $x = \\frac{\\pi}{2} + k\\pi$ ($k \\in \\mathbb{Z}$)，周期为 $\\pi$，值域为全体实数 $\\mathbb{R}$。",
           question:
-            "基本周期为何是 π 而非 2π？各个单调开区间为何被渐近线隔开？",
+            "基本周期为何是 $\\pi$ 而非 $2\\pi$？各个单调开区间为何被渐近线隔开？",
         };
       case "gaokaoProblem":
         return {
           variant: "accent" as const,
-          badge: "新高考热点 · ω 范围探究",
-          condition: `f(x) = tan(ωx)，考虑在 [0, ${params.targetIntervalEnd?.toFixed(2)}] 上不含渐近线且单调。`,
-          question: "要保证区间内无渐近线，ω 的取值范围应满足怎样的不等式？",
+          badge: "新高考热点 · $\\omega$ 范围探究",
+          condition: `函数 $f(x) = \\tan(\\omega x)$，考虑在 $[0, ${params.targetIntervalEnd?.toFixed(2)}]$ 上不含渐近线且单调。`,
+          question:
+            "要保证区间内无渐近线，$\\omega$ 的取值范围应满足怎样的不等式？",
         };
       default:
         return {
           variant: "warning" as const,
-          badge: "一般型 · y = A tan(ωx + φ) + C",
-          condition: `A = ${params.A ?? 1}，ω = ${omega}，φ = ${params.phi ?? 0}，C = ${params.C ?? 0}。`,
+          badge: "一般型 · $y = A \\tan(\\omega x + \\varphi) + C$",
+          condition: `$A = ${params.A ?? 1}$，$\\omega = ${omega}$，$\\varphi = ${params.phi ?? 0}$，$C = ${params.C ?? 0}$。`,
           question:
-            "A、ω、φ、C 各自如何影响振幅倾向、周期平移与上下平移？渐近线如何随参数移动？",
+            "$A$、$\\omega$、$\\varphi$、$C$ 各自如何影响振幅倾向、周期平移与上下平移？渐近线如何随参数移动？",
         };
     }
   }, [studyMode, params]);

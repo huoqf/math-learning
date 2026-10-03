@@ -39,6 +39,7 @@ export function buildVectorBasisPanel(
     modE2,
     modTarget,
     angleDeg,
+    isAngleDefined,
     orthoE1,
     orthoE2,
     orthoLambda,
@@ -89,7 +90,10 @@ export function buildVectorBasisPanel(
       {
         label: "基底夹角",
         symbol: "\\angle(\\vec{e}_1, \\vec{e}_2)",
-        value: `${angleDeg.toFixed(1)}°`,
+        value: isAngleDefined
+          ? `${angleDeg.toFixed(1)}°`
+          : "无定义 (存在零向量)",
+        color: isAngleDefined ? undefined : MATH_COLORS.degeneracy,
       },
       {
         label: "分解系数 λ (e1 权重)",

@@ -224,14 +224,18 @@ export function buildComplexPanel(
             "\\frac{z_1}{z_2} = \\left(\\frac{r_1}{r_2}\\right) [\\cos(\\theta_1 - \\theta_2) + i \\sin(\\theta_1 - \\theta_2)]",
           prerequisites: ["$z_2 \\neq 0$"],
           note: "模长相除：$|z_1 / z_2| = r_1 / r_2$；辐角相减：$\\arg(z_1 / z_2) = \\theta_1 - \\theta_2$。",
-          level: "important",
+          level: "supplementary",
+          isExtension: true,
+          extensionBadge: "拓展 · 选学",
         },
         {
           name: "常见旋转算子特例",
           latex:
             "z \\cdot i \\text{ (逆时针 } 90^\\circ \\text{)}, \\quad z \\cdot (-1) \\text{ (逆时针 } 180^\\circ \\text{)}",
           note: "乘以 $i$ 逆时针旋转 $90^\\circ$；乘以 $-i$ 顺时针旋转 $90^\\circ$；乘以 $-1$ 中心对称旋转 $180^\\circ$。",
-          level: "important",
+          level: "supplementary",
+          isExtension: true,
+          extensionBadge: "拓展 · 选学",
         },
       ],
       gaokaoPoints: [

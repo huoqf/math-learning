@@ -14,7 +14,11 @@ import {
   INTERACTIVE_POINT_GEOMETRY,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
-import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
+import {
+  paramDragRange,
+  paramDomainRange,
+  snapDragValue,
+} from "@/utils/paramClamp";
 import {
   calculateWarningCapsuleWidth,
   calculateWarningCapsuleHeight,
@@ -41,6 +45,8 @@ export const TAN_CAPSULE_SPEC = {
   baseFontPx: 10,
   minWidth: 110,
 } as const;
+
+const RANGE_ALPHA_DEG = paramDomainRange(paramMeta.alphaDeg);
 
 interface TrigIdentitySceneProps {
   params: Record<string, number>;
@@ -197,10 +203,10 @@ export const TrigIdentityScene: React.FC<TrigIdentitySceneProps> = ({
   const compP1Design = mathToDesign(compP1.x, compP1.y, scale);
   const compP2Design = mathToDesign(compP2.x, compP2.y, scale);
 
-  // P 点拖拽求角度
+  // P 点拖拽求角度（经声明域钳制）
   const handlePDrag = (rawMath: { x: number; y: number }) => {
     const newDeg = pointToAngleDeg(rawMath.x, rawMath.y, alphaDeg);
-    onParamChange("alphaDeg", newDeg);
+    onParamChange("alphaDeg", snapDragValue(newDeg, 1, RANGE_ALPHA_DEG));
   };
 
   // Q(B, A) 点拖拽解算分子 A 和 B

@@ -258,7 +258,7 @@ export function buildTrigIdentityPanel(
         {
           step: 3,
           title: "符号取舍 · 差值开方定符号",
-          detail: `由 $(\\sin\\alpha - \\cos\\alpha)^2 = 1 - 2P = 2 - S^2$，当前角 $\\alpha = ${alphaDeg}^\\circ$ 处于第 ${trig.quadrant} 象限，${trig.diffSignReason}。`,
+          detail: `由 $(\\sin\\alpha - \\cos\\alpha)^2 = 1 - 2P = 2 - S^2$，当前角 $\\alpha = ${alphaDeg}^\\circ$ ${trig.quadrant === 0 ? "终边落在坐标轴上（非象限角）" : `处于第 ${trig.quadrant} 象限`}，${trig.diffSignReason}。`,
           latex: `D = \\sin\\alpha - \\cos\\alpha = ${trig.diffSC >= 0 ? "" : "-"}\\sqrt{2 - S^2} = ${trig.diffSC.toFixed(3)}`,
           rubric: "采分点：结合象限角判定差值正负号（4分）",
         },

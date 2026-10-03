@@ -252,12 +252,14 @@ export function TrigTransformScene({
             strokeWidth={2.5}
           />
 
-          {/* 超出视口友好提示与手柄同源过滤 */}
+          {/* 超出视口友好提示与手柄同源过滤（支持横纵双向过滤） */}
           {(() => {
             const { visiblePoints, outCount } = partitionFivePointsByView(
               trigData.fivePoints,
               scale.xMin,
               scale.xMax,
+              scale.yMin,
+              scale.yMax,
             );
             const pillW = Math.max(260, Math.round(fontScale(11) * 20));
 
@@ -282,7 +284,7 @@ export function TrigTransformScene({
                       textAnchor="middle"
                       className="select-none pointer-events-none"
                     >
-                      {outCount} 个特征点超出视口 · 建议增大 ω 观察
+                      {outCount} 个特征点超出视口 · 建议调整 ω 或 A 观察
                     </text>
                   </g>
                 )}

@@ -423,8 +423,18 @@ export function buildTriangleExtremaPanel(
     });
   } else if (calcState && isAcuteOnly && !calcState.isAcute) {
     warnings.push({
-      text: `当前角 B=${calcState.angles.B.toFixed(0)}° 或角 C=${calcState.angles.C.toFixed(0)}° 超出锐角范围 (90°-A, 90°)，非锐角三角形！`,
+      text: `当前角 $B = ${calcState.angles.B.toFixed(0)}^\\circ$ 或角 $C = ${calcState.angles.C.toFixed(0)}^\\circ$ 超出锐角范围 $(90^\\circ-A, 90^\\circ)$，非锐角三角形！`,
       level: "warning",
+    });
+  }
+
+  if (
+    studyMode === "side-ineq" &&
+    calcState?.doubleSolution?.hasSecondSolution
+  ) {
+    warnings.push({
+      text: `【SSA 双解提示】当前存在第二组合法三角形解（第三边 $c_2 = ${calcState.doubleSolution.c2?.toFixed(2)}$），右屏看板默认展示 $c_1 = ${calcState.doubleSolution.c1.toFixed(2)}$ 对应主解。`,
+      level: "info",
     });
   }
 

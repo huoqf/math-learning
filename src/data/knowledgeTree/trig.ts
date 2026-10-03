@@ -3,6 +3,21 @@ import type { KnowledgeNode } from "../types";
 // ========== 5. 三角函数 ==========
 export const trigNodes: KnowledgeNode[] = [
   {
+    id: "know-radian-measure",
+    title: "弧度制、弧长与扇形面积",
+    labTitle: "弧度制与扇形面积实验室",
+    chapter: "三角函数",
+    module: "三角函数概念",
+    importance: "core",
+    animationIds: ["anim-radian-measure"],
+    prerequisites: ["know-func-properties"],
+    route: "/radian-measure",
+    gaokaoTopic: "vector_triangle",
+    questionCategory: "foundation",
+    examMethod: "度弧互化与弧长扇形面积公式运算",
+    examWeight: 3,
+  },
+  {
     id: "know-trig-lines",
     title: "任意角与单位圆中的三角函数线",
     labTitle: "三角函数线实验室",
@@ -76,6 +91,21 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "渐近线对称中心与单调开区间",
     examWeight: 3,
+  },
+  {
+    id: "know-trig-model",
+    title: "三角函数模型的应用",
+    labTitle: "三角函数模型应用实验室",
+    chapter: "三角函数",
+    module: "三角函数的应用",
+    importance: "gaokao",
+    animationIds: ["anim-trig-model"],
+    prerequisites: ["know-trig-transform"],
+    route: "/trig-model",
+    gaokaoTopic: "vector_triangle",
+    questionCategory: "solution_first",
+    examMethod: "简谐运动与实际周期情境的三角函数建模",
+    examWeight: 4,
   },
   {
     id: "know-triangle-solve",

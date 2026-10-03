@@ -14,7 +14,11 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
 import { TrigFormulasScene } from "./components/TrigFormulasScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/trigFormulas";
+import {
+  defaultParams,
+  paramMeta,
+  buildAngleDegreeMarks,
+} from "@/data/registries/trigFormulas";
 import {
   calculateSumDiff,
   calculateDoubleAngle,
@@ -95,7 +99,7 @@ export function TrigFormulasAnimation() {
     setStudyMode(mode);
   };
 
-  // 按研究模式过滤参数配置
+  // 按研究模式过滤参数配置（降幂模式滑块范围与曲线视口严格协同）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByMode: Record<StudyMode, string[]> = {
       sum_diff: ["alphaDeg", "betaDeg"],
@@ -103,27 +107,42 @@ export function TrigFormulasAnimation() {
       auxiliary: ["coeffA", "coeffB"],
     };
     const activeKeys = keysByMode[studyMode] ?? ["alphaDeg"];
+    const isPowerReduction =
+      studyMode === "double_angle" &&
+      (doubleAngleKey === "sin2_a" || doubleAngleKey === "cos2_a");
 
     return activeKeys
       .filter((key) => key in paramMeta)
       .map((key) => {
         const meta = paramMeta[key];
+        const isAlphaOnCurve = isPowerReduction && key === "alphaDeg";
+        const minVal = isAlphaOnCurve ? -110 : meta.min;
+        const maxVal = isAlphaOnCurve ? 110 : meta.max;
+        const rawVal = params[key] ?? meta.defaultValue ?? 0;
+        const curVal = isAlphaOnCurve
+          ? Math.max(-110, Math.min(110, rawVal))
+          : rawVal;
+
         return {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
-          value: params[key] ?? meta.defaultValue ?? 0,
-          min: meta.min,
-          max: meta.max,
+          value: curVal,
+          min: minVal,
+          max: maxVal,
           step: meta.step ?? 1,
-          description: meta.description,
-          descriptionFormula: meta.descriptionFormula,
+          description: isAlphaOnCurve
+            ? "降幂后周期波形可视区间 [-110°, 110°] 内的角度 α"
+            : meta.description,
+          descriptionFormula: isAlphaOnCurve
+            ? "\\alpha \\in [-110^\\circ, 110^\\circ]"
+            : meta.descriptionFormula,
           importance: meta.importance,
           group: meta.group,
-          marks: meta.marks,
+          marks: isAlphaOnCurve ? buildAngleDegreeMarks() : meta.marks,
         };
       });
-  }, [params, studyMode]);
+  }, [params, studyMode, doubleAngleKey]);
 
   // 顶端悬浮 KaTeX 公式渲染
   const headerFormulaLatex = useMemo(() => {

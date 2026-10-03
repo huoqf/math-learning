@@ -622,24 +622,25 @@ export const VectorPolarizationApolloniusScene: React.FC<
             P
           </text>
 
-          {/* 外分点 E / 阿氏圆越界显式提示（替代静默裁切） */}
-          {studyMode === "apollonius" && isEOutOfView && (
-            <text
-              x={clipNoticeAt.x}
-              y={clipNoticeAt.y}
-              textAnchor="start"
-              fill={MATH_COLORS.degeneracy}
-              fontSize={fontScale(11)}
-              fontWeight="600"
-              paintOrder="stroke"
-              stroke={MATH_COLORS.white}
-              strokeWidth={3}
-              className="select-none pointer-events-none"
-            >
-              外分点 E(x = {apolloniusData.pointE.x.toFixed(1)}) 已超出画布：λ →
-              1 时阿氏圆半径 2cλ/|λ²−1| 发散
-            </text>
-          )}
+          {/* 外分点 E / 阿氏圆越界显式提示（替代静默裁切，覆盖单阿氏圆与综合模式） */}
+          {(studyMode === "apollonius" || studyMode === "combined") &&
+            isEOutOfView && (
+              <text
+                x={clipNoticeAt.x}
+                y={clipNoticeAt.y}
+                textAnchor="start"
+                fill={MATH_COLORS.degeneracy}
+                fontSize={fontScale(11)}
+                fontWeight="600"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+                className="select-none pointer-events-none"
+              >
+                外分点 E(x = {apolloniusData.pointE.x.toFixed(1)}) 已超出画布：λ
+                → 1 时阿氏圆半径 2cλ/|λ²−1| 发散
+              </text>
+            )}
         </g>
       )}
     </g>

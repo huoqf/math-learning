@@ -50,6 +50,8 @@ export interface VectorBasisResult {
   // 基底夹角 (rad, deg)
   angleRad: number;
   angleDeg: number;
+  /** 夹角是否有效定义（存在零向量时夹角无定义） */
+  isAngleDefined: boolean;
 
   // 正交模式相关
   orthoE1: Point2D;
@@ -103,9 +105,10 @@ export function computeVectorBasis(input: VectorBasisInput): VectorBasisResult {
   const modE2 = vectorMagnitude(e2);
   const modTarget = vectorMagnitude(target);
 
-  // 基底夹角
+  // 基底夹角（存在零向量时夹角无定义）
   const dotE1E2 = dotProduct2D(e1, e2);
-  const cosAngle = modE1 > 1e-6 && modE2 > 1e-6 ? dotE1E2 / (modE1 * modE2) : 1;
+  const isAngleDefined = modE1 > 1e-4 && modE2 > 1e-4;
+  const cosAngle = isAngleDefined ? dotE1E2 / (modE1 * modE2) : 1;
   const clampedCos = Math.max(-1, Math.min(1, cosAngle));
   const angleRad = Math.acos(clampedCos);
   const angleDeg = (angleRad * 180) / Math.PI;
@@ -189,6 +192,7 @@ export function computeVectorBasis(input: VectorBasisInput): VectorBasisResult {
     modTarget: Math.round(modTarget * 100) / 100,
     angleRad,
     angleDeg: Math.round(angleDeg * 10) / 10,
+    isAngleDefined,
     orthoE1,
     orthoE2,
     orthoLambda,

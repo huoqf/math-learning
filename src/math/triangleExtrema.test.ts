@@ -62,6 +62,30 @@ describe("triangleExtrema - 解三角形极值与范围计算", () => {
     expect(res.sides.c / res.sides.b).toBeCloseTo(2.0, 4);
   });
 
+  it("阿波罗尼斯圆模式：周长与边积的上确界在退化端点取得（最高点只是内部点）", () => {
+    // a = 6, k = 2 ⇒ 阿氏圆 O_A(5, 0)、R_A = 4；B(-3, 0)、C(3, 0)。
+    // 圆上 A 的横坐标 X 属于 [1, 9]，P(X) = 6 + |X + 3| + |X - 3| 为凸函数，端点取最大：
+    //   X = 9 ⇒ 6 + 12 + 6 = 24（θ -> 0 三点共线极限，不可达）
+    //   X = 1 ⇒ 6 + 4 + 2 = 12
+    const res = solveApollonius(6, 2, 90);
+    expect(res.isValid).toBe(true);
+    expect(res.extrema.maxPerimeter).toBeCloseTo(24, 6);
+    expect(res.extrema.maxSideSum).toBeCloseTo(18, 6);
+
+    // b·c = k·b²，b = |AC| 在圆上最大 = |x0 - a/2| + R_A = |5 - 3| + 4 = 6 ⇒ b·c = 2 × 36 = 72
+    expect(res.extrema.maxSideProduct).toBeCloseTo(72, 6);
+
+    // 最高点 (θ = 90°) 只是内部点：当前周长严格小于上确界
+    const perimeterAtTop = 6 + Math.hypot(8, 4) + Math.hypot(2, 4);
+    expect(res.extrema.perimeter).toBeCloseTo(perimeterAtTop, 6);
+    expect(res.extrema.perimeter).toBeLessThan(res.extrema.maxPerimeter);
+
+    // 上确界与 θ 无关（旧实现 (maxArea·2)/sinA 会随滑块漂移）
+    const resAt30 = solveApollonius(6, 2, 30);
+    expect(resAt30.extrema.maxPerimeter).toBeCloseTo(24, 6);
+    expect(resAt30.extrema.maxSideProduct).toBeCloseTo(72, 6);
+  });
+
   it("极化恒等式模式：固定 a=6, 中线 ma=4, 验证 AB·AC 的恒定极值", () => {
     // 向量极化恒等式：AB·AC = |AM|^2 - |MB|^2 = ma^2 - (a/2)^2 = 16 - 9 = 7
     const res = solvePolarization(6, 4, 60);

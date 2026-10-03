@@ -184,10 +184,58 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
 
     // 3. 三角与向量
     { animId: "anim-trig-lines", params: { alphaDeg: 45 } },
+    {
+      animId: "anim-radian-measure",
+      params: { alphaRad: Math.PI / 3, radius: 1.5 },
+      config: { studyMode: "definition" },
+    },
+    {
+      animId: "anim-radian-measure",
+      params: { alphaRad: Math.PI / 3, radius: 1.5 },
+      config: { studyMode: "conversion" },
+    },
+    {
+      // α = 0 退化态：扇形退化为一条半径，面板必须给「弧长与面积为 0」的预警而非 NaN
+      animId: "anim-radian-measure",
+      params: { alphaRad: 0, radius: 1.5 },
+      config: { studyMode: "arcSector" },
+    },
+    {
+      animId: "anim-radian-measure",
+      params: { alphaRad: 2 * Math.PI, radius: 3 },
+      config: { studyMode: "arcSector" },
+    },
     { animId: "anim-trig-identity", params: { alphaDeg: 30 } },
     { animId: "anim-trig-tangent", params: { omega: 1, phi: 0 } },
     { animId: "anim-trig-formulas", params: { alphaDeg: 30, betaDeg: 45 } },
     { animId: "anim-trig-transform", params: { A: 2, omega: 2, phi: 0, k: 1 } },
+    {
+      animId: "anim-trig-model",
+      params: { A: 2, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.75 },
+      config: { studyMode: "harmonic" },
+    },
+    {
+      animId: "anim-trig-model",
+      params: { A: 2, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.75 },
+      config: { studyMode: "fromGraph" },
+    },
+    {
+      animId: "anim-trig-model",
+      params: { A: 2, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.5 },
+      config: { studyMode: "modeling", scenarioKey: "spring" },
+    },
+    {
+      // φ = 0 且 k = 0 的退化态：解析式简化为 h = A sin(ωt)，看板必须给纯正弦读数而非残留符号
+      animId: "anim-trig-model",
+      params: { A: 3, period: 13, phi: 0, k: 0, tRatio: 1 },
+      config: { studyMode: "harmonic" },
+    },
+    {
+      // 声明域四个端点同时取到的极值包络：A 最小、k 最小、T 最大、观测点落在 t = T
+      animId: "anim-trig-model",
+      params: { A: 0.5, period: 13, phi: -Math.PI, k: -1, tRatio: 1 },
+      config: { studyMode: "fromGraph" },
+    },
     { animId: "anim-triangle-solve", params: { a: 3, b: 4, c: 5 } },
     {
       animId: "anim-triangle-extrema",

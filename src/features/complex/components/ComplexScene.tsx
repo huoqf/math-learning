@@ -472,18 +472,34 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             labelSize={12}
           />
 
-          {/* 乘积向量 z1 * z2 (靠外端标注) */}
-          <VectorArrow
-            from={[0, 0]}
-            to={[zProd.re, zProd.im]}
-            scale={scale}
-            fontScale={fontScale}
-            color={MATH_COLORS.paramTertiary}
-            strokeWidth={3}
-            label="z₁z₂"
-            labelPositionRatio={0.85}
-            labelSize={12}
-          />
+          {/* 乘积向量 z1 * z2 (靠外端标注，带越界守卫) */}
+          {inView(zProd.re, zProd.im, 0.2) ? (
+            <VectorArrow
+              from={[0, 0]}
+              to={[zProd.re, zProd.im]}
+              scale={scale}
+              fontScale={fontScale}
+              color={MATH_COLORS.paramTertiary}
+              strokeWidth={3}
+              label="z₁z₂"
+              labelPositionRatio={0.85}
+              labelSize={12}
+            />
+          ) : (
+            <text
+              x={hintX}
+              y={hintY}
+              textAnchor="end"
+              fill={MATH_COLORS.paramTertiary}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              paintOrder="stroke"
+              stroke={MATH_COLORS.white}
+              strokeWidth={3}
+            >
+              z₁z₂ 模长过大 (|z₁z₂| = {(r1 * r2).toFixed(2)})，超出视口
+            </text>
+          )}
 
           {/* 可拖拽交互点 Z1 (改变 r1, deg1) */}
           {/* 可拖拽交互点 Z1（极坐标模式：拖拽反解模长 r1 与辐角 deg1） */}
@@ -558,31 +574,63 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
             strokeWidth={3}
           />
 
-          {/* 最远点标注 */}
-          <MathPoint
-            cx={locusRes.maxPoint.re}
-            cy={locusRes.maxPoint.im}
-            scale={scale}
-            fontScale={fontScale}
-            color={MATH_COLORS.paramPrimary}
-            variant="solid"
-            r={4}
-            label="Z_max"
-            labelPosition="top"
-          />
+          {/* 最远点标注（视口守卫：越界时改为画布内提示，杜绝「点与标签无声消失」） */}
+          {inView(locusRes.maxPoint.re, locusRes.maxPoint.im, 0.1) ? (
+            <MathPoint
+              cx={locusRes.maxPoint.re}
+              cy={locusRes.maxPoint.im}
+              scale={scale}
+              fontScale={fontScale}
+              color={MATH_COLORS.paramPrimary}
+              variant="solid"
+              r={4}
+              label="Z_max"
+              labelPosition="top"
+            />
+          ) : (
+            <text
+              x={hintX}
+              y={hintY}
+              textAnchor="end"
+              fill={MATH_COLORS.paramPrimary}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              paintOrder="stroke"
+              stroke={MATH_COLORS.white}
+              strokeWidth={3}
+            >
+              Z_max 超出视口 (|z - w| = {locusRes.maxDist.toFixed(2)})
+            </text>
+          )}
 
-          {/* 最近点标注 */}
-          <MathPoint
-            cx={locusRes.minPoint.re}
-            cy={locusRes.minPoint.im}
-            scale={scale}
-            fontScale={fontScale}
-            color={MATH_COLORS.paramTertiary}
-            variant="solid"
-            r={4}
-            label="Z_min"
-            labelPosition="bottom"
-          />
+          {/* 最近点标注（视口守卫：越界时改为画布内提示） */}
+          {inView(locusRes.minPoint.re, locusRes.minPoint.im, 0.1) ? (
+            <MathPoint
+              cx={locusRes.minPoint.re}
+              cy={locusRes.minPoint.im}
+              scale={scale}
+              fontScale={fontScale}
+              color={MATH_COLORS.paramTertiary}
+              variant="solid"
+              r={4}
+              label="Z_min"
+              labelPosition="bottom"
+            />
+          ) : (
+            <text
+              x={hintX}
+              y={hintY + fontScale(17)}
+              textAnchor="end"
+              fill={MATH_COLORS.paramTertiary}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              paintOrder="stroke"
+              stroke={MATH_COLORS.white}
+              strokeWidth={3}
+            >
+              Z_min 超出视口 (|z - w| = {locusRes.minDist.toFixed(2)})
+            </text>
+          )}
 
           {/* 圆心 z0 可拖拽 */}
           <InteractivePoint
@@ -1182,7 +1230,9 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
                   stroke={MATH_COLORS.white}
                   strokeWidth={3}
                 >
-                  {`× i（${powerSteps} 次）`}
+                  {powerDir < 0
+                    ? `÷ i（${powerSteps} 次）`
+                    : `× i（${powerSteps} 次）`}
                 </text>
               )}
 

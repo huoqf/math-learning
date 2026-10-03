@@ -542,17 +542,24 @@ export interface FivePointsPartition {
 }
 
 /**
- * 五点作图视口划分纯函数（一次遍历同时计算可见集合与超界点计数，100% 同源）
+ * 五点作图视口划分纯函数（支持横向与纵向双轴检测，100% 同源）
  */
 export function partitionFivePointsByView(
   points: FivePointInfo[],
   xMin: number,
   xMax: number,
+  yMin?: number,
+  yMax?: number,
 ): FivePointsPartition {
   const visiblePoints: FivePointInfo[] = [];
   let outCount = 0;
   for (const pt of points) {
-    if (isPointInHorizontalView(pt.x, xMin, xMax)) {
+    const inX = isPointInHorizontalView(pt.x, xMin, xMax);
+    const inY =
+      yMin !== undefined && yMax !== undefined
+        ? pt.y >= yMin && pt.y <= yMax
+        : true;
+    if (inX && inY) {
       visiblePoints.push(pt);
     } else {
       outCount++;

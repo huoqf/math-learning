@@ -108,9 +108,39 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
       config: { studyMode: "lines" },
     },
     {
+      animId: "anim-radian-measure",
+      params: { alphaRad: Math.PI / 3, radius: 1.5 },
+      config: { studyMode: "definition" },
+    },
+    {
+      animId: "anim-radian-measure",
+      params: { alphaRad: Math.PI / 3, radius: 1.5 },
+      config: { studyMode: "conversion" },
+    },
+    {
+      animId: "anim-radian-measure",
+      params: { alphaRad: Math.PI / 3, radius: 1.5 },
+      config: { studyMode: "arcSector" },
+    },
+    {
       animId: "anim-trig-transform",
       params: { A: 2, omega: 2, phi: 0, k: 1 },
       config: { studyMode: "transformPath" },
+    },
+    {
+      animId: "anim-trig-model",
+      params: { A: 2, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.75 },
+      config: { studyMode: "harmonic" },
+    },
+    {
+      animId: "anim-trig-model",
+      params: { A: 2, period: 2, phi: Math.PI / 2, k: 0, tRatio: 0.75 },
+      config: { studyMode: "fromGraph" },
+    },
+    {
+      animId: "anim-trig-model",
+      params: { A: 1.5, period: 12, phi: -Math.PI / 2, k: 2.5, tRatio: 0.25 },
+      config: { studyMode: "modeling", scenarioKey: "ferris" },
     },
     {
       animId: "anim-func-zero",

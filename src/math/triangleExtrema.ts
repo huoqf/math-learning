@@ -81,6 +81,12 @@ export interface TriangleExtremaState {
     medianLength: number;
     constantDotProduct: number;
   };
+  // SSA 边边角双解情况标识
+  doubleSolution?: {
+    hasSecondSolution: boolean;
+    c1: number;
+    c2?: number;
+  };
 }
 
 /**
@@ -299,11 +305,13 @@ export function solveSideIneq(
   const c1 = (2 * sideB * cosA + Math.sqrt(delta)) / 2;
   const c2 = (2 * sideB * cosA - Math.sqrt(delta)) / 2;
 
-  // 优先取正解
+  // 优先取大正解为主展示
   let sideC = c1 > 0 ? c1 : c2;
   if (sideC <= 0) {
     return createInvalidState("无法生成有效的第三边 c");
   }
+
+  const hasSecondSolution = c1 > 1e-4 && c2 > 1e-4 && Math.abs(c1 - c2) > 1e-4;
 
   // 计算角 B
   const cosB =
@@ -311,7 +319,20 @@ export function solveSideIneq(
   const clampedCosB = Math.max(-1, Math.min(1, cosB));
   const angleBDeg = radToDeg(Math.acos(clampedCosB));
 
-  return solveAngleTransform(angleADeg, sideA, angleBDeg, isAcuteOnly);
+  const baseResult = solveAngleTransform(
+    angleADeg,
+    sideA,
+    angleBDeg,
+    isAcuteOnly,
+  );
+  return {
+    ...baseResult,
+    doubleSolution: {
+      hasSecondSolution,
+      c1: Math.max(c1, c2),
+      c2: hasSecondSolution ? Math.min(c1, c2) : undefined,
+    },
+  };
 }
 
 /**
@@ -345,7 +366,7 @@ export function solveApollonius(
   const C: Point2D = { x: a / 2, y: 0 };
   const A: Point2D = { x: Ax, y: Math.abs(Ay) }; // 取上方半圆
 
-  // 计算三边长
+  // 计算三边长（b 为 A 到 C 的距离，纵坐标须取 C.y：底边水平时与 B.y 同值，但语义必须自洽）
   const sideC = Math.hypot(A.x - B.x, A.y - B.y);
   const sideB = Math.hypot(A.x - C.x, A.y - C.y);
 
@@ -368,8 +389,15 @@ export function solveApollonius(
 
   // 最值
   const maxArea = 0.5 * a * R_A;
-  const maxPerimeter =
-    a + (Math.abs(x0 - B.x) + R_A) + (Math.abs(x0 - C.x) + R_A);
+
+  // 周长最大点**不在**圆最高点：A 沿阿氏圆运动时 (|AB| + |AC|) 随 A 远离 B、C 单调增大，
+  // 而阿氏圆圆心 O_A(x0, 0) 一般不在底边中点（k != 1 时 x0 != 0），最高点 (x0, R_A) 只是内部点。
+  // 记 A 的横坐标为 X（圆上 X 属于 [x0 - R_A, x0 + R_A]），则
+  //   P(X) = a + |X + a/2| + |X - a/2|
+  // 关于 X 为凸函数，最大值在区间端点取得；端点对应 θ -> 0 / π 的三点共线退化，
+  // 故此处给出的是**周长上确界**（不可达，性质与 minPerimeter 的开区间极限相同），而非可达最大值。
+  const perimAtX = (X: number) => a + Math.abs(X + a / 2) + Math.abs(X - a / 2);
+  const maxPerimeter = Math.max(perimAtX(x0 + R_A), perimAtX(x0 - R_A));
 
   const vecAB = { x: B.x - A.x, y: B.y - A.y };
   const vecAC = { x: C.x - A.x, y: C.y - A.y };
@@ -403,7 +431,11 @@ export function solveApollonius(
       sideSum: sideB + sideC,
       maxSideSum: maxPerimeter - a,
       sideProduct: sideB * sideC,
-      maxSideProduct: (maxArea * 2) / Math.sin(radA),
+      // 由定比性质 sideC = k·sideB，得 b·c = k·b²；b = |AC| 在圆上最大时取上确界：
+      //   b_max = |x0 - a/2| + R_A（圆心到 C 的距离 + 半径），同样在 θ -> 0 / π 的退化端点取得。
+      // 旧实现 (maxArea·2)/sinA 把「θ 上的面积最大值」除以「当前 θ 的 sin A」，两个量不同源，
+      // 数值会随滑块漂移且并非任何极值。
+      maxSideProduct: k * (Math.abs(x0 - a / 2) + R_A) ** 2,
       dotProduct,
       projectionSum:
         sideB * Math.cos(degToRad(angleCDeg)) +

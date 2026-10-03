@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 import "@/test/mocks";
@@ -97,9 +97,11 @@ import { ProbabilityNormalAnimation } from "@/features/probabilityNormal/Probabi
 import { SecondDerivativeAnimation } from "@/features/second-derivative/SecondDerivativeAnimation";
 import { StatPercentileAnimation } from "@/features/statPercentile/StatPercentileAnimation";
 import { TrigFormulasAnimation } from "@/features/trigFormulas/TrigFormulasAnimation";
+import { RadianMeasureAnimation } from "@/features/radianMeasure/RadianMeasureAnimation";
 import { TrigLinesAnimation } from "@/features/trigLines/TrigLinesAnimation";
 import { TrigTangentAnimation } from "@/features/trigTangent/TrigTangentAnimation";
 import { TrigTransformAnimation } from "@/features/trigTransform/TrigTransformAnimation";
+import { TrigModelAnimation } from "@/features/trigModel/TrigModelAnimation";
 import { VectorBasisAnimation } from "@/features/vectorBasis/VectorBasisAnimation";
 import { VectorDotProductAnimation } from "@/features/vectorDotProduct/VectorDotProductAnimation";
 import { VectorPolarizationApolloniusAnimation } from "@/features/vectorPolarizationApollonius/VectorPolarizationApolloniusAnimation";
@@ -129,6 +131,37 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
     render(<TriangleExtremaAnimation />);
     expect(screen.getByText("最值研究模型")).toBeInTheDocument();
     expect(screen.getByText("正弦边化角")).toBeInTheDocument();
+  });
+
+  it("RadianMeasureAnimation mounts properly and renders study mode", () => {
+    render(<RadianMeasureAnimation />);
+    expect(screen.getByText("研究模式")).toBeInTheDocument();
+    expect(screen.getByText("弧度定义与比值不变性看板")).toBeInTheDocument();
+  });
+
+  it("TrigModelAnimation mounts properly and renders study mode", () => {
+    render(<TrigModelAnimation />);
+    expect(screen.getByText("研究模式")).toBeInTheDocument();
+    expect(screen.getByText("简谐运动四量看板")).toBeInTheDocument();
+  });
+
+  it("TrigModelAnimation：切入「实际情境应用」时参数必须同步到已选情境", () => {
+    // 左屏一进建模模式就已勾选「弹簧振子」（设问时刻 t = 1、周期 T = 2 ⇒ 观测比例 0.5）。
+    // 参数必须一并切到该情境，否则三屏互相打架：
+    // 徽章写「设问于 t = 1」，观测点却还停在上一个模式遗留的 t = 1.5 上。
+    render(<TrigModelAnimation />);
+    expect(screen.getByRole("spinbutton", { name: /观测时刻/ })).toHaveValue(
+      0.75,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: /实际情境应用/ }));
+
+    expect(
+      screen.getByText("弹簧振子 · 竖直位移（设问于 t = 1）"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /观测时刻/ })).toHaveValue(
+      0.5,
+    );
   });
 
   it("InequalityAbsoluteAnimation mounts properly and renders", () => {

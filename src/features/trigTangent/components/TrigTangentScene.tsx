@@ -17,6 +17,7 @@ import {
   pickAdjacentAsymptotePair,
   calculateUnitCircleTangent,
   checkIntervalAsymptoteFree,
+  computeTangentVisibleXLimit,
 } from "../math/trigTangent";
 
 interface TrigTangentSceneProps {
@@ -83,14 +84,10 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
       ? 0.0
       : C;
 
-  /**
-   * 基础正切曲线模式动点的横向可达范围（由视口反解，不再写死常数）：
-   * y = tan x 落在可见分支上需 |tan x| ≤ yMax ⇒ |x| ≤ arctan(yMax)，再留 2% 余量。
-   * 旧实现写死 π/2 − 0.08 = 1.49 ⇒ 纵坐标可达 tan(1.49) ≈ 12.3，是可见高度（±4.64）的 2.6 倍，
-   * 动点一拖就飞出画布且再也抓不回来。
-   */
+  // 基础正切曲线模式动点的横向可达范围：与滑块共用同一真源（见 math/trigTangent.ts），
+  // 保证「滑块能拖到哪」与「手柄能走到哪」严格同口径。派生依据与反例见该函数文档。
   const tangentVisibleXLimit = useMemo(
-    () => Math.atan(Math.max(1, scale.yMax) * 0.98),
+    () => computeTangentVisibleXLimit(scale.yMax),
     [scale.yMax],
   );
 
@@ -681,21 +678,22 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
               />
             )}
 
-          {/* 从 x 轴 x = theta 【严格竖直】投影到 Q */}
-          {(() => {
-            const thetaAxisPt = mathToDesign(theta, 0, scale);
-            return (
-              <line
-                x1={thetaAxisPt.x}
-                y1={thetaAxisPt.y}
-                x2={qDesign.x}
-                y2={qDesign.y}
-                stroke={MATH_COLORS.paramPrimary}
-                strokeWidth={1.2}
-                strokeDasharray="4 3"
-              />
-            );
-          })()}
+          {/* 从 x 轴 x = theta 【严格竖直】投影到 Q (与 Q 共用非渐近线守卫) */}
+          {Math.abs(Math.cos(theta)) > 0.05 &&
+            (() => {
+              const thetaAxisPt = mathToDesign(theta, 0, scale);
+              return (
+                <line
+                  x1={thetaAxisPt.x}
+                  y1={thetaAxisPt.y}
+                  x2={qDesign.x}
+                  y2={qDesign.y}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={1.2}
+                  strokeDasharray="4 3"
+                />
+              );
+            })()}
 
           {/* 曲线上的对应动点 Q(θ, tan θ) */}
           {Math.abs(Math.cos(theta)) > 0.05 && (
@@ -784,26 +782,63 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
         />
       )}
 
-      {/* 模式 3 特征点拖拽 */}
-      {mode === "generalTransform" && (
-        <InteractivePoint
-          cx={(Math.PI / 4 - effectivePhi) / (effectiveOmega || 1)}
-          cy={effectiveA * Math.tan(Math.PI / 4) + effectiveC}
-          scale={scale}
-          vp={vp}
-          color={MATH_COLORS.paramPrimary}
-          label="特征点 A"
-          fontScale={fontScale}
-          onDrag={(newPt) => {
-            const newA = (newPt.y - effectiveC) / Math.tan(Math.PI / 4);
-            // 振幅必须在声明域 [−3, 3] 内：旧实现完全不设上限，
-            // 把特征点往上拖即可写出 A = 8，而滑块最大只到 3。
-            if (Number.isFinite(newA)) {
-              onParamChange("A", snapDragValue(newA, 0.1, RANGE_A));
-            }
-          }}
-        />
-      )}
+      {/* 模式 3 特征点拖拽（带视口越界守卫与友好提示） */}
+      {mode === "generalTransform" &&
+        (() => {
+          const featPtX = (Math.PI / 4 - effectivePhi) / (effectiveOmega || 1);
+          const featPtY = effectiveA * Math.tan(Math.PI / 4) + effectiveC;
+          const isFeatPtInView =
+            featPtX >= scale.xMin &&
+            featPtX <= scale.xMax &&
+            featPtY >= scale.yMin &&
+            featPtY <= scale.yMax;
+
+          if (!isFeatPtInView) {
+            const pillW = Math.max(260, Math.round(fontScale(11) * 20));
+            return (
+              <g transform="translate(24, 28)">
+                <rect
+                  x={0}
+                  y={0}
+                  width={pillW}
+                  height={fontScale(24)}
+                  rx={4}
+                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.9)}
+                />
+                <text
+                  x={pillW / 2}
+                  y={fontScale(16)}
+                  fill={MATH_COLORS.white}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  className="select-none pointer-events-none"
+                >
+                  特征点 A 超出视口 · 建议调整 ω 或 A 观察
+                </text>
+              </g>
+            );
+          }
+
+          return (
+            <InteractivePoint
+              cx={featPtX}
+              cy={featPtY}
+              scale={scale}
+              vp={vp}
+              color={MATH_COLORS.paramPrimary}
+              label="特征点 A"
+              fontScale={fontScale}
+              onDrag={(newPt) => {
+                const newA = (newPt.y - effectiveC) / Math.tan(Math.PI / 4);
+                // 振幅必须在声明域 [−3, 3] 内：经 RANGE_A 钳制
+                if (Number.isFinite(newA)) {
+                  onParamChange("A", snapDragValue(newA, 0.1, RANGE_A));
+                }
+              }}
+            />
+          );
+        })()}
 
       {/* 高考模式：区间右端点拖拽点 */}
       {mode === "gaokaoProblem" && (

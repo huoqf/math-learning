@@ -268,7 +268,7 @@ export function buildTrigLinesPanel(
         importance: "hard",
       },
       {
-        text: "考点2：利用 S_△ < S_扇 < S_△ 构造不等式解决三角估值综合题",
+        text: "考点2：利用 $S_{\\triangle OMP} < S_{\\text{扇形 } OAP} < S_{\\text{Rt}\\triangle OAT}$ 构造面积放缩不等式，解决新高考三角函数估值与大小比较综合题。",
         importance: "gaokao",
       },
     ];

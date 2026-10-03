@@ -5,6 +5,8 @@ import { MATH_COLORS, withAlpha } from "@/theme";
 import {
   solveTriangleFromSAS,
   solveBisectorAndMedian,
+  solveAngleAFromVertexPosition,
+  solveTriangleFromSSS,
 } from "@/math/triangleSolve";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
@@ -21,7 +23,7 @@ interface TriangleSolveSceneProps {
   vp: ViewportInfo;
   onParamChange?: (key: string, value: number) => void;
   fontScale: (v: number) => number;
-  studyMode: "sine" | "ssa" | "cosine" | "area" | "bisector";
+  studyMode: "sine" | "ssa" | "cosine" | "area" | "bisector" | "sss";
 }
 
 /**
@@ -102,9 +104,11 @@ export function TriangleSolveScene({
   const angleA = params.angleA ?? 60;
   const b = params.b ?? 5;
   const c = params.c ?? 6;
+  const a = params.a ?? 4.5;
 
   const sasResult = solveTriangleFromSAS(b, c, angleA);
   const bisectorResult = solveBisectorAndMedian(b, c, angleA);
+  const sssResult = solveTriangleFromSSS(a, b, c);
 
   // ── 模式 1: SSA 探究模式 (完全独立的构图,委托给子场景) ──
   if (studyMode === "ssa") {
@@ -117,10 +121,32 @@ export function TriangleSolveScene({
     );
   }
 
-  // ── 模式 2~5: sine | cosine | area | bisector (共享同一坐标系与主三角形) ──
+  // ── 模式 1.5: SSS 三边模式：三角不等式不成立时无法构图，须在画布内说明而非留白 ──
+  if (studyMode === "sss" && !sssResult.isValid) {
+    return (
+      <g className="triangle-solve-scene">
+        <text
+          x={scale.originX}
+          y={scale.originY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={MATH_COLORS.paramPrimary}
+          fontSize={fontScale(15)}
+          fontWeight="bold"
+        >
+          {`三边 a=${a.toFixed(2)}, b=${b.toFixed(2)}, c=${c.toFixed(2)} 不满足三角不等式，无法构成三角形`}
+        </text>
+      </g>
+    );
+  }
+
+  // ── 模式 2~6: sine | cosine | area | bisector | sss（共享同一坐标系与主三角形）──
+  // SSS 由三边唯一确定三角形，其几何结果经 solveTriangleFromSSS 委托 SAS 产出，可直接复用同一套渲染。
+  const mainResult =
+    studyMode === "sss" && sssResult.full ? sssResult.full : sasResult;
   const {
     points: { A, B, C },
-  } = sasResult;
+  } = mainResult;
 
   const pA = mathToDesign(A.x, A.y, scale);
   const pB = mathToDesign(B.x, B.y, scale);
@@ -299,8 +325,16 @@ export function TriangleSolveScene({
         fontScale={fontScale}
         onDrag={(mathPos) => {
           if (onParamChange) {
-            // 顶点纵向位置 → 内角 A，经声明域钳制与 1° 取整
-            const rawAngle = Math.abs(mathPos.y) * 15 + 30;
+            // 顶点 A 拖拽 = 「光标位置 → A 轨迹最近点 → 内角 A」的映射（真源见 math/triangleSolve.ts）。
+            // 旧实现用「光标相对 B、C 的夹角」反解：A 的**竖直**位置对角度非单调（b=5,c=6 时 ≈32° 取极大）
+            // ⇒ A ≲ 32° 区间接柄逆光标；而 A 的**横坐标**也只是相对单调（b>c 时反向、b=c 时恒为 0 退化）
+            // ⇒ 任何单分量反解都会在某个参数区间失效。最近点投影对任意 (b, c) 都成立、方向连续不逆走。
+            const rawAngle = solveAngleAFromVertexPosition(
+              mathPos.x,
+              mathPos.y,
+              b,
+              c,
+            );
             onParamChange("angleA", snapDragValue(rawAngle, 1, RANGE_ANGLE_A));
           }
         }}

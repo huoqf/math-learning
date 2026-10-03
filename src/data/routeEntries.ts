@@ -64,6 +64,10 @@ import { compositeNode, compositeLoader } from "@/features/composite/meta";
 import { quadraticNode, quadraticLoader } from "@/features/quadratic/meta";
 
 // ── 4. 三角函数与解三角形 ──
+import {
+  radianMeasureNode,
+  radianMeasureLoader,
+} from "@/features/radianMeasure/meta";
 import { trigLinesNode, trigLinesLoader } from "@/features/trigLines/meta";
 import {
   trigIdentityNode,
@@ -81,6 +85,7 @@ import {
   node as trigTransformNode,
   loader as trigTransformLoader,
 } from "@/features/trigTransform/meta";
+import { trigModelNode, trigModelLoader } from "@/features/trigModel/meta";
 import {
   node as triangleSolveNode,
   loader as triangleSolveLoader,
@@ -319,6 +324,10 @@ export const routeEntries: RouteEntry[] = [
   { node: quadraticNode, loader: quadraticLoader },
 
   // 4. 三角函数与解三角形
+  {
+    node: radianMeasureNode,
+    loader: radianMeasureLoader as RouteEntry["loader"],
+  },
   { node: trigLinesNode, loader: trigLinesLoader as RouteEntry["loader"] },
   {
     node: trigIdentityNode,
@@ -332,6 +341,10 @@ export const routeEntries: RouteEntry[] = [
   {
     node: trigTransformNode,
     loader: trigTransformLoader as RouteEntry["loader"],
+  },
+  {
+    node: trigModelNode,
+    loader: trigModelLoader as RouteEntry["loader"],
   },
   {
     node: triangleSolveNode,

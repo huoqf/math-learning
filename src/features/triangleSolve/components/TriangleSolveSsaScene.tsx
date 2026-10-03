@@ -97,20 +97,22 @@ export function TriangleSolveSsaScene({
         b
       </text>
 
-      {/* 角 A 角弧 */}
+      {/* 角 A 角弧与标注（基于屏幕设计坐标向量严格绘制，杜绝镜像） */}
       {(() => {
         const arcR = fontScale(22);
+        const dirRay = { x: pRayEnd.x - pA.x, y: pRayEnd.y - pA.y };
+        const angRay = Math.atan2(dirRay.y, dirRay.x); // 屏幕极角 (位于屏幕上方，< 0)
         const startX = pA.x + arcR;
         const startY = pA.y;
-        const endX = pA.x + arcR * Math.cos(radA);
-        const endY = pA.y + arcR * Math.sin(radA);
-        const midAng = radA / 2;
+        const endX = pA.x + arcR * Math.cos(angRay);
+        const endY = pA.y + arcR * Math.sin(angRay);
+        const midAng = angRay / 2;
         const textR = arcR + fontScale(12);
 
         return (
           <g className="angle-A-arc-ssa">
             <path
-              d={`M ${startX} ${startY} A ${arcR} ${arcR} 0 0 1 ${endX} ${endY}`}
+              d={`M ${startX} ${startY} A ${arcR} ${arcR} 0 0 0 ${endX} ${endY}`}
               fill="none"
               stroke={MATH_COLORS.paramPrimary}
               strokeWidth={1.8}

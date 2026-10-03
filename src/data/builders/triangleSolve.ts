@@ -9,6 +9,7 @@ import {
   solveTriangleFromSAS,
   solveSSA,
   solveBisectorAndMedian,
+  solveTriangleFromSSS,
 } from "@/math/triangleSolve";
 import type { SSACaseKind } from "@/math/triangleSolve";
 import { MATH_COLORS } from "@/theme";
@@ -41,6 +42,7 @@ export function buildTriangleSolvePanel(
 
   const sasResult = solveTriangleFromSAS(b, c, angleA);
   const ssaResult = solveSSA(a, b, angleA);
+  const sssResult = solveTriangleFromSSS(a, b, c);
 
   if (studyMode === "bisector") {
     const bm = solveBisectorAndMedian(b, c, angleA);
@@ -279,7 +281,11 @@ export function buildTriangleSolvePanel(
       solveDetail = `$\\sin B = ${sinBVal.toFixed(3)}$ 同时对应锐角解 $B_1 = ${toDeg1(sol1.angleB)}^\\circ$ 与钝角解 $B_2 = ${toDeg1(sol2.angleB)}^\\circ$，两解内角和均小于 $180^\\circ$，故有两个三角形，必须都写出。`;
       solveLatex = `c_1 = \\frac{a\\sin C_1}{\\sin A} = ${sol1.c.toFixed(2)},\\quad c_2 = \\frac{a\\sin C_2}{\\sin A} = ${sol2.c.toFixed(2)}`;
     } else if (sol1) {
-      solveDetail = `$\\sin B = ${sinBVal.toFixed(3)}$ 解出 $B_1 = ${toDeg1(sol1.angleB)}^\\circ$；其补角会使 $A + B > 180^\\circ$，须舍去。再由内角和得 $C_1 = ${toDeg1(sol1.angleC)}^\\circ$。`;
+      if (ssaResult.caseKind === "acute_right_single") {
+        solveDetail = `$\\sin B = 1$ 在 $(0^\\circ, 180^\\circ)$ 内对应唯一解 $B_1 = 90.0^\\circ$（圆弧与射线相切，为直角三角形）；由内角和得 $C_1 = ${toDeg1(sol1.angleC)}^\\circ$。`;
+      } else {
+        solveDetail = `$\\sin B = ${sinBVal.toFixed(3)}$ 解出 $B_1 = ${toDeg1(sol1.angleB)}^\\circ$；其钝角补角会使 $A + B > 180^\\circ$，须舍去。再由内角和得 $C_1 = ${toDeg1(sol1.angleC)}^\\circ$。`;
+      }
       solveLatex = `c_1 = \\frac{a\\sin C_1}{\\sin A} = ${sol1.c.toFixed(2)}`;
     } else {
       solveDetail = "当前参数下无合法解。";
@@ -325,7 +331,7 @@ export function buildTriangleSolvePanel(
       ],
       gaokaoPoints: [
         {
-          text: "高考必考：SSA 伪全等与双解判断。已知 $a, b, A$，若 $a < b$ 且 $a > b\\sin A$，则存在两个三角形（一个锐角三角形，一个钝角三角形），正弦定理求角时切记不可漏掉钝角解！",
+          text: "高考必考：SSA 伪全等与双解判断。已知两边及其中一边对角 $a, b, A$，当 $A < 90^\\circ$ 时：若 $a < b$ 且 $a > b\\sin A$，则存在两个三角形（一个锐角三角形，一个钝角三角形），正弦定理求角时切记不可漏掉钝角解！若 $A \\ge 90^\\circ$，必须满足 $a > b$ 才有唯一钝角解，否则无解。",
           importance: "gaokao",
         },
       ],
@@ -524,7 +530,7 @@ export function buildTriangleSolvePanel(
 
     const gaokaoPoints: GaokaoPoint[] = [
       {
-        text: "高考边角互化决策树 2：若已知式为二次齐次式（如 $a^2+b^2-c^2 = ab$），必须优先'角化边'，利用 $\\cos C = \\frac{a^2+b^2-c^2}{2ab} = \\frac{1}{2}$ 直接求出 $C = \\frac{\\pi}{3}$。",
+        text: "高考边角互化决策树 2：若已知式为二次齐次式（如 $a^2+b^2-c^2 = ab$），必须优先「边化角」，利用 $\\cos C = \\frac{a^2+b^2-c^2}{2ab} = \\frac{1}{2}$ 直接求出 $C = \\frac{\\pi}{3}$。",
         importance: "gaokao",
       },
       {
@@ -582,6 +588,166 @@ export function buildTriangleSolvePanel(
             : [],
       mnemonic:
         "余弦点积平方差，射影底边两段夹；二次齐次速求角，均值求极顶呱呱！",
+    };
+  }
+
+  // ── SSS 三边模式 (sss)：三边唯一确定三角形，先由余弦定理求角，再求面积与切接圆 ──
+  if (studyMode === "sss") {
+    if (!sssResult.isValid || !sssResult.full) {
+      return {
+        quantities: [],
+        theorems: [
+          {
+            name: "余弦定理（已知三边求角）",
+            latex: "\\cos A = \\frac{b^2 + c^2 - a^2}{2bc}",
+            condition: "已知三边 $a, b, c$，求内角 $A$",
+            note: "三边已知时先由余弦定理求出任意一角，再用内角和或正弦定理求其余两角，最后用 $S = \\frac{1}{2}bc\\sin A$ 求面积。",
+            level: "core",
+          },
+        ],
+        gaokaoPoints: [
+          {
+            text: "判定三角形形状：比较最大边的平方与其他两边平方和 —— 相等为直角三角形、小于为锐角三角形、大于为钝角三角形。",
+            importance: "gaokao",
+          },
+        ],
+        reasoningSteps: [],
+        warnings: [
+          {
+            text: `${sssResult.warning ?? "三边不满足三角不等式"} 请调节左屏边长 $a, b, c$，使任意两边之和大于第三边。`,
+            level: "danger",
+          },
+        ],
+        mnemonic:
+          "三边定形先求角，余弦变形把它挑；最大边平方判形状，两边之和须大过第三条。",
+      };
+    }
+
+    const { sides, anglesDeg, area, circumcircle, incircle, altitudeA } =
+      sssResult.full;
+
+    // 最大边平方与其余两边平方和的关系 → 形状判定（高考高频结论，避免逐个求角）
+    const maxSide = Math.max(sides.a, sides.b, sides.c);
+    const sumSqOthers =
+      sides.a ** 2 + sides.b ** 2 + sides.c ** 2 - maxSide ** 2;
+    const shapeDiff = maxSide ** 2 - sumSqOthers;
+    const shape =
+      Math.abs(shapeDiff) < 0.01
+        ? "直角三角形"
+        : shapeDiff < 0
+          ? "锐角三角形"
+          : "钝角三角形";
+
+    const quantities: MathQuantity[] = [
+      {
+        label: "三边长 a / b / c",
+        symbol: "a, \\; b, \\; c",
+        value: `a = ${sides.a.toFixed(2)}, b = ${sides.b.toFixed(2)}, c = ${sides.c.toFixed(2)}`,
+        color: MATH_COLORS.paramPrimary,
+        highlight: "positive",
+      },
+      {
+        label: "三内角 A / B / C",
+        symbol: "A, \\; B, \\; C",
+        value: `A = ${anglesDeg.A.toFixed(1)}°, B = ${anglesDeg.B.toFixed(1)}°, C = ${anglesDeg.C.toFixed(1)}°`,
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "三角形形状（最大边平方判定）",
+        symbol: "a_{\\max}^2 \\;\\text{vs}\\; b^2 + c^2",
+        value: shape,
+        color: MATH_COLORS.function,
+      },
+      {
+        label: "三角形面积 S",
+        symbol: "S_{\\triangle ABC}",
+        value: area.toFixed(2),
+        color: MATH_COLORS.sequenceHighlight,
+      },
+      {
+        label: "外接圆半径 R (abc / 4S)",
+        symbol: "R = \\frac{abc}{4S}",
+        value: circumcircle.radius.toFixed(2),
+        color: MATH_COLORS.circle,
+      },
+      {
+        label: "内切圆半径 r (S / p)",
+        symbol: "r = \\frac{S}{p}",
+        value: incircle.radius.toFixed(2),
+        color: MATH_COLORS.complexNum,
+      },
+      {
+        label: "顶点 A 高线 ha (2S / a)",
+        symbol: "h_a",
+        value: altitudeA.length.toFixed(2),
+        color: MATH_COLORS.tangentLine,
+      },
+    ];
+
+    const theorems: Theorem[] = [
+      {
+        name: "余弦定理（已知三边求角）",
+        latex:
+          "\\cos A = \\frac{b^2 + c^2 - a^2}{2bc}, \\quad \\cos B = \\frac{a^2 + c^2 - b^2}{2ac}, \\quad \\cos C = \\frac{a^2 + b^2 - c^2}{2ab}",
+        condition: "已知三边 $a, b, c$，求三个内角",
+        note: "SSS 型解三角形的标准入口：三边先求角，再用 $S = \\frac{1}{2}bc\\sin A$ 求面积。",
+        level: "core",
+      },
+      {
+        name: "由最大边判定三角形形状",
+        latex:
+          "a_{\\max}^2 \\begin{cases} = b^2 + c^2 & \\text{直角} \\\\ < b^2 + c^2 & \\text{锐角} \\\\ > b^2 + c^2 & \\text{钝角} \\end{cases}",
+        condition: "$a_{\\max}$ 为三边中的最大边，$b, c$ 为其余两边",
+        note: "高考判断三角形形状的高频结论，可完全避开逐个求角的繁琐计算。",
+        level: "important",
+      },
+    ];
+
+    const gaokaoPoints: GaokaoPoint[] = [
+      {
+        text: "SSS 型（已知三边）唯一确定一个三角形，是解三角形三类基本问题（SSS / SAS / AAS-ASA）之一；三边不满足三角不等式时无解。",
+        importance: "gaokao",
+      },
+      {
+        text: "已知三边求面积优先用 $S = \\frac{1}{2}bc\\sin A$：先由余弦定理求角，再代入两边夹角公式，全程避开海伦公式（不在人教A版课标正文范围）。",
+        importance: "core",
+      },
+    ];
+
+    const reasoningSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 三边入手先求角",
+        detail:
+          "已知三边，唯一未知量是三个内角。由余弦定理的变形式，任意一角都可直接用三边表示，先取角 $A$。",
+        latex: `\\cos A = \\frac{b^2 + c^2 - a^2}{2bc} = \\frac{${sides.b.toFixed(2)}^2 + ${sides.c.toFixed(2)}^2 - ${sides.a.toFixed(2)}^2}{2 \\times ${sides.b.toFixed(2)} \\times ${sides.c.toFixed(2)}}`,
+        rubric: "采分点：写出余弦定理变形并代入三边（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 求出三内角",
+        detail:
+          "由反余弦求出角 $A$，其余两角同样直接使用余弦定理变形式，避免正弦定理可能产生的钝角歧义；最后核验内角和为 $180^\\circ$。",
+        latex: `A = ${anglesDeg.A.toFixed(1)}^\\circ, \\; B = ${anglesDeg.B.toFixed(1)}^\\circ, \\; C = ${anglesDeg.C.toFixed(1)}^\\circ`,
+        rubric: "采分点：求出三个内角并核验内角和（4分）",
+      },
+      {
+        step: 3,
+        title: "代入求解 · 面积与切接圆",
+        detail: `由两边夹角公式求面积 $S = \\frac{1}{2}bc\\sin A = ${area.toFixed(2)}$，再由 $S = rp$、$S = \\frac{abc}{4R}$ 反解内切圆与外接圆半径。`,
+        latex: `S = \\frac{1}{2} \\times ${sides.b.toFixed(2)} \\times ${sides.c.toFixed(2)} \\times \\sin ${anglesDeg.A.toFixed(1)}^\\circ = ${area.toFixed(2)}`,
+        rubric: "采分点：代入求出面积并反解 r、R（3分）",
+      },
+    ];
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      reasoningSteps,
+      warnings: [],
+      mnemonic:
+        "三边定形先求角，余弦变形把它挑；最大边平方判形状，两边之和须大过第三条。",
     };
   }
 

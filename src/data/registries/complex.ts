@@ -15,9 +15,9 @@ export const defaultParams = {
   deg2: 60, // 60°
 
   // 模式 3：轨迹与极值参数
-  z0x: 3.0,
-  z0y: 4.0,
-  radius: 2.0,
+  z0x: 2.0,
+  z0y: 2.0,
+  radius: 1.5,
   wx: 0.0,
   wy: 0.0,
 
@@ -169,7 +169,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "z0y",
     label: "轨迹圆心 Im(z0)",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{y_0}`,
-    defaultValue: 4.0,
+    defaultValue: 2.0,
     min: -4.0,
     max: 4.0,
     step: 0.5,
@@ -180,7 +180,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "radius",
     label: "轨迹圆半径 R",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{R}`,
-    defaultValue: 2.0,
+    defaultValue: 1.5,
     min: 0.5,
     max: 4.0,
     step: 0.5,
