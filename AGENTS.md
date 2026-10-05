@@ -49,9 +49,9 @@
 
 ### 公理 4：画布视口与原子组件复用
 1. **默认 `full` Preset**：高中数学绝大部分页面优先选用 `CANVAS_PRESETS.full` (840×650)；仅单位圆/三角函数/极坐标选用 `square` (650×650)；**能合屏坚决不分屏**。
-2. **字号链路（FontScale Chain）**：
-   `Animation (canvasSize.font) ──→ Scene (fontScale) ──→ CoordinateGrid / InteractivePoint / Labels`
-   SVG 内部严禁硬编码字号或写死 Tailwind `text-[Npx]`。
+2. **字号链路（FontScale Chain）与定位链路（PositionScale Chain）解耦**：
+   - **字号链路**：`Animation (canvasSize.font) ──→ Scene (fontScale) ──→ components / Labels`。`fontScale` 专门且唯一服务于 `fontSize`；SVG 内部严禁硬编码字号或写死 Tailwind `text-[Npx]`。
+   - **定位链路**：中屏几何图元与定位偏移量统一使用 pure design 常量（由 SVG 外层视口 `<g transform="translate(...) scale(vp.scale)">` 等比线性放缩）。共享原子组件与基础设施（`src/components/`）受门禁强拦截阻断，严禁将几何定位偏移传入 `fontScale` 触发非线性截断造成排版畸变。
 3. **全面原子化复用，严禁手写重复轮子**：
    - 2D 点：纯数学点/交点用 `MathPoint`，拖拽控制点用 `InteractivePoint`；
    - 2D 标注：点标一律用 `SceneLabelGroup`；图例一律用 `SceneLegend`（遵循**智能避让原则**：默认 `bottom-right`，当右下角存在直方图高分柱、正态长尾阴影、焦点或轴标签时，必须切换为 `top-right` 避让主体，严禁教条硬编码遮挡）；向量一律用 `VectorArrow`；
@@ -73,6 +73,7 @@ $env:PATH="D:\node-v24;"+$env:PATH; npm run audit -- <path/to/feature>
 |:---|:---|:---|
 | **色彩与硬编码** | 源码中严禁出现 JSX 属性字面量 `fill="#RRGGBB"` / `stroke="#RRGGBB"`，以及 LaTeX 的 `\color{#RRGGBB}{...}`；一律走 `MATH_COLORS.*` / `CANVAS_COLORS.*`。⚠️ 数组元素、变量中转、模板插值里的色值字面量**不在机械拦截范围内**，须人工自律 | `audit:style/no-hardcoded-hex`、`audit:style/no-hardcoded-rgb` |
 | **字体缩放** | SVG 标签内严禁裸 `fontSize={数字}`，必须经 `fontScale` 缩放 | `audit:center/font-scale` |
+| **几何坐标纯净度** | 共享原子组件严禁将 `fontScale` 误用于 `x`/`y`/`cx`/`cy`/`r`/`width`/`height` 等几何坐标或尺寸属性；几何量统一使用纯 design 常量 | `audit:center/no-font-scale-in-coords` |
 | **控件纯净度** | `SelectGrid` 项必须为纯中文标题，严禁堆砌公式或参数值 | `audit:left/select-grid-clean` |
 | **情景联动性** | 凡含 `<SelectGrid value={x}>`，`TipCard` / `useScenario` 依赖必须包含 `x` | `audit:left/tipcard-secondary-sync` |
 | **架构纯洁性** | `src/math/` 禁止包含 React/DOM 引用；全库禁止 `BrowserRouter` | `audit:arch/pure-math-layer`、`audit:arch/no-browser-router` |

@@ -10,6 +10,8 @@ import { styleTokensRules } from "../../.agents/skills/math-page-audit/scripts/r
 // @ts-expect-error -- importing internal mjs audit script
 import { rightPanelRules } from "../../.agents/skills/math-page-audit/scripts/rules/right-panel.mjs";
 // @ts-expect-error -- importing internal mjs audit script
+import { centerCanvasRules } from "../../.agents/skills/math-page-audit/scripts/rules/center-canvas.mjs";
+// @ts-expect-error -- importing internal mjs audit script
 import * as disciplineMeta from "../../.agents/skills/math-page-audit/scripts/rules/discipline.mjs";
 // @ts-expect-error -- importing internal mjs audit script
 import { runAudit } from "../../.agents/skills/math-page-audit/scripts/engine/runner.mjs";
@@ -197,6 +199,49 @@ export function buildTestPanel() {
     const issues = rule.check(ctx);
     expect(issues.length).toBe(1);
     expect(issues[0].message).toContain("推导链严禁跳步直接给孤立数值");
+  });
+
+  it("高价值规则：拦截共享原子组件中将 fontScale 误用于几何坐标或尺寸属性", () => {
+    const badCode = `
+export function MockMathWidget() {
+  return (
+    <text x={10} y={pt.y + fontScale(14)} fontSize={fontScale(10.5)}>
+      label
+    </text>
+  );
+}
+`;
+    const ctx = new FileContext(
+      "src/components/Math/MockMathWidget.tsx",
+      badCode,
+      process.cwd(),
+    );
+    const rule = (centerCanvasRules as AuditRule[]).find(
+      (r: AuditRule) => r.id === "center/no-font-scale-in-coords",
+    )!;
+    const issues = rule.check(ctx);
+    expect(issues.length).toBe(1);
+    expect(issues[0].message).toContain(
+      "共享原子组件严禁将 fontScale 用于几何坐标或尺寸属性",
+    );
+
+    // 合法用例：坐标使用常量，只有 fontSize 走 fontScale
+    const goodCode = `
+export function MockMathWidget() {
+  return (
+    <text x={10} y={pt.y + 14} fontSize={fontScale(10.5)}>
+      label
+    </text>
+  );
+}
+`;
+    const goodCtx = new FileContext(
+      "src/components/Math/MockMathWidget.tsx",
+      goodCode,
+      process.cwd(),
+    );
+    const goodIssues = rule.check(goodCtx);
+    expect(goodIssues.length).toBe(0);
   });
 
   it("CLI 增强：runAudit 支持 rule 定向过滤与耗时统计", () => {

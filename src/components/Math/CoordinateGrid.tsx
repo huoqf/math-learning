@@ -56,6 +56,30 @@ function getSafeStep(min: number, max: number, requestedStep: number): number {
   return Math.max(requestedStep, niceStep);
 }
 
+/**
+ * 坐标系网格与标签布局的 Design 空间纯几何常数（AGENTS.md 公理 4.2：几何位移使用 design 常量，字号使用 fontScale）。
+ *
+ * 【取值依据与历史纠偏说明】：
+ * 1. 杜绝将定位偏移量传给 fontScale 触发 clamp(v*scale, 7, 16) 非线性截断与比例畸变。
+ * 2. yTickLabelY 取 3.5：SVG text 默认以基线对齐，fontSize=10.5 时数字高度约 7.3px，视觉重心距基线上方约 3.6px；
+ *    设为 3.5 使数字垂直中轴精准居中对齐水平刻度线（彻底纠正历史代码误套 fontScale(3.5) 被 clamp(7) 强推下沉 3.5px 的偏心缺陷）。
+ * 3. yTickLabelX 取 7：textAnchor="end"，刻度线半长 3.5px，此值令文本右边缘距刻度左端点保持 3.5px 安全间隙。
+ * 4. originOffset 取 (7, 13)：原点 O 置于第三象限左下角，避开穿过原点的函数图象与渐近线。
+ * 5. xAxisLabelOffset 取 (6, 15)：箭头总长 7px，x 居中对齐设偏移 6px 形成与箭头尖端的舒适呼吸留白。
+ */
+const GRID_METRICS = {
+  tickHalfSize: 3.5, // 刻度线半长 (px)
+  xTickLabelY: 14, // X 轴刻度文字 Y 偏移 (px)
+  yTickLabelX: 7, // Y 轴刻度文字 X 偏移 (px，textAnchor="end"，距离刻度端点留 3.5px 空隙)
+  yTickLabelY: 3.5, // Y 轴刻度文字 Y 居中微调 (px，字号 10.5 时使数字视觉重心对齐水平刻度线)
+  originOffsetX: 7, // 原点 O 标签 X 偏移 (px，textAnchor="end")
+  originOffsetY: 13, // 原点 O 标签 Y 偏移 (px，位于第三象限)
+  xAxisLabelOffsetX: 6, // X 轴端点 'x' 标签 X 偏移 (px，textAnchor="middle")
+  xAxisLabelOffsetY: 15, // X 轴端点 'x' 标签 Y 偏移 (px)
+  yAxisLabelOffsetX: 12, // Y 轴端点 'y' 标签 X 偏移 (px，textAnchor="middle")
+  yAxisLabelOffsetY: 10, // Y 轴端点 'y' 标签 Y 偏移 (px)
+} as const;
+
 export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   scale,
   showGrid = false, // 默认纯净高中数学坐标系 (无背景虚线方格干扰)
@@ -122,7 +146,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   // 生成刻度线与文本标签
   const ticksAndLabels = React.useMemo(() => {
     const elements: React.ReactNode[] = [];
-    const tickSize = 3.5; // 刻度线半长 (px)
+    const tickSize = GRID_METRICS.tickHalfSize;
 
     // X 轴刻度
     const xStart = Math.ceil(xMin / safeXStep) * safeXStep;
@@ -150,7 +174,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
           <text
             key={`label-x-${x}`}
             x={pt.x}
-            y={pt.y + fontScale(14)}
+            y={pt.y + GRID_METRICS.xTickLabelY}
             textAnchor="middle"
             fill={MATH_COLORS.labelTextLight}
             fontSize={fontScale(10.5)}
@@ -187,8 +211,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
         elements.push(
           <text
             key={`label-y-${y}`}
-            x={pt.x - fontScale(6)}
-            y={pt.y + fontScale(3.5)}
+            x={pt.x - GRID_METRICS.yTickLabelX}
+            y={pt.y + GRID_METRICS.yTickLabelY}
             textAnchor="end"
             fill={MATH_COLORS.labelTextLight}
             fontSize={fontScale(10.5)}
@@ -207,8 +231,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
       elements.push(
         <text
           key="label-origin"
-          x={ptZero.x - fontScale(6)}
-          y={ptZero.y + fontScale(13)}
+          x={ptZero.x - GRID_METRICS.originOffsetX}
+          y={ptZero.y + GRID_METRICS.originOffsetY}
           textAnchor="end"
           fill={MATH_COLORS.labelText}
           fontSize={fontScale(12)}
@@ -271,8 +295,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
         fill={MATH_COLORS.labelTextLight}
       />
       <text
-        x={xAxisEnd.x - fontScale(2)}
-        y={xAxisEnd.y + fontScale(15)}
+        x={xAxisEnd.x - GRID_METRICS.xAxisLabelOffsetX}
+        y={xAxisEnd.y + GRID_METRICS.xAxisLabelOffsetY}
         textAnchor="middle"
         fill={MATH_COLORS.labelText}
         fontSize={fontScale(13)}
@@ -289,8 +313,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
         fill={MATH_COLORS.labelTextLight}
       />
       <text
-        x={yAxisEnd.x - fontScale(12)}
-        y={yAxisEnd.y + fontScale(10)}
+        x={yAxisEnd.x - GRID_METRICS.yAxisLabelOffsetX}
+        y={yAxisEnd.y + GRID_METRICS.yAxisLabelOffsetY}
         textAnchor="middle"
         fill={MATH_COLORS.labelText}
         fontSize={fontScale(13)}

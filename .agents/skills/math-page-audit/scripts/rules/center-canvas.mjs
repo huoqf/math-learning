@@ -65,6 +65,27 @@ export const centerCanvasRules = [
     },
   },
   {
+    id: 'center/no-font-scale-in-coords',
+    type: 'fontScale误用于几何坐标或尺寸',
+    severity: 'error',
+    check(ctx) {
+      if ((!ctx.isTsx && !ctx.filePath.endsWith('.jsx')) || ctx.isTest) return [];
+      // 严格守卫共享组件层（src/components/），防止公共基础设施将 fontScale 渗入几何坐标造成全库性畸变
+      if (!/(?:^|[/\\])src[/\\]components[/\\]/.test(ctx.filePath)) return [];
+      const issues = [];
+      ctx.cleanLines.forEach((line, idx) => {
+        if (/\b(?:x|y|cx|cy|r|rx|ry|width|height|strokeWidth)\s*=\s*\{[^}]*\bfontScale\s*\(/.test(line)) {
+          issues.push({
+            lineNum: idx + 1,
+            message: '共享原子组件严禁将 fontScale 用于几何坐标或尺寸属性，几何量必须使用纯 design 常量以避免非线性截断畸变',
+            snippet: line.trim(),
+          });
+        }
+      });
+      return issues;
+    },
+  },
+  {
     id: 'center/no-drag-reconvert',
     type: '拖拽二次转换',
     severity: 'error',

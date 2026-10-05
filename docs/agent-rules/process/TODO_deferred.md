@@ -1,9 +1,9 @@
 # 规范治理与高中数学教学质量保证 — 待办事项
 
-> 更新时间：2026-10-03
-> 当前状态：P0 基础设施完成；P1 存量规范治理收官（**`src/features` 502 文件**严格审计 0 违规）；
-> **P2 门禁范围与课标边界治理**：审计范围扩至全库 `src`、新增超纲术语门禁与学段边界一致性测试。
-> **P3 / P4 已完成**（分节见下）。**新增「六、 待裁决 / 延后项」**：中屏「CSS 像素 ↔ design 坐标」换算链路治理（已修）与 `CoordinateGrid` 定位量误用 `fontScale`（待裁决）。
+> 更新时间：2026-10-05  
+> 当前状态：P0 基础设施完成；P1 存量规范治理收官（**`src/features` 502 文件**严格审计 0 违规）；  
+> **P2 门禁范围与课标边界治理**：审计范围扩至全库 `src`、新增超纲术语门禁与学段边界一致性测试。  
+> **P3 / P4 已完成**（分节见下）。**中屏换算与网格定位量治理**：中屏「CSS 像素 ↔ design 坐标」换算链路治理与 `CoordinateGrid` 定位量解耦纯 design 常量均已闭环落地（见第六节 6.1 / 6.1.1）；新增 6.1.2 features 业务层 24 文件存量待办。
 
 ---
 
@@ -33,7 +33,7 @@
 
 ## 二、 阶段成果与已完成（P1 阶段：存量代码规范治理全面清零）
 
-> 目标：清理存量违规，使 `npm run audit:strict src/features` 全局通过并纳入 CI 阻断门禁。
+> 目标：清理存量违规，使 `npm run audit:strict src/features` 全局通过并纳入 CI 阻断门禁。  
 > **最终战报**：全量违规项从 **269 处降至 0 处**（累计清除 269 处，清除率 **100%**），全库 365 个功能文件 0 警告 0 报错通过严格门禁！
 
 ### 2.1 P1 阶段治理成果
@@ -112,12 +112,12 @@
 
 ---
 
-## 六、 待裁决 / 延后项（Deferred）
+## 六、 待裁决 / 延后项（Deferred）与链路治理记录
 
-> 本节条目均为**已定位到行、已量化、但未动手**的问题，供裁决后直接执行。
+> 本节收录中屏适配链路的根本性治理落地记录（6.1 / 6.1.1 已闭环）及后续待推进的存量项（6.1.2 / 6.2）。  
 > 口径约定：**不做无证据的"疑似"**——每条必须给出可执行定位（`文件:行`）与可复算的量化依据；数量必须逐行清点，不得估算（参见 `docs/reports/审查报告09-13.md:91` 关于"口径前后不一"的教训）。
 
-### 6.1 中屏「CSS 像素 ↔ design 坐标」换算链路（2026-10-03 发现，已部分治理）
+### 6.1 中屏「CSS 像素 ↔ design 坐标」与定位链路治理（已全面治理落地）
 
 **架构事实**：中屏分辨率适配由共享组件/hook 单一链路承担，页面不得自造视口逻辑：
 
@@ -144,7 +144,6 @@ useAnimationViewport({ preset })
 - 项目此前**没有**「SVG 内 CSS px → design」的官方工具，页面便各自发明：`trigModel` 写 `const px = (v) => v * vp.scale`，`radianMeasure` 照抄 ⇒ 屏幕长度成 **`v × vp.scale²`**（基准窗口 `vp.scale ≈ 1` 时完全隐形，1.3754 倍窗口虚胖 89%）；
 - **同一模块内方向相反的既有铁证**：`src/features/trigModel/viewport.ts:66` 的 `topChromeBottomY` 用 `(PX − ty) / scale`（**除法，正确**），而同 feature 的 `TrigModelScene.tsx:93` 用 `v * vp.scale`（**乘法，错误**）；
 - **规范缺口**：`AGENTS.md` 公理 4 只有 4.1 Preset / 4.2 字号链路 / 4.3 原子化复用——**「定位链路」不在宪法里**，是代码注释自造的概念。
-
 - [x] **本轮已落地**（2026-10-03）：
   - `src/utils/useViewport.ts` 新增并导出 `cssToDesignLength(viewport, css) = css / vp.scale` 作为唯一换算真源（附反例文档）；
   - `src/utils/useCanvasSize.ts` 的 `CanvasSize.px` 补「⚠️ 仅 CSS / DOM 上下文」规范注释；
@@ -153,24 +152,31 @@ useAnimationViewport({ preset })
   - `src/features/radianMeasure/sceneGeometry.ts` 新增（比例常量 + 视口区间单一真源），Scene 的 `angleArcR / labelDist / rLabelNormalOffset` 改为 `radiusPx × 比例`，删除自造 `px` / `vpScale`；
   - 整角分支由死代码变可达：`isFull` 阈值 `TAU − 1e−4` → `TAU − step/2`（实机坐实 `alphaRad` 的可达上界仅 6.28，距 TAU 有 0.0032，旧阈值下双半圆路径与 `<circle>` 角标记恒不可达）；
   - 新增 `src/test/radianMeasureSceneRender.test.tsx`（6 用例，跨三视口断言比例恒等，含优角 `largeArc=1/sweep=0`、整角双半圆、`O` 唯一、三模式无 NaN）。
-  - 验收：`tsc -b --force` exit 0 ｜ vitest **172 文件 / 1790 用例** ｜ `audit:strict` **788 文件 / 0 error** ｜ `eslint src --max-warnings 0` exit 0 ｜ 实机三视口（`vp.scale` = 0.56 / 0.9908 / 1.3754）`angleArcR ÷ mainR` 恒 `0.3333`（修复前为 `29.72 ↔ 41.26`，差 38.8%）。
-
-- [ ] **6.1.1 待裁决：`CoordinateGrid` 有 9 处把「定位偏移量」喂给 `fontScale`（字号链路）**
-  - **逐行定位** —— `src/components/Math/CoordinateGrid.tsx` 全文共 14 处 `fontScale(`，其中 **9 处为定位量、5 处为字号**：
-    - 横轴数值标签：`:153 y={pt.y + fontScale(14)}`、`:190 x={pt.x - fontScale(6)}`、`:191 y={pt.y + fontScale(3.5)}`
-    - 原点 `O`：`:210 x={ptZero.x - fontScale(6)}`、`:211 y={ptZero.y + fontScale(13)}`
-    - `x` 轴名与箭头：`:274 x={xAxisEnd.x - fontScale(2)}`、`:275 y={xAxisEnd.y + fontScale(15)}`
-    - `y` 轴名与箭头：`:292 x={yAxisEnd.x - fontScale(12)}`、`:293 y={yAxisEnd.y + fontScale(10)}`
-    - （`:156 / :194 / :214 / :278 / :296` 的 `fontSize={fontScale(...)}` 属**字号**，为正确用法，不在本条范围）
-  - **性质**：`fontScale = clamp(v * scale, 7, 16)`（`useCanvasSize.ts:19-20`），偏移量经它换算会**先于字号被 clamp 钉死**。`scale = 1.3754` 时：偏移 `fontScale(14) = clamp(19.26, 7, 16) = 16`，而字号 `fontScale(10.5) = 14.44` 尚未触顶 ⇒ 「偏移 ÷ 字号」由基准 `14 / 10.5 = 1.333` 畸变为 `16 / 14.44 = 1.108`（**约 17%**），表现为大窗口下刻度标签逐渐贴近轴线。
-  - **为何未动**：① 畸变有 `clamp` 缓冲、幅度轻微；② 意图可解释（偏移跟着字号走，视觉自洽）；③ `CoordinateGrid` 是**全库共享原子件**，实测有 **80 个** feature 文件引用它（其中 73 个为 `Scene.tsx` / `Animation.tsx`，`grep -rl "CoordinateGrid" src/features --include=*.tsx | wc -l` 可复算），改动会波及这些页面的坐标网格视觉，需全库回归而非局部验证。
-  - **⚠️ 内部标准本就不统一（这是需要裁决的核心理由）**：同库 `src/components/Math/MathPoint.tsx:123` 的标签偏移用的是**纯 design 常量** `const offset = finalR + 5`，即「几何量走几何常量」。两套做法并存 ⇒ 规范本身未定。
-  - **候选方案**：
-    - **A（对齐既有正确范本）**：偏移量改为纯 design 常量（`14 / 6 / 13 / 15 / 10 / 2 / 3.5`），与 `MathPoint` 一致。语义 = 偏移与图形等比，跨分辨率比例恒定。
-    - **B（保留"跟字号走"意图）**：若确要偏移随字号缩放，应走 `fontScale` 的**未截断形式**（`canvasSize.px` 或 `v * scale`），并把「定位链路」在 `AGENTS.md` 4.2 正式定义后下传，使偏移与字号始终同比例。
-    - **C（维持现状）**：仅登记，不修改，接受 ≤17% 的偏移畸变。
-  - **裁决后需同步**：无论选 A 还是 B，都应在 `AGENTS.md` 公理 4.2 **正式补入「定位链路（PositionScale Chain）」定义**，填上当前规范缺口 —— 否则"该用哪条链路"仍靠注释口耳相传，同类问题会第四次出现。
-  - **验收方式**：`npx tsc -b --force` + `npx vitest run src/math src/data src/test src/features` + `npm run audit:strict` + `npx eslint src --max-warnings 0` 全绿；并在 ≥2 种窗口尺寸下对含 `CoordinateGrid` 的代表页面（如 `radian-measure`、`trig-model`）抽样复核标签与轴线的间距，确认跨分辨率视觉稳定。
+  - 验收：`tsc -b --force` exit 0 ｜ vitest（全量及 `npm run test`：**180 文件 / 1844 用例**；四目录口径 `src/math src/data src/test src/features`：**172 文件 / 1791 用例**）｜ `audit:strict` **788 文件 / 0 error** ｜ `eslint src --max-warnings 0` exit 0 ｜ 实机三视口（`vp.scale` = 0.56 / 0.9908 / 1.3754）`angleArcR ÷ mainR` 恒 `0.3333`（修复前为 `29.72 ↔ 41.26`，差 38.8%）。
+- [x] **6.1.1 已落地（2026-10-05）**：`CoordinateGrid` 9 处「定位偏移量」解耦为纯 design 常量（对齐方案 A + 几何纠偏）
+  - **最新锚点** —— 常量定义集中于 `src/components/Math/CoordinateGrid.tsx:70-81` 的 `GRID_METRICS`，在渲染时消费：
+    - 横轴数值标签：`:177 y={pt.y + GRID_METRICS.xTickLabelY}`、`:214 x={pt.x - GRID_METRICS.yTickLabelX}`、`:215 y={pt.y + GRID_METRICS.yTickLabelY}`
+    - 原点 `O`：`:234 x={ptZero.x - GRID_METRICS.originOffsetX}`、`:235 y={ptZero.y + GRID_METRICS.originOffsetY}`
+    - `x` 轴名与箭头：`:298 x={xAxisEnd.x - GRID_METRICS.xAxisLabelOffsetX}`、`:299 y={xAxisEnd.y + GRID_METRICS.xAxisLabelOffsetY}`
+    - `y` 轴名与箭头：`:316 x={yAxisEnd.x - GRID_METRICS.yAxisLabelOffsetX}`、`:317 y={yAxisEnd.y + GRID_METRICS.yAxisLabelOffsetY}`
+    - （`:180 / :218 / :238 / :302 / :320` 的 `fontSize={fontScale(...)}` 属**字号链路**，完整保留，解耦清晰）
+  - **取值裁决（偏离原方案 A 字面量承诺的工程理由）**：
+    - 原方案 A 假定的 `(14 / 6 / 13 / 15 / 10 / 2 / 3.5)` 系机械抄录旧 JSX 字面量；实机核算发现 `6 / 2 / 3.5` 在旧代码中受 `FONT_SCALE_MIN = 7` 约束运行时恒被夹紧为 `7`；
+    - 落地时经实机视觉校验，裁决采用**真实几何居中与避让值**而非机械字面量：
+      1. `yTickLabelY: 3.5`：字号 10.5 时数字高度约 7.3px，重心距基线约 3.6px，设为 3.5 使数字垂直中轴精准对齐水平刻度线（彻底纠正原先误套 fontScale 导致被 clamp(7) 下沉 3.5px 的偏心 Bug）；
+      2. `yTickLabelX: 7` 与 `originOffsetX: 7`：刻度线半长 3.5px，右对齐偏移 7px 留出 3.5px 留白；
+      3. `xAxisLabelOffsetX: 6`：
+         - 几何澄清：箭头为 `polygon [xAxisEnd, xAxisEnd-7] × [y±3.5]`，标签在 `y+15`（基线），文字顶边距箭头底边保持有 ≈11.5px~14.5px 充裕间距，纵向绝无粘连；
+         - 取值真因：核心考量为 X 方向视觉平衡。旧代码 `fontScale(2)` 因 `clamp(7)` 实际恒生效为 7px（正对底座垂直线）；若按原字面量 2 突变 5px，中轴将偏至尖端（距尖端仅 2px）导致右倾孤悬；取 6 是为了在承接旧运行时视觉的前提下向尖端微调 1px，居于箭头中后段平衡位置。
+  - **门禁与契约固化**：
+    - `AGENTS.md` 公理 4.2 正式补入「字号链路与定位链路（PositionScale Chain）解耦」双轨定义；
+    - 质量门禁新增 `audit:center/no-font-scale-in-coords` 强拦截公共共享基础设施（`src/components/`）；
+    - 实机经多视口（1536×825 标准视口与 1024×768 小视口）交互审查核验，字号缩放与几何留白比例恒定，彻底消除了此前大屏 clamp(16) 导致的 17%~25% 贴脸挤压畸变（区间推导：当 `scale ≥ 16/10.5 ≈ 1.5238` 时字号亦触顶，畸变达 25%）。
+  - **验收**：`npx tsc -b` exit 0 ｜ vitest（全量及 `npm run test`：180 文件 / 1844 用例；四目录路径 `npx vitest run src/math src/data src/test src/features`：172 文件 / 1791 用例）100% pass ｜ `audit:strict` 788 文件 / 35 规则 / 0 error。
+- [ ] **6.1.2 待治理：`src/features/` 下 24 个历史业务页面定位量误用 `fontScale` 存量收拢**
+  - **现状**：门禁新规则 `center/no-font-scale-in-coords` 当前优先守卫 `src/components/` 公共共享基础设施（保证 0 存量基线）；经全库逐行清点，`src/features/` 下仍有 **24 个业务文件、精确 221 处**（如 `LineCircleScene.tsx` 7 处、`ComplexScene.tsx` 4 处、`ProbabilityDistribution*` 系列等）存在历史同类误用；
+  - **清点依据**：临时移除 `components` 路径限定后运行 `npm run audit:strict` 精确报告 221 处违规，涉及 24 个 Scene/Zone 文件；
+  - **治理计划**：在后续专题重构中，对这 24 个业务页面逐步将局部 `<text>` 几何位移或背景框 `width/height` 解耦为纯 design 常量，最终推进门禁规则向全库开放。
 
 ### 6.2 全库存量（与 6.1 无因果关系，一并登记备查）
 
