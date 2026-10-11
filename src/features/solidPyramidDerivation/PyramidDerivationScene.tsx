@@ -4,6 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Segment3D } from "@/components/Math3D/Segment3D";
 import { Point3D } from "@/components/Math3D/Point3D";
 import { PointLabel3D } from "@/components/Math3D/PointLabel3D";
+import { FormulaLabel3D } from "@/components/Math3D/FormulaLabel3D";
 import { mathToThree } from "@/math3d/coordinateConvention";
 import { MATH_COLORS } from "@/theme";
 import type { Vec3 } from "@/math3d/vector3";
@@ -159,24 +160,31 @@ function PartPolyhedronMesh({
           />
         ))}
 
-      {/* 子体名称标注：仅在子体已分离（explode > 0.15）时显示，与顶点字母门互补不重叠 */}
+      {/* 子体名称标注：仅在子体已分离（explode > 0.15）时显示，与顶点字母门互补不重叠。
+          名称含中文，必须走 FormulaLabel3D 的 KaTeX 文本模式 —— KaTeX_Main 字体
+          不含 CJK，塞进 PointLabel3D 在弱网/离线会渲染成方框。 */}
       {explode > 0.15 && (
-        <PointLabel3D
+        <FormulaLabel3D
           position={partCenter}
-          text={
-            part.id.includes("yangma")
-              ? "阳马"
-              : part.id.includes("bienao")
-                ? "鳖臑"
-                : part.chineseName.split(" ")[0]
-          }
+          tex={`\\text{${escapeTex(partLabel(part))}}`}
           colorKey={part.colorKey}
-          fontSize={0.24}
           offset={[0, 0.12, 0]}
         />
       )}
     </group>
   );
+}
+
+/** 子体的中文名称（供 KaTeX 文本模式渲染） */
+function partLabel(part: { id: string; chineseName: string }): string {
+  if (part.id.includes("yangma")) return "阳马";
+  if (part.id.includes("bienao")) return "鳖臑";
+  return part.chineseName.split(" ")[0];
+}
+
+/** `\text{}` 内必须转义的字符 */
+function escapeTex(s: string): string {
+  return s.replace(/[\\{}$&%#]/g, (c) => `\\${c}`);
 }
 
 /** 模式三：祖暅圆锥与正四棱锥等底等高 3D 伴随切片对比组件 */
@@ -310,11 +318,10 @@ function ConePyramidEquivalenceMesh({
         colorKey="paramPrimary"
         radius={0.05}
       />
-      <PointLabel3D
+      <FormulaLabel3D
         position={{ x: 0, y: leftCenterY, z: h }}
-        text="P₁ (圆锥顶)"
+        tex="P_1\ (\text{圆锥顶})"
         colorKey="paramPrimary"
-        fontSize={0.22}
         offset={[0, 0.12, 0.05]}
       />
 
@@ -331,11 +338,10 @@ function ConePyramidEquivalenceMesh({
       </group>
 
       {/* 圆锥截面积读数标签 */}
-      <PointLabel3D
+      <FormulaLabel3D
         position={{ x: 0, y: leftCenterY, z: z + 0.12 }}
-        text={`S₁ = ${data.coneCutArea.toFixed(2)}`}
+        tex={`S_1 = ${data.coneCutArea.toFixed(2)}`}
         colorKey="paramPrimary"
-        fontSize={0.23}
       />
 
       {/* ── 2. 右侧：正四棱锥 (半透明表面 + 几何边框) ── */}
@@ -370,11 +376,10 @@ function ConePyramidEquivalenceMesh({
 
       {/* 正四棱锥顶点 */}
       <Point3D position={pApex} colorKey="paramSecondary" radius={0.05} />
-      <PointLabel3D
+      <FormulaLabel3D
         position={pApex}
-        text="P₂ (棱锥顶)"
+        tex="P_2\ (\text{棱锥顶})"
         colorKey="paramSecondary"
-        fontSize={0.22}
         offset={[0, 0.12, 0.05]}
       />
 
@@ -397,11 +402,10 @@ function ConePyramidEquivalenceMesh({
       <Segment3D from={c3} to={c0} colorKey="highlight" lineWidth={2.5} />
 
       {/* 正四棱锥截面积读数标签 */}
-      <PointLabel3D
+      <FormulaLabel3D
         position={{ x: 0, y: rightCenterY, z: z + 0.12 }}
-        text={`S₂ = ${data.pyramidCutArea.toFixed(2)}`}
+        tex={`S_2 = ${data.pyramidCutArea.toFixed(2)}`}
         colorKey="paramSecondary"
-        fontSize={0.23}
       />
 
       {/* ── 3. 全局贯穿水平等高切片辅助平面 (卡瓦列里/祖暅截切刀) ── */}
@@ -418,11 +422,10 @@ function ConePyramidEquivalenceMesh({
       </group>
 
       {/* 截面高度标示标尺 */}
-      <PointLabel3D
+      <FormulaLabel3D
         position={{ x: 0, y: 0, z: z + 0.08 }}
-        text={`截面高度 z = ${z.toFixed(2)} (S₁ ≡ S₂)`}
+        tex={`\\text{截面高度 } z = ${z.toFixed(2)}\\ (S_1 \\equiv S_2)`}
         colorKey="highlight"
-        fontSize={0.24}
         offset={[0, 0.1, 0]}
       />
     </group>

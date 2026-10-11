@@ -44,6 +44,8 @@ import {
   buildSpatialDistancePanel,
   buildPyramidDerivationPanel,
   buildObliqueDrawingPanel,
+  buildSolidAxiomsPanel,
+  buildPolyhedronFeaturesPanel,
 } from "./builders/solidGeometry";
 import { buildSphereDerivationPanel } from "./builders/solidSphereDerivation";
 import { buildVector3DBasisPanel } from "./builders/vector3d";
@@ -228,6 +230,10 @@ export function buildMathQuantities(
       return buildPyramidDerivationPanel(params, config);
     case "anim-solid-sphere-derivation":
       return buildSphereDerivationPanel(params, config);
+    case "anim-solid-axioms":
+      return buildSolidAxiomsPanel(params, config);
+    case "anim-solid-polyhedron":
+      return buildPolyhedronFeaturesPanel(params, config);
     case "anim-solid-folding":
       return buildSolidFoldingPanel(params, config);
     case "anim-solid-parametric":

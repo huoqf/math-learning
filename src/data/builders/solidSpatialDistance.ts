@@ -12,6 +12,7 @@ import {
   solveSkewLinesDistance,
   solveSideEdgeAndFaceDiagonalDistance,
   solvePointPlaneDistance,
+  solvePointLineDistance,
 } from "@/math3d/spatialDistance";
 
 // ── know-solid-distance: 异面直线公垂线与空间距离动态极值 ──
@@ -50,6 +51,12 @@ export function buildSpatialDistancePanel(
       ? solveSideEdgeAndFaceDiagonalDistance(a, b, c, lambda, mu)
       : solveSkewLinesDistance(a, b, c, lambda, mu);
 
+    const distPToLine2 = solvePointLineDistance(
+      skew.P,
+      { x: 0, y: 0, z: 0 },
+      { x: a, y: b, z: 0 },
+    );
+
     examAnchor = "新高考解答题 · 空间向量法求异面直线公垂线与动点极值";
     mnemonic =
       "异面求距选向量，法矢联立垂直求；射影长度即距离，平行平面化点面。";
@@ -65,7 +72,7 @@ export function buildSpatialDistancePanel(
         invariantNote: "直线方向向量固定",
       },
       {
-        label: "异面直线 2 (AC)",
+        label: "异面直线 $l_2$ (AC)",
         symbol: "\\vec{v}",
         value: `(${a}, ${b}, 0)`,
         color: MATH_COLORS.paramSecondary,
@@ -92,6 +99,12 @@ export function buildSpatialDistancePanel(
           ? MATH_COLORS.paramTertiary
           : MATH_COLORS.highlight,
         highlight: skew.isAtPerpendicular ? "extreme" : undefined,
+      },
+      {
+        label: "点 $P$ 到直线 $l_2$ 的垂直距离",
+        symbol: "d(P, l_2)",
+        value: Number(distPToLine2.distance.toFixed(4)),
+        color: MATH_COLORS.paramTertiary,
       },
       {
         label: "公垂线最短距离 $d_{\\min}$",
@@ -236,6 +249,12 @@ export function buildSpatialDistancePanel(
             level: "important",
             note: "由双垂直性质 H₁H₂ ⊥ u 且 H₁H₂ ⊥ v，动向量在公垂线与跨线平面上严格正交分解，当且仅当 λ=λ*, μ=μ* 时模方取得极小值",
           },
+      {
+        name: "空间点到直线的向量距离公式",
+        latex: `d(P, l) = \\sqrt{|\\vec{AP}|^2 - \\left(\\frac{\\vec{AP}\\cdot\\vec{u}}{|\\vec{u}|}\\right)^2}`,
+        level: "core",
+        note: "已知直线上一点 $A$ 及方向向量 $\\vec{u}$，由直角三角形勾股定理，投影长度 $t = \\frac{\\vec{AP}\\cdot\\vec{u}}{|\\vec{u}|}$，垂直距离 $d = \\sqrt{|\\vec{AP}|^2 - t^2}$",
+      },
     );
 
     gaokaoPoints.push(

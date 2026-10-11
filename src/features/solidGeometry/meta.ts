@@ -20,7 +20,7 @@ export const solidPositionNode: KnowledgeNode = {
   module: "立体几何",
   importance: "core",
   animationIds: ["anim-solid-position"],
-  prerequisites: [],
+  prerequisites: ["know-solid-axioms"],
   route: "/solid-position",
 };
 
@@ -132,6 +132,38 @@ export const solidAdvancedSphereNode: KnowledgeNode = {
   route: "/solid-advanced-sphere",
 };
 
+export const solidAxiomsNode: KnowledgeNode = {
+  id: "know-solid-axioms",
+  title: "空间点线面位置关系的基本事实与推论",
+  labTitle: "空间公理与基本事实实验室",
+  chapter: "立体几何与空间向量",
+  module: "立体几何",
+  importance: "core",
+  animationIds: ["anim-solid-axioms"],
+  prerequisites: ["know-solid-rotation-body"],
+  route: "/solid-axioms",
+  gaokaoTopic: "solid_geometry",
+  questionCategory: "foundation",
+  examMethod: "平面的确定推论与两面交线定理、空间等角定理",
+  examWeight: 4,
+};
+
+export const solidPolyhedronNode: KnowledgeNode = {
+  id: "know-solid-polyhedron",
+  title: "多面体的结构特征与台体体积推导、等体积法",
+  labTitle: "多面体特征与台体体积实验室",
+  chapter: "立体几何与空间向量",
+  module: "立体几何",
+  importance: "core",
+  animationIds: ["anim-solid-polyhedron"],
+  prerequisites: ["know-solid-rotation-body"],
+  route: "/solid-polyhedron",
+  gaokaoTopic: "solid_geometry",
+  questionCategory: "solution_first",
+  examMethod: "正棱锥核心直角三角形与台体大锥减小锥、三棱锥等体积法",
+  examWeight: 5,
+};
+
 export const solidRotationBodyLoader = () => import("./RotationBodyAnimation");
 export const solidPositionLoader = () => import("./LinePlaneRelationAnimation");
 export const solidSurfaceRelationLoader = () =>
@@ -146,3 +178,6 @@ export const solidBallModelsLoader = () =>
   import("./PolyhedronCircumSphereAnimation");
 export const solidAdvancedSphereLoader = () =>
   import("./AdvancedSphereAnimation");
+export const solidAxiomsLoader = () => import("./axioms/SolidAxiomsAnimation");
+export const solidPolyhedronLoader = () =>
+  import("./polyhedron/PolyhedronFeaturesAnimation");

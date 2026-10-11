@@ -341,3 +341,61 @@ export function solvePointPlaneDistance(
     volumeCheckError,
   };
 }
+
+export interface PointLineDistanceResult {
+  /** 动点 P */
+  P: Vec3;
+  /** 直线上定点 A */
+  A: Vec3;
+  /** 直线方向向量 u */
+  u: Vec3;
+  /** 向量 AP */
+  vecAP: Vec3;
+  /** 垂足 H */
+  footH: Vec3;
+  /** 垂直向量 HP */
+  vecHP: Vec3;
+  /** 点到直线距离 d */
+  distance: number;
+  /** 投影线段长 t */
+  projectionLength: number;
+}
+
+/**
+ * 4. 空间点到直线的向量距离公式计算
+ * 设直线上已知点 A，方向向量为 u，空间中一点 P
+ * 投影长度 t = (AP · u) / |u|
+ * 垂足 H = A + t * (u / |u|)
+ * 距离 d = |HP| = sqrt(|AP|^2 - t^2)
+ */
+export function solvePointLineDistance(
+  P: Vec3,
+  A: Vec3,
+  u: Vec3,
+): PointLineDistanceResult {
+  const vecAP = sub(P, A);
+  const lenU = norm(u);
+  const safeLenU = lenU < 1e-9 ? 1 : lenU;
+  const unitU = scale(u, 1 / safeLenU);
+
+  // 投影长度 t = vecAP · unitU
+  const t = vecAP.x * unitU.x + vecAP.y * unitU.y + vecAP.z * unitU.z;
+  const footH: Vec3 = {
+    x: A.x + t * unitU.x,
+    y: A.y + t * unitU.y,
+    z: A.z + t * unitU.z,
+  };
+  const vecHP = sub(P, footH);
+  const distance = norm(vecHP);
+
+  return {
+    P,
+    A,
+    u,
+    vecAP,
+    footH,
+    vecHP,
+    distance,
+    projectionLength: t,
+  };
+}

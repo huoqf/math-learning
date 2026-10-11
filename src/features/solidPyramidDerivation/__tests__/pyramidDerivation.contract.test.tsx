@@ -61,12 +61,18 @@ describe("PyramidDerivationAnimation 页面契约测试", () => {
   it("默认态显示母体顶点字母，拖大爆炸进度后改由子体名称接替", () => {
     const { container } = render(<PyramidDerivationAnimation />);
 
-    // 3D 层标注文本被 drei Text 替身为 <sprite/>（文本内容不进 DOM），
-    // 故以 sprite 数量作为「当前显示几个标注」的结构代理（本页仅 PointLabel3D 产出 sprite）。
-    const labelCount = () => container.querySelectorAll("sprite").length;
+    // 中屏 3D 容器内的标注分两类：
+    // - 顶点字母（纯 ASCII）走 PointLabel3D → 被 drei Text 替身为 <sprite/>；
+    // - 子体名称含中文，走 FormulaLabel3D（KaTeX）→ 真实 DOM 中留下 .katex 节点。
+    //   中文标注绝不能塞进 PointLabel3D：KaTeX_Main 字体不含 CJK，弱网会渲染成方框。
+    const labels = () =>
+      container.querySelectorAll('[data-testid="r3f-canvas"] sprite').length;
+    const subPartNames = () =>
+      container.querySelectorAll('[data-testid="r3f-canvas"] .katex').length;
 
     // 默认不拆解：显示母体 6 个顶点字母 A/B/C/A₁/B₁/C₁，此刻不显示子体名称
-    expect(labelCount()).toBe(6);
+    expect(labels()).toBe(6);
+    expect(subPartNames()).toBe(0);
 
     // 拖动「爆炸拆解进度」（唯一 min=0 / max=1 的滑块）使子体分离
     const explodeSlider = Array.from(
@@ -78,7 +84,8 @@ describe("PyramidDerivationAnimation 页面契约测试", () => {
     fireEvent.change(explodeSlider!, { target: { value: "0.6" } });
 
     // 分离后顶点字母退场（位置已漂移），改由 3 个子体名称标注接替
-    expect(labelCount()).toBe(3);
+    expect(labels()).toBe(0);
+    expect(subPartNames()).toBe(3);
   });
 
   it("点击切换到祖暅圆锥等积模式，三屏联动同步更新", () => {

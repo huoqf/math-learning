@@ -40,13 +40,13 @@ export function buildSpatialAnglePanel(
 
     quantities.push(
       {
-        label: "异面直线 1 (A₁B)",
+        label: "异面直线 $l_1$ (A₁B)",
         symbol: "\\vec{u}",
         value: `(${a}, 0, -${c})`,
         color: MATH_COLORS.primary,
       },
       {
-        label: "异面直线 2 (AC)",
+        label: "异面直线 $l_2$ (AC)",
         symbol: "\\vec{v}",
         value: `(${a}, ${b}, 0)`,
         color: MATH_COLORS.accent,

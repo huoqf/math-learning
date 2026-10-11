@@ -74,10 +74,24 @@ const fakeCanvasElement = {
   ownerDocument: typeof document === "undefined" ? undefined : document,
 } as unknown as HTMLCanvasElement;
 
-/** `useThree()` 替身：只提供渲染期与回调期真正会被读到的字段。 */
-export const useThreeMock = () => ({
+/**
+ * `useThree()` 替身：只提供渲染期与回调期真正会被读到的字段。
+ *
+ * ⚠️ 真实 R3F 的 `useThree` 是**订阅式** API：`useThree(selector?)`。
+ * 早先的替身直接忽略入参、无脑返回整个 state 对象，于是
+ * `useThree((s) => s.controls)` 拿到的是整个 state（没有 `target`），
+ * 组件一旦写 `controls.target.x` 就抛错、连整棵 3D 树一起被错误边界吞掉 ——
+ * 表现为契约测试里"3D 容器为 null"，但真实浏览器里一切正常。
+ * 因此这里必须按真实签名实现：**有 selector 就应用 selector**。
+ *
+ * `controls` 对应 `makeDefault` 后的 OrbitControls 实例（drei 替身为 null，
+ * 故这里显式给出一份可用替身，供 `<CameraFit>` 这类场景适配组件消费）。
+ * state 每次调用都新建，避免跨用例共享可变对象互相污染。
+ */
+const makeThreeState = () => ({
   camera: {
     position: { x: 6, y: 5, z: 8 },
+    fov: 45,
     getWorldDirection: (v: unknown) => v,
     updateProjectionMatrix: () => {},
   },
@@ -100,7 +114,22 @@ export const useThreeMock = () => ({
   advance: () => {},
   set: () => {},
   get: () => ({}),
+  controls: {
+    target: { x: 0, y: 0, z: 0 },
+    minDistance: 3,
+    maxDistance: 20,
+    update: () => {},
+  },
 });
+
+export type ThreeStateMock = ReturnType<typeof makeThreeState>;
+
+export const useThreeMock = <T,>(
+  selector?: (state: ThreeStateMock) => T,
+): T | ThreeStateMock => {
+  const state = makeThreeState();
+  return typeof selector === "function" ? selector(state) : state;
+};
 
 /** `useFrame()` 替身：测试中不推进逐帧回调。 */
 export const useFrameMock = () => {};

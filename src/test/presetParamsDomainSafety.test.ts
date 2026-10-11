@@ -14,6 +14,10 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
   //    历史上本表混入了大量已废弃键名（如 magA/magB、A_deg、order、setA_left…），
   //    它们在全库既无声明也无 `params.x` 读取 ⇒ builder 永远读不到 ⇒ 用例实际跑的是默认值。
   //    处置后：无对应键的一律删除；删除后为空 `{}` 表示"使用该页声明域默认值"。
+  //
+  //    ⚠️ 本清单 + autoRegistryFuzz 的 fuzzTargets 必须覆盖 `mathQuantities.ts`
+  //       分派表里的**每一个** animId —— 由 domainCoverage.test.ts 强制。
+  //       新页面只要没进任何清单，就会在那里报错，不会再"静默脱离巡检"。
   const safetyCases: TestCase[] = [
     // 1. 函数与导数系列
     { animId: "anim-quadratic", params: { a: 1, b: -2, c: -3 } },
@@ -259,6 +263,7 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
 
     // 4. 解析几何系列
     { animId: "anim-line-equation", params: { k: 1, b: 0 } },
+    { animId: "anim-circle-equation", params: {} },
     { animId: "anim-line-circle", params: { r: 2 } },
     { animId: "anim-circle-circle", params: { r1: 3, r2: 2 } },
     {
@@ -305,6 +310,22 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       params: { a1: 1, d: 1, q: 2, N: 3 },
       config: { activeMode: "models", subModel: "arith-geo" },
     },
+    // 三个兼容别名：与 anim-sequence 共用同一 builder，但分派表里各有独立分支
+    {
+      animId: "anim-sequence-arithmetic",
+      params: { a1: 1, d: 2, N: 5 },
+      config: { activeMode: "arithmetic" },
+    },
+    {
+      animId: "anim-sequence-geometric",
+      params: { a1: 1, q: 2, N: 4 },
+      config: { activeMode: "geometric" },
+    },
+    {
+      animId: "anim-sequence-models",
+      params: { a1: 1, d: 1, q: 2, N: 3 },
+      config: { activeMode: "models", subModel: "arith-geo" },
+    },
 
     // 6. 立体几何系列
     {
@@ -338,9 +359,87 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     { animId: "anim-solid-rotation-body", params: { r1: 2, height: 3 } },
     { animId: "anim-solid-folding", params: { alphaDeg: 60 } },
     { animId: "anim-solid-parametric", params: { lambda: 0.5 } },
+    { animId: "anim-solid-oblique-drawing", params: {} },
+    { animId: "anim-solid-pyramid-derivation", params: {} },
+    { animId: "anim-solid-sphere-derivation", params: {} },
+
+    // 6.1 空间公理与基本事实（三种模式 × 等角定理两个分支）
+    {
+      animId: "anim-solid-axioms",
+      params: { tParam: 0 },
+      config: { mode: "determination", subType: "threePoints" },
+    },
+    {
+      // 动点取到离面偏移的两个端点：垂线虚线分支必须仍然有限
+      animId: "anim-solid-axioms",
+      params: { tParam: 2 },
+      config: { mode: "determination", subType: "lineAndPoint" },
+    },
+    {
+      animId: "anim-solid-axioms",
+      params: { tParam: -2 },
+      config: { mode: "determination", subType: "intersectingLines" },
+    },
+    {
+      animId: "anim-solid-axioms",
+      params: { tParam: 0 },
+      config: { mode: "determination", subType: "parallelLines" },
+    },
+    {
+      // 倾角取到声明域两端：β 面片与交线仍须落在示意面片内
+      animId: "anim-solid-axioms",
+      params: { tiltDeg: 85 },
+      config: { mode: "intersection", subType: "threePoints" },
+    },
+    {
+      animId: "anim-solid-axioms",
+      params: { tiltDeg: 15 },
+      config: { mode: "intersection", subType: "threePoints" },
+    },
+    {
+      // 等角定理「相等」分支
+      animId: "anim-solid-axioms",
+      params: { angleParamDeg: 60 },
+      config: { mode: "spatialLines", flipSecondRay: false },
+    },
+    {
+      // 等角定理「互补」分支（对应边反向）
+      animId: "anim-solid-axioms",
+      params: { angleParamDeg: 120 },
+      config: { mode: "spatialLines", flipSecondRay: true },
+    },
+
+    // 6.2 多面体特征与台体体积推导（含 a₁ → a₂ 的相似比退化边界）
+    {
+      animId: "anim-solid-polyhedron",
+      params: { a: 3, h: 3 },
+      config: { mode: "prism" },
+    },
+    {
+      animId: "anim-solid-polyhedron",
+      params: { a: 3, h: 3 },
+      config: { mode: "pyramid" },
+    },
+    {
+      animId: "anim-solid-polyhedron",
+      params: { a2: 4, a1: 2, h: 3 },
+      config: { mode: "frustum" },
+    },
+    {
+      // 相似比 k → 1 的临界：补全大锥高 H = h/(1-k) 迅速发散，面板不得泄漏 Infinity
+      animId: "anim-solid-polyhedron",
+      params: { a2: 5, a1: 4.5, h: 6 },
+      config: { mode: "frustum" },
+    },
+    {
+      animId: "anim-solid-polyhedron",
+      params: { a: 3, b: 4, h: 3 },
+      config: { mode: "equalVolume" },
+    },
 
     // 7. 概率与统计
     { animId: "anim-probability-counting", params: { n: 5, k: 3 } },
+    { animId: "anim-probability-events", params: {} },
     {
       animId: "anim-probability-bayes",
       params: { pPriorD: 0.02, pSensitivity: 0.95, pFalsePositive: 0.05 },

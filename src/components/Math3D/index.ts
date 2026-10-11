@@ -20,6 +20,8 @@
 // ============================================================================
 export { Scene3DGrid } from "./Scene3DGrid";
 export { CameraRig } from "./CameraRig";
+export { CameraFit } from "./CameraFit";
+export type { CameraFitProps } from "./CameraFit";
 
 // ============================================================================
 // 标签系统 (Label System)

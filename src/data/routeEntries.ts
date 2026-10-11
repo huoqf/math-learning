@@ -226,6 +226,8 @@ import {
   solidBallNode,
   solidBallModelsNode,
   solidAdvancedSphereNode,
+  solidAxiomsNode,
+  solidPolyhedronNode,
   solidRotationBodyLoader,
   solidPositionLoader,
   solidSurfaceRelationLoader,
@@ -237,6 +239,8 @@ import {
   solidBallLoader,
   solidBallModelsLoader,
   solidAdvancedSphereLoader,
+  solidAxiomsLoader,
+  solidPolyhedronLoader,
 } from "@/features/solidGeometry/meta";
 import {
   solidPyramidDerivationNode,
@@ -518,6 +522,16 @@ export const routeEntries: RouteEntry[] = [
   {
     node: solidAdvancedSphereNode,
     loader: solidAdvancedSphereLoader,
+    guarded3D: true,
+  },
+  {
+    node: solidAxiomsNode,
+    loader: solidAxiomsLoader,
+    guarded3D: true,
+  },
+  {
+    node: solidPolyhedronNode,
+    loader: solidPolyhedronLoader,
     guarded3D: true,
   },
 

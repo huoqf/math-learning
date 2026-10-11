@@ -1,9 +1,9 @@
 /**
- * 立体几何 13 页「3D 真渲染」契约测试（P1-14 收口）
+ * 立体几何 17 页「3D 真渲染」契约测试（P1-14 收口）
  *
  * ## 背景
  * 历史测试把 `@/components/Math3D` 与 `ThreeDCanvas` **整包 mock 成 `null`**，
- * 导致这 13 页的 **3D 元素树在测试里永不渲染** ⇒「手柄位置 / 切点 / 半径线 / 相机」
+ * 导致这 17 页的 **3D 元素树在测试里永不渲染** ⇒「手柄位置 / 切点 / 半径线 / 相机」
  * 这类结构性缺陷在测试层面**根本无法被发现**。
  *
  * 本套测试用 `@/test/harness/threeTestLayer` 只替身「必须 WebGL / 必须 R3F 上下文」的边界，
@@ -56,8 +56,10 @@ import PolyhedronCircumSphereAnimation from "@/features/solidGeometry/Polyhedron
 import AdvancedSphereAnimation from "@/features/solidGeometry/AdvancedSphereAnimation";
 import SphereDerivationAnimation from "@/features/solidSphereDerivation/SphereDerivationAnimation";
 import PyramidDerivationAnimation from "@/features/solidPyramidDerivation/PyramidDerivationAnimation";
+import SolidAxiomsAnimation from "@/features/solidGeometry/axioms/SolidAxiomsAnimation";
+import PolyhedronFeaturesAnimation from "@/features/solidGeometry/polyhedron/PolyhedronFeaturesAnimation";
 
-/** 知识点节点 key 与页面组件的对应（`src/data/knowledgeTree/solid.ts` 14 节点） */
+/** 知识点节点 key 与页面组件的对应（`src/data/knowledgeTree/solid.ts` 17 节点） */
 const PAGES: {
   key: string;
   name: string;
@@ -133,6 +135,16 @@ const PAGES: {
     name: "进阶切接球（双外心/三球同心/旋转体）",
     Component: AdvancedSphereAnimation,
   },
+  {
+    key: "know-solid-axioms",
+    name: "空间点线面位置关系的基本事实与推论",
+    Component: SolidAxiomsAnimation,
+  },
+  {
+    key: "know-solid-polyhedron",
+    name: "多面体的结构特征与台体体积推导、等体积法",
+    Component: PolyhedronFeaturesAnimation,
+  },
 ];
 
 const POINT_MARKER_RE = /^0\.0(42|75),/;
@@ -168,7 +180,7 @@ const readSphere = (root: ParentNode): { center: number[]; radius: number } => {
 const dist = (a: number[], b: number[]): number =>
   Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
-describe("立体几何 13 页 3D 真渲染契约（P1-14）", () => {
+describe("立体几何 17 页 3D 真渲染契约（P1-14）", () => {
   describe("通用：3D 元素树真实渲染且几何数值有限", () => {
     PAGES.forEach(({ key, name, Component }) => {
       it(`${name}（${key}）渲染出非空 3D 树，且所有几何数值属性有限`, () => {

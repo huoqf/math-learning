@@ -43,14 +43,44 @@ import {
   defaultParams as lineCircleDefaults,
   paramMeta as lineCircleMeta,
 } from "@/data/registries/lineCircle";
+import {
+  defaultParams as solidDefaults,
+  solidAxiomsMeta,
+  polyhedronFeaturesMeta,
+} from "@/data/registries/solidGeometry";
+
+/**
+ * 立体几何 registry 的元数据以数组形式导出（同一文件承载十余个页面的 meta），
+ * 这里做一次本地适配：数组 → 以 key 为索引的表，与其他专题的 paramMeta 形状对齐。
+ */
+const toMetaRecord = (list: ParamMeta[]): Record<string, ParamMeta> =>
+  Object.fromEntries(list.map((m) => [m.key, m]));
+
+/**
+ * 单构型巡检参数。
+ *
+ * 多模式页面（如空间公理页的 平面确定/平面相交/等角定理）如果只测默认构型，
+ * 其余模式就仍是"零巡检"——与"四道门禁全绿、页面仍有问题"是同一个病根。
+ * 因此这里允许一个 animId 展开成多个构型，逐构型跑完整套边界 + 动态响应断言。
+ */
+interface FuzzVariant {
+  /** 构型说明，会拼进用例名，便于失败时定位到具体模式 */
+  label: string;
+  config?: Record<string, unknown>;
+  /** 该构型的核心主控参数键名（不同构型主控参数可能不同，故按构型指定） */
+  primaryKey?: string;
+}
 
 interface TopicFuzzTarget {
   animId: string;
   topicName: string;
   defaultParams: Record<string, number>;
   paramMeta: Record<string, ParamMeta>;
+  /** 单构型页面的写法（与 variants 二选一） */
   config?: Record<string, unknown>;
   primaryKey?: string; // 核心主控参数键名，用于做摄动动态响应检查
+  /** 多构型页面：逐构型展开；提供后 config/primaryKey 被忽略 */
+  variants?: FuzzVariant[];
 }
 
 const fuzzTargets: TopicFuzzTarget[] = [
@@ -128,12 +158,76 @@ const fuzzTargets: TopicFuzzTarget[] = [
     paramMeta: lineCircleMeta,
     primaryKey: "d",
   },
+  {
+    animId: "anim-solid-axioms",
+    topicName: "空间公理与基本事实",
+    defaultParams: solidDefaults.solidAxioms,
+    paramMeta: toMetaRecord(solidAxiomsMeta),
+    variants: [
+      {
+        label: "平面确定 · 三点",
+        config: { mode: "determination", subType: "threePoints" },
+        primaryKey: "tParam",
+      },
+      {
+        label: "平面确定 · 直线与线外一点",
+        config: { mode: "determination", subType: "lineAndPoint" },
+        primaryKey: "tParam",
+      },
+      {
+        label: "平面确定 · 两条相交直线",
+        config: { mode: "determination", subType: "intersectingLines" },
+        primaryKey: "tParam",
+      },
+      {
+        label: "平面相交 · 基本事实 3",
+        config: { mode: "intersection", subType: "parallelLines" },
+        primaryKey: "tiltDeg",
+      },
+      {
+        label: "等角定理 · 同向等角",
+        config: { mode: "spatialLines", subType: "threePoints" },
+        primaryKey: "angleParamDeg",
+      },
+      {
+        label: "等角定理 · 反向互补",
+        config: {
+          mode: "spatialLines",
+          subType: "threePoints",
+          flipSecondRay: true,
+        },
+        primaryKey: "angleParamDeg",
+      },
+    ],
+  },
+  {
+    animId: "anim-solid-polyhedron",
+    topicName: "多面体特征与台体体积",
+    defaultParams: solidDefaults.polyhedronFeatures,
+    paramMeta: toMetaRecord(polyhedronFeaturesMeta),
+    variants: [
+      { label: "棱柱", config: { mode: "prism" }, primaryKey: "h" },
+      { label: "正棱锥", config: { mode: "pyramid" }, primaryKey: "h" },
+      { label: "棱台", config: { mode: "frustum" }, primaryKey: "h" },
+      { label: "等体积法", config: { mode: "equalVolume" }, primaryKey: "h" },
+    ],
+  },
 ];
 
 describe("全库核心学科专题参数边界模糊测试与防虚假推导巡检 (Auto-Registry Fuzzing & Dynamic Response)", () => {
-  fuzzTargets.forEach(
-    ({ animId, topicName, defaultParams, paramMeta, config, primaryKey }) => {
-      describe(`[${topicName}] ${animId}`, () => {
+  fuzzTargets.forEach((target) => {
+    const { animId, topicName, defaultParams, paramMeta } = target;
+    // 多构型页面逐构型展开；单构型页面等价于只有一个构型的旧写法
+    const variants: FuzzVariant[] =
+      target.variants && target.variants.length > 0
+        ? target.variants
+        : [{ label: "", config: target.config, primaryKey: target.primaryKey }];
+
+    variants.forEach(({ label, config, primaryKey }) => {
+      const title = label
+        ? `[${topicName}] ${animId} · ${label}`
+        : `[${topicName}] ${animId}`;
+      describe(title, () => {
         // 1. 全极小值边界测试 (All Minima)
         it("全参数极小值极限边界：面板数据无 NaN/除零且推导公式有效", () => {
           const minParams: Record<string, number> = { ...defaultParams };
@@ -224,8 +318,8 @@ describe("全库核心学科专题参数边界模糊测试与防虚假推导巡�
           });
         }
       });
-    },
-  );
+    });
+  });
 });
 
 /**

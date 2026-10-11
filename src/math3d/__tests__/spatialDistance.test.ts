@@ -3,6 +3,7 @@ import {
   solveSkewLinesDistance,
   solveSideEdgeAndFaceDiagonalDistance,
   solvePointPlaneDistance,
+  solvePointLineDistance,
 } from "../spatialDistance";
 import { dot, sub } from "../vector3";
 
@@ -125,6 +126,37 @@ describe("空间距离与异面直线公垂线数学层算法测试", () => {
       const resMax = solvePointPlaneDistance(a, b, c, 1.0);
       expect(resMax.volume).toBeCloseTo(resMax.maxVolume, 5);
       expect(resMax.volume).toBeCloseTo((1 / 6) * a * b * c, 5);
+    });
+  });
+
+  describe("空间点到直线向量距离公式", () => {
+    it("点到坐标轴直线的距离与解析几何一致", () => {
+      // 直线经过原点 A(0,0,0)，方向向量 u=(1,0,0) (x轴)
+      // 点 P(3, 4, 0)
+      // 距离应为 4
+      const res = solvePointLineDistance(
+        { x: 3, y: 4, z: 0 },
+        { x: 0, y: 0, z: 0 },
+        { x: 1, y: 0, z: 0 },
+      );
+      expect(res.distance).toBeCloseTo(4, 5);
+      expect(res.projectionLength).toBeCloseTo(3, 5);
+      expect(res.footH).toEqual({ x: 3, y: 0, z: 0 });
+    });
+
+    it("空间任意直线的勾股垂直性 |HP|^2 + t^2 = |AP|^2", () => {
+      const P = { x: 2, y: 3, z: 5 };
+      const A = { x: 1, y: 1, z: 1 };
+      const u = { x: 1, y: 2, z: 2 };
+      const res = solvePointLineDistance(P, A, u);
+
+      const dSq = res.distance * res.distance;
+      const tSq = res.projectionLength * res.projectionLength;
+      const apSq =
+        res.vecAP.x * res.vecAP.x +
+        res.vecAP.y * res.vecAP.y +
+        res.vecAP.z * res.vecAP.z;
+      expect(dSq + tSq).toBeCloseTo(apSq, 5);
     });
   });
 });

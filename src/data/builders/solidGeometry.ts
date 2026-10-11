@@ -27,3 +27,5 @@ export { buildAdvancedSpherePanel } from "./solidAdvancedSphere";
 export { buildSpatialDistancePanel } from "./solidSpatialDistance";
 export { buildPyramidDerivationPanel } from "./solidPyramidDerivation";
 export { buildObliqueDrawingPanel } from "./solidObliqueDrawing";
+export { buildSolidAxiomsPanel } from "./solidAxioms";
+export { buildPolyhedronFeaturesPanel } from "./solidPolyhedronFeatures";

@@ -8,6 +8,14 @@ interface FormulaLabel3DProps {
   position: Vec3;
   tex: string;
   offset?: [number, number, number];
+  /**
+   * 标注颜色（`MATH_COLORS` 键）。
+   * KaTeX 输出不含固定色值（`\color` 之外一律继承 `color`），
+   * 因此这里落到容器样式即可让整条公式染色 —— 这正是它存在的理由：
+   * 需要"彩色 + 下标 + 中文"的标注过去只能退回 `PointLabel3D`，
+   * 而 `KaTeX_Main` 字体不含 Unicode 下标与 CJK，弱网会渲染成方框。
+   */
+  colorKey?: keyof typeof MATH_COLORS;
   /** 距离缩放因子，默认 7.5，使公式大小与 3D 几何顶点标签完全匹配 */
   distanceFactor?: number;
   /** 是否使用纯净无框模式（默认 true，符合教科书作图风格） */
@@ -48,11 +56,18 @@ export const FormulaLabel3D = ({
   position,
   tex,
   offset = [0.18, 0.18, 0],
+  colorKey,
   distanceFactor = 7.8,
   plain = true,
 }: FormulaLabel3DProps) => {
   const [x, y, z] = mathToThree(position);
   const cleanTex = sanitizeLatex(tex);
+  // KaTeX 输出只在 \color 处写死色值，其余字符一律继承 CSS color，故落到容器样式即可。
+  const colorStyle = colorKey ? { color: MATH_COLORS[colorKey] } : null;
+  const textShadow = {
+    textShadow:
+      "0 0 3px #FFFFFF, 0 0 3px #FFFFFF, 0 0 5px #FFFFFF, 0 0 8px #FFFFFF",
+  };
 
   return (
     <group position={[x + offset[0], y + offset[1], z + offset[2]]}>
@@ -72,8 +87,8 @@ export const FormulaLabel3D = ({
                   fontSize: "13.5px",
                   lineHeight: 1,
                   userSelect: "none",
-                  textShadow:
-                    "0 0 3px #FFFFFF, 0 0 3px #FFFFFF, 0 0 5px #FFFFFF, 0 0 8px #FFFFFF",
+                  ...textShadow,
+                  ...(colorStyle ?? {}),
                 }
               : {
                   background: withAlpha(MATH_COLORS.background, 0.92),
@@ -86,6 +101,7 @@ export const FormulaLabel3D = ({
                   fontSize: "13px",
                   lineHeight: 1.2,
                   userSelect: "none",
+                  ...(colorStyle ?? {}),
                 }
           }
         >
