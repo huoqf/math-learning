@@ -8,7 +8,7 @@ export const lineCircleNode: KnowledgeNode = {
   module: "直线与圆",
   importance: "gaokao",
   animationIds: ["anim-line-circle"],
-  prerequisites: ["know-line-equation"],
+  prerequisites: ["know-circle-equation"],
   route: "/line-circle",
 };
 

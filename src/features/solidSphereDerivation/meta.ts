@@ -8,7 +8,7 @@ export const solidSphereDerivationNode: KnowledgeNode = {
   module: "立体几何",
   importance: "core",
   animationIds: ["anim-solid-sphere-derivation"],
-  prerequisites: ["know-solid-rotation-body"],
+  prerequisites: ["know-solid-pyramid-derivation"],
   route: "/solid-sphere-derivation",
   gaokaoTopic: "solid_geometry",
   questionCategory: "foundation",

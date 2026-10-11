@@ -90,7 +90,7 @@ export const probabilityNodes: KnowledgeNode[] = [
   {
     id: "know-probability-distribution",
     title: "离散型随机变量分布列与数字特征",
-    labTitle: "离散随机变量分布列实验室",
+    labTitle: "离散型随机变量分布列与数字特征",
     chapter: "概率与统计",
     module: "随机变量及其分布",
     importance: "gaokao",
@@ -105,7 +105,7 @@ export const probabilityNodes: KnowledgeNode[] = [
   {
     id: "know-probability-normal",
     title: "频率直方图与正态分布曲线",
-    labTitle: "频率分布与正态分布实验室",
+    labTitle: "频率分布直方图与正态分布实验室",
     chapter: "概率与统计",
     module: "随机变量及其分布",
     importance: "gaokao",

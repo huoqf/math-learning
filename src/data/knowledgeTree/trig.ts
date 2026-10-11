@@ -110,6 +110,7 @@ export const trigNodes: KnowledgeNode[] = [
   {
     id: "know-triangle-solve",
     title: "正弦定理、余弦定理与解三角形",
+    labTitle: "解三角形实验室",
     chapter: "解三角形",
     module: "解三角形",
     importance: "gaokao",

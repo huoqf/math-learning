@@ -8,7 +8,7 @@ export const node: KnowledgeNode = {
   module: "圆锥曲线",
   importance: "hard",
   animationIds: ["anim-conic-param"],
-  prerequisites: ["know-conic-line"],
+  prerequisites: ["know-conic-line", "know-line-equation"],
   route: "/conic-param",
 };
 

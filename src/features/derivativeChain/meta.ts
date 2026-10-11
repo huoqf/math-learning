@@ -8,7 +8,7 @@ export const derivativeChainNode: KnowledgeNode = {
   module: "导数概念与运算",
   importance: "gaokao",
   animationIds: ["anim-derivative-chain"],
-  prerequisites: ["know-derivative-operations"],
+  prerequisites: ["know-derivative-operations", "know-derivative-formulas"],
   route: "/derivative-chain",
   gaokaoTopic: "func_derivative",
   questionCategory: "solution_first",

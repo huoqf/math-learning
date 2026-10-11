@@ -8,7 +8,7 @@ export const probabilityDistributionNode: KnowledgeNode = {
   module: "随机变量及其分布",
   importance: "gaokao",
   animationIds: ["anim-probability-distribution"],
-  prerequisites: ["know-probability-bayes"],
+  prerequisites: ["know-probability-counting", "know-probability-bayes"],
   route: "/probability-distribution",
 };
 

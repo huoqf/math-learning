@@ -12,7 +12,7 @@ export const derivativeTangentScalingNode: KnowledgeNode = {
   route: "/derivative-tangent-scaling",
   gaokaoTopic: "func_derivative",
   questionCategory: "solution_final",
-  examMethod: "指对切线放缩 ($e^x\\ge x+1$, $\\ln x\\le x-1$) 与双侧卡位",
+  examMethod: "指对切线放缩 ($e^x \\ge x+1$, $\\ln x \\le x-1$) 与双侧卡位",
   examWeight: 5,
 };
 

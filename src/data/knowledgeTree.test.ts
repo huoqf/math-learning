@@ -293,8 +293,31 @@ describe("双源定义一致性（knowledgeTree ↔ features/*/meta.ts）", () =
    * 历史教训：C29–C32 曾因两处 chapter/module/gaokaoTopic 分歧导致"改了这边忘了那边"；
    * markovNode 曾一处 importance 为 "hard"、另一处为 "extend"。
    *
-   * 在"单一定义源"重构（修复记录 7.2 方案 A/B）落地前，本契约测试强制同 id 节点的
-   * 定位字段完全一致，让两处脱节在提交时即被机器拦截，杜绝双源漂移复发。
+   * 在"单一定义源"重构（修复记录 7.2 方案 A/B）落地前，本契约把两处脱节交给机器拦截。
+   *
+   * ## 为什么是"通用规则"而不是逐字段枚举
+   * 逐字段枚举（只挑 importance/chapter/module 或再加 route/prerequisites…）永远漏项：
+   * 实测 meta 侧会声明的字段有 13 个（id/title/chapter/module/importance/animationIds/
+   * prerequisites/labTitle/route/gaokaoTopic/questionCategory/examMethod/examWeight），
+   * 只要有一个没进枚举，它就重新变成"两侧各看自洽、单源测试抓不到"的盲区——
+   * 本断言落地时就靠通用规则抓到了一处枚举版永远看不见的真实漂移：
+   * `know-derivative-tangent-scaling.examMethod` 在 LaTeX 内空白上两侧不一致。
+   *
+   * ## 收缩规则
+   * 「meta 侧只要声明了某字段（非 undefined），就必须与知识树侧逐字一致」。
+   * meta **允许省略**字段（首页专用字段如 syllabus 由 knowledgeTree 出口统一回填，
+   * syllabus 是知识树专有，本规则天然不覆盖），但**不允许分歧**。
+   *
+   * ## 两侧各自的权威字段（同步方向，供将来收敛时参考）
+   * - 知识树为权威：prerequisites（meta 侧零运行时消费方；知识树侧被"先修拓扑册次门禁"
+   *   与下方概率分支用例消费，后者用数学理由钉死过 C_n^k 的先修来源）、
+   *   gaokaoTopic/questionCategory/examWeight/examMethod（面向首页知识树的呈现层字段）。
+   * - meta 为权威：labTitle/route/animationIds（routeEntries 从 meta 派生
+   *   ANIMATION_ROUTE_MAP 与 PATH_TO_LABEL，教师/学生看到的页面标签就来自这里）。
+   *
+   * ## 本规则的边界（不要误以为"全字段已锁"）
+   * 知识树专有字段（syllabus 回填、以及将来任何只写在一侧的字段）不在覆盖范围；
+   * 它们若哪天被写进 meta，本规则会自动把它们纳入把守——这正是通用规则的价值。
    */
   type MetaNode = (typeof routeEntries)[number]["node"];
 
@@ -303,20 +326,21 @@ describe("双源定义一致性（knowledgeTree ↔ features/*/meta.ts）", () =
     if (entry.node?.id) metaById.set(entry.node.id, entry.node);
   }
 
-  it("同 id 节点：importance / chapter / module 必须完全一致", () => {
+  it("同 id 节点：meta 侧声明的每个字段都必须与知识树侧逐字一致", () => {
     const mismatches: string[] = [];
+    /** 按字段名取值：KnowledgeNode 没有索引签名，故经 unknown 桥接 */
+    const fieldOf = (node: unknown, key: string): unknown =>
+      (node as Record<string, unknown>)[key];
     for (const n of knowledgeTree) {
       const m = metaById.get(n.id);
       if (!m) continue; // 知识树独有（未路由 / 规划中）节点不在本契约范围
-      const fields: Array<[string, string, string]> = [
-        ["importance", n.importance, m.importance],
-        ["chapter", n.chapter, m.chapter],
-        ["module", n.module, m.module],
-      ];
-      for (const [field, a, b] of fields) {
-        if (a !== b) {
+      for (const key of Object.keys(m as object)) {
+        const metaValue = fieldOf(m, key);
+        if (metaValue === undefined) continue; // meta 允许省略，但不得分歧
+        const treeValue = fieldOf(n, key);
+        if (JSON.stringify(treeValue) !== JSON.stringify(metaValue)) {
           mismatches.push(
-            `${n.id}.${field}: knowledgeTree="${a}" | meta="${b}"`,
+            `${n.id}.${key}: knowledgeTree=${JSON.stringify(treeValue)} | meta=${JSON.stringify(metaValue)}`,
           );
         }
       }
@@ -329,4 +353,11 @@ describe("双源定义一致性（knowledgeTree ↔ features/*/meta.ts）", () =
     const orphans = [...metaById.keys()].filter((id) => !treeIds.has(id));
     expect(orphans).toEqual([]);
   });
+
+  /**
+   * 补充说明：labTitle 的同步方向取 meta → tree 时，知识树侧会失去
+   * "…实验室"的命名统一（meta 侧个别节点用"…模型 / …与数字特征"等措辞）。
+   * 这是**有意接受**的取舍——门禁只负责"锁死漂移、不改文案"，
+   * 学生看到的页面标签一字不变；命名统一属编辑性议题，另行处理。
+   */
 });
