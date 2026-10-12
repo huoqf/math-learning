@@ -597,15 +597,16 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
               foldState,
             });
 
+            const effectiveAlpha = foldState === "unfolded" ? 0 : alphaDeg;
             let res;
             if (model === "trapezoid") {
-              res = calculateRightTrapezoidFolding(a, b, h, alphaDeg);
+              res = calculateRightTrapezoidFolding(a, b, h, effectiveAlpha);
             } else if (model === "rectangleDiagonal") {
-              res = calculateRectangleDiagonalFolding(a, b, alphaDeg);
+              res = calculateRectangleDiagonalFolding(a, b, effectiveAlpha);
             } else if (model === "triangleAltitude") {
-              res = calculateTriangleAltitudeFolding(a, h, alphaDeg);
+              res = calculateTriangleAltitudeFolding(a, h, effectiveAlpha);
             } else {
-              res = calculateRhombusFolding(a, alphaDeg);
+              res = calculateRhombusFolding(a, effectiveAlpha);
             }
 
             const pointsToCheck =

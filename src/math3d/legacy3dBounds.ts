@@ -197,8 +197,8 @@ export function getFoldingBounds(params?: {
   const a = params?.a ?? 4;
   const b = params?.b ?? 3;
   const h = params?.h ?? 3;
-  const alphaDeg = params?.alphaDeg ?? 90;
   const foldState = params?.foldState ?? "both";
+  const alphaDeg = foldState === "unfolded" ? 0 : (params?.alphaDeg ?? 90);
 
   let points: Vec3[] = [];
   let unfolded: Vec3[] = [];
@@ -245,16 +245,22 @@ export function getFoldingExtremeBounds(): Bounds3D {
   ];
   const allCorners: Vec3[] = [];
   for (const m of models) {
-    for (const alpha of [1, 45, 90, 135, 179]) {
-      const b = getFoldingBounds({
-        model: m,
-        a: 5,
-        b: 1,
-        h: 5,
-        alphaDeg: alpha,
-        foldState: "both",
-      });
-      allCorners.push(b.min, b.max);
+    for (const a of [2, 5]) {
+      for (const b of [1, 4]) {
+        for (const h of [1, 5]) {
+          for (const alpha of [1, 45, 90, 135, 179]) {
+            const bound = getFoldingBounds({
+              model: m,
+              a,
+              b,
+              h,
+              alphaDeg: alpha,
+              foldState: "both",
+            });
+            allCorners.push(bound.min, bound.max);
+          }
+        }
+      }
     }
   }
   return boundsOf(allCorners);
