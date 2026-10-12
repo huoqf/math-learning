@@ -473,6 +473,7 @@ export function PyramidDerivationScene({
   return (
     <>
       <OrbitControls
+        makeDefault
         enableDamping
         dampingFactor={0.08}
         minDistance={3}

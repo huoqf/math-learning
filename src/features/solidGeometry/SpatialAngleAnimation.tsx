@@ -12,7 +12,13 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig, ModeSwitchOverlay3D } from "@/components/Math3D";
+import {
+  Legend3D,
+  CameraRig,
+  CameraFit,
+  ModeSwitchOverlay3D,
+} from "@/components/Math3D";
+import { getSolidAngleBounds } from "@/math3d/legacy3dBounds";
 import type { LegendItem } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -66,10 +72,15 @@ export default function SpatialAngleAnimation({
     lambda: 0.6,
   });
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
   const { a, b, c, lambda } = params;
+
+  const sceneBounds = useMemo(
+    () => getSolidAngleBounds({ a, b, c }),
+    [a, b, c],
+  );
 
   // 长方体及动点坐标解算
   const vertices = useMemo(
@@ -696,6 +707,7 @@ export default function SpatialAngleAnimation({
               ref={controlsRef}
               enabled={interactionMode === "orbit"}
             />
+            <CameraFit bounds={sceneBounds} token={viewToken} />
             {/* 基础长方体 + 顶点标号（建系后切换为坐标标注）共享骨架 */}
             <CuboidBaseScene
               a={a}

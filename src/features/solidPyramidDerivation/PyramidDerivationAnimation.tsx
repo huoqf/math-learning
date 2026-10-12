@@ -12,6 +12,8 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { Legend3D } from "@/components/Math3D/Legend3D";
+import { CameraFit } from "@/components/Math3D";
+import { getPyramidDerivationBounds } from "@/math3d/legacy3dBounds";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   calculatePrismTripartition,
@@ -44,6 +46,18 @@ export function PyramidDerivationAnimation() {
       [key]: value,
     }));
   };
+
+  const sceneBounds = useMemo(
+    () =>
+      getPyramidDerivationBounds({
+        a: params.a,
+        b: params.b,
+        h: params.h,
+        c: params.c,
+        explode: params.explode,
+      }),
+    [params],
+  );
 
   // 纯数学层计算结果
   const tripartitionData = useMemo(
@@ -337,6 +351,7 @@ export function PyramidDerivationAnimation() {
           fov={42}
           legend={<Legend3D items={legendItems} />}
         >
+          <CameraFit bounds={sceneBounds} fov={42} />
           <PyramidDerivationScene
             mode={mode}
             tripartitionData={tripartitionData}

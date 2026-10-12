@@ -12,7 +12,13 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig, ModeSwitchOverlay3D } from "@/components/Math3D";
+import {
+  Legend3D,
+  CameraRig,
+  CameraFit,
+  ModeSwitchOverlay3D,
+} from "@/components/Math3D";
+import { getSurfaceRelationBounds } from "@/math3d/legacy3dBounds";
 import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -46,7 +52,7 @@ export default function SurfaceRelationAnimation() {
     step: 1,
   });
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
   const zHeight = params.zHeight ?? 2.2;
@@ -59,6 +65,17 @@ export default function SurfaceRelationAnimation() {
   const pyramidH = params.pyramidH ?? 3.2;
   const posO = params.posO ?? 0.5;
   const step = params.step ?? 1;
+
+  const sceneBounds = useMemo(
+    () =>
+      getSurfaceRelationBounds({
+        pyramidA,
+        pyramidB,
+        pyramidH,
+        zHeight,
+      }),
+    [pyramidA, pyramidB, pyramidH, zHeight],
+  );
 
   // 组装右屏看板数据
   const mathData = useMemo(
@@ -497,6 +514,7 @@ export default function SurfaceRelationAnimation() {
               subType === "cube"
             }
           />
+          <CameraFit bounds={sceneBounds} token={viewToken} />
 
           {/* 模式 1：面面平行判定 */}
           {activeMode === "parallelJudge" && (

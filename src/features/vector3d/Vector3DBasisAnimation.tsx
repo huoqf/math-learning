@@ -18,10 +18,12 @@ import {
   FormulaLabel3D,
   Legend3D,
   CameraRig,
+  CameraFit,
   ModeSwitchOverlay3D,
   type InteractionMode3D,
   type LegendItem,
 } from "@/components/Math3D";
+import { getVector3DBasisBounds } from "@/math3d/legacy3dBounds";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import type { Vec3 } from "@/math3d/vector3";
@@ -83,7 +85,9 @@ export default function Vector3DBasisAnimation() {
   const [showAngle] = useState(true);
   const [showAxes, setShowAxes] = useState(true);
 
-  const { cameraPosition, controlsRef } = use3DViewport("iso");
+  const { cameraPosition, viewToken, controlsRef } = use3DViewport("iso");
+
+  const sceneBounds = useMemo(() => getVector3DBasisBounds(params), [params]);
 
   const {
     x,
@@ -497,6 +501,7 @@ export default function Vector3DBasisAnimation() {
           legend={<Legend3D title="空间向量图例" items={legendItems} />}
         >
           <CameraRig ref={controlsRef} enabled={interactionMode === "orbit"} />
+          <CameraFit bounds={sceneBounds} token={viewToken} />
 
           {/* 原点 O */}
           <Point3D position={O} colorKey="primary" />

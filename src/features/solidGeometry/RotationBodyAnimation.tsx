@@ -14,10 +14,12 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import {
   CameraRig,
+  CameraFit,
   Legend3D,
   ThreeViewsPanel,
   ModeSwitchOverlay3D,
 } from "@/components/Math3D";
+import { getRotationBodyBounds } from "@/math3d/legacy3dBounds";
 import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { RotationSweep, SphereCutSection } from "@/components/Math3D/solids";
 import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
@@ -52,8 +54,18 @@ export default function RotationBodyAnimation() {
   });
   const [autoPlay, setAutoPlay] = useState(false);
   const [displayMode, setDisplayMode] = useState<"3d" | "orthographic">("3d");
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
+
+  const sceneBounds = useMemo(
+    () =>
+      getRotationBodyBounds({
+        r1: params.r1,
+        r2: params.r2,
+        height: params.height,
+      }),
+    [params.r1, params.r2, params.height],
+  );
   const timerRef = useRef<number | null>(null);
 
   // 自动播放：定时递增扫描角度，模拟"旋转生成"动画
@@ -464,6 +476,7 @@ export default function RotationBodyAnimation() {
                 featureMode !== "sphereCut"
               }
             />
+            <CameraFit bounds={sceneBounds} token={viewToken} />
 
             {shape === "semicircle" && featureMode === "sphereCut" ? (
               <SphereCutSection

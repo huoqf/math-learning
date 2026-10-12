@@ -8,7 +8,9 @@ import {
   Legend3D,
   Point3D,
   ModeSwitchOverlay3D,
+  CameraFit,
 } from "@/components/Math3D";
+import { getSectionCuboidBounds } from "@/math3d/legacy3dBounds";
 import type { InteractionMode3D } from "@/components/Math3D";
 import {
   buildCuboidPolyhedron,
@@ -193,7 +195,7 @@ export default function SectionCuboidDemo() {
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode3D>("orbit");
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
   // 多面体几何尺寸
@@ -201,6 +203,11 @@ export default function SectionCuboidDemo() {
   const depth = 3;
   const height = 3.5;
   const currentHeight = solidKind === "tetrahedron" ? 2.2 * Math.SQRT2 : height;
+
+  const sceneBounds = useMemo(
+    () => getSectionCuboidBounds({ a: width, b: depth, c: currentHeight }),
+    [width, depth, currentHeight],
+  );
 
   // 构造当前多面体 Polyhedron 数据结构
   const currentPolyhedron = useMemo(() => {
@@ -698,6 +705,7 @@ export default function SectionCuboidDemo() {
               ref={controlsRef}
               enabled={interactionMode === "orbit"}
             />
+            <CameraFit bounds={sceneBounds} token={viewToken} />
 
             {/* 3D 几何实体与边线渲染 (严格基于 Polyhedron 拓扑结构，100% 精确吻合) */}
             <PolyhedronSolid polyhedron={currentPolyhedron} opacity={0.15} />

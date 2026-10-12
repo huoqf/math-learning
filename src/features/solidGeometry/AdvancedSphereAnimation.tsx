@@ -12,7 +12,8 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig } from "@/components/Math3D";
+import { Legend3D, CameraRig, CameraFit } from "@/components/Math3D";
+import { getAdvancedSphereBounds } from "@/math3d/legacy3dBounds";
 import type { LegendItem } from "@/components/Math3D";
 import {
   AdvancedSphereScene,
@@ -49,8 +50,13 @@ export default function AdvancedSphereAnimation() {
     shapeType: 0,
   });
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
+
+  const sceneBounds = useMemo(
+    () => getAdvancedSphereBounds({ r: params.R ?? params.a }),
+    [params.R, params.a],
+  );
 
   // 1. 右屏看板数据
   const mathData = useMemo(
@@ -601,6 +607,7 @@ export default function AdvancedSphereAnimation() {
           legend={<Legend3D items={legendItems} />}
         >
           <CameraRig ref={controlsRef} />
+          <CameraFit bounds={sceneBounds} token={viewToken} />
           <AdvancedSphereScene
             modelType={modelType}
             params={params}

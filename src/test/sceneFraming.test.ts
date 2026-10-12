@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import {
   boundsCorners,
   boundingSphereOf,
@@ -483,6 +485,39 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
       }
       const significantDiffs = diffs.filter((d) => d > 0.05);
       expect(significantDiffs.length).toBeGreaterThanOrEqual(10);
+    });
+
+    it("全库 16 个 3D 页面 100% 接入 CameraFit 刚性门禁（杜绝任何三维页面无取景防护）", () => {
+      const featuresDir = path.resolve(__dirname, "../features");
+      const findThreeCanvasFiles = (dir: string): string[] => {
+        let results: string[] = [];
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            results = results.concat(findThreeCanvasFiles(fullPath));
+          } else if (entry.isFile() && entry.name.endsWith(".tsx")) {
+            const content = fs.readFileSync(fullPath, "utf8");
+            if (content.includes("<ThreeDCanvas")) {
+              results.push(fullPath);
+            }
+          }
+        }
+        return results;
+      };
+
+      const canvasFiles = findThreeCanvasFiles(featuresDir);
+      expect(canvasFiles.length).toBe(16);
+
+      for (const file of canvasFiles) {
+        const content = fs.readFileSync(file, "utf8");
+        const relPath = path.relative(featuresDir, file).replace(/\\/g, "/");
+        expect(
+          content.includes("<CameraFit") ||
+            content.includes("CameraFit bounds"),
+          `3D 页面 ${relPath} 必须挂载 <CameraFit> 自适应取景组件`,
+        ).toBe(true);
+      }
     });
   });
 });

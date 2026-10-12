@@ -12,7 +12,13 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig, SelectGridItem } from "@/components/UI";
-import { Legend3D, CameraRig, ModeSwitchOverlay3D } from "@/components/Math3D";
+import {
+  Legend3D,
+  CameraRig,
+  CameraFit,
+  ModeSwitchOverlay3D,
+} from "@/components/Math3D";
+import { getLinePlaneRelationBounds } from "@/math3d/legacy3dBounds";
 import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -45,7 +51,7 @@ export default function LinePlaneRelationAnimation() {
     step: 1,
   });
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
   const zHeight = params.zHeight ?? 2;
@@ -59,6 +65,17 @@ export default function LinePlaneRelationAnimation() {
   const pyramidB = params.pyramidB ?? 2.8;
   const pyramidH = params.pyramidH ?? 3.5;
   const step = params.step ?? 1;
+
+  const sceneBounds = useMemo(
+    () =>
+      getLinePlaneRelationBounds({
+        pyramidA,
+        pyramidB,
+        pyramidH,
+        zHeight,
+      }),
+    [pyramidA, pyramidB, pyramidH, zHeight],
+  );
 
   // 组装右屏看板数据
   const mathData = useMemo(
@@ -623,6 +640,7 @@ export default function LinePlaneRelationAnimation() {
               interactionMode === "orbit" || activeMode !== "gaokaoPyramid"
             }
           />
+          <CameraFit bounds={sceneBounds} token={viewToken} />
           <LinePlaneRelationScene
             activeMode={activeMode}
             subTheorem={subTheorem}

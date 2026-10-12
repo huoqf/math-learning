@@ -11,7 +11,13 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { CameraRig, Legend3D, ModeSwitchOverlay3D } from "@/components/Math3D";
+import {
+  CameraRig,
+  CameraFit,
+  Legend3D,
+  ModeSwitchOverlay3D,
+} from "@/components/Math3D";
+import { getSphereDerivationBounds } from "@/math3d/legacy3dBounds";
 import type { InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -42,8 +48,13 @@ export default function SphereDerivationAnimation() {
   const [autoSweep, setAutoSweep] = useState(false);
   const [autoPop, setAutoPop] = useState(false);
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
+
+  const sceneBounds = useMemo(
+    () => getSphereDerivationBounds({ radius: params.radius }),
+    [params.radius],
+  );
 
   const handleParamChange = (key: string, value: number) => {
     // 用户一旦手动拖动对应滑块，就视为「接管」，立即停掉对应自动动效
@@ -405,6 +416,7 @@ export default function SphereDerivationAnimation() {
             }
           >
             <CameraRig ref={controlsRef} />
+            <CameraFit bounds={sceneBounds} token={viewToken} />
             <ambientLight intensity={0.8} />
             <directionalLight position={[5, 10, 7]} intensity={1.2} />
             <directionalLight position={[-5, 5, -5]} intensity={0.4} />

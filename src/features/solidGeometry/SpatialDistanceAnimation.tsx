@@ -16,9 +16,11 @@ import type { ParamConfig } from "@/components/UI";
 import {
   Legend3D,
   CameraRig,
+  CameraFit,
   ThreeViewsPanel,
   ModeSwitchOverlay3D,
 } from "@/components/Math3D";
+import { getSolidDistanceBounds } from "@/math3d/legacy3dBounds";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidDistanceMeta } from "@/data/registries/solidGeometry";
@@ -68,7 +70,7 @@ export default function SpatialDistanceAnimation() {
   const [showParallelPlane, setShowParallelPlane] = useState(true);
   const [showCommonPerpAlways, setShowCommonPerpAlways] = useState(false);
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
   const a = params.a ?? 3;
@@ -76,6 +78,11 @@ export default function SpatialDistanceAnimation() {
   const c = params.c ?? 2;
   const lambda = params.lambda ?? 0.5;
   const mu = params.mu ?? 0.4;
+
+  const sceneBounds = useMemo(
+    () => getSolidDistanceBounds({ a, b, c }),
+    [a, b, c],
+  );
 
   // 纯数学模型解算
   const isSideEdgeModel = modelPreset === "sideEdge";
@@ -362,6 +369,7 @@ export default function SpatialDistanceAnimation() {
                   ref={controlsRef}
                   enabled={interactionMode === "orbit"}
                 />
+                <CameraFit bounds={sceneBounds} token={viewToken} />
 
                 {/* 共享长方体基座与顶点标号 */}
                 <CuboidBaseScene

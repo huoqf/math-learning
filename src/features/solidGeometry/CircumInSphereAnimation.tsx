@@ -12,7 +12,8 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig } from "@/components/Math3D";
+import { Legend3D, CameraRig, CameraFit } from "@/components/Math3D";
+import { getCircumInSphereBounds } from "@/math3d/legacy3dBounds";
 import { CircumInSphereScene } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -39,8 +40,13 @@ export default function CircumInSphereAnimation() {
     c: 2,
   });
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
+
+  const sceneBounds = useMemo(
+    () => getCircumInSphereBounds({ a: params.a, h: params.h }),
+    [params.a, params.h],
+  );
 
   // 1. 2×2 黄金预设定义（纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余公式）
   const presetsByShape: Record<
@@ -724,6 +730,7 @@ export default function CircumInSphereAnimation() {
           }
         >
           <CameraRig ref={controlsRef} />
+          <CameraFit bounds={sceneBounds} token={viewToken} />
           <CircumInSphereScene
             sphereType={sphereType}
             shape={shape}

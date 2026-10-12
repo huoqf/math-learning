@@ -14,9 +14,11 @@ import type { ParamConfig } from "@/components/UI";
 import {
   Legend3D,
   CameraRig,
+  CameraFit,
   ThreeViewsPanel,
   ModeSwitchOverlay3D,
 } from "@/components/Math3D";
+import { getParametricPointBounds } from "@/math3d/legacy3dBounds";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidParametricMeta } from "@/data/registries/solidGeometry";
@@ -59,7 +61,7 @@ export default function ParametricPointAnimation() {
     targetThetaDeg: 45,
   });
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
   const a = params.a ?? 4;
@@ -68,6 +70,11 @@ export default function ParametricPointAnimation() {
   const lambda = params.lambda ?? 0.5;
   const mu = params.mu ?? 0.5;
   const targetThetaDeg = params.targetThetaDeg ?? 45;
+
+  const sceneBounds = useMemo(
+    () => getParametricPointBounds({ a, b, c }),
+    [a, b, c],
+  );
 
   // 1. 各几何顶点坐标计算 (A 为坐标原点建立直角坐标系 A-xyz)
   // x 轴向前(底面长 a), y 轴向右(底面宽 b), z 轴向上(高 c)
@@ -600,6 +607,7 @@ export default function ParametricPointAnimation() {
                 ref={controlsRef}
                 enabled={interactionMode === "orbit"}
               />
+              <CameraFit bounds={sceneBounds} token={viewToken} />
 
               {/* 共享 3D 基底：长方体骨架 + 顶点标注 + 导轨 + 可拖拽动点 P */}
               <ParametricPointBaseScene

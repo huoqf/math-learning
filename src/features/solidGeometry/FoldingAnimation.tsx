@@ -13,7 +13,13 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig, ModeSwitchOverlay3D } from "@/components/Math3D";
+import {
+  Legend3D,
+  CameraRig,
+  CameraFit,
+  ModeSwitchOverlay3D,
+} from "@/components/Math3D";
+import { getFoldingBounds } from "@/math3d/legacy3dBounds";
 import type { InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -48,12 +54,14 @@ export default function FoldingAnimation() {
     alphaDeg: 90,
   });
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
   const a = params.a ?? 4;
   const b = params.b ?? 3;
   const h = params.h ?? 3;
+
+  const sceneBounds = useMemo(() => getFoldingBounds({ a, b }), [a, b]);
   // 当切换到 2D 展平状态时，视角和翻折角设为 0°
   const alphaDeg = foldState === "unfolded" ? 0 : (params.alphaDeg ?? 90);
 
@@ -406,6 +414,7 @@ export default function FoldingAnimation() {
               ref={controlsRef}
               enabled={interactionMode === "orbit"}
             />
+            <CameraFit bounds={sceneBounds} token={viewToken} />
 
             <FoldingModelScene3D
               model={model}

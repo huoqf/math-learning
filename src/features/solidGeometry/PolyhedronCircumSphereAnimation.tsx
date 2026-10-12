@@ -12,7 +12,8 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig } from "@/components/Math3D";
+import { Legend3D, CameraRig, CameraFit } from "@/components/Math3D";
+import { getPolyhedronCircumSphereBounds } from "@/math3d/legacy3dBounds";
 import { PolyhedronSphereScene } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -38,8 +39,19 @@ export default function PolyhedronCircumSphereAnimation() {
     h: 4,
   });
 
-  const { preset, cameraPosition, setCameraPreset, controlsRef } =
+  const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
+
+  const sceneBounds = useMemo(
+    () =>
+      getPolyhedronCircumSphereBounds({
+        a: params.a,
+        b: params.b,
+        c: params.c,
+        r: params.r,
+      }),
+    [params.a, params.b, params.c, params.r],
+  );
 
   // 1. 右屏看板数据
   const mathData = useMemo(
@@ -593,6 +605,7 @@ export default function PolyhedronCircumSphereAnimation() {
           }
         >
           <CameraRig ref={controlsRef} />
+          <CameraFit bounds={sceneBounds} token={viewToken} />
           <PolyhedronSphereScene
             modelType={modelType}
             params={params}
