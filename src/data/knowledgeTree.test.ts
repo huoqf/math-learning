@@ -22,6 +22,33 @@ describe("knowledgeTree 数据完整性", () => {
     expect(dupes).toEqual([]);
   });
 
+  it("所有声明了 route 的节点 route 全局唯一（杜绝影子节点）", () => {
+    const routes = knowledgeTree
+      .map((n) => n.route)
+      .filter((r): r is string => Boolean(r));
+    const dupes = routes.filter((r, i) => routes.indexOf(r) !== i);
+    expect(dupes).toEqual([]);
+  });
+
+  it("树侧高考元数据完整性门禁：所有已路由节点必须声明 gaokaoTopic / questionCategory / examWeight / examMethod", () => {
+    const fields = [
+      "gaokaoTopic",
+      "questionCategory",
+      "examWeight",
+      "examMethod",
+    ] as const;
+    const missing: string[] = [];
+    for (const node of knowledgeTree) {
+      if (!node.route) continue; // 未路由（规划中）节点不在完整性要求范围
+      for (const field of fields) {
+        if (node[field] === undefined) {
+          missing.push(`${node.id}.${field}`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
   it("所有节点的 prerequisites 引用的 id 都存在", () => {
     const ids = new Set(knowledgeTree.map((n) => n.id));
     const missing: string[] = [];
