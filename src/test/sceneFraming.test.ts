@@ -28,7 +28,15 @@ import { PRESET_POSITIONS } from "@/hooks/use3DViewport";
 import {
   LEGACY_3D_PAGE_BOUNDS,
   getFoldingBounds,
+  getFoldingExtremeBounds,
 } from "@/math3d/legacy3dBounds";
+import {
+  calculateRightTrapezoidFolding,
+  calculateRectangleDiagonalFolding,
+  calculateTriangleAltitudeFolding,
+  calculateRhombusFolding,
+  type FoldingModelKind,
+} from "@/math3d/folding";
 
 /**
  * 取景（framing）回归测试
@@ -530,32 +538,136 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
         "triangleAltitude",
         "rhombus",
       ] as const;
-      const testAngles = [0, 45, 90, 135, 180];
+      const testAngles = [1, 45, 90, 135, 179];
+      const foldStates = ["both", "folded", "unfolded"] as const;
 
       for (const model of models) {
         for (const alphaDeg of testAngles) {
-          const bounds = getFoldingBounds({
-            model,
-            a: 4,
-            b: 3,
-            h: 3,
-            alphaDeg,
-          });
+          for (const foldState of foldStates) {
+            const bounds = getFoldingBounds({
+              model,
+              a: 4,
+              b: 3,
+              h: 3,
+              alphaDeg,
+              foldState,
+            });
 
-          for (const aspect of ASPECTS) {
-            for (const preset of PRESETS) {
-              const { camPos, target } = fitCamera(
-                bounds,
-                PRESET_POSITIONS[preset],
-                aspect,
-              );
-              const { outside } = frameCheck(bounds, camPos, target, aspect);
-              expect(
-                outside,
-                `翻折模型 ${model} 在 alpha=${alphaDeg}°、${preset}@${aspect} 下仍有 ${outside} 角点出框`,
-              ).toBe(0);
+            for (const aspect of ASPECTS) {
+              for (const preset of PRESETS) {
+                const { camPos, target } = fitCamera(
+                  bounds,
+                  PRESET_POSITIONS[preset],
+                  aspect,
+                );
+                const { outside } = frameCheck(bounds, camPos, target, aspect);
+                expect(
+                  outside,
+                  `翻折模型 ${model} 在 foldState=${foldState}、alpha=${alphaDeg}°、${preset}@${aspect} 下仍有 ${outside} 角点出框`,
+                ).toBe(0);
+              }
             }
           }
+        }
+      }
+    });
+
+    it("翻折场景包围盒 100% 包含实际渲染图元顶点集（含展平底板轮廓参考点）", () => {
+      const models: FoldingModelKind[] = [
+        "trapezoid",
+        "rectangleDiagonal",
+        "triangleAltitude",
+        "rhombus",
+      ];
+      const foldStates = ["both", "folded", "unfolded"] as const;
+      const testAngles = [1, 45, 90, 135, 179];
+
+      for (const model of models) {
+        for (const alphaDeg of testAngles) {
+          for (const foldState of foldStates) {
+            const a = 4;
+            const b = 3;
+            const h = 3;
+            const bounds = getFoldingBounds({
+              model,
+              a,
+              b,
+              h,
+              alphaDeg,
+              foldState,
+            });
+
+            let res;
+            if (model === "trapezoid") {
+              res = calculateRightTrapezoidFolding(a, b, h, alphaDeg);
+            } else if (model === "rectangleDiagonal") {
+              res = calculateRectangleDiagonalFolding(a, b, alphaDeg);
+            } else if (model === "triangleAltitude") {
+              res = calculateTriangleAltitudeFolding(a, h, alphaDeg);
+            } else {
+              res = calculateRhombusFolding(a, alphaDeg);
+            }
+
+            const pointsToCheck =
+              foldState === "folded"
+                ? Object.values(res.points)
+                : Object.values(res.points).concat(
+                    Object.values(res.unfoldedPoints),
+                  );
+
+            for (const pt of pointsToCheck) {
+              const eps = 1e-5;
+              expect(
+                pt.x >= bounds.min.x - eps && pt.x <= bounds.max.x + eps,
+                `顶点 x=${pt.x} 超出包围盒 [${bounds.min.x}, ${bounds.max.x}] (model=${model}, state=${foldState}, alpha=${alphaDeg})`,
+              ).toBe(true);
+              expect(
+                pt.y >= bounds.min.y - eps && pt.y <= bounds.max.y + eps,
+                `顶点 y=${pt.y} 超出包围盒 [${bounds.min.y}, ${bounds.max.y}] (model=${model}, state=${foldState}, alpha=${alphaDeg})`,
+              ).toBe(true);
+              expect(
+                pt.z >= bounds.min.z - eps && pt.z <= bounds.max.z + eps,
+                `顶点 z=${pt.z} 超出包围盒 [${bounds.min.z}, ${bounds.max.z}] (model=${model}, state=${foldState}, alpha=${alphaDeg})`,
+              ).toBe(true);
+            }
+          }
+        }
+      }
+    });
+
+    it("翻折页面登记的 extremeBounds 纯函数派生并 100% 覆盖全模型极限参数包围盒", () => {
+      const page = LEGACY_3D_PAGE_BOUNDS.find(
+        (p) => p.pageId === "know-solid-folding",
+      );
+      expect(page).toBeDefined();
+      const extreme = page!.extremeBounds;
+      const derivedExtreme = getFoldingExtremeBounds();
+      expect(extreme).toEqual(derivedExtreme);
+
+      // 验证在极限参数组合下，任意单一形态的 bounds 都在 extremeBounds 内
+      const models: FoldingModelKind[] = [
+        "trapezoid",
+        "rectangleDiagonal",
+        "triangleAltitude",
+        "rhombus",
+      ];
+      for (const model of models) {
+        for (const alphaDeg of [1, 45, 90, 135, 179]) {
+          const bounds = getFoldingBounds({
+            model,
+            a: 5,
+            b: 1,
+            h: 5,
+            alphaDeg,
+            foldState: "both",
+          });
+          const eps = 1e-5;
+          expect(bounds.min.x >= extreme.min.x - eps).toBe(true);
+          expect(bounds.max.x <= extreme.max.x + eps).toBe(true);
+          expect(bounds.min.y >= extreme.min.y - eps).toBe(true);
+          expect(bounds.max.y <= extreme.max.y + eps).toBe(true);
+          expect(bounds.min.z >= extreme.min.z - eps).toBe(true);
+          expect(bounds.max.z <= extreme.max.z + eps).toBe(true);
         }
       }
     });

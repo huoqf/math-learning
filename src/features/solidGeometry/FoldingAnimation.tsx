@@ -65,8 +65,8 @@ export default function FoldingAnimation() {
   const alphaDeg = foldState === "unfolded" ? 0 : (params.alphaDeg ?? 90);
 
   const sceneBounds = useMemo(
-    () => getFoldingBounds({ model, a, b, h, alphaDeg }),
-    [model, a, b, h, alphaDeg],
+    () => getFoldingBounds({ model, a, b, h, alphaDeg, foldState }),
+    [model, a, b, h, alphaDeg, foldState],
   );
 
   // 1. 求解 3D 折叠数学模型（顶点坐标绝对精准无错位）

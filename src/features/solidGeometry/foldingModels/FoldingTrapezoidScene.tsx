@@ -8,7 +8,6 @@ import {
   FormulaLabel3D,
   AngleArc3D,
 } from "@/components/Math3D";
-import type { Vec3 } from "@/math3d/vector3";
 import type { FoldingSceneCommonProps } from "./types";
 
 /** 直角梯形沿腰线 CE 翻折模型场景 */
@@ -24,7 +23,7 @@ export function FoldingTrapezoidScene({
   foldingData,
 }: FoldingSceneCommonProps) {
   const { A, B, C, E, "D'": D_prime } = foldingData.points;
-  const D_0: Vec3 = { x: a, y: 0, z: 0 };
+  const D_0 = foldingData.unfoldedPoints.D_0;
   const showUnfolded = foldState === "both" || foldState === "unfolded";
 
   return (

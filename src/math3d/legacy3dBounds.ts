@@ -182,7 +182,8 @@ export function getSectionCuboidBounds(params?: {
 }
 
 /**
- * 模型感知的翻折场景包围盒（直接调用纯数学层 calculateXxxFolding 取顶点真实 AABB）
+ * 模型感知的翻折场景包围盒（直接调用纯数学层 calculateXxxFolding 取顶点真实 AABB，
+ * 并根据 foldState 自动感知是否需要容纳展平参考底板轮廓顶点）
  */
 export function getFoldingBounds(params?: {
   model?: FoldingModelKind;
@@ -190,35 +191,73 @@ export function getFoldingBounds(params?: {
   b?: number;
   h?: number;
   alphaDeg?: number;
+  foldState?: "folded" | "both" | "unfolded";
 }): Bounds3D {
   const model = params?.model ?? "trapezoid";
   const a = params?.a ?? 4;
   const b = params?.b ?? 3;
   const h = params?.h ?? 3;
   const alphaDeg = params?.alphaDeg ?? 90;
+  const foldState = params?.foldState ?? "both";
 
   let points: Vec3[] = [];
+  let unfolded: Vec3[] = [];
   switch (model) {
-    case "trapezoid":
-      points = Object.values(
-        calculateRightTrapezoidFolding(a, b, h, alphaDeg).points,
-      );
+    case "trapezoid": {
+      const res = calculateRightTrapezoidFolding(a, b, h, alphaDeg);
+      points = Object.values(res.points);
+      unfolded = Object.values(res.unfoldedPoints);
       break;
-    case "rectangleDiagonal":
-      points = Object.values(
-        calculateRectangleDiagonalFolding(a, b, alphaDeg).points,
-      );
+    }
+    case "rectangleDiagonal": {
+      const res = calculateRectangleDiagonalFolding(a, b, alphaDeg);
+      points = Object.values(res.points);
+      unfolded = Object.values(res.unfoldedPoints);
       break;
-    case "triangleAltitude":
-      points = Object.values(
-        calculateTriangleAltitudeFolding(a, h, alphaDeg).points,
-      );
+    }
+    case "triangleAltitude": {
+      const res = calculateTriangleAltitudeFolding(a, h, alphaDeg);
+      points = Object.values(res.points);
+      unfolded = Object.values(res.unfoldedPoints);
       break;
-    case "rhombus":
-      points = Object.values(calculateRhombusFolding(a, alphaDeg).points);
+    }
+    case "rhombus": {
+      const res = calculateRhombusFolding(a, alphaDeg);
+      points = Object.values(res.points);
+      unfolded = Object.values(res.unfoldedPoints);
       break;
+    }
   }
-  return boundsOf(points);
+
+  const allPoints = foldState === "folded" ? points : points.concat(unfolded);
+  return boundsOf(allPoints);
+}
+
+/**
+ * 遍历 4 种翻折模型在声明域全极端参数下的空间几何，派生求值生成真实的全局极限包围盒（零手写字面量）
+ */
+export function getFoldingExtremeBounds(): Bounds3D {
+  const models: FoldingModelKind[] = [
+    "trapezoid",
+    "rectangleDiagonal",
+    "triangleAltitude",
+    "rhombus",
+  ];
+  const allCorners: Vec3[] = [];
+  for (const m of models) {
+    for (const alpha of [1, 45, 90, 135, 179]) {
+      const b = getFoldingBounds({
+        model: m,
+        a: 5,
+        b: 1,
+        h: 5,
+        alphaDeg: alpha,
+        foldState: "both",
+      });
+      allCorners.push(b.min, b.max);
+    }
+  }
+  return boundsOf(allCorners);
 }
 
 export function getCircumInSphereBounds(params?: {
@@ -379,11 +418,7 @@ export const LEGACY_3D_PAGE_BOUNDS: Legacy3DPageBoundsCase[] = [
       h: 3,
       alphaDeg: 90,
     }),
-    extremeBounds: {
-      // 覆盖 4 个模型在极限参数 (a=5, b=1, h=5, alphaDeg=90/180) 下的真实并集 AABB
-      min: { x: -4.5, y: -2, z: 0 },
-      max: { x: 5, y: 5, z: 4.5 },
-    },
+    extremeBounds: getFoldingExtremeBounds(),
   },
   {
     pageId: "know-solid-ball",

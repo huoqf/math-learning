@@ -7,6 +7,8 @@ export interface FoldingResult {
   model: FoldingModelKind;
   /** 3D 关键顶点映射 */
   points: Record<string, Vec3>;
+  /** 展平状态下的参考顶点映射（例如 D_0, C_0, A_0 等，作为场景与包围盒同源依据） */
+  unfoldedPoints: Record<string, Vec3>;
   /** 二面角平面角垂线构造点：垂足 H，静态面内垂线端点 H_base，翻折面内垂线端点 H_fold */
   dihedralRays?: {
     vertex: Vec3;
@@ -93,9 +95,12 @@ export function calculateRightTrapezoidFolding(
     n2: { x: -Math.sin(alphaRad), y: 0, z: Math.cos(alphaRad) },
   };
 
+  const D_0: Vec3 = { x: safeA, y: 0, z: 0 };
+
   return {
     model: "trapezoid",
     points: { A, B, C, E, "D'": D_prime },
+    unfoldedPoints: { D_0 },
     dihedralRays,
     normals,
     movingSegmentLength,
@@ -222,6 +227,7 @@ export function calculateRectangleDiagonalFolding(
   return {
     model: "rectangleDiagonal",
     points: { A, B, C, D, HA, HC, "A'": A_prime },
+    unfoldedPoints: { A_0: A },
     dihedralRays,
     movingSegmentLength,
     movingSegmentName: "|A'C|",
@@ -271,9 +277,12 @@ export function calculateTriangleAltitudeFolding(
     foldRayEnd: C_prime,
   };
 
+  const C_0: Vec3 = { x: halfA, y: 0, z: 0 };
+
   return {
     model: "triangleAltitude",
     points: { A, B, D, "C'": C_prime },
+    unfoldedPoints: { C_0 },
     dihedralRays,
     movingSegmentLength,
     movingSegmentName: "|BC'|",
@@ -322,9 +331,12 @@ export function calculateRhombusFolding(
     foldRayEnd: A_prime,
   };
 
+  const A_0: Vec3 = { x: -hAO, y: 0, z: 0 };
+
   return {
     model: "rhombus",
     points: { O, B, C, D, "A'": A_prime },
+    unfoldedPoints: { A_0 },
     dihedralRays,
     movingSegmentLength,
     movingSegmentName: "|A'C|",

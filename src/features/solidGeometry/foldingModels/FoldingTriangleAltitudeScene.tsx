@@ -8,7 +8,6 @@ import {
   FormulaLabel3D,
   AngleArc3D,
 } from "@/components/Math3D";
-import type { Vec3 } from "@/math3d/vector3";
 import type { FoldingSceneCommonProps } from "./types";
 
 /** 等腰三角形沿高 AD 翻折模型场景 */
@@ -23,8 +22,8 @@ export function FoldingTriangleAltitudeScene({
   foldingData,
 }: FoldingSceneCommonProps) {
   const { A, B, D, "C'": C_prime } = foldingData.points;
+  const C_0 = foldingData.unfoldedPoints.C_0;
   const halfA = a / 2;
-  const C_0: Vec3 = { x: halfA, y: 0, z: 0 };
   const showUnfolded = foldState === "both" || foldState === "unfolded";
 
   return (

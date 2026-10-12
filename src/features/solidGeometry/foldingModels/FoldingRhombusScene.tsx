@@ -8,7 +8,6 @@ import {
   FormulaLabel3D,
   AngleArc3D,
 } from "@/components/Math3D";
-import type { Vec3 } from "@/math3d/vector3";
 import type { FoldingSceneCommonProps } from "./types";
 
 /** 菱形沿短对角线 BD 翻折模型场景 */
@@ -23,8 +22,8 @@ export function FoldingRhombusScene({
   foldingData,
 }: FoldingSceneCommonProps) {
   const { O, B, C, D, "A'": A_prime } = foldingData.points;
+  const A_0 = foldingData.unfoldedPoints.A_0;
   const hAO = (Math.sqrt(3) / 2) * a;
-  const A_0: Vec3 = { x: -hAO, y: 0, z: 0 };
   const showUnfolded = foldState === "both" || foldState === "unfolded";
 
   return (
