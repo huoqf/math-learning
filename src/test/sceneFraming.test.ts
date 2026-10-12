@@ -643,9 +643,10 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
       expect(page).toBeDefined();
       const extreme = page!.extremeBounds;
       const derivedExtreme = getFoldingExtremeBounds();
+      // 1. 防硬编码字面量回退门禁：确保台账登记必须同源绑定纯函数派生，杜绝手工字面量
       expect(extreme).toEqual(derivedExtreme);
 
-      // 验证在极限参数组合下，任意单一形态的 bounds 都在 extremeBounds 内
+      // 2. 数值有效性与真包含断言：极限包围盒必须真实包含参数网格极值点下的所有包围盒
       const models: FoldingModelKind[] = [
         "trapezoid",
         "rectangleDiagonal",
@@ -653,22 +654,28 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
         "rhombus",
       ];
       for (const model of models) {
-        for (const alphaDeg of [1, 45, 90, 135, 179]) {
-          const bounds = getFoldingBounds({
-            model,
-            a: 5,
-            b: 1,
-            h: 5,
-            alphaDeg,
-            foldState: "both",
-          });
-          const eps = 1e-5;
-          expect(bounds.min.x >= extreme.min.x - eps).toBe(true);
-          expect(bounds.max.x <= extreme.max.x + eps).toBe(true);
-          expect(bounds.min.y >= extreme.min.y - eps).toBe(true);
-          expect(bounds.max.y <= extreme.max.y + eps).toBe(true);
-          expect(bounds.min.z >= extreme.min.z - eps).toBe(true);
-          expect(bounds.max.z <= extreme.max.z + eps).toBe(true);
+        for (const a of [2, 5]) {
+          for (const b of [1, 4]) {
+            for (const h of [1, 4]) {
+              for (const alphaDeg of [1, 45, 90, 135, 179]) {
+                const bounds = getFoldingBounds({
+                  model,
+                  a,
+                  b,
+                  h,
+                  alphaDeg,
+                  foldState: "both",
+                });
+                const eps = 1e-5;
+                expect(bounds.min.x >= extreme.min.x - eps).toBe(true);
+                expect(bounds.max.x <= extreme.max.x + eps).toBe(true);
+                expect(bounds.min.y >= extreme.min.y - eps).toBe(true);
+                expect(bounds.max.y <= extreme.max.y + eps).toBe(true);
+                expect(bounds.min.z >= extreme.min.z - eps).toBe(true);
+                expect(bounds.max.z <= extreme.max.z + eps).toBe(true);
+              }
+            }
+          }
         }
       }
     });

@@ -22,6 +22,7 @@ import {
   calculateRhombusFolding,
   type FoldingModelKind,
 } from "./folding";
+import { solidFoldingMeta } from "@/data/registries/solidGeometry";
 
 // ============================================================================
 // 各页面运行时动态包围盒纯函数（纯数学层，零 DOM/React 依赖）
@@ -183,7 +184,12 @@ export function getSectionCuboidBounds(params?: {
 
 /**
  * 模型感知的翻折场景包围盒（直接调用纯数学层 calculateXxxFolding 取顶点真实 AABB，
- * 并根据 foldState 自动感知是否需要容纳展平参考底板轮廓顶点）
+ * 并根据 foldState 自动感知是否需要容纳展平参考底板轮廓顶点）。
+ *
+ * ## 取景职责边界（契约）
+ * - 核心数学主体：包围盒严格保证几何主体（动点/棱/面/底板轮廓）100% 纳入视口，无裁切；
+ * - 辅助装饰图层：空间基底、法向量箭头与二面角弧属于局部视觉标注，其固定长度由
+ *   CameraFit 的视口缓冲（默认 padding = 0.35）消化吸收，严禁反向耦合进几何包围盒。
  */
 export function getFoldingBounds(params?: {
   model?: FoldingModelKind;
@@ -234,7 +240,8 @@ export function getFoldingBounds(params?: {
 }
 
 /**
- * 遍历 4 种翻折模型在声明域全极端参数下的空间几何，派生求值生成真实的全局极限包围盒（零手写字面量）
+ * 遍历 4 种翻折模型在声明域 (solidFoldingMeta) 全极端参数下的空间几何，
+ * 动态派生求值生成真实的全局极限包围盒（零手写常数，单一事实源 SSOT）
  */
 export function getFoldingExtremeBounds(): Bounds3D {
   const models: FoldingModelKind[] = [
@@ -243,12 +250,22 @@ export function getFoldingExtremeBounds(): Bounds3D {
     "triangleAltitude",
     "rhombus",
   ];
+  const aMeta = solidFoldingMeta.find((m) => m.key === "a");
+  const bMeta = solidFoldingMeta.find((m) => m.key === "b");
+  const hMeta = solidFoldingMeta.find((m) => m.key === "h");
+  const alphaMeta = solidFoldingMeta.find((m) => m.key === "alphaDeg");
+
+  const aDomain = [aMeta?.min ?? 2, aMeta?.max ?? 5];
+  const bDomain = [bMeta?.min ?? 1, bMeta?.max ?? 4];
+  const hDomain = [hMeta?.min ?? 1, hMeta?.max ?? 4];
+  const alphaDomain = [alphaMeta?.min ?? 1, 45, 90, 135, alphaMeta?.max ?? 179];
+
   const allCorners: Vec3[] = [];
   for (const m of models) {
-    for (const a of [2, 5]) {
-      for (const b of [1, 4]) {
-        for (const h of [1, 5]) {
-          for (const alpha of [1, 45, 90, 135, 179]) {
+    for (const a of aDomain) {
+      for (const b of bDomain) {
+        for (const h of hDomain) {
+          for (const alpha of alphaDomain) {
             const bound = getFoldingBounds({
               model: m,
               a,
