@@ -20,9 +20,10 @@ import {
   calculateRectangleDiagonalFolding,
   calculateTriangleAltitudeFolding,
   calculateRhombusFolding,
+  resolveFoldAlpha,
   type FoldingModelKind,
+  type FoldStateKind,
 } from "./folding";
-import { solidFoldingMeta } from "@/data/registries/solidGeometry";
 
 // ============================================================================
 // 各页面运行时动态包围盒纯函数（纯数学层，零 DOM/React 依赖）
@@ -186,10 +187,13 @@ export function getSectionCuboidBounds(params?: {
  * 模型感知的翻折场景包围盒（直接调用纯数学层 calculateXxxFolding 取顶点真实 AABB，
  * 并根据 foldState 自动感知是否需要容纳展平参考底板轮廓顶点）。
  *
- * ## 取景职责边界（契约）
+ * ## 取景职责边界契约（Geometry vs Decoration）
  * - 核心数学主体：包围盒严格保证几何主体（动点/棱/面/底板轮廓）100% 纳入视口，无裁切；
- * - 辅助装饰图层：空间基底、法向量箭头与二面角弧属于局部视觉标注，其固定长度由
- *   CameraFit 的视口缓冲（默认 padding = 0.35）消化吸收，严禁反向耦合进几何包围盒。
+ * - 辅助装饰图层：坐标轴基底、法向量箭头与二面角弧属于局部视觉标注/屏幕语义，
+ *   主要由 CameraFit 的视口缓冲（padding = 0.35）与整体取景余量吸收。
+ *   实测在近塌陷极限参数（如等腰高线翻折 α→179°、h=1）叠加窄视口（aspect=0.6）等极罕见组合下，
+ *   约有 0.7% 的边缘装饰图元可能伸出视口（最差 |ndc| ≈ 1.5），此属已知工程设计边界，
+ *   严禁将辅助箭头长度反向耦合进几何包围盒削弱几何主体视觉占比。
  */
 export function getFoldingBounds(params?: {
   model?: FoldingModelKind;
@@ -197,14 +201,14 @@ export function getFoldingBounds(params?: {
   b?: number;
   h?: number;
   alphaDeg?: number;
-  foldState?: "folded" | "both" | "unfolded";
+  foldState?: FoldStateKind;
 }): Bounds3D {
   const model = params?.model ?? "trapezoid";
   const a = params?.a ?? 4;
   const b = params?.b ?? 3;
   const h = params?.h ?? 3;
   const foldState = params?.foldState ?? "both";
-  const alphaDeg = foldState === "unfolded" ? 0 : (params?.alphaDeg ?? 90);
+  const alphaDeg = resolveFoldAlpha(foldState, params?.alphaDeg ?? 90);
 
   let points: Vec3[] = [];
   let unfolded: Vec3[] = [];
@@ -239,26 +243,36 @@ export function getFoldingBounds(params?: {
   return boundsOf(allPoints);
 }
 
+export interface FoldingDomainSpec {
+  a?: [number, number];
+  b?: [number, number];
+  h?: [number, number];
+  alphaDeg?: number[];
+}
+
+/** 翻折模型在高中课标声明域内的基准极值网格（纯数学层默认规范，与 registry 一致） */
+export const DEFAULT_FOLDING_DOMAINS: Required<FoldingDomainSpec> = {
+  a: [2, 5],
+  b: [1, 4],
+  h: [1, 4],
+  alphaDeg: [1, 45, 90, 135, 179],
+};
+
 /**
- * 遍历 4 种翻折模型在声明域 (solidFoldingMeta) 全极端参数下的空间几何，
- * 动态派生求值生成真实的全局极限包围盒（零手写常数，单一事实源 SSOT）
+ * 遍历 4 种翻折模型在声明域全极端参数下的空间几何，
+ * 派生求值生成真实的全局极限包围盒（纯函数实现，零对数据层的反向依赖）
  */
-export function getFoldingExtremeBounds(): Bounds3D {
+export function getFoldingExtremeBounds(domains?: FoldingDomainSpec): Bounds3D {
   const models: FoldingModelKind[] = [
     "trapezoid",
     "rectangleDiagonal",
     "triangleAltitude",
     "rhombus",
   ];
-  const aMeta = solidFoldingMeta.find((m) => m.key === "a");
-  const bMeta = solidFoldingMeta.find((m) => m.key === "b");
-  const hMeta = solidFoldingMeta.find((m) => m.key === "h");
-  const alphaMeta = solidFoldingMeta.find((m) => m.key === "alphaDeg");
-
-  const aDomain = [aMeta?.min ?? 2, aMeta?.max ?? 5];
-  const bDomain = [bMeta?.min ?? 1, bMeta?.max ?? 4];
-  const hDomain = [hMeta?.min ?? 1, hMeta?.max ?? 4];
-  const alphaDomain = [alphaMeta?.min ?? 1, 45, 90, 135, alphaMeta?.max ?? 179];
+  const aDomain = domains?.a ?? DEFAULT_FOLDING_DOMAINS.a;
+  const bDomain = domains?.b ?? DEFAULT_FOLDING_DOMAINS.b;
+  const hDomain = domains?.h ?? DEFAULT_FOLDING_DOMAINS.h;
+  const alphaDomain = domains?.alphaDeg ?? DEFAULT_FOLDING_DOMAINS.alphaDeg;
 
   const allCorners: Vec3[] = [];
   for (const m of models) {

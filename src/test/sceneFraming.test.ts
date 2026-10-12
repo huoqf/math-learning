@@ -23,6 +23,7 @@ import {
 import {
   defaultParams as solidDefaultParams,
   polyhedronFeaturesMeta,
+  solidFoldingMeta,
 } from "@/data/registries/solidGeometry";
 import { PRESET_POSITIONS } from "@/hooks/use3DViewport";
 import {
@@ -35,6 +36,7 @@ import {
   calculateRectangleDiagonalFolding,
   calculateTriangleAltitudeFolding,
   calculateRhombusFolding,
+  resolveFoldAlpha,
   type FoldingModelKind,
 } from "@/math3d/folding";
 
@@ -597,7 +599,7 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
               foldState,
             });
 
-            const effectiveAlpha = foldState === "unfolded" ? 0 : alphaDeg;
+            const effectiveAlpha = resolveFoldAlpha(foldState, alphaDeg);
             let res;
             if (model === "trapezoid") {
               res = calculateRightTrapezoidFolding(a, b, h, effectiveAlpha);
@@ -646,7 +648,23 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
       // 1. 防硬编码字面量回退门禁：确保台账登记必须同源绑定纯函数派生，杜绝手工字面量
       expect(extreme).toEqual(derivedExtreme);
 
-      // 2. 数值有效性与真包含断言：极限包围盒必须真实包含参数网格极值点下的所有包围盒
+      // 2. 数值有效性与真包含断言：极限包围盒必须真实包含注册表声明域极值点下的所有包围盒
+      const aMeta = solidFoldingMeta.find((m) => m.key === "a");
+      const bMeta = solidFoldingMeta.find((m) => m.key === "b");
+      const hMeta = solidFoldingMeta.find((m) => m.key === "h");
+      const alphaMeta = solidFoldingMeta.find((m) => m.key === "alphaDeg");
+
+      const aDomain = [aMeta?.min ?? 2, aMeta?.max ?? 5];
+      const bDomain = [bMeta?.min ?? 1, bMeta?.max ?? 4];
+      const hDomain = [hMeta?.min ?? 1, hMeta?.max ?? 4];
+      const alphaDomain = [
+        alphaMeta?.min ?? 1,
+        45,
+        90,
+        135,
+        alphaMeta?.max ?? 179,
+      ];
+
       const models: FoldingModelKind[] = [
         "trapezoid",
         "rectangleDiagonal",
@@ -654,10 +672,10 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
         "rhombus",
       ];
       for (const model of models) {
-        for (const a of [2, 5]) {
-          for (const b of [1, 4]) {
-            for (const h of [1, 4]) {
-              for (const alphaDeg of [1, 45, 90, 135, 179]) {
+        for (const a of aDomain) {
+          for (const b of bDomain) {
+            for (const h of hDomain) {
+              for (const alphaDeg of alphaDomain) {
                 const bounds = getFoldingBounds({
                   model,
                   a,

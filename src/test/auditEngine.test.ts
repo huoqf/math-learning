@@ -956,5 +956,24 @@ const diagAxial = Math.sqrt(4 * r1 ** 2 + height ** 2);
       expect(issues.length).toBe(1);
       expect(issues[0].lineNum).toBe(4);
     });
+
+    it("数学层架构纯洁性守卫：严密拦截 src/math 与 src/math3d 反向依赖 @/data、@/features 或 @/components", () => {
+      const rule = (architectureRules as AuditRule[]).find(
+        (r: AuditRule) => r.id === "arch/pure-math-layer",
+      )!;
+
+      const reverseDepCode = `
+import { solidFoldingMeta } from "@/data/registries/solidGeometry";
+export function demoMath() { return solidFoldingMeta.length; }
+`;
+      const ctx = new FileContext(
+        "src/math3d/demoBounds.ts",
+        reverseDepCode,
+        process.cwd(),
+      );
+      const issues = rule.check(ctx);
+      expect(issues.length).toBe(1);
+      expect(issues[0].message).toContain("严禁反向依赖 @/data/");
+    });
   });
 });

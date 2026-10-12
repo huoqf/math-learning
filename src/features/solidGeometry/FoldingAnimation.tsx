@@ -32,6 +32,7 @@ import {
   calculateTriangleAltitudeFolding,
   calculateRhombusFolding,
   buildFoldingPolyhedron,
+  resolveFoldAlpha,
   type FoldingModelKind,
 } from "@/math3d/folding";
 import { projectPolyhedron } from "@/math3d/orthographicProjection";
@@ -61,8 +62,8 @@ export default function FoldingAnimation() {
   const b = params.b ?? 3;
   const h = params.h ?? 3;
 
-  // 当切换到 2D 展平状态时，视角和翻折角设为 0°
-  const alphaDeg = foldState === "unfolded" ? 0 : (params.alphaDeg ?? 90);
+  // 当切换到 2D 展平状态时，视角和翻折角通过统一纯函数 resolveFoldAlpha 设为 0°
+  const alphaDeg = resolveFoldAlpha(foldState, params.alphaDeg ?? 90);
 
   const sceneBounds = useMemo(
     () => getFoldingBounds({ model, a, b, h, alphaDeg, foldState }),

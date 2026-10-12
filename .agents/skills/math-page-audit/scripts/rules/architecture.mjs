@@ -178,10 +178,19 @@ export const architectureRules = [
       if (!ctx.isMathPureLayer) return [];
       const issues = [];
       ctx.cleanLines.forEach((line, idx) => {
-        if (/from\s+['"]react['"]/.test(line) || /from\s+['"]react-dom['"]/.test(line) || /\bdocument\./.test(line) || /\bwindow\./.test(line)) {
+        if (
+          /from\s+['"]react['"]/.test(line) ||
+          /from\s+['"]react-dom['"]/.test(line) ||
+          /\bdocument\./.test(line) ||
+          /\bwindow\./.test(line) ||
+          /from\s+['"]@\/data\//.test(line) ||
+          /from\s+['"]\.\.\/data\//.test(line) ||
+          /from\s+['"]@\/features\//.test(line) ||
+          /from\s+['"]@\/components\//.test(line)
+        ) {
           issues.push({
             lineNum: idx + 1,
-            message: 'src/math/ 与 src/math3d/ 必须为纯函数层，严禁导入 React 或直接访问 DOM / window 全局对象',
+            message: 'src/math/ 与 src/math3d/ 必须为纯函数底层，严禁反向依赖 @/data/、@/features/、@/components/ 或导入 React/DOM 全局对象',
             snippet: line.trim(),
           });
         }

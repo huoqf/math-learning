@@ -3,6 +3,19 @@ import type { Vec3 } from "./vector3";
 export type FoldingModelKind =
   "trapezoid" | "rectangleDiagonal" | "triangleAltitude" | "rhombus";
 
+export type FoldStateKind = "folded" | "both" | "unfolded";
+
+/**
+ * 根据折叠对比状态计算实际生效的翻折角 α
+ * 当 foldState 为 "unfolded"（2D 展平状态）时，α 严格归零；否则保留当前翻折角
+ */
+export function resolveFoldAlpha(
+  foldState: FoldStateKind | undefined,
+  alphaDeg: number,
+): number {
+  return foldState === "unfolded" ? 0 : alphaDeg;
+}
+
 export interface FoldingResult {
   model: FoldingModelKind;
   /** 3D 关键顶点映射 */
