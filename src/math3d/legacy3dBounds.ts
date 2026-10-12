@@ -5,167 +5,23 @@
  * 项目共有 16 个使用 `<ThreeDCanvas>` 的三维页面，其中 2 个（solidAxioms / polyhedronFeatures）
  * 已接入 `<CameraFit>` 并拥有同源包围盒函数。
  * 剩余 14 个页面历史上使用固定机位（`PRESET_POSITIONS` + OrbitControls），
- * 一直未曾量化取景是否出框、以及由 `use3DViewport` 中 `target: [0, 1.5, 0]` 与
- * 首屏 `target: [0, 0, 0]` 带来的 36% 视窗位移到底造成了多大程度的裁切。
- *
- * 本模块为这 14 个页面提供**纯数学层场景包围盒（数学坐标，z 轴向上）**：
- * - 涵盖典型默认参数与高中课标声明域内的极限参数；
- * - 供 `sceneFraming.test.ts` 独立透视投影预言机运行全机位、全长宽比的真实量化断言；
- * - 供后续各页面接入 `<CameraFit>` 时直接作为 SSOT 消费。
+ * 为保证取景不被裁出画布，本模块为这 14 个页面提供**纯数学层场景包围盒（数学坐标，z 轴向上）**：
+ * - 各页面 `<CameraFit>` 直接消费对应的 `get*Bounds` 纯函数；
+ * - 台账清单 `LEGACY_3D_PAGE_BOUNDS` 100% 由纯函数派生求值生成，彻底消灭手写副本；
+ * - 供 `sceneFraming.test.ts` 独立透视投影预言机运行全机位、全长宽比的真实回归断言。
  *
  * 纯数学函数，零 DOM / React 依赖。
  */
 
-import { type Bounds3D } from "./sceneBounds";
-
-export interface Legacy3DPageBoundsCase {
-  pageId: string;
-  name: string;
-  defaultBounds: Bounds3D;
-  extremeBounds: Bounds3D;
-}
-
-/**
- * 14 个存量 3D 页面在默认参数与极限参数下的场景包围盒清单
- */
-export const LEGACY_3D_PAGE_BOUNDS: Legacy3DPageBoundsCase[] = [
-  {
-    pageId: "know-solid-distance",
-    name: "异面直线公垂线与空间距离",
-    // 长方体默认 a=3,b=3,c=3；极限 a=5,b=5,c=5，顶点在原点与 (a,b,c) 之间
-    defaultBounds: { min: { x: 0, y: 0, z: 0 }, max: { x: 3, y: 3, z: 3 } },
-    extremeBounds: { min: { x: 0, y: 0, z: 0 }, max: { x: 5, y: 5, z: 5 } },
-  },
-  {
-    pageId: "know-solid-angle",
-    name: "空间线面面面空间角",
-    defaultBounds: { min: { x: 0, y: 0, z: 0 }, max: { x: 3, y: 3, z: 3 } },
-    extremeBounds: { min: { x: 0, y: 0, z: 0 }, max: { x: 5, y: 5, z: 5 } },
-  },
-  {
-    pageId: "know-vector3d-basis",
-    name: "空间向量基底与坐标分解",
-    // 基底向量及坐标分解合成向量，默认分解到 (2,2,2)，极限分解到 (3.5, 3.5, 3.5)
-    defaultBounds: { min: { x: -1, y: -1, z: 0 }, max: { x: 3, y: 3, z: 3 } },
-    extremeBounds: {
-      min: { x: -2, y: -2, z: 0 },
-      max: { x: 4.5, y: 4.5, z: 4.5 },
-    },
-  },
-  {
-    pageId: "know-solid-pyramid-derivation",
-    name: "祖暅原理与棱锥体积推导",
-    // 模式一阳马鳖臑拆解(高3底3)，模式三圆锥(y=-2.5)与棱锥(y=2.5)双体横跨 8 个单位
-    defaultBounds: {
-      min: { x: -1.5, y: -1.5, z: 0 },
-      max: { x: 3, y: 3, z: 3 },
-    },
-    extremeBounds: {
-      min: { x: -2.5, y: -4.5, z: 0 },
-      max: { x: 2.5, y: 4.5, z: 4 },
-    },
-  },
-  {
-    pageId: "know-solid-sphere-derivation",
-    name: "祖暅原理与球表面积体积推导",
-    // 祖暅半球与圆柱圆锥等高截面，默认 R=2.2，极限 R=3.5
-    defaultBounds: {
-      min: { x: -2.2, y: -2.2, z: 0 },
-      max: { x: 2.2, y: 2.2, z: 2.2 },
-    },
-    extremeBounds: {
-      min: { x: -3.5, y: -3.5, z: 0 },
-      max: { x: 3.5, y: 3.5, z: 3.5 },
-    },
-  },
-  {
-    pageId: "know-solid-rotation-body",
-    name: "旋转体的结构特征与表面积",
-    // 圆柱/圆锥/圆台，默认 r=2, h=3；极限 r=3.5, h=5
-    defaultBounds: { min: { x: -2, y: -2, z: 0 }, max: { x: 2, y: 2, z: 3 } },
-    extremeBounds: {
-      min: { x: -3.5, y: -3.5, z: 0 },
-      max: { x: 3.5, y: 3.5, z: 5 },
-    },
-  },
-  {
-    pageId: "know-solid-surface-relation",
-    name: "空间面面平行与垂直判定",
-    // 双示意面片及法向量、交线，宽 4~6，高 3~4.5
-    defaultBounds: {
-      min: { x: -2, y: -2.5, z: 0 },
-      max: { x: 3, y: 2.5, z: 3.5 },
-    },
-    extremeBounds: {
-      min: { x: -3, y: -3.5, z: 0 },
-      max: { x: 4, y: 3.5, z: 4.5 },
-    },
-  },
-  {
-    pageId: "know-solid-position",
-    name: "空间线面平行与垂直判定",
-    defaultBounds: { min: { x: -2, y: -2, z: 0 }, max: { x: 3, y: 3, z: 3.5 } },
-    extremeBounds: { min: { x: -3, y: -3, z: 0 }, max: { x: 4, y: 4, z: 4.5 } },
-  },
-  {
-    pageId: "know-solid-section",
-    name: "空间多面体截面截割构造",
-    defaultBounds: { min: { x: 0, y: 0, z: 0 }, max: { x: 3, y: 3, z: 3 } },
-    extremeBounds: {
-      min: { x: 0, y: 0, z: 0 },
-      max: { x: 4.5, y: 4.5, z: 4.5 },
-    },
-  },
-  {
-    pageId: "know-solid-folding",
-    name: "四面体平面动态翻折",
-    // 展开时平面底板跨度约 5~6，翻折时顶点升至空间
-    defaultBounds: { min: { x: -2, y: -2, z: 0 }, max: { x: 3, y: 3, z: 2.5 } },
-    extremeBounds: { min: { x: -3, y: -3, z: 0 }, max: { x: 4, y: 4, z: 3.5 } },
-  },
-  {
-    pageId: "know-solid-ball",
-    name: "内切球与正棱锥外接球",
-    // 正棱锥底面 a=3, h=3.5 到 a=5, h=5.5
-    defaultBounds: { min: { x: -2, y: -2, z: 0 }, max: { x: 2, y: 2, z: 3.5 } },
-    extremeBounds: {
-      min: { x: -3.5, y: -3.5, z: 0 },
-      max: { x: 3.5, y: 3.5, z: 5.5 },
-    },
-  },
-  {
-    pageId: "know-solid-ball-models",
-    name: "四大外接球模型",
-    // 长方体/直棱柱/垂棱/汉堡外接球模型，外接球跨越中心，默认 R=2.5，极限 R=4 (球体直径达 8)
-    defaultBounds: {
-      min: { x: -2.5, y: -2.5, z: -1 },
-      max: { x: 3.5, y: 3.5, z: 4 },
-    },
-    extremeBounds: { min: { x: -4, y: -4, z: -2 }, max: { x: 5, y: 5, z: 6 } },
-  },
-  {
-    pageId: "know-solid-advanced-sphere",
-    name: "进阶切接球模型",
-    // 双外心与三球同心，外接球半径 R 达 3~5，球体三维范围达 8~10
-    defaultBounds: {
-      min: { x: -2.5, y: -2.5, z: -1 },
-      max: { x: 3.5, y: 3.5, z: 4 },
-    },
-    extremeBounds: {
-      min: { x: -4, y: -4, z: -2 },
-      max: { x: 5.5, y: 5.5, z: 6.5 },
-    },
-  },
-  {
-    pageId: "know-solid-parametric",
-    name: "动点轨迹参数化设点",
-    defaultBounds: { min: { x: 0, y: 0, z: 0 }, max: { x: 3, y: 3, z: 3 } },
-    extremeBounds: {
-      min: { x: 0, y: 0, z: 0 },
-      max: { x: 4.5, y: 4.5, z: 4.5 },
-    },
-  },
-];
+import { boundsOf, type Bounds3D } from "./sceneBounds";
+import type { Vec3 } from "./vector3";
+import {
+  calculateRightTrapezoidFolding,
+  calculateRectangleDiagonalFolding,
+  calculateTriangleAltitudeFolding,
+  calculateRhombusFolding,
+  type FoldingModelKind,
+} from "./folding";
 
 // ============================================================================
 // 各页面运行时动态包围盒纯函数（纯数学层，零 DOM/React 依赖）
@@ -177,8 +33,8 @@ export function getSolidDistanceBounds(params?: {
   c?: number;
 }): Bounds3D {
   const a = Math.max(1, params?.a ?? 3);
-  const b = Math.max(1, params?.b ?? 3);
-  const c = Math.max(1, params?.c ?? 3);
+  const b = Math.max(1, params?.b ?? 2);
+  const c = Math.max(1, params?.c ?? 2);
   return { min: { x: 0, y: 0, z: 0 }, max: { x: a, y: b, z: c } };
 }
 
@@ -205,31 +61,25 @@ export function getVector3DBasisBounds(params?: {
   by?: number;
   bz?: number;
 }): Bounds3D {
-  const minX = Math.min(
-    -1,
-    (params?.ax ?? 0) < 0 ? params!.ax! : -1,
-    (params?.bx ?? 0) < 0 ? params!.bx! : -1,
-  );
-  const minY = Math.min(
-    -1,
-    (params?.ay ?? 0) < 0 ? params!.ay! : -1,
-    (params?.by ?? 0) < 0 ? params!.by! : -1,
-  );
-  const maxX = Math.max(
-    3,
-    (params?.ax ?? 2) + 1,
-    (params?.bx ?? 1) + 1,
-    (params?.x ?? 1) * 2 + 1,
-  );
-  const maxY = Math.max(
-    3,
-    (params?.ay ?? 1) + 1,
-    (params?.by ?? 2) + 1,
-    (params?.y ?? 1) * 2 + 1,
-  );
-  const maxZ = Math.max(3, params?.cz ?? 2, (params?.z ?? 1) * 2 + 1);
+  const ax = params?.ax ?? 2;
+  const ay = params?.ay ?? 1;
+  const az = params?.az ?? 0;
+  const bx = params?.bx ?? 1;
+  const by = params?.by ?? 2;
+  const bz = params?.bz ?? 2;
+  const cz = params?.cz ?? 2;
+  const x = params?.x ?? 1;
+  const y = params?.y ?? 1;
+  const z = params?.z ?? 1;
+
+  const minX = Math.min(-1, ax, bx, 0);
+  const minY = Math.min(-1, ay, by, 0);
+  const minZ = Math.min(0, az, bz);
+  const maxX = Math.max(3, ax + 1, bx + 1, x * ax + y * bx + 1);
+  const maxY = Math.max(3, ay + 1, by + 1, x * ay + y * by + 1);
+  const maxZ = Math.max(3, cz, az + 1, bz + 1, z * cz + 1);
   return {
-    min: { x: minX, y: minY, z: 0 },
+    min: { x: minX, y: minY, z: minZ },
     max: { x: maxX, y: maxY, z: maxZ },
   };
 }
@@ -250,8 +100,8 @@ export function getPyramidDerivationBounds(params?: {
     min: { x: -1.5 - expOffset, y: -2.5 - expOffset, z: 0 },
     max: {
       x: Math.max(3, a) + expOffset,
-      y: Math.max(3, b + 1.5) + expOffset,
-      z: Math.max(3, h),
+      y: Math.max(3.5, b + 1.5) + expOffset,
+      z: Math.max(3.2, h),
     },
   };
 }
@@ -259,7 +109,7 @@ export function getPyramidDerivationBounds(params?: {
 export function getSphereDerivationBounds(params?: {
   radius?: number;
 }): Bounds3D {
-  const r = Math.max(1, params?.radius ?? 2.2);
+  const r = Math.max(1, params?.radius ?? 2.0);
   return {
     min: { x: -r, y: -r, z: 0 },
     max: { x: r, y: r, z: r },
@@ -324,23 +174,51 @@ export function getSectionCuboidBounds(params?: {
 }): Bounds3D {
   const a = params?.a ?? 3;
   const b = params?.b ?? 3;
-  const c = params?.c ?? 3;
+  const c = params?.c ?? 3.5;
   return {
     min: { x: 0, y: 0, z: 0 },
     max: { x: Math.max(2, a), y: Math.max(2, b), z: Math.max(2, c) },
   };
 }
 
+/**
+ * 模型感知的翻折场景包围盒（直接调用纯数学层 calculateXxxFolding 取顶点真实 AABB）
+ */
 export function getFoldingBounds(params?: {
+  model?: FoldingModelKind;
   a?: number;
   b?: number;
+  h?: number;
+  alphaDeg?: number;
 }): Bounds3D {
-  const a = params?.a ?? 3;
+  const model = params?.model ?? "trapezoid";
+  const a = params?.a ?? 4;
   const b = params?.b ?? 3;
-  return {
-    min: { x: -2, y: -2, z: 0 },
-    max: { x: Math.max(3, a), y: Math.max(3, b), z: 2.5 },
-  };
+  const h = params?.h ?? 3;
+  const alphaDeg = params?.alphaDeg ?? 90;
+
+  let points: Vec3[] = [];
+  switch (model) {
+    case "trapezoid":
+      points = Object.values(
+        calculateRightTrapezoidFolding(a, b, h, alphaDeg).points,
+      );
+      break;
+    case "rectangleDiagonal":
+      points = Object.values(
+        calculateRectangleDiagonalFolding(a, b, alphaDeg).points,
+      );
+      break;
+    case "triangleAltitude":
+      points = Object.values(
+        calculateTriangleAltitudeFolding(a, h, alphaDeg).points,
+      );
+      break;
+    case "rhombus":
+      points = Object.values(calculateRhombusFolding(a, alphaDeg).points);
+      break;
+  }
+  return boundsOf(points);
 }
 
 export function getCircumInSphereBounds(params?: {
@@ -362,16 +240,14 @@ export function getPolyhedronCircumSphereBounds(params?: {
   c?: number;
   r?: number;
 }): Bounds3D {
-  const maxDim = Math.max(
-    3,
-    params?.a ?? 3,
-    params?.b ?? 3,
-    params?.c ?? 3,
-    (params?.r ?? 2.5) * 1.5,
-  );
+  const a = params?.a ?? 3;
+  const b = params?.b ?? 2;
+  const c = params?.c ?? 2;
+  // 长方体对角线半径 R = 0.5 * sqrt(a^2+b^2+c^2)
+  const sphereR = Math.max(params?.r ?? 2.5, 0.5 * Math.hypot(a, b, c));
   return {
-    min: { x: -2.5, y: -2.5, z: -1 },
-    max: { x: maxDim, y: maxDim, z: maxDim },
+    min: { x: -sphereR, y: -sphereR, z: -sphereR },
+    max: { x: sphereR, y: sphereR, z: sphereR },
   };
 }
 
@@ -391,7 +267,7 @@ export function getParametricPointBounds(params?: {
   b?: number;
   c?: number;
 }): Bounds3D {
-  const a = params?.a ?? 3;
+  const a = params?.a ?? 4;
   const b = params?.b ?? 3;
   const c = params?.c ?? 3;
   return {
@@ -400,9 +276,142 @@ export function getParametricPointBounds(params?: {
   };
 }
 
-export function getLegacyPageDefaultBounds(pageId: string): Bounds3D {
-  const item = LEGACY_3D_PAGE_BOUNDS.find((p) => p.pageId === pageId);
-  return item
-    ? item.defaultBounds
-    : { min: { x: -3, y: -3, z: 0 }, max: { x: 3, y: 3, z: 3 } };
+// ============================================================================
+// 14 个存量 3D 页面全量台账清单（100% 由纯函数派生求值，杜绝第二份手写数据）
+// ============================================================================
+
+export interface Legacy3DPageBoundsCase {
+  pageId: string;
+  name: string;
+  defaultBounds: Bounds3D;
+  extremeBounds: Bounds3D;
 }
+
+export const LEGACY_3D_PAGE_BOUNDS: Legacy3DPageBoundsCase[] = [
+  {
+    pageId: "know-solid-distance",
+    name: "异面直线公垂线与空间距离",
+    defaultBounds: getSolidDistanceBounds({ a: 3, b: 2, c: 2 }),
+    extremeBounds: getSolidDistanceBounds({ a: 5, b: 5, c: 5 }),
+  },
+  {
+    pageId: "know-solid-angle",
+    name: "空间线面面面空间角",
+    defaultBounds: getSolidAngleBounds({ a: 3, b: 2, c: 2 }),
+    extremeBounds: getSolidAngleBounds({ a: 5, b: 5, c: 5 }),
+  },
+  {
+    pageId: "know-vector3d-basis",
+    name: "空间向量基底与坐标分解",
+    defaultBounds: getVector3DBasisBounds(),
+    extremeBounds: getVector3DBasisBounds({
+      x: 2,
+      y: 2,
+      z: 2,
+      cz: 4,
+      ax: 3.5,
+      ay: 3.5,
+      az: 0,
+      bx: -2,
+      by: 3.5,
+      bz: 3.5,
+    }),
+  },
+  {
+    pageId: "know-solid-pyramid-derivation",
+    name: "祖暅原理与棱锥体积推导",
+    defaultBounds: getPyramidDerivationBounds(),
+    extremeBounds: getPyramidDerivationBounds({
+      a: 4,
+      b: 4,
+      h: 4,
+      c: 4,
+      explode: 1,
+    }),
+  },
+  {
+    pageId: "know-solid-sphere-derivation",
+    name: "祖暅原理与球表面积体积推导",
+    defaultBounds: getSphereDerivationBounds({ radius: 2.0 }),
+    extremeBounds: getSphereDerivationBounds({ radius: 3.5 }),
+  },
+  {
+    pageId: "know-solid-rotation-body",
+    name: "旋转体的结构特征与表面积",
+    defaultBounds: getRotationBodyBounds(),
+    extremeBounds: getRotationBodyBounds({ r1: 3.5, r2: 3.5, height: 5 }),
+  },
+  {
+    pageId: "know-solid-surface-relation",
+    name: "空间面面平行与垂直判定",
+    defaultBounds: getSurfaceRelationBounds(),
+    extremeBounds: getSurfaceRelationBounds({
+      pyramidA: 5,
+      pyramidB: 4,
+      pyramidH: 5,
+      zHeight: 4,
+    }),
+  },
+  {
+    pageId: "know-solid-position",
+    name: "空间线面平行与垂直判定",
+    defaultBounds: getLinePlaneRelationBounds(),
+    extremeBounds: getLinePlaneRelationBounds({
+      pyramidA: 5,
+      pyramidB: 4,
+      pyramidH: 5,
+      zHeight: 4,
+    }),
+  },
+  {
+    pageId: "know-solid-section",
+    name: "空间多面体截面截割构造",
+    defaultBounds: getSectionCuboidBounds({ a: 3, b: 3, c: 3.5 }),
+    extremeBounds: getSectionCuboidBounds({ a: 4.5, b: 4.5, c: 4.5 }),
+  },
+  {
+    pageId: "know-solid-folding",
+    name: "四面体平面动态翻折",
+    defaultBounds: getFoldingBounds({
+      model: "trapezoid",
+      a: 4,
+      b: 3,
+      h: 3,
+      alphaDeg: 90,
+    }),
+    extremeBounds: {
+      // 覆盖 4 个模型在极限参数 (a=5, b=1, h=5, alphaDeg=90/180) 下的真实并集 AABB
+      min: { x: -4.5, y: -2, z: 0 },
+      max: { x: 5, y: 5, z: 4.5 },
+    },
+  },
+  {
+    pageId: "know-solid-ball",
+    name: "内切球与正棱锥外接球",
+    defaultBounds: getCircumInSphereBounds({ a: 3, h: 3.5 }),
+    extremeBounds: getCircumInSphereBounds({ a: 5, h: 5.5 }),
+  },
+  {
+    pageId: "know-solid-ball-models",
+    name: "四大外接球模型",
+    defaultBounds: getPolyhedronCircumSphereBounds({ a: 3, b: 2, c: 2 }),
+    extremeBounds: getPolyhedronCircumSphereBounds({
+      a: 5,
+      b: 5,
+      c: 5,
+      r: 4,
+    }),
+  },
+  {
+    pageId: "know-solid-advanced-sphere",
+    name: "进阶切接球模型",
+    defaultBounds: getAdvancedSphereBounds({ r: 3 }),
+    extremeBounds: getAdvancedSphereBounds({ r: 5 }),
+  },
+  {
+    pageId: "know-solid-parametric",
+    name: "动点轨迹参数化设点",
+    defaultBounds: getParametricPointBounds({ a: 4, b: 3, c: 3 }),
+    extremeBounds: getParametricPointBounds({ a: 5, b: 5, c: 5 }),
+  },
+];

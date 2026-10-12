@@ -25,7 +25,10 @@ import {
   polyhedronFeaturesMeta,
 } from "@/data/registries/solidGeometry";
 import { PRESET_POSITIONS } from "@/hooks/use3DViewport";
-import { LEGACY_3D_PAGE_BOUNDS } from "@/math3d/legacy3dBounds";
+import {
+  LEGACY_3D_PAGE_BOUNDS,
+  getFoldingBounds,
+} from "@/math3d/legacy3dBounds";
 
 /**
  * 取景（framing）回归测试
@@ -512,11 +515,48 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
       for (const file of canvasFiles) {
         const content = fs.readFileSync(file, "utf8");
         const relPath = path.relative(featuresDir, file).replace(/\\/g, "/");
+        // 门禁不仅匹配组件名，还必须真实绑定了 bounds 属性，杜绝注释糊弄或空标签
         expect(
-          content.includes("<CameraFit") ||
-            content.includes("CameraFit bounds"),
-          `3D 页面 ${relPath} 必须挂载 <CameraFit> 自适应取景组件`,
+          /<CameraFit\s+[^>]*bounds=\{/.test(content),
+          `3D 页面 ${relPath} 必须挂载 <CameraFit bounds={...}> 自适应取景组件`,
         ).toBe(true);
+      }
+    });
+
+    it("翻折页面 4 种折叠模型在全翻折角与全机位下经 CameraFit 适配后 100% 纳入画布（0 几何出框）", () => {
+      const models = [
+        "trapezoid",
+        "rectangleDiagonal",
+        "triangleAltitude",
+        "rhombus",
+      ] as const;
+      const testAngles = [0, 45, 90, 135, 180];
+
+      for (const model of models) {
+        for (const alphaDeg of testAngles) {
+          const bounds = getFoldingBounds({
+            model,
+            a: 4,
+            b: 3,
+            h: 3,
+            alphaDeg,
+          });
+
+          for (const aspect of ASPECTS) {
+            for (const preset of PRESETS) {
+              const { camPos, target } = fitCamera(
+                bounds,
+                PRESET_POSITIONS[preset],
+                aspect,
+              );
+              const { outside } = frameCheck(bounds, camPos, target, aspect);
+              expect(
+                outside,
+                `翻折模型 ${model} 在 alpha=${alphaDeg}°、${preset}@${aspect} 下仍有 ${outside} 角点出框`,
+              ).toBe(0);
+            }
+          }
+        }
       }
     });
   });

@@ -61,9 +61,13 @@ export default function FoldingAnimation() {
   const b = params.b ?? 3;
   const h = params.h ?? 3;
 
-  const sceneBounds = useMemo(() => getFoldingBounds({ a, b }), [a, b]);
   // 当切换到 2D 展平状态时，视角和翻折角设为 0°
   const alphaDeg = foldState === "unfolded" ? 0 : (params.alphaDeg ?? 90);
+
+  const sceneBounds = useMemo(
+    () => getFoldingBounds({ model, a, b, h, alphaDeg }),
+    [model, a, b, h, alphaDeg],
+  );
 
   // 1. 求解 3D 折叠数学模型（顶点坐标绝对精准无错位）
   const foldingData = useMemo(() => {
