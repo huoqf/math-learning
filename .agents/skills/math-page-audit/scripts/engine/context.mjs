@@ -20,11 +20,12 @@ export class FileContext {
     this.isTsx = filePath.endsWith('.tsx');
     this.isTs = filePath.endsWith('.ts');
     this.isTest = filePath.includes('test') || filePath.includes('spec');
+    const normalizedPath = (this.relPath || filePath).replace(/\\/g, '/');
     this.isMathPureLayer =
-      (filePath.includes('src/math') ||
-        filePath.includes('src\\math') ||
-        filePath.includes('src/math3d') ||
-        filePath.includes('src\\math3d')) &&
+      (normalizedPath.startsWith('src/math/') ||
+        normalizedPath.startsWith('src/math3d/') ||
+        normalizedPath.includes('/src/math/') ||
+        normalizedPath.includes('/src/math3d/')) &&
       !this.isTest;
     this.isAnimationPage =
       (filePath.endsWith('Animation.tsx') || filePath.endsWith('Page.tsx')) &&

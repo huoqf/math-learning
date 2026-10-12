@@ -12,11 +12,11 @@ import {
 import type { LabelItem } from "@/utils/labelOverlap";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS } from "@/theme";
+import { calculatePowerFunction } from "@/math/function";
 import {
-  calculatePowerFunction,
+  paramMeta,
   STANDARD_POWER_FUNCTIONS,
-} from "@/math/function";
-import { paramMeta } from "@/data/registries/funcExpLog";
+} from "@/data/registries/funcExpLog";
 import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
 
 export interface PowerSceneProps {

@@ -957,31 +957,62 @@ const diagAxial = Math.sqrt(4 * r1 ** 2 + height ** 2);
       expect(issues[0].lineNum).toBe(4);
     });
 
-    it("数学层架构纯洁性守卫：严密拦截 src/math 与 src/math3d 反向依赖 @/data、@/features 或 @/components", () => {
+    it("数学层架构纯洁性守卫：严密拦截 src/math 与 src/math3d 反向依赖 @/data、@/features、@/components、@/hooks、@/theme 或 React/DOM", () => {
       const rule = (architectureRules as AuditRule[]).find(
         (r: AuditRule) => r.id === "arch/pure-math-layer",
       )!;
 
-      const testCases = [
+      const forbiddenCases = [
         'import { solidFoldingMeta } from "@/data/registries/solidGeometry";',
         'import { something } from "@/features/solidGeometry/types";',
         'import { Button } from "@/components/UI/Button";',
+        'import { use3DViewport } from "@/hooks";',
+        'import { MATH_COLORS } from "@/theme";',
+        'import "@/theme";',
         'import { solidFoldingMeta } from "../data/registries/solidGeometry";',
         'import { solidFoldingMeta } from "../../data/registries/solidGeometry";',
         'import { something } from "../features/solidGeometry/types";',
         'import { Button } from "../../components/UI/Button";',
+        'import React from "react";',
+        'import { useState } from "react";',
+        'const mod = import("@/data/registries/solidGeometry");',
+        'import {\n  multilineItem\n} from "@/data/registries/solidGeometry";',
+        "const w = window.innerWidth;",
+        'const el = document.getElementById("canvas");',
       ];
 
-      for (const line of testCases) {
-        const code = `\n${line}\nexport function demoMath() { return 1; }\n`;
+      for (const snippet of forbiddenCases) {
+        const code = `\n${snippet}\nexport function demoMath() { return 1; }\n`;
         const ctx = new FileContext(
           "src/math3d/demoBounds.ts",
           code,
           process.cwd(),
         );
         const issues = rule.check(ctx);
-        expect(issues.length, `应拦截反向依赖语句: ${line}`).toBe(1);
+        expect(
+          issues.length,
+          `应拦截违规写法: ${snippet}`,
+        ).toBeGreaterThanOrEqual(1);
         expect(issues[0].message).toContain("必须为纯函数底层");
+      }
+
+      // 验证合法数学纯依赖不被误伤（放行）
+      const allowedCases = [
+        'import { Vec3 } from "./vector3";',
+        'import { formatMathNumber } from "@/utils/mathFormat";',
+        'import { solveLinear } from "@/math/lineEquation";',
+        'export type { Vec3 } from "./vector3";',
+      ];
+
+      for (const snippet of allowedCases) {
+        const code = `\n${snippet}\nexport function demoMath() { return 1; }\n`;
+        const ctx = new FileContext(
+          "src/math3d/demoBounds.ts",
+          code,
+          process.cwd(),
+        );
+        const issues = rule.check(ctx);
+        expect(issues.length, `合法纯数学依赖不应被误伤: ${snippet}`).toBe(0);
       }
     });
   });

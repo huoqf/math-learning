@@ -17,8 +17,11 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { PowerScene } from "./components/PowerScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/funcExpLog";
-import { STANDARD_POWER_FUNCTIONS } from "@/math/function";
+import {
+  defaultParams,
+  paramMeta,
+  STANDARD_POWER_FUNCTIONS,
+} from "@/data/registries/funcExpLog";
 
 export function PowerPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));

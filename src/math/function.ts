@@ -3,8 +3,6 @@
  * 零 React/DOM/window 依赖，符合数学层纯净规则
  */
 
-import { MATH_COLORS } from "@/theme";
-
 export interface FunctionPoint {
   x: number;
   y: number;
@@ -407,17 +405,6 @@ export function evalPeriodicityModel(
   };
 }
 
-export interface StandardPowerInfo {
-  key: string;
-  alpha: number;
-  latex: string;
-  name: string;
-  labelUnicode: string;
-  domain: string;
-  parity: string;
-  colorToken: string;
-}
-
 export interface PowerFunctionResult {
   alpha: number;
   x0: number;
@@ -548,62 +535,6 @@ export function calculateExpLog(a: number, x0: number): ExpLogResult {
     expTangentEquationLatex,
   };
 }
-
-/**
- * 课标 5 大基准幂函数元数据
- */
-export const STANDARD_POWER_FUNCTIONS: StandardPowerInfo[] = [
-  {
-    key: "power-1",
-    alpha: 1,
-    latex: "y = x",
-    name: "正比例 (α = 1)",
-    labelUnicode: "y = x",
-    domain: "$x \\in \\mathbb{R}$",
-    parity: "奇函数",
-    colorToken: MATH_COLORS.function,
-  },
-  {
-    key: "power-2",
-    alpha: 2,
-    latex: "y = x^2",
-    name: "二次抛物线 (α = 2)",
-    labelUnicode: "y = x²",
-    domain: "$x \\in \\mathbb{R}$",
-    parity: "偶函数",
-    colorToken: MATH_COLORS.setIntersection,
-  },
-  {
-    key: "power-3",
-    alpha: 3,
-    latex: "y = x^3",
-    name: "三次曲线 (α = 3)",
-    labelUnicode: "y = x³",
-    domain: "$x \\in \\mathbb{R}$",
-    parity: "奇函数",
-    colorToken: MATH_COLORS.functionSecondary,
-  },
-  {
-    key: "power-half",
-    alpha: 0.5,
-    latex: "y = \\sqrt{x}",
-    name: "平方根 (α = 1/2)",
-    labelUnicode: "y = √x",
-    domain: "$[0, +\\infty)$",
-    parity: "非奇非偶",
-    colorToken: MATH_COLORS.paramSecondary,
-  },
-  {
-    key: "power-neg1",
-    alpha: -1,
-    latex: "y = \\frac{1}{x}",
-    name: "反比例 (α = -1)",
-    labelUnicode: "y = 1/x",
-    domain: "$\\{x \\in \\mathbb{R} \\mid x \\neq 0\\}$",
-    parity: "奇函数",
-    colorToken: MATH_COLORS.functionTransformed,
-  },
-];
 
 /**
  * 幂函数 y = x^α 纯数学计算

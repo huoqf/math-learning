@@ -177,22 +177,56 @@ export const architectureRules = [
     check(ctx) {
       if (!ctx.isMathPureLayer) return [];
       const issues = [];
+
+      // 1. 扫描所有静态/动态 import 与 export 说明符（支持跨行、无 from、动态 import）
+      const SPECIFIER_RE =
+        /\b(?:import|export)\b[\s\S]*?\bfrom\s*['"]([^'"]+)['"]|\bimport\s+['"]([^'"]+)['"]|\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)|\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+
+      let match;
+      while ((match = SPECIFIER_RE.exec(ctx.cleanContent)) !== null) {
+        const specifier = match[1] || match[2] || match[3] || match[4];
+        if (!specifier) continue;
+
+        const isForbiddenReact =
+          specifier === 'react' ||
+          specifier.startsWith('react/') ||
+          specifier.startsWith('react-dom') ||
+          specifier.startsWith('react-router') ||
+          specifier.startsWith('@react-three');
+
+        const isForbiddenUpperLayer =
+          /^(?:@\/|(?:\.\.\/)+)(?:data|features|components|hooks|theme|assets)(?:\/|['"]|$)/.test(
+            specifier,
+          );
+
+        if (isForbiddenReact || isForbiddenUpperLayer) {
+          const lineNum = ctx.cleanContent
+            .slice(0, match.index)
+            .split('\n').length;
+          const lineText = ctx.rawLines[lineNum - 1] || '';
+          issues.push({
+            lineNum,
+            message:
+              'src/math/ 与 src/math3d/ 必须为纯函数底层，严禁反向依赖 @/data/、@/features/、@/components/、@/hooks/、@/theme 或导入 React 全局生态',
+            snippet: lineText.trim(),
+          });
+        }
+      }
+
+      // 2. 逐行扫描浏览器与 DOM 全局对象访问（window, document, localStorage 等）
       ctx.cleanLines.forEach((line, idx) => {
         if (
-          /from\s+['"]react['"]/.test(line) ||
-          /from\s+['"]react-dom['"]/.test(line) ||
-          /\bdocument\./.test(line) ||
-          /\bwindow\./.test(line) ||
-          /from\s+['"]@\/(?:data|features|components)\//.test(line) ||
-          /from\s+['"](?:\.\.\/)+(?:data|features|components)\//.test(line)
+          /\b(?:document\.|window\.|localStorage\.|sessionStorage\.)/.test(line)
         ) {
           issues.push({
             lineNum: idx + 1,
-            message: 'src/math/ 与 src/math3d/ 必须为纯函数底层，严禁反向依赖 @/data/、@/features/、@/components/ 或导入 React/DOM 全局对象',
+            message:
+              'src/math/ 与 src/math3d/ 必须为纯函数底层，严禁访问 window/document/localStorage 等 DOM 全局对象',
             snippet: line.trim(),
           });
         }
       });
+
       return issues;
     },
   },
