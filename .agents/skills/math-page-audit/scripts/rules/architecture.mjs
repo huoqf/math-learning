@@ -183,10 +183,8 @@ export const architectureRules = [
           /from\s+['"]react-dom['"]/.test(line) ||
           /\bdocument\./.test(line) ||
           /\bwindow\./.test(line) ||
-          /from\s+['"]@\/data\//.test(line) ||
-          /from\s+['"]\.\.\/data\//.test(line) ||
-          /from\s+['"]@\/features\//.test(line) ||
-          /from\s+['"]@\/components\//.test(line)
+          /from\s+['"]@\/(?:data|features|components)\//.test(line) ||
+          /from\s+['"](?:\.\.\/)+(?:data|features|components)\//.test(line)
         ) {
           issues.push({
             lineNum: idx + 1,

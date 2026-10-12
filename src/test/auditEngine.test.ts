@@ -962,18 +962,27 @@ const diagAxial = Math.sqrt(4 * r1 ** 2 + height ** 2);
         (r: AuditRule) => r.id === "arch/pure-math-layer",
       )!;
 
-      const reverseDepCode = `
-import { solidFoldingMeta } from "@/data/registries/solidGeometry";
-export function demoMath() { return solidFoldingMeta.length; }
-`;
-      const ctx = new FileContext(
-        "src/math3d/demoBounds.ts",
-        reverseDepCode,
-        process.cwd(),
-      );
-      const issues = rule.check(ctx);
-      expect(issues.length).toBe(1);
-      expect(issues[0].message).toContain("严禁反向依赖 @/data/");
+      const testCases = [
+        'import { solidFoldingMeta } from "@/data/registries/solidGeometry";',
+        'import { something } from "@/features/solidGeometry/types";',
+        'import { Button } from "@/components/UI/Button";',
+        'import { solidFoldingMeta } from "../data/registries/solidGeometry";',
+        'import { solidFoldingMeta } from "../../data/registries/solidGeometry";',
+        'import { something } from "../features/solidGeometry/types";',
+        'import { Button } from "../../components/UI/Button";',
+      ];
+
+      for (const line of testCases) {
+        const code = `\n${line}\nexport function demoMath() { return 1; }\n`;
+        const ctx = new FileContext(
+          "src/math3d/demoBounds.ts",
+          code,
+          process.cwd(),
+        );
+        const issues = rule.check(ctx);
+        expect(issues.length, `应拦截反向依赖语句: ${line}`).toBe(1);
+        expect(issues[0].message).toContain("必须为纯函数底层");
+      }
     });
   });
 });
