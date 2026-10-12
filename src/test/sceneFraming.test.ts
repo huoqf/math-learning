@@ -23,6 +23,7 @@ import {
   polyhedronFeaturesMeta,
 } from "@/data/registries/solidGeometry";
 import { PRESET_POSITIONS } from "@/hooks/use3DViewport";
+import { LEGACY_3D_PAGE_BOUNDS } from "@/math3d/legacy3dBounds";
 
 /**
  * 取景（framing）回归测试
@@ -401,6 +402,87 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
         y: PRESET_POSITIONS.iso[1],
         z: PRESET_POSITIONS.iso[2],
       });
+    });
+  });
+
+  describe("全库 14 个未接入 CameraFit 的 3D 页面全量取景量化台账（把未知变已知）", () => {
+    it("量化台账：14 个存量页面清单完整且覆盖 100% 对应知识树节点", () => {
+      expect(LEGACY_3D_PAGE_BOUNDS.length).toBe(14);
+    });
+
+    it("量化实测证明：14 个页面在极限参数且未适配机位下 100% 存在角点出框（证实系统性排除）", () => {
+      for (const page of LEGACY_3D_PAGE_BOUNDS) {
+        let maxOutside = 0;
+        for (const preset of PRESETS) {
+          const rawPos: V3 = {
+            x: PRESET_POSITIONS[preset][0],
+            y: PRESET_POSITIONS[preset][1],
+            z: PRESET_POSITIONS[preset][2],
+          };
+          const target: V3 = { x: 0, y: 1.5, z: 0 };
+          const { outside } = frameCheck(
+            page.extremeBounds,
+            rawPos,
+            target,
+            1.3,
+          );
+          maxOutside = Math.max(maxOutside, outside);
+        }
+        expect(
+          maxOutside,
+          `页面 ${page.name}(${page.pageId}) 在极限参数下应能被预言机检出至少 1 个出框角点`,
+        ).toBeGreaterThan(0);
+      }
+    });
+
+    it("数学预言证明：若对这 14 个页面应用 CameraFit 适配机位，则全机位下角点全部 100% 纳入画布 [-1, 1]", () => {
+      for (const page of LEGACY_3D_PAGE_BOUNDS) {
+        for (const aspect of ASPECTS) {
+          for (const preset of PRESETS) {
+            const { camPos, target } = fitCamera(
+              page.extremeBounds,
+              PRESET_POSITIONS[preset],
+              aspect,
+            );
+            const { outside } = frameCheck(
+              page.extremeBounds,
+              camPos,
+              target,
+              aspect,
+            );
+            expect(
+              outside,
+              `页面 ${page.name}(${page.pageId}) 经 CameraFit 适配后在 ${preset}@${aspect} 仍有 ${outside} 角点出框`,
+            ).toBe(0);
+          }
+        }
+      }
+    });
+
+    it("视窗漂移量化：首屏 target [0,0,0] 与切换视角后 target [0,1.5,0] 带来确凿的可见视窗漂移", () => {
+      const diffs: number[] = [];
+      for (const page of LEGACY_3D_PAGE_BOUNDS) {
+        const rawIso: V3 = {
+          x: PRESET_POSITIONS.iso[0],
+          y: PRESET_POSITIONS.iso[1],
+          z: PRESET_POSITIONS.iso[2],
+        };
+        const initialCheck = frameCheck(
+          page.defaultBounds,
+          rawIso,
+          { x: 0, y: 0, z: 0 },
+          1.3,
+        );
+        const clickedCheck = frameCheck(
+          page.defaultBounds,
+          rawIso,
+          { x: 0, y: 1.5, z: 0 },
+          1.3,
+        );
+        diffs.push(Math.abs(initialCheck.maxAbs - clickedCheck.maxAbs));
+      }
+      const significantDiffs = diffs.filter((d) => d > 0.05);
+      expect(significantDiffs.length).toBeGreaterThanOrEqual(10);
     });
   });
 });

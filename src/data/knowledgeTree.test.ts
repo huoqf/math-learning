@@ -26,7 +26,15 @@ describe("knowledgeTree 数据完整性", () => {
     const routes = knowledgeTree
       .map((n) => n.route)
       .filter((r): r is string => Boolean(r));
+    expect(routes.length).toBeGreaterThan(80);
     const dupes = routes.filter((r, i) => routes.indexOf(r) !== i);
+    expect(dupes).toEqual([]);
+  });
+
+  it("所有节点声明的 animationIds 跨节点全局唯一（杜绝覆盖 ANIMATION_ROUTE_MAP 单值映射）", () => {
+    const allAnimIds = knowledgeTree.flatMap((n) => n.animationIds || []);
+    expect(allAnimIds.length).toBeGreaterThan(80);
+    const dupes = allAnimIds.filter((id, i) => allAnimIds.indexOf(id) !== i);
     expect(dupes).toEqual([]);
   });
 
@@ -37,9 +45,10 @@ describe("knowledgeTree 数据完整性", () => {
       "examWeight",
       "examMethod",
     ] as const;
+    const routedNodes = knowledgeTree.filter((n) => Boolean(n.route));
+    expect(routedNodes.length).toBeGreaterThan(80);
     const missing: string[] = [];
-    for (const node of knowledgeTree) {
-      if (!node.route) continue; // 未路由（规划中）节点不在完整性要求范围
+    for (const node of routedNodes) {
       for (const field of fields) {
         if (node[field] === undefined) {
           missing.push(`${node.id}.${field}`);

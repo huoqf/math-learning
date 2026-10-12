@@ -82,6 +82,11 @@ export const solidDistanceNode: KnowledgeNode = {
   animationIds: ["anim-solid-distance"],
   prerequisites: ["know-solid-angle"],
   route: "/solid-distance",
+  gaokaoTopic: "solid_geometry",
+  questionCategory: "solution_first",
+  examMethod:
+    "公垂线双垂直判定与动参数投影极值、线面平行转化法与点面距等体积互验",
+  examWeight: 5,
 };
 
 export const solidParametricNode: KnowledgeNode = {
