@@ -155,10 +155,14 @@ export function TransformAnimation() {
         ),
         questionNode: (
           <span>
-            (1) 验证偶函数性质{" "}
-            <KatexFormula formula="f(|-x|) = f(|x|)" mode="inline" /> 及对称轴{" "}
-            <KatexFormula formula="x = 0" mode="inline" />
-            ；(2) 求解函数在区间{" "}
+            (1) 验证图象关于直线{" "}
+            <KatexFormula formula={`x = ${h.toFixed(1)}`} mode="inline" />{" "}
+            对称（即{" "}
+            <KatexFormula
+              formula={`f(${h.toFixed(1)}+t) = f(${h.toFixed(1)}-t)`}
+              mode="inline"
+            />
+            ），并写出定义域；(2) 求解函数在区间{" "}
             <KatexFormula formula="[-3, 3]" mode="inline" />{" "}
             上的最大值、最小值及取得最值的位置。
           </span>

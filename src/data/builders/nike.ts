@@ -303,7 +303,7 @@ export function buildNikePanel(
       theorems.push({
         name: "二次分式分离常数化对勾模型定理",
         latex: `f(x) = \\frac{x^2 + px + q}{x - h} = (x - h) + (p + 2h) + \\frac{h^2 + ph + q}{x - h}`,
-        prerequisites: ["x ≠ h", "分子系数 b > 0"],
+        prerequisites: ["x ≠ h", "a · b > 0"],
         note: `转化为平移对勾函数，对称中心为 $(${h.toFixed(1)}, ${c.toFixed(1)})$，斜渐近线为 $y = ${a.toFixed(1)}(x - ${h.toFixed(1)}) + ${c.toFixed(1)}$`,
       });
 
@@ -327,19 +327,28 @@ export function buildNikePanel(
         },
         {
           step: 2,
-          title: "建模联立 · 基本不等式求最小值",
+          title:
+            a > 0
+              ? "建模联立 · 基本不等式求最小值"
+              : "建模联立 · 基本不等式求最大值",
           detail:
             a > 0
               ? `当 $u > 0$ 时，由基本不等式 $${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} \\ge 2\\sqrt{${a.toFixed(1)} \\cdot ${b.toFixed(1)}} = ${extVal}$，等号当且仅当 $${a.toFixed(1)}u = \\frac{${b.toFixed(1)}}{u}$，即 $u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)}$ 时成立。`
               : `当 $u > 0$ 时，由基本不等式 $${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} \\le -2\\sqrt{${a.toFixed(1)} \\cdot ${b.toFixed(1)}} = -${extVal}$，等号当且仅当 $${a.toFixed(1)}u = \\frac{${b.toFixed(1)}}{u}$，即 $u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)}$ 时成立。`,
-          latex: `u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)} \\implies x = ${rX}, \\quad y_{\\min} = ${c.toFixed(1)} + ${extVal}`,
+          latex:
+            a > 0
+              ? `u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)} \\implies x = ${rX}, \\quad y_{\\min} = ${c.toFixed(1)} + ${extVal} = ${(c + 2 * Math.sqrt(a * b)).toFixed(2)}`
+              : `u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)} \\implies x = ${rX}, \\quad y_{\\max} = ${(c - 2 * Math.sqrt(a * b)).toFixed(2)}`,
           rubric: "验证等号成立条件 $au = \\frac{b}{u}$ 得 2 分",
         },
         {
           step: 3,
           title: "求解反思 · 最值与对称中心闭环",
-          detail: `由中心对称性得左支最大值点 $(${lX}, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)})$，两最值点中点恰为中心 $C(${h.toFixed(1)}, ${c.toFixed(1)})$。`,
-          latex: `\\text{最值集合：} y \\in (-\\infty, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)}] \\cup [${(c + 2 * Math.sqrt(a * b)).toFixed(2)}, +\\infty)`,
+          detail:
+            a > 0
+              ? `由中心对称性得左支最大值点 $(${lX}, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)})$，两最值点中点恰为中心 $C(${h.toFixed(1)}, ${c.toFixed(1)})$。`
+              : `由中心对称性得左支最小值点 $(${lX}, ${(c + 2 * Math.sqrt(a * b)).toFixed(2)})$，两最值点中点恰为中心 $C(${h.toFixed(1)}, ${c.toFixed(1)})$。`,
+          latex: `\\text{值域：} y \\in (-\\infty, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)}] \\cup [${(c + 2 * Math.sqrt(a * b)).toFixed(2)}, +\\infty)`,
           rubric: "写出完整值域与最值点坐标得 2 分",
         },
       );
@@ -389,7 +398,9 @@ export function buildNikePanel(
         name: isClassic
           ? "对勾函数最值与单调性定理"
           : "倒对勾函数最值与单调性定理",
-        latex: `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\; (x > 0) \\implies f(x) \\ge 2\\sqrt{${col("a", ca)} \\cdot ${col("b", cb)}} = 2\\sqrt{ab}`,
+        latex: isClassic
+          ? `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\; (x > 0) \\implies f(x) \\ge 2\\sqrt{${col("a", ca)} \\cdot ${col("b", cb)}} = 2\\sqrt{ab}`
+          : `f(x) = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} \\; (x > 0) \\implies f(x) \\le -2\\sqrt{${col("a", ca)} \\cdot ${col("b", cb)}} = -2\\sqrt{ab}`,
         prerequisites: ["a · b > 0", "x ≠ 0"],
         note: isClassic
           ? `由单调性定义作差法与基本不等式，在 $x = \\sqrt{\\frac{b}{a}}$（$x > 0$ 分支）处取得最小值、在 $x = -\\sqrt{\\frac{b}{a}}$（$x < 0$ 分支）处取得最大值，右侧最低点横坐标 $x = ${Math.sqrt(b / a).toFixed(2)}$`

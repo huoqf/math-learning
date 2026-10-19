@@ -115,8 +115,14 @@ export function QuantifiersScene({
   const aPos = mathToDesign(singleResult.interval.min, 0, scale);
   const bPos = mathToDesign(singleResult.interval.max, 0, scale);
 
-  const probePos = mathToDesign(probeX, singleResult.probeVal, scale);
-  const probeFoot = mathToDesign(probeX, 0, scale);
+  // 探针点位必须与右屏读数同源：越界时用数学层钳制后的 probeXUsed，
+  // 否则点会画在曲线上而横坐标早已越出区间（点与值对不上）。
+  const probePos = mathToDesign(
+    singleResult.probeXUsed,
+    singleResult.probeVal,
+    scale,
+  );
+  const probeFoot = mathToDesign(singleResult.probeXUsed, 0, scale);
 
   const minPos = mathToDesign(singleResult.xMinAt, singleResult.fMin, scale);
 
@@ -348,9 +354,9 @@ export function QuantifiersScene({
             variant="focus"
           />
 
-          {/* 动点探针 P(x0, f(x0)) */}
+          {/* 动点探针 P(x0, f(x0))：横坐标取钳制后的 probeXUsed，与右屏读数同源 */}
           <InteractivePoint
-            cx={probeX}
+            cx={singleResult.probeXUsed}
             cy={singleResult.probeVal}
             scale={scale}
             vp={vp}

@@ -33,7 +33,13 @@ export interface SingleVarQuantifierResult {
   xMaxAt: number;
   /** 比较基准值 m */
   threshold: number;
-  /** 动点 probeX 当前函数值 */
+  /**
+   * 实际参与计算的探针横坐标（= clamp(probeX, [left, right])）。
+   * 探针滑杆可越出目标区间，故右屏标签、中屏点位必须消费本字段，
+   * 严禁直接把入参 probeX 与 probeVal 拼在一起（会得到 f(越界点)=区间端点值 的假等式）。
+   */
+  probeXUsed: number;
+  /** 动点 probeX 当前函数值（对应 probeXUsed，而非入参 probeX） */
   probeVal: number;
   /** 动点是否为反例 */
   isProbeCounterExample: boolean;
@@ -224,6 +230,7 @@ export function solveSingleVarQuantifier(
     xMinAt: xMin,
     xMaxAt: xMax,
     threshold,
+    probeXUsed: clampedProbeX,
     probeVal,
     isProbeCounterExample,
     isOriginalTrue,

@@ -9,7 +9,41 @@ import {
   solveAbsoluteInequality,
   type InequalityMode,
   type InequalityType,
+  type SolutionInterval,
 } from "@/math/inequalityAbsolute";
+
+/**
+ * 把数学层的解集区间直接渲染成 LaTeX。
+ *
+ * 为什么必须由 intervals 渲染（来源：全站审查 P0）：
+ * 旧实现对「倾斜段交点个数」做启发式——根数为 1 给单点、区间为空给 ∅、其余一律 `x ∈ ℝ`。
+ * 但平台临界 `m = ±|a − b|` 时数学层只填 intervals（半直线）、不填 intersectionRoots，
+ * 于是 `m = −|a−b|, f(x) ≤ m` 这种真解集为 `(−∞, min]` 的情形被渲染成 `x ∈ ℝ`。
+ * 解集是结论本身，不能靠根数反推；一律消费 intervals。
+ */
+function formatSolutionSet(intervals: SolutionInterval[]): string {
+  if (intervals.length === 0) return "\\varnothing";
+  if (
+    intervals.length === 1 &&
+    intervals[0].isLeftInfinity &&
+    intervals[0].isRightInfinity
+  ) {
+    return "\\mathbb{R}";
+  }
+  const safeFixed = (val: number) => {
+    const rounded = Math.abs(val) < 1e-9 ? 0 : val;
+    return rounded.toFixed(2);
+  };
+  const parts = intervals.map(({ x1, x2, isLeftInfinity, isRightInfinity }) => {
+    if (!isLeftInfinity && !isRightInfinity && Math.abs(x1 - x2) < 1e-9) {
+      return `\\{${safeFixed(x1)}\\}`;
+    }
+    const left = isLeftInfinity ? "(-\\infty" : `[${safeFixed(x1)}`;
+    const right = isRightInfinity ? "+\\infty)" : `${safeFixed(x2)}]`;
+    return `${left}, ${right}`;
+  });
+  return parts.join(" \\cup ");
+}
 
 export function buildInequalityAbsolutePanel(
   params: Record<string, number>,
@@ -29,6 +63,9 @@ export function buildInequalityAbsolutePanel(
   const minA = Math.min(a, b);
   const maxA = Math.max(a, b);
   const distAB = Math.abs(a - b);
+
+  /** 解集 LaTeX（唯一口径：由数学层 intervals 直接渲染，根数不参与推断） */
+  const solutionSetLatex = formatSolutionSet(res.intervals);
 
   if (studyMode === "single") {
     const r1 = a - c;
@@ -155,13 +192,15 @@ export function buildInequalityAbsolutePanel(
         detail:
           res.intervals.length === 0
             ? `当前目标常数 $m = ${m.toFixed(1)} < |a - b| = ${distAB.toFixed(1)}$，水平线位于杯底下方，不等式 $f(x) \\le m$ 无实数解。`
-            : `联立方程 $f(x) = m$，解得平底杯两侧斜率为 $\\pm 2$ 的射线交点，进而求得当前解集。`,
+            : res.intersectionRoots.length === 0
+              ? `当前目标常数 $m = ${m.toFixed(1)} < |a - b| = ${distAB.toFixed(1)}$，水平线位于杯底下方，不等式 $f(x) \\ge m$ 对任意实数恒成立。`
+              : Math.abs(m - distAB) < 1e-9
+                ? `水平线 $y = ${m.toFixed(1)}$ 恰与平底杯底重合（$m = |a - b|$），此时整个杯底区间上的点均满足条件。`
+                : `联立方程 $f(x) = m$，解得平底杯两侧斜率为 $\\pm 2$ 的射线交点，进而求得当前解集。`,
         latex:
           res.intersectionRoots.length === 2
-            ? `x_1 = \\frac{a+b-m}{2} = ${res.intersectionRoots[0].toFixed(2)}, \\; x_2 = \\frac{a+b+m}{2} = ${res.intersectionRoots[1].toFixed(2)}`
-            : res.intervals.length === 0
-              ? "\\varnothing"
-              : `x \\in [${minA.toFixed(1)}, ${maxA.toFixed(1)}]`,
+            ? `x_1 = \\frac{a+b-m}{2} = ${res.intersectionRoots[0].toFixed(2)}, \\; x_2 = \\frac{a+b+m}{2} = ${res.intersectionRoots[1].toFixed(2)} \\;\\implies\\; \\text{解集 } ${solutionSetLatex}`
+            : `\\text{解集 } ${solutionSetLatex}`,
         rubric: "结论得分点：结合 $m$ 与 $|a - b|$ 大小关系规范写出解集",
       },
     ];
@@ -248,14 +287,14 @@ export function buildInequalityAbsolutePanel(
         title: "③ 求解反思 · 倾斜段交点与解集",
         detail:
           Math.abs(m) > distAB
-            ? `当前水平线高度 $|m| > |a - b|$ 超出函数值域，不等式解集表现为空集或全集。`
-            : `当常数 $m$ 处于平台之间时，与过渡倾斜线段相交于唯一实根，解集为射线区间。`,
+            ? `当前水平线高度 $|m| > |a - b| = ${distAB.toFixed(1)}$ 越出 $g(x)$ 的值域 $[-${distAB.toFixed(1)}, ${distAB.toFixed(1)}]$，不等式解集为${res.intervals.length === 0 ? "空集" : "全集"}。`
+            : Math.abs(Math.abs(m) - distAB) < 1e-9
+              ? `水平线 $y = ${m.toFixed(1)}$ 恰与${m > 0 ? "上" : "下"}平台重合（$|m| = |a - b|$）：此时不是"唯一交点"，而是整段平台上的点全部满足，解集是以平台端点起的一条射线。`
+              : `水平线 $y = ${m.toFixed(1)}$ 落在两平台之间，与过渡倾斜段相交于唯一实根，解集为射线区间。`,
         latex:
-          res.intersectionRoots.length === 1
-            ? `x_0 = ${res.intersectionRoots[0].toFixed(2)}`
-            : res.intervals.length === 0
-              ? "\\varnothing"
-              : "x \\in \\mathbb{R}",
+          res.intersectionRoots.length >= 1
+            ? `x_0 = ${res.intersectionRoots[0].toFixed(2)} \\;\\implies\\; \\text{解集 } ${solutionSetLatex}`
+            : `\\text{解集 } ${solutionSetLatex}`,
         rubric: "求解得分点：根据单调过渡斜率精准求解集",
       },
     ];

@@ -87,10 +87,12 @@ export function buildFuncTransformPanel(
     log: "\\text{对数函数 } f(x) = \\log_2 x",
   };
 
+  // 自变量翻折时实际解析式为 y = f(ω|x − h|)：真数 |x − h| > 0 只在 x = h 处失效，
+  // 因此定义域是「去心」的一条直线，而不是 (−∞,−|h|)∪(|h|,+∞)（旧口径把 |x−h| 误当 |x|−h）。
   const domainDesc =
     fnType === "log"
       ? foldMode === "input"
-        ? `x \\in (-\\infty, -${Math.abs(h).toFixed(1)}) \\cup (${Math.abs(h).toFixed(1)}, +\\infty)`
+        ? `x \\neq ${h.toFixed(1)}`
         : `x > ${h.toFixed(1)}`
       : "x \\in \\mathbb{R}";
 

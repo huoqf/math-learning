@@ -125,6 +125,18 @@ export function buildQuantifiersPanel(
     probeX,
   );
 
+  // 探针滑杆取值域 [−5, 5] 与目标区间共同决定探针可达性：越界时数学层按端点计算，
+  // 右屏必须显式告知「读数取自哪个点」，否则学生会把 f(端点) 当成 f(越界点)。
+  const probeClampWarning =
+    Math.abs(probeX - res.probeXUsed) > 1e-9
+      ? [
+          {
+            text: `探针 $x_0 = ${probeX.toFixed(1)}$ 已越出目标区间 $[${res.interval.min.toFixed(1)}, ${res.interval.max.toFixed(1)}]$，以下读数按端点 $x = ${res.probeXUsed.toFixed(1)}$ 计算`,
+            level: "info" as const,
+          },
+        ]
+      : [];
+
   return {
     quantities: [
       {
@@ -141,7 +153,7 @@ export function buildQuantifiersPanel(
       },
       {
         label: "动点探针值",
-        symbol: `f(${probeX.toFixed(1)})`,
+        symbol: `f(${res.probeXUsed.toFixed(1)})`,
         value: res.probeVal.toFixed(2),
         color: res.isProbeCounterExample
           ? MATH_COLORS.paramPrimary
@@ -197,22 +209,25 @@ export function buildQuantifiersPanel(
         importance: "gaokao",
       },
     ],
-    warnings:
-      intMin >= intMax
+    warnings: [
+      ...(intMin >= intMax
         ? [
             {
               text: "区间左端点需严格小于右端点",
-              level: "warning",
+              level: "warning" as const,
             },
           ]
-        : k === 0
-          ? [
-              {
-                text: "二次项系数 k = 0，函数退化为常数函数",
-                level: "warning",
-              },
-            ]
-          : [],
+        : []),
+      ...(k === 0
+        ? [
+            {
+              text: "二次项系数 k = 0，函数退化为常数函数",
+              level: "warning" as const,
+            },
+          ]
+        : []),
+      ...probeClampWarning,
+    ],
     mnemonic:
       "全称改存在、存在改全称，正面结论变否定；恒成立找最值，证伪只需一反例",
   };
