@@ -30,11 +30,22 @@ export function buildRotationBodyPanel(
   const r2 = params.r2 ?? 0.8;
   const height = params.height ?? 3;
   const cutDistance = params.cutDistance ?? 0.8;
+  const mode = (config?.mode as string | undefined) ?? "generation";
+  const sweepAngleDeg = params.sweepAngleDeg ?? 360;
 
   const quantities: MathQuantity[] = [];
   const theorems: Theorem[] = [];
   const gaokaoPoints: GaokaoPoint[] = [];
   const warnings: WarningItem[] = [];
+
+  if (mode === "generation") {
+    quantities.push({
+      label: "生成扫掠角",
+      symbol: "\\theta",
+      value: `${sweepAngleDeg.toFixed(0)}°`,
+      color: MATH_COLORS.accent,
+    });
+  }
 
   if (shape === "rectangle") {
     const sSide = 2 * Math.PI * r1 * height;
@@ -539,6 +550,13 @@ export function buildRotationBodyPanel(
   if (r1 < 0.15 || height < 0.15) {
     warnings.push({
       text: "几何尺寸接近 0，旋转体退化为线段或点！",
+      level: "warning",
+    });
+  }
+
+  if (mode === "generation" && sweepAngleDeg < 359.5) {
+    warnings.push({
+      text: `当前仅旋转扫掠 ${sweepAngleDeg.toFixed(0)}°（生成态演示）；看板展示的侧面积、表面积与体积为旋转 360° 完整闭合旋转体的理论值。`,
       level: "warning",
     });
   }

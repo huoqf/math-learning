@@ -13,6 +13,7 @@ import {
   paramDragRange,
   snapDragValue,
 } from "@/utils/paramClamp";
+import { formatMathNumber } from "@/utils/mathFormat";
 import type { ViewportInfo } from "@/utils/useViewport";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import {
@@ -505,15 +506,50 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
       {/* ===================== 模式三：极化恒等式与高考中点公式 ===================== */}
       {studyMode === "polarization" && (
         <>
-          {/* 线段 AB */}
+          {/* 半弦 AM (虚线辅助) */}
           <line
             x1={posADesign.x}
             y1={posADesign.y}
+            x2={posMDesign.x}
+            y2={posMDesign.y}
+            stroke={withAlpha(MATH_COLORS.paramPrimary, 0.65)}
+            strokeWidth={2}
+            strokeDasharray="4,3"
+          />
+
+          {/* 半弦 MB (极化恒等式核心半弦高亮 - 鲜明单独标色) */}
+          <line
+            x1={posMDesign.x}
+            y1={posMDesign.y}
             x2={posBDesign.x}
             y2={posBDesign.y}
-            stroke={withAlpha(MATH_COLORS.accent, 0.6)}
-            strokeWidth={2}
+            stroke={MATH_COLORS.focusPoint}
+            strokeWidth={3.5}
           />
+
+          {/* 半弦 MB 长度与标签标注 */}
+          {(() => {
+            const midMBDesign = {
+              x: (posMDesign.x + posBDesign.x) / 2,
+              y: (posMDesign.y + posBDesign.y) / 2,
+            };
+            const halfLen = Math.hypot(a.x - b.x, a.y - b.y) / 2;
+            return (
+              <text
+                x={midMBDesign.x + fontScale(8)}
+                y={midMBDesign.y - fontScale(8)}
+                fill={MATH_COLORS.focusPoint}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+                className="select-none pointer-events-none"
+              >
+                |MB| = |AB|/2 = {formatMathNumber(halfLen)}
+              </text>
+            );
+          })()}
 
           {/* 平行四边形两条对角线: 和向量 (O -> S) 辅助线 */}
           <line
@@ -537,6 +573,31 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
             label="OM"
             labelOffset={[0, -10]}
           />
+
+          {/* 中线 OM 模长标注 */}
+          {(() => {
+            const midOMDesign = {
+              x: (originDesign.x + posMDesign.x) / 2,
+              y: (originDesign.y + posMDesign.y) / 2,
+            };
+            const lenOM = Math.hypot(midpointM.x, midpointM.y);
+            return (
+              <text
+                x={midOMDesign.x - fontScale(10)}
+                y={midOMDesign.y}
+                textAnchor="end"
+                fill={MATH_COLORS.paramTertiary}
+                fontSize={fontScale(11)}
+                fontWeight="bold"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+                className="select-none pointer-events-none"
+              >
+                |OM| = {formatMathNumber(lenOM)}
+              </text>
+            );
+          })()}
 
           {/* 中点 M 标记 */}
           <MathPoint

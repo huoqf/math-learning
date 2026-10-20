@@ -41,10 +41,12 @@ export function buildConicParamPanel(
   if (studyMode === "ellipseTrig") {
     const targetLine = { A: 1, B: -1, C: -6 };
     const res = calculateEllipseParam(a, b, theta, targetLine);
-    const cVal = Math.sqrt(Math.max(0, a * a - b * b));
+    const effA = res.safeA;
+    const effB = res.safeB;
+    const cVal = Math.sqrt(Math.max(0, effA * effA - effB * effB));
 
-    // 辅助角合振幅 R = √((Aa)² + (Bb)²) = √(a² + b²)：随 a, b 实时变化，严禁写死为常数 5
-    const R = Math.hypot(a, b);
+    // 辅助角合振幅 R = √((Aa)² + (Bb)²) = √(effA² + effB²)：随 effA, effB 实时同源变化
+    const R = Math.hypot(effA, effB);
     const absC = Math.abs(targetLine.C);
     const lineIntersects = R >= absC;
     const numMax = absC + R;
@@ -54,7 +56,9 @@ export function buildConicParamPanel(
       {
         label: "椭圆半轴与焦点",
         symbol: "a, b, c",
-        value: `a = ${formatMathNumber(a)}, \\; b = ${formatMathNumber(b)} \\implies c = \\sqrt{a^2-b^2} = ${formatMathNumber(cVal)}`,
+        value: res.isClamped
+          ? `a = ${formatMathNumber(effA)}, \\; b = ${formatMathNumber(effB)} \\; (\\text{已钳制 } b < a) \\implies c = \\sqrt{a^2-b^2} = ${formatMathNumber(cVal)}`
+          : `a = ${formatMathNumber(effA)}, \\; b = ${formatMathNumber(effB)} \\implies c = \\sqrt{a^2-b^2} = ${formatMathNumber(cVal)}`,
         color: MATH_COLORS.paramPrimary,
       },
       {
@@ -66,20 +70,20 @@ export function buildConicParamPanel(
       {
         label: "椭圆动点 $P$ 参数坐标",
         symbol: "P(a\\cos\\theta, b\\sin\\theta)",
-        value: `(${formatMathNumber(a)}\\cos ${theta}^\\circ, ${formatMathNumber(b)}\\sin ${theta}^\\circ) = (${formatMathNumber(res.P.x)}, ${formatMathNumber(res.P.y)})`,
+        value: `(${formatMathNumber(effA)}\\cos ${theta}^\\circ, ${formatMathNumber(effB)}\\sin ${theta}^\\circ) = (${formatMathNumber(res.P.x)}, ${formatMathNumber(res.P.y)})`,
         color: MATH_COLORS.paramPrimary,
       },
       {
         label: "辅助离心圆对应点 $P'$",
         symbol: "P'(a\\cos\\theta, a\\sin\\theta)",
-        value: `(${formatMathNumber(a)}\\cos ${theta}^\\circ, ${formatMathNumber(a)}\\sin ${theta}^\\circ) = (${formatMathNumber(res.Paux.x)}, ${formatMathNumber(res.Paux.y)})`,
+        value: `(${formatMathNumber(effA)}\\cos ${theta}^\\circ, ${formatMathNumber(effA)}\\sin ${theta}^\\circ) = (${formatMathNumber(res.Paux.x)}, ${formatMathNumber(res.Paux.y)})`,
         color: MATH_COLORS.paramSecondary,
       },
       {
         label: "切线截距三角形面积 $S$",
         symbol: "S = \\frac{ab}{|\\sin 2\\theta|}",
         value: isFinite(res.triangleArea)
-          ? `S = \\frac{${formatMathNumber(a * b)}}{|\\sin ${2 * theta}^\\circ|} = ${formatMathNumber(res.triangleArea)} \\; (S_{\\min} = ab = ${formatMathNumber(a * b)})`
+          ? `S = \\frac{${formatMathNumber(effA * effB)}}{|\\sin ${2 * theta}^\\circ|} = ${formatMathNumber(res.triangleArea)} \\; (S_{\\min} = ab = ${formatMathNumber(effA * effB)})`
           : "S \\to \\infty",
         color: MATH_COLORS.accent,
       },
@@ -103,8 +107,8 @@ export function buildConicParamPanel(
       {
         step: 2,
         title: "第二步：建模联立 · 点线距离的辅助角化简",
-        latex: `d(\\theta) = \\frac{|(Aa)\\cos\\theta + (Bb)\\sin\\theta + C|}{\\sqrt{A^2 + B^2}} = \\frac{|${formatMathNumber(a)}\\cos\\theta - ${formatMathNumber(b)}\\sin\\theta - 6|}{\\sqrt{1^2 + (-1)^2}} = \\frac{|${formatMathNumber(R)}\\sin(\\theta + \\varphi) - 6|}{\\sqrt{2}}`,
-        detail: `将 $P(${formatMathNumber(a)}\\cos\\theta, ${formatMathNumber(b)}\\sin\\theta)$ 代入目标直线方程 $x - y - 6 = 0$ 的点线距离公式中，提取合振幅 $R = \\sqrt{(1\\times ${formatMathNumber(a)})^2 + (-1\\times ${formatMathNumber(b)})^2} = \\sqrt{${formatMathNumber(a * a)} + ${formatMathNumber(b * b)}} = ${formatMathNumber(R)}$。`,
+        latex: `d(\\theta) = \\frac{|(Aa)\\cos\\theta + (Bb)\\sin\\theta + C|}{\\sqrt{A^2 + B^2}} = \\frac{|${formatMathNumber(effA)}\\cos\\theta - ${formatMathNumber(effB)}\\sin\\theta - 6|}{\\sqrt{1^2 + (-1)^2}} = \\frac{|${formatMathNumber(R)}\\sin(\\theta + \\varphi) - 6|}{\\sqrt{2}}`,
+        detail: `将 $P(${formatMathNumber(effA)}\\cos\\theta, ${formatMathNumber(effB)}\\sin\\theta)$ 代入目标直线方程 $x - y - 6 = 0$ 的点线距离公式中，提取合振幅 $R = \\sqrt{(1\\times ${formatMathNumber(effA)})^2 + (-1\\times ${formatMathNumber(effB)})^2} = \\sqrt{${formatMathNumber(effA * effA)} + ${formatMathNumber(effB * effB)}} = ${formatMathNumber(R)}$。`,
         rubric: "运用辅助角公式将二元线段距离化为单一正弦函数 (4分)",
       },
       {
@@ -147,9 +151,9 @@ export function buildConicParamPanel(
     ];
 
     const warnings: WarningItem[] = [];
-    if (a <= b) {
+    if (res.isClamped || a <= b) {
       warnings.push({
-        text: "几何退化警示：焦点在 $x$ 轴上的椭圆必须满足 $a > b > 0$，当前参数 $a \\le b$。",
+        text: `几何退化警示：焦点在 $x$ 轴上的椭圆必须满足 $a > b > 0$。当前输入参数 $a = ${formatMathNumber(a)}, b = ${formatMathNumber(b)}$（$b \\ge a$），为避免两焦点退化重合于原点，短半轴已自动安全钳制为 $b = ${formatMathNumber(effB)}$。`,
         level: "warning",
       });
     }
@@ -295,12 +299,14 @@ export function buildConicParamPanel(
   // 模式 3: 设线降维 x = my + n 与对称韦达消元模型 (lineYForm)
   // --------------------------------------------------------------------------
   const res = calculateLineYFormConic(a, b, m, n);
+  const effA = res.safeA;
+  const effB = res.safeB;
 
   const quantities: MathQuantity[] = [
     {
       label: "椭圆方程",
       symbol: "\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1",
-      value: `\\frac{x^2}{${formatMathNumber(a * a)}} + \\frac{y^2}{${formatMathNumber(b * b)}} = 1`,
+      value: `\\frac{x^2}{${formatMathNumber(effA * effA)}} + \\frac{y^2}{${formatMathNumber(effB * effB)}} = 1`,
       color: MATH_COLORS.paramPrimary,
     },
     {
@@ -320,7 +326,7 @@ export function buildConicParamPanel(
     {
       label: "判别式 $\\Delta_y$",
       symbol: "\\Delta_y = 4a^2b^2(b^2m^2+a^2-n^2)",
-      value: `\\Delta_y = 4(${formatMathNumber(a * a)})(${formatMathNumber(b * b)})[${formatMathNumber(b * b)}(${formatMathNumber(m)})^2 + ${formatMathNumber(a * a)} - (${formatMathNumber(n)})^2] = ${formatMathNumber(res.deltaY)}`,
+      value: `\\Delta_y = 4(${formatMathNumber(effA * effA)})(${formatMathNumber(effB * effB)})[${formatMathNumber(effB * effB)}(${formatMathNumber(m)})^2 + ${formatMathNumber(effA * effA)} - (${formatMathNumber(n)})^2] = ${formatMathNumber(res.deltaY)}`,
       color: res.valid ? MATH_COLORS.paramTertiary : MATH_COLORS.accent,
     },
   ];
@@ -404,6 +410,12 @@ export function buildConicParamPanel(
   ];
 
   const warnings: WarningItem[] = [];
+  if (res.isClamped || a <= b) {
+    warnings.push({
+      text: `几何退化警示：焦点在 $x$ 轴上的椭圆必须满足 $a > b > 0$。当前输入参数 $a = ${formatMathNumber(a)}, b = ${formatMathNumber(b)}$（$b \\ge a$），为避免两焦点退化重合于原点，短半轴已自动安全钳制为 $b = ${formatMathNumber(effB)}$。`,
+      level: "warning",
+    });
+  }
   if (!res.valid) {
     warnings.push({
       text: "无交点警示：当前割线与椭圆判别式 $\\Delta_y < 0$，割线与椭圆无实数交点。",

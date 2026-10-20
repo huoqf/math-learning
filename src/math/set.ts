@@ -19,7 +19,8 @@ export type VennOpType =
   | "union" // A ∪ B
   | "complement_A" // ∁U A
   | "complement_B" // ∁U B
-  | "difference_A_B"; // A \ B
+  | "difference_A_B" // A \ B
+  | "none"; // 不进行运算阴影（用于纯逻辑包含展示）
 
 export type LogicConditionType =
   | "sufficient_not_necessary" // 充分不必要条件 (A ⊂ B)

@@ -54,8 +54,27 @@ export default function AdvancedSphereAnimation() {
     use3DViewport("iso");
 
   const sceneBounds = useMemo(
-    () => getAdvancedSphereBounds({ r: params.R ?? params.a }),
-    [params.R, params.a],
+    () =>
+      getAdvancedSphereBounds({
+        modelType,
+        r1: params.r1,
+        r2: params.r2,
+        c: params.c,
+        a: params.a,
+        h: params.h,
+        R: params.R,
+        shapeType: params.shapeType,
+      }),
+    [
+      modelType,
+      params.r1,
+      params.r2,
+      params.c,
+      params.a,
+      params.h,
+      params.R,
+      params.shapeType,
+    ],
   );
 
   // 1. 右屏看板数据

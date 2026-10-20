@@ -563,6 +563,8 @@ export function buildConicLineMathQuantities(
       condition: "曲线外一点 $P(x_P, y_P)$ 向曲线引两条切线，$A$、$B$ 为两切点",
       note: "自曲线外一点引两条切线：分别写出两切点处的切线方程并代入点 $P$，可得两个结构相同的一次方程，说明 $A$、$B$ 均满足同一方程，由“两点确定一条直线”即得切点弦方程。高考解答题按此链条书写即可满分，不建议直接套用结论。",
       level: "core",
+      isExtension: true,
+      extensionBadge: "选学拓展",
     });
   }
 

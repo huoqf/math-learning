@@ -253,6 +253,21 @@ export function DerivativeShiftScene({
         });
       }
 
+      const sampleX = shiftResult.x0 * 0.45;
+      const sampleY = shiftResult.diffFn(sampleX);
+      if (Number.isFinite(sampleY)) {
+        const diffPt = mathToDesign(sampleX, sampleY, scale);
+        items.push({
+          key: "diff_fn_curve",
+          x: diffPt.x,
+          y: diffPt.y,
+          text: "F(x)",
+          color: P.diffFn.color,
+          fontSize: fontScale(11),
+          preferredPlacement: "bottom-left",
+        });
+      }
+
       return items;
     } else {
       const geo = mathToDesign(logMeanResult.geoMean, 0, scale);
@@ -475,6 +490,15 @@ export function DerivativeShiftScene({
             color={withAlpha(P.mirrorFn.color, 0.85)}
             strokeWidth={P.mirrorFn.width}
             strokeDasharray={dashArrayOf(P.mirrorFn)}
+          />
+
+          {/* 差函数 F(x) = f(x) - f(2x0 - x) 曲线：极值点偏移对称构造法的核心可视证据 */}
+          <FunctionGraph
+            fn={shiftResult.diffFn}
+            scale={scale}
+            color={P.diffFn.color}
+            strokeWidth={P.diffFn.width}
+            strokeDasharray={dashArrayOf(P.diffFn)}
           />
 
           {/* 极值点 x0 对称中轴 */}

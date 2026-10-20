@@ -87,7 +87,7 @@ const SECTIONS = [
   },
 ];
 
-// 新高考六大攻坚大专题配置（严格对接 2024-2026 新课标 19 题制命题结构）
+// 新高考大专题与代数基础工具配置（严格对接 2024-2026 新课标命题结构）
 const GAOKAO_TOPIC_CONFIGS: Array<{
   key: GaokaoTopicKey;
   title: string;
@@ -99,6 +99,18 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   bgLight: string;
   textColor: string;
 }> = [
+  {
+    key: "algebra_basics",
+    title: "代数基础工具与不等式通法",
+    badge: "高考基本功 · 必备基石",
+    description:
+      "集合与常用逻辑、充要条件、一元二次不等式、基本不等式配凑与绝对值不等式，贯穿全卷的代数基石与运算底座",
+    icon: Calculator,
+    gradient: "from-blue-600 to-indigo-600",
+    borderLight: "border-blue-200",
+    bgLight: "bg-blue-50/60",
+    textColor: "text-blue-700",
+  },
   {
     key: "func_derivative",
     title: "函数性质与导数压轴通法",
@@ -564,7 +576,7 @@ export function KnowledgeTreeHome() {
             <span>当前视角：</span>
             <strong className="text-neutral-800 font-semibold">
               {viewMode === "gaokao"
-                ? "聚焦新高考六大专题与秒杀模型"
+                ? "聚焦新高考专题与代数基础工具"
                 : "按必修/选修传统章节递进"}
             </strong>
           </div>

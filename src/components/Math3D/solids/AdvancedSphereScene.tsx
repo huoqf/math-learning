@@ -20,12 +20,12 @@ import {
   calculateConcentricSpheres,
   calculateTruncatedConeSphere,
   calculateSphereExtrema,
+  type AdvancedSphereModelType,
 } from "@/math3d/advancedSphereModels";
 import { mathToThree } from "@/math3d/coordinateConvention";
 import type { Vec3 } from "@/math3d/vector3";
 
-export type AdvancedSphereModelType =
-  "perpPlanes" | "concentric" | "truncatedCone" | "extrema";
+export type { AdvancedSphereModelType };
 
 export interface AdvancedSphereSceneProps {
   modelType: AdvancedSphereModelType;

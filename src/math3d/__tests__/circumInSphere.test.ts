@@ -79,4 +79,46 @@ describe("circumInSphere 切接球数学模型测试", () => {
       expect(res.radius).toBe(2);
     });
   });
+
+  describe("6. 场景自适应包围盒取景契约测试 (防球顶/球底出框截断)", () => {
+    it("勾股长方体外接球 (a=1.5, b=2, c=6)：包围盒必须真实包络球顶 (z=6.25) 与球底 (z=-0.25)，绝不硬编码截断于 3.5", async () => {
+      const { getCircumInSphereBounds } = await import("../legacy3dBounds");
+      const bounds = getCircumInSphereBounds({
+        shape: "cuboid",
+        sphereType: "circum",
+        a: 1.5,
+        b: 2,
+        c: 6,
+      });
+
+      // 外接球 R = 3.25, 中心在 z = 3 => 球顶 z = 6.25, 球底 z = -0.25
+      expect(bounds.max.z).toBeGreaterThanOrEqual(6.25);
+      expect(bounds.min.z).toBeLessThanOrEqual(-0.25);
+      // X 与 Y 轴必须完整包围球体外沿
+      expect(bounds.max.x).toBeGreaterThanOrEqual(0.75 + 3.25);
+      expect(bounds.min.x).toBeLessThanOrEqual(0.75 - 3.25);
+    });
+
+    it("高阶外接球模型 (AdvancedSphere)：全模型下 min.z 必须真实对称向下延伸，彻底杜绝写死 z=-1 导致下半球截断", async () => {
+      const { getAdvancedSphereBounds } = await import("../legacy3dBounds");
+
+      // 1. 面面垂直双外心模型
+      const perpBounds = getAdvancedSphereBounds({
+        modelType: "perpPlanes",
+        r1: 3,
+        r2: 4,
+        c: 5,
+      });
+      expect(perpBounds.min.z).toBeLessThan(-2);
+      expect(perpBounds.max.z).toBeGreaterThan(2);
+
+      // 2. 体积极值模型
+      const extremaBounds = getAdvancedSphereBounds({
+        modelType: "extrema",
+        R: 4,
+      });
+      expect(extremaBounds.min.z).toBe(-4);
+      expect(extremaBounds.max.z).toBe(4);
+    });
+  });
 });

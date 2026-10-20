@@ -18,7 +18,6 @@ import {
   calculateIntervalZeros,
   solveParamsFromDrag,
   partitionFivePointsByView,
-  DEFAULT_TRIG_XRANGE,
 } from "../math/trigTransform";
 
 /**
@@ -66,8 +65,8 @@ export function TrigTransformScene({
   const x2 = params.x2 ?? Math.PI;
 
   const trigData = useMemo(
-    () => calcTrigProperties(A, omega, phi, k, DEFAULT_TRIG_XRANGE),
-    [A, omega, phi, k],
+    () => calcTrigProperties(A, omega, phi, k, [scale.xMin, scale.xMax]),
+    [A, omega, phi, k, scale.xMin, scale.xMax],
   );
 
   const pathSteps = useMemo(

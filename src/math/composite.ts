@@ -65,35 +65,41 @@ export function calculatePiecewise(params: PiecewiseParams): PiecewiseResult {
   const rightMonotonicity =
     rightSlope > 0 ? "increasing" : rightSlope < 0 ? "decreasing" : "constant";
 
-  // 高考核心判定：分段函数全域单调性
+  // 高考核心判定：分段函数全域严格单调性（高中数学严格要求两侧严格单调）
   let globalMonotonicity: MonotonicityState = "non-monotonic";
   let monotonicityReason = "";
 
-  if (leftSlope >= 0 && rightSlope >= 0) {
+  if (leftSlope > 0 && rightSlope > 0) {
     if (leftValAtX0 <= rightValAtX0) {
-      globalMonotonicity =
-        leftSlope === 0 && rightSlope === 0 ? "constant" : "increasing";
+      globalMonotonicity = "increasing";
       monotonicityReason = isContinuous
-        ? "两段均单调递增且分界点连续闭合，在 ℝ 上单调递增。"
-        : `两段均单调递增，且分界点满足搭接不等式 f₁(x₀)=${leftValAtX0.toFixed(2)} ≤ f₂(x₀)=${rightValAtX0.toFixed(2)}，在 ℝ 上单调递增。`;
+        ? "两段均单调递增且分界点连续闭合，在 ℝ 上严格单调递增。"
+        : `两段均单调递增，且分界点满足搭接不等式 f₁(x₀)=${leftValAtX0.toFixed(2)} ≤ f₂(x₀)=${rightValAtX0.toFixed(2)}，在 ℝ 上严格单调递增。`;
     } else {
       globalMonotonicity = "non-monotonic";
       monotonicityReason = `两段虽各自单增，但在分界点处向下跳跃 (f₁(x₀)=${leftValAtX0.toFixed(2)} > f₂(x₀)=${rightValAtX0.toFixed(2)})，破坏全域单调性！`;
     }
-  } else if (leftSlope <= 0 && rightSlope <= 0) {
+  } else if (leftSlope < 0 && rightSlope < 0) {
     if (leftValAtX0 >= rightValAtX0) {
-      globalMonotonicity =
-        leftSlope === 0 && rightSlope === 0 ? "constant" : "decreasing";
+      globalMonotonicity = "decreasing";
       monotonicityReason = isContinuous
-        ? "两段均单调递减且分界点连续闭合，在 ℝ 上单调递减。"
-        : `两段均单调递减，且分界点满足搭接不等式 f₁(x₀)=${leftValAtX0.toFixed(2)} ≥ f₂(x₀)=${rightValAtX0.toFixed(2)}，在 ℝ 上单调递减。`;
+        ? "两段均单调递减且分界点连续闭合，在 ℝ 上严格单调递减。"
+        : `两段均单调递减，且分界点满足搭接不等式 f₁(x₀)=${leftValAtX0.toFixed(2)} ≥ f₂(x₀)=${rightValAtX0.toFixed(2)}，在 ℝ 上严格单调递减。`;
     } else {
       globalMonotonicity = "non-monotonic";
       monotonicityReason = `两段虽各自单减，但在分界点处向上跳跃 (f₁(x₀)=${leftValAtX0.toFixed(2)} < f₂(x₀)=${rightValAtX0.toFixed(2)})，破坏全域单调性！`;
     }
+  } else if (leftSlope === 0 && rightSlope === 0 && isContinuous) {
+    globalMonotonicity = "constant";
+    monotonicityReason = `两段均为常数且分界点连续闭合，全域为常数函数 f(x) = ${leftValAtX0.toFixed(2)}。`;
   } else {
     globalMonotonicity = "non-monotonic";
-    monotonicityReason = "左右两段单调方向相反，全域不具备单调性。";
+    if (leftSlope === 0 || rightSlope === 0) {
+      monotonicityReason =
+        "函数包含水平常数段（斜率为 0），按课标定义不满足严格单调递增/递减要求。";
+    } else {
+      monotonicityReason = "左右两段单调方向相反，全域不具备单调性。";
+    }
   }
 
   const evaluate = (x: number) => {

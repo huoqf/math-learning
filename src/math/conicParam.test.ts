@@ -23,22 +23,39 @@ describe("calculateEllipseParam - 椭圆三角参数设点与辅助角最值", (
     expect(res.Paux.y).toBeCloseTo(4);
   });
 
-  it("课标契约：b ≥ a 的非法输入须钳制为 a > b > 0，保证焦点不退化重合", () => {
+  it("课标契约：b ≥ a 的非法输入须钳制为 a > b > 0，保证焦点不退化重合，并显式返回 safeB 与 isClamped", () => {
     // 模拟滑块越界组合 a = 2, b = 5（原实现下 c = 0，两焦点退化重合于原点）
     const res = calculateEllipseParam(2, 5, 45);
     expect(res.valid).toBe(true);
     expect(res.a).toBeCloseTo(2, 6);
+    expect(res.safeA).toBeCloseTo(2, 6);
     expect(res.b).toBeLessThan(res.a);
+    expect(res.safeB).toBe(res.b);
+    expect(res.rawA).toBe(2);
+    expect(res.rawB).toBe(5);
+    expect(res.isClamped).toBe(true);
 
     // 半焦距 c = √(a² - b²) 必须严格为正
-    const c = Math.sqrt(Math.max(0, res.a * res.a - res.b * res.b));
+    const c = Math.sqrt(
+      Math.max(0, res.safeA * res.safeA - res.safeB * res.safeB),
+    );
     expect(c).toBeGreaterThan(0);
 
     // 钳制后的动点必须仍严格落在椭圆上：x²/a² + y²/b² = 1
     expect(
-      (res.P.x * res.P.x) / (res.a * res.a) +
-        (res.P.y * res.P.y) / (res.b * res.b),
+      (res.P.x * res.P.x) / (res.safeA * res.safeA) +
+        (res.P.y * res.P.y) / (res.safeB * res.safeB),
     ).toBeCloseTo(1, 6);
+  });
+
+  it("合法参数输入下 isClamped 为 false，且 safeA === rawA, safeB === rawB", () => {
+    const res = calculateEllipseParam(4, 3, 45);
+    expect(res.valid).toBe(true);
+    expect(res.isClamped).toBe(false);
+    expect(res.safeA).toBe(4);
+    expect(res.safeB).toBe(3);
+    expect(res.rawA).toBe(4);
+    expect(res.rawB).toBe(3);
   });
 
   it("切线截距三角形面积极值：当 θ = 45° 时取得最小值 S_min = a * b", () => {

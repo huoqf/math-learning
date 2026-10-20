@@ -1,6 +1,7 @@
-﻿import React from "react";
+import React from "react";
 import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
+import { rightAnglePath } from "@/utils/geometryMarks";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { TriangleExtremaState, Point2D } from "@/math/triangleExtrema";
 import type { SceneScale } from "@/hooks/useSceneScale";
@@ -81,6 +82,52 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
 
   // 顶点 A 在底边上的垂足 H
   const posH = mathToDesign(vertices.A.x, 0, scale);
+
+  // 阿波罗尼斯圆内外分点 D, E 投射 (点 D 为内分点 DB/DC=k, 点 E 为外分点 EB/EC=k)
+  const posD = apolloniusCircle?.pointD
+    ? mathToDesign(apolloniusCircle.pointD.x, apolloniusCircle.pointD.y, scale)
+    : null;
+  const posE = apolloniusCircle?.pointE
+    ? mathToDesign(apolloniusCircle.pointE.x, apolloniusCircle.pointE.y, scale)
+    : null;
+
+  // 外分点端点连线目标坐标（视口边界截断保护，防止超远坐标绘制失控）
+  //
+  // ⚠️ 本组件在 `if (!isValid)` 处有提前 return，故从该处到文件末尾**禁止使用任何 Hook**：
+  // isValid 由拖拽顶点实时决定，退化态与非退化态切换时若 hook 数量发生变化，
+  // React 会抛 "Rendered more hooks than during the previous render" 并白屏。
+  // 下面的投射与直角符号均为纯计算，与上方 posA/posD/posE 同族，不需要 memo。
+  let endPointE: Point2D | null = null;
+  if (apolloniusCircle?.pointE && posD && posE) {
+    const rawEx = apolloniusCircle.pointE.x;
+    if (rawEx >= scale.xMin - 1 && rawEx <= scale.xMax + 1) {
+      endPointE = posE;
+    } else {
+      const clampedEx = Math.max(
+        scale.xMin - 0.5,
+        Math.min(scale.xMax + 0.5, rawEx),
+      );
+      const denom = rawEx - vertices.A.x;
+      if (Math.abs(denom) < 1e-4) {
+        endPointE = posE;
+      } else {
+        const t = (clampedEx - vertices.A.x) / denom;
+        const clampedEy = vertices.A.y + t * (0 - vertices.A.y);
+        endPointE = mathToDesign(clampedEx, clampedEy, scale);
+      }
+    }
+  }
+
+  // AD 与 AE 为内/外角平分线，必互相垂直 (∠DAE = 90° 直角符号)
+  const rightAngleDAE =
+    studyMode === "apollonius" && posD && posE
+      ? rightAnglePath(
+          posA,
+          { x: posD.x - posA.x, y: posD.y - posA.y },
+          { x: posE.x - posA.x, y: posE.y - posA.y },
+          fontScale(10),
+        )
+      : null;
 
   // 外接圆最高点（等腰三角形顶点）
   const maxVertexA = {
@@ -216,6 +263,112 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             strokeLinejoin="round"
           >
             hₘₐₓ = R_A
+          </text>
+
+          {/* 内角平分线 AD 与 外角平分线 AE (AD ⊥ AE 直径直角特征) */}
+          {posD && (
+            <line
+              x1={posA.x}
+              y1={posA.y}
+              x2={posD.x}
+              y2={posD.y}
+              stroke={MATH_COLORS.paramPrimary}
+              strokeDasharray="4 3"
+              strokeWidth={1.6}
+              opacity={0.85}
+            />
+          )}
+          {endPointE && (
+            <line
+              x1={posA.x}
+              y1={posA.y}
+              x2={endPointE.x}
+              y2={endPointE.y}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeDasharray="4 3"
+              strokeWidth={1.6}
+              opacity={0.85}
+            />
+          )}
+
+          {/* ∠DAE = 90° 直角符号 */}
+          {rightAngleDAE && (
+            <path
+              d={rightAngleDAE}
+              fill="none"
+              stroke={MATH_COLORS.tangentLine}
+              strokeWidth={1.5}
+            />
+          )}
+
+          {/* 内分点 D (满足 DB/DC = k) */}
+          {posD && (
+            <g id="apollonius-point-d">
+              <MathPoint
+                x={posD.x}
+                y={posD.y}
+                color={MATH_COLORS.paramPrimary}
+              />
+              <text
+                x={posD.x}
+                y={posD.y + fontScale(16)}
+                fill={MATH_COLORS.paramPrimary}
+                fontSize={fontScale(12)}
+                fontWeight="bold"
+                fontStyle="italic"
+                textAnchor="middle"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={fontScale(3.5)}
+                strokeLinejoin="round"
+              >
+                D
+              </text>
+            </g>
+          )}
+
+          {/* 外分点 E (满足 EB/EC = k，直径另一端点) */}
+          {posE &&
+            apolloniusCircle.pointE.x >= scale.xMin - 2 &&
+            apolloniusCircle.pointE.x <= scale.xMax + 2 && (
+              <g id="apollonius-point-e">
+                <MathPoint
+                  x={posE.x}
+                  y={posE.y}
+                  color={MATH_COLORS.paramSecondary}
+                />
+                <text
+                  x={posE.x}
+                  y={posE.y + fontScale(16)}
+                  fill={MATH_COLORS.paramSecondary}
+                  fontSize={fontScale(12)}
+                  fontWeight="bold"
+                  fontStyle="italic"
+                  textAnchor="middle"
+                  paintOrder="stroke"
+                  stroke={MATH_COLORS.white}
+                  strokeWidth={fontScale(3.5)}
+                  strokeLinejoin="round"
+                >
+                  E
+                </text>
+              </g>
+            )}
+
+          {/* 定比标注 c / b = k */}
+          <text
+            x={apCenter.x}
+            y={apCenter.y + apRadiusPx + fontScale(18)}
+            fill={MATH_COLORS.circle}
+            fontSize={fontScale(11)}
+            fontWeight="bold"
+            textAnchor="middle"
+            paintOrder="stroke"
+            stroke={MATH_COLORS.white}
+            strokeWidth={fontScale(3.5)}
+            strokeLinejoin="round"
+          >
+            c / b = k = {apolloniusCircle.ratioK.toFixed(1)}
           </text>
         </g>
       )}

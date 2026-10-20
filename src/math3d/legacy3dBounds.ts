@@ -13,7 +13,7 @@
  * 纯数学函数，零 DOM / React 依赖。
  */
 
-import { boundsOf, type Bounds3D } from "./sceneBounds";
+import { boundsOf, unionBounds, type Bounds3D } from "./sceneBounds";
 import type { Vec3 } from "./vector3";
 import {
   calculateRightTrapezoidFolding,
@@ -24,6 +24,21 @@ import {
   type FoldingModelKind,
   type FoldStateKind,
 } from "./folding";
+import {
+  calculateCuboidSphere,
+  calculatePyramidSphere,
+  calculatePrismSphere,
+  calculateConeSphere,
+  calculateCylinderSphere,
+  type SphereType,
+  type ShapeType,
+} from "./circumInSphere";
+import {
+  calculatePerpPlanesSphere,
+  calculateConcentricSpheres,
+  calculateTruncatedConeSphere,
+  type AdvancedSphereModelType,
+} from "./advancedSphereModels";
 
 // ============================================================================
 // 各页面运行时动态包围盒纯函数（纯数学层，零 DOM/React 依赖）
@@ -298,16 +313,61 @@ export function getFoldingExtremeBounds(domains?: FoldingDomainSpec): Bounds3D {
 }
 
 export function getCircumInSphereBounds(params?: {
+  shape?: ShapeType;
+  sphereType?: SphereType;
   a?: number;
+  b?: number;
+  c?: number;
   h?: number;
 }): Bounds3D {
-  const a = params?.a ?? 3;
-  const h = params?.h ?? 3.5;
-  const halfA = Math.max(2, a / 2);
-  return {
-    min: { x: -halfA, y: -halfA, z: 0 },
-    max: { x: halfA, y: halfA, z: Math.max(3.5, h) },
+  const shape = params?.shape ?? "cuboid";
+  const sphereType = params?.sphereType ?? "circum";
+  const a = Math.max(0.5, params?.a ?? 3);
+  const b = Math.max(0.5, params?.b ?? 2);
+  const c = Math.max(0.5, params?.c ?? params?.h ?? 2);
+
+  let modelData;
+  switch (shape) {
+    case "cuboid":
+      modelData = calculateCuboidSphere(a, b, c, sphereType);
+      break;
+    case "regularPyramid":
+      modelData = calculatePyramidSphere(a, c, sphereType);
+      break;
+    case "triangularPrism":
+      modelData = calculatePrismSphere(a, b, c, sphereType);
+      break;
+    case "cone":
+      modelData = calculateConeSphere(a, c, sphereType);
+      break;
+    case "cylinder":
+      modelData = calculateCylinderSphere(a, c, sphereType);
+      break;
+    default:
+      modelData = calculateCuboidSphere(a, b, c, sphereType);
+  }
+
+  const { center, radius, keyPoints } = modelData;
+
+  // 球体的包围盒（球心 ± 半径）
+  const sphereBounds: Bounds3D = {
+    min: {
+      x: center.x - radius,
+      y: center.y - radius,
+      z: center.z - radius,
+    },
+    max: {
+      x: center.x + radius,
+      y: center.y + radius,
+      z: center.z + radius,
+    },
   };
+
+  // 几何体各关键特征点包围盒
+  const points = Object.values(keyPoints);
+  const solidBounds = boundsOf(points);
+
+  return unionBounds(sphereBounds, solidBounds);
 }
 
 export function getPolyhedronCircumSphereBounds(params?: {
@@ -328,13 +388,70 @@ export function getPolyhedronCircumSphereBounds(params?: {
 }
 
 export function getAdvancedSphereBounds(params?: {
+  modelType?: AdvancedSphereModelType;
+  r1?: number;
+  r2?: number;
+  c?: number;
+  a?: number;
+  h?: number;
+  R?: number;
+  shapeType?: number;
   r?: number;
   d?: number;
 }): Bounds3D {
-  const r = Math.max(2.5, params?.r ?? 3);
+  const modelType = params?.modelType;
+
+  if (modelType === "perpPlanes") {
+    const r1 = params?.r1 ?? 3;
+    const r2 = params?.r2 ?? 3.5;
+    const c = params?.c ?? 3;
+    const res = calculatePerpPlanesSphere(r1, r2, c);
+    // 渲染时模型通过 perpCenterOffset 平移使球心在原点 (0, 0, 0)
+    const R = res.radius;
+    return {
+      min: { x: -R, y: -R, z: -R },
+      max: { x: R, y: R, z: R },
+    };
+  }
+
+  if (modelType === "concentric") {
+    const a = params?.a ?? 4;
+    const res = calculateConcentricSpheres(a);
+    const R = res.circumRadius;
+    const center = res.center;
+    return {
+      min: { x: center.x - R, y: center.y - R, z: center.z - R },
+      max: { x: center.x + R, y: center.y + R, z: center.z + R },
+    };
+  }
+
+  if (modelType === "truncatedCone") {
+    const r1 = params?.r1 ?? 1.5;
+    const r2 = params?.r2 ?? 3;
+    const h = params?.h ?? 4.24;
+    const res = calculateTruncatedConeSphere(r1, r2, h);
+    const R = res.circumRadius;
+    const cz = res.circumCenter.z;
+    const maxHoriz = Math.max(res.r2, R);
+    return {
+      min: { x: -maxHoriz, y: -maxHoriz, z: Math.min(0, cz - R) },
+      max: { x: maxHoriz, y: maxHoriz, z: Math.max(res.height, cz + R) },
+    };
+  }
+
+  if (modelType === "extrema") {
+    const R = Math.max(1, params?.R ?? params?.r ?? 3);
+    return {
+      min: { x: -R, y: -R, z: -R },
+      max: { x: R, y: R, z: R },
+    };
+  }
+
+  // 兜底：根据传入的半径做全三维对称包围盒，彻底消灭历史实现中 z: -1 导致的球体下半部分裁切
+  const fallbackR = Math.max(2.5, params?.R ?? params?.r ?? params?.a ?? 3);
   return {
-    min: { x: -r, y: -r, z: -1 },
-    max: { x: r + 1, y: r + 1, z: r + 1 },
+    min: { x: -fallbackR, y: -fallbackR, z: -fallbackR },
+    max: { x: fallbackR, y: fallbackR, z: fallbackR },
   };
 }
 
@@ -460,8 +577,18 @@ export const LEGACY_3D_PAGE_BOUNDS: Legacy3DPageBoundsCase[] = [
   {
     pageId: "know-solid-ball",
     name: "内切球与正棱锥外接球",
-    defaultBounds: getCircumInSphereBounds({ a: 3, h: 3.5 }),
-    extremeBounds: getCircumInSphereBounds({ a: 5, h: 5.5 }),
+    defaultBounds: getCircumInSphereBounds({
+      shape: "cuboid",
+      a: 3,
+      b: 2,
+      c: 2,
+    }),
+    extremeBounds: getCircumInSphereBounds({
+      shape: "cuboid",
+      a: 5,
+      b: 5,
+      c: 6,
+    }),
   },
   {
     pageId: "know-solid-ball-models",
@@ -477,8 +604,18 @@ export const LEGACY_3D_PAGE_BOUNDS: Legacy3DPageBoundsCase[] = [
   {
     pageId: "know-solid-advanced-sphere",
     name: "进阶切接球模型",
-    defaultBounds: getAdvancedSphereBounds({ r: 3 }),
-    extremeBounds: getAdvancedSphereBounds({ r: 5 }),
+    defaultBounds: getAdvancedSphereBounds({
+      modelType: "perpPlanes",
+      r1: 3,
+      r2: 3.5,
+      c: 3,
+    }),
+    extremeBounds: getAdvancedSphereBounds({
+      modelType: "perpPlanes",
+      r1: 4,
+      r2: 5,
+      c: 5,
+    }),
   },
   {
     pageId: "know-solid-parametric",

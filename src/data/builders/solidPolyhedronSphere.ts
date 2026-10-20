@@ -304,15 +304,23 @@ export function buildPolyhedronSpherePanel(
       {
         step: 2,
         title: "三式相加解长方体体对角线",
-        detail: `三方程相加得 2(x² + y² + z²) = a² + b² + c² = ${sumSq}，长方体体对角线长等于外接球直径 2R。`,
-        latex: `(2R)^2 = x^2 + y^2 + z^2 = \\frac{a^2 + b^2 + c^2}{2} = \\frac{${sumSq}}{2} = ${halfSumSq}`,
+        detail: res.isValid
+          ? `三方程相加得 2(x² + y² + z²) = a² + b² + c² = ${sumSq}，长方体体对角线长等于外接球直径 2R。`
+          : `联立方程组两两作差解得 x², y², z² 存在非正数，三面对角线无法同时在实数域构成封闭长方体！`,
+        latex: res.isValid
+          ? `(2R)^2 = x^2 + y^2 + z^2 = \\frac{a^2 + b^2 + c^2}{2} = \\frac{${sumSq}}{2} = ${halfSumSq}`
+          : `x^2 = \\frac{a^2+b^2-c^2}{2} \\le 0 \\iff \\text{无实数解}`,
         rubric: "[高考采分点] 准确推导出体对角线与三对棱平方和关系 (+2分)",
       },
       {
         step: 3,
         title: "求解外接球半径 R",
-        detail: `两边开方解出外接球半径 R = ${res.radius.toFixed(3)}。`,
-        latex: `R = \\frac{\\sqrt{2(a^2 + b^2 + c^2)}}{4} = \\frac{\\sqrt{2 \\times ${sumSq}}}{4} \\approx ${res.radius.toFixed(3)}`,
+        detail: res.isValid
+          ? `两边开方解出外接球半径 R = ${res.radius.toFixed(3)}。`
+          : `由于对棱不满足任意两边平方和大于第三边平方和的锐角三角形要求，无法构造实数外接球。画面以单位基准四面体与同心同径外接球保全视口。`,
+        latex: res.isValid
+          ? `R = \\frac{\\sqrt{2(a^2 + b^2 + c^2)}}{4} = \\frac{\\sqrt{2 \\times ${sumSq}}}{4} \\approx ${res.radius.toFixed(3)}`
+          : `R = \\frac{\\sqrt{x^2+y^2+z^2}}{2} = \\frac{\\sqrt{3}}{2} \\approx ${res.radius.toFixed(3)} \\quad (\\text{保全基准})`,
         rubric: "[高考采分点] 正确解出外接球半径与表面积 (+2分)",
       },
     );
@@ -330,7 +338,7 @@ export function buildPolyhedronSpherePanel(
 
     if (!res.isValid) {
       warnings.push({
-        text: "当前对棱长 (a, b, c) 不满足三角形三边平方和条件 (如 a²+b² ≤ c²)，无法构成实数补形长方体！请调整参数使任意两边平方和大于第三边平方和。",
+        text: "当前对棱长 (a, b, c) 不满足三角形三边平方和条件 (如 a²+b² ≤ c²)，无法构成实数补形长方体！画面已自动保全同心球体，请调整参数使任意两边平方和大于第三边平方和。",
         level: "danger",
       });
     }

@@ -8,6 +8,11 @@ import type {
 import { colorize } from "../types";
 import { solveNike, evalNikeAt } from "@/math/nike";
 import { MATH_COLORS } from "@/theme";
+import {
+  formatMathNumber,
+  formatCoefTerm,
+  formatShiftParen,
+} from "@/utils/mathFormat";
 
 const PARAM_COLORS = {
   a: MATH_COLORS.paramPrimary, // #EF4444
@@ -120,11 +125,11 @@ export function buildNikePanel(
       Math.abs(intercept) < 1e-4
         ? ""
         : intercept > 0
-          ? `+ ${intercept.toFixed(1)}`
-          : `- ${Math.abs(intercept).toFixed(1)}`;
+          ? `+ ${formatMathNumber(intercept)}`
+          : `- ${formatMathNumber(Math.abs(intercept))}`;
     quantities.push({
       label: "渐近线方程",
-      value: `x = ${h.toFixed(1)}, \\; y = ${a.toFixed(1)}x ${interceptStr} \\text{（垂直与斜渐近线）}`,
+      value: `x = ${h.toFixed(1)}, \\; y = ${formatCoefTerm(a, "x")} ${interceptStr} \\text{（垂直与斜渐近线）}`,
     });
   }
 
@@ -231,15 +236,15 @@ export function buildNikePanel(
         {
           step: 1,
           title: "审题定法 · 检验一正与乘积定值",
-          detail: `由题设 $a = ${a.toFixed(1)} > 0, b = ${b.toFixed(1)} > 0$，自变量 $x > 0$，两正数项乘积为定值 $(${a.toFixed(1)}x)\\left(\\frac{${b.toFixed(1)}}{x}\\right) = ${(a * b).toFixed(1)}$。`,
-          latex: `u = ax > 0, \\quad v = \\frac{b}{x} > 0 \\implies u \\cdot v = ab = ${(a * b).toFixed(1)}`,
+          detail: `由题设 $a = ${a.toFixed(1)} > 0, b = ${b.toFixed(1)} > 0$，自变量 $x > 0$，两正数项乘积为定值 $(${formatCoefTerm(a, "x")})\\left(\\frac{${formatMathNumber(b)}}{x}\\right) = ${formatMathNumber(a * b)}$。`,
+          latex: `u = ax > 0, \\quad v = \\frac{b}{x} > 0 \\implies u \\cdot v = ab = ${formatMathNumber(a * b)}`,
           rubric: "准确验证正数前提与乘积定值条件得 2 分",
         },
         {
           step: 2,
           title: "建模联立 · 应用均值不等式放缩",
           detail: `由基本不等式 $u + v \\ge 2\\sqrt{uv}$，代入项得 $f(x) \\ge 2\\sqrt{ab}$。`,
-          latex: `f(x) = ${a.toFixed(1)}x + \\frac{${b.toFixed(1)}}{x} \\ge 2\\sqrt{${a.toFixed(1)} \\times ${b.toFixed(1)}} = ${minY.toFixed(2)}`,
+          latex: `f(x) = ${formatCoefTerm(a, "x")} + \\frac{${formatMathNumber(b)}}{x} \\ge 2\\sqrt{${formatMathNumber(a)} \\times ${formatMathNumber(b)}} = ${minY.toFixed(2)}`,
           rubric: "规范写出基本不等式公式与数值代入得 2 分",
         },
         {
@@ -304,7 +309,7 @@ export function buildNikePanel(
         name: "二次分式分离常数化对勾模型定理",
         latex: `f(x) = \\frac{x^2 + px + q}{x - h} = (x - h) + (p + 2h) + \\frac{h^2 + ph + q}{x - h}`,
         prerequisites: ["x ≠ h", "a · b > 0"],
-        note: `转化为平移对勾函数，对称中心为 $(${h.toFixed(1)}, ${c.toFixed(1)})$，斜渐近线为 $y = ${a.toFixed(1)}(x - ${h.toFixed(1)}) + ${c.toFixed(1)}$`,
+        note: `转化为平移对勾函数，对称中心为 $(${h.toFixed(1)}, ${c.toFixed(1)})$，斜渐近线为 $y = ${formatCoefTerm(a, formatShiftParen(h))} + ${formatMathNumber(c)}$`,
       });
 
       gaokaoPoints.push({
@@ -370,7 +375,7 @@ export function buildNikePanel(
         {
           step: 1,
           title: "审题定法 · 识别飘带模型并分离常数",
-          detail: `由 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 知 $ab = ${(a * b).toFixed(1)} < 0$，属于双曲飘带型。令 $u = x - ${h.toFixed(1)} \\; (u \\ne 0)$，分离常数后化归为 $f = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}$。`,
+          detail: `由 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 知 $ab = ${formatMathNumber(a * b)} < 0$，属于双曲飘带型。令 $u = x - ${h.toFixed(1)} \\; (u \\ne 0)$，分离常数后化归为 $f = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}$。`,
           latex: `u = x - ${h.toFixed(1)} \\implies f(x) = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}`,
           rubric: "准确换元并写出分离常数后的表达式得 2 分",
         },
@@ -414,7 +419,7 @@ export function buildNikePanel(
           step: 1,
           title: "审题定法 · 任取两元作差变形",
           detail: `在区间 $(0, +\\infty)$ 上任取 $0 < x_1 < x_2$，作差并通分因式分解：$f(x_1) - f(x_2) = a(x_1 - x_2) + b\\left(\\frac{1}{x_1} - \\frac{1}{x_2}\\right) = (x_1 - x_2)\\frac{a x_1 x_2 - b}{x_1 x_2}$。`,
-          latex: `f(x_1) - f(x_2) = (x_1 - x_2)\\left( ${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{x_1 x_2} \\right) = \\frac{(x_1 - x_2)(${a.toFixed(1)}x_1 x_2 - ${b.toFixed(1)})}{x_1 x_2}`,
+          latex: `f(x_1) - f(x_2) = (x_1 - x_2)\\left( ${formatMathNumber(a)} - \\frac{${formatMathNumber(b)}}{x_1 x_2} \\right) = \\frac{(x_1 - x_2)(${formatCoefTerm(a, "x_1 x_2")} - ${formatMathNumber(b)})}{x_1 x_2}`,
           rubric: "规范设元、作差并通分因式分解得 2 分",
         },
         {

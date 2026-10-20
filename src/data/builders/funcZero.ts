@@ -170,13 +170,17 @@ export function buildFuncZeroPanel(
     },
     {
       step: 2,
-      title: "定理验证 · 检验端点函数值异号",
-      rubric: "采分点：代入端点计算函数值并验证 f(a)·f(b) < 0（4分）",
-      latex: `f(${m.toFixed(1)}) = ${Number.isFinite(fA) ? fA.toFixed(2) : "\\text{无定义}"}, \\quad f(${n.toFixed(1)}) = ${Number.isFinite(fB) ? fB.toFixed(2) : "\\text{无定义}"} \\implies f(a) \\cdot f(b) ${prod < 0 ? "< 0" : "> 0"}`,
+      title: "定理验证 · 检验端点函数值符号",
+      rubric: "采分点：代入端点计算函数值并验证 f(a)·f(b) 符号（4分）",
+      latex: `f(${m.toFixed(1)}) = ${Number.isFinite(fA) ? fA.toFixed(2) : "\\text{无定义}"}, \\quad f(${n.toFixed(1)}) = ${Number.isFinite(fB) ? fB.toFixed(2) : "\\text{无定义}"} \\implies f(a) \\cdot f(b) ${
+        Math.abs(prod) <= 1e-6 ? "= 0" : prod < 0 ? "< 0" : "> 0"
+      }`,
       detail:
-        prod < 0
-          ? `由 $f(a) \\cdot f(b) < 0$，由零点存在性定理知区间 $(${m.toFixed(1)}, ${n.toFixed(1)})$ 内必存在零点。结合严格单调性，零点唯一。`
-          : `当前端点同号 $f(a) \\cdot f(b) > 0$，不满足定理前提，无法启动标准二分缩小流程。`,
+        Math.abs(prod) <= 1e-6
+          ? `端点函数值满足 $f(${Math.abs(fA) <= 1e-4 ? m.toFixed(1) : n.toFixed(1)}) = 0$，端点本身恰为函数的精确零点，已直接获得零点根。`
+          : prod < 0
+            ? `由 $f(a) \\cdot f(b) < 0$，由零点存在性定理知区间 $(${m.toFixed(1)}, ${n.toFixed(1)})$ 内必存在零点。结合严格单调性，零点唯一。`
+            : `当前端点同号 $f(a) \\cdot f(b) > 0$，不满足定理前提，无法启动标准二分缩小流程。`,
     },
     {
       step: 3,

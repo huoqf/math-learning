@@ -113,11 +113,46 @@ export function buildFuncCompositePanel(
       });
     }
 
+    const reasoningSteps: MathPanelData["reasoningSteps"] = [
+      {
+        step: 1,
+        title: "审题定法 · 各自区间斜率与严格单调性",
+        latex: `f_1'(x) = k_1 = ${leftSlope.toFixed(2)}, \\quad f_2'(x) = k_2 = ${rightSlope.toFixed(2)}`,
+        detail: `分段函数在各自分段区间上为一次函数。若要求在 $\\mathbb{R}$ 上严格单调，首先两侧斜率必须严格同向同号且均非零。`,
+        rubric: "采分点：分别求解各分段区间的单调性与斜率符号（3分）",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 建立分界点搭接不等式",
+        latex: `f_1(x_0) = ${res.leftValAtX0.toFixed(2)}, \\quad f_2(x_0) = ${res.rightValAtX0.toFixed(2)} \\implies \\Delta y = f_2(x_0) - f_1(x_0) = ${(res.rightValAtX0 - res.leftValAtX0).toFixed(2)}`,
+        detail: `高考核心充要搭接：若递增则必有 $f_1(x_0) \\le f_2(x_0)$；若递减则必有 $f_1(x_0) \\ge f_2(x_0)$。`,
+        rubric: "采分点：列出分界点搭接不等式并代入计算（4分）",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 综合判定全域严格单调性",
+        latex: `\\text{全域单调性: } ${
+          res.globalMonotonicity === "increasing"
+            ? "\\text{在 } \\mathbb{R} \\text{ 上严格单调递增}"
+            : res.globalMonotonicity === "decreasing"
+              ? "\\text{在 } \\mathbb{R} \\text{ 上严格单调递减}"
+              : res.globalMonotonicity === "constant"
+                ? "\\text{全域常数函数}"
+                : "\\text{非全域单调（不满足充要条件）}"
+        }`,
+        detail: res.monotonicityReason,
+        rubric: "采分点：综合斜率与搭接不等式得出全域单调性结论（3分）",
+      },
+    ];
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
       warnings,
+      reasoningSteps,
+      examAnchor:
+        "人教A版必修第一册 · 分段函数与全域单调性充要条件 (高频题位/搭接大题)",
       mnemonic: "分段讨论看分界，单调递增验搭接；零点分求验定义域。",
     };
   } else {
@@ -244,11 +279,57 @@ export function buildFuncCompositePanel(
       warnings.push({ text: res.warningMessage, level: "warning" });
     }
 
+    const reasoningSteps: MathPanelData["reasoningSteps"] = [
+      {
+        step: 1,
+        title: "审题求域 · 计算内层取值与外层定义域核查",
+        latex: `x = ${xSample.toFixed(1)} \\implies u = g(${xSample.toFixed(1)}) = ${Number.isFinite(res.u) ? res.u.toFixed(2) : "\\text{无意义}"}`,
+        detail: `先求内层二次函数值 $u = g(x)$。若外层为对数函数 $\\log_2(u)$，必须严格保证真数 $u > 0$；若不满足则复合函数在采样点处无定义。`,
+        rubric: "采分点：先求内层中间变量值并严格检验外层函数定义域（3分）",
+      },
+      {
+        step: 2,
+        title: "分层研判 · 提取内层与外层各自单调走势",
+        latex: `g(x) \\text{ 趋势: } ${
+          res.innerMonotonicity === "increasing"
+            ? "\\text{单调递增 (\\nearrow)}"
+            : res.innerMonotonicity === "decreasing"
+              ? "\\text{单调递减 (\\searrow)}"
+              : "\\text{处于对称轴顶点}"
+        }, \\quad f(u) \\text{ 趋势: } ${
+          res.outerMonotonicity === "increasing"
+            ? "\\text{单调递增 (\\nearrow)}"
+            : res.outerMonotonicity === "decreasing"
+              ? "\\text{单调递减 (\\searrow)}"
+              : "\\text{处于对称轴顶点}"
+        }`,
+        detail: `根据内层二次函数对称轴 $x = ${(-innerB / 2).toFixed(2)}$ 判定 $g(x)$ 的增减性；再根据外层函数类型判定 $f(u)$ 的增减性。`,
+        rubric:
+          "采分点：分别准确判定内层与外层函数在对应自变量位置的单调性（4分）",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 依据“同增异减”合成复合单调性",
+        latex: `\\text{复合单调性: } ${
+          res.compositeMonotonicity === "increasing"
+            ? "\\text{同增 (\\nearrow)}"
+            : res.compositeMonotonicity === "decreasing"
+              ? "\\text{异减 (\\searrow)}"
+              : "\\text{非严格单调/无定义}"
+        }`,
+        detail: `运用高中数学经典“同增异减”核心口诀：内层与外层单调性方向相同时，复合函数单调递增；内层与外层单调性方向相反时，复合函数单调递减。`,
+        rubric: "采分点：应用同增异减法则得出复合函数最终单调性结论（3分）",
+      },
+    ];
+
     return {
       quantities,
       theorems,
       gaokaoPoints,
       warnings,
+      reasoningSteps,
+      examAnchor:
+        "人教A版必修第一册 · 复合函数定义域与同增异减模型 (高频核心题位)",
       mnemonic: "复合函数先求域，内层值域是外域；同增异减定区间。",
     };
   }

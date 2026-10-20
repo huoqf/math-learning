@@ -16,6 +16,7 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { NikeScene } from "./components/NikeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/nike";
+import { formatMathNumber, formatCoefTerm } from "@/utils/mathFormat";
 
 export function AmgmPage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -38,9 +39,10 @@ export function AmgmPage() {
   );
 
   const equationLatex = useMemo(() => {
-    const aVal = params.a.toFixed(1);
-    const bVal = params.b.toFixed(1);
-    return `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${aVal}}x + \\frac{\\color{${MATH_COLORS.paramSecondary}}{${bVal}}}{x} \\ge 2\\sqrt{\\color{${MATH_COLORS.paramPrimary}}{${aVal}} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${bVal}}}`;
+    const aVal = formatMathNumber(params.a);
+    const bVal = formatMathNumber(params.b);
+    const aTerm = formatCoefTerm(params.a, "x", MATH_COLORS.paramPrimary);
+    return `f(x) = ${aTerm} + \\frac{\\color{${MATH_COLORS.paramSecondary}}{${bVal}}}{x} \\ge 2\\sqrt{\\color{${MATH_COLORS.paramPrimary}}{${aVal}} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${bVal}}} \\quad (x > 0)`;
   }, [params.a, params.b]);
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -102,12 +104,12 @@ export function AmgmPage() {
         style: "solid",
       },
       {
-        label: `项一：y1 = ${a.toFixed(1)}x`,
+        label: `项一：y1 = ${formatCoefTerm(a, "x")}`,
         color: MATH_COLORS.paramPrimary,
         style: "dash",
       },
       {
-        label: `项二：y2 = ${b.toFixed(1)}/x`,
+        label: `项二：y2 = ${formatMathNumber(b)}/x`,
         color: MATH_COLORS.paramSecondary,
         style: "dash",
       },
@@ -175,7 +177,7 @@ export function AmgmPage() {
                 <span>
                   满足前提“一正、二定”，乘积为定值{" "}
                   <KatexFormula
-                    formula={`(ax)(\\frac{b}{x}) = ${(params.a * params.b).toFixed(1)}`}
+                    formula={`(ax)(\\frac{b}{x}) = ${formatMathNumber(params.a * params.b)}`}
                     mode="inline"
                   />
                   。

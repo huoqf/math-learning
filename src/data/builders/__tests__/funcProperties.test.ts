@@ -209,4 +209,55 @@ describe("buildFuncPropertiesPanel 构建器测试", () => {
     expect(data.reasoningSteps?.[1].title).toContain("平方非负性");
     expect(data.reasoningSteps?.[2].latex).toContain("R = [0, +\\infty)");
   });
+
+  describe("对称性模式 (symmetry) 中心对称边界与除零防御", () => {
+    it("分式函数在 x0 = centerX 处触发垂直渐近线无定义保护，杜绝 NaN 泄漏", () => {
+      const data = buildFuncPropertiesPanel(
+        { centerX: 1, centerY: 2, x0: 1 },
+        { mode: "symmetry", subMode: "center", fnType: "reciprocal" },
+      );
+
+      // 验证绝无 NaN 泄漏
+      const jsonStr = JSON.stringify(data);
+      expect(jsonStr).not.toContain("NaN");
+
+      // 验证提示和警告
+      const pQuantity = data.quantities.find((q) =>
+        q.label.includes("测试点 P"),
+      );
+      expect(pQuantity?.value).toContain("无定义");
+
+      const warn = data.warnings.find((w) => w.text.includes("垂直渐近线"));
+      expect(warn).toBeDefined();
+      expect(warn?.text).toContain("分母为零无定义");
+
+      // 验证推导链
+      expect(data.reasoningSteps?.[2].detail).toContain(
+        "处于垂直渐近线分母零点",
+      );
+    });
+
+    it("连续函数（如三次函数）在 x0 = centerX 时识别为自守不动点，零残差完全对称", () => {
+      const data = buildFuncPropertiesPanel(
+        { centerX: 1, centerY: 2, x0: 1 },
+        { mode: "symmetry", subMode: "center", fnType: "cubic" },
+      );
+
+      const jsonStr = JSON.stringify(data);
+      expect(jsonStr).not.toContain("NaN");
+
+      const pQuantity = data.quantities.find((q) =>
+        q.label.includes("测试点 P"),
+      );
+      expect(pQuantity?.value).toContain("与中心重合");
+
+      const symJudge = data.quantities.find((q) =>
+        q.label.includes("中心对称判定"),
+      );
+      expect(symJudge?.value).toContain("完全对称 (自守不动点)");
+
+      const warn = data.warnings.find((w) => w.text.includes("自守不动点"));
+      expect(warn).toBeDefined();
+    });
+  });
 });

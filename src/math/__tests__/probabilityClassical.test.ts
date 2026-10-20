@@ -54,6 +54,30 @@ describe("古典概型纯数学计算层 (computeClassicalProbability)", () => {
     expect(res.eventCount).toBe(14);
     expect(res.probability).toBeCloseTo(0.7);
     expect(res.reducedFractionLatex).toBe("\\frac{14}{20} = \\frac{7}{10}");
+
+    // 树状图真实概率断言：验证杜绝误导等可能的 0.25 硬编码
+    expect(res.treeNodes).toBeDefined();
+    const rrLeaf = res.treeNodes?.find((n) => n.id === "node-ball-RR");
+    const rwLeaf = res.treeNodes?.find((n) => n.id === "node-ball-RW");
+    const wrLeaf = res.treeNodes?.find((n) => n.id === "node-ball-WR");
+    const wwLeaf = res.treeNodes?.find((n) => n.id === "node-ball-WW");
+
+    expect(rrLeaf?.prob).toBeCloseTo(0.1, 4); // 2/5 * 1/4 = 2/20 = 0.1
+    expect(rwLeaf?.prob).toBeCloseTo(0.3, 4); // 2/5 * 3/4 = 6/20 = 0.3
+    expect(wrLeaf?.prob).toBeCloseTo(0.3, 4); // 3/5 * 2/4 = 6/20 = 0.3
+    expect(wwLeaf?.prob).toBeCloseTo(0.3, 4); // 3/5 * 2/4 = 6/20 = 0.3
+
+    expect(rrLeaf?.pathProbText).toBe("1/10");
+    expect(rwLeaf?.pathProbText).toBe("3/10");
+    expect(wrLeaf?.pathProbText).toBe("3/10");
+    expect(wwLeaf?.pathProbText).toBe("3/10");
+
+    // 命中叶子节点概率之和严格等于事件概率 0.7
+    const matchedLeaves = res.treeNodes?.filter(
+      (n) => n.depth === 2 && n.isEvent,
+    );
+    const sumProb = matchedLeaves?.reduce((acc, cur) => acc + cur.prob, 0);
+    expect(sumProb).toBeCloseTo(0.7, 4);
   });
 
   it("抛掷 3 次硬币：树状图 8 个样本点，恰好 2 正为 3 个，概率 3/8", () => {

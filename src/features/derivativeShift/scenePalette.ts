@@ -139,13 +139,20 @@ const SHIFT_SYMMETRIC: ScenePalette = {
     label: "弦中点",
     formula: "M\\left(\\frac{x_1+x_2}{2}, k\\right)",
   },
+  diffFn: {
+    color: MATH_COLORS.paramTertiary,
+    kind: "line",
+    dash: "dash",
+    width: 2,
+    label: "差函数",
+    formula: "F(x) = f(x) - f(2x_0 - x)",
+  },
   diffSeg: {
     color: MATH_COLORS.paramTertiary,
     kind: "line",
     dash: "dash",
     width: 1.8,
-    label: "差值",
-    formula: "F(x_1) = f(x_1) - f(2x_0 - x_1)",
+    note: "测试点 x1 处的差值竖线段与差函数同色同族，不单列",
   },
   offsetZone: {
     color: MATH_COLORS.paramTertiary,

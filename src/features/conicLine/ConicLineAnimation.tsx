@@ -477,7 +477,7 @@ export function ConicLineAnimation() {
                 { key: "general", label: "位置与弦长" },
                 { key: "focus", label: "过焦点弦" },
                 { key: "midpoint", label: "中点弦/点差" },
-                { key: "polePolar", label: "切点弦" },
+                { key: "polePolar", label: "切点弦（拓展）" },
               ]}
               value={studyMode}
               onChange={(k) => handleModeChange(k as StudyMode)}

@@ -17,6 +17,11 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { NikeScene } from "./components/NikeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/nike";
+import {
+  formatMathNumber,
+  formatCoefTerm,
+  formatShiftParen,
+} from "@/utils/mathFormat";
 
 export function NikeAnimation() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -49,13 +54,13 @@ export function NikeAnimation() {
 
   // 4. 中屏悬浮公式字符串拼接 (参数 a, b 应用三位一体语义色)
   const equationLatex = useMemo(() => {
-    const aVal = params.a.toFixed(1);
-    const bVal = params.b.toFixed(1);
+    const aVal = formatMathNumber(params.a);
+    const bVal = formatMathNumber(params.b);
 
     const colA = `\\color{${MATH_COLORS.paramPrimary}}{${aVal}}`;
-    const colB = `\\color{${MATH_COLORS.paramSecondary}}{${Math.abs(params.b).toFixed(1)}}`;
-    const colH = `\\color{${MATH_COLORS.paramTertiary}}{${Math.abs(params.h).toFixed(1)}}`;
-    const colC = `\\color{${MATH_COLORS.paramTertiary}}{${Math.abs(params.c).toFixed(1)}}`;
+    const colB = `\\color{${MATH_COLORS.paramSecondary}}{${formatMathNumber(Math.abs(params.b))}}`;
+    const colH = `\\color{${MATH_COLORS.paramTertiary}}{${formatMathNumber(Math.abs(params.h))}}`;
+    const colC = `\\color{${MATH_COLORS.paramTertiary}}{${formatMathNumber(Math.abs(params.c))}}`;
 
     if (activeMode === "shifted") {
       const hPart =
@@ -78,7 +83,7 @@ export function NikeAnimation() {
         return `y = ${cSigned} ${fracTerm}`;
       }
 
-      const aTerm = `${colA}${hPart}`;
+      const aTerm = formatCoefTerm(params.a, hPart, MATH_COLORS.paramPrimary);
       const cTerm =
         Math.abs(params.c) < 1e-4
           ? ""
@@ -89,7 +94,7 @@ export function NikeAnimation() {
       return `y = ${aTerm} ${cTerm} ${fracTerm}`.replace(/\s+/g, " ");
     }
     if (activeMode === "amgm") {
-      return `f(x) = ${colA}x + \\frac{\\color{${MATH_COLORS.paramSecondary}}{${bVal}}}{x} \\ge 2\\sqrt{${colA} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${bVal}}}`;
+      return `f(x) = ${formatCoefTerm(params.a, "x", MATH_COLORS.paramPrimary)} + \\frac{\\color{${MATH_COLORS.paramSecondary}}{${bVal}}}{x} \\ge 2\\sqrt{${colA} \\cdot \\color{${MATH_COLORS.paramSecondary}}{${bVal}}}`;
     }
     const bSign = params.b >= 0 ? "+" : "-";
     const fracTerm = `${bSign} \\frac{${colB}}{x}`;
@@ -98,7 +103,7 @@ export function NikeAnimation() {
         ? `y = \\frac{${colB}}{x}`
         : `y = -\\frac{${colB}}{x}`;
     }
-    return `y = ${colA}x ${fracTerm}`;
+    return `y = ${formatCoefTerm(params.a, "x", MATH_COLORS.paramPrimary)} ${fracTerm}`;
   }, [params.a, params.b, params.h, params.c, activeMode]);
 
   // 5. 左屏参数过滤与配置 (声明式ParamControl，支持动态定义域保护)
@@ -207,7 +212,7 @@ export function NikeAnimation() {
             style: "dash",
           }
         : {
-            label: `斜渐近线 y = ${a.toFixed(1)}(x - ${h.toFixed(1)}) + ${c.toFixed(1)}`,
+            label: `斜渐近线 y = ${formatCoefTerm(a, formatShiftParen(h))} + ${formatMathNumber(c)}`,
             color: MATH_COLORS.asymptote,
             style: "dash",
           };
@@ -247,12 +252,12 @@ export function NikeAnimation() {
           style: "solid",
         },
         {
-          label: `y1 = ${a.toFixed(1)}x`,
+          label: `y1 = ${formatCoefTerm(a, "x")}`,
           color: MATH_COLORS.paramPrimary,
           style: "dash",
         },
         {
-          label: `y2 = ${b.toFixed(1)}/x`,
+          label: `y2 = ${formatMathNumber(b)}/x`,
           color: MATH_COLORS.paramSecondary,
           style: "dash",
         },
@@ -283,7 +288,7 @@ export function NikeAnimation() {
         style: "dash",
       },
       {
-        label: `斜渐近线 y = ${a.toFixed(1)}x`,
+        label: `斜渐近线 y = ${formatCoefTerm(a, "x")}`,
         color: MATH_COLORS.asymptote,
         style: "dash",
       },
@@ -429,7 +434,7 @@ export function NikeAnimation() {
                       formula={
                         Math.abs(params.a) < 1e-4
                           ? "y = 0"
-                          : `y = ${params.a.toFixed(1)}x`
+                          : `y = ${formatCoefTerm(params.a, "x")}`
                       }
                       mode="inline"
                     />{" "}
@@ -454,7 +459,7 @@ export function NikeAnimation() {
                   <span>
                     满足前提“一正、二定”，乘积为定值{" "}
                     <KatexFormula
-                      formula={`(ax)(\\frac{b}{x}) = ${(params.a * params.b).toFixed(1)}`}
+                      formula={`(ax)(\\frac{b}{x}) = ${formatMathNumber(params.a * params.b)}`}
                       mode="inline"
                     />
                     。

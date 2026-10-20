@@ -6,7 +6,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { VennOpType } from "@/math/set";
-import { isPointInCircle } from "@/math/set";
+import { isPointInCircle, calculateSetMathState } from "@/math/set";
 
 interface SetSceneProps {
   params: Record<string, number>;
@@ -49,6 +49,15 @@ export function SetScene({
   // 点 P 的归属状态
   const inA = isPointInCircle({ x: xP, y: yP }, { x: xA, y: yA, r: rA });
   const inB = isPointInCircle({ x: xP, y: yP }, { x: xB, y: yB, r: rB });
+
+  // 几何关系与逻辑充要状态计算
+  const mathState = React.useMemo(() => {
+    return calculateSetMathState(
+      { x: xA, y: yA, r: rA },
+      { x: xB, y: yB, r: rB },
+      { x: xP, y: yP },
+    );
+  }, [xA, yA, rA, xB, yB, rB, xP, yP]);
 
   // 拖拽圆心 A
   const handleDragA = (mathPt: { x: number; y: number }) => {
@@ -141,85 +150,170 @@ export function SetScene({
         全集 U
       </text>
 
-      {/* --- Venn 运算阴影高亮层 --- */}
-
-      {/* 1. 交集 A ∩ B */}
-      {vennOp === "intersection" && (
-        <g clipPath={`url(#${clipIdA})`}>
-          <circle
-            cx={posB.x}
-            cy={posB.y}
-            r={radiusBInPx}
-            fill={withAlpha(MATH_COLORS.setIntersection, 0.4)}
-            stroke="none"
-          />
-        </g>
-      )}
-
-      {/* 2. 并集 A ∪ B */}
-      {vennOp === "union" && (
+      {/* --- 高亮阴影层 --- */}
+      {showLogic ? (
         <g>
-          {rA > 0 && (
+          {/* 1. 充分条件：A ⊆ B (A 为 B 的子集，小范围推大范围) */}
+          {(mathState.relation === "contained_A_in_B" ||
+            mathState.relation === "empty_A") &&
+            rB > 0 && (
+              <g>
+                {/* 大集合 B 底色 */}
+                <circle
+                  cx={posB.x}
+                  cy={posB.y}
+                  r={radiusBInPx}
+                  fill={withAlpha(MATH_COLORS.setB, 0.1)}
+                />
+                {/* 小集合 A (充分条件对应子集) 高亮 */}
+                {rA > 0 && (
+                  <circle
+                    cx={posA.x}
+                    cy={posA.y}
+                    r={radiusAInPx}
+                    fill={withAlpha(MATH_COLORS.paramPrimary, 0.28)}
+                    stroke={MATH_COLORS.paramPrimary}
+                    strokeWidth={2}
+                    strokeDasharray="5 3"
+                  />
+                )}
+              </g>
+            )}
+
+          {/* 2. 必要条件：B ⊆ A (B 为 A 的子集，q => p) */}
+          {(mathState.relation === "contained_B_in_A" ||
+            mathState.relation === "empty_B") &&
+            rA > 0 && (
+              <g>
+                {/* 大集合 A 底色 */}
+                <circle
+                  cx={posA.x}
+                  cy={posA.y}
+                  r={radiusAInPx}
+                  fill={withAlpha(MATH_COLORS.setA, 0.1)}
+                />
+                {/* 小集合 B (必要条件对应子集) 高亮 */}
+                {rB > 0 && (
+                  <circle
+                    cx={posB.x}
+                    cy={posB.y}
+                    r={radiusBInPx}
+                    fill={withAlpha(MATH_COLORS.paramSecondary, 0.28)}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={2}
+                    strokeDasharray="5 3"
+                  />
+                )}
+              </g>
+            )}
+
+          {/* 3. 充要条件：A = B (两集合完全重合) */}
+          {mathState.relation === "equal" && rA > 0 && (
             <circle
               cx={posA.x}
               cy={posA.y}
               r={radiusAInPx}
-              fill={withAlpha(MATH_COLORS.setUnion, 0.3)}
+              fill={withAlpha(MATH_COLORS.function, 0.25)}
+              stroke={MATH_COLORS.function}
+              strokeWidth={3}
             />
           )}
-          {rB > 0 && (
-            <circle
-              cx={posB.x}
-              cy={posB.y}
-              r={radiusBInPx}
-              fill={withAlpha(MATH_COLORS.setUnion, 0.3)}
-            />
+
+          {/* 4. 相交但不包含：既不充分也不必要条件 */}
+          {mathState.relation === "intersect" && (
+            <g clipPath={`url(#${clipIdA})`}>
+              <circle
+                cx={posB.x}
+                cy={posB.y}
+                r={radiusBInPx}
+                fill={withAlpha(MATH_COLORS.setIntersection, 0.18)}
+                stroke="none"
+              />
+            </g>
           )}
         </g>
-      )}
-
-      {/* 3. A 的补集 ∁U A */}
-      {vennOp === "complement_A" && (
+      ) : (
+        /* 常规 Venn 运算阴影高亮层 */
         <g>
-          {/* 全集底块 */}
-          <rect
-            x={scale.originX - 5.5 * scale.scaleX}
-            y={scale.originY - 3.8 * scale.scaleY}
-            width={11 * scale.scaleX}
-            height={7.6 * scale.scaleY}
-            fill={withAlpha(MATH_COLORS.setComplement, 0.25)}
-            rx={12}
-          />
-          {/* 用白色把 A 的区域盖住 */}
-          {rA > 0 && (
-            <circle
-              cx={posA.x}
-              cy={posA.y}
-              r={radiusAInPx}
-              fill={CANVAS_COLORS.white}
-            />
+          {/* 1. 交集 A ∩ B */}
+          {vennOp === "intersection" && (
+            <g clipPath={`url(#${clipIdA})`}>
+              <circle
+                cx={posB.x}
+                cy={posB.y}
+                r={radiusBInPx}
+                fill={withAlpha(MATH_COLORS.setIntersection, 0.4)}
+                stroke="none"
+              />
+            </g>
           )}
-        </g>
-      )}
 
-      {/* 4. 差集 A \ B (在 A 内且不在 B 内) */}
-      {vennOp === "difference_A_B" && (
-        <g>
-          {rA > 0 && (
-            <circle
-              cx={posA.x}
-              cy={posA.y}
-              r={radiusAInPx}
-              fill={withAlpha(MATH_COLORS.setA, 0.35)}
-            />
+          {/* 2. 并集 A ∪ B */}
+          {vennOp === "union" && (
+            <g>
+              {rA > 0 && (
+                <circle
+                  cx={posA.x}
+                  cy={posA.y}
+                  r={radiusAInPx}
+                  fill={withAlpha(MATH_COLORS.setUnion, 0.3)}
+                />
+              )}
+              {rB > 0 && (
+                <circle
+                  cx={posB.x}
+                  cy={posB.y}
+                  r={radiusBInPx}
+                  fill={withAlpha(MATH_COLORS.setUnion, 0.3)}
+                />
+              )}
+            </g>
           )}
-          {rB > 0 && (
-            <circle
-              cx={posB.x}
-              cy={posB.y}
-              r={radiusBInPx}
-              fill={CANVAS_COLORS.white}
-            />
+
+          {/* 3. A 的补集 ∁U A */}
+          {vennOp === "complement_A" && (
+            <g>
+              {/* 全集底块 */}
+              <rect
+                x={scale.originX - 5.5 * scale.scaleX}
+                y={scale.originY - 3.8 * scale.scaleY}
+                width={11 * scale.scaleX}
+                height={7.6 * scale.scaleY}
+                fill={withAlpha(MATH_COLORS.setComplement, 0.25)}
+                rx={12}
+              />
+              {/* 用白色把 A 的区域盖住 */}
+              {rA > 0 && (
+                <circle
+                  cx={posA.x}
+                  cy={posA.y}
+                  r={radiusAInPx}
+                  fill={CANVAS_COLORS.white}
+                />
+              )}
+            </g>
+          )}
+
+          {/* 4. 差集 A \ B (在 A 内且不在 B 内) */}
+          {vennOp === "difference_A_B" && (
+            <g>
+              {rA > 0 && (
+                <circle
+                  cx={posA.x}
+                  cy={posA.y}
+                  r={radiusAInPx}
+                  fill={withAlpha(MATH_COLORS.setA, 0.35)}
+                />
+              )}
+              {rB > 0 && (
+                <circle
+                  cx={posB.x}
+                  cy={posB.y}
+                  r={radiusBInPx}
+                  fill={CANVAS_COLORS.white}
+                />
+              )}
+            </g>
           )}
         </g>
       )}
@@ -232,7 +326,7 @@ export function SetScene({
             cy={posA.y}
             r={radiusAInPx}
             fill={
-              vennOp === "intersection" || vennOp === "union"
+              !showLogic && (vennOp === "intersection" || vennOp === "union")
                 ? "none"
                 : withAlpha(MATH_COLORS.setA, 0.05)
             }
@@ -348,24 +442,24 @@ export function SetScene({
           transform={`translate(${scale.originX}, ${scale.originY + 3.8 * scale.scaleY})`}
         >
           <rect
-            x={-180}
-            y={-20}
-            width={360}
-            height={32}
+            x={-220}
+            y={-18}
+            width={440}
+            height={36}
             fill={CANVAS_COLORS.white}
             stroke={MATH_COLORS.function}
             strokeWidth={1.5}
-            rx={16}
+            rx={18}
           />
           <text
             x={0}
-            y={2}
+            y={4}
             textAnchor="middle"
             fill={MATH_COLORS.function}
             fontSize={fontScale(12)}
             fontWeight="bold"
           >
-            {`元素 P: ${inA ? "P∈A" : "P∉A"}  且  ${inB ? "P∈B" : "P∉B"}`}
+            {`P: ${inA ? "P∈A" : "P∉A"}, ${inB ? "P∈B" : "P∉B"} | 判定: ${mathState.logicDescription}`}
           </text>
         </g>
       )}

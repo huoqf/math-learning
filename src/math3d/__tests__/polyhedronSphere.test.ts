@@ -43,6 +43,30 @@ describe("polyhedronSphere 3D math algorithms", () => {
     expect(res.radius).toBeCloseTo(Math.sqrt(2), 4);
   });
 
+  it("补形模型退化（无法构成实长方体，isValid=false）时，顶点与球心及半径严格联动不脱钩", () => {
+    // a=1, b=1, c=5: 1^2 + 1^2 - 5^2 = -23 < 0，无法构成实数补形长方体
+    const res = calculateComplementModel(1, 1, 5);
+    expect(res.isValid).toBe(false);
+
+    // 退化保全：长方体长宽高回退为单位立方体 (1, 1, 1)
+    expect(res.boxDimensions).toEqual({ x: 1, y: 1, z: 1 });
+    expect(res.center).toEqual({ x: 0.5, y: 0.5, z: 0.5 });
+
+    // 外接球半径必须联动为 sqrt(1^2+1^2+1^2)/2 = sqrt(3)/2，绝不使用脱钩的原始非法边长
+    const expectedR = Math.sqrt(3) / 2;
+    expect(res.radius).toBeCloseTo(expectedR, 6);
+
+    // 验证所有 4 个四面体顶点到球心的欧氏距离全部精确等于半径 R
+    for (const v of res.tetrahedronVertices) {
+      const dist = Math.hypot(
+        v.x - res.center.x,
+        v.y - res.center.y,
+        v.z - res.center.z,
+      );
+      expect(dist).toBeCloseTo(res.radius, 6);
+    }
+  });
+
   it("should correctly compute verticalEdge (burger model) radius", () => {
     // a=3, b=4, h=4 => rBase=2.5, h/2=2 => R^2 = 2.5^2 + 2^2 = 6.25 + 4 = 10.25 => R = sqrt(10.25)
     const res = calculateVerticalEdgeModel(3, 4, 4);

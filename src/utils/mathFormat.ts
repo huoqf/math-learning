@@ -18,6 +18,42 @@ export function formatMathNumber(n: number): string {
 }
 
 /**
+ * 将「系数 + 项主体」拼成课标规范的乘积形式：系数为 ±1 时**省略系数**，为 0 时返回空串。
+ *
+ * - `1x → x`、`-1x → -x`、`2x → 2x`、`0x → ""`
+ * - 省略系数时不施加语义色：系数既然不出现，就不存在「属于哪个参数」的问题；
+ *   否则会出现「把变量 x 染成参数 a 的颜色」的伪对应。这与既有
+ *   `buildSlopeInterceptLatex`（src/math/derivative.ts）的 ±1 分支口径一致。
+ *
+ * @param coef 系数（滑杆步长均为 0.1/0.5，故 ±1 判定留 1e-9 容差即可）
+ * @param body 项主体 LaTeX，如 `"x"`、`"(x - 2)"`、`"\\frac{4}{x}"`
+ * @param colorToken 可选语义色 Token，只作用于系数本身
+ */
+export function formatCoefTerm(
+  coef: number,
+  body: string,
+  colorToken?: string,
+): string {
+  if (!Number.isFinite(coef) || Math.abs(coef) < 1e-9) return "";
+  if (Math.abs(Math.abs(coef) - 1) < 1e-9) {
+    return coef > 0 ? body : `-${body}`;
+  }
+  const coefStr = formatMathNumber(coef);
+  const colored = colorToken ? `\\color{${colorToken}}{${coefStr}}` : coefStr;
+  return `${colored}${body}`;
+}
+
+/**
+ * 把「自变量整体平移」因式按课标记号写出：`h > 0 → (x - h)`、`h < 0 → (x + |h|)`、`h = 0 → x`。
+ * 用于 `y = a(x - h) + c` 一类的斜渐近线/平表达式，杜绝 `h` 为负时印成 `(x - -2)` 的双负号。
+ */
+export function formatShiftParen(h: number): string {
+  if (!Number.isFinite(h) || Math.abs(h) < 1e-9) return "x";
+  const abs = formatMathNumber(Math.abs(h));
+  return h > 0 ? `(x - ${abs})` : `(x + ${abs})`;
+}
+
+/**
  * 概率类数值的显示精度（小数位数）。
  *
  * 这是「判定 ⟺ 显示」同源的唯一事实源：独立性判定直接比较两个概率量化到该位数后的

@@ -14,8 +14,13 @@ export interface Point2D {
 
 export interface EllipseTrigResult {
   valid: boolean;
-  a: number;
-  b: number;
+  a: number; // 实际生效的长半轴 safeA
+  b: number; // 实际生效的短半轴 safeB
+  safeA: number; // 兼容显式字段
+  safeB: number; // 兼容显式字段
+  rawA: number; // 原始输入 a
+  rawB: number; // 原始输入 b
+  isClamped: boolean; // 是否触发课标安全钳制 (如 b >= a 或 a <= 0.1)
   thetaDeg: number;
   thetaRad: number;
   // 椭圆上的参数动点 P(a cos theta, b sin theta)
@@ -67,8 +72,13 @@ export interface ParabolaYParamResult {
 
 export interface LineYFormResult {
   valid: boolean;
-  a: number;
-  b: number;
+  a: number; // safeA (有效长半轴)
+  b: number; // safeB (有效短半轴)
+  safeA: number;
+  safeB: number;
+  rawA: number;
+  rawB: number;
+  isClamped: boolean;
   m: number; // x = my + n
   n: number;
   // 代入后关于 y 的一元二次方程 Ay^2 + By + C = 0
@@ -98,10 +108,20 @@ export function calculateEllipseParam(
   targetLine: { A: number; B: number; C: number } = { A: 1, B: -1, C: -6 },
 ): EllipseTrigResult {
   if (a <= 0 || b <= 0) {
+    const fallbackA = Math.max(0.1, a);
+    const fallbackB = Math.min(
+      Math.max(0.01, b),
+      Math.max(0.01, fallbackA - 0.01),
+    );
     return {
       valid: false,
-      a,
-      b,
+      a: fallbackA,
+      b: fallbackB,
+      safeA: fallbackA,
+      safeB: fallbackB,
+      rawA: a,
+      rawB: b,
+      isClamped: true,
       thetaDeg,
       thetaRad: 0,
       P: { x: 0, y: 0 },
@@ -129,6 +149,7 @@ export function calculateEllipseParam(
   // 越界参数在此钳制，避免 b ≥ a 时半焦距 c = √(a²-b²) 归零、两个焦点退化重合于原点。
   const safeA = Math.max(0.1, a);
   const safeB = Math.min(Math.max(0.01, b), Math.max(0.01, safeA - 0.01));
+  const isClamped = safeA !== a || safeB !== b;
 
   const P: Point2D = { x: safeA * cosT, y: safeB * sinT };
   const Paux: Point2D = { x: safeA * cosT, y: safeA * sinT };
@@ -181,6 +202,11 @@ export function calculateEllipseParam(
     valid: true,
     a: safeA,
     b: safeB,
+    safeA,
+    safeB,
+    rawA: a,
+    rawB: b,
+    isClamped,
     thetaDeg,
     thetaRad,
     P,
@@ -285,11 +311,21 @@ export function calculateLineYFormConic(
   n: number,
 ): LineYFormResult {
   if (a <= 0 || b <= 0) {
+    const fallbackA = Math.max(0.1, a);
+    const fallbackB = Math.min(
+      Math.max(0.01, b),
+      Math.max(0.01, fallbackA - 0.01),
+    );
     const origin = { x: 0, y: 0 };
     return {
       valid: false,
-      a,
-      b,
+      a: fallbackA,
+      b: fallbackB,
+      safeA: fallbackA,
+      safeB: fallbackB,
+      rawA: a,
+      rawB: b,
+      isClamped: true,
       m,
       n,
       A: 0,
@@ -309,8 +345,13 @@ export function calculateLineYFormConic(
     };
   }
 
-  const a2 = a * a;
-  const b2 = b * b;
+  // 高中课标安全契约：焦点在 x 轴的椭圆必须满足 a > b > 0
+  const safeA = Math.max(0.1, a);
+  const safeB = Math.min(Math.max(0.01, b), Math.max(0.01, safeA - 0.01));
+  const isClamped = safeA !== a || safeB !== b;
+
+  const a2 = safeA * safeA;
+  const b2 = safeB * safeB;
 
   // (my + n)^2 / a^2 + y^2 / b^2 = 1
   // b^2(m^2 y^2 + 2mny + n^2) + a^2 y^2 - a^2 b^2 = 0
@@ -325,8 +366,13 @@ export function calculateLineYFormConic(
     const origin = { x: 0, y: 0 };
     return {
       valid: false,
-      a,
-      b,
+      a: safeA,
+      b: safeB,
+      safeA,
+      safeB,
+      rawA: a,
+      rawB: b,
+      isClamped,
       m,
       n,
       A,
@@ -372,8 +418,13 @@ export function calculateLineYFormConic(
 
   return {
     valid: true,
-    a,
-    b,
+    a: safeA,
+    b: safeB,
+    safeA,
+    safeB,
+    rawA: a,
+    rawB: b,
+    isClamped,
     m,
     n,
     A,

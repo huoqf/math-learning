@@ -60,6 +60,18 @@ describe("triangleExtrema - 解三角形极值与范围计算", () => {
 
     // 验证动点 A 到 B 和 C 的距离比严格等于 k = 2
     expect(res.sides.c / res.sides.b).toBeCloseTo(2.0, 4);
+
+    // 验证内分点 D 与外分点 E 满足 DB/DC = 2 与 EB/EC = 2
+    // B = (-2, 0), C = (2, 0), a = 4, k = 2
+    // D.x = (1/3) * 2 = 2/3 ≈ 0.6667, E.x = 3 * 2 = 6
+    expect(res.apolloniusCircle?.pointD.x).toBeCloseTo(2 / 3, 4);
+    expect(res.apolloniusCircle?.pointE.x).toBeCloseTo(6, 4);
+    const distDB = Math.abs((res.apolloniusCircle?.pointD.x ?? 0) - -2);
+    const distDC = Math.abs(2 - (res.apolloniusCircle?.pointD.x ?? 0));
+    expect(distDB / distDC).toBeCloseTo(2.0, 4);
+    const distEB = Math.abs((res.apolloniusCircle?.pointE.x ?? 0) - -2);
+    const distEC = Math.abs((res.apolloniusCircle?.pointE.x ?? 0) - 2);
+    expect(distEB / distEC).toBeCloseTo(2.0, 4);
   });
 
   it("阿波罗尼斯圆模式：周长与边积的上确界在退化端点取得（最高点只是内部点）", () => {

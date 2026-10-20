@@ -223,3 +223,76 @@ describe("P0-5 /inequality-absolute：解集必须由 intervals 渲染", () => {
     );
   });
 });
+
+describe("圆锥曲线参数方程 (conicParam) SSOT 单源闭环回归", () => {
+  it("当用户输入越界 b >= a (如 a=2, b=5) 时，右屏看板与数学层完全同源消费 safeB，杜绝数值打架", async () => {
+    const { buildConicParamPanel } = await import("../conicParam");
+    const data = buildConicParamPanel(
+      { a: 2, b: 5, theta: 45 },
+      { studyMode: "ellipseTrig" },
+    );
+
+    // 1. quantities 中半轴与焦点应显示钳制后的 safeB (1.99)
+    const axisQuantity = data.quantities.find(
+      (q) => q.label === "椭圆半轴与焦点",
+    );
+    expect(axisQuantity).toBeDefined();
+    expect(axisQuantity?.value).toContain("已钳制");
+    expect(axisQuantity?.value).toContain("b = 1.99");
+
+    // 2. 动点 P 参数坐标必须使用 1.99 计算，不得出现 5*sin(45°) 的 raw 假象
+    const pQuantity = data.quantities.find(
+      (q) => q.label === "椭圆动点 $P$ 参数坐标",
+    );
+    expect(pQuantity?.value).toContain("1.99\\sin 45^\\circ");
+    expect(pQuantity?.value).not.toContain("5.00\\sin 45^\\circ");
+
+    // 3. 辅助角合振幅 R 在推导步骤第 2 步中必须同源基于 safeA 与 safeB 计算
+    const step2 = data.reasoningSteps?.[1];
+    expect(step2?.latex).toContain("1.99\\sin\\theta");
+    expect(step2?.detail).toContain("1.99");
+    expect(step2?.detail).not.toContain("25.00"); // 5^2 = 25 不应出现
+
+    // 4. warnings 必须明确抛出几何退化警示并指出 safeB
+    expect(data.warnings?.length).toBeGreaterThan(0);
+    expect(data.warnings?.[0]?.text).toContain("已自动安全钳制为 $b = 1.99$");
+  });
+
+  it("模式3 (lineYForm) 同样在 b >= a (如 a=2, b=5) 时严格以 safeB 计算二次方程系数与判别式，并抛出警示", async () => {
+    const { buildConicParamPanel } = await import("../conicParam");
+    const data = buildConicParamPanel(
+      { a: 2, b: 5, m: 1, n: 1 },
+      { studyMode: "lineYForm" },
+    );
+
+    // 1. 椭圆方程展示必须基于 safeA=2, safeB=1.99 计算分母 (4.00 与 3.96)，绝不出现 25.00
+    const eqQuantity = data.quantities.find((q) => q.label === "椭圆方程");
+    expect(eqQuantity?.value).toContain("3.96");
+    expect(eqQuantity?.value).not.toContain("25.00");
+
+    // 2. warnings 必须明确抛出退化警示
+    expect(
+      data.warnings?.some((w) =>
+        w.text.includes("已自动安全钳制为 $b = 1.99$"),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("函数零点存在性 (funcZero) 边界推导链回归", () => {
+  it("当端点函数值为 0 (如 counterExample 模型 f(x)=x(x-2) 在 m=0 处 f(0)=0) 时，推导链必须输出 = 0，绝不能误判为 > 0 或端点同号", async () => {
+    const { buildFuncZeroPanel } = await import("../funcZero");
+    // counterExample: f(x) = x(x-2), modelKey=3, m=0, n=3 => f(0)=0, f(3)=3, prod=0
+    const data = buildFuncZeroPanel({
+      modelKey: 3,
+      intervalM: 0,
+      intervalN: 3,
+    });
+
+    const step2 = data.reasoningSteps?.[1];
+    expect(step2?.latex).toContain("f(a) \\cdot f(b) = 0");
+    expect(step2?.latex).not.toContain("f(a) \\cdot f(b) > 0");
+    expect(step2?.detail).toContain("端点本身恰为函数的精确零点");
+    expect(step2?.detail).not.toContain("端点同号");
+  });
+});

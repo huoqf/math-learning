@@ -4,6 +4,7 @@ import {
   OPTIMIZATION_CONSTANTS,
 } from "@/math/derivativeOptimization";
 import { buildDerivativeOptimizationPanel } from "@/data/builders/derivativeOptimization";
+import { calculateSceneScale } from "@/hooks/useSceneScale";
 
 describe("导数生活优化建模数学层与组装层契约", () => {
   it("折叠长方体盒模型在导数为零的点 x=10 处导数为零且达到最大容积 16000", () => {
@@ -147,5 +148,28 @@ describe("导数生活优化建模数学层与组装层契约", () => {
     expect(
       warnings.every((w) => w.level === "warning" || w.level === "info"),
     ).toBe(true);
+  });
+
+  it("场景比例尺必须解除纵横比锁定：横轴必须占满百像素宽度，严禁被纵轴万级容积压扁成细线", () => {
+    // 模拟 full preset (840x650)
+    const scale = calculateSceneScale({
+      designVisibleW: 840,
+      designVisibleH: 650,
+      designLeft: 0,
+      designTop: 0,
+      xRange: [-2, 32],
+      yRange: [-2000, 19000],
+      keepAspectRatio: false,
+    });
+
+    // keepAspectRatio=false 时 scaleX 必须基于 x 轴跨度独立计算 (~24.7px/unit)
+    expect(scale.scaleX).toBeGreaterThan(20);
+    // 曲线物理定义域 x ∈ [0, 30] 必须占据至少 600px 的视觉有效宽度
+    const visibleCurveWidth = 30 * scale.scaleX;
+    expect(visibleCurveWidth).toBeGreaterThan(600);
+    // 纵轴基于 y 轴跨度独立计算 (~0.031px/unit)，最大容积 16000 占据约 490px 高度
+    expect(scale.scaleY).toBeLessThan(0.1);
+    const visiblePeakHeight = 16000 * scale.scaleY;
+    expect(visiblePeakHeight).toBeGreaterThan(400);
   });
 });

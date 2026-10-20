@@ -204,9 +204,10 @@ export function calculateComplementModel(
   ];
 
   const center: Vec3 = { x: x / 2, y: y / 2, z: z / 2 };
-  const radius =
-    Math.sqrt(safeA * safeA + safeB * safeB + safeC * safeC) /
-    (2 * Math.sqrt(2));
+  // 外接球半径始终由长方体三边对角线唯一决定：R = sqrt(x^2 + y^2 + z^2) / 2
+  // 在 isValid 为 true 时，与 sqrt(a^2 + b^2 + c^2) / (2*sqrt(2)) 数学完全恒等；
+  // 在 isValid 为 false 时，与退化顶点 (x=1,y=1,z=1) 严格同源闭环，杜绝球体与四面体顶点脱钩
+  const radius = Math.sqrt(x * x + y * y + z * z) / 2;
   const surfaceArea = 4 * Math.PI * radius * radius;
   const volume = (4 / 3) * Math.PI * Math.pow(radius, 3);
 

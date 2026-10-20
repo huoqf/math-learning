@@ -390,6 +390,17 @@ describe("双源定义一致性（knowledgeTree ↔ features/*/meta.ts）", () =
     expect(orphans).toEqual([]);
   });
 
+  it("algebra_basics 专题节点完整性：9 个代数基础节点均存在且声明有效路由", () => {
+    const algebraNodes = knowledgeTree.filter(
+      (n) => n.gaokaoTopic === "algebra_basics",
+    );
+    expect(algebraNodes.length).toBe(9);
+    for (const node of algebraNodes) {
+      expect(node.route).toBeDefined();
+      expect(typeof node.route).toBe("string");
+    }
+  });
+
   /**
    * 补充说明：labTitle 的同步方向取 meta → tree 时，知识树侧会失去
    * "…实验室"的命名统一（meta 侧个别节点用"…模型 / …与数字特征"等措辞）。

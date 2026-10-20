@@ -1,5 +1,8 @@
 import type { Vec3 } from "./vector3";
 
+export type AdvancedSphereModelType =
+  "perpPlanes" | "concentric" | "truncatedCone" | "extrema";
+
 // ─── 1. 面面垂直与交线双外心模型 ───
 export interface PerpPlanesSphereResult {
   /** 底面外接圆半径 r1 */

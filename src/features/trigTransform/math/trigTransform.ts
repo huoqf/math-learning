@@ -523,6 +523,24 @@ export function calculateIntervalZeros(
 export const DEFAULT_TRIG_XRANGE: [number, number] = [-8, 8];
 
 /**
+ * 根据角频率与初相自适应计算包含五点完整周期与默认基准视口的横向范围
+ */
+export function calcAdaptiveTrigXRange(
+  omega: number,
+  phi: number,
+): [number, number] {
+  const absOmega = Math.abs(omega) > 1e-9 ? Math.abs(omega) : 1;
+  const p0 = -phi / absOmega;
+  const p4 = (2 * Math.PI - phi) / absOmega;
+  const pMin = Math.min(p0, p4);
+  const pMax = Math.max(p0, p4);
+  const padding = Math.max(2, (pMax - pMin) * 0.15);
+  const minX = Math.min(-8, pMin - padding);
+  const maxX = Math.max(8, pMax + padding);
+  return [Number(minX.toFixed(1)), Number(maxX.toFixed(1))];
+}
+
+/**
  * 判断点在横向视口范围内（严格判定，零容差盲区，模块内部私有）
  */
 function isPointInHorizontalView(

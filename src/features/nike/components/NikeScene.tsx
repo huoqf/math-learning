@@ -14,6 +14,7 @@ import type { LabelItem } from "@/utils/labelOverlap";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { solveNike, evalNikeAt } from "@/math/nike";
+import { formatMathNumber, formatCoefTerm } from "@/utils/mathFormat";
 
 interface NikeSceneProps {
   params: Record<string, number>;
@@ -45,12 +46,14 @@ export function NikeScene({
   const handleDragProbe = useCallback(
     (mathPt: { x: number; y: number }) => {
       let newX = Math.round(mathPt.x * 10) / 10;
-      if (Math.abs(newX - h) < 0.2) {
+      if (activeMode === "amgm") {
+        newX = Math.max(0.2, newX);
+      } else if (Math.abs(newX - h) < 0.2) {
         newX = newX >= h ? h + 0.2 : h - 0.2;
       }
       onParamChange("x0", newX);
     },
-    [h, onParamChange],
+    [h, activeMode, onParamChange],
   );
 
   // 2. 中心点拖拽解算 (仅平移模式)
@@ -87,8 +90,13 @@ export function NikeScene({
   const labelItems = useMemo<LabelItem[]>(() => {
     const items: LabelItem[] = [];
 
-    // 最值特征点标签
-    res.criticalPoints.forEach((cp, idx) => {
+    // 最值特征点标签 (均值不等式模式下仅展示 x > 0 的正支最小值)
+    const filteredCriticalPoints =
+      activeMode === "amgm"
+        ? res.criticalPoints.filter((cp) => cp.x > 0)
+        : res.criticalPoints;
+
+    filteredCriticalPoints.forEach((cp, idx) => {
       const pt = mathToDesign(cp.x, cp.y, scale);
       items.push({
         key: `cp-${idx}`,
@@ -187,8 +195,8 @@ export function NikeScene({
           scale={scale}
           label={
             Math.abs(c - a * h) < 1e-4
-              ? `y = ${a.toFixed(1)}x`
-              : `y = ${a.toFixed(1)}x ${c - a * h >= 0 ? "+" : "-"} ${Math.abs(c - a * h).toFixed(1)}`
+              ? `y = ${formatCoefTerm(a, "x")}`
+              : `y = ${formatCoefTerm(a, "x")} ${c - a * h >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(c - a * h))}`
           }
           fontScale={fontScale}
           color={MATH_COLORS.asymptote}
@@ -204,7 +212,7 @@ export function NikeScene({
         />
       )}
 
-      {/* 3. 均值不等式模式：拆分线 y1=ax 与 y2=b/x */}
+      {/* 3. 均值不等式模式：拆分线 y1=ax 与 y2=b/x (严格限定正数区间 x > 0) */}
       {activeMode === "amgm" && (
         <>
           {/* 项一：y1 = ax */}
@@ -214,6 +222,7 @@ export function NikeScene({
             color={withAlpha(MATH_COLORS.paramPrimary, 0.45)}
             strokeWidth={1.5}
             strokeDasharray="4,4"
+            domain={[0.001, Infinity]}
           />
           {/* 项二：y2 = b/x */}
           <FunctionGraph
@@ -222,6 +231,7 @@ export function NikeScene({
             color={withAlpha(MATH_COLORS.paramSecondary, 0.45)}
             strokeWidth={1.5}
             strokeDasharray="4,4"
+            domain={[0.001, Infinity]}
           />
           {/* 动点处垂直叠加加和线 */}
           {probeDesign && (
@@ -265,7 +275,7 @@ export function NikeScene({
         </>
       )}
 
-      {/* 4. 主曲线：对勾/双曲函数 y = a(x-h) + c + b/(x-h) */}
+      {/* 4. 主曲线：对勾/双曲函数 y = a(x-h) + c + b/(x-h) (均值不等式模式下限定 x > 0 正支) */}
       <FunctionGraph
         fn={nikeFn}
         scale={scale}
@@ -277,10 +287,14 @@ export function NikeScene({
               : MATH_COLORS.degeneracy
         }
         strokeWidth={2.5}
+        domain={activeMode === "amgm" ? [0.001, Infinity] : undefined}
       />
 
-      {/* 5. 最值参考水平线 (当存在最值点时) */}
-      {res.criticalPoints.map((cp, idx) => {
+      {/* 5. 最值参考水平线 (均值不等式模式下仅渲染正支最小值) */}
+      {(activeMode === "amgm"
+        ? res.criticalPoints.filter((cp) => cp.x > 0)
+        : res.criticalPoints
+      ).map((cp, idx) => {
         const pt = mathToDesign(cp.x, cp.y, scale);
         return (
           <g key={`crit-${idx}`}>

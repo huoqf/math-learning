@@ -260,7 +260,7 @@ export function PropertiesSymmetryScene({
             fontScale={fontScale}
           />
           {/* 连线与对称点 */}
-          {Number.isFinite(centerSymRes.fx) && (
+          {Number.isFinite(centerSymRes.fx) ? (
             <g>
               <line
                 x1={scale.originX + x0 * scale.scaleX}
@@ -286,6 +286,30 @@ export function PropertiesSymmetryScene({
                 vp={vp}
                 onDrag={handleDragX0}
                 color={MATH_COLORS.paramSecondary}
+                fontScale={fontScale}
+                edgeClampProjection
+              />
+            </g>
+          ) : (
+            /* 渐近线指示与拖拽保护 */
+            <g>
+              <line
+                x1={scale.originX + centerX * scale.scaleX}
+                y1={scale.originY - scale.yMax * scale.scaleY}
+                x2={scale.originX + centerX * scale.scaleX}
+                y2={scale.originY - scale.yMin * scale.scaleY}
+                stroke={MATH_COLORS.asymptote}
+                strokeDasharray="4 4"
+                strokeWidth={1.5}
+                opacity={0.8}
+              />
+              <InteractivePoint
+                cx={x0}
+                cy={centerY}
+                scale={scale}
+                vp={vp}
+                onDrag={handleDragX0}
+                color={MATH_COLORS.labelText}
                 fontScale={fontScale}
                 edgeClampProjection
               />

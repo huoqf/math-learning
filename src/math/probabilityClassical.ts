@@ -22,7 +22,10 @@ export interface ClassicalTreeNode {
   label: string;
   depth: number;
   isEvent: boolean;
-  prob: number;
+  prob: number; // 路径累积概率（即到该节点的联合概率）
+  branchProb?: number; // 该分支条件转移概率
+  branchProbText?: string; // 分支概率文本（如 "2/5"、"1/4"）
+  pathProbText?: string; // 路径概率文本（如 "0.10"、"1/10"）
   parentId?: string;
   childrenIds: string[];
 }
@@ -99,6 +102,19 @@ export function getSimplifiedFraction(
   const rd = denominator / g;
   if (rd === 1) return `${rn}`;
   return `\\frac{${rn}}{${rd}}`;
+}
+
+export function formatFractionText(
+  numerator: number,
+  denominator: number,
+): string {
+  if (denominator === 0 || numerator === 0) return "0";
+  if (numerator === denominator) return "1";
+  const g = gcd(numerator, denominator);
+  const rn = numerator / g;
+  const rd = denominator / g;
+  if (rd === 1) return `${rn}`;
+  return `${rn}/${rd}`;
 }
 
 export interface ClassicalParamsInput {
@@ -381,6 +397,21 @@ function computeBallDraw(
   const compCount = totalCount - eventCount;
 
   // 构造摸球分步树状图节点 (2 级分支树：起点 -> 第1次 -> 第2次)
+  const pR1 = safeR / totalBalls;
+  const pW1 = safeW / totalBalls;
+
+  const denom2 = isWithoutReplace ? totalBalls - 1 : totalBalls;
+  const pR2_givenR1 =
+    denom2 > 0
+      ? (isWithoutReplace ? Math.max(0, safeR - 1) : safeR) / denom2
+      : 0;
+  const pW2_givenR1 = denom2 > 0 ? safeW / denom2 : 0;
+  const pR2_givenW1 = denom2 > 0 ? safeR / denom2 : 0;
+  const pW2_givenW1 =
+    denom2 > 0
+      ? (isWithoutReplace ? Math.max(0, safeW - 1) : safeW) / denom2
+      : 0;
+
   const treeNodes: ClassicalTreeNode[] = [
     {
       id: "root",
@@ -395,7 +426,9 @@ function computeBallDraw(
       label: "红球",
       depth: 1,
       isEvent: true,
-      prob: safeR / totalBalls,
+      prob: pR1,
+      branchProb: pR1,
+      branchProbText: `${safeR}/${totalBalls}`,
       parentId: "root",
       childrenIds: ["node-ball-RR", "node-ball-RW"],
     },
@@ -404,17 +437,71 @@ function computeBallDraw(
       label: "白球",
       depth: 1,
       isEvent: true,
-      prob: safeW / totalBalls,
+      prob: pW1,
+      branchProb: pW1,
+      branchProbText: `${safeW}/${totalBalls}`,
       parentId: "root",
       childrenIds: ["node-ball-WR", "node-ball-WW"],
     },
   ];
 
+  const denomTotal = totalBalls * denom2;
+  const numRR = safeR * (isWithoutReplace ? Math.max(0, safeR - 1) : safeR);
+  const numRW = safeR * safeW;
+  const numWR = safeW * safeR;
+  const numWW = safeW * (isWithoutReplace ? Math.max(0, safeW - 1) : safeW);
+
   const outcomes2 = [
-    { id: "node-ball-RR", label: "红球", red: 2, parent: "node-ball-R" },
-    { id: "node-ball-RW", label: "白球", red: 1, parent: "node-ball-R" },
-    { id: "node-ball-WR", label: "红球", red: 1, parent: "node-ball-W" },
-    { id: "node-ball-WW", label: "白球", red: 0, parent: "node-ball-W" },
+    {
+      id: "node-ball-RR",
+      label: "红球",
+      red: 2,
+      parent: "node-ball-R",
+      branchProb: pR2_givenR1,
+      branchProbText:
+        denom2 > 0
+          ? `${isWithoutReplace ? Math.max(0, safeR - 1) : safeR}/${denom2}`
+          : "0",
+      prob: pR1 * pR2_givenR1,
+      pathProbText:
+        denomTotal > 0 ? formatFractionText(numRR, denomTotal) : "0",
+    },
+    {
+      id: "node-ball-RW",
+      label: "白球",
+      red: 1,
+      parent: "node-ball-R",
+      branchProb: pW2_givenR1,
+      branchProbText: denom2 > 0 ? `${safeW}/${denom2}` : "0",
+      prob: pR1 * pW2_givenR1,
+      pathProbText:
+        denomTotal > 0 ? formatFractionText(numRW, denomTotal) : "0",
+    },
+    {
+      id: "node-ball-WR",
+      label: "红球",
+      red: 1,
+      parent: "node-ball-W",
+      branchProb: pR2_givenW1,
+      branchProbText: denom2 > 0 ? `${safeR}/${denom2}` : "0",
+      prob: pW1 * pR2_givenW1,
+      pathProbText:
+        denomTotal > 0 ? formatFractionText(numWR, denomTotal) : "0",
+    },
+    {
+      id: "node-ball-WW",
+      label: "白球",
+      red: 0,
+      parent: "node-ball-W",
+      branchProb: pW2_givenW1,
+      branchProbText:
+        denom2 > 0
+          ? `${isWithoutReplace ? Math.max(0, safeW - 1) : safeW}/${denom2}`
+          : "0",
+      prob: pW1 * pW2_givenW1,
+      pathProbText:
+        denomTotal > 0 ? formatFractionText(numWW, denomTotal) : "0",
+    },
   ];
 
   outcomes2.forEach((leaf) => {
@@ -441,7 +528,10 @@ function computeBallDraw(
       label: leaf.label,
       depth: 2,
       isEvent: isLeafMatch,
-      prob: 0.25,
+      prob: leaf.prob,
+      branchProb: leaf.branchProb,
+      branchProbText: leaf.branchProbText,
+      pathProbText: leaf.pathProbText,
       parentId: leaf.parent,
       childrenIds: [],
     });
@@ -525,6 +615,8 @@ function computeCoinToss(targetEvent: string): ClassicalMathResult {
       depth: 1,
       isEvent: true,
       prob: 0.5,
+      branchProb: 0.5,
+      branchProbText: "1/2",
       parentId: "root",
       childrenIds: [`node-${o1}H`, `node-${o1}T`],
     });
@@ -537,6 +629,8 @@ function computeCoinToss(targetEvent: string): ClassicalMathResult {
         depth: 2,
         isEvent: true,
         prob: 0.25,
+        branchProb: 0.5,
+        branchProbText: "1/2",
         parentId: `node-${o1}`,
         childrenIds: [`node-${o1}${o2}H`, `node-${o1}${o2}T`],
       });
@@ -575,6 +669,9 @@ function computeCoinToss(targetEvent: string): ClassicalMathResult {
           depth: 3,
           isEvent: isMatch,
           prob: 0.125,
+          branchProb: 0.5,
+          branchProbText: "1/2",
+          pathProbText: "1/8",
           parentId: `node-${o1}${o2}`,
           childrenIds: [],
         });

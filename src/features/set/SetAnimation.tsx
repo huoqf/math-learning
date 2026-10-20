@@ -202,7 +202,7 @@ export function SetAnimation() {
               vp={vp}
               onParamChange={handleParamChange}
               fontScale={canvasSize.font}
-              vennOp={vennOp}
+              vennOp={activeTab === "logic" ? "none" : vennOp}
               showLogic={activeTab === "logic"}
             />
           </AnimationSvgCanvas>

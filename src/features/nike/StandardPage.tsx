@@ -16,6 +16,7 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { NikeScene } from "./components/NikeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/nike";
+import { formatMathNumber, formatCoefTerm } from "@/utils/mathFormat";
 
 export function StandardPage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -35,12 +36,7 @@ export function StandardPage() {
   );
 
   const equationLatex = useMemo(() => {
-    const aVal = params.a.toFixed(1);
-    const absB = Math.abs(params.b).toFixed(1);
-    const aPart =
-      Math.abs(params.a) < 1e-4
-        ? ""
-        : `\\color{${MATH_COLORS.paramPrimary}}{${aVal}}x`;
+    const absB = formatMathNumber(Math.abs(params.b));
     const bSign = params.b >= 0 ? "+" : "-";
     const bPart = `${bSign} \\frac{\\color{${MATH_COLORS.paramSecondary}}{${absB}}}{x}`;
 
@@ -49,7 +45,7 @@ export function StandardPage() {
         ? `y = \\frac{\\color{${MATH_COLORS.paramSecondary}}{${absB}}}{x}`
         : `y = -\\frac{\\color{${MATH_COLORS.paramSecondary}}{${absB}}}{x}`;
     }
-    return `y = ${aPart} ${bPart}`;
+    return `y = ${formatCoefTerm(params.a, "x", MATH_COLORS.paramPrimary)} ${bPart}`;
   }, [params.a, params.b]);
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -116,7 +112,7 @@ export function StandardPage() {
         label:
           Math.abs(a) < 1e-4
             ? "水平渐近线 y = 0 (x轴)"
-            : `斜渐近线 y = ${a.toFixed(1)}x`,
+            : `斜渐近线 y = ${formatCoefTerm(a, "x")}`,
         color: MATH_COLORS.asymptote,
         style: "dash",
       },
@@ -202,7 +198,7 @@ export function StandardPage() {
                     formula={
                       Math.abs(params.a) < 1e-4
                         ? "y = 0"
-                        : `y = ${params.a.toFixed(1)}x`
+                        : `y = ${formatCoefTerm(params.a, "x")}`
                     }
                     mode="inline"
                   />{" "}

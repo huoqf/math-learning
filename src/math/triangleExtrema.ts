@@ -75,6 +75,8 @@ export interface TriangleExtremaState {
     center: Point2D;
     radius: number;
     ratioK: number;
+    pointD: Point2D;
+    pointE: Point2D;
   };
   // 极化恒等式数据
   polarization?: {
@@ -445,6 +447,8 @@ export function solveApollonius(
       center: { x: x0, y: 0 },
       radius: R_A,
       ratioK: k,
+      pointD: { x: ((k - 1) / (k + 1)) * (a / 2), y: 0 },
+      pointE: { x: ((k + 1) / (k - 1)) * (a / 2), y: 0 },
     },
   };
 }

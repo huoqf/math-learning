@@ -16,6 +16,11 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { NikeScene } from "./components/NikeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/nike";
+import {
+  formatMathNumber,
+  formatCoefTerm,
+  formatShiftParen,
+} from "@/utils/mathFormat";
 
 export function ShiftedPage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -41,10 +46,9 @@ export function ShiftedPage() {
 
   const equationLatex = useMemo(() => {
     const { a, b, h, c } = params;
-    const colA = `\\color{${MATH_COLORS.paramPrimary}}{${a.toFixed(1)}}`;
-    const colB = `\\color{${MATH_COLORS.paramSecondary}}{${Math.abs(b).toFixed(1)}}`;
-    const colH = `\\color{${MATH_COLORS.paramTertiary}}{${Math.abs(h).toFixed(1)}}`;
-    const colC = `\\color{${MATH_COLORS.paramTertiary}}{${Math.abs(c).toFixed(1)}}`;
+    const colB = `\\color{${MATH_COLORS.paramSecondary}}{${formatMathNumber(Math.abs(b))}}`;
+    const colH = `\\color{${MATH_COLORS.paramTertiary}}{${formatMathNumber(Math.abs(h))}}`;
+    const colC = `\\color{${MATH_COLORS.paramTertiary}}{${formatMathNumber(Math.abs(c))}}`;
 
     const hPart =
       Math.abs(h) < 1e-4 ? "x" : h > 0 ? `(x - ${colH})` : `(x + ${colH})`;
@@ -62,7 +66,7 @@ export function ShiftedPage() {
       return `y = ${cSigned} ${fracTerm}`;
     }
 
-    const aTerm = `${colA}${hPart}`;
+    const aTerm = formatCoefTerm(a, hPart, MATH_COLORS.paramPrimary);
     const cTerm = Math.abs(c) < 1e-4 ? "" : c > 0 ? `+ ${colC}` : `- ${colC}`;
 
     return `y = ${aTerm} ${cTerm} ${fracTerm}`.replace(/\s+/g, " ");
@@ -118,7 +122,7 @@ export function ShiftedPage() {
           style: "dash",
         }
       : {
-          label: `斜渐近线 y = ${a.toFixed(1)}(x - ${h.toFixed(1)}) + ${c.toFixed(1)}`,
+          label: `斜渐近线 y = ${formatCoefTerm(a, formatShiftParen(h))} + ${formatMathNumber(c)}`,
           color: MATH_COLORS.asymptote,
           style: "dash",
         };

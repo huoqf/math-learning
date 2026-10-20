@@ -5,6 +5,7 @@ import {
   calculateIntervalZeros,
   solveParamsFromDrag,
   formatPiValue,
+  calcAdaptiveTrigXRange,
 } from "./trigTransform";
 
 describe("trigTransform math utils", () => {
@@ -82,5 +83,37 @@ describe("trigTransform math utils", () => {
     const updated = solveParamsFromDrag(1, Math.PI / 4, 2.5, current);
     expect(updated.A).toBeCloseTo(2.5);
     expect(updated.phi).toBeCloseTo(0);
+  });
+
+  it("calcAdaptiveTrigXRange 自适应扩展视口范围，确保极端低频大相位下五点不飞出画布", () => {
+    // 1. 默认参数 (omega=2, phi=pi/3)：保持默认 [-8, 8]
+    const defaultRange = calcAdaptiveTrigXRange(2, Math.PI / 3);
+    expect(defaultRange[0]).toBe(-8);
+    expect(defaultRange[1]).toBe(8);
+
+    // 2. 审查报告典型暴露条件：omega=0.2, phi=-pi
+    // 五点 x 从 5pi (~15.71) 到 15pi (~47.12)
+    const wideRange = calcAdaptiveTrigXRange(0.2, -Math.PI);
+    expect(wideRange[0]).toBeLessThanOrEqual(-8);
+    expect(wideRange[1]).toBeGreaterThanOrEqual(47.12 + 2);
+
+    // 3. 验证此视口下五点全部落在内部
+    const props = calcTrigProperties(1, 0.2, -Math.PI, 0, wideRange);
+    expect(
+      props.fivePoints.every(
+        (pt: { x: number }) => pt.x >= wideRange[0] && pt.x <= wideRange[1],
+      ),
+    ).toBe(true);
+
+    // 4. 负大初相：omega=0.5, phi=3pi => x 从 -6pi (~-18.85) 到 -2pi (~-6.28)
+    const negRange = calcAdaptiveTrigXRange(0.5, 3 * Math.PI);
+    expect(negRange[0]).toBeLessThanOrEqual(-18.85);
+    expect(negRange[1]).toBeGreaterThanOrEqual(8);
+    const negProps = calcTrigProperties(1, 0.5, 3 * Math.PI, 0, negRange);
+    expect(
+      negProps.fivePoints.every(
+        (pt: { x: number }) => pt.x >= negRange[0] && pt.x <= negRange[1],
+      ),
+    ).toBe(true);
   });
 });

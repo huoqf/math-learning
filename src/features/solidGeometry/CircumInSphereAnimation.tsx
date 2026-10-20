@@ -44,8 +44,16 @@ export default function CircumInSphereAnimation() {
     use3DViewport("iso");
 
   const sceneBounds = useMemo(
-    () => getCircumInSphereBounds({ a: params.a, h: params.h }),
-    [params.a, params.h],
+    () =>
+      getCircumInSphereBounds({
+        shape,
+        sphereType,
+        a: params.a,
+        b: params.b,
+        c: params.c,
+        h: params.h,
+      }),
+    [shape, sphereType, params.a, params.b, params.c, params.h],
   );
 
   // 1. 2×2 黄金预设定义（纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余公式）

@@ -136,9 +136,9 @@ export const DerivativeOptimizationScene: React.FC<
 
       {/* 导数为零的点水平切线 (k = 0) */}
       <line
-        x1={scale.originX - 100}
+        x1={mathToDesign(scale.xMin, 0, scale).x}
         y1={optimalPointDesign.y}
-        x2={scale.originX + 380}
+        x2={mathToDesign(scale.xMax, 0, scale).x}
         y2={optimalPointDesign.y}
         stroke={P.optimalTangent.color}
         strokeWidth={P.optimalTangent.width}

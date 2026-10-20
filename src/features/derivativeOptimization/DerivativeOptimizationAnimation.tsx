@@ -66,6 +66,7 @@ export const DerivativeOptimizationAnimation: React.FC = () => {
     vp,
     xRange,
     yRange,
+    keepAspectRatio: false,
   });
 
   const handleParamChange = useCallback((key: string, value: number) => {

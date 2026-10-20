@@ -714,8 +714,13 @@ export function buildFuncPropertiesPanel(
     const ycStr = centerY.toFixed(1).replace(/\.0$/, "");
     const x0Str = x0.toFixed(1).replace(/\.0$/, "");
     const symXStr = centerRes.symX.toFixed(1).replace(/\.0$/, "");
-    const fxStr = centerRes.fx.toFixed(2);
-    const symFxStr = centerRes.symFx.toFixed(2);
+
+    const isDefined =
+      Number.isFinite(centerRes.fx) && Number.isFinite(centerRes.symFx);
+    const isCoincident = isDefined && Math.abs(x0 - centerX) < 1e-4;
+
+    const fxStr = isDefined ? centerRes.fx.toFixed(2) : "无定义";
+    const symFxStr = isDefined ? centerRes.symFx.toFixed(2) : "无定义";
 
     const quantities: MathPanelData["quantities"] = [
       {
@@ -727,21 +732,33 @@ export function buildFuncPropertiesPanel(
       {
         label: "测试点 P(x₀, y₀)",
         symbol: "P",
-        value: `(${x0.toFixed(1)}, ${centerRes.fx.toFixed(1)})`,
-        color: MATH_COLORS.paramSecondary,
+        value: isDefined
+          ? `(${x0.toFixed(1)}, ${centerRes.fx.toFixed(1)})${isCoincident ? " (与中心重合)" : ""}`
+          : "无定义 (x₀ ∉ 域)",
+        color: isDefined ? MATH_COLORS.paramSecondary : MATH_COLORS.labelText,
       },
       {
         label: "中心对称点 P'",
         symbol: "P'",
-        value: `(${centerRes.symX.toFixed(1)}, ${centerRes.symFx.toFixed(1)})`,
-        color: MATH_COLORS.paramTertiary,
+        value: isDefined
+          ? `(${centerRes.symX.toFixed(1)}, ${centerRes.symFx.toFixed(1)})${isCoincident ? " (不动点)" : ""}`
+          : "无定义 (渐近线)",
+        color: isDefined ? MATH_COLORS.paramTertiary : MATH_COLORS.labelText,
       },
       {
         label: "中心对称判定",
-        value: centerRes.isSymmetric
-          ? "完全对称"
-          : `残差 Δy=${centerRes.residual.toFixed(2)}`,
-        highlight: centerRes.isSymmetric ? "positive" : "negative",
+        value: !isDefined
+          ? "无定义（垂直渐近线）"
+          : centerRes.isSymmetric
+            ? isCoincident
+              ? "完全对称 (自守不动点)"
+              : "完全对称"
+            : `残差 Δy=${centerRes.residual.toFixed(2)}`,
+        highlight: !isDefined
+          ? "negative"
+          : centerRes.isSymmetric
+            ? "positive"
+            : "negative",
       },
     ];
 
@@ -762,6 +779,19 @@ export function buildFuncPropertiesPanel(
       },
     ];
 
+    const warnings: MathPanelData["warnings"] = [];
+    if (!isDefined) {
+      warnings.push({
+        text: `测试点 $x_0 = ${x0Str}$ 落在分式函数垂直渐近线 $x = ${xcStr}$ 上，分母为零无定义。请调节 $x_0$ 避开垂直渐近线。`,
+        level: "danger",
+      });
+    } else if (isCoincident) {
+      warnings.push({
+        text: `当前测试点 $x_0 = ${x0Str}$ 与对称中心横坐标重合，点 $P$ 恰好位于对称中心 $C(${xcStr}, ${ycStr})$ 处，为中心对称的自守不动点。`,
+        level: "info",
+      });
+    }
+
     const reasoningSteps: MathPanelData["reasoningSteps"] = [
       {
         step: 1,
@@ -780,8 +810,14 @@ export function buildFuncPropertiesPanel(
       {
         step: 3,
         title: "代入求解 · 当前测试点中心对称数值代入",
-        detail: `代入中心坐标 $(x_c, y_c) = (${xcStr}, ${ycStr})$ 与测试点 $x_0 = ${x0Str}$：$x' = 2(${xcStr}) - ${x0Str} = ${symXStr}$。计算两点纵坐标均值 $\\frac{f(${x0Str}) + f(${symXStr})}{2} = \\frac{${fxStr} + (${symFxStr})}{2} = ${ycStr}$。`,
-        latex: `\\frac{f(${x0Str}) + f(${symXStr})}{2} = \\frac{${(Number(fxStr) + Number(symFxStr)).toFixed(2)}}{2} = ${ycStr}`,
+        detail: !isDefined
+          ? `代入中心坐标 $(x_c, y_c) = (${xcStr}, ${ycStr})$ 与测试点 $x_0 = ${x0Str}$：测试点恰好处于垂直渐近线分母零点，函数在该处无定义。但在定义域内任意 $x \\neq ${xcStr}$ 处，均严格满足中心对称充要方程。`
+          : isCoincident
+            ? `代入中心坐标 $(x_c, y_c) = (${xcStr}, ${ycStr})$ 与测试点 $x_0 = ${x0Str}$：对称点横坐标 $x' = 2(${xcStr}) - ${x0Str} = ${symXStr}$。点 $P$ 与对称中心 $C$ 重合，为中心对称不动点，验证恒等式成立。`
+            : `代入中心坐标 $(x_c, y_c) = (${xcStr}, ${ycStr})$ 与测试点 $x_0 = ${x0Str}$：$x' = 2(${xcStr}) - ${x0Str} = ${symXStr}$。计算两点纵坐标均值 $\\frac{f(${x0Str}) + f(${symXStr})}{2} = \\frac{${fxStr} + (${symFxStr})}{2} = ${ycStr}$。`,
+        latex: !isDefined
+          ? `x_0 = x_c = ${xcStr} \\notin D_f, \\quad \\forall x \\in D_f: \\ \\frac{f(x) + f(2x_c - x)}{2} = ${ycStr}`
+          : `\\frac{f(${x0Str}) + f(${symXStr})}{2} = \\frac{${(Number(fxStr) + Number(symFxStr)).toFixed(2)}}{2} = ${ycStr}`,
         rubric: "得分点：代入具体数值完成闭环验证",
       },
     ];
@@ -802,7 +838,7 @@ export function buildFuncPropertiesPanel(
       theorems,
       gaokaoPoints,
       reasoningSteps,
-      warnings: [],
+      warnings,
       mnemonic: "自变量相加为常数，函数值相加为常数，必关于中点中心对称。",
     };
   }

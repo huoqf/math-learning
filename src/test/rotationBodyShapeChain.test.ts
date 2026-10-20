@@ -42,4 +42,60 @@ describe("临时校验：旋转体页圆柱（默认 shape）推导链", () => {
     expect(joined).toContain("\\frac{1}{3}\\pi r^2 h");
     expect(joined).toContain("\\pi r l");
   });
+
+  it("准 P0 修复保护：生成模式下扫掠角未满整周时，右屏必须显式出示理论值说明与扫掠角进度", () => {
+    // 旋转 180°（半圆柱中屏图形）
+    const panelPartial = buildRotationBodyPanel(
+      {
+        r1: 1.5,
+        height: 3,
+        shape: "rectangle",
+        sweepAngleDeg: 180,
+      } as unknown as Record<string, number>,
+      { mode: "generation" },
+    );
+
+    // 必须有扫掠角数学量
+    const sweepQ = panelPartial.quantities.find(
+      (q) => q.label === "生成扫掠角",
+    );
+    expect(sweepQ?.value).toBe("180°");
+
+    // 必须有警示说明数值为 360° 整周理论值
+    expect(
+      panelPartial.warnings?.some(
+        (w) =>
+          w.text.includes("当前仅旋转扫掠 180°") &&
+          w.text.includes("360° 完整闭合旋转体"),
+      ),
+    ).toBe(true);
+
+    // 对照支：完整旋转 360° 时不报该警示
+    const panelFull = buildRotationBodyPanel(
+      {
+        r1: 1.5,
+        height: 3,
+        shape: "rectangle",
+        sweepAngleDeg: 360,
+      } as unknown as Record<string, number>,
+      { mode: "generation" },
+    );
+    expect(panelFull.warnings?.some((w) => w.text.includes("生成态演示"))).toBe(
+      false,
+    );
+
+    // 对照支：轴截面模式下不报该警示
+    const panelSection = buildRotationBodyPanel(
+      {
+        r1: 1.5,
+        height: 3,
+        shape: "rectangle",
+        sweepAngleDeg: 180,
+      } as unknown as Record<string, number>,
+      { mode: "section" },
+    );
+    expect(
+      panelSection.warnings?.some((w) => w.text.includes("生成态演示")),
+    ).toBe(false);
+  });
 });

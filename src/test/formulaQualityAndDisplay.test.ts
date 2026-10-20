@@ -90,4 +90,15 @@ describe("圆锥曲线右屏推导步骤高中答题规范检验", () => {
       }
     }
   });
+
+  it("切点弦 polePolar 模式必须显式声明 isExtension 与 extensionBadge 拓展属性", () => {
+    const data = buildConicLineMathQuantities(
+      { a: 3, b: 2, p: 2, poleX: 4, poleY: 2 },
+      { conicType: "ellipse", studyMode: "polePolar" },
+    );
+    const th = data.theorems?.[0];
+    expect(th?.name).toContain("切点弦");
+    expect(th?.isExtension).toBe(true);
+    expect(th?.extensionBadge).toBe("选学拓展");
+  });
 });

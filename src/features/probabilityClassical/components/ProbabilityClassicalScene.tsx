@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type {
   ClassicalMathResult,
   ClassicalModelType,
@@ -485,14 +485,42 @@ export const ProbabilityClassicalScene: React.FC<
                   }
 
                   return (
-                    <path
-                      key={`path-${node.id}-${cid}`}
-                      d={`M ${parentPos.x} ${parentPos.y} C ${cpx} ${parentPos.y}, ${cpx} ${childPos.y}, ${childPos.x} ${childPos.y}`}
-                      fill="none"
-                      stroke={strokeColor}
-                      strokeWidth={strokeWidth}
-                      opacity={pathOpacity}
-                    />
+                    <g key={`path-group-${node.id}-${cid}`}>
+                      <path
+                        key={`path-${node.id}-${cid}`}
+                        d={`M ${parentPos.x} ${parentPos.y} C ${cpx} ${parentPos.y}, ${cpx} ${childPos.y}, ${childPos.x} ${childPos.y}`}
+                        fill="none"
+                        stroke={strokeColor}
+                        strokeWidth={strokeWidth}
+                        opacity={pathOpacity}
+                      />
+                      {childNode.branchProbText && (
+                        <g
+                          transform={`translate(${cpx}, ${(parentPos.y + childPos.y) / 2})`}
+                          opacity={pathOpacity}
+                        >
+                          <rect
+                            x={-14}
+                            y={-9}
+                            width={28}
+                            height={16}
+                            rx={4}
+                            fill={CANVAS_COLORS.white}
+                            stroke={withAlpha(strokeColor, 0.45)}
+                            strokeWidth={1}
+                          />
+                          <text
+                            y={3}
+                            textAnchor="middle"
+                            fill={strokeColor}
+                            fontSize={fontScale(10)}
+                            fontWeight="bold"
+                          >
+                            {childNode.branchProbText}
+                          </text>
+                        </g>
+                      )}
+                    </g>
                   );
                 })}
               </g>
@@ -579,7 +607,7 @@ export const ProbabilityClassicalScene: React.FC<
                   {node.label}
                 </text>
 
-                {/* 叶子节点右侧样本点总览 */}
+                {/* 叶子节点右侧样本点总览与路径真实概率 */}
                 {isLeaf && (
                   <g transform="translate(24, 4)">
                     <text
@@ -594,6 +622,18 @@ export const ProbabilityClassicalScene: React.FC<
                       fontWeight={isMatch ? "bold" : "normal"}
                     >
                       {leafDisplayName}
+                      {node.pathProbText && (
+                        <tspan
+                          fill={
+                            isMatch
+                              ? MATH_COLORS.paramPrimary
+                              : MATH_COLORS.labelText
+                          }
+                          fontWeight="bold"
+                        >
+                          {`  (P=${node.pathProbText})`}
+                        </tspan>
+                      )}
                       {isMatch ? " ✓ (命中)" : ""}
                     </text>
                   </g>

@@ -115,7 +115,7 @@ export function SetLogicPage() {
               vp={vp}
               onParamChange={handleParamChange}
               fontScale={canvasSize.font}
-              vennOp="intersection"
+              vennOp="none"
               showLogic={true}
             />
           </AnimationSvgCanvas>

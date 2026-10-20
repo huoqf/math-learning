@@ -68,6 +68,32 @@ describe("calculatePiecewise", () => {
     expect(res.rightMonotonicity).toBe("decreasing");
     expect(res.globalMonotonicity).toBe("non-monotonic");
   });
+
+  it("含水平常数段（如 k1=0, k2>0）绝不能被误判为严格全域单调递增（高考数学严格性）", () => {
+    const res = calculatePiecewise({
+      x0: 1.0,
+      leftSlope: 0.0,
+      leftConst: 2.0, // f1(x) = 2 (常数)
+      rightSlope: 1.0,
+      rightConst: 1.0, // f2(1) = 2 (连续接上)
+    });
+    expect(res.leftMonotonicity).toBe("constant");
+    expect(res.rightMonotonicity).toBe("increasing");
+    // 严格高中数学定义：含常数段不是严格单调递增
+    expect(res.globalMonotonicity).toBe("non-monotonic");
+    expect(res.monotonicityReason).toContain("包含水平常数段");
+  });
+
+  it("两段均为水平常数且连续时判定为 constant", () => {
+    const res = calculatePiecewise({
+      x0: 1.0,
+      leftSlope: 0.0,
+      leftConst: 3.0,
+      rightSlope: 0.0,
+      rightConst: 3.0,
+    });
+    expect(res.globalMonotonicity).toBe("constant");
+  });
 });
 
 describe("calculateComposite", () => {
