@@ -13,6 +13,7 @@ import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { PRESET_FUNCTIONS, type PresetFunctionKey } from "@/math/derivative";
+import { fitViewRange } from "@/math/viewRange";
 import { DerivativeScene } from "./components/DerivativeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { SceneLegend } from "@/components/Math";
@@ -45,10 +46,26 @@ export function DerivativeAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
+  // 视口自适应：切点 (x₀, f(x₀)) 与所选函数在整个 x₀ 定义域上的两端必须可见。
+  // cubic 在 x₀=3 时 f=18、exp 在 x₀=2 时 f≈7.39，固定 [-4,4] 会把切点整条裁掉。
+  const viewRange = useMemo(() => {
+    const preset = PRESET_FUNCTIONS[fnKey] ?? PRESET_FUNCTIONS.cubic;
+    const x0 = params.x0;
+    const [lo, hi] = preset.x0Range;
+    return fitViewRange(
+      [
+        { x: x0, y: preset.fn(x0) },
+        { x: lo, y: preset.fn(lo) },
+        { x: hi, y: preset.fn(hi) },
+      ],
+      { defaultXRange: [-5, 5], defaultYRange: [-4, 4] },
+    );
+  }, [fnKey, params.x0]);
+
   const scale = useSceneScale({
     vp,
-    xRange: [-5, 5],
-    yRange: [-4, 4],
+    xRange: viewRange.xRange,
+    yRange: viewRange.yRange,
   });
 
   const mathData = useMemo(() => {

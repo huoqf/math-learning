@@ -415,10 +415,14 @@ export function buildProbabilityCountingPanel(
             color: MATH_COLORS.paramSecondary,
           },
           {
-            label: "每组元素数",
+            label: groupInfo.isDivisible ? "每组元素数" : "每组元素数（无解）",
             symbol: "m",
+            // 不可整除时 m 无定义（不是 0 个），这里如实给 0 并在 warning 里讲清原因
             value: groupInfo.itemsPerGroup,
-            color: MATH_COLORS.paramTertiary,
+            color: groupInfo.isDivisible
+              ? MATH_COLORS.paramTertiary
+              : MATH_COLORS.highlight,
+            highlight: groupInfo.isDivisible ? undefined : "extreme",
           },
           {
             label: "逐步组合总数 (含虚假顺序)",
@@ -459,33 +463,68 @@ export function buildProbabilityCountingPanel(
             importance: "core",
           },
         ],
-        warnings: [],
-        reasoningSteps: [
-          {
-            step: 1,
-            title: "审题定法 · 判定均分模型与每组元素数",
-            latex: `N = ${groupInfo.totalItems}, \\quad k = ${groupInfo.groupCount}, \\quad m = \\frac{N}{k} = ${groupInfo.itemsPerGroup}`,
-            detail:
-              "元素被等分成若干组且各组无名称标签时属于均分模型，先判断总数能否被组数整除。",
-            rubric: "【高考采分点】判定为均分模型并求出每组元素数，得 2 分。",
-          },
-          {
-            step: 2,
-            title: "建模联立 · 逐步组合得到含序堆数",
-            latex: `\\prod C = C_{${groupInfo.totalItems}}^{${groupInfo.itemsPerGroup}} \\cdot C_{${groupInfo.totalItems - groupInfo.itemsPerGroup}}^{${groupInfo.itemsPerGroup}} \\cdots C_m^m = ${groupInfo.directCombinationWays}`,
-            detail:
-              "按组依次选出元素，得到的是带有「先选后选」人为顺序的堆数。",
-            rubric: "【高考采分点】列出逐步组合式并计算含序堆数，得 3 分。",
-          },
-          {
-            step: 3,
-            title: "求解反思 · 除以 k! 消去组间顺序",
-            latex: `N_{\\text{均分}} = \\frac{\\prod C}{k!} = \\frac{${groupInfo.directCombinationWays}}{${groupInfo.groupCount}!} = ${groupInfo.groupedWays}`,
-            detail:
-              "无名称标签的组之间不可区分，每组内元素个数相同，故须除以组数阶乘消去重复计数。",
-            rubric: "【高考采分点】除以 $k!$ 消序得出均分总数，得 3 分。",
-          },
-        ],
+        warnings: groupInfo.isDivisible
+          ? []
+          : [
+              {
+                text: `当前总元素数 $N=${groupInfo.totalItems}$ 无法被组数 $k=${groupInfo.groupCount}$ 整除（余数 $r=${groupInfo.remainder}$）。均匀分组的前提是各堆元素个数严格相等，此参数下均分无意义。`,
+                level: "danger",
+              },
+            ],
+        reasoningSteps: groupInfo.isDivisible
+          ? [
+              {
+                step: 1,
+                title: "审题定法 · 判定均分模型与每组元素数",
+                latex: `N = ${groupInfo.totalItems}, \\quad k = ${groupInfo.groupCount}, \\quad m = \\frac{N}{k} = ${groupInfo.itemsPerGroup}`,
+                detail:
+                  "元素被等分成若干组且各组无名称标签时属于均分模型，先判断总数能否被组数整除。",
+                rubric:
+                  "【高考采分点】判定为均分模型并求出每组元素数，得 2 分。",
+              },
+              {
+                step: 2,
+                title: "建模联立 · 逐步组合得到含序堆数",
+                latex: `\\prod C = C_{${groupInfo.totalItems}}^{${groupInfo.itemsPerGroup}} \\cdot C_{${groupInfo.totalItems - groupInfo.itemsPerGroup}}^{${groupInfo.itemsPerGroup}} \\cdots C_m^m = ${groupInfo.directCombinationWays}`,
+                detail:
+                  "按组依次选出元素，得到的是带有「先选后选」人为顺序的堆数。",
+                rubric: "【高考采分点】列出逐步组合式并计算含序堆数，得 3 分。",
+              },
+              {
+                step: 3,
+                title: "求解反思 · 除以 k! 消去组间顺序",
+                latex: `N_{\\text{均分}} = \\frac{\\prod C}{k!} = \\frac{${groupInfo.directCombinationWays}}{${groupInfo.groupCount}!} = ${groupInfo.groupedWays}`,
+                detail:
+                  "无名称标签的组之间不可区分，每组内元素个数相同，故须除以组数阶乘消去重复计数。",
+                rubric: "【高考采分点】除以 $k!$ 消序得出均分总数，得 3 分。",
+              },
+            ]
+          : [
+              {
+                step: 1,
+                title: "审题定法 · 先验整除性",
+                latex: `${groupInfo.totalItems} \\div ${groupInfo.groupCount} = ${Math.floor(groupInfo.totalItems / groupInfo.groupCount)} \\text{ 余 } ${groupInfo.remainder}`,
+                detail: `均匀分组的第一步不是选组，而是整除性检验：要求各组元素个数严格相等，即 $N$ 必须能被 $k$ 整除。此处 $N=${groupInfo.totalItems}$ 除以 $k=${groupInfo.groupCount}$ 余 $${groupInfo.remainder}$。`,
+                rubric: "【高考采分点】写出整除性检验并判定不可均分，得 2 分。",
+              },
+              {
+                step: 2,
+                title: "建模联立 · 均分前提不成立",
+                latex: `m = \\frac{N}{k} = \\frac{${groupInfo.totalItems}}{${groupInfo.groupCount}} \\notin \\mathbb{Z}`,
+                detail: `不存在整数 $m$ 使 $N = km$，也就没有「每堆 $m$ 个」这种分法，逐步组合式 $C_N^m C_{N-m}^m \\cdots$ 无从写起。`,
+                rubric:
+                  "【高考采分点】指出不存在整数 $m$ 使 $N = km$，得 3 分。",
+              },
+              {
+                step: 3,
+                title: "求解反思 · 结论书写",
+                latex: `\\text{当 } N = ${groupInfo.totalItems},\\ k = ${groupInfo.groupCount} \\text{ 时，均分方案不存在}`,
+                detail:
+                  "高考答题时此问到此为止：先写整除性不成立，再写「该参数下无均分方案」，不要继续套用消序公式。",
+                rubric:
+                  "【高考采分点】结论书写「此参数下无均分方案」，得 2 分。",
+              },
+            ],
         mnemonic:
           "均分无名除阶乘，消去先后重复算；分配有名乘阶乘，各就各位排座次。",
       };

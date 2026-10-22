@@ -152,7 +152,7 @@ export function buildTrigLinesPanel(
         detail:
           "把角 $\\alpha$ 的终边与单位圆 $x^2 + y^2 = 1$ 的交点记为 $P$。因为半径是 1，$P$ 的横、纵坐标就分别等于余弦与正弦，这是所有三角函数线的共同起点。",
         latex: "P(\\cos\\alpha, \\sin\\alpha), \\quad |OP| = r = 1",
-        rubric: "采分点：写出单位圆交点坐标并说明 r = 1（3分）",
+        rubric: "【高考采分点】写出单位圆交点坐标并说明 r = 1（3分）",
       },
       {
         step: 2,
@@ -161,7 +161,7 @@ export function buildTrigLinesPanel(
           "过 $P$ 作 $x$ 轴垂线得垂足 $M$；再过切点 $A(1,0)$ 作单位圆的切线交终边（或其延长线）于 $T$。三条有向线段各自对应一个三角函数值，方向与坐标轴同向记正、反向记负。",
         latex:
           "\\overrightarrow{MP} = \\sin\\alpha, \\quad \\overrightarrow{OM} = \\cos\\alpha, \\quad \\overrightarrow{AT} = \\tan\\alpha",
-        rubric: "采分点：写出三条线的起点终点与有向性（4分）",
+        rubric: "【高考采分点】写出三条线的起点终点与有向性（4分）",
       },
       {
         step: 3,
@@ -176,7 +176,7 @@ export function buildTrigLinesPanel(
             ? trig.tanVal.toFixed(3)
             : "\\text{不存在}"
         }`,
-        rubric: "采分点：由线段长度读出三个函数值并判断符号（3分）",
+        rubric: "【高考采分点】由线段长度读出三个函数值并判断符号（3分）",
       },
     ];
 
@@ -293,7 +293,7 @@ export function buildTrigLinesPanel(
           "在单位圆中取锐角 $x$，四块图形共顶点 $O$、共半径 $OA$，由内到外层层包含，所以面积必然依次递增。",
         latex:
           "S_{\\triangle OMP} < S_{\\triangle OAP} < S_{\\text{扇形}OAP} < S_{\\triangle OAT}",
-        rubric: "采分点：写出四阶面积包含关系（3分）",
+        rubric: "【高考采分点】写出四阶面积包含关系（3分）",
       },
       {
         step: 2,
@@ -302,14 +302,14 @@ export function buildTrigLinesPanel(
           "两块三角形用「底乘高除以二」，扇形用 $S = \\frac{1}{2}r^2\\theta$（$r = 1$）；四式同除以 $\\frac{1}{2}$ 消去系数，即得三阶放缩链。",
         latex:
           "\\frac{1}{2}\\sin x\\cos x < \\frac{1}{2}\\sin x < \\frac{1}{2}x < \\frac{1}{2}\\tan x \\implies \\sin x\\cos x < \\sin x < x < \\tan x",
-        rubric: "采分点：写出四块面积表达式并同除系数（4分）",
+        rubric: "【高考采分点】写出四块面积表达式并同除系数（4分）",
       },
       {
         step: 3,
         title: "代入求解 · 数值验证放缩链",
         detail: `代入 $x = ${compAlphaDeg}^\\circ$（即 $${xVal}$ rad），可得 $S_1 = ${sOMP}$、$S_2 = ${sOAP}$、$S_3 = ${sSector}$、$S_4 = ${sOAT}$，严格递增，放缩链方向得到验证。`,
         latex: `\\sin x = ${sinVal} < x = ${xVal} < \\tan x = ${tanVal}`,
-        rubric: "采分点：代入数值验证 sin x < x < tan x（3分）",
+        rubric: "【高考采分点】代入数值验证 sin x < x < tan x（3分）",
       },
     ];
 
@@ -428,7 +428,7 @@ export function buildTrigLinesPanel(
       detail:
         "先把不等号换成等号解出界值：正弦画水平线 $y = c$，余弦画竖直线 $x = c$，正切则把切点 $A(1,0)$ 与直线 $x = c$ 上的截距相连。",
       latex: `${kindLabels[ineqKind]} \\implies c = ${ineqThreshold.toFixed(2)}`,
-      rubric: "采分点：写出界值方程并说明基准线画法（3分）",
+      rubric: "【高考采分点】写出界值方程并说明基准线画法（3分）",
     },
     {
       step: 2,
@@ -437,14 +437,14 @@ export function buildTrigLinesPanel(
         "界值点把单位圆切成若干段圆弧；在每段上任取一个测试点，用相应有向线段的正负判断该弧段是否属于解集，最后按逆时针方向书写区间。",
       latex:
         "\\text{界值点} \\to \\text{分段圆弧} \\to \\text{取测试点定符号} \\to \\text{逆时针写区间}",
-      rubric: "采分点：给出分弧测试与区间方向的判断流程（4分）",
+      rubric: "【高考采分点】给出分弧测试与区间方向的判断流程（4分）",
     },
     {
       step: 3,
       title: "代入求解 · 补周期得通解集",
       detail: `当前测试角 $\\alpha = ${alphaDeg}^\\circ$ ${ineq.isSatisfied ? "落在解集内（✓）" : "落在解集外（✗）"}，可与分弧测试的结论互相印证。通解集必须在每个区间后补上周期（正弦、余弦为 $2k\\pi$，正切为 $k\\pi$）并写明 $k \\in \\mathbb{Z}$。`,
       latex: ineq.latexSolution || "\\text{正在计算}",
-      rubric: "采分点：写出含 $k \\in \\mathbb{Z}$ 的完整通解集（3分）",
+      rubric: "【高考采分点】写出含 $k \\in \\mathbb{Z}$ 的完整通解集（3分）",
     },
   ];
 

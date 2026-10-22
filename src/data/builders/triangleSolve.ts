@@ -148,7 +148,7 @@ export function buildTriangleSolvePanel(
           "遇内角平分线 $AD$，记 $\\angle BAD = \\angle CAD = \\frac{A}{2}$。以 $A$ 为公共顶点把总面积拆成左右两块，两块都含 $AD$ 与半角。",
         latex:
           "S_{\\triangle ABC} = \\frac{1}{2}bc\\sin A = S_{\\triangle ABD} + S_{\\triangle ACD} = \\frac{1}{2}(b+c)\\cdot AD\\sin\\frac{A}{2}",
-        rubric: "采分点：正确拆解面积并识别两段半角（3分）",
+        rubric: "【高考采分点】正确拆解面积并识别两段半角（3分）",
       },
       {
         step: 2,
@@ -157,14 +157,14 @@ export function buildTriangleSolvePanel(
           "把 $\\sin A$ 展成 $2\\sin\\frac{A}{2}\\cos\\frac{A}{2}$；因 $0<A<180^\\circ$ 时 $\\sin\\frac{A}{2}\\neq 0$，两边约去后解出 $AD$。",
         latex:
           "\\frac{1}{2}bc\\cdot 2\\sin\\frac{A}{2}\\cos\\frac{A}{2} = \\frac{1}{2}(b+c)AD\\sin\\frac{A}{2} \\implies AD = \\frac{2bc\\cos\\frac{A}{2}}{b+c}",
-        rubric: "采分点：二倍角化简并解出角平分线长公式（4分）",
+        rubric: "【高考采分点】二倍角化简并解出角平分线长公式（4分）",
       },
       {
         step: 3,
         title: "代入求解 · 数值与分底边",
         detail: `代入 $b = ${b.toFixed(1)}$、$c = ${c.toFixed(1)}$、$A = ${anglesDeg.A.toFixed(1)}^\\circ$ 求出 $AD$；再由分角定理 $BD:DC = c:b$ 得到两段底边 $BD = ${sideBD.toFixed(2)}$、$DC = ${sideDC.toFixed(2)}$。`,
         latex: `AD = \\frac{2\\times ${b.toFixed(1)}\\times ${c.toFixed(1)}\\times \\cos ${(angleA / 2).toFixed(1)}^\\circ}{${b.toFixed(1)} + ${c.toFixed(1)}} = ${bisectorLength.toFixed(2)}`,
-        rubric: "采分点：代入数值求出角平分线长与分底边段（3分）",
+        rubric: "【高考采分点】代入数值求出角平分线长与分底边段（3分）",
       },
     ];
 
@@ -299,21 +299,21 @@ export function buildTriangleSolvePanel(
         detail:
           "已知两边 $a, b$ 与其中一边的对角 $A$（SSA 不是全等条件）。过顶点 $C$ 向射线 $AB$ 作垂线，得到临界高 $h$，它把 $a$ 的取值范围切成若干判定区间。",
         latex: `h = b\\sin A = ${b.toFixed(2)}\\times \\sin ${angleA.toFixed(1)}^\\circ = ${h.toFixed(2)}`,
-        rubric: "采分点：先算出临界高 h = b·sinA（3分）",
+        rubric: "【高考采分点】先算出临界高 h = b·sinA（3分）",
       },
       {
         step: 2,
         title: "建模联立 · 比较定解数",
         detail: `把 $a$ 与 $h$、$b$ 作比较：$A<90^\\circ$ 时 $a<h$ 无解、$a=h$ 一解（直角）、$h<a<b$ 两解、$a\\ge b$ 一解；$A\\ge 90^\\circ$ 时 $a>b$ 一解、$a\\le b$ 无解。当前落入「${SSA_CASE_LABEL[ssaResult.caseKind]}」。`,
         latex: `a = ${a.toFixed(2)},\\quad h = ${h.toFixed(2)},\\quad b = ${b.toFixed(2)} \\implies N_{\\text{sol}} = ${solutionCount}`,
-        rubric: "采分点：套用判据给出解的个数（4分）",
+        rubric: "【高考采分点】套用判据给出解的个数（4分）",
       },
       {
         step: 3,
         title: "代入求解 · 回代检验内角和",
         detail: solveDetail,
         latex: solveLatex,
-        rubric: "采分点：求出边角并完成增解检验（4分）",
+        rubric: "【高考采分点】求出边角并完成增解检验（4分）",
       },
     ];
 
@@ -435,7 +435,7 @@ export function buildTriangleSolvePanel(
           "正弦定理把三边与各自对角的正弦绑成同一个比值，且该比值恰为外接圆直径 $2R$。先写出符号形式。",
         latex:
           "\\frac{a}{\\sin A} = \\frac{b}{\\sin B} = \\frac{c}{\\sin C} = 2R",
-        rubric: "采分点：写出正弦定理的连比形式（3分）",
+        rubric: "【高考采分点】写出正弦定理的连比形式（3分）",
       },
       {
         step: 2,
@@ -443,14 +443,14 @@ export function buildTriangleSolvePanel(
         detail:
           "把已知的边 $a$ 与其对角 $A$ 代入求出公共比值，再用同一个比值回代其余边角，实现边角互化。",
         latex: `\\frac{a}{\\sin A} = \\frac{${sides.a.toFixed(2)}}{\\sin ${anglesDeg.A.toFixed(1)}^\\circ} = ${sineRatios.ratioA.toFixed(2)} = 2R`,
-        rubric: "采分点：代入求比并指出该比值即 2R（4分）",
+        rubric: "【高考采分点】代入求比并指出该比值即 2R（4分）",
       },
       {
         step: 3,
         title: "代入求解 · 边角与半径齐出",
         detail: `由比例式得 $b = \\frac{a\\sin B}{\\sin A}$、$c = \\frac{a\\sin C}{\\sin A}$；公共比值即外接圆直径，故半径为其一半。`,
         latex: `b = ${sides.b.toFixed(2)},\\quad c = ${sides.c.toFixed(2)},\\quad R = \\frac{${sineRatios.ratioA.toFixed(2)}}{2} = ${circumcircle.radius.toFixed(2)}`,
-        rubric: "采分点：求出全部边角与外接圆半径（3分）",
+        rubric: "【高考采分点】求出全部边角与外接圆半径（3分）",
       },
     ];
 
@@ -546,7 +546,7 @@ export function buildTriangleSolvePanel(
         detail:
           "已知两边 $b, c$ 及其夹角 $A$（SAS 全等型），直接用余弦定理求对边，不必先求其余两角。",
         latex: "a^2 = b^2 + c^2 - 2bc\\cos A",
-        rubric: "采分点：写出余弦定理并说明属于 SAS 型（3分）",
+        rubric: "【高考采分点】写出余弦定理并说明属于 SAS 型（3分）",
       },
       {
         step: 2,
@@ -554,14 +554,14 @@ export function buildTriangleSolvePanel(
         detail:
           "把 $b, c$ 与 $\\cos A$ 逐项代入：先算两邻边平方和，再算修正项 $2bc\\cos A$。注意 $A$ 为钝角时 $\\cos A < 0$，修正项整体为负，等价于加上其绝对值。",
         latex: `a^2 = ${(sides.b ** 2).toFixed(2)} + ${(sides.c ** 2).toFixed(2)} - 2\\times ${sides.b.toFixed(2)}\\times ${sides.c.toFixed(2)}\\times \\cos ${anglesDeg.A.toFixed(1)}^\\circ`,
-        rubric: "采分点：代入数值写出 a² 的解析式（4分）",
+        rubric: "【高考采分点】代入数值写出 a² 的解析式（4分）",
       },
       {
         step: 3,
         title: "代入求解 · 结果与射影校验",
         detail: `得 $a = ${sides.a.toFixed(2)}$。再用射影定理 $a = c\\cos B + b\\cos C$ 作独立校验：两段有向投影之和应恒等于底边。`,
         latex: `a = ${sides.a.toFixed(2)},\\quad c\\cos B + b\\cos C = ${projections.cCosB.toFixed(2)} + ${projections.bCosC.toFixed(2)} = ${sides.a.toFixed(2)}`,
-        rubric: "采分点：求出 a 并用射影定理回代校验（3分）",
+        rubric: "【高考采分点】求出 a 并用射影定理回代校验（3分）",
       },
     ];
 
@@ -721,7 +721,7 @@ export function buildTriangleSolvePanel(
         detail:
           "已知三边，唯一未知量是三个内角。由余弦定理的变形式，任意一角都可直接用三边表示，先取角 $A$。",
         latex: `\\cos A = \\frac{b^2 + c^2 - a^2}{2bc} = \\frac{${sides.b.toFixed(2)}^2 + ${sides.c.toFixed(2)}^2 - ${sides.a.toFixed(2)}^2}{2 \\times ${sides.b.toFixed(2)} \\times ${sides.c.toFixed(2)}}`,
-        rubric: "采分点：写出余弦定理变形并代入三边（3分）",
+        rubric: "【高考采分点】写出余弦定理变形并代入三边（3分）",
       },
       {
         step: 2,
@@ -729,14 +729,14 @@ export function buildTriangleSolvePanel(
         detail:
           "由反余弦求出角 $A$，其余两角同样直接使用余弦定理变形式，避免正弦定理可能产生的钝角歧义；最后核验内角和为 $180^\\circ$。",
         latex: `A = ${anglesDeg.A.toFixed(1)}^\\circ, \\; B = ${anglesDeg.B.toFixed(1)}^\\circ, \\; C = ${anglesDeg.C.toFixed(1)}^\\circ`,
-        rubric: "采分点：求出三个内角并核验内角和（4分）",
+        rubric: "【高考采分点】求出三个内角并核验内角和（4分）",
       },
       {
         step: 3,
         title: "代入求解 · 面积与切接圆",
         detail: `由两边夹角公式求面积 $S = \\frac{1}{2}bc\\sin A = ${area.toFixed(2)}$，再由 $S = rp$、$S = \\frac{abc}{4R}$ 反解内切圆与外接圆半径。`,
         latex: `S = \\frac{1}{2} \\times ${sides.b.toFixed(2)} \\times ${sides.c.toFixed(2)} \\times \\sin ${anglesDeg.A.toFixed(1)}^\\circ = ${area.toFixed(2)}`,
-        rubric: "采分点：代入求出面积并反解 r、R（3分）",
+        rubric: "【高考采分点】代入求出面积并反解 r、R（3分）",
       },
     ];
 
@@ -832,7 +832,7 @@ export function buildTriangleSolvePanel(
         "已知两边 $b, c$ 与夹角 $A$，先由两边夹角公式定出面积；内切圆半径 $r$、高线 $h_a$ 都可由面积反解，外接圆半径由三边与面积联系。",
       latex:
         "S = \\frac{1}{2}bc\\sin A = \\frac{abc}{4R} = r\\cdot p, \\quad p = \\frac{a+b+c}{2}",
-      rubric: "采分点：写出面积公式族并明确以 S 为中心（3分）",
+      rubric: "【高考采分点】写出面积公式族并明确以 S 为中心（3分）",
     },
     {
       step: 2,
@@ -840,14 +840,14 @@ export function buildTriangleSolvePanel(
       detail:
         "代入 $b, c$ 与夹角 $A$ 求出面积 $S$；再由三边和求半周长 $p$，为反解内切圆半径做准备。",
       latex: `S = \\frac{1}{2}\\times ${sides.b.toFixed(2)}\\times ${sides.c.toFixed(2)}\\times \\sin ${angleA.toFixed(1)}^\\circ = ${area.toFixed(2)},\\quad p = ${pVal.toFixed(2)}`,
-      rubric: "采分点：代入求出面积 S 与半周长 p（4分）",
+      rubric: "【高考采分点】代入求出面积 S 与半周长 p（4分）",
     },
     {
       step: 3,
       title: "代入求解 · 反解内切圆与外接圆",
       detail: `由等面积法 $S = rp$ 反解 $r = \\frac{S}{p}$；由 $S = \\frac{abc}{4R}$ 反解 $R = \\frac{abc}{4S}$。高线则由 $S = \\frac{1}{2}ah_a$ 得 $h_a = ${altitudeA.length.toFixed(2)}$。`,
       latex: `r = \\frac{${area.toFixed(2)}}{${pVal.toFixed(2)}} = ${incircle.radius.toFixed(2)},\\quad R = \\frac{abc}{4S} = ${circumcircle.radius.toFixed(2)}`,
-      rubric: "采分点：由面积反解 $r$、$R$ 与 $h_a$（3分）",
+      rubric: "【高考采分点】由面积反解 $r$、$R$ 与 $h_a$（3分）",
     },
   ];
 

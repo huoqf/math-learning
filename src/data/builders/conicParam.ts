@@ -102,14 +102,15 @@ export function buildConicParamPanel(
         latex: `\\text{设 } P(x, y) \\text{ 为椭圆上任一点} \\implies \\begin{cases} x = a\\cos\\theta \\\\ y = b\\sin\\theta \\end{cases} \\quad (\\theta \\in [0, 2\\pi))`,
         detail:
           "根据椭圆标准方程 $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$，利用三角同角平方和公式 $\\cos^2\\theta + \\sin^2\\theta = 1$，将平面二维动点坐标降维为单一角参量 $\\theta$。",
-        rubric: "准确设定三角参数坐标，实现代数单变量降维 (3分)",
+        rubric: "【高考采分点】准确设定三角参数坐标，实现代数单变量降维 (3分)",
       },
       {
         step: 2,
         title: "第二步：建模联立 · 点线距离的辅助角化简",
         latex: `d(\\theta) = \\frac{|(Aa)\\cos\\theta + (Bb)\\sin\\theta + C|}{\\sqrt{A^2 + B^2}} = \\frac{|${formatMathNumber(effA)}\\cos\\theta - ${formatMathNumber(effB)}\\sin\\theta - 6|}{\\sqrt{1^2 + (-1)^2}} = \\frac{|${formatMathNumber(R)}\\sin(\\theta + \\varphi) - 6|}{\\sqrt{2}}`,
         detail: `将 $P(${formatMathNumber(effA)}\\cos\\theta, ${formatMathNumber(effB)}\\sin\\theta)$ 代入目标直线方程 $x - y - 6 = 0$ 的点线距离公式中，提取合振幅 $R = \\sqrt{(1\\times ${formatMathNumber(effA)})^2 + (-1\\times ${formatMathNumber(effB)})^2} = \\sqrt{${formatMathNumber(effA * effA)} + ${formatMathNumber(effB * effB)}} = ${formatMathNumber(R)}$。`,
-        rubric: "运用辅助角公式将二元线段距离化为单一正弦函数 (4分)",
+        rubric:
+          "【高考采分点】运用辅助角公式将二元线段距离化为单一正弦函数 (4分)",
       },
       {
         step: 3,
@@ -118,7 +119,8 @@ export function buildConicParamPanel(
         detail: lineIntersects
           ? `合振幅 $R = ${formatMathNumber(R)} \\ge |C| = ${formatMathNumber(absC)}$，直线 $x - y - 6 = 0$ 与椭圆相交，$d = 0$ 可取到（存在 $\\sin(\\theta+\\varphi) = \\frac{${formatMathNumber(absC)}}{${formatMathNumber(R)}}$），故最小距离为 $0$；当 $\\sin(\\theta+\\varphi) = -1$ 时动点距离直线最远。全程避开联立二次方程求判别式 $\\Delta = 0$ 的冗长运算，实现了运算量降维。`
           : `合振幅 $R = ${formatMathNumber(R)} < |C| = ${formatMathNumber(absC)}$，直线 $x - y - 6 = 0$ 与椭圆相离：当 $\\sin(\\theta+\\varphi) = 1$ 时动点距离直线最近，当 $\\sin(\\theta+\\varphi) = -1$ 时距离最远。全程避开联立二次方程求判别式 $\\Delta = 0$ 的冗长运算，实现了运算量降维。`,
-        rubric: "由三角函数有界性严密推导出最值区间并完成反思 (3分)",
+        rubric:
+          "【高考采分点】由三角函数有界性严密推导出最值区间并完成反思 (3分)",
       },
     ];
 
@@ -225,7 +227,7 @@ export function buildConicParamPanel(
         latex: `\\text{设 } A\\left(\\frac{y_1^2}{2p}, y_1\\right), \\quad B\\left(\\frac{y_2^2}{2p}, y_2\\right) \\quad (y_1 \\ne y_2)`,
         detail:
           "对于抛物线 $y^2 = 2px$，以纵坐标 $y$ 作为唯一的自由参数。横坐标由方程 $x = \\frac{y^2}{2p}$ 自然表达，全过程彻底避免引入带二次根号的代数式。",
-        rubric: "单参数设点并用纵坐标表示端点坐标 (3分)",
+        rubric: "【高考采分点】单参数设点并用纵坐标表示端点坐标 (3分)",
       },
       {
         step: 2,
@@ -233,7 +235,7 @@ export function buildConicParamPanel(
         latex: `k_{AB} = \\frac{y_2 - y_1}{\\frac{y_2^2 - y_1^2}{2p}} = \\frac{2p}{y_1 + y_2} \\implies (y_1 + y_2)y = 2px + y_1 y_2`,
         detail:
           "利用平方差公式 $y_2^2 - y_1^2 = (y_2 - y_1)(y_2 + y_1)$ 进行因式分解消去公因式。割线方程由两点坐标直接写出，完全无需联立一元二次方程与计算判别式 $\\Delta$。",
-        rubric: "应用点差法因式分解求出割线方程与斜率 (4分)",
+        rubric: "【高考采分点】应用点差法因式分解求出割线方程与斜率 (4分)",
       },
       {
         step: 3,
@@ -244,7 +246,7 @@ export function buildConicParamPanel(
         detail: res.isFocusChord
           ? "割线过焦点 $F(p/2, 0)$ 的充要条件是纵坐标之积为定值 $y_1 y_2 = -p^2$；此时由抛物线定义，焦点弦长直接转化为准线距离之和 $|AB| = x_1 + x_2 + p$。"
           : "割线与对称轴交点横坐标 $x_0 = -\\frac{y_1 y_2}{2p}$；点差法斜率公式 $k_{AB} = \\frac{p}{y_M}$ 直接建立了中点纵坐标与割线斜率的反比守恒关系。",
-        rubric: "准确代入计算几何量并完成焦点弦定值反思 (3分)",
+        rubric: "【高考采分点】准确代入计算几何量并完成焦点弦定值反思 (3分)",
       },
     ];
 
@@ -361,14 +363,14 @@ export function buildConicParamPanel(
       latex: `\\text{设直线方程为 } x = my + n \\quad (m = \\cot\\alpha)`,
       detail:
         "新高考第一命题避坑法则：设 $y=kx+b$ 必须严密分类讨论斜率不存在；设 $x=my+n$ 天然涵盖所有与 $y$ 轴不平行的直线（当 $m=0$ 时为垂直于 $x$ 轴的铅垂割线 $x=n$），无死角且自洽。",
-      rubric: "合理设定以 y 为主元的割线方程 (3分)",
+      rubric: "【高考采分点】合理设定以 y 为主元的割线方程 (3分)",
     },
     {
       step: 2,
       title: "第二步：建模联立 · 代入椭圆展开关于 y 的二次方程",
       latex: `\\frac{(my+n)^2}{a^2} + \\frac{y^2}{b^2} = 1 \\implies (b^2m^2+a^2)y^2 + 2b^2mny + b^2(n^2-a^2) = 0 \\implies (${formatMathNumber(res.A)})y^2 ${formatSignedTerm(res.B, "y")} ${formatSignedTerm(res.C, "")} = 0`,
       detail: `消去横坐标 $x$ 得到关于纵坐标 $y$ 的整系数一元二次方程，分母无高次未知数。韦达定理直接给出 $y_1+y_2 = -\\frac{2b^2mn}{b^2m^2+a^2} = ${formatMathNumber(res.ySum)}$ 与 $y_1y_2 = \\frac{b^2(n^2-a^2)}{b^2m^2+a^2} = ${formatMathNumber(res.yProd)}$。`,
-      rubric: "联立化简并由韦达定理表达对称项 (4分)",
+      rubric: "【高考采分点】联立化简并由韦达定理表达对称项 (4分)",
     },
     {
       step: 3,
@@ -378,7 +380,7 @@ export function buildConicParamPanel(
         : `\\Delta_y = 4a^2b^2(b^2m^2+a^2-n^2) < 0 \\implies \\text{割线与椭圆无实数交点}`,
       detail:
         "三角形面积 $S_{\\triangle OAB} = \\frac{1}{2}|x_0||y_1-y_2|$，底边直接取为割线在 $x$ 轴截距 $|n|$，高为纵坐标差 $|y_1-y_2|$，计算步骤精简 60% 以上。",
-      rubric: "准确计算目标面积并给出几何结论 (3分)",
+      rubric: "【高考采分点】准确计算目标面积并给出几何结论 (3分)",
     },
   ];
 

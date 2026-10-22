@@ -1,4 +1,8 @@
 import { MATH_COLORS } from "@/theme";
+import {
+  BASE_CURVE_MODELS,
+  SANDWICH_CURVE_MODELS,
+} from "@/math/tangentScaling";
 import type { ParamConfig, SelectGridItem } from "@/components/UI";
 import type {
   TangentScalingMode,
@@ -223,9 +227,9 @@ export function getTangentScalingParamConfigs(
   switch (mode) {
     case "base": {
       const baseSub = options?.baseSubModel ?? "exp_x_plus_1";
-      let min = -2.0;
-      let max = 2.0;
-      let step = 0.1;
+      // 滑块区间与中屏可拖拽切点区间共用同一来源，避免两处各写一份而失配
+      const [min, max] = BASE_CURVE_MODELS[baseSub].dragXRange;
+      const step = 0.1;
       let marks: ParamConfig["marks"] = [
         {
           value: 0,
@@ -236,8 +240,6 @@ export function getTangentScalingParamConfigs(
       ];
 
       if (baseSub === "log_x_minus_1") {
-        min = 0.2;
-        max = 4.0;
         marks = [
           {
             value: 1,
@@ -247,8 +249,6 @@ export function getTangentScalingParamConfigs(
           },
         ];
       } else if (baseSub === "log_x_div_e") {
-        min = 0.5;
-        max = 4.5;
         marks = [
           {
             value: 2.72,
@@ -258,8 +258,6 @@ export function getTangentScalingParamConfigs(
           },
         ];
       } else if (baseSub === "log_shift_0") {
-        min = -0.8;
-        max = 3.5;
         marks = [
           {
             value: 0,
@@ -269,8 +267,6 @@ export function getTangentScalingParamConfigs(
           },
         ];
       } else if (baseSub === "exp_shift_x" || baseSub === "exp_ex") {
-        min = -1.5;
-        max = 2.8;
         marks = [
           {
             value: 1,
@@ -298,8 +294,11 @@ export function getTangentScalingParamConfigs(
     }
 
     case "sandwich": {
-      const isOrigin = options?.sandwichSubModel === "origin_sandwich";
-      const isParallel = options?.sandwichSubModel === "parallel_bands";
+      const swSub = options?.sandwichSubModel ?? "common_tangent";
+      const isOrigin = swSub === "origin_sandwich";
+      const isParallel = swSub === "parallel_bands";
+      // 观察点允许区间与中屏拖拽点共用同一来源
+      const [probeMin, probeMax] = SANDWICH_CURVE_MODELS[swSub].probeXRange;
       return [
         {
           key: "evalX",
@@ -307,8 +306,8 @@ export function getTangentScalingParamConfigs(
           labelFormula: `\\text{观察点横坐标 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
           group: "卡位观察",
           value: params.evalX,
-          min: isOrigin ? -0.7 : 0.2,
-          max: 3.5,
+          min: probeMin,
+          max: probeMax,
           step: 0.1,
           importance: "core",
           marks: [

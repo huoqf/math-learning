@@ -211,7 +211,8 @@ export function buildFuncExpLogPanel(
                 "高考比较大小题型中，面对同底不同指或同指不同底式子，首先识别对应幂函数 $y = x^{\\alpha}$ 模型，将数值比较转化为同一区间内幂函数的函数值比较。",
               latex:
                 "f(x) = x^{\\alpha}, \\quad \\alpha \\in \\{1, 2, 3, \\tfrac{1}{2}, -1\\}",
-              rubric: "确立所比较式子的自变量 $x$ 所在区间与基准幂函数模型",
+              rubric:
+                "【高考采分点】确立所比较式子的自变量 $x$ 所在区间与基准幂函数模型",
             },
             {
               step: 2,
@@ -220,7 +221,8 @@ export function buildFuncExpLogPanel(
                 "所有幂函数图象在第一象限恒过公共定点 $(1, 1)$。在 $(1, +\\infty)$ 上作垂直参考线 $x = 2$，交各幂函数于点 $(2, 2^{\\alpha})$，利用取值高低直接判定指数大小。",
               latex:
                 "x = 2 \\implies \\begin{cases} y = x^3: & y = 8 \\\\ y = x^2: & y = 4 \\\\ y = x: & y = 2 \\\\ y = \\sqrt{x}: & y = \\sqrt{2} \\approx 1.41 \\\\ y = 1/x: & y = 0.5 \\end{cases}",
-              rubric: "利用 $x = 2$ 处高低次序确立各幂指数大小关系",
+              rubric:
+                "【高考采分点】利用 $x = 2$ 处高低次序确立各幂指数大小关系",
             },
             {
               step: 3,
@@ -229,7 +231,8 @@ export function buildFuncExpLogPanel(
                 "当 $x > 1$ 时，图象在上方的函数幂指数更大（即【指大图高】）；当 $0 < x < 1$ 时，次序完全反转（指数越大图象越在下方）。公共定点 $(1, 1)$ 为旋转枢纽。",
               latex:
                 "\\begin{cases} x > 1: & x^3 > x^2 > x > x^{1/2} > x^{-1} \\\\ 0 < x < 1: & x^{-1} > x^{1/2} > x > x^2 > x^3 \\end{cases}",
-              rubric: "规范写出高考大小比较最终结论并谨防区间反转",
+              rubric:
+                "【高考采分点】规范写出高考大小比较最终结论并谨防区间反转",
             },
           ]
         : [
@@ -240,7 +243,7 @@ export function buildFuncExpLogPanel(
                 "在同一坐标系中作出幂函数 $f(x) = x^{\\alpha}$ 与基准直线 $y = x$ 的图象，把「研究幂函数」转化为「比较两条图象的高低与增长快慢」。",
               latex: `f(x) = x^{${alpha.toFixed(1).replace(/\.0$/, "")}} \\quad \\text{与} \\quad y = x`,
               rubric:
-                "写出幂函数解析式，并在同一坐标系中作出它与基准线 $y=x$ 的图象",
+                "【高考采分点】写出幂函数解析式，并在同一坐标系中作出它与基准线 $y=x$ 的图象",
             },
             {
               step: 2,
@@ -252,7 +255,7 @@ export function buildFuncExpLogPanel(
                 ? `${compareWithLine.replace(/\$/g, "")}`
                 : `x_0 = ${x0.toFixed(2)} \\notin D`,
               rubric:
-                "代入 x₀ 比较函数值与 x₀ 的大小，并说明图象相对基准线的高低",
+                "【高考采分点】代入 x₀ 比较函数值与 x₀ 的大小，并说明图象相对基准线的高低",
             },
             {
               step: 3,
@@ -274,7 +277,7 @@ export function buildFuncExpLogPanel(
                       ? `\\alpha < 0 \\implies f(x) \\text{ 在 } (0, +\\infty) \\text{ 上递减、与两坐标轴无限接近}`
                       : `y = 1 \\quad (x \\neq 0)`,
               rubric:
-                "归纳幂指数取不同范围时图象的弯曲方向、相对基准线的高低与渐近走势",
+                "【高考采分点】归纳幂指数取不同范围时图象的弯曲方向、相对基准线的高低与渐近走势",
             },
           ];
 
@@ -635,7 +638,8 @@ export function buildFuncExpLogPanel(
             "设原函数为 $y = \\log_a x$（$a > 0, a \\neq 1, x > 0$），将方程看作关于 $x$ 的方程解出 $x = a^y$；交换自变量与因变量符号得到反函数解析式 $y = a^x$。原函数定义域 $(0, +\\infty)$ 与值域 $\\mathbb{R}$ 分别对调为反函数的值域与定义域。",
           latex:
             "y = \\log_a x \\iff x = a^y \\xrightarrow{x \\leftrightarrow y} y = a^x \\quad (D_{\\log} = R_{\\exp} = (0, +\\infty))",
-          rubric: "规范呈现反解自变量、互换变元符号与定义域值域互易过程",
+          rubric:
+            "【高考采分点】规范呈现反解自变量、互换变元符号与定义域值域互易过程",
         },
         {
           step: 2,
@@ -643,7 +647,8 @@ export function buildFuncExpLogPanel(
           detail: `设探究点 $P(${x0.toFixed(2)}, ${y0Val.toFixed(2)})$ 在对数曲线上，其关于直线 $y = x$ 的对称点为 $P'(${y0Val.toFixed(2)}, ${x0.toFixed(2)})$。连线斜率 $k_{PP'} = \\frac{${x0.toFixed(2)} - ${y0Val.toFixed(2)}}{${y0Val.toFixed(2)} - ${x0.toFixed(2)}} = -1$，满足 $k_{PP'} \\cdot 1 = -1 \\implies PP' \\perp (y = x)$；且线段 $PP'$ 的中点 $M(${midX.toFixed(2)}, ${midX.toFixed(2)})$ 纵横坐标严格相等，恒在对称轴 $y = x$ 上，充要证实直线 $y = x$ 是 $PP'$ 的垂直平分线。`,
           latex:
             "\\begin{cases} k_{PP'} = -1 \\implies k_{PP'} \\cdot k_{y=x} = -1 \\implies PP' \\perp (y=x) \\\\ M\\left(\\frac{x_0+y_0}{2}, \\frac{x_0+y_0}{2}\\right) \\in \\{ (x, y) \\mid y = x \\} \\end{cases}",
-          rubric: "从斜率乘积为 $-1$ 与中点落在对称轴上两方面充要证明垂直平分",
+          rubric:
+            "【高考采分点】从斜率乘积为 $-1$ 与中点落在对称轴上两方面充要证明垂直平分",
         },
         {
           step: 3,
@@ -652,7 +657,8 @@ export function buildFuncExpLogPanel(
             "由互为反函数的图象关于直线 $y = x$ 轴对称可知：指数函数定点 $(0, 1)$ 与对数函数定点 $(1, 0)$ 互为镜像；指数函数的水平渐近线 $y = 0$ 镜像为对数函数的竖直渐近线 $x = 0$；且两者在各定义域上的单调增减性严格保持同向。",
           latex:
             "(0, 1) \\xleftrightarrow{y=x} (1, 0), \\quad (y = 0) \\xleftrightarrow{y=x} (x = 0)",
-          rubric: "准确阐释反函数对称映射下定点、渐近线与单调性的对应规律",
+          rubric:
+            "【高考采分点】准确阐释反函数对称映射下定点、渐近线与单调性的对应规律",
         },
       ];
     } else {
@@ -662,14 +668,14 @@ export function buildFuncExpLogPanel(
           title: "基准模型 · 对数函数定义与必过定点",
           detail: `对数函数 $y = \\log_a x$（当前底数 $a = ${a.toFixed(1)}$）定义域为 $(0, +\\infty)$，值域为 $\\mathbb{R}$。因为对任意底数恒有 $\\log_a 1 = 0$，故函数图象恒过定点 $(1, 0)$。$y$ 轴（直线 $x = 0$）为曲线的垂直渐近线。`,
           latex: `f(1) = \\log_{${a.toFixed(1)}} 1 = 0 \\implies \\text{必过定点 } (1, 0) \\text{，且图象以 } y \\text{ 轴为竖直渐近线}`,
-          rubric: "规范交代定义域、值域、定点坐标与垂直渐近线",
+          rubric: "【高考采分点】规范交代定义域、值域、定点坐标与垂直渐近线",
         },
         {
           step: 2,
           title: "单调判号 · 底数与真数同大异大律",
           detail: `对数函数单调性由底数 $a$ 严格决定：当底数 $a = ${a.toFixed(1)} > 1$ 时，在 $(0, +\\infty)$ 上严格单调递增；当 $0 < a < 1$ 时，在 $(0, +\\infty)$ 上严格单调递减。在当前探究点 $x_0 = ${x0.toFixed(2)}$ 处，结合定义域与底数大小，准确判定函数值正负与大小。`,
           latex: `a > 1 \\implies \\forall 0 < x_1 < x_2, \\; \\log_a x_1 < \\log_a x_2`,
-          rubric: "准确阐明底数对单调性的决定作用并由单调性定号",
+          rubric: "【高考采分点】准确阐明底数对单调性的决定作用并由单调性定号",
         },
         {
           step: 3,
@@ -678,7 +684,8 @@ export function buildFuncExpLogPanel(
             "当 $x \\to 0^+$ 时，$\\log_a x \\to -\\infty$（$a > 1$ 时），以 $y$ 轴（直线 $x = 0$）为竖直渐近线；当 $x$ 充分大时，对数增长远慢于线性增长与指数增长，图象呈现随 $x$ 增大而越来越平缓的向下弯曲特征。",
           latex:
             "x \\to 0^+ \\implies y \\to -\\infty \\; (x=0 \\text{ 为竖直渐近线})",
-          rubric: "规范描述对数曲线以 y 轴为渐近线及大自变量下的走势特征",
+          rubric:
+            "【高考采分点】规范描述对数曲线以 y 轴为渐近线及大自变量下的走势特征",
         },
       ];
     }
@@ -695,7 +702,7 @@ export function buildFuncExpLogPanel(
             "指数函数 $y = a^x$（$a > 0, a \\neq 1$）为单调映射，反解得 $x = \\log_a y$；自变量因变量互换得反函数 $y = \\log_a x$。指数函数定义域 $\\mathbb{R}$ 成为对数函数值域，值域 $(0, +\\infty)$ 成为对数函数定义域。",
           latex:
             "y = a^x \\iff x = \\log_a y \\xrightarrow{x \\leftrightarrow y} y = \\log_a x \\quad (D_{\\exp} = R_{\\log} = \\mathbb{R})",
-          rubric: "规范呈现反解与定义域值域互换",
+          rubric: "【高考采分点】规范呈现反解与定义域值域互换",
         },
         {
           step: 2,
@@ -703,7 +710,7 @@ export function buildFuncExpLogPanel(
           detail: `设原曲线上探究动点为 $P(${x0.toFixed(2)}, ${expVal.toFixed(2)})$，反函数对应点为 $P'(${expVal.toFixed(2)}, ${x0.toFixed(2)})$。连线斜率 $k_{PP'} = \\frac{${x0.toFixed(2)} - ${expVal.toFixed(2)}}{${expVal.toFixed(2)} - ${x0.toFixed(2)}} = -1$，与直线 $y = x$ 斜率之积为 $-1$，证明 $PP' \\perp (y = x)$；中点 $M(${midX.toFixed(2)}, ${midX.toFixed(2)})$ 纵横坐标严格相等，落在对称轴 $y = x$ 上，充要证实直线 $y = x$ 垂直平分线段 $PP'$。`,
           latex:
             "\\begin{cases} k_{PP'} = \\frac{x_0 - a^{x_0}}{a^{x_0} - x_0} = -1 \\implies PP' \\perp (y = x) \\\\ M\\left(\\frac{x_0 + a^{x_0}}{2}, \\frac{x_0 + a^{x_0}}{2}\\right) \\in \\{ (x, y) \\mid y = x \\} \\end{cases}",
-          rubric: "证明两点连线被对称轴垂直平分",
+          rubric: "【高考采分点】证明两点连线被对称轴垂直平分",
         },
         {
           step: 3,
@@ -712,7 +719,8 @@ export function buildFuncExpLogPanel(
             "由互为反函数的图象关于直线 $y = x$ 轴对称可知：指数函数定点 $(0, 1)$ 与对数函数定点 $(1, 0)$ 互为镜像；指数函数的水平渐近线 $y = 0$ 镜像为对数函数的竖直渐近线 $x = 0$；且两者在各定义域上的单调增减性严格保持同向。",
           latex:
             "(0, 1) \\xleftrightarrow{y=x} (1, 0), \\quad (y = 0) \\xleftrightarrow{y=x} (x = 0)",
-          rubric: "全面总结反函数关于直线 y=x 对称下的关键特征对偶规律",
+          rubric:
+            "【高考采分点】全面总结反函数关于直线 y=x 对称下的关键特征对偶规律",
         },
       ];
     } else {
@@ -723,14 +731,14 @@ export function buildFuncExpLogPanel(
           title: "基准模型 · 指数函数定义与必过定点",
           detail: `指数函数 $y = a^x$（底数 $a = ${a.toFixed(1)}$）定义域为 $\\mathbb{R}$，值域为 $(0, +\\infty)$，恒过定点 $(0, 1)$。$x$ 轴（直线 $y = 0$）为水平渐近线。`,
           latex: `f(0) = ${a.toFixed(1)}^0 = 1 \\implies \\text{必过定点 } (0, 1) \\text{，且图象以 } x \\text{ 轴为水平渐近线}`,
-          rubric: "写明指数函数性质与渐近线",
+          rubric: "【高考采分点】写明指数函数性质与渐近线",
         },
         {
           step: 2,
           title: "单调判号 · 底数分类与单调性分析",
           detail: `指数函数 $y = a^x$（当前底数 $a = ${a.toFixed(1)}$）单调性完全由底数大小决定：当 $a > 1$ 时，在 $\\mathbb{R}$ 上严格单调递增；当 $0 < a < 1$ 时，在 $\\mathbb{R}$ 上严格单调递减。当前探究点 $x_0 = ${x0.toFixed(2)}$，对应函数值 $f(x_0) = ${expVal.toFixed(2)}$。`,
           latex: `a > 1 \\implies \\forall x_1 < x_2, \\; a^{x_1} < a^{x_2}`,
-          rubric: "根据底数大小准确分类并阐明全域单调性",
+          rubric: "【高考采分点】根据底数大小准确分类并阐明全域单调性",
         },
         {
           step: 3,
@@ -739,7 +747,7 @@ export function buildFuncExpLogPanel(
             "当 $a > 1$ 且 $x \\to -\\infty$ 时，$a^x \\to 0$ 恒大于 0，故 $x$ 轴（直线 $y = 0$）为水平渐近线；当 $x > 0$ 且增大时，函数值呈现指数爆炸式急剧增长，增长速度最终远超任何一次多项式。",
           latex:
             "x \\to -\\infty \\implies a^x \\to 0 \\; (y=0 \\text{ 为水平渐近线})",
-          rubric: "规范交代水平渐近线及指数增长的几何特征",
+          rubric: "【高考采分点】规范交代水平渐近线及指数增长的几何特征",
         },
       ];
     }

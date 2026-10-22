@@ -7,6 +7,19 @@ import {
 } from "../registries/probabilityMarkov";
 import { MATH_COLORS } from "../../theme";
 
+/**
+ * 四步采分权重（设事件 / 列递推 / 构造等比 / 求通项）——本页推导链的**唯一分值来源**。
+ *
+ * 为什么单独拎出来：改前 gaokaoPoint 声明「新高考大题 17 分标准采分点链路」，
+ * 而四步 rubric 实际合计只有 2+3+3+2 = 10 分，同一屏两个数字对不上，
+ * 学生会以为还漏了 7 分的步骤。现在声明文案由常量算出，改分值不会改漏口径。
+ */
+const MARKOV_STEP_SCORES = [2, 3, 3, 2] as const;
+/** 本页四步覆盖的主干分值 */
+const MARKOV_MAIN_SCORE = MARKOV_STEP_SCORES.reduce((sum, x) => sum + x, 0);
+/** 该模型在 2026 新课标卷的题位总分：概率递推常作压轴题（第 19 题，17 分） */
+const MARKOV_PAPER_SCORE = 17;
+
 export function buildProbabilityMarkovPanel(
   params: Record<string, number>,
   config?: Record<string, unknown>,
@@ -136,7 +149,7 @@ export function buildProbabilityMarkovPanel(
     ],
     gaokaoPoints: [
       {
-        text: "【新高考大题 17 分标准采分点链路】①设第 $n$ 步状态事件 $A_n$ 与完备对立事件 $\\overline{A_n}$；②列全概率展开式 $p_{n+1} = p_{11}p_n + p_{21}(1-p_n)$；③待定系数配凑辅助等比数列 $\\{p_n - t\\}$；④求通项 $p_n$ 并由 $|\\lambda| < 1$ 分析收敛行为（高考作答使用「随着项数 $n$ 增大趋于定值 $t$」表述，不直接写极限记号）。",
+        text: `【2026 新课标卷 · 概率递推压轴题（${MARKOV_PAPER_SCORE} 分）的采分主干，本页四步覆盖 ${MARKOV_MAIN_SCORE} 分】①设第 $n$ 步状态事件 $A_n$ 与完备对立事件 $\\overline{A_n}$；②列全概率展开式 $p_{n+1} = p_{11}p_n + p_{21}(1-p_n)$；③待定系数配凑辅助等比数列 $\\{p_n - t\\}$；④求通项 $p_n$ 并由 $|\\lambda| < 1$ 分析收敛行为（高考作答使用「随着项数 $n$ 增大趋于定值 $t$」表述，不直接写极限记号）。余下 ${MARKOV_PAPER_SCORE - MARKOV_MAIN_SCORE} 分落在各小问的具体计数、分类讨论与结论书写上，不在本页四步之内。`,
         importance: "gaokao",
       },
       {
@@ -168,16 +181,14 @@ export function buildProbabilityMarkovPanel(
         title: "审题定法 · 设全集事件与完备划分",
         latex: "P(A_n) = p_n, \\quad P(\\overline{A_n}) = 1 - p_n",
         detail: `设第 $n$ 步事件【${currentPreset.labels.s1}】发生概率为 $p_n$，对立事件【${currentPreset.labels.s2}】为 $1-p_n$。两事件构成完备划分，初始 $p_1 = ${p1Val.toFixed(2)}$。`,
-        rubric:
-          "【高考采分点】设出第 $n$ 步状态事件，说明与对立事件构成完备划分并写出初始概率，得 2 分。",
+        rubric: `【高考采分点】设出第 $n$ 步状态事件，说明与对立事件构成完备划分并写出初始概率，得 ${MARKOV_STEP_SCORES[0]} 分。`,
       },
       {
         step: 2,
         title: "建模联立 · 全概率公式列出递推关系",
         latex: `p_{n+1} = p_{11} p_n + p_{21}(1 - p_n) = ${markovRes.recurrenceLatex}`,
         detail: `由全概率公式展开状态转移，化简整理为一阶线性递推数列 $p_{n+1} = \\lambda p_n + p_{21}$，公比 $\\lambda = ${lambdaVal.toFixed(2)}$。`,
-        rubric:
-          "【高考采分点】应用全概率公式建立 $p_{n+1}$ 与 $p_n$ 的线性递推关系式，得 3 分。",
+        rubric: `【高考采分点】应用全概率公式建立 $p_{n+1}$ 与 $p_n$ 的线性递推关系式，得 ${MARKOV_STEP_SCORES[1]} 分。`,
       },
       {
         step: 3,
@@ -188,8 +199,7 @@ export function buildProbabilityMarkovPanel(
         detail: markovRes.isDegenerate
           ? "公比 $\\lambda = 1.00$，递推关系退化为常数列，无需待定系数配凑。"
           : `设 $p_{n+1} - t = \\lambda(p_n - t)$，对比常数项解得平衡不动点 $t = \\frac{p_{21}}{1-\\lambda} = ${tVal.toFixed(3)}$，构成公比为 $\\lambda$ 的等比数列。`,
-        rubric:
-          "【高考采分点】待定系数配凑构造辅助等比数列，求出平衡不动点参数，得 3 分。",
+        rubric: `【高考采分点】待定系数配凑构造辅助等比数列，求出平衡不动点参数，得 ${MARKOV_STEP_SCORES[2]} 分。`,
       },
       {
         step: 4,
@@ -204,8 +214,7 @@ export function buildProbabilityMarkovPanel(
                 ? "公比 $-1 < \\lambda < 0$，序列在平衡值两侧振荡趋于定值。"
                 : "公比 $0 \\le \\lambda < 1$，序列单调趋于定值。"
         }`,
-        rubric:
-          "【高考采分点】正确求解通项公式 $p_n$ 并按课标规范表述渐近动态变化趋势，得 2 分。",
+        rubric: `【高考采分点】正确求解通项公式 $p_n$ 并按课标规范表述渐近动态变化趋势，得 ${MARKOV_STEP_SCORES[3]} 分。`,
       },
     ],
     mnemonic:

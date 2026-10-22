@@ -48,7 +48,7 @@ describe("VectorLinear Builder — 直角坐标运算模式", () => {
     expect(panel.reasoningSteps).toBeDefined();
     expect(panel.reasoningSteps).toHaveLength(3);
     panel.reasoningSteps!.forEach((step) => {
-      expect(step.rubric ?? "").toContain("采分点：");
+      expect(step.rubric ?? "").toContain("【高考采分点】");
       expect((step.detail ?? "").length).toBeGreaterThan(20);
     });
     // 第三步必须落到判据本身，而不是泛泛而谈

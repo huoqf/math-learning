@@ -16,6 +16,12 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { InequalityBasicScene } from "./components/InequalityBasicScene";
 import { InequalityPropertiesScene } from "./components/InequalityPropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
+import { fitViewRange } from "@/math/viewRange";
+import {
+  getSemicircleGeometry,
+  getSquareProofGeometry,
+  getNikeExtremaGeometry,
+} from "./math/inequalityBasic";
 import { defaultParams, paramMeta } from "@/data/registries/inequalityBasic";
 
 export function InequalityBasicAnimation() {
@@ -39,20 +45,55 @@ export function InequalityBasicAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 3. 根据研究模式动态自适应 Y 轴范围，确保几何图形与标注完整显示不被裁切
-  const yRange = useMemo<[number, number]>(() => {
-    if (studyMode === "semicircle") return [-2.2, 5.8];
-    if (studyMode === "square") return [-4.8, 4.8];
-    // 性质模式是三条基线（上/中/下），纵向只需要容纳三行标注
-    if (studyMode === "properties") return [-4.2, 4.2];
-    return [-1.5, 6.5];
-  }, [studyMode]);
+  // 3. 视口自适应：按研究模式取该模式的几何关键点（半圆端点/顶点/垂足、均值正方形外框、
+  //    对勾极值点），再与分档基准取并集。基准仍按模式分档（Floor Clamp），
+  //    参数正常时视口不变；a=b=10 这类边界值时整体外扩，不再把图形裁掉。
+  const viewRange = useMemo(() => {
+    const baseY: [number, number] =
+      studyMode === "semicircle"
+        ? [-2.2, 5.8]
+        : studyMode === "square"
+          ? [-4.8, 4.8]
+          : // 性质模式是三条基线（上/中/下），纵向只需要容纳三行标注
+            studyMode === "properties"
+            ? [-4.2, 4.2]
+            : [-1.5, 6.5];
+
+    let keyPoints: Array<{ x: number; y: number }> = [];
+    if (studyMode === "semicircle") {
+      const g = getSemicircleGeometry(params.a, params.b);
+      keyPoints = [g.pointA, g.pointB, g.pointM, g.pointC];
+    } else if (studyMode === "square") {
+      const g = getSquareProofGeometry(params.a, params.b);
+      const half = g.totalSide / 2;
+      keyPoints = [
+        { x: -half, y: half },
+        { x: half, y: half },
+        { x: -half, y: 0 },
+        { x: half, y: 0 },
+      ];
+    } else if (studyMode === "nike") {
+      const g = getNikeExtremaGeometry(
+        params.k,
+        Math.sqrt(Math.max(0.1, params.k)),
+      );
+      keyPoints = [
+        { x: g.minX, y: g.minY },
+        { x: -g.minX, y: -g.minY },
+      ];
+    }
+
+    return fitViewRange(keyPoints, {
+      defaultXRange: [-6, 6],
+      defaultYRange: baseY,
+    });
+  }, [studyMode, params.a, params.b, params.k]);
 
   // 构建直角坐标系比例尺
   const scale = useSceneScale({
     vp,
-    xRange: [-6, 6],
-    yRange,
+    xRange: viewRange.xRange,
+    yRange: viewRange.yRange,
   });
 
   // 4. 数学量看板数据计算与组装

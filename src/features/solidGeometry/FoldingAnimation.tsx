@@ -203,7 +203,7 @@ export default function FoldingAnimation() {
     setParams({ a: 4, b: 3, h: 3, alphaDeg: 90 });
   };
 
-  // 拖拽 3D 点时反向解算二面角 α
+  // 拖拽 3D 点时反向解算翻折旋转角 α
   const handlePointDrag = (newZ: number, maxRadius: number) => {
     const clampedZ = Math.max(0, Math.min(maxRadius, newZ));
     const sinA = clampedZ / maxRadius;
@@ -219,7 +219,7 @@ export default function FoldingAnimation() {
           variant: "primary" as const,
           badge: "高考母题 · 直角梯形翻折",
           condition:
-            "直角梯形 ABCD 中 AB ⊥ AD, BC ∥ AD, AD=a, BC=b, AB=h。E 在 AD 上且 AE=BC，沿折痕 EC 将 △CDE 翻折，二面角为 α。",
+            "直角梯形 ABCD 中 AB ⊥ AD, BC ∥ AD, AD=a, BC=b, AB=h。E 在 AD 上且 AE=BC，沿折痕 EC 将 △CDE 翻折至 △CD'E，记翻折旋转角为 α（对应二面角 D'-EC-A 为 180°−α）。",
           question:
             "探究翻折过程中面内垂直性（EC ⊥ D'E, EC ⊥ AE）的不变性，当 α=90° 时求证 D'E ⊥ 底面 ABCE 并求解空间线面角与异面直线角。",
         };
@@ -228,7 +228,7 @@ export default function FoldingAnimation() {
           variant: "warning" as const,
           badge: "高考经典 · 矩形对角线翻折",
           condition:
-            "矩形 ABCD 长 AB=a、宽 AD=b，沿对角线 BD 翻折 △ABD 至 △A'BD，二面角为 α。",
+            "矩形 ABCD 长 AB=a、宽 AD=b，沿对角线 BD 翻折 △ABD 至 △A'BD，记翻折旋转角为 α（对应二面角 A'-BD-C 为 180°−α）。",
           question:
             "探究翻折过程中 A'B ⊥ A'D 的不变性，求解二面角 α 变化时空间两动点间距 A'C 与三棱锥 A'-BCD 体积的极值规律。",
         };
@@ -237,7 +237,7 @@ export default function FoldingAnimation() {
           variant: "success" as const,
           badge: "高考母题 · 等腰三角形高线翻折",
           condition:
-            "等腰三角形 ABC 底边 BC=a，高 AD=h。沿高线 AD 将 △ACD 翻折至 △AC'D，二面角为 α。",
+            "等腰三角形 ABC 底边 BC=a，高 AD=h。沿高线 AD 将 △ACD 翻折至 △AC'D，记翻折旋转角为 α（对应二面角 B-AD-C' 为 180°−α）。",
           question:
             "探究折痕 AD ⊥ 底面 BDC' 的垂直不变性，当 α=90° 时求证 C'D ⊥ BD 并计算三棱锥 A-BC'D 外接球半径。",
         };
@@ -246,9 +246,9 @@ export default function FoldingAnimation() {
           variant: "accent" as const,
           badge: "高考压轴 · 菱形短对角线翻折",
           condition:
-            "菱形 ABCD 边长为 a，∠BAD=60°。沿短对角线 BD 翻折 △ABD 至 △A'BD，二面角为 α。",
+            "菱形 ABCD 边长为 a，∠BAD=60°。沿短对角线 BD 翻折 △ABD 至 △A'BD，记翻折旋转角为 α（对应二面角 A'-BD-C 为 180°−α）。",
           question:
-            "探究二面角 α 与空间二面角 A'-BD-C 的等价性，当面 A'BD ⊥ 面 CBD 时求解点 A' 到底面距离与体对角线长。",
+            "探究翻折旋转角 α 与二面角 A'-BD-C 的互补关系 β = 180°−α，当面 A'BD ⊥ 面 CBD（即 β = 90°）时求解点 A' 到底面距离与体对角线长。",
         };
     }
   }, [model]);

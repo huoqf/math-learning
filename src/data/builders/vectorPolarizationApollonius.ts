@@ -79,7 +79,7 @@ export function buildVectorPolarizationApolloniusPanel(
           "遇到两定点 $B, C$ 与一动点 $A$，连结底边中点 $M$，将两向量分别以中线 $\\vec{AM}$ 与半底边 $\\vec{MB}$ 为基底分解。",
         latex:
           "\\vec{AB} = \\vec{AM} + \\vec{MB}, \\quad \\vec{AC} = \\vec{AM} + \\vec{MC} = \\vec{AM} - \\vec{MB}",
-        rubric: "采分点：规范引入中线向量并线性分解（3分）",
+        rubric: "【高考采分点】规范引入中线向量并线性分解（3分）",
       },
       {
         step: 2,
@@ -88,14 +88,14 @@ export function buildVectorPolarizationApolloniusPanel(
           "应用数量积的分配律，交叉项 $\\vec{AM}\\cdot\\vec{MB}$ 与 $-\\vec{AM}\\cdot\\vec{MB}$ 相互抵消，得到平方差简洁形式。",
         latex:
           "\\vec{AB} \\cdot \\vec{AC} = (\\vec{AM} + \\vec{MB}) \\cdot (\\vec{AM} - \\vec{MB}) = |\\vec{AM}|^2 - |\\vec{BM}|^2",
-        rubric: "采分点：极化恒等式展开与代数消元（3分）",
+        rubric: "【高考采分点】极化恒等式展开与代数消元（3分）",
       },
       {
         step: 3,
         title: "代入求解 · 实时数值演算",
         detail: `底边定长 $|BC| = ${formatMathNumber(res.lenBC)}$，半底边长 $|BM| = ${formatMathNumber(res.lenBM)}$ 为定值。动点数量积唯一由中线长 $|\\vec{AM}|$ 决定。`,
         latex: `\\vec{AB} \\cdot \\vec{AC} = (${formatMathNumber(res.lenAM)})^2 - (${formatMathNumber(res.lenBM)})^2 = ${formatMathNumber(res.dotProductPolar)}`,
-        rubric: "采分点：代入参数求得数量积解（4分）",
+        rubric: "【高考采分点】代入参数求得数量积解（4分）",
       },
     );
   } else if (studyMode === "apollonius") {
@@ -158,21 +158,21 @@ export function buildVectorPolarizationApolloniusPanel(
           title: "审题定法 · 轨迹建系与距离方程",
           detail: `以线段 $AB$ 中点为原点建立直角坐标系，定点坐标为 $A(-${formatMathNumber(halfD)}, 0), B(${formatMathNumber(halfD)}, 0)$。由题设距离比为 $\\lambda = ${formatMathNumber(lambda)}$ 列出动点方程。`,
           latex: `\\frac{|PA|}{|PB|} = ${formatMathNumber(lambda)} \\iff \\frac{(x + ${formatMathNumber(halfD)})^2 + y^2}{(x - ${formatMathNumber(halfD)})^2 + y^2} = (${formatMathNumber(lambda)})^2`,
-          rubric: "采分点：规范建系并确立动点模长方程（3分）",
+          rubric: "【高考采分点】规范建系并确立动点模长方程（3分）",
         },
         {
           step: 2,
           title: "建模联立 · 两边平方配方化简",
           detail: `去分母展开整理：$(\\lambda^2-1)x^2 - 2c(\\lambda^2+1)x + (\\lambda^2-1)y^2 + c^2(\\lambda^2-1) = 0$。两边除以 $\\lambda^2-1$ 并配方。`,
           latex: `\\left(x - ${formatMathNumber(res.centerO.x)}\\right)^2 + y^2 = (${formatMathNumber(res.radiusR)})^2`,
-          rubric: "采分点：准确配方整理为圆的标准方程（4分）",
+          rubric: "【高考采分点】准确配方整理为圆的标准方程（4分）",
         },
         {
           step: 3,
           title: "求解反思 · 直径端点几何性质",
           detail: `阿圆圆心 $O_A = (${formatMathNumber(res.centerO.x)}, 0)$，半径 $R_A = ${formatMathNumber(res.radiusR)}$。内分点 $D$ 与外分点 $E$ 为圆的直径端点，且 $\\angle DPE = 90^\\circ$ 恒成立。`,
           latex: `D\\left(${formatMathNumber(res.pointD.x)}, 0\\right), \\quad E\\left(${formatMathNumber(res.pointE.x)}, 0\\right), \\quad |DE| = 2R_A = ${formatMathNumber(2 * res.radiusR)}`,
-          rubric: "采分点：得出圆心、半径及内外分点（3分）",
+          rubric: "【高考采分点】得出圆心、半径及内外分点（3分）",
         },
       );
     } else {
@@ -188,14 +188,14 @@ export function buildVectorPolarizationApolloniusPanel(
           detail:
             "当距离比 $\\lambda = 1$ 时，动点 $P$ 满足 $|PA| = |PB|$，动点到两定点距离相等。",
           latex: "\\frac{|PA|}{|PB|} = 1 \\iff |PA| = |PB|",
-          rubric: "采分点：判定比值为 1 的特殊几何意义（3分）",
+          rubric: "【高考采分点】判定比值为 1 的特殊几何意义（3分）",
         },
         {
           step: 2,
           title: "建模联立 · 代数消元退化",
           detail: `两边平方展开：$(x+${formatMathNumber(halfD)})^2 + y^2 = (x-${formatMathNumber(halfD)})^2 + y^2$，二次项全数消去。`,
           latex: `4 \\times (${formatMathNumber(halfD)}) x = 0 \\iff x = 0`,
-          rubric: "采分点：两边消去二次项得出线性方程（4分）",
+          rubric: "【高考采分点】两边消去二次项得出线性方程（4分）",
         },
         {
           step: 3,
@@ -203,7 +203,7 @@ export function buildVectorPolarizationApolloniusPanel(
           detail:
             "轨迹退化为直线 $x = 0$（线段 $AB$ 的垂直平分线），此时无法构成封闭阿波罗尼斯圆，半径无穷大。",
           latex: "\\text{轨迹为线段 } AB \\text{ 的垂直平分线 } x = 0",
-          rubric: "采分点：指出退化为垂直平分线（3分）",
+          rubric: "【高考采分点】指出退化为垂直平分线（3分）",
         },
       );
     }
@@ -276,7 +276,7 @@ export function buildVectorPolarizationApolloniusPanel(
         detail:
           "求阿氏圆上动点 $P$ 与两定点 $A, B$ 的数量积 $\\vec{PA}\\cdot\\vec{PB}$。取 $AB$ 中点 $M(0,0)$，应用极化恒等式将双矢积转化为单中线长 $|PM|$。",
         latex: `\\vec{PA} \\cdot \\vec{PB} = |\\vec{PM}|^2 - |\\vec{MB}|^2 = |\\vec{PM}|^2 - (${formatMathNumber(res.lenMB)})^2`,
-        rubric: "采分点：应用极化恒等式实现变量降维（3分）",
+        rubric: "【高考采分点】应用极化恒等式实现变量降维（3分）",
       },
       {
         step: 2,
@@ -287,7 +287,7 @@ export function buildVectorPolarizationApolloniusPanel(
         latex: res.isDegenerate
           ? "|PM| \\in [0, +\\infty)"
           : `|PM|_{\\min} = |d_{OM} - R_A| = ${formatMathNumber(minDistPM)}, \\quad |PM|_{\\max} = d_{OM} + R_A = ${formatMathNumber(maxDistPM)}`,
-        rubric: "采分点：几何法确定中线 $|PM|$ 的取值范围（4分）",
+        rubric: "【高考采分点】几何法确定中线 $|PM|$ 的取值范围（4分）",
       },
       {
         step: 3,
@@ -298,7 +298,7 @@ export function buildVectorPolarizationApolloniusPanel(
         latex: res.isDegenerate
           ? `(\\vec{PA} \\cdot \\vec{PB}) \\in \\left[-${formatMathNumber(res.lenMB * res.lenMB)}, +\\infty\\right)`
           : `(\\vec{PA} \\cdot \\vec{PB})_{\\min} = ${formatMathNumber(res.minDotProduct)}, \\quad (\\vec{PA} \\cdot \\vec{PB})_{\\max} = ${formatMathNumber(res.maxDotProduct)}`,
-        rubric: "采分点：准确代入并规范书写最值结论（3分）",
+        rubric: "【高考采分点】准确代入并规范书写最值结论（3分）",
       },
     );
   }

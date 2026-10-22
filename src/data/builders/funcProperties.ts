@@ -668,21 +668,21 @@ export function buildFuncPropertiesPanel(
         title: "审题定法 · 几何轴对称中垂线转化",
         detail: `若点 $P(x_0, y_0)$ 在函数 $y = f(x)$ 图象上，其关于对称轴 $x = ${aStr}$ 的对称点设为 $P'(x', y')$，则线段 $PP'$ 的中点 $H$ 必落在对称轴上。`,
         latex: `\\frac{x_0 + x'}{2} = a \\implies x' = 2a - x_0, \\quad y' = y_0`,
-        rubric: "得分点：写出中点坐标公式并解出对称点横坐标",
+        rubric: "【高考采分点】写出中点坐标公式并解出对称点横坐标",
       },
       {
         step: 2,
         title: "建模联立 · 代数等价恒等式建立",
         detail: `由对称点 $P'$ 仍在函数图象上，代入解析式得 $f(x') = f(x_0)$，即 $f(2a - x_0) = f(x_0)$。将其推广至定义域内任意自变量 $x$，得函数轴对称充要条件。`,
         latex: `f(x) = f(2a - x) \\iff f(a + t) = f(a - t)`,
-        rubric: "得分点：写出函数轴对称的一般充要条件",
+        rubric: "【高考采分点】写出函数轴对称的一般充要条件",
       },
       {
         step: 3,
         title: "代入求解 · 当前测试点代数闭环验证",
         detail: `代入当前轴 $a = ${aStr}$ 及测试点 $x_0 = ${x0Str}$：对称点横坐标 $x' = 2(${aStr}) - (${x0Str}) = ${symXStr}$。计算函数值 $f(${x0Str}) = ${fxStr}$，$f(${symXStr}) = ${symFxStr}$，两点纵坐标完全相等。`,
         latex: `f(${x0Str}) = ${fxStr}, \\quad f(${symXStr}) = ${symFxStr} \\implies \\Delta y = 0.00`,
-        rubric: "得分点：代入具体参数完成数形闭环验证",
+        rubric: "【高考采分点】代入具体参数完成数形闭环验证",
       },
     ];
 
@@ -798,14 +798,14 @@ export function buildFuncPropertiesPanel(
         title: "审题定法 · 几何中心对称中点公式转化",
         detail: `设图象上任意点 $P(x_0, y_0)$ 关于对称中心 $C(${xcStr}, ${ycStr})$ 的对称点为 $P'(x', y')$，则中心 $C$ 为线段 $PP'$ 的中点。`,
         latex: `\\begin{cases} \\frac{x_0 + x'}{2} = x_c \\implies x' = 2x_c - x_0 \\\\ \\frac{y_0 + y'}{2} = y_c \\implies y' = 2y_c - y_0 \\end{cases}`,
-        rubric: "得分点：运用中点坐标公式表示对称点坐标",
+        rubric: "【高考采分点】运用中点坐标公式表示对称点坐标",
       },
       {
         step: 2,
         title: "建模联立 · 中心对称函数值求和恒等式",
         detail: `由于对称点 $P'$ 仍在函数图象上，故 $y' = f(x')$。代入中点纵坐标关系式，推广至定义域内任意自变量 $x$。`,
         latex: `f(x) + f(2x_c - x) = 2y_c \\iff f(x_c + t) + f(x_c - t) = 2y_c`,
-        rubric: "得分点：列出中心对称充要方程",
+        rubric: "【高考采分点】列出中心对称充要方程",
       },
       {
         step: 3,
@@ -818,7 +818,7 @@ export function buildFuncPropertiesPanel(
         latex: !isDefined
           ? `x_0 = x_c = ${xcStr} \\notin D_f, \\quad \\forall x \\in D_f: \\ \\frac{f(x) + f(2x_c - x)}{2} = ${ycStr}`
           : `\\frac{f(${x0Str}) + f(${symXStr})}{2} = \\frac{${(Number(fxStr) + Number(symFxStr)).toFixed(2)}}{2} = ${ycStr}`,
-        rubric: "得分点：代入具体数值完成闭环验证",
+        rubric: "【高考采分点】代入具体数值完成闭环验证",
       },
     ];
 
@@ -920,21 +920,21 @@ export function buildFuncPropertiesPanel(
         title: "审题定法 · 双轴对称充要条件代数化",
         detail: `由函数 $f(x)$ 的图象分别关于垂直直线 $x = ${aStr}$ 与 $x = ${bStr}$ 对称，根据轴对称代数充要条件，分别列出两个恒等式。`,
         latex: `\\begin{cases} f(2a - x) = f(x) & \\text{(关于直线 } x = a \\text{ 对称)} \\\\ f(2b - x) = f(x) & \\text{(关于直线 } x = b \\text{ 对称)} \\end{cases}`,
-        rubric: "得分点：准确写出两对称轴对应的反射方程",
+        rubric: "【高考采分点】准确写出两对称轴对应的反射方程",
       },
       {
         step: 2,
         title: "建模联立 · 两次对称自变量代换消元",
         detail: `利用自变量代换技巧，在第二个方程中令自变量 $x \\leftarrow 2a - x$，复合两次反射消去镜像翻转，将其转化为纯水平平移。`,
         latex: `f(x + 2(b - a)) = f(2b - (2a - x)) = f(2a - x) = f(x)`,
-        rubric: "得分点：写出自变量代换与消元复合平移过程",
+        rubric: "【高考采分点】写出自变量代换与消元复合平移过程",
       },
       {
         step: 3,
         title: "代入求解 · 导出最小正周期与规律反思",
         detail: `由 $f(x + 2(b - a)) = f(x)$ 可知，图象具有周期性。代入当前对称轴参数 $a = ${aStr}, b = ${bStr}$，轴间距为 $|a - b| = ${distStr}$，导出最小正周期。`,
         latex: `T = 2|a - b| = 2 \\times |${aStr} - (${bStr})| = ${periodStr}`,
-        rubric: "得分点：代入参数求出最小正周期并指出 2 倍间距规律",
+        rubric: "【高考采分点】代入参数求出最小正周期并指出 2 倍间距规律",
       },
     ];
   } else if (periodModelType === "dual-center") {
@@ -944,21 +944,21 @@ export function buildFuncPropertiesPanel(
         title: "审题定法 · 双中心对称充要条件代数化",
         detail: `设函数 $f(x)$ 关于点 $C_1(${aStr}, 0)$ 与 $C_2(${bStr}, 0)$ 均中心对称，列出中心对称代数充要条件方程。`,
         latex: `\\begin{cases} f(2a - x) = -f(x) & \\text{(关于点 } (a, 0) \\text{ 对称)} \\\\ f(2b - x) = -f(x) & \\text{(关于点 } (b, 0) \\text{ 对称)} \\end{cases}`,
-        rubric: "得分点：准确写出两个对称中心对应的反射方程",
+        rubric: "【高考采分点】准确写出两个对称中心对应的反射方程",
       },
       {
         step: 2,
         title: "建模联立 · 两次负号反转复合平移消元",
         detail: `在第二个方程中令自变量 $x \\leftarrow 2a - x$。两次中心对称使函数值连续变号两次（$(-1)^2 = 1$），负负得正恢复正号。`,
         latex: `f(x + 2(b - a)) = f(2b - (2a - x)) = -f(2a - x) = -(-f(x)) = f(x)`,
-        rubric: "得分点：展示负负得正复合消元推导",
+        rubric: "【高考采分点】展示负负得正复合消元推导",
       },
       {
         step: 3,
         title: "代入求解 · 代入参数导出最小正周期",
         detail: `由 $f(x + 2(b - a)) = f(x)$ 知周期存在。代入两中心横坐标参数 $a = ${aStr}, b = ${bStr}$，两中心间距为 $|a - b| = ${distStr}$，导出最小正周期。`,
         latex: `T = 2|a - b| = 2 \\times |${aStr} - (${bStr})| = ${periodStr}`,
-        rubric: "得分点：代入具体数值完成周期计算",
+        rubric: "【高考采分点】代入具体数值完成周期计算",
       },
     ];
   } else {
@@ -969,21 +969,21 @@ export function buildFuncPropertiesPanel(
         title: "审题定法 · 轴对称与中心对称联立代数化",
         detail: `函数 $f(x)$ 关于直线 $x = ${aStr}$ 轴对称，且关于点 $C(${bStr}, 0)$ 中心对称，列出已知充要条件方程。`,
         latex: `\\begin{cases} f(2a - x) = f(x) & \\text{(关于轴 } x = a \\text{ 对称)} \\\\ f(2b - x) = -f(x) & \\text{(关于中心 } (b, 0) \\text{ 对称)} \\end{cases}`,
-        rubric: "得分点：列出轴对称与中心对称代数方程",
+        rubric: "【高考采分点】列出轴对称与中心对称代数方程",
       },
       {
         step: 2,
         title: "建模联立 · 一轴一中心复合得半周期反号",
         detail: `在中心对称方程中将自变量代换为 $x \\leftarrow 2a - x$，得到平移 $2(b - a)$ 后的半周期反号关系。`,
         latex: `f(x + 2(b - a)) = f(2b - (2a - x)) = -f(2a - x) = -f(x)`,
-        rubric: "得分点：推导出一轴一中心导致函数值反号的核心方程",
+        rubric: "【高考采分点】推导出一轴一中心导致函数值反号的核心方程",
       },
       {
         step: 3,
         title: "求解反思 · 连续四次反射导出四倍间距周期",
         detail: `对反号方程两边再次应用自变量平移 $2(b - a)$，负负得正得 $f(x + 4(b - a)) = f(x)$。代入当前参数 $a = ${aStr}, b = ${bStr}$，得最小正周期。`,
         latex: `f(x + 4(b - a)) = -f(x + 2(b - a)) = f(x) \\implies T = 4|a - b| = ${periodStr}`,
-        rubric: "得分点：完成 4 次反射循环证明并代入参数求出周期",
+        rubric: "【高考采分点】完成 4 次反射循环证明并代入参数求出周期",
       },
     ];
   }

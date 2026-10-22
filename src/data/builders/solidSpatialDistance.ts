@@ -152,7 +152,7 @@ export function buildSpatialDistancePanel(
           title: "建立空间直角坐标系并参数化动点代数坐标",
           detail: `以 $A$ 为原点建立空间直角坐标系 $A\\text{-}xyz$。侧棱 $BB_1$ 与对角线 $AC$ 的方向向量及动点代数坐标为：`,
           latex: `\\begin{aligned} &\\vec{u} = (0, 0, ${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\[1ex] &P(\\lambda) = (a, 0, \\lambda c) = (${a}, 0, ${c.toFixed(1)}\\lambda) \\\\[1ex] &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
-          rubric: "[高考采分点] 建立坐标系与确定动点参数代数式 (+4分)",
+          rubric: "【高考采分点】建立坐标系与确定动点参数代数式 (+4分)",
         },
         {
           step: 2,
@@ -160,7 +160,7 @@ export function buildSpatialDistancePanel(
           detail:
             "公垂向量 $\\vec{PQ}$ 同时垂直于侧棱 $BB_1$ 与底面对角线 $AC$，列出正交方程组：",
           latex: `\\begin{aligned} &\\begin{cases} \\vec{PQ} \\cdot \\vec{u} = -c^2\\lambda = 0 \\\\[1ex] \\vec{PQ} \\cdot \\vec{v} = (a^2+b^2)\\mu - a^2 = 0 \\end{cases} \\\\[1.5ex] \\implies &\\begin{cases} \\lambda^* = 0 \\\\[1.5ex] \\mu^* = \\dfrac{a^2}{a^2+b^2} = ${((a * a) / (a * a + b * b)).toFixed(4)} \\end{cases} \\end{aligned}`,
-          rubric: "[高考采分点] 正交方程组构建与解析解求解 (+5分)",
+          rubric: "【高考采分点】正交方程组构建与解析解求解 (+5分)",
         },
         {
           step: 3,
@@ -168,7 +168,7 @@ export function buildSpatialDistancePanel(
           detail:
             "转化为点 $B$ 到截面 $ACC_1A_1$ 的距离，即 $\\text{Rt}\\triangle ABC$ 斜边 $AC$ 上的高：",
           latex: `\\begin{aligned} d_{\\min} &= \\frac{a b}{\\sqrt{a^2 + b^2}} \\\\[1.5ex] &= \\frac{${a} \\times ${b}}{\\sqrt{${a}^2 + ${b}^2}} \\approx ${skew.minDist.toFixed(4)} \\end{aligned}`,
-          rubric: "[高考采分点] 线面平行转化与斜边高距离计算 (+4分)",
+          rubric: "【高考采分点】线面平行转化与斜边高距离计算 (+4分)",
         },
       );
     } else {
@@ -178,7 +178,7 @@ export function buildSpatialDistancePanel(
           title: "建立空间直角坐标系并参数化动点代数坐标",
           detail: `以 $A$ 为原点建立空间直角坐标系 $A\\text{-}xyz$。两异面直线的方向向量及动点代数坐标为：`,
           latex: `\\begin{aligned} &\\vec{u} = (${a}, 0, -${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\[1ex] &P(\\lambda) = (\\lambda a, 0, (1-\\lambda)c) = (${a}\\lambda, 0, ${c.toFixed(1)}(1-\\lambda)) \\\\[1ex] &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
-          rubric: "[高考采分点] 建立坐标系与确定动点参数代数式 (+4分)",
+          rubric: "【高考采分点】建立坐标系与确定动点参数代数式 (+4分)",
         },
         {
           step: 2,
@@ -188,7 +188,7 @@ export function buildSpatialDistancePanel(
           latex: isCube
             ? `\\begin{aligned} &\\begin{cases} \\vec{PQ} \\cdot \\vec{u} = 2a^2\\lambda - a^2\\mu - a^2 = 0 \\\\[1ex] \\vec{PQ} \\cdot \\vec{v} = 2a^2\\mu - a^2\\lambda = 0 \\end{cases} \\\\[1.5ex] \\implies &\\begin{cases} \\lambda^* = \\dfrac{2}{3} \\\\[1.5ex] \\mu^* = \\dfrac{1}{3} \\end{cases} \\end{aligned}`
             : `\\begin{aligned} &\\begin{cases} (${a}^2+${c}^2)\\lambda - ${a}^2\\mu = ${c}^2 \\\\[1ex] (${a}^2+${b}^2)\\mu - ${a}^2\\lambda = 0 \\end{cases} \\\\[1.5ex] \\implies &\\begin{cases} \\lambda^* = \\dfrac{c^2(a^2+b^2)}{a^2b^2+b^2c^2+c^2a^2} = ${skew.optimalLambda.toFixed(4)} \\\\[2ex] \\mu^* = \\dfrac{a^2c^2}{a^2b^2+b^2c^2+c^2a^2} = ${skew.optimalMu.toFixed(4)} \\end{cases} \\end{aligned}`,
-          rubric: "[高考采分点] 正交方程组构建与解析解求解 (+5分)",
+          rubric: "【高考采分点】正交方程组构建与解析解求解 (+5分)",
         },
         {
           step: 3,
@@ -198,7 +198,7 @@ export function buildSpatialDistancePanel(
           latex: isCube
             ? `\\begin{aligned} \\begin{cases} \\vec{n} \\cdot \\vec{u} = 0 \\\\ \\vec{n} \\cdot \\vec{v} = 0 \\end{cases} &\\implies \\vec{n} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\\\[1ex] \\implies d_{\\min} &= \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} \\\\[1.5ex] &= \\frac{a^3}{\\sqrt{3}a^2} = \\frac{\\sqrt{3}}{3} a \\approx ${((Math.sqrt(3) / 3) * a).toFixed(4)} \\end{aligned}`
             : `\\begin{aligned} \\begin{cases} \\vec{n} \\cdot \\vec{u} = 0 \\\\ \\vec{n} \\cdot \\vec{v} = 0 \\end{cases} &\\implies \\vec{n} = (${skew.nRaw.x.toFixed(1)}, ${skew.nRaw.y.toFixed(1)}, ${skew.nRaw.z.toFixed(1)}) \\\\[1ex] \\implies d_{\\min} &= \\frac{|\\vec{AA_1} \\cdot \\vec{n}|}{|\\vec{n}|} \\\\[1.5ex] &= \\frac{abc}{\\sqrt{b^2 c^2 + a^2 c^2 + a^2 b^2}} \\approx ${skew.minDist.toFixed(4)} \\end{aligned}`,
-          rubric: "[高考采分点] 公垂向量计算与点乘射影公式代入 (+4分)",
+          rubric: "【高考采分点】公垂向量计算与点乘射影公式代入 (+4分)",
         },
       );
     }
@@ -354,7 +354,7 @@ export function buildSpatialDistancePanel(
         title: "建立空间直角坐标系并求解截面 BDE 法向量",
         detail: `设平面 $BDE$ 法向量为 $\\vec{n} = (x, y, z)$，由正交垂直关系列方程组：`,
         latex: `\\begin{aligned} &\\begin{cases} \\vec{n} \\cdot \\vec{BD} = 0 \\\\[1ex] \\vec{n} \\cdot \\vec{BE} = 0 \\end{cases} \\\\[1.5ex] \\implies &\\vec{n} = (${distRes.nRaw.x.toFixed(2)}, ${distRes.nRaw.y.toFixed(2)}, ${distRes.nRaw.z.toFixed(2)}) \\end{aligned}`,
-        rubric: "[高考采分点] 坐标系建立与法向量求解 (+4分)",
+        rubric: "【高考采分点】坐标系建立与法向量求解 (+4分)",
       },
       {
         step: 2,
@@ -362,7 +362,7 @@ export function buildSpatialDistancePanel(
         detail:
           "取截面内已知参考点 $B$，斜向量 $\\vec{AB}$ 在法向量 $\\vec{n}$ 上的射影长度：",
         latex: `d = \\frac{|\\vec{AB} \\cdot \\vec{n}|}{|\\vec{n}|} = ${distRes.distance.toFixed(4)}`,
-        rubric: "[高考采分点] 向量射影公式代入与准确计算 (+5分)",
+        rubric: "【高考采分点】向量射影公式代入与准确计算 (+5分)",
       },
       {
         step: 3,
@@ -370,7 +370,7 @@ export function buildSpatialDistancePanel(
         detail:
           "等体积法换底 $V_{A-BDE} = V_{E-ABD}$ 反求高线 $d$，结果严格自洽：",
         latex: `\\begin{aligned} d &= \\frac{3 V_{E-ABD}}{S_{\\Delta BDE}} \\\\[1.5ex] &= \\frac{3 \\times ${distRes.volume.toFixed(4)}}{${distRes.areaSection.toFixed(4)}} = ${distRes.distance.toFixed(4)} \\end{aligned}`,
-        rubric: "[高考采分点] 等体积反解与结论验证 (+4分)",
+        rubric: "【高考采分点】等体积反解与结论验证 (+4分)",
       },
     );
   } else {
@@ -443,7 +443,7 @@ export function buildSpatialDistancePanel(
         detail:
           "底面 $\\triangle ABD$ 位于长方体底面，边长 $a, b$ 固定，其面积恒定为 $\\frac{1}{2}ab$：",
         latex: `\\begin{aligned} S_{\\Delta ABD} &= \\frac{1}{2} a b \\\\[1ex] &= \\frac{1}{2} (${a})(${b}) = ${distRes.areaBase.toFixed(2)} \\end{aligned}`,
-        rubric: "[高考采分点] 定底面积分析 (+4分)",
+        rubric: "【高考采分点】定底面积分析 (+4分)",
       },
       {
         step: 2,
@@ -451,7 +451,7 @@ export function buildSpatialDistancePanel(
         detail:
           "动点 $E$ 在侧棱 $AA_1$ 上移动，高线 $h(\\lambda) = \\lambda c$ 与体积成严格正比例关系：",
         latex: `\\begin{aligned} V(\\lambda) &= \\frac{1}{3} S_{\\Delta ABD} \\cdot (\\lambda c) \\\\[1ex] &= \\frac{1}{6} (${a})(${b})(${c}) \\lambda = ${distRes.maxVolume.toFixed(2)} \\lambda \\end{aligned}`,
-        rubric: "[高考采分点] 体积函数构建 (+5分)",
+        rubric: "【高考采分点】体积函数构建 (+5分)",
       },
       {
         step: 3,
@@ -459,7 +459,7 @@ export function buildSpatialDistancePanel(
         detail:
           "由于 $\\lambda \\in (0, 1]$，体积函数关于 $\\lambda$ 单调递增，端点处取得最大极值：",
         latex: `V_{\\max} = V(1.0) = ${distRes.maxVolume.toFixed(4)}`,
-        rubric: "[高考采分点] 端点极值结论明确 (+4分)",
+        rubric: "【高考采分点】端点极值结论明确 (+4分)",
       },
     );
   }

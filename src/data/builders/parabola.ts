@@ -284,7 +284,7 @@ export function buildParabolaPanel(
         detail: `已知抛物线焦参数 $p = ${pStr}$，焦点 $F(${xFStr}, ${yFStr})$，准线方程 $l: ${base.directrixIsVertical ? `x` : `y`} = ${formatMathNumber(base.directrixConstant)}$。根据定义，抛物线上任意动点 $P(x_0, y_0)$ 到焦点的距离恒等于到准线的垂直距离。`,
         latex: `|PF| = d(P, l) = ${focalRadiusFormula}`,
         rubric:
-          "采分点：规范写出焦点坐标与准线方程，明确第一定义几何等价转化（3分）",
+          "【高考采分点】规范写出焦点坐标与准线方程，明确第一定义几何等价转化（3分）",
       },
       {
         step: 2,
@@ -292,7 +292,7 @@ export function buildParabolaPanel(
         detail: `当前动点 $P(${xPStr}, ${yPStr})$，代入平面两点间距离公式展开计算焦半径 $|PF|$，同时求点 $P$ 到准线 $l$ 的垂足 $H(${formatMathNumber(radiusInfo.H.x)}, ${formatMathNumber(radiusInfo.H.y)})$ 与垂线段长度：`,
         latex: `|PF| = \\sqrt{(x_P - x_F)^2 + (y_P - y_F)^2} = \\sqrt{(${xPStr} - ${xFStr})^2 + (${yPStr} - ${yFStr})^2} = ${focalRadiusVal}, \\quad d(P, l) = |${axisCoord}_P - (${formatMathNumber(base.directrixConstant)})| = ${directrixDistVal}`,
         rubric:
-          "采分点：列出两点间距离代数式并代入具体坐标，精确求得焦半径与准线距离（3分）",
+          "【高考采分点】列出两点间距离代数式并代入具体坐标，精确求得焦半径与准线距离（3分）",
       },
       {
         step: 3,
@@ -301,7 +301,7 @@ export function buildParabolaPanel(
           "对于求平面定点 $A(x_A, y_A)$ 与抛物线上动点 $P$ 构成的折线距离和 $|PA| + |PF|$ 的最值问题，利用第一定义将焦半径转化为垂线段：$|PA| + |PF| = |PA| + |PH| \\ge |AH_A|$，当且仅当 $A, P, H_A$ 三点共线时取等号，最小值为点 $A$ 到准线 $l$ 的距离。",
         latex: `(|PA| + |PF|)_{\\min} = d(A, l) = ${radialSign}${axisCoord}_A + \\frac{p}{2} = ${radialSign}${axisCoord}_A + ${pHalf}`,
         rubric:
-          "采分点：应用第一定义化折为直，写出三点共线充要条件与最值结论（4分）",
+          "【高考采分点】应用第一定义化折为直，写出三点共线充要条件与最值结论（4分）",
       },
     );
   } else if (studyMode === "focalChord") {
@@ -316,7 +316,8 @@ export function buildParabolaPanel(
         title: "审题定法 · 焦点弦参数设线与联立展开",
         detail: `设过焦点 $F$ 且与对称轴正向夹角为 $\\theta = ${formatMathNumber(thetaDeg)}^\\circ$ 的直线，交抛物线于两端点 $A(x_1, y_1), B(x_2, y_2)$。采用点斜式设直线并联立消元：`,
         latex: `\\begin{cases} x = x_F + r\\cos\\theta \\\\ y = y_F + r\\sin\\theta \\end{cases} \\implies r^2\\sin^2\\theta - 2pr\\cos\\theta - p^2 = 0`,
-        rubric: "采分点：设直线方程并代入抛物线方程整理为一元二次方程（3分）",
+        rubric:
+          "【高考采分点】设直线方程并代入抛物线方程整理为一元二次方程（3分）",
       },
       {
         step: 2,
@@ -324,7 +325,7 @@ export function buildParabolaPanel(
         detail: `方程两根 $r_1, r_2$ 分别对应向径 $|AF|, -|BF|$。由韦达定理 $r_1 + r_2 = \\frac{2p\\cos\\theta}{\\sin^2\\theta}, r_1 r_2 = -\\frac{p^2}{\\sin^2\\theta}$，代入弦长展开式演绎计算：`,
         latex: `|AB| = r_1 - r_2 = \\frac{\\sqrt{(2p\\cos\\theta)^2 - 4(\\sin^2\\theta)(-p^2)}}{\\sin^2\\theta} = \\frac{2p}{\\sin^2\\theta} = \\frac{${twoPStr}}{\\sin^2(${formatMathNumber(thetaDeg)}^\\circ)} = ${chordLen}`,
         rubric:
-          "采分点：根与系数关系代数消元，代入具体角度精确求出焦点弦长（4分）",
+          "【高考采分点】根与系数关系代数消元，代入具体角度精确求出焦点弦长（4分）",
       },
       {
         step: 3,
@@ -332,7 +333,7 @@ export function buildParabolaPanel(
         detail: `以 $AB$ 为直径的圆半径为 $R = \\frac{|AB|}{2} = \\frac{${chordLen}}{2} = ${radiusVal}$。弦中点 $M$ 到准线的垂直距离为梯形中位线：$d(M, l) = \\frac{d(A,l)+d(B,l)}{2} = \\frac{|AF|+|BF|}{2} = \\frac{|AB|}{2} = R$。故直径圆恒与准线切于点 $K$；且焦半径倒数和恒为定值：`,
         latex: `d(M, l) = R = ${radiusVal} \\implies \\text{圆 } M \\text{ 恒与准线切于点 } K, \\quad \\frac{1}{|AF|} + \\frac{1}{|BF|} = \\frac{2}{p} = \\frac{2}{${pStr}} = ${harmonicVal}`,
         rubric:
-          "采分点：由梯形中位线严格证明直径圆与准线相切，推演倒数和定值闭环（5分）",
+          "【高考采分点】由梯形中位线严格证明直径圆与准线相切，推演倒数和定值闭环（5分）",
       },
     );
   } else {
@@ -367,7 +368,7 @@ export function buildParabolaPanel(
         detail: `抛物线上动点 $P(${xPStr}, ${yPStr})$ 处的切线方程为 $${tangentSymbolic}$，切线斜率 $k_P = ${kPStr}$。令 $${isHorizontalAxis ? "y = 0" : "x = 0"}$ 得对称轴截距点 $T(${interceptT})$。由焦截距公式展开：`,
         latex: `|FT| = ${focalRadiusFormula} = ${radialTermNum} + ${pHalf}, \\quad |PF| = d(P, l) = ${focalRadiusFormula} \\implies |FT| = |PF|`,
         rubric:
-          "采分点：求出切线对称轴截距，严格证明 △PTF 为等腰三角形与反射平分线（4分）",
+          "【高考采分点】求出切线对称轴截距，严格证明 △PTF 为等腰三角形与反射平分线（4分）",
       },
       {
         step: 2,
@@ -375,7 +376,7 @@ export function buildParabolaPanel(
         detail: `准线上动点 $Q(${qPoint})$，引两条切线切点为 $A(x_1, y_1), B(x_2, y_2)$。切点弦方程为 $${chordOfContact}$。令 $${isHorizontalAxis ? "x" : "y"} = ${pHalf}$ 得 $${isHorizontalAxis ? "y" : "x"} = 0$，故切点弦恒过焦点 $F(${formatMathNumber(base.focus.x)}, ${formatMathNumber(base.focus.y)})$。联立解得 $${productSymbol} = -p^2$：`,
         latex: `${slopeProductLatex} \\implies QA \\perp QB`,
         rubric:
-          "采分点：写出切点弦方程并代入焦点验证，利用韦达定理完成斜率乘积消元（4分）",
+          "【高考采分点】写出切点弦方程并代入焦点验证，利用韦达定理完成斜率乘积消元（4分）",
       },
       {
         step: 3,
@@ -383,7 +384,7 @@ export function buildParabolaPanel(
         detail: `向量内积展开：$\\vec{QF} \\cdot \\vec{AB} = (x_F - x_Q)(x_B - x_A) + (y_F - y_Q)(y_B - y_A) = 0 \\implies QF \\perp AB$。三角形 $QAB$ 的面积公式为：`,
         latex: `S_{\\triangle QAB} = \\frac{1}{2} |QF| \\cdot |AB| = \\frac{p^2}{\\sin^3\\theta} \\ge p^2 = ${pStr}^2 = ${formatMathNumber(safeP * safeP)} \\quad (当前S = ${areaVal})`,
         rubric:
-          "采分点：向量内积证明 QF 垂直于切点弦，给出阿基米德三角形面积取等条件（4分）",
+          "【高考采分点】向量内积证明 QF 垂直于切点弦，给出阿基米德三角形面积取等条件（4分）",
       },
     );
   }

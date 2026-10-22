@@ -110,21 +110,21 @@ export function buildCircleEquationPanel(
         title: "审题定法 · 几何定义与设元列式",
         detail: `圆是平面内到定点（圆心 $C(${formatMathNumber(a)}, ${formatMathNumber(b)})$）的距离等于定长（半径 $r = ${formatMathNumber(r)}$）的点的集合。设圆上任意一点为 $M(x, y)$，由两点间距离公式：`,
         latex: `|MC| = \\sqrt{(x - a)^2 + (y - b)^2} = r \\implies \\sqrt{(x - (${formatMathNumber(a)}))^2 + (y - (${formatMathNumber(b)}))^2} = ${formatMathNumber(r)}`,
-        rubric: "采分点：写出几何距离关系式并代入圆心半径参数（3分）",
+        rubric: "【高考采分点】写出几何距离关系式并代入圆心半径参数（3分）",
       },
       {
         step: 2,
         title: "建模代入 · 两边平方化简求标准方程",
         detail: `两边平方化去根号，即得圆的标准方程；展开整理可得一般方程系数 $D = -2a, E = -2b, F = a^2+b^2-r^2$：`,
         latex: `${res.standardEquationLatex} \\iff ${res.generalEquationLatex}`,
-        rubric: "采分点：两边平方化简得到标准方程与展开式（3分）",
+        rubric: "【高考采分点】两边平方化简得到标准方程与展开式（3分）",
       },
       {
         step: 3,
         title: "求解反思 · 动点 P 与圆的位置关系代数判别",
         detail: `计算探究点 $P(${formatMathNumber(px)}, ${formatMathNumber(py)})$ 到圆心 $C$ 的距离并与半径 $r$ 比较：`,
         latex: `|PC| = \\sqrt{(${formatMathNumber(px)} - (${formatMathNumber(a)}))^2 + (${formatMathNumber(py)} - (${formatMathNumber(b)}))^2} = ${formatMathNumber(res.distPC)} ${res.positionRelation === "outside" ? ">" : res.positionRelation === "inside" ? "<" : "="} r = ${formatMathNumber(r)} \\implies \\text{${res.positionRelationLabel}}`,
-        rubric: "采分点：准确计算两点距离并给出位置关系代数判定（2分）",
+        rubric: "【高考采分点】准确计算两点距离并给出位置关系代数判定（2分）",
       },
     );
   } else if (mode === "general") {
@@ -211,7 +211,7 @@ export function buildCircleEquationPanel(
         title: "审题定法 · 分组配方与凑完全平方",
         detail: `将方程中含 $x$ 与含 $y$ 的项分别分组，常数项移到等号右边：`,
         latex: `(x^2 + Dx) + (y^2 + Ey) = -F \\implies (x^2 + (${fq(D)})x) + (y^2 + (${fq(E)})y) = -(${fq(F)})`,
-        rubric: "采分点：正确分组并移项（2分）",
+        rubric: "【高考采分点】正确分组并移项（2分）",
       },
       {
         step: 2,
@@ -220,7 +220,7 @@ export function buildCircleEquationPanel(
         // 右端直接落成最终常数值 Δ_c/4（= r²）：分数预设下 Δ_c = 16/9 时写 \frac{4}{9}，
         // 而不是嵌套的 \frac{\frac{16}{9}}{4}——配方这一步的采分点就是算出这个常数。
         latex: `\\left(x + \\frac{D}{2}\\right)^2 + \\left(y + \\frac{E}{2}\\right)^2 = \\frac{D^2 + E^2 - 4F}{4} = ${fq(res.deltaC / 4)}`,
-        rubric: "采分点：两边完成配方求得右端常数值（3分）",
+        rubric: "【高考采分点】两边完成配方求得右端常数值（3分）",
       },
       {
         step: 3,
@@ -232,7 +232,7 @@ export function buildCircleEquationPanel(
             : res.deltaC === 0
               ? `\\Delta_c = 0 \\implies \\text{退化为单点 } (${fq(res.center.x)}, ${fq(res.center.y)})`
               : `\\Delta_c < 0 \\implies \\text{无实数解，不表示任何几何图形}`,
-        rubric: "采分点：由判别式准确给出圆心、半径或退化结论（3分）",
+        rubric: "【高考采分点】由判别式准确给出圆心、半径或退化结论（3分）",
       },
     );
   } else {
@@ -335,21 +335,22 @@ export function buildCircleEquationPanel(
           title: "审题定法 · 设一般方程并代入三点",
           detail: `设圆的一般方程为 $x^2 + y^2 + Dx + Ey + F = 0$。将三点 $A, B, C$ 坐标分别代入方程：`,
           latex: `\\begin{cases} ${formatMathNumber(pA.x)}D + ${formatMathNumber(pA.y)}E + F = -(${formatMathNumber(pA.x * pA.x + pA.y * pA.y)}) \\\\ ${formatMathNumber(pB.x)}D + ${formatMathNumber(pB.y)}E + F = -(${formatMathNumber(pB.x * pB.x + pB.y * pB.y)}) \\\\ ${formatMathNumber(pC.x)}D + ${formatMathNumber(pC.y)}E + F = -(${formatMathNumber(pC.x * pC.x + pC.y * pC.y)}) \\end{cases}`,
-          rubric: "采分点：设一般方程并准确代入三点列出三元一次方程组（3分）",
+          rubric:
+            "【高考采分点】设一般方程并准确代入三点列出三元一次方程组（3分）",
         },
         {
           step: 2,
           title: "建模代入 · 解三元一次方程组求系数",
           detail: `两两作差消去常数项 $F$，解得未知系数 $D, E, F$：`,
           latex: `D = ${formatMathNumber(res.D)}, \\quad E = ${formatMathNumber(res.E!)}, \\quad F = ${formatMathNumber(res.F!)}`,
-          rubric: "采分点：消元准确求解线性方程组（3分）",
+          rubric: "【高考采分点】消元准确求解线性方程组（3分）",
         },
         {
           step: 3,
           title: "求解反思 · 写出方程并验证外接圆几何量",
           detail: `将系数代入得圆的一般方程与配方后的标准方程，验证外心与半径：`,
           latex: `${res.generalEquationLatex} \\iff ${res.standardEquationLatex} \\implies R = ${formatMathNumber(res.radius!)}`,
-          rubric: "采分点：写出方程并指明外心与半径（2分）",
+          rubric: "【高考采分点】写出方程并指明外心与半径（2分）",
         },
       );
     }

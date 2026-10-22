@@ -23,6 +23,7 @@ import {
 } from "@/data/registries/parabola";
 import type { ParabolaDirection } from "@/math/parabola";
 import { formatMathNumber } from "@/utils/mathFormat";
+import { fitViewRange } from "@/math/viewRange";
 
 export function ParabolaAnimation() {
   // 抛物线开口方向：'right' | 'left' | 'up' | 'down'
@@ -49,11 +50,39 @@ export function ParabolaAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 数学视图坐标范围 [-7, 7] x [-5.5, 5.5]
+  // 视口自适应：动点 P(2pt², 2pt) 与焦点必须可见。
+  // p=0.5、tP=5 时 P 落在 (25, 5)，固定 x∈[-7,7] 会把动点整个裁到画布外。
+  // 开口方向决定对称轴：right/left 沿 x，up/down 沿 y。
+  const viewRange = useMemo(() => {
+    const { p: pVal, tP } = params;
+    const along = 2 * pVal * tP * tP; // 对称轴方向坐标
+    const across = 2 * pVal * tP; // 垂直于对称轴的坐标（曲线向两侧对称延伸）
+    const focal = pVal / 2;
+    const sign = direction === "right" || direction === "up" ? 1 : -1;
+    const horizontal = direction === "right" || direction === "left";
+    const keyPoints = horizontal
+      ? [
+          { x: sign * along, y: across },
+          { x: sign * along, y: -across },
+          { x: sign * focal, y: 0 },
+          { x: 0, y: 0 },
+        ]
+      : [
+          { x: across, y: sign * along },
+          { x: -across, y: sign * along },
+          { x: 0, y: sign * focal },
+          { x: 0, y: 0 },
+        ];
+    return fitViewRange(keyPoints, {
+      defaultXRange: [-7, 7],
+      defaultYRange: [-5.5, 5.5],
+    });
+  }, [direction, params.p, params.tP]);
+
   const scale = useSceneScale({
     vp,
-    xRange: [-7, 7],
-    yRange: [-5.5, 5.5],
+    xRange: viewRange.xRange,
+    yRange: viewRange.yRange,
   });
 
   // 数学量看板数据组装

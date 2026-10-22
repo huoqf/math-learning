@@ -465,7 +465,7 @@ export function buildRotationBodyPanel(
             : shape === "rectangle"
               ? `r = ${r1.toFixed(2)}, \\quad h = ${height.toFixed(2)}, \\quad \\text{母线} \\parallel \\text{轴} \\implies l = h`
               : `r = ${r1.toFixed(2)}, \\quad h = ${height.toFixed(2)} \\implies l = \\sqrt{r^2 + h^2}`,
-      rubric: "[高考采分点] 作轴截面平面图并标清基本度量特征 (+4分)",
+      rubric: "【高考采分点】作轴截面平面图并标清基本度量特征 (+4分)",
     },
     {
       step: 2,
@@ -482,7 +482,7 @@ export function buildRotationBodyPanel(
             : shape === "rectangle"
               ? `S_{\\text{侧}} = 2\\pi r h, \\quad S_{\\text{全}} = 2\\pi r(r+h), \\quad V = \\pi r^2 h`
               : `S_{\\text{侧}} = \\pi r l, \\quad V = \\frac{1}{3}\\pi r^2 h`,
-      rubric: "[高考采分点] 正确列出侧面积/截面积与体积计算公式 (+5分)",
+      rubric: "【高考采分点】正确列出侧面积/截面积与体积计算公式 (+5分)",
     },
     {
       step: 3,
@@ -497,7 +497,7 @@ export function buildRotationBodyPanel(
             : shape === "rectangle"
               ? `\\text{侧面展开为矩形：两边分别为} \\; 2\\pi r \\; \\text{(底面周长)} \\; \\text{与} \\; h, \\quad L_{\\min} = \\sqrt{(2\\pi r)^2 + h^2}`
               : `\\alpha = \\frac{r}{l} \\times 360^\\circ = (\\sin\\theta) \\times 360^\\circ`,
-      rubric: "[高考采分点] 精确解出最终结果并说明几何临界与展开性质 (+4分)",
+      rubric: "【高考采分点】精确解出最终结果并说明几何临界与展开性质 (+4分)",
     },
   ];
 

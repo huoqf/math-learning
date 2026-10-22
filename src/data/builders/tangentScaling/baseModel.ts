@@ -1,6 +1,6 @@
 import type { MathPanelData } from "@/data/types";
 import { MATH_COLORS } from "@/theme";
-import { calculateTangentLine } from "@/math/tangentScaling";
+import { BASE_CURVE_MODELS, calculateTangentLine } from "@/math/tangentScaling";
 import type {
   TangentScalingParams,
   BaseSubModel,
@@ -184,60 +184,30 @@ export function buildBaseModel(
   params: TangentScalingParams,
   baseSub: BaseSubModel,
 ): MathPanelData {
-  let funcType: "exp" | "log" | "exp_shift" | "log_shift" = "exp";
-  let modelFormula = "e^x \\ge x + 1";
-  let anchorPoint = "x_0 = 0";
-  let isUnder = true; // 切线是否在曲线下方
+  /* 曲线类型、基准切点与基准切线全部取自数学层模型表（单一来源）。
+     此处只保留「文案」与「切线相对曲线的上下位置」两类本层专属信息：
+     指数族恒为凸、切线在曲线下方；对数族恒为凹、切线在曲线上方。 */
+  const model = BASE_CURVE_MODELS[baseSub];
+  const funcType = model.funcType;
+  const isUnder = !funcType.startsWith("log"); // 切线是否在曲线下方
+  const baseSlope = model.baseTangent.slope;
+  const baseIntercept = model.baseTangent.intercept;
+  const baseAnchorX = model.basePoint.x;
 
-  if (baseSub === "exp_shift_x") {
-    funcType = "exp_shift";
-    modelFormula = "e^{x-1} \\ge x";
-    anchorPoint = "x_0 = 1";
-  } else if (baseSub === "exp_ex") {
-    funcType = "exp";
-    modelFormula = "e^x \\ge ex";
-    anchorPoint = "x_0 = 1";
-  } else if (baseSub === "log_x_minus_1") {
-    funcType = "log";
-    modelFormula = "\\ln x \\le x - 1";
-    anchorPoint = "x_0 = 1";
-    isUnder = false;
-  } else if (baseSub === "log_x_div_e") {
-    funcType = "log";
-    modelFormula = "\\ln x \\le \\frac{x}{e}";
-    anchorPoint = "x_0 = e";
-    isUnder = false;
-  } else if (baseSub === "log_shift_0") {
-    funcType = "log_shift";
-    modelFormula = "\\ln(x+1) \\le x";
-    anchorPoint = "x_0 = 0";
-    isUnder = false;
-  }
-
-  let baseSlope = 1;
-  let baseIntercept = 1;
-  let baseAnchorX = 0;
-  if (baseSub === "exp_shift_x") {
-    baseSlope = 1;
-    baseIntercept = 0;
-    baseAnchorX = 1;
-  } else if (baseSub === "exp_ex") {
-    baseSlope = Math.E;
-    baseIntercept = 0;
-    baseAnchorX = 1;
-  } else if (baseSub === "log_x_minus_1") {
-    baseSlope = 1;
-    baseIntercept = -1;
-    baseAnchorX = 1;
-  } else if (baseSub === "log_shift_0") {
-    baseSlope = 1;
-    baseIntercept = 0;
-    baseAnchorX = 0;
-  } else if (baseSub === "log_x_div_e") {
-    baseSlope = 1 / Math.E;
-    baseIntercept = 0;
-    baseAnchorX = Math.E;
-  }
+  const modeLabels: Record<BaseSubModel, { formula: string; anchor: string }> =
+    {
+      exp_x_plus_1: { formula: "e^x \\ge x + 1", anchor: "x_0 = 0" },
+      exp_shift_x: { formula: "e^{x-1} \\ge x", anchor: "x_0 = 1" },
+      exp_ex: { formula: "e^x \\ge ex", anchor: "x_0 = 1" },
+      log_x_minus_1: { formula: "\\ln x \\le x - 1", anchor: "x_0 = 1" },
+      log_x_div_e: {
+        formula: "\\ln x \\le \\frac{x}{e}",
+        anchor: "x_0 = e",
+      },
+      log_shift_0: { formula: "\\ln(x+1) \\le x", anchor: "x_0 = 0" },
+    };
+  const modelFormula = modeLabels[baseSub].formula;
+  const anchorPoint = modeLabels[baseSub].anchor;
 
   const tangent = calculateTangentLine(funcType, params.x0);
   const baseLineVal = baseSlope * params.x0 + baseIntercept;

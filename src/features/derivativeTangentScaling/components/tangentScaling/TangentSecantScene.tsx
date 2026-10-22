@@ -12,6 +12,7 @@ import { MATH_COLORS } from "@/theme";
 import {
   calculateSecantLine,
   calculateTangentLine,
+  SECANT_CURVE_MODELS,
 } from "@/math/tangentScaling";
 import type { SecantSubModel } from "@/data/registries/tangentScaling";
 import { clipFn } from "./clipFn";
@@ -31,31 +32,28 @@ export function TangentSecantScene({
   onParamChange,
 }: TangentSecantSceneProps) {
   const secantData = useMemo(() => {
-    const isTaylor = secantSubModel === "taylor_quadratic";
-    if (isTaylor) {
+    const model = SECANT_CURVE_MODELS[secantSubModel];
+    if (model.tangentFuncType === null) {
+      // 二阶多项式卡位：无中点切线，上下界解析式直接取自模型表
       return {
         isTaylor: true as const,
         isLog: false as const,
-        mainFn: (x: number) => (x > -0.99 ? Math.log(1 + x) : -10),
-        upperFn: (x: number) => x,
-        lowerFn: (x: number) => x - 0.5 * x * x,
-        mainXRange: [-0.98, 5.0] as [number, number],
-        lineXRange: [-2.5, 5.0] as [number, number],
-        // x - x^2/2 <= ln(1+x) 仅在 x >= 0 成立：割线下界必须截断在 [0, 5.0]，
-        // 否则 x < 0 段会画出「下界跑到函数上方」的错误图形
-        lowerXRange: [0, 5.0] as [number, number],
+        mainFn: model.mainFn,
+        upperFn: model.upperFn!,
+        lowerFn: model.lowerFn!,
+        mainXRange: model.mainXRange,
+        lineXRange: model.lineXRange,
+        lowerXRange: model.lowerXRange!,
       };
     }
 
-    const isLog = secantSubModel === "log_secant_tangent";
-    const fn = isLog
-      ? (x: number) => (x > 0.01 ? Math.log(x) : -10)
-      : (x: number) => Math.exp(x);
+    const isLog = model.isLog;
+    const fn = model.mainFn;
     const a = params.intervalA;
     const b = params.intervalB;
     const midX = (a + b) / 2;
     const secant = calculateSecantLine(fn, a, b);
-    const tangent = calculateTangentLine(isLog ? "log" : "exp", midX);
+    const tangent = calculateTangentLine(model.tangentFuncType, midX);
 
     return {
       isTaylor: false as const,
@@ -67,8 +65,8 @@ export function TangentSecantScene({
       b,
       midX,
       midY: fn(midX),
-      mainXRange: (isLog ? [0.02, 5.0] : [-4.0, 3.0]) as [number, number],
-      lineXRange: (isLog ? [0.02, 5.0] : [-4.0, 5.0]) as [number, number],
+      mainXRange: model.mainXRange,
+      lineXRange: model.lineXRange,
     };
   }, [secantSubModel, params.intervalA, params.intervalB]);
 

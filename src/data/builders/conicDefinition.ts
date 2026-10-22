@@ -113,7 +113,7 @@ export function buildConicDefinitionPanel(
           detail:
             "以两定点 $F_1(-c, 0), F_2(c, 0)$ 所在直线为 $x$ 轴，线段 $F_1F_2$ 垂直平分线为 $y$ 轴建系。动点 $P(x, y)$ 满足几何等式：",
           latex: "|PF_1| + |PF_2| = 2a \\quad (2a > 2c > 0)",
-          rubric: "审题定法与设点",
+          rubric: "【高考采分点】审题定法与设点",
         },
         {
           step: 2,
@@ -121,7 +121,7 @@ export function buildConicDefinitionPanel(
           detail:
             "代入距离公式 $\\sqrt{(x+c)^2+y^2} + \\sqrt{(x-c)^2+y^2} = 2a$。移项平方整理：",
           latex: "a\\sqrt{(x-c)^2+y^2} = a^2 - cx",
-          rubric: "移项平方化简",
+          rubric: "【高考采分点】移项平方化简",
         },
         {
           step: 3,
@@ -129,7 +129,7 @@ export function buildConicDefinitionPanel(
           detail:
             "再次两边平方得 $(a^2-c^2)x^2 + a^2y^2 = a^2(a^2-c^2)$。令 $b^2 = a^2 - c^2 > 0$，两边同除以 $a^2b^2$：",
           latex: "\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1 \\quad (a > b > 0)",
-          rubric: "换元确立标准方程",
+          rubric: "【高考采分点】换元确立标准方程",
         },
       );
 
@@ -225,7 +225,7 @@ export function buildConicDefinitionPanel(
             "两焦点为 $F_1(-c, 0), F_2(c, 0)$，常数 $0 < 2a < 2c$。由于动点可能更靠近 $F_1$ 或 $F_2$，必须使用绝对值统摄：",
           latex:
             "||PF_1| - |PF_2|| = 2a \\iff \\sqrt{(x+c)^2+y^2} - \\sqrt{(x-c)^2+y^2} = \\pm 2a",
-          rubric: "审题定法与双支建模",
+          rubric: "【高考采分点】审题定法与双支建模",
         },
         {
           step: 2,
@@ -233,7 +233,7 @@ export function buildConicDefinitionPanel(
           detail:
             "移项平方整理得 $\\pm a\\sqrt{(x-c)^2+y^2} = a^2 - cx$。其中“$+$”号对应左支（$x \\le -a$），“$-$”号对应右支（$x \\ge a$）。再次平方：",
           latex: "(c^2-a^2)x^2 - a^2y^2 = a^2(c^2-a^2)",
-          rubric: "双重平方展开消元",
+          rubric: "【高考采分点】双重平方展开消元",
         },
         {
           step: 3,
@@ -242,7 +242,7 @@ export function buildConicDefinitionPanel(
             "因 $c > a > 0$，令 $b^2 = c^2 - a^2 > 0$，两边同除以 $a^2b^2$，得到双曲线标准方程：",
           latex:
             "\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1 \\quad (a > 0, b > 0)",
-          rubric: "换元确立标准方程",
+          rubric: "【高考采分点】换元确立标准方程",
         },
       );
 
@@ -317,7 +317,7 @@ export function buildConicDefinitionPanel(
           detail:
             "取过焦点 $F$ 垂直于准线 $l$ 的直线为 $x$ 轴，垂足与焦点连线中点为原点。焦点 $F\\left(\\frac{p}{2}, 0\\right)$，准线 $l: x = -\\frac{p}{2}$。由定义：",
           latex: "|PF| = d_l",
-          rubric: "建系与列定义式",
+          rubric: "【高考采分点】建系与列定义式",
         },
         {
           step: 2,
@@ -326,7 +326,7 @@ export function buildConicDefinitionPanel(
             "设动点 $P(x, y)$（$x \\ge 0$），代入两点间距离与点到直线距离公式：",
           latex:
             "\\sqrt{\\left(x - \\frac{p}{2}\\right)^2 + y^2} = x + \\frac{p}{2}",
-          rubric: "坐标化代入",
+          rubric: "【高考采分点】坐标化代入",
         },
         {
           step: 3,
@@ -334,7 +334,7 @@ export function buildConicDefinitionPanel(
           detail:
             "两边平方展开：$x^2 - px + \\frac{p^2}{4} + y^2 = x^2 + px + \\frac{p^2}{4}$。移项化简得抛物线标准方程：",
           latex: "y^2 = 2px \\quad (p > 0)",
-          rubric: "平方化简确立方程",
+          rubric: "【高考采分点】平方化简确立方程",
         },
       );
 
@@ -419,7 +419,7 @@ export function buildConicDefinitionPanel(
           "定焦点取为 $F\\left(\\frac{p}{2}, 0\\right)$，对应定准线为 $l: x = -\\frac{p}{2}$。动点 $P(x, y)$ 满足焦准距比值恒为 $e$：",
         latex:
           "\\frac{\\sqrt{\\left(x - \\frac{p}{2}\\right)^2 + y^2}}{\\left|x + \\frac{p}{2}\\right|} = e",
-        rubric: "焦准比列式",
+        rubric: "【高考采分点】焦准比列式",
       },
       {
         step: 2,
@@ -427,7 +427,7 @@ export function buildConicDefinitionPanel(
         detail:
           "两边平方去分母：$\\left(x - \\frac{p}{2}\\right)^2 + y^2 = e^2\\left(x + \\frac{p}{2}\\right)^2$。合并同类项展开整理为关于 $x, y$ 的二次方程：",
         latex: "(1 - e^2)x^2 - p(1 + e^2)x + y^2 + \\frac{p^2(1 - e^2)}{4} = 0",
-        rubric: "展开整理二次方程",
+        rubric: "【高考采分点】展开整理二次方程",
       },
       {
         step: 3,
@@ -436,7 +436,7 @@ export function buildConicDefinitionPanel(
           "二次项系数 $(1-e^2)$ 与 $1$ 符号决定曲线类型：当 $0 < e < 1$ 时两项同号配方得椭圆；当 $e = 1$ 时二次项抵消得抛物线；当 $e > 1$ 时两项异号配方得包含左右两支的双曲线：",
         latex:
           "e \\in (0, 1) \\implies \\text{椭圆}, \\quad e = 1 \\implies \\text{抛物线}, \\quad e > 1 \\implies \\text{双曲线}",
-        rubric: "分类讨论与形态判定",
+        rubric: "【高考采分点】分类讨论与形态判定",
       },
     );
 

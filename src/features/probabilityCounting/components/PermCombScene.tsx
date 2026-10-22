@@ -3,6 +3,7 @@ import {
   perm,
   comb,
   factorial,
+  buildGroupingItems,
   calculateGroupingAllocation,
 } from "../../../math/probabilityCounting";
 import type { SceneCommonProps } from "./types";
@@ -288,18 +289,20 @@ export function PermCombScene({
   // 2. 均匀分组与消序模型 (subMode === 1)
   if (subMode === 1) {
     const groupInfo = calculateGroupingAllocation(groupTotal, groupCount);
-    const groupItems = Array.from({ length: groupInfo.totalItems }, (_, i) => ({
-      id: i,
-      label: String.fromCharCode(65 + i),
-    }));
+    // 元素库全员在场（N 个球），不做任何截断——截断会让画面与滑块各说一套
+    const groupItems = buildGroupingItems(groupInfo);
 
     // 逐步选堆的组合数连乘链：严格跟随 groupTotal / groupCount 参数推导，杜绝写死 6/4/2
-    const groupingChain = Array.from({ length: groupInfo.groupCount }, (_, i) =>
-      formatComb(
-        groupInfo.totalItems - i * groupInfo.itemsPerGroup,
-        groupInfo.itemsPerGroup,
-      ),
-    ).join(" × ");
+    const groupingChain = groupInfo.isDivisible
+      ? Array.from({ length: groupInfo.groupCount }, (_, i) =>
+          formatComb(
+            groupInfo.totalItems - i * groupInfo.itemsPerGroup,
+            groupInfo.itemsPerGroup,
+          ),
+        ).join(" × ")
+      : "—";
+    // 不可均分时所有计数一律为 0，直接印「0 ÷ 3! = 0 种」等于把无定义伪装成结论
+    const noSolution = "无法均分 · 无解";
 
     return (
       <g transform="translate(40, 45)">
@@ -321,8 +324,9 @@ export function PermCombScene({
           fontSize={fontScale(15)}
           fontWeight="bold"
         >
-          均匀分组消序模型：将 {groupInfo.totalItems} 个不同元素均分为{" "}
-          {groupInfo.groupCount} 堆 (每堆 {groupInfo.itemsPerGroup} 个)
+          {groupInfo.isDivisible
+            ? `均匀分组消序模型：将 ${groupInfo.totalItems} 个不同元素均分为 ${groupInfo.groupCount} 堆 (每堆 ${groupInfo.itemsPerGroup} 个)`
+            : `均匀分组前提检验：${groupInfo.totalItems} 个元素无法均分为 ${groupInfo.groupCount} 堆 (余 ${groupInfo.remainder} 个)`}
         </text>
 
         {/* 顶部原始元素 */}
@@ -360,143 +364,154 @@ export function PermCombScene({
           ))}
         </g>
 
-        {/* 对比展示两栏：分步取堆 (虚假顺序) vs 真实无序堆 */}
-        <g transform="translate(45, 115)">
-          {/* 左栏：有顺序的分步选择 */}
-          <rect
-            x={0}
-            y={0}
-            width={320}
-            height={250}
-            fill={MATH_COLORS.white}
-            stroke={MATH_COLORS.tangentLine}
-            strokeWidth={1.5}
-            rx={10}
-          />
-          <text
-            x={15}
-            y={28}
-            fill={MATH_COLORS.tangentLine}
-            fontSize={fontScale(13)}
-            fontWeight="bold"
-          >
-            ① 逐步选堆 (含人为产生的先后顺序)
-          </text>
-
-          <g transform="translate(15, 45)">
-            {Array.from({ length: groupInfo.groupCount }, (_, gIdx) => (
-              <g
-                key={`step-g-${gIdx}`}
-                transform={`translate(0, ${gIdx * 56})`}
-              >
-                <rect
-                  x={0}
-                  y={0}
-                  width={290}
-                  height={46}
-                  fill={withAlpha(MATH_COLORS.tangentLine, 0.06)}
-                  stroke={MATH_COLORS.tangentLine}
-                  strokeDasharray="2 2"
-                  rx={6}
-                />
-                <text
-                  x={10}
-                  y={28}
-                  fill={MATH_COLORS.labelText}
-                  fontSize={fontScale(11)}
-                >
-                  第 {gIdx + 1} 次选堆：
-                </text>
-                {Array.from({ length: groupInfo.itemsPerGroup }, (_, iIdx) => (
-                  <circle
-                    key={`b-${gIdx}-${iIdx}`}
-                    cx={120 + iIdx * 30}
-                    cy={23}
-                    r={12}
-                    fill={
-                      BALL_COLORS[
-                        (gIdx * groupInfo.itemsPerGroup + iIdx) %
-                          BALL_COLORS.length
-                      ]
-                    }
-                  />
-                ))}
-              </g>
-            ))}
-          </g>
-
-          {/* 右栏：无序真实堆并除以 k! */}
-          <rect
-            x={345}
-            y={0}
-            width={320}
-            height={250}
-            fill={MATH_COLORS.white}
-            stroke={MATH_COLORS.paramTertiary}
-            strokeWidth={1.5}
-            rx={10}
-          />
-          <text
-            x={360}
-            y={28}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(13)}
-            fontWeight="bold"
-          >
-            ② 真实无名堆 (除以 {groupInfo.groupCount}! 消序)
-          </text>
-
-          <g transform="translate(360, 50)">
-            <text
-              x={0}
-              y={20}
-              fill={MATH_COLORS.labelText}
-              fontSize={fontScale(12)}
-            >
-              因为各堆没有名字标签，
-            </text>
-            <text
-              x={0}
-              y={44}
-              fill={MATH_COLORS.labelText}
-              fontSize={fontScale(12)}
-            >
-              {groupInfo.groupCount} 个堆之间存在 {groupInfo.groupCount}! ={" "}
-              {groupInfo.divisionOrderFactor} 种全排列重复。
-            </text>
-
+        {/* 堆示意区：不可均分时整块置灰，另以红色徽标说明「无解」 */}
+        <g opacity={groupInfo.isDivisible ? 1 : 0.4}>
+          {/* 对比展示两栏：分步取堆 (虚假顺序) vs 真实无序堆 */}
+          <g transform="translate(45, 115)">
+            {/* 左栏：有顺序的分步选择 */}
             <rect
               x={0}
-              y={70}
-              width={290}
-              height={85}
-              fill={withAlpha(MATH_COLORS.paramTertiary, 0.1)}
-              stroke={MATH_COLORS.paramTertiary}
-              rx={8}
+              y={0}
+              width={320}
+              height={250}
+              fill={MATH_COLORS.white}
+              stroke={MATH_COLORS.tangentLine}
+              strokeWidth={1.5}
+              rx={10}
             />
             <text
               x={15}
-              y={98}
-              fill={MATH_COLORS.paramTertiary}
-              fontSize={fontScale(12)}
-              fontWeight="bold"
-            >
-              实际均分堆数计算：
-            </text>
-            <text
-              x={15}
-              y={130}
-              fill={MATH_COLORS.labelText}
+              y={28}
+              fill={MATH_COLORS.tangentLine}
               fontSize={fontScale(13)}
               fontWeight="bold"
             >
-              {groupInfo.directCombinationWays} ÷{" "}
-              {groupInfo.divisionOrderFactor} = {groupInfo.groupedWays} 种
+              ① 逐步选堆 (含人为产生的先后顺序)
             </text>
+
+            <g transform="translate(15, 45)">
+              {Array.from({ length: groupInfo.groupCount }, (_, gIdx) => (
+                <g
+                  key={`step-g-${gIdx}`}
+                  transform={`translate(0, ${gIdx * 56})`}
+                >
+                  <rect
+                    x={0}
+                    y={0}
+                    width={290}
+                    height={46}
+                    fill={withAlpha(MATH_COLORS.tangentLine, 0.06)}
+                    stroke={MATH_COLORS.tangentLine}
+                    strokeDasharray="2 2"
+                    rx={6}
+                  />
+                  <text
+                    x={10}
+                    y={28}
+                    fill={MATH_COLORS.labelText}
+                    fontSize={fontScale(11)}
+                  >
+                    第 {gIdx + 1} 次选堆：
+                  </text>
+                  {Array.from(
+                    { length: groupInfo.itemsPerGroup },
+                    (_, iIdx) => (
+                      <circle
+                        key={`b-${gIdx}-${iIdx}`}
+                        cx={120 + iIdx * 30}
+                        cy={23}
+                        r={12}
+                        fill={
+                          BALL_COLORS[
+                            (gIdx * groupInfo.itemsPerGroup + iIdx) %
+                              BALL_COLORS.length
+                          ]
+                        }
+                      />
+                    ),
+                  )}
+                </g>
+              ))}
+            </g>
+
+            {/* 右栏：无序真实堆并除以 k! */}
+            <rect
+              x={345}
+              y={0}
+              width={320}
+              height={250}
+              fill={MATH_COLORS.white}
+              stroke={MATH_COLORS.paramTertiary}
+              strokeWidth={1.5}
+              rx={10}
+            />
+            <text
+              x={360}
+              y={28}
+              fill={MATH_COLORS.paramTertiary}
+              fontSize={fontScale(13)}
+              fontWeight="bold"
+            >
+              ② 真实无名堆 (除以 {groupInfo.groupCount}! 消序)
+            </text>
+
+            <g transform="translate(360, 50)">
+              <text
+                x={0}
+                y={20}
+                fill={MATH_COLORS.labelText}
+                fontSize={fontScale(12)}
+              >
+                因为各堆没有名字标签，
+              </text>
+              <text
+                x={0}
+                y={44}
+                fill={MATH_COLORS.labelText}
+                fontSize={fontScale(12)}
+              >
+                {groupInfo.groupCount} 个堆之间存在 {groupInfo.groupCount}! ={" "}
+                {groupInfo.divisionOrderFactor} 种全排列重复。
+              </text>
+
+              <rect
+                x={0}
+                y={70}
+                width={290}
+                height={85}
+                fill={withAlpha(MATH_COLORS.paramTertiary, 0.1)}
+                stroke={MATH_COLORS.paramTertiary}
+                rx={8}
+              />
+              <text
+                x={15}
+                y={98}
+                fill={MATH_COLORS.paramTertiary}
+                fontSize={fontScale(12)}
+                fontWeight="bold"
+              >
+                实际均分堆数计算：
+              </text>
+              <text
+                x={15}
+                y={130}
+                fill={
+                  groupInfo.isDivisible
+                    ? MATH_COLORS.labelText
+                    : MATH_COLORS.highlight
+                }
+                fontSize={fontScale(13)}
+                fontWeight="bold"
+              >
+                {groupInfo.isDivisible
+                  ? `${groupInfo.directCombinationWays} ÷ ${groupInfo.divisionOrderFactor} = ${groupInfo.groupedWays} 种`
+                  : noSolution}
+              </text>
+            </g>
           </g>
         </g>
 
-        {/* 底部高考模型口诀 */}
+        {/* 底部高考模型口诀：讲的是通用消序法则，退化帧下照样成立，故不随堆区置灰 */}
         <g transform="translate(45, 385)">
           <rect
             x={0}
@@ -523,8 +538,9 @@ export function PermCombScene({
             fill={MATH_COLORS.labelText}
             fontSize={fontScale(12)}
           >
-            • 均分（无接收者）：N_均分 = ({groupingChain}) ÷{" "}
-            {groupInfo.groupCount}! = {groupInfo.groupedWays} 种
+            {groupInfo.isDivisible
+              ? `• 均分（无接收者）：N_均分 = (${groupingChain}) ÷ ${groupInfo.groupCount}! = ${groupInfo.groupedWays} 种`
+              : `• 均分（无接收者）：${noSolution}（余 ${groupInfo.remainder} 个元素）`}
           </text>
           <text
             x={20}
@@ -532,12 +548,47 @@ export function PermCombScene({
             fill={MATH_COLORS.labelText}
             fontSize={fontScale(12)}
           >
-            • 定向分配（分给 {groupInfo.groupCount} 个不同对象）：N_分配 ={" "}
-            {groupInfo.groupedWays} ×{" "}
-            {formatPerm(groupInfo.groupCount, groupInfo.groupCount)} ={" "}
-            {groupInfo.allocatedWays} 种
+            {groupInfo.isDivisible
+              ? `• 定向分配（分给 ${groupInfo.groupCount} 个不同对象）：N_分配 = ${groupInfo.groupedWays} × ${formatPerm(groupInfo.groupCount, groupInfo.groupCount)} = ${groupInfo.allocatedWays} 种`
+              : "• 定向分配：均分这一步尚未成立，分配数无从谈起"}
           </text>
         </g>
+
+        {/* 不可均分徽标：整块已置灰，这里把「为什么无解」说清楚 */}
+        {!groupInfo.isDivisible && (
+          <g>
+            <rect
+              x={80}
+              y={196}
+              width={580}
+              height={92}
+              rx={12}
+              fill={MATH_COLORS.white}
+              stroke={MATH_COLORS.highlight}
+              strokeWidth={2}
+            />
+            <text
+              x={370}
+              y={232}
+              textAnchor="middle"
+              fill={MATH_COLORS.highlight}
+              fontSize={fontScale(15)}
+              fontWeight="bold"
+            >
+              N = {groupInfo.totalItems} 无法被 k = {groupInfo.groupCount} 均分
+              （余 {groupInfo.remainder} 个元素）
+            </text>
+            <text
+              x={370}
+              y={262}
+              textAnchor="middle"
+              fill={MATH_COLORS.labelText}
+              fontSize={fontScale(12)}
+            >
+              均匀分组要求各堆元素个数严格相等，此参数下均分模型无解
+            </text>
+          </g>
+        )}
       </g>
     );
   }

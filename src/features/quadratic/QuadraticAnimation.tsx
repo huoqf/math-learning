@@ -16,6 +16,8 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { buildPolyLatex } from "@/utils/polyBuilder";
 import { QuadraticScene } from "./components/QuadraticScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
+import { solveQuadratic } from "@/math/quadratic";
+import { fitViewRange } from "@/math/viewRange";
 import { defaultParams, paramMeta } from "@/data/registries/quadratic";
 import { quadraticScenarios } from "./scenarios";
 
@@ -74,11 +76,30 @@ export function QuadraticAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 3. 构建直角坐标系比例尺：数学范围 X [-6, 6]，Y [-4.5, 4.5]
+  // 3. 视口自适应：顶点 / 实根 / y 轴截距必须全部可见。
+  //    基准仍取 X[-6,6]、Y[-4.5,4.5]（Floor Clamp），参数正常时不收缩；
+  //    一旦 a、c 拉到边界使顶点或截距越界，视口整体外扩而不是把点裁掉。
+  const viewRange = useMemo(() => {
+    const res = solveQuadratic(params.a, params.b, params.c);
+    const keyPoints = [
+      { x: 0, y: params.c },
+      ...(res.vertexX !== null && res.vertexY !== null
+        ? [{ x: res.vertexX, y: res.vertexY }]
+        : []),
+      ...res.roots
+        .filter((r) => Number.isFinite(r))
+        .map((r) => ({ x: r, y: 0 })),
+    ];
+    return fitViewRange(keyPoints, {
+      defaultXRange: [-6, 6],
+      defaultYRange: [-4.5, 4.5],
+    });
+  }, [params.a, params.b, params.c]);
+
   const scale = useSceneScale({
     vp,
-    xRange: [-6, 6],
-    yRange: [-4.5, 4.5],
+    xRange: viewRange.xRange,
+    yRange: viewRange.yRange,
   });
 
   // 4. 数学量看板数据计算与组装

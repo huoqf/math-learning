@@ -124,7 +124,7 @@ export function buildPyramidDerivationPanel(
           "设直三棱柱 $ABC-A_1B_1C_1$，底面直角边为 $a, b$，高为 $h$。作截面 $A_1BC$ 与 $A_1BC_1$，将三棱柱严格剖分为三个三棱锥：$P_1 = A_1-ABC$，$P_2 = A_1-BCC_1$，$P_3 = C_1-A_1B_1B$（即 $A_1-BB_1C_1$）。",
         latex: `V_{\\text{柱}} = S_{\\text{底}} \\cdot h = \\left(\\frac{1}{2}ab\\right) h`,
         rubric:
-          "[高考规范采分] 明确构造剖分截面并列出母体三棱柱体积表达式 (+3分)",
+          "【高考采分点】[高考规范采分] 明确构造剖分截面并列出母体三棱柱体积表达式 (+3分)",
       },
       {
         step: 2,
@@ -133,7 +133,7 @@ export function buildPyramidDerivationPanel(
           "① 对 $P_2$ 与 $P_3$：均以 $A_1$ 为顶点，底面 $\\triangle BCC_1$ 与 $\\triangle B_1C_1B$ 是矩形 $BCC_1B_1$ 被对角线平分的两个三角形，面积相等且高同为 $A_1$ 到侧面的距离 $\\implies V_2 = V_3$；② 对 $P_1$ 与 $P_3$：$P_1$ 视顶点为 $C$、底为 $\\triangle A_1AB$；$P_3$ 视顶点为 $C_1$、底为 $\\triangle A_1B_1B$。侧面矩形中 $\\triangle A_1AB$ 与 $\\triangle A_1B_1B$ 面积相等，且 $CC_1 \\parallel$ 侧面 $\\implies$ 顶点到侧面距离相等 $\\implies V_1 = V_3$。",
         latex: `V_1 = V_3 = V_2 \\implies V_{\\text{锥}} = \\frac{1}{3} V_{\\text{柱}}`,
         rubric:
-          "[高考规范采分] 逻辑严密阐述等底同高关系并证明三体积等价 (+5分)",
+          "【高考采分点】[高考规范采分] 逻辑严密阐述等底同高关系并证明三体积等价 (+5分)",
       },
       {
         step: 3,
@@ -141,7 +141,8 @@ export function buildPyramidDerivationPanel(
         detail:
           "三个三棱锥体积全等且无缝充满整个三棱柱，故每个三棱锥体积为三棱柱的 $\\frac{1}{3}$。结合多面体任意截面相似比 $S(x)/S = (x/h)^2$ 与祖暅原理，推广至所有锥体：",
         latex: `V_{\\text{锥}} = \\frac{1}{3} S_{\\text{底}} h = \\frac{1}{3} \\cdot \\left(\\frac{1}{2} \\color{${MATH_COLORS.paramPrimary}}{a} \\color{${MATH_COLORS.paramSecondary}}{b}\\right) \\color{${MATH_COLORS.paramTertiary}}{h} = \\frac{1}{6} \\color{${MATH_COLORS.paramPrimary}}{a} \\color{${MATH_COLORS.paramSecondary}}{b} \\color{${MATH_COLORS.paramTertiary}}{h}`,
-        rubric: "[高考规范采分] 准确写出通式并给出规范结论代数表达式 (+4分)",
+        rubric:
+          "【高考采分点】[高考规范采分] 准确写出通式并给出规范结论代数表达式 (+4分)",
       },
     );
 
@@ -237,7 +238,8 @@ export function buildPyramidDerivationPanel(
         detail:
           "取底面为直角边 $a, b$、高为 $c$ 的直三棱柱（堑堵）。沿顶点 $A_1$ 与对角线 $OB$ 作截面 $A_1OB$，将堑堵分解为四棱锥 $A_1-OBB_1O_1$（阳马）与三棱锥 $A_1-OAB$（鳖臑）。",
         latex: `V_{\\text{堑堵}} = \\frac{1}{2}abc`,
-        rubric: "[高考规范采分] 明确写出母体几何体名称及剖分截面位置 (+3分)",
+        rubric:
+          "【高考采分点】[高考规范采分] 明确写出母体几何体名称及剖分截面位置 (+3分)",
       },
       {
         step: 2,
@@ -245,7 +247,8 @@ export function buildPyramidDerivationPanel(
         detail:
           "刘徽平分堑堵的长、宽、高（取各棱中点）作割补：阳马被分成 $1$ 个小长方体、$2$ 个小堑堵与 $2$ 个更小的阳马；鳖臑被分成 $2$ 个小堑堵与 $2$ 个更小的鳖臑。其中“已知”部分（小长方体与 $4$ 个小堑堵）体积恰为鳖臑“已知”部分的 $2$ 倍，且共占原堑堵的 $\\frac{3}{4}$；剩余部分照此反复细分，“半之弥少，其余弥细；至细曰微，微则无形”，逐轮逼近后阳马与鳖臑体积比恒为 $2:1$：",
         latex: `V_{\\text{阳马}} : V_{\\text{鳖臑}} = 2 : 1 \\implies V_{\\text{阳马}} = \\frac{2}{3} V_{\\text{堑堵}} = \\frac{1}{3}abc`,
-        rubric: "[高考规范采分] 清晰阐述阳马居二鳖臑居一的比例证明思想 (+5分)",
+        rubric:
+          "【高考采分点】[高考规范采分] 清晰阐述阳马居二鳖臑居一的比例证明思想 (+5分)",
       },
       {
         step: 3,
@@ -253,7 +256,8 @@ export function buildPyramidDerivationPanel(
         detail:
           "代入参数值，求出各几何体体积，并验证两者之和严格充盈母体堑堵，同时验证阳马作为四棱锥其体积严格满足 $\\frac{1}{3} S_{\\text{底}} h$：",
         latex: `V_{\\text{阳马}} = \\frac{1}{3} \\cdot (${data.a.toFixed(2)} \\times ${data.b.toFixed(2)} \\times ${data.c.toFixed(2)}) = ${data.yangmaVolume.toFixed(2)}, \\quad V_{\\text{鳖臑}} = \\frac{1}{6} abc = ${data.bienaoVolume.toFixed(2)}`,
-        rubric: "[高考规范采分] 准确计算具体数值并代入公式验证闭环 (+4分)",
+        rubric:
+          "【高考采分点】[高考规范采分] 准确计算具体数值并代入公式验证闭环 (+4分)",
       },
     );
 
@@ -365,7 +369,7 @@ export function buildPyramidDerivationPanel(
           "设圆锥底面半径为 $r$，高为 $h$，底面积为 $S = \\pi r^2$。在同基准面上并排放置一个同底等高的正四棱锥，其底面正方形边长为 $a = \\sqrt{\\pi} r$，高同样为 $h$。正四棱锥可沿对角面剖分为两个底面积各为 $\\frac{1}{2}S$ 的三棱锥，体积已知为 $V_{\\text{棱锥}} = \\frac{1}{3} S h$。",
         latex: `S_{\\text{圆}} = \\pi r^2, \\quad S_{\\text{棱}} = a^2 = (\\sqrt{\\pi}r)^2 = \\pi r^2 \\implies S_{\\text{圆}} = S_{\\text{棱}}`,
         rubric:
-          "[高考规范采分] 明确构造等底等高伴随正四棱锥并列出底面积恒等式 (+3分)",
+          "【高考采分点】[高考规范采分] 明确构造等底等高伴随正四棱锥并列出底面积恒等式 (+3分)",
       },
       {
         step: 2,
@@ -374,7 +378,7 @@ export function buildPyramidDerivationPanel(
           "在任意高度 $z$（$0 \\le z \\le h$）处作平行于底面的水平截面。截面到顶点的距离为 $h - z$。由相似三角形性质，圆锥截面圆半径为 $r(z) = r \\cdot \\frac{h-z}{h}$；正四棱锥截面正方形边长为 $a(z) = a \\cdot \\frac{h-z}{h}$。代入面积公式对账：",
         latex: `S_1(z) = \\pi [r(z)]^2 = \\pi r^2 \\left(\\frac{h-z}{h}\\right)^2, \\quad S_2(z) = [a(z)]^2 = a^2 \\left(\\frac{h-z}{h}\\right)^2 \\implies S_1(z) \\equiv S_2(z)`,
         rubric:
-          "[高考规范采分] 准确运用相似比写出截面积解析式并严格证明恒等 (+5分)",
+          "【高考采分点】[高考规范采分] 准确运用相似比写出截面积解析式并严格证明恒等 (+5分)",
       },
       {
         step: 3,
@@ -383,7 +387,7 @@ export function buildPyramidDerivationPanel(
           "由于对任意高度 $z \\in [0, h]$，截面面积总相等 $S_1(z) \\equiv S_2(z)$，由祖暅原理得圆锥体积等于伴随正四棱锥体积，从而完成从多面体到旋转体锥体体积的严格演绎闭环：",
         latex: `V_{\\text{圆锥}} = V_{\\text{正棱锥}} = \\frac{1}{3} S_{\\text{底}} h = \\frac{1}{3}\\pi \\color{${MATH_COLORS.paramPrimary}}{r}^2 \\color{${MATH_COLORS.paramTertiary}}{h} = \\frac{1}{3} \\cdot \\pi \\times (${data.radius.toFixed(2)})^2 \\times ${data.height.toFixed(2)} = ${data.volume.toFixed(2)}`,
         rubric:
-          "[高考规范采分] 准确引用祖暅原理给出最终体积代数式与计算值 (+4分)",
+          "【高考采分点】[高考规范采分] 准确引用祖暅原理给出最终体积代数式与计算值 (+4分)",
       },
     );
 

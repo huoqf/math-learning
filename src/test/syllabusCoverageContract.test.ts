@@ -4,8 +4,19 @@
  * 依据《知识树完整性与全站 89 页动画核查报告》§2.2 课标主条目对照（71 条）固化。
  * 目的：
  * 1. 锁死高中数学课标 71 个主条目的教学承载基线，防范后续重构无意丢失承载页面（No Silent Regression）；
- * 2. 严格受控 G1~G7 缺口清单与白名单，杜绝未登记的课标条目发生退化；
+ * 2. 严格受控缺口清单：G1~G6 已于 2026-10 补齐并在此**点名钉死**（改回 gap/partial 即红），
+ *    仅 G7（函数应用建模）按报告判定「可接受缺口」单挂账；
  * 3. 校验课标条目与全库实际 routeEntries / knowledgeTree 节点的一致性。
+ *
+ * ── 2026-10-22 基线更新 ──
+ * 报告 §2.3 的七个缺口，G1~G6 已全部落地独立承载面（不再是「仅考点提示」）：
+ *   G1 Sn↔an 互化     → /sequence-arithmetic（SequenceArithmeticSnToAnScene）
+ *   G2 数学归纳法      → /sequence-recurrence（RecurrenceInductionScene）
+ *   G3 频率的稳定性     → /probability-classical（ClassicalFrequencyScene）
+ *   G4 不等式性质      → /inequality-basic（InequalityPropertiesScene）
+ *   G5 平面向量坐标运算 → /vector-linear（VectorCoordinateScene）
+ *   G6 集合子集/真子集  → /set（SubsetHierarchyScene）
+ * 覆盖率由 66/71（92.9%）升至 70/71（98.6%）。契约若继续标 gap，会误导后续开发重复造轮子。
  */
 
 import { describe, expect, it } from "vitest";
@@ -30,20 +41,16 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     book: "必修一",
     chapter: "集合与常用逻辑",
     itemTitle: "集合的概念与元素三性",
-    status: "partial",
+    status: "covered",
     pages: ["/set"],
-    gapCode: "G6",
-    gapReason: "/set 仅以考点提示呈现，缺少元素-集合归属直观层级",
   },
   {
     id: "syl-comp1-set-relation",
     book: "必修一",
     chapter: "集合与常用逻辑",
     itemTitle: "集合间的基本关系（子集/真子集）",
-    status: "partial",
-    pages: ["/set-logic"],
-    gapCode: "G6",
-    gapReason: "/set-logic 讲包含关系服务于充要条件，缺少独立子集真子集演示",
+    status: "covered",
+    pages: ["/set"],
   },
   {
     id: "syl-comp1-set-op",
@@ -74,10 +81,8 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     book: "必修一",
     chapter: "不等式",
     itemTitle: "等式性质与不等式的性质（2.1）",
-    status: "gap",
-    pages: [],
-    gapCode: "G4",
-    gapReason: "选填不等式性质判断高频，全库尚无独立作差法与同向可加可乘演示",
+    status: "covered",
+    pages: ["/inequality-basic"],
   },
   {
     id: "syl-comp1-amgm",
@@ -240,10 +245,8 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     book: "必修二",
     chapter: "平面向量与复数",
     itemTitle: "平面向量的坐标表示与坐标运算（6.3）",
-    status: "partial",
-    pages: ["/vector-dot-product"],
-    gapCode: "G5",
-    gapReason: "仅有数量积坐标，缺加减数乘坐标运算与共线坐标判据 x1y2-x2y1=0",
+    status: "covered",
+    pages: ["/vector-linear"],
   },
   {
     id: "syl-comp2-triangle-solve",
@@ -331,10 +334,8 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     book: "必修二",
     chapter: "概率",
     itemTitle: "频率与概率（10.3 频率的稳定性）",
-    status: "gap",
-    pages: [],
-    gapCode: "G3",
-    gapReason: "大样本频率逼近概率的稳定性探究全库缺独立承载",
+    status: "covered",
+    pages: ["/probability-classical"],
   },
 
   // ── 选择性必修一（13 项：空间向量、直线与圆、圆锥曲线）──
@@ -449,10 +450,8 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     book: "选择性必修二",
     chapter: "数列",
     itemTitle: "数列的概念与通项公式、Sn与an互化（4.1）",
-    status: "gap",
-    pages: [],
-    gapCode: "G1",
-    gapReason: "已知 Sn 求 an 逆向考法全库尚无独立教学模型",
+    status: "covered",
+    pages: ["/sequence-arithmetic"],
   },
   {
     id: "syl-sel2-seq-arithmetic",
@@ -491,10 +490,8 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     book: "选择性必修二",
     chapter: "数列",
     itemTitle: "数学归纳法（4.4）",
-    status: "gap",
-    pages: [],
-    gapCode: "G2",
-    gapReason: "课标选学条目，当前仅注释提及，无独立教学演示",
+    status: "covered",
+    pages: ["/sequence-recurrence"],
   },
   {
     id: "syl-sel2-deriv-tangent",
@@ -642,11 +639,12 @@ describe("课标覆盖差集自动化门禁契约 (Syllabus Coverage Contract)",
       (i) => i.status === "gap",
     ).length;
 
-    expect(coveredCount).toBe(62);
-    expect(partialCount).toBe(4);
-    expect(gapCount).toBe(5);
-    // 覆盖 + 部分覆盖 = 66 项（92.9% 课标覆盖率）
-    expect(coveredCount + partialCount).toBe(66);
+    // G1~G6 闭环后：62+7=69 covered、4-3=1 partial、5-4=1 gap
+    expect(coveredCount).toBe(69);
+    expect(partialCount).toBe(1);
+    expect(gapCount).toBe(1);
+    // 覆盖 + 部分覆盖 = 70 项（98.6% 课标覆盖率，原 66/71 = 92.9%）
+    expect(coveredCount + partialCount).toBe(70);
   });
 
   it("防静默退化（No Silent Regression）：所有已覆盖条目的声明路由必须在全库真实注册", () => {
@@ -663,7 +661,47 @@ describe("课标覆盖差集自动化门禁契约 (Syllabus Coverage Contract)",
     expect(unresolvablePages).toEqual([]);
   });
 
-  it("缺口受控闭环：G1~G7 七大缺口必须严格登记 gapCode 与 gapReason，禁止未登记缺口扩散", () => {
+  it("已闭环缺口不得复活：G1~G6 的承载条目必须钉死在 covered", () => {
+    // 缺口码 → 承载条目 id。报告 §2.3 的七项缺口已补六项，任何一条被改回 gap/partial
+    // 都会在这里立刻报红，避免「补了又退」而无人察觉。
+    const CLOSED_GAPS: Record<string, string> = {
+      G1: "syl-sel2-seq-concept",
+      G2: "syl-sel2-induction",
+      G3: "syl-comp2-prob-frequency",
+      G4: "syl-comp1-ineq-properties",
+      G5: "syl-comp2-vector-coord-ops",
+      G6: "syl-comp1-set-relation",
+    };
+
+    for (const [code, id] of Object.entries(CLOSED_GAPS)) {
+      const item = SYLLABUS_CORE_ITEMS.find((i) => i.id === id);
+      expect(item, `${code} 的承载条目 ${id} 已从契约中消失`).toBeDefined();
+      expect(item!.status, `缺口 ${code} 已补齐（${id}），状态不得回退`).toBe(
+        "covered",
+      );
+      expect(
+        item!.gapCode,
+        `缺口 ${code} 已闭环，不得再挂 gapCode`,
+      ).toBeUndefined();
+      expect(
+        item!.pages.length,
+        `缺口 ${code} 已闭环，必须声明真实承载路由`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("挂账缺口唯一性：当前只允许 G7（函数应用建模）单挂账", () => {
+    const openGapCodes = [
+      ...new Set(
+        SYLLABUS_CORE_ITEMS.filter((i) => i.gapCode !== undefined).map(
+          (i) => i.gapCode!,
+        ),
+      ),
+    ];
+    expect(openGapCodes).toEqual(["G7"]);
+  });
+
+  it("状态字段自洽：gap 必带 code+reason，covered 必无 code，partial 必带 reason", () => {
     const validGapCodes = new Set(["G1", "G2", "G3", "G4", "G5", "G6", "G7"]);
 
     for (const item of SYLLABUS_CORE_ITEMS) {
@@ -694,15 +732,6 @@ describe("课标覆盖差集自动化门禁契约 (Syllabus Coverage Contract)",
         }
       }
     }
-
-    const allWithGap = SYLLABUS_CORE_ITEMS.filter(
-      (i) => i.gapCode !== undefined,
-    );
-    const gapCodesFound = new Set(allWithGap.map((i) => i.gapCode!));
-    expect(gapCodesFound.size).toBe(7);
-    expect([...gapCodesFound].sort()).toEqual(
-      ["G1", "G2", "G3", "G4", "G5", "G6", "G7"].sort(),
-    );
   });
 
   it("课标条目分册归属拓扑一致性：条目所挂载路由的节点分册不得迟于条目所属分册", () => {

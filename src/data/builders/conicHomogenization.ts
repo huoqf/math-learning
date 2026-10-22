@@ -56,22 +56,22 @@ export function buildConicHomogenizationPanel(
         ? `\\begin{cases} X = x - x_0,\\ Y = y - y_0 \\\\ m X + n Y = 1 \\end{cases} \\quad (${result.lineEqLatex})`
         : `m x + n y = 1 \\quad (${result.lineEqLatex})`,
       rubric: isShift
-        ? "建立平移坐标系并写出割线的 $mX+nY=1$ 形式（2分）"
-        : "把割线方程化为 $mx+ny=1$（2分）",
+        ? "【高考采分点】建立平移坐标系并写出割线的 $mX+nY=1$ 形式（2分）"
+        : "【高考采分点】把割线方程化为 $mx+ny=1$（2分）",
     },
     {
       step: 2,
       title: "建模展开 · 用 $1^2$ 升次构造齐次方程",
       detail: `把圆锥曲线方程中的一次项与常数项按 $1^2 = (mX + nY)^2$ 整体替换，使方程各项都成为二次齐次项，整理得关于 $X,\\ Y$ 的二次齐次方程（系数 $A' = ${result.homoA.toFixed(3)},\\ B' = ${result.homoB.toFixed(3)},\\ C' = ${result.homoC.toFixed(3)}$）：`,
       latex: `${result.homoEqLatex} \\\\ \\implies A' X^2 + B' XY + C' Y^2 = 0`,
-      rubric: "完成齐次升次并写出二次齐次方程（3分）",
+      rubric: "【高考采分点】完成齐次升次并写出二次齐次方程（3分）",
     },
     {
       step: 3,
       title: "求解反思 · 同除 $X^2$ 得斜率方程并用韦达定理",
       detail: `两边同除以 $X^2$（$X \\ne 0$）得关于 $k = \\frac{Y}{X}$ 的一元二次方程 $C' k^2 + B' k + A' = 0$，由韦达定理直接读出两根之和与积；若 $C' = 0$ 或割线铅垂，须单独讨论斜率不存在的情形。代入当前参数：`,
       latex: `k_1 + k_2 = -\\frac{B'}{C'} = ${result.theoreticalSum !== null ? result.theoreticalSum.toFixed(4) : "\\text{斜率不存在}"},\\quad k_1 k_2 = \\frac{A'}{C'} = ${result.theoreticalProduct !== null ? result.theoreticalProduct.toFixed(4) : "\\text{斜率不存在}"}`,
-      rubric: "同除 $X^2$ 并写出韦达定理斜率关系（3分）",
+      rubric: "【高考采分点】同除 $X^2$ 并写出韦达定理斜率关系（3分）",
     },
     ...(studyMode === "asymmetric"
       ? [
@@ -81,7 +81,7 @@ export function buildConicHomogenizationPanel(
             detail: `遇到 $\\lambda k_1 + \\mu k_2 = 0$ 这类非对称条件时，严禁直接套用记忆结论，须联立 $k_1 + k_2 = S$、$k_1 k_2 = P$ 解出两根再代入，消元后得割线参数的二次型方程：`,
             latex: `\\begin{cases} \\lambda k_1 + \\mu k_2 = 0 \\\\ k_1 + k_2 = S \\\\ k_1 k_2 = P \\end{cases} \\implies \\lambda \\mu S^2 + (\\lambda - \\mu)^2 P = 0`,
             rubric:
-              "按解方程组顺序消元，导出割线参数约束并检验 $\\Delta > 0$（3分）",
+              "【高考采分点】按解方程组顺序消元，导出割线参数约束并检验 $\\Delta > 0$（3分）",
           },
         ]
       : []),

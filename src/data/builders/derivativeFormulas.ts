@@ -137,7 +137,7 @@ export function buildDerivativeFormulasPanel(
       title: "审题定法 · 确定基本函数类型与法则公式",
       detail: `当前探究函数为 $${res.funcLatex}$，其所属课标基本初等函数求导母公式为 $${res.derivativeRuleLatex}$。定义域为 $${res.domainDesc}$。`,
       latex: res.derivativeRuleLatex,
-      rubric: "准确写出当前函数的导函数法则公式得 2 分",
+      rubric: "【高考采分点】准确写出当前函数的导函数法则公式得 2 分",
     },
     {
       step: 2,
@@ -148,7 +148,7 @@ export function buildDerivativeFormulasPanel(
       latex: res.isValid
         ? `\\frac{\\Delta y}{\\Delta x} = \\frac{${formatMathNumber(res.deltaY)}}{${formatMathNumber(res.deltaX)}} = ${formatMathNumber(res.secantSlope)}`
         : "\\text{该点无定义，割线模型不成立}",
-      rubric: "列出差商计算式并算出割线斜率得 2 分",
+      rubric: "【高考采分点】列出差商计算式并算出割线斜率得 2 分",
     },
     {
       step: 3,
@@ -159,7 +159,7 @@ export function buildDerivativeFormulasPanel(
       latex: res.isValid
         ? `f'(${formatMathNumber(res.x0)}) = ${formatMathNumber(res.fpx0)} \\implies y ${formatSubtractTerm(res.fx0)} = ${slopeCoeff}${formatParenSubtractTerm(res.x0)}`
         : "\\text{无定义，无切线}",
-      rubric: "写出瞬时导数值并由点斜式写出切线方程得 2 分",
+      rubric: "【高考采分点】写出瞬时导数值并由点斜式写出切线方程得 2 分",
     },
   ];
 

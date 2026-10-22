@@ -111,21 +111,21 @@ export function buildLineEquationPanel(
           title: "审题定法 · 提取已知定点与斜率",
           detail: `已知直线过定点 $P_0(x_0, y_0) = (${formatMathNumber(x0)}, ${formatMathNumber(y0)})$，且直线的倾斜角 $\\alpha \\neq 90^\\circ$，斜率 $k = ${formatMathNumber(k)}$ 存在。`,
           latex: `P_0(${formatMathNumber(x0)}, ${formatMathNumber(y0)}), \\quad k = ${formatMathNumber(k)}`,
-          rubric: "采分点：明确已知点与斜率存在前提（2分）",
+          rubric: "【高考采分点】明确已知点与斜率存在前提（2分）",
         },
         {
           step: 2,
           title: "代数展开 · 构建点斜式方程",
           detail: `根据直线上任意动点 $P(x, y)$ 与定点 $P_0$ 满足的斜率定义式 $\\frac{y - y_0}{x - x_0} = k$，去分母代入参数构建点斜式：`,
           latex: `y - y_0 = k(x - x_0) \\implies y - (${formatMathNumber(y0)}) = ${formatMathNumber(k)}(x - (${formatMathNumber(x0)}))`,
-          rubric: "采分点：规范写出点斜式方程（4分）",
+          rubric: "【高考采分点】规范写出点斜式方程（4分）",
         },
         {
           step: 3,
           title: "求解反思 · 整理为标准一般式与防漏讨论",
           detail: `移项整理得标准一般式 $Ax + By + C = 0$。注意：解答题中若设点斜式，必须提前说明斜率不存在（即垂直于 $x$ 轴）的特殊情形以防失分。`,
           latex: `y - (${formatMathNumber(y0)}) = ${formatMathNumber(k)}(x - (${formatMathNumber(x0)})) \\implies ${formatGeneralEquationLatex(A, B, C)}`,
-          rubric: "采分点：化为一般式并注意斜率不存在讨论（2分）",
+          rubric: "【高考采分点】化为一般式并注意斜率不存在讨论（2分）",
         },
       );
     } else if (form === "slopeIntercept") {
@@ -160,21 +160,21 @@ export function buildLineEquationPanel(
           title: "审题定法 · 提取斜率与截距",
           detail: `直线斜率 $k = ${formatMathNumber(k)}$，在 $y$ 轴上的截距 $b = ${formatMathNumber(b)}$（即直线与 $y$ 轴交于定点 $P(0, ${formatMathNumber(b)})$）。`,
           latex: `k = ${formatMathNumber(k)}, \\quad b = ${formatMathNumber(b)} \\implies \\text{直线过点 } P(0, ${formatMathNumber(b)})`,
-          rubric: "采分点：明确斜率与截距的几何意义（2分）",
+          rubric: "【高考采分点】明确斜率与截距的几何意义（2分）",
         },
         {
           step: 2,
           title: "代数建模 · 代入斜截式模型",
           detail: `由斜截式标准型 $y = kx + b$，将已知参数代入解析式并展开：`,
           latex: `y = kx + b \\implies y = ${formatMathNumber(k)} \\cdot x ${b >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(b))} \\implies ${formatSlopeInterceptEquationLatex(k, b)}`,
-          rubric: "采分点：规范写出斜截式方程（4分）",
+          rubric: "【高考采分点】规范写出斜截式方程（4分）",
         },
         {
           step: 3,
           title: "化简转化 · 移项化为标准一般式",
           detail: `将方程各项移至等号同一侧，得到平面解析几何标准一般式方程 $Ax + By + C = 0$：`,
           latex: `${formatSlopeInterceptEquationLatex(k, b)} \\implies ${formatGeneralEquationLatex(A, B, C)}`,
-          rubric: "采分点：规范化为标准一般式（2分）",
+          rubric: "【高考采分点】规范化为标准一般式（2分）",
         },
       );
     } else if (form === "twoPoint") {
@@ -217,21 +217,21 @@ export function buildLineEquationPanel(
             title: "审题定法 · 检测坐标关系",
             detail: `两定点横坐标相同：$x_1 = x_2 = ${formatMathNumber(x1)}$，两点连线垂直于 $x$ 轴（平行于 $y$ 轴）。`,
             latex: `x_1 = x_2 = ${formatMathNumber(x1)}, \\quad y_1 \\neq y_2`,
-            rubric: "采分点：发现垂直于坐标轴特殊位置（3分）",
+            rubric: "【高考采分点】发现垂直于坐标轴特殊位置（3分）",
           },
           {
             step: 2,
             title: "退化分析 · 两点式分母为零失效",
             detail: `两点式方程分母中包含 $x_2 - x_1 = 0$，故不可直接套用两点式分式形态。`,
             latex: `x_2 - x_1 = 0 \\implies \\text{两点式分式无意义}`,
-            rubric: "采分点：说明分式无意义原因（2分）",
+            rubric: "【高考采分点】说明分式无意义原因（2分）",
           },
           {
             step: 3,
             title: "特化求解 · 给出特殊直线方程",
             detail: `直线上所有点的横坐标恒为 $${formatMathNumber(x1)}$，故方程特化为铅垂线方程：`,
             latex: `x = ${formatMathNumber(x1)} \\implies x - ${formatMathNumber(x1)} = 0`,
-            rubric: "采分点：准确写出铅垂线方程（3分）",
+            rubric: "【高考采分点】准确写出铅垂线方程（3分）",
           },
         );
       } else if (isHoriz) {
@@ -241,21 +241,21 @@ export function buildLineEquationPanel(
             title: "审题定法 · 检测坐标关系",
             detail: `两定点纵坐标相同：$y_1 = y_2 = ${formatMathNumber(y1)}$，两点连线平行于 $x$ 轴（斜率 $k = 0$）。`,
             latex: `y_1 = y_2 = ${formatMathNumber(y1)}, \\quad x_1 \\neq x_2`,
-            rubric: "采分点：判定为水平直线（3分）",
+            rubric: "【高考采分点】判定为水平直线（3分）",
           },
           {
             step: 2,
             title: "退化分析 · 两点式分母为零失效",
             detail: `两点式方程纵坐标差分母 $y_2 - y_1 = 0$，不可套用两点式分式形式。`,
             latex: `y_2 - y_1 = 0 \\implies \\text{两点式分式无意义}`,
-            rubric: "采分点：说明分母为零（2分）",
+            rubric: "【高考采分点】说明分母为零（2分）",
           },
           {
             step: 3,
             title: "特化求解 · 给出水平直线方程",
             detail: `直线上所有点的纵坐标恒为 $${formatMathNumber(y1)}$，故方程为水平线方程：`,
             latex: `y = ${formatMathNumber(y1)} \\implies y - ${formatMathNumber(y1)} = 0`,
-            rubric: "采分点：准确写出水平线方程（3分）",
+            rubric: "【高考采分点】准确写出水平线方程（3分）",
           },
         );
       } else {
@@ -267,21 +267,21 @@ export function buildLineEquationPanel(
             title: "审题定法 · 验证两点不平行于坐标轴",
             detail: `点 $P_1(${formatMathNumber(x1)}, ${formatMathNumber(y1)})$ 与 $P_2(${formatMathNumber(x2)}, ${formatMathNumber(y2)})$ 满足 $x_1 \\neq x_2$ 且 $y_1 \\neq y_2$。`,
             latex: `x_2 - x_1 = ${formatMathNumber(dx)} \\neq 0, \\quad y_2 - y_1 = ${formatMathNumber(dy)} \\neq 0`,
-            rubric: "采分点：检验两点式适用前提（2分）",
+            rubric: "【高考采分点】检验两点式适用前提（2分）",
           },
           {
             step: 2,
             title: "建模代入 · 套用两点式标准方程",
             detail: `将两点坐标代入两点式方程 $\\frac{y - y_1}{y_2 - y_1} = \\frac{x - x_1}{x_2 - x_1}$：`,
             latex: `\\frac{y - (${formatMathNumber(y1)})}{${formatMathNumber(dy)}} = \\frac{x - (${formatMathNumber(x1)})}{${formatMathNumber(dx)}}`,
-            rubric: "采分点：规范代入两点式（3分）",
+            rubric: "【高考采分点】规范代入两点式（3分）",
           },
           {
             step: 3,
             title: "交叉消元 · 整理化为一般式",
             detail: `交叉相乘去分母并移项合并同类项：`,
             latex: `${formatMathNumber(dy)}(x - (${formatMathNumber(x1)})) - ${formatMathNumber(dx)}(y - (${formatMathNumber(y1)})) = 0 \\implies ${formatGeneralEquationLatex(A, B, C)}`,
-            rubric: "采分点：化简为标准一般式（3分）",
+            rubric: "【高考采分点】化简为标准一般式（3分）",
           },
         );
       }
@@ -321,21 +321,21 @@ export function buildLineEquationPanel(
             title: "审题定法 · 截距为零警示",
             detail: `直线过坐标原点 $(0, 0)$ 或平行于坐标轴，截距 $a$ 或 $b$ 为 $0$。`,
             latex: `a = ${formatMathNumber(a)}, \\quad b = ${formatMathNumber(b)} \\implies ab = 0`,
-            rubric: "采分点：说明截距为零不可用截距式（3分）",
+            rubric: "【高考采分点】说明截距为零不可用截距式（3分）",
           },
           {
             step: 2,
             title: "易错反思 · 截距式的定义域限制",
             detail: `截距式方程 $\\frac{x}{a} + \\frac{y}{b} = 1$ 的分母必须非零，过原点的直线不能用截距式表示，必须设点斜式 $y = kx$ 或一般式。`,
             latex: `\\text{截距式前提：} a \\neq 0 \\text{ 且 } b \\neq 0`,
-            rubric: "采分点：明确定义域前提条件（3分）",
+            rubric: "【高考采分点】明确定义域前提条件（3分）",
           },
           {
             step: 3,
             title: "补救求解 · 设点斜式或一般式求解",
             detail: `改设一般式 $Ax + By = 0$ 表达过原点的直线。`,
             latex: `${formatGeneralEquationLatex(A, B, 0)}`,
-            rubric: "采分点：正确给出替代方程（2分）",
+            rubric: "【高考采分点】正确给出替代方程（2分）",
           },
         );
       } else {
@@ -346,21 +346,21 @@ export function buildLineEquationPanel(
             title: "审题定法 · 提取坐标轴截距",
             detail: `直线在 $x$ 轴上的截距为 $a = ${formatMathNumber(a)}$（交点 $A(${formatMathNumber(a)}, 0)$），在 $y$ 轴上的截距为 $b = ${formatMathNumber(b)}$（交点 $B(0, ${formatMathNumber(b)})$）。`,
             latex: `A(${formatMathNumber(a)}, 0), \\quad B(0, ${formatMathNumber(b)})`,
-            rubric: "采分点：准确理解截距概念（非距离，带正负）（2分）",
+            rubric: "【高考采分点】准确理解截距概念（非距离，带正负）（2分）",
           },
           {
             step: 2,
             title: "建模代入 · 列截距式方程",
             detail: `将截距代入标准截距式方程 $\\frac{x}{a} + \\frac{y}{b} = 1$：`,
             latex: `\\frac{x}{a} + \\frac{y}{b} = 1 \\implies \\frac{x}{${formatMathNumber(a)}} + \\frac{y}{${formatMathNumber(b)}} = 1`,
-            rubric: "采分点：规范写出截距式方程（3分）",
+            rubric: "【高考采分点】规范写出截距式方程（3分）",
           },
           {
             step: 3,
             title: "几何应用 · 围成三角形面积与一般式转化",
             detail: `两边同乘以 $ab$ 化为一般式，且直线与坐标轴围成直角三角形面积 $S = \\frac{1}{2}|ab|$：`,
             latex: `${formatGeneralEquationLatex(A, B, C)}, \\quad S_{\\triangle AOB} = \\frac{1}{2}|ab| = ${formatMathNumber(area)}`,
-            rubric: "采分点：转化为一般式并求解围成面积（3分）",
+            rubric: "【高考采分点】转化为一般式并求解围成面积（3分）",
           },
         );
       }
@@ -407,7 +407,7 @@ export function buildLineEquationPanel(
           title: "审题定法 · 提取一般式系数与法向量",
           detail: `方程 $Ax + By + C = 0$ 中，$A = ${formatMathNumber(A)}, B = ${formatMathNumber(B)}, C = ${formatMathNumber(C)}$。直线的法向量为 $\\vec{n} = (A, B) = (${formatMathNumber(A)}, ${formatMathNumber(B)})$，方向向量为 $\\vec{v} = (-B, A) = (${formatMathNumber(-B)}, ${formatMathNumber(A)})$。`,
           latex: `\\vec{n} = (${formatMathNumber(A)}, ${formatMathNumber(B)}), \\quad \\vec{v} = (${formatMathNumber(-B)}, ${formatMathNumber(A)})`,
-          rubric: "采分点：写出一般式系数与特征几何向量（2分）",
+          rubric: "【高考采分点】写出一般式系数与特征几何向量（2分）",
         },
         {
           step: 2,
@@ -420,7 +420,7 @@ export function buildLineEquationPanel(
             Math.abs(B) > 1e-9
               ? `k = -\\frac{A}{B} = -\\frac{${formatMathNumber(A)}}{${formatMathNumber(B)}} = ${formatMathNumber(lineProps.slope ?? 0)}, \\quad \\alpha = ${formatMathNumber(lineProps.inclinationDeg)}^\\circ`
               : `B = 0 \\implies k \\text{ 不存在}, \\quad \\alpha = 90^\\circ`,
-          rubric: "采分点：由一般式准确求解斜率与倾斜角（3分）",
+          rubric: "【高考采分点】由一般式准确求解斜率与倾斜角（3分）",
         },
         {
           step: 3,
@@ -435,7 +435,7 @@ export function buildLineEquationPanel(
               ? `b = -\\frac{C}{B} = -\\frac{${formatMathNumber(C)}}{${formatMathNumber(B)}} = ${formatMathNumber(lineProps.yIntercept ?? 0)}`
               : `B = 0 \\implies \\text{平行于 } y \\text{ 轴，} b \\text{ 不存在}`
           }`,
-          rubric: "采分点：正确求解坐标轴截距（3分）",
+          rubric: "【高考采分点】正确求解坐标轴截距（3分）",
         },
       );
     }
@@ -624,14 +624,14 @@ export function buildLineEquationPanel(
         title: "审题定法 · 提炼已知量与法向量",
         detail: `给定平面待测点 $P_0(x_0, y_0) = (${formatMathNumber(x0)}, ${formatMathNumber(y0)})$，目标直线一般式方程为 $Ax + By + C = 0$，其中系数 $A = ${formatMathNumber(A)}, B = ${formatMathNumber(B)}, C = ${formatMathNumber(C)}$。直线的法向量为 $\\vec{n} = (${formatMathNumber(A)}, ${formatMathNumber(B)})$。`,
         latex: `P_0(${formatMathNumber(x0)}, ${formatMathNumber(y0)}), \\quad L: ${formatGeneralEquationLatex(A, B, C)}`,
-        rubric: "采分点：明确已知量与直线方程（2分）",
+        rubric: "【高考采分点】明确已知量与直线方程（2分）",
       },
       {
         step: 2,
         title: "建模展开 · 代入距离公式",
         detail: `套用高中核心公式 $d = \\frac{|Ax_0 + By_0 + C|}{\\sqrt{A^2 + B^2}}$，将点坐标代入分子绝对值项，将系数代入分母模长项：`,
         latex: `d = \\frac{|${formatMathNumber(A)} \\cdot (${formatMathNumber(x0)}) + (${formatMathNumber(B)}) \\cdot (${formatMathNumber(y0)}) + (${formatMathNumber(C)})|}{\\sqrt{(${formatMathNumber(A)})^2 + (${formatMathNumber(B)})^2}} = \\frac{${formatMathNumber(numeratorVal)}}{${formatMathNumber(denomVal)}}`,
-        rubric: "采分点：规范代入展开距离公式（4分）",
+        rubric: "【高考采分点】规范代入展开距离公式（4分）",
       },
       {
         step: 3,
@@ -641,7 +641,7 @@ export function buildLineEquationPanel(
             ? "计算得距离 $d = 0$。说明代入分子为零，点 $P_0$ 恰好位于目标直线 $L$ 上，垂足 $Q$ 与点 $P_0$ 重合。"
             : `计算得最短垂直距离 $d = ${formatMathNumber(p2l.distance)}$。过点 $P_0$ 作直线的垂线 $P_0 Q \\perp L$，求得垂足 $Q(x_H, y_H) = (${formatMathNumber(p2l.foot.x)}, ${formatMathNumber(p2l.foot.y)})$。`,
         latex: `d = \\mathbf{${formatMathNumber(p2l.distance)}}, \\quad Q(${formatMathNumber(p2l.foot.x)}, ${formatMathNumber(p2l.foot.y)})`,
-        rubric: "采分点：准确求出解与垂足坐标（2分）",
+        rubric: "【高考采分点】准确求出解与垂足坐标（2分）",
       },
     );
 
@@ -749,7 +749,7 @@ export function buildLineEquationPanel(
           B2.toFixed(1) +
           ")$。",
         latex: `\\vec{n}_1 = (${A.toFixed(1)}, ${B.toFixed(1)}), \\quad \\vec{n}_2 = (${A2.toFixed(1)}, ${B2.toFixed(1)})`,
-        rubric: "采分点：提取两直线系数与法向量（2分）",
+        rubric: "【高考采分点】提取两直线系数与法向量（2分）",
       },
       {
         step: 2,
@@ -761,7 +761,7 @@ export function buildLineEquationPanel(
           crossProd.toFixed(2) +
           "$：",
         latex: `A_1 A_2 + B_1 B_2 = ${dotProd.toFixed(2)}, \\quad A_1 B_2 - A_2 B_1 = ${crossProd.toFixed(2)}`,
-        rubric: "采分点：列出平行与垂直的代数充要判据（3分）",
+        rubric: "【高考采分点】列出平行与垂直的代数充要判据（3分）",
       },
       {
         step: 3,
@@ -791,7 +791,7 @@ export function buildLineEquationPanel(
             : rel.type === "coincident"
               ? `L_1 = L_2 \\quad (\\text{重合})`
               : `P(${rel.intersection?.x.toFixed(2) ?? "0"}, ${rel.intersection?.y.toFixed(2) ?? "0"}), \\quad \\theta = ${rel.angleDeg.toFixed(1)}^\\circ`,
-        rubric: "采分点：准确判定位置并给出交点或距离（3分）",
+        rubric: "【高考采分点】准确判定位置并给出交点或距离（3分）",
       },
     );
 
@@ -900,7 +900,7 @@ export function buildLineEquationPanel(
           title: "审题定法 · 列出相交直线系方程",
           detail: `给定两相交基准直线 $L_1$ 与 $L_2$，引入变参数 $\\lambda = ${formatMathNumber(lam)}$ 构造直线系：$L_1 + \\lambda L_2 = 0$。`,
           latex: `(${formatLinearPoly(A, B, C)}) + \\lambda (${formatLinearPoly(A2, B2, C2)}) = 0`,
-          rubric: "采分点：写出相交直线系标准组合型（2分）",
+          rubric: "【高考采分点】写出相交直线系标准组合型（2分）",
         },
         {
           step: 2,
@@ -908,14 +908,14 @@ export function buildLineEquationPanel(
           detail:
             "要使方程对任意实数 $\\lambda \\in \\mathbb{R}$ 恒成立，根据多项式恒等定理，必须使 $\\lambda$ 的系数与常数项分别同时为 $0$：",
           latex: `\\begin{cases} ${formatLinearPoly(A, B, C)} = 0 \\\\ ${formatLinearPoly(A2, B2, C2)} = 0 \\end{cases}`,
-          rubric: "采分点：运用分离参数法列出联立方程组（3分）",
+          rubric: "【高考采分点】运用分离参数法列出联立方程组（3分）",
         },
         {
           step: 3,
           title: "求解反思 · 联立解出公共定点坐标",
           detail: `解该二元一次方程组，求得直线系恒过的定点坐标为 $P_0(${formatMathNumber(rel.intersection.x)}, ${formatMathNumber(rel.intersection.y)})$。注意：该直线系包含了过 $P_0$ 的除 $L_2$ 本身之外的所有直线。`,
           latex: `P_0(${formatMathNumber(rel.intersection.x)}, ${formatMathNumber(rel.intersection.y)}) \\quad (\\text{恒定不变})`,
-          rubric: "采分点：准确求出定点坐标并指出不含 L₂（3分）",
+          rubric: "【高考采分点】准确求出定点坐标并指出不含 L₂（3分）",
         },
       );
     }

@@ -18,6 +18,7 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { fitViewRange } from "@/math/viewRange";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import {
   MONOTONICITY_MODELS,
@@ -67,16 +68,35 @@ export function DerivativeMonotonicityAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  const scale = useSceneScale({
-    vp,
-    xRange: currentModel.xRange,
-    yRange: currentModel.yRange,
-  });
-
   // 数学计算结果
   const modelResult = useMemo(() => {
     return solveMonotonicityModel(modelKey, params.a ?? 1.0);
   }, [modelKey, params.a]);
+
+  // 视口自适应：极值点与定义域端点必须可见。
+  // 各模型的 xRange 是「典型参数」下的基准（Floor Clamp），参数拉到边界时
+  // （如 a 使极值点移到 x≈7.4）视口整体外扩，而不是把极值点裁掉。
+  // 指数模型在定义域端点会出现 ±Infinity，由 fitViewRange 内部剔除。
+  const viewRange = useMemo(() => {
+    const keyPoints = [
+      ...modelResult.extrema.map((e) => ({ x: e.x, y: e.y })),
+      ...modelResult.domainIntervals.flatMap(([lo, hi]) => [
+        { x: lo, y: modelResult.fn(lo) },
+        { x: hi, y: modelResult.fn(hi) },
+      ]),
+    ];
+    return fitViewRange(keyPoints, {
+      defaultXRange: currentModel.xRange,
+      defaultYRange: currentModel.yRange,
+    });
+  }, [modelResult, currentModel]);
+
+  // 视口与缩放比例
+  const scale = useSceneScale({
+    vp,
+    xRange: viewRange.xRange,
+    yRange: viewRange.yRange,
+  });
 
   // 右屏看板数据
   const mathData = useMemo(() => {

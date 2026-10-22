@@ -351,7 +351,7 @@ function buildSubsetPanel(
             ? `B \\subseteq A \\land B \\ne A \\implies B \\subsetneq A`
             : `A \\not\\subseteq B \\land B \\not\\subseteq A`,
       rubric:
-        "[高考采分点] 写出 $A \\subseteq B$ 后再补「存在 $x \\in B, x \\notin A$」才能落真子集",
+        "【高考采分点】写出 $A \\subseteq B$ 后再补「存在 $x \\in B, x \\notin A$」才能落真子集",
     },
   ];
 

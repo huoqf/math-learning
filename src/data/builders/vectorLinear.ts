@@ -517,14 +517,14 @@ export function buildVectorLinearPanel(
         title: "符号表达式 · 写出两向量的坐标形式",
         detail: `把两向量的起点都平移到原点 $O$，则终点坐标就是向量坐标：$\\vec{a} = (${formatMathNumber(vecA.x)}, ${formatMathNumber(vecA.y)})$、$\\vec{b} = (${formatMathNumber(vecB.x)}, ${formatMathNumber(vecB.y)})$。$|\\vec{a}| = ${normA.toFixed(2)}$、$|\\vec{b}| = ${normB.toFixed(2)}$。`,
         latex: `\\vec{a} = (x_a, y_a), \\quad \\vec{b} = (x_b, y_b)`,
-        rubric: "采分点：写出两向量的坐标形式（2分）",
+        rubric: "【高考采分点】写出两向量的坐标形式（2分）",
       },
       {
         step: 2,
         title: "代入坐标 · 同名分量分别运算",
         detail: `加减法只对同名分量运算：$\\vec{a}+\\vec{b} = (${formatMathNumber(vecA.x)} + ${formatMathNumber(vecB.x)},\\ ${formatMathNumber(vecA.y)} + ${formatMathNumber(vecB.y)}) = (${formatMathNumber(sumAB.x)}, ${formatMathNumber(sumAB.y)})$；$\\vec{a}-\\vec{b} = (${formatMathNumber(diffVec.x)}, ${formatMathNumber(diffVec.y)})$；数乘 $\\lambda\\vec{a} = (${lambdaStr} \\times ${formatMathNumber(vecA.x)},\\ ${lambdaStr} \\times ${formatMathNumber(vecA.y)}) = (${formatMathNumber(lambda * vecA.x)}, ${formatMathNumber(lambda * vecA.y)})$，且 $|\\lambda\\vec{a}| = |\\lambda|\\,|\\vec{a}| = ${(Math.abs(lambda) * normA).toFixed(2)}$。`,
         latex: `\\vec{a}+\\vec{b} = (${formatMathNumber(sumAB.x)}, ${formatMathNumber(sumAB.y)}), \\quad \\vec{a}-\\vec{b} = (${formatMathNumber(diffVec.x)}, ${formatMathNumber(diffVec.y)})`,
-        rubric: "采分点：按分量运算求出加减与数乘的坐标（3分）",
+        rubric: "【高考采分点】按分量运算求出加减与数乘的坐标（3分）",
       },
       {
         step: 3,
@@ -533,7 +533,7 @@ export function buildVectorLinearPanel(
           ? `$x_ay_b - x_by_a = ${formatMathNumber(vecA.x)}\\times${formatMathNumber(vecB.y)} - ${formatMathNumber(vecB.x)}\\times${formatMathNumber(vecA.y)} = ${formatMathNumber(detAB)}$，判据取零，故 $\\vec{a} \\parallel \\vec{b}$——存在实数 $\\lambda$ 使 $\\vec{b} = \\lambda\\vec{a}$。此时不能再用夹角公式求两向量夹角：夹角为 $0^\\circ$（同向）或 $180^\\circ$（反向）。`
           : `$x_ay_b - x_by_a = ${formatMathNumber(vecA.x)}\\times${formatMathNumber(vecB.y)} - ${formatMathNumber(vecB.x)}\\times${formatMathNumber(vecA.y)} = ${formatMathNumber(detAB)} \\neq 0$，判据不成立，故 $\\vec{a}$ 与 $\\vec{b}$ 不共线，它们可充当平面的一组基底，任一向量在该基底下的分解系数存在且唯一。`,
         latex: `x_ay_b - x_by_a = ${formatMathNumber(detAB)} \\;${isCollinearAB ? "=" : "\\neq"}\\; 0`,
-        rubric: "采分点：用交叉相乘判据判定共线并说明理由（2分）",
+        rubric: "【高考采分点】用交叉相乘判据判定共线并说明理由（2分）",
       },
     );
   } else if (studyMode === "linearCombo" && physics) {
@@ -554,14 +554,14 @@ export function buildVectorLinearPanel(
         title: `物理建模 · ${physics.label}`,
         detail: `${physics.model}本例中 $|${n.first.vecLatex}| = ${normA.toFixed(2)}$、$|${n.second.vecLatex}| = ${normB.toFixed(2)}$，两向量的夹角 $\theta = ${angleText}$。`,
         latex: physics.equation,
-        rubric: "采分点：把实际量抽象为向量并写出向量加法模型（2分）",
+        rubric: "【高考采分点】把实际量抽象为向量并写出向量加法模型（2分）",
       },
       {
         step: 2,
         title: "平行四边形法则 · 求合成结果",
         detail: `由平行四边形法则（等价地，把两向量首尾相接即三角形法则）得${n.resultant.name} $${n.resultant.vecLatex} = (${sumVec.x.toFixed(1)}, ${sumVec.y.toFixed(1)})$，大小 $|${n.resultant.vecLatex}| = ${normSum.toFixed(2)}$——合成结果只由两向量的大小与夹角决定。`,
         latex: `|${n.resultant.vecLatex}| = \\sqrt{|${n.first.vecLatex}|^2 + 2${n.first.vecLatex} \\cdot ${n.second.vecLatex} + |${n.second.vecLatex}|^2}`,
-        rubric: "采分点：用向量加法法则合成并求出合成结果的大小（3分）",
+        rubric: "【高考采分点】用向量加法法则合成并求出合成结果的大小（3分）",
       },
       n.third
         ? {
@@ -571,14 +571,14 @@ export function buildVectorLinearPanel(
               ? `两已知向量共线时三力首尾相接退化为一维线段（闭合三角形压扁成一条直线），但平衡条件不变：${n.third.name}仍与${n.resultant.name}等大反向，$|${n.third.vecLatex}| = |${n.resultant.vecLatex}| = ${normSum.toFixed(2)}$。`
               : `三力平衡的向量判据是合力为零，即 $${n.first.vecLatex} + ${n.second.vecLatex} + ${n.third.vecLatex} = \\vec{0}$：${n.third.name}必与${n.resultant.name}等大反向，故 $|${n.third.vecLatex}| = |${n.resultant.vecLatex}| = ${normSum.toFixed(2)}$，方向由 $${n.third.vecLatex} = (${closingVec.x.toFixed(1)}, ${closingVec.y.toFixed(1)})$ 给出——三力首尾相接正好绕回起点。`,
             latex: `${n.first.vecLatex} + ${n.second.vecLatex} + ${n.third.vecLatex} = \\vec{0}`,
-            rubric: "采分点：由合力为零判定平衡并求出第三个力（2分）",
+            rubric: "【高考采分点】由合力为零判定平衡并求出第三个力（2分）",
           }
         : {
             step: 3,
             title: "合成结果收口 · 向量和的平方公式",
             detail: `向量和的平方公式 $|${n.first.vecLatex} + ${n.second.vecLatex}|^2 = |${n.first.vecLatex}|^2 + 2${n.first.vecLatex} \\cdot ${n.second.vecLatex} + |${n.second.vecLatex}|^2$ 是通用工具：两向量的大小与夹角一旦确定，合成结果的大小随之确定，不必再画图量长度。本例 $|${n.resultant.vecLatex}| = ${normSum.toFixed(2)}$。`,
             latex: `${n.first.vecLatex} + ${n.second.vecLatex} = ${n.resultant.vecLatex}`,
-            rubric: "采分点：用向量和的平方公式求合成结果的大小（2分）",
+            rubric: "【高考采分点】用向量和的平方公式求合成结果的大小（2分）",
           },
     );
   } else if (studyMode === "linearCombo") {
@@ -590,14 +590,14 @@ export function buildVectorLinearPanel(
           "由向量的数乘与加法法则，平面内任一向量都可写成两个已知向量的线性组合。",
         latex:
           "\\vec{s} = \\lambda \\vec{a} + \\mu \\vec{b} = (\\lambda x_a + \\mu x_b,\\; \\lambda y_a + \\mu y_b)",
-        rubric: "采分点：写出线性组合式（2分）",
+        rubric: "【高考采分点】写出线性组合式（2分）",
       },
       {
         step: 2,
         title: "代入坐标 · 实虚分量合成",
         detail: `按分量相加得合成向量 $\\vec{s} = (${sumVec.x.toFixed(1)}, ${sumVec.y.toFixed(1)})$，其模长为 $|\\vec{s}| = ${normSum.toFixed(2)}$；$|\\vec{a}| = ${normA.toFixed(2)}$、$|\\vec{b}| = ${normB.toFixed(2)}$。`,
         latex: `\\vec{s} = \\lambda\\vec{a} + \\mu\\vec{b} = (${sumVec.x.toFixed(1)}, ${sumVec.y.toFixed(1)})`,
-        rubric: "采分点：按分量合成求合成向量（2分）",
+        rubric: "【高考采分点】按分量合成求合成向量（2分）",
       },
       {
         step: 3,
@@ -606,7 +606,7 @@ export function buildVectorLinearPanel(
           ? `数量积 $\\vec{a}\\cdot\\vec{b} = ${dotProduct.toFixed(2)}$，夹角 $\\theta = ${angleDeg.toFixed(1)}^\\circ$；由 $|\\vec{a}-\\vec{b}|^2 = |\\vec{a}|^2 - 2\\vec{a}\\cdot\\vec{b} + |\\vec{b}|^2$ 可解出差向量模长。`
           : `数量积 $\\vec{a}\\cdot\\vec{b} = ${dotProduct.toFixed(2)}$；因其中一个向量为零向量，夹角无定义，此时不得代入 $\\cos\\theta = \\dfrac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}||\\vec{b}|}$ 求角。`,
         latex: `\\vec{a}\\cdot\\vec{b} = ${dotProduct.toFixed(2)}, \\quad \\cos\\theta = \\frac{\\vec{a}\\cdot\\vec{b}}{|\\vec{a}||\\vec{b}|}`,
-        rubric: "采分点：用数量积求夹角与模长（3分）",
+        rubric: "【高考采分点】用数量积求夹角与模长（3分）",
       },
       {
         step: 4,
@@ -616,7 +616,7 @@ export function buildVectorLinearPanel(
             ? `把 $\\vec{a}$、$\\vec{b}$ 各自单位化：$\\vec{e}_a = (${unitA.x.toFixed(2)}, ${unitA.y.toFixed(2)})$、$\\vec{e}_b = (${unitB.x.toFixed(2)}, ${unitB.y.toFixed(2)})$，则 $\\vec{e}_a \\cdot \\vec{e}_b = ${unitDotProduct.toFixed(4)} = \\cos\\theta$——夹角只由两个单位向量决定，与 $|\\vec{a}|$、$|\\vec{b}|$ 的大小无关。`
             : "当前存在零向量，$\\vec{e}_a$ 或 $\\vec{e}_b$ 无定义（零向量方向任意、不可单位化），故不能用两单位向量的内积求夹角。",
         latex: `\\vec{e}_a \\cdot \\vec{e}_b = \\cos\\theta`,
-        rubric: "采分点：把夹角余弦转化为两单位向量的数量积（2分）",
+        rubric: "【高考采分点】把夹角余弦转化为两单位向量的数量积（2分）",
       },
     );
   } else if (studyMode === "collinear") {
@@ -627,14 +627,14 @@ export function buildVectorLinearPanel(
         detail:
           "取基准点 $O$，把点 $C$ 的位置向量用 $\\vec{OA}, \\vec{OB}$ 分解。",
         latex: "\\vec{OC} = x\\vec{OA} + y\\vec{OB}",
-        rubric: "采分点：写出基底分解式（1分）",
+        rubric: "【高考采分点】写出基底分解式（1分）",
       },
       {
         step: 2,
         title: "代入系数 · 求系数和",
         detail: `得 $C(${pointC.x.toFixed(1)}, ${pointC.y.toFixed(1)})$，两系数之和 $x + y = ${coeffSum.toFixed(2)}$。`,
         latex: `x + y = ${coeffSum.toFixed(2)}`,
-        rubric: "采分点：计算两系数之和（2分）",
+        rubric: "【高考采分点】计算两系数之和（2分）",
       },
       {
         step: 3,
@@ -643,7 +643,7 @@ export function buildVectorLinearPanel(
           ? `$x + y = 1$，故 $A, B, C$ 三点共线，$C$ ${isOnSegmentAB ? "落在线段 $AB$ 内部（内分点）" : "落在直线 $AB$ 的延长线上（外分点）"}。`
           : `$x + y = ${coeffSum.toFixed(2)} \\neq 1$，$C$ 偏离直线 $AB$，三点不共线。`,
         latex: `x + y = ${coeffSum.toFixed(2)} \\;\\Rightarrow\\; A, B, C \\text{ 何时共线：} x+y=1`,
-        rubric: "采分点：由系数和判定三点共线（3分）",
+        rubric: "【高考采分点】由系数和判定三点共线（3分）",
       },
     );
   } else {
@@ -654,7 +654,7 @@ export function buildVectorLinearPanel(
         detail:
           "若 $\\vec{e}_1, \\vec{e}_2$ 不共线，则平面内任一向量 $\\vec{v}$ 可唯一表示为其线性组合。",
         latex: "\\vec{v} = \\lambda_1 \\vec{e}_1 + \\lambda_2 \\vec{e}_2",
-        rubric: "采分点：写出基底下唯一分解式（2分）",
+        rubric: "【高考采分点】写出基底下唯一分解式（2分）",
       },
       {
         step: 2,
@@ -663,14 +663,14 @@ export function buildVectorLinearPanel(
           ? `代入坐标解方程组，得 $\\lambda_1 = ${lambda1.toFixed(2)}$、$\\lambda_2 = ${lambda2.toFixed(2)}$；目标向量 $\\vec{v} = (${targetVecV.x}, ${targetVecV.y})$。`
           : `判据 $D = ${detAB.toFixed(2)} = 0$，基底共线退化，方程组无唯一解。`,
         latex: `\\lambda_1 = ${isBasisValid ? lambda1.toFixed(2) : "\\text{无解}"}, \\quad \\lambda_2 = ${isBasisValid ? lambda2.toFixed(2) : "\\text{无解}"}`,
-        rubric: "采分点：解方程组求分解系数（3分）",
+        rubric: "【高考采分点】解方程组求分解系数（3分）",
       },
       {
         step: 3,
         title: "唯一性判据 · 交叉相乘非零",
         detail: `分解唯一当且仅当两基底不共线，即交叉相乘 $D = x_1 y_2 - x_2 y_1 = ${detAB.toFixed(2)} \\neq 0$。`,
         latex: `D = x_1 y_2 - x_2 y_1 = ${detAB.toFixed(2)}`,
-        rubric: "采分点：说明基底不共线是唯一分解的前提（2分）",
+        rubric: "【高考采分点】说明基底不共线是唯一分解的前提（2分）",
       },
     );
   }

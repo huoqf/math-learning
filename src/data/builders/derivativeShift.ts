@@ -259,7 +259,7 @@ export function buildDerivativeShiftPanel(
           subModel === "x_ln_x"
             ? `f'(x_0) = \\ln x_0 + x_0 + 1 - a = 0 \\implies \\ln x_0 = a - 1 - x_0`
             : `f'(x_0) = e^{x_0} - x_0 - a = 0 \\implies a = e^{x_0} - x_0`,
-        rubric: "零点存在定理与设而不求 (采分点 +4分)",
+        rubric: "【高考采分点】零点存在定理与设而不求 (采分点 +4分)",
       },
       {
         step: 2,
@@ -272,14 +272,14 @@ export function buildDerivativeShiftPanel(
           subModel === "x_ln_x"
             ? `f(x_0) = x_0(a - 1 - x_0) + \\frac{1}{2}x_0^2 - ax_0 = {\\color{${MATH_COLORS.paramSecondary}}-\\frac{1}{2}x_0^2 - x_0} = h(x_0)`
             : `f(x_0) = e^{x_0} - \\frac{1}{2}x_0^2 - (e^{x_0} - x_0)x_0 = {\\color{${MATH_COLORS.paramSecondary}}e^{x_0}(1 - x_0) + \\frac{1}{2}x_0^2} = h(x_0)`,
-        rubric: "设代消参与轨迹构建 (采分点 +4分)",
+        rubric: "【高考采分点】设代消参与轨迹构建 (采分点 +4分)",
       },
       {
         step: 3,
         title: "代入求值与范围确定",
         detail: `代入当前参数 $a = ${a.toFixed(2)}$，解算超越方程得隐零点 $x_0 \\approx ${izRes.x0.toFixed(3)}$，进而求得当前极值最值。`,
         latex: `x_0 \\approx ${izRes.x0.toFixed(3)} \\implies f(x_0) = h(x_0) \\approx ${izRes.y0.toFixed(3)}`,
-        rubric: "结合区间单调性求最值范围 (采分点 +4分)",
+        rubric: "【高考采分点】结合区间单调性求最值范围 (采分点 +4分)",
       },
     );
   } else if (mode === "shift_symmetric") {
@@ -296,7 +296,7 @@ export function buildDerivativeShiftPanel(
           subModel === "xe_neg_x"
             ? `x_0 = 1, \\quad f(x_0) = \\frac{1}{e} \\approx 0.368, \\quad f(x_1) = f(x_2) = k`
             : `x_0 = e, \\quad f(x_0) = \\frac{1}{e} \\approx 0.368, \\quad f(x_1) = f(x_2) = k`,
-        rubric: "极值点与单调区间判定 (采分点 +3分)",
+        rubric: "【高考采分点】极值点与单调区间判定 (采分点 +3分)",
       },
       {
         step: 2,
@@ -304,14 +304,14 @@ export function buildDerivativeShiftPanel(
         detail:
           "欲证 $x_1 + x_2 > 2x_0$，即证 $x_2 > 2x_0 - x_1$。由单调递减等价于证明 $f(x_2) < f(2x_0 - x_1)$。由 $f(x_1) = f(x_2)$，构造差函数 $F(x) = f(x) - f(2x_0 - x)$。",
         latex: `F(x) = f(x) - f(2x_0 - x) \\quad (x \\in (0, x_0)), \\quad F(x_0) = 0`,
-        rubric: "对称构造与目标等价转化 (采分点 +5分)",
+        rubric: "【高考采分点】对称构造与目标等价转化 (采分点 +5分)",
       },
       {
         step: 3,
         title: "求导定号与偏移结论",
         detail: `通过导数分析证明 $F'(x) > 0$，由 $F(x_0) = 0$ 推出 $F(x_1) < 0$，从而 $x_1 + x_2 > 2x_0$ 获证。当前中点 $(x_1+x_2)/2 \\approx ${shiftRes.midX.toFixed(3)} > x_0$。`,
         latex: `F(x_1) < 0 \\implies f(x_1) < f(2x_0 - x_1) \\xrightarrow{f(x_1) = f(x_2)} f(x_2) < f(2x_0 - x_1) \\implies x_1 + x_2 > 2x_0`,
-        rubric: "单调性定号与结论落地 (采分点 +4分)",
+        rubric: "【高考采分点】单调性定号与结论落地 (采分点 +4分)",
       },
     );
   } else {
@@ -323,7 +323,7 @@ export function buildDerivativeShiftPanel(
         detail:
           "连结对数曲线上两点 $P_1, P_2$，割线斜率为 $\\frac{\\ln x_2 - \\ln x_1}{x_2 - x_1} = \\frac{1}{L(x_1, x_2)}$。切点 $T(L, \\ln L)$ 处的切线斜率与割线严格平行。",
         latex: `k_{\\text{割}} = \\frac{\\ln x_2 - \\ln x_1}{x_2 - x_1} = \\frac{1}{L(x_1, x_2)} = f'(L)`,
-        rubric: "斜率等价与对数均值定义 (采分点 +4分)",
+        rubric: "【高考采分点】斜率等价与对数均值定义 (采分点 +4分)",
       },
       {
         step: 2,
@@ -331,14 +331,14 @@ export function buildDerivativeShiftPanel(
         detail:
           "令比值 $t = \\frac{x_2}{x_1} > 1$。证明 $L < \\frac{x_1 + x_2}{2}$ 等价于证明 $\\frac{t - 1}{\\ln t} < \\frac{t + 1}{2}$，构造单变量函数 $g(t) = \\ln t - \\frac{2(t-1)}{t+1}$。",
         latex: `g(t) = \\ln t - \\frac{2(t - 1)}{t + 1}, \\quad g'(t) = \\frac{(t - 1)^2}{t(t + 1)^2} > 0`,
-        rubric: "齐次换元与单变量求导 (采分点 +5分)",
+        rubric: "【高考采分点】齐次换元与单变量求导 (采分点 +5分)",
       },
       {
         step: 3,
         title: "综合确立不等式链",
         detail: `由 $g(t) > g(1) = 0$ 得证 $L < A$；同理可证几何均值 $G = \\sqrt{x_1 x_2} < L$。当前区间数值 $G \\approx ${lmRes.geoMean.toFixed(2)} < L \\approx ${lmRes.logMean.toFixed(2)} < A \\approx ${lmRes.ariMean.toFixed(2)}$。`,
         latex: `\\sqrt{x_1 x_2} < L(x_1, x_2) = \\frac{x_2 - x_1}{\\ln x_2 - \\ln x_1} < \\frac{x_1 + x_2}{2}`,
-        rubric: "不等式链确立与压轴应用 (采分点 +3分)",
+        rubric: "【高考采分点】不等式链确立与压轴应用 (采分点 +3分)",
       },
     );
   }

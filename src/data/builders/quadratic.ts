@@ -200,21 +200,21 @@ function buildFunctionMode(
         title: "审题定模 · 提公因式与配方准备",
         latex: `f(x) = ${a.toFixed(2)} \\left( x^2 + \\frac{${b.toFixed(2)}}{${a.toFixed(2)}} x \\right) + ${c.toFixed(2)}`,
         detail: `提取二次项系数 $a = ${a.toFixed(2)}$，括号内加上并减去一次项系数一半的平方 $(\\frac{b}{2a})^2$。`,
-        rubric: "准确提取二次项系数并确定配方常数",
+        rubric: "【高考采分点】准确提取二次项系数并确定配方常数",
       },
       {
         step: 2,
         title: "代数配方 · 化一般式为顶点式",
         latex: `f(x) = ${a.toFixed(2)} \\left( x ${signH} \\right)^2 ${signK}`,
         detail: `配方完成，得到顶点式 $f(x) = a(x - h)^2 + k$，其中 $h = -\\frac{b}{2a} = ${h.toFixed(2)}$，$k = \\frac{4ac-b^2}{4a} = ${k.toFixed(2)}$。`,
-        rubric: "标准配方化简，得到顶点横纵坐标",
+        rubric: "【高考采分点】标准配方化简，得到顶点横纵坐标",
       },
       {
         step: 3,
         title: "求解反思 · 对称轴与最值结论",
         latex: `\\text{对称轴: } x = ${h.toFixed(2)}, \\quad f(x)_{${a > 0 ? "\\min" : "\\max"}} = ${k.toFixed(2)}`,
         detail: `因为 $a ${a > 0 ? "> 0" : "< 0"}$，抛物线开口${a > 0 ? "向上" : "向下"}，故当 $x = ${h.toFixed(2)}$ 时取得全局${a > 0 ? "最小值" : "最大值"} ${k.toFixed(2)}。`,
-        rubric: "结合开口方向与对称轴得出最值",
+        rubric: "【高考采分点】结合开口方向与对称轴得出最值",
       },
     );
   } else {
@@ -224,7 +224,7 @@ function buildFunctionMode(
       latex: `f(x) = ${b.toFixed(2)}x ${c >= 0 ? `+ ${c.toFixed(2)}` : `- ${Math.abs(c).toFixed(2)}`}`,
       detail:
         "当 $a = 0$ 时，二次函数退化为一次函数（直线），无对称轴与顶点，在实数集上为单调函数或常数函数。",
-      rubric: "识别二次项退化情况",
+      rubric: "【高考采分点】识别二次项退化情况",
     });
   }
 }
@@ -369,7 +369,7 @@ function buildEquationMode(
         title: "判别式定性 · 确定实根个数",
         latex: `\\Delta = b^2 - 4ac = (${b.toFixed(2)})^2 - 4 \\times (${a.toFixed(2)}) \\times (${c.toFixed(2)}) = ${res.delta.toFixed(2)}`,
         detail: `计算判别式 $\\Delta = ${res.delta.toFixed(2)}$。因为 $\\Delta ${res.delta > 1e-9 ? "> 0" : Math.abs(res.delta) <= 1e-9 ? "= 0" : "< 0"}$，方程在实数范围内有 ${res.delta > 1e-9 ? "两个相异实根" : Math.abs(res.delta) <= 1e-9 ? "两个相等实根" : "零个实根（在实数范围无解）"}。`,
-        rubric: "准确计算判别式数值并判定根的存在性",
+        rubric: "【高考采分点】准确计算判别式数值并判定根的存在性",
       },
       {
         step: 2,
@@ -384,7 +384,7 @@ function buildEquationMode(
             : res.roots.length === 1
               ? `代入求根公式解得：$x_0 = ${res.roots[0].toFixed(2)}$。`
               : "由于判别式小于零，抛物线悬空，与 $x$ 轴无交点，方程无实数解。",
-        rubric: "代入求根公式完整列式计算",
+        rubric: "【高考采分点】代入求根公式完整列式计算",
       },
     );
 
@@ -394,7 +394,7 @@ function buildEquationMode(
         title: "求解反思 · 韦达定理验证",
         latex: `x_1 + x_2 = -\\frac{b}{a} = ${(-b / a).toFixed(2)}, \\quad x_1 x_2 = \\frac{c}{a} = ${(c / a).toFixed(2)}`,
         detail: `两根之和等于 $-\\frac{b}{a} = ${(-b / a).toFixed(2)}$，两根之积等于 $\\frac{c}{a} = ${(c / a).toFixed(2)}$，完美吻合韦达定理根与系数关系。`,
-        rubric: "应用韦达定理完成代数校验",
+        rubric: "【高考采分点】应用韦达定理完成代数校验",
       });
     }
   }
@@ -554,21 +554,21 @@ function buildInequalityMode(
             : res.roots.length === 1
               ? `方程有唯一重根：$x_0 = ${res.roots[0].toFixed(2)}$，抛物线与 $x$ 轴相切。`
               : "方程在实数范围无实根，抛物线全在 $x$ 轴同侧，与 $x$ 轴无交点。",
-        rubric: "求得零点作为解集区间分界点",
+        rubric: "【高考采分点】求得零点作为解集区间分界点",
       },
       {
         step: 2,
         title: "数形结合 · 开口方向与符号法则",
         latex: `a = ${a.toFixed(2)} ${a > 0 ? "> 0" : "< 0"} \\implies \\text{抛物线开口}${a > 0 ? "向上" : "向下"}`,
         detail: `结合几何图象：当 $a ${a > 0 ? "> 0" : "< 0"}$ 时，不等式 $f(x) ${ineqType} 0$ 对应图象位于 $x$ 轴${ineqType === ">" ? "上方" : "下方"}的区域。`,
-        rubric: "依据开口方向与不等号判定取值区域",
+        rubric: "【高考采分点】依据开口方向与不等号判定取值区域",
       },
       {
         step: 3,
         title: "求解反思 · 规范不等式解集",
         latex: `\\text{解集: } ${solutionText}`,
         detail: `经过区间检验，不等式 $${a.toFixed(2)}x^2 ${b >= 0 ? `+ ${b.toFixed(2)}` : `- ${Math.abs(b).toFixed(2)}`}x ${c >= 0 ? `+ ${c.toFixed(2)}` : `- ${Math.abs(c).toFixed(2)}`} ${ineqType} 0$ 的完整解集为 $${solutionText}$。`,
-        rubric: "完整给出规范集合/区间表示的解集",
+        rubric: "【高考采分点】完整给出规范集合/区间表示的解集",
       },
     );
   } else {
@@ -579,14 +579,14 @@ function buildInequalityMode(
         latex: `a = 0 \\implies ${b.toFixed(2)}x ${c >= 0 ? `+ ${c.toFixed(2)}` : `- ${Math.abs(c).toFixed(2)}`} ${ineqType} 0`,
         detail:
           "含参不等式分类讨论的首要步骤：当 $a = 0$ 时，原不等式退化为一元一次不等式或常数不等式。",
-        rubric: "讨论 a = 0 的退化情况",
+        rubric: "【高考采分点】讨论 a = 0 的退化情况",
       },
       {
         step: 2,
         title: "一次求解 · 一元一次不等式解集",
         latex: `\\text{解集: } ${solutionText}`,
         detail: `解一次不等式得到解集为 $${solutionText}$。`,
-        rubric: "求出一元一次不等式解集",
+        rubric: "【高考采分点】求出一元一次不等式解集",
       },
     );
   }

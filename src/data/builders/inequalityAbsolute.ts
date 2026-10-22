@@ -77,7 +77,8 @@ export function buildInequalityAbsolutePanel(
         detail:
           "将绝对值不等式 $|x - a| \\le c$ 转化为数轴几何模型：表示动点 $P(x)$ 到基准定点 $A(a)$ 的距离不大于阈值半径 $c$。",
         latex: `d(P, A) = |x - (${a.toFixed(1)})| ${ineqType === "<=" ? "\\le" : "\\ge"} ${c.toFixed(1)}`,
-        rubric: "审题得分点：识别单绝对值本质为数轴单定点距离模型",
+        rubric:
+          "【高考采分点】审题得分点：识别单绝对值本质为数轴单定点距离模型",
       },
       {
         step: 2,
@@ -85,7 +86,7 @@ export function buildInequalityAbsolutePanel(
         detail:
           "求解临界边界方程 $|x - a| = c$，由绝对值代数性质脱去绝对值符号，得到关于中心点 $a$ 对称的两个临界实根。",
         latex: `x - (${a.toFixed(1)}) = \\pm ${c.toFixed(1)} \\implies x_1 = ${r1.toFixed(2)}, \\; x_2 = ${r2.toFixed(2)}`,
-        rubric: "联立得分点：解出区间对称端点值",
+        rubric: "【高考采分点】联立得分点：解出区间对称端点值",
       },
       {
         step: 3,
@@ -102,7 +103,7 @@ export function buildInequalityAbsolutePanel(
             : c >= 0
               ? `x \\in (-\\infty, ${r1.toFixed(2)}] \\cup [${r2.toFixed(2)}, +\\infty)`
               : "x \\in \\mathbb{R}",
-        rubric: "求解得分点：根据不等号方向写出正确解集",
+        rubric: "【高考采分点】求解得分点：根据不等号方向写出正确解集",
       },
     ];
 
@@ -176,7 +177,7 @@ export function buildInequalityAbsolutePanel(
         detail:
           "构造函数 $f(x) = |x - a| + |x - b|$，几何本质为数轴上动点 $P(x)$ 到两定点 $A(a), B(b)$ 的距离之和 $|PA| + |PB|$。",
         latex: `f(x) = |x - (${a.toFixed(1)})| + |x - (${b.toFixed(1)})|`,
-        rubric: "审题得分点：确立两点距离之和的平底杯几何模型",
+        rubric: "【高考采分点】审题得分点：确立两点距离之和的平底杯几何模型",
       },
       {
         step: 2,
@@ -184,7 +185,7 @@ export function buildInequalityAbsolutePanel(
         detail:
           "由绝对值三角不等式放缩：$|x - a| + |x - b| = |x - a| + |b - x| \\ge |(x - a) + (b - x)| = |a - b|$，当且仅当动点 $P$ 在线段 $AB$ 上时取最小值。",
         latex: `f(x)_{\\min} = |a - b| = |${a.toFixed(1)} - (${b.toFixed(1)})| = ${distAB.toFixed(2)}`,
-        rubric: "建模得分点：求出平底杯最小值与杯底区间",
+        rubric: "【高考采分点】建模得分点：求出平底杯最小值与杯底区间",
       },
       {
         step: 3,
@@ -201,7 +202,8 @@ export function buildInequalityAbsolutePanel(
           res.intersectionRoots.length === 2
             ? `x_1 = \\frac{a+b-m}{2} = ${res.intersectionRoots[0].toFixed(2)}, \\; x_2 = \\frac{a+b+m}{2} = ${res.intersectionRoots[1].toFixed(2)} \\;\\implies\\; \\text{解集 } ${solutionSetLatex}`
             : `\\text{解集 } ${solutionSetLatex}`,
-        rubric: "结论得分点：结合 $m$ 与 $|a - b|$ 大小关系规范写出解集",
+        rubric:
+          "【高考采分点】结论得分点：结合 $m$ 与 $|a - b|$ 大小关系规范写出解集",
       },
     ];
 
@@ -272,7 +274,7 @@ export function buildInequalityAbsolutePanel(
         detail:
           "构造阶梯函数 $g(x) = |x - a| - |x - b|$，几何上表示动点 $P(x)$ 到两定点 $A(a), B(b)$ 的距离之差 $|PA| - |PB|$。",
         latex: `g(x) = |x - (${a.toFixed(1)})| - |x - (${b.toFixed(1)})|`,
-        rubric: "审题得分点：明确双绝对值差的几何本质与阶梯模型",
+        rubric: "【高考采分点】审题得分点：明确双绝对值差的几何本质与阶梯模型",
       },
       {
         step: 2,
@@ -280,7 +282,7 @@ export function buildInequalityAbsolutePanel(
         detail:
           "由三角形两边之差性质与有向线段投影，距离之差的值域限定在闭区间 $[-|a - b|, |a - b|]$ 之间。动点位于两定点外侧时达到最值平台。",
         latex: `-|a - b| \\le g(x) \\le |a - b| \\implies g(x) \\in [${(-distAB).toFixed(2)}, ${distAB.toFixed(2)}]`,
-        rubric: "建模得分点：导出最大值与最小值平台常数",
+        rubric: "【高考采分点】建模得分点：导出最大值与最小值平台常数",
       },
       {
         step: 3,
@@ -295,7 +297,7 @@ export function buildInequalityAbsolutePanel(
           res.intersectionRoots.length >= 1
             ? `x_0 = ${res.intersectionRoots[0].toFixed(2)} \\;\\implies\\; \\text{解集 } ${solutionSetLatex}`
             : `\\text{解集 } ${solutionSetLatex}`,
-        rubric: "求解得分点：根据单调过渡斜率精准求解集",
+        rubric: "【高考采分点】求解得分点：根据单调过渡斜率精准求解集",
       },
     ];
 
@@ -370,7 +372,7 @@ export function buildInequalityAbsolutePanel(
         "将实数 $a, b$ 映射为数轴上有向线段或向量 $\\overrightarrow{OA} = a, \\overrightarrow{AB} = b$，其合成和向量为 $\\overrightarrow{OB} = a + b$。",
       latex:
         "\\overrightarrow{OB} = \\overrightarrow{OA} + \\overrightarrow{AB}",
-      rubric: "审题得分点：将绝对值代数转化为数轴向量模长叠加",
+      rubric: "【高考采分点】审题得分点：将绝对值代数转化为数轴向量模长叠加",
     },
     {
       step: 2,
@@ -378,7 +380,7 @@ export function buildInequalityAbsolutePanel(
       detail:
         "利用三角形两边之和大于第三边、两边之差小于第三边，推导实数模长的双向界定不等式关系。",
       latex: `||a| - |b|| \\le |a + b| \\le |a| + |b| \\implies ${modDiff.toFixed(2)} \\le ${sumMod.toFixed(2)} \\le ${modSum.toFixed(2)}`,
-      rubric: "推导得分点：代入当前参数完成双向模长界定计算",
+      rubric: "【高考采分点】推导得分点：代入当前参数完成双向模长界定计算",
     },
     {
       step: 3,
@@ -389,7 +391,7 @@ export function buildInequalityAbsolutePanel(
       latex: isSameSign
         ? `|a + b| = |a| + |b| = ${modSum.toFixed(2)} \\quad (ab \\ge 0)`
         : `|a + b| = ||a| - |b|| = ${modDiff.toFixed(2)} \\quad (ab \\le 0)`,
-      rubric: "考点得分点：根据 $ab$ 符号判定取等充要条件",
+      rubric: "【高考采分点】考点得分点：根据 $ab$ 符号判定取等充要条件",
     },
   ];
 

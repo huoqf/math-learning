@@ -99,7 +99,7 @@ export function buildDerivativeChainPanel(
       title: "审题定法 · 识别结构与设换元分解",
       detail: `观察目标解析式 $y = f(ax+b)$，明确外层为初等函数 $f(u)$，内层为一阶线性函数 $u = ${innerLinear}$。确定求导主定理为复合函数求导法则 $y' = f'(u) \\cdot u'$。`,
       latex: "y = f(u), \\quad u = ax + b \\implies y' = f'(u) \\cdot a",
-      rubric: "准确识别内外层函数与线性关系得 1 分",
+      rubric: "【高考采分点】准确识别内外层函数与线性关系得 1 分",
     },
     {
       step: 2,
@@ -110,7 +110,7 @@ export function buildDerivativeChainPanel(
       latex: res.isValid
         ? `u_0 = ${formatMathNumber(res.u0)}, \\quad f'(u_0) = ${formatMathNumber(res.fpu0)}, \\quad u' = ${formatMathNumber(a)}`
         : "\\text{中间变量超出定义域}",
-      rubric: "正确求得中间变量及外层导数值规范列式得 2 分",
+      rubric: "【高考采分点】正确求得中间变量及外层导数值规范列式得 2 分",
     },
     {
       step: 3,
@@ -121,7 +121,7 @@ export function buildDerivativeChainPanel(
       latex: res.isValid
         ? `y'(${formatMathNumber(x0)}) = ${formatMathNumber(res.slope)} \\implies y ${formatSubtractTerm(res.y0)} = ${formatMathNumber(res.slope)}${formatParenSubtractTerm(x0)}`
         : "\\text{无解}",
-      rubric: "准确给出切线斜率与点斜式方程得 2 分",
+      rubric: "【高考采分点】准确给出切线斜率与点斜式方程得 2 分",
     },
   ];
 

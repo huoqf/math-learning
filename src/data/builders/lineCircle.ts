@@ -182,21 +182,21 @@ export function buildLineCirclePanel(
           title: "审题定法 · 提取圆心半径与一般式方程",
           detail: `圆的标准方程为 $${circleEqLatex}$，提取圆心 $C(${aVal}, ${bVal})$，半径 $r = ${rVal}$；直线化为一般式 $${lineGenLatex}$。`,
           latex: `C(a, b) = C(${aVal}, ${bVal}), \\quad r = ${rVal}, \\quad l: ${lineGenLatex}`,
-          rubric: "采分点：标定圆心坐标与直线标准方程（2分）",
+          rubric: "【高考采分点】标定圆心坐标与直线标准方程（2分）",
         },
         {
           step: 2,
           title: "建模计算 · 点到直线距离公式展开",
           detail: `代入点到直线距离公式计算弦心距 $d$，并与圆半径 $r$ 进行比较：`,
           latex: `${calcRes.deductions.distanceDeduction} > r = ${rVal}`,
-          rubric: "采分点：写出距离公式并完整代入计算（3分）",
+          rubric: "【高考采分点】写出距离公式并完整代入计算（3分）",
         },
         {
           step: 3,
           title: "求解反思 · 相离无相交弦长",
           detail: `因为 $d = ${dVal} > r = ${rVal}$，对应联立方程判别式 $\\Delta = ${deltaVal} < 0$，直线与圆相离无公共交点，弦长无实数解。`,
           latex: `d > r \\iff \\Delta < 0 \\implies \\text{直线与圆相离，相交弦长不存在}`,
-          rubric: "采分点：得出相离结论并指出无实根（3分）",
+          rubric: "【高考采分点】得出相离结论并指出无实根（3分）",
         },
       );
     } else {
@@ -206,21 +206,21 @@ export function buildLineCirclePanel(
           title: "审题定法 · 弦心距公式展开与交点存在性",
           detail: `由点到直线距离公式计算圆心 $C(${aVal}, ${bVal})$ 到直线 $l: ${lineGenLatex}$ 的弦心距 $d$：`,
           latex: `${calcRes.deductions.distanceDeduction} \\le r = ${rVal}`,
-          rubric: "采分点：写出点到直线距离公式并代入求解弦心距（2分）",
+          rubric: "【高考采分点】写出点到直线距离公式并代入求解弦心距（2分）",
         },
         {
           step: 2,
           title: "建模展开 · 构造 Rt△CHA 与垂径勾股定理",
           detail: `过圆心 $C$ 作 $CH \\perp AB$ 于垂足 $H$。由垂径定理知 $H$ 为弦 $AB$ 的中点，在 $\\text{Rt}\\triangle CHA$ 中应用勾股定理列出方程：`,
           latex: `r^2 = d^2 + \\left(\\frac{L}{2}\\right)^2 \\implies \\left(\\frac{L}{2}\\right)^2 = r^2 - d^2 = ${rVal}^2 - (${dVal})^2 = ${r2MinusD2}`,
-          rubric: "采分点：构造直角三角形并列出垂径勾股展开式（3分）",
+          rubric: "【高考采分点】构造直角三角形并列出垂径勾股展开式（3分）",
         },
         {
           step: 3,
           title: "求解反思 · 几何相交弦长与代数韦达对照",
           detail: `两边开平方求解得半弦长 $\\frac{L}{2} = \\sqrt{${r2MinusD2}} = ${halfLVal}$，相交弦长为 $L = 2\\sqrt{r^2 - d^2}$。代数法联立二次方程判别式 $\\Delta = ${deltaVal}$，二者完全一致：`,
           latex: `${calcRes.deductions.pythagorasDeduction} \\quad \\left(\\text{代数法: } ${calcRes.deductions.vietaChordDeduction}\\right)`,
-          rubric: "采分点：准确计算弦长最终数值并给出结论（3分）",
+          rubric: "【高考采分点】准确计算弦长最终数值并给出结论（3分）",
         },
       );
     }
@@ -278,7 +278,7 @@ export function buildLineCirclePanel(
         title: "审题定法 · 两点间距离公式与点圆关系",
         detail: `已知圆方程为 $${circleEqLatex}$，圆心 $C(${aVal}, ${bVal})$，半径 $r = ${rVal}$。由两点间距离公式求点 $P(${pxVal}, ${pyVal})$ 到圆心距离：`,
         latex: `|PC| = \\sqrt{(x_P - a)^2 + (y_P - b)^2} = \\sqrt{(${pxVal} - (${aVal}))^2 + (${pyVal} - (${bVal}))^2} = \\sqrt{${distPCSq}} = ${distPCVal} ${compSymbol} r = ${rVal}`,
-        rubric: "采分点：写出两点距离公式并代入判定点在圆外（2分）",
+        rubric: "【高考采分点】写出两点距离公式并代入判定点在圆外（2分）",
       },
       {
         step: 2,
@@ -290,14 +290,14 @@ export function buildLineCirclePanel(
           ? (calcRes.deductions.tangentDeduction ??
             `PT = \\sqrt{|PC|^2 - r^2} = ${tanLenVal}`)
           : `|PC| = ${distPCVal} < r = ${rVal} \\implies \\text{点在圆内，无实数切线长}`,
-        rubric: "采分点：写出切线长公式并代入求解（3分）",
+        rubric: "【高考采分点】写出切线长公式并代入求解（3分）",
       },
       {
         step: 3,
         title: "求解反思 · 切点弦方程",
         detail: `以 $PC$ 为直径的圆与已知圆相交，两交点 $T_1, T_2$ 所在直线方程可代入切点弦方程公式 $(x_0 - a)(x - a) + (y_0 - b)(y - b) = r^2$：`,
         latex: `(x_P - a)(x - a) + (y_P - b)(y - b) = r^2 \\implies (${pxVal} - (${aVal}))(x - (${aVal})) + (${pyVal} - (${bVal}))(y - (${bVal})) = ${rSqVal}`,
-        rubric: "采分点：列出切点弦方程并代入求出方程（3分）",
+        rubric: "【高考采分点】列出切点弦方程并代入求出方程（3分）",
       },
     );
   } else if (studyMode === "midpoint") {
@@ -363,21 +363,21 @@ export function buildLineCirclePanel(
         title: "审题定法 · 垂径定理中点垂直性",
         detail: `在圆 $${circleEqLatex}$ 中，动弦 $AB$ 的中点为 $H(${midX}, ${midY})$，圆心为 $C(${aVal}, ${bVal})$。由垂径定理知连心线垂直平分动弦：`,
         latex: `H \\text{ 为弦 } AB \\text{ 中点} \\iff CH \\perp AB`,
-        rubric: "采分点：由垂径定理明确垂直平分充要关系（2分）",
+        rubric: "【高考采分点】由垂径定理明确垂直平分充要关系（2分）",
       },
       {
         step: 2,
         title: "建模展开 · 斜率垂直乘积与负倒数方程",
         detail: `计算连心线 $CH$ 的斜率，再由两直线垂直充要条件 $k_{CH} \\cdot k_{AB} = -1$ 求解割线斜率：`,
         latex: calcRes.deductions.midpointSlopeDeduction,
-        rubric: "采分点：写出斜率公式并代入求解割线斜率（3分）",
+        rubric: "【高考采分点】写出斜率公式并代入求解割线斜率（3分）",
       },
       {
         step: 3,
         title: "求解反思 · 点差法原理与动中点轨迹方程",
         detail: `设端点 $A(x_1, y_1), B(x_2, y_2)$ 代入圆方程两式相减消常数项，利用平方差公式因式分解：`,
         latex: `(x_1 - x_2)(x_1 + x_2 - 2a) + (y_1 - y_2)(y_1 + y_2 - 2b) = 0 \\implies k_{AB} = \\frac{y_1 - y_2}{x_1 - x_2} = -\\frac{x_0 - a}{y_0 - b}`,
-        rubric: "采分点：阐明点差法两式相减代数推导过程（3分）",
+        rubric: "【高考采分点】阐明点差法两式相减代数推导过程（3分）",
       },
     );
   } else {
@@ -454,21 +454,21 @@ export function buildLineCirclePanel(
         title: "审题定法 · 提取圆心半径与一般式方程",
         detail: `圆的标准方程为 $${circleEqLatex}$，提取圆心 $C(a, b) = C(${aVal}, ${bVal})$，半径 $r = ${rVal}$；直线化为一般式 $Ax + By + C = 0 \\implies ${lineGenLatex}$。`,
         latex: `C(a, b) = C(${aVal}, ${bVal}), \\quad r = ${rVal}, \\quad l: ${lineGenLatex}`,
-        rubric: "采分点：准确提取圆心坐标、半径及直线一般式系数（2分）",
+        rubric: "【高考采分点】准确提取圆心坐标、半径及直线一般式系数（2分）",
       },
       {
         step: 2,
         title: "建模计算 · 几何法距离 d 与代数法联立 Δ",
         detail: `几何法代入点到直线距离公式计算 $d$；代数法联立方程 $(1+k^2)x^2 + 2[k(m-b)-a]x + [a^2+(m-b)^2-r^2] = 0$ 计算判别式 $\\Delta$：`,
         latex: `${calcRes.deductions.distanceDeduction}, \\quad \\Delta = B^2 - 4AC = ${deltaVal}`,
-        rubric: "采分点：写出距离公式与判别式公式并完整代入展开（3分）",
+        rubric: "【高考采分点】写出距离公式与判别式公式并完整代入展开（3分）",
       },
       {
         step: 3,
         title: "求解判定 · 数形结合双轨判定结论",
         detail: `比较距离与半径：$d = ${dVal} ${relSymbol} r = ${rVal}$，对应代数判别式 $\\Delta = ${deltaVal} ${deltaSymbol}$，得出充要几何结论：`,
         latex: `d ${relSymbol} r \\iff \\Delta ${deltaSymbol} \\implies \\text{直线与圆}${conclusionText}`,
-        rubric: "采分点：给出几何与代数双向判定的准确推导结论（3分）",
+        rubric: "【高考采分点】给出几何与代数双向判定的准确推导结论（3分）",
       },
     );
   }

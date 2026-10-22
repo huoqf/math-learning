@@ -196,8 +196,8 @@ function buildSepBranch(
         ? `恒成立问题采用【参变分离法】，将含参不等式转化为函数在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上的最小值问题。参数 $a$ 必须守住全域底线。`
         : `存在性问题采用【参变分离法】，不等式在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上有解，只需参数 $a$ 不超过函数的最大值，即寻求突破口。`,
       rubric: isAlways
-        ? "建立恒成立充要转化方程 (3分)"
-        : "建立存在性充要转化方程 (3分)",
+        ? "【高考采分点】建立恒成立充要转化方程 (3分)"
+        : "【高考采分点】建立存在性充要转化方程 (3分)",
     },
     {
       step: 2,
@@ -210,14 +210,14 @@ function buildSepBranch(
           ? `当 $x \\in (0, e)$ 时 $f'(x) > 0$，$f(x)$ 单调递增；当 $x \\in (e, +\\infty)$ 时 $f'(x) < 0$，$f(x)$ 单调递减。在当前区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上，最值由导数为零的点 $x = e$ 与端点共同决定。`
           : `目标函数为 $${spec.sepFnLatex}$（定义域 $${spec.sepDomainLatex}$），导函数 $${spec.sepDerivLatex}$。先由导函数零点与正负号确定函数在区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上的单调性，再比较导数为零的点处的函数值与两端点函数值取最值。`
         : `导函数 $f'(x) = 2(x-1)$，在 $(-\\infty, 1)$ 单调递减，在 $(1, +\\infty)$ 单调递增，顶点为 $x = 1$。`,
-      rubric: "求导并确定函数在研究区间上的单调性 (5分)",
+      rubric: "【高考采分点】求导并确定函数在研究区间上的单调性 (5分)",
     },
     {
       step: 3,
       title: "第三步：求解反思 · 代数求界与充要判定",
       latex: step3Latex,
       detail: step3Detail,
-      rubric: "代入数值并给出参数 a 的充要范围与反思判定 (4分)",
+      rubric: "【高考采分点】代入数值并给出参数 a 的充要范围与反思判定 (4分)",
     },
   ];
 
@@ -521,7 +521,7 @@ function buildDirectBranch(
       detail: isTranscendent
         ? `对含参超越函数 $${spec.directFnLatex(aCol)}$ 求导得 $${spec.directDerivLatex(aCol)}$。当 $a > 0$ 时导数存在唯一零点 $x_0 = ${spec.directCriticalLatex(aCol)}$，该导数为零的点随参数 $a$ 动态变化，需就它与研究区间 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 的相对位置分类讨论。`
         : `二次函数对称轴与极小值点为 $x = a$。对称轴随参数 $a$ 平移（轴动区间定），必须根据对称轴落在区间左侧、内部或右侧分类讨论。`,
-      rubric: "求导确定含参导数为零点与分类依据 (3分)",
+      rubric: "【高考采分点】求导确定含参导数为零点与分类依据 (3分)",
     },
     {
       step: 2,
@@ -530,14 +530,14 @@ function buildDirectBranch(
         ? `f(x)_{\\min} = \\begin{cases} f(m) = m^2 - 2am + 2, & a < m \\\\[2pt] f(a) = 2 - a^2, & m \\le a \\le n \\\\[2pt] f(n) = n^2 - 2an + 2, & a > n \\end{cases}`
         : `f(x)_{\\min} = \\begin{cases} f(m), & ${critTex} < m \\\\[2pt] ${spec.directInsideMinLatex(aCol)}, & m \\le ${critTex} \\le n \\\\[2pt] f(n), & ${critTex} > n \\end{cases}`,
       detail: directStep2Detail,
-      rubric: "全面列出三段分类单调性与最小值表达式 (5分)",
+      rubric: "【高考采分点】全面列出三段分类单调性与最小值表达式 (5分)",
     },
     {
       step: 3,
       title: "第三步：求解反思 · 代入分支求解与充要判定",
       latex: directStep3Latex,
       detail: directStep3Detail,
-      rubric: "代入数值并给出对应分支不等式与综合解集 (4分)",
+      rubric: "【高考采分点】代入数值并给出对应分支不等式与综合解集 (4分)",
     },
   ];
 

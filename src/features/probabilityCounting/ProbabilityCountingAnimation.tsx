@@ -103,6 +103,10 @@ export function ProbabilityCountingAnimation() {
         const groupTotal = Math.floor(params.groupTotal ?? 6);
         const groupCount = Math.floor(params.groupCount ?? 3);
         const gInfo = calculateGroupingAllocation(groupTotal, groupCount);
+        // 不可整除时三个计数一律为 0，印成「0 ÷ 3! = 0」等于把无定义伪装成结论
+        if (!gInfo.isDivisible) {
+          return `\\text{均分前提不成立：} ${gInfo.totalItems} \\text{ 除以 } ${gInfo.groupCount} \\text{ 余 } ${gInfo.remainder} \\text{，均分方案不存在}`;
+        }
         return `N_{\\text{均分}} = \\frac{${gInfo.directCombinationWays}}{\\color{${MATH_COLORS.paramSecondary}}{${gInfo.groupCount}!}} = \\color{${MATH_COLORS.paramPrimary}}{${gInfo.groupedWays}} \\quad (\\text{除以消去虚假顺序})`;
       }
       if (subMode === 2) {

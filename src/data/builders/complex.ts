@@ -128,21 +128,21 @@ export function buildComplexPanel(
           title: "代数表示 · 复数写成 a + bi",
           detail: `由复数的代数形式，$z_1 = ${formatComplexLatex(z1)}$、$z_2 = ${formatComplexLatex(z2)}$，对应复平面上的点 $Z_1(${a1}, ${b1})$、$Z_2(${a2}, ${b2})$。`,
           latex: `z_1 = ${a1} + ${b1}i, \\quad z_2 = ${a2} + ${b2}i`,
-          rubric: "采分点：写出两复数的代数形式（1分）",
+          rubric: "【高考采分点】写出两复数的代数形式（1分）",
         },
         {
           step: 2,
           title: "加减运算 · 实虚部分别合并",
           detail: `实部与实部、虚部与虚部分别相加：$z_1 + z_2 = (${a1} + ${a2}) + (${b1} + ${b2})i = ${formatComplexLatex(zSum)}$；相减同理。`,
           latex: `z_1 + z_2 = (${a1} + ${a2}) + (${b1} + ${b2})i = ${formatComplexLatex(zSum)}`,
-          rubric: "采分点：按实虚部合并求复数加法（2分）",
+          rubric: "【高考采分点】按实虚部合并求复数加法（2分）",
         },
         {
           step: 3,
           title: "几何意义 · 差模长即两点距离",
           detail: `$z_1 - z_2$ 对应向量 $\\vec{Z_2 Z_1}$，其模长为两点欧氏距离 $|z_1 - z_2| = ${dist.toFixed(2)}$；由勾股关系，$|z_1| = ${mod1.toFixed(2)}$。`,
           latex: `|z_1 - z_2| = \\sqrt{(${a1 - a2})^2 + (${b1 - b2})^2} = ${dist.toFixed(2)}`,
-          rubric: "采分点：用模长公式求两点距离（3分）",
+          rubric: "【高考采分点】用模长公式求两点距离（3分）",
         },
       ],
       mnemonic: "实部对实部，虚部对虚部；减法求距离，平行四边形。",
@@ -255,21 +255,21 @@ export function buildComplexPanel(
           title: "化为三角形式",
           detail: `把两复数写成模长与辐角形式：$z_1$ 的模 $r_1 = ${r1.toFixed(1)}$、辐角 $\\theta_1 = ${deg1}^\\circ$；$z_2$ 的模 $r_2 = ${r2.toFixed(1)}$、辐角 $\\theta_2 = ${deg2}^\\circ$。`,
           latex: `z_1 = ${r1.toFixed(1)}\\left(\\cos ${deg1}^\\circ + i\\sin ${deg1}^\\circ\\right), \\quad z_2 = ${r2.toFixed(1)}\\left(\\cos ${deg2}^\\circ + i\\sin ${deg2}^\\circ\\right)`,
-          rubric: "采分点：写出两复数的三角形式（2分）",
+          rubric: "【高考采分点】写出两复数的三角形式（2分）",
         },
         {
           step: 2,
           title: "乘法法则 · 模长相乘角相加",
           detail: `模长相乘、辐角相加：$|z_1 z_2| = r_1 r_2 = ${r1.toFixed(1)} \\times ${r2.toFixed(1)} = ${prodMod.toFixed(2)}$，$\\arg(z_1 z_2) = \\theta_1 + \\theta_2 = ${deg1}^\\circ + ${deg2}^\\circ = ${deg1 + deg2}^\\circ$。`,
           latex: `z_1 z_2 = ${r1.toFixed(1)} \\times ${r2.toFixed(1)}\\left[\\cos(${deg1}^\\circ + ${deg2}^\\circ) + i\\sin(${deg1}^\\circ + ${deg2}^\\circ)\\right]`,
-          rubric: "采分点：用乘法法则求模长与辐角（3分）",
+          rubric: "【高考采分点】用乘法法则求模长与辐角（3分）",
         },
         {
           step: 3,
           title: "几何解释 · 一次旋转伸缩",
           detail: `乘 $z_2$ 相当于把 $z_1$ 绕原点逆时针旋转 $${deg2}^\\circ$、模长伸缩为原来的 $${r2.toFixed(1)}$ 倍，得 $z_1 z_2 = ${formatComplexLatex(zProd)}$。图中显示的主辐角 $${prodArgDeg.toFixed(1)}^\\circ$ 与 $${deg1 + deg2}^\\circ$ 相差 $2k\\pi$，二者表征同一终边。`,
           latex: `|z_1 z_2| = ${prodMod.toFixed(2)}, \\quad \\arg(z_1 z_2) = ${deg1 + deg2}^\\circ + 2k\\pi`,
-          rubric: "采分点：说明乘法的旋转伸缩几何意义（2分）",
+          rubric: "【高考采分点】说明乘法的旋转伸缩几何意义（2分）",
         },
       ],
       mnemonic:
@@ -389,21 +389,21 @@ export function buildComplexPanel(
             detail:
               "由 $i^1 = i$、$i^2 = -1$、$i^3 = i^2 \\cdot i = -i$、$i^4 = i^2 \\cdot i^2 = 1$，可见四次幂之后回到 $i$。故 $i$ 的幂以 $4$ 为周期循环，取值只能是 $i, -1, -i, 1$ 四个之一。",
             latex: "i^1 = i, \\quad i^2 = -1, \\quad i^3 = -i, \\quad i^4 = 1",
-            rubric: "采分点：写出前四次幂并指出周期为 4（2分）",
+            rubric: "【高考采分点】写出前四次幂并指出周期为 4（2分）",
           },
           {
             step: 2,
             title: "化为带余形式 · 写成 4k + r",
             detail: `把指数写成 $n = 4k + r$（$k \\in \\mathbb{Z}$，$0 \\le r < 4$）。本组参数 $n = ${powerN}$，取整除法得 $r = ${cur.residue}$，即 $${powerN} = 4 \\times ${Math.floor(powerN / 4)} + ${cur.residue}$（负数按最小非负余数归一）。`,
             latex: `n = ${powerN} = 4k + r, \\quad r = ${cur.residue}`,
-            rubric: "采分点：把指数化为 4k + r 并求出余数（3分）",
+            rubric: "【高考采分点】把指数化为 4k + r 并求出余数（3分）",
           },
           {
             step: 3,
             title: "查表定位 · 由余数写出结果",
             detail: `余数 $r = ${cur.residue}$ 对应 $i^{${powerN}} = ${cur.latex}$；其后三项依次为 $${next1.latex}$、$${next2.latex}$、$${next3.latex}$，四项之和为 $${cycleSum.re} + ${cycleSum.im}i = 0$，正是周期分组的落点。`,
             latex: `i^{${powerN}} = ${cur.latex}, \\quad i^{${powerN}} + i^{${powerN + 1}} + i^{${powerN + 2}} + i^{${powerN + 3}} = 0`,
-            rubric: "采分点：由余数查表写出结果并说明四项和为零（2分）",
+            rubric: "【高考采分点】由余数查表写出结果并说明四项和为零（2分）",
           },
         ],
         mnemonic:
@@ -532,14 +532,14 @@ export function buildComplexPanel(
             title: "同乘共轭 · 把分母变成实数",
             detail: `分子分母同时乘分母的共轭 $\\bar{z_2} = ${formatComplexLatex(z2Conj)}$（虚部取相反数），分式的值不变，但分母由复数变为实数。`,
             latex: `\\frac{z_1}{z_2} = \\frac{z_1}{z_2} \\cdot \\frac{\\bar{z_2}}{\\bar{z_2}} = \\frac{z_1 \\bar{z_2}}{z_2 \\bar{z_2}}`,
-            rubric: "采分点：正确写出分母的共轭并同乘（2分）",
+            rubric: "【高考采分点】正确写出分母的共轭并同乘（2分）",
           },
           {
             step: 2,
             title: "分母实数化 · 用共轭乘法公式",
             detail: `由 $(c+di)(c-di) = c^2 + d^2$，本组参数 $c = ${a2}$、$d = ${b2}$，分母化为 $${divRes.c2.toFixed(2)} + ${divRes.d2.toFixed(2)} = ${divRes.denominator.toFixed(2)}$，恰等于 $|z_2|^2$，是一个非负实数。`,
             latex: `z_2 \\bar{z_2} = ${a2}^2 + ${b2}^2 = ${divRes.denominator.toFixed(2)} = |z_2|^2`,
-            rubric: "采分点：用共轭乘法公式把分母化为实数（3分）",
+            rubric: "【高考采分点】用共轭乘法公式把分母化为实数（3分）",
           },
           {
             step: 3,
@@ -550,7 +550,7 @@ export function buildComplexPanel(
             latex: divRes.valid
               ? `\\frac{z_1}{z_2} = \\frac{${divRes.numeratorRe.toFixed(2)} + ${divRes.numeratorIm.toFixed(2)}i}{${divRes.denominator.toFixed(2)}} = ${formatComplexLatex(divRes.result)}`
               : "\\frac{z_1}{0} \\text{ 无意义}",
-            rubric: "采分点：展开分子并实虚部分别除以分母（3分）",
+            rubric: "【高考采分点】展开分子并实虚部分别除以分母（3分）",
           },
         ],
         mnemonic:
@@ -666,14 +666,14 @@ export function buildComplexPanel(
           title: "代数设定 · 写出实虚部",
           detail: `设 $z_1 = ${a1} + ${b1}i$（实部 $a = ${a1}$、虚部 $b = ${b1}$），$z_2 = ${a2} + ${b2}i$（实部 $c = ${a2}$、虚部 $d = ${b2}$）。一切代数运算都建立在这四个实数之上。`,
           latex: `z_1 = ${a1} + ${b1}i, \\quad z_2 = ${a2} + ${b2}i`,
-          rubric: "采分点：写出两复数的代数形式并标出实虚部（1分）",
+          rubric: "【高考采分点】写出两复数的代数形式并标出实虚部（1分）",
         },
         {
           step: 2,
           title: "乘法展开 · 逐项相乘再合并同类项",
           detail: `按多项式乘法逐项展开：$ac = ${expand.ac.toFixed(2)}$、$ad = ${expand.ad.toFixed(2)}$、$bc = ${expand.bc.toFixed(2)}$、$bd = ${expand.bd.toFixed(2)}$；把 $bd\\,i^2$ 换成 $-bd = ${expand.iSquaredTerm.toFixed(2)}$ 并入实部，得 $z_1 z_2 = ${formatComplexLatex(zProd)}$。`,
           latex: `(a+bi)(c+di) = \\bigl(${expand.ac.toFixed(2)} - (${expand.bd.toFixed(2)})\\bigr) + \\bigl(${expand.ad.toFixed(2)} + (${expand.bc.toFixed(2)})\\bigr)i = ${formatComplexLatex(zProd)}`,
-          rubric: "采分点：逐项展开并把 i² 化为 −1 后合并（3分）",
+          rubric: "【高考采分点】逐项展开并把 i² 化为 −1 后合并（3分）",
         },
         {
           step: 3,
@@ -684,7 +684,7 @@ export function buildComplexPanel(
           latex: divRes.valid
             ? `\\frac{z_1}{z_2} = \\frac{${divRes.numeratorRe.toFixed(2)} + ${divRes.numeratorIm.toFixed(2)}i}{${divRes.denominator.toFixed(2)}} = ${formatComplexLatex(divRes.result)}`
             : "\\frac{z_1}{0} \\text{ 无意义}",
-          rubric: "采分点：同乘共轭把分母化为实数后分别相除（3分）",
+          rubric: "【高考采分点】同乘共轭把分母化为实数后分别相除（3分）",
         },
       ],
       mnemonic:
@@ -761,14 +761,14 @@ export function buildComplexPanel(
           title: "条件翻译 · 等距方程",
           detail: `$|z - z_1| = |z - z_2|$ 表示动点 $z$ 到两定点 $z_1 = ${formatComplexLatex(z1)}$、$z_2 = ${formatComplexLatex(z2)}$ 的距离相等。`,
           latex: "|z - z_1| = |z - z_2|",
-          rubric: "采分点：把复数等式翻译为等距条件（2分）",
+          rubric: "【高考采分点】把复数等式翻译为等距条件（2分）",
         },
         {
           step: 2,
           title: "几何定位 · 求中点",
           detail: `到两定点距离相等的点集是线段 $Z_1 Z_2$ 的垂直平分线，垂足即中点 $M = \\dfrac{z_1 + z_2}{2} = ${formatComplexLatex(bisector.midPoint)}$，两点距离 $|z_1 - z_2| = ${bisector.dist.toFixed(2)}$。`,
           latex: `M = \\frac{z_1 + z_2}{2} = ${formatComplexLatex(bisector.midPoint)}`,
-          rubric: "采分点：求中点坐标（2分）",
+          rubric: "【高考采分点】求中点坐标（2分）",
         },
         {
           step: 3,
@@ -777,7 +777,7 @@ export function buildComplexPanel(
             ? `直线 $Z_1 Z_2$ 的斜率 $k = \\dfrac{${b2} - ${b1}}{${a2} - ${a1}}$，垂直平分线斜率满足 $k' \\cdot k = -1$，过中点 $M$ 即得轨迹方程。`
             : "两定点重合（$z_1 = z_2$），等距条件退化为全平面，不存在唯一直线轨迹。",
           latex: `k_{Z_1 Z_2} = \\frac{${b2} - ${b1}}{${a2} - ${a1}}, \\quad k_{\\perp} \\cdot k_{Z_1 Z_2} = -1`,
-          rubric: "采分点：由垂直关系写出轨迹直线方程（3分）",
+          rubric: "【高考采分点】由垂直关系写出轨迹直线方程（3分）",
         },
       ],
       mnemonic: "等距方程中垂线，找准中点定法向。",
@@ -846,21 +846,21 @@ export function buildComplexPanel(
           title: "共起点化 · 把三个模长放进同一个三角形",
           detail: `$|z_1|$、$|z_2|$、$|z_1 + z_2|$ 分别对应复平面上向量 $\\vec{OZ_1}$、$\\vec{OZ_2}$、$\\vec{OZ_1} + \\vec{OZ_2}$ 的模；后者的终点是平行四边形 $OZ_1ZZ_2$ 的第四个顶点 $Z$。本组参数下 $|z_1| = ${ineq.mod1.toFixed(2)}$、$|z_2| = ${ineq.mod2.toFixed(2)}$、$|z_1 + z_2| = ${ineq.modSum.toFixed(2)}$。`,
           latex: `|z_1| = ${ineq.mod1.toFixed(2)}, \\quad |z_2| = ${ineq.mod2.toFixed(2)}, \\quad |z_1 + z_2| = ${ineq.modSum.toFixed(2)}`,
-          rubric: "采分点：写出三个模长并说明其几何对应（2分）",
+          rubric: "【高考采分点】写出三个模长并说明其几何对应（2分）",
         },
         {
           step: 2,
           title: "三角形放缩 · 两边之和差夹住第三边",
           detail: `在 $\\triangle OZ_1Z$ 中，$|OZ_1| = |z_1|$、$|Z_1Z| = |z_2|$、$|OZ| = |z_1 + z_2|$，由两边之和大于第三边、两边之差小于第三边得 $${ineq.lowerBound.toFixed(2)} \\le |z_1 + z_2| \\le ${ineq.upperBound.toFixed(2)}$；实测 $|z_1 + z_2| = ${ineq.modSum.toFixed(2)}$ 恰好落在该区间内。`,
           latex: `\\bigl||z_1| - |z_2|\\bigr| = ${ineq.lowerBound.toFixed(2)} \\le |z_1 + z_2| \\le ${ineq.upperBound.toFixed(2)} = |z_1| + |z_2|`,
-          rubric: "采分点：用三角不等式给出上下界并验证实际值（3分）",
+          rubric: "【高考采分点】用三角不等式给出上下界并验证实际值（3分）",
         },
         {
           step: 3,
           title: "取等条件 · 同向与反向共线",
           detail: `两端等号都只在共线时成立：$z_1$ 与 $z_2$ 同向（辐角相等）时 $|z_1 + z_2| = |z_1| + |z_2| = ${ineq.upperBound.toFixed(2)}$；反向（辐角相差 $180^\\circ$）时 $|z_1 + z_2| = \\bigl||z_1| - |z_2|\\bigr| = ${ineq.lowerBound.toFixed(2)}$。这两个共线构型就是模长最值题里的"取等检验点"。`,
           latex: `\\arg z_1 = \\arg z_2 \\;\\Rightarrow\\; |z_1 + z_2| = |z_1| + |z_2|, \\quad \\arg z_1 - \\arg z_2 = \\pi \\;\\Rightarrow\\; |z_1 + z_2| = \\bigl||z_1| - |z_2|\\bigr|`,
-          rubric: "采分点：说明两端取等条件（2分）",
+          rubric: "【高考采分点】说明两端取等条件（2分）",
         },
       ],
       mnemonic: "两边之差小于第三边，两边之和大于第三边。",
@@ -953,14 +953,14 @@ export function buildComplexPanel(
         title: "条件翻译 · 模长方程即圆",
         detail: `$|z - z_0| = R$ 表示动点 $Z$ 到定点 $Z_0$ 的距离恒为 $R$，故轨迹是以 $Z_0(${z0x}, ${z0y})$ 为圆心、以 $R = ${radius.toFixed(1)}$ 为半径的圆。这正是"复数模长条件 ↔ 平面几何轨迹"互译的第一步。`,
         latex: `|z - z_0| = R \\iff Z_0(${z0x}, ${z0y}), \\quad R = ${radius.toFixed(1)}`,
-        rubric: "采分点：把模长条件翻译为圆的方程（2分）",
+        rubric: "【高考采分点】把模长条件翻译为圆的方程（2分）",
       },
       {
         step: 2,
         title: "转化为圆心距 · 加减半径即得最值",
         detail: `圆上动点到定点 $w(${wx}, ${wy})$ 的距离最值，不必设点消元，只需先算圆心距 $d = |z_0 - w| = ${locusRes.centerDist.toFixed(2)}$，再对半径整体做加减：$|z - w|_{\\min} = |d - R| = ${locusRes.minDist.toFixed(2)}$，$|z - w|_{\\max} = d + R = ${locusRes.maxDist.toFixed(2)}$。`,
         latex: `d = |z_0 - w| = ${locusRes.centerDist.toFixed(2)}, \\quad |z - w|_{\\min} = \\bigl|${locusRes.centerDist.toFixed(2)} - ${radius.toFixed(1)}\\bigr| = ${locusRes.minDist.toFixed(2)}, \\quad |z - w|_{\\max} = ${locusRes.maxDist.toFixed(2)}`,
-        rubric: "采分点：用圆心距加减半径求最值（3分）",
+        rubric: "【高考采分点】用圆心距加减半径求最值（3分）",
       },
       {
         step: 3,
@@ -970,7 +970,7 @@ export function buildComplexPanel(
             ? `本组参数下 $w$ 恰好与圆心 $Z_0$ 重合，圆上每一点到 $w$ 的距离都等于半径 $R = ${radius.toFixed(1)}$，最大最小值退化为同一个数，不再由三点共线决定。`
             : `当且仅当动点 $Z$、圆心 $Z_0$、定点 $w$ 三点共线时取到最值：最近点 $Z_{\\min}(${locusRes.minPoint.re.toFixed(2)}, ${locusRes.minPoint.im.toFixed(2)})$ 落在圆心指向 $w$ 的一侧，最远点 $Z_{\\max}(${locusRes.maxPoint.re.toFixed(2)}, ${locusRes.maxPoint.im.toFixed(2)})$ 落在反向一侧。`,
         latex: `Z_{\\min} = z_0 + R \\cdot \\frac{w - z_0}{|w - z_0|}, \\quad Z_{\\max} = z_0 - R \\cdot \\frac{w - z_0}{|w - z_0|}`,
-        rubric: "采分点：说明取等条件并写出最值点坐标（2分）",
+        rubric: "【高考采分点】说明取等条件并写出最值点坐标（2分）",
       },
     ],
     mnemonic:

@@ -185,7 +185,7 @@ describe("反回归：这些旧写法不许回来", () => {
     );
     expect(rubrics).toHaveLength(45);
     rubrics.forEach((r) => {
-      expect(r).toContain("[高考采分点]");
+      expect(r).toContain("【高考采分点】");
       expect(r).toMatch(/\(\+\d+分\)$/);
     });
     // 旧实现 45 条全为 +2；现在客观题档（10 个组合）的收尾步必须是 1 分，

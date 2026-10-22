@@ -126,14 +126,14 @@ export function buildTrigFormulasPanel(
         title: "审题定法 · 和差角展开定理",
         detail: `运算目标为两角和差公式，展开式由两单角 $\\alpha, \\beta$ 的同名或异名三角函数乘积组合而成。`,
         latex: res.formulaLatex,
-        rubric: "采分点：写出对应的两角和差展开定理（3分）",
+        rubric: "【高考采分点】写出对应的两角和差展开定理（3分）",
       },
       {
         step: 2,
         title: "代入数据 · 单角函数逐项相乘",
         detail: `代入 $\\alpha = ${alphaDeg}^\\circ, \\beta = ${betaDeg}^\\circ$：$\\sin\\alpha = ${res.sinAlpha.toFixed(3)}, \\cos\\alpha = ${res.cosAlpha.toFixed(3)}$；$\\sin\\beta = ${res.sinBeta.toFixed(3)}, \\cos\\beta = ${res.cosBeta.toFixed(3)}$。`,
         latex: `${res.formulaTitle} = ${res.isTanDefined && !Number.isNaN(res.resultVal) ? res.resultVal.toFixed(3) : "\\text{无定义}"}`,
-        rubric: "采分点：代入单角三角函数值算出结果（4分）",
+        rubric: "【高考采分点】代入单角三角函数值算出结果（4分）",
       },
       {
         step: 3,
@@ -149,7 +149,7 @@ export function buildTrigFormulasPanel(
           sumDiffKey === "cos_minus"
             ? `\\vec{u}\\cdot\\vec{v} = \\cos\\alpha\\cos\\beta + \\sin\\alpha\\sin\\beta = ${res.dotProduct.toFixed(3)}`
             : `\\cos(\\alpha-\\beta) = \\cos\\alpha\\cos\\beta + \\sin\\alpha\\sin\\beta \\implies ${res.formulaTitle}`,
-        rubric: "采分点：结合单位圆向量数量积建立数形互证（3分）",
+        rubric: "【高考采分点】结合单位圆向量数量积建立数形互证（3分）",
       },
     ];
 
@@ -253,7 +253,7 @@ export function buildTrigFormulasPanel(
         detail:
           "二倍角公式既是展开式，又是高考求值题中降幂降角的核心恒等变换工具。",
         latex: res.formulaLatex,
-        rubric: "采分点：写出二倍角展开或降幂升角公式（3分）",
+        rubric: "【高考采分点】写出二倍角展开或降幂升角公式（3分）",
       },
       {
         step: 2,
@@ -264,14 +264,14 @@ export function buildTrigFormulasPanel(
           (!res.isTanDefined || res.tan2Alpha === undefined)
             ? `${res.formulaTitle} = \\text{无定义}`
             : `${res.formulaTitle} = ${(doubleAngleKey === "sin_2a" ? res.sin2Alpha : doubleAngleKey === "cos_2a" ? res.cos2Alpha : doubleAngleKey === "tan_2a" ? res.tan2Alpha! : doubleAngleKey === "sin2_a" ? res.sinSqAlpha : res.cosSqAlpha).toFixed(3)}`,
-        rubric: "采分点：代入单角三角函数值算出结果（4分）",
+        rubric: "【高考采分点】代入单角三角函数值算出结果（4分）",
       },
       {
         step: 3,
         title: "求解反思 · 齐次化与升降幂应用",
         detail: `由二倍角公式可得 $\\sin 2\\alpha = \\frac{2\\tan\\alpha}{1+\\tan^2\\alpha}$ 与 $\\cos 2\\alpha = \\frac{1-\\tan^2\\alpha}{1+\\tan^2\\alpha}$，为高考中弦切齐次互化的通用工具。`,
         latex: `\\tan 2\\alpha = \\frac{2\\tan\\alpha}{1 - \\tan^2\\alpha} = ${res.isTanDefined && res.tan2Alpha !== undefined ? res.tan2Alpha.toFixed(3) : "\\text{无定义}"}`,
-        rubric: "采分点：说明齐次弦化切与升降幂的采分点规范（3分）",
+        rubric: "【高考采分点】说明齐次弦化切与升降幂的采分点规范（3分）",
       },
     ];
 
@@ -372,21 +372,21 @@ export function buildTrigFormulasPanel(
         detail: `化简 $a\\sin x + b\\cos x$ 首要步骤为提取模长 $A = \\sqrt{a^2+b^2}$，使括号内各项系数满足平方和为 1。`,
         latex:
           "a\\sin x + b\\cos x = \\sqrt{a^2+b^2}\\left(\\frac{a}{\\sqrt{a^2+b^2}}\\sin x + \\frac{b}{\\sqrt{a^2+b^2}}\\cos x\\right)",
-        rubric: "采分点：写出提取模长公式与变形结构（3分）",
+        rubric: "【高考采分点】写出提取模长公式与变形结构（3分）",
       },
       {
         step: 2,
         title: "建模转化 · 点(a,b)象限定初相",
         detail: `当前 $a = ${coeffA}, b = ${coeffB}$，点 $(a,b)$ 位于 ${res.quadrantStr}，对应唯一初相角 $\\varphi = ${res.phiDeg.toFixed(1)}^\\circ$。`,
         latex: `\\cos\\varphi = \\frac{${coeffA}}{${res.amplitude.toFixed(3)}}, \\quad \\sin\\varphi = \\frac{${coeffB}}{${res.amplitude.toFixed(3)}} \\implies \\varphi = ${res.phiDeg.toFixed(1)}^\\circ`,
-        rubric: "采分点：写出正余弦值并按象限定出初相（4分）",
+        rubric: "【高考采分点】写出正余弦值并按象限定出初相（4分）",
       },
       {
         step: 3,
         title: "化简结论 · 单一正弦型收口",
         detail: `合并为单一正弦函数后，最大值为 $A = ${res.amplitude.toFixed(3)}$，最小值为 $-${res.amplitude.toFixed(3)}$，最小正周期 $T = 2\\pi$。`,
         latex: `${res.formulaLatex} = ${res.amplitude.toFixed(3)}\\sin(x + ${res.phiDeg.toFixed(1)}^\\circ)`,
-        rubric: "采分点：写出最终单一正弦型解析式（3分）",
+        rubric: "【高考采分点】写出最终单一正弦型解析式（3分）",
       },
     ];
 

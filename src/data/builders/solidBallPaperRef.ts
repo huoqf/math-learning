@@ -101,5 +101,5 @@ export function ballRubric(
   stepIndex: 0 | 1 | 2,
   what: string,
 ): string {
-  return `[高考采分点] ${what} (+${ref.stepScores[stepIndex]}分)`;
+  return `【高考采分点】${what} (+${ref.stepScores[stepIndex]}分)`;
 }

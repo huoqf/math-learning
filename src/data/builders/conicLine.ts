@@ -233,7 +233,8 @@ export function buildConicLineMathQuantities(
         title: "审题建模 · 联立消元建立二次方程",
         detail: step1Detail,
         latex: `${step1Symbol} \\\\ \\implies ${step1Result}`,
-        rubric: "联立方程消元并代入参数整理得标准一元二次方程（3分）",
+        rubric:
+          "【高考采分点】联立方程消元并代入参数整理得标准一元二次方程（3分）",
       },
       {
         step: 2,
@@ -254,7 +255,7 @@ export function buildConicLineMathQuantities(
             : result.xSum !== null && result.xProd !== null
               ? `\\Delta = ${deltaVal} > 0 \\\\ x_1 + x_2 = -\\frac{${quadBVal}}{${quadAVal}} = ${formatMathNumber(result.xSum)}`
               : `\\Delta = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal}`,
-        rubric: "准确计算判别式并写出韦达定理代换式（3分）",
+        rubric: "【高考采分点】准确计算判别式并写出韦达定理代换式（3分）",
       },
       {
         step: 3,
@@ -271,7 +272,7 @@ export function buildConicLineMathQuantities(
               ? `|AB| = \\sqrt{1 + \\frac{1}{k^2}}\\frac{\\sqrt{\\Delta}}{|A|} = ${formatMathNumber(result.chordLength)}`
               : `|AB| = \\sqrt{1 + k^2}\\frac{\\sqrt{\\Delta}}{|A|} = ${formatMathNumber(result.chordLength)}`
             : "\\text{割线弦长不存在}",
-        rubric: "准确代入弦长公式并化简求得精确数值（4分）",
+        rubric: "【高考采分点】准确代入弦长公式并化简求得精确数值（4分）",
       },
     );
   } else if (studyMode === "focus") {
@@ -286,21 +287,21 @@ export function buildConicLineMathQuantities(
           latex: result.isVertical
             ? `x = \\frac{p}{2} = ${formatMathNumber(p / 2)}`
             : `y = ${kVal}\\left(x - ${formatMathNumber(p / 2)}\\right)`,
-          rubric: "标定焦点坐标并写出点斜式割线方程（2分）",
+          rubric: "【高考采分点】标定焦点坐标并写出点斜式割线方程（2分）",
         },
         {
           step: 2,
           title: "建模展开 · 焦半径定义与弦长公式推导",
           detail: `由抛物线定义，端点到焦点距离等于到准线距离，$|AB| = x_1 + x_2 + p$。代入倾斜角 $\\theta = ${formatMathNumber(theta)}^\\circ$：`,
           latex: `|AB| = \\frac{2p}{\\sin^2\\theta} = ${formatMathNumber(result.chordLength ?? 2 * p)}`,
-          rubric: "利用定义转化焦半径并求解弦长（3分）",
+          rubric: "【高考采分点】利用定义转化焦半径并求解弦长（3分）",
         },
         {
           step: 3,
           title: "求解反思 · 焦半径倒数和恒等定值",
           detail: `两端点焦半径倒数和与直线的倾斜角 $\\theta$ 无关，恒为定值 $\\frac{2}{p}$：`,
           latex: `\\frac{1}{|FA|} + \\frac{1}{|FB|} = \\frac{2}{p} = ${formatMathNumber(2 / p)}`,
-          rubric: "得出焦半径倒数和恒等式（3分）",
+          rubric: "【高考采分点】得出焦半径倒数和恒等式（3分）",
         },
       );
     } else {
@@ -312,14 +313,14 @@ export function buildConicLineMathQuantities(
           latex: result.isVertical
             ? `x = c = ${formatMathNumber(result.focusF1.x)}`
             : `y = ${kVal}(x - ${formatMathNumber(result.focusF1.x)})`,
-          rubric: "准确计算焦点坐标并写出割线方程（2分）",
+          rubric: "【高考采分点】准确计算焦点坐标并写出割线方程（2分）",
         },
         {
           step: 2,
           title: "建模展开 · 通径极小值公式推导",
           detail: `垂直于对称轴的长割线为通径，对应焦点弦长的极小值。代入参数 $a = ${aVal}, b = ${bVal}$：`,
           latex: `L_{\\text{通径}} = \\frac{2b^2}{a} = ${formatMathNumber((2 * b * b) / a)}`,
-          rubric: "推导通径公式并计算极小值（3分）",
+          rubric: "【高考采分点】推导通径公式并计算极小值（3分）",
         },
         {
           step: 3,
@@ -335,7 +336,7 @@ export function buildConicLineMathQuantities(
             result.focalRadiusRelationKind === "difference"
               ? `\\left|\\frac{1}{|F_1 A|} - \\frac{1}{|F_1 B|}\\right| = \\frac{2a}{b^2} = ${formatMathNumber((2 * a) / (b * b))}`
               : `\\frac{1}{|F_1 A|} + \\frac{1}{|F_1 B|} = \\frac{2a}{b^2} = ${formatMathNumber((2 * a) / (b * b))}`,
-          rubric: "得出定值并反思高考设问考法（3分）",
+          rubric: "【高考采分点】得出定值并反思高考设问考法（3分）",
         },
       );
     }
@@ -354,14 +355,14 @@ export function buildConicLineMathQuantities(
           title: "审题定法 · 设端点坐标并代入椭圆方程",
           detail: `设弦端点为 $A(x_1, y_1), B(x_2, y_2)$，中点 $M(x_0, y_0) = (${x0Val}, ${y0Val})$，代入椭圆方程：`,
           latex: `\\frac{x_1^2}{${aVal}^2} + \\frac{y_1^2}{${bVal}^2} = 1 \\\\ \\frac{x_2^2}{${aVal}^2} + \\frac{y_2^2}{${bVal}^2} = 1`,
-          rubric: "设点代入建立两端点方程（2分）",
+          rubric: "【高考采分点】设点代入建立两端点方程（2分）",
         },
         {
           step: 2,
           title: "建模展开 · 点差法两式作差求动弦斜率",
           detail: `两式相减并因式分解，由斜率定义 $k_{AB} = \\frac{y_1-y_2}{x_1-x_2}$ 及中点坐标关系，代入 $M(${x0Val}, ${y0Val})$ 与参数：`,
           latex: `k_{AB} = -\\frac{b^2 x_0}{a^2 y_0} = ${kVal}`,
-          rubric: "作差因式分解导出斜率与中点坐标关系（3分）",
+          rubric: "【高考采分点】作差因式分解导出斜率与中点坐标关系（3分）",
         },
         {
           step: 3,
@@ -370,7 +371,7 @@ export function buildConicLineMathQuantities(
             ? `中点位于椭圆内部（$\\frac{x_0^2}{a^2}+\\frac{y_0^2}{b^2} < 1$），判别式 $\\Delta > 0$，实中点弦真实存在：`
             : `【高考防坑警示】中点位于椭圆外部，点差法所求直线与椭圆相离（$\\Delta < 0$），无实数中点弦！`,
           latex: `\\frac{x_0^2}{a^2} + \\frac{y_0^2}{b^2} = ${ratioVal} ${result.isMidpointValid ? "< 1" : "\\ge 1"}`,
-          rubric: "代回完成存在性充要条件检验（3分）",
+          rubric: "【高考采分点】代回完成存在性充要条件检验（3分）",
         },
       );
     } else if (conicType === "hyperbola") {
@@ -380,14 +381,14 @@ export function buildConicLineMathQuantities(
           title: "审题定法 · 设端点坐标并代入双曲线方程",
           detail: `设弦端点为 $A(x_1, y_1), B(x_2, y_2)$，中点 $M(x_0, y_0) = (${x0Val}, ${y0Val})$，代入双曲线方程：`,
           latex: `\\frac{x_1^2}{${aVal}^2} - \\frac{y_1^2}{${bVal}^2} = 1 \\\\ \\frac{x_2^2}{${aVal}^2} - \\frac{y_2^2}{${bVal}^2} = 1`,
-          rubric: "设点代入建立方程（2分）",
+          rubric: "【高考采分点】设点代入建立方程（2分）",
         },
         {
           step: 2,
           title: "建模展开 · 点差法求动弦斜率与定值积",
           detail: `两式相减消去常数项，利用斜率积公式 $k_{AB} \\cdot k_{OM} = \\frac{b^2}{a^2}$，代入参数计算斜率：`,
           latex: `k_{AB} = \\frac{b^2 x_0}{a^2 y_0} = ${kVal}`,
-          rubric: "推导双曲线点差法斜率公式（3分）",
+          rubric: "【高考采分点】推导双曲线点差法斜率公式（3分）",
         },
         {
           step: 3,
@@ -396,7 +397,7 @@ export function buildConicLineMathQuantities(
             ? `中点使联立方程判别式 $\\Delta > 0$，动割线与双曲线相交于两点：`
             : `【考场警示】中点导致联立方程 $\\Delta \\le 0$，无实数中点弦：`,
           latex: `\\Delta = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal} ${result.isMidpointValid ? "> 0" : "\\le 0"}`,
-          rubric: "代回检验避免增根伪解（3分）",
+          rubric: "【高考采分点】代回检验避免增根伪解（3分）",
         },
       );
     } else {
@@ -410,14 +411,14 @@ export function buildConicLineMathQuantities(
           title: "审题定法 · 设端点坐标并代入抛物线方程",
           detail: `设端点为 $A(x_1, y_1), B(x_2, y_2)$，中点 $M(x_0, y_0) = (${x0Val}, ${y0Val})$，代入抛物线方程：`,
           latex: `y_1^2 = 2px_1 \\\\ y_2^2 = 2px_2`,
-          rubric: "设点代入建立抛物线端点方程（2分）",
+          rubric: "【高考采分点】设点代入建立抛物线端点方程（2分）",
         },
         {
           step: 2,
           title: "建模展开 · 两式作差求动弦斜率",
           detail: `两式相减因式分解 $(y_1 - y_2)(y_1 + y_2) = 2p(x_1 - x_2)$，整理得 $k_{AB} \\cdot y_0 = p$：`,
           latex: `k_{AB} = \\frac{p}{y_0} = \\frac{${pVal}}{${y0Val}} = ${kVal}`,
-          rubric: "利用作差因式分解求得斜率（3分）",
+          rubric: "【高考采分点】利用作差因式分解求得斜率（3分）",
         },
         {
           step: 3,
@@ -426,7 +427,7 @@ export function buildConicLineMathQuantities(
             ? `抛物线内部充要条件 $y_0^2 < 2px_0$，判别式 $\\Delta > 0$，实弦存在：`
             : `【高考防坑警示】点 $M$ 位于抛物线外部，点差法所求直线与抛物线相离，无实弦！`,
           latex: `y_0^2 - 2px_0 = (${y0Val})^2 - 2(${pVal})(${x0Val}) = ${diffVal} ${result.isMidpointValid ? "< 0" : "\\ge 0"}`,
-          rubric: "严格检验中点在抛物线内部充要条件（3分）",
+          rubric: "【高考采分点】严格检验中点在抛物线内部充要条件（3分）",
         },
       );
     }
@@ -456,14 +457,14 @@ export function buildConicLineMathQuantities(
         title: "审题定法 · 设两切点并写出切点处切线方程",
         detail: `设过点 $P(${xPVal}, ${yPVal})$ 所作两条切线的切点分别为 $A(x_1, y_1)$、$B(x_2, y_2)$。由圆锥曲线在切点处的切线方程（把标准方程中的 $x^2$ 换成 $x_1 x$、$y^2$ 换成 $y_1 y$ 即得），切线 $PA$ 的方程为：`,
         latex: tangentAtA,
-        rubric: "设出两切点坐标并写出切点处切线方程（3分）",
+        rubric: "【高考采分点】设出两切点坐标并写出切点处切线方程（3分）",
       },
       {
         step: 2,
         title: "建模展开 · 代入外部点推出切点弦方程",
         detail: `切线 $PA$ 过外部点 $P$，把 $P(${xPVal}, ${yPVal})$ 代入切线方程；对切点 $B$ 同理。两式结构完全相同，说明 $A$、$B$ 两点坐标都满足同一个一次方程，由“两点确定一条直线”即得切点弦 $AB$ 的方程，再化为斜截式 $y = kx + m$：`,
         latex: `${polarEq} \\\\ \\implies y = ${kVal}x ${m >= 0 ? "+" : ""} ${formatMathNumber(m)}`,
-        rubric: "用切线方程三步推出切点弦方程并化简（3分）",
+        rubric: "【高考采分点】用切线方程三步推出切点弦方程并化简（3分）",
       },
       {
         step: 3,
@@ -476,7 +477,7 @@ export function buildConicLineMathQuantities(
           conicType === "parabola"
             ? `x_P = -\\frac{p}{2} \\implies k_1 k_2 = -1`
             : "\\text{点 } P \\text{ 在定直线} \\iff \\text{切点弦绕定点旋转}",
-        rubric: "总结几何定值与高考大题定点规律（3分）",
+        rubric: "【高考采分点】总结几何定值与高考大题定点规律（3分）",
       },
     );
   }

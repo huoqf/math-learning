@@ -371,7 +371,7 @@ export function buildVector3DBasisPanel(
       detail:
         "如果三个向量 $\\vec{a}, \\vec{b}, \\vec{c}$ 不共面，那么对空间任一向量 $\\vec{p}$，存在唯一的有序实数组 $(x, y, z)$ 使得 $\\vec{p} = x\\vec{a} + y\\vec{b} + z\\vec{c}$。不共面向量组构成空间基底：",
       latex: `\\vec{a}, \\vec{b}, \\vec{c} \\text{ 不共面} \\iff \\text{对任一空间向量 } \\vec{p}, \\; \\text{存在唯一有序实数组 } (x, y, z), \\; \\vec{p} = x\\vec{a} + y\\vec{b} + z\\vec{c}`,
-      rubric: "[高考采分点] 准确说明基底三个向量不共面的前提条件 (+4分)",
+      rubric: "【高考采分点】准确说明基底三个向量不共面的前提条件 (+4分)",
     },
     {
       step: 2,
@@ -379,7 +379,7 @@ export function buildVector3DBasisPanel(
       detail:
         "对空间中任意一点 P，存在唯一的实数组 (x, y, z)，使得向量 OP 可以用基底线性表出：",
       latex: `\\vec{OP} = x\\vec{a} + y\\vec{b} + z\\vec{c} = ${x.toFixed(2)}\\vec{a} + ${y.toFixed(2)}\\vec{b} + ${z.toFixed(2)}\\vec{c}`,
-      rubric: "[高考采分点] 正确建立线性方程组并求解分解系数 (x,y,z) (+5分)",
+      rubric: "【高考采分点】正确建立线性方程组并求解分解系数 (x,y,z) (+5分)",
     },
     {
       step: 3,
@@ -387,7 +387,7 @@ export function buildVector3DBasisPanel(
       detail:
         "分析点 P 相对基底端点 A, B, C 的几何从属关系。当且仅当系数之和为 1 时，四点 P, A, B, C 共面：",
       latex: `x + y + z = 1 \\iff P, A, B, C \\text{ 四点共面}`,
-      rubric: "[高考采分点] 应用系数和定理准确判定空间共面从属关系 (+4分)",
+      rubric: "【高考采分点】应用系数和定理准确判定空间共面从属关系 (+4分)",
     },
   ];
 

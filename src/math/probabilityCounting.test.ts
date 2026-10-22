@@ -9,6 +9,7 @@ import {
   evaluateAssignments,
   getGridPathMatrix,
   calculateGroupingAllocation,
+  buildGroupingItems,
   buildAdditionTree,
   buildMultiplicationTree,
 } from "./probabilityCounting";
@@ -107,5 +108,57 @@ describe("probabilityCounting math module", () => {
     const addTree = buildAdditionTree(3, 4);
     expect(addTree.nodes.length).toBe(1 + 3 + 4);
     expect(addTree.edges.length).toBe(3 + 4);
+  });
+
+  it("均分模型：不可整除的 3 帧必须显式退化，禁止静默截断", () => {
+    /* 改前 validTotal = floor(N/k)*k：
+       (4,3) 截断成 3、(6,4) 截断成 4、(8,3) 截断成 6，
+       于是中屏少画球、右屏把滑块的 N 印小、左屏滑块还是原值——三屏撕裂。
+       定案是保留滑块全区间（整除性检验本身就是考点），由数学层如实报无解。 */
+    const cases = [
+      { n: 4, k: 3, remainder: 1 },
+      { n: 6, k: 4, remainder: 2 },
+      { n: 8, k: 3, remainder: 2 },
+    ];
+    for (const c of cases) {
+      const info = calculateGroupingAllocation(c.n, c.k);
+      expect(info.isDivisible, `(${c.n},${c.k}) 应判为不可均分`).toBe(false);
+      expect(info.validity).toBe("not_divisible");
+      expect(info.remainder).toBe(c.remainder);
+      // 关键回归：totalItems 必须如实等于滑块值，不得回填成截断后的数
+      expect(info.totalItems).toBe(c.n);
+      expect(info.itemsPerGroup).toBe(0);
+      expect(info.directCombinationWays).toBe(0);
+      expect(info.groupedWays).toBe(0);
+      expect(info.allocatedWays).toBe(0);
+      // 中屏元素库必须全员在场（A~H 共 N 个）
+      const items = buildGroupingItems(info);
+      expect(items).toHaveLength(c.n);
+      expect(items[items.length - 1].label).toBe(String.fromCharCode(64 + c.n));
+    }
+  });
+
+  it("均分模型：可整除的 6 帧计数不变，元素库长度与 N 一致", () => {
+    // [N, k, 每组个数, 逐步组合积, 均分总数]
+    const cases: Array<[number, number, number, number, number]> = [
+      [4, 2, 2, 6, 3],
+      [4, 4, 1, 24, 1],
+      [6, 2, 3, 20, 10],
+      [6, 3, 2, 90, 15],
+      [8, 2, 4, 70, 35],
+      [8, 4, 2, 2520, 105],
+    ];
+    for (const [n, k, m, direct, grouped] of cases) {
+      const info = calculateGroupingAllocation(n, k);
+      expect(info.isDivisible, `(${n},${k}) 应可均分`).toBe(true);
+      expect(info.validity).toBe("valid");
+      expect(info.totalItems).toBe(n);
+      expect(info.itemsPerGroup).toBe(m);
+      expect(info.directCombinationWays).toBe(direct);
+      expect(info.groupedWays).toBe(grouped);
+      // 定向分配乘回 k! 后回到含序积
+      expect(info.allocatedWays).toBe(direct);
+      expect(buildGroupingItems(info)).toHaveLength(n);
+    }
   });
 });

@@ -183,14 +183,14 @@ export function buildConicPropertiesPanel(
         latex: isEllipse
           ? `c = \\sqrt{a^2 - b^2} = \\sqrt{${a.toFixed(2)}^2 - ${b.toFixed(2)}^2} = ${c.toFixed(2)}`
           : `c = \\sqrt{a^2 + b^2} = \\sqrt{${a.toFixed(2)}^2 + ${b.toFixed(2)}^2} = ${c.toFixed(2)}`,
-        rubric: "采分点：规范写出 $a, b, c$ 平方关系并代入求值（2分）",
+        rubric: "【高考采分点】规范写出 $a, b, c$ 平方关系并代入求值（2分）",
       },
       {
         step: 2,
         title: "建模联立 · 顶点、焦点与离心率解算",
         detail: `代入当前参数 $a = ${a.toFixed(2)}, b = ${b.toFixed(2)}, c = ${c.toFixed(2)}$，求得焦点与离心率：`,
         latex: `F_1(-${c.toFixed(2)}, 0),\\; F_2(${c.toFixed(2)}, 0),\\quad e = \\frac{c}{a} = \\frac{${c.toFixed(2)}}{${a.toFixed(2)}} = ${e.toFixed(3)}`,
-        rubric: "采分点：准确写出焦点坐标与离心率（2分）",
+        rubric: "【高考采分点】准确写出焦点坐标与离心率（2分）",
       },
       {
         step: 3,
@@ -201,7 +201,7 @@ export function buildConicPropertiesPanel(
         latex: isEllipse
           ? `x = \\pm \\frac{${(a * a).toFixed(2)}}{${c.toFixed(2)}} = \\pm ${directrices.rightX.toFixed(2)},\\quad L = \\frac{2 \\times ${b.toFixed(2)}^2}{${a.toFixed(2)}} = ${latusRectum.length.toFixed(2)}`
           : `y = \\pm \\frac{${b.toFixed(2)}}{${a.toFixed(2)}}x = \\pm ${(b / a).toFixed(2)}x,\\quad L = \\frac{2 \\times ${b.toFixed(2)}^2}{${a.toFixed(2)}} = ${latusRectum.length.toFixed(2)}`,
-        rubric: "采分点：规范列出特征线与通径公式（2分）",
+        rubric: "【高考采分点】规范列出特征线与通径公式（2分）",
       },
     );
   } else if (studyMode === "eccentricity") {
@@ -215,7 +215,7 @@ export function buildConicPropertiesPanel(
         latex: isEllipse
           ? `b = a\\sqrt{1 - e^2} = ${a.toFixed(2)} \\times \\sqrt{1 - ${e.toFixed(3)}^2} = ${b.toFixed(2)}`
           : `b = a\\sqrt{e^2 - 1} = ${a.toFixed(2)} \\times \\sqrt{${e.toFixed(3)}^2 - 1} = ${b.toFixed(2)}`,
-        rubric: "采分点：由离心率转化出半轴比值关系（2分）",
+        rubric: "【高考采分点】由离心率转化出半轴比值关系（2分）",
       },
       {
         step: 2,
@@ -226,7 +226,7 @@ export function buildConicPropertiesPanel(
         latex: isEllipse
           ? `L = 2 \\times ${a.toFixed(2)} \\times (1 - ${e.toFixed(3)}^2) = ${latusRectum.length.toFixed(2)}`
           : `\\cos\\frac{\\alpha}{2} = \\frac{1}{${e.toFixed(3)}} = ${(1 / e).toFixed(3)} \\implies \\alpha \\approx ${(2 * Math.acos(Math.min(1, 1 / e)) * (180 / Math.PI)).toFixed(1)}^\\circ`,
-        rubric: "采分点：联立离心率与几何特征参量公式（2分）",
+        rubric: "【高考采分点】联立离心率与几何特征参量公式（2分）",
       },
       {
         step: 3,
@@ -237,7 +237,7 @@ export function buildConicPropertiesPanel(
         latex: isEllipse
           ? `e \\ge \\frac{\\sqrt{2}}{2} \\iff \\text{椭圆上存在直角焦点三角形}`
           : `e = \\sqrt{2} \\iff y = \\pm x \\iff \\text{渐近线互相垂直}`,
-        rubric: "采分点：得出高考特征极值与充要条件结论（2分）",
+        rubric: "【高考采分点】得出高考特征极值与充要条件结论（2分）",
       },
     );
   } else {
@@ -252,7 +252,7 @@ export function buildConicPropertiesPanel(
         latex: isEllipse
           ? `r_1 = ${focusTriangle.r1.toFixed(2)},\\; r_2 = ${focusTriangle.r2.toFixed(2)},\\; r_1 + r_2 = ${(focusTriangle.r1 + focusTriangle.r2).toFixed(2)} = 2a`
           : `r_1 = ${focusTriangle.r1.toFixed(2)},\\; r_2 = ${focusTriangle.r2.toFixed(2)},\\; r_1 - r_2 = ${(focusTriangle.r1 - focusTriangle.r2).toFixed(2)} = 2a`,
-        rubric: "采分点：利用圆锥曲线第一定义建立焦半径等式（2分）",
+        rubric: "【高考采分点】利用圆锥曲线第一定义建立焦半径等式（2分）",
       },
       {
         step: 2,
@@ -261,7 +261,7 @@ export function buildConicPropertiesPanel(
         latex: isEllipse
           ? `(2c)^2 = (r_1+r_2)^2 - 2r_1r_2(1+\\cos\\theta) \\implies r_1r_2 = \\frac{b^2}{\\cos^2(\\theta/2)}`
           : `(2c)^2 = (r_1-r_2)^2 + 2r_1r_2(1-\\cos\\theta) \\implies r_1r_2 = \\frac{b^2}{\\sin^2(\\theta/2)}`,
-        rubric: "采分点：列出余弦定理并完成完全平方差消元（2分）",
+        rubric: "【高考采分点】列出余弦定理并完成完全平方差消元（2分）",
       },
       {
         step: 3,
@@ -272,7 +272,8 @@ export function buildConicPropertiesPanel(
         latex: isEllipse
           ? `S_{\\triangle PF_1F_2} = b^2\\tan\\frac{\\theta}{2} = ${b.toFixed(2)}^2 \\times \\tan(${(focusTriangle.angleDeg / 2).toFixed(2)}^\\circ) = ${focusTriangle.areaGeom.toFixed(2)}`
           : `S_{\\triangle PF_1F_2} = \\frac{b^2}{\\tan(\\theta/2)} = \\frac{${b.toFixed(2)}^2}{\\tan(${(focusTriangle.angleDeg / 2).toFixed(2)}^\\circ)} = ${focusTriangle.areaGeom.toFixed(2)}`,
-        rubric: "采分点：准确代入半角正切公式求出面积与内切圆特征量（2分）",
+        rubric:
+          "【高考采分点】准确代入半角正切公式求出面积与内切圆特征量（2分）",
       },
     );
   }

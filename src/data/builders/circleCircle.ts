@@ -267,21 +267,21 @@ export function buildCircleCirclePanel(
         latex: `C_1 - C_2 = 0 \\implies ${chord.line.latex}`,
         detail:
           "两圆方程相减抵消二次项 $x^2, y^2$，所得一次方程即为两圆相交公共弦 $AB$ 所在直线方程。",
-        rubric: "求得公共弦方程",
+        rubric: "【高考采分点】求得公共弦方程",
       },
       {
         step: 2,
         title: "第二步：计算圆心 O1 到公共弦的弦心距 d1",
         latex: `d_1 = \\frac{|A x_1 + B y_1 + C|}{\\sqrt{A^2 + B^2}} = ${formatMathNumber(d1Val)}`,
         detail: `代入圆心 $O_1(${formatMathNumber(x1)}, ${formatMathNumber(y1)})$ 坐标，求得弦心距 $d_1 = ${formatMathNumber(d1Val)}$。`,
-        rubric: "计算弦心距",
+        rubric: "【高考采分点】计算弦心距",
       },
       {
         step: 3,
         title: "第三步：在 Rt△O1 M A 中应用垂径勾股定理求解弦长",
         latex: `|AB| = 2\\sqrt{r_1^2 - d_1^2} = 2\\sqrt{${formatMathNumber(r1)}^2 - (${formatMathNumber(d1Val)})^2} = ${formatMathNumber(lenVal)}`,
         detail: `利用垂径定理与勾股定理求出相交公共弦长 $|AB| = ${formatMathNumber(lenVal)}$，避免联立一元二次方程，提升解题速度。`,
-        rubric: "求得公共弦长",
+        rubric: "【高考采分点】求得公共弦长",
       },
     );
   }

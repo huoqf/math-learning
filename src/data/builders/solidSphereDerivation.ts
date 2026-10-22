@@ -142,7 +142,7 @@ export function buildSphereDerivationPanel(
           "选取底面半径为 $R$、高为 $R$ 的半球，置于水平基准面上。在同基准面上并排放置一个同底等高的圆柱（底半径 $R$、高 $R$），并在圆柱内挖去一个顶点在底面圆心、底面与圆柱上底重合的倒圆锥。",
         latex: `V_{\\text{柱}} = \\pi R^2 \\cdot R = \\pi R^3, \\quad V_{\\text{锥}} = \\frac{1}{3}\\pi R^2 \\cdot R = \\frac{1}{3}\\pi R^3`,
         rubric:
-          "[高考规范采分] 明确构造等高伴随几何体并写出柱、锥体积表达式 (+4分)",
+          "【高考采分点】[高考规范采分] 明确构造等高伴随几何体并写出柱、锥体积表达式 (+4分)",
       },
       {
         step: 2,
@@ -151,7 +151,7 @@ export function buildSphereDerivationPanel(
           "在任意高度 $h$（$0 \\le h \\le R$）处作平行于底面的水平截面。对半球，由勾股定理截面圆半径为 $\\sqrt{R^2 - h^2}$；对挖锥柱体，倒圆锥在该高度处的横截面半径由截面三角形相似比得 $r_{\\text{内}} = h$：",
         latex: `S_1(h) = \\pi (\\sqrt{R^2 - h^2})^2 = \\pi(R^2 - h^2), \\quad S_2(h) = \\pi R^2 - \\pi h^2 = \\pi(R^2 - h^2) \\implies S_1(h) \\equiv S_2(h)`,
         rubric:
-          "[高考规范采分] 准确列出截面圆与截面圆环面积表达式并严格证明等价 (+5分)",
+          "【高考采分点】[高考规范采分] 准确列出截面圆与截面圆环面积表达式并严格证明等价 (+5分)",
       },
       {
         step: 3,
@@ -160,7 +160,7 @@ export function buildSphereDerivationPanel(
           "因为对任意高度 $h \\in [0, R]$，截面面积恒等 $S_1(h) = S_2(h)$，由祖暅原理得半球体积等于挖锥柱体体积：",
         latex: `V_{\\text{半球}} = \\pi R^3 - \\frac{1}{3}\\pi R^3 = \\frac{2}{3}\\pi R^3 \\implies V_{\\text{球}} = 2 V_{\\text{半球}} = \\frac{4}{3}\\pi R^3`,
         rubric:
-          "[高考规范采分] 依据祖暅原理给出严密推导结论并倍乘得出整球体积 (+4分)",
+          "【高考采分点】[高考规范采分] 依据祖暅原理给出严密推导结论并倍乘得出整球体积 (+4分)",
       },
     );
 
@@ -292,7 +292,7 @@ export function buildSphereDerivationPanel(
           "将半径为 $R$ 的球面分割成 $N$ 个微小网格，每个微小网格面积记为 $\\Delta S_i$。连接球心与各网格的顶点，整个球体被近似分割为 $N$ 个以球心为顶点的小棱锥。",
         latex: `\\text{微锥体高} \\; h_i \\approx R, \\quad \\Delta V_i \\approx \\frac{1}{3} h_i \\Delta S_i = \\frac{1}{3} R \\Delta S_i`,
         rubric:
-          "[高考规范采分] 准确建立微锥体体积与微小底面积的线性正比例模型 (+4分)",
+          "【高考采分点】[高考规范采分] 准确建立微锥体体积与微小底面积的线性正比例模型 (+4分)",
       },
       {
         step: 2,
@@ -301,7 +301,7 @@ export function buildSphereDerivationPanel(
           "把所有小棱锥的体积累加起来，总和近似等于球的体积；同时所有小网格面积之和近似等于球的表面积：",
         latex: `V = \\sum_{i=1}^N \\Delta V_i \\approx \\frac{1}{3} R \\sum_{i=1}^N \\Delta S_i = \\frac{1}{3} R S`,
         rubric:
-          "[高考规范采分] 提出以平代曲思想并正确提公因式写出求和式 (+5分)",
+          "【高考采分点】[高考规范采分] 提出以平代曲思想并正确提公因式写出求和式 (+5分)",
       },
       {
         step: 3,
@@ -310,7 +310,7 @@ export function buildSphereDerivationPanel(
           "当网格划分越来越密时，近似等式趋于精确相等。将已知球体积公式 $V = \\frac{4}{3}\\pi R^3$ 代入反解表面积：",
         latex: `S = \\frac{3V}{R} = \\frac{3 \\cdot \\left(\\frac{4}{3}\\pi R^3\\right)}{R} = 4\\pi R^2`,
         rubric:
-          "[高考规范采分] 准确反解求得 $S = 4\\pi R^2$ 结论并说明几何意义 (+4分)",
+          "【高考采分点】[高考规范采分] 准确反解求得 $S = 4\\pi R^2$ 结论并说明几何意义 (+4分)",
       },
     );
 

@@ -98,14 +98,14 @@ export function buildAdvancedSpherePanel(
         detail:
           "过底面外心 O₁ 作底面垂线，过侧面外心 O₂ 作侧面垂线。由两面互相垂直，两垂线在空间必相交于外接球球心 O，构成空间矩形 H-O₁-O-O₂。",
         latex: `O O_1 \\perp \\text{底面}, \\quad O O_2 \\perp \\text{侧面} \\implies |O O_1| = d_2, \\quad |O O_2| = d_1`,
-        rubric: "[高考采分点] 需写明两垂线共面且垂直于交线得空间矩形 (+2分)",
+        rubric: "【高考采分点】需写明两垂线共面且垂直于交线得空间矩形 (+2分)",
       },
       {
         step: 2,
         title: "勾股定理代入已知求弦心距",
         detail: `代入当前参数 r₁ = ${res.r1.toFixed(1)}, r₂ = ${res.r2.toFixed(1)}, c = ${res.c.toFixed(2)} (交线半长 c/2 = ${res.halfC.toFixed(2)})，分别在两截面圆中解直角三角形求弦心距：`,
         latex: `d_1 = \\sqrt{r_1^2 - (c/2)^2} = \\sqrt{${res.r1.toFixed(1)}^2 - ${res.halfC.toFixed(2)}^2} \\approx ${res.d1.toFixed(2)}, \\quad d_2 = \\sqrt{r_2^2 - (c/2)^2} \\approx ${res.d2.toFixed(2)}`,
-        rubric: "[高考采分点] 正确利用截面圆弦心距勾股定理 (+2分)",
+        rubric: "【高考采分点】正确利用截面圆弦心距勾股定理 (+2分)",
       },
       {
         step: 3,
@@ -113,7 +113,7 @@ export function buildAdvancedSpherePanel(
         detail:
           "外接球球心 O 到任意顶点的距离即为半径 R。利用空间矩形对角线与勾股差公式直接解出：",
         latex: `R^2 = d_1^2 + d_2^2 + \\left(\\frac{c}{2}\\right)^2 = r_1^2 + r_2^2 - \\left(\\frac{c}{2}\\right)^2 = ${res.r1.toFixed(1)}^2 + ${res.r2.toFixed(1)}^2 - ${res.halfC.toFixed(2)}^2 = ${R2.toFixed(2)} \\implies R \\approx ${res.radius.toFixed(3)}`,
-        rubric: "[高考采分点] 正确写出外接球半径方程并求解 (+2分)",
+        rubric: "【高考采分点】正确写出外接球半径方程并求解 (+2分)",
       },
     );
 
@@ -177,7 +177,7 @@ export function buildAdvancedSpherePanel(
         detail:
           "正四面体具备高度空间对称性，各面重心、各棱中垂线与顶点高线完全交于一点，即为三球公共球心 O。",
         latex: `O_{\\text{内}} = O_{\\text{棱}} = O_{\\text{外}} = O`,
-        rubric: "[高考采分点] 判定正四面体空间对称中心为公共球心 (+4分)",
+        rubric: "【高考采分点】判定正四面体空间对称中心为公共球心 (+4分)",
       },
       {
         step: 2,
@@ -185,7 +185,7 @@ export function buildAdvancedSpherePanel(
         detail: `代入当前棱长 a = ${a}，直接套用黄金比例解析式求得三球半径。外接球半径是内切球半径的 3 倍，棱切球切于 6 条棱的中点：`,
         latex: `r_{\\text{内}} = \\frac{\\sqrt{6}}{12}a \\approx ${res.inRadius.toFixed(3)}, \\quad r_{\\text{棱}} = \\frac{\\sqrt{2}}{4}a \\approx ${res.edgeRadius.toFixed(3)}, \\quad R_{\\text{外}} = \\frac{\\sqrt{6}}{4}a \\approx ${res.circumRadius.toFixed(3)} \\implies \\frac{R_{\\text{外}}}{r_{\\text{内}}} = 3`,
         rubric:
-          "[高考采分点] 准确计算三球特征半径数值并说明内外球固定倍数 (+5分)",
+          "【高考采分点】准确计算三球特征半径数值并说明内外球固定倍数 (+5分)",
       },
     );
 

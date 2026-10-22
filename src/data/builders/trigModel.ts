@@ -195,21 +195,21 @@ export function buildTrigModelPanel(
         step: 1,
         title: "审题定法 · 读出文字里的三个条件",
         detail: `${scenario.background} 本情境的设问时刻为 $t = ${probeStr}$。由此得：$t = 0$ 的状态定 $\\varphi$，最高最低之差定 $A$，一次完整变化用时定 $T$。`,
-        rubric: "要点：把文字条件逐条对应到 A、T、φ、k",
+        rubric: "【高考采分点】把文字条件逐条对应到 A、T、φ、k",
       },
       {
         step: 2,
         title: "建模联立 · 定四量并写出解析式",
         detail: `当前四量为 $A = ${aStr}$、$T = ${tStr}$、$\\varphi = ${phiStr}$、$k = ${kStr}$，故 $\\omega = \\dfrac{2\\pi}{${tStr}} = ${wStr}$，解析式为 $h = ${aStr}\\sin\\!\\left(${phaseTerm(tStr, model.phi)}\\right) + ${kStr}$。`,
         latex: `\\omega = \\dfrac{2\\pi}{${tStr}} = ${wStr}, \\quad \\varphi = ${phiStr}`,
-        rubric: "要点：由周期派生 ω，再代入标准形式",
+        rubric: "【高考采分点】由周期派生 ω，再代入标准形式",
       },
       {
         step: 3,
         title: "代入求解 · 回答情境设问",
         detail: `${scenario.probeQuestion} 把观测点对准设问时刻即得 $t = ${tProbeStr}$，此时相位 $\\omega t + \\varphi = ${formatMathNumber(phaseProbe)}$，函数值 $h = ${hProbeStr}$。`,
         latex: `h(${tProbeStr}) = ${aStr}\\sin\\!\\left(${phaseTerm(tStr, model.phi)}\\right)\\Big|_{t = ${tProbeStr}} + ${kStr} = ${hProbeStr}`,
-        rubric: "要点：代入并核对结果是否落在 [k − A, k + A] 内",
+        rubric: "【高考采分点】代入并核对结果是否落在 [k − A, k + A] 内",
       },
     ];
 
@@ -344,21 +344,21 @@ export function buildTrigModelPanel(
         title: "审题定法 · 由最值定 A 与 k",
         detail: `图象最高点纵坐标 $h_{max} = ${hMaxStr}$、最低点纵坐标 $h_{min} = ${hMinStr}$，故振幅与平衡位置分别为 $A = \\dfrac{${hMaxStr} - ${hMinStr}}{2} = ${aStr}$，$k = \\dfrac{${hMaxStr} + ${hMinStr}}{2} = ${kStr}$。`,
         latex: `A = \\dfrac{${hMaxStr} - ${hMinStr}}{2} = ${aStr}, \\quad k = \\dfrac{${hMaxStr} + ${hMinStr}}{2} = ${kStr}`,
-        rubric: "要点：先折半求振幅，再取平均求平衡位置",
+        rubric: "【高考采分点】先折半求振幅，再取平均求平衡位置",
       },
       {
         step: 2,
         title: "建模联立 · 由周期定 ω、由波峰定 φ",
         detail: `图象上一个完整周期的横向读数为 $T = ${tStr}$，故 $\\omega = \\dfrac{2\\pi}{${tStr}} = ${wStr}$；再令所取波峰处的相位等于 $\\dfrac{\\pi}{2}$，得 $\\varphi = \\dfrac{\\pi}{2} - \\dfrac{2\\pi}{${tStr}}\\times ${tMaxStr} = ${phiStr}$。`,
         latex: `\\omega = \\dfrac{2\\pi}{${tStr}} = ${wStr}, \\quad \\varphi = \\dfrac{\\pi}{2} - \\dfrac{2\\pi}{${tStr}}\\times ${tMaxStr} = ${phiStr}`,
-        rubric: "要点：ω 由 T 唯一确定，φ 必须借助具体点",
+        rubric: "【高考采分点】ω 由 T 唯一确定，φ 必须借助具体点",
       },
       {
         step: 3,
         title: "代入求解 · 代回校验并写出解析式",
         detail: `把反解结果代回波峰横坐标 $t = ${tMaxStr}$，应恰好取到最高点，残差 $|h(t_{max}) - h_{max}| = ${residualStr}$；解析式为 $h = ${aStr}\\sin\\!\\left(${phaseTerm(tStr, model.phi)}\\right) + ${kStr}$。`,
         latex: `h = ${aStr}\\sin\\!\\left(${phaseTerm(tStr, model.phi)}\\right) + ${kStr}`,
-        rubric: "要点：代回校验，确保反解与图象自洽",
+        rubric: "【高考采分点】代回校验，确保反解与图象自洽",
       },
     ];
 
@@ -470,21 +470,21 @@ export function buildTrigModelPanel(
       title: "审题定法 · 把文字条件翻译成四个量",
       detail:
         "「最高与最低」折半给出振幅 $A$ 与平衡位置 $k$；「完成一次完整振动所用时间」直接给出周期 $T$；「$t = 0$ 时的状态」作为定初相 $\\varphi$ 的特殊点。",
-      rubric: "要点：四条文字条件分别对应四个量，不可交叉使用",
+      rubric: "【高考采分点】四条文字条件分别对应四个量，不可交叉使用",
     },
     {
       step: 2,
       title: "建模联立 · 写出解析式",
       detail: `由周期派生角频率 $\\omega = \\dfrac{2\\pi}{T} = \\dfrac{2\\pi}{${tStr}} = ${wStr}$，四量齐备后代入标准形式得 $h = ${aStr}\\sin\\!\\left(${phaseTerm(tStr, model.phi)}\\right) + ${kStr}$。`,
       latex: `h = ${aStr}\\sin\\!\\left(${phaseTerm(tStr, model.phi)}\\right) + ${kStr}`,
-      rubric: "要点：先由 T 派生 ω，再整体代入标准形式",
+      rubric: "【高考采分点】先由 T 派生 ω，再整体代入标准形式",
     },
     {
       step: 3,
       title: "代入求解 · 预测指定时刻的位移",
       detail: `把观测时刻 $t = ${tProbeStr}$ 代入解析式，相位 $\\omega t + \\varphi = ${formatMathNumber(phaseProbe)}$，位移 $h = ${hProbeStr}$；该值必落在值域 $[${formatMathNumber(model.minValue)}, ${formatMathNumber(model.maxValue)}]$ 内。`,
       latex: `h(${tProbeStr}) = ${aStr}\\sin\\!\\left(${phaseTerm(tStr, model.phi)}\\right)\\Big|_{t = ${tProbeStr}} + ${kStr} = ${hProbeStr}`,
-      rubric: "要点：代入求值并用值域复核结果",
+      rubric: "【高考采分点】代入求值并用值域复核结果",
     },
   ];
 

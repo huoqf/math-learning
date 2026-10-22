@@ -328,7 +328,7 @@ export function buildConstantDoublePanel(
           "自变量 $x_1 \\in [0.5, 2.0]$ 与 $x_2 \\in [1.5, 3.0]$ 各自独立滑动无绑定约束。要使得不等式全域恒成立，充要条件为 $f(x)$ 的全域最小值不低于 $g(x)$ 的全域最大值。",
         latex: `\\forall x_1 \\in I_1, \\; \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2) \\iff f_{\\min} \\ge g_{\\max}`,
         rubric:
-          "采分点：识别双动点独立自由滑动，准确确立极值完全隔离充要模型（2分）",
+          "【高考采分点】识别双动点独立自由滑动，准确确立极值完全隔离充要模型（2分）",
       },
       {
         step: 2,
@@ -339,7 +339,7 @@ export function buildConstantDoublePanel(
           ${gMaxLatex} 
         \\end{aligned}`,
         rubric:
-          "采分点：判定对称轴位置与单调区间，列出解析式代入并解出极值（4分）",
+          "【高考采分点】判定对称轴位置与单调区间，列出解析式代入并解出极值（4分）",
       },
       {
         step: 3,
@@ -353,7 +353,7 @@ export function buildConstantDoublePanel(
           &\\iff y_f \\ge ${formatMathNumber(res.gMax)} 
         \\end{aligned}`,
         rubric:
-          "采分点：建立参数不等式并解出充要区间，完成高度差与临界相切反思（4分）",
+          "【高考采分点】建立参数不等式并解出充要区间，完成高度差与临界相切反思（4分）",
       },
     ];
   } else if (selectedLogic === "all_exist") {
@@ -365,7 +365,8 @@ export function buildConstantDoublePanel(
         detail:
           "对于每一个给定的 $x_1 \\in I_1$，要求总能在 $I_2$ 中找到动点 $x_2$ 使得 $f(x_1) \\ge g(x_2)$。即每个函数值 $f(x_1)$ 都不低于 $g(x)$ 的全域最低点，等价于 $f(x)$ 的最小值不低于 $g(x)$ 的最小值。",
         latex: `\\forall x_1 \\in I_1, \\; \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2) \\iff f_{\\min} \\ge g_{\\min}`,
-        rubric: "采分点：正确转化量词覆盖关系，锁定保底极小值比较模型（2分）",
+        rubric:
+          "【高考采分点】正确转化量词覆盖关系，锁定保底极小值比较模型（2分）",
       },
       {
         step: 2,
@@ -376,7 +377,7 @@ export function buildConstantDoublePanel(
           ${gMinLatex} 
         \\end{aligned}`,
         rubric:
-          "采分点：结合对称轴与远端点比较，准确解算两函数闭区间最小值（4分）",
+          "【高考采分点】结合对称轴与远端点比较，准确解算两函数闭区间最小值（4分）",
       },
       {
         step: 3,
@@ -390,7 +391,7 @@ export function buildConstantDoublePanel(
           &\\iff y_f \\ge ${formatMathNumber(res.gMin)} 
         \\end{aligned}`,
         rubric:
-          "采分点：完成参数不等式求解，反思图象相交但保底依然成立的数学内涵（4分）",
+          "【高考采分点】完成参数不等式求解，反思图象相交但保底依然成立的数学内涵（4分）",
       },
     ];
   } else if (selectedLogic === "exist_all") {
@@ -402,7 +403,8 @@ export function buildConstantDoublePanel(
         detail:
           "只需在 $I_1$ 内存在至少一个动点 $x_1$，使得 $f(x_1)$ 能够压制 $g(x)$ 在 $I_2$ 上的所有取值。由于只要选出 $f(x)$ 的最高峰顶即可产生最大压制力，故等价于 $f(x)$ 的最大值不低于 $g(x)$ 的最大值。",
         latex: `\\exists x_1 \\in I_1, \\; \\forall x_2 \\in I_2, \\; f(x_1) \\ge g(x_2) \\iff f_{\\max} \\ge g_{\\max}`,
-        rubric: "采分点：识别存在量词最大优势特征，提炼顶峰压制充要条件（2分）",
+        rubric:
+          "【高考采分点】识别存在量词最大优势特征，提炼顶峰压制充要条件（2分）",
       },
       {
         step: 2,
@@ -413,7 +415,7 @@ export function buildConstantDoublePanel(
           ${gMaxLatex} 
         \\end{aligned}`,
         rubric:
-          "采分点：正确比较区间端点与顶点函数值，得出两函数最大值代数式（4分）",
+          "【高考采分点】正确比较区间端点与顶点函数值，得出两函数最大值代数式（4分）",
       },
       {
         step: 3,
@@ -428,7 +430,7 @@ export function buildConstantDoublePanel(
           &\\iff y_f \\ge ${formatMathNumber(yfCrit)} 
         \\end{aligned}`,
         rubric:
-          "采分点：求解参数不等式，反思峰顶持平相切时的唯一最优动点位置（4分）",
+          "【高考采分点】求解参数不等式，反思峰顶持平相切时的唯一最优动点位置（4分）",
       },
     ];
   } else if (selectedLogic === "exist_exist") {
@@ -440,7 +442,8 @@ export function buildConstantDoublePanel(
         detail:
           "只需在各自区间内能挑出一组动点对 $(x_1, x_2)$ 满足不等式即可。这代表最宽松的准入门槛，只要 $f(x)$ 的最高峰顶不低于 $g(x)$ 的最低谷底，两函数在对应高度上必有点对满足关系。",
         latex: `\\exists x_1 \\in I_1, \\; \\exists x_2 \\in I_2, \\; f(x_1) \\ge g(x_2) \\iff f_{\\max} \\ge g_{\\min}`,
-        rubric: "采分点：识别双存在量词等价于峰顶与谷底的最宽松门槛跨越（2分）",
+        rubric:
+          "【高考采分点】识别双存在量词等价于峰顶与谷底的最宽松门槛跨越（2分）",
       },
       {
         step: 2,
@@ -451,7 +454,7 @@ export function buildConstantDoublePanel(
           ${gMinLatex} 
         \\end{aligned}`,
         rubric:
-          "采分点：分别求解闭区间上 $f(x)$ 的最大值与 $g(x)$ 的最小值代数式（4分）",
+          "【高考采分点】分别求解闭区间上 $f(x)$ 的最大值与 $g(x)$ 的最小值代数式（4分）",
       },
       {
         step: 3,
@@ -466,7 +469,7 @@ export function buildConstantDoublePanel(
           &\\iff y_f \\ge ${formatMathNumber(yfCrit)} 
         \\end{aligned}`,
         rubric:
-          "采分点：完成最宽松参数解集求解，反思解集由非空退化为空集的几何本质（4分）",
+          "【高考采分点】完成最宽松参数解集求解，反思解集由非空退化为空集的几何本质（4分）",
       },
     ];
   } else if (selectedLogic === "same_var") {
@@ -481,7 +484,7 @@ export function buildConstantDoublePanel(
           "题设要求对同一动点 $x \\in [1.50, 2.00]$ 恒成立。严禁拆分为独立最值，必须在公共交集 $I_1 \\cap I_2$ 上构造差函数 $h(x) = f(x) - g(x)$，转化为差函数恒成立问题。",
         latex: `h(x) = f(x) - g(x) \\ge 0, \\quad x \\in I_1 \\cap I_2 \\iff h(x)_{\\min} \\ge 0`,
         rubric:
-          "采分点：识别同自变量特征，规范声明差函数与公共交集定义域（2分）",
+          "【高考采分点】识别同自变量特征，规范声明差函数与公共交集定义域（2分）",
       },
       {
         step: 2,
@@ -493,7 +496,8 @@ export function buildConstantDoublePanel(
           &= 2x^2 - ${formatMathNumber(2 * (xf + xg))}x + y_f ${formatSignedTerm(xf * xf + xg * xg - yg, "")} \\\\ 
           x_{\\text{sym}} &= \\frac{x_f + x_g}{2} = ${formatMathNumber(symAxis)} 
         \\end{aligned}`,
-        rubric: "采分点：正确展开二次多项式并求得对称轴，判定区间单调性（4分）",
+        rubric:
+          "【高考采分点】正确展开二次多项式并求得对称轴，判定区间单调性（4分）",
       },
       {
         step: 3,
@@ -508,7 +512,8 @@ export function buildConstantDoublePanel(
           &\\iff y_f ${formatSignedTerm(2 * xMin * xMin - 2 * (xf + xg) * xMin + (xf * xf + xg * xg - yg), "")} \\ge 0 \\\\ 
           &\\iff y_f \\ge ${formatMathNumber(yfCrit)} 
         \\end{aligned}`,
-        rubric: "采分点：由对称轴位置精确定位极小值点，解出参数充要解集（4分）",
+        rubric:
+          "【高考采分点】由对称轴位置精确定位极小值点，解出参数充要解集（4分）",
       },
     ];
   }

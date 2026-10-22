@@ -176,21 +176,22 @@ export function buildDerivativeOptimizationPanel(
       title: step1Title,
       detail: step1Detail,
       latex: step1Latex,
-      rubric: "准确设定自变量并列出目标函数与实际物理定义域得 4 分",
+      rubric:
+        "【高考采分点】准确设定自变量并列出目标函数与实际物理定义域得 4 分",
     },
     {
       step: 2,
       title: step2Title,
       detail: step2Detail,
       latex: step2Latex,
-      rubric: "正确求导并规范求解导数为零的方程得 4 分",
+      rubric: "【高考采分点】正确求导并规范求解导数为零的方程得 4 分",
     },
     {
       step: 3,
       title: step3Title,
       detail: step3Detail,
       latex: step3Latex,
-      rubric: "完整给出单调性符号列表或说明，写出最值定论得 4 分",
+      rubric: "【高考采分点】完整给出单调性符号列表或说明，写出最值定论得 4 分",
     },
     {
       step: 4,
@@ -198,7 +199,7 @@ export function buildDerivativeOptimizationPanel(
       detail:
         "把导数为零的点结论升级为全局最值，必须在物理定义域两端各取一次趋势比较：只有端点趋势与「唯一导数为零的点为极大（小）值」相容，才能断定它就是全局最大（小）值。这一步是高考解答题的标准收尾，漏写会直接扣分。",
       latex: res.endpointCheckLatex,
-      rubric: "补出两端极限趋势并与导数为零的点结论对齐得 2 分",
+      rubric: "【高考采分点】补出两端极限趋势并与导数为零的点结论对齐得 2 分",
     },
   ];
 

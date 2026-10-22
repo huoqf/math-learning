@@ -458,7 +458,7 @@ export function buildTranscendentalPanel(
             "函数 $f(x)=e^{x-1}$ 导数 $f'(x)=e^{x-1}$。代入切点横坐标 $x_0=1$ 得切线斜率 $k=f'(1)=e^{1-1}=1$。由点斜式切线方程代入切点 $(1,1)$ 展开得 $y=x$。",
           latex:
             "f'(1) = e^0 = 1 \\implies y - 1 = 1 \\cdot (x - 1) \\implies y = x",
-          rubric: "采分点：求导与点斜式切线方程列式（3分）",
+          rubric: "【高考采分点】求导与点斜式切线方程列式（3分）",
         },
         {
           step: 2,
@@ -467,7 +467,7 @@ export function buildTranscendentalPanel(
             "令 $h(x) = e^{x-1} - x$，求导得 $h'(x) = e^{x-1} - 1$。令 $h'(x) = 0 \\iff e^{x-1} = 1 \\iff x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
           latex:
             "h'(x) = e^{x-1} - 1 = 0 \\iff x = 1 \\implies x = 1 \\text{ 为唯一极小值点}",
-          rubric: "采分点：辅助函数求导与极值符号讨论（4分）",
+          rubric: "【高考采分点】辅助函数求导与极值符号讨论（4分）",
         },
         {
           step: 3,
@@ -476,7 +476,7 @@ export function buildTranscendentalPanel(
             "由于 $x=1$ 为唯一极小值点，故在 $\\mathbb{R}$ 上 $h(x) \\ge h(1) = e^{1-1} - 1 = 0$。即 $e^{x-1} \\ge x$ 在 $\\mathbb{R}$ 上恒成立，等号当且仅当 $x=1$ 成立。",
           latex:
             "h(x) \\ge h(1) = 0 \\implies e^{x-1} \\ge x \\quad (x = 1 \\text{ 取等})",
-          rubric: "采分点：最值判定与取等充要条件闭环（5分）",
+          rubric: "【高考采分点】最值判定与取等充要条件闭环（5分）",
         },
       ];
     } else if (isTangent1Exp) {
@@ -487,7 +487,7 @@ export function buildTranscendentalPanel(
           detail:
             "设切点为 $(x_0, e^{x_0})$，函数 $f(x)=e^x$ 导数 $f'(x_0)=e^{x_0}$。点斜式切线方程为 $y - e^{x_0} = e^{x_0}(x - x_0)$。将原点 $(0,0)$ 代入得 $-e^{x_0} = -x_0 e^{x_0} \\implies x_0 = 1$。切点为 $(1,e)$，切线方程为 $y - e = e(x - 1) \\implies y = ex$。",
           latex: "-e^{x_0} = -x_0 e^{x_0} \\implies x_0 = 1 \\implies y = ex",
-          rubric: "采分点：切点解算与切线方程确立（4分）",
+          rubric: "【高考采分点】切点解算与切线方程确立（4分）",
         },
         {
           step: 2,
@@ -496,7 +496,7 @@ export function buildTranscendentalPanel(
             "构造差值函数 $h(x) = e^x - ex$，求导得 $h'(x) = e^x - e$。令 $h'(x) = 0 \\iff e^x = e \\iff x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
           latex:
             "h'(x) = e^x - e = 0 \\iff x = 1 \\implies x = 1 \\text{ 为唯一极值点}",
-          rubric: "采分点：差函数导数与单调性分析（4分）",
+          rubric: "【高考采分点】差函数导数与单调性分析（4分）",
         },
         {
           step: 3,
@@ -505,7 +505,7 @@ export function buildTranscendentalPanel(
             "由单调性知 $x=1$ 为全局最小值点，故 $h(x) \\ge h(1) = e^1 - e \\cdot 1 = 0$。即 $e^x \\ge ex$ 在 $\\mathbb{R}$ 上恒成立，等号当且仅当 $x=1$ 成立。",
           latex:
             "h(x) \\ge h(1) = 0 \\implies e^x \\ge ex \\quad (x = 1 \\text{ 取等})",
-          rubric: "采分点：代入验算与等号条件确认（4分）",
+          rubric: "【高考采分点】代入验算与等号条件确认（4分）",
         },
       ];
     } else if (presetKey === "free") {
@@ -517,7 +517,7 @@ export function buildTranscendentalPanel(
             "动切点 $P(x_0, e^{x_0})$ 处导数 $f'(x_0)=e^{x_0}$。点斜式方程为 $y - e^{x_0} = e^{x_0}(x - x_0) \\implies y = e^{x_0}x + e^{x_0}(1 - x_0)$。",
           latex:
             "y - e^{x_0} = e^{x_0}(x - x_0) \\implies y = e^{x_0}x + e^{x_0}(1 - x_0)",
-          rubric: "采分点：参变切线建立（3分）",
+          rubric: "【高考采分点】参变切线建立（3分）",
         },
         {
           step: 2,
@@ -525,7 +525,7 @@ export function buildTranscendentalPanel(
           detail:
             "令 $F(x) = e^x - [e^{x_0}(x - x_0) + e^{x_0}]$，求导得 $F'(x) = e^x - e^{x_0}$。当 $x < x_0$ 时 $F'(x) < 0$；当 $x > x_0$ 时 $F'(x) > 0$。$x = x_0$ 为唯一极小值点。",
           latex: "F'(x) = e^x - e^{x_0} = 0 \\iff x = x_0",
-          rubric: "采分点：通式差函数求导（4分）",
+          rubric: "【高考采分点】通式差函数求导（4分）",
         },
         {
           step: 3,
@@ -534,7 +534,7 @@ export function buildTranscendentalPanel(
             "由极小值即最小值知 $F(x) \\ge F(x_0) = e^{x_0} - e^{x_0} = 0$。故任意点处的切线恒位于指数曲线下方，切线下界结论成立。",
           latex:
             "e^x \\ge e^{x_0}(x - x_0) + e^{x_0} \\quad (x = x_0 \\text{ 取等})",
-          rubric: "采分点：切线下界结论与取等条件（5分）",
+          rubric: "【高考采分点】切线下界结论与取等条件（5分）",
         },
       ];
     } else {
@@ -547,7 +547,7 @@ export function buildTranscendentalPanel(
             "函数 $f(x)=e^x$ 导数 $f'(x)=e^x$。在切点 $(0,1)$ 处切线斜率 $f'(0)=e^0=1$。点斜式切线方程为 $y - 1 = 1 \\cdot (x - 0) \\implies y = x + 1$。",
           latex:
             "f'(0) = e^0 = 1 \\implies y - 1 = 1 \\cdot (x - 0) \\implies y = x + 1",
-          rubric: "采分点：求导与切线方程列式（3分）",
+          rubric: "【高考采分点】求导与切线方程列式（3分）",
         },
         {
           step: 2,
@@ -555,7 +555,7 @@ export function buildTranscendentalPanel(
           detail:
             "令 $h(x) = e^x - (x+1)$，求导得 $h'(x) = e^x - 1$。令 $h'(x) = 0 \\iff e^x = 1 \\iff x = 0$。当 $x < 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
           latex: "h'(x) = e^x - 1 = 0 \\iff x = 0",
-          rubric: "采分点：辅助函数求导与极值符号讨论（4分）",
+          rubric: "【高考采分点】辅助函数求导与极值符号讨论（4分）",
         },
         {
           step: 3,
@@ -564,7 +564,7 @@ export function buildTranscendentalPanel(
             "所以 $h(x) \\ge h(0) = e^0 - (0 + 1) = 0$，即 $e^x \\ge x + 1$ 在 $\\mathbb{R}$ 上恒成立，等号当且仅当 $x=0$ 成立。",
           latex:
             "h(x) \\ge h(0) = 0 \\implies e^x \\ge x + 1 \\quad (x = 0 \\text{ 取等})",
-          rubric: "采分点：最值判定与取等充要条件闭环（5分）",
+          rubric: "【高考采分点】最值判定与取等充要条件闭环（5分）",
         },
       ];
     }
@@ -578,7 +578,7 @@ export function buildTranscendentalPanel(
           detail:
             "在切点 $(1,0)$ 处构造二次函数 $Q(x) = \\frac{x^2-1}{2}$，其在 $x=1$ 处的函数值 $Q(1)=0$ 且切线斜率 $Q'(1)=1$，与对数曲线 $g(x)=\\ln x$ 在 $(1,0)$ 处同切相切。",
           latex: "Q(1) = \\frac{1-1}{2} = 0 = \\ln 1, \\quad Q'(1) = 1 = g'(1)",
-          rubric: "采分点：相切二次多项式构造（3分）",
+          rubric: "【高考采分点】相切二次多项式构造（3分）",
         },
         {
           step: 2,
@@ -586,7 +586,7 @@ export function buildTranscendentalPanel(
           detail:
             "构造 $H(x) = \\frac{x^2-1}{2} - \\ln x$ ($x > 0$)，求导得 $H'(x) = x - \\frac{1}{x} = \\frac{x^2-1}{x} = \\frac{(x-1)(x+1)}{x}$。由于 $x > 0$，因式 $x+1 > 0$。当 $0 < x < 1$ 时 $H'(x) < 0$；当 $x > 1$ 时 $H'(x) > 0$。",
           latex: "H'(x) = \\frac{(x-1)(x+1)}{x} = 0 \\iff x = 1",
-          rubric: "采分点：构造函数因式求导与符号分析（5分）",
+          rubric: "【高考采分点】构造函数因式求导与符号分析（5分）",
         },
         {
           step: 3,
@@ -595,7 +595,7 @@ export function buildTranscendentalPanel(
             "由于 $x=1$ 为唯一极小值点，故 $H(x) \\ge H(1) = \\frac{1-1}{2} - \\ln 1 = 0$，即 $\\ln x \\le \\frac{x^2-1}{2}$ 在 $(0,+\\infty)$ 恒成立，等号当且仅当 $x=1$ 取得；且在 $x>1$ 时该二次上界比一次切线更贴合。",
           latex:
             "H(x) \\ge H(1) = 0 \\implies \\ln x \\le \\frac{x^2-1}{2} \\quad (x = 1 \\text{ 取等})",
-          rubric: "采分点：最值闭环与精度反思（4分）",
+          rubric: "【高考采分点】最值闭环与精度反思（4分）",
         },
       ];
     } else if (isTangentELog) {
@@ -606,7 +606,7 @@ export function buildTranscendentalPanel(
           detail:
             "设过原点的切线切点为 $(x_0, \\ln x_0)$ ($x_0 > 0$)，导数 $g'(x_0) = \\frac{1}{x_0}$。点斜式切线方程为 $y - \\ln x_0 = \\frac{1}{x_0}(x - x_0)$。代入原点 $(0,0)$ 得 $-\\ln x_0 = -1 \\implies x_0 = e$。切点为 $(e,1)$，切线方程为 $y - 1 = \\frac{1}{e}(x - e) \\implies y = \\frac{x}{e}$。",
           latex: "-\\ln x_0 = -1 \\implies x_0 = e \\implies y = \\frac{x}{e}",
-          rubric: "采分点：代入原点解算临界切点（4分）",
+          rubric: "【高考采分点】代入原点解算临界切点（4分）",
         },
         {
           step: 2,
@@ -614,7 +614,7 @@ export function buildTranscendentalPanel(
           detail:
             "构造差值函数 $\\varphi(x) = \\frac{x}{e} - \\ln x$ ($x > 0$)，求导得 $\\varphi'(x) = \\frac{1}{e} - \\frac{1}{x} = \\frac{x - e}{ex}$。令 $\\varphi'(x) = 0 \\iff x = e$。当 $0 < x < e$ 时 $\\varphi'(x) < 0$；当 $x > e$ 时 $\\varphi'(x) > 0$。",
           latex: "\\varphi'(x) = \\frac{x - e}{ex} = 0 \\iff x = e",
-          rubric: "采分点：差值函数单调性论证（4分）",
+          rubric: "【高考采分点】差值函数单调性论证（4分）",
         },
         {
           step: 3,
@@ -623,7 +623,7 @@ export function buildTranscendentalPanel(
             "因 $x=e$ 为唯一极小值点，故在 $(0,+\\infty)$ 上 $\\varphi(x) \\ge \\varphi(e) = \\frac{e}{e} - \\ln e = 1 - 1 = 0$。即 $\\ln x \\le \\frac{x}{e}$ 恒成立，等号当且仅当 $x=e$ 成立。",
           latex:
             "\\varphi(x) \\ge \\varphi(e) = 0 \\implies \\ln x \\le \\frac{x}{e} \\quad (x = e \\text{ 取等})",
-          rubric: "采分点：最值代入与取等条件闭环（4分）",
+          rubric: "【高考采分点】最值代入与取等条件闭环（4分）",
         },
       ];
     } else if (presetKey === "free") {
@@ -635,7 +635,7 @@ export function buildTranscendentalPanel(
             "动切点 $P(x_0, \\ln x_0)$ ($x_0 > 0$) 处切线点斜式为 $y - \\ln x_0 = \\frac{1}{x_0}(x - x_0) \\implies y = \\frac{1}{x_0}x + \\ln x_0 - 1$。",
           latex:
             "y - \\ln x_0 = \\frac{1}{x_0}(x - x_0) \\implies y = \\frac{1}{x_0}x + \\ln x_0 - 1",
-          rubric: "采分点：对数动切线方程（3分）",
+          rubric: "【高考采分点】对数动切线方程（3分）",
         },
         {
           step: 2,
@@ -643,7 +643,7 @@ export function buildTranscendentalPanel(
           detail:
             "令 $F(x) = \\left[\\frac{1}{x_0}x + \\ln x_0 - 1\\right] - \\ln x$ ($x > 0$)，求导得 $F'(x) = \\frac{1}{x_0} - \\frac{1}{x} = \\frac{x - x_0}{x_0 x}$。当 $0 < x < x_0$ 时 $F'(x) < 0$；当 $x > x_0$ 时 $F'(x) > 0$。",
           latex: "F'(x) = \\frac{x - x_0}{x_0 x} = 0 \\iff x = x_0",
-          rubric: "采分点：差函数导数与单调性分析（4分）",
+          rubric: "【高考采分点】差函数导数与单调性分析（4分）",
         },
         {
           step: 3,
@@ -652,7 +652,7 @@ export function buildTranscendentalPanel(
             "由 $F(x) \\ge F(x_0) = 0$ 知对数函数任意点处的切线均位于曲线上方，等号当且仅当 $x=x_0$ 取得，切线上界结论成立。",
           latex:
             "\\ln x \\le \\frac{1}{x_0}x + \\ln x_0 - 1 \\quad (x = x_0 \\text{ 取等})",
-          rubric: "采分点：切线上界结论与取等条件（5分）",
+          rubric: "【高考采分点】切线上界结论与取等条件（5分）",
         },
       ];
     } else {
@@ -665,7 +665,7 @@ export function buildTranscendentalPanel(
             "对数函数 $g(x)=\\ln x$ 定义域为 $(0, +\\infty)$，求导得 $g'(x)=\\frac{1}{x}$。在切点 $(1,0)$ 处切线斜率 $g'(1)=\\frac{1}{1}=1$。点斜式展开：$y - 0 = 1 \\cdot (x - 1) \\implies y = x - 1$。",
           latex:
             "g'(1) = 1 \\implies y - 0 = 1 \\cdot (x - 1) \\implies y = x - 1",
-          rubric: "采分点：定义域交代与切线方程推导（3分）",
+          rubric: "【高考采分点】定义域交代与切线方程推导（3分）",
         },
         {
           step: 2,
@@ -673,7 +673,7 @@ export function buildTranscendentalPanel(
           detail:
             "构造差值函数 $h(x) = x - 1 - \\ln x$ ($x > 0$)，求导得 $h'(x) = 1 - \\frac{1}{x} = \\frac{x-1}{x}$。当 $0 < x < 1$ 时 $h'(x) < 0$；当 $x > 1$ 时 $h'(x) > 0$。",
           latex: "h'(x) = \\frac{x-1}{x} = 0 \\iff x = 1",
-          rubric: "采分点：构造函数求导与极值分析（4分）",
+          rubric: "【高考采分点】构造函数求导与极值分析（4分）",
         },
         {
           step: 3,
@@ -682,7 +682,7 @@ export function buildTranscendentalPanel(
             "由于 $x=1$ 为唯一极小值点，故在 $(0,+\\infty)$ 上 $h(x) \\ge h(1) = 1 - 1 - \\ln 1 = 0$。即 $\\ln x \\le x - 1$ 恒成立，等号当且仅当 $x=1$ 取得。",
           latex:
             "h(x) \\ge h(1) = 0 \\implies \\ln x \\le x - 1 \\quad (x = 1 \\text{ 取等})",
-          rubric: "采分点：最值判定与不等式结论（5分）",
+          rubric: "【高考采分点】最值判定与不等式结论（5分）",
         },
       ];
     }
@@ -697,7 +697,7 @@ export function buildTranscendentalPanel(
             "代入考察点 $x=2$，上界指数曲线值为 $y_1 = e^{2-1} = e \\approx 2.718$；中轴切线值为 $y_2 = 2$；下界对数曲线值为 $y_3 = \\ln 2 + 1 \\approx 1.693$。",
           latex:
             "x = 2 \\implies e^{2-1} = e \\approx 2.718, \\quad \\ln 2 + 1 \\approx 1.693",
-          rubric: "采分点：各特征值准确计算（3分）",
+          rubric: "【高考采分点】各特征值准确计算（3分）",
         },
         {
           step: 2,
@@ -706,7 +706,7 @@ export function buildTranscendentalPanel(
             "上界指数差值为 $\\Delta_1 = e^{x-1} - x = e - 2 \\approx 0.718$；下界对数差值为 $\\Delta_2 = x - (\\ln x + 1) = 1 - \\ln 2 \\approx 0.307$。计算表明 $\\Delta_2 < \\Delta_1$。",
           latex:
             "\\Delta_1 = e - 2 \\approx 0.718, \\quad \\Delta_2 = 1 - \\ln 2 \\approx 0.307 \\implies \\Delta_2 < \\Delta_1",
-          rubric: "采分点：代数差值列式与大小比较（5分）",
+          rubric: "【高考采分点】代数差值列式与大小比较（5分）",
         },
         {
           step: 3,
@@ -714,7 +714,7 @@ export function buildTranscendentalPanel(
           detail:
             "在区间 $x > 1$ 上，对数下界曲线比指数上界更紧密贴合中轴线 $y=x$。在证明高次代数混合不等式时，优先选用紧度更高的单侧以避免放缩过宽导致失败。",
           latex: "x - (\\ln x + 1) < e^{x-1} - x \\quad (x > 1)",
-          rubric: "采分点：放缩紧度分析与答题建议（4分）",
+          rubric: "【高考采分点】放缩紧度分析与答题建议（4分）",
         },
       ];
     } else if (presetKey === "pos_half") {
@@ -726,7 +726,7 @@ export function buildTranscendentalPanel(
             "代入考察点 $x=0.5$，上界指数曲线值为 $y_1 = e^{0.5-1} = e^{-0.5} \\approx 0.607$；中轴线值为 $y_2 = 0.5$；下界对数曲线值为 $y_3 = \\ln 0.5 + 1 = 1 - \\ln 2 \\approx 0.307$。",
           latex:
             "x = 0.5 \\implies e^{-0.5} \\approx 0.607, \\quad \\ln 0.5 + 1 \\approx 0.307",
-          rubric: "采分点：趋近零点特征值列式（3分）",
+          rubric: "【高考采分点】趋近零点特征值列式（3分）",
         },
         {
           step: 2,
@@ -735,7 +735,7 @@ export function buildTranscendentalPanel(
             "指数差值 $\\Delta_1 = e^{-0.5} - 0.5 \\approx 0.107$；对数差值 $\\Delta_2 = 0.5 - (1 - \\ln 2) \\approx 0.193$。双侧差值均控制在极小范围内，包络跨度仅约为 $0.300$。",
           latex:
             "\\text{包络跨度 } \\Delta = e^{-0.5} - (\\ln 0.5 + 1) \\approx 0.300",
-          rubric: "采分点：双向包络误差分析（5分）",
+          rubric: "【高考采分点】双向包络误差分析（5分）",
         },
         {
           step: 3,
@@ -743,7 +743,7 @@ export function buildTranscendentalPanel(
           detail:
             "在 $(0,1)$ 区间内，利用对偶双向放缩将复杂超越项夹在一次代数式之间，结合零点存在性定理可快速锁定极值点或隐零点的狭窄区间。",
           latex: "\\ln x + 1 \\le x \\le e^{x-1} \\quad (x \\in (0,1))",
-          rubric: "采分点：零点存在性综合应用结论（4分）",
+          rubric: "【高考采分点】零点存在性综合应用结论（4分）",
         },
       ];
     } else if (presetKey === "free") {
@@ -755,7 +755,7 @@ export function buildTranscendentalPanel(
             "当前自变量 $x$ 处，指数曲线值为 $e^{x-1}$，中轴线值为 $x$，对数曲线值为 $\\ln x + 1$ ($x > 0$)。",
           latex:
             "y_{\\text{上}} = e^{x-1}, \\quad y_{\\text{中}} = x, \\quad y_{\\text{下}} = \\ln x + 1",
-          rubric: "采分点：当前点函数值列式（3分）",
+          rubric: "【高考采分点】当前点函数值列式（3分）",
         },
         {
           step: 2,
@@ -763,7 +763,7 @@ export function buildTranscendentalPanel(
           detail:
             "由基准放缩 $e^{x-1} \\ge x$ 与 $x \\ge \\ln x + 1$ 得链式不等式 $\\ln x + 1 \\le x \\le e^{x-1}$。计算当前包络跨度 $\\Delta = e^{x-1} - (\\ln x + 1) \\ge 0$。",
           latex: "\\Delta(x) = e^{x-1} - (\\ln x + 1) \\ge 0 \\quad (x > 0)",
-          rubric: "采分点：链式不等式验证（4分）",
+          rubric: "【高考采分点】链式不等式验证（4分）",
         },
         {
           step: 3,
@@ -771,7 +771,7 @@ export function buildTranscendentalPanel(
           detail:
             "包络跨度 $\\Delta(x)$ 在 $x=1$ 处取得唯一全局最小值 $\\Delta(1) = e^0 - (\\ln 1 + 1) = 1 - 1 = 0$。三曲线在 $(1,1)$ 公切合一。",
           latex: "\\Delta(x) \\ge \\Delta(1) = 0 \\quad (x = 1 \\text{ 取等})",
-          rubric: "采分点：公切合一最值结论（5分）",
+          rubric: "【高考采分点】公切合一最值结论（5分）",
         },
       ];
     } else {
@@ -784,7 +784,7 @@ export function buildTranscendentalPanel(
             "曲线 $y=e^{x-1}$ 与 $y=\\ln x+1$ 互为反函数，图形关于直线 $y=x$ 对称。求导得 $(e^{x-1})'|_{x=1} = e^0 = 1$，$(\\ln x+1)'|_{x=1} = \\frac{1}{1} = 1$。公共切点为 $(1,1)$，公切线为 $y=x$。",
           latex:
             "(e^{x-1})'|_{x=1} = 1, \\quad (\\ln x+1)'|_{x=1} = 1 \\implies \\text{公切线 } y = x",
-          rubric: "采分点：反函数对称性与公切关系判定（3分）",
+          rubric: "【高考采分点】反函数对称性与公切关系判定（3分）",
         },
         {
           step: 2,
@@ -793,7 +793,7 @@ export function buildTranscendentalPanel(
             "由指数切线放缩 $e^t \\ge t+1$，令 $t=x-1$ 得 $e^{x-1} \\ge x$；由对数切线放缩 $\\ln x \\le x-1$ 两边加 1 得 $\\ln x+1 \\le x$ ($x > 0$)。",
           latex:
             "\\begin{cases} e^{x-1} \\ge x \\\\ \\ln x + 1 \\le x \\end{cases} \\quad (x > 0)",
-          rubric: "采分点：双侧独立放缩与变量代换（5分）",
+          rubric: "【高考采分点】双侧独立放缩与变量代换（5分）",
         },
         {
           step: 3,
@@ -801,7 +801,7 @@ export function buildTranscendentalPanel(
           detail:
             "联立两式即得 $\\ln x + 1 \\le x \\le e^{x-1}$ 在 $x \\in (0,+\\infty)$ 上恒成立，三者在公共切点 $x=1$ 处同时取等号。",
           latex: "\\ln x + 1 \\le x \\le e^{x-1} \\quad (x = 1 \\text{ 取等})",
-          rubric: "采分点：链式不等式综合结论（4分）",
+          rubric: "【高考采分点】链式不等式综合结论（4分）",
         },
       ];
     }
@@ -818,7 +818,7 @@ export function buildTranscendentalPanel(
           detail:
             "斜率参数 $a=0$ 时，直线方程退化为水平基准线 $y = 0 \\cdot x + 1 = 1$。曲线与直线交于定点 $(0,1)$，所求不等式为 $e^x \\ge 1$。",
           latex: "a = 0 \\implies y = 1 \\implies e^x \\ge 1",
-          rubric: "采分点：特殊参数模型列式（3分）",
+          rubric: "【高考采分点】特殊参数模型列式（3分）",
         },
         {
           step: 2,
@@ -826,7 +826,7 @@ export function buildTranscendentalPanel(
           detail:
             "由于底数 $e > 1$，指数函数 $f(x)=e^x$ 在 $\\mathbb{R}$ 上单调递增，且 $e^0 = 1$。由 $e^x \\ge e^0$ 依单调性直接解得 $x \\ge 0$。",
           latex: "e^x \\ge e^0 \\iff x \\ge 0",
-          rubric: "采分点：指数函数单调性求解（5分）",
+          rubric: "【高考采分点】指数函数单调性求解（5分）",
         },
         {
           step: 3,
@@ -834,7 +834,7 @@ export function buildTranscendentalPanel(
           detail:
             "当 $x < 0$ 时，曲线位于水平线下方（$e^x < 1$）；当 $x \\ge 0$ 时，曲线位于水平线上方（$e^x \\ge 1$）。故 $e^x \\ge 1$ 在 $\\mathbb{R}$ 上的解集为 $[0, +\\infty)$。",
           latex: "x \\in [0, +\\infty) \\quad (x = 0 \\text{ 取等})",
-          rubric: "采分点：区间结论与图形位置闭环（4分）",
+          rubric: "【高考采分点】区间结论与图形位置闭环（4分）",
         },
       ];
     } else if (isOverOrigin) {
@@ -846,7 +846,7 @@ export function buildTranscendentalPanel(
             "设过原点的直线 $y=ax$ 与 $y=e^x$ 切于点 $(x_0, e^{x_0})$。由切线方程 $y-e^{x_0}=e^{x_0}(x-x_0)$ 代入原点解得 $-e^{x_0} = -x_0 e^{x_0} \\implies x_0=1$，$a_{\\text{临界}}=e$。",
           latex:
             "-e^{x_0} = -x_0 e^{x_0} \\iff x_0 = 1 \\implies a_{\\text{临界}} = e",
-          rubric: "采分点：求出相切临界参数值（4分）",
+          rubric: "【高考采分点】求出相切临界参数值（4分）",
         },
         {
           step: 2,
@@ -854,7 +854,7 @@ export function buildTranscendentalPanel(
           detail:
             "对任意 $x > 0$，$e^x \\ge ax \\iff a \\le \\frac{e^x}{x}$。令 $g(x) = \\frac{e^x}{x}$ ($x > 0$)，求导得 $g'(x) = \\frac{e^x(x-1)}{x^2}$。当 $0 < x < 1$ 时 $g'(x) < 0$；当 $x > 1$ 时 $g'(x) > 0$。$x=1$ 为极小值点。",
           latex: "g'(x) = \\frac{e^x(x-1)}{x^2} = 0 \\iff x = 1",
-          rubric: "采分点：分离参数求导单调性分析（5分）",
+          rubric: "【高考采分点】分离参数求导单调性分析（5分）",
         },
         {
           step: 3,
@@ -863,7 +863,7 @@ export function buildTranscendentalPanel(
             "函数 $g(x)$ 在 $x=1$ 处取得最小值 $g(1) = \\frac{e^1}{1} = e$。故充要条件为 $a \\le g(x)_{\\min} = e$。对任意 $x > 0$ 使 $e^x \\ge ax$ 恒成立的参数 $a$ 取值范围为 $(-\\infty, e]$；当 $a > e$ 时在 $x > 0$ 必产生 2 个交点破坏恒成立。",
           latex:
             "a \\le g(1) = e \\implies a \\in (-\\infty, e] \\quad (x > 0)",
-          rubric: "采分点：最终参数范围结论（3分）",
+          rubric: "【高考采分点】最终参数范围结论（3分）",
         },
       ];
     } else if (presetKey === "free") {
@@ -874,7 +874,7 @@ export function buildTranscendentalPanel(
           detail:
             "当前直线斜率参数为 $a$，直线方程为 $y = ax + 1$。与曲线 $y = e^x$ 恒交于定点 $(0,1)$。",
           latex: "y = ax + 1 \\quad (\\text{过定点 } (0,1))",
-          rubric: "采分点：参变方程建立（3分）",
+          rubric: "【高考采分点】参变方程建立（3分）",
         },
         {
           step: 2,
@@ -882,7 +882,7 @@ export function buildTranscendentalPanel(
           detail:
             "曲线在 $(0,1)$ 处切线斜率为 $f'(0) = 1$。当 $a = 1$ 时直线为切线；当 $a > 1$ 时直线割穿曲线，在 $x > 0$ 产生第二个交点；当 $a < 1$ 时在 $x \\ge 0$ 上直线恒位于曲线下方。",
           latex: "f'(0) = 1 \\implies a_{\\text{临界}} = 1",
-          rubric: "采分点：临界斜率比较（4分）",
+          rubric: "【高考采分点】临界斜率比较（4分）",
         },
         {
           step: 3,
@@ -891,7 +891,7 @@ export function buildTranscendentalPanel(
             "在非负区间 $x \\ge 0$ 上，使 $e^x \\ge ax + 1$ 恒成立的充要条件为 $a \\le 1$；若在全实数域 $\\mathbb{R}$ 上，当 $a < 1$ 时在负半轴必穿插，故全域成立充要条件仅为 $a = 1$。",
           latex:
             "a \\le 1 \\iff e^x \\ge ax + 1 \\; (x \\ge 0); \\quad a = 1 \\iff e^x \\ge ax + 1 \\; (x \\in \\mathbb{R})",
-          rubric: "采分点：分类充要条件闭环（5分）",
+          rubric: "【高考采分点】分类充要条件闭环（5分）",
         },
       ];
     } else {
@@ -903,7 +903,7 @@ export function buildTranscendentalPanel(
           detail:
             "直线 $y=ax+1$ 恒过定点 $(0,1)$。而曲线 $y=e^x$ 在 $(0,1)$ 处的切线斜率恰为 $f'(0)=e^0=1$，切线方程为 $y = x + 1$，因此相切临界斜率为 $a_{\\text{临界}}=1$。",
           latex: "f'(0) = e^0 = 1 \\implies a_{\\text{临界}} = 1",
-          rubric: "采分点：求出相切临界参数值（4分）",
+          rubric: "【高考采分点】求出相切临界参数值（4分）",
         },
         {
           step: 2,
@@ -911,7 +911,7 @@ export function buildTranscendentalPanel(
           detail:
             "在 $x \\ge 0$ 上，当 $a \\le 1$ 时由 $(1-a)x \\ge 0$ 得 $e^x \\ge x+1 \\ge ax+1$ 恒成立；在全域 $\\mathbb{R}$ 上若 $a < 1$ 则在负半轴产生局部穿插破坏恒成立，故全域成立充要条件为 $a = 1$。",
           latex: "a \\le 1 \\iff e^x \\ge ax + 1 \\quad (x \\ge 0)",
-          rubric: "采分点：充分性与必要性分类说明（5分）",
+          rubric: "【高考采分点】充分性与必要性分类说明（5分）",
         },
         {
           step: 3,
@@ -920,7 +920,7 @@ export function buildTranscendentalPanel(
             "综上所述，对任意 $x \\ge 0$ 使 $e^x \\ge ax+1$ 恒成立的参数 $a$ 取值范围为 $(-\\infty, 1]$；若要求在全实数域 $\\mathbb{R}$ 上恒成立，则参数为唯一解 $a = 1$。",
           latex:
             "a \\in (-\\infty, 1] \\quad (x \\ge 0); \\quad a = 1 \\quad (x \\in \\mathbb{R})",
-          rubric: "采分点：最终参数范围结论（3分）",
+          rubric: "【高考采分点】最终参数范围结论（3分）",
         },
       ];
     }

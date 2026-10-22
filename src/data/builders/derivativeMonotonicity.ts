@@ -161,14 +161,14 @@ export function buildDerivativeMonotonicityQuantities(
         title: "确定定义域并规范求导",
         detail: `函数定义域为 $x \\in ${domainLatex}$。对函数求导得导函数表达式：`,
         latex: `${result.derivativeLatex}`,
-        rubric: "求导正确得 2 分",
+        rubric: "【高考采分点】求导正确得 2 分",
       },
       {
         step: 2,
         title: "代入切点计算导数值与切线方程",
         detail: `代入切点横坐标 $x_0 = ${formatFloat(x0)}$，得切线斜率 $k = f'(${formatFloat(x0)}) = ${fpx0Str}$，点斜式切线方程为：`,
         latex: tangentLineLatex,
-        rubric: "斜率与切线方程正确得 2 分",
+        rubric: "【高考采分点】斜率与切线方程正确得 2 分",
       },
       {
         step: 3,
@@ -181,7 +181,7 @@ export function buildDerivativeMonotonicityQuantities(
               : `因 $f'(${formatFloat(x0)}) = 0$，切线处于水平状态，即该点处导数为零。`
           : "切点超出函数定义域。",
         latex: `f'(x_0) ${fpx0 > 0 ? "> 0 \\implies \\text{局部递增}" : fpx0 < 0 ? "< 0 \\implies \\text{局部递减}" : "= 0 \\implies \\text{切线水平的点}"}`,
-        rubric: "单调性结论完整得 2 分",
+        rubric: "【高考采分点】单调性结论完整得 2 分",
       },
     );
   } else if (mode === "extrema_analysis") {
@@ -202,7 +202,7 @@ export function buildDerivativeMonotonicityQuantities(
         title: "求解导函数零点 (必要条件)",
         detail: `在定义域 $x \\in ${domainLatex}$ 内，令导函数 $f'(x) = 0$：`,
         latex: `${result.derivativeLatex} = 0`,
-        rubric: "求出所有导数为零点得 2 分",
+        rubric: "【高考采分点】求出所有导数为零点得 2 分",
       },
       {
         step: 2,
@@ -212,7 +212,7 @@ export function buildDerivativeMonotonicityQuantities(
           result.extrema.length > 0
             ? "\\text{左正右负} \\implies \\text{极大值}；\\quad \\text{左负右正} \\implies \\text{极小值}"
             : "f'(x) \\text{ 不变号} \\implies \\text{无极值点}",
-        rubric: "符号检验与单调性分析得 3 分",
+        rubric: "【高考采分点】符号检验与单调性分析得 3 分",
       },
       {
         step: 3,
@@ -230,7 +230,7 @@ export function buildDerivativeMonotonicityQuantities(
                 )
                 .join("，\\; ")
             : "f(x) \\text{ 无极值}",
-        rubric: "极值结论规范明确得 2 分",
+        rubric: "【高考采分点】极值结论规范明确得 2 分",
       },
     );
   } else {
@@ -242,21 +242,21 @@ export function buildDerivativeMonotonicityQuantities(
         title: "确定定义域与导数因式分解",
         detail: `明确定位函数定义域为 $x \\in ${domainLatex}$，求导并因式分解确定分子分母符号：`,
         latex: `${result.derivativeLatex}`,
-        rubric: "定义域与求导得 2 分",
+        rubric: "【高考采分点】定义域与求导得 2 分",
       },
       {
         step: 2,
         title: "分类讨论分水岭划分依据",
         detail: `核心分界依据：${result.criticalCondition}。针对参数 $a = ${formatFloat(a)}$ 处于不同区间时讨论导数符号分布。`,
         latex: result.criticalCondition,
-        rubric: "分类讨论标准分段得 2 分",
+        rubric: "【高考采分点】分类讨论标准分段得 2 分",
       },
       {
         step: 3,
         title: "列表汇总与单调区间规范书写",
         detail: `根据当前参数 $a = ${formatFloat(a)}$ 讨论所得单调性与极值结论：${result.discussionSummaryLatex}。注意：区间断开处切忌使用并集符号 $\\cup$。`,
         latex: result.discussionSummaryLatex,
-        rubric: "单调区间规范书写得 2 分",
+        rubric: "【高考采分点】单调区间规范书写得 2 分",
       },
     );
   }

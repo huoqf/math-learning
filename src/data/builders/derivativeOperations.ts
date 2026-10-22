@@ -128,7 +128,7 @@ export function buildDerivativeOperationsPanel(
       title: "审题定法 · 识别四则运算结构与运算法则",
       detail: `当前目标函数为 $${res.combinedExpr}$，各基函数分别为 $${res.fExpr}$ 与 $${res.gExpr}$。应用运算法则为 $${res.ruleLatex}$。`,
       latex: res.ruleLatex,
-      rubric: "准确识别运算类型并写出对应的运算法则通式得 2 分",
+      rubric: "【高考采分点】准确识别运算类型并写出对应的运算法则通式得 2 分",
     },
     {
       step: 2,
@@ -137,7 +137,7 @@ export function buildDerivativeOperationsPanel(
         ? `在探究点 $x_0 = ${formatMathNumber(x0)}$ 处，分别计算基函数及其导数值：$f(${formatMathNumber(x0)}) = ${formatMathNumber(res.fx)}, f'(${formatMathNumber(x0)}) = ${formatMathNumber(res.fpx)}$；$g(${formatMathNumber(x0)}) = ${formatMathNumber(res.gx)}, g'(${formatMathNumber(x0)}) = ${formatMathNumber(res.gpx)}$。将数值规范代入法则式。`
         : `探究点 $x_0 = ${formatMathNumber(x0)}$ 使分母 $g(x_0) = ${formatMathNumber(res.gx)} = 0$，商函数在该点无定义，导数不存在，本步无法继续。`,
       latex: res.stepCalculationLatex,
-      rubric: "正确求出各基函数的导数值并规范代入展开得 2 分",
+      rubric: "【高考采分点】正确求出各基函数的导数值并规范代入展开得 2 分",
     },
     {
       step: 3,
@@ -148,7 +148,7 @@ export function buildDerivativeOperationsPanel(
       latex: res.isValid
         ? `H'(${formatMathNumber(x0)}) = ${formatMathNumber(res.combinedSlope)} \\implies y ${formatSubtractTerm(res.combinedY)} = ${formatMathNumber(res.combinedSlope)}${formatParenSubtractTerm(x0)}`
         : "\\text{分母为零，导数与切线均不存在}",
-      rubric: "给出准确结果数值并写出点斜式切线方程得 2 分",
+      rubric: "【高考采分点】给出准确结果数值并写出点斜式切线方程得 2 分",
     },
   ];
 

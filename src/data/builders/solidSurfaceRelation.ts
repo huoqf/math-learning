@@ -445,7 +445,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "证明面面平行需紧扣判定定理核心：必须在一个平面内找到两条相交直线，分别平行于另一个平面：",
         latex: `a \\subset \\alpha, \\quad b \\subset \\alpha, \\quad a \\cap b = P`,
-        rubric: "[高考采分点] 明确列出面内两相交直线关键要件 (+4分)",
+        rubric: "【高考采分点】明确列出面内两相交直线关键要件 (+4分)",
       },
       {
         step: 2,
@@ -453,7 +453,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "分别证明两条相交直线平行于目标平面，或利用性质定理转化交线平行关系：",
         latex: `a \\parallel \\beta, \\quad b \\parallel \\beta \\implies \\text{平面 } \\alpha \\parallel \\text{平面 } \\beta`,
-        rubric: "[高考采分点] 严密完成线面平行到面面平行的逻辑推导 (+5分)",
+        rubric: "【高考采分点】严密完成线面平行到面面平行的逻辑推导 (+5分)",
       },
       {
         step: 3,
@@ -461,7 +461,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "由面面平行性质定理，若第三个平面与两平行平面相交，则所得交线必平行；严防两条线平行的伪证明漏洞：",
         latex: `\\alpha \\parallel \\beta, \\quad \\gamma \\cap \\alpha = a, \\quad \\gamma \\cap \\beta = b \\implies a \\parallel b`,
-        rubric: "[高考采分点] 完整得出面面平行或交线平行性质结论 (+4分)",
+        rubric: "【高考采分点】完整得出面面平行或交线平行性质结论 (+4分)",
       },
     ];
   } else if (mode === "perpJudge" || mode === "perpProp") {
@@ -472,7 +472,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "分析两平面垂直关系。对于面面垂直性质定理，必须严格核验四要素：两面垂直、相交交线、面内直线、垂直于交线：",
         latex: `\\alpha \\perp \\beta, \\quad \\alpha \\cap \\beta = l, \\quad a \\subset \\alpha, \\quad a \\perp l`,
-        rubric: "[高考采分点] 准确写出面面垂直性质定理四要件前提 (+4分)",
+        rubric: "【高考采分点】准确写出面面垂直性质定理四要件前提 (+4分)",
       },
       {
         step: 2,
@@ -480,7 +480,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "由性质定理导出直线垂直于另一平面 (a ⊥ β)。以垂足为坐标原点，建立空间直角坐标系：",
         latex: `a \\perp \\beta \\implies \\text{以垂足为原点建立空间直角坐标系 } O-xyz`,
-        rubric: "[高考采分点] 严密推导线面垂直并确立建系垂直三轴 (+5分)",
+        rubric: "【高考采分点】严密推导线面垂直并确立建系垂直三轴 (+5分)",
       },
       {
         step: 3,
@@ -488,7 +488,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "面面垂直判定定理：平面内有一条直线垂直于另一平面，则两平面垂直；书写必须符合高考阅卷得分规范：",
         latex: `a \\subset \\alpha, \\quad a \\perp \\beta \\implies \\alpha \\perp \\beta`,
-        rubric: "[高考采分点] 完整书写面面垂直标准判定与性质结论 (+4分)",
+        rubric: "【高考采分点】完整书写面面垂直标准判定与性质结论 (+4分)",
       },
     ];
   } else {
@@ -500,7 +500,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "在高考经典四棱锥或折展模型中，侧面垂直于底面是解题核心突破口。提炼交线与顶点在底面的正投影：",
         latex: `\\text{面 } PAB \\perp \\text{面 } ABCD, \\quad \\text{面 } PAB \\cap \\text{面 } ABCD = AB, \\quad PO \\perp AB \\implies PO \\perp \\text{底面 } ABCD`,
-        rubric: "[高考采分点] 准确判定棱锥高线与垂足位置 (+4分)",
+        rubric: "【高考采分点】准确判定棱锥高线与垂足位置 (+4分)",
       },
       {
         step: 2,
@@ -508,7 +508,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "以高线垂足 O 为坐标原点，高线 PO 为 z 轴，底面垂线及平行线为 x, y 轴建立空间直角坐标系：",
         latex: `O(0,0,0), \\quad P(0,0,h), \\quad \\vec{n}_{\\text{底}} = (0, 0, 1)`,
-        rubric: "[高考采分点] 正确建立空间直角坐标系并列出各点坐标向量 (+5分)",
+        rubric: "【高考采分点】正确建立空间直角坐标系并列出各点坐标向量 (+5分)",
       },
       {
         step: 3,
@@ -516,7 +516,7 @@ export function buildSurfaceRelationPanel(
         detail:
           "求出斜侧面法向量，应用向量夹角公式计算二面角余弦值，并根据钝二面角或锐二面角特征确定符号：",
         latex: `\\cos\\theta = \\frac{|\\vec{n}_1 \\cdot \\vec{n}_2|}{|\\vec{n}_1||\\vec{n}_2|}`,
-        rubric: "[高考采分点] 规范得出二面角余弦值并完成作答 (+4分)",
+        rubric: "【高考采分点】规范得出二面角余弦值并完成作答 (+4分)",
       },
     ];
   }

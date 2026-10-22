@@ -1,6 +1,7 @@
 import type { MathPanelData } from "@/data/types";
 import { MATH_COLORS } from "@/theme";
 import { formatMathNumber } from "@/utils/mathFormat";
+import { SECANT_CURVE_MODELS } from "@/math/tangentScaling";
 import type {
   TangentScalingParams,
   SecantSubModel,
@@ -12,9 +13,11 @@ export function buildSecantModel(
 ): MathPanelData {
   if (secantSub === "taylor_quadratic") {
     const x = params.evalX;
-    const lower = x - 0.5 * x * x;
-    const main = x > -0.99 ? Math.log(1 + x) : 0;
-    const upper = x;
+    /* 三层卡位函数取自数学层模型表，与中屏绘制的曲线严格同源 */
+    const model = SECANT_CURVE_MODELS[secantSub];
+    const lower = model.lowerFn!(x);
+    const main = model.mainFn(x);
+    const upper = model.upperFn!(x);
 
     return {
       examAnchor: "新高考解答题 18 题 · 二阶多项式精细卡位",

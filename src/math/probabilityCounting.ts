@@ -417,41 +417,89 @@ export function getGridPathMatrix(m: number, n: number): GridPathPoint[][] {
 
 /** 均匀分组与定向分配模型计算 */
 export interface GroupingInfo {
+  /** 左屏滑块给出的元素总数（真实值，不做任何截断） */
   totalItems: number;
   groupCount: number;
+  /** 每组元素个数；不可均分时为 0——此时「每组几个」本身无定义，回填 floor 会骗人 */
   itemsPerGroup: number;
-  directCombinationWays: number; // 逐步选出的组合数积 (未消序)
+  /** totalItems ÷ groupCount 的余数 */
+  remainder: number;
+  /** 是否可均分（余数为 0 且总数不少于组数） */
+  isDivisible: boolean;
+  /** 公理 1 要求的有效性标志（与 isDivisible 同源，供右屏预警与门禁识别） */
+  validity: "valid" | "not_divisible";
+  directCombinationWays: number; // 逐步选出的组合数积 (未消序)；不可均分时为 0
   divisionOrderFactor: number; // 均分需要消去的全排列数 k!
-  groupedWays: number; // 均匀分组总数（无标签堆）
-  allocatedWays: number; // 分配给指定接收者的总数（有标签）
+  groupedWays: number; // 均匀分组总数（无标签堆）；不可均分时为 0
+  allocatedWays: number; // 分配给指定接收者的总数（有标签）；不可均分时为 0
 }
 
+/**
+ * 均分模型解算。
+ *
+ * ── 改前的静默截断 ──
+ * 旧实现取 `validTotal = floor(N / k) * k` 再拿它当 `totalItems` 返回：
+ * `N=8, k=3` 时 itemsPerGroup=2、validTotal=6，于是中屏元素库只画 6 个球、
+ * 右屏把滑块的 8 印成 6、而左屏滑块仍显示 8——三屏三方撕裂。更糟的是它
+ * 还照常算出「15 种」，把一个无定义的帧包装成了一个确定答案。
+ *
+ * ── 定案（不锁滑块，显式暴露退化态）──
+ * 保留滑块全区间：均分前先验整除性本身就是高频考点，`8 不能平均分成 3 堆`
+ * 这个边界直觉必须能被学生拖出来。数学层只负责如实回答：
+ * 不可整除时 itemsPerGroup 与三个计数一律为 0，并以 validity 标出退化原因，
+ * 由中屏置灰 + 右屏危险级预警把「无解」讲清楚。
+ */
 export function calculateGroupingAllocation(
   totalItems: number,
   groupCount: number,
 ): GroupingInfo {
   const k = Math.min(Math.max(2, Math.floor(groupCount)), 4);
-  const itemsPerGroup = Math.max(1, Math.floor(totalItems / k));
-  const validTotal = itemsPerGroup * k;
+  const n = Math.max(0, Math.floor(totalItems));
+  const remainder = n % k;
+  const isDivisible = remainder === 0 && n >= k;
+  const itemsPerGroup = isDivisible ? n / k : 0;
 
-  let directCombinationWays = 1;
-  let remaining = validTotal;
-  for (let i = 0; i < k; i++) {
-    directCombinationWays *= comb(remaining, itemsPerGroup);
-    remaining -= itemsPerGroup;
+  let directCombinationWays = 0;
+  if (isDivisible) {
+    directCombinationWays = 1;
+    let remaining = n;
+    for (let i = 0; i < k; i++) {
+      directCombinationWays *= comb(remaining, itemsPerGroup);
+      remaining -= itemsPerGroup;
+    }
   }
 
   const divisionOrderFactor = factorial(k);
-  const groupedWays = directCombinationWays / divisionOrderFactor;
-  const allocatedWays = groupedWays * factorial(k); // 等于 directCombinationWays
+  const groupedWays = isDivisible
+    ? directCombinationWays / divisionOrderFactor
+    : 0;
+  const allocatedWays = isDivisible
+    ? groupedWays * factorial(k) // 等于 directCombinationWays
+    : 0;
 
   return {
-    totalItems: validTotal,
+    totalItems: n,
     groupCount: k,
     itemsPerGroup,
+    remainder,
+    isDivisible,
+    validity: isDivisible ? "valid" : "not_divisible",
     directCombinationWays,
     divisionOrderFactor,
     groupedWays,
     allocatedWays,
   };
+}
+
+/**
+ * 中屏元素库的球标序列（A、B、C…）——全部 N 个元素都在场，绝不吃球。
+ * 放在数学层而不是场景组件里，是为了让「元素库长度 = 真实 N」这件事可被单测钉死。
+ */
+export function buildGroupingItems(
+  info: GroupingInfo,
+): Array<{ id: number; label: string }> {
+  return Array.from({ length: info.totalItems }, (_, i) => ({
+    id: i,
+    label: String.fromCharCode(65 + i),
+  }));
 }

@@ -297,14 +297,14 @@ export function buildTrigTangentPanel(
           "在单位圆上过 $A(1,0)$ 作切线 $x=1$，与角 $\\theta$ 的终边（或其反向延长线）交于 $T$，则正切值即为有向线段 $AT$。",
         latex:
           "\\tan\\theta = \\frac{y}{x} = \\frac{AT}{OA} = AT \\quad (OA = 1)",
-        rubric: "采分点：由正切线几何定义表示 tanθ（2分）",
+        rubric: "【高考采分点】由正切线几何定义表示 tanθ（2分）",
       },
       {
         step: 2,
         title: "代入角度 · 求交点 T",
         detail: `代入 $\\theta = ${theta.toFixed(2)}$ rad（即 $${((theta * 180) / Math.PI).toFixed(1)}^\\circ$），与切线 $x=1$ 求交。`,
         latex: `T(1, \\tan\\theta) = (1, ${Number.isFinite(tanV) ? tanV.toFixed(3) : "\\to \\infty"})`,
-        rubric: "采分点：代入角度求交点 T（2分）",
+        rubric: "【高考采分点】代入角度求交点 T（2分）",
       },
       {
         step: 3,
@@ -313,7 +313,7 @@ export function buildTrigTangentPanel(
           ? `正切值 $\\tan\\theta = ${tanV.toFixed(3)}$，$AT$ ${tanV > 0 ? "取正值（终边在一、三象限）" : tanV < 0 ? "取负值（终边在二、四象限）" : "为零（终边落在 x 轴上）"}。`
           : "终边与切线 $x=1$ 平行，无交点，$\\tan\\theta$ 不存在，对应正切曲线的垂直渐近线。",
         latex: `AT = \\tan\\theta = ${Number.isFinite(tanV) ? tanV.toFixed(3) : "\\text{不存在}"}`,
-        rubric: "采分点：读出有向线段 AT 的正负与大小（1分）",
+        rubric: "【高考采分点】读出有向线段 AT 的正负与大小（1分）",
       },
     );
   } else if (mode === "baseFunction") {
@@ -324,7 +324,7 @@ export function buildTrigTangentPanel(
         detail:
           "终边每旋转 $\\pi$ 正切线重合，故正切函数周期为 $\\pi$；又 $\\tan(-x) = -\\tan x$，为奇函数。",
         latex: "\\tan(x + \\pi) = \\tan x, \\quad \\tan(-x) = -\\tan x",
-        rubric: "采分点：写出周期与奇偶性（2分）",
+        rubric: "【高考采分点】写出周期与奇偶性（2分）",
       },
       {
         step: 2,
@@ -333,7 +333,7 @@ export function buildTrigTangentPanel(
           "当 $x = k\\pi + \\dfrac{\\pi}{2}$ 时终边与切线 $x=1$ 平行，$\\tan x$ 无定义，此即垂直渐近线。",
         latex:
           "x \\neq k\\pi + \\frac{\\pi}{2}, \\quad x = k\\pi + \\frac{\\pi}{2} \\text{ 为渐近线}",
-        rubric: "采分点：写出定义域与渐近线（2分）",
+        rubric: "【高考采分点】写出定义域与渐近线（2分）",
       },
       {
         step: 3,
@@ -341,7 +341,7 @@ export function buildTrigTangentPanel(
         detail:
           "在每个开区间 $(k\\pi - \\dfrac{\\pi}{2},\\; k\\pi + \\dfrac{\\pi}{2})$ 内单调递增；图象关于点 $(\\dfrac{k\\pi}{2}, 0)$ 中心对称，无对称轴。",
         latex: "T = \\pi, \\quad \\text{对称中心 } (\\tfrac{k\\pi}{2}, 0)",
-        rubric: "采分点：说明单调区间为开区间且只有对称中心（2分）",
+        rubric: "【高考采分点】说明单调区间为开区间且只有对称中心（2分）",
       },
     );
   } else if (mode === "gaokaoProblem") {
@@ -355,21 +355,21 @@ export function buildTrigTangentPanel(
           "区间 $[0, m]$ 上单调，必须整段落在同一条无渐近线的开区间内，即第一条正渐近线须落在 $m$ 的右侧。",
         latex:
           "f(x) = \\tan(\\omega x) \\text{ 在 } [0, m] \\text{ 上单调} \\iff \\frac{\\pi}{2\\omega} > m",
-        rubric: "采分点：写出单调充要条件（2分）",
+        rubric: "【高考采分点】写出单调充要条件（2分）",
       },
       {
         step: 2,
         title: "代入参数 · 定位渐近线",
         detail: `代入 $\\omega = ${omega}$、区间右端 $m = ${targetIntervalEnd.toFixed(3)}$（约 $${(targetIntervalEnd / Math.PI).toFixed(2)}\\pi$），第一条正渐近线落在 $x_0 = ${Number.isFinite(firstA) ? firstA.toFixed(3) : "不存在"}$。`,
         latex: `\\omega = ${omega}, \\quad m = ${targetIntervalEnd.toFixed(3)}`,
-        rubric: "采分点：代入参数计算渐近线位置（2分）",
+        rubric: "【高考采分点】代入参数计算渐近线位置（2分）",
       },
       {
         step: 3,
         title: "解出 ω 上限并判定",
         detail: `由 $\\omega < \\dfrac{\\pi}{2m} = ${(Math.PI / (2 * targetIntervalEnd)).toFixed(2)}$ 判定：当前${Number.isFinite(firstA) && firstA > targetIntervalEnd ? "渐近线位于区间外侧，函数在 [0, m] 上单调" : "渐近线落入区间内部，函数在 [0, m] 上不单调"}。`,
         latex: `\\omega < \\frac{\\pi}{2 \\times ${targetIntervalEnd.toFixed(3)}} = ${(Math.PI / (2 * targetIntervalEnd)).toFixed(2)}`,
-        rubric: "采分点：解出 ω 的取值范围（2分）",
+        rubric: "【高考采分点】解出 ω 的取值范围（2分）",
       },
     );
   } else {
@@ -380,21 +380,21 @@ export function buildTrigTangentPanel(
         title: "周期公式 · 由渐近线间距得",
         detail: "相邻两条垂直渐近线的间距恰好等于一个周期，由此得周期公式。",
         latex: "T = \\frac{\\pi}{|\\omega|}",
-        rubric: "采分点：写出周期公式（2分）",
+        rubric: "【高考采分点】写出周期公式（2分）",
       },
       {
         step: 2,
         title: "代入参数 · 定单调方向",
         detail: `代入 $\\omega = ${omega}$、$A = ${A}$，得 $T = ${Number.isFinite(per) ? per.toFixed(3) : "不存在"}$；因 $A\\omega ${A * omega > 0 ? ">" : "<"} 0$，函数在各开区间内单调${A * omega > 0 ? "递增" : "递减"}。`,
         latex: `T = \\frac{\\pi}{|${omega}|} = ${Number.isFinite(per) ? per.toFixed(3) : "\\text{不存在}"}`,
-        rubric: "采分点：代入参数求周期（2分）",
+        rubric: "【高考采分点】代入参数求周期（2分）",
       },
       {
         step: 3,
         title: "渐近线与对称中心",
         detail: `解 $\\omega x + \\varphi = k\\pi + \\dfrac{\\pi}{2}$ 得渐近线族 $x = \\dfrac{k\\pi + \\frac{\\pi}{2} - (${phi.toFixed(2)})}{${omega}}$；对称中心为 $\\left(\\dfrac{\\frac{k\\pi}{2} - (${phi.toFixed(2)})}{${omega}},\\; ${C}\\right)$。`,
         latex: "\\omega x + \\varphi = k\\pi + \\frac{\\pi}{2}",
-        rubric: "采分点：写出渐近线族与对称中心（2分）",
+        rubric: "【高考采分点】写出渐近线族与对称中心（2分）",
       },
     );
   }

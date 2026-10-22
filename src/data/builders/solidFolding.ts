@@ -14,7 +14,7 @@ import {
   calculateRhombusFolding,
 } from "@/math3d/folding";
 
-// ── know-solid-folding: 平面图形折叠与翻折二面角 ──
+// ── know-solid-folding: 平面图形折叠与翻折角/二面角 ──
 
 export function buildSolidFoldingPanel(
   params: Record<string, number>,
@@ -90,7 +90,7 @@ export function buildSolidFoldingPanel(
         color: MATH_COLORS.accent,
       },
       {
-        label: "面面法向量夹角",
+        label: "法向量夹角 ⟨n₁,n₂⟩（= α，非 β）",
         symbol: "\\langle\\vec{n}_1, \\vec{n}_2\\rangle",
         value: `${alphaDeg}°`,
         color: MATH_COLORS.highlight,
@@ -103,7 +103,7 @@ export function buildSolidFoldingPanel(
         latex: `\\beta = 180^\\circ - \\alpha \\quad (\\angle D'EA \\text{ 为二面角 } D'-EC-A \\text{ 的平面角})`,
         level: "core",
         condition: "折痕为 EC，在两半平面内分别作 ED' ⊥ EC, EA ⊥ EC",
-        note: "翻折前 A 与 D 分居 EC 两侧成平角；翻折角 α 为旋转偏角，两半平面二面角 β = 180° - α",
+        note: "翻折前 A 与 D 分居 EC 两侧成平角；翻折角 α 为旋转偏角，两半平面二面角 β = 180° - α。法向量取 $n_1=(0,0,1)$、$n_2=(-\\sin\\alpha,0,\\cos\\alpha)$，点积即 $\\cos\\alpha$，故法向量夹角恒等于 α 而非 β，求 β 时须取负号",
       },
       {
         name: "动点 D' 空间坐标参数化公式",
@@ -138,7 +138,7 @@ export function buildSolidFoldingPanel(
 
     quantities.push(
       {
-        label: "翻折二面角 α",
+        label: "翻折旋转角 α",
         symbol: "\\alpha",
         value: `${alphaDeg}°`,
         color: MATH_COLORS.paramPrimary,
@@ -317,7 +317,7 @@ export function buildSolidFoldingPanel(
         name: "菱形折叠异面直线恒垂直定理",
         latex: `BD \\perp A'O, BD \\perp CO \\Rightarrow BD \\perp \\text{面 } A'OC \\Rightarrow BD \\perp A'C`,
         level: "core",
-        note: "无论翻折二面角 α 如何改变，异面直线 A'C 与折痕 BD 永远垂直",
+        note: "无论翻折旋转角 α 如何改变，异面直线 A'C 与折痕 BD 永远垂直",
       },
       {
         name: "对角顶点距离余弦定理",
@@ -335,12 +335,12 @@ export function buildSolidFoldingPanel(
 
   if (alphaDeg <= 2 || alphaDeg >= 178) {
     warnings.push({
-      text: `翻折二面角 α = ${alphaDeg}° 接近展开或贴合临界，图形退化为平面极限状态！`,
+      text: `翻折旋转角 α = ${alphaDeg}° 接近展开或贴合临界，图形退化为平面极限状态！`,
       level: "warning",
     });
   } else if (Math.abs(alphaDeg - 90) < 1e-4) {
     warnings.push({
-      text: "翻折二面角 α = 90°，两半平面垂直！高线达到最大值，几何体体积取得极大值。",
+      text: "翻折旋转角 α = 90°（此时二面角 β = 180°−α = 90°），两半平面垂直！高线达到最大值，几何体体积取得极大值。",
       level: "info",
     });
   }
@@ -352,7 +352,7 @@ export function buildSolidFoldingPanel(
       detail:
         "平面图形折叠问题关键在于抓住“不变量”：折痕两侧半平面内部的边长、线段长度与平面角在折叠过程中完全不变：",
       latex: `\\text{折痕长度不变, 各半平面内线段长度恒定}`,
-      rubric: "[高考采分点] 明确指出翻折过程中的长度与角度不变量 (+4分)",
+      rubric: "【高考采分点】明确指出翻折过程中的长度与角度不变量 (+4分)",
     },
     {
       step: 2,
@@ -361,7 +361,7 @@ export function buildSolidFoldingPanel(
         "过变动顶点向折痕作垂线，垂足为垂底。二面角为 α 时，空间几何体的高等于面内垂线长乘以 sinα：",
       latex: `h(\\alpha) = d \\cdot \\sin\\alpha \\implies V(\\alpha) = \\frac{1}{3} S_{\\text{底}} \\cdot d \\cdot \\sin\\alpha`,
       rubric:
-        "[高考采分点] 准确建立关于二面角 α 的射影高线与体积函数关系式 (+5分)",
+        "【高考采分点】准确建立关于二面角 α 的射影高线与体积函数关系式 (+5分)",
     },
     {
       step: 3,
@@ -370,7 +370,7 @@ export function buildSolidFoldingPanel(
         "由于 α ∈ (0°, 180°)，正弦函数在 α = 90° 处取得最大值 1。两半平面垂直时，多面体的高与体积同时达到极大值：",
       latex: `\\sin\\alpha \\le 1 \\implies \\max V = V(90^\\circ) = \\frac{1}{3} S_{\\text{底}} \\cdot d`,
       rubric:
-        "[高考采分点] 正确得出体积最大值及对应的充要二面角 α = 90° (+4分)",
+        "【高考采分点】正确得出体积最大值及对应的充要二面角 α = 90° (+4分)",
     },
   ];
 

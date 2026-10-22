@@ -116,14 +116,14 @@ export function buildSequencePanel(
           title: "代入通项公式求出指定项",
           detail: `把首项与公差代入 $a_n = a_1 + (n-1)d$，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$`,
           latex: `a_n = ${a1} + (n-1)\\cdot ${d} = ${anLatex} \\implies a_{${N}} = ${formatMathNumber(aN)}`,
-          rubric: "[高考采分点] 写出通项并代入具体项 (+2分)",
+          rubric: "【高考采分点】写出通项并代入具体项 (+2分)",
         },
         {
           step: 3,
           title: "用首项与公差求前 $n$ 项和",
           detail: `代入 $S_n = na_1 + \\frac{n(n-1)}{2}d$，取 $n = ${N}$ 得 $S_{${N}} = ${formatMathNumber(SN)}$`,
           latex: `S_{${N}} = ${N}\\cdot ${a1} + \\frac{${N}\\times ${N - 1}}{2}\\cdot ${d} = ${formatMathNumber(SN)}`,
-          rubric: "[高考采分点] 求和公式代入并算出数值 (+3分)",
+          rubric: "【高考采分点】求和公式代入并算出数值 (+3分)",
         },
       );
     } else if (subMode === "gauss") {
@@ -162,7 +162,7 @@ export function buildSequencePanel(
           title: "倒序相加：正序与倒序逐项配对",
           detail: `把正序和与倒序和相加，每一对的和都等于首末和，共 ${N} 对，故 $2S = ${N} \\times ${formatMathNumber(a1 + aN)}$`,
           latex: `2S_n = (a_1 + a_n) + (a_2 + a_{n-1}) + \\cdots + (a_n + a_1) = n(a_1 + a_n)`,
-          rubric: "[高考采分点] 写清倒序相加的配对过程 (+3分)",
+          rubric: "【高考采分点】写清倒序相加的配对过程 (+3分)",
         },
         {
           step: 3,
@@ -231,7 +231,7 @@ export function buildSequencePanel(
             res.continuousAxis !== null
               ? `x_0 = \\frac{1}{2} - \\frac{${a1}}{${d}} = ${formatMathNumber(res.continuousAxis)}`
               : `d = 0 \\implies S_n = ${a1}n`,
-          rubric: "[高考采分点] 用对称轴定位最值项 (+3分)",
+          rubric: "【高考采分点】用对称轴定位最值项 (+3分)",
         },
         {
           step: 3,
@@ -296,7 +296,7 @@ export function buildSequencePanel(
             latex: segB
               ? `A_2 = S_{${segB.endN}} - S_{${segB.startN - 1}} = ${formatMathNumber(segB.sumValue)}`
               : `N = ${N} < 2k = ${2 * kSegment}`,
-            rubric: "[高考采分点] 用 $S_{2k} - S_k$ 表示第二段和 (+3分)",
+            rubric: "【高考采分点】用 $S_{2k} - S_k$ 表示第二段和 (+3分)",
           },
           {
             step: 3,
@@ -365,7 +365,7 @@ export function buildSequencePanel(
             res.lastPositiveN !== null && d < 0 && a1 > 0
               ? `a_m \\ge 0 > a_{m+1} \\implies m = ${res.lastPositiveN}`
               : `${a1} \\text{ 与 } ${d} \\text{ 同号} \\implies a_n \\text{ 不变号}`,
-          rubric: "[高考采分点] 由 $a_n = 0$ 解出变号分界 (+3分)",
+          rubric: "【高考采分点】由 $a_n = 0$ 解出变号分界 (+3分)",
         },
         {
           step: 2,
@@ -373,7 +373,7 @@ export function buildSequencePanel(
           detail:
             "分界之前各项非负，绝对值直接去掉；分界之后各项为负，取相反数，于是一段原和、一段差的组合",
           latex: `T_n = \\begin{cases} S_n, & n \\le m \\\\ 2S_m - S_n, & n > m \\end{cases}`,
-          rubric: "[高考采分点] 写出分段表达式 $T_n = 2S_m - S_n$ (+3分)",
+          rubric: "【高考采分点】写出分段表达式 $T_n = 2S_m - S_n$ (+3分)",
         },
         {
           step: 3,
@@ -442,14 +442,15 @@ export function buildSequencePanel(
           title: "审题定法 · 写出题给 $S_n$ 的解析式",
           detail: `题目给出 $S_n = ${formatMathNumber(A)}n^2 ${B >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(B))}n${C === 0 ? "" : ` ${C > 0 ? "+" : "-"} ${formatMathNumber(Math.abs(C))}`}$。由 $a_n = S_n - S_{n-1}$ 可知，只要对 $n \\ge 2$ 作差即可消去二次项以下的常数干扰。`,
           latex: `S_n = ${formatMathNumber(A)}n^2 ${B >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(B))}n${C === 0 ? "" : ` ${C > 0 ? "+" : "-"} ${formatMathNumber(Math.abs(C))}`}`,
-          rubric: "采分点：写出题给 $S_n$ 并指明作差法的适用条件（2分）",
+          rubric: "【高考采分点】写出题给 $S_n$ 并指明作差法的适用条件（2分）",
         },
         {
           step: 2,
           title: "代入求解 · 作差求 n ≥ 2 的通项",
           detail: `$a_n = S_n - S_{n-1} = ${formatMathNumber(d)}n ${a1 - d >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(a1 - d))}$（$n \\ge 2$）。作差时二次项与常数项同时抵消，结果为一次式，说明该数列在 $n \\ge 2$ 时构成等差数列，公差为 $${formatMathNumber(d)}$。`,
           latex: `a_n = S_n - S_{n-1} = ${anFormula} \\quad (n \\ge 2)`,
-          rubric: "采分点：由 $S_n - S_{n-1}$ 求出 $n \\ge 2$ 时的通项（3分）",
+          rubric:
+            "【高考采分点】由 $S_n - S_{n-1}$ 求出 $n \\ge 2$ 时的通项（3分）",
         },
         {
           step: 3,
@@ -462,7 +463,8 @@ export function buildSequencePanel(
           latex: snRes.isFirstTermConsistent
             ? `a_1 = S_1 = ${formatMathNumber(snRes.a1FromSn)} = ${anFormula.replace(/n/, "1")}`
             : `a_n = \\begin{cases} ${formatMathNumber(snRes.a1FromSn)}, & n = 1 \\ ${anFormula}, & n \\ge 2 \\end{cases}`,
-          rubric: "采分点：用 a₁ = S₁ 检验首项并给出合并或分段的结论（3分）",
+          rubric:
+            "【高考采分点】用 a₁ = S₁ 检验首项并给出合并或分段的结论（3分）",
         },
       );
 
@@ -552,7 +554,7 @@ export function buildSequencePanel(
           title: "代入通项公式，看清它是指数型",
           detail: `$a_n = a_1 q^{n-1}$ 关于 $n$ 是指数型；取 $n = ${N}$ 得 $a_{${N}} = ${aN.toFixed(4)}$，公比形态为「${typeDesc[res.qType] ?? "一般形态"}」`,
           latex: `a_n = ${a1}\\cdot ${q}^{\\,n-1} \\implies a_{${N}} = ${aN.toFixed(4)}`,
-          rubric: "[高考采分点] 写出通项并判断增减形态 (+2分)",
+          rubric: "【高考采分点】写出通项并判断增减形态 (+2分)",
         },
         {
           step: 3,
@@ -565,7 +567,7 @@ export function buildSequencePanel(
             Math.abs(q - 1) < 1e-9
               ? `S_{${N}} = ${N} \\cdot ${a1} = ${SN.toFixed(4)}`
               : `S_{${N}} = \\frac{${a1}\\left(1 - ${q}^{${N}}\\right)}{1 - ${q}} = ${SN.toFixed(4)}`,
-          rubric: "[高考采分点] 公比是否为 1 必须分类讨论 (+3分)",
+          rubric: "【高考采分点】公比是否为 1 必须分类讨论 (+3分)",
         },
       );
     } else if (subMode === "staggerSum") {
@@ -610,7 +612,7 @@ export function buildSequencePanel(
           title: "两式错开一格相减，中间项成对消去",
           detail: `上下两式相减，中间的等比项全部对消，只剩首尾两项，得 $(1-q)S_{${N}} = ${(SN - q * SN).toFixed(4)}$`,
           latex: `S_n - qS_n = a_1 - a_1 q^n \\implies (1-q)S_n = a_1(1-q^n)`,
-          rubric: "[高考采分点] 写清错位相减的对消过程 (+3分)",
+          rubric: "【高考采分点】写清错位相减的对消过程 (+3分)",
         },
         {
           step: 3,
@@ -623,7 +625,7 @@ export function buildSequencePanel(
             Math.abs(q - 1) < 1e-9
               ? `q = 1 \\implies S_{${N}} = ${N}\\cdot ${a1} = ${SN.toFixed(4)}`
               : `S_{${N}} = \\frac{${(SN - q * SN).toFixed(4)}}{1-${q}} = ${SN.toFixed(4)}`,
-          rubric: "[高考采分点] 声明 $q \\neq 1$ 后再除，漏写扣分 (+2分)",
+          rubric: "【高考采分点】声明 $q \\neq 1$ 后再除，漏写扣分 (+2分)",
         },
       );
     } else if (subMode === "segment") {
@@ -647,7 +649,7 @@ export function buildSequencePanel(
             latex: geoB
               ? `\\frac{A_2}{A_1} = ${(geoB.sumValue / (geoA.sumValue || 1)).toFixed(4)} = q^{${res.segmentedSums.k}}`
               : `N = ${N} \\text{ 不足 } 2k`,
-            rubric: "[高考采分点] 指出片段和仍成等比、公比为 $q^k$ (+3分)",
+            rubric: "【高考采分点】指出片段和仍成等比、公比为 $q^k$ (+3分)",
           },
           {
             step: 3,
@@ -761,7 +763,7 @@ export function buildSequencePanel(
           title: "用相邻两项的比判断增减转折",
           detail: `$\\frac{a_{n+1}}{a_n} = q$，$q$ 与 $1$ 的大小关系决定 $P_n$ 何时由增转减；取 $n = ${N}$ 得 $P_{${N}} = ${PN.toFixed(4)}$`,
           latex: `P_{${N}} = ${a1}^{${N}} \\cdot ${q}^{\\frac{${N}\\times ${N - 1}}{2}} = ${PN.toFixed(4)}`,
-          rubric: "[高考采分点] 用相邻项比值定位乘积的增减转折 (+3分)",
+          rubric: "【高考采分点】用相邻项比值定位乘积的增减转折 (+3分)",
         },
         {
           step: 3,
@@ -803,7 +805,7 @@ export function buildSequencePanel(
               ? `本题 $|q| = ${Math.abs(q)}$ 小于 1，无穷递缩和收敛，前 ${N} 项和 $S_{${N}} = ${SN.toFixed(4)}$ 已接近极限`
               : `本题 $|q| = ${Math.abs(q)}$ 不小于 1，无穷递缩和发散，不存在有限的和`,
           latex: `|q| = ${Math.abs(q)} ${Math.abs(q) < 1 ? "<" : "\\ge"} 1`,
-          rubric: "[高考采分点] 先判断 $|q|<1$ 再谈极限 (+2分)",
+          rubric: "【高考采分点】先判断 $|q|<1$ 再谈极限 (+2分)",
         },
         {
           step: 2,
@@ -816,7 +818,7 @@ export function buildSequencePanel(
             res.limitSum !== null
               ? `S_\\infty = \\frac{${a1}}{1-${q}} = ${res.limitSum.toFixed(4)}`
               : `S_\\infty \\text{ 不存在}`,
-          rubric: "[高考采分点] 写出 $\\frac{a_1}{1-q}$ 并代入 (+3分)",
+          rubric: "【高考采分点】写出 $\\frac{a_1}{1-q}$ 并代入 (+3分)",
         },
         {
           step: 3,
@@ -925,7 +927,7 @@ export function buildSequencePanel(
             Math.abs(q - 1) < 1e-6
               ? `q = 1 \\implies c_n = a_n = ${a1} + (n-1)\\cdot ${d}`
               : `T_n - qT_n = a_1 b_1 + \\sum_{k=2}^{n} (a_k - a_{k-1})b_k - a_n b_{n+1}`,
-          rubric: "[高考采分点] 错位相减后把剩余部分整理成等比求和 (+3分)",
+          rubric: "【高考采分点】错位相减后把剩余部分整理成等比求和 (+3分)",
         },
         {
           step: 3,
@@ -1040,7 +1042,7 @@ export function buildSequencePanel(
           title: "纵向相加，中间项成对消去",
           detail: `把 $n = 1$ 到 $n = ${N}$ 的式子全部写出相加，中间项两两抵消，只剩首尾两项`,
           latex: `T_n = \\sum_{k=1}^{n} c_k = f(1) - f(n+1)`,
-          rubric: "[高考采分点] 写清相消后只剩首尾两项 (+3分)",
+          rubric: "【高考采分点】写清相消后只剩首尾两项 (+3分)",
         },
         {
           step: 3,
@@ -1102,7 +1104,7 @@ export function buildSequencePanel(
             res.zeroPoint !== null
               ? `a_n = 0 \\implies n_0 = ${formatMathNumber(res.zeroPoint)}`
               : `d = 0 \\implies a_n \\text{ 不变号}`,
-          rubric: "[高考采分点] 解 $a_n = 0$ 定位变号分界 (+3分)",
+          rubric: "【高考采分点】解 $a_n = 0$ 定位变号分界 (+3分)",
         },
         {
           step: 2,
@@ -1110,7 +1112,7 @@ export function buildSequencePanel(
           detail:
             "分界之前各项同号，直接去掉绝对值；分界之后取相反数，两段合成 $2S_{n_0} - S_n$",
           latex: res.sumFormula,
-          rubric: "[高考采分点] 写出绝对值求和的分段表达式 (+3分)",
+          rubric: "【高考采分点】写出绝对值求和的分段表达式 (+3分)",
         },
         {
           step: 3,
@@ -1157,7 +1159,7 @@ export function buildSequencePanel(
           title: "分别求和再相加",
           detail: `等差部分用 $na_1 + \\frac{n(n-1)}{2}d$，等比部分用等比求和公式，两者相加即为 $T_n$`,
           latex: `T_n = \\left[na_1 + \\frac{n(n-1)}{2}d\\right] + \\frac{q(1-q^n)}{1-q}`,
-          rubric: "[高考采分点] 拆分后分别求和再合并 (+3分)",
+          rubric: "【高考采分点】拆分后分别求和再合并 (+3分)",
         },
         {
           step: 3,
@@ -1201,7 +1203,7 @@ export function buildSequencePanel(
           detail:
             "$c_n = (-1)^n n$ 的相邻两项 $-(2k-1) + 2k = 1$ 恒为常数，因此可以两两并项，不必逐项相加",
           latex: `c_{2k-1} + c_{2k} = -(2k-1) + 2k = 1`,
-          rubric: "[高考采分点] 指出相邻奇偶两项并项为常数 (+3分)",
+          rubric: "【高考采分点】指出相邻奇偶两项并项为常数 (+3分)",
         },
         {
           step: 2,
@@ -1209,7 +1211,7 @@ export function buildSequencePanel(
           detail:
             "项数为偶数 $n = 2k$ 时恰有 $k$ 对，和为 $k$；项数为奇数 $n = 2k-1$ 时前面 $k-1$ 对相加，再补上最后一项",
           latex: `T_n = \\begin{cases} k, & n = 2k \\\\ -k, & n = 2k-1 \\end{cases}`,
-          rubric: "[高考采分点] 分奇偶讨论并写出分段结果 (+3分)",
+          rubric: "【高考采分点】分奇偶讨论并写出分段结果 (+3分)",
         },
         {
           step: 3,
@@ -1302,7 +1304,7 @@ export function buildSequencePanel(
             latex: `a_{n+1} - c = \\color{${MATH_COLORS.paramPrimary}}{p}(a_n - c) \\implies c = \\frac{\\color{${MATH_COLORS.paramSecondary}}{q}}{1-\\color{${MATH_COLORS.paramPrimary}}{p}}`,
             detail: `设常数 $c$ 满足 $c = ${p_rec}c + ${q_rec}$，移项解得平移不动点 $c = \\frac{${q_rec}}{1 - (${p_rec})} = ${formatMathNumber(cVal)}$。`,
             rubric:
-              "【审题定法 · 2分】设立方程 $c = pc + q$ 并正确求出常数 $c$",
+              "【高考采分点】【审题定法 · 2分】设立方程 $c = pc + q$ 并正确求出常数 $c$",
           },
           {
             step: 2,
@@ -1310,7 +1312,7 @@ export function buildSequencePanel(
             latex: `a_{n+1} - (${formatMathNumber(cVal)}) = ${p_rec} \\left[ a_n - (${formatMathNumber(cVal)}) \\right]`,
             detail: `令 $b_n = a_n - (${formatMathNumber(cVal)})$，则 $\\frac{b_{n+1}}{b_n} = ${p_rec}$ (常数)，故 $\\{b_n\\}$ 是以公比 $p = ${p_rec}$ 的等比数列。`,
             rubric:
-              "【同减构造 · 3分】两端同减 $c$，严密写出比值为常数 $p$ 的等比证明",
+              "【高考采分点】【同减构造 · 3分】两端同减 $c$，严密写出比值为常数 $p$ 的等比证明",
           },
           {
             step: 3,
@@ -1318,7 +1320,7 @@ export function buildSequencePanel(
             latex: `b_n = b_1 \\cdot p^{n-1} = (a_1 - c) p^{n-1} = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1}`,
             detail: `计算首项 $b_1 = a_1 - c = ${a1} - (${formatMathNumber(cVal)}) = ${formatMathNumber(b1Val)}$，套用通项公式得 $b_n = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1}$。`,
             rubric:
-              "【辅助通项 · 3分】正确求出首项 $b_1 = a_1 - c$ 并写出 $b_n$ 通项表达式",
+              "【高考采分点】【辅助通项 · 3分】正确求出首项 $b_1 = a_1 - c$ 并写出 $b_n$ 通项表达式",
           },
           {
             step: 4,
@@ -1326,7 +1328,7 @@ export function buildSequencePanel(
             latex: `a_n = b_n + c = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1} + (${formatMathNumber(cVal)})`,
             detail: `由 $a_n = b_n + c$ 移项还原；当 $n = 1$ 时，$a_1 = ${formatMathNumber(b1Val)} \\times 1 + (${formatMathNumber(cVal)}) = ${a1}$，检验首项完全吻合。`,
             rubric:
-              "【反思还原 · 2分】还原 $a_n$，且答题卷必须显式写出『检验 $n=1$ 吻合』防扣分",
+              "【高考采分点】【反思还原 · 2分】还原 $a_n$，且答题卷必须显式写出『检验 $n=1$ 吻合』防扣分",
           },
         );
       } else {
@@ -1336,28 +1338,30 @@ export function buildSequencePanel(
             title: "待定系数设不动点方程",
             latex: `p = 1 \\implies a_{n+1} - a_n = \\color{${MATH_COLORS.paramSecondary}}{q}`,
             detail: `因 $p = 1$，待定系数分母 $1-p=0$ 无解，递推式退化为相邻项差为常数的等差模型。`,
-            rubric: "【审题识别 · 2分】识别 $p=1$ 临界退化为标准等差数列",
+            rubric:
+              "【高考采分点】【审题识别 · 2分】识别 $p=1$ 临界退化为标准等差数列",
           },
           {
             step: 2,
             title: "构造平移等比数列",
             latex: `a_{n+1} - a_n = ${q_rec} = d`,
             detail: `直接识别公差 $d = ${q_rec}$，无需再平移构造等比数列。`,
-            rubric: "【确定公差 · 3分】写出公差 $d = q$",
+            rubric: "【高考采分点】【确定公差 · 3分】写出公差 $d = q$",
           },
           {
             step: 3,
             title: "求出辅助数列通项",
             latex: `a_n = a_1 + (n-1)d = ${a1} + (n-1)(${q_rec})`,
             detail: `套用等差数列通项公式 $a_n = a_1 + (n-1)d$。`,
-            rubric: "【代数计算 · 3分】套用等差数列通项公式计算",
+            rubric: "【高考采分点】【代数计算 · 3分】套用等差数列通项公式计算",
           },
           {
             step: 4,
             title: "还原主通项并检验首项",
             latex: `a_n = ${q_rec}n + (${a1 - q_rec})`,
             detail: `化简通项；当 $n=1$ 时，$a_1 = ${a1}$，检验吻合。`,
-            rubric: "【化简检验 · 2分】写出最简式并检验 $n=1$ 成立",
+            rubric:
+              "【高考采分点】【化简检验 · 2分】写出最简式并检验 $n=1$ 成立",
           },
         );
       }
@@ -1412,14 +1416,14 @@ export function buildSequencePanel(
           title: "从 $n=1$ 到 $n-1$ 纵向相加，中间项相消",
           detail: `写出 $n-1$ 个差分式相加，左侧相邻项两两抵消只剩 $a_n - a_1$，右侧变成 $\\sum f(k)$`,
           latex: `a_n - a_1 = \\sum_{k=1}^{n-1} f(k) \\implies a_n = ${a1} + \\sum_{k=1}^{n-1} f(k)`,
-          rubric: "[高考采分点] 写清累加后左侧只剩 $a_n - a_1$ (+3分)",
+          rubric: "【高考采分点】写清累加后左侧只剩 $a_n - a_1$ (+3分)",
         },
         {
           step: 3,
           title: "求和并代入项数，末项必须回验",
           detail: `取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$；累加法只保证 $n \\ge 2$ 时成立，必须单独核对 $n = 1$ 是否也满足该式`,
           latex: `a_{${N}} = ${formatMathNumber(aN)}`,
-          rubric: "[高考采分点] 回验 $n=1$ 是否满足通项 (+1分)",
+          rubric: "【高考采分点】回验 $n=1$ 是否满足通项 (+1分)",
         },
       );
     } else if (subModel === "multiplication") {
@@ -1457,7 +1461,7 @@ export function buildSequencePanel(
           title: "把递推式整理成相邻两项之比",
           detail: `题给 $\\frac{a_{n+1}}{a_n} = f(n)$，先用 $a_1 \\ne 0$ 说明各项均不为零，比值才合法`,
           latex: `\\frac{a_{n+1}}{a_n} = f(n) \\quad (a_n \\ne 0)`,
-          rubric: "[高考采分点] 先声明各项非零 (+1分)",
+          rubric: "【高考采分点】先声明各项非零 (+1分)",
         },
         {
           step: 2,
@@ -1465,7 +1469,7 @@ export function buildSequencePanel(
           detail:
             "相邻比值连乘，前一个的分子与后一个的分母交叉约掉，只剩首尾两项之比",
           latex: `\\frac{a_n}{a_1} = \\prod_{k=1}^{n-1} f(k) \\implies a_n = ${a1}\\prod_{k=1}^{n-1} f(k)`,
-          rubric: "[高考采分点] 写清连乘相消只剩 $\\frac{a_n}{a_1}$ (+3分)",
+          rubric: "【高考采分点】写清连乘相消只剩 $\\frac{a_n}{a_1}$ (+3分)",
         },
         {
           step: 3,
@@ -1529,7 +1533,7 @@ export function buildSequencePanel(
           title: "两边同除 $r^{n+1}$，把指数项压平",
           detail: `递推式 $a_{n+1} = ${p_rec}a_n + ${q_rec}\\cdot ${r_rec}^n$ 两边同除 $${r_rec}^{n+1}$，令 $b_n = \\frac{a_n}{r^n}$ 即化为一阶线性递推`,
           latex: `\\frac{a_{n+1}}{${r_rec}^{n+1}} = \\frac{${p_rec}}{${r_rec}}\\cdot \\frac{a_n}{${r_rec}^{n}} + \\frac{${q_rec}}{${r_rec}}`,
-          rubric: "[高考采分点] 指出同除 $r^{n+1}$ 的依据 (+2分)",
+          rubric: "【高考采分点】指出同除 $r^{n+1}$ 的依据 (+2分)",
         },
         {
           step: 2,
@@ -1540,7 +1544,7 @@ export function buildSequencePanel(
           latex: res.isResonant
             ? `p = r \\implies b_{n+1} = b_n + \\frac{${q_rec}}{${r_rec}}`
             : `b_{n+1} = \\frac{${p_rec}}{${r_rec}}b_n + \\frac{${q_rec}}{${r_rec}}`,
-          rubric: "[高考采分点] 分类讨论 $p=r$ 与 $p\\ne r$ (+3分)",
+          rubric: "【高考采分点】分类讨论 $p=r$ 与 $p\\ne r$ (+3分)",
         },
         {
           step: 3,
@@ -1600,7 +1604,7 @@ export function buildSequencePanel(
           title: "先确认两边可以取倒数",
           detail: `分式递推 $a_{n+1} = \\frac{${coefA}a_n}{${coefB}a_n + ${coefC}}$ 要求 $a_n \\ne 0$ 且分母不为零，然后两边取倒数`,
           latex: `\\frac{1}{a_{n+1}} = \\frac{${coefC}}{${coefA}}\\cdot\\frac{1}{a_n} + \\frac{${coefB}}{${coefA}}`,
-          rubric: "[高考采分点] 声明 $a_n \\ne 0$ 后取倒数 (+2分)",
+          rubric: "【高考采分点】声明 $a_n \\ne 0$ 后取倒数 (+2分)",
         },
         {
           step: 2,
@@ -1611,7 +1615,7 @@ export function buildSequencePanel(
           latex: res.isReciprocalLinear
             ? `b_n = \\frac{1}{${a1}}\\cdot\\left(\\frac{${coefC}}{${coefA}}\\right)^{n-1}`
             : `b_{n+1} = \\frac{${coefC}}{${coefA}}b_n + \\frac{${coefB}}{${coefA}}`,
-          rubric: "[高考采分点] 求出辅助数列 $b_n$ 的通项 (+3分)",
+          rubric: "【高考采分点】求出辅助数列 $b_n$ 的通项 (+3分)",
         },
         {
           step: 3,
@@ -1694,7 +1698,7 @@ export function buildSequencePanel(
               ? `对应二次方程的两实根为 $r_1 = ${formatMathNumber(res.r1)}$，$r_2 = ${formatMathNumber(res.r2)}$（$\\Delta = ${formatMathNumber(res.delta)}$）`
               : `判别式 $\\Delta = ${formatMathNumber(res.delta)} < 0$，二次方程无实根，降阶等比构造在实数范围内不适用`,
           latex: `x^2 - ${p_rec}x - ${q_rec} = 0 \\implies x = \\frac{${p_rec} \\pm \\sqrt{${formatMathNumber(res.delta)}}}{2}`,
-          rubric: "[高考采分点] 写出对应二次方程并求根 (+2分)",
+          rubric: "【高考采分点】写出对应二次方程并求根 (+2分)",
         },
         {
           step: 2,
@@ -1704,7 +1708,7 @@ export function buildSequencePanel(
               ? `令 $b_n = a_{n+1} - r_1 a_n$，则 $\\{b_n\\}$ 是公比为 $r_2 = ${formatMathNumber(res.r2)}$ 的等比数列，首项由 $a_1, a_2$ 定出`
               : "无实根时无法完成降阶，属超出本页考查范围的情形",
           latex: `b_n = a_{n+1} - ${formatMathNumber(res.r1)}a_n \\implies b_{n+1} = ${formatMathNumber(res.r2)}b_n`,
-          rubric: "[高考采分点] 说明降阶后是等比数列 (+3分)",
+          rubric: "【高考采分点】说明降阶后是等比数列 (+3分)",
         },
         {
           step: 3,
@@ -1826,7 +1830,7 @@ export function buildSequencePanel(
             claimId === "linear_term"
               ? `a_1 = ${a1} + (1-1)\\cdot ${stepParam} = ${a1} \\;\\checkmark`
               : `n = 1:\\quad \\text{左} = ${formatMathNumber(res.rows[0]?.leftValue ?? 0)},\\; \\text{右} = ${formatMathNumber(res.rows[0]?.rightValue ?? 0)} \\;\\checkmark`,
-          rubric: "[高考采分点] 显式写出 $n=1$ 的验算 (+2分)",
+          rubric: "【高考采分点】显式写出 $n=1$ 的验算 (+2分)",
         },
         {
           step: 2,
@@ -1839,7 +1843,7 @@ export function buildSequencePanel(
               : claimId === "geo_sum"
                 ? "S_k = 2^k - 1 \\quad (k \\ge 1)"
                 : `a_k = ${a1} + (k-1)\\cdot ${stepParam} \\quad (k \\ge 1)`,
-          rubric: "[高考采分点] 明确写出归纳假设 (+3分)",
+          rubric: "【高考采分点】明确写出归纳假设 (+3分)",
         },
         {
           step: 3,
@@ -1851,7 +1855,7 @@ export function buildSequencePanel(
               : claimId === "geo_sum"
                 ? "S_{k+1} = S_k + 2^k = (2^k - 1) + 2^k = 2^{k+1} - 1 \\implies P(k+1) \\text{ 成立}"
                 : `a_{k+1} = a_k + ${stepParam} = \\big(${a1} + (k-1)\\cdot ${stepParam}\\big) + ${stepParam} = ${a1} + k\\cdot ${stepParam} \\implies P(k+1) \\text{ 成立}`,
-          rubric: "[高考采分点] 用上归纳假设完成 $k \\to k+1$ (+4分)",
+          rubric: "【高考采分点】用上归纳假设完成 $k \\to k+1$ (+4分)",
         },
       );
 

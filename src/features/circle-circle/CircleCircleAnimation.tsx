@@ -27,6 +27,7 @@ import {
   type CircleLayerOptions,
 } from "./components/CircleCircleScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
+import { fitViewRange } from "@/math/viewRange";
 import { defaultParams, paramMeta } from "@/data/registries/circleCircle";
 import { circleCircleScenarios } from "./meta";
 
@@ -72,13 +73,6 @@ export function CircleCircleAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 7. 坐标系比例尺 [-7, 7] x [-5, 5]
-  const scale = useSceneScale({
-    vp,
-    xRange: [-7, 7],
-    yRange: [-5, 5],
-  });
-
   const parsedCircleParams = useMemo(
     () => ({
       x1: params.x1 ?? -1.5,
@@ -90,6 +84,32 @@ export function CircleCircleAnimation() {
     }),
     [params],
   );
+
+  // 7. 视口自适应：两圆的外框必须完整可见。
+  //    x₁=−5、r₁=5 时圆最左到 −10，固定 x∈[-7,7] 会把左半个圆切掉。
+  //    圆心本身与四个极值点一起作为关键点，保证无论相离/内含/相交都不裁切。
+  const viewRange = useMemo(() => {
+    const { x1, y1, r1, x2, y2, r2 } = parsedCircleParams;
+    return fitViewRange(
+      [
+        { x: x1 - r1, y: y1 },
+        { x: x1 + r1, y: y1 },
+        { x: x1, y: y1 - r1 },
+        { x: x1, y: y1 + r1 },
+        { x: x2 - r2, y: y2 },
+        { x: x2 + r2, y: y2 },
+        { x: x2, y: y2 - r2 },
+        { x: x2, y: y2 + r2 },
+      ],
+      { defaultXRange: [-7, 7], defaultYRange: [-5, 5] },
+    );
+  }, [parsedCircleParams]);
+
+  const scale = useSceneScale({
+    vp,
+    xRange: viewRange.xRange,
+    yRange: viewRange.yRange,
+  });
 
   // 8. 右屏看板数据 (纯领域模型计算与数据装配)
   const mathData = useMemo(() => {

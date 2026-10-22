@@ -1,5 +1,6 @@
 import type { MathPanelData } from "@/data/types";
 import { MATH_COLORS } from "@/theme";
+import { SANDWICH_CURVE_MODELS } from "@/math/tangentScaling";
 import type {
   TangentScalingParams,
   SandwichSubModel,
@@ -13,19 +14,12 @@ export function buildSandwichModel(
   const isParallel = sandwichSub === "parallel_bands";
   const isOrigin = sandwichSub === "origin_sandwich";
 
-  let upperVal = Math.exp(x - 1);
-  let lowerVal = Math.log(x) + 1;
-  let midVal = x;
-
-  if (isParallel) {
-    upperVal = Math.exp(x);
-    lowerVal = Math.log(x);
-    midVal = x;
-  } else if (isOrigin) {
-    upperVal = Math.exp(x) - 1;
-    lowerVal = Math.log(x + 1);
-    midVal = x;
-  }
+  /* 上下界函数取自数学层模型表：中屏画的曲线与右屏读的数值必须同一来源，
+     否则改了一处就会出现「画的是 e^(x-1)、读数按 e^x」的静默错误 */
+  const model = SANDWICH_CURVE_MODELS[sandwichSub];
+  const upperVal = model.upperFn(x);
+  const lowerVal = model.lowerFn(x);
+  const midVal = x;
 
   if (isParallel) {
     return {

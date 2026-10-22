@@ -17,6 +17,8 @@ import { NikeScene } from "./components/NikeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/nike";
 import { formatMathNumber, formatCoefTerm } from "@/utils/mathFormat";
+import { solveNike } from "@/math/nike";
+import { fitViewRange } from "@/math/viewRange";
 
 export function StandardPage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -28,7 +30,28 @@ export function StandardPage() {
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
-  const scale = useSceneScale({ vp, xRange: [-6, 6], yRange: [-4.5, 4.5] });
+  // 视口自适应：极值点 (±√(b/a), ±2√(ab)) 必须可见。
+  // a=b=10 时极值点 y=20，固定 [-4.5,4.5] 会把它整条裁掉；Floor Clamp 保证参数正常时仍是基准视口。
+  // 渐近线方向会出现 ±Infinity 的采样点，由 fitViewRange 内部按 Number.isFinite 剔除。
+  const viewRange = useMemo(() => {
+    const res = solveNike(params.a, params.b);
+    const keyPoints = [
+      ...res.criticalPoints.map((p) => ({ x: p.x, y: p.y })),
+      ...(res.amgmMinPoint
+        ? [{ x: res.amgmMinPoint.x, y: res.amgmMinPoint.y }]
+        : []),
+    ];
+    return fitViewRange(keyPoints, {
+      defaultXRange: [-6, 6],
+      defaultYRange: [-4.5, 4.5],
+    });
+  }, [params.a, params.b]);
+
+  const scale = useSceneScale({
+    vp,
+    xRange: viewRange.xRange,
+    yRange: viewRange.yRange,
+  });
 
   const mathData = useMemo(
     () => buildMathQuantities("anim-nike", params, { activeMode: "standard" }),

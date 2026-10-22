@@ -96,7 +96,7 @@ export function buildParametricPointPanel(
         detail:
           "以 A 为坐标原点建立空间直角坐标系 A-xyz。侧棱 BB₁ 上的动点 P 满足 BP = λ·BB₁ (λ ∈ [0, 1])。",
         latex: `P(${res.P.x}, ${res.P.y}, ${res.P.z.toFixed(2)}), \\quad A(0,0,0), \\quad C(${res.C.x}, ${res.C.y}, 0), \\quad D(0, ${res.D.y}, 0)`,
-        rubric: "[高考采分点] 正确建立空间直角坐标系并写出动点 P 坐标 (+4分)",
+        rubric: "【高考采分点】正确建立空间直角坐标系并写出动点 P 坐标 (+4分)",
       },
       {
         step: 2,
@@ -104,14 +104,15 @@ export function buildParametricPointPanel(
         detail:
           "计算截面 PAC 的法向量 n，根据底面法向量 n₀=(0,0,1) 建立关于动参数 λ 的二面角三角方程。",
         latex: `\\cos\\theta(\\lambda) = \\frac{|\\vec{n} \\cdot \\vec{n}_0|}{|\\vec{n}|} = \\frac{${(a * b).toFixed(0)}}{\\sqrt{\\lambda^2 \\cdot ${(c * c * (a * a + b * b)).toFixed(0)} + ${(a * a * b * b).toFixed(0)}}} = \\cos ${targetThetaDeg}^\\circ`,
-        rubric: "[高考采分点] 准确求出截面法向量并列出二面角代数方程 (+5分)",
+        rubric: "【高考采分点】准确求出截面法向量并列出二面角代数方程 (+5分)",
       },
       {
         step: 3,
         title: "反解动点参数并严格检验区间存在性",
         detail: `反解方程求得 λ = ${res.rawLambdaTarget.toFixed(2)}。检验 λ ∈ [0, 1]：${res.isTargetDihedralExist ? "解在闭区间内，侧棱 BB₁ 上存在满足条件的点 P" : "解超出闭区间，侧棱 BB₁ 上不存在满足条件的点 P"}。`,
         latex: `\\lambda = \\frac{ab\\tan\\theta_0}{c\\sqrt{a^2+b^2}} = ${res.rawLambdaTarget.toFixed(2)} \\; ${res.isTargetDihedralExist ? "\\in [0, 1]" : "\\notin [0, 1]"}`,
-        rubric: "[高考采分点] 准确解出参数 λ 并书写区间检验与存在性结论 (+4分)",
+        rubric:
+          "【高考采分点】准确解出参数 λ 并书写区间检验与存在性结论 (+4分)",
       },
     );
 
@@ -217,14 +218,14 @@ export function buildParametricPointPanel(
         detail:
           "动点 P 沿侧棱 BB₁ 滑动 (分比 λ)，动点 Q 沿底面对角线 AC 滑动 (分比 μ)。",
         latex: `\\vec{PQ} = Q - P = (${res.vecPQ.x.toFixed(2)}, ${res.vecPQ.y.toFixed(2)}, ${res.vecPQ.z.toFixed(2)})`,
-        rubric: "[高考采分点] 用独立参数 λ, μ 表达双动点坐标与差向量 (+4分)",
+        rubric: "【高考采分点】用独立参数 λ, μ 表达双动点坐标与差向量 (+4分)",
       },
       {
         step: 2,
         title: "距离多元二次型函数的完全平方配方",
         detail: "展开两点间空间距离平方函数，分别对 μ 与 λ 进行独立二次配方。",
         latex: `|PQ|^2 = ${(a * a + b * b).toFixed(0)}\\left(\\mu - ${res.optimalMu.toFixed(2)}\\right)^2 + ${(res.minDistSkew ** 2).toFixed(2)} + ${c * c}\\lambda^2`,
-        rubric: "[高考采分点] 正确展开并配方分离变量为非负项与常数项 (+5分)",
+        rubric: "【高考采分点】正确展开并配方分离变量为非负项与常数项 (+5分)",
       },
       {
         step: 3,
@@ -232,7 +233,7 @@ export function buildParametricPointPanel(
         detail: `令两个完全平方式分别取零（求解得 λ=0 且 μ=${res.optimalMu.toFixed(2)}），二次型便只剩常数项即距离平方的下界。该极小点对应的线段 PQ 同时垂直于 BB₁ 与 AC，恰为异面直线公垂线段。`,
         latex: `|PQ|_{\\min} = \\frac{ab}{\\sqrt{a^2+b^2}} = ${res.minDistSkew.toFixed(3)}`,
         rubric:
-          "[高考采分点] 写出最小值结果并阐明达到最值时的几何公垂线意义 (+4分)",
+          "【高考采分点】写出最小值结果并阐明达到最值时的几何公垂线意义 (+4分)",
       },
     );
 
@@ -307,7 +308,7 @@ export function buildParametricPointPanel(
           "底面 △ACD 固定于长方体底面，面积为定值；动点 P 在侧棱 BB₁ 上滑动，到底面的垂直距离即为棱锥动高。",
         latex: `S_{\\Delta ACD} = \\frac{1}{2}ab = ${res.baseAreaACD.toFixed(1)}, \\quad h(\\lambda) = \\lambda c = ${res.heightH.toFixed(2)}`,
         rubric:
-          "[高考采分点] 求出固定底面积并将高线表示为 λ 的一次线性函数 (+4分)",
+          "【高考采分点】求出固定底面积并将高线表示为 λ 的一次线性函数 (+4分)",
       },
       {
         step: 2,
@@ -316,7 +317,7 @@ export function buildParametricPointPanel(
           "由棱锥体积公式构建 V(λ)。由于高线单调递增，体积函数关于 λ 在区间 [0, 1] 上严格单调递增。",
         latex: `V(\\lambda) = \\frac{1}{3} S \\cdot h(\\lambda) = \\frac{1}{6}abc\\lambda = ${res.volumePACD.toFixed(3)}`,
         rubric:
-          "[高考采分点] 列出棱锥体积函数式并由函数单调性确定极值位置 (+5分)",
+          "【高考采分点】列出棱锥体积函数式并由函数单调性确定极值位置 (+5分)",
       },
       {
         step: 3,
@@ -325,7 +326,7 @@ export function buildParametricPointPanel(
           "在端点 λ=1 (顶点 B₁) 处取得最大体积。通过等体积法 V_{P-ACD} = V_{D-PAC}，可反解点 D 到动截面 PAC 的距离。",
         latex: `V_{\\max} = \\frac{1}{6}abc = ${res.maxVolumePACD.toFixed(2)}, \\quad d_{D-PAC} = \\frac{3V}{S_{\\Delta PAC}}`,
         rubric:
-          "[高考采分点] 写出边界极值并说明利用等体积法转化空间距离的通法 (+4分)",
+          "【高考采分点】写出边界极值并说明利用等体积法转化空间距离的通法 (+4分)",
       },
     );
 
@@ -418,7 +419,7 @@ export function buildParametricPointPanel(
           "立体几何表面动点路径问题基于“两点之间线段最短”原理，需将相邻立体表面沿棱展成同一平面。",
         latex: `\\text{折线 } A \\to P \\to C_1 \\;\\text{展开为平面直线段 } AC_1`,
         rubric:
-          "[高考采分点] 明确空间立体表面路径展为平面直线段的降维思想 (+4分)",
+          "【高考采分点】明确空间立体表面路径展为平面直线段的降维思想 (+4分)",
       },
       {
         step: 2,
@@ -427,7 +428,7 @@ export function buildParametricPointPanel(
           "长方体从 A 到相对顶点 C₁ 存在三种本质不同的相交平面展开方式：分别跨越棱 BB₁、DC 与 BC。",
         latex: `L_1 = \\sqrt{(a+b)^2+c^2} = ${res.path1Length.toFixed(3)}, \\quad L_2 = \\sqrt{a^2+(b+c)^2} = ${res.path2Length.toFixed(3)}, \\quad L_3 = \\sqrt{(a+c)^2+b^2} = ${res.path3Length.toFixed(3)}`,
         rubric:
-          "[高考采分点] 分类计算三种不同展开方式下的直角三角形斜边长度 (+5分)",
+          "【高考采分点】分类计算三种不同展开方式下的直角三角形斜边长度 (+5分)",
       },
       {
         step: 3,
@@ -435,7 +436,7 @@ export function buildParametricPointPanel(
         detail: `全局最短路径为 min(L₁, L₂, L₃)。当走跨棱 BB₁ 路线时，利用相似三角形对应边成比例确定侧棱 BB₁ 上的折点 λ₁。`,
         latex: `L_{\\min} = \\min(L_1, L_2, L_3) = ${res.globalMinLength.toFixed(3)}, \\quad \\lambda_1 = \\frac{a}{a+b} = ${res.optimalLambda1.toFixed(3)}`,
         rubric:
-          "[高考采分点] 得出全局最小值并精确反解出动折点在棱上的分点比 (+4分)",
+          "【高考采分点】得出全局最小值并精确反解出动折点在棱上的分点比 (+4分)",
       },
     );
 

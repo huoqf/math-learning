@@ -164,14 +164,14 @@ export function buildFuncZeroPanel(
     {
       step: 1,
       title: "审题定法 · 确定区间与单调性",
-      rubric: "采分点：检验定义域与图象连续性，指出单调性（2分）",
+      rubric: "【高考采分点】检验定义域与图象连续性，指出单调性（2分）",
       latex: `f(x) = ${model.formula.replace(" = 0", "")} \\quad x \\in [${m.toFixed(1)}, ${n.toFixed(1)}]`,
       detail: `函数在初始闭区间 $[${m.toFixed(1)}, ${n.toFixed(1)}]$ 上连续不断，具备运用零点存在性定理的基础前提。`,
     },
     {
       step: 2,
       title: "定理验证 · 检验端点函数值符号",
-      rubric: "采分点：代入端点计算函数值并验证 f(a)·f(b) 符号（4分）",
+      rubric: "【高考采分点】代入端点计算函数值并验证 f(a)·f(b) 符号（4分）",
       latex: `f(${m.toFixed(1)}) = ${Number.isFinite(fA) ? fA.toFixed(2) : "\\text{无定义}"}, \\quad f(${n.toFixed(1)}) = ${Number.isFinite(fB) ? fB.toFixed(2) : "\\text{无定义}"} \\implies f(a) \\cdot f(b) ${
         Math.abs(prod) <= 1e-6 ? "= 0" : prod < 0 ? "< 0" : "> 0"
       }`,
@@ -185,7 +185,8 @@ export function buildFuncZeroPanel(
     {
       step: 3,
       title: "二分迭代 · 逐次折半收缩误差",
-      rubric: "采分点：写出中点坐标与新区间更替逻辑，输出近似值与误差界（4分）",
+      rubric:
+        "【高考采分点】写出中点坐标与新区间更替逻辑，输出近似值与误差界（4分）",
       latex: bisectionRes.hasZero
         ? `c_{${kActual}} = ${bisectionRes.approxRoot.toFixed(4)}, \\quad |x^* - c_{${kActual}}| \\le ${bisectionRes.errorBound.toFixed(4)}`
         : `\\text{端点未异号，未收敛}`,
