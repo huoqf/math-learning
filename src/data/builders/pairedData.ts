@@ -52,8 +52,8 @@ export function buildPairedDataPanel(
           },
           {
             name: "样本相关系数 r 与决定系数 R² 的统计意义",
-            latex: `\\begin{aligned} r &= \\frac{\\sum_{i=1}^n(x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum_{i=1}^n(x_i-\\bar{x})^2 \\sum_{i=1}^n(y_i-\\bar{y})^2}} \\\\[6pt] R^2 &= 1 - \\frac{\\sum_{i=1}^n (y_i - \\hat{y}_i)^2}{\\sum_{i=1}^n (y_i - \\bar{y})^2} \\end{aligned}`,
-            note: "$r$ 与 $\\hat{b}$ 同号；$|r| \\ge 0.75$ 认为线性相关性很强；$R^2$ 越接近 $1$ 说明模型拟合优度越高、预报可靠性越强。",
+            latex: `\\begin{aligned} r &= \\frac{\\sum_{i=1}^n(x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum_{i=1}^n(x_i-\\bar{x})^2 \\sum_{i=1}^n(y_i-\\bar{y})^2}} \\\\[6pt] R^2 &= 1 - \\frac{\\sum_{i=1}^n (y_i - \\hat{y}_i)^2}{\\sum_{i=1}^n (y_i - \\bar{y})^2} \\\\[6pt] R^2 &= r^2 \\quad (\\text{一元线性回归恒等式}) \\end{aligned}`,
+            note: "$r$ 与 $\\hat{b}$ 同号；$|r| \\ge 0.75$ 认为线性相关性很强；$R^2$ 越接近 $1$ 说明模型拟合优度越高、预报可靠性越强。**一元线性回归中 $R^2 = r^2$ 恒成立**：决定系数就是相关系数的平方，故 $R^2$ 不能为负、也不能超过 $1$；换成非线性模型后该恒等式不再成立，$R^2$ 与 $r$ 必须分开计算。",
             level: "important" as const,
           },
         ]

@@ -13,6 +13,10 @@ import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { VectorLinearScene } from "./components/VectorLinearScene";
+import {
+  VectorCoordinateScene,
+  type VectorCoordinateOp,
+} from "./components/VectorCoordinateScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   defaultParams,
@@ -24,9 +28,10 @@ import {
   type VectorPhysicsContext,
 } from "@/data/registries/vectorLinear";
 import { computeVectorLinear } from "@/math/vectorLinear";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 /** 教学研究模式：加减与数乘 / 三点共线 / 平面向量基本定理 */
-type StudyMode = "linearCombo" | "collinear" | "basis";
+type StudyMode = "linearCombo" | "collinear" | "basis" | "coordinate";
 
 /**
  * 物理实际背景（必修二 6.4.2 向量在物理中的应用）的左屏导引文案。
@@ -94,6 +99,15 @@ function resolveTipContent(
           question:
             "已知 $\\vec{a} = (x_a, y_a)$、$\\vec{b} = (x_b, y_b)$，能否只用坐标写出 $\\lambda\\vec{a} + \\mu\\vec{b}$ 与 $\\vec{a} - \\vec{b}$？当 $\\lambda = \\mu = 1$ 时和向量为何恰是平行四边形的对角线？",
         };
+  }
+  if (studyMode === "coordinate") {
+    return {
+      badge: "平面向量运算的坐标表示",
+      condition:
+        "两向量 $\\vec{a} = (x_a, y_a)$、$\\vec{b} = (x_b, y_b)$ 都以原点 $O$ 为起点，坐标即终点坐标。",
+      question:
+        "已知 $\\vec{a} = (3, 1)$、$\\vec{b} = (1, 3)$，能否只做四则运算就写出 $\\vec{a}+\\vec{b}$、$\\vec{a}-\\vec{b}$ 与 $3\\vec{a}$ 的坐标？再拖动 $\\vec{b}$ 使 $x_ay_b - x_by_a = 0$，此时两向量在图上呈现出什么关系？",
+    };
   }
   if (studyMode === "collinear") {
     return {
@@ -220,6 +234,17 @@ export function VectorLinearAnimation() {
           description: "系数和不为一验证偏离",
         },
       ],
+      coordinate: [
+        { key: "add", label: "坐标加法", description: "分量各自相加" },
+        { key: "sub", label: "坐标减法", description: "终到终的差向量" },
+        { key: "scalar", label: "坐标数乘", description: "每个分量乘 λ" },
+        {
+          key: "collinear",
+          label: "共线判据",
+          description: "交叉相乘为零",
+          fullWidth: true,
+        },
+      ],
       basis: [
         { key: "free", label: "自由探究", description: "全参数开放" },
         {
@@ -244,7 +269,13 @@ export function VectorLinearAnimation() {
   // 切换模式时重置预设
   const handleModeChange = (mode: StudyMode) => {
     setStudyMode(mode);
-    setPresetKey(mode === "collinear" ? "collinear-line" : "free");
+    setPresetKey(
+      mode === "collinear"
+        ? "collinear-line"
+        : mode === "coordinate"
+          ? "add"
+          : "free",
+    );
     // 单位向量图层只在加减与数乘模式下成立（模式二/三以 OA、OB 与 e₁、e₂ 命名，叠加会撞名）
     setShowUnitVectors(false);
   };
@@ -270,6 +301,17 @@ export function VectorLinearAnimation() {
         // 物理三情景：参数同样取自 registry SSOT，且一律把 λ、μ 钉在 1
         // （力的合成与平衡都是纯向量加法，混进数乘系数物理上就说不通了）
         setParams((p) => ({ ...p, ...VECTOR_PHYSICS_PRESETS[preset].params }));
+      }
+    } else if (studyMode === "coordinate") {
+      // 四组参数都取整数：坐标读数一眼可验算，避免出现 0.5 之类的尾数干扰观察
+      if (preset === "add") {
+        setParams((p) => ({ ...p, xa: 3, ya: 1, xb: 1, yb: 3 }));
+      } else if (preset === "sub") {
+        setParams((p) => ({ ...p, xa: 4, ya: 1, xb: 1, yb: 3 }));
+      } else if (preset === "scalar") {
+        setParams((p) => ({ ...p, lambda: 2, xa: 2, ya: 1 }));
+      } else if (preset === "collinear") {
+        setParams((p) => ({ ...p, xa: 2, ya: 1, xb: 4, yb: 2 }));
       }
     } else if (studyMode === "collinear") {
       if (preset === "collinear-line") {
@@ -377,6 +419,12 @@ export function VectorLinearAnimation() {
       } else {
         activeKeys = ["lambda", "mu", "xa", "ya", "xb", "yb"];
       }
+    } else if (studyMode === "coordinate") {
+      // 只有「坐标数乘」情景需要 λ；加法/减法/共线判定里露出 λ 会稀释当堂目标
+      activeKeys =
+        presetKey === "scalar"
+          ? ["lambda", "xa", "ya", "xb", "yb"]
+          : ["xa", "ya", "xb", "yb"];
     } else if (studyMode === "collinear") {
       if (isCollinearLocked) {
         // 锁定 x+y=1：仅需一个 xCoeff 分点滑块，实现极致降维
@@ -440,6 +488,22 @@ export function VectorLinearAnimation() {
       return `\\vec{s} = ${lambdaStr} + ${muStr} = (${mathRes.sumVec.x.toFixed(
         1,
       )}, ${mathRes.sumVec.y.toFixed(1)})`;
+    } else if (studyMode === "coordinate") {
+      const ax = formatMathNumber(mathRes.a.x);
+      const ay = formatMathNumber(mathRes.a.y);
+      const bx = formatMathNumber(mathRes.b.x);
+      const by = formatMathNumber(mathRes.b.y);
+      if (presetKey === "sub") {
+        return `\\vec{a}-\\vec{b} = (${ax} - ${bx},\\ ${ay} - ${by}) = (${formatMathNumber(mathRes.diffVec.x)}, ${formatMathNumber(mathRes.diffVec.y)})`;
+      }
+      if (presetKey === "scalar") {
+        const lam = formatMathNumber(params.lambda ?? 1);
+        return `\\lambda\\vec{a} = (${lam} \\times ${ax},\\ ${lam} \\times ${ay}) = (${formatMathNumber((params.lambda ?? 1) * mathRes.a.x)}, ${formatMathNumber((params.lambda ?? 1) * mathRes.a.y)})`;
+      }
+      if (presetKey === "collinear") {
+        return `x_ay_b - x_by_a = ${ax} \\times ${by} - ${bx} \\times ${ay} = ${formatMathNumber(mathRes.detAB)}`;
+      }
+      return `\\vec{a}+\\vec{b} = (${ax} + ${bx},\\ ${ay} + ${by}) = (${formatMathNumber(mathRes.sumAB.x)}, ${formatMathNumber(mathRes.sumAB.y)})`;
     } else if (studyMode === "collinear") {
       const sumStr = mathRes.coeffSum.toFixed(2);
       return `\\vec{OC} = x\\vec{OA} + y\\vec{OB} \\quad (x+y = ${sumStr})`;
@@ -453,7 +517,7 @@ export function VectorLinearAnimation() {
         2,
       )}}\\vec{e}_2`;
     }
-  }, [studyMode, params, mathRes, showUnitVectors, physicsContext]);
+  }, [studyMode, params, mathRes, showUnitVectors, physicsContext, presetKey]);
 
   // 看板标题
   const panelTitle = useMemo(() => {
@@ -464,6 +528,7 @@ export function VectorLinearAnimation() {
         ? `${VECTOR_PHYSICS_PRESETS[physicsContext].label}看板`
         : "向量加减与数乘看板";
     }
+    if (studyMode === "coordinate") return "平面向量坐标运算看板";
     if (studyMode === "collinear") return "三点共线与分点定理看板";
     return "平面向量基本定理看板";
   }, [studyMode, physicsContext]);
@@ -485,7 +550,8 @@ export function VectorLinearAnimation() {
               items={[
                 { key: "linearCombo", label: "加减与数乘" },
                 { key: "collinear", label: "三点共线" },
-                { key: "basis", label: "基本定理", fullWidth: true },
+                { key: "basis", label: "基本定理" },
+                { key: "coordinate", label: "坐标运算" },
               ]}
               value={studyMode}
               onChange={(k) => handleModeChange(k as StudyMode)}
@@ -535,18 +601,30 @@ export function VectorLinearAnimation() {
             containerRef={containerRef}
             transform={vp.transform}
           >
-            <VectorLinearScene
-              params={params}
-              scale={scale}
-              vp={vp}
-              onParamChange={handleParamChange}
-              onBatchParamsChange={handleBatchParamsChange}
-              fontScale={canvasSize.font}
-              studyMode={studyMode}
-              lockCollinear={isCollinearLocked}
-              showUnitVectors={showUnitVectors}
-              physicsContext={physicsContext}
-            />
+            {studyMode === "coordinate" ? (
+              <VectorCoordinateScene
+                params={params}
+                scale={scale}
+                vp={vp}
+                fontScale={canvasSize.font}
+                op={presetKey as VectorCoordinateOp}
+                onParamChange={handleParamChange}
+                onBatchParamsChange={handleBatchParamsChange}
+              />
+            ) : (
+              <VectorLinearScene
+                params={params}
+                scale={scale}
+                vp={vp}
+                onParamChange={handleParamChange}
+                onBatchParamsChange={handleBatchParamsChange}
+                fontScale={canvasSize.font}
+                studyMode={studyMode}
+                lockCollinear={isCollinearLocked}
+                showUnitVectors={showUnitVectors}
+                physicsContext={physicsContext}
+              />
+            )}
           </AnimationSvgCanvas>
         </div>
       }

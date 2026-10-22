@@ -13,6 +13,7 @@ import {
   calcCrossTelescoping,
   calcOddEvenSequence,
   calcAbsSumSequence,
+  calcSnToAn,
   calcRadicalTelescoping,
   calcLinearRecurrence,
   calcAccumulationRecurrence,
@@ -20,6 +21,8 @@ import {
   calcNonHomogeneousExpRecurrence,
   calcReciprocalRecurrence,
   calcSecondOrderRecurrence,
+  calcInductionVerification,
+  type InductionClaimId,
 } from "@/math/sequence";
 import { MATH_COLORS } from "@/theme";
 
@@ -101,6 +104,28 @@ export function buildSequencePanel(
         text: "数形结合：等差数列 $a_n$ 散点均落在直线 $y = dx + (a_1-d)$ 上。公差 $d > 0$ 时单调递增，$d < 0$ 时单调递减。公差 $d$ 即直线的斜率。",
         importance: "basic",
       });
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "设出首项与公差，确认这是一次型通项",
+          detail: `首项 $a_1 = ${a1}$，公差 $d = ${d}$：等差数列的通项是定义在正整数集上的离散一次函数，斜率就是公差`,
+          latex: `a_1 = ${a1},\\quad d = ${d}`,
+        },
+        {
+          step: 2,
+          title: "代入通项公式求出指定项",
+          detail: `把首项与公差代入 $a_n = a_1 + (n-1)d$，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$`,
+          latex: `a_n = ${a1} + (n-1)\\cdot ${d} = ${anLatex} \\implies a_{${N}} = ${formatMathNumber(aN)}`,
+          rubric: "[高考采分点] 写出通项并代入具体项 (+2分)",
+        },
+        {
+          step: 3,
+          title: "用首项与公差求前 $n$ 项和",
+          detail: `代入 $S_n = na_1 + \\frac{n(n-1)}{2}d$，取 $n = ${N}$ 得 $S_{${N}} = ${formatMathNumber(SN)}$`,
+          latex: `S_{${N}} = ${N}\\cdot ${a1} + \\frac{${N}\\times ${N - 1}}{2}\\cdot ${d} = ${formatMathNumber(SN)}`,
+          rubric: "[高考采分点] 求和公式代入并算出数值 (+3分)",
+        },
+      );
     } else if (subMode === "gauss") {
       quantities.push({
         label: `首尾和 $(a_1 + a_{${N}})$`,
@@ -125,6 +150,27 @@ export function buildSequencePanel(
         text: "无字证明思想：高斯倒序相加通过几何旋转 180° 将两个全等阶梯柱拼成规整矩形，是新高考考查算法与数学证明直观的重要载体。",
         importance: "gaokao",
       });
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "首末两项配对，先算它们的和",
+          detail: `首项 $a_1 = ${a1}$，末项 $a_{${N}} = ${formatMathNumber(aN)}$，首末和为 ${formatMathNumber(a1 + aN)}`,
+          latex: `a_1 + a_{${N}} = ${a1} + ${formatMathNumber(aN)} = ${formatMathNumber(a1 + aN)}`,
+        },
+        {
+          step: 2,
+          title: "倒序相加：正序与倒序逐项配对",
+          detail: `把正序和与倒序和相加，每一对的和都等于首末和，共 ${N} 对，故 $2S = ${N} \\times ${formatMathNumber(a1 + aN)}$`,
+          latex: `2S_n = (a_1 + a_n) + (a_2 + a_{n-1}) + \\cdots + (a_n + a_1) = n(a_1 + a_n)`,
+          rubric: "[高考采分点] 写清倒序相加的配对过程 (+3分)",
+        },
+        {
+          step: 3,
+          title: "两边除以 2 得求和结果",
+          detail: `$S_{${N}} = \\frac{${N}\\left(${a1} + ${formatMathNumber(aN)}\\right)}{2} = ${formatMathNumber(SN)}$`,
+          latex: `S_{${N}} = \\frac{${N}\\left(${a1} + ${formatMathNumber(aN)}\\right)}{2} = ${formatMathNumber(SN)}`,
+        },
+      );
     } else if (subMode === "quadratic") {
       if (res.continuousAxis !== null) {
         quantities.push({
@@ -166,6 +212,38 @@ export function buildSequencePanel(
           importance: "hard",
         });
       }
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "把前 $n$ 项和写成二次函数",
+          detail: `$S_n = \\frac{d}{2}n^2 + \\left(a_1 - \\frac{d}{2}\\right)n$，常数项必为 0，图象过原点`,
+          latex: `S_n = \\frac{${d}}{2}n^2 + \\left(${a1} - \\frac{${d}}{2}\\right)n`,
+        },
+        {
+          step: 2,
+          title: "求对称轴，离散最值向它靠拢",
+          detail:
+            res.continuousAxis !== null
+              ? `对称轴 $x_0 = \\frac{1}{2} - \\frac{a_1}{d} = ${formatMathNumber(res.continuousAxis)}$，最值项取对称轴两侧最近的整数`
+              : "公差为 0 时退化为常数列，$S_n$ 随 $n$ 线性增长，不存在唯一的极值项",
+          latex:
+            res.continuousAxis !== null
+              ? `x_0 = \\frac{1}{2} - \\frac{${a1}}{${d}} = ${formatMathNumber(res.continuousAxis)}`
+              : `d = 0 \\implies S_n = ${a1}n`,
+          rubric: "[高考采分点] 用对称轴定位最值项 (+3分)",
+        },
+        {
+          step: 3,
+          title: "读出最值并核对临界项符号",
+          detail: res.maxSnInfo
+            ? `最值项 $n = ${res.maxSnInfo.nMax}${res.maxSnInfo.isDual ? `$，与 $n = ${res.maxSnInfo.dualN}$ 并列` : ""}，对应 $S = ${formatMathNumber(res.maxSnInfo.maxSn)}$`
+            : "当前参数下没有可报告的最值项",
+          latex: res.maxSnInfo
+            ? `S_{${res.maxSnInfo.nMax}} = ${formatMathNumber(res.maxSnInfo.maxSn)}`
+            : `S_n \\text{ 无最值}`,
+        },
+      );
     } else if (subMode === "segment") {
       if (res.segmentedSums) {
         quantities.push({
@@ -198,6 +276,58 @@ export function buildSequencePanel(
         text: "高考小题秒杀技：已知 $S_n$ 和 $S_{2n}$，直接利用 $S_n, S_{2n}-S_n, S_{3n}-S_{2n}$ 成等差数列可一步口算出 $S_{3n}$，无需反解 $a1$ 和 $d$。",
         importance: "gaokao",
       });
+      if (res.segmentedSums) {
+        const segList = res.segmentedSums.segments;
+        const segA = segList[0];
+        const segB = segList[1];
+        reasoningSteps.push(
+          {
+            step: 1,
+            title: `按每 ${kSegment} 项切一段，先算第一段和`,
+            detail: `第一段从 $n = ${segA.startN}$ 到 $n = ${segA.endN}$，累加得 ${formatMathNumber(segA.sumValue)}`,
+            latex: `A_1 = S_{${segA.endN}} = ${formatMathNumber(segA.sumValue)}`,
+          },
+          {
+            step: 2,
+            title: "第二段用两个前缀和相减，避免重新累加",
+            detail: segB
+              ? `$A_2 = S_{${segB.endN}} - S_{${segB.startN - 1}} = ${formatMathNumber(segB.sumValue)}$`
+              : `当前 $N = ${N}$ 不足 $2k = ${2 * kSegment}$ 项，第二段尚未出现，增大项数后才能观察片段性质`,
+            latex: segB
+              ? `A_2 = S_{${segB.endN}} - S_{${segB.startN - 1}} = ${formatMathNumber(segB.sumValue)}`
+              : `N = ${N} < 2k = ${2 * kSegment}`,
+            rubric: "[高考采分点] 用 $S_{2k} - S_k$ 表示第二段和 (+3分)",
+          },
+          {
+            step: 3,
+            title: "相邻片段和作差，公差只含 $k^2 d$",
+            detail: `片段和之间构成等差数列，公差 $D = k^2 d = ${kSegment}^2 \\times ${d} = ${formatMathNumber(res.segmentedSums.diff)}$，与具体项数 $n$ 无关`,
+            latex: `D = ${kSegment}^2 \\cdot ${d} = ${formatMathNumber(res.segmentedSums.diff)}`,
+          },
+        );
+      } else {
+        reasoningSteps.push(
+          {
+            step: 1,
+            title: "先确认片段长度与实际项数是否匹配",
+            detail: `片段长度 $k = ${kSegment}$，当前只有 $N = ${N}$ 项，不足两段，无法比较相邻片段和`,
+            latex: `N = ${N} < 2k = ${2 * kSegment}`,
+          },
+          {
+            step: 2,
+            title: "片段和成等差的前提是至少出现两段",
+            detail:
+              "至少要凑出 $A_1 = S_k$ 与 $A_2 = S_{2k} - S_k$ 两个量，才谈得上公差 $D = k^2 d$",
+            latex: `A_1, A_2, A_3 \\text{ 才能构成等差数列}`,
+          },
+          {
+            step: 3,
+            title: "调大项数后重看这一步",
+            detail: `在左屏把 $N$ 增大到不小于 ${2 * kSegment}，或把 $k$ 减小，即可观察到片段和等差`,
+            latex: `N \\ge ${2 * kSegment}`,
+          },
+        );
+      }
     } else if (subMode === "absSum") {
       quantities.push({
         label: `绝对值总和 $T_{${N}} = \\sum |a_k|$`,
@@ -223,6 +353,125 @@ export function buildSequencePanel(
         text: "新高考大题压轴热点：绝对值求和必须先令 $a_n ≥ 0$ 求出变号分界点 $m$。当 $n > m$ 时，$T_n = S_m - (S_n - S_m) = 2S_m - S_n$，转化后直接代入二次求和公式。",
         importance: "hard",
       });
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "先令 $a_n = 0$，求出变号分界项",
+          detail:
+            res.lastPositiveN !== null && d < 0 && a1 > 0
+              ? `$a_n = ${a1} + (n-1)\\cdot(${d}) = 0 \\implies n = ${formatMathNumber((a1 - d) / -d)}$，故 $a_m \\ge 0$ 的最后一项为 $m = ${res.lastPositiveN}$`
+              : "当前首项与公差同号，数列全程不变号，去掉绝对值等同于原数列直接求和",
+          latex:
+            res.lastPositiveN !== null && d < 0 && a1 > 0
+              ? `a_m \\ge 0 > a_{m+1} \\implies m = ${res.lastPositiveN}`
+              : `${a1} \\text{ 与 } ${d} \\text{ 同号} \\implies a_n \\text{ 不变号}`,
+          rubric: "[高考采分点] 由 $a_n = 0$ 解出变号分界 (+3分)",
+        },
+        {
+          step: 2,
+          title: "按分界把绝对值拆成同号两段",
+          detail:
+            "分界之前各项非负，绝对值直接去掉；分界之后各项为负，取相反数，于是一段原和、一段差的组合",
+          latex: `T_n = \\begin{cases} S_n, & n \\le m \\\\ 2S_m - S_n, & n > m \\end{cases}`,
+          rubric: "[高考采分点] 写出分段表达式 $T_n = 2S_m - S_n$ (+3分)",
+        },
+        {
+          step: 3,
+          title: "代入具体项数算出绝对值总和",
+          detail: `取 $n = ${N}$，得 $T_{${N}} = ${formatMathNumber(TN)}$；再用 $S_{${N}} = ${formatMathNumber(SN)}$ 交叉核对数量级是否合理`,
+          latex: `T_{${N}} = ${formatMathNumber(TN)},\\quad S_{${N}} = ${formatMathNumber(SN)}`,
+        },
+      );
+    } else if (subMode === "snToAn") {
+      /**
+       * 已知 S_n 求通项（选择性必修二 4.1）。
+       *
+       * 三段式：① 给出题设的 S_n（含常数项 C）；② 用 a_n = S_n − S_{n−1} 作差；
+       * ③ 用 a_1 = S_1 单独验证并给出可否合并的结论。
+       * ③ 是本模式的全部价值所在 —— 常数项 C ≠ 0 时，不验证就直接合并是高考最常见的扣分点。
+       */
+      const C = params.snConst ?? 0;
+      const snRes = calcSnToAn(a1, d, N, C);
+      const A = d / 2;
+      const B = a1 - d / 2;
+      const anFormula =
+        d === 0
+          ? `${formatMathNumber(a1)}`
+          : `${formatMathNumber(d)}n ${B - A >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(B - A))}`;
+
+      quantities.push(
+        {
+          label: "题给前 $n$ 项和 $S_n$",
+          value: `S_n = ${formatMathNumber(A)}n^2 ${B >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(B))}n${C === 0 ? "" : ` ${C > 0 ? "+" : "-"} ${formatMathNumber(Math.abs(C))}`}`,
+          color: MATH_COLORS.sequenceSum,
+        },
+        {
+          label: "作差所得 $a_n$（$n \\ge 2$）",
+          value: `a_n = ${anFormula}`,
+          color: MATH_COLORS.sequence,
+        },
+        {
+          label: "由 $S_1$ 求出的首项 $a_1$",
+          value: `a_1 = S_1 = ${formatMathNumber(snRes.a1FromSn)}`,
+          color: MATH_COLORS.sequenceHighlight,
+        },
+        {
+          label: "反推式在 n = 1 的取值",
+          value: `${formatMathNumber(snRes.a1FromFormula)}`,
+          color: MATH_COLORS.paramTertiary,
+        },
+      );
+
+      theorems.push({
+        name: "由 $S_n$ 求 $a_n$ 的分段定理",
+        latex: `a_n = \\begin{cases} S_1, & n = 1 \\ S_n - S_{n-1}, & n \\ge 2 \\end{cases}`,
+        condition:
+          "两段结果若能统一成一个解析式，才可合并；否则必须写成分段形式",
+      });
+
+      gaokaoPoints.push({
+        text: snRes.isFirstTermConsistent
+          ? "本题 $S_n$ 的常数项为 $0$，作差所得式子恰好在 $n = 1$ 处也成立，因此可以合并成一个通项公式——但要写出「$n = 1$ 时 $a_1 = S_1$ 也满足该式」这句话，验算步骤本身是采分点。"
+          : `本题 S_n 的常数项为 ${formatMathNumber(C)} ≠ 0：作差所得的 a_n = ${anFormula} 只在 n ≥ 2 成立，而 a_1 = S_1 = ${formatMathNumber(snRes.a1FromSn)} 与它在 n = 1 处的取值 ${formatMathNumber(snRes.a1FromFormula)} 不相等。直接合并写成一个式子会丢掉首项，必须写成分段形式。`,
+        importance: "hard",
+      });
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "审题定法 · 写出题给 $S_n$ 的解析式",
+          detail: `题目给出 $S_n = ${formatMathNumber(A)}n^2 ${B >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(B))}n${C === 0 ? "" : ` ${C > 0 ? "+" : "-"} ${formatMathNumber(Math.abs(C))}`}$。由 $a_n = S_n - S_{n-1}$ 可知，只要对 $n \\ge 2$ 作差即可消去二次项以下的常数干扰。`,
+          latex: `S_n = ${formatMathNumber(A)}n^2 ${B >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(B))}n${C === 0 ? "" : ` ${C > 0 ? "+" : "-"} ${formatMathNumber(Math.abs(C))}`}`,
+          rubric: "采分点：写出题给 $S_n$ 并指明作差法的适用条件（2分）",
+        },
+        {
+          step: 2,
+          title: "代入求解 · 作差求 n ≥ 2 的通项",
+          detail: `$a_n = S_n - S_{n-1} = ${formatMathNumber(d)}n ${a1 - d >= 0 ? "+" : "-"} ${formatMathNumber(Math.abs(a1 - d))}$（$n \\ge 2$）。作差时二次项与常数项同时抵消，结果为一次式，说明该数列在 $n \\ge 2$ 时构成等差数列，公差为 $${formatMathNumber(d)}$。`,
+          latex: `a_n = S_n - S_{n-1} = ${anFormula} \\quad (n \\ge 2)`,
+          rubric: "采分点：由 $S_n - S_{n-1}$ 求出 $n \\ge 2$ 时的通项（3分）",
+        },
+        {
+          step: 3,
+          title: "结果检验 · 用 a₁ = S₁ 验证首项",
+          detail: snRes.isFirstTermConsistent
+            ? `$a_1 = S_1 = ${formatMathNumber(snRes.a1FromSn)}$，与作差式在 $n = 1$ 处的取值 $${formatMathNumber(snRes.a1FromFormula)}$ 相等，故两段可合并为 $a_n = ${anFormula}$。${
+                C === 0 ? "常数项为 0 正是可合并的充要原因。" : ""
+              }`
+            : `$a_1 = S_1 = ${formatMathNumber(snRes.a1FromSn)}$，而作差式在 $n = 1$ 处给出 $${formatMathNumber(snRes.a1FromFormula)}$，两者相差 $${formatMathNumber(snRes.a1FromSn - snRes.a1FromFormula)}$，说明首项不服从该式（常数项 $C = ${formatMathNumber(C)} \\ne 0$ 所致）。因此通项必须分段书写。`,
+          latex: snRes.isFirstTermConsistent
+            ? `a_1 = S_1 = ${formatMathNumber(snRes.a1FromSn)} = ${anFormula.replace(/n/, "1")}`
+            : `a_n = \\begin{cases} ${formatMathNumber(snRes.a1FromSn)}, & n = 1 \\ ${anFormula}, & n \\ge 2 \\end{cases}`,
+          rubric: "采分点：用 a₁ = S₁ 检验首项并给出合并或分段的结论（3分）",
+        },
+      );
+
+      if (!snRes.isFirstTermConsistent) {
+        warnings.push({
+          text: `常数项不为零警告：$S_n$ 的常数项 $C = ${formatMathNumber(C)}$，此时 $a_1 = S_1 = ${formatMathNumber(snRes.a1FromSn)}$ 与作差式的 n = 1 取值不相等，通项必须分段书写，切勿直接合并。`,
+          level: "warning",
+        });
+      }
     }
 
     if (Math.abs(d) < 1e-9) {
@@ -291,6 +540,34 @@ export function buildSequencePanel(
         text: "公比分类讨论：新高考大题常考 q 的 6 态分类（特别注意 q=1 常数、0<q<1 衰减与 q<0 震荡）。两边取对数化等差数列是第一问通项求解的核心化归思想。",
         importance: "basic",
       });
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "设出首项与公比，先确认公比不为零",
+          detail: `首项 $a_1 = ${a1}$，公比 $q = ${q}$；等比数列要求每一项都不为零，且 $q \\ne 0$`,
+          latex: `a_1 = ${a1},\\quad q = ${q} \\;(q \\ne 0)`,
+        },
+        {
+          step: 2,
+          title: "代入通项公式，看清它是指数型",
+          detail: `$a_n = a_1 q^{n-1}$ 关于 $n$ 是指数型；取 $n = ${N}$ 得 $a_{${N}} = ${aN.toFixed(4)}$，公比形态为「${typeDesc[res.qType] ?? "一般形态"}」`,
+          latex: `a_n = ${a1}\\cdot ${q}^{\\,n-1} \\implies a_{${N}} = ${aN.toFixed(4)}`,
+          rubric: "[高考采分点] 写出通项并判断增减形态 (+2分)",
+        },
+        {
+          step: 3,
+          title: "分 $q = 1$ 与 $q \\ne 1$ 两类求和",
+          detail:
+            Math.abs(q - 1) < 1e-9
+              ? `$q = 1$ 时为常数列，$S_n = n a_1$，取 $n = ${N}$ 得 $S_{${N}} = ${SN.toFixed(4)}$`
+              : `代入 $S_n = \\frac{a_1(1-q^n)}{1-q}$，取 $n = ${N}$ 得 $S_{${N}} = ${SN.toFixed(4)}$`,
+          latex:
+            Math.abs(q - 1) < 1e-9
+              ? `S_{${N}} = ${N} \\cdot ${a1} = ${SN.toFixed(4)}`
+              : `S_{${N}} = \\frac{${a1}\\left(1 - ${q}^{${N}}\\right)}{1 - ${q}} = ${SN.toFixed(4)}`,
+          rubric: "[高考采分点] 公比是否为 1 必须分类讨论 (+3分)",
+        },
+      );
     } else if (subMode === "staggerSum") {
       quantities.push({
         label: `错位项 $q \\cdot S_{${N}}$`,
@@ -320,8 +597,65 @@ export function buildSequencePanel(
         text: "大题标准答题规范：错位相减法推导是解答题‘差比数列’求和的母体。必须完整呈现：① 写出 Sn；② 错位写出 qSn；③ 两式相减中间项对消；④ 检验 q=1 并化简。",
         importance: "gaokao",
       });
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "先写出和式，再整体乘公比 $q$",
+          detail: `$S_{${N}} = ${SN.toFixed(4)}$，两边同乘 $q = ${q}$ 得 $qS_{${N}} = ${(q * SN).toFixed(4)}$`,
+          latex: `S_{${N}} = ${SN.toFixed(4)},\\quad qS_{${N}} = ${(q * SN).toFixed(4)}`,
+        },
+        {
+          step: 2,
+          title: "两式错开一格相减，中间项成对消去",
+          detail: `上下两式相减，中间的等比项全部对消，只剩首尾两项，得 $(1-q)S_{${N}} = ${(SN - q * SN).toFixed(4)}$`,
+          latex: `S_n - qS_n = a_1 - a_1 q^n \\implies (1-q)S_n = a_1(1-q^n)`,
+          rubric: "[高考采分点] 写清错位相减的对消过程 (+3分)",
+        },
+        {
+          step: 3,
+          title: "除回去时必须声明 $q \\ne 1$",
+          detail:
+            Math.abs(q - 1) < 1e-9
+              ? `本题 $q = 1$，两式相减得 $0 = 0$，说明错位法失效，回到常数列求和 $S_{${N}} = ${SN.toFixed(4)}$`
+              : `本题 $q = ${q} \\ne 1$，可除以 $1-q$，得 $S_{${N}} = ${formatMathNumber(SN)}$`,
+          latex:
+            Math.abs(q - 1) < 1e-9
+              ? `q = 1 \\implies S_{${N}} = ${N}\\cdot ${a1} = ${SN.toFixed(4)}`
+              : `S_{${N}} = \\frac{${(SN - q * SN).toFixed(4)}}{1-${q}} = ${SN.toFixed(4)}`,
+          rubric: "[高考采分点] 声明 $q \\neq 1$ 后再除，漏写扣分 (+2分)",
+        },
+      );
     } else if (subMode === "segment") {
       if (res.segmentedSums) {
+        const geoSegList = res.segmentedSums.segments;
+        const geoA = geoSegList[0];
+        const geoB = geoSegList[1];
+        reasoningSteps.push(
+          {
+            step: 1,
+            title: `每 ${res.segmentedSums.k} 项切一段，先算第一段和`,
+            detail: `第一段从 $n = ${geoA.startN}$ 到 $n = ${geoA.endN}$，和为 ${geoA.sumValue.toFixed(4)}`,
+            latex: `A_1 = S_{${geoA.endN}} = ${geoA.sumValue.toFixed(4)}`,
+          },
+          {
+            step: 2,
+            title: `相邻片段和之比恒为 $q^k = ${res.segmentedSums.ratio.toFixed(4)}$`,
+            detail: geoB
+              ? `$A_2 = S_{${geoB.endN}} - S_{${geoB.startN - 1}} = ${geoB.sumValue.toFixed(4)}$，与 $A_1$ 的比为 ${(geoB.sumValue / (geoA.sumValue || 1)).toFixed(4)}，正是 $q^k$`
+              : `当前 $N = ${N}$ 不足两段，先增大项数才能比较片段和之比`,
+            latex: geoB
+              ? `\\frac{A_2}{A_1} = ${(geoB.sumValue / (geoA.sumValue || 1)).toFixed(4)} = q^{${res.segmentedSums.k}}`
+              : `N = ${N} \\text{ 不足 } 2k`,
+            rubric: "[高考采分点] 指出片段和仍成等比、公比为 $q^k$ (+3分)",
+          },
+          {
+            step: 3,
+            title: "把求 $S_{3n}$ 化归为三个片段和相加",
+            detail: "三段和成等比，直接套等比求和公式即可，不必反解首项与公比",
+            latex: `S_{3k} = A_1 \\cdot \\frac{1 - \\left(q^k\\right)^3}{1 - q^k}`,
+          },
+        );
         quantities.push({
           label: `片段公比 $q^k$ ($k=${res.segmentedSums.k}$)`,
           value: `q^${res.segmentedSums.k} = ${res.segmentedSums.ratio.toFixed(4)}`,
@@ -340,6 +674,28 @@ export function buildSequencePanel(
           text: `当前项数 $N=${N}$ 不足两组等长片段（$k=${kSegment}$，需 $N \\ge 2k$）。请在左侧调整项数或减小 $k$ 以观察等比片段性质。`,
           level: "info",
         });
+
+        reasoningSteps.push(
+          {
+            step: 1,
+            title: "先确认片段长度与实际项数是否匹配",
+            detail: `片段长度 $k = ${kSegment}$，当前 $N = ${N}$ 项不足两段，无法比较相邻片段和`,
+            latex: `N = ${N} < 2k = ${2 * kSegment}`,
+          },
+          {
+            step: 2,
+            title: "片段和成等比的前提是至少出现两段",
+            detail:
+              "要凑出 $A_1 = S_k$ 与 $A_2 = S_{2k} - S_k$ 两个量，才能验证其比恒为 $q^k$",
+            latex: `A_1, A_2, A_3 \\text{ 才能构成等比数列}`,
+          },
+          {
+            step: 3,
+            title: "调大项数后重看这一步",
+            detail: `在左屏把 $N$ 增大到不小于 ${2 * kSegment}，即可观察到片段和的等比性质`,
+            latex: `N \\ge ${2 * kSegment}`,
+          },
+        );
       }
 
       theorems.push({
@@ -393,6 +749,31 @@ export function buildSequencePanel(
         text: "新高考创新压轴点：类比等差求和以 0 为变号分界，等比求积极值以 1 为乘除分界点；取对数 ln(Pn) 后完全等价于等差数列 Sn 的二次函数求最值。",
         importance: "hard",
       });
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "先把乘积拆成指数形式",
+          detail: `$P_n = a_1^n \\cdot q^{\\frac{n(n-1)}{2}}$，取对数后是关于 $n$ 的二次型，最值由对称轴决定`,
+          latex: `P_n = \\prod_{k=1}^{n} a_k = a_1^{\\,n} q^{\\frac{n(n-1)}{2}}`,
+        },
+        {
+          step: 2,
+          title: "用相邻两项的比判断增减转折",
+          detail: `$\\frac{a_{n+1}}{a_n} = q$，$q$ 与 $1$ 的大小关系决定 $P_n$ 何时由增转减；取 $n = ${N}$ 得 $P_{${N}} = ${PN.toFixed(4)}$`,
+          latex: `P_{${N}} = ${a1}^{${N}} \\cdot ${q}^{\\frac{${N}\\times ${N - 1}}{2}} = ${PN.toFixed(4)}`,
+          rubric: "[高考采分点] 用相邻项比值定位乘积的增减转折 (+3分)",
+        },
+        {
+          step: 3,
+          title: "读出最值项并核对是否并列",
+          detail: res.maxPnInfo
+            ? `最值项 $n = ${res.maxPnInfo.nMax}${res.maxPnInfo.isDual ? `$，与 $n = ${res.maxPnInfo.dualN}$ 并列` : ""}，对应 $P = ${res.maxPnInfo.maxPn.toFixed(4)}$`
+            : "当前公比下乘积单调，没有内部极值项",
+          latex: res.maxPnInfo
+            ? `P_{${res.maxPnInfo.nMax}} = ${res.maxPnInfo.maxPn.toFixed(4)}`
+            : `P_n \\text{ 单调，无极值项}`,
+        },
+      );
     } else if (subMode === "tessellation") {
       if (res.limitSum !== null) {
         quantities.push({
@@ -413,6 +794,43 @@ export function buildSequencePanel(
         text: "拓展 · 超出课标：教材正文只要求有限项求和 $S_n$，无穷递缩求和属选学延伸。正方形自相似细分给出了代数无穷累加向几何有限面积的直观印证，可作直观想象素养的载体，但不作为高考必考结论。",
         importance: "extend",
       });
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "先确认收敛条件：公比必须落在 $(-1, 1)$ 内",
+          detail:
+            Math.abs(q) < 1
+              ? `本题 $|q| = ${Math.abs(q)}$ 小于 1，无穷递缩和收敛，前 ${N} 项和 $S_{${N}} = ${SN.toFixed(4)}$ 已接近极限`
+              : `本题 $|q| = ${Math.abs(q)}$ 不小于 1，无穷递缩和发散，不存在有限的和`,
+          latex: `|q| = ${Math.abs(q)} ${Math.abs(q) < 1 ? "<" : "\\ge"} 1`,
+          rubric: "[高考采分点] 先判断 $|q|<1$ 再谈极限 (+2分)",
+        },
+        {
+          step: 2,
+          title: "套用无穷递缩等比求和公式",
+          detail:
+            res.limitSum !== null
+              ? `$S = \\frac{a_1}{1-q} = \\frac{${a1}}{1-${q}} = ${res.limitSum.toFixed(4)}$`
+              : "公比不满足收敛条件，无穷递缩和没有确定值",
+          latex:
+            res.limitSum !== null
+              ? `S_\\infty = \\frac{${a1}}{1-${q}} = ${res.limitSum.toFixed(4)}`
+              : `S_\\infty \\text{ 不存在}`,
+          rubric: "[高考采分点] 写出 $\\frac{a_1}{1-q}$ 并代入 (+3分)",
+        },
+        {
+          step: 3,
+          title: "用有限和逼近极限，验证两者一致",
+          detail:
+            res.limitSum !== null
+              ? `前 ${N} 项和 $S_{${N}} = ${SN.toFixed(4)}$，与极限的差为 ${Math.abs(SN - res.limitSum).toFixed(4)}，随 $n$ 增大趋于 0`
+              : `前 ${N} 项和 $S_{${N}} = ${SN.toFixed(4)}$ 随 $n$ 持续增大，不收敛`,
+          latex:
+            res.limitSum !== null
+              ? `S_{${N}} - S_\\infty = ${Math.abs(SN - res.limitSum).toFixed(4)} \\to 0`
+              : `S_n \\text{ 无上界}`,
+        },
+      );
     }
 
     // 警示与前提
@@ -489,6 +907,33 @@ export function buildSequencePanel(
           level: "danger",
         });
       }
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "把通项写成等差因子乘等比因子",
+          detail: `$c_n = a_n b_n$ 中 $a_n$ 成等差、$b_n$ 成等比，属于差比数列，求和只能用错位相减法`,
+          latex: `c_n = a_n b_n = \\left(${a1} + (n-1)\\cdot ${d}\\right)\\cdot ${q}^{\\,n-1}`,
+        },
+        {
+          step: 2,
+          title: "写出 $T_n$ 与 $qT_n$ 并相减",
+          detail:
+            Math.abs(q - 1) < 1e-6
+              ? `本题 $q = 1$，差比数列退化为纯等差型，直接套等差求和即可，错位相减会两边相等而失效`
+              : `两式错开一格相减，中间的等比部分合并成一个标准等比和对消`,
+          latex:
+            Math.abs(q - 1) < 1e-6
+              ? `q = 1 \\implies c_n = a_n = ${a1} + (n-1)\\cdot ${d}`
+              : `T_n - qT_n = a_1 b_1 + \\sum_{k=2}^{n} (a_k - a_{k-1})b_k - a_n b_{n+1}`,
+          rubric: "[高考采分点] 错位相减后把剩余部分整理成等比求和 (+3分)",
+        },
+        {
+          step: 3,
+          title: "代入项数算出结果",
+          detail: `取 $n = ${N}$，得 $T_{${N}} = ${TN.toFixed(4)}$`,
+          latex: `T_{${N}} = ${TN.toFixed(4)}`,
+        },
+      );
     } else if (subModel === "telescoping") {
       if (teleGap === 3) {
         // 根式有理化型
@@ -572,6 +1017,38 @@ export function buildSequencePanel(
           importance: "gaokao",
         });
       }
+      reasoningSteps.push(
+        {
+          step: 1,
+          title:
+            teleGap === 3
+              ? "先把根式分母有理化"
+              : teleGap === 2
+                ? "先把通项拆成两个相邻分式之差"
+                : "先确认通项可裂成相邻两项之差",
+          detail:
+            teleGap === 3
+              ? "把 $\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}$ 分子有理化，化成 $\\sqrt{n+1}-\\sqrt{n}$，求和时前后相消"
+              : "裂项的关键是找到 $f(n) - f(n+1)$ 的形式，让求和时中间项两两抵消，只剩首尾",
+          latex:
+            teleGap === 3
+              ? `\\frac{1}{\\sqrt{n}+\\sqrt{n+1}} = \\sqrt{n+1} - \\sqrt{n}`
+              : `c_n = f(n) - f(n+1)`,
+        },
+        {
+          step: 2,
+          title: "纵向相加，中间项成对消去",
+          detail: `把 $n = 1$ 到 $n = ${N}$ 的式子全部写出相加，中间项两两抵消，只剩首尾两项`,
+          latex: `T_n = \\sum_{k=1}^{n} c_k = f(1) - f(n+1)`,
+          rubric: "[高考采分点] 写清相消后只剩首尾两项 (+3分)",
+        },
+        {
+          step: 3,
+          title: "代入项数并化简",
+          detail: `取 $n = ${N}$ 得求和结果；务必把 $N$ 代回检验一次，避免边界项写错`,
+          latex: `T_n = f(1) - f(n+1) \\big|_{n = ${N}}`,
+        },
+      );
     } else if (subModel === "abs-sum") {
       const res = calcAbsSumSequence(a1, d, N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
@@ -613,6 +1090,35 @@ export function buildSequencePanel(
         text: "新高考解答题压轴高频：绝对值数列求和 $T_n = \\sum_{k=1}^n |a_k|$。核心步骤：① 令 $a_n = 0$ 解出变号点 $n_0$；② 分 $n \\le n_0$ 与 $n > n_0$ 两种情况；③ 利用 $T_n = 2S_{n_0} - S_n$ 快速化简计算，避免繁琐分段累加。",
         importance: "hard",
       });
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "先令 $a_n = 0$ 求变号点",
+          detail:
+            res.zeroPoint !== null
+              ? `$a_n = ${a1} + (n-1)\\cdot(${d}) = 0 \\implies n_0 = ${formatMathNumber(res.zeroPoint)}$，变号类型为「${res.signChangeType === "posToNeg" ? "前正后负" : res.signChangeType === "negToPos" ? "前负后正" : "同号无变号"}」`
+              : "当前公差为 0，数列恒为同一符号，去绝对值不改变求和结果",
+          latex:
+            res.zeroPoint !== null
+              ? `a_n = 0 \\implies n_0 = ${formatMathNumber(res.zeroPoint)}`
+              : `d = 0 \\implies a_n \\text{ 不变号}`,
+          rubric: "[高考采分点] 解 $a_n = 0$ 定位变号分界 (+3分)",
+        },
+        {
+          step: 2,
+          title: "按分界写出分段求和式",
+          detail:
+            "分界之前各项同号，直接去掉绝对值；分界之后取相反数，两段合成 $2S_{n_0} - S_n$",
+          latex: res.sumFormula,
+          rubric: "[高考采分点] 写出绝对值求和的分段表达式 (+3分)",
+        },
+        {
+          step: 3,
+          title: "代入项数算出总和",
+          detail: `取 $n = ${N}$，得 $T_{${N}} = ${formatMathNumber(TN)}$`,
+          latex: `T_{${N}} = ${formatMathNumber(TN)}`,
+        },
+      );
     } else if (subModel === "grouped") {
       const res = calcGroupedSequence(a1, d, q, N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
@@ -639,6 +1145,27 @@ export function buildSequencePanel(
         text: "高考基础必备：拆项分组。将复合通项拆分为等差数列与等比数列，分别套用各自的求和公式相加，注意等比部分公比 $q=1$ 的讨论。",
         importance: "basic",
       });
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "把通项拆成等差部分与等比部分",
+          detail: `$c_n = a_n + b_n$ 中前者成等差（首项 ${a1}，公差 ${d}），后者成等比（公比 ${q}），两部分各自可求和`,
+          latex: `c_n = \\left(${a1} + (n-1)\\cdot ${d}\\right) + ${q}^{\\,n}`,
+        },
+        {
+          step: 2,
+          title: "分别求和再相加",
+          detail: `等差部分用 $na_1 + \\frac{n(n-1)}{2}d$，等比部分用等比求和公式，两者相加即为 $T_n$`,
+          latex: `T_n = \\left[na_1 + \\frac{n(n-1)}{2}d\\right] + \\frac{q(1-q^n)}{1-q}`,
+          rubric: "[高考采分点] 拆分后分别求和再合并 (+3分)",
+        },
+        {
+          step: 3,
+          title: "代入项数得到结果",
+          detail: `取 $n = ${N}$，得 $T_{${N}} = ${formatMathNumber(TN)}$`,
+          latex: `T_{${N}} = ${formatMathNumber(TN)}`,
+        },
+      );
     } else if (subModel === "odd-even") {
       const res = calcOddEvenSequence(N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
@@ -666,6 +1193,31 @@ export function buildSequencePanel(
         text: "高考高频思想：奇偶并项与分类讨论。当数列呈现摆动周期性时，必须分别对项数 $n$ 为偶数 ($n=2k$) 与 $n$ 为奇数 ($n=2k-1$) 分类求解，再综合写出分段或统一表达式。",
         importance: "gaokao",
       });
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "先看相邻两项之和是否为常数",
+          detail:
+            "$c_n = (-1)^n n$ 的相邻两项 $-(2k-1) + 2k = 1$ 恒为常数，因此可以两两并项，不必逐项相加",
+          latex: `c_{2k-1} + c_{2k} = -(2k-1) + 2k = 1`,
+          rubric: "[高考采分点] 指出相邻奇偶两项并项为常数 (+3分)",
+        },
+        {
+          step: 2,
+          title: "按 $n$ 的奇偶分类写出结果",
+          detail:
+            "项数为偶数 $n = 2k$ 时恰有 $k$ 对，和为 $k$；项数为奇数 $n = 2k-1$ 时前面 $k-1$ 对相加，再补上最后一项",
+          latex: `T_n = \\begin{cases} k, & n = 2k \\\\ -k, & n = 2k-1 \\end{cases}`,
+          rubric: "[高考采分点] 分奇偶讨论并写出分段结果 (+3分)",
+        },
+        {
+          step: 3,
+          title: "代入项数核对",
+          detail: `取 $n = ${N}$（${N % 2 === 0 ? "偶数" : "奇数"}），得 $T_{${N}} = ${TN}$`,
+          latex: `T_{${N}} = ${TN}`,
+        },
+      );
     }
   } else if (activeMode === "recurrence") {
     const subModel = (config?.subModel as string) ?? "linear-pan";
@@ -848,6 +1400,28 @@ export function buildSequencePanel(
 
       mnemonic =
         "差值为式用累加，纵向相加中间消；等差等比或裂项，求和之后验首项。";
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "把递推式整理成相邻两项之差",
+          detail: `题给 $a_{n+1} - a_n = f(n)$，这是累加法的标准入口：只要差分能求和，通项就能累加出来`,
+          latex: `a_{n+1} - a_n = f(n)`,
+        },
+        {
+          step: 2,
+          title: "从 $n=1$ 到 $n-1$ 纵向相加，中间项相消",
+          detail: `写出 $n-1$ 个差分式相加，左侧相邻项两两抵消只剩 $a_n - a_1$，右侧变成 $\\sum f(k)$`,
+          latex: `a_n - a_1 = \\sum_{k=1}^{n-1} f(k) \\implies a_n = ${a1} + \\sum_{k=1}^{n-1} f(k)`,
+          rubric: "[高考采分点] 写清累加后左侧只剩 $a_n - a_1$ (+3分)",
+        },
+        {
+          step: 3,
+          title: "求和并代入项数，末项必须回验",
+          detail: `取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$；累加法只保证 $n \\ge 2$ 时成立，必须单独核对 $n = 1$ 是否也满足该式`,
+          latex: `a_{${N}} = ${formatMathNumber(aN)}`,
+          rubric: "[高考采分点] 回验 $n=1$ 是否满足通项 (+1分)",
+        },
+      );
     } else if (subModel === "multiplication") {
       const res = calcMultiplicationRecurrence(a1, multType, N);
       const aN = res.terms[N - 1]?.an ?? 0;
@@ -877,6 +1451,29 @@ export function buildSequencePanel(
 
       mnemonic =
         "商值为式用累乘，纵向相乘分子消；首尾相连余一项，化简通项验第一。";
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "把递推式整理成相邻两项之比",
+          detail: `题给 $\\frac{a_{n+1}}{a_n} = f(n)$，先用 $a_1 \\ne 0$ 说明各项均不为零，比值才合法`,
+          latex: `\\frac{a_{n+1}}{a_n} = f(n) \\quad (a_n \\ne 0)`,
+          rubric: "[高考采分点] 先声明各项非零 (+1分)",
+        },
+        {
+          step: 2,
+          title: "从 $n=1$ 到 $n-1$ 纵向相乘，分子分母交叉相消",
+          detail:
+            "相邻比值连乘，前一个的分子与后一个的分母交叉约掉，只剩首尾两项之比",
+          latex: `\\frac{a_n}{a_1} = \\prod_{k=1}^{n-1} f(k) \\implies a_n = ${a1}\\prod_{k=1}^{n-1} f(k)`,
+          rubric: "[高考采分点] 写清连乘相消只剩 $\\frac{a_n}{a_1}$ (+3分)",
+        },
+        {
+          step: 3,
+          title: "化简并代入项数，末项必须回验",
+          detail: `取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$；累乘法同样只保证 $n \\ge 2$，要回代检查 $n=1$`,
+          latex: `a_{${N}} = ${formatMathNumber(aN)}`,
+        },
+      );
     } else if (subModel === "non-homogeneous") {
       const res = calcNonHomogeneousExpRecurrence(a1, p_rec, q_rec, r_rec, N);
       const aN = res.terms[N - 1]?.an ?? 0;
@@ -926,6 +1523,32 @@ export function buildSequencePanel(
 
       mnemonic =
         "指数非齐同除幂，两边除以 r 次方；化归一阶或等差，求出辅助还原本。";
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "两边同除 $r^{n+1}$，把指数项压平",
+          detail: `递推式 $a_{n+1} = ${p_rec}a_n + ${q_rec}\\cdot ${r_rec}^n$ 两边同除 $${r_rec}^{n+1}$，令 $b_n = \\frac{a_n}{r^n}$ 即化为一阶线性递推`,
+          latex: `\\frac{a_{n+1}}{${r_rec}^{n+1}} = \\frac{${p_rec}}{${r_rec}}\\cdot \\frac{a_n}{${r_rec}^{n}} + \\frac{${q_rec}}{${r_rec}}`,
+          rubric: "[高考采分点] 指出同除 $r^{n+1}$ 的依据 (+2分)",
+        },
+        {
+          step: 2,
+          title: "对新数列用待定系数法求通项",
+          detail: res.isResonant
+            ? `本题 $p = r = ${p_rec}$，同除后一次项系数恰好为 1，$\\{b_n\\}$ 退化为等差数列，公差 $d = \\frac{q}{r} = ${(q_rec / r_rec).toFixed(4)}$`
+            : `本题 $\\frac{p}{r} = ${(p_rec / r_rec).toFixed(4)} \\ne 1$，用不动点法把 $b_n$ 平移成等比数列`,
+          latex: res.isResonant
+            ? `p = r \\implies b_{n+1} = b_n + \\frac{${q_rec}}{${r_rec}}`
+            : `b_{n+1} = \\frac{${p_rec}}{${r_rec}}b_n + \\frac{${q_rec}}{${r_rec}}`,
+          rubric: "[高考采分点] 分类讨论 $p=r$ 与 $p\\ne r$ (+3分)",
+        },
+        {
+          step: 3,
+          title: "乘回 $r^n$ 还原原数列",
+          detail: `由 $a_n = r^n b_n$ 还原，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$，构造项 $b_{${N}} = ${bN.toFixed(4)}$`,
+          latex: `a_n = ${r_rec}^{\\,n}\\cdot b_n \\implies a_{${N}} = ${formatMathNumber(aN)}`,
+        },
+      );
     } else if (subModel === "reciprocal") {
       const res = calcReciprocalRecurrence(a1, coefA, coefB, coefC, N);
       const aN = res.terms[N - 1]?.an ?? 0;
@@ -971,6 +1594,32 @@ export function buildSequencePanel(
 
       mnemonic =
         "分式递推分子单，两边取倒现乾坤；化归等差或一阶，算得倒数再翻转。";
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "先确认两边可以取倒数",
+          detail: `分式递推 $a_{n+1} = \\frac{${coefA}a_n}{${coefB}a_n + ${coefC}}$ 要求 $a_n \\ne 0$ 且分母不为零，然后两边取倒数`,
+          latex: `\\frac{1}{a_{n+1}} = \\frac{${coefC}}{${coefA}}\\cdot\\frac{1}{a_n} + \\frac{${coefB}}{${coefA}}`,
+          rubric: "[高考采分点] 声明 $a_n \\ne 0$ 后取倒数 (+2分)",
+        },
+        {
+          step: 2,
+          title: "把 $b_n = \\frac{1}{a_n}$ 化成一阶线性递推",
+          detail: res.isReciprocalLinear
+            ? `本题系数满足可线性化条件，$\\{b_n\\}$ 是首项 $\\frac{1}{${a1}}$、公比 $\\frac{${coefC}}{${coefA}} = ${(coefC / coefA).toFixed(4)}$ 的等比数列`
+            : `本题 $\\frac{C}{A} = ${(coefC / coefA).toFixed(4)} \\ne 1$，需再用待定系数法平移成等比数列`,
+          latex: res.isReciprocalLinear
+            ? `b_n = \\frac{1}{${a1}}\\cdot\\left(\\frac{${coefC}}{${coefA}}\\right)^{n-1}`
+            : `b_{n+1} = \\frac{${coefC}}{${coefA}}b_n + \\frac{${coefB}}{${coefA}}`,
+          rubric: "[高考采分点] 求出辅助数列 $b_n$ 的通项 (+3分)",
+        },
+        {
+          step: 3,
+          title: "取倒数还原，并回验首项",
+          detail: `$a_n = \\frac{1}{b_n}$，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$（$b_{${N}} = ${bN.toFixed(4)}$）；取倒数会引入 $a_n \\ne 0$ 的前提，必须回验`,
+          latex: `a_n = \\frac{1}{b_n} \\implies a_{${N}} = ${formatMathNumber(aN)}`,
+        },
+      );
     } else if (subModel === "second-order") {
       const res = calcSecondOrderRecurrence(a1, a2, p_rec, q_rec, N);
       const aN = res.terms[N - 1]?.an ?? 0;
@@ -1036,6 +1685,177 @@ export function buildSequencePanel(
 
       mnemonic =
         "二阶递推特征根，方程求出 r₁ r₂；构造等比公比定，降阶求通势如破。";
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "写出对应的二次方程并求根",
+          detail:
+            res.delta >= 0
+              ? `对应二次方程的两实根为 $r_1 = ${formatMathNumber(res.r1)}$，$r_2 = ${formatMathNumber(res.r2)}$（$\\Delta = ${formatMathNumber(res.delta)}$）`
+              : `判别式 $\\Delta = ${formatMathNumber(res.delta)} < 0$，二次方程无实根，降阶等比构造在实数范围内不适用`,
+          latex: `x^2 - ${p_rec}x - ${q_rec} = 0 \\implies x = \\frac{${p_rec} \\pm \\sqrt{${formatMathNumber(res.delta)}}}{2}`,
+          rubric: "[高考采分点] 写出对应二次方程并求根 (+2分)",
+        },
+        {
+          step: 2,
+          title: "构造降阶等比数列",
+          detail:
+            res.delta >= 0
+              ? `令 $b_n = a_{n+1} - r_1 a_n$，则 $\\{b_n\\}$ 是公比为 $r_2 = ${formatMathNumber(res.r2)}$ 的等比数列，首项由 $a_1, a_2$ 定出`
+              : "无实根时无法完成降阶，属超出本页考查范围的情形",
+          latex: `b_n = a_{n+1} - ${formatMathNumber(res.r1)}a_n \\implies b_{n+1} = ${formatMathNumber(res.r2)}b_n`,
+          rubric: "[高考采分点] 说明降阶后是等比数列 (+3分)",
+        },
+        {
+          step: 3,
+          title: "再累加一次得到原通项",
+          detail: `由 $a_{n+1} = r_1 a_n + b_n$ 用累加法求 $a_n$，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$（$b_{${N}} = ${formatMathNumber(bN)}$）`,
+          latex: `a_n = r_1^{\\,n-1}a_1 + \\sum_{k=1}^{n-1} r_1^{\\,n-1-k}b_k`,
+        },
+      );
+    } else if (subModel === "induction") {
+      const claimId = (config?.inductionClaim as InductionClaimId) ?? "sum_odd";
+      const res = calcInductionVerification(claimId, { a1, d: stepParam, N });
+      const passCount = res.rows.filter((r) => r.holds).length;
+      const stepCount = res.stepChecks.filter((s) => s.ok).length;
+
+      quantities.push(
+        {
+          label: "归纳命题 $P(n)$",
+          value: res.claimLatex.replace(/^P\(n\):\\quad /, ""),
+          color: MATH_COLORS.sequence,
+          isInvariant: true,
+        },
+        {
+          label: "奠基 $P(1)$ 是否成立",
+          value: res.baseCaseHolds
+            ? "成立（第一块骨牌已倒）"
+            : "不成立（前提作废）",
+          color: res.baseCaseHolds
+            ? MATH_COLORS.paramPrimary
+            : MATH_COLORS.degeneracy,
+          highlight: res.baseCaseHolds ? "positive" : "negative",
+        },
+        {
+          label: `逐项核对 $n=1$ 至 $n=${N}$`,
+          value: `${passCount} / ${N} 项成立`,
+          color:
+            passCount === N
+              ? MATH_COLORS.paramSecondary
+              : MATH_COLORS.degeneracy,
+        },
+        {
+          label: `递推增量恒等式（$k=1$ 至 $k=${N - 1}$）`,
+          value:
+            stepCount === res.stepChecks.length
+              ? `${stepCount} / ${stepCount} 组增量严格相等`
+              : `${stepCount} / ${res.stepChecks.length} 组相等`,
+          color:
+            stepCount === res.stepChecks.length
+              ? MATH_COLORS.paramPrimary
+              : MATH_COLORS.degeneracy,
+          highlight:
+            stepCount === res.stepChecks.length ? "extreme" : "negative",
+        },
+      );
+
+      if (res.primeCounterexample) {
+        const ce = res.primeCounterexample;
+        quantities.push({
+          label: "只奠基不递推的反例 $n^2+n+41$",
+          value: `$n=1$ 至 $n=${ce.n - 1}$ 全为质数，$n=${ce.n}$ 时等于 $${ce.value} = ${ce.factor}^2$，不再是质数`,
+          color: MATH_COLORS.limitPoint,
+        });
+      }
+
+      theorems.push(
+        {
+          name: "数学归纳法（两步框架）",
+          latex:
+            "\\begin{cases} \\text{① 奠基：} P(1) \\text{ 成立} \\\\ \\text{② 递推：} P(k) \\text{ 成立} \\implies P(k+1) \\text{ 成立} \\end{cases} \\implies P(n) \\text{ 对一切正整数 } n \\text{ 成立}",
+          level: "important",
+          condition:
+            "两步缺一不可：只奠基等于「验算了有限项」，只递推等于「骨牌全连着却没人推第一块」",
+          isExtension: true,
+          extensionBadge: "拓展 · 选学",
+        },
+        claimId === "linear_term"
+          ? {
+              name: "本题的归纳步骤（由递推推公式）",
+              latex: `a_{k+1} = a_k + ${stepParam} \\;\\overset{\\text{归纳假设}}{=}\\; \\big(${a1} + (k-1)\\cdot ${stepParam}\\big) + ${stepParam} = ${a1} + k \\cdot ${stepParam} \\quad\\text{（即 } n = k+1 \\text{ 时的公式）}`,
+              level: "core",
+            }
+          : {
+              name: "本题的归纳步骤（由 $k$ 的结论推 $k+1$）",
+              latex:
+                claimId === "sum_odd"
+                  ? "S_{k+1} = S_k + (2k+1) \\;\\overset{\\text{归纳假设}}{=}\\; k^2 + 2k + 1 = (k+1)^2"
+                  : "S_{k+1} = S_k + 2^{k} \\;\\overset{\\text{归纳假设}}{=}\\; (2^k - 1) + 2^k = 2^{k+1} - 1",
+              level: "core",
+              note: "归纳假设必须在这一步被用上：拿 $k$ 的结论算出 $k+1$ 的结论才叫递推；把 $n=k+1$ 直接代进去算，是循环论证",
+            },
+      );
+
+      gaokaoPoints.push(
+        {
+          text: "数学归纳法采分三步：① 奠基，验证 $n=1$（或题给的最小正整数）时命题成立；② 假设 $n=k$（$k \\ge 1$）时成立，并把这个结论用进 $n=k+1$ 的推导；③ 结论，写出「由①②知对一切正整数 $n$ 成立」。第②步只写不用，只给一半分。",
+          importance: "gaokao",
+        },
+        {
+          text: "反例警示：$n^2+n+41$ 在 $n=1$ 到 $n=39$ 时全是质数，$n=40$ 时等于 $41^2$。验算有限项永远代替不了证明，这正是必须补上第②步的原因。",
+          importance: "core",
+        },
+      );
+
+      if (!res.allRowsHold || !res.stepIdentityHolds) {
+        warnings.push({
+          text: "逐项核对或递推增量出现不等：当前参数下该命题不成立，归纳法不能使用。",
+          level: "danger",
+        });
+      }
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "奠基：把 $P(1)$ 的真假算清楚",
+          detail:
+            claimId === "linear_term"
+              ? `$n=1$ 时公式给出 $a_1 = ${a1} + 0 = ${a1}$，与题给首项一致，奠基成立`
+              : `$n=1$ 时左边算出 ${formatMathNumber(res.rows[0]?.leftValue ?? 0)}，右边算出 ${formatMathNumber(res.rows[0]?.rightValue ?? 0)}，两边相等，奠基成立`,
+          latex:
+            claimId === "linear_term"
+              ? `a_1 = ${a1} + (1-1)\\cdot ${stepParam} = ${a1} \\;\\checkmark`
+              : `n = 1:\\quad \\text{左} = ${formatMathNumber(res.rows[0]?.leftValue ?? 0)},\\; \\text{右} = ${formatMathNumber(res.rows[0]?.rightValue ?? 0)} \\;\\checkmark`,
+          rubric: "[高考采分点] 显式写出 $n=1$ 的验算 (+2分)",
+        },
+        {
+          step: 2,
+          title: "归纳假设：假定 $n=k$ 时命题成立",
+          detail:
+            "设 $n=k$（$k$ 为不小于 $1$ 的正整数）时命题成立，把这个等式当作已知条件，下一步要真的把它用出来",
+          latex:
+            claimId === "sum_odd"
+              ? "S_k = k^2 \\quad (k \\ge 1)"
+              : claimId === "geo_sum"
+                ? "S_k = 2^k - 1 \\quad (k \\ge 1)"
+                : `a_k = ${a1} + (k-1)\\cdot ${stepParam} \\quad (k \\ge 1)`,
+          rubric: "[高考采分点] 明确写出归纳假设 (+3分)",
+        },
+        {
+          step: 3,
+          title: "递推：用归纳假设推出 $n=k+1$",
+          detail: `增量比对给出左边增量 ${formatMathNumber(res.stepChecks[0]?.lhsIncrement ?? 0)} = 右边增量 ${formatMathNumber(res.stepChecks[0]?.rhsIncrement ?? 0)}，对每个 $k$ 都成立，递推一步通过`,
+          latex:
+            claimId === "sum_odd"
+              ? "S_{k+1} = S_k + (2k+1) = k^2 + 2k + 1 = (k+1)^2 \\implies P(k+1) \\text{ 成立}"
+              : claimId === "geo_sum"
+                ? "S_{k+1} = S_k + 2^k = (2^k - 1) + 2^k = 2^{k+1} - 1 \\implies P(k+1) \\text{ 成立}"
+                : `a_{k+1} = a_k + ${stepParam} = \\big(${a1} + (k-1)\\cdot ${stepParam}\\big) + ${stepParam} = ${a1} + k\\cdot ${stepParam} \\implies P(k+1) \\text{ 成立}`,
+          rubric: "[高考采分点] 用上归纳假设完成 $k \\to k+1$ (+4分)",
+        },
+      );
+
+      mnemonic = "先推第一块，再证块块相连；只验前几项，不算证明完。";
     }
   }
 

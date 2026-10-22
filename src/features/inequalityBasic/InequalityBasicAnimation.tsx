@@ -14,20 +14,24 @@ import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { InequalityBasicScene } from "./components/InequalityBasicScene";
+import { InequalityPropertiesScene } from "./components/InequalityPropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/inequalityBasic";
 
 export function InequalityBasicAnimation() {
   // 研究模式：'semicircle' (半圆证明) | 'square' (赵爽弦图) | 'nike' (最值应用)
-  const [studyMode, setStudyMode] = useState<"semicircle" | "square" | "nike">(
-    "semicircle",
-  );
+  const [studyMode, setStudyMode] = useState<
+    "semicircle" | "square" | "nike" | "properties"
+  >("semicircle");
 
   // 1. 本地状态 a, b, k
   const [params, setParams] = useState(() => ({
     a: defaultParams.a,
     b: defaultParams.b,
     k: defaultParams.k,
+    pA: defaultParams.pA,
+    pB: defaultParams.pB,
+    pC: defaultParams.pC,
   }));
 
   // 2. 视口尺寸测量与防抖
@@ -39,6 +43,8 @@ export function InequalityBasicAnimation() {
   const yRange = useMemo<[number, number]>(() => {
     if (studyMode === "semicircle") return [-2.2, 5.8];
     if (studyMode === "square") return [-4.8, 4.8];
+    // 性质模式是三条基线（上/中/下），纵向只需要容纳三行标注
+    if (studyMode === "properties") return [-4.2, 4.2];
     return [-1.5, 6.5];
   }, [studyMode]);
 
@@ -68,6 +74,9 @@ export function InequalityBasicAnimation() {
       a: defaultParams.a,
       b: defaultParams.b,
       k: defaultParams.k,
+      pA: defaultParams.pA,
+      pB: defaultParams.pB,
+      pC: defaultParams.pC,
     });
   };
 
@@ -77,6 +86,7 @@ export function InequalityBasicAnimation() {
       semicircle: ["a", "b"],
       square: ["a", "b"],
       nike: ["k", "a"],
+      properties: ["pA", "pB", "pC"],
     };
     const keys = keysByMode[studyMode] ?? ["a", "b"];
     return keys
@@ -145,6 +155,22 @@ export function InequalityBasicAnimation() {
         },
       ];
     }
+    if (studyMode === "properties") {
+      return [
+        { label: "原数 a", color: MATH_COLORS.paramPrimary, style: "point" },
+        { label: "原数 b", color: MATH_COLORS.paramSecondary, style: "point" },
+        {
+          label: "同加 c 后（次序不变）",
+          color: MATH_COLORS.paramPrimary,
+          style: "solid",
+        },
+        {
+          label: "同乘负数后（次序翻转）",
+          color: MATH_COLORS.degeneracy,
+          style: "dash",
+        },
+      ];
+    }
     return [
       {
         label: "对勾曲线 y = x + k/x",
@@ -171,6 +197,12 @@ export function InequalityBasicAnimation() {
 
   // 三位一体公式渲染 (使用参数语义色着色)
   const topFormulaLatex = useMemo(() => {
+    if (studyMode === "properties") {
+      const pa = params.pA ?? 3;
+      const pb = params.pB ?? -1;
+      const pc = params.pC ?? -2;
+      return `a - b > 0 \\iff a > b, \\quad a > b \\implies a + \\color{${MATH_COLORS.paramTertiary}}{c} > b + \\color{${MATH_COLORS.paramTertiary}}{c} \\quad (a=${pa},\\ b=${pb},\\ c=${pc})`;
+    }
     if (studyMode === "semicircle" || studyMode === "square") {
       const colorA = MATH_COLORS.paramPrimary;
       const colorB = MATH_COLORS.paramSecondary;
@@ -179,7 +211,7 @@ export function InequalityBasicAnimation() {
       const colorK = MATH_COLORS.paramTertiary;
       return `x + \\frac{\\color{${colorK}}{k}}{x} \\ge 2\\sqrt{\\color{${colorK}}{k}} \\quad (x > 0)`;
     }
-  }, [studyMode]);
+  }, [studyMode, params.pA, params.pB, params.pC]);
 
   // 教学导引动态联动
   const tipConfig = useMemo(() => {
@@ -197,6 +229,19 @@ export function InequalityBasicAnimation() {
         condition: `大正方形边长为 $a + b = ${(params.a + params.b).toFixed(1)}$，分割为 4 个直角边为 $a, b$ 的矩形与中央差值小正方形。`,
         question:
           "(1) 写出大正方形的面积恒等展开式；(2) 利用实数平方非负性 $(a-b)^2 \\ge 0$ 证明基本不等式 $a^2 + b^2 \\ge 2ab$。",
+      };
+    }
+    if (studyMode === "properties") {
+      const pc = params.pC ?? -2;
+      return {
+        badge: "课标起点 · 作差比较与不等式性质",
+        condition: `两实数 $a = ${(params.pA ?? 3).toFixed(1)}$、$b = ${(params.pB ?? -1).toFixed(1)}$，取同一个数 $c = ${pc.toFixed(1)}$ 分别作同加与同乘。`,
+        question:
+          pc < 0
+            ? "三条基线中，同加 $c$ 后两点的左右次序为何纹丝不动，而同乘 $c$ 后次序却整体翻转？用 $c < 0$ 时数轴关于原点对称这一点解释，并写出对应的不等式性质。"
+            : pc > 0
+              ? "同乘正数时次序为何保持不变？请把 $(a+c)-(b+c)$ 与 $ac-bc$ 都化到 $a-b$ 的倍数上，说明「变向与否」只由乘数的符号决定。"
+              : "当 $c = 0$ 时两条基线发生了什么退化？此时为什么不能再写不等号，而只能写等号？",
       };
     }
     return {
@@ -217,7 +262,8 @@ export function InequalityBasicAnimation() {
               items={[
                 { key: "semicircle", label: "半圆四均值" },
                 { key: "square", label: "弦图面积法" },
-                { key: "nike", label: "对勾函数配凑最值", fullWidth: true },
+                { key: "nike", label: "对勾函数配凑最值" },
+                { key: "properties", label: "不等式性质", fullWidth: true },
               ]}
               value={studyMode}
               onChange={(k) => setStudyMode(k as typeof studyMode)}
@@ -258,14 +304,24 @@ export function InequalityBasicAnimation() {
             containerRef={containerRef}
             transform={vp.transform}
           >
-            <InequalityBasicScene
-              params={params}
-              scale={scale}
-              vp={vp}
-              onParamChange={handleParamChange}
-              fontScale={canvasSize.font}
-              studyMode={studyMode}
-            />
+            {studyMode === "properties" ? (
+              <InequalityPropertiesScene
+                params={params}
+                scale={scale}
+                vp={vp}
+                onParamChange={handleParamChange}
+                fontScale={canvasSize.font}
+              />
+            ) : (
+              <InequalityBasicScene
+                params={params}
+                scale={scale}
+                vp={vp}
+                onParamChange={handleParamChange}
+                fontScale={canvasSize.font}
+                studyMode={studyMode}
+              />
+            )}
           </AnimationSvgCanvas>
           <SceneLegend items={legendItems} />
         </div>

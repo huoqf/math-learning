@@ -259,6 +259,36 @@ export function PropertiesSymmetryScene({
             color={MATH_COLORS.paramPrimary}
             fontScale={fontScale}
           />
+          {/**
+           * 三点重合提示：拖到 x₀ = x_c 时，P、P′ 与对称中心 C 落在同一点。
+           *
+           * 这不是绘图错误，而是中心对称的「自守不动点」——但在画面上表现为
+           * 一个点凭空消失（被 C 盖住），学生只会以为拖坏了。
+           * 因此补一圈同心虚线与标牌，把「重合」这件事明说出来，与右屏口径一致。
+           * 仅在函数值有限时显示：反比例函数在 x = x_c 处无定义，那是渐近线分支。
+           */}
+          {Number.isFinite(centerSymRes.fx) &&
+            Math.abs(x0 - centerX) < 1e-6 && (
+              <g>
+                <circle
+                  cx={mathToDesign(centerX, centerY, scale).x}
+                  cy={mathToDesign(centerX, centerY, scale).y}
+                  r={fontScale(14)}
+                  fill="none"
+                  stroke={MATH_COLORS.degeneracy}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 3"
+                />
+                <text
+                  x={mathToDesign(centerX, centerY, scale).x + fontScale(18)}
+                  y={mathToDesign(centerX, centerY, scale).y - fontScale(14)}
+                  fontSize={fontScale(11)}
+                  fill={MATH_COLORS.degeneracy}
+                >
+                  P = P′ = C（自守不动点）
+                </text>
+              </g>
+            )}
           {/* 连线与对称点 */}
           {Number.isFinite(centerSymRes.fx) ? (
             <g>

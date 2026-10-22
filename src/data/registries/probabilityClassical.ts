@@ -8,8 +8,12 @@ export interface ClassicalParams extends Record<string, unknown> {
   drawMode: "without_replacement" | "with_replacement";
   redBalls: number;
   whiteBalls: number;
-  activeView: "matrix" | "tree";
+  activeView: "matrix" | "tree" | "frequency";
   currentStep?: number;
+  /** 大样本频率试验的试验次数 */
+  trials?: number;
+  /** 试验随机种子（可复现） */
+  simSeed?: number;
 }
 
 export const DEFAULT_CLASSICAL_PARAMS: ClassicalParams = {
@@ -21,6 +25,8 @@ export const DEFAULT_CLASSICAL_PARAMS: ClassicalParams = {
   whiteBalls: 3,
   activeView: "matrix",
   currentStep: 1,
+  trials: 600,
+  simSeed: 20260101,
 };
 
 export type ClassicalScenarioKey =

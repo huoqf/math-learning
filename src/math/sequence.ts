@@ -1331,3 +1331,281 @@ export function calcSecondOrderRecurrence(
     delta,
   };
 }
+
+/* ============================================================================
+ * 数列概念与 $S_n \leftrightarrow a_n$ 互化（选择性必修二 4.1）
+ *
+ * 课标要求会由前 n 项和求通项，其数学内核只有一句：
+ *     a_n = S_n − S_{n-1} (n ≥ 2)，而 a_1 = S_1 必须单独验证。
+ * 高考的全部坑都在「单独验证」上：只有当 S_n 的常数项为 0 时，
+ * 反推出的式子才恰好在 n = 1 处也成立，此时才能合并成一个式子；
+ * 常数项不为 0 时，a_1 与该式在 n = 1 的取值必然不等，必须写成分段形式。
+ *
+ * 本函数把「给定的 S_n」与「反推的 a_n」「真实的 a_n」三列并置，
+ * 让 24 组参数下的落差都能被机器裁决（见 builders/__tests__/sequenceSnToAn.test.ts）。
+ * ========================================================================== */
+
+export interface SnToAnTerm {
+  /** 项序号 */
+  n: number;
+  /** 题干给定的前 n 项和 S_n（可含常数项偏移 C） */
+  Sn: number;
+  /** 由 a_n = S_n − S_{n-1} 反推的通项；n = 1 处无前项，取占位 null */
+  anFromSn: number | null;
+  /** 反推式 a_n = d·n + (a_1 − d) 在 n = 1 处的取值（用于与 a_1 对比） */
+  anFormulaAtN: number;
+  /** 该数列真实的通项 a_n = a_1 + (n−1)d */
+  anReal: number;
+}
+
+export interface SnToAnResult {
+  isValid: boolean;
+  errorMsg?: string;
+  terms: SnToAnTerm[];
+  a1: number;
+  d: number;
+  N: number;
+  /** S_n 的常数项偏移 C：C = 0 时反推式对 n = 1 也成立 */
+  constOffset: number;
+  /** S_1 = a_1 + C，即由 S_n 求出的首项 */
+  a1FromSn: number;
+  /** 反推式在 n = 1 的取值（= a_1） */
+  a1FromFormula: number;
+  /** a_1 与反推式在 n = 1 的取值是否一致（等价于 C = 0） */
+  isFirstTermConsistent: boolean;
+}
+
+export function calcSnToAn(
+  a1: number,
+  d: number,
+  N: number,
+  constOffset: number = 0,
+): SnToAnResult {
+  if (N <= 0 || !Number.isFinite(a1) || !Number.isFinite(d)) {
+    return {
+      isValid: false,
+      errorMsg: "参数无效，项数 N 须大于 0",
+      terms: [],
+      a1,
+      d,
+      N,
+      constOffset,
+      a1FromSn: a1 + constOffset,
+      a1FromFormula: a1,
+      isFirstTermConsistent: Math.abs(constOffset) < 1e-9,
+    };
+  }
+
+  const terms: SnToAnTerm[] = [];
+  let currentSum = 0;
+  let prevSn: number | null = null;
+
+  for (let n = 1; n <= N; n++) {
+    const anReal = a1 + (n - 1) * d;
+    currentSum += anReal;
+    const Sn = currentSum + constOffset;
+    terms.push({
+      n,
+      Sn,
+      // 真正按定义作差：a_n = S_n − S_{n−1}（常数项 C 在此抵消，与 anReal 恒等）
+      // n = 1 处没有 S_0，只能靠 a_1 = S_1 —— 这正是必须分段验证的原因
+      anFromSn: prevSn === null ? null : Sn - prevSn,
+      anFormulaAtN: d * n + (a1 - d),
+      anReal,
+    });
+    prevSn = Sn;
+  }
+
+  return {
+    isValid: true,
+    terms,
+    a1,
+    d,
+    N,
+    constOffset,
+    a1FromSn: a1 + constOffset,
+    a1FromFormula: a1,
+    isFirstTermConsistent: Math.abs(constOffset) < 1e-9,
+  };
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * 数学归纳法（选学拓展）
+ *
+ * 归纳法的两句话必须都能兑现，缺一不可：
+ *   ① 奠基：P(1) 真的成立（把骨牌推倒第一块）；
+ *   ② 递推：P(k) 成立 ⇒ P(k+1) 成立（任意相邻两块骨牌连着）。
+ * 这里用一个纯数值引擎把两句话分别落成可核对的算式：
+ *   - rows 逐项比对「左边实际算出的值」与「右边公式算出的值」；
+ *   - stepChecks 比对「左边从 k 到 k+1 的增量」与「右边从 k 到 k+1 的增量」，
+ *     这正是递推那一步在做的事，只是用数值代替了字母。
+ * 另外附一个「只奠基不递推」的经典反例 n²+n+41：它在 n = 1..39 全部是质数，
+ * n = 40 时塌成 41²，用来证明只有奠基不够。
+ * ──────────────────────────────────────────────────────────────── */
+
+export type InductionClaimId = "sum_odd" | "geo_sum" | "linear_term";
+
+export interface InductionRow {
+  n: number;
+  /** 左边由递推/累加独立算出的值 */
+  leftValue: number;
+  /** 右边由猜想公式算出的值 */
+  rightValue: number;
+  holds: boolean;
+}
+
+export interface InductionStepCheck {
+  k: number;
+  /** 左边从 k 到 k+1 的实际增量 */
+  lhsIncrement: number;
+  /** 右边公式从 k 到 k+1 的增量 */
+  rhsIncrement: number;
+  ok: boolean;
+}
+
+export interface InductionResult {
+  claimId: InductionClaimId;
+  claimLatex: string;
+  rows: InductionRow[];
+  stepChecks: InductionStepCheck[];
+  /** 奠基 P(1) 是否成立 */
+  baseCaseHolds: boolean;
+  /** 逐项验证是否全部成立 */
+  allRowsHold: boolean;
+  /** 递推那一步的增量恒等式是否对全部 k 成立 */
+  stepIdentityHolds: boolean;
+  /** 只奠基不递推的反例：n² + n + 41 */
+  primeCounterexample: { n: number; value: number; factor: number } | null;
+}
+
+function isPrime(n: number): boolean {
+  if (n < 2) return false;
+  for (let i = 2; i * i <= n; i++) {
+    if (n % i === 0) return false;
+  }
+  return true;
+}
+
+/** 找出 n² + n + 41 不再为质数的最小 n（经典反例，理论值为 40） */
+export function findPrimeCounterexample(
+  maxN = 200,
+): { n: number; value: number; factor: number } | null {
+  for (let n = 1; n <= maxN; n++) {
+    const v = n * n + n + 41;
+    if (!isPrime(v)) {
+      let factor = 2;
+      while (factor * factor <= v && v % factor !== 0) factor++;
+      return {
+        n,
+        value: v,
+        factor: factor * factor === v ? factor : v / factor,
+      };
+    }
+  }
+  return null;
+}
+
+/**
+ * 数学归纳法验证：逐项比对 + 递推增量比对。
+ */
+export function calcInductionVerification(
+  claimId: InductionClaimId,
+  opts: { a1?: number; d?: number; N?: number } = {},
+): InductionResult {
+  const N = Math.max(2, Math.min(20, Math.round(opts.N ?? 8)));
+  const a1 = opts.a1 ?? 1;
+  const d = opts.d ?? 2;
+  const EPS = 1e-9;
+
+  const rows: InductionRow[] = [];
+  const stepChecks: InductionStepCheck[] = [];
+
+  if (claimId === "sum_odd") {
+    // 左边：1 + 3 + … + (2n−1)，按累加独立计算；右边：n²
+    let acc = 0;
+    for (let n = 1; n <= N; n++) {
+      acc += 2 * n - 1;
+      rows.push({
+        n,
+        leftValue: acc,
+        rightValue: n * n,
+        holds: Math.abs(acc - n * n) < EPS,
+      });
+    }
+    for (let k = 1; k < N; k++) {
+      const lhs = 2 * (k + 1) - 1; // 左边第 k+1 项本身的增量
+      const rhs = (k + 1) * (k + 1) - k * k; // 右边 n² 的增量
+      stepChecks.push({
+        k,
+        lhsIncrement: lhs,
+        rhsIncrement: rhs,
+        ok: Math.abs(lhs - rhs) < EPS,
+      });
+    }
+  } else if (claimId === "geo_sum") {
+    // 左边：1 + 2 + … + 2^{n−1}，逐项累加；右边：2^n − 1
+    let acc = 0;
+    let power = 1;
+    for (let n = 1; n <= N; n++) {
+      acc += power;
+      rows.push({
+        n,
+        leftValue: acc,
+        rightValue: Math.pow(2, n) - 1,
+        holds: Math.abs(acc - (Math.pow(2, n) - 1)) < EPS,
+      });
+      power *= 2;
+    }
+    for (let k = 1; k < N; k++) {
+      const lhs = Math.pow(2, k); // 第 k+1 项
+      const rhs = Math.pow(2, k + 1) - 1 - (Math.pow(2, k) - 1);
+      stepChecks.push({
+        k,
+        lhsIncrement: lhs,
+        rhsIncrement: rhs,
+        ok: Math.abs(lhs - rhs) < EPS,
+      });
+    }
+  } else {
+    // 递推：a₁ 已知，a_{n+1} = a_n + d；猜想：a_n = a₁ + (n−1)d
+    let an = a1;
+    for (let n = 1; n <= N; n++) {
+      if (n > 1) an += d;
+      const formula = a1 + (n - 1) * d;
+      rows.push({
+        n,
+        leftValue: an,
+        rightValue: formula,
+        holds: Math.abs(an - formula) < EPS,
+      });
+    }
+    for (let k = 1; k < N; k++) {
+      const lhs = a1 + k * d - (a1 + (k - 1) * d); // 递推给出的增量
+      const rhs = d; // 公式相邻两项之差
+      stepChecks.push({
+        k,
+        lhsIncrement: lhs,
+        rhsIncrement: rhs,
+        ok: Math.abs(lhs - rhs) < EPS,
+      });
+    }
+  }
+
+  const claimLatex =
+    claimId === "sum_odd"
+      ? "P(n):\\quad 1 + 3 + 5 + \\cdots + (2n-1) = n^2"
+      : claimId === "geo_sum"
+        ? "P(n):\\quad 1 + 2 + 2^2 + \\cdots + 2^{n-1} = 2^n - 1"
+        : `P(n):\\quad a_1 = ${a1},\\; a_{n+1} = a_n + ${d} \\;\\Rightarrow\\; a_n = ${a1} + (n-1)\\cdot ${d}`;
+
+  return {
+    claimId,
+    claimLatex,
+    rows,
+    stepChecks,
+    baseCaseHolds: rows[0]?.holds ?? false,
+    allRowsHold: rows.every((r) => r.holds),
+    stepIdentityHolds: stepChecks.every((s) => s.ok),
+    primeCounterexample: findPrimeCounterexample(),
+  };
+}

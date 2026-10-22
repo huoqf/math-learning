@@ -888,3 +888,128 @@ export function computeClassicalProbability(
       return computeDiceTwo("sum_k", 7);
   }
 }
+
+/* ────────────────────────────────────────────────────────────────
+ * 大样本频率试验（选学拓展）
+ *
+ * 古典概型的概率是算出来的（n(A)/n(Ω)），频率是试出来的。
+ * 模拟必须忠实于「等可能」这一前提：每次试验在样本点池里等概率抽一个，
+ * 抽到的点是否命中事件，直接复用已算好的 isEvent 标记 —— 不重复实现一遍事件判定，
+ * 保证「模拟用的定义」与「右屏列的样本点」永远同一套。
+ * 随机数用确定性线性同余发生器，给定 seed 结果可复现，测试才能钉住数值。
+ * ──────────────────────────────────────────────────────────────── */
+
+export interface ClassicalFrequencyPoint {
+  trials: number;
+  hits: number;
+  frequency: number;
+  /** 与理论概率的绝对偏差 |f − P(A)| */
+  absError: number;
+}
+
+export interface ClassicalFrequencyResult {
+  probability: number;
+  totalCount: number;
+  eventCount: number;
+  trials: number;
+  hits: number;
+  frequency: number;
+  absError: number;
+  /** 频率轨迹：按对数间隔取样，画收敛曲线用 */
+  track: ClassicalFrequencyPoint[];
+  seed: number;
+  /** 末次频率是否已落入 |f − P(A)| ≤ 0.02 的容差带 */
+  withinTolerance: boolean;
+  validity: boolean;
+}
+
+/** 生成对数间隔的检查点，让轨迹在早期密、后期疏（教学上更看得出收敛） */
+function buildFrequencyCheckpoints(trials: number): number[] {
+  const out: number[] = [];
+  let step = 1;
+  let acc = 0;
+  while (acc < trials) {
+    acc += step;
+    out.push(Math.min(acc, trials));
+    if (out.length > 6) step *= 2;
+  }
+  if (out[out.length - 1] !== trials) out.push(trials);
+  return out;
+}
+
+/**
+ * 对照理论概率做一次大样本频率试验（古典概型专用）。
+ * 每次试验在样本点池里等概率抽取一点，命中数累加即为频率的分子。
+ */
+export function simulateClassicalFrequency(
+  input: {
+    samplePoints: Array<{ isEvent: boolean }>;
+    probability: number;
+    totalCount: number;
+  },
+  trials: number,
+  seed = 20260101,
+): ClassicalFrequencyResult {
+  const pool = input.samplePoints ?? [];
+  const total = pool.length;
+  const eventCount = pool.filter((p) => p.isEvent).length;
+  const n = Math.max(1, Math.min(20000, Math.round(trials)));
+  const probability = input.probability;
+
+  if (total === 0) {
+    return {
+      probability,
+      totalCount: 0,
+      eventCount: 0,
+      trials: 0,
+      hits: 0,
+      frequency: 0,
+      absError: 0,
+      track: [],
+      seed,
+      withinTolerance: false,
+      validity: false,
+    };
+  }
+
+  let state = seed >>> 0 || 1;
+  const rand = () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+
+  const checkpoints = new Set(buildFrequencyCheckpoints(n));
+  const track: ClassicalFrequencyPoint[] = [];
+  let hits = 0;
+
+  for (let i = 1; i <= n; i++) {
+    const idx = Math.min(total - 1, Math.floor(rand() * total));
+    if (pool[idx].isEvent) hits += 1;
+    if (checkpoints.has(i)) {
+      const frequency = hits / i;
+      track.push({
+        trials: i,
+        hits,
+        frequency,
+        absError: Math.abs(frequency - probability),
+      });
+    }
+  }
+
+  const frequency = hits / n;
+  const absError = Math.abs(frequency - probability);
+
+  return {
+    probability,
+    totalCount: total,
+    eventCount,
+    trials: n,
+    hits,
+    frequency,
+    absError,
+    track,
+    seed,
+    withinTolerance: absError <= 0.02,
+    validity: true,
+  };
+}

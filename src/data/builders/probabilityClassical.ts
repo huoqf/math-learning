@@ -6,13 +6,14 @@ import type {
 } from "../types";
 import {
   computeClassicalProbability,
+  simulateClassicalFrequency,
   type ClassicalModelType,
 } from "@/math/probabilityClassical";
 import { MATH_COLORS } from "@/theme";
 import { CLASSICAL_ANSWER_STEPS } from "../registries/probabilityClassical";
 
 export interface ClassicalBuilderOptions {
-  activeView?: "matrix" | "tree";
+  activeView?: "matrix" | "tree" | "frequency";
   scenarioKey?: string;
   focusStep?: number;
 }
@@ -28,6 +29,9 @@ export function buildClassicalProbabilityPanel(
     "without_replacement" | "with_replacement";
   const redBalls = Number(params.redBalls ?? 2);
   const whiteBalls = Number(params.whiteBalls ?? 3);
+  const activeView = String(params.activeView ?? "matrix");
+  const trials = Number(params.trials ?? 600);
+  const simSeed = Number(params.simSeed ?? 20260101);
 
   const mathRes = computeClassicalProbability({
     modelType,
@@ -166,11 +170,73 @@ export function buildClassicalProbabilityPanel(
     },
   ];
 
+  const warnings: MathPanelData["warnings"] = [];
+
+  /* ── 大样本频率试验视图（选学拓展） ──
+   * 只在这个视图下追加读数与定理，其余视图的看板保持原样。 */
+  if (activeView === "frequency") {
+    const sim = simulateClassicalFrequency(mathRes, trials, simSeed);
+
+    quantities.splice(2, 0, {
+      label: "试验次数 $n$",
+      symbol: "n",
+      value: `${sim.trials}`,
+      color: MATH_COLORS.paramTertiary,
+    });
+    quantities.splice(
+      6,
+      0,
+      {
+        label: "事件 $A$ 发生次数",
+        symbol: "n_A",
+        value: `${sim.hits} 次`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "试验频率 $f_n(A) = \\frac{n_A}{n}$",
+        symbol: "f_n(A)",
+        value: sim.frequency.toFixed(4),
+        color: MATH_COLORS.accent,
+        highlight: "extreme",
+      },
+      {
+        label: "与理论概率的偏差 $|f_n - P(A)|$",
+        symbol: "\\Delta",
+        value: `${sim.absError.toFixed(4)}${sim.withinTolerance ? "（已落入 0.02 容差带）" : "（未落入 0.02 容差带）"}`,
+        color: sim.withinTolerance
+          ? MATH_COLORS.paramSecondary
+          : MATH_COLORS.degeneracy,
+      },
+    );
+
+    theorems.push({
+      name: "频率与概率的关系（频率稳定性）",
+      latex:
+        "f_n(A) = \\frac{n_A}{n} \\xrightarrow{\\;n \\to \\infty\\;} P(A), \\qquad P(A) = \\frac{n(A)}{n(\\Omega)} \\;\\text{（确定常数）}",
+      level: "important",
+      note: "频率是试验得到的估计值，会随试验结果波动；概率是古典概型算出来的确定常数。试验次数越多，频率越稳定在概率附近，这正是用频率估计概率的依据。",
+      condition:
+        "本页对每次试验都在等可能的样本点中等概率抽取一个，抽样方式与古典概型的前提一致",
+    });
+
+    gaokaoPoints.push({
+      text: "频率≠概率：频率随试验波动、依赖做过的试验，概率是理论常数。常见设问「做 1000 次试验频率为 0.332，能否说概率是 0.332」的正确答案是否定的——只能说概率约为 0.332。",
+      importance: "gaokao",
+    });
+
+    if (!sim.withinTolerance) {
+      warnings.push({
+        text: "本次试验的频率与理论概率偏差超过 0.02：小样本波动属正常现象，增大试验次数后频率会重新靠近概率，这不构成对概率值的否定。",
+        level: "info",
+      });
+    }
+  }
+
   return {
     quantities,
     theorems,
     gaokaoPoints,
-    warnings: [],
+    warnings,
     reasoningSteps,
   };
 }

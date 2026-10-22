@@ -68,3 +68,41 @@ export const SPECIAL_ANGLES: ReadonlyArray<{
   { deg: 270, radLatex: "\\frac{3\\pi}{2}" },
   { deg: 360, radLatex: "2\\pi" },
 ];
+
+/* ============================================================================
+ * 特殊角吸附（必修一 5.1.2 弧度制 · 刻度可达性治理）
+ *
+ * 左屏 alphaRad 滑块的网格是 0.01 rad，而 π 的有理倍几乎全是无理数：
+ * 在 [0, 2π] 的 628 个网格点中，没有任何一个能落在 π/12 的倍数上
+ * （最接近者偏差 8.9e-5），于是「π/3 rad」这类读数在旧实现下**恒不可达** ——
+ * 不是容差太小，而是网格与目标集不相交，放宽容差到 1e-6 依旧是 0 命中。
+ *
+ * 正确做法是让**取值本身**落到特殊角上（而不是让格式化工具有条件地假装），
+ * 这样右屏读数、弧长、扇形面积三者始终同源于一个真实存在的角度。
+ * 吸附窗口取半个网格（0.005 rad ≈ 0.29°），落在窗口内才吸附，其余保持连续。
+ * ========================================================================== */
+
+/** 吸附步长：15° = π/12，覆盖 30°/45°/60°/90°/120°/135°/150°/180° 等全部课标特殊角 */
+export const SPECIAL_ANGLE_STEP_RAD = Math.PI / 12;
+
+/** 吸附窗口（左屏滑块步长 0.01 rad 的一半） */
+export const SPECIAL_ANGLE_SNAP_TOL = 0.005;
+
+/**
+ * 把弧度值吸附到最近的 15° 整数倍；超出吸附窗口则原样返回。
+ *
+ * 返回的三元组让调用方可以同时拿到「吸附后取值」与「是否发生吸附」，
+ * 便于右屏给出「已吸附到特殊角」的提示，而无需再次比较浮点数。
+ */
+export function snapToSpecialAngle(
+  rad: number,
+  tol: number = SPECIAL_ANGLE_SNAP_TOL,
+): { value: number; snapped: boolean; multiple: number } {
+  if (!Number.isFinite(rad)) return { value: rad, snapped: false, multiple: 0 };
+  const multiple = Math.round(rad / SPECIAL_ANGLE_STEP_RAD);
+  const candidate = multiple * SPECIAL_ANGLE_STEP_RAD;
+  if (Math.abs(candidate - rad) <= tol + 1e-12) {
+    return { value: candidate, snapped: multiple !== 0, multiple };
+  }
+  return { value: rad, snapped: false, multiple: 0 };
+}

@@ -94,7 +94,14 @@ export function calculatePiecewise(params: PiecewiseParams): PiecewiseResult {
     monotonicityReason = `两段均为常数且分界点连续闭合，全域为常数函数 f(x) = ${leftValAtX0.toFixed(2)}。`;
   } else {
     globalMonotonicity = "non-monotonic";
-    if (leftSlope === 0 || rightSlope === 0) {
+    if (leftSlope === 0 && rightSlope === 0) {
+      /**
+       * 两段皆常数但不连续：这不是「含常数段的单调函数」，而是一个**取两个值的
+       * 分段常值函数**。旧文案统一写成「包含水平常数段」会掩盖真正的结构——
+       * 学生据此无法区分「一段平一段斜」与「两段都平」这两种完全不同的图形。
+       */
+      monotonicityReason = `两段均为常数但在分界点处发生跳跃（f₁(x₀)=${leftValAtX0.toFixed(2)} → f₂(x₀)=${rightValAtX0.toFixed(2)}）：函数只取两个不同值，既不是常数函数，也不满足严格单调递增/递减的定义。`;
+    } else if (leftSlope === 0 || rightSlope === 0) {
       monotonicityReason =
         "函数包含水平常数段（斜率为 0），按课标定义不满足严格单调递增/递减要求。";
     } else {

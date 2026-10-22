@@ -7,6 +7,7 @@ import type {
   ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { getBallPaperRef, ballRubric } from "./solidBallPaperRef";
 import { formatMathNumber } from "@/utils/mathFormat";
 import {
   calculateCornerModel,
@@ -39,7 +40,8 @@ export function buildPolyhedronSpherePanel(
   if (modelType === "corner") {
     // 墙角模型
     const res = calculateCornerModel(a, b, c);
-    examAnchor = "高考客观题/解答题压轴母题 · 墙角割补";
+    const paperRef = getBallPaperRef("corner");
+    examAnchor = paperRef.anchor;
     mnemonic =
       "三垂直棱补长方，体对角线是直径，(2R)² = a² + b² + c²，球心对角取中点。";
 
@@ -104,23 +106,29 @@ export function buildPolyhedronSpherePanel(
         title: "构造补形长方体",
         detail: `由三棱锥 P 处三条侧棱两两垂直 (PA ⊥ PB, PB ⊥ PC, PC ⊥ PA)，侧棱长分别为 a=${a}, b=${b}, c=${c}，将其补全为长宽高为 ${a}, ${b}, ${c} 的长方体。`,
         latex: `PA \\perp PB, \\; PB \\perp PC, \\; PC \\perp PA \\implies \\text{三棱锥 } P-ABC \\text{ 补全为长方体}`,
-        rubric:
-          "[高考采分点] 准确指出四面体 4 顶点为长方体同一顶角相邻 4 顶点 (+2分)",
+        rubric: ballRubric(
+          paperRef,
+          0,
+          "准确指出四面体 4 顶点为长方体同一顶角相邻 4 顶点",
+        ),
       },
       {
         step: 2,
         title: "确立外接球直径与球心",
         detail: `长方体外接球球心 O 为体对角线 PP' 中点，球直径 2R 等于长方体体对角线长 d。`,
         latex: `(2R)^2 = d^2 = a^2 + b^2 + c^2 = ${a}^2 + ${b}^2 + ${c}^2 = ${sumSq}`,
-        rubric:
-          "[高考采分点] 正确写出长方体体对角线与外接球直径等量关系 (+2分)",
+        rubric: ballRubric(
+          paperRef,
+          1,
+          "正确写出长方体体对角线与外接球直径等量关系",
+        ),
       },
       {
         step: 3,
         title: "求解外接球半径与几何量",
         detail: `解得外接球半径 R = ${res.radius.toFixed(3)}，进而得出球表面积 S = ${formatMathNumber(res.surfaceArea / Math.PI)}π。`,
         latex: `R = \\frac{1}{2}\\sqrt{a^2 + b^2 + c^2} = \\frac{\\sqrt{${sumSq}}}{2} \\approx ${res.radius.toFixed(3)}, \\quad S_{\\text{球}} = ${formatMathNumber(res.surfaceArea / Math.PI)}\\pi`,
-        rubric: "[高考采分点] 正确计算外接球半径与表面积 (+2分)",
+        rubric: ballRubric(paperRef, 2, "正确计算外接球半径与表面积"),
       },
     );
 
@@ -137,7 +145,8 @@ export function buildPolyhedronSpherePanel(
   } else if (modelType === "cylinder") {
     // 柱体模型
     const res = calculateCylinderModel(a, b, h);
-    examAnchor = "高考柱体模型 · 直三棱柱外接球";
+    const paperRef = getBallPaperRef("cylinder");
+    examAnchor = paperRef.anchor;
     mnemonic =
       "直棱柱外接球，上下底圆心中点为球心，球心距半高，勾股半径 R² = r_底² + (h/2)²。";
 
@@ -213,27 +222,28 @@ export function buildPolyhedronSpherePanel(
         title: "求底面外接圆心与半径",
         detail: `底面为直角边分别为 a=${a}, b=${b} 的直角三角形，斜边中点 O₁ 即为底面外接圆心，外接圆半径 r_底 = c_base / 2 = ${(cBaseVal / 2).toFixed(2)}。`,
         latex: `c_{\\text{base}} = \\sqrt{a^2 + b^2} = ${cBaseVal.toFixed(2)} \\implies r_{\\text{底}} = \\frac{c_{\\text{base}}}{2} = ${(cBaseVal / 2).toFixed(2)}`,
-        rubric: "[高考采分点] 准确求出底面多边形外接圆半径 r_底 (+2分)",
+        rubric: ballRubric(paperRef, 0, "准确求出底面多边形外接圆半径 r_底"),
       },
       {
         step: 2,
         title: "确立球心投影与球心距",
         detail: `由直棱柱性质，外接球心 O 必在上下底面外接圆心连线 O₁O₂ 的中点处，球心到底面距离等于半高 d = h/2 = ${(h / 2).toFixed(2)}。`,
         latex: `O \\text{ 在轴线 } O_1 O_2 \\text{ 中点} \\implies d = \\frac{h}{2} = ${(h / 2).toFixed(2)}`,
-        rubric: "[高考采分点] 阐明球心位置及其与底面的垂直距离 (+2分)",
+        rubric: ballRubric(paperRef, 1, "阐明球心位置及其与底面的垂直距离"),
       },
       {
         step: 3,
         title: "构造直角三角形勾股求半径",
         detail: `在直角三角形 OO₁A 中，OA = R, OO₁ = h/2, O₁A = r_底。由勾股定理解得外接球半径 R = ${res.radius.toFixed(3)}。`,
         latex: `R^2 = r_{\\text{底}}^2 + \\left(\\frac{h}{2}\\right)^2 = \\frac{a^2 + b^2 + h^2}{4} \\implies 2R = \\sqrt{a^2 + b^2 + h^2} \\approx ${(2 * res.radius).toFixed(3)}`,
-        rubric: "[高考采分点] 正确利用勾股定理求得外接球半径与直径 (+2分)",
+        rubric: ballRubric(paperRef, 2, "正确利用勾股定理求得外接球半径与直径"),
       },
     );
   } else if (modelType === "complement") {
     // 补形模型 (对棱相等四面体)
     const res = calculateComplementModel(a, b, c);
-    examAnchor = "新高考压轴大招 · 等面四面体对棱长方体";
+    const paperRef = getBallPaperRef("complement");
+    examAnchor = paperRef.anchor;
     mnemonic =
       "对棱相等长方体，面对角线定三面，联立方差解三棱，八倍球径平方和 8R² = a² + b² + c²。";
 
@@ -299,7 +309,7 @@ export function buildPolyhedronSpherePanel(
         title: "构造补形长方体方程组",
         detail: `四面体三组对棱分别相等 a=${a}, b=${b}, c=${c}。将其 4 顶点嵌入长宽高为 x, y, z 的长方体交错顶点，对棱对应长方体各面的面对角线。`,
         latex: `\\begin{cases} x^2 + y^2 = a^2 = ${a}^2 \\\\ y^2 + z^2 = b^2 = ${b}^2 \\\\ z^2 + x^2 = c^2 = ${c}^2 \\end{cases}`,
-        rubric: "[高考采分点] 准确写出对棱与长方体面对角线方程组 (+2分)",
+        rubric: ballRubric(paperRef, 0, "准确写出对棱与长方体面对角线方程组"),
       },
       {
         step: 2,
@@ -310,7 +320,7 @@ export function buildPolyhedronSpherePanel(
         latex: res.isValid
           ? `(2R)^2 = x^2 + y^2 + z^2 = \\frac{a^2 + b^2 + c^2}{2} = \\frac{${sumSq}}{2} = ${halfSumSq}`
           : `x^2 = \\frac{a^2+b^2-c^2}{2} \\le 0 \\iff \\text{无实数解}`,
-        rubric: "[高考采分点] 准确推导出体对角线与三对棱平方和关系 (+2分)",
+        rubric: ballRubric(paperRef, 1, "准确推导出体对角线与三对棱平方和关系"),
       },
       {
         step: 3,
@@ -321,7 +331,7 @@ export function buildPolyhedronSpherePanel(
         latex: res.isValid
           ? `R = \\frac{\\sqrt{2(a^2 + b^2 + c^2)}}{4} = \\frac{\\sqrt{2 \\times ${sumSq}}}{4} \\approx ${res.radius.toFixed(3)}`
           : `R = \\frac{\\sqrt{x^2+y^2+z^2}}{2} = \\frac{\\sqrt{3}}{2} \\approx ${res.radius.toFixed(3)} \\quad (\\text{保全基准})`,
-        rubric: "[高考采分点] 正确解出外接球半径与表面积 (+2分)",
+        rubric: ballRubric(paperRef, 2, "正确解出外接球半径与表面积"),
       },
     );
 
@@ -345,7 +355,8 @@ export function buildPolyhedronSpherePanel(
   } else if (modelType === "verticalEdge") {
     // 侧棱垂直底面模型 (汉堡模型 / 垂直底面侧棱三棱锥)
     const res = calculateVerticalEdgeModel(a, b, h);
-    examAnchor = "新高考解答题核心母题 · 柱体外心勾股轴线";
+    const paperRef = getBallPaperRef("verticalEdge");
+    examAnchor = paperRef.anchor;
     mnemonic =
       "一求底面外心径，二取垂直侧棱半，直角三角连球心，勾股定理定乾坤 R² = r_底² + (h/2)²。";
 
@@ -413,21 +424,25 @@ export function buildPolyhedronSpherePanel(
         title: "求底面外接圆半径 r_底 与外心 O₁",
         detail: `底面 △ABC 为直角三角形（直角边 CA=${a}, CB=${b}），斜边为 AB = ${cBase.toFixed(2)}，斜边中点即为底面外心 O₁。`,
         latex: `r_{\\text{底}} = \\frac{\\sqrt{a^2 + b^2}}{2} = \\frac{\\sqrt{${a}^2 + ${b}^2}}{2} = ${rBaseVal.toFixed(3)}`,
-        rubric: "[高考采分点] 正确指出底面外接圆心位置及半径 (+2分)",
+        rubric: ballRubric(paperRef, 0, "正确指出底面外接圆心位置及半径"),
       },
       {
         step: 2,
         title: "过外心立垂线确立球心 O",
         detail: `侧棱 PA ⊥ 底面 ABC，高 PA=${h}。外接球球心 O 在过外心 O₁ 垂直于底面的轴线上，球心到底面距离为高的一半 |O O₁| = h/2 = ${halfH.toFixed(2)}。`,
         latex: `O O_1 \\perp \\text{底面 } ABC, \\quad |O O_1| = \\frac{h}{2} = ${halfH.toFixed(2)}`,
-        rubric: "[高考采分点] 证明球心在底面外心垂直轴线上且距底面 h/2 (+2分)",
+        rubric: ballRubric(
+          paperRef,
+          1,
+          "证明球心在底面外心垂直轴线上且距底面 h/2",
+        ),
       },
       {
         step: 3,
         title: "Rt△O-O₁-B 中勾股求解 R",
         detail: `连接 OB 即为外接球半径 R，在 Rt△O-O₁-B 中应用勾股定理：`,
         latex: `R^2 = r_{\\text{底}}^2 + \\left(\\frac{h}{2}\\right)^2 = ${rBaseVal.toFixed(2)}^2 + ${halfH.toFixed(2)}^2 = ${rSq} \\implies R \\approx ${res.radius.toFixed(3)}`,
-        rubric: "[高考采分点] 列出并解出外接球半径勾股方程 (+2分)",
+        rubric: ballRubric(paperRef, 2, "列出并解出外接球半径勾股方程"),
       },
     );
 
@@ -444,7 +459,8 @@ export function buildPolyhedronSpherePanel(
   } else if (modelType === "inSphere") {
     // 内切球模型 (等体积法)
     const res = calculateInSphereModel(a, b, c);
-    examAnchor = "高考立体几何通法 · 多面体内切球等体积剖分";
+    const paperRef = getBallPaperRef("inSphere");
+    examAnchor = paperRef.anchor;
     mnemonic =
       "多面体内切求半径，等体积法核心轴，四面剖分同顶点，三倍体积除总面积 r = 3V / S_表。";
 
@@ -511,21 +527,21 @@ export function buildPolyhedronSpherePanel(
         title: "空间分割与等体积法原理",
         detail: `设内切球球心为 I，半径为 r。连接 I 与四面体 4 个顶点，将四面体分割为 4 个以各面为底面、高均为 r 的小棱锥。`,
         latex: `V_{\\text{总}} = \\frac{1}{3}S_1 r + \\frac{1}{3}S_2 r + \\frac{1}{3}S_3 r + \\frac{1}{3}S_4 r = \\frac{1}{3}S_{\\text{总}} r`,
-        rubric: "[高考采分点] 写明利用等体积剖分原理构建方程 (+2分)",
+        rubric: ballRubric(paperRef, 0, "写明利用等体积剖分原理构建方程"),
       },
       {
         step: 2,
         title: "分别求解总体积 V 与总表面积 S_总",
         detail: `代入当前参数 a=${a}, b=${b}, c=${c}：总体积 V = (1/6)abc = ${res.totalVolume.toFixed(2)}；4 个面表面积之和 S_总 = ${res.totalArea.toFixed(2)}。`,
         latex: `V = \\frac{1}{6} \\times ${a} \\times ${b} \\times ${c} = ${res.totalVolume.toFixed(2)}, \\quad S_{\\text{总}} \\approx ${res.totalArea.toFixed(2)}`,
-        rubric: "[高考采分点] 正确求得四面体体积与各表面积之和 (+2分)",
+        rubric: ballRubric(paperRef, 1, "正确求得四面体体积与各表面积之和"),
       },
       {
         step: 3,
         title: "公式化简求解内切球半径",
         detail: `由等体积公式求得内切球半径 r = ${res.inRadius.toFixed(3)}。`,
         latex: `r_{\\text{in}} = \\frac{3 V_{\\text{总}}}{S_{\\text{总}}} = \\frac{3 \\times ${res.totalVolume.toFixed(2)}}{${res.totalArea.toFixed(2)}} \\approx ${res.inRadius.toFixed(3)}`,
-        rubric: "[高考采分点] 正确解得内切球半径 (+2分)",
+        rubric: ballRubric(paperRef, 2, "正确解得内切球半径"),
       },
     );
 

@@ -33,7 +33,9 @@ import {
   calcNonHomogeneousExpRecurrence,
   calcReciprocalRecurrence,
   calcSecondOrderRecurrence,
+  calcInductionVerification,
   type AccumulationFnType,
+  type InductionClaimId,
 } from "@/math/sequence";
 
 type RecurrenceModel =
@@ -42,7 +44,8 @@ type RecurrenceModel =
   | "multiplication"
   | "non-homogeneous"
   | "reciprocal"
-  | "second-order";
+  | "second-order"
+  | "induction";
 
 const KEYS_BY_MODEL: Record<RecurrenceModel, string[]> = {
   "linear-pan": ["a1", "p_rec", "q_rec", "N"],
@@ -51,6 +54,7 @@ const KEYS_BY_MODEL: Record<RecurrenceModel, string[]> = {
   "non-homogeneous": ["a1", "p_rec", "q_rec", "r_rec", "N"],
   reciprocal: ["a1", "coefA", "coefB", "coefC", "N"],
   "second-order": ["a1", "a2", "p_rec", "q_rec", "N"],
+  induction: ["a1", "stepParam", "N"],
 };
 
 /**
@@ -90,6 +94,8 @@ export function RecurrencePage() {
     "shift",
   );
   const [activeStep, setActiveStep] = useState<number>(1);
+  const [inductionClaim, setInductionClaim] =
+    useState<InductionClaimId>("sum_odd");
 
   // 初始化参数
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -270,8 +276,9 @@ export function RecurrencePage() {
         subModel: recurrenceModelType,
         accumFnType,
         multType,
+        inductionClaim,
       }),
-    [params, recurrenceModelType, accumFnType, multType],
+    [params, recurrenceModelType, accumFnType, multType, inductionClaim],
   );
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -379,6 +386,13 @@ export function RecurrencePage() {
     if (recurrenceModelType === "reciprocal") {
       return `a_{n+1} = \\frac{${coefA}a_n}{${coefB}a_n + ${coefC}} \\iff \\frac{1}{a_{n+1}} = \\frac{${coefC}}{${coefA}} \\cdot \\frac{1}{a_n} + \\frac{${coefB}}{${coefA}}`;
     }
+    if (recurrenceModelType === "induction") {
+      return calcInductionVerification(inductionClaim, {
+        a1,
+        d: stepParam,
+        N,
+      }).claimLatex;
+    }
     return "";
   }, [
     recurrenceModelType,
@@ -391,6 +405,9 @@ export function RecurrencePage() {
     coefC,
     accumFnType,
     multType,
+    inductionClaim,
+    a1,
+    N,
   ]);
 
   const handleParamChange = (key: string, value: number) => {
@@ -458,6 +475,16 @@ export function RecurrencePage() {
           question:
             "对递推式两边同取倒数，能否转化为关于辅助数列 $b_n = \\frac{1}{a_n}$ 的线性递推并求出通项？",
         };
+      case "induction":
+        return {
+          variant: "accent" as const,
+          badge: "选学拓展 · 数学归纳法两步框架",
+          background:
+            "数学归纳法是课标星号选学内容，但在数列证明题中反复出现：凡是「对一切正整数 $n$ 成立」的命题，标准证法就是它。",
+          condition: `当前命题为 $${calcInductionVerification(inductionClaim, { a1: a1v, d: stepParam, N }).claimLatex}$，考察 $n=1$ 至 $n=${N}$ 是否成立。`,
+          question:
+            "第一步把 $P(1)$ 验算成立之后，为什么还必须证明「$P(k)$ 成立能推出 $P(k+1)$ 成立」？只验算前若干项为什么不算证明？",
+        };
       default:
         return {
           variant: "primary" as const,
@@ -469,7 +496,15 @@ export function RecurrencePage() {
     }
     // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recurrenceModelType, activePresetKey, params.a1, params.a2, params.N]);
+  }, [
+    recurrenceModelType,
+    activePresetKey,
+    params.a1,
+    params.a2,
+    params.N,
+    inductionClaim,
+    stepParam,
+  ]);
 
   return (
     <ThreePanel
@@ -477,7 +512,7 @@ export function RecurrencePage() {
         <LeftPanel>
           <LeftPanelSection
             title="递推构造 6 大核心模型"
-            subtitle="覆盖待定系数与同除构造核心模型（含 1 项拓展）"
+            subtitle="待定系数与同除构造；末尾附 1 项选学拓展"
           >
             <SelectGrid
               items={[
@@ -515,6 +550,12 @@ export function RecurrencePage() {
                   key: "reciprocal",
                   label: "倒数与分式构造",
                   formula: "a_{n+1}=\\frac{Aa_n}{Ba_n+C}",
+                  fullWidth: true,
+                },
+                {
+                  key: "induction",
+                  label: "数学归纳法（选学）",
+                  formula: "P(1)\\land(P(k)\\Rightarrow P(k+1))",
                   fullWidth: true,
                 },
               ]}
@@ -571,6 +612,39 @@ export function RecurrencePage() {
                 ]}
                 value={accumFnType}
                 onChange={(val) => setAccumFnType(val as AccumulationFnType)}
+              />
+            </LeftPanelSection>
+          )}
+
+          {/* 数学归纳法命题切换 */}
+          {recurrenceModelType === "induction" && (
+            <LeftPanelSection
+              title="归纳命题 P(n) 选择"
+              subtitle="三条最常考的待证命题"
+            >
+              <SelectGrid
+                items={[
+                  {
+                    key: "sum_odd",
+                    label: "奇数求和",
+                    description: "1+3+…+(2n−1) = n²",
+                    fullWidth: true,
+                  },
+                  {
+                    key: "geo_sum",
+                    label: "等比求和",
+                    description: "1+2+…+2^(n−1) = 2^n − 1",
+                    fullWidth: true,
+                  },
+                  {
+                    key: "linear_term",
+                    label: "等差通项",
+                    description: "a_(n+1)=a_n+d ⟹ a_n=a₁+(n−1)d",
+                    fullWidth: true,
+                  },
+                ]}
+                value={inductionClaim}
+                onChange={(val) => setInductionClaim(val as InductionClaimId)}
               />
             </LeftPanelSection>
           )}
@@ -658,6 +732,7 @@ export function RecurrencePage() {
               yStep={yStep}
               activeStep={activeStep}
               linearViewMode={linearViewMode}
+              inductionClaim={inductionClaim}
               onToggleLinearViewMode={() =>
                 setLinearViewMode((v) => (v === "shift" ? "cobweb" : "shift"))
               }

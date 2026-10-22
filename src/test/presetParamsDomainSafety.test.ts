@@ -181,6 +181,10 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
     // 2. 集合与逻辑
     { animId: "anim-set-venn", params: {} },
     {
+      animId: "anim-set-subset",
+      params: { xA: -3, yA: 0, rA: 3, xB: 2, yB: 1, rB: 1 },
+    },
+    {
       animId: "anim-logic-quantifiers",
       params: {},
       config: { statementType: "universal" },

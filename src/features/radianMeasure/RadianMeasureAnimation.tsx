@@ -20,7 +20,12 @@ import {
   paramMeta,
   resolveSceneRadius,
 } from "@/data/registries/radianMeasure";
-import { arcLength, radToDeg, sectorArea } from "@/math/radianMeasure";
+import {
+  snapToSpecialAngle,
+  arcLength,
+  radToDeg,
+  sectorArea,
+} from "@/math/radianMeasure";
 import { formatPiFraction, formatPiFractionLatex } from "@/utils/mathFormat";
 
 type StudyMode = "definition" | "conversion" | "arcSector";
@@ -53,9 +58,13 @@ export function RadianMeasureAnimation() {
 
   // 参数变更
   const handleParamChange = (key: string, value: number) => {
+    // 圆心角吸附到 15° 的整数倍：滑块网格 0.01 rad 与 π 的有理倍不相交，
+    // 不吸附则「π/3 rad」这类读数恒不可达（见 math/radianMeasure 的注释）。
+    const nextValue =
+      key === "alphaRad" ? snapToSpecialAngle(value).value : value;
     setParams((prev) => ({
       ...prev,
-      [key]: value,
+      [key]: nextValue,
     }));
   };
 

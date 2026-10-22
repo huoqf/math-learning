@@ -417,6 +417,25 @@ export function buildSpatialAnglePanel(
         value: `(${dih.edgeFootM.x.toFixed(2)}, ${dih.edgeFootM.y.toFixed(2)}, 0)`,
         color: MATH_COLORS.paramTertiary,
       },
+      {
+        label: "两法向量夹角 $⟨n_1,n_2⟩$",
+        symbol: "\\langle n_1,n_2\\rangle",
+        value: `${dih.normalAngleDeg.toFixed(2)}°（cos = ${dih.cosNormalSigned.toFixed(4)}）`,
+        color: MATH_COLORS.accent,
+      },
+      {
+        label: "法向量方位自动判定",
+        symbol: "n_1,\\ n_2",
+        value: `${dih.isNormal1Inward ? "n₁ 指向内部" : "n₁ 指向外部"}，${dih.isNormal2Inward ? "n₂ 指向内部" : "n₂ 指向外部"} ⇒ ${dih.orientationRelation === "equal" ? "一进一出，θ = ⟨n₁,n₂⟩" : "同进同出，θ = 180° − ⟨n₁,n₂⟩"}：${dih.predictedDihedralDeg.toFixed(2)}°`,
+        color: MATH_COLORS.highlight,
+        highlight: "extreme",
+      },
+      {
+        label: "锐钝自动判定（几何法复核）",
+        symbol: "\\angle PMQ",
+        value: `${dih.angleClass === "acute" ? "锐角" : dih.angleClass === "right" ? "直角" : "钝角"}，cos∠PMQ = ${dih.cosThetaGeometric.toFixed(4)}｜${dih.isOrientationConsistent ? "与法向量规则吻合" : "与法向量规则不符，需检查取点"}`,
+        color: MATH_COLORS.paramPrimary,
+      },
     );
 
     if (preset === "cubeSection") {
@@ -432,10 +451,10 @@ export function buildSpatialAnglePanel(
     theorems.push(
       {
         name: "二面角向量法与钝锐判断定理",
-        latex: `\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle = \\frac{\\vec{n_1} \\cdot \\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}, \\quad \\cos\\theta_{\\text{二面角}} = \\pm\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle \\;(\\text{由图判定正负})`,
+        latex: `\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle = \\frac{\\vec{n_1} \\cdot \\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}, \\quad \\cos\\theta_{\\text{二面角}} = \\begin{cases} \\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle, & \\text{一进一出} \\\\ -\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle, & \\text{同进同出} \\end{cases}`,
         level: "core",
         condition:
-          "$\\theta \\in [0^\\circ, 180^\\circ]$，法向量夹角与二面角相等或互补，高考大题须依据空间图形判断正负号！",
+          "「一进一出」= 两个法向量中恰有一个指向二面角内部：用 $\\vec{n}\\cdot(\\text{内点} - \\text{平面上一点})$ 的符号即可算出，无需看图",
       },
       {
         name: "线面垂直的判定与性质作二面角平面角（几何法）",
@@ -452,7 +471,7 @@ export function buildSpatialAnglePanel(
 
     gaokaoPoints.push(
       {
-        text: "高考立体几何第(2)问满分步骤闭环：① 建立空间直角坐标系 O-xyz；② 设法向量 n=(x,y,z) 联立两方程赋非零特解；③ 代入向量点乘模长公式；④ 依据空间几何直观明确说明“由图可知该二面角为锐角/钝角”。",
+        text: "高考立体几何第(2)问满分步骤闭环：① 建立空间直角坐标系 $O$-$xyz$；② 设法向量 $\\vec{n}=(x,y,z)$ 联立两方程赋非零特解；③ 代入向量点乘模长公式；④ 用 $\\vec{n}\\cdot(\\text{内点}-\\text{平面上一点})$ 的符号判定两法向量各自指向二面角的哪一侧，据此决定 $\\cos\\theta$ 取 $\\cos\\langle n_1,n_2\\rangle$ 还是它的相反数——这一步是纯代数判定，可写进卷面。",
         importance: "gaokao",
       },
       {
@@ -479,10 +498,11 @@ export function buildSpatialAnglePanel(
       },
       {
         step: 3,
-        title: "代入二面角余弦公式并结合图形判定锐钝角",
-        detail: "由几何直观可知该二面角为锐角，余弦值取正值",
-        latex: `\\cos\\theta = \\frac{|\\vec{n_1} \\cdot \\vec{n_2}|}{|\\vec{n_1}||\\vec{n_2}|} = \\frac{${(a * b).toFixed(2)}}{${dih.normalLength.toFixed(2)}} = ${dih.cosTheta.toFixed(4)} \\implies \\theta = ${dih.dihedralDeg.toFixed(2)}^\\circ`,
-        rubric: "[高考采分点] 代入法向量夹角余弦公式并结合直观定锐钝 (+4分)",
+        title: "用点积符号判定进出方位，再代入余弦公式",
+        detail: `$\\vec{n_1}\\cdot(\\vec{G_2}-A)=${dih.inwardProbe.dot1.toFixed(2)}${dih.isNormal1Inward ? ">" : "<"}0$ 说明 $n_1$ ${dih.isNormal1Inward ? "指向内部" : "指向外部"}；$\\vec{n_2}\\cdot(\\vec{G_1}-B)=${dih.inwardProbe.dot2.toFixed(2)}${dih.isNormal2Inward ? ">" : "<"}0$ 说明 $n_2$ ${dih.isNormal2Inward ? "指向内部" : "指向外部"}。${dih.orientationRelation === "equal" ? "一进一出 ⇒ $\\cos\\theta=\\cos\\langle n_1,n_2\\rangle$" : "同进同出 ⇒ $\\cos\\theta=-\\cos\\langle n_1,n_2\\rangle$"}，正负号由算式给出，无需看图`,
+        latex: `\\vec{n_1}\\cdot(\\vec{G_2}-\\vec{A})=${dih.inwardProbe.dot1.toFixed(2)}${dih.isNormal1Inward ? ">" : "<"}0,\\; \\vec{n_2}\\cdot(\\vec{G_1}-\\vec{B})=${dih.inwardProbe.dot2.toFixed(2)}${dih.isNormal2Inward ? ">" : "<"}0 \\implies \\text{一进一出} \\implies \\cos\\theta = \\cos\\langle n_1,n_2\\rangle = \\frac{${(a * b).toFixed(2)}}{${dih.normalLength.toFixed(2)}} = ${dih.cosTheta.toFixed(4)} \\implies \\theta = ${dih.dihedralDeg.toFixed(2)}^\\circ`,
+        rubric:
+          "[高考采分点] 用法向量点积符号自动定出余弦正负，不依赖目视判断 (+4分)",
       },
     );
 
@@ -507,7 +527,7 @@ export function buildSpatialAnglePanel(
     mnemonic = "射影点乘法向量，等体换底互验忙";
   } else {
     examAnchor = "新高考立体几何压轴 · 二面角平面角与法向量点积";
-    mnemonic = "两面法向求夹角，结合图形定钝锐";
+    mnemonic = "两面法向求夹角，进出方位定钝锐";
   }
 
   return {

@@ -46,6 +46,8 @@ export interface SequenceParams {
   coefA: number;
   coefB: number;
   coefC: number;
+  /** 已知 S_n 求通项（snToAn 模式）：S_n 的常数项偏移 C，C ≠ 0 时首项必须单独验证 */
+  snConst: number;
 }
 
 export const defaultParams: SequenceParams = {
@@ -65,6 +67,7 @@ export const defaultParams: SequenceParams = {
   coefA: 1,
   coefB: 1,
   coefC: 1,
+  snConst: 0,
 };
 
 export interface RecurrencePreset {
@@ -280,6 +283,23 @@ export const paramMeta: Record<string, ParamMeta> = {
       { value: 2, label: "k=2", labelFormula: "k=2" },
       { value: 3, label: "k=3", labelFormula: "k=3" },
       { value: 4, label: "k=4", labelFormula: "k=4" },
+    ],
+  },
+  snConst: {
+    key: "snConst",
+    label: "$S_n$ 的常数项 $C$",
+    labelFormula: `S_n = \\tfrac{d}{2}n^2 + (a_1 - \\tfrac{d}{2})n + \\color{${MATH_COLORS.paramTertiary}}{C}`,
+    defaultValue: 0,
+    min: -8,
+    max: 8,
+    step: 0.5,
+    description:
+      "题给 $S_n$ 的常数项：$C = 0$ 时反推式对 $n = 1$ 也成立，可直接合并；$C \\neq 0$ 时 $a_1 = S_1$ 必须单独交代",
+    importance: "core",
+    marks: [
+      { value: 0, label: "0 (可合并)", variant: "critical" },
+      { value: 2, label: "2 (须分段)" },
+      { value: -3, label: "-3 (须分段)" },
     ],
   },
   gaussRatio: {

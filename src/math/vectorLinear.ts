@@ -27,6 +27,14 @@ export interface LinearOperationResult {
   b: Vector2D;
   lambdaA: Vector2D;
   muB: Vector2D;
+  /**
+   * 纯和向量 a + b（区别于下面的「线性组合」`sumVec = λa + μb`）。
+   *
+   * 坐标表示课时（必修二 6.3）要讲的是 $\\vec a + \\vec b = (x_1+x_2,\\ y_1+y_2)$，
+   * 那里根本没有 λ、μ；若直接借用 `sumVec`，一旦左屏数字乘系数残留成 2，
+   * 看板就会印出 $λa+μb$ 的坐标却标着「a+b」——两个概念必须分开存。
+   */
+  sumAB: Vector2D;
   sumVec: Vector2D; // s = lambda * a + mu * b
   diffVec: Vector2D; // d = a - b
   /**
@@ -82,6 +90,15 @@ export interface LinearOperationResult {
   detAB: number; // xa * yb - xb * ya
   isCollinearAB: boolean;
   collinearRatio?: number; // b = ratio * a (若存在)
+  /**
+   * 共线**比例**是否有定义（判据：a 非零向量）。
+   *
+   * 必须与 `isCollinearAB` 分开：课标规定「零向量与任意向量共线」，
+   * 这是**约定**而不是由方向推出来的结论，所以 a = 0 时 `isCollinearAB` 为 true，
+   * 却不存在任何实数 λ 使 b = λa（b ≠ 0 时），`collinearRatio` 必须保持 undefined。
+   * 旧实现把两者混为一谈：判据说「共线」，比例却查无此项，消费方极易拿 undefined 去算。
+   */
+  isCollinearRatioDefined: boolean;
 
   // 三点共线: OC = x * OA + y * OB
   pointC: Vector2D;
@@ -143,6 +160,8 @@ export function computeVectorLinear(
   const lambdaA: Vector2D = { x: lambda * xa, y: lambda * ya };
   const muB: Vector2D = { x: mu * xb, y: mu * yb };
 
+  const sumAB: Vector2D = { x: a.x + b.x, y: a.y + b.y };
+
   const sumVec: Vector2D = {
     x: lambdaA.x + muB.x,
     y: lambdaA.y + muB.y,
@@ -188,6 +207,7 @@ export function computeVectorLinear(
   const detAB = a.x * b.y - a.y * b.x;
   const isCollinearAB = Math.abs(detAB) < 1e-4;
 
+  const isCollinearRatioDefined = normA > EPS_NORM && normB > EPS_NORM;
   let collinearRatio: number | undefined = undefined;
   if (normA > EPS_NORM) {
     if (Math.abs(a.x) > EPS_NORM) {
@@ -245,6 +265,7 @@ export function computeVectorLinear(
     b,
     lambdaA,
     muB,
+    sumAB,
     sumVec,
     diffVec,
     closingVec,
@@ -264,6 +285,7 @@ export function computeVectorLinear(
     detAB,
     isCollinearAB,
     collinearRatio,
+    isCollinearRatioDefined,
     pointC,
     coeffSum,
     isThreePointsCollinear,

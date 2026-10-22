@@ -15,6 +15,7 @@ import {
   calculateCylinderSphere,
 } from "@/math3d/circumInSphere";
 import { sphereVolume, sphereSurfaceArea } from "@/math3d/solidGeometry";
+import { getBallPaperRef, ballRubric } from "./solidBallPaperRef";
 
 // ── know-solid-ball: 外接球与内切球 ──
 
@@ -47,7 +48,8 @@ export function buildCircumSpherePanel(
     if (shape === "cuboid") {
       const res = calculateCuboidSphere(a, b, c, "circum");
       radius = res.radius;
-      examAnchor = "高考立体几何基础母题 · 墙角与长方体外接球模型";
+      const paperRef = getBallPaperRef("circum:cuboid");
+      examAnchor = paperRef.anchor;
       mnemonic = "体对角线即直径，(2R)² = a² + b² + c²，球心体对角线取中点。";
 
       quantities.push(
@@ -115,21 +117,21 @@ export function buildCircumSpherePanel(
           title: "三维正交棱长求体对角线",
           detail: `由长方体长宽高 a=${a}, b=${b}, c=${c}，空间直角坐标勾股计算体对角线长 d。`,
           latex: `d = \\sqrt{a^2 + b^2 + c^2} = \\sqrt{${a}^2 + ${b}^2 + ${c}^2} = ${(2 * radius).toFixed(3)}`,
-          rubric: "[高考采分点] 正确写出三维体对角线公式 (+2分)",
+          rubric: ballRubric(paperRef, 0, "正确写出三维体对角线公式"),
         },
         {
           step: 2,
           title: "外接性质确立球直径关系",
           detail: `长方体 8 个顶点均在外接球面上，体对角线中点即外接球心 O，直径等于体对角线。`,
           latex: `2R = d \\implies R = \\frac{1}{2}\\sqrt{a^2 + b^2 + c^2} = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 准确指出 2R = d 关系及球心位置 (+2分)",
+          rubric: ballRubric(paperRef, 1, "准确指出 2R = d 关系及球心位置"),
         },
         {
           step: 3,
           title: "代入求表面积与体积",
           detail: `根据球表面积与体积公式代入球半径 R，得出精准度量。`,
           latex: `S = 4\\pi R^2 = ${(4 * Math.PI * radius * radius).toFixed(2)}, \\quad V = \\frac{4}{3}\\pi R^3 = ${((4 / 3) * Math.PI * radius ** 3).toFixed(2)}`,
-          rubric: "[高考采分点] 准确计算外接球表面积或体积 (+2分)",
+          rubric: ballRubric(paperRef, 2, "准确计算外接球表面积或体积"),
         },
       );
     } else if (shape === "regularPyramid") {
@@ -137,7 +139,8 @@ export function buildCircumSpherePanel(
       const res = calculatePyramidSphere(a, c, "circum");
       radius = res.radius;
       const rBase = (a * Math.SQRT2) / 2;
-      examAnchor = "新高考高频常考题 · 正棱锥轴截面勾股法";
+      const paperRef = getBallPaperRef("circum:regularPyramid");
+      examAnchor = paperRef.anchor;
       mnemonic = "球心落在高线上，轴截面内列勾股，R² = r_底² + (h - R)²。";
 
       quantities.push(
@@ -192,21 +195,21 @@ export function buildCircumSpherePanel(
           title: "求解底面正方形外接圆半径",
           detail: `底面正方形边长为 a=${a}，对角线长等于 √2 a，外接圆半径为对角线一半。`,
           latex: `r_{底} = \\frac{\\sqrt{2}}{2}a = \\frac{${a}}{\\sqrt{2}} \\approx ${rBase.toFixed(3)}`,
-          rubric: "[高考采分点] 准确计算底面多边形外接圆半径 (+2分)",
+          rubric: ballRubric(paperRef, 0, "准确计算底面多边形外接圆半径"),
         },
         {
           step: 2,
           title: "中心高线上建立勾股方程",
           detail: `正四棱锥球心位于高线上，设球心到顶点距离为 R，在轴截面直角三角形中列勾股方程。`,
           latex: `R^2 = r_{底}^2 + (h - R)^2 \\implies R^2 = ${rBase.toFixed(3)}^2 + (${c} - R)^2`,
-          rubric: "[高考采分点] 正确建立轴截面勾股方程 (+2分)",
+          rubric: ballRubric(paperRef, 1, "正确建立轴截面勾股方程"),
         },
         {
           step: 3,
           title: "解一元方程求解外接半径",
           detail: `展开消去二次项 R²，解得外接球半径 R。`,
           latex: `R = \\frac{r_{底}^2 + h^2}{2h} = \\frac{${(rBase * rBase).toFixed(2)} + ${(c * c).toFixed(2)}}{${2 * c}} = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 正确解出外接球半径 (+2分)",
+          rubric: ballRubric(paperRef, 2, "正确解出外接球半径"),
         },
       );
     } else if (shape === "triangularPrism") {
@@ -215,7 +218,8 @@ export function buildCircumSpherePanel(
       radius = res.radius;
       // calculatePrismSphere 恒定返回底面斜边/外接圆半径，故此处安全断言
       const rBase = res.baseCircumRadius!;
-      examAnchor = "高考柱体切接黄金模型 · 直棱柱双外心垂直平分线法";
+      const paperRef = getBallPaperRef("circum:triangularPrism");
+      examAnchor = paperRef.anchor;
       mnemonic =
         "底面外心定水平，高线一半定竖直，黄金公式 R² = r_底² + (h/2)²。";
 
@@ -270,21 +274,21 @@ export function buildCircumSpherePanel(
           title: "求解底面直角三角形外接圆半径",
           detail: `直角三角形斜边中点为外心，底面外接圆半径等于斜边一半。`,
           latex: `c_{斜} = \\sqrt{a^2 + b^2} = ${(2 * rBase).toFixed(3)} \\implies r_{底} = \\frac{c_{斜}}{2} = ${rBase.toFixed(3)}`,
-          rubric: "[高考采分点] 明确直角三角形外心在斜边中点 (+2分)",
+          rubric: ballRubric(paperRef, 0, "明确直角三角形外心在斜边中点"),
         },
         {
           step: 2,
           title: "确定球心空间垂直高度",
           detail: `球心落在上下底面外心 O₁, O₂ 连线中点，球心距上下底面距离均为 h/2。`,
           latex: `d_{球心} = \\frac{h}{2} = \\frac{${c}}{2} = ${(c / 2).toFixed(2)}`,
-          rubric: "[高考采分点] 指出球心在上下底外心连线中点 (+2分)",
+          rubric: ballRubric(paperRef, 1, "指出球心在上下底外心连线中点"),
         },
         {
           step: 3,
           title: "空间勾股求解外接球半径",
           detail: `应用直棱柱外接球勾股公式 R² = r_底² + (h/2)² 计算半径。`,
           latex: `R = \\sqrt{r_{底}^2 + \\left(\\frac{h}{2}\\right)^2} = \\sqrt{${(rBase * rBase).toFixed(2)} + ${((c / 2) ** 2).toFixed(2)}} = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 正确得出柱体外接球半径 (+2分)",
+          rubric: ballRubric(paperRef, 2, "正确得出柱体外接球半径"),
         },
       );
     } else if (shape === "cone") {
@@ -292,7 +296,8 @@ export function buildCircumSpherePanel(
       const res = calculateConeSphere(a, c, "circum");
       radius = res.radius;
       const l = res.generatrixLength!;
-      examAnchor = "高考旋转体切接母题 · 轴截面降维法";
+      const paperRef = getBallPaperRef("circum:cone");
+      examAnchor = paperRef.anchor;
       mnemonic = "过轴截面降为三角形，等腰三角形外接圆，R = l²/(2h)。";
 
       quantities.push(
@@ -347,28 +352,29 @@ export function buildCircumSpherePanel(
           title: "轴截面降维构建等腰三角形",
           detail: `过圆锥旋转轴作轴截面，截面为底边 2r、腰长 l、高 h 的等腰三角形。`,
           latex: `2r = ${2 * a}, \\quad h = ${c}, \\quad l = \\sqrt{r^2 + h^2} = ${l.toFixed(3)}`,
-          rubric: "[高考采分点] 准确指出轴截面三角形特征及母线长 (+2分)",
+          rubric: ballRubric(paperRef, 0, "准确指出轴截面三角形特征及母线长"),
         },
         {
           step: 2,
           title: "轴截面外接圆即球的大圆截面",
           detail: `外接球球心在轴截面等腰三角形高线上，利用勾股定理 R² = r² + (h - R)²。`,
           latex: `R^2 = r^2 + (h - R)^2 \\implies 2hR = r^2 + h^2 = l^2`,
-          rubric: "[高考采分点] 建立轴截面等腰三角形外接圆方程 (+2分)",
+          rubric: ballRubric(paperRef, 1, "建立轴截面等腰三角形外接圆方程"),
         },
         {
           step: 3,
           title: "求得圆锥外接球半径",
           detail: `由射影/勾股得出结论 R = l² / (2h)。`,
           latex: `R = \\frac{l^2}{2h} = \\frac{${(l * l).toFixed(2)}}{${2 * c}} = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 熟练应用公式解出球半径 (+2分)",
+          rubric: ballRubric(paperRef, 2, "熟练应用公式解出球半径"),
         },
       );
     } else {
       // 圆柱 (底半径 a, 高 c)
       const res = calculateCylinderSphere(a, c, "circum");
       radius = res.radius;
-      examAnchor = "高考旋转体切接经典模型 · 轴截面矩形对角线法";
+      const paperRef = getBallPaperRef("circum:cylinder");
+      examAnchor = paperRef.anchor;
       mnemonic = "轴截面矩形对角线即球直径，(2R)² = (2r)² + h²。";
 
       quantities.push(
@@ -410,21 +416,21 @@ export function buildCircumSpherePanel(
           title: "轴截面降维构建对角矩形",
           detail: `轴截面为宽 2r、高 h 的对称矩形，矩形 4 个顶点均落在球大圆截面上。`,
           latex: `\\text{轴截面矩形边长为 } 2r=${2 * a}, \\; h=${c}`,
-          rubric: "[高考采分点] 作轴截面并识别出矩形四顶点共圆 (+2分)",
+          rubric: ballRubric(paperRef, 0, "作轴截面并识别出矩形四顶点共圆"),
         },
         {
           step: 2,
           title: "矩形对角线即外接球直径",
           detail: `矩形对角线交点即旋转轴中点（球心 O），外接球直径等于矩形对角线。`,
           latex: `(2R)^2 = (2r)^2 + h^2 = ${4 * a * a} + ${c * c} = ${(4 * radius * radius).toFixed(2)}`,
-          rubric: "[高考采分点] 正确给出 (2R)² = (2r)² + h² (+2分)",
+          rubric: ballRubric(paperRef, 1, "正确给出 (2R)² = (2r)² + h²"),
         },
         {
           step: 3,
           title: "求解外接球半径",
           detail: `两边开方除以 2 解得外接球半径 R。`,
           latex: `R = \\sqrt{r^2 + \\left(\\frac{h}{2}\\right)^2} = \\sqrt{${(a * a).toFixed(2)} + ${((c / 2) ** 2).toFixed(2)}} = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 正确得出圆柱外接球半径 (+2分)",
+          rubric: ballRubric(paperRef, 2, "正确得出圆柱外接球半径"),
         },
       );
     }
@@ -451,7 +457,8 @@ export function buildCircumSpherePanel(
       const res = calculateCuboidSphere(a, b, c, "inscribed");
       radius = res.radius;
       const isCube = a === b && b === c;
-      examAnchor = "高考特殊构型检验 · 正方体内切球";
+      const paperRef = getBallPaperRef("inscribed:cuboid");
+      examAnchor = paperRef.anchor;
       mnemonic = "正方体内切球直径等于棱长：2r = a。";
 
       quantities.push(
@@ -505,21 +512,21 @@ export function buildCircumSpherePanel(
           latex: isCube
             ? `a = b = h = ${a} \\implies \\text{存在内切球}`
             : `\\neg(a=b=h) \\implies \\text{退化为最大内部相切球}`,
-          rubric: "[高考采分点] 判断多面体是否存在内切球 (+2分)",
+          rubric: ballRubric(paperRef, 0, "判断多面体是否存在内切球"),
         },
         {
           step: 2,
           title: "对称中心到各面的切线距离",
           detail: `正方体内切球球心与体中心重合，球心到 6 个面的垂直距离均等于半棱长。`,
           latex: `d(I, \\text{各面}) = r_{\\text{in}} = \\frac{a}{2}`,
-          rubric: "[高考采分点] 指出切点在各面中心且 2r = a (+2分)",
+          rubric: ballRubric(paperRef, 1, "指出切点在各面中心且 2r = a"),
         },
         {
           step: 3,
           title: "求解内切球半径及度量",
           detail: `求得内切球半径为 ${radius.toFixed(3)}。`,
           latex: `r_{\\text{in}} = \\frac{${Math.min(a, b, c)}}{2} = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 准确计算内切球半径 (+2分)",
+          rubric: ballRubric(paperRef, 2, "准确计算内切球半径"),
         },
       );
     } else if (shape === "regularPyramid") {
@@ -529,7 +536,8 @@ export function buildCircumSpherePanel(
       const hs = res.slantHeight!; // 斜高直接取自数学解算模型
       const vSolid = res.solidVolume;
       const sTotal = res.solidArea;
-      examAnchor = "新高考内切球通用杀手锏 · 空间等体积剖分法";
+      const paperRef = getBallPaperRef("inscribed:regularPyramid");
+      examAnchor = paperRef.anchor;
       mnemonic = "以球心为顶点向各面剖分，总体积等于各分锥之和：r = 3V/S_全。";
 
       quantities.push(
@@ -589,21 +597,21 @@ export function buildCircumSpherePanel(
           title: "求解棱锥体积与侧面斜高全面积",
           detail: `底面积 $S_{\\text{底}} = a^2$，体积 $V = \\frac{1}{3} a^2 h$；斜高 $h_s = \\sqrt{h^2 + a^2/4}$，全面积 $S_{\\text{全}} = a^2 + 2a h_s$。`,
           latex: `V = \\frac{1}{3}a^2 h = ${vSolid.toFixed(3)}, \\quad S_{\\text{全}} = a^2 + 2a h_s = ${sTotal.toFixed(3)}`,
-          rubric: "[高考采分点] 正确计算棱锥体积与全面积 (+2分)",
+          rubric: ballRubric(paperRef, 0, "正确计算棱锥体积与全面积"),
         },
         {
           step: 2,
           title: "空间等体积剖分方程",
           detail: `以球心 $I$ 为顶点剖分为 5 个小棱锥，高均为 $r_{\\text{in}}$，总体积等于各分锥体积之和。`,
           latex: `V = \\frac{1}{3} S_{\\text{底}} r_{\\text{in}} + \\sum_{i=1}^4 \\frac{1}{3} S_{\\text{侧}i} r_{\\text{in}} = \\frac{1}{3} S_{\\text{全}} r_{\\text{in}}`,
-          rubric: "[高考采分点] 写出等体积剖分核心方程 (+2分)",
+          rubric: ballRubric(paperRef, 1, "写出等体积剖分核心方程"),
         },
         {
           step: 3,
           title: "等体积法解得内切球半径",
           detail: `由等体积方程解得 $r_{\\text{in}} = 3V / S_{\\text{全}}$。`,
           latex: `r_{\\text{in}} = \\frac{3V}{S_{\\text{全}}} = \\frac{3 \\times ${vSolid.toFixed(3)}}{${sTotal.toFixed(3)}} = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 正确计算内切球半径 (+2分)",
+          rubric: ballRubric(paperRef, 2, "正确计算内切球半径"),
         },
       );
     } else if (shape === "triangularPrism") {
@@ -612,7 +620,8 @@ export function buildCircumSpherePanel(
       radius = res.radius;
       const cHyp = res.baseHypotenuse!;
       const rBaseIn = res.baseInRadius!;
-      examAnchor = "高考棱柱内切存在充要条件分析";
+      const paperRef = getBallPaperRef("inscribed:triangularPrism");
+      examAnchor = paperRef.anchor;
       mnemonic =
         "柱体存在内切球充要条件：柱高必须等于底面内切圆直径 h = 2r_底。";
 
@@ -669,21 +678,21 @@ export function buildCircumSpherePanel(
           title: "求解底面直角三角形内切圆半径",
           detail: `直角三角形内切圆半径等于两直角边之和减斜边除以 2。`,
           latex: `r_{底} = \\frac{a + b - \\sqrt{a^2+b^2}}{2} = \\frac{${a} + ${b} - ${cHyp.toFixed(2)}}{2} = ${rBaseIn.toFixed(3)}`,
-          rubric: "[高考采分点] 正确求出底面三角形内切圆半径 (+2分)",
+          rubric: ballRubric(paperRef, 0, "正确求出底面三角形内切圆半径"),
         },
         {
           step: 2,
           title: "柱体切球充要几何约束",
           detail: `球体同时切上下底面要求 2r = h；同时切侧面要求 r = r_底。`,
           latex: `\\text{充要条件：} h = 2r_{底} = ${(2 * rBaseIn).toFixed(2)}`,
-          rubric: "[高考采分点] 明确指出柱体存在内切球充要条件 (+2分)",
+          rubric: ballRubric(paperRef, 1, "明确指出柱体存在内切球充要条件"),
         },
         {
           step: 3,
           title: "确定实际最大容纳切球半径",
           detail: `在水平与垂直两约束中取最小值。`,
           latex: `r = \\min\\left(r_{底}, \\frac{h}{2}\\right) = \\min(${rBaseIn.toFixed(3)}, ${(c / 2).toFixed(3)}) = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 准确给出内切球半径 (+2分)",
+          rubric: ballRubric(paperRef, 2, "准确给出内切球半径"),
         },
       );
     } else if (shape === "cone") {
@@ -691,7 +700,8 @@ export function buildCircumSpherePanel(
       const res = calculateConeSphere(a, c, "inscribed");
       radius = res.radius;
       const l = res.generatrixLength!; // 母线长直接取自数学解算模型
-      examAnchor = "高考旋转体内切降维 · 轴截面等腰三角形内切圆";
+      const paperRef = getBallPaperRef("inscribed:cone");
+      examAnchor = paperRef.anchor;
       mnemonic = "轴截面等腰三角形内切圆即球内切圆，r = rh / (r + l)。";
 
       quantities.push(
@@ -739,28 +749,29 @@ export function buildCircumSpherePanel(
           title: "过轴截面降维构建等腰三角形",
           detail: `轴截面等腰三角形底边为 2r，高为 h，腰长母线 l。`,
           latex: `2r = ${2 * a}, \\quad h = ${c}, \\quad l = \\sqrt{r^2 + h^2} = ${l.toFixed(3)}`,
-          rubric: "[高考采分点] 作轴截面等腰三角形并求出周长面积 (+2分)",
+          rubric: ballRubric(paperRef, 0, "作轴截面等腰三角形并求出周长面积"),
         },
         {
           step: 2,
           title: "等面积法求解三角形内切圆",
           detail: `等腰三角形面积 $S = rh$，半周长 $p = r + l$，由 $S = p r_{\\text{in}}$ 建立方程。`,
           latex: `S = \\frac{1}{2}(2r)h = rh = ${(a * c).toFixed(2)}, \\quad p = r + l = ${(a + l).toFixed(3)}`,
-          rubric: "[高考采分点] 应用等面积法 S = p r (+2分)",
+          rubric: ballRubric(paperRef, 1, "应用等面积法 S = p r"),
         },
         {
           step: 3,
           title: "公式解出内切球半径",
           detail: `解得内切球半径 $r_{\\text{in}} = rh / (r + l)$。`,
           latex: `r_{\\text{in}} = \\frac{rh}{r + l} = \\frac{${(a * c).toFixed(2)}}{${(a + l).toFixed(3)}} = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 正确解出内切球半径 (+2分)",
+          rubric: ballRubric(paperRef, 2, "正确解出内切球半径"),
         },
       );
     } else {
       // 圆柱 (底半径 a, 高 c)
       const res = calculateCylinderSphere(a, c, "inscribed");
       radius = res.radius;
-      examAnchor = "高考圆柱内切球充要条件 · 等高圆柱";
+      const paperRef = getBallPaperRef("inscribed:cylinder");
+      examAnchor = paperRef.anchor;
       mnemonic = "等高圆柱 (h=2r) 轴截面为正方形，内切球半径等于底面半径 r。";
 
       quantities.push(
@@ -804,21 +815,21 @@ export function buildCircumSpherePanel(
           title: "轴截面对称性与切点几何分析",
           detail: `圆柱轴截面为 2r × h 的矩形，内切球在轴截面上的投影必须切矩形四边。`,
           latex: `\\text{轴截面矩形规格为 } 2r = ${2 * a}, \\; h = ${c}`,
-          rubric: "[高考采分点] 分析轴截面矩形切球性质 (+2分)",
+          rubric: ballRubric(paperRef, 0, "分析轴截面矩形切球性质"),
         },
         {
           step: 2,
           title: "充要条件判定（等高圆柱）",
           detail: `矩形内切圆存在充要条件为矩形是正方形，即 h = 2r。`,
           latex: `h = 2r \\iff \\text{圆柱存在内切球}`,
-          rubric: "[高考采分点] 指出圆柱内切球充要条件 h = 2r (+2分)",
+          rubric: ballRubric(paperRef, 1, "指出圆柱内切球充要条件 h = 2r"),
         },
         {
           step: 3,
           title: "确定内切球半径与度量",
           detail: `满足条件时内切球半径为底面半径 r。`,
           latex: `r_{\\text{in}} = \\min\\left(r, \\frac{h}{2}\\right) = ${radius.toFixed(3)}`,
-          rubric: "[高考采分点] 准确计算内切球半径与度量 (+2分)",
+          rubric: ballRubric(paperRef, 2, "准确计算内切球半径与度量"),
         },
       );
     }

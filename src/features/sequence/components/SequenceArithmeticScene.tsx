@@ -9,13 +9,15 @@ import { SequenceArithmeticGaussScene } from "./SequenceArithmeticGaussScene";
 import { SequenceArithmeticQuadraticScene } from "./SequenceArithmeticQuadraticScene";
 import { SequenceArithmeticSegmentScene } from "./SequenceArithmeticSegmentScene";
 import { SequenceArithmeticAbsSumScene } from "./SequenceArithmeticAbsSumScene";
+import { SequenceArithmeticSnToAnScene } from "./SequenceArithmeticSnToAnScene";
 
 export interface SequenceArithmeticSceneProps {
   params: Record<string, number>;
   scale: SceneScale;
   vp: ViewportInfo;
   fontScale: (size: number) => number;
-  arithmeticSubMode?: "linear" | "gauss" | "quadratic" | "segment" | "absSum";
+  arithmeticSubMode?:
+    "linear" | "gauss" | "quadratic" | "segment" | "absSum" | "snToAn";
   highlightN?: number;
   onSelectN?: (n: number) => void;
 }
@@ -47,6 +49,8 @@ export function SequenceArithmeticScene({
       return <SequenceArithmeticSegmentScene {...subProps} />;
     case "absSum":
       return <SequenceArithmeticAbsSumScene {...subProps} />;
+    case "snToAn":
+      return <SequenceArithmeticSnToAnScene {...subProps} />;
     default:
       return <SequenceArithmeticLinearScene {...subProps} />;
   }

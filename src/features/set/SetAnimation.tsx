@@ -14,13 +14,16 @@ import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SetScene } from "./components/SetScene";
+import { SubsetHierarchyScene } from "./components/SubsetHierarchyScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/set";
 import type { VennOpType } from "@/math/set";
 
 export function SetAnimation() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
-  const [activeTab, setActiveTab] = useState<"venn" | "logic">("venn");
+  const [activeTab, setActiveTab] = useState<"venn" | "logic" | "subset">(
+    "venn",
+  );
   const [vennOp, setVennOp] = useState<VennOpType>("intersection");
 
   // Step 1: 视口与画布
@@ -37,7 +40,11 @@ export function SetAnimation() {
 
   // Step 3: 右屏数学数据组装
   const animId =
-    activeTab === "venn" ? "anim-set-venn" : "anim-logic-conditions";
+    activeTab === "venn"
+      ? "anim-set-venn"
+      : activeTab === "subset"
+        ? "anim-set-subset"
+        : "anim-logic-conditions";
   const mathData = useMemo(
     () => buildMathQuantities(animId, params, { vennOp }),
     [animId, params, vennOp],
@@ -58,6 +65,8 @@ export function SetAnimation() {
         default:
           return `\\color{${MATH_COLORS.paramPrimary}}{A} \\cap \\color{${MATH_COLORS.paramSecondary}}{B}`;
       }
+    } else if (activeTab === "subset") {
+      return `\\color{${MATH_COLORS.paramPrimary}}{A} \\subsetneq \\color{${MATH_COLORS.paramSecondary}}{B} \\iff \\color{${MATH_COLORS.paramPrimary}}{A} \\subseteq \\color{${MATH_COLORS.paramSecondary}}{B} \\;\\land\\; \\color{${MATH_COLORS.paramPrimary}}{A} \\ne \\color{${MATH_COLORS.paramSecondary}}{B}`;
     } else {
       return `p: x \\in \\color{${MATH_COLORS.paramPrimary}}{A}, \\quad q: x \\in \\color{${MATH_COLORS.paramSecondary}}{B} \\quad (p \\implies q \\iff \\color{${MATH_COLORS.paramPrimary}}{A} \\subseteq \\color{${MATH_COLORS.paramSecondary}}{B})`;
     }
@@ -103,9 +112,10 @@ export function SetAnimation() {
               tabs={[
                 { key: "venn", label: "集合的基本运算" },
                 { key: "logic", label: "充分必要条件" },
+                { key: "subset", label: "子集与真子集" },
               ]}
               value={activeTab}
-              onChange={(k) => setActiveTab(k as "venn" | "logic")}
+              onChange={(k) => setActiveTab(k as "venn" | "logic" | "subset")}
               className="mb-3"
             />
 
@@ -145,10 +155,21 @@ export function SetAnimation() {
             <TipCard
               variant="primary"
               badge={
-                activeTab === "venn" ? "集合 Venn 图特征" : "充要条件包含法则"
+                activeTab === "venn"
+                  ? "集合 Venn 图特征"
+                  : activeTab === "subset"
+                    ? "子集与真子集的分界"
+                    : "充要条件包含法则"
               }
               condition={
-                activeTab === "venn" ? (
+                activeTab === "subset" ? (
+                  <span>
+                    小圆整体落在大圆之内时为子集{" "}
+                    <KatexFormula formula="A \subseteq B" mode="inline" />
+                    ；两者不重合时为真子集{" "}
+                    <KatexFormula formula="A \subsetneq B" mode="inline" />。
+                  </span>
+                ) : activeTab === "venn" ? (
                   <span>
                     全集 <KatexFormula formula="U" mode="inline" /> 下的两集合{" "}
                     <KatexFormula formula="A, B" mode="inline" /> 及任意动点{" "}
@@ -166,7 +187,13 @@ export function SetAnimation() {
                 )
               }
               question={
-                activeTab === "venn" ? (
+                activeTab === "subset" ? (
+                  <span>
+                    拖动圆心与半径，观察画面中的见证点{" "}
+                    <KatexFormula formula="W" mode="inline" /> 的位置：只要 B
+                    里存在一个 A 拿不到的元素，A 就只是 B 的真子集，而不是相等。
+                  </span>
+                ) : activeTab === "venn" ? (
                   <span>
                     拖拽样本点 <KatexFormula formula="P" mode="inline" />{" "}
                     改变其归属，判断 P 与 A、B
@@ -196,22 +223,38 @@ export function SetAnimation() {
             containerRef={containerRef}
             transform={vp.transform}
           >
-            <SetScene
-              params={params}
-              scale={scale}
-              vp={vp}
-              onParamChange={handleParamChange}
-              fontScale={canvasSize.font}
-              vennOp={activeTab === "logic" ? "none" : vennOp}
-              showLogic={activeTab === "logic"}
-            />
+            {activeTab === "subset" ? (
+              <SubsetHierarchyScene
+                params={params}
+                scale={scale}
+                vp={vp}
+                onParamChange={handleParamChange}
+                fontScale={canvasSize.font}
+              />
+            ) : (
+              <SetScene
+                params={params}
+                scale={scale}
+                vp={vp}
+                onParamChange={handleParamChange}
+                fontScale={canvasSize.font}
+                vennOp={activeTab === "venn" ? vennOp : "none"}
+                showLogic={activeTab === "logic"}
+              />
+            )}
           </AnimationSvgCanvas>
         </div>
       }
       right={
         <MathPanel
           {...mathData}
-          title={activeTab === "venn" ? "集合运算看板" : "逻辑条件看板"}
+          title={
+            activeTab === "venn"
+              ? "集合运算看板"
+              : activeTab === "subset"
+                ? "子集层级看板"
+                : "逻辑条件看板"
+          }
         />
       }
     />

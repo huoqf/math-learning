@@ -14,7 +14,8 @@ export interface SequenceSceneProps {
   vp: ViewportInfo;
   fontScale: (size: number) => number;
   activeMode: "arithmetic" | "geometric" | "models";
-  arithmeticSubMode?: "linear" | "gauss" | "quadratic" | "segment" | "absSum";
+  arithmeticSubMode?:
+    "linear" | "gauss" | "quadratic" | "segment" | "absSum" | "snToAn";
   geometricViewType?: "points" | "tessellation";
   geometricSubMode?:
     "exponential" | "staggerSum" | "segment" | "productMax" | "tessellation";

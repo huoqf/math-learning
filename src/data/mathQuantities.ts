@@ -175,6 +175,7 @@ export function buildMathQuantities(
     case "anim-constant-double":
       return buildConstantDoublePanel(params, config);
     case "anim-set-venn":
+    case "anim-set-subset":
     case "anim-logic-conditions":
       return buildSetPanel(params, { ...config, animId });
     case "anim-logic-quantifiers":

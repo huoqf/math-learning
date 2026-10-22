@@ -1,5 +1,6 @@
 import type { MathPanelData } from "../types";
 import { computeVectorLinear } from "@/math/vectorLinear";
+import { formatMathNumber } from "@/utils/mathFormat";
 import {
   VECTOR_PHYSICS_PRESETS,
   type VectorPhysicsContext,
@@ -25,6 +26,9 @@ export function buildVectorLinearPanel(
   });
 
   const {
+    a: vecA,
+    b: vecB,
+    sumAB,
     sumVec,
     diffVec,
     normA,
@@ -40,6 +44,7 @@ export function buildVectorLinearPanel(
     unitDotProduct,
     detAB,
     isCollinearAB,
+    isCollinearRatioDefined,
     closingVec,
     pointC,
     coeffSum,
@@ -66,8 +71,47 @@ export function buildVectorLinearPanel(
   // 1. 动态数学量列表
   const quantities: MathQuantity[] = [];
 
-  if (studyMode === "linearCombo" && physics) {
-    // —— 实际背景：同一套向量加法，三种物理外衣 ——
+  if (studyMode === "coordinate") {
+    /**
+     * 直角坐标运算（必修二 6.3）：把「几何动作」逐条翻译成「分量运算」。
+     *
+     * 五条读数按课堂推演顺序排列：先分别给出 a、b 的坐标（对象），
+     * 再给出加减与数乘的结果（运算），最后用 x₁y₂−x₂y₁ 收口共线判据（判据）。
+     */
+    const lambda = params.lambda ?? 1;
+    quantities.push(
+      {
+        label: "向量 a 的坐标",
+        symbol: "\\vec{a}",
+        value: `(${formatMathNumber(vecA.x)}, ${formatMathNumber(vecA.y)})`,
+      },
+      {
+        label: "向量 b 的坐标",
+        symbol: "\\vec{b}",
+        value: `(${formatMathNumber(vecB.x)}, ${formatMathNumber(vecB.y)})`,
+      },
+      {
+        label: "和向量 a + b 的坐标",
+        symbol: "\\vec{a}+\\vec{b}",
+        value: `(${formatMathNumber(sumAB.x)}, ${formatMathNumber(sumAB.y)})`,
+      },
+      {
+        label: "差向量 a − b 的坐标",
+        symbol: "\\vec{a}-\\vec{b}",
+        value: `(${formatMathNumber(diffVec.x)}, ${formatMathNumber(diffVec.y)})`,
+      },
+      {
+        label: `数乘向量 ${formatMathNumber(lambda)}a 的坐标`,
+        symbol: "\\lambda\\vec{a}",
+        value: `(${formatMathNumber(lambda * vecA.x)}, ${formatMathNumber(lambda * vecA.y)})`,
+      },
+      {
+        label: "共线判据 x₁y₂ − x₂y₁",
+        symbol: "x_ay_b-x_by_a",
+        value: `${formatMathNumber(detAB)}（${isCollinearAB ? "共线" : "不共线"}）`,
+      },
+    );
+  } else if (studyMode === "linearCombo" && physics) {
     const n = physics.naming;
     quantities.push(
       {
@@ -284,6 +328,16 @@ export function buildVectorLinearPanel(
         "坐标交叉相乘之差为 0",
       ],
     },
+    coordinateOperation: {
+      name: "平面向量运算的坐标表示",
+      latex:
+        "\\vec{a}\\pm\\vec{b} = (x_a\\pm x_b,\\; y_a\\pm y_b), \\quad \\lambda\\vec{a} = (\\lambda x_a,\\; \\lambda y_a)",
+      prerequisites: [
+        "坐标形式的前提：把向量起点平移到原点，终点坐标即向量坐标",
+        "加减法只对同名分量运算（横加横、纵加纵），不得交叉",
+        "数乘 $\\lambda\\vec{a}$ 使每个分量同乘 $\\lambda$：$|\\lambda\\vec{a}| = |\\lambda||\\vec{a}|$，$\\lambda<0$ 时方向反向",
+      ],
+    },
     basis: {
       name: "平面向量基本定理",
       latex: "\\vec{v} = \\lambda_1\\vec{e}_1 + \\lambda_2\\vec{e}_2",
@@ -295,7 +349,11 @@ export function buildVectorLinearPanel(
   };
 
   const theorems: Theorem[] = [];
-  if (studyMode === "linearCombo" && physics) {
+  if (studyMode === "coordinate") {
+    theorems.push({ ...allTheorems.coordinateOperation, level: "core" });
+    theorems.push({ ...allTheorems.collinearCondition, level: "important" });
+    theorems.push({ ...allTheorems.linearCombo, level: "supplementary" });
+  } else if (studyMode === "linearCombo" && physics) {
     theorems.push({ ...allTheorems.physicsVectorApplication, level: "core" });
     theorems.push({ ...allTheorems.linearCombo, level: "important" });
     theorems.push({ ...allTheorems.unitVector, level: "supplementary" });
@@ -316,7 +374,22 @@ export function buildVectorLinearPanel(
 
   // 3. 高考考点（按模式动态适配）
   const gaokaoPoints: GaokaoPoint[] = [];
-  if (studyMode === "linearCombo" && physics) {
+  if (studyMode === "coordinate") {
+    gaokaoPoints.push(
+      {
+        text: "坐标运算的唯一正确姿势：先把起点平移到原点，终点坐标才是向量坐标。两条向量只要起点不同，就必须先平移再谈坐标——直接把两点坐标相减当成向量坐标，是选填题最常见的失分点。",
+        importance: "gaokao",
+      },
+      {
+        text: "共线判据的两种形态：$x_ay_b - x_by_a = 0$（交叉相乘相等）与 $\\vec{a} = \\lambda\\vec{b}$ 完全等价，前者避免了讨论斜率是否存在的分类；但使用前必须先排除零向量——$\\vec{0}$ 与任意向量共线，交叉相乘恒为 0，会把「零向量」误判成「方向确定」。",
+        importance: "hard",
+      },
+      {
+        text: "数乘与模长的联动：$|\\lambda\\vec{a}| = |\\lambda|\\,|\\vec{a}|$ 中绝对值不可省。$\\lambda < 0$ 时方向反转但模长仍按 $|\\lambda|$ 放大，这正是「同向共线」与「反向共线」在坐标上的唯一差别。",
+        importance: "basic",
+      },
+    );
+  } else if (studyMode === "linearCombo" && physics) {
     const n = physics.naming;
     // 情景专属考点（三种物理外衣各自的高考落点，互不串味）
     if (physicsContext === "force-balance") {
@@ -406,6 +479,18 @@ export function buildVectorLinearPanel(
     });
   }
 
+  if (!isCollinearRatioDefined) {
+    /**
+     * 共线判据与共线比例是两件事：课标「零向量与任意向量共线」是约定，
+     * 此时交叉相乘恒为 0 会判出「共线」，但根本不存在使 b = λa 的实数 λ。
+     * 若不把这条讲清楚，学生就会在解答题里写出「λ 不存在故不共线」的错话。
+     */
+    warnings.push({
+      text: "共线比例未定义提示：当前存在零向量，交叉相乘判据恒为 0，按课标约定零向量与任意向量共线；但此时不存在实数 $\\lambda$ 使 $\\vec{b} = \\lambda\\vec{a}$，故「共线比例」不可写。解答题若要用比例式，必须先说明两向量均非零。",
+      level: "info",
+    });
+  }
+
   if (studyMode === "collinear" && !isThreePointsCollinear) {
     warnings.push({
       text: `三点不共线警告：当前系数和 x + y = ${coeffSum.toFixed(2)} ≠ 1，因此点 C 偏离了直线 AB。`,
@@ -423,7 +508,35 @@ export function buildVectorLinearPanel(
   // 推导链（P1-18）：① 符号表达式 → ② 代入解析式 → ③ 结果
   const reasoningSteps: ReasoningStep[] = [];
 
-  if (studyMode === "linearCombo" && physics) {
+  if (studyMode === "coordinate") {
+    const lambda = params.lambda ?? 1;
+    const lambdaStr = formatMathNumber(lambda);
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "符号表达式 · 写出两向量的坐标形式",
+        detail: `把两向量的起点都平移到原点 $O$，则终点坐标就是向量坐标：$\\vec{a} = (${formatMathNumber(vecA.x)}, ${formatMathNumber(vecA.y)})$、$\\vec{b} = (${formatMathNumber(vecB.x)}, ${formatMathNumber(vecB.y)})$。$|\\vec{a}| = ${normA.toFixed(2)}$、$|\\vec{b}| = ${normB.toFixed(2)}$。`,
+        latex: `\\vec{a} = (x_a, y_a), \\quad \\vec{b} = (x_b, y_b)`,
+        rubric: "采分点：写出两向量的坐标形式（2分）",
+      },
+      {
+        step: 2,
+        title: "代入坐标 · 同名分量分别运算",
+        detail: `加减法只对同名分量运算：$\\vec{a}+\\vec{b} = (${formatMathNumber(vecA.x)} + ${formatMathNumber(vecB.x)},\\ ${formatMathNumber(vecA.y)} + ${formatMathNumber(vecB.y)}) = (${formatMathNumber(sumAB.x)}, ${formatMathNumber(sumAB.y)})$；$\\vec{a}-\\vec{b} = (${formatMathNumber(diffVec.x)}, ${formatMathNumber(diffVec.y)})$；数乘 $\\lambda\\vec{a} = (${lambdaStr} \\times ${formatMathNumber(vecA.x)},\\ ${lambdaStr} \\times ${formatMathNumber(vecA.y)}) = (${formatMathNumber(lambda * vecA.x)}, ${formatMathNumber(lambda * vecA.y)})$，且 $|\\lambda\\vec{a}| = |\\lambda|\\,|\\vec{a}| = ${(Math.abs(lambda) * normA).toFixed(2)}$。`,
+        latex: `\\vec{a}+\\vec{b} = (${formatMathNumber(sumAB.x)}, ${formatMathNumber(sumAB.y)}), \\quad \\vec{a}-\\vec{b} = (${formatMathNumber(diffVec.x)}, ${formatMathNumber(diffVec.y)})`,
+        rubric: "采分点：按分量运算求出加减与数乘的坐标（3分）",
+      },
+      {
+        step: 3,
+        title: "判据收口 · 交叉相乘判定共线",
+        detail: isCollinearAB
+          ? `$x_ay_b - x_by_a = ${formatMathNumber(vecA.x)}\\times${formatMathNumber(vecB.y)} - ${formatMathNumber(vecB.x)}\\times${formatMathNumber(vecA.y)} = ${formatMathNumber(detAB)}$，判据取零，故 $\\vec{a} \\parallel \\vec{b}$——存在实数 $\\lambda$ 使 $\\vec{b} = \\lambda\\vec{a}$。此时不能再用夹角公式求两向量夹角：夹角为 $0^\\circ$（同向）或 $180^\\circ$（反向）。`
+          : `$x_ay_b - x_by_a = ${formatMathNumber(vecA.x)}\\times${formatMathNumber(vecB.y)} - ${formatMathNumber(vecB.x)}\\times${formatMathNumber(vecA.y)} = ${formatMathNumber(detAB)} \\neq 0$，判据不成立，故 $\\vec{a}$ 与 $\\vec{b}$ 不共线，它们可充当平面的一组基底，任一向量在该基底下的分解系数存在且唯一。`,
+        latex: `x_ay_b - x_by_a = ${formatMathNumber(detAB)} \\;${isCollinearAB ? "=" : "\\neq"}\\; 0`,
+        rubric: "采分点：用交叉相乘判据判定共线并说明理由（2分）",
+      },
+    );
+  } else if (studyMode === "linearCombo" && physics) {
     const n = physics.naming;
     /**
      * 夹角文案只在「有定义」时才给数值。
@@ -571,11 +684,13 @@ export function buildVectorLinearPanel(
    * 与「合成结果的大小看夹角」不是同一个记忆锚点。
    */
   const mnemonic =
-    studyMode === "linearCombo" && physics
-      ? physics.naming.third
-        ? "共点力首尾接成环，合力为零即平衡；平行四边形求合力，第三力等大反向！"
-        : "首尾相接即合成，同起点作平行四边形；结果大小介于差与和，夹角越大值越小！"
-      : "首尾相接三角形，同起点平行四边形；三点共线和为一，基底不共线唯一分解！";
+    studyMode === "coordinate"
+      ? "起点平移到原点，终点坐标即向量；横加横来纵加纵，交叉相乘零共线！"
+      : studyMode === "linearCombo" && physics
+        ? physics.naming.third
+          ? "共点力首尾接成环，合力为零即平衡；平行四边形求合力，第三力等大反向！"
+          : "首尾相接即合成，同起点作平行四边形；结果大小介于差与和，夹角越大值越小！"
+        : "首尾相接三角形，同起点平行四边形；三点共线和为一，基底不共线唯一分解！";
 
   return {
     quantities,

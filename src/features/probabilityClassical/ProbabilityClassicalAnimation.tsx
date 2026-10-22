@@ -26,6 +26,7 @@ import {
 import { buildClassicalProbabilityPanel } from "@/data/builders/probabilityClassical";
 import { computeClassicalProbability } from "@/math/probabilityClassical";
 import { ProbabilityClassicalScene } from "./components/ProbabilityClassicalScene";
+import { ClassicalFrequencyScene } from "./components/ClassicalFrequencyScene";
 
 export const ProbabilityClassicalAnimation: React.FC = () => {
   const [activePreset, setActivePreset] =
@@ -171,6 +172,7 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
     () => [
       { key: "matrix", label: "二维矩阵视图" },
       { key: "tree", label: "分步树状图视图" },
+      { key: "frequency", label: "大样本频率试验" },
     ],
     [],
   );
@@ -259,7 +261,7 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
     (view: string) => {
       setParams((p: ClassicalParams) => ({
         ...p,
-        activeView: view as "matrix" | "tree",
+        activeView: view as "matrix" | "tree" | "frequency",
       }));
     },
     [setParams],
@@ -287,6 +289,22 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
     }
     return [];
   }, [params.targetEvent, params.targetSum]);
+
+  // 大样本频率试验的次数控件（只在该视图出现）
+  const trialParams = useMemo<ParamConfig[]>(
+    () => [
+      {
+        key: "trials",
+        label: "重复试验次数 n",
+        value: params.trials ?? 600,
+        min: 20,
+        max: 5000,
+        step: 10,
+        description: "试验次数越多，频率越稳定在概率附近",
+      },
+    ],
+    [params.trials],
+  );
 
   const ballParams = useMemo<ParamConfig[]>(() => {
     return [
@@ -357,7 +375,8 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
                     const nextModel =
                       m as import("@/math/probabilityClassical").ClassicalModelType;
                     let defaultEvent = "sum_k";
-                    let nextView: "matrix" | "tree" = params.activeView;
+                    let nextView: "matrix" | "tree" | "frequency" =
+                      params.activeView;
                     if (nextModel === "ball_draw")
                       defaultEvent = "at_least_one_red";
                     if (nextModel === "coin_toss") {
@@ -479,30 +498,53 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
             )}
           </LeftPanelSection>
 
+          {/* 大样本频率试验：试验次数 */}
+          {params.activeView === "frequency" && (
+            <LeftPanelSection
+              title="大样本重复试验"
+              subtitle="拖动试验次数，观察频率如何收拢到概率"
+            >
+              <ParamControl
+                params={trialParams}
+                onParamChange={handleParamChange}
+              />
+            </LeftPanelSection>
+          )}
+
           {/* 题设三要素闭环导引卡片 */}
           {activeTipProps && <TipCard {...activeTipProps} />}
         </LeftPanel>
       }
       center={
         <div className="w-full h-full relative">
-          <SceneLegend
-            items={legendItems}
-            title="样本空间图例指示"
-            position="top-right"
-          />
+          {params.activeView !== "frequency" && (
+            <SceneLegend
+              items={legendItems}
+              title="样本空间图例指示"
+              position="top-right"
+            />
+          )}
           <AnimationSvgCanvas
             containerRef={containerRef}
             transform={vp.transform}
           >
-            <ProbabilityClassicalScene
-              modelType={params.modelType}
-              mathRes={mathRes}
-              activeView={params.activeView}
-              scale={scale}
-              vp={vp}
-              fontScale={canvasSize.font}
-              activeStep={currentStep}
-            />
+            {params.activeView === "frequency" ? (
+              <ClassicalFrequencyScene
+                params={params}
+                scale={scale}
+                fontScale={canvasSize.font}
+              />
+            ) : (
+              <ProbabilityClassicalScene
+                modelType={params.modelType}
+                mathRes={mathRes}
+                activeView={params.activeView}
+                scale={scale}
+                vp={vp}
+                fontScale={canvasSize.font}
+                activeStep={currentStep}
+              />
+            )}
           </AnimationSvgCanvas>
         </div>
       }

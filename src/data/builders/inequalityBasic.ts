@@ -1,5 +1,7 @@
 import type { MathPanelData, ReasoningStep } from "../types";
 import { calcMeans } from "@/features/inequalityBasic/math/inequalityBasic";
+import { analyzeInequalityProperties } from "@/math/inequalityProperties";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export function buildInequalityBasicPanel(
   params: Record<string, number>,
@@ -11,6 +13,144 @@ export function buildInequalityBasicPanel(
   const studyMode = (config?.studyMode as string) ?? "semicircle";
 
   const { am, gm, hm, qm, isEqual, diffAmGm } = calcMeans(a, b);
+
+  if (studyMode === "properties") {
+    /**
+     * 等式与不等式的性质（必修一 2.1）。
+     *
+     * 本模式不画面积、不比均值，只做一件事：用**差（或积）的符号**判定大小。
+     * 三条性质都由符号推出，因此看板只呈现「运算前后的大小关系」与「是否变向」，
+     * 让学生看到「加同一个数不变向、乘同一个负数必变向」的机器级证据。
+     */
+    const pa = params.pA ?? 3;
+    const pb = params.pB ?? -1;
+    const c = params.pC ?? -2;
+    const res = analyzeInequalityProperties(pa, pb, c);
+    const f = formatMathNumber;
+
+    const relationLabel = (r: string) =>
+      r === "gt" ? ">" : r === "lt" ? "<" : r === "eq" ? "=" : "无法比较";
+
+    return {
+      quantities: [
+        {
+          label: "作差结果 $a - b$",
+          symbol: "a-b",
+          value: f(res.diff),
+          highlight: res.relation === "eq" ? "extreme" : undefined,
+        },
+        {
+          label: "由差的符号得大小关系",
+          symbol: "a \\lessgtr b",
+          value: `a ${relationLabel(res.relation)} b`,
+        },
+        {
+          label: "同加 $c$ 后 $(a+c) - (b+c)$",
+          symbol: "(a+c)-(b+c)",
+          value: `a ${relationLabel(res.sumRelation)} b（差仍为 ${f(res.sumA - res.sumB)}）`,
+        },
+        {
+          label: "同乘 $c$ 后 $ac$ 与 $bc$",
+          symbol: "ac,\\ bc",
+          value: `${f(res.prodA)} ${relationLabel(res.prodRelation)} ${f(res.prodB)}`,
+          highlight: res.isProdReversed ? "extreme" : undefined,
+        },
+      ],
+      theorems: [
+        {
+          name: "作差比较法",
+          latex: `a - b > 0 \\iff a > b, \\quad a - b = 0 \\iff a = b, \\quad a - b < 0 \\iff a < b`,
+          level: "core",
+          condition: "比较两实数大小的通法：先作差、再变形、最后判符号",
+          prerequisites: [
+            "比较大小的本质是判断差（或商）的符号",
+            "作差后通常因式分解或配方，才能定出符号",
+          ],
+        },
+        {
+          name: "不等式的可加性",
+          latex: `a > b \\iff a + c > b + c`,
+          level: "important",
+          condition: "两边同加（减）同一个实数，不等号方向不变",
+          prerequisites: [
+            "$(a + c) - (b + c) = a - b$：平移不改变两数的差",
+            "因此可加性对任意实数 $c$ 都成立，无需讨论正负",
+          ],
+        },
+        {
+          name: "不等式的可乘性",
+          latex: `a > b, \\ c > 0 \\implies ac > bc; \\quad a > b, \\ c < 0 \\implies ac < bc`,
+          level: "core",
+          condition: "两边同乘一个数时，必须按该数的正负分情况讨论",
+          prerequisites: [
+            "$a > b > 0$ 且 $c > 0$ 时乘积保持同向",
+            "乘以负数相当于把数轴关于原点翻转，大小关系必然反向",
+            "$c = 0$ 时两边同为 0，不等式退化为等式",
+          ],
+        },
+      ],
+      gaokaoPoints: [
+        {
+          text: "作差法是万能的，但要「变形到能定符号」为止：差式若还含有参数，通常要因式分解或配方成平方和的形式，才能判断符号——停在 $a - b$ 这一步不给分。",
+          importance: "gaokao",
+        },
+        {
+          text: `乘负数变向是最高频失分点：本题 $c = ${f(c)}$，$a ${relationLabel(res.relation)} b$ 但 $ac ${relationLabel(res.prodRelation)} bc$。凡不等式两边同乘含参数的式子，必须先判断该式子的符号，符号不定就要分类讨论。`,
+          importance: "hard",
+        },
+        {
+          text: "同向可加性只能「相加」，不能「相减」：$a > b,\\ c > d \\implies a + c > b + d$ 成立，但 $a - c > b - d$ 不一定成立（$c > d$ 时相当于加了一个更小的数）。",
+          importance: "gaokao",
+        },
+      ],
+      warnings:
+        res.c === 0
+          ? [
+              {
+                text: "同乘 $c = 0$ 退化警告：两边同乘 0 后都变成 0，不等式退化为等式，此时不能再写不等号。",
+                level: "warning",
+              },
+            ]
+          : res.isProdReversed
+            ? [
+                {
+                  text: `同乘负数变向：$c = ${f(c)} < 0$，两侧同乘后不等号方向翻转，由 $a ${relationLabel(res.relation)} b$ 变为 $ac ${relationLabel(res.prodRelation)} bc$。`,
+                  level: "info",
+                },
+              ]
+            : [],
+      mnemonic: "比较大小先作差，符号一定结论出；同加不变向，乘负必变向！",
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 作差并写成可判符号的形式",
+          detail: `要比较 $a = ${f(pa)}$ 与 $b = ${f(pb)}$ 的大小，作差得 $a - b = ${f(pa)} - (${f(pb)}) = ${f(res.diff)}$。作差法的第一步永远是「作差」，而不是凭数轴上的位置目测。`,
+          latex: `a - b = ${f(pa)} - (${f(pb)}) = ${f(res.diff)}`,
+          rubric: "采分点：作差并正确算出差的值（2分）",
+        },
+        {
+          step: 2,
+          title: "代入求解 · 由差的符号判定大小",
+          detail: `差为${res.relation === "gt" ? "正" : res.relation === "lt" ? "负" : "零"}，故 $a ${relationLabel(res.relation)} b$。符号是唯一判据：差大于零即 $a > b$，差小于零即 $a < b$，差等于零即两数相等。`,
+          latex: `a - b = ${f(res.diff)} ${res.relation === "gt" ? ">" : res.relation === "lt" ? "<" : "="} 0 \\implies a ${relationLabel(res.relation)} b`,
+          rubric: "采分点：由差的符号写出大小关系（2分）",
+        },
+        {
+          step: 3,
+          title: "结果检验 · 同加与同乘的变向判断",
+          detail: `同加 $c = ${f(c)}$：$(a + c) - (b + c) = ${f(res.sumA - res.sumB)}$，与 $a - b$ 同号，不等号不变向。同乘 $c$：$ac = ${f(res.prodA)}$、$bc = ${f(res.prodB)}$，故 $ac ${relationLabel(res.prodRelation)} bc$——${
+            res.c < 0
+              ? "乘以负数使数轴翻转，大小关系反向了。"
+              : res.c > 0
+                ? "乘以正数大小关系保持不变。"
+                : "乘数为零时两边同为零，不等式退化为等式。"
+          }`,
+          latex: `(a+c)-(b+c) = a-b = ${f(res.diff)}, \\quad ac ${relationLabel(res.prodRelation)} bc`,
+          rubric: "采分点：分情况讨论同乘正负数对不等号方向的影响（3分）",
+        },
+      ],
+    };
+  }
 
   if (studyMode === "nike") {
     const minX = Math.sqrt(k);

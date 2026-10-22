@@ -6,13 +6,14 @@
  */
 import React from "react";
 import type { SceneScale, ViewportInfo } from "@/hooks";
-import type { AccumulationFnType } from "@/math/sequence";
+import type { AccumulationFnType, InductionClaimId } from "@/math/sequence";
 import { RecurrenceLinearPanScene } from "./RecurrenceLinearPanScene";
 import { RecurrenceAccumulationScene } from "./RecurrenceAccumulationScene";
 import { RecurrenceMultiplicationScene } from "./RecurrenceMultiplicationScene";
 import { RecurrenceNonHomogeneousScene } from "./RecurrenceNonHomogeneousScene";
 import { RecurrenceReciprocalScene } from "./RecurrenceReciprocalScene";
 import { RecurrenceSecondOrderScene } from "./RecurrenceSecondOrderScene";
+import { RecurrenceInductionScene } from "./RecurrenceInductionScene";
 
 export interface RecurrenceSceneProps {
   params: Record<string, number>;
@@ -25,7 +26,8 @@ export interface RecurrenceSceneProps {
     | "multiplication"
     | "non-homogeneous"
     | "reciprocal"
-    | "second-order";
+    | "second-order"
+    | "induction";
   accumFnType?: AccumulationFnType;
   multType?: "n_over_n1" | "n1_over_n" | "pow_two";
   highlightN: number;
@@ -35,6 +37,7 @@ export interface RecurrenceSceneProps {
   activeStep?: number;
   linearViewMode?: "shift" | "cobweb";
   onToggleLinearViewMode?: () => void;
+  inductionClaim?: InductionClaimId;
 }
 
 export const RecurrenceScene: React.FC<RecurrenceSceneProps> = (props) => {
@@ -73,6 +76,13 @@ export const RecurrenceScene: React.FC<RecurrenceSceneProps> = (props) => {
       return <RecurrenceReciprocalScene {...common} />;
     case "second-order":
       return <RecurrenceSecondOrderScene {...common} />;
+    case "induction":
+      return (
+        <RecurrenceInductionScene
+          {...common}
+          inductionClaim={props.inductionClaim}
+        />
+      );
     default:
       return null;
   }

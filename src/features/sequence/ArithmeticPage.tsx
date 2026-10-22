@@ -18,7 +18,7 @@ import { calcArithmeticSequence } from "@/math/sequence";
 
 export function ArithmeticPage() {
   const [arithmeticSubMode, setArithmeticSubMode] = useState<
-    "linear" | "gauss" | "quadratic" | "segment" | "absSum"
+    "linear" | "gauss" | "quadratic" | "segment" | "absSum" | "snToAn"
   >("linear");
   const [highlightN, setHighlightN] = useState<number>(1);
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -64,6 +64,11 @@ export function ArithmeticPage() {
       yR = [Math.floor(minY - 2.0), Math.ceil(maxY + 2.5)];
     } else if (arithmeticSubMode === "segment") {
       yR = [Math.floor(minAn - 1.5), Math.ceil(maxAn + 3.0)];
+    } else if (arithmeticSubMode === "snToAn") {
+      // S_n 是主对象（抛物线），a_n 是每步的竖直落差，两者必须同框才看得出作差关系
+      const minY = Math.min(0, ...allSn);
+      const maxY = Math.max(0, ...allSn);
+      yR = [Math.floor(minY - 1.5), Math.ceil(maxY + 2.5)];
     } else if (arithmeticSubMode === "absSum") {
       const minY = Math.min(0, minAn, minSn);
       const maxY = Math.max(0, maxTn);
@@ -99,6 +104,7 @@ export function ArithmeticPage() {
       quadratic: ["a1", "d", "N"],
       segment: ["a1", "d", "N", "kSegment"],
       absSum: ["a1", "d", "N"],
+      snToAn: ["a1", "d", "N", "snConst"],
     };
 
     const keys = keysByMode[arithmeticSubMode] ?? ["a1", "d", "N"];
@@ -138,6 +144,9 @@ export function ArithmeticPage() {
       Math.floor((params.N ?? 8) / (params.kSegment ?? 3)) < 2
     ) {
       setParams((prev) => ({ ...prev, N: 8, kSegment: 3 }));
+    } else if (mode === "snToAn") {
+      // 入场默认 C = 0（可合并）；学生把 C 拖到非零，才看得到首项脱轨
+      setParams((prev) => ({ ...prev, a1: 5, d: -1.5, N: 8, snConst: 0 }));
     } else if (mode === "absSum" && (params.d ?? 1) >= 0) {
       setParams((prev) => ({ ...prev, a1: 5, d: -1.5, N: 8 }));
     }
@@ -190,6 +199,19 @@ export function ArithmeticPage() {
           question:
             "连续等长片段和 $S_k, S_{2k}-S_k, S_{3k}-S_{2k}$ 为何仍成等差数列，新公差与 $d$ 有何代数联系？",
         };
+      case "snToAn":
+        return {
+          variant:
+            (params.snConst ?? 0) === 0
+              ? ("primary" as const)
+              : ("warning" as const),
+          badge: "核心考点 · 由 $S_n$ 作差求通项",
+          condition: `题给前 $n$ 项和 $S_n = \\frac{${d}}{2}n^2 + (${a1} - \\frac{${d}}{2})n${(params.snConst ?? 0) === 0 ? "" : ` ${(params.snConst ?? 0) > 0 ? "+" : "-"} ${Math.abs(params.snConst ?? 0)}`}$，项数 $N = ${N}$。`,
+          question:
+            (params.snConst ?? 0) === 0
+              ? "图中每一根竖条的竖直落差都是通项 $a_n$，为什么第 1 根竖条要单独用 $a_1 = S_1$ 而不是作差？既然结果能合并成一个式子，验证首项这一步为什么仍是采分点？"
+              : "常数项不为 0 时，第 1 根竖条（从 0 量到 $S_1$）已经不再等于 $a_1$。此时直接合并成一个通项公式会漏掉什么？怎样写才符合分段要求？",
+        };
       case "absSum":
         return {
           variant: "warning" as const,
@@ -207,7 +229,7 @@ export function ArithmeticPage() {
             "探究等差数列通项公式 $a_n$ 与前 $n$ 项和 $S_n$ 之间离散与连续二次函数最值的对应关系。",
         };
     }
-  }, [arithmeticSubMode, a1, d, N, kSegment]);
+  }, [arithmeticSubMode, a1, d, N, kSegment, params.snConst]);
 
   return (
     <ThreePanel
@@ -224,6 +246,7 @@ export function ArithmeticPage() {
                 { key: "quadratic", label: "二次最值" },
                 { key: "segment", label: "片段和" },
                 { key: "absSum", label: "绝对值和" },
+                { key: "snToAn", label: "Sn 求 an" },
               ]}
               value={arithmeticSubMode}
               onChange={(val) =>

@@ -174,6 +174,31 @@ export interface DihedralAngleResult {
   centroidBase: Vec3; // 底面 △ABD 重心 G1(a/3, b/3, 0)
   centroidSection: Vec3; // 截面 △BDE 重心 G2(a/3, b/3, zE/3)
   zE: number; // 实际动点高度
+
+  /* ── 锐钝的自动判定（免去「由图可知」） ─────────────────────────────
+   * 二面角究竟是法向量夹角本身、还是它的补角，取决于两个法向量分别指向
+   * 二面角的哪一侧。这里给出**可计算**的判据，而不是靠肉眼：
+   *   ① 取两个半平面内各一个内点（截面重心、底面重心）；
+   *   ② 用 n·(内点 − 平面上一点) 的符号判断该法向量是否「指向二面角内部」；
+   *   ③ 同指向（都进或都出）⇒ θ = 180° − ⟨n₁,n₂⟩；一进一出 ⇒ θ = ⟨n₁,n₂⟩。
+   * 同时用几何法平面角 MP、MQ 的夹角独立复算一遍，两路结果必须吻合。
+   */
+  cosNormalSigned: number; // cos⟨n₁,n₂⟩（带符号）
+  normalAngleDeg: number; // 法向量夹角 ⟨n₁,n₂⟩，[0°, 180°]
+  isNormal1Inward: boolean; // n₁ 是否指向二面角内部
+  isNormal2Inward: boolean; // n₂ 是否指向二面角内部
+  /** 进出方位判定的原始点积：dot1 = n₁·(截面内点 − A)，dot2 = n₂·(底面内点 − B)，符号即进出 */
+  inwardProbe: { dot1: number; dot2: number };
+  /** 法向量夹角与二面角的关系：相等（一进一出）或互补（同进同出） */
+  orientationRelation: "equal" | "supplementary";
+  /** 由法向量规则算出的二面角大小 */
+  predictedDihedralDeg: number;
+  /** 几何法平面角 ∠PMQ 的余弦（与法向量规则相互独立的一条验证路径） */
+  cosThetaGeometric: number;
+  /** 两路结果是否吻合（差值 < 1e-6） */
+  isOrientationConsistent: boolean;
+  /** 由几何值直接判定的锐钝（不看任何图） */
+  angleClass: "acute" | "right" | "obtuse";
 }
 
 /**
@@ -216,6 +241,65 @@ export function solveDihedralAngle(
   const centroidBase: Vec3 = { x: a / 3, y: b / 3, z: 0 };
   const centroidSection: Vec3 = { x: a / 3, y: b / 3, z: zE / 3 };
 
+  // ── 锐钝自动判定 ──────────────────────────────────────────────
+  // ① 两法向量夹角（带符号）
+  const cosNormalSigned =
+    lenN2 > 1e-6 ? n1.x * n2.x + n1.y * n2.y + n1.z * n2.z : 1; // n₁、n₂ 均为单位向量时，点积即夹角余弦
+  const normalAngleDeg =
+    (Math.acos(Math.min(1, Math.max(-1, cosNormalSigned))) * 180) / Math.PI;
+
+  // ② 是否指向二面角内部：底面平面过 A(0,0,0)，截面平面过 B(a,0,0)
+  const A_PT: Vec3 = { x: 0, y: 0, z: 0 };
+  const B_PT: Vec3 = { x: a, y: 0, z: 0 };
+  const dot1 =
+    n1.x * (centroidSection.x - A_PT.x) +
+    n1.y * (centroidSection.y - A_PT.y) +
+    n1.z * (centroidSection.z - A_PT.z);
+  const dot2 =
+    n2.x * (centroidBase.x - B_PT.x) +
+    n2.y * (centroidBase.y - B_PT.y) +
+    n2.z * (centroidBase.z - B_PT.z);
+  const isNormal1Inward = dot1 > 0;
+  const isNormal2Inward = dot2 > 0;
+
+  // ③ 同指向 ⇒ 互补；一进一出 ⇒ 相等
+  const orientationRelation: "equal" | "supplementary" =
+    isNormal1Inward === isNormal2Inward ? "supplementary" : "equal";
+  const predictedDihedralDeg =
+    orientationRelation === "equal" ? normalAngleDeg : 180 - normalAngleDeg;
+
+  // ④ 独立复核：几何法平面角 ∠PMQ（P = A，Q = E(0,0,zE)，M 为 BD 上的垂足）
+  const E_PT: Vec3 = { x: 0, y: 0, z: zE };
+  const mp: Vec3 = {
+    x: A_PT.x - edgeFootM.x,
+    y: A_PT.y - edgeFootM.y,
+    z: A_PT.z - edgeFootM.z,
+  };
+  const mq: Vec3 = {
+    x: E_PT.x - edgeFootM.x,
+    y: E_PT.y - edgeFootM.y,
+    z: E_PT.z - edgeFootM.z,
+  };
+  const mpLen = Math.sqrt(mp.x * mp.x + mp.y * mp.y + mp.z * mp.z);
+  const mqLen = Math.sqrt(mq.x * mq.x + mq.y * mq.y + mq.z * mq.z);
+  const cosThetaGeometric =
+    mpLen > 1e-9 && mqLen > 1e-9
+      ? (mp.x * mq.x + mp.y * mq.y + mp.z * mq.z) / (mpLen * mqLen)
+      : 1;
+
+  const predictedRad = (predictedDihedralDeg * Math.PI) / 180;
+  const isOrientationConsistent =
+    Math.abs(Math.cos(predictedRad) - cosThetaGeometric) < 1e-6;
+
+  const geometricDeg =
+    (Math.acos(Math.min(1, Math.max(-1, cosThetaGeometric))) * 180) / Math.PI;
+  const angleClass: "acute" | "right" | "obtuse" =
+    Math.abs(geometricDeg - 90) < 1e-6
+      ? "right"
+      : geometricDeg < 90
+        ? "acute"
+        : "obtuse";
+
   return {
     n1,
     n2,
@@ -227,6 +311,16 @@ export function solveDihedralAngle(
     centroidBase,
     centroidSection,
     zE,
+    cosNormalSigned,
+    normalAngleDeg,
+    isNormal1Inward,
+    isNormal2Inward,
+    inwardProbe: { dot1, dot2 },
+    orientationRelation,
+    predictedDihedralDeg,
+    cosThetaGeometric,
+    isOrientationConsistent,
+    angleClass,
   };
 }
 
