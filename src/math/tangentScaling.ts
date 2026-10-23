@@ -431,6 +431,91 @@ export const SECANT_CURVE_MODELS: Record<SecantSubModel, SecantCurveModel> = {
 };
 
 /**
+ * 过定点求参页（`param_k`）两根手柄的活动边界。
+ *
+ * 右屏滑块与中屏拖拽钳制必须同源：两边各写一份 `[0.1, 3.5]` / `[0.2, 3.0]` 时，
+ * 只要改一处就会「滑块拖到底、中屏还在动」或反之，学生看到的是两个不同的定义域。
+ */
+export const PARAM_K_SLOPE_RANGE: readonly [number, number] = [0.1, 3.5];
+export const PARAM_K_PROBE_X_RANGE: readonly [number, number] = [0.2, 3.0];
+
+/** 割线两端点 a、b 的滑块边界与最小间距 */
+export interface SecantIntervalBounds {
+  aMin: number;
+  aMax: number;
+  bMin: number;
+  bMax: number;
+  /** a、b 之间必须保留的最小间距：贴到 0 会让割线退化为切线，教学上就变成另一道题 */
+  minGap: number;
+}
+
+export const SECANT_INTERVAL_BOUNDS: Record<
+  "exp_secant_tangent" | "log_secant_tangent",
+  SecantIntervalBounds
+> = {
+  // 对数支的 a 必须留在 x > 0：ln 在 0 处无定义，a 取到 0.1 时函数值已经掉到 -2.3，图象会被拽出画布
+  //
+  // aMax 不是随手写的：它必须 ≤ bMin − minGap，否则「a 拉到上限 + b 压到下限」会造出
+  // 间距仅 0.1 的近似切线态，与拖拽钳制强制的 0.4 打架。原值 1.5 就是这个矛盾
+  // （1.6 − 0.4 = 1.2 < 1.5），滑块能拖出来、中屏拖不出来，本轮收到 1.2。
+  exp_secant_tangent: {
+    aMin: 0.1,
+    aMax: 1.2,
+    bMin: 1.6,
+    bMax: 3.5,
+    minGap: 0.4,
+  },
+  log_secant_tangent: {
+    aMin: 0.2,
+    aMax: 1.2,
+    bMin: 1.6,
+    bMax: 4.5,
+    minGap: 0.4,
+  },
+};
+
+/**
+ * 取某一割线子模型的两端点边界。
+ * `taylor_quadratic` 不渲染区间滑块（其上界是直线、下界是抛物线的三明治结构），
+ * 这里回落到指数支的边界只为让调用方不必写分支，不会真正参与钳制。
+ */
+export function getSecantIntervalBounds(
+  sub: SecantSubModel,
+): SecantIntervalBounds {
+  return sub === "log_secant_tangent"
+    ? SECANT_INTERVAL_BOUNDS.log_secant_tangent
+    : SECANT_INTERVAL_BOUNDS.exp_secant_tangent;
+}
+
+/**
+ * 割线端点拖拽钳制：把鼠标给出的 x 收成一个合法端点值。
+ *
+ * 之前这段 Math.max / Math.min 套娃写在 `TangentSecantScene` 里，与右屏滑块各写一份边界。
+ * 提到纯函数层后，「滑块范围」与「拖拽钳制」读的是同一张表，且可被单测直接打靶。
+ *
+ * 刻意保留 clamps 的嵌套顺序：先把鼠标值收进 `b - minGap`，再收进滑块边界。
+ * 反过来的话，当 `b` 已经贴到 `bMin` 时会出现「拖 a 拖不动、松手又跳一格」的抖动。
+ */
+export function clampSecantEndpoint(
+  sub: SecantSubModel,
+  which: "a" | "b",
+  proposedX: number,
+  current: { a: number; b: number },
+): number {
+  const bounds = getSecantIntervalBounds(sub);
+  if (which === "a") {
+    return Math.max(
+      bounds.aMin,
+      Math.min(bounds.aMax, Math.min(current.b - bounds.minGap, proposedX)),
+    );
+  }
+  return Math.max(
+    bounds.bMin,
+    Math.max(current.a + bounds.minGap, Math.min(bounds.bMax, proposedX)),
+  );
+}
+
+/**
  * 采集中屏必须落在画布内的教学关键点（切点、临界点、探针读数点）。
  *
  * 只收「点标 / 可拖拽手柄」所在的位置，**不含**函数曲线与切线的端点——

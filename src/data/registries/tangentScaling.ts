@@ -2,6 +2,9 @@ import { MATH_COLORS } from "@/theme";
 import {
   BASE_CURVE_MODELS,
   SANDWICH_CURVE_MODELS,
+  PARAM_K_SLOPE_RANGE,
+  PARAM_K_PROBE_X_RANGE,
+  getSecantIntervalBounds,
 } from "@/math/tangentScaling";
 import type { ParamConfig, SelectGridItem } from "@/components/UI";
 import type {
@@ -349,8 +352,8 @@ export function getTangentScalingParamConfigs(
           labelFormula: `\\text{动直线斜率 } \\color{${MATH_COLORS.paramPrimary}}{k}`,
           group: "直线斜率参数",
           value: params.k,
-          min: 0.1,
-          max: 3.5,
+          min: PARAM_K_SLOPE_RANGE[0],
+          max: PARAM_K_SLOPE_RANGE[1],
           step: 0.05,
           importance: "core",
           marks,
@@ -361,8 +364,8 @@ export function getTangentScalingParamConfigs(
           labelFormula: `\\text{检验点 } \\color{${MATH_COLORS.paramSecondary}}{x}`,
           group: "直线斜率参数",
           value: params.evalX,
-          min: 0.2,
-          max: 3.0,
+          min: PARAM_K_PROBE_X_RANGE[0],
+          max: PARAM_K_PROBE_X_RANGE[1],
           step: 0.1,
         },
       ];
@@ -370,6 +373,7 @@ export function getTangentScalingParamConfigs(
 
     case "secant": {
       const secSub = options?.secantSubModel ?? "exp_secant_tangent";
+      const bounds = getSecantIntervalBounds(secSub);
       if (secSub === "taylor_quadratic") {
         return [
           {
@@ -400,7 +404,6 @@ export function getTangentScalingParamConfigs(
         ];
       }
 
-      const isLog = secSub === "log_secant_tangent";
       return [
         {
           key: "intervalA",
@@ -408,8 +411,8 @@ export function getTangentScalingParamConfigs(
           labelFormula: `\\text{左端点 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
           group: "区间参数",
           value: params.intervalA,
-          min: isLog ? 0.2 : 0.1,
-          max: 1.5,
+          min: bounds.aMin,
+          max: bounds.aMax,
           step: 0.1,
         },
         {
@@ -418,8 +421,8 @@ export function getTangentScalingParamConfigs(
           labelFormula: `\\text{右端点 } \\color{${MATH_COLORS.paramSecondary}}{b}`,
           group: "区间参数",
           value: params.intervalB,
-          min: 1.6,
-          max: isLog ? 4.5 : 3.5,
+          min: bounds.bMin,
+          max: bounds.bMax,
           step: 0.1,
         },
       ];

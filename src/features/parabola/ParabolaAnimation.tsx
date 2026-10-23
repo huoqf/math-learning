@@ -53,8 +53,10 @@ export function ParabolaAnimation() {
   // 视口自适应：动点 P(2pt², 2pt) 与焦点必须可见。
   // p=0.5、tP=5 时 P 落在 (25, 5)，固定 x∈[-7,7] 会把动点整个裁到画布外。
   // 开口方向决定对称轴：right/left 沿 x，up/down 沿 y。
+  // 二元解构提到 useMemo 之外：依赖表里已有 p、tP 两个标量，但函数体引用的是 `params` 整体，
+  // react-hooks/exhaustive-deps 会报缺依赖。提到外面后依赖表与函数体都只谈这两个标量，行为不变。
+  const { p: pVal, tP } = params;
   const viewRange = useMemo(() => {
-    const { p: pVal, tP } = params;
     const along = 2 * pVal * tP * tP; // 对称轴方向坐标
     const across = 2 * pVal * tP; // 垂直于对称轴的坐标（曲线向两侧对称延伸）
     const focal = pVal / 2;
@@ -77,7 +79,7 @@ export function ParabolaAnimation() {
       defaultXRange: [-7, 7],
       defaultYRange: [-5.5, 5.5],
     });
-  }, [direction, params.p, params.tP]);
+  }, [direction, pVal, tP]);
 
   const scale = useSceneScale({
     vp,

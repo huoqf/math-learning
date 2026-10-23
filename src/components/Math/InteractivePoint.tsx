@@ -35,12 +35,14 @@ interface InteractivePointProps {
   /**
    * 横向数学有效取值区间 [min, max]。
    * 拖拽时由底层自动进行 Clamp 截断，业务层无需重复手写 Math.max / Math.min。
+   * 取 `readonly` 是为了让 `as const` 的区间常量（如 PARAM_K_PROBE_X_RANGE）能直接传入，
+   * 不必为了让类型匹配而复制成可变元组——那等于又制造一份副本。
    */
-  xRange?: [number, number];
+  xRange?: readonly [number, number];
   /**
    * 纵向数学有效取值区间 [min, max]。
    */
-  yRange?: [number, number];
+  yRange?: readonly [number, number];
   /**
    * 单自变量变化快捷回调 (newX: number) => void。
    * 当配置了 axis="x" 或 snapTo 时，直接派发受约束的有效横坐标，业务代码极简。

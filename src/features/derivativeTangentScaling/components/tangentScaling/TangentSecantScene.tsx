@@ -12,6 +12,7 @@ import { MATH_COLORS } from "@/theme";
 import {
   calculateSecantLine,
   calculateTangentLine,
+  clampSecantEndpoint,
   SECANT_CURVE_MODELS,
 } from "@/math/tangentScaling";
 import type { SecantSubModel } from "@/data/registries/tangentScaling";
@@ -255,9 +256,6 @@ export function TangentSecantScene({
           />
           {/* 区间端点 A 与 B 可交互拖拽 */}
           {(() => {
-            const isLog = secantData.isLog;
-            const minA = isLog ? 0.2 : 0.1;
-            const maxB = isLog ? 4.5 : 3.5;
             const aVal = secantData.a;
             const bVal = secantData.b;
             const ya = secantData.mainFn(aVal);
@@ -275,7 +273,10 @@ export function TangentSecantScene({
                   onDrag={({ x }) => {
                     onParamChange(
                       "intervalA",
-                      Math.max(minA, Math.min(1.5, Math.min(bVal - 0.4, x))),
+                      clampSecantEndpoint(secantSubModel, "a", x, {
+                        a: aVal,
+                        b: bVal,
+                      }),
                     );
                   }}
                 />
@@ -289,7 +290,10 @@ export function TangentSecantScene({
                   onDrag={({ x }) => {
                     onParamChange(
                       "intervalB",
-                      Math.max(1.6, Math.max(aVal + 0.4, Math.min(maxB, x))),
+                      clampSecantEndpoint(secantSubModel, "b", x, {
+                        a: aVal,
+                        b: bVal,
+                      }),
                     );
                   }}
                 />

@@ -9,7 +9,11 @@ import {
 import type { LabelItem } from "@/utils/labelOverlap";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
-import { checkParamKBounding } from "@/math/tangentScaling";
+import {
+  checkParamKBounding,
+  PARAM_K_SLOPE_RANGE,
+  PARAM_K_PROBE_X_RANGE,
+} from "@/math/tangentScaling";
 import type { ParamKSubModel } from "@/data/registries/tangentScaling";
 import { clipFn } from "./clipFn";
 import type { TangentSceneBaseProps } from "./types";
@@ -218,7 +222,10 @@ export function TangentParamKScene({
         fontScale={fontScale}
         onDrag={({ x, y }) => {
           const effX = Math.max(0.5, x);
-          const newK = Math.max(0.1, Math.min(3.5, y / effX));
+          const newK = Math.max(
+            PARAM_K_SLOPE_RANGE[0],
+            Math.min(PARAM_K_SLOPE_RANGE[1], y / effX),
+          );
           onParamChange("k", Math.round(newK * 100) / 100);
         }}
       />
@@ -255,7 +262,7 @@ export function TangentParamKScene({
           {/* 动直线上的检验探针手柄 P */}
           <InteractivePoint
             axis="x"
-            xRange={[0.2, 3.0]}
+            xRange={PARAM_K_PROBE_X_RANGE}
             cx={ex}
             cy={yLine}
             scale={scale}
@@ -290,7 +297,7 @@ export function TangentParamKScene({
           {/* 动直线上的检验探针手柄 P */}
           <InteractivePoint
             axis="x"
-            xRange={[0.2, 3.0]}
+            xRange={PARAM_K_PROBE_X_RANGE}
             cx={ex}
             cy={yLine}
             scale={scale}
