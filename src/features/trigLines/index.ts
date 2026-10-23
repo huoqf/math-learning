@@ -1,1 +1,4 @@
-export { TrigLinesAnimation as default, TrigLinesAnimation } from "./TrigLinesAnimation";
+export {
+  TrigLinesAnimation as default,
+  TrigLinesAnimation,
+} from "./TrigLinesAnimation";

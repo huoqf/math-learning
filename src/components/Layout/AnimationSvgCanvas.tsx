@@ -1,22 +1,22 @@
-import React, { type RefObject } from 'react'
+import React, { type RefObject } from "react";
 
 interface AnimationSvgCanvasProps {
-  containerRef: RefObject<HTMLDivElement | null>
-  transform: string
-  children: React.ReactNode
-  svgRef?: RefObject<SVGSVGElement | null>
-  canvasRef?: RefObject<HTMLCanvasElement | null>
-  className?: string
-  onMouseMove?: React.MouseEventHandler<SVGSVGElement>
-  onMouseUp?: React.MouseEventHandler<SVGSVGElement>
-  onMouseLeave?: React.MouseEventHandler<SVGSVGElement>
-  onMouseDown?: React.MouseEventHandler<SVGSVGElement>
-  onClick?: React.MouseEventHandler<SVGSVGElement>
-  onTouchStart?: React.TouchEventHandler<SVGSVGElement>
-  onTouchMove?: React.TouchEventHandler<SVGSVGElement>
-  onTouchEnd?: React.TouchEventHandler<SVGSVGElement>
-  onPointerMove?: React.PointerEventHandler<SVGSVGElement>
-  onPointerUp?: React.PointerEventHandler<SVGSVGElement>
+  containerRef: RefObject<HTMLDivElement | null>;
+  transform: string;
+  children: React.ReactNode;
+  svgRef?: RefObject<SVGSVGElement | null>;
+  canvasRef?: RefObject<HTMLCanvasElement | null>;
+  className?: string;
+  onMouseMove?: React.MouseEventHandler<SVGSVGElement>;
+  onMouseUp?: React.MouseEventHandler<SVGSVGElement>;
+  onMouseLeave?: React.MouseEventHandler<SVGSVGElement>;
+  onMouseDown?: React.MouseEventHandler<SVGSVGElement>;
+  onClick?: React.MouseEventHandler<SVGSVGElement>;
+  onTouchStart?: React.TouchEventHandler<SVGSVGElement>;
+  onTouchMove?: React.TouchEventHandler<SVGSVGElement>;
+  onTouchEnd?: React.TouchEventHandler<SVGSVGElement>;
+  onPointerMove?: React.PointerEventHandler<SVGSVGElement>;
+  onPointerUp?: React.PointerEventHandler<SVGSVGElement>;
 }
 
 export const AnimationSvgCanvas = React.memo<AnimationSvgCanvasProps>(
@@ -26,7 +26,7 @@ export const AnimationSvgCanvas = React.memo<AnimationSvgCanvasProps>(
     children,
     svgRef,
     canvasRef,
-    className = '',
+    className = "",
     onMouseMove,
     onMouseUp,
     onMouseLeave,
@@ -38,11 +38,11 @@ export const AnimationSvgCanvas = React.memo<AnimationSvgCanvasProps>(
     onPointerMove,
     onPointerUp,
   }) {
-    const hasCanvas = !!canvasRef
+    const hasCanvas = !!canvasRef;
     return (
       <div
         ref={containerRef}
-        className={`w-full h-full overflow-hidden${hasCanvas ? ' relative' : ''}${className ? ` ${className}` : ''}`}
+        className={`w-full h-full overflow-hidden${hasCanvas ? " relative" : ""}${className ? ` ${className}` : ""}`}
       >
         {hasCanvas && (
           <canvas
@@ -53,7 +53,7 @@ export const AnimationSvgCanvas = React.memo<AnimationSvgCanvasProps>(
         )}
         <svg
           ref={svgRef}
-          className={`block select-none w-full h-full${hasCanvas ? ' absolute inset-0 pointer-events-none' : ''}`}
+          className={`block select-none w-full h-full${hasCanvas ? " absolute inset-0 pointer-events-none" : ""}`}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}
           onMouseLeave={onMouseLeave}
@@ -65,11 +65,9 @@ export const AnimationSvgCanvas = React.memo<AnimationSvgCanvasProps>(
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
         >
-          <g transform={transform}>
-            {children}
-          </g>
+          <g transform={transform}>{children}</g>
         </svg>
       </div>
-    )
-  }
-)
+    );
+  },
+);
