@@ -69,7 +69,7 @@ export function buildParamKModel(
           title: "设切点并写出切线方程",
           detail:
             "设切点为 $(x_1, e^{x_1})$，导数 $f'(x_1) = e^{x_1}$，切线方程为 $y - e^{x_1} = e^{x_1}(x - x_1)$。",
-          rubric: "采分点：切线方程建立（3分）",
+          rubric: "【高考采分点】切线方程建立（3分）",
         },
         {
           step: 2,
@@ -77,14 +77,14 @@ export function buildParamKModel(
           detail:
             "因切线过原点 $(0,0)$，代入得 $-e^{x_1} = -x_1 e^{x_1}$，解得 $x_1 = 1$，临界斜率 $k = e$。",
           latex: "x_1 = 1 \\implies k = e, \\quad \\text{切点 } (1, e)",
-          rubric: "采分点：临界解算（4分）",
+          rubric: "【高考采分点】临界解算（4分）",
         },
         {
           step: 3,
           title: "结合几何切线位置得出参数范围",
           detail:
             "切线 $y=ex$ 恒位于指数曲线下方，动直线绕原点顺时针旋转（斜率减小）时始终不穿透曲线下方，故充要条件为 $k \\le e$。",
-          rubric: "采分点：充分性与必要性结论（4分）",
+          rubric: "【高考采分点】充分性与必要性结论（4分）",
         },
       ],
     };
@@ -147,7 +147,7 @@ export function buildParamKModel(
           title: "参变量分离或切线法",
           detail:
             "令 $g(x) = \\frac{\\ln x}{x}$，求导得 $g'(x) = \\frac{1 - \\ln x}{x^2}$，令 $g'(x) = 0$ 得 $x = e$。",
-          rubric: "采分点：求导与解导数为零的方程（4分）",
+          rubric: "【高考采分点】求导与解导数为零的方程（4分）",
         },
         {
           step: 2,
@@ -155,14 +155,14 @@ export function buildParamKModel(
           detail:
             "当 $x < e$ 时 $g'(x) > 0$，当 $x > e$ 时 $g'(x) < 0$，故 $g(x)$ 在 $x = e$ 处取得最大值 $g(e) = 1/e$。",
           latex: "g(x)_{\\max} = g(e) = \\frac{1}{e}",
-          rubric: "采分点：最值论证（4分）",
+          rubric: "【高考采分点】最值论证（4分）",
         },
         {
           step: 3,
           title: "确立斜率范围",
           detail:
             "恒成立要求 $k \\ge g(x)_{\\max} = 1/e$，几何上对应过原点切线在 $(e,1)$ 相切。",
-          rubric: "采分点：结论总结（3分）",
+          rubric: "【高考采分点】结论总结（3分）",
         },
       ],
     };
@@ -236,7 +236,7 @@ export function buildParamKModel(
         detail:
           "设切点为 $(x_1, e^{x_1})$，切线斜率 $k_1 = e^{x_1}$。由切线过原点得 $e^{x_1}/x_1 = e^{x_1}$，解得 $x_1 = 1$，故 $k_1 = e$。",
         latex: "k_1 = e, \\quad \\text{切点 } (1, e)",
-        rubric: "采分点：指数切线临界解算（4分）",
+        rubric: "【高考采分点】指数切线临界解算（4分）",
       },
       {
         step: 2,
@@ -244,14 +244,14 @@ export function buildParamKModel(
         detail:
           "设切点为 $(x_2, \\ln x_2)$，切线斜率 $k_2 = 1/x_2$。由过原点得 $\\frac{\\ln x_2}{x_2} = \\frac{1}{x_2}$，解得 $x_2 = e$，故 $k_2 = 1/e$。",
         latex: "k_2 = \\frac{1}{e}, \\quad \\text{切点 } (e, 1)",
-        rubric: "采分点：对数切线临界解算（4分）",
+        rubric: "【高考采分点】对数切线临界解算（4分）",
       },
       {
         step: 3,
         title: "几何旋转放缩确定参数范围",
         detail:
           "要使直线 $y=kx$ 介于两曲线之间，斜率必须满足 $k_2 \\le k \\le k_1$，即 $1/e \\le k \\le e$。",
-        rubric: "采分点：综合取交集与边界检验（3分）",
+        rubric: "【高考采分点】综合取交集与边界检验（3分）",
       },
     ],
   };

@@ -130,7 +130,8 @@ export function buildRadianMeasurePanel(
         title: "审题定法 · 锁定换算比例",
         detail:
           "两个方向的换算都由同一个等式派生：半圆的弧长是 $\\pi r$，所对圆心角是 $180^\\circ$，故 $\\pi\\ \\text{rad} = 180^\\circ$。",
-        rubric: "【高考采分点】写出 π rad = 180° 这一基准等式",
+        rubric:
+          "【高考采分点】由半圆弧长 $\\pi r$ 对应圆心角 $180^\\circ$ 写出基准等式 $\\pi\\ \\text{rad} = 180^\\circ$，得 2 分。",
       },
       {
         step: 2,
@@ -140,14 +141,15 @@ export function buildRadianMeasurePanel(
         latex:
           "1^\\circ = \\frac{\\pi}{180}\\ \\text{rad}, \\qquad 1\\ \\text{rad} = \\frac{180^\\circ}{\\pi}",
         rubric:
-          "【高考采分点】明确乘 $\\frac{\\pi}{180}$ 还是乘 $\\frac{180}{\\pi}$",
+          "【高考采分点】由基准等式两边同除定出方向：度化弧度乘 $\\frac{\\pi}{180}$，弧度化度乘 $\\frac{180}{\\pi}$，得 3 分。",
       },
       {
         step: 3,
         title: "代入求解 · 当前角的两种读法",
         detail: `当前圆心角 $\\alpha = ${alphaRad.toFixed(4)}$ rad，换算为角度为 $${alphaDeg.toFixed(2)}^\\circ$；反向验证应回到原值。`,
         latex: `${alphaRad.toFixed(4)} \\times \\frac{180}{\\pi} = ${alphaDeg.toFixed(2)}^\\circ`,
-        rubric: "【高考采分点】代入并双向验证换算结果",
+        rubric:
+          "【高考采分点】代入当前角算出换算值，再反向换算回原值作校验，得 3 分。",
       },
     ];
 
@@ -247,7 +249,8 @@ export function buildRadianMeasurePanel(
         title: "审题定法 · 统一到弧度制",
         detail:
           "弧长与扇形面积的弧度制公式不含换算系数，运算最简。故先确认圆心角是否为弧度数，必要时先做度化弧度。",
-        rubric: "【高考采分点】先统一角度单位再套公式",
+        rubric:
+          "【高考采分点】先确认圆心角是否为弧度数，若题给角度制则先度化弧度，得 2 分。",
       },
       {
         step: 2,
@@ -255,14 +258,16 @@ export function buildRadianMeasurePanel(
         detail:
           "弧长用 $l = |\\alpha|r$；面积有 $\\frac{1}{2}|\\alpha|r^2$ 与 $\\frac{1}{2}lr$ 两式，已知 $\\alpha$ 用前者，已知弧长用后者。",
         latex: `l = ${alphaRad.toFixed(3)} \\times ${r.toFixed(2)} = ${l.toFixed(4)}`,
-        rubric: "【高考采分点】按已知量选择面积公式形式",
+        rubric:
+          "【高考采分点】弧长用 $l = |\\alpha|r$；面积按已知 $\\alpha$ 取 $\\frac{1}{2}|\\alpha|r^2$、已知 $l$ 取 $\\frac{1}{2}lr$，得 3 分。",
       },
       {
         step: 3,
         title: "代入求解 · 面积与周长闭环",
         detail: `代入 $\\alpha = ${alphaRad.toFixed(4)}$、$r = ${r.toFixed(2)}$：面积 $S = \\frac{1}{2}\\times ${l.toFixed(4)} \\times ${r.toFixed(2)} = ${area.toFixed(4)}$；周长 $C = 2r + l = ${perimeter.toFixed(4)}$。`,
         latex: `S = \\frac{1}{2}|\\alpha|r^2 = ${area.toFixed(4)}, \\quad C = 2r + |\\alpha|r = ${perimeter.toFixed(4)}`,
-        rubric: "【高考采分点】求出 l、S、C 并检查单位",
+        rubric:
+          "【高考采分点】代入求出弧长、面积与周长，并核对量纲与单位，得 3 分。",
       },
     ];
 
@@ -351,7 +356,8 @@ export function buildRadianMeasurePanel(
       title: "审题定法 · 从「长度比长度」出发",
       detail:
         "用角度制度量角，本质是把圆周分成 360 份；改用「弧长与半径之比」度量，则这个比值与半径无关，只由张开程度决定。",
-      rubric: "【高考采分点】理解比值度量与半径无关",
+      rubric:
+        "【高考采分点】说明弧长与半径之比只由角的张开程度决定、与半径大小无关，得 2 分。",
     },
     {
       step: 2,
@@ -359,14 +365,16 @@ export function buildRadianMeasurePanel(
       detail:
         "约定「弧长恰等于半径」时该圆心角为 1 rad，于是任意圆心角的弧度数就定义为 l 与 r 的比值。",
       latex: "|\\alpha| = \\frac{l}{r}",
-      rubric: "【高考采分点】写出比值定义式",
+      rubric:
+        "【高考采分点】约定弧长恰等于半径时该圆心角为 $1\\ \\text{rad}$，写出 $|\\alpha| = \\frac{l}{r}$，得 3 分。",
     },
     {
       step: 3,
       title: "代入求解 · 当前图形的读数",
       detail: `当前弧长 $l = ${l.toFixed(4)}$、半径 $r = ${r.toFixed(2)}$，比值 $\\frac{l}{r} = ${ratio.toFixed(4)}$，即圆心角为 $${alphaRad.toFixed(4)}$ rad（约 $${alphaDeg.toFixed(2)}^\\circ$）。`,
       latex: `\\frac{${l.toFixed(4)}}{${r.toFixed(2)}} = ${ratio.toFixed(4)}\\ \\text{rad}`,
-      rubric: "【高考采分点】代入求出弧度读数并与角度制对照",
+      rubric:
+        "【高考采分点】代入当前弧长与半径算出弧度读数，并换算成角度制对照，得 3 分。",
     },
   ];
 

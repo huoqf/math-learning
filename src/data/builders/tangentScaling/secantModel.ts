@@ -76,21 +76,21 @@ export function buildSecantModel(
           detail:
             "令 $h(x) = \\ln(1+x) - (x - 0.5x^2)$，求导得 $h'(x) = \\frac{1}{1+x} - (1-x) = \\frac{x^2}{1+x}$。",
           latex: "h'(x) = \\frac{1}{1+x} - (1-x) = \\frac{x^2}{1+x}",
-          rubric: "采分点：求导与通分化简（4分）",
+          rubric: "【高考采分点】求导与通分化简（4分）",
         },
         {
           step: 2,
           title: "符号判定与单调性",
           detail:
             "当 $x \\ge 0$ 时，$\\frac{x^2}{1+x} \\ge 0$，故 $h(x)$ 在 $[0, +\\infty)$ 上单调递增。",
-          rubric: "采分点：导数符号与单调性（4分）",
+          rubric: "【高考采分点】导数符号与单调性（4分）",
         },
         {
           step: 3,
           title: "代入初值确立下界",
           detail:
             "因 $h(0) = 0$，由单调递增得 $h(x) \\ge h(0) = 0$，结合一阶放缩即证结论。",
-          rubric: "采分点：初值比较与结论（3分）",
+          rubric: "【高考采分点】初值比较与结论（3分）",
         },
       ],
     };
@@ -161,14 +161,14 @@ export function buildSecantModel(
           title: "求解端点割线斜率与中点切线",
           detail: `连接端点 $A(${formatMathNumber(a)}, \\ln ${formatMathNumber(a)})$ 与 $B(${formatMathNumber(b)}, \\ln ${formatMathNumber(b)})$，割线斜率 $m_{AB} = \\frac{\\ln b - \\ln a}{b - a} \\approx ${secSlope.toFixed(3)}$；中点 $x_m = ${formatMathNumber(midX)}$ 处切线斜率 $k_{\\text{tan}} = \\frac{1}{x_m} \\approx ${(1 / midX).toFixed(3)}$。`,
           latex: `m_{AB} = \\frac{\\ln ${formatMathNumber(b)} - \\ln ${formatMathNumber(a)}}{${formatMathNumber(b - a)}} \\approx ${secSlope.toFixed(3)}`,
-          rubric: "采分点：割线与切线解析式求解（3分）",
+          rubric: "【高考采分点】割线与切线解析式求解（3分）",
         },
         {
           step: 2,
           title: "构造差函数研究单调性证明割线下界",
           detail:
             "令辅助函数 $g(x) = \\ln x - [m_{AB}(x - a) + \\ln a]$ ($x \\in [a, b]$)，求导得 $g'(x) = \\frac{1}{x} - m_{AB}$。易知 $g'(x)$ 在 $[a, b]$ 上单调递减，且 $g(a)=g(b)=0$。由零点存在性定理知存在唯一极值点 $x_0 \\in (a, b)$，使 $g(x)$ 在 $[a, x_0]$ 单调递增、在 $[x_0, b]$ 单调递减，故区间内恒有 $g(x) > 0$，割线在下方提供下界。",
-          rubric: "采分点：构造差函数单调性证明割线下界（5分）",
+          rubric: "【高考采分点】构造差函数单调性证明割线下界（5分）",
         },
         {
           step: 3,
@@ -176,7 +176,7 @@ export function buildSecantModel(
           detail:
             "由于切线恒位于曲线的上方，综合切线上界与割线下界，得闭区间内对数曲线被双向线性锁定。",
           latex: `m_{AB}(x - ${formatMathNumber(a)}) + \\ln ${formatMathNumber(a)} \\le \\ln x \\le \\frac{1}{x_m}(x - x_m) + \\ln x_m`,
-          rubric: "采分点：双向定界综合结论（3分）",
+          rubric: "【高考采分点】双向定界综合结论（3分）",
         },
       ],
     };
@@ -247,14 +247,14 @@ export function buildSecantModel(
         title: "求解端点割线斜率与中点切线",
         detail: `连接端点 $A(${formatMathNumber(a)}, e^{${formatMathNumber(a)}})$ 与 $B(${formatMathNumber(b)}, e^{${formatMathNumber(b)}})$，割线斜率 $m_{AB} = \\frac{e^b - e^a}{b - a} \\approx ${secSlope.toFixed(3)}$；在区间中点 $x_m = ${formatMathNumber(midX)}$ 处切线斜率 $k_{\\text{tan}} = e^{x_m} \\approx ${Math.exp(midX).toFixed(3)}$。`,
         latex: `m_{AB} = \\frac{e^{${formatMathNumber(b)}} - e^{${formatMathNumber(a)}}}{${formatMathNumber(b - a)}} \\approx ${secSlope.toFixed(3)}`,
-        rubric: "采分点：割线与切线解析式求解（3分）",
+        rubric: "【高考采分点】割线与切线解析式求解（3分）",
       },
       {
         step: 2,
         title: "构造差函数研究单调性证明割线上界",
         detail:
           "令辅助函数 $g(x) = e^x - [m_{AB}(x - a) + e^a]$ ($x \\in [a, b]$)，求导得 $g'(x) = e^x - m_{AB}$。易知 $g'(x)$ 在 $[a, b]$ 上单调递增，且 $g(a)=g(b)=0$。由零点存在性定理知存在唯一极值点 $x_0 \\in (a, b)$，使 $g(x)$ 在 $[a, x_0]$ 单调递减、在 $[x_0, b]$ 单调递增，故区间内恒有 $g(x) < 0$，割线在上方提供上界。",
-        rubric: "采分点：构造差函数单调性证明割线上界（5分）",
+        rubric: "【高考采分点】构造差函数单调性证明割线上界（5分）",
       },
       {
         step: 3,
@@ -262,7 +262,7 @@ export function buildSecantModel(
         detail:
           "由于切线恒位于曲线下方，综合切线下界与割线上界，得闭区间内曲线被双向线性锁定。",
         latex: `e^{x_m}(x - x_m) + e^{x_m} \\le e^x \\le m_{AB}(x - ${formatMathNumber(a)}) + e^{${formatMathNumber(a)}}`,
-        rubric: "采分点：双向定界综合结论（3分）",
+        rubric: "【高考采分点】双向定界综合结论（3分）",
       },
     ],
   };

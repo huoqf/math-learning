@@ -19,14 +19,14 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         detail:
           "令辅助函数 $h(x) = e^x - x - 1$ ($x \\in \\mathbb{R}$)，求导得 $h'(x) = e^x - 1$。",
         latex: "h(x) = e^x - x - 1 \\implies h'(x) = e^x - 1",
-        rubric: "采分点：构造辅助函数与求导（3分）",
+        rubric: "【高考采分点】构造辅助函数与求导（3分）",
       },
       {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
           "令 $h'(x) = 0$ 得 $x = 0$。当 $x < 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
-        rubric: "采分点：求导数为零点与单调区间判定（4分）",
+        rubric: "【高考采分点】求导数为零点与单调区间判定（4分）",
       },
       {
         step: 3,
@@ -35,7 +35,7 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
           "故 $h(x)$ 在 $x = 0$ 处取得唯一极小值也是最小值 $h(0) = e^0 - 0 - 1 = 0$。因此 $h(x) \\ge 0 \\iff e^x \\ge x + 1$，当且仅当 $x = 0$ 时等号成立。",
         latex:
           "e^x \\ge x + 1 \\quad (\\text{当且仅当 } x = 0 \\text{ 时等号成立})",
-        rubric: "采分点：最小值计算与等号条件（4分）",
+        rubric: "【高考采分点】最小值计算与等号条件（4分）",
       },
     ];
   }
@@ -47,14 +47,14 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         detail:
           "令辅助函数 $h(x) = \\ln x - x + 1$ ($x > 0$)，求导得 $h'(x) = \\frac{1}{x} - 1 = \\frac{1 - x}{x}$。",
         latex: "h(x) = \\ln x - x + 1 \\implies h'(x) = \\frac{1 - x}{x}",
-        rubric: "采分点：定义域说明与求导通分（3分）",
+        rubric: "【高考采分点】定义域说明与求导通分（3分）",
       },
       {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
           "令 $h'(x) = 0$ 得 $x = 1$。当 $0 < x < 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
-        rubric: "采分点：求导数为零点与单调区间判定（4分）",
+        rubric: "【高考采分点】求导数为零点与单调区间判定（4分）",
       },
       {
         step: 3,
@@ -63,7 +63,7 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
           "故 $h(x)$ 在 $x = 1$ 处取得唯一极大值也是最大值 $h(1) = \\ln 1 - 1 + 1 = 0$。因此 $h(x) \\le 0 \\iff \\ln x \\le x - 1$，当且仅当 $x = 1$ 时等号成立。",
         latex:
           "\\ln x \\le x - 1 \\quad (\\text{当且仅当 } x = 1 \\text{ 时等号成立})",
-        rubric: "采分点：最大值计算与等号条件（4分）",
+        rubric: "【高考采分点】最大值计算与等号条件（4分）",
       },
     ];
   }
@@ -75,14 +75,14 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         detail:
           "令辅助函数 $h(x) = e^{x-1} - x$ ($x \\in \\mathbb{R}$)，求导得 $h'(x) = e^{x-1} - 1$。",
         latex: "h(x) = e^{x-1} - x \\implies h'(x) = e^{x-1} - 1",
-        rubric: "采分点：构造辅助函数与求导（3分）",
+        rubric: "【高考采分点】构造辅助函数与求导（3分）",
       },
       {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
           "令 $h'(x) = 0$ 得 $x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
-        rubric: "采分点：求导数为零点与单调区间判定（4分）",
+        rubric: "【高考采分点】求导数为零点与单调区间判定（4分）",
       },
       {
         step: 3,
@@ -91,7 +91,7 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
           "故 $h(x)$ 在 $x = 1$ 处取得唯一极小值也是最小值 $h(1) = e^0 - 1 = 0$。因此 $e^{x-1} \\ge x$，当且仅当 $x = 1$ 时等号成立。",
         latex:
           "e^{x-1} \\ge x \\quad (\\text{当且仅当 } x = 1 \\text{ 时等号成立})",
-        rubric: "采分点：最小值计算与等号条件（4分）",
+        rubric: "【高考采分点】最小值计算与等号条件（4分）",
       },
     ];
   }
@@ -103,14 +103,14 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         detail:
           "令辅助函数 $h(x) = \\ln(x+1) - x$ ($x > -1$)，求导得 $h'(x) = \\frac{1}{x+1} - 1 = -\\frac{x}{x+1}$。",
         latex: "h(x) = \\ln(x+1) - x \\implies h'(x) = -\\frac{x}{x+1}",
-        rubric: "采分点：定义域说明与求导化简（3分）",
+        rubric: "【高考采分点】定义域说明与求导化简（3分）",
       },
       {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
           "令 $h'(x) = 0$ 得 $x = 0$。当 $-1 < x < 0$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > 0$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
-        rubric: "采分点：单调区间判定与分类讨论（4分）",
+        rubric: "【高考采分点】单调区间判定与分类讨论（4分）",
       },
       {
         step: 3,
@@ -119,7 +119,7 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
           "故 $h(x)$ 在 $x = 0$ 处取得唯一极大值也是最大值 $h(0) = \\ln 1 - 0 = 0$。因此 $\\ln(x+1) \\le x$，当且仅当 $x = 0$ 时等号成立。",
         latex:
           "\\ln(x+1) \\le x \\quad (\\text{当且仅当 } x = 0 \\text{ 时等号成立})",
-        rubric: "采分点：最大值计算与等号条件（4分）",
+        rubric: "【高考采分点】最大值计算与等号条件（4分）",
       },
     ];
   }
@@ -131,14 +131,14 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         detail:
           "令辅助函数 $h(x) = e^x - ex$ ($x \\in \\mathbb{R}$)，求导得 $h'(x) = e^x - e$。",
         latex: "h(x) = e^x - ex \\implies h'(x) = e^x - e",
-        rubric: "采分点：构造辅助函数与求导（3分）",
+        rubric: "【高考采分点】构造辅助函数与求导（3分）",
       },
       {
         step: 2,
         title: "判定导数符号确立单调性",
         detail:
           "令 $h'(x) = 0$ 得 $x = 1$。当 $x < 1$ 时 $h'(x) < 0$，$h(x)$ 单调递减；当 $x > 1$ 时 $h'(x) > 0$，$h(x)$ 单调递增。",
-        rubric: "采分点：求导数为零点与单调区间判定（4分）",
+        rubric: "【高考采分点】求导数为零点与单调区间判定（4分）",
       },
       {
         step: 3,
@@ -147,7 +147,7 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
           "故 $h(x)$ 在 $x = 1$ 处取得最小值 $h(1) = e - e = 0$。因此 $e^x \\ge ex$，当且仅当 $x = 1$ 时等号成立。",
         latex:
           "e^x \\ge ex \\quad (\\text{当且仅当 } x = 1 \\text{ 时等号成立})",
-        rubric: "采分点：最小值计算与等号条件（4分）",
+        rubric: "【高考采分点】最小值计算与等号条件（4分）",
       },
     ];
   }
@@ -159,14 +159,14 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
       detail:
         "令辅助函数 $h(x) = \\ln x - \\frac{x}{e}$ ($x > 0$)，求导得 $h'(x) = \\frac{1}{x} - \\frac{1}{e} = \\frac{e - x}{ex}$。",
       latex: "h(x) = \\ln x - \\frac{x}{e} \\implies h'(x) = \\frac{e - x}{ex}",
-      rubric: "采分点：定义域说明与求导通分（3分）",
+      rubric: "【高考采分点】定义域说明与求导通分（3分）",
     },
     {
       step: 2,
       title: "判定导数符号确立单调性",
       detail:
         "令 $h'(x) = 0$ 得 $x = e$。当 $0 < x < e$ 时 $h'(x) > 0$，$h(x)$ 单调递增；当 $x > e$ 时 $h'(x) < 0$，$h(x)$ 单调递减。",
-      rubric: "采分点：求导数为零点与单调区间判定（4分）",
+      rubric: "【高考采分点】求导数为零点与单调区间判定（4分）",
     },
     {
       step: 3,
@@ -175,7 +175,7 @@ function getBaseReasoningSteps(baseSub: BaseSubModel) {
         "故 $h(x)$ 在 $x = e$ 处取得最大值 $h(e) = \\ln e - 1 = 0$。因此 $\\ln x \\le \\frac{x}{e}$，当且仅当 $x = e$ 时等号成立。",
       latex:
         "\\ln x \\le \\frac{x}{e} \\quad (\\text{当且仅当 } x = e \\text{ 时等号成立})",
-      rubric: "采分点：最大值计算与等号条件（4分）",
+      rubric: "【高考采分点】最大值计算与等号条件（4分）",
     },
   ];
 }

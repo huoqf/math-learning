@@ -81,7 +81,7 @@ export function buildSandwichModel(
           detail:
             "由基准放缩：对于 $x > 0$，恒有 $e^x \\ge x + 1$ (当且仅当 $x=0$ 时取等)；同理由 $\\ln x \\le x - 1$ 可得 $-\\ln x \\ge -(x - 1) = 1 - x$ (当且仅当 $x=1$ 时取等)。",
           latex: "e^x \\ge x + 1, \\quad -\\ln x \\ge 1 - x",
-          rubric: "采分点：分别写出切线放缩式（4分）",
+          rubric: "【高考采分点】分别写出切线放缩式（4分）",
         },
         {
           step: 2,
@@ -89,14 +89,14 @@ export function buildSandwichModel(
           detail:
             "将两同向不等式相加得：$e^x + (-\\ln x) \\ge (x + 1) + (1 - x) = 2$。",
           latex: "e^x - \\ln x \\ge (x + 1) + (1 - x) = 2",
-          rubric: "采分点：同向同号相加做差（4分）",
+          rubric: "【高考采分点】同向同号相加做差（4分）",
         },
         {
           step: 3,
           title: "等号不同步判定严格大于",
           detail:
             "由于取等条件 $x=0$ 与 $x=1$ 无法同时满足，等号不可兼得，故对一切 $x > 0$ 严格恒有 $e^x - \\ln x > 2$。",
-          rubric: "采分点：等号不同步论证严格不等（3分）",
+          rubric: "【高考采分点】等号不同步论证严格不等（3分）",
         },
       ],
     };
@@ -163,7 +163,7 @@ export function buildSandwichModel(
         detail: isOrigin
           ? "考察 $f(x)=e^x-1$ 与 $g(x)=\\ln(x+1)$，在 $x=0$ 处 $f(0)=g(0)=0$，$f'(0)=g'(0)=1$，故公切线为 $y = x$。"
           : "考察 $f(x)=e^{x-1}$ 与 $g(x)=\\ln x + 1$，在 $x=1$ 处 $f(1)=g(1)=1$，$f'(1)=g'(1)=1$，故公切线为 $y = x$。",
-        rubric: "采分点：公切线方程求解（3分）",
+        rubric: "【高考采分点】公切线方程求解（3分）",
       },
       {
         step: 2,
@@ -171,13 +171,13 @@ export function buildSandwichModel(
         detail: isOrigin
           ? "由基准放缩 $e^t \\ge t+1$ 知 $e^x-1 \\ge x$；由 $\\ln(1+t) \\le t$ 知 $\\ln(x+1) \\le x$。"
           : "由 $e^t \\ge t+1$ 令 $t=x-1$ 得 $e^{x-1} \\ge x$；由 $\\ln x \\le x-1$ 加 1 得 $\\ln x + 1 \\le x$。",
-        rubric: "采分点：双向子命题论证（5分）",
+        rubric: "【高考采分点】双向子命题论证（5分）",
       },
       {
         step: 3,
         title: "三式合并完成卡位",
         detail: "两侧放缩综合，传递得出不等式成立，等号在公共切点处同步取得。",
-        rubric: "采分点：等号同步条件与结论（3分）",
+        rubric: "【高考采分点】等号同步条件与结论（3分）",
       },
     ],
   };
