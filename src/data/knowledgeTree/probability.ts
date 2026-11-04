@@ -51,9 +51,26 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "独立事件乘法公式 $P(AB)=P(A)P(B)$ 与互斥加法公式的辨析",
     examWeight: 4,
+    crossThemes: ["互斥加法与独立乘法辨析", "n重伯努利试验前置"],
+  },
+  {
+    id: "know-stat-percentile",
+    title: "分层抽样、频率直方图与百分位数/中位数",
+    labTitle: "分层抽样与直方图百分位数",
+    chapter: "概率与统计",
+    module: "统计分析",
+    importance: "gaokao",
+    animationIds: ["anim-stat-percentile"],
+    prerequisites: [],
+    route: "/stat-percentile",
+    gaokaoTopic: "probability_statistics",
+    questionCategory: "solution_first",
+    examMethod: "分层抽样权重与频率直方图面积求百分位数",
+    examWeight: 5,
+    crossThemes: ["分层抽样总均值与总方差合成", "频率直方图面积分割中位数"],
   },
 
-  // ── 选择性必修三：计数原理与随机变量 ────────────────────────────────
+  // ── 选择性必修三：计数原理、随机变量与成对数据统计 ───────────────────
   {
     id: "know-probability-counting",
     title: "计数原理与二项式定理",
@@ -68,6 +85,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "分类加法分步乘法与二项式通项赋值",
     examWeight: 4,
+    crossThemes: ["二项式系数赋值法", "古典概型与超几何计数基本功"],
   },
   {
     id: "know-probability-bayes",
@@ -86,6 +104,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "全概率公式划分与贝叶斯逆概率诊断",
     examWeight: 5,
+    crossThemes: ["样本空间缩减法", "完备事件组划分与概率递推前置"],
   },
   {
     id: "know-probability-distribution",
@@ -101,6 +120,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "超几何二项分布列列写与期望方差",
     examWeight: 5,
+    crossThemes: ["不放回超几何与有放回二项分布", "期望方差线性性质与方案决策"],
   },
   {
     id: "know-probability-normal",
@@ -116,21 +136,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "正态分布曲线对称性与 3σ 原则",
     examWeight: 4,
-  },
-  {
-    id: "know-stat-percentile",
-    title: "分层抽样、频率直方图与百分位数/中位数",
-    labTitle: "分层抽样与直方图百分位数",
-    chapter: "概率与统计",
-    module: "统计分析",
-    importance: "gaokao",
-    animationIds: ["anim-stat-percentile"],
-    prerequisites: [],
-    route: "/stat-percentile",
-    gaokaoTopic: "probability_statistics",
-    questionCategory: "solution_first",
-    examMethod: "分层抽样权重与频率直方图面积求百分位数",
-    examWeight: 5,
+    crossThemes: ["直方图面积向正态分布过渡", "对称轴尾区概率配凑"],
   },
   {
     id: "know-probability-regression",
@@ -146,6 +152,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "最小二乘回归方程与样本中心点必过性",
     examWeight: 4,
+    crossThemes: ["指数与对数非线性换元回归", "残差平方和与决定系数拟合优度"],
   },
   {
     id: "know-paired-independence",
@@ -161,6 +168,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "2x2 列联表卡方公式与独立性假设检验",
     examWeight: 4,
+    crossThemes: ["等高条形图条件频率直观", "零假设与小概率犯错界值比对"],
   },
   {
     id: "know-probability-markov",
@@ -176,5 +184,6 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "全概率展开与状态转移递推数列求解",
     examWeight: 5,
+    crossThemes: ["概率与数列跨章压轴交汇", "全概率公式与待定系数构造等比数列"],
   },
 ];

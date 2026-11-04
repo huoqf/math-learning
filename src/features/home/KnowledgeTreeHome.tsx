@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { knowledgeTree } from "@/data/knowledgeTree";
 import { ANIMATION_ROUTE_MAP, PATH_TO_LABEL } from "@/data/routeEntries";
+import { renderMixedLatex } from "@/components/UI";
 import type {
   KnowledgeNode,
   GaokaoTopicKey,
@@ -319,6 +320,12 @@ export function KnowledgeTreeHome() {
     return result;
   }, []);
 
+  // 节点 ID -> 标题映射（用于展示先修知识依赖链）
+  const nodeTitleMap = useMemo(
+    () => new Map(knowledgeTree.map((n) => [n.id, n.title])),
+    [],
+  );
+
   // 渲染单一知识节点卡片
   const renderNodeCard = (node: KnowledgeNode) => {
     const route = getNodeRoute(node);
@@ -327,6 +334,9 @@ export function KnowledgeTreeHome() {
     const qCategory = node.questionCategory
       ? QUESTION_CATEGORY_MAP[node.questionCategory]
       : null;
+    const prereqTitles = (node.prerequisites ?? [])
+      .map((id) => nodeTitleMap.get(id))
+      .filter((t): t is string => Boolean(t));
 
     return (
       <div key={node.id} className="relative">
@@ -393,8 +403,28 @@ export function KnowledgeTreeHome() {
                   <Sparkles size={11} className="shrink-0 text-rose-500" />
                   <span className="truncate">
                     <strong className="font-semibold">通法模型：</strong>
-                    {node.examMethod}
+                    {renderMixedLatex(node.examMethod)}
                   </span>
+                </div>
+              )}
+
+              {/* 先修依赖链与跨节交汇主题（强化知识网络系统记忆） */}
+              {(prereqTitles.length > 0 ||
+                (node.crossThemes && node.crossThemes.length > 0)) && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                  {prereqTitles.length > 0 && (
+                    <span className="text-[10px] text-slate-600 bg-slate-100/80 border border-slate-200/80 rounded px-1.5 py-0.5 truncate max-w-full">
+                      先修：{prereqTitles.join(" → ")}
+                    </span>
+                  )}
+                  {node.crossThemes?.map((theme) => (
+                    <span
+                      key={theme}
+                      className="text-[10px] text-indigo-700 bg-indigo-50/70 border border-indigo-100 rounded px-1.5 py-0.5"
+                    >
+                      交汇 · {theme}
+                    </span>
+                  ))}
                 </div>
               )}
 
