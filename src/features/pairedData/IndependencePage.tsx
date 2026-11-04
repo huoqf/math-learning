@@ -8,7 +8,6 @@ import {
   SelectGrid,
   TabSwitcher,
   TipCard,
-  KatexFormula,
   StepNavigator,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
@@ -22,25 +21,6 @@ import {
   INDEPENDENCE_ANSWER_STEPS,
 } from "@/data/registries/pairedData";
 import { INDEPENDENCE_PRESETS } from "@/math/pairedData";
-
-// 辅助渲染混合文本（支持 $...$ 内嵌公式与普通文本自然换行）
-function renderMixedText(text: string) {
-  if (!text) return null;
-  const parts = text.split(/\$(.*?)\$/g);
-  return parts.map((part, i) => {
-    if (i % 2 === 1) {
-      return (
-        <KatexFormula
-          key={i}
-          formula={part}
-          mode="inline"
-          className="!text-[11px] !my-0 !mx-0.5"
-        />
-      );
-    }
-    return <span key={i}>{part}</span>;
-  });
-}
 
 export function IndependencePage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -167,7 +147,9 @@ export function IndependencePage() {
       const totalN = a + b + c + d;
       return {
         badge: "自由探索 · 2×2 列联表",
-        condition: `自定义四格观测频数 ($a=${a}, b=${b}, c=${c}, d=${d}$)，总样本量 $n=${totalN}$${mult > 1 ? ` (${mult}\\times \\text{倍增})` : ""}。`,
+        background:
+          "成对分类数据统计调查：通过抽样构建 $2\\times 2$ 列联表，利用小概率反证法检验两个分类变量之间是否存在统计关联。",
+        condition: `自定义四格观测频数 ($a=${a}, b=${b}, c=${c}, d=${d}$)，总样本量 $n=${totalN}$${mult > 1 ? ` ($${mult}\\times$ 倍增)` : ""}。`,
         question:
           "计算卡方统计量 $\\chi^2 = \\frac{n(ad-bc)^2}{(a+b)(c+d)(a+c)(b+d)}$，对比临界值推断两分类变量是否独立。",
       };
@@ -179,6 +161,7 @@ export function IndependencePage() {
 
     return {
       badge: `高考真题 · ${p.shortName}`,
+      background: `【${p.name}】针对分类变量“${p.labelA}/${p.labelNotA}”与“${p.labelB}/${p.labelNotB}”开展独立性抽样统计调查。`,
       condition:
         mult > 1
           ? `${p.conditionDesc} (在样本量放大探究下，总容量扩展为 $n=${totalN}$)`
@@ -311,31 +294,15 @@ export function IndependencePage() {
             )}
           </LeftPanelSection>
 
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant="danger">
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {renderMixedText(tipConfig.condition)}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">
-                    {renderMixedText(tipConfig.question)}
-                  </span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          <div className="mt-auto">
+            <TipCard
+              variant="danger"
+              badge={tipConfig.badge}
+              background={tipConfig.background}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
+          </div>
         </LeftPanel>
       }
       center={

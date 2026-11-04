@@ -21,10 +21,26 @@ import {
 } from "@/data/registries/probabilityMarkov";
 import {
   INDEPENDENCE_ANSWER_STEPS,
+  REGRESSION_ANSWER_STEPS,
   defaultParams as pairedDefaultParams,
 } from "@/data/registries/pairedData";
 import { buildSequencePanel } from "@/data/builders/sequence";
 import { LINEAR_RECURRENCE_ANSWER_STEPS } from "@/data/registries/sequence";
+import { buildClassicalProbabilityPanel } from "@/data/builders/probabilityClassical";
+import {
+  CLASSICAL_ANSWER_STEPS,
+  DEFAULT_CLASSICAL_PARAMS,
+} from "@/data/registries/probabilityClassical";
+import { buildProbabilityBayesPanel } from "@/data/builders/probabilityBayes";
+import {
+  BAYES_ANSWER_STEPS,
+  defaultParams as bayesDefaultParams,
+} from "@/data/registries/probabilityBayes";
+import { buildProbabilityDistributionPanel } from "@/data/builders/probabilityDistribution";
+import {
+  DISTRIBUTION_ANSWER_STEPS,
+  defaultParams as distDefaultParams,
+} from "@/data/registries/probabilityDistribution";
 
 /**
  * 回归防线（来源：概率统计模块审计 · 决策项 3.1「分步作答闭环」）。
@@ -320,10 +336,80 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
     );
   });
 
+  it("古典概型：右屏推演链的步号与标题完全由 CLASSICAL_ANSWER_STEPS 生成", () => {
+    const panel = buildClassicalProbabilityPanel({
+      ...DEFAULT_CLASSICAL_PARAMS,
+    });
+    expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+      CLASSICAL_ANSWER_STEPS.map((s) => s.step),
+    );
+    expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+      CLASSICAL_ANSWER_STEPS.map((s) => s.title),
+    );
+  });
+
+  it("条件概率与全概率/贝叶斯：右屏推演链的步号与标题完全由 BAYES_ANSWER_STEPS 生成", () => {
+    for (const activeMode of ["conditional", "total_prob", "bayes"] as const) {
+      const panel = buildProbabilityBayesPanel(
+        { ...bayesDefaultParams },
+        { activeMode },
+      );
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        BAYES_ANSWER_STEPS.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        BAYES_ANSWER_STEPS.map((s) => s.title),
+      );
+    }
+  });
+
+  it("离散型随机变量分布列：右屏推演链的步号与标题完全由 DISTRIBUTION_ANSWER_STEPS 生成", () => {
+    for (const studyMode of [
+      "binomial",
+      "hypergeometric",
+      "compare",
+      "decision",
+      "linear",
+      "general",
+    ] as const) {
+      const panel = buildProbabilityDistributionPanel(
+        { ...distDefaultParams },
+        { studyMode },
+      );
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        DISTRIBUTION_ANSWER_STEPS.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        DISTRIBUTION_ANSWER_STEPS.map((s) => s.title),
+      );
+    }
+  });
+
+  it("一元线性回归与换元回归：右屏推演链的步号与标题完全由 REGRESSION_ANSWER_STEPS 生成", () => {
+    const panel = buildPairedDataPanel(
+      { ...pairedDefaultParams },
+      {
+        studyMode: "regression",
+        scenarioKey: "ad_sales",
+        selectedModel: "linear",
+      },
+    );
+    expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+      REGRESSION_ANSWER_STEPS.map((s) => s.step),
+    );
+    expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+      REGRESSION_ANSWER_STEPS.map((s) => s.title),
+    );
+  });
+
   it("所有解答链条的步号必须从 1 连续递增——否则左屏清单与右屏聚焦会错位", () => {
     for (const steps of [
       MARKOV_ANSWER_STEPS,
       INDEPENDENCE_ANSWER_STEPS,
+      REGRESSION_ANSWER_STEPS,
+      CLASSICAL_ANSWER_STEPS,
+      BAYES_ANSWER_STEPS,
+      DISTRIBUTION_ANSWER_STEPS,
       LINEAR_RECURRENCE_ANSWER_STEPS,
     ]) {
       expect(steps.map((s) => s.step)).toEqual(steps.map((_, i) => i + 1));

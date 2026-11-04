@@ -9,7 +9,10 @@ import {
   Point2D,
 } from "@/math/pairedData";
 import { MATH_COLORS } from "@/theme";
-import { INDEPENDENCE_ANSWER_STEPS } from "../registries/pairedData";
+import {
+  INDEPENDENCE_ANSWER_STEPS,
+  REGRESSION_ANSWER_STEPS,
+} from "../registries/pairedData";
 
 export function buildPairedDataPanel(
   params: Record<string, number>,
@@ -170,8 +173,8 @@ export function buildPairedDataPanel(
 
         reasoningSteps = [
           makeStep({
-            step: 1,
-            title: "审题定法 · 识别离群点与相关性受损分析",
+            step: REGRESSION_ANSWER_STEPS[0].step,
+            title: REGRESSION_ANSWER_STEPS[0].title,
             latexBlocks: [
               `\\begin{aligned} r &= \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum (x_i-\\bar{x})^2 \\sum (y_i-\\bar{y})^2}} \\\\[4pt] &= \\frac{${fmt2(res.lxy)}}{\\sqrt{${fmt2(res.lxx)} \\times ${fmt2(res.lyy)}}} \\approx ${fmt4(res.r)} \\end{aligned}`,
               `P_{${points.length}}(${lastPt.x}, ${lastPt.y}) \\text{ 显著偏离主样本带}`,
@@ -181,8 +184,8 @@ export function buildPairedDataPanel(
               "【高考采分点】指出离群点坐标并说明其对相关系数的杠杆拉扯破坏得 2 分。",
           }),
           makeStep({
-            step: 2,
-            title: "建模联立 · 剔除异常点后重新求解回归方程",
+            step: REGRESSION_ANSWER_STEPS[1].step,
+            title: REGRESSION_ANSWER_STEPS[1].title,
             latexBlocks: [
               `\\begin{aligned} \\hat{b} &= \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sum (x_i-\\bar{x})^2} = \\frac{${fmt2(cleaned.lxy)}}{${fmt2(cleaned.lxx)}} \\approx ${cleanedB} \\\\[4pt] \\hat{a} &= \\bar{y} - \\hat{b}\\bar{x} \\approx ${cleanedA} \\end{aligned}`,
               `\\hat{y} = ${cleanedB}x ${cleaned.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(cleaned.a))}`,
@@ -191,8 +194,8 @@ export function buildPairedDataPanel(
             rubric: "【高考采分点】清洗后正确代入求和数据求出回归方程得 3 分。",
           }),
           makeStep({
-            step: 3,
-            title: "求解反思 · 目标预报计算与决定系数对比",
+            step: REGRESSION_ANSWER_STEPS[2].step,
+            title: REGRESSION_ANSWER_STEPS[2].title,
             latexBlocks: [
               `\\begin{aligned} \\hat{y}_0 &= ${cleanedB} \\times ${targetX} ${cleaned.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(cleaned.a))} \\\\[4pt] &= ${fmt2(cleanedPred)}\\text{ (${targetUnit})} \\end{aligned}`,
               `\\begin{aligned} R^2_{\\text{clean}} &\\approx ${fmt4(cleaned.rSquare)} \\\\[4pt] (\\text{清洗前 } R^2 &\\approx ${fmt4(res.rSquare)}) \\end{aligned}`,
@@ -208,8 +211,8 @@ export function buildPairedDataPanel(
 
         reasoningSteps = [
           makeStep({
-            step: 1,
-            title: "审题定法 · 计算样本中心点与相关系数检验",
+            step: REGRESSION_ANSWER_STEPS[0].step,
+            title: REGRESSION_ANSWER_STEPS[0].title,
             latexBlocks: [
               `\\bar{x} = \\frac{${res.sumX.toFixed(1)}}{${res.n}} = ${fmt2(res.meanX)}, \\quad \\bar{y} = \\frac{${res.sumY.toFixed(1)}}{${res.n}} = ${fmt2(res.meanY)}`,
               `\\begin{aligned} r &= \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sqrt{\\sum (x_i-\\bar{x})^2 \\sum (y_i-\\bar{y})^2}} \\\\[4pt] &= \\frac{${fmt2(res.lxy)}}{\\sqrt{${fmt2(res.lxx)} \\times ${fmt2(res.lyy)}}} \\approx ${fmt4(res.r)} \\end{aligned}`,
@@ -219,8 +222,8 @@ export function buildPairedDataPanel(
               "【高考采分点】正确计算样本中心并代入求和项求得相关系数 r 判定线性相关性得 3 分。",
           }),
           makeStep({
-            step: 2,
-            title: "建模联立 · 最小二乘公式求经验回归方程",
+            step: REGRESSION_ANSWER_STEPS[1].step,
+            title: REGRESSION_ANSWER_STEPS[1].title,
             latexBlocks: [
               `\\begin{aligned} \\hat{b} &= \\frac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sum (x_i-\\bar{x})^2} \\\\[4pt] &= \\frac{${fmt2(res.lxy)}}{${fmt2(res.lxx)}} \\approx ${bFormatted} \\\\[6pt] \\hat{a} &= \\bar{y} - \\hat{b}\\bar{x} = ${fmt2(res.meanY)} - ${bFormatted} \\times ${fmt2(res.meanX)} \\\\[4pt] &\\approx ${aFormatted} \\end{aligned}`,
               `\\hat{y} = ${bFormatted}x ${res.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(res.a))}`,
@@ -231,8 +234,8 @@ export function buildPairedDataPanel(
               "【高考采分点】写出最小二乘斜率公式代入数据并规范求出回归方程得 4 分。",
           }),
           makeStep({
-            step: 3,
-            title: "求解反思 · 目标预报演算与决定系数评价",
+            step: REGRESSION_ANSWER_STEPS[2].step,
+            title: REGRESSION_ANSWER_STEPS[2].title,
             latexBlocks: [
               `\\begin{aligned} \\hat{y}_0 &= ${bFormatted} \\times ${targetX} ${res.a >= 0 ? "+" : "-"} ${fmt2(Math.abs(res.a))} \\\\[4pt] &= ${fmt2(predictedY)}\\text{ (${targetUnit})} \\end{aligned}`,
               `\\begin{aligned} R^2 &= 1 - \\frac{\\sum (y_i-\\hat{y}_i)^2}{\\sum (y_i-\\bar{y})^2} \\\\[4pt] &= 1 - \\frac{${fmt2(res.sse)}}{${fmt2(res.sst)}} \\approx ${fmt4(res.rSquare)} \\end{aligned}`,
@@ -249,18 +252,18 @@ export function buildPairedDataPanel(
 
         reasoningSteps = [
           makeStep({
-            step: 1,
-            title: `审题定法 · 非线性换元置换 (${currentModelFit?.name ?? "变量代换"})`,
+            step: REGRESSION_ANSWER_STEPS[0].step,
+            title: REGRESSION_ANSWER_STEPS[0].title,
             latexBlocks: [
               `y = f(x; \\theta)`,
               `\\begin{aligned} \\text{换元: } & ${currentModelFit?.variableSubstitution ?? "线性化换元"} \\\\[4pt] \\text{形式: } & ${currentModelFit?.transformedFormula ?? "线性方程"} \\end{aligned}`,
             ],
-            detail: `针对非线性数据分布特征，通过引入中间变量换元，将非线性回归问题化为关于新变量的一元线性回归模型。`,
+            detail: `针对非线性数据分布特征（${currentModelFit?.name ?? "变量代换"}），通过引入中间变量换元，将非线性回归问题化为关于新变量的一元线性回归模型。`,
             rubric: "【高考采分点】选定合理置换公式并建立线性形式得 2 分。",
           }),
           makeStep({
-            step: 2,
-            title: "建模联立 · 线性化求参并逆变换还原原方程",
+            step: REGRESSION_ANSWER_STEPS[1].step,
+            title: REGRESSION_ANSWER_STEPS[1].title,
             latexBlocks: [
               `\\text{线性方程: } ${currentModelFit?.transformedFormula ?? ""}`,
               `\\text{还原方程: } ${currentModelFit?.originalFormula ?? ""}`,
@@ -271,8 +274,8 @@ export function buildPairedDataPanel(
               "【高考采分点】求得转换方程参数并准确逆代换还原原方程得 4 分。",
           }),
           makeStep({
-            step: 3,
-            title: "求解反思 · 目标预报演算与拟合优度 R² 比较",
+            step: REGRESSION_ANSWER_STEPS[2].step,
+            title: REGRESSION_ANSWER_STEPS[2].title,
             latexBlocks: [
               `\\hat{y}_0 = ${fmt2(currentPred)}\\text{ (${targetUnit})}`,
               `\\begin{aligned} R^2 &= 1 - \\frac{\\text{SSE}}{\\text{SST}} \\\\[4pt] &\\approx ${fmt4(currentModelFit?.rSquare ?? res.rSquare)} \\end{aligned}`,
@@ -411,6 +414,10 @@ export function buildPairedDataPanel(
               level: "warning",
             },
           ],
+      examAnchor:
+        "选择性必修三核心 · 一元线性回归方程与非线性换元拟合（13-15分）",
+      mnemonic:
+        "回归必过中心点，先算斜率后算截；离差乘积除平方，相关决定看贴合。",
     };
   } else {
     // 2x2 独立性检验模式

@@ -1,5 +1,28 @@
 import type { ParamMeta } from "../types";
+import type { AnswerStepItem } from "@/components/UI";
 import { MATH_COLORS } from "@/theme";
+
+/**
+ * 离散型随机变量分布列与数字特征 — 高考标准解答 3 步链（SSOT）
+ * 左屏 StepNavigator、右屏 MathPanel.reasoningSteps、中屏 ProbabilityDistributionScene 三方同源。
+ */
+export const DISTRIBUTION_ANSWER_STEPS: AnswerStepItem[] = [
+  {
+    step: 1,
+    title: "审题定法 · 识别分布模型与取值范围",
+    sceneHint: "中屏框定随机变量可能取值范围与归一化校验",
+  },
+  {
+    step: 2,
+    title: "建模联立 · 分布列概率与期望方差展开",
+    sceneHint: "中屏框定各取值概率柱体与期望重心支点",
+  },
+  {
+    step: 3,
+    title: "求解反思 · 数字特征结论与方案最值判定",
+    sceneHint: "中屏框定均值方差波动带与最大概率峰值",
+  },
+];
 
 export const defaultParams = {
   // 二项分布参数 X ~ B(n, p)

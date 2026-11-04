@@ -7,7 +7,7 @@ import type {
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { CANVAS_COLORS } from "@/theme";
+import { CANVAS_COLORS, MATH_COLORS } from "@/theme";
 import { ProbabilityDistributionLinearScene } from "./ProbabilityDistributionLinearScene";
 import { ProbabilityDistributionBarScene } from "./ProbabilityDistributionBarScene";
 import { ProbabilityDistributionCompareScene } from "./ProbabilityDistributionCompareScene";
@@ -32,6 +32,7 @@ interface ProbabilityDistributionSceneProps {
   linearA?: number;
   linearB?: number;
   onProbabilityChange?: (index: number, newP: number) => void;
+  activeStep?: number;
 }
 
 export function ProbabilityDistributionScene({
@@ -46,6 +47,7 @@ export function ProbabilityDistributionScene({
   linearA = 2,
   linearB = 1,
   onProbabilityChange,
+  activeStep,
 }: ProbabilityDistributionSceneProps) {
   const { outcomes, mean, stdDev } = distResult;
 
@@ -276,6 +278,52 @@ export function ProbabilityDistributionScene({
             />
           )}
         </>
+      )}
+
+      {/* 分步作答聚焦围栏（与左屏 StepNavigator、右屏 MathPanel 三方同源） */}
+      {activeStep !== undefined && (
+        <rect
+          x={
+            activeStep === 1
+              ? leftSafeMargin - 16
+              : activeStep === 2
+                ? leftSafeMargin - 12
+                : Math.max(leftSafeMargin - 12, sigmaMinDesign.x - 36)
+          }
+          y={
+            activeStep === 1
+              ? Math.min(yAxisZero.y - 44, 410)
+              : activeStep === 2
+                ? Math.max(58, yAxisMax.y - 16)
+                : Math.max(66, yAxisMax.y - 10)
+          }
+          width={
+            activeStep === 1
+              ? Math.max(240, rightSafeMargin - leftSafeMargin + 48)
+              : activeStep === 2
+                ? Math.max(240, rightSafeMargin - leftSafeMargin + 36)
+                : Math.max(
+                    160,
+                    Math.min(
+                      rightSafeMargin - leftSafeMargin + 24,
+                      sigmaMaxDesign.x - sigmaMinDesign.x + 72,
+                    ),
+                  )
+          }
+          height={
+            activeStep === 1
+              ? 88
+              : activeStep === 2
+                ? Math.max(180, yAxisZero.y - yAxisMax.y + 42)
+                : Math.max(160, yAxisZero.y - yAxisMax.y + 34)
+          }
+          rx={12}
+          fill="none"
+          stroke={MATH_COLORS.answerStepFrame}
+          strokeWidth={2.2}
+          strokeDasharray="7 4"
+          pointerEvents="none"
+        />
       )}
     </g>
   );

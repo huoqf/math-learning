@@ -55,9 +55,9 @@ describe("成对数据推导链与右屏面板自动化严谨性测试", () => {
     const step2 = data.reasoningSteps?.[1];
     const step3 = data.reasoningSteps?.[2];
 
-    expect(step1?.title).toContain("识别离群点");
-    expect(step2?.title).toContain("剔除异常点");
-    expect(step3?.title).toContain("决定系数对比");
+    expect(step1?.detail).toContain("离群");
+    expect(step2?.detail).toContain("剔除异常");
+    expect(step3?.detail).toContain("决定系数");
 
     // 校验每个步骤分块公式能成功编译
     [step1, step2, step3].forEach((step) => {

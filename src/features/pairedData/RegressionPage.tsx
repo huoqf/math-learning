@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  StepNavigator,
   TabSwitcher,
   TipCard,
 } from "@/components/UI";
@@ -16,7 +17,11 @@ import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { RegressionScene } from "./components/RegressionScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/pairedData";
+import {
+  defaultParams,
+  paramMeta,
+  REGRESSION_ANSWER_STEPS,
+} from "@/data/registries/pairedData";
 import {
   REGRESSION_PRESETS,
   calculateLinearRegression,
@@ -24,25 +29,6 @@ import {
   RegressionModelType,
   Point2D,
 } from "@/math/pairedData";
-
-// 辅助渲染混合文本（支持 $...$ 内嵌公式与普通文本自然换行）
-function renderMixedText(text: string) {
-  if (!text) return null;
-  const parts = text.split(/\$(.*?)\$/g);
-  return parts.map((part, i) => {
-    if (i % 2 === 1) {
-      return (
-        <KatexFormula
-          key={i}
-          formula={part}
-          mode="inline"
-          className="!text-[11px] !my-0 !mx-0.5"
-        />
-      );
-    }
-    return <span key={i}>{part}</span>;
-  });
-}
 
 export function RegressionPage() {
   // 顶层模式：'linear' (一元线性回归) | 'nonlinear' (非线性模型转换)
@@ -71,6 +57,7 @@ export function RegressionPage() {
   // 辅助视图开关状态
   const [showResidualSquares, setShowResidualSquares] = useState<boolean>(true);
   const [showResidualPlot, setShowResidualPlot] = useState<boolean>(false);
+  const [answerStep, setAnswerStep] = useState<number>(1);
 
   // 根据离群点偏移 outlierOffset 动态计算活跃散点集（符合高中课标真实样本机制）
   const activePoints = useMemo(() => {
@@ -315,6 +302,8 @@ export function RegressionPage() {
       return {
         variant: "primary" as const,
         badge: "自主探究 · 自由拖拽散点",
+        background:
+          "成对样本数据最小二乘回归建模：探究自变量与因变量之间的统计相关趋势与经验预测方程。",
         condition: `在画布中自由拖拽散点 $P_1 \\sim P_5$，当前采用【${modelNameMap[selectedModel]}】。`,
         question: `求出样本相关系数 $r$ 与经验回归方程，计算当 $x_0 = ${targetXVal}$ 时的预报值 $\\hat{y}_0$，并利用决定系数 $R^2$ 评估拟合优度。`,
       };
@@ -324,6 +313,8 @@ export function RegressionPage() {
       return {
         variant: "warning" as const,
         badge: "高考经典 · 离群点检验与数据清洗",
+        background:
+          "工业生产与经济统计监测中，偶发测量失误或突发波动会产生偏离主趋势带的异常点（离群点）。",
         condition: `成对观测样本中存在异常干扰点 $P_5(6, 1.5)$，导致全样本相关系数受损暴跌。`,
         question: `分析异常点对斜率与相关系数 $r$ 的杠杆拉扯破坏；剔除异常点后重新求解经验回归方程，并预测当 $x_0 = ${targetXVal}$ 时的修正预报值。`,
       };
@@ -332,6 +323,7 @@ export function RegressionPage() {
     return {
       variant: "primary" as const,
       badge: `高考经典 · ${currentPreset?.name ?? "成对数据分析"}`,
+      background: `【${currentPreset?.name ?? "科研与产业实测数据分析"}】通过成对散点分布形态选定回归模型，建立预报方程。`,
       condition: `成对观测样本：自变量【${currentPreset?.xName ?? "x"}】与因变量【${currentPreset?.yName ?? "y"}】共 $5$ 组实测数据，拟合模型为【${modelNameMap[selectedModel]}】。`,
       question: `(1) 检验两变量是否具有显著线性相关关系；(2) 建立经验回归方程；(3) 预测${targetDesc}，并结合决定系数 $R^2$ 进行评价。`,
     };
@@ -449,22 +441,18 @@ export function RegressionPage() {
                       {
                         key: "exponential",
                         label: "指数模型",
-                        formula: "y = c e^{kx}",
                       },
                       {
                         key: "logarithmic",
                         label: "对数模型",
-                        formula: "y = a+b\\ln x",
                       },
                       {
                         key: "power",
                         label: "幂函数",
-                        formula: "y = c x^k",
                       },
                       {
                         key: "inverse",
                         label: "双曲线逆",
-                        formula: "y = a+\\frac{b}{x}",
                       },
                     ]}
                     value={selectedModel}
@@ -474,6 +462,16 @@ export function RegressionPage() {
               )}
             </LeftPanelSection>
           )}
+
+          {/* 第 2.5 层：高考标准解答分步走 */}
+          <LeftPanelSection title="高考标准解答分步走">
+            <StepNavigator
+              steps={REGRESSION_ANSWER_STEPS}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="联动右屏推导采分步聚焦与中屏对应回归要素描边。"
+            />
+          </LeftPanelSection>
 
           {/* 第 3 层：核心参数调节区 (ParamControl) */}
           <LeftPanelSection title="参数调节">
@@ -519,32 +517,16 @@ export function RegressionPage() {
             </div>
           </LeftPanelSection>
 
-          {/* 第 5 层：教学导引与题设背景 (自然折行排版) */}
-          <LeftPanelSection title="教学导引与题设背景" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【初始条件】
-                  </span>
-                  <span className="text-neutral-600">
-                    {renderMixedText(tipConfig.condition)}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【核心设问】
-                  </span>
-                  <span className="text-neutral-600">
-                    {renderMixedText(tipConfig.question)}
-                  </span>
-                </div>
-              </div>
-            </TipCard>
-          </LeftPanelSection>
+          {/* 第 5 层：教学导引与题设背景 */}
+          <div className="mt-auto">
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              background={tipConfig.background}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
+          </div>
         </LeftPanel>
       }
       center={
@@ -572,6 +554,7 @@ export function RegressionPage() {
               targetX={params.targetX ?? currentPreset.targetX ?? 10}
               xStep={xStep}
               yStep={yStep}
+              activeStep={answerStep}
             />
           </AnimationSvgCanvas>
 
@@ -583,7 +566,8 @@ export function RegressionPage() {
         <MathPanel
           {...mathData}
           title="成对数据与回归分析看板"
-          examAnchor="高考选择性必修三 · 成对数据统计分析解答题"
+          focusStep={answerStep}
+          focusTarget="reasoning"
         />
       }
     />

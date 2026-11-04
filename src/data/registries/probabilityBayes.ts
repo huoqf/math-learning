@@ -1,5 +1,28 @@
 import type { ParamMeta } from "../types";
+import type { AnswerStepItem } from "@/components/UI";
 import { MATH_COLORS } from "@/theme";
+
+/**
+ * 条件概率、全概率与贝叶斯实验室 — 高考标准解答 3 步链（SSOT）
+ * 左屏 StepNavigator、右屏 MathPanel.reasoningSteps、中屏 ProbabilityBayesScene 三方同源。
+ */
+export const BAYES_ANSWER_STEPS: AnswerStepItem[] = [
+  {
+    step: 1,
+    title: "审题定法 · 设完备事件组与先验条件",
+    sceneHint: "中屏框定先验样本空间 / 完备划分区域",
+  },
+  {
+    step: 2,
+    title: "建模联立 · 条件概率与全概率公式展开",
+    sceneHint: "中屏框定样本缩减视窗 / 分支路径乘积",
+  },
+  {
+    step: 3,
+    title: "求解反思 · 目标概率求值与逆向结论判定",
+    sceneHint: "中屏框定最终商式汇总与后验对比结论",
+  },
+];
 
 export const defaultParams = {
   // 模式 1: 条件概率

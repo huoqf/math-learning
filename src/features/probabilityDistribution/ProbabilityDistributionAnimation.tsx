@@ -7,6 +7,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  StepNavigator,
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
@@ -14,7 +15,10 @@ import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams } from "@/data/registries/probabilityDistribution";
+import {
+  defaultParams,
+  DISTRIBUTION_ANSWER_STEPS,
+} from "@/data/registries/probabilityDistribution";
 import { ProbabilityDistributionScene } from "./components/ProbabilityDistributionScene";
 import { DistributionTable } from "./components/DistributionTable";
 import {
@@ -40,6 +44,7 @@ export function ProbabilityDistributionAnimation() {
   // 决策场景切换 (质检 vs 投资)
   const [decisionScenario, setDecisionScenario] =
     useState<DecisionScenario>("quality");
+  const [answerStep, setAnswerStep] = useState<number>(1);
 
   // 参数状态保存
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -208,7 +213,6 @@ export function ProbabilityDistributionAnimation() {
               items={modeOptions.map((opt) => ({
                 key: opt.key,
                 label: opt.label,
-                formula: opt.formula,
               }))}
               value={studyMode}
               onChange={(k) => setStudyMode(k as StudyMode)}
@@ -240,6 +244,16 @@ export function ProbabilityDistributionAnimation() {
               />
             </LeftPanelSection>
           )}
+
+          {/* 高考标准解答分步走 */}
+          <LeftPanelSection title="高考标准解答分步走">
+            <StepNavigator
+              steps={DISTRIBUTION_ANSWER_STEPS}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="右屏同步聚焦对应采分步卡片，中屏框定当前步分析区域。"
+            />
+          </LeftPanelSection>
 
           {/* 参数调节 */}
           <LeftPanelSection title="模型参数">
@@ -347,6 +361,7 @@ export function ProbabilityDistributionAnimation() {
               linearA={params.linearA}
               linearB={params.linearB}
               onProbabilityChange={handleCanvasProbabilityChange}
+              activeStep={answerStep}
             />
           </AnimationSvgCanvas>
 
@@ -360,7 +375,14 @@ export function ProbabilityDistributionAnimation() {
           )}
         </div>
       }
-      right={<MathPanel {...mathData} title={panelTitle} />}
+      right={
+        <MathPanel
+          {...mathData}
+          title={panelTitle}
+          focusStep={answerStep}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

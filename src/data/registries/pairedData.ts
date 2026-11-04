@@ -68,6 +68,28 @@ export const INDEPENDENCE_ANSWER_STEPS: IndependenceAnswerStep[] = [
   },
 ];
 
+/**
+ * 一元线性回归与非线性换元回归模块的解答分步链条（SSOT）。
+ * 左屏 StepNavigator、右屏 MathPanel.reasoningSteps、中屏 RegressionScene 三方同源。
+ */
+export const REGRESSION_ANSWER_STEPS: IndependenceAnswerStep[] = [
+  {
+    step: 1,
+    title: "审题定法 · 样本中心点与相关性判定",
+    sceneHint: "中屏框定样本中心点 (x̄, ȳ) 与散点相关趋势",
+  },
+  {
+    step: 2,
+    title: "建模联立 · 最小二乘拟合与经验回归方程",
+    sceneHint: "中屏框定主样本带拟合曲线与残差正方形区域",
+  },
+  {
+    step: 3,
+    title: "求解反思 · 目标预报求值与决定系数 R² 评价",
+    sceneHint: "中屏框定预测靶点 (x₀, ŷ₀) 与坐标轴投影",
+  },
+];
+
 export const paramMeta: Record<string, ParamMeta> = {
   noise: {
     key: "noise",

@@ -125,15 +125,18 @@ export const ProbabilityClassicalScene: React.FC<
     return { nodeCoords, depthX, maxDepth, isThreeLevels };
   }, [treeNodes]);
 
-  // 步数聚焦状态逻辑
-  const isStep1 = activeStep === 1; // 审题定模：全空间亮，外围虚线围栏
+  // 步数聚焦状态逻辑（与 StepNavigator 1~4 步同源联动）
+  const isStep1 = activeStep === 1; // 审题定模：有限性与等可能性
+  const isStep2 = activeStep === 2; // 列举样本：全空间计数 n(Ω)
   const isStep3 = activeStep === 3; // 确定事件：目标事件高亮，非目标点压暗
-  const isStep4 = activeStep === 4; // 代入与验算：目标事件主色高亮，对立事件互补色高亮
+  const isStep4 = activeStep === 4; // 代入与验算：顶部比值算式围栏聚焦 + 原事件与对立事件对偶
+  const topBannerOpacity = activeStep === 0 || isStep1 || isStep4 ? 1 : 0.75;
+  const workspaceOpacity = activeStep === 0 ? 1 : isStep4 ? 0.85 : 1;
 
   return (
     <g className="probability-classical-scene select-none">
       {/* 顶部标题指示与概率实时状态栏 */}
-      <g transform="translate(420, 45)">
+      <g transform="translate(420, 45)" opacity={topBannerOpacity}>
         <rect
           x={-280}
           y={-28}
@@ -144,6 +147,19 @@ export const ProbabilityClassicalScene: React.FC<
           stroke={withAlpha(MATH_COLORS.primary, 0.4)}
           strokeWidth={1.5}
         />
+        {isStep4 && (
+          <rect
+            x={-286}
+            y={-34}
+            width={572}
+            height={60}
+            rx={14}
+            fill="none"
+            stroke={MATH_COLORS.answerStepFrame}
+            strokeWidth={2}
+            strokeDasharray="7 4"
+          />
+        )}
         <text
           x={0}
           y={3}
@@ -167,7 +183,7 @@ export const ProbabilityClassicalScene: React.FC<
 
       {/* 模式一：二维网格矩阵视图 (Matrix View) */}
       {activeView === "matrix" && matrixLayout && (
-        <g className="matrix-view">
+        <g className="matrix-view" opacity={workspaceOpacity}>
           {matrixLayout.type === "grid6x6" ? (
             // 6x6 两枚骰子二维网格
             <g>
@@ -380,8 +396,8 @@ export const ProbabilityClassicalScene: React.FC<
             </g>
           )}
 
-          {/* 外轮廓聚焦框 (Step 1 审题与等可能全集边界) */}
-          {isStep1 && (
+          {/* 外轮廓聚焦框 (Step 1~3 样本空间与目标事件列举围栏) */}
+          {(isStep1 || isStep2 || isStep3) && (
             <rect
               x={matrixLayout.startX - 8}
               y={matrixLayout.startY - 8}
@@ -397,9 +413,9 @@ export const ProbabilityClassicalScene: React.FC<
               }
               rx={12}
               fill="none"
-              stroke={MATH_COLORS.primary}
-              strokeWidth={2.5}
-              strokeDasharray="6 4"
+              stroke={MATH_COLORS.answerStepFrame}
+              strokeWidth={2}
+              strokeDasharray="7 4"
             />
           )}
         </g>
@@ -407,7 +423,20 @@ export const ProbabilityClassicalScene: React.FC<
 
       {/* 模式二：树状图分步路径视图 (Tree Diagram View) */}
       {activeView === "tree" && treeLayout && (
-        <g className="tree-diagram-view">
+        <g className="tree-diagram-view" opacity={workspaceOpacity}>
+          {(isStep1 || isStep2 || isStep3) && (
+            <rect
+              x={90}
+              y={74}
+              width={660}
+              height={500}
+              rx={12}
+              fill="none"
+              stroke={MATH_COLORS.answerStepFrame}
+              strokeWidth={2}
+              strokeDasharray="7 4"
+            />
+          )}
           {/* 分步阶段顶部提示文字 */}
           <text
             x={treeLayout.depthX[0]}

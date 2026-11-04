@@ -9,12 +9,16 @@ import {
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
+  StepNavigator,
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
-import { defaultParams } from "@/data/registries/probabilityBayes";
+import {
+  defaultParams,
+  BAYES_ANSWER_STEPS,
+} from "@/data/registries/probabilityBayes";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { ProbabilityBayesScene } from "./components/ProbabilityBayesScene";
 import {
@@ -41,6 +45,7 @@ export function ProbabilityBayesAnimation() {
 
   const [activeMode, setActiveMode] = useState<BayesMode>(initialMode);
   const [isZoomedToA, setIsZoomedToA] = useState(false);
+  const [answerStep, setAnswerStep] = useState<number>(1);
 
   // 各模式情境选择（自由探索 + 典型课标情景）
   const [condScenario, setCondScenario] = useState<CondScenario>("independent");
@@ -275,6 +280,16 @@ export function ProbabilityBayesAnimation() {
             </LeftPanelSection>
           )}
 
+          {/* 第 2.5 层：高考标准解答分步走 */}
+          <LeftPanelSection title="高考标准解答分步走">
+            <StepNavigator
+              steps={BAYES_ANSWER_STEPS}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="联动右屏推导采分步聚焦与中屏对应模型区块描边。"
+            />
+          </LeftPanelSection>
+
           {/* 第 3 层：参数调节区 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
@@ -355,12 +370,20 @@ export function ProbabilityBayesAnimation() {
                   bayesScenario === "factory" ? "factory" : "screening"
                 }
                 fontScale={canvasSize.font}
+                activeStep={answerStep}
               />
             </AnimationSvgCanvas>
           </div>
         </div>
       }
-      right={<MathPanel {...mathData} title={panelTitle} />}
+      right={
+        <MathPanel
+          {...mathData}
+          title={panelTitle}
+          focusStep={answerStep}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

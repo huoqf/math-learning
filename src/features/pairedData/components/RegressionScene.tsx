@@ -31,6 +31,7 @@ interface RegressionSceneProps {
   targetX?: number;
   xStep?: number;
   yStep?: number;
+  activeStep?: number;
 }
 
 export const RegressionScene: React.FC<RegressionSceneProps> = ({
@@ -47,6 +48,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
   targetX,
   xStep = 1,
   yStep = 1,
+  activeStep,
 }) => {
   // 1. 回归模型计算
   const regResult = useMemo(() => {
@@ -510,6 +512,72 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
           </>
         );
       })()}
+
+      {/* 分步作答聚焦围栏（与左屏 StepNavigator、右屏 MathPanel 三方同源） */}
+      {activeStep !== undefined &&
+        (() => {
+          const ptDesigns = points.map((p) => mathToDesign(p.x, p.y, scale));
+          const minPx =
+            ptDesigns.length > 0
+              ? Math.min(...ptDesigns.map((d) => d.x))
+              : centerPos.x - 100;
+          const maxPx =
+            ptDesigns.length > 0
+              ? Math.max(...ptDesigns.map((d) => d.x))
+              : centerPos.x + 100;
+          const minPy =
+            ptDesigns.length > 0
+              ? Math.min(...ptDesigns.map((d) => d.y))
+              : centerPos.y - 80;
+          const maxPy =
+            ptDesigns.length > 0
+              ? Math.max(...ptDesigns.map((d) => d.y))
+              : centerPos.y + 80;
+
+          const box =
+            activeStep === 1
+              ? {
+                  x: centerPos.x - 75,
+                  y: centerPos.y - 55,
+                  width: 150,
+                  height: 110,
+                }
+              : activeStep === 2
+                ? {
+                    x: minPx - 32,
+                    y: minPy - 32,
+                    width: Math.max(120, maxPx - minPx + 64),
+                    height: Math.max(100, maxPy - minPy + 64),
+                  }
+                : targetPos
+                  ? {
+                      x: targetPos.x - 85,
+                      y: targetPos.y - 55,
+                      width: 170,
+                      height: 110,
+                    }
+                  : {
+                      x: centerPos.x - 75,
+                      y: centerPos.y - 55,
+                      width: 150,
+                      height: 110,
+                    };
+
+          return (
+            <rect
+              x={box.x}
+              y={box.y}
+              width={box.width}
+              height={box.height}
+              rx={12}
+              fill="none"
+              stroke={MATH_COLORS.answerStepFrame}
+              strokeWidth={2.2}
+              strokeDasharray="7 4"
+              pointerEvents="none"
+            />
+          );
+        })()}
     </g>
   );
 };

@@ -500,10 +500,7 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
 
           {/* 大样本频率试验：试验次数 */}
           {params.activeView === "frequency" && (
-            <LeftPanelSection
-              title="大样本重复试验"
-              subtitle="拖动试验次数，观察频率如何收拢到概率"
-            >
+            <LeftPanelSection title="大样本重复试验">
               <ParamControl
                 params={trialParams}
                 onParamChange={handleParamChange}
