@@ -109,6 +109,8 @@ export function buildFuncTransformPanel(
             : fnType === "quadratic"
               ? `顶点原在 $(0, 0)$，对称轴为 $y$ 轴；平移伸缩后顶点迁移至 $(${h.toFixed(1)}, ${k.toFixed(1)})$。`
               : "标定核心特征点与对称中心，确立代数自变量代换边界。",
+      rubric:
+        "【高考采分点】写出母函数解析式、基准定点与渐近线，作为后续变换的对照基准，得 3 分。",
     },
     {
       step: 2,
@@ -116,6 +118,8 @@ export function buildFuncTransformPanel(
       latex: res.routes.shiftFirst,
       detail:
         "【先移后缩规范】必须先平移 $|\\omega h|$ 个单位得到 $f(x - \\omega h)$，再对自变量进行伸缩 $x \\to \\omega x$，平移量绝非孤立的 $|h|$！",
+      rubric:
+        "【高考采分点】按「先移后缩」先平移 $|\\omega h|$ 个单位得 $f(x - \\omega h)$ 再伸缩，平移量不是孤立的 $|h|$，得 4 分。",
     },
     {
       step: 3,
@@ -123,6 +127,8 @@ export function buildFuncTransformPanel(
       latex: res.routes.scaleFirst,
       detail:
         "【先缩后移规范】先对自变量进行伸缩得到 $f(\\omega x)$，再提公因式整体平移 $|h|$ 个单位得到 $f(\\omega(x - h))$。",
+      rubric:
+        "【高考采分点】按「先缩后移」先得 $f(\\omega x)$ 再整体平移，写成 $f(\\omega(x - h))$ 与路径一对照，得 2 分。",
     },
     {
       step: 4,
@@ -139,6 +145,8 @@ export function buildFuncTransformPanel(
               "$ 一侧的图象并对称复制到左侧；所得函数关于该竖直线轴对称。"
             : "综合水平与竖直方向位移与伸缩倍率，完成数形特征完全闭环。"
       }`,
+      rubric:
+        "【高考采分点】写出目标解析式，并说明翻折后的对称轴（或折点位置）与分段写法，得 3 分。",
     },
   ];
 

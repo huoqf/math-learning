@@ -149,6 +149,8 @@ export function buildSolidAxiomsPanel(
         title: "确定基准平面要素",
         detail: step1Detail,
         latex: `\\vec{AB} = (${vABx}, ${vABy}, 0), \\quad \\vec{AC} = (${vACx}, ${vACy}, 0) \\implies \\vec{n}_0 = \\vec{AB} \\times \\vec{AC} = (0, 0, ${crossZ}), \\quad \\vec{n} = \\frac{\\vec{n}_0}{|\\vec{n}_0|} = (${res.plane.normal.x.toFixed(2)}, ${res.plane.normal.y.toFixed(2)}, ${res.plane.normal.z.toFixed(2)})`,
+        rubric:
+          "【高考采分点】取平面内两个不共线向量，由法向量与这两个向量的数量积都为零列方程组，解出法向量，得 2 分。",
       },
       {
         step: 2,
@@ -156,6 +158,8 @@ export function buildSolidAxiomsPanel(
         detail:
           "由法向量建立平面方程 $\\alpha: z = 0$。动点 $P$ 的坐标代入方程，距离 $d = |z_P|$。",
         latex: `d = |0 \\cdot x_P + 0 \\cdot y_P + 1 \\cdot z_P| = |\\Delta z| = ${Math.abs(tParam).toFixed(2)}`,
+        rubric:
+          "【高考采分点】由法向量写出平面方程，把动点坐标代入求出到平面的有向距离，得 3 分。",
       },
       {
         step: 3,
@@ -163,6 +167,8 @@ export function buildSolidAxiomsPanel(
         detail:
           "当且仅当 $\\Delta z = 0$ 时，点 $P$ 位于基准平面内，四点共面成立。",
         latex: `\\Delta z = ${tParam.toFixed(2)} \\implies P ${res.isCoplanar ? "\\in" : "\\notin"} \\text{平面 } \\alpha`,
+        rubric:
+          "【高考采分点】由距离是否为零判定点是否落在平面内，据此写出四点共面结论，得 3 分。",
       },
     );
   } else if (mode === "intersection") {

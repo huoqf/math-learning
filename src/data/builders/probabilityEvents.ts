@@ -436,6 +436,7 @@ export function buildProbabilityEventsPanel(
     theorems,
     gaokaoPoints,
     warnings,
+    examAnchor: "必修二概率基石 · 样本空间、互斥与对立事件加法公式（5分）",
     mnemonic:
       "概率取值零到一，必然是一空为零；互斥加法直接加，相交莫忘减交集；正难则反寻对立，减去反面最省力。",
   };

@@ -237,12 +237,16 @@ export function buildPolyhedronFeaturesPanel(
         detail:
           "设原大棱锥高为 $H$，则切除的小棱锥高为 $H - h$。由截面与底面相似比，高之比等于边长相似比：",
         latex: `\\frac{H - h}{H} = \\frac{a_1}{a_2} = k \\implies H = \\frac{h}{1 - k}, \\quad H - h = \\frac{k h}{1 - k}`,
+        rubric:
+          "【高考采分点】由截面与底面相似定出相似比 $k$，反解大棱锥高 $H = \\frac{h}{1 - k}$，得 3 分。",
       },
       {
         step: 2,
         title: "大锥体积减小锥体积展开化简",
         detail: "将 $S_1 = k^2 S_2$ 代入体积差式中提取因式：",
         latex: `V = \\frac{1}{3} \\left( S_2 H - S_1(H - h) \\right) = \\frac{1}{3} h S_2 \\frac{1 - k^3}{1 - k} = \\frac{1}{3} h S_2 (1 + k + k^2)`,
+        rubric:
+          "【高考采分点】用「大锥减小锥」列出体积差式，提取公因式化简为 $\\frac{1}{3}hS_2(1 + k + k^2)$，得 4 分。",
       },
       {
         step: 3,
@@ -250,6 +254,8 @@ export function buildPolyhedronFeaturesPanel(
         detail:
           "因 $k S_2 = \\sqrt{S_1 S_2}$ 且 $k^2 S_2 = S_1$，代回即得标准公式：",
         latex: `V = \\frac{1}{3} h (S_1 + \\sqrt{S_1 S_2} + S_2)`,
+        rubric:
+          "【高考采分点】由 $kS_2 = \\sqrt{S_1S_2}$ 代回，写出 $V = \\frac{1}{3}h(S_1 + \\sqrt{S_1S_2} + S_2)$，得 5 分。",
       },
     );
   } else {
@@ -323,6 +329,8 @@ export function buildPolyhedronFeaturesPanel(
         detail:
           "以底面 $\\triangle ABC$ 为底、顶点为 $P$，此时高为侧棱 $PA = h$，直接算得体积：",
         latex: `V_{P-ABC} = \\frac{1}{3} S_{\\triangle ABC} \\cdot PA = \\frac{1}{3} \\cdot \\left(\\frac{1}{2} a b\\right) \\cdot h = \\frac{1}{6} a b h = ${res.volume.toFixed(2)}`,
+        rubric:
+          "【高考采分点】选易求高的顶点作顶点，算出三棱锥体积 $V$，得 3 分。",
       },
       {
         step: 2,
@@ -330,6 +338,8 @@ export function buildPolyhedronFeaturesPanel(
         detail:
           "转换顶点，以 $B$ 为顶点、底面为侧面 $\\triangle PAC$，由等体积公式反解点面距离：",
         latex: `h_B = \\frac{3 V_{P-ABC}}{S_{\\triangle PAC}} = \\frac{3 \\cdot ${res.volume.toFixed(2)}}{${res.areaPAC.toFixed(2)}} = ${res.distBToPAC.toFixed(2)}`,
+        rubric:
+          "【高考采分点】换顶点后由 $d = \\frac{3V}{S}$ 反解点到平面的距离，得 4 分。",
       },
     );
   }

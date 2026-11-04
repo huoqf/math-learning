@@ -107,18 +107,24 @@ export function buildProbabilityNormalPanel(
           title: "第一步：累加直方图小矩形频率",
           latex: `\\hat{f}(${minX.toFixed(1)} \\le X \\le ${maxX.toFixed(1)}) = \\sum_{i \\in [${minX.toFixed(1)}, ${maxX.toFixed(1)}]} \\Delta x_i \\cdot h_i = ${(histIntervalFreq * 100).toFixed(2)}\\%`,
           detail: `区间 $[${minX.toFixed(1)}, ${maxX.toFixed(1)}]$ 内部包含的小矩形面积总和，代表样本落入该区间的经验频率。`,
+          rubric:
+            "【高考采分点】用「组距 × 矩形高」把小矩形面积逐块累加，得到样本落在该区间的经验频率，得 3 分。",
         },
         {
           step: 2,
           title: "第二步：计算总体正态连续分布概率",
           latex: `P(${minX.toFixed(1)} \\le X \\le ${maxX.toFixed(1)}) = \\Phi\\left(\\frac{${maxX.toFixed(1)} - \\color{${MATH_COLORS.paramPrimary}}{${mu.toFixed(1)}}}{\\color{${MATH_COLORS.paramSecondary}}{${sigma.toFixed(1)}}}\\right) - \\Phi\\left(\\frac{${minX.toFixed(1)} - \\color{${MATH_COLORS.paramPrimary}}{${mu.toFixed(1)}}}{\\color{${MATH_COLORS.paramSecondary}}{${sigma.toFixed(1)}}}\\right) = ${(normalIntervalProb * 100).toFixed(2)}\\%`,
           detail: `总体正态曲线在区间 $[${minX.toFixed(1)}, ${maxX.toFixed(1)}]$ 下方围成的封闭面积，由标准正态累积分布函数 $\\Phi(z)$ 差值求得。`,
+          rubric:
+            "【高考采分点】先把区间两端点标准化为 $z$ 值，再用 $\\Phi(z_2) - \\Phi(z_1)$ 求总体概率，得 4 分。",
         },
         {
           step: 3,
           title: "第三步：检验逼近收敛误差",
           latex: `|P - \\hat{f}| = |${(normalIntervalProb * 100).toFixed(2)}\\% - ${(histIntervalFreq * 100).toFixed(2)}\\%| = ${(intervalProbDiff * 100).toFixed(2)}\\%`,
           detail: `当组距 $\\Delta x \\to 0$ 且样本容量 $N \\to \\infty$ 时，各组矩形上底边折线无限逼近正态曲线，经验频率收敛于理论概率。`,
+          rubric:
+            "【高考采分点】比较经验频率与理论概率之差，并说明组距趋零、样本容量趋大时二者收敛，得 3 分。",
         },
       ],
       theorems: [
@@ -151,6 +157,7 @@ export function buildProbabilityNormalPanel(
       ],
       mnemonic:
         "样本增大组距缩，阶梯渐变钟形坡；离散频率和为积，连续曲线面积一！",
+      examAnchor: "选择性必修三核心 · 频率直方图向正态密度曲线逼近（5分）",
     };
   }
 
@@ -231,6 +238,8 @@ export function buildProbabilityNormalPanel(
         },
       ],
       mnemonic: "均值定中心，方差定胖瘦；σ 越小越陡峭，面积恒为一！",
+      examAnchor:
+        "新高考选填必考 · 正态分布参数 μ 与 σ 的几何与统计意义（5分）",
     };
   }
 
@@ -340,5 +349,7 @@ export function buildProbabilityNormalPanel(
     ],
     mnemonic:
       "一倍六八二，两倍九五四，三倍九九七；关于均值成镜像，对称转化解难题！",
+    examAnchor:
+      "新高考选填与解答综合 · 正态分布对称性转化与 3-σ 原则（5-13分）",
   };
 }

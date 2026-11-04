@@ -188,6 +188,8 @@ export function buildFuncPropertiesPanel(
             "函数解析式为 $f(x) = x^3$。检查初等函数限制条件：无分母、无偶次根号、无对数真数，自变量可取全体实数。",
           latex:
             "x \\in \\mathbb{R} \\implies D = \\mathbb{R} = (-\\infty, +\\infty)",
+          rubric:
+            "【高考采分点】逐一排查分母、偶次根号、对数真数三类限制，判定定义域为 $\\mathbb{R}$，得 2 分。",
         },
         {
           step: 2,
@@ -196,12 +198,16 @@ export function buildFuncPropertiesPanel(
             "奇多项式 $f(x) = x^3$ 在定义域 $\\mathbb{R}$ 上严格单调递增，当 $x \\to -\\infty$ 时 $f(x) \\to -\\infty$；当 $x \\to +\\infty$ 时 $f(x) \\to +\\infty$。",
           latex:
             "x \\to -\\infty \\text{ 时 } x^3 \\to -\\infty, \\quad x \\to +\\infty \\text{ 时 } x^3 \\to +\\infty",
+          rubric:
+            "【高考采分点】由严格单调性说明函数值无界且连续取遍全体实数，得 3 分。",
         },
         {
           step: 3,
           title: "求解反思 · 垂线单值对应检验",
           detail: `当前采样点 $x_0 = ${x0.toFixed(2)}$，代入得唯一函数值 $f(x_0) = ${fx0.toFixed(2)}$。垂线 $x = x_0$ 与曲线有且仅有 $1$ 个交点，满足函数现代定义。`,
           latex: `f(${x0.toFixed(2)}) = (${x0.toFixed(2)})^3 = ${fx0.toFixed(2)} \\implies R = \\mathbb{R}`,
+          rubric:
+            "【高考采分点】代入采样点验证垂线与曲线有且仅有一个交点，落实函数定义，得 3 分。",
         },
       ];
     } else if (fnType === "quadratic") {
@@ -212,6 +218,8 @@ export function buildFuncPropertiesPanel(
           detail:
             "函数 $f(x) = x^2$ 为一元二次整式函数，自变量 $x$ 的取值不受分母或根号限制，定义域为全体实数 $\\mathbb{R}$。",
           latex: "D = \\{x \\mid x \\in \\mathbb{R}\\} = (-\\infty, +\\infty)",
+          rubric:
+            "【高考采分点】指出整式函数不含分母与根号限制，定义域为 $\\mathbb{R}$，得 2 分。",
         },
         {
           step: 2,
@@ -219,12 +227,16 @@ export function buildFuncPropertiesPanel(
           detail:
             "二次项系数 $a = 1 > 0$，抛物线开口向上，顶点在原点 $(0, 0)$。由实数平方性质恒有 $x^2 \\ge 0$，在 $x = 0$ 处取得最小值 $f_{\\min} = 0$。",
           latex: "\\forall x \\in \\mathbb{R}, \\quad f(x) = x^2 \\ge 0 = f(0)",
+          rubric:
+            "【高考采分点】由 $x^2 \\ge 0$ 与开口向上定出顶点为最小值点 $f_{\\min} = 0$，得 3 分。",
         },
         {
           step: 3,
           title: "求解反思 · 半开半闭值域求解",
           detail: `图象在 $y$ 轴上的正投影自 $y = 0$ 向上延伸至 $+\\infty$。代入探针 $x_0 = ${x0.toFixed(2)}$ 得 $f(x_0) = ${fx0.toFixed(2)}$，垂线检验唯一确定。`,
           latex: `R = [0, +\\infty), \\quad f(${x0.toFixed(2)}) = (${x0.toFixed(2)})^2 = ${fx0.toFixed(2)} \\in R`,
+          rubric:
+            "【高考采分点】把图象在 $y$ 轴上的投影写成半开半闭区间 $[0, +\\infty)$，得 3 分。",
         },
       ];
     } else if (fnType === "root") {
@@ -235,6 +247,8 @@ export function buildFuncPropertiesPanel(
           detail:
             "初等根式函数 $f(x) = \\sqrt{x}$ 的被开方数必须非负，列出定义域充要不等式 $x \\ge 0$。",
           latex: "x \\ge 0 \\iff D = [0, +\\infty)",
+          rubric:
+            "【高考采分点】由被开方数非负列出 $x \\ge 0$，得定义域 $[0, +\\infty)$，得 2 分。",
         },
         {
           step: 2,
@@ -242,6 +256,8 @@ export function buildFuncPropertiesPanel(
           detail:
             "由算术平方根的代数定义，恒有 $\\sqrt{x} \\ge 0$。函数在 $[0, +\\infty)$ 上严格单调递增，且 $f(0) = 0$。",
           latex: "\\sqrt{x} \\ge 0, \\quad f_{\\min} = f(0) = 0",
+          rubric:
+            "【高考采分点】由算术平方根非负且单调递增，定出最小值 $0$ 与值域 $[0, +\\infty)$，得 3 分。",
         },
         {
           step: 3,
@@ -252,6 +268,8 @@ export function buildFuncPropertiesPanel(
           latex: isDefined
             ? `f(${x0.toFixed(2)}) = \\sqrt{${x0.toFixed(2)}} = ${fx0.toFixed(2)} \\implies R = [0, +\\infty)`
             : `x_0 = ${x0.toFixed(2)} \\notin D \\implies f(x_0) \\text{ 无定义}`,
+          rubric:
+            "【高考采分点】区分探针落在定义域内、外两种情形：在内给出唯一函数值，在外判为无定义，得 3 分。",
         },
       ];
     } else if (fnType === "abs") {
@@ -262,6 +280,8 @@ export function buildFuncPropertiesPanel(
           detail:
             "函数 $f(x) = |x|$ 为绝对值函数，自变量 $x$ 取任意实数均有确定绝对值，定义域为全体实数 $\\mathbb{R}$。",
           latex: "D = \\mathbb{R} = (-\\infty, +\\infty)",
+          rubric:
+            "【高考采分点】指出绝对值不构成取值限制，定义域为 $\\mathbb{R}$，得 2 分。",
         },
         {
           step: 2,
@@ -270,12 +290,16 @@ export function buildFuncPropertiesPanel(
             "根据绝对值的几何意义（数轴上点到原点距离），恒有 $|x| \\ge 0$。分段表达为 $x \\ge 0$ 时 $f(x) = x$；$x < 0$ 时 $f(x) = -x$。",
           latex:
             "f(x) = \\begin{cases} x, & x \\ge 0 \\\\ -x, & x < 0 \\end{cases} \\ge 0",
+          rubric:
+            "【高考采分点】以零点分段写出解析式，并由数轴距离的几何意义得 $|x| \\ge 0$，得 3 分。",
         },
         {
           step: 3,
           title: "求解反思 · 投影值域与单值确定",
           detail: `在折点 $x = 0$ 处取得最小值 $0$。代入探针 $x_0 = ${x0.toFixed(2)}$ 得 $f(x_0) = ${fx0.toFixed(2)}$，垂线与折线图象交于唯一一点。`,
           latex: `R = [0, +\\infty), \\quad f(${x0.toFixed(2)}) = |${x0.toFixed(2)}| = ${fx0.toFixed(2)}`,
+          rubric:
+            "【高考采分点】由折点处取最小值写出值域 $[0, +\\infty)$，并用探针验证单值对应，得 3 分。",
         },
       ];
     } else if (fnType === "reciprocal") {
@@ -286,6 +310,8 @@ export function buildFuncPropertiesPanel(
           detail:
             "反比例函数 $f(x) = \\frac{1}{x}$ 中，分母不能为 $0$。解不等式 $x \\ne 0$ 得到去心定义域。",
           latex: "x \\ne 0 \\iff D = (-\\infty, 0) \\cup (0, +\\infty)",
+          rubric:
+            "【高考采分点】由分母非零解出 $x \\ne 0$，写成去心定义域 $(-\\infty, 0) \\cup (0, +\\infty)$，得 2 分。",
         },
         {
           step: 2,
@@ -294,6 +320,8 @@ export function buildFuncPropertiesPanel(
             "分子为非零常数 $1$，由分式性质可知 $f(x) = \\frac{1}{x} \\ne 0$ 恒成立。当 $|x| \\to +\\infty$ 时 $f(x) \\to 0$；当 $x \\to 0$ 时 $|f(x)| \\to +\\infty$。",
           latex:
             "\\frac{1}{x} \\ne 0 \\implies R = (-\\infty, 0) \\cup (0, +\\infty)",
+          rubric:
+            "【高考采分点】说明 $\\frac{1}{x} \\ne 0$ 且两支各自取遍非零实数，得值域 $(-\\infty, 0) \\cup (0, +\\infty)$，得 3 分。",
         },
         {
           step: 3,
@@ -304,6 +332,8 @@ export function buildFuncPropertiesPanel(
           latex: isDefined
             ? `f(${x0.toFixed(2)}) = \\frac{1}{${x0.toFixed(2)}} = ${fx0.toFixed(2)}`
             : "x_0 = 0 \\notin D \\implies f(0) \\text{ 无定义}",
+          rubric:
+            "【高考采分点】标出铅垂、水平两条渐近线，并指出探针落在奇点 $x = 0$ 处无定义，得 3 分。",
         },
       ];
     } else if (fnType === "sin") {
@@ -315,6 +345,8 @@ export function buildFuncPropertiesPanel(
             "由单位圆三角函数定义，任意实数弧度角 $x$ 均在终边与单位圆有确定交点，定义域为全体实数 $\\mathbb{R}$。",
           latex:
             "x \\in \\mathbb{R} \\iff D = \\mathbb{R} = (-\\infty, +\\infty)",
+          rubric:
+            "【高考采分点】由单位圆定义说明任意实数角都有确定正弦值，定义域为 $\\mathbb{R}$，得 2 分。",
         },
         {
           step: 2,
@@ -322,12 +354,16 @@ export function buildFuncPropertiesPanel(
           detail:
             "终边在单位圆上的交点纵坐标满足 $-1 \\le y \\le 1$。函数在区间 $[-\\frac{\\pi}{2}, \\frac{\\pi}{2}]$ 上单调映射，值域为闭区间。",
           latex: "\\forall x \\in \\mathbb{R}, \\quad -1 \\le \\sin x \\le 1",
+          rubric:
+            "【高考采分点】由终边与单位圆交点纵坐标的取值范围得 $-1 \\le \\sin x \\le 1$，得 3 分。",
         },
         {
           step: 3,
           title: "求解反思 · 有界值域与周期单值",
           detail: `在 $x = \\frac{\\pi}{2} + 2k\\pi$ 取极大值 $1$，在 $x = -\\frac{\\pi}{2} + 2k\\pi$ 取极小值 $-1$。代入探针 $x_0 = ${x0.toFixed(2)}$ 验证单值性。`,
           latex: `R = [-1, 1], \\quad f(${x0.toFixed(2)}) = \\sin(${x0.toFixed(2)}) = ${fx0.toFixed(2)}`,
+          rubric:
+            "【高考采分点】写出最值取到的位置与值域 $[-1, 1]$，并用探针验证一个周期内的单值性，得 3 分。",
         },
       ];
     }
@@ -520,6 +556,8 @@ export function buildFuncPropertiesPanel(
                 : fnType === "sin"
                   ? "f(-x) = \\sin(-x) = -\\sin x = -f(x) \\implies \\text{奇函数 (关于原点对称)}"
                   : "f(-x) = (-x)^3 = -x^3 = -f(x) \\implies \\text{奇函数 (关于原点对称)}",
+        rubric:
+          "【高考采分点】先验证定义域关于原点对称，再计算 $f(-x)$ 与 $f(x)$ 或 $-f(x)$ 比对，据此判定奇偶性，得 4 分。",
       },
       {
         step: 2,
@@ -540,6 +578,8 @@ export function buildFuncPropertiesPanel(
               : fnType === "reciprocal"
                 ? "\\Delta y = -\\frac{x_2 - x_1}{x_1 x_2} < 0 \\quad (x_1 x_2 > 0 \\text{ 同支})"
                 : "\\frac{f(x_2) - f(x_1)}{x_2 - x_1} \\text{ 符号决定单调性}",
+        rubric:
+          "【高考采分点】按「取值—作差—变形—定号」四步证明单调性，因式分解后逐个因子判断符号，得 5 分。",
       },
       {
         step: 3,
@@ -548,6 +588,8 @@ export function buildFuncPropertiesPanel(
         latex: Number.isFinite(secantRes.slope)
           ? `k = \\frac{f(${x2.toFixed(1)}) - f(${x1.toFixed(1)})}{${x2.toFixed(1)} - (${x1.toFixed(1)})} = ${secantRes.slope.toFixed(2)}`
           : "x_1 = x_2 \\implies k \\text{ 未定义 (割线退化)}",
+        rubric:
+          "【高考采分点】算出两点间平均变化率，并说明割线斜率不能代替定义域内的单调性，得 3 分。",
       },
     ];
 

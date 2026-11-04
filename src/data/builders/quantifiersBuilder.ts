@@ -109,6 +109,36 @@ export function buildQuantifiersPanel(
               },
             ]
           : [],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 两个函数各自在约束区间上取值域",
+          detail: `先不管量词，分别把 $f$ 在 $I_1$、$g$ 在 $I_2$ 上的图象竖直投影成闭区间：$\\text{Range}(f) = [${dualRes.fMin.toFixed(2)}, ${dualRes.fMax.toFixed(2)}]$，$\\text{Range}(g) = [${dualRes.gMin.toFixed(2)}, ${dualRes.gMax.toFixed(2)}]$。值域算错，后面选的判据一定跟着错。`,
+          latex: `\\text{Range}(f) = [${dualRes.fMin.toFixed(2)}, ${dualRes.fMax.toFixed(2)}],\\quad \\text{Range}(g) = [${dualRes.gMin.toFixed(2)}, ${dualRes.gMax.toFixed(2)}]`,
+          rubric:
+            "【高考采分点】分别求出 $f$、$g$ 在各自约束区间上的值域并写成闭区间，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 按量词组合选判定口径",
+          detail:
+            "「任意对任意」是最强约束，要求 $f$ 的最小值压制 $g$ 的最大值；「任意对存在」要求 $f$ 的值域被 $g$ 的值域包含；「存在对存在」只要求两值域有公共点。量词越强、条件越苛刻，读错一个量词，判据会整体偏一档。",
+          latex:
+            "\\forall\\forall: f_{\\min} > g_{\\max} \\quad \\forall\\exists: \\text{Range}(f) \\subseteq \\text{Range}(g) \\quad \\exists\\exists: \\text{Range}(f) \\cap \\text{Range}(g) \\neq \\emptyset",
+          rubric:
+            "【高考采分点】按当前量词组合选出判据（任意对任意用最值压制、任意对存在用值域包含、存在对存在用交集非空），得 3 分。",
+        },
+        {
+          step: 3,
+          title: "代入求解 · 端点比较出结论",
+          detail: `按所选判据代入两端数值，当前模型判定为「${dualRes.isTrue ? "真命题" : "假命题"}」。答题时判据、数值、结论三件事要按顺序写全，只写结论不给分。`,
+          latex: dualRes.isTrue
+            ? "\\text{判据成立} \\implies \\text{真命题}"
+            : "\\text{判据不成立} \\implies \\text{假命题}",
+          rubric:
+            "【高考采分点】把判据代入端点数值比较并写出真假结论，得 3 分。",
+        },
+      ],
       mnemonic: "全对全看最值压制，全对存看值域包含，存对存看交集非空",
     };
   }
@@ -227,6 +257,36 @@ export function buildQuantifiersPanel(
           ]
         : []),
       ...probeClampWarning,
+    ],
+    reasoningSteps: [
+      {
+        step: 1,
+        title: "审题定法 · 把量词命题化成最值条件",
+        detail:
+          "全称命题「对任意 $x$ 恒成立」等价于最小值满足条件；存在命题「存在 $x$ 使…」同样只用到最小值这一端。两类命题看似相反，落到运算上都归结为同一个数：区间最小值。",
+        latex:
+          activeTab === "universal"
+            ? "\\forall x \\in [a, b],\\ f(x) \\ge m \\iff f_{\\min} \\ge m"
+            : "\\exists x \\in [a, b],\\ f(x) \\le m \\iff f_{\\min} \\le m",
+        rubric:
+          "【高考采分点】把量词命题化为最值条件（全称恒成立取 $f_{\\min} \\ge m$，存在能成立取 $f_{\\min} \\le m$），得 2 分。",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 在约束区间上求最小值",
+        detail: `$f$ 在 $[${res.interval.min.toFixed(1)}, ${res.interval.max.toFixed(1)}]$ 上的最小值 $f_{\\min} = ${res.fMin.toFixed(2)}$。二次函数在闭区间上的最值只可能在顶点或端点取得，先看对称轴是否落在区间内，再决定比哪几个点。`,
+        latex: `f_{\\min} = ${res.fMin.toFixed(2)} \\quad \\text{on } [${res.interval.min.toFixed(1)}, ${res.interval.max.toFixed(1)}]`,
+        rubric:
+          "【高考采分点】在约束区间上求出最小值（比较顶点与端点），得 3 分。",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 判真假并写出否定命题",
+        detail: `最小值 $f_{\\min} = ${res.fMin.toFixed(2)}$ 与阈值 $m = ${threshold.toFixed(2)}$ 比较，原命题为「${res.isOriginalTrue ? "真" : "假"}」，否定命题为「${res.isNegationTrue ? "真" : "假"}」。否定只改两处：量词互换、结论取反，其余原样不动。`,
+        latex: `f_{\\min} = ${res.fMin.toFixed(2)} \\quad \\text{vs} \\quad m = ${threshold.toFixed(2)}`,
+        rubric:
+          "【高考采分点】用最小值与阈值比较判定真假，并按「换量词、否结论」写出否定命题，得 3 分。",
+      },
     ],
     mnemonic:
       "全称改存在、存在改全称，正面结论变否定；恒成立找最值，证伪只需一反例",

@@ -324,6 +324,8 @@ function buildSubsetPanel(
       title: "先用圆心距把两集合的位置关系定下来",
       detail: `$d = ${sub.distance.toFixed(2)}$，$r_A + r_B = ${sumR.toFixed(2)}$，$|r_A - r_B| = ${diffR.toFixed(2)}$：后者是判断「谁包含谁」的分界，前者是判断「是否相离 / 外切」的分界`,
       latex: `d = ${sub.distance.toFixed(2)},\\quad r_A + r_B = ${sumR.toFixed(2)},\\quad |r_A - r_B| = ${diffR.toFixed(2)}`,
+      rubric:
+        "【高考采分点】算出圆心距 $d$，并与 $r_A + r_B$、$|r_A - r_B|$ 两个分界值对照，先定出两集合的位置关系，得 2 分。",
     },
     {
       step: 2,
@@ -334,6 +336,8 @@ function buildSubsetPanel(
       latex: sub.aSubsetB
         ? `d + r_A \\le r_B \\iff ${(sub.distance + rA).toFixed(2)} \\le ${rB.toFixed(2)} \\implies A \\subseteq B`
         : `d + r_A > r_B \\iff ${(sub.distance + rA).toFixed(2)} > ${rB.toFixed(2)} \\implies A \\not\\subseteq B`,
+      rubric:
+        "【高考采分点】用 $d + r_A \\le r_B$ 判定 $A \\subseteq B$（反向包含则用 $d + r_B \\le r_A$），得 3 分。",
     },
     {
       step: 3,

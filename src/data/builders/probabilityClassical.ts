@@ -238,5 +238,9 @@ export function buildClassicalProbabilityPanel(
     gaokaoPoints,
     warnings,
     reasoningSteps,
+    examAnchor:
+      "新高考解答题第(1)问与选填必考 · 古典概型与样本空间列举（5-6分）",
+    mnemonic:
+      "有限等可定古典，两步网格多步树；事件点数除总数，正难则反一减补。",
   };
 }

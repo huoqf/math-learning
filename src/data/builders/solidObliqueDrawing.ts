@@ -119,16 +119,21 @@ export function buildObliqueDrawingPanel(
       step: 1,
       title: "建立坐标系与尺寸提取",
       latex: `\\text{原图形顶点在直角坐标系 } xOy \\text{ 中坐标已知，基底向量平行于坐标轴。}`,
+      rubric: "【高考采分点】在原图上建立直角坐标系并读出各顶点坐标，得 2 分。",
     },
     {
       step: 2,
       title: "执行斜二测代数变换",
       latex: `\\begin{pmatrix} x' \\\\ y' \\end{pmatrix} = \\begin{pmatrix} x + y \\cdot \\cos(${alphaDeg}^\\circ) \\cdot ${ratioY.toFixed(2)} \\\\ y \\cdot \\sin(${alphaDeg}^\\circ) \\cdot ${ratioY.toFixed(2)} \\end{pmatrix}`,
+      rubric:
+        "【高考采分点】按斜二测规则把 $\\cos\\alpha$、$\\sin\\alpha$ 与纵向压缩比代入变换式，逐个算出直观图顶点坐标，得 3 分。",
     },
     {
       step: 3,
       title: "面积压缩与验证闭环",
       latex: `S_{\\text{直观}} = ${poly.obliqueArea.toFixed(2)}, \\; S_{\\text{原}} = ${poly.originalArea.toFixed(2)} \\implies \\frac{S_{\\text{直观}}}{S_{\\text{原}}} = ${poly.areaRatio.toFixed(4)} \\approx \\frac{\\sqrt{2}}{4}`,
+      rubric:
+        "【高考采分点】算出直观图面积并检验 $S_{\\text{直观}} : S_{\\text{原}} = \\frac{\\sqrt{2}}{4}$，得 3 分。",
     },
   ];
 

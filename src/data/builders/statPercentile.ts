@@ -191,6 +191,8 @@ s^2 &\\approx \\sum_{i=1}^k (x_{\\text{mid}, i} - \\bar{x})^2 \\cdot f_i
       ],
       mnemonic:
         "组中值乘频率求均值，平分面积求中位，最高矩形找众数，纵轴高度乘以距！",
+      examAnchor:
+        "必修二统计核心 · 频率分布直方图与众数、中位数、平均数（5-13分）",
     };
   } else if (studyMode === "cumulative") {
     const activeBin = bins[stats.percentileBinIndex];
@@ -340,6 +342,8 @@ Q_3 &= P_{75} \\quad (\\text{上四分位数}) \\\\
       ],
       mnemonic:
         "定位区间看累加，缺多少频率向上插；除以高度加左界，百分位数轻松拿！",
+      examAnchor:
+        "新高考选填与解答高频 · 第 p 百分位数线性插值与四分位箱线图（5-13分）",
     };
   } else {
     // stratified 模式
@@ -487,6 +491,8 @@ s^2 &= w_1 s_1^2 + w_2 s_2^2 + w_1 w_2 (\\bar{x}_1 - \\bar{x}_2)^2
       ],
       mnemonic:
         "按比例抽样本，总体均值权加和；总体方差两部分，层内方差加层间！两组速算乘权积，均值差方一秒析！",
+      examAnchor:
+        "新高考选填压轴与解答 · 分层随机抽样权重与总体方差合成（5-13分）",
     };
   }
 }

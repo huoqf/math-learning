@@ -268,6 +268,8 @@ export function buildProbabilityIndependencePanel(
     theorems,
     gaokaoPoints,
     warnings,
+    examAnchor:
+      "新高考多选压轴与解答题第(1)问 · 事件相互独立与互斥辨析（5-6分）",
     mnemonic:
       "互斥两角不相交，独立乘积恰刚好；正率互斥必相关，逆向求并用补套。",
   };

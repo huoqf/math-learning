@@ -158,6 +158,7 @@ export function buildProbabilityCountingPanel(
         ],
         mnemonic:
           "恒等赋值看需求，求和代一常数零；奇偶加减除以二，导数降幂带权求。",
+        examAnchor: "新高考选填核心 · 二项式展开系数和与赋值法（5分）",
       };
     }
 
@@ -233,22 +234,29 @@ export function buildProbabilityCountingPanel(
             title: "审题定法 · 标定项序号与二项式系数",
             latex: `T_{${k + 1}} = C_{${n}}^{${k}} (${a}x)^{${n - k}} (${b})^{${k}}`,
             detail: `考察展开式的第 $k+1 = ${k + 1}$ 项，其二项式系数为组合数 $C_{${n}}^{${k}} = ${termInfo.binomialCoeff}$，恒为正数。`,
+            rubric:
+              "【高考采分点】写出通项 $T_{k+1} = C_n^k (ax)^{n-k} b^k$，并指明第 $k+1$ 项的二项式系数为 $C_n^k$，得 3 分。",
           },
           {
             step: 2,
             title: "建模联立 · 乘入底数参数求项的系数",
             latex: `A_{${k}} = C_{${n}}^{${k}} \\cdot (${a})^{${n - k}} \\cdot (${b})^{${k}} = ${termInfo.binomialCoeff} \\times ${Math.pow(a, n - k)} \\times ${Math.pow(b, k)} = ${termInfo.termCoeff}`,
             detail: `项的系数受底数参数影响，常数项 $b$ 的正负和奇偶次方直接决定该项符号与绝对值。`,
+            rubric:
+              "【高考采分点】把底数参数 $a$、$b$ 的幂次乘进组合数，算出该项的系数并写清符号，得 4 分。",
           },
           {
             step: 3,
             title: "求解反思 · 二项式系数与项的系数概念区分",
             latex: `C_{${n}}^{${k}} = ${termInfo.binomialCoeff} \\quad \\text{vs} \\quad A_{${k}} = ${termInfo.termCoeff}`,
             detail: `二项式系数仅与指数 $n$ 和序号 $k$ 有关，在中间项达到最大；项的系数必须由相邻项比值不等式组确定最大项。`,
+            rubric:
+              "【高考采分点】区分「二项式系数」与「项的系数」两个概念，并用相邻项比值不等式求出最大项，得 3 分。",
           },
         ],
         mnemonic:
           "二项系数恒为正，中间最大两边平；项之系数看正负，大小求导列不等。",
+        examAnchor: "新高考选填高频 · 二项式系数与项的系数最值辨析（5分）",
       };
     }
 
@@ -392,6 +400,7 @@ export function buildProbabilityCountingPanel(
       ],
       mnemonic:
         "二项展开共 $n+1$ 项，通项看准 $k$ 加 $1$；二项系数对称大，赋值求和特殊 $x$。",
+      examAnchor: "新高考选填必考 · 二项式定理与通项公式求解（5分）",
     };
   }
 
@@ -527,6 +536,7 @@ export function buildProbabilityCountingPanel(
             ],
         mnemonic:
           "均分无名除阶乘，消去先后重复算；分配有名乘阶乘，各就各位排座次。",
+        examAnchor: "新高考选填与概率大题基石 · 分组分配与消序模型（5分）",
       };
     }
 
@@ -630,6 +640,7 @@ export function buildProbabilityCountingPanel(
         ],
         mnemonic:
           "捆绑相邻做整体，内部全排莫忘记；插空留隙后选位，先排无约后插空。",
+        examAnchor: "新高考选填经典 · 相邻捆绑法与不相邻插空法（5分）",
       };
     }
 
@@ -746,6 +757,7 @@ export function buildProbabilityCountingPanel(
       ],
       mnemonic:
         "区分顺序列阵排，消去顺序组合算；捆绑相邻做整体，插空留隙解间隔。",
+      examAnchor: "新高考选填与分布列基石 · 排列数与组合数辨析（5分）",
     };
   }
 
@@ -837,6 +849,7 @@ export function buildProbabilityCountingPanel(
       ],
       mnemonic:
         "网格漫步步步加，杨辉倒转映格花；总步选向定乾坤，遇障标数最无暇。",
+      examAnchor: "新高考创新选填 · 网格最短路径与递推标数法（5分）",
     };
   }
 
@@ -879,8 +892,35 @@ export function buildProbabilityCountingPanel(
         },
       ],
       warnings: [],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 判定各类方案能否独立完成",
+          latex: `\\text{任一类方案均可独立完成整件事} \\implies \\text{分类加法}`,
+          detail:
+            "若完成一件事有两类互斥方案，且任一类中的任一种方法无需后续步骤即可独立达成目标，应当使用分类加法计数原理。",
+          rubric: "【高考采分点】判定各类方案互斥且能独立完成，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 遵循不重不漏统计各类方法数",
+          latex: `m_1 = ${m1}, \\quad m_2 = ${m2}, \\quad A_1 \\cap A_2 = \\varnothing`,
+          detail:
+            "按分类标准分别统计第 1 类方案数 $m_1$ 与第 2 类方案数 $m_2$，确保两类方案之间无交叉重复。",
+          rubric: "【高考采分点】不重不漏分别求出各类方案数，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 相加求和得总方案数",
+          latex: `N = m_1 + m_2 = ${m1} + ${m2} = ${addTotal}`,
+          detail:
+            "将各类方案数直接相加即得完成整件事的总方案数，与分步乘法“步步相依连乘”形成对比。",
+          rubric: "【高考采分点】正确相加求出总方法数，得 2 分。",
+        },
+      ],
       mnemonic:
         "分类独立互排斥，一步到位各算各；不重不漏求总和，互斥方案用加法。",
+      examAnchor: "新高考计数基石 · 分类加法与分步乘法计数原理（5分）",
     };
   }
 
@@ -965,5 +1005,6 @@ export function buildProbabilityCountingPanel(
     ],
     mnemonic:
       "分步相依环环扣，缺一步骤事未成；树状展开连乘积，相依相随用乘法。",
+    examAnchor: "新高考计数基石 · 分类加法与分步乘法计数原理（5分）",
   };
 }

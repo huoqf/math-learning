@@ -26,7 +26,7 @@ export const MathPanelHeader: React.FC<MathPanelHeaderProps> = ({
             {title}
           </h3>
         </div>
-        {!examAnchor && (
+        {title !== "数学解析看板" && (
           <span className="text-xs text-neutral-500 font-medium shrink-0">
             数学解析看板
           </span>

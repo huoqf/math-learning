@@ -178,46 +178,45 @@ export function buildProbabilityMarkovPanel(
     reasoningSteps: [
       {
         step: 1,
-        title: "审题定法 · 设全集事件与完备划分",
-        latex: "P(A_n) = p_n, \\quad P(\\overline{A_n}) = 1 - p_n",
-        detail: `设第 $n$ 步事件【${currentPreset.labels.s1}】发生概率为 $p_n$，对立事件【${currentPreset.labels.s2}】为 $1-p_n$。两事件构成完备划分，初始 $p_1 = ${p1Val.toFixed(2)}$。`,
-        rubric: `【高考采分点】设出第 $n$ 步状态事件，说明与对立事件构成完备划分并写出初始概率，得 ${MARKOV_STEP_SCORES[0]} 分。`,
+        title: "审题定法 · 第 (1) 问特值列举与前两步验算",
+        latex: `p_1 = ${p1Val.toFixed(3)}, \\quad p_2 = p_{11}p_1 + p_{21}(1-p_1) = ${(p11Val * p1Val + p21Val * (1 - p1Val)).toFixed(4)}`,
+        detail: `设第 $n$ 步【${currentPreset.labels.s1}】概率为 $p_n$，对立事件【${currentPreset.labels.s2}】概率为 $1-p_n$。先由两步全概率算出 $p_2 = ${p11Val.toFixed(2)} \\times ${p1Val.toFixed(2)} + ${p21Val.toFixed(2)} \\times ${(1 - p1Val).toFixed(2)} = ${(p11Val * p1Val + p21Val * (1 - p1Val)).toFixed(4)}$，作为后续通项公式的考场验算基准。`,
+        rubric: `【高考采分点】设出状态事件完备划分并准确算出前两步特值 $p_1, p_2$，得 ${MARKOV_STEP_SCORES[0]} 分。`,
       },
       {
         step: 2,
-        title: "建模联立 · 全概率公式列出递推关系",
-        latex: `p_{n+1} = p_{11} p_n + p_{21}(1 - p_n) = ${markovRes.recurrenceLatex}`,
-        detail: `由全概率公式展开状态转移，化简整理为一阶线性递推数列 $p_{n+1} = \\lambda p_n + p_{21}$，公比 $\\lambda = ${lambdaVal.toFixed(2)}$。`,
-        rubric: `【高考采分点】应用全概率公式建立 $p_{n+1}$ 与 $p_n$ 的线性递推关系式，得 ${MARKOV_STEP_SCORES[1]} 分。`,
+        title: "建模联立 · 代入转移概率化简线性递推式",
+        latex: `p_{n+1} = ${p11Val.toFixed(2)} p_n + ${p21Val.toFixed(2)}(1 - p_n) = ${markovRes.recurrenceLatex}`,
+        detail: `合并 $p_n$ 同类项得递推斜率（公比）$\\lambda = p_{11} - p_{21} = ${p11Val.toFixed(2)} - ${p21Val.toFixed(2)} = ${lambdaVal.toFixed(3)}$，常数截距为 $p_{21} = ${p21Val.toFixed(2)}$。`,
+        rubric: `【高考采分点】由全概率公式列出含参转移式并合并化简为一阶线性递推，得 ${MARKOV_STEP_SCORES[1]} 分。`,
       },
       {
         step: 3,
-        title: "待定系数 · 配凑辅助等比数列",
+        title: "待定系数 · 解出平衡不动点与等比首项偏差",
         latex: markovRes.isDegenerate
-          ? "p_{n+1} = p_n \\implies p_n = p_1"
-          : `p_{n+1} - ${tVal.toFixed(3)} = ${lambdaVal.toFixed(2)}(p_n - ${tVal.toFixed(3)})`,
+          ? `\\lambda = 1.000 \\implies p_{n+1} - p_n = 0`
+          : `t = \\frac{p_{21}}{1 - \\lambda} = \\frac{${p21Val.toFixed(2)}}{1 - (${lambdaVal.toFixed(3)})} = ${tVal.toFixed(4)}, \\quad b_1 = p_1 - t = ${(p1Val - tVal).toFixed(4)}`,
         detail: markovRes.isDegenerate
-          ? "公比 $\\lambda = 1.00$，递推关系退化为常数列，无需待定系数配凑。"
-          : `设 $p_{n+1} - t = \\lambda(p_n - t)$，对比常数项解得平衡不动点 $t = \\frac{p_{21}}{1-\\lambda} = ${tVal.toFixed(3)}$，构成公比为 $\\lambda$ 的等比数列。`,
-        rubric: `【高考采分点】待定系数配凑构造辅助等比数列，求出平衡不动点参数，得 ${MARKOV_STEP_SCORES[2]} 分。`,
+          ? "公比 $\\lambda = 1.00$，递推关系退化为恒等常数列，各项偏差恒为 $0$。"
+          : `令 $p_{n+1} - t = \\lambda(p_n - t)$，解得不动点 $t = ${tVal.toFixed(4)}$。构造辅助数列 $b_n = p_n - t$，其首项 $b_1 = p_1 - t = ${(p1Val - tVal).toFixed(4)}$，公比 $\\lambda = ${lambdaVal.toFixed(3)}$。`,
+        rubric: `【高考采分点】正确求出不动点 $t$ 并声明 $\\{p_n - t\\}$ 的首项与公比，得 ${MARKOV_STEP_SCORES[2]} 分。`,
       },
       {
         step: 4,
-        title: "求解反思 · 通项公式与动态收敛分析",
-        latex: markovRes.generalTermLatex,
-        detail: `代入等比数列通项公式求出 $p_n$。${
-          markovRes.dynamicType === "degenerate_constant"
-            ? "序列恒为常数列。"
-            : markovRes.dynamicType === "pure_oscillating"
-              ? "公比 $\\lambda = -1$，序列永久等幅振荡。"
-              : markovRes.dynamicType === "convergent_damped"
-                ? "公比 $-1 < \\lambda < 0$，序列在平衡值两侧振荡趋于定值。"
-                : "公比 $0 \\le \\lambda < 1$，序列单调趋于定值。"
-        }`,
-        rubric: `【高考采分点】正确求解通项公式 $p_n$ 并按课标规范表述渐近动态变化趋势，得 ${MARKOV_STEP_SCORES[3]} 分。`,
+        title: `求解反思 · 第 k=${currStepVal} 步定点求值与回代验算`,
+        latex: markovRes.isDegenerate
+          ? `p_{${currStepVal}} = p_1 = ${p1Val.toFixed(4)}`
+          : `p_{${currStepVal}} = ${tVal.toFixed(4)} + (${(p1Val - tVal).toFixed(4)}) \\times (${lambdaVal.toFixed(3)})^{${currStepVal - 1}} = ${currentStepItem.p1.toFixed(4)}`,
+        detail: `将 $n = ${currStepVal}$ 代入通项公式得 $p_{${currStepVal}} = ${currentStepItem.p1.toFixed(4)}$，距平衡点绝对偏差 $|p_{${currStepVal}} - t| = ${
+          markovRes.isDegenerate
+            ? "0.0000"
+            : currentStepItem.absDelta.toFixed(4)
+        }$。考场务必将 $n=2$ 回代通项检验是否等于第 1 步算出的 $p_2$！`,
+        rubric: `【高考采分点】还原通项公式 $p_n$、代入目标步数求值并规范表述渐近趋势，得 ${MARKOV_STEP_SCORES[3]} 分。`,
       },
     ],
     mnemonic:
       "全概递推设划分，待定系数配等比，不动点处定平衡，通项渐近趋势明。",
+    examAnchor: `新高考解答题 19 题压轴 · 全概率递推数列与等比构造（${MARKOV_PAPER_SCORE}分）`,
   };
 }
