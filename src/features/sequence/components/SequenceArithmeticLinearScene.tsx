@@ -32,8 +32,8 @@ export function SequenceArithmeticLinearScene({
   const zPt =
     zeroPointExact !== null ? mathToDesign(zeroPointExact, 0, scale) : null;
 
-  // 选择在项数居中的相邻两项之间绘制斜率三角形 (避免首尾遮挡)
-  const slopeN = Math.min(2, Math.max(1, N - 1));
+  // 斜率三角形跟随当前选中项 highlightN（若选中末项则取 N-1 与 N）
+  const slopeN = Math.min(Math.max(1, highlightN), Math.max(1, N - 1));
   const termA = terms[slopeN - 1];
   const termB = terms[slopeN];
   const ptSlope1 = termA ? mathToDesign(slopeN, termA.an, scale) : null;
@@ -41,6 +41,13 @@ export function SequenceArithmeticLinearScene({
   const ptSlopeCorner = termA
     ? mathToDesign(slopeN + 1, termA.an, scale)
     : null;
+
+  // 下标等和对称配对项 symN = N + 1 - highlightN
+  const symN = Math.min(N, Math.max(1, N + 1 - highlightN));
+  const termHighlight = terms[highlightN - 1];
+  const termSym = terms[symN - 1];
+  const pairSum =
+    termHighlight && termSym ? termHighlight.an + termSym.an : null;
 
   return (
     <g className="sequence-scene-arithmetic-linear">
@@ -65,9 +72,9 @@ export function SequenceArithmeticLinearScene({
             strokeWidth={1.2}
             strokeDasharray="3,2"
           />
-          {/* 仅在斜边上方放一个整合清晰的斜率标签，避免 Δn/Δa 四处撞车 */}
+          {/* 仅在斜边上方放一个整合清晰的斜率标签，避免 Δn/Δa 四处撞车，微偏移避让正上方散点标 */}
           <text
-            x={(ptSlope1.x + ptSlope2.x) / 2}
+            x={(ptSlope1.x + ptSlope2.x) / 2 + (d < 0 ? 16 : -16)}
             y={Math.min(ptSlope1.y, ptSlope2.y) - 10}
             textAnchor="middle"
             fontSize={fontScale(9.5)}
@@ -76,6 +83,40 @@ export function SequenceArithmeticLinearScene({
           >
             斜率 k = Δa/Δn = {d > 0 ? `+${d}` : `${d}`}
           </text>
+        </g>
+      )}
+
+      {/* 2.5 下标等和对称配对连线 (m+n = 1+N => a_m + a_n = a_1 + a_N) */}
+      {termHighlight && termSym && pairSum !== null && highlightN !== symN && (
+        <g className="symmetric-index-pair">
+          {(() => {
+            const p1 = mathToDesign(highlightN, termHighlight.an, scale);
+            const p2 = mathToDesign(symN, termSym.an, scale);
+            const midX = (p1.x + p2.x) / 2;
+            const arcTopY = Math.max(24, Math.min(p1.y, p2.y) - 32);
+            return (
+              <>
+                <path
+                  d={`M ${p1.x} ${p1.y} Q ${midX} ${arcTopY} ${p2.x} ${p2.y}`}
+                  fill="none"
+                  stroke={MATH_COLORS.sequenceHighlight}
+                  strokeWidth={1.4}
+                  strokeDasharray="4,3"
+                />
+                <text
+                  x={midX}
+                  y={arcTopY - 4}
+                  textAnchor="middle"
+                  fontSize={fontScale(9)}
+                  fill={MATH_COLORS.sequenceHighlight}
+                  fontWeight="bold"
+                >
+                  对称配对：a{toSub(highlightN)} + a{toSub(symN)} = a₁ + a
+                  {toSub(N)} = {pairSum.toFixed(1)}
+                </text>
+              </>
+            );
+          })()}
         </g>
       )}
 

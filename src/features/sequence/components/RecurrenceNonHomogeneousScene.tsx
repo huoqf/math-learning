@@ -45,6 +45,41 @@ export const RecurrenceNonHomogeneousScene: React.FC<
         yStep={yStep}
       />
 
+      {/* 辅助数列 b_n = a_n / r^n 的相邻递推连线 */}
+      {terms.map((t, idx) => {
+        if (idx === terms.length - 1) return null;
+        const next = terms[idx + 1];
+        const p1 = mathToDesign(t.n, t.bn, scale);
+        const p2 = mathToDesign(next.n, next.bn, scale);
+        return (
+          <g key={`nh-b-link-${t.n}`}>
+            <line
+              x1={p1.x}
+              y1={p1.y}
+              x2={p2.x}
+              y2={p2.y}
+              stroke={withAlpha(MATH_COLORS.paramSecondary, 0.55)}
+              strokeWidth={1.5}
+              strokeDasharray="4,3"
+            />
+            {t.n === 1 && (
+              <text
+                x={(p1.x + p2.x) / 2}
+                y={(p1.y + p2.y) / 2 + 14}
+                textAnchor="middle"
+                fontSize={fontScale(9)}
+                fill={MATH_COLORS.paramSecondary}
+                fontWeight="bold"
+              >
+                {expData.isResonant
+                  ? `+d=${(q_rec / r_rec).toFixed(2)}`
+                  : `bₙ₊₁=${(p_rec / r_rec).toFixed(2)}bₙ+${(q_rec / r_rec).toFixed(2)}`}
+              </text>
+            )}
+          </g>
+        );
+      })}
+
       {/* 绘制原数列与构造数列散点 */}
       {terms.map((t) => {
         const isClamped = t.an > scale.yMax;

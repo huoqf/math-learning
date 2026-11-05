@@ -94,6 +94,41 @@ export function SequenceGeometricExponentialScene({
         </g>
       )}
 
+      {/* 3.5 选中相邻项的公比缩放跃迁弧线 (a_{k+1} = a_k · q) */}
+      {(() => {
+        const idx = Math.min(Math.max(1, highlightN), Math.max(1, N - 1)) - 1;
+        const curT = terms[idx];
+        const nextT = terms[idx + 1];
+        if (!curT || !nextT) return null;
+        const p1 = mathToDesign(curT.n, curT.an, scale);
+        const p2 = mathToDesign(nextT.n, nextT.an, scale);
+        const clampedY1 = Math.max(45, p1.y);
+        const clampedY2 = Math.max(45, p2.y);
+        const midX = (p1.x + p2.x) / 2;
+        const ctrlY = Math.max(24, Math.min(clampedY1, clampedY2) - 24);
+        return (
+          <g className="geo-ratio-arc">
+            <path
+              d={`M ${p1.x} ${clampedY1} Q ${midX} ${ctrlY} ${p2.x} ${clampedY2}`}
+              fill="none"
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.6}
+              strokeDasharray="4,3"
+            />
+            <text
+              x={midX}
+              y={ctrlY - 4}
+              textAnchor="middle"
+              fontSize={fontScale(9.5)}
+              fill={MATH_COLORS.paramSecondary}
+              fontWeight="bold"
+            >
+              ×q ({q})
+            </text>
+          </g>
+        );
+      })()}
+
       {/* 4. 散点与各项标注 (带视口边界保护) */}
       {terms.map((t) => {
         const rawPosAn = mathToDesign(t.n, t.an, scale);

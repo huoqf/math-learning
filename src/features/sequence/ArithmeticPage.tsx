@@ -16,14 +16,37 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
 import { calcArithmeticSequence } from "@/math/sequence";
 
+function checkIsGaokaoView(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const hash = window.location.hash || "";
+    const qIndex = hash.indexOf("?");
+    if (qIndex !== -1) {
+      const sp = new URLSearchParams(hash.slice(qIndex));
+      if (sp.get("view") === "gaokao") return true;
+    }
+    const search = window.location.search || "";
+    if (search) {
+      const sp = new URLSearchParams(search);
+      if (sp.get("view") === "gaokao") return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 export function ArithmeticPage() {
+  const isGaokaoView = checkIsGaokaoView();
   const [arithmeticSubMode, setArithmeticSubMode] = useState<
     "linear" | "gauss" | "quadratic" | "segment" | "absSum" | "snToAn"
-  >("linear");
+  >(() => (isGaokaoView ? "snToAn" : "linear"));
   const [highlightN, setHighlightN] = useState<number>(1);
-  const [params, setParams] = useState<Record<string, number>>(() => ({
-    ...defaultParams,
-  }));
+  const [params, setParams] = useState<Record<string, number>>(() =>
+    isGaokaoView
+      ? { ...defaultParams, a1: 5, d: -1.5, N: 8, snConst: 0 }
+      : { ...defaultParams },
+  );
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -93,8 +116,9 @@ export function ArithmeticPage() {
         geometricViewType: "points",
         modelType: "arith-geo",
         subModel: "arith-geo",
+        highlightN,
       }),
-    [params, arithmeticSubMode],
+    [params, arithmeticSubMode, highlightN],
   );
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {

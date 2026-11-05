@@ -37,6 +37,13 @@ export const RecurrenceMultiplicationScene: React.FC<Props> = ({
 
   const multData = calcMultiplicationRecurrence(a1, multType, N);
   const terms = multData.terms;
+  const targetN = highlightN && highlightN >= 2 ? Math.min(highlightN, N) : N;
+  const chainText =
+    multType === "n_over_n1"
+      ? `连乘斜向约分：a${targetN}/a₁ = (1/2)·(2/3)·…·(${targetN - 1}/${targetN}) = 1/${targetN} ⇒ 中间分子分母交叉约尽`
+      : multType === "n1_over_n"
+        ? `连乘斜向约分：a${targetN}/a₁ = (2/1)·(3/2)·…·(${targetN}/${targetN - 1}) = ${targetN} ⇒ 中间分母分子交叉约尽`
+        : `连乘指数累加：a${targetN}/a₁ = 2¹·2²·…·2^(${targetN - 1}) = 2^[${targetN}(${targetN}-1)/2]`;
 
   return (
     <g className="recurrence-scene-multiplication">
@@ -46,6 +53,29 @@ export const RecurrenceMultiplicationScene: React.FC<Props> = ({
         xStep={xStep}
         yStep={yStep}
       />
+
+      {/* 左上角累乘斜向约分链条横幅 */}
+      <g className="mult-cancellation-banner">
+        <rect
+          x={Math.max(16, vp.designLeft + 16)}
+          y={Math.max(14, vp.designTop + 16)}
+          width={455}
+          height={28}
+          rx={7}
+          fill={withAlpha(MATH_COLORS.white, 0.94)}
+          stroke={MATH_COLORS.paramTertiary}
+          strokeWidth={1.4}
+        />
+        <text
+          x={Math.max(16, vp.designLeft + 16) + 12}
+          y={Math.max(14, vp.designTop + 16) + 18}
+          fontSize={fontScale(9.5)}
+          fill={MATH_COLORS.paramTertiary}
+          fontWeight="bold"
+        >
+          {chainText}
+        </text>
+      </g>
 
       {/* 绘制相邻项连乘比例折线 */}
       {terms.map((t, idx) => {

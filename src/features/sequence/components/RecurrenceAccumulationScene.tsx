@@ -39,6 +39,8 @@ export const RecurrenceAccumulationScene: React.FC<Props> = ({
 
   const accumData = calcAccumulationRecurrence(a1, accumFnType, stepParam, N);
   const terms = accumData.terms;
+  const targetN = highlightN && highlightN >= 2 ? Math.min(highlightN, N) : N;
+  const targetTerm = terms[targetN - 1];
 
   return (
     <g className="recurrence-scene-accumulation">
@@ -48,6 +50,61 @@ export const RecurrenceAccumulationScene: React.FC<Props> = ({
         xStep={xStep}
         yStep={yStep}
       />
+
+      {/* 选中项 a_k 的累加阶梯合成柱 (直观展示 a_k = a_1 + Δa_1 + ... + Δa_{k-1}) */}
+      {targetTerm && targetN >= 2 && (
+        <g className="accum-stack-column">
+          {(() => {
+            const colX = mathToDesign(targetN, 0, scale).x;
+            const zeroY = mathToDesign(targetN, 0, scale).y;
+            const a1Y = mathToDesign(targetN, a1, scale).y;
+            const barW = 14;
+            return (
+              <>
+                {/* 底部首项基座 a₁ */}
+                <rect
+                  x={colX - barW / 2}
+                  y={Math.min(zeroY, a1Y)}
+                  width={barW}
+                  height={Math.max(2, Math.abs(zeroY - a1Y))}
+                  fill={withAlpha(MATH_COLORS.paramPrimary, 0.35)}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={1.2}
+                  rx={2}
+                />
+                {/* 逐阶累加增量块 Δa_1 .. Δa_{targetN-1} */}
+                {terms.slice(0, targetN - 1).map((stepTerm, i) => {
+                  const nextVal = terms[i + 1]?.an ?? stepTerm.an;
+                  const yStart = mathToDesign(targetN, stepTerm.an, scale).y;
+                  const yEnd = mathToDesign(targetN, nextVal, scale).y;
+                  return (
+                    <rect
+                      key={`stack-seg-${stepTerm.n}`}
+                      x={colX - barW / 2}
+                      y={Math.min(yStart, yEnd)}
+                      width={barW}
+                      height={Math.max(2, Math.abs(yEnd - yStart))}
+                      fill={withAlpha(
+                        i % 2 === 0
+                          ? MATH_COLORS.paramSecondary
+                          : MATH_COLORS.paramTertiary,
+                        0.38,
+                      )}
+                      stroke={
+                        i % 2 === 0
+                          ? MATH_COLORS.paramSecondary
+                          : MATH_COLORS.paramTertiary
+                      }
+                      strokeWidth={1.2}
+                      rx={2}
+                    />
+                  );
+                })}
+              </>
+            );
+          })()}
+        </g>
+      )}
 
       {/* 绘制相邻项差分增量阶梯柱形 */}
       {terms.map((t, idx) => {

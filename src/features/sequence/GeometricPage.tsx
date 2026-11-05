@@ -16,10 +16,31 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
 import { calcGeometricSequence } from "@/math/sequence";
 
+function checkIsGaokaoView(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const hash = window.location.hash || "";
+    const qIndex = hash.indexOf("?");
+    if (qIndex !== -1) {
+      const sp = new URLSearchParams(hash.slice(qIndex));
+      if (sp.get("view") === "gaokao") return true;
+    }
+    const search = window.location.search || "";
+    if (search) {
+      const sp = new URLSearchParams(search);
+      if (sp.get("view") === "gaokao") return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 export function GeometricPage() {
+  const isGaokaoView = checkIsGaokaoView();
   const [geometricSubMode, setGeometricSubMode] = useState<
     "exponential" | "staggerSum" | "segment" | "productMax" | "tessellation"
-  >("exponential");
+  >(() => (isGaokaoView ? "staggerSum" : "exponential"));
   const [highlightN, setHighlightN] = useState<number>(1);
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
@@ -117,8 +138,9 @@ export function GeometricPage() {
       buildMathQuantities("anim-sequence", params, {
         activeMode: "geometric",
         geometricSubMode,
+        highlightN,
       }),
-    [params, geometricSubMode],
+    [params, geometricSubMode, highlightN],
   );
 
   // 严格按子模式过滤参数配置
@@ -344,15 +366,15 @@ export function GeometricPage() {
                 items={[
                   {
                     key: "max-case",
-                    label: "衰减极大 (a₁=4, q=0.5)",
+                    label: "衰减极大双最值",
                     formula: "P_2 = P_3 = 8.0",
-                    description: "双最值",
+                    description: "首项大于一公比小于一",
                   },
                   {
                     key: "min-case",
-                    label: "激增极小 (a₁=0.25, q=2)",
+                    label: "激增极小单最值",
                     formula: "P_2 = 0.125",
-                    description: "极小值",
+                    description: "首项小于一公比大于一",
                   },
                 ]}
                 value={

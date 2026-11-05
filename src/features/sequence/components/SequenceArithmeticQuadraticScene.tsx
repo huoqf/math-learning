@@ -3,7 +3,7 @@
  * 等差数列 - 专题 C: 前 n 项和与二次函数极值 (连续顶点 vs 离散极值项)
  */
 import { CoordinateGrid, FunctionGraph } from "@/components/Math";
-import { MATH_COLORS } from "@/theme";
+import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { toSub } from "./SequenceText";
@@ -114,6 +114,33 @@ export function SequenceArithmeticQuadraticScene({
           </text>
         </g>
       )}
+
+      {/* 4.5 同轴叠加 a_n 正负指示矮柱，直观呈现「a_n 由正变负 ⇔ S_n 达极值」 */}
+      {terms.map((t) => {
+        const ptZero = mathToDesign(t.n, 0, scale);
+        const ptAn = mathToDesign(t.n, t.an, scale);
+        const isPos = t.an >= 0;
+        const barW = 10;
+        return (
+          <g key={`quad-an-bar-${t.n}`} opacity={0.55}>
+            <rect
+              x={ptZero.x - barW / 2}
+              y={Math.min(ptZero.y, ptAn.y)}
+              width={barW}
+              height={Math.max(2, Math.abs(ptAn.y - ptZero.y))}
+              fill={withAlpha(
+                isPos ? MATH_COLORS.paramTertiary : MATH_COLORS.paramPrimary,
+                0.28,
+              )}
+              stroke={
+                isPos ? MATH_COLORS.paramTertiary : MATH_COLORS.paramPrimary
+              }
+              strokeWidth={1}
+              rx={2}
+            />
+          </g>
+        );
+      })}
 
       {/* 5. S_n 散点与极值标注 */}
       {terms.map((t) => {

@@ -43,6 +43,40 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
         yStep={yStep}
       />
 
+      {/* 降阶等比数列 b_n = a_{n+1} - r_1 a_n 的公比连线 */}
+      {secondData.delta >= 0 &&
+        terms.map((t, idx) => {
+          if (idx === terms.length - 1) return null;
+          const next = terms[idx + 1];
+          const p1 = mathToDesign(t.n, t.bn, scale);
+          const p2 = mathToDesign(next.n, next.bn, scale);
+          return (
+            <g key={`sec-b-link-${t.n}`}>
+              <line
+                x1={p1.x}
+                y1={p1.y}
+                x2={p2.x}
+                y2={p2.y}
+                stroke={withAlpha(MATH_COLORS.paramSecondary, 0.55)}
+                strokeWidth={1.5}
+                strokeDasharray="4,3"
+              />
+              {t.n === 1 && (
+                <text
+                  x={(p1.x + p2.x) / 2}
+                  y={(p1.y + p2.y) / 2 + 14}
+                  textAnchor="middle"
+                  fontSize={fontScale(9)}
+                  fill={MATH_COLORS.paramSecondary}
+                  fontWeight="bold"
+                >
+                  {`×r₂(${secondData.r2.toFixed(1)})`}
+                </text>
+              )}
+            </g>
+          );
+        })}
+
       {terms.map((t) => {
         const isClamped = t.an > scale.yMax;
         const displayAn = Math.min(t.an, scale.yMax - 0.2);

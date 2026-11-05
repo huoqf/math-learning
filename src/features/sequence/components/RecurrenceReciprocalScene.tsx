@@ -43,6 +43,42 @@ export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
         yStep={yStep}
       />
 
+      {/* 倒数辅助数列 b_n = 1/a_n 的递推连线 */}
+      {terms.map((t, idx) => {
+        if (idx === terms.length - 1) return null;
+        const next = terms[idx + 1];
+        if (Number.isNaN(t.bn) || Number.isNaN(next.bn)) return null;
+        const p1 = mathToDesign(t.n, t.bn, scale);
+        const p2 = mathToDesign(next.n, next.bn, scale);
+        return (
+          <g key={`recip-b-link-${t.n}`}>
+            <line
+              x1={p1.x}
+              y1={p1.y}
+              x2={p2.x}
+              y2={p2.y}
+              stroke={withAlpha(MATH_COLORS.paramSecondary, 0.55)}
+              strokeWidth={1.5}
+              strokeDasharray="4,3"
+            />
+            {t.n === 1 && (
+              <text
+                x={(p1.x + p2.x) / 2}
+                y={(p1.y + p2.y) / 2 + 14}
+                textAnchor="middle"
+                fontSize={fontScale(9)}
+                fill={MATH_COLORS.paramSecondary}
+                fontWeight="bold"
+              >
+                {recipData.isReciprocalLinear
+                  ? `+d=${(coefB / coefA).toFixed(2)} (等差)`
+                  : `×${(coefC / coefA).toFixed(2)}+${(coefB / coefA).toFixed(2)}`}
+              </text>
+            )}
+          </g>
+        );
+      })}
+
       {terms.map((t) => {
         const posAn = mathToDesign(t.n, t.an, scale);
         const posBn = Number.isNaN(t.bn)

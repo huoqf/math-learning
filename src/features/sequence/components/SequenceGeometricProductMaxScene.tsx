@@ -90,15 +90,36 @@ export function SequenceGeometricProductMaxScene({
         const ptP2 = mathToDesign(t.n, t.Pn, scale);
 
         return (
-          <line
-            key={`line-pn-${t.n}`}
-            x1={ptP1.x}
-            y1={ptP1.y}
-            x2={ptP2.x}
-            y2={ptP2.y}
-            stroke={MATH_COLORS.sequenceHighlight}
-            strokeWidth={1.8}
-          />
+          <g key={`line-pn-${t.n}`}>
+            <line
+              x1={ptP1.x}
+              y1={ptP1.y}
+              x2={ptP2.x}
+              y2={ptP2.y}
+              stroke={MATH_COLORS.sequenceHighlight}
+              strokeWidth={1.8}
+            />
+            {(t.n === 2 || t.n === highlightN) && (
+              <text
+                x={(ptP1.x + ptP2.x) / 2}
+                y={(ptP1.y + ptP2.y) / 2 - 6}
+                textAnchor="middle"
+                fontSize={fontScale(8)}
+                fill={
+                  t.an >= 1
+                    ? MATH_COLORS.inequality
+                    : MATH_COLORS.paramSecondary
+                }
+                fontWeight="bold"
+              >
+                {t.an > 1
+                  ? "×aₙ>1 放大↗"
+                  : Math.abs(t.an - 1) < 1e-6
+                    ? "×1 保值→"
+                    : "×aₙ<1 缩水↘"}
+              </text>
+            )}
+          </g>
         );
       })}
 

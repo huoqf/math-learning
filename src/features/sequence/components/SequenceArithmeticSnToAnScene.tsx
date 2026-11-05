@@ -29,7 +29,7 @@ interface SequenceArithmeticSnToAnSceneProps {
 
 export const SequenceArithmeticSnToAnScene: React.FC<
   SequenceArithmeticSnToAnSceneProps
-> = ({ params, scale, fontScale, highlightN = 1 }) => {
+> = ({ params, scale, fontScale, highlightN = 1, onSelectN }) => {
   const a1 = params.a1 ?? 5;
   const d = params.d ?? -1.5;
   const N = Math.max(4, Math.min(12, Math.round(params.N ?? 8)));
@@ -61,26 +61,56 @@ export const SequenceArithmeticSnToAnScene: React.FC<
       {/* 每一步的竖直落差：高度差 = 该步的通项 a_n */}
       {snPoints.map((p) => {
         const isFirst = p.n === 1;
+        const isSelected = p.n === highlightN;
         // n = 1 的竖条从 0 量到 S_1：只有当 C = 0 时它才等于 a_1
-        const fromY =
-          isFirst && p.n === 1 ? zeroY : (snPoints[p.n - 2]?.pt.y ?? zeroY);
+        const prevPt = !isFirst ? snPoints[p.n - 2]?.pt : undefined;
+        const fromY = isFirst ? zeroY : (prevPt?.y ?? zeroY);
         const broken = isFirst && !res.isFirstTermConsistent;
         return (
-          <g key={`bar-${p.n}`}>
+          <g
+            key={`bar-${p.n}`}
+            onClick={() => onSelectN?.(p.n)}
+            style={{ cursor: "pointer" }}
+          >
+            {/* 选中项 (n >= 2) 的水平基准延伸线：从 S_{n-1} 水平引到第 n 列，构成直角阶梯落差标尺 */}
+            {isSelected && !isFirst && prevPt && (
+              <line
+                x1={prevPt.x}
+                y1={prevPt.y}
+                x2={p.pt.x}
+                y2={prevPt.y}
+                stroke={MATH_COLORS.sequenceHighlight}
+                strokeWidth={1.6}
+                strokeDasharray="4 3"
+              />
+            )}
             <line
               x1={p.pt.x}
               y1={fromY}
               x2={p.pt.x}
               y2={p.pt.y}
-              stroke={broken ? MATH_COLORS.degeneracy : MATH_COLORS.sequence}
-              strokeWidth={broken ? 3 : 2}
-              opacity={broken ? 1 : 0.85}
+              stroke={
+                broken
+                  ? MATH_COLORS.degeneracy
+                  : isSelected
+                    ? MATH_COLORS.sequenceHighlight
+                    : MATH_COLORS.sequence
+              }
+              strokeWidth={broken || isSelected ? 3 : 2}
+              opacity={broken || isSelected ? 1 : 0.85}
             />
             <text
               x={p.pt.x + 6}
               y={(fromY + p.pt.y) / 2}
-              fontSize={fontScale(10)}
-              fill={broken ? MATH_COLORS.degeneracy : MATH_COLORS.sequence}
+              fontSize={fontScale(isSelected ? 10.5 : 10)}
+              fontWeight={isSelected ? "bold" : "normal"}
+              fill={
+                broken
+                  ? MATH_COLORS.degeneracy
+                  : isSelected
+                    ? MATH_COLORS.sequenceHighlight
+                    : MATH_COLORS.sequence
+              }
             >
               {isFirst
                 ? `S₁=${formatMathNumber(p.Sn)}`
@@ -96,10 +126,12 @@ export const SequenceArithmeticSnToAnScene: React.FC<
           key={`sn-${p.n}`}
           cx={p.pt.x}
           cy={p.pt.y}
-          r={p.n === highlightN ? 5 : 3.4}
+          r={p.n === highlightN ? 5.5 : 3.4}
           fill={MATH_COLORS.sequenceSum}
           stroke={p.n === highlightN ? MATH_COLORS.sequenceHighlight : "none"}
           strokeWidth={p.n === highlightN ? 2 : 0}
+          style={{ cursor: "pointer" }}
+          onClick={() => onSelectN?.(p.n)}
         />
       ))}
 

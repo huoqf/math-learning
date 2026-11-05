@@ -48,6 +48,25 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
     const fixedYPos =
       fixedPoint !== null ? mathToDesign(0, fixedPoint, scale).y : null;
 
+    const stepSummaryMap: Record<number, string> = {
+      1:
+        fixedPoint !== null
+          ? `Step 1 设不动点方程：令 c = ${p_rec}c + ${q_rec} ⇒ 不动点基准线 c = ${fixedPoint.toFixed(2)}`
+          : `Step 1 退化识别：p = 1 时不动点分母为 0，原递推式直接为公差 d = ${q_rec} 的等差数列`,
+      2:
+        fixedPoint !== null
+          ? `Step 2 构造平移等比：各项同减 c = ${fixedPoint.toFixed(2)}，垂直平移得辅助数列 bₙ = aₙ - c`
+          : `Step 2 确定公差：相邻项差恒为 d = ${q_rec}`,
+      3:
+        fixedPoint !== null
+          ? `Step 3 求辅助数列通项：b₁ = a₁ - c = ${(a1 - fixedPoint).toFixed(2)}，公比 p = ${p_rec} ⇒ bₙ = b₁·pⁿ⁻¹`
+          : `Step 3 套用等差通项：aₙ = a₁ + (n-1)d`,
+      4:
+        fixedPoint !== null
+          ? `Step 4 还原主通项并验算首项：aₙ = bₙ + c，核验 n=1 时 a₁ = ${a1} 吻合 ✓`
+          : `Step 4 整理并验算首项：核验 n=1 时 a₁ = ${a1} 吻合 ✓`,
+    };
+
     return (
       <g className="recurrence-scene-linear-pan-shift">
         <defs>
@@ -73,6 +92,33 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
           xStep={xStep}
           yStep={yStep}
         />
+
+        {/* 左上角当前分步围栏胶囊 (与左屏 StepNavigator、右屏 MathPanel 同频同色) */}
+        <g
+          className="linear-pan-step-frame"
+          data-answer-step-frame={activeStep}
+        >
+          <rect
+            x={Math.max(16, vp.designLeft + 16)}
+            y={Math.max(14, vp.designTop + 16)}
+            width={430}
+            height={28}
+            rx={7}
+            fill={withAlpha(MATH_COLORS.white, 0.94)}
+            stroke={MATH_COLORS.answerStepFrame}
+            strokeWidth={1.8}
+            strokeDasharray="7 4"
+          />
+          <text
+            x={Math.max(16, vp.designLeft + 16) + 12}
+            y={Math.max(14, vp.designTop + 16) + 18}
+            fontSize={fontScale(9.5)}
+            fill={MATH_COLORS.answerStepFrame}
+            fontWeight="bold"
+          >
+            {stepSummaryMap[activeStep] ?? stepSummaryMap[1]}
+          </text>
+        </g>
 
         {/* 不动点平移基准线 y = c (当 Step 1 时重点高亮) */}
         {fixedPoint !== null && fixedYPos !== null && (

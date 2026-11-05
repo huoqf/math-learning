@@ -277,8 +277,16 @@ export function RecurrencePage() {
         accumFnType,
         multType,
         inductionClaim,
+        highlightN,
       }),
-    [params, recurrenceModelType, accumFnType, multType, inductionClaim],
+    [
+      params,
+      recurrenceModelType,
+      accumFnType,
+      multType,
+      inductionClaim,
+      highlightN,
+    ],
   );
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
