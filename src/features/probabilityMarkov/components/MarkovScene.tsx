@@ -622,15 +622,19 @@ export function MarkovScene({
 
                 return (
                   <g key={s.n}>
-                    {/* 到平衡线的垂直偏差段 (展现 |p_n - t|) */}
+                    {/* 到平衡线的垂直偏差段 (展现 |p_n - t| = |p_1 - t|·|λ|^{n-1}) */}
                     <line
                       x1={pt.x}
                       y1={pt.y}
                       x2={pt.x}
                       y2={stationaryY}
-                      stroke={withAlpha(MATH_COLORS.focusPoint, 0.3)}
-                      strokeWidth={1.5}
-                      strokeDasharray="2 2"
+                      stroke={
+                        isCurrent
+                          ? MATH_COLORS.focusPoint
+                          : withAlpha(MATH_COLORS.focusPoint, 0.3)
+                      }
+                      strokeWidth={isCurrent ? 2.6 : 1.5}
+                      strokeDasharray={isCurrent ? "none" : "2 2"}
                     />
 
                     {/* 投影到横轴的刻度垂线 */}

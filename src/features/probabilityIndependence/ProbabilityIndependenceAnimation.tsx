@@ -152,6 +152,7 @@ export const ProbabilityIndependenceAnimation: React.FC = () => {
       {
         key: "pA",
         label: PROBABILITY_INDEPENDENCE_PARAM_META.pA.label,
+        labelFormula: PROBABILITY_INDEPENDENCE_PARAM_META.pA.labelFormula,
         value: params.pA,
         min: PROBABILITY_INDEPENDENCE_PARAM_META.pA.min,
         max: PROBABILITY_INDEPENDENCE_PARAM_META.pA.max,
@@ -161,6 +162,7 @@ export const ProbabilityIndependenceAnimation: React.FC = () => {
       {
         key: "pB",
         label: PROBABILITY_INDEPENDENCE_PARAM_META.pB.label,
+        labelFormula: PROBABILITY_INDEPENDENCE_PARAM_META.pB.labelFormula,
         value: params.pB,
         min: PROBABILITY_INDEPENDENCE_PARAM_META.pB.min,
         max: PROBABILITY_INDEPENDENCE_PARAM_META.pB.max,
@@ -170,6 +172,8 @@ export const ProbabilityIndependenceAnimation: React.FC = () => {
       {
         key: "overlapRatio",
         label: PROBABILITY_INDEPENDENCE_PARAM_META.overlapRatio.label,
+        labelFormula:
+          PROBABILITY_INDEPENDENCE_PARAM_META.overlapRatio.labelFormula,
         value: params.overlapRatio,
         min: PROBABILITY_INDEPENDENCE_PARAM_META.overlapRatio.min,
         max: PROBABILITY_INDEPENDENCE_PARAM_META.overlapRatio.max,

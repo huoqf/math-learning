@@ -414,8 +414,8 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(11)}
               fontWeight="bold"
             >
-              总体方差分解：s² = {strat.totalVar.toFixed(2)} = 组内方差贡献 +
-              组间均值离差贡献
+              总体方差双分量分解：s² = {strat.totalVar.toFixed(2)} = ∑wᵢsᵢ²
+              (层内波动) + ∑wᵢ(x̄ᵢ - x̄)² (层间均值差平方)
             </text>
 
             {/* 组内方差贡献段 (蓝色) */}
@@ -435,7 +435,7 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(10)}
               fontWeight="bold"
             >
-              组内方差: {intraVar.toFixed(1)} (
+              层内 ∑wᵢsᵢ²: {intraVar.toFixed(1)} (
               {((intraVar / Math.max(0.1, strat.totalVar)) * 100).toFixed(0)}%)
             </text>
 
@@ -456,7 +456,7 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(10)}
               fontWeight="bold"
             >
-              组间离差: {interMeanVar.toFixed(1)} (
+              层间 ∑wᵢ(x̄ᵢ-x̄)²: {interMeanVar.toFixed(1)} (
               {((interMeanVar / Math.max(0.1, strat.totalVar)) * 100).toFixed(
                 0,
               )}

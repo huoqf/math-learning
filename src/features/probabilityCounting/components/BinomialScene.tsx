@@ -273,11 +273,36 @@ export function BinomialScene({
               x={25}
               y={26}
               fill={MATH_COLORS.labelText}
-              fontSize={fontScale(13)}
+              fontSize={fontScale(12.5)}
               fontWeight="bold"
             >
               当前展开式全部通项序列 (点击切换聚焦项)：
             </text>
+            {(() => {
+              const curTerm = binomialTerms[k] ?? binomialTerms[0];
+              if (!curTerm) return null;
+              const isDiff = curTerm.binomialCoeff !== curTerm.termCoeff;
+              return (
+                <text
+                  x={728}
+                  y={26}
+                  textAnchor="end"
+                  fill={
+                    isDiff
+                      ? MATH_COLORS.paramPrimary
+                      : MATH_COLORS.paramTertiary
+                  }
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                >
+                  ★ 选中 T{toSub(k + 1)}：二项式系数 {formatComb(n, k)}=
+                  {curTerm.binomialCoeff}{" "}
+                  {isDiff
+                    ? `≠ 项的系数=${curTerm.termCoeff}`
+                    : `= 项的系数=${curTerm.termCoeff}${a === 1 && b === 1 ? " (a=b=1 特例)" : " (数值重合)"}`}
+                </text>
+              );
+            })()}
 
             <g transform="translate(20, 42)">
               {binomialTerms.map((t, idx) => {

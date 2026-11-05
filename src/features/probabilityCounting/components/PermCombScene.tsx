@@ -490,7 +490,7 @@ export function PermCombScene({
                 fontSize={fontScale(12)}
                 fontWeight="bold"
               >
-                实际均分堆数计算：
+                实际无序均分堆数（消去 {groupInfo.groupCount}! 组间伪序）：
               </text>
               <text
                 x={15}
@@ -504,7 +504,7 @@ export function PermCombScene({
                 fontWeight="bold"
               >
                 {groupInfo.isDivisible
-                  ? `${groupInfo.directCombinationWays} ÷ ${groupInfo.divisionOrderFactor} = ${groupInfo.groupedWays} 种`
+                  ? `${groupInfo.directCombinationWays} ÷ ${groupInfo.groupCount}! (${groupInfo.divisionOrderFactor}) = ${groupInfo.groupedWays} 种`
                   : noSolution}
               </text>
             </g>

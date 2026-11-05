@@ -25,12 +25,15 @@ export function ConditionalScene({
   const rectOmega = { x: 45, y: 80, width: 420, height: 490 };
   const totalArea = rectOmega.width * rectOmega.height;
 
+  const zoomScale = isZoomedToA ? 1.22 : 1;
   const rawRA =
     Math.sqrt((totalArea * Math.max(0.01, conditionalData.pA)) / Math.PI) *
-    0.95;
+    0.95 *
+    zoomScale;
   const rawRB =
     Math.sqrt((totalArea * Math.max(0.01, conditionalData.pB)) / Math.PI) *
-    0.95;
+    0.95 *
+    zoomScale;
 
   const centerAX = isZoomedToA ? 255 : 210;
   const centerAY = 325;
@@ -172,7 +175,7 @@ export function ConditionalScene({
         </g>
       )}
 
-      {/* 聚焦放大外框 */}
+      {/* 聚焦放大外框与重归一化比例提示 */}
       {isZoomedToA && (
         <g>
           <rect
@@ -194,7 +197,20 @@ export function ConditionalScene({
             fill={MATH_COLORS.paramPrimary}
             textAnchor="middle"
           >
-            【新样本空间 Ω&apos; = A】
+            【新样本空间 Ω&apos; = A · 分母缩减为 P(A) = 100%】
+          </text>
+          <text
+            x={centerAX}
+            y={centerAY + rA + 34}
+            fontSize={fontScale(11.5)}
+            fontWeight="bold"
+            fill={MATH_COLORS.function}
+            textAnchor="middle"
+          >
+            AB 占新全集 Ω&apos; 的面积比 P(B|A) ={" "}
+            {conditionalData.isDegenerate
+              ? "无意义"
+              : `${(conditionalData.pB_given_A * 100).toFixed(1)}%`}
           </text>
         </g>
       )}

@@ -127,7 +127,7 @@ export const StatPercentileHistogramScene: React.FC<
           fontSize={fontScale(11)}
           fontWeight="bold"
         >
-          频率 / 组距 (h = f / d)
+          频率 / 组距 (h = f / d，柱面积 S = h·d = 频率 f)
         </text>
 
         {/* 横轴刻度与数值自适应渲染 */}

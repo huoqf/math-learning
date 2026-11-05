@@ -35,7 +35,8 @@ export const DEFAULT_PROBABILITY_INDEPENDENCE_PARAMS: ProbabilityIndependencePar
 
 export const PROBABILITY_INDEPENDENCE_PARAM_META = {
   pA: {
-    label:
+    label: "事件 A 概率 P(A)",
+    labelFormula:
       "\\text{事件 A 概率 } \\color{" + MATH_COLORS.paramPrimary + "}{P(A)}",
     min: 0.1,
     max: 0.9,
@@ -43,7 +44,8 @@ export const PROBABILITY_INDEPENDENCE_PARAM_META = {
     color: MATH_COLORS.paramPrimary,
   },
   pB: {
-    label:
+    label: "事件 B 概率 P(B)",
+    labelFormula:
       "\\text{事件 B 概率 } \\color{" + MATH_COLORS.paramSecondary + "}{P(B)}",
     min: 0.1,
     max: 0.9,
@@ -51,7 +53,8 @@ export const PROBABILITY_INDEPENDENCE_PARAM_META = {
     color: MATH_COLORS.paramSecondary,
   },
   overlapRatio: {
-    label:
+    label: "交集重叠因子 λ",
+    labelFormula:
       "\\text{交集重叠因子 } \\color{" +
       MATH_COLORS.paramTertiary +
       "}{\\lambda}",

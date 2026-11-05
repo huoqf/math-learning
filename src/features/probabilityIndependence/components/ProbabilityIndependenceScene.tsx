@@ -308,6 +308,91 @@ export const ProbabilityIndependenceScene: React.FC<
               无交集 (A ∩ B = ∅)
             </text>
           )}
+
+          {/* 条件概率同高标尺对比卡：P(B|A) vs P(B) 直观破除“互斥=独立”迷思 */}
+          {(() => {
+            const pBGivenA = vennRes.pA > 1e-6 ? vennRes.pAB / vennRes.pA : 0;
+            const barMaxW = 100;
+            const wBGivenA = Math.max(2, Math.min(1, pBGivenA) * barMaxW);
+            const wB = Math.max(2, Math.min(1, vennRes.pB) * barMaxW);
+            const cardY = rectOmega.y + rectOmega.height - 46;
+            return (
+              <g transform={`translate(${centerX}, ${cardY})`}>
+                <rect
+                  x={-345}
+                  y={-18}
+                  width={690}
+                  height={42}
+                  rx={10}
+                  fill={withAlpha(MATH_COLORS.axis, 0.06)}
+                  stroke={withAlpha(MATH_COLORS.axis, 0.28)}
+                  strokeWidth={1}
+                />
+                <text
+                  x={-330}
+                  y={-2}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  fill={overlapColor}
+                >
+                  条件概率 P(B|A) = {formatMathProb(pBGivenA)}
+                </text>
+                <rect
+                  x={-180}
+                  y={-11}
+                  width={wBGivenA}
+                  height={8}
+                  rx={4}
+                  fill={overlapColor}
+                />
+                <text
+                  x={-330}
+                  y={15}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  fill={MATH_COLORS.paramSecondary}
+                >
+                  无条件概率 P(B) = {formatMathProb(vennRes.pB)}
+                </text>
+                <rect
+                  x={-180}
+                  y={6}
+                  width={wB}
+                  height={8}
+                  rx={4}
+                  fill={MATH_COLORS.paramSecondary}
+                />
+                <line
+                  x1={-180 + wB}
+                  y1={-14}
+                  x2={-180 + wB}
+                  y2={18}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={1.2}
+                  strokeDasharray="2 2"
+                />
+                <text
+                  x={-60}
+                  y={6}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                  fill={
+                    vennRes.isIndependent
+                      ? MATH_COLORS.primary
+                      : vennRes.isMutuallyExclusive
+                        ? MATH_COLORS.paramPrimary
+                        : MATH_COLORS.labelText
+                  }
+                >
+                  {vennRes.isIndependent
+                    ? "★ 标尺齐平: P(B|A) = P(B) ⇔ A 发生不影响 B（相互独立）"
+                    : vennRes.isMutuallyExclusive
+                      ? "✕ 互斥时 P(B|A) = 0 ≠ P(B) ⇒ A 发生彻底排斥 B（必不独立）"
+                      : "P(B|A) ≠ P(B) ⇒ A 发生改变了 B 的条件概率（相关）"}
+                </text>
+              </g>
+            );
+          })()}
         </g>
       )}
 

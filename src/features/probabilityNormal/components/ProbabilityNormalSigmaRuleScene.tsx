@@ -267,6 +267,18 @@ export function ProbabilityNormalSigmaRuleScene({
                 >
                   对称区间 P = {(symData.centerProb * 100).toFixed(1)}%
                 </text>
+                <text
+                  x={midX}
+                  y={leftPt.y + fontScale(13)}
+                  fontSize={fontScale(10)}
+                  fill={MATH_COLORS.paramTertiary}
+                  textAnchor="middle"
+                  className="font-bold select-none"
+                >
+                  镜像尾翼等面积：P(X ≤ {symData.leftX.toFixed(1)}) = P(X ≥{" "}
+                  {symData.rightX.toFixed(1)}) ={" "}
+                  {(symData.tailProb * 100).toFixed(1)}%
+                </text>
               </g>
             );
           })()}
