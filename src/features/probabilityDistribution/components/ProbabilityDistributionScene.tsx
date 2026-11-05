@@ -8,6 +8,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { CANVAS_COLORS, MATH_COLORS } from "@/theme";
+import { DISTRIBUTION_ANSWER_STEPS } from "@/data/registries/probabilityDistribution";
 import { ProbabilityDistributionLinearScene } from "./ProbabilityDistributionLinearScene";
 import { ProbabilityDistributionBarScene } from "./ProbabilityDistributionBarScene";
 import { ProbabilityDistributionCompareScene } from "./ProbabilityDistributionCompareScene";
@@ -281,23 +282,21 @@ export function ProbabilityDistributionScene({
       )}
 
       {/* 分步作答聚焦围栏（与左屏 StepNavigator、右屏 MathPanel 三方同源） */}
-      {activeStep !== undefined && (
-        <rect
-          x={
+      {activeStep !== undefined &&
+        (() => {
+          const boxX =
             activeStep === 1
               ? leftSafeMargin - 16
               : activeStep === 2
                 ? leftSafeMargin - 12
-                : Math.max(leftSafeMargin - 12, sigmaMinDesign.x - 36)
-          }
-          y={
+                : Math.max(leftSafeMargin - 12, sigmaMinDesign.x - 36);
+          const boxY =
             activeStep === 1
               ? Math.min(yAxisZero.y - 44, 410)
               : activeStep === 2
                 ? Math.max(58, yAxisMax.y - 16)
-                : Math.max(66, yAxisMax.y - 10)
-          }
-          width={
+                : Math.max(66, yAxisMax.y - 10);
+          const boxW =
             activeStep === 1
               ? Math.max(240, rightSafeMargin - leftSafeMargin + 48)
               : activeStep === 2
@@ -308,23 +307,60 @@ export function ProbabilityDistributionScene({
                       rightSafeMargin - leftSafeMargin + 24,
                       sigmaMaxDesign.x - sigmaMinDesign.x + 72,
                     ),
-                  )
-          }
-          height={
+                  );
+          const boxH =
             activeStep === 1
               ? 88
               : activeStep === 2
                 ? Math.max(180, yAxisZero.y - yAxisMax.y + 42)
-                : Math.max(160, yAxisZero.y - yAxisMax.y + 34)
-          }
-          rx={12}
-          fill="none"
-          stroke={MATH_COLORS.answerStepFrame}
-          strokeWidth={2.2}
-          strokeDasharray="7 4"
-          pointerEvents="none"
-        />
-      )}
+                : Math.max(160, yAxisZero.y - yAxisMax.y + 34);
+
+          const stepInfo =
+            DISTRIBUTION_ANSWER_STEPS[
+              Math.min(
+                DISTRIBUTION_ANSWER_STEPS.length - 1,
+                Math.max(0, activeStep - 1),
+              )
+            ];
+          const chipLabel = `第 ${stepInfo.step} / ${DISTRIBUTION_ANSWER_STEPS.length} 步 · ${stepInfo.title}`;
+          const chipW = Math.min(310, Math.max(190, chipLabel.length * 10.5));
+          const chipX = Math.max(36, Math.min(800 - chipW, boxX + 10));
+          const chipY = Math.max(52, boxY - 11);
+
+          return (
+            <g pointerEvents="none">
+              <rect
+                x={boxX}
+                y={boxY}
+                width={boxW}
+                height={boxH}
+                rx={12}
+                fill="none"
+                stroke={MATH_COLORS.answerStepFrame}
+                strokeWidth={2.2}
+                strokeDasharray="7 4"
+              />
+              <rect
+                x={chipX}
+                y={chipY}
+                width={chipW}
+                height={22}
+                rx={6}
+                fill={MATH_COLORS.answerStepFrame}
+              />
+              <text
+                x={chipX + chipW / 2}
+                y={chipY + 15}
+                textAnchor="middle"
+                fontSize={fontScale(10)}
+                fontWeight="bold"
+                fill={CANVAS_COLORS.white}
+              >
+                {chipLabel}
+              </text>
+            </g>
+          );
+        })()}
     </g>
   );
 }

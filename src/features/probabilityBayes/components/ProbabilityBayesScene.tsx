@@ -1,6 +1,7 @@
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
-import { MATH_COLORS } from "@/theme";
+import { CANVAS_COLORS, MATH_COLORS } from "@/theme";
+import { BAYES_ANSWER_STEPS } from "@/data/registries/probabilityBayes";
 import { ConditionalScene } from "./ConditionalScene";
 import { TotalProbScene } from "./TotalProbScene";
 import { BayesScreeningScene } from "./BayesScreeningScene";
@@ -31,10 +32,10 @@ export function ProbabilityBayesScene({
       ? null
       : activeMode === "conditional"
         ? activeStep === 1
-          ? { x: 40, y: 54, width: 430, height: 522 }
+          ? { x: 40, y: 38, width: 430, height: 538 }
           : activeStep === 2
-            ? { x: 482, y: 74, width: 326, height: 204 }
-            : { x: 482, y: 288, width: 326, height: 288 }
+            ? { x: 482, y: 74, width: 326, height: 248 }
+            : { x: 482, y: 334, width: 326, height: 236 }
         : activeMode === "total_prob"
           ? activeStep === 1
             ? { x: 40, y: 46, width: 372, height: 450 }
@@ -42,7 +43,7 @@ export function ProbabilityBayesScene({
               ? { x: 430, y: 46, width: 372, height: 450 }
               : { x: 40, y: 504, width: 762, height: 120 }
           : activeStep === 1
-            ? { x: 40, y: 58, width: 760, height: 304 }
+            ? { x: 40, y: 44, width: 760, height: 318 }
             : activeStep === 2
               ? { x: 40, y: 368, width: 382, height: 250 }
               : { x: 424, y: 368, width: 376, height: 250 };
@@ -70,20 +71,54 @@ export function ProbabilityBayesScene({
           fontScale={fontScale}
         />
       )}
-      {stepBox && (
-        <rect
-          x={stepBox.x}
-          y={stepBox.y}
-          width={stepBox.width}
-          height={stepBox.height}
-          rx={12}
-          fill="none"
-          stroke={MATH_COLORS.answerStepFrame}
-          strokeWidth={2.2}
-          strokeDasharray="7 4"
-          pointerEvents="none"
-        />
-      )}
+      {stepBox &&
+        (() => {
+          const stepInfo =
+            BAYES_ANSWER_STEPS[
+              Math.min(
+                BAYES_ANSWER_STEPS.length - 1,
+                Math.max(0, (activeStep ?? 1) - 1),
+              )
+            ];
+          const chipLabel = `第 ${stepInfo.step} / ${BAYES_ANSWER_STEPS.length} 步 · ${stepInfo.title}`;
+          const chipW = Math.min(310, Math.max(190, chipLabel.length * 10.5));
+          const chipX = Math.max(40, Math.min(800 - chipW, stepBox.x + 10));
+          const chipY = Math.max(12, stepBox.y - 11);
+
+          return (
+            <g pointerEvents="none">
+              <rect
+                x={stepBox.x}
+                y={stepBox.y}
+                width={stepBox.width}
+                height={stepBox.height}
+                rx={12}
+                fill="none"
+                stroke={MATH_COLORS.answerStepFrame}
+                strokeWidth={2.2}
+                strokeDasharray="7 4"
+              />
+              <rect
+                x={chipX}
+                y={chipY}
+                width={chipW}
+                height={22}
+                rx={6}
+                fill={MATH_COLORS.answerStepFrame}
+              />
+              <text
+                x={chipX + chipW / 2}
+                y={chipY + 15}
+                textAnchor="middle"
+                fontSize={fontScale(10)}
+                fontWeight="bold"
+                fill={CANVAS_COLORS.white}
+              >
+                {chipLabel}
+              </text>
+            </g>
+          );
+        })()}
     </g>
   );
 }

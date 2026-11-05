@@ -555,6 +555,7 @@ export function RegressionPage() {
               xStep={xStep}
               yStep={yStep}
               activeStep={answerStep}
+              isOutlierScenario={selectedScenarioKey === "outlier"}
             />
           </AnimationSvgCanvas>
 

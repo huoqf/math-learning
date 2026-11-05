@@ -12,10 +12,14 @@ import {
   Point2D,
   RegressionModelType,
   calculateLinearRegression,
+  calculateOutlierComparison,
   fitAllRegressionModels,
   selectCurrentFit,
   sampleRegressionCurvePoints,
 } from "@/math/pairedData";
+import { REGRESSION_ANSWER_STEPS } from "@/data/registries/pairedData";
+
+const SUBSCRIPT_DIGITS = ["₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₁₀"];
 
 interface RegressionSceneProps {
   selectedModel?: RegressionModelType;
@@ -32,6 +36,7 @@ interface RegressionSceneProps {
   xStep?: number;
   yStep?: number;
   activeStep?: number;
+  isOutlierScenario?: boolean;
 }
 
 export const RegressionScene: React.FC<RegressionSceneProps> = ({
@@ -49,6 +54,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
   xStep = 1,
   yStep = 1,
   activeStep,
+  isOutlierScenario = false,
 }) => {
   // 1. 回归模型计算
   const regResult = useMemo(() => {
@@ -63,6 +69,33 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
   const currentFit = useMemo(() => {
     return selectCurrentFit(modelFits, selectedModel);
   }, [modelFits, selectedModel]);
+
+  // 2.5 离群点情景：同步计算剔除异常点后的清洗回归线（供同屏双线对比）
+  const outlierComp = useMemo(() => {
+    if (!isOutlierScenario || selectedModel !== "linear" || points.length < 4) {
+      return null;
+    }
+    return calculateOutlierComparison(points);
+  }, [isOutlierScenario, selectedModel, points]);
+
+  const cleanedLineSeg = useMemo(() => {
+    if (!outlierComp || !outlierComp.cleaned.isValid) return null;
+    const x1 = scale.xMin;
+    const x2 = scale.xMax;
+    const y1 = outlierComp.cleaned.b * x1 + outlierComp.cleaned.a;
+    const y2 = outlierComp.cleaned.b * x2 + outlierComp.cleaned.a;
+    return {
+      p1: mathToDesign(x1, y1, scale),
+      p2: mathToDesign(x2, y2, scale),
+      cleaned: outlierComp.cleaned,
+    };
+  }, [outlierComp, scale]);
+
+  // 分步聚光灯透明度：未分步时全 1，分步时突显当前步重点图元
+  const stepSpotlight = (stepGroup: 1 | 2 | 3): number => {
+    if (activeStep === undefined) return 1;
+    return activeStep === stepGroup ? 1 : 0.35;
+  };
 
   // 3. 生成平滑拟合曲线路径 (动态响应视口数学范围 scale.xMin ~ scale.xMax，顶层 Hook)
   const curvePointsCount = 140;
@@ -137,11 +170,10 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
   const targetAxisY = isTargetValid ? mathToDesign(0, targetY, scale) : null;
 
   // 构建学术点标组数据 (散点 P₁~Pₙ 与 样本中心点 (x̄, ȳ) 及 预测靶点 (x₀, ŷ₀))
-  const subscriptDigits = ["₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₁₀"];
   const regressionLabels = [
     ...points.map((p, idx) => {
       const ptD = mathToDesign(p.x, p.y, scale);
-      const sub = subscriptDigits[idx] ?? `${idx + 1}`;
+      const sub = SUBSCRIPT_DIGITS[idx] ?? `${idx + 1}`;
       return {
         key: `pt-${p.id}`,
         x: ptD.x,
@@ -188,76 +220,146 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
       />
 
       {/* 1. 绘制最小二乘几何“残差正方形面积” (Least Squares Residual Squares) */}
-      {showResidualSquares &&
-        currentFit?.isValid &&
-        points.map((p) => {
-          const yHat = currentFit.predict(p.x);
-          const ptDesign = mathToDesign(p.x, p.y, scale);
-          const hatDesign = mathToDesign(p.x, yHat, scale);
-          const size = Math.abs(hatDesign.y - ptDesign.y);
+      <g opacity={stepSpotlight(2)}>
+        {showResidualSquares &&
+          currentFit?.isValid &&
+          points.map((p) => {
+            const yHat = currentFit.predict(p.x);
+            const ptDesign = mathToDesign(p.x, p.y, scale);
+            const hatDesign = mathToDesign(p.x, yHat, scale);
+            const size = Math.abs(hatDesign.y - ptDesign.y);
 
-          // 正方形在设计像素层向右延伸，面积在像素上严格正比于残差平方
-          const sqX = ptDesign.x;
-          const sqY = Math.min(ptDesign.y, hatDesign.y);
+            // 正方形在设计像素层向右延伸，面积在像素上严格正比于残差平方
+            const sqX = ptDesign.x;
+            const sqY = Math.min(ptDesign.y, hatDesign.y);
 
-          return (
-            <g key={`sq-${p.id}`} opacity={0.65}>
-              <rect
-                x={sqX}
-                y={sqY}
-                width={size}
-                height={size}
-                fill={withAlpha(MATH_COLORS.paramTertiary, 0.2)}
-                stroke={MATH_COLORS.paramTertiary}
-                strokeWidth={1.2}
-                strokeDasharray="2 2"
-                rx={2}
-              />
-            </g>
-          );
-        })}
+            return (
+              <g key={`sq-${p.id}`} opacity={0.65}>
+                <rect
+                  x={sqX}
+                  y={sqY}
+                  width={size}
+                  height={size}
+                  fill={withAlpha(MATH_COLORS.paramTertiary, 0.2)}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1.2}
+                  strokeDasharray="2 2"
+                  rx={2}
+                />
+              </g>
+            );
+          })}
 
-      {/* 2. 绘制残差垂线 (散点 -> 拟合曲线对应点) */}
-      {currentFit?.isValid &&
-        points.map((p) => {
-          const yHat = currentFit.predict(p.x);
-          const ptDesign = mathToDesign(p.x, p.y, scale);
-          const hatDesign = mathToDesign(p.x, yHat, scale);
-          return (
-            <g key={`res-${p.id}`}>
-              <line
-                x1={ptDesign.x}
-                y1={ptDesign.y}
-                x2={hatDesign.x}
-                y2={hatDesign.y}
-                stroke={MATH_COLORS.tangentLine}
-                strokeDasharray="3 3"
-                strokeWidth={1.8}
-                opacity={0.85}
-              />
-              <circle
-                cx={hatDesign.x}
-                cy={hatDesign.y}
-                r={3}
-                fill={MATH_COLORS.tangentLine}
-              />
-            </g>
-          );
-        })}
+        {/* 2. 绘制残差垂线 (散点 -> 拟合曲线对应点) */}
+        {currentFit?.isValid &&
+          points.map((p) => {
+            const yHat = currentFit.predict(p.x);
+            const ptDesign = mathToDesign(p.x, p.y, scale);
+            const hatDesign = mathToDesign(p.x, yHat, scale);
+            return (
+              <g key={`res-${p.id}`}>
+                <line
+                  x1={ptDesign.x}
+                  y1={ptDesign.y}
+                  x2={hatDesign.x}
+                  y2={hatDesign.y}
+                  stroke={MATH_COLORS.tangentLine}
+                  strokeDasharray="3 3"
+                  strokeWidth={1.8}
+                  opacity={0.85}
+                />
+                <circle
+                  cx={hatDesign.x}
+                  cy={hatDesign.y}
+                  r={3}
+                  fill={MATH_COLORS.tangentLine}
+                />
+              </g>
+            );
+          })}
+      </g>
 
-      {/* 3. 绘制拟合回归曲线/直线 */}
+      {/* 3. 绘制拟合回归曲线/直线（离群点情景下同屏展示：含异常点虚线 vs 剔除异常点实线） */}
       {currentFit?.isValid && curvePath && (
         <path
           d={curvePath}
-          stroke={MATH_COLORS.function}
-          strokeWidth={3}
+          stroke={
+            cleanedLineSeg ? MATH_COLORS.degeneracy : MATH_COLORS.function
+          }
+          strokeWidth={cleanedLineSeg ? 2.2 : 3}
+          strokeDasharray={cleanedLineSeg ? "6 4" : undefined}
           fill="none"
+          opacity={cleanedLineSeg ? 0.8 : 1}
         />
+      )}
+
+      {cleanedLineSeg && (
+        <g>
+          <line
+            x1={cleanedLineSeg.p1.x}
+            y1={cleanedLineSeg.p1.y}
+            x2={cleanedLineSeg.p2.x}
+            y2={cleanedLineSeg.p2.y}
+            stroke={MATH_COLORS.function}
+            strokeWidth={3.2}
+          />
+          {/* 离群点警示环与双线对比浮标 */}
+          {points.length > 0 &&
+            (() => {
+              const outPt = points[points.length - 1];
+              const outDesign = mathToDesign(outPt.x, outPt.y, scale);
+              return (
+                <g>
+                  <circle
+                    cx={outDesign.x}
+                    cy={outDesign.y}
+                    r={13}
+                    fill={withAlpha(MATH_COLORS.degeneracy, 0.14)}
+                    stroke={MATH_COLORS.degeneracy}
+                    strokeWidth={1.8}
+                    strokeDasharray="3 2"
+                  />
+                  <rect
+                    x={Math.min(600, Math.max(24, outDesign.x - 105))}
+                    y={Math.min(580, outDesign.y + 16)}
+                    width={210}
+                    height={38}
+                    rx={6}
+                    fill={withAlpha(CANVAS_COLORS.white, 0.94)}
+                    stroke={MATH_COLORS.degeneracy}
+                    strokeWidth={1.2}
+                  />
+                  <text
+                    x={Math.min(600, Math.max(24, outDesign.x - 105)) + 105}
+                    y={Math.min(580, outDesign.y + 16) + 15}
+                    textAnchor="middle"
+                    fontSize={fontScale(10)}
+                    fontWeight="bold"
+                    fill={MATH_COLORS.degeneracy}
+                  >
+                    虚线(含离群点): R²={regResult.rSquare.toFixed(3)}
+                  </text>
+                  <text
+                    x={Math.min(600, Math.max(24, outDesign.x - 105)) + 105}
+                    y={Math.min(580, outDesign.y + 16) + 31}
+                    textAnchor="middle"
+                    fontSize={fontScale(10)}
+                    fontWeight="bold"
+                    fill={MATH_COLORS.function}
+                  >
+                    实线(剔除P
+                    {SUBSCRIPT_DIGITS[points.length - 1] ?? points.length}后):
+                    R²={cleanedLineSeg.cleaned.rSquare.toFixed(3)}
+                  </text>
+                </g>
+              );
+            })()}
+        </g>
       )}
 
       {/* 4. 标记样本中心点 (meanX, meanY) - 仅线性模型下必过重心 */}
       {selectedModel === "linear" && regResult.isValid && (
-        <g className="center-point-group">
+        <g className="center-point-group" opacity={stepSpotlight(1)}>
           {/* 投影到 X 轴虚线 */}
           <line
             x1={centerPos.x}
@@ -298,7 +400,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
 
       {/* 5. 高考回归预报靶点 (x₀, ŷ₀) 及其坐标轴投影 */}
       {targetPos && isTargetValid && targetAxisX && targetAxisY && (
-        <g className="target-forecast-group">
+        <g className="target-forecast-group" opacity={stepSpotlight(3)}>
           {/* 投影到 X 轴虚线 */}
           <line
             x1={targetPos.x}
@@ -563,19 +665,50 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
                       height: 110,
                     };
 
+          const stepInfo =
+            REGRESSION_ANSWER_STEPS[
+              Math.min(
+                REGRESSION_ANSWER_STEPS.length - 1,
+                Math.max(0, activeStep - 1),
+              )
+            ];
+          const chipLabel = `第 ${stepInfo.step} / ${REGRESSION_ANSWER_STEPS.length} 步 · ${stepInfo.title}`;
+          const chipW = Math.min(300, Math.max(180, chipLabel.length * 11));
+          const chipX = Math.max(16, Math.min(820 - chipW, box.x + 8));
+          const chipY = Math.max(46, box.y - 12);
+
           return (
-            <rect
-              x={box.x}
-              y={box.y}
-              width={box.width}
-              height={box.height}
-              rx={12}
-              fill="none"
-              stroke={MATH_COLORS.answerStepFrame}
-              strokeWidth={2.2}
-              strokeDasharray="7 4"
-              pointerEvents="none"
-            />
+            <g pointerEvents="none">
+              <rect
+                x={box.x}
+                y={box.y}
+                width={box.width}
+                height={box.height}
+                rx={12}
+                fill="none"
+                stroke={MATH_COLORS.answerStepFrame}
+                strokeWidth={2.2}
+                strokeDasharray="7 4"
+              />
+              <rect
+                x={chipX}
+                y={chipY}
+                width={chipW}
+                height={22}
+                rx={6}
+                fill={MATH_COLORS.answerStepFrame}
+              />
+              <text
+                x={chipX + chipW / 2}
+                y={chipY + 15}
+                textAnchor="middle"
+                fontSize={fontScale(10)}
+                fontWeight="bold"
+                fill={CANVAS_COLORS.white}
+              >
+                {chipLabel}
+              </text>
+            </g>
           );
         })()}
     </g>
