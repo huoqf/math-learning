@@ -91,7 +91,7 @@ export const MathReasoningSection: React.FC<MathReasoningSectionProps> = ({
                     {s.step}
                   </span>
                   <span className="font-bold text-neutral-800 text-xs leading-snug flex-1 break-words">
-                    {s.title}
+                    {renderMixedLatex(s.title)}
                   </span>
                 </div>
 

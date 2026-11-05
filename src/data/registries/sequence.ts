@@ -29,6 +29,47 @@ export const LINEAR_RECURRENCE_ANSWER_STEPS: AnswerStepItem[] = [
   },
 ];
 
+export const ARITH_GEO_ANSWER_STEPS: AnswerStepItem[] = [
+  {
+    step: 1,
+    title: "拆解差比通项并列出原和式",
+    sceneHint: "分离等差因子与等比因子，展开原和式 Tn 的首尾项结构",
+  },
+  {
+    step: 2,
+    title: "同乘公比右移一格错位对齐",
+    sceneHint: "两边同乘公比 q，使同次幂项上下严格错位对齐",
+  },
+  {
+    step: 3,
+    title: "两式错位相减合并中间等比项",
+    sceneHint: "构造 (1-q)Tn：保留首项、合并中间 n-1 项等比、警惕尾项负号",
+  },
+  {
+    step: 4,
+    title: "分类讨论并化简结果检验首项",
+    sceneHint: "q≠1 时两边同除 1-q 化简，并代入 n=1 检验 T1=c1",
+  },
+];
+
+export const TELESCOPING_ANSWER_STEPS: AnswerStepItem[] = [
+  {
+    step: 1,
+    title: "通项分母因式分解并提取裂项系数",
+    sceneHint: "识别分母两因式跨度 Δ，提取裂项前置系数 1/(Δ·d) 拆为两项差",
+  },
+  {
+    step: 2,
+    title: "逐项展开并执行正负对称抵消",
+    sceneHint: "Δ=1 相邻对消，Δ=2 隔项对消，观察中间项多米诺骨牌式清零",
+  },
+  {
+    step: 3,
+    title: "提取首尾对称残留项并通分化简",
+    sceneHint: "首部正项残留 Δ 项、尾部负项对称残留 Δ 项，通分合并并验算 T1",
+  },
+];
+
 export interface SequenceParams {
   a1: number;
   d: number;

@@ -7,13 +7,19 @@ import {
   LeftPanelSection,
   SelectGrid,
   TipCard,
+  StepNavigator,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
 import { SequenceScene } from "./components/SequenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/sequence";
+import {
+  defaultParams,
+  paramMeta,
+  ARITH_GEO_ANSWER_STEPS,
+  TELESCOPING_ANSWER_STEPS,
+} from "@/data/registries/sequence";
 
 import {
   calcArithGeoSplit,
@@ -109,8 +115,9 @@ export function ModelsPage() {
         geometricViewType: "points",
         modelType,
         subModel: modelType,
+        highlightN,
       }),
-    [params, modelType],
+    [params, modelType, highlightN],
   );
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -152,6 +159,7 @@ export function ModelsPage() {
     const d = params.d ?? -1.5;
     const q = params.q ?? 0.5;
     const N = Math.max(4, Math.min(12, Math.round(params.N ?? 8)));
+    const gap = params.teleGap ?? 1;
     const common = `参数基准：$a_1 = ${a1}$，公差 $d = ${d}$，公比 $q = ${q}$，考察前 $N = ${N}$ 项。`;
     switch (modelType) {
       case "arith-geo":
@@ -167,9 +175,16 @@ export function ModelsPage() {
       case "telescoping":
         return {
           variant: "info" as const,
-          badge: "巧算化简 · 裂项相消法",
+          badge:
+            gap === 3
+              ? "巧算化简 · 根式有理化裂项"
+              : gap === 2
+                ? "巧算化简 · 跨项差 2 裂项"
+                : "巧算化简 · 标准差 1 裂项",
           condition:
-            "通项可拆裂为两项差 $\\frac{1}{n(n+\\Delta)} = \\frac{1}{\\Delta}(\\frac{1}{n} - \\frac{1}{n+\\Delta})$，各项首尾伸缩对消。",
+            gap === 3
+              ? `根式通项 $c_n = \\frac{1}{\\sqrt{n}+\\sqrt{n+1}} = \\sqrt{n+1} - \\sqrt{n}$，考察前 $N = ${N}$ 项伸缩抵消。`
+              : `通项可拆裂为两项差 $\\frac{1}{n(n+${gap})} = \\frac{1}{${gap}}(\\frac{1}{n} - \\frac{1}{n+${gap}})$，考察前 $N = ${N}$ 项对消。`,
           question:
             "裂项相消后正负抵消链条最终残留哪些首末项？跨度 $\\Delta$ 对残留项数有何决定性影响？",
         };
@@ -208,7 +223,7 @@ export function ModelsPage() {
             "探究典型求和模型中离散通项与前 $n$ 项和 $T_n$ 之间的代数转化与裂相对消机理。",
         };
     }
-  }, [modelType, params.a1, params.d, params.q, params.N]);
+  }, [modelType, params.a1, params.d, params.q, params.N, params.teleGap]);
 
   return (
     <ThreePanel
@@ -247,78 +262,71 @@ export function ModelsPage() {
                 },
               ]}
               value={modelType}
-              onChange={(val) => setModelType(val as ModelType)}
+              onChange={(val) => {
+                setModelType(val as ModelType);
+                handleParamChange("sumStep", 1);
+              }}
             />
           </LeftPanelSection>
 
-          {/* 错位相减专属：推导步骤选择卡片 */}
+          {/* 错位相减专属：标准四步作答导航 */}
           {modelType === "arith-geo" && (
             <LeftPanelSection
-              title="推导演化步骤"
-              subtitle="分步展示错位相减标准答题过程"
+              title="高考标准解答分步走"
+              subtitle="同步高亮中屏错位对齐矩阵与右屏采分点"
             >
-              <SelectGrid
-                items={[
-                  {
-                    key: "1",
-                    label: "Step 1: 原式列出",
-                    description: "列出原始求和表达式 Tₙ",
-                  },
-                  {
-                    key: "2",
-                    label: "Step 2: 乘公比错位",
-                    description: "同乘 q 整体向右平移 1 格",
-                  },
-                  {
-                    key: "3",
-                    label: "Step 3: 两式相减",
-                    description: "首项直落，中间等比，尾项带负号",
-                  },
-                  {
-                    key: "4",
-                    label: "Step 4: 求和化简",
-                    description: "代入等比求和公式完成化简",
-                  },
-                ]}
-                value={String(params.sumStep ?? 1)}
-                onChange={(k) => handleParamChange("sumStep", Number(k))}
-                columns={1}
+              <StepNavigator
+                steps={ARITH_GEO_ANSWER_STEPS}
+                active={params.sumStep ?? 1}
+                onChange={(step) => handleParamChange("sumStep", step)}
               />
             </LeftPanelSection>
           )}
 
-          {/* 裂项相消专属：裂项题型选择卡片 */}
+          {/* 裂项相消专属：裂项题型与标准三步作答导航 */}
           {modelType === "telescoping" && (
-            <LeftPanelSection
-              title="裂项相消题型"
-              subtitle="覆盖新高考 3 大典型裂项构造"
-            >
-              <SelectGrid
-                items={[
-                  {
-                    key: "1",
-                    label: "标准差 1 型",
-                    formula: "\\frac{1}{n(n+1)}",
-                    description: "相邻抵消，留首尾各 1 项",
-                  },
-                  {
-                    key: "2",
-                    label: "跨项差 2 型",
-                    formula: "\\frac{1}{n(n+2)}",
-                    description: "提系数 1/2，留首尾各 2 项",
-                  },
-                  {
-                    key: "3",
-                    label: "根式有理化型",
-                    formula: "\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}",
-                    description: "分子有理化，前后伸缩抵消",
-                  },
-                ]}
-                value={String(params.teleGap ?? 1)}
-                onChange={(k) => handleParamChange("teleGap", Number(k))}
-                columns={1}
-              />
-            </LeftPanelSection>
+            <>
+              <LeftPanelSection
+                title="裂项相消题型"
+                subtitle="覆盖新高考 3 大典型裂项构造"
+              >
+                <SelectGrid
+                  items={[
+                    {
+                      key: "1",
+                      label: "标准差一裂项",
+                      formula: "\\frac{1}{n(n+1)}",
+                      description: "相邻抵消，留首尾各 1 项",
+                    },
+                    {
+                      key: "2",
+                      label: "跨项差二裂项",
+                      formula: "\\frac{1}{n(n+2)}",
+                      description: "提系数 1/2，留首尾各 2 项",
+                    },
+                    {
+                      key: "3",
+                      label: "根式有理化裂项",
+                      formula: "\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}",
+                      description: "分子有理化，前后伸缩抵消",
+                    },
+                  ]}
+                  value={String(params.teleGap ?? 1)}
+                  onChange={(k) => handleParamChange("teleGap", Number(k))}
+                  columns={1}
+                />
+              </LeftPanelSection>
+              <LeftPanelSection
+                title="高考标准解答分步走"
+                subtitle="同步观察多米诺对消链条与首尾残留项"
+              >
+                <StepNavigator
+                  steps={TELESCOPING_ANSWER_STEPS}
+                  active={Math.min(3, params.sumStep ?? 1)}
+                  onChange={(step) => handleParamChange("sumStep", step)}
+                />
+              </LeftPanelSection>
+            </>
           )}
 
           <LeftPanelSection
@@ -359,7 +367,20 @@ export function ModelsPage() {
           />
         </AnimationSvgCanvas>
       }
-      right={<MathPanel {...mathData} title="高考求和模型看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          title="高考求和模型看板"
+          focusStep={
+            modelType === "arith-geo"
+              ? (params.sumStep ?? 1)
+              : modelType === "telescoping"
+                ? Math.min(3, params.sumStep ?? 1)
+                : undefined
+          }
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

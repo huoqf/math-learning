@@ -70,6 +70,7 @@ export function SequenceModelsScene({
       <SequenceModelsTelescopingScene
         teleGap={teleGap}
         N={N}
+        sumStep={sumStep}
         telescopingData={telescopingData}
         crossTelescopingData={crossTelescopingData}
         radicalTeleData={radicalTeleData}

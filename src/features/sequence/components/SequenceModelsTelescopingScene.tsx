@@ -19,6 +19,7 @@ const DESIGN_CENTER_X = CANVAS_PRESETS.full.width / 2;
 interface SequenceModelsTelescopingSceneProps {
   teleGap: number;
   N: number;
+  sumStep?: number;
   telescopingData: TelescopingResult;
   crossTelescopingData: CrossTelescopingResult;
   radicalTeleData: RadicalTelescopingResult;
@@ -30,6 +31,7 @@ interface SequenceModelsTelescopingSceneProps {
 export function SequenceModelsTelescopingScene({
   teleGap,
   N,
+  sumStep = 1,
   telescopingData,
   crossTelescopingData,
   radicalTeleData,
@@ -39,6 +41,58 @@ export function SequenceModelsTelescopingScene({
 }: SequenceModelsTelescopingSceneProps) {
   const isRadical = teleGap === 3;
   const isCross = teleGap === 2;
+  const activeStep = Math.min(3, Math.max(1, sumStep));
+  const topBannerY = Math.max(12, vp.designTop + 14);
+
+  const renderDominoBanner = (
+    step1Text: string,
+    step2Text: string,
+    step3Text: string,
+  ) => (
+    <g className="telescoping-domino-card" data-answer-step-frame={activeStep}>
+      <rect
+        x={DESIGN_CENTER_X - 310}
+        y={topBannerY}
+        width={620}
+        height={58}
+        rx={8}
+        fill={withAlpha(MATH_COLORS.white, 0.94)}
+        stroke={MATH_COLORS.answerStepFrame}
+        strokeWidth={1.8}
+        strokeDasharray="7 4"
+      />
+      <text
+        x={DESIGN_CENTER_X - 294}
+        y={topBannerY + 17}
+        fontSize={fontScale(9.5)}
+        fill={MATH_COLORS.sequence}
+        fontWeight="bold"
+        opacity={activeStep === 1 ? 1 : 0.65}
+      >
+        {step1Text}
+      </text>
+      <text
+        x={DESIGN_CENTER_X - 294}
+        y={topBannerY + 35}
+        fontSize={fontScale(9.5)}
+        fill={MATH_COLORS.paramSecondary}
+        fontWeight="bold"
+        opacity={activeStep === 2 ? 1 : 0.65}
+      >
+        {step2Text}
+      </text>
+      <text
+        x={DESIGN_CENTER_X - 294}
+        y={topBannerY + 52}
+        fontSize={fontScale(9.5)}
+        fill={MATH_COLORS.paramPrimary}
+        fontWeight="bold"
+        opacity={activeStep === 3 ? 1 : 0.65}
+      >
+        {step3Text}
+      </text>
+    </g>
+  );
 
   // 1. 标准差 1 型: 1/(n(n+1)) = 1/n - 1/(n+1)
   if (!isRadical && !isCross) {
@@ -48,6 +102,11 @@ export function SequenceModelsTelescopingScene({
     return (
       <g className="sequence-scene-telescoping-standard">
         <CoordinateGrid scale={scale} fontScale={fontScale} />
+        {renderDominoBanner(
+          "① 裂项拆差（跨度 Δ=1）：cₙ = 1/[n(n+1)] = (+1/n) + (-1/(n+1))",
+          "② 多米诺相邻对消：(+1) + (-1/2 + 1/2) + (-1/3 + 1/3) + … 中间项成对清零",
+          `③ 首尾对称留 1 项：T${toSub(N)} = 首正 (+1) + 尾负 (-1/${N + 1}) = ${N}/${N + 1} ≈ ${(N / (N + 1)).toFixed(3)}`,
+        )}
 
         {/* 极限水平线 y = 1 */}
         <line
@@ -199,6 +258,11 @@ export function SequenceModelsTelescopingScene({
     return (
       <g className="sequence-scene-telescoping-cross">
         <CoordinateGrid scale={scale} fontScale={fontScale} />
+        {renderDominoBanner(
+          "① 跨项提系数（跨度 Δ=2）：cₙ = 1/[n(n+2)] = ½ · [(+1/n) + (-1/(n+2))]（必提 ½！）",
+          "② 隔项跨步对消：-1/3 与 +1/3 对消、-1/4 与 +1/4 对消… 奇偶链条各自相消",
+          `③ 首尾对称留 2 项：T${toSub(N)} = ½ · [首正(1 + 1/2) - 尾负(1/${N + 1} + 1/${N + 2})]`,
+        )}
 
         {/* 极限水平线 y = 0.75 */}
         <line
@@ -320,36 +384,15 @@ export function SequenceModelsTelescopingScene({
   // 3. 根式有理化型: 1/(sqrt(n)+sqrt(n+1)) = sqrt(n+1) - sqrt(n)
   if (isRadical) {
     const terms = radicalTeleData.terms;
-    const bannerY = vp.designTop + 24;
 
     return (
       <g className="sequence-scene-telescoping-radical">
         <CoordinateGrid scale={scale} fontScale={fontScale} />
-
-        {/* 顶部总和横幅 */}
-        <g className="radical-banner">
-          <rect
-            x={DESIGN_CENTER_X - 220}
-            y={bannerY}
-            width={440}
-            height={28}
-            rx={14}
-            fill={withAlpha(MATH_COLORS.white, 0.95)}
-            stroke={MATH_COLORS.sequenceHighlight}
-            strokeWidth={1.2}
-          />
-          <text
-            x={DESIGN_CENTER_X}
-            y={bannerY + 18}
-            textAnchor="middle"
-            fontSize={fontScale(10.5)}
-            fill={MATH_COLORS.sequenceHighlight}
-            fontWeight="bold"
-          >
-            根式伸缩和：T{toSub(N)} = √(N+1) - √1 = √{N + 1} - 1 ≈{" "}
-            {radicalTeleData.finalTn.toFixed(3)}
-          </text>
-        </g>
+        {renderDominoBanner(
+          "① 共轭根式有理化：cₙ = 1/(√n + √(n+1)) = (+√(n+1)) + (-√n)",
+          "② 前后根式伸缩对消：(+√2 - √2) + (+√3 - √3) + … 中间根式逐项抵消",
+          `③ 首尾根式残留：T${toSub(N)} = 尾正(+√${N + 1}) + 首负(-√1) ≈ ${radicalTeleData.finalTn.toFixed(3)}`,
+        )}
 
         {terms.map((t) => {
           const posA = mathToDesign(t.n, t.partA, scale);

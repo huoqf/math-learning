@@ -68,44 +68,124 @@ export function SequenceModelsArithGeoScene({
   };
 
   const curStepInfo = stepTitles[sumStep] ?? stepTitles[1];
-  const bannerY = vp.designTop + 24;
+  const bannerY = Math.max(12, vp.designTop + 14);
+  const matrixTopY = bannerY + 34;
+  const finalTn = terms[N - 1]?.Tn ?? 0;
+  const firstCn = terms[0]?.cn ?? 0;
 
   return (
     <g className="sequence-scene-arith-geo">
       <CoordinateGrid scale={scale} fontScale={fontScale} />
 
-      {/* 顶部步骤标题胶囊 */}
-      <g className="step-banner">
+      {/* 顶部步骤标题胶囊 + 当前步围栏 */}
+      <g className="step-banner" data-answer-step-frame={sumStep}>
         <rect
-          x={DESIGN_CENTER_X - 240}
+          x={DESIGN_CENTER_X - 270}
           y={bannerY}
-          width={480}
-          height={30}
-          rx={15}
+          width={540}
+          height={28}
+          rx={14}
           fill={withAlpha(MATH_COLORS.white, 0.95)}
-          stroke={MATH_COLORS.sequenceHighlight}
-          strokeWidth={1.5}
+          stroke={MATH_COLORS.answerStepFrame}
+          strokeWidth={1.8}
+          strokeDasharray="7 4"
         />
         <text
           x={DESIGN_CENTER_X}
-          y={bannerY + 19}
+          y={bannerY + 18}
           textAnchor="middle"
-          fontSize={fontScale(11)}
-          fill={MATH_COLORS.sequenceHighlight}
+          fontSize={fontScale(10.5)}
+          fill={MATH_COLORS.answerStepFrame}
           fontWeight="bold"
         >
           {curStepInfo.text}：{curStepInfo.sub}
         </text>
       </g>
 
+      {/* 错位相减三行代数对齐矩阵条 (Tₙ / qTₙ / (1-q)Tₙ) */}
+      <g className="stagger-matrix-card">
+        <rect
+          x={DESIGN_CENTER_X - 330}
+          y={matrixTopY}
+          width={660}
+          height={64}
+          rx={8}
+          fill={withAlpha(MATH_COLORS.white, 0.92)}
+          stroke={MATH_COLORS.sequenceStem}
+          strokeWidth={1}
+        />
+        {/* 第 1 行：Tₙ 原式 */}
+        <text
+          x={DESIGN_CENTER_X - 314}
+          y={matrixTopY + 18}
+          fontSize={fontScale(9.5)}
+          fill={MATH_COLORS.sequence}
+          fontWeight="bold"
+          opacity={sumStep === 1 || sumStep === 2 ? 1 : 0.65}
+        >
+          ① 原和式 Tₙ = [首项 a₁·q⁰] + [a₂·q¹ + a₃·q² + … + aₙ·qⁿ⁻¹]
+        </text>
+        {/* 第 2 行：q·Tₙ 右移一格对齐 */}
+        <text
+          x={DESIGN_CENTER_X - 314}
+          y={matrixTopY + 37}
+          fontSize={fontScale(9.5)}
+          fill={MATH_COLORS.paramSecondary}
+          fontWeight="bold"
+          opacity={sumStep >= 2 ? 1 : 0.35}
+        >
+          ② 乘公比 qTₙ = {"          "}[同次幂对齐：a₁·q¹ + a₂·q² + … +
+          aₙ₋₁·qⁿ⁻¹] + [尾项 aₙ·qⁿ]
+        </text>
+        {/* 第 3 行：两式相减 (1-q)Tₙ */}
+        <text
+          x={DESIGN_CENTER_X - 314}
+          y={matrixTopY + 55}
+          fontSize={fontScale(9.5)}
+          fill={sumStep >= 3 ? MATH_COLORS.paramPrimary : MATH_COLORS.labelText}
+          fontWeight="bold"
+          opacity={sumStep >= 3 ? 1 : 0.35}
+        >
+          ③ 相减 (1-q)Tₙ = [首项 a₁b₁] + [中间 ({N - 1}) 项等比：d·(q¹ + … +
+          qⁿ⁻¹)] − [尾项负号 aₙ·qⁿ]
+        </text>
+      </g>
+
+      {/* Step 4 专属：同除 (1-q) 化简与首项回验徽标 */}
+      {sumStep === 4 && !isCriticalQ1 && (
+        <g className="step4-verify-badge">
+          <rect
+            x={DESIGN_CENTER_X - 240}
+            y={matrixTopY + 68}
+            width={480}
+            height={24}
+            rx={6}
+            fill={withAlpha(MATH_COLORS.paramTertiary, 0.14)}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.4}
+          />
+          <text
+            x={DESIGN_CENTER_X}
+            y={matrixTopY + 84}
+            textAnchor="middle"
+            fontSize={fontScale(9.5)}
+            fill={MATH_COLORS.paramTertiary}
+            fontWeight="bold"
+          >
+            ④ 同除 (1-q) 得 T{toSub(N)} = {finalTn.toFixed(3)} ｜ 首项回验
+            n=1：T₁ = c₁ = {firstCn.toFixed(2)} ✓
+          </text>
+        </g>
+      )}
+
       {/* q = 1 退化告警横幅 */}
       {isCriticalQ1 && (
         <g className="q1-warning-banner">
           <rect
             x={DESIGN_CENTER_X - 200}
-            y={bannerY + 36}
+            y={matrixTopY + 68}
             width={400}
-            height={26}
+            height={24}
             rx={6}
             fill={withAlpha(MATH_COLORS.paramPrimary, 0.15)}
             stroke={MATH_COLORS.paramPrimary}
@@ -114,9 +194,9 @@ export function SequenceModelsArithGeoScene({
           />
           <text
             x={DESIGN_CENTER_X}
-            y={bannerY + 53}
+            y={matrixTopY + 84}
             textAnchor="middle"
-            fontSize={fontScale(10)}
+            fontSize={fontScale(9.5)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >

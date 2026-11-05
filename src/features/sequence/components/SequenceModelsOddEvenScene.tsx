@@ -111,7 +111,7 @@ export function SequenceModelsOddEvenScene({
               c{toSub(t.n)} = {t.cn > 0 ? `+${t.cn}` : t.cn}
             </text>
 
-            {/* 奇偶项两两配对合并框 */}
+            {/* 奇偶项两两配对合并框 + 合成常数柱 b_k = +1 */}
             {isEven && (
               <g>
                 <rect
@@ -132,6 +132,30 @@ export function SequenceModelsOddEvenScene({
                   strokeDasharray="3,3"
                   rx={6}
                 />
+                {/* 并项合成柱 b_k = +1 */}
+                <rect
+                  x={
+                    (mathToDesign(t.n - 1, 0, scale).x +
+                      mathToDesign(t.n, 0, scale).x) /
+                      2 -
+                    barW * 0.45
+                  }
+                  y={Math.min(
+                    mathToDesign(0, 1, scale).y,
+                    mathToDesign(0, 0, scale).y,
+                  )}
+                  width={barW * 0.9}
+                  height={Math.max(
+                    4,
+                    Math.abs(
+                      mathToDesign(0, 0, scale).y - mathToDesign(0, 1, scale).y,
+                    ),
+                  )}
+                  fill={withAlpha(MATH_COLORS.paramTertiary, 0.45)}
+                  stroke={MATH_COLORS.paramTertiary}
+                  strokeWidth={1.4}
+                  rx={3}
+                />
                 <text
                   x={
                     (mathToDesign(t.n - 1, 0, scale).x +
@@ -144,7 +168,7 @@ export function SequenceModelsOddEvenScene({
                   fill={MATH_COLORS.sequenceSum}
                   fontWeight="bold"
                 >
-                  (-{t.n - 1}) + (+{t.n}) = +1
+                  b{toSub(t.n / 2)}: (-{t.n - 1})+(+{t.n})=+1
                 </text>
               </g>
             )}

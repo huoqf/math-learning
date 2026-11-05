@@ -25,6 +25,11 @@ import {
   type InductionClaimId,
 } from "@/math/sequence";
 import { MATH_COLORS } from "@/theme";
+import {
+  LINEAR_RECURRENCE_ANSWER_STEPS,
+  ARITH_GEO_ANSWER_STEPS,
+  TELESCOPING_ANSWER_STEPS,
+} from "@/data/registries/sequence";
 
 export function buildSequencePanel(
   params: Record<string, number>,
@@ -41,6 +46,11 @@ export function buildSequencePanel(
   const coefA = params.coefA ?? 2;
   const coefB = params.coefB ?? 1;
   const coefC = params.coefC ?? 1;
+  const rawHighlightN = config?.highlightN as number | null | undefined;
+  const highlightN =
+    typeof rawHighlightN === "number" && rawHighlightN >= 1
+      ? Math.min(Math.round(rawHighlightN), N)
+      : null;
 
   const quantities: MathPanelData["quantities"] = [];
   const theorems: MathPanelData["theorems"] = [];
@@ -79,7 +89,21 @@ export function buildSequencePanel(
       color: MATH_COLORS.sequenceSum,
     });
 
+    if (highlightN !== null) {
+      const selTerm = res.terms[highlightN - 1];
+      if (selTerm) {
+        quantities.push({
+          label: `选中第 $${highlightN}$ 项验算`,
+          value: `a_{${highlightN}} = ${formatMathNumber(selTerm.an)},\\; S_{${highlightN}} = ${formatMathNumber(selTerm.Sn)}`,
+          color: MATH_COLORS.sequenceHighlight,
+          highlight: "extreme",
+        });
+      }
+    }
+
     if (subMode === "linear") {
+      mnemonic =
+        "一次通项看斜率，公差正负定增减；下标等和项和等，中项两倍对称连。";
       if (res.zeroPointExact !== null) {
         quantities.push({
           label: "变号零点 $x_0$ ($a_n = 0$ 处)",
@@ -129,6 +153,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subMode === "gauss") {
+      mnemonic =
+        "正序倒序两相逢，首尾配对柱齐平；矩形面积除一半，知三求二百发中。";
       quantities.push({
         label: `首尾和 $(a_1 + a_{${N}})$`,
         value: `${formatMathNumber(a1 + aN)}`,
@@ -178,6 +204,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subMode === "quadratic") {
+      mnemonic =
+        "等差求和二次型，常数必零过原点；变号零点邻对称，正负交界最值显。";
       if (res.continuousAxis !== null) {
         quantities.push({
           label: "抛物线对称轴 $x_0$",
@@ -255,6 +283,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subMode === "segment") {
+      mnemonic =
+        "等长切段再求和，新列依然是等差；相邻段差 k 方 d，秒杀小题不用查。";
       if (res.segmentedSums) {
         quantities.push({
           label: `片段公差 Δ = k²·d (k=${kSegment})`,
@@ -349,6 +379,8 @@ export function buildSequencePanel(
         );
       }
     } else if (subMode === "absSum") {
+      mnemonic =
+        "绝对求和先找零，变号分界定乾坤；前段照抄后翻折，两倍前和减全和。";
       quantities.push({
         label: `绝对值总和 $T_{${N}} = \\sum |a_k|$`,
         value: `T_{${N}} = ${formatMathNumber(TN)}`,
@@ -405,6 +437,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subMode === "snToAn") {
+      mnemonic =
+        "知和求通先作差，仅对二起才合法；首项必用 S₁ 验，常数非零分两家。";
       /**
        * 已知 S_n 求通项（选择性必修二 4.1）。
        *
@@ -532,7 +566,21 @@ export function buildSequencePanel(
       color: MATH_COLORS.sequenceSum,
     });
 
+    if (highlightN !== null) {
+      const selTerm = res.terms[highlightN - 1];
+      if (selTerm) {
+        quantities.push({
+          label: `选中第 $${highlightN}$ 项验算`,
+          value: `a_{${highlightN}} = ${selTerm.an.toFixed(4)},\\; S_{${highlightN}} = ${selTerm.Sn.toFixed(4)}`,
+          color: MATH_COLORS.sequenceHighlight,
+          highlight: "extreme",
+        });
+      }
+    }
+
     if (subMode === "exponential") {
+      mnemonic =
+        "等比通项指数型，首项公比莫为零；取对化归等差列，六态分类看公比。";
       const typeDesc: Record<string, string> = {
         growth: "指数爆炸递增 (q > 1)",
         decay: "指数衰减收敛 (0 < q < 1)",
@@ -595,6 +643,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subMode === "staggerSum") {
+      mnemonic =
+        "求和先判公比一，乘 q 右移错位齐；相减消去中间项，首尾相减除公比。";
       quantities.push({
         label: `错位项 $q \\cdot S_{${N}}$`,
         value: `q S_{${N}} = ${(q * SN).toFixed(4)}`,
@@ -655,6 +705,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subMode === "segment") {
+      mnemonic =
+        "等比切段段段比，新列公比 q 的 k；注意公比负一偶，段和为零莫大意。";
       if (res.segmentedSums) {
         const geoSegList = res.segmentedSums.segments;
         const geoA = geoSegList[0];
@@ -753,6 +805,8 @@ export function buildSequencePanel(
         importance: "gaokao",
       });
     } else if (subMode === "productMax") {
+      mnemonic =
+        "等差求和零分界，等比求积一分水；大一放大少一缩，取对化归二次锤。";
       quantities.push({
         label: `前 ${N} 项积 $P_{${N}}$`,
         value: `P_{${N}} = ${PN.toFixed(4)}`,
@@ -817,6 +871,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subMode === "tessellation") {
+      mnemonic =
+        "公比绝对小于一，无穷累加有边际；面积切分自相似，首项除以一减 q。";
       if (res.limitSum !== null) {
         quantities.push({
           label: "无穷递缩和 $S_\\infty$（拓展）",
@@ -951,38 +1007,70 @@ export function buildSequencePanel(
           level: "danger",
         });
       }
+      if (highlightN !== null) {
+        const selTerm = res.terms[highlightN - 1];
+        if (selTerm) {
+          quantities.push({
+            label: `选中第 $${highlightN}$ 项验算`,
+            value: `c_{${highlightN}} = ${selTerm.cn.toFixed(4)},\\; T_{${highlightN}} = ${selTerm.Tn.toFixed(4)}`,
+            color: MATH_COLORS.sequenceHighlight,
+            highlight: "extreme",
+          });
+        }
+      }
+      mnemonic =
+        "差比相乘错位减，同乘公比右移一；首项中段尾负号，公比为一先莫忘。";
       reasoningSteps.push(
         {
-          step: 1,
-          title: "把通项写成等差因子乘等比因子",
-          detail: `$c_n = a_n b_n$ 中 $a_n$ 成等差、$b_n$ 成等比，属于差比数列，求和只能用错位相减法`,
+          step: ARITH_GEO_ANSWER_STEPS[0].step,
+          title: ARITH_GEO_ANSWER_STEPS[0].title,
+          detail: `$c_n = a_n b_n$ 中 $a_n$ 成等差、$b_n$ 成等比，属于差比数列，先列出原和式 $T_n = c_1 + c_2 + \\dots + c_n$`,
           latex: `c_n = a_n b_n = \\left(${a1} + (n-1)\\cdot ${d}\\right)\\cdot ${q}^{\\,n-1}`,
           rubric:
-            "【高考采分点】把 $c_n$ 拆成等差因子乘等比因子，判定其为差比数列 (+2分)",
+            "【高考采分点】把 $c_n$ 拆成等差因子乘等比因子，列出原和式 $T_n$ (+2分)",
         },
         {
-          step: 2,
-          title: "写出 $T_n$ 与 $qT_n$ 并相减",
+          step: ARITH_GEO_ANSWER_STEPS[1].step,
+          title: ARITH_GEO_ANSWER_STEPS[1].title,
           detail:
             Math.abs(q - 1) < 1e-6
-              ? `本题 $q = 1$，差比数列退化为纯等差型，直接套等差求和即可，错位相减会两边相等而失效`
-              : `两式错开一格相减，中间的等比部分合并成一个标准等比和对消`,
+              ? `本题 $q = 1$，乘公比后两式完全相同，无需错位，直接转入纯等差求和`
+              : `两边同乘公比 $q = ${q}$ 并向右错开一格书写，使每一列的指数幂 $q^k$ 严格上下对齐`,
+          latex:
+            Math.abs(q - 1) < 1e-6
+              ? `q = 1 \\implies qT_n = T_n`
+              : `qT_n = a_1 q + a_2 q^2 + \\cdots + a_{n-1} q^{n-1} + a_n q^n`,
+          rubric: "【高考采分点】同乘公比 $q$ 并错位对齐指数幂 (+2分)",
+        },
+        {
+          step: ARITH_GEO_ANSWER_STEPS[2].step,
+          title: ARITH_GEO_ANSWER_STEPS[2].title,
+          detail:
+            Math.abs(q - 1) < 1e-6
+              ? `本题 $q = 1$，差比数列退化为纯等差型，直接套等差求和公式即可`
+              : `上下两式相减：保留首项 $a_1 b_1$，中间 $n-1$ 项提取公差 $d$ 合并成等比求和，尾部多出带负号的 $-a_n q^n$`,
           latex:
             Math.abs(q - 1) < 1e-6
               ? `q = 1 \\implies c_n = a_n = ${a1} + (n-1)\\cdot ${d}`
-              : `T_n - qT_n = a_1 b_1 + \\sum_{k=2}^{n} (a_k - a_{k-1})b_k - a_n b_{n+1}`,
-          rubric: "【高考采分点】错位相减后把剩余部分整理成等比求和 (+3分)",
+              : `(1-q)T_n = a_1 b_1 + d \\sum_{k=2}^{n} q^{k-1} - a_n q^n`,
+          rubric:
+            "【高考采分点】准确写出首项、中间 $n-1$ 项等比和及尾项负号 (+4分)",
         },
         {
-          step: 3,
-          title: "代入项数算出结果",
-          detail: `取 $n = ${N}$，得 $T_{${N}} = ${TN.toFixed(4)}$`,
-          latex: `T_{${N}} = ${TN.toFixed(4)}`,
+          step: ARITH_GEO_ANSWER_STEPS[3].step,
+          title: ARITH_GEO_ANSWER_STEPS[3].title,
+          detail: `除以 $1-q$（$q \\ne 1$）化简，取 $n = ${N}$ 得 $T_{${N}} = ${TN.toFixed(4)}$，并代入 $n=1$ 检验 $T_1 = c_1$`,
+          latex:
+            Math.abs(q - 1) < 1e-6
+              ? `T_{${N}} = ${N}a_1 + \\frac{${N}(${N}-1)}{2}d = ${TN.toFixed(4)}`
+              : `T_n = \\frac{(1-q)T_n}{1-q} \\implies T_{${N}} = ${TN.toFixed(4)}`,
           rubric:
-            "【高考采分点】代入 $n$ 算出 $T_n$，并核对首项满足 $T_1 = c_1$ (+3分)",
+            "【高考采分点】声明 $q \\ne 1$ 除以 $1-q$ 化简，并核对首项满足 $T_1 = c_1$ (+2分)",
         },
       );
     } else if (subModel === "telescoping") {
+      mnemonic =
+        "分式求和看分母，因式作差提系数；相邻隔项对称消，首正尾负对称留。";
       if (teleGap === 3) {
         // 根式有理化型
         const res = calcRadicalTelescoping(N);
@@ -1067,41 +1155,53 @@ export function buildSequencePanel(
       }
       reasoningSteps.push(
         {
-          step: 1,
-          title:
-            teleGap === 3
-              ? "先把根式分母有理化"
-              : teleGap === 2
-                ? "先把通项拆成两个相邻分式之差"
-                : "先确认通项可裂成相邻两项之差",
+          step: TELESCOPING_ANSWER_STEPS[0].step,
+          title: TELESCOPING_ANSWER_STEPS[0].title,
           detail:
             teleGap === 3
               ? "把 $\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}$ 分子有理化，化成 $\\sqrt{n+1}-\\sqrt{n}$，求和时前后相消"
-              : "裂项的关键是找到 $f(n) - f(n+1)$ 的形式，让求和时中间项两两抵消，只剩首尾",
+              : teleGap === 2
+                ? "分母两因式跨度 $\\Delta = 2$，必须先提取裂项系数 $\\frac{1}{2}$，拆成 $\\frac{1}{2}\\left(\\frac{1}{n} - \\frac{1}{n+2}\\right)$"
+                : "裂项的关键是把分母因式拆成 $f(n) - f(n+1)$ 的形式，让求和时中间项两两抵消",
           latex:
             teleGap === 3
               ? `\\frac{1}{\\sqrt{n}+\\sqrt{n+1}} = \\sqrt{n+1} - \\sqrt{n}`
-              : `c_n = f(n) - f(n+1)`,
+              : teleGap === 2
+                ? `c_n = \\frac{1}{n(n+2)} = \\frac{1}{2}\\left(\\frac{1}{n} - \\frac{1}{n+2}\\right)`
+                : `c_n = \\frac{1}{n(n+1)} = \\frac{1}{n} - \\frac{1}{n+1}`,
           rubric:
-            "【高考采分点】把通项裂成 $f(n) - f(n+1)$ 的形式，根式型先分母有理化 (+3分)",
+            "【高考采分点】把通项裂成前后差式，跨项型必提系数 $\\frac{1}{\\Delta}$、根式型先有理化 (+3分)",
         },
         {
-          step: 2,
-          title: "纵向相加，中间项成对消去",
-          detail: `把 $n = 1$ 到 $n = ${N}$ 的式子全部写出相加，中间项两两抵消，只剩首尾两项`,
-          latex: `T_n = \\sum_{k=1}^{n} c_k = f(1) - f(n+1)`,
-          rubric: "【高考采分点】写清相消后只剩首尾两项 (+3分)",
+          step: TELESCOPING_ANSWER_STEPS[1].step,
+          title: TELESCOPING_ANSWER_STEPS[1].title,
+          detail:
+            teleGap === 2
+              ? `把 $n = 1$ 到 $n = ${N}$ 的式子展开相加，隔项成对抵消，首部对称保留前 $2$ 个正项，尾部对称保留后 $2$ 个负项`
+              : `把 $n = 1$ 到 $n = ${N}$ 的式子全部写出相加，中间相邻项两两正负抵消，只剩首尾两项`,
+          latex:
+            teleGap === 2
+              ? `T_n = \\frac{1}{2}\\sum_{k=1}^{n}\\left(\\frac{1}{k} - \\frac{1}{k+2}\\right)`
+              : `T_n = \\sum_{k=1}^{n} c_k = f(1) - f(n+1)`,
+          rubric: "【高考采分点】写清正负对称抵消过程与首尾残留项数 (+3分)",
         },
         {
-          step: 3,
-          title: "代入项数并化简",
-          detail: `取 $n = ${N}$ 得求和结果；务必把 $N$ 代回检验一次，避免边界项写错`,
-          latex: `T_n = f(1) - f(n+1) \\big|_{n = ${N}}`,
+          step: TELESCOPING_ANSWER_STEPS[2].step,
+          title: TELESCOPING_ANSWER_STEPS[2].title,
+          detail: `取 $n = ${N}$ 通分化简得求和结果，并把 $n = 1$ 代回检验 $T_1 = c_1$，避免边界残留项漏写`,
+          latex:
+            teleGap === 3
+              ? `T_n = \\sqrt{n+1} - 1 \\implies T_{${N}} = \\sqrt{${N + 1}} - 1`
+              : teleGap === 2
+                ? `T_n = \\frac{1}{2}\\left(\\frac{3}{2} - \\frac{1}{n+1} - \\frac{1}{n+2}\\right) \\big|_{n = ${N}}`
+                : `T_n = 1 - \\frac{1}{n+1} = \\frac{n}{n+1} \\big|_{n = ${N}}`,
           rubric:
-            "【高考采分点】代入 $n$ 化简求和结果，并回代检验边界项是否写错 (+3分)",
+            "【高考采分点】通分化简求和结果，并回代检验边界项是否吻合 (+3分)",
         },
       );
     } else if (subModel === "abs-sum") {
+      mnemonic =
+        "绝对求和令项零，解出分界看变号；越界翻折双前和，分段书写莫混同。";
       const res = calcAbsSumSequence(a1, d, N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
 
@@ -1174,6 +1274,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subModel === "grouped") {
+      mnemonic =
+        "加减复合莫慌张，拆成等差与等比；各自套表再合并，公比含参先分类。";
       const res = calcGroupedSequence(a1, d, q, N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
 
@@ -1225,6 +1327,8 @@ export function buildSequencePanel(
         },
       );
     } else if (subModel === "odd-even") {
+      mnemonic =
+        "正负摆动奇偶分，两项并作常数块；先求偶项再补奇，分段表达最稳妥。";
       const res = calcOddEvenSequence(N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
 
@@ -1301,6 +1405,21 @@ export function buildSequencePanel(
         color: MATH_COLORS.sequence,
       });
 
+      if (highlightN !== null) {
+        const selTerm = res.terms[highlightN - 1];
+        if (selTerm) {
+          quantities.push({
+            label: `选中第 $${highlightN}$ 项验算`,
+            value:
+              selTerm.bn !== undefined
+                ? `a_{${highlightN}} = ${formatMathNumber(selTerm.an)},\\; b_{${highlightN}} = ${formatMathNumber(selTerm.bn)}`
+                : `a_{${highlightN}} = ${formatMathNumber(selTerm.an)}`,
+            color: MATH_COLORS.sequenceHighlight,
+            highlight: "extreme",
+          });
+        }
+      }
+
       if (res.fixedPoint !== null) {
         quantities.push({
           label: `不动点 $c = \\frac{q}{1-p}$`,
@@ -1357,32 +1476,32 @@ export function buildSequencePanel(
         const b1Val = a1 - cVal;
         reasoningSteps.push(
           {
-            step: 1,
-            title: "待定系数设不动点方程",
+            step: LINEAR_RECURRENCE_ANSWER_STEPS[0].step,
+            title: LINEAR_RECURRENCE_ANSWER_STEPS[0].title,
             latex: `a_{n+1} - c = \\color{${MATH_COLORS.paramPrimary}}{p}(a_n - c) \\implies c = \\frac{\\color{${MATH_COLORS.paramSecondary}}{q}}{1-\\color{${MATH_COLORS.paramPrimary}}{p}}`,
             detail: `设常数 $c$ 满足 $c = ${p_rec}c + ${q_rec}$，移项解得平移不动点 $c = \\frac{${q_rec}}{1 - (${p_rec})} = ${formatMathNumber(cVal)}$。`,
             rubric:
               "【高考采分点】【审题定法 · 2分】设立方程 $c = pc + q$ 并正确求出常数 $c$",
           },
           {
-            step: 2,
-            title: "构造平移等比数列",
+            step: LINEAR_RECURRENCE_ANSWER_STEPS[1].step,
+            title: LINEAR_RECURRENCE_ANSWER_STEPS[1].title,
             latex: `a_{n+1} - (${formatMathNumber(cVal)}) = ${p_rec} \\left[ a_n - (${formatMathNumber(cVal)}) \\right]`,
             detail: `令 $b_n = a_n - (${formatMathNumber(cVal)})$，则 $\\frac{b_{n+1}}{b_n} = ${p_rec}$ (常数)，故 $\\{b_n\\}$ 是以公比 $p = ${p_rec}$ 的等比数列。`,
             rubric:
               "【高考采分点】【同减构造 · 3分】两端同减 $c$，严密写出比值为常数 $p$ 的等比证明",
           },
           {
-            step: 3,
-            title: "求出辅助数列通项",
+            step: LINEAR_RECURRENCE_ANSWER_STEPS[2].step,
+            title: LINEAR_RECURRENCE_ANSWER_STEPS[2].title,
             latex: `b_n = b_1 \\cdot p^{n-1} = (a_1 - c) p^{n-1} = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1}`,
             detail: `计算首项 $b_1 = a_1 - c = ${a1} - (${formatMathNumber(cVal)}) = ${formatMathNumber(b1Val)}$，套用通项公式得 $b_n = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1}$。`,
             rubric:
               "【高考采分点】【辅助通项 · 3分】正确求出首项 $b_1 = a_1 - c$ 并写出 $b_n$ 通项表达式",
           },
           {
-            step: 4,
-            title: "还原主通项并检验首项",
+            step: LINEAR_RECURRENCE_ANSWER_STEPS[3].step,
+            title: LINEAR_RECURRENCE_ANSWER_STEPS[3].title,
             latex: `a_n = b_n + c = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1} + (${formatMathNumber(cVal)})`,
             detail: `由 $a_n = b_n + c$ 移项还原；当 $n = 1$ 时，$a_1 = ${formatMathNumber(b1Val)} \\times 1 + (${formatMathNumber(cVal)}) = ${a1}$，检验首项完全吻合。`,
             rubric:
@@ -1392,30 +1511,30 @@ export function buildSequencePanel(
       } else {
         reasoningSteps.push(
           {
-            step: 1,
-            title: "待定系数设不动点方程",
+            step: LINEAR_RECURRENCE_ANSWER_STEPS[0].step,
+            title: LINEAR_RECURRENCE_ANSWER_STEPS[0].title,
             latex: `p = 1 \\implies a_{n+1} - a_n = \\color{${MATH_COLORS.paramSecondary}}{q}`,
             detail: `因 $p = 1$，待定系数分母 $1-p=0$ 无解，递推式退化为相邻项差为常数的等差模型。`,
             rubric:
               "【高考采分点】【审题识别 · 2分】识别 $p=1$ 临界退化为标准等差数列",
           },
           {
-            step: 2,
-            title: "构造平移等比数列",
+            step: LINEAR_RECURRENCE_ANSWER_STEPS[1].step,
+            title: LINEAR_RECURRENCE_ANSWER_STEPS[1].title,
             latex: `a_{n+1} - a_n = ${q_rec} = d`,
             detail: `直接识别公差 $d = ${q_rec}$，无需再平移构造等比数列。`,
             rubric: "【高考采分点】【确定公差 · 3分】写出公差 $d = q$",
           },
           {
-            step: 3,
-            title: "求出辅助数列通项",
+            step: LINEAR_RECURRENCE_ANSWER_STEPS[2].step,
+            title: LINEAR_RECURRENCE_ANSWER_STEPS[2].title,
             latex: `a_n = a_1 + (n-1)d = ${a1} + (n-1)(${q_rec})`,
             detail: `套用等差数列通项公式 $a_n = a_1 + (n-1)d$。`,
             rubric: "【高考采分点】【代数计算 · 3分】套用等差数列通项公式计算",
           },
           {
-            step: 4,
-            title: "还原主通项并检验首项",
+            step: LINEAR_RECURRENCE_ANSWER_STEPS[3].step,
+            title: LINEAR_RECURRENCE_ANSWER_STEPS[3].title,
             latex: `a_n = ${q_rec}n + (${a1 - q_rec})`,
             detail: `化简通项；当 $n=1$ 时，$a_1 = ${a1}$，检验吻合。`,
             rubric:

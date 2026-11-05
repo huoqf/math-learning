@@ -25,7 +25,11 @@ import {
   defaultParams as pairedDefaultParams,
 } from "@/data/registries/pairedData";
 import { buildSequencePanel } from "@/data/builders/sequence";
-import { LINEAR_RECURRENCE_ANSWER_STEPS } from "@/data/registries/sequence";
+import {
+  LINEAR_RECURRENCE_ANSWER_STEPS,
+  ARITH_GEO_ANSWER_STEPS,
+  TELESCOPING_ANSWER_STEPS,
+} from "@/data/registries/sequence";
 import { buildClassicalProbabilityPanel } from "@/data/builders/probabilityClassical";
 import {
   CLASSICAL_ANSWER_STEPS,
@@ -336,6 +340,34 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
     );
   });
 
+  it("差比数列错位相减：右屏推演链的步号与标题完全由 ARITH_GEO_ANSWER_STEPS 生成", () => {
+    const panel = buildSequencePanel(
+      { a1: 1, d: 2, q: 0.5, N: 6 },
+      { activeMode: "models", subModel: "arith-geo" },
+    );
+    expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+      ARITH_GEO_ANSWER_STEPS.map((s) => s.step),
+    );
+    expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+      ARITH_GEO_ANSWER_STEPS.map((s) => s.title),
+    );
+  });
+
+  it("裂项相消求和：右屏推演链的步号与标题完全由 TELESCOPING_ANSWER_STEPS 生成", () => {
+    for (const teleGap of [1, 2, 3]) {
+      const panel = buildSequencePanel(
+        { N: 6, teleGap },
+        { activeMode: "models", subModel: "telescoping" },
+      );
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        TELESCOPING_ANSWER_STEPS.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        TELESCOPING_ANSWER_STEPS.map((s) => s.title),
+      );
+    }
+  });
+
   it("古典概型：右屏推演链的步号与标题完全由 CLASSICAL_ANSWER_STEPS 生成", () => {
     const panel = buildClassicalProbabilityPanel({
       ...DEFAULT_CLASSICAL_PARAMS,
@@ -411,6 +443,8 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
       BAYES_ANSWER_STEPS,
       DISTRIBUTION_ANSWER_STEPS,
       LINEAR_RECURRENCE_ANSWER_STEPS,
+      ARITH_GEO_ANSWER_STEPS,
+      TELESCOPING_ANSWER_STEPS,
     ]) {
       expect(steps.map((s) => s.step)).toEqual(steps.map((_, i) => i + 1));
       // 每一步都要给出"该看中屏哪一块"，否则分步导航就只剩翻页没有联动
