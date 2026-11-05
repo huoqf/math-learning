@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom";
 
@@ -87,5 +87,25 @@ describe("KnowledgeTreeHome smoke test", () => {
   it("displays locked node title", () => {
     renderWithRouter(<KnowledgeTreeHome />);
     expect(screen.getByText("数列求和")).toBeInTheDocument();
+  });
+
+  it("prioritizes gaokao/hard nodes in 高考大专题 view and preserves chapter order in 教材同步 view", () => {
+    renderWithRouter(<KnowledgeTreeHome />);
+    // 默认处于新高考大专题视图：同属 func_derivative 专题下，gaokao 节点排在 core 节点之前
+    const gaokaoTitles = screen
+      .getAllByRole("heading", { level: 4 })
+      .map((el) => el.textContent);
+    expect(gaokaoTitles.indexOf("导数的几何意义")).toBeLessThan(
+      gaokaoTitles.indexOf("二次函数"),
+    );
+
+    // 切换到教材同步章节视图：保持教材章节原始顺序（二次函数在导数的几何意义之前）
+    fireEvent.click(screen.getByText(/教材同步章节一览/));
+    const textbookTitles = screen
+      .getAllByRole("heading", { level: 4 })
+      .map((el) => el.textContent);
+    expect(textbookTitles.indexOf("二次函数")).toBeLessThan(
+      textbookTitles.indexOf("导数的几何意义"),
+    );
   });
 });

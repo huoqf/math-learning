@@ -297,7 +297,7 @@ export function KnowledgeTreeHome() {
     return result;
   }, []);
 
-  // 4. 新高考专题聚合（六大攻坚专题 + 代数基础工具）
+  // 4. 新高考专题聚合（六大攻坚专题 + 代数基础工具，按高考考频与大题重要度优先排序）
   const gaokaoGroupedData = useMemo(() => {
     const result: Record<GaokaoTopicKey, KnowledgeNode[]> = {
       algebra_basics: [],
@@ -309,12 +309,43 @@ export function KnowledgeTreeHome() {
       vector_triangle: [],
     };
 
+    const importanceRank: Record<KnowledgeNode["importance"], number> = {
+      gaokao: 4,
+      hard: 4,
+      core: 3,
+      basic: 2,
+      extend: 1,
+    };
+
+    const categoryRank: Record<QuestionCategory, number> = {
+      solution_first: 4,
+      solution_final: 4,
+      multi_select_hard: 3,
+      foundation: 2,
+    };
+
     knowledgeTree.forEach((node) => {
       const topicKey =
         node.gaokaoTopic ||
         CHAPTER_TO_GAOKAO_TOPIC[node.chapter] ||
         "algebra_basics";
       result[topicKey].push(node);
+    });
+
+    (Object.keys(result) as GaokaoTopicKey[]).forEach((key) => {
+      result[key].sort((a, b) => {
+        const impDiff =
+          (importanceRank[b.importance] ?? 0) -
+          (importanceRank[a.importance] ?? 0);
+        if (impDiff !== 0) return impDiff;
+
+        const weightDiff = (b.examWeight ?? 0) - (a.examWeight ?? 0);
+        if (weightDiff !== 0) return weightDiff;
+
+        const catA = a.questionCategory ? categoryRank[a.questionCategory] : 0;
+        const catB = b.questionCategory ? categoryRank[b.questionCategory] : 0;
+        return catB - catA;
+      });
     });
 
     return result;
@@ -354,7 +385,9 @@ export function KnowledgeTreeHome() {
 
         {isActive ? (
           <div
-            onClick={() => navigate(route)}
+            onClick={() =>
+              navigate(viewMode === "gaokao" ? `${route}?view=gaokao` : route)
+            }
             className="group border border-neutral-200 hover:border-primary-400 bg-white p-3.5 rounded-xl cursor-pointer hover:shadow-[0_6px_20px_rgba(59,130,246,0.08)] hover:-translate-y-0.5 transition-all duration-300 flex items-start justify-between gap-3"
           >
             <div className="flex-1 min-w-0">
