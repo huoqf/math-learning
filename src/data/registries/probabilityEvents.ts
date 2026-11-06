@@ -86,7 +86,7 @@ export const PROBABILITY_EVENTS_SCENARIOS: Record<
     condition:
       "事件 $A$（合格，概率 $P(A) = 0.85$）与 $\\overline{A}$（不合格）互斥且 $A \\cup \\overline{A} = \\Omega$，满足 $P(A) + P(\\overline{A}) = 1$。",
     question:
-      "根据对立事件性质求出现不合格品的概率 $P(\\overline{A}) = 1 - P(A)$，领悟高考“正难则反”逆向破题思想。",
+      "判断事件 $A$ 与 $\\overline{A}$ 的关系，并利用对立事件互补性质求出现不合格品的概率 $P(\\overline{A})$，领悟高考“正难则反”逆向破题思想。",
     presetParams: {
       pA: 0.85,
       pB: 0.15,
@@ -108,7 +108,7 @@ export const PROBABILITY_EVENTS_SCENARIOS: Record<
     condition:
       "事件 $A \\subseteq B$（其中 $P(A) = 0.25, P(B) = 0.65$），事件 $A$ 的发生蕴含事件 $B$ 的发生。",
     question:
-      "证明概率单调性 $P(A) \\le P(B)$，并求在事件 $B$ 发生但事件 $A$ 未发生（差事件 $B - A$）的概率 $P(B - A) = P(B) - P(A)$。",
+      "证明概率单调性 $P(A) \\le P(B)$，并求在事件 $B$ 发生但事件 $A$ 未发生（差事件 $B - A$）的概率 $P(B - A)$。",
     presetParams: {
       pA: 0.25,
       pB: 0.65,
@@ -136,7 +136,7 @@ export const PROBABILITY_EVENTS_SCENARIOS: Record<
       overlapRatio: 0.33,
       dicePresetA: "sum_even",
       dicePresetB: "same_points",
-      highlightOp: "union",
+      highlightOp: "none",
       activeMode: "discrete",
     },
     variant: "primary",
@@ -157,7 +157,7 @@ export const PROBABILITY_EVENTS_SCENARIOS: Record<
       overlapRatio: 0.0,
       dicePresetA: "sum_even",
       dicePresetB: "sum_odd",
-      highlightOp: "union",
+      highlightOp: "none",
       activeMode: "discrete",
     },
     variant: "accent",
@@ -171,7 +171,7 @@ export const PROBABILITY_EVENTS_SCENARIOS: Record<
     condition:
       "事件 $A$ 为“点数和为偶数”（包含 18 点），事件 $B$ 为“两枚点数全为偶数”（包含 9 点），满足 $B \\subseteq A$。",
     question:
-      "证明事件概率单调性 $P(B) \\le P(A)$，并求差事件 $A - B$（和为偶但全为奇数）的概率 $P(A - B) = P(A) - P(B)$。",
+      "证明事件概率单调性 $P(B) \\le P(A)$，并求差事件 $A - B$（点数和为偶但非全偶）包含的样本点数与概率 $P(A - B)$。",
     presetParams: {
       pA: 0.5,
       pB: 0.25,

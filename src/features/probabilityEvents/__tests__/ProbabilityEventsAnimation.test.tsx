@@ -135,8 +135,15 @@ describe("ProbabilityEventsAnimation 页面集成与三屏交互测试", () => {
     fireEvent.click(screen.getByText("对立事件甲"));
     expect(screen.getByText(/运算高亮：对立事件 Aᶜ/)).toBeInTheDocument();
 
-    // 切换回全景全显
+    // 切换到离散的“相交加法”，验证专属题设设问与公共交集坐标标签生效
+    fireEvent.click(screen.getByText("相交加法"));
+    expect(screen.getByText(/利用坐标法找出公共点/)).toBeInTheDocument();
+    expect(screen.getByText("(4,4)")).toBeInTheDocument();
+    expect(screen.getByText("(5,5)")).toBeInTheDocument();
+    expect(screen.getByText("(6,6)")).toBeInTheDocument();
+
+    // 切回全景全显
     fireEvent.click(screen.getByText("全景全显"));
-    expect(screen.getByText(/事件 A: 18 点/)).toBeInTheDocument();
+    expect(screen.getByText(/事件 A: 6 点/)).toBeInTheDocument();
   });
 });

@@ -8,6 +8,9 @@ import { MATH_COLORS } from "@/theme";
 
 export interface ProbabilityEventsOptions {
   activeMode?: "venn" | "discrete";
+  dicePresetA?: DiceEventPreset;
+  dicePresetB?: DiceEventPreset;
+  highlightOp?: string;
   animId?: string;
 }
 
@@ -20,9 +23,15 @@ export function buildProbabilityEventsPanel(
   const pA = Number(params.pA ?? 0.45);
   const pB = Number(params.pB ?? 0.55);
   const overlapRatio = Number(params.overlapRatio ?? 0.4);
-  const dicePresetA = (params.dicePresetA ?? "sum_even") as DiceEventPreset;
-  const dicePresetB = (params.dicePresetB ?? "same_points") as DiceEventPreset;
-  const highlightOp = String(params.highlightOp ?? "none");
+  const dicePresetA = (config?.dicePresetA ??
+    params.dicePresetA ??
+    "sum_even") as DiceEventPreset;
+  const dicePresetB = (config?.dicePresetB ??
+    params.dicePresetB ??
+    "same_points") as DiceEventPreset;
+  const highlightOp = String(
+    config?.highlightOp ?? params.highlightOp ?? "none",
+  );
 
   const vennRes = calculateVennProbabilities(pA, pB, overlapRatio);
   const diceRes = filterDiceEvents(dicePresetA, dicePresetB);
@@ -113,7 +122,32 @@ export function buildProbabilityEventsPanel(
   let reasoningSteps: MathPanelData["reasoningSteps"];
 
   if (activeMode === "venn") {
-    if (vennRes.relation === "subset_A_in_B") {
+    if (vennRes.relation === "equal") {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 相等事件充要条件判定",
+          latex: `A \\subseteq B \\text{ 且 } B \\subseteq A \\implies A = B, \\quad P(A \\cap B) = P(A) = ${vennRes.pA.toFixed(2)}`,
+          detail: "两事件相互包含且发生概率相等、完全重叠，构成相等事件。",
+          rubric: "【高考采分点】由双向包含与交集测度判定两事件相等，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 并事件与差事件测度化简",
+          latex: `P(A \\cup B) = P(A) = ${vennRes.pA.toFixed(2)}, \\quad P(A - B) = P(B - A) = ${vennRes.pA.toFixed(2)} - ${vennRes.pB.toFixed(2)}`,
+          detail: "相等事件的并集与交集均等于事件自身，对称差集为空集。",
+          rubric: "【高考采分点】应用相等事件性质化简并集与差集概率，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 相等事件与对立事件概率输出",
+          latex: `P(A \\cup B) = ${vennRes.pUnion.toFixed(2)}, \\quad P(A - B) = 0.00, \\quad P(\\overline{A}) = 1 - ${vennRes.pA.toFixed(2)} = ${vennRes.pNotA.toFixed(2)}`,
+          detail: "两圆完全同心重合，差事件概率为 $0$，补事件测度互补。",
+          rubric:
+            "【高考采分点】正确输出并事件、差事件及对立事件概率，得 2 分。",
+        },
+      ];
+    } else if (vennRes.relation === "subset_A_in_B") {
       reasoningSteps = [
         {
           step: 1,
@@ -138,6 +172,34 @@ export function buildProbabilityEventsPanel(
           latex: `P(A \\cup B) = P(B) = ${vennRes.pB.toFixed(2)}, \\quad P(B - A) = ${vennRes.pB.toFixed(2)} - ${vennRes.pA.toFixed(2)} = ${(vennRes.pB - vennRes.pA).toFixed(2)}`,
           detail:
             "并事件填满外层大集合，差事件 $B - A$（即 $B$ 发生且 $A$ 未发生）测度确立。",
+          rubric: "【高考采分点】正确计算并事件与差事件概率数值，得 2 分。",
+        },
+      ];
+    } else if (vennRes.relation === "subset_B_in_A") {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 事件包含关系与交集判定",
+          latex: `B \\subseteq A \\implies A \\cap B = B \\implies P(A \\cap B) = P(B) = ${vennRes.pB.toFixed(2)}`,
+          detail:
+            "事件 $B$ 的发生必然导致事件 $A$ 发生，交事件即为子事件 $B$ 本身。",
+          rubric:
+            "【高考采分点】判定事件包含关系并明确交事件即为子事件本身，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 概率单调性与差事件分解",
+          latex: `P(B) = ${vennRes.pB.toFixed(2)} \\le P(A) = ${vennRes.pA.toFixed(2)}, \\quad P(A - B) = P(A) - P(B)`,
+          detail:
+            "由包含性质可知概率具有单调性，差事件 $A - B$ 概率等于母事件概率减去子事件概率。",
+          rubric: "【高考采分点】应用概率单调性与差事件概率分解公式，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 并事件与差事件概率输出",
+          latex: `P(A \\cup B) = P(A) = ${vennRes.pA.toFixed(2)}, \\quad P(A - B) = ${vennRes.pA.toFixed(2)} - ${vennRes.pB.toFixed(2)} = ${(vennRes.pA - vennRes.pB).toFixed(2)}`,
+          detail:
+            "并事件填满外层母事件 $A$，差事件 $A - B$（即 $A$ 发生且 $B$ 未发生）测度确立。",
           rubric: "【高考采分点】正确计算并事件与差事件概率数值，得 2 分。",
         },
       ];
@@ -225,12 +287,47 @@ export function buildProbabilityEventsPanel(
     }
   } else {
     // 离散型推导链特化 (AGENTS.md 公理 1 & 2：根据古典样本点几何关系演绎)
+    const isEqualDiscrete =
+      dicePresetA === dicePresetB ||
+      (diceRes.countIntersection === diceRes.countA &&
+        diceRes.countIntersection === diceRes.countB);
     const isSubsetBinA =
-      diceRes.countIntersection === diceRes.countB && diceRes.countB > 0;
+      !isEqualDiscrete &&
+      diceRes.countIntersection === diceRes.countB &&
+      diceRes.countB > 0;
     const isSubsetAinB =
-      diceRes.countIntersection === diceRes.countA && diceRes.countA > 0;
+      !isEqualDiscrete &&
+      diceRes.countIntersection === diceRes.countA &&
+      diceRes.countA > 0;
 
-    if (diceRes.isOpposite) {
+    if (isEqualDiscrete) {
+      reasoningSteps = [
+        {
+          step: 1,
+          title: "审题定法 · 离散样本点相等关系判定",
+          latex: `n(A \\cap B) = n(A) = n(B) = ${diceRes.countA} \\implies A = B`,
+          detail:
+            "事件 $A$ 与事件 $B$ 包含的样本点完全一致，两事件互为相等事件。",
+          rubric:
+            "【高考采分点】由两事件样本点集合完全相同判定相等事件，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 并事件与差事件基数化简",
+          latex: `n(A \\cup B) = n(A) = ${diceRes.countA}, \\quad n(A - B) = ${diceRes.countA} - ${diceRes.countB} = 0`,
+          detail:
+            "相等事件的并事件与交事件均等于自身，差事件不包含任何样本点。",
+          rubric: "【高考采分点】化简相等事件的并集与差集样本数，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 并事件与差事件古典概率输出",
+          latex: `P(A \\cup B) = P(A) = \\frac{${diceRes.countA}}{36} \\approx ${diceRes.pA.toFixed(3)}, \\quad P(A - B) = 0`,
+          detail: "并事件概率等于单事件概率，差事件为不可能事件。",
+          rubric: "【高考采分点】正确输出并事件与差事件古典概型概率，得 2 分。",
+        },
+      ];
+    } else if (diceRes.isOpposite) {
       reasoningSteps = [
         {
           step: 1,

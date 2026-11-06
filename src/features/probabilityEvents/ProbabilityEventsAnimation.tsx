@@ -18,7 +18,7 @@ import {
   type ProbabilityEventsParams,
   type ProbabilityEventsScenarioKey,
 } from "@/data/registries/probabilityEvents";
-import { buildProbabilityEventsPanel } from "@/data/builders/probabilityEvents";
+import { buildMathQuantities } from "@/data/mathQuantities";
 import { ProbabilityEventsScene } from "./components/ProbabilityEventsScene";
 import { SceneLegend } from "@/components/Math";
 import {
@@ -64,13 +64,16 @@ export const ProbabilityEventsAnimation: React.FC = () => {
     k === "dice_inclusion" ||
     k === "dice_intersection";
 
-  // 参数更新句柄
-  const handleParamChange = useCallback((key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-    if (key === "overlapRatio" || key === "pA" || key === "pB") {
-      setActivePreset("free");
-    }
-  }, []);
+  // 参数更新句柄：仅当修改了被当前情景锁定的参数（如画布直接拖拽圆心改变 overlapRatio）时自动解绑切回 free
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      setParams((prev) => ({ ...prev, [key]: value }));
+      if (isParamLocked(key as keyof ProbabilityEventsParams)) {
+        setActivePreset("free");
+      }
+    },
+    [isParamLocked],
+  );
 
   // 离散规则更新句柄 (自动切到离散自由定制)
   const handleDicePresetChange = useCallback(
@@ -115,8 +118,35 @@ export const ProbabilityEventsAnimation: React.FC = () => {
     [params.dicePresetA, params.dicePresetB],
   );
 
+  // 连续测度计算（图例与看板同频）
+  const vennRes = useMemo(
+    () => calculateVennProbabilities(params.pA, params.pB, params.overlapRatio),
+    [params.pA, params.pB, params.overlapRatio],
+  );
+
   const effectiveTipProps = useMemo(() => {
+    const spec = PROBABILITY_EVENTS_SCENARIOS[activePreset];
+
     if (activeMode === "discrete") {
+      // 若处于特定典型情境（奇偶对立/奇偶包含/相交加法）且规则未变动，直接展示该情境专属题设与设问
+      const isDedicatedDiscretePreset =
+        (activePreset === "dice_opposite" ||
+          activePreset === "dice_inclusion" ||
+          activePreset === "dice_intersection") &&
+        spec?.presetParams?.dicePresetA === params.dicePresetA &&
+        spec?.presetParams?.dicePresetB === params.dicePresetB;
+
+      if (isDedicatedDiscretePreset && spec) {
+        return {
+          title: `古典概型 · ${spec.name}`,
+          badge: spec.badge,
+          background: spec.background,
+          condition: spec.condition,
+          question: spec.question,
+          variant: spec.variant ?? "primary",
+        };
+      }
+
       const presetNameMap: Record<DiceEventPreset, string> = {
         sum_even: "点数之和为偶数",
         sum_odd: "点数之和为奇数",
@@ -131,20 +161,6 @@ export const ProbabilityEventsAnimation: React.FC = () => {
       const nameA = presetNameMap[params.dicePresetA];
       const nameB = presetNameMap[params.dicePresetB];
 
-      let relStr = "相交事件";
-      if (discreteDiceRes.isOpposite) {
-        relStr = "对立事件";
-      } else if (discreteDiceRes.isMutuallyExclusive) {
-        relStr = "互斥事件";
-      } else if (
-        discreteDiceRes.countIntersection === discreteDiceRes.countA ||
-        discreteDiceRes.countIntersection === discreteDiceRes.countB
-      ) {
-        relStr = "包含关系";
-      }
-
-      const spec = PROBABILITY_EVENTS_SCENARIOS[activePreset];
-
       return {
         title: spec?.name
           ? `古典概型 · ${spec.name}`
@@ -153,79 +169,89 @@ export const ProbabilityEventsAnimation: React.FC = () => {
         background:
           spec?.background ??
           "同时掷两枚质地均匀的骰子，试验的样本空间包含 $n(\\Omega) = 6 \\times 6 = 36$ 个等可能基本事件。",
-        condition: `事件 $A$ 为“${nameA}”（包含 ${discreteDiceRes.countA} 个样本点），事件 $B$ 为“${nameB}”（包含 ${discreteDiceRes.countB} 个样本点）。`,
-        question: `(1) 观察点阵分析两事件公共样本点数（$n(A \\cap B) = ${discreteDiceRes.countIntersection}$）；(2) 判定两事件关系属于【${relStr}】，并运用概率公式计算并事件概率 $P(A \\cup B)$。`,
+        condition: `事件 $A$ 为“${nameA}”（包含 $${discreteDiceRes.countA}$ 个样本点），事件 $B$ 为“${nameB}”（包含 $${discreteDiceRes.countB}$ 个样本点）。`,
+        question:
+          "(1) 利用坐标法求两事件公共样本点数 $n(A \\cap B)$；(2) 判定事件 $A$ 与 $B$ 的集合关系，并计算并事件概率 $P(A \\cup B)$ 与差事件概率 $P(A - B)$。",
         variant: (spec?.variant as "primary" | "info" | "accent") ?? "primary",
       };
     }
+
+    // 连续 Venn 模式下，若在互斥加法或包含关系中调节了未锁定的 P(A)/P(B)，动态同步题设条件数值
+    if (activePreset === "disjoint_additive") {
+      return {
+        ...tipProps,
+        condition: `事件 $A$（命中 10 环，概率 $P(A) = ${vennRes.pA.toFixed(2)}$）与事件 $B$（命中 9 环，概率 $P(B) = ${vennRes.pB.toFixed(2)}$）设定无重叠因子（$d = 0$）。`,
+      };
+    }
+    if (activePreset === "inclusion_relation") {
+      const subRelation =
+        vennRes.pA <= vennRes.pB ? "A \\subseteq B" : "B \\subseteq A";
+      const diffExpr = vennRes.pA <= vennRes.pB ? "B - A" : "A - B";
+      return {
+        ...tipProps,
+        condition: `当前设定 $P(A) = ${vennRes.pA.toFixed(2)}, P(B) = ${vennRes.pB.toFixed(2)}$，完全重叠下满足 $${subRelation}$。`,
+        question: `证明概率单调性，并求母事件发生但子事件未发生（差事件 $${diffExpr}$）的概率 $P(${diffExpr})$。`,
+      };
+    }
+
+    // 依赖中保留 params.highlightOp：确保事件运算聚焦切换时 TipCard 同步响应（项目纪律 left/tipcard-secondary-sync）
     return tipProps;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeMode,
     tipProps,
     activePreset,
     params.dicePresetA,
     params.dicePresetB,
+    params.highlightOp,
     discreteDiceRes,
+    vennRes.pA,
+    vennRes.pB,
   ]);
 
   // 滑块配置 (三位一体色彩映射)
-  const paramConfigs = useMemo(() => {
-    if (activeMode === "venn") {
-      return [
-        {
-          key: "pA",
-          label: "事件 A 概率",
-          labelFormula: `\\text{概率 } \\color{${MATH_COLORS.paramPrimary}}{P(A)}`,
-          value: params.pA,
-          min: 0.05,
-          max: 0.95,
-          step: 0.05,
-          group: "事件概率设定",
-          disabled: isParamLocked("pA"),
-        },
-        {
-          key: "pB",
-          label: "事件 B 概率",
-          labelFormula: `\\text{概率 } \\color{${MATH_COLORS.paramSecondary}}{P(B)}`,
-          value: params.pB,
-          min: 0.05,
-          max: 0.95,
-          step: 0.05,
-          group: "事件概率设定",
-          disabled: isParamLocked("pB"),
-        },
-        {
-          key: "overlapRatio",
-          label: "重叠度因子",
-          labelFormula: `\\text{重叠 } \\color{${MATH_COLORS.paramTertiary}}{d}`,
-          value: params.overlapRatio,
-          min: 0.0,
-          max: 1.0,
-          step: 0.02,
-          marks: [
-            { value: 0.0, label: "互斥", variant: "critical" as const },
-            { value: 1.0, label: "内含", variant: "critical" as const },
-          ],
-          group: "集合相交程度",
-          disabled: isParamLocked("overlapRatio"),
-        },
-      ];
-    }
-
-    return [
+  const paramConfigs = useMemo(
+    () => [
+      {
+        key: "pA",
+        label: "事件 A 概率",
+        labelFormula: `\\text{概率 } \\color{${MATH_COLORS.paramPrimary}}{P(A)}`,
+        value: params.pA,
+        min: 0.05,
+        max: 0.95,
+        step: 0.05,
+        group: "事件概率设定",
+        disabled: isParamLocked("pA"),
+      },
+      {
+        key: "pB",
+        label: "事件 B 概率",
+        labelFormula: `\\text{概率 } \\color{${MATH_COLORS.paramSecondary}}{P(B)}`,
+        value: params.pB,
+        min: 0.05,
+        max: 0.95,
+        step: 0.05,
+        group: "事件概率设定",
+        disabled: isParamLocked("pB"),
+      },
       {
         key: "overlapRatio",
-        label: "重叠因子",
+        label: "重叠度因子",
         labelFormula: `\\text{重叠 } \\color{${MATH_COLORS.paramTertiary}}{d}`,
         value: params.overlapRatio,
         min: 0.0,
         max: 1.0,
-        step: 0.05,
-        group: "离散分布参数",
+        step: 0.02,
+        marks: [
+          { value: 0.0, label: "互斥", variant: "critical" as const },
+          { value: 1.0, label: "内含", variant: "critical" as const },
+        ],
+        group: "集合相交程度",
         disabled: isParamLocked("overlapRatio"),
       },
-    ];
-  }, [activeMode, params.pA, params.pB, params.overlapRatio, isParamLocked]);
+    ],
+    [params.pA, params.pB, params.overlapRatio, isParamLocked],
+  );
 
   // 情景预设选择器选项 (纯中文标题，公理 3.3，随当前模式自适应切换对应 4 项场景)
   const scenarioItems = useMemo(() => {
@@ -273,19 +299,23 @@ export const ProbabilityEventsAnimation: React.FC = () => {
     [],
   );
 
-  // 右屏看板数据 (联动 highlightOp 驱动数值高亮)
+  // 右屏看板数据 (遵循 AGENTS.md 公理 1.3：统一通过 buildMathQuantities 组装，联动 highlightOp)
   const mathPanelData = useMemo(
     () =>
-      buildProbabilityEventsPanel(
+      buildMathQuantities(
+        "anim-probability-events",
         {
           pA: params.pA,
           pB: params.pB,
           overlapRatio: params.overlapRatio,
+        },
+        {
+          activeMode,
           dicePresetA: params.dicePresetA,
           dicePresetB: params.dicePresetB,
           highlightOp: params.highlightOp,
+          animId: "anim-probability-events",
         },
-        { activeMode, animId: "anim-probability-events" },
       ),
     [
       params.pA,
@@ -296,12 +326,6 @@ export const ProbabilityEventsAnimation: React.FC = () => {
       params.highlightOp,
       activeMode,
     ],
-  );
-
-  // 连续测度计算（图例与看板同频）
-  const vennRes = useMemo(
-    () => calculateVennProbabilities(params.pA, params.pB, params.overlapRatio),
-    [params.pA, params.pB, params.overlapRatio],
   );
 
   // 中屏右上角图例项目 (统一 HTML 浮层定位)
@@ -330,24 +354,40 @@ export const ProbabilityEventsAnimation: React.FC = () => {
         },
       ];
     }
+    const presetShortLabel: Record<DiceEventPreset, string> = {
+      sum_even: "和为偶",
+      sum_odd: "和为奇",
+      sum_ge_8: "和≥8",
+      has_six: "含点数6",
+      same_points: "两数同",
+      diff_le_1: "差≤1",
+      both_odd: "全为奇",
+      both_even: "全为偶",
+    };
     return [
       {
-        label: `\\text{事件 } A \\text{ 样本点}: n(A) = ${discreteDiceRes.countA}`,
+        label: `\\text{事件 } A\\text{ (${presetShortLabel[params.dicePresetA]})}: n(A) = ${discreteDiceRes.countA}`,
         color: MATH_COLORS.paramPrimary,
         style: "point" as const,
       },
       {
-        label: `\\text{事件 } B \\text{ 样本点}: n(B) = ${discreteDiceRes.countB}`,
+        label: `\\text{事件 } B\\text{ (${presetShortLabel[params.dicePresetB]})}: n(B) = ${discreteDiceRes.countB}`,
         color: MATH_COLORS.paramSecondary,
         style: "point" as const,
       },
       {
-        label: `\\text{交集 } A \\cap B: n(AB) = ${discreteDiceRes.countIntersection}`,
+        label: `\\text{公共交集 } A \\cap B: n(AB) = ${discreteDiceRes.countIntersection}`,
         color: MATH_COLORS.paramTertiary,
         style: "point" as const,
       },
     ];
-  }, [activeMode, vennRes, discreteDiceRes]);
+  }, [
+    activeMode,
+    vennRes,
+    discreteDiceRes,
+    params.dicePresetA,
+    params.dicePresetB,
+  ]);
 
   return (
     <ThreePanel
