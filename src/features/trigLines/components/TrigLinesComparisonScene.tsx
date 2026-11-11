@@ -22,6 +22,7 @@ import {
 import { paramMeta } from "@/data/registries/trigLines";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateComparisonAreas } from "../math/trigLines";
+import { formatMathProb } from "@/utils/mathFormat";
 
 /** 放缩角 α 的声明域 [5°, 85°]（模块级：区间恒定，无需每帧重建） */
 const RANGE_COMP_ALPHA = paramDomainRange(paramMeta.compAlphaDeg);
@@ -425,7 +426,7 @@ export const TrigLinesComparisonScene: React.FC<
           fill={MATH_COLORS.paramPrimary}
           fontSize={fontScale(8.5)}
         >
-          S₁ (△OMP) = {compData.areas.triangleOMP.toFixed(3)}
+          S₁ (△OMP) = {formatMathProb(compData.areas.triangleOMP)}
         </text>
         <rect
           x={112}
@@ -443,7 +444,7 @@ export const TrigLinesComparisonScene: React.FC<
           fill={MATH_COLORS.paramSecondary}
           fontSize={fontScale(8.5)}
         >
-          S₂ (△OAP) = {compData.areas.triangleOAP.toFixed(3)}
+          S₂ (△OAP) = {formatMathProb(compData.areas.triangleOAP)}
         </text>
         <rect
           x={112}
@@ -461,7 +462,7 @@ export const TrigLinesComparisonScene: React.FC<
           fill={MATH_COLORS.function}
           fontSize={fontScale(8.5)}
         >
-          S₃ (扇形) = {compData.areas.sectorOAP.toFixed(3)}
+          S₃ (扇形) = {formatMathProb(compData.areas.sectorOAP)}
         </text>
         <rect
           x={112}
@@ -479,7 +480,7 @@ export const TrigLinesComparisonScene: React.FC<
           fill={MATH_COLORS.paramTertiary}
           fontSize={fontScale(8.5)}
         >
-          S₄ (△OAT) = {compData.areas.triangleOAT.toFixed(3)}
+          S₄ (△OAT) = {formatMathProb(compData.areas.triangleOAT)}
         </text>
         <rect
           x={112}

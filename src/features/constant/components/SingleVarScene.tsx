@@ -26,6 +26,7 @@ import {
   type TransModelKey,
 } from "@/math/constant";
 import { MATH_COLORS, withAlpha } from "@/theme";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface SingleVarSceneProps {
   subMode: "sep" | "direct";
@@ -345,7 +346,7 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
           stroke={MATH_COLORS.white}
           strokeWidth={3}
         >
-          {`f(x)max = ${sepResult.fMax.toFixed(2)} ${hold ? "≥" : "<"} a ${
+          {`f(x)max = ${formatMathNumber(sepResult.fMax)} ${hold ? "≥" : "<"} a ${
             hold ? "⟹ 存在性成立" : "⟹ 存在性不成立"
           }`}
         </text>
@@ -557,8 +558,8 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
                     strokeWidth={3}
                   >
                     {existMode
-                      ? `临界：y = ${a.toFixed(1)} 恰过最大值点 (存在性分水岭)`
-                      : `临界：y = ${a.toFixed(1)} 恰与曲线相切`}
+                      ? `临界：y = ${formatMathNumber(a)} 恰过最大值点 (存在性分水岭)`
+                      : `临界：y = ${formatMathNumber(a)} 恰与曲线相切`}
                   </text>
                 </g>
               )}

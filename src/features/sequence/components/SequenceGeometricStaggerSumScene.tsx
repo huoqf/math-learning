@@ -5,6 +5,7 @@
 import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { toSub, toSup } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 const DESIGN_CENTER_X = CANVAS_PRESETS.full.width / 2;
 
@@ -90,7 +91,7 @@ export function SequenceGeometricStaggerSumScene({
               {isHead
                 ? cardWidth < 52
                   ? "a₁"
-                  : `a₁ (${t.val.toFixed(1)})`
+                  : `a₁ (${formatMathNumber(t.val)})`
                 : `a${toSub(t.n)}`}
             </text>
             {idx < N - 1 && (
@@ -255,7 +256,7 @@ export function SequenceGeometricStaggerSumScene({
           fontWeight="bold"
         >
           {isQ1
-            ? `⚠️ 当 q = 1 时，(1-q)=0 导致错位相减失效！直接相加：S${toSub(N)} = ${N} · a₁ = ${(N * a1).toFixed(1)}`
+            ? `⚠️ 当 q = 1 时，(1-q)=0 导致错位相减失效！直接相加：S${toSub(N)} = ${N} · a₁ = ${formatMathNumber(N * a1)}`
             : `(1 - q) · S${toSub(N)} = a₁ - a₁·q${toSup(N)} = a₁(1 - q${toSup(N)})`}
         </text>
       </g>

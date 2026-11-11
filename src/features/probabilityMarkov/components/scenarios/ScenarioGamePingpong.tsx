@@ -1,5 +1,6 @@
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { ScenarioVisualProps } from "./types";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 /** 模型 4：乒乓加赛 · 发球权局势轮换 */
 export function ScenarioGamePingpong({
@@ -45,7 +46,7 @@ export function ScenarioGamePingpong({
           fill={MATH_COLORS.labelText}
           textAnchor="middle"
         >
-          局势率 p_{currStep} = {pn.toFixed(3)}
+          局势率 p_{currStep} = {formatMathProb(pn)}
         </text>
         <text
           x={72}
@@ -73,7 +74,7 @@ export function ScenarioGamePingpong({
           fill={MATH_COLORS.function}
           textAnchor="middle"
         >
-          甲发甲得分 p₁₁ = {p11.toFixed(2)}
+          甲发甲得分 p₁₁ = {formatMathNumber(p11)}
         </text>
       </g>
 
@@ -106,7 +107,7 @@ export function ScenarioGamePingpong({
           fill={MATH_COLORS.labelText}
           textAnchor="middle"
         >
-          局势率 1 - pₙ = {pNotN.toFixed(3)}
+          局势率 1 - pₙ = {formatMathProb(pNotN)}
         </text>
         <text
           x={72}
@@ -134,7 +135,7 @@ export function ScenarioGamePingpong({
           fill={MATH_COLORS.paramSecondary}
           textAnchor="middle"
         >
-          乙发甲反得分 p₂₁ = {p21.toFixed(2)}
+          乙发甲反得分 p₂₁ = {formatMathNumber(p21)}
         </text>
       </g>
 
@@ -146,8 +147,8 @@ export function ScenarioGamePingpong({
         fill={MATH_COLORS.labelTextLight}
         textAnchor="middle"
       >
-        公比 λ = p₁₁ - p₂₁ = {lambda.toFixed(2)}，数列单调趋近于平衡概率{" "}
-        {tVal.toFixed(2)}
+        公比 λ = p₁₁ - p₂₁ = {formatMathNumber(lambda)}，数列单调趋近于平衡概率{" "}
+        {formatMathNumber(tVal)}
       </text>
     </g>
   );

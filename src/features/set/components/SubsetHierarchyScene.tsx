@@ -5,6 +5,7 @@ import { CoordinateGrid, InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { analyzeSubsetHierarchy } from "@/math/set";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface SubsetHierarchySceneProps {
   params: Record<string, number>;
@@ -270,7 +271,7 @@ export function SubsetHierarchyScene({
           fontSize={fontScale(13)}
           fontWeight="bold"
         >
-          {`${relationBadge}｜d = ${d.toFixed(2)}，rA + rB = ${(rA + rB).toFixed(2)}`}
+          {`${relationBadge}｜d = ${formatMathNumber(d)}，rA + rB = ${formatMathNumber(rA + rB)}`}
         </text>
       </g>
 

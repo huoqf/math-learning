@@ -1,5 +1,6 @@
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { ScenarioVisualProps } from "./types";
+import { formatMathProb } from "@/utils/mathFormat";
 
 /** 模型 2：四人传球 · 对称合并其他三人 */
 export function ScenarioPassBall4({
@@ -59,7 +60,7 @@ export function ScenarioPassBall4({
         fill={MATH_COLORS.labelText}
         textAnchor="middle"
       >
-        p_{currStep} = {pn.toFixed(3)}
+        p_{currStep} = {formatMathProb(pn)}
       </text>
 
       {/* 乙、丙、丁 3 节点 */}

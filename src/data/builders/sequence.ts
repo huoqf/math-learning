@@ -556,13 +556,13 @@ export function buildSequencePanel(
     // 基础通量
     quantities.push({
       label: `末项 $a_{${N}}$ ($a_n = ${a1Colored} \\cdot (${qColored})^{n-1}$)`,
-      value: `a_{${N}} = ${aN.toFixed(4)}`,
+      value: `a_{${N}} = ${formatMathNumber(aN, 4)}`,
       color: MATH_COLORS.sequence,
     });
 
     quantities.push({
       label: `前 ${N} 项和 $S_{${N}}$`,
-      value: `S_{${N}} = ${SN.toFixed(4)}`,
+      value: `S_{${N}} = ${formatMathNumber(SN, 4)}`,
       color: MATH_COLORS.sequenceSum,
     });
 
@@ -571,7 +571,7 @@ export function buildSequencePanel(
       if (selTerm) {
         quantities.push({
           label: `选中第 $${highlightN}$ 项验算`,
-          value: `a_{${highlightN}} = ${selTerm.an.toFixed(4)},\\; S_{${highlightN}} = ${selTerm.Sn.toFixed(4)}`,
+          value: `a_{${highlightN}} = ${formatMathNumber(selTerm.an, 4)},\\; S_{${highlightN}} = ${formatMathNumber(selTerm.Sn, 4)}`,
           color: MATH_COLORS.sequenceHighlight,
           highlight: "extreme",
         });
@@ -616,16 +616,16 @@ export function buildSequencePanel(
         {
           step: 1,
           title: "设出首项与公比，先确认公比不为零",
-          detail: `首项 $a_1 = ${a1}$，公比 $q = ${q}$；等比数列要求每一项都不为零，且 $q \\ne 0$`,
-          latex: `a_1 = ${a1},\\quad q = ${q} \\;(q \\ne 0)`,
+          detail: `首项 $a_1 = ${formatMathNumber(a1)}$，公比 $q = ${formatMathNumber(q)}$；等比数列要求每一项都不为零，且 $q \\ne 0$`,
+          latex: `a_1 = ${formatMathNumber(a1)},\\quad q = ${formatMathNumber(q)} \\;(q \\ne 0)`,
           rubric:
             "【高考采分点】设出 $a_1$ 与 $q$，并声明 $q \\ne 0$、各项均不为零 (+2分)",
         },
         {
           step: 2,
           title: "代入通项公式，看清它是指数型",
-          detail: `$a_n = a_1 q^{n-1}$ 关于 $n$ 是指数型；取 $n = ${N}$ 得 $a_{${N}} = ${aN.toFixed(4)}$，公比形态为「${typeDesc[res.qType] ?? "一般形态"}」`,
-          latex: `a_n = ${a1}\\cdot ${q}^{\\,n-1} \\implies a_{${N}} = ${aN.toFixed(4)}`,
+          detail: `$a_n = a_1 q^{n-1}$ 关于 $n$ 是指数型；取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN, 4)}$，公比形态为「${typeDesc[res.qType] ?? "一般形态"}」`,
+          latex: `a_n = ${formatMathNumber(a1)}\\cdot ${q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q)}^{\\,n-1} \\implies a_{${N}} = ${formatMathNumber(aN, 4)}`,
           rubric: "【高考采分点】写出通项并判断增减形态 (+2分)",
         },
         {
@@ -633,12 +633,12 @@ export function buildSequencePanel(
           title: "分 $q = 1$ 与 $q \\ne 1$ 两类求和",
           detail:
             Math.abs(q - 1) < 1e-9
-              ? `$q = 1$ 时为常数列，$S_n = n a_1$，取 $n = ${N}$ 得 $S_{${N}} = ${SN.toFixed(4)}$`
-              : `代入 $S_n = \\frac{a_1(1-q^n)}{1-q}$，取 $n = ${N}$ 得 $S_{${N}} = ${SN.toFixed(4)}$`,
+              ? `$q = 1$ 时为常数列，$S_n = n a_1$，取 $n = ${N}$ 得 $S_{${N}} = ${formatMathNumber(SN, 4)}$`
+              : `代入 $S_n = \\frac{a_1(1-q^n)}{1-q}$，取 $n = ${N}$ 得 $S_{${N}} = ${formatMathNumber(SN, 4)}$`,
           latex:
             Math.abs(q - 1) < 1e-9
-              ? `S_{${N}} = ${N} \\cdot ${a1} = ${SN.toFixed(4)}`
-              : `S_{${N}} = \\frac{${a1}\\left(1 - ${q}^{${N}}\\right)}{1 - ${q}} = ${SN.toFixed(4)}`,
+              ? `S_{${N}} = ${N} \\cdot ${formatMathNumber(a1)} = ${formatMathNumber(SN, 4)}`
+              : `S_{${N}} = \\frac{${formatMathNumber(a1)}\\left(1 - ${q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q)}^{${N}}\\right)}{1 - ${q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q)}} = ${formatMathNumber(SN, 4)}`,
           rubric: "【高考采分点】公比是否为 1 必须分类讨论 (+3分)",
         },
       );
@@ -647,13 +647,13 @@ export function buildSequencePanel(
         "求和先判公比一，乘 q 右移错位齐；相减消去中间项，首尾相减除公比。";
       quantities.push({
         label: `错位项 $q \\cdot S_{${N}}$`,
-        value: `q S_{${N}} = ${(q * SN).toFixed(4)}`,
+        value: `q S_{${N}} = ${formatMathNumber(q * SN, 4)}`,
         color: MATH_COLORS.sequenceSecondary,
       });
 
       quantities.push({
         label: `两式差 $(1 - q) S_{${N}}$`,
-        value: `(1-q)S_{${N}} = ${(SN - q * SN).toFixed(4)}`,
+        value: `(1-q)S_{${N}} = ${formatMathNumber(SN - q * SN, 4)}`,
         color: MATH_COLORS.sequenceHighlight,
       });
 
@@ -678,15 +678,15 @@ export function buildSequencePanel(
         {
           step: 1,
           title: "先写出和式，再整体乘公比 $q$",
-          detail: `$S_{${N}} = ${SN.toFixed(4)}$，两边同乘 $q = ${q}$ 得 $qS_{${N}} = ${(q * SN).toFixed(4)}$`,
-          latex: `S_{${N}} = ${SN.toFixed(4)},\\quad qS_{${N}} = ${(q * SN).toFixed(4)}`,
+          detail: `$S_{${N}} = ${formatMathNumber(SN, 4)}$，两边同乘 $q = ${formatMathNumber(q)}$ 得 $qS_{${N}} = ${formatMathNumber(q * SN, 4)}$`,
+          latex: `S_{${N}} = ${formatMathNumber(SN, 4)},\\quad qS_{${N}} = ${formatMathNumber(q * SN, 4)}`,
           rubric:
             "【高考采分点】写出 $S_n$，再整体乘 $q$ 得 $qS_n$，两式错位排列待减 (+2分)",
         },
         {
           step: 2,
           title: "两式错开一格相减，中间项成对消去",
-          detail: `上下两式相减，中间的等比项全部对消，只剩首尾两项，得 $(1-q)S_{${N}} = ${(SN - q * SN).toFixed(4)}$`,
+          detail: `上下两式相减，中间的等比项全部对消，只剩首尾两项，得 $(1-q)S_{${N}} = ${formatMathNumber(SN - q * SN, 4)}$`,
           latex: `S_n - qS_n = a_1 - a_1 q^n \\implies (1-q)S_n = a_1(1-q^n)`,
           rubric: "【高考采分点】写清错位相减的对消过程 (+3分)",
         },
@@ -695,12 +695,12 @@ export function buildSequencePanel(
           title: "除回去时必须声明 $q \\ne 1$",
           detail:
             Math.abs(q - 1) < 1e-9
-              ? `本题 $q = 1$，两式相减得 $0 = 0$，说明错位法失效，回到常数列求和 $S_{${N}} = ${SN.toFixed(4)}$`
-              : `本题 $q = ${q} \\ne 1$，可除以 $1-q$，得 $S_{${N}} = ${formatMathNumber(SN)}$`,
+              ? `本题 $q = 1$，两式相减得 $0 = 0$，说明错位法失效，回到常数列求和 $S_{${N}} = ${formatMathNumber(SN, 4)}$`
+              : `本题 $q = ${formatMathNumber(q)} \\ne 1$，可除以 $1-q$，得 $S_{${N}} = ${formatMathNumber(SN, 4)}$`,
           latex:
             Math.abs(q - 1) < 1e-9
-              ? `q = 1 \\implies S_{${N}} = ${N}\\cdot ${a1} = ${SN.toFixed(4)}`
-              : `S_{${N}} = \\frac{${(SN - q * SN).toFixed(4)}}{1-${q}} = ${SN.toFixed(4)}`,
+              ? `q = 1 \\implies S_{${N}} = ${N}\\cdot ${formatMathNumber(a1)} = ${formatMathNumber(SN, 4)}`
+              : `S_{${N}} = \\frac{${formatMathNumber(SN - q * SN, 4)}}{1-${q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q)}} = ${formatMathNumber(SN, 4)}`,
           rubric: "【高考采分点】声明 $q \\neq 1$ 后再除，漏写扣分 (+2分)",
         },
       );
@@ -715,19 +715,19 @@ export function buildSequencePanel(
           {
             step: 1,
             title: `每 ${res.segmentedSums.k} 项切一段，先算第一段和`,
-            detail: `第一段从 $n = ${geoA.startN}$ 到 $n = ${geoA.endN}$，和为 ${geoA.sumValue.toFixed(4)}`,
-            latex: `A_1 = S_{${geoA.endN}} = ${geoA.sumValue.toFixed(4)}`,
+            detail: `第一段从 $n = ${geoA.startN}$ 到 $n = ${geoA.endN}$，和为 ${formatMathNumber(geoA.sumValue, 4)}`,
+            latex: `A_1 = S_{${geoA.endN}} = ${formatMathNumber(geoA.sumValue, 4)}`,
             rubric:
               "【高考采分点】按每 $k$ 项一段切分，先算出第一段和 $A_1 = S_k$ (+2分)",
           },
           {
             step: 2,
-            title: `相邻片段和之比恒为 $q^k = ${res.segmentedSums.ratio.toFixed(4)}$`,
+            title: `相邻片段和之比恒为 $q^k = ${formatMathNumber(res.segmentedSums.ratio, 4)}$`,
             detail: geoB
-              ? `$A_2 = S_{${geoB.endN}} - S_{${geoB.startN - 1}} = ${geoB.sumValue.toFixed(4)}$，与 $A_1$ 的比为 ${(geoB.sumValue / (geoA.sumValue || 1)).toFixed(4)}，正是 $q^k$`
+              ? `$A_2 = S_{${geoB.endN}} - S_{${geoB.startN - 1}} = ${formatMathNumber(geoB.sumValue, 4)}$，与 $A_1$ 的比为 ${formatMathNumber(geoB.sumValue / (geoA.sumValue || 1), 4)}，正是 $q^k$`
               : `当前 $N = ${N}$ 不足两段，先增大项数才能比较片段和之比`,
             latex: geoB
-              ? `\\frac{A_2}{A_1} = ${(geoB.sumValue / (geoA.sumValue || 1)).toFixed(4)} = q^{${res.segmentedSums.k}}`
+              ? `\\frac{A_2}{A_1} = ${formatMathNumber(geoB.sumValue / (geoA.sumValue || 1), 4)} = q^{${res.segmentedSums.k}}`
               : `N = ${N} \\text{ 不足 } 2k`,
             rubric: "【高考采分点】指出片段和仍成等比、公比为 $q^k$ (+3分)",
           },
@@ -742,14 +742,14 @@ export function buildSequencePanel(
         );
         quantities.push({
           label: `片段公比 $q^k$ ($k=${res.segmentedSums.k}$)`,
-          value: `q^${res.segmentedSums.k} = ${res.segmentedSums.ratio.toFixed(4)}`,
+          value: `q^${res.segmentedSums.k} = ${formatMathNumber(res.segmentedSums.ratio, 4)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
 
         res.segmentedSums.segments.forEach((seg) => {
           quantities.push({
             label: `片段 ${seg.segmentIndex} 和 ($a_{${seg.startN}}..a_{${seg.endN}}$)`,
-            value: `${seg.sumValue.toFixed(4)}`,
+            value: `${formatMathNumber(seg.sumValue, 4)}`,
             color: MATH_COLORS.sequence,
           });
         });
@@ -809,7 +809,7 @@ export function buildSequencePanel(
         "等差求和零分界，等比求积一分水；大一放大少一缩，取对化归二次锤。";
       quantities.push({
         label: `前 ${N} 项积 $P_{${N}}$`,
-        value: `P_{${N}} = ${PN.toFixed(4)}`,
+        value: `P_{${N}} = ${formatMathNumber(PN, 4)}`,
         color: MATH_COLORS.sequenceHighlight,
       });
 
@@ -819,8 +819,8 @@ export function buildSequencePanel(
             ? `$P_n$ 最大值项 ${res.maxPnInfo.isDual ? "(双最值)" : ""}`
             : `$P_n$ 最小值项 ${res.maxPnInfo.isDual ? "(双最值)" : ""}`,
           value: res.maxPnInfo.isDual
-            ? `n = ${res.maxPnInfo.nMax}, ${res.maxPnInfo.dualN}, P = ${res.maxPnInfo.maxPn.toFixed(4)}`
-            : `n = ${res.maxPnInfo.nMax}, P = ${res.maxPnInfo.maxPn.toFixed(4)}`,
+            ? `n = ${res.maxPnInfo.nMax}, ${res.maxPnInfo.dualN}, P = ${formatMathNumber(res.maxPnInfo.maxPn, 4)}`
+            : `n = ${res.maxPnInfo.nMax}, P = ${formatMathNumber(res.maxPnInfo.maxPn, 4)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
       }
@@ -853,18 +853,18 @@ export function buildSequencePanel(
         {
           step: 2,
           title: "用相邻两项的比判断增减转折",
-          detail: `$\\frac{a_{n+1}}{a_n} = q$，$q$ 与 $1$ 的大小关系决定 $P_n$ 何时由增转减；取 $n = ${N}$ 得 $P_{${N}} = ${PN.toFixed(4)}$`,
-          latex: `P_{${N}} = ${a1}^{${N}} \\cdot ${q}^{\\frac{${N}\\times ${N - 1}}{2}} = ${PN.toFixed(4)}`,
+          detail: `$\\frac{a_{n+1}}{a_n} = q$，$q$ 与 $1$ 的大小关系决定 $P_n$ 何时由增转减；取 $n = ${N}$ 得 $P_{${N}} = ${formatMathNumber(PN, 4)}$`,
+          latex: `P_{${N}} = ${formatMathNumber(a1)}^{${N}} \\cdot ${q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q)}^{\\frac{${N}\\times ${N - 1}}{2}} = ${formatMathNumber(PN, 4)}`,
           rubric: "【高考采分点】用相邻项比值定位乘积的增减转折 (+3分)",
         },
         {
           step: 3,
           title: "读出最值项并核对是否并列",
           detail: res.maxPnInfo
-            ? `最值项 $n = ${res.maxPnInfo.nMax}${res.maxPnInfo.isDual ? `$，与 $n = ${res.maxPnInfo.dualN}$ 并列` : ""}，对应 $P = ${res.maxPnInfo.maxPn.toFixed(4)}$`
+            ? `最值项 $n = ${res.maxPnInfo.nMax}${res.maxPnInfo.isDual ? `$，与 $n = ${res.maxPnInfo.dualN}$ 并列` : ""}，对应 $P = ${formatMathNumber(res.maxPnInfo.maxPn, 4)}$`
             : "当前公比下乘积单调，没有内部极值项",
           latex: res.maxPnInfo
-            ? `P_{${res.maxPnInfo.nMax}} = ${res.maxPnInfo.maxPn.toFixed(4)}`
+            ? `P_{${res.maxPnInfo.nMax}} = ${formatMathNumber(res.maxPnInfo.maxPn, 4)}`
             : `P_n \\text{ 单调，无极值项}`,
           rubric:
             "【高考采分点】读出使 $P_n$ 最大的 $n$，并核对对称轴为半整数时是否出现并列 (+3分)",
@@ -876,7 +876,7 @@ export function buildSequencePanel(
       if (res.limitSum !== null) {
         quantities.push({
           label: "无穷递缩和 $S_\\infty$（拓展）",
-          value: `S_\\infty = ${res.limitSum.toFixed(4)}`,
+          value: `S_\\infty = ${formatMathNumber(res.limitSum, 4)}`,
           color: MATH_COLORS.sequenceHighlight,
         });
       }
@@ -898,9 +898,9 @@ export function buildSequencePanel(
           title: "先确认收敛条件：公比必须落在 $(-1, 1)$ 内",
           detail:
             Math.abs(q) < 1
-              ? `本题 $|q| = ${Math.abs(q)}$ 小于 1，无穷递缩和收敛，前 ${N} 项和 $S_{${N}} = ${SN.toFixed(4)}$ 已接近极限`
-              : `本题 $|q| = ${Math.abs(q)}$ 不小于 1，无穷递缩和发散，不存在有限的和`,
-          latex: `|q| = ${Math.abs(q)} ${Math.abs(q) < 1 ? "<" : "\\ge"} 1`,
+              ? `本题 $|q| = ${formatMathNumber(Math.abs(q))}$ 小于 1，无穷递缩和收敛，前 ${N} 项和 $S_{${N}} = ${formatMathNumber(SN, 4)}$ 已接近极限`
+              : `本题 $|q| = ${formatMathNumber(Math.abs(q))}$ 不小于 1，无穷递缩和发散，不存在有限的和`,
+          latex: `|q| = ${formatMathNumber(Math.abs(q))} ${Math.abs(q) < 1 ? "<" : "\\ge"} 1`,
           rubric: "【高考采分点】先判断 $|q|<1$ 再谈极限 (+2分)",
         },
         {
@@ -908,11 +908,11 @@ export function buildSequencePanel(
           title: "套用无穷递缩等比求和公式",
           detail:
             res.limitSum !== null
-              ? `$S = \\frac{a_1}{1-q} = \\frac{${a1}}{1-${q}} = ${res.limitSum.toFixed(4)}$`
+              ? `$S = \\frac{a_1}{1-q} = \\frac{${formatMathNumber(a1)}}{1-${q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q)}} = ${formatMathNumber(res.limitSum, 4)}$`
               : "公比不满足收敛条件，无穷递缩和没有确定值",
           latex:
             res.limitSum !== null
-              ? `S_\\infty = \\frac{${a1}}{1-${q}} = ${res.limitSum.toFixed(4)}`
+              ? `S_\\infty = \\frac{${formatMathNumber(a1)}}{1-${q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q)}} = ${formatMathNumber(res.limitSum, 4)}`
               : `S_\\infty \\text{ 不存在}`,
           rubric: "【高考采分点】写出 $\\frac{a_1}{1-q}$ 并代入 (+3分)",
         },
@@ -921,11 +921,11 @@ export function buildSequencePanel(
           title: "用有限和逼近极限，验证两者一致",
           detail:
             res.limitSum !== null
-              ? `前 ${N} 项和 $S_{${N}} = ${SN.toFixed(4)}$，与极限的差为 ${Math.abs(SN - res.limitSum).toFixed(4)}，随 $n$ 增大趋于 0`
-              : `前 ${N} 项和 $S_{${N}} = ${SN.toFixed(4)}$ 随 $n$ 持续增大，不收敛`,
+              ? `前 ${N} 项和 $S_{${N}} = ${formatMathNumber(SN, 4)}$，与极限的差为 ${formatMathNumber(Math.abs(SN - res.limitSum), 4)}，随 $n$ 增大趋于 0`
+              : `前 ${N} 项和 $S_{${N}} = ${formatMathNumber(SN, 4)}$ 随 $n$ 持续增大，不收敛`,
           latex:
             res.limitSum !== null
-              ? `S_{${N}} - S_\\infty = ${Math.abs(SN - res.limitSum).toFixed(4)} \\to 0`
+              ? `S_{${N}} - S_\\infty = ${formatMathNumber(Math.abs(SN - res.limitSum), 4)} \\to 0`
               : `S_n \\text{ 无上界}`,
           rubric:
             "【高考采分点】用前 $n$ 项和与极限作差，说明差值随 $n$ 增大趋于 0 (+3分)",
@@ -957,23 +957,33 @@ export function buildSequencePanel(
     if (subModel === "arith-geo") {
       const res = calcArithGeoSplit(a1, d, q, N);
       const TN = res.terms[N - 1]?.Tn ?? 0;
-      const isCriticalQ1 = Math.abs(q - 1) < 1e-6;
+      const isCriticalQ1 = res.isDegenerateQ1;
 
       quantities.push({
         label: "混合通项 $c_n = a_n \\cdot b_n$",
-        value: `c_{${N}} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
+        value: `c_{${N}} = ${formatMathNumber(res.terms[N - 1]?.cn ?? 0, 4)}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
         label: `前 $N$ 项和 $T_{${N}}$`,
-        value: `T_{${N}} = ${TN.toFixed(4)}`,
+        value: `T_{${N}} = ${formatMathNumber(TN, 4)}`,
         color: MATH_COLORS.sequenceSum,
       });
 
+      if (res.closedForm) {
+        quantities.push({
+          label: "标准型化简通项 $T_n$",
+          value: `T_n = ${res.closedForm.latex}`,
+          color: MATH_COLORS.paramTertiary,
+        });
+      }
+
       quantities.push({
         label: "公比 $q$ 状态",
-        value: isCriticalQ1 ? "$q = 1$ (临界退化)" : `$q = ${q}$`,
+        value: isCriticalQ1
+          ? "$q = 1$ (临界退化)"
+          : `$q = ${formatMathNumber(q)}$`,
         color: isCriticalQ1
           ? MATH_COLORS.paramPrimary
           : MATH_COLORS.paramSecondary,
@@ -997,7 +1007,7 @@ export function buildSequencePanel(
       });
 
       gaokaoPoints.push({
-        text: "新高考易错防坑点 3：尾项符号与指数。两式相减后，原第 $n$ 项乘公比得到 $-a_n \\cdot q^n$，必带负号且指数为 $n$，常因粗心漏掉负号或写错指数。",
+        text: "新高考易错防坑点 3：尾项负号与双项回验。两式相减末项必为 $-a_n \\cdot q^n$；结果应整理为标准型 $(An+B)q^n + C$ 并用 $n=1, 2$ 两项交叉检验。",
         importance: "hard",
       });
 
@@ -1012,7 +1022,7 @@ export function buildSequencePanel(
         if (selTerm) {
           quantities.push({
             label: `选中第 $${highlightN}$ 项验算`,
-            value: `c_{${highlightN}} = ${selTerm.cn.toFixed(4)},\\; T_{${highlightN}} = ${selTerm.Tn.toFixed(4)}`,
+            value: `c_{${highlightN}} = ${formatMathNumber(selTerm.cn, 4)},\\; T_{${highlightN}} = ${formatMathNumber(selTerm.Tn, 4)}`,
             color: MATH_COLORS.sequenceHighlight,
             highlight: "extreme",
           });
@@ -1020,52 +1030,53 @@ export function buildSequencePanel(
       }
       mnemonic =
         "差比相乘错位减，同乘公比右移一；首项中段尾负号，公比为一先莫忘。";
+      const dStr = d < 0 ? `(${formatMathNumber(d)})` : formatMathNumber(d);
+      const qStr = q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q);
       reasoningSteps.push(
         {
           step: ARITH_GEO_ANSWER_STEPS[0].step,
           title: ARITH_GEO_ANSWER_STEPS[0].title,
           detail: `$c_n = a_n b_n$ 中 $a_n$ 成等差、$b_n$ 成等比，属于差比数列，先列出原和式 $T_n = c_1 + c_2 + \\dots + c_n$`,
-          latex: `c_n = a_n b_n = \\left(${a1} + (n-1)\\cdot ${d}\\right)\\cdot ${q}^{\\,n-1}`,
+          latex: `c_n = a_n b_n = \\left(${formatMathNumber(a1)} + (n-1)\\cdot ${dStr}\\right)\\cdot ${qStr}^{\\,n-1}`,
           rubric:
             "【高考采分点】把 $c_n$ 拆成等差因子乘等比因子，列出原和式 $T_n$ (+2分)",
         },
         {
           step: ARITH_GEO_ANSWER_STEPS[1].step,
           title: ARITH_GEO_ANSWER_STEPS[1].title,
-          detail:
-            Math.abs(q - 1) < 1e-6
-              ? `本题 $q = 1$，乘公比后两式完全相同，无需错位，直接转入纯等差求和`
-              : `两边同乘公比 $q = ${q}$ 并向右错开一格书写，使每一列的指数幂 $q^k$ 严格上下对齐`,
-          latex:
-            Math.abs(q - 1) < 1e-6
-              ? `q = 1 \\implies qT_n = T_n`
-              : `qT_n = a_1 q + a_2 q^2 + \\cdots + a_{n-1} q^{n-1} + a_n q^n`,
+          detail: isCriticalQ1
+            ? `本题 $q = 1$，乘公比后两式完全相同，无需错位，直接转入纯等差求和`
+            : `两边同乘公比 $q = ${formatMathNumber(q)}$ 并向右错开一格书写，使每一列的指数幂 $q^k$ 严格上下对齐`,
+          latex: isCriticalQ1
+            ? `q = 1 \\implies qT_n = T_n`
+            : `qT_n = a_1 q + a_2 q^2 + \\cdots + a_{n-1} q^{n-1} + a_n q^n`,
           rubric: "【高考采分点】同乘公比 $q$ 并错位对齐指数幂 (+2分)",
         },
         {
           step: ARITH_GEO_ANSWER_STEPS[2].step,
           title: ARITH_GEO_ANSWER_STEPS[2].title,
-          detail:
-            Math.abs(q - 1) < 1e-6
-              ? `本题 $q = 1$，差比数列退化为纯等差型，直接套等差求和公式即可`
-              : `上下两式相减：保留首项 $a_1 b_1$，中间 $n-1$ 项提取公差 $d$ 合并成等比求和，尾部多出带负号的 $-a_n q^n$`,
-          latex:
-            Math.abs(q - 1) < 1e-6
-              ? `q = 1 \\implies c_n = a_n = ${a1} + (n-1)\\cdot ${d}`
-              : `(1-q)T_n = a_1 b_1 + d \\sum_{k=2}^{n} q^{k-1} - a_n q^n`,
+          detail: isCriticalQ1
+            ? `本题 $q = 1$，差比数列退化为纯等差型，直接套等差求和公式即可`
+            : `上下两式相减：保留首项 $a_1 b_1$，中间 $n-1$ 项提取公差 $d$ 合并成等比求和，尾部多出带负号的 $-a_n q^n$`,
+          latex: isCriticalQ1
+            ? `q = 1 \\implies c_n = a_n = ${formatMathNumber(a1)} + (n-1)\\cdot ${dStr}`
+            : `(1-q)T_n = a_1 b_1 + d \\sum_{k=2}^{n} q^{k-1} - a_n q^n`,
           rubric:
             "【高考采分点】准确写出首项、中间 $n-1$ 项等比和及尾项负号 (+4分)",
         },
         {
           step: ARITH_GEO_ANSWER_STEPS[3].step,
           title: ARITH_GEO_ANSWER_STEPS[3].title,
-          detail: `除以 $1-q$（$q \\ne 1$）化简，取 $n = ${N}$ 得 $T_{${N}} = ${TN.toFixed(4)}$，并代入 $n=1$ 检验 $T_1 = c_1$`,
-          latex:
-            Math.abs(q - 1) < 1e-6
-              ? `T_{${N}} = ${N}a_1 + \\frac{${N}(${N}-1)}{2}d = ${TN.toFixed(4)}`
-              : `T_n = \\frac{(1-q)T_n}{1-q} \\implies T_{${N}} = ${TN.toFixed(4)}`,
+          detail: res.closedForm
+            ? `除以 $1-q$（$q \\ne 1$）合并同类幂整理为标准型，取 $n = ${N}$ 得 $T_{${N}} = ${formatMathNumber(TN, 4)}$；双项防错核验：$n=1$ 得 $T_1 = ${formatMathNumber(res.verifyN1.actual, 4)} = c_1$${res.verifyN2 ? `，$n=2$ 得 $T_2 = ${formatMathNumber(res.verifyN2.actual, 4)} = c_1+c_2$` : ""}`
+            : `除以 $1-q$（或按 $q=${formatMathNumber(q)}$ 退化情形）化简，取 $n = ${N}$ 得 $T_{${N}} = ${formatMathNumber(TN, 4)}$，并代入 $n=1$ 检验 $T_1 = c_1$`,
+          latex: isCriticalQ1
+            ? `T_{${N}} = ${N}a_1 + \\frac{${N}(${N}-1)}{2}d = ${formatMathNumber(TN, 4)}`
+            : res.closedForm
+              ? `T_n = ${res.closedForm.latex} \\implies T_{${N}} = ${formatMathNumber(TN, 4)}`
+              : `T_n = \\frac{(1-q)T_n}{1-q} \\implies T_{${N}} = ${formatMathNumber(TN, 4)}`,
           rubric:
-            "【高考采分点】声明 $q \\ne 1$ 除以 $1-q$ 化简，并核对首项满足 $T_1 = c_1$ (+2分)",
+            "【高考采分点】声明 $q \\ne 1$ 整理为 $(An+B)q^n+C$，并代入 $n=1,2$ 双项回验 (+2分)",
         },
       );
     } else if (subModel === "telescoping") {
@@ -1081,7 +1092,7 @@ export function buildSequencePanel(
         });
         quantities.push({
           label: `前 $N$ 项和 $T_{${N}}$`,
-          value: `T_{${N}} = ${res.finalTn.toFixed(4)}`,
+          value: `T_{${N}} = ${formatMathNumber(res.finalTn, 4)}`,
           color: MATH_COLORS.sequenceSum,
         });
         theorems.push({
@@ -1100,17 +1111,17 @@ export function buildSequencePanel(
 
         quantities.push({
           label: "跨项裂项通项 $c_n = \\frac{1}{n(n+2)}$",
-          value: `c_{${N}} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
+          value: `c_{${N}} = ${formatMathNumber(res.terms[N - 1]?.cn ?? 0, 4)}`,
           color: MATH_COLORS.sequence,
         });
         quantities.push({
           label: `前 $N$ 项和 $T_{${N}}$`,
-          value: `T_{${N}} = ${TN.toFixed(4)}`,
+          value: `T_{${N}} = ${formatMathNumber(TN, 4)}`,
           color: MATH_COLORS.sequenceSum,
         });
         quantities.push({
           label: "无限逼近值 $T_\\infty$（拓展）",
-          value: "0.7500",
+          value: "0.75",
           color: MATH_COLORS.sequenceHighlight,
         });
         theorems.push({
@@ -1130,17 +1141,17 @@ export function buildSequencePanel(
 
         quantities.push({
           label: "裂项通项 $c_n = \\frac{1}{n(n+1)}$",
-          value: `c_{${N}} = ${(res.terms[N - 1]?.cn ?? 0).toFixed(4)}`,
+          value: `c_{${N}} = ${formatMathNumber(res.terms[N - 1]?.cn ?? 0, 4)}`,
           color: MATH_COLORS.sequence,
         });
         quantities.push({
           label: `前 $N$ 项和 $T_{${N}}$`,
-          value: `T_{${N}} = ${TN.toFixed(4)}`,
+          value: `T_{${N}} = ${formatMathNumber(TN, 4)}`,
           color: MATH_COLORS.sequenceSum,
         });
         quantities.push({
           label: "无限逼近值 $T_\\infty$（拓展）",
-          value: "1.0000",
+          value: "1",
           color: MATH_COLORS.sequenceHighlight,
         });
         theorems.push({
@@ -1611,7 +1622,7 @@ export function buildSequencePanel(
 
       quantities.push({
         label: `通项 $a_{${N}}$`,
-        value: `a_{${N}} = ${aN.toFixed(4)}`,
+        value: `a_{${N}} = ${formatMathNumber(aN, 4)}`,
         color: MATH_COLORS.sequence,
       });
 
@@ -1672,7 +1683,7 @@ export function buildSequencePanel(
 
       quantities.push({
         label: `构造项 $b_{${N}}$ ($b_n = \\frac{a_n}{${r_rec}^n}$)`,
-        value: `b_{${N}} = ${bN.toFixed(3)}`,
+        value: `b_{${N}} = ${formatMathNumber(bN, 4)}`,
         color: MATH_COLORS.paramSecondary,
       });
 
@@ -1720,8 +1731,8 @@ export function buildSequencePanel(
           step: 2,
           title: "对新数列用待定系数法求通项",
           detail: res.isResonant
-            ? `本题 $p = r = ${p_rec}$，同除后一次项系数恰好为 1，$\\{b_n\\}$ 退化为等差数列，公差 $d = \\frac{q}{r} = ${(q_rec / r_rec).toFixed(4)}$`
-            : `本题 $\\frac{p}{r} = ${(p_rec / r_rec).toFixed(4)} \\ne 1$，用不动点法把 $b_n$ 平移成等比数列`,
+            ? `本题 $p = r = ${p_rec}$，同除后一次项系数恰好为 1，$\\{b_n\\}$ 退化为等差数列，公差 $d = \\frac{q}{r} = ${formatMathNumber(q_rec / r_rec, 4)}$`
+            : `本题 $\\frac{p}{r} = ${formatMathNumber(p_rec / r_rec, 4)} \\ne 1$，用不动点法把 $b_n$ 平移成等比数列`,
           latex: res.isResonant
             ? `p = r \\implies b_{n+1} = b_n + \\frac{${q_rec}}{${r_rec}}`
             : `b_{n+1} = \\frac{${p_rec}}{${r_rec}}b_n + \\frac{${q_rec}}{${r_rec}}`,
@@ -1730,8 +1741,8 @@ export function buildSequencePanel(
         {
           step: 3,
           title: "乘回 $r^n$ 还原原数列",
-          detail: `由 $a_n = r^n b_n$ 还原，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$，构造项 $b_{${N}} = ${bN.toFixed(4)}$`,
-          latex: `a_n = ${r_rec}^{\\,n}\\cdot b_n \\implies a_{${N}} = ${formatMathNumber(aN)}`,
+          detail: `由 $a_n = r^n b_n$ 还原，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN, 4)}$，构造项 $b_{${N}} = ${formatMathNumber(bN, 4)}$`,
+          latex: `a_n = ${r_rec}^{\\,n}\\cdot b_n \\implies a_{${N}} = ${formatMathNumber(aN, 4)}`,
           rubric:
             "【高考采分点】乘回 $r^n$ 还原 $a_n$，并核对 $n = 1$ 与原首项一致 (+3分)",
         },
@@ -1743,13 +1754,17 @@ export function buildSequencePanel(
 
       quantities.push({
         label: `原通项 $a_{${N}}$`,
-        value: Number.isNaN(aN) ? "发散/无定义" : `a_{${N}} = ${aN.toFixed(4)}`,
+        value: Number.isNaN(aN)
+          ? "发散/无定义"
+          : `a_{${N}} = ${formatMathNumber(aN, 4)}`,
         color: MATH_COLORS.sequence,
       });
 
       quantities.push({
         label: `倒数构造项 $b_{${N}}$ ($b_n = \\frac{1}{a_n}$)`,
-        value: Number.isNaN(bN) ? "无定义" : `b_{${N}} = ${bN.toFixed(4)}`,
+        value: Number.isNaN(bN)
+          ? "无定义"
+          : `b_{${N}} = ${formatMathNumber(bN, 4)}`,
         color: MATH_COLORS.paramSecondary,
       });
 
@@ -1793,18 +1808,18 @@ export function buildSequencePanel(
           step: 2,
           title: "把 $b_n = \\frac{1}{a_n}$ 化成一阶线性递推",
           detail: res.isReciprocalLinear
-            ? `本题系数满足可线性化条件，$\\{b_n\\}$ 是首项 $\\frac{1}{${a1}}$、公比 $\\frac{${coefC}}{${coefA}} = ${(coefC / coefA).toFixed(4)}$ 的等比数列`
-            : `本题 $\\frac{C}{A} = ${(coefC / coefA).toFixed(4)} \\ne 1$，需再用待定系数法平移成等比数列`,
+            ? `本题系数满足可线性化条件，$\\{b_n\\}$ 是首项 $\\frac{1}{${formatMathNumber(a1)}}$、公比 $\\frac{${coefC}}{${coefA}} = ${formatMathNumber(coefC / coefA, 4)}$ 的等比数列`
+            : `本题 $\\frac{C}{A} = ${formatMathNumber(coefC / coefA, 4)} \\ne 1$，需再用待定系数法平移成等比数列`,
           latex: res.isReciprocalLinear
-            ? `b_n = \\frac{1}{${a1}}\\cdot\\left(\\frac{${coefC}}{${coefA}}\\right)^{n-1}`
+            ? `b_n = \\frac{1}{${formatMathNumber(a1)}}\\cdot\\left(\\frac{${coefC}}{${coefA}}\\right)^{n-1}`
             : `b_{n+1} = \\frac{${coefC}}{${coefA}}b_n + \\frac{${coefB}}{${coefA}}`,
           rubric: "【高考采分点】求出辅助数列 $b_n$ 的通项 (+3分)",
         },
         {
           step: 3,
           title: "取倒数还原，并回验首项",
-          detail: `$a_n = \\frac{1}{b_n}$，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN)}$（$b_{${N}} = ${bN.toFixed(4)}$）；取倒数会引入 $a_n \\ne 0$ 的前提，必须回验`,
-          latex: `a_n = \\frac{1}{b_n} \\implies a_{${N}} = ${formatMathNumber(aN)}`,
+          detail: `$a_n = \\frac{1}{b_n}$，取 $n = ${N}$ 得 $a_{${N}} = ${formatMathNumber(aN, 4)}$（$b_{${N}} = ${formatMathNumber(bN, 4)}$）；取倒数会引入 $a_n \\ne 0$ 的前提，必须回验`,
+          latex: `a_n = \\frac{1}{b_n} \\implies a_{${N}} = ${formatMathNumber(aN, 4)}`,
           rubric:
             "【高考采分点】由 $a_n = \\frac{1}{b_n}$ 还原，并回验 $n = 1$ 与 $a_1$ 一致 (+3分)",
         },

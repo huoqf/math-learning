@@ -8,6 +8,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { toSub } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ArithmeticSubSceneProps {
   params: Record<string, number>;
@@ -112,7 +113,7 @@ export function SequenceArithmeticLinearScene({
                   fontWeight="bold"
                 >
                   对称配对：a{toSub(highlightN)} + a{toSub(symN)} = a₁ + a
-                  {toSub(N)} = {pairSum.toFixed(1)}
+                  {toSub(N)} = {formatMathNumber(pairSum)}
                 </text>
               </>
             );
@@ -142,7 +143,7 @@ export function SequenceArithmeticLinearScene({
               fill={MATH_COLORS.paramTertiary}
               fontWeight="bold"
             >
-              零点 x₀={zeroPointExact.toFixed(2)}
+              零点 x₀={formatMathNumber(zeroPointExact)}
             </text>
           </g>
         )}
@@ -203,7 +204,7 @@ export function SequenceArithmeticLinearScene({
               fill={t.an >= 0 ? MATH_COLORS.sequence : MATH_COLORS.paramPrimary}
               fontWeight={isHighlighted ? "bold" : "normal"}
             >
-              a{toSub(t.n)} = {t.an.toFixed(1)}
+              a{toSub(t.n)} = {formatMathNumber(t.an)}
             </text>
           </g>
         );

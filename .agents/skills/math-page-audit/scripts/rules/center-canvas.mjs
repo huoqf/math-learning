@@ -3,6 +3,66 @@
  * 领域规则：中屏画布与数形结合规范
  */
 
+/** 跨行精确提取 JSX <text ...>...</text> 元素范围（跟踪 {} 深度与引号，跳过 >= / =>） */
+function findJsxTextElements(code) {
+  const ranges = [];
+  let idx = 0;
+  while (true) {
+    const start = code.indexOf('<text', idx);
+    if (start === -1) break;
+    const after = code[start + 5];
+    if (after && !/[\s>]/.test(after)) {
+      idx = start + 5;
+      continue;
+    }
+    let i = start + 5;
+    let brace = 0;
+    let quote = null;
+    let selfClosing = false;
+    let openEnd = -1;
+    while (i < code.length) {
+      const ch = code[i];
+      if (quote) {
+        if (ch === '\\') {
+          i += 2;
+          continue;
+        }
+        if (ch === quote) quote = null;
+      } else if (ch === '"' || ch === "'" || ch === '`') {
+        quote = ch;
+      } else if (ch === '{') {
+        brace++;
+      } else if (ch === '}') {
+        if (brace > 0) brace--;
+      } else if (brace === 0) {
+        if (ch === '/' && code[i + 1] === '>') {
+          selfClosing = true;
+          openEnd = i + 2;
+          break;
+        }
+        if (ch === '>') {
+          openEnd = i + 1;
+          break;
+        }
+      }
+      i++;
+    }
+    if (openEnd === -1) break;
+    if (selfClosing) {
+      idx = openEnd;
+      continue;
+    }
+    const closeIdx = code.indexOf('</text>', openEnd);
+    if (closeIdx === -1) {
+      idx = openEnd;
+      continue;
+    }
+    ranges.push({ openStart: start, bodyStart: openEnd, bodyEnd: closeIdx });
+    idx = closeIdx + 7;
+  }
+  return ranges;
+}
+
 export const centerCanvasRules = [
   {
     id: 'center/no-raw-float-text',
@@ -10,8 +70,40 @@ export const centerCanvasRules = [
     type: '中屏浮点堆砌',
     severity: 'error',
     check(ctx) {
+      if (!ctx.isTsx && !ctx.filePath.endsWith('.jsx')) return [];
+      if (
+        ctx.filePath.includes('SceneLabelGroup') ||
+        ctx.filePath.includes('PolarGrid') ||
+        ctx.filePath.includes('CoordinateGrid')
+      ) {
+        return [];
+      }
       const issues = [];
+      const seenLines = new Set();
+
+      // 1. 跨行扫描 JSX <text ...>BODY</text> 标签体内的裸 .toFixed(...) 调用
+      const textRanges = findJsxTextElements(ctx.cleanContent);
+      for (const r of textRanges) {
+        const body = ctx.cleanContent.slice(r.bodyStart, r.bodyEnd);
+        const match = /\.toFixed\s*\(/.exec(body);
+        if (match) {
+          const absPos = r.bodyStart + match.index;
+          const lineNum = ctx.cleanContent.slice(0, absPos).split('\n').length;
+          if (!seenLines.has(lineNum)) {
+            seenLines.add(lineNum);
+            issues.push({
+              lineNum,
+              message:
+                '检测到 SVG <text> 内直接调用 .toFixed() 渲染浮点字符串，请改用 formatMathNumber() / formatMathProb() 或纯代数符号 + SceneLegend',
+              snippet: (ctx.cleanLines[lineNum - 1] || '').trim(),
+            });
+          }
+        }
+      }
+
+      // 2. 兼容单行遗留模式（如 <text ...>{`...${...}`}</text> 含模板坐标）
       ctx.cleanLines.forEach((line, idx) => {
+        if (seenLines.has(idx + 1)) return;
         if (line.includes('<text') && (line.includes('toFixed') || line.includes('${'))) {
           if (!line.includes('SceneLabelGroup') && !line.includes('PolarGrid') && !line.includes('CoordinateGrid')) {
             issues.push({

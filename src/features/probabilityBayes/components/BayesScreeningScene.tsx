@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateBayesDiagnostic } from "@/math/probabilityBayes";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface BayesScreeningSceneProps {
   params: Record<string, number>;
@@ -104,7 +105,7 @@ export function BayesScreeningScene({
       >
         1000 {isFactory ? "件零件质检模拟" : "人群体样本诊断模拟"} (先验
         {isFactory ? "次品率" : "患病基率"} P({targetSymbol}) ={" "}
-        {(bayesData.pPriorD * 100).toFixed(1)}%)
+        {formatMathNumber(bayesData.pPriorD * 100)}%)
       </text>
 
       {/* ================= 左区：患病/次品组卡片 ================= */}
@@ -126,7 +127,8 @@ export function BayesScreeningScene({
           fontWeight="bold"
           fill={MATH_COLORS.paramPrimary}
         >
-          {group1Title}: {sickCount} 人 ({(bayesData.pPriorD * 100).toFixed(1)}
+          {group1Title}: {sickCount} 人 (
+          {formatMathNumber(bayesData.pPriorD * 100)}
           %)
         </text>
 
@@ -212,7 +214,7 @@ export function BayesScreeningScene({
           fill={MATH_COLORS.labelText}
         >
           {group2Title}: {healthyCount} 人 (
-          {((1 - bayesData.pPriorD) * 100).toFixed(1)}%)
+          {formatMathNumber((1 - bayesData.pPriorD) * 100)}%)
         </text>
 
         {/* 健康点阵 */}
@@ -248,7 +250,7 @@ export function BayesScreeningScene({
             fill={MATH_COLORS.paramSecondary}
           >
             {falsePosLabel}: {falsePosCount} 人 (误报率{" "}
-            {(bayesData.pFalsePositive * 100).toFixed(1)}%)
+            {formatMathNumber(bayesData.pFalsePositive * 100)}%)
           </text>
 
           <rect
@@ -340,7 +342,8 @@ export function BayesScreeningScene({
             fontWeight="bold"
             fill={MATH_COLORS.paramPrimary}
           >
-            {truePosLabel} ({truePosCount}，占 {posteriorPercent.toFixed(1)}%)
+            {truePosLabel} ({truePosCount}，占{" "}
+            {formatMathNumber(posteriorPercent)}%)
           </text>
 
           <circle cx={180} cy={6} r={5} fill={MATH_COLORS.paramSecondary} />
@@ -352,7 +355,7 @@ export function BayesScreeningScene({
             fill={MATH_COLORS.paramSecondary}
           >
             {falsePosLabel} ({falsePosCount}，占{" "}
-            {(100 - posteriorPercent).toFixed(1)}%)
+            {formatMathNumber(100 - posteriorPercent)}%)
           </text>
         </g>
 
@@ -388,7 +391,7 @@ export function BayesScreeningScene({
           >
             全概分母 P(+) = P({targetSymbol})P(+|{targetSymbol}) + P(~
             {targetSymbol})P(+|~{targetSymbol}) ={" "}
-            {(bayesData.pTotalPositive * 100).toFixed(2)}%
+            {formatMathNumber(bayesData.pTotalPositive * 100)}%
           </text>
           <g transform="translate(0, 60)">
             <rect
@@ -463,7 +466,9 @@ export function BayesScreeningScene({
             >
               ① 点阵模拟频率 = {truePosCount} / ({truePosCount} +{" "}
               {falsePosCount}) ={" "}
-              <tspan fontWeight="bold">{posteriorPercent.toFixed(2)}%</tspan>
+              <tspan fontWeight="bold">
+                {formatMathNumber(posteriorPercent)}%
+              </tspan>
             </text>
             <text
               x={12}
@@ -473,7 +478,7 @@ export function BayesScreeningScene({
             >
               ② 理论值 = P({targetSymbol})P(+|{targetSymbol}) / P(+) ={" "}
               <tspan fontWeight="bold" fill={MATH_COLORS.derivative}>
-                {theoreticalPosteriorPercent.toFixed(2)}%
+                {formatMathNumber(theoreticalPosteriorPercent)}%
               </tspan>
             </text>
             <text
@@ -482,7 +487,7 @@ export function BayesScreeningScene({
               fontSize={fontScale(10)}
               fill={MATH_COLORS.textMuted}
             >
-              偏差 |① − ②| = {latticeGap.toFixed(2)}
+              偏差 |① − ②| = {formatMathNumber(latticeGap)}
               %（点阵按整数人数取整所致）
             </text>
             <text

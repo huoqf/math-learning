@@ -17,11 +17,6 @@ import { InequalityBasicScene } from "./components/InequalityBasicScene";
 import { InequalityPropertiesScene } from "./components/InequalityPropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { fitViewRange } from "@/math/viewRange";
-import {
-  getSemicircleGeometry,
-  getSquareProofGeometry,
-  getNikeExtremaGeometry,
-} from "./math/inequalityBasic";
 import { defaultParams, paramMeta } from "@/data/registries/inequalityBasic";
 
 export function InequalityBasicAnimation() {
@@ -47,47 +42,68 @@ export function InequalityBasicAnimation() {
 
   // 3. 视口自适应：按研究模式取该模式的几何关键点（半圆端点/顶点/垂足、均值正方形外框、
   //    对勾极值点），再与分档基准取并集。基准仍按模式分档（Floor Clamp），
-  //    参数正常时视口不变；a=b=10 这类边界值时整体外扩，不再把图形裁掉。
+  // 3. A 类固定参数预算视口：同一研究模式下按 paramMeta 参数域极值预算固定视口，
+  //    拖动 a、b、k 时 scale 严格恒定，还原「参数增大 → 几何尺度增大」的因果映射。
   const viewRange = useMemo(() => {
-    const baseY: [number, number] =
-      studyMode === "semicircle"
-        ? [-2.2, 5.8]
-        : studyMode === "square"
-          ? [-4.8, 4.8]
-          : // 性质模式是三条基线（上/中/下），纵向只需要容纳三行标注
-            studyMode === "properties"
-            ? [-4.2, 4.2]
-            : [-1.5, 6.5];
+    const maxA = paramMeta.a.max;
+    const maxB = paramMeta.b.max;
+    const maxR = (maxA + maxB) / 2;
 
-    let keyPoints: Array<{ x: number; y: number }> = [];
     if (studyMode === "semicircle") {
-      const g = getSemicircleGeometry(params.a, params.b);
-      keyPoints = [g.pointA, g.pointB, g.pointM, g.pointC];
-    } else if (studyMode === "square") {
-      const g = getSquareProofGeometry(params.a, params.b);
-      const half = g.totalSide / 2;
-      keyPoints = [
-        { x: -half, y: half },
-        { x: half, y: half },
-        { x: -half, y: 0 },
-        { x: half, y: 0 },
-      ];
-    } else if (studyMode === "nike") {
-      const g = getNikeExtremaGeometry(
-        params.k,
-        Math.sqrt(Math.max(0.1, params.k)),
+      return fitViewRange(
+        [
+          { x: -maxR, y: 0 },
+          { x: maxR, y: maxR },
+        ],
+        {
+          defaultXRange: [-6, 6],
+          defaultYRange: [-2.2, 5.8],
+          paddingRatio: 0,
+          minPadding: 0.6,
+        },
       );
-      keyPoints = [
-        { x: g.minX, y: g.minY },
-        { x: -g.minX, y: -g.minY },
-      ];
     }
 
-    return fitViewRange(keyPoints, {
+    if (studyMode === "square") {
+      const maxHalf = (maxA + maxB) / 2;
+      return fitViewRange(
+        [
+          { x: -maxHalf, y: -maxHalf },
+          { x: maxHalf, y: maxHalf },
+        ],
+        {
+          defaultXRange: [-6, 6],
+          defaultYRange: [-4.8, 4.8],
+          paddingRatio: 0,
+          minPadding: 1.2,
+        },
+      );
+    }
+
+    if (studyMode === "nike") {
+      const maxK = paramMeta.k.max;
+      const minXAtMaxK = Math.sqrt(maxK);
+      const minYAtMaxK = 2 * minXAtMaxK;
+      return fitViewRange(
+        [
+          { x: 0, y: 0 },
+          { x: minXAtMaxK, y: minYAtMaxK },
+          { x: 8, y: 8 + maxK / 8 },
+        ],
+        {
+          defaultXRange: [-6, 6],
+          defaultYRange: [-1.5, 6.5],
+          paddingRatio: 0,
+          minPadding: 0.8,
+        },
+      );
+    }
+
+    return fitViewRange([], {
       defaultXRange: [-6, 6],
-      defaultYRange: baseY,
+      defaultYRange: [-4.2, 4.2],
     });
-  }, [studyMode, params.a, params.b, params.k]);
+  }, [studyMode]);
 
   // 构建直角坐标系比例尺
   const scale = useSceneScale({

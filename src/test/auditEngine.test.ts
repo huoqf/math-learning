@@ -353,6 +353,79 @@ export function buildDemo() {
     expect(badIssues[0].message).toContain("点线位置关系严禁滥用充要双向箭头");
   });
 
+  it("加固：center/no-raw-float-text 跨行拦截 SVG <text> 标签体内裸 .toFixed()，同时放行合法 <path> 坐标与 formatMathNumber", () => {
+    const rule = (centerCanvasRules as AuditRule[]).find(
+      (r: AuditRule) => r.id === "center/no-raw-float-text",
+    )!;
+
+    const multilineBad = `
+export function DemoScene() {
+  return (
+    <g>
+      <path d={\`M \${x.toFixed(1)} \${y.toFixed(1)}\`} />
+      <text
+        x={x >= 0 ? 10 : 20}
+        y={30}
+      >
+        c₁ = {val.toFixed(2)}
+      </text>
+    </g>
+  );
+}
+`;
+    const badCtx = new FileContext(
+      "src/features/demo/DemoScene.tsx",
+      multilineBad,
+      process.cwd(),
+    );
+    const badIssues = rule.check(badCtx);
+    expect(badIssues.length).toBe(1);
+    expect(badIssues[0].lineNum).toBe(10);
+
+    const cleanCode = `
+import { formatMathNumber } from "@/utils/mathFormat";
+export function DemoScene() {
+  return (
+    <text x={10} y={20}>
+      c₁ = {formatMathNumber(val)}
+    </text>
+  );
+}
+`;
+    const cleanCtx = new FileContext(
+      "src/features/demo/DemoScene.tsx",
+      cleanCode,
+      process.cwd(),
+    );
+    expect(rule.check(cleanCtx).length).toBe(0);
+  });
+
+  it("加固：right/algebra-rigor 拦截模板字符串直接以 .toFixed() 拼接变量系数与字面双符号", () => {
+    const rule = (rightPanelRules as AuditRule[]).find(
+      (r: AuditRule) => r.id === "right/algebra-rigor",
+    )!;
+
+    const badBuilder = `
+export function buildDemo() {
+  return {
+    reasoningSteps: [
+      {
+        latex: \`f(x) = \${a.toFixed(2)} \\\\left( x^2 \\\\right) + -3\`,
+      }
+    ]
+  };
+}
+`;
+    const ctx = new FileContext(
+      "src/data/builders/demo.ts",
+      badBuilder,
+      process.cwd(),
+    );
+    const issues = rule.check(ctx);
+    expect(issues.some((i) => i.type === "代数式模板插值浮点尾零")).toBe(true);
+    expect(issues.some((i) => i.type === "代数式未化简双符号")).toBe(true);
+  });
+
   // ───────────────────────────────────────────────────────────────────────────
   // 门禁升级：discipline/no-beyond-syllabus-terms 由「文件级豁免」收紧为「条目级豁免」
   // 背景：旧实现只要文件里出现过「拓展」字样就整份豁免，导致「局部含拓展 → 整页超纲检测失效」。

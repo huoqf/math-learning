@@ -10,6 +10,8 @@ import { render, cleanup } from "@testing-library/react";
 import { CoordinateGrid } from "@/components/Math";
 import { CANVAS_PRESETS } from "@/theme";
 import { calculateSceneScale, type ViewportInfo } from "@/hooks";
+import { mathToDesign } from "@/utils/coordinate";
+import { buildSequencePanel } from "@/data/builders/sequence";
 import { SequenceGeometricSegmentScene } from "@/features/sequence/components/SequenceGeometricSegmentScene";
 import { SequenceArithmeticSegmentScene } from "@/features/sequence/components/SequenceArithmeticSegmentScene";
 import { SequenceArithmeticGaussScene } from "@/features/sequence/components/SequenceArithmeticGaussScene";
@@ -150,7 +152,7 @@ describe("数列场景渲染级守卫契约测试", () => {
       expect(textContent).toContain(
         "几何面积拼图需各项非负且和为正：本例不适用，代数对称相加恒等式依然成立",
       );
-      expect(textContent).toContain("和=-4.0");
+      expect(textContent).toContain("和=-4");
       expect(textContent).not.toContain("大长方形面积");
     });
 
@@ -173,7 +175,7 @@ describe("数列场景渲染级守卫契约测试", () => {
       );
       // 核心断言：全零时绝不可展示「含负项」
       expect(textContent).not.toContain("含负项");
-      expect(textContent).toContain("和=0.0");
+      expect(textContent).toContain("和=0");
       expect(textContent).not.toContain("大长方形面积");
     });
   });
@@ -324,24 +326,30 @@ describe("数列场景渲染级守卫契约测试", () => {
         { a1: 0, d: 2, q: 2, N: 7 }, // 零首项 + 极不对称视口
         { a1: 0, d: 3, q: 2, N: 12 }, // 极限指数膨胀（原始真实值跨度达 15.5 万，检验教学视口收敛）
       ];
-      // step 4 与 step 3 共用同一渲染分支（源码 `sumStep === 3 || sumStep === 4`），无需重复渲染
-      const steps = [1, 2, 3];
+      const steps = [1, 2, 3, 4];
 
       for (const { a1, d, q, N } of grid) {
         const splitRes = calcArithGeoSplit(a1, d, q, N);
 
         // 严格复刻 ModelsPage 中 arith-geo 分支的最新真实视口换算口径
-        const allVals = splitRes.terms.flatMap((t) => [
+        const allPosVals = splitRes.terms.flatMap((t) => [
           t.cn,
+          t.diffTerm,
           t.cn * q,
           t.an,
           t.bn,
         ]);
-        const minV = Math.max(-40, Math.min(0, ...allVals));
-        const maxV = Math.min(120, Math.max(3, ...allVals));
+        const allWithTail = [...allPosVals, splitRes.tailTermVal];
+        const rawMin = Math.min(0, ...allWithTail);
+        const rawMax = Math.max(3, ...allPosVals);
+        const posTiers = [12, 24, 48, 80, 120];
+        const maxV = posTiers.find((t) => t >= rawMax) ?? 120;
+        const baseNegPad = Math.max(4, Math.ceil(maxV * 0.26));
+        const negCap = -Math.max(24, Math.ceil(maxV * 0.34));
+        const minV = Math.max(negCap, Math.min(-baseNegPad, rawMin - 2));
         let yR: [number, number] = [
-          Math.floor(minV - 3),
-          Math.ceil(maxV * 1.15 + 4),
+          Math.floor(minV),
+          Math.ceil(maxV * 1.62 + 8),
         ];
         if (yR[1] - yR[0] < 6) yR = [yR[0], yR[0] + 6];
 
@@ -366,6 +374,9 @@ describe("数列场景渲染级守卫契约测试", () => {
                 vp={VP}
                 scale={scale}
                 fontScale={dummyFontScale}
+                a1={a1}
+                d={d}
+                splitResult={splitRes}
               />
             </svg>,
           );
@@ -441,6 +452,114 @@ describe("数列场景渲染级守卫契约测试", () => {
         </svg>,
       );
       assertSvgElementsWithinBounds(groupedContainer);
+    });
+
+    it("教学与新高考优化契约：X轴下沿零叠字 + Step3/4 负尾项朝下画入第四象限 + 闭式 (An+B)q^n+C 与右屏无 .0000 尾零", () => {
+      const a1 = 1;
+      const d = 1;
+      const q = 2;
+      const N = 8;
+      const splitRes = calcArithGeoSplit(a1, d, q, N);
+
+      expect(splitRes.closedForm).not.toBeNull();
+      expect(splitRes.closedForm?.A).toBeCloseTo(1);
+      expect(splitRes.closedForm?.B).toBeCloseTo(-1);
+      expect(splitRes.closedForm?.C).toBeCloseTo(1);
+      expect(splitRes.verifyN1.passed).toBe(true);
+      expect(splitRes.verifyN2?.passed).toBe(true);
+
+      // 退化情形 q=1 与 q=0 不抛出且安全返回
+      expect(calcArithGeoSplit(2, 3, 1, 6).isDegenerateQ1).toBe(true);
+      expect(calcArithGeoSplit(2, 3, 0, 6).isDegenerateQ0).toBe(true);
+
+      // 右屏清洗验证：等比与错位相减整数结果不再泄露 .0000
+      const geoPanel = buildSequencePanel(
+        { a1: 3, q: 2, N: 8 },
+        { activeMode: "geometric", geometricSubMode: "exponential" },
+      );
+      expect(JSON.stringify(geoPanel)).not.toMatch(/\d+\.0000\b/);
+
+      const arithGeoPanel = buildSequencePanel(
+        { a1: 1, d: 1, q: 2, N: 8 },
+        { activeMode: "models", subModel: "arith-geo" },
+      );
+      expect(JSON.stringify(arithGeoPanel)).not.toMatch(/\d+\.0000\b/);
+      expect(
+        arithGeoPanel.quantities.some((item) => item.label.includes("标准型")),
+      ).toBe(true);
+
+      const scale = calculateSceneScale({
+        designVisibleW: FULL_W,
+        designVisibleH: FULL_H,
+        designLeft: 0,
+        designTop: 0,
+        xRange: [-1, N + 2],
+        yRange: [-36, 203],
+        keepAspectRatio: false,
+      });
+      const zeroY = mathToDesign(1, 0, scale).y;
+
+      // Step 1：X 轴正整数刻度 1..N 下沿不得存在 a_n*b_n 二次叠字（文本应留在柱内或柱顶，y < zeroY）
+      const { container: step1Dom } = render(
+        <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
+          <SequenceModelsArithGeoScene
+            terms={splitRes.terms}
+            q={q}
+            N={N}
+            sumStep={1}
+            vp={VP}
+            scale={scale}
+            fontScale={dummyFontScale}
+            a1={a1}
+            d={d}
+            splitResult={splitRes}
+          />
+        </svg>,
+      );
+      const structureTexts = Array.from(
+        step1Dom.querySelectorAll("text"),
+      ).filter(
+        (el) =>
+          (el.textContent ?? "").includes("a₄b₄") ||
+          (el.textContent ?? "").includes("a₈b₈"),
+      );
+      expect(structureTexts.length).toBeGreaterThanOrEqual(1);
+      structureTexts.forEach((el) => {
+        expect(Number(el.getAttribute("y"))).toBeLessThan(zeroY);
+      });
+      cleanup();
+
+      // Step 4：负尾项柱必须位于 y >= zeroY - 1（第四象限向下），且存在中间纯等比差值柱、Step 4 双项回验 ✓
+      const { container: step4Dom } = render(
+        <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
+          <SequenceModelsArithGeoScene
+            terms={splitRes.terms}
+            q={q}
+            N={N}
+            sumStep={4}
+            vp={VP}
+            scale={scale}
+            fontScale={dummyFontScale}
+            a1={a1}
+            d={d}
+            splitResult={splitRes}
+          />
+        </svg>,
+      );
+      const tailRect = step4Dom.querySelector(
+        'g.tail-warning-term rect[data-seq-bar="true"]',
+      );
+      expect(tailRect).not.toBeNull();
+      expect(Number(tailRect?.getAttribute("y"))).toBeGreaterThanOrEqual(
+        zeroY - 1,
+      );
+      const middleBars = step4Dom.querySelectorAll(
+        'g.middle-geo-box rect[data-seq-bar="true"]',
+      );
+      expect(middleBars.length).toBe(N - 1);
+      expect(step4Dom.textContent ?? "").toContain("n=1");
+      expect(step4Dom.textContent ?? "").toContain("n=2");
+      cleanup();
     });
   });
 });

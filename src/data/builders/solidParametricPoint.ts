@@ -7,6 +7,7 @@ import type {
   ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatCoefTerm, formatMathNumber } from "@/utils/mathFormat";
 import {
   calculateSinglePointAngle,
   calculateDoublePointDistance,
@@ -224,7 +225,7 @@ export function buildParametricPointPanel(
         step: 2,
         title: "距离多元二次型函数的完全平方配方",
         detail: "展开两点间空间距离平方函数，分别对 μ 与 λ 进行独立二次配方。",
-        latex: `|PQ|^2 = ${(a * a + b * b).toFixed(0)}\\left(\\mu - ${res.optimalMu.toFixed(2)}\\right)^2 + ${(res.minDistSkew ** 2).toFixed(2)} + ${c * c}\\lambda^2`,
+        latex: `|PQ|^2 = ${formatCoefTerm(a * a + b * b, `\\left(\\mu - ${formatMathNumber(res.optimalMu)}\\right)^2`)} + ${formatMathNumber(res.minDistSkew ** 2)} + ${formatCoefTerm(c * c, "\\lambda^2")}`,
         rubric: "【高考采分点】正确展开并配方分离变量为非负项与常数项 (+5分)",
       },
       {

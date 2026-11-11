@@ -3,7 +3,10 @@
  * 数列纯函数计算模块 — 零 DOM、零 React 依赖、带 validity 状态
  */
 
-import { formatMathNumber } from "@/utils/mathFormat";
+import {
+  formatMathNumber,
+  formatMathRationalOrNumber,
+} from "@/utils/mathFormat";
 
 export interface ArithmeticTermInfo {
   n: number;
@@ -106,7 +109,16 @@ export interface ArithGeoSplitTerm {
   an: number;
   bn: number;
   cn: number;
+  /** 错位相减后同次幂对齐合并项（n=1 保留首项 cn，n>=2 为纯等比差值 d·q^(n-1)） */
+  diffTerm: number;
   Tn: number;
+}
+
+export interface ArithGeoClosedForm {
+  A: number;
+  B: number;
+  C: number;
+  latex: string;
 }
 
 export interface ArithGeoSplitResult {
@@ -116,6 +128,14 @@ export interface ArithGeoSplitResult {
   d: number;
   q: number;
   N: number;
+  /** 尾项 -a_N·q^N（带真实正负号） */
+  tailTermVal: number;
+  isDegenerateQ1: boolean;
+  isDegenerateQ0: boolean;
+  /** (An + B)q^n + C 标准闭式结构（q ≠ 0 且 q ≠ 1 时有效） */
+  closedForm: ArithGeoClosedForm | null;
+  verifyN1: { actual: number; expected: number; passed: boolean };
+  verifyN2: { actual: number; expected: number; passed: boolean } | null;
 }
 
 export interface TelescopingTerm {
@@ -601,6 +621,59 @@ export function calcGeometricSequence(
   };
 }
 
+function buildArithGeoClosedForm(
+  a1: number,
+  d: number,
+  q: number,
+): ArithGeoClosedForm | null {
+  if (Math.abs(q - 1) < 1e-6 || Math.abs(q) < 1e-6) return null;
+  const denom = q - 1;
+  const A = d / denom;
+  const B = a1 / denom - (d * q) / (denom * denom);
+  const C = -B;
+
+  if (Math.abs(A) < 1e-9 && Math.abs(B) < 1e-9) {
+    return { A: 0, B: 0, C: 0, latex: "0" };
+  }
+
+  const fmtRat = (v: number) => formatMathRationalOrNumber(v, 24);
+  const qRaw = fmtRat(q);
+  const qBase =
+    q < 0 || qRaw.includes("\\frac") ? `\\left(${qRaw}\\right)` : qRaw;
+
+  let mainPart = "";
+  if (Math.abs(A) < 1e-9) {
+    const absB = fmtRat(Math.abs(B));
+    const isUnitB = Math.abs(Math.abs(B) - 1) < 1e-9;
+    const prefix = isUnitB
+      ? B < 0
+        ? "-"
+        : ""
+      : `${B < 0 ? "-" : ""}${absB} \\cdot `;
+    mainPart = `${prefix}${qBase}^{n}`;
+  } else {
+    const absAStr = Math.abs(Math.abs(A) - 1) < 1e-9 ? "" : fmtRat(Math.abs(A));
+    const aTerm = `${A < 0 ? "-" : ""}${absAStr}n`;
+    if (Math.abs(B) < 1e-9) {
+      mainPart = `${aTerm} \\cdot ${qBase}^{n}`;
+    } else {
+      const bSign = B < 0 ? "-" : "+";
+      const absBStr = fmtRat(Math.abs(B));
+      mainPart = `\\left(${aTerm} ${bSign} ${absBStr}\\right) \\cdot ${qBase}^{n}`;
+    }
+  }
+
+  const cTail =
+    Math.abs(C) < 1e-9 ? "" : ` ${C < 0 ? "-" : "+"} ${fmtRat(Math.abs(C))}`;
+
+  return {
+    A,
+    B,
+    C,
+    latex: `${mainPart}${cTail}`,
+  };
+}
+
 /**
  * 错位相减法数据计算: cn = (a1 + (n-1)d) * q^(n-1)
  */
@@ -615,10 +688,41 @@ export function calcArithGeoSplit(
 
   for (let n = 1; n <= N; n++) {
     const an = a1 + (n - 1) * d;
-    const bn = Math.pow(q, n - 1);
+    const bn = n === 1 ? 1 : Math.pow(q, n - 1);
     const cn = an * bn;
+    const diffTerm = n === 1 ? cn : d * bn;
     currentTn += cn;
-    terms.push({ n, an, bn, cn, Tn: currentTn });
+    terms.push({ n, an, bn, cn, diffTerm, Tn: currentTn });
+  }
+
+  const lastCn = terms[terms.length - 1]?.cn ?? 0;
+  const tailTermVal = -lastCn * q;
+  const isDegenerateQ1 = Math.abs(q - 1) < 1e-6;
+  const isDegenerateQ0 = Math.abs(q) < 1e-6;
+  const closedForm = buildArithGeoClosedForm(a1, d, q);
+
+  const c1 = terms[0]?.cn ?? 0;
+  const t1Eval = closedForm
+    ? (closedForm.A * 1 + closedForm.B) * q + closedForm.C
+    : (terms[0]?.Tn ?? 0);
+  const verifyN1 = {
+    actual: t1Eval,
+    expected: c1,
+    passed: Math.abs(t1Eval - c1) < 1e-5,
+  };
+
+  let verifyN2: { actual: number; expected: number; passed: boolean } | null =
+    null;
+  if (terms.length >= 2) {
+    const c1c2 = c1 + terms[1].cn;
+    const t2Eval = closedForm
+      ? (closedForm.A * 2 + closedForm.B) * q * q + closedForm.C
+      : terms[1].Tn;
+    verifyN2 = {
+      actual: t2Eval,
+      expected: c1c2,
+      passed: Math.abs(t2Eval - c1c2) < 1e-5,
+    };
   }
 
   return {
@@ -628,6 +732,12 @@ export function calcArithGeoSplit(
     d,
     q,
     N,
+    tailTermVal,
+    isDegenerateQ1,
+    isDegenerateQ0,
+    closedForm,
+    verifyN1,
+    verifyN2,
   };
 }
 

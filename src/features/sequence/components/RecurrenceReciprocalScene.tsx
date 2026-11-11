@@ -13,6 +13,7 @@ import {
   legendXOf,
   type RecurrenceSceneBaseProps,
 } from "./RecurrenceShared";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
   params,
@@ -71,8 +72,8 @@ export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
                 fontWeight="bold"
               >
                 {recipData.isReciprocalLinear
-                  ? `+d=${(coefB / coefA).toFixed(2)} (等差)`
-                  : `×${(coefC / coefA).toFixed(2)}+${(coefB / coefA).toFixed(2)}`}
+                  ? `+d=${formatMathNumber(coefB / coefA)} (等差)`
+                  : `×${formatMathNumber(coefC / coefA)}+${formatMathNumber(coefB / coefA)}`}
               </text>
             )}
           </g>

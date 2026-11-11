@@ -6,6 +6,7 @@ import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { TriangleExtremaState, Point2D } from "@/math/triangleExtrema";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface TriangleExtremaSceneProps {
   state: TriangleExtremaState;
@@ -368,7 +369,7 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
             strokeWidth={fontScale(3.5)}
             strokeLinejoin="round"
           >
-            c / b = k = {apolloniusCircle.ratioK.toFixed(1)}
+            c / b = k = {formatMathNumber(apolloniusCircle.ratioK)}
           </text>
         </g>
       )}
@@ -505,8 +506,9 @@ export const TriangleExtremaScene: React.FC<TriangleExtremaSceneProps> = ({
                 stroke={MATH_COLORS.white}
                 strokeWidth={fontScale(4)}
               >
-                ⚠️ 非锐角状态 (角 B ∈ ({acuteRange.minAngleB.toFixed(0)}°,{" "}
-                {acuteRange.maxAngleB.toFixed(0)}°))
+                ⚠️ 非锐角状态 (角 B ∈ (
+                {formatMathNumber(Math.round(acuteRange.minAngleB))}°,{" "}
+                {formatMathNumber(Math.round(acuteRange.maxAngleB))}°))
               </text>
             )}
 

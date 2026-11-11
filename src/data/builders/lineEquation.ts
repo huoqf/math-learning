@@ -701,12 +701,12 @@ export function buildLineEquationPanel(
     quantities.push(
       {
         label: "直线 L₁ 方程",
-        value: `${A.toFixed(1)}x ${B >= 0 ? "+" : ""} ${B.toFixed(1)}y ${C >= 0 ? "+" : ""} ${C.toFixed(1)} = 0`,
+        value: `${formatLinearPoly(A, B, C)} = 0`,
         color: cPrimary,
       },
       {
         label: "直线 L₂ 方程",
-        value: `${A2.toFixed(1)}x ${B2 >= 0 ? "+" : ""} ${B2.toFixed(1)}y ${C2 >= 0 ? "+" : ""} ${C2.toFixed(1)} = 0`,
+        value: `${formatLinearPoly(A2, B2, C2)} = 0`,
         color: cSecondary,
       },
       {
@@ -870,17 +870,17 @@ export function buildLineEquationPanel(
     quantities.push(
       {
         label: "基准直线 L₁",
-        value: `${A.toFixed(1)}x ${B >= 0 ? "+" : ""} ${B.toFixed(1)}y ${C >= 0 ? "+" : ""} ${C.toFixed(1)} = 0`,
+        value: `${formatLinearPoly(A, B, C)} = 0`,
         color: cPrimary,
       },
       {
         label: "基准直线 L₂",
-        value: `${A2.toFixed(1)}x ${B2 >= 0 ? "+" : ""} ${B2.toFixed(1)}y ${C2 >= 0 ? "+" : ""} ${C2.toFixed(1)} = 0`,
+        value: `${formatLinearPoly(A2, B2, C2)} = 0`,
         color: cSecondary,
       },
       {
         label: "动直线系 L(λ)",
-        value: `${A_fam.toFixed(1)}x ${B_fam >= 0 ? "+" : ""} ${B_fam.toFixed(1)}y ${C_fam >= 0 ? "+" : ""} ${C_fam.toFixed(1)} = 0`,
+        value: `${formatLinearPoly(A_fam, B_fam, C_fam)} = 0`,
         color: cTertiary,
       },
     );

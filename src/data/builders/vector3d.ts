@@ -14,6 +14,7 @@ import {
 } from "@/math3d/basis";
 import { calculateVectorOperations } from "@/math3d/vectorOperations";
 import type { Vec3 } from "@/math3d/vector3";
+import { formatSignedTerm } from "@/utils/mathFormat";
 
 export function buildVector3DBasisPanel(
   params: Record<string, number>,
@@ -378,7 +379,18 @@ export function buildVector3DBasisPanel(
       title: "建模联立 · 空间向量基本定理唯一分解",
       detail:
         "对空间中任意一点 P，存在唯一的实数组 (x, y, z)，使得向量 OP 可以用基底线性表出：",
-      latex: `\\vec{OP} = x\\vec{a} + y\\vec{b} + z\\vec{c} = ${x.toFixed(2)}\\vec{a} + ${y.toFixed(2)}\\vec{b} + ${z.toFixed(2)}\\vec{c}`,
+      latex: (() => {
+        const parts = [
+          formatSignedTerm(x, "\\vec{a}", true),
+          formatSignedTerm(y, "\\vec{b}", Math.abs(x) < 1e-9),
+          formatSignedTerm(
+            z,
+            "\\vec{c}",
+            Math.abs(x) < 1e-9 && Math.abs(y) < 1e-9,
+          ),
+        ].filter(Boolean);
+        return `\\vec{OP} = x\\vec{a} + y\\vec{b} + z\\vec{c} = ${parts.length > 0 ? parts.join(" ") : "\\vec{0}"}`;
+      })(),
       rubric: "【高考采分点】正确建立线性方程组并求解分解系数 (x,y,z) (+5分)",
     },
     {

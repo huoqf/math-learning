@@ -2,6 +2,7 @@ import type { DistributionComparisonResult } from "@/math/probabilityDistributio
 import { mathToDesign, type Point } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface ProbabilityDistributionCompareSceneProps {
   comparisonResult: DistributionComparisonResult;
@@ -58,7 +59,7 @@ export function ProbabilityDistributionCompareScene({
           textAnchor="middle"
           fontWeight="bold"
         >
-          方差修正系数 (N-n)/(N-1) = {varianceCorrectionFactor.toFixed(3)}{" "}
+          方差修正系数 (N-n)/(N-1) = {formatMathProb(varianceCorrectionFactor)}{" "}
           {isNearConvergence ? "✔ 逼近充分" : "≈ 趋近中"}
         </text>
       </g>
@@ -105,7 +106,7 @@ export function ProbabilityDistributionCompareScene({
                 fontWeight="bold"
                 className="font-mono"
               >
-                {pHyper.toFixed(2)}
+                {formatMathNumber(pHyper)}
               </text>
             )}
 
@@ -130,7 +131,7 @@ export function ProbabilityDistributionCompareScene({
                 fontWeight="bold"
                 className="font-mono"
               >
-                {pBinom.toFixed(2)}
+                {formatMathNumber(pBinom)}
               </text>
             )}
 
@@ -144,7 +145,7 @@ export function ProbabilityDistributionCompareScene({
                 textAnchor="middle"
                 className="font-mono"
               >
-                Δ={diff.toFixed(2)}
+                Δ={formatMathNumber(diff)}
               </text>
             )}
 
@@ -197,7 +198,7 @@ export function ProbabilityDistributionCompareScene({
             textAnchor="middle"
             fontWeight="bold"
           >
-            E(X) = {mean.toFixed(2)}
+            E(X) = {formatMathNumber(mean)}
           </text>
         </g>
       </g>

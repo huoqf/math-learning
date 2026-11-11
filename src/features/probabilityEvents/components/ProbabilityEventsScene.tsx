@@ -12,6 +12,7 @@ import {
   calculateVennProbabilities,
   filterDiceEvents,
 } from "@/math/probabilityEvents";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export interface ProbabilityEventsSceneProps {
   activeMode: "venn" | "discrete";
@@ -378,14 +379,14 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
             {highlightOp === "none"
               ? `两事件关系：${vennRes.relationText}`
               : highlightOp === "union"
-                ? `运算高亮：并事件 A ∪ B (P = ${vennRes.pUnion.toFixed(2)})`
+                ? `运算高亮：并事件 A ∪ B (P = ${formatMathNumber(vennRes.pUnion)})`
                 : highlightOp === "intersection"
-                  ? `运算高亮：交事件 A ∩ B (P = ${vennRes.pIntersection.toFixed(2)})`
+                  ? `运算高亮：交事件 A ∩ B (P = ${formatMathNumber(vennRes.pIntersection)})`
                   : highlightOp === "onlyA"
-                    ? `运算高亮：差事件 A - B (P = ${vennRes.pOnlyA.toFixed(2)})`
+                    ? `运算高亮：差事件 A - B (P = ${formatMathNumber(vennRes.pOnlyA)})`
                     : highlightOp === "onlyB"
-                      ? `运算高亮：差事件 B - A (P = ${vennRes.pDiffBminusA.toFixed(2)})`
-                      : `运算高亮：对立事件 Aᶜ (P(Ā) = ${vennRes.pNotA.toFixed(2)})`}
+                      ? `运算高亮：差事件 B - A (P = ${formatMathNumber(vennRes.pDiffBminusA)})`
+                      : `运算高亮：对立事件 Aᶜ (P(Ā) = ${formatMathNumber(vennRes.pNotA)})`}
           </text>
 
           {/* 两圆心连线辅助指示 */}
@@ -489,7 +490,7 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
             dominantBaseline="central"
             opacity={0.9}
           >
-            P(A) = {vennRes.pA.toFixed(2)}
+            P(A) = {formatMathNumber(vennRes.pA)}
           </text>
 
           {vennRes.relation !== "equal" && (
@@ -515,7 +516,7 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
                 dominantBaseline="central"
                 opacity={0.9}
               >
-                P(B) = {vennRes.pB.toFixed(2)}
+                P(B) = {formatMathNumber(vennRes.pB)}
               </text>
             </>
           )}
@@ -547,14 +548,14 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
             {isOppositeVenn
               ? "对立事件图式：A ∩ B = ∅ 且 A ∪ B = Ω（事件 B 即为圆 A 外部的全部样本空间 Ā，无剩余空白）"
               : vennRes.isMutuallyExclusive
-                ? `互斥但不对立：A ∩ B = ∅，但全集仍余留空白区域 P(Ω \\ (A∪B)) = ${vennRes.pNeither.toFixed(2)} > 0`
+                ? `互斥但不对立：A ∩ B = ∅，但全集仍余留空白区域 P(Ω \\ (A∪B)) = ${formatMathNumber(vennRes.pNeither)} > 0`
                 : vennRes.relation === "subset_A_in_B"
                   ? "包含关系图式：小圆 A 完全内含于大圆 B 内 (A ⊆ B)，必有 A ∩ B = A 且 P(A) ≤ P(B)"
                   : vennRes.relation === "subset_B_in_A"
                     ? "包含关系图式：小圆 B 完全内含于大圆 A 内 (B ⊆ A)，必有 A ∩ B = B 且 P(B) ≤ P(A)"
                     : vennRes.relation === "equal"
                       ? "相等事件图式：两圆同心等径完全重合 (A = B)，A ∪ B = A ∩ B = A"
-                      : `广义加法容斥：P(A ∪ B) = P(A) + P(B) - P(A ∩ B) = ${vennRes.pA.toFixed(2)} + ${vennRes.pB.toFixed(2)} - ${vennRes.pIntersection.toFixed(2)} = ${vennRes.pUnion.toFixed(2)}`}
+                      : `广义加法容斥：P(A ∪ B) = P(A) + P(B) - P(A ∩ B) = ${formatMathNumber(vennRes.pA)} + ${formatMathNumber(vennRes.pB)} - ${formatMathNumber(vennRes.pIntersection)} = ${formatMathNumber(vennRes.pUnion)}`}
           </text>
         </g>
       )}
@@ -593,14 +594,14 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
             {highlightOp === "none"
               ? `事件 A: ${diceRes.countA} 点 | 事件 B: ${diceRes.countB} 点 | 交事件: ${diceRes.countIntersection} 点 | 并事件: ${diceRes.countUnion} 点`
               : highlightOp === "union"
-                ? `运算高亮：并事件 A ∪ B (包含 ${diceRes.countUnion} 点，P = ${diceRes.countUnion}/36 = ${(diceRes.countUnion / 36).toFixed(2)})`
+                ? `运算高亮：并事件 A ∪ B (包含 ${diceRes.countUnion} 点，P = ${diceRes.countUnion}/36 = ${formatMathNumber(diceRes.countUnion / 36)})`
                 : highlightOp === "intersection"
-                  ? `运算高亮：交事件 A ∩ B (包含 ${diceRes.countIntersection} 点，P = ${diceRes.countIntersection}/36 = ${(diceRes.countIntersection / 36).toFixed(2)})`
+                  ? `运算高亮：交事件 A ∩ B (包含 ${diceRes.countIntersection} 点，P = ${diceRes.countIntersection}/36 = ${formatMathNumber(diceRes.countIntersection / 36)})`
                   : highlightOp === "onlyA"
                     ? `运算高亮：差事件 A - B (包含 ${diceRes.countA - diceRes.countIntersection} 点，P = ${diceRes.countA - diceRes.countIntersection}/36)`
                     : highlightOp === "onlyB"
                       ? `运算高亮：差事件 B - A (包含 ${diceRes.countB - diceRes.countIntersection} 点，P = ${diceRes.countB - diceRes.countIntersection}/36)`
-                      : `运算高亮：对立事件 Aᶜ (P(Ā) = ${36 - diceRes.countA}/36 = ${((36 - diceRes.countA) / 36).toFixed(2)})`}
+                      : `运算高亮：对立事件 Aᶜ (P(Ā) = ${36 - diceRes.countA}/36 = ${formatMathNumber((36 - diceRes.countA) / 36)})`}
           </text>
 
           {/* 6×6 坐标网格背景与辅助线 (整体下移且偏左排布，避让顶栏副标题与右上图例) */}

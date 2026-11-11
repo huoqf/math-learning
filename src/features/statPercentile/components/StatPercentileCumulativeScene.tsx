@@ -11,6 +11,7 @@ import { InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { HistogramBin, HistogramStatsResult } from "@/math/statPercentile";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface StatPercentileCumulativeSceneProps {
   percentileP: number;
@@ -354,7 +355,7 @@ export const StatPercentileCumulativeScene: React.FC<
               fontWeight="bold"
               fontFamily="monospace"
             >
-              P{percentileP} = {pVal.toFixed(2)}
+              P{percentileP} = {formatMathNumber(pVal)}
             </text>
           </g>
         );
@@ -447,7 +448,7 @@ export const StatPercentileCumulativeScene: React.FC<
               fontSize={fontScale(9)}
               fontWeight="600"
             >
-              Q₁={stats.q1.toFixed(1)}
+              Q₁={formatMathNumber(stats.q1)}
             </text>
             <text
               x={pMed.x}
@@ -457,7 +458,7 @@ export const StatPercentileCumulativeScene: React.FC<
               fontSize={fontScale(9)}
               fontWeight="bold"
             >
-              Me={stats.median.toFixed(1)}
+              Me={formatMathNumber(stats.median)}
             </text>
             <text
               x={pQ3.x}
@@ -467,7 +468,7 @@ export const StatPercentileCumulativeScene: React.FC<
               fontSize={fontScale(9)}
               fontWeight="600"
             >
-              Q₃={stats.q3.toFixed(1)}
+              Q₃={formatMathNumber(stats.q3)}
             </text>
             <text
               x={(pQ1.x + pQ3.x) / 2}
@@ -477,7 +478,7 @@ export const StatPercentileCumulativeScene: React.FC<
               fontSize={fontScale(9)}
               fontWeight="bold"
             >
-              IQR={stats.iqr.toFixed(1)} (中间50%)
+              IQR={formatMathNumber(stats.iqr)} (中间50%)
             </text>
           </g>
         );

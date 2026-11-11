@@ -16,6 +16,7 @@ import {
   simulateClassicalFrequency,
   type ClassicalModelType,
 } from "@/math/probabilityClassical";
+import { formatMathProb } from "@/utils/mathFormat";
 
 export interface ClassicalFrequencySceneProps {
   params: Record<string, unknown>;
@@ -130,7 +131,7 @@ export const ClassicalFrequencyScene: React.FC<
         fontSize={fontScale(12)}
         fontWeight="bold"
       >
-        {`P(A) = ${p.toFixed(4)}`}
+        {`P(A) = ${formatMathProb(p)}`}
       </text>
 
       {/* 频率轨迹 */}
@@ -163,7 +164,7 @@ export const ClassicalFrequencyScene: React.FC<
             fontSize={fontScale(12)}
             fontWeight="bold"
           >
-            {`f = ${sim.frequency.toFixed(4)}`}
+            {`f = ${formatMathProb(sim.frequency)}`}
           </text>
         </g>
       )}
@@ -210,7 +211,7 @@ export const ClassicalFrequencyScene: React.FC<
         fontSize={fontScale(13)}
         fontWeight="bold"
       >
-        {`${sim.trials} 次试验：事件发生 ${sim.hits} 次，频率 ${sim.frequency.toFixed(4)}，与概率偏差 ${sim.absError.toFixed(4)}`}
+        {`${sim.trials} 次试验：事件发生 ${sim.hits} 次，频率 ${formatMathProb(sim.frequency)}，与概率偏差 ${formatMathProb(sim.absError)}`}
       </text>
     </g>
   );

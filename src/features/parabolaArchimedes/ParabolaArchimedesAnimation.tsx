@@ -17,7 +17,7 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ParabolaArchimedesScene } from "./components/ParabolaArchimedesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { getArchimedesTriangleInfo } from "@/math/parabolaArchimedes";
-import { fitViewRange } from "@/math/viewRange";
+import { fitSteppedViewRange } from "@/math/viewRange";
 import {
   defaultParams,
   paramMeta,
@@ -45,12 +45,10 @@ export function ParabolaArchimedesAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 视口自适应：阿基米德三角形的 Q、两切点 A/B、弦中点 M、中线与抛物线的交点 P₀ 必须可见。
-  // yQ=5、p=2 时切点 A 的纵坐标达到 10.385，固定 y∈[-5.5,5.5] 会把切点与整个弓形裁出画布。
-  // 焦点弦/正交弦模式共用同一抛物线 y²=2px，上述点集已覆盖其几何范围。
+  // B 类稳态分级视口：Q、两切点 A/B、中点 M、P₀ 处于基准内时锁定比例尺，越界按阶梯档位外扩。
   const viewRange = useMemo(() => {
     const info = getArchimedesTriangleInfo(params.p, params.yQ);
-    return fitViewRange([info.Q, info.A, info.B, info.M, info.P0], {
+    return fitSteppedViewRange([info.Q, info.A, info.B, info.M, info.P0], {
       defaultXRange: [-7, 7],
       defaultYRange: [-5.5, 5.5],
     });

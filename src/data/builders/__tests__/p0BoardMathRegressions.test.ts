@@ -78,18 +78,18 @@ describe("P0-3 /nike-shifted：a<0 时把最大值点写成 y_min", () => {
     const step2 = panel.reasoningSteps?.[1];
     expect(step2?.title).toBe("建模联立 · 基本不等式求最大值");
     expect(step2?.latex).toContain("y_{\\max}");
-    expect(step2?.latex).toContain("-2.00");
+    expect(step2?.latex).toContain("= -2");
     expect(step2?.latex).not.toContain("y_{\\min}");
   });
 
-  it("a<0 时第 3 步把左支写成极小值点 (−1.00, 6.00)，且使用规范「值域」记号", () => {
+  it("a<0 时第 3 步把左支写成极小值点 (−1, 6)，且使用规范「值域」记号", () => {
     const panel = buildNikePanel(
       { a: -1, b: -4, h: 1, c: 2, x0: 3 },
       { activeMode: "shifted" },
     );
     const step3 = panel.reasoningSteps?.[2];
     expect(step3?.detail).toContain("左支最小值点");
-    expect(step3?.detail).toContain("6.00");
+    expect(step3?.detail).toContain("(-1, 6)");
     expect(step3?.latex).toContain("\\text{值域：}");
     expect(step3?.latex).not.toContain("最值集合");
   });
@@ -112,7 +112,7 @@ describe("P0-3 /nike-shifted：a<0 时把最大值点写成 y_min", () => {
     const step2 = panel.reasoningSteps?.[1];
     expect(step2?.title).toBe("建模联立 · 基本不等式求最小值");
     expect(step2?.latex).toContain("y_{\\min}");
-    expect(step2?.latex).toContain("= 6.00");
+    expect(step2?.latex).toContain("= 2 + 4 = 6");
     expect(panel.reasoningSteps?.[2]?.detail ?? "").toContain("左支最大值点");
   });
 });

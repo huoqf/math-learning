@@ -3,6 +3,7 @@ import { mathToDesign, type Point } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { DECISION_BAR_FIRST_X, DECISION_BAR_STRIDE } from "./modeConfig";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ProbabilityDistributionDecisionSceneProps {
   decisionResult: DecisionScenarioResult;
@@ -103,7 +104,7 @@ export function ProbabilityDistributionDecisionScene({
                 fontWeight="bold"
                 className="font-mono"
               >
-                {(item.p * 100).toFixed(0)}%
+                {formatMathNumber(Math.round(item.p * 100))}%
               </text>
               <text
                 x={bPos.x}

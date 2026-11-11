@@ -8,6 +8,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { toSub } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ArithmeticSubSceneProps {
   params: Record<string, number>;
@@ -185,7 +186,7 @@ export function SequenceArithmeticAbsSumScene({
                 fill={MATH_COLORS.sequenceHighlight}
                 fontWeight="bold"
               >
-                T{toSub(t.n)} = {t.Tn.toFixed(1)}
+                T{toSub(t.n)} = {formatMathNumber(t.Tn)}
               </text>
             )}
 

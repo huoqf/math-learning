@@ -9,35 +9,15 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useGaokaoView } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SequenceScene } from "./components/SequenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
 import { calcGeometricSequence } from "@/math/sequence";
 
-function checkIsGaokaoView(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const hash = window.location.hash || "";
-    const qIndex = hash.indexOf("?");
-    if (qIndex !== -1) {
-      const sp = new URLSearchParams(hash.slice(qIndex));
-      if (sp.get("view") === "gaokao") return true;
-    }
-    const search = window.location.search || "";
-    if (search) {
-      const sp = new URLSearchParams(search);
-      if (sp.get("view") === "gaokao") return true;
-    }
-  } catch {
-    return false;
-  }
-  return false;
-}
-
 export function GeometricPage() {
-  const isGaokaoView = checkIsGaokaoView();
+  const isGaokaoView = useGaokaoView();
   const [geometricSubMode, setGeometricSubMode] = useState<
     "exponential" | "staggerSum" | "segment" | "productMax" | "tessellation"
   >(() => (isGaokaoView ? "staggerSum" : "exponential"));
@@ -53,7 +33,9 @@ export function GeometricPage() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 动态视口范围：根据当前模式与实际数据自适应包络，限制在合理教学尺度内，杜绝指数爆炸导致的网格墨染与轴变形
+  // 稳态分档视口：序数横轴与数值纵轴解耦（keepAspectRatio: false），杜绝指数增长把横轴压成竖线；
+  // 常规态按教学档位对整齐整上界（避免拖滑块逐帧微跳），超限爆炸项不再硬塞入 yValues 伪造高度，
+  // 而是在固定量程天花板顶部留出断轴警示带交由场景显式绘制断轴标识。
   const yRange = useMemo<[number, number]>(() => {
     const a1 = params.a1 ?? 3;
     const q = params.q ?? 0.5;
@@ -67,56 +49,63 @@ export function GeometricPage() {
       return [-2, 10];
     }
 
+    const POS_CAP = 32;
+    const NEG_CAP = -24;
     const geo = calcGeometricSequence(a1, q, N, kSegment);
-    const yValues: number[] = [0];
+    const inRangeVals: number[] = [0];
+    let hasTopOverflow = false;
+    let hasBotOverflow = false;
+
+    const recordVal = (v: number, posLimit = POS_CAP, negLimit = NEG_CAP) => {
+      if (!Number.isFinite(v)) return;
+      if (v > posLimit) {
+        hasTopOverflow = true;
+      } else if (v < negLimit) {
+        hasBotOverflow = true;
+      } else {
+        inRangeVals.push(v);
+      }
+    };
 
     if (geometricSubMode === "exponential") {
-      // 观察通项在指数曲线上的演化，对爆炸项做视口上限截断保护
       geo.terms.forEach((t) => {
-        if (Math.abs(t.an) <= 32) {
-          yValues.push(t.an);
-        } else {
-          yValues.push(Math.sign(t.an) * 32);
-        }
-        if (Math.abs(t.Sn) <= 36) {
-          yValues.push(t.Sn);
-        }
+        recordVal(t.an, POS_CAP, NEG_CAP);
+        recordVal(t.Sn, 36, NEG_CAP);
       });
-      if (geo.limitSum !== null && Math.abs(geo.limitSum) <= 40) {
-        yValues.push(geo.limitSum);
+      if (geo.limitSum !== null) {
+        recordVal(geo.limitSum, 40, NEG_CAP);
       }
     } else if (geometricSubMode === "segment") {
-      geo.terms.forEach((t) => {
-        if (Math.abs(t.an) <= 32) yValues.push(t.an);
-      });
+      geo.terms.forEach((t) => recordVal(t.an, POS_CAP, NEG_CAP));
       if (geo.segmentedSums) {
-        geo.segmentedSums.segments.forEach((s) => {
-          if (Math.abs(s.sumValue) <= 40) yValues.push(s.sumValue);
-        });
+        geo.segmentedSums.segments.forEach((s) =>
+          recordVal(s.sumValue, 40, NEG_CAP),
+        );
       }
     } else if (geometricSubMode === "productMax") {
-      yValues.push(1); // 临界基准线 y=1
+      inRangeVals.push(1); // 临界基准线 y=1
       geo.terms.forEach((t) => {
-        if (Math.abs(t.an) <= 30) yValues.push(t.an);
-        if (Number.isFinite(t.Pn) && Math.abs(t.Pn) <= 36) {
-          yValues.push(t.Pn);
-        }
+        recordVal(t.an, 30, NEG_CAP);
+        recordVal(t.Pn, 36, NEG_CAP);
       });
     }
 
-    let minY = Math.min(...yValues);
-    let maxY = Math.max(...yValues);
+    const rawMin = Math.min(...inRangeVals);
+    const rawMax = Math.max(...inRangeVals);
 
-    if (maxY - minY < 5) {
-      minY = Math.min(minY, -1.5);
-      maxY = Math.max(maxY, 4.5);
-    }
+    // 阶梯档位化：温和区不随每步 0.1 滑块移动微调刻度；顶部多留安全空间用于断轴带与点标
+    const posTiers = [6, 12, 24, 36];
+    const negTiers = [-4, -8, -14, -24];
 
-    minY = Math.max(-25, minY);
-    maxY = Math.min(42, maxY);
+    const yMaxTarget = hasTopOverflow
+      ? 42
+      : (posTiers.find((t) => t >= rawMax * 1.15 + 1) ?? 42);
+    const botPad = Math.max(2, Math.ceil(yMaxTarget * 0.1));
+    const yMinTarget = hasBotOverflow
+      ? -28
+      : (negTiers.find((t) => t <= rawMin - botPad) ?? -28);
 
-    const padding = (maxY - minY) * 0.15;
-    return [minY - padding, maxY + padding];
+    return [yMinTarget, yMaxTarget];
   }, [params, geometricSubMode]);
 
   const xRange = useMemo<[number, number]>(() => {
@@ -131,6 +120,7 @@ export function GeometricPage() {
     vp,
     xRange,
     yRange,
+    keepAspectRatio: false,
   });
 
   const mathData = useMemo(

@@ -1,7 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import "@testing-library/jest-dom";
+
+const mockNavigate = vi.fn();
+
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 vi.mock("@/data/knowledgeTree", () => ({
   knowledgeTree: [
@@ -30,6 +40,15 @@ vi.mock("@/data/knowledgeTree", () => ({
       animationIds: ["anim-constant-single"],
     },
     {
+      id: "know-sequence-geom",
+      title: "等差数列通项与求和",
+      chapter: "数列",
+      module: "等差与等比数列",
+      importance: "core",
+      route: "/sequence-arithmetic",
+      animationIds: ["anim-sequence-arithmetic"],
+    },
+    {
       id: "locked-node",
       title: "数列求和",
       chapter: "数列",
@@ -45,6 +64,10 @@ import { KnowledgeTreeHome } from "./KnowledgeTreeHome";
 describe("KnowledgeTreeHome smoke test", () => {
   const renderWithRouter = (component: React.ReactNode) =>
     render(<MemoryRouter>{component}</MemoryRouter>);
+
+  beforeEach(() => {
+    mockNavigate.mockReset();
+  });
 
   it("renders without crashing", () => {
     renderWithRouter(<KnowledgeTreeHome />);
@@ -107,5 +130,18 @@ describe("KnowledgeTreeHome smoke test", () => {
     expect(textbookTitles.indexOf("二次函数")).toBeLessThan(
       textbookTitles.indexOf("导数的几何意义"),
     );
+  });
+
+  it("仅对声明支持 ?view=gaokao 的路由拼接查询参数，不对其他页面透传无效参数", () => {
+    renderWithRouter(<KnowledgeTreeHome />);
+
+    fireEvent.click(screen.getByText("等差数列通项与求和"));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/sequence-arithmetic?view=gaokao",
+    );
+
+    mockNavigate.mockReset();
+    fireEvent.click(screen.getByText("二次函数"));
+    expect(mockNavigate).toHaveBeenCalledWith("/quadratic");
   });
 });

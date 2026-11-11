@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { fitViewRange, isPointInsideRange } from "@/math/viewRange";
+import {
+  fitViewRange,
+  fitSteppedViewRange,
+  isPointInsideRange,
+} from "@/math/viewRange";
 
 /**
  * `fitViewRange` 单测。覆盖四条契约：
@@ -140,5 +144,48 @@ describe("数值稳定性", () => {
     // 单点（跨度 0）：比例无作用对象，仍保 minPadding
     const single = fitViewRange([{ x: 20, y: 0 }], { paddingRatio: 0.5 });
     expect(single.xRange[1]).toBeCloseTo(20.5, 5);
+  });
+});
+
+describe("fitSteppedViewRange 稳态阶梯视口", () => {
+  it("所有活跃点在基准视口内时锁定基准，绝不跳变", () => {
+    const r = fitSteppedViewRange(
+      [
+        { x: 1, y: -2 },
+        { x: 2.72, y: 0.37 },
+      ],
+      { defaultXRange: [-5, 5], defaultYRange: [-4, 4] },
+    );
+    expect(r.expanded).toBe(false);
+    expect(r.xRange).toEqual([-5, 5]);
+    expect(r.yRange).toEqual([-4, 4]);
+  });
+
+  it("越界时落入同一阶梯档位内多次微调保持相同 range", () => {
+    const r1 = fitSteppedViewRange([{ x: 2, y: -8 }], {
+      defaultXRange: [-6, 6],
+      defaultYRange: [-4.5, 4.5],
+    });
+    const r2 = fitSteppedViewRange([{ x: 1.82, y: -7.64 }], {
+      defaultXRange: [-6, 6],
+      defaultYRange: [-4.5, 4.5],
+    });
+    const r3 = fitSteppedViewRange([{ x: 1.67, y: -7.33 }], {
+      defaultXRange: [-6, 6],
+      defaultYRange: [-4.5, 4.5],
+    });
+    expect(r1.expanded).toBe(true);
+    expect(r1.yRange).toEqual(r2.yRange);
+    expect(r2.yRange).toEqual(r3.yRange);
+  });
+
+  it("受 maxExpandFactor 钳位，防止极端奇异点拖垮主图比例", () => {
+    const r = fitSteppedViewRange([{ x: 0.1, y: -23.03 }], {
+      defaultXRange: [-5, 5],
+      defaultYRange: [-4, 4],
+      maxExpandFactor: 2.0,
+    });
+    expect(r.expanded).toBe(true);
+    expect(r.yRange[0]).toBeGreaterThanOrEqual(-8);
   });
 });

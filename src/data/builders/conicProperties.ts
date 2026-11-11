@@ -9,6 +9,7 @@ import {
   type ConicType,
 } from "@/features/conicProperties/math/conicProperties";
 import { MATH_COLORS } from "@/theme";
+import { formatCoefTerm, formatMathNumber } from "@/utils/mathFormat";
 
 export function buildConicPropertiesPanel(
   params: Record<string, number>,
@@ -200,7 +201,7 @@ export function buildConicPropertiesPanel(
           : `双曲线渐近线方程为 $y = \\pm \\frac{b}{a}x$，通径长为 $L = \\frac{2b^2}{a}$。`,
         latex: isEllipse
           ? `x = \\pm \\frac{${(a * a).toFixed(2)}}{${c.toFixed(2)}} = \\pm ${directrices.rightX.toFixed(2)},\\quad L = \\frac{2 \\times ${b.toFixed(2)}^2}{${a.toFixed(2)}} = ${latusRectum.length.toFixed(2)}`
-          : `y = \\pm \\frac{${b.toFixed(2)}}{${a.toFixed(2)}}x = \\pm ${(b / a).toFixed(2)}x,\\quad L = \\frac{2 \\times ${b.toFixed(2)}^2}{${a.toFixed(2)}} = ${latusRectum.length.toFixed(2)}`,
+          : `y = \\pm \\frac{${formatMathNumber(b)}}{${formatMathNumber(a)}}x = \\pm ${formatCoefTerm(b / a, "x")},\\quad L = \\frac{2 \\times ${formatMathNumber(b)}^2}{${formatMathNumber(a)}} = ${formatMathNumber(latusRectum.length)}`,
         rubric: "【高考采分点】规范列出特征线与通径公式（2分）",
       },
     );

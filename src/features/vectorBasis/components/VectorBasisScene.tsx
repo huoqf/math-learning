@@ -16,6 +16,7 @@ import type { SceneScale } from "@/hooks";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { computeVectorBasis, type VectorBasisInput } from "@/math/vectorBasis";
 import { paramMeta } from "@/data/registries/vectorBasis";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 // 计算垂直于向量方向的屏幕法向偏移量 (彻底避免共线向量标签相撞)
 function getNormalOffset(
@@ -694,7 +695,7 @@ export const VectorBasisScene: React.FC<VectorBasisSceneProps> = ({
                 >
                   {isLineOne
                     ? "x + y = 1 (共线)"
-                    : `等和线 (x + y = ${sumCoeff.toFixed(2)})`}
+                    : `等和线 (x + y = ${formatMathNumber(sumCoeff)})`}
                 </text>
               </g>
             );

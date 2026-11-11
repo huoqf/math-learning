@@ -12,6 +12,7 @@ import {
   calculateIntervalZeros,
 } from "@/features/trigTransform/math/trigTransform";
 import { MATH_COLORS } from "@/theme";
+import { formatCoefTerm, formatMathNumber } from "@/utils/mathFormat";
 
 export function buildTrigTransformPanel(
   params: Record<string, number>,
@@ -262,7 +263,7 @@ export function buildTrigTransformPanel(
         step: 3,
         title: "振幅与偏置 · 综合得到目标式",
         detail: `最后纵向拉伸 $A = ${A.toFixed(1)}$ 倍，并整体沿 $y$ 轴平移 $k = ${k.toFixed(1)}$，得到最终解析式。`,
-        latex: `y = ${A.toFixed(1)}\\sin(${omega.toFixed(1)} x + ${phiStr}) ${k >= 0 ? "+" : ""}${k.toFixed(1)}`,
+        latex: `y = ${formatCoefTerm(A, `\\sin(${formatCoefTerm(omega, "x")} + ${phiStr})`)}${Math.abs(k) < 1e-6 ? "" : k > 0 ? ` + ${formatMathNumber(k)}` : ` - ${formatMathNumber(Math.abs(k))}`}`,
         rubric: "【高考采分点】写出完成全部变换后的标准解析式（3分）",
       },
     ];
@@ -467,7 +468,7 @@ export function buildTrigTransformPanel(
         step: 2,
         title: "整体换元 · 求单调递增区间",
         detail: `令整体角处于递增主区间 $2k\\pi - \\frac{\\pi}{2} \\le \\omega x + \\varphi \\le 2k\\pi + \\frac{\\pi}{2}$，移项同除以 $\\omega$ 解出 $x$ 的范围。`,
-        latex: `2k\\pi - \\frac{\\pi}{2} \\le ${omega.toFixed(2)} x + ${phiStr} \\le 2k\\pi + \\frac{\\pi}{2}`,
+        latex: `2k\\pi - \\frac{\\pi}{2} \\le ${formatCoefTerm(omega, "x")} + ${phiStr} \\le 2k\\pi + \\frac{\\pi}{2}`,
         rubric: "【高考采分点】列出整体角单调区间不等式并求解（4分）",
       },
       {

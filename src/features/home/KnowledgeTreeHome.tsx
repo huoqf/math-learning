@@ -16,7 +16,11 @@ import {
   Box,
 } from "lucide-react";
 import { knowledgeTree } from "@/data/knowledgeTree";
-import { ANIMATION_ROUTE_MAP, PATH_TO_LABEL } from "@/data/routeEntries";
+import {
+  ANIMATION_ROUTE_MAP,
+  GAOKAO_VIEW_SUPPORTED_ROUTES,
+  PATH_TO_LABEL,
+} from "@/data/routeEntries";
 import { renderMixedLatex } from "@/components/UI";
 import type {
   KnowledgeNode,
@@ -386,7 +390,13 @@ export function KnowledgeTreeHome() {
         {isActive ? (
           <div
             onClick={() =>
-              navigate(viewMode === "gaokao" ? `${route}?view=gaokao` : route)
+              navigate(
+                viewMode === "gaokao" &&
+                  route &&
+                  GAOKAO_VIEW_SUPPORTED_ROUTES.has(route)
+                  ? `${route}?view=gaokao`
+                  : route,
+              )
             }
             className="group border border-neutral-200 hover:border-primary-400 bg-white p-3.5 rounded-xl cursor-pointer hover:shadow-[0_6px_20px_rgba(59,130,246,0.08)] hover:-translate-y-0.5 transition-all duration-300 flex items-start justify-between gap-3"
           >

@@ -53,12 +53,12 @@ export function buildNikePanel(
   const formatHPart = (val: number) => {
     if (Math.abs(val) < 1e-4) return "x";
     return val > 0
-      ? `(x - ${col(val.toFixed(1), ct)})`
-      : `(x + ${col(Math.abs(val).toFixed(1), ct)})`;
+      ? `(x - ${col(formatMathNumber(val), ct)})`
+      : `(x + ${col(formatMathNumber(Math.abs(val)), ct)})`;
   };
 
   const formatFractionPart = (bVal: number, denomStr: string) => {
-    const absB = Math.abs(bVal).toFixed(1);
+    const absB = formatMathNumber(Math.abs(bVal));
     return bVal >= 0
       ? `+ \\frac{${col(absB, cb)}}{${denomStr}}`
       : `- \\frac{${col(absB, cb)}}{${denomStr}}`;
@@ -67,28 +67,28 @@ export function buildNikePanel(
   // 1. 基本量组装
   let funcFormulaStr = "";
   if (h === 0 && c === 0) {
-    const aPart = Math.abs(a) < 1e-4 ? "" : `${col(a.toFixed(1), ca)}x`;
+    const aPart = formatCoefTerm(a, "x", ca);
     const bPart = formatFractionPart(b, "x");
     funcFormulaStr =
       Math.abs(a) < 1e-4
-        ? `y = \\frac{${col(b.toFixed(1), cb)}}{x}`
+        ? `y = \\frac{${col(formatMathNumber(b), cb)}}{x}`
         : `y = ${col("a", ca)}x + \\frac{${col("b", cb)}}{x} = ${aPart} ${bPart}`;
   } else {
     const denom = formatHPart(h);
-    const aTerm = Math.abs(a) < 1e-4 ? "" : `${col(a.toFixed(1), ca)}${denom}`;
+    const aTerm = formatCoefTerm(a, denom, ca);
     const cTerm =
       Math.abs(c) < 1e-4
         ? ""
         : c > 0
-          ? `+ ${col(c.toFixed(1), ct)}`
-          : `- ${col(Math.abs(c).toFixed(1), ct)}`;
+          ? `+ ${col(formatMathNumber(c), ct)}`
+          : `- ${col(formatMathNumber(Math.abs(c)), ct)}`;
     const bTerm = formatFractionPart(b, denom);
 
     if (Math.abs(a) < 1e-4) {
       funcFormulaStr =
         Math.abs(c) < 1e-4
-          ? `y = \\frac{${col(b.toFixed(1), cb)}}{${denom}}`
-          : `y = ${col(c.toFixed(1), ct)} ${bTerm}`;
+          ? `y = \\frac{${col(formatMathNumber(b), cb)}}{${denom}}`
+          : `y = ${col(formatMathNumber(c), ct)} ${bTerm}`;
     } else {
       funcFormulaStr = `y = ${aTerm} ${cTerm} ${bTerm}`.replace(/\s+/g, " ");
     }
@@ -320,15 +320,29 @@ export function buildNikePanel(
       });
 
       const deltaX = Math.sqrt(b / a);
-      const rX = (h + deltaX).toFixed(2);
-      const lX = (h - deltaX).toFixed(2);
-      const extVal = (2 * Math.sqrt(a * b)).toFixed(2);
+      const rX = formatMathNumber(h + deltaX);
+      const lX = formatMathNumber(h - deltaX);
+      const extNum = 2 * Math.sqrt(a * b);
+      const extVal = formatMathNumber(extNum);
+      const aStr = formatMathNumber(a);
+      const bStr = formatMathNumber(b);
+      const hStr = formatMathNumber(h);
+      const cStr = formatMathNumber(c);
+      const shiftU = formatShiftParen(h);
+      const uExpr = shiftU === "x" ? "x" : shiftU.slice(1, -1);
+      const aU = formatCoefTerm(a, "u");
+      const cTail =
+        Math.abs(c) < 1e-9
+          ? ""
+          : c > 0
+            ? ` + ${cStr}`
+            : ` - ${formatMathNumber(Math.abs(c))}`;
 
       reasoningSteps.push(
         {
           step: 1,
           title: "审题定法 · 分离常数与换元",
-          detail: `令 $u = x - ${h.toFixed(1)} \\; (u \\ne 0)$，将二次分式化归为标准对勾型 $g(u) = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}$。`,
+          detail: `令 $u = ${uExpr} \\; (u \\ne 0)$，将二次分式化归为标准对勾型 $g(u) = ${aU} + \\frac{${bStr}}{u}${cTail}$。`,
           latex: `u = x - h \\implies f(x) = a\\cdot u + \\frac{b}{u} + c`,
           rubric: "【高考采分点】准确写出换元定义域 $u \\ne 0$ 得 2 分",
         },
@@ -340,12 +354,12 @@ export function buildNikePanel(
               : "建模联立 · 基本不等式求最大值",
           detail:
             a > 0
-              ? `当 $u > 0$ 时，由基本不等式 $${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} \\ge 2\\sqrt{${a.toFixed(1)} \\cdot ${b.toFixed(1)}} = ${extVal}$，等号当且仅当 $${a.toFixed(1)}u = \\frac{${b.toFixed(1)}}{u}$，即 $u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)}$ 时成立。`
-              : `当 $u > 0$ 时，由基本不等式 $${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} \\le -2\\sqrt{${a.toFixed(1)} \\cdot ${b.toFixed(1)}} = -${extVal}$，等号当且仅当 $${a.toFixed(1)}u = \\frac{${b.toFixed(1)}}{u}$，即 $u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)}$ 时成立。`,
+              ? `当 $u > 0$ 时，由基本不等式 $${aU} + \\frac{${bStr}}{u} \\ge 2\\sqrt{${aStr} \\cdot ${bStr}} = ${extVal}$，等号当且仅当 $${aU} = \\frac{${bStr}}{u}$，即 $u = \\sqrt{\\frac{b}{a}} = ${formatMathNumber(deltaX)}$ 时成立。`
+              : `当 $u > 0$ 时，由基本不等式 $${aU} + \\frac{${bStr}}{u} \\le -2\\sqrt{${aStr} \\cdot ${bStr}} = -${extVal}$，等号当且仅当 $${aU} = \\frac{${bStr}}{u}$，即 $u = \\sqrt{\\frac{b}{a}} = ${formatMathNumber(deltaX)}$ 时成立。`,
           latex:
             a > 0
-              ? `u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)} \\implies x = ${rX}, \\quad y_{\\min} = ${c.toFixed(1)} + ${extVal} = ${(c + 2 * Math.sqrt(a * b)).toFixed(2)}`
-              : `u = \\sqrt{\\frac{b}{a}} = ${deltaX.toFixed(2)} \\implies x = ${rX}, \\quad y_{\\max} = ${(c - 2 * Math.sqrt(a * b)).toFixed(2)}`,
+              ? `u = \\sqrt{\\frac{b}{a}} = ${formatMathNumber(deltaX)} \\implies x = ${rX}, \\quad y_{\\min} = ${cStr} + ${extVal} = ${formatMathNumber(c + extNum)}`
+              : `u = \\sqrt{\\frac{b}{a}} = ${formatMathNumber(deltaX)} \\implies x = ${rX}, \\quad y_{\\max} = ${formatMathNumber(c - extNum)}`,
           rubric: "【高考采分点】验证等号成立条件 $au = \\frac{b}{u}$ 得 2 分",
         },
         {
@@ -353,19 +367,39 @@ export function buildNikePanel(
           title: "求解反思 · 最值与对称中心闭环",
           detail:
             a > 0
-              ? `由中心对称性得左支最大值点 $(${lX}, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)})$，两最值点中点恰为中心 $C(${h.toFixed(1)}, ${c.toFixed(1)})$。`
-              : `由中心对称性得左支最小值点 $(${lX}, ${(c + 2 * Math.sqrt(a * b)).toFixed(2)})$，两最值点中点恰为中心 $C(${h.toFixed(1)}, ${c.toFixed(1)})$。`,
-          latex: `\\text{值域：} y \\in (-\\infty, ${(c - 2 * Math.sqrt(a * b)).toFixed(2)}] \\cup [${(c + 2 * Math.sqrt(a * b)).toFixed(2)}, +\\infty)`,
+              ? `由中心对称性得左支最大值点 $(${lX}, ${formatMathNumber(c - extNum)})$，两最值点中点恰为中心 $C(${hStr}, ${cStr})$。`
+              : `由中心对称性得左支最小值点 $(${lX}, ${formatMathNumber(c + extNum)})$，两最值点中点恰为中心 $C(${hStr}, ${cStr})$。`,
+          latex: `\\text{值域：} y \\in (-\\infty, ${formatMathNumber(c - extNum)}] \\cup [${formatMathNumber(c + extNum)}, +\\infty)`,
           rubric: "【高考采分点】写出完整值域与最值点坐标得 2 分",
         },
       );
     } else {
       // 二次分式飘带型
+      const aStr = formatMathNumber(a);
+      const bStr = formatMathNumber(b);
+      const absBStr = formatMathNumber(Math.abs(b));
+      const hStr = formatMathNumber(h);
+      const cStr = formatMathNumber(c);
+      const shiftU = formatShiftParen(h);
+      const uExpr = shiftU === "x" ? "x" : shiftU.slice(1, -1);
+      const aU = formatCoefTerm(a, "u");
+      const bFrac = b >= 0 ? `+ \\frac{${bStr}}{u}` : `- \\frac{${absBStr}}{u}`;
+      const cTail =
+        Math.abs(c) < 1e-9
+          ? ""
+          : c > 0
+            ? ` + ${cStr}`
+            : ` - ${formatMathNumber(Math.abs(c))}`;
+      const diffTerm =
+        b >= 0
+          ? `${aStr} - \\frac{${bStr}}{u_1 u_2}`
+          : `${aStr} + \\frac{${absBStr}}{u_1 u_2}`;
+
       theorems.push({
         name: "二次分式分离常数化飘带双曲定理",
         latex: `f(x) = \\frac{x^2 + px + q}{x - h} = (x - h) + (p + 2h) - \\frac{|b|}{x - h}`,
         prerequisites: ["x ≠ h", "分子系数 b < 0"],
-        note: `转化为平移双曲飘带型，在 $(-\\infty, ${h.toFixed(1)})$ 和 $(${h.toFixed(1)}, +\\infty)$ 上严格单调递增，全域既无最大值也无最小值`,
+        note: `转化为平移双曲飘带型，在 $(-\\infty, ${hStr})$ 和 $(${hStr}, +\\infty)$ 上严格单调递增，全域既无最大值也无最小值`,
       });
 
       gaokaoPoints.push({
@@ -377,22 +411,22 @@ export function buildNikePanel(
         {
           step: 1,
           title: "审题定法 · 识别飘带模型并分离常数",
-          detail: `由 $a = ${a.toFixed(1)}, b = ${b.toFixed(1)}$ 知 $ab = ${formatMathNumber(a * b)} < 0$，属于双曲飘带型。令 $u = x - ${h.toFixed(1)} \\; (u \\ne 0)$，分离常数后化归为 $f = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}$。`,
-          latex: `u = x - ${h.toFixed(1)} \\implies f(x) = ${a.toFixed(1)}u + \\frac{${b.toFixed(1)}}{u} + ${c.toFixed(1)}`,
+          detail: `由 $a = ${aStr}, b = ${bStr}$ 知 $ab = ${formatMathNumber(a * b)} < 0$，属于双曲飘带型。令 $u = ${uExpr} \\; (u \\ne 0)$，分离常数后化归为 $f = ${aU} ${bFrac}${cTail}$。`,
+          latex: `u = ${uExpr} \\implies f(x) = ${aU} ${bFrac}${cTail}`,
           rubric: "【高考采分点】准确换元并写出分离常数后的表达式得 2 分",
         },
         {
           step: 2,
           title: "建模联立 · 作差法证双支单调",
-          detail: `在 $(0, +\\infty)$ 上任取 $0 < u_1 < u_2$，作差并通分：$f(u_1) - f(u_2) = (u_1 - u_2)\\left(${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{u_1 u_2}\\right)$。因 $ab < 0$ 时括号内恒与 $a$ 同号，而 $u_1 - u_2 < 0$，故 $f$ 在 $(0, +\\infty)$ 上单调${a > 0 ? "递增" : "递减"}；由中心对称性，$(-\\infty, 0)$ 上同向单调。`,
-          latex: `f(u_1) - f(u_2) = (u_1 - u_2)\\left(${a.toFixed(1)} - \\frac{${b.toFixed(1)}}{u_1 u_2}\\right); \\quad ab < 0 \\implies \\text{括号与 } a \\text{ 同号}`,
+          detail: `在 $(0, +\\infty)$ 上任取 $0 < u_1 < u_2$，作差并通分：$f(u_1) - f(u_2) = (u_1 - u_2)\\left(${diffTerm}\\right)$。因 $ab < 0$ 时括号内恒与 $a$ 同号，而 $u_1 - u_2 < 0$，故 $f$ 在 $(0, +\\infty)$ 上单调${a > 0 ? "递增" : "递减"}；由中心对称性，$(-\\infty, 0)$ 上同向单调。`,
+          latex: `f(u_1) - f(u_2) = (u_1 - u_2)\\left(${diffTerm}\\right); \\quad ab < 0 \\implies \\text{括号与 } a \\text{ 同号}`,
           rubric: "【高考采分点】作差并通分因式分解，判定括号符号得 2 分",
         },
         {
           step: 3,
           title: "求解反思 · 零点存在与方程考法",
           detail: `函数在各分支上单调且全域无最值，在高考中常结合方程 $f(x) = m$ 考查实根个数与零点存在性定理。`,
-          latex: `\\text{单调性：在 } (-\\infty, ${h.toFixed(1)}) \\text{ 与 } (${h.toFixed(1)}, +\\infty) \\text{ 上分别单调}${a > 0 ? "递增" : "递减"}`,
+          latex: `\\text{单调性：在 } (-\\infty, ${hStr}) \\text{ 与 } (${hStr}, +\\infty) \\text{ 上分别单调}${a > 0 ? "递增" : "递减"}`,
           rubric: "【高考采分点】得出单调区间与零点特征得 2 分",
         },
       );

@@ -3,6 +3,7 @@ import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
 import { normalPdf } from "@/math/probabilityNormal";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface SymIntervalData {
   xSym: number;
@@ -265,7 +266,7 @@ export function ProbabilityNormalSigmaRuleScene({
                   textAnchor="middle"
                   className="font-bold select-none drop-shadow-sm"
                 >
-                  对称区间 P = {(symData.centerProb * 100).toFixed(1)}%
+                  对称区间 P = {formatMathNumber(symData.centerProb * 100)}%
                 </text>
                 <text
                   x={midX}
@@ -275,9 +276,9 @@ export function ProbabilityNormalSigmaRuleScene({
                   textAnchor="middle"
                   className="font-bold select-none"
                 >
-                  镜像尾翼等面积：P(X ≤ {symData.leftX.toFixed(1)}) = P(X ≥{" "}
-                  {symData.rightX.toFixed(1)}) ={" "}
-                  {(symData.tailProb * 100).toFixed(1)}%
+                  镜像尾翼等面积：P(X ≤ {formatMathNumber(symData.leftX)}) = P(X
+                  ≥ {formatMathNumber(symData.rightX)}) ={" "}
+                  {formatMathNumber(symData.tailProb * 100)}%
                 </text>
               </g>
             );
@@ -322,7 +323,7 @@ export function ProbabilityNormalSigmaRuleScene({
               textAnchor="middle"
               className="font-bold select-none drop-shadow-sm"
             >
-              μ = {mu.toFixed(1)}
+              μ = {formatMathNumber(mu)}
             </text>
           </g>
         );
@@ -361,7 +362,7 @@ export function ProbabilityNormalSigmaRuleScene({
               textAnchor="middle"
               className="font-bold select-none drop-shadow-sm"
             >
-              2μ-x₀ = {symData.xSym.toFixed(1)}
+              2μ-x₀ = {formatMathNumber(symData.xSym)}
             </text>
           </g>
         );

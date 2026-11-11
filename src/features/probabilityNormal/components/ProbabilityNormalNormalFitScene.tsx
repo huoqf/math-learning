@@ -4,6 +4,7 @@ import type { SceneScale, ViewportInfo } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
 import { normalPdf } from "@/math/probabilityNormal";
 import type { HistogramBin } from "@/math/probabilityNormal";
+import { formatMathProb } from "@/utils/mathFormat";
 
 interface ProbabilityNormalNormalFitSceneProps {
   bins: HistogramBin[];
@@ -140,7 +141,7 @@ export function ProbabilityNormalNormalFitScene({
               textAnchor="middle"
               className="font-bold select-none drop-shadow-sm"
             >
-              f(μ) = {peakY.toFixed(3)}
+              f(μ) = {formatMathProb(peakY)}
             </text>
           </g>
         );

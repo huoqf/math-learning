@@ -10,6 +10,13 @@ import { colorize } from "../types";
 import { solveQuadratic } from "@/math/quadratic";
 import { quadraticChecker } from "@/math/degeneration";
 import { MATH_COLORS } from "@/theme";
+import {
+  formatMathNumber,
+  formatCoefTerm,
+  formatLinearExpr,
+  formatShiftParen,
+} from "@/utils/mathFormat";
+import { buildQuadraticLatex } from "@/utils/polyBuilder";
 
 const PARAM_COLORS = {
   a: MATH_COLORS.paramPrimary,
@@ -146,13 +153,13 @@ function buildFunctionMode(
     {
       label: "对称轴",
       symbol: "x",
-      value: res.axisX !== null ? `x = ${res.axisX.toFixed(2)}` : "无",
+      value: res.axisX !== null ? `x = ${formatMathNumber(res.axisX)}` : "无",
     },
     {
       label: "顶点坐标",
       value:
         res.vertexX !== null && res.vertexY !== null
-          ? `(${res.vertexX.toFixed(2)}, ${res.vertexY.toFixed(2)})`
+          ? `(${formatMathNumber(res.vertexX)}, ${formatMathNumber(res.vertexY)})`
           : "无",
     },
   );
@@ -191,31 +198,62 @@ function buildFunctionMode(
   if (Math.abs(a) >= 1e-9 && res.axisX !== null && res.vertexY !== null) {
     const h = res.axisX;
     const k = res.vertexY;
-    const signH = -h >= 0 ? `+ ${(-h).toFixed(2)}` : `- ${h.toFixed(2)}`;
-    const signK = k >= 0 ? `+ ${k.toFixed(2)}` : `- ${Math.abs(k).toFixed(2)}`;
+    const aStr = formatMathNumber(a);
+    const bStr = formatMathNumber(b);
+    const cTail =
+      Math.abs(c) < 1e-9
+        ? ""
+        : c > 0
+          ? ` + ${formatMathNumber(c)}`
+          : ` - ${formatMathNumber(Math.abs(c))}`;
+    const innerTerm =
+      Math.abs(b) < 1e-9
+        ? "x^2"
+        : b / a > 0
+          ? `x^2 + \\frac{${formatMathNumber(b)}}{${aStr}} x`
+          : `x^2 - \\frac{${formatMathNumber(Math.abs(b))}}{${aStr}} x`;
+    const factoredStep1 =
+      Math.abs(a - 1) < 1e-9
+        ? `\\left( ${innerTerm} \\right)`
+        : Math.abs(a + 1) < 1e-9
+          ? `-\\left( ${innerTerm} \\right)`
+          : `${aStr} \\left( ${innerTerm} \\right)`;
+    const vertexParen = formatShiftParen(h);
+    const vertexLead = formatCoefTerm(
+      a,
+      vertexParen === "x" ? "x^2" : `${vertexParen}^2`,
+    );
+    const kTail =
+      Math.abs(k) < 1e-9
+        ? ""
+        : k > 0
+          ? ` + ${formatMathNumber(k)}`
+          : ` - ${formatMathNumber(Math.abs(k))}`;
+    const hStr = formatMathNumber(h);
+    const kStr = formatMathNumber(k);
 
     reasoningSteps.push(
       {
         step: 1,
         title: "审题定模 · 提公因式与配方准备",
-        latex: `f(x) = ${a.toFixed(2)} \\left( x^2 + \\frac{${b.toFixed(2)}}{${a.toFixed(2)}} x \\right) + ${c.toFixed(2)}`,
-        detail: `提取二次项系数 $a = ${a.toFixed(2)}$，括号内加上并减去一次项系数一半的平方 $(\\frac{b}{2a})^2$。`,
+        latex: `f(x) = ${factoredStep1}${cTail}`,
+        detail: `提取二次项系数 $a = ${aStr}$（当前 $b = ${bStr}$），括号内加上并减去一次项系数一半的平方 $(\\frac{b}{2a})^2$。`,
         rubric:
           "【高考采分点】提出二次项系数后，在括号内加上再减去 $\\left(\\frac{b}{2a}\\right)^2$ 完成配方，得 3 分。",
       },
       {
         step: 2,
         title: "代数配方 · 化一般式为顶点式",
-        latex: `f(x) = ${a.toFixed(2)} \\left( x ${signH} \\right)^2 ${signK}`,
-        detail: `配方完成，得到顶点式 $f(x) = a(x - h)^2 + k$，其中 $h = -\\frac{b}{2a} = ${h.toFixed(2)}$，$k = \\frac{4ac-b^2}{4a} = ${k.toFixed(2)}$。`,
+        latex: `f(x) = ${vertexLead}${kTail}`,
+        detail: `配方完成，得到顶点式 $f(x) = a(x - h)^2 + k$，其中 $h = -\\frac{b}{2a} = ${hStr}$，$k = \\frac{4ac-b^2}{4a} = ${kStr}$。`,
         rubric:
           "【高考采分点】配成 $f(x) = a(x - h)^2 + k$，写出 $h = -\\frac{b}{2a}$ 与 $k = \\frac{4ac - b^2}{4a}$，得 4 分。",
       },
       {
         step: 3,
         title: "求解反思 · 对称轴与最值结论",
-        latex: `\\text{对称轴: } x = ${h.toFixed(2)}, \\quad f(x)_{${a > 0 ? "\\min" : "\\max"}} = ${k.toFixed(2)}`,
-        detail: `因为 $a ${a > 0 ? "> 0" : "< 0"}$，抛物线开口${a > 0 ? "向上" : "向下"}，故当 $x = ${h.toFixed(2)}$ 时取得全局${a > 0 ? "最小值" : "最大值"} ${k.toFixed(2)}。`,
+        latex: `\\text{对称轴: } x = ${hStr}, \\quad f(x)_{${a > 0 ? "\\min" : "\\max"}} = ${kStr}`,
+        detail: `因为 $a ${a > 0 ? "> 0" : "< 0"}$，抛物线开口${a > 0 ? "向上" : "向下"}，故当 $x = ${hStr}$ 时取得全局${a > 0 ? "最小值" : "最大值"} ${kStr}。`,
         rubric:
           "【高考采分点】由 $a$ 的符号判断开口方向，再结合对称轴写出最大值或最小值，得 5 分。",
       },
@@ -224,7 +262,7 @@ function buildFunctionMode(
     reasoningSteps.push({
       step: 1,
       title: "退化分析 · 二次项系数为零",
-      latex: `f(x) = ${b.toFixed(2)}x ${c >= 0 ? `+ ${c.toFixed(2)}` : `- ${Math.abs(c).toFixed(2)}`}`,
+      latex: `f(x) = ${formatLinearExpr(b, c)}`,
       detail:
         "当 $a = 0$ 时，二次函数退化为一次函数（直线），无对称轴与顶点，在实数集上为单调函数或常数函数。",
       rubric:
@@ -367,12 +405,16 @@ function buildEquationMode(
 
   // 构建推导链：判别式定性 -> 求根公式 -> 韦达定理反思
   if (Math.abs(a) >= 1e-9) {
+    const aTex = a < 0 ? `(${formatMathNumber(a)})` : formatMathNumber(a);
+    const bTex = b < 0 ? `(${formatMathNumber(b)})` : formatMathNumber(b);
+    const cTex = c < 0 ? `(${formatMathNumber(c)})` : formatMathNumber(c);
+    const deltaStr = formatMathNumber(res.delta);
     reasoningSteps.push(
       {
         step: 1,
         title: "判别式定性 · 确定实根个数",
-        latex: `\\Delta = b^2 - 4ac = (${b.toFixed(2)})^2 - 4 \\times (${a.toFixed(2)}) \\times (${c.toFixed(2)}) = ${res.delta.toFixed(2)}`,
-        detail: `计算判别式 $\\Delta = ${res.delta.toFixed(2)}$。因为 $\\Delta ${res.delta > 1e-9 ? "> 0" : Math.abs(res.delta) <= 1e-9 ? "= 0" : "< 0"}$，方程在实数范围内有 ${res.delta > 1e-9 ? "两个相异实根" : Math.abs(res.delta) <= 1e-9 ? "两个相等实根" : "零个实根（在实数范围无解）"}。`,
+        latex: `\\Delta = b^2 - 4ac = ${bTex}^2 - 4 \\times ${aTex} \\times ${cTex} = ${deltaStr}`,
+        detail: `计算判别式 $\\Delta = ${deltaStr}$。因为 $\\Delta ${res.delta > 1e-9 ? "> 0" : Math.abs(res.delta) <= 1e-9 ? "= 0" : "< 0"}$，方程在实数范围内有 ${res.delta > 1e-9 ? "两个相异实根" : Math.abs(res.delta) <= 1e-9 ? "两个相等实根" : "零个实根（在实数范围无解）"}。`,
         rubric:
           "【高考采分点】算出 $\\Delta = b^2 - 4ac$ 的数值，并按其符号判定实根个数，得 4 分。",
       },
@@ -381,13 +423,13 @@ function buildEquationMode(
         title: "公式代入 · 求根公式展开",
         latex:
           res.delta >= 0
-            ? `x = \\frac{-(${b.toFixed(2)}) \\pm \\sqrt{${res.delta.toFixed(2)}}}{2 \\times (${a.toFixed(2)})}`
-            : `\\Delta = ${res.delta.toFixed(2)} < 0 \\implies x \\notin \\mathbb{R}`,
+            ? `x = \\frac{-${bTex} \\pm \\sqrt{${deltaStr}}}{2 \\times ${aTex}}`
+            : `\\Delta = ${deltaStr} < 0 \\implies x \\notin \\mathbb{R}`,
         detail:
           res.roots.length === 2
-            ? `代入求根公式解得：$x_1 = ${res.roots[0].toFixed(2)}$, $x_2 = ${res.roots[1].toFixed(2)}$。`
+            ? `代入求根公式解得：$x_1 = ${formatMathNumber(res.roots[0])}$, $x_2 = ${formatMathNumber(res.roots[1])}$。`
             : res.roots.length === 1
-              ? `代入求根公式解得：$x_0 = ${res.roots[0].toFixed(2)}$。`
+              ? `代入求根公式解得：$x_0 = ${formatMathNumber(res.roots[0])}$。`
               : "由于判别式小于零，抛物线悬空，与 $x$ 轴无交点，方程无实数解。",
         rubric:
           "【高考采分点】把 $a$、$b$、$\\Delta$ 代入 $x = \\frac{-b \\pm \\sqrt{\\Delta}}{2a}$ 完整列式并算出根，得 4 分。",
@@ -398,8 +440,8 @@ function buildEquationMode(
       reasoningSteps.push({
         step: 3,
         title: "求解反思 · 韦达定理验证",
-        latex: `x_1 + x_2 = -\\frac{b}{a} = ${(-b / a).toFixed(2)}, \\quad x_1 x_2 = \\frac{c}{a} = ${(c / a).toFixed(2)}`,
-        detail: `两根之和等于 $-\\frac{b}{a} = ${(-b / a).toFixed(2)}$，两根之积等于 $\\frac{c}{a} = ${(c / a).toFixed(2)}$，完美吻合韦达定理根与系数关系。`,
+        latex: `x_1 + x_2 = -\\frac{b}{a} = ${formatMathNumber(-b / a)}, \\quad x_1 x_2 = \\frac{c}{a} = ${formatMathNumber(c / a)}`,
+        detail: `两根之和等于 $-\\frac{b}{a} = ${formatMathNumber(-b / a)}$，两根之积等于 $\\frac{c}{a} = ${formatMathNumber(c / a)}$，完美吻合韦达定理根与系数关系。`,
         rubric:
           "【高考采分点】用 $x_1 + x_2 = -\\frac{b}{a}$ 与 $x_1 x_2 = \\frac{c}{a}$ 回验所求两根，得 2 分。",
       });
@@ -549,17 +591,20 @@ function buildInequalityMode(
   );
 
   // 推导链：审题联立方程 -> 开口方向数形分析 -> 确定解集
+  const ineqPolyLatex = buildQuadraticLatex(a, b, c).replace(/^y\s*=\s*/, "");
   if (Math.abs(a) >= 1e-9) {
+    const aStr = formatMathNumber(a);
+    const deltaStr = formatMathNumber(res.delta);
     reasoningSteps.push(
       {
         step: 1,
         title: "方程定根 · 计算对应二次方程零点",
-        latex: `\\Delta = b^2 - 4ac = ${res.delta.toFixed(2)}`,
+        latex: `\\Delta = b^2 - 4ac = ${deltaStr}`,
         detail:
           res.roots.length === 2
-            ? `方程有两个相异实根：$x_1 = ${res.roots[0].toFixed(2)}$, $x_2 = ${res.roots[1].toFixed(2)}$，将数轴划分为三个开区间。`
+            ? `方程有两个相异实根：$x_1 = ${formatMathNumber(res.roots[0])}$, $x_2 = ${formatMathNumber(res.roots[1])}$，将数轴划分为三个开区间。`
             : res.roots.length === 1
-              ? `方程有唯一重根：$x_0 = ${res.roots[0].toFixed(2)}$，抛物线与 $x$ 轴相切。`
+              ? `方程有唯一重根：$x_0 = ${formatMathNumber(res.roots[0])}$，抛物线与 $x$ 轴相切。`
               : "方程在实数范围无实根，抛物线全在 $x$ 轴同侧，与 $x$ 轴无交点。",
         rubric:
           "【高考采分点】解对应二次方程求出零点，并以零点把数轴划分成若干区间，得 3 分。",
@@ -567,7 +612,7 @@ function buildInequalityMode(
       {
         step: 2,
         title: "数形结合 · 开口方向与符号法则",
-        latex: `a = ${a.toFixed(2)} ${a > 0 ? "> 0" : "< 0"} \\implies \\text{抛物线开口}${a > 0 ? "向上" : "向下"}`,
+        latex: `a = ${aStr} ${a > 0 ? "> 0" : "< 0"} \\implies \\text{抛物线开口}${a > 0 ? "向上" : "向下"}`,
         detail: `结合几何图象：当 $a ${a > 0 ? "> 0" : "< 0"}$ 时，不等式 $f(x) ${ineqType} 0$ 对应图象位于 $x$ 轴${ineqType === ">" ? "上方" : "下方"}的区域。`,
         rubric:
           "【高考采分点】由开口方向与不等号方向定出图象位于 $x$ 轴上方或下方的区间，得 4 分。",
@@ -576,7 +621,7 @@ function buildInequalityMode(
         step: 3,
         title: "求解反思 · 规范不等式解集",
         latex: `\\text{解集: } ${solutionText}`,
-        detail: `经过区间检验，不等式 $${a.toFixed(2)}x^2 ${b >= 0 ? `+ ${b.toFixed(2)}` : `- ${Math.abs(b).toFixed(2)}`}x ${c >= 0 ? `+ ${c.toFixed(2)}` : `- ${Math.abs(c).toFixed(2)}`} ${ineqType} 0$ 的完整解集为 $${solutionText}$。`,
+        detail: `经过区间检验，不等式 $${ineqPolyLatex} ${ineqType} 0$ 的完整解集为 $${solutionText}$。`,
         rubric: "【高考采分点】把取值区间写成规范的集合或区间形式，得 5 分。",
       },
     );
@@ -585,7 +630,7 @@ function buildInequalityMode(
       {
         step: 1,
         title: "分类讨论 · 二次项系数退化为零",
-        latex: `a = 0 \\implies ${b.toFixed(2)}x ${c >= 0 ? `+ ${c.toFixed(2)}` : `- ${Math.abs(c).toFixed(2)}`} ${ineqType} 0`,
+        latex: `a = 0 \\implies ${formatLinearExpr(b, c)} ${ineqType} 0`,
         detail:
           "含参不等式分类讨论的首要步骤：当 $a = 0$ 时，原不等式退化为一元一次不等式或常数不等式。",
         rubric:

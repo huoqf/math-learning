@@ -6,6 +6,7 @@ import {
   MARKOV_ANSWER_STEPS,
 } from "../registries/probabilityMarkov";
 import { MATH_COLORS } from "../../theme";
+import { formatMathProb } from "../../utils/mathFormat";
 
 /**
  * 四步采分权重（设事件 / 列递推 / 构造等比 / 求通项）——本页推导链的**唯一分值来源**。
@@ -186,7 +187,7 @@ export function buildProbabilityMarkovPanel(
       {
         step: 2,
         title: "建模联立 · 代入转移概率化简线性递推式",
-        latex: `p_{n+1} = ${p11Val.toFixed(2)} p_n + ${p21Val.toFixed(2)}(1 - p_n) = ${markovRes.recurrenceLatex}`,
+        latex: `p_{n+1} = ${formatMathProb(p11Val)} p_n + ${formatMathProb(p21Val)}(1 - p_n) = ${markovRes.recurrenceLatex}`,
         detail: `合并 $p_n$ 同类项得递推斜率（公比）$\\lambda = p_{11} - p_{21} = ${p11Val.toFixed(2)} - ${p21Val.toFixed(2)} = ${lambdaVal.toFixed(3)}$，常数截距为 $p_{21} = ${p21Val.toFixed(2)}$。`,
         rubric: `【高考采分点】由全概率公式列出含参转移式并合并化简为一阶线性递推，得 ${MARKOV_STEP_SCORES[1]} 分。`,
       },

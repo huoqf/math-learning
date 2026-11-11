@@ -4,6 +4,7 @@ import type { SceneScale } from "@/hooks/useSceneScale";
 import type { ViewportInfo } from "@/utils/useViewport";
 import { InteractivePoint } from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface ProbabilityDistributionBarSceneProps {
   studyMode: "binomial" | "hypergeometric" | "general";
@@ -60,8 +61,8 @@ export function ProbabilityDistributionBarScene({
             textAnchor="middle"
             fontWeight="bold"
           >
-            σ 波动区间 [{(mean - stdDev).toFixed(2)},{" "}
-            {(mean + stdDev).toFixed(2)}]
+            σ 波动区间 [{formatMathNumber(mean - stdDev)},{" "}
+            {formatMathNumber(mean + stdDev)}]
           </text>
         </g>
       )}
@@ -136,7 +137,7 @@ export function ProbabilityDistributionBarScene({
                   fontWeight={isMax ? "bold" : "600"}
                   className="font-mono"
                 >
-                  {item.p.toFixed(3)}
+                  {formatMathProb(item.p)}
                 </text>
               </g>
             )}
@@ -184,7 +185,7 @@ export function ProbabilityDistributionBarScene({
                   fontWeight="bold"
                   className="font-mono"
                 >
-                  p3={item.p.toFixed(2)}
+                  p3={formatMathNumber(item.p)}
                 </text>
               </g>
             )}
@@ -248,7 +249,9 @@ export function ProbabilityDistributionBarScene({
                 textAnchor="middle"
                 className="font-mono"
               >
-                {torque > 0 ? `+${torque.toFixed(2)}` : torque.toFixed(2)}
+                {torque > 0
+                  ? `+${formatMathNumber(torque)}`
+                  : formatMathNumber(torque)}
               </text>
             </g>
           );
@@ -289,7 +292,7 @@ export function ProbabilityDistributionBarScene({
             textAnchor="middle"
             fontWeight="bold"
           >
-            E(X) 支点 = {mean.toFixed(2)}
+            E(X) 支点 = {formatMathNumber(mean)}
           </text>
         </g>
       </g>

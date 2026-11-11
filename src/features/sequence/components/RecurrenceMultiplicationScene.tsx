@@ -13,6 +13,7 @@ import {
   legendXOf,
   type RecurrenceSceneBaseProps,
 } from "./RecurrenceShared";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export type MultType = "n_over_n1" | "n1_over_n" | "pow_two";
 
@@ -104,7 +105,7 @@ export const RecurrenceMultiplicationScene: React.FC<Props> = ({
                 fill={MATH_COLORS.paramTertiary}
                 fontWeight="bold"
               >
-                {`×${t.ratioK.toFixed(2)}`}
+                {`×${formatMathNumber(t.ratioK)}`}
               </text>
             )}
           </g>

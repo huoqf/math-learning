@@ -11,6 +11,7 @@ import { InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { StratifiedResult } from "@/math/statPercentile";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface StatPercentileStratifiedSceneProps {
   strat: StratifiedResult;
@@ -107,7 +108,7 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(9.5)}
               fontWeight="600"
             >
-              抽样比 f = n/N = {(strat.samplingRatio * 100).toFixed(1)}%
+              抽样比 f = n/N = {formatMathNumber(strat.samplingRatio * 100)}%
             </text>
 
             {/* 各层按比例分配卡片 */}
@@ -144,7 +145,7 @@ export const StatPercentileStratifiedScene: React.FC<
                     <tspan fontWeight="bold" fill={st.color}>
                       n{st.indexLabel}={st.n}
                     </tspan>
-                    人 (权重 {(st.weight * 100).toFixed(0)}%)
+                    人 (权重 {formatMathNumber(Math.round(st.weight * 100))}%)
                   </text>
                 </g>
               );
@@ -238,7 +239,7 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(10.5)}
               fontWeight="bold"
             >
-              总体均值 x̄ = {strat.totalMean.toFixed(2)}
+              总体均值 x̄ = {formatMathNumber(strat.totalMean)}
             </text>
           </g>
         );
@@ -296,7 +297,7 @@ export const StatPercentileStratifiedScene: React.FC<
                 fontSize={fontScale(9)}
                 fontWeight="600"
               >
-                s{st.indexLabel}²={st.var} (±{stdDev.toFixed(1)})
+                s{st.indexLabel}²={st.var} (±{formatMathNumber(stdDev)})
               </text>
 
               {/* 组间离差拉扯跨度虚线 (连接层均值与总均值) */}
@@ -336,7 +337,7 @@ export const StatPercentileStratifiedScene: React.FC<
                     fontWeight="bold"
                   >
                     |x̄{st.indexLabel} - x̄| ={" "}
-                    {Math.abs(st.mean - strat.totalMean).toFixed(1)}
+                    {formatMathNumber(Math.abs(st.mean - strat.totalMean))}
                   </text>
                 </g>
               )}
@@ -414,8 +415,8 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(11)}
               fontWeight="bold"
             >
-              总体方差双分量分解：s² = {strat.totalVar.toFixed(2)} = ∑wᵢsᵢ²
-              (层内波动) + ∑wᵢ(x̄ᵢ - x̄)² (层间均值差平方)
+              总体方差双分量分解：s² = {formatMathNumber(strat.totalVar)} =
+              ∑wᵢsᵢ² (层内波动) + ∑wᵢ(x̄ᵢ - x̄)² (层间均值差平方)
             </text>
 
             {/* 组内方差贡献段 (蓝色) */}
@@ -435,8 +436,11 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(10)}
               fontWeight="bold"
             >
-              层内 ∑wᵢsᵢ²: {intraVar.toFixed(1)} (
-              {((intraVar / Math.max(0.1, strat.totalVar)) * 100).toFixed(0)}%)
+              层内 ∑wᵢsᵢ²: {formatMathNumber(intraVar)} (
+              {formatMathNumber(
+                Math.round((intraVar / Math.max(0.1, strat.totalVar)) * 100),
+              )}
+              %)
             </text>
 
             {/* 组间离差贡献段 (橙色) */}
@@ -456,9 +460,11 @@ export const StatPercentileStratifiedScene: React.FC<
               fontSize={fontScale(10)}
               fontWeight="bold"
             >
-              层间 ∑wᵢ(x̄ᵢ-x̄)²: {interMeanVar.toFixed(1)} (
-              {((interMeanVar / Math.max(0.1, strat.totalVar)) * 100).toFixed(
-                0,
+              层间 ∑wᵢ(x̄ᵢ-x̄)²: {formatMathNumber(interMeanVar)} (
+              {formatMathNumber(
+                Math.round(
+                  (interMeanVar / Math.max(0.1, strat.totalVar)) * 100,
+                ),
               )}
               %)
             </text>

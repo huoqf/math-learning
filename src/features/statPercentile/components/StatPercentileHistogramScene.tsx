@@ -11,6 +11,7 @@ import { InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { HistogramBin, HistogramStatsResult } from "@/math/statPercentile";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface StatPercentileHistogramSceneProps {
   bins: HistogramBin[];
@@ -76,7 +77,7 @@ export const StatPercentileHistogramScene: React.FC<
                 fontSize={fontScale(10)}
                 fontFamily="monospace"
               >
-                {hVal.toFixed(2)}
+                {formatMathNumber(hVal)}
               </text>
             </g>
           );
@@ -217,7 +218,8 @@ export const StatPercentileHistogramScene: React.FC<
                 fontSize={fontScale(10)}
                 fontWeight={isHighest ? "bold" : "600"}
               >
-                h={bin.height.toFixed(3)} (f={(bin.frequency * 100).toFixed(0)}
+                h={formatMathProb(bin.height)} (f=
+                {formatMathNumber(Math.round(bin.frequency * 100))}
                 %)
               </text>
             </g>
@@ -318,7 +320,7 @@ export const StatPercentileHistogramScene: React.FC<
                 fontSize={fontScale(10)}
                 fontWeight="bold"
               >
-                众数 Mo = 中位 Me = 均值 x̄ = {stats.mean.toFixed(1)}
+                众数 Mo = 中位 Me = 均值 x̄ = {formatMathNumber(stats.mean)}
               </text>
 
               {/* 物理力矩平衡三角形支点 (Fulcrum Pivot) */}
@@ -398,8 +400,8 @@ export const StatPercentileHistogramScene: React.FC<
                     fontWeight="bold"
                   >
                     {isMulti
-                      ? `众数${MODE_SUBSCRIPT[peakIdx] ?? peakIdx + 1}=${modeVal.toFixed(1)}`
-                      : `众数=${modeVal.toFixed(1)}`}
+                      ? `众数${MODE_SUBSCRIPT[peakIdx] ?? peakIdx + 1}=${formatMathNumber(modeVal)}`
+                      : `众数=${formatMathNumber(modeVal)}`}
                   </text>
                 </g>
               );
@@ -431,7 +433,7 @@ export const StatPercentileHistogramScene: React.FC<
               fontSize={fontScale(9.5)}
               fontWeight="bold"
             >
-              中位={stats.median.toFixed(1)}
+              中位={formatMathNumber(stats.median)}
             </text>
 
             {/* 3. 平均数 x̄ (蓝色虚线 + 重心天平支点) */}
@@ -460,7 +462,7 @@ export const StatPercentileHistogramScene: React.FC<
               fontSize={fontScale(9.5)}
               fontWeight="bold"
             >
-              均值={stats.mean.toFixed(1)}
+              均值={formatMathNumber(stats.mean)}
             </text>
 
             {/* 物理力矩平衡三角形支点 (Fulcrum Pivot) */}

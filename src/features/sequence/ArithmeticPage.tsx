@@ -9,35 +9,15 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useGaokaoView } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
 import { SequenceScene } from "./components/SequenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
 import { calcArithmeticSequence } from "@/math/sequence";
 
-function checkIsGaokaoView(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const hash = window.location.hash || "";
-    const qIndex = hash.indexOf("?");
-    if (qIndex !== -1) {
-      const sp = new URLSearchParams(hash.slice(qIndex));
-      if (sp.get("view") === "gaokao") return true;
-    }
-    const search = window.location.search || "";
-    if (search) {
-      const sp = new URLSearchParams(search);
-      if (sp.get("view") === "gaokao") return true;
-    }
-  } catch {
-    return false;
-  }
-  return false;
-}
-
 export function ArithmeticPage() {
-  const isGaokaoView = checkIsGaokaoView();
+  const isGaokaoView = useGaokaoView();
   const [arithmeticSubMode, setArithmeticSubMode] = useState<
     "linear" | "gauss" | "quadratic" | "segment" | "absSum" | "snToAn"
   >(() => (isGaokaoView ? "snToAn" : "linear"));
@@ -103,10 +83,23 @@ export function ArithmeticPage() {
       yR = [Math.floor(mid - 3), Math.ceil(mid + 3)];
     }
 
+    // 阶梯化对齐：避免小步调整参数时纵轴每步跳变；离散序列解耦横纵比例尺
+    const quantizeBound = (v: number, isMax: boolean) => {
+      const abs = Math.abs(v);
+      const step = abs <= 12 ? 4 : abs <= 40 ? 10 : abs <= 120 ? 25 : 60;
+      return isMax ? Math.ceil(v / step) * step : Math.floor(v / step) * step;
+    };
+    yR = [quantizeBound(yR[0], false), quantizeBound(yR[1], true)];
+
     return { xRange: xR, yRange: yR };
   }, [a1, d, N, kSegment, arithmeticSubMode]);
 
-  const scale = useSceneScale({ vp, xRange, yRange });
+  const scale = useSceneScale({
+    vp,
+    xRange,
+    yRange,
+    keepAspectRatio: false,
+  });
 
   const mathData = useMemo(
     () =>

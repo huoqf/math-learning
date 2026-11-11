@@ -18,7 +18,7 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { fitViewRange } from "@/math/viewRange";
+import { fitSteppedViewRange } from "@/math/viewRange";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import {
   MONOTONICITY_MODELS,
@@ -73,21 +73,15 @@ export function DerivativeMonotonicityAnimation() {
     return solveMonotonicityModel(modelKey, params.a ?? 1.0);
   }, [modelKey, params.a]);
 
-  // 视口自适应：极值点与定义域端点必须可见。
-  // 各模型的 xRange 是「典型参数」下的基准（Floor Clamp），参数拉到边界时
-  // （如 a 使极值点移到 x≈7.4）视口整体外扩，而不是把极值点裁掉。
-  // 指数模型在定义域端点会出现 ±Infinity，由 fitViewRange 内部剔除。
+  // B 类稳态分级视口：只追踪极值点，绝不将 domainIntervals 定义域端点纳入视口，
+  // 杜绝 ln_x_ratio 在 x=0.05 (y≈-80) 或 exp_poly 在右端 (y≈100) 把曲线压扁成一条直线。
+  // 默认/常规区锁定模型基准视口，越界按阶梯档位有限扩张（上限 2.5×）。
   const viewRange = useMemo(() => {
-    const keyPoints = [
-      ...modelResult.extrema.map((e) => ({ x: e.x, y: e.y })),
-      ...modelResult.domainIntervals.flatMap(([lo, hi]) => [
-        { x: lo, y: modelResult.fn(lo) },
-        { x: hi, y: modelResult.fn(hi) },
-      ]),
-    ];
-    return fitViewRange(keyPoints, {
+    const keyPoints = modelResult.extrema.map((e) => ({ x: e.x, y: e.y }));
+    return fitSteppedViewRange(keyPoints, {
       defaultXRange: currentModel.xRange,
       defaultYRange: currentModel.yRange,
+      maxExpandFactor: 2.5,
     });
   }, [modelResult, currentModel]);
 

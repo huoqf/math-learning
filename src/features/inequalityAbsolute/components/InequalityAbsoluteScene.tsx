@@ -23,6 +23,7 @@ import {
   type InequalityType,
 } from "@/math/inequalityAbsolute";
 import type { LabelItem } from "@/utils/labelOverlap";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface InequalityAbsoluteSceneProps {
   params: {
@@ -285,8 +286,8 @@ export const InequalityAbsoluteScene: React.FC<
               fontSize={fontScale(10)}
             >
               {a * b >= 0
-                ? `取等：|a + b| = |a| + |b| = ${(Math.abs(a) + Math.abs(b)).toFixed(1)}`
-                : `取等：|a + b| = ||a| - |b|| = ${Math.abs(Math.abs(a) - Math.abs(b)).toFixed(1)}`}
+                ? `取等：|a + b| = |a| + |b| = ${formatMathNumber(Math.abs(a) + Math.abs(b))}`
+                : `取等：|a + b| = ||a| - |b|| = ${formatMathNumber(Math.abs(Math.abs(a) - Math.abs(b)))}`}
             </text>
           </g>
         </g>
@@ -327,8 +328,8 @@ export const InequalityAbsoluteScene: React.FC<
               className="select-none pointer-events-none"
             >
               {studyMode === "single"
-                ? `y = c = ${c.toFixed(1)}`
-                : `y = m = ${m.toFixed(1)}`}
+                ? `y = c = ${formatMathNumber(c)}`
+                : `y = m = ${formatMathNumber(m)}`}
             </text>
           </g>
 
@@ -445,7 +446,7 @@ export const InequalityAbsoluteScene: React.FC<
               fontWeight="bold"
               className="select-none pointer-events-none"
             >
-              |PA| = |x - a| = {result.distA.toFixed(1)}
+              |PA| = |x - a| = {formatMathNumber(result.distA)}
             </text>
           </g>
 
@@ -484,7 +485,7 @@ export const InequalityAbsoluteScene: React.FC<
                 fontWeight="bold"
                 className="select-none pointer-events-none"
               >
-                |PB| = |x - b| = {result.distB.toFixed(1)}
+                |PB| = |x - b| = {formatMathNumber(result.distB)}
               </text>
             </g>
           )}

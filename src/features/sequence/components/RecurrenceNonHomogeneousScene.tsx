@@ -13,6 +13,7 @@ import {
   legendXOf,
   type RecurrenceSceneBaseProps,
 } from "./RecurrenceShared";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export const RecurrenceNonHomogeneousScene: React.FC<
   RecurrenceSceneBaseProps
@@ -72,8 +73,8 @@ export const RecurrenceNonHomogeneousScene: React.FC<
                 fontWeight="bold"
               >
                 {expData.isResonant
-                  ? `+d=${(q_rec / r_rec).toFixed(2)}`
-                  : `bₙ₊₁=${(p_rec / r_rec).toFixed(2)}bₙ+${(q_rec / r_rec).toFixed(2)}`}
+                  ? `+d=${formatMathNumber(q_rec / r_rec)}`
+                  : `bₙ₊₁=${formatMathNumber(p_rec / r_rec)}bₙ+${formatMathNumber(q_rec / r_rec)}`}
               </text>
             )}
           </g>

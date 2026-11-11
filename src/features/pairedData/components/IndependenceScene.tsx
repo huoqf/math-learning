@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { calculateIndependenceTest } from "@/math/pairedData";
 import { ChiSquarePlot } from "./ChiSquarePlot";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface IndependenceSceneProps {
   freqA: number;
@@ -169,7 +170,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
-            当前计算观测值 ≈ {indResult.chiSquare.toFixed(3)}
+            当前计算观测值 ≈ {formatMathProb(indResult.chiSquare)}
           </text>
         </g>
       </g>
@@ -331,8 +332,8 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             fontSize={fontScale(8.5)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            ({(ratioA_B * 100).toFixed(1)}%) · 期望E=
-            {indResult.expected.eA.toFixed(1)}
+            ({formatMathNumber(ratioA_B * 100)}%) · 期望E=
+            {formatMathNumber(indResult.expected.eA)}
           </text>
 
           {/* 格 2 (b) */}
@@ -360,8 +361,8 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             fontSize={fontScale(8.5)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            ({(ratioA_NotB * 100).toFixed(1)}%) · 期望E=
-            {indResult.expected.eB.toFixed(1)}
+            ({formatMathNumber(ratioA_NotB * 100)}%) · 期望E=
+            {formatMathNumber(indResult.expected.eB)}
           </text>
 
           {/* 行 1 合计 */}
@@ -413,8 +414,8 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             fontSize={fontScale(8.5)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            ({(ratioNotA_B * 100).toFixed(1)}%) · 期望E=
-            {indResult.expected.eC.toFixed(1)}
+            ({formatMathNumber(ratioNotA_B * 100)}%) · 期望E=
+            {formatMathNumber(indResult.expected.eC)}
           </text>
 
           {/* 格 4 (d) */}
@@ -442,8 +443,8 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             fontSize={fontScale(8.5)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            ({(ratioNotA_NotB * 100).toFixed(1)}%) · 期望E=
-            {indResult.expected.eD.toFixed(1)}
+            ({formatMathNumber(ratioNotA_NotB * 100)}%) · 期望E=
+            {formatMathNumber(indResult.expected.eD)}
           </text>
 
           {/* 行 2 合计 */}
@@ -621,7 +622,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
                 fontSize={fontScale(9)}
                 fontWeight="bold"
               >
-                p₁={(ratioA_B * 100).toFixed(1)}%
+                p₁={formatMathNumber(ratioA_B * 100)}%
               </text>
             )}
             {/* 下部 非B */}
@@ -642,7 +643,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
                 fontSize={fontScale(9)}
                 fontWeight="bold"
               >
-                {(ratioA_NotB * 100).toFixed(1)}%
+                {formatMathNumber(ratioA_NotB * 100)}%
               </text>
             )}
           </g>
@@ -679,7 +680,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
                 fontSize={fontScale(9)}
                 fontWeight="bold"
               >
-                p₂={(ratioNotA_B * 100).toFixed(1)}%
+                p₂={formatMathNumber(ratioNotA_B * 100)}%
               </text>
             )}
             {/* 下部 非B */}
@@ -700,7 +701,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
                 fontSize={fontScale(9)}
                 fontWeight="bold"
               >
-                {(ratioNotA_NotB * 100).toFixed(1)}%
+                {formatMathNumber(ratioNotA_NotB * 100)}%
               </text>
             )}
           </g>
@@ -765,7 +766,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
                     fontSize={fontScale(8.5)}
                     fontWeight="bold"
                   >
-                    落差|p₁-p₂|: {(deltaP * 100).toFixed(1)}%
+                    落差|p₁-p₂|: {formatMathNumber(deltaP * 100)}%
                   </text>
                 </g>
               )}

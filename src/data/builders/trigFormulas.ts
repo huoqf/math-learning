@@ -7,6 +7,7 @@ import type {
   ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatCoefTerm, formatMathNumber } from "@/utils/mathFormat";
 import {
   calculateSumDiff,
   calculateDoubleAngle,
@@ -385,7 +386,7 @@ export function buildTrigFormulasPanel(
         step: 3,
         title: "化简结论 · 单一正弦型收口",
         detail: `合并为单一正弦函数后，最大值为 $A = ${res.amplitude.toFixed(3)}$，最小值为 $-${res.amplitude.toFixed(3)}$，最小正周期 $T = 2\\pi$。`,
-        latex: `${res.formulaLatex} = ${res.amplitude.toFixed(3)}\\sin(x + ${res.phiDeg.toFixed(1)}^\\circ)`,
+        latex: `${res.formulaLatex} = ${formatCoefTerm(res.amplitude, `\\sin(x ${res.phiDeg < 0 ? "-" : "+"} ${formatMathNumber(Math.abs(res.phiDeg))}^\\circ)`)}`,
         rubric: "【高考采分点】写出最终单一正弦型解析式（3分）",
       },
     ];

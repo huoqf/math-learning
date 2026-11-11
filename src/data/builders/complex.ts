@@ -1,5 +1,6 @@
 import type { MathPanelData } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber } from "@/utils/mathFormat";
 import {
   createComplex,
   modulus,
@@ -254,14 +255,14 @@ export function buildComplexPanel(
           step: 1,
           title: "化为三角形式",
           detail: `把两复数写成模长与辐角形式：$z_1$ 的模 $r_1 = ${r1.toFixed(1)}$、辐角 $\\theta_1 = ${deg1}^\\circ$；$z_2$ 的模 $r_2 = ${r2.toFixed(1)}$、辐角 $\\theta_2 = ${deg2}^\\circ$。`,
-          latex: `z_1 = ${r1.toFixed(1)}\\left(\\cos ${deg1}^\\circ + i\\sin ${deg1}^\\circ\\right), \\quad z_2 = ${r2.toFixed(1)}\\left(\\cos ${deg2}^\\circ + i\\sin ${deg2}^\\circ\\right)`,
+          latex: `z_1 = ${formatMathNumber(r1)}\\left(\\cos ${deg1}^\\circ + i\\sin ${deg1}^\\circ\\right), \\quad z_2 = ${formatMathNumber(r2)}\\left(\\cos ${deg2}^\\circ + i\\sin ${deg2}^\\circ\\right)`,
           rubric: "【高考采分点】写出两复数的三角形式（2分）",
         },
         {
           step: 2,
           title: "乘法法则 · 模长相乘角相加",
           detail: `模长相乘、辐角相加：$|z_1 z_2| = r_1 r_2 = ${r1.toFixed(1)} \\times ${r2.toFixed(1)} = ${prodMod.toFixed(2)}$，$\\arg(z_1 z_2) = \\theta_1 + \\theta_2 = ${deg1}^\\circ + ${deg2}^\\circ = ${deg1 + deg2}^\\circ$。`,
-          latex: `z_1 z_2 = ${r1.toFixed(1)} \\times ${r2.toFixed(1)}\\left[\\cos(${deg1}^\\circ + ${deg2}^\\circ) + i\\sin(${deg1}^\\circ + ${deg2}^\\circ)\\right]`,
+          latex: `z_1 z_2 = ${formatMathNumber(r1)} \\times ${formatMathNumber(r2)}\\left[\\cos(${deg1}^\\circ + ${deg2}^\\circ) + i\\sin(${deg1}^\\circ + ${deg2}^\\circ)\\right]`,
           rubric: "【高考采分点】用乘法法则求模长与辐角（3分）",
         },
         {

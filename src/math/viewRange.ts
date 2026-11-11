@@ -137,3 +137,175 @@ export function isPointInsideRange(
     p.y <= range.yRange[1] + tolerance
   );
 }
+
+export interface FitSteppedViewRangeOptions {
+  /** 基准横向视口（保底下限），默认 [-6, 6] */
+  defaultXRange?: [number, number];
+  /** 基准纵向视口（保底下限），默认 [-4.5, 4.5] */
+  defaultYRange?: [number, number];
+  /** 触发扩张前，允许贴近默认视口边界的最小安全内边距，默认 0.25 */
+  innerSafety?: number;
+  /** 扩张后的边缘留白，默认 0.5 */
+  minPadding?: number;
+  /** 阶梯档位倍率（相对于基准半跨度），默认 [1.5, 2, 3, 4, 6, 8, 12, 16] */
+  stepMultipliers?: readonly number[];
+  /** 最大允许扩张倍率（防渐近线奇异点把画布缩废），默认不限制 */
+  maxExpandFactor?: number;
+  /** 结果保留小数位，默认 1 */
+  precision?: number;
+}
+
+const DEFAULT_STEP_MULTIPLIERS = [1.5, 2, 3, 4, 6, 8, 12, 16] as const;
+
+function expandAxisBySteps(
+  baseRange: [number, number],
+  minVal: number,
+  maxVal: number,
+  minPadding: number,
+  multipliers: readonly number[],
+  maxExpandFactor: number,
+  precision: number,
+): { range: [number, number]; expanded: boolean } {
+  const [baseLo, baseHi] = baseRange;
+  const span = baseHi - baseLo;
+  if (span <= 0) return { range: [...baseRange], expanded: false };
+
+  const needLo = minVal < baseLo ? minVal - minPadding : baseLo;
+  const needHi = maxVal > baseHi ? maxVal + minPadding : baseHi;
+
+  if (needLo >= baseLo - 1e-9 && needHi <= baseHi + 1e-9) {
+    return { range: [...baseRange], expanded: false };
+  }
+
+  const maxSpan = Number.isFinite(maxExpandFactor)
+    ? span * Math.max(1, maxExpandFactor)
+    : Infinity;
+
+  // 按预设阶梯倍率逐档尝试，保证小步滑动时整段区间共用同一档位、零逐帧跳变
+  for (const m of multipliers) {
+    if (m <= 1) continue;
+    if (span * m > maxSpan + 1e-9) break;
+    const extra = ((m - 1) * span) / 2;
+    const candLo = needLo < baseLo ? baseLo - extra : baseLo;
+    const candHi = needHi > baseHi ? baseHi + extra : baseHi;
+    if (candLo <= needLo + 1e-9 && candHi >= needHi - 1e-9) {
+      return {
+        range: [round(candLo, precision), round(candHi, precision)],
+        expanded: true,
+      };
+    }
+  }
+
+  // 若仍超出所有预设档位且受 maxExpandFactor 上限约束，则钳位到最大允许扩幅；
+  // 若无上限，则按整数倍基准跨度对齐（依然维持分档稳态而非连续小数）。
+  if (Number.isFinite(maxExpandFactor)) {
+    const clampedM = Math.max(1, maxExpandFactor);
+    const extra = ((clampedM - 1) * span) / 2;
+    const candLo = needLo < baseLo ? baseLo - extra : baseLo;
+    const candHi = needHi > baseHi ? baseHi + extra : baseHi;
+    const expanded = candLo < baseLo - 1e-9 || candHi > baseHi + 1e-9;
+    return {
+      range: [round(candLo, precision), round(candHi, precision)],
+      expanded,
+    };
+  }
+
+  const extraLo =
+    needLo < baseLo ? Math.ceil((baseLo - needLo) / span) * span : 0;
+  const extraHi =
+    needHi > baseHi ? Math.ceil((needHi - baseHi) / span) * span : 0;
+  return {
+    range: [
+      round(baseLo - extraLo, precision),
+      round(baseHi + extraHi, precision),
+    ],
+    expanded: extraLo > 0 || extraHi > 0,
+  };
+}
+
+/**
+ * 稳态分级视口（用于函数/解析几何等 B 类页面）：
+ * 1. 点集均落在基准视口内时，严格锁定基准 range，零跳变；
+ * 2. 越界时按阶梯档位外扩，防止拖动滑块时每 0.1 步进引发连续缩放抖动；
+ * 3. 可通过 maxExpandFactor 限制最大缩幅，杜绝渐近线/高次边界把主画面缩成竖线。
+ */
+export function fitSteppedViewRange(
+  points: readonly Point2Like[],
+  options: FitSteppedViewRangeOptions = {},
+): ViewRange {
+  const {
+    defaultXRange = DEFAULT_X,
+    defaultYRange = DEFAULT_Y,
+    innerSafety = 0,
+    minPadding = 0.5,
+    stepMultipliers = DEFAULT_STEP_MULTIPLIERS,
+    maxExpandFactor = Infinity,
+    precision = 1,
+  } = options;
+
+  const valid = points.filter(
+    (p) => Number.isFinite(p.x) && Number.isFinite(p.y),
+  );
+  const droppedCount = points.length - valid.length;
+
+  if (valid.length === 0) {
+    return {
+      xRange: [...defaultXRange],
+      yRange: [...defaultYRange],
+      droppedCount,
+      expanded: false,
+    };
+  }
+
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const p of valid) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+
+  const allInsideBase =
+    minX >= defaultXRange[0] + innerSafety &&
+    maxX <= defaultXRange[1] - innerSafety &&
+    minY >= defaultYRange[0] + innerSafety &&
+    maxY <= defaultYRange[1] - innerSafety;
+
+  if (allInsideBase) {
+    return {
+      xRange: [...defaultXRange],
+      yRange: [...defaultYRange],
+      droppedCount,
+      expanded: false,
+    };
+  }
+
+  const xRes = expandAxisBySteps(
+    defaultXRange,
+    minX,
+    maxX,
+    minPadding,
+    stepMultipliers,
+    maxExpandFactor,
+    precision,
+  );
+  const yRes = expandAxisBySteps(
+    defaultYRange,
+    minY,
+    maxY,
+    minPadding,
+    stepMultipliers,
+    maxExpandFactor,
+    precision,
+  );
+
+  return {
+    xRange: xRes.range,
+    yRange: yRes.range,
+    droppedCount,
+    expanded: xRes.expanded || yRes.expanded,
+  };
+}

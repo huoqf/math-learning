@@ -19,6 +19,7 @@ import {
   solveParamsFromDrag,
   partitionFivePointsByView,
 } from "../math/trigTransform";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 /**
  * 拖拽五点反解出来的是 A / φ / k 三个**函数参数**（与屏幕坐标不同轴），
@@ -143,7 +144,7 @@ export function TrigTransformScene({
             stroke={CANVAS_COLORS.white}
             strokeWidth={3}
           >
-            y_max = {trigData.yMax.toFixed(2)}
+            y_max = {formatMathNumber(trigData.yMax)}
           </text>
 
           <line
@@ -166,7 +167,7 @@ export function TrigTransformScene({
             stroke={CANVAS_COLORS.white}
             strokeWidth={3}
           >
-            y_min = {trigData.yMin.toFixed(2)}
+            y_min = {formatMathNumber(trigData.yMin)}
           </text>
 
           {/* 平衡轴 y = k */}
@@ -191,7 +192,7 @@ export function TrigTransformScene({
                 stroke={CANVAS_COLORS.white}
                 strokeWidth={3}
               >
-                平衡轴 y = {k.toFixed(1)}
+                平衡轴 y = {formatMathNumber(k)}
               </text>
             </>
           )}
@@ -417,7 +418,7 @@ export function TrigTransformScene({
               stroke={CANVAS_COLORS.white}
               strokeWidth={3}
             >
-              x₁ = {x1.toFixed(2)}
+              x₁ = {formatMathNumber(x1)}
             </text>
             <text
               x={pMaxX.x - 6}
@@ -430,7 +431,7 @@ export function TrigTransformScene({
               stroke={CANVAS_COLORS.white}
               strokeWidth={3}
             >
-              x₂ = {x2.toFixed(2)}
+              x₂ = {formatMathNumber(x2)}
             </text>
           </g>
 
@@ -469,7 +470,7 @@ export function TrigTransformScene({
                   stroke={CANVAS_COLORS.white}
                   strokeWidth={3}
                 >
-                  Z{idx + 1}({zero.x.toFixed(2)})
+                  Z{idx + 1}({formatMathNumber(zero.x)})
                   {zero.isEndpoint ? "[端点]" : ""}
                 </text>
               </g>
@@ -500,7 +501,7 @@ export function TrigTransformScene({
                   stroke={CANVAS_COLORS.white}
                   strokeWidth={3}
                 >
-                  极大({maxPt.x.toFixed(2)})
+                  极大({formatMathNumber(maxPt.x)})
                 </text>
               </g>
             );
@@ -529,7 +530,7 @@ export function TrigTransformScene({
                   stroke={CANVAS_COLORS.white}
                   strokeWidth={3}
                 >
-                  极小({minPt.x.toFixed(2)})
+                  极小({formatMathNumber(minPt.x)})
                 </text>
               </g>
             );

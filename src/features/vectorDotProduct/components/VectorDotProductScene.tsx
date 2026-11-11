@@ -184,7 +184,7 @@ export const VectorDotProductScene: React.FC<VectorDotProductSceneProps> = ({
           stroke={MATH_COLORS.white}
           strokeWidth={3}
         >
-          {`θ = ${angleDeg.toFixed(0)}°`}
+          {`θ = ${formatMathNumber(Math.round(angleDeg))}°`}
         </text>
       </g>
     );

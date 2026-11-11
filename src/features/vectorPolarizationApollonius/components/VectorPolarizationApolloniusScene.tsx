@@ -17,6 +17,7 @@ import { rightAnglePath } from "@/utils/geometryMarks";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { VectorPolarizationApolloniusParams } from "@/data/registries/vectorPolarizationApollonius";
 import { useVectorPolarizationApolloniusScene } from "../hooks/useVectorPolarizationApolloniusScene";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface VectorPolarizationApolloniusSceneProps {
   params: VectorPolarizationApolloniusParams;
@@ -283,7 +284,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
             strokeWidth={3}
             className="select-none pointer-events-none"
           >
-            |AM| = {polarizationData.lenAM.toFixed(2)}
+            |AM| = {formatMathNumber(polarizationData.lenAM)}
           </text>
         </g>
       )}
@@ -338,7 +339,7 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 strokeWidth={3}
                 className="select-none pointer-events-none"
               >
-                |PM| = {combinedData.lenPM.toFixed(2)}
+                |PM| = {formatMathNumber(combinedData.lenPM)}
               </text>
 
               {/* 最短距离点 P_min (内分点 D) 标注 */}
@@ -637,8 +638,8 @@ export const VectorPolarizationApolloniusScene: React.FC<
                 strokeWidth={3}
                 className="select-none pointer-events-none"
               >
-                外分点 E(x = {apolloniusData.pointE.x.toFixed(1)}) 已超出画布：λ
-                → 1 时阿氏圆半径 2cλ/|λ²−1| 发散
+                外分点 E(x = {formatMathNumber(apolloniusData.pointE.x)})
+                已超出画布：λ → 1 时阿氏圆半径 2cλ/|λ²−1| 发散
               </text>
             )}
         </g>

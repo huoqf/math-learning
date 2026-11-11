@@ -2,6 +2,7 @@ import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import type { SceneScale } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
 import { normalPdf } from "@/math/probabilityNormal";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface ProbabilityNormalParamsShapeSceneProps {
   curvePathD: string;
@@ -94,7 +95,7 @@ export function ProbabilityNormalParamsShapeScene({
               textAnchor="middle"
               className="font-bold select-none drop-shadow-sm"
             >
-              对称轴 x = {mu.toFixed(1)} (f_max={peakY.toFixed(3)})
+              对称轴 x = {formatMathNumber(mu)} (f_max={formatMathProb(peakY)})
             </text>
           </g>
         );
@@ -134,7 +135,7 @@ export function ProbabilityNormalParamsShapeScene({
               textAnchor="end"
               className="font-bold select-none drop-shadow-sm"
             >
-              弯曲改变处 μ-σ = {(mu - safeSigma).toFixed(2)}
+              弯曲改变处 μ-σ = {formatMathNumber(mu - safeSigma)}
             </text>
             <text
               x={pR.x + offsetDist}
@@ -144,7 +145,7 @@ export function ProbabilityNormalParamsShapeScene({
               textAnchor="start"
               className="font-bold select-none drop-shadow-sm"
             >
-              弯曲改变处 μ+σ = {(mu + safeSigma).toFixed(2)}
+              弯曲改变处 μ+σ = {formatMathNumber(mu + safeSigma)}
             </text>
           </g>
         );

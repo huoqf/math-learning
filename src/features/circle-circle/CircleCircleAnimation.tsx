@@ -85,25 +85,31 @@ export function CircleCircleAnimation() {
     [params],
   );
 
-  // 7. 视口自适应：两圆的外框必须完整可见。
-  //    x₁=−5、r₁=5 时圆最左到 −10，固定 x∈[-7,7] 会把左半个圆切掉。
-  //    圆心本身与四个极值点一起作为关键点，保证无论相离/内含/相交都不裁切。
+  // 7. A 类固定参数预算视口：根据两圆在 paramMeta 定义域内可达极值算静态预算，
+  //    确保拖动半径 r1/r2 与圆心时 scale 恒定不变，真正呈现「半径变大 → 图形变大」的因果关系。
   const viewRange = useMemo(() => {
-    const { x1, y1, r1, x2, y2, r2 } = parsedCircleParams;
+    const x1Min = paramMeta.x1.min - paramMeta.r1.max;
+    const x1Max = paramMeta.x1.max + paramMeta.r1.max;
+    const x2Min = paramMeta.x2.min - paramMeta.r2.max;
+    const x2Max = paramMeta.x2.max + paramMeta.r2.max;
+    const y1Min = paramMeta.y1.min - paramMeta.r1.max;
+    const y1Max = paramMeta.y1.max + paramMeta.r1.max;
+    const y2Min = paramMeta.y2.min - paramMeta.r2.max;
+    const y2Max = paramMeta.y2.max + paramMeta.r2.max;
+
     return fitViewRange(
       [
-        { x: x1 - r1, y: y1 },
-        { x: x1 + r1, y: y1 },
-        { x: x1, y: y1 - r1 },
-        { x: x1, y: y1 + r1 },
-        { x: x2 - r2, y: y2 },
-        { x: x2 + r2, y: y2 },
-        { x: x2, y: y2 - r2 },
-        { x: x2, y: y2 + r2 },
+        { x: Math.min(x1Min, x2Min), y: Math.min(y1Min, y2Min) },
+        { x: Math.max(x1Max, x2Max), y: Math.max(y1Max, y2Max) },
       ],
-      { defaultXRange: [-7, 7], defaultYRange: [-5, 5] },
+      {
+        defaultXRange: [-7, 7],
+        defaultYRange: [-5, 5],
+        paddingRatio: 0,
+        minPadding: 0.5,
+      },
     );
-  }, [parsedCircleParams]);
+  }, []);
 
   const scale = useSceneScale({
     vp,

@@ -18,6 +18,7 @@ import {
   sampleRegressionCurvePoints,
 } from "@/math/pairedData";
 import { REGRESSION_ANSWER_STEPS } from "@/data/registries/pairedData";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 const SUBSCRIPT_DIGITS = ["₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉", "₁₀"];
 
@@ -337,7 +338,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
                     fontWeight="bold"
                     fill={MATH_COLORS.degeneracy}
                   >
-                    虚线(含离群点): R²={regResult.rSquare.toFixed(3)}
+                    虚线(含离群点): R²={formatMathProb(regResult.rSquare)}
                   </text>
                   <text
                     x={Math.min(600, Math.max(24, outDesign.x - 105)) + 105}
@@ -349,7 +350,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
                   >
                     实线(剔除P
                     {SUBSCRIPT_DIGITS[points.length - 1] ?? points.length}后):
-                    R²={cleanedLineSeg.cleaned.rSquare.toFixed(3)}
+                    R²={formatMathProb(cleanedLineSeg.cleaned.rSquare)}
                   </text>
                 </g>
               );
@@ -536,7 +537,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
                 fontSize={fontScale(8)}
                 fill={MATH_COLORS.paramTertiary}
               >
-                +{(maxAbsE * 0.7).toFixed(1)}
+                +{formatMathNumber(maxAbsE * 0.7)}
               </text>
               <line
                 x1={18}
@@ -554,7 +555,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
                 fontSize={fontScale(8)}
                 fill={MATH_COLORS.paramTertiary}
               >
-                -{(maxAbsE * 0.7).toFixed(1)}
+                -{formatMathNumber(maxAbsE * 0.7)}
               </text>
               {/* 残差点分布 */}
               {residualsWithX.map((r) => {

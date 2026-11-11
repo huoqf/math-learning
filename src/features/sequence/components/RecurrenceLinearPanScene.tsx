@@ -13,6 +13,7 @@ import {
   legendXOf,
   type RecurrenceSceneBaseProps,
 } from "./RecurrenceShared";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
   params,
@@ -150,7 +151,7 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
               fill={MATH_COLORS.paramTertiary}
               fontWeight="bold"
             >
-              {`基准不动点线 y = c (${fixedPoint.toFixed(2)})`}
+              {`基准不动点线 y = c (${formatMathNumber(fixedPoint)})`}
             </text>
           </g>
         )}
@@ -478,7 +479,7 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
           >
             <tspan>不动点 </tspan>
             <tspan fontStyle="italic">c</tspan>
-            <tspan>{` = ${fixedPoint.toFixed(2)}`}</tspan>
+            <tspan>{` = ${formatMathNumber(fixedPoint)}`}</tspan>
           </text>
         </g>
       )}

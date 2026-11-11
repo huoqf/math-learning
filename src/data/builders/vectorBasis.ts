@@ -1,6 +1,11 @@
 import type { MathPanelData } from "../types";
 import { computeVectorBasis } from "@/math/vectorBasis";
 import { MATH_COLORS } from "@/theme";
+import {
+  formatMathNumber,
+  formatCoefTerm,
+  formatSignedTerm,
+} from "@/utils/mathFormat";
 import type {
   MathQuantity,
   Theorem,
@@ -330,7 +335,7 @@ export function buildVectorBasisPanel(
         step: 2,
         title: "坐标对应 · 转二元一次方程组",
         detail: `比较横纵坐标，得到关于 $\\lambda, \\mu$ 的二元一次方程组；因基底向量不共线，方程组必有唯一确定的解。`,
-        latex: `\\begin{cases} ${e1.x.toFixed(1)}\\lambda + ${e2.x.toFixed(1)}\\mu = ${target.x.toFixed(1)} \\\\ ${e1.y.toFixed(1)}\\lambda + ${e2.y.toFixed(1)}\\mu = ${target.y.toFixed(1)} \\end{cases}`,
+        latex: `\\begin{cases} ${[formatSignedTerm(e1.x, "\\lambda", true), formatSignedTerm(e2.x, "\\mu", Math.abs(e1.x) < 1e-9)].filter(Boolean).join(" ") || "0"} = ${formatMathNumber(target.x)} \\\\ ${[formatSignedTerm(e1.y, "\\lambda", true), formatSignedTerm(e2.y, "\\mu", Math.abs(e1.y) < 1e-9)].filter(Boolean).join(" ") || "0"} = ${formatMathNumber(target.y)} \\end{cases}`,
         rubric: "【高考采分点】坐标对应建立方程组 (+2分)",
       },
       {
@@ -338,8 +343,8 @@ export function buildVectorBasisPanel(
         title: "回代验证 · 唯一性判据",
         detail: isCollinear
           ? "基底两向量共线，分解系数不唯一，方程组无解或有无穷多解，向量无法唯一分解。"
-          : `解得 $\\lambda = ${lambda.toFixed(3)}$、$\\mu = ${mu.toFixed(3)}$；因基底向量不共线，分解唯一。回代得 $(${lambda.toFixed(3)})\\vec{e}_1 + (${mu.toFixed(3)})\\vec{e}_2 = (${target.x.toFixed(1)}, ${target.y.toFixed(1)})$。`,
-        latex: `\\vec{a} = ${lambda.toFixed(3)}\\vec{e}_1 + ${mu.toFixed(3)}\\vec{e}_2`,
+          : `解得 $\\lambda = ${formatMathNumber(lambda)}$、$\\mu = ${formatMathNumber(mu)}$；因基底向量不共线，分解唯一。回代得 $(${formatMathNumber(lambda)})\\vec{e}_1 + (${formatMathNumber(mu)})\\vec{e}_2 = (${formatMathNumber(target.x)}, ${formatMathNumber(target.y)})$。`,
+        latex: `\\vec{a} = ${[formatSignedTerm(lambda, "\\vec{e}_1", true), formatSignedTerm(mu, "\\vec{e}_2", Math.abs(lambda) < 1e-9)].filter(Boolean).join(" ") || "\\vec{0}"}`,
         rubric: "【高考采分点】解方程组并回代验证 (+3分)",
       },
     );
@@ -357,19 +362,21 @@ export function buildVectorBasisPanel(
       {
         step: 2,
         title: "代入求投影系数",
-        detail: `投影系数 $x' = ${orthoLambda.toFixed(3)}$、$y' = ${orthoMu.toFixed(3)}$。`,
-        latex: `\\vec{a} = ${orthoLambda.toFixed(3)}\\vec{e}_1' + ${orthoMu.toFixed(3)}\\vec{e}_2'`,
+        detail: `投影系数 $x' = ${formatMathNumber(orthoLambda)}$、$y' = ${formatMathNumber(orthoMu)}$。`,
+        latex: `\\vec{a} = ${[formatSignedTerm(orthoLambda, "\\vec{e}_1'", true), formatSignedTerm(orthoMu, "\\vec{e}_2'", Math.abs(orthoLambda) < 1e-9)].filter(Boolean).join(" ") || "\\vec{0}"}`,
         rubric: "【高考采分点】代值求正交投影系数 (+2分)",
       },
       {
         step: 3,
         title: "勾股验证 · 模长平方守恒",
-        detail: `正交基底下模长满足勾股定理：$x'^2 + y'^2 = ${(orthoLambda ** 2 + orthoMu ** 2).toFixed(2)}$，与直接计算 $|\\vec{a}|^2 = ${(modTarget ** 2).toFixed(2)}$ 一致。`,
-        latex: `x'^2 + y'^2 = (${orthoLambda.toFixed(3)})^2 + (${orthoMu.toFixed(3)})^2 = ${(orthoLambda ** 2 + orthoMu ** 2).toFixed(2)}`,
+        detail: `正交基底下模长满足勾股定理：$x'^2 + y'^2 = ${formatMathNumber(orthoLambda ** 2 + orthoMu ** 2)}$，与直接计算 $|\\vec{a}|^2 = ${formatMathNumber(modTarget ** 2)}$ 一致。`,
+        latex: `x'^2 + y'^2 = (${formatMathNumber(orthoLambda)})^2 + (${formatMathNumber(orthoMu)})^2 = ${formatMathNumber(orthoLambda ** 2 + orthoMu ** 2)}`,
         rubric: "【高考采分点】勾股定理回代校验 (+2分)",
       },
     );
   } else if (studyMode === "collinear") {
+    const xC = params.xCoeff ?? 0.4;
+    const yC = params.yCoeff ?? 0.6;
     reasoningSteps.push(
       {
         step: 1,
@@ -382,8 +389,8 @@ export function buildVectorBasisPanel(
       {
         step: 2,
         title: "计算两系数之和",
-        detail: `代入权重 $x = ${(params.xCoeff ?? 0.4).toFixed(2)}$、$y = ${(params.yCoeff ?? 0.6).toFixed(2)}$，得 $x + y = ${sumCoeff.toFixed(2)}$。`,
-        latex: `x + y = ${(params.xCoeff ?? 0.4).toFixed(2)} + ${(params.yCoeff ?? 0.6).toFixed(2)} = ${sumCoeff.toFixed(2)}`,
+        detail: `代入权重 $x = ${formatMathNumber(xC)}$、$y = ${formatMathNumber(yC)}$，得 $x + y = ${formatMathNumber(sumCoeff)}$。`,
+        latex: `x + y = ${formatMathNumber(xC)} ${yC >= 0 ? `+ ${formatMathNumber(yC)}` : `- ${formatMathNumber(Math.abs(yC))}`} = ${formatMathNumber(sumCoeff)}`,
         rubric: "【高考采分点】计算两系数之和 (+2分)",
       },
       {
@@ -391,12 +398,19 @@ export function buildVectorBasisPanel(
         title: "共线判定 · 系数和定成败",
         detail: isSumOne
           ? `$x + y = 1$，故 $A, B, P$ 三点共线，$\\vec{OP}$ 的终点落在直线 $AB$ 上。`
-          : `$x + y = ${sumCoeff.toFixed(2)} \\neq 1$，$P$ 落在平行于 $AB$ 的等系数直线上，不与 $A, B$ 共线。`,
-        latex: `A, B, P \\text{ 共线} \\iff x + y = 1; \\quad x + y = ${sumCoeff.toFixed(2)} ${isSumOne ? "= 1" : "\\neq 1"} \\implies A, B, P ${isSumOne ? "\\text{共线}" : "\\text{不共线}"}`,
+          : `$x + y = ${formatMathNumber(sumCoeff)} \\neq 1$，$P$ 落在平行于 $AB$ 的等系数直线上，不与 $A, B$ 共线。`,
+        latex: `A, B, P \\text{ 共线} \\iff x + y = 1; \\quad x + y = ${formatMathNumber(sumCoeff)} ${isSumOne ? "= 1" : "\\neq 1"} \\implies A, B, P ${isSumOne ? "\\text{共线}" : "\\text{不共线}"}`,
         rubric: "【高考采分点】由系数和判定三点共线 (+3分)",
       },
     );
   } else {
+    const tVal = params.ratioT ?? 0.5;
+    const opFormula = [
+      formatCoefTerm(1 - tVal, "\\vec{OA}"),
+      formatSignedTerm(tVal, "\\vec{OB}", Math.abs(1 - tVal) < 1e-9),
+    ]
+      .filter(Boolean)
+      .join(" ");
     reasoningSteps.push(
       {
         step: 1,
@@ -409,14 +423,14 @@ export function buildVectorBasisPanel(
       {
         step: 2,
         title: "代入数值 · 中点与重心",
-        detail: `取 $t = ${(params.ratioT ?? 0.5).toFixed(2)}$，得内分点 $P(${divisionPoint.x.toFixed(1)}, ${divisionPoint.y.toFixed(1)})$；中点 $M = \\dfrac{1}{2}\\vec{OA} + \\dfrac{1}{2}\\vec{OB}$、重心 $G = \\dfrac{1}{3}\\vec{OA} + \\dfrac{1}{3}\\vec{OB}$ 均为 $t$ 的特殊取值。`,
-        latex: `\\vec{OP} = ${(1 - (params.ratioT ?? 0.5)).toFixed(2)}\\vec{OA} + ${(params.ratioT ?? 0.5).toFixed(2)}\\vec{OB}`,
+        detail: `取 $t = ${formatMathNumber(tVal)}$，得内分点 $P(${formatMathNumber(divisionPoint.x)}, ${formatMathNumber(divisionPoint.y)})$；中点 $M = \\dfrac{1}{2}\\vec{OA} + \\dfrac{1}{2}\\vec{OB}$、重心 $G = \\dfrac{1}{3}\\vec{OA} + \\dfrac{1}{3}\\vec{OB}$ 均为 $t$ 的特殊取值。`,
+        latex: `\\vec{OP} = ${opFormula || "\\vec{0}"}`,
         rubric: "【高考采分点】代值求分点坐标 (+2分)",
       },
       {
         step: 3,
         title: "系数和恒为 1 · 凸组合本质",
-        detail: `任意分点两系数和恒等于 $1$：$(1-t) + t = 1$，这正是「三点共线 ⟺ 系数和为 1」的根源。此处 $\\vec{OP} = ${(1 - (params.ratioT ?? 0.5)).toFixed(2)}\\vec{OA} + ${(params.ratioT ?? 0.5).toFixed(2)}\\vec{OB}$。`,
+        detail: `任意分点两系数和恒等于 $1$：$(1-t) + t = 1$，这正是「三点共线 ⟺ 系数和为 1」的根源。此处 $\\vec{OP} = ${opFormula || "\\vec{0}"}$。`,
         latex: `(1-t) + t = 1 \\;\\Rightarrow\\; \\vec{OM} = \\tfrac{1}{2}\\vec{OA} + \\tfrac{1}{2}\\vec{OB}`,
         rubric: "【高考采分点】说明系数和恒为 1 的几何意义 (+3分)",
       },

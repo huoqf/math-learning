@@ -17,7 +17,7 @@ import { buildPolyLatex } from "@/utils/polyBuilder";
 import { QuadraticScene } from "./components/QuadraticScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { solveQuadratic } from "@/math/quadratic";
-import { fitViewRange } from "@/math/viewRange";
+import { fitSteppedViewRange } from "@/math/viewRange";
 import { defaultParams, paramMeta } from "@/data/registries/quadratic";
 import { quadraticScenarios } from "./scenarios";
 
@@ -76,9 +76,8 @@ export function QuadraticAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 3. 视口自适应：顶点 / 实根 / y 轴截距必须全部可见。
-  //    基准仍取 X[-6,6]、Y[-4.5,4.5]（Floor Clamp），参数正常时不收缩；
-  //    一旦 a、c 拉到边界使顶点或截距越界，视口整体外扩而不是把点裁掉。
+  // 3. B 类稳态分级视口：顶点 / 实根 / y 轴截距处于基准 [-6,6]×[-4.5,4.5] 内时锁定比例尺；
+  //    越界时按阶梯档位外扩，防止拖动滑块每 0.1 步长引发连续小数缩放抖动。
   const viewRange = useMemo(() => {
     const res = solveQuadratic(params.a, params.b, params.c);
     const keyPoints = [
@@ -90,7 +89,7 @@ export function QuadraticAnimation() {
         .filter((r) => Number.isFinite(r))
         .map((r) => ({ x: r, y: 0 })),
     ];
-    return fitViewRange(keyPoints, {
+    return fitSteppedViewRange(keyPoints, {
       defaultXRange: [-6, 6],
       defaultYRange: [-4.5, 4.5],
     });

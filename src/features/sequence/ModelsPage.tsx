@@ -57,13 +57,24 @@ export function ModelsPage() {
     if (modelType === "arith-geo") {
       xR = [-1, N + 2];
       const res = calcArithGeoSplit(a1, d, q, N);
-      const allVals = res.terms.flatMap((t) => [t.cn, t.cn * q, t.an, t.bn]);
-      const minV = Math.max(-40, Math.min(0, ...allVals));
-      // 科学教学比例尺：错位相减教学重点在展现前几项的错位对齐与中间相消过程。
-      // 为杜绝指数爆炸使前项高度缩成看不见的 0 像素细线，将视口教学上限收敛在 120；
-      // 超高柱体由 fitVertical 自然收束于视口天花板内，并在柱顶标注真实精确值。
-      const maxV = Math.min(120, Math.max(3, ...allVals));
-      yR = [Math.floor(minV - 3), Math.ceil(maxV * 1.15 + 4)];
+      const allPosVals = res.terms.flatMap((t) => [
+        t.cn,
+        t.diffTerm,
+        t.cn * q,
+        t.an,
+        t.bn,
+      ]);
+      const allWithTail = [...allPosVals, res.tailTermVal];
+      const rawMin = Math.min(0, ...allWithTail);
+      // 科学教学比例尺：正半轴展示前几项增长与中间纯等比段，顶部留足对齐卡/Step4 净空；
+      // 负半轴保留 26% maxV 的第四象限空间，用于完整呈现 Step 3/4 向下的负尾项 (-aₙqⁿ) 与锯齿截断，且各步切换时坐标轴恒定不跳动。
+      const rawMax = Math.max(3, ...allPosVals);
+      const posTiers = [12, 24, 48, 80, 120];
+      const maxV = posTiers.find((t) => t >= rawMax) ?? 120;
+      const baseNegPad = Math.max(4, Math.ceil(maxV * 0.26));
+      const negCap = -Math.max(24, Math.ceil(maxV * 0.34));
+      const minV = Math.max(negCap, Math.min(-baseNegPad, rawMin - 2));
+      yR = [Math.floor(minV), Math.ceil(maxV * 1.62 + 8)];
       if (yR[1] - yR[0] < 6) yR = [yR[0], yR[0] + 6];
     } else if (modelType === "telescoping") {
       xR = [-1, N + 1.5];
@@ -89,9 +100,11 @@ export function ModelsPage() {
       const res = calcGroupedSequence(a1, d, q, N);
       const allVals = res.terms.flatMap((t) => [t.an, t.bn, t.cn]);
       const minV = Math.max(-30, Math.min(0, ...allVals));
-      // 分组模型同构上限钳制（100），兼顾等差分量与等比分量的可读性
-      const maxV = Math.min(100, Math.max(3, ...allVals));
-      yR = [Math.floor(minV - 2), Math.ceil(maxV + 3)];
+      const rawMax = Math.max(3, ...allVals);
+      const posTiers = [12, 24, 48, 80, 100];
+      const maxV = posTiers.find((t) => t >= rawMax) ?? 100;
+      const botPad = Math.max(2, Math.ceil(maxV * 0.12));
+      yR = [Math.floor(minV - botPad), Math.ceil(maxV * 1.38 + 6)];
       if (yR[1] - yR[0] < 6) yR = [yR[0], yR[0] + 6];
     } else if (modelType === "odd-even") {
       xR = [-1, N + 1.5];

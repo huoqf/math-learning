@@ -70,6 +70,22 @@ export const rightPanelRules = [
             snippet: line.trim(),
           });
         }
+        if (/\$\{[^}]*\.toFixed\([^)]*\)[^}]*\}(?:\s*(?:[xyzut]\b|\\\\?(?:left|vec|lambda|mu|sin|cos|tan)\b)|\()/.test(line)) {
+          issues.push({
+            lineNum: idx + 1,
+            type: '代数式模板插值浮点尾零',
+            message: '代数式系数模板严禁直接调用 .toFixed() 拼接变量或括号（易产生 1.00x / 1.00( 尾零），请改用 formatCoefTerm() / formatSignedTerm() / formatMathNumber()',
+            snippet: line.trim(),
+          });
+        }
+        if (/(?:latex|detail)\s*:.*(?:\+\s+-\d|-\s+-\d|\+\s+-\\|-\s+-\\)/.test(line)) {
+          issues.push({
+            lineNum: idx + 1,
+            type: '代数式未化简双符号',
+            message: '代数表达式中严禁出现 + - 或 - - 未化简双符号，请按正负分支或使用 formatSignedTerm() 处理符号',
+            snippet: line.trim(),
+          });
+        }
         if (/(?:latex|value)\s*:\s*[`'"].*?[+\-=]\s*1[a-zA-Z]\b/.test(line)) {
           issues.push({
             lineNum: idx + 1,

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateConditionalProb } from "@/math/probabilityBayes";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface ConditionalSceneProps {
   params: Record<string, number>;
@@ -210,7 +211,7 @@ export function ConditionalScene({
             AB 占新全集 Ω&apos; 的面积比 P(B|A) ={" "}
             {conditionalData.isDegenerate
               ? "无意义"
-              : `${(conditionalData.pB_given_A * 100).toFixed(1)}%`}
+              : `${formatMathNumber(conditionalData.pB_given_A * 100)}%`}
           </text>
         </g>
       )}
@@ -263,7 +264,7 @@ export function ConditionalScene({
         fill={MATH_COLORS.paramPrimary}
         textAnchor="middle"
       >
-        事件 A [P(A) = {conditionalData.pA.toFixed(2)}]
+        事件 A [P(A) = {formatMathNumber(conditionalData.pA)}]
       </text>
 
       {/* B 标签 */}
@@ -275,7 +276,7 @@ export function ConditionalScene({
         fill={MATH_COLORS.paramSecondary}
         textAnchor="middle"
       >
-        事件 B [P(B) = {conditionalData.pB.toFixed(2)}]
+        事件 B [P(B) = {formatMathNumber(conditionalData.pB)}]
       </text>
 
       {/* 交集 AB 标注 */}
@@ -287,7 +288,7 @@ export function ConditionalScene({
         fill={MATH_COLORS.labelText}
         textAnchor="middle"
       >
-        AB [{conditionalData.pAB.toFixed(2)}]
+        AB [{formatMathNumber(conditionalData.pAB)}]
       </text>
 
       {/* ─── 右半区：重归一化与数学本质面板 (x: 490 ~ 800, y: 75 ~ 600) ─── */}
@@ -354,7 +355,7 @@ export function ConditionalScene({
             fontSize={fontScale(11)}
             fill={MATH_COLORS.labelText}
           >
-            {conditionalData.pAB.toFixed(2)}
+            {formatMathNumber(conditionalData.pAB)}
           </text>
         </g>
         <text
@@ -363,7 +364,8 @@ export function ConditionalScene({
           fontSize={fontScale(11)}
           fill={MATH_COLORS.paramTertiary}
         >
-          交集 P(AB) 占全集面积比例 = {(conditionalData.pAB * 100).toFixed(1)}%
+          交集 P(AB) 占全集面积比例 ={" "}
+          {formatMathNumber(conditionalData.pAB * 100)}%
         </text>
 
         {/* 条件压缩视角 */}
@@ -373,7 +375,8 @@ export function ConditionalScene({
           fontSize={fontScale(12)}
           fill={MATH_COLORS.labelTextLight}
         >
-          ② 条件视窗（分母压缩为事件 A = {conditionalData.pA.toFixed(2)}）：
+          ② 条件视窗（分母压缩为事件 A = {formatMathNumber(conditionalData.pA)}
+          ）：
         </text>
         <g transform="translate(16, 142)">
           <rect
@@ -410,7 +413,7 @@ export function ConditionalScene({
           >
             {conditionalData.isDegenerate
               ? "无意义"
-              : conditionalData.pB_given_A.toFixed(3)}
+              : formatMathProb(conditionalData.pB_given_A)}
           </text>
         </g>
         <text
@@ -423,7 +426,7 @@ export function ConditionalScene({
           条件概率 P(B|A) ={" "}
           {conditionalData.isDegenerate
             ? "无意义"
-            : `${(conditionalData.pB_given_A * 100).toFixed(1)}%`}
+            : `${formatMathNumber(conditionalData.pB_given_A * 100)}%`}
         </text>
         <text
           x={16}
@@ -463,7 +466,8 @@ export function ConditionalScene({
             fontSize={fontScale(12)}
             fill={MATH_COLORS.labelTextLight}
           >
-            无条件先验概率 P(B) = {(conditionalData.pB * 100).toFixed(1)}%：
+            无条件先验概率 P(B) = {formatMathNumber(conditionalData.pB * 100)}
+            %：
           </text>
           <g transform="translate(16, 68)">
             <rect
@@ -489,7 +493,7 @@ export function ConditionalScene({
               fontWeight="bold"
               fill={MATH_COLORS.paramSecondary}
             >
-              {conditionalData.pB.toFixed(2)}
+              {formatMathNumber(conditionalData.pB)}
             </text>
           </g>
 
@@ -503,7 +507,7 @@ export function ConditionalScene({
             已知 A 发生后条件概率 P(B|A) ={" "}
             {conditionalData.isDegenerate
               ? "无意义"
-              : `${(conditionalData.pB_given_A * 100).toFixed(1)}%`}
+              : `${formatMathNumber(conditionalData.pB_given_A * 100)}%`}
             ：
           </text>
           <g transform="translate(16, 122)">
@@ -536,7 +540,7 @@ export function ConditionalScene({
             >
               {conditionalData.isDegenerate
                 ? "无意义"
-                : conditionalData.pB_given_A.toFixed(2)}
+                : formatMathNumber(conditionalData.pB_given_A)}
             </text>
           </g>
 

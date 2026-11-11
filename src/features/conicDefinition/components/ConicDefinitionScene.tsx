@@ -14,6 +14,7 @@ import { CoordinateGrid, InteractivePoint, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { useConicDefinitionScene } from "../hooks/useConicDefinitionScene";
 import type { PlacedLabel } from "@/utils/labelAvoider";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ConicDefinitionSceneProps {
   params: {
@@ -120,7 +121,7 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
             stroke={MATH_COLORS.white}
             strokeWidth={3}
           >
-            准线 l (x = {directrixLine.x.toFixed(1)})
+            准线 l (x = {formatMathNumber(directrixLine.x)})
           </text>
         </g>
       )}

@@ -16,7 +16,7 @@ import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
 import { TangentScalingScene } from "./components/TangentScalingScene";
 import { buildTangentScalingPanel } from "@/data/builders/tangentScaling";
-import { fitViewRange } from "@/math/viewRange";
+import { fitSteppedViewRange } from "@/math/viewRange";
 import { collectTangentScalingKeyPoints } from "@/math/tangentScaling";
 import {
   defaultParams,
@@ -57,13 +57,10 @@ export function TangentScalingAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 视口自适应：参数放宽后关键点（切点 / 临界点 / 探针读数点）必须留在画布内。
-  // 取景是纯函数，range 算好后单向派发给 useSceneScale，
-  // 不在 useSceneScale 内部做隐式 autoFit——否则 CoordinateGrid、
-  // FunctionGraph 与 InteractivePoint 会各自感知不同的动态区间，出现网格与曲线比例撕裂。
+  // B 类稳态分级视口：常规区锁定 [-4,5]×[-3,6]，参数推至边缘时按阶梯档位外扩而不每步微跳。
   const viewRange = useMemo(
     () =>
-      fitViewRange(
+      fitSteppedViewRange(
         collectTangentScalingKeyPoints(params, mode, {
           baseSubModel,
           sandwichSubModel,

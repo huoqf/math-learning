@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { fitViewRange, isPointInsideRange } from "@/math/viewRange";
+import {
+  fitViewRange,
+  fitSteppedViewRange,
+  isPointInsideRange,
+} from "@/math/viewRange";
 import { collectTangentScalingKeyPoints as collectTangentScalingPoints } from "@/math/tangentScaling";
 
 /**
@@ -87,12 +91,10 @@ const PAGE_CASES: PageCase[] = [
     route: "/derivative",
     baseX: [-5, 5],
     baseY: [-4, 4],
-    // cubic x₀=3 ⇒ f=18；exp x₀=2 ⇒ e²=7.389
-    overrun: [
-      { x: 3, y: 18 },
-      { x: 2, y: 7.389 },
-    ],
-    note: "切点必须在切线上，出框后「切线斜率」失去可读的几何对象",
+    // 温和越界如 exp x₀=2 ⇒ e²=7.389 应由稳态阶梯外扩纳入画布；
+    // 极端边点如 cubic x₀=3 (f=18) 则由 maxExpandFactor 拦阻防止整图萎缩，交由 edgeClampProjection 贴边显示
+    overrun: [{ x: 2, y: 7.389 }],
+    note: "温和越界切点应在梯级视口内，同时不致因定义域端点压垮主图比例",
   },
   {
     file: "src/features/derivative-monotonicity/DerivativeMonotonicityAnimation.tsx",
@@ -166,10 +168,17 @@ function extractUseSceneScaleArgs(source: string): string | null {
 describe("视口自适应 · 机制层：报告实测越界点必须落框", () => {
   for (const page of PAGE_CASES) {
     it(`${page.route}：${page.note}`, () => {
-      const range = fitViewRange(page.overrun, {
-        defaultXRange: page.baseX,
-        defaultYRange: page.baseY,
-      });
+      const range =
+        page.route === "/derivative"
+          ? fitSteppedViewRange(page.overrun, {
+              defaultXRange: page.baseX,
+              defaultYRange: page.baseY,
+              maxExpandFactor: 2.0,
+            })
+          : fitViewRange(page.overrun, {
+              defaultXRange: page.baseX,
+              defaultYRange: page.baseY,
+            });
 
       // 采集到的每个关键点都要在框内，且不贴边（padding 生效）
       for (const p of page.overrun) {
@@ -210,7 +219,11 @@ describe("视口自适应 · 接线层：9 页必须单向派发 fitViewRange �
     it(`${page.route} 的 useSceneScale 消费 viewRange，且不再保留写死 range`, () => {
       const source = readSource(page.file);
 
-      expect(source, "缺少 fitViewRange 调用").toContain("fitViewRange(");
+      expect(
+        source.includes("fitViewRange(") ||
+          source.includes("fitSteppedViewRange("),
+        "缺少 fitViewRange 或 fitSteppedViewRange 调用",
+      ).toBe(true);
 
       const args = extractUseSceneScaleArgs(source);
       expect(args, "找不到 useSceneScale 调用").not.toBeNull();

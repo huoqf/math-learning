@@ -5,6 +5,7 @@
 import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { toSub } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 const DESIGN_CENTER_X = CANVAS_PRESETS.full.width / 2;
 const DESIGN_CENTER_Y = CANVAS_PRESETS.full.height / 2;
@@ -270,7 +271,7 @@ export function SequenceGeometricTessellationScene({
               fontSize={fontScale(8)}
               fill={MATH_COLORS.labelText}
             >
-              余尾={remainSum.toFixed(2)}
+              余尾={formatMathNumber(remainSum)}
             </text>
           )}
         </g>

@@ -7,6 +7,7 @@ import { ScenarioPassBall4 } from "./scenarios/ScenarioPassBall4";
 import { ScenarioUrnReplace } from "./scenarios/ScenarioUrnReplace";
 import { ScenarioGamePingpong } from "./scenarios/ScenarioGamePingpong";
 import { ScenarioFreeExplore } from "./scenarios/ScenarioFreeExplore";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface MarkovSceneProps {
   params: Record<string, number>;
@@ -272,7 +273,8 @@ export function MarkovScene({
               fontWeight="bold"
               fill={MATH_COLORS.paramPrimary}
             >
-              = {pn.toFixed(2)} × {p11.toFixed(2)} = {flow1.toFixed(3)}
+              = {formatMathNumber(pn)} × {formatMathNumber(p11)} ={" "}
+              {formatMathProb(flow1)}
             </text>
           </g>
 
@@ -312,7 +314,8 @@ export function MarkovScene({
               fontWeight="bold"
               fill={MATH_COLORS.paramSecondary}
             >
-              = {pNotN.toFixed(2)} × {p21.toFixed(2)} = {flow2.toFixed(3)}
+              = {formatMathNumber(pNotN)} × {formatMathNumber(p21)} ={" "}
+              {formatMathProb(flow2)}
             </text>
           </g>
 
@@ -362,7 +365,7 @@ export function MarkovScene({
               fill={MATH_COLORS.labelText}
               textAnchor="middle"
             >
-              {flow1.toFixed(3)} + {flow2.toFixed(3)}
+              {formatMathProb(flow1)} + {formatMathProb(flow2)}
             </text>
             <text
               x={80}
@@ -372,7 +375,7 @@ export function MarkovScene({
               fill={MATH_COLORS.focusPoint}
               textAnchor="middle"
             >
-              p_{currStep + 1} = {pnNext.toFixed(3)}
+              p_{currStep + 1} = {formatMathProb(pnNext)}
             </text>
           </g>
 
@@ -405,7 +408,7 @@ export function MarkovScene({
               fill={MATH_COLORS.function}
               textAnchor="middle"
             >
-              pₙ₊₁ = {lambdaStr} pₙ + {p21.toFixed(2)}
+              pₙ₊₁ = {lambdaStr} pₙ + {formatMathNumber(p21)}
             </text>
             <text
               x={(leftW - 52) / 2}
@@ -414,7 +417,7 @@ export function MarkovScene({
               fill={MATH_COLORS.labelTextLight}
               textAnchor="middle"
             >
-              公比 λ = p₁₁ - p₂₁ = {lambda.toFixed(2)}
+              公比 λ = p₁₁ - p₂₁ = {formatMathNumber(lambda)}
             </text>
           </g>
         </g>
@@ -496,8 +499,8 @@ export function MarkovScene({
             : markovData.isPureOscillating
               ? "λ = -1.00：两点间等幅振荡 (无衰减)"
               : markovData.isOscillating
-                ? `λ = ${lambda.toFixed(2)} < 0：交替阻尼振荡`
-                : `λ = ${lambda.toFixed(2)} ≥ 0：单调递进趋近`}
+                ? `λ = ${formatMathNumber(lambda)} < 0：交替阻尼振荡`
+                : `λ = ${formatMathNumber(lambda)} ≥ 0：单调递进趋近`}
         </text>
 
         {/* ─────────────────────────────────────────────────────────────
@@ -559,7 +562,7 @@ export function MarkovScene({
                       fill={MATH_COLORS.labelTextLight}
                       textAnchor="end"
                     >
-                      {v.toFixed(2)}
+                      {formatMathNumber(v)}
                     </text>
                   </g>
                 );
@@ -594,8 +597,8 @@ export function MarkovScene({
                 textAnchor="middle"
               >
                 {markovData.isDegenerate
-                  ? `恒等基准线 p₁ = ${tVal.toFixed(3)}`
-                  : `平衡不动点 t = ${tVal.toFixed(3)}`}
+                  ? `恒等基准线 p₁ = ${formatMathProb(tVal)}`
+                  : `平衡不动点 t = ${formatMathProb(tVal)}`}
               </text>
 
               {/* 连线轨迹折线 (显示跳跃形态) */}
@@ -691,7 +694,7 @@ export function MarkovScene({
                       }
                       textAnchor="middle"
                     >
-                      {s.p1.toFixed(3)}
+                      {formatMathProb(s.p1)}
                     </text>
                   </g>
                 );
@@ -736,7 +739,7 @@ export function MarkovScene({
                         textAnchor="middle"
                       >
                         第 {currStep} 步：p_{currStep} ={" "}
-                        {currentStepData.p1.toFixed(4)}
+                        {formatMathProb(currentStepData.p1)}
                       </text>
                       <text
                         x={75}
@@ -745,7 +748,8 @@ export function MarkovScene({
                         fill={MATH_COLORS.labelText}
                         textAnchor="middle"
                       >
-                        距不动点偏差：{(currentStepData.p1 - tVal).toFixed(4)}
+                        距不动点偏差：
+                        {formatMathProb(currentStepData.p1 - tVal)}
                       </text>
                     </g>
                   </g>
@@ -796,9 +800,9 @@ export function MarkovScene({
             fontSize={fontScale(10)}
             fill={MATH_COLORS.function}
           >
-            ① 递推手算：p₂ = {p11.toFixed(2)}×{p1.toFixed(2)} + {p21.toFixed(2)}
-            ×{(1 - p1).toFixed(2)} ={" "}
-            <tspan fontWeight="bold">{p2Recurrence.toFixed(3)}</tspan>
+            ① 递推手算：p₂ = {formatMathNumber(p11)}×{formatMathNumber(p1)} +{" "}
+            {formatMathNumber(p21)}×{formatMathNumber(1 - p1)} ={" "}
+            <tspan fontWeight="bold">{formatMathProb(p2Recurrence)}</tspan>
           </text>
           <text
             x={12}
@@ -806,9 +810,10 @@ export function MarkovScene({
             fontSize={fontScale(10)}
             fill={MATH_COLORS.focusPoint}
           >
-            ② 通项代入：p₂ = {tVal.toFixed(3)} + ({diffInit.toFixed(3)})×
+            ② 通项代入：p₂ = {formatMathProb(tVal)} + (
+            {formatMathProb(diffInit)})×
             {lambdaStr}¹ ={" "}
-            <tspan fontWeight="bold">{p2General.toFixed(3)}</tspan>
+            <tspan fontWeight="bold">{formatMathProb(p2General)}</tspan>
             <tspan fill={MATH_COLORS.derivative} fontWeight="bold">
               {"  "}✓ 双路径计算值完全一致
             </tspan>

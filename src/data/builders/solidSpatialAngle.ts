@@ -7,6 +7,7 @@ import type {
   ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber } from "@/utils/mathFormat";
 import {
   solveCuboidVertices,
   solveSkewLines,
@@ -351,7 +352,7 @@ export function buildSpatialAnglePanel(
         step: 1,
         title: "建立空间直角坐标系并求截面 BDE 的法向量",
         detail: `以 A 为原点建立坐标系 A-xyz，设平面 BDE 法向量为 n = (x, y, z)`,
-        latex: `\\begin{cases} \\vec{n} \\cdot \\vec{BD} = 0 \\\\ \\vec{n} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\begin{cases} -${a}x + ${b}y = 0 \\\\ -${a}x + ${zE.toFixed(2)}z = 0 \\end{cases} \\implies \\vec{n} = (${(b * zE).toFixed(2)},\\; ${(a * zE).toFixed(2)},\\; ${(a * b).toFixed(2)})`,
+        latex: `\\begin{cases} \\vec{n} \\cdot \\vec{BD} = 0 \\\\ \\vec{n} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\begin{cases} -${formatMathNumber(a)}x + ${formatMathNumber(b)}y = 0 \\\\ -${formatMathNumber(a)}x + ${formatMathNumber(zE)}z = 0 \\end{cases} \\implies \\vec{n} = (${formatMathNumber(b * zE)},\\; ${formatMathNumber(a * zE)},\\; ${formatMathNumber(a * b)})`,
         rubric: "【高考采分点】建立空间坐标系并联立方程组求截面法向量 (+4分)",
       },
       {
@@ -493,7 +494,7 @@ export function buildSpatialAnglePanel(
         step: 2,
         title: "解方程组求截面 BDE 的法向量",
         detail: "底面法向量取 n₁=(0,0,1)，设截面 BDE 法向量 n₂=(x,y,z)",
-        latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\begin{cases} -${a}x + ${b}y = 0 \\\\ -${a}x + ${zE.toFixed(2)}z = 0 \\end{cases} \\implies \\vec{n_2} = (${dih.n2Raw.x.toFixed(2)},\\; ${dih.n2Raw.y.toFixed(2)},\\; ${dih.n2Raw.z.toFixed(2)})`,
+        latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\begin{cases} -${formatMathNumber(a)}x + ${formatMathNumber(b)}y = 0 \\\\ -${formatMathNumber(a)}x + ${formatMathNumber(zE)}z = 0 \\end{cases} \\implies \\vec{n_2} = (${formatMathNumber(dih.n2Raw.x)},\\; ${formatMathNumber(dih.n2Raw.y)},\\; ${formatMathNumber(dih.n2Raw.z)})`,
         rubric: "【高考采分点】联立正交方程组精确求得截面法向量坐标 (+5分)",
       },
       {

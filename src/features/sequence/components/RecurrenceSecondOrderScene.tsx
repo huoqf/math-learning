@@ -13,6 +13,7 @@ import {
   legendXOf,
   type RecurrenceSceneBaseProps,
 } from "./RecurrenceShared";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
   params,
@@ -70,7 +71,7 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
                   fill={MATH_COLORS.paramSecondary}
                   fontWeight="bold"
                 >
-                  {`×r₂(${secondData.r2.toFixed(1)})`}
+                  {`×r₂(${formatMathNumber(secondData.r2)})`}
                 </text>
               )}
             </g>

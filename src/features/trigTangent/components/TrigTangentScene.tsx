@@ -6,7 +6,7 @@ import { Asymptote } from "@/components/Math/Asymptote";
 import { InteractivePoint } from "@/components/Math/InteractivePoint";
 import { VectorArrow } from "@/components/Math/VectorArrow";
 import { mathToDesign } from "@/utils/coordinate";
-import { formatPiFraction } from "@/utils/mathFormat";
+import { formatPiFraction, formatMathNumber } from "@/utils/mathFormat";
 import { paramDomainRange, snapDragValue } from "@/utils/paramClamp";
 import { paramMeta } from "@/data/registries/trigTangent";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
@@ -416,7 +416,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                 fontSize={fontScale(8.5)}
                 fontWeight="500"
               >
-                ({xLabel}, {center.y.toFixed(1)})
+                ({xLabel}, {formatMathNumber(center.y)})
               </text>
             </g>
           );
@@ -639,7 +639,7 @@ export const TrigTangentScene: React.FC<TrigTangentSceneProps> = ({
                     fontSize={fontScale(10.5)}
                     fontWeight="bold"
                   >
-                    AT = tan θ ({tangentData.tanValue.toFixed(2)})
+                    AT = tan θ ({formatMathNumber(tangentData.tanValue)})
                   </text>
                 </g>
               )}

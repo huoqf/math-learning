@@ -5,6 +5,7 @@
 import { CoordinateGrid } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import { formatMathNumber } from "@/utils/mathFormat";
 import type { SceneScale } from "@/hooks";
 import { toSub } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
@@ -77,7 +78,7 @@ export function SequenceGeometricProductMaxScene({
             fontWeight="bold"
           >
             双最值：P{toSub(maxPnInfo.nMax)} = P{toSub(maxPnInfo.dualN!)} ={" "}
-            {maxPnInfo.maxPn.toFixed(2)}
+            {formatMathNumber(maxPnInfo.maxPn)}
           </text>
         </g>
       )}
@@ -182,7 +183,7 @@ export function SequenceGeometricProductMaxScene({
                 isAboveOne ? MATH_COLORS.inequality : MATH_COLORS.paramSecondary
               }
             >
-              a{toSub(t.n)}={t.an.toFixed(2)}
+              a{toSub(t.n)}={formatMathNumber(t.an)}
             </text>
 
             {/* P_n 散点与极值光环 */}
@@ -222,7 +223,7 @@ export function SequenceGeometricProductMaxScene({
                     fill={MATH_COLORS.sequenceHighlight}
                     fontWeight="bold"
                   >
-                    P{toSub(t.n)}最值 = {t.Pn.toFixed(2)}
+                    P{toSub(t.n)}最值 = {formatMathNumber(t.Pn)}
                   </text>
                 )}
 
@@ -251,7 +252,7 @@ export function SequenceGeometricProductMaxScene({
                 fontSize={fontScale(8.5)}
                 fill={MATH_COLORS.sequenceSum}
               >
-                P{toSub(t.n)}={t.Pn.toFixed(2)}
+                P{toSub(t.n)}={formatMathNumber(t.Pn)}
               </text>
             )}
           </g>

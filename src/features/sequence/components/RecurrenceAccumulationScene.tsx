@@ -16,6 +16,7 @@ import {
   legendXOf,
   type RecurrenceSceneBaseProps,
 } from "./RecurrenceShared";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface Props extends RecurrenceSceneBaseProps {
   accumFnType?: AccumulationFnType;
@@ -138,7 +139,9 @@ export const RecurrenceAccumulationScene: React.FC<Props> = ({
                 <tspan fontSize={fontScale(8)} dy={fontScale(2)}>
                   {t.n}
                 </tspan>
-                <tspan dy={-fontScale(2)}>{` = ${t.deltaK.toFixed(1)}`}</tspan>
+                <tspan
+                  dy={-fontScale(2)}
+                >{` = ${formatMathNumber(t.deltaK)}`}</tspan>
               </text>
             )}
           </g>

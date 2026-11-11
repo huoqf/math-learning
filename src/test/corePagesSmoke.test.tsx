@@ -177,11 +177,19 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
   });
 
   it("Sequence pages mount properly and render", () => {
-    const { unmount: u1 } = render(<ArithmeticPage />);
+    const { unmount: u1 } = render(
+      <MemoryRouter>
+        <ArithmeticPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText("等差数列看板")).toBeInTheDocument();
     u1();
 
-    const { unmount: u2 } = render(<GeometricPage />);
+    const { unmount: u2 } = render(
+      <MemoryRouter>
+        <GeometricPage />
+      </MemoryRouter>,
+    );
     expect(screen.getByText("等比数列实验室")).toBeInTheDocument();
     u2();
 

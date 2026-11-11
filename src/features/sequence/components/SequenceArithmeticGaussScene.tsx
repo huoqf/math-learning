@@ -8,6 +8,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { toSub } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ArithmeticSubSceneProps {
   params: Record<string, number>;
@@ -157,7 +158,7 @@ export function SequenceArithmeticGaussScene({
                   fill={MATH_COLORS.sequence}
                   fontWeight="bold"
                 >
-                  {t.an.toFixed(1)}
+                  {formatMathNumber(t.an)}
                 </text>
               )}
 
@@ -181,7 +182,7 @@ export function SequenceArithmeticGaussScene({
                   fill={MATH_COLORS.paramSecondary}
                   fontWeight="bold"
                 >
-                  {revTerm.an.toFixed(1)}
+                  {formatMathNumber(revTerm.an)}
                 </text>
               )}
 
@@ -197,7 +198,7 @@ export function SequenceArithmeticGaussScene({
                 fill={MATH_COLORS.paramSecondary}
                 fontWeight="bold"
               >
-                和={(t.an + revTerm.an).toFixed(1)}
+                和={formatMathNumber(t.an + revTerm.an)}
               </text>
             </g>
           );
@@ -266,8 +267,8 @@ export function SequenceArithmeticGaussScene({
                     fontWeight="bold"
                   >
                     {isGeometricValid
-                      ? `大长方形面积 = 2S${toSub(N)} = ${N} × (a₁ + a${toSub(N)}) = ${(N * sumHeightVal).toFixed(1)}`
-                      : `代数配对和 = 2S${toSub(N)} = ${N} × (a₁ + a${toSub(N)}) = ${(N * sumHeightVal).toFixed(1)}`}
+                      ? `大长方形面积 = 2S${toSub(N)} = ${N} × (a₁ + a${toSub(N)}) = ${formatMathNumber(N * sumHeightVal)}`
+                      : `代数配对和 = 2S${toSub(N)} = ${N} × (a₁ + a${toSub(N)}) = ${formatMathNumber(N * sumHeightVal)}`}
                   </text>
                   {!isGeometricValid && (
                     <text

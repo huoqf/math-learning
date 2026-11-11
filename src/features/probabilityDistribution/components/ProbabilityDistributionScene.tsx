@@ -14,6 +14,7 @@ import { ProbabilityDistributionBarScene } from "./ProbabilityDistributionBarSce
 import { ProbabilityDistributionCompareScene } from "./ProbabilityDistributionCompareScene";
 import { ProbabilityDistributionDecisionScene } from "./ProbabilityDistributionDecisionScene";
 import { getDecisionMaxX } from "./modeConfig";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ProbabilityDistributionSceneProps {
   distResult: DistributionResult;
@@ -159,7 +160,7 @@ export function ProbabilityDistributionScene({
                   fontWeight="600"
                   className="font-mono"
                 >
-                  {pVal.toFixed(1)}
+                  {formatMathNumber(pVal)}
                 </text>
               </g>
             );

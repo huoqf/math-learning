@@ -8,6 +8,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { toSub } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ArithmeticSubSceneProps {
   params: Record<string, number>;
@@ -79,7 +80,7 @@ export function SequenceArithmeticQuadraticScene({
             fill={MATH_COLORS.sequenceHighlight}
             fontWeight="bold"
           >
-            对称轴 x={continuousAxis.toFixed(2)}
+            对称轴 x={formatMathNumber(continuousAxis)}
           </text>
         </g>
       )}
@@ -110,7 +111,7 @@ export function SequenceArithmeticQuadraticScene({
             fontWeight="bold"
           >
             双最值：S{toSub(maxSnInfo.nMax)} = S{toSub(maxSnInfo.dualN)} ={" "}
-            {terms[maxSnInfo.nMax - 1]?.Sn.toFixed(1)}
+            {formatMathNumber(terms[maxSnInfo.nMax - 1]?.Sn ?? 0)}
           </text>
         </g>
       )}
@@ -190,7 +191,7 @@ export function SequenceArithmeticQuadraticScene({
                 fontSize={fontScale(9)}
                 fill={MATH_COLORS.sequenceSum}
               >
-                S{toSub(t.n)} = {t.Sn.toFixed(1)}
+                S{toSub(t.n)} = {formatMathNumber(t.Sn)}
               </text>
             )}
 
@@ -218,7 +219,7 @@ export function SequenceArithmeticQuadraticScene({
                     fontWeight="bold"
                   >
                     {(maxSnInfo?.isMax ?? d < 0) ? "最大值项" : "最小值项"} S
-                    {toSub(t.n)} = {t.Sn.toFixed(1)}
+                    {toSub(t.n)} = {formatMathNumber(t.Sn)}
                   </text>
                 )}
 

@@ -8,6 +8,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks";
 import type { AbsSumResult } from "@/math/sequence";
 import { toSub } from "./SequenceText";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface SequenceModelsAbsSumSceneProps {
   absSumData: AbsSumResult;
@@ -80,7 +81,7 @@ export function SequenceModelsAbsSumScene({
               fill={MATH_COLORS.paramPrimary}
               fontWeight="bold"
             >
-              变号零点 n₀ = {zeroPoint.toFixed(2)}
+              变号零点 n₀ = {formatMathNumber(zeroPoint)}
             </text>
           </g>
         </g>
@@ -163,7 +164,7 @@ export function SequenceModelsAbsSumScene({
               }
               fontWeight="bold"
             >
-              |a{toSub(t.n)}| = {t.absAn.toFixed(1)}
+              |a{toSub(t.n)}| = {formatMathNumber(t.absAn)}
             </text>
           </g>
         );

@@ -8,13 +8,13 @@
  * 将数值格式化为高中数学规范的精简代数表示（整数无小数位，非整数去除多余尾随零）
  * 示例：1 -> "1", 1.00 -> "1", 2.50 -> "2.5", 0 -> "0"
  */
-export function formatMathNumber(n: number): string {
+export function formatMathNumber(n: number, maxDecimals = 2): string {
   if (!Number.isFinite(n)) return String(n);
   if (Math.abs(n) < 1e-9) return "0";
   if (Math.abs(n - Math.round(n)) < 1e-6) {
     return Math.round(n).toString();
   }
-  return Number(n.toFixed(2)).toString();
+  return Number(n.toFixed(maxDecimals)).toString();
 }
 
 /**

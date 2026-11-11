@@ -4,6 +4,7 @@ import {
   calculateTotalProb,
   calculateWarnerModel,
 } from "@/math/probabilityBayes";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 // 完备事件组分区的固定配色（模块级常量：引用稳定，不进入 useMemo 依赖）
 const partitionColors = [
@@ -216,8 +217,8 @@ export function TotalProbScene({
               textAnchor="middle"
             >
               {isWarner
-                ? `${idx === 0 ? "C₁" : "C₂"}: ${(part.pAi * 100).toFixed(0)}%`
-                : `A${idx + 1}: ${(part.pAi * 100).toFixed(0)}%`}
+                ? `${idx === 0 ? "C₁" : "C₂"}: ${formatMathNumber(Math.round(part.pAi * 100))}%`
+                : `A${idx + 1}: ${formatMathNumber(Math.round(part.pAi * 100))}%`}
             </text>
 
             {/* 色块内联合概率标注 */}
@@ -230,7 +231,7 @@ export function TotalProbScene({
                 fill={MATH_COLORS.white}
                 textAnchor="middle"
               >
-                {part.pJoint.toFixed(3)}
+                {formatMathProb(part.pJoint)}
               </text>
             )}
           </g>
@@ -247,7 +248,7 @@ export function TotalProbScene({
         textAnchor="middle"
       >
         总底宽 = 完备划分概率和 100% ｜ 高亮总面积 = {targetEventTitle} 的全概率{" "}
-        {(totalProbData.pB * 100).toFixed(1)}%
+        {formatMathNumber(totalProbData.pB * 100)}%
       </text>
 
       {/* ─── 右半区：树状图路径与全概率汇聚 ─── */}
@@ -310,7 +311,7 @@ export function TotalProbScene({
             fill={nA.color}
             textAnchor="middle"
           >
-            P({nA.label})={nA.item.pAi.toFixed(2)}
+            P({nA.label})={formatMathNumber(nA.item.pAi)}
           </text>
         </g>
       ))}
@@ -390,7 +391,7 @@ export function TotalProbScene({
             fill={nA.color}
             textAnchor="middle"
           >
-            P({nA.label}B)={nA.item.pJoint.toFixed(3)}
+            P({nA.label}B)={formatMathProb(nA.item.pJoint)}
           </text>
         </g>
       ))}
@@ -421,7 +422,7 @@ export function TotalProbScene({
         fill={MATH_COLORS.white}
         textAnchor="middle"
       >
-        {(totalProbData.pB * 100).toFixed(1)}%
+        {formatMathNumber(totalProbData.pB * 100)}%
       </text>
 
       {/* ─── 底部长条卡片：全概率公式闭环数值展开 (x: 45 ~ 800, y: 515 ~ 620) ─── */}
@@ -459,15 +460,15 @@ export function TotalProbScene({
             >
               P(Yes) ={" "}
               <tspan fill={MATH_COLORS.paramPrimary}>
-                {warnerRes.pCard.toFixed(2)} × p_real
+                {formatMathNumber(warnerRes.pCard)} × p_real
               </tspan>{" "}
               +{" "}
               <tspan fill={MATH_COLORS.paramSecondary}>
-                {(1 - warnerRes.pCard).toFixed(2)} × (1 - p_real)
+                {formatMathNumber(1 - warnerRes.pCard)} × (1 - p_real)
               </tspan>{" "}
               ={" "}
               <tspan fill={MATH_COLORS.function}>
-                {(warnerRes.pReportYes * 100).toFixed(1)}%
+                {formatMathNumber(warnerRes.pReportYes * 100)}%
               </tspan>{" "}
               ⟹ 反解真实比例：
               <tspan
@@ -480,7 +481,7 @@ export function TotalProbScene({
               >
                 {warnerRes.isDegenerate
                   ? "信息完全抵消，无法反解真实比例"
-                  : `p_real = ${(warnerRes.pReal * 100).toFixed(2)}%`}
+                  : `p_real = ${formatMathNumber(warnerRes.pReal * 100)}%`}
               </tspan>
             </text>
           ) : (
@@ -501,9 +502,9 @@ export function TotalProbScene({
                 fontWeight="bold"
                 fill={MATH_COLORS.paramPrimary}
               >
-                {totalProbData.partitions[0].pAi.toFixed(2)}×
-                {totalProbData.partitions[0].pB_given_Ai.toFixed(2)} (
-                {totalProbData.partitions[0].pJoint.toFixed(3)})
+                {formatMathNumber(totalProbData.partitions[0].pAi)}×
+                {formatMathNumber(totalProbData.partitions[0].pB_given_Ai)} (
+                {formatMathProb(totalProbData.partitions[0].pJoint)})
               </text>
               <text
                 x={200}
@@ -521,9 +522,9 @@ export function TotalProbScene({
                 fontWeight="bold"
                 fill={MATH_COLORS.paramSecondary}
               >
-                {totalProbData.partitions[1].pAi.toFixed(2)}×
-                {totalProbData.partitions[1].pB_given_Ai.toFixed(2)} (
-                {totalProbData.partitions[1].pJoint.toFixed(3)})
+                {formatMathNumber(totalProbData.partitions[1].pAi)}×
+                {formatMathNumber(totalProbData.partitions[1].pB_given_Ai)} (
+                {formatMathProb(totalProbData.partitions[1].pJoint)})
               </text>
               {totalProbData.partitions[2] && (
                 <>
@@ -543,9 +544,9 @@ export function TotalProbScene({
                     fontWeight="bold"
                     fill={MATH_COLORS.paramTertiary}
                   >
-                    {totalProbData.partitions[2].pAi.toFixed(2)}×
-                    {totalProbData.partitions[2].pB_given_Ai.toFixed(2)} (
-                    {totalProbData.partitions[2].pJoint.toFixed(3)})
+                    {formatMathNumber(totalProbData.partitions[2].pAi)}×
+                    {formatMathNumber(totalProbData.partitions[2].pB_given_Ai)}{" "}
+                    ({formatMathProb(totalProbData.partitions[2].pJoint)})
                   </text>
                 </>
               )}
@@ -565,8 +566,8 @@ export function TotalProbScene({
                 fontWeight="bold"
                 fill={MATH_COLORS.function}
               >
-                {(totalProbData.pB * 100).toFixed(2)}% (
-                {totalProbData.pB.toFixed(4)})
+                {formatMathNumber(totalProbData.pB * 100)}% (
+                {formatMathProb(totalProbData.pB)})
               </text>
             </>
           )}

@@ -18,7 +18,7 @@ import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/nike";
 import { formatMathNumber, formatCoefTerm } from "@/utils/mathFormat";
 import { solveNike } from "@/math/nike";
-import { fitViewRange } from "@/math/viewRange";
+import { fitSteppedViewRange } from "@/math/viewRange";
 
 export function StandardPage() {
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -30,9 +30,7 @@ export function StandardPage() {
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
-  // 视口自适应：极值点 (±√(b/a), ±2√(ab)) 必须可见。
-  // a=b=10 时极值点 y=20，固定 [-4.5,4.5] 会把它整条裁掉；Floor Clamp 保证参数正常时仍是基准视口。
-  // 渐近线方向会出现 ±Infinity 的采样点，由 fitViewRange 内部按 Number.isFinite 剔除。
+  // B 类稳态分级视口：极值点处于基准 [-6,6]×[-4.5,4.5] 内时锁定比例尺，越界按阶梯档位外扩。
   const viewRange = useMemo(() => {
     const res = solveNike(params.a, params.b);
     const keyPoints = [
@@ -41,7 +39,7 @@ export function StandardPage() {
         ? [{ x: res.amgmMinPoint.x, y: res.amgmMinPoint.y }]
         : []),
     ];
-    return fitViewRange(keyPoints, {
+    return fitSteppedViewRange(keyPoints, {
       defaultXRange: [-6, 6],
       defaultYRange: [-4.5, 4.5],
     });

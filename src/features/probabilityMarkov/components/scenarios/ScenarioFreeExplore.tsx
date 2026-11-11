@@ -1,5 +1,6 @@
 import { MATH_COLORS } from "@/theme";
 import type { ScenarioVisualProps } from "./types";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 /** 模型 5：自由探索 · 二状态通用转移 */
 export function ScenarioFreeExplore({
@@ -41,7 +42,7 @@ export function ScenarioFreeExplore({
           fill={MATH_COLORS.labelText}
           textAnchor="middle"
         >
-          p_{currStep} = {pn.toFixed(3)}
+          p_{currStep} = {formatMathProb(pn)}
         </text>
       </g>
 
@@ -72,7 +73,7 @@ export function ScenarioFreeExplore({
           fill={MATH_COLORS.labelText}
           textAnchor="middle"
         >
-          1 - pₙ = {pNotN.toFixed(3)}
+          1 - pₙ = {formatMathProb(pNotN)}
         </text>
       </g>
 
@@ -92,7 +93,7 @@ export function ScenarioFreeExplore({
         fill={MATH_COLORS.paramPrimary}
         textAnchor="middle"
       >
-        自保持转移率 p₁₁ = {p11.toFixed(2)}
+        自保持转移率 p₁₁ = {formatMathNumber(p11)}
       </text>
 
       {/* 转移箭头：2→1 跨状态 */}
@@ -111,7 +112,7 @@ export function ScenarioFreeExplore({
         fill={MATH_COLORS.paramSecondary}
         textAnchor="middle"
       >
-        跨状态转移率 p₂₁ = {p21.toFixed(2)}
+        跨状态转移率 p₂₁ = {formatMathNumber(p21)}
       </text>
     </g>
   );

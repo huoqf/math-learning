@@ -1,5 +1,6 @@
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { ScenarioVisualProps } from "./types";
+import { formatMathProb } from "@/utils/mathFormat";
 
 /** 模型 1：三人传球 (2020高考真题) · 对称合并乙丙 */
 export function ScenarioPassBall3({
@@ -60,7 +61,7 @@ export function ScenarioPassBall3({
         fill={MATH_COLORS.labelText}
         textAnchor="middle"
       >
-        p_{currStep} = {pn.toFixed(3)}
+        p_{currStep} = {formatMathProb(pn)}
       </text>
 
       {/* 节点：乙 */}
@@ -89,7 +90,7 @@ export function ScenarioPassBall3({
         fill={MATH_COLORS.labelTextLight}
         textAnchor="middle"
       >
-        {(pNotN / 2).toFixed(3)}
+        {formatMathProb(pNotN / 2)}
       </text>
 
       {/* 节点：丙 */}
@@ -118,7 +119,7 @@ export function ScenarioPassBall3({
         fill={MATH_COLORS.labelTextLight}
         textAnchor="middle"
       >
-        {(pNotN / 2).toFixed(3)}
+        {formatMathProb(pNotN / 2)}
       </text>
 
       {/* 传球弧线：甲传出 (各 0.50) */}

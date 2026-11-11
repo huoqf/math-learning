@@ -35,6 +35,7 @@ import type {
   ComplexStudyMode,
   ComplexSubModel,
 } from "../sceneConfig";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ComplexSceneProps {
   params: Record<string, number>;
@@ -497,7 +498,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
               stroke={MATH_COLORS.white}
               strokeWidth={3}
             >
-              z₁z₂ 模长过大 (|z₁z₂| = {(r1 * r2).toFixed(2)})，超出视口
+              z₁z₂ 模长过大 (|z₁z₂| = {formatMathNumber(r1 * r2)})，超出视口
             </text>
           )}
 
@@ -599,7 +600,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
               stroke={MATH_COLORS.white}
               strokeWidth={3}
             >
-              Z_max 超出视口 (|z - w| = {locusRes.maxDist.toFixed(2)})
+              Z_max 超出视口 (|z - w| = {formatMathNumber(locusRes.maxDist)})
             </text>
           )}
 
@@ -628,7 +629,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
               stroke={MATH_COLORS.white}
               strokeWidth={3}
             >
-              Z_min 超出视口 (|z - w| = {locusRes.minDist.toFixed(2)})
+              Z_min 超出视口 (|z - w| = {formatMathNumber(locusRes.minDist)})
             </text>
           )}
 
@@ -1064,7 +1065,7 @@ export const ComplexScene: React.FC<ComplexSceneProps> = ({
                   ? "z₂ = 0，分母无法实数化"
                   : denomInView
                     ? ""
-                    : `z₂z̄₂ = |z₂|² = ${denomValue.toFixed(2)}（在视口外）`}
+                    : `z₂z̄₂ = |z₂|² = ${formatMathNumber(denomValue)}（在视口外）`}
               </text>
 
               {/* 商向量 z₁ ÷ z₂ */}

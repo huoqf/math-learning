@@ -13,7 +13,7 @@ import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { PRESET_FUNCTIONS, type PresetFunctionKey } from "@/math/derivative";
-import { fitViewRange } from "@/math/viewRange";
+import { fitSteppedViewRange } from "@/math/viewRange";
 import { DerivativeScene } from "./components/DerivativeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { SceneLegend } from "@/components/Math";
@@ -46,20 +46,18 @@ export function DerivativeAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 视口自适应：切点 (x₀, f(x₀)) 与所选函数在整个 x₀ 定义域上的两端必须可见。
-  // cubic 在 x₀=3 时 f=18、exp 在 x₀=2 时 f≈7.39，固定 [-4,4] 会把切点整条裁掉。
+  // 稳态分级视口：只追踪当前切点 (x₀, f(x₀))，绝不纳入 x0Range 定义域极限端点。
+  // 默认状态及常规区间内严格保持 [-5,5]×[-4,4] (81.25 px/单位)；
+  // 温和越界（如 e²≈7.39 / sin(±6.28)）按阶梯档位外扩，上限 2× 以防高次/渐近线把主曲线缩成竖线，
+  // 超出部分由 DerivativeScene 的 edgeClampProjection 贴边手柄兜底展示。
   const viewRange = useMemo(() => {
     const preset = PRESET_FUNCTIONS[fnKey] ?? PRESET_FUNCTIONS.cubic;
     const x0 = params.x0;
-    const [lo, hi] = preset.x0Range;
-    return fitViewRange(
-      [
-        { x: x0, y: preset.fn(x0) },
-        { x: lo, y: preset.fn(lo) },
-        { x: hi, y: preset.fn(hi) },
-      ],
-      { defaultXRange: [-5, 5], defaultYRange: [-4, 4] },
-    );
+    return fitSteppedViewRange([{ x: x0, y: preset.fn(x0) }], {
+      defaultXRange: [-5, 5],
+      defaultYRange: [-4, 4],
+      maxExpandFactor: 2.0,
+    });
   }, [fnKey, params.x0]);
 
   const scale = useSceneScale({

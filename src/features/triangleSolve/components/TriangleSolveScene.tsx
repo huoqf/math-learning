@@ -16,6 +16,7 @@ import { TriangleCosineZone } from "./TriangleCosineZone";
 import { TriangleAreaZone } from "./TriangleAreaZone";
 import { TriangleBisectorZone } from "./TriangleBisectorZone";
 import { paramMeta } from "@/data/registries/triangleSolve";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface TriangleSolveSceneProps {
   params: Record<string, number>;
@@ -134,7 +135,7 @@ export function TriangleSolveScene({
           fontSize={fontScale(15)}
           fontWeight="bold"
         >
-          {`三边 a=${a.toFixed(2)}, b=${b.toFixed(2)}, c=${c.toFixed(2)} 不满足三角不等式，无法构成三角形`}
+          {`三边 a=${formatMathNumber(a)}, b=${formatMathNumber(b)}, c=${formatMathNumber(c)} 不满足三角不等式，无法构成三角形`}
         </text>
       </g>
     );

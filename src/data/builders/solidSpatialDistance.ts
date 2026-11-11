@@ -8,6 +8,7 @@ import type {
   SpatialDistanceMode,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatCoefTerm } from "@/utils/mathFormat";
 import {
   solveSkewLinesDistance,
   solveSideEdgeAndFaceDiagonalDistance,
@@ -151,7 +152,7 @@ export function buildSpatialDistancePanel(
           step: 1,
           title: "建立空间直角坐标系并参数化动点代数坐标",
           detail: `以 $A$ 为原点建立空间直角坐标系 $A\\text{-}xyz$。侧棱 $BB_1$ 与对角线 $AC$ 的方向向量及动点代数坐标为：`,
-          latex: `\\begin{aligned} &\\vec{u} = (0, 0, ${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\[1ex] &P(\\lambda) = (a, 0, \\lambda c) = (${a}, 0, ${c.toFixed(1)}\\lambda) \\\\[1ex] &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
+          latex: `\\begin{aligned} &\\vec{u} = (0, 0, ${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\[1ex] &P(\\lambda) = (a, 0, \\lambda c) = (${a}, 0, ${formatCoefTerm(c, "\\lambda")}) \\\\[1ex] &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
           rubric: "【高考采分点】建立坐标系与确定动点参数代数式 (+4分)",
         },
         {
@@ -177,7 +178,7 @@ export function buildSpatialDistancePanel(
           step: 1,
           title: "建立空间直角坐标系并参数化动点代数坐标",
           detail: `以 $A$ 为原点建立空间直角坐标系 $A\\text{-}xyz$。两异面直线的方向向量及动点代数坐标为：`,
-          latex: `\\begin{aligned} &\\vec{u} = (${a}, 0, -${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\[1ex] &P(\\lambda) = (\\lambda a, 0, (1-\\lambda)c) = (${a}\\lambda, 0, ${c.toFixed(1)}(1-\\lambda)) \\\\[1ex] &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
+          latex: `\\begin{aligned} &\\vec{u} = (${a}, 0, -${c}), \\quad \\vec{v} = (${a}, ${b}, 0) \\\\[1ex] &P(\\lambda) = (\\lambda a, 0, (1-\\lambda)c) = (${a}\\lambda, 0, ${formatCoefTerm(c, "(1-\\lambda)")}) \\\\[1ex] &Q(\\mu) = (\\mu a, \\mu b, 0) = (${a}\\mu, ${b}\\mu, 0), \\quad \\lambda, \\mu \\in [0, 1] \\end{aligned}`,
           rubric: "【高考采分点】建立坐标系与确定动点参数代数式 (+4分)",
         },
         {
@@ -450,7 +451,7 @@ export function buildSpatialDistancePanel(
         title: "建立体积关于分点比例 λ 的线性函数",
         detail:
           "动点 $E$ 在侧棱 $AA_1$ 上移动，高线 $h(\\lambda) = \\lambda c$ 与体积成严格正比例关系：",
-        latex: `\\begin{aligned} V(\\lambda) &= \\frac{1}{3} S_{\\Delta ABD} \\cdot (\\lambda c) \\\\[1ex] &= \\frac{1}{6} (${a})(${b})(${c}) \\lambda = ${distRes.maxVolume.toFixed(2)} \\lambda \\end{aligned}`,
+        latex: `\\begin{aligned} V(\\lambda) &= \\frac{1}{3} S_{\\Delta ABD} \\cdot (\\lambda c) \\\\[1ex] &= \\frac{1}{6} (${a})(${b})(${c}) \\lambda = ${formatCoefTerm(distRes.maxVolume, "\\lambda")} \\end{aligned}`,
         rubric: "【高考采分点】体积函数构建 (+5分)",
       },
       {

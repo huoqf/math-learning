@@ -569,3 +569,12 @@ for (const entry of routeEntries) {
     PATH_TO_LABEL[entry.node.route] = entry.node.labTitle || entry.node.title;
   }
 }
+
+/**
+ * 显式声明支持 `?view=gaokao` 查询参数切换高考默认子模式的路由清单（SSOT）。
+ * 首页大专题视图仅对列入此集合的路由拼接 `?view=gaokao`，避免向不支持的页面透传死参数。
+ */
+export const GAOKAO_VIEW_SUPPORTED_ROUTES: ReadonlySet<string> = new Set([
+  "/sequence-arithmetic",
+  "/sequence-geometric",
+]);

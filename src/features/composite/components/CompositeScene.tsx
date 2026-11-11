@@ -19,6 +19,7 @@ import {
   OUTER_INSET,
   type OuterType,
 } from "@/features/composite/outerInset";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface CompositeSceneProps {
   params: Record<string, number>;
@@ -431,7 +432,7 @@ export function CompositeScene({
                 fontSize={fontScale(10)}
                 fill={MATH_COLORS.labelText}
               >
-                u = {res.u.toFixed(1)}
+                u = {formatMathNumber(res.u)}
               </text>
               <text
                 x={outerInset.markerOnYAxis.x + 4}
@@ -439,7 +440,7 @@ export function CompositeScene({
                 fontSize={fontScale(10)}
                 fill={MATH_COLORS.labelText}
               >
-                y = {res.y.toFixed(1)}
+                y = {formatMathNumber(res.y)}
               </text>
             </>
           ) : (

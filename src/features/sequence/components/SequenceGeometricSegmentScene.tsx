@@ -3,11 +3,16 @@
  * 等比模型 - 专题 C: 等长片段性质 (Sk, S2k-Sk, S3k-S2k 等比条带)
  */
 import { CoordinateGrid } from "@/components/Math";
-import { MATH_COLORS, withAlpha } from "@/theme";
+import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import { formatMathNumber } from "@/utils/mathFormat";
 import type { SceneScale } from "@/hooks";
 import { toSup } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
+import { SequenceTruncatedBar } from "./SequenceTruncatedBar";
+
+const SEG_PLOT_TOP_Y = 56;
+const SEG_PLOT_BOT_Y = CANVAS_PRESETS.full.height - 10;
 
 interface SequenceGeometricSegmentSceneProps {
   params: Record<string, number>;
@@ -40,7 +45,7 @@ export function SequenceGeometricSegmentScene({
     <g className="sequence-scene-geometric-segment">
       <CoordinateGrid scale={scale} fontScale={fontScale} />
 
-      {/* 1. 分组柱体与连线 */}
+      {/* 1. 分组柱体与连线（带断轴保护） */}
       {terms.map((t) => {
         const segIdx = Math.floor((t.n - 1) / validK);
         const color = segColors[segIdx % segColors.length];
@@ -54,24 +59,33 @@ export function SequenceGeometricSegmentScene({
             onClick={() => onSelectN?.(t.n)}
             className="cursor-pointer"
           >
-            <rect
+            <SequenceTruncatedBar
               x={ptBase.x - 7}
-              y={Math.min(ptBase.y, ptTop.y)}
               width={14}
-              height={Math.abs(ptBase.y - ptTop.y)}
-              fill={withAlpha(color, isHighlighted ? 0.45 : 0.22)}
-              stroke={color}
+              zeroY={ptBase.y}
+              rawTopY={ptTop.y}
+              plotTopY={SEG_PLOT_TOP_Y}
+              plotBotY={SEG_PLOT_BOT_Y}
+              absValue={Math.abs(t.an)}
+              capThreshold={32}
+              color={color}
+              fillAlpha={isHighlighted ? 0.45 : 0.22}
               strokeWidth={isHighlighted ? 2 : 1}
               rx={2}
-            />
-            <circle
-              cx={ptTop.x}
-              cy={ptTop.y}
-              r={isHighlighted ? 4.5 : 3}
-              fill={color}
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.2}
-            />
+            >
+              {({ topY, botY, truncated }) =>
+                !truncated ? (
+                  <circle
+                    cx={ptTop.x}
+                    cy={t.an >= 0 ? topY : botY}
+                    r={isHighlighted ? 4.5 : 3}
+                    fill={color}
+                    stroke={MATH_COLORS.white}
+                    strokeWidth={1.2}
+                  />
+                ) : null
+              }
+            </SequenceTruncatedBar>
           </g>
         );
       })}
@@ -87,7 +101,10 @@ export function SequenceGeometricSegmentScene({
               .slice(seg.startN - 1, seg.endN)
               .map((t) => Math.max(0, t.an)),
           );
-          const topY = mathToDesign(0, maxAnInSeg + 1, scale).y;
+          const topY = Math.max(
+            SEG_PLOT_TOP_Y + 26,
+            mathToDesign(0, maxAnInSeg + 1, scale).y,
+          );
 
           return (
             <g key={`geo-seg-box-${seg.segmentIndex}`}>
@@ -126,7 +143,7 @@ export function SequenceGeometricSegmentScene({
                 fill={color}
                 fontWeight="bold"
               >
-                第 {seg.segmentIndex} 片段和 = {seg.sumValue.toFixed(2)}
+                第 {seg.segmentIndex} 片段和 = {formatMathNumber(seg.sumValue)}
               </text>
 
               {/* 跨段比例标注弧线 */}
@@ -147,7 +164,7 @@ export function SequenceGeometricSegmentScene({
                     fill={MATH_COLORS.sequenceHighlight}
                     fontWeight="bold"
                   >
-                    × q{toSup(validK)} ({segmentedSums.ratio.toFixed(2)})
+                    × q{toSup(validK)} ({formatMathNumber(segmentedSums.ratio)})
                   </text>
                 </g>
               )}

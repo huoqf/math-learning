@@ -6,6 +6,7 @@ import {
   type PolygonPresetKey,
   type Point2D,
 } from "@/math/obliqueDrawing";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 export interface ObliqueDrawingSceneProps {
   mode: "polygon" | "solidPrism";
@@ -213,7 +214,7 @@ export function ObliqueDrawingScene({
             fontSize={font(13)}
             textAnchor="middle"
           >
-            {`S_原 = ${poly.originalArea.toFixed(2)}`}
+            {`S_原 = ${formatMathNumber(poly.originalArea)}`}
           </text>
         </g>
 
@@ -260,7 +261,7 @@ export function ObliqueDrawingScene({
             fontSize={font(11)}
             textAnchor="middle"
           >
-            {`y' 长度折半 (×${ratioY.toFixed(2)})`}
+            {`y' 长度折半 (×${formatMathNumber(ratioY)})`}
           </text>
         </g>
 
@@ -369,7 +370,7 @@ export function ObliqueDrawingScene({
             fontSize={font(13)}
             textAnchor="middle"
           >
-            {`S_直观 = ${poly.obliqueArea.toFixed(2)} (比值: ${poly.areaRatio.toFixed(4)})`}
+            {`S_直观 = ${formatMathNumber(poly.obliqueArea)} (比值: ${formatMathProb(poly.areaRatio)})`}
           </text>
         </g>
 

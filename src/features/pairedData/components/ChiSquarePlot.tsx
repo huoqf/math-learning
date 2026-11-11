@@ -5,6 +5,7 @@ import {
   sampleChiSquareCurvePoints,
   mapChiValueToPixel,
 } from "@/math/pairedData";
+import { formatMathProb } from "@/utils/mathFormat";
 
 /**
  * 卡方分布子图（df=1）：连续概率密度曲线 + 多级拒绝域 + 高考临界标尺 + 当前观测值指针
@@ -374,7 +375,7 @@ export const ChiSquarePlot: React.FC<ChiSquarePlotProps> = ({
             fontSize={fontScale(10.5)}
             fontWeight="bold"
           >
-            当前观测值 χ² = {chiSquare.toFixed(3)}{" "}
+            当前观测值 χ² = {formatMathProb(chiSquare)}{" "}
             {isChiOverflow ? "(≫ 15 极显著)" : ""}
           </text>
           <text

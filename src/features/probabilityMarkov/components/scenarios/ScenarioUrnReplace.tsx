@@ -1,5 +1,6 @@
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { ScenarioVisualProps } from "./types";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 /** 模型 3：摸球置换 · 白球池与黑球池 */
 export function ScenarioUrnReplace({
@@ -43,7 +44,7 @@ export function ScenarioUrnReplace({
           fill={MATH_COLORS.labelText}
           textAnchor="middle"
         >
-          当前概率 p_{currStep} = {pn.toFixed(3)}
+          当前概率 p_{currStep} = {formatMathProb(pn)}
         </text>
 
         {/* 示意白球图元 */}
@@ -98,7 +99,7 @@ export function ScenarioUrnReplace({
           fill={MATH_COLORS.function}
           textAnchor="middle"
         >
-          摸白放回率 p₁₁ = {p11.toFixed(2)}
+          摸白放回率 p₁₁ = {formatMathNumber(p11)}
         </text>
       </g>
 
@@ -131,7 +132,7 @@ export function ScenarioUrnReplace({
           fill={MATH_COLORS.labelText}
           textAnchor="middle"
         >
-          对立概率 1 - pₙ = {pNotN.toFixed(3)}
+          对立概率 1 - pₙ = {formatMathProb(pNotN)}
         </text>
 
         {/* 示意黑球图元 */}
@@ -183,7 +184,7 @@ export function ScenarioUrnReplace({
           fill={MATH_COLORS.paramSecondary}
           textAnchor="middle"
         >
-          换白注入率 p₂₁ = {p21.toFixed(2)}
+          换白注入率 p₂₁ = {formatMathNumber(p21)}
         </text>
       </g>
 

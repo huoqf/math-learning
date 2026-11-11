@@ -19,6 +19,7 @@ import {
 } from "@/math/conicLine";
 import { paramMeta } from "@/data/registries/conicLine";
 import { paramDragBounds } from "@/utils/paramClamp";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ConicLineSceneProps {
   params: Record<string, number>;
@@ -360,7 +361,7 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
             fontWeight="bold"
             textAnchor="end"
           >
-            {`x = -${(p / 2).toFixed(1).replace(/\.0$/, "")}`}
+            {`x = -${formatMathNumber(p / 2)}`}
           </text>
           {/* 焦点弦端点到准线的垂直投影特征线 */}
           {projectionPoints.map((proj, idx) => (

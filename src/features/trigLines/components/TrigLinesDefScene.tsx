@@ -11,6 +11,7 @@ import { InteractivePoint, MathPoint, VectorArrow } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { calculateTrigLines } from "../math/trigLines";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface TrigLinesDefSceneProps {
   params: {
@@ -432,7 +433,7 @@ export const TrigLinesDefScene: React.FC<TrigLinesDefSceneProps> = ({
         strokeWidth={3}
         className="select-none pointer-events-none"
       >
-        P({cosVal.toFixed(2)}, {sinVal.toFixed(2)})
+        P({formatMathNumber(cosVal)}, {formatMathNumber(sinVal)})
       </text>
     </g>
   );

@@ -61,6 +61,9 @@ export function SequenceModelsScene({
         vp={vp}
         scale={scale}
         fontScale={fontScale}
+        a1={a1}
+        d={d}
+        splitResult={arithGeoData}
       />
     );
   }

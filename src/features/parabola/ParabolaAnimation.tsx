@@ -23,7 +23,7 @@ import {
 } from "@/data/registries/parabola";
 import type { ParabolaDirection } from "@/math/parabola";
 import { formatMathNumber } from "@/utils/mathFormat";
-import { fitViewRange } from "@/math/viewRange";
+import { fitSteppedViewRange } from "@/math/viewRange";
 
 export function ParabolaAnimation() {
   // 抛物线开口方向：'right' | 'left' | 'up' | 'down'
@@ -50,11 +50,8 @@ export function ParabolaAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 视口自适应：动点 P(2pt², 2pt) 与焦点必须可见。
-  // p=0.5、tP=5 时 P 落在 (25, 5)，固定 x∈[-7,7] 会把动点整个裁到画布外。
-  // 开口方向决定对称轴：right/left 沿 x，up/down 沿 y。
-  // 二元解构提到 useMemo 之外：依赖表里已有 p、tP 两个标量，但函数体引用的是 `params` 整体，
-  // react-hooks/exhaustive-deps 会报缺依赖。提到外面后依赖表与函数体都只谈这两个标量，行为不变。
+  // B 类稳态分级视口：动点 P(2pt², 2pt) 与焦点处于基准 [-7,7]×[-5.5,5.5] 内时锁定比例尺；
+  // 越界按阶梯档位外扩，既防止 P 被裁掉，又消除滑动时的连续缩放跳变。
   const { p: pVal, tP } = params;
   const viewRange = useMemo(() => {
     const along = 2 * pVal * tP * tP; // 对称轴方向坐标
@@ -75,7 +72,7 @@ export function ParabolaAnimation() {
           { x: 0, y: sign * focal },
           { x: 0, y: 0 },
         ];
-    return fitViewRange(keyPoints, {
+    return fitSteppedViewRange(keyPoints, {
       defaultXRange: [-7, 7],
       defaultYRange: [-5.5, 5.5],
     });

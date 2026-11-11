@@ -2,6 +2,7 @@ import type { DistributionResult } from "@/math/probabilityDistribution";
 import { mathToDesign, type Point } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks/useSceneScale";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
+import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface ProbabilityDistributionLinearSceneProps {
   distResult: DistributionResult;
@@ -113,7 +114,7 @@ export function ProbabilityDistributionLinearScene({
                 fontWeight="bold"
                 className="font-mono"
               >
-                {item.p.toFixed(3)}
+                {formatMathProb(item.p)}
               </text>
             )}
             {/* 上轨 X 刻度 */}
@@ -156,7 +157,7 @@ export function ProbabilityDistributionLinearScene({
             textAnchor="middle"
             fontWeight="bold"
           >
-            E(X) = {mean.toFixed(2)}
+            E(X) = {formatMathNumber(mean)}
           </text>
         </g>
       </g>
@@ -236,7 +237,7 @@ export function ProbabilityDistributionLinearScene({
                 fontWeight="bold"
                 className="font-mono"
               >
-                {item.p.toFixed(3)}
+                {formatMathProb(item.p)}
               </text>
             )}
             {/* 下轨 y 刻度卡片 */}
@@ -258,7 +259,7 @@ export function ProbabilityDistributionLinearScene({
                 fontWeight="bold"
                 className="font-mono"
               >
-                {yMathVal.toFixed(1)}
+                {formatMathNumber(yMathVal)}
               </text>
             </g>
           </g>
@@ -290,7 +291,7 @@ export function ProbabilityDistributionLinearScene({
             textAnchor="middle"
             fontWeight="bold"
           >
-            E(Y) = {meanYVal.toFixed(2)}
+            E(Y) = {formatMathNumber(meanYVal)}
           </text>
         </g>
       </g>

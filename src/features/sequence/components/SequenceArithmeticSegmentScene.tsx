@@ -8,6 +8,7 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
 import { toSub } from "./SequenceText";
 import { useSequenceParams } from "./useSequenceData";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 interface ArithmeticSubSceneProps {
   params: Record<string, number>;
@@ -75,7 +76,7 @@ export function SequenceArithmeticSegmentScene({
               fill={color}
               fontWeight="bold"
             >
-              A{toSub(seg.segmentIndex)} = {seg.sumValue.toFixed(1)}
+              A{toSub(seg.segmentIndex)} = {formatMathNumber(seg.sumValue)}
             </text>
           </g>
         );
@@ -120,7 +121,7 @@ export function SequenceArithmeticSegmentScene({
               fontSize={fontScale(8.5)}
               fill={color}
             >
-              {t.an.toFixed(1)}
+              {formatMathNumber(t.an)}
             </text>
           </g>
         );
