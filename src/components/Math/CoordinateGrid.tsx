@@ -17,6 +17,10 @@ interface CoordinateGridProps {
   yStep?: number;
   /** 字号缩放函数，默认原样返回 */
   fontScale?: (v: number) => number;
+  /** 自定义 X 轴刻度文本格式化函数（缺省时为标准数值格式化） */
+  xTickFormatter?: (val: number) => string;
+  /** 自定义 Y 轴刻度文本格式化函数（缺省时为标准数值格式化） */
+  yTickFormatter?: (val: number) => string;
 }
 
 /** 格式化刻度数值：整数显示整数，非整数去除末尾无意义的 0 */
@@ -88,6 +92,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
   xStep = 1,
   yStep = 1,
   fontScale = (v) => v,
+  xTickFormatter,
+  yTickFormatter,
 }) => {
   const { xMin, xMax, yMin, yMax } = scale;
   const safeXStep = getSafeStep(xMin, xMax, xStep);
@@ -168,7 +174,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
         />,
       );
 
-      // 绘制数值标签（统一格式化整数与小数）
+      // 绘制数值标签（统一格式化整数与小数，支持自定义 formatter）
       if (showLabels) {
         elements.push(
           <text
@@ -180,7 +186,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
             fontSize={fontScale(10.5)}
             className="select-none font-sans"
           >
-            {formatTick(x)}
+            {xTickFormatter ? xTickFormatter(x) : formatTick(x)}
           </text>,
         );
       }
@@ -218,7 +224,7 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
             fontSize={fontScale(10.5)}
             className="select-none font-sans"
           >
-            {formatTick(y)}
+            {yTickFormatter ? yTickFormatter(y) : formatTick(y)}
           </text>,
         );
       }
@@ -257,6 +263,8 @@ export const CoordinateGrid: React.FC<CoordinateGridProps> = ({
     yMin,
     yMax,
     fontScale,
+    xTickFormatter,
+    yTickFormatter,
   ]);
 
   // 坐标轴两端主线及其端点
