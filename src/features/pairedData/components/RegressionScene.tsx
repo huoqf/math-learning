@@ -442,7 +442,7 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
         </g>
       )}
 
-      {/* 5. 可拖拽散点 */}
+      {/* 5. 可拖拽散点 (限制在可见视口安全区内，拖拽时背景坐标轴绝对静止) */}
       {points.map((p) => (
         <InteractivePoint
           key={p.id}
@@ -453,6 +453,8 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
           color={MATH_COLORS.paramPrimary}
           r={6.5}
           fontScale={fontScale}
+          xRange={[scale.xMin + 0.2, scale.xMax - 0.2]}
+          yRange={[scale.yMin + 0.2, scale.yMax - 0.2]}
           onDrag={(newPos) => handlePointDrag(p.id, newPos)}
         />
       ))}

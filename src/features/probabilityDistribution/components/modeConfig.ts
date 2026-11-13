@@ -206,13 +206,8 @@ export function computeXRange(
     return [-0.8, 3.8];
   }
   if (studyMode === "linear") {
-    const a = params.linearA ?? 2;
-    const b = params.linearB ?? 1;
-    const n = params.n ?? 6;
-    const yVals = [b, a * n + b];
-    const minVal = Math.min(0, ...yVals) - 1.0;
-    const maxVal = Math.max(n, ...yVals) + 1.2;
-    return [minVal, maxVal];
+    // 线性变换固定静态预算视口：scale 恒定，真实呈现 E(aX+b) 刚体平移与方差离散度拉伸
+    return [-12, 16];
   }
   return [-0.8, 8.8];
 }

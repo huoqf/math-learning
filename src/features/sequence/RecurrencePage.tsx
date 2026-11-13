@@ -127,28 +127,20 @@ export function RecurrencePage() {
   const { xRange, yRange, xStep, yStep, keepAspectRatio } = useMemo(() => {
     if (recurrenceModelType === "linear-pan") {
       if (linearViewMode === "cobweb") {
-        const linearData = calcLinearRecurrence(a1, p_rec, q_rec, N);
-        const allVals = [
-          ...linearData.terms.map((t) => t.an),
-          ...(linearData.fixedPoint !== null ? [linearData.fixedPoint] : []),
-        ].filter(Number.isFinite);
-
-        let minV = Math.min(-2, ...allVals);
-        let maxV = Math.max(6, ...allVals);
-        const span = Math.max(8, maxV - minV);
-        const pad = span * 0.18;
-        minV = Math.floor(minV - pad);
-        maxV = Math.ceil(maxV + pad);
-
-        const totalSpan = maxV - minV;
-        const step = calcNiceStep(totalSpan, 6);
+        // 蛛网图固定静态预算视口：以不动点为中心保持恒定 10×10 视口与 1:1 纵横比，
+        // 调节斜率 p 时 scale 绝对恒定，真实呈现 |p| < 1 螺旋收敛与 |p| > 1 发散逃逸的动态冲击
+        const fixedPt = p_rec !== 1 ? q_rec / (1 - p_rec) : a1;
+        const center = Number.isFinite(fixedPt) ? Math.round(fixedPt) : 2;
+        const halfSpan = 5;
+        const minV = center - halfSpan;
+        const maxV = center + halfSpan;
 
         return {
           xRange: [minV, maxV] as [number, number],
           yRange: [minV, maxV] as [number, number],
-          xStep: step,
-          yStep: step,
-          keepAspectRatio: true, // 蛛网图保持 1:1 对角线 45 度角
+          xStep: 2,
+          yStep: 2,
+          keepAspectRatio: true,
         };
       } else {
         // 平移构造双轴图模式：x 为项数 [0, N + 0.8]，y 涵盖原数列 an 与辅助等比数列 bn
@@ -428,6 +420,17 @@ export function RecurrencePage() {
     const common = `初始项 $a_1 = ${a1v}$，考察前 $N = ${N}$ 项的通项演化。`;
     switch (recurrenceModelType) {
       case "linear-pan":
+        if (linearViewMode === "cobweb") {
+          return {
+            variant: "accent" as const,
+            badge: "选学拓展 · 蛛网图与不动点动力系统",
+            background:
+              "【近代数学观点】利用函数图象 $y = px+q$ 与恒等线 $y = x$ 的阶梯与螺旋迭代，直观定性判定不动点吸引与发散逃逸。",
+            condition: `初始项 $a_1 = ${a1v}$，递推函数 $f(x) = ${p_rec}x + ${q_rec}$，迭代考察前 $N = ${N}$ 项。`,
+            question:
+              "当 $|p| < 1$ 时折线如何向不动点迭代收敛？当 $|p| > 1$ 时为何发散逃逸？它如何解释待定系数法不动点方程 $c = pc+q$ 的几何本质？",
+          };
+        }
         return {
           variant: "primary" as const,
           badge: "高考核心 · 待定系数构造等比",
@@ -506,6 +509,7 @@ export function RecurrencePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     recurrenceModelType,
+    linearViewMode,
     activePresetKey,
     params.a1,
     params.a2,

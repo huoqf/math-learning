@@ -86,7 +86,7 @@ export function RegressionPage() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 动态视口范围计算
+  // 情景静态预算视口：仅在切换情景预设时切换视口，拖拽散点或调参时 scale 严格恒定，杜绝全屏散点缩放抖动
   const currentPreset = useMemo(() => {
     return (
       REGRESSION_PRESETS.find((p) => p.id === selectedScenarioKey) ??
@@ -96,29 +96,21 @@ export function RegressionPage() {
 
   const xRange = useMemo<[number, number]>(() => {
     if (selectedScenarioKey === "free") {
-      const xs = activePoints.map((p) => p.x);
-      const minX = Math.min(...xs, 0);
-      const maxX = Math.max(...xs, 10);
-      const margin = (maxX - minX) * 0.25 || 2;
-      return [Math.floor(minX - margin), Math.ceil(maxX + margin)];
+      return [-2, 16];
     }
     const [minX, maxX] = currentPreset.xRange;
     const margin = (maxX - minX) * 0.18;
     return [Math.floor(minX - margin), Math.ceil(maxX + margin)];
-  }, [selectedScenarioKey, activePoints, currentPreset]);
+  }, [selectedScenarioKey, currentPreset]);
 
   const yRange = useMemo<[number, number]>(() => {
     if (selectedScenarioKey === "free") {
-      const ys = activePoints.map((p) => p.y);
-      const minY = Math.min(...ys, 0);
-      const maxY = Math.max(...ys, 10);
-      const margin = (maxY - minY) * 0.25 || 2;
-      return [Math.floor(minY - margin), Math.ceil(maxY + margin)];
+      return [-2, 18];
     }
     const [minY, maxY] = currentPreset.yRange;
     const margin = (maxY - minY) * 0.18;
     return [Math.floor(minY - margin), Math.ceil(maxY + margin)];
-  }, [selectedScenarioKey, activePoints, currentPreset]);
+  }, [selectedScenarioKey, currentPreset]);
 
   const calcStep = (range: number) => {
     if (range <= 8) return 1;
