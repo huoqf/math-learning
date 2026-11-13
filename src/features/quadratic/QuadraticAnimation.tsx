@@ -76,8 +76,8 @@ export function QuadraticAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 3. B 类稳态分级视口：顶点 / 实根 / y 轴截距处于基准 [-6,6]×[-4.5,4.5] 内时锁定比例尺；
-  //    越界时按阶梯档位外扩，防止拖动滑块每 0.1 步长引发连续小数缩放抖动。
+  // 3. 稳态视口：基准 [-6.5, 6.5] × [-6.5, 5.5] 覆盖参数定义域内全部顶点与实根，
+  //    微调与平移期间 scale 绝对稳定零跳变，保证刚体平移直觉；越界时由阶梯档位兜底。
   const viewRange = useMemo(() => {
     const res = solveQuadratic(params.a, params.b, params.c);
     const keyPoints = [
@@ -90,8 +90,8 @@ export function QuadraticAnimation() {
         .map((r) => ({ x: r, y: 0 })),
     ];
     return fitSteppedViewRange(keyPoints, {
-      defaultXRange: [-6, 6],
-      defaultYRange: [-4.5, 4.5],
+      defaultXRange: [-6.5, 6.5],
+      defaultYRange: [-6.5, 5.5],
     });
   }, [params.a, params.b, params.c]);
 

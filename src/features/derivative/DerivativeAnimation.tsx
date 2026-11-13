@@ -46,19 +46,20 @@ export function DerivativeAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 稳态分级视口：只追踪当前切点 (x₀, f(x₀))，绝不纳入 x0Range 定义域极限端点。
-  // 默认状态及常规区间内严格保持 [-5,5]×[-4,4] (81.25 px/单位)；
-  // 温和越界（如 e²≈7.39 / sin(±6.28)）按阶梯档位外扩，上限 2× 以防高次/渐近线把主曲线缩成竖线，
-  // 超出部分由 DerivativeScene 的 edgeClampProjection 贴边手柄兜底展示。
+  // 3. 情景预算视口：基准保持 [-5, 5] × [-4, 4]（基准 81.25 px/单位），
+  //    仅随函数模型 fnKey 切换，拖动切点 x0 时 scale 绝对恒定，平滑感知切线旋转；
+  //    越界部分由 DerivativeScene 的 edgeClampProjection 贴边手柄承接。
   const viewRange = useMemo(() => {
     const preset = PRESET_FUNCTIONS[fnKey] ?? PRESET_FUNCTIONS.cubic;
-    const x0 = params.x0;
-    return fitSteppedViewRange([{ x: x0, y: preset.fn(x0) }], {
-      defaultXRange: [-5, 5],
-      defaultYRange: [-4, 4],
-      maxExpandFactor: 2.0,
-    });
-  }, [fnKey, params.x0]);
+    return fitSteppedViewRange(
+      [{ x: preset.defaultX0, y: preset.fn(preset.defaultX0) }],
+      {
+        defaultXRange: [-5, 5],
+        defaultYRange: [-4, 4],
+        maxExpandFactor: 2.0,
+      },
+    );
+  }, [fnKey]);
 
   const scale = useSceneScale({
     vp,

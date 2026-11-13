@@ -30,7 +30,7 @@ export function StandardPage() {
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
-  // B 类稳态分级视口：极值点处于基准 [-6,6]×[-4.5,4.5] 内时锁定比例尺，越界按阶梯档位外扩。
+  // 稳态视口：基准 [-6.5, 6.5] × [-5.5, 5.5] 覆盖常规极值区间，保持 scale 稳定，真实呈现双曲支随 a, b 连续张开与平移
   const viewRange = useMemo(() => {
     const res = solveNike(params.a, params.b);
     const keyPoints = [
@@ -40,8 +40,8 @@ export function StandardPage() {
         : []),
     ];
     return fitSteppedViewRange(keyPoints, {
-      defaultXRange: [-6, 6],
-      defaultYRange: [-4.5, 4.5],
+      defaultXRange: [-6.5, 6.5],
+      defaultYRange: [-5.5, 5.5],
     });
   }, [params.a, params.b]);
 

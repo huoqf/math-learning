@@ -298,15 +298,15 @@ export function NikeScene({
         const pt = mathToDesign(cp.x, cp.y, scale);
         return (
           <g key={`crit-${idx}`}>
-            {/* 水平参考线段 */}
+            {/* 贯穿视口的最值切线水平参考线（均值不等式最值切线 y = ±2√ab） */}
             <line
-              x1={pt.x - 24}
+              x1={scale.originX + scale.xMin * scale.scaleX}
               y1={pt.y}
-              x2={pt.x + 24}
+              x2={scale.originX + scale.xMax * scale.scaleX}
               y2={pt.y}
-              stroke={MATH_COLORS.tangentLine}
-              strokeWidth={1.5}
-              strokeDasharray="4,2"
+              stroke={withAlpha(MATH_COLORS.tangentLine, 0.6)}
+              strokeWidth={1.2}
+              strokeDasharray="4 3"
             />
             {/* 最值特征点 */}
             <MathPoint

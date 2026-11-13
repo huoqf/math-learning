@@ -197,6 +197,19 @@ export const QuadraticScene: React.FC<QuadraticSceneProps> = ({
         />
       )}
 
+      {/* 顶点水平最值参考虚线 y = y_V */}
+      {vertexY !== null && !isDegenerate && (
+        <line
+          x1={scale.originX + scale.xMin * scale.scaleX}
+          y1={scale.originY - vertexY * scale.scaleY}
+          x2={scale.originX + scale.xMax * scale.scaleX}
+          y2={scale.originY - vertexY * scale.scaleY}
+          stroke={withAlpha(MATH_COLORS.paramPrimary, 0.45)}
+          strokeWidth={1.2}
+          strokeDasharray="3 3"
+        />
+      )}
+
       {/* 二次函数图象 */}
       <FunctionGraph
         fn={fn}
