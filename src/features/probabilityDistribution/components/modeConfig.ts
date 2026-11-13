@@ -10,6 +10,7 @@ import type { ParamConfig } from "@/components/UI";
 import type { SceneLegendItem } from "@/components/Math";
 import { MATH_COLORS } from "@/theme";
 import { paramMeta } from "@/data/registries/probabilityDistribution";
+import { fitSteppedViewRange } from "@/math/viewRange";
 import type {
   DistributionResult,
   DistributionComparisonResult,
@@ -206,8 +207,25 @@ export function computeXRange(
     return [-0.8, 3.8];
   }
   if (studyMode === "linear") {
-    // 线性变换固定静态预算视口：scale 恒定，真实呈现 E(aX+b) 刚体平移与方差离散度拉伸
-    return [-12, 16];
+    const a = params.linearA ?? 2;
+    const b = params.linearB ?? 1;
+    const n = params.n ?? 6;
+    const allX = [0, n, b, a * n + b].filter(Number.isFinite);
+    const minVal = Math.min(...allX);
+    const maxVal = Math.max(...allX);
+    // 稳态分级视口：常规区间锁定 [-12, 16]（scale 恒定，真实呈现刚体平移与方差拉伸）；
+    // 右侧预留 2.8 个数学单位避让轴端标签，越界时按阶梯档位外扩，防止高参数组合出框。
+    return fitSteppedViewRange(
+      [
+        { x: minVal - 1.0, y: 0 },
+        { x: maxVal + 2.8, y: 0 },
+      ],
+      {
+        defaultXRange: [-12, 16],
+        defaultYRange: [-1, 1],
+        minPadding: 1.0,
+      },
+    ).xRange;
   }
   return [-0.8, 8.8];
 }

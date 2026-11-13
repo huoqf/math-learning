@@ -58,6 +58,11 @@ export function RegressionPage() {
   const [showResidualSquares, setShowResidualSquares] = useState<boolean>(true);
   const [showResidualPlot, setShowResidualPlot] = useState<boolean>(false);
   const [answerStep, setAnswerStep] = useState<number>(1);
+  // 切入自由探索时冻结并继承切入前的视口范围，防止其它情景散点集拖入 free 时突然跳缩丢点
+  const [lockedFreeViewport, setLockedFreeViewport] = useState<{
+    xRange: [number, number];
+    yRange: [number, number];
+  } | null>(null);
 
   // 根据离群点偏移 outlierOffset 动态计算活跃散点集（符合高中课标真实样本机制）
   const activePoints = useMemo(() => {
@@ -76,12 +81,6 @@ export function RegressionPage() {
     });
   }, [basePoints, params.outlierOffset, selectedScenarioKey]);
 
-  // 处理散点拖拽更新：自动切入【自由探索 (free)】
-  const handlePointsChange = (newActivePoints: Point2D[]) => {
-    setSelectedScenarioKey("free");
-    setBasePoints(newActivePoints);
-  };
-
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
   });
@@ -94,23 +93,45 @@ export function RegressionPage() {
     );
   }, [selectedScenarioKey]);
 
+  const presetViewport = useMemo(() => {
+    const [minX, maxX] = currentPreset.xRange;
+    const marginX = (maxX - minX) * 0.18;
+    const [minY, maxY] = currentPreset.yRange;
+    const marginY = (maxY - minY) * 0.18;
+    return {
+      xRange: [Math.floor(minX - marginX), Math.ceil(maxX + marginX)] as [
+        number,
+        number,
+      ],
+      yRange: [Math.floor(minY - marginY), Math.ceil(maxY + marginY)] as [
+        number,
+        number,
+      ],
+    };
+  }, [currentPreset]);
+
   const xRange = useMemo<[number, number]>(() => {
     if (selectedScenarioKey === "free") {
-      return [-2, 16];
+      return lockedFreeViewport?.xRange ?? [-2, 16];
     }
-    const [minX, maxX] = currentPreset.xRange;
-    const margin = (maxX - minX) * 0.18;
-    return [Math.floor(minX - margin), Math.ceil(maxX + margin)];
-  }, [selectedScenarioKey, currentPreset]);
+    return presetViewport.xRange;
+  }, [selectedScenarioKey, lockedFreeViewport, presetViewport]);
 
   const yRange = useMemo<[number, number]>(() => {
     if (selectedScenarioKey === "free") {
-      return [-2, 18];
+      return lockedFreeViewport?.yRange ?? [-2, 18];
     }
-    const [minY, maxY] = currentPreset.yRange;
-    const margin = (maxY - minY) * 0.18;
-    return [Math.floor(minY - margin), Math.ceil(maxY + margin)];
-  }, [selectedScenarioKey, currentPreset]);
+    return presetViewport.yRange;
+  }, [selectedScenarioKey, lockedFreeViewport, presetViewport]);
+
+  // 处理散点拖拽更新：首次拖拽切入【自由探索 (free)】并锁定继承当前视口，坐标轴静止不跳变
+  const handlePointsChange = (newActivePoints: Point2D[]) => {
+    if (selectedScenarioKey !== "free") {
+      setLockedFreeViewport({ xRange, yRange });
+    }
+    setSelectedScenarioKey("free");
+    setBasePoints(newActivePoints);
+  };
 
   const calcStep = (range: number) => {
     if (range <= 8) return 1;
@@ -129,8 +150,16 @@ export function RegressionPage() {
 
   // 切换情景预设
   const handleScenarioSelect = (scenarioKey: string) => {
+    if (scenarioKey === "free") {
+      if (selectedScenarioKey !== "free") {
+        setLockedFreeViewport({ xRange, yRange });
+      }
+      setSelectedScenarioKey("free");
+      return;
+    }
+
+    setLockedFreeViewport(null);
     setSelectedScenarioKey(scenarioKey);
-    if (scenarioKey === "free") return;
 
     const preset = REGRESSION_PRESETS.find((p) => p.id === scenarioKey);
     if (preset) {
@@ -152,6 +181,7 @@ export function RegressionPage() {
     setParams({ ...defaultParams, targetX: 10 });
     setAnalysisMode("linear");
     setSelectedModel("linear");
+    setLockedFreeViewport(null);
     setSelectedScenarioKey("ad_sales");
     setBasePoints(REGRESSION_PRESETS[0].points);
     setShowResidualSquares(true);
@@ -345,6 +375,7 @@ export function RegressionPage() {
               onChange={(k: string) => {
                 const nextMode = k as "linear" | "nonlinear";
                 setAnalysisMode(nextMode);
+                setLockedFreeViewport(null);
                 if (nextMode === "linear") {
                   setSelectedModel("linear");
                   setSelectedScenarioKey("ad_sales");

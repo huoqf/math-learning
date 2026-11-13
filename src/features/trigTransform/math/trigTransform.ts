@@ -521,10 +521,12 @@ export function calculateIntervalZeros(
 
 /**
  * 三角函数图象变换默认基准横向视口范围
+ * 取 [-8.6, 8.6]：为最末刻度 ±5π/2 (≈ ±7.854) 与 X 轴两端箭头/轴标之间留出充裕呼吸边距
  */
-export const DEFAULT_TRIG_XRANGE: [number, number] = [-8, 8];
+export const DEFAULT_TRIG_XRANGE: [number, number] = [-8.6, 8.6];
 
 /**
+ * @deprecated 页面已改用固定静态视口 `DEFAULT_TRIG_XRANGE` 消除伸缩平移缩放抖动，保留供历史单测兼容。
  * 根据角频率与初相自适应计算包含五点完整周期与默认基准视口的横向范围
  */
 export function calcAdaptiveTrigXRange(

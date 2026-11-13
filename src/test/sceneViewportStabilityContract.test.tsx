@@ -85,6 +85,10 @@ import { ModelsPage } from "@/features/sequence/ModelsPage";
 import { CircleCircleAnimation } from "@/features/circle-circle/CircleCircleAnimation";
 import { InequalityBasicAnimation } from "@/features/inequalityBasic/InequalityBasicAnimation";
 import { QuadraticAnimation } from "@/features/quadratic/QuadraticAnimation";
+import { RegressionPage } from "@/features/pairedData/RegressionPage";
+import { RecurrencePage } from "@/features/sequence/RecurrencePage";
+import { TrigTransformAnimation } from "@/features/trigTransform/TrigTransformAnimation";
+import { computeXRange } from "@/features/probabilityDistribution/components/modeConfig";
 
 function lastScale(): SceneScale {
   expect(capturedScales.length).toBeGreaterThan(0);
@@ -320,6 +324,95 @@ describe("视口稳定性与反萎缩 / 反无标记截断契约", () => {
         </MemoryRouter>,
       );
       expect(screen.getByText("高考经典 · 错位相减推导")).toBeInTheDocument();
+    });
+  });
+
+  describe("P3 · 静态/分档视口边界防裁切与继承回归契约", () => {
+    it("ProbabilityDistribution 线性变换默认锁定 [-12, 16]，极端参数分档外扩不裁掉柱体", () => {
+      const defRange = computeXRange("linear", {
+        n: 6,
+        linearA: 2,
+        linearB: 1,
+      });
+      expect(defRange).toEqual([-12, 16]);
+
+      const highRange = computeXRange("linear", {
+        n: 6,
+        linearA: 4,
+        linearB: 5,
+      });
+      expect(highRange[1]).toBeGreaterThanOrEqual(29 + 2.8);
+
+      const negRange = computeXRange("linear", {
+        n: 8,
+        linearA: -3,
+        linearB: -4,
+      });
+      expect(negRange[0]).toBeLessThanOrEqual(-28 - 1);
+    });
+
+    it("RegressionPage 在气温与用电量情景切入自由探索时，继承原视口范围且不丢点", () => {
+      render(
+        <MemoryRouter>
+          <RegressionPage />
+        </MemoryRouter>,
+      );
+
+      fireEvent.click(screen.getByRole("radio", { name: "气温与用电量" }));
+      const sBefore = lastScale();
+      expect(sBefore.xMax).toBeGreaterThanOrEqual(35);
+      expect(sBefore.yMax).toBeGreaterThanOrEqual(25);
+
+      fireEvent.click(screen.getByRole("radio", { name: "自由探索" }));
+      const sFree = lastScale();
+      expect(sFree.xMin).toBeCloseTo(sBefore.xMin, 6);
+      expect(sFree.xMax).toBeCloseTo(sBefore.xMax, 6);
+      expect(sFree.yMin).toBeCloseTo(sBefore.yMin, 6);
+      expect(sFree.yMax).toBeCloseTo(sBefore.yMax, 6);
+    });
+
+    it("RecurrencePage 蛛网图收敛型调 p 时保持 [-8, 8] 静止，发散型分档外扩覆盖核心轨迹与不动点", () => {
+      render(
+        <MemoryRouter>
+          <RecurrencePage />
+        </MemoryRouter>,
+      );
+
+      fireEvent.click(screen.getByText("蛛网迭代图 ↗"));
+      const sConverge = lastScale();
+      // 840x650 画布启用 keepAspectRatio: true 时，纵轴严格锁定 [-8, 8]，横轴按宽高比等比扩至约 ±10.34
+      expect(sConverge.yMin).toBe(-8);
+      expect(sConverge.yMax).toBe(8);
+      expect(sConverge.xMin).toBeLessThanOrEqual(-8);
+      expect(sConverge.xMax).toBeGreaterThanOrEqual(8);
+
+      // 改变斜率 p 从 0.5 到 0，不跨格跳动，scale 与坐标范围完全静止
+      fireEvent.change(screen.getByRole("slider", { name: "递推系数 p滑块" }), {
+        target: { value: "0" },
+      });
+      const sChangedP = lastScale();
+      expect(sChangedP.scale).toBeCloseTo(sConverge.scale, 6);
+      expect(sChangedP.xMin).toBeCloseTo(sConverge.xMin, 6);
+      expect(sChangedP.xMax).toBeCloseTo(sConverge.xMax, 6);
+      expect(sChangedP.yMin).toBe(-8);
+      expect(sChangedP.yMax).toBe(8);
+
+      // 切换至标准等比待定系数预设 (a1=1, p=2, q=1, c=-1)，应同步覆盖 c=-1 与前 4 项 (a4=15)
+      fireEvent.click(screen.getByText("标准等比待定系数"));
+      const sDiv = lastScale();
+      expect(sDiv.xMin).toBeLessThanOrEqual(-1);
+      expect(sDiv.xMax).toBeGreaterThanOrEqual(15);
+    });
+
+    it("TrigTransformAnimation 锁定 [-8.6, 8.6] 视口，避开 ±5π/2 末刻度与轴端箭头拥挤", () => {
+      render(
+        <MemoryRouter>
+          <TrigTransformAnimation />
+        </MemoryRouter>,
+      );
+      const s = lastScale();
+      expect(s.xMin).toBeCloseTo(-8.6, 4);
+      expect(s.xMax).toBeCloseTo(8.6, 4);
     });
   });
 });

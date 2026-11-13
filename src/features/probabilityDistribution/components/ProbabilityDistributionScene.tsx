@@ -93,10 +93,11 @@ export function ProbabilityDistributionScene({
   const rawAxisMin = mathToDesign(minXVal, 0, scale);
   const rawAxisMax = mathToDesign(maxXVal, 0, scale);
 
-  // 保证 Y 轴刻度文本永远在左侧安全边距之内 (绝不截断)
+  // 保证 Y 轴刻度文本永远在左侧安全边距之内，右侧为线性双轨轴名预留充足呼吸空间 (绝不截断)
   const leftSafeMargin = Math.max(38, rawAxisMin.x);
+  const maxRightX = studyMode === "linear" ? 745 : 810;
   const rightSafeMargin = Math.min(
-    810,
+    maxRightX,
     Math.max(rawAxisMax.x, leftSafeMargin + 200),
   );
 

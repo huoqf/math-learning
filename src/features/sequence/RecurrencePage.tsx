@@ -18,6 +18,7 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { fitSteppedViewRange } from "@/math/viewRange";
 import { RecurrenceScene } from "./components/RecurrenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
@@ -127,19 +128,44 @@ export function RecurrencePage() {
   const { xRange, yRange, xStep, yStep, keepAspectRatio } = useMemo(() => {
     if (recurrenceModelType === "linear-pan") {
       if (linearViewMode === "cobweb") {
-        // 蛛网图固定静态预算视口：以不动点为中心保持恒定 10×10 视口与 1:1 纵横比，
-        // 调节斜率 p 时 scale 绝对恒定，真实呈现 |p| < 1 螺旋收敛与 |p| > 1 发散逃逸的动态冲击
-        const fixedPt = p_rec !== 1 ? q_rec / (1 - p_rec) : a1;
-        const center = Number.isFinite(fixedPt) ? Math.round(fixedPt) : 2;
-        const halfSpan = 5;
-        const minV = center - halfSpan;
-        const maxV = center + halfSpan;
+        // 蛛网图稳态分档视口（保持 1:1 对角线纵横比）：
+        // 基准锁定 [-8, 8] × [-8, 8]，常规调参期间坐标轴绝对静止；
+        // 纳入起始点 a1、不动点 c 与前 4 项核心迭代点，越界时按档位外扩（上限 3× 防发散爆表）。
+        const fixedPt = p_rec !== 1 ? q_rec / (1 - p_rec) : null;
+        const linearData = calcLinearRecurrence(
+          a1,
+          p_rec,
+          q_rec,
+          Math.min(N, 4),
+        );
+        const keyCoords: number[] = [a1];
+        if (
+          fixedPt !== null &&
+          Number.isFinite(fixedPt) &&
+          Math.abs(fixedPt) <= 24
+        ) {
+          keyCoords.push(fixedPt);
+        }
+        for (const t of linearData.terms) {
+          if (Number.isFinite(t.an) && Math.abs(t.an) <= 24) {
+            keyCoords.push(t.an);
+          }
+        }
+        const diagPoints = keyCoords.map((v) => ({ x: v, y: v }));
+        const vr = fitSteppedViewRange(diagPoints, {
+          defaultXRange: [-8, 8],
+          defaultYRange: [-8, 8],
+          stepMultipliers: [1.5, 2, 3],
+          maxExpandFactor: 3,
+          minPadding: 1,
+        });
+        const cobwebStep = calcNiceStep(vr.xRange[1] - vr.xRange[0], 8);
 
         return {
-          xRange: [minV, maxV] as [number, number],
-          yRange: [minV, maxV] as [number, number],
-          xStep: 2,
-          yStep: 2,
+          xRange: vr.xRange,
+          yRange: vr.yRange,
+          xStep: cobwebStep,
+          yStep: cobwebStep,
           keepAspectRatio: true,
         };
       } else {

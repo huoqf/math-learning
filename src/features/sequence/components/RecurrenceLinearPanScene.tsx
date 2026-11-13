@@ -417,9 +417,14 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
   const fnLine = (x: number) => p_rec * x + q_rec;
   const diagLine = (x: number) => x;
 
+  const clampCobwebX = (v: number) =>
+    Math.max(scale.xMin - 1, Math.min(scale.xMax + 1, v));
+  const clampCobwebY = (v: number) =>
+    Math.max(scale.yMin - 1, Math.min(scale.yMax + 1, v));
+
   let cobwebPathStr = "";
   cobwebPoints.forEach((pt, idx) => {
-    const dPt = mathToDesign(pt.x, pt.y, scale);
+    const dPt = mathToDesign(clampCobwebX(pt.x), clampCobwebY(pt.y), scale);
     if (idx === 0) {
       cobwebPathStr += `M ${dPt.x} ${dPt.y}`;
     } else {
@@ -460,71 +465,75 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
         strokeDasharray="3,2"
       />
 
-      {fixedPoint !== null && (
-        <g>
-          <circle
-            cx={mathToDesign(fixedPoint, fixedPoint, scale).x}
-            cy={mathToDesign(fixedPoint, fixedPoint, scale).y}
-            r={6}
-            fill={MATH_COLORS.paramTertiary}
-            stroke={MATH_COLORS.white}
-            strokeWidth={2}
-          />
-          <text
-            x={mathToDesign(fixedPoint, fixedPoint, scale).x + 10}
-            y={mathToDesign(fixedPoint, fixedPoint, scale).y - 10}
-            fontSize={fontScale(11)}
-            fill={MATH_COLORS.paramTertiary}
-            fontWeight="bold"
-          >
-            <tspan>不动点 </tspan>
-            <tspan fontStyle="italic">c</tspan>
-            <tspan>{` = ${formatMathNumber(fixedPoint)}`}</tspan>
-          </text>
-        </g>
-      )}
-
-      {terms.map((t) => {
-        const posAn = mathToDesign(t.an, t.an, scale);
-        const isHighlighted = t.n === highlightN;
-        const showLabel = t.n === 1 || t.n === N || isHighlighted;
-
-        return (
-          <g
-            key={`lin-term-${t.n}`}
-            style={{ cursor: "pointer" }}
-            onClick={() => onSelectN?.(t.n)}
-          >
-            {isHighlighted && (
-              <circle
-                cx={posAn.x}
-                cy={posAn.y}
-                r={12}
-                fill={withAlpha(MATH_COLORS.sequence, 0.25)}
-              />
-            )}
+      {fixedPoint !== null &&
+        fixedPoint >= scale.xMin - 0.5 &&
+        fixedPoint <= scale.xMax + 0.5 && (
+          <g>
             <circle
-              cx={posAn.x}
-              cy={posAn.y}
-              r={isHighlighted ? 7 : 4.5}
-              fill={MATH_COLORS.sequence}
+              cx={mathToDesign(fixedPoint, fixedPoint, scale).x}
+              cy={mathToDesign(fixedPoint, fixedPoint, scale).y}
+              r={6}
+              fill={MATH_COLORS.paramTertiary}
               stroke={MATH_COLORS.white}
               strokeWidth={2}
             />
-            {showLabel && (
-              <MathSubText
-                x={posAn.x}
-                y={posAn.y - 12}
-                base="a"
-                sub={t.n}
-                val={t.an.toFixed(1)}
-                fill={MATH_COLORS.sequence}
-                fontScale={fontScale}
-              />
-            )}
+            <text
+              x={mathToDesign(fixedPoint, fixedPoint, scale).x + 10}
+              y={mathToDesign(fixedPoint, fixedPoint, scale).y - 10}
+              fontSize={fontScale(11)}
+              fill={MATH_COLORS.paramTertiary}
+              fontWeight="bold"
+            >
+              <tspan>不动点 </tspan>
+              <tspan fontStyle="italic">c</tspan>
+              <tspan>{` = ${formatMathNumber(fixedPoint)}`}</tspan>
+            </text>
           </g>
-        );
-      })}
+        )}
+
+      {terms
+        .filter((t) => t.an >= scale.xMin - 0.2 && t.an <= scale.xMax + 0.2)
+        .map((t) => {
+          const posAn = mathToDesign(t.an, t.an, scale);
+          const isHighlighted = t.n === highlightN;
+          const showLabel = t.n === 1 || t.n === N || isHighlighted;
+
+          return (
+            <g
+              key={`lin-term-${t.n}`}
+              style={{ cursor: "pointer" }}
+              onClick={() => onSelectN?.(t.n)}
+            >
+              {isHighlighted && (
+                <circle
+                  cx={posAn.x}
+                  cy={posAn.y}
+                  r={12}
+                  fill={withAlpha(MATH_COLORS.sequence, 0.25)}
+                />
+              )}
+              <circle
+                cx={posAn.x}
+                cy={posAn.y}
+                r={isHighlighted ? 7 : 4.5}
+                fill={MATH_COLORS.sequence}
+                stroke={MATH_COLORS.white}
+                strokeWidth={2}
+              />
+              {showLabel && (
+                <MathSubText
+                  x={posAn.x}
+                  y={posAn.y - 12}
+                  base="a"
+                  sub={t.n}
+                  val={t.an.toFixed(1)}
+                  fill={MATH_COLORS.sequence}
+                  fontScale={fontScale}
+                />
+              )}
+            </g>
+          );
+        })}
 
       <g transform={`translate(${legendX}, 20)`}>
         <rect
