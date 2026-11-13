@@ -5,6 +5,7 @@ import {
   calculateIntervalZeros,
   solveParamsFromDrag,
   formatPiValue,
+  formatPiPlainText,
   calcAdaptiveTrigXRange,
 } from "./trigTransform";
 
@@ -115,5 +116,18 @@ describe("trigTransform math utils", () => {
         (pt: { x: number }) => pt.x >= negRange[0] && pt.x <= negRange[1],
       ),
     ).toBe(true);
+  });
+
+  it("formatPiPlainText correctly formats multiples of pi for coordinate ticks", () => {
+    expect(formatPiPlainText(0)).toBe("0");
+    expect(formatPiPlainText(Math.PI)).toBe("π");
+    expect(formatPiPlainText(-Math.PI)).toBe("-π");
+    expect(formatPiPlainText(Math.PI / 2)).toBe("π/2");
+    expect(formatPiPlainText(-Math.PI / 2)).toBe("-π/2");
+    expect(formatPiPlainText((3 * Math.PI) / 2)).toBe("3π/2");
+    expect(formatPiPlainText((-3 * Math.PI) / 2)).toBe("-3π/2");
+    expect(formatPiPlainText((5 * Math.PI) / 2)).toBe("5π/2");
+    expect(formatPiPlainText(2 * Math.PI)).toBe("2π");
+    expect(formatPiPlainText(-2 * Math.PI)).toBe("-2π");
   });
 });

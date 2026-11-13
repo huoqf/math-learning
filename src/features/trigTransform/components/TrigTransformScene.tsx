@@ -18,6 +18,7 @@ import {
   calculateIntervalZeros,
   solveParamsFromDrag,
   partitionFivePointsByView,
+  formatPiPlainText,
 } from "../math/trigTransform";
 import { formatMathNumber } from "@/utils/mathFormat";
 
@@ -118,7 +119,12 @@ export function TrigTransformScene({
 
   return (
     <g>
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      <CoordinateGrid
+        scale={scale}
+        fontScale={fontScale}
+        xStep={Math.PI / 2}
+        xTickFormatter={formatPiPlainText}
+      />
 
       {/* 模式一：基本性质研究 */}
       {studyMode === "properties" && (

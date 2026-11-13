@@ -141,6 +141,8 @@ export function formatPiPlainText(val: number): string {
   if (Math.abs(absR - 1) < 1e-4) return isNeg ? "-π" : "π";
   if (Math.abs(absR - 2) < 1e-4) return isNeg ? "-2π" : "2π";
   if (Math.abs(absR - 0.5) < 1e-4) return `${prefix}π/2`;
+  if (Math.abs(absR - 1.5) < 1e-4) return `${prefix}3π/2`;
+  if (Math.abs(absR - 2.5) < 1e-4) return `${prefix}5π/2`;
   if (Math.abs(absR - 1 / 3) < 1e-4) return `${prefix}π/3`;
   if (Math.abs(absR - 2 / 3) < 1e-4) return `${prefix}2π/3`;
   if (Math.abs(absR - 0.25) < 1e-4) return `${prefix}π/4`;

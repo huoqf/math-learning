@@ -20,7 +20,7 @@ import {
   getTransformPathSteps,
   formatPiValue,
   calculateIntervalZeros,
-  calcAdaptiveTrigXRange,
+  DEFAULT_TRIG_XRANGE,
 } from "./math/trigTransform";
 
 export function TrigTransformAnimation() {
@@ -50,15 +50,10 @@ export function TrigTransformAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 3. 构建直角坐标系比例尺：自适应覆盖五点周期，并保证基准 [-8, 8]
-  const xRange = useMemo(
-    () => calcAdaptiveTrigXRange(params.omega ?? 2, params.phi ?? Math.PI / 3),
-    [params.omega, params.phi],
-  );
-
+  // 3. 构建直角坐标系比例尺：固定基准 [-8, 8]，保持 scale 绝对恒定，真实呈现伸缩与平移
   const scale = useSceneScale({
     vp,
-    xRange,
+    xRange: DEFAULT_TRIG_XRANGE,
     yRange: [-4.5, 4.5],
   });
 
