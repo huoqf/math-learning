@@ -99,5 +99,5 @@
    - **次要关联参数二**（如 $b, r_2, \alpha$）：`\color{${MATH_COLORS.paramSecondary}}{...}` (`#D97706`)
    - **辅助或高度参数三**（如 $c, h, \theta$）：`\color{${MATH_COLORS.paramTertiary}}{...}` (`#059669`)
    - **截面实体与主多边形**：`MATH_COLORS.paramPrimary` (`#EF4444`，与公式 $S_{\text{截}}$ 严格同色绑定)
-   - **底面射影阴影**：`MATH_COLORS.secondary` (`#8B5CF6`，与公式 $S_{\text{投}}$ 严格同色绑定)
-   - **作图辅助线与交轨线**：`MATH_COLORS.highlight` (`#F59E0B`) 或 `MATH_COLORS.paramSecondary`
+   - **底面射影阴影**：`MATH_COLORS.ellipse` (`#7C3AED`) 或 `MATH_COLORS.functionSecondary` (`#8B5CF6`，与公式 $S_{\text{投}}$ 严格同色绑定)
+   - **作图辅助线与交轨线**：`MATH_COLORS.paramSecondary` (`#D97706`) 或 `MATH_COLORS.highlight` (`#DC2626`)

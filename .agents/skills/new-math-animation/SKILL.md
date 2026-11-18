@@ -73,7 +73,7 @@ src/data/
 
 1. **创建 `meta.ts`**：在 `src/features/<topic>/meta.ts` 导出 `node` 与 `loader`，`animationIds` 必须与 Step 4 中的 `case` 字符串完全一致。
 2. **注册路由**：在 `src/data/routeEntries.ts` 的 `routeEntries` 中添加 `{ node, loader }`（3D 页面加 `guarded3D: true`）。
-3. **注册知识树**：在 `src/data/knowledgeTree.ts` 中按章节顺序插入节点。
+3. **注册知识树**：在 `src/data/knowledgeTree/<chapter>.ts` 中按章节顺序引入并插入节点。
 4. **统一看板接入**：在 `src/data/mathQuantities.ts` 的 `buildMathQuantities` 中追加 `case 'anim-<topic>'`，调用 builder 函数。
 
 ---

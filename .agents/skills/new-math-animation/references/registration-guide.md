@@ -23,15 +23,18 @@ export const <topic>Node: KnowledgeNode = {
   prerequisites: [],             // 前置知识节点 id 列表（可空数组）
   route: '/<topic>',             // HashRouter 路径（不含 #）
 
-  // 可选但推荐填写（影响高考专题地图展示）
+  // ⚠️ 已路由节点必填（由 src/data/knowledgeTree.test.ts 门禁强制检查）
   gaokaoTopic: 'func_derivative', // 'func_derivative'|'conic_geometry'|'solid_geometry'|...
   questionCategory: 'solution_first', // 'foundation'|'multi_select_hard'|'solution_first'|'solution_final'
   examMethod: '通法一句话描述',   // 高考核心通法，如"切点斜率法与截距式联立"
   examWeight: 4,                  // 高考考查权重 1-5 星
 };
 
-// ── loader：动态 import 页面组件（3D 页面 import 对应的 3D Animation 文件）
-export const <topic>Loader = () => import('./<Topic>Animation');
+// ── loader：动态 import 页面组件（推荐显式暴露 default 导出，与 routeEntries.ts 约定一致）
+export const <topic>Loader = () =>
+  import('./<Topic>Animation').then((m) => ({
+    default: m.<Topic>Animation,
+  }));
 ```
 
 **重要：`animationIds[0]` 必须与 Step 4 中 `mathQuantities.ts` 里的 `case "anim-<topic>"` 字符串严格相同**，否则右屏看板永远空白。
@@ -65,35 +68,19 @@ export const routeEntries: RouteEntry[] = [
 
 ---
 
-## Step 3：注册知识树 — `knowledgeTree.ts`
+## Step 3：注册知识树 — `src/data/knowledgeTree/<chapter>.ts`
 
-路径：`src/data/knowledgeTree.ts`
+路径：`src/data/knowledgeTree/<chapter>.ts`（按学科分片，统一由 `src/data/knowledgeTree/index.ts` 聚合并自动回填 `syllabus`）
 
 ```ts
-// 在对应章节注释区块内插入节点（按照课程进度顺序）
-import type { KnowledgeNode } from './types';
+// 在对应章节分片文件顶部从 meta.ts 单一来源导入，严禁复制粘贴节点对象
+import { <topic>Node } from '@/features/<topic>/meta';
 
-// ── 在现有节点之后追加 ──
-{
-  ...  // 前一个节点
-},
-// 导入并展开或直接写：
-// <topic>Node 对象从 meta.ts re-export 或直接复制粘贴
-{
-  id: 'know-<topic>',
-  title: '知识点全称',
-  // ... 同 meta.ts 中的 KnowledgeNode 内容
-},
+export const <chapter>Nodes: KnowledgeNode[] = [
+  // ... 已有节点 ...
+  <topic>Node, // 按课程进度顺序插入合适位置
+];
 ```
-
-> **替代方案**（推荐）：在 `knowledgeTree.ts` 顶部 import 后，直接在数组中引用 `<topic>Node`：
-> ```ts
-> import { <topic>Node } from '@/features/<topic>/meta';
-> export const knowledgeTree: KnowledgeNode[] = [
->   ...,
->   <topic>Node,  // 插入合适位置
-> ];
-> ```
 
 ---
 

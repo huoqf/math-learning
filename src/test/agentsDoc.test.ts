@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { relative, resolve } from "node:path";
 // @ts-expect-error -- importing internal mjs audit script
 import * as auditRulesModule from "../../.agents/skills/math-page-audit/scripts/rules/index.mjs";
 import { MATH_COLORS } from "../theme/math/colors";
@@ -289,6 +289,70 @@ describe("AGENTS.md 契约测试（工作区宪法不得漂移）", () => {
             offenders.push(`L${idx + 1}：提及了不存在的规则 ${m[0]}`);
         }
       });
+      expect(offenders).toEqual([]);
+    });
+  });
+
+  // ── 铁律 4：Skill 参考文档色彩令牌与色值一致性 ──────────────────────────
+  describe("铁律 4 · Skill 参考文档令牌与色值一致性", () => {
+    function collectSkillRefs(dir: string, out: string[] = []): string[] {
+      if (!existsSync(dir)) return out;
+      for (const entry of readdirSync(dir)) {
+        const abs = resolve(dir, entry);
+        if (statSync(abs).isDirectory()) {
+          collectSkillRefs(abs, out);
+        } else if (
+          abs.replace(/\\/g, "/").includes("/references/") &&
+          entry.endsWith(".md")
+        ) {
+          out.push(abs);
+        }
+      }
+      return out;
+    }
+
+    it("references/*.md 中引用的 MATH_COLORS.<key> 必须真实存在，且同行 Hex 注解恒等", () => {
+      const files = collectSkillRefs(resolve(ROOT, ".agents/skills"));
+      expect(files.length).toBeGreaterThanOrEqual(5);
+      const offenders: string[] = [];
+      const tokenColors = MATH_COLORS as Record<string, string>;
+
+      for (const file of files) {
+        const rel = relative(ROOT, file).replace(/\\/g, "/");
+        const contentLines = readFileSync(file, "utf-8").split(/\r?\n/);
+        contentLines.forEach((line, idx) => {
+          // 跳过占位符泛指 MATH_COLORS.*
+          const refs = [
+            ...line.matchAll(/MATH_COLORS\.([A-Za-z0-9_]+)/g),
+          ].filter(([, key]) => key !== "*");
+          if (refs.length === 0) return;
+
+          for (const [, key] of refs) {
+            if (typeof tokenColors[key] !== "string") {
+              offenders.push(
+                `${rel}:L${idx + 1} 引用了不存在的令牌 MATH_COLORS.${key}`,
+              );
+            }
+          }
+
+          const hexHits = [...line.matchAll(/#[0-9A-Fa-f]{6}\b/g)];
+          if (hexHits.length > 0) {
+            for (const [hex] of hexHits) {
+              const matched = refs.some(([, key]) => {
+                const v = tokenColors[key];
+                return (
+                  typeof v === "string" && v.toUpperCase() === hex.toUpperCase()
+                );
+              });
+              if (!matched) {
+                offenders.push(
+                  `${rel}:L${idx + 1} Hex ${hex} 与同行令牌 (${refs.map(([, k]) => `${k}=${tokenColors[k]}`).join(", ")}) 不一致`,
+                );
+              }
+            }
+          }
+        });
+      }
       expect(offenders).toEqual([]);
     });
   });

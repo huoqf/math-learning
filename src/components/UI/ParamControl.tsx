@@ -26,6 +26,8 @@ export interface ParamConfig {
   marks?: ParamMark[];
   importance?: ParamImportance;
   resetOnChange?: boolean;
+  /** 单独禁用该参数（如 useScenario.isParamLocked 参数降维） */
+  disabled?: boolean;
 }
 
 interface ParamControlProps {
@@ -340,6 +342,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
   };
 
   const renderParam = (param: ParamConfig) => {
+    const isParamDisabled = disabled || Boolean(param.disabled);
     const step = param.step ?? 0.1;
     const parsedValue = Number.parseFloat(localValues[param.key]);
     const safeValue = Number.isFinite(parsedValue)
@@ -364,7 +367,12 @@ export const ParamControl: React.FC<ParamControlProps> = ({
     return (
       <div
         key={param.key}
-        className="space-y-1.5 pb-2 border-b border-neutral-100/90 last:border-0 last:pb-0"
+        className={[
+          "space-y-1.5 pb-2 border-b border-neutral-100/90 last:border-0 last:pb-0",
+          !disabled && param.disabled && "opacity-50 pointer-events-none",
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
         {/* 行1：参数标签与数值输入框（两端对齐） */}
         <div className="flex items-center justify-between gap-1.5">
@@ -405,7 +413,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
               min={param.min}
               max={param.max}
               step={step}
-              disabled={disabled}
+              disabled={isParamDisabled}
               style={{ width: inputWidth }}
               className="h-6 px-1.5 py-0 text-xs text-right font-mono bg-neutral-50/80 border border-neutral-300/80 rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               aria-label={`${param.label}数值`}
@@ -454,7 +462,7 @@ export const ParamControl: React.FC<ParamControlProps> = ({
                     param,
                   )
                 }
-                disabled={disabled}
+                disabled={isParamDisabled}
                 className="peer absolute -inset-y-2 left-0 w-full h-5 opacity-0 cursor-pointer z-10"
                 aria-label={`${param.label}滑块`}
               />

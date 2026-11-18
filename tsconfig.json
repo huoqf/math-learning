@@ -27,5 +27,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", ".agents", "e2e", "scripts"]
+  "include": ["src", ".agents/skills/**/*.ts", ".agents/skills/**/*.tsx", "e2e", "scripts"]
 }

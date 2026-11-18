@@ -19,7 +19,7 @@ description: >
 |---------|-----------|---------|
 | [references/geometry-standards.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/geometry-standards.md) | **全章节模型图谱与高考标注规范**（空间角/距离/切接球/截面/动点） | **重构与新建前必查**（确定必标辅助线与图元） |
 | [references/left-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/left-panel-spec.md) | **左屏六步标准动线层级**、模式防截断、操作引导与图层分类规范 | 编写/重构左屏 UI 时必读 |
-| [references/components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/components-guide.md) | **3D 核心组件清单**、`SPACE_3D_COLORS`、动点约束与透视切圆架构 | 编写中屏 3D 场景时查阅 |
+| [references/components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/references/components-guide.md) | **3D 核心组件清单**、`MATH_COLORS`、动点约束与透视切圆架构 | 编写中屏 3D 场景时查阅 |
 | [examples/Template3DAnimation.tsx](file:///d:/code/math/math-learning/.agents/skills/new-3d-math-animation/examples/Template3DAnimation.tsx) | **3D 页面标准完整骨架模板** | 新建 3D 页面时直接参考复制 |
 | [../new-math-animation/references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md) | **右屏看板 MathPanel 完整 Props 规范**（MathQuantity/Theorem/GaokaoPoint 字段+课型分层+Builder 标准结构） | **编写或审查右屏 builder 时必读** |
 | [../new-math-animation/references/registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md) | **新页面注册四步闭环指南**（KnowledgeNode 必填字段、animId 对应联动、代码片段模板、自检清单） | **新建 3D 页面时必读，保证知识树与右屏正确注册** |
@@ -73,7 +73,7 @@ description: >
      1. **首屏体积与网络防护**：利用 `isWebGLAvailable()` 进行硬件与上下文探测；不支持设备绝对**不触发** Three.js / R3F chunk 下载，杜绝弱网/低端设备内存暴涨。
      2. **优雅友好降级**：非 WebGL 环境自动展示引导升级提示；可用环境下由 `<Suspense fallback={<PageLoading />}>` 驱动异步懒加载。
    - **知识树与右屏看板关联**：
-     - 在 `src/data/knowledgeTree.ts` 挂载对应节点；
+     - 在 `src/data/knowledgeTree/<chapter>.ts` 引入并挂载对应节点；
      - 在 `src/data/mathQuantities.ts` 的 `buildMathQuantities()` 中添加 `case 'anim-<topic>': return build<Topic>Panel(params, config);`。
    - **完整注册四步闭环指南见 [registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md)。**
 

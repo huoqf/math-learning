@@ -66,8 +66,13 @@ export function runAudit({ targetDir, workspaceRoot, isStrict = false, group = n
     const fileIssues = [];
 
     for (const rule of activeRules) {
-      // 纯数学算法层 (src/math 与 src/math3d) 仅做纯洁性检验，跳过前端 UI/JSX/文本切分规则
-      if (ctx.isMathPureLayer && rule.id !== 'arch/pure-math-layer') {
+      // 纯数学算法层 (src/math 与 src/math3d) 仅做纯洁性与显式声明的学科边界检验，跳过前端 UI/JSX/文本切分规则
+      const MATH_PURE_ALLOWED_RULES = new Set([
+        'arch/pure-math-layer',
+        'discipline/no-beyond-syllabus-terms',
+        'discipline/no-limit-notation-compulsory-one',
+      ]);
+      if (ctx.isMathPureLayer && !MATH_PURE_ALLOWED_RULES.has(rule.id)) {
         continue;
       }
 

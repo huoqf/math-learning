@@ -1,5 +1,6 @@
-# 标注避让系统 — 实施记录
+# 标注避让系统 — 实施记录（历史存档）
 
+> **档案说明**：本文档记录 2026-07-21 标注避让第一阶段落地情况；此后 `src/utils/labelOverlap.ts` 已重新演进为 `resolveLabelPlacements` 与 `<SceneLabelGroup>` 8 向碰撞避让体系（见 `AGENTS.md` 公理 4.3 与 `new-math-animation/references/2d-components-guide.md`）。  
 > 完成时间：2026-07-21
 > Commit: `debe601` feat: 标注避让系统 — 共享工具 + InteractivePoint 接入
 

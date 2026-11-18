@@ -550,6 +550,7 @@ export const EXTEND_MODULE_AUTHORIZED_TERMS = [
     features: ['second-derivative'],
     builders: ['secondDerivative'],
     registries: [],
+    maths: ['secondDerivative'],
     terms: ['二阶导', '拐点', '琴生', CONCAVITY_TERM_LABEL],
     reason:
       '节点 know-derivative-inflection 为 importance:"extend" 且标题带「拓展 · 超出课标」，其唯一授课主题就是二阶导数、拐点、函数凹凸性与琴生不等式——这些词即页面主题名。',
@@ -586,7 +587,7 @@ export const EXTEND_MODULE_AUTHORIZED_TERMS = [
 /** 全部授权术语的并集（知识树按节点级判定时使用） */
 const ALL_AUTHORIZED_TERMS = EXTEND_MODULE_AUTHORIZED_TERMS.flatMap((m) => m.terms);
 
-/** 取相对路径所属的模块载体坐标（feature 目录 / builder / registry 三者可同时命中） */
+/** 取相对路径所属的模块载体坐标（feature 目录 / builder / registry / math 纯函数层） */
 function moduleScopes(rel) {
   const scopes = [];
   const feature = rel.match(/^src\/features\/([^/]+)\//);
@@ -595,6 +596,8 @@ function moduleScopes(rel) {
   if (builder) scopes.push(['builders', builder[1]]);
   const registry = rel.match(/^src\/data\/registries\/([^/]+)\.ts$/);
   if (registry) scopes.push(['registries', registry[1]]);
+  const mathMod = rel.match(/^src\/(?:math|math3d)\/([^/]+)\.ts$/);
+  if (mathMod) scopes.push(['maths', mathMod[1]]);
   return scopes;
 }
 
@@ -619,12 +622,12 @@ function isAuthorizedExtendModuleTerm(ctx, hit, line, nodeExtend) {
     return nodeExtend === true && termMatches(hit, ALL_AUTHORIZED_TERMS);
   }
 
-  // ② features / builders / registries：按模块登记放行
+  // ② features / builders / registries / maths：按模块登记放行
   const scopes = moduleScopes(rel);
   if (scopes.length === 0) return false;
   return scopes.some(([kind, name]) =>
     EXTEND_MODULE_AUTHORIZED_TERMS.some(
-      (m) => m[kind].includes(name) && termMatches(hit, m.terms),
+      (m) => Array.isArray(m[kind]) && m[kind].includes(name) && termMatches(hit, m.terms),
     ),
   );
 }
@@ -839,6 +842,10 @@ export const disciplineRules = [
         const hit =
           termHit || (familyHit ? familyHit.label : null) || (concavityHit ? CONCAVITY_TERM_LABEL : null);
         if (hit) {
+          // 语境防误伤：统计列联表中的「交叉积」非向量外积「叉积」
+          if (hit === '叉积' && line.includes('交叉积') && !/(?:^|[^交])叉积/.test(line)) {
+            return;
+          }
           // 标内白名单放行：新高考倡导的"向量参数方程"、"参数化设点"、"单参数设点"、"三角参数化"属合规技巧，不误判为超纲
           if (hit === '参数方程') {
             const isCompliantParametric =

@@ -8,7 +8,7 @@
 
 - [ ] **课型明确**：页面已明确标注为 **A 类基础概念课** 还是 **B 类高考专题/大题课**。
   - **A 类课**：右屏仅装配核心定义、数学性质与特征解，**严禁生塞大题三步破题推演**。
-  - **B 类课**：右屏必须装配 `reasoningSteps`（带采分点）、`gaokaoPoints`（高考秒杀考点）与 `invariants`（定值不变量）。
+  - **B 类课**：右屏必须装配 `reasoningSteps`（带采分点）、`gaokaoPoints`（高考秒杀考点）与定值不变量（`quantities` 中标记 `isInvariant: true`）。
 
 ---
 

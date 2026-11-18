@@ -8,16 +8,16 @@
 
 ### ❌ 错误写法
 ```tsx
-// 错误：InteractivePoint 吐出的已经是经过逆解算的数学坐标 (mathX, mathY)
-const handleDrag = (x: number, y: number) => {
-  const mathPos = designToMath(x, y, scale); // 💣 二次转换！导致动点瞬移或飞出画布
+// 错误：InteractivePoint 吐出的已经是数学坐标对象 { x, y }
+const handleDrag = (pt: { x: number; y: number }) => {
+  const mathPos = designToMath(pt.x, pt.y, scale); // 💣 二次转换！导致动点瞬移或飞出画布
   setParams({ x0: mathPos.x });
 };
 ```
 ### ✅ 正确写法
 ```tsx
-const handleDrag = (mathX: number, mathY: number) => {
-  setParams({ x0: mathX }); // 直接消费数学坐标
+const handleDrag = ({ x }: { x: number; y: number }) => {
+  setParams({ x0: x }); // 直接消费数学坐标
 };
 ```
 
@@ -32,10 +32,10 @@ const handleDrag = (mathX: number, mathY: number) => {
 ```
 ### ✅ 正确写法
 ```tsx
-// 正确：画布内仅保留代数点标 P，精确坐标与公式统一收纳至 SceneLegend 与右屏
+// 正确：画布内仅保留代数点标 P（先经 mathToDesign 换算为设计坐标），精确坐标与公式统一收纳至 SceneLegend 与右屏
+const ptP = mathToDesign(x, y, scale);
 <SceneLabelGroup
-  items={[{ id: 'p', text: 'P', mathX: x, mathY: y, color: MATH_COLORS.focusPoint }]}
-  scale={scale}
+  items={[{ key: 'p', text: 'P', x: ptP.x, y: ptP.y, color: MATH_COLORS.focusPoint }]}
   fontScale={fontScale}
 />
 ```
@@ -97,8 +97,8 @@ const tipConfig = {
 ### ❌ 错误写法
 ```tsx
 // 错误 1：色彩错位（图例与实际渲染不一致）
-<FunctionGraph fn={f} scale={scale} color={MATH_COLORS.secondary} />
-<SceneLegend items={[{ label: 'f(x)', colorKey: 'primary', type: 'line' }]} />
+<FunctionGraph fn={f} scale={scale} color={MATH_COLORS.functionSecondary} />
+<SceneLegend items={[{ label: 'f(x)', colorKey: 'function', style: 'line' }]} />
 
 // 错误 2：教条硬编码右下角，完全不顾场景右下角有高分段柱子、正半轴刻度或对称长尾阴影
 <SceneLegend items={legendItems} /> // 💣 默认 bottom-right，直接将右侧图元与轴标签压在身下！

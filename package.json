@@ -15,6 +15,7 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "audit": "node .agents/skills/math-page-audit/scripts/audit_page.mjs",
     "audit:strict": "node .agents/skills/math-page-audit/scripts/audit_page.mjs --strict",
+    "audit:examples": "node .agents/skills/math-page-audit/scripts/audit_page.mjs .agents/skills/new-math-animation/examples --strict && node .agents/skills/math-page-audit/scripts/audit_page.mjs .agents/skills/new-3d-math-animation/examples --strict",
     "audit:update-baseline": "node .agents/skills/math-page-audit/scripts/audit_page.mjs --update-baseline",
     "test": "vitest run src/math/ src/math3d/ src/data/ src/test/ src/features/ src/components/ src/utils/",
     "test:ci": "vitest run",
