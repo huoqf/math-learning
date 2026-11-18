@@ -16,7 +16,7 @@ export const regressionNode: KnowledgeNode = {
   module: "统计分析",
   importance: "gaokao",
   animationIds: ["anim-paired-data-regression", "anim-paired-data"],
-  prerequisites: ["know-probability-normal"],
+  prerequisites: ["know-stat-percentile"],
   route: "/paired-data-regression",
 };
 
@@ -28,7 +28,7 @@ export const independenceNode: KnowledgeNode = {
   module: "统计分析",
   importance: "gaokao",
   animationIds: ["anim-paired-data-independence"],
-  prerequisites: ["know-probability-normal"],
+  prerequisites: ["know-probability-independence", "know-stat-percentile"],
   route: "/paired-data-independence",
 };
 

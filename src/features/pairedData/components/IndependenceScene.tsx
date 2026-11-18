@@ -229,25 +229,25 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
           />
 
           <line
-            x1={96}
+            x1={124}
             y1={0}
-            x2={96}
+            x2={124}
             y2={148}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
           />
           <line
-            x1={192}
+            x1={211}
             y1={0}
-            x2={192}
+            x2={211}
             y2={148}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
           />
           <line
-            x1={288}
+            x1={298}
             y1={0}
-            x2={288}
+            x2={298}
             y2={148}
             stroke={CANVAS_COLORS.grid}
             strokeWidth={1}
@@ -255,7 +255,7 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
 
           {/* 列表头 */}
           <text
-            x={48}
+            x={62}
             y={18}
             textAnchor="middle"
             fontSize={fontScale(9.5)}
@@ -265,27 +265,27 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
             分类变量 X \ Y
           </text>
           <text
-            x={144}
+            x={167.5}
             y={18}
             textAnchor="middle"
-            fontSize={labelB.length > 4 ? fontScale(9.5) : fontScale(10.5)}
+            fontSize={labelB.length > 4 ? fontScale(9) : fontScale(10.5)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
             {labelB}
           </text>
           <text
-            x={240}
+            x={254.5}
             y={18}
             textAnchor="middle"
-            fontSize={labelNotB.length > 4 ? fontScale(9.5) : fontScale(10.5)}
+            fontSize={labelNotB.length > 4 ? fontScale(9) : fontScale(10.5)}
             fill={CANVAS_COLORS.labelTextLight}
             fontWeight="bold"
           >
             {labelNotB}
           </text>
           <text
-            x={336}
+            x={341.5}
             y={18}
             textAnchor="middle"
             fontSize={fontScale(10)}
@@ -297,10 +297,10 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
 
           {/* 行 1: labelA */}
           <text
-            x={48}
+            x={62}
             y={52}
             textAnchor="middle"
-            fontSize={labelA.length > 4 ? fontScale(9) : fontScale(10.5)}
+            fontSize={labelA.length > 6 ? fontScale(8.5) : fontScale(9.5)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
@@ -309,65 +309,65 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
 
           {/* 格 1 (a) */}
           <rect
-            x={97}
+            x={125}
             y={29}
-            width={94}
+            width={85}
             height={38}
             fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
           />
           <text
-            x={144}
+            x={167.5}
             y={46}
             textAnchor="middle"
-            fontSize={fontScale(13.5)}
+            fontSize={fontScale(13)}
             fill={MATH_COLORS.paramPrimary}
             fontWeight="bold"
           >
             a = {effectiveA}
           </text>
           <text
-            x={144}
+            x={167.5}
             y={61}
             textAnchor="middle"
-            fontSize={fontScale(8.5)}
+            fontSize={fontScale(8)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            ({formatMathNumber(ratioA_B * 100)}%) · 期望E=
+            ({formatMathNumber(ratioA_B * 100)}%)·E=
             {formatMathNumber(indResult.expected.eA)}
           </text>
 
           {/* 格 2 (b) */}
           <rect
-            x={193}
+            x={212}
             y={29}
-            width={94}
+            width={85}
             height={38}
             fill={withAlpha(MATH_COLORS.paramSecondary, 0.05)}
           />
           <text
-            x={240}
+            x={254.5}
             y={46}
             textAnchor="middle"
-            fontSize={fontScale(13.5)}
+            fontSize={fontScale(13)}
             fill={MATH_COLORS.paramSecondary}
             fontWeight="bold"
           >
             b = {effectiveB}
           </text>
           <text
-            x={240}
+            x={254.5}
             y={61}
             textAnchor="middle"
-            fontSize={fontScale(8.5)}
+            fontSize={fontScale(8)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            ({formatMathNumber(ratioA_NotB * 100)}%) · 期望E=
+            ({formatMathNumber(ratioA_NotB * 100)}%)·E=
             {formatMathNumber(indResult.expected.eB)}
           </text>
 
           {/* 行 1 合计 */}
           <text
-            x={336}
+            x={341.5}
             y={53}
             textAnchor="middle"
             fontSize={fontScale(12)}
@@ -379,10 +379,10 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
 
           {/* 行 2: labelNotA */}
           <text
-            x={48}
+            x={62}
             y={92}
             textAnchor="middle"
-            fontSize={labelNotA.length > 4 ? fontScale(9) : fontScale(10.5)}
+            fontSize={labelNotA.length > 6 ? fontScale(8.5) : fontScale(9.5)}
             fill={MATH_COLORS.paramSecondary}
             fontWeight="bold"
           >
@@ -391,38 +391,38 @@ export const IndependenceScene: React.FC<IndependenceSceneProps> = ({
 
           {/* 格 3 (c) */}
           <rect
-            x={97}
+            x={125}
             y={69}
-            width={94}
+            width={85}
             height={38}
             fill={withAlpha(MATH_COLORS.paramTertiary, 0.06)}
           />
           <text
-            x={144}
+            x={167.5}
             y={86}
             textAnchor="middle"
-            fontSize={fontScale(13.5)}
+            fontSize={fontScale(13)}
             fill={MATH_COLORS.paramTertiary}
             fontWeight="bold"
           >
             c = {effectiveC}
           </text>
           <text
-            x={144}
+            x={167.5}
             y={101}
             textAnchor="middle"
-            fontSize={fontScale(8.5)}
+            fontSize={fontScale(8)}
             fill={CANVAS_COLORS.labelTextLight}
           >
-            ({formatMathNumber(ratioNotA_B * 100)}%) · 期望E=
+            ({formatMathNumber(ratioNotA_B * 100)}%)·E=
             {formatMathNumber(indResult.expected.eC)}
           </text>
 
           {/* 格 4 (d) */}
           <rect
-            x={193}
+            x={212}
             y={69}
-            width={94}
+            width={85}
             height={38}
             fill={withAlpha(CANVAS_COLORS.labelTextLight, 0.06)}
           />

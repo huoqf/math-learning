@@ -64,6 +64,7 @@ export function IndependencePage() {
     setParams({ ...defaultParams });
     setIndPresetKey("0");
     setActiveTab("standard");
+    setAnswerStep(1);
   };
 
   const currentPreset = useMemo(() => {

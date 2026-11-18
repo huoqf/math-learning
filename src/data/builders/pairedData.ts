@@ -1,12 +1,19 @@
-import type { MathPanelData, WarningItem, ReasoningStep } from "../types";
+import type {
+  MathPanelData,
+  MathQuantity,
+  WarningItem,
+  ReasoningStep,
+} from "../types";
 import {
   calculateLinearRegression,
   calculateIndependenceTest,
   calculateOutlierComparison,
   fitAllRegressionModels,
+  isRegressionTargetInDomain,
   REGRESSION_PRESETS,
   INDEPENDENCE_PRESETS,
   Point2D,
+  RegressionModelType,
 } from "@/math/pairedData";
 import { MATH_COLORS } from "@/theme";
 import {
@@ -35,13 +42,14 @@ export function buildPairedDataPanel(
 
     const res = calculateLinearRegression(points);
     const modelFits = fitAllRegressionModels(points);
-    const selectedModel = (config?.selectedModel as string) ?? "linear";
-    const currentModelFit =
-      modelFits.find((m) => m.type === selectedModel) ?? modelFits[0];
+    const selectedModel = ((config?.selectedModel as string) ??
+      "linear") as RegressionModelType;
+    const currentModelFit = modelFits.find((m) => m.type === selectedModel);
 
     const isLinearMode = selectedModel === "linear";
     const isOutlierScenario = scenarioKey === "outlier";
     const targetX = Number(params.targetX ?? preset.targetX ?? 10);
+    const isTargetInDomain = isRegressionTargetInDomain(selectedModel, targetX);
     const targetUnit = preset.targetUnit ? ` ${preset.targetUnit}` : "";
 
     // 动态组装定理体系：纵向多行对齐，彻底消除超宽缩放
@@ -161,10 +169,14 @@ export function buildPairedDataPanel(
       latexBlocks: step.latexBlocks,
     });
 
+    const outlierComp =
+      res.isValid && isOutlierScenario && isLinearMode
+        ? calculateOutlierComparison(points)
+        : null;
+
     if (res.isValid) {
       if (isOutlierScenario) {
         // 离群点情境：展示“含异常点 vs 剔除异常点”的高考对比作答链
-        const outlierComp = calculateOutlierComparison(points);
         const lastPt = points[points.length - 1];
         const cleaned = outlierComp?.cleaned ?? res;
         const cleanedPred = cleaned.b * targetX + cleaned.a;
@@ -245,10 +257,45 @@ export function buildPairedDataPanel(
               "【高考采分点】准确代入自变量目标值求出预报值并给出决定系数评价得 2 分。",
           }),
         ];
+      } else if (!currentModelFit) {
+        const modelNameMap: Record<RegressionModelType, string> = {
+          linear: "一元线性模型",
+          exponential: "指数模型（要求全体 $y_i > 0$）",
+          logarithmic: "对数模型（要求全体 $x_i > 0$）",
+          power: "幂函数模型（要求全体 $x_i > 0$ 且 $y_i > 0$）",
+          inverse: "双曲线模型（要求全体 $x_i \\neq 0$）",
+        };
+        reasoningSteps = [
+          makeStep({
+            step: REGRESSION_ANSWER_STEPS[0].step,
+            title: REGRESSION_ANSWER_STEPS[0].title,
+            latexBlocks: [`\\text{定义域检验不通过}`],
+            detail: `当前散点数据不满足${modelNameMap[selectedModel]}的换元定义域要求（对数变换需正数、倒数变换需非零），无法构建对应非线性模型。`,
+            rubric:
+              "【高考采分点】检验换元公式定义域并指出越界散点位置得 2 分。",
+          }),
+          makeStep({
+            step: REGRESSION_ANSWER_STEPS[1].step,
+            title: REGRESSION_ANSWER_STEPS[1].title,
+            latexBlocks: [`\\text{无法执行线性化还原}`],
+            detail:
+              "请将散点拖回正域/非零域后再进行换元拟合，或切换至其它适用模型。",
+            rubric:
+              "【高考采分点】说明定义域受限原因，严禁强行对负数取对数或零作分母，得 4 分。",
+          }),
+          makeStep({
+            step: REGRESSION_ANSWER_STEPS[2].step,
+            title: REGRESSION_ANSWER_STEPS[2].title,
+            latexBlocks: [`\\text{模型暂不可用}`],
+            detail: "样本满足定义域前提后即可重新展示决定系数 $R^2$ 与预报值。",
+            rubric: "【高考采分点】明确模型适用条件得 2 分。",
+          }),
+        ];
       } else {
         // 非线性回归转换模式：变量代换与逆变换还原标准解答链
-        const currentPred =
-          currentModelFit?.predict(targetX) ?? res.b * targetX + res.a;
+        const currentPred = isTargetInDomain
+          ? currentModelFit.predict(targetX)
+          : NaN;
 
         reasoningSteps = [
           makeStep({
@@ -256,17 +303,17 @@ export function buildPairedDataPanel(
             title: REGRESSION_ANSWER_STEPS[0].title,
             latexBlocks: [
               `y = f(x; \\theta)`,
-              `\\begin{aligned} \\text{换元: } & ${currentModelFit?.variableSubstitution ?? "线性化换元"} \\\\[4pt] \\text{形式: } & ${currentModelFit?.transformedFormula ?? "线性方程"} \\end{aligned}`,
+              `\\begin{aligned} \\text{换元: } & ${currentModelFit.variableSubstitution} \\\\[4pt] \\text{形式: } & ${currentModelFit.transformedFormula} \\end{aligned}`,
             ],
-            detail: `针对非线性数据分布特征（${currentModelFit?.name ?? "变量代换"}），通过引入中间变量换元，将非线性回归问题化为关于新变量的一元线性回归模型。`,
+            detail: `针对非线性数据分布特征（${currentModelFit.name}），通过引入中间变量换元，将非线性回归问题化为关于新变量的一元线性回归模型。`,
             rubric: "【高考采分点】选定合理置换公式并建立线性形式得 2 分。",
           }),
           makeStep({
             step: REGRESSION_ANSWER_STEPS[1].step,
             title: REGRESSION_ANSWER_STEPS[1].title,
             latexBlocks: [
-              `\\text{线性方程: } ${currentModelFit?.transformedFormula ?? ""}`,
-              `\\text{还原方程: } ${currentModelFit?.originalFormula ?? ""}`,
+              `\\text{线性方程: } ${currentModelFit.transformedFormula}`,
+              `\\text{还原方程: } ${currentModelFit.originalFormula}`,
             ],
             detail:
               "高考采分关键：在线性化求解出参数后，务必逆代换回原物理变量，还原出以原变量 $x, y$ 表达的经验回归方程。",
@@ -277,10 +324,14 @@ export function buildPairedDataPanel(
             step: REGRESSION_ANSWER_STEPS[2].step,
             title: REGRESSION_ANSWER_STEPS[2].title,
             latexBlocks: [
-              `\\hat{y}_0 = ${fmt2(currentPred)}\\text{ (${targetUnit})}`,
-              `\\begin{aligned} R^2 &= 1 - \\frac{\\text{SSE}}{\\text{SST}} \\\\[4pt] &\\approx ${fmt4(currentModelFit?.rSquare ?? res.rSquare)} \\end{aligned}`,
+              isTargetInDomain
+                ? `\\hat{y}_0 = ${fmt2(currentPred)}\\text{ (${targetUnit})}`
+                : `x_0 = ${targetX} \\notin \\text{定义域（无意义）}`,
+              `\\begin{aligned} R^2 &= 1 - \\frac{\\text{SSE}}{\\text{SST}} \\\\[4pt] &\\approx ${fmt4(currentModelFit.rSquare)} \\end{aligned}`,
             ],
-            detail: `当前模型在原观测变量上的决定系数为 $R^2 \\approx ${fmt4(currentModelFit?.rSquare ?? res.rSquare)}$，残差平方和 $\\text{SSE} = ${fmt2(currentModelFit?.sse ?? res.sse)}$。预测目标自变量 $x = ${targetX}$ 时，${targetYDesc}约为 $${fmt2(currentPred)}$${targetUnit}。`,
+            detail: isTargetInDomain
+              ? `当前模型在原观测变量上的决定系数为 $R^2 \\approx ${fmt4(currentModelFit.rSquare)}$，残差平方和 $\\text{SSE} = ${fmt2(currentModelFit.sse)}$。预测目标自变量 $x = ${targetX}$ 时，${targetYDesc}约为 $${fmt2(currentPred)}$${targetUnit}。`
+              : `当前目标预报点 $x_0 = ${targetX}$ 不在「${currentModelFit.name}」的数学定义域内（对数/幂函数须 $x_0 > 0$，双曲线须 $x_0 \\neq 0$），请向右/远离零点调节 $x_0$。`,
             rubric:
               "【高考采分点】准确代入计算预报值并结合 R² 评估模型拟合效果得 2 分。",
           }),
@@ -290,8 +341,13 @@ export function buildPairedDataPanel(
 
     const denomLxy = res.lxy;
     const isLxyPos = denomLxy >= 0;
+    const cleanedRes = outlierComp?.cleaned;
+    const rawPredictedY = res.b * targetX + res.a;
+    const cleanedPredictedY = cleanedRes
+      ? cleanedRes.b * targetX + cleanedRes.a
+      : rawPredictedY;
 
-    const quantities = isLinearMode
+    const quantities: MathQuantity[] = isLinearMode
       ? [
           {
             label: "样本容量 n",
@@ -316,104 +372,150 @@ export function buildPairedDataPanel(
             color: MATH_COLORS.paramSecondary,
           },
           {
-            label: "回归斜率 b̂",
-            value: `${res.b.toFixed(4)}`,
+            label: cleanedRes ? "清洗后斜率 b̂_clean" : "回归斜率 b̂",
+            value: cleanedRes
+              ? `${cleanedRes.b.toFixed(4)} (原 ${res.b.toFixed(4)})`
+              : `${res.b.toFixed(4)}`,
             color: MATH_COLORS.paramPrimary,
           },
           {
-            label: "回归截距 â",
-            value: `${res.a.toFixed(4)}`,
+            label: cleanedRes ? "清洗后截距 â_clean" : "回归截距 â",
+            value: cleanedRes
+              ? `${cleanedRes.a.toFixed(4)} (原 ${res.a.toFixed(4)})`
+              : `${res.a.toFixed(4)}`,
             color: MATH_COLORS.paramSecondary,
           },
           {
-            label: "样本相关系数 r",
-            value: `${res.r.toFixed(4)}`,
+            label: cleanedRes ? "相关系数 r (清洗前→后)" : "样本相关系数 r",
+            value: cleanedRes
+              ? `${res.r.toFixed(4)} → ${cleanedRes.r.toFixed(4)}`
+              : `${res.r.toFixed(4)}`,
             color:
               res.r >= 0 ? MATH_COLORS.paramPrimary : MATH_COLORS.paramTertiary,
           },
           {
-            label: "决定系数 R²",
-            value: `${res.rSquare.toFixed(4)}`,
+            label: cleanedRes ? "决定系数 R² (清洗前→后)" : "决定系数 R²",
+            value: cleanedRes
+              ? `${res.rSquare.toFixed(4)} → ${cleanedRes.rSquare.toFixed(4)}`
+              : `${res.rSquare.toFixed(4)}`,
             color: MATH_COLORS.paramSecondary,
           },
           {
             label: "残差平方和 SSE",
-            value: `${res.sse.toFixed(2)}`,
+            value: `${(cleanedRes ?? res).sse.toFixed(2)}`,
             color: MATH_COLORS.tangentLine,
           },
           {
-            label: `预报值 ŷ₀ (x₀=${targetX})`,
-            value: `${(res.b * targetX + res.a).toFixed(2)}${targetUnit}`,
+            label: cleanedRes
+              ? `清洗后预报值 ŷ₀ (x₀=${targetX})`
+              : `预报值 ŷ₀ (x₀=${targetX})`,
+            value: cleanedRes
+              ? `${cleanedPredictedY.toFixed(2)}${targetUnit} (含异常点: ${rawPredictedY.toFixed(2)}${targetUnit})`
+              : `${rawPredictedY.toFixed(2)}${targetUnit}`,
             color: MATH_COLORS.paramPrimary,
           },
         ]
-      : [
-          {
-            label: "样本容量 n",
-            value: `${res.n}`,
-            color: MATH_COLORS.paramPrimary,
-          },
-          {
-            label: "拟合模型类型",
-            value: `${currentModelFit?.name ?? "非线性转换"}`,
-            color: MATH_COLORS.paramSecondary,
-          },
-          {
-            label: "换元线性方程",
-            value: `$${currentModelFit?.transformedFormula ?? ""}$`,
-            color: MATH_COLORS.paramPrimary,
-          },
-          {
-            label: "还原经验方程",
-            value: `$${currentModelFit?.originalFormula ?? ""}$`,
-            color: MATH_COLORS.paramSecondary,
-          },
-          {
-            label: "原空间决定系数 R²",
-            value: `${(currentModelFit?.rSquare ?? 0).toFixed(4)}`,
-            color: MATH_COLORS.paramSecondary,
-          },
-          {
-            label: "原空间残差和 SSE",
-            value: `${(currentModelFit?.sse ?? 0).toFixed(2)}`,
-            color: MATH_COLORS.tangentLine,
-          },
-          {
-            label: "最优模型判定",
-            value: currentModelFit?.isBest
-              ? "★ 全候选模型中 R² 最高"
-              : "候选模型比较中",
-            color: currentModelFit?.isBest
-              ? MATH_COLORS.paramPrimary
-              : MATH_COLORS.textMuted,
-          },
-          {
-            label: `预报值 ŷ₀ (x₀=${targetX})`,
-            value: `${(currentModelFit ? currentModelFit.predict(targetX) : 0).toFixed(2)}${targetUnit}`,
-            color: MATH_COLORS.paramPrimary,
-          },
-        ];
+      : !currentModelFit
+        ? [
+            {
+              label: "样本容量 n",
+              value: `${res.n}`,
+              color: MATH_COLORS.paramPrimary,
+            },
+            {
+              label: "所选模型状态",
+              value: "定义域受限（不可拟合）",
+              color: MATH_COLORS.degeneracy,
+              highlight: "extreme",
+            },
+          ]
+        : [
+            {
+              label: "样本容量 n",
+              value: `${res.n}`,
+              color: MATH_COLORS.paramPrimary,
+            },
+            {
+              label: "拟合模型类型",
+              value: currentModelFit.name,
+              color: MATH_COLORS.paramSecondary,
+            },
+            {
+              label: "换元线性方程",
+              value: `$${currentModelFit.transformedFormula}$`,
+              color: MATH_COLORS.paramPrimary,
+            },
+            {
+              label: "还原经验方程",
+              value: `$${currentModelFit.originalFormula}$`,
+              color: MATH_COLORS.paramSecondary,
+            },
+            {
+              label: "原空间决定系数 R²",
+              value: `${currentModelFit.rSquare.toFixed(4)}`,
+              color: MATH_COLORS.paramSecondary,
+            },
+            {
+              label: "原空间残差和 SSE",
+              value: `${currentModelFit.sse.toFixed(2)}`,
+              color: MATH_COLORS.tangentLine,
+            },
+            {
+              label: "最优模型判定",
+              value: currentModelFit.isBest
+                ? "★ 全候选模型中 R² 最高"
+                : "候选模型比较中",
+              color: currentModelFit.isBest
+                ? MATH_COLORS.paramPrimary
+                : MATH_COLORS.textMuted,
+            },
+            {
+              label: `预报值 ŷ₀ (x₀=${targetX})`,
+              value: isTargetInDomain
+                ? `${currentModelFit.predict(targetX).toFixed(2)}${targetUnit}`
+                : "超出模型定义域（无定义）",
+              color: isTargetInDomain
+                ? MATH_COLORS.paramPrimary
+                : MATH_COLORS.degeneracy,
+            },
+          ];
+
+    const domainWarnings: WarningItem[] = [];
+    if (!isLinearMode && !currentModelFit) {
+      domainWarnings.push({
+        level: "danger",
+        text: "【定义域违规】当前散点存在 $x_i \\le 0$ 或 $y_i \\le 0$（或 $x_i = 0$），无法进行对数/指数/倒数换元拟合，请把越界点拖回有效定义域。",
+      });
+    } else if (!isLinearMode && !isTargetInDomain) {
+      domainWarnings.push({
+        level: "warning",
+        text: `【预报点定义域受限】预测值 $x_0 = ${targetX}$ 不在当前非线性模型定义域内（需满足 $x_0 > 0$ 或 $x_0 \\neq 0$）。`,
+      });
+    }
 
     return {
       quantities,
       theorems: dynamicTheorems,
       gaokaoPoints: dynamicGaokaoPoints,
       reasoningSteps,
-      warnings: res.isValid
-        ? Math.abs(res.r) < 0.3
-          ? [
+      warnings: [
+        ...domainWarnings,
+        ...(res.isValid
+          ? isLinearMode && Math.abs(res.r) < 0.3
+            ? [
+                {
+                  text: "【相关性较弱】|r| < 0.3 说明线性相关程度低，直接使用线性模型预测误差较大，建议尝试非线性模型转换。",
+                  level: "warning" as const,
+                },
+              ]
+            : []
+          : [
               {
-                text: "【相关性较弱】|r| < 0.3 说明线性相关程度低，直接使用线性模型预测误差较大，建议尝试非线性模型转换。",
-                level: "warning",
+                text: `【模型退化】${res.message ?? "数据无法计算回归方程"}`,
+                level: "warning" as const,
               },
-            ]
-          : []
-        : [
-            {
-              text: `【模型退化】${res.message ?? "数据无法计算回归方程"}`,
-              level: "warning",
-            },
-          ],
+            ]),
+      ],
       examAnchor:
         "选择性必修三核心 · 一元线性回归方程与非线性换元拟合（13-15分）",
       mnemonic:

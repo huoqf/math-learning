@@ -25,7 +25,9 @@ import {
 import {
   REGRESSION_PRESETS,
   calculateLinearRegression,
+  calculateOutlierComparison,
   fitAllRegressionModels,
+  isRegressionTargetInDomain,
   RegressionModelType,
   Point2D,
 } from "@/math/pairedData";
@@ -186,6 +188,7 @@ export function RegressionPage() {
     setBasePoints(REGRESSION_PRESETS[0].points);
     setShowResidualSquares(true);
     setShowResidualPlot(false);
+    setAnswerStep(1);
   };
 
   // 按情景自适应动态装配核心参数配置（严格遵循高中课标）
@@ -243,23 +246,63 @@ export function RegressionPage() {
   }, [activePoints]);
 
   const currentFit = useMemo(() => {
-    return fits.find((m) => m.type === selectedModel) ?? fits[0];
+    return fits.find((m) => m.type === selectedModel);
   }, [fits, selectedModel]);
 
+  const outlierComp = useMemo(() => {
+    if (
+      selectedScenarioKey !== "outlier" ||
+      selectedModel !== "linear" ||
+      activePoints.length < 4
+    ) {
+      return null;
+    }
+    return calculateOutlierComparison(activePoints);
+  }, [selectedScenarioKey, selectedModel, activePoints]);
+
   const headerFormulaLatex = useMemo(() => {
-    if (!currentFit || !currentFit.isValid) return "y = f(x)";
+    if (!currentFit || !currentFit.isValid) {
+      return `\\text{当前样本点不满足所选模型定义域（须满足 } x>0\\text{、}y>0 \\text{ 或 } x\\neq 0\\text{）}`;
+    }
+    if (outlierComp && outlierComp.cleaned.isValid) {
+      const cb = outlierComp.cleaned.b;
+      const ca = outlierComp.cleaned.a;
+      const aSign = ca >= 0 ? "+" : "-";
+      const aAbs = Math.abs(ca).toFixed(2);
+      return `\\text{清洗后回归: } \\; \\hat{y} = ${cb.toFixed(2)}x ${aSign} ${aAbs} \\quad (R^2_{\\text{clean}} = ${outlierComp.cleaned.rSquare.toFixed(3)})`;
+    }
     return `\\text{${currentFit.name}: } \\; ${currentFit.originalFormula} \\quad (R^2 = ${currentFit.rSquare.toFixed(3)}, \\; \\text{SSE} = ${currentFit.sse.toFixed(2)})`;
-  }, [currentFit]);
+  }, [currentFit, outlierComp]);
 
   // 中屏右下角图例配置 (SceneLegend)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (!currentFit || !currentFit.isValid) {
+      return [
+        {
+          color: MATH_COLORS.degeneracy,
+          formula: "\\text{所选非线性模型定义域受限（需调整样本点坐标）}",
+          style: "point",
+        },
+      ];
+    }
+
     const items: SceneLegendItem[] = [
       {
         color: MATH_COLORS.function,
-        formula: `${currentFit?.name ?? "拟合曲线"} \\; (R^2 = ${(currentFit?.rSquare ?? 0).toFixed(3)})`,
+        formula: outlierComp?.cleaned.isValid
+          ? `\\text{清洗后实线 } (R^2_{\\text{clean}} = ${outlierComp.cleaned.rSquare.toFixed(3)})`
+          : `${currentFit.name} \\; (R^2 = ${currentFit.rSquare.toFixed(3)})`,
         style: "solid",
       },
     ];
+
+    if (outlierComp?.cleaned.isValid && linearRes.isValid) {
+      items.push({
+        color: MATH_COLORS.degeneracy,
+        formula: `\\text{含离群点虚线 } (R^2 = ${linearRes.rSquare.toFixed(3)})`,
+        style: "dash",
+      });
+    }
 
     if (selectedModel === "linear" && linearRes.isValid) {
       items.push({
@@ -270,18 +313,32 @@ export function RegressionPage() {
     }
 
     const targetXVal = params.targetX ?? currentPreset.targetX ?? 10;
-    if (currentFit?.isValid && Number.isFinite(targetXVal)) {
-      const predY = currentFit.predict(targetXVal);
-      items.push({
-        color: MATH_COLORS.paramTertiary,
-        formula: `\\text{预报靶点 } (x_0=${targetXVal}, \\hat{y}_0=${predY.toFixed(1)})`,
-        style: "point",
-      });
+    const targetDomainOk = isRegressionTargetInDomain(
+      selectedModel,
+      targetXVal,
+    );
+    if (currentFit.isValid && Number.isFinite(targetXVal)) {
+      if (targetDomainOk) {
+        const predY = outlierComp?.cleaned.isValid
+          ? outlierComp.cleaned.b * targetXVal + outlierComp.cleaned.a
+          : currentFit.predict(targetXVal);
+        items.push({
+          color: MATH_COLORS.paramTertiary,
+          formula: `\\text{预报靶点 } (x_0=${targetXVal}, \\hat{y}_0=${predY.toFixed(1)})`,
+          style: "point",
+        });
+      } else {
+        items.push({
+          color: MATH_COLORS.degeneracy,
+          formula: `\\text{预报点 } x_0=${targetXVal} \\text{ 超出定义域}`,
+          style: "point",
+        });
+      }
     }
 
     items.push({
       color: MATH_COLORS.tangentLine,
-      formula: `\\text{残差 } e_i = y_i - \\hat{y}_i \\; (\\text{SSE}=${(currentFit?.sse ?? 0).toFixed(2)})`,
+      formula: `\\text{残差 } e_i = y_i - \\hat{y}_i \\; (\\text{SSE}=${currentFit.sse.toFixed(2)})`,
       style: "dash",
     });
 
@@ -296,10 +353,9 @@ export function RegressionPage() {
     return items;
   }, [
     currentFit,
+    outlierComp,
     linearRes,
     showResidualSquares,
-    // 样本中心的图例条目以 selectedModel === "linear" 为条件，
-    // 必须显式声明为依赖，否则切换模型时该条目可能不被增删。
     selectedModel,
     params.targetX,
     currentPreset.targetX,
@@ -332,12 +388,17 @@ export function RegressionPage() {
     }
 
     if (selectedScenarioKey === "outlier") {
+      const lastPt =
+        activePoints.length > 0 ? activePoints[activePoints.length - 1] : null;
+      const outCoord = lastPt
+        ? `$P_{${activePoints.length}}(${lastPt.x}, ${lastPt.y})$`
+        : "$P_5(6, 1.5)$";
       return {
         variant: "warning" as const,
         badge: "高考经典 · 离群点检验与数据清洗",
         background:
           "工业生产与经济统计监测中，偶发测量失误或突发波动会产生偏离主趋势带的异常点（离群点）。",
-        condition: `成对观测样本中存在异常干扰点 $P_5(6, 1.5)$，导致全样本相关系数受损暴跌。`,
+        condition: `成对观测样本中存在异常干扰点 ${outCoord}，导致全样本相关系数受损暴跌。`,
         question: `分析异常点对斜率与相关系数 $r$ 的杠杆拉扯破坏；剔除异常点后重新求解经验回归方程，并预测当 $x_0 = ${targetXVal}$ 时的修正预报值。`,
       };
     }
@@ -349,7 +410,13 @@ export function RegressionPage() {
       condition: `成对观测样本：自变量【${currentPreset?.xName ?? "x"}】与因变量【${currentPreset?.yName ?? "y"}】共 $5$ 组实测数据，拟合模型为【${modelNameMap[selectedModel]}】。`,
       question: `(1) 检验两变量是否具有显著线性相关关系；(2) 建立经验回归方程；(3) 预测${targetDesc}，并结合决定系数 $R^2$ 进行评价。`,
     };
-  }, [selectedModel, currentPreset, selectedScenarioKey, params.targetX]);
+  }, [
+    selectedModel,
+    currentPreset,
+    selectedScenarioKey,
+    params.targetX,
+    activePoints,
+  ]);
 
   return (
     <ThreePanel
@@ -452,37 +519,35 @@ export function RegressionPage() {
                 onChange={handleScenarioSelect}
               />
 
-              {/* 仅在非线性自由探索模式下，才展示拟合模型自主切换选择器 */}
-              {selectedScenarioKey === "free" && (
-                <div className="mt-2.5 pt-2 border-t border-neutral-100">
-                  <span className="text-[11px] font-semibold text-neutral-600 mb-1.5 block">
-                    拟合转换模型
-                  </span>
-                  <SelectGrid
-                    columns={2}
-                    items={[
-                      {
-                        key: "exponential",
-                        label: "指数模型",
-                      },
-                      {
-                        key: "logarithmic",
-                        label: "对数模型",
-                      },
-                      {
-                        key: "power",
-                        label: "幂函数",
-                      },
-                      {
-                        key: "inverse",
-                        label: "双曲线逆",
-                      },
-                    ]}
-                    value={selectedModel}
-                    onChange={(k) => setSelectedModel(k as RegressionModelType)}
-                  />
-                </div>
-              )}
+              {/* 非线性模式下均开放拟合转换模型切换，支持真题场景多模型横向对比 R² */}
+              <div className="mt-2.5 pt-2 border-t border-neutral-100">
+                <span className="text-[11px] font-semibold text-neutral-600 mb-1.5 block">
+                  拟合转换模型（横向比较 R²）
+                </span>
+                <SelectGrid
+                  columns={2}
+                  items={[
+                    {
+                      key: "exponential",
+                      label: "指数模型",
+                    },
+                    {
+                      key: "logarithmic",
+                      label: "对数模型",
+                    },
+                    {
+                      key: "power",
+                      label: "幂函数",
+                    },
+                    {
+                      key: "inverse",
+                      label: "双曲线逆",
+                    },
+                  ]}
+                  value={selectedModel}
+                  onChange={(k) => setSelectedModel(k as RegressionModelType)}
+                />
+              </div>
             </LeftPanelSection>
           )}
 
@@ -582,8 +647,25 @@ export function RegressionPage() {
             />
           </AnimationSvgCanvas>
 
-          {/* 中屏右下角标准毛玻璃图例 (SceneLegend) */}
-          <SceneLegend items={legendItems} title="回归分析图例" />
+          {/* 中屏毛玻璃图例 (智能避让：离群点/反比例/高温情景切顶右，避开右下散点与警示浮标) */}
+          <SceneLegend
+            items={legendItems}
+            title="回归分析图例"
+            position={
+              selectedScenarioKey === "outlier" ||
+              selectedScenarioKey === "inverse_current" ||
+              selectedScenarioKey === "temp_power"
+                ? "top-right"
+                : "bottom-right"
+            }
+            className={
+              selectedScenarioKey === "outlier" ||
+              selectedScenarioKey === "inverse_current" ||
+              selectedScenarioKey === "temp_power"
+                ? "!top-14 !right-4"
+                : ""
+            }
+          />
         </div>
       }
       right={

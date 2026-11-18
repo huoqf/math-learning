@@ -98,4 +98,66 @@ describe("成对数据推导链与右屏面板自动化严谨性测试", () => {
       });
     });
   });
+
+  it("离群点情境下 quantities 显式列出清洗前后对比指标与预报值", () => {
+    const data = buildPairedDataPanel(
+      { targetX: 10 },
+      { scenarioKey: "outlier", selectedModel: "linear" },
+    );
+    const predQty = data.quantities.find((q) =>
+      q.label.includes("清洗后预报值"),
+    );
+    expect(predQty).toBeDefined();
+    expect(predQty?.value).toContain("含异常点:");
+    const rQty = data.quantities.find((q) => q.label.includes("相关系数"));
+    expect(rQty?.value).toContain("→");
+  });
+
+  it("独立性检验 (studyMode=independence) 全模式生成有效看板与卡方公式", () => {
+    // 1. 标准预设情景
+    const std = buildPairedDataPanel(
+      { scaleMultiplier: 1 },
+      { studyMode: "independence", indPresetKey: "0", activeTab: "standard" },
+    );
+    expect(std.reasoningSteps).toHaveLength(3);
+    expect(std.quantities.some((q) => q.symbol === "\\chi^2")).toBe(true);
+
+    // 2. 样本倍增情景（10倍扩大后卡方严格放大 10 倍，且展示样本倍增高考要点）
+    const baseChi = Number(
+      std.quantities.find((q) => q.symbol === "\\chi^2")?.value ?? "0",
+    );
+    const scaled = buildPairedDataPanel(
+      { scaleMultiplier: 10 },
+      { studyMode: "independence", indPresetKey: "0", activeTab: "scale" },
+    );
+    expect(scaled.quantities.find((q) => q.symbol === "n")?.value).toContain(
+      "10×",
+    );
+    const scaledChi = Number(
+      scaled.quantities.find((q) => q.symbol === "\\chi^2")?.value ?? "0",
+    );
+    expect(scaledChi).toBeCloseTo(baseChi * 10, 2);
+    expect(
+      scaled.gaokaoPoints?.some((g) => g.text.includes("样本量倍增效应")),
+    ).toBe(true);
+
+    // 3. 自由探索下 ad - bc = 0 完全独立退化检验
+    const zeroInd = buildPairedDataPanel(
+      { freqA: 20, freqB: 30, freqC: 20, freqD: 30, scaleMultiplier: 1 },
+      {
+        studyMode: "independence",
+        indPresetKey: "free",
+        activeTab: "standard",
+      },
+    );
+    expect(
+      zeroInd.quantities.find((q) => q.symbol === "|ad - bc|")?.value,
+    ).toBe("0");
+    expect(zeroInd.quantities.find((q) => q.symbol === "\\chi^2")?.value).toBe(
+      "0.000",
+    );
+    expect(
+      zeroInd.theorems.some((t) => t.name.includes("零假设独立充要条件定理")),
+    ).toBe(true);
+  });
 });

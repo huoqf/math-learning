@@ -285,13 +285,16 @@ export function fitAllRegressionModels(
           : 0;
       const kStr = k.toFixed(3);
       const cStr = c.toFixed(3);
+      const lnC = Math.log(c);
+      const lnCSign = lnC >= 0 ? "+" : "-";
+      const lnCAbs = Math.abs(lnC).toFixed(3);
 
       results.push({
         type: "exponential",
         name: "指数模型",
         variableSubstitution:
           "\\text{令 } z = \\ln y \\implies z = kx + \\ln c",
-        transformedFormula: `\\hat{z} = ${kStr}x + ${Math.log(c).toFixed(3)}`,
+        transformedFormula: `\\hat{z} = ${kStr}x ${lnCSign} ${lnCAbs}`,
         originalFormula: `\\hat{y} = ${cStr} \\cdot e^{${kStr}x}`,
         rSquare,
         sse,
@@ -370,13 +373,16 @@ export function fitAllRegressionModels(
           : 0;
       const kStr = k.toFixed(3);
       const cStr = c.toFixed(3);
+      const lnC = Math.log(c);
+      const lnCSign = lnC >= 0 ? "+" : "-";
+      const lnCAbs = Math.abs(lnC).toFixed(3);
 
       results.push({
         type: "power",
         name: "幂函数模型",
         variableSubstitution:
           "\\text{令 } z = \\ln y, \\; u = \\ln x \\implies z = ku + \\ln c",
-        transformedFormula: `\\hat{z} = ${kStr}u + ${Math.log(c).toFixed(3)}`,
+        transformedFormula: `\\hat{z} = ${kStr}u ${lnCSign} ${lnCAbs}`,
         originalFormula: `\\hat{y} = ${cStr} \\cdot x^{${kStr}}`,
         rSquare,
         sse,
@@ -584,14 +590,29 @@ export function getChiSquare1Pdf(x: number): number {
 }
 
 /**
- * 从全模型拟合列表中选取"当前选中的模型"对应的拟合结果。
- * 找不到匹配模型时回退到列表中的第一个（原组件内 modelFits.find ?? modelFits[0] 逻辑）。
+ * 判断预测自变量 x₀ 是否处于指定回归模型的数学定义域内
+ * - 对数/幂函数模型要求 x₀ > 0
+ * - 双曲线逆函数模型要求 x₀ ≠ 0
+ */
+export function isRegressionTargetInDomain(
+  model: RegressionModelType,
+  x: number,
+): boolean {
+  if (!Number.isFinite(x)) return false;
+  if (model === "logarithmic" || model === "power") return x > 0.001;
+  if (model === "inverse") return Math.abs(x) > 1e-4;
+  return true;
+}
+
+/**
+ * 从全模型拟合列表中精确选取“当前选中的模型”对应的拟合结果。
+ * 若因定义域越界（如 x ≤ 0 或 y ≤ 0）导致该模型不在有效拟合列表中，返回 undefined 而非静默冒名回退。
  */
 export function selectCurrentFit(
   models: ModelFitComparison[],
   model: RegressionModelType,
 ): ModelFitComparison | undefined {
-  return models.find((m) => m.type === model) ?? models[0];
+  return models.find((m) => m.type === model);
 }
 
 /**

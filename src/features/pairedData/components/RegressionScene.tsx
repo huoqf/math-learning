@@ -14,6 +14,7 @@ import {
   calculateLinearRegression,
   calculateOutlierComparison,
   fitAllRegressionModels,
+  isRegressionTargetInDomain,
   selectCurrentFit,
   sampleRegressionCurvePoints,
 } from "@/math/pairedData";
@@ -154,9 +155,14 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
   const centerAxisY = mathToDesign(0, regResult.meanY, scale);
 
   // 高考回归预报靶点 (targetX, targetY) 设计坐标与轴投影
+  // 注：在离群点对比场景下，预报靶点与右屏清洗后预报方程同步对齐
+  const isTargetDomainOk =
+    targetX !== undefined && isRegressionTargetInDomain(selectedModel, targetX);
   const targetY =
-    currentFit?.isValid && targetX !== undefined
-      ? currentFit.predict(targetX)
+    currentFit?.isValid && isTargetDomainOk && targetX !== undefined
+      ? cleanedLineSeg && outlierComp?.cleaned.isValid
+        ? outlierComp.cleaned.b * targetX + outlierComp.cleaned.a
+        : currentFit.predict(targetX)
       : null;
   const isTargetValid =
     targetX !== undefined &&
@@ -281,6 +287,31 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
       </g>
 
       {/* 3. 绘制拟合回归曲线/直线（离群点情景下同屏展示：含异常点虚线 vs 剔除异常点实线） */}
+      {selectedModel !== "linear" && !currentFit && (
+        <g pointerEvents="none">
+          <rect
+            x={210}
+            y={72}
+            width={420}
+            height={36}
+            rx={8}
+            fill={withAlpha(CANVAS_COLORS.white, 0.95)}
+            stroke={MATH_COLORS.degeneracy}
+            strokeWidth={1.5}
+          />
+          <text
+            x={420}
+            y={94}
+            textAnchor="middle"
+            fontSize={fontScale(11.5)}
+            fontWeight="bold"
+            fill={MATH_COLORS.degeneracy}
+          >
+            当前散点越出所选非线性模型定义域（须满足 x &gt; 0 / y &gt; 0 或 x ≠
+            0）
+          </text>
+        </g>
+      )}
       {currentFit?.isValid && curvePath && (
         <path
           d={curvePath}
@@ -641,18 +672,25 @@ export const RegressionScene: React.FC<RegressionSceneProps> = ({
 
           const box =
             activeStep === 1
-              ? {
-                  x: centerPos.x - 75,
-                  y: centerPos.y - 55,
-                  width: 150,
-                  height: 110,
-                }
+              ? selectedModel === "linear"
+                ? {
+                    x: centerPos.x - 75,
+                    y: centerPos.y - 55,
+                    width: 150,
+                    height: 110,
+                  }
+                : {
+                    x: minPx - 28,
+                    y: minPy - 28,
+                    width: Math.max(120, maxPx - minPx + 56),
+                    height: Math.max(100, maxPy - minPy + 56),
+                  }
               : activeStep === 2
                 ? {
-                    x: minPx - 32,
-                    y: minPy - 32,
-                    width: Math.max(120, maxPx - minPx + 64),
-                    height: Math.max(100, maxPy - minPy + 64),
+                    x: minPx - 36,
+                    y: minPy - 36,
+                    width: Math.max(130, maxPx - minPx + 72),
+                    height: Math.max(110, maxPy - minPy + 72),
                   }
                 : targetPos
                   ? {
