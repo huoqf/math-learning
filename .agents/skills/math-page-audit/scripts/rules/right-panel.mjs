@@ -5,6 +5,26 @@
 
 export const rightPanelRules = [
   {
+    id: 'right/use-unified-builder',
+    group: 'right',
+    type: '绕过统一右屏数据源',
+    severity: 'error',
+    check(ctx) {
+      if (!ctx.isAnimationPage || ctx.isTest) return [];
+      const hasBuilderImport = /@\/data\/builders\//.test(ctx.cleanContent);
+      const hasDirectCall = /\bbuild[A-Z][a-zA-Z0-9]*Panel\s*\(/.test(ctx.cleanContent);
+      if (hasBuilderImport && hasDirectCall && !ctx.cleanContent.includes('buildMathQuantities(')) {
+        const lineIdx = ctx.cleanLines.findIndex((l) => /\bbuild[A-Z][a-zA-Z0-9]*Panel\s*\(/.test(l));
+        return [{
+          lineNum: lineIdx >= 0 ? lineIdx + 1 : 1,
+          message: 'Animation 页面严禁直接导入并调用 @/data/builders/*，必须统一通过 buildMathQuantities(animId, params, config) 组装右屏数据',
+          snippet: lineIdx >= 0 ? ctx.cleanLines[lineIdx].trim() : 'build*Panel(...)',
+        }];
+      }
+      return [];
+    },
+  },
+  {
     id: 'right/build-context-forwarding',
     group: 'right',
     type: '右屏缺少模式上下文透传',

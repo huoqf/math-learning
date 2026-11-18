@@ -709,6 +709,27 @@ export const disciplineRules = [
         const strMatches = line.match(/(["'`])(?:\\.|(?!\1)[^\\])*\1/g) || [];
         for (const rawStr of strMatches) {
           const str = rawStr.slice(1, -1);
+          const strippedInterp = str.replace(/\$\{[^}]*\}/g, 'X');
+          if (/[\u4e00-\u9fa5]/.test(str) && !line.includes('latex:') && !line.includes('formula:')) {
+            if (/\$\$(?!\{)/.test(strippedInterp)) {
+              issues.push({
+                lineNum: idx + 1,
+                type: '混合文本双美元定界符错误',
+                message: '检测到混合文本字符串在剥离模板插值后仍残留连续 $$，请使用单 $...$ 包裹行内数学公式',
+                snippet: line.trim(),
+              });
+              break;
+            }
+            if (/\$[^$]*[A-Za-z]_(?:max|min|real|clean)\b/.test(strippedInterp)) {
+              issues.push({
+                lineNum: idx + 1,
+                type: '混合文本下标缺少花括号',
+                message: '检测到 $...$ 行内公式中的多字母下标（如 _max/_min/_real/_clean）未加花括号，请改写为 _{...}',
+                snippet: line.trim(),
+              });
+              break;
+            }
+          }
           if (/[\u4e00-\u9fa5]/.test(str) && !str.includes('$') && !line.includes('latex:') && !line.includes('formula:')) {
             const textFreeStr = str.replace(/\\(?:text|mathrm|operatorname)\{[^}]*\}/g, '');
             if (/[\u4e00-\u9fa5]/.test(textFreeStr)) {

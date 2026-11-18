@@ -6,7 +6,7 @@ export const probabilityNodes: KnowledgeNode[] = [
   // 说明：新高考概率统计解答题第 (1) 问几乎都落在这一层（样本空间书写、古典概型、
   // 互斥与独立辨析）。此层必须先于选择性必修三的"条件概率/分布列"出现，
   // 否则条件概率与分布列将挂在空先修上（先修拓扑倒置，见审计 P1-2）。
-  // 该层暂无实验室页面，仅作为知识树先修拓扑与教材定位的正式入口。
+  // 必修二概率基础层 3 个实验室页面，构成条件概率与分布列的前置拓扑。
   {
     id: "know-probability-events",
     title: "随机事件与概率的基本性质",
@@ -146,7 +146,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     module: "统计分析",
     importance: "gaokao",
     animationIds: ["anim-paired-data-regression", "anim-paired-data"],
-    prerequisites: ["know-probability-normal"],
+    prerequisites: ["know-stat-percentile"],
     route: "/paired-data-regression",
     gaokaoTopic: "probability_statistics",
     questionCategory: "solution_first",
@@ -162,7 +162,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     module: "统计分析",
     importance: "gaokao",
     animationIds: ["anim-paired-data-independence"],
-    prerequisites: ["know-probability-normal"],
+    prerequisites: ["know-probability-independence", "know-stat-percentile"],
     route: "/paired-data-independence",
     gaokaoTopic: "probability_statistics",
     questionCategory: "solution_first",
@@ -178,7 +178,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     module: "概率压轴",
     importance: "hard",
     animationIds: ["anim-probability-markov"],
-    prerequisites: ["know-probability-bayes"],
+    prerequisites: ["know-probability-bayes", "know-sequence-recurrence"],
     route: "/probability-markov",
     gaokaoTopic: "probability_statistics",
     questionCategory: "solution_final",

@@ -197,7 +197,7 @@ export function buildInequalityBasicPanel(
           highlight: isAtMin ? "extreme" : undefined,
         },
         {
-          label: "函数最小值 $f_min$",
+          label: "函数最小值 $f_{\\min}$",
           symbol: "y_{\\min}",
           value: minY.toFixed(2),
           highlight: isAtMin ? "extreme" : undefined,

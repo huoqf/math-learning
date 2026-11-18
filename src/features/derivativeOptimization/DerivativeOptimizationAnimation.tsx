@@ -23,7 +23,7 @@ import {
   defaultOptimizationParams,
   optimizationParamMeta,
 } from "@/data/registries/derivativeOptimization";
-import { buildDerivativeOptimizationPanel } from "@/data/builders/derivativeOptimization";
+import { buildMathQuantities } from "@/data/mathQuantities";
 import { DerivativeOptimizationScene } from "./components/DerivativeOptimizationScene";
 
 const MODEL_TABS = [
@@ -97,7 +97,9 @@ export const DerivativeOptimizationAnimation: React.FC = () => {
   );
 
   const panelData = useMemo(() => {
-    return buildDerivativeOptimizationPanel(params, { modelType });
+    return buildMathQuantities("anim-derivative-optimization", params, {
+      modelType,
+    });
   }, [params, modelType]);
 
   const tipCardContent = useMemo(() => {

@@ -21,7 +21,7 @@ import {
   DERIVATIVE_CHAIN_DEFAULT_PARAMS,
   DERIVATIVE_CHAIN_PARAM_META,
 } from "@/data/registries/derivativeChain";
-import { buildDerivativeChainPanel } from "@/data/builders/derivativeChain";
+import { buildMathQuantities } from "@/data/mathQuantities";
 import { DerivativeChainScene } from "./components/DerivativeChainScene";
 
 const TAB_OPTIONS = [
@@ -92,7 +92,7 @@ export const DerivativeChainAnimation: React.FC = () => {
   );
 
   const panelData = useMemo(() => {
-    return buildDerivativeChainPanel(params, { outerType });
+    return buildMathQuantities("anim-derivative-chain", params, { outerType });
   }, [params, outerType]);
 
   const tipCardContent = useMemo(() => {

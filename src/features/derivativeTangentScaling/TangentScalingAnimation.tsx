@@ -15,7 +15,7 @@ import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
 import { TangentScalingScene } from "./components/TangentScalingScene";
-import { buildTangentScalingPanel } from "@/data/builders/tangentScaling";
+import { buildMathQuantities } from "@/data/mathQuantities";
 import { fitSteppedViewRange } from "@/math/viewRange";
 import { collectTangentScalingKeyPoints } from "@/math/tangentScaling";
 import {
@@ -143,13 +143,17 @@ export function TangentScalingAnimation() {
 
   // 3. 右屏纯数据驱动看板
   const mathData = useMemo(() => {
-    return buildTangentScalingPanel(params, {
-      mode,
-      baseSubModel,
-      sandwichSubModel,
-      paramKSubModel,
-      secantSubModel,
-    });
+    return buildMathQuantities(
+      "anim-derivative-tangent-scaling",
+      params as unknown as Record<string, number>,
+      {
+        mode,
+        baseSubModel,
+        sandwichSubModel,
+        paramKSubModel,
+        secantSubModel,
+      },
+    );
   }, [
     params,
     mode,

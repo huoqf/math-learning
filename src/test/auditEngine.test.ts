@@ -1088,5 +1088,112 @@ const diagAxial = Math.sqrt(4 * r1 ** 2 + height ** 2);
         expect(issues.length, `合法纯数学依赖不应被误伤: ${snippet}`).toBe(0);
       }
     });
+
+    it("混合文本定界符门禁：拦截残留双 $$ 与 $...$ 内未加花括号多字母下标", () => {
+      const rule = disciplineRules.find(
+        (r) => r.id === "discipline/text-delimiter",
+      )!;
+      const doubleDollarCode = `
+export const msg = "当前值为 $$x_0$，需注意";
+`;
+      const ddIssues = rule.check(
+        new FileContext(
+          "src/data/builders/demo.ts",
+          doubleDollarCode,
+          process.cwd(),
+        ),
+      );
+      expect(ddIssues.length).toBe(1);
+      expect(ddIssues[0].type).toContain("双美元定界符");
+
+      const doubleDollarInterpCode = `
+export const msg = \`当前值为 $$$\${val}$ 错误\`;
+`;
+      const ddiIssues = rule.check(
+        new FileContext(
+          "src/data/builders/demo.ts",
+          doubleDollarInterpCode,
+          process.cwd(),
+        ),
+      );
+      expect(ddiIssues.length).toBe(1);
+
+      const nestedBacktickCode = `
+export const msg = \`样本量 $n=\${totalN}$\${mult > 1 ? \` ($\${mult}x$)\` : ""}。\`;
+`;
+      const nestedIssues = rule.check(
+        new FileContext(
+          "src/data/builders/demo.ts",
+          nestedBacktickCode,
+          process.cwd(),
+        ),
+      );
+      expect(nestedIssues.length).toBe(0);
+
+      const validInterpCode = `
+export const msg = \`当前值 $t = \${val}$ 有效\`;
+export const msg2 = \`两边同减 $\${val}$ 成立\`;
+`;
+      const validIssues = rule.check(
+        new FileContext(
+          "src/data/builders/demo.ts",
+          validInterpCode,
+          process.cwd(),
+        ),
+      );
+      expect(validIssues.length).toBe(0);
+
+      const unbracedSubCode = `
+export const item = { label: "峰值概率 $P_max$" };
+`;
+      const subIssues = rule.check(
+        new FileContext(
+          "src/data/builders/demo.ts",
+          unbracedSubCode,
+          process.cwd(),
+        ),
+      );
+      expect(subIssues.length).toBe(1);
+      expect(subIssues[0].type).toContain("下标缺少花括号");
+    });
+
+    it("右屏统一数据源门禁：拦截 Animation 页直接调用 build*Panel", () => {
+      const rule = (rightPanelRules as AuditRule[]).find(
+        (r) => r.id === "right/use-unified-builder",
+      )!;
+      const badPage = `
+import { ThreePanel } from "@/components/Layout";
+import { buildDemoPanel } from "@/data/builders/demo";
+export function DemoAnimation() {
+  const data = buildDemoPanel({});
+  return <ThreePanel left={null} center={null} right={null} />;
+}
+`;
+      const badIssues = rule.check(
+        new FileContext(
+          "src/features/demo/DemoAnimation.tsx",
+          badPage,
+          process.cwd(),
+        ),
+      );
+      expect(badIssues.length).toBe(1);
+
+      const goodPage = `
+import { ThreePanel } from "@/components/Layout";
+import { buildMathQuantities } from "@/data/mathQuantities";
+export function DemoAnimation() {
+  const data = buildMathQuantities("anim-demo", {});
+  return <ThreePanel left={null} center={null} right={null} />;
+}
+`;
+      const goodIssues = rule.check(
+        new FileContext(
+          "src/features/demo/DemoAnimation.tsx",
+          goodPage,
+          process.cwd(),
+        ),
+      );
+      expect(goodIssues.length).toBe(0);
+    });
   });
 });

@@ -32,6 +32,10 @@ import {
   paramMeta as probBayesMeta,
 } from "@/data/registries/probabilityBayes";
 import {
+  defaultParams as probMarkovDefaults,
+  paramMeta as probMarkovMeta,
+} from "@/data/registries/probabilityMarkov";
+import {
   defaultParams as triangleSolveDefaults,
   paramMeta as triangleSolveMeta,
 } from "@/data/registries/triangleSolve";
@@ -210,6 +214,35 @@ const fuzzTargets: TopicFuzzTarget[] = [
       { label: "正棱锥", config: { mode: "pyramid" }, primaryKey: "h" },
       { label: "棱台", config: { mode: "frustum" }, primaryKey: "h" },
       { label: "等体积法", config: { mode: "equalVolume" }, primaryKey: "h" },
+    ],
+  },
+  {
+    animId: "anim-probability-markov",
+    topicName: "概率与递推数列",
+    defaultParams: probMarkovDefaults,
+    paramMeta: probMarkovMeta,
+    variants: [
+      { label: "自由探索", config: { scenarioKey: "free" }, primaryKey: "p11" },
+      {
+        label: "三人传球",
+        config: { scenarioKey: "pass_ball_3" },
+        primaryKey: "p11",
+      },
+      {
+        label: "四人传球",
+        config: { scenarioKey: "pass_ball_4" },
+        primaryKey: "p11",
+      },
+      {
+        label: "摸球置换",
+        config: { scenarioKey: "urn_replace" },
+        primaryKey: "p11",
+      },
+      {
+        label: "乒乓加赛",
+        config: { scenarioKey: "game_pingpong" },
+        primaryKey: "p11",
+      },
     ],
   },
 ];

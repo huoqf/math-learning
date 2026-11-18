@@ -60,7 +60,8 @@ import { ParabolaAnimation } from "@/features/parabola/ParabolaAnimation";
 import { ConicHomogenizationAnimation } from "@/features/conicHomogenization/ConicHomogenizationAnimation";
 import { DerivativeShiftAnimation } from "@/features/derivativeShift/DerivativeShiftAnimation";
 import { ProbabilityDistributionAnimation } from "@/features/probabilityDistribution/ProbabilityDistributionAnimation";
-import { PairedDataAnimation } from "@/features/pairedData/PairedDataAnimation";
+import { RegressionPage } from "@/features/pairedData/RegressionPage";
+import { IndependencePage } from "@/features/pairedData/IndependencePage";
 import { ComplexAnimation } from "@/features/complex/ComplexAnimation";
 import { FuncPropertiesAnimation } from "@/features/funcProperties";
 import { FuncExpLogAnimation } from "@/features/funcExpLog";
@@ -226,10 +227,15 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
     expect(screen.getByText("二项分布与最值项")).toBeInTheDocument();
   });
 
-  it("PairedDataAnimation mounts properly and renders", () => {
-    render(<PairedDataAnimation />);
-    expect(screen.getByText("研究模块")).toBeInTheDocument();
-    expect(screen.getByText("回归分析")).toBeInTheDocument();
+  it("RegressionPage and IndependencePage mount properly and render", () => {
+    const regRender = render(<RegressionPage />);
+    expect(regRender.getByText("统计分析模式")).toBeInTheDocument();
+    expect(regRender.getByText("一元线性回归模型")).toBeInTheDocument();
+    regRender.unmount();
+
+    const indRender = render(<IndependencePage />);
+    expect(indRender.getByText("探究实验维度")).toBeInTheDocument();
+    expect(indRender.getByText("列联表频数检验")).toBeInTheDocument();
   });
 
   it("ComplexAnimation mounts properly and renders", () => {
