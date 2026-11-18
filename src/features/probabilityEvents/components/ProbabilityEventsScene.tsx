@@ -28,6 +28,59 @@ export interface ProbabilityEventsSceneProps {
   onParamChange: (key: string, value: number) => void;
 }
 
+function buildCircleDiffPath(
+  cx1: number,
+  cy1: number,
+  r1: number,
+  cx2: number,
+  cy2: number,
+  r2: number,
+): { d: string; fillRule?: "evenodd" } | null {
+  const fullCircle = (cx: number, cy: number, r: number) =>
+    `M ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} Z`;
+
+  const dist = Math.hypot(cx2 - cx1, cy2 - cy1);
+  // 相离或外切
+  if (dist >= r1 + r2 - 1e-3) {
+    return { d: fullCircle(cx1, cy1, r1) };
+  }
+  // B 完全包含 A，差集为空
+  if (dist + r1 <= r2 + 1e-3) {
+    return null;
+  }
+  // A 完全包含 B，使用 evenodd 挖洞
+  if (dist + r2 <= r1 + 1e-3) {
+    return {
+      d: `${fullCircle(cx1, cy1, r1)} ${fullCircle(cx2, cy2, r2)}`,
+      fillRule: "evenodd",
+    };
+  }
+  // 一般相交：利用余弦定理精确求两圆交点构造月牙闭合路径
+  const cosA = Math.max(
+    -1,
+    Math.min(1, (r1 * r1 + dist * dist - r2 * r2) / (2 * r1 * dist)),
+  );
+  const cosB = Math.max(
+    -1,
+    Math.min(1, (r2 * r2 + dist * dist - r1 * r1) / (2 * r2 * dist)),
+  );
+  const alpha = Math.acos(cosA);
+  const beta = Math.acos(cosB);
+  const phi = Math.atan2(cy2 - cy1, cx2 - cx1);
+
+  const p1x = cx1 + r1 * Math.cos(phi - alpha);
+  const p1y = cy1 + r1 * Math.sin(phi - alpha);
+  const p2x = cx1 + r1 * Math.cos(phi + alpha);
+  const p2y = cy1 + r1 * Math.sin(phi + alpha);
+
+  const largeArcA = alpha < Math.PI / 2 ? 1 : 0;
+  const largeArcB = beta > Math.PI / 2 ? 1 : 0;
+
+  return {
+    d: `M ${p2x} ${p2y} A ${r1} ${r1} 0 ${largeArcA} 1 ${p1x} ${p1y} A ${r2} ${r2} 0 ${largeArcB} 0 ${p2x} ${p2y} Z`,
+  };
+}
+
 export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
   activeMode,
   pA,
@@ -43,15 +96,9 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
 }) => {
   const rawClipIdA = useId();
   const rawClipIdB = useId();
-  const rawMaskOnlyAId = useId();
-  const rawMaskOnlyBId = useId();
-  const rawMaskNotAId = useId();
 
   const clipIdA = rawClipIdA.replace(/:/g, "");
   const clipIdB = rawClipIdB.replace(/:/g, "");
-  const maskOnlyAId = rawMaskOnlyAId.replace(/:/g, "");
-  const maskOnlyBId = rawMaskOnlyBId.replace(/:/g, "");
-  const maskNotAId = rawMaskNotAId.replace(/:/g, "");
 
   // 1. 连续 Venn 模式计算
   const vennRes = useMemo(
@@ -60,9 +107,9 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
   );
 
   // 几何图形半径与圆心推导
-  // rA 与 sqrt(pA) 成比例，基准最大半径 2.35，确保在全集框 9.6×6.4 内留有安全边距
-  const rA = Math.max(0.55, Math.sqrt(vennRes.pA) * 2.35);
-  const rB = Math.max(0.55, Math.sqrt(vennRes.pB) * 2.35);
+  // rA 与 sqrt(pA) 成比例，基准最大半径 2.15，确保在全集框 9.6×5.6 内留有安全边距
+  const rA = Math.max(0.55, Math.sqrt(vennRes.pA) * 2.15);
+  const rB = Math.max(0.55, Math.sqrt(vennRes.pB) * 2.15);
   const radiusDiff = Math.abs(rA - rB);
   const radiusSum = rA + rB;
 
@@ -108,9 +155,9 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
   // 两圆关于原点 X=0 对称居中；若为对立事件 (B = Ā)，圆 A 居中偏左以展示全集互补分割
   const isOppositeVenn = vennRes.isOpposite;
   const xA = isOppositeVenn ? -0.55 : -currentDist / 2;
-  const yA = -0.15;
+  const yA = 0.25;
   const xB = isOppositeVenn ? 2.15 : currentDist / 2;
-  const yB = -0.15;
+  const yB = 0.25;
 
   const posA = mathToDesign(xA, yA, scale);
   const posB = mathToDesign(xB, yB, scale);
@@ -177,14 +224,17 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
     yB,
   ]);
 
-  // 拖拽 B 的圆心调整重叠度（基于对称中心单调平稳反解，零抖动）
+  // 拖拽 B 的圆心调整重叠度（兼容对立分割视图下的 2.15 锚点，避免瞬间跳变或死区）
+  const dragAnchorMaxX = isOppositeVenn ? xB : dragMaxDist / 2;
+  const dragAnchorMinX = dragMinDist / 2;
+
   const handleDragB = (mathPt: { x: number; y: number }) => {
-    const span = Math.max(0.1, dragMaxDist - dragMinDist);
-    const clampedDist = Math.max(
-      dragMinDist,
-      Math.min(dragMaxDist, 2 * mathPt.x),
+    const span = Math.max(0.1, dragAnchorMaxX - dragAnchorMinX);
+    const clampedX = Math.max(
+      dragAnchorMinX,
+      Math.min(dragAnchorMaxX, mathPt.x),
     );
-    const newRatio = (dragMaxDist - clampedDist) / span;
+    const newRatio = (dragAnchorMaxX - clampedX) / span;
     onParamChange(
       "overlapRatio",
       Math.max(0, Math.min(1, Math.round(newRatio * 100) / 100)),
@@ -197,11 +247,55 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
     [dicePresetA, dicePresetB],
   );
 
-  // 全集边框在屏幕坐标下的范围 (两模式统一为 9.6 × 6.4)
+  // 全集边框在屏幕坐标下的范围 (Venn 上移至 9.6 × 5.55 以腾出下方 1D 测度条；离散保持 9.6 × 6.4)
   const omegaLeft = scale.originX - 4.8 * scale.scaleX;
-  const omegaTop = scale.originY - 3.2 * scale.scaleY;
+  const omegaTop =
+    activeMode === "venn"
+      ? scale.originY - 3.35 * scale.scaleY
+      : scale.originY - 3.2 * scale.scaleY;
   const omegaWidth = 9.6 * scale.scaleX;
-  const omegaHeight = 6.4 * scale.scaleY;
+  const omegaHeight =
+    activeMode === "venn" ? 5.55 * scale.scaleY : 6.4 * scale.scaleY;
+
+  const onlyAPath = useMemo(
+    () =>
+      buildCircleDiffPath(
+        posA.x,
+        posA.y,
+        radiusAInPx,
+        posB.x,
+        posB.y,
+        radiusBInPx,
+      ),
+    [posA.x, posA.y, radiusAInPx, posB.x, posB.y, radiusBInPx],
+  );
+
+  const onlyBPath = useMemo(
+    () =>
+      buildCircleDiffPath(
+        posB.x,
+        posB.y,
+        radiusBInPx,
+        posA.x,
+        posA.y,
+        radiusAInPx,
+      ),
+    [posA.x, posA.y, radiusAInPx, posB.x, posB.y, radiusBInPx],
+  );
+
+  const notAPathD = useMemo(() => {
+    const rectD = `M ${omegaLeft} ${omegaTop} h ${omegaWidth} v ${omegaHeight} h ${-omegaWidth} Z`;
+    const circleAD = `M ${posA.x + radiusAInPx} ${posA.y} A ${radiusAInPx} ${radiusAInPx} 0 1 0 ${posA.x - radiusAInPx} ${posA.y} A ${radiusAInPx} ${radiusAInPx} 0 1 0 ${posA.x + radiusAInPx} ${posA.y} Z`;
+    return `${rectD} ${circleAD}`;
+  }, [
+    omegaLeft,
+    omegaTop,
+    omegaWidth,
+    omegaHeight,
+    posA.x,
+    posA.y,
+    radiusAInPx,
+  ]);
 
   return (
     <g className="select-none">
@@ -214,41 +308,6 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
         <clipPath id={clipIdB}>
           <circle cx={posB.x} cy={posB.y} r={radiusBInPx} />
         </clipPath>
-
-        {/* 差集 A - B 镂空蒙版：白圆 A 抠去 黑圆 B */}
-        <mask id={maskOnlyAId}>
-          <circle
-            cx={posA.x}
-            cy={posA.y}
-            r={radiusAInPx}
-            fill={MATH_COLORS.white}
-          />
-          <circle cx={posB.x} cy={posB.y} r={radiusBInPx} fill="black" />
-        </mask>
-
-        {/* 差集 B - A 镂空蒙版：白圆 B 抠去 黑圆 A */}
-        <mask id={maskOnlyBId}>
-          <circle
-            cx={posB.x}
-            cy={posB.y}
-            r={radiusBInPx}
-            fill={MATH_COLORS.white}
-          />
-          <circle cx={posA.x} cy={posA.y} r={radiusAInPx} fill="black" />
-        </mask>
-
-        {/* 补集 not A 镂空蒙版：白全集矩形 抠去 黑圆 A */}
-        <mask id={maskNotAId}>
-          <rect
-            x={omegaLeft}
-            y={omegaTop}
-            width={omegaWidth}
-            height={omegaHeight}
-            fill={MATH_COLORS.white}
-            rx={12}
-          />
-          <circle cx={posA.x} cy={posA.y} r={radiusAInPx} fill="black" />
-        </mask>
       </defs>
 
       {/* ── 模式 1：连续 Venn 测度图 ── */}
@@ -270,21 +329,17 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
             opacity={0.75}
           />
 
-          {/* 对立事件专属教材图式 (人教A版必修二图10.1-7)：当 A 与 B 对立 (A∩B=∅ 且 A∪B=Ω) 时，B = Ā 即为 Ω \ A 全域 */}
+          {/* 对立事件专属教材图式 (人教A版必修二图10.1-7)：使用奇偶规则反向镂空圆 A 呈现 B = Ā */}
           {isOppositeVenn && (
-            <rect
-              x={omegaLeft}
-              y={omegaTop}
-              width={omegaWidth}
-              height={omegaHeight}
+            <path
+              d={notAPathD}
+              fillRule="evenodd"
               fill={withAlpha(
                 MATH_COLORS.paramSecondary,
                 highlightOp === "onlyB" || highlightOp === "union"
                   ? 0.26
                   : 0.14,
               )}
-              rx={12}
-              mask={`url(#${maskNotAId})`}
             />
           )}
 
@@ -327,35 +382,37 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
             </g>
           )}
 
-          {highlightOp === "onlyA" && (
-            <circle
-              cx={posA.x}
-              cy={posA.y}
-              r={radiusAInPx}
-              fill={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
-              mask={isOppositeVenn ? undefined : `url(#${maskOnlyAId})`}
-            />
-          )}
+          {highlightOp === "onlyA" &&
+            (isOppositeVenn ? (
+              <circle
+                cx={posA.x}
+                cy={posA.y}
+                r={radiusAInPx}
+                fill={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
+              />
+            ) : (
+              onlyAPath && (
+                <path
+                  d={onlyAPath.d}
+                  fillRule={onlyAPath.fillRule}
+                  fill={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
+                />
+              )
+            ))}
 
-          {highlightOp === "onlyB" && !isOppositeVenn && (
-            <circle
-              cx={posB.x}
-              cy={posB.y}
-              r={radiusBInPx}
+          {highlightOp === "onlyB" && !isOppositeVenn && onlyBPath && (
+            <path
+              d={onlyBPath.d}
+              fillRule={onlyBPath.fillRule}
               fill={withAlpha(MATH_COLORS.paramSecondary, 0.4)}
-              mask={`url(#${maskOnlyBId})`}
             />
           )}
 
           {highlightOp === "notA" && (
-            <rect
-              x={omegaLeft}
-              y={omegaTop}
-              width={omegaWidth}
-              height={omegaHeight}
+            <path
+              d={notAPathD}
+              fillRule="evenodd"
               fill={withAlpha(MATH_COLORS.setComplement, 0.22)}
-              rx={12}
-              mask={`url(#${maskNotAId})`}
             />
           )}
 
@@ -367,7 +424,7 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
             fontSize={fontScale(14)}
             fontWeight="bold"
           >
-            样本空间 Ω (P(Ω) = 1.00)
+            样本空间 Ω (P(Ω) = 1)
           </text>
           <text
             x={omegaLeft + 16}
@@ -386,7 +443,7 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
                     ? `运算高亮：差事件 A - B (P = ${formatMathNumber(vennRes.pOnlyA)})`
                     : highlightOp === "onlyB"
                       ? `运算高亮：差事件 B - A (P = ${formatMathNumber(vennRes.pDiffBminusA)})`
-                      : `运算高亮：对立事件 Aᶜ (P(Ā) = ${formatMathNumber(vennRes.pNotA)})`}
+                      : `运算高亮：对立事件 Ā (P(Ā) = ${formatMathNumber(vennRes.pNotA)})`}
           </text>
 
           {/* 两圆心连线辅助指示 */}
@@ -452,7 +509,7 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
             scale={scale}
             vp={vp}
             axis="x"
-            xRange={[dragMinDist / 2, dragMaxDist / 2]}
+            xRange={[dragAnchorMinX, dragAnchorMaxX]}
             color={MATH_COLORS.paramSecondary}
             onDrag={handleDragB}
           />
@@ -557,6 +614,101 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
                       ? "相等事件图式：两圆同心等径完全重合 (A = B)，A ∪ B = A ∩ B = A"
                       : `广义加法容斥：P(A ∪ B) = P(A) + P(B) - P(A ∩ B) = ${formatMathNumber(vennRes.pA)} + ${formatMathNumber(vennRes.pB)} - ${formatMathNumber(vennRes.pIntersection)} = ${formatMathNumber(vennRes.pUnion)}`}
           </text>
+
+          {/* 1D 概率测度区间对比条 [0, 1]：直观透视 P(A∪B) = P(A) + P(B) - P(A∩B) 长度重叠 */}
+          {(() => {
+            const barY = omegaTop + omegaHeight + 14;
+            const barX = omegaLeft + 115;
+            const barW = omegaWidth - 135;
+            const bStartRatio = Math.max(
+              0,
+              Math.min(1, vennRes.pA - vennRes.pIntersection),
+            );
+            const interRatio = Math.max(0, vennRes.pIntersection);
+            return (
+              <g transform={`translate(0, ${barY})`}>
+                <text
+                  x={omegaLeft + 4}
+                  y={17}
+                  fill={MATH_COLORS.labelText}
+                  fontSize={fontScale(11)}
+                  fontWeight="bold"
+                >
+                  一维测度条 [0,1]
+                </text>
+                {/* 全集 [0, 1] 底槽 */}
+                <rect
+                  x={barX}
+                  y={4}
+                  width={barW}
+                  height={22}
+                  rx={6}
+                  fill={MATH_COLORS.gridSubtle}
+                  stroke={MATH_COLORS.axis}
+                  strokeWidth={1}
+                />
+                {/* 事件 A 区间 [0, P(A)] */}
+                <rect
+                  x={barX}
+                  y={4}
+                  width={Math.max(2, vennRes.pA * barW)}
+                  height={11}
+                  rx={3}
+                  fill={withAlpha(MATH_COLORS.paramPrimary, 0.72)}
+                />
+                {/* 事件 B 区间 [P(A)-P(A∩B), P(A∪B)] */}
+                <rect
+                  x={barX + bStartRatio * barW}
+                  y={15}
+                  width={Math.max(2, vennRes.pB * barW)}
+                  height={11}
+                  rx={3}
+                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.72)}
+                />
+                {/* 重叠区间 A∩B 纵跨高亮 */}
+                {interRatio > 0.005 && (
+                  <rect
+                    x={barX + bStartRatio * barW}
+                    y={4}
+                    width={Math.max(2, interRatio * barW)}
+                    height={22}
+                    rx={2}
+                    fill={withAlpha(MATH_COLORS.paramTertiary, 0.55)}
+                    stroke={MATH_COLORS.paramTertiary}
+                    strokeWidth={1.2}
+                  />
+                )}
+                {/* 刻度与读数说明 */}
+                <text
+                  x={barX}
+                  y={40}
+                  fill={MATH_COLORS.textMuted}
+                  fontSize={fontScale(9.5)}
+                >
+                  0
+                </text>
+                <text
+                  x={barX + vennRes.pUnion * barW}
+                  y={40}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.primary}
+                  fontSize={fontScale(9.5)}
+                  fontWeight="bold"
+                >
+                  P(A∪B)={formatMathNumber(vennRes.pUnion)}
+                </text>
+                <text
+                  x={barX + barW}
+                  y={40}
+                  textAnchor="end"
+                  fill={MATH_COLORS.textMuted}
+                  fontSize={fontScale(9.5)}
+                >
+                  1 (剩余空白 {formatMathNumber(vennRes.pNeither)})
+                </text>
+              </g>
+            );
+          })()}
         </g>
       )}
 
@@ -601,7 +753,7 @@ export const ProbabilityEventsScene: React.FC<ProbabilityEventsSceneProps> = ({
                     ? `运算高亮：差事件 A - B (包含 ${diceRes.countA - diceRes.countIntersection} 点，P = ${diceRes.countA - diceRes.countIntersection}/36)`
                     : highlightOp === "onlyB"
                       ? `运算高亮：差事件 B - A (包含 ${diceRes.countB - diceRes.countIntersection} 点，P = ${diceRes.countB - diceRes.countIntersection}/36)`
-                      : `运算高亮：对立事件 Aᶜ (P(Ā) = ${36 - diceRes.countA}/36 = ${formatMathNumber((36 - diceRes.countA) / 36)})`}
+                      : `运算高亮：对立事件 Ā (P(Ā) = ${36 - diceRes.countA}/36 = ${formatMathNumber((36 - diceRes.countA) / 36)})`}
           </text>
 
           {/* 6×6 坐标网格背景与辅助线 (整体下移且偏左排布，避让顶栏副标题与右上图例) */}

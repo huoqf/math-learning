@@ -56,5 +56,24 @@ describe("ProbabilityIndependenceAnimation 页面集成与三屏联动测试", (
     // 切换到相交相关情景
     fireEvent.click(screen.getByText("骰子相交相关"));
     expect(screen.getByText(/离散等可能 · 相交不独立/)).toBeInTheDocument();
+
+    // 在骰子自由模式下切换事件 A/B 联动 TipCard
+    fireEvent.click(screen.getByText("质数点"));
+    expect(screen.getByText(/为「掷出质数点」/)).toBeInTheDocument();
+  });
+
+  it("连续模式展示 1×1 正交面积图并执行预设锁定与自由探索解锁", () => {
+    renderWithRouter();
+
+    expect(screen.getByText("1×1 单位正方形正交面积图")).toBeInTheDocument();
+    expect(screen.getByText("两柱齐平 ⇔ 独立")).toBeInTheDocument();
+
+    // 默认预设情景锁定参数滑块
+    const sliders = screen.getAllByRole("slider");
+    expect(sliders[0]).toBeDisabled();
+
+    // 切换至连续自由探索解锁滑块
+    fireEvent.click(screen.getByText("连续自由探索"));
+    expect(screen.getAllByRole("slider")[0]).not.toBeDisabled();
   });
 });

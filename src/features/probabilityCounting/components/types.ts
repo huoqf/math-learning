@@ -1,5 +1,6 @@
 import type { SceneScale } from "../../../hooks/useSceneScale";
 import type { ViewportInfo } from "../../../utils/useViewport";
+import { MATH_COLORS } from "@/theme";
 
 export interface SceneCommonProps {
   params: Record<string, number>;
@@ -12,16 +13,16 @@ export interface SceneCommonProps {
 }
 
 export const BALL_COLORS = [
-  "#EF4444",
-  "#F59E0B",
-  "#10B981",
-  "#3B82F6",
-  "#8B5CF6",
-  "#EC4899",
-  "#6366F1",
-  "#14B8A6",
-  "#F97316",
-  "#84CC16",
+  MATH_COLORS.paramPrimary,
+  MATH_COLORS.setComplement,
+  MATH_COLORS.setIntersection,
+  MATH_COLORS.bayesPrior,
+  MATH_COLORS.setB,
+  MATH_COLORS.functionTransformed,
+  MATH_COLORS.ellipse,
+  MATH_COLORS.barBorder,
+  MATH_COLORS.paramSecondary,
+  MATH_COLORS.paramTertiary,
 ];
 
 export function toSup(val: number | string): string {

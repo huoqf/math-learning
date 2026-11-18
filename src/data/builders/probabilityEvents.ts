@@ -5,6 +5,58 @@ import {
   type DiceEventPreset,
 } from "@/math/probabilityEvents";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber } from "@/utils/mathFormat";
+
+function gcdInt(a: number, b: number): number {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y !== 0) {
+    const t = y;
+    y = x % y;
+    x = t;
+  }
+  return x || 1;
+}
+
+function formatDiscreteFractionLatex(count: number, total = 36): string {
+  if (count <= 0) return "0";
+  if (count >= total) return "1";
+  const g = gcdInt(count, total);
+  const rn = count / g;
+  const rd = total / g;
+  const baseFrac = `\\frac{${count}}{${total}}`;
+  const reduced = rd === 1 ? `${rn}` : `\\frac{${rn}}{${rd}}`;
+  const val = count / total;
+  const isTerminating = (d: number) => {
+    let rem = d;
+    while (rem % 2 === 0) rem /= 2;
+    while (rem % 5 === 0) rem /= 5;
+    return rem === 1;
+  };
+  const decPart = isTerminating(rd)
+    ? `= ${formatMathNumber(val)}`
+    : `\\approx ${val.toFixed(3)}`;
+  return g === 1
+    ? `${baseFrac} ${decPart}`
+    : `${baseFrac} = ${reduced} ${decPart}`;
+}
+
+function formatDiscreteQtyValue(count: number, total = 36): string {
+  if (count <= 0) return `0/${total} = 0`;
+  if (count >= total) return `${total}/${total} = 1`;
+  const g = gcdInt(count, total);
+  const rn = count / g;
+  const rd = total / g;
+  const val = count / total;
+  let rem = rd;
+  while (rem % 2 === 0) rem /= 2;
+  while (rem % 5 === 0) rem /= 5;
+  const fracPart =
+    g === 1 ? `${count}/${total}` : `${count}/${total} = ${rn}/${rd}`;
+  return rem === 1
+    ? `${fracPart} = ${formatMathNumber(val)}`
+    : `${fracPart} ≈ ${val.toFixed(3)}`;
+}
 
 export interface ProbabilityEventsOptions {
   activeMode?: "venn" | "discrete";
@@ -43,28 +95,28 @@ export function buildProbabilityEventsPanel(
           {
             label: "事件 A 概率",
             symbol: "P(A)",
-            value: vennRes.pA.toFixed(2),
+            value: formatMathNumber(vennRes.pA),
             color: MATH_COLORS.paramPrimary,
             highlight: highlightOp === "onlyA" ? "positive" : undefined,
           },
           {
             label: "事件 B 概率",
             symbol: "P(B)",
-            value: vennRes.pB.toFixed(2),
+            value: formatMathNumber(vennRes.pB),
             color: MATH_COLORS.paramSecondary,
             highlight: highlightOp === "onlyB" ? "positive" : undefined,
           },
           {
             label: "交事件(积)概率",
             symbol: "P(A ∩ B)",
-            value: vennRes.pIntersection.toFixed(2),
+            value: formatMathNumber(vennRes.pIntersection),
             color: MATH_COLORS.paramTertiary,
             highlight: highlightOp === "intersection" ? "positive" : undefined,
           },
           {
             label: "并事件(和)概率",
             symbol: "P(A ∪ B)",
-            value: vennRes.pUnion.toFixed(2),
+            value: formatMathNumber(vennRes.pUnion),
             color: MATH_COLORS.primary,
             highlight: highlightOp === "union" ? "positive" : undefined,
           },
@@ -91,28 +143,28 @@ export function buildProbabilityEventsPanel(
           {
             label: "事件 A 样本数与概率",
             symbol: "P(A)",
-            value: `${diceRes.countA}/36 ≈ ${diceRes.pA.toFixed(3)}`,
+            value: `${diceRes.countA} 点 (${formatDiscreteQtyValue(diceRes.countA)})`,
             color: MATH_COLORS.paramPrimary,
             highlight: highlightOp === "onlyA" ? "positive" : undefined,
           },
           {
             label: "事件 B 样本数与概率",
             symbol: "P(B)",
-            value: `${diceRes.countB}/36 ≈ ${diceRes.pB.toFixed(3)}`,
+            value: `${diceRes.countB} 点 (${formatDiscreteQtyValue(diceRes.countB)})`,
             color: MATH_COLORS.paramSecondary,
             highlight: highlightOp === "onlyB" ? "positive" : undefined,
           },
           {
             label: "交事件样本数与概率",
             symbol: "P(A ∩ B)",
-            value: `${diceRes.countIntersection}/36 ≈ ${diceRes.pIntersection.toFixed(3)}`,
+            value: `${diceRes.countIntersection} 点 (${formatDiscreteQtyValue(diceRes.countIntersection)})`,
             color: MATH_COLORS.paramTertiary,
             highlight: highlightOp === "intersection" ? "positive" : undefined,
           },
           {
             label: "并事件样本数与概率",
             symbol: "P(A ∪ B)",
-            value: `${diceRes.countUnion}/36 ≈ ${diceRes.pUnion.toFixed(3)}`,
+            value: `${diceRes.countUnion} 点 (${formatDiscreteQtyValue(diceRes.countUnion)})`,
             color: MATH_COLORS.primary,
             highlight: highlightOp === "union" ? "positive" : undefined,
           },
@@ -127,21 +179,21 @@ export function buildProbabilityEventsPanel(
         {
           step: 1,
           title: "审题定法 · 相等事件充要条件判定",
-          latex: `A \\subseteq B \\text{ 且 } B \\subseteq A \\implies A = B, \\quad P(A \\cap B) = P(A) = ${vennRes.pA.toFixed(2)}`,
+          latex: `A \\subseteq B \\text{ 且 } B \\subseteq A \\implies A = B, \\quad P(A \\cap B) = P(A) = ${formatMathNumber(vennRes.pA)}`,
           detail: "两事件相互包含且发生概率相等、完全重叠，构成相等事件。",
           rubric: "【高考采分点】由双向包含与交集测度判定两事件相等，得 2 分。",
         },
         {
           step: 2,
           title: "建模联立 · 并事件与差事件测度化简",
-          latex: `P(A \\cup B) = P(A) = ${vennRes.pA.toFixed(2)}, \\quad P(A - B) = P(B - A) = ${vennRes.pA.toFixed(2)} - ${vennRes.pB.toFixed(2)}`,
+          latex: `P(A \\cup B) = P(A) = ${formatMathNumber(vennRes.pA)}, \\quad P(A - B) = P(B - A) = ${formatMathNumber(vennRes.pA)} - ${formatMathNumber(vennRes.pB)}`,
           detail: "相等事件的并集与交集均等于事件自身，对称差集为空集。",
           rubric: "【高考采分点】应用相等事件性质化简并集与差集概率，得 2 分。",
         },
         {
           step: 3,
           title: "求解反思 · 相等事件与对立事件概率输出",
-          latex: `P(A \\cup B) = ${vennRes.pUnion.toFixed(2)}, \\quad P(A - B) = 0.00, \\quad P(\\overline{A}) = 1 - ${vennRes.pA.toFixed(2)} = ${vennRes.pNotA.toFixed(2)}`,
+          latex: `P(A \\cup B) = ${formatMathNumber(vennRes.pUnion)}, \\quad P(A - B) = 0, \\quad P(\\overline{A}) = 1 - ${formatMathNumber(vennRes.pA)} = ${formatMathNumber(vennRes.pNotA)}`,
           detail: "两圆完全同心重合，差事件概率为 $0$，补事件测度互补。",
           rubric:
             "【高考采分点】正确输出并事件、差事件及对立事件概率，得 2 分。",
@@ -152,7 +204,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 1,
           title: "审题定法 · 事件包含关系与交集判定",
-          latex: `A \\subseteq B \\implies A \\cap B = A \\implies P(A \\cap B) = P(A) = ${vennRes.pA.toFixed(2)}`,
+          latex: `A \\subseteq B \\implies A \\cap B = A \\implies P(A \\cap B) = P(A) = ${formatMathNumber(vennRes.pA)}`,
           detail:
             "事件 $A$ 的发生必然导致事件 $B$ 发生，交事件即为事件 $A$ 本身。",
           rubric:
@@ -161,7 +213,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 2,
           title: "建模联立 · 概率单调性与差事件分解",
-          latex: `P(A) = ${vennRes.pA.toFixed(2)} \\le P(B) = ${vennRes.pB.toFixed(2)}, \\quad P(B - A) = P(B) - P(A)`,
+          latex: `P(A) = ${formatMathNumber(vennRes.pA)} \\le P(B) = ${formatMathNumber(vennRes.pB)}, \\quad P(B - A) = P(B) - P(A)`,
           detail:
             "由包含性质可知概率具有单调性，差事件概率等于大事件概率减去子事件概率。",
           rubric: "【高考采分点】应用概率单调性与差事件概率分解公式，得 2 分。",
@@ -169,7 +221,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 并事件与差事件概率输出",
-          latex: `P(A \\cup B) = P(B) = ${vennRes.pB.toFixed(2)}, \\quad P(B - A) = ${vennRes.pB.toFixed(2)} - ${vennRes.pA.toFixed(2)} = ${(vennRes.pB - vennRes.pA).toFixed(2)}`,
+          latex: `P(A \\cup B) = P(B) = ${formatMathNumber(vennRes.pB)}, \\quad P(B - A) = ${formatMathNumber(vennRes.pB)} - ${formatMathNumber(vennRes.pA)} = ${formatMathNumber(vennRes.pB - vennRes.pA)}`,
           detail:
             "并事件填满外层大集合，差事件 $B - A$（即 $B$ 发生且 $A$ 未发生）测度确立。",
           rubric: "【高考采分点】正确计算并事件与差事件概率数值，得 2 分。",
@@ -180,7 +232,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 1,
           title: "审题定法 · 事件包含关系与交集判定",
-          latex: `B \\subseteq A \\implies A \\cap B = B \\implies P(A \\cap B) = P(B) = ${vennRes.pB.toFixed(2)}`,
+          latex: `B \\subseteq A \\implies A \\cap B = B \\implies P(A \\cap B) = P(B) = ${formatMathNumber(vennRes.pB)}`,
           detail:
             "事件 $B$ 的发生必然导致事件 $A$ 发生，交事件即为子事件 $B$ 本身。",
           rubric:
@@ -189,7 +241,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 2,
           title: "建模联立 · 概率单调性与差事件分解",
-          latex: `P(B) = ${vennRes.pB.toFixed(2)} \\le P(A) = ${vennRes.pA.toFixed(2)}, \\quad P(A - B) = P(A) - P(B)`,
+          latex: `P(B) = ${formatMathNumber(vennRes.pB)} \\le P(A) = ${formatMathNumber(vennRes.pA)}, \\quad P(A - B) = P(A) - P(B)`,
           detail:
             "由包含性质可知概率具有单调性，差事件 $A - B$ 概率等于母事件概率减去子事件概率。",
           rubric: "【高考采分点】应用概率单调性与差事件概率分解公式，得 2 分。",
@@ -197,7 +249,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 并事件与差事件概率输出",
-          latex: `P(A \\cup B) = P(A) = ${vennRes.pA.toFixed(2)}, \\quad P(A - B) = ${vennRes.pA.toFixed(2)} - ${vennRes.pB.toFixed(2)} = ${(vennRes.pA - vennRes.pB).toFixed(2)}`,
+          latex: `P(A \\cup B) = P(A) = ${formatMathNumber(vennRes.pA)}, \\quad P(A - B) = ${formatMathNumber(vennRes.pA)} - ${formatMathNumber(vennRes.pB)} = ${formatMathNumber(vennRes.pA - vennRes.pB)}`,
           detail:
             "并事件填满外层母事件 $A$，差事件 $A - B$（即 $A$ 发生且 $B$ 未发生）测度确立。",
           rubric: "【高考采分点】正确计算并事件与差事件概率数值，得 2 分。",
@@ -217,14 +269,14 @@ export function buildProbabilityEventsPanel(
         {
           step: 2,
           title: "建模联立 · 对立事件互补公式展开",
-          latex: `P(\\overline{A}) = 1 - P(A) = 1.00 - ${vennRes.pA.toFixed(2)}`,
+          latex: `P(\\overline{A}) = 1 - P(A) = 1 - ${formatMathNumber(vennRes.pA)}`,
           detail: "运用高考“正难则反”逆向破题思想，全集测度减去对立面测度。",
           rubric: "【高考采分点】应用正难则反对立事件互补概率公式，得 2 分。",
         },
         {
           step: 3,
           title: "求解反思 · 对立事件与全集概率确定",
-          latex: `P(\\overline{A}) = ${(1 - vennRes.pA).toFixed(2)}, \\quad P(A \\cup \\overline{A}) = P(\\Omega) = 1.00`,
+          latex: `P(\\overline{A}) = ${formatMathNumber(1 - vennRes.pA)}, \\quad P(A \\cup \\overline{A}) = P(\\Omega) = 1`,
           detail: "必然事件概率恒为 1，对立事件概率之和严格等于 1。",
           rubric:
             "【高考采分点】正确求出对立事件概率并验证与原事件和为 1，得 2 分。",
@@ -235,7 +287,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 1,
           title: "审题定法 · 辨析事件互斥关系",
-          latex: "A \\cap B = \\varnothing \\implies P(A \\cap B) = 0.00",
+          latex: "A \\cap B = \\varnothing \\implies P(A \\cap B) = 0",
           detail:
             "两事件不能同时发生，公共样本点为空集，互斥加法公式直接适用。",
           rubric:
@@ -244,14 +296,14 @@ export function buildProbabilityEventsPanel(
         {
           step: 2,
           title: "建模联立 · 互斥事件概率加法公式展开",
-          latex: `P(A \\cup B) = P(A) + P(B) = ${vennRes.pA.toFixed(2)} + ${vennRes.pB.toFixed(2)}`,
+          latex: `P(A \\cup B) = P(A) + P(B) = ${formatMathNumber(vennRes.pA)} + ${formatMathNumber(vennRes.pB)}`,
           detail: "无公共交集测度，并事件概率直接等于各自分立事件概率代数和。",
           rubric: "【高考采分点】代入互斥事件概率加法公式列出算式，得 2 分。",
         },
         {
           step: 3,
           title: "求解反思 · 并事件概率计算与区间检验",
-          latex: `P(A \\cup B) = ${vennRes.pUnion.toFixed(2)}`,
+          latex: `P(A \\cup B) = ${formatMathNumber(vennRes.pUnion)}`,
           detail:
             "互斥事件并集概率处于 $[0, 1]$ 之间，完全符合概率可加性公理。",
           rubric:
@@ -263,7 +315,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 1,
           title: "审题定法 · 辨析事件相交性与交集测度",
-          latex: `P(A \\cap B) = ${vennRes.pIntersection.toFixed(2)} > 0`,
+          latex: `P(A \\cap B) = ${formatMathNumber(vennRes.pIntersection)} > 0`,
           detail: "两事件存在公共基本事件，必须应用广义加法公式扣除重复测度。",
           rubric:
             "【高考采分点】明确两事件可同时发生，交集概率大于 0，得 2 分。",
@@ -271,7 +323,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 2,
           title: "建模联立 · 广义概率加法公式展开",
-          latex: `P(A \\cup B) = P(A) + P(B) - P(A \\cap B) = ${vennRes.pA.toFixed(2)} + ${vennRes.pB.toFixed(2)} - ${vennRes.pIntersection.toFixed(2)}`,
+          latex: `P(A \\cup B) = P(A) + P(B) - P(A \\cap B) = ${formatMathNumber(vennRes.pA)} + ${formatMathNumber(vennRes.pB)} - ${formatMathNumber(vennRes.pIntersection)}`,
           detail: "容斥原理：两集合并集测度减去重复计算的交集测度。",
           rubric:
             "【高考采分点】应用广义概率加法公式（容斥原理）扣除交集重复项，得 2 分。",
@@ -279,7 +331,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 并事件与补事件概率确定",
-          latex: `P(A \\cup B) = ${vennRes.pUnion.toFixed(2)}, \\quad P(\\overline{A}) = 1 - P(A) = ${(1 - vennRes.pA).toFixed(2)}`,
+          latex: `P(A \\cup B) = ${formatMathNumber(vennRes.pUnion)}, \\quad P(\\overline{A}) = 1 - P(A) = ${formatMathNumber(1 - vennRes.pA)}`,
           detail: "任意两随机事件并集概率恒满足广义加法定理。",
           rubric: "【高考采分点】正确计算出并事件与补事件概率，得 2 分。",
         },
@@ -322,7 +374,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 并事件与差事件古典概率输出",
-          latex: `P(A \\cup B) = P(A) = \\frac{${diceRes.countA}}{36} \\approx ${diceRes.pA.toFixed(3)}, \\quad P(A - B) = 0`,
+          latex: `P(A \\cup B) = P(A) = ${formatDiscreteFractionLatex(diceRes.countA)}, \\quad P(A - B) = 0`,
           detail: "并事件概率等于单事件概率，差事件为不可能事件。",
           rubric: "【高考采分点】正确输出并事件与差事件古典概型概率，得 2 分。",
         },
@@ -348,7 +400,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 正难则反逆向概率计算",
-          latex: `P(B) = 1 - P(A) = 1 - ${(diceRes.countA / 36).toFixed(3)} = ${(diceRes.countB / 36).toFixed(3)}`,
+          latex: `P(B) = 1 - P(A) = 1 - ${formatDiscreteFractionLatex(diceRes.countA)} \\implies P(B) = ${formatDiscreteFractionLatex(diceRes.countB)}`,
           detail: "符合新高考正难则反逆向破题规范，直接化简计算。",
           rubric:
             "【高考采分点】应用正难则反公式准确计算出对立事件概率值，得 2 分。",
@@ -375,7 +427,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 差事件与并事件概率输出",
-          latex: `P(A - B) = \\frac{${diceRes.countA - diceRes.countB}}{36} \\approx ${((diceRes.countA - diceRes.countB) / 36).toFixed(3)}, \\quad P(A \\cup B) = P(A) \\approx ${diceRes.pA.toFixed(3)}`,
+          latex: `P(A - B) = ${formatDiscreteFractionLatex(diceRes.countA - diceRes.countB)}, \\quad P(A \\cup B) = P(A) = ${formatDiscreteFractionLatex(diceRes.countA)}`,
           detail: "并事件容量等同于母事件 $A$，差事件点数严格等于基数之差。",
           rubric: "【高考采分点】正确计算差事件与并事件古典概率比值，得 2 分。",
         },
@@ -401,7 +453,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 差事件与并事件概率输出",
-          latex: `P(B - A) = \\frac{${diceRes.countB - diceRes.countA}}{36} \\approx ${((diceRes.countB - diceRes.countA) / 36).toFixed(3)}, \\quad P(A \\cup B) = P(B) \\approx ${diceRes.pB.toFixed(3)}`,
+          latex: `P(B - A) = ${formatDiscreteFractionLatex(diceRes.countB - diceRes.countA)}, \\quad P(A \\cup B) = P(B) = ${formatDiscreteFractionLatex(diceRes.countB)}`,
           detail: "并事件容量等同于母事件 $B$，差事件点数严格等于基数之差。",
           rubric: "【高考采分点】正确计算差事件与并事件古典概率比值，得 2 分。",
         },
@@ -428,7 +480,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 并事件概率计算与自洽核验",
-          latex: `P(A \\cup B) = \\frac{${diceRes.countUnion}}{36} \\approx ${diceRes.pUnion.toFixed(3)}`,
+          latex: `P(A \\cup B) = ${formatDiscreteFractionLatex(diceRes.countUnion)}`,
           detail: "互斥加法公式计算结果与点阵计数完全一致。",
           rubric:
             "【高考采分点】正确计算出并事件概率并验证与点阵计数一致，得 2 分。",
@@ -456,7 +508,7 @@ export function buildProbabilityEventsPanel(
         {
           step: 3,
           title: "求解反思 · 广义加法公式验算与概率比值输出",
-          latex: `P(A \\cup B) = \\frac{n(A \\cup B)}{36} = \\frac{${diceRes.countA} + ${diceRes.countB} - ${diceRes.countIntersection}}{36} = \\frac{${diceRes.countUnion}}{36} \\approx ${diceRes.pUnion.toFixed(3)}`,
+          latex: `P(A \\cup B) = \\frac{n(A \\cup B)}{36} = \\frac{${diceRes.countA} + ${diceRes.countB} - ${diceRes.countIntersection}}{36} = ${formatDiscreteFractionLatex(diceRes.countUnion)}`,
           detail: "离散计数与广义加法公式结果完全吻合，符合高考大题规范书写。",
           rubric:
             "【高考采分点】应用古典概型公式与容斥原理正确算出并事件概率，得 2 分。",
@@ -500,6 +552,15 @@ export function buildProbabilityEventsPanel(
       level: "important",
       prerequisites: ["事件 $A$ 发生必然导致事件 $B$ 发生"],
     },
+    {
+      name: "德摩根定律 (De Morgan's Laws)",
+      latex:
+        "\\overline{A \\cup B} = \\overline{A} \\cap \\overline{B}, \\qquad \\overline{A \\cap B} = \\overline{A} \\cup \\overline{B}",
+      level: "derived",
+      prerequisites: [
+        "对立事件与交并运算对偶转换，常用于求解「至少/都不发生」概率转化",
+      ],
+    },
   ];
 
   // 4. 高考秒杀考点 (GaokaoPoints)
@@ -510,6 +571,10 @@ export function buildProbabilityEventsPanel(
     },
     {
       text: "逆向破题法「正难则反」：题目出现「至少有一个」、「至多有一个」或正面分类讨论繁琐时，优先转向对立事件，利用 $P(A) = 1 - P(\\overline{A})$ 快速化简。",
+      importance: "gaokao",
+    },
+    {
+      text: "【压轴放缩·交并概率上下界】由容斥原理与包含单调性必有：$\\max(0, P(A)+P(B)-1) \\le P(A \\cap B) \\le \\min(P(A), P(B))$，以及 $\\max(P(A), P(B)) \\le P(A \\cup B) \\le \\min(1, P(A)+P(B))$，多选题可用作秒杀排除。",
       importance: "gaokao",
     },
     {

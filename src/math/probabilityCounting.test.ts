@@ -12,6 +12,9 @@ import {
   buildGroupingItems,
   buildAdditionTree,
   buildMultiplicationTree,
+  formatXPowerLatex,
+  formatNumericSumLatex,
+  formatLinearBinomialLatex,
 } from "./probabilityCounting";
 
 describe("probabilityCounting math module", () => {
@@ -160,5 +163,35 @@ describe("probabilityCounting math module", () => {
       expect(info.allocatedWays).toBe(direct);
       expect(buildGroupingItems(info)).toHaveLength(n);
     }
+  });
+
+  it("二项式与赋值法 LaTeX 规范格式化：消除 1x、+ -、-- 与 x^0 / x^1 冗余", () => {
+    expect(formatXPowerLatex(0)).toBe("");
+    expect(formatXPowerLatex(1)).toBe("x");
+    expect(formatXPowerLatex(3)).toBe("x^{3}");
+
+    expect(formatNumericSumLatex(1, -1)).toBe("1 - 1");
+    expect(formatNumericSumLatex(-2, -1)).toBe("-2 - 1");
+    expect(formatNumericSumLatex(2, 0)).toBe("2");
+
+    expect(formatLinearBinomialLatex(1, 1, 5)).toBe("(x + 1)^{5}");
+    expect(formatLinearBinomialLatex(1, -1, 4)).toBe("(x - 1)^{4}");
+    expect(formatLinearBinomialLatex(-1, -2, 3)).toBe("(-x - 2)^{3}");
+    expect(formatLinearBinomialLatex(0, -1, 3)).toBe("(-1)^{3}");
+
+    const tConst = getBinomialTerm(5, 5, 1, -1);
+    expect(tConst.latexTerm).not.toContain("x^{0}");
+    expect(tConst.latexTerm).not.toContain("1x");
+    expect(tConst.termCoeff).toBe(-1);
+
+    const tOne = getBinomialTerm(5, 4, 1, -1);
+    expect(tOne.latexTerm).not.toContain("x^{1}");
+    expect(tOne.latexTerm).toContain("x");
+
+    const assignNeg = evaluateAssignments(4, -2, -1);
+    expect(assignNeg.sum_all.latexExpr).toBe("f(1) = (-2 - 1)^{4} = 81");
+    expect(assignNeg.sum_alt.latexExpr).toBe("f(-1) = (2 - 1)^{4} = 1");
+    expect(assignNeg.sum_alt.description).not.toContain("--");
+    expect(assignNeg.sum_all.description).not.toContain("+-");
   });
 });

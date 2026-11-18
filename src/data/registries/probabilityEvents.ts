@@ -150,7 +150,7 @@ export const PROBABILITY_EVENTS_SCENARIOS: Record<
     condition:
       "事件 $A$ 为“点数和为偶数”（18 个点），事件 $B$ 为“点数和为奇数”（18 个点）。",
     question:
-      "(1) 验证 $A \\cap B = \\varnothing$ 且 $A \\cup B = \\Omega$；(2) 由古典概型验证对立事件概率之和 $P(A) + P(B) = 1.00$。",
+      "(1) 验证 $A \\cap B = \\varnothing$ 且 $A \\cup B = \\Omega$；(2) 由古典概型验证对立事件概率之和 $P(A) + P(B) = 1$。",
     presetParams: {
       pA: 0.5,
       pB: 0.5,

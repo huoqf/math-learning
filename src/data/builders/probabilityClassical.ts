@@ -75,7 +75,7 @@ export function buildClassicalProbabilityPanel(
   // 2. 定理与课标方法 (Theorems)
   const theorems: Theorem[] = [
     {
-      name: "古典概型两大概征",
+      name: "古典概型两大特征",
       latex:
         "n(\\Omega) < +\\infty,\\quad P(\\omega_1) = P(\\omega_2) = \\cdots = P(\\omega_n)",
       note: "试验具有两大本质特征：(1) 有限性（样本空间的样本点只有有限个）；(2) 等可能性（每个样本点发生的可能性都相等）。",
@@ -116,6 +116,14 @@ export function buildClassicalProbabilityPanel(
       text: "高考标准解答分步走踩分点：规范答题必须写出：① 记事件字母；② 规范罗列 $\\Omega$ 并求 $n(\\Omega)$；③ 罗列事件 $A$ 并求 $n(A)$；④ 代入公式 $P(A) = \\frac{n(A)}{n(\\Omega)}$ 求解并约分。",
       importance: "core",
     },
+    ...(mathRes.modelType === "ball_draw"
+      ? [
+          {
+            text: "有序排列 $A_N^2$ 与无序组合 $C_N^2$ 等价性：不放回取 $2$ 球时，将有序数对 $(x_1, x_2)$ 视作基本事件得 $n(\\Omega) = A_N^2 = N(N-1)$；若改用无序组合 $\\{x_1, x_2\\}$ 得 $C_N^2 = \\frac{N(N-1)}{2!}$，分子与分母同除 $2!$ 后概率比值完全相等！切忌分子按有序算而分母按无序算。",
+            importance: "gaokao" as const,
+          },
+        ]
+      : []),
   ];
 
   // 4. 解答题四步走推导链 (ReasoningSteps) - 与 CLASSICAL_ANSWER_STEPS 逐条完全对齐
@@ -135,7 +143,11 @@ export function buildClassicalProbabilityPanel(
 
   const step4Formula = mathRes.reducedFractionLatex.includes("=")
     ? `P(A) = \\frac{n(A)}{n(\\Omega)} = \\frac{${mathRes.eventCount}}{${mathRes.totalCount}} = ${mathRes.reducedFractionLatex.split("=")[1].trim()}`
-    : `P(A) = \\frac{n(A)}{n(\\Omega)} = \\frac{${mathRes.eventCount}}{${mathRes.totalCount}}`;
+    : mathRes.eventCount === 0
+      ? `P(A) = \\frac{n(A)}{n(\\Omega)} = \\frac{0}{${mathRes.totalCount}} = 0`
+      : mathRes.eventCount === mathRes.totalCount
+        ? `P(A) = \\frac{n(A)}{n(\\Omega)} = \\frac{${mathRes.totalCount}}{${mathRes.totalCount}} = 1`
+        : `P(A) = \\frac{n(A)}{n(\\Omega)} = \\frac{${mathRes.eventCount}}{${mathRes.totalCount}}`;
 
   const reasoningSteps: ReasoningStep[] = [
     {
@@ -212,9 +224,9 @@ export function buildClassicalProbabilityPanel(
     theorems.push({
       name: "频率与概率的关系（频率稳定性）",
       latex:
-        "f_n(A) = \\frac{n_A}{n} \\xrightarrow{\\;n \\to \\infty\\;} P(A), \\qquad P(A) = \\frac{n(A)}{n(\\Omega)} \\;\\text{（确定常数）}",
+        "f_n(A) = \\frac{n_A}{n} \\approx P(A) = \\frac{n(A)}{n(\\Omega)} \\quad\\text{（大样本下稳定在理论概率附近）}",
       level: "important",
-      note: "频率是试验得到的估计值，会随试验结果波动；概率是古典概型算出来的确定常数。试验次数越多，频率越稳定在概率附近，这正是用频率估计概率的依据。",
+      note: "频率是试验得到的估计值，会随试验结果波动；概率是古典概型算出来的确定常数。随着试验次数增多，频率逐渐稳定在理论概率附近，这正是用频率估计概率的依据。",
       condition:
         "本页对每次试验都在等可能的样本点中等概率抽取一个，抽样方式与古典概型的前提一致",
     });

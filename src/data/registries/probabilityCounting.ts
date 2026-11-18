@@ -84,7 +84,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   m1: {
     key: "m1",
     label: "步骤1 / 类别1 选择数",
-    labelFormula: `\\text{步骤1 / 类别1 选择数 }\\color{${MATH_COLORS.paramTertiary}}{m_1}`,
+    labelFormula: `\\text{步骤1 / 类别1 选择数 }\\color{${MATH_COLORS.paramPrimary}}{m_1}`,
     min: 1,
     max: 5,
     step: 1,
@@ -96,7 +96,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   m2: {
     key: "m2",
     label: "步骤2 / 类别2 选择数",
-    labelFormula: `\\text{步骤2 / 类别2 选择数 }\\color{${MATH_COLORS.paramTertiary}}{m_2}`,
+    labelFormula: `\\text{步骤2 / 类别2 选择数 }\\color{${MATH_COLORS.paramSecondary}}{m_2}`,
     min: 1,
     max: 4,
     step: 1,
@@ -121,7 +121,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   gridM: {
     key: "gridM",
     label: "横向步数 m",
-    labelFormula: `\\text{横向步数 }\\color{${MATH_COLORS.paramTertiary}}{m}`,
+    labelFormula: `\\text{横向步数 }\\color{${MATH_COLORS.paramPrimary}}{m}`,
     min: 1,
     max: 6,
     step: 1,
@@ -133,7 +133,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   gridN: {
     key: "gridN",
     label: "纵向步数 n",
-    labelFormula: `\\text{纵向步数 }\\color{${MATH_COLORS.paramPrimary}}{n}`,
+    labelFormula: `\\text{纵向步数 }\\color{${MATH_COLORS.paramSecondary}}{n}`,
     min: 1,
     max: 5,
     step: 1,
@@ -145,7 +145,7 @@ export const paramMeta: Record<string, ParamMeta> = {
   groupTotal: {
     key: "groupTotal",
     label: "均分总元素数",
-    labelFormula: `\\text{均分总元素数 }\\color{${MATH_COLORS.paramTertiary}}{N}`,
+    labelFormula: `\\text{均分总元素数 }\\color{${MATH_COLORS.paramPrimary}}{N}`,
     min: 4,
     max: 8,
     step: 2,

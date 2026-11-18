@@ -6,6 +6,8 @@ import {
   getBinomialTerm,
   evaluateAssignments,
   calculateGroupingAllocation,
+  formatLinearBinomialLatex,
+  formatNumericSumLatex,
 } from "../../math/probabilityCounting";
 import { MATH_COLORS } from "../../theme";
 
@@ -46,6 +48,15 @@ export function buildProbabilityCountingPanel(
     const curAssign = assignments[curAssignKey] || assignments.sum_all;
 
     const binomCoeffSum = Math.pow(2, n);
+    const sumAllInner = formatNumericSumLatex(a, b);
+    const linearBinomLatex = formatLinearBinomialLatex(a, b, n);
+    const aFactorParen = a < 0 ? `(${a})` : `${a}`;
+    const bFactorParen = b < 0 ? `(${b})` : `${b}`;
+    const axBaseLatex = a === 1 ? "x" : a === -1 ? "(-x)" : `(${a}x)`;
+    const powAVal = Math.pow(a, n - k);
+    const powBVal = Math.pow(b, k);
+    const powAValLatex = powAVal < 0 ? `(${powAVal})` : `${powAVal}`;
+    const powBValLatex = powBVal < 0 ? `(${powBVal})` : `${powBVal}`;
 
     if (subMode === 1) {
       // 赋值法沙盘模式
@@ -119,6 +130,14 @@ export function buildProbabilityCountingPanel(
           },
         ],
         warnings: [
+          ...(n === 0
+            ? [
+                {
+                  level: "warning" as const,
+                  text: "边界提示：二项式定理课标默认指数 $n \\in \\mathbb{N}^*$；当 $n = 0$ 且底数非零时 $(ax+b)^0 \\equiv 1$。",
+                },
+              ]
+            : []),
           ...(a === 0
             ? [
                 {
@@ -132,7 +151,7 @@ export function buildProbabilityCountingPanel(
           {
             step: 1,
             title: "审题定法 · 识别多项式恒等式特征",
-            latex: `f(x) = (${a}x + ${b})^{${n}} = a_n x^n + \\dots + a_1 x + a_0`,
+            latex: `f(x) = ${linearBinomLatex} = a_n x^n + \\dots + a_1 x + a_0`,
             detail:
               "多项式展开为关于自变量 $x$ 的恒等式，对任意实数 $x$ 两端恒等，具备特殊值代入求解基础。",
             rubric:
@@ -192,7 +211,7 @@ export function buildProbabilityCountingPanel(
           },
           {
             label: "各项系数和 (x=1)",
-            symbol: `(${a}+${b})^{${n}}`,
+            symbol: `(${sumAllInner})^{${n}}`,
             value: Math.pow(a + b, n),
             color: MATH_COLORS.derivative,
           },
@@ -219,6 +238,22 @@ export function buildProbabilityCountingPanel(
           },
         ],
         warnings: [
+          ...(n === 0
+            ? [
+                {
+                  level: "warning" as const,
+                  text: "边界提示：二项式定理课标默认指数 $n \\in \\mathbb{N}^*$；当 $n = 0$ 时仅含唯一常数项 $T_1 = 1$。",
+                },
+              ]
+            : []),
+          ...(rawK > n
+            ? [
+                {
+                  level: "warning" as const,
+                  text: `下标越界：请求项序号 $k = ${rawK} > n = ${n}$，展示已对齐至末项 $k = ${n}$。`,
+                },
+              ]
+            : []),
           ...(b < 0
             ? [
                 {
@@ -232,7 +267,7 @@ export function buildProbabilityCountingPanel(
           {
             step: 1,
             title: "审题定法 · 标定项序号与二项式系数",
-            latex: `T_{${k + 1}} = C_{${n}}^{${k}} (${a}x)^{${n - k}} (${b})^{${k}}`,
+            latex: `T_{${k + 1}} = C_{${n}}^{${k}} ${axBaseLatex}^{${n - k}} ${bFactorParen}^{${k}}`,
             detail: `考察展开式的第 $k+1 = ${k + 1}$ 项，其二项式系数为组合数 $C_{${n}}^{${k}} = ${termInfo.binomialCoeff}$，恒为正数。`,
             rubric:
               "【高考采分点】写出通项 $T_{k+1} = C_n^k (ax)^{n-k} b^k$，并指明第 $k+1$ 项的二项式系数为 $C_n^k$，得 3 分。",
@@ -240,7 +275,7 @@ export function buildProbabilityCountingPanel(
           {
             step: 2,
             title: "建模联立 · 乘入底数参数求项的系数",
-            latex: `A_{${k}} = C_{${n}}^{${k}} \\cdot (${a})^{${n - k}} \\cdot (${b})^{${k}} = ${termInfo.binomialCoeff} \\times ${Math.pow(a, n - k)} \\times ${Math.pow(b, k)} = ${termInfo.termCoeff}`,
+            latex: `A_{${k}} = C_{${n}}^{${k}} \\cdot ${aFactorParen}^{${n - k}} \\cdot ${bFactorParen}^{${k}} = ${termInfo.binomialCoeff} \\times ${powAValLatex} \\times ${powBValLatex} = ${termInfo.termCoeff}`,
             detail: `项的系数受底数参数影响，常数项 $b$ 的正负和奇偶次方直接决定该项符号与绝对值。`,
             rubric:
               "【高考采分点】把底数参数 $a$、$b$ 的幂次乘进组合数，算出该项的系数并写清符号，得 4 分。",
@@ -295,7 +330,7 @@ export function buildProbabilityCountingPanel(
         },
         {
           label: "展开式各项系数和 (x=1)",
-          symbol: `(${a} + ${b})^{${n}}`,
+          symbol: `(${sumAllInner})^{${n}}`,
           value: Math.pow(a + b, n),
           color: MATH_COLORS.derivative,
         },
@@ -345,6 +380,22 @@ export function buildProbabilityCountingPanel(
         },
       ],
       warnings: [
+        ...(n === 0
+          ? [
+              {
+                level: "warning" as const,
+                text: "边界提示：二项式定理课标默认指数 $n \\in \\mathbb{N}^*$；当 $n = 0$ 时退化为恒等常数 $1$。",
+              },
+            ]
+          : []),
+        ...(rawK > n
+          ? [
+              {
+                level: "warning" as const,
+                text: `下标越界：请求项序号 $k = ${rawK} > n = ${n}$，已自动对齐至末项 $k = ${n}$。`,
+              },
+            ]
+          : []),
         ...(a === 0
           ? [
               {
@@ -382,7 +433,7 @@ export function buildProbabilityCountingPanel(
         {
           step: 2,
           title: "建模联立 · 计算二项式系数与项的系数",
-          latex: `C_{${n}}^{${k}} = ${termInfo.binomialCoeff}, \\quad A_{${k}} = C_{${n}}^{${k}} \\cdot (${a})^{${n - k}} \\cdot (${b})^{${k}} = ${termInfo.termCoeff}`,
+          latex: `C_{${n}}^{${k}} = ${termInfo.binomialCoeff}, \\quad A_{${k}} = C_{${n}}^{${k}} \\cdot ${aFactorParen}^{${n - k}} \\cdot ${bFactorParen}^{${k}} = ${termInfo.termCoeff}`,
           detail:
             "区分二项式系数（恒为正数 $C_n^k$）与项的系数（代入参数 $a, b$ 后的实际代数积）。",
           rubric:
@@ -391,7 +442,7 @@ export function buildProbabilityCountingPanel(
         {
           step: 3,
           title: "求解反思 · 系数极值与全项求和核验",
-          latex: `\\sum_{k=0}^{${n}} C_{${n}}^k = 2^{${n}} = ${binomCoeffSum}, \\quad f(1) = (${a}+${b})^{${n}} = ${Math.pow(a + b, n)}`,
+          latex: `\\sum_{k=0}^{${n}} C_{${n}}^k = 2^{${n}} = ${binomCoeffSum}, \\quad f(1) = (${sumAllInner})^{${n}} = ${Math.pow(a + b, n)}`,
           detail:
             "利用二项式系数和公式 $2^n$ 与赋值法 $x=1$ 双向核验展开项总规模与代数自洽性。",
           rubric:
@@ -544,9 +595,14 @@ export function buildProbabilityCountingPanel(
       // 捆绑法与插空法模型
       const nTotal = n;
       const bindCount = 2; // 相邻 2 人
-      const bindWays = factorial(nTotal - bindCount + 1) * factorial(bindCount);
-      const insertWays =
-        factorial(nTotal - bindCount) * perm(nTotal - bindCount + 1, bindCount);
+      const isValidBindModel = nTotal >= bindCount;
+      const bindWays = isValidBindModel
+        ? factorial(nTotal - bindCount + 1) * factorial(bindCount)
+        : 0;
+      const insertWays = isValidBindModel
+        ? factorial(nTotal - bindCount) *
+          perm(nTotal - bindCount + 1, bindCount)
+        : 0;
 
       return {
         quantities: [
@@ -563,13 +619,17 @@ export function buildProbabilityCountingPanel(
             color: MATH_COLORS.paramSecondary,
           },
           {
-            label: "捆绑相邻总走法 N_捆绑",
+            label: isValidBindModel
+              ? "捆绑相邻总走法 N_捆绑"
+              : "捆绑相邻走法（前提不成立）",
             symbol: "N_\\text{捆绑}",
             value: bindWays,
             color: MATH_COLORS.functionTransformed,
           },
           {
-            label: "插空不相邻总走法 N_插空",
+            label: isValidBindModel
+              ? "插空不相邻总走法 N_插空"
+              : "插空不相邻走法（前提不成立）",
             symbol: "N_\\text{插空}",
             value: insertWays,
             color: MATH_COLORS.derivative,
@@ -602,42 +662,78 @@ export function buildProbabilityCountingPanel(
           },
         ],
         warnings: [
-          ...(nTotal < 4
+          ...(!isValidBindModel
             ? [
                 {
-                  level: "info" as const,
-                  text: "提示：元素数 $n \\ge 4$ 时更利于观察插空空档分布。",
+                  level: "danger" as const,
+                  text: `排队前提不成立：捆绑与插空模型要求总元素数 $n \\ge ${bindCount}$，当前 $n = ${nTotal}$，无法选出 $2$ 个受限元素！`,
                 },
               ]
-            : []),
+            : nTotal < 4
+              ? [
+                  {
+                    level: "info" as const,
+                    text: "提示：元素数 $n \\ge 4$ 时更利于观察插空空档分布。",
+                  },
+                ]
+              : []),
         ],
-        reasoningSteps: [
-          {
-            step: 1,
-            title: "审题定法 · 区分相邻与不相邻约束",
-            latex: `n = ${nTotal}, \\quad m = ${bindCount}`,
-            detail:
-              "共有 $n$ 个元素参与排队，其中 $m$ 个元素受位置约束：要求相邻用捆绑法，要求不相邻用插空法。",
-            rubric:
-              "【高考采分点】识别相邻/不相邻约束并确定 $n$ 与 $m$，得 2 分。",
-          },
-          {
-            step: 2,
-            title: "建模联立 · 捆绑法求解相邻排列数",
-            latex: `N_{\\text{捆绑}} = A_{${nTotal - bindCount + 1}}^{${nTotal - bindCount + 1}} \\times A_{${bindCount}}^{${bindCount}} = ${bindWays}`,
-            detail:
-              "把要求相邻的 $m$ 个元素捆绑成一个整体，与其余元素一起全排列，整体内部再全排列。",
-            rubric: "【高考采分点】用捆绑法列出并计算相邻排列数，得 3 分。",
-          },
-          {
-            step: 3,
-            title: "求解反思 · 插空法求解不相邻排列数",
-            latex: `N_{\\text{插空}} = A_{${nTotal - bindCount}}^{${nTotal - bindCount}} \\times A_{${nTotal - bindCount + 1}}^{${bindCount}} = ${insertWays}`,
-            detail:
-              "先排无限制的 $n-m$ 个元素形成 $n-m+1$ 个空档，再把限制元素插入空档，即保证互不相邻。",
-            rubric: "【高考采分点】用插空法列出并计算不相邻排列数，得 3 分。",
-          },
-        ],
+        reasoningSteps: !isValidBindModel
+          ? [
+              {
+                step: 1,
+                title: "审题定法 · 校验受限元素存在前提",
+                latex: `n = ${nTotal} < m = ${bindCount} \\implies \\text{前提不成立}`,
+                detail: `模型预设受限元素数为 $m = ${bindCount}$，必须满足 $n \\ge ${bindCount}$ 才可讨论相邻与不相邻排法。`,
+                rubric:
+                  "【高考采分点】检验样本总数 $n \\ge m$ 前提并判定当前不满足条件，得 2 分。",
+              },
+              {
+                step: 2,
+                title: "建模联立 · 捆绑法无法成组",
+                latex: `N_{\\text{捆绑}} = 0\\;(n < ${bindCount})`,
+                detail: `当前仅有 $${nTotal}$ 个元素，不足以挑选 $2$ 个元素进行相邻捆绑。`,
+                rubric:
+                  "【高考采分点】指出无法构造捆绑整体，方案数为 $0$，得 2 分。",
+              },
+              {
+                step: 3,
+                title: "求解反思 · 调大 n 后再展开排列计数",
+                latex: `N_{\\text{插空}} = 0\\;(\\text{需调至 } n \\ge ${bindCount})`,
+                detail:
+                  "请将左屏总数滑块调至 $n \\ge 2$（建议 $n \\ge 4$），即可观察捆绑整体与先排后插空档分布。",
+                rubric:
+                  "【高考采分点】说明退化边界结论并给出合理参数范围 $n \\ge 2$，得 2 分。",
+              },
+            ]
+          : [
+              {
+                step: 1,
+                title: "审题定法 · 区分相邻与不相邻约束",
+                latex: `n = ${nTotal}, \\quad m = ${bindCount}`,
+                detail:
+                  "共有 $n$ 个元素参与排队，其中 $m$ 个元素受位置约束：要求相邻用捆绑法，要求不相邻用插空法。",
+                rubric:
+                  "【高考采分点】识别相邻/不相邻约束并确定 $n$ 与 $m$，得 2 分。",
+              },
+              {
+                step: 2,
+                title: "建模联立 · 捆绑法求解相邻排列数",
+                latex: `N_{\\text{捆绑}} = A_{${nTotal - bindCount + 1}}^{${nTotal - bindCount + 1}} \\times A_{${bindCount}}^{${bindCount}} = ${bindWays}`,
+                detail:
+                  "把要求相邻的 $m$ 个元素捆绑成一个整体，与其余元素一起全排列，整体内部再全排列。",
+                rubric: "【高考采分点】用捆绑法列出并计算相邻排列数，得 3 分。",
+              },
+              {
+                step: 3,
+                title: "求解反思 · 插空法求解不相邻排列数",
+                latex: `N_{\\text{插空}} = A_{${nTotal - bindCount}}^{${nTotal - bindCount}} \\times A_{${nTotal - bindCount + 1}}^{${bindCount}} = ${insertWays}`,
+                detail:
+                  "先排无限制的 $n-m$ 个元素形成 $n-m+1$ 个空档，再把限制元素插入空档，即保证互不相邻。",
+                rubric:
+                  "【高考采分点】用插空法列出并计算不相邻排列数，得 3 分。",
+              },
+            ],
         mnemonic:
           "捆绑相邻做整体，内部全排莫忘记；插空留隙后选位，先排无约后插空。",
         examAnchor: "新高考选填经典 · 相邻捆绑法与不相邻插空法（5分）",

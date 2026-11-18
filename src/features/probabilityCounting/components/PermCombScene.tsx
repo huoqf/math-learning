@@ -29,6 +29,16 @@ export function PermCombScene({
 
   // 1. 基础排列与组合对比
   if (subMode === 0) {
+    const poolGap = n <= 1 ? 0 : Math.min(54, Math.floor(490 / (n - 1)));
+    const poolRadius = n >= 9 ? 15 : 18;
+    const selGap = k <= 1 ? 0 : Math.min(44, Math.floor(242 / (k - 1)));
+    const selRadius = k >= 8 ? 11 : k >= 6 ? 13 : 16;
+    const remCount = Math.max(0, n - k);
+    const remGap =
+      remCount <= 1 ? 0 : Math.min(44, Math.floor(242 / (remCount - 1)));
+    const remRadius = remCount >= 8 ? 11 : remCount >= 6 ? 13 : 16;
+    const visibleSlotCount = k > 5 ? 4 : k;
+
     return (
       <g transform="translate(40, 45)">
         {/* 顶部：原始元素池 (n 个球) */}
@@ -54,24 +64,24 @@ export function PermCombScene({
           </text>
 
           {balls.map((ball, idx) => {
-            const bx = 160 + idx * 54;
-            const by = 54;
+            const bx = (n >= 9 ? 185 : 195) + idx * poolGap;
+            const by = 58;
             return (
               <g key={`ball-${idx}`}>
                 <circle
                   cx={bx}
                   cy={by}
-                  r={18}
+                  r={poolRadius}
                   fill={BALL_COLORS[idx % BALL_COLORS.length]}
                   stroke={MATH_COLORS.white}
                   strokeWidth={2.5}
                 />
                 <text
                   x={bx}
-                  y={by + 5}
+                  y={by + 4.5}
                   textAnchor="middle"
                   fill={MATH_COLORS.white}
-                  fontSize={fontScale(13)}
+                  fontSize={fontScale(n >= 9 ? 11.5 : 13)}
                   fontWeight="bold"
                 >
                   {ball.label}
@@ -129,15 +139,30 @@ export function PermCombScene({
                 .join(", ")}{" "}
               &#125;
             </text>
-            {balls.slice(0, k).map((_, idx) => (
-              <circle
-                key={`c-sel-${idx}`}
-                cx={32 + idx * 45}
-                cy={65}
-                r={16}
-                fill={BALL_COLORS[idx % BALL_COLORS.length]}
-              />
-            ))}
+            {balls.slice(0, k).map((ball, idx) => {
+              const cx = 30 + idx * selGap;
+              const cy = 66;
+              return (
+                <g key={`c-sel-${idx}`}>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={selRadius}
+                    fill={BALL_COLORS[idx % BALL_COLORS.length]}
+                  />
+                  <text
+                    x={cx}
+                    y={cy + 3.5}
+                    textAnchor="middle"
+                    fill={MATH_COLORS.white}
+                    fontSize={fontScale(k >= 8 ? 9 : 11)}
+                    fontWeight="bold"
+                  >
+                    {ball.label}
+                  </text>
+                </g>
+              );
+            })}
           </g>
 
           {/* 剩下的补集 */}
@@ -160,16 +185,31 @@ export function PermCombScene({
               余下补集 (共 {n - k} 个) 自动成组 ({formatComb(n, k)} ={" "}
               {formatComb(n, n - k)})：
             </text>
-            {balls.slice(k).map((_, idx) => (
-              <circle
-                key={`c-rem-${idx}`}
-                cx={32 + idx * 45}
-                cy={68}
-                r={16}
-                fill={BALL_COLORS[(k + idx) % BALL_COLORS.length]}
-                opacity={0.65}
-              />
-            ))}
+            {balls.slice(k).map((ball, idx) => {
+              const cx = 30 + idx * remGap;
+              const cy = 68;
+              return (
+                <g key={`c-rem-${idx}`}>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={remRadius}
+                    fill={BALL_COLORS[(k + idx) % BALL_COLORS.length]}
+                    opacity={0.72}
+                  />
+                  <text
+                    x={cx}
+                    y={cy + 3.5}
+                    textAnchor="middle"
+                    fill={MATH_COLORS.white}
+                    fontSize={fontScale(remCount >= 8 ? 9 : 11)}
+                    fontWeight="bold"
+                  >
+                    {ball.label}
+                  </text>
+                </g>
+              );
+            })}
           </g>
         </g>
 
@@ -198,7 +238,7 @@ export function PermCombScene({
 
           {/* 槽位选择图示 */}
           <g transform="translate(18, 65)">
-            {Array.from({ length: Math.min(k, 5) }, (_, sIdx) => {
+            {Array.from({ length: visibleSlotCount }, (_, sIdx) => {
               const choicesLeft = n - sIdx;
               return (
                 <g
@@ -232,6 +272,16 @@ export function PermCombScene({
                   />
                   <text
                     x={28}
+                    y={56}
+                    textAnchor="middle"
+                    fill={MATH_COLORS.white}
+                    fontSize={fontScale(10.5)}
+                    fontWeight="bold"
+                  >
+                    {balls[sIdx]?.label ?? ""}
+                  </text>
+                  <text
+                    x={28}
                     y={92}
                     textAnchor="middle"
                     fill={MATH_COLORS.permHeader}
@@ -243,6 +293,40 @@ export function PermCombScene({
                 </g>
               );
             })}
+            {k > 5 && (
+              <g transform={`translate(${4 * 62}, 0)`}>
+                <rect
+                  x={0}
+                  y={0}
+                  width={56}
+                  height={110}
+                  fill={withAlpha(MATH_COLORS.permHeader, 0.06)}
+                  stroke={MATH_COLORS.permHeader}
+                  strokeWidth={1.5}
+                  strokeDasharray="4 3"
+                  rx={8}
+                />
+                <text
+                  x={28}
+                  y={48}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.permHeader}
+                  fontSize={fontScale(12)}
+                  fontWeight="bold"
+                >
+                  +{k - 4} 槽位
+                </text>
+                <text
+                  x={28}
+                  y={72}
+                  textAnchor="middle"
+                  fill={MATH_COLORS.textMuted}
+                  fontSize={fontScale(9.5)}
+                >
+                  继续连乘
+                </text>
+              </g>
+            )}
           </g>
 
           <g transform="translate(20, 220)">

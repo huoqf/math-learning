@@ -106,9 +106,7 @@ describe("ProbabilityEventsAnimation 页面集成与三屏交互测试", () => {
   it("中屏动画：文氏图模式和离散模式在运算高亮下的动态状态与样本点渲染", () => {
     renderWithRouter();
     // 1. 连续测度文氏图模式：默认 highlightOp 为 none，检查全集 Ω 标题与两事件关系状态
-    expect(
-      screen.getByText(/样本空间 Ω \(P\(Ω\) = 1.00\)/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/样本空间 Ω \(P\(Ω\) = 1\)/)).toBeInTheDocument();
     expect(screen.getByText(/两事件关系：/)).toBeInTheDocument();
 
     // 切换集合运算为交事件
@@ -133,7 +131,7 @@ describe("ProbabilityEventsAnimation 页面集成与三屏交互测试", () => {
 
     // 切换为对立事件甲
     fireEvent.click(screen.getByText("对立事件甲"));
-    expect(screen.getByText(/运算高亮：对立事件 Aᶜ/)).toBeInTheDocument();
+    expect(screen.getByText(/运算高亮：对立事件 Ā/)).toBeInTheDocument();
 
     // 切换到离散的“相交加法”，验证专属题设设问与公共交集坐标标签生效
     fireEvent.click(screen.getByText("相交加法"));

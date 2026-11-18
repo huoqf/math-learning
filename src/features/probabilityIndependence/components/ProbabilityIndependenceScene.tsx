@@ -62,19 +62,14 @@ export const ProbabilityIndependenceScene: React.FC<
     return { x, y, width: w, height: h };
   }, [vp.designLeft, vp.designTop, vp.designVisibleW, vp.designVisibleH]);
 
-  // 圆半径正比于 sqrt(P)
-  const rA = Math.max(60, Math.sqrt(vennRes.pA) * 170);
-  const rB = Math.max(60, Math.sqrt(vennRes.pB) * 170);
+  // 圆半径正比于 sqrt(P)，压缩比例适配左半区 Venn + 右侧 1×1 Eikosogram 并排展示
+  const rA = Math.max(46, Math.sqrt(vennRes.pA) * 112);
+  const rB = Math.max(46, Math.sqrt(vennRes.pB) * 112);
 
   // 严格依据交集测度 P(AB) 解算几何两圆心距离（三段契约）：
-  //  ① P(AB) = 0（互斥）      ⇒ 两圆相离，currentD = rA + rB + 40；
-  //  ② P(AB) → 0⁺             ⇒ 两圆恰好外切，currentD = rA + rB（保证「有交集必有交叠」的数形一致）；
-  //  ③ P(AB) 达最大重叠 min(pA, pB) ⇒ 两圆最大内聚，currentD = |rA − rB| + 15。
-  // 旧实现只在 ① 与 ③ 之间线性插值，导致 P(AB) 低于满量程约 27.6% 时两圆已几何分离，
-  // 出现「数值有正交集、图形却无交叠」的数形分裂。
-  const outerD = rA + rB + 40;
+  const outerD = rA + rB + 28;
   const tangentD = rA + rB;
-  const innerD = Math.max(15, Math.abs(rA - rB) + 15);
+  const innerD = Math.max(12, Math.abs(rA - rB) + 12);
   const maxPossiblePAB = Math.min(vennRes.pA, vennRes.pB);
   const currentD = vennRes.isMutuallyExclusive
     ? outerD
@@ -82,21 +77,19 @@ export const ProbabilityIndependenceScene: React.FC<
       ? tangentD - (vennRes.pAB / maxPossiblePAB) * (tangentD - innerD)
       : tangentD;
 
-  const centerX = rectOmega.x + rectOmega.width / 2;
-  const centerY = rectOmega.y + rectOmega.height / 2 + 10;
+  const omegaCenterX = rectOmega.x + rectOmega.width / 2;
+  const vennCenterX = rectOmega.x + 245;
+  const centerY = rectOmega.y + rectOmega.height / 2 + 6;
 
-  const centerAX = centerX - currentD / 2;
+  const centerAX = vennCenterX - currentD / 2;
   const centerAY = centerY;
-  const centerBX = centerX + currentD / 2;
+  const centerBX = vennCenterX + currentD / 2;
   const centerBY = centerY;
 
-  // 交集标注几何：透镜（两圆交叠区）横向宽度与质心横向锚点。
-  // 交叠细窄时标签必须落在圆外，用引线回指质心，避免学生误读标注位置。
-  const overlapColor = vennRes.isIndependent
-    ? MATH_COLORS.primary
-    : MATH_COLORS.paramTertiary;
+  // 交集标注颜色与左屏图例、右屏 P(AB) 统一绑定 paramTertiary，独立性状态改由顶部胶囊与正交图体现。
+  const overlapColor = MATH_COLORS.paramTertiary;
   const lensWidth = Math.max(0, rA + rB - currentD);
-  const lensAnchorX = centerX + (rA - rB) / 2;
+  const lensAnchorX = vennCenterX + (rA - rB) / 2;
   const needLeader = !vennRes.isMutuallyExclusive && lensWidth < 26;
   const overlapLabelTopY = needLeader ? centerY - 44 : centerY - 10;
 
@@ -130,17 +123,17 @@ export const ProbabilityIndependenceScene: React.FC<
 
           {/* 全集标签 */}
           <text
-            x={rectOmega.x + 24}
+            x={rectOmega.x + 20}
             y={rectOmega.y + 36}
-            fontSize={fontScale(18)}
+            fontSize={fontScale(14.5)}
             fontWeight="bold"
             fill={MATH_COLORS.axis}
           >
-            样本空间全集 Ω (测度 P(Ω) = 1.00)
+            全集 Ω (P(Ω) = 1)
           </text>
 
           {/* 状态徽标与测度指示 */}
-          <g transform={`translate(${centerX}, ${rectOmega.y + 36})`}>
+          <g transform={`translate(${omegaCenterX}, ${rectOmega.y + 36})`}>
             <rect
               x={-150}
               y={-18}
@@ -217,47 +210,56 @@ export const ProbabilityIndependenceScene: React.FC<
             />
           </g>
 
-          {/* 集合 A 文字标签 */}
-          <text
-            x={centerAX - rA * 0.45}
-            y={centerAY}
-            textAnchor="middle"
-            fontSize={fontScale(18)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramPrimary}
-          >
-            A
-          </text>
-          <text
-            x={centerAX - rA * 0.45}
-            y={centerAY + 26}
-            textAnchor="middle"
-            fontSize={fontScale(14)}
-            fill={MATH_COLORS.paramPrimary}
-          >
-            P(A) = {formatMathProb(vennRes.pA)}
-          </text>
+          {/* 集合 A 文字标签（高重叠或大圆时自适应外移且微调高度防撞 AB） */}
+          {(() => {
+            const isHighOverlap = lensWidth > Math.min(rA, rB) * 1.1;
+            const offsetFactor = isHighOverlap ? 0.62 : 0.45;
+            const labelYOffset = isHighOverlap ? -22 : 0;
+            return (
+              <>
+                <text
+                  x={centerAX - rA * offsetFactor}
+                  y={centerAY + labelYOffset}
+                  textAnchor="middle"
+                  fontSize={fontScale(18)}
+                  fontWeight="bold"
+                  fill={MATH_COLORS.paramPrimary}
+                >
+                  A
+                </text>
+                <text
+                  x={centerAX - rA * offsetFactor}
+                  y={centerAY + labelYOffset + 24}
+                  textAnchor="middle"
+                  fontSize={fontScale(13)}
+                  fill={MATH_COLORS.paramPrimary}
+                >
+                  P(A) = {formatMathProb(vennRes.pA)}
+                </text>
 
-          {/* 集合 B 文字标签 */}
-          <text
-            x={centerBX + rB * 0.45}
-            y={centerBY}
-            textAnchor="middle"
-            fontSize={fontScale(18)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramSecondary}
-          >
-            B
-          </text>
-          <text
-            x={centerBX + rB * 0.45}
-            y={centerBY + 26}
-            textAnchor="middle"
-            fontSize={fontScale(14)}
-            fill={MATH_COLORS.paramSecondary}
-          >
-            P(B) = {formatMathProb(vennRes.pB)}
-          </text>
+                {/* 集合 B 文字标签 */}
+                <text
+                  x={centerBX + rB * offsetFactor}
+                  y={centerBY + labelYOffset}
+                  textAnchor="middle"
+                  fontSize={fontScale(18)}
+                  fontWeight="bold"
+                  fill={MATH_COLORS.paramSecondary}
+                >
+                  B
+                </text>
+                <text
+                  x={centerBX + rB * offsetFactor}
+                  y={centerBY + labelYOffset + 24}
+                  textAnchor="middle"
+                  fontSize={fontScale(13)}
+                  fill={MATH_COLORS.paramSecondary}
+                >
+                  P(B) = {formatMathProb(vennRes.pB)}
+                </text>
+              </>
+            );
+          })()}
 
           {/* 交集文字标注：判据取数学层的 isMutuallyExclusive（P(AB) ≈ 0），
               仅在真正互斥时提示 A ∩ B = ∅；只要 P(AB) > 0 就必须标注交集，
@@ -269,7 +271,7 @@ export const ProbabilityIndependenceScene: React.FC<
                 <line
                   x1={lensAnchorX}
                   y1={centerY - 5}
-                  x2={centerX}
+                  x2={vennCenterX}
                   y2={overlapLabelTopY + 8}
                   stroke={overlapColor}
                   strokeWidth={1.2}
@@ -277,7 +279,7 @@ export const ProbabilityIndependenceScene: React.FC<
                 />
               )}
               <text
-                x={centerX}
+                x={vennCenterX}
                 y={overlapLabelTopY}
                 textAnchor="middle"
                 fontSize={fontScale(16)}
@@ -287,7 +289,7 @@ export const ProbabilityIndependenceScene: React.FC<
                 AB
               </text>
               <text
-                x={centerX}
+                x={vennCenterX}
                 y={overlapLabelTopY + 26}
                 textAnchor="middle"
                 fontSize={fontScale(13)}
@@ -298,7 +300,7 @@ export const ProbabilityIndependenceScene: React.FC<
             </g>
           ) : (
             <text
-              x={centerX}
+              x={vennCenterX}
               y={centerY}
               textAnchor="middle"
               fontSize={fontScale(14)}
@@ -309,6 +311,143 @@ export const ProbabilityIndependenceScene: React.FC<
             </text>
           )}
 
+          {/* 右侧：1×1 单位正方形正交面积图 (Eikosogram) —— 直观判定高度是否齐平 */}
+          {(() => {
+            const sqSize = 166;
+            const sqX = rectOmega.x + 522;
+            const sqY = rectOmega.y + 170;
+            const wA = Math.max(0, Math.min(1, vennRes.pA)) * sqSize;
+            const wNotA = sqSize - wA;
+            const pBGivenA =
+              vennRes.pA > 1e-6
+                ? Math.max(0, Math.min(1, vennRes.pAB / vennRes.pA))
+                : 0;
+            const pBGivenNotA =
+              1 - vennRes.pA > 1e-6
+                ? Math.max(
+                    0,
+                    Math.min(
+                      1,
+                      Math.max(0, vennRes.pB - vennRes.pAB) / (1 - vennRes.pA),
+                    ),
+                  )
+                : 0;
+            const hA = pBGivenA * sqSize;
+            const hNotA = pBGivenNotA * sqSize;
+            const hRefB = Math.max(0, Math.min(1, vennRes.pB)) * sqSize;
+            const refY = sqY + sqSize - hRefB;
+            return (
+              <g>
+                <text
+                  x={sqX + sqSize / 2}
+                  y={sqY - 14}
+                  textAnchor="middle"
+                  fontSize={fontScale(12)}
+                  fontWeight="bold"
+                  fill={MATH_COLORS.labelText}
+                >
+                  1×1 单位正方形正交面积图
+                </text>
+                {/* 单位正方形背景底框 (Ω) */}
+                <rect
+                  x={sqX}
+                  y={sqY}
+                  width={sqSize}
+                  height={sqSize}
+                  fill={MATH_COLORS.white}
+                  stroke={MATH_COLORS.axis}
+                  strokeWidth={1.5}
+                />
+                {/* 左侧 A 列中 B|A 条件面积 (等于 P(AB)) */}
+                <rect
+                  x={sqX}
+                  y={sqY + sqSize - hA}
+                  width={wA}
+                  height={hA}
+                  fill={withAlpha(overlapColor, 0.42)}
+                  stroke={overlapColor}
+                  strokeWidth={1.2}
+                />
+                {/* 右侧 Ā 列中 B|Ā 条件面积 (等于 P(ĀB)) */}
+                <rect
+                  x={sqX + wA}
+                  y={sqY + sqSize - hNotA}
+                  width={wNotA}
+                  height={hNotA}
+                  fill={withAlpha(MATH_COLORS.paramSecondary, 0.25)}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={1}
+                />
+                {/* A 与 Ā 纵分界线 */}
+                <line
+                  x1={sqX + wA}
+                  y1={sqY}
+                  x2={sqX + wA}
+                  y2={sqY + sqSize}
+                  stroke={MATH_COLORS.labelTextLight}
+                  strokeWidth={1.2}
+                  strokeDasharray="3 2"
+                />
+                {/* P(B) 无条件高度参考虚线 */}
+                <line
+                  x1={sqX - 6}
+                  y1={refY}
+                  x2={sqX + sqSize + 6}
+                  y2={refY}
+                  stroke={MATH_COLORS.paramSecondary}
+                  strokeWidth={1.6}
+                  strokeDasharray="5 3"
+                />
+                <text
+                  x={sqX - 9}
+                  y={refY + 4}
+                  textAnchor="end"
+                  fontSize={fontScale(9.5)}
+                  fontWeight="bold"
+                  fill={MATH_COLORS.paramSecondary}
+                >
+                  P(B)
+                </text>
+                {/* 柱高读数与底部列标 */}
+                <text
+                  x={sqX + wA / 2}
+                  y={sqY + sqSize + 15}
+                  textAnchor="middle"
+                  fontSize={fontScale(10)}
+                  fontWeight="bold"
+                  fill={MATH_COLORS.paramPrimary}
+                >
+                  A
+                </text>
+                <text
+                  x={sqX + wA + wNotA / 2}
+                  y={sqY + sqSize + 15}
+                  textAnchor="middle"
+                  fontSize={fontScale(10)}
+                  fill={MATH_COLORS.textMuted}
+                >
+                  Ā
+                </text>
+                <text
+                  x={sqX + sqSize / 2}
+                  y={sqY + sqSize + 34}
+                  textAnchor="middle"
+                  fontSize={fontScale(10)}
+                  fontWeight="bold"
+                  fill={
+                    vennRes.isIndependent
+                      ? MATH_COLORS.primary
+                      : MATH_COLORS.labelTextLight
+                  }
+                >
+                  {vennRes.isIndependent
+                    ? "两柱齐平 ⇔ 独立"
+                    : "高度不等 ⇔ 相关"}
+                </text>
+              </g>
+            );
+          })()}
+
           {/* 条件概率同高标尺对比卡：P(B|A) vs P(B) 直观破除“互斥=独立”迷思 */}
           {(() => {
             const pBGivenA = vennRes.pA > 1e-6 ? vennRes.pAB / vennRes.pA : 0;
@@ -317,7 +456,7 @@ export const ProbabilityIndependenceScene: React.FC<
             const wB = Math.max(2, Math.min(1, vennRes.pB) * barMaxW);
             const cardY = rectOmega.y + rectOmega.height - 46;
             return (
-              <g transform={`translate(${centerX}, ${cardY})`}>
+              <g transform={`translate(${omegaCenterX}, ${cardY})`}>
                 <rect
                   x={-345}
                   y={-18}

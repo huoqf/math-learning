@@ -91,5 +91,25 @@ describe("ProbabilityClassicalAnimation 页面集成与三屏交互测试", () =
     fireEvent.click(screen.getByText("摸球正难则反"));
     expect(screen.getByText("不放回抽样（n=20）")).toBeInTheDocument();
     expect(screen.getByText("有放回抽样（n=25）")).toBeInTheDocument();
+    // 真实二维网格渲染对角线禁用标记与有序表头
+    expect(screen.getByText(/不放回：对角线不可取/)).toBeInTheDocument();
+  });
+
+  it("支持大样本频率稳定性视图与重新随机抽样交互，志愿选人可切至树状图视图", () => {
+    renderWithRouter();
+
+    // 志愿选人下切换至树状图视图直接渲染组合决策树而非退回提示框
+    fireEvent.click(screen.getByText("志愿选人"));
+    fireEvent.click(screen.getByText("分步树状图视图"));
+    expect(screen.getByText("试验起点")).toBeInTheDocument();
+    expect(screen.getAllByText(/\(男_1, 女_1\)/).length).toBeGreaterThan(0);
+
+    // 切至大样本频率试验并点击重抽按钮
+    fireEvent.click(screen.getByText("大样本频率试验"));
+    expect(screen.getByText("大样本重复试验")).toBeInTheDocument();
+    const resampleBtn = screen.getByRole("button", { name: /重新随机抽样/ });
+    expect(resampleBtn).toHaveTextContent("20260101");
+    fireEvent.click(resampleBtn);
+    expect(resampleBtn).toHaveTextContent("20260102");
   });
 });

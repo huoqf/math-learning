@@ -22,11 +22,12 @@ export interface ClassicalFrequencySceneProps {
   params: Record<string, unknown>;
   scale: SceneScale;
   fontScale?: (v: number) => number;
+  activeStep?: number | null;
 }
 
 export const ClassicalFrequencyScene: React.FC<
   ClassicalFrequencySceneProps
-> = ({ params, scale, fontScale = (v) => v }) => {
+> = ({ params, scale, fontScale = (v) => v, activeStep = null }) => {
   const modelType = (params.modelType ?? "dice_two") as ClassicalModelType;
   const targetEvent = String(params.targetEvent ?? "sum_k");
   const targetSum = Number(params.targetSum ?? 7);
@@ -90,6 +91,10 @@ export const ClassicalFrequencyScene: React.FC<
   const bottomY = mathToDesign(0, y0, scale).y;
   const topY = mathToDesign(0, y1, scale).y;
 
+  const isStep1Or2 = activeStep === 1 || activeStep === 2;
+  const isStep3 = activeStep === 3;
+  const isStep4 = activeStep === 4;
+
   return (
     <g className="classical-frequency-scene">
       {/* 绘图区底板 */}
@@ -99,8 +104,11 @@ export const ClassicalFrequencyScene: React.FC<
         width={rightX - leftX}
         height={bottomY - topY}
         fill={CANVAS_COLORS.white}
-        stroke={MATH_COLORS.labelText}
-        strokeOpacity={0.25}
+        stroke={
+          activeStep ? MATH_COLORS.answerStepFrame : MATH_COLORS.labelText
+        }
+        strokeWidth={activeStep ? 2 : 1}
+        strokeOpacity={activeStep ? 0.9 : 0.25}
         rx={6}
       />
 
@@ -110,7 +118,7 @@ export const ClassicalFrequencyScene: React.FC<
         y={bandTopY}
         width={rightX - leftX}
         height={Math.max(1, bandBottomY - bandTopY)}
-        fill={withAlpha(MATH_COLORS.accent, 0.12)}
+        fill={withAlpha(MATH_COLORS.accent, isStep4 ? 0.24 : 0.12)}
       />
 
       {/* 概率参考线 */}
@@ -120,7 +128,7 @@ export const ClassicalFrequencyScene: React.FC<
         x2={rightX}
         y2={probLineY}
         stroke={MATH_COLORS.accent}
-        strokeWidth={2}
+        strokeWidth={isStep1Or2 || isStep4 ? 2.6 : 2}
         strokeDasharray="7 4"
       />
       <text
@@ -140,7 +148,8 @@ export const ClassicalFrequencyScene: React.FC<
           points={pathPoints}
           fill="none"
           stroke={MATH_COLORS.paramPrimary}
-          strokeWidth={2}
+          strokeWidth={isStep3 ? 2.8 : 2}
+          strokeOpacity={isStep1Or2 ? 0.45 : 1}
           strokeLinejoin="round"
         />
       )}

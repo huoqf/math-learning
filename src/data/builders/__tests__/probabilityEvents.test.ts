@@ -11,7 +11,7 @@ describe("随机事件与概率基本性质右屏看板测试 (buildProbabilityE
     expect(data.theorems.length).toBeGreaterThan(0);
     expect(data.reasoningSteps?.length).toBe(3);
     const qA = data.quantities.find((q) => q.symbol === "P(A)");
-    expect(qA?.value).toBe("0.40");
+    expect(qA?.value).toBe("0.4");
   });
 
   it("离散点阵模式：正确计算 36 个基本事件计数与比值", () => {
@@ -32,7 +32,7 @@ describe("随机事件与概率基本性质右屏看板测试 (buildProbabilityE
       { activeMode: "venn" },
     );
     expect(data.reasoningSteps?.[1].latex).toContain("P(B - A) = P(B) - P(A)");
-    expect(data.reasoningSteps?.[2].latex).toContain("0.40");
+    expect(data.reasoningSteps?.[2].latex).toContain("0.4");
   });
 
   it("概率之和大于1且重叠度接近0时，看板触发安全警告", () => {
@@ -42,5 +42,32 @@ describe("随机事件与概率基本性质右屏看板测试 (buildProbabilityE
     );
     expect(data.warnings?.length).toBeGreaterThan(0);
     expect(data.warnings?.[0].text).toContain("必然相交无法互斥");
+  });
+
+  it("看板包含德摩根定律与交并概率上下界高考考点，并在不同 dicePreset 下返回对应推导", () => {
+    const vennPanel = buildProbabilityEventsPanel(
+      { pA: 0.5, pB: 0.5, overlapRatio: 0.0 },
+      { activeMode: "venn" },
+    );
+    expect(vennPanel.theorems.some((t) => t.name.includes("德摩根定律"))).toBe(
+      true,
+    );
+    expect(
+      vennPanel.gaokaoPoints?.some((g) => g.text.includes("交并概率上下界")),
+    ).toBe(true);
+
+    const discretePanel = buildProbabilityEventsPanel(
+      {},
+      {
+        activeMode: "discrete",
+        dicePresetA: "has_six",
+        dicePresetB: "sum_ge_8",
+        highlightOp: "intersection",
+      },
+    );
+    expect(discretePanel.quantities.some((q) => q.symbol === "P(A ∩ B)")).toBe(
+      true,
+    );
+    expect(discretePanel.reasoningSteps?.[2]?.latex).toContain("36");
   });
 });

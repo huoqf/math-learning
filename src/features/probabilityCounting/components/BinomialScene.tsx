@@ -5,6 +5,7 @@ import {
   getAllBinomialTerms,
   getPascalProperties,
   evaluateAssignments,
+  formatNumericSumLatex,
 } from "../../../math/probabilityCounting";
 import type { SceneCommonProps } from "./types";
 import { formatComb, formatTermText, toSub, toSup } from "./types";
@@ -571,9 +572,9 @@ export function BinomialScene({
               fontWeight="bold"
             >
               {curAssignKey === "sum_all"
-                ? `f(1) = (a + b)ⁿ = (${a} + ${b})${toSup(n)} = ${assignments.sum_all.evaluatedValue}`
+                ? `f(1) = (a + b)ⁿ = (${formatNumericSumLatex(a, b)})${toSup(n)} = ${assignments.sum_all.evaluatedValue}`
                 : curAssignKey === "sum_alt"
-                  ? `f(-1) = (-a + b)ⁿ = (${-a} + ${b})${toSup(n)} = ${assignments.sum_alt.evaluatedValue}`
+                  ? `f(-1) = (-a + b)ⁿ = (${formatNumericSumLatex(-a, b)})${toSup(n)} = ${assignments.sum_alt.evaluatedValue}`
                   : curAssignKey === "sum_even"
                     ? `偶数项和 = [f(1) + f(-1)] ÷ 2 = ${assignments.sum_even.evaluatedValue}`
                     : curAssignKey === "sum_odd"
@@ -615,7 +616,7 @@ export function BinomialScene({
             fill={MATH_COLORS.textMuted}
             fontSize={fontScale(12)}
           >
-            蓝色代表二项式系数（恒正对称）；橙红色代表实际项系数（受 a, b
+            红色柱代表二项式系数（恒正对称）；玫红/深红柱代表实际项系数（受 a, b
             符号与大小调制）
           </text>
 

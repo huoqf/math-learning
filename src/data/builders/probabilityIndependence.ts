@@ -255,6 +255,15 @@ export function buildProbabilityIndependencePanel(
       level: "danger",
       text: "【互斥不独立预警】当前两事件处于互斥状态 ($P(AB) = 0$)，因两事件概率均大于 0，乘积 $P(A)P(B) > 0$，故此时两事件绝对不独立！",
     });
+  } else if (
+    activeMode === "venn" &&
+    pA + pB > 1 + 1e-6 &&
+    overlapRatio <= 1e-4
+  ) {
+    warnings.push({
+      level: "warning",
+      text: `【全集越界预警】当前 $P(A) + P(B) = ${(pA + pB).toFixed(2)} > 1$，即使重叠因子 $\\lambda = 0$，交集仍有正下界 $P(AB) \\ge ${(pA + pB - 1).toFixed(2)} > 0$，故不可能构造互斥事件！`,
+    });
   } else if (currentIndependent) {
     warnings.push({
       level: "info",

@@ -88,6 +88,58 @@ export interface BinomialTermInfo {
   latexTerm: string; // T_{k+1} 简易 KaTeX
 }
 
+/** 规范化 x^p 的 LaTeX 表达，消除 x^0 / x^1 冗余 */
+export function formatXPowerLatex(power: number): string {
+  if (power === 0) return "";
+  if (power === 1) return "x";
+  return `x^{${power}}`;
+}
+
+/** 规范化两数之和 p + q 的 LaTeX 表达，消除 + -q */
+export function formatNumericSumLatex(first: number, second: number): string {
+  if (second === 0) return `${first}`;
+  if (second > 0) return `${first} + ${second}`;
+  return `${first} - ${Math.abs(second)}`;
+}
+
+/** 规范化线性二项式 (ax + b)^n 的 LaTeX 表达，消除 1x / -1x / + -b / + 0 */
+export function formatLinearBinomialLatex(
+  a: number,
+  b: number,
+  n?: number | string,
+  colored?: { aColor?: string; bColor?: string; nColor?: string },
+): string {
+  let xPart = "";
+  if (a !== 0) {
+    if (a === 1) {
+      xPart = "x";
+    } else if (a === -1) {
+      xPart = "-x";
+    } else {
+      xPart = colored?.aColor ? `\\color{${colored.aColor}}{${a}}x` : `${a}x`;
+    }
+  }
+
+  let bPart = "";
+  if (xPart === "") {
+    bPart = colored?.bColor ? `\\color{${colored.bColor}}{${b}}` : `${b}`;
+  } else if (b > 0) {
+    const bVal = colored?.bColor ? `\\color{${colored.bColor}}{${b}}` : `${b}`;
+    bPart = ` + ${bVal}`;
+  } else if (b < 0) {
+    const absB = Math.abs(b);
+    const bVal = colored?.bColor
+      ? `\\color{${colored.bColor}}{${absB}}`
+      : `${absB}`;
+    bPart = ` - ${bVal}`;
+  }
+
+  const inner = `${xPart}${bPart}` || "0";
+  if (n === undefined) return `(${inner})`;
+  const nStr = colored?.nColor ? `\\color{${colored.nColor}}{${n}}` : `${n}`;
+  return `(${inner})^{${nStr}}`;
+}
+
 /**
  * 计算 (a*x + b)^n 中第 k+1 项 (即 C_n^k (ax)^(n-k) b^k) 的具体数值与系数
  */
@@ -102,22 +154,36 @@ export function getBinomialTerm(
   const powerB = k;
   const termCoeff = c * Math.pow(a, powerA) * Math.pow(b, powerB);
 
-  // 拼接 Latex 字符串
-  let latexTerm = `T_{${k + 1}} = `;
-  latexTerm += `\\binom{${n}}{${k}} \\cdot `;
-  if (a !== 1) {
-    latexTerm += `(${a})^{${powerA}} `;
-  } else if (powerA > 0) {
-    latexTerm += `1^{${powerA}} `;
+  const xPow = formatXPowerLatex(powerA);
+  let latexTerm = `T_{${k + 1}} = \\binom{${n}}{${k}}`;
+  if (powerA > 0) {
+    const baseAx = a === 1 ? "x" : a === -1 ? "-x" : `${a}x`;
+    const needParenAx = a !== 1 || powerA > 1;
+    const axPart = needParenAx && a !== 1 ? `(${baseAx})` : baseAx;
+    latexTerm +=
+      powerA === 1
+        ? ` \\cdot ${axPart}`
+        : ` \\cdot ${axPart === "x" ? "x" : `(${baseAx})`}^{${powerA}}`;
+  }
+  if (powerB > 0 && b !== 1) {
+    const bBase = b < 0 ? `(${b})` : `${b}`;
+    latexTerm +=
+      powerB === 1 ? ` \\cdot ${bBase}` : ` \\cdot ${bBase}^{${powerB}}`;
   }
 
-  if (b !== 1) {
-    latexTerm += `(${b})^{${powerB}} `;
-  } else if (powerB > 0) {
-    latexTerm += `1^{${powerB}} `;
-  }
-
-  latexTerm += `x^{${powerA}} = ${Number.isInteger(termCoeff) ? termCoeff : termCoeff.toFixed(2)} x^{${powerA}}`;
+  const coeffFmt = Number.isInteger(termCoeff)
+    ? String(termCoeff)
+    : termCoeff.toFixed(2);
+  const rhs = xPow
+    ? termCoeff === 1
+      ? xPow
+      : termCoeff === -1
+        ? `-${xPow}`
+        : termCoeff === 0
+          ? "0"
+          : `${coeffFmt}${xPow}`
+    : coeffFmt;
+  latexTerm += ` = ${rhs}`;
 
   return {
     k,
@@ -193,21 +259,35 @@ export function evaluateAssignments(
   // f(x) = (ax+b)^n => f'(x) = n * a * (ax+b)^(n-1)
   const valDerivative = n > 0 ? n * a * Math.pow(a + b, n - 1) : 0;
 
+  const sumAllInner = formatNumericSumLatex(a, b);
+  const sumAltInner = formatNumericSumLatex(-a, b);
+  const aDerivFactor = a < 0 ? `(${a})` : `${a}`;
+  const bBaseLatex = b < 0 ? `(${b})` : `${b}`;
+  const sumAllParen = `(${a}${b >= 0 ? ` + ${b}` : ` - ${Math.abs(b)}`})`;
+  const sumAltParen = `(${-a}${b >= 0 ? ` + ${b}` : ` - ${Math.abs(b)}`})`;
+  const isDegenerateZero = n === 0;
+
   return {
     sum_all: {
       xValue: 1,
       name: "全部系数和 (令 x = 1)",
-      latexExpr: `f(1) = (${a} + ${b})^{${n}} = ${valX1}`,
+      latexExpr:
+        isDegenerateZero && a + b === 0
+          ? `f(x) \\equiv 1 \\implies f(1) = 1`
+          : `f(1) = (${sumAllInner})^{${n}} = ${valX1}`,
       evaluatedValue: valX1,
-      description: `各项展开项系数相加：a₀ + a₁ + ⋯ + aₙ = (${a}+${b})ⁿ`,
+      description: `各项展开项系数相加：a₀ + a₁ + ⋯ + aₙ = ${sumAllParen}ⁿ`,
       itemValues: itemsX1,
     },
     sum_alt: {
       xValue: -1,
       name: "奇偶交错和 (令 x = -1)",
-      latexExpr: `f(-1) = (${-a} + ${b})^{${n}} = ${valXNeg1}`,
+      latexExpr:
+        isDegenerateZero && -a + b === 0
+          ? `f(x) \\equiv 1 \\implies f(-1) = 1`
+          : `f(-1) = (${sumAltInner})^{${n}} = ${valXNeg1}`,
       evaluatedValue: valXNeg1,
-      description: `各项正负交替相加：a₀ - a₁ + a₂ - ⋯ = (-${a}+${b})ⁿ`,
+      description: `各项正负交替相加：a₀ - a₁ + a₂ - ⋯ = ${sumAltParen}ⁿ`,
       itemValues: itemsXNeg1,
     },
     sum_even: {
@@ -237,7 +317,9 @@ export function evaluateAssignments(
     derivative: {
       xValue: 1,
       name: "导数加权和 (f'(1))",
-      latexExpr: `f'(1) = ${n} \\cdot ${a} \\cdot (${a}+${b})^{${Math.max(0, n - 1)}} = ${valDerivative}`,
+      latexExpr: isDegenerateZero
+        ? `f(x) = 1 \\implies f'(1) = 0`
+        : `f'(1) = ${n} \\cdot ${aDerivFactor} \\cdot (${sumAllInner})^{${n - 1}} = ${valDerivative}`,
       evaluatedValue: valDerivative,
       description: "两边求导赋值令 x=1：Σ k·aₖ = f′(1)",
       itemValues: terms.map((t) => ({
@@ -249,7 +331,10 @@ export function evaluateAssignments(
     constant: {
       xValue: 0,
       name: "常数项 (令 x = 0)",
-      latexExpr: `f(0) = (${b})^{${n}} = ${valX0}`,
+      latexExpr:
+        isDegenerateZero && b === 0
+          ? `f(x) \\equiv 1 \\implies a_0 = 1`
+          : `f(0) = ${bBaseLatex}^{${n}} = ${valX0}`,
       evaluatedValue: valX0,
       description: `展开式中的常数项（x⁰ 的系数）：bⁿ = ${valX0}`,
       itemValues: itemsX0,

@@ -108,7 +108,8 @@ describe("频率视图看板：频率与概率必须被区分开", () => {
   it("频率视图给出频率稳定性定理，并申明概率是确定常数", () => {
     const data = panel("frequency");
     const thm = data.theorems.find((t) => t.name.includes("频率稳定性"))!;
-    expect(thm.latex).toContain("n \\to \\infty");
+    expect(thm.latex).toContain("P(A) = \\frac{n(A)}{n(\\Omega)}");
+    expect(thm.latex).not.toContain("n \\to \\infty");
     expect(thm.note).toContain("确定常数");
   });
 

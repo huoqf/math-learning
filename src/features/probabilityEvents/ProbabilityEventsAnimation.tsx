@@ -26,6 +26,7 @@ import {
   filterDiceEvents,
   type DiceEventPreset,
 } from "@/math/probabilityEvents";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 export const ProbabilityEventsAnimation: React.FC = () => {
   // 模式控制：连续文氏图测度 vs 离散点阵骰子
@@ -194,9 +195,24 @@ export const ProbabilityEventsAnimation: React.FC = () => {
       };
     }
 
+    const opHintMap: Record<ProbabilityEventsParams["highlightOp"], string> = {
+      none: "",
+      union: "（当前聚焦高亮点并集 $A \\cup B$ 区域）",
+      intersection: "（当前聚焦高亮交集 $A \\cap B$ 区域）",
+      onlyA: "（当前聚焦高亮差事件 $A - B$ 区域）",
+      onlyB: "（当前聚焦高亮差事件 $B - A$ 区域）",
+      notA: "（当前聚焦高亮对立事件 $\\overline{A}$ 区域）",
+    };
+    const opSuffix = opHintMap[params.highlightOp] ?? "";
+
     // 依赖中保留 params.highlightOp：确保事件运算聚焦切换时 TipCard 同步响应（项目纪律 left/tipcard-secondary-sync）
+    if (opSuffix && tipProps) {
+      return {
+        ...tipProps,
+        question: `${tipProps.question}${opSuffix}`,
+      };
+    }
     return tipProps;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeMode,
     tipProps,
@@ -333,22 +349,22 @@ export const ProbabilityEventsAnimation: React.FC = () => {
     if (activeMode === "venn") {
       return [
         {
-          label: `\\text{事件 } A: P(A) = ${vennRes.pA.toFixed(2)}`,
+          label: `\\text{事件 } A: P(A) = ${formatMathNumber(vennRes.pA)}`,
           color: MATH_COLORS.paramPrimary,
           style: "line" as const,
         },
         {
-          label: `\\text{事件 } B: P(B) = ${vennRes.pB.toFixed(2)}`,
+          label: `\\text{事件 } B: P(B) = ${formatMathNumber(vennRes.pB)}`,
           color: MATH_COLORS.paramSecondary,
           style: "line" as const,
         },
         {
-          label: `\\text{交事件 } A \\cap B: P(A \\cap B) = ${vennRes.pIntersection.toFixed(2)}`,
+          label: `\\text{交事件 } A \\cap B: P(A \\cap B) = ${formatMathNumber(vennRes.pIntersection)}`,
           color: MATH_COLORS.paramTertiary,
           style: "line" as const,
         },
         {
-          label: `\\text{并事件 } A \\cup B: P(A \\cup B) = ${vennRes.pUnion.toFixed(2)}`,
+          label: `\\text{并事件 } A \\cup B: P(A \\cup B) = ${formatMathNumber(vennRes.pUnion)}`,
           color: MATH_COLORS.primary,
           style: "line" as const,
         },
@@ -508,6 +524,7 @@ export const ProbabilityEventsAnimation: React.FC = () => {
           theorems={mathPanelData.theorems}
           gaokaoPoints={mathPanelData.gaokaoPoints}
           warnings={mathPanelData.warnings}
+          examAnchor={mathPanelData.examAnchor}
           mnemonic={mathPanelData.mnemonic}
         />
       }

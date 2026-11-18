@@ -19,10 +19,15 @@ import {
   type ProbabilityIndependenceParams,
   type ProbabilityIndependenceScenarioKey,
 } from "@/data/registries/probabilityIndependence";
-import { buildProbabilityIndependencePanel } from "@/data/builders/probabilityIndependence";
+import { buildMathQuantities } from "@/data/mathQuantities";
 import { ProbabilityIndependenceScene } from "./components/ProbabilityIndependenceScene";
 import { SceneLegend } from "@/components/Math";
-import type { DiscreteDiceEventKey } from "@/math/probabilityIndependence";
+import {
+  calculateDiscreteDiceEvents,
+  calculateIndependenceMeasure,
+  type DiscreteDiceEventKey,
+} from "@/math/probabilityIndependence";
+import { formatMathNumber } from "@/utils/mathFormat";
 
 const MODE_TABS = [
   { key: "venn", label: "连续概率测度" },
@@ -72,6 +77,47 @@ export const ProbabilityIndependenceAnimation: React.FC = () => {
     params,
     onParamsChange: setParams,
   });
+
+  // 自由探究及骰子自由模式下按实时参数/事件 A, B 特化 TipCard 题设导引
+  const activeTipProps = useMemo(() => {
+    if (!tipProps) return undefined;
+    if (activePreset === "free_explore") {
+      const vennRes = calculateIndependenceMeasure(
+        params.pA,
+        params.pB,
+        params.overlapRatio,
+      );
+      const statusText = vennRes.isIndependent
+        ? "满足 $P(AB) = P(A)P(B)$（两事件相互独立）"
+        : vennRes.isMutuallyExclusive
+          ? "交集为 $0$，处于互斥但不独立状态"
+          : "处于相交但非独立（概率相关）状态";
+      return {
+        ...tipProps,
+        condition: `自由测度设定：$P(A) = ${formatMathNumber(vennRes.pA)}$，$P(B) = ${formatMathNumber(vennRes.pB)}$，当前积事件概率 $P(AB) = ${formatMathNumber(vennRes.pAB)}$，乘积基准 $P(A)P(B) = ${formatMathNumber(vennRes.pA * vennRes.pB)}$（${statusText}）。`,
+        question: `(1) 调节滑块使 $P(AB)$ 对齐独立乘积基准；(2) 对比条件概率 $P(B|A) = ${vennRes.pConditionalBGivenA !== null ? formatMathNumber(vennRes.pConditionalBGivenA) : "\\text{未定义}"}$ 与 $P(B) = ${formatMathNumber(vennRes.pB)}$，验证两柱齐平等价性。`,
+      };
+    }
+    if (activePreset !== "dice_free") return tipProps;
+
+    const diceRes = calculateDiscreteDiceEvents(
+      params.dicePresetA,
+      params.dicePresetB,
+    );
+    return {
+      ...tipProps,
+      condition: `抛掷均匀骰子 $\\Omega = \\{1,2,3,4,5,6\\}$：当前设定事件 $A$ 为「${diceRes.eventA.name}」$\\{${diceRes.outcomesA.join(",")}\\}$ ($P(A)=${formatMathNumber(diceRes.pA)}$)，事件 $B$ 为「${diceRes.eventB.name}」$\\{${diceRes.outcomesB.join(",")}\\}$ ($P(B)=${formatMathNumber(diceRes.pB)}$)。`,
+      question: `交集 $A \\cap B = \\{${diceRes.intersectionOutcomes.length > 0 ? diceRes.intersectionOutcomes.join(",") : "\\varnothing"}\\}$，比较 $P(AB) = ${diceRes.intersectionOutcomes.length}/6$ 与 $P(A)P(B) = ${diceRes.outcomesA.length * diceRes.outcomesB.length}/36$，判定 $A$ 与 $B$ 是互斥、相关还是相互独立？`,
+    };
+  }, [
+    tipProps,
+    activePreset,
+    params.pA,
+    params.pB,
+    params.overlapRatio,
+    params.dicePresetA,
+    params.dicePresetB,
+  ]);
 
   // 视口与缩放解构 (840×650 full preset)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -131,10 +177,12 @@ export const ProbabilityIndependenceAnimation: React.FC = () => {
 
   // 右屏数据实时组装
   const mathPanelData = useMemo(() => {
-    return buildProbabilityIndependencePanel(
-      params as unknown as Record<string, unknown>,
+    return buildMathQuantities(
+      "anim-probability-independence",
+      params as unknown as Record<string, number>,
+      { scenarioKey: activePreset },
     );
-  }, [params]);
+  }, [params, activePreset]);
 
   // 中屏图例
   const legendItems = useMemo(
@@ -216,6 +264,11 @@ export const ProbabilityIndependenceAnimation: React.FC = () => {
               <ParamControl
                 params={paramConfigs}
                 onParamChange={handleParamChange}
+                disabled={
+                  isParamLocked("pA") ||
+                  isParamLocked("pB") ||
+                  isParamLocked("overlapRatio")
+                }
               />
             </LeftPanelSection>
           )}
@@ -241,7 +294,7 @@ export const ProbabilityIndependenceAnimation: React.FC = () => {
           )}
 
           {/* 题设导引卡片 */}
-          <TipCard {...tipProps} />
+          {activeTipProps && <TipCard {...activeTipProps} />}
         </LeftPanel>
       }
       center={
@@ -280,6 +333,7 @@ export const ProbabilityIndependenceAnimation: React.FC = () => {
           theorems={mathPanelData.theorems}
           gaokaoPoints={mathPanelData.gaokaoPoints}
           warnings={mathPanelData.warnings}
+          examAnchor={mathPanelData.examAnchor}
           mnemonic={mathPanelData.mnemonic}
         />
       }

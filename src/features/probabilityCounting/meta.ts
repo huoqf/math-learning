@@ -10,6 +10,10 @@ export const probabilityCountingNode: KnowledgeNode = {
   animationIds: ["anim-probability-counting"],
   prerequisites: [],
   route: "/probability-counting",
+  gaokaoTopic: "probability_statistics",
+  questionCategory: "foundation",
+  examMethod: "分类加法分步乘法与二项式通项赋值",
+  examWeight: 4,
 };
 
 export const probabilityCountingLoader = () =>

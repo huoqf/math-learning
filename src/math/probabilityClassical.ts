@@ -769,6 +769,7 @@ function computeGaokaoVolunteer(targetEvent: string): ClassicalMathResult {
 
   const points: ClassicalSamplePoint[] = [];
   const matchedLabels: string[] = [];
+  const leafNodesByFirst = new Map<string, ClassicalTreeNode[]>();
   let eventCount = 0;
 
   let eventName = "至少有 $1$ 名女生";
@@ -836,9 +837,57 @@ function computeGaokaoVolunteer(targetEvent: string): ClassicalMathResult {
         isEvent: isMatch,
         tooltip: `组员: ${m1.label} 与 ${m2.label} (女生数: ${girlCount})`,
       });
+      const stepChoices = members.length - 1 - i;
+      const list = leafNodesByFirst.get(m1.id) ?? [];
+      list.push({
+        id: `vol-leaf-${m1.id}-${m2.id}`,
+        label: `(${m1.label}, ${m2.label})`,
+        depth: 2,
+        isEvent: isMatch,
+        prob: 0.1,
+        branchProb: 1 / stepChoices,
+        branchProbText: "1 组 (1/10)",
+        pathProbText: "1/10",
+        parentId: `vol-step1-${m1.id}`,
+        childrenIds: [],
+      });
+      leafNodesByFirst.set(m1.id, list);
       idx++;
     }
   }
+
+  const step1Nodes: ClassicalTreeNode[] = [];
+  const allLeafNodes: ClassicalTreeNode[] = [];
+  for (let i = 0; i < members.length - 1; i++) {
+    const m1 = members[i];
+    const children = leafNodesByFirst.get(m1.id) ?? [];
+    const hasMatch = children.some((c) => c.isEvent);
+    step1Nodes.push({
+      id: `vol-step1-${m1.id}`,
+      label: m1.label,
+      depth: 1,
+      isEvent: hasMatch,
+      prob: children.length / 10,
+      branchProb: children.length / 10,
+      branchProbText: `含${children.length}组`,
+      parentId: "root",
+      childrenIds: children.map((c) => c.id),
+    });
+    allLeafNodes.push(...children);
+  }
+
+  const treeNodes: ClassicalTreeNode[] = [
+    {
+      id: "root",
+      label: "志愿选人",
+      depth: 0,
+      isEvent: true,
+      prob: 1,
+      childrenIds: step1Nodes.map((n) => n.id),
+    },
+    ...step1Nodes,
+    ...allLeafNodes,
+  ];
 
   const totalCount = 10;
   const prob = eventCount / totalCount;
@@ -857,6 +906,7 @@ function computeGaokaoVolunteer(targetEvent: string): ClassicalMathResult {
     complementProbability: compCount / totalCount,
     complementFractionLatex: formatReducedFractionLatex(compCount, totalCount),
     samplePoints: points,
+    treeNodes,
     isEquiprobable: true,
     eventName,
     eventDescription,

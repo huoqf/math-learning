@@ -87,6 +87,7 @@ export const PROBABILITY_INDEPENDENCE_SCENARIOS: Record<
       dicePresetB: "le4",
       activeMode: "venn",
     },
+    lockedParamKeys: ["pA", "pB", "overlapRatio"],
   },
   exclusive_model: {
     id: "exclusive_model",
@@ -106,6 +107,7 @@ export const PROBABILITY_INDEPENDENCE_SCENARIOS: Record<
       dicePresetB: "odd",
       activeMode: "venn",
     },
+    lockedParamKeys: ["pA", "pB", "overlapRatio"],
   },
   conditional_test: {
     id: "conditional_test",
@@ -125,6 +127,7 @@ export const PROBABILITY_INDEPENDENCE_SCENARIOS: Record<
       dicePresetB: "le4",
       activeMode: "venn",
     },
+    lockedParamKeys: ["pA", "pB", "overlapRatio"],
   },
   free_explore: {
     id: "free_explore",
@@ -162,17 +165,18 @@ export const PROBABILITY_INDEPENDENCE_SCENARIOS: Record<
       dicePresetB: "le4",
       activeMode: "discrete",
     },
+    lockedParamKeys: ["pA", "pB", "overlapRatio"],
   },
   dice_exclusive: {
     id: "dice_exclusive",
     name: "骰子互斥模型",
     badge: "离散等可能 · 对立与互斥",
     background:
-      "抛掷一枚质地均匀的骰子，考察偶数点事件 $A=\\{2,4,6\\}$ 与奇数点事件 $C=\\{1,3,5\\}$。",
+      "抛掷一枚质地均匀的骰子，考察偶数点事件 $A=\\{2,4,6\\}$ 与奇数点事件 $B=\\{1,3,5\\}$。",
     condition:
-      "事件 $A$ 与 $C$ 属于同一次试验中不可兼得的结果，且 $A \\cup C = \\Omega$。",
+      "事件 $A$ 与 $B$ 属于同一次试验中不可兼得的结果，且 $A \\cup B = \\Omega$。",
     question:
-      "求交集 $A \\cap C$ 及概率 $P(AC)$，判定 $A$ 与 $C$ 是互斥还是相互独立？",
+      "求交集 $A \\cap B$ 及概率 $P(AB)$，判定 $A$ 与 $B$ 是互斥还是相互独立？",
     presetParams: {
       pA: 0.5,
       pB: 0.5,
@@ -181,17 +185,18 @@ export const PROBABILITY_INDEPENDENCE_SCENARIOS: Record<
       dicePresetB: "odd",
       activeMode: "discrete",
     },
+    lockedParamKeys: ["pA", "pB", "overlapRatio"],
   },
   dice_correlated: {
     id: "dice_correlated",
     name: "骰子相交相关",
     badge: "离散等可能 · 相交不独立",
     background:
-      "抛掷一枚质地均匀的骰子，考察偶数点事件 $A=\\{2,4,6\\}$ 与质数点事件 $E=\\{2,3,5\\}$。",
+      "抛掷一枚质地均匀的骰子，考察偶数点事件 $A=\\{2,4,6\\}$ 与质数点事件 $B=\\{2,3,5\\}$。",
     condition:
-      "两事件仅有一个共有点 $2$，即 $A \\cap E = \\{2\\}$，积事件概率 $P(AE) = 1/6$。",
+      "两事件仅有一个共有点 $2$，即 $A \\cap B = \\{2\\}$，积事件概率 $P(AB) = 1/6$。",
     question:
-      "计算乘积 $P(A)P(E) = 1/4$，对比实际交集 $P(AE) = 1/6$，判定为何两事件相交却不独立？",
+      "计算乘积 $P(A)P(B) = 1/4$，对比实际交集 $P(AB) = 1/6$，判定为何两事件相交却不独立？",
     presetParams: {
       pA: 0.5,
       pB: 0.5,
@@ -200,6 +205,7 @@ export const PROBABILITY_INDEPENDENCE_SCENARIOS: Record<
       dicePresetB: "prime",
       activeMode: "discrete",
     },
+    lockedParamKeys: ["pA", "pB", "overlapRatio"],
   },
   dice_free: {
     id: "dice_free",

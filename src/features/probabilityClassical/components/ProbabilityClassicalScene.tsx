@@ -47,21 +47,30 @@ export const ProbabilityClassicalScene: React.FC<
     }
 
     if (modelType === "ball_draw") {
-      // 摸球样本点矩阵 (通常 20 或 25 点)
-      const cols = 5;
-      const rows = Math.ceil(samplePoints.length / cols);
-      const cellW = 88;
-      const cellH = 56;
-      const startX = 420 - (cols * cellW) / 2;
-      const startY = 325 - (rows * cellH) / 2 + 15;
+      // 从样本点有序解析全量球号列表 [R1..Rr, W1..Ww]，构建真正的 (R+W)×(R+W) 二维网格
+      const seen = new Set<string>();
+      const orderedBalls: string[] = [];
+      for (const pt of samplePoints) {
+        const b1 = String(pt.xVal ?? "");
+        if (b1 && !seen.has(b1)) {
+          seen.add(b1);
+          orderedBalls.push(b1);
+        }
+      }
+      const n = Math.max(2, orderedBalls.length);
+      const isWithoutReplace = samplePoints.length === n * (n - 1);
+      const cellSize = Math.min(64, Math.floor(390 / n));
+      const startX = 420 - (n * cellSize) / 2;
+      const startY = 335 - (n * cellSize) / 2 + 12;
       return {
-        rows,
-        cols,
-        cellW,
-        cellH,
+        rows: n,
+        cols: n,
+        cellSize,
         startX,
         startY,
-        type: "flow" as const,
+        orderedBalls,
+        isWithoutReplace,
+        type: "ballMatrix" as const,
       };
     }
 
@@ -81,7 +90,7 @@ export const ProbabilityClassicalScene: React.FC<
       startY,
       type: "flow" as const,
     };
-  }, [modelType, samplePoints.length]);
+  }, [modelType, samplePoints]);
 
   // 2. 树状图节点坐标布局 (Tree Diagram View)
   const treeLayout = useMemo(() => {
@@ -90,11 +99,15 @@ export const ProbabilityClassicalScene: React.FC<
     const maxDepth = Math.max(...treeNodes.map((n) => n.depth));
     const isThreeLevels = maxDepth === 3;
 
-    // 树状图分层 X 坐标
-    const depthX = isThreeLevels ? [120, 260, 420, 600] : [160, 360, 580];
+    // 树状图分层 X 坐标与自适应叶行距（兼容 4 叶、8 叶与志愿选人 10 叶）
+    const depthX = isThreeLevels ? [120, 260, 420, 600] : [155, 345, 560];
     const leafNodes = treeNodes.filter((n) => n.depth === maxDepth);
-    const startY = isThreeLevels ? 130 : 170;
-    const rowGap = isThreeLevels ? 56 : 84;
+    const leafCount = Math.max(1, leafNodes.length);
+    const availableHeight = isThreeLevels
+      ? Math.min(400, Math.max(220, (leafCount - 1) * 56))
+      : Math.min(430, Math.max(220, (leafCount - 1) * 84));
+    const rowGap = leafCount > 1 ? availableHeight / (leafCount - 1) : 0;
+    const startY = isThreeLevels ? 130 : Math.round(338 - availableHeight / 2);
 
     const nodeCoords = new Map<string, { x: number; y: number }>();
 
@@ -326,8 +339,194 @@ export const ProbabilityClassicalScene: React.FC<
                 );
               })}
             </g>
+          ) : matrixLayout.type === "ballMatrix" ? (
+            // (R+W) × (R+W) 摸球有序数对真实二维矩阵
+            <g>
+              <text
+                x={matrixLayout.startX - 38}
+                y={
+                  matrixLayout.startY +
+                  (matrixLayout.rows * matrixLayout.cellSize) / 2
+                }
+                textAnchor="middle"
+                fill={MATH_COLORS.paramPrimary}
+                fontSize={fontScale(12.5)}
+                fontWeight="bold"
+                transform={`rotate(-90, ${matrixLayout.startX - 38}, ${matrixLayout.startY + (matrixLayout.rows * matrixLayout.cellSize) / 2})`}
+              >
+                第 1 次取球
+              </text>
+              <text
+                x={
+                  matrixLayout.startX +
+                  (matrixLayout.cols * matrixLayout.cellSize) / 2
+                }
+                y={matrixLayout.startY - 24}
+                textAnchor="middle"
+                fill={MATH_COLORS.paramSecondary}
+                fontSize={fontScale(12.5)}
+                fontWeight="bold"
+              >
+                第 2 次取球（
+                {matrixLayout.isWithoutReplace
+                  ? "不放回：对角线不可取"
+                  : "有放回：含对角线"}
+                ）
+              </text>
+
+              {matrixLayout.orderedBalls.map((ballId, idx) => {
+                const isRed = ballId.startsWith("R");
+                const labelColor = isRed
+                  ? MATH_COLORS.paramPrimary
+                  : MATH_COLORS.labelTextLight;
+                const centerColX =
+                  matrixLayout.startX +
+                  idx * matrixLayout.cellSize +
+                  matrixLayout.cellSize / 2;
+                const centerRowY =
+                  matrixLayout.startY +
+                  idx * matrixLayout.cellSize +
+                  matrixLayout.cellSize / 2 +
+                  4;
+                return (
+                  <g key={`ball-axis-${ballId}`}>
+                    <text
+                      x={centerColX}
+                      y={matrixLayout.startY - 7}
+                      textAnchor="middle"
+                      fill={labelColor}
+                      fontSize={fontScale(11)}
+                      fontWeight="bold"
+                    >
+                      {ballId}
+                    </text>
+                    <text
+                      x={matrixLayout.startX - 9}
+                      y={centerRowY}
+                      textAnchor="end"
+                      fill={labelColor}
+                      fontSize={fontScale(11)}
+                      fontWeight="bold"
+                    >
+                      {ballId}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {matrixLayout.orderedBalls.map((rowBall, rIdx) =>
+                matrixLayout.orderedBalls.map((colBall, cIdx) => {
+                  const cellX =
+                    matrixLayout.startX + cIdx * matrixLayout.cellSize;
+                  const cellY =
+                    matrixLayout.startY + rIdx * matrixLayout.cellSize;
+                  const isDisabledDiag =
+                    matrixLayout.isWithoutReplace && rIdx === cIdx;
+                  const pt = isDisabledDiag
+                    ? undefined
+                    : samplePoints.find(
+                        (p) =>
+                          String(p.xVal) === rowBall &&
+                          String(p.yVal) === colBall,
+                      );
+
+                  if (isDisabledDiag || !pt) {
+                    return (
+                      <g
+                        key={`diag-${rowBall}-${colBall}`}
+                        transform={`translate(${cellX}, ${cellY})`}
+                      >
+                        <rect
+                          x={2}
+                          y={2}
+                          width={matrixLayout.cellSize - 4}
+                          height={matrixLayout.cellSize - 4}
+                          rx={6}
+                          fill={MATH_COLORS.gridSubtle}
+                          stroke={MATH_COLORS.axis}
+                          strokeWidth={1}
+                          strokeDasharray="3 2"
+                        />
+                        <line
+                          x1={6}
+                          y1={6}
+                          x2={matrixLayout.cellSize - 6}
+                          y2={matrixLayout.cellSize - 6}
+                          stroke={MATH_COLORS.axis}
+                          strokeWidth={1.2}
+                        />
+                        <text
+                          x={matrixLayout.cellSize / 2}
+                          y={matrixLayout.cellSize / 2 + 4}
+                          textAnchor="middle"
+                          fill={MATH_COLORS.textMuted}
+                          fontSize={fontScale(10)}
+                        >
+                          ×
+                        </text>
+                      </g>
+                    );
+                  }
+
+                  const isMatch = pt.isEvent;
+                  let cellFill = withAlpha(MATH_COLORS.poolBg, 0.6);
+                  let cellStroke = withAlpha(MATH_COLORS.textMuted, 0.25);
+                  let cellStrokeWidth = 1;
+                  let cellOpacity = 1.0;
+
+                  if (isMatch) {
+                    cellFill = withAlpha(MATH_COLORS.paramPrimary, 0.22);
+                    cellStroke = MATH_COLORS.paramPrimary;
+                    cellStrokeWidth = 2;
+                  } else if (isStep4) {
+                    cellFill = withAlpha(MATH_COLORS.paramSecondary, 0.16);
+                    cellStroke = withAlpha(MATH_COLORS.paramSecondary, 0.6);
+                    cellStrokeWidth = 1.5;
+                  } else if (isStep3) {
+                    cellOpacity = 0.35;
+                  }
+
+                  return (
+                    <g
+                      key={pt.id}
+                      transform={`translate(${cellX}, ${cellY})`}
+                      opacity={cellOpacity}
+                      className="cursor-pointer transition-all duration-200"
+                    >
+                      <rect
+                        x={2}
+                        y={2}
+                        width={matrixLayout.cellSize - 4}
+                        height={matrixLayout.cellSize - 4}
+                        rx={6}
+                        fill={cellFill}
+                        stroke={cellStroke}
+                        strokeWidth={cellStrokeWidth}
+                      />
+                      <text
+                        x={matrixLayout.cellSize / 2}
+                        y={matrixLayout.cellSize / 2 + 3}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill={
+                          isMatch
+                            ? MATH_COLORS.paramPrimary
+                            : isStep4
+                              ? MATH_COLORS.paramSecondary
+                              : MATH_COLORS.labelText
+                        }
+                        fontSize={fontScale(matrixLayout.rows >= 7 ? 9 : 10.5)}
+                        fontWeight={isMatch ? "bold" : "normal"}
+                      >
+                        {pt.label}
+                      </text>
+                    </g>
+                  );
+                }),
+              )}
+            </g>
           ) : (
-            // 摸球 / 选人组合流动卡片
+            // 选人组合流动卡片
             <g>
               {samplePoints.map((pt, idx) => {
                 const cols = matrixLayout.cols;
@@ -402,12 +601,14 @@ export const ProbabilityClassicalScene: React.FC<
               x={matrixLayout.startX - 8}
               y={matrixLayout.startY - 8}
               width={
-                matrixLayout.type === "grid6x6"
+                matrixLayout.type === "grid6x6" ||
+                matrixLayout.type === "ballMatrix"
                   ? matrixLayout.cols * matrixLayout.cellSize + 16
                   : matrixLayout.cols * (matrixLayout.cellW ?? 90) + 16
               }
               height={
-                matrixLayout.type === "grid6x6"
+                matrixLayout.type === "grid6x6" ||
+                matrixLayout.type === "ballMatrix"
                   ? matrixLayout.rows * matrixLayout.cellSize + 16
                   : matrixLayout.rows * (matrixLayout.cellH ?? 60) + 16
               }
@@ -588,13 +789,15 @@ export const ProbabilityClassicalScene: React.FC<
             }
 
             // 中间节点与叶子节点
-            const leafDisplayName = node.id
-              .replace("node-ball-", "")
-              .replace("node-", "")
-              .replace("RR", "(红, 红)")
-              .replace("RW", "(红, 白)")
-              .replace("WR", "(白, 红)")
-              .replace("WW", "(白, 白)");
+            const leafDisplayName = node.id.startsWith("vol-")
+              ? node.label
+              : node.id
+                  .replace("node-ball-", "")
+                  .replace("node-", "")
+                  .replace("RR", "(红, 红)")
+                  .replace("RW", "(红, 白)")
+                  .replace("WR", "(白, 红)")
+                  .replace("WW", "(白, 白)");
 
             return (
               <g
@@ -633,7 +836,7 @@ export const ProbabilityClassicalScene: React.FC<
                   fontSize={fontScale(11)}
                   fontWeight={isMatch ? "bold" : "normal"}
                 >
-                  {node.label}
+                  {node.id.startsWith("vol-leaf-") ? "配对" : node.label}
                 </text>
 
                 {/* 叶子节点右侧样本点总览与路径真实概率 */}

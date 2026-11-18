@@ -3,6 +3,7 @@ import {
   computeClassicalProbability,
   formatFractionLatex,
   formatReducedFractionLatex,
+  simulateClassicalFrequency,
 } from "../probabilityClassical";
 
 describe("古典概型纯数学计算层 (computeClassicalProbability)", () => {
@@ -101,5 +102,36 @@ describe("古典概型纯数学计算层 (computeClassicalProbability)", () => {
     expect(res.eventCount).toBe(7);
     expect(res.probability).toBeCloseTo(0.7);
     expect(res.reducedFractionLatex).toBe("\\frac{7}{10}");
+
+    // 志愿选人模型包含 1 + 4 + 10 = 15 个组合树状图节点，且命中 7 个叶子节点
+    expect(res.treeNodes?.length).toBe(15);
+    const leaves = res.treeNodes?.filter((n) => n.depth === 2) ?? [];
+    expect(leaves).toHaveLength(10);
+    expect(leaves.filter((l) => l.isEvent)).toHaveLength(7);
+  });
+
+  it("大样本频率稳定性仿真：确定性同种子可复现，采样轨道单调递增", () => {
+    const res = computeClassicalProbability({
+      modelType: "dice_two",
+      targetEvent: "sum_k",
+      targetSum: 7,
+    });
+    const sim1 = simulateClassicalFrequency(res, 1000, 20260101);
+    const sim2 = simulateClassicalFrequency(res, 1000, 20260101);
+    const simOther = simulateClassicalFrequency(res, 1000, 20260102);
+
+    expect(sim1.trials).toBe(1000);
+    expect(sim1.hits).toBe(sim2.hits);
+    expect(sim1.frequency).toBeCloseTo(sim1.hits / 1000, 6);
+    expect(sim1.absError).toBeCloseTo(
+      Math.abs(sim1.frequency - res.probability),
+      6,
+    );
+    expect(sim1.track.length).toBeGreaterThan(2);
+    expect(sim1.track[sim1.track.length - 1].trials).toBe(1000);
+    // 不同种子通常产生不同命中次数，至少结构合法
+    expect(simOther.trials).toBe(1000);
+    expect(simOther.frequency).toBeGreaterThanOrEqual(0);
+    expect(simOther.frequency).toBeLessThanOrEqual(1);
   });
 });

@@ -23,7 +23,7 @@ import {
   type ClassicalParams,
   type ClassicalScenarioKey,
 } from "@/data/registries/probabilityClassical";
-import { buildClassicalProbabilityPanel } from "@/data/builders/probabilityClassical";
+import { buildMathQuantities } from "@/data/mathQuantities";
 import { computeClassicalProbability } from "@/math/probabilityClassical";
 import { ProbabilityClassicalScene } from "./components/ProbabilityClassicalScene";
 import { ClassicalFrequencyScene } from "./components/ClassicalFrequencyScene";
@@ -47,65 +47,7 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
     onParamsChange: setParams,
   });
 
-  // 自由探究模式下根据当前试验模型动态特化题设三要素闭环
-  const activeTipProps = useMemo(() => {
-    if (!tipProps) return undefined;
-    if (activePreset !== "free_explore") return tipProps;
-
-    switch (params.modelType) {
-      case "ball_draw":
-        return {
-          ...tipProps,
-          background:
-            "摸球抽样试验：袋中有红球与白球若干，可自由调节两色球数与抽样方式（不放回或有放回）。",
-          condition: `当前设定：$${params.redBalls}$ 个红球与 $${params.whiteBalls}$ 个白球，${params.drawMode === "without_replacement" ? "不放回" : "有放回"}抽取 $2$ 球。样本空间总数为 $n(\\Omega) = ${params.drawMode === "without_replacement" ? (params.redBalls + params.whiteBalls) * (params.redBalls + params.whiteBalls - 1) : (params.redBalls + params.whiteBalls) ** 2}$。`,
-          question:
-            "(1) 计算两种抽样方式下的样本空间总数；(2) 证明目标事件概率与对立事件概率满足 $P(A) + P(\\overline{A}) = 1$。",
-        };
-      case "coin_toss":
-        return {
-          ...tipProps,
-          background:
-            "连续抛掷 $3$ 次均匀硬币试验：分步试验可自然展开为树状图分支路径。",
-          condition:
-            "由分步乘法计数原理，连续 $3$ 次抛掷构成的基本事件总数为 $n(\\Omega) = 2^3 = 8$。",
-          question:
-            "(1) 依据树状图列举目标事件包含的分步样本点；(2) 计算正面出现次数对应事件的概率 $P(A)$。",
-        };
-      case "gaokao_volunteer":
-        return {
-          ...tipProps,
-          background:
-            "志愿选人组合试验：从 $3$ 男 $2$ 女中随机选出 $2$ 名志愿者，属于无序组合抽样模型。",
-          condition:
-            "从 $5$ 名志愿者中无序抽取 $2$ 人，基本事件总数为 $n(\\Omega) = C_5^2 = 10$。",
-          question:
-            "(1) 规范写出无序抽取的全部等可能样本点；(2) 求解至少包含 $1$ 名女生的概率 $P(A)$。",
-        };
-      default:
-        return tipProps;
-    }
-  }, [
-    tipProps,
-    activePreset,
-    params.modelType,
-    params.redBalls,
-    params.whiteBalls,
-    params.drawMode,
-  ]);
-
-  // 画布视口配置 (full preset: 840x650)
-  const { containerRef, canvasSize, vp } = useAnimationViewport({
-    preset: CANVAS_PRESETS.full,
-  });
-
-  const scale = useSceneScale({
-    vp,
-    xRange: [-6, 6],
-    yRange: [-4.5, 4.5],
-  });
-
-  // 纯数学解算结果
+  // 纯数学解算结果（前置计算，供 activeTipProps 在自由探究下按当前目标事件特化）
   const mathRes = useMemo(() => {
     return computeClassicalProbability({
       modelType: params.modelType,
@@ -124,13 +66,81 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
     params.whiteBalls,
   ]);
 
+  // 自由探究模式下根据当前试验模型与目标事件动态特化题设三要素闭环
+  const activeTipProps = useMemo(() => {
+    if (!tipProps) return undefined;
+    if (activePreset !== "free_explore") return tipProps;
+
+    const cleanEvent = mathRes.eventName;
+    switch (params.modelType) {
+      case "ball_draw":
+        return {
+          ...tipProps,
+          background:
+            "摸球抽样试验：袋中有红球与白球若干，可自由调节两色球数与抽样方式（不放回或有放回）。",
+          condition: `当前设定：$${params.redBalls}$ 个红球与 $${params.whiteBalls}$ 个白球，${params.drawMode === "without_replacement" ? "不放回" : "有放回"}抽取 $2$ 球。样本空间总数为 $n(\\Omega) = ${mathRes.totalCount}$，目标事件 $A$ 为「${cleanEvent}」。`,
+          question: `(1) 区分不放回 $A_N^2$ 与有放回 $N^2$ 下的样本总数；(2) 求事件「${cleanEvent}」的概率，并验证 $P(A) + P(\\overline{A}) = 1$。`,
+        };
+      case "coin_toss":
+        return {
+          ...tipProps,
+          background:
+            "连续抛掷 $3$ 次均匀硬币试验：分步试验可自然展开为树状图分支路径。",
+          condition: `由分步乘法计数原理，样本空间基本事件总数为 $n(\\Omega) = 2^3 = 8$，当前目标事件 $A$ 为「${cleanEvent}」。`,
+          question: `(1) 依据树状图列举事件「${cleanEvent}」包含的分步路径；(2) 计算概率 $P(A) = ${mathRes.fractionLatex}$。`,
+        };
+      case "gaokao_volunteer":
+        return {
+          ...tipProps,
+          background:
+            "志愿选人组合试验：从 $3$ 男 $2$ 女中随机选出 $2$ 名志愿者，属于无序组合抽样模型。",
+          condition: `从 $5$ 名志愿者中无序抽取 $2$ 人，基本事件总数为 $n(\\Omega) = C_5^2 = 10$，当前目标事件 $A$ 为「${cleanEvent}」。`,
+          question: `(1) 规范写出无序抽取的全部等可能样本点；(2) 计算事件「${cleanEvent}」的概率 $P(A)$。`,
+        };
+      case "dice_two":
+      default:
+        return {
+          ...tipProps,
+          background:
+            "经典随机试验探究：两枚均匀骰子同时掷出，可直观对应 $6 \\times 6$ 二维样本空间列表法。",
+          condition: `样本点为有序数对 $(i, j)$，共 $n(\\Omega) = 36$ 个等可能基本事件，当前探究事件 $A$ 为「${cleanEvent}」。`,
+          question: `(1) 在二维网格中筛选出满足「${cleanEvent}」的格点；(2) 求 $P(A)$ 并分析为何点数和本身不等可能。`,
+        };
+    }
+  }, [
+    tipProps,
+    activePreset,
+    params.modelType,
+    params.redBalls,
+    params.whiteBalls,
+    params.drawMode,
+    mathRes.eventName,
+    mathRes.totalCount,
+    mathRes.fractionLatex,
+  ]);
+
+  // 画布视口配置 (full preset: 840x650)
+  const { containerRef, canvasSize, vp } = useAnimationViewport({
+    preset: CANVAS_PRESETS.full,
+  });
+
+  const scale = useSceneScale({
+    vp,
+    xRange: [-6, 6],
+    yRange: [-4.5, 4.5],
+  });
+
   // 右屏数据看板
   const panelData = useMemo(() => {
-    return buildClassicalProbabilityPanel(params, {
-      activeView: params.activeView,
-      scenarioKey: activePreset,
-      focusStep: currentStep,
-    });
+    return buildMathQuantities(
+      "anim-probability-classical",
+      params as unknown as Record<string, number>,
+      {
+        activeView: params.activeView,
+        scenarioKey: activePreset,
+        focusStep: currentStep,
+      },
+    );
   }, [params, activePreset, currentStep]);
 
   // 中屏图例配置
@@ -139,17 +149,17 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
       {
         label: `目标事件 A (${mathRes.eventCount} 个基本事件)`,
         color: MATH_COLORS.paramPrimary,
-        shape: "circle",
+        style: "point",
       },
       {
         label: `样本空间 Ω 全体 (${mathRes.totalCount} 个等可能点)`,
         color: MATH_COLORS.primary,
-        shape: "square",
+        style: "area",
       },
       {
         label: `对立事件 Ā (${mathRes.complementCount} 个)`,
         color: MATH_COLORS.paramSecondary,
-        shape: "rect",
+        style: "area",
       },
     ];
   }, [mathRes.eventCount, mathRes.totalCount, mathRes.complementCount]);
@@ -267,12 +277,18 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
     [setParams],
   );
 
-  const handleParamChange = useCallback((key: string, value: number) => {
-    setParams((p: ClassicalParams) => ({
-      ...p,
-      [key]: value,
-    }));
-  }, []);
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      if (isParamLocked(key)) {
+        setActivePreset("free_explore");
+      }
+      setParams((p: ClassicalParams) => ({
+        ...p,
+        [key]: value,
+      }));
+    },
+    [isParamLocked],
+  );
 
   const diceParams = useMemo<ParamConfig[]>(() => {
     if (params.targetEvent === "sum_k" || params.targetEvent === "sum_ge_k") {
@@ -498,13 +514,25 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
             )}
           </LeftPanelSection>
 
-          {/* 大样本频率试验：试验次数 */}
+          {/* 大样本频率试验：试验次数与重抽控制 */}
           {params.activeView === "frequency" && (
             <LeftPanelSection title="大样本重复试验">
               <ParamControl
                 params={trialParams}
                 onParamChange={handleParamChange}
               />
+              <button
+                type="button"
+                onClick={() =>
+                  setParams((p: ClassicalParams) => ({
+                    ...p,
+                    simSeed: (p.simSeed ?? 20260101) + 1,
+                  }))
+                }
+                className="mt-2 w-full py-1.5 px-2.5 text-xs font-semibold rounded-md border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                重新随机抽样 (种子 #{params.simSeed ?? 20260101})
+              </button>
             </LeftPanelSection>
           )}
 
@@ -530,6 +558,7 @@ export const ProbabilityClassicalAnimation: React.FC = () => {
                 params={params}
                 scale={scale}
                 fontScale={canvasSize.font}
+                activeStep={currentStep}
               />
             ) : (
               <ProbabilityClassicalScene

@@ -14,7 +14,7 @@ describe("古典概型右屏看板生成器 (buildClassicalProbabilityPanel)", (
     expect(pA?.value).toContain("\\frac{1}{6}");
 
     expect(panel.theorems.length).toBe(4);
-    expect(panel.theorems.some((t) => t.name.includes("两大概征"))).toBe(true);
+    expect(panel.theorems.some((t) => t.name.includes("两大特征"))).toBe(true);
 
     expect(panel.gaokaoPoints?.length).toBe(2);
 
@@ -83,5 +83,26 @@ describe("古典概型右屏看板生成器 (buildClassicalProbabilityPanel)", (
     expect(step4?.latex).toBe(
       "P(A) = \\frac{n(A)}{n(\\Omega)} = \\frac{7}{10}",
     );
+  });
+
+  it("大样本频率视图不引入 \\lim 极限记号并输出频率与容差偏差", () => {
+    const freqPanel = buildClassicalProbabilityPanel(
+      {
+        ...DEFAULT_CLASSICAL_PARAMS,
+        activeView: "frequency",
+        trials: 1200,
+        simSeed: 20260101,
+      },
+      { activeView: "frequency" },
+    );
+
+    expect(freqPanel.quantities.some((q) => q.symbol === "f_n(A)")).toBe(true);
+    expect(freqPanel.quantities.some((q) => q.symbol === "\\Delta")).toBe(true);
+    const freqTheorem = freqPanel.theorems.find((t) =>
+      t.name.includes("频率与概率的关系"),
+    );
+    expect(freqTheorem).toBeDefined();
+    expect(freqTheorem?.latex).not.toContain("\\to \\infty");
+    expect(freqTheorem?.latex).not.toContain("\\lim");
   });
 });

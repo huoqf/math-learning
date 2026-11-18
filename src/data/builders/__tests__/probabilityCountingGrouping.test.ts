@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildProbabilityCountingPanel } from "@/data/builders/probabilityCounting";
+import { buildMathQuantities } from "@/data/mathQuantities";
+import { defaultParams } from "@/data/registries/probabilityCounting";
 
 /**
  * 均分模型右屏看板 · 退化态门禁。
@@ -69,5 +71,43 @@ describe("均分模型右屏 · 可整除帧不受影响", () => {
     expect(q.find((x) => x.symbol === "\\frac{\\prod C}{k!}")?.value).toBe(15);
     expect(data.warnings ?? []).toHaveLength(0);
     expect(data.reasoningSteps?.[2]?.latex).toContain("15");
+  });
+});
+
+describe("计数原理与二项式定理 · 全 9 组合分支与负系数格式门禁", () => {
+  const MODES: Array<"binomial" | "perm_comb" | "principles"> = [
+    "binomial",
+    "perm_comb",
+    "principles",
+  ];
+
+  for (const activeMode of MODES) {
+    for (const subMode of [0, 1, 2]) {
+      it(`(${activeMode}, subMode=${subMode}) 均返回完整看板与采分推导链`, () => {
+        const panel = buildMathQuantities(
+          "anim-probability-counting",
+          { ...defaultParams },
+          { activeMode, subMode },
+        );
+        expect(panel.quantities?.length ?? 0).toBeGreaterThan(0);
+        expect(panel.theorems?.length ?? 0).toBeGreaterThan(0);
+        expect(panel.reasoningSteps?.length ?? 0).toBeGreaterThanOrEqual(3);
+      });
+    }
+  }
+
+  it("二项式当 a=1, b=-1 时不输出 (1x + -1) 或乘法裸负数", () => {
+    for (const subMode of [0, 1, 2]) {
+      const panel = buildMathQuantities(
+        "anim-probability-counting",
+        { ...defaultParams, n: 4, k: 1, a: 1, b: -1, assignmentType: 1 },
+        { activeMode: "binomial", subMode },
+      );
+      const joined = JSON.stringify(panel);
+      expect(joined).not.toContain("1x");
+      expect(joined).not.toContain("+ -1");
+      expect(joined).not.toContain("+-1");
+      expect(joined).not.toContain("× -1");
+    }
   });
 });
