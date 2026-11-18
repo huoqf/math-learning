@@ -74,7 +74,7 @@ describe("probabilityBayes math module", () => {
     // 格式严谨性断言：杜绝 ((-0.50)) 双重括号缺陷
     expect(res.generalTermLatex).not.toContain("((");
     expect(res.generalTermText).not.toContain("((");
-    expect(res.generalTermLatex).toContain("(-0.50)^{n-1}");
+    expect(res.generalTermLatex).toContain("(-0.5)^{n-1}");
   });
 
   it("should handle lambda = -1 (pure oscillation, no steady state)", () => {
@@ -128,7 +128,7 @@ describe("probabilityBayes math module", () => {
     expect(res.gaokaoSteps.step4_generalTerm).toContain("常数列");
     expect(res.gaokaoSteps.step4_generalTerm).not.toContain("(0.000) \\cdot");
     expect(res.gaokaoSteps.step4_generalTerm).toContain(
-      "初始概率 $p_1 = 0.333$ 恰好等于不动点 $0.333$",
+      "初始概率 $p_1 = \\frac{1}{3}$ 恰好等于不动点 $t = \\frac{1}{3}$",
     );
   });
 
@@ -148,6 +148,9 @@ describe("probabilityBayes math module", () => {
     expect(res.steps[0].p1).toBe(0.9);
     expect(res.steps[1].p1).toBe(0.5);
     expect(res.steps[2].p1).toBe(0.5);
+    expect(res.gaokaoSteps.step3_geometric).not.toContain("为公比");
+    expect(res.gaokaoSteps.step3_geometric).toContain("退化为与 $p_n$ 无关");
+    expect(res.gaokaoSteps.step4_generalTerm).not.toContain("0^{n-1}");
   });
 
   it("should clamp maxSteps within [3, 15] range", () => {

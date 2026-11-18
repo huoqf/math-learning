@@ -7,12 +7,14 @@ interface BayesScreeningSceneProps {
   params: Record<string, number>;
   bayesPreset?: "screening" | "factory" | "survey" | "custom";
   fontScale: (v: number) => number;
+  activeStep?: number;
 }
 
 export function BayesScreeningScene({
   params,
   bayesPreset = "screening",
   fontScale,
+  activeStep,
 }: BayesScreeningSceneProps) {
   const bayesData = useMemo(() => {
     const pPriorD = params.pPriorD ?? 0.02;
@@ -36,12 +38,13 @@ export function BayesScreeningScene({
   const truePosCount = Math.round(sickCount * bayesData.pSensitivity);
   const falsePosCount = Math.round(healthyCount * bayesData.pFalsePositive);
 
-  // ---------------- 1. 左区：患病/次品点阵 (严格约束在卡片上半部) ----------------
+  // ---------------- 1. 左区：患病/次品点阵 (严格约束在卡片上半部，适配上限 200 人) ----------------
   const leftCard = { x: 45, y: 65, width: 195, height: 290 };
   const isSmallSick = sickCount <= 40;
-  const leftCols = isSmallSick ? 5 : 8;
-  const leftCellSize = isSmallSick ? 12 : 8.5;
-  const leftGap = isSmallSick ? 4.5 : 3;
+  const isDenseSick = sickCount > 80;
+  const leftCols = isSmallSick ? 5 : isDenseSick ? 14 : 8;
+  const leftCellSize = isSmallSick ? 12 : isDenseSick ? 7.5 : 8.5;
+  const leftGap = isSmallSick ? 4.5 : isDenseSick ? 2.5 : 3;
   const leftGridWidth = leftCols * (leftCellSize + leftGap) - leftGap;
   const leftStartX = leftCard.x + (leftCard.width - leftGridWidth) / 2;
   const leftStartY = leftCard.y + 36;
@@ -60,14 +63,14 @@ export function BayesScreeningScene({
     };
   });
 
-  // ---------------- 2. 右区：健康/合格点阵 (严格约束在卡片内部，绝对不溢出) ----------------
+  // ---------------- 2. 右区：健康/合格点阵 (严格约束在卡片内部，适配上限 999 人绝对不溢出) ----------------
   const rightCard = { x: 250, y: 65, width: 545, height: 290 };
-  const rightCols = 38; // 38 列
-  const rightCellSize = 7.5; // 点尺寸 7.5px
-  const rightGapX = 4.5; // X 间距
-  const rightGapY = 2.6; // Y 间距 (26 行 * 10.1px = 262px 范围，点阵高 180px)
-  const rightGridWidth = rightCols * (rightCellSize + rightGapX) - rightGapX; // 38 * 12 - 4.5 = 451.5px
-  const rightStartX = rightCard.x + (rightCard.width - rightGridWidth) / 2; // 居中
+  const rightCols = 42; // 42 列 × 最多 24 行 = 1008 格，高仅 181px，严守底栏上方边界
+  const rightCellSize = 6.0;
+  const rightGapX = 4.2;
+  const rightGapY = 1.6;
+  const rightGridWidth = rightCols * (rightCellSize + rightGapX) - rightGapX;
+  const rightStartX = rightCard.x + (rightCard.width - rightGridWidth) / 2;
   const rightStartY = rightCard.y + 36;
 
   const rightCells = Array.from({ length: healthyCount }).map((_, idx) => {
@@ -93,187 +96,193 @@ export function BayesScreeningScene({
   const theoreticalPosteriorPercent = bayesData.pPosteriorD * 100;
   const latticeGap = Math.abs(posteriorPercent - theoreticalPosteriorPercent);
 
+  const opStep1 = activeStep === undefined || activeStep === 1 ? 1 : 0.3;
+  const opStep2 = activeStep === undefined || activeStep === 2 ? 1 : 0.3;
+  const opStep3 = activeStep === undefined || activeStep === 3 ? 1 : 0.3;
+
   return (
     <g>
-      {/* ─── 画布大标题 ─── */}
-      <text
-        x={45}
-        y={46}
-        fontSize={fontScale(15.5)}
-        fontWeight="bold"
-        fill={MATH_COLORS.labelText}
-      >
-        1000 {isFactory ? "件零件质检模拟" : "人群体样本诊断模拟"} (先验
-        {isFactory ? "次品率" : "患病基率"} P({targetSymbol}) ={" "}
-        {formatMathNumber(bayesData.pPriorD * 100)}%)
-      </text>
-
-      {/* ================= 左区：患病/次品组卡片 ================= */}
-      <g>
-        <rect
-          x={leftCard.x}
-          y={leftCard.y}
-          width={leftCard.width}
-          height={leftCard.height}
-          rx={12}
-          fill={withAlpha(MATH_COLORS.paramPrimary, 0.04)}
-          stroke={MATH_COLORS.paramPrimary}
-          strokeWidth={1.5}
-        />
+      <g opacity={opStep1}>
+        {/* ─── 画布大标题 ─── */}
         <text
-          x={leftCard.x + 14}
-          y={leftCard.y + 24}
-          fontSize={fontScale(13)}
-          fontWeight="bold"
-          fill={MATH_COLORS.paramPrimary}
-        >
-          {group1Title}: {sickCount} 人 (
-          {formatMathNumber(bayesData.pPriorD * 100)}
-          %)
-        </text>
-
-        {/* 患病点阵 */}
-        {leftCells.map((c, i) => (
-          <rect
-            key={`left-${i}`}
-            x={c.x}
-            y={c.y}
-            width={leftCellSize}
-            height={leftCellSize}
-            rx={2}
-            fill={c.fill}
-          />
-        ))}
-
-        {/* 底部独立图例与统计区（固定在卡片底部，绝对不与点阵重叠） */}
-        <g
-          transform={`translate(${leftCard.x + 12}, ${leftCard.y + leftCard.height - 68})`}
-        >
-          <rect
-            x={0}
-            y={0}
-            width={leftCard.width - 24}
-            height={56}
-            rx={6}
-            fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
-          />
-          <rect
-            x={10}
-            y={10}
-            width={9}
-            height={9}
-            rx={2}
-            fill={MATH_COLORS.paramPrimary}
-          />
-          <text
-            x={24}
-            y={18}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramPrimary}
-          >
-            {truePosLabel}: {truePosCount} 人
-          </text>
-
-          <rect
-            x={10}
-            y={30}
-            width={9}
-            height={9}
-            rx={2}
-            fill={withAlpha(MATH_COLORS.axis, 0.4)}
-          />
-          <text
-            x={24}
-            y={38}
-            fontSize={fontScale(11)}
-            fill={MATH_COLORS.labelTextLight}
-          >
-            {isFactory ? "次品漏检" : "患病漏诊"}: {sickCount - truePosCount} 人
-          </text>
-        </g>
-      </g>
-
-      {/* ================= 右区：健康/合格组卡片 ================= */}
-      <g>
-        <rect
-          x={rightCard.x}
-          y={rightCard.y}
-          width={rightCard.width}
-          height={rightCard.height}
-          rx={12}
-          fill={withAlpha(MATH_COLORS.axis, 0.04)}
-          stroke={MATH_COLORS.axis}
-          strokeWidth={1.5}
-        />
-        <text
-          x={rightCard.x + 16}
-          y={rightCard.y + 24}
-          fontSize={fontScale(13)}
+          x={45}
+          y={46}
+          fontSize={fontScale(15.5)}
           fontWeight="bold"
           fill={MATH_COLORS.labelText}
         >
-          {group2Title}: {healthyCount} 人 (
-          {formatMathNumber((1 - bayesData.pPriorD) * 100)}%)
+          1000 {isFactory ? "件零件质检模拟" : "人群体样本诊断模拟"} (先验
+          {isFactory ? "次品率" : "患病基率"} P({targetSymbol}) ={" "}
+          {formatMathNumber(bayesData.pPriorD * 100)}%)
         </text>
 
-        {/* 健康点阵 */}
-        {rightCells.map((c, i) => (
+        {/* ================= 左区：患病/次品组卡片 ================= */}
+        <g>
           <rect
-            key={`right-${i}`}
-            x={c.x}
-            y={c.y}
-            width={rightCellSize}
-            height={rightCellSize}
-            rx={1.5}
-            fill={c.fill}
-          />
-        ))}
-
-        {/* 底部独立图例区（固定在卡片底部，绝对不与点阵重叠） */}
-        <g
-          transform={`translate(${rightCard.x + 16}, ${rightCard.y + rightCard.height - 34})`}
-        >
-          <rect
-            x={0}
-            y={0}
-            width={10}
-            height={10}
-            rx={2}
-            fill={MATH_COLORS.paramSecondary}
+            x={leftCard.x}
+            y={leftCard.y}
+            width={leftCard.width}
+            height={leftCard.height}
+            rx={12}
+            fill={withAlpha(MATH_COLORS.paramPrimary, 0.04)}
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={1.5}
           />
           <text
-            x={16}
-            y={9}
-            fontSize={fontScale(11.5)}
+            x={leftCard.x + 14}
+            y={leftCard.y + 24}
+            fontSize={fontScale(13)}
             fontWeight="bold"
-            fill={MATH_COLORS.paramSecondary}
+            fill={MATH_COLORS.paramPrimary}
           >
-            {falsePosLabel}: {falsePosCount} 人 (误报率{" "}
-            {formatMathNumber(bayesData.pFalsePositive * 100)}%)
+            {group1Title}: {sickCount} 人 (
+            {formatMathNumber(bayesData.pPriorD * 100)}
+            %)
           </text>
 
+          {/* 患病点阵 */}
+          {leftCells.map((c, i) => (
+            <rect
+              key={`left-${i}`}
+              x={c.x}
+              y={c.y}
+              width={leftCellSize}
+              height={leftCellSize}
+              rx={2}
+              fill={c.fill}
+            />
+          ))}
+
+          {/* 底部独立图例与统计区（固定在卡片底部，绝对不与点阵重叠） */}
+          <g
+            transform={`translate(${leftCard.x + 12}, ${leftCard.y + leftCard.height - 68})`}
+          >
+            <rect
+              x={0}
+              y={0}
+              width={leftCard.width - 24}
+              height={56}
+              rx={6}
+              fill={withAlpha(MATH_COLORS.paramPrimary, 0.08)}
+            />
+            <rect
+              x={10}
+              y={10}
+              width={9}
+              height={9}
+              rx={2}
+              fill={MATH_COLORS.paramPrimary}
+            />
+            <text
+              x={24}
+              y={18}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramPrimary}
+            >
+              {truePosLabel}: {truePosCount} 人
+            </text>
+
+            <rect
+              x={10}
+              y={30}
+              width={9}
+              height={9}
+              rx={2}
+              fill={withAlpha(MATH_COLORS.axis, 0.4)}
+            />
+            <text
+              x={24}
+              y={38}
+              fontSize={fontScale(11)}
+              fill={MATH_COLORS.labelTextLight}
+            >
+              {isFactory ? "次品漏检" : "患病漏诊"}: {sickCount - truePosCount}{" "}
+              人
+            </text>
+          </g>
+        </g>
+
+        {/* ================= 右区：健康/合格组卡片 ================= */}
+        <g>
           <rect
-            x={230}
-            y={0}
-            width={10}
-            height={10}
-            rx={2}
-            fill={withAlpha(MATH_COLORS.axis, 0.3)}
+            x={rightCard.x}
+            y={rightCard.y}
+            width={rightCard.width}
+            height={rightCard.height}
+            rx={12}
+            fill={withAlpha(MATH_COLORS.axis, 0.04)}
+            stroke={MATH_COLORS.axis}
+            strokeWidth={1.5}
           />
           <text
-            x={246}
-            y={9}
-            fontSize={fontScale(11.5)}
-            fill={MATH_COLORS.labelTextLight}
+            x={rightCard.x + 16}
+            y={rightCard.y + 24}
+            fontSize={fontScale(13)}
+            fontWeight="bold"
+            fill={MATH_COLORS.labelText}
           >
-            {isFactory ? "合格正常 (-)" : "健康阴性 (-)"}:{" "}
-            {healthyCount - falsePosCount} 人
+            {group2Title}: {healthyCount} 人 (
+            {formatMathNumber((1 - bayesData.pPriorD) * 100)}%)
           </text>
+
+          {/* 健康点阵 */}
+          {rightCells.map((c, i) => (
+            <rect
+              key={`right-${i}`}
+              x={c.x}
+              y={c.y}
+              width={rightCellSize}
+              height={rightCellSize}
+              rx={1.5}
+              fill={c.fill}
+            />
+          ))}
+
+          {/* 底部独立图例区（固定在卡片底部，绝对不与点阵重叠） */}
+          <g
+            transform={`translate(${rightCard.x + 16}, ${rightCard.y + rightCard.height - 34})`}
+          >
+            <rect
+              x={0}
+              y={0}
+              width={10}
+              height={10}
+              rx={2}
+              fill={MATH_COLORS.paramSecondary}
+            />
+            <text
+              x={16}
+              y={9}
+              fontSize={fontScale(11.5)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+            >
+              {falsePosLabel}: {falsePosCount} 人 (误报率{" "}
+              {formatMathNumber(bayesData.pFalsePositive * 100)}%)
+            </text>
+
+            <rect
+              x={230}
+              y={0}
+              width={10}
+              height={10}
+              rx={2}
+              fill={withAlpha(MATH_COLORS.axis, 0.3)}
+            />
+            <text
+              x={246}
+              y={9}
+              fontSize={fontScale(11.5)}
+              fill={MATH_COLORS.labelTextLight}
+            >
+              {isFactory ? "合格正常 (-)" : "健康阴性 (-)"}:{" "}
+              {healthyCount - falsePosCount} 人
+            </text>
+          </g>
         </g>
       </g>
 
-      {/* ================= 逆向焦点：阳性汇聚卡片 (x: 45 ~ 475, y: 370 ~ 610) ================= */}
       {/* ================= 下半区：阳性群体逆向溯源与全概分解可视化 (x: 45 ~ 795, y: 370 ~ 605) ================= */}
       <g transform="translate(45, 370)">
         <rect
@@ -288,75 +297,77 @@ export function BayesScreeningScene({
         />
 
         {/* ─── 左区：检测阳性 (+) 群体构成分析 ─── */}
-        <text
-          x={16}
-          y={26}
-          fontSize={fontScale(14)}
-          fontWeight="bold"
-          fill={MATH_COLORS.derivative}
-        >
-          1. 阳性检出群体构成（点阵模拟，共 {totalPositives} 件/人）
-        </text>
-
-        {/* 比例条形图 */}
-        <g transform="translate(16, 42)">
-          <rect
-            x={0}
-            y={0}
-            width={340}
-            height={28}
-            rx={6}
-            fill={withAlpha(MATH_COLORS.axis, 0.15)}
-          />
-          {/* 真阳性条 */}
-          <rect
-            x={0}
-            y={0}
-            width={
-              totalPositives > 0 ? (340 * truePosCount) / totalPositives : 0
-            }
-            height={28}
-            rx={6}
-            fill={MATH_COLORS.paramPrimary}
-          />
-          {/* 假阳性条 */}
-          <rect
-            x={totalPositives > 0 ? (340 * truePosCount) / totalPositives : 0}
-            y={0}
-            width={
-              totalPositives > 0 ? (340 * falsePosCount) / totalPositives : 0
-            }
-            height={28}
-            rx={6}
-            fill={MATH_COLORS.paramSecondary}
-          />
-        </g>
-
-        {/* 图例数据 */}
-        <g transform="translate(16, 88)">
-          <circle cx={6} cy={6} r={5} fill={MATH_COLORS.paramPrimary} />
+        <g opacity={opStep2}>
           <text
             x={16}
-            y={10}
-            fontSize={fontScale(12)}
+            y={26}
+            fontSize={fontScale(14)}
             fontWeight="bold"
-            fill={MATH_COLORS.paramPrimary}
+            fill={MATH_COLORS.derivative}
           >
-            {truePosLabel} ({truePosCount}，占{" "}
-            {formatMathNumber(posteriorPercent)}%)
+            1. 阳性检出群体构成（点阵模拟，共 {totalPositives} 件/人）
           </text>
 
-          <circle cx={180} cy={6} r={5} fill={MATH_COLORS.paramSecondary} />
-          <text
-            x={190}
-            y={10}
-            fontSize={fontScale(12)}
-            fontWeight="bold"
-            fill={MATH_COLORS.paramSecondary}
-          >
-            {falsePosLabel} ({falsePosCount}，占{" "}
-            {formatMathNumber(100 - posteriorPercent)}%)
-          </text>
+          {/* 比例条形图 */}
+          <g transform="translate(16, 42)">
+            <rect
+              x={0}
+              y={0}
+              width={340}
+              height={28}
+              rx={6}
+              fill={withAlpha(MATH_COLORS.axis, 0.15)}
+            />
+            {/* 真阳性条 */}
+            <rect
+              x={0}
+              y={0}
+              width={
+                totalPositives > 0 ? (340 * truePosCount) / totalPositives : 0
+              }
+              height={28}
+              rx={6}
+              fill={MATH_COLORS.paramPrimary}
+            />
+            {/* 假阳性条 */}
+            <rect
+              x={totalPositives > 0 ? (340 * truePosCount) / totalPositives : 0}
+              y={0}
+              width={
+                totalPositives > 0 ? (340 * falsePosCount) / totalPositives : 0
+              }
+              height={28}
+              rx={6}
+              fill={MATH_COLORS.paramSecondary}
+            />
+          </g>
+
+          {/* 图例数据 */}
+          <g transform="translate(16, 88)">
+            <circle cx={6} cy={6} r={5} fill={MATH_COLORS.paramPrimary} />
+            <text
+              x={16}
+              y={10}
+              fontSize={fontScale(12)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramPrimary}
+            >
+              {truePosLabel} ({truePosCount}，占{" "}
+              {formatMathNumber(posteriorPercent)}%)
+            </text>
+
+            <circle cx={180} cy={6} r={5} fill={MATH_COLORS.paramSecondary} />
+            <text
+              x={190}
+              y={10}
+              fontSize={fontScale(12)}
+              fontWeight="bold"
+              fill={MATH_COLORS.paramSecondary}
+            >
+              {falsePosLabel} ({falsePosCount}，占{" "}
+              {formatMathNumber(100 - posteriorPercent)}%)
+            </text>
+          </g>
         </g>
 
         {/* 左右分割虚线 */}
@@ -371,7 +382,7 @@ export function BayesScreeningScene({
         />
 
         {/* ─── 右区：贝叶斯后验与全概分解算式 ─── */}
-        <g transform="translate(395, 0)">
+        <g transform="translate(395, 0)" opacity={opStep3}>
           <text
             x={0}
             y={26}

@@ -417,7 +417,9 @@ export function MarkovScene({
               fill={MATH_COLORS.labelTextLight}
               textAnchor="middle"
             >
-              公比 λ = p₁₁ - p₂₁ = {formatMathNumber(lambda)}
+              {Math.abs(lambda) < 1e-6
+                ? "转移系数 λ = p₁₁ - p₂₁ = 0 (一步到位)"
+                : `公比 λ = p₁₁ - p₂₁ = ${formatMathNumber(lambda)}`}
             </text>
           </g>
         </g>
@@ -527,6 +529,37 @@ export function MarkovScene({
 
           const stationaryY =
             plotOriginY + (1 - Math.max(0, Math.min(1, tVal))) * plotH;
+          const stationaryBoxY =
+            stationaryY < plotOriginY + 26 ? stationaryY + 5 : stationaryY - 22;
+
+          // Step 4 / 全览时的连续指数包络虚线 (仅当 0 < |λ| < 1 且初值偏离平衡点时绘制)
+          const showEnvelope =
+            (activeStep === 4 || activeStep === 0) &&
+            !markovData.isDegenerate &&
+            !markovData.isPureOscillating &&
+            Math.abs(lambda) > 1e-4 &&
+            Math.abs(diffInit) > 1e-4 &&
+            totalSteps > 1;
+          const buildEnvelopePath = (sign: 1 | -1) => {
+            const samples = 40;
+            return Array.from({ length: samples + 1 }, (_, i) => {
+              const frac = i / samples;
+              const xVal = 1 + frac * (totalSteps - 1);
+              const yProb = Math.max(
+                0,
+                Math.min(
+                  1,
+                  tVal +
+                    sign *
+                      Math.abs(diffInit) *
+                      Math.pow(Math.abs(lambda), xVal - 1),
+                ),
+              );
+              const px = plotOriginX + frac * plotW;
+              const py = plotOriginY + (1 - yProb) * plotH;
+              return `${i === 0 ? "M" : "L"} ${px.toFixed(1)} ${py.toFixed(1)}`;
+            }).join(" ");
+          };
 
           return (
             <g>
@@ -575,12 +608,12 @@ export function MarkovScene({
                 x2={plotOriginX + plotW}
                 y2={stationaryY}
                 stroke={MATH_COLORS.focusPoint}
-                strokeWidth={2}
+                strokeWidth={activeStep === 3 ? 2.6 : 2}
                 strokeDasharray="5 3"
               />
               <rect
                 x={plotOriginX + plotW - (markovData.isDegenerate ? 140 : 105)}
-                y={stationaryY - 22}
+                y={stationaryBoxY}
                 width={markovData.isDegenerate ? 135 : 100}
                 height={18}
                 rx={4}
@@ -590,7 +623,7 @@ export function MarkovScene({
               />
               <text
                 x={plotOriginX + plotW - (markovData.isDegenerate ? 72 : 55)}
-                y={stationaryY - 9}
+                y={stationaryBoxY + 13}
                 fontSize={fontScale(markovData.isDegenerate ? 8.5 : 9.5)}
                 fontWeight="bold"
                 fill={MATH_COLORS.focusPoint}
@@ -600,6 +633,26 @@ export function MarkovScene({
                   ? `恒等基准线 p₁ = ${formatMathProb(tVal)}`
                   : `平衡不动点 t = ${formatMathProb(tVal)}`}
               </text>
+
+              {/* Step 4 专属：指数衰减包络走廊虚线 */}
+              {showEnvelope && (
+                <>
+                  <path
+                    d={buildEnvelopePath(1)}
+                    fill="none"
+                    stroke={withAlpha(MATH_COLORS.derivative, 0.35)}
+                    strokeWidth={1.3}
+                    strokeDasharray="3 3"
+                  />
+                  <path
+                    d={buildEnvelopePath(-1)}
+                    fill="none"
+                    stroke={withAlpha(MATH_COLORS.derivative, 0.35)}
+                    strokeWidth={1.3}
+                    strokeDasharray="3 3"
+                  />
+                </>
+              )}
 
               {/* 连线轨迹折线 (显示跳跃形态) */}
               <path
@@ -622,22 +675,44 @@ export function MarkovScene({
               {steps.map((s) => {
                 const pt = getCoords(s);
                 const isCurrent = s.n === currStep;
+                const isStep3Mode =
+                  activeStep === 3 && !markovData.isDegenerate;
+                const showValueLabel =
+                  totalSteps < 10 ||
+                  s.n === 1 ||
+                  s.n === 2 ||
+                  isCurrent ||
+                  s.n === totalSteps;
 
                 return (
                   <g key={s.n}>
-                    {/* 到平衡线的垂直偏差段 (展现 |p_n - t| = |p_1 - t|·|λ|^{n-1}) */}
+                    {/* 到平衡线的垂直偏差段 (Step 3 时突出显示平移后的等比有向偏差 b_n = p_n - t) */}
                     <line
                       x1={pt.x}
                       y1={pt.y}
                       x2={pt.x}
                       y2={stationaryY}
                       stroke={
-                        isCurrent
-                          ? MATH_COLORS.focusPoint
-                          : withAlpha(MATH_COLORS.focusPoint, 0.3)
+                        isStep3Mode
+                          ? s.deltaToStationary >= 0
+                            ? MATH_COLORS.paramPrimary
+                            : MATH_COLORS.paramSecondary
+                          : isCurrent
+                            ? MATH_COLORS.focusPoint
+                            : withAlpha(MATH_COLORS.focusPoint, 0.3)
                       }
-                      strokeWidth={isCurrent ? 2.6 : 1.5}
-                      strokeDasharray={isCurrent ? "none" : "2 2"}
+                      strokeWidth={
+                        isStep3Mode
+                          ? isCurrent
+                            ? 4.2
+                            : 3
+                          : isCurrent
+                            ? 2.6
+                            : 1.5
+                      }
+                      strokeDasharray={
+                        isStep3Mode || isCurrent ? "none" : "2 2"
+                      }
                     />
 
                     {/* 投影到横轴的刻度垂线 */}
@@ -681,24 +756,75 @@ export function MarkovScene({
                       strokeWidth={isCurrent ? 2.5 : 1.5}
                     />
 
-                    {/* 点上方/下方数值标注 */}
-                    <text
-                      x={pt.x}
-                      y={pt.y < stationaryY ? pt.y - 8 : pt.y + 14}
-                      fontSize={fontScale(8.5)}
-                      fontWeight={isCurrent ? "bold" : "normal"}
-                      fill={
-                        isCurrent
-                          ? MATH_COLORS.focusPoint
-                          : MATH_COLORS.labelTextLight
-                      }
-                      textAnchor="middle"
-                    >
-                      {formatMathProb(s.p1)}
-                    </text>
+                    {/* 点上方/下方数值标注（大项数时自动抽稀防水平重叠） */}
+                    {showValueLabel && (
+                      <text
+                        x={pt.x}
+                        y={pt.y < stationaryY ? pt.y - 8 : pt.y + 14}
+                        fontSize={fontScale(8.5)}
+                        fontWeight={isCurrent ? "bold" : "normal"}
+                        fill={
+                          isCurrent
+                            ? MATH_COLORS.focusPoint
+                            : MATH_COLORS.labelTextLight
+                        }
+                        textAnchor="middle"
+                      >
+                        {formatMathProb(s.p1)}
+                      </text>
+                    )}
                   </g>
                 );
               })}
+
+              {/* Step 3 专属：等比缩放系数 × λ 指示弧 (b_curr → b_{curr+1}) */}
+              {activeStep === 3 &&
+                !markovData.isDegenerate &&
+                currStep < totalSteps &&
+                (() => {
+                  const sNext = steps.find((s) => s.n === currStep + 1);
+                  if (!sNext) return null;
+                  const pCur = getCoords(currentStepData);
+                  const pNext = getCoords(sNext);
+                  const midCurY = (pCur.y + stationaryY) / 2;
+                  const midNextY = (pNext.y + stationaryY) / 2;
+                  const arcCtrlX = (pCur.x + pNext.x) / 2;
+                  const arcCtrlY = Math.max(
+                    plotOriginY + 14,
+                    Math.min(midCurY, midNextY) - 26,
+                  );
+                  return (
+                    <g pointerEvents="none">
+                      <path
+                        d={`M ${pCur.x.toFixed(1)} ${midCurY.toFixed(1)} Q ${arcCtrlX.toFixed(1)} ${arcCtrlY.toFixed(1)} ${pNext.x.toFixed(1)} ${midNextY.toFixed(1)}`}
+                        fill="none"
+                        stroke={MATH_COLORS.answerStepFrame}
+                        strokeWidth={1.8}
+                        markerEnd="url(#m-arrow-function)"
+                      />
+                      <rect
+                        x={arcCtrlX - 36}
+                        y={Math.max(plotOriginY + 2, arcCtrlY - 11)}
+                        width={72}
+                        height={18}
+                        rx={9}
+                        fill={MATH_COLORS.white}
+                        stroke={MATH_COLORS.answerStepFrame}
+                        strokeWidth={1}
+                      />
+                      <text
+                        x={arcCtrlX}
+                        y={Math.max(plotOriginY + 2, arcCtrlY - 11) + 13}
+                        fontSize={fontScale(9)}
+                        fontWeight="bold"
+                        fill={MATH_COLORS.answerStepFrame}
+                        textAnchor="middle"
+                      >
+                        × λ ({formatMathNumber(lambda)})
+                      </text>
+                    </g>
+                  );
+                })()}
 
               {/* 当前项瞄准十字光标与浮动指示窗 */}
               {(() => {
@@ -815,7 +941,10 @@ export function MarkovScene({
             {lambdaStr}¹ ={" "}
             <tspan fontWeight="bold">{formatMathProb(p2General)}</tspan>
             <tspan fill={MATH_COLORS.derivative} fontWeight="bold">
-              {"  "}✓ 双路径计算值完全一致
+              {"  "}✓ 一致
+            </tspan>
+            <tspan fill={MATH_COLORS.labelText}>
+              {"  |  "}S_{currStep} = {formatMathProb(currentStepData.sumP1)}
             </tspan>
           </text>
         </g>

@@ -55,9 +55,10 @@ describe("四条采分链的分值与声明一致", () => {
 
   it("换场景预设后分值与声明仍同步（不是某一个 preset 的特例）", () => {
     for (const config of [
-      { scenario: "weather" },
-      { scenario: "defect" },
-      { scenario: "study" },
+      { scenarioKey: "pass_ball_3" },
+      { scenarioKey: "pass_ball_4" },
+      { scenarioKey: "urn_replace" },
+      { scenarioKey: "game_pingpong" },
     ]) {
       const data = panel(config);
       const steps = data.reasoningSteps ?? [];

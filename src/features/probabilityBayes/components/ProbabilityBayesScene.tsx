@@ -32,21 +32,21 @@ export function ProbabilityBayesScene({
       ? null
       : activeMode === "conditional"
         ? activeStep === 1
-          ? { x: 40, y: 38, width: 430, height: 538 }
+          ? { x: 40, y: 40, width: 430, height: 536 }
           : activeStep === 2
             ? { x: 482, y: 74, width: 326, height: 248 }
-            : { x: 482, y: 334, width: 326, height: 236 }
+            : { x: 482, y: 324, width: 326, height: 252 }
         : activeMode === "total_prob"
           ? activeStep === 1
-            ? { x: 40, y: 46, width: 372, height: 450 }
+            ? { x: 40, y: 36, width: 372, height: 460 }
             : activeStep === 2
-              ? { x: 430, y: 46, width: 372, height: 450 }
-              : { x: 40, y: 504, width: 762, height: 120 }
+              ? { x: 430, y: 36, width: 372, height: 460 }
+              : { x: 40, y: 502, width: 762, height: 122 }
           : activeStep === 1
-            ? { x: 40, y: 44, width: 760, height: 318 }
+            ? { x: 40, y: 24, width: 760, height: 338 }
             : activeStep === 2
-              ? { x: 40, y: 368, width: 382, height: 250 }
-              : { x: 424, y: 368, width: 376, height: 250 };
+              ? { x: 40, y: 366, width: 382, height: 244 }
+              : { x: 424, y: 366, width: 376, height: 244 };
 
   return (
     <g>
@@ -55,6 +55,7 @@ export function ProbabilityBayesScene({
           params={params}
           isZoomedToA={isZoomedToA}
           fontScale={fontScale}
+          activeStep={activeStep}
         />
       )}
       {activeMode === "total_prob" && (
@@ -62,6 +63,7 @@ export function ProbabilityBayesScene({
           params={params}
           totalScenario={totalScenario}
           fontScale={fontScale}
+          activeStep={activeStep}
         />
       )}
       {activeMode === "bayes" && (
@@ -69,6 +71,7 @@ export function ProbabilityBayesScene({
           params={params}
           bayesPreset={bayesPreset}
           fontScale={fontScale}
+          activeStep={activeStep}
         />
       )}
       {stepBox &&
@@ -82,8 +85,12 @@ export function ProbabilityBayesScene({
             ];
           const chipLabel = `第 ${stepInfo.step} / ${BAYES_ANSWER_STEPS.length} 步 · ${stepInfo.title}`;
           const chipW = Math.min(310, Math.max(190, chipLabel.length * 10.5));
-          const chipX = Math.max(40, Math.min(800 - chipW, stepBox.x + 10));
-          const chipY = Math.max(12, stepBox.y - 11);
+          // Step 1 时徽章贴右上边框放置，完全避开左半区顶部主标题
+          const chipX =
+            activeStep === 1
+              ? stepBox.x + stepBox.width - chipW - 8
+              : Math.max(40, Math.min(800 - chipW, stepBox.x + 10));
+          const chipY = Math.max(10, stepBox.y - 11);
 
           return (
             <g pointerEvents="none">

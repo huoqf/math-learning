@@ -91,7 +91,23 @@ export function ScenarioPassBall4({
         </g>
       ))}
 
-      {/* 传球弧线与回传概率 */}
+      {/* 甲向乙/丙/丁传出弧线（每条等概率 1/3） */}
+      <path
+        d={`M ${leftW / 2 - 26} 72 Q ${leftW / 2 - 68} 112 65 174`}
+        fill="none"
+        stroke={withAlpha(MATH_COLORS.paramPrimary, 0.55)}
+        strokeWidth={1.6}
+        markerEnd="url(#m-arrow-primary)"
+      />
+      <path
+        d={`M ${leftW / 2 + 26} 72 Q ${leftW / 2 + 68} 112 ${leftW - 65} 174`}
+        fill="none"
+        stroke={withAlpha(MATH_COLORS.paramPrimary, 0.55)}
+        strokeWidth={1.6}
+        markerEnd="url(#m-arrow-primary)"
+      />
+
+      {/* 回传甲中心箭线与白底保护标签（避免箭头直接穿字） */}
       <path
         d={`M ${leftW / 2} 176 L ${leftW / 2} 86`}
         fill="none"
@@ -99,23 +115,39 @@ export function ScenarioPassBall4({
         strokeWidth={2.2}
         markerEnd="url(#m-arrow-secondary)"
       />
+      <rect
+        x={leftW / 2 - 84}
+        y={96}
+        width={168}
+        height={16}
+        rx={4}
+        fill={withAlpha(MATH_COLORS.white, 0.92)}
+      />
       <text
-        x={leftW / 2 + 10}
-        y={132}
-        fontSize={fontScale(10)}
+        x={leftW / 2}
+        y={107}
+        fontSize={fontScale(9)}
+        fill={MATH_COLORS.paramPrimary}
+        textAnchor="middle"
+      >
+        甲必传另 3 人之一 (p₁₁ = 0)
+      </text>
+      <rect
+        x={leftW / 2 + 8}
+        y={119}
+        width={132}
+        height={18}
+        rx={4}
+        fill={withAlpha(MATH_COLORS.white, 0.92)}
+      />
+      <text
+        x={leftW / 2 + 12}
+        y={131}
+        fontSize={fontScale(9.5)}
         fontWeight="bold"
         fill={MATH_COLORS.paramSecondary}
       >
         回传甲 p₂₁ = 1/3 ≈ 0.333
-      </text>
-      <text
-        x={leftW / 2}
-        y={108}
-        fontSize={fontScale(9)}
-        fill={MATH_COLORS.labelTextLight}
-        textAnchor="middle"
-      >
-        甲必传给另外 3 人之一 (留存 p₁₁ = 0)
       </text>
       <text
         x={leftW / 2}

@@ -32,36 +32,36 @@ export function buildProbabilityBayesPanel(
       scenarioTheorems.push({
         name: "相互独立事件乘法公式 (Independence)",
         latex: `P(AB) = P(A)P(B) \\iff P(B|A) = P(B) \\quad (P(A) > 0)`,
-        condition: "事件 A 的发生对事件 B 的发生概率无影响",
+        condition: "事件 $A$ 的发生对事件 $B$ 的发生概率无影响",
         note: "条件概率等于无条件先验概率，几何上两圆相交比例与全集比例一致。",
         level: "core" as const,
       });
       scenarioGaokaoPoints.push({
-        text: "【新高考高频考点·独立性等价判定】四式等价：① P(AB)=P(A)P(B) ② P(B|A)=P(B) ③ P(A|B)=P(A) ④ P(~A~B)=P(~A)P(~B)。满足其一则全成立。",
+        text: "【新高考高频考点·独立性等价判定】四式等价：① $P(AB)=P(A)P(B)$ ② $P(B|A)=P(B)$ ③ $P(A|B)=P(A)$ ④ $P(\\overline{A}\\overline{B})=P(\\overline{A})P(\\overline{B})$。满足其一则全成立。",
         importance: "gaokao" as const,
       });
     } else if (condScenario === "exclusive") {
       scenarioTheorems.push({
         name: "互斥事件加法公式 (Mutual Exclusivity)",
         latex: `A \\cap B = \\emptyset \\implies P(AB) = 0 \\implies P(B|A) = 0`,
-        condition: "事件 A 与 B 不可能同时发生",
-        note: "两圆无公共交集区域，已知 A 发生后 B 绝不可能发生。",
+        condition: "事件 $A$ 与 $B$ 不可能同时发生",
+        note: "两圆无公共交集区域，已知 $A$ 发生后 $B$ 绝不可能发生。",
         level: "core" as const,
       });
       scenarioGaokaoPoints.push({
-        text: "【易错辨析·互斥 vs 独立】互斥是“不能同时发生”，独立是“互不影响”。若 P(A)>0 且 P(B)>0，则互斥事件必然不独立，独立事件必然不互斥！",
+        text: "【易错辨析·互斥 vs 独立】互斥是“不能同时发生”，独立是“互不影响”。若 $P(A)>0$ 且 $P(B)>0$，则互斥事件必然不独立，独立事件必然不互斥！",
         importance: "gaokao" as const,
       });
     } else if (condScenario === "correlated") {
       scenarioTheorems.push({
         name: "子集包含条件概率 (Subset Relation)",
         latex: `A \\subseteq B \\implies P(AB) = P(A) \\implies P(B|A) = 1.0`,
-        condition: "事件 A 是事件 B 的充分条件",
-        note: "集合 A 完全包含在集合 B 内部，已知 A 发生则 B 必然发生。",
+        condition: "事件 $A$ 是事件 $B$ 的充分条件",
+        note: "集合 $A$ 完全包含在集合 $B$ 内部，已知 $A$ 发生则 $B$ 必然发生。",
         level: "core" as const,
       });
       scenarioGaokaoPoints.push({
-        text: "【极值几何性质】当 A ⊆ B 时，条件概率 P(B|A) 达到理论最大值 1.0；当 B ⊆ A 时，P(A|B) = 1.0。",
+        text: "【极值几何性质】当 $A \\subseteq B$ 时，条件概率 $P(B|A)$ 达到理论最大值 $1.0$；当 $B \\subseteq A$ 时，$P(A|B) = 1.0$。",
         importance: "core" as const,
       });
     }
@@ -253,7 +253,7 @@ export function buildProbabilityBayesPanel(
             color: MATH_COLORS.functionTransformed,
           },
           {
-            label: "★ 全概逆解真实具有特征率 $p_real$",
+            label: "★ 全概逆解真实具有特征率 $p_{\\text{real}}$",
             symbol: "p_{\\text{real}}",
             value: warnerRes.isDegenerate
               ? "退化无法解出"
@@ -339,12 +339,12 @@ export function buildProbabilityBayesPanel(
       scenarioTheorems.push({
         name: "三车间次品全概模型 (Three-Partition Factory)",
         latex: `P(B) = P(A_1)P(B|A_1) + P(A_2)P(B|A_2) + P(A_3)P(B|A_3)`,
-        condition: "A₁, A₂, A₃ 为三个互斥生产车间，B 为产出次品",
+        condition: "$A_1, A_2, A_3$ 为三个互斥生产车间，$B$ 为产出次品",
         note: "总次品率等于各车间产量占比乘以该车间自身次品率的加权和。",
         level: "core" as const,
       });
       scenarioGaokaoPoints.push({
-        text: "【高考工业大题标准答题规范】① 设 $A_i$ 为“产品由第 $i$ 车间生产”，$B$ 为“抽到次品”；② 证明 $A₁, A₂, A₃$ 构成完备事件组；③ 写出全概公式并代入数值求和。",
+        text: "【高考工业大题标准答题规范】① 设 $A_i$ 为“产品由第 $i$ 车间生产”，$B$ 为“抽到次品”；② 证明 $A_1, A_2, A_3$ 构成完备事件组；③ 写出全概公式并代入数值求和。",
         importance: "gaokao" as const,
       });
     } else if (totalScenario === "balanced") {
@@ -428,6 +428,24 @@ export function buildProbabilityBayesPanel(
           label: "分支 3 贡献联合概率 P(A₃B)",
           symbol: "P(A_3 B)",
           value: res.partitions[2].pJoint.toFixed(4),
+          color: MATH_COLORS.paramTertiary,
+        },
+        {
+          label: "溯因后验：来自 $A_1$ 占比",
+          symbol: "P(A_1|B)",
+          value: `${(res.partitions[0].posterior * 100).toFixed(1)}%`,
+          color: MATH_COLORS.paramPrimary,
+        },
+        {
+          label: "溯因后验：来自 $A_2$ 占比",
+          symbol: "P(A_2|B)",
+          value: `${(res.partitions[1].posterior * 100).toFixed(1)}%`,
+          color: MATH_COLORS.paramSecondary,
+        },
+        {
+          label: "溯因后验：来自 $A_3$ 占比",
+          symbol: "P(A_3|B)",
+          value: `${(res.partitions[2].posterior * 100).toFixed(1)}%`,
           color: MATH_COLORS.paramTertiary,
         },
       ],

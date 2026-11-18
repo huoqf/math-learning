@@ -90,8 +90,11 @@ export function calculateConditionalProb(
   if (isDegenerate) {
     warningMsg =
       "已知事件 A 的概率 P(A) = 0，条件概率 P(B|A) 无意义（退化状态）";
-  } else if (clampedPAB > maxAB) {
+  } else if (pAB > maxAB + 1e-6) {
     warningMsg = "交集概率 P(AB) 不能超过 P(A) 与 P(B) 的最小值";
+  } else if (pAB < minAB - 1e-6) {
+    warningMsg =
+      "交集概率 P(AB) 低于全集下界 P(A) + P(B) - 1，已自动修正至可行域";
   }
 
   return {

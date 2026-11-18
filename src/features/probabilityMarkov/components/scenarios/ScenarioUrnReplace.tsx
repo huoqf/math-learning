@@ -190,7 +190,7 @@ export function ScenarioUrnReplace({
 
       {/* 顶置换箭头 */}
       <path
-        d={`M ${leftW - 164} 60 Q ${leftW / 2} 40 164 60`}
+        d={`M ${leftW - 164} 60 Q ${leftW / 2} 36 164 60`}
         fill="none"
         stroke={MATH_COLORS.paramSecondary}
         strokeWidth={2}
@@ -198,13 +198,33 @@ export function ScenarioUrnReplace({
       />
       <text
         x={leftW / 2}
-        y={38}
+        y={34}
         fontSize={fontScale(9.5)}
         fontWeight="bold"
         fill={MATH_COLORS.paramSecondary}
         textAnchor="middle"
       >
         摸出黑球以概率 p₂₁ 换入白球
+      </text>
+
+      {/* 底置换箭头：白转黑 1-p₁₁ */}
+      <path
+        d={`M 164 205 Q ${leftW / 2} 228 ${leftW - 164} 205`}
+        fill="none"
+        stroke={withAlpha(MATH_COLORS.function, 0.8)}
+        strokeWidth={1.8}
+        strokeDasharray="4 2"
+        markerEnd="url(#m-arrow-function)"
+      />
+      <text
+        x={leftW / 2}
+        y={234}
+        fontSize={fontScale(9)}
+        fontWeight="bold"
+        fill={MATH_COLORS.function}
+        textAnchor="middle"
+      >
+        摸白换黑概率 1-p₁₁ = {formatMathNumber(1 - p11)}
       </text>
     </g>
   );

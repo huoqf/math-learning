@@ -1,4 +1,4 @@
-import { MATH_COLORS } from "@/theme";
+import { MATH_COLORS, withAlpha } from "@/theme";
 import type { ScenarioVisualProps } from "./types";
 import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
@@ -77,26 +77,46 @@ export function ScenarioFreeExplore({
         </text>
       </g>
 
-      {/* 转移箭头：1→1 自保持 */}
+      {/* 左侧自环：1→1 自保持 */}
       <path
-        d={`M 125 75 Q ${leftW / 2} 45 ${leftW - 125} 75`}
+        d="M 55 68 C 12 42 12 148 55 122"
         fill="none"
         stroke={MATH_COLORS.paramPrimary}
         strokeWidth={2}
         markerEnd="url(#m-arrow-primary)"
       />
       <text
+        x={22}
+        y={34}
+        fontSize={fontScale(9.5)}
+        fontWeight="bold"
+        fill={MATH_COLORS.paramPrimary}
+        textAnchor="start"
+      >
+        自保持 p₁₁={formatMathNumber(p11)}
+      </text>
+
+      {/* 顶部跨状态弧：1→2 流出 */}
+      <path
+        d={`M 125 75 Q ${leftW / 2} 45 ${leftW - 125} 75`}
+        fill="none"
+        stroke={withAlpha(MATH_COLORS.paramPrimary, 0.75)}
+        strokeWidth={1.8}
+        strokeDasharray="4 2"
+        markerEnd="url(#m-arrow-primary)"
+      />
+      <text
         x={leftW / 2}
-        y={40}
-        fontSize={fontScale(10)}
+        y={42}
+        fontSize={fontScale(9.5)}
         fontWeight="bold"
         fill={MATH_COLORS.paramPrimary}
         textAnchor="middle"
       >
-        自保持转移率 p₁₁ = {formatMathNumber(p11)}
+        跨状态流出 1-p₁₁ = {formatMathNumber(1 - p11)}
       </text>
 
-      {/* 转移箭头：2→1 跨状态 */}
+      {/* 底部跨状态弧：2→1 流入 */}
       <path
         d={`M ${leftW - 125} 115 Q ${leftW / 2} 145 125 115`}
         fill="none"
@@ -106,13 +126,33 @@ export function ScenarioFreeExplore({
       />
       <text
         x={leftW / 2}
-        y={150}
-        fontSize={fontScale(10)}
+        y={152}
+        fontSize={fontScale(9.5)}
         fontWeight="bold"
         fill={MATH_COLORS.paramSecondary}
         textAnchor="middle"
       >
-        跨状态转移率 p₂₁ = {formatMathNumber(p21)}
+        跨状态转移 p₂₁ = {formatMathNumber(p21)}
+      </text>
+
+      {/* 右侧自环：2→2 自保持 */}
+      <path
+        d={`M ${leftW - 55} 68 C ${leftW - 12} 42 ${leftW - 12} 148 ${leftW - 55} 122`}
+        fill="none"
+        stroke={withAlpha(MATH_COLORS.paramSecondary, 0.75)}
+        strokeWidth={1.8}
+        strokeDasharray="4 2"
+        markerEnd="url(#m-arrow-secondary)"
+      />
+      <text
+        x={leftW - 22}
+        y={34}
+        fontSize={fontScale(9.5)}
+        fontWeight="bold"
+        fill={MATH_COLORS.paramSecondary}
+        textAnchor="end"
+      >
+        留存 1-p₂₁={formatMathNumber(1 - p21)}
       </text>
     </g>
   );

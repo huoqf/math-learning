@@ -139,16 +139,56 @@ export function ScenarioGamePingpong({
         </text>
       </g>
 
+      {/* 顶部转移弧：甲发未保持领先 1-p₁₁ */}
+      <path
+        d={`M 120 35 Q ${leftW / 2} 8 ${leftW - 120} 35`}
+        fill="none"
+        stroke={withAlpha(MATH_COLORS.function, 0.75)}
+        strokeWidth={1.8}
+        strokeDasharray="4 2"
+        markerEnd="url(#m-arrow-function)"
+      />
+      <text
+        x={leftW / 2}
+        y={16}
+        fontSize={fontScale(9)}
+        fontWeight="bold"
+        fill={MATH_COLORS.function}
+        textAnchor="middle"
+      >
+        失分转乙 1-p₁₁={formatMathNumber(1 - p11)}
+      </text>
+
+      {/* 底部转移弧：乙发甲反拉得分 p₂₁ */}
+      <path
+        d={`M ${leftW - 120} 215 Q ${leftW / 2} 238 120 215`}
+        fill="none"
+        stroke={MATH_COLORS.paramSecondary}
+        strokeWidth={1.8}
+        markerEnd="url(#m-arrow-secondary)"
+      />
+      <text
+        x={leftW / 2}
+        y={236}
+        fontSize={fontScale(9)}
+        fontWeight="bold"
+        fill={MATH_COLORS.paramSecondary}
+        textAnchor="middle"
+      >
+        反拉转甲 p₂₁={formatMathNumber(p21)}
+      </text>
+
       {/* 局势轮换动态说明 */}
       <text
         x={leftW / 2}
-        y={235}
+        y={252}
         fontSize={fontScale(9)}
         fill={MATH_COLORS.labelTextLight}
         textAnchor="middle"
       >
-        公比 λ = p₁₁ - p₂₁ = {formatMathNumber(lambda)}，数列单调趋近于平衡概率{" "}
-        {formatMathNumber(tVal)}
+        {Math.abs(lambda) < 1e-6
+          ? `转移系数 λ = p₁₁ - p₂₁ = 0，第 2 步起恒为稳态 ${formatMathNumber(tVal)}`
+          : `公比 λ = p₁₁ - p₂₁ = ${formatMathNumber(lambda)}，数列趋近于平衡概率 ${formatMathNumber(tVal)}`}
       </text>
     </g>
   );

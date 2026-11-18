@@ -6,7 +6,7 @@ import {
   MARKOV_ANSWER_STEPS,
 } from "../registries/probabilityMarkov";
 import { MATH_COLORS } from "../../theme";
-import { formatMathProb } from "../../utils/mathFormat";
+import { formatMathNumber, formatMathProb } from "../../utils/mathFormat";
 
 /**
  * 四步采分权重（设事件 / 列递推 / 构造等比 / 求通项）——本页推导链的**唯一分值来源**。
@@ -48,6 +48,7 @@ export function buildProbabilityMarkovPanel(
    * 与左屏 StepNavigator、中屏 MarkovScene 分区高亮三方同源：
    * 任一处改标题/调步序，另两处自动跟随，不会各自写死而漂移。
    */
+  const isZeroLambda = Math.abs(lambdaVal) < 1e-6;
   const answerStepTitle = (index: number) =>
     `【高考采分步 ${MARKOV_ANSWER_STEPS[index].step}】${MARKOV_ANSWER_STEPS[index].title}`;
 
@@ -72,7 +73,9 @@ export function buildProbabilityMarkovPanel(
         color: MATH_COLORS.paramSecondary,
       },
       {
-        label: "递推公比 λ = p₁₁ - p₂₁",
+        label: isZeroLambda
+          ? "转移系数 λ = p₁₁ - p₂₁"
+          : "递推公比 λ = p₁₁ - p₂₁",
         symbol: "\\lambda",
         value: lambdaVal.toFixed(3),
         color: MATH_COLORS.functionTransformed,
@@ -97,6 +100,12 @@ export function buildProbabilityMarkovPanel(
           : currentStepItem.absDelta.toFixed(4),
         color: MATH_COLORS.derivative,
       },
+      {
+        label: `前 ${currStepVal} 步累计期望 $S_{${currStepVal}} = \\sum p_i$`,
+        symbol: `S_{${currStepVal}}`,
+        value: currentStepItem.sumP1.toFixed(4),
+        color: MATH_COLORS.function,
+      },
     ],
     theorems: [
       {
@@ -114,7 +123,9 @@ export function buildProbabilityMarkovPanel(
         latex:
           "P(A_{n+1}) = P(A_n)P(A_{n+1}|A_n) + P(\\overline{A_n})P(A_{n+1}|\\overline{A_n})",
         condition: markovRes.step2_recurrence,
-        note: `本情景递推化简后为：$${markovRes.recurrenceLatex}$。递推公比为 $\\lambda = p_{11} - p_{21} = ${lambdaVal.toFixed(2)}$。`,
+        note: isZeroLambda
+          ? `本情景递推化简后为：$${markovRes.recurrenceLatex}$。因转移系数 $\\lambda = p_{11} - p_{21} = 0$，下一状态概率不再依赖 $p_n$，无需构造等比数列。`
+          : `本情景递推化简后为：$${markovRes.recurrenceLatex}$。递推公比为 $\\lambda = p_{11} - p_{21} = ${lambdaVal.toFixed(2)}$。`,
         level: "core",
       },
       {
@@ -122,11 +133,15 @@ export function buildProbabilityMarkovPanel(
         step: MARKOV_ANSWER_STEPS[2].step,
         latex: markovRes.isDegenerate
           ? "p_{n+1} = p_n \\implies p_n = p_1"
-          : "p_{n+1} - t = \\lambda (p_n - t) \\iff p_{n+1} = \\lambda p_n + t(1 - \\lambda)",
+          : isZeroLambda
+            ? "p_{n+1} = p_{21} \\implies p_n = t\\;(n \\ge 2)"
+            : "p_{n+1} - t = \\lambda (p_n - t) \\iff p_{n+1} = \\lambda p_n + t(1 - \\lambda)",
         condition: markovRes.step3_geometric,
         note: markovRes.isDegenerate
           ? `公比 $\\lambda = 1.00$，递推式退化为 $p_{n+1} = p_n$。数列为恒等常数列，各项恒等于 $p_1 = ${p1Val.toFixed(3)}$，无需待定系数配凑。`
-          : `对比常数项 $t(1 - \\lambda) = p_{21}$，解得平衡不动点 $t = \\frac{p_{21}}{1 - \\lambda} = ${tVal.toFixed(3)}$。新高考阅卷要求展示配凑过程，严禁直接跳步给出平衡值。`,
+          : isZeroLambda
+            ? `转移系数 $\\lambda = 0$，递推式直接成为常数关系 $p_{n+1} = t = ${tVal.toFixed(3)}$，系统一步到达稳态，无需待定系数配凑等比数列。`
+            : `对比常数项 $t(1 - \\lambda) = p_{21}$，解得平衡不动点 $t = \\frac{p_{21}}{1 - \\lambda} = ${tVal.toFixed(3)}$。新高考阅卷要求展示配凑过程，严禁直接跳步给出平衡值。`,
         level: "important",
       },
       {
@@ -134,7 +149,9 @@ export function buildProbabilityMarkovPanel(
         step: MARKOV_ANSWER_STEPS[3].step,
         latex: markovRes.isDegenerate
           ? `p_n = ${p1Val.toFixed(3)}`
-          : "p_n - t = (p_1 - t)\\lambda^{n-1} \\implies p_n = t + (p_1 - t)\\lambda^{n-1}",
+          : isZeroLambda
+            ? `p_1 = ${p1Val.toFixed(3)},\\; p_n = t = ${tVal.toFixed(3)}\\;(n \\ge 2)`
+            : "p_n - t = (p_1 - t)\\lambda^{n-1} \\implies p_n = t + (p_1 - t)\\lambda^{n-1}",
         condition: markovRes.step4_generalTerm,
         note: `${markovRes.generalTermLatex ? `当前代入通项：$${markovRes.generalTermLatex}$；` : ""}${
           markovRes.dynamicType === "degenerate_constant"
@@ -143,7 +160,9 @@ export function buildProbabilityMarkovPanel(
               ? "公比 $\\lambda = -1.00$：在两个数值间交替进行永久等幅振荡（无衰减），不会趋于单一稳定值。"
               : markovRes.dynamicType === "convergent_damped"
                 ? "公比 $-1 < \\lambda < 0$：在平衡值两侧交替振荡衰减收敛（高考作答用「随着项数增大振荡趋近于定值」表述，规避极限记号失分）。"
-                : "公比 $0 \\le \\lambda < 1$：单调递进逼近（高考作答用「单调递增/递减趋近于定值」表述即可）。"
+                : isZeroLambda
+                  ? "转移系数 $\\lambda = 0$：从第 $2$ 步起直接恒等于稳态定值 $t$（无需再写等比数列与 $0^{n-1}$）。"
+                  : "公比 $0 < \\lambda < 1$：单调递进逼近（高考作答用「单调递增/递减趋近于定值」表述即可）。"
         }`,
         level: "derived",
       },
@@ -180,38 +199,40 @@ export function buildProbabilityMarkovPanel(
       {
         step: 1,
         title: "审题定法 · 第 (1) 问特值列举与前两步验算",
-        latex: `p_1 = ${p1Val.toFixed(3)}, \\quad p_2 = p_{11}p_1 + p_{21}(1-p_1) = ${(p11Val * p1Val + p21Val * (1 - p1Val)).toFixed(4)}`,
-        detail: `设第 $n$ 步【${currentPreset.labels.s1}】概率为 $p_n$，对立事件【${currentPreset.labels.s2}】概率为 $1-p_n$。先由两步全概率算出 $p_2 = ${p11Val.toFixed(2)} \\times ${p1Val.toFixed(2)} + ${p21Val.toFixed(2)} \\times ${(1 - p1Val).toFixed(2)} = ${(p11Val * p1Val + p21Val * (1 - p1Val)).toFixed(4)}$，作为后续通项公式的考场验算基准。`,
+        latex: `p_1 = ${formatMathNumber(p1Val)}, \\quad p_2 = p_{11}p_1 + p_{21}(1-p_1) = ${formatMathProb(p11Val * p1Val + p21Val * (1 - p1Val))}`,
+        detail: `设第 $n$ 步【${currentPreset.labels.s1}】概率为 $p_n$，对立事件【${currentPreset.labels.s2}】概率为 $1-p_n$。先由两步全概率算出 $p_2 = ${formatMathProb(p11Val)} \\times ${formatMathProb(p1Val)} + ${formatMathProb(p21Val)} \\times ${formatMathProb(1 - p1Val)} = ${formatMathProb(p11Val * p1Val + p21Val * (1 - p1Val))}$，作为后续通项公式的考场验算基准。`,
         rubric: `【高考采分点】设出状态事件完备划分并准确算出前两步特值 $p_1, p_2$，得 ${MARKOV_STEP_SCORES[0]} 分。`,
       },
       {
         step: 2,
         title: "建模联立 · 代入转移概率化简线性递推式",
-        latex: `p_{n+1} = ${formatMathProb(p11Val)} p_n + ${formatMathProb(p21Val)}(1 - p_n) = ${markovRes.recurrenceLatex}`,
-        detail: `合并 $p_n$ 同类项得递推斜率（公比）$\\lambda = p_{11} - p_{21} = ${p11Val.toFixed(2)} - ${p21Val.toFixed(2)} = ${lambdaVal.toFixed(3)}$，常数截距为 $p_{21} = ${p21Val.toFixed(2)}$。`,
+        latex: `p_{n+1} = ${formatMathProb(p11Val)} p_n + ${formatMathProb(p21Val)}(1 - p_n) \\implies ${markovRes.recurrenceLatex}`,
+        detail: `合并 $p_n$ 同类项得递推斜率（公比）$\\lambda = p_{11} - p_{21} = ${formatMathProb(p11Val)} - ${formatMathProb(p21Val)} = ${formatMathProb(lambdaVal)}$，常数截距为 $p_{21} = ${formatMathProb(p21Val)}$。`,
         rubric: `【高考采分点】由全概率公式列出含参转移式并合并化简为一阶线性递推，得 ${MARKOV_STEP_SCORES[1]} 分。`,
       },
       {
         step: 3,
         title: "待定系数 · 解出平衡不动点与等比首项偏差",
         latex: markovRes.isDegenerate
-          ? `\\lambda = 1.000 \\implies p_{n+1} - p_n = 0`
-          : `t = \\frac{p_{21}}{1 - \\lambda} = \\frac{${p21Val.toFixed(2)}}{1 - (${lambdaVal.toFixed(3)})} = ${tVal.toFixed(4)}, \\quad b_1 = p_1 - t = ${(p1Val - tVal).toFixed(4)}`,
+          ? `\\lambda = 1 \\implies p_{n+1} - p_n = 0`
+          : `t = \\frac{p_{21}}{1 - \\lambda} = \\frac{${formatMathProb(p21Val)}}{1 - (${formatMathProb(lambdaVal)})} = ${formatMathProb(tVal)}, \\quad b_1 = p_1 - t = ${formatMathProb(p1Val - tVal)}`,
         detail: markovRes.isDegenerate
-          ? "公比 $\\lambda = 1.00$，递推关系退化为恒等常数列，各项偏差恒为 $0$。"
-          : `令 $p_{n+1} - t = \\lambda(p_n - t)$，解得不动点 $t = ${tVal.toFixed(4)}$。构造辅助数列 $b_n = p_n - t$，其首项 $b_1 = p_1 - t = ${(p1Val - tVal).toFixed(4)}$，公比 $\\lambda = ${lambdaVal.toFixed(3)}$。`,
+          ? "公比 $\\lambda = 1$，递推关系退化为恒等常数列，各项偏差恒为 $0$。"
+          : `令 $p_{n+1} - t = \\lambda(p_n - t)$，解得不动点 $t = ${formatMathProb(tVal)}$。构造辅助数列 $b_n = p_n - t$，其首项 $b_1 = p_1 - t = ${formatMathProb(p1Val - tVal)}$，公比 $\\lambda = ${formatMathProb(lambdaVal)}$。`,
         rubric: `【高考采分点】正确求出不动点 $t$ 并声明 $\\{p_n - t\\}$ 的首项与公比，得 ${MARKOV_STEP_SCORES[2]} 分。`,
       },
       {
         step: 4,
-        title: `求解反思 · 第 k=${currStepVal} 步定点求值与回代验算`,
+        title: `求解反思 · 第 k=${currStepVal} 步定点求值与累计期望`,
         latex: markovRes.isDegenerate
-          ? `p_{${currStepVal}} = p_1 = ${p1Val.toFixed(4)}`
-          : `p_{${currStepVal}} = ${tVal.toFixed(4)} + (${(p1Val - tVal).toFixed(4)}) \\times (${lambdaVal.toFixed(3)})^{${currStepVal - 1}} = ${currentStepItem.p1.toFixed(4)}`,
-        detail: `将 $n = ${currStepVal}$ 代入通项公式得 $p_{${currStepVal}} = ${currentStepItem.p1.toFixed(4)}$，距平衡点绝对偏差 $|p_{${currStepVal}} - t| = ${
+          ? `p_{${currStepVal}} = p_1 = ${formatMathProb(p1Val)}, \\quad S_{${currStepVal}} = ${formatMathProb(currentStepItem.sumP1)}`
+          : Math.abs(lambdaVal) < 1e-6
+            ? `p_{${currStepVal}} = ${currStepVal === 1 ? formatMathProb(p1Val) : formatMathProb(tVal)}, \\quad S_{${currStepVal}} = ${formatMathProb(currentStepItem.sumP1)}`
+            : `p_{${currStepVal}} = ${formatMathProb(tVal)} + (${formatMathProb(p1Val - tVal)}) \\times (${formatMathProb(lambdaVal)})^{${currStepVal - 1}} = ${formatMathProb(currentStepItem.p1)}, \\quad S_{${currStepVal}} = ${formatMathProb(currentStepItem.sumP1)}`,
+        detail: `将 $n = ${currStepVal}$ 代入通项公式得 $p_{${currStepVal}} = ${formatMathProb(currentStepItem.p1)}$，前 ${currStepVal} 步累计期望 $S_{${currStepVal}} = ${formatMathProb(currentStepItem.sumP1)}$，距平衡点绝对偏差 $|p_{${currStepVal}} - t| = ${
           markovRes.isDegenerate
-            ? "0.0000"
-            : currentStepItem.absDelta.toFixed(4)
+            ? "0"
+            : formatMathProb(currentStepItem.absDelta)
         }$。考场务必将 $n=2$ 回代通项检验是否等于第 1 步算出的 $p_2$！`,
         rubric: `【高考采分点】还原通项公式 $p_n$、代入目标步数求值并规范表述渐近趋势，得 ${MARKOV_STEP_SCORES[3]} 分。`,
       },

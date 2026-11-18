@@ -131,6 +131,8 @@ export function ProbabilityBayesAnimation() {
     setCondScenario("independent");
     setTotalScenario("factory3");
     setBayesScenario("screening");
+    setAnswerStep(1);
+    setIsZoomedToA(false);
   };
 
   const panelTitle = useMemo(() => getModePanelTitle(activeMode), [activeMode]);

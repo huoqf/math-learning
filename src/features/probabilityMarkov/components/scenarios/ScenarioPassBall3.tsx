@@ -137,9 +137,17 @@ export function ScenarioPassBall3({
         strokeWidth={1.8}
         markerEnd="url(#m-arrow-primary)"
       />
+      <rect
+        x={leftW / 2 - 84}
+        y={94}
+        width={168}
+        height={16}
+        rx={4}
+        fill={withAlpha(MATH_COLORS.white, 0.9)}
+      />
       <text
         x={leftW / 2}
-        y={106}
+        y={105}
         fontSize={fontScale(9.5)}
         fill={MATH_COLORS.paramPrimary}
         textAnchor="middle"
@@ -161,6 +169,14 @@ export function ScenarioPassBall3({
         stroke={MATH_COLORS.paramSecondary}
         strokeWidth={2}
         markerEnd="url(#m-arrow-secondary)"
+      />
+      <rect
+        x={leftW / 2 - 74}
+        y={117}
+        width={148}
+        height={16}
+        rx={4}
+        fill={withAlpha(MATH_COLORS.white, 0.92)}
       />
       <text
         x={leftW / 2}

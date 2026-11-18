@@ -1,6 +1,7 @@
 import type { ParamConfig } from "@/components/UI";
 import { MATH_COLORS } from "@/theme";
 import { paramMeta } from "@/data/registries/probabilityBayes";
+import { calculateConditionalProb } from "@/math/probabilityBayes";
 
 export type BayesMode = "conditional" | "total_prob" | "bayes";
 export type CondScenario = "free" | "independent" | "correlated" | "exclusive";
@@ -22,15 +23,16 @@ export function getModeFormulaLatex(
   bayesScenario: BayesScenario,
 ): string {
   if (activeMode === "conditional") {
-    const pABVal = Math.min(
+    const cond = calculateConditionalProb(
+      params.pA ?? 0.5,
+      params.pB ?? 0.4,
       params.pAB ?? 0.2,
-      Math.min(params.pA ?? 0.5, params.pB ?? 0.4),
-    ).toFixed(2);
-    const pAVal = (params.pA ?? 0.5).toFixed(2);
-    const pBGivenA =
-      (params.pA ?? 0.5) > 0
-        ? ((params.pAB ?? 0.2) / (params.pA ?? 0.5)).toFixed(3)
-        : "\\text{无意义}";
+    );
+    const pABVal = cond.pAB.toFixed(2);
+    const pAVal = cond.pA.toFixed(2);
+    const pBGivenA = cond.isDegenerate
+      ? "\\text{无意义}"
+      : cond.pB_given_A.toFixed(3);
     return `\\color{${MATH_COLORS.function}}{P(B|A)} = \\frac{\\color{${MATH_COLORS.paramTertiary}}{P(AB)}}{\\color{${MATH_COLORS.paramPrimary}}{P(A)}} = \\frac{${pABVal}}{${pAVal}} = ${pBGivenA}`;
   }
   if (activeMode === "total_prob") {

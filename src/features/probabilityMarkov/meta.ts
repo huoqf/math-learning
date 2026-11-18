@@ -8,7 +8,7 @@ export const markovNode: KnowledgeNode = {
   module: "概率压轴",
   importance: "hard",
   animationIds: ["anim-probability-markov"],
-  prerequisites: ["know-probability-bayes"],
+  prerequisites: ["know-probability-bayes", "know-sequence-recurrence"],
   route: "/probability-markov",
 };
 

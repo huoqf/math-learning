@@ -94,32 +94,28 @@ export function ProbabilityMarkovAnimation() {
           {/* 第 1 层：典型高考真题模型 (首项为自由探索，后续为正统高考真题模型) */}
           <LeftPanelSection title="典型高考真题模型">
             <SelectGrid
-              columns={1}
+              columns={2}
               items={[
                 {
                   key: "free",
                   label: "自由探索",
-                  description: "自主设定初始概率与转移概率",
+                  fullWidth: true,
                 },
                 {
                   key: "pass_ball_3",
                   label: "三人传球问题",
-                  description: "2020新高考I卷真题第21题",
                 },
                 {
                   key: "pass_ball_4",
                   label: "四人传球问题",
-                  description: "经典高考压轴多目标对称拓展",
                 },
                 {
                   key: "urn_replace",
                   label: "摸球置换问题",
-                  description: "经典高考状态更新单调模型",
                 },
                 {
                   key: "game_pingpong",
                   label: "乒乓加赛问题",
-                  description: "2021新高考I卷压轴局势递推",
                 },
               ]}
               value={scenarioKey}
