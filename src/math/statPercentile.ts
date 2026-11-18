@@ -542,3 +542,38 @@ export function calculateStratifiedSampling(
 }
 
 export const calculateStratifiedSample = calculateStratifiedSampling;
+
+/**
+ * 依据目标均值反解直方图偏斜控制参量 shift ∈ [-1, 1]（二分高精度求解，兼容任意单调方向）
+ */
+export function solveShiftForTargetMean(
+  targetMean: number,
+  binCount: number = 6,
+): number {
+  const calcMeanAt = (s: number): number => {
+    const bs = generateHistogramBins(s, binCount);
+    return bs.reduce((sum, b) => sum + b.midpoint * b.frequency, 0);
+  };
+  const mLow = calcMeanAt(-1);
+  const mHigh = calcMeanAt(1);
+  const isIncreasing = mHigh >= mLow;
+  const minM = Math.min(mLow, mHigh);
+  const maxM = Math.max(mLow, mHigh);
+  if (targetMean <= minM) return isIncreasing ? -1 : 1;
+  if (targetMean >= maxM) return isIncreasing ? 1 : -1;
+
+  let lo = -1;
+  let hi = 1;
+  for (let iter = 0; iter < 18; iter++) {
+    const mid = (lo + hi) / 2;
+    const m = calcMeanAt(mid);
+    if (isIncreasing) {
+      if (m < targetMean) lo = mid;
+      else hi = mid;
+    } else {
+      if (m > targetMean) lo = mid;
+      else hi = mid;
+    }
+  }
+  return Number(((lo + hi) / 2).toFixed(2));
+}

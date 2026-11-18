@@ -9,6 +9,7 @@ export interface ParamMeta {
   step?: number;
   description: string;
   descriptionFormula?: string;
+  group?: string;
   importance?: "core" | "display" | "advanced";
   marks?: Array<{
     value: number;
@@ -66,7 +67,7 @@ export const MODE_SCENARIOS: Record<NormalStudyMode, NormalScenario[]> = {
       question:
         "探究频率矩形上底边折线随组距缩小与样本量扩增时向理论钟形正态曲线的收敛极限。",
       params: { mu: 0, sigma: 1, binCount: 10, sampleSize: 300, blend: 0.5 },
-      visibleKeys: ["binCount", "sampleSize", "blend"],
+      visibleKeys: ["binCount", "sampleSize", "blend", "x1", "x2"],
     },
     {
       key: "coarse",
@@ -78,7 +79,7 @@ export const MODE_SCENARIOS: Record<NormalStudyMode, NormalScenario[]> = {
       question:
         "计算当前分组矩形高度与连续理论正态峰值的差值，分析小样本粗分组带来的估算误差。",
       params: { mu: 0, sigma: 1, binCount: 6, sampleSize: 80, blend: 0.2 },
-      visibleKeys: ["binCount", "sampleSize", "blend"],
+      visibleKeys: ["binCount", "sampleSize", "blend", "x1", "x2"],
     },
     {
       key: "dense",
@@ -90,7 +91,7 @@ export const MODE_SCENARIOS: Record<NormalStudyMode, NormalScenario[]> = {
       question:
         "证明各细分组矩形频率累加向总体正态曲线下方积分面积恒等于 $1$ 的收敛过程。",
       params: { mu: 0, sigma: 1, binCount: 20, sampleSize: 800, blend: 0.8 },
-      visibleKeys: ["binCount", "sampleSize", "blend"],
+      visibleKeys: ["binCount", "sampleSize", "blend", "x1", "x2"],
     },
   ],
   paramsShape: [
@@ -187,6 +188,20 @@ export const MODE_SCENARIOS: Record<NormalStudyMode, NormalScenario[]> = {
       visibleKeys: ["mu", "sigma", "x0"],
       showSigmaIntervals: true,
     },
+    {
+      key: "asymmetricSigma",
+      label: "非对称区间配凑",
+      badge: "新高考高频 · 非对称区间面积配凑",
+      background:
+        "新高考全国卷高频考点：不直接查表，仅利用标准 $1\\sigma$ ($68.27\\%$) 与 $2\\sigma$ ($95.45\\%$) 对称概率推导非对称子区间面积。",
+      condition:
+        "已知 $X \\sim N(0, 1^2)$，将探究线设为 $x_0 = 1.0$（即 $\\mu + \\sigma$），关注翼侧区间 $[\\mu + \\sigma, \\mu + 2\\sigma]$。",
+      question:
+        "如何通过大对称区间减去小对称区间再折半，精准求出 $P(\\mu + \\sigma < X \\le \\mu + 2\\sigma)$？",
+      params: { mu: 0, sigma: 1, x0: 1 },
+      visibleKeys: ["mu", "sigma", "x0"],
+      showSigmaIntervals: true,
+    },
   ],
 };
 
@@ -200,6 +215,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "决定正态分布曲线的对称轴与中心位置",
     descriptionFormula: `x = \\color{${MATH_COLORS.paramPrimary}}{\\mu}`,
+    group: "分布核心参数",
     importance: "core",
     marks: [
       {
@@ -219,6 +235,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "决定正态分布曲线的分散程度（σ越小越瘦陡，σ越大越矮胖）",
     descriptionFormula: `\\color{${MATH_COLORS.paramSecondary}}{\\sigma} > 0`,
+    group: "分布核心参数",
     importance: "core",
     marks: [
       {
@@ -238,6 +255,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 1,
     description: "数据切分的分组个数（组距 Δx = 全程 / K）",
     descriptionFormula: "\\Delta x = \\frac{7\\sigma}{K}",
+    group: "抽样拟合参数",
     importance: "display",
   },
   sampleSize: {
@@ -248,6 +266,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 1000,
     step: 50,
     description: "抽样调查的总体数据样本个数",
+    group: "抽样拟合参数",
     importance: "display",
   },
   blend: {
@@ -258,6 +277,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 1,
     step: 0.1,
     description: "直方图折线向光滑正态曲线的过渡逼近比例",
+    group: "抽样拟合参数",
     importance: "display",
   },
   x0: {
@@ -268,6 +288,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 4,
     step: 0.1,
     description: "探究关于 μ 对称点 2μ - x₀ 的基准位置",
+    group: "探究区间边界",
     importance: "core",
   },
   x1: {
@@ -278,6 +299,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 4,
     step: 0.1,
     description: "目标计算概率区间的左侧边界",
+    group: "探究区间边界",
     importance: "core",
   },
   x2: {
@@ -288,6 +310,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     max: 4,
     step: 0.1,
     description: "目标计算概率区间的右侧边界",
+    group: "探究区间边界",
     importance: "core",
   },
 };

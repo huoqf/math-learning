@@ -20,6 +20,7 @@ export function buildProbabilityNormalPanel(
   const x1 = params.x1 ?? -1;
   const x2 = params.x2 ?? 1;
   const studyMode = (config?.studyMode as string) ?? "normalFit";
+  const activeScenario = (config?.activeScenario as string) ?? "free";
 
   // 直方图数据与统计计算（此处直方图仅服务于"组距细化 → 轮廓趋于正态曲线"的直观佐证；
   // 众数/中位数/百分位数等特征数的精细计算属必修二 know-stat-percentile，不在此重复。）
@@ -138,8 +139,8 @@ export function buildProbabilityNormalPanel(
         {
           name: "正态分布密度曲线 N(μ, σ²)",
           latex: `f(x) = \\frac{1}{\\sqrt{2\\pi}\\color{${MATH_COLORS.paramSecondary}}{\\sigma}} e^{-\\frac{(x - \\color{${MATH_COLORS.paramPrimary}}{\\mu})^2}{2\\color{${MATH_COLORS.paramSecondary}}{\\sigma}^2}}`,
-          prerequisites: ["$\\sigma > 0$", "曲线与 $x$ 轴所围总面积为 1"],
-          note: "曲线关于直线 x = μ 对称，且在 x = μ 处取得最大值 1/(√(2π)σ)。",
+          prerequisites: ["$\\sigma > 0$", "曲线与 $x$ 轴所围总面积为 $1$"],
+          note: "曲线关于直线 $x = \\mu$ 对称，且在 $x = \\mu$ 处取得最大值 $\\frac{1}{\\sqrt{2\\pi}\\sigma}$。",
           level: "important",
         },
       ],
@@ -200,7 +201,7 @@ export function buildProbabilityNormalPanel(
         },
         {
           label: "μ±σ 处相对峰高比",
-          value: `${inflectionRatio.toFixed(1)}% (e^{-0.5})`,
+          value: `${inflectionRatio.toFixed(1)}% ($e^{-0.5}$)`,
           color: MATH_COLORS.paramSecondary,
         },
         {
@@ -214,7 +215,7 @@ export function buildProbabilityNormalPanel(
         {
           name: "参数 μ 与 σ 的几何与统计意义",
           latex: `\\text{对称轴: } x = \\color{${MATH_COLORS.paramPrimary}}{\\mu} \\quad \\text{最大值: } f_{\\max} = \\frac{1}{\\sqrt{2\\pi}\\color{${MATH_COLORS.paramSecondary}}{\\sigma}}`,
-          note: "μ 决定中心对称轴位置（曲线左右刚性平移）；σ 决定高矮胖瘦（σ 越小越瘦高陡峭，数据越集中；σ 越大越矮胖平缓，数据越分散）。",
+          note: "$\\mu$ 决定中心对称轴位置（曲线左右刚性平移）；$\\sigma$ 决定高矮胖瘦（$\\sigma$ 越小越瘦高陡峭，数据越集中；$\\sigma$ 越大越矮胖平缓，数据越分散）。",
           level: "core",
         },
         {
@@ -225,15 +226,40 @@ export function buildProbabilityNormalPanel(
           level: "important",
         },
       ],
+      reasoningSteps: [
+        {
+          step: 1,
+          title: "审题定法 · 确定对称轴与峰值高度",
+          latex: `x = \\color{${MATH_COLORS.paramPrimary}}{\\mu} = ${mu.toFixed(1)}, \\quad f_{\\max} = \\frac{1}{\\sqrt{2\\pi}\\color{${MATH_COLORS.paramSecondary}}{\\sigma}} = ${peakHeight.toFixed(3)}`,
+          detail: `正态分布密度曲线关于直线 $x = \\mu = ${mu.toFixed(1)}$ 轴对称，且在均值处取得唯一最大值 $f(\\mu) = ${peakHeight.toFixed(3)}$。`,
+          rubric:
+            "【高考采分点】指出对称轴方程 $x = \\mu$ 并利用 $\\sigma$ 判定峰值高低，得 2 分。",
+        },
+        {
+          step: 2,
+          title: "建模联立 · 标定弯曲改变点与单调区间",
+          latex: `x = \\mu \\pm \\sigma = ${inflectL.toFixed(2)} \\text{ 或 } ${inflectR.toFixed(2)}, \\quad f(\\mu \\pm \\sigma) = ${inflectHeight.toFixed(3)}`,
+          detail: `曲线在 $(-\\infty, ${mu.toFixed(1)}]$ 上单调递增，在 $[${mu.toFixed(1)}, +\\infty)$ 上单调递减；在 $x = \\mu \\pm \\sigma$ 处高度恰为峰值的 $e^{-0.5} \\approx 60.65\\%$。`,
+          rubric: "【高考采分点】正确写出单调区间与标准差偏离点位置，得 2 分。",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 比较离散程度与全域概率守恒",
+          latex: `\\sigma = ${sigma.toFixed(1)} \\text{ 时，全域总概率 } P(-\\infty < X < +\\infty) = 1`,
+          detail: `与标准正态基准 $N(0, 1)$ 对比：$\\sigma$ 越小，曲线越瘦陡、数据越集中；无论 $\\mu, \\sigma$ 如何取定，曲线与 $x$ 轴围成的总面积恒为 $1$。`,
+          rubric:
+            "【高考采分点】结合总面积恒为 $1$ 分析参数对形态的控制作用，得 2 分。",
+        },
+      ],
       gaokaoPoints: [
         {
-          text: "【高考考点】比较两组正态数据（如甲乙两班模考成绩）：曲线对称轴位置判定均值 μ₁ 与 μ₂ 的大小；曲线峰值高低判定标准差 σ₁ 与 σ₂ 的离散程度。",
+          text: "【高考考点】比较两组正态数据（如甲乙两班模考成绩）：曲线对称轴位置判定均值 $\\mu_1$ 与 $\\mu_2$ 的大小；曲线峰值高低判定标准差 $\\sigma_1$ 与 $\\sigma_2$ 的离散程度。",
           importance: "gaokao",
         },
       ],
       warnings: [
         {
-          text: "核心：无论 μ 如何平移、σ 如何伸缩，正态曲线与 x 轴所围图形的总面积恒等于 1。",
+          text: "核心：无论 $\\mu$ 如何平移、$\\sigma$ 如何伸缩，正态曲线与 $x$ 轴所围图形的总面积恒等于 $1$。",
           level: "info",
         },
       ],
@@ -289,7 +315,8 @@ export function buildProbabilityNormalPanel(
         title: "审题定法 · 确定对称轴与镜像点",
         latex: `x_{\\text{sym}} = 2\\color{${MATH_COLORS.paramPrimary}}{\\mu} - x_0 = 2 \\times ${mu.toFixed(1)} - (${x0.toFixed(1)}) = ${symData.xSym.toFixed(2)}`,
         detail: `正态分布曲线关于直线 $x = \\mu = ${mu.toFixed(1)}$ 轴对称，基准点 $x_0 = ${x0.toFixed(1)}$ 的镜面对称点为 $2\\mu - x_0 = ${symData.xSym.toFixed(2)}$。`,
-        rubric: "【高考采分点】利用对称轴 x = μ 准确求出对称镜像点得 2 分。",
+        rubric:
+          "【高考采分点】利用对称轴 $x = \\mu$ 准确求出对称镜像点得 2 分。",
       },
       {
         step: 2,
@@ -300,10 +327,24 @@ export function buildProbabilityNormalPanel(
       },
       {
         step: 3,
-        title: "求解反思 · 利用全概率归一求解对称区间",
-        latex: `P(${symData.leftX.toFixed(1)} \\le X \\le ${symData.rightX.toFixed(1)}) = 1 - 2P(X \\le ${symData.leftX.toFixed(1)}) = ${(symData.centerProb * 100).toFixed(2)}\\%`,
-        detail: `正态曲线与 $x$ 轴所夹总概率恒为 $1$，从总概率中扣除两侧对称尾部，即得中间双侧对称概率。`,
-        rubric: "【高考采分点】利用对立与归一性求解区间概率并规范作答得 3 分。",
+        title:
+          activeScenario === "asymmetricSigma"
+            ? "求解反思 · 非对称翼侧区间作差折半配凑"
+            : "求解反思 · 利用全概率归一求解对称区间",
+        latex:
+          activeScenario === "asymmetricSigma"
+            ? `P(\\mu+\\sigma < X \\le \\mu+2\\sigma) = \\frac{P(|X-\\mu|\\le 2\\sigma) - P(|X-\\mu|\\le \\sigma)}{2} = \\frac{95.45\\% - 68.27\\%}{2} = 13.59\\%`
+            : `P(${symData.leftX.toFixed(1)} \\le X \\le ${symData.rightX.toFixed(1)}) = 1 - 2P(X \\le ${symData.leftX.toFixed(1)}) = ${(symData.centerProb * 100).toFixed(2)}\\%`,
+        detail:
+          activeScenario === "asymmetricSigma"
+            ? "利用对称性把两个对称环形带面积差折半，即得右单侧翼区 $[\\mu+\\sigma, \\mu+2\\sigma] = [" +
+              (mu + sigma).toFixed(1) +
+              ", " +
+              (mu + 2 * sigma).toFixed(1) +
+              "]$ 的精确概率 $13.59\\%$。"
+            : `正态曲线与 $x$ 轴所夹总概率恒为 $1$，从总概率中扣除两侧对称尾部，即得中间双侧对称概率。`,
+        rubric:
+          "【高考采分点】利用正态分布对称性与概率归一性作差折半或互补求解目标区间概率得 3 分。",
       },
     ],
     theorems: [
@@ -312,38 +353,38 @@ export function buildProbabilityNormalPanel(
         latex:
           "P(\\mu-\\sigma \\le X \\le \\mu+\\sigma) \\approx 68.27\\% \\quad P(\\mu-2\\sigma \\le X \\le \\mu+2\\sigma) \\approx 95.45\\% \\quad P(\\mu-3\\sigma \\le X \\le \\mu+3\\sigma) \\approx 99.73\\%",
         prerequisites: ["$X \\sim N(\\mu, \\sigma^2)$"],
-        note: "落在 [μ-3σ, μ+3σ] 之外的概率仅约 0.27%，为小概率事件。",
+        note: "落在 $[\\mu-3\\sigma, \\mu+3\\sigma]$ 之外的概率仅约 $0.27\\%$，为小概率事件。",
         level: "core",
       },
       {
         name: "高考对称转化公式组",
         latex:
           "P(X \\le \\mu-a) = P(X \\ge \\mu+a) \\quad P(\\mu-a \\le X \\le \\mu+a) = 1 - 2P(X \\le \\mu-a)",
-        note: "利用对称性 P(X ≤ μ) = 0.5，可快速将未知单侧或双侧区间转化为已知对称面积。",
+        note: "利用对称性 $P(X \\le \\mu) = 0.5$，可快速将未知单侧或双侧区间转化为已知对称面积；非对称翼区可用 $\\frac{P_{2\\sigma} - P_{1\\sigma}}{2} \\approx 13.59\\%$ 配凑。",
         level: "core",
       },
       {
         name: "标准化变量变换公式",
         latex: `Z = \\frac{X - \\color{${MATH_COLORS.paramPrimary}}{\\mu}}{\\color{${MATH_COLORS.paramSecondary}}{\\sigma}} \\sim N(0, 1) \\quad \\Rightarrow \\quad P(X \\le x_0) = \\Phi(Z_0)`,
         note: isStandardNormal
-          ? "当前已为标准正态分布 N(0, 1)。"
-          : `当前 x₀ = ${x0.toFixed(2)} 对应标准正态变量 Z₀ = ${z0.toFixed(2)}。`,
+          ? "当前已为标准正态分布 $N(0, 1)$。"
+          : `当前 $x_0 = ${x0.toFixed(2)}$ 对应标准正态变量 $Z_0 = ${z0.toFixed(2)}$。`,
         level: "important",
       },
     ],
     gaokaoPoints: [
       {
-        text: "【高考必考】对称性公式：P(X < a) + P(X > a) = 1；若 P(X < a) = P(X > b)，则对称轴 μ = (a+b)/2。",
+        text: "【高考必考】对称性公式：$P(X < a) + P(X > a) = 1$；若 $P(X < a) = P(X > b)$，则对称轴 $\\mu = \\frac{a+b}{2}$。",
         importance: "gaokao",
       },
       {
-        text: "【高考必考】3-σ 原则结合二项分布综合题：先由 3-σ 计算单件产品合格率 $p$，再由独立重复试验计算恰有 $k$ 件合格的概率 $C_n^k p^k (1-p)^{n-k}$。",
+        text: "【高考必考】$3\\sigma$ 原则结合二项分布综合题：先由 $3\\sigma$ 计算单件产品合格率 $p$，再由独立重复试验计算恰有 $k$ 件合格的概率 $C_n^k p^k (1-p)^{n-k}$。",
         importance: "gaokao",
       },
     ],
     warnings: [
       {
-        text: "牢记：正态分布关于 x = μ 对称，任意点 x 与 2μ - x 处的概率密度完全相等 f(x) = f(2μ - x)。",
+        text: "牢记：正态分布关于 $x = \\mu$ 对称，任意点 $x$ 与 $2\\mu - x$ 处的概率密度完全相等 $f(x) = f(2\\mu - x)$。",
         level: "info",
       },
     ],

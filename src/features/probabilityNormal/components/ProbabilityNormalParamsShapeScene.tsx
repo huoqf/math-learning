@@ -3,6 +3,7 @@ import type { SceneScale } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
 import { normalPdf } from "@/math/probabilityNormal";
 import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
+import { StandardZAxisRuler } from "./StandardZAxisRuler";
 
 interface ProbabilityNormalParamsShapeSceneProps {
   curvePathD: string;
@@ -150,6 +151,14 @@ export function ProbabilityNormalParamsShapeScene({
           </g>
         );
       })()}
+
+      {/* 标准化变换同步标尺 Z = (X - μ) / σ */}
+      <StandardZAxisRuler
+        mu={mu}
+        safeSigma={safeSigma}
+        scale={scale}
+        fontScale={fontScale}
+      />
     </g>
   );
 }

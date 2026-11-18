@@ -58,7 +58,7 @@ const CASES: Array<{
     name: "决策方案 · 投资",
     studyMode: "decision",
     params: { decisionParam: 0.5 },
-    config: { decisionScenario: "equity" },
+    config: { decisionScenario: "investment" },
   },
   {
     name: "线性变换 Y=aX+b",
@@ -124,5 +124,38 @@ describe("分布列右屏 · 逼近表述规范门禁", () => {
       compareSampleN: 4,
     });
     expect(compareText).toContain("拓展");
+
+    const hyperPanel = buildProbabilityDistributionPanel(
+      { N: 30, M: 6, sampleN: 4 },
+      { studyMode: "hypergeometric" },
+    );
+    const approxTheorem = hyperPanel.theorems.find((t) =>
+      t.name.includes("二项近似"),
+    );
+    expect(approxTheorem?.isExtension).toBe(true);
+    expect(approxTheorem?.extensionBadge).toContain("拓展");
+  });
+
+  it("二项分布双众数时推导链 Step 3 完整列出所有众数而非截断单个", () => {
+    // X ~ B(5, 0.5) 的最值项为 k = 2 和 k = 3
+    const panel = buildProbabilityDistributionPanel(
+      { n: 5, p: 0.5 },
+      {
+        studyMode: "binomial",
+        distResult: {
+          outcomes: [],
+          mean: 2.5,
+          variance: 1.25,
+          stdDev: Math.sqrt(1.25),
+          sumP: 1,
+          modeX: [2, 3],
+          maxP: 0.3125,
+          isValid: true,
+        },
+      },
+    );
+    const step3 = panel.reasoningSteps?.find((s) => s.step === 3);
+    expect(step3?.latex).toContain("2, 3");
+    expect(step3?.detail).toContain("2, 3");
   });
 });

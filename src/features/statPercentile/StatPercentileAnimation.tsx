@@ -57,10 +57,11 @@ export function StatPercentileAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 坐标系横轴区间：根据组数自适应扩展（6 组高考模型 [40, 100]、5 组课本模型 [50, 100]、8 组 [30, 110]）
+  // 坐标系横轴区间：根据组数自适应扩展（5组 [50,100]、6组 [40,100]、7组 [35,105]、8组 [30,110]）
   const xRange: [number, number] = useMemo(() => {
     if (studyMode === "stratified") return [42, 108];
     if (groupCount === 5) return [42, 108];
+    if (groupCount === 7) return [27, 113];
     if (groupCount === 8) return [22, 118];
     return [32, 108]; // 6 组标准高考模型
   }, [studyMode, groupCount]);
@@ -107,23 +108,35 @@ export function StatPercentileAnimation() {
     [activeScenario],
   );
 
-  // 切换一级研究模式（单模式闭环：重置二级情景为 'free'）
+  // 切换一级研究模式（单模式闭环：重置二级情景为 'free' 并加载对应模式基线参数）
   const handleStudyModeChange = (newMode: string) => {
     const m = newMode as StudyMode;
     setStudyMode(m);
     setActiveScenario("free");
+    const baseScenario = MODE_SCENARIOS[m]?.[0];
+    setParams((prev) =>
+      clampSampleNToStrata({
+        ...prev,
+        ...defaultParams,
+        ...(baseScenario?.params ?? {}),
+      }),
+    );
   };
 
-  // 载入二级情景预设（参数题设锁定与降维）
+  // 载入二级情景预设（先回落本模式基线再叠加强预设，消除跨情景脏残留）
   const handleScenarioSelect = (scenarioKey: string) => {
     setActiveScenario(scenarioKey);
     const scenarioList = MODE_SCENARIOS[studyMode];
+    const baseScenario = scenarioList[0];
     const scenario = scenarioList.find((s) => s.key === scenarioKey);
     if (scenario?.params) {
-      setParams((prev) => ({
-        ...prev,
-        ...scenario.params,
-      }));
+      setParams((prev) =>
+        clampSampleNToStrata({
+          ...prev,
+          ...(baseScenario?.params ?? {}),
+          ...scenario.params,
+        }),
+      );
     }
   };
 
@@ -236,7 +249,7 @@ export function StatPercentileAnimation() {
       return [
         {
           color: MATH_COLORS.paramPrimary,
-          formula: `\\text{已累积 } ${params.percentileP}\\% \\text{ 面积}`,
+          formula: `\\text{已累积 } ${params.percentileP}\\% \\text{ 频率组柱}`,
           style: "area",
         },
         {
@@ -256,36 +269,22 @@ export function StatPercentileAnimation() {
         },
       ];
     }
-    // stratified
+    // stratified（合并精简为 3 条图例，严守顶部安全区不压总体均值与高斯峰值）
     return [
       {
         color: MATH_COLORS.paramPrimary,
-        formula: "\\text{层 1 均值 } \\bar{x}_1 \\text{ 与波动区间}",
-        style: "solid",
-      },
-      {
-        color: MATH_COLORS.paramSecondary,
-        formula: "\\text{层 2 均值 } \\bar{x}_2 \\text{ 与波动区间}",
-        style: "solid",
-      },
-      {
-        color: MATH_COLORS.paramTertiary,
-        formula: "\\text{层 3 均值 } \\bar{x}_3 \\text{ 与波动区间}",
+        formula:
+          "\\text{各层均值 } \\bar{x}_i \\text{ 与 } \\pm s_i \\text{ 波动}",
         style: "solid",
       },
       {
         color: MATH_COLORS.function,
-        formula: "\\text{总体加权均值 } \\bar{x}",
+        formula: "\\text{总体均值 } \\bar{x} \\text{ / 组内 } \\sum w_i s_i^2",
         style: "dash",
       },
       {
-        color: MATH_COLORS.function,
-        formula: "\\sum w_i s_i^2 \\text{ (组内方差贡献)}",
-        style: "area",
-      },
-      {
         color: MATH_COLORS.paramSecondary,
-        formula: "\\sum w_i (\\bar{x}_i - \\bar{x})^2 \\text{ (组间离差贡献)}",
+        formula: "\\text{组间离差 } \\sum w_i (\\bar{x}_i - \\bar{x})^2",
         style: "area",
       },
     ];

@@ -10,6 +10,10 @@ export const statPercentileNode: KnowledgeNode = {
   animationIds: ["anim-stat-percentile"],
   prerequisites: [],
   route: "/stat-percentile",
+  gaokaoTopic: "probability_statistics",
+  questionCategory: "solution_first",
+  examMethod: "分层抽样权重与频率直方图面积求百分位数",
+  examWeight: 5,
 };
 
 export const statPercentileLoader = () => import("./StatPercentileAnimation");

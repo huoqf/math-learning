@@ -134,6 +134,7 @@ export function ProbabilityDistributionScene({
           halfBarWidthPx={halfBarWidthPx}
           sigmaMinDesign={sigmaMinDesign}
           sigmaMaxDesign={sigmaMaxDesign}
+          activeStep={activeStep}
         />
       ) : (
         /* ================= 其它模式：标准单轨道设计 ================= */
@@ -278,6 +279,7 @@ export function ProbabilityDistributionScene({
               fontScale={fontScale}
               yAxisMax={yAxisMax}
               rightSafeMargin={rightSafeMargin}
+              activeStep={activeStep}
             />
           )}
         </>
@@ -286,36 +288,59 @@ export function ProbabilityDistributionScene({
       {/* 分步作答聚焦围栏（与左屏 StepNavigator、右屏 MathPanel 三方同源） */}
       {activeStep !== undefined &&
         (() => {
-          const boxX =
-            activeStep === 1
-              ? leftSafeMargin - 16
+          const isLinearTrack = studyMode === "linear";
+          const isDecisionChartStep3 =
+            studyMode === "decision" && activeStep === 3;
+          const boxX = isLinearTrack
+            ? leftSafeMargin - 16
+            : isDecisionChartStep3
+              ? 520
+              : activeStep === 1
+                ? leftSafeMargin - 16
+                : activeStep === 2
+                  ? leftSafeMargin - 12
+                  : Math.max(leftSafeMargin - 12, sigmaMinDesign.x - 36);
+          const boxY = isLinearTrack
+            ? activeStep === 1
+              ? 82
               : activeStep === 2
-                ? leftSafeMargin - 12
-                : Math.max(leftSafeMargin - 12, sigmaMinDesign.x - 36);
-          const boxY =
-            activeStep === 1
-              ? Math.min(yAxisZero.y - 44, 410)
+                ? 272
+                : 82
+            : isDecisionChartStep3
+              ? 142
+              : activeStep === 1
+                ? Math.min(yAxisZero.y - 44, 410)
+                : activeStep === 2
+                  ? Math.max(58, yAxisMax.y - 16)
+                  : Math.max(66, yAxisMax.y - 10);
+          const boxW = isLinearTrack
+            ? Math.max(260, rightSafeMargin - leftSafeMargin + 54)
+            : isDecisionChartStep3
+              ? 280
+              : activeStep === 1
+                ? Math.max(240, rightSafeMargin - leftSafeMargin + 48)
+                : activeStep === 2
+                  ? Math.max(240, rightSafeMargin - leftSafeMargin + 36)
+                  : Math.max(
+                      160,
+                      Math.min(
+                        rightSafeMargin - leftSafeMargin + 24,
+                        sigmaMaxDesign.x - sigmaMinDesign.x + 72,
+                      ),
+                    );
+          const boxH = isLinearTrack
+            ? activeStep === 1
+              ? 184
               : activeStep === 2
-                ? Math.max(58, yAxisMax.y - 16)
-                : Math.max(66, yAxisMax.y - 10);
-          const boxW =
-            activeStep === 1
-              ? Math.max(240, rightSafeMargin - leftSafeMargin + 48)
-              : activeStep === 2
-                ? Math.max(240, rightSafeMargin - leftSafeMargin + 36)
-                : Math.max(
-                    160,
-                    Math.min(
-                      rightSafeMargin - leftSafeMargin + 24,
-                      sigmaMaxDesign.x - sigmaMinDesign.x + 72,
-                    ),
-                  );
-          const boxH =
-            activeStep === 1
-              ? 88
-              : activeStep === 2
-                ? Math.max(180, yAxisZero.y - yAxisMax.y + 42)
-                : Math.max(160, yAxisZero.y - yAxisMax.y + 34);
+                ? 236
+                : 426
+            : isDecisionChartStep3
+              ? 208
+              : activeStep === 1
+                ? 88
+                : activeStep === 2
+                  ? Math.max(180, yAxisZero.y - yAxisMax.y + 42)
+                  : Math.max(160, yAxisZero.y - yAxisMax.y + 34);
 
           const stepInfo =
             DISTRIBUTION_ANSWER_STEPS[

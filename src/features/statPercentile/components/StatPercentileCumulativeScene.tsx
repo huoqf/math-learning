@@ -10,7 +10,11 @@ import type { ViewportInfo } from "@/utils/useViewport";
 import { InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
-import type { HistogramBin, HistogramStatsResult } from "@/math/statPercentile";
+import {
+  calculatePercentileShadeBins,
+  type HistogramBin,
+  type HistogramStatsResult,
+} from "@/math/statPercentile";
 import { formatMathNumber } from "@/utils/mathFormat";
 
 interface StatPercentileCumulativeSceneProps {
@@ -188,51 +192,68 @@ export const StatPercentileCumulativeScene: React.FC<
         })}
       </g>
 
-      {/* ────────────────── 2. 背景累积直方图轮廓与累积面积 ────────────────── */}
+      {/* ────────────────── 2. 背景频率直方图柱与百分位线性插值累积面积 ────────────────── */}
       <g key="cumulative-histogram-background">
-        {bins.map((bin, i) => {
-          const pTL = mathToDesign(bin.xMin, bin.cumFrequency, scale);
-          const pBR = mathToDesign(bin.xMax, 0, scale);
-          const widthPx = Math.abs(pBR.x - pTL.x);
-          const heightPx = Math.abs(pBR.y - pTL.y);
+        {(() => {
+          const shadeBins = calculatePercentileShadeBins(bins, pVal);
+          return bins.map((bin, i) => {
+            const pTL = mathToDesign(bin.xMin, bin.frequency, scale);
+            const pBR = mathToDesign(bin.xMax, 0, scale);
+            const widthPx = Math.abs(pBR.x - pTL.x);
+            const heightPx = Math.abs(pBR.y - pTL.y);
 
-          // 计算当前百分位数 pVal 在该 bin 内部的填充宽度
-          let fillWidth = 0;
-          if (pVal >= bin.xMax) {
-            fillWidth = widthPx;
-          } else if (pVal > bin.xMin) {
-            fillWidth = ((pVal - bin.xMin) / bin.width) * widthPx;
-          }
+            const shade = shadeBins[i];
+            const fillWidth = shade ? shade.fraction * widthPx : 0;
 
-          return (
-            <g key={`cum-hist-bin-${i}`}>
-              {/* 背景矩形线框 */}
-              <rect
-                x={pTL.x}
-                y={pTL.y}
-                width={widthPx}
-                height={heightPx}
-                fill={withAlpha(MATH_COLORS.function, 0.04)}
-                stroke={withAlpha(MATH_COLORS.function, 0.18)}
-                strokeDasharray="2 2"
-                rx={1}
-              />
-
-              {/* 已累积覆盖高亮面积 */}
-              {fillWidth > 0 && (
+            return (
+              <g key={`cum-hist-bin-${i}`}>
+                {/* 单组频率矩形边框（柱高对应单组频率 f_i） */}
                 <rect
                   x={pTL.x}
                   y={pTL.y}
-                  width={fillWidth}
+                  width={widthPx}
                   height={heightPx}
-                  fill={withAlpha(MATH_COLORS.paramPrimary, 0.16)}
-                  stroke={withAlpha(MATH_COLORS.paramPrimary, 0.4)}
-                  strokeWidth={1}
+                  fill={withAlpha(MATH_COLORS.function, 0.06)}
+                  stroke={withAlpha(MATH_COLORS.function, 0.28)}
+                  strokeDasharray="2 2"
+                  rx={1}
                 />
-              )}
-            </g>
-          );
-        })}
+
+                {/* 已累积面积染色（完整组全染，当前插值组按线性比 fraction 染色） */}
+                {fillWidth > 0 && (
+                  <rect
+                    x={pTL.x}
+                    y={pTL.y}
+                    width={fillWidth}
+                    height={heightPx}
+                    fill={withAlpha(
+                      MATH_COLORS.paramPrimary,
+                      shade?.isPartial ? 0.34 : 0.18,
+                    )}
+                    stroke={
+                      shade?.isPartial
+                        ? MATH_COLORS.paramPrimary
+                        : withAlpha(MATH_COLORS.paramPrimary, 0.5)
+                    }
+                    strokeWidth={shade?.isPartial ? 1.6 : 1}
+                  />
+                )}
+                {shade?.isPartial && (
+                  <text
+                    x={pTL.x + fillWidth / 2}
+                    y={pTL.y - 5}
+                    textAnchor="middle"
+                    fill={MATH_COLORS.paramPrimary}
+                    fontSize={fontScale(8.5)}
+                    fontWeight="bold"
+                  >
+                    Δf={formatMathNumber(shade.fraction * bin.frequency * 100)}%
+                  </text>
+                )}
+              </g>
+            );
+          });
+        })()}
       </g>
 
       {/* ────────────────── 3. 累积频率 S 型折线 (Ogive) ────────────────── */}

@@ -4,6 +4,7 @@ import type { SceneScale, ViewportInfo } from "@/hooks";
 import { mathToDesign } from "@/utils/coordinate";
 import { normalPdf } from "@/math/probabilityNormal";
 import { formatMathNumber } from "@/utils/mathFormat";
+import { StandardZAxisRuler } from "./StandardZAxisRuler";
 
 interface SymIntervalData {
   xSym: number;
@@ -21,6 +22,7 @@ interface ProbabilityNormalSigmaRuleSceneProps {
   mu: number;
   safeSigma: number;
   x0: number;
+  activeScenario?: string;
   showSigmaIntervals: boolean;
   scale: SceneScale;
   vp: ViewportInfo;
@@ -36,6 +38,7 @@ export function ProbabilityNormalSigmaRuleScene({
   mu,
   safeSigma,
   x0,
+  activeScenario = "free",
   showSigmaIntervals,
   scale,
   vp,
@@ -203,6 +206,53 @@ export function ProbabilityNormalSigmaRuleScene({
               </g>
             );
           })()}
+
+          {/* 非对称区间配凑高亮块 [μ+σ, μ+2σ] = (95.45% - 68.27%)/2 = 13.59% */}
+          {activeScenario === "asymmetricSigma" &&
+            (() => {
+              const aL = mu + safeSigma;
+              const aR = mu + 2 * safeSigma;
+              const pts: string[] = [];
+              const sPt = mathToDesign(aL, 0, scale);
+              pts.push(`M ${sPt.x.toFixed(1)} ${sPt.y.toFixed(1)}`);
+              for (let x = aL; x <= aR; x += 0.03) {
+                const pt = mathToDesign(x, normalPdf(x, mu, safeSigma), scale);
+                pts.push(`L ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`);
+              }
+              const ePtY = mathToDesign(
+                aR,
+                normalPdf(aR, mu, safeSigma),
+                scale,
+              );
+              const ePt0 = mathToDesign(aR, 0, scale);
+              pts.push(`L ${ePtY.x.toFixed(1)} ${ePtY.y.toFixed(1)}`);
+              pts.push(`L ${ePt0.x.toFixed(1)} ${ePt0.y.toFixed(1)} Z`);
+              const midPt = mathToDesign(
+                mu + 1.5 * safeSigma,
+                normalPdf(mu + 1.5 * safeSigma, mu, safeSigma) + 0.08,
+                scale,
+              );
+              return (
+                <g key="asymmetric-sigma-wing">
+                  <path
+                    d={pts.join(" ")}
+                    fill={withAlpha(MATH_COLORS.answerStepFrame, 0.35)}
+                    stroke={MATH_COLORS.answerStepFrame}
+                    strokeWidth={2}
+                  />
+                  <text
+                    x={midPt.x + 18}
+                    y={midPt.y - 6}
+                    fontSize={fontScale(10.5)}
+                    fontWeight="bold"
+                    fill={MATH_COLORS.answerStepFrame}
+                    textAnchor="start"
+                  >
+                    翼区 [μ+σ, μ+2σ] ≈ 13.59%
+                  </text>
+                </g>
+              );
+            })()}
         </g>
       )}
 
@@ -367,6 +417,14 @@ export function ProbabilityNormalSigmaRuleScene({
           </g>
         );
       })()}
+
+      {/* 标准化变换同步标尺 Z = (X - μ) / σ */}
+      <StandardZAxisRuler
+        mu={mu}
+        safeSigma={safeSigma}
+        scale={scale}
+        fontScale={fontScale}
+      />
     </g>
   );
 }

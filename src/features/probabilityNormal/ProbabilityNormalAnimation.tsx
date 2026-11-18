@@ -106,11 +106,24 @@ export function ProbabilityNormalAnimation() {
     keepAspectRatio: false,
   });
 
-  // 切换一级模式（重置二级预设为 'free'，避免上一模式状态残留）
+  // 切换一级模式（重置二级预设为 'free'，并同步载入新模式基线参数与默认开关，杜绝上一模式参数泄漏）
   const handleStudyModeChange = (newMode: string) => {
     const m = newMode as NormalStudyMode;
     setStudyMode(m);
     setPreset("free");
+    const baseScenario = MODE_SCENARIOS[m]?.[0];
+    setParams((prev) => {
+      const next = { ...prev, ...defaultParams };
+      if (baseScenario?.params) {
+        for (const [k, v] of Object.entries(baseScenario.params)) {
+          if (typeof v === "number") {
+            next[k] = v;
+          }
+        }
+      }
+      return next;
+    });
+    setShowSigmaIntervals(baseScenario?.showSigmaIntervals ?? false);
   };
 
   // 预设情境切换（参数联动与辅助开关同步）
@@ -138,12 +151,20 @@ export function ProbabilityNormalAnimation() {
     return buildMathQuantities("anim-probability-normal", params, {
       studyMode,
       activeScenario: preset,
+      showSigmaIntervals,
     });
-  }, [params, studyMode, preset]);
+  }, [params, studyMode, preset, showSigmaIntervals]);
 
-  // 参数变更（拖拽或滑块改变自动切回 free 探索）
+  // 参数变更（在极限逼近拟合模式下拖拽探究区间端点 x1/x2，或在非对称配凑下微调 μ/σ 时保持当前预设）
   const handleParamChange = (key: string, value: number) => {
-    setPreset("free");
+    const keepCurrentPreset =
+      (studyMode === "normalFit" && (key === "x1" || key === "x2")) ||
+      (studyMode === "sigmaRule" &&
+        preset === "asymmetricSigma" &&
+        (key === "mu" || key === "sigma"));
+    if (!keepCurrentPreset) {
+      setPreset("free");
+    }
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -154,12 +175,14 @@ export function ProbabilityNormalAnimation() {
   const handleReset = () => {
     setPreset("free");
     setParams({ ...defaultParams });
+    setShowSigmaIntervals(false);
+    setShowBenchmarkNormal(true);
   };
 
   // 按当前探究模式与二级情景白名单裁剪参数展示（参数降维）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const defaultKeysByMode: Record<NormalStudyMode, string[]> = {
-      normalFit: ["mu", "sigma", "binCount", "sampleSize", "blend"],
+      normalFit: ["mu", "sigma", "binCount", "sampleSize", "blend", "x1", "x2"],
       paramsShape: ["mu", "sigma"],
       sigmaRule: ["mu", "sigma", "x0"],
     };
@@ -181,6 +204,7 @@ export function ProbabilityNormalAnimation() {
           step: meta.step ?? 0.1,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
+          group: meta.group,
           importance: meta.importance,
           marks: meta.marks,
         };
@@ -460,6 +484,7 @@ export function ProbabilityNormalAnimation() {
                 vp={vp}
                 fontScale={canvasSize.font}
                 studyMode={studyMode}
+                activeScenario={preset}
                 showSigmaIntervals={showSigmaIntervals}
                 showBenchmarkNormal={showBenchmarkNormal}
                 onParamChange={handleParamChange}

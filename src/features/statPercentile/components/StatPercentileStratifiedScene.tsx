@@ -206,6 +206,95 @@ export const StatPercentileStratifiedScene: React.FC<
         })}
       </g>
 
+      {/* ────────────────── 2.5 总体混合分布与各层高斯钟形曲线 ────────────────── */}
+      {(() => {
+        const gaussVal = (x: number, m: number, s2: number) => {
+          const s = Math.max(1.5, Math.sqrt(Math.max(1, s2)));
+          return (
+            (1 / (s * Math.sqrt(2 * Math.PI))) *
+            Math.exp(-((x - m) * (x - m)) / (2 * s * s))
+          );
+        };
+        const samples: number[] = [];
+        for (let x = 48; x <= 102; x += 0.8) samples.push(x);
+
+        // 归一化缩放使曲线优雅落在各层基线之上且不超顶
+        const maxLayerPeak = Math.max(
+          0.01,
+          ...activeStrata.map(
+            (st) => st.weight * gaussVal(st.mean, st.mean, st.var),
+          ),
+        );
+        const layerHeightScale = 0.13 / maxLayerPeak;
+
+        const mixY = (x: number) =>
+          activeStrata.reduce(
+            (sum, st) => sum + st.weight * gaussVal(x, st.mean, st.var),
+            0,
+          );
+        const maxMixPeak = Math.max(0.01, ...samples.map(mixY));
+        const mixHeightScale = 0.14 / maxMixPeak;
+
+        const mixPathPts = [
+          mathToDesign(48, 0.12, scale),
+          ...samples.map((x) =>
+            mathToDesign(x, 0.12 + mixY(x) * mixHeightScale, scale),
+          ),
+          mathToDesign(102, 0.12, scale),
+        ];
+        const mixPathD = mixPathPts
+          .map(
+            (pt, idx) =>
+              `${idx === 0 ? "M" : "L"} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`,
+          )
+          .join(" ");
+
+        return (
+          <g key="strata-gaussian-curves">
+            {/* 数轴上方总体混合分布包络线 */}
+            <path
+              d={`${mixPathD} Z`}
+              fill={withAlpha(MATH_COLORS.function, 0.08)}
+              stroke={MATH_COLORS.function}
+              strokeWidth={1.6}
+              strokeDasharray="4 2"
+            />
+            {/* 各层按权重缩比的高斯钟形分布曲线 */}
+            {activeStrata.map((st, idx) => {
+              const pts = [
+                mathToDesign(48, st.yPos, scale),
+                ...samples.map((x) =>
+                  mathToDesign(
+                    x,
+                    st.yPos +
+                      st.weight *
+                        gaussVal(x, st.mean, st.var) *
+                        layerHeightScale,
+                    scale,
+                  ),
+                ),
+                mathToDesign(102, st.yPos, scale),
+              ];
+              const d = pts
+                .map(
+                  (pt, i) =>
+                    `${i === 0 ? "M" : "L"} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`,
+                )
+                .join(" ");
+              return (
+                <path
+                  key={`strata-gauss-${idx}`}
+                  d={`${d} Z`}
+                  fill={withAlpha(st.color, 0.12)}
+                  stroke={withAlpha(st.color, 0.65)}
+                  strokeWidth={1.3}
+                />
+              );
+            })}
+          </g>
+        );
+      })()}
+
       {/* ────────────────── 3. 总体均值贯穿参考线与卡片 ────────────────── */}
       {(() => {
         const ptMeanTop = mathToDesign(strat.totalMean, 0.82, scale);
@@ -291,8 +380,9 @@ export const StatPercentileStratifiedScene: React.FC<
                 strokeWidth={1.5}
               />
               <text
-                x={ptStdRight.x + 8}
+                x={ptStdRight.x > 650 ? ptStdLeft.x - 8 : ptStdRight.x + 8}
                 y={ptMean.y + 4}
+                textAnchor={ptStdRight.x > 650 ? "end" : "start"}
                 fill={st.color}
                 fontSize={fontScale(9)}
                 fontWeight="600"
@@ -412,11 +502,21 @@ export const StatPercentileStratifiedScene: React.FC<
               x={ptBarStart.x}
               y={ptBarStart.y - 10}
               fill={MATH_COLORS.labelText}
-              fontSize={fontScale(11)}
+              fontSize={fontScale(10.5)}
               fontWeight="bold"
             >
-              总体方差双分量分解：s² = {formatMathNumber(strat.totalVar)} =
-              ∑wᵢsᵢ² (层内波动) + ∑wᵢ(x̄ᵢ - x̄)² (层间均值差平方)
+              总体方差分解 s² = {formatMathNumber(strat.totalVar)} ＝ 层内{" "}
+              {formatMathNumber(intraVar)} (
+              {formatMathNumber(
+                Math.round((intraVar / Math.max(0.1, strat.totalVar)) * 100),
+              )}
+              %) ＋ 层间 {formatMathNumber(interMeanVar)} (
+              {formatMathNumber(
+                Math.round(
+                  (interMeanVar / Math.max(0.1, strat.totalVar)) * 100,
+                ),
+              )}
+              %)
             </text>
 
             {/* 组内方差贡献段 (蓝色) */}
@@ -428,20 +528,22 @@ export const StatPercentileStratifiedScene: React.FC<
               rx={4}
               fill={withAlpha(MATH_COLORS.function, 0.85)}
             />
-            <text
-              x={ptBarStart.x + intraWidthPx / 2}
-              y={ptBarStart.y + 16}
-              textAnchor="middle"
-              fill={CANVAS_COLORS.white}
-              fontSize={fontScale(10)}
-              fontWeight="bold"
-            >
-              层内 ∑wᵢsᵢ²: {formatMathNumber(intraVar)} (
-              {formatMathNumber(
-                Math.round((intraVar / Math.max(0.1, strat.totalVar)) * 100),
-              )}
-              %)
-            </text>
+            {intraWidthPx >= 95 && (
+              <text
+                x={ptBarStart.x + intraWidthPx / 2}
+                y={ptBarStart.y + 16}
+                textAnchor="middle"
+                fill={CANVAS_COLORS.white}
+                fontSize={fontScale(9.5)}
+                fontWeight="bold"
+              >
+                层内 ∑wᵢsᵢ²:{" "}
+                {formatMathNumber(
+                  Math.round((intraVar / Math.max(0.1, strat.totalVar)) * 100),
+                )}
+                %
+              </text>
+            )}
 
             {/* 组间离差贡献段 (橙色) */}
             <rect
@@ -452,22 +554,24 @@ export const StatPercentileStratifiedScene: React.FC<
               rx={4}
               fill={withAlpha(MATH_COLORS.paramSecondary, 0.9)}
             />
-            <text
-              x={ptBarStart.x + intraWidthPx + interWidthPx / 2}
-              y={ptBarStart.y + 16}
-              textAnchor="middle"
-              fill={CANVAS_COLORS.white}
-              fontSize={fontScale(10)}
-              fontWeight="bold"
-            >
-              层间 ∑wᵢ(x̄ᵢ-x̄)²: {formatMathNumber(interMeanVar)} (
-              {formatMathNumber(
-                Math.round(
-                  (interMeanVar / Math.max(0.1, strat.totalVar)) * 100,
-                ),
-              )}
-              %)
-            </text>
+            {interWidthPx >= 95 && (
+              <text
+                x={ptBarStart.x + intraWidthPx + interWidthPx / 2}
+                y={ptBarStart.y + 16}
+                textAnchor="middle"
+                fill={CANVAS_COLORS.white}
+                fontSize={fontScale(9.5)}
+                fontWeight="bold"
+              >
+                层间 ∑wᵢ(x̄ᵢ-x̄)²:{" "}
+                {formatMathNumber(
+                  Math.round(
+                    (interMeanVar / Math.max(0.1, strat.totalVar)) * 100,
+                  ),
+                )}
+                %
+              </text>
+            )}
           </g>
         );
       })()}

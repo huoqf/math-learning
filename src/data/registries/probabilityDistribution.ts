@@ -174,8 +174,8 @@ export const paramMeta: Record<string, ParamMeta> = {
 
   p1: {
     key: "p1",
-    label: "P(X=0)",
-    labelFormula: `\\text{概率 } \\color{${MATH_COLORS.paramPrimary}}{P(X=0)}`,
+    label: "p₀ = P(X=0)",
+    labelFormula: `\\text{权重 } \\color{${MATH_COLORS.paramPrimary}}{p_0 = P(X=0)}`,
     defaultValue: 0.2,
     min: 0,
     max: 0.8,
@@ -184,8 +184,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   p2: {
     key: "p2",
-    label: "P(X=1)",
-    labelFormula: `\\text{概率 } \\color{${MATH_COLORS.paramSecondary}}{P(X=1)}`,
+    label: "p₁ = P(X=1)",
+    labelFormula: `\\text{权重 } \\color{${MATH_COLORS.paramSecondary}}{p_1 = P(X=1)}`,
     defaultValue: 0.4,
     min: 0,
     max: 0.8,
@@ -194,8 +194,8 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   p3: {
     key: "p3",
-    label: "P(X=2)",
-    labelFormula: `\\text{概率 } \\color{${MATH_COLORS.paramTertiary}}{P(X=2)}`,
+    label: "p₂ = P(X=2)",
+    labelFormula: `\\text{权重 } \\color{${MATH_COLORS.paramTertiary}}{p_2 = P(X=2)}`,
     defaultValue: 0.3,
     min: 0,
     max: 0.8,

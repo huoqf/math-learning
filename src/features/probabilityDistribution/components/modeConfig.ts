@@ -170,7 +170,7 @@ export function getDecisionBarCount(
     : 4;
 }
 
-/** 决策模式 X 轴自适应上界：末柱横坐标 + 安全边距（与柱位排布同源，随情境柱数自动伸缩） */
+/** 决策模式 X 轴自适应上界：末柱横坐标 + 安全边距 + 右侧期望交点图预留区 */
 export function getDecisionMaxX(
   decisionResult?: DecisionScenarioResult,
 ): number {
@@ -178,7 +178,8 @@ export function getDecisionMaxX(
   return (
     DECISION_BAR_FIRST_X +
     Math.max(0, count - 1) * DECISION_BAR_STRIDE +
-    DECISION_BAR_MARGIN
+    DECISION_BAR_MARGIN +
+    3.2
   );
 }
 

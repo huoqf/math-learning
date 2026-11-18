@@ -28,6 +28,7 @@ interface ProbabilityNormalSceneProps {
   vp: ViewportInfo;
   fontScale: (size: number) => number;
   studyMode: "normalFit" | "paramsShape" | "sigmaRule";
+  activeScenario?: string;
   showSigmaIntervals?: boolean;
   showBenchmarkNormal?: boolean;
   onParamChange: (key: string, value: number) => void;
@@ -43,6 +44,7 @@ export function ProbabilityNormalScene({
   vp,
   fontScale,
   studyMode,
+  activeScenario = "free",
   showSigmaIntervals = false,
   showBenchmarkNormal = true,
   onParamChange,
@@ -182,19 +184,19 @@ export function ProbabilityNormalScene({
     return points.join(" ");
   }, [symData.rightX, mu, safeSigma, scale]);
 
-  // 6. 拖拽处理（InteractivePoint 返回数学坐标 mathPt）
+  // 6. 拖拽处理（InteractivePoint 返回数学坐标 mathPt，与左屏滑块值域 [-4, 4] 严格对称对齐）
   const handleDragX0 = (mathPt: { x: number; y: number }) => {
-    const clamped = Math.max(-5, Math.min(5, Math.round(mathPt.x * 10) / 10));
+    const clamped = Math.max(-4, Math.min(4, Math.round(mathPt.x * 10) / 10));
     onParamChange("x0", clamped);
   };
 
   const handleDragX1 = (mathPt: { x: number; y: number }) => {
-    const clamped = Math.max(-5, Math.min(5, Math.round(mathPt.x * 10) / 10));
+    const clamped = Math.max(-4, Math.min(4, Math.round(mathPt.x * 10) / 10));
     onParamChange("x1", clamped);
   };
 
   const handleDragX2 = (mathPt: { x: number; y: number }) => {
-    const clamped = Math.max(-5, Math.min(5, Math.round(mathPt.x * 10) / 10));
+    const clamped = Math.max(-4, Math.min(4, Math.round(mathPt.x * 10) / 10));
     onParamChange("x2", clamped);
   };
 
@@ -273,6 +275,7 @@ export function ProbabilityNormalScene({
           mu={mu}
           safeSigma={safeSigma}
           x0={x0}
+          activeScenario={activeScenario}
           showSigmaIntervals={showSigmaIntervals}
           scale={scale}
           vp={vp}

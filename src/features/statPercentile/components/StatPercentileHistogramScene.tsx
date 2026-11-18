@@ -10,7 +10,11 @@ import type { ViewportInfo } from "@/utils/useViewport";
 import { InteractivePoint } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
-import type { HistogramBin, HistogramStatsResult } from "@/math/statPercentile";
+import {
+  solveShiftForTargetMean,
+  type HistogramBin,
+  type HistogramStatsResult,
+} from "@/math/statPercentile";
 import { formatMathNumber, formatMathProb } from "@/utils/mathFormat";
 
 interface StatPercentileHistogramSceneProps {
@@ -487,24 +491,22 @@ export const StatPercentileHistogramScene: React.FC<
               fontSize={fontScale(9)}
               fontWeight="bold"
             >
-              ▲ 重心 (可拖拽平衡)
+              ▲ 重心 ({stats.isMultimodal ? "双峰低谷只读" : "可拖拽平衡"})
             </text>
           </g>
         );
       })()}
 
-      {/* ────────────────── 5. 重心物理支点拖拽交互点 ────────────────── */}
-      {vp && onParamChange && (
+      {/* ────────────────── 5. 重心物理支点拖拽交互点（双峰预设态禁用单峰偏移反推） ────────────────── */}
+      {vp && onParamChange && !stats.isMultimodal && (
         <InteractivePoint
           cx={stats.mean}
           cy={0}
           scale={scale}
           vp={vp}
           onDrag={(newPos) => {
-            const midCenter = (minX + maxX) / 2;
-            const offset = newPos.x - midCenter;
-            const targetShift = Math.max(-1, Math.min(1, offset / 12));
-            onParamChange("shift", Number(targetShift.toFixed(2)));
+            const targetShift = solveShiftForTargetMean(newPos.x, bins.length);
+            onParamChange("shift", targetShift);
           }}
           color={MATH_COLORS.function}
           r={7}

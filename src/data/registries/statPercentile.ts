@@ -160,7 +160,7 @@ export const MODE_SCENARIOS: Record<StudyMode, StatScenarioItem[]> = {
     {
       key: "equalMean",
       label: "均值无差异模型",
-      description: "各层均值相等 (x̄₁=x̄₂=x̄₃)，组间离差=0，总方差=组内方差",
+      description: "各层均值完全相等，组间离差归零，总方差等于组内加权方差",
       params: {
         mean1: 75,
         mean2: 75,

@@ -65,13 +65,29 @@ export function ProbabilityDistributionAnimation() {
     preset: CANVAS_PRESETS.full,
   });
 
-  // 2. 参数改动处理 (带超几何分布参数联动防越界)
+  // 2. 参数改动处理 (带超几何分布参数联动防越界 & 一般分布概率归一化总和<=1约束)
   const handleParamChange = (key: string, value: number) => {
     setParams((prev) => {
       const next = { ...prev, [key]: value };
       if (key === "N") {
         next.M = Math.min(next.M, value);
         next.sampleN = Math.min(next.sampleN, value);
+      }
+      if (
+        studyMode === "general" &&
+        (key === "p1" || key === "p2" || key === "p3")
+      ) {
+        const otherSum =
+          key === "p1"
+            ? (prev.p2 ?? 0) + (prev.p3 ?? 0)
+            : key === "p2"
+              ? (prev.p1 ?? 0) + (prev.p3 ?? 0)
+              : (prev.p1 ?? 0) + (prev.p2 ?? 0);
+        const safeP = Math.min(
+          value,
+          Math.max(0, Number((1 - otherSum).toFixed(2))),
+        );
+        next[key] = safeP;
       }
       return next;
     });
@@ -94,7 +110,12 @@ export function ProbabilityDistributionAnimation() {
   };
 
   const handleReset = () => {
-    setParams({ ...defaultParams });
+    setParams({
+      ...defaultParams,
+      decisionParam:
+        decisionScenario === "investment" ? 0.5 : defaultParams.decisionParam,
+    });
+    setAnswerStep(1);
   };
 
   // 3. 各模式数学模型计算结果
@@ -309,7 +330,11 @@ export function ProbabilityDistributionAnimation() {
                     ):
                   </span>
                   <span className="text-primary-700 font-bold font-mono">
-                    {distResult.sumP.toFixed(3)}
+                    {studyMode === "general" &&
+                    distResult.rawSumP !== undefined &&
+                    Math.abs(distResult.rawSumP - 1) > 1e-4
+                      ? `${distResult.rawSumP.toFixed(2)} → ${distResult.sumP.toFixed(3)}`
+                      : distResult.sumP.toFixed(3)}
                   </span>
                 </>
               )}

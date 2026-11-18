@@ -60,7 +60,7 @@ export function buildProbabilityDistributionPanel(
           color: MATH_COLORS.asymptote,
         },
         {
-          label: "峰值概率 $P_max$",
+          label: "峰值概率 $P_{\\max}$",
           symbol: "P_{max}",
           value: maxPVal,
           color: MATH_COLORS.barFill,
@@ -120,7 +120,10 @@ export function buildProbabilityDistributionPanel(
           step: DISTRIBUTION_ANSWER_STEPS[2].step,
           title: DISTRIBUTION_ANSWER_STEPS[2].title,
           detail: `在整数区间内求解 $k$，得到概率最大项为 $k_{\\max} = ${distResult?.modeX.join(", ") ?? "0"}$，对应最大概率 $P_{\\max} = ${maxPVal}$。`,
-          latex: `k = ${distResult?.modeX.join(", ") ?? "0"} \\implies P(X=${distResult?.modeX[0] ?? 0}) = ${maxPVal}`,
+          latex:
+            distResult && distResult.modeX.length > 1
+              ? `k \\in \\{${distResult.modeX.join(", ")}\\} \\implies P_{\\max} = ${maxPVal}`
+              : `k = ${distResult?.modeX[0] ?? 0} \\implies P(X=${distResult?.modeX[0] ?? 0}) = ${maxPVal}`,
           rubric: "【高考采分点】确定众数取值并规范作答得 2 分。",
         },
       ],
@@ -191,7 +194,9 @@ export function buildProbabilityDistributionPanel(
         {
           name: "大样本二项近似 (N 远大于 n)",
           latex: `N \\gg n \\implies \\frac{C_M^k C_{N-M}^{n-k}}{C_N^n} \\approx C_n^k p^k (1-p)^{n-k} \\quad \\left(p = \\frac{M}{N}\\right)`,
-          note: "当总体容量 $N$ 远大于抽取数 $n$（通常 $N \\ge 10n$）时，不放回抽样与有放回抽样的差别可忽略，超几何分布可用二项分布近似计算。该结论为近似表述，不属于课标正文要求。",
+          note: "当总体容量 $N$ 远大于抽取数 $n$（通常 $N \\ge 10n$）时，不放回抽样与有放回抽样的差别可忽略，超几何分布可用二项分布近似计算。",
+          isExtension: true,
+          extensionBadge: "拓展 · 超出课标",
           level: "derived",
         },
       ],
