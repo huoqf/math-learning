@@ -212,6 +212,10 @@ import {
   parabolaArchimedesNode,
   parabolaArchimedesLoader,
 } from "@/features/parabolaArchimedes/meta";
+import {
+  conicLocusInvariantsNode,
+  loader as conicLocusInvariantsLoader,
+} from "@/features/conicLocusInvariants/meta";
 
 // ── 9. 立体几何与空间向量 (3D) ──
 import {
@@ -436,6 +440,10 @@ export const routeEntries: RouteEntry[] = [
   { node: parabolaNode, loader: parabolaLoader as RouteEntry["loader"] },
   { node: conicLineMeta.node, loader: conicLineMeta.loader },
   { node: conicParamMeta.node, loader: conicParamMeta.loader },
+  {
+    node: conicLocusInvariantsNode,
+    loader: conicLocusInvariantsLoader as RouteEntry["loader"],
+  },
   {
     node: conicParamTNode,
     loader: conicParamTLoader as RouteEntry["loader"],

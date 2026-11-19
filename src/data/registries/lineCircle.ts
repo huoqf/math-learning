@@ -25,6 +25,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆心 C 的横坐标位置",
     descriptionFormula: `圆心 $C(\\color{${MATH_COLORS.paramPrimary}}{a}, b)$ 的横坐标`,
+    group: "目标圆参数",
   },
   b: {
     key: "b",
@@ -37,6 +38,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆心 C 的纵坐标位置",
     descriptionFormula: `圆心 $C(a, \\color{${MATH_COLORS.paramPrimary}}{b})$ 的纵坐标`,
+    group: "目标圆参数",
   },
   r: {
     key: "r",
@@ -49,6 +51,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆的大小半径 (r > 0)",
     descriptionFormula: `圆的大小半径 ($\\color{${MATH_COLORS.paramPrimary}}{r} > 0$)`,
+    group: "目标圆参数",
     marks: [
       {
         value: 3.0,
@@ -68,6 +71,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "直线的倾斜程度 tan(θ)",
     descriptionFormula: `直线的倾斜程度 $\\tan\\theta = \\color{${MATH_COLORS.paramSecondary}}{k}$`,
+    group: "直线斜截式",
     marks: [
       {
         value: 0,
@@ -88,6 +92,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "直线与 y 轴交点 (0, m)",
     descriptionFormula: `直线在 $y$ 轴上的截距 $(0, \\color{${MATH_COLORS.paramSecondary}}{m})$`,
+    group: "直线斜截式",
   },
   px: {
     key: "px",
@@ -100,6 +105,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     description: "切线模式下圆外点 P 的横坐标",
     descriptionFormula: `圆外点 $P(\\color{${MATH_COLORS.complexNum}}{x_P}, y_P)$ 的横坐标`,
+    group: "定点 / 切点坐标",
   },
   py: {
     key: "py",
@@ -112,6 +118,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     description: "切线模式下圆外点 P 的纵坐标",
     descriptionFormula: `圆外点 $P(x_P, \\color{${MATH_COLORS.complexNum}}{y_P})$ 的纵坐标`,
+    group: "定点 / 切点坐标",
   },
   mx: {
     key: "mx",
@@ -124,6 +131,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     description: "相交弦过定点 M 的横坐标",
     descriptionFormula: `定点 $M(\\color{${MATH_COLORS.paramSecondary}}{x_M}, y_M)$ 的横坐标`,
+    group: "定点 / 切点坐标",
   },
   my: {
     key: "my",
@@ -136,5 +144,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "advanced",
     description: "相交弦过定点 M 的纵坐标",
     descriptionFormula: `定点 $M(x_M, \\color{${MATH_COLORS.paramSecondary}}{y_M})$ 的纵坐标`,
+    group: "定点 / 切点坐标",
   },
 };

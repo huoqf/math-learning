@@ -26,6 +26,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "控制椭圆长轴 2a 或双曲线实轴 2a",
     importance: "core",
+    group: "几何尺寸",
   },
   b: {
     key: "b",
@@ -37,6 +38,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "控制椭圆短轴 2b 或双曲线虚轴 2b",
     importance: "core",
+    group: "几何尺寸",
   },
   e: {
     key: "e",
@@ -48,6 +50,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.01,
     description: "控制圆锥曲线扁平程度或开口开合度",
     importance: "core",
+    group: "几何特征",
     marks: [
       { value: 0.01, label: "圆", labelFormula: "e \\to 0" },
       {
@@ -73,5 +76,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.02,
     description: "沿曲线滑动动点 P 的位置",
     importance: "display",
+    group: "动点控制",
   },
 };

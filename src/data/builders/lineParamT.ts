@@ -58,8 +58,8 @@ export function buildLineParamTPanel(
       },
       {
         label: "非标准点 P' 参数与位移",
-        labelFormula: `\\text{修正位移 }\\color{${MATH_COLORS.paramPrimary}}{|P_0P'| = k_{\\text{norm}}|m|}`,
-        value: `m = ${t.toFixed(2)}, k_norm = ${kNorm.toFixed(
+        labelFormula: `\\text{修正位移 }\\color{${MATH_COLORS.paramPrimary}}{|P_0P'| = \\lambda|m|}`,
+        value: `m = ${t.toFixed(2)}, 比例因子 λ = ${kNorm.toFixed(
           2,
         )}, 实际距离 = ${(Math.abs(t) * kNorm).toFixed(2)}`,
         status:
@@ -406,7 +406,7 @@ export function buildLineParamTPanel(
 
   if (Math.abs(kNorm - 1.0) > 1e-3) {
     warnings.push({
-      text: `非标准参数警示：当前归一化比例 k_norm = ${kNorm.toFixed(2)} ≠ 1。此时参数 m 不直接等于实际距离，必须乘上系数 k_norm 换算为真距离！`,
+      text: `非标准参数警示：当前方向向量模长缩放因子 $\\lambda = ${kNorm.toFixed(2)} \\neq 1$。此时参数 $m$ 不直接等于实际距离，必须乘上系数 $\\lambda$ 换算为真距离！`,
       level: "warning",
     });
   }
@@ -450,8 +450,8 @@ export function buildLineParamTPanel(
       {
         step: 3,
         title: "求解反思 · 归一化判定与非标准参数换算",
-        detail: `若参数方程形式为 $x = x_0 + a\\cdot m, y = y_0 + b\\cdot m$，其归一化因子 $k_{\\text{norm}} = \\sqrt{a^2 + b^2}$。仅当 $k_{\\text{norm}} = 1$ 时参数才具有真实几何距离意义：`,
-        latex: `k_{\\text{norm}} = \\sqrt{a^2 + b^2} = ${kNorm.toFixed(2)} \\implies |P_0P| = k_{\\text{norm}} \\cdot |m|`,
+        detail: `若参数方程形式为 $x = x_0 + a\\cdot m, y = y_0 + b\\cdot m$，其方向向量模长缩放因子 $\\lambda = \\sqrt{a^2 + b^2}$。仅当 $\\lambda = 1$ 时参数才具有真实几何距离意义：`,
+        latex: `\\lambda = \\sqrt{a^2 + b^2} = ${kNorm.toFixed(2)} \\implies |P_0P| = \\lambda \\cdot |m|`,
         rubric: "【高考采分点】指出非标准参数方程与距离的比例换算关系（3分）",
       },
     );
@@ -478,6 +478,58 @@ export function buildLineParamTPanel(
         detail: `利用参数几何意义，相交弦长与割线线段乘积可由参数差与参数积直接秒解：`,
         latex: `|AB| = |t_1 - t_2| = \\frac{\\sqrt{\\Delta}}{|A|} = ${intersect.chordLength !== undefined ? intersect.chordLength.toFixed(2) : "0"}, \\quad |P_0A| \\cdot |P_0B| = |t_1 t_2| = \\left|\\frac{C}{A}\\right| = ${intersect.segmentProduct !== undefined ? intersect.segmentProduct.toFixed(2) : "0"}`,
         rubric: "【高考采分点】应用参数差公式求出弦长与线段乘积（2分）",
+      },
+    );
+  } else if (gaokaoModel === "midpoint") {
+    const midT = intersect.A !== 0 ? -intersect.B / (2 * intersect.A) : 0;
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "审题定法 · 中点弦参数方程设定",
+        detail: `以已知弦中点 $P_0(${x0.toFixed(2)}, ${y0.toFixed(2)})$ 为基准点设直线标准参数方程，代入曲线联立得关于 $t$ 的二次方程：`,
+        latex: `x = x_0 + t\\cos\\alpha, \\quad y = y_0 + t\\sin\\alpha \\implies A t^2 + B t + C = 0`,
+        rubric: "【高考采分点】设出过中点的标准参数方程并联立消元（2分）",
+      },
+      {
+        step: 2,
+        title: "建模代入 · 利用中点条件导出 $t_1 + t_2 = 0$",
+        detail: `若 $P_0$ 为弦 $AB$ 的中点，则点 $A, B$ 分居 $P_0$ 两侧且距 $P_0$ 距离相等，即参数满足互为相反数关系 $t_1 + t_2 = 0$（等价于一次项系数 $B = 0$）：`,
+        latex: `t_M = \\frac{t_1 + t_2}{2} = -\\frac{B}{2A} = ${midT.toFixed(2)} \\xrightarrow{P_0\\text{ 为中点}} B = 0`,
+        rubric:
+          "【高考采分点】正确利用参数几何对称性写出 $t_1 + t_2 = 0$（3分）",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 反解斜率并检验 $\\Delta > 0$",
+        detail: `由 $B = 0$ 直接解得直线斜率 $k = \\tan\\alpha$，并须代回验证判别式 $\\Delta = B^2 - 4AC = -4AC > 0$ 确保中点确实位于曲线内部：`,
+        latex: `\\Delta = ${intersect.delta.toFixed(2)}, \\quad t_1 + t_2 = ${(2 * midT).toFixed(2)}`,
+        rubric:
+          "【高考采分点】反解直线方程并完成 $\\Delta > 0$ 存在性检验（3分）",
+      },
+    );
+  } else if (gaokaoModel === "product") {
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "审题定法 · 定点割线参数方程设定",
+        detail: `设直线过定点 $P_0(${x0.toFixed(2)}, ${y0.toFixed(2)})$，建立标准参数方程并联立曲线得关于 $t$ 的二次方程：`,
+        latex: `x = x_0 + t\\cos\\alpha, \\quad y = y_0 + t\\sin\\alpha \\implies A t^2 + B t + C = 0`,
+        rubric: "【高考采分点】设出标准参数方程并代入曲线联立（2分）",
+      },
+      {
+        step: 2,
+        title: "建模代入 · 线段乘积与向量点乘转化",
+        detail: `由参数 $|t|$ 为点到 $P_0$ 距离，割线线段乘积或共线向量数量积直接由韦达两根之积读出：`,
+        latex: `|P_0A|\\cdot |P_0B| = |t_1 t_2| = \\left|\\frac{C}{A}\\right|, \\quad \\overrightarrow{P_0A}\\cdot\\overrightarrow{P_0B} = t_1 t_2 = \\frac{C}{A}`,
+        rubric: "【高考采分点】完成向量/线段乘积向 $t_1 t_2$ 的转化（3分）",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 割线积定量代换求解",
+        detail: `结合当前二次方程系数 $A = ${intersect.A.toFixed(2)}, C = ${intersect.C.toFixed(2)}$，直接求出线段乘积定值或取值范围（注意圆幂与二次曲线方向依赖差异）：`,
+        latex: `|P_0A| \\cdot |P_0B| = \\left|\\frac{${intersect.C.toFixed(2)}}{${intersect.A.toFixed(2)}}\\right| = ${intersect.segmentProduct !== undefined ? intersect.segmentProduct.toFixed(2) : "\\text{无交点}"}`,
+        rubric:
+          "【高考采分点】正确求得线段乘积并说明圆与其他二次曲线的差异（3分）",
       },
     );
   } else {

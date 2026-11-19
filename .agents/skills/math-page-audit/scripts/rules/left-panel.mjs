@@ -26,14 +26,37 @@ export const leftPanelRules = [
     type: '参数映射丢失group',
     severity: 'error',
     check(ctx) {
-      if (!ctx.isAnimationPage || !ctx.cleanContent.includes('mapKeysToConfigs')) return [];
-      const mapMatch = ctx.cleanContent.match(/const\s+mapKeysToConfigs\s*=\s*useCallback\([\s\S]*?return\s+keys[\s\S]*?\.map\(\s*\([^)]*\)\s*=>\s*\(\{([\s\S]*?)\}\)/);
-      if (mapMatch && !mapMatch[1].includes('group')) {
-        return [{
-          lineNum: 1,
-          message: 'mapKeysToConfigs 未解构/传递 group: meta.group，会导致左屏参数分组卡片无法正常渲染',
-          snippet: 'mapKeysToConfigs 返回项缺少 group 属性',
-        }];
+      if (!ctx.isAnimationPage || ctx.isTest) return [];
+      const hasGroupSpreadOrProp = (body) =>
+        /\bgroup\b/.test(body) || /\.\.\.meta\b/.test(body);
+
+      if (ctx.cleanContent.includes('mapKeysToConfigs')) {
+        const mapMatch = ctx.cleanContent.match(
+          /const\s+mapKeysToConfigs\s*=\s*useCallback\([\s\S]*?return\s+keys[\s\S]*?\.map\(\s*\([^)]*\)\s*=>\s*\(\{([\s\S]*?)\}\)/,
+        );
+        if (mapMatch && !hasGroupSpreadOrProp(mapMatch[1])) {
+          return [{
+            lineNum: 1,
+            message: 'mapKeysToConfigs 未解构/传递 group: meta.group，会导致左屏参数分组卡片无法正常渲染',
+            snippet: 'mapKeysToConfigs 返回项缺少 group 属性',
+          }];
+        }
+        return [];
+      }
+
+      // 兼容内联 useMemo<ParamConfig[]>(() => ... .map((...) => ({ ... }))) 写法
+      const inlineMapMatch = ctx.cleanContent.match(
+        /useMemo\s*<\s*ParamConfig\s*\[\]\s*>\s*\([\s\S]*?\.map\s*\([^)]*=>\s*(?:\(\s*\{([\s\S]*?)\}\s*\)|\{[\s\S]*?return\s+\{([\s\S]*?)\})/,
+      );
+      if (inlineMapMatch) {
+        const body = inlineMapMatch[1] || inlineMapMatch[2] || '';
+        if (body && !hasGroupSpreadOrProp(body)) {
+          return [{
+            lineNum: 1,
+            message: 'ParamConfig[] 内联 .map() 未传递 group: meta.group，会导致左屏参数分组卡片无法正常渲染',
+            snippet: 'ParamConfig[] 映射返回项缺少 group 属性',
+          }];
+        }
       }
       return [];
     },
@@ -152,58 +175,119 @@ export const leftPanelRules = [
     type: '参数元数据合规性',
     severity: 'error',
     check(ctx) {
-      if (!ctx.isRegistry || !ctx.cleanContent.includes('ParamMeta[]')) return [];
-      const metaArrayRegex = /export\s+const\s+(\w+Meta)\s*:\s*ParamMeta\[\]\s*=\s*\[([\s\S]*?)\];/g;
-      let matchMeta;
+      if (!ctx.isRegistry) return [];
       const issues = [];
 
-      while ((matchMeta = metaArrayRegex.exec(ctx.cleanContent)) !== null) {
-        const metaName = matchMeta[1];
-        const arrayBody = matchMeta[2];
-        const paramBlocks = arrayBody.split(/\},\s*\{/);
-        const paramsList = [];
-        for (const block of paramBlocks) {
-          const keyMatch = block.match(/key:\s*["']([^"']+)["']/);
-          const groupMatch = block.match(/group:\s*["']([^"']+)["']/);
-          if (keyMatch) {
-            paramsList.push({
-              key: keyMatch[1],
-              hasGroup: Boolean(groupMatch),
+      // 情况 A: ParamMeta[] 数组形式（如立体几何、空间向量）
+      if (ctx.cleanContent.includes('ParamMeta[]')) {
+        const metaArrayRegex = /export\s+const\s+(\w+Meta)\s*:\s*ParamMeta\[\]\s*=\s*\[([\s\S]*?)\];/g;
+        let matchMeta;
+
+        while ((matchMeta = metaArrayRegex.exec(ctx.cleanContent)) !== null) {
+          const metaName = matchMeta[1];
+          const arrayBody = matchMeta[2];
+          const paramBlocks = arrayBody.split(/\},\s*\{/);
+          const paramsList = [];
+          for (const block of paramBlocks) {
+            const keyMatch = block.match(/key:\s*["']([^"']+)["']/);
+            const groupMatch = block.match(/group:\s*["']([^"']+)["']/);
+            if (keyMatch) {
+              paramsList.push({
+                key: keyMatch[1],
+                hasGroup: Boolean(groupMatch),
+              });
+            }
+          }
+
+          if (paramsList.length >= 4 && paramsList.some((p) => !p.hasGroup)) {
+            issues.push({
+              lineNum: 1,
+              type: '参数过多未分组',
+              message: `${metaName} 包含 ${paramsList.length} 个参数 (>=4 项)，严禁全平铺，必须通过 group 字段进行对象化分层`,
+              snippet: `${metaName} 包含 ${paramsList.length} 项参数，未全量配置 group`,
             });
+          }
+
+          const isSolidContext = ctx.filePath.includes('solidGeometry') || /solid|cuboid|prism|pyramid/i.test(metaName);
+          if (isSolidContext) {
+            const dynamicKeyRegex = /^(lambda|mu|theta|phi|progress|step)/i;
+            const staticKeyRegex = /^(a|b|c|width|height|depth|radius|len|r|size)/i;
+            let foundStatic = false;
+            for (const p of paramsList) {
+              if (staticKeyRegex.test(p.key)) {
+                foundStatic = true;
+              } else if (dynamicKeyRegex.test(p.key) && foundStatic) {
+                issues.push({
+                  lineNum: 1,
+                  type: '动参数动线倒挂',
+                  message: `${metaName} 中核心动点参数应置顶于底模尺寸/背景常数之上，优先展示主要探究自变量`,
+                  snippet: `立体几何底模尺寸排在核心动分点 ${p.key} 之前`,
+                });
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // 情况 B: Record<string, ParamMeta> 对象形式（绝大多数 2D / 概率 / 解几页面）
+      const recordDeclRe = /export\s+const\s+(\w+)\s*:\s*Record\s*<\s*string\s*,\s*ParamMeta\s*>\s*=\s*\{/g;
+      let recMatch;
+      while ((recMatch = recordDeclRe.exec(ctx.cleanContent)) !== null) {
+        const metaName = recMatch[1];
+        const openBraceIdx = recMatch.index + recMatch[0].length - 1;
+        let depth = 0;
+        let closeBraceIdx = -1;
+        for (let i = openBraceIdx; i < ctx.cleanContent.length; i++) {
+          const ch = ctx.cleanContent[i];
+          if (ch === '{') depth++;
+          else if (ch === '}') {
+            depth--;
+            if (depth === 0) {
+              closeBraceIdx = i;
+              break;
+            }
+          }
+        }
+        if (closeBraceIdx === -1) continue;
+
+        const body = ctx.cleanContent.slice(openBraceIdx + 1, closeBraceIdx);
+        // 提取 depth === 1 的顶级属性块 { ... }
+        const entryBlocks = [];
+        let innerDepth = 0;
+        let blockStart = -1;
+        for (let i = 0; i < body.length; i++) {
+          const ch = body[i];
+          if (ch === '{') {
+            if (innerDepth === 0) blockStart = i;
+            innerDepth++;
+          } else if (ch === '}') {
+            innerDepth--;
+            if (innerDepth === 0 && blockStart !== -1) {
+              entryBlocks.push(body.slice(blockStart, i + 1));
+              blockStart = -1;
+            }
           }
         }
 
-        // 规则 A：参数数量 >= 4 必须配置 group 分组
+        const paramsList = entryBlocks
+          .map((block) => ({
+            hasKey: /\bkey\s*:/.test(block),
+            hasGroup: /\bgroup\s*:\s*["'][^"']+["']/.test(block),
+          }))
+          .filter((item) => item.hasKey);
+
         if (paramsList.length >= 4 && paramsList.some((p) => !p.hasGroup)) {
+          const lineNum = ctx.cleanContent.slice(0, recMatch.index).split('\n').length;
           issues.push({
-            lineNum: 1,
+            lineNum,
             type: '参数过多未分组',
             message: `${metaName} 包含 ${paramsList.length} 个参数 (>=4 项)，严禁全平铺，必须通过 group 字段进行对象化分层`,
             snippet: `${metaName} 包含 ${paramsList.length} 项参数，未全量配置 group`,
           });
         }
-
-        // 规则 B：动参数动线置顶检测 (三维场景)
-        const isSolidContext = ctx.filePath.includes('solidGeometry') || /solid|cuboid|prism|pyramid/i.test(metaName);
-        if (isSolidContext) {
-          const dynamicKeyRegex = /^(lambda|mu|theta|phi|progress|step)/i;
-          const staticKeyRegex = /^(a|b|c|width|height|depth|radius|len|r|size)/i;
-          let foundStatic = false;
-          for (const p of paramsList) {
-            if (staticKeyRegex.test(p.key)) {
-              foundStatic = true;
-            } else if (dynamicKeyRegex.test(p.key) && foundStatic) {
-              issues.push({
-                lineNum: 1,
-                type: '动参数动线倒挂',
-                message: `${metaName} 中核心动点参数应置顶于底模尺寸/背景常数之上，优先展示主要探究自变量`,
-                snippet: `立体几何底模尺寸排在核心动分点 ${p.key} 之前`,
-              });
-              break;
-            }
-          }
-        }
       }
+
       return issues;
     },
   },

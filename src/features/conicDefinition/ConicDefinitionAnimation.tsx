@@ -12,17 +12,21 @@ import { useState, useMemo } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
+  ParamPlayBar,
   MathPanel,
+  KatexFormula,
   LeftPanel,
   LeftPanelSection,
   TabSwitcher,
   SelectGrid,
   TipCard,
 } from "@/components/UI";
+import { SceneLegend } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ConicDefinitionScene } from "./components/ConicDefinitionScene";
+import { getFirstDefData } from "@/math/conicDefinition";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
   defaultParams,
@@ -82,8 +86,62 @@ export function ConicDefinitionAnimation() {
     });
   }, [params, studyMode, conicType]);
 
+  // 动点描迹播放 + 统一定义离心率连续演化播放
+  const thetaPlay = useParamPlay({
+    min: 0,
+    max: 6.28,
+    step: 0.02,
+    mode: "loop",
+    getValue: () => params.theta,
+    onChange: (val) => {
+      setParams((prev) => ({ ...prev, theta: val }));
+    },
+  });
+
+  const ePlay = useParamPlay({
+    min: 0.35,
+    max: 1.85,
+    step: 0.02,
+    mode: "bounce",
+    getValue: () => params.e,
+    onChange: (val) => {
+      setActivePreset("free");
+      setParams((prev) => ({ ...prev, e: val }));
+    },
+  });
+
+  // 第一定义椭圆下双焦半径能量比例（|PF1| + |PF2| = 2a 恒定对比）
+  const ellipseSumBar = useMemo(() => {
+    if (
+      studyMode !== "firstDef" ||
+      conicType !== "ellipse" ||
+      params.a <= params.c
+    ) {
+      return null;
+    }
+    const data = getFirstDefData(
+      "ellipse",
+      params.a,
+      params.c,
+      params.p,
+      params.theta,
+    );
+    const r1 = data.d1 ?? 0;
+    const r2 = data.d2 ?? 0;
+    const total = r1 + r2;
+    if (total <= 1e-6) return null;
+    return {
+      r1,
+      r2,
+      p1: (r1 / total) * 100,
+      p2: (r2 / total) * 100,
+    };
+  }, [studyMode, conicType, params.a, params.c, params.p, params.theta]);
+
   // 参数更新 (当在特定预设下联动从属参数，当在自由模式下直接更新)
   const handleParamChange = (key: string, value: number) => {
+    if (key !== "theta") thetaPlay.pause();
+    if (key !== "e") ePlay.pause();
     setParams((prev) => {
       const next = {
         ...prev,
@@ -130,6 +188,8 @@ export function ConicDefinitionAnimation() {
 
   // 模式切换
   const handleModeChange = (modeKey: string) => {
+    thetaPlay.pause();
+    ePlay.pause();
     const newMode = modeKey as typeof studyMode;
     setStudyMode(newMode);
     setActivePreset("free");
@@ -209,6 +269,7 @@ export function ConicDefinitionAnimation() {
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
+          group: meta.group,
         };
       });
   }, [params, studyMode, conicType, activePreset]);
@@ -317,8 +378,10 @@ export function ConicDefinitionAnimation() {
             {/* 仅在第一定义下展示曲线类型切换 */}
             {studyMode === "firstDef" && (
               <div className="mt-2.5">
-                <SelectGrid
-                  items={[
+                <TabSwitcher
+                  layout="horizontal"
+                  size="compact"
+                  tabs={[
                     { key: "ellipse", label: "椭圆" },
                     { key: "hyperbola", label: "双曲线" },
                     { key: "parabola", label: "抛物线" },
@@ -337,7 +400,6 @@ export function ConicDefinitionAnimation() {
                       setParams((prev) => ({ ...prev, a: 2.0, c: 3.0 }));
                     }
                   }}
-                  columns={3}
                 />
               </div>
             )}
@@ -349,7 +411,6 @@ export function ConicDefinitionAnimation() {
               items={currentPresets.map((p) => ({
                 key: p.key,
                 label: p.label,
-                formula: p.formula,
               }))}
               value={activePreset}
               onChange={handlePresetSelect}
@@ -358,10 +419,38 @@ export function ConicDefinitionAnimation() {
           </LeftPanelSection>
 
           <LeftPanelSection title="参数调节">
+            <div className="mb-2.5">
+              <ParamPlayBar
+                isPlaying={thetaPlay.isPlaying}
+                onToggle={() => {
+                  if (!thetaPlay.isPlaying) ePlay.pause();
+                  thetaPlay.toggle();
+                }}
+                speed={thetaPlay.speed}
+                onSpeedChange={thetaPlay.setSpeed}
+                label="动点 P 轨迹描点"
+                secondaryAction={
+                  studyMode === "unifiedDef" && activePreset !== "parabola_e"
+                    ? {
+                        label: "离心率 e 连续演化",
+                        active: ePlay.isPlaying,
+                        onToggle: () => {
+                          if (!ePlay.isPlaying) thetaPlay.pause();
+                          ePlay.toggle();
+                        },
+                      }
+                    : undefined
+                }
+              />
+            </div>
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={handleReset}
+              onReset={() => {
+                thetaPlay.pause();
+                ePlay.pause();
+                handleReset();
+              }}
             />
           </LeftPanelSection>
 
@@ -375,20 +464,91 @@ export function ConicDefinitionAnimation() {
         </LeftPanel>
       }
       center={
-        <AnimationSvgCanvas
-          containerRef={containerRef}
-          transform={vp.transform}
-        >
-          <ConicDefinitionScene
-            params={params}
-            scale={scale}
-            vp={vp}
-            fontScale={canvasSize.font}
-            studyMode={studyMode}
-            conicType={conicType}
-            onParamChange={handleParamChange}
+        <div className="w-full h-full relative">
+          {ellipseSumBar && (
+            <div className="absolute top-3 left-3 z-10 w-56 rounded-lg bg-white/95 backdrop-blur border border-neutral-200 px-3 py-2 shadow-sm pointer-events-none">
+              <div className="flex items-center justify-between text-[11px] font-medium text-neutral-700 mb-1">
+                <KatexFormula formula="|PF_1| + |PF_2| = 2a" mode="inline" />
+                <span className="text-neutral-500">定长绳演示</span>
+              </div>
+              <div className="h-2 w-full rounded-full overflow-hidden flex bg-neutral-100">
+                <div
+                  className="h-full transition-[width] duration-75"
+                  style={{
+                    width: `${ellipseSumBar.p1}%`,
+                    backgroundColor: MATH_COLORS.paramPrimary,
+                  }}
+                />
+                <div
+                  className="h-full transition-[width] duration-75"
+                  style={{
+                    width: `${ellipseSumBar.p2}%`,
+                    backgroundColor: MATH_COLORS.paramSecondary,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          <AnimationSvgCanvas
+            containerRef={containerRef}
+            transform={vp.transform}
+          >
+            <ConicDefinitionScene
+              params={params}
+              scale={scale}
+              vp={vp}
+              fontScale={canvasSize.font}
+              studyMode={studyMode}
+              conicType={conicType}
+              onParamChange={handleParamChange}
+            />
+          </AnimationSvgCanvas>
+          <SceneLegend
+            items={
+              studyMode === "firstDef" && conicType !== "parabola"
+                ? [
+                    {
+                      label: "圆锥曲线",
+                      color: MATH_COLORS.paramPrimary,
+                      style: "solid",
+                    },
+                    {
+                      label: "焦点 F₁, F₂",
+                      color: MATH_COLORS.paramSecondary,
+                      style: "point",
+                    },
+                    {
+                      label: "动点 P",
+                      color: MATH_COLORS.paramPrimary,
+                      style: "point",
+                    },
+                  ]
+                : [
+                    {
+                      label: "圆锥曲线",
+                      color: MATH_COLORS.paramPrimary,
+                      style: "solid",
+                    },
+                    {
+                      label: "焦点 F",
+                      color: MATH_COLORS.paramSecondary,
+                      style: "point",
+                    },
+                    {
+                      label: "准线 l",
+                      color: MATH_COLORS.paramTertiary,
+                      style: "dashed",
+                    },
+                    {
+                      label: "垂足 H",
+                      color: MATH_COLORS.paramTertiary,
+                      style: "point",
+                    },
+                  ]
+            }
+            position="bottom-right"
           />
-        </AnimationSvgCanvas>
+        </div>
       }
       right={<MathPanel {...mathData} title="圆锥曲线定义看板" />}
     />

@@ -58,7 +58,7 @@ const EXEMPTIONS: Exemption[] = [
     relPath: "conicDefinition/components/ConicDefinitionScene.tsx",
     contains: "sceneData.pPoint",
     reason:
-      "动点位置由角度参数 θ 决定，且拖拽先投影回曲线再反解 θ；另需 edgeClampProjection 处理纵溢出",
+      "动点位置由角度参数 θ 决定，且拖拽先投影回曲线再反解 θ；已开启 edgeClampProjection 边缘投影吸附防出界",
   },
   {
     relPath: "conicParam/components/ConicParamScene.tsx",

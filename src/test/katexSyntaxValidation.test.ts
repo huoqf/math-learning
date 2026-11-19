@@ -277,6 +277,138 @@ describe("高中数学右屏数据推导链与 LaTeX 离线语法自动化校验
       params: { a: 1, x0: 1 },
       config: { modelKey: "x_ln_x_param", mode: "parametric_discuss" },
     },
+    // 圆锥曲线专题全量校验补齐（含边界退化、各子模式与拓展）
+    {
+      animId: "anim-line-circle",
+      params: { a: 0, b: 0, r: 3, k: 0.75, m: -1 },
+      config: { studyMode: "secant" },
+    },
+    {
+      animId: "anim-circle-circle",
+      params: { x1: -1.5, y1: 0, r1: 2.5, x2: 2.0, y2: 0, r2: 2.0 },
+      config: { studyMode: "relation" },
+    },
+    {
+      animId: "anim-conic-definition",
+      params: { a: 3, c: 2, e: 0.66, p: 2, theta: 0.8 },
+      config: { studyMode: "firstDef", conicType: "ellipse" },
+    },
+    {
+      animId: "anim-conic-definition",
+      params: { a: 2, c: 3, e: 1.5, p: 2, theta: 0.8 },
+      config: { studyMode: "unifiedDef", conicType: "hyperbola" },
+    },
+    {
+      animId: "anim-conic-properties",
+      params: { a: 3, b: 2, e: 0.745, t: Math.PI / 4 },
+      config: { studyMode: "focusTriangle", conicType: "ellipse" },
+    },
+    {
+      animId: "anim-conic-properties",
+      params: { a: 3, b: 4, e: 5 / 3, t: 0.5 },
+      config: {
+        studyMode: "focusTriangle",
+        conicType: "hyperbola",
+        branch: "left",
+      },
+    },
+    {
+      animId: "anim-conic-line",
+      params: { a: 3, b: 2, p: 2, k: 0, m: 1 },
+      config: { conicType: "parabola", studyMode: "general" },
+    },
+    {
+      animId: "anim-conic-line",
+      params: { a: 3, b: 2, p: 2, k: 2 / 3, m: 1 },
+      config: { conicType: "hyperbola", studyMode: "general" },
+    },
+    {
+      animId: "anim-conic-param",
+      params: { a: 4, b: 3, theta: 45, y1: 4, y2: -1, p: 2, m: 0.8, n: 1 },
+      config: { studyMode: "parabolaYParam" },
+    },
+    {
+      animId: "anim-conic-param-t",
+      params: {
+        x0: 0.5,
+        y0: 0.8,
+        alpha: 45,
+        t: 2.5,
+        kNorm: 1.5,
+        R: 3,
+        a: 3.5,
+        b: 2,
+        p: 1.5,
+      },
+      config: { mode: "gaokao", conicType: "ellipse", gaokaoModel: "midpoint" },
+    },
+    {
+      animId: "anim-conic-param-t",
+      params: {
+        x0: 1.0,
+        y0: 0,
+        alpha: 60,
+        t: 2,
+        kNorm: 1,
+        R: 3,
+        a: 3.5,
+        b: 2,
+        p: 2,
+      },
+      config: {
+        mode: "gaokao",
+        conicType: "parabola",
+        gaokaoModel: "reciprocal",
+      },
+    },
+    {
+      animId: "anim-conic-homogenization",
+      params: {
+        a: 2.5,
+        b: 1.5,
+        lineA: 0.3,
+        lineB: 0.4,
+        px: -2.5,
+        py: 0,
+        lambda: 1,
+        mu: 1,
+      },
+      config: { curveType: "ellipse", studyMode: "shift" },
+    },
+    {
+      animId: "anim-conic-homogenization",
+      params: {
+        a: 2.0,
+        b: 1.5,
+        lineA: 0.3,
+        lineB: 0.4,
+        px: 0,
+        py: 0,
+        lambda: 1,
+        mu: 2,
+      },
+      config: { curveType: "hyperbola", studyMode: "origin" },
+    },
+    {
+      animId: "anim-parabola-archimedes",
+      params: { p: 2, thetaDeg: 60, yQ: 2 },
+      config: { mode: "archimedesTriangle" },
+    },
+    {
+      animId: "anim-conic-locus-invariants",
+      params: { a: 3.5, b: 2.0, thetaDeg: 50, slopeInvM: 0.45 },
+      config: { studyMode: "locusTransfer" },
+    },
+    {
+      animId: "anim-conic-locus-invariants",
+      params: { a: 3.5, b: 2.0, thetaDeg: 50, slopeInvM: 0.45 },
+      config: { studyMode: "thirdDefinition", curveType: "hyperbola" },
+    },
+    {
+      animId: "anim-conic-locus-invariants",
+      params: { a: 3.5, b: 2.0, thetaDeg: 50, slopeInvM: 0.45 },
+      config: { studyMode: "fixedPoint" },
+    },
   ];
 
   topicsToTest.forEach(({ animId, params, config }) => {

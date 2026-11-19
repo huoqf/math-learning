@@ -105,7 +105,7 @@ export const ParabolaScene: React.FC<ParabolaSceneProps> = ({
   return (
     <g>
       {/* 1. 坐标轴与网格 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* 2. 准线 (使用 Asymptote 组件) */}
       {base.directrixIsVertical ? (

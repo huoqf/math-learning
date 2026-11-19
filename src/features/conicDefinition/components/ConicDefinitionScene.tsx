@@ -240,7 +240,7 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
         </text>
       ))}
 
-      {/* 9. 可拖拽动点 P (外光晕手柄，全轨迹拖拽) */}
+      {/* 9. 可拖拽动点 P (外光晕手柄，开启边缘投影防飞出失联) */}
       <InteractivePoint
         cx={sceneData.pPoint?.x ?? 0}
         cy={sceneData.pPoint?.y ?? 0}
@@ -248,6 +248,7 @@ export const ConicDefinitionScene: React.FC<ConicDefinitionSceneProps> = ({
         vp={vp}
         color={cPrimary}
         fontScale={fontScale}
+        edgeClampProjection
         onDrag={handlePDrag}
       />
     </g>

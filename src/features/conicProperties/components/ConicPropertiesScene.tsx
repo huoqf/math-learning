@@ -14,6 +14,8 @@ import {
   calculateConicProperties,
   hyperbolaTMaxOnCanvas,
   type ConicType,
+  type HyperbolaBranch,
+  type FocusAxis,
 } from "../math/conicProperties";
 
 interface ConicPropertiesSceneProps {
@@ -28,6 +30,9 @@ interface ConicPropertiesSceneProps {
   fontScale: (size: number) => number;
   studyMode: "basicProperties" | "eccentricity" | "focusTriangle";
   conicType: ConicType;
+  focusAxis?: FocusAxis;
+  branch?: HyperbolaBranch;
+  onBranchChange?: (branch: HyperbolaBranch) => void;
   onParamChange: (key: string, value: number) => void;
 }
 
@@ -38,12 +43,24 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
   fontScale,
   studyMode,
   conicType,
+  focusAxis = "x",
+  branch = "right",
+  onBranchChange,
   onParamChange,
 }) => {
+  const isXAxis = focusAxis === "x";
   // 数学计算结果
   const calcResult = useMemo(
-    () => calculateConicProperties(conicType, params.a, params.b, params.t),
-    [conicType, params.a, params.b, params.t],
+    () =>
+      calculateConicProperties(
+        conicType,
+        params.a,
+        params.b,
+        params.t,
+        branch,
+        focusAxis,
+      ),
+    [conicType, params.a, params.b, params.t, branch, focusAxis],
   );
 
   const {
@@ -78,18 +95,40 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
    */
   const visibleHalfX = Math.max(Math.abs(scale.xMin), Math.abs(scale.xMax));
   const visibleHalfY = Math.max(Math.abs(scale.yMin), Math.abs(scale.yMax));
-  const hyperbolaTMax = hyperbolaTMaxOnCanvas(a, b, visibleHalfX, visibleHalfY);
+  const hyperbolaTMax = hyperbolaTMaxOnCanvas(
+    a,
+    b,
+    isXAxis ? visibleHalfX : visibleHalfY,
+    isXAxis ? visibleHalfY : visibleHalfX,
+  );
   const dragBounds =
     conicType === "hyperbola"
-      ? paramDragBounds(
-          { min: a, max: a / Math.cos(hyperbolaTMax) },
-          {
-            min: -b * Math.tan(hyperbolaTMax),
-            max: b * Math.tan(hyperbolaTMax),
-          },
-          scale,
-        )
-      : paramDragBounds({ min: -a, max: a }, { min: -b, max: b }, scale);
+      ? isXAxis
+        ? paramDragBounds(
+            {
+              min: -a / Math.cos(hyperbolaTMax),
+              max: a / Math.cos(hyperbolaTMax),
+            },
+            {
+              min: -b * Math.tan(hyperbolaTMax),
+              max: b * Math.tan(hyperbolaTMax),
+            },
+            scale,
+          )
+        : paramDragBounds(
+            {
+              min: -b * Math.tan(hyperbolaTMax),
+              max: b * Math.tan(hyperbolaTMax),
+            },
+            {
+              min: -a / Math.cos(hyperbolaTMax),
+              max: a / Math.cos(hyperbolaTMax),
+            },
+            scale,
+          )
+      : isXAxis
+        ? paramDragBounds({ min: -a, max: a }, { min: -b, max: b }, scale)
+        : paramDragBounds({ min: -b, max: b }, { min: -a, max: a }, scale);
 
   // 1. 生成曲线 SVG 路径
   const curvePaths = useMemo(() => {
@@ -98,8 +137,8 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
       const pts: string[] = [];
       for (let i = 0; i <= steps; i++) {
         const theta = (i / steps) * Math.PI * 2;
-        const x = a * Math.cos(theta);
-        const y = b * Math.sin(theta);
+        const x = (isXAxis ? a : b) * Math.cos(theta);
+        const y = (isXAxis ? b : a) * Math.sin(theta);
         const dPt = mathToDesign(x, y, scale);
         pts.push(
           `${i === 0 ? "M" : "L"} ${dPt.x.toFixed(1)},${dPt.y.toFixed(1)}`,
@@ -107,10 +146,8 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
       }
       return [pts.join(" ")];
     } else {
-      // 双曲线：右支与左支
+      // 双曲线：左右或上下两支
       const steps = 60;
-      // 绘制范围与左屏 t 滑块量程、拖拽钳制**同源**（就用组件级已算好的 hyperbolaTMax），
-      // 否则曲线会画到滑块永远够不到的位置（讲画不一致）。
       const tMax = hyperbolaTMax;
       const rightPts: string[] = [];
       const leftPts: string[] = [];
@@ -120,17 +157,15 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         const secT = 1 / Math.cos(tVal);
         const tanT = Math.tan(tVal);
 
-        // 右支
-        const rx = a * secT;
-        const ry = b * tanT;
+        const rx = isXAxis ? a * secT : b * tanT;
+        const ry = isXAxis ? b * tanT : a * secT;
         const rPt = mathToDesign(rx, ry, scale);
         rightPts.push(
           `${i === 0 ? "M" : "L"} ${rPt.x.toFixed(1)},${rPt.y.toFixed(1)}`,
         );
 
-        // 左支
-        const lx = -a * secT;
-        const ly = b * tanT;
+        const lx = isXAxis ? -a * secT : b * tanT;
+        const ly = isXAxis ? b * tanT : -a * secT;
         const lPt = mathToDesign(lx, ly, scale);
         leftPts.push(
           `${i === 0 ? "M" : "L"} ${lPt.x.toFixed(1)},${lPt.y.toFixed(1)}`,
@@ -138,17 +173,19 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
       }
       return [rightPts.join(" "), leftPts.join(" ")];
     }
-  }, [conicType, a, b, scale, hyperbolaTMax]);
+  }, [conicType, a, b, scale, hyperbolaTMax, isXAxis]);
 
   // 2. 双曲线特征矩形与辅助外接圆
   const rectPts = useMemo(() => {
     if (conicType !== "hyperbola") return null;
-    const p1 = mathToDesign(a, b, scale);
-    const p2 = mathToDesign(-a, b, scale);
-    const p3 = mathToDesign(-a, -b, scale);
-    const p4 = mathToDesign(a, -b, scale);
+    const rx = isXAxis ? a : b;
+    const ry = isXAxis ? b : a;
+    const p1 = mathToDesign(rx, ry, scale);
+    const p2 = mathToDesign(-rx, ry, scale);
+    const p3 = mathToDesign(-rx, -ry, scale);
+    const p4 = mathToDesign(rx, -ry, scale);
     return { p1, p2, p3, p4 };
-  }, [conicType, a, b, scale]);
+  }, [conicType, a, b, scale, isXAxis]);
 
   const auxCircleRadiusPx = useMemo(() => {
     if (conicType !== "hyperbola") return 0;
@@ -172,25 +209,25 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
       {/* 坐标轴与网格 (解析几何默认纯净背景) */}
       <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
-      {/* 渐近线 (仅双曲线) */}
+      {/* 渐近线 (仅双曲线：焦点在 x 轴斜率 b/a；焦点在 y 轴斜率 a/b) */}
       {conicType === "hyperbola" && (
         <>
           <Asymptote
             type="oblique"
-            value={b / a}
+            value={isXAxis ? b / a : a / b}
             intercept={0}
             scale={scale}
             color={MATH_COLORS.paramSecondary}
-            label="y = (b/a)x"
+            label={isXAxis ? "y = (b/a)x" : "y = (a/b)x"}
             fontScale={fontScale}
           />
           <Asymptote
             type="oblique"
-            value={-b / a}
+            value={isXAxis ? -b / a : -a / b}
             intercept={0}
             scale={scale}
             color={MATH_COLORS.paramSecondary}
-            label="y = -(b/a)x"
+            label={isXAxis ? "y = -(b/a)x" : "y = -(a/b)x"}
             fontScale={fontScale}
           />
         </>
@@ -200,19 +237,19 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
       {studyMode === "eccentricity" && (
         <>
           <Asymptote
-            type="vertical"
+            type={isXAxis ? "vertical" : "horizontal"}
             value={directrices.leftX}
             scale={scale}
             color={MATH_COLORS.primary}
-            label="x = -a²/c"
+            label={isXAxis ? "x = -a²/c" : "y = -a²/c"}
             fontScale={fontScale}
           />
           <Asymptote
-            type="vertical"
+            type={isXAxis ? "vertical" : "horizontal"}
             value={directrices.rightX}
             scale={scale}
             color={MATH_COLORS.primary}
-            label="x = a²/c"
+            label={isXAxis ? "x = a²/c" : "y = a²/c"}
             fontScale={fontScale}
           />
         </>
@@ -259,10 +296,10 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
               >
                 a (斜边)
               </text>
-              {/* 直角边 b */}
+              {/* 直角边 b 与 c 位置随焦点轴向自适应 */}
               <text
-                x={originPt.x - 14}
-                y={(originPt.y + b2Pt.y) / 2}
+                x={isXAxis ? originPt.x - 14 : (originPt.x + b2Pt.x) / 2}
+                y={isXAxis ? (originPt.y + b2Pt.y) / 2 : originPt.y + 16}
                 fill={MATH_COLORS.paramSecondary}
                 fontSize={fontScale(12)}
                 fontWeight="bold"
@@ -274,8 +311,8 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
               </text>
               {/* 直角边 c */}
               <text
-                x={(originPt.x + f2Pt.x) / 2}
-                y={originPt.y + 16}
+                x={isXAxis ? (originPt.x + f2Pt.x) / 2 : originPt.x - 14}
+                y={isXAxis ? originPt.y + 16 : (originPt.y + f2Pt.y) / 2}
                 fill={MATH_COLORS.paramTertiary}
                 fontSize={fontScale(12)}
                 fontWeight="bold"
@@ -316,7 +353,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                   stroke={MATH_COLORS.white}
                   strokeWidth={3}
                 >
-                  M(a, b)
+                  {isXAxis ? "M(a, b)" : "M(b, a)"}
                 </text>
               </g>
             )
@@ -329,7 +366,11 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         <g className="latus-rectum-group">
           {/* 通径垂直标尺 (在焦点 F2 处垂直于主轴) */}
           <path
-            d={`M ${f2Pt.x - 8},${f2Pt.y} L ${f2Pt.x - 8},${f2Pt.y - 8} L ${f2Pt.x},${f2Pt.y - 8}`}
+            d={
+              isXAxis
+                ? `M ${f2Pt.x - 8},${f2Pt.y} L ${f2Pt.x - 8},${f2Pt.y - 8} L ${f2Pt.x},${f2Pt.y - 8}`
+                : `M ${f2Pt.x},${f2Pt.y + 8} L ${f2Pt.x + 8},${f2Pt.y + 8} L ${f2Pt.x + 8},${f2Pt.y}`
+            }
             fill="none"
             stroke={MATH_COLORS.paramPrimary}
             strokeWidth={1.5}
@@ -357,8 +398,8 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             r={3.5}
           />
           <text
-            x={lrTopPt.x + 8}
-            y={(lrTopPt.y + lrBotPt.y) / 2}
+            x={isXAxis ? lrTopPt.x + 8 : (lrTopPt.x + lrBotPt.x) / 2 + 10}
+            y={isXAxis ? (lrTopPt.y + lrBotPt.y) / 2 : lrTopPt.y - 8}
             fill={MATH_COLORS.paramPrimary}
             fontSize={fontScale(12)}
             fontWeight="bold"
@@ -484,14 +525,20 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
                       fontScale={fontScale}
                     />
 
-                    {/* 底边切点 T (双曲线时切点恒为实轴顶点 A2) */}
+                    {/* 底边切点 T (双曲线时切点恒为所在分支实轴顶点 A2 或 A1) */}
                     <MathPoint
                       cx={inc.tangentBase.x}
                       cy={inc.tangentBase.y}
                       scale={scale}
                       color={MATH_COLORS.paramPrimary}
-                      label={conicType === "ellipse" ? "T" : "T(A₂)"}
-                      labelPosition="bottom"
+                      label={
+                        conicType === "ellipse"
+                          ? "T"
+                          : branch === "left"
+                            ? "T(A₁)"
+                            : "T(A₂)"
+                      }
+                      labelPosition={isXAxis ? "bottom" : "right"}
                       fontScale={fontScale}
                     />
                   </>
@@ -502,14 +549,14 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         </g>
       )}
 
-      {/* 顶点标注 (使用标准 MathPoint 与学术单字母) */}
+      {/* 顶点标注 (使用标准 MathPoint 与学术单字母，位置随焦点轴向自适应) */}
       <MathPoint
         cx={vertices.A1.x}
         cy={vertices.A1.y}
         scale={scale}
         color={MATH_COLORS.primary}
         label="A₁"
-        labelPosition="left"
+        labelPosition={isXAxis ? "left" : "bottom"}
         fontScale={fontScale}
       />
       <MathPoint
@@ -518,7 +565,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         scale={scale}
         color={MATH_COLORS.primary}
         label="A₂"
-        labelPosition="right"
+        labelPosition={isXAxis ? "right" : "top"}
         fontScale={fontScale}
       />
 
@@ -531,7 +578,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             scale={scale}
             color={MATH_COLORS.paramSecondary}
             label="B₁"
-            labelPosition="bottom"
+            labelPosition={isXAxis ? "bottom" : "left"}
             fontScale={fontScale}
           />
           <MathPoint
@@ -540,7 +587,7 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
             scale={scale}
             color={MATH_COLORS.paramSecondary}
             label="B₂"
-            labelPosition="top"
+            labelPosition={isXAxis ? "top" : "right"}
             fontScale={fontScale}
           />
         </>
@@ -579,9 +626,16 @@ export const ConicPropertiesScene: React.FC<ConicPropertiesSceneProps> = ({
         onDrag={(newMathPt) => {
           let newT: number;
           if (conicType === "ellipse") {
-            newT = Math.atan2(newMathPt.y / b, newMathPt.x / a);
+            newT = isXAxis
+              ? Math.atan2(newMathPt.y / b, newMathPt.x / a)
+              : Math.atan2(newMathPt.y / a, newMathPt.x / b);
           } else {
-            newT = Math.atan2(newMathPt.y, b);
+            newT = isXAxis
+              ? Math.atan2(newMathPt.y, b)
+              : Math.atan2(newMathPt.x, b);
+            onBranchChange?.(
+              (isXAxis ? newMathPt.x : newMathPt.y) < 0 ? "left" : "right",
+            );
           }
           onParamChange("t", newT);
         }}

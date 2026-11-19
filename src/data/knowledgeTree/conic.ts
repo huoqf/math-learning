@@ -1,6 +1,7 @@
 import type { KnowledgeNode } from "../types";
 import { conicDefinitionNode } from "@/features/conicDefinition/meta";
 import { circleEquationNode } from "@/features/circleEquation/meta";
+import { conicLocusInvariantsNode } from "@/features/conicLocusInvariants/meta";
 
 // ========== 9. 解析几何 ==========
 export const conicNodes: KnowledgeNode[] = [
@@ -111,6 +112,7 @@ export const conicNodes: KnowledgeNode[] = [
     examMethod: "单参数纵坐标设点、三角代换与割线消元",
     examWeight: 5,
   },
+  conicLocusInvariantsNode,
   {
     id: "know-conic-param-t",
     title: "直线参数方程 t 的几何意义与割线定理（拓展 · 超出课标）",

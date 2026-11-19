@@ -85,7 +85,7 @@ export const CircleEquationScene: React.FC<CircleEquationSceneProps> = ({
   return (
     <g>
       {/* 1. 坐标轴与网格 */}
-      <CoordinateGrid scale={scale} fontScale={fontScale} />
+      <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
       {/* ───────────────────────────────────────────────────────── */}
       {/* 模式 1: standard */}
@@ -282,7 +282,7 @@ export const CircleEquationScene: React.FC<CircleEquationSceneProps> = ({
               fontSize={fontScale(18)}
               fontWeight="700"
             >
-              判别式 Δ_c &lt; 0 (无实数几何图形)
+              判别式 Δc &lt; 0 (无实数几何图形)
             </text>
           )}
         </g>

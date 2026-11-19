@@ -243,4 +243,59 @@ export const centerCanvasRules = [
       return issues;
     },
   },
+  {
+    id: 'center/no-raw-circle-point',
+    group: 'center',
+    type: '手写circle绘制点',
+    severity: 'error',
+    check(ctx) {
+      if (!ctx.filePath.endsWith('Scene.tsx') || ctx.isTest) return [];
+      const issues = [];
+      const circleRe = /<circle\b([\s\S]*?)\/?>/g;
+      let match;
+      while ((match = circleRe.exec(ctx.cleanContent)) !== null) {
+        const attrs = match[1];
+        // 仅拦截固定像素小半径点状 <circle r={3..10} />（排除半径随 scale 放缩的真实数学圆）
+        const rMatch = attrs.match(/\br\s*=\s*\{\s*(\d+(?:\.\d+)?)\s*\}/);
+        if (rMatch) {
+          const rVal = parseFloat(rMatch[1]);
+          if (rVal > 0 && rVal <= 12) {
+            const lineNum = ctx.cleanContent.slice(0, match.index).split('\n').length;
+            issues.push({
+              lineNum,
+              message: `检测到 Scene 内手写固定小半径 <circle r={${rVal}} /> 绘制点，必须改用原子组件 <MathPoint> 或 <InteractivePoint>`,
+              snippet: (ctx.cleanLines[lineNum - 1] || '').trim(),
+            });
+          }
+        }
+      }
+      return issues;
+    },
+  },
+  {
+    id: 'center/conic-clean-grid',
+    group: 'center',
+    type: '解析几何未关闭网格',
+    severity: 'error',
+    check(ctx) {
+      if (!ctx.filePath.endsWith('Scene.tsx') || ctx.isTest) return [];
+      const isConicTopic = /(?:lineEquation|circleEquation|line-circle|circle-circle|conic|parabola)/i.test(ctx.relPath);
+      if (!isConicTopic) return [];
+      const issues = [];
+      const gridRe = /<CoordinateGrid\b([\s\S]*?)\/>/g;
+      let match;
+      while ((match = gridRe.exec(ctx.cleanContent)) !== null) {
+        const attrs = match[1];
+        if (!/\bshowGrid\s*=\s*\{\s*false\s*\}/.test(attrs)) {
+          const lineNum = ctx.cleanContent.slice(0, match.index).split('\n').length;
+          issues.push({
+            lineNum,
+            message: '解析几何场景 <CoordinateGrid> 必须显式配置 showGrid={false}，以纯白底色高对比度呈现曲线与辅助线',
+            snippet: (ctx.cleanLines[lineNum - 1] || '').trim(),
+          });
+        }
+      }
+      return issues;
+    },
+  },
 ];

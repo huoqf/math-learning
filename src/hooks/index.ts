@@ -16,3 +16,9 @@ export type { CameraPreset } from "./use3DViewport";
 export { useFontScale3D } from "./useFontScale3D";
 export { useScenario } from "./useScenario";
 export { useGaokaoView } from "./useGaokaoView";
+export { useParamPlay } from "./useParamPlay";
+export type {
+  PlayLoopMode,
+  UseParamPlayOptions,
+  UseParamPlayResult,
+} from "./useParamPlay";

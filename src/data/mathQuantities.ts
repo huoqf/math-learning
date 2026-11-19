@@ -80,6 +80,7 @@ import { buildDerivativeMonotonicityQuantities } from "./builders/derivativeMono
 import { buildLineParamTPanel } from "./builders/lineParamT";
 import { buildVectorPolarizationApolloniusPanel } from "./builders/vectorPolarizationApollonius";
 import { buildConicHomogenizationPanel } from "./builders/conicHomogenization";
+import { buildConicLocusInvariantsPanel } from "./builders/conicLocusInvariants";
 
 export type { MathPanelData } from "./types";
 
@@ -299,6 +300,8 @@ export function buildMathQuantities(
       return buildVectorPolarizationApolloniusPanel(params, config);
     case "anim-conic-homogenization":
       return buildConicHomogenizationPanel(params, config);
+    case "anim-conic-locus-invariants":
+      return buildConicLocusInvariantsPanel(params, config);
     case "anim-ineq-basic":
     case "anim-inequality-basic":
       return buildInequalityBasicPanel(params, config);

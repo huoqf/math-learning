@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
+  ParamPlayBar,
   MathPanel,
   KatexFormula,
   LeftPanel,
@@ -12,7 +13,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ParabolaArchimedesScene } from "./components/ParabolaArchimedesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -65,13 +66,30 @@ export function ParabolaArchimedesAnimation() {
     return buildMathQuantities("anim-parabola-archimedes", params, { mode });
   }, [params, mode]);
 
-  // 画布拖拽交互时自动回归自由探索
+  // 动画播放控制器（阿基米德模式巡游 yQ；焦点弦/正交弦模式扫掠倾角 θ）
+  const animPlay = useParamPlay({
+    min: mode === "archimedesTriangle" ? -3.5 : 25,
+    max: mode === "archimedesTriangle" ? 3.5 : 155,
+    step: mode === "archimedesTriangle" ? 0.05 : 1,
+    mode: "bounce",
+    getValue: () =>
+      mode === "archimedesTriangle" ? params.yQ : params.thetaDeg,
+    onChange: (val) => {
+      setActivePreset("free");
+      const key = mode === "archimedesTriangle" ? "yQ" : "thetaDeg";
+      setParams((prev) => ({ ...prev, [key]: val }));
+    },
+  });
+
+  // 画布拖拽交互时自动回归自由探索并暂停自动播放
   const handleInteractionStart = useCallback(() => {
+    animPlay.pause();
     setActivePreset("free");
-  }, []);
+  }, [animPlay]);
 
   // 参数更新处理器（若调节焦准距 p，不强行重置预设情景）
   const handleParamChange = (key: string, value: number) => {
+    animPlay.pause();
     if (key !== "p") {
       setActivePreset("free");
     }
@@ -83,6 +101,7 @@ export function ParabolaArchimedesAnimation() {
 
   // 切换模式处理器（重置为对应模式的基准参数）
   const handleModeChange = (modeKey: string) => {
+    animPlay.pause();
     const nextMode = modeKey as typeof mode;
     setMode(nextMode);
     setActivePreset("free");
@@ -405,6 +424,19 @@ export function ParabolaArchimedesAnimation() {
 
           {/* 3. 参数调节 Section */}
           <LeftPanelSection title="参数调节">
+            <div className="mb-2.5">
+              <ParamPlayBar
+                isPlaying={animPlay.isPlaying}
+                onToggle={animPlay.toggle}
+                speed={animPlay.speed}
+                onSpeedChange={animPlay.setSpeed}
+                label={
+                  mode === "archimedesTriangle"
+                    ? "准线点 Q 巡游"
+                    : "焦点弦扫掠演示"
+                }
+              />
+            </div>
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

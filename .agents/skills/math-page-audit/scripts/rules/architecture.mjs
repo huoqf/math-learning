@@ -346,4 +346,32 @@ export const architectureRules = [
       return issues.sort((a, b) => a.lineNum - b.lineNum);
     },
   },
+  {
+    id: 'arch/step-navigator-ssot',
+    group: 'arch',
+    type: '分步作答三屏联动断链',
+    severity: 'error',
+    check(ctx) {
+      if ((!ctx.isAnimationPage && !ctx.filePath.endsWith('Page.tsx')) || ctx.isTest) return [];
+      if (!ctx.cleanContent.includes('<StepNavigator') || !ctx.cleanContent.includes('<MathPanel')) return [];
+      const issues = [];
+      if (!/\bfocusStep\s*=/.test(ctx.cleanContent) || !/\bfocusTarget\s*=/.test(ctx.cleanContent)) {
+        issues.push({
+          lineNum: 1,
+          message: '页面接入了 <StepNavigator>，右屏 <MathPanel> 必须同步传出 focusStep 与 focusTarget 保持单处聚焦联动',
+          snippet: 'MathPanel 缺少 focusStep / focusTarget',
+        });
+      }
+      // 仅当 StepNavigator 绑定独立 state（非 params.xxx 传给 Scene）时强制检查 activeStep=
+      const usesIndependentStep = !/<StepNavigator[\s\S]*?\bactive=\{[^}]*\bparams\./.test(ctx.cleanContent);
+      if (usesIndependentStep && !/\bactiveStep\s*=/.test(ctx.cleanContent)) {
+        issues.push({
+          lineNum: 1,
+          message: '页面接入了 <StepNavigator>，中屏 Scene 组件必须透传 activeStep 以同步点亮分区与绘制围栏',
+          snippet: 'Scene 缺少 activeStep 透传',
+        });
+      }
+      return issues;
+    },
+  },
 ];

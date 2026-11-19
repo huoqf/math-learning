@@ -1,5 +1,156 @@
 import type { ParamMeta } from "../types";
+import type { AnswerStepItem } from "@/components/UI/StepNavigator";
+import type { ConicType, StudyMode } from "@/math/conicLine";
 import { MATH_COLORS } from "@/theme";
+
+/**
+ * 直线与圆锥曲线「高考标准解答分步走」单一事实源（SSOT）。
+ * 左屏 StepNavigator、右屏 MathPanel reasoningSteps、中屏 ConicLineScene 共用本链条。
+ */
+export function getConicLineAnswerSteps(
+  studyMode: StudyMode,
+  conicType: ConicType,
+  isDegeneratedParallel = false,
+): AnswerStepItem[] {
+  if (studyMode === "general") {
+    return [
+      {
+        step: 1,
+        title: "审题建模 · 联立消元建立方程",
+        sceneHint: "观察主曲线、直线 L 及渐近线/对称轴边界斜率位置",
+      },
+      {
+        step: 2,
+        title: isDegeneratedParallel
+          ? "建模展开 · 一次方程直接求唯一交点"
+          : "建模展开 · 判别式检验与韦达代换",
+        sceneHint: isDegeneratedParallel
+          ? "聚焦直线与曲线的唯一交点（二次项归零非相切）"
+          : "聚焦交点 A, B 坐标位置与判别式根分布",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 割线弦长公式代入求解",
+        sceneHint: "高亮实心相交弦 AB 与原点三角形 △OAB 目标区域",
+      },
+    ];
+  }
+
+  if (studyMode === "focus") {
+    if (conicType === "parabola") {
+      return [
+        {
+          step: 1,
+          title: "审题定法 · 确定焦点坐标与割线方程",
+          sceneHint: "观察焦点 F 坐标与过焦点割线旋转位置",
+        },
+        {
+          step: 2,
+          title: "建模展开 · 焦半径定义与弦长公式推导",
+          sceneHint: "聚焦交点 A, B 到准线的垂直投影点 A', B'",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 焦半径倒数和恒等定值",
+          sceneHint: "高亮聚焦焦点弦 AB 及其正交极值特征",
+        },
+      ];
+    }
+    return [
+      {
+        step: 1,
+        title: "审题定法 · 确定焦点坐标与割线方程",
+        sceneHint: "观察焦点 F₁ 位置与过焦点动直线",
+      },
+      {
+        step: 2,
+        title: "建模展开 · 通径极小值公式推导",
+        sceneHint: "聚焦焦点弦端点 A, B 的实时位置变化",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 焦半径倒数定值性质",
+        sceneHint: "高亮弦段 F₁A, F₁B 构成的焦点弦 AB",
+      },
+    ];
+  }
+
+  if (studyMode === "midpoint") {
+    if (conicType === "ellipse") {
+      return [
+        {
+          step: 1,
+          title: "审题定法 · 设端点坐标并代入椭圆方程",
+          sceneHint: "观察椭圆曲线与给定目标中点 M 的内部位置",
+        },
+        {
+          step: 2,
+          title: "建模展开 · 点差法两式作差求动弦斜率",
+          sceneHint: "聚焦中点连线 OM 与动弦 AB 的垂直/斜率乘积关联",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 存在性检验（防越界伪根）",
+          sceneHint: "高亮实心交点弦 AB 验证点 M 位于椭圆内部",
+        },
+      ];
+    }
+    if (conicType === "hyperbola") {
+      return [
+        {
+          step: 1,
+          title: "审题定法 · 设端点坐标并代入双曲线方程",
+          sceneHint: "观察双曲线两支与中点 M 所处区域",
+        },
+        {
+          step: 2,
+          title: "建模展开 · 点差法求动弦斜率与定值积",
+          sceneHint: "聚焦中心连线 OM 与中点弦斜率关系",
+        },
+        {
+          step: 3,
+          title: "求解反思 · 代回判别式检验存在性",
+          sceneHint: "高亮焦点弦实交点 A, B 确认不存在伪中点弦",
+        },
+      ];
+    }
+    return [
+      {
+        step: 1,
+        title: "审题定法 · 设端点坐标并代入抛物线方程",
+        sceneHint: "观察抛物线开口与给定中点 M",
+      },
+      {
+        step: 2,
+        title: "建模展开 · 两式作差求动弦斜率",
+        sceneHint: "聚焦中点连线与水平对称轴对斜率约束",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 存在性检验（防越界伪根）",
+        sceneHint: "高亮实心交点弦 AB 验证 y₀² < 2px₀",
+      },
+    ];
+  }
+
+  return [
+    {
+      step: 1,
+      title: "审题定法 · 设两切点并写出切点处切线方程",
+      sceneHint: "观察曲线外点 P 与两切点 A, B 切线位置",
+    },
+    {
+      step: 2,
+      title: "建模展开 · 代入外部点推出切点弦方程",
+      sceneHint: "聚焦两条虚线切线 PA, PB 与切点 A, B",
+    },
+    {
+      step: 3,
+      title: "求解反思 · 几何性质与切线垂直定值",
+      sceneHint: "高亮切点弦 AB 及准线关联垂直特征",
+    },
+  ];
+}
 
 export const defaultParams: Record<string, number> = {
   conicTypeIdx: 0, // 0: ellipse, 1: hyperbola, 2: parabola
@@ -377,6 +528,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "控制椭圆/双曲线的半轴长度",
     descriptionFormula: `\\color{${MATH_COLORS.paramPrimary}}{a} \\in [1, 5]`,
     importance: "core",
+    group: "曲线几何底模",
   },
   b: {
     key: "b",
@@ -389,6 +541,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "控制椭圆/双曲线的短轴或虚轴",
     descriptionFormula: `\\color{${MATH_COLORS.paramSecondary}}{b} \\in [0.5, 4]`,
     importance: "core",
+    group: "曲线几何底模",
   },
   p: {
     key: "p",
@@ -401,6 +554,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "抛物线焦点到准线的距离",
     descriptionFormula: `\\color{${MATH_COLORS.paramPrimary}}{p} > 0`,
     importance: "core",
+    group: "曲线几何底模",
   },
   k: {
     key: "k",
@@ -413,6 +567,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "直线 y = kx + m 的斜率",
     descriptionFormula: `\\color{${MATH_COLORS.paramSecondary}}{k} = \\tan \\alpha`,
     importance: "core",
+    group: "直线与方位角",
     marks: [
       {
         value: 0,
@@ -445,6 +600,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "直线在 y 轴上的截距",
     descriptionFormula: `y = kx + \\color{${MATH_COLORS.paramTertiary}}{m}`,
     importance: "advanced",
+    group: "直线与方位角",
     marks: [
       {
         value: 0,
@@ -465,6 +621,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "过焦点直线的倾斜角 (弧度)",
     descriptionFormula: `\\color{${MATH_COLORS.paramTertiary}}{\\theta} \\in (0, \\pi)`,
     importance: "core",
+    group: "直线与方位角",
     marks: [
       {
         value: 1.571,
@@ -484,6 +641,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "目标弦 AB 的中点 X 坐标",
     importance: "core",
+    group: "弦中点 / 曲线外定点",
   },
   midpointY: {
     key: "midpointY",
@@ -495,6 +653,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "目标弦 AB 的中点 Y 坐标",
     importance: "core",
+    group: "弦中点 / 曲线外定点",
   },
   poleX: {
     key: "poleX",
@@ -506,6 +665,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "曲线外一点 P 的横坐标",
     importance: "core",
+    group: "弦中点 / 曲线外定点",
   },
   poleY: {
     key: "poleY",
@@ -517,5 +677,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "曲线外一点 P 的纵坐标",
     importance: "core",
+    group: "弦中点 / 曲线外定点",
   },
 };

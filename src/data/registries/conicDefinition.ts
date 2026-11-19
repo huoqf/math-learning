@@ -28,6 +28,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 3.0,
     importance: "core",
     description: "决定椭圆长半轴或双曲线实半轴长度 (2a 为常数和/差)",
+    group: "第一定义核心参数",
     marks: [
       {
         value: 2.0,
@@ -47,6 +48,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2.0,
     importance: "core",
     description: "焦点坐标为 (±c, 0)，焦距为 2c",
+    group: "第一定义核心参数",
     marks: [
       {
         value: 3.0,
@@ -66,6 +68,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.66,
     importance: "core",
     description: "e < 1 为椭圆，e = 1 为抛物线，e > 1 为双曲线",
+    group: "统一定义参数",
     marks: [
       {
         value: 1.0,
@@ -85,6 +88,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 2.0,
     importance: "core",
     description: "焦点到准线的距离 (p > 0)，焦点 (p/2, 0)，准线 x = -p/2",
+    group: "统一定义参数",
   },
   theta: {
     key: "theta",
@@ -96,6 +100,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     defaultValue: 0.8,
     importance: "core",
     description: "控制动点 P 沿着圆锥曲线轨迹连续滑动",
+    group: "动点控制",
   },
 };
 

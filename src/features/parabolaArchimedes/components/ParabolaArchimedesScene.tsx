@@ -315,7 +315,7 @@ export const ParabolaArchimedesScene: React.FC<
           {/* 中线 QM 与平分线 (水平线 y = yQ) */}
           <line
             x1={mathToDesign(archInfo.Q.x, archInfo.Q.y, scale).x}
-            y1={mathToDesign(archInfo.Q.y, archInfo.Q.y, scale).y}
+            y1={mathToDesign(archInfo.Q.x, archInfo.Q.y, scale).y}
             x2={mathToDesign(archInfo.M.x, archInfo.M.y, scale).x}
             y2={mathToDesign(archInfo.M.x, archInfo.M.y, scale).y}
             stroke={MATH_COLORS.paramSecondary}
@@ -570,7 +570,7 @@ export const ParabolaArchimedesScene: React.FC<
                 .x
             }
             y1={
-              mathToDesign(orthoInfo.chordAB.A.y, orthoInfo.chordAB.A.y, scale)
+              mathToDesign(orthoInfo.chordAB.A.x, orthoInfo.chordAB.A.y, scale)
                 .y
             }
             x2={
@@ -592,7 +592,7 @@ export const ParabolaArchimedesScene: React.FC<
                 .x
             }
             y1={
-              mathToDesign(orthoInfo.chordCD.A.y, orthoInfo.chordCD.A.y, scale)
+              mathToDesign(orthoInfo.chordCD.A.x, orthoInfo.chordCD.A.y, scale)
                 .y
             }
             x2={

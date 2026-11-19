@@ -25,6 +25,8 @@ export { Toggle } from "./Toggle";
 // ============================================================================
 export { ParamControl } from "./ParamControl";
 export type { ParamConfig } from "./ParamControl";
+export { ParamPlayBar } from "./ParamPlayBar";
+export type { ParamPlayBarProps } from "./ParamPlayBar";
 export { TabSwitcher } from "./TabSwitcher";
 export { SelectGrid } from "./SelectGrid";
 export type { SelectGridItem } from "./SelectGrid";

@@ -7,6 +7,8 @@ import type {
 import {
   calculateConicProperties,
   type ConicType,
+  type HyperbolaBranch,
+  type FocusAxis,
 } from "@/features/conicProperties/math/conicProperties";
 import { MATH_COLORS } from "@/theme";
 import { formatCoefTerm, formatMathNumber } from "@/utils/mathFormat";
@@ -17,12 +19,15 @@ export function buildConicPropertiesPanel(
 ): MathPanelData {
   const conicType = (config?.conicType as ConicType) || "ellipse";
   const studyMode = (config?.studyMode as string) || "basicProperties";
+  const branch = (config?.branch as HyperbolaBranch) || "right";
+  const focusAxis = (config?.focusAxis as FocusAxis) || "x";
+  const isXAxis = focusAxis === "x";
 
   const a = params.a ?? 3;
   const b = params.b ?? 2;
   const t = params.t ?? Math.PI / 4;
 
-  const calc = calculateConicProperties(conicType, a, b, t);
+  const calc = calculateConicProperties(conicType, a, b, t, branch, focusAxis);
   const { c, e, directrices, latusRectum, focusTriangle } = calc;
 
   const isEllipse = conicType === "ellipse";
@@ -50,7 +55,7 @@ export function buildConicPropertiesPanel(
       color: MATH_COLORS.primary,
     },
     {
-      label: "准线方程 x",
+      label: isXAxis ? "准线方程 x" : "准线方程 y",
       value: `\\pm ${directrices.rightX.toFixed(2)}`,
       color: MATH_COLORS.primary,
     },
@@ -63,7 +68,9 @@ export function buildConicPropertiesPanel(
 
   if (!isEllipse && calc.asymptotes) {
     quantities.push({
-      label: "渐近线斜率 $k = \\pm b/a$",
+      label: isXAxis
+        ? "渐近线斜率 $k = \\pm b/a$"
+        : "渐近线斜率 $k = \\pm a/b$",
       value: `\\pm ${calc.asymptotes.slope.toFixed(2)}`,
       color: MATH_COLORS.paramSecondary,
     });
@@ -92,7 +99,7 @@ export function buildConicPropertiesPanel(
         color: MATH_COLORS.primary,
       },
       {
-        label: "内切圆半径 r_{in}",
+        label: "内切圆半径 $r_{\\text{in}}$",
         value: focusTriangle.incircle.inradius.toFixed(3),
         color: MATH_COLORS.paramTertiary,
       },
@@ -106,7 +113,10 @@ export function buildConicPropertiesPanel(
       latex: isEllipse
         ? `a^2 = b^2 + c^2 \\quad (a > b > 0)`
         : `c^2 = a^2 + b^2 \\quad (a, b > 0)`,
-      prerequisites: ["平面直角坐标系", "焦点在 $x$ 轴上"],
+      prerequisites: [
+        "平面直角坐标系",
+        isXAxis ? "焦点在 $x$ 轴上" : "焦点在 $y$ 轴上",
+      ],
     },
     {
       name: "焦点三角形面积与内切圆定理",
@@ -115,8 +125,12 @@ export function buildConicPropertiesPanel(
         : `S_{\\triangle PF_1F_2} = \\frac{b^2}{\\tan\\frac{\\theta}{2}}`,
       condition: `$\\theta = \\angle F_1PF_2$ 为焦点三角形顶角`,
       note: isEllipse
-        ? "对椭圆：内切圆与底边 $F_1F_2$ 的切点横坐标为 $x_T = e x_P$；动点 $P$ 向内切圆引的两条切线长恒为定值 $a - c$！"
-        : "对双曲线：内切圆与实轴切点恒落在实轴顶点 $(\\pm a, 0)$，内心横坐标恒为定值 $\\pm a$！",
+        ? isXAxis
+          ? "对椭圆：内切圆与底边 $F_1F_2$ 的切点横坐标为 $x_T = e x_P$；动点 $P$ 向内切圆引的两条切线长恒为定值 $a - c$！"
+          : "对纵向椭圆：内切圆与底边 $F_1F_2$ 的切点纵坐标为 $y_T = e y_P$；动点 $P$ 向内切圆引的两条切线长恒为定值 $a - c$！"
+        : isXAxis
+          ? "对双曲线：内切圆与实轴切点恒落在实轴顶点 $(\\pm a, 0)$，内心横坐标恒为定值 $\\pm a$！"
+          : "对纵向双曲线：内切圆与实轴切点恒落在实轴顶点 $(0, \\pm a)$，内心纵坐标恒为定值 $\\pm a$！",
     },
   ];
 
@@ -129,7 +143,9 @@ export function buildConicPropertiesPanel(
     {
       text: isEllipse
         ? "【离心率与扁平度】椭圆 $0 < e < 1$。$e$ 越接近 1，椭圆越扁（$b \\to 0, c \\to a$）；$e$ 越接近 0，椭圆越圆（$b \\to a, c \\to 0$）。"
-        : "【离心率与渐近线】双曲线 $e > 1$。渐近线斜率 $k = \\pm \\frac{b}{a} = \\pm \\sqrt{e^2 - 1}$，渐近线夹角 $\\alpha$ 满足 $\\cos\\frac{\\alpha}{2} = \\frac{1}{e}$。等轴双曲线 $e = \\sqrt{2}$，两渐近线互相垂直。",
+        : isXAxis
+          ? "【离心率与渐近线】焦点在 $x$ 轴双曲线 $e > 1$。渐近线斜率 $k = \\pm \\frac{b}{a} = \\pm \\sqrt{e^2 - 1}$，渐近线夹角 $\\alpha$ 满足 $\\cos\\frac{\\alpha}{2} = \\frac{1}{e}$。"
+          : "【易错坑·焦点在 y 轴渐近线】标准方程 $\\frac{y^2}{a^2} - \\frac{x^2}{b^2} = 1$ 的渐近线斜率为 $k = \\pm\\frac{a}{b}$（而非 $\\pm\\frac{b}{a}$）！此时离心率与斜率关系满足 $e = \\sqrt{1 + \\frac{1}{k^2}}$。",
       importance: "gaokao",
     },
     {
@@ -179,8 +195,12 @@ export function buildConicPropertiesPanel(
         step: 1,
         title: "审题定法 · 主轴关系与焦距确定",
         detail: isEllipse
-          ? `由椭圆标准方程 $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$ ($a > b > 0$)，焦点位于 $x$ 轴。主轴等量关系为 $a^2 = b^2 + c^2$。`
-          : `由双曲线标准方程 $\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1$ ($a, b > 0$)，焦点位于 $x$ 轴。等量关系为 $c^2 = a^2 + b^2$。`,
+          ? isXAxis
+            ? `由椭圆标准方程 $\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1$ ($a > b > 0$)，焦点位于 $x$ 轴。主轴等量关系为 $a^2 = b^2 + c^2$。`
+            : `由椭圆标准方程 $\\frac{y^2}{a^2} + \\frac{x^2}{b^2} = 1$ ($a > b > 0$)，焦点位于 $y$ 轴。主轴等量关系为 $a^2 = b^2 + c^2$。`
+          : isXAxis
+            ? `由双曲线标准方程 $\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1$ ($a, b > 0$)，焦点位于 $x$ 轴。等量关系为 $c^2 = a^2 + b^2$。`
+            : `由双曲线标准方程 $\\frac{y^2}{a^2} - \\frac{x^2}{b^2} = 1$ ($a, b > 0$)，焦点位于 $y$ 轴。等量关系为 $c^2 = a^2 + b^2$。`,
         latex: isEllipse
           ? `c = \\sqrt{a^2 - b^2} = \\sqrt{${a.toFixed(2)}^2 - ${b.toFixed(2)}^2} = ${c.toFixed(2)}`
           : `c = \\sqrt{a^2 + b^2} = \\sqrt{${a.toFixed(2)}^2 + ${b.toFixed(2)}^2} = ${c.toFixed(2)}`,
@@ -190,7 +210,9 @@ export function buildConicPropertiesPanel(
         step: 2,
         title: "建模联立 · 顶点、焦点与离心率解算",
         detail: `代入当前参数 $a = ${a.toFixed(2)}, b = ${b.toFixed(2)}, c = ${c.toFixed(2)}$，求得焦点与离心率：`,
-        latex: `F_1(-${c.toFixed(2)}, 0),\\; F_2(${c.toFixed(2)}, 0),\\quad e = \\frac{c}{a} = \\frac{${c.toFixed(2)}}{${a.toFixed(2)}} = ${e.toFixed(3)}`,
+        latex: isXAxis
+          ? `F_1(-${c.toFixed(2)}, 0),\\; F_2(${c.toFixed(2)}, 0),\\quad e = \\frac{c}{a} = \\frac{${c.toFixed(2)}}{${a.toFixed(2)}} = ${e.toFixed(3)}`
+          : `F_1(0, -${c.toFixed(2)}),\\; F_2(0, ${c.toFixed(2)}),\\quad e = \\frac{c}{a} = \\frac{${c.toFixed(2)}}{${a.toFixed(2)}} = ${e.toFixed(3)}`,
         rubric: "【高考采分点】准确写出焦点坐标与离心率（2分）",
       },
       {

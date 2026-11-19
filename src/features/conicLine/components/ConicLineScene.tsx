@@ -29,6 +29,7 @@ interface ConicLineSceneProps {
   fontScale?: (v: number) => number;
   conicType: ConicType;
   studyMode: StudyMode;
+  activeStep?: number;
 }
 
 export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
@@ -38,8 +39,11 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
   fontScale = (v) => v,
   conicType,
   studyMode,
+  activeStep,
   onParamChange,
 }) => {
+  const regionOpacity = (region: 1 | 2 | 3) =>
+    activeStep === undefined || activeStep === region ? 1 : 0.3;
   const a = params.a ?? 3;
   const b = params.b ?? 2;
   const p = params.p ?? 2;
@@ -302,69 +306,144 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
       {/* 坐标轴与网格 (解析几何采用纯净坐标轴规范 showGrid={false}) */}
       <CoordinateGrid scale={scale} fontScale={fontScale} showGrid={false} />
 
-      {/* 双曲线渐近线 y = ±(b/a)x */}
-      {conicType === "hyperbola" && (
-        <>
-          <Asymptote
-            type="oblique"
-            value={b / a}
-            scale={scale}
-            fontScale={fontScale}
-            label="y=(b/a)x"
-          />
-          <Asymptote
-            type="oblique"
-            value={-b / a}
-            scale={scale}
-            fontScale={fontScale}
-            label="y=-(b/a)x"
-          />
-        </>
-      )}
+      {/* 分区 1：曲线本体、准线/渐近线、设定直线方程（第 1 步焦点） */}
+      <g opacity={regionOpacity(1)}>
+        {/* 双曲线渐近线 y = ±(b/a)x */}
+        {conicType === "hyperbola" && (
+          <>
+            <Asymptote
+              type="oblique"
+              value={b / a}
+              scale={scale}
+              fontScale={fontScale}
+              label="y=(b/a)x"
+            />
+            <Asymptote
+              type="oblique"
+              value={-b / a}
+              scale={scale}
+              fontScale={fontScale}
+              label="y=-(b/a)x"
+            />
+          </>
+        )}
 
-      {/* 圆锥曲线主体渲染 */}
-      {conicType === "ellipse" && (
-        <ellipse
-          cx={originD.x}
-          cy={originD.y}
-          rx={a * scale.scaleX}
-          ry={b * scale.scaleY}
-          fill="none"
-          stroke={MATH_COLORS.primary}
-          strokeWidth={2.5}
-        />
-      )}
-
-      {conicType === "parabola" && (
-        <>
-          <path
-            d={parabolaPathD}
+        {/* 圆锥曲线主体渲染 */}
+        {conicType === "ellipse" && (
+          <ellipse
+            cx={originD.x}
+            cy={originD.y}
+            rx={a * scale.scaleX}
+            ry={b * scale.scaleY}
             fill="none"
             stroke={MATH_COLORS.primary}
             strokeWidth={2.5}
           />
-          {/* 准线 x = -p/2 */}
-          <line
-            x1={directrixP1.x}
-            y1={directrixP1.y}
-            x2={directrixP2.x}
-            y2={directrixP2.y}
+        )}
+
+        {conicType === "parabola" && (
+          <>
+            <path
+              d={parabolaPathD}
+              fill="none"
+              stroke={MATH_COLORS.primary}
+              strokeWidth={2.5}
+            />
+            {/* 准线 x = -p/2 */}
+            <line
+              x1={directrixP1.x}
+              y1={directrixP1.y}
+              x2={directrixP2.x}
+              y2={directrixP2.y}
+              stroke={MATH_COLORS.paramTertiary}
+              strokeWidth={1.5}
+              strokeDasharray="5,4"
+            />
+            <text
+              x={directrixP1.x - 8}
+              y={directrixP1.y + 15}
+              fill={MATH_COLORS.paramTertiary}
+              fontSize={fontScale(11)}
+              fontWeight="bold"
+              textAnchor="end"
+            >
+              {`x = -${formatMathNumber(p / 2)}`}
+            </text>
+          </>
+        )}
+
+        {conicType === "hyperbola" && (
+          <>
+            <path
+              d={hyperbolaRightPathD}
+              fill="none"
+              stroke={MATH_COLORS.primary}
+              strokeWidth={2.5}
+            />
+            <path
+              d={hyperbolaLeftPathD}
+              fill="none"
+              stroke={MATH_COLORS.primary}
+              strokeWidth={2.5}
+            />
+          </>
+        )}
+
+        {/* 全程延伸直线 y = kx + m (长虚线) */}
+        <line
+          x1={lineP1.x}
+          y1={lineP1.y}
+          x2={lineP2.x}
+          y2={lineP2.y}
+          stroke={withAlpha(MATH_COLORS.line, 0.6)}
+          strokeWidth={1.5}
+          strokeDasharray="6,4"
+        />
+      </g>
+
+      {/* 分区 3：目标相交弦 AB、原点三角形 △OAB 与弦中点连线（第 3 步焦点） */}
+      <g opacity={regionOpacity(3)}>
+        {/* 原点三角形 △OAB 填充 */}
+        {trianglePath && (
+          <path
+            d={trianglePath}
+            fill={withAlpha(MATH_COLORS.paramTertiary, 0.15)}
             stroke={MATH_COLORS.paramTertiary}
-            strokeWidth={1.5}
-            strokeDasharray="5,4"
+            strokeWidth={1}
+            strokeDasharray="4,4"
           />
-          <text
-            x={directrixP1.x - 8}
-            y={directrixP1.y + 15}
-            fill={MATH_COLORS.paramTertiary}
-            fontSize={fontScale(11)}
-            fontWeight="bold"
-            textAnchor="end"
-          >
-            {`x = -${formatMathNumber(p / 2)}`}
-          </text>
-          {/* 焦点弦端点到准线的垂直投影特征线 */}
-          {projectionPoints.map((proj, idx) => (
+        )}
+
+        {/* 相交弦 AB 高亮实线 */}
+        {intersectionDesignPoints.length === 2 && (
+          <line
+            x1={intersectionDesignPoints[0].x}
+            y1={intersectionDesignPoints[0].y}
+            x2={intersectionDesignPoints[1].x}
+            y2={intersectionDesignPoints[1].y}
+            stroke={MATH_COLORS.paramPrimary}
+            strokeWidth={3.5}
+          />
+        )}
+
+        {/* 弦中点连线 OM */}
+        {midpointD && (
+          <line
+            x1={originD.x}
+            y1={originD.y}
+            x2={midpointD.x}
+            y2={midpointD.y}
+            stroke={MATH_COLORS.paramSecondary}
+            strokeWidth={2}
+            strokeDasharray="3,3"
+          />
+        )}
+      </g>
+
+      {/* 分区 2：交点 A/B、焦点与准线投影特征（第 2 步焦点） */}
+      <g opacity={regionOpacity(2)}>
+        {conicType === "parabola" &&
+          projectionPoints.map((proj, idx) => (
             <g key={`proj-${idx}`}>
               <line
                 x1={proj.from.x}
@@ -384,102 +463,37 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
               />
             </g>
           ))}
-        </>
-      )}
 
-      {conicType === "hyperbola" && (
-        <>
-          <path
-            d={hyperbolaRightPathD}
-            fill="none"
-            stroke={MATH_COLORS.primary}
-            strokeWidth={2.5}
-          />
-          <path
-            d={hyperbolaLeftPathD}
-            fill="none"
-            stroke={MATH_COLORS.primary}
-            strokeWidth={2.5}
-          />
-        </>
-      )}
-
-      {/* 原点三角形 △OAB 填充 */}
-      {trianglePath && (
-        <path
-          d={trianglePath}
-          fill={withAlpha(MATH_COLORS.paramTertiary, 0.15)}
-          stroke={MATH_COLORS.paramTertiary}
-          strokeWidth={1}
-          strokeDasharray="4,4"
-        />
-      )}
-
-      {/* 全程延伸直线 y = kx + m (长虚线) */}
-      <line
-        x1={lineP1.x}
-        y1={lineP1.y}
-        x2={lineP2.x}
-        y2={lineP2.y}
-        stroke={withAlpha(MATH_COLORS.line, 0.6)}
-        strokeWidth={1.5}
-        strokeDasharray="6,4"
-      />
-
-      {/* 相交弦 AB 高亮实线 */}
-      {intersectionDesignPoints.length === 2 && (
-        <line
-          x1={intersectionDesignPoints[0].x}
-          y1={intersectionDesignPoints[0].y}
-          x2={intersectionDesignPoints[1].x}
-          y2={intersectionDesignPoints[1].y}
-          stroke={MATH_COLORS.paramPrimary}
-          strokeWidth={3.5}
-        />
-      )}
-
-      {/* 弦中点连线 OM */}
-      {midpointD && (
-        <line
-          x1={originD.x}
-          y1={originD.y}
-          x2={midpointD.x}
-          y2={midpointD.y}
-          stroke={MATH_COLORS.paramSecondary}
-          strokeWidth={2}
-          strokeDasharray="3,3"
-        />
-      )}
-
-      {/* 焦点点标 */}
-      <MathPoint
-        cx={result.focusF1.x}
-        cy={result.focusF1.y}
-        scale={scale}
-        color={MATH_COLORS.accent}
-        fontScale={fontScale}
-      />
-      {result.focusF2 && (
+        {/* 焦点点标 */}
         <MathPoint
-          cx={result.focusF2.x}
-          cy={result.focusF2.y}
+          cx={result.focusF1.x}
+          cy={result.focusF1.y}
           scale={scale}
           color={MATH_COLORS.accent}
           fontScale={fontScale}
         />
-      )}
+        {result.focusF2 && (
+          <MathPoint
+            cx={result.focusF2.x}
+            cy={result.focusF2.y}
+            scale={scale}
+            color={MATH_COLORS.accent}
+            fontScale={fontScale}
+          />
+        )}
 
-      {/* 交点 A 与 B / 切点 T */}
-      {result.intersections.map((pt, idx) => (
-        <MathPoint
-          key={`intersect-${idx}`}
-          cx={pt.x}
-          cy={pt.y}
-          scale={scale}
-          color={MATH_COLORS.paramPrimary}
-          fontScale={fontScale}
-        />
-      ))}
+        {/* 交点 A 与 B / 切点 T */}
+        {result.intersections.map((pt, idx) => (
+          <MathPoint
+            key={`intersect-${idx}`}
+            cx={pt.x}
+            cy={pt.y}
+            scale={scale}
+            color={MATH_COLORS.paramPrimary}
+            fontScale={fontScale}
+          />
+        ))}
+      </g>
 
       {/* 极点极线模式：渲染切线 PA, PB 与可拖拽极点 P */}
       {studyMode === "polePolar" && (
@@ -565,6 +579,21 @@ export const ConicLineScene: React.FC<ConicLineSceneProps> = ({
           {lbl.text}
         </text>
       ))}
+      {/* 分步作答聚光围栏 (使用三处同源令牌 answerStepFrame) */}
+      {activeStep !== undefined && (
+        <rect
+          x={originD.x - (a + 1.4) * scale.scaleX}
+          y={originD.y - (b + 1.2) * scale.scaleY}
+          width={2 * (a + 1.4) * scale.scaleX}
+          height={2 * (b + 1.2) * scale.scaleY}
+          rx={10}
+          fill="none"
+          stroke={MATH_COLORS.answerStepFrame}
+          strokeWidth={2}
+          strokeDasharray="7 4"
+          className="pointer-events-none"
+        />
+      )}
     </g>
   );
 };

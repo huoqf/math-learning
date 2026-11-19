@@ -87,12 +87,15 @@ export function buildConicHomogenizationPanel(
       : []),
   ];
 
+  const effectiveA = result.a;
+  const effectiveB = result.b;
+
   return {
     quantities: [
       {
         label: "圆锥曲线方程",
-        value: `a=${a.toFixed(1)}, b=${b.toFixed(1)}`,
-        symbol: `\\frac{x^2}{${(a * a).toFixed(1)}} ${curveType === "ellipse" ? "+" : "-"} \\frac{y^2}{${(b * b).toFixed(1)}} = 1`,
+        value: `a=${effectiveA.toFixed(1)}, b=${effectiveB.toFixed(1)}`,
+        symbol: `\\frac{x^2}{${(effectiveA * effectiveA).toFixed(1)}} ${curveType === "ellipse" ? "+" : "-"} \\frac{y^2}{${(effectiveB * effectiveB).toFixed(1)}} = 1`,
       },
       {
         label: "平移定点 / 割线基准点 P",
@@ -170,12 +173,16 @@ export function buildConicHomogenizationPanel(
             {
               name: "原点齐次化升次通法",
               latex:
-                "\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = (mx + ny)^2 \\implies \\left(\\frac{1}{b^2} - n^2\\right)k^2 - 2mn k + \\left(\\frac{1}{a^2} - m^2\\right) = 0",
+                curveType === "ellipse"
+                  ? "\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = (mx + ny)^2 \\implies \\left(\\frac{1}{b^2} - n^2\\right)k^2 - 2mn k + \\left(\\frac{1}{a^2} - m^2\\right) = 0"
+                  : "\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = (mx + ny)^2 \\implies \\left(-\\frac{1}{b^2} - n^2\\right)k^2 - 2mn k + \\left(\\frac{1}{a^2} - m^2\\right) = 0",
               note: "将割线方程构造为 $1 = mx + ny$ 代入二次曲线方程，将常数项升次为二次齐次多项式，两边同除以 $x^2$ 转化为关于斜率 $k$ 的一元二次方程。",
               prerequisites: [
                 "割线 $l$ 不经过原点 $O$ (即 $m \\cdot 0 + n \\cdot 0 \\neq 1$)",
                 "割线与圆锥曲线有两个不同交点 $A, B$ (判别式 $\\Delta > 0$)",
-                "割线非铅垂线且 $\\frac{1}{b^2} - n^2 \\neq 0$",
+                curveType === "ellipse"
+                  ? "割线非铅垂线且 $\\frac{1}{b^2} - n^2 \\neq 0$"
+                  : "割线非铅垂线且 $-\\frac{1}{b^2} - n^2 \\neq 0$",
               ],
             },
             {

@@ -52,6 +52,50 @@ import {
   solidAxiomsMeta,
   polyhedronFeaturesMeta,
 } from "@/data/registries/solidGeometry";
+import {
+  defaultParams as lineEqDefaults,
+  paramMeta as lineEqMeta,
+} from "@/data/registries/lineEquation";
+import {
+  circleEquationDefaultParams as circleEqDefaults,
+  circleEquationParamMeta as circleEqMeta,
+} from "@/data/registries/circleEquation";
+import {
+  defaultParams as circleCircleDefaults,
+  paramMeta as circleCircleMeta,
+} from "@/data/registries/circleCircle";
+import {
+  defaultParams as conicDefDefaults,
+  paramMeta as conicDefMeta,
+} from "@/data/registries/conicDefinition";
+import {
+  defaultParams as conicPropDefaults,
+  paramMeta as conicPropMeta,
+} from "@/data/registries/conicProperties";
+import {
+  defaultParams as parabolaDefaults,
+  paramMeta as parabolaMeta,
+} from "@/data/registries/parabola";
+import {
+  defaultParams as conicParamDefaults,
+  paramMeta as conicParamMeta,
+} from "@/data/registries/conicParam";
+import {
+  defaultParams as lineParamTDefaults,
+  paramMeta as lineParamTMeta,
+} from "@/data/registries/lineParamT";
+import {
+  defaultParams as conicHomoDefaults,
+  paramMeta as conicHomoMeta,
+} from "@/data/registries/conicHomogenization";
+import {
+  defaultParams as parabolaArchDefaults,
+  paramMeta as parabolaArchMeta,
+} from "@/data/registries/parabolaArchimedes";
+import {
+  defaultParams as conicLocusDefaults,
+  paramMeta as conicLocusMeta,
+} from "@/data/registries/conicLocusInvariants";
 
 /**
  * 立体几何 registry 的元数据以数组形式导出（同一文件承载十余个页面的 meta），
@@ -137,8 +181,8 @@ const fuzzTargets: TopicFuzzTarget[] = [
     topicName: "条件概率与贝叶斯全概",
     defaultParams: probBayesDefaults,
     paramMeta: probBayesMeta,
-    config: { diseaseType: "rare" },
-    primaryKey: "prior",
+    config: { activeMode: "bayes", diseaseType: "rare" },
+    primaryKey: "pPriorD",
   },
   {
     animId: "anim-triangle-solve",
@@ -160,7 +204,244 @@ const fuzzTargets: TopicFuzzTarget[] = [
     topicName: "直线与圆的位置关系",
     defaultParams: lineCircleDefaults,
     paramMeta: lineCircleMeta,
-    primaryKey: "d",
+    config: { studyMode: "secant" },
+    primaryKey: "k",
+  },
+  {
+    animId: "anim-line-equation",
+    topicName: "直线方程与点到直线的距离",
+    defaultParams: lineEqDefaults as unknown as Record<string, number>,
+    paramMeta: lineEqMeta as unknown as Record<string, ParamMeta>,
+    variants: [
+      {
+        label: "方程五式·斜截式",
+        config: { studyMode: "forms", form: "slopeIntercept" },
+        primaryKey: "k",
+      },
+      {
+        label: "点到直线距离",
+        config: { studyMode: "distance" },
+        primaryKey: "x0",
+      },
+      {
+        label: "两线位置关系",
+        config: { studyMode: "relation" },
+        primaryKey: "A",
+      },
+    ],
+  },
+  {
+    animId: "anim-circle-equation",
+    topicName: "圆的方程",
+    defaultParams: circleEqDefaults as unknown as Record<string, number>,
+    paramMeta: circleEqMeta,
+    variants: [
+      { label: "标准方程", config: { studyMode: "standard" }, primaryKey: "r" },
+      {
+        label: "一般方程配方",
+        config: { studyMode: "general" },
+        primaryKey: "F",
+      },
+      {
+        label: "待定系数三点求圆",
+        config: { studyMode: "threePoints" },
+        primaryKey: "x1",
+      },
+    ],
+  },
+  {
+    animId: "anim-circle-circle",
+    topicName: "圆与圆的位置关系及公共弦方程",
+    defaultParams: circleCircleDefaults,
+    paramMeta: circleCircleMeta,
+    config: { studyMode: "relation" },
+    primaryKey: "r1",
+  },
+  {
+    animId: "anim-conic-definition",
+    topicName: "圆锥曲线第一与统一定义",
+    defaultParams: conicDefDefaults as unknown as Record<string, number>,
+    paramMeta: conicDefMeta,
+    variants: [
+      {
+        label: "第一定义·椭圆",
+        config: { studyMode: "firstDef", conicType: "ellipse" },
+        primaryKey: "a",
+      },
+      {
+        label: "第一定义·双曲线",
+        config: { studyMode: "firstDef", conicType: "hyperbola" },
+        primaryKey: "c",
+      },
+      {
+        label: "统一定义",
+        config: { studyMode: "unifiedDef", conicType: "ellipse" },
+        primaryKey: "e",
+      },
+    ],
+  },
+  {
+    animId: "anim-conic-properties",
+    topicName: "椭圆与双曲线的几何性质及离心率",
+    defaultParams: conicPropDefaults as unknown as Record<string, number>,
+    paramMeta: conicPropMeta,
+    variants: [
+      {
+        label: "椭圆基本性质",
+        config: { studyMode: "basicProperties", conicType: "ellipse" },
+        primaryKey: "a",
+      },
+      {
+        label: "双曲线焦点三角形",
+        config: { studyMode: "focusTriangle", conicType: "hyperbola" },
+        primaryKey: "b",
+      },
+    ],
+  },
+  {
+    animId: "anim-conic-parabola",
+    topicName: "抛物线的焦点性质与准线几何",
+    defaultParams: parabolaDefaults as unknown as Record<string, number>,
+    paramMeta: parabolaMeta,
+    variants: [
+      {
+        label: "定义与开口",
+        config: { studyMode: "definition", direction: "right" },
+        primaryKey: "p",
+      },
+      {
+        label: "准线阿基米德切线",
+        config: { studyMode: "tangentOptical", direction: "right" },
+        primaryKey: "yQ",
+      },
+    ],
+  },
+  {
+    animId: "anim-conic-param",
+    topicName: "圆锥曲线参数化设点与代数降维",
+    defaultParams: conicParamDefaults,
+    paramMeta: conicParamMeta,
+    variants: [
+      {
+        label: "椭圆三角代换",
+        config: { studyMode: "ellipseTrig" },
+        primaryKey: "theta",
+      },
+      {
+        label: "抛物线单参数设点",
+        config: { studyMode: "parabolaYParam" },
+        primaryKey: "y1",
+      },
+      {
+        label: "割线纵坐标斜率式",
+        config: { studyMode: "lineYForm" },
+        primaryKey: "m",
+      },
+    ],
+  },
+  {
+    animId: "anim-conic-param-t",
+    topicName: "直线参数方程 t 的几何意义",
+    defaultParams: lineParamTDefaults as unknown as Record<string, number>,
+    paramMeta: lineParamTMeta,
+    variants: [
+      {
+        label: "高考·中点弦",
+        config: {
+          mode: "gaokao",
+          conicType: "ellipse",
+          gaokaoModel: "midpoint",
+        },
+        primaryKey: "alpha",
+      },
+      {
+        label: "高考·割线线段积",
+        config: {
+          mode: "gaokao",
+          conicType: "ellipse",
+          gaokaoModel: "product",
+        },
+        primaryKey: "alpha",
+      },
+      {
+        label: "高考·倒数和",
+        config: {
+          mode: "gaokao",
+          conicType: "parabola",
+          gaokaoModel: "reciprocal",
+        },
+        primaryKey: "p",
+      },
+    ],
+  },
+  {
+    animId: "anim-conic-homogenization",
+    topicName: "圆锥曲线齐次化联立与斜率消元",
+    defaultParams: conicHomoDefaults,
+    paramMeta: conicHomoMeta,
+    variants: [
+      {
+        label: "椭圆·平移齐次化",
+        config: { curveType: "ellipse", studyMode: "shift" },
+        primaryKey: "lineA",
+      },
+      {
+        label: "双曲线·原点齐次化",
+        config: { curveType: "hyperbola", studyMode: "origin" },
+        primaryKey: "lineB",
+      },
+    ],
+  },
+  {
+    animId: "anim-parabola-archimedes",
+    topicName: "抛物线焦点弦性质与阿基米德三角形",
+    defaultParams: parabolaArchDefaults as unknown as Record<string, number>,
+    paramMeta: parabolaArchMeta,
+    variants: [
+      {
+        label: "焦半径调和中项",
+        config: { mode: "focalChordProperties" },
+        primaryKey: "thetaDeg",
+      },
+      {
+        label: "阿基米德三角形",
+        config: { mode: "archimedesTriangle" },
+        primaryKey: "yQ",
+      },
+      {
+        label: "正交焦点弦最值",
+        config: { mode: "orthogonalChords" },
+        primaryKey: "p",
+      },
+    ],
+  },
+  {
+    animId: "anim-conic-locus-invariants",
+    topicName: "圆锥曲线第三定义、相关点转移与定值定点",
+    defaultParams: conicLocusDefaults,
+    paramMeta: conicLocusMeta,
+    variants: [
+      {
+        label: "相关点转移法",
+        config: { studyMode: "locusTransfer" },
+        primaryKey: "thetaDeg",
+      },
+      {
+        label: "第三定义·椭圆",
+        config: { studyMode: "thirdDefinition", curveType: "ellipse" },
+        primaryKey: "thetaDeg",
+      },
+      {
+        label: "第三定义·双曲线",
+        config: { studyMode: "thirdDefinition", curveType: "hyperbola" },
+        primaryKey: "a",
+      },
+      {
+        label: "常规联立过定点",
+        config: { studyMode: "fixedPoint" },
+        primaryKey: "slopeInvM",
+      },
+    ],
   },
   {
     animId: "anim-solid-axioms",
@@ -306,8 +587,12 @@ describe("全库核心学科专题参数边界模糊测试与防虚假推导巡�
         });
 
         // 4. 防虚假推导：主参数扰动动态响应断言 (Dynamic Responsiveness Assertion)
-        if (primaryKey && paramMeta[primaryKey]) {
+        if (primaryKey) {
           it(`防虚假硬编码推导：主控参数 [${primaryKey}] 扰动时，看板数值必须动态响应变化`, () => {
+            expect(
+              paramMeta[primaryKey],
+              `[${animId}] 配置的 primaryKey="${primaryKey}" 在 paramMeta 中不存在`,
+            ).toBeDefined();
             const meta = paramMeta[primaryKey];
             const val1 = meta.defaultValue ?? defaultParams[primaryKey] ?? 1;
             const val2 =

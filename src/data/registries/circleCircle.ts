@@ -22,6 +22,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆 O1 的横坐标",
     descriptionFormula: `圆心 $O_1(\\color{${MATH_COLORS.paramPrimary}}{x_1}, y_1)$ 的横向位置`,
+    group: "圆 O₁",
   },
   y1: {
     key: "y1",
@@ -34,6 +35,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆 O1 的纵坐标",
     descriptionFormula: `圆心 $O_1(x_1, \\color{${MATH_COLORS.paramPrimary}}{y_1})$ 的纵向位置`,
+    group: "圆 O₁",
   },
   r1: {
     key: "r1",
@@ -46,6 +48,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆 O1 的大小半径",
     descriptionFormula: `圆 $O_1$ 半径 ($\\color{${MATH_COLORS.paramPrimary}}{r_1} > 0$)`,
+    group: "圆 O₁",
     marks: [
       {
         value: 2.5,
@@ -65,6 +68,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆 O2 的横坐标",
     descriptionFormula: `圆心 $O_2(\\color{${MATH_COLORS.paramSecondary}}{x_2}, y_2)$ 的横向位置`,
+    group: "圆 O₂",
   },
   y2: {
     key: "y2",
@@ -77,6 +81,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆 O2 的纵坐标",
     descriptionFormula: `圆心 $O_2(x_2, \\color{${MATH_COLORS.paramSecondary}}{y_2})$ 的纵向位置`,
+    group: "圆 O₂",
   },
   r2: {
     key: "r2",
@@ -89,6 +94,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "圆 O2 的大小半径",
     descriptionFormula: `圆 $O_2$ 半径 ($\\color{${MATH_COLORS.paramSecondary}}{r_2} > 0$)`,
+    group: "圆 O₂",
     marks: [
       {
         value: 2.0,

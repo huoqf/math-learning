@@ -104,10 +104,21 @@ export function ConicHomogenizationAnimation() {
     }
 
     setPresetKey("free");
-    setParams((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+    setParams((prev) => {
+      const next = { ...prev, [key]: value };
+      if (curveType === "ellipse" && key === "a" && next.b >= value) {
+        next.b = Math.max(
+          paramMeta.b.min ?? 0.5,
+          Number((value - 0.1).toFixed(1)),
+        );
+      } else if (curveType === "ellipse" && key === "b" && value >= next.a) {
+        next.b = Math.max(
+          paramMeta.b.min ?? 0.5,
+          Number((next.a - 0.1).toFixed(1)),
+        );
+      }
+      return next;
+    });
   };
 
   // 拖拽定点 P (仅在非原点模式下有效)
@@ -149,9 +160,8 @@ export function ConicHomogenizationAnimation() {
         lineB: 0.3, // 稍微倾斜，直角三角形特征更清晰
       }));
     } else if (key === "origin_symmetric_sum") {
-      // 原点中心对称斜率和为 0 (平行于坐标轴割线)
+      // 原点中心对称斜率和为 0 (平行于坐标轴割线，保留当前曲线类型)
       setStudyMode("origin");
-      setCurveType("ellipse");
       setParams((prev) => ({
         ...prev,
         a: 3.0,
@@ -162,9 +172,8 @@ export function ConicHomogenizationAnimation() {
         lineB: 0.5,
       }));
     } else if (key === "asymmetric_slope_explore") {
-      // 非对称斜率约束 k_PA + 2 k_PB = 0 探究
+      // 非对称斜率约束 k_PA + 2 k_PB = 0 探究（保留当前曲线类型）
       setStudyMode("asymmetric");
-      setCurveType("ellipse");
       setParams((prev) => ({
         ...prev,
         a: 2.5,
@@ -332,8 +341,25 @@ export function ConicHomogenizationAnimation() {
               ]}
               value={curveType}
               onChange={(key) => {
+                const nextType = key as CurveType;
                 setPresetKey("free");
-                setCurveType(key as CurveType);
+                setCurveType(nextType);
+                if (nextType === "ellipse") {
+                  setParams((prev) => {
+                    const curA = prev.a ?? defaultParams.a;
+                    const curB = prev.b ?? defaultParams.b;
+                    if (curB >= curA) {
+                      return {
+                        ...prev,
+                        b: Math.max(
+                          paramMeta.b.min ?? 0.5,
+                          Number((curA - 0.1).toFixed(1)),
+                        ),
+                      };
+                    }
+                    return prev;
+                  });
+                }
               }}
             />
           </div>

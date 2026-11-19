@@ -9,6 +9,7 @@ import type { ViewportInfo } from "@/utils/useViewport";
 import {
   CoordinateGrid,
   InteractivePoint,
+  MathPoint,
   SceneLabelGroup,
 } from "@/components/Math";
 import { MATH_COLORS } from "@/theme";
@@ -40,10 +41,11 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
     pointPDesign,
     distanceResult,
     footDesign,
+    footMath,
     rightAnglePath,
     line2Design,
     twoLinesRelation,
-    intersectionDesign,
+    intersectionMath,
     familyLineDesign,
     handlePointPDrag,
     handlePoint1Drag,
@@ -138,13 +140,13 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
           )}
 
           {/* 垂足 Q 焦点高亮 */}
-          <circle
-            cx={footDesign.x}
-            cy={footDesign.y}
+          <MathPoint
+            cx={footMath.x}
+            cy={footMath.y}
+            scale={scale}
             r={5}
-            fill={MATH_COLORS.white}
-            stroke={MATH_COLORS.focusPoint}
-            strokeWidth={2}
+            color={MATH_COLORS.focusPoint}
+            fontScale={fontScale}
           />
         </g>
       )}
@@ -152,18 +154,18 @@ export const LineEquationScene: React.FC<LineEquationSceneProps> = ({
       {/* 5. 两线关系 / 直线系模式：交点 / 恒过定点高亮 */}
       {(studyMode === "relation" || studyMode === "family") &&
         twoLinesRelation.type === "intersect" &&
-        intersectionDesign && (
-          <circle
-            cx={intersectionDesign.x}
-            cy={intersectionDesign.y}
+        intersectionMath && (
+          <MathPoint
+            cx={intersectionMath.x}
+            cy={intersectionMath.y}
+            scale={scale}
             r={6}
-            fill={
+            color={
               studyMode === "family"
                 ? MATH_COLORS.paramPrimary
                 : MATH_COLORS.vectorResult
             }
-            stroke={MATH_COLORS.white}
-            strokeWidth={2}
+            fontScale={fontScale}
           />
         )}
 

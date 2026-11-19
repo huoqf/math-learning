@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   ParamControl,
+  ParamPlayBar,
+  StepNavigator,
   MathPanel,
   KatexFormula,
   LeftPanel,
@@ -11,7 +13,7 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { ConicLineScene } from "./components/ConicLineScene";
@@ -20,8 +22,13 @@ import {
   defaultParams,
   paramMeta,
   getConicLinePresets,
+  getConicLineAnswerSteps,
 } from "@/data/registries/conicLine";
-import type { ConicType, StudyMode } from "@/math/conicLine";
+import {
+  solveConicLineIntersection,
+  type ConicType,
+  type StudyMode,
+} from "@/math/conicLine";
 
 export function ConicLineAnimation() {
   // 圆锥曲线类型：'ellipse' | 'hyperbola' | 'parabola'
@@ -30,6 +37,9 @@ export function ConicLineAnimation() {
   const [studyMode, setStudyMode] = useState<StudyMode>("general");
   // 当前选中的典型预设 key
   const [activePreset, setActivePreset] = useState<string>("free");
+  // 高考分步作答控制：默认步骤 1，用户切换步序时开启中屏分区聚光与围栏
+  const [answerStep, setAnswerStep] = useState<number>(1);
+  const [isStepFocusOn, setIsStepFocusOn] = useState<boolean>(false);
 
   // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({
@@ -48,6 +58,53 @@ export function ConicLineAnimation() {
     yRange: [-4.5, 4.5],
   });
 
+  // 当前数学求解状态（用于同步判断平行渐近线降阶一步骤文案）
+  const lineSolveResult = useMemo(
+    () =>
+      solveConicLineIntersection({
+        conicType,
+        studyMode,
+        a: params.a ?? 3,
+        b: params.b ?? 2,
+        p: params.p ?? 2,
+        k: params.k ?? 0.5,
+        m: params.m ?? 0.5,
+        theta: params.theta ?? 0.785,
+        midpointX: params.midpointX ?? 1,
+        midpointY: params.midpointY ?? 1,
+        poleX: params.poleX ?? 4,
+        poleY: params.poleY ?? 3,
+      }),
+    [params, conicType, studyMode],
+  );
+
+  // 分步作答同源步骤
+  const answerSteps = useMemo(
+    () =>
+      getConicLineAnswerSteps(
+        studyMode,
+        conicType,
+        lineSolveResult.status === "degenerated_parallel",
+      ),
+    [studyMode, conicType, lineSolveResult.status],
+  );
+
+  // 直线斜率/焦点弦旋转自动播放控制
+  const canAutoPlay = studyMode === "general" || studyMode === "focus";
+  const lineSweepPlay = useParamPlay({
+    min: studyMode === "general" ? -2.2 : 0.15,
+    max: studyMode === "general" ? 2.2 : 2.98,
+    step: studyMode === "general" ? 0.02 : 0.02,
+    mode: "bounce",
+    getValue: () =>
+      studyMode === "general" ? (params.k ?? 0.5) : (params.theta ?? 0.785),
+    onChange: (val) => {
+      setActivePreset("free");
+      const key = studyMode === "general" ? "k" : "theta";
+      setParams((prev) => ({ ...prev, [key]: val }));
+    },
+  });
+
   // 数学量看板数据计算与组装
   const mathData = useMemo(() => {
     return buildMathQuantities("anim-conic-line", params, {
@@ -58,6 +115,7 @@ export function ConicLineAnimation() {
 
   // 参数变更处理器（拖拽或手动微调时自动退回 free 自由探究，并保证高中数学椭圆 a > b > 0 课标约束）
   const handleParamChange = (key: string, value: number) => {
+    lineSweepPlay.pause();
     setActivePreset("free");
     setParams((prev) => {
       const next = {
@@ -491,18 +549,69 @@ export function ConicLineAnimation() {
             <SelectGrid
               items={currentPresets}
               value={activePreset}
-              onChange={handlePresetChange}
+              onChange={(presetKey) => {
+                lineSweepPlay.pause();
+                handlePresetChange(presetKey);
+              }}
               variant="filled"
               columns={2}
             />
           </LeftPanelSection>
 
+          {/* 高考标准解答分步走 (三处同源联动) */}
+          <LeftPanelSection
+            title="高考标准解答分步走"
+            action={
+              <button
+                type="button"
+                onClick={() => setIsStepFocusOn((prev) => !prev)}
+                className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+                  isStepFocusOn
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : "bg-neutral-50 text-neutral-500 border-neutral-200 hover:text-neutral-700"
+                }`}
+              >
+                {isStepFocusOn ? "聚光开" : "全图亮"}
+              </button>
+            }
+          >
+            <StepNavigator
+              steps={answerSteps}
+              active={answerStep}
+              onChange={(step) => {
+                setAnswerStep(step);
+                setIsStepFocusOn(true);
+              }}
+              hint="联动右屏采分步描边与中屏分区聚焦围栏"
+            />
+          </LeftPanelSection>
+
           {/* 参数调节 Section */}
           <LeftPanelSection title="参数调节">
+            {canAutoPlay && (
+              <div className="mb-2.5">
+                <ParamPlayBar
+                  isPlaying={lineSweepPlay.isPlaying}
+                  onToggle={lineSweepPlay.toggle}
+                  speed={lineSweepPlay.speed}
+                  onSpeedChange={lineSweepPlay.setSpeed}
+                  label={
+                    studyMode === "general"
+                      ? conicType === "hyperbola"
+                        ? "斜率扫掠（渐近线跃迁）"
+                        : "动直线斜率 k 扫掠"
+                      : "焦点弦旋转演示"
+                  }
+                />
+              </div>
+            )}
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={handleReset}
+              onReset={() => {
+                lineSweepPlay.pause();
+                handleReset();
+              }}
             />
           </LeftPanelSection>
 
@@ -534,6 +643,7 @@ export function ConicLineAnimation() {
               fontScale={canvasSize.font}
               conicType={conicType}
               studyMode={studyMode}
+              activeStep={isStepFocusOn ? answerStep : undefined}
               onParamChange={handleParamChange}
             />
           </AnimationSvgCanvas>
@@ -542,7 +652,14 @@ export function ConicLineAnimation() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={<MathPanel {...mathData} title="数学解析看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          title="数学解析看板"
+          focusStep={isStepFocusOn ? answerStep : undefined}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

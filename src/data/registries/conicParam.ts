@@ -115,6 +115,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "椭圆参数动点的离心角",
     descriptionFormula: `P(a\\cos\\color{${MATH_COLORS.paramTertiary}}{\\theta}, b\\sin\\color{${MATH_COLORS.paramTertiary}}{\\theta})`,
     importance: "core",
+    group: "参数化控制",
     marks: [
       { value: 0, label: "0°", labelFormula: "0^\\circ" },
       { value: 45, label: "45°", labelFormula: "45^\\circ" },
@@ -132,6 +133,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "椭圆焦点在 x 轴时的长半轴",
     importance: "advanced",
+    group: "曲线几何底模",
   },
   b: {
     key: "b",
@@ -143,6 +145,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "椭圆短半轴",
     importance: "advanced",
+    group: "曲线几何底模",
   },
   p: {
     key: "p",
@@ -154,6 +157,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.2,
     description: "抛物线方程 y² = 2px 的参数",
     importance: "core",
+    group: "曲线几何底模",
     marks: [
       { value: 2, label: "p=2", labelFormula: "p=2", variant: "critical" },
     ],
@@ -169,6 +173,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "抛物线上动点 A 的单个参数",
     descriptionFormula: `A\\left(\\frac{\\color{${MATH_COLORS.paramSecondary}}{y_1}^2}{2p}, \\color{${MATH_COLORS.paramSecondary}}{y_1}\\right)`,
     importance: "core",
+    group: "单参数动点坐标",
   },
   y2: {
     key: "y2",
@@ -181,6 +186,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     description: "抛物线上动点 B 的单个参数",
     descriptionFormula: `B\\left(\\frac{\\color{${MATH_COLORS.paramTertiary}}{y_2}^2}{2p}, \\color{${MATH_COLORS.paramTertiary}}{y_2}\\right)`,
     importance: "core",
+    group: "单参数动点坐标",
   },
   m: {
     key: "m",
@@ -192,6 +198,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "割线方程 x = my + n 的斜率倒数参数",
     importance: "core",
+    group: "设线与截距",
     marks: [
       {
         value: 0,
@@ -211,6 +218,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     step: 0.1,
     description: "割线与 x 轴交点横坐标",
     importance: "core",
+    group: "设线与截距",
     marks: [
       {
         value: 0,

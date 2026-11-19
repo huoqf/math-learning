@@ -182,4 +182,23 @@ describe("中屏可见范围约束 (2026-10-01 新增：P1-5b / P1-5c 回归)", 
       }
     }
   });
+
+  it("双曲线左支与焦点在 y 轴切换：渐近线斜率为 a/b 且切点落在对称实轴顶点", () => {
+    const resLeft = calculateConicProperties(
+      "hyperbola",
+      3,
+      4,
+      0.4,
+      "left",
+      "x",
+    );
+    expect(resLeft.pointP.x).toBeLessThan(-3);
+    expect(resLeft.focusTriangle.incircle.tangentBase.x).toBeCloseTo(-3, 4);
+
+    const resY = calculateConicProperties("hyperbola", 3, 4, 0.3, "right", "y");
+    expect(resY.asymptotes?.slope).toBeCloseTo(3 / 4, 4); // y 轴双曲线渐近线斜率为 a/b
+    expect(resY.foci.F2.x).toBe(0);
+    expect(resY.foci.F2.y).toBeCloseTo(5, 4);
+    expect(resY.focusTriangle.incircle.tangentBase.y).toBeCloseTo(3, 4);
+  });
 });

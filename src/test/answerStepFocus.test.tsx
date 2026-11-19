@@ -45,6 +45,16 @@ import {
   DISTRIBUTION_ANSWER_STEPS,
   defaultParams as distDefaultParams,
 } from "@/data/registries/probabilityDistribution";
+import { buildConicLineMathQuantities } from "@/data/builders/conicLine";
+import {
+  getConicLineAnswerSteps,
+  defaultParams as conicLineDefaultParams,
+} from "@/data/registries/conicLine";
+import { buildConicLocusInvariantsPanel } from "@/data/builders/conicLocusInvariants";
+import {
+  getConicLocusAnswerSteps,
+  defaultParams as conicLocusDefaultParams,
+} from "@/data/registries/conicLocusInvariants";
 
 /**
  * 回归防线（来源：概率统计模块审计 · 决策项 3.1「分步作答闭环」）。
@@ -434,6 +444,64 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
     );
   });
 
+  it("直线与圆锥曲线：右屏推演链的步号与标题完全由 getConicLineAnswerSteps 生成", () => {
+    const modes = ["general", "focus", "midpoint", "polePolar"] as const;
+    const curves = ["ellipse", "hyperbola", "parabola"] as const;
+    for (const studyMode of modes) {
+      for (const conicType of curves) {
+        const panel = buildConicLineMathQuantities(
+          { ...conicLineDefaultParams },
+          { studyMode, conicType },
+        );
+        const steps = getConicLineAnswerSteps(studyMode, conicType, false);
+        expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+          steps.map((s) => s.step),
+        );
+        expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+          steps.map((s) => s.title),
+        );
+      }
+    }
+    // 双曲线平行渐近线退化分支（A = 0 -> b*k = ±a）
+    const parallelParams = {
+      ...conicLineDefaultParams,
+      a: 2,
+      b: 3,
+      k: 1.5,
+    };
+    const parallelPanel = buildConicLineMathQuantities(parallelParams, {
+      studyMode: "general",
+      conicType: "hyperbola",
+    });
+    const parallelSteps = getConicLineAnswerSteps("general", "hyperbola", true);
+    expect(parallelPanel.reasoningSteps?.map((s) => s.step)).toEqual(
+      parallelSteps.map((s) => s.step),
+    );
+    expect(parallelPanel.reasoningSteps?.map((s) => s.title)).toEqual(
+      parallelSteps.map((s) => s.title),
+    );
+  });
+
+  it("第三定义、相关点转移与定值定点：右屏推演链的步号与标题完全由 getConicLocusAnswerSteps 生成", () => {
+    for (const studyMode of [
+      "locusTransfer",
+      "thirdDefinition",
+      "fixedPoint",
+    ] as const) {
+      const panel = buildConicLocusInvariantsPanel(
+        { ...conicLocusDefaultParams },
+        { studyMode },
+      );
+      const steps = getConicLocusAnswerSteps(studyMode);
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        steps.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        steps.map((s) => s.title),
+      );
+    }
+  });
+
   it("所有解答链条的步号必须从 1 连续递增——否则左屏清单与右屏聚焦会错位", () => {
     for (const steps of [
       MARKOV_ANSWER_STEPS,
@@ -445,6 +513,15 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
       LINEAR_RECURRENCE_ANSWER_STEPS,
       ARITH_GEO_ANSWER_STEPS,
       TELESCOPING_ANSWER_STEPS,
+      getConicLineAnswerSteps("general", "ellipse", false),
+      getConicLineAnswerSteps("general", "hyperbola", true),
+      getConicLineAnswerSteps("general", "parabola", false),
+      getConicLineAnswerSteps("focus", "ellipse", false),
+      getConicLineAnswerSteps("midpoint", "ellipse", false),
+      getConicLineAnswerSteps("polePolar", "ellipse", false),
+      getConicLocusAnswerSteps("locusTransfer"),
+      getConicLocusAnswerSteps("thirdDefinition"),
+      getConicLocusAnswerSteps("fixedPoint"),
     ]) {
       expect(steps.map((s) => s.step)).toEqual(steps.map((_, i) => i + 1));
       // 每一步都要给出"该看中屏哪一块"，否则分步导航就只剩翻页没有联动

@@ -2,12 +2,14 @@ import React, { useState, useMemo, useCallback } from "react";
 import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   LeftPanel,
+  LeftPanelSection,
   MathPanel,
   TabSwitcher,
   SelectGrid,
   ParamControl,
   TipCard,
 } from "@/components/UI";
+import { formatMathNumber } from "@/utils/mathFormat";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { useAnimationViewport } from "@/hooks";
 import { useSceneScale } from "@/hooks/useSceneScale";
@@ -87,6 +89,21 @@ export const CircleEquationAnimation: React.FC = () => {
     [studyMode],
   );
 
+  // 9.5 参数重置
+  const handleReset = useCallback(() => {
+    const presets = CIRCLE_EQUATION_PRESETS[studyMode];
+    if (presets && presets.length > 0) {
+      setActivePreset(presets[0].key);
+      setParams({
+        ...circleEquationDefaultParams,
+        ...presets[0].params,
+      });
+    } else {
+      setActivePreset("free");
+      setParams({ ...circleEquationDefaultParams });
+    }
+  }, [studyMode]);
+
   // 10. 根据模式动态展示参数控制项 (参数降维)
   const activeParamKeys = useMemo(() => {
     if (studyMode === "standard") return ["a", "b", "r", "px", "py"];
@@ -106,17 +123,19 @@ export const CircleEquationAnimation: React.FC = () => {
         max: meta.max,
         step: meta.step,
         marks: meta.marks,
+        group: meta.group,
       };
     });
   }, [activeParamKeys, params]);
 
   // 11. 题设三要素闭环 (TipCard)
   const tipData = useMemo(() => {
+    const fmt = formatMathNumber;
     if (studyMode === "standard") {
       return {
         background:
           "2019人教A版选必一第2.4.1节：圆的标准方程是解析几何中研究圆的基本模型，由圆的几何定义推导而来。",
-        condition: `已知圆心为 $C(${params.a}, ${params.b})$，半径为 $r = ${params.r}$；动点 $P(${params.px}, ${params.py})$。`,
+        condition: `已知圆心为 $C(${fmt(params.a)}, ${fmt(params.b)})$，半径为 $r = ${fmt(params.r)}$；动点 $P(${fmt(params.px)}, ${fmt(params.py)})$。`,
         question:
           "探究点 $P$ 到圆心的距离 $|PC|$ 与半径 $r$ 的代数大小关系，判定点在圆外、圆上还是圆内？",
       };
@@ -125,7 +144,7 @@ export const CircleEquationAnimation: React.FC = () => {
       return {
         background:
           "2019人教A版选必一第2.4.2节：二元二次方程 $x^2+y^2+Dx+Ey+F=0$ 是圆的一般方程，通过配方法探究其几何意义。",
-        condition: `方程系数 $D = ${params.D}, E = ${params.E}, F = ${params.F}$，判别式 $\\Delta_c = D^2 + E^2 - 4F$。`,
+        condition: `方程系数 $D = ${fmt(params.D)}, E = ${fmt(params.E)}, F = ${fmt(params.F)}$，判别式 $\\Delta_c = D^2 + E^2 - 4F$。`,
         question:
           "运用配方法求解圆心坐标与半径，讨论判别式 $\\Delta_c$ 的正负如何决定图形的几何形态？",
       };
@@ -133,7 +152,7 @@ export const CircleEquationAnimation: React.FC = () => {
     return {
       background:
         "2019人教A版选必一第2.4节例题与高考真题：不在同一直线上的三点确定一个圆，待定系数法是求曲线方程的核心通法。",
-      condition: `已知平面上三点 $A(${params.x1}, ${params.y1})$、$B(${params.x2}, ${params.y2})$、$C(${params.x3}, ${params.y3})$。`,
+      condition: `已知平面上三点 $A(${fmt(params.x1)}, ${fmt(params.y1)})$、$B(${fmt(params.x2)}, ${fmt(params.y2)})$、$C(${fmt(params.x3)}, ${fmt(params.y3)})$。`,
       question:
         "将三点坐标代入圆的一般方程建立三元一次方程组，求系数 $D, E, F$ 与外接圆圆心半径。",
     };
@@ -174,34 +193,37 @@ export const CircleEquationAnimation: React.FC = () => {
     <ThreePanel
       left={
         <LeftPanel>
-          {/* 模式选择器 */}
-          <TabSwitcher
-            tabs={[
-              { key: "standard", label: "标准方程与点圆关系" },
-              { key: "general", label: "一般方程配方互化" },
-              { key: "threePoints", label: "待定系数法求圆" },
-            ]}
-            value={studyMode}
-            onChange={handleModeChange}
-          />
+          <LeftPanelSection title="探究模式">
+            <TabSwitcher
+              tabs={[
+                { key: "standard", label: "标准方程与点圆关系" },
+                { key: "general", label: "一般方程配方互化" },
+                { key: "threePoints", label: "待定系数法求圆" },
+              ]}
+              value={studyMode}
+              onChange={handleModeChange}
+            />
+          </LeftPanelSection>
 
-          {/* 典型预设 (SelectGrid) */}
-          <SelectGrid
-            items={CIRCLE_EQUATION_PRESETS[studyMode].map((p) => ({
-              key: p.key,
-              label: p.label,
-            }))}
-            value={activePreset}
-            onChange={handlePresetSelect}
-          />
+          <LeftPanelSection title="典型情景">
+            <SelectGrid
+              items={CIRCLE_EQUATION_PRESETS[studyMode].map((p) => ({
+                key: p.key,
+                label: p.label,
+              }))}
+              value={activePreset}
+              onChange={handlePresetSelect}
+            />
+          </LeftPanelSection>
 
-          {/* 参数控制 */}
-          <ParamControl
-            params={paramConfigs}
-            onParamChange={handleParamChange}
-          />
+          <LeftPanelSection title="参数调节">
+            <ParamControl
+              params={paramConfigs}
+              onParamChange={handleParamChange}
+              onReset={handleReset}
+            />
+          </LeftPanelSection>
 
-          {/* 教学导引题设 (TipCard) */}
           <TipCard
             background={tipData.background}
             condition={tipData.condition}

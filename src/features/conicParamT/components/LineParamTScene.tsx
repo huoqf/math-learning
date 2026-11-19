@@ -425,11 +425,13 @@ export const LineParamTScene: React.FC<LineParamTSceneProps> = ({
 
           {/* 非标准点 P' 标注 */}
           {Math.abs(kNorm - 1.0) > 1e-2 && (
-            <circle
-              cx={desPNon.x}
-              cy={desPNon.y}
+            <MathPoint
+              cx={ptPNon.x}
+              cy={ptPNon.y}
+              scale={scale}
               r={5}
-              fill={MATH_COLORS.paramTertiary}
+              color={MATH_COLORS.paramTertiary}
+              fontScale={fontScale}
             />
           )}
         </>

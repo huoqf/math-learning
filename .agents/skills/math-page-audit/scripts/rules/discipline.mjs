@@ -738,7 +738,10 @@ export const disciplineRules = [
             if (/[\u4e00-\u9fa5]/.test(textFreeStr)) {
               const hasLatexCmd = /\\[a-zA-Z]{2,}/.test(textFreeStr);
               const hasMathSuper = /[a-zA-Z]\^[0-9a-zA-Z]+/.test(textFreeStr);
-              const hasMathSub = /\b[a-zA-Z]{1,2}_[0-9a-zA-Z]+|\b[fgh]_(?:max|min)\b/.test(textFreeStr);
+              const hasMathSub =
+                /\b[a-zA-Z]{1,2}_(?:\{[0-9a-zA-Z\\]+\}|[0-9a-zA-Z]+)|\b[fgh]_(?:max|min)\b|[ΔθαλμσΩΦ]_\{?[0-9a-zA-Z\\]+\}?/.test(
+                  textFreeStr,
+                );
               if (hasLatexCmd || hasMathSuper || hasMathSub) {
                 issues.push({
                   lineNum: idx + 1,

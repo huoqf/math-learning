@@ -196,6 +196,7 @@ export function ParabolaAnimation() {
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
           marks: meta.marks,
+          group: meta.group,
         };
       });
   }, [params, studyMode, activePreset, direction]);

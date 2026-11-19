@@ -1,4 +1,6 @@
 export type ConicType = "ellipse" | "hyperbola";
+export type HyperbolaBranch = "right" | "left";
+export type FocusAxis = "x" | "y";
 
 export interface Point2D {
   x: number;
@@ -44,6 +46,7 @@ export function ellipseBMaxOnCanvas(a: number, visibleHalfY: number): number {
 
 export interface ConicMathResult {
   conicType: ConicType;
+  focusAxis: FocusAxis;
   a: number;
   b: number;
   c: number;
@@ -81,6 +84,8 @@ export function calculateConicProperties(
   a: number,
   b: number,
   t: number,
+  branch: HyperbolaBranch = "right",
+  focusAxis: FocusAxis = "x",
 ): ConicMathResult {
   const safeA = Math.max(0.5, a);
   let safeB = Math.max(0.2, b);
@@ -97,32 +102,33 @@ export function calculateConicProperties(
 
   const e = c / safeA;
 
-  // 2. 焦点与顶点
-  const F1: Point2D = { x: -c, y: 0 };
-  const F2: Point2D = { x: c, y: 0 };
-  const A1: Point2D = { x: -safeA, y: 0 };
-  const A2: Point2D = { x: safeA, y: 0 };
-  const B1: Point2D = { x: 0, y: -safeB };
-  const B2: Point2D = { x: 0, y: safeB };
+  // 2. 焦点与顶点（随焦点轴向 x / y 自适应）
+  const isXAxis = focusAxis === "x";
+  const F1: Point2D = isXAxis ? { x: -c, y: 0 } : { x: 0, y: -c };
+  const F2: Point2D = isXAxis ? { x: c, y: 0 } : { x: 0, y: c };
+  const A1: Point2D = isXAxis ? { x: -safeA, y: 0 } : { x: 0, y: -safeA };
+  const A2: Point2D = isXAxis ? { x: safeA, y: 0 } : { x: 0, y: safeA };
+  const B1: Point2D = isXAxis ? { x: 0, y: -safeB } : { x: -safeB, y: 0 };
+  const B2: Point2D = isXAxis ? { x: 0, y: safeB } : { x: safeB, y: 0 };
 
-  // 3. 准线方程 x = +/- a^2 / c
+  // 3. 准线坐标 x = +/- a^2/c 或 y = +/- a^2/c
   const dirX = (safeA * safeA) / c;
   const directrices = { leftX: -dirX, rightX: dirX };
 
-  // 4. 通径：过焦点 F2 垂直于 x 轴的弦长 L = 2 b^2 / a
+  // 4. 通径：过焦点 F2 垂直于主轴的弦长 L = 2 b^2 / a
   const lrLength = (2 * safeB * safeB) / safeA;
   const latusRectum = {
     length: lrLength,
     points: {
-      top: { x: c, y: lrLength / 2 },
-      bottom: { x: c, y: -lrLength / 2 },
+      top: isXAxis ? { x: c, y: lrLength / 2 } : { x: lrLength / 2, y: c },
+      bottom: isXAxis ? { x: c, y: -lrLength / 2 } : { x: -lrLength / 2, y: c },
     },
   };
 
-  // 5. 渐近线 (仅双曲线)
+  // 5. 渐近线 (仅双曲线：焦点在 x 轴时斜率为 b/a；焦点在 y 轴时斜率为 a/b)
   let asymptotes;
   if (conicType === "hyperbola") {
-    const slope = safeB / safeA;
+    const slope = isXAxis ? safeB / safeA : safeA / safeB;
     asymptotes = {
       slope,
       angleRad: Math.atan(slope) * 2,
@@ -134,16 +140,27 @@ export function calculateConicProperties(
   let py: number;
 
   if (conicType === "ellipse") {
-    px = safeA * Math.cos(t);
-    py = safeB * Math.sin(t);
+    if (isXAxis) {
+      px = safeA * Math.cos(t);
+      py = safeB * Math.sin(t);
+    } else {
+      px = safeB * Math.cos(t);
+      py = safeA * Math.sin(t);
+    }
   } else {
-    // 双曲线右支参数方程 x = a sec(t), y = b tan(t)，限制 t ∈ (-HYPERBOLA_T_SAFE_MAX, +HYPERBOLA_T_SAFE_MAX) 避免溢出
+    // 双曲线左右/上下双支参数方程，限制 t ∈ (-HYPERBOLA_T_SAFE_MAX, +HYPERBOLA_T_SAFE_MAX) 避免溢出
     const safeT = Math.max(
       -HYPERBOLA_T_SAFE_MAX,
       Math.min(HYPERBOLA_T_SAFE_MAX, t),
     );
-    px = safeA / Math.cos(safeT);
-    py = safeB * Math.tan(safeT);
+    const branchSign = branch === "left" ? -1 : 1;
+    if (isXAxis) {
+      px = branchSign * (safeA / Math.cos(safeT));
+      py = safeB * Math.tan(safeT);
+    } else {
+      px = safeB * Math.tan(safeT);
+      py = branchSign * (safeA / Math.cos(safeT));
+    }
   }
 
   const pointP: Point2D = { x: px, y: py };
@@ -160,7 +177,7 @@ export function calculateConicProperties(
   const angleRad = Math.acos(cosTheta);
   const angleDeg = (angleRad * 180) / Math.PI;
 
-  const areaGeom = c * Math.abs(py);
+  const areaGeom = c * Math.abs(isXAxis ? py : px);
 
   const halfTheta = angleRad / 2;
   const tanHalf = Math.tan(halfTheta);
@@ -189,13 +206,14 @@ export function calculateConicProperties(
 
   const inradius = areaGeom / (perimeter / 2 || 1);
 
-  // 底边切点坐标 (落在 x 轴上)
-  // 对椭圆：底边切点横坐标与内心横坐标相同，均为 x_T = x_I = e * x_P
-  const tangentBaseX = conicType === "ellipse" ? e * px : incenter.x;
-  const tangentBase: Point2D = { x: tangentBaseX, y: 0 };
+  // 底边切点坐标 (落在焦点主轴上：x 轴为 (x_I, 0)，y 轴为 (0, y_I))
+  const tangentBase: Point2D = isXAxis
+    ? { x: conicType === "ellipse" ? e * px : incenter.x, y: 0 }
+    : { x: 0, y: conicType === "ellipse" ? e * py : incenter.y };
 
   return {
     conicType,
+    focusAxis,
     a: safeA,
     b: safeB,
     c,

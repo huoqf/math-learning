@@ -22,6 +22,8 @@ import {
   ellipseBMaxOnCanvas,
   hyperbolaTMaxOnCanvas,
   type ConicType,
+  type HyperbolaBranch,
+  type FocusAxis,
 } from "./math/conicProperties";
 
 export function ConicPropertiesAnimation() {
@@ -30,8 +32,11 @@ export function ConicPropertiesAnimation() {
     "basicProperties" | "eccentricity" | "focusTriangle"
   >("basicProperties");
 
-  // 2. 曲线类型
+  // 2. 曲线类型与焦点轴向
   const [conicType, setConicType] = useState<ConicType>("ellipse");
+  const [focusAxis, setFocusAxis] = useState<FocusAxis>("x");
+  const [hyperbolaBranch, setHyperbolaBranch] =
+    useState<HyperbolaBranch>("right");
 
   // 3. 典型预设
   const [presetKey, setPresetKey] = useState<string>("free");
@@ -64,8 +69,14 @@ export function ConicPropertiesAnimation() {
   // 6.2 双曲线动点 t 的**可达上界**：既保证 P 不飞出画布，又保证滑块量程与画面同源。
   //     统一由 math 层 hyperbolaTMaxOnCanvas 给出（滑块量程 / 曲线绘制 / 拖拽钳制共用同一规则）。
   const hyperbolaTMax = useMemo(
-    () => hyperbolaTMaxOnCanvas(params.a, params.b, visibleHalfX, visibleHalfY),
-    [params.a, params.b, visibleHalfX, visibleHalfY],
+    () =>
+      hyperbolaTMaxOnCanvas(
+        params.a,
+        params.b,
+        focusAxis === "x" ? visibleHalfX : visibleHalfY,
+        focusAxis === "x" ? visibleHalfY : visibleHalfX,
+      ),
+    [params.a, params.b, visibleHalfX, visibleHalfY, focusAxis],
   );
 
   // 6.3 不变量回收：参数 a/b、曲线类型或容器尺寸变化都可能让当前 t 越出可达域，
@@ -84,8 +95,10 @@ export function ConicPropertiesAnimation() {
     return buildMathQuantities("anim-conic-properties", params, {
       studyMode,
       conicType,
+      focusAxis,
+      branch: hyperbolaBranch,
     });
-  }, [params, studyMode, conicType]);
+  }, [params, studyMode, conicType, focusAxis, hyperbolaBranch]);
 
   // 8. 参数回调处理
   const handleParamChange = (key: string, value: number) => {
@@ -506,6 +519,7 @@ export function ConicPropertiesAnimation() {
               ? ellipseMarks
               : hyperbolaMarks
             : meta.marks,
+          group: meta.group,
         };
       });
   }, [params, studyMode, conicType, hyperbolaTMax, visibleHalfY]);
@@ -606,15 +620,22 @@ export function ConicPropertiesAnimation() {
     }
 
     if (studyMode === "basicProperties") {
+      const stdEq = isEllipse
+        ? focusAxis === "x"
+          ? `\\frac{x^2}{${a2}} + \\frac{y^2}{${b2}} = 1`
+          : `\\frac{y^2}{${a2}} + \\frac{x^2}{${b2}} = 1`
+        : focusAxis === "x"
+          ? `\\frac{x^2}{${a2}} - \\frac{y^2}{${b2}} = 1`
+          : `\\frac{y^2}{${a2}} - \\frac{x^2}{${b2}} = 1`;
       return {
         variant: "info" as const,
         badge: `${isEllipse ? "椭圆" : "双曲线"}标准方程与基本性质`,
-        condition: isEllipse
-          ? `当前椭圆标准方程为 $\\frac{x^2}{${a2}} + \\frac{y^2}{${b2}} = 1$ ($a=${aVal}, b=${bVal}$)。`
-          : `当前双曲线标准方程为 $\\frac{x^2}{${a2}} - \\frac{y^2}{${b2}} = 1$ ($a=${aVal}, b=${bVal}$)。`,
+        condition: `当前${isEllipse ? "椭圆" : "双曲线"}标准方程为 $${stdEq}$ ($a=${aVal}, b=${bVal}$，焦点在 $${focusAxis}$ 轴)。`,
         question: isEllipse
           ? `如何由半轴参数确定焦点坐标、准线方程、顶点坐标与通径长？`
-          : `如何由特征矩形确定渐近线方程 $y = \\pm \\frac{b}{a}x$、焦点与通径长？`,
+          : focusAxis === "x"
+            ? `如何由特征矩形确定渐近线方程 $y = \\pm \\frac{b}{a}x$、焦点与通径长？`
+            : `如何区分焦点在 $y$ 轴时的渐近线方程 $y = \\pm \\frac{a}{b}x$ 与焦点坐标？`,
       };
     }
     if (studyMode === "eccentricity") {
@@ -637,18 +658,23 @@ export function ConicPropertiesAnimation() {
         ? `如何结合第一定义与余弦定理，求解焦点三角形面积 $S = b^2\\tan\\frac{\\theta}{2}$ 与最大顶角？`
         : `如何结合第一定义与余弦定理，推导双曲线焦点三角形面积公式 $S = \\frac{b^2}{\\tan(\\theta/2)}$？`,
     };
-  }, [studyMode, conicType, presetKey, params]);
+  }, [studyMode, conicType, presetKey, params, focusAxis]);
 
   // 14. 中屏几何图例配置 (SceneLegend)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
     const isEllipse = conicType === "ellipse";
+    const isX = focusAxis === "x";
     const legendList: SceneLegendItem[] = [
       {
         colorKey: "primary",
         label: isEllipse ? "椭圆曲线" : "双曲线",
         formula: isEllipse
-          ? "\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1"
-          : "\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1",
+          ? isX
+            ? "\\frac{x^2}{a^2} + \\frac{y^2}{b^2} = 1"
+            : "\\frac{y^2}{a^2} + \\frac{x^2}{b^2} = 1"
+          : isX
+            ? "\\frac{x^2}{a^2} - \\frac{y^2}{b^2} = 1"
+            : "\\frac{y^2}{a^2} - \\frac{x^2}{b^2} = 1",
         style: "solid",
       },
     ];
@@ -657,7 +683,7 @@ export function ConicPropertiesAnimation() {
       legendList.push({
         colorKey: "paramSecondary",
         label: "渐近线",
-        formula: "y = \\pm \\frac{b}{a}x",
+        formula: isX ? "y = \\pm \\frac{b}{a}x" : "y = \\pm \\frac{a}{b}x",
         style: "dash",
       });
     }
@@ -688,7 +714,7 @@ export function ConicPropertiesAnimation() {
       legendList.push({
         colorKey: "primary",
         label: "准线",
-        formula: "x = \\pm \\frac{a^2}{c}",
+        formula: isX ? "x = \\pm \\frac{a^2}{c}" : "y = \\pm \\frac{a^2}{c}",
         style: "dash",
       });
       legendList.push({
@@ -720,7 +746,7 @@ export function ConicPropertiesAnimation() {
     }
 
     return legendList;
-  }, [conicType, studyMode]);
+  }, [conicType, studyMode, focusAxis]);
 
   return (
     <ThreePanel
@@ -740,18 +766,18 @@ export function ConicPropertiesAnimation() {
               }}
             />
 
-            <div className="mt-3">
+            <div className="mt-3 space-y-2">
               <SelectGrid
                 items={[
                   {
                     key: "ellipse",
                     label: "椭圆",
-                    description: "焦点在 x 轴",
+                    description: `焦点在 ${focusAxis} 轴`,
                   },
                   {
                     key: "hyperbola",
                     label: "双曲线",
-                    description: "焦点在 x 轴",
+                    description: `焦点在 ${focusAxis} 轴`,
                   },
                 ]}
                 value={conicType}
@@ -759,6 +785,16 @@ export function ConicPropertiesAnimation() {
                   handleConicTypeChange(key as typeof conicType)
                 }
                 columns={2}
+              />
+              <TabSwitcher
+                layout="horizontal"
+                size="compact"
+                tabs={[
+                  { key: "x", label: "焦点在 x 轴" },
+                  { key: "y", label: "焦点在 y 轴" },
+                ]}
+                value={focusAxis}
+                onChange={(key) => setFocusAxis(key as FocusAxis)}
               />
             </div>
           </LeftPanelSection>
@@ -802,6 +838,9 @@ export function ConicPropertiesAnimation() {
               fontScale={canvasSize.font}
               studyMode={studyMode}
               conicType={conicType}
+              focusAxis={focusAxis}
+              branch={hyperbolaBranch}
+              onBranchChange={setHyperbolaBranch}
               onParamChange={handleParamChange}
             />
           </AnimationSvgCanvas>

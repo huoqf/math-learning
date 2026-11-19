@@ -118,6 +118,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "焦点到准线的距离 (p > 0)，决定抛物线的张口大小",
     descriptionFormula: `焦点到准线的距离 $\\color{${MATH_COLORS.paramPrimary}}{p} > 0$，决定抛物线张口`,
+    group: "曲线特征尺寸",
     marks: [
       {
         value: 0.5,
@@ -144,6 +145,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "控制抛物线上动点 P 的坐标位置",
     descriptionFormula: `抛物线上动点 $P$ 沿曲线滑动的自由参数`,
+    group: "动点控制",
   },
   thetaDeg: {
     key: "thetaDeg",
@@ -156,6 +158,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "过焦点 F 的焦点弦与对称轴的正向夹角",
     descriptionFormula: `焦点弦 $AB$ 绕焦点 $F$ 旋转的倾斜角 $\\theta$`,
+    group: "焦点弦控制",
     marks: [
       {
         value: 90.0,
@@ -176,5 +179,6 @@ export const paramMeta: Record<string, ParamMeta> = {
     importance: "core",
     description: "准线上动点 Q 的垂直坐标，引两条互相垂直的切线",
     descriptionFormula: `准线上点 $Q$ 的位置，引抛物线垂直切线对`,
+    group: "准线切点控制",
   },
 };

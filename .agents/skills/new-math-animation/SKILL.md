@@ -23,6 +23,7 @@ description: >
 | [examples/Template2DAnimation.tsx](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/examples/Template2DAnimation.tsx) | **2D 页面标准完整编排模板**（三屏组装/题设三要素TipCard/智能避让图例） | **新建 2D 页面时直接参考复制** |
 | [examples/Template2DScene.tsx](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/examples/Template2DScene.tsx) | **2D 中屏 SVG 标准场景模板**（坐标网格/函数曲线/动切线/智能点标） | 编写中屏 SVG 场景时参考 |
 | [references/2d-components-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/2d-components-guide.md) | **2D 核心数学组件速查手册**（Props表、避雷规范、三位一体色系映射） | 组装图形图元时查阅 |
+| [references/left-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/left-panel-spec.md) | **左屏面板五级动线与 `StepNavigator` 规范**（SelectGrid容量法则/ParamControl紧凑态/TipCard三要素/分步作答三处联动） | **编排左屏控件或接入分步作答时必读** |
 | [resources/gaokao_function_models.json](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/resources/gaokao_function_models.json) | **高考高频函数模型字典**（定义域保护、解析解、增减区间参数） | 配置预设模型数据时快速查表 |
 | [references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md) | **右屏看板 MathPanel 完整 Props 规范**（MathQuantity/Theorem/GaokaoPoint 等所有字段类型+课型分层表+Builder 标准结构） | **编写或审查右屏 builder 时必读** |
 | [references/registration-guide.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/registration-guide.md) | **新页面注册四步闭环指南**（KnowledgeNode 必填字段、animId 对应联动、代码片段模板、自检清单） | **新建页面时必读，保证知识树与右屏正确注册** |
@@ -60,10 +61,11 @@ src/data/
   - ❌ 禁止手写 `<button>` 按钮组，必须用 `TabSwitcher` / `SelectGrid`；
   - ❌ 禁止手写散乱 `<text>` 渲染点标/图例，必须用 `SceneLabelGroup`（8 向避让）与 `SceneLegend`（毛玻璃图例）；
   - ❌ 禁止手写右屏卡片，必须由 `MathPanel` + `src/data/builders/<topic>.ts` 驱动。
-- **左屏控制台**：严格遵循 `TabSwitcher → SelectGrid(双列) → ParamControl → TipCard(题设三要素)` 动线。
+- **左屏控制台**：严格遵循 `TabSwitcher → SelectGrid(双列) → (StepNavigator 选配) → ParamControl → TipCard(题设三要素)` 动线。
   - 课标参数合规性：100% 对应高中课标标准题设（严禁计算机/工程化自造参数）；
-  - 步骤自适应：若包含作图或推演步数控制器，必须按数学构型动态自适应（严禁教条化一刀切固定步数）。
+  - 步骤自适应与三处同源：若包含作图或推演步数控制器，必须按数学构型动态自适应（严禁教条化一刀切固定步数）；B 类大题建议接入 `StepNavigator`，`AnswerStepItem[]` 仅在注册表声明一份，并同步驱动右屏 `focusStep`/`focusTarget="reasoning"` 与中屏 `activeStep`/`regionOpacity`/`MATH_COLORS.answerStepFrame` 围栏（详见 `left-panel-spec.md` 第七节）。
 - **右屏看板**：所有内容由 `src/data/builders/<topic>.ts` 导出 `MathPanelData`，查阅 [references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md)。
+  - 拓展条目结构化声明：凡超出 2019 人教A版新课标正文的定理，一律通过 `Theorem.isExtension: true` 与 `extensionBadge` 声明，**严禁**把「（拓展 · 超出课标）」写进定理 `name`；
   - 推导链防断层铁律：遵循“已知条件/设元 $\to$ 核心方程/定理 $\to$ 数值求解代入”三要素闭环，严禁空降浮点数或跳步给答案。
 - **坐标转换**：拖拽使用 `InteractivePoint`（内部已逆解算，**严禁二次调用 `designToMath`**）。
 

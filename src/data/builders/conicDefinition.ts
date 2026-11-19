@@ -94,7 +94,7 @@ export function buildConicDefinitionPanel(
         level: "core",
       });
 
-      if (a === c) {
+      if (Math.abs(a - c) < 1e-6) {
         warnings.push({
           text: "退化警示 ($2a = 2c$)：动点 $P$ 到两焦点距离之和等于焦距，轨迹退化为线段 $F_1F_2$。",
           level: "danger",
@@ -208,7 +208,7 @@ export function buildConicDefinitionPanel(
         level: "core",
       });
 
-      if (a === c) {
+      if (Math.abs(a - c) < 1e-6) {
         warnings.push({
           text: "退化警示 ($2a = 2c$)：轨迹退化为以 $F_1, F_2$ 为端点且向外延伸的两条反向射线。",
           level: "danger",
@@ -458,7 +458,7 @@ export function buildConicDefinitionPanel(
         importance: "gaokao",
       },
       {
-        text: "拓展 · 超出课标：椭圆/双曲线的准线方程为 $x = \\pm \\frac{a^2}{c}$，焦准距 $p = \\frac{b^2}{c}$，满足焦准比 $e = \\frac{c}{a}$ 且 $e\\cdot p = \\frac{b^2}{a}$（半通径）。",
+        text: "椭圆/双曲线的准线方程为 $x = \\pm \\frac{a^2}{c}$，焦准距 $p = \\frac{b^2}{c}$，满足焦准比 $e = \\frac{c}{a}$ 且 $e\\cdot p = \\frac{b^2}{a}$（半通径）。",
         importance: "extend",
       },
     );

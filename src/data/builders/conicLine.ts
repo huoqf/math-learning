@@ -8,6 +8,7 @@ import type {
 import { solveConicLineIntersection } from "@/math/conicLine";
 import type { ConicType, StudyMode } from "@/math/conicLine";
 import { formatMathNumber, formatSignedTerm } from "@/utils/mathFormat";
+import { getConicLineAnswerSteps } from "@/data/registries/conicLine";
 
 export function buildConicLineMathQuantities(
   params: Record<string, number>,
@@ -58,20 +59,27 @@ export function buildConicLineMathQuantities(
   const mVal = formatMathNumber(m);
   const deltaVal = formatMathNumber(result.delta);
   const quadAVal = formatMathNumber(result.quadCoeff);
+  const isParabolaHorizontal =
+    conicType === "parabola" && !result.isVertical && Math.abs(k) < 1e-6;
   const quadB =
     conicType === "ellipse"
       ? 2 * a * a * k * m
       : conicType === "hyperbola"
         ? -2 * a * a * k * m
-        : -(2 * p) / (k || 1);
+        : isParabolaHorizontal
+          ? 0
+          : -(2 * p) / k;
   const quadC =
     conicType === "ellipse"
       ? a * a * (m * m - b * b)
       : conicType === "hyperbola"
         ? -a * a * (m * m + b * b)
-        : (2 * p * m) / (k || 1);
+        : isParabolaHorizontal
+          ? m * m
+          : (2 * p * m) / k;
   const quadBVal = formatMathNumber(quadB);
   const quadCVal = formatMathNumber(quadC);
+  const thetaDeg = Math.round((theta * 180) / Math.PI);
 
   // ─────────────────────────────────────────────────────────────
   // 1. 数值量看板数据（模式纯净过滤，剔除非当前模式的无关指标）
@@ -122,7 +130,6 @@ export function buildConicLineMathQuantities(
       });
     }
   } else if (studyMode === "focus") {
-    const thetaDeg = Math.round((theta * 180) / Math.PI);
     quantities.push({
       label: "焦点弦倾斜角",
       symbol: "\\theta",
@@ -201,73 +208,104 @@ export function buildConicLineMathQuantities(
   // 2. 高考三步推演链（严格遵循高中答题三部曲：符号通式 -> 代入解析式 -> 化简结果）
   // ─────────────────────────────────────────────────────────────
   const reasoningSteps: ReasoningStep[] = [];
+  const answerSteps = getConicLineAnswerSteps(
+    studyMode,
+    conicType,
+    result.status === "degenerated_parallel",
+  );
+  const stepTitle = (stepNum: number, fallback: string) =>
+    answerSteps.find((s) => s.step === stepNum)?.title ?? fallback;
   let examAnchor = "高考解析几何核心通法 · 直线与圆锥曲线联立体系";
 
   if (studyMode === "general") {
     examAnchor = "高考大题第(2)问标杆 · 联立方程、判别式与韦达弦长三步走";
 
+    const isDegeneratedParallel = result.status === "degenerated_parallel";
     const step1Symbol =
       conicType === "ellipse"
         ? "(b^2 + a^2 k^2)x^2 + 2a^2 km x + a^2(m^2 - b^2) = 0"
         : conicType === "hyperbola"
           ? "(b^2 - a^2 k^2)x^2 - 2a^2 km x - a^2(m^2 + b^2) = 0"
-          : "y^2 - \\frac{2p}{k}y + \\frac{2pm}{k} = 0";
+          : isParabolaHorizontal
+            ? "m^2 = 2px \\implies x = \\frac{m^2}{2p}"
+            : "y^2 - \\frac{2p}{k}y + \\frac{2pm}{k} = 0";
 
     const step1Result =
       conicType === "parabola"
-        ? `y^2 ${formatSignedTerm(quadB, "y")} ${formatSignedTerm(quadC, "")} = 0`
-        : `${quadAVal}x^2 ${formatSignedTerm(quadB, "x")} ${formatSignedTerm(quadC, "")} = 0`;
+        ? isParabolaHorizontal
+          ? `${formatMathNumber(m * m)} - ${formatMathNumber(2 * p)}x = 0`
+          : `y^2 ${formatSignedTerm(quadB, "y")} ${formatSignedTerm(quadC, "")} = 0`
+        : isDegeneratedParallel
+          ? `${formatSignedTerm(quadB, "x")} ${formatSignedTerm(quadC, "")} = 0`
+          : `${quadAVal}x^2 ${formatSignedTerm(quadB, "x")} ${formatSignedTerm(quadC, "")} = 0`;
 
     let step1Detail = "";
     if (conicType === "ellipse") {
       step1Detail = `将直线方程 $y = ${kVal}x ${m >= 0 ? "+ " + formatMathNumber(m) : "- " + formatMathNumber(-m)}$ 代入椭圆方程 $\\frac{x^2}{${aVal}^2} + \\frac{y^2}{${bVal}^2} = 1$，展开消元得二次方程通式 $(b^2 + a^2 k^2)x^2 + 2a^2 km x + a^2(m^2 - b^2) = 0$。代入参数计算各项系数：$A = ${bVal}^2 + ${aVal}^2 \\cdot (${kVal})^2 = ${quadAVal}$，$B = 2(${aVal}^2)(${kVal})(${mVal}) = ${quadBVal}$，$C = ${aVal}^2((${mVal})^2 - ${bVal}^2) = ${quadCVal}$，整理得标准一元二次方程：`;
     } else if (conicType === "hyperbola") {
-      step1Detail = `将直线方程 $y = ${kVal}x ${m >= 0 ? "+ " + formatMathNumber(m) : "- " + formatMathNumber(-m)}$ 代入双曲线方程 $\\frac{x^2}{${aVal}^2} - \\frac{y^2}{${bVal}^2} = 1$，展开消元得二次方程通式 $(b^2 - a^2 k^2)x^2 - 2a^2 km x - a^2(m^2 + b^2) = 0$。代入参数计算各项系数：$A = ${bVal}^2 - ${aVal}^2 \\cdot (${kVal})^2 = ${quadAVal}$，$B = -2(${aVal}^2)(${kVal})(${mVal}) = ${quadBVal}$，$C = -${aVal}^2((${mVal})^2 + ${bVal}^2) = ${quadCVal}$，整理得标准一元二次方程：`;
+      step1Detail = isDegeneratedParallel
+        ? `直线斜率满足 $k = \\pm\\frac{b}{a} = ${kVal}$，与双曲线渐近线平行。二次项系数 $A = b^2 - a^2 k^2 = 0$，联立方程退化为一元一次方程：`
+        : `将直线方程 $y = ${kVal}x ${m >= 0 ? "+ " + formatMathNumber(m) : "- " + formatMathNumber(-m)}$ 代入双曲线方程 $\\frac{x^2}{${aVal}^2} - \\frac{y^2}{${bVal}^2} = 1$，展开消元得二次方程通式 $(b^2 - a^2 k^2)x^2 - 2a^2 km x - a^2(m^2 + b^2) = 0$。代入参数计算各项系数：$A = ${bVal}^2 - ${aVal}^2 \\cdot (${kVal})^2 = ${quadAVal}$，$B = -2(${aVal}^2)(${kVal})(${mVal}) = ${quadBVal}$，$C = -${aVal}^2((${mVal})^2 + ${bVal}^2) = ${quadCVal}$，整理得标准一元二次方程：`;
     } else {
-      step1Detail = `将直线方程 $x = \\frac{1}{${kVal}}y - \\frac{${mVal}}{${kVal}}$ 代入抛物线方程 $y^2 = 2px = 2(${pVal})x$，消去 $x$ 整理得一元二次方程标准形式：`;
+      step1Detail = isParabolaHorizontal
+        ? `当直线斜率 $k = 0$（即平行于抛物线对称轴 $x$ 轴）时，将水平线 $y = ${mVal}$ 直接代入 $y^2 = 2(${pVal})x$，二次项消去并退化为一元一次方程：`
+        : `将直线方程 $x = \\frac{1}{${kVal}}y - \\frac{${mVal}}{${kVal}}$ 代入抛物线方程 $y^2 = 2px = 2(${pVal})x$，消去 $x$ 整理得一元二次方程标准形式：`;
     }
 
     reasoningSteps.push(
       {
         step: 1,
-        title: "审题建模 · 联立消元建立二次方程",
+        title: stepTitle(1, "审题建模 · 联立消元建立方程"),
         detail: step1Detail,
         latex: `${step1Symbol} \\\\ \\implies ${step1Result}`,
-        rubric:
-          "【高考采分点】联立方程消元并代入参数整理得标准一元二次方程（3分）",
+        rubric: "【高考采分点】联立方程消元并分类讨论二次项系数是否为零（3分）",
       },
       {
         step: 2,
-        title: "建模展开 · 判别式检验与韦达代换",
-        detail:
-          result.delta > 1e-5
+        title: stepTitle(
+          2,
+          isDegeneratedParallel
+            ? "建模展开 · 一次方程直接求唯一交点"
+            : "建模展开 · 判别式检验与韦达代换",
+        ),
+        detail: isDegeneratedParallel
+          ? result.intersections.length > 0
+            ? `由于二次项系数 $A = 0$，不能套用判别式 $\\Delta$，直接解一元一次方程得唯一交点 $(${formatMathNumber(result.intersections[0].x)}, ${formatMathNumber(result.intersections[0].y)})$：`
+            : `由于二次项系数 $A = 0$ 且一次项也消去，直线与渐近线重合或无交点：`
+          : result.delta > 1e-5
             ? conicType === "parabola"
               ? `代入系数计算关于 $y$ 的二次方程判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal} > 0$。割线与抛物线交于两点。由韦达定理得以 $y$ 为主元的两根之和 $y_1 + y_2 = -\\frac{B}{A} = ${formatMathNumber(result.ySum ?? 0)}$，两根之积 $y_1 y_2 = \\frac{C}{A} = ${formatMathNumber(result.yProd ?? 0)}$。`
               : `代入系数计算根的判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal} > 0$。割线与曲线交于两点。由韦达定理得两根之和 $x_1 + x_2 = -\\frac{B}{A} = ${formatMathNumber(result.xSum ?? 0)}$，两根之积 $x_1 x_2 = \\frac{C}{A} = ${formatMathNumber(result.xProd ?? 0)}$。`
             : Math.abs(result.delta) <= 1e-5
               ? `代入系数计算判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = 0$。方程有唯一实数重根，直线与曲线相切。`
               : `代入系数计算判别式：$\\Delta = B^2 - 4AC = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal} < 0$。方程无实数根，直线与曲线相离。`,
-        latex:
-          conicType === "parabola"
+        latex: isDegeneratedParallel
+          ? result.intersections.length > 0
+            ? `A = 0 \\implies (x_0, y_0) = (${formatMathNumber(result.intersections[0].x)}, ${formatMathNumber(result.intersections[0].y)})`
+            : `A = 0 \\implies \\text{无交点（与渐近线重合）}`
+          : conicType === "parabola"
             ? result.ySum !== null && result.yProd !== null
               ? `\\Delta = ${deltaVal} > 0 \\\\ y_1 + y_2 = -\\frac{${quadBVal}}{${quadAVal}} = ${formatMathNumber(result.ySum)}`
               : `\\Delta = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal}`
             : result.xSum !== null && result.xProd !== null
               ? `\\Delta = ${deltaVal} > 0 \\\\ x_1 + x_2 = -\\frac{${quadBVal}}{${quadAVal}} = ${formatMathNumber(result.xSum)}`
               : `\\Delta = (${quadBVal})^2 - 4(${quadAVal})(${quadCVal}) = ${deltaVal}`,
-        rubric: "【高考采分点】准确计算判别式并写出韦达定理代换式（3分）",
+        rubric: isDegeneratedParallel
+          ? "【高考采分点】精准识别二次项系数为零的退化单交点情形（3分）"
+          : "【高考采分点】准确计算判别式并写出韦达定理代换式（3分）",
       },
       {
         step: 3,
-        title: "求解反思 · 割线弦长公式代入求解",
-        detail:
-          result.status === "secant" && result.chordLength !== null
+        title: stepTitle(3, "求解反思 · 割线弦长公式代入求解"),
+        detail: isDegeneratedParallel
+          ? "直线与曲线仅存在唯一交点（平行于渐近线/对称轴），不存在两异交点组成的相交弦。"
+          : result.status === "secant" && result.chordLength !== null
             ? conicType === "parabola"
               ? `代入以 $y$ 为主元的抛物线弦长公式 $|AB| = \\sqrt{1 + \\frac{1}{k^2}} \\cdot \\frac{\\sqrt{\\Delta}}{|A|} = \\sqrt{1 + \\frac{1}{(${kVal})^2}} \\cdot \\frac{\\sqrt{${deltaVal}}}{|${quadAVal}|}$，求解得割线长：`
               : `代入解析几何标准弦长公式 $|AB| = \\sqrt{1+k^2} \\cdot \\frac{\\sqrt{\\Delta}}{|A|} = \\sqrt{1 + (${kVal})^2} \\cdot \\frac{\\sqrt{${deltaVal}}}{|${quadAVal}|}$，求解得割线长：`
             : "判别式 $\\Delta \\le 0$，直线与曲线无两相异公共交点，割线弦长不存在。",
         latex:
-          result.chordLength !== null
+          !isDegeneratedParallel && result.chordLength !== null
             ? conicType === "parabola"
               ? `|AB| = \\sqrt{1 + \\frac{1}{k^2}}\\frac{\\sqrt{\\Delta}}{|A|} = ${formatMathNumber(result.chordLength)}`
               : `|AB| = \\sqrt{1 + k^2}\\frac{\\sqrt{\\Delta}}{|A|} = ${formatMathNumber(result.chordLength)}`
@@ -282,7 +320,7 @@ export function buildConicLineMathQuantities(
       reasoningSteps.push(
         {
           step: 1,
-          title: "审题定法 · 确定焦点坐标与割线方程",
+          title: stepTitle(1, "审题定法 · 确定焦点坐标与割线方程"),
           detail: `抛物线 $y^2 = 2px$ 焦点为 $F(\\frac{p}{2}, 0) = (${formatMathNumber(p / 2)}, 0)$，准线为 $x = -\\frac{p}{2}$：`,
           latex: result.isVertical
             ? `x = \\frac{p}{2} = ${formatMathNumber(p / 2)}`
@@ -291,14 +329,14 @@ export function buildConicLineMathQuantities(
         },
         {
           step: 2,
-          title: "建模展开 · 焦半径定义与弦长公式推导",
-          detail: `由抛物线定义，端点到焦点距离等于到准线距离，$|AB| = x_1 + x_2 + p$。代入倾斜角 $\\theta = ${formatMathNumber(theta)}^\\circ$：`,
+          title: stepTitle(2, "建模展开 · 焦半径定义与弦长公式推导"),
+          detail: `由抛物线定义，端点到焦点距离等于到准线距离，$|AB| = x_1 + x_2 + p$。代入倾斜角 $\\theta = ${thetaDeg}^\\circ$：`,
           latex: `|AB| = \\frac{2p}{\\sin^2\\theta} = ${formatMathNumber(result.chordLength ?? 2 * p)}`,
           rubric: "【高考采分点】利用定义转化焦半径并求解弦长（3分）",
         },
         {
           step: 3,
-          title: "求解反思 · 焦半径倒数和恒等定值",
+          title: stepTitle(3, "求解反思 · 焦半径倒数和恒等定值"),
           detail: `两端点焦半径倒数和与直线的倾斜角 $\\theta$ 无关，恒为定值 $\\frac{2}{p}$：`,
           latex: `\\frac{1}{|FA|} + \\frac{1}{|FB|} = \\frac{2}{p} = ${formatMathNumber(2 / p)}`,
           rubric: "【高考采分点】得出焦半径倒数和恒等式（3分）",
@@ -308,7 +346,7 @@ export function buildConicLineMathQuantities(
       reasoningSteps.push(
         {
           step: 1,
-          title: "审题定法 · 确定焦点坐标与割线方程",
+          title: stepTitle(1, "审题定法 · 确定焦点坐标与割线方程"),
           detail: `圆锥曲线右焦点为 $F_1(c, 0) = (${formatMathNumber(result.focusF1.x)}, 0)$：`,
           latex: result.isVertical
             ? `x = c = ${formatMathNumber(result.focusF1.x)}`
@@ -317,14 +355,14 @@ export function buildConicLineMathQuantities(
         },
         {
           step: 2,
-          title: "建模展开 · 通径极小值公式推导",
+          title: stepTitle(2, "建模展开 · 通径极小值公式推导"),
           detail: `垂直于对称轴的长割线为通径，对应焦点弦长的极小值。代入参数 $a = ${aVal}, b = ${bVal}$：`,
           latex: `L_{\\text{通径}} = \\frac{2b^2}{a} = ${formatMathNumber((2 * b * b) / a)}`,
           rubric: "【高考采分点】推导通径公式并计算极小值（3分）",
         },
         {
           step: 3,
-          title: "求解反思 · 焦半径倒数定值性质",
+          title: stepTitle(3, "求解反思 · 焦半径倒数定值性质"),
           detail:
             conicType === "hyperbola"
               ? result.focalRadiusRelationKind === "difference"
@@ -352,21 +390,21 @@ export function buildConicLineMathQuantities(
       reasoningSteps.push(
         {
           step: 1,
-          title: "审题定法 · 设端点坐标并代入椭圆方程",
+          title: stepTitle(1, "审题定法 · 设端点坐标并代入椭圆方程"),
           detail: `设弦端点为 $A(x_1, y_1), B(x_2, y_2)$，中点 $M(x_0, y_0) = (${x0Val}, ${y0Val})$，代入椭圆方程：`,
           latex: `\\frac{x_1^2}{${aVal}^2} + \\frac{y_1^2}{${bVal}^2} = 1 \\\\ \\frac{x_2^2}{${aVal}^2} + \\frac{y_2^2}{${bVal}^2} = 1`,
           rubric: "【高考采分点】设点代入建立两端点方程（2分）",
         },
         {
           step: 2,
-          title: "建模展开 · 点差法两式作差求动弦斜率",
+          title: stepTitle(2, "建模展开 · 点差法两式作差求动弦斜率"),
           detail: `两式相减并因式分解，由斜率定义 $k_{AB} = \\frac{y_1-y_2}{x_1-x_2}$ 及中点坐标关系，代入 $M(${x0Val}, ${y0Val})$ 与参数：`,
           latex: `k_{AB} = -\\frac{b^2 x_0}{a^2 y_0} = ${kVal}`,
           rubric: "【高考采分点】作差因式分解导出斜率与中点坐标关系（3分）",
         },
         {
           step: 3,
-          title: "求解反思 · 存在性检验（防越界伪根）",
+          title: stepTitle(3, "求解反思 · 存在性检验（防越界伪根）"),
           detail: result.isMidpointValid
             ? `中点位于椭圆内部（$\\frac{x_0^2}{a^2}+\\frac{y_0^2}{b^2} < 1$），判别式 $\\Delta > 0$，实中点弦真实存在：`
             : `【高考防坑警示】中点位于椭圆外部，点差法所求直线与椭圆相离（$\\Delta < 0$），无实数中点弦！`,
@@ -378,21 +416,21 @@ export function buildConicLineMathQuantities(
       reasoningSteps.push(
         {
           step: 1,
-          title: "审题定法 · 设端点坐标并代入双曲线方程",
+          title: stepTitle(1, "审题定法 · 设端点坐标并代入双曲线方程"),
           detail: `设弦端点为 $A(x_1, y_1), B(x_2, y_2)$，中点 $M(x_0, y_0) = (${x0Val}, ${y0Val})$，代入双曲线方程：`,
           latex: `\\frac{x_1^2}{${aVal}^2} - \\frac{y_1^2}{${bVal}^2} = 1 \\\\ \\frac{x_2^2}{${aVal}^2} - \\frac{y_2^2}{${bVal}^2} = 1`,
           rubric: "【高考采分点】设点代入建立方程（2分）",
         },
         {
           step: 2,
-          title: "建模展开 · 点差法求动弦斜率与定值积",
+          title: stepTitle(2, "建模展开 · 点差法求动弦斜率与定值积"),
           detail: `两式相减消去常数项，利用斜率积公式 $k_{AB} \\cdot k_{OM} = \\frac{b^2}{a^2}$，代入参数计算斜率：`,
           latex: `k_{AB} = \\frac{b^2 x_0}{a^2 y_0} = ${kVal}`,
           rubric: "【高考采分点】推导双曲线点差法斜率公式（3分）",
         },
         {
           step: 3,
-          title: "求解反思 · 代回判别式检验存在性",
+          title: stepTitle(3, "求解反思 · 代回判别式检验存在性"),
           detail: result.isMidpointValid
             ? `中点使联立方程判别式 $\\Delta > 0$，动割线与双曲线相交于两点：`
             : `【考场警示】中点导致联立方程 $\\Delta \\le 0$，无实数中点弦：`,
@@ -408,21 +446,21 @@ export function buildConicLineMathQuantities(
       reasoningSteps.push(
         {
           step: 1,
-          title: "审题定法 · 设端点坐标并代入抛物线方程",
+          title: stepTitle(1, "审题定法 · 设端点坐标并代入抛物线方程"),
           detail: `设端点为 $A(x_1, y_1), B(x_2, y_2)$，中点 $M(x_0, y_0) = (${x0Val}, ${y0Val})$，代入抛物线方程：`,
           latex: `y_1^2 = 2px_1 \\\\ y_2^2 = 2px_2`,
           rubric: "【高考采分点】设点代入建立抛物线端点方程（2分）",
         },
         {
           step: 2,
-          title: "建模展开 · 两式作差求动弦斜率",
+          title: stepTitle(2, "建模展开 · 两式作差求动弦斜率"),
           detail: `两式相减因式分解 $(y_1 - y_2)(y_1 + y_2) = 2p(x_1 - x_2)$，整理得 $k_{AB} \\cdot y_0 = p$：`,
           latex: `k_{AB} = \\frac{p}{y_0} = \\frac{${pVal}}{${y0Val}} = ${kVal}`,
           rubric: "【高考采分点】利用作差因式分解求得斜率（3分）",
         },
         {
           step: 3,
-          title: "求解反思 · 存在性检验（防越界伪根）",
+          title: stepTitle(3, "求解反思 · 存在性检验（防越界伪根）"),
           detail: result.isMidpointValid
             ? `抛物线内部充要条件 $y_0^2 < 2px_0$，判别式 $\\Delta > 0$，实弦存在：`
             : `【高考防坑警示】点 $M$ 位于抛物线外部，点差法所求直线与抛物线相离，无实弦！`,
@@ -454,21 +492,21 @@ export function buildConicLineMathQuantities(
     reasoningSteps.push(
       {
         step: 1,
-        title: "审题定法 · 设两切点并写出切点处切线方程",
+        title: stepTitle(1, "审题定法 · 设两切点并写出切点处切线方程"),
         detail: `设过点 $P(${xPVal}, ${yPVal})$ 所作两条切线的切点分别为 $A(x_1, y_1)$、$B(x_2, y_2)$。由圆锥曲线在切点处的切线方程（把标准方程中的 $x^2$ 换成 $x_1 x$、$y^2$ 换成 $y_1 y$ 即得），切线 $PA$ 的方程为：`,
         latex: tangentAtA,
         rubric: "【高考采分点】设出两切点坐标并写出切点处切线方程（3分）",
       },
       {
         step: 2,
-        title: "建模展开 · 代入外部点推出切点弦方程",
+        title: stepTitle(2, "建模展开 · 代入外部点推出切点弦方程"),
         detail: `切线 $PA$ 过外部点 $P$，把 $P(${xPVal}, ${yPVal})$ 代入切线方程；对切点 $B$ 同理。两式结构完全相同，说明 $A$、$B$ 两点坐标都满足同一个一次方程，由“两点确定一条直线”即得切点弦 $AB$ 的方程，再化为斜截式 $y = kx + m$：`,
         latex: `${polarEq} \\\\ \\implies y = ${kVal}x ${m >= 0 ? "+" : ""} ${formatMathNumber(m)}`,
         rubric: "【高考采分点】用切线方程三步推出切点弦方程并化简（3分）",
       },
       {
         step: 3,
-        title: "求解反思 · 几何性质与切线垂直定值",
+        title: stepTitle(3, "求解反思 · 几何性质与切线垂直定值"),
         detail:
           conicType === "parabola"
             ? "点 $P$ 在准线 $x = -\\frac{p}{2}$ 上时，向抛物线引出的两条切线互相垂直，且切点弦必过焦点 $F$。"

@@ -148,7 +148,7 @@ export function buildCircleEquationPanel(
         color: cPrimary,
       },
       {
-        label: "圆心判别式 Δ_c",
+        label: "圆心判别式 $\\Delta_c$",
         symbol: `\\Delta_c = D^2 + E^2 - 4F`,
         value: `${fq(res.deltaC)}`,
         color: res.deltaC > 0 ? cSecondary : MATH_COLORS.degeneracy,
