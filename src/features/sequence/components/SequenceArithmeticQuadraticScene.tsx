@@ -2,7 +2,7 @@
  * src/features/sequence/components/SequenceArithmeticQuadraticScene.tsx
  * 等差数列 - 专题 C: 前 n 项和与二次函数极值 (连续顶点 vs 离散极值项)
  */
-import { CoordinateGrid, FunctionGraph } from "@/components/Math";
+import { CoordinateGrid, FunctionGraph, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
@@ -88,20 +88,28 @@ export function SequenceArithmeticQuadraticScene({
       {/* 3. 连续抛物线顶点 (非整数时单独标注) */}
       {vertexPt && !isExactIntegerAxis && (
         <g className="continuous-vertex">
-          <circle
-            cx={vertexPt.x}
-            cy={vertexPt.y}
+          <MathPoint
+            x={vertexPt.x}
+            y={vertexPt.y}
             r={4}
-            fill={MATH_COLORS.white}
-            stroke={MATH_COLORS.sequenceHighlight}
-            strokeWidth={1.5}
+            variant="hollow"
+            color={MATH_COLORS.sequenceHighlight}
           />
         </g>
       )}
 
-      {/* 4. 双最值统一悬浮标题 (在对称轴上方居中显示，彻底杜绝两个散点标签互撞) */}
-      {maxSnInfo?.isDual && axisPt && (
+      {/* 4. 双最值统一悬浮标题与水平等高连线 */}
+      {maxSnInfo?.isDual && axisPt && maxSnInfo.dualN && (
         <g className="dual-max-banner">
+          <line
+            x1={mathToDesign(maxSnInfo.nMax, maxSnInfo.maxSn, scale).x}
+            y1={mathToDesign(maxSnInfo.nMax, maxSnInfo.maxSn, scale).y}
+            x2={mathToDesign(maxSnInfo.dualN, maxSnInfo.maxSn, scale).x}
+            y2={mathToDesign(maxSnInfo.dualN, maxSnInfo.maxSn, scale).y}
+            stroke={MATH_COLORS.sequenceHighlight}
+            strokeWidth={1.6}
+            strokeDasharray="4,2"
+          />
           <text
             x={axisPt.x}
             y={mathToDesign(0, vertexY, scale).y - 18}
@@ -169,17 +177,23 @@ export function SequenceArithmeticQuadraticScene({
               strokeDasharray="2,2"
               strokeWidth={1}
             />
-            <circle
-              cx={posSn.x}
-              cy={posSn.y}
+            <rect
+              x={posSn.x - 10}
+              y={posSn.y - 10}
+              width={20}
+              height={20}
+              fill="transparent"
+            />
+            <MathPoint
+              x={posSn.x}
+              y={posSn.y}
               r={isMaxSn ? 5 : 3}
-              fill={
+              variant="focus"
+              color={
                 isMaxSn
                   ? MATH_COLORS.sequenceHighlight
                   : MATH_COLORS.sequenceSum
               }
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.5}
             />
 
             {/* 普通项 / 选中项数值标注 */}
@@ -198,10 +212,12 @@ export function SequenceArithmeticQuadraticScene({
             {/* 极值项光环与标注 */}
             {isMaxSn && (
               <g>
-                <circle
-                  cx={posSn.x}
-                  cy={posSn.y}
-                  r={8}
+                <rect
+                  x={posSn.x - 9}
+                  y={posSn.y - 9}
+                  width={18}
+                  height={18}
+                  rx={9}
                   fill="none"
                   stroke={MATH_COLORS.sequenceHighlight}
                   strokeWidth={1.5}

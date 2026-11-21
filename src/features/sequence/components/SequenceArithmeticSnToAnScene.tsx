@@ -11,7 +11,7 @@
  * 这就是「必须分段」在画面上的样子。
  */
 import React from "react";
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
@@ -122,22 +122,49 @@ export const SequenceArithmeticSnToAnScene: React.FC<
 
       {/* S_n 散点 */}
       {snPoints.map((p) => (
-        <circle
+        <g
           key={`sn-${p.n}`}
-          cx={p.pt.x}
-          cy={p.pt.y}
-          r={p.n === highlightN ? 5.5 : 3.4}
-          fill={MATH_COLORS.sequenceSum}
-          stroke={p.n === highlightN ? MATH_COLORS.sequenceHighlight : "none"}
-          strokeWidth={p.n === highlightN ? 2 : 0}
           style={{ cursor: "pointer" }}
           onClick={() => onSelectN?.(p.n)}
-        />
+        >
+          <rect
+            x={p.pt.x - 10}
+            y={p.pt.y - 10}
+            width={20}
+            height={20}
+            fill="transparent"
+          />
+          <MathPoint
+            x={p.pt.x}
+            y={p.pt.y}
+            r={p.n === highlightN ? 5.5 : 3.4}
+            variant={p.n === highlightN ? "focus" : "solid"}
+            color={
+              p.n === highlightN
+                ? MATH_COLORS.sequenceHighlight
+                : MATH_COLORS.sequenceSum
+            }
+          />
+        </g>
       ))}
 
-      {/* 首项与作差式的落差可视化：两条等高的参考线，差距一眼可辨 */}
+      {/* 首项与作差式的落差可视化：并排虚线预测柱 + 偏移量 C 缺口标尺 */}
       {!res.isFirstTermConsistent && (
-        <>
+        <g className="sn-first-term-mismatch">
+          <rect
+            x={mathToDesign(1, 0, scale).x + 8}
+            y={Math.min(zeroY, mathToDesign(1, res.a1FromFormula, scale).y)}
+            width={10}
+            height={Math.max(
+              2,
+              Math.abs(zeroY - mathToDesign(1, res.a1FromFormula, scale).y),
+            )}
+            fill={withAlpha(MATH_COLORS.paramTertiary, 0.2)}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.4}
+            strokeDasharray="3 2"
+            rx={2}
+          />
           <line
             x1={mathToDesign(0.55, res.a1FromSn, scale).x}
             y1={mathToDesign(0.55, res.a1FromSn, scale).y}
@@ -156,23 +183,40 @@ export const SequenceArithmeticSnToAnScene: React.FC<
             strokeWidth={1.4}
             strokeDasharray="4 3"
           />
-          <text
-            x={mathToDesign(1.85, res.a1FromSn, scale).x}
-            y={mathToDesign(1.85, res.a1FromSn, scale).y}
-            fontSize={fontScale(10)}
-            fill={MATH_COLORS.degeneracy}
-          >
-            {`S₁ = ${formatMathNumber(res.a1FromSn)}`}
-          </text>
-          <text
-            x={mathToDesign(1.85, res.a1FromFormula, scale).x}
-            y={mathToDesign(1.85, res.a1FromFormula, scale).y}
-            fontSize={fontScale(10)}
-            fill={MATH_COLORS.paramTertiary}
-          >
-            {`作差式取 n=1 → ${formatMathNumber(res.a1FromFormula)}`}
-          </text>
-        </>
+          {(() => {
+            const p1 = mathToDesign(1.85, res.a1FromSn, scale);
+            const p2 = mathToDesign(1.85, res.a1FromFormula, scale);
+            const minGap = 16;
+            const dy = p2.y - p1.y;
+            const adjustedY2 =
+              Math.abs(dy) < minGap
+                ? dy >= 0
+                  ? p1.y + minGap
+                  : p1.y - minGap
+                : p2.y;
+            return (
+              <>
+                <text
+                  x={p1.x}
+                  y={p1.y}
+                  fontSize={fontScale(10)}
+                  fill={MATH_COLORS.degeneracy}
+                  fontWeight="bold"
+                >
+                  {`S₁ = ${formatMathNumber(res.a1FromSn)} (缺口 C=${formatMathNumber(C)})`}
+                </text>
+                <text
+                  x={p2.x}
+                  y={adjustedY2}
+                  fontSize={fontScale(10)}
+                  fill={MATH_COLORS.paramTertiary}
+                >
+                  {`作差式取 n=1 → ${formatMathNumber(res.a1FromFormula)}`}
+                </text>
+              </>
+            );
+          })()}
+        </g>
       )}
     </g>
   );

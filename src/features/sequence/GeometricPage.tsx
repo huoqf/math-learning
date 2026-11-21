@@ -10,7 +10,7 @@ import {
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale, useGaokaoView } from "@/hooks";
-import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
+import { CANVAS_PRESETS } from "@/theme";
 import { SequenceScene } from "./components/SequenceScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { defaultParams, paramMeta } from "@/data/registries/sequence";
@@ -152,6 +152,7 @@ export function GeometricPage() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
+          group: meta.group,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
@@ -220,7 +221,7 @@ export function GeometricPage() {
       case "tessellation":
         return {
           variant: "success" as const,
-          badge: "拓展 · 自相似几何无穷剖分（超出课标）",
+          badge: "选学拓展 · 自相似几何无穷剖分",
           condition: `边长 $a_1 = ${a1}$，公比 $q = ${q}$，观察二维正方形面积无线剖分累加。`,
           question:
             "项数趋于无限时面积累加为何能保持有界？这与无穷等比级数和 $S_\\infty = \\frac{a_1}{1-q}$ 有何对应直观？",
@@ -240,37 +241,34 @@ export function GeometricPage() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="教学专题"
-            subtitle="等比数列 5 大新高考核心专题"
-          >
+          <LeftPanelSection title="教学专题">
             <SelectGrid
               columns={2}
               items={[
                 {
                   key: "exponential",
                   label: "通项与指数模型",
-                  formula: "a_n = a_1 q^{n-1}",
+                  description: "六态单调与震荡",
                 },
                 {
                   key: "staggerSum",
                   label: "错位相减推导",
-                  formula: "S_n - qS_n",
+                  description: "首尾残留与公比讨论",
                 },
                 {
                   key: "segment",
                   label: "等长片段性质",
-                  formula: "S_k, S_{2k}-S_k",
+                  description: "连续片段和等比",
                 },
                 {
                   key: "productMax",
                   label: "前 n 项积极值",
-                  formula: "P_n = a_1^n q^{\\dots}",
+                  description: "临界基准线对比",
                 },
                 {
                   key: "tessellation",
-                  label: "自相似无穷求和（拓展）",
-                  formula: "S_\\infty = \\frac{a_1}{1-q}",
+                  label: "自相似无穷求和",
+                  description: "选学无字证明",
                   fullWidth: true,
                 },
               ]}
@@ -281,35 +279,32 @@ export function GeometricPage() {
             />
           </LeftPanelSection>
 
-          {/* 专题 A 专属：公比形态典型预设 (2 列对称：左正右负，彻底根除折行与截断) */}
+          {/* 专题 A 专属：公比形态典型预设 (2 列对称：左正右负) */}
           {geometricSubMode === "exponential" && (
-            <LeftPanelSection
-              title="公比形态典型预设"
-              subtitle="一键切换 6 大典型单调/震荡形态"
-            >
+            <LeftPanelSection title="公比形态预设">
               <SelectGrid
                 columns={2}
                 items={[
-                  { key: "growth", formula: "q = 2", description: "激增增长" },
+                  { key: "growth", label: "q = 2", description: "激增增长" },
                   {
                     key: "osc-div",
-                    formula: "q = -1.5",
+                    label: "q = -1.5",
                     description: "发散震荡",
                   },
-                  { key: "decay", formula: "q = 0.5", description: "衰减收敛" },
+                  { key: "decay", label: "q = 0.5", description: "衰减收敛" },
                   {
                     key: "osc-dec",
-                    formula: "q = -0.5",
+                    label: "q = -0.5",
                     description: "衰减震荡",
                   },
                   {
                     key: "const",
-                    formula: `\\color{${MATH_COLORS.paramPrimary}}{q = 1}`,
+                    label: "q = 1",
                     description: "常数列退化",
                   },
                   {
                     key: "osc-per",
-                    formula: `\\color{${MATH_COLORS.paramSecondary}}{q = -1}`,
+                    label: "q = -1",
                     description: "周期摆动",
                   },
                 ]}
@@ -347,23 +342,18 @@ export function GeometricPage() {
 
           {/* 专题 D 专属：积的最值典型预设 */}
           {geometricSubMode === "productMax" && (
-            <LeftPanelSection
-              title="极值典型预设"
-              subtitle="观察项与 1 临界比较与二次顶点"
-            >
+            <LeftPanelSection title="极值典型预设">
               <SelectGrid
                 columns={2}
                 items={[
                   {
                     key: "max-case",
                     label: "衰减极大双最值",
-                    formula: "P_2 = P_3 = 8.0",
                     description: "首项大于一公比小于一",
                   },
                   {
                     key: "min-case",
                     label: "激增极小单最值",
-                    formula: "P_2 = 0.125",
                     description: "首项小于一公比大于一",
                   },
                 ]}
@@ -387,26 +377,23 @@ export function GeometricPage() {
 
           {/* 专题 E 专属：自相似剖分典型预设 */}
           {geometricSubMode === "tessellation" && (
-            <LeftPanelSection
-              title="无字证明典型预设"
-              subtitle="选择经典分数公比观察面积细分"
-            >
+            <LeftPanelSection title="无字证明典型预设">
               <SelectGrid
                 columns={3}
                 items={[
                   {
                     key: "half",
-                    formula: "q = \\frac{1}{2}",
+                    label: "q = 1/2",
                     description: "二分",
                   },
                   {
                     key: "third",
-                    formula: "q = \\frac{1}{3}",
+                    label: "q = 1/3",
                     description: "三分",
                   },
                   {
                     key: "quarter",
-                    formula: "q = \\frac{1}{4}",
+                    label: "q = 1/4",
                     description: "四分",
                   },
                 ]}
@@ -433,10 +420,7 @@ export function GeometricPage() {
             </LeftPanelSection>
           )}
 
-          <LeftPanelSection
-            title="参数精准调节"
-            subtitle="拖动滑块实时观察数形联动"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

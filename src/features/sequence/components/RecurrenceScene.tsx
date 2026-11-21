@@ -6,7 +6,12 @@
  */
 import React from "react";
 import type { SceneScale, ViewportInfo } from "@/hooks";
-import type { AccumulationFnType, InductionClaimId } from "@/math/sequence";
+import type {
+  AccumulationFnType,
+  InductionClaimId,
+  SnMixedMode,
+  NewDefinitionType,
+} from "@/math/sequence";
 import { RecurrenceLinearPanScene } from "./RecurrenceLinearPanScene";
 import { RecurrenceAccumulationScene } from "./RecurrenceAccumulationScene";
 import { RecurrenceMultiplicationScene } from "./RecurrenceMultiplicationScene";
@@ -14,6 +19,8 @@ import { RecurrenceNonHomogeneousScene } from "./RecurrenceNonHomogeneousScene";
 import { RecurrenceReciprocalScene } from "./RecurrenceReciprocalScene";
 import { RecurrenceSecondOrderScene } from "./RecurrenceSecondOrderScene";
 import { RecurrenceInductionScene } from "./RecurrenceInductionScene";
+import { RecurrenceSnMixedScene } from "./RecurrenceSnMixedScene";
+import { RecurrenceNewDefinitionScene } from "./RecurrenceNewDefinitionScene";
 
 export interface RecurrenceSceneProps {
   params: Record<string, number>;
@@ -27,9 +34,13 @@ export interface RecurrenceSceneProps {
     | "non-homogeneous"
     | "reciprocal"
     | "second-order"
-    | "induction";
+    | "induction"
+    | "sn-mixed"
+    | "new-definition";
   accumFnType?: AccumulationFnType;
   multType?: "n_over_n1" | "n1_over_n" | "pow_two";
+  snMixedMode?: SnMixedMode;
+  newDefType?: NewDefinitionType;
   highlightN: number;
   onSelectN?: (n: number) => void;
   xStep?: number;
@@ -81,6 +92,17 @@ export const RecurrenceScene: React.FC<RecurrenceSceneProps> = (props) => {
         <RecurrenceInductionScene
           {...common}
           inductionClaim={props.inductionClaim}
+        />
+      );
+    case "sn-mixed":
+      return (
+        <RecurrenceSnMixedScene {...common} snMixedMode={props.snMixedMode} />
+      );
+    case "new-definition":
+      return (
+        <RecurrenceNewDefinitionScene
+          {...common}
+          newDefType={props.newDefType}
         />
       );
     default:

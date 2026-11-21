@@ -14,6 +14,7 @@ import {
   calcOddEvenSequence,
   calcAbsSumSequence,
   calcRadicalTelescoping,
+  calcExponentialTelescoping,
   calcLinearRecurrence,
   calcAccumulationRecurrence,
   calcMultiplicationRecurrence,
@@ -80,6 +81,7 @@ export function useSequenceParams(params: Record<string, number>) {
   const oddEvenData = useMemo(() => calcOddEvenSequence(N), [N]);
   const absSumData = useMemo(() => calcAbsSumSequence(a1, d, N), [a1, d, N]);
   const radicalTeleData = useMemo(() => calcRadicalTelescoping(N), [N]);
+  const expTeleData = useMemo(() => calcExponentialTelescoping(N), [N]);
 
   return {
     a1,
@@ -110,5 +112,6 @@ export function useSequenceParams(params: Record<string, number>) {
     oddEvenData,
     absSumData,
     radicalTeleData,
+    expTeleData,
   };
 }

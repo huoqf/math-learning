@@ -1,16 +1,19 @@
 /**
  * src/features/sequence/components/SequenceModelsTelescopingScene.tsx
  * 数列实验室 - 高考求和模型 2：裂项相消法
- * (支持 3 种模式：标准差1型 / 跨项差2型 / 根式有理化型)
+ * (支持 4 种模式：标准差1型 / 跨项差2型 / 根式有理化型 / 指数裂项型，并实现 3 步联动动画)
  */
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
+import { formatMathNumber } from "@/utils/mathFormat";
 import type { SceneScale, ViewportInfo } from "@/hooks";
-import type {
-  TelescopingResult,
-  CrossTelescopingResult,
-  RadicalTelescopingResult,
+import {
+  calcExponentialTelescoping,
+  type TelescopingResult,
+  type CrossTelescopingResult,
+  type RadicalTelescopingResult,
+  type ExponentialTelescopingResult,
 } from "@/math/sequence";
 import { toSub } from "./SequenceText";
 
@@ -23,6 +26,7 @@ interface SequenceModelsTelescopingSceneProps {
   telescopingData: TelescopingResult;
   crossTelescopingData: CrossTelescopingResult;
   radicalTeleData: RadicalTelescopingResult;
+  expTeleData?: ExponentialTelescopingResult;
   vp: ViewportInfo;
   scale: SceneScale;
   fontScale: (size: number) => number;
@@ -35,14 +39,17 @@ export function SequenceModelsTelescopingScene({
   telescopingData,
   crossTelescopingData,
   radicalTeleData,
+  expTeleData,
   vp,
   scale,
   fontScale,
 }: SequenceModelsTelescopingSceneProps) {
+  const isExponential = teleGap === 4;
   const isRadical = teleGap === 3;
   const isCross = teleGap === 2;
   const activeStep = Math.min(3, Math.max(1, sumStep));
   const topBannerY = Math.max(12, vp.designTop + 14);
+  const resolvedExpData = expTeleData ?? calcExponentialTelescoping(N);
 
   const renderDominoBanner = (
     step1Text: string,
@@ -67,7 +74,7 @@ export function SequenceModelsTelescopingScene({
         fontSize={fontScale(9.5)}
         fill={MATH_COLORS.sequence}
         fontWeight="bold"
-        opacity={activeStep === 1 ? 1 : 0.65}
+        opacity={activeStep === 1 ? 1 : 0.45}
       >
         {step1Text}
       </text>
@@ -77,7 +84,7 @@ export function SequenceModelsTelescopingScene({
         fontSize={fontScale(9.5)}
         fill={MATH_COLORS.paramSecondary}
         fontWeight="bold"
-        opacity={activeStep === 2 ? 1 : 0.65}
+        opacity={activeStep === 2 ? 1 : 0.45}
       >
         {step2Text}
       </text>
@@ -87,15 +94,65 @@ export function SequenceModelsTelescopingScene({
         fontSize={fontScale(9.5)}
         fill={MATH_COLORS.paramPrimary}
         fontWeight="bold"
-        opacity={activeStep === 3 ? 1 : 0.65}
+        opacity={activeStep === 3 ? 1 : 0.45}
       >
         {step3Text}
       </text>
     </g>
   );
 
+  /** 根据当前步计算正/负项透明度与删除线状态，落实 3 步教学递进 */
+  const stepOpacity = (isRetained: boolean) => {
+    if (activeStep === 1) return 1;
+    if (activeStep === 2) return isRetained ? 0.85 : 0.5;
+    return isRetained ? 1 : 0.2;
+  };
+
+  /** 被抵消项的交叉删除标记（Step 2/3 显示） */
+  const renderCancelSlash = (px: number, py: number, color: string) => {
+    if (activeStep < 2) return null;
+    return (
+      <g opacity={activeStep === 2 ? 0.95 : 0.45}>
+        <line
+          x1={px - 6}
+          y1={py - 6}
+          x2={px + 6}
+          y2={py + 6}
+          stroke={color}
+          strokeWidth={1.8}
+        />
+        <line
+          x1={px - 6}
+          y1={py + 6}
+          x2={px + 6}
+          y2={py - 6}
+          stroke={color}
+          strokeWidth={1.8}
+        />
+      </g>
+    );
+  };
+
+  /** 首尾残留项聚焦框（Step 3 突出锁定） */
+  const renderRetainedFocusBox = (px: number, py: number) => {
+    if (activeStep !== 3) return null;
+    return (
+      <rect
+        x={px - 10}
+        y={py - 10}
+        width={20}
+        height={20}
+        rx={10}
+        fill="none"
+        stroke={MATH_COLORS.answerStepFrame}
+        strokeWidth={1.8}
+        strokeDasharray="3,2"
+      />
+    );
+  };
+
   // 1. 标准差 1 型: 1/(n(n+1)) = 1/n - 1/(n+1)
-  if (!isRadical && !isCross) {
+  if (!isRadical && !isCross && !isExponential) {
     const terms = telescopingData.terms;
     const limitY = mathToDesign(0, 1, scale).y;
 
@@ -105,10 +162,10 @@ export function SequenceModelsTelescopingScene({
         {renderDominoBanner(
           "① 裂项拆差（跨度 Δ=1）：cₙ = 1/[n(n+1)] = (+1/n) + (-1/(n+1))",
           "② 多米诺相邻对消：(+1) + (-1/2 + 1/2) + (-1/3 + 1/3) + … 中间项成对清零",
-          `③ 首尾对称留 1 项：T${toSub(N)} = 首正 (+1) + 尾负 (-1/${N + 1}) = ${N}/${N + 1} ≈ ${(N / (N + 1)).toFixed(3)}`,
+          `③ 首尾对称留 1 项：T${toSub(N)} = 首正 (+1) + 尾负 (-1/${N + 1}) = ${N}/${N + 1} ≈ ${formatMathNumber(N / (N + 1), 3)}`,
         )}
 
-        {/* 极限水平线 y = 1 */}
+        {/* 上界参考线 y = 1 */}
         <line
           x1={mathToDesign(-0.8, 1, scale).x}
           y1={limitY}
@@ -126,121 +183,131 @@ export function SequenceModelsTelescopingScene({
           fill={MATH_COLORS.sequenceHighlight}
           fontWeight="bold"
         >
-          趋势参考线 T_n → 1（拓展）
+          {`渐近上界参考线 T${toSub(N)} < 1`}
         </text>
 
         {/* 各项对消与残留项锁定 */}
         {terms.map((t) => {
           const posA = mathToDesign(t.n, t.partA, scale);
           const posB = mathToDesign(t.n + 0.35, -t.partB, scale);
+          const zeroY = mathToDesign(t.n, 0, scale).y;
           const isRetainedA = t.n === 1;
           const isRetainedB = t.n === N;
+          const opA = stepOpacity(isRetainedA);
+          const opB = stepOpacity(isRetainedB);
 
           return (
             <g key={`tele-std-${t.n}`}>
               {/* 正项 +1/n */}
-              <line
-                x1={posA.x}
-                y1={mathToDesign(t.n, 0, scale).y}
-                x2={posA.x}
-                y2={posA.y}
-                stroke={
-                  isRetainedA
-                    ? MATH_COLORS.combHeader
-                    : withAlpha(MATH_COLORS.combHeader, 0.5)
-                }
-                strokeWidth={isRetainedA ? 2 : 1.2}
-              />
-              <circle
-                cx={posA.x}
-                cy={posA.y}
-                r={isRetainedA ? 6 : 3.5}
-                fill={
-                  isRetainedA
-                    ? MATH_COLORS.sequenceHighlight
-                    : withAlpha(MATH_COLORS.combHeader, 0.4)
-                }
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.2}
-              />
-              <text
-                x={posA.x}
-                y={posA.y - 7}
-                textAnchor="middle"
-                fontSize={fontScale(isRetainedA ? 10 : 8.5)}
-                fill={
-                  isRetainedA
-                    ? MATH_COLORS.sequenceHighlight
-                    : withAlpha(MATH_COLORS.combHeader, 0.8)
-                }
-                fontWeight={isRetainedA ? "bold" : "normal"}
-              >
-                +1/{t.n}
-                {isRetainedA ? " (首项保留)" : ""}
-              </text>
+              <g opacity={opA}>
+                <line
+                  x1={posA.x}
+                  y1={zeroY}
+                  x2={posA.x}
+                  y2={posA.y}
+                  stroke={
+                    isRetainedA
+                      ? MATH_COLORS.combHeader
+                      : withAlpha(MATH_COLORS.combHeader, 0.6)
+                  }
+                  strokeWidth={isRetainedA ? 2.4 : 1.3}
+                />
+                <MathPoint
+                  x={posA.x}
+                  y={posA.y}
+                  r={isRetainedA ? 5.5 : 3.5}
+                  variant={isRetainedA ? "focus" : "solid"}
+                  color={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : MATH_COLORS.combHeader
+                  }
+                />
+                {isRetainedA && renderRetainedFocusBox(posA.x, posA.y)}
+                {!isRetainedA &&
+                  renderCancelSlash(posA.x, posA.y, MATH_COLORS.paramSecondary)}
+                <text
+                  x={posA.x}
+                  y={posA.y - 8}
+                  textAnchor="middle"
+                  fontSize={fontScale(isRetainedA ? 10 : 8.5)}
+                  fill={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : MATH_COLORS.combHeader
+                  }
+                  fontWeight={isRetainedA ? "bold" : "normal"}
+                >
+                  +1/{t.n}
+                  {isRetainedA ? " (首项保留)" : ""}
+                </text>
+              </g>
 
               {/* 负项 -1/(n+1) */}
-              <line
-                x1={posB.x}
-                y1={mathToDesign(t.n, 0, scale).y}
-                x2={posB.x}
-                y2={posB.y}
-                stroke={
-                  isRetainedB
-                    ? MATH_COLORS.paramPrimary
-                    : withAlpha(MATH_COLORS.paramPrimary, 0.5)
-                }
-                strokeWidth={isRetainedB ? 2 : 1.2}
-              />
-              <circle
-                cx={posB.x}
-                cy={posB.y}
-                r={isRetainedB ? 6 : 3.5}
-                fill={
-                  isRetainedB
-                    ? MATH_COLORS.paramPrimary
-                    : withAlpha(MATH_COLORS.paramPrimary, 0.4)
-                }
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.2}
-              />
-              <text
-                x={posB.x}
-                y={posB.y + 14}
-                textAnchor="middle"
-                fontSize={fontScale(isRetainedB ? 10 : 8.5)}
-                fill={
-                  isRetainedB
-                    ? MATH_COLORS.paramPrimary
-                    : withAlpha(MATH_COLORS.paramPrimary, 0.8)
-                }
-                fontWeight={isRetainedB ? "bold" : "normal"}
-              >
-                -1/{t.n + 1}
-                {isRetainedB ? " (尾项保留)" : ""}
-              </text>
+              <g opacity={opB}>
+                <line
+                  x1={posB.x}
+                  y1={zeroY}
+                  x2={posB.x}
+                  y2={posB.y}
+                  stroke={
+                    isRetainedB
+                      ? MATH_COLORS.paramPrimary
+                      : withAlpha(MATH_COLORS.paramPrimary, 0.6)
+                  }
+                  strokeWidth={isRetainedB ? 2.4 : 1.3}
+                />
+                <MathPoint
+                  x={posB.x}
+                  y={posB.y}
+                  r={isRetainedB ? 5.5 : 3.5}
+                  variant={isRetainedB ? "focus" : "solid"}
+                  color={MATH_COLORS.paramPrimary}
+                />
+                {isRetainedB && renderRetainedFocusBox(posB.x, posB.y)}
+                {!isRetainedB &&
+                  renderCancelSlash(posB.x, posB.y, MATH_COLORS.paramSecondary)}
+                <text
+                  x={posB.x}
+                  y={posB.y + 15}
+                  textAnchor="middle"
+                  fontSize={fontScale(isRetainedB ? 10 : 8.5)}
+                  fill={MATH_COLORS.paramPrimary}
+                  fontWeight={isRetainedB ? "bold" : "normal"}
+                >
+                  -1/{t.n + 1}
+                  {isRetainedB ? " (尾项保留)" : ""}
+                </text>
+              </g>
 
-              {/* 相邻项对消弧线与对消标记 */}
+              {/* 相邻项对消弧线 */}
               {t.n < N && (
-                <g>
+                <g
+                  opacity={
+                    activeStep === 2 ? 0.95 : activeStep === 1 ? 0.2 : 0.35
+                  }
+                >
                   <path
                     d={`M ${posB.x} ${posB.y} Q ${(posB.x + mathToDesign(t.n + 1, 0, scale).x) / 2} ${
-                      mathToDesign(0, 0, scale).y - 12
+                      zeroY - 12
                     } ${mathToDesign(t.n + 1, terms[t.n].partA, scale).x} ${mathToDesign(t.n + 1, terms[t.n].partA, scale).y}`}
                     fill="none"
-                    stroke={withAlpha(MATH_COLORS.paramSecondary, 0.45)}
-                    strokeWidth={1.2}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={activeStep === 2 ? 1.8 : 1.1}
                     strokeDasharray="3,2"
                   />
-                  <text
-                    x={(posB.x + mathToDesign(t.n + 1, 0, scale).x) / 2}
-                    y={mathToDesign(0, 0, scale).y - 14}
-                    textAnchor="middle"
-                    fontSize={fontScale(7.5)}
-                    fill={MATH_COLORS.paramSecondary}
-                  >
-                    抵消
-                  </text>
+                  {activeStep === 2 && (
+                    <text
+                      x={(posB.x + mathToDesign(t.n + 1, 0, scale).x) / 2}
+                      y={zeroY - 14}
+                      textAnchor="middle"
+                      fontSize={fontScale(8)}
+                      fill={MATH_COLORS.paramSecondary}
+                      fontWeight="bold"
+                    >
+                      抵消
+                    </text>
+                  )}
                 </g>
               )}
             </g>
@@ -264,7 +331,6 @@ export function SequenceModelsTelescopingScene({
           `③ 首尾对称留 2 项：T${toSub(N)} = ½ · [首正(1 + 1/2) - 尾负(1/${N + 1} + 1/${N + 2})]`,
         )}
 
-        {/* 极限水平线 y = 0.75 */}
         <line
           x1={mathToDesign(-0.8, 0.75, scale).x}
           y1={limitY}
@@ -282,96 +348,125 @@ export function SequenceModelsTelescopingScene({
           fill={MATH_COLORS.sequenceHighlight}
           fontWeight="bold"
         >
-          趋势参考线 T_n → 0.75 (½·(1 + ½))（拓展）
+          {`渐近上界参考线 T${toSub(N)} < 0.75`}
         </text>
 
         {terms.map((t) => {
           const posA = mathToDesign(t.n, t.partA, scale);
           const posB = mathToDesign(t.n + 0.35, -t.partB, scale);
+          const zeroY = mathToDesign(t.n, 0, scale).y;
           const isRetainedA = t.n <= 2;
           const isRetainedB = t.n >= N - 1;
 
           return (
             <g key={`c-tele-${t.n}`}>
-              {/* 正项 +1/(2n) */}
-              <circle
-                cx={posA.x}
-                cy={posA.y}
-                r={isRetainedA ? 6 : 3.5}
-                fill={
-                  isRetainedA
-                    ? MATH_COLORS.sequenceHighlight
-                    : withAlpha(MATH_COLORS.combHeader, 0.4)
-                }
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.2}
-              />
-              <text
-                x={posA.x}
-                y={posA.y - 6}
-                textAnchor="middle"
-                fontSize={fontScale(isRetainedA ? 10 : 8.5)}
-                fill={
-                  isRetainedA
-                    ? MATH_COLORS.sequenceHighlight
-                    : withAlpha(MATH_COLORS.combHeader, 0.8)
-                }
-                fontWeight={isRetainedA ? "bold" : "normal"}
-              >
-                +1/{2 * t.n}
-                {isRetainedA ? " (留)" : ""}
-              </text>
+              <g opacity={stepOpacity(isRetainedA)}>
+                <line
+                  x1={posA.x}
+                  y1={zeroY}
+                  x2={posA.x}
+                  y2={posA.y}
+                  stroke={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : withAlpha(MATH_COLORS.combHeader, 0.5)
+                  }
+                  strokeWidth={isRetainedA ? 2.2 : 1.2}
+                />
+                <MathPoint
+                  x={posA.x}
+                  y={posA.y}
+                  r={isRetainedA ? 5.5 : 3.5}
+                  variant={isRetainedA ? "focus" : "solid"}
+                  color={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : MATH_COLORS.combHeader
+                  }
+                />
+                {isRetainedA && renderRetainedFocusBox(posA.x, posA.y)}
+                {!isRetainedA &&
+                  renderCancelSlash(posA.x, posA.y, MATH_COLORS.paramSecondary)}
+                <text
+                  x={posA.x}
+                  y={posA.y - 7}
+                  textAnchor="middle"
+                  fontSize={fontScale(isRetainedA ? 10 : 8.5)}
+                  fill={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : MATH_COLORS.combHeader
+                  }
+                  fontWeight={isRetainedA ? "bold" : "normal"}
+                >
+                  +1/{2 * t.n}
+                  {isRetainedA ? " (留)" : ""}
+                </text>
+              </g>
 
-              {/* 负项 -1/(2(n+2)) */}
-              <circle
-                cx={posB.x}
-                cy={posB.y}
-                r={isRetainedB ? 6 : 3.5}
-                fill={
-                  isRetainedB
-                    ? MATH_COLORS.paramPrimary
-                    : withAlpha(MATH_COLORS.paramPrimary, 0.4)
-                }
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.2}
-              />
-              <text
-                x={posB.x}
-                y={posB.y + 14}
-                textAnchor="middle"
-                fontSize={fontScale(isRetainedB ? 10 : 8.5)}
-                fill={
-                  isRetainedB
-                    ? MATH_COLORS.paramPrimary
-                    : withAlpha(MATH_COLORS.paramPrimary, 0.8)
-                }
-                fontWeight={isRetainedB ? "bold" : "normal"}
-              >
-                -1/{2 * (t.n + 2)}
-                {isRetainedB ? " (留)" : ""}
-              </text>
+              <g opacity={stepOpacity(isRetainedB)}>
+                <line
+                  x1={posB.x}
+                  y1={zeroY}
+                  x2={posB.x}
+                  y2={posB.y}
+                  stroke={
+                    isRetainedB
+                      ? MATH_COLORS.paramPrimary
+                      : withAlpha(MATH_COLORS.paramPrimary, 0.5)
+                  }
+                  strokeWidth={isRetainedB ? 2.2 : 1.2}
+                />
+                <MathPoint
+                  x={posB.x}
+                  y={posB.y}
+                  r={isRetainedB ? 5.5 : 3.5}
+                  variant={isRetainedB ? "focus" : "solid"}
+                  color={MATH_COLORS.paramPrimary}
+                />
+                {isRetainedB && renderRetainedFocusBox(posB.x, posB.y)}
+                {!isRetainedB &&
+                  renderCancelSlash(posB.x, posB.y, MATH_COLORS.paramSecondary)}
+                <text
+                  x={posB.x}
+                  y={posB.y + 15}
+                  textAnchor="middle"
+                  fontSize={fontScale(isRetainedB ? 10 : 8.5)}
+                  fill={MATH_COLORS.paramPrimary}
+                  fontWeight={isRetainedB ? "bold" : "normal"}
+                >
+                  -1/{2 * (t.n + 2)}
+                  {isRetainedB ? " (留)" : ""}
+                </text>
+              </g>
 
-              {/* 跨越 2 项的对消弧线 */}
               {t.n <= N - 2 && (
-                <g>
+                <g
+                  opacity={
+                    activeStep === 2 ? 0.95 : activeStep === 1 ? 0.2 : 0.35
+                  }
+                >
                   <path
                     d={`M ${posB.x} ${posB.y} Q ${(posB.x + mathToDesign(t.n + 2, 0, scale).x) / 2} ${
-                      mathToDesign(0, 0, scale).y - 18
+                      zeroY - 18
                     } ${mathToDesign(t.n + 2, terms[t.n + 1].partA, scale).x} ${mathToDesign(t.n + 2, terms[t.n + 1].partA, scale).y}`}
                     fill="none"
-                    stroke={withAlpha(MATH_COLORS.paramSecondary, 0.4)}
-                    strokeWidth={1.2}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={activeStep === 2 ? 1.8 : 1.1}
                     strokeDasharray="4,4"
                   />
-                  <text
-                    x={(posB.x + mathToDesign(t.n + 2, 0, scale).x) / 2}
-                    y={mathToDesign(0, 0, scale).y - 20}
-                    textAnchor="middle"
-                    fontSize={fontScale(7.5)}
-                    fill={MATH_COLORS.paramSecondary}
-                  >
-                    跨项抵消
-                  </text>
+                  {activeStep === 2 && (
+                    <text
+                      x={(posB.x + mathToDesign(t.n + 2, 0, scale).x) / 2}
+                      y={zeroY - 20}
+                      textAnchor="middle"
+                      fontSize={fontScale(8)}
+                      fill={MATH_COLORS.paramSecondary}
+                      fontWeight="bold"
+                    >
+                      跨项抵消
+                    </text>
+                  )}
                 </g>
               )}
             </g>
@@ -391,110 +486,254 @@ export function SequenceModelsTelescopingScene({
         {renderDominoBanner(
           "① 共轭根式有理化：cₙ = 1/(√n + √(n+1)) = (+√(n+1)) + (-√n)",
           "② 前后根式伸缩对消：(+√2 - √2) + (+√3 - √3) + … 中间根式逐项抵消",
-          `③ 首尾根式残留：T${toSub(N)} = 尾正(+√${N + 1}) + 首负(-√1) ≈ ${radicalTeleData.finalTn.toFixed(3)}`,
+          `③ 首尾根式残留：T${toSub(N)} = 尾正(+√${N + 1}) + 首负(-√1) ≈ ${formatMathNumber(radicalTeleData.finalTn, 3)}`,
         )}
 
         {terms.map((t) => {
           const posA = mathToDesign(t.n, t.partA, scale);
           const posB = mathToDesign(t.n, -t.partB, scale);
+          const zeroY = mathToDesign(t.n, 0, scale).y;
           const isRetainedA = t.n === N;
           const isRetainedB = t.n === 1;
 
           return (
             <g key={`tele-rad-${t.n}`}>
-              {/* 正项 +√(n+1) */}
-              <line
-                x1={posA.x}
-                y1={mathToDesign(t.n, 0, scale).y}
-                x2={posA.x}
-                y2={posA.y}
-                stroke={MATH_COLORS.combHeader}
-                strokeWidth={1.5}
-              />
-              <circle
-                cx={posA.x}
-                cy={posA.y}
-                r={isRetainedA ? 6 : 3.5}
-                fill={
-                  isRetainedA
-                    ? MATH_COLORS.sequenceHighlight
-                    : withAlpha(MATH_COLORS.combHeader, 0.5)
-                }
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.2}
-              />
-              <text
-                x={posA.x}
-                y={posA.y - 6}
-                textAnchor="middle"
-                fontSize={fontScale(isRetainedA ? 10 : 8.5)}
-                fill={
-                  isRetainedA
-                    ? MATH_COLORS.sequenceHighlight
-                    : withAlpha(MATH_COLORS.combHeader, 0.8)
-                }
-                fontWeight={isRetainedA ? "bold" : "normal"}
-              >
-                +√{t.n + 1}
-                {isRetainedA ? " (尾项保留)" : ""}
-              </text>
+              <g opacity={stepOpacity(isRetainedA)}>
+                <line
+                  x1={posA.x}
+                  y1={zeroY}
+                  x2={posA.x}
+                  y2={posA.y}
+                  stroke={MATH_COLORS.combHeader}
+                  strokeWidth={isRetainedA ? 2.2 : 1.4}
+                />
+                <MathPoint
+                  x={posA.x}
+                  y={posA.y}
+                  r={isRetainedA ? 5.5 : 3.5}
+                  variant={isRetainedA ? "focus" : "solid"}
+                  color={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : MATH_COLORS.combHeader
+                  }
+                />
+                {isRetainedA && renderRetainedFocusBox(posA.x, posA.y)}
+                {!isRetainedA &&
+                  renderCancelSlash(posA.x, posA.y, MATH_COLORS.paramSecondary)}
+                <text
+                  x={posA.x}
+                  y={posA.y - 7}
+                  textAnchor="middle"
+                  fontSize={fontScale(isRetainedA ? 10 : 8.5)}
+                  fill={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : MATH_COLORS.combHeader
+                  }
+                  fontWeight={isRetainedA ? "bold" : "normal"}
+                >
+                  +√{t.n + 1}
+                  {isRetainedA ? " (尾项保留)" : ""}
+                </text>
+              </g>
 
-              {/* 负项 -√n */}
-              <line
-                x1={posB.x}
-                y1={mathToDesign(t.n, 0, scale).y}
-                x2={posB.x}
-                y2={posB.y}
-                stroke={MATH_COLORS.paramPrimary}
-                strokeWidth={1.5}
-              />
-              <circle
-                cx={posB.x}
-                cy={posB.y}
-                r={isRetainedB ? 6 : 3.5}
-                fill={
-                  isRetainedB
-                    ? MATH_COLORS.paramPrimary
-                    : withAlpha(MATH_COLORS.paramPrimary, 0.5)
-                }
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.2}
-              />
-              <text
-                x={posB.x}
-                y={posB.y + 14}
-                textAnchor="middle"
-                fontSize={fontScale(isRetainedB ? 10 : 8.5)}
-                fill={
-                  isRetainedB
-                    ? MATH_COLORS.paramPrimary
-                    : withAlpha(MATH_COLORS.paramPrimary, 0.8)
-                }
-                fontWeight={isRetainedB ? "bold" : "normal"}
-              >
-                -√{t.n}
-                {isRetainedB ? " (首项保留: -1)" : ""}
-              </text>
+              <g opacity={stepOpacity(isRetainedB)}>
+                <line
+                  x1={posB.x}
+                  y1={zeroY}
+                  x2={posB.x}
+                  y2={posB.y}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={isRetainedB ? 2.2 : 1.4}
+                />
+                <MathPoint
+                  x={posB.x}
+                  y={posB.y}
+                  r={isRetainedB ? 5.5 : 3.5}
+                  variant={isRetainedB ? "focus" : "solid"}
+                  color={MATH_COLORS.paramPrimary}
+                />
+                {isRetainedB && renderRetainedFocusBox(posB.x, posB.y)}
+                {!isRetainedB &&
+                  renderCancelSlash(posB.x, posB.y, MATH_COLORS.paramSecondary)}
+                <text
+                  x={posB.x}
+                  y={posB.y + 15}
+                  textAnchor="middle"
+                  fontSize={fontScale(isRetainedB ? 10 : 8.5)}
+                  fill={MATH_COLORS.paramPrimary}
+                  fontWeight={isRetainedB ? "bold" : "normal"}
+                >
+                  -√{t.n}
+                  {isRetainedB ? " (首项保留: -1)" : ""}
+                </text>
+              </g>
 
-              {/* 前项 +√(k+1) 与 后项 -√(k+1) 对消连接弧线 */}
               {t.n < N && (
-                <g>
+                <g
+                  opacity={
+                    activeStep === 2 ? 0.95 : activeStep === 1 ? 0.2 : 0.35
+                  }
+                >
                   <path
-                    d={`M ${posA.x} ${posA.y} Q ${(posA.x + mathToDesign(t.n + 1, 0, scale).x) / 2} ${mathToDesign(0, 0, scale).y} ${mathToDesign(t.n + 1, -t.partA, scale).x} ${mathToDesign(t.n + 1, -t.partA, scale).y}`}
+                    d={`M ${posA.x} ${posA.y} Q ${(posA.x + mathToDesign(t.n + 1, 0, scale).x) / 2} ${zeroY} ${mathToDesign(t.n + 1, -t.partA, scale).x} ${mathToDesign(t.n + 1, -t.partA, scale).y}`}
                     fill="none"
-                    stroke={withAlpha(MATH_COLORS.paramSecondary, 0.4)}
-                    strokeWidth={1.2}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={activeStep === 2 ? 1.8 : 1.1}
                     strokeDasharray="3,2"
                   />
-                  <text
-                    x={(posA.x + mathToDesign(t.n + 1, 0, scale).x) / 2}
-                    y={mathToDesign(0, 0, scale).y - 4}
-                    textAnchor="middle"
-                    fontSize={fontScale(7.5)}
-                    fill={MATH_COLORS.paramSecondary}
-                  >
-                    伸缩抵消
-                  </text>
+                  {activeStep === 2 && (
+                    <text
+                      x={(posA.x + mathToDesign(t.n + 1, 0, scale).x) / 2}
+                      y={zeroY - 4}
+                      textAnchor="middle"
+                      fontSize={fontScale(8)}
+                      fill={MATH_COLORS.paramSecondary}
+                      fontWeight="bold"
+                    >
+                      伸缩抵消
+                    </text>
+                  )}
+                </g>
+              )}
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+
+  // 4. 指数分式裂项型: 2^n / ((2^n-1)(2^{n+1}-1)) = 1/(2^n-1) - 1/(2^{n+1}-1)
+  if (isExponential) {
+    const terms = resolvedExpData.terms;
+    const limitY = mathToDesign(0, 1, scale).y;
+
+    return (
+      <g className="sequence-scene-telescoping-exp">
+        <CoordinateGrid scale={scale} fontScale={fontScale} />
+        {renderDominoBanner(
+          "① 指数分子拆差：2ⁿ = (2ⁿ⁺¹-1) - (2ⁿ-1) ⇒ cₙ = 1/(2ⁿ-1) - 1/(2ⁿ⁺¹-1)",
+          "② 邻项指数分式抵消：(-1/3 + 1/3) + (-1/7 + 1/7) + … 中间项清零",
+          `③ 首尾保留封顶：T${toSub(N)} = 1 - 1/(2^${N + 1}-1) ≈ ${formatMathNumber(resolvedExpData.finalTn, 4)} < 1`,
+        )}
+
+        <line
+          x1={mathToDesign(-0.8, 1, scale).x}
+          y1={limitY}
+          x2={mathToDesign(N + 1, 1, scale).x}
+          y2={limitY}
+          stroke={MATH_COLORS.sequenceHighlight}
+          strokeWidth={1.5}
+          strokeDasharray="5,3"
+        />
+        <text
+          x={mathToDesign(N + 0.8, 1, scale).x}
+          y={limitY - 6}
+          textAnchor="end"
+          fontSize={fontScale(9)}
+          fill={MATH_COLORS.sequenceHighlight}
+          fontWeight="bold"
+        >
+          {`常数上界线 T${toSub(N)} < 1`}
+        </text>
+
+        {terms.map((t) => {
+          const posA = mathToDesign(t.n, t.partA, scale);
+          const posB = mathToDesign(t.n + 0.35, -t.partB, scale);
+          const zeroY = mathToDesign(t.n, 0, scale).y;
+          const isRetainedA = t.n === 1;
+          const isRetainedB = t.n === N;
+          const denomA = Math.pow(2, t.n) - 1;
+          const denomB = Math.pow(2, t.n + 1) - 1;
+
+          return (
+            <g key={`tele-exp-${t.n}`}>
+              <g opacity={stepOpacity(isRetainedA)}>
+                <line
+                  x1={posA.x}
+                  y1={zeroY}
+                  x2={posA.x}
+                  y2={posA.y}
+                  stroke={MATH_COLORS.combHeader}
+                  strokeWidth={isRetainedA ? 2.4 : 1.3}
+                />
+                <MathPoint
+                  x={posA.x}
+                  y={posA.y}
+                  r={isRetainedA ? 5.5 : 3.5}
+                  variant={isRetainedA ? "focus" : "solid"}
+                  color={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : MATH_COLORS.combHeader
+                  }
+                />
+                {isRetainedA && renderRetainedFocusBox(posA.x, posA.y)}
+                {!isRetainedA &&
+                  renderCancelSlash(posA.x, posA.y, MATH_COLORS.paramSecondary)}
+                <text
+                  x={posA.x}
+                  y={posA.y - 8}
+                  textAnchor="middle"
+                  fontSize={fontScale(isRetainedA ? 10 : 8.5)}
+                  fill={
+                    isRetainedA
+                      ? MATH_COLORS.sequenceHighlight
+                      : MATH_COLORS.combHeader
+                  }
+                  fontWeight={isRetainedA ? "bold" : "normal"}
+                >
+                  +1/{denomA}
+                  {isRetainedA ? " (首项保留)" : ""}
+                </text>
+              </g>
+
+              <g opacity={stepOpacity(isRetainedB)}>
+                <line
+                  x1={posB.x}
+                  y1={zeroY}
+                  x2={posB.x}
+                  y2={posB.y}
+                  stroke={MATH_COLORS.paramPrimary}
+                  strokeWidth={isRetainedB ? 2.4 : 1.3}
+                />
+                <MathPoint
+                  x={posB.x}
+                  y={posB.y}
+                  r={isRetainedB ? 5.5 : 3.5}
+                  variant={isRetainedB ? "focus" : "solid"}
+                  color={MATH_COLORS.paramPrimary}
+                />
+                {isRetainedB && renderRetainedFocusBox(posB.x, posB.y)}
+                {!isRetainedB &&
+                  renderCancelSlash(posB.x, posB.y, MATH_COLORS.paramSecondary)}
+                <text
+                  x={posB.x}
+                  y={posB.y + 15}
+                  textAnchor="middle"
+                  fontSize={fontScale(isRetainedB ? 10 : 8.5)}
+                  fill={MATH_COLORS.paramPrimary}
+                  fontWeight={isRetainedB ? "bold" : "normal"}
+                >
+                  -1/{denomB}
+                  {isRetainedB ? " (尾项保留)" : ""}
+                </text>
+              </g>
+
+              {t.n < N && (
+                <g
+                  opacity={
+                    activeStep === 2 ? 0.95 : activeStep === 1 ? 0.2 : 0.35
+                  }
+                >
+                  <path
+                    d={`M ${posB.x} ${posB.y} Q ${(posB.x + mathToDesign(t.n + 1, 0, scale).x) / 2} ${zeroY - 12} ${mathToDesign(t.n + 1, terms[t.n].partA, scale).x} ${mathToDesign(t.n + 1, terms[t.n].partA, scale).y}`}
+                    fill="none"
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={activeStep === 2 ? 1.8 : 1.1}
+                    strokeDasharray="3,2"
+                  />
                 </g>
               )}
             </g>

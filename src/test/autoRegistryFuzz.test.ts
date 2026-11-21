@@ -156,11 +156,58 @@ const fuzzTargets: TopicFuzzTarget[] = [
   },
   {
     animId: "anim-sequence",
-    topicName: "等差与等比数列通项求和",
+    topicName: "等差、等比、求和模型与递推新定义",
     defaultParams: seqDefaults as unknown as Record<string, number>,
     paramMeta: seqMeta,
     config: { activeMode: "arithmetic", arithmeticSubMode: "linear" },
     primaryKey: "d",
+    variants: [
+      {
+        label: "等比指数模型",
+        config: { activeMode: "geometric", geometricSubMode: "exponential" },
+        primaryKey: "q",
+      },
+      {
+        label: "等比片段和",
+        config: { activeMode: "geometric", geometricSubMode: "segment" },
+        primaryKey: "q",
+      },
+      {
+        label: "错位相减求和",
+        config: { activeMode: "models", subModel: "arith-geo" },
+        primaryKey: "q",
+      },
+      {
+        label: "放缩不等式证明",
+        config: { activeMode: "models", subModel: "scaling" },
+        primaryKey: "N",
+      },
+      {
+        label: "一阶线性递推",
+        config: { activeMode: "recurrence", subModel: "linear-pan" },
+        primaryKey: "p_rec",
+      },
+      {
+        label: "倒数分式递推",
+        config: { activeMode: "recurrence", subModel: "reciprocal" },
+        primaryKey: "coefB",
+      },
+      {
+        label: "二阶递推构造",
+        config: { activeMode: "recurrence", subModel: "second-order" },
+        primaryKey: "q_rec",
+      },
+      {
+        label: "Sn与an混合消元",
+        config: { activeMode: "recurrence", subModel: "sn-mixed" },
+        primaryKey: "mixedP",
+      },
+      {
+        label: "新高考19题新定义",
+        config: { activeMode: "recurrence", subModel: "new-definition" },
+        primaryKey: "p_rec",
+      },
+    ],
   },
   {
     animId: "anim-nike",

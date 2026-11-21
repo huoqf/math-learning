@@ -2,7 +2,7 @@
  * src/features/sequence/components/SequenceArithmeticAbsSumScene.tsx
  * 等差数列 - 专题 E: 绝对值数列求和 Tn = sum |an|
  */
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
@@ -133,12 +133,12 @@ export function SequenceArithmeticAbsSumScene({
                   strokeWidth={1}
                   strokeDasharray="2,2"
                 />
-                <circle
-                  cx={ptOrig.x}
-                  cy={ptOrig.y}
+                <MathPoint
+                  x={ptOrig.x}
+                  y={ptOrig.y}
                   r={2.5}
-                  fill="none"
-                  stroke={MATH_COLORS.paramPrimary}
+                  variant="hollow"
+                  color={MATH_COLORS.paramPrimary}
                 />
               </g>
             )}
@@ -168,14 +168,20 @@ export function SequenceArithmeticAbsSumScene({
               rx={2}
             />
 
+            <rect
+              x={ptTn.x - 10}
+              y={ptTn.y - 10}
+              width={20}
+              height={20}
+              fill="transparent"
+            />
             {/* Tn 绝对值累计和散点 */}
-            <circle
-              cx={ptTn.x}
-              cy={ptTn.y}
+            <MathPoint
+              x={ptTn.x}
+              y={ptTn.y}
               r={isKeyPoint ? 4 : 2.5}
-              fill={MATH_COLORS.sequenceHighlight}
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.2}
+              variant="focus"
+              color={MATH_COLORS.sequenceHighlight}
             />
             {isKeyPoint && (
               <text
@@ -191,11 +197,11 @@ export function SequenceArithmeticAbsSumScene({
             )}
 
             {/* Sn 散点 */}
-            <circle
-              cx={ptSn.x}
-              cy={ptSn.y}
+            <MathPoint
+              x={ptSn.x}
+              y={ptSn.y}
               r={2.5}
-              fill={MATH_COLORS.sequenceSum}
+              color={MATH_COLORS.sequenceSum}
             />
           </g>
         );

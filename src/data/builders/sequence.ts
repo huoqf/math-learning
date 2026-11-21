@@ -22,13 +22,23 @@ import {
   calcReciprocalRecurrence,
   calcSecondOrderRecurrence,
   calcInductionVerification,
+  calcExponentialTelescoping,
+  calcTelescopingScaling,
+  calcNewDefinitionSequence,
+  calcSnMixedRecurrence,
   type InductionClaimId,
+  type TelescopingScalingType,
+  type NewDefinitionType,
+  type SnMixedMode,
 } from "@/math/sequence";
 import { MATH_COLORS } from "@/theme";
 import {
   LINEAR_RECURRENCE_ANSWER_STEPS,
   ARITH_GEO_ANSWER_STEPS,
   TELESCOPING_ANSWER_STEPS,
+  SCALING_ANSWER_STEPS,
+  NEW_DEFINITION_ANSWER_STEPS,
+  SN_MIXED_ANSWER_STEPS,
 } from "@/data/registries/sequence";
 
 export function buildSequencePanel(
@@ -309,7 +319,7 @@ export function buildSequencePanel(
       theorems.push({
         name: "等长片段和等差性质定理",
         latex: `A_1 = S_k, \\ A_2 = S_{2k}-S_k, \\ A_3 = S_{3k}-S_{2k} \\implies \\{A_m\\} \\text{ 成等差数列，公差 } D = k^2 d`,
-        condition: "分段等长求和性质，适用于解答题快速求 S_{3n}",
+        condition: "分段等长求和性质，适用于解答题快速求 $S_{3n}$",
       });
 
       gaokaoPoints.push({
@@ -711,6 +721,13 @@ export function buildSequencePanel(
         const geoSegList = res.segmentedSums.segments;
         const geoA = geoSegList[0];
         const geoB = geoSegList[1];
+        const isZeroDegenerate = Boolean(res.segmentedSums.isZeroDegenerate);
+        if (isZeroDegenerate) {
+          warnings.push({
+            text: `临界退化（$q = -1$ 且片段长度 $k = ${res.segmentedSums.k}$ 为偶数）：每段和均为 $0$，各片段和全为 $0$ 时不能作为等比数列的公比基准！`,
+            level: "warning",
+          });
+        }
         reasoningSteps.push(
           {
             step: 1,
@@ -722,22 +739,37 @@ export function buildSequencePanel(
           },
           {
             step: 2,
-            title: `相邻片段和之比恒为 $q^k = ${formatMathNumber(res.segmentedSums.ratio, 4)}$`,
-            detail: geoB
-              ? `$A_2 = S_{${geoB.endN}} - S_{${geoB.startN - 1}} = ${formatMathNumber(geoB.sumValue, 4)}$，与 $A_1$ 的比为 ${formatMathNumber(geoB.sumValue / (geoA.sumValue || 1), 4)}，正是 $q^k$`
-              : `当前 $N = ${N}$ 不足两段，先增大项数才能比较片段和之比`,
-            latex: geoB
-              ? `\\frac{A_2}{A_1} = ${formatMathNumber(geoB.sumValue / (geoA.sumValue || 1), 4)} = q^{${res.segmentedSums.k}}`
-              : `N = ${N} \\text{ 不足 } 2k`,
-            rubric: "【高考采分点】指出片段和仍成等比、公比为 $q^k$ (+3分)",
+            title: isZeroDegenerate
+              ? "公比 $q = -1$ 且 $k$ 为偶数时片段和全为 $0$"
+              : `相邻片段和之比恒为 $q^k = ${formatMathNumber(res.segmentedSums.ratio, 4)}$`,
+            detail: isZeroDegenerate
+              ? `当 $q = -1$ 且 $k = ${res.segmentedSums.k}$ 为偶数时，$A_1 = A_2 = 0$，分母 $A_1 = 0$，此时片段和不再构成等比数列`
+              : geoB
+                ? `$A_2 = S_{${geoB.endN}} - S_{${geoB.startN - 1}} = ${formatMathNumber(geoB.sumValue, 4)}$，与 $A_1$ 的比为 ${formatMathNumber(geoB.sumValue / geoA.sumValue, 4)}，正是 $q^k$`
+                : `当前 $N = ${N}$ 不足两段，先增大项数才能比较片段和之比`,
+            latex: isZeroDegenerate
+              ? `q = -1,\\; k = ${res.segmentedSums.k}\\text{ (偶数)} \\implies A_1 = A_2 = 0 \\text{（不能作分母）}`
+              : geoB
+                ? `\\frac{A_2}{A_1} = ${formatMathNumber(geoB.sumValue / geoA.sumValue, 4)} = q^{${res.segmentedSums.k}}`
+                : `N = ${N} \\text{ 不足 } 2k`,
+            rubric:
+              "【高考采分点】指出片段和成等比的前提 $S_k \\neq 0$，规避 $q=-1$ 偶数段陷阱 (+3分)",
           },
           {
             step: 3,
-            title: "把求 $S_{3n}$ 化归为三个片段和相加",
-            detail: "三段和成等比，直接套等比求和公式即可，不必反解首项与公比",
-            latex: `S_{3k} = A_1 \\cdot \\frac{1 - \\left(q^k\\right)^3}{1 - q^k}`,
+            title: isZeroDegenerate
+              ? "退化情况下直接累加分段值"
+              : "把求 $S_{3n}$ 化归为三个片段和相加",
+            detail: isZeroDegenerate
+              ? "因各段和均为 $0$，偶数倍段和恒为 $0$；求任意项和直接按周期摆动检验奇偶即可"
+              : "三段和成等比，直接套等比求和公式即可，不必反解首项与公比",
+            latex: isZeroDegenerate
+              ? `S_{mk} = 0 \\quad (q = -1,\\; k \\text{ 为偶数})`
+              : Math.abs(res.segmentedSums.ratio - 1) < 1e-9
+                ? `S_{3k} = 3A_1`
+                : `S_{3k} = A_1 \\cdot \\frac{1 - \\left(q^k\\right)^3}{1 - q^k}`,
             rubric:
-              "【高考采分点】把 $S_{3k}$ 化成三段等比之和，直接套等比求和公式 (+3分)",
+              "【高考采分点】把 $S_{3k}$ 化成三段等比之和，注意公比是否为 $1$ 及 $S_k \\neq 0$ (+3分)",
           },
         );
         quantities.push({
@@ -882,10 +914,12 @@ export function buildSequencePanel(
       }
 
       theorems.push({
-        name: "无穷递缩等比数列的极限和（拓展 · 超出课标）",
+        name: "无穷递缩等比数列的极限和",
         latex: `S_\\infty = \\lim_{n \\to \\infty} S_n = \\frac{\\color{${MATH_COLORS.paramPrimary}}{a_1}}{1 - \\color{${MATH_COLORS.paramSecondary}}{q}} \\quad (|\\color{${MATH_COLORS.paramSecondary}}{q}| < 1)`,
         condition:
           "公比绝对值严格小于 1 时，$q^n$ 趋近于 0，和无界累加却收敛于有限面积",
+        isExtension: true,
+        extensionBadge: "拓展 · 超出课标",
       });
 
       gaokaoPoints.push({
@@ -1082,7 +1116,30 @@ export function buildSequencePanel(
     } else if (subModel === "telescoping") {
       mnemonic =
         "分式求和看分母，因式作差提系数；相邻隔项对称消，首正尾负对称留。";
-      if (teleGap === 3) {
+      if (teleGap === 4) {
+        // 指数裂项型: 2^n / ((2^n - 1)(2^{n+1} - 1))
+        const res = calcExponentialTelescoping(N);
+        quantities.push({
+          label: "指数裂项通项 $c_n$",
+          value:
+            "\\frac{2^n}{(2^n-1)(2^{n+1}-1)} = \\frac{1}{2^n-1} - \\frac{1}{2^{n+1}-1}",
+          color: MATH_COLORS.sequence,
+        });
+        quantities.push({
+          label: `前 $N$ 项和 $T_{${N}}$`,
+          value: `T_{${N}} = ${formatMathNumber(res.finalTn, 4)}`,
+          color: MATH_COLORS.sequenceSum,
+        });
+        theorems.push({
+          name: "指数分式裂项相消原理",
+          latex: `\\sum_{k=1}^n \\frac{2^k}{(2^k-1)(2^{k+1}-1)} = \\sum_{k=1}^n \\left(\\frac{1}{2^k-1} - \\frac{1}{2^{k+1}-1}\\right) = 1 - \\frac{1}{2^{n+1}-1}`,
+          condition: "分子 2^n 恰为分母两指数幂因式之差 (2^{n+1}-1) - (2^n-1)",
+        });
+        gaokaoPoints.push({
+          text: "新高考指数裂项：分子出现 $2^n$ 时，优先识别 $(2^{n+1}-1)-(2^n-1)=2^n$，拆成邻项差即可快速求和并得 $T_n < 1$。",
+          importance: "gaokao",
+        });
+      } else if (teleGap === 3) {
         // 根式有理化型
         const res = calcRadicalTelescoping(N);
         quantities.push({
@@ -1169,17 +1226,21 @@ export function buildSequencePanel(
           step: TELESCOPING_ANSWER_STEPS[0].step,
           title: TELESCOPING_ANSWER_STEPS[0].title,
           detail:
-            teleGap === 3
-              ? "把 $\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}$ 分子有理化，化成 $\\sqrt{n+1}-\\sqrt{n}$，求和时前后相消"
-              : teleGap === 2
-                ? "分母两因式跨度 $\\Delta = 2$，必须先提取裂项系数 $\\frac{1}{2}$，拆成 $\\frac{1}{2}\\left(\\frac{1}{n} - \\frac{1}{n+2}\\right)$"
-                : "裂项的关键是把分母因式拆成 $f(n) - f(n+1)$ 的形式，让求和时中间项两两抵消",
+            teleGap === 4
+              ? "识别分子 $2^n = (2^{n+1}-1)-(2^n-1)$，把通项裂成 $\\frac{1}{2^n-1} - \\frac{1}{2^{n+1}-1}$"
+              : teleGap === 3
+                ? "把 $\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}$ 分子有理化，化成 $\\sqrt{n+1}-\\sqrt{n}$，求和时前后相消"
+                : teleGap === 2
+                  ? "分母两因式跨度 $\\Delta = 2$，必须先提取裂项系数 $\\frac{1}{2}$，拆成 $\\frac{1}{2}\\left(\\frac{1}{n} - \\frac{1}{n+2}\\right)$"
+                  : "裂项的关键是把分母因式拆成 $f(n) - f(n+1)$ 的形式，让求和时中间项两两抵消",
           latex:
-            teleGap === 3
-              ? `\\frac{1}{\\sqrt{n}+\\sqrt{n+1}} = \\sqrt{n+1} - \\sqrt{n}`
-              : teleGap === 2
-                ? `c_n = \\frac{1}{n(n+2)} = \\frac{1}{2}\\left(\\frac{1}{n} - \\frac{1}{n+2}\\right)`
-                : `c_n = \\frac{1}{n(n+1)} = \\frac{1}{n} - \\frac{1}{n+1}`,
+            teleGap === 4
+              ? `\\frac{2^n}{(2^n-1)(2^{n+1}-1)} = \\frac{1}{2^n-1} - \\frac{1}{2^{n+1}-1}`
+              : teleGap === 3
+                ? `\\frac{1}{\\sqrt{n}+\\sqrt{n+1}} = \\sqrt{n+1} - \\sqrt{n}`
+                : teleGap === 2
+                  ? `c_n = \\frac{1}{n(n+2)} = \\frac{1}{2}\\left(\\frac{1}{n} - \\frac{1}{n+2}\\right)`
+                  : `c_n = \\frac{1}{n(n+1)} = \\frac{1}{n} - \\frac{1}{n+1}`,
           rubric:
             "【高考采分点】把通项裂成前后差式，跨项型必提系数 $\\frac{1}{\\Delta}$、根式型先有理化 (+3分)",
         },
@@ -1201,13 +1262,91 @@ export function buildSequencePanel(
           title: TELESCOPING_ANSWER_STEPS[2].title,
           detail: `取 $n = ${N}$ 通分化简得求和结果，并把 $n = 1$ 代回检验 $T_1 = c_1$，避免边界残留项漏写`,
           latex:
-            teleGap === 3
-              ? `T_n = \\sqrt{n+1} - 1 \\implies T_{${N}} = \\sqrt{${N + 1}} - 1`
-              : teleGap === 2
-                ? `T_n = \\frac{1}{2}\\left(\\frac{3}{2} - \\frac{1}{n+1} - \\frac{1}{n+2}\\right) \\big|_{n = ${N}}`
-                : `T_n = 1 - \\frac{1}{n+1} = \\frac{n}{n+1} \\big|_{n = ${N}}`,
+            teleGap === 4
+              ? `T_n = 1 - \\frac{1}{2^{n+1}-1} \\big|_{n = ${N}}`
+              : teleGap === 3
+                ? `T_n = \\sqrt{n+1} - 1 \\implies T_{${N}} = \\sqrt{${N + 1}} - 1`
+                : teleGap === 2
+                  ? `T_n = \\frac{1}{2}\\left(\\frac{3}{2} - \\frac{1}{n+1} - \\frac{1}{n+2}\\right) \\big|_{n = ${N}}`
+                  : `T_n = 1 - \\frac{1}{n+1} = \\frac{n}{n+1} \\big|_{n = ${N}}`,
           rubric:
             "【高考采分点】通分化简求和结果，并回代检验边界项是否吻合 (+3分)",
+        },
+      );
+    } else if (subModel === "scaling") {
+      mnemonic =
+        "原式难求莫硬算，逐项放大找参照；裂项等比缩成界，天花板下永不超。";
+      const scalingType =
+        (config?.scalingType as TelescopingScalingType) ?? "square_telescoping";
+      const res = calcTelescopingScaling(scalingType, N);
+      const isSq = scalingType === "square_telescoping";
+
+      quantities.push({
+        label: `原数列前 ${N} 项和 $T_{${N}}$`,
+        value: `T_{${N}} = ${formatMathNumber(res.origFinalSum, 4)}`,
+        color: MATH_COLORS.sequence,
+      });
+      quantities.push({
+        label: `放缩上界和 $U_{${N}}$`,
+        value: `U_{${N}} = ${formatMathNumber(res.scaledFinalSum, 4)}`,
+        color: MATH_COLORS.paramSecondary,
+      });
+      quantities.push({
+        label: "严格常数上界 $M$",
+        value: `T_n < U_n < ${res.upperBound}`,
+        color: MATH_COLORS.paramTertiary,
+        isInvariant: true,
+      });
+
+      theorems.push({
+        name: isSq ? "平方倒数裂项放缩不等式" : "指数分式放缩等比求和不等式",
+        latex: isSq
+          ? `\\frac{1}{k^2} < \\frac{1}{k(k-1)} = \\frac{1}{k-1} - \\frac{1}{k} \\quad (k \\ge 2)`
+          : `\\frac{1}{2^k + 1} < \\frac{1}{2^k} \\quad (k \\ge 1)`,
+        condition: isSq
+          ? "首项 $k=1$ 保留 $1$，从 $k=2$ 起缩分母使单调放大且可裂项相消"
+          : "缩去分母常数 $+1$，直接化为公比为 $\\frac{1}{2}$ 的等比数列求和",
+      });
+
+      gaokaoPoints.push({
+        text: isSq
+          ? "【新高考压轴不等式证明】证明 $\\sum \\frac{1}{k^2} < 2$ 时，$k=1$ 时 $\\frac{1}{k(k-1)}$ 分母为零，故首项 $1$ 必须单独保留，从第 2 项起再放缩裂项！"
+          : "【新高考放缩通法】当分母含 $2^n + C$（$C>0$）无法直接求和时，直接丢掉 $+C$ 放大成纯等比数列 $\\frac{1}{2^n}$，求和即可得严格上界 $1$。",
+        importance: "hard",
+      });
+
+      reasoningSteps.push(
+        {
+          step: SCALING_ANSWER_STEPS[0].step,
+          title: SCALING_ANSWER_STEPS[0].title,
+          detail: isSq
+            ? "对 $k \\ge 2$，缩分母得 $\\frac{1}{k^2} < \\frac{1}{k(k-1)}$，保留 $k=1$ 项 $1$ 防止分母为零"
+            : "对所有 $k \\ge 1$，因 $2^k + 1 > 2^k > 0$，取倒数得 $\\frac{1}{2^k+1} < \\frac{1}{2^k}$",
+          latex: isSq
+            ? `\\frac{1}{k^2} < \\frac{1}{k(k-1)} = \\frac{1}{k-1} - \\frac{1}{k} \\;(k \\ge 2)`
+            : `\\frac{1}{2^k + 1} < \\frac{1}{2^k} \\;(k \\ge 1)`,
+          rubric:
+            "【高考采分点】正确写出逐项放缩不等式并交代首项保留或不等号方向 (+3分)",
+        },
+        {
+          step: SCALING_ANSWER_STEPS[1].step,
+          title: SCALING_ANSWER_STEPS[1].title,
+          detail: isSq
+            ? `累加 $k=2$ 至 $n$ 并与首项 $1$ 相加，抵消后得 $U_{${N}} = 2 - \\frac{1}{${N}} = ${formatMathNumber(res.scaledFinalSum, 4)}$`
+            : `等比求和得放缩上界 $U_{${N}} = 1 - \\frac{1}{2^{${N}}} = ${formatMathNumber(res.scaledFinalSum, 4)}$`,
+          latex: isSq
+            ? `T_n < 1 + \\sum_{k=2}^{n}\\left(\\frac{1}{k-1}-\\frac{1}{k}\\right) = 2 - \\frac{1}{n}`
+            : `T_n < \\sum_{k=1}^{n}\\frac{1}{2^k} = 1 - \\frac{1}{2^n}`,
+          rubric: "【高考采分点】完成放缩后可求和数列的裂项或等比求和 (+3分)",
+        },
+        {
+          step: SCALING_ANSWER_STEPS[2].step,
+          title: SCALING_ANSWER_STEPS[2].title,
+          detail: `取 $n = ${N}$ 有 $T_{${N}} = ${formatMathNumber(res.origFinalSum, 4)} < U_{${N}} = ${formatMathNumber(res.scaledFinalSum, 4)} < ${res.upperBound}$，证得恒小于常数上界 $${res.upperBound}$`,
+          latex: isSq
+            ? `T_{${N}} = ${formatMathNumber(res.origFinalSum, 4)} < 2 - \\frac{1}{${N}} < 2`
+            : `T_{${N}} = ${formatMathNumber(res.origFinalSum, 4)} < 1 - \\frac{1}{2^{${N}}} < 1`,
+          rubric: "【高考采分点】丢掉负尾项放缩得到严格常数上界 (+2分)",
         },
       );
     } else if (subModel === "abs-sum") {
@@ -1312,21 +1451,34 @@ export function buildSequencePanel(
         text: "高考基础必备：拆项分组。将复合通项拆分为等差数列与等比数列，分别套用各自的求和公式相加，注意等比部分公比 $q=1$ 的讨论。",
         importance: "basic",
       });
+      const isQ1Grouped = Math.abs(q - 1) < 1e-9;
+      if (isQ1Grouped) {
+        warnings.push({
+          text: "⚠️ 临界退化（$q = 1$）：等比分量 $b_n = 1^{n-1} = 1$ 为常数列，求和为 $n$，严禁套用分母含 $1-q$ 的等比公式！",
+          level: "warning",
+        });
+      }
+      const qParen = q < 0 ? `(${formatMathNumber(q)})` : formatMathNumber(q);
       reasoningSteps.push(
         {
           step: 1,
           title: "把通项拆成等差部分与等比部分",
-          detail: `$c_n = a_n + b_n$ 中前者成等差（首项 ${a1}，公差 ${d}），后者成等比（公比 ${q}），两部分各自可求和`,
-          latex: `c_n = \\left(${a1} + (n-1)\\cdot ${d}\\right) + ${q}^{\\,n}`,
+          detail: `$c_n = a_n + b_n$ 中前者成等差（首项 $${formatMathNumber(a1)}$，公差 $${formatMathNumber(d)}$），后者成等比（首项 $b_1 = 1$，公比 $${formatMathNumber(q)}$），两部分各自可求和`,
+          latex: `c_n = \\left(${formatMathNumber(a1)} + (n-1)\\cdot ${d < 0 ? `(${formatMathNumber(d)})` : formatMathNumber(d)}\\right) + ${qParen}^{\\,n-1}`,
           rubric:
             "【高考采分点】把 $c_n$ 拆成等差部分与等比部分，分别套用各自求和公式 (+2分)",
         },
         {
           step: 2,
-          title: "分别求和再相加",
-          detail: `等差部分用 $na_1 + \\frac{n(n-1)}{2}d$，等比部分用等比求和公式，两者相加即为 $T_n$`,
-          latex: `T_n = \\left[na_1 + \\frac{n(n-1)}{2}d\\right] + \\frac{q(1-q^n)}{1-q}`,
-          rubric: "【高考采分点】拆分后分别求和再合并 (+3分)",
+          title: "分别求和再相加（注意分类讨论 $q = 1$）",
+          detail: isQ1Grouped
+            ? `等差部分用 $na_1 + \\frac{n(n-1)}{2}d$；因 $q = 1$，等比部分退化为 $n$ 个 $1$ 相加（即 $n$），两者相加即为 $T_n$`
+            : `等差部分用 $na_1 + \\frac{n(n-1)}{2}d$，等比部分（$q \\ne 1$）用 $\\frac{1-q^n}{1-q}$，两者相加即为 $T_n$`,
+          latex: isQ1Grouped
+            ? `T_n = \\left[na_1 + \\frac{n(n-1)}{2}d\\right] + n \\quad (q = 1)`
+            : `T_n = \\left[na_1 + \\frac{n(n-1)}{2}d\\right] + \\frac{1-q^n}{1-q} \\quad (q \\ne 1)`,
+          rubric:
+            "【高考采分点】拆分后分别求和，并对公比 $q=1$ 做出讨论 (+3分)",
         },
         {
           step: 3,
@@ -1485,36 +1637,51 @@ export function buildSequencePanel(
       if (res.fixedPoint !== null) {
         const cVal = res.fixedPoint;
         const b1Val = a1 - cVal;
+        const qSigned =
+          q_rec >= 0
+            ? `+ ${formatMathNumber(q_rec)}`
+            : `- ${formatMathNumber(Math.abs(q_rec))}`;
+        const cMinusExpr =
+          cVal >= 0
+            ? `- ${formatMathNumber(cVal)}`
+            : `+ ${formatMathNumber(Math.abs(cVal))}`;
+        const cPlusExpr =
+          cVal >= 0
+            ? `+ ${formatMathNumber(cVal)}`
+            : `- ${formatMathNumber(Math.abs(cVal))}`;
+        const pParen =
+          p_rec < 0 ? `(${formatMathNumber(p_rec)})` : formatMathNumber(p_rec);
+
         reasoningSteps.push(
           {
             step: LINEAR_RECURRENCE_ANSWER_STEPS[0].step,
             title: LINEAR_RECURRENCE_ANSWER_STEPS[0].title,
             latex: `a_{n+1} - c = \\color{${MATH_COLORS.paramPrimary}}{p}(a_n - c) \\implies c = \\frac{\\color{${MATH_COLORS.paramSecondary}}{q}}{1-\\color{${MATH_COLORS.paramPrimary}}{p}}`,
-            detail: `设常数 $c$ 满足 $c = ${p_rec}c + ${q_rec}$，移项解得平移不动点 $c = \\frac{${q_rec}}{1 - (${p_rec})} = ${formatMathNumber(cVal)}$。`,
+            detail: `设常数 $c$ 满足 $c = ${formatMathNumber(p_rec)}c ${qSigned}$，移项解得平移不动点 $c = \\frac{${formatMathNumber(q_rec)}}{1 - ${pParen}} = ${formatMathNumber(cVal)}$。`,
             rubric:
               "【高考采分点】【审题定法 · 2分】设立方程 $c = pc + q$ 并正确求出常数 $c$",
           },
           {
             step: LINEAR_RECURRENCE_ANSWER_STEPS[1].step,
             title: LINEAR_RECURRENCE_ANSWER_STEPS[1].title,
-            latex: `a_{n+1} - (${formatMathNumber(cVal)}) = ${p_rec} \\left[ a_n - (${formatMathNumber(cVal)}) \\right]`,
-            detail: `令 $b_n = a_n - (${formatMathNumber(cVal)})$，则 $\\frac{b_{n+1}}{b_n} = ${p_rec}$ (常数)，故 $\\{b_n\\}$ 是以公比 $p = ${p_rec}$ 的等比数列。`,
+            latex: `a_{n+1} ${cMinusExpr} = ${formatMathNumber(p_rec)} \\left( a_n ${cMinusExpr} \\right)`,
+            detail: `令 $b_n = a_n ${cMinusExpr}$，则 $\\frac{b_{n+1}}{b_n} = ${formatMathNumber(p_rec)}$ (常数)，故 $\\{b_n\\}$ 是以公比 $p = ${formatMathNumber(p_rec)}$ 的等比数列。`,
             rubric:
               "【高考采分点】【同减构造 · 3分】两端同减 $c$，严密写出比值为常数 $p$ 的等比证明",
           },
           {
             step: LINEAR_RECURRENCE_ANSWER_STEPS[2].step,
             title: LINEAR_RECURRENCE_ANSWER_STEPS[2].title,
-            latex: `b_n = b_1 \\cdot p^{n-1} = (a_1 - c) p^{n-1} = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1}`,
-            detail: `计算首项 $b_1 = a_1 - c = ${a1} - (${formatMathNumber(cVal)}) = ${formatMathNumber(b1Val)}$，套用通项公式得 $b_n = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1}$。`,
+            latex: `b_n = b_1 \\cdot p^{n-1} = (a_1 - c) p^{n-1} = ${formatMathNumber(b1Val)} \\cdot ${pParen}^{\\,n-1}`,
+            detail: `计算首项 $b_1 = a_1 - c = ${formatMathNumber(a1)} ${cMinusExpr} = ${formatMathNumber(b1Val)}$，套用通项公式得 $b_n = ${formatMathNumber(b1Val)} \\cdot ${pParen}^{\\,n-1}$。`,
             rubric:
               "【高考采分点】【辅助通项 · 3分】正确求出首项 $b_1 = a_1 - c$ 并写出 $b_n$ 通项表达式",
           },
           {
             step: LINEAR_RECURRENCE_ANSWER_STEPS[3].step,
             title: LINEAR_RECURRENCE_ANSWER_STEPS[3].title,
-            latex: `a_n = b_n + c = ${formatMathNumber(b1Val)} \\cdot (${p_rec})^{n-1} + (${formatMathNumber(cVal)})`,
-            detail: `由 $a_n = b_n + c$ 移项还原；当 $n = 1$ 时，$a_1 = ${formatMathNumber(b1Val)} \\times 1 + (${formatMathNumber(cVal)}) = ${a1}$，检验首项完全吻合。`,
+            latex: `a_n = b_n + c = ${formatMathNumber(b1Val)} \\cdot ${pParen}^{\\,n-1} ${cPlusExpr}`,
+            detail: `由 $a_n = b_n + c$ 移项还原；当 $n = 1$ 时，$a_1 = ${formatMathNumber(b1Val)} \\times 1 ${cPlusExpr} = ${formatMathNumber(a1)}$，检验首项完全吻合。`,
             rubric:
               "【高考采分点】【反思还原 · 2分】还原 $a_n$，且答题卷必须显式写出『检验 $n=1$ 吻合』防扣分",
           },
@@ -2062,6 +2229,265 @@ export function buildSequencePanel(
       );
 
       mnemonic = "先推第一块，再证块块相连；只验前几项，不算证明完。";
+    } else if (subModel === "sn-mixed") {
+      const mixedMode = (config?.snMixedMode as SnMixedMode) ?? "sn_linear_an";
+      const mixedP = params.mixedP ?? 2;
+      const mixedC = params.mixedC ?? -1;
+      const res = calcSnMixedRecurrence(mixedMode, mixedP, mixedC, a1, N);
+
+      if (!res.isValid) {
+        warnings.push({
+          text: res.errorMsg ?? "参数退化导致无法构成递推等比数列",
+          level: "danger",
+        });
+      } else {
+        const aN = res.terms[N - 1]?.an ?? 0;
+        const sN = res.terms[N - 1]?.Sn ?? 0;
+        const cSigned =
+          mixedC >= 0
+            ? `+ ${formatMathNumber(mixedC)}`
+            : `- ${formatMathNumber(Math.abs(mixedC))}`;
+        quantities.push(
+          {
+            label: "真实首项 $a_1$",
+            value: `a_1 = ${formatMathNumber(res.a1)}`,
+            color: MATH_COLORS.paramPrimary,
+          },
+          {
+            label: "$n \\ge 2$ 段公比 $q$",
+            value: `q = ${formatMathNumber(res.qRatio ?? 0, 4)}`,
+            color: MATH_COLORS.paramSecondary,
+          },
+          {
+            label: `第 ${N} 项 $a_{${N}}$ 与和 $S_{${N}}$`,
+            value: `a_{${N}} = ${formatMathNumber(aN, 4)},\\; S_{${N}} = ${formatMathNumber(sN, 4)}`,
+            color: MATH_COLORS.sequence,
+          },
+          {
+            label: "首项合并判定",
+            value: res.isFirstTermConsistent
+              ? "可合并为统一通项"
+              : "首项脱节，必须分段书写",
+            color: res.isFirstTermConsistent
+              ? MATH_COLORS.paramTertiary
+              : MATH_COLORS.degeneracy,
+            highlight: res.isFirstTermConsistent ? "positive" : "negative",
+          },
+        );
+
+        if (!res.isFirstTermConsistent) {
+          warnings.push({
+            text: `首项脱节告警：$a_2 = ${formatMathNumber(res.terms[1]?.an ?? 0)}$ 不等于后段公比倍 $(p+1)a_1 = ${formatMathNumber((res.qRatio ?? 0) * res.a1)}$，解答题漏写分段扣 2~3 分！`,
+            level: "warning",
+          });
+        }
+        if (mixedMode === "sn_linear_an" && Math.abs(mixedC) < 1e-9) {
+          warnings.push({
+            text: "临界退化（$c = 0$）：解得 $a_1 = 0$，数列各项恒为 $0$，不能作为非零等比数列。",
+            level: "warning",
+          });
+        }
+        if (mixedMode === "an1_linear_sn" && Math.abs(res.qRatio ?? 0) < 1e-9) {
+          warnings.push({
+            text: "临界退化（$p = -1$）：后段公比 $p+1 = 0$，从第 $3$ 项起恒为 $0$，严禁写作 $0^{n-2}$（$n=2$ 时 $0^0$ 无意义），须明确写出 $n=1, 2$ 及 $n \\ge 3$ 的分段值！",
+            level: "warning",
+          });
+        }
+
+        theorems.push({
+          name: "$S_n$ 与 $a_n$ 混合关系作差消元法",
+          latex:
+            mixedMode === "sn_linear_an"
+              ? `S_n = p a_n + c \\implies a_n = S_n - S_{n-1} = p(a_n - a_{n-1}) \\implies \\frac{a_n}{a_{n-1}} = \\frac{p}{p-1} \\;(n \\ge 2)`
+              : `a_{n+1} = p S_n + c \\implies a_{n+1} - a_n = p a_n \\implies a_{n+1} = (p+1)a_n \\;(n \\ge 2)`,
+          condition:
+            "作差公式仅在 $n \\ge 2$ 时成立，必须单独代入 $n=1$ 求出 $a_1$（或 $a_2$）并与后段比较",
+        });
+
+        gaokaoPoints.push({
+          text: "【高考大题第一问高频母题】见 $S_n$ 与 $a_n$ 混合必作差：写出 $n \\ge 2$ 的相邻式相减消去 $S_n$，再用 $n=1$ 回代检验是否满足统一通项。",
+          importance: "gaokao",
+        });
+
+        const isQZeroMixed = Math.abs(res.qRatio ?? 0) < 1e-9;
+        const qStr =
+          (res.qRatio ?? 0) < 0
+            ? `(${formatMathNumber(res.qRatio ?? 0, 4)})`
+            : formatMathNumber(res.qRatio ?? 0, 4);
+        reasoningSteps.push(
+          {
+            step: SN_MIXED_ANSWER_STEPS[0].step,
+            title: SN_MIXED_ANSWER_STEPS[0].title,
+            detail:
+              mixedMode === "sn_linear_an"
+                ? `令 $n=1$，由 $S_1 = a_1 = ${formatMathNumber(mixedP)}a_1 ${cSigned}$ 解得 $a_1 = ${formatMathNumber(res.a1, 4)}$`
+                : `已知 $a_1 = ${formatMathNumber(res.a1)}$，令 $n=1$ 得 $a_2 = ${formatMathNumber(mixedP)}S_1 ${cSigned} = ${formatMathNumber(res.terms[1]?.an ?? 0, 4)}$`,
+            latex:
+              mixedMode === "sn_linear_an"
+                ? `n=1:\\quad a_1 = ${formatMathNumber(mixedP)}a_1 ${cSigned} \\implies a_1 = ${formatMathNumber(res.a1, 4)}`
+                : `n=1:\\quad a_2 = ${formatMathNumber(mixedP)}a_1 ${cSigned} = ${formatMathNumber(res.terms[1]?.an ?? 0, 4)}`,
+            rubric: "【高考采分点】单独代入 $n=1$ 求出初始项 (+2分)",
+          },
+          {
+            step: SN_MIXED_ANSWER_STEPS[1].step,
+            title: SN_MIXED_ANSWER_STEPS[1].title,
+            detail:
+              mixedMode === "sn_linear_an"
+                ? `当 $n \\ge 2$ 时，两式相减消去 $S_n$ 得公比 $q = \\frac{${formatMathNumber(mixedP)}}{${formatMathNumber(mixedP)} - 1} = ${formatMathNumber(res.qRatio ?? 0, 4)}$`
+                : `当 $n \\ge 2$ 时，由 $a_{n+1}-a_n = ${formatMathNumber(mixedP)}(S_n - S_{n-1}) = ${formatMathNumber(mixedP)}a_n$ 得 $a_{n+1} = ${formatMathNumber(res.qRatio ?? 0, 4)}a_n$`,
+            latex:
+              mixedMode === "sn_linear_an"
+                ? `n \\ge 2:\\quad a_n = ${formatMathNumber(res.qRatio ?? 0, 4)} a_{n-1}`
+                : `n \\ge 2:\\quad a_{n+1} = (${formatMathNumber(mixedP)}+1)a_n = ${formatMathNumber(res.qRatio ?? 0, 4)}a_n`,
+            rubric: "【高考采分点】声明 $n \\ge 2$ 并作差消去 $S_n$ (+3分)",
+          },
+          {
+            step: SN_MIXED_ANSWER_STEPS[2].step,
+            title: SN_MIXED_ANSWER_STEPS[2].title,
+            detail: isQZeroMixed
+              ? `因后段比例系数 $p+1 = 0$，故 $a_1 = ${formatMathNumber(res.a1, 4)}$，$a_2 = ${formatMathNumber(res.terms[1]?.an ?? 0, 4)}$，$n \\ge 3$ 起 $a_n = 0$（避免出现无意义的 $0^0$）`
+              : res.isFirstTermConsistent
+                ? `首项满足后段等比通项，合并为 $a_n = ${formatMathNumber(res.a1, 4)}\\cdot ${qStr}^{\\,n-1}$`
+                : `$a_2 = ${formatMathNumber(res.terms[1]?.an ?? 0, 4)} \\neq ${formatMathNumber((res.qRatio ?? 0) * res.a1, 4)}$，故 $n=1$ 与 $n \\ge 2$ 必须写成分段形式`,
+            latex: isQZeroMixed
+              ? `a_n = \\begin{cases} ${formatMathNumber(res.a1, 4)}, & n = 1 \\\\ ${formatMathNumber(res.terms[1]?.an ?? 0, 4)}, & n = 2 \\\\ 0, & n \\ge 3 \\end{cases}`
+              : res.isFirstTermConsistent
+                ? `a_n = ${formatMathNumber(res.a1, 4)} \\cdot ${qStr}^{\\,n-1} \\;(n \\in \\mathbb{N}^*)`
+                : `a_n = \\begin{cases} ${formatMathNumber(res.a1, 4)}, & n = 1 \\\\ ${formatMathNumber(res.terms[1]?.an ?? 0, 4)}\\cdot ${qStr}^{\\,n-2}, & n \\ge 2 \\end{cases}`,
+            rubric:
+              "【高考采分点】检验首项一致性并准确写出统一或分段通项 (+3分)",
+          },
+        );
+      }
+      mnemonic =
+        "见和混项必作差，n 大于二记心间；首项单独先算出，验完能否再合并。";
+    } else if (subModel === "new-definition") {
+      const defType = (config?.newDefType as NewDefinitionType) ?? "diff_ratio";
+      const res = calcNewDefinitionSequence(defType, a1, p_rec, q_rec, N);
+      const lastValidTerm = res.terms[res.terms.length - 1];
+      const aN = lastValidTerm?.an ?? a1;
+
+      quantities.push(
+        {
+          label: "新定义规则",
+          value: res.ruleTitle.replace("新定义 · ", ""),
+          color: MATH_COLORS.sequence,
+        },
+        {
+          label: res.isValid ? `末项 $a_{${N}}$` : "定义域有效项数",
+          value: res.isValid
+            ? `a_{${N}} = ${formatMathNumber(aN, 4)}`
+            : `仅前 ${res.terms.length} 项有定义`,
+          color: res.isValid ? MATH_COLORS.sequence : MATH_COLORS.degeneracy,
+        },
+        {
+          label: "值域边界与有界性",
+          value: !res.isValid
+            ? "定义域受限（触发分母为零）"
+            : res.isBounded
+              ? `有界：$[${formatMathNumber(res.minVal, 3)},\\; ${formatMathNumber(res.maxVal, 3)}]$`
+              : `无界趋势（当前范围 $[${formatMathNumber(res.minVal, 3)},\\; ${formatMathNumber(res.maxVal, 3)}]$）`,
+          color: !res.isValid
+            ? MATH_COLORS.degeneracy
+            : res.isBounded
+              ? MATH_COLORS.paramTertiary
+              : MATH_COLORS.paramSecondary,
+        },
+      );
+      if (res.periodDetected !== null) {
+        quantities.push({
+          label: "周期性检测",
+          value: `最小正周期 $T = ${res.periodDetected}$`,
+          color: MATH_COLORS.sequenceHighlight,
+          isInvariant: true,
+        });
+      }
+      if (!res.isValid) {
+        warnings.push({
+          text: `分式定义域失效：当前 $a_1 = ${formatMathNumber(a1)}$ 导致迭代过程中出现 $1 - a_n = 0$ 而无定义！高考试题要求首项满足 $a_1 \\neq 0$ 且 $a_1 \\neq 1$。`,
+          level: "danger",
+        });
+      }
+
+      theorems.push({
+        name: res.ruleTitle,
+        latex:
+          defType === "diff_ratio"
+            ? `\\Delta a_n = a_{n+1} - a_n \\implies \\Delta a_{n+1} = p \\cdot \\Delta a_n`
+            : defType === "alt_sum_arith"
+              ? `a_n + a_{n+1} = 2n + q \\implies a_{n+2} - a_n = (2n+2+q)-(2n+q) = 2`
+              : `a_{n+1} = \\frac{1}{1 - a_n} \\implies a_{n+3} = a_n \\quad (a_1 \\notin \\{0, 1\\})`,
+        condition: res.conclusionText,
+      });
+
+      gaokaoPoints.push({
+        text: "【新高考 19 题破题心法】遇到陌生新定义数列，先算前 4~6 项找结构，再通过「作差 / 隔项作差 / 连续迭代」构造出常规的等差、等比或周期闭环（同时严查分母非零等存在性条件）。",
+        importance: "hard",
+      });
+
+      const qSigned =
+        q_rec >= 0
+          ? `+ ${formatMathNumber(q_rec)}`
+          : `- ${formatMathNumber(Math.abs(q_rec))}`;
+      const a2Alt = 2 + q_rec - a1;
+      reasoningSteps.push(
+        {
+          step: NEW_DEFINITION_ANSWER_STEPS[0].step,
+          title: NEW_DEFINITION_ANSWER_STEPS[0].title,
+          detail: !res.isValid
+            ? `取首项 $a_1 = ${formatMathNumber(a1)}$，推至第 ${res.terms.length} 项时出现 $a_{${res.terms.length}} = 1$，下一步分母 $1 - a_n = 0$ 无意义`
+            : `取首项 $a_1 = ${formatMathNumber(res.terms[0]?.an ?? a1, 3)}$，顺次算出前 $3$ 项为 $${res.terms
+                .slice(0, 3)
+                .map((t) => formatMathNumber(t.an, 3))
+                .join(",\\; ")}$`,
+          latex:
+            defType === "diff_ratio"
+              ? `a_{n+1} = ${formatMathNumber(p_rec)}a_n ${qSigned},\\; a_1 = ${formatMathNumber(a1)}`
+              : defType === "alt_sum_arith"
+                ? `a_n + a_{n+1} = 2n ${qSigned},\\; a_1 = ${formatMathNumber(a1)},\\; a_2 = ${formatMathNumber(a2Alt)}`
+                : `a_{n+1} = \\frac{1}{1 - a_n},\\; a_1 = ${formatMathNumber(a1)}`,
+          rubric:
+            "【高考采分点】正确读懂新定义、算出初项并核查存在性前提 (+2分)",
+        },
+        {
+          step: NEW_DEFINITION_ANSWER_STEPS[1].step,
+          title: NEW_DEFINITION_ANSWER_STEPS[1].title,
+          detail: res.conclusionText,
+          latex:
+            defType === "diff_ratio"
+              ? `\\Delta a_n = a_{n+1} - a_n \\implies \\frac{\\Delta a_{n+1}}{\\Delta a_n} = ${formatMathNumber(p_rec)}`
+              : defType === "alt_sum_arith"
+                ? `a_{n+2} - a_n = (a_{n+2}+a_{n+1}) - (a_{n+1}+a_n) = 2`
+                : res.isValid
+                  ? `a_{n+2} = 1 - \\frac{1}{a_n} \\implies a_{n+3} = a_n`
+                  : `1 - a_{${res.terms.length}} = 0 \\implies \\text{后续项无定义}`,
+          rubric:
+            "【高考采分点】通过作差或迭代构造出派生等差/等比或周期恒等式 (+4分)",
+        },
+        {
+          step: NEW_DEFINITION_ANSWER_STEPS[2].step,
+          title: NEW_DEFINITION_ANSWER_STEPS[2].title,
+          detail: !res.isValid
+            ? `须先由数列各项有意义求得定义域禁区 $a_1 \\neq 0$ 且 $a_1 \\neq 1$`
+            : defType === "alt_sum_arith"
+              ? `奇数项成首项 ${formatMathNumber(a1)}、公差 2 的等差数列；偶数项成首项 ${formatMathNumber(a2Alt)}、公差 2 的等差数列`
+              : `结合派生数列特征，得出该数列${res.isBounded ? "在闭区间上严格有界" : "呈发散或线性增长趋势"}，当前末项 $a_{${N}} = ${formatMathNumber(aN, 4)}$`,
+          latex: !res.isValid
+            ? `a_1 \\notin \\{0,\\; 1\\}`
+            : defType === "bounded_period"
+              ? `a_n \\in \\left\\{${res.terms
+                  .slice(0, 3)
+                  .map((t) => formatMathNumber(t.an, 3))
+                  .join(",\\; ")}\\right\\}`
+              : defType === "alt_sum_arith"
+                ? `\\begin{cases} a_{2k-1} = ${formatMathNumber(a1)} + 2(k-1) \\\\ a_{2k} = ${formatMathNumber(a2Alt)} + 2(k-1) \\end{cases}`
+                : `a_{${N}} = ${formatMathNumber(aN, 4)}`,
+          rubric:
+            "【高考采分点】利用派生结构完成新定义性质（分段通项/有界/周期）的最终证明 (+3分)",
+        },
+      );
+      mnemonic =
+        "新定义题莫发慌，先写三项摸规律；一阶作差隔项减，化归等差等比圈。";
     }
   }
 

@@ -3,7 +3,7 @@
  * 倒数与分式递推构造
  */
 import React from "react";
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { calcReciprocalRecurrence } from "@/math/sequence";
@@ -106,24 +106,48 @@ export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
               />
             )}
 
+            {/* 倒数映射指示线 */}
+            {showLabel &&
+              !Number.isNaN(t.an) &&
+              posBn &&
+              Math.abs(posAn.y - posBn.y) > 14 && (
+                <line
+                  x1={posAn.x}
+                  y1={posAn.y}
+                  x2={posBn.x}
+                  y2={posBn.y}
+                  stroke={withAlpha(MATH_COLORS.paramTertiary, 0.55)}
+                  strokeWidth={1.2}
+                  strokeDasharray="2,2"
+                />
+              )}
+
             {/* 原数列散点 */}
             {!Number.isNaN(t.an) && (
               <g>
+                <rect
+                  x={posAn.x - 12}
+                  y={posAn.y - 12}
+                  width={24}
+                  height={24}
+                  fill="transparent"
+                />
                 {isHighlighted && (
-                  <circle
-                    cx={posAn.x}
-                    cy={posAn.y}
-                    r={12}
+                  <rect
+                    x={posAn.x - 11}
+                    y={posAn.y - 11}
+                    width={22}
+                    height={22}
+                    rx={11}
                     fill={withAlpha(MATH_COLORS.sequence, 0.25)}
                   />
                 )}
-                <circle
-                  cx={posAn.x}
-                  cy={posAn.y}
+                <MathPoint
+                  x={posAn.x}
+                  y={posAn.y}
                   r={isHighlighted ? 7 : 4.5}
-                  fill={MATH_COLORS.sequence}
-                  stroke={MATH_COLORS.white}
-                  strokeWidth={2}
+                  variant="focus"
+                  color={MATH_COLORS.sequence}
                 />
                 {showLabel && (
                   <MathSubText
@@ -131,7 +155,7 @@ export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
                     y={posAn.y - 12}
                     base="a"
                     sub={t.n}
-                    val={t.an.toFixed(2)}
+                    val={formatMathNumber(t.an, 2)}
                     fill={MATH_COLORS.sequence}
                     fontScale={fontScale}
                     fontSize={10}
@@ -143,13 +167,12 @@ export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
             {/* 倒数数列 b_n = 1/a_n */}
             {posBn && (
               <g>
-                <circle
-                  cx={posBn.x}
-                  cy={posBn.y}
+                <MathPoint
+                  x={posBn.x}
+                  y={posBn.y}
                   r={4.5}
-                  fill={MATH_COLORS.paramSecondary}
-                  stroke={MATH_COLORS.white}
-                  strokeWidth={1.5}
+                  variant="focus"
+                  color={MATH_COLORS.paramSecondary}
                 />
                 {showLabel && (
                   <MathSubText
@@ -157,7 +180,7 @@ export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
                     y={posBn.y + 16}
                     base="b"
                     sub={t.n}
-                    val={t.bn.toFixed(2)}
+                    val={formatMathNumber(t.bn, 2)}
                     fill={MATH_COLORS.paramSecondary}
                     fontScale={fontScale}
                     fontSize={10}
@@ -182,7 +205,7 @@ export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
           stroke={CANVAS_COLORS.axis}
           strokeWidth={1}
         />
-        <circle cx={14} cy={18} r={4.5} fill={MATH_COLORS.sequence} />
+        <MathPoint x={14} y={18} r={4.5} color={MATH_COLORS.sequence} />
         <text
           x={26}
           y={22}
@@ -194,7 +217,7 @@ export const RecurrenceReciprocalScene: React.FC<RecurrenceSceneBaseProps> = ({
           <tspan fontStyle="italic">a</tspan>
           <tspan fontSize={fontScale(8)}>ₙ</tspan>
         </text>
-        <circle cx={14} cy={38} r={4.5} fill={MATH_COLORS.paramSecondary} />
+        <MathPoint x={14} y={38} r={4.5} color={MATH_COLORS.paramSecondary} />
         <text
           x={26}
           y={42}

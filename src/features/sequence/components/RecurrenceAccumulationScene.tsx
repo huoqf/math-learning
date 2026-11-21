@@ -3,7 +3,7 @@
  * 累加法：差分增量柱状堆叠与散点
  */
 import React from "react";
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import {
@@ -168,21 +168,29 @@ export const RecurrenceAccumulationScene: React.FC<Props> = ({
               stroke={MATH_COLORS.sequenceStem}
               strokeDasharray="3,3"
             />
+            <rect
+              x={posAn.x - 12}
+              y={posAn.y - 12}
+              width={24}
+              height={24}
+              fill="transparent"
+            />
             {isHighlighted && (
-              <circle
-                cx={posAn.x}
-                cy={posAn.y}
-                r={12}
+              <rect
+                x={posAn.x - 11}
+                y={posAn.y - 11}
+                width={22}
+                height={22}
+                rx={11}
                 fill={withAlpha(MATH_COLORS.sequence, 0.25)}
               />
             )}
-            <circle
-              cx={posAn.x}
-              cy={posAn.y}
+            <MathPoint
+              x={posAn.x}
+              y={posAn.y}
               r={isHighlighted ? 7 : 4.5}
-              fill={MATH_COLORS.sequence}
-              stroke={MATH_COLORS.white}
-              strokeWidth={2}
+              variant="focus"
+              color={MATH_COLORS.sequence}
             />
             {showLabel && (
               <MathSubText
@@ -190,7 +198,7 @@ export const RecurrenceAccumulationScene: React.FC<Props> = ({
                 y={posAn.y - 12}
                 base="a"
                 sub={t.n}
-                val={t.an.toFixed(1)}
+                val={formatMathNumber(t.an, 2)}
                 fill={MATH_COLORS.sequence}
                 fontScale={fontScale}
               />

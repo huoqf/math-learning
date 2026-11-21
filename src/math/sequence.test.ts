@@ -15,6 +15,10 @@ import {
   calcNonHomogeneousExpRecurrence,
   calcReciprocalRecurrence,
   calcSecondOrderRecurrence,
+  calcExponentialTelescoping,
+  calcTelescopingScaling,
+  calcNewDefinitionSequence,
+  calcSnMixedRecurrence,
 } from "./sequence";
 
 describe("Sequence Math Calculations — 高中数学数列核心计算与高考模型测试", () => {
@@ -625,6 +629,104 @@ describe("Sequence Math Calculations — 高中数学数列核心计算与高考
           }
         }
       }
+    });
+  });
+
+  // ==========================================
+  // 7. 新高考新增模型测试：指数裂项、放缩证明、Sn-an 混合消元、新定义探索、q=-1 片段退化
+  // ==========================================
+  describe("7. 新高考高频综合模型 (Exponential Telescoping / Scaling / Sn-Mixed / New-Definition)", () => {
+    it("等比片段和在 q = -1 且 k 为偶数时必须标记 isZeroDegenerate: true", () => {
+      const zeroDeg = calcGeometricSequence(3, -1, 6, 2);
+      expect(zeroDeg.segmentedSums?.isZeroDegenerate).toBe(true);
+      expect(
+        zeroDeg.segmentedSums?.segments.every((s) => s.sumValue === 0),
+      ).toBe(true);
+
+      const nonZeroOdd = calcGeometricSequence(3, -1, 6, 3);
+      expect(nonZeroOdd.segmentedSums?.isZeroDegenerate).toBe(false);
+    });
+
+    it("指数分式裂项：前 N 项和严格等于 1 - 1/(2^{N+1}-1)", () => {
+      const res = calcExponentialTelescoping(6);
+      expect(res.isValid).toBe(true);
+      expect(res.terms[0].cn).toBeCloseTo(2 / (1 * 3), 10);
+      expect(res.finalTn).toBeCloseTo(1 - 1 / (Math.pow(2, 7) - 1), 10);
+      expect(res.terms[5].Tn).toBeCloseTo(res.finalTn, 10);
+    });
+
+    it("数列放缩不等式证明：平方倒数裂项放缩 (< 2) 与指数等比放缩 (< 1)", () => {
+      const sq = calcTelescopingScaling("square_telescoping", 10);
+      expect(sq.allDominated).toBe(true);
+      expect(sq.origFinalSum).toBeLessThan(sq.scaledFinalSum);
+      expect(sq.scaledFinalSum).toBeCloseTo(2 - 1 / 10, 10);
+      expect(sq.scaledFinalSum).toBeLessThan(2);
+
+      const exp = calcTelescopingScaling("exp_geometric", 8);
+      expect(exp.allDominated).toBe(true);
+      expect(exp.origFinalSum).toBeLessThan(exp.scaledFinalSum);
+      expect(exp.scaledFinalSum).toBeCloseTo(1 - 1 / Math.pow(2, 8), 10);
+      expect(exp.scaledFinalSum).toBeLessThan(1);
+    });
+
+    it("Sn 与 an 混合消元：Sn = 2an - 1 可合并，a_{n+1} = 2Sn + 2 必须分段", () => {
+      const merged = calcSnMixedRecurrence("sn_linear_an", 2, -1, 1, 5);
+      expect(merged.isValid).toBe(true);
+      expect(merged.a1).toBeCloseTo(1, 10);
+      expect(merged.qRatio).toBeCloseTo(2, 10);
+      expect(merged.terms.map((t) => t.an)).toEqual([1, 2, 4, 8, 16]);
+      expect(merged.isFirstTermConsistent).toBe(true);
+
+      const split = calcSnMixedRecurrence("an1_linear_sn", 2, 2, 1, 5);
+      expect(split.isValid).toBe(true);
+      expect(split.isFirstTermConsistent).toBe(false);
+      // a1=1, a2=2*1+2=4, a3=3*4=12, a4=36, a5=108
+      expect(split.terms.map((t) => t.an)).toEqual([1, 4, 12, 36, 108]);
+    });
+
+    it("新高考 19 题新定义探索：差分等比、邻和奇偶等差、3-周期分式", () => {
+      const diffRatio = calcNewDefinitionSequence("diff_ratio", 2, 3, -2, 6);
+      expect(diffRatio.isValid).toBe(true);
+      // a1=2, a2=4, a3=10, a4=28 => delta: 2, 6, 18 (公比3)
+      expect(diffRatio.terms[0].derived).toBe(2);
+      expect(diffRatio.terms[1].derived).toBe(6);
+      expect(diffRatio.terms[2].derived).toBe(18);
+
+      const altSum = calcNewDefinitionSequence("alt_sum_arith", 1, 1, 1, 8);
+      expect(
+        altSum.terms.slice(0, 6).every((t) => t.derived === 2 && t.propertyOk),
+      ).toBe(true);
+
+      const period = calcNewDefinitionSequence("bounded_period", 2, 1, 1, 7);
+      expect(period.periodDetected).toBe(3);
+      expect(period.isBounded).toBe(true);
+      // 2 -> -1 -> 0.5 -> 2
+      expect(period.terms[0].an).toBeCloseTo(2, 10);
+      expect(period.terms[3].an).toBeCloseTo(2, 10);
+      expect(period.terms[6].an).toBeCloseTo(2, 10);
+
+      // 3-周期分式边界：a1 = 0 或 a1 = 1 时必须如实报 isValid: false，严禁静默替换为 a1=2
+      const zeroSingular = calcNewDefinitionSequence(
+        "bounded_period",
+        0,
+        1,
+        1,
+        6,
+      );
+      expect(zeroSingular.isValid).toBe(false);
+      expect(zeroSingular.periodDetected).toBeNull();
+      expect(zeroSingular.conclusionText).toContain("a₁ = 0");
+
+      const oneSingular = calcNewDefinitionSequence(
+        "bounded_period",
+        1,
+        1,
+        1,
+        6,
+      );
+      expect(oneSingular.isValid).toBe(false);
+      expect(oneSingular.periodDetected).toBeNull();
+      expect(oneSingular.conclusionText).toContain("1 - aₙ = 0");
     });
   });
 });

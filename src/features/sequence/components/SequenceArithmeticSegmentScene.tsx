@@ -2,7 +2,7 @@
  * src/features/sequence/components/SequenceArithmeticSegmentScene.tsx
  * 等差数列 - 专题 D: 等长片段和性质 (Sk, S2k-Sk, S3k-S2k 等差条带)
  */
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
@@ -27,6 +27,8 @@ export function SequenceArithmeticSegmentScene({
   const { kSegment, arithData } = useSequenceParams(params);
 
   const { terms, segmentedSums } = arithData;
+  const validK =
+    segmentedSums?.k ?? Math.max(2, Math.min(5, Math.round(kSegment)));
 
   const segColors = [
     MATH_COLORS.sequence,
@@ -84,7 +86,7 @@ export function SequenceArithmeticSegmentScene({
 
       {/* 2. 各项柱体与散点 */}
       {terms.map((t) => {
-        const segIdx = Math.floor((t.n - 1) / kSegment);
+        const segIdx = Math.floor((t.n - 1) / validK);
         const color = segColors[segIdx % segColors.length];
         const pt0 = mathToDesign(t.n - 0.2, 0, scale);
         const pt1 = mathToDesign(t.n + 0.2, t.an, scale);
@@ -106,13 +108,12 @@ export function SequenceArithmeticSegmentScene({
               strokeWidth={1.2}
               rx={2}
             />
-            <circle
-              cx={posAn.x}
-              cy={posAn.y}
+            <MathPoint
+              x={posAn.x}
+              y={posAn.y}
               r={3}
-              fill={color}
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.2}
+              variant="focus"
+              color={color}
             />
             <text
               x={posAn.x}

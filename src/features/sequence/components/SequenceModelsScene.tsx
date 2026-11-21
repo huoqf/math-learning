@@ -11,6 +11,8 @@ import { SequenceModelsTelescopingScene } from "./SequenceModelsTelescopingScene
 import { SequenceModelsAbsSumScene } from "./SequenceModelsAbsSumScene";
 import { SequenceModelsGroupedScene } from "./SequenceModelsGroupedScene";
 import { SequenceModelsOddEvenScene } from "./SequenceModelsOddEvenScene";
+import { SequenceModelsScalingScene } from "./SequenceModelsScalingScene";
+import type { TelescopingScalingType } from "@/math/sequence";
 
 interface SequenceModelsSceneProps {
   params: Record<string, number>;
@@ -20,10 +22,12 @@ interface SequenceModelsSceneProps {
   modelType?:
     | "arith-geo"
     | "telescoping"
+    | "scaling"
     | "cross-telescoping"
     | "grouped"
     | "odd-even"
     | "abs-sum";
+  scalingType?: TelescopingScalingType;
   highlightN?: number;
   onSelectN?: (n: number) => void;
 }
@@ -34,6 +38,7 @@ export function SequenceModelsScene({
   vp,
   fontScale,
   modelType = "arith-geo",
+  scalingType = "square_telescoping",
 }: SequenceModelsSceneProps) {
   const {
     a1,
@@ -49,6 +54,7 @@ export function SequenceModelsScene({
     oddEvenData,
     absSumData,
     radicalTeleData,
+    expTeleData,
   } = useSequenceParams(params);
 
   if (modelType === "arith-geo") {
@@ -77,6 +83,20 @@ export function SequenceModelsScene({
         telescopingData={telescopingData}
         crossTelescopingData={crossTelescopingData}
         radicalTeleData={radicalTeleData}
+        expTeleData={expTeleData}
+        vp={vp}
+        scale={scale}
+        fontScale={fontScale}
+      />
+    );
+  }
+
+  if (modelType === "scaling") {
+    return (
+      <SequenceModelsScalingScene
+        scalingType={scalingType}
+        N={N}
+        sumStep={sumStep}
         vp={vp}
         scale={scale}
         fontScale={fontScale}

@@ -70,6 +70,60 @@ export const TELESCOPING_ANSWER_STEPS: AnswerStepItem[] = [
   },
 ];
 
+export const SCALING_ANSWER_STEPS: AnswerStepItem[] = [
+  {
+    step: 1,
+    title: "逐项放大构建可求和上界通项",
+    sceneHint: "比较原项柱与放缩上界虚线柱，确认每一项均满足 cₙ < uₙ",
+  },
+  {
+    step: 2,
+    title: "对放缩上界数列裂项或等比求和",
+    sceneHint: "保留首项或对齐公共因子，求出放缩部分和 Uₙ 的封闭式",
+  },
+  {
+    step: 3,
+    title: "放缩传递锁定常数上界天花板",
+    sceneHint: "观察原部分和 Tₙ 始终位于 Uₙ 与渐近常数上界线 M 下方",
+  },
+];
+
+export const NEW_DEFINITION_ANSWER_STEPS: AnswerStepItem[] = [
+  {
+    step: 1,
+    title: "翻译新定义约束并检验初始前几项",
+    sceneHint: "读出新定义算子，核验首项 a₁ 与相邻项是否触发约束边界",
+  },
+  {
+    step: 2,
+    title: "构造派生数列化归为等差、等比或周期",
+    sceneHint: "观察下方派生数列 bₙ 是否呈现等比、常数或周期归零结构",
+  },
+  {
+    step: 3,
+    title: "回代判定有界性、单调性或通项结构",
+    sceneHint: "对比原数列包络边界与派生判定标记，给出严谨证明结论",
+  },
+];
+
+export const SN_MIXED_ANSWER_STEPS: AnswerStepItem[] = [
+  {
+    step: 1,
+    title: "令 n = 1 代入 S₁ = a₁ 求出首项",
+    sceneHint: "观察 n=1 处首项柱与基准关系式，确定真实首项 a₁",
+  },
+  {
+    step: 2,
+    title: "令 n ≥ 2 作差消去 Sₙ 得递推比",
+    sceneHint: "由 aₙ = Sₙ - Sₙ₋₁ 消去 Sₙ，得到 n ≥ 2 时的相邻项公比 q",
+  },
+  {
+    step: 3,
+    title: "检验首项是否满足通项并决定是否分段",
+    sceneHint: "比对实际 a₁（或 a₂/a₁）与后段通项公式，缺口非零必写分段",
+  },
+];
+
 export interface SequenceParams {
   a1: number;
   d: number;
@@ -89,6 +143,9 @@ export interface SequenceParams {
   coefC: number;
   /** 已知 S_n 求通项（snToAn 模式）：S_n 的常数项偏移 C，C ≠ 0 时首项必须单独验证 */
   snConst: number;
+  /** Sn 与 an 混合消元系数 p 与常数 c */
+  mixedP: number;
+  mixedC: number;
 }
 
 export const defaultParams: SequenceParams = {
@@ -109,6 +166,8 @@ export const defaultParams: SequenceParams = {
   coefB: 1,
   coefC: 1,
   snConst: 0,
+  mixedP: 2,
+  mixedC: -1,
 };
 
 export interface RecurrencePreset {
@@ -227,6 +286,40 @@ export const RECURRENCE_PRESETS: Record<string, RecurrencePreset[]> = {
       params: { a1: 1, a2: 3, p_rec: 2, q_rec: -1, N: 6 },
     },
   ],
+  "sn-mixed": [
+    {
+      key: "sn-linear-merged",
+      name: "含 Sn 式消元 (Sn=2an-1)",
+      desc: "$n=1$ 解得 $a_1=1$，作差得公比 $q=2$ 的纯等比数列",
+      params: { mixedP: 2, mixedC: -1, a1: 1, N: 6 },
+    },
+    {
+      key: "an1-sn-split",
+      name: "首项脱节陷阱 (an+1=2Sn+2)",
+      desc: "$a_1=1$ 时 $a_2=4 \\neq 3a_1$，$n=1$ 必须分段表示",
+      params: { mixedP: 2, mixedC: 2, a1: 1, N: 6 },
+    },
+  ],
+  "new-definition": [
+    {
+      key: "diff-ratio",
+      name: "新定义 · 差分等比数列",
+      desc: "一阶差分 $\\Delta a_n = a_{n+1}-a_n$ 成公比 $p$ 的等比数列",
+      params: { a1: 2, p_rec: 3, q_rec: -2, N: 6 },
+    },
+    {
+      key: "alt-sum-arith",
+      name: "新定义 · 邻和线性分流",
+      desc: "$a_n + a_{n+1} = 2n + q$，隔项作差证奇偶各自等差",
+      params: { a1: 1, p_rec: 1, q_rec: 1, N: 8 },
+    },
+    {
+      key: "bounded-period",
+      name: "新定义 · 分式 3-周期有界",
+      desc: "$a_{n+1} = 1/(1-a_n)$，连续三次迭代周期循环与有界性",
+      params: { a1: 2, p_rec: 1, q_rec: 1, N: 8 },
+    },
+  ],
 };
 
 export const paramMeta: Record<string, ParamMeta> = {
@@ -234,6 +327,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "a1",
     label: "首项 a₁",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{a_1}`,
+    group: "核心首项与结构",
     defaultValue: 1,
     min: -6,
     max: 8,
@@ -251,11 +345,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "d",
     label: "公差 d",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{d}`,
+    group: "核心首项与结构",
     defaultValue: -1,
     min: -3,
     max: 3,
     step: 0.5,
-    description: "公差 d（对应一次函数斜率与二次函数二次项系数 d/2）",
+    description: "公差 $d$（对应一次函数斜率与二次函数二次项系数 $d/2$）",
     importance: "core",
     marks: [
       {
@@ -280,11 +375,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "q",
     label: "公比 q",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{q}`,
+    group: "核心首项与结构",
     defaultValue: 0.5,
     min: -2,
     max: 2,
     step: 0.1,
-    description: "等比数列公比 q（决定数列增长、衰减、常数或震荡形态）",
+    description: "等比数列公比 $q$（决定数列增长、衰减、常数或震荡形态）",
     importance: "core",
     marks: [
       {
@@ -313,12 +409,13 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "kSegment",
     label: "片段项数 k",
     labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{k}`,
+    group: "显示与边界控制",
     defaultValue: 3,
     min: 2,
     max: 4,
     step: 1,
     description:
-      "等长片段大小 $k$（展示 $S_k, S_{2k}-S_k, S_{3k}-S_{2k}$ 的等差性）",
+      "等长片段大小 $k$（展示 $S_k, S_{2k}-S_k, S_{3k}-S_{2k}$ 的等差或等比性质）",
     importance: "core",
     marks: [
       { value: 2, label: "k=2", labelFormula: "k=2" },
@@ -328,8 +425,9 @@ export const paramMeta: Record<string, ParamMeta> = {
   },
   snConst: {
     key: "snConst",
-    label: "$S_n$ 的常数项 $C$",
-    labelFormula: `S_n = \\tfrac{d}{2}n^2 + (a_1 - \\tfrac{d}{2})n + \\color{${MATH_COLORS.paramTertiary}}{C}`,
+    label: "Sn 常数项 C",
+    labelFormula: `\\text{常数项 }\\color{${MATH_COLORS.paramTertiary}}{C}`,
+    group: "显示与边界控制",
     defaultValue: 0,
     min: -8,
     max: 8,
@@ -347,6 +445,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "gaussRatio",
     label: "倒序拼图进度 λ",
     labelFormula: `\\text{倒序拼图进度 }\\color{${MATH_COLORS.paramTertiary}}{\\lambda}`,
+    group: "显示与边界控制",
     defaultValue: 1,
     min: 0,
     max: 1,
@@ -363,11 +462,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "N",
     label: "展示项数 N",
     labelFormula: `\\text{展示项数 }\\color{${MATH_COLORS.paramTertiary}}{N}`,
+    group: "显示与边界控制",
     defaultValue: 6,
     min: 4,
     max: 12,
     step: 1,
-    description: "数列展现的前 N 项项数",
+    description: "数列展现的前 $N$ 项项数",
     importance: "advanced",
     marks: [
       { value: 6, label: "N=6", labelFormula: "6" },
@@ -379,11 +479,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "p_rec",
     label: "递推系数 p",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{p}`,
+    group: "递推与分式系数",
     defaultValue: 2,
     min: -3,
     max: 3,
     step: 0.5,
-    description: "递推关系式 $a_{n+1} = p * a_n + q$ 中的系数 $p$",
+    description: "递推关系式 $a_{n+1} = p \\cdot a_n + q$ 中的系数 $p$",
     descriptionFormula: `a_{n+1} = \\color{${MATH_COLORS.paramPrimary}}{p} a_n + q`,
     importance: "core",
     marks: [
@@ -401,12 +502,13 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "q_rec",
     label: "递推常数 q",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{q}`,
+    group: "递推与分式系数",
     defaultValue: 1,
     min: -5,
     max: 5,
     step: 1,
     description:
-      "递推关系式 $a_{n+1} = p * a_n + q$ 中的常数项 $q$ ($q=0$ 时退化为纯等比)",
+      "递推关系式 $a_{n+1} = p \\cdot a_n + q$ 中的常数项 $q$ ($q=0$ 时退化为纯等比)",
     descriptionFormula: `a_{n+1} = p a_n + \\color{${MATH_COLORS.paramSecondary}}{q}`,
     importance: "core",
     marks: [
@@ -423,11 +525,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "r_rec",
     label: "非齐次指数底数 r",
     labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{r}`,
+    group: "递推与分式系数",
     defaultValue: 3,
     min: 1,
     max: 5,
     step: 1,
-    description: "非齐次项 $a_{n+1} = p*a_n + q*r^n$ 中的指数底数 $r$",
+    description: "非齐次项 $a_{n+1} = p a_n + q r^n$ 中的指数底数 $r$",
     descriptionFormula: `a_{n+1} = p a_n + q \\cdot \\color{${MATH_COLORS.paramTertiary}}{r}^n`,
     importance: "core",
     marks: [
@@ -439,11 +542,12 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "stepParam",
     label: "增量参数 d/q",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{\\Delta}`,
+    group: "递推与分式系数",
     defaultValue: 2,
     min: 1,
     max: 5,
     step: 0.5,
-    description: "累加法增量函数 f(n) 的参数（等差步长或等比公比）",
+    description: "累加法增量函数 $f(n)$ 的参数（等差步长或等比公比）",
     importance: "core",
     marks: [
       { value: 1, label: "1", labelFormula: "1" },
@@ -455,6 +559,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "a2",
     label: "第二项 a₂",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{a_2}`,
+    group: "核心首项与结构",
     defaultValue: 3,
     min: -5,
     max: 10,
@@ -470,23 +575,25 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "coefA",
     label: "分子系数 A",
     labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{A}`,
+    group: "递推与分式系数",
     defaultValue: 2,
     min: 0.5,
     max: 5,
     step: 0.5,
-    description: "分式递推 $a_{n+1} = A*a_n / (B*a_n + C)$ 的分子系数 $A$",
+    description: "分式递推 $a_{n+1} = A a_n / (B a_n + C)$ 的分子系数 $A$",
     importance: "core",
   },
   coefB: {
     key: "coefB",
     label: "分母二次项 B",
     labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{B}`,
+    group: "递推与分式系数",
     defaultValue: 1,
     min: -3,
     max: 3,
     step: 0.5,
     description:
-      "分式递推 $a_{n+1} = A*a_n / (B*a_n + C)$ 的分母系数 $B$ ($B=0$ 时退化为纯比例)",
+      "分式递推 $a_{n+1} = A a_n / (B a_n + C)$ 的分母系数 $B$ ($B=0$ 时退化为纯比例)",
     importance: "core",
     marks: [
       {
@@ -501,11 +608,45 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "coefC",
     label: "分母常数 C",
     labelFormula: `\\color{${MATH_COLORS.paramTertiary}}{C}`,
+    group: "递推与分式系数",
     defaultValue: 1,
     min: 0.5,
     max: 5,
     step: 0.5,
-    description: "分式递推 $a_{n+1} = A*a_n / (B*a_n + C)$ 的分母常数 $C$",
+    description: "分式递推 $a_{n+1} = A a_n / (B a_n + C)$ 的分母常数 $C$",
     importance: "core",
+  },
+  mixedP: {
+    key: "mixedP",
+    label: "混合系数 p",
+    labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{p}`,
+    group: "递推与分式系数",
+    defaultValue: 2,
+    min: -3,
+    max: 4,
+    step: 0.5,
+    description: "$S_n$ 与 $a_n$ 混合关系式中的比例系数 $p$",
+    importance: "core",
+    marks: [
+      { value: 2, label: "2", labelFormula: "2" },
+      { value: 3, label: "3", labelFormula: "3" },
+    ],
+  },
+  mixedC: {
+    key: "mixedC",
+    label: "混合常数 c",
+    labelFormula: `\\color{${MATH_COLORS.paramSecondary}}{c}`,
+    group: "递推与分式系数",
+    defaultValue: -1,
+    min: -5,
+    max: 5,
+    step: 0.5,
+    description: "$S_n$ 与 $a_n$ 混合关系式中的常数偏移 $c$",
+    importance: "core",
+    marks: [
+      { value: -1, label: "-1", labelFormula: "-1" },
+      { value: 1, label: "1", labelFormula: "1" },
+      { value: 2, label: "2", labelFormula: "2" },
+    ],
   },
 };

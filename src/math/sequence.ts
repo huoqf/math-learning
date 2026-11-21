@@ -67,6 +67,7 @@ export interface GeometricSegmentedSumInfo {
     sumValue: number;
   }>;
   ratio: number; // 理论公比 q^k
+  isZeroDegenerate?: boolean; // q = -1 且 k 为偶数时各段和均为 0，不再构成等比数列
 }
 
 export type GeometricQType =
@@ -581,10 +582,14 @@ export function calcGeometricSequence(
         sumValue: sumVal,
       });
     }
+    const isZeroDegenerate =
+      segments.length > 0 &&
+      segments.every((seg) => Math.abs(seg.sumValue) < 1e-9);
     segmentedSums = {
       k: validK,
       segments,
       ratio: Math.pow(q, validK),
+      isZeroDegenerate,
     };
   }
 
@@ -1717,5 +1722,403 @@ export function calcInductionVerification(
     allRowsHold: rows.every((r) => r.holds),
     stepIdentityHolds: stepChecks.every((s) => s.ok),
     primeCounterexample: findPrimeCounterexample(),
+  };
+}
+
+/* ============================================================================
+ * 新高考高频拓展：指数裂项、放缩证明、Sn-an 混合消元、新高考 19 题新定义探索
+ * ========================================================================== */
+
+export interface ExponentialTelescopingTerm {
+  n: number;
+  cn: number;
+  partA: number;
+  partB: number;
+  Tn: number;
+}
+
+export interface ExponentialTelescopingResult {
+  isValid: boolean;
+  terms: ExponentialTelescopingTerm[];
+  N: number;
+  finalTn: number;
+  limitUpper: number;
+}
+
+/**
+ * 指数裂项：c_n = 2^n / ((2^n - 1)(2^{n+1} - 1)) = 1/(2^n - 1) - 1/(2^{n+1} - 1)
+ */
+export function calcExponentialTelescoping(
+  N: number,
+): ExponentialTelescopingResult {
+  const safeN = Math.max(1, Math.min(15, Math.round(N)));
+  const terms: ExponentialTelescopingTerm[] = [];
+  let currentTn = 0;
+  for (let n = 1; n <= safeN; n++) {
+    const partA = 1 / (Math.pow(2, n) - 1);
+    const partB = 1 / (Math.pow(2, n + 1) - 1);
+    const cn = partA - partB;
+    currentTn += cn;
+    terms.push({ n, cn, partA, partB, Tn: currentTn });
+  }
+  return {
+    isValid: true,
+    terms,
+    N: safeN,
+    finalTn: 1 - 1 / (Math.pow(2, safeN + 1) - 1),
+    limitUpper: 1,
+  };
+}
+
+export type TelescopingScalingType = "square_telescoping" | "exp_geometric";
+
+export interface TelescopingScalingTerm {
+  n: number;
+  origTerm: number;
+  scaledTerm: number;
+  origSum: number;
+  scaledSum: number;
+}
+
+export interface TelescopingScalingResult {
+  isValid: boolean;
+  scalingType: TelescopingScalingType;
+  terms: TelescopingScalingTerm[];
+  N: number;
+  upperBound: number;
+  origFinalSum: number;
+  scaledFinalSum: number;
+  allDominated: boolean;
+}
+
+/**
+ * 数列放缩不等式证明纯数学引擎：
+ * - square_telescoping: 1/n^2 <= 1/(n(n-1)) (n >= 2), T_n < 2 - 1/n < 2
+ * - exp_geometric: 1/(2^n + 1) < 1/2^n, T_n < 1 - 1/2^n < 1
+ */
+export function calcTelescopingScaling(
+  scalingType: TelescopingScalingType,
+  N: number,
+): TelescopingScalingResult {
+  const safeN = Math.max(2, Math.min(15, Math.round(N)));
+  const terms: TelescopingScalingTerm[] = [];
+  let origSum = 0;
+  let scaledSum = 0;
+
+  for (let n = 1; n <= safeN; n++) {
+    const origTerm =
+      scalingType === "square_telescoping"
+        ? 1 / (n * n)
+        : 1 / (Math.pow(2, n) + 1);
+    const scaledTerm =
+      scalingType === "square_telescoping"
+        ? n === 1
+          ? 1
+          : 1 / (n * (n - 1))
+        : 1 / Math.pow(2, n);
+    origSum += origTerm;
+    scaledSum += scaledTerm;
+    terms.push({
+      n,
+      origTerm,
+      scaledTerm,
+      origSum,
+      scaledSum,
+    });
+  }
+
+  const upperBound = scalingType === "square_telescoping" ? 2 : 1;
+  return {
+    isValid: true,
+    scalingType,
+    terms,
+    N: safeN,
+    upperBound,
+    origFinalSum: origSum,
+    scaledFinalSum: scaledSum,
+    allDominated: terms.every(
+      (t) => t.origTerm <= t.scaledTerm + 1e-12 && t.origSum < upperBound,
+    ),
+  };
+}
+
+export type NewDefinitionType =
+  "diff_ratio" | "alt_sum_arith" | "bounded_period";
+
+export interface NewDefinitionTerm {
+  n: number;
+  an: number;
+  derived: number | null; // 派生数列：一阶差分 / 隔项差 / 周期偏差
+  propertyOk: boolean;
+}
+
+export interface NewDefinitionResult {
+  isValid: boolean;
+  defType: NewDefinitionType;
+  terms: NewDefinitionTerm[];
+  N: number;
+  ruleTitle: string;
+  derivedName: string;
+  conclusionText: string;
+  isBounded: boolean;
+  periodDetected: number | null;
+  minVal: number;
+  maxVal: number;
+}
+
+/**
+ * 新高考 19 题新定义数列探索：
+ * - diff_ratio: 「差比派生数列」 a_{n+1} = p*a_n + q => 派生差分 d_n = a_{n+1} - a_n 成公比 p 的等比数列
+ * - alt_sum_arith: 「邻和线性数列」 a_n + a_{n+1} = 2n + q => 隔项差 b_n = a_{n+2} - a_n = 2 恒定，奇偶项分别成等差
+ * - bounded_period: 「循环分式有界数列」 a_{n+1} = 1 / (1 - a_n)（或退化检测），探索 3-周期性与有界闭集
+ */
+export function calcNewDefinitionSequence(
+  defType: NewDefinitionType,
+  a1: number,
+  paramP: number,
+  paramQ: number,
+  N: number,
+): NewDefinitionResult {
+  const safeN = Math.max(4, Math.min(12, Math.round(N)));
+  const rawAn: number[] = [];
+
+  if (defType === "diff_ratio") {
+    let cur = a1;
+    for (let n = 1; n <= safeN; n++) {
+      rawAn.push(cur);
+      cur = paramP * cur + paramQ;
+    }
+    const terms: NewDefinitionTerm[] = rawAn.map((an, idx) => {
+      const n = idx + 1;
+      const derived = idx < safeN - 1 ? rawAn[idx + 1] - an : null;
+      return { n, an, derived, propertyOk: true };
+    });
+    const minVal = Math.min(...rawAn);
+    const maxVal = Math.max(...rawAn);
+    return {
+      isValid: true,
+      defType,
+      terms,
+      N: safeN,
+      ruleTitle: "新定义 · 一阶差分等比数列",
+      derivedName: "Δaₙ = aₙ₊₁ - aₙ",
+      conclusionText:
+        Math.abs(paramP - 1) < 1e-9
+          ? `p=1 时差分恒为常数 ${formatMathNumber(paramQ)}，原数列退化为等差数列`
+          : `派生差分数列 {Δaₙ} 是公比为 ${formatMathNumber(paramP)} 的等比数列`,
+      isBounded: Math.abs(paramP) < 1,
+      periodDetected:
+        paramP === -1 ? 2 : paramP === 1 && paramQ === 0 ? 1 : null,
+      minVal,
+      maxVal,
+    };
+  }
+
+  if (defType === "alt_sum_arith") {
+    // 邻项和定义：a_n + a_{n+1} = 2n + q
+    let cur = a1;
+    for (let n = 1; n <= safeN; n++) {
+      rawAn.push(cur);
+      cur = 2 * n + paramQ - cur;
+    }
+    const terms: NewDefinitionTerm[] = rawAn.map((an, idx) => {
+      const n = idx + 1;
+      const derived = idx + 2 < safeN ? rawAn[idx + 2] - an : null;
+      const ok = derived === null || Math.abs(derived - 2) < 1e-9;
+      return { n, an, derived, propertyOk: ok };
+    });
+    return {
+      isValid: true,
+      defType,
+      terms,
+      N: safeN,
+      ruleTitle: "新定义 · 邻项和线性（奇偶分流等差）",
+      derivedName: "隔项差 bₙ = aₙ₊₂ - aₙ",
+      conclusionText:
+        "由邻式相减得 aₙ₊₂ - aₙ = 2 恒成立，奇数项与偶数项各自成公差为 2 的等差数列",
+      isBounded: false,
+      periodDetected: null,
+      minVal: Math.min(...rawAn),
+      maxVal: Math.max(...rawAn),
+    };
+  }
+
+  // bounded_period: 分式周期映射 a_{n+1} = 1 / (1 - a_n)（如实校验 a1=0 或 a1=1 的定义域禁区，绝不静默篡改用户输入）
+  let cur = a1;
+  let isValid = true;
+  for (let n = 1; n <= safeN; n++) {
+    if (!Number.isFinite(cur)) {
+      isValid = false;
+      break;
+    }
+    rawAn.push(cur);
+    const denom = 1 - cur;
+    if (Math.abs(denom) < 1e-9) {
+      isValid = false;
+      cur = NaN;
+    } else {
+      cur = 1 / denom;
+    }
+  }
+  const terms: NewDefinitionTerm[] = rawAn.map((an, idx) => {
+    const n = idx + 1;
+    const derived =
+      idx + 3 < rawAn.length &&
+      Number.isFinite(rawAn[idx + 3]) &&
+      Number.isFinite(an)
+        ? rawAn[idx + 3] - an
+        : null;
+    return {
+      n,
+      an,
+      derived,
+      propertyOk: derived === null || Math.abs(derived) < 1e-6,
+    };
+  });
+  const finiteAn = rawAn.filter(Number.isFinite);
+  return {
+    isValid,
+    defType,
+    terms,
+    N: safeN,
+    ruleTitle: "新定义 · 分式递推 3-周期有界探索",
+    derivedName: "周期差 δₙ = aₙ₊₃ - aₙ",
+    conclusionText: isValid
+      ? "连续三次迭代回到初值：aₙ₊₃ = aₙ 恒成立，数列呈 3-周期循环且严格有界"
+      : "初值触发分母 1 - aₙ = 0 奇点（a₁ = 0 或 a₁ = 1），定义域失效",
+    isBounded: isValid,
+    periodDetected: isValid ? 3 : null,
+    minVal: finiteAn.length > 0 ? Math.min(...finiteAn) : 0,
+    maxVal: finiteAn.length > 0 ? Math.max(...finiteAn) : 1,
+  };
+}
+
+export type SnMixedMode = "sn_linear_an" | "an1_linear_sn";
+
+export interface SnMixedTerm {
+  n: number;
+  an: number;
+  Sn: number;
+  ratioFromPrev: number | null;
+  fitsTailGeometric: boolean;
+}
+
+export interface SnMixedResult {
+  isValid: boolean;
+  errorMsg?: string;
+  mixedMode: SnMixedMode;
+  p: number;
+  c: number;
+  a1: number;
+  qRatio: number | null; // n >= 2 段的公比
+  isFirstTermConsistent: boolean; // 首项是否能并入 n >= 2 的通项
+  terms: SnMixedTerm[];
+}
+
+/**
+ * Sn 与 an 混合消元求通项（选择性必修二高频大题母型）：
+ * - sn_linear_an: S_n = p * a_n + c  (p != 1, p != 0)
+ * - an1_linear_sn: a_{n+1} = p * S_n + c (p != -1)
+ */
+export function calcSnMixedRecurrence(
+  mixedMode: SnMixedMode,
+  p: number,
+  c: number,
+  a1Input: number,
+  N: number,
+): SnMixedResult {
+  const safeN = Math.max(4, Math.min(12, Math.round(N)));
+  const terms: SnMixedTerm[] = [];
+
+  if (mixedMode === "sn_linear_an") {
+    if (Math.abs(p - 1) < 1e-9 || Math.abs(p) < 1e-9) {
+      return {
+        isValid: false,
+        errorMsg:
+          "当 p = 1 或 p = 0 时关系式 S_n = p a_n + c 退化，无法构成非平凡等比",
+        mixedMode,
+        p,
+        c,
+        a1: a1Input,
+        qRatio: null,
+        isFirstTermConsistent: false,
+        terms: [],
+      };
+    }
+    const a1 = c / (1 - p);
+    const qRatio = p / (p - 1);
+    let curAn = a1;
+    let curSn = 0;
+    for (let n = 1; n <= safeN; n++) {
+      if (n > 1) curAn *= qRatio;
+      curSn += curAn;
+      terms.push({
+        n,
+        an: curAn,
+        Sn: curSn,
+        ratioFromPrev: n === 1 ? null : qRatio,
+        fitsTailGeometric: true,
+      });
+    }
+    return {
+      isValid: true,
+      mixedMode,
+      p,
+      c,
+      a1,
+      qRatio,
+      isFirstTermConsistent: true,
+      terms,
+    };
+  }
+
+  // an1_linear_sn: a_{n+1} = p * S_n + c
+  const qRatio = p + 1;
+  let curSn = a1Input;
+  let curAn = a1Input;
+  const a2 = p * a1Input + c;
+  const isFirstTermConsistent = Math.abs(a2 - qRatio * a1Input) < 1e-6;
+
+  terms.push({
+    n: 1,
+    an: a1Input,
+    Sn: a1Input,
+    ratioFromPrev: null,
+    fitsTailGeometric: isFirstTermConsistent,
+  });
+
+  if (safeN >= 2) {
+    curAn = a2;
+    curSn += curAn;
+    terms.push({
+      n: 2,
+      an: curAn,
+      Sn: curSn,
+      ratioFromPrev: Math.abs(a1Input) > 1e-9 ? curAn / a1Input : null,
+      fitsTailGeometric: true,
+    });
+  }
+
+  for (let n = 3; n <= safeN; n++) {
+    curAn = qRatio * curAn;
+    curSn += curAn;
+    terms.push({
+      n,
+      an: curAn,
+      Sn: curSn,
+      ratioFromPrev: qRatio,
+      fitsTailGeometric: true,
+    });
+  }
+
+  return {
+    isValid: true,
+    mixedMode,
+    p,
+    c,
+    a1: a1Input,
+    qRatio,
+    isFirstTermConsistent,
+    terms,
   };
 }

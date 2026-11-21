@@ -133,6 +133,7 @@ export function ArithmeticPage() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
+          group: meta.group,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
@@ -252,10 +253,7 @@ export function ArithmeticPage() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="教学与新高考专题"
-            subtitle="选择数形结合核心认知模型"
-          >
+          <LeftPanelSection title="核心专题">
             <TabSwitcher
               tabs={[
                 { key: "linear", label: "一次函数" },
@@ -271,14 +269,35 @@ export function ArithmeticPage() {
               }
             />
           </LeftPanelSection>
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="拖动滑块实时观察几何变化"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() => setParams({ ...defaultParams })}
+              onReset={() => {
+                if (arithmeticSubMode === "gauss") {
+                  setParams({
+                    ...defaultParams,
+                    a1: 1,
+                    d: 1,
+                    N: 6,
+                    gaussRatio: 1,
+                  });
+                } else if (
+                  arithmeticSubMode === "quadratic" ||
+                  arithmeticSubMode === "absSum" ||
+                  arithmeticSubMode === "snToAn"
+                ) {
+                  setParams({
+                    ...defaultParams,
+                    a1: 5,
+                    d: -1.5,
+                    N: 8,
+                    snConst: 0,
+                  });
+                } else {
+                  setParams({ ...defaultParams });
+                }
+              }}
             />
           </LeftPanelSection>
 

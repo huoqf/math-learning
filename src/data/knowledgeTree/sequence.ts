@@ -44,7 +44,7 @@ export const sequenceNodes: KnowledgeNode[] = [
     route: "/sequence-models",
     gaokaoTopic: "sequence_series",
     questionCategory: "solution_first",
-    examMethod: "裂项相消抵消与错位相减求和模型",
+    examMethod: "错位相减、裂项相消与放缩不等式证明",
     examWeight: 5,
   },
   {
@@ -59,7 +59,7 @@ export const sequenceNodes: KnowledgeNode[] = [
     route: "/sequence-recurrence",
     gaokaoTopic: "sequence_series",
     questionCategory: "solution_final",
-    examMethod: "待定系数构造等比数列求通项",
+    examMethod: "待定系数构造、Sn与an混合作差及新定义差分探索",
     examWeight: 5,
   },
 ];

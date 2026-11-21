@@ -21,11 +21,18 @@ import { SequenceGeometricTessellationScene } from "@/features/sequence/componen
 import { SequenceModelsArithGeoScene } from "@/features/sequence/components/SequenceModelsArithGeoScene";
 import { SequenceModelsTelescopingScene } from "@/features/sequence/components/SequenceModelsTelescopingScene";
 import { SequenceModelsGroupedScene } from "@/features/sequence/components/SequenceModelsGroupedScene";
+import { SequenceModelsScalingScene } from "@/features/sequence/components/SequenceModelsScalingScene";
+import { RecurrenceLinearPanScene } from "@/features/sequence/components/RecurrenceLinearPanScene";
+import { RecurrenceSnMixedScene } from "@/features/sequence/components/RecurrenceSnMixedScene";
+import { RecurrenceNewDefinitionScene } from "@/features/sequence/components/RecurrenceNewDefinitionScene";
+import { RecurrencePage } from "@/features/sequence/RecurrencePage";
+import { fireEvent } from "@testing-library/react";
 import {
   calcArithGeoSplit,
   calcTelescoping,
   calcCrossTelescoping,
   calcRadicalTelescoping,
+  calcExponentialTelescoping,
   calcGroupedSequence,
 } from "@/math/sequence";
 
@@ -420,23 +427,55 @@ describe("数列场景渲染级守卫契约测试", () => {
       const radicalData = calcRadicalTelescoping(6);
       const groupedData = calcGroupedSequence(1, 1, 2, 6);
 
-      // 1. 裂项相消三种模式
-      for (const gap of [1, 2, 3]) {
-        const { container } = render(
+      // 1. 裂项相消四种模式（含指数裂项 teleGap=4）
+      const expData = calcExponentialTelescoping(6);
+      for (const gap of [1, 2, 3, 4]) {
+        for (const sumStep of [1, 2, 3]) {
+          const { container } = render(
+            <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
+              <SequenceModelsTelescopingScene
+                teleGap={gap}
+                N={6}
+                sumStep={sumStep}
+                telescopingData={teleData}
+                crossTelescopingData={crossData}
+                radicalTeleData={radicalData}
+                expTeleData={expData}
+                vp={VP}
+                scale={dummyScale}
+                fontScale={dummyFontScale}
+              />
+            </svg>,
+          );
+          assertSvgElementsWithinBounds(container);
+          expect(
+            container.querySelector(`[data-answer-step-frame="${sumStep}"]`),
+          ).not.toBeNull();
+          cleanup();
+        }
+      }
+
+      // 1.5 数列放缩证明场景
+      for (const scalingType of [
+        "square_telescoping",
+        "exp_geometric",
+      ] as const) {
+        const { container: scaleContainer } = render(
           <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
-            <SequenceModelsTelescopingScene
-              teleGap={gap}
-              N={6}
-              telescopingData={teleData}
-              crossTelescopingData={crossData}
-              radicalTeleData={radicalData}
+            <SequenceModelsScalingScene
+              scalingType={scalingType}
+              N={8}
+              sumStep={3}
               vp={VP}
               scale={dummyScale}
               fontScale={dummyFontScale}
             />
           </svg>,
         );
-        assertSvgElementsWithinBounds(container);
+        assertSvgElementsWithinBounds(scaleContainer);
+        expect(scaleContainer.textContent ?? "").toContain(
+          "严格常数上界天花板",
+        );
         cleanup();
       }
 
@@ -559,6 +598,121 @@ describe("数列场景渲染级守卫契约测试", () => {
       expect(middleBars.length).toBe(N - 1);
       expect(step4Dom.textContent ?? "").toContain("n=1");
       expect(step4Dom.textContent ?? "").toContain("n=2");
+      cleanup();
+    });
+  });
+
+  describe("5. 递推新定义/Sn混合/q=-1退化与无尾零双符号契约", () => {
+    it("等比片段和 q=-1 且 k=2 时，必须渲染零退化警示且不渲染误导性 × q² 弧线", () => {
+      const { container } = render(
+        <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
+          <SequenceGeometricSegmentScene
+            params={{ a1: 3, q: -1, N: 6, kSegment: 2 }}
+            scale={dummyScale}
+            fontScale={dummyFontScale}
+          />
+        </svg>,
+      );
+      const text = container.textContent ?? "";
+      expect(text).toContain("各片段和全为 0");
+      expect(text).not.toContain("× q²");
+    });
+
+    it("一阶线性递推场景 (shift 与 cobweb)：负参数 q=-2 不得渲染 + -2 或 .00 尾零", () => {
+      for (const linearViewMode of ["shift", "cobweb"] as const) {
+        const { container } = render(
+          <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
+            <RecurrenceLinearPanScene
+              params={{ a1: 2, p_rec: 3, q_rec: -2, N: 6 }}
+              scale={dummyScale}
+              vp={VP}
+              fontScale={dummyFontScale}
+              highlightN={1}
+              activeStep={2}
+              linearViewMode={linearViewMode}
+            />
+          </svg>,
+        );
+        const text = container.textContent ?? "";
+        expect(text).not.toContain("+ -");
+        expect(text).not.toContain("- -");
+        expect(text).not.toMatch(/\d+\.00\b/);
+        cleanup();
+      }
+    });
+
+    it("Sn 与 an 混合消元场景：脱节态必须渲染回推比较柱，合并态正常显示分步围栏", () => {
+      const { container: splitDom } = render(
+        <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
+          <RecurrenceSnMixedScene
+            params={{ a1: 1, mixedP: 2, mixedC: 2, N: 6 }}
+            scale={dummyScale}
+            vp={VP}
+            fontScale={dummyFontScale}
+            highlightN={1}
+            activeStep={3}
+            snMixedMode="an1_linear_sn"
+          />
+        </svg>,
+      );
+      expect(splitDom.textContent ?? "").toContain("必须分段");
+      expect(splitDom.querySelector(".sn-mixed-predicted-a1")).not.toBeNull();
+      cleanup();
+    });
+
+    it("新高考 19 题新定义探索场景：3-周期分式态正常渲染有界包络，首项 a1=1 时渲染定义域中断警示卡", () => {
+      const { container } = render(
+        <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
+          <RecurrenceNewDefinitionScene
+            params={{ a1: 2, p_rec: 1, q_rec: 1, N: 7 }}
+            scale={dummyScale}
+            vp={VP}
+            fontScale={dummyFontScale}
+            highlightN={1}
+            activeStep={3}
+            newDefType="bounded_period"
+          />
+        </svg>,
+      );
+      const text = container.textContent ?? "";
+      expect(text).toContain("最小正周期 T=3");
+      expect(container.querySelector(".bounded-envelope")).not.toBeNull();
+      cleanup();
+
+      const { container: invalidDom } = render(
+        <svg viewBox={`0 0 ${FULL_W} ${FULL_H}`}>
+          <RecurrenceNewDefinitionScene
+            params={{ a1: 1, p_rec: 1, q_rec: 1, N: 6 }}
+            scale={dummyScale}
+            vp={VP}
+            fontScale={dummyFontScale}
+            highlightN={1}
+            activeStep={2}
+            newDefType="bounded_period"
+          />
+        </svg>,
+      );
+      expect(invalidDom.querySelector(".new-def-invalid-card")).not.toBeNull();
+      expect(invalidDom.textContent ?? "").toContain("递推定义域中断");
+      expect(invalidDom.querySelector(".bounded-envelope")).toBeNull();
+      cleanup();
+    });
+
+    it("RecurrencePage：顶部递推公式栏独立占高不覆盖 SVG，且拖动 p 滑块同步更新 TipCard", () => {
+      const { container, getByRole } = render(<RecurrencePage />);
+      const svg = container.querySelector("svg");
+      expect(svg).not.toBeNull();
+      // 顶部公式栏不在 absolute 遮挡层上，位于独立的 flex-col 顶栏中
+      const formulaBar = Array.from(container.querySelectorAll("div")).find(
+        (el) => (el.textContent ?? "").includes("核心递推与构造方程"),
+      );
+      expect(formulaBar).not.toBeNull();
+      expect(formulaBar?.className).not.toContain("absolute");
+
+      // 拖动递推系数 p 滑块到 2，TipCard 必须同步更新为 a_{n+1} = 2a_n + 1
+      const pSlider = getByRole("slider", { name: "递推系数 p滑块" });
+      fireEvent.change(pSlider, { target: { value: "2" } });
+      expect(container.textContent ?? "").toContain("2a_n + 1");
       cleanup();
     });
   });

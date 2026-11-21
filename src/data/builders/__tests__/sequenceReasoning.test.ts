@@ -98,6 +98,14 @@ const CASES: Case[] = [
     config: { activeMode: "models", subModel: "telescoping", teleGap: 3 },
   },
   {
+    name: "模型 · 裂项(指数)",
+    config: { activeMode: "models", subModel: "telescoping", teleGap: 4 },
+  },
+  {
+    name: "模型 · 放缩证明",
+    config: { activeMode: "models", subModel: "scaling" },
+  },
+  {
     name: "模型 · 绝对值",
     config: { activeMode: "models", subModel: "abs-sum" },
   },
@@ -139,9 +147,17 @@ const CASES: Case[] = [
     name: "递推 · 数学归纳法",
     config: { activeMode: "recurrence", subModel: "induction" },
   },
+  {
+    name: "递推 · Sn 与 an 混合消元",
+    config: { activeMode: "recurrence", subModel: "sn-mixed" },
+  },
+  {
+    name: "递推 · 新定义探索",
+    config: { activeMode: "recurrence", subModel: "new-definition" },
+  },
 ];
 
-describe("数列 25 个子模式的推导链全覆盖", () => {
+describe("数列 29 个子模式的推导链全覆盖", () => {
   it.each(CASES.map((c) => [c.name, c] as const))(
     "%s 至少给出 3 步推导链，且每步都有可读的 latex 与说明",
     (_name, c) => {
@@ -172,7 +188,7 @@ describe("数列 25 个子模式的推导链全覆盖", () => {
     expect(dump).not.toContain("undefined");
   });
 
-  it("覆盖清单与 builder 的分支数一致：25 个子模式一个不漏", () => {
-    expect(CASES).toHaveLength(25);
+  it("覆盖清单与 builder 的分支数一致：29 个子模式一个不漏", () => {
+    expect(CASES).toHaveLength(29);
   });
 });

@@ -2,7 +2,7 @@
  * src/features/sequence/components/SequenceModelsAbsSumScene.tsx
  * 数列实验室 - 高考求和模型 3：绝对值变号求和 (零点分段与对称翻折)
  */
-import { CoordinateGrid, FunctionGraph } from "@/components/Math";
+import { CoordinateGrid, FunctionGraph, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks";
@@ -55,11 +55,12 @@ export function SequenceModelsAbsSumScene({
             strokeWidth={1.5}
             strokeDasharray="4,3"
           />
-          <circle
-            cx={mathToDesign(zeroPoint, 0, scale).x}
-            cy={mathToDesign(zeroPoint, 0, scale).y}
+          <MathPoint
+            x={mathToDesign(zeroPoint, 0, scale).x}
+            y={mathToDesign(zeroPoint, 0, scale).y}
             r={5}
-            fill={MATH_COLORS.paramPrimary}
+            variant="focus"
+            color={MATH_COLORS.paramPrimary}
           />
           {/* 零点浮动胶囊 */}
           <g className="zero-point-badge">
@@ -140,17 +141,16 @@ export function SequenceModelsAbsSumScene({
               strokeWidth={1.5}
               rx={3}
             />
-            <circle
-              cx={ptAbs.x}
-              cy={ptAbs.y}
+            <MathPoint
+              x={ptAbs.x}
+              y={ptAbs.y}
               r={4}
-              fill={
+              variant="focus"
+              color={
                 t.isNegative
                   ? MATH_COLORS.paramSecondary
                   : MATH_COLORS.inequality
               }
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.2}
             />
             <text
               x={ptAbs.x}

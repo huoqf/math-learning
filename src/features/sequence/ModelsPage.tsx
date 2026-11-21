@@ -19,19 +19,23 @@ import {
   paramMeta,
   ARITH_GEO_ANSWER_STEPS,
   TELESCOPING_ANSWER_STEPS,
+  SCALING_ANSWER_STEPS,
 } from "@/data/registries/sequence";
 
 import {
   calcArithGeoSplit,
   calcAbsSumSequence,
   calcGroupedSequence,
+  type TelescopingScalingType,
 } from "@/math/sequence";
 
 type ModelType =
-  "arith-geo" | "telescoping" | "abs-sum" | "grouped" | "odd-even";
+  "arith-geo" | "telescoping" | "scaling" | "abs-sum" | "grouped" | "odd-even";
 
 export function ModelsPage() {
   const [modelType, setModelType] = useState<ModelType>("arith-geo");
+  const [scalingType, setScalingType] =
+    useState<TelescopingScalingType>("square_telescoping");
   const [highlightN, setHighlightN] = useState<number>(1);
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
@@ -81,11 +85,16 @@ export function ModelsPage() {
       if (teleGap === 3) {
         const maxRad = Math.sqrt(N + 1);
         yR = [-Math.ceil(maxRad + 0.5), Math.ceil(maxRad + 1.5)];
+      } else if (teleGap === 4) {
+        yR = [-0.6, 1.5];
       } else if (teleGap === 2) {
         yR = [-0.8, 1.2];
       } else {
         yR = [-1.2, 1.5];
       }
+    } else if (modelType === "scaling") {
+      xR = [-0.8, N + 1.2];
+      yR = scalingType === "square_telescoping" ? [-0.3, 2.5] : [-0.2, 1.35];
     } else if (modelType === "abs-sum") {
       const res = calcAbsSumSequence(a1, d, N);
       const zP = res.zeroPoint ?? 0;
@@ -112,7 +121,7 @@ export function ModelsPage() {
     }
 
     return { xRange: xR, yRange: yR };
-  }, [modelType, a1, d, q, N, teleGap]);
+  }, [modelType, scalingType, a1, d, q, N, teleGap]);
 
   const scale = useSceneScale({
     vp,
@@ -128,15 +137,17 @@ export function ModelsPage() {
         geometricViewType: "points",
         modelType,
         subModel: modelType,
+        scalingType,
         highlightN,
       }),
-    [params, modelType, highlightN],
+    [params, modelType, scalingType, highlightN],
   );
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const keysByModel: Record<ModelType, string[]> = {
       "arith-geo": ["a1", "d", "q", "N"],
       telescoping: ["N"],
+      scaling: ["N"],
       "abs-sum": ["a1", "d", "N"],
       grouped: ["a1", "d", "q", "N"],
       "odd-even": ["N"],
@@ -151,6 +162,7 @@ export function ModelsPage() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
+          group: meta.group,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,
@@ -189,17 +201,32 @@ export function ModelsPage() {
         return {
           variant: "info" as const,
           badge:
-            gap === 3
-              ? "巧算化简 · 根式有理化裂项"
-              : gap === 2
-                ? "巧算化简 · 跨项差 2 裂项"
-                : "巧算化简 · 标准差 1 裂项",
+            gap === 4
+              ? "巧算化简 · 指数分式裂项"
+              : gap === 3
+                ? "巧算化简 · 根式有理化裂项"
+                : gap === 2
+                  ? "巧算化简 · 跨项差 2 裂项"
+                  : "巧算化简 · 标准差 1 裂项",
           condition:
-            gap === 3
-              ? `根式通项 $c_n = \\frac{1}{\\sqrt{n}+\\sqrt{n+1}} = \\sqrt{n+1} - \\sqrt{n}$，考察前 $N = ${N}$ 项伸缩抵消。`
-              : `通项可拆裂为两项差 $\\frac{1}{n(n+${gap})} = \\frac{1}{${gap}}(\\frac{1}{n} - \\frac{1}{n+${gap}})$，考察前 $N = ${N}$ 项对消。`,
+            gap === 4
+              ? `指数通项 $c_n = \\frac{2^n}{(2^n-1)(2^{n+1}-1)} = \\frac{1}{2^n-1} - \\frac{1}{2^{n+1}-1}$，考察前 $N = ${N}$ 项对消。`
+              : gap === 3
+                ? `根式通项 $c_n = \\frac{1}{\\sqrt{n}+\\sqrt{n+1}} = \\sqrt{n+1} - \\sqrt{n}$，考察前 $N = ${N}$ 项伸缩抵消。`
+                : `通项可拆裂为两项差 $\\frac{1}{n(n+${gap})} = \\frac{1}{${gap}}(\\frac{1}{n} - \\frac{1}{n+${gap}})$，考察前 $N = ${N}$ 项对消。`,
           question:
             "裂项相消后正负抵消链条最终残留哪些首末项？跨度 $\\Delta$ 对残留项数有何决定性影响？",
+        };
+      case "scaling":
+        return {
+          variant: "warning" as const,
+          badge: "压轴证明 · 裂项与等比放缩",
+          condition:
+            scalingType === "square_telescoping"
+              ? `考察原数列 $c_n = \\frac{1}{n^2}$ 的前 $N = ${N}$ 项和 $T_n$，保留 $n=1$ 后对 $k \\ge 2$ 放缩为 $\\frac{1}{k(k-1)}$。`
+              : `考察原数列 $c_n = \\frac{1}{2^n+1}$ 的前 $N = ${N}$ 项和 $T_n$，舍去分母常数 $+1$ 放大为等比通项 $\\frac{1}{2^n}$。`,
+          question:
+            "如何通过逐项放缩构造可求和的上界数列 $u_n$，并证明原部分和 $T_n$ 严格小于常数上界？",
         };
       case "abs-sum":
         return {
@@ -236,32 +263,43 @@ export function ModelsPage() {
             "探究典型求和模型中离散通项与前 $n$ 项和 $T_n$ 之间的代数转化与裂相对消机理。",
         };
     }
-  }, [modelType, params.a1, params.d, params.q, params.N, params.teleGap]);
+  }, [
+    modelType,
+    scalingType,
+    params.a1,
+    params.d,
+    params.q,
+    params.N,
+    params.teleGap,
+  ]);
 
   return (
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection
-            title="高考核心求和模型"
-            subtitle="覆盖高考解答题必考求和思想与转化技巧"
-          >
+          <LeftPanelSection title="求和模型">
             <SelectGrid
+              columns={2}
               items={[
                 {
                   key: "arith-geo",
                   label: "错位相减法",
-                  description: "差比相乘型 (4步推导)",
+                  description: "差比相乘 4 步",
                 },
                 {
                   key: "telescoping",
                   label: "裂项相消法",
-                  description: "差1/差2跨项/根式",
+                  description: "邻项/跨项/根式/指数",
+                },
+                {
+                  key: "scaling",
+                  label: "数列放缩证明",
+                  description: "不等式上界放缩",
                 },
                 {
                   key: "abs-sum",
-                  label: "绝对值变号求和",
-                  description: "零点分段/最值转折",
+                  label: "绝对值求和",
+                  description: "零点分段翻折",
                 },
                 {
                   key: "grouped",
@@ -271,7 +309,7 @@ export function ModelsPage() {
                 {
                   key: "odd-even",
                   label: "奇偶并项求和",
-                  description: "摆动序列与配对",
+                  description: "摆动配对双轨",
                 },
               ]}
               value={modelType}
@@ -284,10 +322,7 @@ export function ModelsPage() {
 
           {/* 错位相减专属：标准四步作答导航 */}
           {modelType === "arith-geo" && (
-            <LeftPanelSection
-              title="高考标准解答分步走"
-              subtitle="同步高亮中屏错位对齐矩阵与右屏采分点"
-            >
+            <LeftPanelSection title="高考标准解答分步走">
               <StepNavigator
                 steps={ARITH_GEO_ANSWER_STEPS}
                 active={params.sumStep ?? 1}
@@ -299,40 +334,36 @@ export function ModelsPage() {
           {/* 裂项相消专属：裂项题型与标准三步作答导航 */}
           {modelType === "telescoping" && (
             <>
-              <LeftPanelSection
-                title="裂项相消题型"
-                subtitle="覆盖新高考 3 大典型裂项构造"
-              >
+              <LeftPanelSection title="裂项相消题型">
                 <SelectGrid
+                  columns={2}
                   items={[
                     {
                       key: "1",
                       label: "标准差一裂项",
-                      formula: "\\frac{1}{n(n+1)}",
-                      description: "相邻抵消，留首尾各 1 项",
+                      description: "留首尾各 1 项",
                     },
                     {
                       key: "2",
                       label: "跨项差二裂项",
-                      formula: "\\frac{1}{n(n+2)}",
-                      description: "提系数 1/2，留首尾各 2 项",
+                      description: "提 1/2 留各 2 项",
                     },
                     {
                       key: "3",
-                      label: "根式有理化裂项",
-                      formula: "\\frac{1}{\\sqrt{n}+\\sqrt{n+1}}",
-                      description: "分子有理化，前后伸缩抵消",
+                      label: "根式有理化",
+                      description: "前后伸缩抵消",
+                    },
+                    {
+                      key: "4",
+                      label: "指数分式裂项",
+                      description: "2ⁿ 分子拆差",
                     },
                   ]}
                   value={String(params.teleGap ?? 1)}
                   onChange={(k) => handleParamChange("teleGap", Number(k))}
-                  columns={1}
                 />
               </LeftPanelSection>
-              <LeftPanelSection
-                title="高考标准解答分步走"
-                subtitle="同步观察多米诺对消链条与首尾残留项"
-              >
+              <LeftPanelSection title="高考标准解答分步走">
                 <StepNavigator
                   steps={TELESCOPING_ANSWER_STEPS}
                   active={Math.min(3, params.sumStep ?? 1)}
@@ -342,10 +373,39 @@ export function ModelsPage() {
             </>
           )}
 
-          <LeftPanelSection
-            title="数值参数调节"
-            subtitle="拖动滑块探索参数对数列图像与求和的影响"
-          >
+          {/* 放缩证明专属：放缩模型与标准三步作答导航 */}
+          {modelType === "scaling" && (
+            <>
+              <LeftPanelSection title="放缩证明模型">
+                <SelectGrid
+                  columns={2}
+                  items={[
+                    {
+                      key: "square_telescoping",
+                      label: "平方倒数裂项",
+                      description: "1/n² < 1/[n(n-1)]",
+                    },
+                    {
+                      key: "exp_geometric",
+                      label: "指数等比放缩",
+                      description: "1/(2ⁿ+1) < 1/2ⁿ",
+                    },
+                  ]}
+                  value={scalingType}
+                  onChange={(k) => setScalingType(k as TelescopingScalingType)}
+                />
+              </LeftPanelSection>
+              <LeftPanelSection title="高考标准解答分步走">
+                <StepNavigator
+                  steps={SCALING_ANSWER_STEPS}
+                  active={Math.min(3, params.sumStep ?? 1)}
+                  onChange={(step) => handleParamChange("sumStep", step)}
+                />
+              </LeftPanelSection>
+            </>
+          )}
+
+          <LeftPanelSection title="数值参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
@@ -375,6 +435,7 @@ export function ModelsPage() {
             fontScale={canvasSize.font}
             activeMode="models"
             modelType={modelType}
+            scalingType={scalingType}
             highlightN={highlightN}
             onSelectN={setHighlightN}
           />
@@ -387,7 +448,7 @@ export function ModelsPage() {
           focusStep={
             modelType === "arith-geo"
               ? (params.sumStep ?? 1)
-              : modelType === "telescoping"
+              : modelType === "telescoping" || modelType === "scaling"
                 ? Math.min(3, params.sumStep ?? 1)
                 : undefined
           }

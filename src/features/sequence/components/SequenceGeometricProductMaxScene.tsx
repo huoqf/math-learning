@@ -2,7 +2,7 @@
  * src/features/sequence/components/SequenceGeometricProductMaxScene.tsx
  * 等比模型 - 专题 D: 前 n 项积与极值 (以 1 为分界点，对数二次模型)
  */
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { formatMathNumber } from "@/utils/mathFormat";
@@ -66,9 +66,18 @@ export function SequenceGeometricProductMaxScene({
         临界基准线 y=1 (乘积增减分界)
       </text>
 
-      {/* 2. 双最值统一悬浮标题 (杜绝两个点标签互相撞车) */}
-      {isDual && maxPnInfo && dualMidX !== null && (
+      {/* 2. 双最值统一悬浮标题与水平等高连线 */}
+      {isDual && maxPnInfo && maxPnInfo.dualN && dualMidX !== null && (
         <g className="dual-max-banner">
+          <line
+            x1={mathToDesign(maxPnInfo.nMax, maxPnInfo.maxPn, scale).x}
+            y1={mathToDesign(maxPnInfo.nMax, maxPnInfo.maxPn, scale).y}
+            x2={mathToDesign(maxPnInfo.dualN, maxPnInfo.maxPn, scale).x}
+            y2={mathToDesign(maxPnInfo.dualN, maxPnInfo.maxPn, scale).y}
+            stroke={MATH_COLORS.sequenceHighlight}
+            strokeWidth={1.6}
+            strokeDasharray="4,2"
+          />
           <text
             x={dualMidX}
             y={dualTopY - 18}
@@ -77,7 +86,7 @@ export function SequenceGeometricProductMaxScene({
             fill={MATH_COLORS.sequenceHighlight}
             fontWeight="bold"
           >
-            双最值：P{toSub(maxPnInfo.nMax)} = P{toSub(maxPnInfo.dualN!)} ={" "}
+            双最值：P{toSub(maxPnInfo.nMax)} = P{toSub(maxPnInfo.dualN)} ={" "}
             {formatMathNumber(maxPnInfo.maxPn)}
           </text>
         </g>
@@ -163,16 +172,22 @@ export function SequenceGeometricProductMaxScene({
               strokeWidth={1}
             />
 
+            <rect
+              x={posPn.x - 10}
+              y={posPn.y - 10}
+              width={20}
+              height={20}
+              fill="transparent"
+            />
             {/* a_n 散点 */}
-            <circle
-              cx={posAn.x}
-              cy={posAn.y}
+            <MathPoint
+              x={posAn.x}
+              y={posAn.y}
               r={3.5}
-              fill={
+              variant="focus"
+              color={
                 isAboveOne ? MATH_COLORS.inequality : MATH_COLORS.paramSecondary
               }
-              stroke={MATH_COLORS.white}
-              strokeWidth={1}
             />
             <text
               x={posAn.x}
@@ -187,26 +202,27 @@ export function SequenceGeometricProductMaxScene({
             </text>
 
             {/* P_n 散点与极值光环 */}
-            <circle
-              cx={posPn.x}
-              cy={posPn.y}
+            <MathPoint
+              x={posPn.x}
+              y={posPn.y}
               r={isMaxPn ? 5.5 : 3.5}
-              fill={
+              variant="focus"
+              color={
                 isMaxPn
                   ? MATH_COLORS.sequenceHighlight
                   : MATH_COLORS.sequenceSum
               }
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.5}
             />
 
             {/* 极值光环与文字 */}
             {isMaxPn && (
               <g>
-                <circle
-                  cx={posPn.x}
-                  cy={posPn.y}
-                  r={9}
+                <rect
+                  x={posPn.x - 10}
+                  y={posPn.y - 10}
+                  width={20}
+                  height={20}
+                  rx={10}
                   fill="none"
                   stroke={MATH_COLORS.sequenceHighlight}
                   strokeWidth={1.5}

@@ -2,7 +2,7 @@
  * src/features/sequence/components/SequenceModelsOddEvenScene.tsx
  * 数列实验室 - 高考求和模型 5：奇偶并项求和法 (摆动配对与双轨分段)
  */
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale } from "@/hooks";
@@ -94,11 +94,11 @@ export function SequenceModelsOddEvenScene({
               }
               strokeWidth={2}
             />
-            <circle
-              cx={ptCn.x}
-              cy={ptCn.y}
+            <MathPoint
+              x={ptCn.x}
+              y={ptCn.y}
               r={5}
-              fill={isEven ? MATH_COLORS.combHeader : MATH_COLORS.paramPrimary}
+              color={isEven ? MATH_COLORS.combHeader : MATH_COLORS.paramPrimary}
             />
             <text
               x={ptCn.x}

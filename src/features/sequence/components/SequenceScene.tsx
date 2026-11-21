@@ -4,6 +4,7 @@
  * 按 activeMode 分发到 4 个子场景组件（数据统一来自 useSequenceParams）
  */
 import type { SceneScale, ViewportInfo } from "@/hooks";
+import type { TelescopingScalingType } from "@/math/sequence";
 import { SequenceArithmeticScene } from "./SequenceArithmeticScene";
 import { SequenceGeometricScene } from "./SequenceGeometricScene";
 import { SequenceModelsScene } from "./SequenceModelsScene";
@@ -22,10 +23,12 @@ export interface SequenceSceneProps {
   modelType?:
     | "arith-geo"
     | "telescoping"
+    | "scaling"
     | "cross-telescoping"
     | "grouped"
     | "odd-even"
     | "abs-sum";
+  scalingType?: TelescopingScalingType;
   highlightN?: number;
   onSelectN?: (n: number) => void;
 }
@@ -40,6 +43,7 @@ export function SequenceScene({
   geometricViewType = "points",
   geometricSubMode = "exponential",
   modelType = "arith-geo",
+  scalingType = "square_telescoping",
   highlightN = 1,
   onSelectN,
 }: SequenceSceneProps) {
@@ -80,6 +84,7 @@ export function SequenceScene({
         vp={vp}
         fontScale={fontScale}
         modelType={modelType}
+        scalingType={scalingType}
         highlightN={highlightN}
         onSelectN={onSelectN}
       />

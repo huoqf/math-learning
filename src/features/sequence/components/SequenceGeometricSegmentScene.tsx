@@ -146,8 +146,8 @@ export function SequenceGeometricSegmentScene({
                 第 {seg.segmentIndex} 片段和 = {formatMathNumber(seg.sumValue)}
               </text>
 
-              {/* 跨段比例标注弧线 */}
-              {idx > 0 && (
+              {/* 跨段比例标注弧线（q=-1 且 k 为偶数各段全零时不展示误导比值） */}
+              {idx > 0 && !segmentedSums.isZeroDegenerate && (
                 <g className="ratio-arrow">
                   <path
                     d={`M ${ptStart.x - 30},${topY - 18} Q ${ptStart.x},${topY - 35} ${ptStart.x + 30},${topY - 18}`}
@@ -171,6 +171,36 @@ export function SequenceGeometricSegmentScene({
             </g>
           );
         })}
+
+      {/* 1.5 q=-1 且 k 为偶数导致各片段和恒为 0 的退化告警卡 */}
+      {segmentedSums?.isZeroDegenerate && (
+        <g
+          className="zero-degenerate-card"
+          transform={`translate(${mathToDesign((1 + terms.length) / 2, 0, scale).x}, 42)`}
+        >
+          <rect
+            x={-210}
+            y={-18}
+            width={420}
+            height={38}
+            rx={8}
+            fill={withAlpha(MATH_COLORS.white, 0.96)}
+            stroke={MATH_COLORS.degeneracy}
+            strokeWidth={1.5}
+            strokeDasharray="4,3"
+          />
+          <text
+            x={0}
+            y={4}
+            textAnchor="middle"
+            fontSize={fontScale(10)}
+            fill={MATH_COLORS.degeneracy}
+            fontWeight="bold"
+          >
+            {`⚠️ q = -1 且 k = ${validK} 为偶数：各片段和全为 0，不成等比数列`}
+          </text>
+        </g>
+      )}
 
       {/* 2. 项数不足成段时的空态引导卡 */}
       {!segmentedSums && (

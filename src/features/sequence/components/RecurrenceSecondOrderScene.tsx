@@ -3,7 +3,7 @@
  * 二阶特征根法
  */
 import React from "react";
-import { CoordinateGrid } from "@/components/Math";
+import { CoordinateGrid, MathPoint } from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { calcSecondOrderRecurrence } from "@/math/sequence";
@@ -100,21 +100,29 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
               stroke={MATH_COLORS.sequenceStem}
               strokeDasharray="3,3"
             />
+            <rect
+              x={posAn.x - 12}
+              y={posAn.y - 12}
+              width={24}
+              height={24}
+              fill="transparent"
+            />
             {isHighlighted && (
-              <circle
-                cx={posAn.x}
-                cy={posAn.y}
-                r={12}
+              <rect
+                x={posAn.x - 11}
+                y={posAn.y - 11}
+                width={22}
+                height={22}
+                rx={11}
                 fill={withAlpha(MATH_COLORS.sequence, 0.25)}
               />
             )}
-            <circle
-              cx={posAn.x}
-              cy={posAn.y}
+            <MathPoint
+              x={posAn.x}
+              y={posAn.y}
               r={isHighlighted ? 7 : 4.5}
-              fill={MATH_COLORS.sequence}
-              stroke={MATH_COLORS.white}
-              strokeWidth={2}
+              variant="focus"
+              color={MATH_COLORS.sequence}
             />
             {showLabel && (
               <MathSubText
@@ -122,7 +130,7 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
                 y={posAn.y - 12}
                 base="a"
                 sub={t.n}
-                val={t.an.toFixed(1)}
+                val={formatMathNumber(t.an, 2)}
                 fill={MATH_COLORS.sequence}
                 fontScale={fontScale}
                 fontSize={10}
@@ -133,13 +141,12 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
             {/* 仅在特征方程判别式 delta >= 0 时构造降阶等比数列 */}
             {secondData.delta >= 0 && (
               <>
-                <circle
-                  cx={posBn.x}
-                  cy={posBn.y}
+                <MathPoint
+                  x={posBn.x}
+                  y={posBn.y}
                   r={4}
-                  fill={MATH_COLORS.paramSecondary}
-                  stroke={MATH_COLORS.white}
-                  strokeWidth={1.5}
+                  variant="focus"
+                  color={MATH_COLORS.paramSecondary}
                 />
                 {showLabel && (
                   <MathSubText
@@ -147,7 +154,7 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
                     y={posBn.y + 16}
                     base="b"
                     sub={t.n}
-                    val={t.bn.toFixed(1)}
+                    val={formatMathNumber(t.bn, 2)}
                     fill={MATH_COLORS.paramSecondary}
                     fontScale={fontScale}
                     fontSize={10}
@@ -174,7 +181,7 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
           }
           strokeWidth={1}
         />
-        <circle cx={14} cy={18} r={4.5} fill={MATH_COLORS.sequence} />
+        <MathPoint x={14} y={18} r={4.5} color={MATH_COLORS.sequence} />
         <text
           x={26}
           y={22}
@@ -189,7 +196,12 @@ export const RecurrenceSecondOrderScene: React.FC<RecurrenceSceneBaseProps> = ({
 
         {secondData.delta >= 0 ? (
           <>
-            <circle cx={14} cy={38} r={4.5} fill={MATH_COLORS.paramSecondary} />
+            <MathPoint
+              x={14}
+              y={38}
+              r={4.5}
+              color={MATH_COLORS.paramSecondary}
+            />
             <text
               x={26}
               y={42}

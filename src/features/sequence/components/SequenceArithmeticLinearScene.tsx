@@ -2,7 +2,7 @@
  * src/features/sequence/components/SequenceArithmeticLinearScene.tsx
  * 等差数列 - 专题 A：通项与一次函数（斜率三角形、变号零点、单调性）
  */
-import { CoordinateGrid, FunctionGraph } from "@/components/Math";
+import { CoordinateGrid, FunctionGraph, MathPoint } from "@/components/Math";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import type { SceneScale, ViewportInfo } from "@/hooks";
@@ -127,13 +127,12 @@ export function SequenceArithmeticLinearScene({
         zeroPointExact >= 0.5 &&
         zeroPointExact <= N + 1.5 && (
           <g className="zero-point-indicator">
-            <circle
-              cx={zPt.x}
-              cy={zPt.y}
+            <MathPoint
+              x={zPt.x}
+              y={zPt.y}
               r={4}
-              fill={MATH_COLORS.white}
-              stroke={MATH_COLORS.paramTertiary}
-              strokeWidth={2}
+              variant="hollow"
+              color={MATH_COLORS.paramTertiary}
             />
             <text
               x={zPt.x}
@@ -188,13 +187,14 @@ export function SequenceArithmeticLinearScene({
               strokeWidth={isHighlighted ? 2 : 1.2}
               rx={2}
             />
-            <circle
-              cx={posAn.x}
-              cy={posAn.y}
+            <MathPoint
+              x={posAn.x}
+              y={posAn.y}
               r={isHighlighted ? 4.5 : 3}
-              fill={t.an >= 0 ? MATH_COLORS.sequence : MATH_COLORS.paramPrimary}
-              stroke={MATH_COLORS.white}
-              strokeWidth={1.2}
+              variant="focus"
+              color={
+                t.an >= 0 ? MATH_COLORS.sequence : MATH_COLORS.paramPrimary
+              }
             />
             <text
               x={posAn.x}

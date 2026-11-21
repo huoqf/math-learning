@@ -29,6 +29,9 @@ import {
   LINEAR_RECURRENCE_ANSWER_STEPS,
   ARITH_GEO_ANSWER_STEPS,
   TELESCOPING_ANSWER_STEPS,
+  SCALING_ANSWER_STEPS,
+  NEW_DEFINITION_ANSWER_STEPS,
+  SN_MIXED_ANSWER_STEPS,
 } from "@/data/registries/sequence";
 import { buildClassicalProbabilityPanel } from "@/data/builders/probabilityClassical";
 import {
@@ -364,7 +367,7 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
   });
 
   it("裂项相消求和：右屏推演链的步号与标题完全由 TELESCOPING_ANSWER_STEPS 生成", () => {
-    for (const teleGap of [1, 2, 3]) {
+    for (const teleGap of [1, 2, 3, 4]) {
       const panel = buildSequencePanel(
         { N: 6, teleGap },
         { activeMode: "models", subModel: "telescoping" },
@@ -374,6 +377,58 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
       );
       expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
         TELESCOPING_ANSWER_STEPS.map((s) => s.title),
+      );
+    }
+  });
+
+  it("数列放缩证明：右屏推演链的步号与标题完全由 SCALING_ANSWER_STEPS 生成", () => {
+    for (const scalingType of [
+      "square_telescoping",
+      "exp_geometric",
+    ] as const) {
+      const panel = buildSequencePanel(
+        { N: 8 },
+        { activeMode: "models", subModel: "scaling", scalingType },
+      );
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        SCALING_ANSWER_STEPS.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        SCALING_ANSWER_STEPS.map((s) => s.title),
+      );
+    }
+  });
+
+  it("Sn 与 an 混合消元：右屏推演链的步号与标题完全由 SN_MIXED_ANSWER_STEPS 生成", () => {
+    for (const snMixedMode of ["sn_linear_an", "an1_linear_sn"] as const) {
+      const panel = buildSequencePanel(
+        { a1: 1, mixedP: 2, mixedC: -1, N: 6 },
+        { activeMode: "recurrence", subModel: "sn-mixed", snMixedMode },
+      );
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        SN_MIXED_ANSWER_STEPS.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        SN_MIXED_ANSWER_STEPS.map((s) => s.title),
+      );
+    }
+  });
+
+  it("新高考 19 题新定义探索：右屏推演链的步号与标题完全由 NEW_DEFINITION_ANSWER_STEPS 生成", () => {
+    for (const newDefType of [
+      "diff_ratio",
+      "alt_sum_arith",
+      "bounded_period",
+    ] as const) {
+      const panel = buildSequencePanel(
+        { a1: 2, p_rec: 3, q_rec: -2, N: 6 },
+        { activeMode: "recurrence", subModel: "new-definition", newDefType },
+      );
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        NEW_DEFINITION_ANSWER_STEPS.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        NEW_DEFINITION_ANSWER_STEPS.map((s) => s.title),
       );
     }
   });
@@ -513,6 +568,9 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
       LINEAR_RECURRENCE_ANSWER_STEPS,
       ARITH_GEO_ANSWER_STEPS,
       TELESCOPING_ANSWER_STEPS,
+      SCALING_ANSWER_STEPS,
+      SN_MIXED_ANSWER_STEPS,
+      NEW_DEFINITION_ANSWER_STEPS,
       getConicLineAnswerSteps("general", "ellipse", false),
       getConicLineAnswerSteps("general", "hyperbola", true),
       getConicLineAnswerSteps("general", "parabola", false),

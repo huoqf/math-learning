@@ -330,6 +330,29 @@ describe("全库预设参数与定义域数值安全性自动化巡检 (Domain &
       params: { a1: 1, d: 1, q: 2, N: 3 },
       config: { activeMode: "models", subModel: "arith-geo" },
     },
+    {
+      animId: "anim-sequence-recurrence",
+      params: { a1: 5, p_rec: 0.5, q_rec: 1, N: 6 },
+      config: { activeMode: "recurrence", subModel: "linear-pan" },
+    },
+    {
+      animId: "anim-sequence-recurrence",
+      params: { a1: 2, p_rec: 3, q_rec: -2, N: 6 },
+      config: {
+        activeMode: "recurrence",
+        subModel: "new-definition",
+        newDefType: "diff_ratio",
+      },
+    },
+    {
+      animId: "anim-sequence-recurrence",
+      params: { a1: 1, mixedP: 2, mixedC: 2, N: 6 },
+      config: {
+        activeMode: "recurrence",
+        subModel: "sn-mixed",
+        snMixedMode: "an1_linear_sn",
+      },
+    },
 
     // 6. 立体几何系列
     {

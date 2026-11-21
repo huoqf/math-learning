@@ -3,7 +3,7 @@
  * 一阶线性递推：待定系数平移构造等比双轴图（默认高考模式）与不动点蛛网图（高观点拓展）
  */
 import React from "react";
-import { CoordinateGrid, FunctionGraph } from "@/components/Math";
+import { CoordinateGrid, FunctionGraph, MathPoint } from "@/components/Math";
 import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { mathToDesign } from "@/utils/coordinate";
 import { calcLinearRecurrence } from "@/math/sequence";
@@ -49,23 +49,29 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
     const fixedYPos =
       fixedPoint !== null ? mathToDesign(0, fixedPoint, scale).y : null;
 
+    const cSigned = fixedPoint !== null ? formatMathNumber(fixedPoint, 2) : "";
+    const qSigned =
+      q_rec >= 0
+        ? `+ ${formatMathNumber(q_rec)}`
+        : `- ${formatMathNumber(Math.abs(q_rec))}`;
+
     const stepSummaryMap: Record<number, string> = {
       1:
         fixedPoint !== null
-          ? `Step 1 设不动点方程：令 c = ${p_rec}c + ${q_rec} ⇒ 不动点基准线 c = ${fixedPoint.toFixed(2)}`
-          : `Step 1 退化识别：p = 1 时不动点分母为 0，原递推式直接为公差 d = ${q_rec} 的等差数列`,
+          ? `Step 1 设不动点方程：令 c = ${formatMathNumber(p_rec)}c ${qSigned} ⇒ 不动点基准线 c = ${cSigned}`
+          : `Step 1 退化识别：p = 1 时不动点分母为 0，原递推式直接为公差 d = ${formatMathNumber(q_rec)} 的等差数列`,
       2:
         fixedPoint !== null
-          ? `Step 2 构造平移等比：各项同减 c = ${fixedPoint.toFixed(2)}，垂直平移得辅助数列 bₙ = aₙ - c`
-          : `Step 2 确定公差：相邻项差恒为 d = ${q_rec}`,
+          ? `Step 2 构造平移等比：以 y = ${cSigned} 为新零轴，垂直平移得辅助数列 bₙ = aₙ - c`
+          : `Step 2 确定公差：相邻项差恒为 d = ${formatMathNumber(q_rec)}`,
       3:
         fixedPoint !== null
-          ? `Step 3 求辅助数列通项：b₁ = a₁ - c = ${(a1 - fixedPoint).toFixed(2)}，公比 p = ${p_rec} ⇒ bₙ = b₁·pⁿ⁻¹`
+          ? `Step 3 求辅助数列通项：b₁ = ${formatMathNumber(a1 - fixedPoint, 2)}，公比 p = ${formatMathNumber(p_rec)} ⇒ bₙ = b₁·pⁿ⁻¹`
           : `Step 3 套用等差通项：aₙ = a₁ + (n-1)d`,
       4:
         fixedPoint !== null
-          ? `Step 4 还原主通项并验算首项：aₙ = bₙ + c，核验 n=1 时 a₁ = ${a1} 吻合 ✓`
-          : `Step 4 整理并验算首项：核验 n=1 时 a₁ = ${a1} 吻合 ✓`,
+          ? `Step 4 还原主通项并验算首项：aₙ = bₙ + c，核验 n=1 时 a₁ = ${formatMathNumber(a1)} 吻合 ✓`
+          : `Step 4 整理并验算首项：核验 n=1 时 a₁ = ${formatMathNumber(a1)} 吻合 ✓`,
     };
 
     return (
@@ -121,16 +127,19 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
           </text>
         </g>
 
-        {/* 不动点平移基准线 y = c (当 Step 1 时重点高亮) */}
+        {/* 不动点平移基准线 y = c (Step 1 高亮不动点，Step 2 高亮作为平移新零基准轴) */}
         {fixedPoint !== null && fixedYPos !== null && (
           <g className="fixed-point-baseline">
-            {isStep1 && (
+            {(isStep1 || isStep2) && (
               <line
                 x1={mathToDesign(-0.5, fixedPoint, scale).x}
                 y1={fixedYPos}
                 x2={mathToDesign(N + 0.8, fixedPoint, scale).x}
                 y2={fixedYPos}
-                stroke={withAlpha(MATH_COLORS.paramTertiary, 0.35)}
+                stroke={withAlpha(
+                  MATH_COLORS.paramTertiary,
+                  isStep2 ? 0.28 : 0.35,
+                )}
                 strokeWidth={10}
               />
             )}
@@ -140,8 +149,8 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
               x2={mathToDesign(N + 0.8, fixedPoint, scale).x}
               y2={fixedYPos}
               stroke={MATH_COLORS.paramTertiary}
-              strokeWidth={isStep1 ? 2.5 : 1.5}
-              strokeDasharray={isStep1 ? "6,4" : "4,3"}
+              strokeWidth={isStep1 || isStep2 ? 2.5 : 1.5}
+              strokeDasharray={isStep1 || isStep2 ? "6,4" : "4,3"}
             />
             <text
               x={mathToDesign(N + 0.8, fixedPoint, scale).x}
@@ -151,7 +160,9 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
               fill={MATH_COLORS.paramTertiary}
               fontWeight="bold"
             >
-              {`基准不动点线 y = c (${formatMathNumber(fixedPoint)})`}
+              {isStep2
+                ? `新等比基准零轴 y = c (${formatMathNumber(fixedPoint, 2)})`
+                : `基准不动点线 y = c (${formatMathNumber(fixedPoint, 2)})`}
             </text>
           </g>
         )}
@@ -259,13 +270,19 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
               )}
 
               {/* 辅助等比数列散点 b_n */}
-              <circle
-                cx={posBn.x}
-                cy={posBn.y}
+              <rect
+                x={posBn.x - 10}
+                y={posBn.y - 10}
+                width={20}
+                height={20}
+                fill="transparent"
+              />
+              <MathPoint
+                x={posBn.x}
+                y={posBn.y}
                 r={isStep2 || isStep3 ? 6 : 4}
-                fill={MATH_COLORS.paramSecondary}
-                stroke={MATH_COLORS.white}
-                strokeWidth={1.5}
+                variant="focus"
+                color={MATH_COLORS.paramSecondary}
               />
               {showLabel && (
                 <MathSubText
@@ -273,7 +290,7 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
                   y={posBn.y + 16}
                   base="b"
                   sub={t.n}
-                  val={t.bn.toFixed(1)}
+                  val={formatMathNumber(t.bn, 2)}
                   fill={MATH_COLORS.paramSecondary}
                   fontScale={fontScale}
                   fontSize={10}
@@ -282,31 +299,41 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
               )}
 
               {/* 原数列散点 a_n */}
+              <rect
+                x={posAn.x - 12}
+                y={posAn.y - 12}
+                width={24}
+                height={24}
+                fill="transparent"
+              />
               {isHighlighted && (
-                <circle
-                  cx={posAn.x}
-                  cy={posAn.y}
-                  r={12}
+                <rect
+                  x={posAn.x - 11}
+                  y={posAn.y - 11}
+                  width={22}
+                  height={22}
+                  rx={11}
                   fill={withAlpha(MATH_COLORS.sequence, 0.25)}
                 />
               )}
               {isStep4 && t.n === 1 && (
-                <circle
-                  cx={posAn.x}
-                  cy={posAn.y}
-                  r={14}
+                <rect
+                  x={posAn.x - 14}
+                  y={posAn.y - 14}
+                  width={28}
+                  height={28}
+                  rx={14}
                   fill="none"
                   stroke={MATH_COLORS.paramPrimary}
                   strokeWidth={2}
                 />
               )}
-              <circle
-                cx={posAn.x}
-                cy={posAn.y}
+              <MathPoint
+                x={posAn.x}
+                y={posAn.y}
                 r={isHighlighted ? 7 : 5}
-                fill={MATH_COLORS.sequence}
-                stroke={MATH_COLORS.white}
-                strokeWidth={2}
+                variant="focus"
+                color={MATH_COLORS.sequence}
               />
               {showLabel && (
                 <MathSubText
@@ -314,7 +341,7 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
                   y={posAn.y - 12}
                   base="a"
                   sub={t.n}
-                  val={t.an.toFixed(1)}
+                  val={formatMathNumber(t.an, 2)}
                   fill={MATH_COLORS.sequence}
                   fontScale={fontScale}
                   fontSize={10.5}
@@ -337,7 +364,7 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
             stroke={CANVAS_COLORS.axis}
             strokeWidth={1}
           />
-          <circle cx={16} cy={18} r={4.5} fill={MATH_COLORS.sequence} />
+          <MathPoint x={16} y={18} r={4.5} color={MATH_COLORS.sequence} />
           <text
             x={28}
             y={22}
@@ -348,7 +375,7 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
             原数列 aₙ（纵轴坐标）
           </text>
 
-          <circle cx={16} cy={38} r={4} fill={MATH_COLORS.paramSecondary} />
+          <MathPoint x={16} y={38} r={4} color={MATH_COLORS.paramSecondary} />
           <text
             x={28}
             y={42}
@@ -469,13 +496,12 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
         fixedPoint >= scale.xMin - 0.5 &&
         fixedPoint <= scale.xMax + 0.5 && (
           <g>
-            <circle
-              cx={mathToDesign(fixedPoint, fixedPoint, scale).x}
-              cy={mathToDesign(fixedPoint, fixedPoint, scale).y}
+            <MathPoint
+              x={mathToDesign(fixedPoint, fixedPoint, scale).x}
+              y={mathToDesign(fixedPoint, fixedPoint, scale).y}
               r={6}
-              fill={MATH_COLORS.paramTertiary}
-              stroke={MATH_COLORS.white}
-              strokeWidth={2}
+              variant="focus"
+              color={MATH_COLORS.paramTertiary}
             />
             <text
               x={mathToDesign(fixedPoint, fixedPoint, scale).x + 10}
@@ -504,21 +530,29 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
               style={{ cursor: "pointer" }}
               onClick={() => onSelectN?.(t.n)}
             >
+              <rect
+                x={posAn.x - 12}
+                y={posAn.y - 12}
+                width={24}
+                height={24}
+                fill="transparent"
+              />
               {isHighlighted && (
-                <circle
-                  cx={posAn.x}
-                  cy={posAn.y}
-                  r={12}
+                <rect
+                  x={posAn.x - 11}
+                  y={posAn.y - 11}
+                  width={22}
+                  height={22}
+                  rx={11}
                   fill={withAlpha(MATH_COLORS.sequence, 0.25)}
                 />
               )}
-              <circle
-                cx={posAn.x}
-                cy={posAn.y}
+              <MathPoint
+                x={posAn.x}
+                y={posAn.y}
                 r={isHighlighted ? 7 : 4.5}
-                fill={MATH_COLORS.sequence}
-                stroke={MATH_COLORS.white}
-                strokeWidth={2}
+                variant="focus"
+                color={MATH_COLORS.sequence}
               />
               {showLabel && (
                 <MathSubText
@@ -526,7 +560,7 @@ export const RecurrenceLinearPanScene: React.FC<RecurrenceSceneBaseProps> = ({
                   y={posAn.y - 12}
                   base="a"
                   sub={t.n}
-                  val={t.an.toFixed(1)}
+                  val={formatMathNumber(t.an, 2)}
                   fill={MATH_COLORS.sequence}
                   fontScale={fontScale}
                 />

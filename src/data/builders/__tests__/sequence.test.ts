@@ -311,5 +311,132 @@ describe("Sequence MathPanel Builder Tests — 数列右屏看板与高考考点
         true,
       );
     });
+
+    it("Sn 与 an 混合消元 (sn-mixed) 脱节告警", () => {
+      const panel = buildSequencePanel(
+        { a1: 1, mixedP: 2, mixedC: 2, N: 6 },
+        {
+          activeMode: "recurrence",
+          subModel: "sn-mixed",
+          snMixedMode: "an1_linear_sn",
+        },
+      );
+      expect(panel.warnings.some((w) => w.text.includes("首项脱节告警"))).toBe(
+        true,
+      );
+      expect(panel.reasoningSteps![2].latex ?? "").toContain("\\begin{cases}");
+    });
+
+    it("新高考 19 题新定义探索 (new-definition)", () => {
+      const panel = buildSequencePanel(
+        { a1: 2, p_rec: 3, q_rec: -2, N: 6 },
+        {
+          activeMode: "recurrence",
+          subModel: "new-definition",
+          newDefType: "bounded_period",
+        },
+      );
+      expect(panel.quantities.some((q) => q.label.includes("周期性检测"))).toBe(
+        true,
+      );
+      expect(panel.reasoningSteps?.length).toBe(3);
+    });
+  });
+
+  describe("边界修复守卫：grouped q=1 退化与等比 segment q=-1 偶数段", () => {
+    it("分组求和 q=1 时不出现 1-1 分母为零表达式且发出退化告警", () => {
+      const panel = buildSequencePanel(
+        { a1: 1, d: 2, q: 1, N: 5 },
+        { activeMode: "models", subModel: "grouped" },
+      );
+      expect(panel.warnings.some((w) => w.text.includes("q = 1"))).toBe(true);
+      expect(JSON.stringify(panel.reasoningSteps)).not.toContain("1-q");
+    });
+
+    it("分组求和 q=2 时公式严格对应 bn = q^{n-1}", () => {
+      const panel = buildSequencePanel(
+        { a1: 1, d: 2, q: 2, N: 5 },
+        { activeMode: "models", subModel: "grouped" },
+      );
+      expect(panel.reasoningSteps![0].latex).toContain("n-1");
+      expect(panel.reasoningSteps![1].latex).toContain("\\frac{1-q^n}{1-q}");
+    });
+
+    it("等比片段和 q=-1 且 k=2 时发出全零退化告警，绝不伪算 0/1 = q^k", () => {
+      const panel = buildSequencePanel(
+        { a1: 3, q: -1, N: 6, kSegment: 2 },
+        { activeMode: "geometric", geometricSubMode: "segment" },
+      );
+      expect(panel.warnings.some((w) => w.text.includes("q = -1"))).toBe(true);
+      expect(panel.reasoningSteps![1].detail).toContain("不再构成等比数列");
+    });
+
+    it("放缩证明 (scaling) 与指数裂项 (teleGap=4) 看板输出", () => {
+      const expTele = buildSequencePanel(
+        { N: 6, teleGap: 4 },
+        { activeMode: "models", subModel: "telescoping" },
+      );
+      expect(
+        expTele.theorems.some((t) => t.name.includes("指数分式裂项")),
+      ).toBe(true);
+
+      const scaling = buildSequencePanel(
+        { N: 8 },
+        {
+          activeMode: "models",
+          subModel: "scaling",
+          scalingType: "square_telescoping",
+        },
+      );
+      expect(
+        scaling.theorems.some((t) => t.name.includes("裂项放缩不等式")),
+      ).toBe(true);
+      expect(
+        scaling.quantities.some((q) =>
+          String(q.value).includes("T_n < U_n < 2"),
+        ),
+      ).toBe(true);
+    });
+
+    it("sn-mixed 在 p = -1 时不输出 0^{n-2} (0^0 未定义) 表达式且告警；bounded_period 在 a1=1 时输出定义域预警", () => {
+      const pNegOne = buildSequencePanel(
+        { a1: 2, mixedP: -1, mixedC: 3, N: 6 },
+        {
+          activeMode: "recurrence",
+          subModel: "sn-mixed",
+          snMixedMode: "an1_linear_sn",
+        },
+      );
+      const stepLatex = pNegOne.reasoningSteps?.[2]?.latex ?? "";
+      expect(stepLatex).not.toContain("0^{");
+      expect(pNegOne.warnings.some((w) => w.text.includes("p = -1"))).toBe(
+        true,
+      );
+
+      const badDomain = buildSequencePanel(
+        { a1: 1, p_rec: 1, q_rec: 1, N: 6 },
+        {
+          activeMode: "recurrence",
+          subModel: "new-definition",
+          newDefType: "bounded_period",
+        },
+      );
+      expect(
+        badDomain.warnings.some(
+          (w) => w.text.includes("a_1 \\neq 0") || w.text.includes("1-a_n = 0"),
+        ),
+      ).toBe(true);
+
+      const altArith = buildSequencePanel(
+        { a1: 1, p_rec: 1, q_rec: 1, N: 6 },
+        {
+          activeMode: "recurrence",
+          subModel: "new-definition",
+          newDefType: "alt_sum_arith",
+        },
+      );
+      expect(altArith.reasoningSteps?.[2]?.latex ?? "").toContain("a_{2k-1}");
+      expect(altArith.reasoningSteps?.[2]?.latex ?? "").toContain("a_{2k}");
+    });
   });
 });
