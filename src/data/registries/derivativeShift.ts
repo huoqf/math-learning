@@ -4,6 +4,7 @@
  */
 
 import type { ParamMeta } from "../types";
+import type { AnswerStepItem } from "@/components/UI/StepNavigator";
 import { MATH_COLORS } from "@/theme";
 
 export const defaultParams: Record<string, number> = {
@@ -256,3 +257,61 @@ export const paramMeta: Record<string, ParamMeta> = {
     descriptionFormula: "对数均值不等式右端点 $x_2 > x_1$",
   },
 };
+
+const SHIFT_ANSWER_STEPS: Record<string, AnswerStepItem[]> = {
+  implicit_zero: [
+    {
+      step: 1,
+      title: "求导与零点存在性证明",
+      sceneHint: "聚焦导函数曲线与导数零点 $(x_0, 0)$",
+    },
+    {
+      step: 2,
+      title: "设而不求消参下沉",
+      sceneHint: "聚焦消元轨迹 $h(x)$ 与代换轨迹点 $(x_0, h(x_0))$",
+    },
+    {
+      step: 3,
+      title: "代入求值与范围确定",
+      sceneHint: "聚焦原函数 $f(x)$ 与极值点 $P(x_0, f(x_0))$",
+    },
+  ],
+  shift_symmetric: [
+    {
+      step: 1,
+      title: "求导确立极值中心",
+      sceneHint: "聚焦对称轴 $x = x_0$、水平割线与交点 $P_1, P_2$",
+    },
+    {
+      step: 2,
+      title: "对称构造差函数转化",
+      sceneHint: "聚焦镜像曲线 $f(2x_0 - x)$ 与差函数 $F(x)$",
+    },
+    {
+      step: 3,
+      title: "求导定号与偏移结论",
+      sceneHint: "聚焦中点 $M$ 与底部横轴大小序对照",
+    },
+  ],
+  log_mean: [
+    {
+      step: 1,
+      title: "割线切线斜率对应",
+      sceneHint: "聚焦对数曲线、割线 $P_1 P_2$ 与平行切线",
+    },
+    {
+      step: 2,
+      title: "比值齐次化构造辅助函数",
+      sceneHint: "聚焦切点 $T(L, \\ln L)$ 与横轴投影垂线",
+    },
+    {
+      step: 3,
+      title: "综合确立不等式链",
+      sceneHint: "聚焦横轴三大均值 $G < L < A$ 排序位置",
+    },
+  ],
+};
+
+export function getDerivativeShiftAnswerSteps(mode: string): AnswerStepItem[] {
+  return SHIFT_ANSWER_STEPS[mode] ?? SHIFT_ANSWER_STEPS.implicit_zero;
+}

@@ -200,3 +200,39 @@ const reasoningSteps = hasRoots
 | **函数导数** | 声明定义域并规范求导 $f'(x)$ $\to$ 令 $f'(x)=0$ 因式分解求极值点，列表讨论单调区间 $\to$ 极值计算与区间端点最值比较 |
 | **概率统计** | 设出事件并列出先验/条件概率 $\to$ 全概率公式展开分母 $P(B)=P(A)P(B\|A)+P(\bar{A})P(B\|\bar{A})$ $\to$ 代入贝叶斯公式计算后验概率 |
 | **数列递推** | 识别递推特征列出关系式 $\to$ 构造辅助等比/等差模型（如待定系数法、不动点方程） $\to$ 求通项公式 $a_n$ 并代入首项检验闭环 |
+
+---
+
+## 🚫 反模式 9：多模式页面裸用全局 `defaultParams` 重置导致跨模式越界
+
+### ❌ 错误写法
+```tsx
+// 错误：全局 defaultParams.x0 = 0 仅对指数模式合法；切到对数或双基准模式点重置会把 x0 复位成 0，
+// 而滑块 UI 仅用 Math.max 伪装，底层计算与画布仍消费非法状态 x0 = 0 (ln 0 无定义)！
+<ParamControl params={paramConfigs} onParamChange={handleParamChange} onReset={() => setParams({ ...defaultParams })} />
+```
+
+### ✅ 正确规范（按激活模式与子情景安全复位）
+```tsx
+const handleReset = useCallback(() => {
+  pause(); // 若接入 useParamPlay，复位时同步暂停播放
+  setParams((prev) => ({
+    ...prev,
+    ...(mode === 'log' || mode === 'chain' ? { x0: 1.0 } : mode === 'param' ? { a: 1.0 } : { x0: 0.0 }),
+  }));
+}, [mode, pause]);
+```
+
+---
+
+## 🚫 反模式 10：只画静态拖拽结果、缺少演进过程与错因视觉对比
+
+### ❌ 错误写法
+- 极限逼近、二分收敛、曲线变换路径或动态轨迹全靠学生盲拖滑块，缺乏自动演示与局部放大对照；
+- 在亮色白底 `LeftPanel` 中混用深色 Tailwind 类（`bg-slate-800`）或手写原生 `<input type="checkbox">`；
+- 多曲线同图（如 $f(x)$ 与 $f'(x)$ 数量级悬殊）硬叠在同一坐标系导致遮挡混淆。
+
+### ✅ 正确规范
+- 复用 `@/hooks` 的 `useParamPlay` + `@/components/UI` 的 `ParamPlayBar` 驱动过程演示，并在手势拖拽/切模式时自动 `pause()`；
+- 开关统一复用 `<Toggle>`；
+- 必要时提供同轴上下双视窗对照（如 $f(x)$ 与 $f'(x)$ 共用 $x$ 轴联动扫描线）或错因警示对比图层。

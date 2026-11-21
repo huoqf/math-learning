@@ -103,6 +103,7 @@ export function SymmetryPage() {
           key,
           label: meta.label,
           labelFormula: meta.labelFormula,
+          group: meta.group,
           value: params[key] ?? meta.defaultValue ?? 0,
           min: meta.min,
           max: meta.max,

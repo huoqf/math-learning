@@ -9,13 +9,25 @@ import {
   SelectGrid,
   TabSwitcher,
   TipCard,
+  Toggle,
+  StepNavigator,
+  ParamPlayBar,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
-import { useAnimationViewport, useSceneScale, useScenario } from "@/hooks";
+import {
+  useAnimationViewport,
+  useSceneScale,
+  useScenario,
+  useParamPlay,
+} from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
-import { defaultParams, paramMeta } from "@/data/registries/constant";
+import {
+  defaultParams,
+  paramMeta,
+  getConstantSingleAnswerSteps,
+} from "@/data/registries/constant";
 import type { TransModelKey } from "@/math/constant";
 import type { ScenarioSpec } from "@/types/scenario";
 import { SingleVarScene } from "./components/SingleVarScene";
@@ -30,6 +42,7 @@ export function SingleVarPage() {
   const [presetKey, setPresetKey] = useState<string>("free");
   const [showDerivative, setShowDerivative] = useState<boolean>(false);
   const [showTangent, setShowTangent] = useState<boolean>(false);
+  const [answerStep, setAnswerStep] = useState<number>(0);
 
   const [params, setParams] = useState<Record<string, number>>(() => ({
     a: defaultParams.a,
@@ -37,6 +50,42 @@ export function SingleVarPage() {
     m: defaultParams.m,
     n: defaultParams.n,
   }));
+
+  const answerSteps = useMemo(
+    () => getConstantSingleAnswerSteps(subMode, logic),
+    [subMode, logic],
+  );
+
+  const playTargetKey = subMode === "sep" ? "a" : "a_axis";
+  const playCtrl = useParamPlay({
+    min:
+      subMode === "sep"
+        ? funModel === "transcendent"
+          ? -0.5
+          : paramMeta.a.min
+        : funModel === "transcendent"
+          ? 0.2
+          : paramMeta.a_axis.min,
+    max:
+      subMode === "sep"
+        ? funModel === "transcendent"
+          ? 3.0
+          : paramMeta.a.max
+        : funModel === "transcendent"
+          ? 4.0
+          : paramMeta.a_axis.max,
+    ratePerSecond: 0.7,
+    step: subMode === "sep" && funModel === "transcendent" ? 0.02 : 0.05,
+    mode: "bounce",
+    getValue: () => params[playTargetKey] ?? defaultParams[playTargetKey],
+    onChange: (val) => {
+      setPresetKey("free");
+      setParams((prev) => ({
+        ...prev,
+        [playTargetKey]: Number(val.toFixed(2)),
+      }));
+    },
+  });
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -264,6 +313,8 @@ export function SingleVarPage() {
 
   // 切换函数模型时的定义域安全性保障
   const handleFunModelChange = (model: "transcendent" | "quadratic") => {
+    playCtrl.pause();
+    setAnswerStep(0);
     setFunModel(model);
     setPresetKey("free");
     // 若从二次函数切至超越函数，需强制校准定义域 (m >= 0.1, n >= 0.5)
@@ -278,6 +329,7 @@ export function SingleVarPage() {
 
   const handleParamChange = useCallback(
     (key: string, value: number) => {
+      playCtrl.pause();
       // 拖拽或手动调参时，自动切回自由探究
       setPresetKey("free");
       setParams((prev) => {
@@ -306,11 +358,12 @@ export function SingleVarPage() {
         return { ...prev, [key]: value };
       });
     },
-    [funModel],
+    [funModel, playCtrl],
   );
 
   // 典型预设切换响应
   const handlePresetChange = (key: string) => {
+    playCtrl.pause();
     setPresetKey(key);
     if (key === "free") return;
 
@@ -339,6 +392,8 @@ export function SingleVarPage() {
   };
 
   const handleReset = () => {
+    playCtrl.pause();
+    setAnswerStep(0);
     setPresetKey("free");
     setParams({
       a: defaultParams.a,
@@ -381,7 +436,7 @@ export function SingleVarPage() {
         labelFormula = `\\text{区间左界 } \\color{${MATH_COLORS.paramSecondary}}{m}`;
       } else if (key === "n") {
         label = "区间右界 n";
-        labelFormula = `\\text{区间右界 } \\color{${MATH_COLORS.paramSecondary}}{n}`;
+        labelFormula = `\\text{区间右界 } \\color{${MATH_COLORS.paramTertiary}}{n}`;
       }
 
       if (funModel === "transcendent") {
@@ -412,12 +467,12 @@ export function SingleVarPage() {
             {
               value: params.m,
               variant: "critical",
-              label: `m=${params.m.toFixed(1).replace(/\\.0$/, "")}`,
+              label: `m=${params.m.toFixed(1).replace(/\.0$/, "")}`,
             },
             {
               value: params.n,
               variant: "critical",
-              label: `n=${params.n.toFixed(1).replace(/\\.0$/, "")}`,
+              label: `n=${params.n.toFixed(1).replace(/\.0$/, "")}`,
             },
           ];
         }
@@ -431,6 +486,7 @@ export function SingleVarPage() {
         min,
         max,
         step,
+        group: meta.group,
         description,
         importance: meta.importance,
         marks,
@@ -439,8 +495,8 @@ export function SingleVarPage() {
   }, [params, subMode, funModel]);
 
   const formulasLatex = useMemo(() => {
-    const mStr = `\\color{${MATH_COLORS.paramSecondary}}{${params.m.toFixed(2).replace(/\\.?0+$/, "")}}`;
-    const nStr = `\\color{${MATH_COLORS.paramTertiary}}{${params.n.toFixed(2).replace(/\\.?0+$/, "")}}`;
+    const mStr = `\\color{${MATH_COLORS.paramSecondary}}{${params.m.toFixed(2).replace(/\.?0+$/, "")}}`;
+    const nStr = `\\color{${MATH_COLORS.paramTertiary}}{${params.n.toFixed(2).replace(/\.?0+$/, "")}}`;
     const rangeStr = `x \\in [${mStr}, ${nStr}]`;
 
     if (subMode === "sep") {
@@ -455,26 +511,26 @@ export function SingleVarPage() {
         } else if (transModel === "exp_minus_a_x_plus_1") {
           polyStr = `f(x) = \\frac{e^x}{x+1}`;
         }
-        const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\\.?0+$/, "")}}`;
+        const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\.?0+$/, "")}}`;
         return { line1: `${polyStr} \\quad ${rangeStr}`, line2: lineStr };
       } else {
         const polyStr = `f(x) = x^2 - 2x + 2 \\quad ${rangeStr}`;
-        const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\\.?0+$/, "")}}`;
+        const lineStr = `y = \\color{${MATH_COLORS.paramPrimary}}{${params.a.toFixed(2).replace(/\.?0+$/, "")}}`;
         return { line1: polyStr, line2: lineStr };
       }
     } else {
       if (funModel === "transcendent") {
         let line1 = "";
         if (transModel === "ln_x_over_x" || transModel === "exp_minus_ax") {
-          line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\\.?0+$/, "")}}x`;
+          line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\.?0+$/, "")}}x`;
         } else if (transModel === "a_ln_x_minus_x") {
-          line1 = `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\\.?0+$/, "")}}\\ln x - x + 1`;
+          line1 = `f(x) = \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\.?0+$/, "")}}\\ln x - x + 1`;
         } else if (transModel === "exp_minus_a_x_plus_1") {
-          line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\\.?0+$/, "")}}(x+1)`;
+          line1 = `f(x) = e^x - \\color{${MATH_COLORS.paramPrimary}}{${params.a_axis.toFixed(2).replace(/\.?0+$/, "")}}(x+1)`;
         }
         return { line1, line2: rangeStr };
       } else {
-        const line1 = `f(x) = x^2 - 2\\color{${MATH_COLORS.paramPrimary}}{(${params.a_axis.toFixed(2).replace(/\\.?0+$/, "")})}x + 2`;
+        const line1 = `f(x) = x^2 - 2\\color{${MATH_COLORS.paramPrimary}}{(${params.a_axis.toFixed(2).replace(/\.?0+$/, "")})}x + 2`;
         return { line1, line2: rangeStr };
       }
     }
@@ -577,6 +633,8 @@ export function SingleVarPage() {
                   ]}
                   value={transModel}
                   onChange={(k) => {
+                    playCtrl.pause();
+                    setAnswerStep(0);
                     setTransModel(k as TransModelKey);
                     setPresetKey("free");
                   }}
@@ -608,7 +666,11 @@ export function SingleVarPage() {
                     },
                   ]}
                   value={logic}
-                  onChange={(k) => setLogic(k as "always" | "exist")}
+                  onChange={(k) => {
+                    playCtrl.pause();
+                    setAnswerStep(0);
+                    setLogic(k as "always" | "exist");
+                  }}
                   variant="filled"
                   columns={2}
                 />
@@ -633,6 +695,8 @@ export function SingleVarPage() {
                   ]}
                   value={subMode}
                   onChange={(k) => {
+                    playCtrl.pause();
+                    setAnswerStep(0);
                     setSubMode(k as "sep" | "direct");
                     setPresetKey("free");
                   }}
@@ -645,37 +709,20 @@ export function SingleVarPage() {
                 <label className="text-[10px] font-bold text-neutral-400 block mb-1">
                   辅助分析图层
                 </label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setShowDerivative((prev) => !prev)}
-                    className={`py-1.5 px-2 text-[11px] font-semibold rounded-lg border transition-all duration-200 text-center select-none cursor-pointer ${
-                      showDerivative
-                        ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
-                        : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50"
-                    }`}
-                  >
-                    {showDerivative ? "✓ 导数 f'(x)" : "+ 导数 f'(x)"}
-                  </button>
-                  <button
-                    type="button"
+                <div className="grid grid-cols-2 gap-2">
+                  <Toggle
+                    size="compact"
+                    label="导数 f'(x)"
+                    checked={showDerivative}
+                    onChange={setShowDerivative}
+                  />
+                  <Toggle
+                    size="compact"
+                    label="切线放缩"
                     disabled={!isTangentSupported}
-                    onClick={() => setShowTangent((prev) => !prev)}
-                    title={
-                      isTangentSupported
-                        ? "显示切线放缩辅助线"
-                        : "当前函数模型无需切线放缩"
-                    }
-                    className={`py-1.5 px-2 text-[11px] font-semibold rounded-lg border transition-all duration-200 text-center select-none ${
-                      !isTangentSupported
-                        ? "bg-neutral-100 text-neutral-300 border-neutral-200 cursor-not-allowed opacity-60"
-                        : showTangent
-                          ? "bg-amber-500 text-white border-amber-500 shadow-sm cursor-pointer"
-                          : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50 cursor-pointer"
-                    }`}
-                  >
-                    {showTangent ? "✓ 切线放缩" : "+ 切线放缩"}
-                  </button>
+                    checked={showTangent}
+                    onChange={setShowTangent}
+                  />
                 </div>
               </div>
             </div>
@@ -761,9 +808,32 @@ export function SingleVarPage() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label={
+                  subMode === "sep"
+                    ? "水平线高度 a 临界扫动"
+                    : "讨论参数 a 分类临界扫动"
+                }
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
           </LeftPanelSection>
 
-          {/* 5. 教学导引 (TipCard 结构化呈现) */}
+          {/* 5. 标准解答分步 */}
+          <LeftPanelSection title="标准解答分步">
+            <StepNavigator
+              steps={answerSteps}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="点击步号可联动高亮中屏几何区与右屏推演步"
+            />
+          </LeftPanelSection>
+
+          {/* 6. 教学导引 (TipCard 结构化呈现) */}
           {tipProps && (
             <LeftPanelSection title="教学导引" compact>
               <TipCard
@@ -803,6 +873,7 @@ export function SingleVarPage() {
               transModel={transModel}
               showDerivative={showDerivative}
               showTangent={showTangent}
+              activeStep={answerStep}
               params={params}
               scale={scale}
               vp={vp}
@@ -813,7 +884,14 @@ export function SingleVarPage() {
           <SceneLegend items={legendItems} title="图例说明" />
         </div>
       }
-      right={<MathPanel {...mathData} title="单变量恒成立与存在性看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          title="单变量恒成立与存在性看板"
+          focusStep={answerStep}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

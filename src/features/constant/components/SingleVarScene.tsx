@@ -35,6 +35,7 @@ interface SingleVarSceneProps {
   transModel?: TransModelKey;
   showDerivative?: boolean;
   showTangent?: boolean;
+  activeStep?: number;
   params: Record<string, number>;
   scale: SceneScale;
   vp: ViewportInfo;
@@ -49,12 +50,15 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   transModel = "ln_x_over_x",
   showDerivative = false,
   showTangent = false,
+  activeStep = 0,
   params,
   scale,
   vp,
   fontScale = (v) => v,
   onParamChange,
 }) => {
+  const regionOpacity = (r: number) =>
+    !activeStep ? 1 : activeStep === r ? 1 : 0.3;
   const a = params.a ?? 1.2;
   const a_axis = params.a_axis ?? 1.0;
   const m = params.m ?? 0.5;
@@ -358,250 +362,306 @@ export const SingleVarScene: React.FC<SingleVarSceneProps> = ({
   const critX = existMode ? sepResult.xFMax : sepResult.xFMin;
   const critY = existMode ? sepResult.fMax : sepResult.fMin;
 
+  const clampFrame = (x: number, y: number, w: number, h: number) => {
+    const pad = 10;
+    const minX = vp.designLeft + pad;
+    const maxX = vp.designLeft + vp.designVisibleW - w - pad;
+    const minY = vp.designTop + pad;
+    const maxY = vp.designTop + vp.designVisibleH - h - pad;
+    const cx = Math.max(minX, Math.min(x, Math.max(minX, maxX)));
+    const cy = Math.max(minY, Math.min(y, Math.max(minY, maxY)));
+    return { x: cx, y: cy, width: w, height: h };
+  };
+
+  const stepFrame = (() => {
+    if (!activeStep) return null;
+    if (activeStep === 1) {
+      return clampFrame(
+        Math.min(ptM.x, ptN.x) - 24,
+        vp.designTop + 28,
+        Math.max(140, Math.abs(ptN.x - ptM.x) + 48),
+        Math.max(180, vp.designVisibleH - 56),
+      );
+    }
+    if (activeStep === 2) {
+      const extPt = isSep
+        ? mathToDesign(critX, critY, scale)
+        : mathToDesign(directResult.xFMin, directResult.fMin, scale);
+      return clampFrame(extPt.x - 135, extPt.y - 95, 270, 190);
+    }
+    if (isSep) {
+      const lineY = mathToDesign(0, a, scale).y;
+      return clampFrame(
+        Math.min(ptM.x, ptN.x) - 36,
+        lineY - 90,
+        Math.max(180, Math.abs(ptN.x - ptM.x) + 72),
+        180,
+      );
+    }
+    const zeroY = scale.originY;
+    return clampFrame(
+      Math.min(ptM.x, ptN.x) - 36,
+      zeroY - 105,
+      Math.max(180, Math.abs(ptN.x - ptM.x) + 72),
+      210,
+    );
+  })();
+
   return (
     <g>
       {/* 坐标轴背景 */}
       <CoordinateGrid scale={scale} fontScale={fontScale} />
 
-      {/* 研究区间 [m, n] 底纹 */}
-      {!isCollapsed && (
-        <rect
-          x={ptM.x}
-          y={mathToDesign(0, scale.yMax, scale).y}
-          width={Math.max(0, ptN.x - ptM.x)}
-          height={Math.max(
-            0,
-            mathToDesign(0, scale.yMin, scale).y -
-              mathToDesign(0, scale.yMax, scale).y,
-          )}
-          fill={withAlpha(MATH_COLORS.function, 0.04)}
-          pointerEvents="none"
-        />
-      )}
-
-      {/* 区间外虚线 */}
-      <FunctionGraph
-        fn={(x) => {
-          if (isCollapsed) return NaN;
-          return x < m || x > n ? evalPrimaryFn(x) : NaN;
-        }}
-        scale={scale}
-        color={withAlpha(MATH_COLORS.function, 0.35)}
-        strokeWidth={1.5}
-        strokeDasharray="3 3"
-      />
-      {/* 区间内加粗实线 */}
-      {!isCollapsed && (
-        <FunctionGraph
-          fn={(x) => (x >= m && x <= n ? evalPrimaryFn(x) : NaN)}
-          scale={scale}
-          color={MATH_COLORS.function}
-          strokeWidth={2.8}
-        />
-      )}
-
-      {/* 导函数 f'(x) 轨迹（受控于 showDerivative） */}
-      {showDerivative && !isCollapsed && (
-        <g>
-          <FunctionGraph
-            fn={(x) => (x >= m && x <= n ? evalDerivativeFn(x) : NaN)}
-            scale={scale}
-            color={MATH_COLORS.derivative}
-            strokeWidth={1.8}
-            strokeDasharray="4 2"
-          />
-        </g>
-      )}
-
-      {/* 切线放缩辅助线（受控于 showTangent） */}
-      {showTangent && (
-        <g>
-          {isTrans &&
-            (transModel === "a_ln_x_minus_x" ||
-              transModel === "exp_minus_a_x_plus_1") && (
-              <TangentLine
-                fn={evalPrimaryFn}
-                x0={transModel === "a_ln_x_minus_x" ? 1.0 : 0.0}
-                scale={scale}
-                color={MATH_COLORS.tangentLine}
-                strokeWidth={1.5}
-              />
+      {/* 第 1 步：审题定法（研究区间 [m, n] 与目标函数曲线） */}
+      <g data-step-region={1} opacity={regionOpacity(1)}>
+        {!isCollapsed && (
+          <rect
+            x={ptM.x}
+            y={mathToDesign(0, scale.yMax, scale).y}
+            width={Math.max(0, ptN.x - ptM.x)}
+            height={Math.max(
+              0,
+              mathToDesign(0, scale.yMin, scale).y -
+                mathToDesign(0, scale.yMax, scale).y,
             )}
-        </g>
-      )}
-
-      {/* 水平线与对称轴 */}
-      {sepHorizontalLine}
-      {directAxisLine}
-
-      {/* 参照线下方区域 + ∃ 判据线 */}
-      {violatedVisuals}
-      {existCriterionVisuals}
-
-      {/* 区间端点垂直虚线 */}
-      {!isCollapsed && (
-        <g>
-          <line
-            x1={ptM.x}
-            y1={mathToDesign(m, scale.yMax, scale).y}
-            x2={ptM.x}
-            y2={mathToDesign(m, scale.yMin, scale).y}
-            stroke={MATH_COLORS.paramSecondary}
-            strokeWidth={1.2}
-            strokeDasharray="3 3"
+            fill={withAlpha(MATH_COLORS.function, 0.04)}
+            pointerEvents="none"
           />
-          <line
-            x1={ptN.x}
-            y1={mathToDesign(n, scale.yMax, scale).y}
-            x2={ptN.x}
-            y2={mathToDesign(n, scale.yMin, scale).y}
-            stroke={MATH_COLORS.paramTertiary}
-            strokeWidth={1.2}
-            strokeDasharray="3 3"
-          />
-        </g>
-      )}
+        )}
 
-      {/* 可交互端点 m */}
-      <InteractivePoint
-        cx={m}
-        cy={0}
-        scale={scale}
-        vp={vp}
-        onDrag={handleMDrag}
-        color={MATH_COLORS.paramSecondary}
-        r={5.5}
-        label="m"
-        labelKey="m"
-        placedLabels={placedPointLabels}
-        fontScale={fontScale}
-      />
-
-      {/* 可交互端点 n */}
-      <InteractivePoint
-        cx={n}
-        cy={0}
-        scale={scale}
-        vp={vp}
-        onDrag={handleNDrag}
-        color={MATH_COLORS.paramTertiary}
-        r={5.5}
-        label="n"
-        labelKey="n"
-        placedLabels={placedPointLabels}
-        fontScale={fontScale}
-      />
-
-      {/* 水平线 dragging 点 */}
-      {isSep && !isCollapsed && (
-        <InteractivePoint
-          cx={(m + n) / 2}
-          cy={a}
+        <FunctionGraph
+          fn={(x) => {
+            if (isCollapsed) return NaN;
+            return x < m || x > n ? evalPrimaryFn(x) : NaN;
+          }}
           scale={scale}
-          vp={vp}
-          onDrag={handleADrag}
-          color={MATH_COLORS.paramPrimary}
-          r={6.5}
-          label="a"
-          labelKey="a"
-          placedLabels={placedPointLabels}
-          fontScale={fontScale}
+          color={withAlpha(MATH_COLORS.function, 0.35)}
+          strokeWidth={1.5}
+          strokeDasharray="3 3"
         />
-      )}
+        {!isCollapsed && (
+          <FunctionGraph
+            fn={(x) => (x >= m && x <= n ? evalPrimaryFn(x) : NaN)}
+            scale={scale}
+            color={MATH_COLORS.function}
+            strokeWidth={2.8}
+          />
+        )}
 
-      {/* 对称轴/导数为零的点 dragging 点 */}
-      {!isSep && !isCollapsed && (
+        {!isCollapsed && (
+          <g>
+            <line
+              x1={ptM.x}
+              y1={mathToDesign(m, scale.yMax, scale).y}
+              x2={ptM.x}
+              y2={mathToDesign(m, scale.yMin, scale).y}
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.2}
+              strokeDasharray="3 3"
+            />
+            <line
+              x1={ptN.x}
+              y1={mathToDesign(n, scale.yMax, scale).y}
+              x2={ptN.x}
+              y2={mathToDesign(n, scale.yMin, scale).y}
+              stroke={MATH_COLORS.paramTertiary}
+              strokeWidth={1.2}
+              strokeDasharray="3 3"
+            />
+          </g>
+        )}
+
         <InteractivePoint
-          cx={isTrans && a_axis > 0 ? Math.log(a_axis) : a_axis}
+          cx={m}
           cy={0}
           scale={scale}
           vp={vp}
-          onDrag={handleAAxisDrag}
-          color={MATH_COLORS.paramPrimary}
-          r={6.5}
-          label={isTrans ? "ln a" : "a"}
-          labelKey="a_axis"
+          onDrag={handleMDrag}
+          color={MATH_COLORS.paramSecondary}
+          r={5.5}
+          label="m"
+          labelKey="m"
           placedLabels={placedPointLabels}
           fontScale={fontScale}
         />
-      )}
+        <InteractivePoint
+          cx={n}
+          cy={0}
+          scale={scale}
+          vp={vp}
+          onDrag={handleNDrag}
+          color={MATH_COLORS.paramTertiary}
+          r={5.5}
+          label="n"
+          labelKey="n"
+          placedLabels={placedPointLabels}
+          fontScale={fontScale}
+        />
+      </g>
 
-      {/* 极值点学术化标注 */}
-      {!isCollapsed && (
-        <g>
-          {isSep ? (
-            <g>
-              {/* 临界相切反馈：a 恰好压在临界最值上时，参照线与曲线在该点相切，
-                  在切点处给非零几何载体（空心环）与正反馈文案。
-                  判据点随量词切换：∀ 看最小值点，∃ 看最大值点（与右屏判据同源）。 */}
-              {!sepResult.isDegenerate && Math.abs(a - critY) < 0.05 && (
-                <g>
-                  <circle
-                    cx={mathToDesign(critX, critY, scale).x}
-                    cy={mathToDesign(critX, critY, scale).y}
-                    r={9}
-                    fill="none"
-                    stroke={MATH_COLORS.degeneracy}
-                    strokeWidth={2}
-                    strokeDasharray="3 2"
-                  />
-                  <text
-                    x={mathToDesign(critX, critY, scale).x}
-                    y={mathToDesign(critX, critY, scale).y + 24}
-                    textAnchor="middle"
-                    fill={MATH_COLORS.degeneracy}
-                    fontSize={fontScale(10)}
-                    fontWeight="bold"
-                    className="select-none"
-                    paintOrder="stroke"
-                    stroke={MATH_COLORS.white}
-                    strokeWidth={3}
-                  >
-                    {existMode
-                      ? `临界：y = ${formatMathNumber(a)} 恰过最大值点 (存在性分水岭)`
-                      : `临界：y = ${formatMathNumber(a)} 恰与曲线相切`}
-                  </text>
-                </g>
+      {/* 第 2 步：建模联立（求导单调性、动轴/极值点剖析） */}
+      <g data-step-region={2} opacity={regionOpacity(2)}>
+        {showDerivative && !isCollapsed && (
+          <g>
+            <FunctionGraph
+              fn={(x) => (x >= m && x <= n ? evalDerivativeFn(x) : NaN)}
+              scale={scale}
+              color={MATH_COLORS.derivative}
+              strokeWidth={1.8}
+              strokeDasharray="4 2"
+            />
+          </g>
+        )}
+
+        {showTangent && (
+          <g>
+            {isTrans &&
+              (transModel === "a_ln_x_minus_x" ||
+                transModel === "exp_minus_a_x_plus_1") && (
+                <TangentLine
+                  fn={evalPrimaryFn}
+                  x0={transModel === "a_ln_x_minus_x" ? 1.0 : 0.0}
+                  scale={scale}
+                  color={MATH_COLORS.tangentLine}
+                  strokeWidth={1.5}
+                />
               )}
-              <MathPoint
-                cx={sepResult.xFMin}
-                cy={sepResult.fMin}
-                scale={scale}
-                color={MATH_COLORS.function}
-                variant="focus"
-                label="极小值"
-                labelKey="min"
-                placedLabels={placedExtremumLabels}
-                fontScale={fontScale}
-              />
-              <MathPoint
-                cx={sepResult.xFMax}
-                cy={sepResult.fMax}
-                scale={scale}
-                color={MATH_COLORS.derivative}
-                variant="focus"
-                label="极大值"
-                labelKey="max"
-                placedLabels={placedExtremumLabels}
-                fontScale={fontScale}
-              />
-            </g>
-          ) : (
+          </g>
+        )}
+
+        {directAxisLine}
+
+        {!isSep && !isCollapsed && (
+          <InteractivePoint
+            cx={isTrans && a_axis > 0 ? Math.log(a_axis) : a_axis}
+            cy={0}
+            scale={scale}
+            vp={vp}
+            onDrag={handleAAxisDrag}
+            color={MATH_COLORS.paramPrimary}
+            r={6.5}
+            label={isTrans ? "ln a" : "a"}
+            labelKey="a_axis"
+            placedLabels={placedPointLabels}
+            fontScale={fontScale}
+          />
+        )}
+
+        {!isCollapsed && (
+          <g>
+            {isSep ? (
+              <g>
+                <MathPoint
+                  cx={sepResult.xFMin}
+                  cy={sepResult.fMin}
+                  scale={scale}
+                  color={MATH_COLORS.function}
+                  variant="focus"
+                  label="极小值"
+                  labelKey="min"
+                  placedLabels={placedExtremumLabels}
+                  fontScale={fontScale}
+                />
+                <MathPoint
+                  cx={sepResult.xFMax}
+                  cy={sepResult.fMax}
+                  scale={scale}
+                  color={MATH_COLORS.derivative}
+                  variant="focus"
+                  label="极大值"
+                  labelKey="max"
+                  placedLabels={placedExtremumLabels}
+                  fontScale={fontScale}
+                />
+              </g>
+            ) : (
+              <g>
+                <MathPoint
+                  cx={directResult.xFMin}
+                  cy={directResult.fMin}
+                  scale={scale}
+                  color={MATH_COLORS.function}
+                  variant="focus"
+                  label="极小值"
+                  labelKey="min"
+                  placedLabels={placedExtremumLabels}
+                  fontScale={fontScale}
+                />
+              </g>
+            )}
+          </g>
+        )}
+      </g>
+
+      {/* 第 3 步：求解反思（边界水平参照线、违背区间与充要判定） */}
+      <g data-step-region={3} opacity={regionOpacity(3)}>
+        {sepHorizontalLine}
+        {violatedVisuals}
+        {existCriterionVisuals}
+
+        {isSep && !isCollapsed && (
+          <InteractivePoint
+            cx={(m + n) / 2}
+            cy={a}
+            scale={scale}
+            vp={vp}
+            onDrag={handleADrag}
+            color={MATH_COLORS.paramPrimary}
+            r={6.5}
+            label="a"
+            labelKey="a"
+            placedLabels={placedPointLabels}
+            fontScale={fontScale}
+          />
+        )}
+
+        {!isCollapsed &&
+          isSep &&
+          !sepResult.isDegenerate &&
+          Math.abs(a - critY) < 0.05 && (
             <g>
               <MathPoint
-                cx={directResult.xFMin}
-                cy={directResult.fMin}
+                cx={critX}
+                cy={critY}
                 scale={scale}
-                color={MATH_COLORS.function}
-                variant="focus"
-                label="极小值"
-                labelKey="min"
-                placedLabels={placedExtremumLabels}
+                variant="hollow"
+                color={MATH_COLORS.degeneracy}
+                r={9}
                 fontScale={fontScale}
               />
+              <text
+                x={mathToDesign(critX, critY, scale).x}
+                y={mathToDesign(critX, critY, scale).y + 24}
+                textAnchor="middle"
+                fill={MATH_COLORS.degeneracy}
+                fontSize={fontScale(10)}
+                fontWeight="bold"
+                className="select-none"
+                paintOrder="stroke"
+                stroke={MATH_COLORS.white}
+                strokeWidth={3}
+              >
+                {existMode
+                  ? `临界：y = ${formatMathNumber(a)} 恰过最大值点 (存在性分水岭)`
+                  : `临界：y = ${formatMathNumber(a)} 恰与曲线相切`}
+              </text>
             </g>
           )}
-        </g>
+      </g>
+
+      {stepFrame && (
+        <rect
+          x={stepFrame.x}
+          y={stepFrame.y}
+          width={stepFrame.width}
+          height={stepFrame.height}
+          rx={8}
+          fill="none"
+          stroke={MATH_COLORS.answerStepFrame}
+          strokeWidth={2}
+          strokeDasharray="7 4"
+          className="pointer-events-none"
+        />
       )}
     </g>
   );

@@ -313,3 +313,141 @@ export const PRESET_FUNCTIONS: Record<string, PresetFunction> = {
 };
 
 export type PresetFunctionKey = keyof typeof PRESET_FUNCTIONS;
+
+export interface ExternalTangentSolution {
+  /** 切点横坐标 t */
+  t: number;
+  /** 切点纵坐标 f(t) */
+  ft: number;
+  /** 切线斜率 f'(t) */
+  slope: number;
+  /** 切线纵截距 f(t) - f'(t)*t */
+  intercept: number;
+}
+
+/**
+ * 求解“过外部点 A(xA, yA)”所作曲线切线的所有实切点 t ∈ [xMin, xMax]
+ * 方程：G(t) = f(t) + f'(t)(xA - t) - yA = 0
+ */
+export function solveExternalTangents(
+  fn: (x: number) => number,
+  xA: number,
+  yA: number,
+  xMin: number,
+  xMax: number,
+): ExternalTangentSolution[] {
+  if (!Number.isFinite(xA) || !Number.isFinite(yA) || xMax <= xMin) {
+    return [];
+  }
+
+  const evalG = (t: number): number => {
+    const res = solveDerivative(fn, t);
+    if (!res.isValid || Math.abs(res.fpx) > 500) return NaN;
+    return res.fx + res.fpx * (xA - t) - yA;
+  };
+
+  const samples = 240;
+  const h = (xMax - xMin) / samples;
+  const roots: number[] = [];
+
+  const bisect = (lo0: number, hi0: number, gLo0: number): number => {
+    let lo = lo0;
+    let hi = hi0;
+    let gLo = gLo0;
+    for (let iter = 0; iter < 30; iter++) {
+      const mid = 0.5 * (lo + hi);
+      const gm = evalG(mid);
+      if (!Number.isFinite(gm)) return NaN;
+      if (Math.abs(gm) < 1e-8) return mid;
+      if (gLo * gm <= 0) {
+        hi = mid;
+      } else {
+        lo = mid;
+        gLo = gm;
+      }
+    }
+    return 0.5 * (lo + hi);
+  };
+
+  for (let i = 0; i < samples; i++) {
+    const t1 = xMin + i * h;
+    const t2 = t1 + h;
+    const g1 = evalG(t1);
+    const g2 = evalG(t2);
+    if (!Number.isFinite(g1)) continue;
+    if (Math.abs(g1) < 1e-4) {
+      roots.push(t1);
+    }
+    if (Number.isFinite(g2) && g1 * g2 < 0) {
+      const r = bisect(t1, t2, g1);
+      if (Number.isFinite(r)) {
+        const gr = evalG(r);
+        if (Number.isFinite(gr) && Math.abs(gr) < 1e-2) {
+          roots.push(r);
+        }
+      }
+    }
+    // 偶数重切根检测（如点 A 恰在曲线上，G(t) 在切点处触零不变号）
+    if (i > 0 && i < samples - 1) {
+      const t0 = t1 - h;
+      const g0 = evalG(t0);
+      if (
+        Number.isFinite(g0) &&
+        Number.isFinite(g2) &&
+        Math.abs(g1) <= Math.abs(g0) &&
+        Math.abs(g1) <= Math.abs(g2) &&
+        Math.abs(g1) < 0.08
+      ) {
+        let lo = t0;
+        let hi = t2;
+        for (let iter = 0; iter < 24; iter++) {
+          const m1 = lo + (hi - lo) / 3;
+          const m2 = hi - (hi - lo) / 3;
+          const gm1 = evalG(m1);
+          const gm2 = evalG(m2);
+          if (!Number.isFinite(gm1) || !Number.isFinite(gm2)) break;
+          if (Math.abs(gm1) < Math.abs(gm2)) {
+            hi = m2;
+          } else {
+            lo = m1;
+          }
+        }
+        const cand = 0.5 * (lo + hi);
+        const gc = evalG(cand);
+        if (Number.isFinite(gc) && Math.abs(gc) < 1e-3) {
+          roots.push(cand);
+        }
+      }
+    }
+  }
+
+  // 检查最右端及相切重根极小值点
+  const gEnd = evalG(xMax);
+  if (Number.isFinite(gEnd) && Math.abs(gEnd) < 1e-4) {
+    roots.push(xMax);
+  }
+
+  const sorted = roots.sort((a, b) => a - b);
+  const deduped: number[] = [];
+  for (const r of sorted) {
+    if (
+      deduped.length === 0 ||
+      Math.abs(r - deduped[deduped.length - 1]) > 1e-2
+    ) {
+      deduped.push(r);
+    }
+  }
+
+  const result: ExternalTangentSolution[] = [];
+  for (const t of deduped) {
+    const res = solveDerivative(fn, t);
+    if (!res.isValid) continue;
+    result.push({
+      t: Number(t.toFixed(4)),
+      ft: res.fx,
+      slope: res.slope,
+      intercept: res.tangentIntercept,
+    });
+  }
+  return result;
+}

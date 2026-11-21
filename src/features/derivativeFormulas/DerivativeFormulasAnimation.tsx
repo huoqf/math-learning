@@ -7,14 +7,17 @@ import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   TabSwitcher,
   ParamControl,
+  ParamPlayBar,
   TipCard,
   LeftPanel,
+  LeftPanelSection,
+  Toggle,
   MathPanel,
 } from "@/components/UI";
 import { SceneLegend } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { getFormulasLegendItems } from "./scenePalette";
 import { DerivativeFormulasScene } from "./components/DerivativeFormulasScene";
 import {
@@ -77,26 +80,64 @@ export const DerivativeFormulasAnimation: React.FC = () => {
     yRange,
   });
 
-  const handleParamChange = useCallback((key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const deltaXVal = params.deltaX ?? 0.8;
+  const playCtrl = useParamPlay({
+    min: derivativeFormulasParamMeta.deltaX.min,
+    max: derivativeFormulasParamMeta.deltaX.max,
+    step: derivativeFormulasParamMeta.deltaX.step,
+    mode: "bounce",
+    getValue: () => deltaXVal,
+    onChange: (nextVal) => setParams((prev) => ({ ...prev, deltaX: nextVal })),
+  });
 
-  const handleTabChange = useCallback((key: string) => {
-    const nextType = key as BasicFuncType;
-    setFuncType(nextType);
-    // 切换函数类型时重置为适合该函数的安全参数
-    if (nextType === "sin" || nextType === "cos") {
-      setParams((prev) => ({ ...prev, x0: 1.0, deltaX: 0.6 }));
-    } else if (nextType === "log") {
-      setParams((prev) => ({ ...prev, x0: 1.5, deltaX: 0.5, paramA: Math.E }));
-    } else if (nextType === "exp") {
-      setParams((prev) => ({ ...prev, x0: 1.0, deltaX: 0.5, paramA: Math.E }));
-    } else if (nextType === "constant") {
-      setParams((prev) => ({ ...prev, x0: 1.5, deltaX: 0.8, paramA: 3.0 }));
-    } else {
-      setParams((prev) => ({ ...prev, x0: 1.5, deltaX: 0.8, paramA: 2.0 }));
-    }
-  }, []);
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      playCtrl.pause();
+      setParams((prev) => ({ ...prev, [key]: value }));
+    },
+    [playCtrl],
+  );
+
+  const resetForType = useCallback(
+    (nextType: BasicFuncType) => {
+      playCtrl.pause();
+      if (nextType === "sin" || nextType === "cos") {
+        setParams((prev) => ({ ...prev, x0: 1.0, deltaX: 0.6 }));
+      } else if (nextType === "log") {
+        setParams((prev) => ({
+          ...prev,
+          x0: 1.5,
+          deltaX: 0.5,
+          paramA: Math.E,
+        }));
+      } else if (nextType === "exp") {
+        setParams((prev) => ({
+          ...prev,
+          x0: 1.0,
+          deltaX: 0.5,
+          paramA: Math.E,
+        }));
+      } else if (nextType === "constant") {
+        setParams((prev) => ({ ...prev, x0: 1.5, deltaX: 0.8, paramA: 3.0 }));
+      } else {
+        setParams((prev) => ({ ...prev, x0: 1.5, deltaX: 0.8, paramA: 2.0 }));
+      }
+    },
+    [playCtrl],
+  );
+
+  const handleTabChange = useCallback(
+    (key: string) => {
+      const nextType = key as BasicFuncType;
+      setFuncType(nextType);
+      resetForType(nextType);
+    },
+    [resetForType],
+  );
+
+  const handleReset = useCallback(() => {
+    resetForType(funcType);
+  }, [funcType, resetForType]);
 
   // 右屏面板数据统一组装
   const mathPanelData = useMemo(() => {
@@ -164,6 +205,7 @@ export const DerivativeFormulasAnimation: React.FC = () => {
       {
         key: "x0",
         label: derivativeFormulasParamMeta.x0.label,
+        labelFormula: `\\text{切点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
         value: params.x0 ?? 1.5,
         min: derivativeFormulasParamMeta.x0.min,
         max: derivativeFormulasParamMeta.x0.max,
@@ -172,6 +214,7 @@ export const DerivativeFormulasAnimation: React.FC = () => {
       {
         key: "deltaX",
         label: derivativeFormulasParamMeta.deltaX.label,
+        labelFormula: `\\text{增量 } \\color{${MATH_COLORS.paramSecondary}}{\\Delta x}`,
         value: params.deltaX ?? 0.8,
         min: derivativeFormulasParamMeta.deltaX.min,
         max: derivativeFormulasParamMeta.deltaX.max,
@@ -188,9 +231,18 @@ export const DerivativeFormulasAnimation: React.FC = () => {
       // paramA 的含义随模式变化（幂指数 α / 底数 a / 常数值 C），声明域必须取自
       // registries/derivativeFormulas 的按模式 SSOT —— 中屏拖拽钳制读的是同一份，避免口径分裂。
       const aMeta = resolveParamAMeta(funcType);
+      const aSym =
+        funcType === "power" ? "\\alpha" : funcType === "constant" ? "C" : "a";
+      const aText =
+        funcType === "power"
+          ? "幂指数"
+          : funcType === "constant"
+            ? "常数值"
+            : "底数";
       list.push({
         key: "paramA",
         label: aMeta.label,
+        labelFormula: `\\text{${aText} } \\color{${MATH_COLORS.paramTertiary}}{${aSym}}`,
         value: params.paramA ?? 2.0,
         min: aMeta.min,
         max: aMeta.max,
@@ -205,31 +257,47 @@ export const DerivativeFormulasAnimation: React.FC = () => {
 
   const leftPanelContent = (
     <LeftPanel>
-      <TabSwitcher
-        tabs={FUNC_TABS}
-        value={funcType}
-        onChange={handleTabChange}
-      />
+      <LeftPanelSection title="基本初等函数">
+        <TabSwitcher
+          tabs={FUNC_TABS}
+          value={funcType}
+          onChange={handleTabChange}
+        />
+      </LeftPanelSection>
 
-      <div className="space-y-4 pt-2">
-        <ParamControl params={paramConfigs} onParamChange={handleParamChange} />
-
-        <div className="flex items-center justify-between rounded-lg border border-slate-700/60 bg-slate-800/40 px-3 py-2 text-xs text-slate-300">
-          <span>显示导函数虚线曲线 f'(x)</span>
-          <input
-            type="checkbox"
-            checked={showDerivativeGraph}
-            onChange={(e) => setShowDerivativeGraph(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-0"
+      <LeftPanelSection title="参数调节">
+        <ParamControl
+          params={paramConfigs}
+          onParamChange={handleParamChange}
+          onReset={handleReset}
+        />
+        <div className="pt-2">
+          <ParamPlayBar
+            isPlaying={playCtrl.isPlaying}
+            onToggle={playCtrl.toggle}
+            label="割线逼近切线 (Δx → 0)"
+            speed={playCtrl.speed}
+            onSpeedChange={playCtrl.setSpeed}
           />
         </div>
+      </LeftPanelSection>
 
+      <LeftPanelSection title="图层控制" compact>
+        <Toggle
+          size="compact"
+          label="显示导函数虚线曲线 f'(x)"
+          checked={showDerivativeGraph}
+          onChange={setShowDerivativeGraph}
+        />
+      </LeftPanelSection>
+
+      <LeftPanelSection title="教学导引与题设背景" compact>
         <TipCard
           background={tipCardContent.background}
           condition={tipCardContent.condition}
           question={tipCardContent.question}
         />
-      </div>
+      </LeftPanelSection>
     </LeftPanel>
   );
 

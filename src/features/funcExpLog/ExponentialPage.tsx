@@ -9,11 +9,12 @@ import {
   TipCard,
   TabSwitcher,
   Toggle,
+  ParamPlayBar,
   renderMixedLatex,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ExpLogScene } from "./components/ExpLogScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -100,7 +101,19 @@ export function ExponentialPage() {
     ];
   }, [params]);
 
+  const playCtrl = useParamPlay({
+    min: -4.0,
+    max: 4.0,
+    ratePerSecond: 1.0,
+    step: 0.1,
+    mode: "bounce",
+    getValue: () => params.x0 ?? 1.5,
+    onChange: (val) =>
+      setParams((prev) => ({ ...prev, x0: Number(val.toFixed(2)) })),
+  });
+
   const handleParamChange = (key: string, value: number) => {
+    playCtrl.pause();
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -219,7 +232,10 @@ export function ExponentialPage() {
                 { key: "inverse", label: "反函数对称" },
               ]}
               value={mode}
-              onChange={(val) => setMode(val as "single" | "inverse")}
+              onChange={(val) => {
+                playCtrl.pause();
+                setMode(val as "single" | "inverse");
+              }}
             />
             <div className="pt-2">
               {/* @syllabus-extension:begin 拓展图层开关（选必二前瞻），默认关闭 */}
@@ -236,8 +252,20 @@ export function ExponentialPage() {
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() => setParams({ ...defaultParams })}
+              onReset={() => {
+                playCtrl.pause();
+                setParams({ ...defaultParams });
+              }}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label="探究动点 x₀ 连续扫描"
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
           </LeftPanelSection>
 
           {/* 教学导引与题设背景 */}

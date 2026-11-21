@@ -7,14 +7,16 @@ import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   TabSwitcher,
   ParamControl,
+  ParamPlayBar,
   TipCard,
   LeftPanel,
+  LeftPanelSection,
   MathPanel,
 } from "@/components/UI";
 import { SceneLegend } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { getOperationsLegendItems } from "./scenePalette";
 import { DerivativeOperationsScene } from "./components/DerivativeOperationsScene";
 import {
@@ -67,13 +69,41 @@ export const DerivativeOperationsAnimation: React.FC = () => {
     yRange,
   });
 
-  const handleParamChange = useCallback((key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const deltaXVal = params.deltaX ?? 0.3;
+  const playCtrl = useParamPlay({
+    min: derivativeOperationsParamMeta.deltaX.min,
+    max: derivativeOperationsParamMeta.deltaX.max,
+    step: derivativeOperationsParamMeta.deltaX.step,
+    mode: "bounce",
+    getValue: () => deltaXVal,
+    onChange: (nextVal) => setParams((prev) => ({ ...prev, deltaX: nextVal })),
+  });
 
-  const handleTabChange = useCallback((key: string) => {
-    setOpType(key as OperationType);
-  }, []);
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      playCtrl.pause();
+      setParams((prev) => ({ ...prev, [key]: value }));
+    },
+    [playCtrl],
+  );
+
+  const handleTabChange = useCallback(
+    (key: string) => {
+      playCtrl.pause();
+      const nextOp = key as OperationType;
+      setOpType(nextOp);
+      setParams((prev) => ({
+        ...prev,
+        x0: nextOp === "divide" && (prev.x0 ?? 1.2) < 0.2 ? 1.2 : prev.x0,
+      }));
+    },
+    [playCtrl],
+  );
+
+  const handleReset = useCallback(() => {
+    playCtrl.pause();
+    setParams({ ...defaultDerivativeOperationsParams });
+  }, [playCtrl]);
 
   const mathPanelData = useMemo(() => {
     return buildMathQuantities("anim-derivative-operations", params, {
@@ -123,6 +153,7 @@ export const DerivativeOperationsAnimation: React.FC = () => {
       {
         key: "x0",
         label: derivativeOperationsParamMeta.x0.label,
+        labelFormula: `\\text{探究点 } \\color{${MATH_COLORS.paramPrimary}}{x_0}`,
         value: params.x0 ?? 1.2,
         min: derivativeOperationsParamMeta.x0.min,
         max: derivativeOperationsParamMeta.x0.max,
@@ -131,6 +162,7 @@ export const DerivativeOperationsAnimation: React.FC = () => {
       {
         key: "deltaX",
         label: derivativeOperationsParamMeta.deltaX.label,
+        labelFormula: `\\text{增量 } \\color{${MATH_COLORS.paramSecondary}}{\\Delta x}`,
         value: params.deltaX ?? 0.3,
         min: derivativeOperationsParamMeta.deltaX.min,
         max: derivativeOperationsParamMeta.deltaX.max,
@@ -141,17 +173,34 @@ export const DerivativeOperationsAnimation: React.FC = () => {
 
   const leftPanelContent = (
     <LeftPanel>
-      <TabSwitcher tabs={OP_TABS} value={opType} onChange={handleTabChange} />
+      <LeftPanelSection title="四则运算法则">
+        <TabSwitcher tabs={OP_TABS} value={opType} onChange={handleTabChange} />
+      </LeftPanelSection>
 
-      <div className="space-y-4 pt-2">
-        <ParamControl params={paramConfigs} onParamChange={handleParamChange} />
+      <LeftPanelSection title="参数调节">
+        <ParamControl
+          params={paramConfigs}
+          onParamChange={handleParamChange}
+          onReset={handleReset}
+        />
+        <div className="pt-2">
+          <ParamPlayBar
+            isPlaying={playCtrl.isPlaying}
+            onToggle={playCtrl.toggle}
+            label="增量趋近零演示 (Δx → 0)"
+            speed={playCtrl.speed}
+            onSpeedChange={playCtrl.setSpeed}
+          />
+        </div>
+      </LeftPanelSection>
 
+      <LeftPanelSection title="教学导引与题设背景" compact>
         <TipCard
           background={tipCardContent.background}
           condition={tipCardContent.condition}
           question={tipCardContent.question}
         />
-      </div>
+      </LeftPanelSection>
     </LeftPanel>
   );
 

@@ -233,5 +233,9 @@ export function build<Topic>Panel(
 2. **KaTeX 自动化编译门禁**：
    - 所有的 `formula` 与 `reasoningSteps` LaTeX 字符串必须经由自动化单测（`katex.__parse`）验证，严禁出现语法错误或未捕获的模板未展开 `${...}`；
    - 严禁在推导中出现 `NaN`、`undefined` 或分母为 0 的未经处理的算式。
+   - 数字格式化统一使用 `formatMathNumber` 或正确单反斜杠正则（`/\.0$/`、`/\.?0+$/`），严禁在 JS 正则字面量中误写双反斜杠 `/\\.0$/`。
+
+### ⑤ B 类大题分步作答链全学科推广要求
+- 所有具备明确采分步的 B 类高考专题页面（含**导数单调极值含参讨论、恒成立与存在性、隐零点与极值点偏移、切线放缩、解析几何联立定值、立体几何、概率统计、数列递推**），推荐在 `src/data/registries/<topic>.ts` 导出同源 `AnswerStepItem[]`，由左屏 `StepNavigator`、右屏 `MathPanel(focusStep, focusTarget)` 与中屏分区聚光围栏三方共享。
 
 

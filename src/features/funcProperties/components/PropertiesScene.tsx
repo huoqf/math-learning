@@ -26,6 +26,7 @@ interface PropertiesSceneProps {
   fontScale?: (v: number) => number;
   fnType: PropertiesFnType;
   mode: "domain" | "parity" | "symmetry";
+  showAbstractIneq?: boolean;
   subMode?:
     | "axis"
     | "center"
@@ -42,6 +43,7 @@ export function PropertiesScene({
   fontScale = (v) => v,
   fnType,
   mode,
+  showAbstractIneq = false,
   subMode = "axis",
 }: PropertiesSceneProps) {
   const x0 = params.x0 ?? 1.5;
@@ -140,6 +142,7 @@ export function PropertiesScene({
           x0={x0}
           x1={x1}
           x2={x2}
+          showAbstractIneq={showAbstractIneq}
         />
       )}
 

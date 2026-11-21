@@ -73,6 +73,20 @@ export const FUNC_ZERO_MODELS: Record<string, FuncZeroModel> = {
     approxZero: 0.0,
     fn: (x: number) => x * x - 2 * x,
   },
+  piecewiseAbs: {
+    key: "piecewiseAbs",
+    name: "复合绝对值零点",
+    formula: "|x^2 - 2x| - 0.5 = 0",
+    defaultM: 2.0,
+    defaultN: 3.0,
+    minM: -2.0,
+    maxM: 3.0,
+    minN: -1.0,
+    maxN: 4.0,
+    step: 0.1,
+    approxZero: 1 + Math.sqrt(1.5),
+    fn: (x: number) => Math.abs(x * x - 2 * x) - 0.5,
+  },
 };
 
 export const defaultParams: Record<string, number> = {

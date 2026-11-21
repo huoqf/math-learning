@@ -22,7 +22,13 @@ import {
   getDynamicParamMeta,
 } from "@/data/registries/funcZero";
 
-const MODEL_KEYS = ["cubic", "logMixed", "expMixed", "counterExample"];
+const MODEL_KEYS = [
+  "cubic",
+  "logMixed",
+  "expMixed",
+  "counterExample",
+  "piecewiseAbs",
+];
 
 /** 区间端点 a、b 必须保持的最小间距（二分法要求 a < b，且不得退化到同一点） */
 const MIN_ENDPOINT_GAP = 0.2;

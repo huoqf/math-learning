@@ -8,9 +8,10 @@ import {
   LeftPanelSection,
   SelectGrid,
   TipCard,
+  ParamPlayBar,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { useScenario } from "@/hooks/useScenario";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { TranscendentalScene } from "./components/TranscendentalScene";
@@ -100,20 +101,50 @@ export function TranscendentalAnimation() {
     });
   }, [params, mode, subMode, isParamLocked]);
 
+  // 7. 动态动画播放控制器 (使用按模式 SSOT 参数域)
+  const playTargetKey = mode === "param" ? "a" : "x0";
+  const playMeta = transcendentalParamMeta[mode]?.[playTargetKey];
+  const playCtrl = useParamPlay({
+    min: playMeta?.min ?? 0.2,
+    max: playMeta?.max ?? 2.0,
+    ratePerSecond: mode === "param" ? 0.9 : 0.65,
+    step: playMeta?.step ?? 0.1,
+    mode: "bounce",
+    getValue: () => params[playTargetKey] ?? playMeta?.defaultValue ?? 1.0,
+    onChange: (val) => {
+      setPreset("free");
+      setParams((prev) => ({
+        ...prev,
+        [playTargetKey]: Number(val.toFixed(2)),
+      }));
+    },
+  });
+
   const handleParamChange = (key: string, value: number) => {
+    playCtrl.pause();
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 画布拖拽动点时自动解耦切回自由探究
-  const handleSceneDrag = useCallback((key: string, value: number) => {
-    setPreset("free");
-    setParams((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  // 画布拖拽动点时自动解耦切回自由探究并暂停播放
+  const handleSceneDrag = useCallback(
+    (key: string, value: number) => {
+      playCtrl.pause();
+      setPreset("free");
+      setParams((prev) => ({ ...prev, [key]: value }));
+    },
+    [playCtrl],
+  );
 
   // 7. 悬浮公式字符串拼接（三位一体色彩绑定：paramPrimary #EF4444）
   const equationLatex = useMemo(() => {
     const pColor = MATH_COLORS.paramPrimary;
-    if (mode === "exp") {
+    if (mode === "isomorphism") {
+      const xStr = (params.x0 > 0 ? params.x0 : 1.0).toFixed(2);
+      if (subMode === "prod_iso") {
+        return `g(t) = e^t + t: \\quad x e^x + x + \\ln x = g(\\color{${pColor}}{x + \\ln x}), \\; x = ${xStr}`;
+      }
+      return `g(t) = e^t + t: \\quad e^x + x \\ge a + \\ln a = g(0.5), \\; x = ${xStr}`;
+    } else if (mode === "exp") {
       const x0Val = params.x0.toFixed(1);
       if (subMode === "shift_1") {
         return `f(x) = e^{x-1} \\ge \\color{${pColor}}{x}`;
@@ -149,6 +180,7 @@ export function TranscendentalAnimation() {
 
   // 8. 模式切换重置参数与默认情景
   const handleModeChange = (newMode: string) => {
+    playCtrl.pause();
     const m = newMode as TranscendentalMode;
     setMode(m);
     if (m === "exp") {
@@ -167,11 +199,16 @@ export function TranscendentalAnimation() {
       setPreset("exp_ax_1_crit");
       setSubMode("exp_ax_1");
       setParams((prev) => ({ ...prev, a: 1.0 }));
+    } else if (m === "isomorphism") {
+      setPreset("sum_iso");
+      setSubMode("sum_iso");
+      setParams((prev) => ({ ...prev, x0: 0.8 }));
     }
   };
 
   // 9. 预设情景选择回调 (useScenario 自动派发参数并特化 subMode)
   const handleScenarioChange = (k: string) => {
+    playCtrl.pause();
     setPreset(k);
     selectScenario(k);
 
@@ -197,12 +234,40 @@ export function TranscendentalAnimation() {
       } else {
         setSubMode("exp_ax_1");
       }
+    } else if (mode === "isomorphism") {
+      if (k === "prod_iso") {
+        setSubMode("prod_iso");
+      } else {
+        setSubMode("sum_iso");
+      }
     }
   };
 
   // 右下角图例配置 (模式专属)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
-    if (mode === "exp") {
+    if (mode === "isomorphism") {
+      const isProd = subMode === "prod_iso";
+      return [
+        {
+          color: MATH_COLORS.function,
+          label: "同构母函数",
+          formula: "g(t) = e^t + t",
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramTertiary,
+          label: "基准参考点",
+          formula: isProd ? "B(1, e+1)" : "B(0.5, g(0.5))",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          label: isProd ? "代换像点" : "动点",
+          formula: isProd ? "U(x+\\ln x, g(u))" : "P(x, g(x))",
+          style: "point",
+        },
+      ];
+    } else if (mode === "exp") {
       const isShift = subMode === "shift_1";
       const isTangent1 = subMode === "tangent_1";
       return [
@@ -375,6 +440,11 @@ export function TranscendentalAnimation() {
                   label: "切线求参",
                   description: "临界切线与参变量",
                 },
+                {
+                  key: "isomorphism",
+                  label: "指对同构",
+                  description: "母函数单调降维",
+                },
               ]}
               value={mode}
               onChange={handleModeChange}
@@ -402,10 +472,49 @@ export function TranscendentalAnimation() {
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={() => {
-                setParams({ ...defaultParams });
-                setPreset("free");
+                playCtrl.pause();
+                setParams({
+                  ...defaultParams,
+                  x0: mode === "exp" ? 0.0 : 1.0,
+                  a: 1.0,
+                });
+                setPreset(
+                  mode === "exp"
+                    ? "tangent_0"
+                    : mode === "param"
+                      ? "exp_ax_1_crit"
+                      : mode === "isomorphism"
+                        ? "sum_iso"
+                        : "tangent_1",
+                );
+                setSubMode(
+                  mode === "exp"
+                    ? "tangent_0"
+                    : mode === "log"
+                      ? "tangent_1"
+                      : mode === "param"
+                        ? "exp_ax_1"
+                        : mode === "isomorphism"
+                          ? "sum_iso"
+                          : "default",
+                );
               }}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label={
+                  mode === "param"
+                    ? "斜率参数 a 连续扫动"
+                    : mode === "isomorphism"
+                      ? "同构自变量 x 连续变化"
+                      : "考察点 x₀ 连续扫描"
+                }
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
           </LeftPanelSection>
 
           {/* 4. 教学导引与考题设问 (由 useScenario SSOT 驱动闭环) */}

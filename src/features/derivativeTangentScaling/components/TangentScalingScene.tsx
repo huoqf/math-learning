@@ -22,6 +22,7 @@ interface TangentScalingSceneProps {
   scale: ReturnType<typeof import("@/hooks").useSceneScale>;
   vp: ViewportInfo;
   fontScale: (v: number) => number;
+  activeStep?: number;
   onParamChange: (key: string, value: number) => void;
 }
 

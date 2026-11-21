@@ -58,12 +58,15 @@ src/data/
   - ❌ 禁止手写 `<circle>` 绘制点，必须用 `MathPoint`（静态点）或 `InteractivePoint`（可拖拽控制点）；
   - ❌ 禁止手写 `<line>` + `<polygon>` 做箭头，必须用 `VectorArrow`；
   - ❌ 禁止手写 `<input type="range">`，必须用 `ParamControl`；
+  - ❌ 禁止手写原生 `<input type="checkbox">` 或暗色样式开关框（如 `bg-slate-800`），统一使用 `<Toggle>`；
   - ❌ 禁止手写 `<button>` 按钮组，必须用 `TabSwitcher` / `SelectGrid`；
   - ❌ 禁止手写散乱 `<text>` 渲染点标/图例，必须用 `SceneLabelGroup`（8 向避让）与 `SceneLegend`（毛玻璃图例）；
   - ❌ 禁止手写右屏卡片，必须由 `MathPanel` + `src/data/builders/<topic>.ts` 驱动。
-- **左屏控制台**：严格遵循 `TabSwitcher → SelectGrid(双列) → (StepNavigator 选配) → ParamControl → TipCard(题设三要素)` 动线。
-  - 课标参数合规性：100% 对应高中课标标准题设（严禁计算机/工程化自造参数）；
-  - 步骤自适应与三处同源：若包含作图或推演步数控制器，必须按数学构型动态自适应（严禁教条化一刀切固定步数）；B 类大题建议接入 `StepNavigator`，`AnswerStepItem[]` 仅在注册表声明一份，并同步驱动右屏 `focusStep`/`focusTarget="reasoning"` 与中屏 `activeStep`/`regionOpacity`/`MATH_COLORS.answerStepFrame` 围栏（详见 `left-panel-spec.md` 第七节）。
+- **左屏控制台**：严格遵循 `TabSwitcher → SelectGrid(双列) → (StepNavigator 选配) → ParamControl → (ParamPlayBar 选配) → Toggle → TipCard(题设三要素)` 动线。
+  - **课标参数合规性与安全复位**：100% 对应高中课标标准题设（严禁计算机/工程化自造参数）；多模式页面 `ParamControl` 的 `onReset` **必须按当前激活模式/子情景复位到合法参数域默认值**（严禁裸用跨模式 `defaultParams` 导致对数真数或定义域越界）；
+  - **可控动态演进动画**：涉及极限逼近、迭代收敛、曲线变换路径、几何轨迹生成或局部微观对比的页面，优先接入 `useParamPlay`（`@/hooks`）+ `ParamPlayBar`（`@/components/UI`），严禁自造 `setInterval` 轮询；用户手动拖拽画布动点、调节滑块或切换模式时必须同步 `pause()` 停止播放，避免状态打架；
+  - **步骤自适应与三处同源**：若包含作图或推演步数控制器，必须按数学构型动态自适应（严禁教条化一刀切固定步数）；所有 B 类高考大题（导数、解析几何、立体几何、概率统计、数列等）均推荐接入 `StepNavigator`，`AnswerStepItem[]` 仅在注册表声明一份，并同步驱动右屏 `focusStep`/`focusTarget="reasoning"` 与中屏 `activeStep`/`regionOpacity`/`MATH_COLORS.answerStepFrame` 围栏（详见 `left-panel-spec.md` 第七节）。
+- **双视窗与错因对比**：当同坐标系叠加多条量纲差异大的曲线易干扰初学者时（如原函数 $f(x)$ 与导函数 $f'(x)$），或需直观辨析易错反例时（如“在点切线 vs 过点切线”、单调区间不可写并集），优先在中屏提供双视窗同轴对齐或错因对比图层。
 - **右屏看板**：所有内容由 `src/data/builders/<topic>.ts` 导出 `MathPanelData`，查阅 [references/right-panel-spec.md](file:///d:/code/math/math-learning/.agents/skills/new-math-animation/references/right-panel-spec.md)。
   - 拓展条目结构化声明：凡超出 2019 人教A版新课标正文的定理，一律通过 `Theorem.isExtension: true` 与 `extensionBadge` 声明，**严禁**把「（拓展 · 超出课标）」写进定理 `name`；
   - 推导链防断层铁律：遵循“已知条件/设元 $\to$ 核心方程/定理 $\to$ 数值求解代入”三要素闭环，严禁空降浮点数或跳步给答案。
@@ -82,7 +85,8 @@ src/data/
 
 ## 交付前自检
 
-运行质检门禁并对照清单自检：
+1. 将新建或改造的多构型/带参数模块纳入 `src/test/autoRegistryFuzz.test.ts`（`fuzzTargets`）及页面交互单测，确保极值边界与动态响应受机器守卫。
+2. 运行质检门禁并对照清单自检：
 ```bash
 node .agents/skills/math-page-audit/scripts/audit_page.mjs src/features/<topic>
 npx tsc -b

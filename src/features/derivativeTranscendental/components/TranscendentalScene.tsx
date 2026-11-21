@@ -12,7 +12,11 @@ import {
 import { mathToDesign } from "@/utils/coordinate";
 import { MATH_COLORS, withAlpha } from "@/theme";
 import type { LabelItem } from "@/utils/labelOverlap";
-import type { TranscendentalMode } from "@/math/transcendental";
+import {
+  solveIsomorphism,
+  type TranscendentalMode,
+  type IsomorphismSubMode,
+} from "@/math/transcendental";
 import {
   paramDomainRange,
   paramDragRange,
@@ -102,6 +106,11 @@ export function TranscendentalScene({
   const validChainX0 = Math.max(0.05, x0);
   const chainExpY = Math.exp(validChainX0 - 1);
   const chainLogY = Math.log(validChainX0) + 1;
+
+  // 4.5 指对同构映射计算
+  const isoSub: IsomorphismSubMode =
+    subMode === "prod_iso" ? "prod_iso" : "sum_iso";
+  const isoRes = useMemo(() => solveIsomorphism(x0, isoSub), [x0, isoSub]);
 
   // 5. 差值阴影区
   const expDiffAreaD = useMemo(() => {
@@ -297,6 +306,30 @@ export function TranscendentalScene({
         },
       ];
       return items;
+    } else if (mode === "isomorphism") {
+      const pU = mathToDesign(isoRes.u, isoRes.gU, scale);
+      const pB = mathToDesign(isoRes.refT, isoRes.gRef, scale);
+      const items: LabelItem[] = [
+        {
+          key: "isoB",
+          x: pB.x,
+          y: pB.y,
+          text: "B",
+          color: MATH_COLORS.paramTertiary,
+          fontSize: fontScale(12),
+          preferredPlacement: "top-left",
+        },
+        {
+          key: "isoU",
+          x: pU.x,
+          y: pU.y,
+          text: isoSub === "prod_iso" ? "U(x+lnx)" : "P",
+          color: MATH_COLORS.paramPrimary,
+          fontSize: fontScale(13),
+          preferredPlacement: "bottom-right",
+        },
+      ];
+      return items;
     } else {
       const isExpAx = subMode === "exp_ax";
       const p0 = mathToDesign(isExpAx ? 1 : 0, isExpAx ? Math.E : 1, scale);
@@ -316,6 +349,8 @@ export function TranscendentalScene({
   }, [
     mode,
     subMode,
+    isoSub,
+    isoRes,
     isShiftMode,
     isTangent1Exp,
     isTangentELog,
@@ -638,6 +673,104 @@ export function TranscendentalScene({
             r={6}
             fontScale={fontScale}
           />
+        </g>
+      )}
+
+      {/* ================= 模式 5: 指对同构与母函数降维 ================= */}
+      {mode === "isomorphism" && (
+        <g>
+          {/* 同构母函数 g(t) = e^t + t */}
+          <FunctionGraph
+            fn={(t) => Math.exp(t) + t}
+            scale={scale}
+            color={MATH_COLORS.function}
+            strokeWidth={3}
+          />
+
+          {/* 基准对照高度水平线 y = g(refT) */}
+          <Asymptote
+            type="horizontal"
+            value={isoRes.gRef}
+            scale={scale}
+            color={withAlpha(MATH_COLORS.paramTertiary, 0.7)}
+            label={isoSub === "prod_iso" ? "g(1) = e + 1" : "g(0.5)"}
+            fontScale={fontScale}
+          />
+
+          {/* 基准对照点 B(refT, g(refT)) */}
+          <MathPoint
+            cx={isoRes.refT}
+            cy={isoRes.gRef}
+            scale={scale}
+            color={MATH_COLORS.paramTertiary}
+            fontScale={fontScale}
+          />
+
+          {/* 从 u 到母函数点 U(u, g(u)) 的垂线，以及 x0 -> u 的同构映射线 */}
+          {(() => {
+            const ptU = mathToDesign(isoRes.u, isoRes.gU, scale);
+            const ptUFoot = mathToDesign(isoRes.u, 0, scale);
+            const ptXFoot = mathToDesign(isoRes.x0, 0, scale);
+            return (
+              <g>
+                {isoSub === "prod_iso" && (
+                  <line
+                    x1={ptXFoot.x}
+                    y1={ptXFoot.y}
+                    x2={ptUFoot.x}
+                    y2={ptUFoot.y}
+                    stroke={MATH_COLORS.paramSecondary}
+                    strokeWidth={1.8}
+                    strokeDasharray="4 3"
+                  />
+                )}
+                <line
+                  x1={ptUFoot.x}
+                  y1={ptUFoot.y}
+                  x2={ptU.x}
+                  y2={ptU.y}
+                  stroke={withAlpha(MATH_COLORS.paramPrimary, 0.75)}
+                  strokeWidth={1.5}
+                  strokeDasharray="3 3"
+                />
+              </g>
+            );
+          })()}
+
+          {/* 母函数上的同构映射点 U(u, g(u)) */}
+          {isoSub === "prod_iso" ? (
+            <>
+              <MathPoint
+                cx={isoRes.u}
+                cy={isoRes.gU}
+                scale={scale}
+                color={MATH_COLORS.paramPrimary}
+                fontScale={fontScale}
+              />
+              <InteractivePoint
+                axis="x"
+                cx={isoRes.x0}
+                cy={0}
+                scale={scale}
+                vp={vp}
+                onDrag={handleDragX0}
+                color={MATH_COLORS.paramSecondary}
+                r={6}
+                fontScale={fontScale}
+              />
+            </>
+          ) : (
+            <InteractivePoint
+              cx={isoRes.x0}
+              cy={isoRes.gU}
+              scale={scale}
+              vp={vp}
+              onDrag={handleDragX0}
+              color={MATH_COLORS.paramPrimary}
+              r={6}
+              fontScale={fontScale}
+            />
+          )}
         </g>
       )}
 

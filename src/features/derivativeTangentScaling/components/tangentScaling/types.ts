@@ -10,5 +10,6 @@ export interface TangentSceneBaseProps {
   scale: SceneScale;
   vp: ViewportInfo;
   fontScale: (v: number) => number;
+  activeStep?: number;
   onParamChange: (key: string, value: number) => void;
 }

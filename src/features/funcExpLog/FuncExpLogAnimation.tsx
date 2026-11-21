@@ -8,6 +8,7 @@ import {
   LeftPanelSection,
   SelectGrid,
   TipCard,
+  Toggle,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { useAnimationViewport, useSceneScale } from "@/hooks";
@@ -85,7 +86,7 @@ export function FuncExpLogAnimation() {
     <ThreePanel
       left={
         <LeftPanel>
-          <LeftPanelSection title="函数选择" subtitle="指数、对数与幂函数">
+          <LeftPanelSection title="函数选择">
             <SelectGrid
               items={[
                 {
@@ -108,22 +109,16 @@ export function FuncExpLogAnimation() {
 
             {/* 反函数对称关系：仅在指数或对数模式下可选 */}
             {(funcType === "exponential" || funcType === "logarithmic") && (
-              <label className="flex items-center gap-2 text-xs text-neutral-600 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={showInverse}
-                  onChange={(e) => setShowInverse(e.target.checked)}
-                  className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                />
-                显示反函数对称 (y = x)
-              </label>
+              <Toggle
+                size="compact"
+                label="显示反函数对称 (y = x)"
+                checked={showInverse}
+                onChange={setShowInverse}
+              />
             )}
           </LeftPanelSection>
 
-          <LeftPanelSection
-            title="参数调节"
-            subtitle="调节参数观察曲线与几何演变"
-          >
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}

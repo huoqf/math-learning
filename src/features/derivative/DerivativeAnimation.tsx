@@ -7,12 +7,18 @@ import {
   LeftPanel,
   LeftPanelSection,
   SelectGrid,
+  TabSwitcher,
   TipCard,
+  ParamPlayBar,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
-import { PRESET_FUNCTIONS, type PresetFunctionKey } from "@/math/derivative";
+import {
+  PRESET_FUNCTIONS,
+  solveExternalTangents,
+  type PresetFunctionKey,
+} from "@/math/derivative";
 import { fitSteppedViewRange } from "@/math/viewRange";
 import { DerivativeScene } from "./components/DerivativeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -20,7 +26,7 @@ import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
 import { defaultParams, paramMeta } from "@/data/registries/derivative";
 
-type ExploreMode = "secant_limit" | "tangent_eq";
+type ExploreMode = "secant_limit" | "tangent_eq" | "external_tangent";
 
 // 精选高中高频核心教学函数（8个经典模型，杜绝冗余）
 const CORE_FUNCTION_KEYS: PresetFunctionKey[] = [
@@ -37,9 +43,12 @@ const CORE_FUNCTION_KEYS: PresetFunctionKey[] = [
 export function DerivativeAnimation() {
   const [mode, setMode] = useState<ExploreMode>("secant_limit");
   const [fnKey, setFnKey] = useState<PresetFunctionKey>("cubic");
+  const [showZoomLoupe, setShowZoomLoupe] = useState<boolean>(false);
   const [params, setParams] = useState<Record<string, number>>(() => ({
     x0: PRESET_FUNCTIONS.cubic.defaultX0,
     dx: defaultParams.dx,
+    xA: defaultParams.xA,
+    yA: defaultParams.yA,
   }));
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -78,6 +87,26 @@ export function DerivativeAnimation() {
 
   // 右下角图例配置
   const legendItems = useMemo<SceneLegendItem[]>(() => {
+    if (mode === "external_tangent") {
+      return [
+        {
+          color: MATH_COLORS.function,
+          formula: `f(x) = ${preset.latex}`,
+          style: "solid",
+        },
+        {
+          color: MATH_COLORS.paramPrimary,
+          formula: "A(x_A, y_A) \\;(\\text{给定定点})",
+          style: "point",
+        },
+        {
+          color: MATH_COLORS.tangentLine,
+          formula: "T_i(t_i, f(t_i)) \\;(\\text{过点切线与切点})",
+          style: "solid",
+        },
+      ];
+    }
+
     const items: SceneLegendItem[] = [
       {
         color: MATH_COLORS.function,
@@ -111,8 +140,42 @@ export function DerivativeAnimation() {
     return items;
   }, [preset.latex, mode]);
 
+  const playTargetKey =
+    mode === "secant_limit" ? "dx" : mode === "tangent_eq" ? "x0" : "xA";
+  const playBounds = useMemo(() => {
+    if (mode === "secant_limit") {
+      return { min: -1.5, max: -0.05, step: 0.05, rate: 0.55 };
+    }
+    if (mode === "tangent_eq") {
+      return {
+        min: preset.x0Range[0],
+        max: preset.x0Range[1],
+        step: 0.05,
+        rate: 0.9,
+      };
+    }
+    return { min: -2.5, max: 2.5, step: 0.1, rate: 0.8 };
+  }, [mode, preset.x0Range]);
+
+  const playCtrl = useParamPlay({
+    min: playBounds.min,
+    max: playBounds.max,
+    ratePerSecond: playBounds.rate,
+    step: playBounds.step,
+    mode: "bounce",
+    getValue: () => params[playTargetKey] ?? playBounds.min,
+    onChange: (val) => {
+      let nextVal = Number(val.toFixed(2));
+      if (playTargetKey === "dx" && Math.abs(nextVal) < 0.02) {
+        nextVal = -0.05;
+      }
+      setParams((prev) => ({ ...prev, [playTargetKey]: nextVal }));
+    },
+  });
+
   const handleParamChange = useCallback(
     (key: string, value: number) => {
+      playCtrl.pause();
       let clampedValue = value;
       const currentPreset = PRESET_FUNCTIONS[fnKey];
       if (key === "x0") {
@@ -125,38 +188,65 @@ export function DerivativeAnimation() {
         if (Math.abs(clampedValue) < 0.02) {
           clampedValue = value >= 0 ? 0.05 : -0.05;
         }
+      } else if (key === "xA") {
+        clampedValue = Math.max(
+          paramMeta.xA.min,
+          Math.min(paramMeta.xA.max, value),
+        );
+      } else if (key === "yA") {
+        clampedValue = Math.max(
+          paramMeta.yA.min,
+          Math.min(paramMeta.yA.max, value),
+        );
       }
-      setParams((prev) => ({ ...prev, [key]: clampedValue }));
+      setParams((prev) => ({
+        ...prev,
+        [key]: Number(clampedValue.toFixed(2)),
+      }));
     },
-    [fnKey],
+    [fnKey, playCtrl],
   );
 
-  const handleDragStart = useCallback(() => {}, []);
+  const handleDragStart = useCallback(() => {
+    playCtrl.pause();
+  }, [playCtrl]);
 
   const handleModeChange = (newMode: ExploreMode) => {
+    playCtrl.pause();
     setMode(newMode);
   };
 
   const handleFnKeyChange = (key: PresetFunctionKey) => {
+    playCtrl.pause();
     setFnKey(key);
     const newPreset = PRESET_FUNCTIONS[key];
     setParams({
       x0: newPreset.defaultX0,
       dx: defaultParams.dx,
+      xA: defaultParams.xA,
+      yA: defaultParams.yA,
     });
   };
 
   const handleReset = () => {
+    playCtrl.pause();
     const currentPreset = PRESET_FUNCTIONS[fnKey];
     setParams({
       x0: currentPreset.defaultX0,
       dx: defaultParams.dx,
+      xA: defaultParams.xA,
+      yA: defaultParams.yA,
     });
   };
 
-  // 模式与参数动态裁剪：在切线方程模式下隐藏 Δx
+  // 模式与参数动态裁剪
   const paramConfigs = useMemo<ParamConfig[]>(() => {
-    const keys = mode === "secant_limit" ? ["x0", "dx"] : ["x0"];
+    const keys =
+      mode === "secant_limit"
+        ? ["x0", "dx"]
+        : mode === "tangent_eq"
+          ? ["x0"]
+          : ["xA", "yA"];
 
     return keys.map((key) => {
       const meta = paramMeta[key];
@@ -222,8 +312,20 @@ export function DerivativeAnimation() {
     return `f(x) = ${fnName}`;
   }, [preset]);
 
+  const externalCount = useMemo(() => {
+    if (mode !== "external_tangent") return 0;
+    return solveExternalTangents(
+      preset.fn,
+      params.xA ?? 1,
+      params.yA ?? -3,
+      preset.x0Range[0],
+      preset.x0Range[1],
+    ).length;
+  }, [mode, preset, params.xA, params.yA]);
+
   const secantLatex = `k_{\\text{割}} = \\frac{f(\\color{${x0ColorHex}}{x_0} + \\color{${dxColorHex}}{\\Delta x}) - f(\\color{${x0ColorHex}}{x_0})}{\\color{${dxColorHex}}{\\Delta x}}`;
   const limitLatex = `f'(\\color{${x0ColorHex}}{x_0}) = \\lim_{\\color{${dxColorHex}}{\\Delta x} \\to 0} k_{\\text{割}}`;
+  const externalLatex = `f'(t)(x_A - t) + f(t) = y_A \\implies \\text{可作 } ${externalCount} \\text{ 条切线}`;
 
   // 教学导引与题设背景配置
   const tipConfig = useMemo(() => {
@@ -235,6 +337,14 @@ export function DerivativeAnimation() {
           "调节割线步长 $\\Delta x \\to 0$（体验左、右双侧逼近），计算割线斜率 $k_{\\text{割}} = \\frac{\\Delta y}{\\Delta x}$ 的极限值，验证其与切点瞬时变化率 $f'(x_0)$ 的代数一致性。",
       };
     }
+    if (mode === "external_tangent") {
+      return {
+        badge: "探究三 · 过定点作切线（在点 vs 过点辨析）",
+        condition: `考察函数 $${preset.latex}$ 与给定定点 $A(${(params.xA ?? 1).toFixed(1)}, ${(params.yA ?? -3).toFixed(1)})$，其中点 $A$ 不必是切点。`,
+        question:
+          "设切点为 $T(t, f(t))$，写出方程 $y_A - f(t) = f'(t)(x_A - t)$，探究拖动定点 $A$ 跨过曲线弯曲分界时过点 $A$ 可作切线条数的变化规律与参数范围。",
+      };
+    }
     return {
       badge: "探究二 · 切线方程与斜率（几何性质 · 点斜式）",
       condition: `考察函数 $${preset.latex}$ 随切点 $P(x_0, y_0)$ 移动时切线 $l$ 的变化。`,
@@ -243,7 +353,7 @@ export function DerivativeAnimation() {
     };
     // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, preset, fnKey]);
+  }, [mode, preset, fnKey, params.xA, params.yA]);
 
   return (
     <ThreePanel
@@ -251,21 +361,14 @@ export function DerivativeAnimation() {
         <LeftPanel>
           {/* 1. 核心探究模式 */}
           <LeftPanelSection title="探究模式">
-            <SelectGrid
-              items={[
-                {
-                  key: "secant_limit",
-                  label: "割线极限逼近",
-                },
-                {
-                  key: "tangent_eq",
-                  label: "切线方程性质",
-                },
+            <TabSwitcher
+              tabs={[
+                { key: "secant_limit", label: "割线极限逼近" },
+                { key: "tangent_eq", label: "切线方程性质" },
+                { key: "external_tangent", label: "过点求切线" },
               ]}
               value={mode}
               onChange={(m) => handleModeChange(m as ExploreMode)}
-              variant="filled"
-              columns={2}
             />
           </LeftPanelSection>
 
@@ -293,6 +396,30 @@ export function DerivativeAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label={
+                  mode === "secant_limit"
+                    ? "Δx → 0 割线逼近切线演示"
+                    : mode === "tangent_eq"
+                      ? "切点 x₀ 沿曲线扫描"
+                      : "定点 xA 横向扫动"
+                }
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+                secondaryAction={
+                  mode !== "external_tangent"
+                    ? {
+                        label: "8× 放大镜",
+                        active: showZoomLoupe,
+                        onToggle: () => setShowZoomLoupe((v) => !v),
+                      }
+                    : undefined
+                }
+              />
+            </div>
           </LeftPanelSection>
 
           {/* 4. 教学引导与题设背景 (置于最底部) */}
@@ -309,7 +436,11 @@ export function DerivativeAnimation() {
           {/* 公式悬浮窗口 */}
           <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5 bg-white/95 backdrop-blur border border-neutral-200 rounded-lg p-3 shadow-md select-none max-w-[280px]">
             <div className="text-xs font-semibold text-neutral-500 border-b border-neutral-100 pb-1">
-              {mode === "secant_limit" ? "割线逼近与导数定义" : "函数切线方程"}
+              {mode === "secant_limit"
+                ? "割线逼近与导数定义"
+                : mode === "tangent_eq"
+                  ? "在点处切线方程"
+                  : "过定点作切线设点方程"}
             </div>
             <div className="space-y-1.5 py-1">
               <div>
@@ -324,6 +455,11 @@ export function DerivativeAnimation() {
                     <KatexFormula formula={limitLatex} mode="inline" />
                   </div>
                 </>
+              )}
+              {mode === "external_tangent" && (
+                <div className="text-[11px]">
+                  <KatexFormula formula={externalLatex} mode="inline" />
+                </div>
               )}
             </div>
           </div>
@@ -340,6 +476,9 @@ export function DerivativeAnimation() {
               fnKey={fnKey}
               x0={params.x0}
               dx={params.dx}
+              xA={params.xA}
+              yA={params.yA}
+              showZoomLoupe={showZoomLoupe}
               scale={scale}
               vp={vp}
               onParamChange={handleParamChange}

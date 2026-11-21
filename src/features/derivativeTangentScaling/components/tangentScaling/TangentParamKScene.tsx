@@ -29,8 +29,11 @@ export function TangentParamKScene({
   scale,
   vp,
   fontScale,
+  activeStep = 0,
   onParamChange,
 }: TangentParamKSceneProps) {
+  const regionOpacity = (r: number) =>
+    !activeStep ? 1 : activeStep === r ? 1 : 0.3;
   const paramKData = useMemo(() => {
     const k = params.k;
     const evalRes = checkParamKBounding(k, params.evalX, paramKSubModel);
@@ -131,182 +134,228 @@ export function TangentParamKScene({
   const pExp = mathToDesign(ex, yExp, scale);
   const pLog = mathToDesign(ex, yLog, scale);
 
+  const clampFrame = (x: number, y: number, w: number, h: number) => {
+    const pad = 10;
+    const minX = vp.designLeft + pad;
+    const maxX = vp.designLeft + vp.designVisibleW - w - pad;
+    const minY = vp.designTop + pad;
+    const maxY = vp.designTop + vp.designVisibleH - h - pad;
+    const cx = Math.max(minX, Math.min(x, Math.max(minX, maxX)));
+    const cy = Math.max(minY, Math.min(y, Math.max(minY, maxY)));
+    return { x: cx, y: cy, width: w, height: h };
+  };
+
+  const stepFrame = (() => {
+    if (!activeStep) return null;
+    if (activeStep === 1) {
+      const ptA = mathToDesign(1, Math.E, scale);
+      return paramKData.showExp
+        ? clampFrame(ptA.x - 130, ptA.y - 90, 260, 180)
+        : clampFrame(
+            vp.designLeft + 30,
+            vp.designTop + 30,
+            vp.designVisibleW - 60,
+            vp.designVisibleH - 60,
+          );
+    }
+    if (activeStep === 2) {
+      const ptFocus = paramKData.showLog
+        ? mathToDesign(Math.E, 1, scale)
+        : mathToDesign(1, Math.E, scale);
+      return clampFrame(ptFocus.x - 135, ptFocus.y - 95, 270, 190);
+    }
+    return clampFrame(
+      Math.min(pLine.x, pTarget.x) - 90,
+      Math.min(pLine.y, pTarget.y, pExp.y, pLog.y) - 50,
+      240,
+      Math.max(150, Math.abs(pExp.y - pLog.y) + 100),
+    );
+  })();
+
   return (
     <>
       <CoordinateGrid scale={scale} fontScale={fontScale} />
 
-      {/* 指数曲线 e^x (单侧/双侧) */}
-      {paramKData.showExp && (
-        <>
-          <FunctionGraph
-            fn={clipFn(paramKData.expFn, [-4, 2.5])}
-            scale={scale}
-            color={MATH_COLORS.primary}
-            strokeWidth={2.5}
-          />
-          {/* 临界上切线 y = ex */}
-          <FunctionGraph
-            fn={clipFn(paramKData.expCritLineFn, [0, 3.0])}
-            scale={scale}
-            color={withAlpha(MATH_COLORS.primary, 0.4)}
-            strokeWidth={1.5}
-            strokeDasharray="5 3"
-          />
-          {/* 临界切点 A(1,e) */}
-          <MathPoint
-            cx={1}
-            cy={Math.E}
-            scale={scale}
-            color={MATH_COLORS.primary}
-            fontScale={fontScale}
-          />
-        </>
-      )}
+      {/* 第 1 步：指数曲线与临界相切位置 */}
+      <g data-step-region={1} opacity={regionOpacity(1)}>
+        {paramKData.showExp && (
+          <>
+            <FunctionGraph
+              fn={clipFn(paramKData.expFn, [-4, 2.5])}
+              scale={scale}
+              color={MATH_COLORS.primary}
+              strokeWidth={2.5}
+            />
+            <FunctionGraph
+              fn={clipFn(paramKData.expCritLineFn, [0, 3.0])}
+              scale={scale}
+              color={withAlpha(MATH_COLORS.primary, 0.4)}
+              strokeWidth={1.5}
+              strokeDasharray="5 3"
+            />
+            <MathPoint
+              cx={1}
+              cy={Math.E}
+              scale={scale}
+              color={MATH_COLORS.primary}
+              fontScale={fontScale}
+            />
+          </>
+        )}
+        <MathPoint
+          cx={0}
+          cy={0}
+          scale={scale}
+          color={MATH_COLORS.line}
+          fontScale={fontScale}
+        />
+      </g>
 
-      {/* 对数曲线 ln x (单侧/双侧) */}
-      {paramKData.showLog && (
-        <>
-          <FunctionGraph
-            fn={clipFn(paramKData.logFn, [0.02, 5.0])}
-            scale={scale}
-            color={MATH_COLORS.secondary}
-            strokeWidth={2.5}
-          />
-          {/* 临界下切线 y = (1/e)x */}
-          <FunctionGraph
-            fn={clipFn(paramKData.logCritLineFn, [0, 5.0])}
-            scale={scale}
-            color={withAlpha(MATH_COLORS.secondary, 0.4)}
-            strokeWidth={1.5}
-            strokeDasharray="5 3"
-          />
-          {/* 临界切点 B(e,1) */}
-          <MathPoint
-            cx={Math.E}
-            cy={1}
-            scale={scale}
-            color={MATH_COLORS.secondary}
-            fontScale={fontScale}
-          />
-        </>
-      )}
+      {/* 第 2 步：对数曲线与过原点临界斜率 */}
+      <g data-step-region={2} opacity={regionOpacity(2)}>
+        {paramKData.showLog && (
+          <>
+            <FunctionGraph
+              fn={clipFn(paramKData.logFn, [0.02, 5.0])}
+              scale={scale}
+              color={MATH_COLORS.secondary}
+              strokeWidth={2.5}
+            />
+            <FunctionGraph
+              fn={clipFn(paramKData.logCritLineFn, [0, 5.0])}
+              scale={scale}
+              color={withAlpha(MATH_COLORS.secondary, 0.4)}
+              strokeWidth={1.5}
+              strokeDasharray="5 3"
+            />
+            <MathPoint
+              cx={Math.E}
+              cy={1}
+              scale={scale}
+              color={MATH_COLORS.secondary}
+              fontScale={fontScale}
+            />
+          </>
+        )}
+      </g>
 
-      {/* 旋转动直线 y = kx */}
-      <FunctionGraph
-        fn={clipFn(paramKData.lineFn, [0, 4.5])}
-        scale={scale}
-        color={
-          paramKData.evalRes.isSafe
-            ? MATH_COLORS.paramTertiary
-            : MATH_COLORS.highlight
-        }
-        strokeWidth={2.2}
-      />
+      {/* 第 3 步：旋转动直线 y = kx 与检验点垂直位置范围 */}
+      <g data-step-region={3} opacity={regionOpacity(3)}>
+        <FunctionGraph
+          fn={clipFn(paramKData.lineFn, [0, 4.5])}
+          scale={scale}
+          color={
+            paramKData.evalRes.isSafe
+              ? MATH_COLORS.paramTertiary
+              : MATH_COLORS.highlight
+          }
+          strokeWidth={2.2}
+        />
 
-      {/* 旋转中心原点 O(0,0) */}
-      <MathPoint
-        cx={0}
-        cy={0}
-        scale={scale}
-        color={MATH_COLORS.line}
-        fontScale={fontScale}
-      />
+        <InteractivePoint
+          cx={kHandleX}
+          cy={kHandleY}
+          scale={scale}
+          vp={vp}
+          color={MATH_COLORS.paramPrimary}
+          fontScale={fontScale}
+          onDrag={({ x, y }) => {
+            const effX = Math.max(0.5, x);
+            const newK = Math.max(
+              PARAM_K_SLOPE_RANGE[0],
+              Math.min(PARAM_K_SLOPE_RANGE[1], y / effX),
+            );
+            onParamChange("k", Math.round(newK * 100) / 100);
+          }}
+        />
 
-      {/* 动直线斜率旋转手柄 Q_k (专职调节斜率 k，鲜红色与左屏 k 滑块 100% 绑定) */}
-      <InteractivePoint
-        cx={kHandleX}
-        cy={kHandleY}
-        scale={scale}
-        vp={vp}
-        color={MATH_COLORS.paramPrimary}
-        fontScale={fontScale}
-        onDrag={({ x, y }) => {
-          const effX = Math.max(0.5, x);
-          const newK = Math.max(
-            PARAM_K_SLOPE_RANGE[0],
-            Math.min(PARAM_K_SLOPE_RANGE[1], y / effX),
-          );
-          onParamChange("k", Math.round(newK * 100) / 100);
-        }}
-      />
+        {isDual ? (
+          <g>
+            <line
+              x1={pExp.x}
+              y1={pExp.y}
+              x2={pLog.x}
+              y2={pLog.y}
+              stroke={MATH_COLORS.accent}
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+            />
+            <MathPoint
+              cx={ex}
+              cy={yExp}
+              scale={scale}
+              color={MATH_COLORS.primary}
+              fontScale={fontScale}
+            />
+            <MathPoint
+              cx={ex}
+              cy={yLog}
+              scale={scale}
+              color={MATH_COLORS.secondary}
+              fontScale={fontScale}
+            />
+            <InteractivePoint
+              axis="x"
+              xRange={PARAM_K_PROBE_X_RANGE}
+              cx={ex}
+              cy={yLine}
+              scale={scale}
+              vp={vp}
+              color={MATH_COLORS.paramSecondary}
+              fontScale={fontScale}
+              onChangeX={(x) => onParamChange("evalX", x)}
+            />
+          </g>
+        ) : (
+          <g>
+            <line
+              x1={pLine.x}
+              y1={pLine.y}
+              x2={pTarget.x}
+              y2={pTarget.y}
+              stroke={MATH_COLORS.accent}
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+            />
+            <MathPoint
+              cx={ex}
+              cy={targetY}
+              scale={scale}
+              color={
+                paramKSubModel === "log_kx_origin"
+                  ? MATH_COLORS.secondary
+                  : MATH_COLORS.primary
+              }
+              fontScale={fontScale}
+            />
+            <InteractivePoint
+              axis="x"
+              xRange={PARAM_K_PROBE_X_RANGE}
+              cx={ex}
+              cy={yLine}
+              scale={scale}
+              vp={vp}
+              color={MATH_COLORS.paramSecondary}
+              fontScale={fontScale}
+              onChangeX={(x) => onParamChange("evalX", x)}
+            />
+          </g>
+        )}
+      </g>
 
-      {/* 检验点 evalX 垂直连线与横向探针交互手柄 */}
-      {isDual ? (
-        <g>
-          {/* 双侧贯通垂直指示虚线 (ln x 到 e^x) */}
-          <line
-            x1={pExp.x}
-            y1={pExp.y}
-            x2={pLog.x}
-            y2={pLog.y}
-            stroke={MATH_COLORS.accent}
-            strokeWidth={1.5}
-            strokeDasharray="3 3"
-          />
-          {/* 上交点 e^x */}
-          <MathPoint
-            cx={ex}
-            cy={yExp}
-            scale={scale}
-            color={MATH_COLORS.primary}
-            fontScale={fontScale}
-          />
-          {/* 下交点 ln x */}
-          <MathPoint
-            cx={ex}
-            cy={yLog}
-            scale={scale}
-            color={MATH_COLORS.secondary}
-            fontScale={fontScale}
-          />
-          {/* 动直线上的检验探针手柄 P */}
-          <InteractivePoint
-            axis="x"
-            xRange={PARAM_K_PROBE_X_RANGE}
-            cx={ex}
-            cy={yLine}
-            scale={scale}
-            vp={vp}
-            color={MATH_COLORS.paramSecondary}
-            fontScale={fontScale}
-            onChangeX={(x) => onParamChange("evalX", x)}
-          />
-        </g>
-      ) : (
-        <g>
-          <line
-            x1={pLine.x}
-            y1={pLine.y}
-            x2={pTarget.x}
-            y2={pTarget.y}
-            stroke={MATH_COLORS.accent}
-            strokeWidth={1.5}
-            strokeDasharray="3 3"
-          />
-          <MathPoint
-            cx={ex}
-            cy={targetY}
-            scale={scale}
-            color={
-              paramKSubModel === "log_kx_origin"
-                ? MATH_COLORS.secondary
-                : MATH_COLORS.primary
-            }
-            fontScale={fontScale}
-          />
-          {/* 动直线上的检验探针手柄 P */}
-          <InteractivePoint
-            axis="x"
-            xRange={PARAM_K_PROBE_X_RANGE}
-            cx={ex}
-            cy={yLine}
-            scale={scale}
-            vp={vp}
-            color={MATH_COLORS.paramSecondary}
-            fontScale={fontScale}
-            onChangeX={(x) => onParamChange("evalX", x)}
-          />
-        </g>
+      {stepFrame && (
+        <rect
+          x={stepFrame.x}
+          y={stepFrame.y}
+          width={stepFrame.width}
+          height={stepFrame.height}
+          rx={8}
+          fill="none"
+          stroke={MATH_COLORS.answerStepFrame}
+          strokeWidth={2}
+          strokeDasharray="7 4"
+          className="pointer-events-none"
+        />
       )}
 
       <SceneLabelGroup items={labelItems} fontScale={fontScale} />

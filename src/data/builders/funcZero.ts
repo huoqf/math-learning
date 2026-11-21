@@ -3,7 +3,13 @@ import { solveBisection } from "@/math/function";
 import { MATH_COLORS } from "@/theme";
 import { FUNC_ZERO_MODELS } from "../registries/funcZero";
 
-const MODEL_KEYS = ["cubic", "logMixed", "expMixed", "counterExample"];
+const MODEL_KEYS = [
+  "cubic",
+  "logMixed",
+  "expMixed",
+  "counterExample",
+  "piecewiseAbs",
+];
 
 export function buildFuncZeroPanel(
   params: Record<string, number>,

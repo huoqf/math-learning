@@ -17,6 +17,7 @@ import {
   formatFloat,
   type MonotonicityModelKey,
 } from "@/math/derivativeMonotonicity";
+import { getMonotonicityAnswerSteps } from "../registries/derivativeMonotonicity";
 import { MATH_COLORS } from "@/theme";
 
 export function buildDerivativeMonotonicityQuantities(
@@ -144,6 +145,9 @@ export function buildDerivativeMonotonicityQuantities(
   }
 
   // ── 2. 高考解答题破题推演链 (三步法闭环，严格对应当前维度与模型) ──
+  const stepChain = getMonotonicityAnswerSteps(mode);
+  const stepTitle = (stepNum: number) =>
+    stepChain.find((s) => s.step === stepNum)?.title ?? "";
   const reasoningSteps: ReasoningStep[] = [];
   let examAnchor = "";
 
@@ -158,21 +162,21 @@ export function buildDerivativeMonotonicityQuantities(
     reasoningSteps.push(
       {
         step: 1,
-        title: "确定定义域并规范求导",
+        title: stepTitle(1),
         detail: `函数定义域为 $x \\in ${domainLatex}$。对函数求导得导函数表达式：`,
         latex: `${result.derivativeLatex}`,
         rubric: "【高考采分点】求导正确得 2 分",
       },
       {
         step: 2,
-        title: "代入切点计算导数值与切线方程",
+        title: stepTitle(2),
         detail: `代入切点横坐标 $x_0 = ${formatFloat(x0)}$，得切线斜率 $k = f'(${formatFloat(x0)}) = ${fpx0Str}$，点斜式切线方程为：`,
         latex: tangentLineLatex,
         rubric: "【高考采分点】斜率与切线方程正确得 2 分",
       },
       {
         step: 3,
-        title: "导数符号判定局部单调增减性",
+        title: stepTitle(3),
         detail: Number.isFinite(fpx0)
           ? fpx0 > 0
             ? `因 $f'(${formatFloat(x0)}) = ${fpx0Str} > 0$，切线倾斜角为锐角，函数在 $x_0$ 的邻域内严格单调递增。`
@@ -199,14 +203,14 @@ export function buildDerivativeMonotonicityQuantities(
     reasoningSteps.push(
       {
         step: 1,
-        title: "求解导函数零点 (必要条件)",
+        title: stepTitle(1),
         detail: `在定义域 $x \\in ${domainLatex}$ 内，令导函数 $f'(x) = 0$：`,
         latex: `${result.derivativeLatex} = 0`,
         rubric: "【高考采分点】求出所有导数为零点得 2 分",
       },
       {
         step: 2,
-        title: "第一充分条件符号穿零检验",
+        title: stepTitle(2),
         detail: extremaDetail,
         latex:
           result.extrema.length > 0
@@ -216,7 +220,7 @@ export function buildDerivativeMonotonicityQuantities(
       },
       {
         step: 3,
-        title: "代入原函数规范下结论",
+        title: stepTitle(3),
         detail:
           result.extrema.length > 0
             ? `代入导数为零的点求出对应的极值：${result.extrema.map((e) => `f(${formatFloat(e.x)}) = ${formatFloat(e.y)}`).join("，")}。`
@@ -239,21 +243,21 @@ export function buildDerivativeMonotonicityQuantities(
     reasoningSteps.push(
       {
         step: 1,
-        title: "确定定义域与导数因式分解",
+        title: stepTitle(1),
         detail: `明确定位函数定义域为 $x \\in ${domainLatex}$，求导并因式分解确定分子分母符号：`,
         latex: `${result.derivativeLatex}`,
         rubric: "【高考采分点】定义域与求导得 2 分",
       },
       {
         step: 2,
-        title: "分类讨论分水岭划分依据",
+        title: stepTitle(2),
         detail: `核心分界依据：${result.criticalCondition}。针对参数 $a = ${formatFloat(a)}$ 处于不同区间时讨论导数符号分布。`,
         latex: result.criticalCondition,
         rubric: "【高考采分点】分类讨论标准分段得 2 分",
       },
       {
         step: 3,
-        title: "列表汇总与单调区间规范书写",
+        title: stepTitle(3),
         detail: `根据当前参数 $a = ${formatFloat(a)}$ 讨论所得单调性与极值结论：${result.discussionSummaryLatex}。注意：区间断开处切忌使用并集符号 $\\cup$。`,
         latex: result.discussionSummaryLatex,
         rubric: "【高考采分点】单调区间规范书写得 2 分",

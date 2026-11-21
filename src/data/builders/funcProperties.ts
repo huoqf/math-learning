@@ -434,7 +434,57 @@ export function buildFuncPropertiesPanel(
       intrinsicMonotonicityHighlight = "extreme";
     }
 
+    const showAbstractIneq = Boolean(config?.showAbstractIneq);
+    const fx1 = getFn(x1);
+    const fx2 = getFn(x2);
+
+    const abstractQuantities: MathPanelData["quantities"] = [];
+    if (showAbstractIneq && Number.isFinite(fx1) && Number.isFinite(fx2)) {
+      if (parityRes.parity === "even") {
+        const cmpAbs =
+          Math.abs(Math.abs(x1) - Math.abs(x2)) < 1e-4
+            ? "|x_1| = |x_2|"
+            : Math.abs(x1) < Math.abs(x2)
+              ? "|x_1| < |x_2|"
+              : "|x_1| > |x_2|";
+        const cmpVal =
+          Math.abs(fx1 - fx2) < 1e-4
+            ? "f(x_1) = f(x_2)"
+            : fx1 < fx2
+              ? "f(x_1) < f(x_2)"
+              : "f(x_1) > f(x_2)";
+        abstractQuantities.push({
+          label: "偶函数绝对值脱壳对照",
+          symbol: "|x_1|\\text{ vs }|x_2|",
+          value: `${cmpAbs} \\implies ${cmpVal}`,
+          color: MATH_COLORS.paramTertiary,
+          highlight: fx1 >= fx2 ? "positive" : "negative",
+        });
+      } else if (parityRes.parity === "odd") {
+        const cmpSumX =
+          Math.abs(x1 + x2) < 1e-4
+            ? "x_1 + x_2 = 0"
+            : x1 + x2 > 0
+              ? "x_1 > -x_2"
+              : "x_1 < -x_2";
+        const cmpSumF =
+          Math.abs(fx1 + fx2) < 1e-4
+            ? "f(x_1) + f(x_2) = 0"
+            : fx1 + fx2 > 0
+              ? "f(x_1) > f(-x_2)"
+              : "f(x_1) < f(-x_2)";
+        abstractQuantities.push({
+          label: "奇函数对称移项对照",
+          symbol: "f(x_1) + f(x_2)",
+          value: `${cmpSumF}\\; (${cmpSumX})`,
+          color: MATH_COLORS.paramTertiary,
+          highlight: fx1 + fx2 >= 0 ? "positive" : "negative",
+        });
+      }
+    }
+
     const quantities: MathPanelData["quantities"] = [
+      ...abstractQuantities,
       {
         label: "主测试点 P₀",
         symbol: "P_0(x_0, y_0)",
@@ -594,6 +644,14 @@ export function buildFuncPropertiesPanel(
     ];
 
     const gaokaoPoints: MathPanelData["gaokaoPoints"] = [
+      ...(showAbstractIneq
+        ? [
+            {
+              text: "【奇偶+单调抽象不等式通法】偶函数先化为 $f(|u|) > f(|v|)$，再结合 $[0, +\\infty)$ 单调性脱去 $f$；奇函数先用 $f(-v) = -f(v)$ 移项化为 $f(u) > f(-v)$，再按区间单调性脱去 $f$。",
+              importance: "gaokao" as const,
+            },
+          ]
+        : []),
       {
         text: "奇函数在原点处的性质：若奇函数 f(x) 在 x = 0 处有定义，则必有 f(0) = 0！这是高考赋值法秒杀待定系数的关键（如分式、对数含参函数）。",
         importance: "gaokao",

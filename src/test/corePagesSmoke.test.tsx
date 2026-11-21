@@ -64,8 +64,16 @@ import { RegressionPage } from "@/features/pairedData/RegressionPage";
 import { IndependencePage } from "@/features/pairedData/IndependencePage";
 import { ComplexAnimation } from "@/features/complex/ComplexAnimation";
 import { FuncPropertiesAnimation } from "@/features/funcProperties";
+import { DomainPage } from "@/features/funcProperties/DomainPage";
+import { ParityPage } from "@/features/funcProperties/ParityPage";
+import { SymmetryPage } from "@/features/funcProperties/SymmetryPage";
 import { FuncExpLogAnimation } from "@/features/funcExpLog";
+import { ExponentialPage } from "@/features/funcExpLog/ExponentialPage";
+import { LogarithmicPage } from "@/features/funcExpLog/LogarithmicPage";
+import { PowerPage } from "@/features/funcExpLog/PowerPage";
 import { FuncZeroAnimation } from "@/features/funcZero";
+import { SingleVarPage } from "@/features/constant/SingleVarPage";
+import { DoubleVarPage } from "@/features/constant/DoubleVarPage";
 import { QuadraticAnimation } from "@/features/quadratic/QuadraticAnimation";
 import { NikeAnimation } from "@/features/nike/NikeAnimation";
 import { TransformAnimation } from "@/features/transform";
@@ -506,5 +514,34 @@ describe("Core Feature Pages Smoke & Rendering Tests", () => {
       </MemoryRouter>,
     );
     expect(screen.getByText("辨析情境选择")).toBeInTheDocument();
+  });
+
+  // ═════════ 函数与导数直达路由子页面（独立路由组件烟雾）═════════
+  it("DomainPage / ParityPage / SymmetryPage mount properly", () => {
+    render(<DomainPage />);
+    expect(screen.getByText("定义域与值域看板")).toBeInTheDocument();
+    render(<ParityPage />);
+    expect(screen.getByText("单调奇偶性看板")).toBeInTheDocument();
+    render(<SymmetryPage />);
+    expect(screen.getByText("对称与周期看板")).toBeInTheDocument();
+  });
+
+  it("ExponentialPage / LogarithmicPage / PowerPage mount properly", () => {
+    render(<ExponentialPage />);
+    expect(screen.getByText("指数函数看板")).toBeInTheDocument();
+    render(<LogarithmicPage />);
+    expect(screen.getByText("对数函数看板")).toBeInTheDocument();
+    render(<PowerPage />);
+    expect(screen.getByText("幂函数看板")).toBeInTheDocument();
+  });
+
+  it("SingleVarPage mounts properly", () => {
+    render(<SingleVarPage />);
+    expect(screen.getByText("单变量恒成立与存在性看板")).toBeInTheDocument();
+  });
+
+  it("DoubleVarPage mounts properly", () => {
+    render(<DoubleVarPage />);
+    expect(screen.getByText("数学解析看板")).toBeInTheDocument();
   });
 });

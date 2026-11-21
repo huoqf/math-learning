@@ -22,7 +22,7 @@ import { dashArrayOf } from "@/components/Math/scenePalette";
 import { mathToDesign } from "@/utils/coordinate";
 import { withAlpha } from "@/theme";
 import type { LabelItem } from "@/utils/labelOverlap";
-import { getShiftPalette } from "../scenePalette";
+import { getShiftPalette, SHIFT_STEP_FRAME_COLOR } from "../scenePalette";
 import { paramMeta } from "@/data/registries/derivativeShift";
 import { ShiftPanoramaAxis } from "./ShiftPanoramaAxis";
 import {
@@ -40,6 +40,7 @@ interface DerivativeShiftSceneProps {
   activeMode: string;
   subModel: string;
   onParamChange: (key: string, value: number) => void;
+  activeStep?: number;
   fontScale?: (v: number) => number;
 }
 
@@ -50,8 +51,11 @@ export function DerivativeShiftScene({
   activeMode,
   subModel,
   onParamChange,
+  activeStep = 0,
   fontScale = (v) => v,
 }: DerivativeShiftSceneProps) {
+  const regionOpacity = (r: number) =>
+    !activeStep ? 1 : activeStep === r ? 1 : 0.3;
   const a = params.a ?? 1.5;
   const k = params.k ?? 0.25;
   const x1Param = params.x1 ?? 0.3;
@@ -383,6 +387,106 @@ export function DerivativeShiftScene({
     onParamChange("x2", Math.round(newX2 * 10) / 10);
   };
 
+  const p1SecantPt = mathToDesign(shiftResult.x1, shiftResult.k, scale);
+  const mirrorPtDesign = mathToDesign(
+    2 * shiftResult.x0 - shiftResult.x1,
+    shiftResult.k,
+    scale,
+  );
+  const traceDesignPt = mathToDesign(izResult.x0, izResult.traceY, scale);
+
+  const clampFrame = (x: number, y: number, w: number, h: number) => {
+    const pad = 10;
+    const minX = vp.designLeft + pad;
+    const maxX = vp.designLeft + vp.designVisibleW - w - pad;
+    const minY = vp.designTop + pad;
+    const maxY = vp.designTop + vp.designVisibleH - h - pad;
+    const cx = Math.max(minX, Math.min(x, Math.max(minX, maxX)));
+    const cy = Math.max(minY, Math.min(y, Math.max(minY, maxY)));
+    return { x: cx, y: cy, width: w, height: h };
+  };
+
+  const stepFrame = (() => {
+    if (!activeStep) return null;
+    if (activeMode === "implicit_zero") {
+      if (activeStep === 1 && Number.isFinite(zeroFootPt.x)) {
+        return clampFrame(zeroFootPt.x - 110, zeroFootPt.y - 95, 220, 170);
+      }
+      if (
+        activeStep === 2 &&
+        Number.isFinite(traceDesignPt.x) &&
+        Number.isFinite(traceDesignPt.y)
+      ) {
+        return clampFrame(
+          traceDesignPt.x - 130,
+          traceDesignPt.y - 80,
+          260,
+          160,
+        );
+      }
+      if (Number.isFinite(zeroPt.x) && Number.isFinite(zeroPt.y)) {
+        return clampFrame(zeroPt.x - 130, zeroPt.y - 80, 260, 160);
+      }
+      return clampFrame(
+        vp.designLeft + 50,
+        vp.designTop + 50,
+        vp.designVisibleW - 100,
+        vp.designVisibleH - 100,
+      );
+    }
+    if (activeMode === "shift_symmetric") {
+      if (activeStep === 1) {
+        const minX = Math.min(p1SecantPt.x, p2Pt.x) - 30;
+        const maxX = Math.max(p1SecantPt.x, p2Pt.x) + 30;
+        const w = Math.max(180, Math.min(vp.designVisibleW - 40, maxX - minX));
+        return clampFrame(minX, Math.min(p1SecantPt.y, p2Pt.y) - 90, w, 170);
+      }
+      if (activeStep === 2) {
+        const refX = Number.isFinite(mirrorPtDesign.x)
+          ? mirrorPtDesign.x
+          : midPt.x;
+        const minX = Math.min(p1SecantPt.x, refX) - 35;
+        const maxX = Math.max(p1SecantPt.x, refX) + 35;
+        const w = Math.max(200, Math.min(vp.designVisibleW - 40, maxX - minX));
+        return clampFrame(minX, p1SecantPt.y - 105, w, 210);
+      }
+      return clampFrame(
+        vp.designLeft + 24,
+        vp.designTop + vp.designVisibleH - 115,
+        vp.designVisibleW - 48,
+        100,
+      );
+    }
+    if (activeStep === 1) {
+      const minX = Math.min(p1Design.x, p2Design.x) - 30;
+      const maxX = Math.max(p1Design.x, p2Design.x) + 30;
+      const minY = Math.min(p1Design.y, p2Design.y) - 35;
+      const maxY = Math.max(p1Design.y, p2Design.y) + 35;
+      return clampFrame(
+        minX,
+        minY,
+        Math.max(180, maxX - minX),
+        Math.max(130, maxY - minY),
+      );
+    }
+    if (activeStep === 2) {
+      return clampFrame(
+        tangentPtDesign.x - 85,
+        Math.min(tangentPtDesign.y, scale.originY) - 30,
+        170,
+        Math.max(110, Math.abs(scale.originY - tangentPtDesign.y) + 60),
+      );
+    }
+    const gDesign = mathToDesign(logMeanResult.geoMean, 0, scale);
+    const aDesign = mathToDesign(logMeanResult.ariMean, 0, scale);
+    return clampFrame(
+      Math.min(gDesign.x, aDesign.x) - 40,
+      scale.originY - 50,
+      Math.max(160, Math.abs(aDesign.x - gDesign.x) + 80),
+      100,
+    );
+  })();
+
   return (
     <g>
       {/* 统一坐标轴网格 */}
@@ -391,385 +495,373 @@ export function DerivativeShiftScene({
       {/* ─── 模式一：隐零点设而不求与极值消元 ─── */}
       {activeMode === "implicit_zero" && (
         <g>
-          {/* 原函数 f(x) 曲线 */}
-          <FunctionGraph
-            fn={izResult.fn}
-            scale={scale}
-            color={P.fn.color}
-            strokeWidth={P.fn.width}
-          />
+          {/* 第 1 步：求导与零点存在性 */}
+          <g data-step-region={1} opacity={regionOpacity(1)}>
+            <FunctionGraph
+              fn={izResult.dfn}
+              scale={scale}
+              color={P.dfn.color}
+              strokeWidth={P.dfn.width}
+              strokeDasharray={dashArrayOf(P.dfn)}
+            />
+            <Asymptote
+              type="vertical"
+              value={izResult.x0}
+              scale={scale}
+              color={withAlpha(P.x0Guide.color, 0.6)}
+              label="x = x₀"
+              fontScale={fontScale}
+            />
+            <MathPoint
+              cx={izResult.x0}
+              cy={0}
+              scale={scale}
+              color={P.zeroPt.color}
+              variant="hollow"
+              fontScale={fontScale}
+            />
+          </g>
 
-          {/* 导函数 f'(x) 曲线 */}
-          <FunctionGraph
-            fn={izResult.dfn}
-            scale={scale}
-            color={P.dfn.color}
-            strokeWidth={P.dfn.width}
-            strokeDasharray={dashArrayOf(P.dfn)}
-          />
+          {/* 第 2 步：设而不求消参下沉 */}
+          <g data-step-region={2} opacity={regionOpacity(2)}>
+            <FunctionGraph
+              fn={izResult.traceFn}
+              scale={scale}
+              color={P.trace.color}
+              strokeWidth={P.trace.width}
+              strokeDasharray={dashArrayOf(P.trace)}
+            />
+            <MathPoint
+              cx={izResult.x0}
+              cy={izResult.traceY}
+              scale={scale}
+              color={P.tracePt.color}
+              fontScale={fontScale}
+            />
+          </g>
 
-          {/* 极值消元轨迹 h(x) 曲线 */}
-          <FunctionGraph
-            fn={izResult.traceFn}
-            scale={scale}
-            color={P.trace.color}
-            strokeWidth={P.trace.width}
-            strokeDasharray={dashArrayOf(P.trace)}
-          />
-
-          {/* 隐零点 x0 处的垂直虚线 */}
-          <Asymptote
-            type="vertical"
-            value={izResult.x0}
-            scale={scale}
-            color={withAlpha(P.x0Guide.color, 0.6)}
-            label="x = x₀"
-            fontScale={fontScale}
-          />
-
-          {/* x0 的 x 轴足点连线 */}
-          <line
-            x1={zeroFootPt.x}
-            y1={zeroFootPt.y}
-            x2={zeroPt.x}
-            y2={zeroPt.y}
-            stroke={P.x0Guide.color}
-            strokeWidth={1.5}
-            strokeDasharray="3 3"
-          />
-
-          {/* 极值点 (x0, f(x0)) 可拖拽点（当 a > 3.7 极值点下沉飞出视口时，边缘吸附手柄允许用户横向拉回） */}
-          <InteractivePoint
-            cx={izResult.x0}
-            cy={izResult.y0}
-            scale={scale}
-            vp={vp}
-            onDrag={handleDragX0}
-            color={P.extremumPt.color}
-            r={6}
-            fontScale={fontScale}
-            edgeClampProjection
-          />
-
-          {/* 代换消元下的轨迹点 (x0, h(x0)) */}
-          <MathPoint
-            cx={izResult.x0}
-            cy={izResult.traceY}
-            scale={scale}
-            color={P.tracePt.color}
-            fontScale={fontScale}
-          />
-
-          {/* 导数零点 (x0, 0) */}
-          <MathPoint
-            cx={izResult.x0}
-            cy={0}
-            scale={scale}
-            color={P.zeroPt.color}
-            variant="hollow"
-            fontScale={fontScale}
-          />
+          {/* 第 3 步：代入求值与范围确定 */}
+          <g data-step-region={3} opacity={regionOpacity(3)}>
+            <FunctionGraph
+              fn={izResult.fn}
+              scale={scale}
+              color={P.fn.color}
+              strokeWidth={P.fn.width}
+            />
+            <line
+              x1={zeroFootPt.x}
+              y1={zeroFootPt.y}
+              x2={zeroPt.x}
+              y2={zeroPt.y}
+              stroke={P.x0Guide.color}
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+            />
+            <InteractivePoint
+              cx={izResult.x0}
+              cy={izResult.y0}
+              scale={scale}
+              vp={vp}
+              onDrag={handleDragX0}
+              color={P.extremumPt.color}
+              r={6}
+              fontScale={fontScale}
+              edgeClampProjection
+            />
+          </g>
         </g>
       )}
 
       {/* ─── 模式二：极值点偏移与对称构造法 ─── */}
       {activeMode === "shift_symmetric" && (
         <g>
-          {/* 原函数 f(x) 曲线 */}
-          <FunctionGraph
-            fn={shiftResult.fn}
-            scale={scale}
-            color={P.fn.color}
-            strokeWidth={P.fn.width}
-          />
-
-          {/* 镜像对称曲线 y = f(2x0 - x) */}
-          <FunctionGraph
-            fn={shiftResult.mirrorFn}
-            scale={scale}
-            color={withAlpha(P.mirrorFn.color, 0.85)}
-            strokeWidth={P.mirrorFn.width}
-            strokeDasharray={dashArrayOf(P.mirrorFn)}
-          />
-
-          {/* 差函数 F(x) = f(x) - f(2x0 - x) 曲线：极值点偏移对称构造法的核心可视证据 */}
-          <FunctionGraph
-            fn={shiftResult.diffFn}
-            scale={scale}
-            color={P.diffFn.color}
-            strokeWidth={P.diffFn.width}
-            strokeDasharray={dashArrayOf(P.diffFn)}
-          />
-
-          {/* 极值点 x0 对称中轴 */}
-          <Asymptote
-            type="vertical"
-            value={shiftResult.x0}
-            scale={scale}
-            color={P.axis.color}
-            label="对称轴 x = x₀"
-            fontScale={fontScale}
-          />
-
-          {/* 水平割线 y = k */}
-          <Asymptote
-            type="horizontal"
-            value={shiftResult.k}
-            scale={scale}
-            color={P.secant.color}
-            label="割线 y = k"
-            fontScale={fontScale}
-          />
-
-          {/* 偏移区间高亮阴影: [x0, midX]，下边界为割线 y = k（偏移量 |f(x) - k|） */}
-          <IntervalShadow
-            fn={shiftResult.fn}
-            x1={shiftResult.x0}
-            x2={shiftResult.midX}
-            scale={scale}
-            baseline={{ kind: "horizontal", y: shiftResult.k }}
-            fillColor={withAlpha(P.offsetZone.color, 0.25)}
-          />
-
-          {/* 水平割线上的控制点：拖动改变 k */}
-          <InteractivePoint
-            cx={shiftResult.x0}
-            cy={shiftResult.k}
-            scale={scale}
-            vp={vp}
-            onDrag={handleDragSecant}
-            color={P.secantHandle.color}
-            r={6}
-            fontScale={fontScale}
-          />
-
-          {/* 双根交点 P1(x1, k) 与 P2(x2, k) */}
-          <MathPoint
-            cx={shiftResult.x1}
-            cy={shiftResult.k}
-            scale={scale}
-            color={P.p1.color}
-            fontScale={fontScale}
-          />
-
-          {frameFlags.p2OffFrame ? (
-            /* P₂ 越出可见域：空心点 + 右向箭头收在边界槽位，
-               真实横坐标与「超出画布」说明由底部对照条按同一刻度给出，
-               绝不静默裁掉、也不为此缩放坐标轴 */
-            <g>
+          {/* 第 1 步：求导确立极值中心与水平割线 */}
+          <g data-step-region={1} opacity={regionOpacity(1)}>
+            <FunctionGraph
+              fn={shiftResult.fn}
+              scale={scale}
+              color={P.fn.color}
+              strokeWidth={P.fn.width}
+            />
+            <Asymptote
+              type="vertical"
+              value={shiftResult.x0}
+              scale={scale}
+              color={P.axis.color}
+              label="对称轴 x = x₀"
+              fontScale={fontScale}
+            />
+            <Asymptote
+              type="horizontal"
+              value={shiftResult.k}
+              scale={scale}
+              color={P.secant.color}
+              label="割线 y = k"
+              fontScale={fontScale}
+            />
+            <InteractivePoint
+              cx={shiftResult.x0}
+              cy={shiftResult.k}
+              scale={scale}
+              vp={vp}
+              onDrag={handleDragSecant}
+              color={P.secantHandle.color}
+              r={6}
+              fontScale={fontScale}
+            />
+            <MathPoint
+              cx={shiftResult.x1}
+              cy={shiftResult.k}
+              scale={scale}
+              color={P.p1.color}
+              fontScale={fontScale}
+            />
+            {frameFlags.p2OffFrame ? (
+              <g>
+                <MathPoint
+                  x={p2Pt.x}
+                  y={p2Pt.y}
+                  variant="hollow"
+                  color={P.p2.color}
+                  fontScale={fontScale}
+                />
+                <polygon
+                  points={`${p2Pt.x + 6},${p2Pt.y - 4.5} ${p2Pt.x + 14},${p2Pt.y} ${p2Pt.x + 6},${p2Pt.y + 4.5}`}
+                  fill={P.p2.color}
+                />
+              </g>
+            ) : (
               <MathPoint
-                x={p2Pt.x}
-                y={p2Pt.y}
-                variant="hollow"
+                cx={shiftResult.x2}
+                cy={shiftResult.k}
+                scale={scale}
                 color={P.p2.color}
                 fontScale={fontScale}
               />
-              <polygon
-                points={`${p2Pt.x + 6},${p2Pt.y - 4.5} ${p2Pt.x + 14},${p2Pt.y} ${p2Pt.x + 6},${p2Pt.y + 4.5}`}
-                fill={P.p2.color}
-              />
-            </g>
-          ) : (
+            )}
+          </g>
+
+          {/* 第 2 步：对称构造差函数转化 */}
+          <g data-step-region={2} opacity={regionOpacity(2)}>
+            <FunctionGraph
+              fn={shiftResult.mirrorFn}
+              scale={scale}
+              color={withAlpha(P.mirrorFn.color, 0.85)}
+              strokeWidth={P.mirrorFn.width}
+              strokeDasharray={dashArrayOf(P.mirrorFn)}
+            />
+            <FunctionGraph
+              fn={shiftResult.diffFn}
+              scale={scale}
+              color={P.diffFn.color}
+              strokeWidth={P.diffFn.width}
+              strokeDasharray={dashArrayOf(P.diffFn)}
+            />
+            <IntervalShadow
+              fn={shiftResult.fn}
+              x1={shiftResult.x0}
+              x2={shiftResult.midX}
+              scale={scale}
+              baseline={{ kind: "horizontal", y: shiftResult.k }}
+              fillColor={withAlpha(P.offsetZone.color, 0.25)}
+            />
             <MathPoint
-              cx={shiftResult.x2}
+              cx={2 * shiftResult.x0 - shiftResult.x1}
               cy={shiftResult.k}
               scale={scale}
-              color={P.p2.color}
+              color={P.mirrorPt.color}
+              variant="hollow"
               fontScale={fontScale}
             />
-          )}
+            {(() => {
+              const topPt = mathToDesign(
+                shiftResult.x1,
+                shiftResult.mirrorFn(shiftResult.x1),
+                scale,
+              );
+              const botPt = mathToDesign(
+                shiftResult.x1,
+                shiftResult.fn(shiftResult.x1),
+                scale,
+              );
+              if (!isNaN(topPt.y) && !isNaN(botPt.y)) {
+                return (
+                  <line
+                    x1={topPt.x}
+                    y1={topPt.y}
+                    x2={botPt.x}
+                    y2={botPt.y}
+                    stroke={P.diffSeg.color}
+                    strokeWidth={1.8}
+                    strokeDasharray="3 2"
+                  />
+                );
+              }
+              return null;
+            })()}
+          </g>
 
-          {/* 对称点 P'1(2x0 - x1, k) */}
-          <MathPoint
-            cx={2 * shiftResult.x0 - shiftResult.x1}
-            cy={shiftResult.k}
-            scale={scale}
-            color={P.mirrorPt.color}
-            variant="hollow"
-            fontScale={fontScale}
-          />
-
-          {/* 两根中点 M((x1+x2)/2, k) */}
-          {frameFlags.midOffFrame ? (
-            /* M 亦越出可见域：与 P₂ 同一套「空心点 + 右向箭头」语义，
-               两者槽位保持真实先后（midMarkerX < p2MarkerX），越界说明见底部对照条 */
-            <g>
+          {/* 第 3 步：求导定号与偏移结论 */}
+          <g data-step-region={3} opacity={regionOpacity(3)}>
+            {frameFlags.midOffFrame ? (
+              <g>
+                <MathPoint
+                  x={midPt.x}
+                  y={midPt.y}
+                  variant="hollow"
+                  color={P.midPt.color}
+                  fontScale={fontScale}
+                />
+                <polygon
+                  points={`${midPt.x + 6},${midPt.y - 4.5} ${midPt.x + 14},${midPt.y} ${midPt.x + 6},${midPt.y + 4.5}`}
+                  fill={P.midPt.color}
+                />
+              </g>
+            ) : (
               <MathPoint
-                x={midPt.x}
-                y={midPt.y}
-                variant="hollow"
+                cx={frameFlags.midMarkerX}
+                cy={shiftResult.k}
+                scale={scale}
                 color={P.midPt.color}
                 fontScale={fontScale}
               />
-              <polygon
-                points={`${midPt.x + 6},${midPt.y - 4.5} ${midPt.x + 14},${midPt.y} ${midPt.x + 6},${midPt.y + 4.5}`}
-                fill={P.midPt.color}
+            )}
+            {!frameFlags.midOffFrame && (
+              <line
+                x1={midPt.x}
+                y1={midPt.y}
+                x2={midPt.x}
+                y2={scale.originY}
+                stroke={P.midPt.color}
+                strokeWidth={1.5}
+                strokeDasharray="3 3"
               />
-            </g>
-          ) : (
-            <MathPoint
-              cx={frameFlags.midMarkerX}
-              cy={shiftResult.k}
+            )}
+            <ShiftPanoramaAxis
+              x1={shiftResult.x1}
+              x0={shiftResult.x0}
+              midX={shiftResult.midX}
+              x2={shiftResult.x2}
+              mirrorX={2 * shiftResult.x0 - shiftResult.x1}
               scale={scale}
-              color={P.midPt.color}
+              vp={vp}
               fontScale={fontScale}
             />
-          )}
-          {/* M 出框时不再画这条垂足线：槽位坐标并非 M 的真实横坐标，画出会造成误导 */}
-          {!frameFlags.midOffFrame && (
-            <line
-              x1={midPt.x}
-              y1={midPt.y}
-              x2={midPt.x}
-              y2={scale.originY}
-              stroke={P.midPt.color}
-              strokeWidth={1.5}
-              strokeDasharray="3 3"
-            />
-          )}
-
-          {/* x1 处的差值垂线段展示 F(x1) = f(x1) - f(2x0-x1) */}
-          {(() => {
-            const topPt = mathToDesign(
-              shiftResult.x1,
-              shiftResult.mirrorFn(shiftResult.x1),
-              scale,
-            );
-            const botPt = mathToDesign(
-              shiftResult.x1,
-              shiftResult.fn(shiftResult.x1),
-              scale,
-            );
-            if (!isNaN(topPt.y) && !isNaN(botPt.y)) {
-              return (
-                <line
-                  x1={topPt.x}
-                  y1={topPt.y}
-                  x2={botPt.x}
-                  y2={botPt.y}
-                  stroke={P.diffSeg.color}
-                  strokeWidth={1.8}
-                  strokeDasharray="3 2"
-                />
-              );
-            }
-            return null;
-          })()}
-
-          {/* 底部横坐标对照条：与画布同刻度，标明 x₁ / x₀ / P₁′ / M / x₂ 的真实先后 */}
-          <ShiftPanoramaAxis
-            x1={shiftResult.x1}
-            x0={shiftResult.x0}
-            midX={shiftResult.midX}
-            x2={shiftResult.x2}
-            mirrorX={2 * shiftResult.x0 - shiftResult.x1}
-            scale={scale}
-            vp={vp}
-            fontScale={fontScale}
-          />
+          </g>
         </g>
       )}
 
       {/* ─── 模式三：对数均值不等式与齐次化 ─── */}
       {activeMode === "log_mean" && (
         <g>
-          {/* 对数曲线 ln x */}
-          <FunctionGraph
-            fn={(x) => (x > 0 ? Math.log(x) : NaN)}
-            scale={scale}
-            color={P.ln.color}
-            strokeWidth={P.ln.width}
-          />
+          {/* 第 1 步：割线切线斜率对应 */}
+          <g data-step-region={1} opacity={regionOpacity(1)}>
+            <FunctionGraph
+              fn={(x) => (x > 0 ? Math.log(x) : NaN)}
+              scale={scale}
+              color={P.ln.color}
+              strokeWidth={P.ln.width}
+            />
+            <line
+              x1={p1Design.x}
+              y1={p1Design.y}
+              x2={p2Design.x}
+              y2={p2Design.y}
+              stroke={P.secant.color}
+              strokeWidth={P.secant.width}
+              strokeDasharray={dashArrayOf(P.secant)}
+            />
+            <line
+              x1={tanLeftDesign.x}
+              y1={tanLeftDesign.y}
+              x2={tanRightDesign.x}
+              y2={tanRightDesign.y}
+              stroke={P.tangentLine.color}
+              strokeWidth={P.tangentLine.width}
+            />
+            <InteractivePoint
+              cx={logMeanResult.x1}
+              cy={Math.log(logMeanResult.x1)}
+              scale={scale}
+              vp={vp}
+              onDrag={handleDragLogMeanX1}
+              color={P.p1.color}
+              r={6}
+              fontScale={fontScale}
+            />
+            <InteractivePoint
+              cx={logMeanResult.x2}
+              cy={Math.log(logMeanResult.x2)}
+              scale={scale}
+              vp={vp}
+              onDrag={handleDragLogMeanX2}
+              color={P.p2.color}
+              r={6}
+              fontScale={fontScale}
+            />
+          </g>
 
-          {/* 割线 P1P2 */}
-          <line
-            x1={p1Design.x}
-            y1={p1Design.y}
-            x2={p2Design.x}
-            y2={p2Design.y}
-            stroke={P.secant.color}
-            strokeWidth={P.secant.width}
-            strokeDasharray={dashArrayOf(P.secant)}
-          />
+          {/* 第 2 步：比值齐次化构造辅助函数 */}
+          <g data-step-region={2} opacity={regionOpacity(2)}>
+            <MathPoint
+              cx={logMeanResult.logMean}
+              cy={Math.log(logMeanResult.logMean)}
+              scale={scale}
+              color={P.tangentPt.color}
+              fontScale={fontScale}
+            />
+            <line
+              x1={tangentPtDesign.x}
+              y1={tangentPtDesign.y}
+              x2={tangentPtDesign.x}
+              y2={scale.originY}
+              stroke={P.tangentFoot.color}
+              strokeWidth={1.5}
+              strokeDasharray="3 3"
+            />
+          </g>
 
-          {/* 切点处的平行切线 */}
-          <line
-            x1={tanLeftDesign.x}
-            y1={tanLeftDesign.y}
-            x2={tanRightDesign.x}
-            y2={tanRightDesign.y}
-            stroke={P.tangentLine.color}
-            strokeWidth={P.tangentLine.width}
-          />
-
-          {/* 可拖动端点 x1 与 x2 */}
-          <InteractivePoint
-            cx={logMeanResult.x1}
-            cy={Math.log(logMeanResult.x1)}
-            scale={scale}
-            vp={vp}
-            onDrag={handleDragLogMeanX1}
-            color={P.p1.color}
-            r={6}
-            fontScale={fontScale}
-          />
-
-          <InteractivePoint
-            cx={logMeanResult.x2}
-            cy={Math.log(logMeanResult.x2)}
-            scale={scale}
-            vp={vp}
-            onDrag={handleDragLogMeanX2}
-            color={P.p2.color}
-            r={6}
-            fontScale={fontScale}
-          />
-
-          {/* 切点 T(L, ln L) */}
-          <MathPoint
-            cx={logMeanResult.logMean}
-            cy={Math.log(logMeanResult.logMean)}
-            scale={scale}
-            color={P.tangentPt.color}
-            fontScale={fontScale}
-          />
-
-          {/* 切点到 x 轴的垂线 */}
-          <line
-            x1={tangentPtDesign.x}
-            y1={tangentPtDesign.y}
-            x2={tangentPtDesign.x}
-            y2={scale.originY}
-            stroke={P.tangentFoot.color}
-            strokeWidth={1.5}
-            strokeDasharray="3 3"
-          />
-
-          {/* 三大均值位置标注 */}
-          <MathPoint
-            cx={logMeanResult.geoMean}
-            cy={0}
-            scale={scale}
-            color={P.geoMean.color}
-            fontScale={fontScale}
-          />
-
-          <MathPoint
-            cx={logMeanResult.logMean}
-            cy={0}
-            scale={scale}
-            color={P.logMean.color}
-            fontScale={fontScale}
-          />
-
-          <MathPoint
-            cx={logMeanResult.ariMean}
-            cy={0}
-            scale={scale}
-            color={P.ariMean.color}
-            fontScale={fontScale}
-          />
+          {/* 第 3 步：综合确立不等式链 */}
+          <g data-step-region={3} opacity={regionOpacity(3)}>
+            <MathPoint
+              cx={logMeanResult.geoMean}
+              cy={0}
+              scale={scale}
+              color={P.geoMean.color}
+              fontScale={fontScale}
+            />
+            <MathPoint
+              cx={logMeanResult.logMean}
+              cy={0}
+              scale={scale}
+              color={P.logMean.color}
+              fontScale={fontScale}
+            />
+            <MathPoint
+              cx={logMeanResult.ariMean}
+              cy={0}
+              scale={scale}
+              color={P.ariMean.color}
+              fontScale={fontScale}
+            />
+          </g>
         </g>
+      )}
+
+      {/* 分步聚焦虚线围栏（仅在 activeStep > 0 时呈现，严禁硬编码 Hex） */}
+      {stepFrame && (
+        <rect
+          x={stepFrame.x}
+          y={stepFrame.y}
+          width={stepFrame.width}
+          height={stepFrame.height}
+          rx={8}
+          fill="none"
+          stroke={SHIFT_STEP_FRAME_COLOR}
+          strokeWidth={2}
+          strokeDasharray="7 4"
+          className="pointer-events-none"
+        />
       )}
 
       {/* ─── 统一智能避让学术点标 ─── */}

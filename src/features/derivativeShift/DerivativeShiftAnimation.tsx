@@ -14,9 +14,11 @@ import {
   TabSwitcher,
   SelectGrid,
   TipCard,
+  StepNavigator,
+  ParamPlayBar,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { DerivativeShiftScene } from "./components/DerivativeShiftScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -26,6 +28,7 @@ import {
   defaultParams,
   paramMeta,
   getPresets,
+  getDerivativeShiftAnswerSteps,
 } from "@/data/registries/derivativeShift";
 import {
   getDerivativeShiftLegendItems,
@@ -40,6 +43,56 @@ export function DerivativeShiftAnimation() {
   const [activeMode, setActiveMode] = useState<ShiftMode>("implicit_zero");
   const [subModel, setSubModel] = useState<ShiftSubModel>("x_ln_x");
   const [activePreset, setActivePreset] = useState<string>("free");
+  const [answerStep, setAnswerStep] = useState<number>(0);
+
+  const answerSteps = useMemo(
+    () => getDerivativeShiftAnswerSteps(activeMode),
+    [activeMode],
+  );
+
+  const playMeta = useMemo(() => {
+    if (activeMode === "implicit_zero") {
+      return {
+        key: "a" as const,
+        min: paramMeta.a.min,
+        max: paramMeta.a.max,
+        ratePerSecond: 0.5,
+        label: "参数 a 连续变化演示",
+      };
+    }
+    if (activeMode === "shift_symmetric") {
+      return {
+        key: "k" as const,
+        min: paramMeta.k.min,
+        max: paramMeta.k.max,
+        ratePerSecond: 0.08,
+        label: "割线高度 k 升降演示",
+      };
+    }
+    return {
+      key: "x1" as const,
+      min: paramMeta.x1.min,
+      max: Math.max(
+        paramMeta.x1.min + 0.1,
+        Math.min(paramMeta.x1.max, params.x2 - 0.3),
+      ),
+      ratePerSecond: 0.45,
+      label: "左端点 x₁ 逼近演示",
+    };
+  }, [activeMode, params.x2]);
+
+  const playCtrl = useParamPlay({
+    min: playMeta.min,
+    max: playMeta.max,
+    ratePerSecond: playMeta.ratePerSecond,
+    step: paramMeta[playMeta.key]?.step ?? 0.05,
+    mode: "bounce",
+    getValue: () => params[playMeta.key] ?? playMeta.min,
+    onChange: (val) => {
+      setActivePreset("free");
+      setParams((prev) => ({ ...prev, [playMeta.key]: val }));
+    },
+  });
 
   // 1. Viewport + 自适应画布 (固定 Preset: full)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -107,8 +160,9 @@ export function DerivativeShiftAnimation() {
       });
   }, [params, activeMode]);
 
-  // 参数更新处理 (滑块调节或动点拖拽时自动切回自由探究)
+  // 参数更新处理 (滑块调节或动点拖拽时自动切回自由探究并暂停播放)
   const handleParamChange = (key: string, value: number) => {
+    playCtrl.pause();
     setActivePreset("free");
     setParams((prev) => ({ ...prev, [key]: value }));
   };
@@ -201,9 +255,11 @@ export function DerivativeShiftAnimation() {
               ]}
               value={activeMode}
               onChange={(k) => {
+                playCtrl.pause();
                 const mode = k as ShiftMode;
                 setActiveMode(mode);
                 setActivePreset("free");
+                setAnswerStep(0);
                 if (mode === "implicit_zero") {
                   setSubModel("x_ln_x");
                   setParams((prev) => ({ ...prev, a: 2.0 }));
@@ -234,9 +290,11 @@ export function DerivativeShiftAnimation() {
                   ]}
                   value={subModel}
                   onChange={(key) => {
+                    playCtrl.pause();
                     const model = key as ShiftSubModel;
                     setSubModel(model);
                     setActivePreset("free");
+                    setAnswerStep(0);
                   }}
                   columns={2}
                 />
@@ -254,9 +312,11 @@ export function DerivativeShiftAnimation() {
                   ]}
                   value={subModel}
                   onChange={(key) => {
+                    playCtrl.pause();
                     const model = key as ShiftSubModel;
                     setSubModel(model);
                     setActivePreset("free");
+                    setAnswerStep(0);
                   }}
                   columns={2}
                 />
@@ -274,6 +334,7 @@ export function DerivativeShiftAnimation() {
                 }))}
                 value={activePreset}
                 onChange={(key) => {
+                  playCtrl.pause();
                   setActivePreset(key);
                   const found = currentPresets.find((p) => p.key === key);
                   if (found) {
@@ -285,19 +346,40 @@ export function DerivativeShiftAnimation() {
             </LeftPanelSection>
           )}
 
-          {/* 4. 参数调节区 */}
+          {/* 4. 参数调节区 + 动态扫参控制 */}
           <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={() => {
+                playCtrl.pause();
                 setActivePreset("free");
+                setAnswerStep(0);
                 setParams({ ...defaultParams });
               }}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label={playMeta.label}
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
           </LeftPanelSection>
 
-          {/* 5. 教学导引与高考设问 */}
+          {/* 5. 解答分步联动 */}
+          <LeftPanelSection title="标准解答分步">
+            <StepNavigator
+              steps={answerSteps}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="点击步号可联动高亮中屏几何区与右屏推演步"
+            />
+          </LeftPanelSection>
+
+          {/* 6. 教学导引与高考设问 */}
           <TipCard
             variant={tipConfig.variant}
             badge={tipConfig.badge}
@@ -328,12 +410,20 @@ export function DerivativeShiftAnimation() {
               activeMode={activeMode}
               subModel={subModel}
               onParamChange={handleParamChange}
+              activeStep={answerStep}
               fontScale={canvasSize.font}
             />
           </AnimationSvgCanvas>
         </div>
       }
-      right={<MathPanel {...mathData} title="隐零点与极值点偏移看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          title="隐零点与极值点偏移看板"
+          focusStep={answerStep}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

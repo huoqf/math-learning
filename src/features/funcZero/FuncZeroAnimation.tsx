@@ -8,13 +8,14 @@ import {
   LeftPanelSection,
   SelectGrid,
   TipCard,
+  ParamPlayBar,
 } from "@/components/UI";
 import {
   SceneLegend,
   type SceneLegendItem,
 } from "@/components/Math/SceneLegend";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ZeroScene } from "./components/ZeroScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -25,7 +26,13 @@ import {
   FUNC_ZERO_MODELS,
 } from "@/data/registries/funcZero";
 
-const MODEL_KEYS = ["cubic", "logMixed", "expMixed", "counterExample"];
+const MODEL_KEYS = [
+  "cubic",
+  "logMixed",
+  "expMixed",
+  "counterExample",
+  "piecewiseAbs",
+];
 
 export function FuncZeroAnimation() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
@@ -52,22 +59,44 @@ export function FuncZeroAnimation() {
     [params, modelKey],
   );
 
-  const handleModelChange = useCallback((key: string) => {
-    const idx = MODEL_KEYS.indexOf(key);
-    if (idx >= 0) {
-      const targetModel = FUNC_ZERO_MODELS[key];
-      setParams({
-        modelKey: idx,
-        intervalM: targetModel.defaultM,
-        intervalN: targetModel.defaultN,
-        bisectionSteps: 3,
-      });
-    }
-  }, []);
+  const playCtrl = useParamPlay({
+    min: 1,
+    max: 8,
+    ratePerSecond: 1.4,
+    step: 1,
+    mode: "loop",
+    getValue: () => params.bisectionSteps ?? 3,
+    onChange: (val) =>
+      setParams((prev) => ({
+        ...prev,
+        bisectionSteps: Math.max(1, Math.min(8, Math.round(val))),
+      })),
+  });
 
-  const handleParamChange = useCallback((key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const handleModelChange = useCallback(
+    (key: string) => {
+      playCtrl.pause();
+      const idx = MODEL_KEYS.indexOf(key);
+      if (idx >= 0) {
+        const targetModel = FUNC_ZERO_MODELS[key];
+        setParams({
+          modelKey: idx,
+          intervalM: targetModel.defaultM,
+          intervalN: targetModel.defaultN,
+          bisectionSteps: 3,
+        });
+      }
+    },
+    [playCtrl],
+  );
+
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      playCtrl.pause();
+      setParams((prev) => ({ ...prev, [key]: value }));
+    },
+    [playCtrl],
+  );
 
   // 动态参数范围自适应：有效参数域（模型盒覆盖注册表默认域）统一由注册表出口提供，
   // 与中屏拖拽落值严格同源。
@@ -194,7 +223,9 @@ export function FuncZeroAnimation() {
                   description:
                     item.key === "counterExample"
                       ? "端点同号多根辨析"
-                      : "单调连续必考模型",
+                      : item.key === "piecewiseAbs"
+                        ? "复合绝对值多零点"
+                        : "单调连续必考模型",
                   fullWidth: true,
                 };
               })}
@@ -210,15 +241,25 @@ export function FuncZeroAnimation() {
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() =>
+              onReset={() => {
+                playCtrl.pause();
                 setParams({
                   modelKey: modelIdx,
                   intervalM: currentModel.defaultM,
                   intervalN: currentModel.defaultN,
                   bisectionSteps: 3,
-                })
-              }
+                });
+              }}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label="二分法迭代步数 k 自动推进"
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
           </LeftPanelSection>
 
           {/* 3. 教学导引 */}

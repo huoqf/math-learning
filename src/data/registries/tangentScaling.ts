@@ -7,6 +7,7 @@ import {
   getSecantIntervalBounds,
 } from "@/math/tangentScaling";
 import type { ParamConfig, SelectGridItem } from "@/components/UI";
+import type { AnswerStepItem } from "@/components/UI/StepNavigator";
 import type {
   TangentScalingMode,
   BaseSubModel,
@@ -427,5 +428,185 @@ export function getTangentScalingParamConfigs(
         },
       ];
     }
+  }
+}
+
+export function getTangentScalingAnswerSteps(
+  mode: TangentScalingMode,
+  options?: {
+    baseSubModel?: BaseSubModel;
+    sandwichSubModel?: SandwichSubModel;
+    paramKSubModel?: ParamKSubModel;
+    secantSubModel?: SecantSubModel;
+  },
+): AnswerStepItem[] {
+  switch (mode) {
+    case "base":
+      return [
+        {
+          step: 1,
+          title: "构造辅助函数并求导",
+          sceneHint: "聚焦原函数曲线与基准切线几何轮廓",
+        },
+        {
+          step: 2,
+          title: "判定导数符号确立单调性",
+          sceneHint: "聚焦可拖动切点 P₀ 与切线变化方向",
+        },
+        {
+          step: 3,
+          title: "极值结论与取等条件",
+          sceneHint: "聚焦基准切点 T₀ 与相切取等临界态",
+        },
+      ];
+    case "sandwich":
+      if (options?.sandwichSubModel === "parallel_bands") {
+        return [
+          {
+            step: 1,
+            title: "分别列出两曲线的平行切线放缩式",
+            sceneHint: "聚焦上下两曲线与两条平行参考切线",
+          },
+          {
+            step: 2,
+            title: "利用同向同号不等式相加求差",
+            sceneHint: "聚焦纵向缓冲带与观察点垂直连线",
+          },
+          {
+            step: 3,
+            title: "等号不同步判定严格大于",
+            sceneHint: "聚焦两个非重合切点 T₁、T₂ 位置差异",
+          },
+        ];
+      }
+      return [
+        {
+          step: 1,
+          title: "确立公切线方程",
+          sceneHint: "聚焦中间公切线 y = x 与公共切点",
+        },
+        {
+          step: 2,
+          title: "双向分别证明不等式",
+          sceneHint: "聚焦上下双曲线分别相对于公切线的位置",
+        },
+        {
+          step: 3,
+          title: "三式合并完成卡位",
+          sceneHint: "聚焦观察点处上/中/下三值垂直传递序",
+        },
+      ];
+    case "param_k":
+      if (options?.paramKSubModel === "exp_kx_origin") {
+        return [
+          {
+            step: 1,
+            title: "设切点并写出切线方程",
+            sceneHint: "聚焦指数曲线与过原点临界切线",
+          },
+          {
+            step: 2,
+            title: "代入原点求解临界切点与斜率",
+            sceneHint: "聚焦原点 O 与临界切点 A(1, e)",
+          },
+          {
+            step: 3,
+            title: "结合几何切线位置得出参数范围",
+            sceneHint: "聚焦旋转动直线 y = kx 与检验点垂直差",
+          },
+        ];
+      }
+      if (options?.paramKSubModel === "log_kx_origin") {
+        return [
+          {
+            step: 1,
+            title: "参变量分离或切线法",
+            sceneHint: "聚焦对数曲线与过原点切线",
+          },
+          {
+            step: 2,
+            title: "确立最值点与临界斜率",
+            sceneHint: "聚焦原点 O 与临界切点 B(e, 1)",
+          },
+          {
+            step: 3,
+            title: "确立斜率范围",
+            sceneHint: "聚焦旋转直线 y = kx 在对数曲线上方的卡位态",
+          },
+        ];
+      }
+      return [
+        {
+          step: 1,
+          title: "求解过原点与指数曲线相切的临界斜率",
+          sceneHint: "聚焦上边界指数曲线与临界切线 y = ex",
+        },
+        {
+          step: 2,
+          title: "求解过原点与对数曲线相切的临界斜率",
+          sceneHint: "聚焦下边界对数曲线与临界切线 y = x/e",
+        },
+        {
+          step: 3,
+          title: "几何旋转放缩确定参数范围",
+          sceneHint: "聚焦旋转动直线 y = kx 在双边界间的卡位通道",
+        },
+      ];
+    case "secant":
+      if (options?.secantSubModel === "taylor_quadratic") {
+        return [
+          {
+            step: 1,
+            title: "构造下界差函数",
+            sceneHint: "聚焦 ln(1+x) 主曲线与下界抛物线",
+          },
+          {
+            step: 2,
+            title: "符号判定与单调性",
+            sceneHint: "聚焦 x ≥ 0 上的导数符号与上界切线",
+          },
+          {
+            step: 3,
+            title: "代入初值确立下界",
+            sceneHint: "聚焦观察点 x 处的三层大小关系",
+          },
+        ];
+      }
+      if (options?.secantSubModel === "log_secant_tangent") {
+        return [
+          {
+            step: 1,
+            title: "求解端点割线斜率与中点切线",
+            sceneHint: "聚焦端点 A、B 连结的割线与中点 M",
+          },
+          {
+            step: 2,
+            title: "构造差函数研究单调性证明割线下界",
+            sceneHint: "聚焦对数曲线位于割线上方的弓形特征",
+          },
+          {
+            step: 3,
+            title: "结合切线上界得出双向放缩",
+            sceneHint: "聚焦中点切线在上、端点割线在下的双向锁定结构",
+          },
+        ];
+      }
+      return [
+        {
+          step: 1,
+          title: "求解端点割线斜率与中点切线",
+          sceneHint: "聚焦端点 A、B 连结的割线与中点 M",
+        },
+        {
+          step: 2,
+          title: "构造差函数研究单调性证明割线上界",
+          sceneHint: "聚焦指数曲线位于割线下方的弓形特征",
+        },
+        {
+          step: 3,
+          title: "结合切线下界得出双向放缩",
+          sceneHint: "聚焦割线在上、中点切线在下的双向锁定结构",
+        },
+      ];
   }
 }

@@ -40,9 +40,35 @@ export const paramMeta: Record<string, ParamMeta> = {
       { value: 1.0, label: "1.0" },
     ],
   },
+  xA: {
+    key: "xA",
+    label: "定点横坐标 xA",
+    labelFormula: `\\text{定点横坐标 }\\color{${MATH_COLORS.paramPrimary}}{x_A}`,
+    group: "过点切线坐标",
+    min: -3.5,
+    max: 3.5,
+    step: 0.1,
+    defaultValue: 1.0,
+    description: "过定点作切线中的定点 A 横坐标，可直接拖动图中 A 点。",
+    importance: "core",
+  },
+  yA: {
+    key: "yA",
+    label: "定点纵坐标 yA",
+    labelFormula: `\\text{定点纵坐标 }\\color{${MATH_COLORS.paramSecondary}}{y_A}`,
+    group: "过点切线坐标",
+    min: -3.5,
+    max: 3.5,
+    step: 0.1,
+    defaultValue: -3.0,
+    description: "过定点作切线中的定点 A 纵坐标，可直接拖动图中 A 点。",
+    importance: "core",
+  },
 };
 
 export const defaultParams = {
   x0: 1.0,
   dx: 1.0,
+  xA: 1.0,
+  yA: -3.0,
 };

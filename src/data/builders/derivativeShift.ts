@@ -11,6 +11,7 @@ import {
   type ImplicitZeroModel,
   type ExtremumShiftModel,
 } from "@/math/derivativeShift";
+import { getDerivativeShiftAnswerSteps } from "../registries/derivativeShift";
 import { MATH_COLORS } from "@/theme";
 
 export function buildDerivativeShiftPanel(
@@ -243,6 +244,9 @@ export function buildDerivativeShiftPanel(
   }
 
   // 高考破题推演三部曲 (审题定法 -> 建模联立/消参 -> 代入求解反思)
+  const stepChain = getDerivativeShiftAnswerSteps(mode);
+  const stepTitle = (stepNum: number) =>
+    stepChain.find((s) => s.step === stepNum)?.title ?? "";
   const reasoningSteps: MathPanelData["reasoningSteps"] = [];
 
   if (mode === "implicit_zero") {
@@ -250,7 +254,7 @@ export function buildDerivativeShiftPanel(
     reasoningSteps.push(
       {
         step: 1,
-        title: "求导与零点存在性证明",
+        title: stepTitle(1),
         detail:
           subModel === "x_ln_x"
             ? "求导得 $f'(x) = \\ln x + x + 1 - a$。$f'(x)$ 在 $(0, +\\infty)$ 单调递增，由零点存在定理必存在唯一零点 $x_0$ 满足 $f'(x_0) = 0$。"
@@ -263,7 +267,7 @@ export function buildDerivativeShiftPanel(
       },
       {
         step: 2,
-        title: "设而不求消参下沉",
+        title: stepTitle(2),
         detail:
           subModel === "x_ln_x"
             ? "将 $\\ln x_0 = a - 1 - x_0$ 代入极值 $f(x_0)$，彻底消去参数 $a$，将极值下沉为单变量二次抛物线轨迹 $h(x_0)$。"
@@ -276,7 +280,7 @@ export function buildDerivativeShiftPanel(
       },
       {
         step: 3,
-        title: "代入求值与范围确定",
+        title: stepTitle(3),
         detail: `代入当前参数 $a = ${a.toFixed(2)}$，解算超越方程得隐零点 $x_0 \\approx ${izRes.x0.toFixed(3)}$，进而求得当前极值最值。`,
         latex: `x_0 \\approx ${izRes.x0.toFixed(3)} \\implies f(x_0) = h(x_0) \\approx ${izRes.y0.toFixed(3)}`,
         rubric: "【高考采分点】结合区间单调性求最值范围 (采分点 +4分)",
@@ -287,7 +291,7 @@ export function buildDerivativeShiftPanel(
     reasoningSteps.push(
       {
         step: 1,
-        title: "求导确立极值中心",
+        title: stepTitle(1),
         detail:
           subModel === "xe_neg_x"
             ? "对原函数求导得 $f'(x) = (1 - x)e^{-x}$，确定唯一极大值点 $x_0 = 1$。水平割线 $y = k$ 与曲线割于两点 $x_1 < 1 < x_2$。"
@@ -300,7 +304,7 @@ export function buildDerivativeShiftPanel(
       },
       {
         step: 2,
-        title: "对称构造差函数转化",
+        title: stepTitle(2),
         detail:
           "欲证 $x_1 + x_2 > 2x_0$，即证 $x_2 > 2x_0 - x_1$。由单调递减等价于证明 $f(x_2) < f(2x_0 - x_1)$。由 $f(x_1) = f(x_2)$，构造差函数 $F(x) = f(x) - f(2x_0 - x)$。",
         latex: `F(x) = f(x) - f(2x_0 - x) \\quad (x \\in (0, x_0)), \\quad F(x_0) = 0`,
@@ -308,7 +312,7 @@ export function buildDerivativeShiftPanel(
       },
       {
         step: 3,
-        title: "求导定号与偏移结论",
+        title: stepTitle(3),
         detail: `通过导数分析证明 $F'(x) > 0$，由 $F(x_0) = 0$ 推出 $F(x_1) < 0$，从而 $x_1 + x_2 > 2x_0$ 获证。当前中点 $(x_1+x_2)/2 \\approx ${shiftRes.midX.toFixed(3)} > x_0$。`,
         latex: `F(x_1) < 0 \\implies f(x_1) < f(2x_0 - x_1) \\xrightarrow{f(x_1) = f(x_2)} f(x_2) < f(2x_0 - x_1) \\implies x_1 + x_2 > 2x_0`,
         rubric: "【高考采分点】单调性定号与结论落地 (采分点 +4分)",
@@ -319,7 +323,7 @@ export function buildDerivativeShiftPanel(
     reasoningSteps.push(
       {
         step: 1,
-        title: "割线切线斜率对应",
+        title: stepTitle(1),
         detail:
           "连结对数曲线上两点 $P_1, P_2$，割线斜率为 $\\frac{\\ln x_2 - \\ln x_1}{x_2 - x_1} = \\frac{1}{L(x_1, x_2)}$。切点 $T(L, \\ln L)$ 处的切线斜率与割线严格平行。",
         latex: `k_{\\text{割}} = \\frac{\\ln x_2 - \\ln x_1}{x_2 - x_1} = \\frac{1}{L(x_1, x_2)} = f'(L)`,
@@ -327,7 +331,7 @@ export function buildDerivativeShiftPanel(
       },
       {
         step: 2,
-        title: "比值齐次化构造辅助函数",
+        title: stepTitle(2),
         detail:
           "令比值 $t = \\frac{x_2}{x_1} > 1$。证明 $L < \\frac{x_1 + x_2}{2}$ 等价于证明 $\\frac{t - 1}{\\ln t} < \\frac{t + 1}{2}$，构造单变量函数 $g(t) = \\ln t - \\frac{2(t-1)}{t+1}$。",
         latex: `g(t) = \\ln t - \\frac{2(t - 1)}{t + 1}, \\quad g'(t) = \\frac{(t - 1)^2}{t(t + 1)^2} > 0`,
@@ -335,7 +339,7 @@ export function buildDerivativeShiftPanel(
       },
       {
         step: 3,
-        title: "综合确立不等式链",
+        title: stepTitle(3),
         detail: `由 $g(t) > g(1) = 0$ 得证 $L < A$；同理可证几何均值 $G = \\sqrt{x_1 x_2} < L$。当前区间数值 $G \\approx ${lmRes.geoMean.toFixed(2)} < L \\approx ${lmRes.logMean.toFixed(2)} < A \\approx ${lmRes.ariMean.toFixed(2)}$。`,
         latex: `\\sqrt{x_1 x_2} < L(x_1, x_2) = \\frac{x_2 - x_1}{\\ln x_2 - \\ln x_1} < \\frac{x_1 + x_2}{2}`,
         rubric: "【高考采分点】不等式链确立与压轴应用 (采分点 +3分)",

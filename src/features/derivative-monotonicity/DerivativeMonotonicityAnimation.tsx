@@ -14,10 +14,12 @@ import {
   TipCard,
   KatexFormula,
   MathPanel,
+  StepNavigator,
+  ParamPlayBar,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { fitSteppedViewRange } from "@/math/viewRange";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import {
@@ -31,6 +33,7 @@ import { DerivativeMonotonicityScene } from "./components/DerivativeMonotonicity
 import {
   defaultParams,
   getDynamicParamMeta,
+  getMonotonicityAnswerSteps,
 } from "@/data/registries/derivativeMonotonicity";
 import { buildMathQuantities } from "@/data/mathQuantities";
 
@@ -54,6 +57,8 @@ const MODEL_KEYS: MonotonicityModelKey[] = [
 export function DerivativeMonotonicityAnimation() {
   const [mode, setMode] = useState<ExploreMode>("monotonicity_point");
   const [modelKey, setModelKey] = useState<MonotonicityModelKey>("cubic_param");
+  const [answerStep, setAnswerStep] = useState<number>(0);
+  const [showSplitView, setShowSplitView] = useState<boolean>(false);
 
   const [params, setParams] = useState<Record<string, number>>(() => ({
     a: defaultParams.a,
@@ -62,6 +67,23 @@ export function DerivativeMonotonicityAnimation() {
 
   const dynamicMeta = useMemo(() => getDynamicParamMeta(modelKey), [modelKey]);
   const currentModel = MONOTONICITY_MODELS[modelKey];
+  const answerSteps = useMemo(() => getMonotonicityAnswerSteps(mode), [mode]);
+
+  const playTarget = mode === "parametric_discuss" ? "a" : "x0";
+  const playTargetMeta = dynamicMeta[playTarget];
+  const playCtrl = useParamPlay({
+    min: playTargetMeta.min,
+    max: playTargetMeta.max,
+    ratePerSecond: mode === "parametric_discuss" ? 0.65 : 1.0,
+    step: playTargetMeta.step,
+    mode: "bounce",
+    getValue: () =>
+      params[playTarget] ??
+      (playTarget === "a" ? currentModel.defaultA : currentModel.defaultX0),
+    onChange: (val) => {
+      setParams((prev) => ({ ...prev, [playTarget]: Number(val.toFixed(2)) }));
+    },
+  });
 
   // 视口与缩放比例
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -101,19 +123,25 @@ export function DerivativeMonotonicityAnimation() {
   }, [params, modelKey, mode]);
 
   // 切换函数模型
-  const handleModelChange = useCallback((key: string) => {
-    const nextKey = key as MonotonicityModelKey;
-    setModelKey(nextKey);
-    const newModel = MONOTONICITY_MODELS[nextKey];
-    setParams({
-      a: newModel.defaultA,
-      x0: newModel.defaultX0,
-    });
-  }, []);
+  const handleModelChange = useCallback(
+    (key: string) => {
+      playCtrl.pause();
+      setAnswerStep(0);
+      const nextKey = key as MonotonicityModelKey;
+      setModelKey(nextKey);
+      const newModel = MONOTONICITY_MODELS[nextKey];
+      setParams({
+        a: newModel.defaultA,
+        x0: newModel.defaultX0,
+      });
+    },
+    [playCtrl],
+  );
 
   // 调节参数
   const handleParamChange = useCallback(
     (key: string, value: number) => {
+      playCtrl.pause();
       const meta = dynamicMeta[key];
       let clamped = value;
       if (meta) {
@@ -121,15 +149,17 @@ export function DerivativeMonotonicityAnimation() {
       }
       setParams((prev) => ({ ...prev, [key]: Number(clamped.toFixed(2)) }));
     },
-    [dynamicMeta],
+    [dynamicMeta, playCtrl],
   );
 
   const handleReset = useCallback(() => {
+    playCtrl.pause();
+    setAnswerStep(0);
     setParams({
       a: currentModel.defaultA,
       x0: currentModel.defaultX0,
     });
-  }, [currentModel]);
+  }, [currentModel, playCtrl]);
 
   // 参数配置传递给 ParamControl
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -311,7 +341,11 @@ export function DerivativeMonotonicityAnimation() {
             <TabSwitcher
               tabs={MODE_TABS}
               value={mode}
-              onChange={(tab) => setMode(tab as ExploreMode)}
+              onChange={(tab) => {
+                playCtrl.pause();
+                setAnswerStep(0);
+                setMode(tab as ExploreMode);
+              }}
             />
           </LeftPanelSection>
 
@@ -333,6 +367,33 @@ export function DerivativeMonotonicityAnimation() {
               params={paramConfigs}
               onParamChange={handleParamChange}
               onReset={handleReset}
+            />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label={
+                  mode === "parametric_discuss"
+                    ? "参数 a 分类临界扫动"
+                    : "切点 x₀ 沿曲线扫动"
+                }
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+                secondaryAction={{
+                  label: "f/f' 同轴双视窗",
+                  active: showSplitView,
+                  onToggle: () => setShowSplitView((v) => !v),
+                }}
+              />
+            </div>
+          </LeftPanelSection>
+
+          <LeftPanelSection title="标准解答分步">
+            <StepNavigator
+              steps={answerSteps}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="点击步号可联动高亮中屏几何区与右屏推演步"
             />
           </LeftPanelSection>
 
@@ -366,12 +427,21 @@ export function DerivativeMonotonicityAnimation() {
               fontScale={canvasSize.font}
               modelKey={modelKey}
               mode={mode}
+              activeStep={answerStep}
+              showSplitView={showSplitView}
               onParamChange={handleParamChange}
             />
           </AnimationSvgCanvas>
         </div>
       }
-      right={<MathPanel {...mathData} title="数学解析看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          title="数学解析看板"
+          focusStep={answerStep}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

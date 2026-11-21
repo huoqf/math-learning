@@ -14,18 +14,22 @@ import { mathToDesign } from "@/utils/coordinate";
 import type { LabelItem } from "@/utils/labelOverlap";
 import {
   solveDerivative,
+  solveExternalTangents,
   PRESET_FUNCTIONS,
   type PresetFunctionKey,
 } from "@/math/derivative";
-import { MATH_COLORS } from "@/theme";
+import { MATH_COLORS, CANVAS_COLORS, withAlpha } from "@/theme";
 import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
 import { paramMeta } from "@/data/registries/derivative";
 
 interface DerivativeSceneProps {
-  mode: "secant_limit" | "tangent_eq";
+  mode: "secant_limit" | "tangent_eq" | "external_tangent";
   fnKey: PresetFunctionKey;
   x0: number;
   dx: number;
+  xA?: number;
+  yA?: number;
+  showZoomLoupe?: boolean;
   scale: SceneScale;
   vp: ViewportInfo;
   onParamChange: (key: string, value: number) => void;
@@ -38,6 +42,9 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
   fnKey,
   x0,
   dx,
+  xA = 1,
+  yA = -3,
+  showZoomLoupe = false,
   scale,
   vp,
   onParamChange,
@@ -49,6 +56,21 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
   const res = solveDerivative(fn, x0);
 
   const showSecant = mode === "secant_limit";
+  const isExternal = mode === "external_tangent";
+
+  const externalTangents = React.useMemo(
+    () =>
+      isExternal
+        ? solveExternalTangents(
+            fn,
+            xA,
+            yA,
+            preset.x0Range[0],
+            preset.x0Range[1],
+          )
+        : [],
+    [isExternal, fn, xA, yA, preset.x0Range],
+  );
 
   // 割线第二点 (Q 点)
   const x2 = x0 + dx;
@@ -88,8 +110,60 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
     [onParamChange, onDragStart, scale, preset],
   );
 
-  // 纯极简学术点标：切点 P、割线动点 Q
+  // 拖拽外部定点 A(xA, yA)
+  const handleDragA = React.useCallback(
+    (mathPt: { x: number; y: number }) => {
+      onDragStart?.();
+      onParamChange(
+        "xA",
+        snapDragValue(
+          mathPt.x,
+          paramMeta.xA.step,
+          paramDragRange(paramMeta.xA, scale, "x"),
+        ),
+      );
+      onParamChange(
+        "yA",
+        snapDragValue(
+          mathPt.y,
+          paramMeta.yA.step,
+          paramDragRange(paramMeta.yA, scale, "y"),
+        ),
+      );
+    },
+    [onParamChange, onDragStart, scale],
+  );
+
+  // 纯极简学术点标：切点 P、割线动点 Q（过点模式为 A 与各切点 T1..）
   const labelItems = React.useMemo<LabelItem[]>(() => {
+    if (isExternal) {
+      const ptA = mathToDesign(xA, yA, scale);
+      const items: LabelItem[] = [
+        {
+          key: "ptA",
+          text: "A",
+          x: ptA.x,
+          y: ptA.y,
+          color: MATH_COLORS.paramPrimary,
+          fontSize: fontScale(13),
+          preferredPlacement: "top-right",
+        },
+      ];
+      externalTangents.forEach((tan, idx) => {
+        const ptT = mathToDesign(tan.t, tan.ft, scale);
+        items.push({
+          key: `ptT-${idx}`,
+          text: externalTangents.length > 1 ? `T${idx + 1}` : "T",
+          x: ptT.x,
+          y: ptT.y,
+          color: MATH_COLORS.tangentLine,
+          fontSize: fontScale(12),
+          preferredPlacement: idx % 2 === 0 ? "top-left" : "bottom-right",
+        });
+      });
+      return items;
+    }
+
     if (!res.isValid) return [];
     const ptP = mathToDesign(x0, res.fx, scale);
     const items: LabelItem[] = [
@@ -119,6 +193,10 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
 
     return items;
   }, [
+    isExternal,
+    xA,
+    yA,
+    externalTangents,
     x0,
     res.fx,
     res.isValid,
@@ -133,18 +211,40 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
 
   // 直角三角形直角符号
   const rightAnglePath = React.useMemo(() => {
-    if (!showSecant || !res.isValid || !isQValid || Math.abs(dx) < 0.4)
+    if (
+      isExternal ||
+      !showSecant ||
+      !res.isValid ||
+      !isQValid ||
+      Math.abs(dx) < 0.4
+    )
       return null;
     const pC = mathToDesign(x2, res.fx, scale);
     const sqSize = 9;
     const xDir = dx > 0 ? -1 : 1;
     const yDir = y2 > res.fx ? -1 : 1;
     return `M ${pC.x + xDir * sqSize} ${pC.y} L ${pC.x + xDir * sqSize} ${pC.y + yDir * sqSize} L ${pC.x} ${pC.y + yDir * sqSize}`;
-  }, [showSecant, res.isValid, isQValid, dx, x2, y2, res.fx, scale]);
+  }, [
+    isExternal,
+    showSecant,
+    res.isValid,
+    isQValid,
+    dx,
+    x2,
+    y2,
+    res.fx,
+    scale,
+  ]);
 
   // 割线增量 Δx 和 Δy 极简学术标注
   const deltaLabels = React.useMemo(() => {
-    if (!showSecant || !res.isValid || !isQValid || Math.abs(dx) < 0.35)
+    if (
+      isExternal ||
+      !showSecant ||
+      !res.isValid ||
+      !isQValid ||
+      Math.abs(dx) < 0.35
+    )
       return null;
 
     const midX = x0 + dx / 2;
@@ -190,7 +290,139 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
         </text>
       </g>
     );
-  }, [showSecant, x0, dx, y2, res.fx, res.isValid, isQValid, scale, fontScale]);
+  }, [
+    isExternal,
+    showSecant,
+    x0,
+    dx,
+    y2,
+    res.fx,
+    res.isValid,
+    isQValid,
+    scale,
+    fontScale,
+  ]);
+
+  // 8× 局部放大镜（展现“以直代曲”）
+  const loupeRender = React.useMemo(() => {
+    if (!showZoomLoupe || isExternal || !res.isValid) return null;
+    const loupeR = 64;
+    const loupeCx = vp.designLeft + vp.designVisibleW - loupeR - 22;
+    const loupeCy = vp.designTop + loupeR + 20;
+    const zoom = 8;
+    const dxWindow = loupeR / (Math.max(1e-3, scale.scaleX) * zoom);
+    const clipId = "derivative-loupe-clip";
+
+    let curvePath = "";
+    let penDown = false;
+    const segs = 36;
+    for (let i = 0; i <= segs; i++) {
+      const tx = x0 - dxWindow + (2 * dxWindow * i) / segs;
+      let fy = NaN;
+      try {
+        fy = fn(tx);
+      } catch {
+        fy = NaN;
+      }
+      if (!Number.isFinite(fy)) {
+        penDown = false;
+        continue;
+      }
+      const px = loupeCx + (tx - x0) * scale.scaleX * zoom;
+      const py = loupeCy - (fy - res.fx) * scale.scaleY * zoom;
+      if (Math.abs(py - loupeCy) > loupeR * 2) {
+        penDown = false;
+        continue;
+      }
+      curvePath += `${penDown ? "L" : "M"} ${px.toFixed(2)} ${py.toFixed(2)} `;
+      penDown = true;
+    }
+
+    const tanX1 = loupeCx - dxWindow * scale.scaleX * zoom;
+    const tanY1 = loupeCy + res.slope * dxWindow * scale.scaleY * zoom;
+    const tanX2 = loupeCx + dxWindow * scale.scaleX * zoom;
+    const tanY2 = loupeCy - res.slope * dxWindow * scale.scaleY * zoom;
+
+    return (
+      <g className="pointer-events-none">
+        <defs>
+          <clipPath id={clipId}>
+            <circle cx={loupeCx} cy={loupeCy} r={loupeR} />
+          </clipPath>
+        </defs>
+        <circle
+          cx={loupeCx}
+          cy={loupeCy}
+          r={loupeR}
+          fill={MATH_COLORS.white}
+          stroke={CANVAS_COLORS.axis}
+          strokeWidth={1.8}
+        />
+        <g clipPath={`url(#${clipId})`}>
+          <line
+            x1={loupeCx - loupeR}
+            y1={loupeCy}
+            x2={loupeCx + loupeR}
+            y2={loupeCy}
+            stroke={CANVAS_COLORS.grid}
+            strokeWidth={0.8}
+            strokeDasharray="3 3"
+          />
+          <line
+            x1={loupeCx}
+            y1={loupeCy - loupeR}
+            x2={loupeCx}
+            y2={loupeCy + loupeR}
+            stroke={CANVAS_COLORS.grid}
+            strokeWidth={0.8}
+            strokeDasharray="3 3"
+          />
+          {curvePath && (
+            <path
+              d={curvePath}
+              fill="none"
+              stroke={MATH_COLORS.function}
+              strokeWidth={2.4}
+            />
+          )}
+          <line
+            x1={tanX1}
+            y1={tanY1}
+            x2={tanX2}
+            y2={tanY2}
+            stroke={MATH_COLORS.tangentLine}
+            strokeWidth={1.6}
+            strokeDasharray="5 3"
+          />
+          <MathPoint
+            x={loupeCx}
+            y={loupeCy}
+            r={3.5}
+            color={MATH_COLORS.paramPrimary}
+            fontScale={fontScale}
+          />
+        </g>
+        <circle
+          cx={loupeCx}
+          cy={loupeCy}
+          r={loupeR}
+          fill="none"
+          stroke={MATH_COLORS.axis}
+          strokeWidth={1.8}
+        />
+        <text
+          x={loupeCx}
+          y={loupeCy + loupeR + 15}
+          textAnchor="middle"
+          fill={CANVAS_COLORS.labelTextLight}
+          fontSize={fontScale(10)}
+          fontWeight={600}
+        >
+          8× 局部放大 (以直代曲)
+        </text>
+      </g>
+    );
+  }, [showZoomLoupe, isExternal, res, vp, scale, x0, fn, fontScale]);
 
   return (
     <g>
@@ -204,71 +436,129 @@ export const DerivativeScene: React.FC<DerivativeSceneProps> = ({
         strokeWidth={2.5}
       />
 
-      {/* 割线（仅在割线极限逼近模式展示） */}
-      {showSecant && (
-        <SecantLine
-          fn={fn}
-          x1={x0}
-          x2={x2}
-          scale={scale}
-          color={MATH_COLORS.paramSecondary}
-          strokeWidth={1.8}
-          showTriangle={true}
-        />
-      )}
+      {isExternal ? (
+        <>
+          {/* 过点 A 所作的全部切线及切点 */}
+          {externalTangents.map((tan, idx) => {
+            const xMinLine = scale.xMin - 1;
+            const xMaxLine = scale.xMax + 1;
+            const p1 = mathToDesign(
+              xMinLine,
+              tan.slope * xMinLine + tan.intercept,
+              scale,
+            );
+            const p2 = mathToDesign(
+              xMaxLine,
+              tan.slope * xMaxLine + tan.intercept,
+              scale,
+            );
+            return (
+              <g key={`ext-tan-${idx}-${tan.t}`}>
+                <line
+                  x1={p1.x}
+                  y1={p1.y}
+                  x2={p2.x}
+                  y2={p2.y}
+                  stroke={withAlpha(MATH_COLORS.tangentLine, 0.85)}
+                  strokeWidth={1.9}
+                />
+                <MathPoint
+                  cx={tan.t}
+                  cy={tan.ft}
+                  r={4.8}
+                  scale={scale}
+                  color={MATH_COLORS.tangentLine}
+                  fontScale={fontScale}
+                />
+              </g>
+            );
+          })}
 
-      {/* 直角标尺 */}
-      {rightAnglePath && (
-        <path
-          d={rightAnglePath}
-          fill="none"
-          stroke={MATH_COLORS.paramSecondary}
-          strokeWidth={1.2}
-          opacity={0.7}
-        />
-      )}
+          {/* 可拖拽定点 A(xA, yA) */}
+          <InteractivePoint
+            cx={xA}
+            cy={yA}
+            scale={scale}
+            vp={vp}
+            onDrag={handleDragA}
+            color={MATH_COLORS.paramPrimary}
+            r={6.5}
+            fontScale={fontScale}
+            edgeClampProjection
+          />
+        </>
+      ) : (
+        <>
+          {/* 割线（仅在割线极限逼近模式展示） */}
+          {showSecant && (
+            <SecantLine
+              fn={fn}
+              x1={x0}
+              x2={x2}
+              scale={scale}
+              color={MATH_COLORS.paramSecondary}
+              strokeWidth={1.8}
+              showTriangle={true}
+            />
+          )}
 
-      {/* 切线 */}
-      {res.isValid && (
-        <TangentLine
-          fn={fn}
-          x0={x0}
-          scale={scale}
-          color={MATH_COLORS.tangentLine}
-          strokeWidth={2}
-        />
-      )}
+          {/* 直角标尺 */}
+          {rightAnglePath && (
+            <path
+              d={rightAnglePath}
+              fill="none"
+              stroke={MATH_COLORS.paramSecondary}
+              strokeWidth={1.2}
+              opacity={0.7}
+            />
+          )}
 
-      {/* 割线动点 Q (仅割线模式) */}
-      {showSecant && isQValid && (
-        <MathPoint
-          cx={x2}
-          cy={y2}
-          r={4}
-          scale={scale}
-          color={MATH_COLORS.paramSecondary}
-          fontScale={fontScale}
-        />
-      )}
+          {/* 切线 */}
+          {res.isValid && (
+            <TangentLine
+              fn={fn}
+              x0={x0}
+              scale={scale}
+              color={MATH_COLORS.tangentLine}
+              strokeWidth={2}
+            />
+          )}
 
-      {/* 切点 P（可拖拽） */}
-      <InteractivePoint
-        cx={x0}
-        cy={res.isValid ? res.fx : 0}
-        scale={scale}
-        vp={vp}
-        onDrag={handleDrag}
-        color={MATH_COLORS.paramPrimary}
-        r={6}
-        disabled={!res.isValid}
-        fontScale={fontScale}
-        edgeClampProjection
-      />
+          {/* 割线动点 Q (仅割线模式) */}
+          {showSecant && isQValid && (
+            <MathPoint
+              cx={x2}
+              cy={y2}
+              r={4}
+              scale={scale}
+              color={MATH_COLORS.paramSecondary}
+              fontScale={fontScale}
+            />
+          )}
+
+          {/* 切点 P（可拖拽） */}
+          <InteractivePoint
+            cx={x0}
+            cy={res.isValid ? res.fx : 0}
+            scale={scale}
+            vp={vp}
+            onDrag={handleDrag}
+            color={MATH_COLORS.paramPrimary}
+            r={6}
+            disabled={!res.isValid}
+            fontScale={fontScale}
+            edgeClampProjection
+          />
+        </>
+      )}
 
       {/* 极简学术点标 */}
       <SceneLabelGroup items={labelItems} fontScale={fontScale} />
 
       {deltaLabels}
+
+      {/* 8× 局部放大镜 */}
+      {loupeRender}
     </g>
   );
 };

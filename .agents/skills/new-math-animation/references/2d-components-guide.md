@@ -33,7 +33,10 @@
 | **`LeftPanelSection`** | `@/components/UI` | `title`, `compact`, `children` | 左屏区块卡片外壳。标题精炼加粗，严禁写口水话副标题。 |
 | **`TabSwitcher`** | `@/components/UI` | `tabs`, `value`, `onChange`, `layout`, `size` | 探索维度/大类模式切换器。支持横向单排与 4 项自动熔断网格。 |
 | **`SelectGrid`** | `@/components/UI` | `items`, `value`, `onChange`, `columns`, `layout`, `variant` | 典型情境/母题预设选择器。纯中文标题，默认 2 列排版，首项自由探索通栏。 |
-| **`ParamControl`** | `@/components/UI` | `params`, `onParamChange`, `onReset`, `disabled`, `variant` | 核心参数降维调节器。支持单项 `ParamConfig.disabled`（如 `isParamLocked`）与整组 `disabled`；扁平分组，三位一体色彩映射。 |
+| **`ParamControl`** | `@/components/UI` | `params`, `onParamChange`, `onReset`, `disabled`, `variant` | 核心参数降维调节器。支持单项 `ParamConfig.disabled`（如 `isParamLocked`）与整组 `disabled`；扁平分组，三位一体色彩映射；多模式页面 `onReset` 须按当前模式安全复位。 |
+| **`ParamPlayBar`** | `@/components/UI` | `isPlaying`, `onToggle`, `label`, `speed`, `onSpeedChange`, `secondaryAction` | 通用动画播放控制条（搭配 `@/hooks` 的 `useParamPlay`）。手动调参/拖拽/切模式时必须同步 `pause()`。 |
+| **`Toggle`** | `@/components/UI` | `label`, `checked`, `onChange`, `disabled`, `size` | 标准单行紧凑开关。❌ 严禁手写原生 `<input type="checkbox">` 或暗色风格开关盒（如 `bg-slate-800`）。 |
+| **`StepNavigator`** | `@/components/UI` | `steps`, `active`, `onChange`, `hint` | B 类大题分步作答导航器，驱动右屏 `focusStep` 与中屏 `activeStep` 三方同源联动。 |
 | **`TipCard`** | `@/components/UI` | `badge`, `background`, `condition`, `question`, `variant` | 教学导引与题设三要素闭环卡片。置于左屏底部，数学符号 100% 包裹 `$...$`。 |
 | **`MathPanel`** | `@/components/UI` | `quantities`, `theorems`, `gaokaoPoints`, `warnings`, `reasoningSteps`, `examAnchor`, `mnemonic`, `focusStep`, `focusTarget` | 右屏数学量看板。统一由 `buildMathQuantities` 组装结构化数据接入。 |
 

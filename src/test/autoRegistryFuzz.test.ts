@@ -96,6 +96,67 @@ import {
   defaultParams as conicLocusDefaults,
   paramMeta as conicLocusMeta,
 } from "@/data/registries/conicLocusInvariants";
+import {
+  defaultParams as funcPropDefaults,
+  paramMeta as funcPropMeta,
+} from "@/data/registries/funcProperties";
+import {
+  defaultParams as expLogDefaults,
+  paramMeta as expLogMeta,
+} from "@/data/registries/funcExpLog";
+import {
+  defaultParams as funcZeroDefaults,
+  paramMeta as funcZeroMeta,
+} from "@/data/registries/funcZero";
+import {
+  defaultParams as transformDefaults,
+  paramMeta as transformMeta,
+} from "@/data/registries/transform";
+import {
+  defaultParams as compositeDefaults,
+  paramMeta as compositeMeta,
+} from "@/data/registries/composite";
+import {
+  defaultDerivativeFormulasParams as derivFormulasDefaults,
+  derivativeFormulasParamMeta as derivFormulasMeta,
+} from "@/data/registries/derivativeFormulas";
+import {
+  defaultDerivativeOperationsParams as derivOpsDefaults,
+  derivativeOperationsParamMeta as derivOpsMeta,
+} from "@/data/registries/derivativeOperations";
+import {
+  DERIVATIVE_CHAIN_DEFAULT_PARAMS as derivChainDefaults,
+  DERIVATIVE_CHAIN_PARAM_META as derivChainMeta,
+} from "@/data/registries/derivativeChain";
+import {
+  defaultOptimizationParams as derivOptDefaults,
+  optimizationParamMeta as derivOptMeta,
+} from "@/data/registries/derivativeOptimization";
+import {
+  defaultParams as monoDefaults,
+  paramMeta as monoMeta,
+} from "@/data/registries/derivativeMonotonicity";
+import {
+  defaultParams as constantDefaults,
+  paramMeta as constantMeta,
+} from "@/data/registries/constant";
+import {
+  defaultParams as shiftDefaults,
+  paramMeta as shiftMeta,
+} from "@/data/registries/derivativeShift";
+import {
+  defaultParams as transDefaults,
+  transcendentalParamMeta as transMetaByMode,
+} from "@/data/registries/transcendental";
+import { defaultParams as tangentScalingDefaults } from "@/data/registries/tangentScaling";
+import {
+  defaultParams as secondDerivDefaults,
+  paramMeta as secondDerivMeta,
+} from "@/data/registries/secondDerivative";
+import {
+  defaultParams as endpointTaylorDefaults,
+  paramMeta as endpointTaylorMeta,
+} from "@/data/registries/derivativeEndpointTaylor";
 
 /**
  * 立体几何 registry 的元数据以数组形式导出（同一文件承载十余个页面的 meta），
@@ -103,6 +164,16 @@ import {
  */
 const toMetaRecord = (list: ParamMeta[]): Record<string, ParamMeta> =>
   Object.fromEntries(list.map((m) => [m.key, m]));
+
+const normalizeMetaRecord = (
+  raw: Record<string, Record<string, unknown>>,
+): Record<string, ParamMeta> =>
+  Object.fromEntries(
+    Object.entries(raw).map(([k, v]) => [
+      k,
+      { key: k, ...v } as unknown as ParamMeta,
+    ]),
+  );
 
 /**
  * 单构型巡检参数。
@@ -144,7 +215,418 @@ const fuzzTargets: TopicFuzzTarget[] = [
     topicName: "导数与切线方程",
     defaultParams: derivDefaults,
     paramMeta: derivMeta,
-    primaryKey: "x0",
+    variants: [
+      {
+        label: "割线逼近极限",
+        config: { mode: "secant_limit", fnKey: "cubic" },
+        primaryKey: "x0",
+      },
+      {
+        label: "在点切线方程",
+        config: { mode: "tangent_eq", fnKey: "exp" },
+        primaryKey: "x0",
+      },
+      {
+        label: "过定点作切线",
+        config: { mode: "external_tangent", fnKey: "cubic" },
+        primaryKey: "xA",
+      },
+    ],
+  },
+  {
+    animId: "anim-func-properties",
+    topicName: "函数基本性质（定义域/奇偶/对称周期）",
+    defaultParams: funcPropDefaults,
+    paramMeta: funcPropMeta,
+    variants: [
+      {
+        label: "定义域与值域",
+        config: { mode: "domain", fnType: "quadratic" },
+        primaryKey: "x0",
+      },
+      {
+        label: "单调与奇偶性",
+        config: { mode: "parity", fnType: "cubic" },
+        primaryKey: "x0",
+      },
+      {
+        label: "对称性与周期性",
+        config: { mode: "symmetry", subMode: "axis" },
+        primaryKey: "axisA",
+      },
+    ],
+  },
+  {
+    animId: "anim-func-explog",
+    topicName: "指数、对数与幂函数",
+    defaultParams: expLogDefaults,
+    paramMeta: expLogMeta,
+    variants: [
+      {
+        label: "指数函数",
+        config: { funcType: "exponential", explogMode: "single" },
+        primaryKey: "baseA",
+      },
+      {
+        label: "对数函数",
+        config: { funcType: "logarithmic", explogMode: "inverse" },
+        primaryKey: "baseA",
+      },
+      {
+        label: "幂函数",
+        config: { funcType: "power" },
+        primaryKey: "powerAlpha",
+      },
+    ],
+  },
+  {
+    animId: "anim-func-zero",
+    topicName: "函数零点与二分法",
+    defaultParams: funcZeroDefaults,
+    paramMeta: funcZeroMeta,
+    variants: [
+      {
+        label: "三次多项式",
+        config: { modelKey: "cubic" },
+        primaryKey: "bisectionSteps",
+      },
+      {
+        label: "复合绝对值零点",
+        config: { modelKey: "piecewiseAbs" },
+        primaryKey: "bisectionSteps",
+      },
+    ],
+  },
+  {
+    animId: "anim-func-transform",
+    topicName: "函数图象伸缩平移与翻折变换",
+    defaultParams: transformDefaults,
+    paramMeta: transformMeta,
+    variants: [
+      {
+        label: "二次平移翻折",
+        config: { fnType: "quadratic", foldMode: "global" },
+        primaryKey: "h",
+      },
+      {
+        label: "正弦伸缩平移",
+        config: { fnType: "sine", foldMode: "none" },
+        primaryKey: "omega",
+      },
+    ],
+  },
+  {
+    animId: "anim-func-composite",
+    topicName: "分段函数与复合函数同增异减",
+    defaultParams: compositeDefaults,
+    paramMeta: compositeMeta,
+    variants: [
+      {
+        label: "分段单调临界",
+        config: { subMode: "piecewise" },
+        primaryKey: "leftSlope",
+      },
+      {
+        label: "复合函数指数外层",
+        config: { subMode: "composite", outerType: "exp" },
+        primaryKey: "innerB",
+      },
+    ],
+  },
+  {
+    animId: "anim-derivative-formulas",
+    topicName: "基本初等函数求导公式",
+    defaultParams: derivFormulasDefaults,
+    paramMeta: normalizeMetaRecord(
+      derivFormulasMeta as unknown as Record<string, Record<string, unknown>>,
+    ),
+    variants: [
+      { label: "幂函数", config: { funcType: "power" }, primaryKey: "x0" },
+      { label: "指数函数", config: { funcType: "exp" }, primaryKey: "x0" },
+      { label: "对数函数", config: { funcType: "log" }, primaryKey: "x0" },
+      { label: "正弦余弦", config: { funcType: "sin" }, primaryKey: "x0" },
+    ],
+  },
+  {
+    animId: "anim-derivative-operations",
+    topicName: "导数四则运算法则",
+    defaultParams: derivOpsDefaults,
+    paramMeta: normalizeMetaRecord(
+      derivOpsMeta as unknown as Record<string, Record<string, unknown>>,
+    ),
+    variants: [
+      { label: "线性组合", config: { opType: "linear" }, primaryKey: "x0" },
+      { label: "乘积法则", config: { opType: "product" }, primaryKey: "x0" },
+      { label: "商的法则", config: { opType: "quotient" }, primaryKey: "x0" },
+    ],
+  },
+  {
+    animId: "anim-derivative-chain",
+    topicName: "复合函数链式求导法则",
+    defaultParams: derivChainDefaults,
+    paramMeta: normalizeMetaRecord(
+      derivChainMeta as unknown as Record<string, Record<string, unknown>>,
+    ),
+    variants: [
+      { label: "外层正弦", config: { outerType: "sin" }, primaryKey: "x0" },
+      { label: "外层指数", config: { outerType: "exp" }, primaryKey: "x0" },
+      { label: "外层对数", config: { outerType: "ln" }, primaryKey: "x0" },
+    ],
+  },
+  {
+    animId: "anim-derivative-optimization",
+    topicName: "导数实际优化建模",
+    defaultParams: derivOptDefaults,
+    paramMeta: normalizeMetaRecord(
+      derivOptMeta as unknown as Record<string, Record<string, unknown>>,
+    ),
+    variants: [
+      {
+        label: "无盖方盒容积",
+        config: { modelType: "box" },
+        primaryKey: "box_x",
+      },
+      {
+        label: "圆柱表面积最优",
+        config: { modelType: "can" },
+        primaryKey: "can_r",
+      },
+      {
+        label: "利润最大化",
+        config: { modelType: "profit" },
+        primaryKey: "profit_x",
+      },
+    ],
+  },
+  {
+    animId: "anim-derivative-monotonicity",
+    topicName: "导数与单调性极值及含参分类讨论",
+    defaultParams: { a: monoDefaults.a, x0: monoDefaults.x0 },
+    paramMeta: monoMeta,
+    variants: [
+      {
+        label: "动点切线单调",
+        config: { modelKey: "cubic_param", mode: "monotonicity_point" },
+        primaryKey: "x0",
+      },
+      {
+        label: "穿零变号极值",
+        config: { modelKey: "exp_poly", mode: "extrema_analysis" },
+        primaryKey: "a",
+      },
+      {
+        label: "含参分类讨论",
+        config: { modelKey: "nike_rational", mode: "parametric_discuss" },
+        primaryKey: "a",
+      },
+    ],
+  },
+  {
+    animId: "anim-constant-single",
+    topicName: "单变量恒成立与存在性",
+    defaultParams: {
+      a: constantDefaults.a,
+      a_axis: constantDefaults.a_axis,
+      m: constantDefaults.m,
+      n: constantDefaults.n,
+    },
+    paramMeta: { a: constantMeta.a, a_axis: constantMeta.a_axis },
+    variants: [
+      {
+        label: "参变分离·超越恒成立",
+        config: {
+          subMode: "sep",
+          logic: "always",
+          funModel: "transcendent",
+          transModel: "ln_x_over_x",
+        },
+        primaryKey: "a",
+      },
+      {
+        label: "参变分离·存在性",
+        config: { subMode: "sep", logic: "exist", funModel: "quadratic" },
+        primaryKey: "a",
+      },
+      {
+        label: "直接讨论·超越分类",
+        config: {
+          subMode: "direct",
+          logic: "always",
+          funModel: "transcendent",
+          transModel: "exp_minus_ax",
+        },
+        primaryKey: "a_axis",
+      },
+    ],
+  },
+  {
+    animId: "anim-constant-double",
+    topicName: "双变量恒成立与存在性",
+    defaultParams: {
+      yf: constantDefaults.yf,
+      xf: constantDefaults.xf,
+      yg: constantDefaults.yg,
+      xg: constantDefaults.xg,
+    },
+    paramMeta: {
+      yf: constantMeta.yf,
+      xf: constantMeta.xf,
+      yg: constantMeta.yg,
+      xg: constantMeta.xg,
+    },
+    variants: [
+      { label: "双任意恒成立", config: { logic: "all_all" }, primaryKey: "yf" },
+      { label: "任意配存在", config: { logic: "all_exist" }, primaryKey: "yf" },
+    ],
+  },
+  {
+    animId: "anim-derivative-shift",
+    topicName: "隐零点定理与极值点偏移",
+    defaultParams: shiftDefaults,
+    paramMeta: shiftMeta,
+    variants: [
+      {
+        label: "隐零点消元",
+        config: { activeMode: "implicit_zero", subModel: "x_ln_x" },
+        primaryKey: "a",
+      },
+      {
+        label: "极值点偏移",
+        config: { activeMode: "shift_symmetric", subModel: "xe_neg_x" },
+        primaryKey: "k",
+      },
+      {
+        label: "对数均值链",
+        config: { activeMode: "log_mean" },
+        primaryKey: "x1",
+      },
+    ],
+  },
+  {
+    animId: "anim-derivative-transcendental",
+    topicName: "超越函数切线放缩 · 指数与对数与同构",
+    defaultParams: transDefaults,
+    paramMeta: transMetaByMode.log,
+    variants: [
+      {
+        label: "指数放缩",
+        config: { mode: "exp", subMode: "tangent_0" },
+        primaryKey: "x0",
+      },
+      {
+        label: "对数放缩",
+        config: { mode: "log", subMode: "tangent_1" },
+        primaryKey: "x0",
+      },
+      { label: "双基准对偶", config: { mode: "chain" }, primaryKey: "x0" },
+      {
+        label: "指对同构",
+        config: { mode: "isomorphism", subMode: "prod_iso" },
+        primaryKey: "x0",
+      },
+    ],
+  },
+  {
+    animId: "anim-derivative-transcendental",
+    topicName: "超越函数切线放缩 · 切线求参",
+    defaultParams: transDefaults,
+    paramMeta: transMetaByMode.param,
+    config: { mode: "param", subMode: "exp_ax_1" },
+    primaryKey: "a",
+  },
+  {
+    animId: "anim-derivative-tangent-scaling",
+    topicName: "切线放缩核心技巧",
+    defaultParams: tangentScalingDefaults as unknown as Record<string, number>,
+    paramMeta: {
+      x0: {
+        key: "x0",
+        label: "切点",
+        min: -2,
+        max: 2,
+        step: 0.1,
+        defaultValue: 0,
+      },
+      evalX: {
+        key: "evalX",
+        label: "观察点",
+        min: 0.2,
+        max: 2.2,
+        step: 0.1,
+        defaultValue: 1.5,
+      },
+      k: {
+        key: "k",
+        label: "斜率",
+        min: 0.1,
+        max: 3.5,
+        step: 0.05,
+        defaultValue: 1.0,
+      },
+    },
+    variants: [
+      {
+        label: "基准切线",
+        config: { mode: "base", baseSubModel: "exp_x_plus_1" },
+        primaryKey: "x0",
+      },
+      {
+        label: "双切线卡位",
+        config: { mode: "sandwich", sandwichSubModel: "parallel_bands" },
+        primaryKey: "evalX",
+      },
+      {
+        label: "过定点求参",
+        config: { mode: "param_k", paramKSubModel: "exp_log_k" },
+        primaryKey: "k",
+      },
+      {
+        label: "二阶卡位",
+        config: { mode: "secant", secantSubModel: "taylor_quadratic" },
+        primaryKey: "evalX",
+      },
+    ],
+  },
+  {
+    animId: "anim-derivative-inflection",
+    topicName: "二阶导数与曲线拐点（拓展）",
+    defaultParams: secondDerivDefaults,
+    paramMeta: secondDerivMeta,
+    variants: [
+      {
+        label: "二阶导凹凸与拐点",
+        config: { studyMode: "concavity" },
+        primaryKey: "a",
+      },
+      {
+        label: "琴生不等式（拓展）",
+        config: { studyMode: "jensen" },
+        primaryKey: "x1",
+      },
+    ],
+  },
+  {
+    animId: "anim-derivative-endpoint-taylor",
+    topicName: "端点效应与洛必达/泰勒拟合（拓展）",
+    defaultParams: endpointTaylorDefaults as unknown as Record<string, number>,
+    paramMeta: endpointTaylorMeta,
+    variants: [
+      {
+        label: "端点效应必要性",
+        config: { activeMode: "endpoint" },
+        primaryKey: "a",
+      },
+      {
+        label: "洛必达法则（拓展）",
+        config: { activeMode: "lhopital" },
+        primaryKey: "xCurr",
+      },
+      {
+        label: "泰勒多项式拟合（拓展）",
+        config: { activeMode: "taylor" },
+        primaryKey: "xTest",
+      },
+    ],
   },
   {
     animId: "anim-conic-line",

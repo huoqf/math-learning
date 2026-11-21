@@ -8,10 +8,11 @@ import {
   LeftPanelSection,
   SelectGrid,
   TipCard,
+  ParamPlayBar,
 } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS, withAlpha } from "@/theme";
 import { TransformScene } from "./components/TransformScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -85,7 +86,19 @@ export function TransformAnimation() {
     });
   }, [params]);
 
+  const playCtrl = useParamPlay({
+    min: paramMeta.h?.min ?? -3,
+    max: paramMeta.h?.max ?? 3,
+    ratePerSecond: 1.0,
+    step: paramMeta.h?.step ?? 0.1,
+    mode: "bounce",
+    getValue: () => params.h ?? defaultParams.h ?? 1.0,
+    onChange: (val) =>
+      setParams((prev) => ({ ...prev, h: Number(val.toFixed(2)) })),
+  });
+
   const handleParamChange = (key: string, value: number) => {
+    playCtrl.pause();
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -283,7 +296,10 @@ export function TransformAnimation() {
                 { key: "cubic", formula: "y = x^3" },
               ]}
               value={fnType}
-              onChange={(k) => setFnType(k as BaseFnType)}
+              onChange={(k) => {
+                playCtrl.pause();
+                setFnType(k as BaseFnType);
+              }}
               variant="outline"
               columns={2}
             />
@@ -293,12 +309,15 @@ export function TransformAnimation() {
           <LeftPanelSection title="绝对值翻折">
             <SelectGrid
               items={[
-                { key: "none", formula: "\\text{无翻折}" },
+                { key: "none", label: "无翻折" },
                 { key: "global", formula: "y = |f(x)|" },
                 { key: "input", formula: "y = f(|x|)" },
               ]}
               value={foldMode}
-              onChange={(k) => setFoldMode(k as FoldMode)}
+              onChange={(k) => {
+                playCtrl.pause();
+                setFoldMode(k as FoldMode);
+              }}
               variant="outline"
               columns={3}
             />
@@ -309,8 +328,20 @@ export function TransformAnimation() {
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() => setParams({ ...defaultParams })}
+              onReset={() => {
+                playCtrl.pause();
+                setParams({ ...defaultParams });
+              }}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label="水平平移量 h 连续演示"
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
           </LeftPanelSection>
 
           {/* 教学导引 */}

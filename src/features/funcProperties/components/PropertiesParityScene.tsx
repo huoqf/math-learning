@@ -21,6 +21,7 @@ interface PropertiesParitySceneProps extends PropertiesCommonProps {
   x0: number;
   x1: number;
   x2: number;
+  showAbstractIneq?: boolean;
 }
 
 export function PropertiesParityScene({
@@ -33,6 +34,7 @@ export function PropertiesParityScene({
   x0,
   x1,
   x2,
+  showAbstractIneq = false,
 }: PropertiesParitySceneProps) {
   const fx0 = getFn(x0);
   const fx1 = getFn(x1);
@@ -118,6 +120,17 @@ export function PropertiesParityScene({
       color: MATH_COLORS.paramTertiary,
       preferredPlacement: "top-right",
     });
+    if (showAbstractIneq && Number.isFinite(getFn(-x2))) {
+      const ptNeg2 = mathToDesign(-x2, getFn(-x2), scale);
+      labelItems.push({
+        key: "P2_sym",
+        x: ptNeg2.x,
+        y: ptNeg2.y,
+        text: "P'₂",
+        color: MATH_COLORS.paramTertiary,
+        preferredPlacement: "bottom-left",
+      });
+    }
   }
 
   return (
@@ -197,6 +210,42 @@ export function PropertiesParityScene({
           fontScale={fontScale}
           edgeClampProjection
         />
+      )}
+
+      {/* 奇偶+单调抽象不等式对照模式：展示 y=f(x1) 与 y=f(x2)/f(-x2) 高度比较 */}
+      {showAbstractIneq && Number.isFinite(fx1) && Number.isFinite(fx2) && (
+        <g>
+          <line
+            x1={mathToDesign(scale.xMin, fx1, scale).x}
+            y1={mathToDesign(0, fx1, scale).y}
+            x2={mathToDesign(scale.xMax, fx1, scale).x}
+            y2={mathToDesign(0, fx1, scale).y}
+            stroke={MATH_COLORS.paramSecondary}
+            strokeWidth={1.2}
+            strokeDasharray="5 4"
+            opacity={0.65}
+          />
+          <line
+            x1={mathToDesign(scale.xMin, fx2, scale).x}
+            y1={mathToDesign(0, fx2, scale).y}
+            x2={mathToDesign(scale.xMax, fx2, scale).x}
+            y2={mathToDesign(0, fx2, scale).y}
+            stroke={MATH_COLORS.paramTertiary}
+            strokeWidth={1.2}
+            strokeDasharray="5 4"
+            opacity={0.65}
+          />
+          {Number.isFinite(getFn(-x2)) && (
+            <MathPoint
+              cx={-x2}
+              cy={getFn(-x2)}
+              scale={scale}
+              variant="hollow"
+              color={MATH_COLORS.paramTertiary}
+              fontScale={fontScale}
+            />
+          )}
+        </g>
       )}
 
       <SceneLabelGroup items={labelItems} fontScale={fontScale} />

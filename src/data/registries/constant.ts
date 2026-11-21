@@ -1,4 +1,5 @@
 import type { ParamMeta } from "../types";
+import type { AnswerStepItem } from "@/components/UI/StepNavigator";
 import { MATH_COLORS } from "@/theme";
 
 export const defaultParams = {
@@ -17,6 +18,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "a",
     label: "水平线高度 a",
     labelFormula: `\\text{水平线高度 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
+    group: "参变分离目标参数",
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -37,6 +39,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "a_axis",
     label: "参数 a (讨论项)",
     labelFormula: `\\text{讨论参数 }\\color{${MATH_COLORS.paramPrimary}}{a}`,
+    group: "直接讨论主参数",
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -60,6 +63,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "m",
     label: "区间左边界 m",
     labelFormula: `\\text{区间左边界 }\\color{${MATH_COLORS.paramSecondary}}{m}`,
+    group: "研究区间 [m, n]",
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -72,6 +76,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "n",
     label: "区间右边界 n",
     labelFormula: `\\text{区间右边界 }\\color{${MATH_COLORS.paramTertiary}}{n}`,
+    group: "研究区间 [m, n]",
     min: -1.0,
     max: 4.0,
     step: 0.05,
@@ -84,6 +89,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "yf",
     label: "顶点纵坐标 $y_f$",
     labelFormula: `\\text{顶点纵坐标 }\\color{${MATH_COLORS.paramPrimary}}{y_f}`,
+    group: "抛物线 f(x) (开口向上)",
     min: -1.5,
     max: 4.0,
     step: 0.05,
@@ -97,6 +103,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "xf",
     label: "对称轴位置 $x_f$",
     labelFormula: `\\text{对称轴位置 }\\color{${MATH_COLORS.paramTertiary}}{x_f}`,
+    group: "抛物线 f(x) (开口向上)",
     min: 0.5,
     max: 2.0,
     step: 0.05,
@@ -110,6 +117,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "yg",
     label: "顶点纵坐标 $y_g$",
     labelFormula: `\\text{顶点纵坐标 }\\color{${MATH_COLORS.paramSecondary}}{y_g}`,
+    group: "抛物线 g(x) (开口向下)",
     min: 0.0,
     max: 3.0,
     step: 0.05,
@@ -123,6 +131,7 @@ export const paramMeta: Record<string, ParamMeta> = {
     key: "xg",
     label: "对称轴位置 $x_g$",
     labelFormula: `\\text{对称轴位置 }\\color{${MATH_COLORS.paramTertiary}}{x_g}`,
+    group: "抛物线 g(x) (开口向下)",
     min: 1.5,
     max: 3.0,
     step: 0.05,
@@ -133,3 +142,48 @@ export const paramMeta: Record<string, ParamMeta> = {
       "\\text{控制对称轴在区间 } I_2 = [1.5, 3.0] \\text{ 内左右移动}",
   },
 };
+
+export function getConstantSingleAnswerSteps(
+  subMode: "sep" | "direct",
+  logic: "always" | "exist" = "always",
+): AnswerStepItem[] {
+  if (subMode === "sep") {
+    return [
+      {
+        step: 1,
+        title:
+          logic === "always"
+            ? "第一步：审题定法 · 恒成立命题等价转化"
+            : "第一步：审题定法 · 存在性命题等价转化",
+        sceneHint: "聚焦研究区间 [m, n] 与目标函数曲线",
+      },
+      {
+        step: 2,
+        title: "第二步：建模联立 · 求导单调性与极值分析",
+        sceneHint: "聚焦导数与区间极值点特征标记",
+      },
+      {
+        step: 3,
+        title: "第三步：求解反思 · 代数求界与充要判定",
+        sceneHint: "聚焦参照线 y = a 与违背区间高亮对照",
+      },
+    ];
+  }
+  return [
+    {
+      step: 1,
+      title: "第一步：审题定法 · 求导与含参导数为零点的确定",
+      sceneHint: "聚焦动轴/导数零点位置与区间 [m, n]",
+    },
+    {
+      step: 2,
+      title: "第二步：建模联立 · 轴动区间定三类分类推演",
+      sceneHint: "聚焦曲线单调走势与区间内极小值点",
+    },
+    {
+      step: 3,
+      title: "第三步：求解反思 · 代入分支求解与充要判定",
+      sceneHint: "聚焦当前分支下的违背区间与边界结论",
+    },
+  ];
+}

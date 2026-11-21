@@ -264,3 +264,6 @@ export function getDerivativeShiftLegendItems(
 ) {
   return buildLegendItems(getShiftPalette(activeMode), ctxOf(subModel));
 }
+
+/** 分步作答围栏框色（由调色板模块统一透出，避免 Scene 直接引入 MATH_COLORS） */
+export const SHIFT_STEP_FRAME_COLOR = MATH_COLORS.answerStepFrame;

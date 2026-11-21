@@ -8,11 +8,12 @@ import {
   LeftPanelSection,
   SelectGrid,
   TipCard,
+  ParamPlayBar,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { PropertiesScene } from "./components/PropertiesScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -31,6 +32,18 @@ const FORMULA_MAP: Record<FnType, string> = {
 export function ParityPage() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
   const [fnType, setFnType] = useState<FnType>("cubic");
+  const [showAbstractIneq, setShowAbstractIneq] = useState<boolean>(false);
+
+  const playCtrl = useParamPlay({
+    min: paramMeta.x0.min,
+    max: paramMeta.x0.max,
+    ratePerSecond: 0.9,
+    step: paramMeta.x0.step ?? 0.1,
+    mode: "bounce",
+    getValue: () => params.x0 ?? defaultParams.x0,
+    onChange: (val) =>
+      setParams((prev) => ({ ...prev, x0: Number(val.toFixed(2)) })),
+  });
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
     preset: CANVAS_PRESETS.full,
@@ -42,8 +55,9 @@ export function ParityPage() {
       buildMathQuantities("anim-func-properties", params, {
         mode: "parity",
         fnType,
+        showAbstractIneq,
       }),
-    [params, fnType],
+    [params, fnType, showAbstractIneq],
   );
 
   const paramConfigs = useMemo<ParamConfig[]>(() => {
@@ -67,6 +81,7 @@ export function ParityPage() {
   }, [params]);
 
   const handleParamChange = (key: string, value: number) => {
+    playCtrl.pause();
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -172,7 +187,10 @@ export function ParityPage() {
                 { key: "sin", label: "正弦波形", formula: "y=\\sin x" },
               ]}
               value={fnType}
-              onChange={(k) => setFnType(k as FnType)}
+              onChange={(k) => {
+                playCtrl.pause();
+                setFnType(k as FnType);
+              }}
               variant="outline"
               className="mb-4"
             />
@@ -181,8 +199,25 @@ export function ParityPage() {
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() => setParams({ ...defaultParams })}
+              onReset={() => {
+                playCtrl.pause();
+                setParams({ ...defaultParams });
+              }}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label="对称测试点 x₀ 连续扫动"
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+                secondaryAction={{
+                  label: "奇偶不等式对照",
+                  active: showAbstractIneq,
+                  onToggle: () => setShowAbstractIneq((v) => !v),
+                }}
+              />
+            </div>
           </LeftPanelSection>
           {/* 教学导引与题设背景 */}
           <LeftPanelSection title="教学导引与题设背景" compact>
@@ -212,6 +247,7 @@ export function ParityPage() {
               fontScale={canvasSize.font}
               fnType={fnType}
               mode="parity"
+              showAbstractIneq={showAbstractIneq}
             />
           </AnimationSvgCanvas>
           <SceneLegend items={legendItems} />

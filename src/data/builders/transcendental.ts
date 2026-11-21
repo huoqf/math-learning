@@ -4,7 +4,9 @@ import {
   solveLogTangent,
   solveParamExpAx1,
   solveParamExpAx,
+  solveIsomorphism,
   type TranscendentalMode,
+  type IsomorphismSubMode,
 } from "@/math/transcendental";
 import { MATH_COLORS } from "@/theme";
 
@@ -27,6 +29,162 @@ export function buildTranscendentalPanel(
 
   const quantities: MathPanelData["quantities"] = [];
   const warnings: MathPanelData["warnings"] = [];
+
+  if (mode === "isomorphism") {
+    const isoSub: IsomorphismSubMode =
+      (config?.subMode as string) === "prod_iso" ? "prod_iso" : "sum_iso";
+    const iso = solveIsomorphism(x0, isoSub);
+    const isProd = isoSub === "prod_iso";
+
+    const isoQuantities: MathPanelData["quantities"] = [
+      {
+        label: "同构母函数",
+        symbol: "g(t)",
+        value: "e^t + t \\;(\\text{严格递增})",
+        color: MATH_COLORS.function,
+      },
+      {
+        label: isProd ? "代换输入 u = x + ln x" : "输入自变量 x",
+        symbol: isProd ? "u" : "x",
+        value: iso.u.toFixed(3),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "同构映射像值 g(u)",
+        symbol: "g(u)",
+        value: iso.gU.toFixed(3),
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "基准对比像值 g(t₀)",
+        symbol: isProd ? "g(1) = e + 1" : "g(0.5)",
+        value: iso.gRef.toFixed(3),
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "不等号比较结果",
+        symbol: "g(u) - g(t_0)",
+        value: `${(iso.gU - iso.gRef).toFixed(3)} (${iso.satisfied ? "成立" : "不成立"})`,
+        color: iso.satisfied
+          ? MATH_COLORS.paramTertiary
+          : MATH_COLORS.highlight,
+        highlight: iso.satisfied ? "positive" : "extreme",
+      },
+    ];
+
+    const isoTheorems: MathPanelData["theorems"] = [
+      {
+        name: "指对同构母函数单调降维原理",
+        latex:
+          "g(t) = e^t + t \\implies g'(t) = e^t + 1 > 0 \\implies (g(u) \\ge g(v) \\iff u \\ge v)",
+        level: "core",
+        prerequisites: [
+          "母函数 $g(t) = e^t + t$ 在 $\\mathbb{R}$ 上连续且导数恒正",
+          "把不同位置的指对混合项改写为同一母函数的函数值比较",
+        ],
+      },
+      {
+        name: "幂指恒等变形规则 (x > 0)",
+        latex: "x e^x = e^{\\ln x} \\cdot e^x = e^{x + \\ln x}",
+        level: "core",
+        prerequisites: [
+          "严格声明对数真数条件 $x > 0$",
+          "若题目出现 $a + \\ln a$，同样改写为 $e^{\\ln a} + \\ln a = g(\\ln a)$",
+        ],
+      },
+    ];
+
+    const isoGaokao: MathPanelData["gaokaoPoints"] = [
+      {
+        text: "【新高考通法·指对同构三大模型】加法型 $e^x + x \\ge a + \\ln a$、乘积型 $x e^x + \\ln x + x$、商式型 $\\frac{e^x}{x} = e^{x - \\ln x}$，本质均是利用 $x = e^{\\ln x}$ 把乘除与对数全部吸收入指数上标。",
+        importance: "gaokao",
+      },
+      {
+        text: "【同构消元一步到位】化为 $g(u) \\ge g(v)$ 后，直接由母函数 $g(t)$ 单调递增去掉外层函数符号 $g$，降维为简单对数/一次不等式 $u \\ge v$。",
+        importance: "gaokao",
+      },
+    ];
+
+    const isoSteps: MathPanelData["reasoningSteps"] = isProd
+      ? [
+          {
+            step: 1,
+            title: "恒等变形统合幂指乘积",
+            detail:
+              "先声明定义域 $x > 0$，利用恒等式 $x = e^{\\ln x}$ 将 $x e^x$ 变形为 $e^{x + \\ln x}$，观察与后面 $+ x + \\ln x$ 的结构对称性。",
+            latex: "x e^x + x + \\ln x = e^{x + \\ln x} + (x + \\ln x)",
+            rubric: "【高考采分点】正确利用对数恒等式统一结构得 4 分",
+          },
+          {
+            step: 2,
+            title: "构造单调递增同构母函数",
+            detail:
+              "令同构母函数 $g(t) = e^t + t$，由 $g'(t) = e^t + 1 > 0$ 知其在 $\\mathbb{R}$ 上严格单调递增；记代换元 $u = x + \\ln x$，当前 $x = " +
+              iso.x0.toFixed(2) +
+              "$ 时 $u \\approx " +
+              iso.u.toFixed(3) +
+              "$。",
+            latex: `g(u) \\ge g(1) \\iff u = x + \\ln x \\ge 1`,
+            rubric: "【高考采分点】构造母函数并论证单调性得 4 分",
+          },
+          {
+            step: 3,
+            title: "脱去母函数求解最终解集",
+            detail:
+              "因 $u(x) = x + \\ln x$ 在 $(0, +\\infty)$ 也单调递增且 $u(1) = 1$，故 $x + \\ln x \\ge 1 \\iff x \\ge 1$。",
+            latex: "x \\ge 1 \\quad (x = 1 \\text{ 处取等})",
+            rubric: "【高考采分点】脱去母函数并解出准确范围得 4 分",
+          },
+        ]
+      : [
+          {
+            step: 1,
+            title: "右端对数项改写为指数外衣",
+            detail:
+              "考察不等式 $e^x + x \\ge a + \\ln a$（取基准 $a = e^{0.5}$），将右端正数项 $a$ 改写为 $e^{\\ln a}$，与 $+ \\ln a$ 对齐同构形态。",
+            latex: "a + \\ln a = e^{\\ln a} + \\ln a = g(0.5)",
+            rubric: "【高考采分点】将参数项等价改写为母函数形式得 4 分",
+          },
+          {
+            step: 2,
+            title: "论证同构母函数严格单调性",
+            detail:
+              "令 $g(t) = e^t + t$，求导得 $g'(t) = e^t + 1 > 0$，故 $g(t)$ 在 $\\mathbb{R}$ 上严格单调递增。",
+            latex: "g'(t) = e^t + 1 > 0 \\implies g(t) \\text{ 严格递增}",
+            rubric: "【高考采分点】写出母函数并严格求导定单调性得 4 分",
+          },
+          {
+            step: 3,
+            title: "单调脱壳完成等价求解",
+            detail:
+              "原不等式等价于 $g(x) \\ge g(\\ln a)$，当且仅当 $x \\ge \\ln a = 0.5$。当前 $x = " +
+              iso.x0.toFixed(2) +
+              "$，" +
+              (iso.satisfied
+                ? "满足 $x \\ge 0.5$。"
+                : "小于 $0.5$，不等式不成立。"),
+            latex: "g(x) \\ge g(0.5) \\iff x \\ge 0.5",
+            rubric: "【高考采分点】等价脱壳并给出正确解集得 4 分",
+          },
+        ];
+
+    return {
+      quantities: isoQuantities,
+      theorems: isoTheorems,
+      gaokaoPoints: isoGaokao,
+      warnings: !iso.satisfied
+        ? [
+            {
+              text: `当前代换点 $u = ${iso.u.toFixed(2)} < ${iso.refT.toFixed(1)}$，因母函数 $g(t)$ 单调递增，故 $g(u) < g(${iso.refT.toFixed(1)})$，不等式暂不满足。`,
+              level: "warning",
+            },
+          ]
+        : [],
+      reasoningSteps: isoSteps,
+      examAnchor: "新高考压轴题高频通法 · 指对同构与母函数降维",
+      mnemonic: "遇指又遇对，变形同结构；造出母函数，单调脱外衣。",
+    };
+  }
 
   if (mode === "exp") {
     const resExp = solveExpTangent(x0);

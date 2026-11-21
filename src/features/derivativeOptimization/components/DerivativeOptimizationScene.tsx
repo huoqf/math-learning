@@ -7,6 +7,7 @@ import {
   CoordinateGrid,
   FunctionGraph,
   InteractivePoint,
+  MathPoint,
   SceneLabelGroup,
 } from "@/components/Math";
 import type { SceneScale } from "@/hooks/useSceneScale";
@@ -23,7 +24,6 @@ import {
   OPTIMIZATION_CONSTANTS,
   type OptimizationModelType,
 } from "@/math/derivativeOptimization";
-import { formatMathNumber } from "@/utils/mathFormat";
 import { optimizationParamMeta } from "@/data/registries/derivativeOptimization";
 import { paramDragRange, snapDragValue } from "@/utils/paramClamp";
 
@@ -98,24 +98,22 @@ export const DerivativeOptimizationScene: React.FC<
     return [
       {
         key: "current-point",
-        text: `P(${formatMathNumber(res.xVal)}, ${formatMathNumber(res.yVal)})`,
+        text: "P",
         x: currentPointDesign.x,
         y: currentPointDesign.y,
         color: P.currentPoint.color,
+        preferredPlacement: "bottom-right",
       },
       {
         key: "optimal-point",
-        text: `最大值点 (${formatMathNumber(res.optimalX)}, ${formatMathNumber(res.optimalY)})`,
+        text: "M (最值点)",
         x: optimalPointDesign.x,
-        y: optimalPointDesign.y - 10,
+        y: optimalPointDesign.y,
         color: P.optimalPoint.color,
+        preferredPlacement: "top",
       },
     ];
   }, [
-    res.xVal,
-    res.yVal,
-    res.optimalX,
-    res.optimalY,
     currentPointDesign,
     optimalPointDesign,
     P.currentPoint.color,
@@ -146,13 +144,14 @@ export const DerivativeOptimizationScene: React.FC<
       />
 
       {/* 导数为零的点最优标记点 */}
-      <circle
-        cx={optimalPointDesign.x}
-        cy={optimalPointDesign.y}
+      <MathPoint
+        cx={res.optimalX}
+        cy={res.optimalY}
+        scale={scale}
+        variant="focus"
+        color={P.optimalPoint.color}
         r={5}
-        fill={P.optimalPoint.color}
-        stroke={C.contrast}
-        strokeWidth={1.5}
+        fontScale={fontScale}
       />
 
       {/* 动态交互探究点 */}
@@ -193,132 +192,158 @@ export const DerivativeOptimizationScene: React.FC<
               : "企业经济产量与边际分析"}
         </text>
 
-        {modelType === "box" && (
-          <g transform="translate(45, 38)">
-            {/* 正方形铁皮轮廓 */}
-            <rect
-              x={0}
-              y={0}
-              width={90}
-              height={90}
-              fill={withAlpha(C.boxSheet, 0.15)}
-              stroke={C.boxSheet}
-              strokeWidth={1.5}
-            />
-            {/* 剪去四个角的小正方形 */}
-            <rect
-              x={0}
-              y={0}
-              width={22}
-              height={22}
-              fill={withAlpha(C.boxCut, 0.4)}
-              stroke={C.boxCut}
-              strokeWidth={1}
-            />
-            <rect
-              x={68}
-              y={0}
-              width={22}
-              height={22}
-              fill={withAlpha(C.boxCut, 0.4)}
-              stroke={C.boxCut}
-              strokeWidth={1}
-            />
-            <rect
-              x={0}
-              y={68}
-              width={22}
-              height={22}
-              fill={withAlpha(C.boxCut, 0.4)}
-              stroke={C.boxCut}
-              strokeWidth={1}
-            />
-            <rect
-              x={68}
-              y={68}
-              width={22}
-              height={22}
-              fill={withAlpha(C.boxCut, 0.4)}
-              stroke={C.boxCut}
-              strokeWidth={1}
-            />
-            {/* 折叠虚线 */}
-            <line
-              x1={22}
-              y1={22}
-              x2={68}
-              y2={22}
-              stroke={C.contrast}
-              strokeDasharray="3 2"
-            />
-            <line
-              x1={22}
-              y1={68}
-              x2={68}
-              y2={68}
-              stroke={C.contrast}
-              strokeDasharray="3 2"
-            />
-            <line
-              x1={22}
-              y1={22}
-              x2={22}
-              y2={68}
-              stroke={C.contrast}
-              strokeDasharray="3 2"
-            />
-            <line
-              x1={68}
-              y1={22}
-              x2={68}
-              y2={68}
-              stroke={C.contrast}
-              strokeDasharray="3 2"
-            />
-            <text x={28} y={48} fill={C.inkLabel} fontSize={fontScale(10)}>
-              底面 (L-2x)²
-            </text>
-            <text x={3} y={15} fill={C.inkParam} fontSize={fontScale(8)}>
-              x
-            </text>
-          </g>
-        )}
+        {modelType === "box" &&
+          (() => {
+            const cutPx = Math.max(
+              6,
+              Math.min(38, (res.xVal / OPTIMIZATION_CONSTANTS.box.L) * 90),
+            );
+            const innerSpan = 90 - 2 * cutPx;
+            return (
+              <g transform="translate(45, 38)">
+                {/* 正方形铁皮轮廓 */}
+                <rect
+                  x={0}
+                  y={0}
+                  width={90}
+                  height={90}
+                  fill={withAlpha(C.boxSheet, 0.15)}
+                  stroke={C.boxSheet}
+                  strokeWidth={1.5}
+                />
+                {/* 剪去四个角的小正方形（随 x 动态缩放） */}
+                {[
+                  { x: 0, y: 0 },
+                  { x: 90 - cutPx, y: 0 },
+                  { x: 0, y: 90 - cutPx },
+                  { x: 90 - cutPx, y: 90 - cutPx },
+                ].map((corner, idx) => (
+                  <rect
+                    key={idx}
+                    x={corner.x}
+                    y={corner.y}
+                    width={cutPx}
+                    height={cutPx}
+                    fill={withAlpha(C.boxCut, 0.4)}
+                    stroke={C.boxCut}
+                    strokeWidth={1}
+                  />
+                ))}
+                {/* 折叠虚线 */}
+                <line
+                  x1={cutPx}
+                  y1={cutPx}
+                  x2={90 - cutPx}
+                  y2={cutPx}
+                  stroke={C.contrast}
+                  strokeDasharray="3 2"
+                />
+                <line
+                  x1={cutPx}
+                  y1={90 - cutPx}
+                  x2={90 - cutPx}
+                  y2={90 - cutPx}
+                  stroke={C.contrast}
+                  strokeDasharray="3 2"
+                />
+                <line
+                  x1={cutPx}
+                  y1={cutPx}
+                  x2={cutPx}
+                  y2={90 - cutPx}
+                  stroke={C.contrast}
+                  strokeDasharray="3 2"
+                />
+                <line
+                  x1={90 - cutPx}
+                  y1={cutPx}
+                  x2={90 - cutPx}
+                  y2={90 - cutPx}
+                  stroke={C.contrast}
+                  strokeDasharray="3 2"
+                />
+                {innerSpan > 22 && (
+                  <text
+                    x={45}
+                    y={48}
+                    textAnchor="middle"
+                    fill={C.inkLabel}
+                    fontSize={fontScale(9.5)}
+                  >
+                    (L-2x)²
+                  </text>
+                )}
+                <text
+                  x={3}
+                  y={Math.min(14, cutPx - 2)}
+                  fill={C.inkParam}
+                  fontSize={fontScale(8)}
+                >
+                  x
+                </text>
+              </g>
+            );
+          })()}
 
-        {modelType === "can" && (
-          <g transform="translate(60, 42)">
-            {/* 圆柱侧面与上下底 */}
-            <ellipse
-              cx={30}
-              cy={15}
-              rx={25}
-              ry={10}
-              fill={withAlpha(C.canTop, 0.3)}
-              stroke={C.canTop}
-            />
-            <rect
-              x={5}
-              y={15}
-              width={50}
-              height={55}
-              fill={withAlpha(C.canSide, 0.2)}
-              stroke={C.canSide}
-            />
-            <ellipse
-              cx={30}
-              cy={70}
-              rx={25}
-              ry={10}
-              fill={withAlpha(C.canTop, 0.3)}
-              stroke={C.canTop}
-            />
-            <text x={20} y={45} fill={C.inkLabel} fontSize={fontScale(10)}>
-              V = {OPTIMIZATION_CONSTANTS.can.V}
-            </text>
-            <text x={12} y={74} fill={C.inkParam} fontSize={fontScale(9)}>
-              r={formatMathNumber(res.xVal)}
-            </text>
-          </g>
-        )}
+        {modelType === "can" &&
+          (() => {
+            const rx = Math.max(10, Math.min(34, (res.xVal / 9) * 32));
+            const hPx = Math.max(
+              20,
+              Math.min(
+                62,
+                (300 / (Math.PI * Math.max(1.5, res.xVal) ** 2)) * 8,
+              ),
+            );
+            const topY = 48 - hPx / 2;
+            return (
+              <g transform="translate(45, 36)">
+                {/* 圆柱侧面与上下底（随底面半径 r 动态等比响应） */}
+                <ellipse
+                  cx={45}
+                  cy={topY}
+                  rx={rx}
+                  ry={Math.max(4, rx * 0.35)}
+                  fill={withAlpha(C.canTop, 0.3)}
+                  stroke={C.canTop}
+                />
+                <rect
+                  x={45 - rx}
+                  y={topY}
+                  width={2 * rx}
+                  height={hPx}
+                  fill={withAlpha(C.canSide, 0.2)}
+                  stroke={C.canSide}
+                />
+                <ellipse
+                  cx={45}
+                  cy={topY + hPx}
+                  rx={rx}
+                  ry={Math.max(4, rx * 0.35)}
+                  fill={withAlpha(C.canTop, 0.3)}
+                  stroke={C.canTop}
+                />
+                <text
+                  x={45}
+                  y={topY + hPx / 2 + 3}
+                  textAnchor="middle"
+                  fill={C.inkLabel}
+                  fontSize={fontScale(9.5)}
+                >
+                  V={OPTIMIZATION_CONSTANTS.can.V}
+                </text>
+                <text
+                  x={45}
+                  y={topY + hPx + 14}
+                  textAnchor="middle"
+                  fill={C.inkParam}
+                  fontSize={fontScale(9)}
+                >
+                  底半径 r
+                </text>
+              </g>
+            );
+          })()}
 
         {modelType === "profit" && (
           <g transform="translate(25, 45)">

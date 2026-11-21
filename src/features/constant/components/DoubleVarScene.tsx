@@ -6,6 +6,7 @@ import {
   FunctionGraph,
   InteractivePoint,
   IntervalShadow,
+  MathPoint,
 } from "@/components/Math";
 import { mathToDesign } from "@/utils/coordinate";
 import { avoidLabels, type LabelEntry } from "@/utils/labelAvoider";
@@ -212,11 +213,13 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         strokeWidth={1}
         strokeDasharray="2 2"
       />
-      <circle
-        cx={ptAxisXF.x}
-        cy={ptAxisXF.y}
+      <MathPoint
+        x={ptAxisXF.x}
+        y={ptAxisXF.y}
+        variant="foot"
         r={2}
-        fill={MATH_COLORS.paramPrimary}
+        color={MATH_COLORS.paramPrimary}
+        fontScale={fontScale}
       />
       <line
         x1={ptGV.x}
@@ -227,11 +230,13 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         strokeWidth={1}
         strokeDasharray="2 2"
       />
-      <circle
-        cx={ptAxisXG.x}
-        cy={ptAxisXG.y}
+      <MathPoint
+        x={ptAxisXG.x}
+        y={ptAxisXG.y}
+        variant="foot"
         r={2}
-        fill={MATH_COLORS.paramSecondary}
+        color={MATH_COLORS.paramSecondary}
+        fontScale={fontScale}
       />
 
       {/* 2. 定义域区间垂足引线（符合高中作图：端点向 X 轴引垂线） */}
@@ -284,17 +289,19 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         stroke={MATH_COLORS.function}
         strokeWidth={2}
       />
-      <circle
-        cx={ptAxisFStart.x}
-        cy={ptAxisFStart.y + 14}
+      <MathPoint
+        x={ptAxisFStart.x}
+        y={ptAxisFStart.y + 14}
         r={2.5}
-        fill={MATH_COLORS.function}
+        color={MATH_COLORS.function}
+        fontScale={fontScale}
       />
-      <circle
-        cx={ptAxisFEnd.x}
-        cy={ptAxisFEnd.y + 14}
+      <MathPoint
+        x={ptAxisFEnd.x}
+        y={ptAxisFEnd.y + 14}
         r={2.5}
-        fill={MATH_COLORS.function}
+        color={MATH_COLORS.function}
+        fontScale={fontScale}
       />
       <text
         x={(ptAxisFStart.x + ptAxisFEnd.x) / 2}
@@ -320,17 +327,19 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         stroke={MATH_COLORS.functionSecondary}
         strokeWidth={2}
       />
-      <circle
-        cx={ptAxisGStart.x}
-        cy={ptAxisGStart.y + 36}
+      <MathPoint
+        x={ptAxisGStart.x}
+        y={ptAxisGStart.y + 36}
         r={2.5}
-        fill={MATH_COLORS.functionSecondary}
+        color={MATH_COLORS.functionSecondary}
+        fontScale={fontScale}
       />
-      <circle
-        cx={ptAxisGEnd.x}
-        cy={ptAxisGEnd.y + 36}
+      <MathPoint
+        x={ptAxisGEnd.x}
+        y={ptAxisGEnd.y + 36}
         r={2.5}
-        fill={MATH_COLORS.functionSecondary}
+        color={MATH_COLORS.functionSecondary}
+        fontScale={fontScale}
       />
       <text
         x={(ptAxisGStart.x + ptAxisGEnd.x) / 2}
@@ -364,13 +373,20 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         strokeWidth={2.8}
       />
       {/* f(x) 闭区间实心端点（高中数学严谨作图标准：端点可取必须实心） */}
-      <circle
-        cx={ptFStart.x}
-        cy={ptFStart.y}
+      <MathPoint
+        x={ptFStart.x}
+        y={ptFStart.y}
         r={2.8}
-        fill={MATH_COLORS.function}
+        color={MATH_COLORS.function}
+        fontScale={fontScale}
       />
-      <circle cx={ptFEnd.x} cy={ptFEnd.y} r={2.8} fill={MATH_COLORS.function} />
+      <MathPoint
+        x={ptFEnd.x}
+        y={ptFEnd.y}
+        r={2.8}
+        color={MATH_COLORS.function}
+        fontScale={fontScale}
+      />
       {/* f(x) 曲线标签 */}
       <text
         x={mathToDesign(0.6, evalFDouble(0.6), scale).x - 6}
@@ -403,17 +419,19 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         strokeWidth={2.8}
       />
       {/* g(x) 闭区间实心端点 */}
-      <circle
-        cx={ptGStart.x}
-        cy={ptGStart.y}
+      <MathPoint
+        x={ptGStart.x}
+        y={ptGStart.y}
         r={2.8}
-        fill={MATH_COLORS.functionSecondary}
+        color={MATH_COLORS.functionSecondary}
+        fontScale={fontScale}
       />
-      <circle
-        cx={ptGEnd.x}
-        cy={ptGEnd.y}
+      <MathPoint
+        x={ptGEnd.x}
+        y={ptGEnd.y}
         r={2.8}
-        fill={MATH_COLORS.functionSecondary}
+        color={MATH_COLORS.functionSecondary}
+        fontScale={fontScale}
       />
       {/* g(x) 曲线标签 */}
       <text
@@ -477,17 +495,19 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
           />
 
           {/* Y 轴上的决策投影点标 */}
-          <circle
-            cx={ptYAxisF.x - 6}
-            cy={ptYAxisF.y}
+          <MathPoint
+            x={ptYAxisF.x - 6}
+            y={ptYAxisF.y}
             r={3.2}
-            fill={MATH_COLORS.function}
+            color={MATH_COLORS.function}
+            fontScale={fontScale}
           />
-          <circle
-            cx={ptYAxisG.x + 6}
-            cy={ptYAxisG.y}
+          <MathPoint
+            x={ptYAxisG.x + 6}
+            y={ptYAxisG.y}
             r={3.2}
-            fill={MATH_COLORS.functionSecondary}
+            color={MATH_COLORS.functionSecondary}
+            fontScale={fontScale}
           />
 
           {/* Y 轴决策高度文本标注（规范高中闭区间全局最值单行排版，平齐稳固） */}
@@ -536,28 +556,28 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
                 改画空心重合环作为非零几何载体，避免"零长度线段"无信息 */}
             {Math.abs(ptYAxisF.y - ptYAxisG.y) < 2 ? (
               <>
-                <circle
-                  cx={ptYAxisF.x - 26}
-                  cy={ptYAxisF.y}
+                <MathPoint
+                  x={ptYAxisF.x - 26}
+                  y={ptYAxisF.y}
+                  variant="hollow"
                   r={6}
-                  fill="none"
-                  stroke={
+                  color={
                     isSatisfied
                       ? MATH_COLORS.inequality
                       : MATH_COLORS.degeneracy
                   }
-                  strokeWidth={2}
-                  strokeDasharray="3 2"
+                  fontScale={fontScale}
                 />
-                <circle
-                  cx={ptYAxisF.x - 26}
-                  cy={ptYAxisF.y}
+                <MathPoint
+                  x={ptYAxisF.x - 26}
+                  y={ptYAxisF.y}
                   r={2.2}
-                  fill={
+                  color={
                     isSatisfied
                       ? MATH_COLORS.inequality
                       : MATH_COLORS.degeneracy
                   }
+                  fontScale={fontScale}
                 />
               </>
             ) : (
@@ -665,28 +685,28 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
               h(xmin)≈0 临界时线段长度退化为 0，改画重合空心环打点 */}
           {Math.abs(ptDecisionF.y - ptDecisionG.y) < 2 ? (
             <>
-              <circle
-                cx={ptDecisionF.x}
-                cy={ptDecisionF.y}
+              <MathPoint
+                x={ptDecisionF.x}
+                y={ptDecisionF.y}
+                variant="hollow"
                 r={7}
-                fill="none"
-                stroke={
+                color={
                   res.isSameVarTrue
                     ? MATH_COLORS.inequality
                     : MATH_COLORS.degeneracy
                 }
-                strokeWidth={2}
-                strokeDasharray="3 2"
+                fontScale={fontScale}
               />
-              <circle
-                cx={ptDecisionF.x}
-                cy={ptDecisionF.y}
+              <MathPoint
+                x={ptDecisionF.x}
+                y={ptDecisionF.y}
                 r={2.6}
-                fill={
+                color={
                   res.isSameVarTrue
                     ? MATH_COLORS.inequality
                     : MATH_COLORS.degeneracy
                 }
+                fontScale={fontScale}
               />
             </>
           ) : (
@@ -704,17 +724,19 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
                 strokeWidth={2.5}
               />
               {/* 上下端点 */}
-              <circle
-                cx={ptDecisionF.x}
-                cy={ptDecisionF.y}
+              <MathPoint
+                x={ptDecisionF.x}
+                y={ptDecisionF.y}
                 r={3.2}
-                fill={MATH_COLORS.function}
+                color={MATH_COLORS.function}
+                fontScale={fontScale}
               />
-              <circle
-                cx={ptDecisionG.x}
-                cy={ptDecisionG.y}
+              <MathPoint
+                x={ptDecisionG.x}
+                y={ptDecisionG.y}
                 r={3.2}
-                fill={MATH_COLORS.functionSecondary}
+                color={MATH_COLORS.functionSecondary}
+                fontScale={fontScale}
               />
             </>
           )}
@@ -785,27 +807,25 @@ export const DoubleVarScene: React.FC<DoubleVarSceneProps> = ({
         </g>
       )}
 
-      {/* 8. 当极值在区间端点取得（而非顶点）时，在端点处高亮虚线光环指示决策位置 */}
+      {/* 8. 当极值在区间端点取得（而非顶点）时，在端点处高亮空心环指示决策位置 */}
       {Math.abs(res.battlePointF.x - xf) > 0.05 && (
-        <circle
-          cx={ptDecisionF.x}
-          cy={ptDecisionF.y}
+        <MathPoint
+          x={ptDecisionF.x}
+          y={ptDecisionF.y}
+          variant="hollow"
           r={5.5}
-          fill="none"
-          stroke={MATH_COLORS.function}
-          strokeWidth={1.8}
-          strokeDasharray="2 2"
+          color={MATH_COLORS.function}
+          fontScale={fontScale}
         />
       )}
       {Math.abs(res.battlePointG.x - xg) > 0.05 && (
-        <circle
-          cx={ptDecisionG.x}
-          cy={ptDecisionG.y}
+        <MathPoint
+          x={ptDecisionG.x}
+          y={ptDecisionG.y}
+          variant="hollow"
           r={5.5}
-          fill="none"
-          stroke={MATH_COLORS.functionSecondary}
-          strokeWidth={1.8}
-          strokeDasharray="2 2"
+          color={MATH_COLORS.functionSecondary}
+          fontScale={fontScale}
         />
       )}
 

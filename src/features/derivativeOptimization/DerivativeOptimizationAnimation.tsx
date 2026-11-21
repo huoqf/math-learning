@@ -7,13 +7,15 @@ import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   TabSwitcher,
   ParamControl,
+  ParamPlayBar,
   TipCard,
   LeftPanel,
+  LeftPanelSection,
   MathPanel,
 } from "@/components/UI";
 import { SceneLegend } from "@/components/Math";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
-import { CANVAS_PRESETS } from "@/theme";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
+import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { getOptimizationLegendItems } from "./scenePalette";
 import {
   OPTIMIZATION_CONSTANTS,
@@ -69,32 +71,66 @@ export const DerivativeOptimizationAnimation: React.FC = () => {
     keepAspectRatio: false,
   });
 
-  const handleParamChange = useCallback((key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleTabChange = useCallback((key: string) => {
-    setModelType(key as OptimizationModelType);
-  }, []);
-
   const currentXKey =
     modelType === "box" ? "box_x" : modelType === "can" ? "can_r" : "profit_x";
   const currentMeta = optimizationParamMeta[currentXKey];
+  const currentXVal = params[currentXKey] ?? currentMeta.default;
 
-  const paramConfigs = useMemo(
-    () => [
+  const playCtrl = useParamPlay({
+    min: currentMeta.min,
+    max: currentMeta.max,
+    step: currentMeta.step,
+    mode: "bounce",
+    getValue: () => currentXVal,
+    onChange: (nextVal) =>
+      setParams((prev) => ({ ...prev, [currentXKey]: nextVal })),
+  });
+
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      playCtrl.pause();
+      setParams((prev) => ({ ...prev, [key]: value }));
+    },
+    [playCtrl],
+  );
+
+  const handleTabChange = useCallback(
+    (key: string) => {
+      playCtrl.pause();
+      setModelType(key as OptimizationModelType);
+    },
+    [playCtrl],
+  );
+
+  const handleReset = useCallback(() => {
+    playCtrl.pause();
+    setParams((prev) => ({
+      ...prev,
+      [currentXKey]: defaultOptimizationParams[currentXKey],
+    }));
+  }, [playCtrl, currentXKey]);
+
+  const paramConfigs = useMemo(() => {
+    const varSym = modelType === "can" ? "r" : "x";
+    const varName =
+      modelType === "box"
+        ? "剪切边长"
+        : modelType === "can"
+          ? "底面半径"
+          : "批次产量";
+    return [
       {
         key: currentXKey,
         label: currentMeta.label,
-        value: params[currentXKey] ?? currentMeta.default,
+        labelFormula: `\\text{${varName} } \\color{${MATH_COLORS.paramPrimary}}{${varSym}}`,
+        value: currentXVal,
         min: currentMeta.min,
         max: currentMeta.max,
         step: currentMeta.step,
         color: currentMeta.color,
       },
-    ],
-    [currentXKey, currentMeta, params],
-  );
+    ];
+  }, [modelType, currentXKey, currentMeta, currentXVal]);
 
   const panelData = useMemo(() => {
     return buildMathQuantities("anim-derivative-optimization", params, {
@@ -134,21 +170,38 @@ export const DerivativeOptimizationAnimation: React.FC = () => {
 
   const leftPanelContent = (
     <LeftPanel>
-      <TabSwitcher
-        tabs={MODEL_TABS}
-        value={modelType}
-        onChange={handleTabChange}
-      />
+      <LeftPanelSection title="实际优化模型">
+        <TabSwitcher
+          tabs={MODEL_TABS}
+          value={modelType}
+          onChange={handleTabChange}
+        />
+      </LeftPanelSection>
 
-      <div className="space-y-4 pt-2">
-        <ParamControl params={paramConfigs} onParamChange={handleParamChange} />
+      <LeftPanelSection title="参数调节">
+        <ParamControl
+          params={paramConfigs}
+          onParamChange={handleParamChange}
+          onReset={handleReset}
+        />
+        <div className="pt-2">
+          <ParamPlayBar
+            isPlaying={playCtrl.isPlaying}
+            onToggle={playCtrl.toggle}
+            label="极值演变扫掠演示"
+            speed={playCtrl.speed}
+            onSpeedChange={playCtrl.setSpeed}
+          />
+        </div>
+      </LeftPanelSection>
 
+      <LeftPanelSection title="教学导引与题设背景" compact>
         <TipCard
           background={tipCardContent.background}
           condition={tipCardContent.condition}
           question={tipCardContent.question}
         />
-      </div>
+      </LeftPanelSection>
     </LeftPanel>
   );
 

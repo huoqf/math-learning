@@ -8,6 +8,7 @@ import {
   TRANS_MODEL_SPEC,
   type TransModelKey,
 } from "@/math/constant";
+import { getConstantSingleAnswerSteps } from "../registries/constant";
 import { MATH_COLORS } from "@/theme";
 
 export function buildConstantSinglePanel(
@@ -70,6 +71,12 @@ function buildSepBranch(
       symbol: "x_{max}",
       value: res.xFMax,
       color: MATH_COLORS.derivative,
+    },
+    {
+      label: "参照水平线高度",
+      symbol: "a",
+      value: Number(a.toFixed(2)),
+      color: MATH_COLORS.paramPrimary,
     },
     {
       label:
@@ -183,12 +190,13 @@ function buildSepBranch(
   }
 
   // 高考解答题破题推导链（代数三部曲：审题定法 -> 建模联立 -> 求解反思）
+  const sepChain = getConstantSingleAnswerSteps("sep", logic);
+  const stepTitle = (s: number) =>
+    sepChain.find((item) => item.step === s)?.title ?? "";
   const reasoningSteps: ReasoningStep[] = [
     {
       step: 1,
-      title: isAlways
-        ? "第一步：审题定法 · 恒成立命题等价转化"
-        : "第一步：审题定法 · 存在性命题等价转化",
+      title: stepTitle(1),
       latex: isAlways
         ? `\\forall x \\in [${col(m.toFixed(2), MATH_COLORS.paramSecondary)}, ${col(n.toFixed(2), MATH_COLORS.paramTertiary)}], \\, f(x) \\ge ${col("a", MATH_COLORS.paramPrimary)} \\iff ${col("a", MATH_COLORS.paramPrimary)} \\le f(x)_{\\min}`
         : `\\exists x \\in [${col(m.toFixed(2), MATH_COLORS.paramSecondary)}, ${col(n.toFixed(2), MATH_COLORS.paramTertiary)}], \\, f(x) \\ge ${col("a", MATH_COLORS.paramPrimary)} \\iff ${col("a", MATH_COLORS.paramPrimary)} \\le f(x)_{\\max}`,
@@ -201,7 +209,7 @@ function buildSepBranch(
     },
     {
       step: 2,
-      title: "第二步：建模联立 · 求导单调性与极值分析",
+      title: stepTitle(2),
       latex: isTranscendent
         ? `${spec.sepDerivLatex}, \\quad \\text{导数为零的点 } ${spec.sepCriticalLatex}`
         : `f'(x) = 2x - 2, \\quad f'(x) = 0 \\iff x = 1`,
@@ -214,7 +222,7 @@ function buildSepBranch(
     },
     {
       step: 3,
-      title: "第三步：求解反思 · 代数求界与充要判定",
+      title: stepTitle(3),
       latex: step3Latex,
       detail: step3Detail,
       rubric: "【高考采分点】代入数值并给出参数 a 的充要范围与反思判定 (4分)",
@@ -511,10 +519,13 @@ function buildDirectBranch(
         : `当前参数处于【第三类：导数为零的点位于区间右侧 ($${critTex} > n$)】：函数在 $[${m.toFixed(2)}, ${n.toFixed(2)}]$ 上严格单调，最小值在右端点取得，即 $f_{\\min} = f(n)$。`;
 
   // 高考破题推导链：分类讨论三部曲
+  const directChain = getConstantSingleAnswerSteps("direct");
+  const stepTitle = (s: number) =>
+    directChain.find((item) => item.step === s)?.title ?? "";
   const reasoningSteps: ReasoningStep[] = [
     {
       step: 1,
-      title: "第一步：审题定法 · 求导与含参导数为零点的确定",
+      title: stepTitle(1),
       latex: isTranscendent
         ? `${spec.directDerivLatex(aCol)}, \\quad f'(x) = 0 \\iff x = ${spec.directCriticalLatex(aCol)} \\quad (a > 0)`
         : `f'(x) = 2x - 2${col("a", MATH_COLORS.paramPrimary)}, \\quad f'(x) = 0 \\iff x = ${col("a", MATH_COLORS.paramPrimary)}`,
@@ -525,7 +536,7 @@ function buildDirectBranch(
     },
     {
       step: 2,
-      title: "第二步：建模联立 · 轴动区间定三类分类推演",
+      title: stepTitle(2),
       latex: !isTranscendent
         ? `f(x)_{\\min} = \\begin{cases} f(m) = m^2 - 2am + 2, & a < m \\\\[2pt] f(a) = 2 - a^2, & m \\le a \\le n \\\\[2pt] f(n) = n^2 - 2an + 2, & a > n \\end{cases}`
         : `f(x)_{\\min} = \\begin{cases} f(m), & ${critTex} < m \\\\[2pt] ${spec.directInsideMinLatex(aCol)}, & m \\le ${critTex} \\le n \\\\[2pt] f(n), & ${critTex} > n \\end{cases}`,
@@ -534,7 +545,7 @@ function buildDirectBranch(
     },
     {
       step: 3,
-      title: "第三步：求解反思 · 代入分支求解与充要判定",
+      title: stepTitle(3),
       latex: directStep3Latex,
       detail: directStep3Detail,
       rubric: "【高考采分点】代入数值并给出对应分支不等式与综合解集 (4分)",

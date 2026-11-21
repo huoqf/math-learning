@@ -141,6 +141,38 @@ export const transcendentalParamMeta: Record<
       ],
     },
   },
+  isomorphism: {
+    x0: {
+      key: "x0",
+      label: "同构自变量 x",
+      labelFormula: `\\text{同构变量 } \\color{${MATH_COLORS.paramPrimary}}{x}`,
+      group: "指对同构控制",
+      min: 0.2,
+      max: 1.4,
+      step: 0.05,
+      defaultValue: 1.0,
+      importance: "core",
+      description: "控制指对同构表达式自变量 $x > 0$",
+      descriptionFormula:
+        "控制指对同构表达式自变量 $\\color{" +
+        MATH_COLORS.paramPrimary +
+        "}{x} > 0$",
+      marks: [
+        {
+          value: 0.5,
+          variant: "critical",
+          label: "加法同构界",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x=0.5}`,
+        },
+        {
+          value: 1.0,
+          variant: "critical",
+          label: "乘积同构界",
+          labelFormula: `\\color{${MATH_COLORS.paramPrimary}}{x=1}`,
+        },
+      ],
+    },
+  },
 };
 
 import type { ScenarioSpec } from "@/types/scenario";
@@ -325,6 +357,40 @@ export const transcendentalScenarios: Record<
         "证明不等式 $e^x \\ge 1$ 在实数集上的解集范围，并探究其与指数函数单调性的内在联系。",
       presetParams: { a: 0.0 },
       variant: "primary",
+    },
+  ],
+  isomorphism: [
+    {
+      id: "free",
+      name: "自由探究",
+      badge: "指对同构 · 母函数单调归约",
+      condition:
+        "面对指数与对数混合的超越不等式，通过构造共同单调母函数 $g(t) = e^t + t$ 实现变量降维统一。",
+      question:
+        "调节自变量 $x$，观察复杂混合式如何被等价化归到母函数 $g(t) = e^t + t$ 的两值比较上。",
+      variant: "primary",
+    },
+    {
+      id: "sum_iso",
+      name: "加法同构",
+      badge: "指对同构 · 加法母函数型",
+      condition:
+        "不等式 $e^x + x \\ge a + \\ln a$（取基准 $a = e^{0.5}$），右端可等价改写为 $e^{\\ln a} + \\ln a$。",
+      question:
+        "证明两端均满足同一母函数 $g(t) = e^t + t$ 的结构特征，并利用 $g(t)$ 的严格单调性求解 $x$ 的取值范围。",
+      presetParams: { x0: 0.8 },
+      variant: "primary",
+    },
+    {
+      id: "prod_iso",
+      name: "乘积同构",
+      badge: "指对同构 · 幂指转化型",
+      condition:
+        "高考压轴不等式 $x e^x + x + \\ln x \\ge e + 1$（$x > 0$），通过恒等变形 $x = e^{\\ln x}$ 把乘积合并为 $e^{x + \\ln x}$。",
+      question:
+        "设代换元 $u = x + \\ln x$，说明原不等式如何等价转化为 $g(u) \\ge g(1)$ 并求解 $x$ 的范围。",
+      presetParams: { x0: 1.0 },
+      variant: "warning",
     },
   ],
 };

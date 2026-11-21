@@ -1,6 +1,7 @@
 import type { MathPanelData, ReasoningStep } from "../types";
 import {
   solveDerivative,
+  solveExternalTangents,
   PRESET_FUNCTIONS,
   buildPointSlopeLatex,
   buildSlopeInterceptLatex,
@@ -14,10 +15,138 @@ export function buildDerivativePanel(
 ): MathPanelData {
   const x0 = params.x0 ?? 1;
   const dx = params.dx ?? 1;
+  const xA = params.xA ?? 1;
+  const yA = params.yA ?? -3;
   const fnKey = ((config?.fnKey as string) || "cubic") as PresetFunctionKey;
   const mode = (config?.mode as string) || "secant_limit";
   const preset = PRESET_FUNCTIONS[fnKey] || PRESET_FUNCTIONS.cubic;
   const res = solveDerivative(preset.fn, x0);
+
+  // ── 分支：过外部定点 A(xA, yA) 作切线 ──
+  if (mode === "external_tangent") {
+    const extTangents = solveExternalTangents(
+      preset.fn,
+      xA,
+      yA,
+      preset.x0Range[0],
+      preset.x0Range[1],
+    );
+    const fyA = preset.fn(xA);
+    const isOnCurve = Number.isFinite(fyA) && Math.abs(fyA - yA) < 0.08;
+
+    const extQuantities: MathPanelData["quantities"] = [
+      {
+        label: "给定定点 A 坐标",
+        symbol: "A(x_A, y_A)",
+        value: `(${xA.toFixed(2)}, ${yA.toFixed(2)})`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "过点可作切线条数",
+        symbol: "N",
+        value: `${extTangents.length} 条`,
+        color:
+          extTangents.length > 0
+            ? MATH_COLORS.paramTertiary
+            : MATH_COLORS.highlight,
+        highlight: extTangents.length > 0 ? "positive" : "extreme",
+      },
+      ...extTangents.slice(0, 3).map((item, idx) => ({
+        label: `第 ${idx + 1} 条切线切点`,
+        symbol: `T_${idx + 1}(t_${idx + 1}, f(t_${idx + 1}))`,
+        value: `t_${idx + 1} = ${item.t.toFixed(2)},\\; k = ${item.slope.toFixed(2)}`,
+        color: MATH_COLORS.tangentLine,
+      })),
+    ];
+
+    const extTheorems: MathPanelData["theorems"] = [
+      {
+        name: "“过点”求切线通用设点方程",
+        latex: "y_A - f(t) = f'(t)(x_A - t)",
+        level: "core",
+        prerequisites: [
+          "给定点 $A(x_A, y_A)$ 未必是切点，先设未知切点 $T(t, f(t))$",
+          "方程关于 $t$ 的不同实根个数等于过点 $A$ 可作的切线条数",
+        ],
+      },
+      {
+        name: "“在点”与“过点”的充要辨析",
+        latex:
+          "\\text{在点 } P \\iff t = x_P; \\quad \\text{过点 } A \\iff A \\text{ 在切线上（即使 } A \\text{ 在曲线上也可能另有切线）}",
+        level: "important",
+        prerequisites: [
+          "例如过三次曲线某点作切线，最多可得到 2 条或 3 条不同切线",
+        ],
+      },
+    ];
+
+    const extGaokao: MathPanelData["gaokaoPoints"] = [
+      {
+        text: "【新高考易错陷阱·“在点”vs“过点”】见到“过点 $A$ 的切线”，哪怕点 $A$ 恰好满足 $y_A = f(x_A)$，也不可直接取 $f'(x_A)$ 算一条完事，必须先设切点 $T(t, f(t))$ 列方程解出全部实根 $t$。",
+        importance: "gaokao",
+      },
+      {
+        text: "【切线条数与方程根转化】高考压轴小题常考查“过点 $A(x_A, y_A)$ 可作 3 条（或 0 条）切线”，等价于方程 $f(t) + f'(t)(x_A - t) = y_A$ 的实根个数问题。",
+        importance: "gaokao",
+      },
+    ];
+
+    const rootsLatex =
+      extTangents.length > 0
+        ? extTangents
+            .map((item, idx) => `t_${idx + 1} \\approx ${item.t.toFixed(2)}`)
+            .join(",\\quad ")
+        : "\\text{无实数切点解}";
+
+    const extSteps: ReasoningStep[] = [
+      {
+        step: 1,
+        title: "审题定法 · 设切点区分“过点”与“在点”",
+        detail: `所求切线“过点 $A(${xA.toFixed(2)}, ${yA.toFixed(2)})$”，切点未知，先设切点为 $T(t, f(t))$，核验函数在 $T$ 处导数为 $f'(t)$。`,
+        latex: `T(t, f(t)), \\quad k_{\\text{切}} = f'(t)`,
+        rubric: "【高考采分点】正确设出切点坐标 $T(t, f(t))$ 得 2 分",
+      },
+      {
+        step: 2,
+        title: "建模联立 · 列过点 A 的斜率方程",
+        detail: `写出过 $T(t, f(t))$ 的切线方程 $y - f(t) = f'(t)(x - t)$，将已知点 $A(${xA.toFixed(2)}, ${yA.toFixed(2)})$ 代入构造关于 $t$ 的方程：`,
+        latex: `${yA.toFixed(2)} - f(t) = f'(t)(${xA.toFixed(2)} - t)`,
+        rubric: "【高考采分点】代入定点构造关于 $t$ 的方程得 2 分",
+      },
+      {
+        step: 3,
+        title: "求解反思 · 解出全部实根并写切线",
+        detail:
+          extTangents.length > 0
+            ? `在区间 $[${preset.x0Range[0]}, ${preset.x0Range[1]}]$ 内解得共 ${extTangents.length} 个实根：$${rootsLatex}$，分别回代点斜式即得全部切线方程。`
+            : `当前方程无实数解，说明定点 $A$ 位于曲线开口内侧，过 $A$ 点共可作 $0$ 条切线。`,
+        latex: rootsLatex,
+        rubric: "【高考采分点】不漏根、无增根写出全部切线方程得 2 分",
+      },
+    ];
+
+    const extWarnings: MathPanelData["warnings"] = [];
+    if (extTangents.length === 0) {
+      extWarnings.push({
+        text: `过当前点 $A(${xA.toFixed(2)}, ${yA.toFixed(2)})$ 方程无实根，无法作出该曲线的切线（0 条）。`,
+        level: "warning",
+      });
+    } else if (isOnCurve) {
+      extWarnings.push({
+        text: `点 $A$ 恰在曲线上（同时可能还存在其它切点），目前共求得 ${extTangents.length} 条切线，请勿误判为只有 1 条！`,
+        level: "info",
+      });
+    }
+
+    return {
+      quantities: extQuantities,
+      theorems: extTheorems,
+      gaokaoPoints: extGaokao,
+      warnings: extWarnings,
+      reasoningSteps: extSteps,
+      mnemonic: "在点直接代，过点设参数；方程几个根，切线有几条。",
+    };
+  }
 
   const x2 = x0 + dx;
   let fy2 = NaN;

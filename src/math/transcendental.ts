@@ -3,10 +3,49 @@
  * 纯函数实现，零 DOM / React / Store 依赖
  */
 
-export type TranscendentalMode = "exp" | "log" | "chain" | "param";
+export type TranscendentalMode =
+  "exp" | "log" | "chain" | "param" | "isomorphism";
 export type ExpSubMode = "tangent_0" | "tangent_1" | "shift_1";
 export type LogSubMode = "tangent_1" | "tangent_e" | "quadratic_bound";
 export type ParamSubMode = "exp_ax_1" | "exp_ax";
+export type IsomorphismSubMode = "sum_iso" | "prod_iso";
+
+export interface IsomorphismResult {
+  subMode: IsomorphismSubMode;
+  x0: number;
+  u: number;
+  refT: number;
+  gU: number;
+  gRef: number;
+  satisfied: boolean;
+}
+
+/**
+ * 求解指对同构母函数 g(t) = e^t + t 下的同构映射结果
+ * - sum_iso:  e^x + x >= a + ln a = e^(ln a) + ln a (基准 a = e^0.5 -> refT = 0.5)
+ * - prod_iso: x e^x + x + ln x = e^(x + ln x) + (x + ln x) >= e + 1 (refT = 1.0)
+ */
+export function solveIsomorphism(
+  x0: number,
+  subMode: IsomorphismSubMode = "sum_iso",
+): IsomorphismResult {
+  const safeX = Number.isFinite(x0) && x0 > 0 ? x0 : 1.0;
+  const g = (t: number) => Math.exp(t) + t;
+  const isProd = subMode === "prod_iso";
+  const u = isProd ? safeX + Math.log(safeX) : safeX;
+  const refT = isProd ? 1.0 : 0.5;
+  const gU = g(u);
+  const gRef = g(refT);
+  return {
+    subMode,
+    x0: safeX,
+    u,
+    refT,
+    gU,
+    gRef,
+    satisfied: gU >= gRef - 1e-9,
+  };
+}
 
 export interface TangentLineResult {
   x0: number;

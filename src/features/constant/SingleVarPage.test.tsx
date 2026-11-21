@@ -48,9 +48,15 @@ describe("SingleVarPage left panel and reasoning tests", () => {
     // 中屏与右屏
     expect(screen.getByTestId("scene-legend")).toBeInTheDocument();
     expect(screen.getByText("单变量恒成立与存在性看板")).toBeInTheDocument();
-    expect(screen.getByText(/第一步：审题定法/)).toBeInTheDocument();
-    expect(screen.getByText(/第二步：建模联立/)).toBeInTheDocument();
-    expect(screen.getByText(/第三步：求解反思/)).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/第一步：审题定法/).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText(/第二步：建模联立/).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText(/第三步：求解反思/).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("adapts preset grid dynamically when switching between 参变分离法 and 直接分类讨论", () => {
@@ -99,12 +105,13 @@ describe("SingleVarPage left panel and reasoning tests", () => {
   it("disables tangent scaling toggle when current model does not support it", () => {
     render(<SingleVarPage />);
     // 默认对数分式模型，不支持切线放缩
-    const tangentBtn = screen.getByText("+ 切线放缩");
-    expect(tangentBtn).toBeDisabled();
+    const switches = screen.getAllByRole("switch");
+    const tangentSwitch = switches[1];
+    expect(tangentSwitch).toBeDisabled();
 
     // 切换到支持切线放缩的对数线性放缩模型
     const scalingModelBtn = screen.getByText("对数线性放缩");
     fireEvent.click(scalingModelBtn);
-    expect(screen.getByText("+ 切线放缩")).not.toBeDisabled();
+    expect(screen.getAllByRole("switch")[1]).not.toBeDisabled();
   });
 });

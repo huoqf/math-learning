@@ -7,12 +7,14 @@ import { ThreePanel, AnimationSvgCanvas } from "@/components/Layout";
 import {
   TabSwitcher,
   ParamControl,
+  ParamPlayBar,
   TipCard,
   LeftPanel,
+  LeftPanelSection,
   MathPanel,
 } from "@/components/UI";
 import { SceneLegend } from "@/components/Math";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { getChainLegendItems } from "./scenePalette";
 import type { OuterFunctionType } from "@/math/derivativeChain";
@@ -47,22 +49,55 @@ export const DerivativeChainAnimation: React.FC = () => {
     yRange: [-3.5, 3.5],
   });
 
-  const handleParamChange = useCallback((key: string, value: number) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const x0Val = params.x0 ?? 0.5;
+  const playCtrl = useParamPlay({
+    min: -2.0,
+    max: 2.0,
+    step: DERIVATIVE_CHAIN_PARAM_META.x0.step,
+    mode: "bounce",
+    getValue: () => x0Val,
+    onChange: (nextVal) => setParams((prev) => ({ ...prev, x0: nextVal })),
+  });
 
-  const handleTabChange = useCallback((key: string) => {
-    setOuterType(key as OuterFunctionType);
-    if (key === "ln") {
-      setParams((prev) => ({ ...prev, a: 1, b: 2, x0: 0 }));
-    }
-  }, []);
+  const handleParamChange = useCallback(
+    (key: string, value: number) => {
+      playCtrl.pause();
+      setParams((prev) => ({ ...prev, [key]: value }));
+    },
+    [playCtrl],
+  );
+
+  const resetForOuterType = useCallback(
+    (type: OuterFunctionType) => {
+      playCtrl.pause();
+      if (type === "ln") {
+        setParams({ a: 1, b: 2, x0: 0 });
+      } else {
+        setParams({ ...DERIVATIVE_CHAIN_DEFAULT_PARAMS });
+      }
+    },
+    [playCtrl],
+  );
+
+  const handleTabChange = useCallback(
+    (key: string) => {
+      const next = key as OuterFunctionType;
+      setOuterType(next);
+      resetForOuterType(next);
+    },
+    [resetForOuterType],
+  );
+
+  const handleReset = useCallback(() => {
+    resetForOuterType(outerType);
+  }, [outerType, resetForOuterType]);
 
   const paramConfigs = useMemo(
     () => [
       {
         key: "a",
         label: "内层系数 a",
+        labelFormula: `\\text{内层系数 } \\color{${MATH_COLORS.paramPrimary}}{a}`,
         value: params.a ?? 2,
         min: DERIVATIVE_CHAIN_PARAM_META.a.min,
         max: DERIVATIVE_CHAIN_PARAM_META.a.max,
@@ -72,6 +107,7 @@ export const DerivativeChainAnimation: React.FC = () => {
       {
         key: "b",
         label: "内层常数 b",
+        labelFormula: `\\text{内层常数 } \\color{${MATH_COLORS.paramSecondary}}{b}`,
         value: params.b ?? 1,
         min: DERIVATIVE_CHAIN_PARAM_META.b.min,
         max: DERIVATIVE_CHAIN_PARAM_META.b.max,
@@ -81,6 +117,7 @@ export const DerivativeChainAnimation: React.FC = () => {
       {
         key: "x0",
         label: "切点横坐标 x₀",
+        labelFormula: `\\text{切点 } \\color{${MATH_COLORS.paramTertiary}}{x_0}`,
         value: params.x0 ?? 0.5,
         min: DERIVATIVE_CHAIN_PARAM_META.x0.min,
         max: DERIVATIVE_CHAIN_PARAM_META.x0.max,
@@ -98,7 +135,7 @@ export const DerivativeChainAnimation: React.FC = () => {
   const tipCardContent = useMemo(() => {
     const aVal = params.a ?? 2;
     const bVal = params.b ?? 1;
-    const x0Val = params.x0 ?? 0.5;
+    const x0Cur = params.x0 ?? 0.5;
     // 内层线性式统一走 formatLinearExpr：避免 `2x + -3` / `1x + 2` / `0x + 1` 这类不规范书写
     const innerLinear = formatLinearExpr(aVal, bVal);
 
@@ -107,7 +144,7 @@ export const DerivativeChainAnimation: React.FC = () => {
         return {
           background:
             "课标核心模型：指数复合函数常见于放射性衰变、电容器充放电与高考切线大题。",
-          condition: `设外层函数 $f(u) = e^u$，内层线性函数 $u = ${innerLinear}$，复合函数 $y = e^{${innerLinear}}$。当前切点 $x_0 = ${x0Val}$。`,
+          condition: `设外层函数 $f(u) = e^u$，内层线性函数 $u = ${innerLinear}$，复合函数 $y = e^{${innerLinear}}$。当前切点 $x_0 = ${x0Cur}$。`,
           question:
             "求复合函数在探究点处的瞬时切线斜率与切线方程，反思为什么导数中必须乘以内层系数 $a$？",
         };
@@ -115,7 +152,7 @@ export const DerivativeChainAnimation: React.FC = () => {
         return {
           background:
             "简谐振动模型：周期震荡过程中的角频率 $\\omega = a$ 引起振动速度按比例缩放。",
-          condition: `设外层函数 $f(u) = \\sin u$，内层线性函数 $u = ${innerLinear}$，复合函数 $y = \\sin(${innerLinear})$。当前切点 $x_0 = ${x0Val}$。`,
+          condition: `设外层函数 $f(u) = \\sin u$，内层线性函数 $u = ${innerLinear}$，复合函数 $y = \\sin(${innerLinear})$。当前切点 $x_0 = ${x0Cur}$。`,
           question:
             "求三角复合函数的瞬时切线斜率，探究系数 $a$ 对函数单调区间与斜率极值的影响。",
         };
@@ -123,7 +160,7 @@ export const DerivativeChainAnimation: React.FC = () => {
         return {
           background:
             "对数衰减与增长模型：广泛应用于信息熵计算、化学酸碱度与声学分贝度量。",
-          condition: `设外层函数 $f(u) = \\ln u$，内层线性函数 $u = ${innerLinear}$（定义域 $u > 0$），复合函数 $y = \\ln(${innerLinear})$。当前切点 $x_0 = ${x0Val}$。`,
+          condition: `设外层函数 $f(u) = \\ln u$，内层线性函数 $u = ${innerLinear}$（定义域 $u > 0$），复合函数 $y = \\ln(${innerLinear})$。当前切点 $x_0 = ${x0Cur}$。`,
           question:
             "求对数复合函数的定义域与在探究点处的导数，验证其单调性与切线几何特征。",
         };
@@ -131,7 +168,7 @@ export const DerivativeChainAnimation: React.FC = () => {
         return {
           background:
             "多项式展开替代模型：通过复合求导避免展开三次多项式的繁琐代数运算。",
-          condition: `设外层函数 $f(u) = u^3$，内层线性函数 $u = ${innerLinear}$，复合函数 $y = (${innerLinear})^3$。当前切点 $x_0 = ${x0Val}$。`,
+          condition: `设外层函数 $f(u) = u^3$，内层线性函数 $u = ${innerLinear}$，复合函数 $y = (${innerLinear})^3$。当前切点 $x_0 = ${x0Cur}$。`,
           question:
             "求三次复合函数的导数解析式与在 $x_0$ 处的切线方程，对比直接展开后逐项求导的结果是否一致。",
         };
@@ -143,21 +180,38 @@ export const DerivativeChainAnimation: React.FC = () => {
 
   const leftPanelContent = (
     <LeftPanel>
-      <TabSwitcher
-        tabs={TAB_OPTIONS}
-        value={outerType}
-        onChange={handleTabChange}
-      />
+      <LeftPanelSection title="复合函数类型">
+        <TabSwitcher
+          tabs={TAB_OPTIONS}
+          value={outerType}
+          onChange={handleTabChange}
+        />
+      </LeftPanelSection>
 
-      <div className="space-y-4 pt-2">
-        <ParamControl params={paramConfigs} onParamChange={handleParamChange} />
+      <LeftPanelSection title="参数调节">
+        <ParamControl
+          params={paramConfigs}
+          onParamChange={handleParamChange}
+          onReset={handleReset}
+        />
+        <div className="pt-2">
+          <ParamPlayBar
+            isPlaying={playCtrl.isPlaying}
+            onToggle={playCtrl.toggle}
+            label="链式传导点扫掠演示"
+            speed={playCtrl.speed}
+            onSpeedChange={playCtrl.setSpeed}
+          />
+        </div>
+      </LeftPanelSection>
 
+      <LeftPanelSection title="教学导引与题设背景" compact>
         <TipCard
           background={tipCardContent.background}
           condition={tipCardContent.condition}
           question={tipCardContent.question}
         />
-      </div>
+      </LeftPanelSection>
     </LeftPanel>
   );
 

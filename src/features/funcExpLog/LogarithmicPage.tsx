@@ -9,11 +9,12 @@ import {
   TipCard,
   TabSwitcher,
   Toggle,
+  ParamPlayBar,
   renderMixedLatex,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { ExpLogScene } from "./components/ExpLogScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -107,7 +108,22 @@ export function LogarithmicPage() {
     ];
   }, [params]);
 
+  const playCtrl = useParamPlay({
+    min: 0.1,
+    max: 4.0,
+    ratePerSecond: 0.8,
+    step: 0.1,
+    mode: "bounce",
+    getValue: () => params.x0 ?? 1.5,
+    onChange: (val) =>
+      setParams((prev) => ({
+        ...prev,
+        x0: Number(Math.max(0.1, val).toFixed(2)),
+      })),
+  });
+
   const handleParamChange = (key: string, value: number) => {
+    playCtrl.pause();
     setParams((prev) => ({
       ...prev,
       [key]: key === "x0" ? Math.max(0.1, value) : value,
@@ -230,7 +246,10 @@ export function LogarithmicPage() {
                 { key: "inverse", label: "反函数对称" },
               ]}
               value={mode}
-              onChange={(val) => setMode(val as "single" | "inverse")}
+              onChange={(val) => {
+                playCtrl.pause();
+                setMode(val as "single" | "inverse");
+              }}
             />
             <div className="pt-2">
               {/* @syllabus-extension:begin 拓展图层开关（选必二前瞻），默认关闭 */}
@@ -247,14 +266,24 @@ export function LogarithmicPage() {
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() =>
+              onReset={() => {
+                playCtrl.pause();
                 setParams({
                   ...defaultParams,
                   x0: 1.5,
                   baseA: 2.0,
-                })
-              }
+                });
+              }}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label="探究真数 x₀ 连续扫描"
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
           </LeftPanelSection>
 
           {/* 教学导引与题设背景 */}

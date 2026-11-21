@@ -9,8 +9,10 @@ import {
   SelectGrid,
   TipCard,
   renderMixedLatex,
+  StepNavigator,
+  ParamPlayBar,
 } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math";
@@ -28,6 +30,7 @@ import {
   getTangentScalingParamConfigs,
   subModelDefaultPointMap,
   getPresetParams,
+  getTangentScalingAnswerSteps,
 } from "@/data/registries/tangentScaling";
 import type {
   TangentScalingMode,
@@ -51,6 +54,18 @@ export function TangentScalingAnimation() {
     useState<ParamKSubModel>("exp_log_k");
   const [secantSubModel, setSecantSubModel] =
     useState<SecantSubModel>("exp_secant_tangent");
+  const [answerStep, setAnswerStep] = useState<number>(0);
+
+  const answerSteps = useMemo(
+    () =>
+      getTangentScalingAnswerSteps(mode, {
+        baseSubModel,
+        sandwichSubModel,
+        paramKSubModel,
+        secantSubModel,
+      }),
+    [mode, baseSubModel, sandwichSubModel, paramKSubModel, secantSubModel],
+  );
 
   // 1. Viewport 与比例尺 (840x650 full preset)
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -179,6 +194,27 @@ export function TangentScalingAnimation() {
     paramKSubModel,
     secantSubModel,
   ]);
+
+  const primaryPlayCfg = paramConfigs[0];
+  const playKey = (primaryPlayCfg?.key ?? "x0") as keyof TangentScalingParams;
+  const playMin = primaryPlayCfg?.min ?? -2;
+  const playMaxRaw = primaryPlayCfg?.max ?? 2;
+  const playMax =
+    playKey === "intervalA"
+      ? Math.max(playMin + 0.2, Math.min(playMaxRaw, params.intervalB - 0.25))
+      : playMaxRaw;
+
+  const playCtrl = useParamPlay({
+    min: playMin,
+    max: playMax,
+    ratePerSecond: mode === "param_k" ? 0.65 : 0.85,
+    step: primaryPlayCfg?.step ?? 0.05,
+    mode: "bounce",
+    getValue: () => params[playKey] ?? playMin,
+    onChange: (val) => {
+      setParams((prev) => ({ ...prev, [playKey]: Number(val.toFixed(2)) }));
+    },
+  });
 
   // 5. 中屏右下角毛玻璃图例 (100% 动态特化)
   const legendItems = useMemo<SceneLegendItem[]>(() => {
@@ -512,7 +548,11 @@ export function TangentScalingAnimation() {
             <TabSwitcher
               tabs={modeTabs}
               value={mode}
-              onChange={(key) => handleModeChange(key as TangentScalingMode)}
+              onChange={(key) => {
+                playCtrl.pause();
+                setAnswerStep(0);
+                handleModeChange(key as TangentScalingMode);
+              }}
               layout="horizontal"
             />
           </LeftPanelSection>
@@ -523,7 +563,11 @@ export function TangentScalingAnimation() {
               <SelectGrid
                 items={baseSubModels}
                 value={baseSubModel}
-                onChange={(key) => handleBaseSubChange(key as BaseSubModel)}
+                onChange={(key) => {
+                  playCtrl.pause();
+                  setAnswerStep(0);
+                  handleBaseSubChange(key as BaseSubModel);
+                }}
                 columns={2}
               />
             )}
@@ -531,9 +575,11 @@ export function TangentScalingAnimation() {
               <SelectGrid
                 items={sandwichSubModels}
                 value={sandwichSubModel}
-                onChange={(key) =>
-                  handleSandwichSubChange(key as SandwichSubModel)
-                }
+                onChange={(key) => {
+                  playCtrl.pause();
+                  setAnswerStep(0);
+                  handleSandwichSubChange(key as SandwichSubModel);
+                }}
                 columns={1}
               />
             )}
@@ -541,7 +587,11 @@ export function TangentScalingAnimation() {
               <SelectGrid
                 items={paramKSubModels}
                 value={paramKSubModel}
-                onChange={(key) => handleParamKSubChange(key as ParamKSubModel)}
+                onChange={(key) => {
+                  playCtrl.pause();
+                  setAnswerStep(0);
+                  handleParamKSubChange(key as ParamKSubModel);
+                }}
                 columns={1}
               />
             )}
@@ -549,7 +599,11 @@ export function TangentScalingAnimation() {
               <SelectGrid
                 items={secantSubModels}
                 value={secantSubModel}
-                onChange={(key) => handleSecantSubChange(key as SecantSubModel)}
+                onChange={(key) => {
+                  playCtrl.pause();
+                  setAnswerStep(0);
+                  handleSecantSubChange(key as SecantSubModel);
+                }}
                 columns={1}
               />
             )}
@@ -559,8 +613,34 @@ export function TangentScalingAnimation() {
           <LeftPanelSection title="核心交互参数">
             <ParamControl
               params={paramConfigs}
-              onParamChange={handleParamChange}
-              onReset={handleReset}
+              onParamChange={(k, v) => {
+                playCtrl.pause();
+                handleParamChange(k, v);
+              }}
+              onReset={() => {
+                playCtrl.pause();
+                setAnswerStep(0);
+                handleReset();
+              }}
+            />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label={`${primaryPlayCfg?.label ?? "核心参数"}动态扫动`}
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
+          </LeftPanelSection>
+
+          {/* 标准解答分步联动 */}
+          <LeftPanelSection title="标准解答分步">
+            <StepNavigator
+              steps={answerSteps}
+              active={answerStep}
+              onChange={setAnswerStep}
+              hint="点击步号可联动高亮中屏几何区与右屏推演步"
             />
           </LeftPanelSection>
 
@@ -603,7 +683,11 @@ export function TangentScalingAnimation() {
               scale={scale}
               vp={vp}
               fontScale={canvasSize.font}
-              onParamChange={handleParamChange}
+              activeStep={answerStep}
+              onParamChange={(k, v) => {
+                playCtrl.pause();
+                handleParamChange(k, v);
+              }}
             />
           </AnimationSvgCanvas>
 
@@ -611,7 +695,13 @@ export function TangentScalingAnimation() {
           <SceneLegend items={legendItems} />
         </div>
       }
-      right={<MathPanel {...mathData} />}
+      right={
+        <MathPanel
+          {...mathData}
+          focusStep={answerStep}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

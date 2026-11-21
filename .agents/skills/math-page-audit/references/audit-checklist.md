@@ -17,7 +17,9 @@
 - [ ] **动线规范**：遵循 `模式维度(TabSwitcher) → 典型情景(SelectGrid) → 参数调节(ParamControl) → 教学导引(TipCard)`。
 - [ ] **课标参数合规性**：参数必须 100% 对应高中教材标准题设（如函数系数、解几斜率截距与离心率、立几已知点比例 $t$、概率样本量 $n$ 与事件概率），**严禁出现脱离教材的计算机/工程化建模（如球坐标切面、高维噪声参量）**。
 - [ ] **推演步骤因题制宜**：若含推演/作图控制器，步数与分支必须因题自适应（如立几截面 2/3/4 步、导数符号无根单调区间自适应、解几垂直轴特化），**严禁教条化一刀切硬编码固定步数**。
-- [ ] **分步作答三处同源联动**（已接入 `StepNavigator` 的大题页面）：`AnswerStepItem[]` 仅在注册表声明一份，左屏 `StepNavigator`、右屏 `MathPanel`（`focusStep` + `focusTarget` 仅命中单个区块）与中屏 `Scene`（`activeStep` + `regionOpacity` + `MATH_COLORS.answerStepFrame` 围栏）保持步号与标题严格一致。
+- [ ] **分步作答三处同源联动**（B 类大题与已接入 `StepNavigator` 的页面）：`AnswerStepItem[]` 仅在注册表声明一份，左屏 `StepNavigator`、右屏 `MathPanel`（`focusStep` + `focusTarget` 仅命中单个区块）与中屏 `Scene`（`activeStep` + `regionOpacity` + `MATH_COLORS.answerStepFrame` 围栏）保持步号与标题严格一致。
+- [ ] **可控动态演示与安全复位**：含演进过程的页面优先配置 `useParamPlay` + `ParamPlayBar`，并在手动调参/拖拽/切模式时自动 `pause()`；多模式页面 `onReset` 按当前激活模式复位到合法定义域默认值；全站统一亮色风格，严禁混入深色 Tailwind 类或原生 `<input type="checkbox">`。
+- [ ] **双视窗对齐与错因对比**：多曲线同屏易混淆场景（如原函数与导函数、理论分布与抽样频率）或高频易错构型，优先提供同轴双视窗对齐或错因对比图层。
 - [ ] **参数分组**：参数数量 $\ge 4$ 时，必须通过 `group` 显式分层（核心探究变量置顶，静态底模尺寸沉底）。
 - [ ] **参数映射**：`Animation.tsx` 的 `mapKeysToConfigs` 必须解构并透传 `group: meta.group`。
 - [ ] **标签三位一体**：滑块标签包含中文含义 + 课标代号 + 动态色彩（`\text{含义 } \color{Token}{代号}`），严禁孤立英文字母。

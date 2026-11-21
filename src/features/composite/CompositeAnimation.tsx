@@ -9,10 +9,11 @@ import {
   TabSwitcher,
   SelectGrid,
   TipCard,
+  ParamPlayBar,
 } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { CompositeScene } from "./components/CompositeScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -20,11 +21,13 @@ import { defaultParams, paramMeta } from "@/data/registries/composite";
 
 type SubMode = "piecewise" | "composite";
 type OuterType = "exp" | "log" | "quadratic";
+type PiecewiseScenarioKey = "custom" | "tiered_tariff";
 
 export function CompositeAnimation() {
   const [params, setParams] = useState(() => ({ ...defaultParams }));
   const [subMode, setSubMode] = useState<SubMode>("piecewise");
   const [outerType, setOuterType] = useState<OuterType>("exp");
+  const [pwScenario, setPwScenario] = useState<PiecewiseScenarioKey>("custom");
 
   // Step 1: 自适应视口
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -166,11 +169,46 @@ export function CompositeAnimation() {
       });
   }, [params, subMode]);
 
+  const playKey = subMode === "piecewise" ? "x0" : "xSample";
+  const playMeta = paramMeta[playKey];
+  const playCtrl = useParamPlay({
+    min: playMeta?.min ?? -2.5,
+    max: playMeta?.max ?? 3.5,
+    ratePerSecond: subMode === "piecewise" ? 0.7 : 1.0,
+    step: playMeta?.step ?? 0.1,
+    mode: "bounce",
+    getValue: () => params[playKey] ?? playMeta?.defaultValue ?? 1.0,
+    onChange: (val) => {
+      if (subMode === "piecewise") setPwScenario("custom");
+      setParams((prev) => ({ ...prev, [playKey]: Number(val.toFixed(2)) }));
+    },
+  });
+
   const handleParamChange = (key: string, value: number) => {
+    playCtrl.pause();
+    if (subMode === "piecewise") {
+      setPwScenario("custom");
+    }
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 动态教学提示配置（严格遵循 SKILL 双要素架构：基础条件 + 启发式探究设问）
+  const handlePiecewiseScenarioChange = (key: string) => {
+    playCtrl.pause();
+    const sc = key as PiecewiseScenarioKey;
+    setPwScenario(sc);
+    if (sc === "tiered_tariff") {
+      setParams((prev) => ({
+        ...prev,
+        x0: 2.0,
+        leftSlope: 0.5,
+        leftConst: 0.0,
+        rightSlope: 1.5,
+        rightConst: -2.0,
+      }));
+    }
+  };
+
+  // 动态教学提示配置（严格遵循 SKILL 结构化三要素：badge + condition + question + $...$ 定界符）
   const tipConfig = useMemo(() => {
     if (subMode === "piecewise") {
       const x0 = params.x0 ?? 1.0;
@@ -181,46 +219,25 @@ export function CompositeAnimation() {
       const isContinuous = Math.abs(yLeft - yRight) < 1e-4;
       const isGlobalInc = k1 >= 0 && k2 >= 0 && yLeft <= yRight;
 
+      if (pwScenario === "tiered_tariff") {
+        return {
+          variant: "success" as const,
+          badge: "生活应用建模 · 阶梯水电费分段计费",
+          condition: `某户居民阶梯计费以 $x_0 = ${x0.toFixed(1)}$ 为分界阈值：第一档单价 $${k1.toFixed(1)}$，第二档单价 $${k2.toFixed(1)}$，分界点处左右费用同为 $${yLeft.toFixed(2)}$。`,
+          question:
+            "求解当月费用关于用水量的连续单调分段解析式，并验证为何阶梯费率上升时仍须满足分界点搭接连续条件。",
+        };
+      }
+
       return {
         variant: isGlobalInc ? ("success" as const) : ("danger" as const),
         badge: "高考高频 · 分段函数单调性充要条件",
-        conditionNode: (
-          <span>
-            分界点{" "}
-            <KatexFormula formula={`x_0 = ${x0.toFixed(1)}`} mode="inline" />
-            ，左段在分界点的取值{" "}
-            <KatexFormula
-              formula={`f_1(x_0) = ${yLeft.toFixed(2)}`}
-              mode="inline"
-            />
-            ，右段在分界点的取值{" "}
-            <KatexFormula
-              formula={`f_2(x_0) = ${yRight.toFixed(2)}`}
-              mode="inline"
-            />
-            。
-          </span>
-        ),
-        questionNode: isGlobalInc ? (
-          <span>
-            两段均单调递增且满足搭接不等式{" "}
-            <KatexFormula formula="f_1(x_0) \le f_2(x_0)" mode="inline" />
-            ，函数在 <KatexFormula formula="\mathbb{R}" mode="inline" />{" "}
-            上是否处处单调？
-          </span>
-        ) : !isContinuous && k1 >= 0 && k2 >= 0 ? (
-          <span>
-            两段虽各自单增，但在分界点向下跳跃（
-            <KatexFormula formula="f_1(x_0) > f_2(x_0)" mode="inline" />
-            ），为何导致全域单调性失效？
-          </span>
-        ) : (
-          <span>
-            如何调节斜率与截距，使分段函数满足在{" "}
-            <KatexFormula formula="\mathbb{R}" mode="inline" />{" "}
-            上严格单调递增的充要条件？
-          </span>
-        ),
+        condition: `分界点 $x_0 = ${x0.toFixed(1)}$，左段在分界点的取值 $f_1(x_0) = ${yLeft.toFixed(2)}$，右段在分界点的取值 $f_2(x_0) = ${yRight.toFixed(2)}$。`,
+        question: isGlobalInc
+          ? "两段均单调递增且满足搭接不等式 $f_1(x_0) \\le f_2(x_0)$，求证该函数在 $\\mathbb{R}$ 上全域单调递增。"
+          : !isContinuous && k1 >= 0 && k2 >= 0
+            ? "两段虽各自单增，但在分界点向下跳跃（$f_1(x_0) > f_2(x_0)$），说明为何全域单调性会失效。"
+            : "求参数斜率与截距应满足的充要不等式，使分段函数在 $\\mathbb{R}$ 上严格单调递增。",
       };
     } else {
       const symAxis = (-(params.innerB ?? -2.0) / 2).toFixed(2);
@@ -234,30 +251,15 @@ export function CompositeAnimation() {
       return {
         variant: "primary" as const,
         badge: "高考难点 · 复合函数单调性与定义域优先",
-        conditionNode: (
-          <span>
-            内层二次函数对称轴{" "}
-            <KatexFormula formula={`x = ${symAxis}`} mode="inline" />
-            ，外层映射法则 <KatexFormula formula={outerFormula} mode="inline" />
-            。
-          </span>
-        ),
-        questionNode: (
-          <span>
-            比较中间量 <KatexFormula formula="u = g(x)" mode="inline" /> 与终值{" "}
-            <KatexFormula formula="y = f(u)" mode="inline" />{" "}
-            的单调方向，运用“同增异减”确定复合函数{" "}
-            <KatexFormula formula="y = f(g(x))" mode="inline" />{" "}
-            的单调区间，并说明为何必须保证{" "}
-            <KatexFormula formula="u = g(x)" mode="inline" /> 的值域落在{" "}
-            <KatexFormula formula="f" mode="inline" /> 的定义域内。
-          </span>
-        ),
+        condition: `内层二次函数对称轴 $x = ${symAxis}$，外层映射法则 $${outerFormula}$。`,
+        question:
+          "比较中间量 $u = g(x)$ 与终值 $y = f(u)$ 的单调方向，运用“同增异减”求复合函数 $y = f(g(x))$ 的单调区间，并说明为何必须先确保 $u = g(x)$ 落在外层函数定义域内。",
       };
     }
   }, [
     subMode,
     outerType,
+    pwScenario,
     params.x0,
     params.leftSlope,
     params.leftConst,
@@ -271,38 +273,53 @@ export function CompositeAnimation() {
       left={
         <LeftPanel>
           {/* 一级研究模式（TabSwitcher 标准动线） */}
-          <LeftPanelSection title="研究主题" subtitle="选择函数探究模块">
+          <LeftPanelSection title="研究主题">
             <TabSwitcher
               tabs={[
                 { key: "piecewise", label: "分段函数临界与单调" },
                 { key: "composite", label: "复合函数同增异减" },
               ]}
               value={subMode}
-              onChange={(k) => setSubMode(k as SubMode)}
+              onChange={(k) => {
+                playCtrl.pause();
+                setSubMode(k as SubMode);
+              }}
               layout="vertical"
               className="mb-2"
             />
           </LeftPanelSection>
 
-          {/* 复合函数模式下选择外层函数模型 */}
-          {subMode === "composite" && (
-            <LeftPanelSection
-              title="外层函数模型 f(u)"
-              subtitle="选择外层映射类型"
-            >
+          {/* 分段函数真实生活情景或复合函数外层模型 */}
+          {subMode === "piecewise" ? (
+            <LeftPanelSection title="分段典型情景">
               <SelectGrid
                 items={[
-                  { key: "exp", label: "指数型", description: "y = 2^u" },
-                  { key: "log", label: "对数型", description: "y = log_2(u)" },
+                  { key: "custom", label: "自由参数调节" },
+                  { key: "tiered_tariff", label: "阶梯水电费建模" },
+                ]}
+                value={pwScenario}
+                onChange={handlePiecewiseScenarioChange}
+                variant="outline"
+                columns={2}
+              />
+            </LeftPanelSection>
+          ) : (
+            <LeftPanelSection title="外层函数模型 f(u)">
+              <SelectGrid
+                items={[
+                  { key: "exp", label: "指数型" },
+                  { key: "log", label: "对数型" },
                   {
                     key: "quadratic",
                     label: "二次型",
-                    description: "y = -(u-2)²+4",
                     fullWidth: true,
                   },
                 ]}
                 value={outerType}
-                onChange={(k) => setOuterType(k as OuterType)}
+                onChange={(k) => {
+                  playCtrl.pause();
+                  setOuterType(k as OuterType);
+                }}
                 variant="outline"
                 columns={2}
               />
@@ -310,39 +327,39 @@ export function CompositeAnimation() {
           )}
 
           {/* 参数调节区 */}
-          <LeftPanelSection title="参数调节" subtitle="调节临界点与模型系数">
+          <LeftPanelSection title="参数调节">
             <ParamControl
               params={paramConfigs}
               onParamChange={handleParamChange}
-              onReset={() => setParams({ ...defaultParams })}
+              onReset={() => {
+                playCtrl.pause();
+                setPwScenario("custom");
+                setParams({ ...defaultParams });
+              }}
             />
+            <div className="mt-2">
+              <ParamPlayBar
+                isPlaying={playCtrl.isPlaying}
+                onToggle={playCtrl.toggle}
+                label={
+                  subMode === "piecewise"
+                    ? "分界点 x₀ 平移临界演示"
+                    : "信号流 x → u → y 动态传导"
+                }
+                speed={playCtrl.speed}
+                onSpeedChange={playCtrl.setSpeed}
+              />
+            </div>
           </LeftPanelSection>
 
-          {/* 底部教学导引卡片（严格遵循 SKILL 规范：双要素架构 + KatexFormula 渲染） */}
-          <LeftPanelSection title="教学导引与高考设问" compact>
-            <TipCard variant={tipConfig.variant}>
-              <div className="flex items-center justify-between font-semibold text-xs mb-1.5 border-b border-black/5 pb-1">
-                <span>{tipConfig.badge}</span>
-              </div>
-              <div className="space-y-1.5 text-[11px] leading-relaxed">
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【基础条件】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    {tipConfig.conditionNode}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-semibold text-neutral-800">
-                    【探究设问】
-                  </span>
-                  <span className="text-neutral-600 ml-1">
-                    {tipConfig.questionNode}
-                  </span>
-                </div>
-              </div>
-            </TipCard>
+          {/* 底部教学导引卡片（结构化 badge / condition / question） */}
+          <LeftPanelSection title="教学导引" compact>
+            <TipCard
+              variant={tipConfig.variant}
+              badge={tipConfig.badge}
+              condition={tipConfig.condition}
+              question={tipConfig.question}
+            />
           </LeftPanelSection>
         </LeftPanel>
       }

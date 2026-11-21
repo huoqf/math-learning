@@ -13,7 +13,13 @@ import { paramDragRange } from "@/utils/paramClamp";
 import type { TranscendentalMode } from "@/math/transcendental";
 import { transcendentalParamMeta } from "../transcendental";
 
-const MODES: TranscendentalMode[] = ["exp", "log", "chain", "param"];
+const MODES: TranscendentalMode[] = [
+  "exp",
+  "log",
+  "chain",
+  "param",
+  "isomorphism",
+];
 
 /** 与 TranscendentalAnimation 同构：xRange [-4,4]、yRange [-3,5]、840×650 */
 const scale = calculateSceneScale({

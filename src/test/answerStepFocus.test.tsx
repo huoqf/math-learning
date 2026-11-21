@@ -58,6 +58,31 @@ import {
   getConicLocusAnswerSteps,
   defaultParams as conicLocusDefaultParams,
 } from "@/data/registries/conicLocusInvariants";
+import { buildDerivativeShiftPanel } from "@/data/builders/derivativeShift";
+import {
+  getDerivativeShiftAnswerSteps,
+  defaultParams as shiftDefaultParams,
+} from "@/data/registries/derivativeShift";
+import { DerivativeShiftScene } from "@/features/derivativeShift/components/DerivativeShiftScene";
+import { buildDerivativeMonotonicityQuantities } from "@/data/builders/derivativeMonotonicity";
+import {
+  getMonotonicityAnswerSteps,
+  defaultParams as monoDefaultParams,
+} from "@/data/registries/derivativeMonotonicity";
+import { DerivativeMonotonicityScene } from "@/features/derivative-monotonicity/components/DerivativeMonotonicityScene";
+import { buildConstantSinglePanel } from "@/data/builders/constantSingle";
+import {
+  getConstantSingleAnswerSteps,
+  defaultParams as constantDefaultParams,
+} from "@/data/registries/constant";
+import { SingleVarScene } from "@/features/constant/components/SingleVarScene";
+import { buildTangentScalingPanel } from "@/data/builders/tangentScaling";
+import {
+  getTangentScalingAnswerSteps,
+  defaultParams as tangentScalingDefaultParams,
+} from "@/data/registries/tangentScaling";
+import { TangentScalingScene } from "@/features/derivativeTangentScaling/components/TangentScalingScene";
+import { calculateSceneScale } from "@/hooks/useSceneScale";
 
 /**
  * 回归防线（来源：概率统计模块审计 · 决策项 3.1「分步作答闭环」）。
@@ -580,6 +605,26 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
       getConicLocusAnswerSteps("locusTransfer"),
       getConicLocusAnswerSteps("thirdDefinition"),
       getConicLocusAnswerSteps("fixedPoint"),
+      getDerivativeShiftAnswerSteps("implicit_zero"),
+      getDerivativeShiftAnswerSteps("shift_symmetric"),
+      getDerivativeShiftAnswerSteps("log_mean"),
+      getMonotonicityAnswerSteps("monotonicity_point"),
+      getMonotonicityAnswerSteps("extrema_analysis"),
+      getMonotonicityAnswerSteps("parametric_discuss"),
+      getConstantSingleAnswerSteps("sep", "always"),
+      getConstantSingleAnswerSteps("sep", "exist"),
+      getConstantSingleAnswerSteps("direct", "always"),
+      getTangentScalingAnswerSteps("base"),
+      getTangentScalingAnswerSteps("sandwich", {
+        sandwichSubModel: "parallel_bands",
+      }),
+      getTangentScalingAnswerSteps("sandwich", {
+        sandwichSubModel: "common_tangent",
+      }),
+      getTangentScalingAnswerSteps("param_k", { paramKSubModel: "exp_log_k" }),
+      getTangentScalingAnswerSteps("secant", {
+        secantSubModel: "log_secant_tangent",
+      }),
     ]) {
       expect(steps.map((s) => s.step)).toEqual(steps.map((_, i) => i + 1));
       // 每一步都要给出"该看中屏哪一块"，否则分步导航就只剩翻页没有联动
@@ -587,6 +632,309 @@ describe("三方同源（SSOT）· 右屏步号与标题必须逐条等于注册
         expect(s.title.trim().length).toBeGreaterThan(0);
         expect(s.sceneHint ? s.sceneHint.trim().length : 0).toBeGreaterThan(0);
       }
+    }
+  });
+});
+
+describe("导数压轴四页分步作答 SSOT 与中屏高亮联动", () => {
+  const stepRegionOpacities = (container: HTMLElement): string[] =>
+    Array.from(container.querySelectorAll("g[data-step-region]")).map(
+      (g) => g.getAttribute("opacity") ?? "",
+    );
+
+  const testVp = {
+    visibleX: 0,
+    visibleY: 0,
+    visibleW: 840,
+    visibleH: 650,
+    centerX: 420,
+    centerY: 325,
+    scale: 1,
+    tx: 0,
+    ty: 0,
+    transform: "translate(0 0) scale(1)",
+    designVisibleW: 840,
+    designVisibleH: 650,
+    designLeft: 0,
+    designTop: 0,
+  };
+  const testScale = calculateSceneScale({
+    designVisibleW: 840,
+    designVisibleH: 650,
+    designLeft: 0,
+    designTop: 0,
+    xRange: [-4, 5],
+    yRange: [-3, 6],
+  });
+
+  it("DerivativeShift：三模式右屏步号标题与注册表完全同源，中屏按 activeStep 高亮并输出单围栏", () => {
+    for (const activeMode of [
+      "implicit_zero",
+      "shift_symmetric",
+      "log_mean",
+    ] as const) {
+      const panel = buildDerivativeShiftPanel(
+        { ...shiftDefaultParams },
+        { activeMode, subModel: "x_ln_x" },
+      );
+      const steps = getDerivativeShiftAnswerSteps(activeMode);
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        steps.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        steps.map((s) => s.title),
+      );
+    }
+
+    const { container, rerender } = renderInSvg(
+      <DerivativeShiftScene
+        params={{ ...shiftDefaultParams }}
+        scale={testScale}
+        vp={testVp}
+        activeMode="implicit_zero"
+        subModel="x_ln_x"
+        onParamChange={vi.fn()}
+        activeStep={0}
+        fontScale={fontScale}
+      />,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["1", "1", "1"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(0);
+
+    rerender(
+      <svg>
+        <DerivativeShiftScene
+          params={{ ...shiftDefaultParams }}
+          scale={testScale}
+          vp={testVp}
+          activeMode="implicit_zero"
+          subModel="x_ln_x"
+          onParamChange={vi.fn()}
+          activeStep={2}
+          fontScale={fontScale}
+        />
+      </svg>,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["0.3", "1", "0.3"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
+  });
+
+  it("DerivativeMonotonicity：三模式 SSOT 同源，合屏与同轴双视窗均响应 activeStep", () => {
+    const monoNumericParams = {
+      a: monoDefaultParams.a,
+      x0: monoDefaultParams.x0,
+    };
+    for (const mode of [
+      "monotonicity_point",
+      "extrema_analysis",
+      "parametric_discuss",
+    ] as const) {
+      const panel = buildDerivativeMonotonicityQuantities(
+        { ...monoNumericParams },
+        { modelKey: "cubic_param", mode },
+      );
+      const steps = getMonotonicityAnswerSteps(mode);
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        steps.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        steps.map((s) => s.title),
+      );
+    }
+
+    const { container, rerender } = renderInSvg(
+      <DerivativeMonotonicityScene
+        params={{ ...monoNumericParams }}
+        scale={testScale}
+        vp={testVp}
+        fontScale={fontScale}
+        modelKey="cubic_param"
+        mode="monotonicity_point"
+        activeStep={0}
+      />,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["1", "1", "1"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(0);
+
+    rerender(
+      <svg>
+        <DerivativeMonotonicityScene
+          params={{ ...monoNumericParams }}
+          scale={testScale}
+          vp={testVp}
+          fontScale={fontScale}
+          modelKey="cubic_param"
+          mode="monotonicity_point"
+          activeStep={2}
+        />
+      </svg>,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["0.3", "1", "0.3"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
+
+    rerender(
+      <svg>
+        <DerivativeMonotonicityScene
+          params={{ ...monoNumericParams }}
+          scale={testScale}
+          vp={testVp}
+          fontScale={fontScale}
+          modelKey="cubic_param"
+          mode="monotonicity_point"
+          showSplitView
+          activeStep={2}
+        />
+      </svg>,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["0.3", "1", "0.3", "1"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
+  });
+
+  it("ConstantSingle (SingleVarScene)：参变分离/直接讨论与量词全覆盖，中屏步进高亮正常", () => {
+    for (const [subMode, logic] of [
+      ["sep", "always"],
+      ["sep", "exist"],
+      ["direct", "always"],
+    ] as const) {
+      const panel = buildConstantSinglePanel(
+        { ...constantDefaultParams },
+        { subMode, logic, funModel: "transcendent", transModel: "ln_x_over_x" },
+      );
+      const steps = getConstantSingleAnswerSteps(subMode, logic);
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        steps.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        steps.map((s) => s.title),
+      );
+    }
+
+    const { container, rerender } = renderInSvg(
+      <SingleVarScene
+        subMode="sep"
+        logic="always"
+        funModel="transcendent"
+        transModel="ln_x_over_x"
+        activeStep={0}
+        params={{ ...constantDefaultParams }}
+        scale={testScale}
+        vp={testVp}
+        fontScale={fontScale}
+        onParamChange={vi.fn()}
+      />,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["1", "1", "1"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(0);
+
+    rerender(
+      <svg>
+        <SingleVarScene
+          subMode="sep"
+          logic="always"
+          funModel="transcendent"
+          transModel="ln_x_over_x"
+          activeStep={3}
+          params={{ ...constantDefaultParams }}
+          scale={testScale}
+          vp={testVp}
+          fontScale={fontScale}
+          onParamChange={vi.fn()}
+        />
+      </svg>,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["0.3", "0.3", "1"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
+  });
+
+  it("TangentScaling：全四子模式 SSOT 同源，场景切换 activeStep 输出单围栏", () => {
+    const comboCheck = [
+      { mode: "base" as const, baseSubModel: "exp_x_plus_1" as const },
+      {
+        mode: "sandwich" as const,
+        sandwichSubModel: "parallel_bands" as const,
+      },
+      {
+        mode: "sandwich" as const,
+        sandwichSubModel: "common_tangent" as const,
+      },
+      { mode: "param_k" as const, paramKSubModel: "exp_log_k" as const },
+      { mode: "param_k" as const, paramKSubModel: "exp_kx_origin" as const },
+      { mode: "param_k" as const, paramKSubModel: "log_kx_origin" as const },
+      { mode: "secant" as const, secantSubModel: "taylor_quadratic" as const },
+      {
+        mode: "secant" as const,
+        secantSubModel: "log_secant_tangent" as const,
+      },
+    ];
+    for (const opt of comboCheck) {
+      const panel = buildTangentScalingPanel(tangentScalingDefaultParams, opt);
+      const steps = getTangentScalingAnswerSteps(opt.mode, opt);
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        steps.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        steps.map((s) => s.title),
+      );
+    }
+
+    const { container, rerender } = renderInSvg(
+      <TangentScalingScene
+        params={tangentScalingDefaultParams}
+        mode="base"
+        baseSubModel="exp_x_plus_1"
+        sandwichSubModel="common_tangent"
+        paramKSubModel="exp_log_k"
+        secantSubModel="exp_secant_tangent"
+        scale={testScale}
+        vp={testVp}
+        fontScale={fontScale}
+        activeStep={0}
+        onParamChange={vi.fn()}
+      />,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["1", "1", "1"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(0);
+
+    rerender(
+      <svg>
+        <TangentScalingScene
+          params={tangentScalingDefaultParams}
+          mode="base"
+          baseSubModel="exp_x_plus_1"
+          sandwichSubModel="common_tangent"
+          paramKSubModel="exp_log_k"
+          secantSubModel="exp_secant_tangent"
+          scale={testScale}
+          vp={testVp}
+          fontScale={fontScale}
+          activeStep={2}
+          onParamChange={vi.fn()}
+        />
+      </svg>,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["0.3", "1", "0.3"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
+
+    for (const extraMode of ["sandwich", "param_k", "secant"] as const) {
+      rerender(
+        <svg>
+          <TangentScalingScene
+            params={tangentScalingDefaultParams}
+            mode={extraMode}
+            baseSubModel="exp_x_plus_1"
+            sandwichSubModel="common_tangent"
+            paramKSubModel="exp_log_k"
+            secantSubModel="exp_secant_tangent"
+            scale={testScale}
+            vp={testVp}
+            fontScale={fontScale}
+            activeStep={3}
+            onParamChange={vi.fn()}
+          />
+        </svg>,
+      );
+      expect(stepRegionOpacities(container)).toEqual(["0.3", "0.3", "1"]);
+      expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
     }
   });
 });
